@@ -517,7 +517,10 @@ void SCR_DrawDemoClock (void) {
 	if (scr_democlock.value == 2)
 		Q_strncpyz (str, SecondsToHourString((int) (cls.demotime)), sizeof(str));
 	else
-		Q_strncpyz (str, SecondsToHourString((int) (cls.demotime - demostarttime)), sizeof(str));
+		// START shaman RFE 1024658
+		// Q_strncpyz (str, SecondsToHourString((int) (cls.demotime - demostarttime)), sizeof(str));
+		Q_strncpyz (str, SecondsToMinutesString((int) (cls.demotime - demostarttime)), sizeof(str));
+		// END shaman RFE 1024658
 
 	x = ELEMENT_X_COORD(scr_democlock);
 	y = ELEMENT_Y_COORD(scr_democlock);

@@ -620,8 +620,10 @@ void SCR_DrawDemoClock (void) {
 
 	if (!cls.demoplayback || !scr_democlock.value)
 		return;
-
-	Q_strncpyz (str, SecondsToHourString(cls.realtime - cls.demostarttime), sizeof(str));
+	// START shaman RFE 1024658
+	// Q_strncpyz (str, SecondsToHourString(cls.realtime - cls.demostarttime), sizeof(str));
+	Q_strncpyz (str, SecondsToMinutesString(cls.realtime - cls.demostarttime), sizeof(str));
+	// END shaman RFE 1024658
 
 	if (scr_democlock_y.value < 0)
 		Draw_String (8 * scr_democlock_x.value, vid.height - sb_lines + 8 * scr_democlock_y.value, str);

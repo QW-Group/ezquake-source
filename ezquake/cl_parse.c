@@ -1381,11 +1381,17 @@ void CL_ParsePrint (void) {
 
 		if (strlen(s) > 0)  // KT sometimes sends empty strings
 		{
+
+			// START shaman BUG 1020636
+/*
 			if (con_addtimestamp)
 			{
 				con_addtimestamp = false;
 				if (con_timestamps.value)
 				{
+*/
+			// END shaman BUG 1020636
+
 					if (con_timestamps.value != 0)
 					{
 						SYSTEMTIME lt;
@@ -1395,11 +1401,16 @@ void CL_ParsePrint (void) {
 						//MakeChatRed(tmpbuf, false);
 						Com_Printf(tmpbuf);
 					}
+
+			// START shaman BUG 1020636
+/*
 				}
 			}
 
 			if (strchr(s, '\n'))
 				con_addtimestamp = true;
+*/
+			// END shaman BUG 1020636
 
 		}
 
