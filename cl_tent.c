@@ -68,7 +68,7 @@ void CL_InitTEnts (void) {
 	cl_sfx_ric3 = S_PrecacheSound ("weapons/ric3.wav");
 	cl_sfx_r_exp3 = S_PrecacheSound ("weapons/r_exp3.wav");
 	
-	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
+	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register(&r_lgblood);
 	Cvar_ResetCurrentGroup();
 }
