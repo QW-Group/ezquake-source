@@ -125,7 +125,7 @@ static void Rulesets_Smackdown(void) {
 		{&amf_camera_death, "0"},
 		{&amf_part_sparks, "0"},
 		{&amf_waterripple, "0"},
-		{&amf_lightning_sparks, "0"}
+		{&amf_lightning_sparks, "0"},
 #endif
 		{&tp_msgtriggers, "0"},
 		{&cl_trueLightning, "0"},
