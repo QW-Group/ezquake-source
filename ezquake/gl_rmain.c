@@ -628,11 +628,17 @@ void R_DrawAliasModel (entity_t *ent) {
 	aliashdr_t *paliashdr;
 	model_t *clmodel;
 	maliasframedesc_t *oldframe, *frame;
+
+	//	entity_t *self;
+	//static sfx_t *step;//foosteps sounds, commented out
+	//static int setstep;
+
 	extern	cvar_t r_viewmodelsize, cl_drawgun;
 
 	VectorCopy (ent->origin, r_entorigin);
 	VectorSubtract (r_origin, r_entorigin, modelorg);
 
+	//TODO: use modhints here? 
 	//VULT CORONAS
 	if ((!strcmp (ent->model->name, "progs/flame.mdl") /*|| !strcmp (ent->model->name, "progs/flame2.mdl")*/ || !strcmp (ent->model->name, "progs/flame3.mdl")) && (amf_coronas.value/* && (rand() % 2 < 2)*/))
 	{
@@ -668,6 +674,29 @@ void R_DrawAliasModel (entity_t *ent) {
 	frame = &paliashdr->frames[ent->frame];
 	oldframe = &paliashdr->frames[ent->oldframe];
 
+#if 0
+//TODO:
+// cheat protection
+// limit footsteps sounds to self 
+// add self footsteps :D
+// State: crap	
+	self = ent;
+	if(ent->stepframe != ent->frame && ent->model->modhint == MOD_PLAYER && (self->frame == 1||self->frame == 4||self->frame == 7 || self->frame ==10))
+	{
+		//Com_Printf("foot..\n");
+			//va("footsteps/step%d.wav",(int)(rand()%3+1)));
+
+		if (!setstep)
+		{
+			step = S_PrecacheSound ("footsteps/step1.wav");
+			setstep=true;
+		}
+
+		S_StartSound (-1, 0, step , ent->origin, 1, 1);
+
+		ent->stepframe = ent->frame;
+	}
+#endif
 
 	if (!r_lerpframes.value || ent->framelerp < 0 || ent->oldframe == ent->frame)
 		r_framelerp = 1.0;

@@ -1704,7 +1704,7 @@ void WeatherEffect(void)
 			{
 				ParticleFirePool(impact);
 			}
-		}
+	}
 
 };
 
@@ -2584,6 +2584,16 @@ void ParticleSlime (vec3_t org)
 
 	AddParticle(4, org, 1, rand()%32, rand()%3, color, dir);//zerodir);
 	AddParticle(11, org, 1, rand()%32, rand()%10, color, dir);//zerodir);
+}
+
+//TEI PARTICLES
+//Idea: bloodpool 
+void ParticleBloodPool (vec3_t org) 
+{
+	col_t color={30,100,150, 240};
+	vec3_t dir={0,0,80};
+
+	AddParticle(28, org, 1, rand()%11, rand()%3, color, dir);
 }
 
 
