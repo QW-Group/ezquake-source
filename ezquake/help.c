@@ -206,10 +206,10 @@ void Help_Init(void)
     Help_Files_Init();
 
     CTab_AddPage(&help_tab, "files", help_files, NULL, Help_Files_Draw, Help_Files_Key);
-    CTab_AddPage(&help_tab, "help", help_help, NULL, NULL, NULL);
+//    CTab_AddPage(&help_tab, "help", help_help, NULL, NULL, NULL);
     CTab_AddPage(&help_tab, "browser", help_browser, NULL, Help_Browser_Draw, Help_Browser_Key);
-    CTab_AddPage(&help_tab, "online", help_online, NULL, NULL, NULL);
-    CTab_AddPage(&help_tab, "options", help_options, NULL, NULL, NULL);
+//    CTab_AddPage(&help_tab, "online", help_online, NULL, NULL, NULL);
+//    CTab_AddPage(&help_tab, "options", help_options, NULL, NULL, NULL);
 
     Help_Browser_Focus();
 }
