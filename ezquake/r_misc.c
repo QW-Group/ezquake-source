@@ -275,7 +275,7 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
                 int lost, int minping, int avgping, int maxping, int devping,
                 int posx, int posy, int width, int height, int revx, int revy)
 {
-    int     a, x, y, y2, w, i;
+    int     a, x, y, y2, i;
     char st[80];
 
     static hud_t *hud = NULL;
