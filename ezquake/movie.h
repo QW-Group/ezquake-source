@@ -32,5 +32,6 @@ qboolean Movie_GetSoundtime(void);
 
 extern cvar_t movie_fps;
 extern cvar_t movie_steadycam;
+extern qboolean	movie_is_avi;	//joe: capturing to avi
 
 #endif
