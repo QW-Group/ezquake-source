@@ -88,9 +88,12 @@ void CL_ForwardToServer_f (void) {
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		if (strcasecmp(Cmd_Argv(1), "download") == 0 && Cmd_Argc() > 2)
 		{
-			Q_snprintfz (cls.downloadname, sizeof(cls.downloadname),
-					"%s", Cmd_Argv(2));
-			strlcpy (cls.downloadtempname, cls.downloadname, sizeof(cls.downloadtempname));
+			strlcpy(cls.downloadname, Cmd_Argv(2), sizeof(cls.downloadname));
+			COM_StripExtension(cls.downloadname, cls.downloadtempname);
+			strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
+			cls.downloadtype = dl_single;
+			//Q_snprintfz (cls.downloadname, sizeof(cls.downloadname), "%s", Cmd_Argv(2));
+			//strlcpy (cls.downloadtempname, cls.downloadname, sizeof(cls.downloadtempname));
 		}
 // Added by VVD {
 		if (cl_crypt_rcon.value && strcasecmp(Cmd_Argv(1), "techlogin") == 0)
@@ -330,7 +333,7 @@ void CL_Rcon_f (void) {
 }
 
 void CL_Download_f (void){
-	char *p, *q;
+	//char *p, *q;
 
 	if (cls.state == ca_disconnected) {
 		Com_Printf ("Must be connected.\n");
@@ -342,7 +345,7 @@ void CL_Download_f (void){
 		return;
 	}
 
-	Q_snprintfz (cls.downloadname, sizeof(cls.downloadname), "%s/%s", cls.gamedir, Cmd_Argv(1));
+	/*Q_snprintfz (cls.downloadname, sizeof(cls.downloadname), "%s/%s", cls.gamedir, Cmd_Argv(1));
 
 	p = cls.downloadname;
 	while (1) {
@@ -356,11 +359,14 @@ void CL_Download_f (void){
 	}
 
 	strcpy(cls.downloadtempname, cls.downloadname);
-	cls.download = fopen (cls.downloadname, "wb");
+	cls.download = fopen (cls.downloadname, "wb");*/
+	strlcpy(cls.downloadname, Cmd_Argv(1), sizeof(cls.downloadname));
+	COM_StripExtension(cls.downloadname, cls.downloadtempname);
+	strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 	cls.downloadtype = dl_single;
 
 	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-	SZ_Print (&cls.netchan.message, va("download %s\n",Cmd_Argv(1)));
+	SZ_Print (&cls.netchan.message, va("download %s\n", Cmd_Argv(1)));
 }
 
 void CL_User_f (void) {
