@@ -425,7 +425,7 @@ void DumpFogSettings(FILE *f) {
 		fprintf(f, "fog %s %s %s\n", gl_fogred.string, gl_foggreen.string, gl_fogblue.string);
 	}
 }
-#endif GLQUAKE
+#endif //GLQUAKE
 
 void DumpMisc(FILE *f) {
 
