@@ -22,7 +22,7 @@ static void LeaveNavigationMode(CPageViewer_t *viewer)
 
 static void EnterNavigationMode(CPageViewer_t *viewer)
 {
-    int i;
+    int i;	extern int isShiftDown(void);
     document_rendered_link_t *from, *to;
     int screen_start, screen_end;
 
@@ -99,7 +99,7 @@ static void FreePage(CPageViewer_page_t *page)
 
 static void RenderDocument(CPageViewer_t *viewer, int width)
 {
-    int lines;
+    // int lines;
     xml_document_t *doc;
 
     LeaveNavigationMode(viewer);
@@ -335,13 +335,11 @@ qboolean CPageViewer_Key(CPageViewer_t *viewer, int key)
             ret = true;
             break;
         case K_ENTER:
-            href = viewer->current_links[viewer->current_link_index]->tag->href;
-            if (href)
+            href = viewer->current_links[viewer->current_link_index]->tag->href;            if (href)
             {
                 LeaveNavigationMode(viewer);
                 CPageViewer_GoUrl(viewer, href);
-            }
-            ret = true;
+            }            ret = true;
             break;
         case K_SHIFT:
             break;

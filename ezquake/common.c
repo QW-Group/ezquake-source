@@ -934,6 +934,28 @@ void COM_CopyFile (char *netpath, char *cachepath) {
 	fclose (out);
 }
 
+int FS_FOpenPathFile (char *filename, FILE **file) {
+
+	*file = NULL;
+	com_filesize = -1;
+	com_netpath[0] = 0;
+
+	if ((*file = fopen (filename, "rb"))) {
+
+		if (developer.value)
+			Sys_Printf ("FindFile: %s\n", com_netpath);
+
+		com_filesize = COM_FileLength (*file);
+		return com_filesize;
+
+	}
+
+	if (developer.value)
+		Sys_Printf ("FindFile: can't find %s\n", filename);
+
+	return -1;
+}
+
 //Finds the file in the search path.
 //Sets com_filesize, com_netpath and one of handle or file
 int		file_from_pak;				// global indicating file came from pack file ZOID

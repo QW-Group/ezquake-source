@@ -23,7 +23,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="libexpat"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS,id386,GLQUAKE,WITH_KEYMAP,WITH_JPEG,WITH_PNG,WITH_ZLIB"
 				StringPooling="FALSE"
 				BasicRuntimeChecks="3"
@@ -99,7 +99,7 @@
 				FavorSizeOrSpeed="0"
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="libexpat"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS,id386,WITH_KEYMAP"
 				StringPooling="TRUE"
 				RuntimeLibrary="4"
@@ -120,7 +120,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="mgllt.lib dxguid.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="libexpat.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib"
 				OutputFile="$(Outdir)/ezquake.exe"
 				Version=""
 				LinkIncremental="1"
@@ -170,7 +170,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="libexpat"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS,id386,WITH_KEYMAP,WITH_PNG,WITH_JPEG,GLQUAKE,WITH_ZLIB"
 				StringPooling="TRUE"
 				RuntimeLibrary="4"
@@ -191,7 +191,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="dxguid.lib opengl32.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="libexpat.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib"
 				OutputFile="$(Outdir)/ezquake-gl.exe"
 				Version=""
 				LinkIncremental="1"
@@ -236,7 +236,7 @@
 				GlobalOptimizations="FALSE"
 				FavorSizeOrSpeed="0"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="libexpat"
 				PreprocessorDefinitions="WIN32,_WINDOWS,id386,WITH_PNG,WITH_ZLIB"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="FALSE"
@@ -1168,6 +1168,15 @@
 					RelativePath="Ctrl_EditBox.c">
 				</File>
 				<File
+					RelativePath="Ctrl_PageViewer.c">
+				</File>
+				<File
+					RelativePath="Ctrl_Tab.c">
+				</File>
+				<File
+					RelativePath="EX_FileList.c">
+				</File>
+				<File
 					RelativePath="EX_FunNames.c">
 				</File>
 				<File
@@ -1198,6 +1207,9 @@
 					RelativePath="config_manager.c">
 				</File>
 				<File
+					RelativePath="document_rendering.c">
+				</File>
+				<File
 					RelativePath=".\fchecks.c">
 				</File>
 				<File
@@ -1205,6 +1217,15 @@
 				</File>
 				<File
 					RelativePath="fragstats.c">
+				</File>
+				<File
+					RelativePath="help.c">
+				</File>
+				<File
+					RelativePath="help_browser.c">
+				</File>
+				<File
+					RelativePath="help_files.c">
 				</File>
 				<File
 					RelativePath="hud.c">
@@ -1329,6 +1350,21 @@
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
 				</File>
+				<File
+					RelativePath="xml_test.c">
+				</File>
+				<File
+					RelativePath="xsd.c">
+				</File>
+				<File
+					RelativePath="xsd_command.c">
+				</File>
+				<File
+					RelativePath="xsd_document.c">
+				</File>
+				<File
+					RelativePath="xsd_variable.c">
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
@@ -1426,6 +1462,15 @@
 					RelativePath="Ctrl_EditBox.h">
 				</File>
 				<File
+					RelativePath="Ctrl_PageViewer.h">
+				</File>
+				<File
+					RelativePath="Ctrl_Tab.h">
+				</File>
+				<File
+					RelativePath="EX_FileList.h">
+				</File>
+				<File
 					RelativePath="EX_FunNames.h">
 				</File>
 				<File
@@ -1453,6 +1498,9 @@
 					RelativePath="cvar_groups.h">
 				</File>
 				<File
+					RelativePath="document_rendering.h">
+				</File>
+				<File
 					RelativePath=".\fchecks.h">
 				</File>
 				<File
@@ -1460,6 +1508,9 @@
 				</File>
 				<File
 					RelativePath="gl_texture.h">
+				</File>
+				<File
+					RelativePath="help.h">
 				</File>
 				<File
 					RelativePath="hud.h">
@@ -1538,6 +1589,18 @@
 						<Tool
 							Name="VCCustomBuildTool"/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="xsd.h">
+				</File>
+				<File
+					RelativePath="xsd_command.h">
+				</File>
+				<File
+					RelativePath="xsd_document.h">
+				</File>
+				<File
+					RelativePath="xsd_variable.h">
 				</File>
 			</Filter>
 			<Filter

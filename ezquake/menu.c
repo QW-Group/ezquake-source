@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sound.h"
 #include "console.h"
 #include "version.h"
+#include "Ctrl_PageViewer.h"
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
@@ -1183,10 +1184,23 @@ void M_Menu_Help_f (void) {
 }
 
 void M_Help_Draw (void) {
-	M_DrawPic (0, 0, Draw_CachePic ( va("gfx/help%i.lmp", help_page)) );
+//	M_DrawPic (0, 0, Draw_CachePic ( va("gfx/help%i.lmp", help_page)) );
+    extern void Help_Draw(int, int, int, int);
+
+	int x, y, w, h;
+
+    w = min(max(512, 320), vid.width) - 8;
+    h = min(max(432, 200), vid.height) - 8;
+    x = (vid.width - w) / 2;
+    y = (vid.height - h) / 2;
+
+    Help_Draw (x, y, w, h);
 }
 
 void M_Help_Key (int key) {
+
+/*
+
 	switch (key) {
 	case K_BACKSPACE:
 		m_topmenu = m_none;	// intentional fallthrough
@@ -1208,6 +1222,12 @@ void M_Help_Key (int key) {
 			help_page = NUM_HELP_PAGES-1;
 		break;
 	}
+
+*/
+
+    extern void Help_Key(int key);
+
+    Help_Key(key);
 
 }
 
@@ -3506,6 +3526,7 @@ void M_Init (void) {
 
 	Cvar_ResetCurrentGroup();
 	Browser_Init();
+	Help_Init();
 
 	Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
 
