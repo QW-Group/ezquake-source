@@ -255,6 +255,7 @@ void M_Main_Draw (void) {
 }
 
 void M_Main_Key (int key) {
+	extern cvar_t cl_confirmquit;
 	switch (key) {
 	case K_ESCAPE:
 		key_dest = key_game;
@@ -308,8 +309,14 @@ void M_Main_Key (int key) {
 	#endif
 
 		case 4:
-			//M_Menu_Quit_f ();
-			Host_Quit ();
+			// START shaman [Quake 1.09 quit screen]
+			if (cl_confirmquit.value) {
+				M_Menu_Quit_f ();
+			}
+			else {
+				Host_Quit ();
+			}
+			// END shaman [Quake 1.09 quit screen]
 			break;
 		}
 	}
@@ -3389,40 +3396,32 @@ void M_SEdit_Key (int key) {
 
 // <-- SLIST
 
+// START shaman [Quake 1.09 quit screen]
 void M_Quit_Draw (void) {
-	static char *quitmsg[] = {
-	"1",
-	"1",
-	"1",
-	"1",
-	"1",
-	"1",
-	"1",
-	"1",
-	"1",
-	"1",
-	"1",
-	"1",
-	"1",
-	"1",
-	"1",
-	"1",
-	"1",
-	"1",
-	NULL};
-	char **p;
-	int x, y;
-
-	M_DrawTextBox (0, 12, 38, 19);
-	y = 24;
-	for (p = quitmsg; *p; p++, y += 8) {
-		x = 18 + (36 - (strlen(*p + 1))) * 4;
-		if (**p == '0')
-			M_PrintWhite (x, y, *p + 1);
-		else
-			M_Print (x, y,	*p + 1);
-	}
+	M_DrawTextBox (0, 0, 38, 23);
+	M_PrintWhite (16, 12,  "  Quake version 1.09 by id Software\n\n");
+	M_PrintWhite (16, 28,  "Programming        Art \n");
+	M_Print (16, 36,  " John Carmack       Adrian Carmack\n");
+	M_Print (16, 44,  " Michael Abrash     Kevin Cloud\n");
+	M_Print (16, 52,  " John Cash          Paul Steed\n");
+	M_Print (16, 60,  " Dave 'Zoid' Kirsch\n");
+	M_PrintWhite (16, 68,  "Design             Biz\n");
+	M_Print (16, 76,  " John Romero        Jay Wilbur\n");
+	M_Print (16, 84,  " Sandy Petersen     Mike Wilson\n");
+	M_Print (16, 92,  " American McGee     Donna Jackson\n");
+	M_Print (16, 100,  " Tim Willits        Todd Hollenshead\n");
+	M_PrintWhite (16, 108, "Support            Projects\n");
+	M_Print (16, 116, " Barrett Alexander  Shawn Green\n");
+	M_PrintWhite (16, 124, "Sound Effects\n");
+	M_Print (16, 132, " Trent Reznor and Nine Inch Nails\n\n");
+	M_PrintWhite (16, 140, "Quake is a trademark of Id Software,\n");
+	M_PrintWhite (16, 148, "inc., (c)1996 Id Software, inc. All\n");
+	M_PrintWhite (16, 156, "rights reserved. NIN logo is a\n");
+	M_PrintWhite (16, 164, "registered trademark licensed to\n");
+	M_PrintWhite (16, 172, "Nothing Interactive, Inc. All rights\n");
+	M_PrintWhite (16, 180, "reserved. Press y to exit\n"); 
 }
+// END shaman [Quake 1.09 quit screen]
 
 //=============================================================================
 /* Menu Subsystem */
@@ -3457,7 +3456,8 @@ void M_Init (void) {
 	Cmd_AddCommand ("menu_video", M_Menu_Video_f);
 	Cmd_AddCommand ("help", M_Menu_Help_f);
 	Cmd_AddCommand ("menu_help", M_Menu_Help_f);
-	//Cmd_AddCommand ("menu_quit", M_Menu_Quit_f);
+	Cmd_AddCommand ("menu_quit", M_Menu_Quit_f);
+
 }
 
 void M_Draw (void) {
