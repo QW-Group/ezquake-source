@@ -1471,9 +1471,6 @@
 					RelativePath="mp3_player.h">
 				</File>
 				<File
-					RelativePath=".\quotes.h">
-				</File>
-				<File
 					RelativePath="rulesets.h">
 				</File>
 				<File
