@@ -1,10 +1,10 @@
 object Form1: TForm1
-  Left = 477
-  Top = 352
+  Left = 431
+  Top = 215
   BorderIcons = [biSystemMenu, biMinimize, biHelp]
   BorderStyle = bsSingle
   Caption = 'ezQuake Starter'
-  ClientHeight = 427
+  ClientHeight = 426
   ClientWidth = 592
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -18,33 +18,6 @@ object Form1: TForm1
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
-  object Label13: TLabel
-    Left = 568
-    Top = 408
-    Width = 166
-    Height = 33
-    Cursor = crHandPoint
-    Hint = 'Send mail to tyrannos@nm.ru'
-    Alignment = taCenter
-    Caption = 
-      'Copyright 2003 Andrey "Tyrannos" Belik Zvery Quake Clan, Russia,' +
-      ' Saint-Petersburg'
-    Color = clBtnFace
-    DragCursor = crDefault
-    Font.Charset = RUSSIAN_CHARSET
-    Font.Color = clHotLight
-    Font.Height = -11
-    Font.Name = 'MS Serif'
-    Font.Style = []
-    ParentColor = False
-    ParentFont = False
-    ParentShowHint = False
-    ShowHint = True
-    Layout = tlCenter
-    Visible = False
-    WordWrap = True
-    OnClick = Label13Click
-  end
   object gs: TGroupBox
     Left = 8
     Top = 160
@@ -69,9 +42,9 @@ object Form1: TForm1
     object Label3: TLabel
       Left = 16
       Top = 72
-      Width = 44
+      Width = 121
       Height = 13
-      Caption = 'Bits per p'
+      Caption = 'Bits per pixel (color depth)'
     end
     object Label11: TLabel
       Left = 16
@@ -334,7 +307,7 @@ object Form1: TForm1
       Hint = 
         'Performance tweek, can speed up sound a bit, but causes glitches' +
         ' with many sound systems'
-      Caption = 'use primary buffer'
+      Caption = 'use primar'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 5
@@ -347,7 +320,7 @@ object Form1: TForm1
       Hint = 
         'Disables sound playback but simulates sound playback for code te' +
         'sting'
-      Caption = 'disable mp3 volume control'
+      Caption = 'disable MP3 volume control'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 4
@@ -432,7 +405,7 @@ object Form1: TForm1
       Hint = 'Other command line parameter can be typed here'
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 8
+      TabOrder = 7
     end
     object nohwtimer: TCheckBox
       Left = 168
@@ -444,17 +417,6 @@ object Form1: TForm1
       ParentShowHint = False
       ShowHint = True
       TabOrder = 3
-    end
-    object noconfirmquit: TCheckBox
-      Left = 168
-      Top = 48
-      Width = 105
-      Height = 17
-      Hint = 'Don'#39't ask for confirmation when exiting from Quake'
-      Caption = 'confirm quit'
-      ParentShowHint = False
-      ShowHint = True
-      TabOrder = 4
     end
     object condebug: TCheckBox
       Left = 168
@@ -481,23 +443,23 @@ object Form1: TForm1
     end
     object indphys: TCheckBox
       Left = 272
-      Top = 48
+      Top = 32
       Width = 118
       Height = 17
       Caption = 'independent physics'
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 7
+      TabOrder = 6
     end
     object noroot: TCheckBox
-      Left = 272
-      Top = 32
+      Left = 168
+      Top = 48
       Width = 97
       Height = 17
       Caption = 'no admin rights'
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 6
+      TabOrder = 4
     end
   end
   object ss: TGroupBox
@@ -545,7 +507,7 @@ object Form1: TForm1
       Top = 20
       Width = 89
       Height = 21
-      Hint = 'Sets the direcory containing the game that the server uses'
+      Hint = 'Sets t'#0'e direcory containing the game that the server uses'
       CharCase = ecLowerCase
       ItemHeight = 13
       ParentShowHint = False
@@ -693,7 +655,7 @@ object Form1: TForm1
       Width = 25
       Height = 21
       Hint = 
-        'Specifies the ammount of memory in megabytes that Quake should a' +
+        'Specif'#0'es the ammount of memory in megabytes that Quake should a' +
         'llocate'
       CharCase = ecLowerCase
       MaxLength = 3
@@ -902,6 +864,7 @@ object Form1: TForm1
     ShowHint = True
     Sorted = True
     TabOrder = 8
+    OnChange = fbatChange
   end
   object load: TButton
     Left = 512
@@ -910,6 +873,7 @@ object Form1: TForm1
     Height = 21
     Hint = 'Loads settings from bat file for editing'
     Caption = 'Load'
+    Enabled = False
     ParentShowHint = False
     ShowHint = True
     TabOrder = 9
@@ -922,6 +886,7 @@ object Form1: TForm1
     Height = 21
     Hint = 'Saves current settings to bat file'
     Caption = 'Save'
+    Enabled = False
     ParentShowHint = False
     ShowHint = True
     TabOrder = 10
@@ -942,33 +907,30 @@ object Form1: TForm1
   object crlnk: TButton
     Left = 408
     Top = 384
-    Width = 57
+    Width = 65
     Height = 25
+    Hint = 'Creates link at given place'
     Caption = 'Create link'
     Enabled = False
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 14
     OnClick = crlnkClick
   end
   object lnkpath: TComboBox
-    Left = 472
+    Left = 480
     Top = 386
-    Width = 113
+    Width = 105
     Height = 21
     Style = csDropDownList
     ItemHeight = 13
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 15
     OnChange = lnkpathChange
     Items.Strings = (
       'at Desktop'
-      'at Programs menu'
+      'at Quick launch'
       'at Start menu')
-  end
-  object lnks: TFastShellLink
-    CreateIn.CreatePath = True
-    CreateIn.ShellFolder = sfDesktop
-    LinkName = 'ezQuake'
-    RunAs = raNormal
-    Left = 360
-    Top = 384
   end
 end

@@ -11,8 +11,8 @@
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) Unit1.dfm"/>
     <LIBFILES value=""/>
-    <LIBRARIES value="K102_R61.lib fsl.lib vclx.lib rtl.lib vcl.lib"/>
-    <SPARELIBS value="vcl.lib rtl.lib vclx.lib fsl.lib K102_R61.lib"/>
+    <LIBRARIES value="vclx.lib rtl.lib vcl.lib"/>
+    <SPARELIBS value="vcl.lib rtl.lib vclx.lib"/>
     <PACKAGES value="vcl.bpi rtl.bpi dbrtl.bpi adortl.bpi vcldb.bpi vclx.bpi bdertl.bpi 
       vcldbx.bpi ibxpress.bpi cds.bpi dsnap.bpi bdecds.bpi qrpt.bpi teeui.bpi 
       teedb.bpi tee.bpi dss.bpi teeqr.bpi visualclx.bpi visualdbclx.bpi 

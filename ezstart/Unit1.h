@@ -10,7 +10,6 @@
 #include <ComCtrls.hpp>
 #include <ExtCtrls.hpp>
 #include <Buttons.hpp>
-#include "FastShellLink.hpp"
 //---------------------------------------------------------------------------
 class TForm1 : public TForm
 {
@@ -20,7 +19,6 @@ __published:	// IDE-managed Components
         TLabel *Label1;
         TLabel *Label2;
         TComboBox *cmode;
-        TLabel *Label3;
         TComboBox *bpp;
         TGroupBox *ws;
         TGroupBox *us;
@@ -52,7 +50,6 @@ __published:	// IDE-managed Components
         TCheckBox *maxtmu2;
         TButton *start;
         TButton *cancel;
-        TLabel *Label13;
         TLabel *Label14;
         TEdit *other;
         TCheckBox *nomp3;
@@ -75,7 +72,6 @@ __published:	// IDE-managed Components
         TCheckBox *nospd;
         TCheckBox *nopar;
         TCheckBox *nohwtimer;
-        TCheckBox *noconfirmquit;
         TCheckBox *nomouse;
         TLabel *Label15;
         TEdit *zone;
@@ -97,7 +93,6 @@ __published:	// IDE-managed Components
         TCheckBox *noroot;
         TButton *crlnk;
         TComboBox *lnkpath;
-        TFastShellLink *lnks;
         void __fastcall FormCreate(TObject *Sender);
         void __fastcall cancelClick(TObject *Sender);
         void __fastcall gamedirsChange(TObject *Sender);
@@ -106,7 +101,6 @@ __published:	// IDE-managed Components
         void __fastcall nomtexClick(TObject *Sender);
         void __fastcall maxtmu2Click(TObject *Sender);
         void __fastcall startClick(TObject *Sender);
-        void __fastcall Label13Click(TObject *Sender);
         void __fastcall nosoundClick(TObject *Sender);
         void __fastcall verClick(TObject *Sender);
         void __fastcall nomouseClick(TObject *Sender);
@@ -123,11 +117,13 @@ __published:	// IDE-managed Components
         void __fastcall FormShow(TObject *Sender);
         void __fastcall crlnkClick(TObject *Sender);
         void __fastcall lnkpathChange(TObject *Sender);
+        void __fastcall fbatChange(TObject *Sender);
 private:	// User declarations
         void __fastcall TForm1::checks();
         void __fastcall TForm1::cmdcalc();
         void __fastcall TForm1::clear();
         void __fastcall TForm1::loadcmd();
+        void __fastcall TForm1::CreateShortcut(LPCWSTR,LPCTSTR,LPCTSTR,LPCTSTR,WORD);
 public:		// User declarations
         __fastcall TForm1(TComponent* Owner);
 

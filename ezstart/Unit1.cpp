@@ -1,15 +1,15 @@
 //---------------------------------------------------------------------------
 
-#include <vcl.h>
+//#include <vcl.h>
 #pragma hdrstop
 
 #include "Unit1.h"
+#include <objidl.h>
+#include <shlobj.h>
+#include "registry.hpp"
+#define HOTKEY(modifier,key) ((((modifier)&0xff)<<8)|((key)&0xff)) 
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
-#pragma link "SsBase"
-#pragma link "StShrtCt"
-#pragma link "FastShellLink"
-#pragma link "FastShellLink"
 #pragma resource "*.dfm"
  AnsiString s,cmd,bat,tmp;
  TSearchRec sr;
@@ -374,6 +374,7 @@ Turns off new precise timer and returns back old behaviour.\n\
 \n\Recommendation:\n\
 Not necessary. You can leave this box unchecked.\n\
 \n\Notes: -";
+/*
 noconfirmquit->Hint=\
 "Description:\n\
 Ask for your confirmation when exiting from ezQuake.\n\
@@ -382,6 +383,7 @@ Ask for your confirmation when exiting from ezQuake.\n\
 \n\Recommendation:\n\
 No.\n\
 \n\Notes: -";
+*/
 other->Hint=\
 "Description:\n\
 Here you can type all the other command line parameters that you\n\
@@ -427,7 +429,7 @@ if (FileExists(ExtractFilePath(Application->ExeName)+"ezquake-gl.exe"))
 if (FileExists(ExtractFilePath(Application->ExeName)+"ezquake.exe"))
  ver->Items->Add("Software");
 if (ver->Items->Count==0)
- { ShowMessage("ezQuake executable file(s) not found in current directory");
+ { MessageBox(Application->Handle,"ezQuake executable file(s) not found in current directory","ezStart",MB_OK+MB_ICONWARNING);
    Application->Terminate();
  }
 else
@@ -564,12 +566,6 @@ Close();
 }
 //---------------------------------------------------------------------------
 
-void __fastcall TForm1::Label13Click(TObject *Sender)
-{
-ShellExecute(NULL,NULL,"mailto: tyrannos@nm.ru",0,0,SW_SHOW);
-}
-//---------------------------------------------------------------------------
-
 void __fastcall TForm1::nosoundClick(TObject *Sender)
 {
 wavonly->Enabled=!nosound->Checked;
@@ -615,9 +611,9 @@ dibonly->Enabled=!gl;
 void __fastcall TForm1::cmdcalc()
 {
 if (ver->Items->Strings[ver->ItemIndex]=="OpenGL")
- cmd="@start ezquake-gl.exe ";
+ cmd="ezquake-gl.exe ";
 else
- cmd="@start ezquake.exe ";
+ cmd="ezquake.exe ";
 
 if (ded->Checked && ded->Enabled) cmd=cmd+"-dedicated ";
 if (gamedirs->Text!="" && gamedirs->Enabled) cmd=cmd+"-game "+gamedirs->Text+" ";
@@ -670,7 +666,7 @@ if (nospd->Checked && nospd->Enabled) cmd=cmd+"-noforcemspd ";
 
 if (ruleset->Text!="" && ruleset->Enabled) cmd=cmd+"-ruleset "+ruleset->Text+" ";
 if (nohwtimer->Checked && nohwtimer->Enabled) cmd=cmd+"-nohwtimer ";
-if (noconfirmquit->Checked && noconfirmquit->Enabled) cmd=cmd+"+set cl_confirmquit 0 ";
+//if (noconfirmquit->Checked && noconfirmquit->Enabled) cmd=cmd+"+set cl_confirmquit 0 ";
 if (noscripts->Checked && noscripts->Enabled) cmd=cmd+"-noscripts ";
 if (noroot->Checked && noroot->Enabled) cmd=cmd+"-nosockraw ";
 if (indphys->Checked && indphys->Enabled) cmd=cmd+"+set cl_independentPhysics 1 ";
@@ -766,7 +762,7 @@ void __fastcall TForm1::dedClick(TObject *Sender)
    ruleset->Enabled=!ded->Checked;
    clcfg->Enabled=!ded->Checked;
    nohwtimer->Enabled=!ded->Checked;
-   noconfirmquit->Enabled=!ded->Checked;
+//   noconfirmquit->Enabled=!ded->Checked;
    ver->Enabled =!ded->Checked;
 }
 //---------------------------------------------------------------------------
@@ -775,7 +771,6 @@ void __fastcall TForm1::loadClick(TObject *Sender)
 {
 char *buf;
 
-//ShowMessage(cmd);
 //if (InputQuery(Caption,"Enter bat file name:",bat))
 if (fbat->Text!="")
  bat=fbat->Text;
@@ -914,10 +909,10 @@ if (cmd.SubString(cmd.Length(),1)!=" ")
     { nohwtimer->Checked=1;
       cmd=cmd.Delete(cmd.Pos(" -nohwtimer"),11);
     }
-   if (cmd.Pos(" +set cl_confirmquit 0"))
-    { noconfirmquit->Checked=1;
-      cmd=cmd.Delete(cmd.Pos(" +set cl_confirmquit 0"),22);
-    }
+//   if (cmd.Pos(" +set cl_confirmquit 0"))
+//    { noconfirmquit->Checked=1;
+//      cmd=cmd.Delete(cmd.Pos(" +set cl_confirmquit 0"),22);
+//    }
    if (cmd.Pos(" -noscripts"))
     { noscripts->Checked=1;
       cmd=cmd.Delete(cmd.Pos(" -noscripts"),11);
@@ -1047,15 +1042,15 @@ if (cmd.SubString(cmd.Length(),1)!=" ")
     cmd=TrimRight(cmd);
     other->Text=cmd;
  }
-
+else
+ MessageBox(Application->Handle,"Batch file not found in current directory","ezStart",MB_OK+MB_ICONWARNING);
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TForm1::saveClick(TObject *Sender)
 {
-//ShowMessage(cmd);
 if (fbat->Text=="")
- InputQuery(Caption,"Enter bat file name:",bat);
+ MessageBox(Application->Handle,"You must enter bat file name","ezStart",MB_OK+MB_ICONWARNING);
 else
  bat=fbat->Text;
 if (bat!="")
@@ -1065,7 +1060,7 @@ if (bat!="")
    fh=FileCreate(ExtractFilePath(Application->ExeName)+bat);
    FileClose(fh);
    fh=FileOpen(ExtractFilePath(Application->ExeName)+bat,fmOpenWrite);
-   FileWrite(fh,cmd.c_str(),cmd.Length());
+   FileWrite(fh,("@start "+cmd).c_str(),cmd.Length()+7);
    FileClose(fh);
 
 fbat->Clear();
@@ -1134,7 +1129,7 @@ cdaudio->Checked=0;
 ruleset->Text="";
 clcfg->Text="";
 nohwtimer->Checked=0;
-noconfirmquit->Checked=0;
+//noconfirmquit->Checked=0;
 other->Text="";
 }
 //---------------------------------------------------------------------------
@@ -1157,36 +1152,81 @@ if (FileExists(ExtractFilePath(Application->ExeName)+"ezStart.ini"))
 }
 //---------------------------------------------------------------------------
 
-
-
-
-
 void __fastcall TForm1::crlnkClick(TObject *Sender)
 {
 int t;
+AnsiString lnk_target,create_path;
+TRegistry *reg = new TRegistry();
+WCHAR buffer[256];
+MessageBeep(MB_ICONEXCLAMATION);
+reg->RootKey = HKEY_CURRENT_USER;
+reg->OpenKey("\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",false);
 cmdcalc();
-lnks->WorkingDirectory=ExtractFilePath(Application->ExeName);
-lnks->LinkTarget=ExtractFilePath(Application->ExeName);
-if (ver->Items->Strings[ver->ItemIndex]=="OpenGL")
- lnks->LinkTarget=lnks->LinkTarget+"ezquake-gl.exe";
-else
- lnks->LinkTarget=lnks->LinkTarget+"ezquake.exe";
-
 switch (lnkpath->ItemIndex)
- { case 0 : lnks->CreateIn->ShellFolder=sfDesktop; break;
-   case 1 : lnks->CreateIn->ShellFolder=sfProgramsMenu; break;
-   case 2 : lnks->CreateIn->ShellFolder=sfStartMenu; break;
+ { case 0 : create_path=reg->ReadString("Desktop"); break;
+   case 1 : create_path=reg->ReadString("AppData")+"\\Microsoft\\Internet Explorer\\Quick Launch"; break;
+   case 2 : create_path=reg->ReadString("Start Menu"); break;
    default : break;
  }
-lnks->ParamString=cmd.SubString(cmd.Pos(".exe")+5,cmd.Length());
-
-lnks->Execute();
+lnk_target=ExtractFilePath(Application->ExeName);
+if (ver->Items->Strings[ver->ItemIndex]=="OpenGL")
+ lnk_target=lnk_target+"ezquake-gl.exe";
+else
+ lnk_target=lnk_target+"ezquake.exe";
+CoInitialize(NULL);
+CreateShortcut((create_path+"\\ezQuake.lnk").WideChar(buffer,255),\
+                lnk_target.c_str(),\
+                (ExtractFilePath(Application->ExeName)).c_str(),\
+                (cmd.SubString(cmd.Pos(".exe")+5,cmd.Length())).c_str(),\
+                NULL);
+CoUninitialize();
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TForm1::lnkpathChange(TObject *Sender)
 {
 crlnk->Enabled=(lnkpath->ItemIndex!=-1);
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::CreateShortcut(LPCWSTR pwzShortCutFileName,
+                    LPCTSTR pszPathAndFileName,
+                    LPCTSTR pszWorkingDirectory,
+                    LPCTSTR pszArguments,
+                    WORD wHotKey) {
+IShellLink * pSL;
+IPersistFile * pPF;
+HRESULT hRes;
+
+hRes = CoCreateInstance(CLSID_ShellLink,0,CLSCTX_INPROC_SERVER,IID_IShellLink,(LPVOID*)&pSL);
+ if( SUCCEEDED(hRes) )
+  { hRes = pSL->SetPath(pszPathAndFileName);
+    if( SUCCEEDED(hRes) )
+     { hRes = pSL->SetArguments(pszArguments);
+       if( SUCCEEDED(hRes) )
+        { hRes = pSL->SetWorkingDirectory(pszWorkingDirectory);
+          if( SUCCEEDED(hRes) )
+           { hRes = pSL->SetHotkey(wHotKey);
+             if( SUCCEEDED(hRes) )
+              { hRes = pSL->QueryInterface(IID_IPersistFile,(LPVOID*)&pPF);
+                if( SUCCEEDED(hRes) )
+                 { hRes = pPF->Save(pwzShortCutFileName,TRUE);
+                   pPF->Release();
+                 }
+              }
+           }
+        }
+     }
+  }
+pSL->Release();
+
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::fbatChange(TObject *Sender)
+{
+load->Enabled=(fbat->Text.Length()>0 && FileExists(ExtractFilePath(Application->ExeName)+fbat->Text) );
+save->Enabled=(fbat->Text.Length()>0);        
 }
 //---------------------------------------------------------------------------
 
