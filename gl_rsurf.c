@@ -111,9 +111,7 @@ void R_RenderLumas (void) {
 	int i;
 	glpoly_t *p;
 
-	extern cvar_t gl_lumaTextures;
-
-	if (!drawlumas || !gl_lumaTextures.value)
+	if (!drawlumas)
 		return;
 
 	glDepthMask (GL_FALSE);	// don't bother writing Z
@@ -696,6 +694,8 @@ static void R_ClearTextureChains(model_t *clmodel) {
 
 void DrawTextureChains (model_t *model) {
 
+	extern cvar_t gl_lumaTextures;
+
 	int waterline, i, k, GL_LIGHTMAP_TEXTURE, GL_FB_TEXTURE;
 	msurface_t *s;
 	texture_t *t;
@@ -745,7 +745,9 @@ void DrawTextureChains (model_t *model) {
 		draw_mtex_fbs = draw_fbs && can_mtex_fbs;
 
 		if (gl_mtexable) {
-			if (t->isLumaTexture && !drawLumasGlowing) {
+			// START shaman FIX 1025184
+			if (t->isLumaTexture && !drawLumasGlowing && gl_lumaTextures.value) {
+			// END shaman FIX 1025184
 				if (gl_add_ext) {
 					doMtex1 = true;
 					GL_EnableTMU(GL_TEXTURE1_ARB);
@@ -869,7 +871,6 @@ void DrawTextureChains (model_t *model) {
 
 	if (gl_fogenable.value)
 		glDisable(GL_FOG);
-
 	if (drawLumasGlowing) {
 		if (gl_fogenable.value)
 			glEnable(GL_FOG);
@@ -877,10 +878,14 @@ void DrawTextureChains (model_t *model) {
 			R_BlendLightmaps();
 		if (drawfullbrights)
 			R_RenderFullbrights();
-		if (drawlumas && !gl_fogenable.value)
+		// START shaman FIX 1025184
+		if (drawlumas && !gl_fogenable.value && gl_lumaTextures.value)
+		// END shaman FIX 1025184
 			R_RenderLumas();
 	} else {
-		if (drawlumas)
+		// START shaman FIX 1025184
+		if (drawlumas && gl_lumaTextures.value)
+		// END shaman FIX 1025184
 			R_RenderLumas();
 		if (render_lightmaps)
 			R_BlendLightmaps();
