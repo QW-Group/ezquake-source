@@ -90,7 +90,7 @@ char *VersionString (void)
         strcpy (st, " noscripts");
     }
 
-	Q_snprintfz (str, sizeof(str), "%s (build %i)%s", EZ_VERSION, build_number(), st);
+	Q_snprintfz (str, sizeof(str), "%i%s", build_number(), st);
 
 	return str;
 }

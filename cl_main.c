@@ -890,7 +890,7 @@ void CL_InitLocal (void) {
 
     com_blockscripts = false;
 
-    strcpy(st, EZ_VERSION);
+    strcpy(st, "ezQuake %i", build_number());
 
     if (COM_CheckParm("-noscripts"))
     {
@@ -898,7 +898,7 @@ void CL_InitLocal (void) {
         strcat(st, " noscripts");
     }
 
- 	Info_SetValueForStarKey (cls.userinfo, "*ezQuake", st, MAX_INFO_STRING);
+ 	Info_SetValueForStarKey (cls.userinfo, "*client", st, MAX_INFO_STRING);
 
 	Cmd_AddLegacyCommand ("demotimescale", "cl_demospeed");
 
