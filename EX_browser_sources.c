@@ -21,45 +21,6 @@
 // sources table
 source_data *sources[MAX_SOURCES];
 int sourcesn;
-/*
-int  myGetFileLocalTime(char *path, SYSTEMTIME *wintime)
-{
-#ifdef _WIN32
-    // update time
-    HANDLE hFile;
-    //OFSTRUCT of;
-    FILETIME ft1, ft2;
-
-    hFile = CreateFile(path, 0, FILE_SHARE_READ,
-        NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hFile == (HANDLE)ERROR_INVALID_HANDLE)
-        return 0;
-        
-    GetFileTime(hFile, NULL, NULL, &ft1);
-    FileTimeToLocalFileTime(&ft1, &ft2);
-    FileTimeToSystemTime(&ft2, wintime);
-    CloseHandle(hFile);
-    return 1;
-}
-#else
-    // update time
-    HANDLE hFile;
-    OFSTRUCT of;
-    FILETIME ft1, ft2;
-
-    hFile = CreateFile(path, 0, FILE_SHARE_READ,
-        NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hFile == (HANDLE)ERROR_INVALID_HANDLE)
-        return 0;
-        
-    GetFileTime(hFile, NULL, NULL, &ft1);
-    FileTimeToLocalFileTime(&ft1, &ft2);
-    FileTimeToSystemTime(&ft2, wintime);
-    CloseHandle(hFile);
-    return 1;
-}
-#endif
-*/
 
 source_data * Create_Source(void)
 {
@@ -458,8 +419,6 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
 
 void Update_Multiple_Sources(source_data *s[], int sn)
 {
-	/*DWORD threadid;
-	HANDLE thread;*/
 
     psources = s;
     psourcesn = sn;
@@ -467,19 +426,6 @@ void Update_Multiple_Sources(source_data *s[], int sn)
     abort_ping = 0;
     updating_sources = 1;
     ping_pos = 0;
-
-	/*thread = CreateThread (
-		NULL,				// pointer to security attributes
-		0,					// initial thread stack	size
-		Update_Multiple_Sources_Proc,		// pointer to thread function
-		NULL,			// argument	for	new	thread
-		CREATE_SUSPENDED,	// creation	flags
-		&threadid			// pointer to receive thread ID
-	);
-	if (!thread)
-		return;
-	SetThreadPriority(thread, THREAD_PRIORITY_HIGHEST);
-	ResumeThread(thread);*/
 
     Sys_CreateThread(Update_Multiple_Sources_Proc, NULL);
 
