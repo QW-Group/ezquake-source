@@ -14,7 +14,7 @@ void Help_Describe_f(void)
 
     if (Cmd_Argc() != 2)
     {
-        Com_Printf("usage:  whatis <name>\n");
+        Com_Printf("usage: /describe <command|variable>\ne.g. /describe ignore\n");
         return;
     }
 

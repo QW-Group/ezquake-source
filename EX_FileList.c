@@ -48,6 +48,7 @@ extern void cvar_toggle (cvar_t *var);
              cvar_t *        show_status)
 {
     Sys_getcwd(fl->current_dir, _MAX_PATH);
+	FL_SetCurrentDir(fl, "./ezquake/help/manual");
     fl->error = false;
     fl->need_refresh = true;
     fl->num_entries = 0;
