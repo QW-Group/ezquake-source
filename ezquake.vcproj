@@ -197,6 +197,8 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories=""
+				IgnoreAllDefaultLibraries="FALSE"
+				IgnoreDefaultLibraryNames="libcmt"
 				ProgramDatabaseFile=".\Release-gl/ezquake-gl.pdb"
 				SubSystem="2"
 				SetChecksum="TRUE"/>
