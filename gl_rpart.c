@@ -161,9 +161,9 @@ static particle_type_t particle_types[num_particletypes];
 static int particle_type_index[num_particletypes];	
 static particle_texture_t particle_textures[num_particletextures];
 
-static int r_numparticles;		
+int r_numparticles;		
 static vec3_t zerodir = {22, 22, 22};
-static int particle_count = 0;
+int particle_count = 0;
 static float particle_time;		
 static vec3_t trail_stop;
 
@@ -284,16 +284,27 @@ do {																													\
 void QMB_InitParticles (void) {
 	int	i, count = 0, particlefont;
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
-	Cvar_Register (&gl_clipparticles);
-	Cvar_Register (&gl_bounceparticles);
+	if (!qmb_initialized) {
+		Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
+		Cvar_Register (&gl_clipparticles);
+		Cvar_Register (&gl_bounceparticles);
+		Cvar_ResetCurrentGroup();
 
-	Cvar_ResetCurrentGroup();
+		if ((i = COM_CheckParm ("-particles")) && i + 1 < com_argc)	{
+			r_numparticles = (int) (Q_atoi(com_argv[i + 1]));
+			r_numparticles = bound(ABSOLUTE_MIN_PARTICLES, r_numparticles, ABSOLUTE_MAX_PARTICLES);
+		} else {
+			r_numparticles = DEFAULT_NUM_PARTICLES;
+		}
+		particles = Hunk_AllocName(r_numparticles * sizeof(particle_t), "qmb:particles");
+	}
+	else {
+		QMB_ClearParticles ();
+	}
 
 	if (!(particlefont = GL_LoadTextureImage ("textures/particles/particlefont", "qmb:particlefont", 256, 256, TEX_ALPHA | TEX_COMPLAIN))) 
 		return;		
 
-	
 	ADD_PARTICLE_TEXTURE(ptex_none, 0, 0, 1, 0, 0, 0, 0);	
 	ADD_PARTICLE_TEXTURE(ptex_blood1, particlefont, 0, 1, 0, 0, 64, 64);
 	ADD_PARTICLE_TEXTURE(ptex_blood2, particlefont, 0, 1, 64, 0, 128, 64);
@@ -317,15 +328,6 @@ void QMB_InitParticles (void) {
 		return;
 	ADD_PARTICLE_TEXTURE(ptex_spark, spark_texture, 0, 1, 0, 0, 32, 32);
 
-	if ((i = COM_CheckParm ("-particles")) && i + 1 < com_argc)	{
-		r_numparticles = (int) (Q_atoi(com_argv[i + 1]));
-		r_numparticles = bound(ABSOLUTE_MIN_PARTICLES, r_numparticles, ABSOLUTE_MAX_PARTICLES);
-	} else {
-		r_numparticles = DEFAULT_NUM_PARTICLES;
-	}
-	particles = Hunk_AllocName(r_numparticles * sizeof(particle_t), "qmb:particles");
-
-	
 	ADD_PARTICLE_TYPE(p_spark, pd_spark, GL_SRC_ALPHA, GL_ONE, ptex_none, 255, -32, 0, pm_bounce, 1.3);
 	ADD_PARTICLE_TYPE(p_sparkray, pd_sparkray, GL_SRC_ALPHA, GL_ONE, ptex_none, 255, -0, 0, pm_nophysics, 0);
 	ADD_PARTICLE_TYPE(p_gunblast, pd_spark, GL_SRC_ALPHA, GL_ONE, ptex_none, 255, -16, 0, pm_bounce, 1.3);

@@ -939,6 +939,9 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 
 				R_DrawAliasModel (currententity);
 				break;
+			case mod_alias3:
+				R_DrawAlias3Model (currententity);
+				break;
 			case mod_brush:
 				R_DrawBrushModel (currententity);
 				break;
@@ -1001,7 +1004,19 @@ void R_DrawViewModel (void) {
 
 	// hack the depth range to prevent view model from poking into walls
 	glDepthRange (gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
-	R_DrawAliasModel (currententity);
+	//R_DrawAliasModel (currententity);
+	switch(currententity->model->type)
+	{
+	case mod_alias:
+		R_DrawAliasModel (currententity);
+		break;
+	case mod_alias3:
+		R_DrawAlias3Model (currententity);
+		break;
+	default:
+		Com_Printf("Not drawing view model of type %i\n", currententity->model->type);
+		break;
+	} 
 	glDepthRange (gldepthmin, gldepthmax);
 }
 

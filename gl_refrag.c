@@ -166,6 +166,7 @@ void R_StoreEfrags (efrag_t **ppefrag) {
 
 		switch (model->type) {
 		case mod_alias:
+		case mod_alias3:
 		case mod_brush:
 		case mod_sprite:
 			if (pent->visframe != r_framecount) {

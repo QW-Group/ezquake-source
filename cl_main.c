@@ -929,7 +929,7 @@ void CL_Init (void) {
 	W_LoadWadFile ("gfx.wad");
 
 	Modules_Init();
-	FChecks_Init();				
+	FChecks_Init();	
 
 	host_basepal = (byte *) FS_LoadHunkFile ("gfx/palette.lmp");
 	if (!host_basepal)
