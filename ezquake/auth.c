@@ -131,7 +131,7 @@ static void Auth_CheckFServerResponse (char *s, int flags, int offset) {
 
 
 static void Auth_UnauthenticateClient(int slot) {
-	if (!strlen(Info_ValueForKey(cl.players[slot].userinfo, "*client")) && auth_validateclients.value != 2)
+	if (strncmp(Info_ValueForKey(cl.players[slot].userinfo, "*client"), "ezQuake", 7) && auth_validateclients.value != 2)
 		return;
 
 	cl.players[slot].validated = false;
@@ -141,7 +141,7 @@ static void Auth_UnauthenticateClient(int slot) {
 }
 
 static void Auth_AuthenticateClient(int slot) {
-	if (!strlen(Info_ValueForKey(cl.players[slot].userinfo, "*client")) && auth_validateclients.value != 2)
+	if (strncmp(Info_ValueForKey(cl.players[slot].userinfo, "*client"), "ezQuake", 7) && auth_validateclients.value != 2)
 		return;
 
 	cl.players[slot].validated = true;
@@ -174,7 +174,7 @@ static void Auth_Verify_Clients_f(void) {
 	authClientsCount = unauthClientsCount = otherClientsCount = 0;
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		if (cl.players[i].name[0] && !cl.players[i].spectator && (cls.demoplayback || i != cl.playernum)) {
-			if (auth_validateclients.value != 2 && !strlen(Info_ValueForKey(cl.players[i].userinfo, "*ezQuake"))) {
+			if (auth_validateclients.value != 2 && strncmp(Info_ValueForKey(cl.players[i].userinfo, "*client"), "ezQuake", 7)) {
 				otherClients[otherClientsCount++] = i;
 			} else {
 				if (cl.players[i].validated)
