@@ -1265,6 +1265,7 @@ void CL_ParsePrint (void) {
 	char *s, str[2048], *p, check_flood, dest[2048], *c, *d, *f, e, b; 
 	int len, level, flags = 0, offset = 0;
 	extern cvar_t cl_chatsound, msg_filter;
+	extern cvar_t ignore_qizmo_spec;
 
     int client;
     int type; 
@@ -1343,6 +1344,9 @@ void CL_ParsePrint (void) {
 		Auth_CheckResponse (s, flags, offset);						
 
 		if (Ignore_Message(s, flags, offset))						
+			return;
+
+		if ( flags == 0 && ignore_qizmo_spec.value && strlen(s) > 0 && s[0] == '[' && strstr(s, "]: ") ) 
 			return;
 
 		if (flags == 2 && !TP_FilterMessage(s + offset))
