@@ -77,6 +77,9 @@ cvar_t	r_drawentities = {"r_drawentities", "1"};
 cvar_t	r_lerpframes = {"r_lerpframes", "1"};
 cvar_t	r_lerpmuzzlehack = {"r_lerpmuzzlehack", "1"};
 cvar_t	r_drawflame = {"r_drawflame", "1"};
+cvar_t	r_drawflat = {"r_drawflat", "0"};
+cvar_t	r_wallcolor = {"r_wallcolor", "192 192 192"};
+cvar_t	r_floorcolor = {"r_floorcolor", "128 128 128"};
 cvar_t	r_speeds = {"r_speeds", "0"};
 cvar_t	r_fullbright = {"r_fullbright", "0"};
 cvar_t	r_lightmap = {"r_lightmap", "0"};
@@ -1331,6 +1334,9 @@ void R_Init (void) {
 	Cvar_Register (&gl_fogsky);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
+	Cvar_Register (&r_drawflat);
+	Cvar_Register (&r_floorcolor);
+	Cvar_Register (&r_wallcolor);
 	Cvar_Register (&r_drawentities);
 	Cvar_Register (&r_lerpframes);
 	Cvar_Register (&r_lerpmuzzlehack);
