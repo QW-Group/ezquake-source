@@ -23,6 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "utils.h"
 
+// START shaman RFE 1020608
+#include "teamplay.h"
+// END shaman RFE 1020608
+
 // START shaman RFE 1022504
 #include "pmove.h"
 // END shaman RFE 1022504
@@ -231,6 +235,9 @@ void EmitWaterPolys (msurface_t *fa) {
 		}
 		else if (strstr (fa->texinfo->texture->name, "tele")) {
 			col = StringToRGB(r_telecolor.string);
+		}
+		else {
+			col = (byte *) &fa->texinfo->texture->colour;
 		}
 		glColor3ubv (col);
 
@@ -475,8 +482,23 @@ int R_SetSky(char *skyname) {
 	int i, error = 0;
 	byte *data[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
 	extern int image_width, image_height, gl_max_size_default;
-
 	
+	// START shaman RFE 1020608
+	char *mapname, *groupname;
+	
+	mapname = TP_MapName();
+	groupname = TP_GetSkyGroupName(mapname, NULL);
+	if (groupname) {
+		skyname = groupname;
+	}
+
+	if (strlen(skyname) == 0) {
+		r_skyboxloaded = false;
+		error = 1;
+		goto cleanup;		
+	}
+	// END shaman RFE 1020608
+
 	for (i = 0; i < 6; i++) {
 		if (
 				!(data[i] = GL_LoadImagePixels (va("env/%s%s", skyname, skybox_ext[i]), 0, 0, 0)) &&

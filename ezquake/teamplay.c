@@ -1885,6 +1885,16 @@ char *TP_MapName(void) {
 	return mapname.string;
 }
 
+// START shaman RFE 1020608
+#ifdef GLQUAKE
+char *MT_GetSkyGroupName(char *mapname, qboolean *system);
+
+char *TP_GetSkyGroupName(char *mapname, qboolean *system) {
+	return MT_GetSkyGroupName(mapname, system);
+}
+#endif
+// END shaman RFE 1020608
+
 char *MT_GetMapGroupName(char *mapname, qboolean *system);
 
 char *TP_GetMapGroupName(char *mapname, qboolean *system) {

@@ -62,6 +62,12 @@ int	TP_CountPlayers(void);
 // teamcolor & enemycolor
 extern int cl_teamtopcolor, cl_teambottomcolor, cl_enemytopcolor, cl_enemybottomcolor;
 
+// START shaman RFE 1020608
+#ifdef GLQUAKE
+char *TP_GetSkyGroupName(char *mapname, qboolean *system);
+#endif
+// END shaman RFE 1020608
+
 char *TP_GetMapGroupName(char *mapname, qboolean *system);
 char *TP_ParseMacroString (char *s);
 char *TP_ParseFunChars (char *s, qboolean chat);

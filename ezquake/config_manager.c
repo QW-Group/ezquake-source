@@ -31,6 +31,12 @@ char *Key_KeynumToString (int keynum, char *buffer);
 char *Key_KeynumToString (int keynum);
 #endif
 
+// START shaman RFE 1020608
+#ifdef GLQUAKE
+void DumpSkyGroups(FILE *f);
+#endif
+// END shaman RFE 1020608
+
 qboolean Key_IsLeftRightSameBind(int b);
 void DumpMapGroups(FILE *f);
 void TP_DumpTriggers(FILE *);
@@ -414,10 +420,14 @@ static void DumpTeamplay(FILE *f) {
 void DumpMisc(FILE *f) {
 
 	DumpMapGroups(f);
-
 	fprintf(f, "\n");
 
-
+// START shaman RFE 1020608
+#ifdef GLQUAKE
+	DumpSkyGroups(f);
+	fprintf(f, "\n");
+#endif
+// END shaman RFE 1020608
 
 	if (cl.teamfortress) {
 		if (!Q_strcasecmp(Info_ValueForKey (cls.userinfo, "ec"), "on") || 
@@ -513,6 +523,11 @@ static void ResetTeamplayCommands(void) {
 
 static void ResetMiscCommands(void) {
 	Cbuf_AddText("mapgroup clear\n");
+// START shaman RFE 1020608
+#ifdef GLQUAKE
+	Cbuf_AddText("skygroup clear\n");
+#endif
+// END shaman RFE 1020608
 
 	Info_RemoveKey(cls.userinfo, "ec");
 	Info_RemoveKey(cls.userinfo, "exec_class");

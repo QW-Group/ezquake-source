@@ -773,6 +773,8 @@ void ED_LoadFromFile (char *data) {
 
 //TEI: loading entitys from map, at clientside,
 // will be usefull to locate more eyecandy and cameras
+extern void CL_GenStatic (vec3_t origin);
+
 void CL_ED_LoadFromFile (char *data) {	
 	edict_t *ent;
 	static edict_t entstatic;
@@ -805,9 +807,9 @@ void CL_ED_LoadFromFile (char *data) {
 
 
 void CL_PR_LoadProgs (void) {
-	int i, lowmark;
+	int i; /*, lowmark;
 	char num[32];
-	dfunction_t *f;
+	dfunction_t *f;*/
 
 	// flush the non-C variable lookup cache
 

@@ -306,9 +306,9 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_extratrails);
 	Cvar_Register (&amf_detpacklights);
 	Cvar_Register (&amf_buildingsparks);
-	Cvar_Register (&amf_lightning);
+	Cvar_Register (&amf_lightning);// START shaman RFE 1022310
 	Cvar_Register (&amf_lightning_size);
-
+// END shaman RFE 1022310
 	Cvar_Register (&amf_lightning_sparks);
 	Cvar_Register (&amf_showstats);
 	Cvar_Register (&amf_motiontrails);
