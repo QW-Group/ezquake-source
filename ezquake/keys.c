@@ -371,6 +371,14 @@ CompleteCommandNew (void)
 		    || isspace (key_lines[edit_line][key_linepos - 1]))
 			return;
 
+		           if (!(isspace (key_lines[edit_line][key_linepos])))
+			   {
+			   	memmove ( key_lines[edit_line] + key_linepos + 1,
+			   	key_lines[edit_line] + key_linepos ,
+			   	(MAXCMDLINE - key_linepos ));
+			   	memcpy (key_lines[edit_line] + key_linepos, " ", 1);
+			   }
+
 		for (start = key_linepos - 1;
 		     start >= 1 && !isspace (key_lines[edit_line][start]);
 		     start--)
