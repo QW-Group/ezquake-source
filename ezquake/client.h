@@ -626,7 +626,7 @@ int nPolyblendExit, nGlClearExit;
 int nLerpframesExit;
 int nWaterwarp;
 int nContentblend;
-int nQuadshift, nPentshift, nRingshift, nDamageshift, nSuitshift;
+float nQuadshift, nPentshift, nRingshift, nDamageshift, nSuitshift;
 int nBonusflash;
 int bExitmultiview;
 int nPlayernum;
