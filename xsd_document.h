@@ -3,6 +3,9 @@
 
 #include "xsd.h"
 
+#ifndef _WIN32
+#define boolean qboolean
+#endif
 
 typedef enum
 {
@@ -289,5 +292,8 @@ xml_t * XSD_Document_LoadFromHandle(FILE *f);
 // read document content from file, return NULL if error
 xml_document_t * XSD_Document_Load(char *filename);
 
+#ifndef _WIN32
+#undef boolean
+#endif
 
 #endif // __XSD_DOCUMENT_H__

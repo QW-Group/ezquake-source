@@ -42,6 +42,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define stringify(m) { #m, m }
 
+// kazik -->
+int ctrlDown = 0;
+int shiftDown = 0;
+int altDown = 0;
+// kazik <--
+
 unsigned short d_8to16table[256];
 
 static byte		*vid_surfcache;
@@ -354,7 +360,18 @@ static byte scantokey[128] = {
 
 void keyhandler(int scancode, int state) {
 	byte *scan = cl_keypad.value ? scantokey_kp : scantokey;
-	Key_Event(scan[scancode & 0x7f], state == KEY_EVENTPRESS);
+	int sc = scancode & 0x7f;
+
+	Key_Event(scan[sc], state == KEY_EVENTPRESS);
+
+	// kazik -->
+	if (sc == SCANCODE_LEFTCONTROL || sc == SCANCODE_RIGHTCONTROL)
+		ctrlDown = (state == KEY_EVENTPRESS);
+	if (sc == SCANCODE_LEFTSHIFT || sc == SCANCODE_RIGHTSHIFT)
+		shiftDown = (state == KEY_EVENTPRESS);
+	if (sc == SCANCODE_LEFTALT || sc == SCANCODE_RIGHTALT)
+		altDown = (state == KEY_EVENTPRESS);
+	// kazik <--
 }
 
 void VID_Shutdown(void) {
@@ -779,6 +796,26 @@ char *VID_ModeInfo (int modenum) {
 	} else {
 		return (badmodestr);
 	}
+}
+
+// kazik -->
+int isAltDown(void)
+{
+//    return keyboard_keypressed(SCANCODE_LEFTALT)  ||
+//           keyboard_keypressed(SCANCODE_RIGHTALT);
+    return altDown;
+}
+int isCtrlDown(void)
+{
+//    return keyboard_keypressed(SCANCODE_LEFTCONTROL)  ||
+//           keyboard_keypressed(SCANCODE_RIGHTCONTROL);
+    return ctrlDown;
+}
+int isShiftDown(void)
+{
+//    return keyboard_keypressed(SCANCODE_LEFTSHIFT)  ||
+//           keyboard_keypressed(SCANCODE_RIGHTSHIFT);
+    return shiftDown;
 }
 
 void VID_LockBuffer (void) {}

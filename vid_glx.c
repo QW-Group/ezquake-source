@@ -57,6 +57,12 @@ extern void IN_Keycode_Print_f( XKeyEvent *ev, qboolean ext, qboolean down, int 
 #include <pthread.h>
 #endif
 
+// kazik -->
+int ctrlDown = 0;
+int shiftDown = 0;
+int altDown = 0;
+// kazik <--
+
 static Display *dpy = NULL;
 static Window win;
 static GLXContext ctx = NULL;
@@ -330,10 +336,7 @@ qboolean OnChange_windowed_mouse(cvar_t *var, char *value) {
 
 static void GetEvent(void) {
 	XEvent event;
-
-#ifdef WITH_KEYMAP
 	int    key;
-#endif // WITH_KEYMAP 
 
 	if (!dpy)
 		return;
@@ -343,16 +346,19 @@ static void GetEvent(void) {
 	switch (event.type) {
 	case KeyPress:
 	case KeyRelease:
-#ifdef WITH_KEYMAP
 		key = XLateKey(&event.xkey);
+		if (key == K_CTRL)  ctrlDown  = event.type == KeyPress;
+		if (key == K_SHIFT) shiftDown = event.type == KeyPress;
+		if (key == K_ALT)   altDown   = event.type == KeyPress;
+
+#ifdef WITH_KEYMAP
 		// if set, print the current Key information
 		if (cl_showkeycodes.value > 0) {
 			IN_Keycode_Print_f (&event.xkey, false, event.type == KeyPress, key);
 		}
+#endif // WITH_KEYMAP
+
 		Key_Event(key, event.type == KeyPress);
-#else // WITH_KEYMAP
-		Key_Event(XLateKey(&event.xkey), event.type == KeyPress);
-#endif // WITH_KEYMAP else
 		break;
 
 	case MotionNotify:
@@ -1031,6 +1037,21 @@ void IN_MouseMove (usercmd_t *cmd) {
 void IN_Move (usercmd_t *cmd) {
 	IN_MouseMove(cmd);
 }
+
+// kazik -->
+int isAltDown(void)
+{
+    return altDown;
+}
+int isCtrlDown(void)
+{
+    return ctrlDown;
+}
+int isShiftDown(void)
+{
+    return shiftDown;
+}
+// kazik <--
 
 #ifdef WITH_EVDEV
 /************************************* EVDEV *************************************/

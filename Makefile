@@ -21,13 +21,13 @@ STATICLIB_DIR= /usr/X11R6/lib
 
 #BASE CFLAGS
 XMMS_CFLAGS=-DWITH_XMMS `glib-config --cflags`
-BASE_CFLAGS=-DWITH_ZLIB -DWITH_PNG -I$(HEADER_DIR) -funsigned-char -D__linux__ -Did386 $(XMMS_CFLAGS)
+BASE_CFLAGS=-DWITH_ZLIB -DWITH_PNG -I$(HEADER_DIR) -funsigned-char -D__linux__ -Did386 $(XMMS_CFLAGS) -pipe
 RELEASE_CFLAGS=$(BASE_CFLAGS) -DNDEBUG -march=pentium2 -O -ffast-math -funroll-loops -fomit-frame-pointer \
 	-fexpensive-optimizations #-falign-loops=2 -falign-jumps=2 -falign-functions=2
 DEBUG_CFLAGS=$(BASE_CFLAGS) -g -Wall -Wimplicit
 
 #BASE LDFLAGS
-LDFLAGS=-lm -ldl `glib-config --libs`
+LDFLAGS=-lm -ldl `glib-config --libs` -lexpat
 
 
 #FOR SVGALIB AND X11 BUILDS
@@ -198,6 +198,8 @@ QWCL_OBJS = \
     $(BUILDDIR)/build/auth.o \
     $(BUILDDIR)/build/Ctrl.o \
     $(BUILDDIR)/build/Ctrl_EditBox.o \
+    $(BUILDDIR)/build/Ctrl_Tab.o \
+    $(BUILDDIR)/build/Ctrl_PageViewer.o \
     $(BUILDDIR)/build/EX_FunNames.o \
     $(BUILDDIR)/build/EX_browser.o \
     $(BUILDDIR)/build/EX_browser_net.o \
@@ -211,7 +213,18 @@ QWCL_OBJS = \
     $(BUILDDIR)/build/config_manager.o \
     $(BUILDDIR)/build/mp3_player.o \
     $(BUILDDIR)/build/fmod.o \
-    $(BUILDDIR)/build/localtime_linux.o
+    $(BUILDDIR)/build/localtime_linux.o \
+ \
+    $(BUILDDIR)/build/xml_test.o \
+    $(BUILDDIR)/build/xsd.o \
+    $(BUILDDIR)/build/xsd_command.o \
+    $(BUILDDIR)/build/xsd_document.o \
+    $(BUILDDIR)/build/xsd_variable.o \
+    $(BUILDDIR)/build/document_rendering.o \
+    $(BUILDDIR)/build/help.o \
+    $(BUILDDIR)/build/help_browser.o \
+    $(BUILDDIR)/build/help_files.o \
+    $(BUILDDIR)/build/EX_FileList.o
     
 QWCL_SVGA_AS_OBJS = \
     $(BUILDDIR)/build/d_copy.o
@@ -516,6 +529,12 @@ $(BUILDDIR)/build/Ctrl.o :           $(SOURCE_DIR)/Ctrl.c
 $(BUILDDIR)/build/Ctrl_EditBox.o :   $(SOURCE_DIR)/Ctrl_EditBox.c
 	$(DO_CC)
 
+$(BUILDDIR)/build/Ctrl_Tab.o :       $(SOURCE_DIR)/Ctrl_Tab.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/Ctrl_PageViewer.o :   $(SOURCE_DIR)/Ctrl_PageViewer.c
+	$(DO_CC)
+
 $(BUILDDIR)/build/EX_FunNames.o :    $(SOURCE_DIR)/EX_FunNames.c
 	$(DO_CC)
 
@@ -568,6 +587,36 @@ $(BUILDDIR)/build/wad.o :            $(SOURCE_DIR)/wad.c
 	$(DO_CC)
                                                                       
 $(BUILDDIR)/build/zone.o :           $(SOURCE_DIR)/zone.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/xml_test.o :		$(SOURCE_DIR)/xml_test.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/xsd.o :		$(SOURCE_DIR)/xsd.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/xsd_command.o :	$(SOURCE_DIR)/xsd_command.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/xsd_document.o :	$(SOURCE_DIR)/xsd_document.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/xsd_variable.o :	$(SOURCE_DIR)/xsd_variable.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/document_rendering.o : $(SOURCE_DIR)/document_rendering.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/help.o :		$(SOURCE_DIR)/help.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/help_browser.o :	$(SOURCE_DIR)/help_browser.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/help_files.o :	$(SOURCE_DIR)/help_files.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/EX_FileList.o :	$(SOURCE_DIR)/EX_FileList.c
 	$(DO_CC)
 	
 #ASM FILES                                                                                                                                    
@@ -728,6 +777,8 @@ GLQWCL_OBJS = \
     $(BUILDDIR)/build-gl/auth.o \
     $(BUILDDIR)/build-gl/Ctrl.o \
     $(BUILDDIR)/build-gl/Ctrl_EditBox.o \
+    $(BUILDDIR)/build-gl/Ctrl_Tab.o \
+    $(BUILDDIR)/build-gl/Ctrl_PageViewer.o \
     $(BUILDDIR)/build-gl/EX_FunNames.o \
     $(BUILDDIR)/build-gl/EX_browser.o \
     $(BUILDDIR)/build-gl/EX_browser_net.o \
@@ -750,7 +801,18 @@ GLQWCL_OBJS = \
     $(BUILDDIR)/build-gl/vx_motiontrail.o \
     $(BUILDDIR)/build-gl/vx_stuff.o \
     $(BUILDDIR)/build-gl/vx_tracker.o \
-    $(BUILDDIR)/build-gl/vx_vertexlights.o
+    $(BUILDDIR)/build-gl/vx_vertexlights.o \
+ \
+    $(BUILDDIR)/build-gl/xml_test.o \
+    $(BUILDDIR)/build-gl/xsd.o \
+    $(BUILDDIR)/build-gl/xsd_command.o \
+    $(BUILDDIR)/build-gl/xsd_document.o \
+    $(BUILDDIR)/build-gl/xsd_variable.o \
+    $(BUILDDIR)/build-gl/document_rendering.o \
+    $(BUILDDIR)/build-gl/help.o \
+    $(BUILDDIR)/build-gl/help_browser.o \
+    $(BUILDDIR)/build-gl/help_files.o \
+    $(BUILDDIR)/build-gl/EX_FileList.o
 
 GLQWCL_AS_OBJS = \
     $(BUILDDIR)/build-gl/cl_math.o \
@@ -986,6 +1048,12 @@ $(BUILDDIR)/build-gl/Ctrl.o :           $(SOURCE_DIR)/Ctrl.c
 $(BUILDDIR)/build-gl/Ctrl_EditBox.o :   $(SOURCE_DIR)/Ctrl_EditBox.c
 	$(DO_GL_CC)
 
+$(BUILDDIR)/build-gl/Ctrl_Tab.o :       $(SOURCE_DIR)/Ctrl_Tab.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/Ctrl_PageViewer.o :   $(SOURCE_DIR)/Ctrl_PageViewer.c
+	$(DO_GL_CC)
+
 $(BUILDDIR)/build-gl/EX_browser.o :     $(SOURCE_DIR)/EX_browser.c
 	$(DO_GL_CC)
 
@@ -1065,6 +1133,36 @@ $(BUILDDIR)/build-gl/zone.o :           $(SOURCE_DIR)/zone.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-gl/localtime_linux.o : $(SOURCE_DIR)/localtime_linux.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/xml_test.o :		$(SOURCE_DIR)/xml_test.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/xsd.o :		$(SOURCE_DIR)/xsd.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/xsd_command.o :	$(SOURCE_DIR)/xsd_command.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/xsd_document.o :	$(SOURCE_DIR)/xsd_document.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/xsd_variable.o :	$(SOURCE_DIR)/xsd_variable.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/document_rendering.o : $(SOURCE_DIR)/document_rendering.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/help.o :		$(SOURCE_DIR)/help.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/help_browser.o :	$(SOURCE_DIR)/help_browser.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/help_files.o :	$(SOURCE_DIR)/help_files.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/EX_FileList.o :	$(SOURCE_DIR)/EX_FileList.c
 	$(DO_GL_CC)
 
 #ASM FILES
