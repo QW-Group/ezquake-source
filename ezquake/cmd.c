@@ -458,7 +458,7 @@ void Cmd_EditAlias_f (void){
 	extern int		edit_line;
 	cmd_alias_t	*a;
 	char *s, final_string[MAXCMDLINE -1];
-	int c, comp_len;
+	int c;
 	
 
 	c = Cmd_Argc();
@@ -468,13 +468,12 @@ void Cmd_EditAlias_f (void){
 		return;
 	}
 	
-	comp_len = strlen(Cmd_Argv(1));
 	a = Cmd_FindAlias(Cmd_Argv(1));
-	if ( a == '\0' ) {
-			s="";
+	if ( a == NULL ) {
+		s = CopyString("");
 	}
 	else {
-	s = CopyString(a->value);
+		s = CopyString(a->value);
 	}
 	
 	Q_snprintfz(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
