@@ -1392,7 +1392,7 @@ void CL_ProcessServerInfo (void) {
 	cl.bunnyspeedcap = Q_atof(Info_ValueForKey(cl.serverinfo, "pm_bunnyspeedcap"));
 	movevars.slidefix = Q_atoi(Info_ValueForKey(cl.serverinfo, "pm_slidefix"));
 	movevars.ktjump = *(p = Info_ValueForKey(cl.serverinfo, "pm_ktjump")) ?
-		Q_atof(p) : cl.teamfortress ? 0 : 0.5;
+		Q_atof(p) : cl.teamfortress ? 0 : 1;
 
 	// deathmatch and teamplay
 	cl.deathmatch = atoi(Info_ValueForKey(cl.serverinfo, "deathmatch"));
