@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sound.h"
 #include "utils.h"
 
+#include "hud.h"
+#include "hud_common.h"
+
 //VULT
 #include "vx_stuff.h"
 #include "vx_vertexlights.h"
@@ -83,6 +86,7 @@ cvar_t	r_wateralpha = {"gl_turbalpha", "1"};
 cvar_t	r_dynamic = {"r_dynamic", "1"};
 cvar_t	r_novis = {"r_novis", "0"};
 cvar_t	r_netgraph = {"r_netgraph", "0"};
+cvar_t	r_netstats = {"r_netstats", "0"};
 cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t  r_fastturb = {"r_fastturb", "0"};
@@ -1332,6 +1336,7 @@ void R_Init (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&r_speeds);
 	Cvar_Register (&r_netgraph);
+	Cvar_Register (&r_netstats);
 
 	Cvar_Register(&cl_multiview);
 	Cvar_Register(&cl_mvdisplayhud);
@@ -1340,6 +1345,21 @@ void R_Init (void) {
 	Cvar_Register(&cl_mvinsethud);
 
 	Cvar_ResetCurrentGroup();
+
+    hud_netgraph = HUD_Register("netgraph", /*"r_netgraph"*/ NULL, "Shows your network conditions in graph-form. With netgraph you can monitor your latency (ping), packet loss and network errors.",
+        HUD_PLUSMINUS | HUD_ON_SCORES, ca_onserver, 0, SCR_HUD_Netgraph,
+        "0", "top", "left", "bottom", "0", "0", "0",
+        "swap_x",       "0",
+        "swap_y",       "0",
+        "inframes",     "0",
+        "scale",        "256",
+        "ploss",        "1",
+        "width",        "256",
+        "height",       "32",
+        "lostscale",    "1",
+        "full",         "0",
+        "alpha",        "1",
+        NULL);
 
 	// this minigl driver seems to slow us down if the particles are drawn WITHOUT Z buffer bits 
 	if (!strcmp(gl_vendor, "METABYTE/WICKED3D")) 

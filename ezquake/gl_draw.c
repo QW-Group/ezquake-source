@@ -55,7 +55,6 @@ static int		char_texture;
 
 static mpic_t	conback;
 
-
 #define		NUMCROSSHAIRS 6
 int			crosshairtextures[NUMCROSSHAIRS];
 int			crosshairtexture_txt;
@@ -962,6 +961,11 @@ void Draw_SubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int h
 	glEnd ();
 }
 
+void Draw_TransSubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height)
+{
+    Draw_SubPic(x, y, pic, srcx, srcy, width, height);
+}
+
 void Draw_TransPic (int x, int y, mpic_t *pic) {
 	if (x < 0 || (unsigned) (x + pic->width) > vid.width || y < 0 || (unsigned) (y + pic->height) > vid.height)
 		Sys_Error ("Draw_TransPic: bad coordinates");
@@ -1068,7 +1072,219 @@ void Draw_Fill (int x, int y, int w, int h, int c) {
 	Draw_AlphaFill(x, y, w, h, c, 1);
 }
 
+// HUD -> hexum
+// kazik -->
+//
+// SCALE versions of some functions
+//
+
+void Draw_SCharacter (int x, int y, int num, float scale)
+{
+    int             row, col;
+    float           frow, fcol, size;
+
+    if (num == 32)
+        return;     // space
+
+    num &= 255;
+    
+    if (y <= -8 * scale)
+        return;         // totally off screen
+
+    row = num>>4;
+    col = num&15;
+
+    frow = row*0.0625;
+    fcol = col*0.0625;
+    size = 0.0625;
+
+    GL_Bind (char_texture);
+
+    glBegin (GL_QUADS);
+    glTexCoord2f (fcol, frow);
+    glVertex2f (x, y);
+    glTexCoord2f (fcol + size, frow);
+    glVertex2f (x+scale*8, y);
+    glTexCoord2f (fcol + size, frow + size);
+    glVertex2f (x+scale*8, y+scale*8);
+    glTexCoord2f (fcol, frow + size);
+    glVertex2f (x, y+scale*8);
+    glEnd ();
+}
+
+void Draw_SString (int x, int y, char *str, float scale)
+{
+    while (*str)
+    {
+        Draw_SCharacter (x, y, *str, scale);
+        str++;
+        x += 8 * scale;
+    }
+}
+
+void Draw_SAlt_String (int x, int y, char *str, float scale)
+{
+    while (*str)
+    {
+        Draw_SCharacter (x, y, (*str) | 0x80, scale);
+        str++;
+        x += 8 * scale;
+    }
+}
+
+void Draw_SPic (int x, int y, mpic_t *gl, float scale)
+{
+//    glpic_t         *gl;
+
+    if (scrap_dirty)
+        Scrap_Upload ();
+
+//    gl = (glpic_t *)pic->data;
+
+    // kazik glColor4f (1,1,1,1);
+    GL_Bind (gl->texnum);
+    glBegin (GL_QUADS);
+    glTexCoord2f (gl->sl, gl->tl);
+    glVertex2f (x, y);
+    glTexCoord2f (gl->sh, gl->tl);
+    glVertex2f (x + scale*gl->width, y);
+    glTexCoord2f (gl->sh, gl->th);
+    glVertex2f (x + scale*gl->width, y + scale*gl->height);
+    glTexCoord2f (gl->sl, gl->th);
+    glVertex2f (x, y + scale*gl->height);
+    glEnd ();
+}
+
+void Draw_SAlphaPic (int x, int y, mpic_t *gl, float alpha, float scale)
+{
+//	glpic_t			*gl;
+
+	if (scrap_dirty)
+		Scrap_Upload ();
+//	gl = (glpic_t *)pic->data;
+	glDisable(GL_ALPHA_TEST);
+	glEnable (GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);              // kazik
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);    // kazik
+	glCullFace(GL_FRONT);
+	glColor4f (1,1,1,alpha);
+	GL_Bind (gl->texnum);
+	glBegin (GL_QUADS);
+    glTexCoord2f (gl->sl, gl->tl);
+    glVertex2f (x, y);
+    glTexCoord2f (gl->sh, gl->tl);
+    glVertex2f (x + scale*gl->width, y);
+    glTexCoord2f (gl->sh, gl->th);
+    glVertex2f (x + scale*gl->width, y + scale*gl->height);
+    glTexCoord2f (gl->sl, gl->th);
+    glVertex2f (x, y + scale*gl->height);
+	glEnd ();
+	glColor4f (1,1,1,1);
+	glEnable(GL_ALPHA_TEST);
+	glDisable (GL_BLEND);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);     // kazik
+}
+
+void Draw_SSubPic(int x, int y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale)
+{
+//    glpic_t         *gl;
+    float newsl, newtl, newsh, newth;
+    float oldglwidth, oldglheight;
+
+    if (scrap_dirty)
+        Scrap_Upload ();
+//    gl = (glpic_t *)pic->data;
+
+    oldglwidth = gl->sh - gl->sl;
+    oldglheight = gl->th - gl->tl;
+
+    newsl = gl->sl + (srcx*oldglwidth)/gl->width;
+    newsh = newsl + (width*oldglwidth)/gl->width;
+
+    newtl = gl->tl + (srcy*oldglheight)/gl->height;
+    newth = newtl + (height*oldglheight)/gl->height;
+    
+    // kazik glColor4f (1,1,1,1);
+    GL_Bind (gl->texnum);
+    glBegin (GL_QUADS);
+    glTexCoord2f (newsl, newtl);
+    glVertex2f (x, y);
+    glTexCoord2f (newsh, newtl);
+    glVertex2f (x+scale*width, y);
+    glTexCoord2f (newsh, newth);
+    glVertex2f (x+scale*width, y+scale*height);
+    glTexCoord2f (newsl, newth);
+    glVertex2f (x, y+scale*height);
+    glEnd ();
+}
+
+void Draw_STransPic (int x, int y, mpic_t *pic, float scale)
+{
+    if (x < 0 || (unsigned)(x + scale*pic->width) > vid.width || y < 0 ||
+         (unsigned)(y + scale*pic->height) > vid.height)
+    {
+        Sys_Error ("Draw_TransPic: bad coordinates");
+    }
+        
+    Draw_SPic (x, y, pic, scale);
+}
+
+void Draw_SFill (int x, int y, int w, int h, int c, float scale)
+{
+    glDisable (GL_TEXTURE_2D);
+    glColor3f (host_basepal[c*3]/255.0,
+        host_basepal[c*3+1]/255.0,
+        host_basepal[c*3+2]/255.0);
+
+    glBegin (GL_QUADS);
+
+    glVertex2f (x,y);
+    glVertex2f (x+w*scale, y);
+    glVertex2f (x+w*scale, y+h*scale);
+    glVertex2f (x, y+h*scale);
+
+    glEnd ();
+    glColor3f (1,1,1);
+    glEnable (GL_TEXTURE_2D);
+}
+
+// kazik <--
+
 //=============================================================================
+
+// HUD -> hexum
+// kazik -->
+/*
+================
+Draw_FadeBox
+
+================
+*/
+void Draw_FadeBox (int x, int y, int width, int height,
+                   float r, float g, float b, float a)
+{
+    if (a <= 0)
+        return;
+
+    glDisable(GL_ALPHA_TEST);
+    glEnable (GL_BLEND);
+    glDisable (GL_TEXTURE_2D);
+
+    glColor4f (r, g, b, a);
+
+    glBegin (GL_QUADS);
+    glVertex2f (x, y);
+    glVertex2f (x + width, y);
+    glVertex2f (x + width, y + height);
+    glVertex2f (x, y + height);
+    glEnd ();
+
+    glColor3f (1,1,1);
+    glEnable(GL_ALPHA_TEST);
+    glDisable (GL_BLEND);
+    glEnable (GL_TEXTURE_2D);
+}
+// kazik <--
 
 void Draw_FadeScreen (void) {
 	float alpha;

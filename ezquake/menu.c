@@ -44,11 +44,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifdef GLQUAKE
-enum {mode_fastest, mode_faithful, mode_eyecandy, mode_movies} fps_mode;
-fps_mode = mode_eyecandy;
+enum {mode_fastest, mode_faithful, mode_eyecandy, mode_movies} fps_mode = mode_eyecandy;
 #else
-enum {mode_fastest, mode_default} fps_mode;
-fps_mode = mode_default;
+enum {mode_fastest, mode_default} fps_mode = mode_default;
 #endif
 
 qboolean vid_windowedmouse = true;

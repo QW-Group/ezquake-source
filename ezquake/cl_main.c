@@ -47,6 +47,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <netdb.h>		
 #endif
 
+int         host_screenupdatecount; // kazik - HUD -> hexum
+
 cvar_t	rcon_password = {"rcon_password", ""};
 cvar_t	rcon_address = {"rcon_address", ""};
 cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "0"};
@@ -930,6 +932,7 @@ void CL_Init (void) {
 		return;
 
 	cls.state = ca_disconnected;
+	cls.min_fps = 999999; // HUD -> hexum
 
 	strcpy (cls.gamedirfile, com_gamedirfile);
 	strcpy (cls.gamedir, com_gamedir);
@@ -1061,6 +1064,26 @@ static double MinPhysFrameTime ()
 	fpscap = max(fpscap, 10);
 
 	return 1 / fpscap;
+}
+
+void CL_CalcFPS(void) { // HUD -> hexum
+	double t;
+	static double lastfps;
+	static double lastframetime;
+	extern cvar_t scr_newHud;
+
+	if (!scr_newHud.value) // so we dont stomp on show_fps 1 in original hud
+		return;
+
+	t = Sys_DoubleTime();
+	if ((t - lastframetime) >= 1.0) {
+		lastfps = (double)fps_count / (t - lastframetime);
+		fps_count = 0;
+		lastframetime = t;
+	}
+
+	cls.fps = lastfps;
+	if (lastfps > 10.0 && lastfps < cls.min_fps) cls.min_fps = lastfps;
 }
 
 //#fps:
@@ -1318,6 +1341,8 @@ void CL_Frame (double time) {
 	cls.framecount++;
 
 	fps_count++;
+
+	CL_CalcFPS(); // HUD -> hexum
 }
 
 //============================================================================

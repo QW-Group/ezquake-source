@@ -43,4 +43,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_model.h"
 #endif
 
+// HUD -> hexum
+extern  int         host_screenupdatecount; // kazik, incremented every screen update, never reset
+
 #endif //__QUAKEDEF_H_

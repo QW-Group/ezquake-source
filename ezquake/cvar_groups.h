@@ -67,6 +67,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define CVAR_GROUP_USERINFO					"Player Settings"
 #define CVAR_GROUP_CONFIG					"Config Management"
+#define CVAR_GROUP_HUD						"MQWCL HUD" // HUD -> hexum
 
 #else		// CVAR_GROUPS_DEFINE_VARIABLES
 
@@ -113,6 +114,7 @@ char *cvar_groups_list[] = {
 	CVAR_GROUP_SKIN,
 	CVAR_GROUP_COMMUNICATION,
 	CVAR_GROUP_USERINFO,
+	CVAR_GROUP_HUD,		// HUD -> hexum
 	NULL
 };
 

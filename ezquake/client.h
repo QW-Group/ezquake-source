@@ -115,16 +115,19 @@ typedef struct {
 
 typedef struct {
 	// generated on client side
-	usercmd_t	cmd;		// cmd that generated the frame
-	double		senttime;	// time cmd was sent off
+	usercmd_t		cmd;		// cmd that generated the frame
+	double			senttime;	// time cmd was sent off
 	int			delta_sequence;		// sequence number to delta from, -1 = full update
+	int			sentsize;   // kazik
 
 	// received from server
-	double		receivedtime;	// time message was received, or -1
-	player_state_t	playerstate[MAX_CLIENTS];	// message received that reflects performing
-							// the usercmd
+	double			receivedtime;	// time message was received, or -1
+	player_state_t		playerstate[MAX_CLIENTS];	// message received that reflects performing
+								// the usercmd
 	packet_entities_t	packet_entities;
-	qboolean	invalid;		// true if the packet_entities delta was invalid
+	qboolean		invalid;		// true if the packet_entities delta was invalid
+	int			receivedsize;   // kazik
+	int			seq_when_received;  // kazik
 } frame_t;
 
 typedef struct {
@@ -256,6 +259,9 @@ typedef struct {
 
 	byte		demomessage_data[MAX_MSGLEN * 2];
 	sizebuf_t	demomessage;
+
+	double         fps;  // HUD -> hexum
+	double         min_fps;
 
 	int			challenge;
 
@@ -505,6 +511,80 @@ extern float nextdemotime, olddemotime;
 #define NET_TIMINGS 256
 #define NET_TIMINGSMASK 255
 extern int	packet_latency[NET_TIMINGS];
+
+// HUD -> hexum
+// kazik -->
+// advanced network stats
+
+#define  NETWORK_STATS_SIZE  512    // must be power of 2
+#define  NETWORK_STATS_MASK  (NETWORK_STATS_SIZE-1)
+
+typedef  enum{packet_ok, packet_dropped, packet_choked,
+              packet_delta, packet_netlimit}  packet_status;
+
+typedef struct packet_info_s
+{
+    packet_status   status;
+
+    double          senttime;
+    double          receivedtime;
+
+    int             sentsize;
+    int             receivedsize;
+
+    int             seq_diff;   // frames elapsed between send and recv
+
+    qboolean        delta;  // if deltaying
+}
+packet_info_t;
+
+extern packet_info_t network_stats[NETWORK_STATS_SIZE];
+
+typedef struct net_stat_result_s
+{
+    int samples;    // samples processed to calculate stats
+
+    // latency [miliseconds]
+    float ping_min;
+    float ping_avg;
+    float ping_max;
+    float ping_dev;
+
+    // latency [frames]
+    int   ping_f_min;
+    int   ping_f_max;
+    float ping_f_avg;
+    float ping_f_dev;
+
+    // packet loss [percent]
+    float lost_lost;
+    float lost_rate;
+    float lost_delta;
+    float lost_netlimit;
+
+    // average packet sizes [bytes]
+    float size_in;
+    float size_out;
+
+    // bandwidth [bytes / sec]
+    float bandwidth_in;
+    float bandwidth_out;
+
+    // if delta compression occured
+    int delta;
+
+} net_stat_result_t;
+
+int CL_CalcNetStatistics(
+            /* in */
+            float period,           // period of time
+            packet_info_t *samples, // statistics table
+            int num_samples,        // table size
+            /* out */
+            net_stat_result_t *res);
+
+// kazik <--
+
 int CL_CalcNet (void);
 void CL_ParseServerMessage (void);
 void CL_NewTranslation (int slot);

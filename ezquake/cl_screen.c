@@ -37,6 +37,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #endif
 
+#include "hud.h" // HUD -> hexum
+#include "hud_common.h"
+
 #ifdef GLQUAKE
 int				glx, gly, glwidth, glheight;
 #endif
@@ -51,6 +54,8 @@ char *COM_FileExtension (char *in);
 
 
 extern byte	current_pal[768];	// Tonik
+
+extern cvar_t	scr_newHud;		// HUD -> hexum
 
 
 // only the refresh window will be updated unless these variables are flagged 
@@ -408,7 +413,7 @@ void SCR_DrawFPS (void) {
 	static double lastframetime;
 	extern int fps_count;
 
-	if (!show_fps.value)
+	if (!show_fps.value || scr_newHud.value) // HUD -> hexum - newHud has its own fps
 		return;
 
 	t = Sys_DoubleTime();
@@ -831,6 +836,7 @@ void SCR_DrawElements(void) {
 	if (scr_drawloading) {
 		SCR_DrawLoading ();
 		Sbar_Draw ();
+		HUD_Draw ();		// HUD -> hexum
 	} else {
 		if (cl.intermission == 1) {
 			Sbar_IntermissionOverlay ();
@@ -870,6 +876,7 @@ void SCR_DrawElements(void) {
 					SCR_DrawStatusMultiview();
 
 				Sbar_Draw();
+				HUD_Draw();		// HUD -> hexum
 			}
 		}
 
@@ -887,6 +894,11 @@ void SCR_DrawElements(void) {
 //This is called every frame, and can also be called explicitly to flush text to the screen.
 //WARNING: be very careful calling this from elsewhere, because the refresh needs almost the entire 256k of stack space!
 void SCR_UpdateScreen (void) {
+	static hud_t *hud_netstats = NULL;
+
+	if (hud_netstats == NULL) // first time
+		hud_netstats = HUD_Find("net");
+
 	if (!scr_initialized)
 		return;                         // not initialized yet
 
@@ -913,6 +925,8 @@ void SCR_UpdateScreen (void) {
 
 	scr_copytop = 0;
 	scr_copyeverything = 0;
+
+	host_screenupdatecount ++;  // kazik - HUD -> hexum
 
 	// check for vid changes
 	if (oldfov != scr_fov.value) {
@@ -955,8 +969,23 @@ void SCR_UpdateScreen (void) {
 	// draw any areas not covered by the refresh
 	SCR_TileClear ();
 
-	if (r_netgraph.value)
-		R_NetGraph ();
+	if (r_netgraph.value && !scr_newHud.value) { // HUD -> hexum
+		// FIXME: ugly hack :(
+		float temp = hud_netgraph->show->value;
+
+		Cvar_SetValue(hud_netgraph->show, 1);
+		SCR_HUD_Netgraph(hud_netgraph);
+		Cvar_SetValue(hud_netgraph->show, temp);
+	}
+
+	if (r_netstats.value && !scr_newHud.value) {
+		// FIXME: ugly hack :(
+		float temp = hud_netstats->show->value;
+
+		Cvar_SetValue(hud_netstats->show, 1);
+		SCR_HUD_DrawNetStats(hud_netstats);
+		Cvar_SetValue(hud_netstats->show, temp);
+	}
 
 	SCR_DrawElements();
 
@@ -1001,6 +1030,8 @@ void SCR_UpdateScreen (void) {
 
 	scr_copytop = 0;
 	scr_copyeverything = 0;
+
+	host_screenupdatecount ++;  // kazik - HUD -> hexum
 
 	// check for vid changes
 	if (oldfov != scr_fov.value) {

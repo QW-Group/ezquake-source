@@ -21,6 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "r_local.h"
 
+#include "hud.h"
+#include "hud_common.h"
+
 #include "rulesets.h"
 
 char *Skin_FindName (player_info_t *sc) ;
@@ -196,6 +199,7 @@ void R_TimeGraph (void) {
 	timex = (timex + 1)%MAX_TIMINGS;
 }
 
+#if 0
 void R_NetGraph (void) {
 	extern cvar_t r_netgraph;
 	int a, x, y, y2, w, i, lost;
@@ -226,6 +230,153 @@ void R_NetGraph (void) {
 		sprintf(st, "%3i%% packet loss", lost);
 		Draw_String(8, y2, st);
 	}
+}
+#endif
+
+// HUD -> hexum
+void R_MQW_LineGraph (int x, int y, int h, int graphheight,
+                  int reverse, int color, int detailed)
+{
+    int     i;
+    byte    *dest;
+    int     s;
+
+// FIXME: should be disabled on no-buffer adapters, or should be in the driver
+    
+//  x += r_refdef.vrect.x;
+//  y += r_refdef.vrect.y;
+    
+    s = graphheight;
+
+    if (h>s)
+        h = s;
+    
+    if (reverse)
+    {
+        dest = vid.buffer + vid.rowbytes*(y-s+1) + x;
+        for (i=0 ; i<h ; i++, dest += vid.rowbytes)
+        {
+            if ( detailed  ||  !(i&1) )
+                dest[0] = color;
+        }
+    }
+    else
+    {
+        dest = vid.buffer + vid.rowbytes*y + x;
+        for (i=0 ; i<h ; i++, dest -= vid.rowbytes)
+        {
+            if ( detailed  ||  !(i&1) )
+                dest[0] = color;
+        }
+    }
+}
+
+void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_latency,
+                int lost, int minping, int avgping, int maxping, int devping,
+                int posx, int posy, int width, int height, int revx, int revy)
+{
+    int     a, x, y, y2, w, i;
+    char st[80];
+
+    static hud_t *hud = NULL;
+    static cvar_t
+        /**par_alpha,*/ *par_full, *par_inframes, *par_maxping, *par_dropheight;
+
+    if (hud == NULL)  // first time
+    {
+        hud = HUD_Find("netgraph");
+        /*par_alpha      = HUD_FindVar(hud, "alpha");*/
+        par_full       = HUD_FindVar(hud, "full");
+        par_inframes   = HUD_FindVar(hud, "inframes");
+        par_maxping    = HUD_FindVar(hud, "scale");
+        par_dropheight = HUD_FindVar(hud, "lostscale");
+    }
+        
+    CL_CalcNet();
+
+    if (width < 0)
+        width = NET_TIMINGS;
+    width = min(width, 256);
+    if (width < 16)
+        return;
+
+    if (height < 0)
+        height = 32;
+    if (height < 1)
+        return;
+
+    if (posx < 0  ||  posy < 0)
+    {
+        int w, h;
+
+        w = width;
+        h = height;
+        if (lost >= 0)
+            h += 8;
+        if (!HUD_PrepareDraw(hud, w, h, &posx, &posy))
+            return;
+    }
+
+    x = posx;
+    y = posy;
+
+    y2 = y;
+    y += height-1;
+    if (lost >= 0)
+        y += 8;
+
+    for (a=NET_TIMINGS-width ; a < NET_TIMINGS ; a++)
+    {
+        int h, color, px;
+        i = (outgoing_sequence-a-1 + NET_TIMINGS - width) & NET_TIMINGSMASK;
+        h = packet_latency[i];
+        if (h == 10000)
+            color = 0x6f;   // yellow   [rate]
+        else if (h == 9999)
+            color = 0x4f;   // red      [lost]
+        else if (h == 9998)
+            color = 0xd0;   // blue     [delta]
+        else if (h == 10001)
+            color = 4;      // gray     [netlimit]
+        else
+            color = 0xff;   // pink     [ms ping]
+
+        if (h < 9000)
+        {
+            if (!par_inframes->value)
+                h = min(height, h*height/par_maxping->value);
+        }
+        else
+            h = min(height, height*par_dropheight->value);
+
+        px = revx ? x+a-(NET_TIMINGS-width) : x+NET_TIMINGS-1-a;
+
+        R_MQW_LineGraph (px, y, h, height,
+                     revy, color, par_full->value);
+    }
+
+    if (lost >= 0)
+    {
+        if (avgping < 0)
+        {
+            sprintf(st, "%3i%% packet loss", lost);
+            st[(width-1)/8] = 0;
+            Draw_String(x+3, y2, st);
+        }
+        else
+        {
+            char buf[128];
+            if (lost > 99)
+                lost = 99;
+
+            strcpy(st, "\x1D\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1E\x1F");
+            //sprintf(st, "%3i%% packet loss, %3i ms ping", lost, avgping);
+            sprintf(buf, " %i \xf %i%% ", avgping, lost);
+            strncpy(st + strlen(st) - strlen(buf) - 3, buf, strlen(buf));
+            Draw_String(x+4, y2, st);
+        }
+    }
+
 }
 
 void R_ZGraph (void) {

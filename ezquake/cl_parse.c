@@ -34,6 +34,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "EX_misc.h"
 #include "localtime.h"
 
+#include "hud.h"
+#include "hud_common.h"
+
 #ifdef GLQUAKE
 #include "vx_stuff.h"
 #endif
@@ -138,25 +141,71 @@ messages_t net;
 
 //=============================================================================
 
+// HUD -> hexum
+// kazik -->
+packet_info_t network_stats[NETWORK_STATS_SIZE];
+// kazik <--
+
 int packet_latency[NET_TIMINGS];
 
 int CL_CalcNet (void) {
 	extern cvar_t cl_oldPL;
-	int a, i, lost, packetcount;
+	int a, i, j, lost, packetcount;
 	frame_t	*frame;
+
+	// HUD -> hexum
+	// kazik -->
+	static cvar_t * netgraph_inframes = NULL;
+	extern hud_t * hud_netgraph;
+
+	int total_counted;
+	static int last_calculated_outgoing;
+	static int last_calculated_incoming;
+	static int last_lost;
+
+	if (last_calculated_incoming == cls.netchan.incoming_sequence  &&
+	    last_calculated_outgoing == cls.netchan.outgoing_sequence)
+		return last_lost;
+
+	last_calculated_outgoing = cls.netchan.outgoing_sequence;
+	last_calculated_incoming = cls.netchan.incoming_sequence;
+
+	if (netgraph_inframes == NULL)
+	    netgraph_inframes = HUD_FindVar(hud_netgraph, "inframes");
+	// kazik <--
 
 	for (i = cls.netchan.outgoing_sequence-UPDATE_BACKUP + 1; i <= cls.netchan.outgoing_sequence; i++) {
 		frame = &cl.frames[i & UPDATE_MASK];
-		if (frame->receivedtime == -1)
+	        j = i & NETWORK_STATS_MASK;
+		if (frame->receivedtime == -1) {
 			packet_latency[i & NET_TIMINGSMASK] = 9999;	// dropped
-		else if (frame->receivedtime == -2)
+			network_stats[j].status = packet_dropped;
+		}
+		else if (frame->receivedtime == -2) {
 			packet_latency[i & NET_TIMINGSMASK] = 10000;	// choked
-		else if (frame->receivedtime == -3)
+			network_stats[j].status = packet_choked;
+		}
+		else if (frame->receivedtime == -3) {
 			packet_latency[i & NET_TIMINGSMASK] = -1;	// choked by c2spps
-		else if (frame->invalid)
+			network_stats[j].status = packet_netlimit;
+		}
+		else if (frame->invalid) {
 			packet_latency[i & NET_TIMINGSMASK] = 9998;	// invalid delta
-		else
-			packet_latency[i & NET_TIMINGSMASK] = (frame->receivedtime - frame->senttime) * 20;
+			network_stats[j].status = packet_delta;
+		}
+		else {
+			//packet_latency[i & NET_TIMINGSMASK] = (frame->receivedtime - frame->senttime) * 20;
+
+			// modified by kazik
+			double l;
+			if (netgraph_inframes->value)      // [frames]
+				l = 2*(frame->seq_when_received-i);
+			else                                // [miliseconds]
+				l = min((frame->receivedtime - frame->senttime)*1000, 1000);
+
+			packet_latency[i&NET_TIMINGSMASK] = (int)l;
+			network_stats[j].status = packet_ok;
+		}
 	}
 
 	lost = packetcount = 0;
@@ -171,8 +220,174 @@ int CL_CalcNet (void) {
 		if (packet_latency[i] != -1)	// don't count packets choked by c2spps
 			packetcount++;
 	}
-	return packetcount ? lost * 100 / packetcount : 100;
+	last_lost = packetcount ? lost * 100 / packetcount : 100;
+	return last_lost;
 }
+
+// HUD -> hexum
+// kazik -->
+// more network statistics
+int CL_CalcNetStatistics(
+            /* in */
+            float period,           // period of time
+            packet_info_t *samples, // statistics table
+            int num_samples,        // table size
+            /* out */
+            net_stat_result_t *res)
+{
+    int i, p, q;   // calc fom p to q
+
+    float ping_min, ping_max, ping_avg, ping_dev, ping_sum, ping_dev_sum;
+    float f_min, f_max, f_avg, f_dev, f_sum, f_dev_sum;
+    int lost_lost, lost_rate, lost_delta, lost_netlimit;
+    int size_sent, size_received;
+    int samples_received, samples_sent, samples_delta;
+
+    if (cls.netchan.outgoing_sequence - cls.netchan.incoming_sequence  >  NETWORK_STATS_SIZE/2)
+        return (res->samples = 0);
+
+    // find boundaries
+    q = cls.netchan.incoming_sequence - 1;
+    p = q - 1;
+    while (p > cls.netchan.outgoing_sequence - NETWORK_STATS_SIZE + 1  &&
+           samples[q&NETWORK_STATS_MASK].senttime - samples[p&NETWORK_STATS_MASK].senttime < period)
+        p--;
+
+    // init values
+    samples_sent = 0;
+    samples_received = 0;
+    samples_delta = 0;  // packets with delta compression applied
+
+    ping_sum = 0;
+    ping_min =  99999999;
+    ping_max = -99999999;
+    ping_dev_sum = 0;
+
+    f_sum = 0;
+    f_min =  99999999;
+    f_max = -99999999;
+    f_dev_sum = 0;
+    
+    lost_lost = 0;
+    lost_rate = 0;
+    lost_netlimit = 0;
+    lost_delta = 0;
+
+    size_sent = 0;
+    size_received = 0;
+
+    for (i=p; i < q; i++)
+    {
+        int a = i & NETWORK_STATS_MASK;
+
+        if (samples[a].status == packet_netlimit)
+        {
+            // not even sent
+            lost_netlimit ++;
+            continue;
+        }
+
+        // packet was sent
+        samples_sent ++;
+        
+        size_sent += samples[a].sentsize;
+
+        switch (samples[a].status)
+        {
+        case packet_delta:
+            lost_delta ++;
+            samples_delta ++;
+            break;
+        case packet_choked:
+            lost_rate ++;
+            break;
+        case packet_dropped:
+            lost_lost ++;
+            break;
+        case packet_ok:
+            // packet received
+            {
+                float ping;
+                int frames;
+
+                samples_received ++;
+                frames = samples[a].seq_diff;
+                ping = 1000*(samples[a].receivedtime - samples[a].senttime);
+
+                if (ping < ping_min)    ping_min = ping;
+                if (ping > ping_max)    ping_max = ping;
+                if (frames < f_min)     f_min = frames;
+                if (frames > f_max)     f_max = frames;
+
+                ping_sum += ping;
+                f_sum += frames;
+
+                size_received += samples[a].receivedsize;
+
+                if (samples[a].delta)
+                    samples_delta ++;
+            }
+        default:
+            break;
+        }
+
+        // end of loop
+    }
+
+    if (samples_sent <= 0  ||  samples_received <= 0)
+        return (res->samples = 0);
+
+    ping_avg = ping_sum / samples_received;
+    f_avg = f_sum / samples_received;
+
+    // loop again to calc standard deviation
+    for (i=p; i < q; i++)
+    {
+        int a = i & NETWORK_STATS_MASK;
+
+        if (samples[a].status == packet_ok)
+        {
+            float ping;
+            int frames;
+
+            frames = samples[a].seq_diff;
+            ping = 1000*(samples[a].receivedtime - samples[a].senttime);
+
+            ping_dev_sum += (ping - ping_avg) * (ping - ping_avg);
+            f_dev_sum += (frames - f_avg) * (frames - f_avg);
+        }
+    }
+
+    ping_dev = sqrt(ping_dev_sum / samples_received);
+    f_dev = sqrt(f_dev_sum / samples_received);
+
+    // fill-in result struct
+    res->ping_min = ping_min;
+    res->ping_max = ping_max;
+    res->ping_avg = ping_avg;
+    res->ping_dev = ping_dev;
+
+    res->ping_f_min = f_min;
+    res->ping_f_max = f_max;
+    res->ping_f_avg = f_avg;
+    res->ping_f_dev = f_dev;
+
+    res->lost_netlimit = lost_netlimit * 100.0 / (q-p);
+    res->lost_lost     = lost_lost     * 100.0 / samples_sent;
+    res->lost_rate     = lost_rate     * 100.0 / samples_sent;
+    res->bandwidth_in  = lost_delta    * 100.0 / samples_sent;
+
+    res->size_out = size_sent      / (float)samples_sent;
+    res->size_in  = size_received  / (float)samples_received;
+
+    res->bandwidth_out = size_sent      / period;
+    res->bandwidth_in  = size_received  / period;
+
+    res->delta = (samples_delta > 0) ? 1 : 0;
+    res->samples = q-p;
+    return res->samples;
+}
+// kazik <--
 
 //=============================================================================
 
@@ -943,7 +1158,7 @@ void CL_ParseStartSoundPacket(void) {
 
 //Server information pertaining to this client only, sent every frame
 void CL_ParseClientdata (void) {
-	int newparsecount;
+	int newparsecount, i;
 	float latency;
 	frame_t *frame;
 
@@ -963,6 +1178,21 @@ void CL_ParseClientdata (void) {
 	parsecounttime = cl.frames[parsecountmod].senttime;
 
 	frame->receivedtime = cls.realtime;
+
+	// HUD -> hexum
+	frame->seq_when_received = cls.netchan.outgoing_sequence;
+
+	// kazik -->
+	frame->receivedsize = net_message.cursize;
+	// kazik <--
+
+	// kazik -->
+	// update network stats table
+	i = cls.netchan.incoming_sequence & NETWORK_STATS_MASK;
+	network_stats[i].receivedtime = cls.realtime;
+	network_stats[i].receivedsize = net_message.cursize;
+	network_stats[i].seq_diff = cls.netchan.outgoing_sequence - cls.netchan.incoming_sequence;
+	// kazik <--
 
 	// calculate latency
 	latency = frame->receivedtime - frame->senttime;
