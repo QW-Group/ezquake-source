@@ -941,29 +941,62 @@ void Cmd_CmdList_f (void) {
 typedef struct {
 	char name[32];
 	char *(*func) (void);
+// is macro allowed - setup by ruleset; default disallowed //VVD
+	qboolean allowed;
 } macro_command_t;
 
 static macro_command_t macro_commands[MAX_MACROS];
 static int macro_count = 0;
 
 void Cmd_AddMacro(char *s, char *(*f)(void)) {
+	macro_command_t	*macro;
 	if (macro_count == MAX_MACROS)
 		Sys_Error("Cmd_AddMacro: macro_count == MAX_MACROS");
-	Q_strncpyz(macro_commands[macro_count].name, s, sizeof(macro_commands[macro_count].name));
-	macro_commands[macro_count++].func = f;
+	macro = &macro_commands[macro_count++];
+	Q_strncpyz(macro->name, s, sizeof(macro->name));
+	macro->allowed = false;
+	macro->func = f;
 }
 
-char *Cmd_MacroString (char *s, int *macro_length) {	
+void Cmd_SetAllMacros(qboolean allow)
+{
 	int i;
-	macro_command_t	*macro;
+	for (i = 0; i < macro_count; i++)
+		macro_commands[i].allowed = allow;
+}
 
-	for (i = 0; i < macro_count; i++) {
-		macro = &macro_commands[i];
-		if (!Q_strncasecmp(s, macro->name, strlen(macro->name))) {
-			*macro_length = strlen(macro->name);
-			return macro->func();
+void Cmd_SetMacro(char *s, qboolean allow)
+{
+	int i;
+	macro_command_t	*macro = macro_commands;
+
+	for (i = 0; i < macro_count; i++, macro++)
+	{
+		if (!strncasecmp(s, macro->name, strlen(macro->name) + 1))
+		{
+			macro->allowed = allow;
+			return;
 		}
-		macro++;
+	}
+}
+
+char *Cmd_MacroString (char *s, int *macro_length)
+{
+	int i;
+	macro_command_t	*macro = macro_commands;
+
+	for (i = 0; i < macro_count; i++, macro++)
+	{
+		if (!strncasecmp(s, macro->name, strlen(macro->name) + 1))
+		{
+			if (macro->allowed)
+			{
+				*macro_length = strlen(macro->name);
+				return macro->func();
+			}
+			else
+				break;
+		}
 	}
 	*macro_length = 0;
 	return NULL;
@@ -1037,7 +1070,7 @@ void Cmd_ExpandString (char *data, char *dest) {
 #ifndef SERVERONLY
 			if (!dedicated) 
 			{
-				str = Cmd_MacroString (buf, &macro_length);		
+				str = Cmd_MacroString (buf, &macro_length);
 				name_length = macro_length;
 
 				if (bestvar && (!str || (strlen(bestvar->name) > macro_length))) {

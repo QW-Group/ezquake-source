@@ -25,6 +25,21 @@ typedef struct locked_cvar_s {
 	char *value;
 } locked_cvar_t;
 
+static char *allowed_smackdown_macros[] =
+{
+	{"connectiontype"},
+	{"date"},
+	{"demoplayback"},
+	{"latency"},
+	{"matchname"},
+	{"matchstatus"},
+	{"matchtype"},
+	{"mp3info"},
+	{"qt"},
+	{"triggermatch"},
+	{NULL}
+};
+
 typedef enum {rs_default, rs_smackdown} ruleset_t;
 
 static ruleset_t ruleset;
@@ -124,10 +139,15 @@ static void Rulesets_Smackdown(void) {
 	notimers = true;
 	ruleset = rs_smackdown;
 	restrictTriggers = true;
+
+	for (i = 0; allowed_smackdown_macros[i]; i++)
+		Cmd_SetMacro(allowed_smackdown_macros[i], true);
+
 }
 
 static void Rulesets_Default(void) {
 	ruleset = rs_default;
+	Cmd_SetAllMacros(true);
 }
 
 void Rulesets_Init(void) {
