@@ -154,7 +154,7 @@ cvar_t  gl_fogend			= {"gl_fogend", "800.0"};
 cvar_t  gl_fogred			= {"gl_fogred", "0.6"};
 cvar_t  gl_foggreen			= {"gl_foggreen", "0.5"};
 cvar_t  gl_fogblue			= {"gl_fogblue", "0.4"};
-cvar_t  gl_fogsky			= {"gl_fogsky", "0"}; 
+cvar_t  gl_fogsky			= {"gl_fogsky", "1"}; 
 
 int		lightmode = 2;
 
@@ -1330,11 +1330,11 @@ void R_Init (void) {
 	Cvar_Register (&gl_fogenable); 
 	Cvar_Register (&gl_fogstart); 
 	Cvar_Register (&gl_fogend); 
+	Cvar_Register (&gl_fogsky);
 // START shaman RFE 1032143 {
 //	Cvar_Register (&gl_fogred); 
 //	Cvar_Register (&gl_fogblue);
 //	Cvar_Register (&gl_foggreen);
-//	Cvar_Register (&gl_fogsky);
 // END shaman RFE 1032143 {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
@@ -1463,7 +1463,8 @@ void R_RenderScene (void) {
 
 	GL_DisableMultitexture();
 
-	if (gl_fogenable.value)
+	// START shaman BUG fog was out of control when fogstart>fogend {
+	if (gl_fogenable.value && gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value)	// } END shaman BUG fog was out of control when fogstart>fogend
 	{
 		glFogi(GL_FOG_MODE, GL_LINEAR);
 			colors[0] = gl_fogred.value;
