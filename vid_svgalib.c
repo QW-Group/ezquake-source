@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -35,6 +35,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "d_local.h"
 #include "input.h"
 #include "keys.h"
+
+#ifdef WITH_KEYMAP
+#include "keymap.h"
+#endif // WITH_KEYMAP
 
 #define stringify(m) { #m, m }
 
@@ -76,7 +80,7 @@ cvar_t		vid_ref = {"vid_ref", "soft", CVAR_ROM};
 cvar_t		vid_mode = {"vid_mode","5"};
 cvar_t		vid_redrawfull = {"vid_redrawfull","0"};
 cvar_t		vid_waitforrefresh = {"vid_waitforrefresh","0",CVAR_ARCHIVE};
- 
+
 char	*framebuffer_ptr;
 
 cvar_t  mouse_button_commands[3] = {
@@ -219,7 +223,7 @@ void VID_Gamma_f (void) {
 
 void VID_ModeList_f (void) {
 	int i;
-	
+
 	for (i = 0; i < num_modes; i++) {
 		if (modes[i].width) {
 			Com_Printf ("%d: %d x %d - ", i, modes[i].width,modes[i].height);
@@ -233,7 +237,7 @@ void VID_ModeList_f (void) {
 
 int VID_NumModes (void) {
 	int i, i1 = 0;
-	
+
 	for (i = 0; i < num_modes;i++)
 		i1 += (modes[i].width ? 1 : 0);
 	return i1;
@@ -261,7 +265,7 @@ void VID_InitModes(void) {
 
 	// filter for modes i don't support
 	for (i = 0; i < num_modes ; i++) {
-		if ((modes[i].bytesperpixel != 1 && modes[i].colors != 256) || modes[i].width > MAXWIDTH || modes[i].height > MAXHEIGHT) 
+		if ((modes[i].bytesperpixel != 1 && modes[i].colors != 256) || modes[i].width > MAXWIDTH || modes[i].height > MAXHEIGHT)
 			modes[i].width = 0;
 	}
 
@@ -348,13 +352,13 @@ static byte scantokey[128] = {
 	0,      0,      0,      0,      0,      K_LWIN, K_RWIN, K_MENU			// 7
 };
 
-void keyhandler(int scancode, int state) {	
+void keyhandler(int scancode, int state) {
 	byte *scan = cl_keypad.value ? scantokey_kp : scantokey;
 	Key_Event(scan[scancode & 0x7f], state == KEY_EVENTPRESS);
 }
 
 void VID_Shutdown(void) {
-	if (!svgalib_inited) 
+	if (!svgalib_inited)
 		return;
 
 //	printf("shutdown graphics called\n");
@@ -398,14 +402,14 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 
 	if ((modenum >= num_modes) || (modenum < 0) || !modes[modenum].width) {
 		Cvar_SetValue (&vid_mode, (float)current_mode);
-		
+
 		Com_Printf ("No such video mode: %d\n",modenum);
-		
+
 		return 0;
 	}
 
 	Cvar_SetValue (&vid_mode, (float)modenum);
-	
+
 	current_mode=modenum;
 
 	vid.width = modes[current_mode].width;
@@ -427,7 +431,7 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 	vid.conwidth = vid.width;
 	vid.conheight = vid.height;
 	vid.numpages = 1;
-	
+
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
 
@@ -492,7 +496,7 @@ void VID_Init(unsigned char *palette) {
 		Cvar_Register (&vid_redrawfull);
 		Cvar_Register (&vid_waitforrefresh);
 		Cvar_ResetCurrentGroup();
-		
+
 		Cmd_AddCommand("vid_modelist", VID_ModeList_f);
 		Cmd_AddCommand("vid_debug", VID_Debug_f);
 
@@ -521,10 +525,10 @@ void VID_Init(unsigned char *palette) {
 		VID_SetPalette(palette);
 
 		// we do want to run in the background when switched away
-		vga_runinbackground(1);	
+		vga_runinbackground(1);
 	}
 
-	if (COM_CheckParm("-nokbd")) 
+	if (COM_CheckParm("-nokbd"))
 		UseKeyboard = 0;
 
 	if (UseKeyboard) {
@@ -563,19 +567,21 @@ void VID_Update(vrect_t *rects) {
 
 		vga_setpage(0);
 
+		// oppymv 010904
+	if (!cls.mvdplayback || !cl_multiview.value || (cl_multiview.value>0 && CURRVIEW == 1)) {
 		while (rects) {
 			ycount = rects->height;
 			offset = rects->y * vid.rowbytes + rects->x;
 			while (ycount--) {
 				register int i = offset % 0x10000;
-	
+
 				if (offset / 0x10000 != vidpage) {
 					vidpage=offset / 0x10000;
 					vga_setpage(vidpage);
 				}
 				if (rects->width + i > 0x10000) {
-					memcpy(framebuffer_ptr + i, 
-							vid.buffer + offset, 
+					memcpy(framebuffer_ptr + i,
+							vid.buffer + offset,
 							0x10000 - i);
 					vga_setpage(++vidpage);
 					memcpy(framebuffer_ptr,	vid.buffer + offset + 0x10000 - i, 	rects->width - 0x10000 + i);
@@ -583,11 +589,12 @@ void VID_Update(vrect_t *rects) {
 					memcpy(framebuffer_ptr + i, vid.buffer + offset, rects->width);
 				}
 				offset += vid.rowbytes;
-			}	
+			}
 			rects = rects->pnext;
 		}
 	}
-	
+}
+
 	if (vid_mode.value != current_mode)
 		VID_SetMode ((int)vid_mode.value, vid_current_palette);
 }
@@ -669,6 +676,9 @@ void IN_Init(void) {
 		Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
 		Cvar_Register (&cl_keypad);
 		Cvar_ResetCurrentGroup();
+#ifdef WITH_KEYMAP
+		IN_StartupKeymap();
+#endif // WITH_KEYMAP
 	}
 }
 
@@ -742,10 +752,10 @@ void IN_MouseMove (usercmd_t *cmd) {
 		cmd->sidemove += m_side.value * mouse_x;
 	else
 		cl.viewangles[YAW] -= m_yaw.value * mouse_x;
-	
+
 	if (mlook_active)
 		V_StopPitchDrift ();
-		
+
 	if (mlook_active && !(in_strafe.state & 1))	{
 		cl.viewangles[PITCH] += m_pitch.value * mouse_y;
 		cl.viewangles[PITCH] = bound(-70, cl.viewangles[PITCH], 80);

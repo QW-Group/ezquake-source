@@ -20,10 +20,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // this should be the only file that includes both server.h and client.h
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "quakedef.h"
 #include "pmove.h"
 #include "version.h"
 #include "modules.h"
+#include "common.h"
+#include "EX_browser.h"
 #include <setjmp.h>
 
 
@@ -40,6 +46,103 @@ qboolean	host_initialized;	// true if into command execution
 int			host_memsize;
 
 static jmp_buf 	host_abort;
+
+extern void COM_StoreOriginalCmdline(int argc, char **argv);
+
+#ifdef _WIN32
+int     SYSINFO_memory = 0;
+int     SYSINFO_MHz = 0;
+char *  SYSINFO_processor_description = NULL;
+char *  SYSINFO_3D_description        = NULL;
+
+char f_system_string[1024] = ""; 
+
+char * SYSINFO_GetString(void)
+{
+    return f_system_string;
+}
+
+void SYSINFO_Init(void)
+{
+    MEMORYSTATUS    memstat;
+    LONG            ret;
+    HKEY            hKey;
+
+    GlobalMemoryStatus(&memstat);
+    SYSINFO_memory = memstat.dwTotalPhys;
+
+    ret = RegOpenKey(
+        HKEY_LOCAL_MACHINE,
+        "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
+        &hKey);
+
+    if (ret == ERROR_SUCCESS)
+    {
+        DWORD type;
+        byte  data[1024];
+        DWORD datasize;
+
+        datasize = 1024;
+        ret = RegQueryValueEx(
+            hKey,
+            "~MHz",
+            NULL,
+            &type,
+            data,
+            &datasize);
+    
+        if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_DWORD)
+            SYSINFO_MHz = *((DWORD *)data);
+
+        datasize = 1024;
+        ret = RegQueryValueEx(
+            hKey,
+            "ProcessorNameString",
+            NULL,
+            &type,
+            data,
+            &datasize);
+    
+        if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_SZ)
+            SYSINFO_processor_description = strdup((char *) data);
+
+        RegCloseKey(hKey);
+    }
+
+#ifdef GLQUAKE
+    {
+        extern const char *gl_renderer;
+
+        if (gl_renderer  &&  gl_renderer[0])
+            SYSINFO_3D_description = strdup(gl_renderer);
+    }
+#endif
+
+    f_system_string[0] = 0;
+
+    strcat(f_system_string, va("%d", (int)(SYSINFO_memory / 1024.0 / 1024.0 + 0.5)));
+    strcat(f_system_string, "MB");
+
+    if (SYSINFO_processor_description)
+    {
+        strcat(f_system_string, ", ");
+        strcat(f_system_string, SYSINFO_processor_description);
+    }
+    if (SYSINFO_MHz)
+    {
+        strcat(f_system_string, " ");
+        strcat(f_system_string, va("%d", SYSINFO_MHz));
+        strcat(f_system_string, "MHz");
+    }
+    if (SYSINFO_3D_description)
+    {
+        strcat(f_system_string, ", ");
+        strcat(f_system_string, SYSINFO_3D_description);
+    }
+}
+#else // _WIN32
+void SYSINFO_Init(void) {}
+#endif // _WIN32
 
 void Host_Abort (void) {
 	longjmp (host_abort, 1);
@@ -160,7 +263,8 @@ void Host_Init (int argc, char **argv, int default_memsize) {
 	FILE *f;
 
 	COM_InitArgv (argc, argv);
-
+	COM_StoreOriginalCmdline(argc, argv);
+    
 	Host_InitMemory (default_memsize);
 
 	Cbuf_Init ();
@@ -185,6 +289,10 @@ void Host_Init (int argc, char **argv, int default_memsize) {
 	SV_Init ();
 	CL_Init ();
 
+    SYSINFO_Init();
+
+    SB_RootInit();
+
 #ifndef SERVERONLY
 	
 	if (!dedicated)
@@ -199,13 +307,13 @@ void Host_Init (int argc, char **argv, int default_memsize) {
 	Com_Printf ("Exe: "__TIME__" "__DATE__"\n");
 	Com_Printf ("Hunk allocation: %4.1f MB.\n", (float) host_memsize / (1024 * 1024));
 
-	Com_Printf ("\nFuhQuake version %s\n\n", VersionString());
+	Com_Printf ("\nv%s\n\n", VersionString());
 	if (dedicated) {
-		Com_Printf ("========== www.fuhquake.net ==========\n\n");
-		Com_Printf ("======== FuhQuake Initialized ========\n\n");
+		Com_Printf ("====== ezQuake.SourceForge.net ======\n\n");
+		Com_Printf ("======== ezQuake Initialized ========\n\n");
 	} else {
-		Com_Printf (Host_PrintBars("www\x9c" "fuhquake\x9c" "net", 38));
-		Com_Printf(Host_PrintBars("FuhQuake Initialized", 38));
+		Com_Printf(Host_PrintBars("ezQuake\x9c" "SourceForge\x9c" "net", 38));
+		Com_Printf(Host_PrintBars("ezQuake Initialized", 38));
 	}
 
 	if (dedicated) {

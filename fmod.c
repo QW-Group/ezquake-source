@@ -102,74 +102,76 @@ void FMod_Init(void) {
 
 	Cmd_AddCommand("f_modified", FMod_Response);
 
-	FMod_AddModel("progs/armor.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/backpack.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/bolt2.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/end1.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/end2.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/end3.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/end4.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/eyes.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/g_light.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/g_nail.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/g_nail2.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/g_rock.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/g_rock2.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/g_shot.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/gib1.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/gib2.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/gib3.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/grenade.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/invisibl.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/invulner.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/missile.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/quaddama.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/s_spike.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/spike.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/suit.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/end1.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/end2.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/end3.mdl", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/end4.mdl", FMOD_DM | FMOD_TF);
+	FMod_AddModel("progs/armor.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/backpack.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/bolt2.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/end1.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/end2.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/end3.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/end4.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/eyes.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/g_light.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/g_nail.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/g_nail2.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/g_rock.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/g_rock2.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/g_shot.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/gib1.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/gib2.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/gib3.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/grenade.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/invisibl.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/invulner.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/missile.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/quaddama.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/s_spike.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/spike.mdl", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/suit.mdl", FMOD_DM | FMOD_TF); //x
 
-	FMod_AddModel("progs/player.mdl", FMOD_DM);
-	FMod_AddModel("progs/player.mdl_ctf_", FMOD_DM);	
+//	-> hexum - why are these added twice?
+//	FMod_AddModel("progs/end1.mdl", FMOD_DM | FMOD_TF);
+//	FMod_AddModel("progs/end2.mdl", FMOD_DM | FMOD_TF);
+//	FMod_AddModel("progs/end3.mdl", FMOD_DM | FMOD_TF);
+//	FMod_AddModel("progs/end4.mdl", FMOD_DM | FMOD_TF);
 
-	FMod_AddModel("progs/player.mdl", FMOD_TF);
-	FMod_AddModel("progs/tf_flag.mdl", FMOD_TF);
-	FMod_AddModel("progs/turrbase.mdl", FMOD_TF);
-	FMod_AddModel("progs/turrgun.mdl", FMOD_TF);
-	FMod_AddModel("progs/disp.mdl", FMOD_TF);
-	FMod_AddModel("progs/tf_stan.mdl", FMOD_TF);
+	FMod_AddModel("progs/player.mdl", FMOD_DM); //x
+	FMod_AddModel("progs/player.mdl_ctf_", FMOD_DM); //x
 
-	FMod_AddModel("progs/s_bubble.spr", FMOD_DM | FMOD_TF);
-	FMod_AddModel("progs/s_explod.spr", FMOD_DM | FMOD_TF);
+	FMod_AddModel("progs/player.mdl", FMOD_TF); //x
+	FMod_AddModel("progs/tf_flag.mdl", FMOD_TF); //x
+	FMod_AddModel("progs/turrbase.mdl", FMOD_TF); //x
+	FMod_AddModel("progs/turrgun.mdl", FMOD_TF); //x
+	FMod_AddModel("progs/disp.mdl", FMOD_TF); //x
+	FMod_AddModel("progs/tf_stan.mdl", FMOD_TF); //x
 
-	FMod_AddModel("maps/b_bh100.bsp", FMOD_DM | FMOD_TF);
+	FMod_AddModel("progs/s_bubble.spr", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("progs/s_explod.spr", FMOD_DM | FMOD_TF); //x
 
-	FMod_AddModel("sound/buttons/airbut1.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/items/armor1.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/items/damage.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/items/damage2.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/items/damage3.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/items/health1.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/items/inv1.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/items/inv2.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/items/inv3.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/items/itembk2.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/player/land.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/player/land2.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/misc/outwater.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/weapons/pkup.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/player/plyrjmp8.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/items/protect.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/items/protect2.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/items/protect3.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/misc/water1.wav", FMOD_DM | FMOD_TF);
-	FMod_AddModel("sound/misc/water2.wav", FMOD_DM | FMOD_TF);
+	FMod_AddModel("maps/b_bh100.bsp", FMOD_DM | FMOD_TF); //x
 
-	FMod_AddModel("gfx/colormap.lmp", FMOD_DM | FMOD_TF);
-	FMod_AddModel("gfx/palette.lmp", FMOD_DM | FMOD_TF);
+	FMod_AddModel("sound/buttons/airbut1.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/items/armor1.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/items/damage.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/items/damage2.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/items/damage3.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/items/health1.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/items/inv1.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/items/inv2.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/items/inv3.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/items/itembk2.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/player/land.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/player/land2.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/misc/outwater.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/weapons/pkup.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/player/plyrjmp8.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/items/protect.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/items/protect2.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/items/protect3.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/misc/water1.wav", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("sound/misc/water2.wav", FMOD_DM | FMOD_TF); //x
+
+	FMod_AddModel("gfx/colormap.lmp", FMOD_DM | FMOD_TF); //x
+	FMod_AddModel("gfx/palette.lmp", FMOD_DM | FMOD_TF); //x
 }
 
 void FMod_Response (void) {
@@ -192,5 +194,6 @@ void FMod_Response (void) {
 	}
 	if (!count)
 		strcpy(buf, "all models ok");
+//	strcpy(buf, "not implemented yet");
 	Cbuf_AddText(va("%s %s\n", cls.state == ca_disconnected ? "echo" : "say", buf));
 }

@@ -117,6 +117,15 @@ extern	int	skyboxtextures;
 extern	int	skytexturenum;		// index in cl.loadmodel, not gl texture object
 extern	int underwatertexture, detailtexture;
 
+// Tomaz - Fog Begin
+extern  cvar_t  gl_fogenable; 
+extern  cvar_t  gl_fogstart;
+extern  cvar_t  gl_fogend; 
+extern  cvar_t  gl_fogred; 
+extern  cvar_t  gl_fogblue; 
+extern  cvar_t  gl_foggreen; 
+// Tomaz - Fog End
+
 extern	cvar_t	r_drawentities;
 extern	cvar_t	r_drawworld;
 extern	cvar_t	r_drawflame;
@@ -137,6 +146,8 @@ extern	cvar_t	r_farclip;
 extern	cvar_t	r_skyname;
 extern  cvar_t  gl_caustics;		
 extern  cvar_t  gl_detail;			
+extern  cvar_t  gl_waterfog;		
+extern  cvar_t  gl_waterfog_density; 
 
 extern	cvar_t	gl_subdivide_size;
 extern	cvar_t	gl_clear;
@@ -166,7 +177,6 @@ extern	cvar_t gl_part_inferno;
 
 extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_miptexLevel;
 extern cvar_t gl_externalTextures_world, gl_externalTextures_bmodels;
-
 
 extern	int		lightmode;		// set to gl_lightmode on mapchange
 

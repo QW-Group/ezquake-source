@@ -24,12 +24,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "rulesets.h"
 
+//VULT
+#include "vx_stuff.h"
 
 void R_InitOtherTextures (void) {
-	static const int flags = TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN;
+/*	static const int flags = TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN;
 
 	underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  flags );	
 	detailtexture = GL_LoadTextureImage("textures/detail", NULL, 256, 256, flags);	
+*/
+	int flags = TEX_MIPMAP | TEX_ALPHA;
+
+	underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  flags | (gl_waterfog.value ? TEX_COMPLAIN : 0));	
+	detailtexture = GL_LoadTextureImage ("textures/detail", NULL, 256, 256, flags | (gl_detail.value ? TEX_COMPLAIN : 0));	 
 }
 
 void R_InitTextures (void) {
@@ -245,6 +252,14 @@ void R_NewMap (void) {
 			cl.worldmodel->textures[i]->texturechain_tail[waterline] = &cl.worldmodel->textures[i]->texturechain[waterline];
 		}
 	}
+
+	//VULT CORONAS
+	InitCoronas();
+	//VULT NAMES
+	VX_TrackerClear();
+	//VULT MOTION TRAILS
+	CL_ClearBlurs();
+
 }
 
 void R_TimeRefresh_f (void) {

@@ -24,7 +24,13 @@ Foundation,	Inc., 59 Temple	Place -	Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 
 void Key_WriteBindings (FILE *);
+
+#ifdef WITH_KEYMAP
+char *Key_KeynumToString (int keynum, char *buffer);
+#else
 char *Key_KeynumToString (int keynum);
+#endif
+
 qboolean Key_IsLeftRightSameBind(int b);
 void DumpMapGroups(FILE *f);
 void TP_DumpTriggers(FILE *);
@@ -37,6 +43,7 @@ int Cvar_CvarCompare (const void *p1, const void *p2);
 int Cmd_AliasCompare (const void *p1, const void *p2);
 
 extern char	*keybindings[256];
+extern void WriteSourcesConfiguration(FILE *f);
 
 extern cvar_group_t *cvar_groups;
 extern cmd_alias_t *cmd_alias;
@@ -78,7 +85,11 @@ void DumpBindings (FILE *f) {
 		leftright = Key_IsLeftRightSameBind(i) ? 1 : 0;
 		if (keybindings[i] || leftright) {
 			printed = true;
+#ifdef WITH_KEYMAP
+			string = Key_KeynumToString(i, NULL);
+#else
 			string = Key_KeynumToString(i);
+#endif
 			spaces = CreateSpaces(BIND_ALIGN_COL - strlen(string) - 6);
 			if (i == ';')
 				fprintf (f, "bind  \";\"%s\"%s\"\n", spaces, keybindings[i]);
@@ -554,9 +565,7 @@ static void Config_PrintPreamble(FILE *f) {
 	Config_PrintBorder(f);
 	Config_PrintLine(f, "", 3);
 	Config_PrintLine(f, "", 3);
-	Config_PrintLine(f, "F U H Q U A K E   C O N F I G U R A T I O N", 3);
-	Config_PrintLine(f, "", 3);
-	Config_PrintLine(f, "http://www.fuhquake.net/", 3);
+	Config_PrintLine(f, "E Z Q U A K E   C O N F I G U R A T I O N", 3);
 	Config_PrintLine(f, "", 3);
 	Config_PrintLine(f, "", 3);
 	Config_PrintBorder(f);
@@ -595,9 +604,9 @@ static void ResetConfigs(qboolean resetall)	{
 
 void DumpConfig(char *name)	{
 	FILE	*f;
-	char	*outfile, *newlines = "\n\n\n\n";
+	char	*outfile, *newlines = "\n";
 
-	outfile = va("%s/fuhquake/configs/%s", com_basedir, name);
+	outfile = va("%s/ezquake/configs/%s", com_basedir, name);
 	if (!(f	= fopen	(outfile, "w"))) {
 		COM_CreatePath(outfile);
 		if (!(f	= fopen	(outfile, "w"))) {
@@ -608,7 +617,7 @@ void DumpConfig(char *name)	{
 
 	Config_PrintPreamble(f);
 
-	if (cfg_save_cmdline.value) {
+	if (cfg_save_cmdline.value && strlen(cl_cmdline.string) > 1) {
 		Config_PrintHeading(f, "C O M M A N D   L I N E");
 		DumpCmdLine(f);
 		fprintf(f, newlines);
@@ -617,6 +626,12 @@ void DumpConfig(char *name)	{
 	if (cfg_save_cvars.value) {
 		Config_PrintHeading(f, "V A R I A B L E S");
 		DumpVariables(f);
+		fprintf(f, newlines);
+	}
+
+	if (cfg_save_cmds.value) {
+		Config_PrintHeading(f, "S E L E C T E D   S O U R C E S");
+		WriteSourcesConfiguration(f);
 		fprintf(f, newlines);
 	}
 
@@ -667,7 +682,7 @@ void SaveConfig_f(void)	{
 
 
 	if (cfg_backup.value) {
-		filename_ext = va("%s/fuhquake/configs/%s", com_basedir, filename);
+		filename_ext = va("%s/ezquake/configs/%s", com_basedir, filename);
 		if ((f = fopen(filename_ext, "r"))) {
 			fclose(f);
 			backupname_ext = Z_Malloc(strlen(filename_ext) + 4);
@@ -705,7 +720,7 @@ void LoadConfig_f(void)	{
 	}
 	filename = COM_SkipPath(Cmd_Argv(1));
 	COM_ForceExtension(filename, ".cfg");
-	if (!(f = fopen(va("%s/fuhquake/configs/%s", com_basedir, filename), "r"))) {
+	if (!(f = fopen(va("%s/ezquake/configs/%s", com_basedir, filename), "r"))) {
 		Com_Printf("Couldn't load config %s\n", filename);
 		return;
 	}

@@ -194,6 +194,43 @@ void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up) {
 	}
 }
 
+//VULT COLLISION
+void AngleVectorsFLU (const vec3_t angles, vec3_t forward, vec3_t left, vec3_t up)
+{
+	double angle, sr, sp, sy, cr, cp, cy;
+
+	angle = angles[YAW] * (M_PI*2 / 360);
+	sy = sin(angle);
+	cy = cos(angle);
+	angle = angles[PITCH] * (M_PI*2 / 360);
+	sp = sin(angle);
+	cp = cos(angle);
+	if (forward)
+	{
+		forward[0] = cp*cy;
+		forward[1] = cp*sy;
+		forward[2] = -sp;
+	}
+	if (left || up)
+	{
+		angle = angles[ROLL] * (M_PI*2 / 360);
+		sr = sin(angle);
+		cr = cos(angle);
+		if (left)
+		{
+			left[0] = sr*sp*cy+cr*-sy;
+			left[1] = sr*sp*sy+cr*cy;
+			left[2] = sr*cp;
+		}
+		if (up)
+		{
+			up[0] = cr*sp*cy+-sr*-sy;
+			up[1] = cr*sp*sy+-sr*cy;
+			up[2] = cr*cp;
+		}
+	}
+}
+
 vec_t VectorLength (vec3_t v) {
 	float length;
 

@@ -121,6 +121,13 @@ cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "0"};
 cvar_t	r_fastturb = {"r_fastturb", "0"};
 cvar_t  r_max_size_1 = {"r_max_size_1", "0"};
 
+// oppymv 310804
+cvar_t cl_multiview = {"cl_multiview", "0" };
+cvar_t cl_mvdisplayhud = {"cl_mvdisplayhud", "1"};
+cvar_t cl_mvinset = {"cl_mvinset", "0"};
+cvar_t cl_mvinsetcrosshair = {"cl_mvinsetcrosshair", "1"};
+cvar_t cl_mvinsethud = {"cl_mvinsethud", "1"};
+
 extern cvar_t	scr_fov;
 
 void R_NetGraph (void);
@@ -209,6 +216,14 @@ void R_Init (void) {
 	Cvar_Register (&r_aliastransbase);
 	Cvar_Register (&r_aliastransadj);
 
+	// oppymv 310804
+	Cvar_Register(&cl_multiview);
+	Cvar_Register(&cl_mvdisplayhud);
+	Cvar_Register(&cl_mvinset);
+	Cvar_Register(&cl_mvinsetcrosshair);
+	Cvar_Register(&cl_mvinsethud);
+
+
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetValue (&r_maxedges, (float) NUMSTACKEDGES);
@@ -288,6 +303,7 @@ void R_SetVrect (vrect_t *pvrectin, vrect_t *pvrect, int lineadj) {
 	int h;
 	float size;
 	qboolean full = false;
+	int max; // oppymv
 
 	if (scr_viewsize.value >= 100.0) {
 		size = 100.0;
@@ -323,10 +339,110 @@ void R_SetVrect (vrect_t *pvrectin, vrect_t *pvrect, int lineadj) {
 	pvrect->height &= ~1;
 
 	pvrect->x = (pvrectin->width - pvrect->width) / 2;
-	if (full)
+
+	// oppymv 010904
+	if (CURRVIEW && cl_multiview.value && cls.mvdplayback) {
+	max = cl_multiview.value;
+
+	// vid.height and vid.width for pvrect->x and pvrect->y
+
+	if (max == 1) {
+		pvrect->y = 0; // top
+	}
+	else if (max == 2 && cl_mvinset.value) {
+		if (CURRVIEW == 2) {
+			pvrect->y = 0;
+			pvrect->x = 0;
+			// height and width already calculated (for sbar)
+		}
+		else if (CURRVIEW == 1 && !cl_sbar.value) {
+			pvrect->x = (vid.width/3)*2;
+			pvrect->y = 0;
+			pvrect->width = vid.width / 3 + 2;
+			pvrect->height = vid.height / 3;
+		}
+		else if (CURRVIEW == 1 && cl_sbar.value) {
+			pvrect->x = (vid.width/3)*2;
+			pvrect->y = 0;
+			pvrect->width = vid.width / 3 + 2;
+			pvrect->height = h / 3 + 1;
+		}
+		return;
+	}
+	else if (max == 2 && !cl_mvinset.value) { // top
+		if (CURRVIEW == 2) {
+			pvrect->x = 0;
+			pvrect->y = 0;
+			pvrect->width = vid.width;
+			pvrect->height = h/2;
+		}
+		else if (CURRVIEW == 1) { // bottom
+			pvrect->x = 0;
+			pvrect->y = h/2;
+			pvrect->width = vid.width;
+			pvrect->height = h/2;
+		}
+		return;
+
+	}
+	
+	else if (max == 3) {
+		if (CURRVIEW == 2) { // top
+			pvrect->x = 0;
+			pvrect->y = 0;
+			pvrect->width = vid.width;
+			pvrect->height = h/2;
+		}
+		else if (CURRVIEW == 3) { // bottom left
+			pvrect->x = 0;
+			pvrect->y = h/2;
+			pvrect->width = vid.width/2;
+			pvrect->height = h/2;
+		}
+		else {
+			pvrect->x = vid.width/2; // bottom right
+			pvrect->y = h/2;
+			pvrect->width = vid.width/2;
+			pvrect->height = h/2;
+		}
+		return;
+	}
+	else {
+		if (cl_multiview.value > 4)
+			cl_multiview.value = 4;
+
+		if (CURRVIEW == 2) { // tl
+			pvrect->x = 0;
+			pvrect->y = 0;
+			pvrect->width = vid.width/2;
+			pvrect->height = h/2;
+		}
+		else if (CURRVIEW == 3) { // tr
+			pvrect->x = vid.width/2;
+			pvrect->y = 0;
+			pvrect->width = vid.width/2;
+			pvrect->height = h/2;
+		}
+		else if (CURRVIEW == 4) { // bl
+			pvrect->x = 0;
+			pvrect->y = h/2;
+			pvrect->width = vid.width/2;
+			pvrect->height = h/2;
+		}
+		else if (CURRVIEW == 1) { // br
+			pvrect->x = vid.width/2;
+			pvrect->y = h/2;
+			pvrect->width = vid.width/2;
+			pvrect->height = h/2;
+		}
+		return;
+	}
+}
+if (full)
 		pvrect->y = 0;
 	else
 		pvrect->y = (h - pvrect->height) / 2;
+
 }
 
 //Called every time the vid structure or r_refdef changes.

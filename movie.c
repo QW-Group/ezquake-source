@@ -140,7 +140,6 @@ double Movie_StartFrame(void) {
 
 void Movie_FinishFrame(void) {
 	char fname[128];
-
 	if (!Movie_IsCapturing())
 		return;
 
@@ -153,8 +152,26 @@ void Movie_FinishFrame(void) {
 	movie_dir.string, movie_start_date.tm_mday, movie_start_date.tm_mon, movie_start_date.tm_year,
 	movie_start_date.tm_hour, movie_start_date.tm_min, movie_start_date.tm_sec,	movie_frame_count, image_ext);
 #endif
-	SCR_Screenshot(fname);
-	movie_frame_count++;
+
+	con_suppress = true;
+
+	//SCR_Screenshot(fname);
+	//movie_frame_count++;
+
+	if (cl_multiview.value) {
+		if (CURRVIEW == 1)
+			SCR_Screenshot(fname);
+	} else {
+		SCR_Screenshot(fname);
+	}
+	con_suppress = false;
+	if (cl_multiview.value) {
+		if (CURRVIEW == 1)
+			movie_frame_count++;
+	} else {
+		movie_frame_count++;
+	}
+
 	if (cls.realtime >= movie_start_time + movie_len)
 		Movie_Stop();
 }

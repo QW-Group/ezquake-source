@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 
 cvar_t	cl_nopred	= {"cl_nopred", "0"};
+extern cvar_t cl_independentPhysics;
 
 void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) {
 	// split up very long moves
@@ -132,6 +133,118 @@ void CL_CalcCrouch (void) {
 	}
 }
 
+
+extern qboolean physframe; //#fps
+
+//#fps
+// for fps-independent physics
+
+static void CL_LerpMove (double msgtime)
+{
+	
+	static int		lastsequence = 0;
+	static vec3_t	lerp_angles[3];
+	static vec3_t	lerp_origin[3];
+	static double	lerp_times[3];
+	static qboolean	nolerp[2];
+	static double	demo_latency = 0.01;
+	float	frac;
+	float	simtime;
+	int		i;
+	int		from, to;
+	extern cvar_t cl_nolerp;
+
+	if (cl_nolerp.value) {
+lastsequence = ((unsigned)-1) >> 1;	//reset
+		return;
+	}
+
+	if (cls.netchan.outgoing_sequence < lastsequence) {
+		// reset
+//Com_Printf ("*********** RESET");
+		lastsequence = -1;
+		lerp_times[0] = -1;
+		demo_latency = 0.01;
+	}
+
+//@@	if (cls.netchan.outgoing_sequence > lastsequence) {
+if (physframe) {	// #fps
+		lastsequence = cls.netchan.outgoing_sequence;
+		// move along
+		lerp_times[2] = lerp_times[1];
+		lerp_times[1] = lerp_times[0];
+		lerp_times[0] = msgtime;
+
+		VectorCopy (lerp_origin[1], lerp_origin[2]);
+		VectorCopy (lerp_origin[0], lerp_origin[1]);
+		VectorCopy (cl.simorg, lerp_origin[0]);
+
+		VectorCopy (lerp_angles[1], lerp_angles[2]);
+		VectorCopy (lerp_angles[0], lerp_angles[1]);
+		VectorCopy (cl.simangles, lerp_angles[0]);
+
+		nolerp[1] = nolerp[0];
+		nolerp[0] = false;
+		for (i = 0; i < 3; i++)
+			if (fabs(lerp_origin[0][i] - lerp_origin[1][i]) > 100)
+				break;
+		if (i < 3)
+			nolerp[0] = true;	// a teleport or something
+	}
+
+	simtime = cls.realtime - demo_latency;
+
+	// adjust latency
+	if (simtime > lerp_times[0]) {
+//		Com_DPrintf ("HIGH clamp\n");
+		demo_latency = cls.realtime - lerp_times[0];
+	}
+	else if (simtime < lerp_times[2]) {
+//		Com_DPrintf ("   low clamp\n");
+		demo_latency = cls.realtime - lerp_times[2];
+	} else {
+extern cvar_t cl_physfps;
+		// drift towards ideal latency
+		float ideal_latency = (lerp_times[0] - lerp_times[2]) * 0.6;
+//		float ideal_latency = 1.0/cl_physfps.value;
+
+ideal_latency = 0;
+
+if (physframe)	//##testing
+{
+		if (demo_latency > ideal_latency)
+			demo_latency = max(demo_latency - cls.frametime * 0.1, ideal_latency);
+		if (demo_latency < ideal_latency)
+			demo_latency = min(demo_latency + cls.frametime * 0.1, ideal_latency);
+}
+	}
+
+	// decide where to lerp from
+	if (simtime > lerp_times[1]) {
+		from = 1;
+		to = 0;
+	} else {
+		from = 2;
+		to = 1;
+	}
+
+	if (nolerp[to])
+		return;
+
+	frac = (simtime - lerp_times[from]) / (lerp_times[to] - lerp_times[from]);
+	frac = bound (0, frac, 1);
+
+//Com_Printf ("%f\n", frac);
+
+	for (i = 0; i < 3; i++)
+		cl.simorg[i] = lerp_origin[from][i] + (lerp_origin[to][i] - lerp_origin[from][i]) * frac;
+
+
+}
+
+double lerp_time;
+
+
 void CL_PredictMove (void) {
 	int i, oldphysent;
 	frame_t *from = NULL, *to;
@@ -168,9 +281,14 @@ void CL_PredictMove (void) {
 		VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
 		VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
 		CL_CategorizePosition ();
+		if (cl_independentPhysics.value != 0) 
+			lerp_time = cls.realtime;	//#fps
 		goto out;
 	}
 
+//#fps
+if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0)
+{
 	oldphysent = pmove.numphysent;
 	CL_SetSolidPlayers (cl.playernum);
 
@@ -187,9 +305,14 @@ void CL_PredictMove (void) {
 	// copy results out for rendering
 	VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
 	VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
+	if (physframe && cl_independentPhysics.value != 0)
+		lerp_time = cls.realtime;
+}
 
 out:
-	CL_CalcCrouch ();
+if (!cls.demoplayback && cl_independentPhysics.value != 0)
+	CL_LerpMove (lerp_time);
+CL_CalcCrouch ();
 	cl.waterlevel = pmove.waterlevel;
 }
 
@@ -198,4 +321,4 @@ void CL_InitPrediction (void) {
 	Cvar_Register(&cl_nopred);
 
 	Cvar_ResetCurrentGroup();
-}
+} 

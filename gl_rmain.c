@@ -23,6 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sound.h"
 #include "utils.h"
 
+//VULT
+#include "vx_stuff.h"
+#include "vx_vertexlights.h"
+
 entity_t	r_worldentity;
 
 qboolean	r_cache_thrash;		// compatability
@@ -60,6 +64,12 @@ texture_t	*r_notexture_mip;
 
 int			d_lightstylevalue[256];	// 8.8 fraction of base light value
 
+cvar_t cl_multiview = {"cl_multiview", "0" };
+cvar_t cl_mvdisplayhud = {"cl_mvdisplayhud", "1"};
+cvar_t cl_mvinset = {"cl_mvinset", "0"};
+cvar_t cl_mvinsetcrosshair = {"cl_mvinsetcrosshair", "1"};
+cvar_t cl_mvinsethud = {"cl_mvinsethud", "1"};
+
 cvar_t	r_drawentities = {"r_drawentities", "1"};
 cvar_t	r_lerpframes = {"r_lerpframes", "1"};
 cvar_t	r_lerpmuzzlehack = {"r_lerpmuzzlehack", "1"};
@@ -82,8 +92,12 @@ cvar_t	r_farclip			= {"r_farclip", "4096"};
 qboolean OnChange_r_skyname(cvar_t *v, char *s);
 cvar_t	r_skyname			= {"r_skyname", "", 0, OnChange_r_skyname};
 cvar_t	gl_detail			= {"gl_detail","0"};			
-cvar_t	gl_caustics			= {"gl_caustics", "0"};			
+cvar_t	gl_caustics			= {"gl_caustics", "0"};		
+cvar_t  gl_waterfog			= {"gl_waterfog", "1"};			
+cvar_t  gl_waterfog_density = {"gl_waterfogDensity", "1"};	
+ 
 
+cvar_t  gl_lumaTextures = {"gl_lumaTextures", "1"};	
 cvar_t	gl_subdivide_size = {"gl_subdivide_size", "128", CVAR_ARCHIVE};
 cvar_t	gl_clear = {"gl_clear", "0"};
 qboolean OnChange_gl_clearColor(cvar_t *v, char *s);
@@ -114,6 +128,13 @@ cvar_t gl_part_blobs = {"gl_part_blobs", "0"};
 cvar_t gl_part_lavasplash = {"gl_part_lavasplash", "0"};
 cvar_t gl_part_inferno = {"gl_part_inferno", "0"};
 
+cvar_t  gl_fogenable		= {"gl_fogenable", "0"};//Tei default
+cvar_t  gl_fogstart			= {"gl_fogstart", "50.0"}; 
+cvar_t  gl_fogend			= {"gl_fogend", "800.0"}; 
+cvar_t  gl_fogred			= {"gl_fogred","0.6"};
+cvar_t  gl_foggreen			= {"gl_foggreen","0.5"}; 
+cvar_t  gl_fogblue			= {"gl_fogblue","0.4"}; 
+cvar_t  gl_fogsky			= {"gl_fogsky","0"}; 
 
 int		lightmode = 2;
 
@@ -271,11 +292,20 @@ float	r_framelerp;
 float	r_modelalpha;
 float	r_lerpdistance;
 
+//VULT COLOURED MODEL LIGHTS
+extern vec3_t lightcolor;
+float apitch, ayaw;
+vec3_t vertexlight;
+
 void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qboolean mtex) {
     int *order, count;
 	vec3_t interpolated_verts;
     float l, lerpfrac;
     trivertx_t *verts1, *verts2;
+
+	//VULT COLOURED MODEL LIGHTS
+	int i;
+	vec3_t lc;
 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;	
@@ -313,11 +343,27 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qboolean mte
 				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
 			}
 
-			
-			l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
-			l = (l * shadelight + ambientlight) / 256.0;
+			// VULT VERTEX LIGHTING
+			if (amf_lighting_vertex.value && !full_light)
+			{
+				l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, apitch, ayaw);
+			}
+			else
+			{
+				l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
+				l = (l * shadelight + ambientlight) / 256.0;
+			}
 			l = min(l , 1);
-			glColor4f (l, l, l, r_modelalpha);
+			//VULT COLOURED MODEL LIGHTS
+			if (amf_lighting_colour.value && !full_light)
+			{
+				for (i=0;i<3;i++)
+					lc[i] = lightcolor[i] / 256 + l;
+					//Com_Printf("rgb light : %f %f %f\n", lc[0], lc[1], lc[2]);
+					glColor4f(lc[0],lc[1],lc[2], r_modelalpha);
+			}
+			else
+				glColor4f (l, l, l, r_modelalpha);
 
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 			glVertex3fv(interpolated_verts);
@@ -398,11 +444,18 @@ void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum) {
 	}	
 }
 
+//VULT COLOURED MODEL LIGHTING
+vec3_t dlight_color;
+extern float bubblecolor[NUM_DLIGHTTYPES][4];
 void R_AliasSetupLighting(entity_t *ent) {
 	int minlight, lnum;
 	float add, fbskins;
 	vec3_t dist;
 	model_t *clmodel;
+
+	//VULT COLOURED MODEL LIGHTING
+	int i;
+	float radiusmax = 0;
 
 	clmodel = ent->model;
 
@@ -423,15 +476,108 @@ void R_AliasSetupLighting(entity_t *ent) {
 	full_light = false;
 	ambientlight = shadelight = R_LightPoint (ent->origin);
 
-	for (lnum = 0; lnum < MAX_DLIGHTS; lnum++) {
-		if (cl_dlights[lnum].die < cl.time || !cl_dlights[lnum].radius)
-			continue;
+	//VULT COLOURED MODEL LIGHTS
+	if (amf_lighting_colour.value)
+	{
+		for (lnum = 0; lnum < MAX_DLIGHTS; lnum++)
+		{
+			if (cl_dlights[lnum].die < cl.time || !cl_dlights[lnum].radius)
+				continue;
 
-		VectorSubtract (ent->origin, cl_dlights[lnum].origin, dist);
-		add = cl_dlights[lnum].radius - VectorLength(dist);
+			VectorSubtract (ent->origin, cl_dlights[lnum].origin, dist);
+			add = cl_dlights[lnum].radius - VectorLength(dist);
 
-		if (add > 0)
-			ambientlight += add;
+			if (add > 0)
+			{
+				//VULT VERTEX LIGHTING
+				if (amf_lighting_vertex.value)
+				{
+					if (!radiusmax)
+					{
+						radiusmax = cl_dlights[lnum].radius;
+						VectorCopy(cl_dlights[lnum].origin, vertexlight);
+					}
+					else if (cl_dlights[lnum].radius > radiusmax)
+					{
+						radiusmax = cl_dlights[lnum].radius;
+						VectorCopy(cl_dlights[lnum].origin, vertexlight);
+					}
+				}
+				VectorCopy(bubblecolor[cl_dlights[lnum].type], dlight_color);
+				for (i=0;i<3;i++)
+				{
+					lightcolor[i] = lightcolor[i] + (dlight_color[i]*add)*2;
+					if (lightcolor[i] > 256)
+					{
+						switch (i)
+						{
+						case 0:
+							lightcolor[1] = lightcolor[1] - (1 * lightcolor[1]/3); 
+							lightcolor[2] = lightcolor[2] - (1 * lightcolor[2]/3); 
+							break;
+						case 1:
+							lightcolor[0] = lightcolor[0] - (1 * lightcolor[0]/3); 
+							lightcolor[2] = lightcolor[2] - (1 * lightcolor[2]/3); 
+							break;
+						case 2:
+							lightcolor[1] = lightcolor[1] - (1 * lightcolor[1]/3); 
+							lightcolor[0] = lightcolor[0] - (1 * lightcolor[0]/3); 
+							break;
+						}
+					}
+				}
+				//ambientlight += add;
+			}
+		}
+	}
+	else
+	{
+		for (lnum = 0; lnum < MAX_DLIGHTS; lnum++) {
+			if (cl_dlights[lnum].die < cl.time || !cl_dlights[lnum].radius)
+				continue;
+
+			VectorSubtract (ent->origin, cl_dlights[lnum].origin, dist);
+			add = cl_dlights[lnum].radius - VectorLength(dist);
+
+			if (add > 0)
+			{
+				//VULT VERTEX LIGHTING
+				if (amf_lighting_vertex.value)
+				{
+					if (!radiusmax)
+					{
+						radiusmax = cl_dlights[lnum].radius;
+						VectorCopy(cl_dlights[lnum].origin, vertexlight);
+					}
+					else if (cl_dlights[lnum].radius > radiusmax)
+					{
+						radiusmax = cl_dlights[lnum].radius;
+						VectorCopy(cl_dlights[lnum].origin, vertexlight);
+					}
+				}
+				ambientlight += add;
+			}
+		}
+	}
+	//calculate pitch and yaw for vertex lighting
+	if (amf_lighting_vertex.value)
+	{
+		vec3_t dist, ang;
+		apitch = currententity->angles[0];
+		ayaw = currententity->angles[1];
+
+		if (!radiusmax)
+		{
+			vlight_pitch = 45;
+			vlight_yaw = 45;
+		}
+		else
+		{
+			VectorSubtract (vertexlight, currententity->origin, dist);
+			vectoangles(dist, ang);
+			vlight_pitch = ang[0];
+			vlight_yaw = ang[1];
+		}
 	}
 
 	// clamp lighting so it doesn't overbright as much
@@ -453,7 +599,16 @@ void R_AliasSetupLighting(entity_t *ent) {
 
 	if (clmodel->modhint == MOD_PLAYER) {
 		fbskins = bound(0, r_fullbrightSkins.value, cl.fbskins);
-		if (fbskins) {
+		if (r_fullbrightSkins.value == 1 && gl_fb_models.value == 1) {
+			ambientlight = shadelight = 4096;
+			full_light = true;
+		}
+		else if (r_fullbrightSkins.value == 0) {
+			ambientlight = max(ambientlight, 8);
+			shadelight = max(shadelight, 8);
+			full_light = true;
+		}
+		else if (fbskins) {
 			ambientlight = max(ambientlight, 8 + fbskins * 120);
 			shadelight = max(shadelight, 8 + fbskins * 120);
 			full_light = true;
@@ -477,6 +632,25 @@ void R_DrawAliasModel (entity_t *ent) {
 
 	VectorCopy (ent->origin, r_entorigin);
 	VectorSubtract (r_origin, r_entorigin, modelorg);
+
+	//VULT CORONAS
+	if ((!strcmp (ent->model->name, "progs/flame.mdl") /*|| !strcmp (ent->model->name, "progs/flame2.mdl")*/ || !strcmp (ent->model->name, "progs/flame3.mdl")) && (amf_coronas.value/* && (rand() % 2 < 2)*/))
+	{
+		//FIXME: This is slow and pathetic as hell, really we should just check the entity
+		//alternativley add some kind of permanent client side TE for the torch
+		NewStaticLightCorona (C_FIRE, ent->origin);
+	}
+	if (amf_part_fire.value && (!strcmp (ent->model->name, "progs/flame.mdl") || !strcmp (ent->model->name, "progs/flame2.mdl") || !strcmp (ent->model->name, "progs/flame3.mdl")))
+	{
+		if (!strcmp (ent->model->name, "progs/flame.mdl") && !cl.paused)
+			ParticleFire(ent->origin);
+		else if (!strcmp (ent->model->name, "progs/flame2.mdl") || !strcmp (ent->model->name, "progs/flame3.mdl"))
+		{
+			if (!cl.paused)
+				ParticleFire(ent->origin);
+			return;
+		}
+	}
 
 	clmodel = ent->model;
 	paliashdr = (aliashdr_t *) Mod_Extradata (ent->model);	//locate the proper data
@@ -555,6 +729,9 @@ void R_DrawAliasModel (entity_t *ent) {
 
 	
 	r_modelalpha = ((ent->flags & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
+	//VULT MOTION TRAILS
+	if (ent->alpha)
+		r_modelalpha = ent->alpha;
 
 	// we can't dynamically colormap textures, so they are cached separately for the players.  Heads are just uncolored.
 	if (ent->scoreboard && !gl_nocolors.value) {
@@ -612,7 +789,8 @@ void R_DrawAliasModel (entity_t *ent) {
 
 	glPopMatrix ();
 
-	if (r_shadows.value && !full_light && !(ent->flags & RF_NOSHADOW)) {
+	//VULT MOTION TRAILS - No shadows on motion trails
+	if ((r_shadows.value && !full_light && !(ent->flags & RF_NOSHADOW)) && !ent->alpha) {
 		float theta;
 		static float shadescale = 0;
 
@@ -654,6 +832,23 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 		currententity = &vislist->list[i];
 		switch (currententity->model->type) {
 			case mod_alias:
+				//VULT NAILTRAIL - Hidenails
+				if (amf_hidenails.value && currententity->model->modhint == MOD_SPIKE)
+					break;
+				//VULT ROCKETTRAILS - Hide rockets
+				if (amf_hiderockets.value && currententity->model->flags & EF_ROCKET)
+					break;
+				//VULT CAMERAS - Show/Hide playermodel
+				if (currententity->alpha == -1)
+				{
+					 if (cameratype == C_NORMAL)
+						break;
+					 else
+						currententity->alpha = 1;
+				}
+				//VULT MOTION TRAILS
+				if (currententity->alpha < 0)
+					break;
 				R_DrawAliasModel (currententity);
 				break;
 			case mod_brush:
@@ -672,6 +867,10 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 void R_DrawViewModel (void) {
 	centity_t *cent;
 	static entity_t gun;
+
+	//VULT CAMERA - Don't draw gun in external camera
+	if (cameratype != C_NORMAL)
+		return;
 
 	if (!r_drawentities.value || !cl.viewent.current.modelindex)
 		return;
@@ -854,6 +1053,7 @@ void R_SetupFrame (void) {
 	}
 
 	V_SetContentsColor (r_viewleaf->contents);
+	V_AddWaterfog (r_viewleaf->contents);	 
 	V_CalcBlend ();
 
 	r_cache_thrash = false;
@@ -871,8 +1071,70 @@ __inline void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, G
 	xmin = ymin * aspect;
 	xmax = ymax * aspect;
 
-	glFrustum(xmin, xmax, ymin, ymax, zNear, zFar);
+	if (cl_multiview.value == 2 && !cl_mvinset.value && cls.mvdplayback)
+		glFrustum( xmin, xmax, ymin + (ymax - ymin)*0.25, ymax - (ymax - ymin)*0.25, zNear, zFar);
+	else if (cl_multiview.value == 3 && cls.mvdplayback) {
+		if (CURRVIEW == 2)
+			glFrustum( xmin, xmax, ymin + (ymax - ymin)*0.25, ymax - (ymax - ymin)*0.25, zNear, zFar);
+		else
+			glFrustum( xmin, xmax, ymin, ymax, zNear, zFar);
+	}
+	else
+		glFrustum( xmin, xmax, ymin, ymax, zNear, zFar);
 }
+
+void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max) {
+
+	if (max == 1) {
+		glViewport (glx + x, gly + y2, w, h);
+		return;
+	}
+	else if (max == 2 && cl_mvinset.value) {
+		if (CURRVIEW == 2)
+			glViewport (glx + x, gly + y2, w, h);
+		else if (CURRVIEW == 1 && !cl_sbar.value)
+			glViewport (glx + x + (glwidth/3)*2 + 1, gly + y2 + (glheight/3)*2, w/3, h/3);
+		else if (CURRVIEW == 1 && cl_sbar.value)
+			glViewport (glx + x + (glwidth/3)*2 + 1, gly + y2 + (h/3)*2, w/3, h/3);
+		else 
+			Com_Printf("ERROR!\n");
+		return;
+	}
+	else if (max == 2 && !cl_mvinset.value) {
+		if (CURRVIEW == 2)
+			glViewport (0, h/2, w, h/2);
+		else if (CURRVIEW == 1)
+			glViewport (0, 0, w, h/2-1);
+		else 
+			Com_Printf("ERROR!\n");
+		return;
+
+	}
+	else if (max == 3) {
+		if (CURRVIEW == 2)
+			glViewport (0, h/2, w, h/2);
+		else if (CURRVIEW == 3)
+			glViewport (0, 0, w/2, h/2-1);
+		else
+			glViewport (w/2, 0, w/2, h/2-1);
+		return;
+	}
+	else {
+		if (cl_multiview.value > 4)
+			cl_multiview.value = 4;
+
+		if (CURRVIEW == 2)
+			glViewport (0, h/2, w/2, h/2);
+		else if (CURRVIEW == 3)
+			glViewport (w/2, h/2, w/2, h/2);
+		else if (CURRVIEW == 4)
+			glViewport (0, 0, w/2, h/2-1);
+		else if (CURRVIEW == 1)
+			glViewport (w/2, 0, w/2, h/2-1);
+	}
+
+	return;
+} 
 
 void R_SetupGL (void) {
 	float screenaspect;
@@ -890,7 +1152,12 @@ void R_SetupGL (void) {
 	w = x2 - x;
 	h = y - y2;
 
-	glViewport (glx + x, gly + y2, w, h);
+	if (CURRVIEW && cl_multiview.value && cls.mvdplayback)
+		R_SetViewports(glx,x,gly,y2,w,h,cl_multiview.value);
+
+	if (!cl_multiview.value || !cls.mvdplayback)
+		glViewport (glx + x, gly + y2, w, h);
+
     screenaspect = (float)r_refdef.vrect.width/r_refdef.vrect.height;
 	farclip = max((int) r_farclip.value, 4096);
     MYgluPerspective (r_refdef.fov_y, screenaspect, 4, farclip);
@@ -915,8 +1182,21 @@ void R_SetupGL (void) {
 	else
 		glDisable(GL_CULL_FACE);
 
+	if (cl_multiview.value && cls.mvdplayback) {
+		glClear (GL_DEPTH_BUFFER_BIT);
+		gldepthmin = 0;
+		gldepthmax = 1;
+		glDepthFunc (GL_LEQUAL);
+	}
+
+	glDepthRange (gldepthmin, gldepthmax); 
+
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
+
+	glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	glHint (GL_FOG_HINT,GL_NICEST);
+
 	glEnable(GL_DEPTH_TEST);
 }
 
@@ -955,6 +1235,10 @@ void R_Init (void) {
 	Cvar_Register (&r_drawflame);
 	Cvar_Register (&gl_detail);
 	Cvar_Register (&gl_caustics);
+	if (!COM_CheckParm ("-nomtex")) {
+		Cvar_Register (&gl_waterfog);
+		Cvar_Register (&gl_waterfog_density);
+	}
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_BLEND);
 	Cvar_Register (&gl_polyblend);
@@ -977,6 +1261,7 @@ void R_Init (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
 	Cvar_Register (&gl_playermip);
 	Cvar_Register (&gl_subdivide_size);
+	Cvar_Register (&gl_lumaTextures);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
 	Cvar_Register (&r_farclip);
@@ -988,10 +1273,23 @@ void R_Init (void) {
 	Cvar_Register (&gl_ztrick);
 	Cvar_Register (&gl_nocolors);
 	Cvar_Register (&gl_finish);
+	Cvar_Register (&gl_fogenable); 
+	Cvar_Register (&gl_fogstart); 
+	Cvar_Register (&gl_fogend); 
+	Cvar_Register (&gl_fogred); 
+	Cvar_Register (&gl_fogblue); 
+	Cvar_Register (&gl_foggreen);
+	Cvar_Register (&gl_fogsky);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&r_speeds);
 	Cvar_Register (&r_netgraph);
+
+	Cvar_Register(&cl_multiview);
+	Cvar_Register(&cl_mvdisplayhud);
+	Cvar_Register(&cl_mvinset);
+	Cvar_Register(&cl_mvinsetcrosshair);
+	Cvar_Register(&cl_mvinsethud);
 
 	Cvar_ResetCurrentGroup();
 
@@ -1005,6 +1303,9 @@ void R_Init (void) {
 	R_InitTextures ();
 	R_InitBubble ();
 	R_InitParticles ();
+
+	//VULT STUFF
+	InitVXStuff();
 
 	netgraphtexture = texture_extension_number;
 	texture_extension_number++;
@@ -1023,6 +1324,9 @@ void R_Init (void) {
 
 extern msurface_t	*alphachain;
 void R_RenderScene (void) {
+
+	vec3_t		colors;
+
 	R_SetupFrame ();
 
 	R_SetFrustum ();
@@ -1041,6 +1345,21 @@ void R_RenderScene (void) {
 	R_DrawWaterSurfaces ();
 
 	GL_DisableMultitexture();
+
+	if (gl_fogenable.value)
+	{
+		glFogi(GL_FOG_MODE, GL_LINEAR);
+			colors[0] = gl_fogred.value;
+			colors[1] = gl_foggreen.value;
+			colors[2] = gl_fogblue.value; 
+		glFogfv(GL_FOG_COLOR, colors); 
+		glFogf(GL_FOG_START, gl_fogstart.value); 
+		glFogf(GL_FOG_END, gl_fogend.value); 
+		glEnable(GL_FOG);
+	}
+	else
+		glDisable(GL_FOG);
+
 }
 
 int gl_ztrickframe = 0;
@@ -1059,6 +1378,14 @@ void R_Clear (void) {
 
 	if (gl_clear.value || (!vid_hwgamma_enabled && v_contrast.value > 1))
 		clearbits |= GL_COLOR_BUFFER_BIT;
+
+	if (gl_clear.value)
+	{
+		if (gl_fogenable.value)
+			glClearColor(gl_fogred.value,gl_foggreen.value,gl_fogblue.value,0.5);//Tei custom clear color
+		else
+			glClearColor(0,0,0,1);
+	}
 
 	if (gl_ztrick.value) {
 		if (clearbits)
@@ -1108,6 +1435,11 @@ void R_RenderView (void) {
 	R_RenderScene ();
 	R_RenderDlights ();
 	R_DrawParticles ();
+	//VULT: CORONAS
+	//Even if coronas gets turned off, let active ones fade out
+	if (amf_coronas.value || CoronaCount)
+		R_DrawCoronas();
+
 	R_DrawViewModel ();
 
 	if (r_speeds.value) {

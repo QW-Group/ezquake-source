@@ -44,8 +44,6 @@ netadr_t	net_local_adr;
 
 netadr_t	net_from;
 sizebuf_t	net_message;
-
-#define	MAX_UDP_PACKET	(MAX_MSGLEN*2)	// one more than msg + header
 byte		net_message_buffer[MAX_UDP_PACKET];
 
 #define	MAX_LOOPBACK	4	// must be a power of two

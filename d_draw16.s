@@ -23,7 +23,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: d_draw16.s,v 1.1.1.1 2004-09-07 20:58:58 hexum Exp $
+	$Id: d_draw16.s,v 1.1.1.2 2004-09-07 21:08:43 hexum Exp $
 */
 // d_draw16.s
 // x86 assembly-language horizontal 8-bpp span-drawing code, with 16-pixel

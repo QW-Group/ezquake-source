@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_GROUP_SCREEN					"Screen Settings"
 #define CVAR_GROUP_CROSSHAIR				"Crosshair Settings"
 #define CVAR_GROUP_SBAR						"Status Bar and Scoreboard"
+#define CVAR_GROUP_SERVER_BROWSER			"Server Browser"
 #define CVAR_GROUP_NETWORK					"Network Settings"
 #define CVAR_GROUP_INPUT_MISC				"Input - Misc"
 #define CVAR_GROUP_INPUT_JOY				"Input - Joystick"
@@ -49,6 +50,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef GLQUAKE
 #define CVAR_GROUP_OPENGL					"OpenGL Rendering"
+#define CVAR_GROUP_AMF   					"AMF Features"
 #else
 #define CVAR_GROUP_SOFTWARE					"Software Rendering"
 #endif
@@ -88,6 +90,7 @@ char *cvar_groups_list[] = {
 	CVAR_GROUP_SCREEN,
 	CVAR_GROUP_CROSSHAIR,
 	CVAR_GROUP_SBAR,
+	CVAR_GROUP_SERVER_BROWSER,
 	CVAR_GROUP_NETWORK,
 	CVAR_GROUP_INPUT_MISC,
 	CVAR_GROUP_INPUT_JOY,
@@ -99,6 +102,7 @@ char *cvar_groups_list[] = {
 	CVAR_GROUP_SYSTEM_SETTINGS,
 #ifdef GLQUAKE
 	CVAR_GROUP_OPENGL,
+	CVAR_GROUP_AMF,
 #else
 	CVAR_GROUP_SOFTWARE,
 #endif

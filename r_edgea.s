@@ -23,7 +23,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: r_edgea.s,v 1.1.1.1 2004-09-07 20:59:16 hexum Exp $
+	$Id: r_edgea.s,v 1.1.1.2 2004-09-07 21:09:24 hexum Exp $
 */
 // r_edgea.s
 // x86 assembly-language edge-processing code.

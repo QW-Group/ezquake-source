@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 
 int sb_updates;		// if >= vid.numpages, no update needed
+extern cvar_t show_fps2;
 
 #define STAT_MINUS		10	// num frame for '-' stats digit
 mpic_t		*sb_nums[2][11];
@@ -77,7 +78,21 @@ cvar_t	scr_scoreboard_borderless = {"scr_scoreboard_borderless", "0"};
 #ifdef GLQUAKE
 cvar_t	scr_scoreboard_fillalpha = {"scr_scoreboard_fillalpha", "0.7"};
 cvar_t	scr_scoreboard_fillcolored = {"scr_scoreboard_fillcolored", "2"};		
+
+
+int vxdamagecount;
+int vxdamagecount_oldhealth;
+int vxdamagecount_time;
+int vxdamagecountarmour;
+int vxdamagecountarmour_oldhealth;
+int vxdamagecountarmour_time;
+
+#include "vx_stuff.h"
+#include "gl_local.h"
+
 #endif
+
+
 
 /********************************** CONTROL **********************************/
 
@@ -223,6 +238,16 @@ void Sbar_Init (void) {
 		
 	Cmd_AddCommand ("+showteamscores", Sbar_ShowTeamScores);
 	Cmd_AddCommand ("-showteamscores", Sbar_DontShowTeamScores);
+}
+
+void Request_Pings (void)
+{
+    if (cls.realtime - cl.last_ping_request > 2)
+    {
+        cl.last_ping_request = cls.realtime;
+        MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+        SZ_Print (&cls.netchan.message, "pings");
+    }
 }
 
 /****************************** SUPPORT ROUTINES ******************************/
@@ -806,6 +831,36 @@ static void Sbar_DrawNormal (void) {
 			Sbar_DrawPic (0, 0, sb_armor[1]);
 		else if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
 			Sbar_DrawPic (0, 0, sb_armor[0]);
+#ifdef GLQUAKE
+		if (amf_stat_loss.value)
+		{
+			float alpha;
+			//VULT STAT LOSS
+			//Pretty self explanitory, I just thought it would be a nice feature to go with my "what the hell is going on?" theme
+			//and obscure even more of the screen
+			if (cl.stats[STAT_ARMOR] < vxdamagecountarmour_oldhealth)
+			{
+				if (vxdamagecountarmour_time > cl.time) //add to damage
+					vxdamagecountarmour = vxdamagecountarmour + (vxdamagecountarmour_oldhealth - cl.stats[STAT_ARMOR]);
+				else
+					vxdamagecountarmour = vxdamagecountarmour_oldhealth - cl.stats[STAT_ARMOR];
+				vxdamagecountarmour_time = cl.time + 2*amf_stat_loss.value;
+			}
+			vxdamagecountarmour_oldhealth = cl.stats[STAT_ARMOR];
+			if (vxdamagecountarmour_time > cl.time)
+			{
+				alpha = min(1, (vxdamagecountarmour_time - cl.time));
+				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+				glDisable(GL_ALPHA_TEST);
+				glEnable (GL_BLEND);
+				glColor4f(1, 1, 1, alpha);
+				Sbar_DrawNum (24, -24, -vxdamagecountarmour, 3, vxdamagecountarmour>0);
+				glEnable(GL_ALPHA_TEST);
+				glDisable (GL_BLEND);
+				glColor4f(1, 1, 1, 1);
+			}
+		}
+#endif
 	}
 
 	// face
@@ -813,6 +868,34 @@ static void Sbar_DrawNormal (void) {
 	
 	// health
 	Sbar_DrawNum (136, 0, cl.stats[STAT_HEALTH], 3, cl.stats[STAT_HEALTH] <= 25);
+#ifdef GLQUAKE
+	if (amf_stat_loss.value)
+	{
+		//VULT STAT LOSS
+		if (cl.stats[STAT_HEALTH] < vxdamagecount_oldhealth)
+		{
+			if (vxdamagecount_time > cl.time) //add to damage
+				vxdamagecount = vxdamagecount + (vxdamagecount_oldhealth - cl.stats[STAT_HEALTH]);
+			else
+				vxdamagecount = vxdamagecount_oldhealth - cl.stats[STAT_HEALTH];
+			vxdamagecount_time = cl.time + 2 * amf_stat_loss.value;
+		}
+		vxdamagecount_oldhealth = cl.stats[STAT_HEALTH];
+		if (vxdamagecount_time > cl.time)
+		{
+			float alpha;
+			alpha = min(1, (vxdamagecount_time - cl.time));
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			glDisable(GL_ALPHA_TEST);
+			glEnable (GL_BLEND);
+			glColor4f(1, 1, 1, alpha);
+			Sbar_DrawNum (136, -24, -vxdamagecount, 3, vxdamagecount>0);
+			glEnable(GL_ALPHA_TEST);
+			glDisable (GL_BLEND);
+			glColor4f(1, 1, 1, 1);
+		}
+	}	
+#endif
 
 	// ammo icon
 	if (cl.stats[STAT_ITEMS] & IT_SHELLS)
@@ -966,11 +1049,17 @@ static void Sbar_SoloScoreboard (void) {
 static void Sbar_DeathmatchOverlay (int start) {
 	int stats_basic, stats_team, stats_touches, stats_caps, playerstats[7];
 	int scoreboardsize, colors_thickness, statswidth, stats_xoffset;
-	int i, k, top, bottom, x, y, xofs, total, minutes, p, skip = 10;
+	int i, d, k, top, bottom, x, y, xofs, total, p, skip = 10;
 	int rank_width, leftover, startx, tempx, mynum;
 	char num[12], scorerow[64], team[5], name[MAX_SCOREBOARDNAME];
-	player_info_t *s;
+	char myminutes[3];
+	int             draw_fps;
+    int             offset;     
+    player_info_t *s;
 	mpic_t *pic;
+
+    draw_fps = show_fps2.value && !cl.intermission && !cls.mvdplayback;
+    offset = 8 * draw_fps;
 
 #ifndef CLIENTONLY
 	// FIXME
@@ -1050,7 +1139,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 		Draw_Fill (xofs - 1, y - 9, rank_width + 2, 1, 0);						//Border - Top
 	Draw_AlphaFill (xofs, y - 8, rank_width, 9, 1, SCOREBOARD_HEADINGALPHA);	//Draw heading row
 
-	Draw_String(xofs + 1, y - 8, cl.teamplay ? " ping pl time frags team name" : " ping pl time frags name");
+	Draw_String(xofs + 1, y - 8, cl.teamplay ? (draw_fps ? " ping pl  fps frags team name" : " ping pl time frags team name") : (draw_fps ? " ping pl  fps frags name" : " ping pl time frags name"));
 
 
 	if (statswidth) {
@@ -1176,7 +1265,20 @@ static void Sbar_DeathmatchOverlay (int start) {
 
 			// draw time
 			total = (cl.intermission ? cl.completed_time : cls.demoplayback ? cls.demotime : cls.realtime) - s->entertime;
-			minutes = (int) total / 60;
+			sprintf (myminutes, "%3i", (int) total / 60);
+
+			if (draw_fps) {
+				if (s->last_fps > 0) {
+					sprintf (myminutes, "%3i", s->last_fps);
+					if (s->last_fps < 70) {
+						for (d=0; d < strlen(myminutes); d++)
+							myminutes[d] ^= 128;
+					}
+				}
+				else {
+					sprintf (myminutes, "   ");
+				}
+			}
 
 			// print the shirt/pants colour bars
 			Draw_Fill (cl.teamplay ? tempx - 40 : tempx, y + 4 - colors_thickness, 40, colors_thickness, Sbar_ColorForMap (top));
@@ -1194,9 +1296,9 @@ static void Sbar_DeathmatchOverlay (int start) {
 			// team
 			if (cl.teamplay) {
 				Q_strncpyz  (team, s->team, sizeof(team));
-				Q_snprintfz (scorerow, sizeof(scorerow), " %3i  %3i  %-4s %s", minutes, s->frags, team, name);
+				Q_snprintfz (scorerow, sizeof(scorerow), " %s  %3i  %-4s %s", myminutes, s->frags, team, name);
 			} else {
-				Q_snprintfz (scorerow, sizeof(scorerow), " %3i  %3i  %s", minutes, s->frags, name);
+				Q_snprintfz (scorerow, sizeof(scorerow), " %s  %3i  %s", myminutes, s->frags, name);
 			}
 			Draw_String (x, y, scorerow);
 
@@ -1222,9 +1324,11 @@ static void Sbar_DeathmatchOverlay (int start) {
 			}
 
 
-			if (k == mynum) {
-				Draw_Character (x + 40, y, 16);
-				Draw_Character (x + 40 + 32, y, 17);
+			if (!cls.mvdplayback || !cl_multiview.value) {
+				if (k == mynum) {
+					Draw_Character (x + 40, y, 16);
+					Draw_Character (x + 40 + 32, y, 17);
+				}
 			}
 
 			y += skip;
@@ -1328,9 +1432,11 @@ static void Sbar_TeamOverlay (void) {
 		Q_snprintfz (num, sizeof(num), "%5i", tm->players);
 		Draw_String (x + 104 + 88, y, num);
 
-		if (tm->myteam) {
-			Draw_Character (x + 104 - 8, y, 16);
-			Draw_Character (x + 104 + 32, y, 17);
+		if (!cls.mvdplayback || !cl_multiview.value) {
+			if (tm->myteam) {
+				Draw_Character (x + 104 - 8, y, 16);
+				Draw_Character (x + 104 + 32, y, 17);
+			}
 		}
 
 		y += skip;
@@ -1411,9 +1517,11 @@ static void Sbar_MiniDeathmatchOverlay (void) {
 		Draw_Character (x + 16, y, num[1]);
 		Draw_Character (x + 24, y, num[2]);
 
-		if (k == mynum) {
-			Draw_Character (x, y, 16);
-			Draw_Character (x + 32, y, 17);
+		if (!cls.mvdplayback || !cl_multiview.value) {
+			if (k == mynum) {
+				Draw_Character (x, y, 16);
+				Draw_Character (x + 32, y, 17);
+			}
 		}
 
 		// team
@@ -1599,7 +1707,14 @@ void Sbar_Draw(void) {
 				Q_snprintfz(st, sizeof(st), "Tracking %-.13s", cl.players[spec_track].name);
 				if (!cls.demoplayback)
 					strcat (st, ", [JUMP] for next");
-				Sbar_DrawString(0, -8, st);
+
+				// oppymv 300804
+				// fix displaying "tracking .." for both players with inset on
+				if (cl_multiview.value != 2 || !cls.mvdplayback)
+					Sbar_DrawString(0, -8, st);
+				else if (CURRVIEW == 1 && cl_mvinset.value)
+					Sbar_DrawString(0, -8, st);
+				//vm
 			}
 		} else if (sb_showscores || sb_showteamscores || cl.stats[STAT_HEALTH] <= 0) {
 			Sbar_SoloScoreboard();
@@ -1613,6 +1728,20 @@ void Sbar_Draw(void) {
 			Sbar_DrawNormal();
 		}
 	}
+
+#ifdef GLQUAKE
+	//VULT STAT LOSS
+	if (cl.stats[STAT_HEALTH] <= 0)
+	{
+		vxdamagecount_time = 0;
+		vxdamagecount = 0;
+		vxdamagecount_oldhealth = 0;
+		vxdamagecountarmour_time = 0;
+		vxdamagecountarmour = 0;
+		vxdamagecountarmour_oldhealth = 0;
+
+	}
+#endif
 
 	// main screen deathmatch rankings
 	// if we're dead show team scores in team games

@@ -165,7 +165,7 @@ qboolean MP3_IsActive(void) {
 #ifdef _WIN32
 
 static qboolean MP3_IsPlayerRunning(void) {
-	return ((mp3_hwnd = FindWindow("FuhQuake Winamp", NULL)) || (mp3_hwnd = FindWindow("Winamp v1.x", NULL)));
+	return ((mp3_hwnd = FindWindow("ezQuake Winamp", NULL)) || (mp3_hwnd = FindWindow("Winamp v1.x", NULL)));
 }
 
 void MP3_Execute_f(void) {
@@ -189,7 +189,7 @@ void MP3_Execute_f(void) {
 	if (length && (path[length - 1] == '\\' || path[length - 1] == '/'))
 		path[length - 1] = 0;
 	strcat(path, "/winamp.exe");
-	if (!CreateProcess (NULL, va("%s /CLASS=\"FuhQuake Winamp\"", path), 
+	if (!CreateProcess (NULL, va("%s /CLASS=\"ezQuake Winamp\"", path), 
 		NULL, NULL, FALSE, GetPriorityClass(GetCurrentProcess()), NULL, NULL, &si, &pi))
 	{
 		Com_Printf ("Couldn't execute winamp\n");

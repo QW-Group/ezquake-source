@@ -20,6 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // these are the key numbers that should be passed to Key_Event
 
+#ifndef _KEYS_H_
+#define _KEYS_H_
+ 
 typedef enum {
 	K_TAB = 9,
 	K_ENTER = 13,
@@ -44,6 +47,9 @@ typedef enum {
 	K_ALT,
 	K_LALT,
 	K_RALT,
+#ifdef WITH_KEYMAP
+	K_ALTGR,    // Right Alt-Key (=AltGr Key; this key must be used, if a third level of mappings is needed)
+#endif // WITH_KEYMAP 
 	K_CTRL,
 	K_LCTRL,
 	K_RCTRL,
@@ -182,4 +188,11 @@ void Key_WriteBindings (FILE *f);
 void Key_SetBinding (int keynum, char *binding);
 void Key_Unbind (int keynum);
 void Key_ClearStates (void);
+#ifdef WITH_KEYMAP
+int	 Key_StringToKeynum (char *str);
+char	*Key_KeynumToString (int keynum, char *buffer);
+#else // WITH_KEYMAP
 char *Key_KeynumToString (int keynum);
+#endif // WITH_KEYMAP 
+
+#endif // _KEYS_H_ 

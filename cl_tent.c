@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sound.h"
 
 #ifdef GLQUAKE
+#include "vx_stuff.h"
 #include "gl_local.h"
 #endif
 
@@ -173,6 +174,9 @@ void CL_ParseTEnt (void) {
 	int	rnd, cnt, type;
 	vec3_t pos;
 	dlight_t *dl;
+#ifdef GLQUAKE
+	byte col[2];
+#endif
 
 	type = MSG_ReadByte ();
 	switch (type) {
@@ -180,7 +184,15 @@ void CL_ParseTEnt (void) {
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_RunParticleEffect (pos, vec3_origin, 20, 30);
+#ifdef GLQUAKE
+		if (amf_part_sparks.value)
+		{
+			col[0] = 0; col[1] = 124; col[2] = 0;
+			SparkGen (pos, col, 20, 90, 1);
+		}
+		else
+#endif
+			R_RunParticleEffect (pos, vec3_origin, 20, 30);
 		S_StartSound (-1, 0, cl_sfx_wizhit, pos, 1, 1);
 		break;
 
@@ -188,7 +200,15 @@ void CL_ParseTEnt (void) {
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_RunParticleEffect (pos, vec3_origin, 226, 20);
+#ifdef GLQUAKE
+		if (amf_part_sparks.value)
+		{
+			col[0] = 255; col[1] = 77; col[2] = 0;
+			SparkGen (pos, col, 20, 150, 1);
+		}
+		else
+#endif
+			R_RunParticleEffect (pos, vec3_origin, 226, 20);
 		S_StartSound (-1, 0, cl_sfx_knighthit, pos, 1, 1);
 		break;
 
@@ -196,7 +216,12 @@ void CL_ParseTEnt (void) {
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_RunParticleEffect (pos, vec3_origin, 0, 10);
+#ifdef GLQUAKE
+		if (amf_part_spikes.value)
+			VXNailhit (pos, 10*amf_part_spikes.value);
+		else
+#endif
+			R_RunParticleEffect (pos, vec3_origin, 0, 10);
 
 		if ( rand() % 5 ) {
 			S_StartSound (-1, 0, cl_sfx_tink1, pos, 1, 1);
@@ -214,7 +239,12 @@ void CL_ParseTEnt (void) {
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_RunParticleEffect (pos, vec3_origin, 0, 20);
+#ifdef GLQUAKE
+		if (amf_part_spikes.value)
+			VXNailhit (pos, 20*amf_part_spikes.value);
+		else
+#endif
+			R_RunParticleEffect (pos, vec3_origin, 0, 20);
 
 		if ( rand() % 5 ) {
 			S_StartSound (-1, 0, cl_sfx_tink1, pos, 1, 1);
@@ -234,31 +264,88 @@ void CL_ParseTEnt (void) {
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
 
-		if (r_explosiontype.value == 2) {
-			R_TeleportSplash (pos);									//teleport splash
-		} else if (r_explosiontype.value == 3) {	
-			R_RunParticleEffect (pos, vec3_origin, 225, 50);		//lightning blood
-		} else if (r_explosiontype.value == 4) {	
-			R_RunParticleEffect (pos, vec3_origin, 73, 20 * 32);	//big blood
-		} else if (r_explosiontype.value == 5) {
-			R_RunParticleEffect (pos, vec3_origin, 0, 20 * 14);		//dbl gunshot
-		} else if (r_explosiontype.value == 6) {
-			R_BlobExplosion (pos);									//blob explosion
+		if (r_explosiontype.value == 2) 
+		{
 #ifdef GLQUAKE
-		} else if (r_explosiontype.value == 7 && qmb_initialized && gl_part_explosions.value) {
+			if (amf_part_teleport.value)
+				VXTeleport(pos);
+			else
+#endif
+				R_TeleportSplash (pos);									//teleport splash
+#ifdef GLQUAKE
+			if (amf_coronas.value)
+				NewCorona (C_BLUEFLASH, pos);
+#endif
+		}
+		else if (r_explosiontype.value == 3) 
+		{	
+			R_RunParticleEffect (pos, vec3_origin, 225, 50);		//lightning blood
+		}
+		else if (r_explosiontype.value == 4) 
+		{	
+			R_RunParticleEffect (pos, vec3_origin, 73, 20 * 32);	//big blood
+		}
+		else if (r_explosiontype.value == 5) 
+		{
+			R_RunParticleEffect (pos, vec3_origin, 0, 20 * 14);		//dbl gunshot
+		}
+		else if (r_explosiontype.value == 6) 
+		{
+#ifdef GLQUAKE
+			if (amf_part_blobexplosion.value)
+				VXBlobExplosion(pos);
+			else
+#endif
+				R_BlobExplosion (pos);									//blob explosion
+#ifdef GLQUAKE
+			//VULT CORONAS
+			if (amf_coronas.value)
+				NewCorona (C_BLUEFLASH, pos);
+		}
+		else if (r_explosiontype.value == 7 && qmb_initialized && gl_part_explosions.value) 
+		{
 			QMB_DetpackExplosion (pos);								//detpack explosion
 #endif
-		} else {	//sprite and particles
-			R_ParticleExplosion (pos);								//normal explosion
+		}
+#ifdef GLQUAKE
+		//VULT PARTICLES
+		else if (r_explosiontype.value == 8)
+		{
+			FuelRodExplosion (pos);
+		}
+		else if (r_explosiontype.value == 9)
+		{
+			BurningExplosion (pos); 
+		}
+#endif
+		else
+		{	//sprite and particles
+#ifdef GLQUAKE
+			if (amf_part_explosion.value)
+				VXExplosion(pos);
+			else
+#endif
+				R_ParticleExplosion (pos);								//normal explosion
 		}
 
-		if (r_explosionlight.value)	{
+		if (r_explosionlight.value)	
+		{
 			dl = CL_AllocDlight (0);
 			VectorCopy (pos, dl->origin);
 			dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
 			dl->die = cl.time + 0.5;
 			dl->decay = 300;
-			dl->type = dlightColor(r_explosionlightcolor.value, lt_explosion, true);
+#ifdef GLQUAKE
+			if (r_explosiontype.value == 8)
+				dl->type = lt_green;
+			else
+#endif
+				dl->type = dlightColor(r_explosionlightcolor.value, lt_explosion, true);
+#ifdef GLQUAKE
+			//VULT CORONAS
+			if (amf_coronas.value && r_explosiontype.value != 7 && r_explosiontype.value != 2 && r_explosiontype.value != 8)
+				NewCorona (C_FLASH, pos);
+#endif
 		}
 
 		S_StartSound (-1, 0, cl_sfx_r_exp3, pos, 1, 1);
@@ -268,8 +355,17 @@ void CL_ParseTEnt (void) {
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_BlobExplosion (pos);
-
+#ifdef GLQUAKE
+		if (amf_part_blobexplosion.value)
+			VXBlobExplosion(pos);
+		else
+#endif
+			R_BlobExplosion (pos);									//blob explosion
+		//VULT CORONAS
+#ifdef GLQUAKE
+		if (amf_coronas.value)
+			NewCorona (C_BLUEFLASH, pos);
+#endif
 		S_StartSound (-1, 0, cl_sfx_r_exp3, pos, 1, 1);
 		break;
 
@@ -302,7 +398,16 @@ void CL_ParseTEnt (void) {
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_TeleportSplash (pos);
+#ifdef GLQUAKE
+		if (amf_part_teleport.value)
+			VXTeleport(pos);
+		else
+#endif
+			R_TeleportSplash (pos);									//teleport splash
+#ifdef GLQUAKE
+		if (amf_coronas.value)
+			NewCorona (C_BLUEFLASH, pos);
+#endif
 		break;
 
 	case TE_GUNSHOT:			// bullet hitting wall
@@ -310,7 +415,12 @@ void CL_ParseTEnt (void) {
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_RunParticleEffect (pos, vec3_origin, 0, 20*cnt);
+#ifdef GLQUAKE
+		if (amf_part_gunshot.value)
+			VXGunshot (pos, 5*cnt*amf_part_gunshot.value);
+		else
+#endif
+			R_RunParticleEffect (pos, vec3_origin, 0, 20*cnt);
 		break;
 
 	case TE_BLOOD:				// bullets hitting body
@@ -318,7 +428,12 @@ void CL_ParseTEnt (void) {
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-		R_RunParticleEffect (pos, vec3_origin, 73, 20*cnt);
+#ifdef GLQUAKE
+		if (amf_part_blood.value)
+			VXBlood (pos, 5*cnt*amf_part_blood.value);
+		else
+#endif
+			R_RunParticleEffect (pos, vec3_origin, 73, 20*cnt);
 		break;
 
 	case TE_LIGHTNINGBLOOD:		// lightning hitting body
@@ -335,17 +450,29 @@ void CL_ParseTEnt (void) {
 
 void vectoangles(vec3_t vec, vec3_t ang);
 
+#define MAX_LIGHTNINGBEAMS 10
+//VULT LIGHTNING
+
 void CL_UpdateBeams (void) {
 	int i;
-	beam_t *b;
+	beam_t *b;	
 	vec3_t dist, org;
 	entity_t ent;
 	float d, yaw, pitch, forward, truelightning;
 	extern cvar_t v_viewheight;
 
+#ifdef GLQUAKE
+	int beamstodraw, j, k;
+	qboolean sparks = false;
+	vec3_t beamstart[MAX_LIGHTNINGBEAMS], beamend[MAX_LIGHTNINGBEAMS];
+#endif
+
 	memset (&ent, 0, sizeof(entity_t));
 	ent.colormap = vid.colormap;
 
+#ifdef GLQUAKE
+	beamstodraw = bound(1, amf_lightning.value, MAX_LIGHTNINGBEAMS);
+#endif
 	
 	truelightning = bound(0, cl_trueLightning.value, cl.truelightning);
 
@@ -413,19 +540,68 @@ void CL_UpdateBeams (void) {
 
 		// add new entities for the lightning
 		VectorCopy (b->start, org);
+#ifdef GLQUAKE
+		for (k=0;k<beamstodraw;k++)
+			VectorCopy (b->start, beamstart[k]);
+#endif
 		d = VectorNormalize(dist);
 		VectorScale (dist, 30, dist);
 
-		for ( ; d > 0; d -= 30) {
-			VectorCopy (org, ent.origin);
-			ent.model = b->model;
-			ent.angles[0] = pitch;
-			ent.angles[1] = yaw;
-			ent.angles[2] = rand() % 360;
+		for ( ; d > 0; d -= 30) 
+		{
+#ifdef GLQUAKE
+			if (!amf_lightning.value)
+			{
+#endif
+				VectorCopy (org, ent.origin);
+				ent.model = b->model;
+				ent.angles[0] = pitch;
+				ent.angles[1] = yaw;
+				ent.angles[2] = rand() % 360;
 
-			CL_AddEntity (&ent);
-			
+				CL_AddEntity (&ent);
+#ifdef GLQUAKE
+			}
+			else
+			{
+				if (!cl.paused)
+				{
+					//VULT - Some people might like their lightning beams thicker
+					for (k=0;k<beamstodraw;k++)
+					{
+						VectorAdd (org, dist, beamend[k]);
+						for (j=0;j<3;j++)
+						beamend[k][j]+=(rand()%40)-20;
+						VX_LightningBeam (beamstart[k], beamend[k]);
+						VectorCopy (beamend[k], beamstart[k]);
+					}
+				}
+			}
+			//VULT LIGHTNING
+			//The infamous d-light glow has been replaced with a simple corona so it doesn't light up the room anymore
+			if (amf_coronas.value && amf_lightning.value && !cl.paused)
+			{
+				if (b->entity == cl.viewplayernum + 1 && !amf_camera_chase.value)
+					NewCorona (C_SMALLLIGHTNING, org);
+				else
+					NewCorona (C_LIGHTNING, org);
+			}
+#endif
 			VectorAdd (org, dist, org);
+#ifdef GLQUAKE
+			//VULT LIGHTNING SPARKS
+			if (amf_lightning_sparks.value && !sparks && !cl.paused)
+			{
+				pmtrace_t	trace;
+				trace = PM_TraceLine (org, b->end);
+				if (trace.fraction < 1)
+				{
+					byte col[3] = {60,100,240};
+					SparkGen (trace.endpos, col, (int)(3*amf_lightning_sparks.value), 300, 0.25);
+					sparks = true;
+				}
+			}
+#endif
 		}
 	}	
 }
@@ -459,4 +635,82 @@ void CL_UpdateExplosions (void) {
 void CL_UpdateTEnts (void) {
 	CL_UpdateBeams ();
 	CL_UpdateExplosions ();
+#ifdef GLQUAKE
+	//VULT MOTION TRAILS
+	if (amf_motiontrails.value || MotionBlurCount) //dont stop removing trails if we have 'em
+		CL_UpdateBlurs();
+#endif
+
 }
+
+#ifdef GLQUAKE
+//VULT PARTICLES - For amf_inferno haxxed fake explosions
+void CL_FakeExplosion (vec3_t pos)
+{
+	dlight_t *dl;
+
+	if (amf_inferno_trail.value == 2) 
+	{
+		if (amf_part_blobexplosion.value)
+			VXBlobExplosion(pos);
+		else
+			R_BlobExplosion (pos);									//blob explosion
+		//VULT CORONAS
+		if (amf_coronas.value)
+			NewCorona (C_BLUEFLASH, pos);
+
+		dl = CL_AllocDlight (0);
+		VectorCopy (pos, dl->origin);
+		dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
+		dl->die = cl.time + 0.5;
+		dl->decay = 300;
+		dl->type = lt_blue;
+	}
+	else if (amf_inferno_trail.value == 3) 
+	{
+		FuelRodExplosion (pos);
+
+		dl = CL_AllocDlight (0);
+		VectorCopy (pos, dl->origin);
+		dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
+		dl->die = cl.time + 0.5;
+		dl->decay = 300;
+		dl->type = lt_green;
+	}
+	else if (amf_inferno_trail.value == 4) 
+	{
+		BurningExplosion(pos);
+
+		dl = CL_AllocDlight (0);
+		VectorCopy (pos, dl->origin);
+		dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
+		dl->die = cl.time + 0.5;
+		dl->decay = 300;
+		dl->type = lt_red;
+	}
+	else
+	{	//sprite and particles
+		if (r_explosiontype.value == 7 && qmb_initialized && gl_part_explosions.value) 
+			QMB_DetpackExplosion (pos); 							//detpack explosion
+		else if (amf_part_explosion.value)
+			VXExplosion(pos);
+		else
+			R_ParticleExplosion (pos);								//normal explosion
+
+		if (r_explosionlight.value) 
+		{
+			dl = CL_AllocDlight (0);
+			VectorCopy (pos, dl->origin);
+			dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
+			dl->die = cl.time + 0.5;
+			dl->decay = 300;
+			dl->type = dlightColor(r_explosionlightcolor.value, lt_explosion, true);
+			//VULT CORONAS
+			if (amf_coronas.value)
+				NewCorona (C_FLASH, pos);
+		}
+
+	}
+	S_StartSound (-1, 0, cl_sfx_r_exp3, pos, 1, 1);
+}
+#endif

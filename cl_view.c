@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef GLQUAKE
 #include "gl_local.h"
+#include "vx_stuff.h"
 #else
 #include "r_local.h"
 #endif
@@ -404,6 +405,45 @@ void V_SetContentsColor (int contents) {
 	}
 #endif
 }
+
+#ifdef GLQUAKE
+void V_AddWaterfog (int contents) {
+	int i = 0;
+	float *colors;
+	float lava[4] =  {1.0f,   0.314f, 0.0f,   0.5f};
+	float slime[4] = {0.039f,   0.738f,  0.333f,   0.5f};
+	float water[4] = {0.039f, 0.584f, 0.888f, 0.5f};	
+
+	if (!gl_waterfog.value || COM_CheckParm ("-nomtex") || contents == CONTENTS_EMPTY || contents == CONTENTS_SOLID) {
+		glDisable(GL_FOG);
+		return;
+	}
+
+	switch (contents) {
+		case CONTENTS_LAVA:
+			colors = lava;
+			break;
+		case CONTENTS_SLIME:
+			colors = slime;
+			break;
+		default:
+			colors = water;
+			break;
+	}
+
+	
+	glFogfv(GL_FOG_COLOR, colors);
+	if (( (int) gl_waterfog.value ) == 2) {
+		glFogf(GL_FOG_DENSITY, 0.0002 + (0.0009 - 0.0002) * bound(0, gl_waterfog_density.value, 1));
+		glFogi(GL_FOG_MODE, GL_EXP);
+	} else {
+		glFogi(GL_FOG_MODE, GL_LINEAR);
+		glFogf(GL_FOG_START, 150.0f);	
+		glFogf(GL_FOG_END, 4250.0f - (4250.0f - 1536.0f) * bound (0, gl_waterfog_density.value, 1));	
+	}
+	glEnable(GL_FOG);
+}
+#endif 
 
 void V_CalcPowerupCshift (void) {
 	float fraction;
@@ -829,7 +869,10 @@ void V_CalcRefdef (void) {
 	if (view_message->flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0))
 		r_refdef.viewangles[ROLL] = 80;	// dead view angle
 
-	
+#ifdef GLQUAKE
+	//VULT CAMERAS
+	CameraUpdate(view_message->flags & PF_DEAD);
+#endif
 	V_AddViewWeapon (height_adjustment);
 	
 }

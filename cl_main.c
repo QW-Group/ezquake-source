@@ -49,6 +49,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t	rcon_password = {"rcon_password", ""};
 cvar_t	rcon_address = {"rcon_address", ""};
+cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "0"};
 
 cvar_t	cl_timeout = {"cl_timeout", "60"};
 
@@ -57,13 +58,18 @@ cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 cvar_t	cl_sbar		= {"cl_sbar", "0", CVAR_ARCHIVE};
 cvar_t	cl_hudswap	= {"cl_hudswap", "0", CVAR_ARCHIVE};
 cvar_t	cl_maxfps	= {"cl_maxfps", "0", CVAR_ARCHIVE};
+cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
+cvar_t	cl_independentPhysics = {"cl_independentPhysics", "0", CVAR_INIT};	//#fps
 
 cvar_t	cl_predictPlayers = {"cl_predictPlayers", "1"};
 cvar_t	cl_solidPlayers = {"cl_solidPlayers", "1"};
 
+cvar_t  show_fps2 = {"draw_fps","0"};
+
 cvar_t  localid = {"localid", ""};
 
 static qboolean allowremotecmd = true;
+qboolean com_blockscripts;
 
 cvar_t	cl_deadbodyfilter = {"cl_deadbodyFilter", "0"};
 cvar_t	cl_gibfilter = {"cl_gibFilter", "0"};
@@ -76,8 +82,9 @@ cvar_t	cl_parseWhiteText = {"cl_parseWhiteText", "1"};
 cvar_t	cl_filterdrawviewmodel = {"cl_filterdrawviewmodel", "0"};
 cvar_t	cl_oldPL = {"cl_oldPL", "0"};
 cvar_t	cl_demoPingInterval = {"cl_demoPingInterval", "5"};
+cvar_t  demo_getpings      = {"demo_getpings",    "1"};
 cvar_t	cl_chatsound = {"cl_chatsound", "1"};
-cvar_t	cl_confirmquit = {"cl_confirmquit", "1", CVAR_INIT};
+//cvar_t	cl_confirmquit = {"cl_confirmquit", "1", CVAR_INIT};
 cvar_t	default_fov = {"default_fov", "0"};
 cvar_t	qizmo_dir = {"qizmo_dir", "qizmo"};
 
@@ -97,7 +104,8 @@ cvar_t r_explosionlight			= {"r_explosionLight", "1"};
 cvar_t r_explosiontype			= {"r_explosionType", "0"};
 cvar_t r_flagcolor				= {"r_flagColor", "0"};
 cvar_t r_lightflicker			= {"r_lightflicker", "1"};
-cvar_t r_rockettrail			= {"r_rocketTrail", "1"};
+//VULT - Hax to make my trail the default
+cvar_t r_rockettrail			= {"r_rocketTrail", "12"};
 cvar_t r_grenadetrail			= {"r_grenadeTrail", "1"};
 cvar_t r_powerupglow			= {"r_powerupGlow", "1"};
 
@@ -139,6 +147,8 @@ byte		*host_basepal;
 byte		*host_colormap;
 
 int			fps_count;
+
+void CL_Multiview(void);
 
 // emodel and pmodel are encrypted to prevent llamas from easily hacking them
 char emodel_name[] = { 'e'^0xe5, 'm'^0xe5, 'o'^0xe5, 'd'^0xe5, 'e'^0xe5, 'l'^0xe5, 0 };
@@ -195,7 +205,7 @@ void CL_MakeActive(void) {
 	}
 
 	if (!cls.demoplayback)
-		VID_SetCaption (va("FuhQuake: %s", cls.servername));
+		VID_SetCaption (va("ezQuake: %s", cls.servername));
 
 	Con_ClearNotify ();
 	TP_ExecTrigger ("f_spawn");
@@ -437,12 +447,49 @@ void CL_ClearState (void) {
 //Sends a disconnect message to the server
 //This is also called on Host_Error, so it shouldn't cause any errors
 void CL_Disconnect (void) {
+
+	extern cvar_t r_lerpframes;
+
+#ifdef GLQUAKE
+	extern cvar_t gl_polyblend;
+	extern cvar_t gl_clear;
+#endif
+
+#ifndef GLQUAKE
+	extern cvar_t r_waterwarp;
+	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
+		v_damagecshift, v_suitcshift, v_bonusflash;
+#endif
+
 	byte final[10];
 
 	connect_time = 0;
+    con_addtimestamp = true;
+
 	cl.teamfortress = false;
 
-	VID_SetCaption("FuhQuake");
+	CURRVIEW = 0;
+	scr_viewsize.value =  nViewsizeExit;
+	v_contrast.value = nContrastExit;
+#ifdef GLQUAKE
+	gl_polyblend.value = nPolyblendExit;
+	gl_clear.value = nGlClearExit;
+#endif
+	r_lerpframes.value = nLerpframesExit;
+#ifndef GLQUAKE
+	r_waterwarp.value = nWaterwarp;
+	v_contentblend.value = nContentblend;
+	v_quadcshift.value = nQuadshift;
+	v_ringcshift.value = nRingshift;
+	v_pentcshift.value = nPentshift;
+	v_damagecshift.value = nDamageshift;
+	v_suitcshift.value = nSuitshift;
+	v_bonusflash.value = nBonusflash;
+#endif
+	nTrack1duel = nTrack2duel = 0;
+	bExitmultiview = 0;
+
+	VID_SetCaption("ezQuake");
 
 	// stop sounds (especially looping!)
 	S_StopAllSounds (true);
@@ -563,7 +610,7 @@ void CL_ConnectionlessPacket (void) {
 				Com_Printf ("===========================\n");
 				Com_Printf ("Invalid localid on command packet received from local host. "
 					"\n|%s| != |%s|\n"
-					"You may need to reload your server browser and FuhQuake.\n",
+					"You may need to reload your server browser and ezQuake.\n",
 					s, localid.string);
 				Com_Printf ("===========================\n");
 				Cvar_Set(&localid, "");
@@ -633,6 +680,7 @@ qboolean CL_GetMessage (void) {
 }
 
 void CL_ReadPackets (void) {
+
 	while (CL_GetMessage()) {
 		// remote command packet
 		if (*(int *)net_message.data == -1)	{
@@ -715,20 +763,41 @@ void CL_SaveArgv(int argc, char **argv) {
 
 void CL_InitCommands (void);
 
+#ifdef GLQUAKE
+void CL_Fog_f (void)
+{
+	extern cvar_t gl_fogred, gl_foggreen, gl_fogblue, gl_fogenable;
+	if (Cmd_Argc () == 1)
+	{
+		Com_Printf ("\"fog\" is \"%f %f %f\"\n", gl_fogred.value, gl_foggreen.value, gl_fogblue.value);
+		return;
+	}
+	gl_fogenable.value = 1;
+	
+	gl_fogred.value =  atof(Cmd_Argv(1));
+	gl_foggreen.value =  atof(Cmd_Argv(2));
+	gl_fogblue.value =  atof(Cmd_Argv(3));
+
+
+}
+#endif
+
 void CL_InitLocal (void) {
 	extern cvar_t baseskin, noskins;
+	char st[256]; 
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CHAT);
 	Cvar_Register (&cl_parseWhiteText);
 	Cvar_Register (&cl_chatsound);
 
 	Cvar_Register (&cl_floodprot);
-	Cvar_Register (&cl_fp_messages );
+	Cvar_Register (&cl_fp_messages);
 	Cvar_Register (&cl_fp_persecond);
 
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&cl_shownet);
+	Cvar_Register (&show_fps2);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register (&cl_sbar);
@@ -741,6 +810,8 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_model_bobbing);
 	Cvar_Register (&cl_nolerp);
 	Cvar_Register (&cl_maxfps);
+	Cvar_Register (&cl_physfps);	//#fps
+	Cvar_Register (&cl_independentPhysics);	//#fps
 	Cvar_Register (&cl_deadbodyfilter);
 	Cvar_Register (&cl_gibfilter);
 	Cvar_Register (&cl_muzzleflash);
@@ -765,6 +836,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_demospeed);
 	Cvar_Register (&cl_demoPingInterval);
 	Cvar_Register (&qizmo_dir);
+	Cvar_Register (&demo_getpings);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 	Cvar_Register (&cl_staticsounds);
@@ -796,15 +868,26 @@ void CL_InitLocal (void) {
 	Cvar_Register (&password);
 	Cvar_Register (&rcon_password);
 	Cvar_Register (&rcon_address);
+	Cvar_Register (&cl_crypt_rcon);
 	Cvar_Register (&localid);
 	Cvar_Register (&cl_warncmd);
 	Cvar_Register (&cl_cmdline);
 
 	Cvar_ResetCurrentGroup();
 
-	Cvar_Register (&cl_confirmquit);
+	//Cvar_Register (&cl_confirmquit);
 
- 	Info_SetValueForStarKey (cls.userinfo, "*FuhQuake", FUH_VERSION, MAX_INFO_STRING);
+    com_blockscripts = false;
+
+    strcpy(st, EZ_VERSION);
+
+    if (COM_CheckParm("-noscripts"))
+    {
+        com_blockscripts = true;
+        strcat(st, " noscripts");
+    }
+
+ 	Info_SetValueForStarKey (cls.userinfo, "*ezQuake", st, MAX_INFO_STRING);
 
 	Cmd_AddLegacyCommand ("demotimescale", "cl_demospeed");
 
@@ -818,8 +901,11 @@ void CL_InitLocal (void) {
 
 
 	Cmd_AddCommand ("dns", CL_DNS_f);
-
 	Cmd_AddCommand ("reconnect", CL_Reconnect_f);
+
+#ifdef GLQUAKE
+	Cmd_AddCommand ("fog",CL_Fog_f);
+#endif
 
 	Cmd_AddMacro("connectiontype", CL_Macro_ConnectionType);
 	Cmd_AddMacro("demoplayback", CL_Macro_Demoplayback);
@@ -851,7 +937,7 @@ void CL_Init (void) {
 	FMod_CheckModel("gfx/colormap.lmp", host_colormap, com_filesize); 
 
 	Sys_mkdir(va("%s/qw", com_basedir));
-	Sys_mkdir(va("%s/fuhquake", com_basedir));	
+	Sys_mkdir(va("%s/ezquake", com_basedir));	
 
 	Key_Init ();
 	V_Init ();
@@ -929,20 +1015,62 @@ static double CL_MinFrameTime (void) {
 	if (cls.demoplayback) {
 		if (!cl_maxfps.value)
 			return 0;
-		fps = max (30.0, cl_maxfps.value);
-	} else {
-		fpscap = cl.maxfps ? max (30.0, cl.maxfps) : Rulesets_MaxFPS();
 
-		fps = cl_maxfps.value ? bound (30.0, cl_maxfps.value, fpscap) : com_serveractive ? fpscap : bound (30.0, rate.value / 80.0, fpscap);
+		// oppymv 310804
+		if (cl_multiview.value>0 && cls.mvdplayback)
+			fps = max (30.0, cl_maxfps.value * nNumViews);
+		else
+			fps = max (30.0, cl_maxfps.value);
+
+	} else {
+		if (cl_independentPhysics.value == 0) {
+			fpscap = cl.maxfps ? max (30.0, cl.maxfps) : Rulesets_MaxFPS();
+			fps = cl_maxfps.value ? bound (30.0, cl_maxfps.value, fpscap) : com_serveractive ? fpscap : bound (30.0, rate.value / 80.0, fpscap);
+		}
+		else 
+			fps = cl_maxfps.value ? max(cl_maxfps.value, 30) : 99999; //#fps:
 	}
 
 	return 1 / fps;
 }
 
+//#fps
+static double MinPhysFrameTime ()
+{
+	// server policy
+	float fpscap = (cl.maxfps ? cl.maxfps : 72.0);
+
+	// the user can lower it for testing (or really shit connection)
+	if (cl_physfps.value)
+		fpscap = min(fpscap, cl_physfps.value);
+
+	// not less than this no matter what
+	fpscap = max(fpscap, 10);
+
+	return 1 / fpscap;
+}
+
+//#fps:
+qboolean physframe;
+double physframetime;
+
 void CL_Frame (double time) {
 
 	static double extratime = 0.001;
 	double minframetime;
+	static double	extraphysframetime;	//#fps
+
+#ifdef GLQUAKE
+	extern cvar_t gl_clear;
+	extern cvar_t gl_polyblend;
+#endif
+	extern cvar_t r_lerpframes;
+
+#ifndef GLQUAKE
+	extern cvar_t r_waterwarp;
+	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
+		v_damagecshift, v_suitcshift, v_bonusflash;
+#endif
 
 	extratime += time;
 	minframetime = CL_MinFrameTime();
@@ -965,6 +1093,25 @@ void CL_Frame (double time) {
 	else
 		cls.frametime = min(0.2, cls.trueframetime);
 
+	//#fps:
+	if (cl_independentPhysics.value != 0) {
+		double minphysframetime = MinPhysFrameTime();
+
+		extraphysframetime += cls.frametime;
+		if (extraphysframetime < minphysframetime)
+			physframe = false;
+		else {
+			physframe = true;
+
+		if (extraphysframetime > minphysframetime*2)// FIXME: this is for the case when
+			physframetime = extraphysframetime;	// actual fps is too low
+		else									// Dunno how to do it right
+
+		physframetime = minphysframetime;
+		extraphysframetime -= physframetime;
+		}	
+	}
+
 	if (cls.demoplayback) {
 		if (cl.paused & PAUSED_DEMO)
 			cls.frametime = 0;
@@ -982,47 +1129,144 @@ void CL_Frame (double time) {
 		cl.time += cls.frametime;
 
 	// get new key events
-	Sys_SendKeyEvents();
 
-	// allow mice or other external controllers to add commands
-	IN_Commands();
+	if (cl_independentPhysics.value == 0) {
 
-	// process console commands
-	Cbuf_Execute();
+		Sys_SendKeyEvents();
 
-	if (com_serveractive)
-		SV_Frame(cls.frametime);
+		// allow mice or other external controllers to add commands
+		IN_Commands();
 
-	// fetch results from server
-	CL_ReadPackets();
+		// process console commands
+		Cbuf_Execute();
 
-	TP_UpdateSkins();
+		if (com_serveractive)
+			SV_Frame(cls.frametime);
 
 
-	if (cls.mvdplayback)
-		MVD_Interpolate();
+
+		// fetch results from server
+		CL_ReadPackets();
+
+		TP_UpdateSkins();
 
 
-	// process stuffed commands
-	Cbuf_ExecuteEx(&cbuf_svc);
+		if (cls.mvdplayback)
+			MVD_Interpolate();
 
-	CL_SendToServer();
+
+		// process stuffed commands
+		Cbuf_ExecuteEx(&cbuf_svc);
+
+		CL_SendToServer();
+
+	}
+
+	else {
+
+		//#fps
+		if (physframe)
+		{
+			Sys_SendKeyEvents();
+
+			// allow mice or other external controllers to add commands
+			IN_Commands();
+
+			// process console commands
+			Cbuf_Execute();
+		}
+
+		if (physframe)	//FIXME?
+			if (com_serveractive)
+				SV_Frame (physframetime);
+
+		if (physframe)
+		{
+			// fetch results from server
+			CL_ReadPackets();
+
+			TP_UpdateSkins();
+
+
+			if (cls.mvdplayback)
+				MVD_Interpolate();
+
+
+			// process stuffed commands
+			Cbuf_ExecuteEx(&cbuf_svc);
+
+			CL_SendToServer();
+		}
+		else
+		{
+			usercmd_t dummy;
+			IN_Move (&dummy);
+		}
+
+	}
 
 	if (cls.state >= ca_onserver) {	// !!! Tonik
 		Cam_SetViewPlayer();
 
 		// Set up prediction for other players
+	if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0)
 		CL_SetUpPlayerPrediction(false);
 
 		// do client side motion prediction
 		CL_PredictMove();
 
 		// Set up prediction for other players
+	if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0)
 		CL_SetUpPlayerPrediction(true);
 
 		// build a refresh entity list
 		CL_EmitEntities();
 	}
+
+	if (!bExitmultiview) {
+		nContrastExit = v_contrast.value;
+		nViewsizeExit = scr_viewsize.value;
+#ifdef GLQUAKE
+		nPolyblendExit = gl_polyblend.value;
+		nGlClearExit = gl_clear.value;
+#endif
+		nLerpframesExit = r_lerpframes.value; // oppymv 310804
+#ifndef GLQUAKE
+		nWaterwarp = r_waterwarp.value; // oppymv 010904
+		nContentblend = v_contentblend.value;
+		nQuadshift = v_quadcshift.value;
+		nRingshift = v_ringcshift.value;
+		nPentshift = v_pentcshift.value;
+		nDamageshift = v_damagecshift.value;
+		nSuitshift = v_suitcshift.value;
+		nBonusflash = v_bonusflash.value;
+#endif
+		CURRVIEW = 0;
+	}
+
+	if (bExitmultiview && !cl_multiview.value) {
+		scr_viewsize.value =  nViewsizeExit;
+		v_contrast.value = nContrastExit;
+#ifdef GLQUAKE
+		gl_polyblend.value = nPolyblendExit;
+		gl_clear.value = nGlClearExit;
+#endif
+		r_lerpframes.value = nLerpframesExit; // oppymv 310804
+#ifndef GLQUAKE
+		r_waterwarp.value = nWaterwarp; // oppymv 010904
+		v_contentblend.value = nContentblend;
+		v_quadcshift.value = nQuadshift;
+		v_ringcshift.value = nRingshift;
+		v_pentcshift.value = nPentshift;
+		v_damagecshift.value = nDamageshift;
+		v_suitcshift.value = nSuitshift;
+		v_bonusflash.value = nBonusflash;
+#endif
+		bExitmultiview = 0;
+	}
+
+	if (cl_multiview.value>0 && cls.mvdplayback)
+		CL_Multiview(); 
 
 	// update video
 	SCR_UpdateScreen();
@@ -1030,19 +1274,34 @@ void CL_Frame (double time) {
 	CL_DecayLights();
 
 	// update audio
-	if (cls.state == ca_active)
-		S_Update(r_origin, vpn, vright, vup);
-	else
-		S_Update(vec3_origin, vec3_origin, vec3_origin, vec3_origin);
+	if (CURRVIEW==2 && cl_multiview.value && cls.mvdplayback) {
+		if (cls.state == ca_active)	{
+			S_Update (r_origin, vpn, vright, vup);
+			CL_DecayLights ();
+		} else {
+			S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
+		}
+		CDAudio_Update();
+		MP3_Frame();
+	} else if (!cls.mvdplayback || !cl_multiview.value) {
+		if (cls.state == ca_active)	{
+			S_Update (r_origin, vpn, vright, vup);
+			CL_DecayLights ();
+		} else {
+			S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
+		}
+ 
+		CDAudio_Update();
+		MP3_Frame();
+	}
 
-	CDAudio_Update();
-	MP3_Frame();
 	MT_Frame();
 
 	if (Movie_IsCapturing())		
 		Movie_FinishFrame();
 
 	cls.framecount++;
+
 	fps_count++;
 }
 
@@ -1062,4 +1321,167 @@ void CL_Shutdown (void) {
 	Log_Shutdown();
 	if (host_basepal)
 		VID_Shutdown();
+} 
+
+int CL_IncrLoop(int cview, float max) {
+
+	if (cview >= max)
+		cview = 1;
+	else
+		cview++;
+
+	return cview;
+}
+
+int CL_NextPlayer(int plr) {
+	if (plr < -1)
+		plr = -1;
+	plr++;
+	while (cl.players[plr].spectator || !strcmp(cl.players[plr].name,"")) {
+		plr++;
+		if (plr>=32)
+			plr = 0;
+		}
+	return plr;
+}
+
+void CL_Multiview(void) {
+	static int playernum;
+	static char st[40];
+	extern cvar_t crosshair;
+
+#ifdef GLQUAKE
+	extern cvar_t gl_polyblend;
+	extern cvar_t gl_clear;
+	extern cvar_t gl_crosshairimage;
+#endif
+	extern cvar_t r_lerpframes;
+#ifndef GLQUAKE
+	extern cvar_t r_waterwarp;
+	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
+		v_damagecshift, v_suitcshift, v_bonusflash;
+#endif
+
+	if (!cls.mvdplayback)
+		return;
+
+	nNumViews = cl_multiview.value;
+
+	if (!CURRVIEW && cls.state >= ca_connected)
+		TP_RefreshSkins();
+
+	v_contrast.value = 1;
+
+	if (!cl_mvinset.value && cl_multiview.value == 2 || cl_multiview.value != 2)
+		scr_viewsize.value = 120;
+	else
+		scr_viewsize.value = nViewsizeExit;
+
+	// stop small screens
+	if (cl_mvinset.value && cl_multiview.value == 2 && scr_viewsize.value < 100)
+		scr_viewsize.value = 100;
+
+#ifdef GLQUAKE
+	gl_polyblend.value = 0;
+	gl_clear.value = 0;
+#endif
+	r_lerpframes.value = 0; // oppymv 310804
+	
+#ifndef GLQUAKE
+	r_waterwarp.value = 0;
+	v_contentblend.value = 0;
+	v_quadcshift.value = 0;
+	v_ringcshift.value = 0;
+	v_pentcshift.value = 0;
+	v_damagecshift.value = 0;
+	v_suitcshift.value = 0;
+	v_bonusflash.value = 0;
+#endif
+
+	nPlayernum = playernum;
+
+	if (cls.mvdplayback) {
+		
+		memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
+
+		CURRVIEW = CL_IncrLoop(CURRVIEW,cl_multiview.value);
+
+		if (cl_mvinset.value && cl_multiview.value == 2) {
+
+			// where did my comments go ?! they appear to have been
+			// stripped when this was ported.
+
+			if (nTrack1duel==nTrack2duel) {
+				nTrack1duel=CL_NextPlayer(-1);
+				nTrack2duel=CL_NextPlayer(nTrack1duel);
+			}
+			
+			if (nSwapPov==1) {
+				nTrack1duel = CL_NextPlayer(nTrack1duel);
+				nTrack2duel = CL_NextPlayer(nTrack2duel);
+				nSwapPov=0;
+			} else {
+				if (CURRVIEW == 1) {
+					playernum = nTrack1duel;
+				}
+				else {
+					playernum = nTrack2duel;
+				}
+
+			}
+		} else {
+		if (CURRVIEW ==	1) {
+			if (nTrack1 < 0 ) {
+				playernum = 0;
+				while (cl.players[playernum].spectator || !strcmp(cl.players[playernum].name,"")) {
+					playernum++;
+					if (playernum>=32)
+						playernum = 0;
+				}
+			} else {
+				playernum=nTrack1;
+			}
+		}
+		else if (CURRVIEW == 2) {
+			if (nTrack2 < 0 ) {
+				playernum++;
+				while (cl.players[playernum].spectator || !strcmp(cl.players[playernum].name,"")) {
+					playernum++;
+					if (playernum>=32)
+						playernum = 0;
+				}
+			} else {
+				playernum=nTrack2;
+			}
+		}
+		else if (CURRVIEW == 3) {
+			if (nTrack3 < 0 ) {
+				playernum++;
+				while (cl.players[playernum].spectator || !strcmp(cl.players[playernum].name,"")) {
+					playernum++;
+					if (playernum>=32)
+						playernum = 0;	
+				}
+			} else {
+				playernum=nTrack3;
+			}
+		}
+		else if (CURRVIEW == 4) {
+			if (nTrack4 < 0 ) {
+				playernum++;
+				while (cl.players[playernum].spectator || !strcmp(cl.players[playernum].name,"")) {
+					playernum++;
+					if (playernum>=32)
+						playernum = 0;
+				}
+			} else {
+				playernum=nTrack4;
+			}
+		}
+
+		}
+		spec_track = playernum;
+	}	
+
+	bExitmultiview = 1;
 }

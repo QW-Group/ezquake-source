@@ -29,10 +29,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t	cl_chatmode = {"cl_chatmode", "2"};
 
+#ifdef WITH_KEYMAP
+// variable to enable/disable key informations (e.g. scancode) to the consoloe:
+cvar_t	cl_showkeycodes  = {"cl_showkeycodes", "0"};
+#endif // WITH_KEYMAP
+
 #define		MAXCMDLINE	256
 char	key_lines[32][MAXCMDLINE];
 int		key_linepos;
+#ifdef WITH_KEYMAP
+#else
 int		key_lastpress;
+#endif // WITH_KEYMAP else
 
 int		edit_line=0;
 int		history_line=0;
@@ -42,7 +50,10 @@ keydest_t	key_dest;
 char		*keybindings[256];
 qboolean	consolekeys[256];	// if true, can't be rebound while in console
 qboolean	menubound[256];		// if true, can't be rebound while in menu
+#ifdef WITH_KEYMAP
+#else
 int			keyshift[256];		// key to map to if shift held down in console
+#endif // WITH_KEYMAP else
 int			key_repeats[256];	// if > 1, it is autorepeating
 qboolean	keydown[256];
 qboolean	keyactive[256];	
@@ -73,6 +84,12 @@ keyname_t keynames[] = {
 	{"ALT", K_ALT},
 	{"LALT", K_LALT},
 	{"RALT", K_RALT},
+
+#ifdef WITH_KEYMAP
+	{"ALTGR", K_ALTGR},
+	{"ALTCHAR", K_ALTGR},
+#endif // WITH_KEYMAP
+
 	{"CTRL", K_CTRL},
 	{"LCTRL", K_LCTRL},
 	{"RCTRL", K_RCTRL},
@@ -84,7 +101,15 @@ keyname_t keynames[] = {
 	{"LWINKEY", K_LWIN},
 	{"RWINKEY", K_RWIN},
 	{"POPUPMENU", K_MENU},
-	
+
+#ifdef WITH_KEYMAP
+	// special keys
+	{"WIN", K_WIN},
+	{"LWIN", K_LWIN},
+	{"RWIN", K_RWIN},
+	{"MENU", K_MENU},
+#endif // WITH_KEYMAP
+
 	// Keypad stuff..
 
 	{"NUMLOCK", KP_NUMLOCK},
@@ -488,6 +513,11 @@ static void AdjustConsoleHeight (int delta) {
 void Key_Console (int key) {
 	int i, len;
 
+#ifdef WITH_KEYMAP
+	static qboolean yellowchars = false;
+	static qboolean redchars    = false;
+#endif // WITH_KEYMAP
+
 	switch (key) {
 	    case K_ENTER:
 			// backslash text are commands
@@ -673,7 +703,31 @@ no_lf:
 	if (key < 32 || key > 127)
 		return;	// non printable
 
+#ifdef WITH_KEYMAP
+	// CTRL+y toggles yellowchars
+	if (keydown[K_CTRL] && key == 'y' && !keydown[K_ALTGR] && !keydown[K_ALT]) {
+		yellowchars = !yellowchars;
+		if ( redchars )
+			Com_Printf( "input of red characters is now off!\n" );
+		redchars    = false;
+		Com_Printf( "input of yellow numbers is now o%s!\n", yellowchars ? "n" : "ff" );
+		return;
+	}
+
+	// CTRL+r toggles redchars
+	if (keydown[K_CTRL] && key == 'r' && !keydown[K_ALTGR] && !keydown[K_ALT]) {
+		redchars    = !redchars;
+		if ( yellowchars )
+			Com_Printf( "input of yellow numbers is now off!\n" );
+		yellowchars = false;
+			Com_Printf( "input of red characters is now o%s!\n", redchars ? "n" : "ff" );
+		return;
+	}
+
+	if ( yellowchars ) {
+#else // WITH_KEYMAP
 	if (keydown[K_CTRL]) {
+#endif // WITH_KEYMAP else
 		if (key >= '0' && key <= '9')
 				key = key - '0' + 0x12;	// yellow number
 		else switch (key) {
@@ -697,7 +751,11 @@ no_lf:
 		}
 	}
 
+#ifdef WITH_KEYMAP
+	if (redchars)
+#else // WITH_KEYMAP
 	if (keydown[K_ALT])
+#endif // WITH_KEYMAP else
 		key |= 128;		// red char
 
 	i = strlen(key_lines[edit_line]);
@@ -804,11 +862,25 @@ void Key_Message (int key) {
 //Single ascii characters return themselves, while the K_* names are matched up.
 int Key_StringToKeynum (char *str) {
 	keyname_t *kn;
+#ifdef WITH_KEYMAP
+	int        keynum;
+#endif // WITH_KEYMAP
 	
 	if (!str || !str[0])
 		return -1;
 	if (!str[1])
+#ifdef WITH_KEYMAP
+		return (int)(unsigned char)str[0];
+
+	if (str[0] == '#') {
+		keynum = Q_atoi(str + 1);
+		if (keynum < 32 || keynum > 127)
+			return -1;
+		return keynum;
+	}
+#else // WITH_KEYMAP
 		return (unsigned char) str[0];
+#endif // WITH_KEYMAP else
 
 	for (kn = keynames; kn->name; kn++) {
 		if (!Q_strcasecmp(str,kn->name))
@@ -818,6 +890,59 @@ int Key_StringToKeynum (char *str) {
 }
 
 //Returns a string (either a single ascii char, or a K_* name) for the given keynum.
+//FIXME: handle quote special (general escape sequence?)
+#ifdef WITH_KEYMAP
+/*
+===================
+Key_KeynumToString
+
+Returns a string (either a single ascii char, or a K_* name) for the
+given keynum.
+===================
+*/
+char *Key_KeynumToString (int keynum, char *buffer) {
+	static char  *retval       = NULL;
+	keyname_t    *kn           = NULL;
+	static char   tinystr[ 5 ] = { "\0" };
+
+	if ( keynum < 0 )
+		retval = "<KEY NOT FOUND>";
+	else
+	if ( keynum == 0 )
+		retval = "<NO KEY>";
+	else
+	if ( keynum > 32 && keynum < 127 ) {
+		// printable ascii
+		if (keynum == 34) // treat " special
+			sprintf(tinystr, "#%u", keynum);
+		else {
+			tinystr[ 0 ] = keynum;
+			tinystr[ 1 ] = '\0';
+		}
+		retval = tinystr;
+	}
+	else {
+		for (kn=keynames; kn->name != NULL; kn++) {
+			if (keynum == kn->keynum)
+			{
+				retval = kn->name;
+				break;
+			}
+		}
+	}
+
+	if ( retval == NULL )
+		retval = "<UNKNOWN KEYNUM>";
+
+	// use the buffer if given
+	if ( buffer != NULL ) {
+		strcpy( buffer, retval );
+		return( buffer );
+	}
+
+	return( retval );
+}
+#else // WITH_KEYMAP
 //FIXME: handle quote special (general escape sequence?)
 char *Key_KeynumToString (int keynum) {
 	keyname_t *kn;	
@@ -837,6 +962,7 @@ char *Key_KeynumToString (int keynum) {
 
 	return "<UNKNOWN KEYNUM>";
 }
+#endif // WITH_KEYMAP else
 
 void Key_SetBinding (int keynum, char *binding) {
 	if (keynum == -1)
@@ -903,7 +1029,11 @@ void Key_Unbindall_f (void) {
 
 static void Key_PrintBindInfo(int keynum, char *keyname) {
 	if (!keyname)
+#ifdef WITH_KEYMAP
+		keyname = Key_KeynumToString(keynum, NULL);
+#else // WITH_KEYMAP
 		keyname = Key_KeynumToString(keynum);
+#endif // WITH_KEYMAP else
 
 	if (keynum == -1) {
 		Com_Printf ("\"%s\" isn't a valid key\n", keyname);
@@ -962,14 +1092,25 @@ void Key_Bind_f (void) {
 
 void Key_BindList_f (void) {
 	int i;
+#ifdef WITH_KEYMAP
+	char str[ 256 ];
+#endif // WITH_KEYMAP
 
 	for (i = 0; i < 256; i++) {
 		if (Key_IsLeftRightSameBind(i)) {
+#ifdef WITH_KEYMAP
+			Com_Printf ("%s \"%s\"\n", Key_KeynumToString(i, str), keybindings[i + 1]);
+#else // WITH_KEYMAP
 			Com_Printf ("%s \"%s\"\n", Key_KeynumToString(i), keybindings[i + 1]);
+#endif // WITH_KEYMAP else
 			i += 2;	
 		} else {
 			if (keybindings[i])
+#ifdef WITH_KEYMAP
+				Com_Printf ("%s \"%s\"\n", Key_KeynumToString(i, str), keybindings[i]);
+#else // WITH_KEYMAP
 				Com_Printf ("%s \"%s\"\n", Key_KeynumToString(i), keybindings[i]);
+#endif // WITH_KEYMAP else
 		}
 	}
 }
@@ -977,6 +1118,9 @@ void Key_BindList_f (void) {
 //Writes lines containing "bind key value"
 void Key_WriteBindings (FILE *f) {
 	int i, leftright;
+#ifdef WITH_KEYMAP
+	char str[ 256 ];
+#endif // WITH_KEYMAP
 
 	for (i = 0; i < 256; i++) {
 		leftright = Key_IsLeftRightSameBind(i) ? 1 : 0;
@@ -984,7 +1128,11 @@ void Key_WriteBindings (FILE *f) {
 			if (i == ';')
 				fprintf (f, "bind \";\" \"%s\"\n", keybindings[i]);
 			else
+#ifdef WITH_KEYMAP
+				fprintf (f, "bind %s \"%s\"\n", Key_KeynumToString(i, str), keybindings[leftright ? i + 1 : i]);
+#else // WITH_KEYMAP
 				fprintf (f, "bind %s \"%s\"\n", Key_KeynumToString(i), keybindings[leftright ? i + 1 : i]);
+#endif // WITH_KEYMAP else
 
 			if (leftright)
 				i += 2;
@@ -1028,9 +1176,17 @@ void Key_Init (void) {
 	consolekeys[K_RSHIFT] = true;
 	consolekeys[K_MWHEELUP] = true;
 	consolekeys[K_MWHEELDOWN] = true;
+#ifdef WITH_KEYMAP
+	consolekeys[K_WIN] = true;
+	consolekeys[K_LWIN] = true;
+	consolekeys[K_RWIN] = true;
+	consolekeys[K_MENU] = true;
+#endif // WITH_KEYMAP
 	consolekeys['`'] = false;
 	consolekeys['~'] = false;
 
+#ifdef WITH_KEYMAP
+#else
 	for (i = 0; i < 256; i++)
 		keyshift[i] = i;
 	for (i = 'a'; i <= 'z'; i++)
@@ -1056,6 +1212,7 @@ void Key_Init (void) {
 	keyshift[']'] = '}';
 	keyshift['`'] = '~';
 	keyshift['\\'] = '|';
+#endif // WITH_KEYMAP else
 
 	menubound[K_ESCAPE] = true;
 	for (i = 0; i < 12; i++)
@@ -1093,7 +1250,10 @@ void Key_Event (int key, qboolean down) {
 	if (!down)
 		key_repeats[key] = 0;
 
+#ifdef WITH_KEYMAP
+#else
 	key_lastpress = key;
+#endif // WITH_KEYMAP else 
 
 	// update auto-repeat status
 	if (down) {
@@ -1144,6 +1304,8 @@ void Key_Event (int key, qboolean down) {
 			Cbuf_AddText (cmd);
 			keyactive[key] = false;
 		}
+#ifdef WITH_KEYMAP
+#else // WITH_KEYMAP
 		if (keyshift[key] != key) {
 			kb = keybindings[keyshift[key]];
 			if (kb && kb[0] == '+' && keyactive[keyshift[key]]) {
@@ -1152,6 +1314,7 @@ void Key_Event (int key, qboolean down) {
 				keyactive[keyshift[key]] = false;
 			}
 		}
+#endif // WITH_KEYMAP else
 		return;
 	}
 
@@ -1178,8 +1341,11 @@ void Key_Event (int key, qboolean down) {
 	if (!down)
 		return;		// other systems only care about key down events
 
+#ifdef WITH_KEYMAP
+#else // WITH_KEYMAP
 	if (keydown[K_SHIFT])
 		key = keyshift[key];
+#endif // WITH_KEYMAP else 
 
 	switch (key_dest) {
 	case key_message:

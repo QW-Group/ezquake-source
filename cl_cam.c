@@ -43,12 +43,16 @@ double cam_lastviewtime;
 int spec_track = 0; // player# of who we are tracking
 int autocam = CAM_NONE;
 
+void CL_TrackMV1_f(void);
+void CL_TrackMV2_f(void);
+void CL_TrackMV3_f(void);
+void CL_TrackMV4_f(void);
+void CL_TrackTeam_f(void); 
+
+void CL_Track_f(void);
 
 int		ideal_track = 0;
 float	last_lock = 0;
-
-
-void CL_Track_f(void);	
 
 void vectoangles(vec3_t vec, vec3_t ang) {
 	float forward, yaw, pitch;
@@ -113,6 +117,9 @@ void Cam_Unlock(void) {
 
 void Cam_Lock(int playernum) {
 	char st[40];
+
+	if (cl_multiview.value && cls.mvdplayback)
+		return; 
 
 	sprintf(st, "ptrack %i", playernum);
 
@@ -396,6 +403,9 @@ void Cam_FinishMove(usercmd_t *cmd) {
 			return;
 		}
 		oldbuttons |= BUTTON_JUMP;	// don't jump again until released
+
+		if (!nSwapPov)
+			nSwapPov = 1; 
 	}
 
 	
@@ -483,7 +493,18 @@ void CL_InitCam(void) {
 	Cvar_Register (&cl_chasecam);
 
 	Cvar_ResetCurrentGroup();
-	Cmd_AddCommand ("track", CL_Track_f);		
+	Cmd_AddCommand ("track", CL_Track_f);	
+
+	Cmd_AddCommand ("track1", CL_TrackMV1_f);	
+	Cmd_AddCommand ("track2", CL_TrackMV2_f);	
+	Cmd_AddCommand ("track3", CL_TrackMV3_f);	
+	Cmd_AddCommand ("track4", CL_TrackMV4_f);
+	Cmd_AddCommand ("trackteam", CL_TrackTeam_f);	
+ 
+	nTrack1 = -1;
+	nTrack2 = -1;
+	nTrack3 = -1;
+	nTrack4 = -1;
 }
 
 void CL_Track_f(void) {	
@@ -529,7 +550,298 @@ void CL_Track_f(void) {
 
 
 int Cam_TrackNum(void) {
+	if (cl_multiview.value && !locked 
+#ifndef GLQUAKE
+		&& CURRVIEW == 2
+#endif
+		) {
+		mvlatch = cl_multiview.value;
+		cl_multiview.value = 0;
+	}
+	else if (!cl_multiview.value && mvlatch && locked) {
+		cl_multiview.value = mvlatch;
+		mvlatch = 0;
+	}
+
 	if (!autocam)
 		return -1;
 	return spec_track;
+}
+
+int WhoIsSpectated (void)
+{
+    if (cl.spectator  &&  autocam == CAM_TRACK  &&  cl.players[spec_track].name[0])
+        return spec_track;
+
+    return -1;
+}
+void CL_TrackMV1_f() {
+	int slot;
+	char *arg;
+
+	if (cls.state < ca_connected) {
+		Com_Printf("You must be connected to track\n", Cmd_Argv(0));
+		return;
+	}
+	if (!cl.spectator) {
+		Com_Printf("You can only track in spectator mode\n", Cmd_Argv(0));
+		return;
+	}
+	if (!strcmp(Cmd_Args(),"off")) {
+		Com_Printf("Track 1 resetting to default\n");
+		nTrack1 = -1;
+		return;
+	}
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: %s <name | userid | off>\n", Cmd_Argv(0));
+		return;
+	}
+
+	slot = Player_GetSlot(arg = Cmd_Argv(1));
+
+	if (slot == PLAYER_NAME_NOMATCH) {
+		Com_Printf("%s : no such player %s\n", Cmd_Argv(0), arg);
+		return;
+	} else if (slot == PLAYER_ID_NOMATCH) {
+		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), Q_atoi(arg));
+		return;
+	} else if (slot < 0 || slot >= MAX_CLIENTS) {	//PLAYER_NUM_MISMATCH covered by this
+		Com_Printf("%s : no such player\n", Cmd_Argv(0));
+		return;
+	}
+
+	if (cl.players[slot].spectator) {
+		Com_Printf("You cannot track a spectator\n", Cmd_Argv(0));
+	} else if (Cam_TrackNum() != slot) {
+		autocam = CAM_TRACK;
+		Cam_Lock(slot);
+		ideal_track = slot;
+		nTrack1=slot;
+		locked = true;
+	}
+}
+
+void CL_TrackMV2_f() {
+	int slot;
+	char *arg;
+
+	if (cls.state < ca_connected) {
+		Com_Printf("You must be connected to track\n", Cmd_Argv(0));
+		return;
+	}
+	if (!cl.spectator) {
+		Com_Printf("You can only track in spectator mode\n", Cmd_Argv(0));
+		return;
+	}
+	if (!strcmp(Cmd_Args(),"off")) {
+		Com_Printf("Track 2 resetting to default\n");
+		nTrack2 = -1;
+		return;
+	}
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: %s <name | userid | off>\n", Cmd_Argv(0));
+		return;
+	}
+
+	slot = Player_GetSlot(arg = Cmd_Argv(1));
+
+	if (slot == PLAYER_NAME_NOMATCH) {
+		Com_Printf("%s : no such player %s\n", Cmd_Argv(0), arg);
+		return;
+	} else if (slot == PLAYER_ID_NOMATCH) {
+		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), Q_atoi(arg));
+		return;
+	} else if (slot < 0 || slot >= MAX_CLIENTS) {	//PLAYER_NUM_MISMATCH covered by this
+		Com_Printf("%s : no such player\n", Cmd_Argv(0));
+		return;
+	}
+
+	if (cl.players[slot].spectator) {
+		Com_Printf("You cannot track a spectator\n", Cmd_Argv(0));
+	} else if (Cam_TrackNum() != slot) {
+		autocam = CAM_TRACK;
+		Cam_Lock(slot);
+		ideal_track = slot;
+		nTrack2=slot;
+		locked = true;
+	}
+}
+void CL_TrackMV3_f() {
+	int slot;
+	char *arg;
+
+	if (cls.state < ca_connected) {
+		Com_Printf("You must be connected to track\n", Cmd_Argv(0));
+		return;
+	}
+	if (!cl.spectator) {
+		Com_Printf("You can only track in spectator mode\n", Cmd_Argv(0));
+		return;
+	}
+	if (!strcmp(Cmd_Args(),"off")) {
+		Com_Printf("Track 3 resetting to default\n");
+		nTrack3 = -1;
+		return;
+	}
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: %s <name | userid | off>\n", Cmd_Argv(0));
+		return;
+	}
+
+	slot = Player_GetSlot(arg = Cmd_Argv(1));
+
+	if (slot == PLAYER_NAME_NOMATCH) {
+		Com_Printf("%s : no such player %s\n", Cmd_Argv(0), arg);
+		return;
+	} else if (slot == PLAYER_ID_NOMATCH) {
+		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), Q_atoi(arg));
+		return;
+	} else if (slot < 0 || slot >= MAX_CLIENTS) {	//PLAYER_NUM_MISMATCH covered by this
+		Com_Printf("%s : no such player\n", Cmd_Argv(0));
+		return;
+	}
+
+	if (cl.players[slot].spectator) {
+		Com_Printf("You cannot track a spectator\n", Cmd_Argv(0));
+	} else if (Cam_TrackNum() != slot) {
+		autocam = CAM_TRACK;
+		Cam_Lock(slot);
+		ideal_track = slot;
+		nTrack3=slot;
+		locked = true;
+	}
+}
+void CL_TrackMV4_f() {
+	int slot;
+	char *arg;
+
+	if (cls.state < ca_connected) {
+		Com_Printf("You must be connected to track\n", Cmd_Argv(0));
+		return;
+	}
+	if (!cl.spectator) {
+		Com_Printf("You can only track in spectator mode\n", Cmd_Argv(0));
+		return;
+	}
+	if (!strcmp(Cmd_Args(),"off")) {
+		Com_Printf("Track 4 resetting to default\n");
+		nTrack4 = -1;
+		return;
+	}
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: %s <name | userid | off>\n", Cmd_Argv(0));
+		return;
+	}
+
+	slot = Player_GetSlot(arg = Cmd_Argv(1));
+
+	if (slot == PLAYER_NAME_NOMATCH) {
+		Com_Printf("%s : no such player %s\n", Cmd_Argv(0), arg);
+		return;
+	} else if (slot == PLAYER_ID_NOMATCH) {
+		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), Q_atoi(arg));
+		return;
+	} else if (slot < 0 || slot >= MAX_CLIENTS) {	//PLAYER_NUM_MISMATCH covered by this
+		Com_Printf("%s : no such player\n", Cmd_Argv(0));
+		return;
+	}
+
+	if (cl.players[slot].spectator) {
+		Com_Printf("You cannot track a spectator\n", Cmd_Argv(0));
+	} else if (Cam_TrackNum() != slot) {
+		autocam = CAM_TRACK;
+		Cam_Lock(slot);
+		ideal_track = slot;
+		nTrack4=slot;
+		locked = true;
+	}
+}
+
+void CL_TrackTeam_f(void) {
+	int i, bExit, teamchoice, count;
+
+	if (cls.state < ca_connected) {
+		Com_Printf("You must be connected to track\n", Cmd_Argv(0));
+		return;
+	}
+	if (!cl.spectator) {
+		Com_Printf("You can only track in spectator mode\n", Cmd_Argv(0));
+		return;
+	}
+	if (!strcmp(Cmd_Args(),"off")) {
+		Com_Printf("Track team disabled\n");
+		nTrack1 = -1;
+		nTrack2 = -1;
+		nTrack3 = -1;
+		nTrack4 = -1;
+		return;
+	}
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: %s < 1 | 2 | off>\n", Cmd_Argv(0));
+		return;
+	}
+	
+	nTrack1 = -1;
+	nTrack2 = -1;
+	nTrack3 = -1;
+	nTrack4 = -1;
+
+	teamchoice=atoi(Cmd_Args());
+		
+	bExit = 0;
+	count = 0;
+
+	for (i = 0; i < 32 && !bExit; i++) {
+		if (!cl.players[i].spectator && strcmp(cl.players[i].name,"")) {
+			strcpy(currteam,cl.players[i].team);
+			bExit = 1;
+		}
+	}
+
+	bExit = 0;
+	if (teamchoice == 2) {
+		for (i=0;i<32&&!bExit;i++) {
+			if (strcmp(currteam,cl.players[i].team) && !cl.players[i].spectator && strcmp(cl.players[i].name,"")) {
+				nTrack1 = i;
+				strcpy(currteam,cl.players[i].team);
+				count++;
+				bExit = 1;
+			}
+		}
+	}
+	else {
+		for (i=0; i < 32 && !bExit; i++) {
+			if (!cl.players[i].spectator && !strcmp(cl.players[i].team,currteam) && strcmp(cl.players[i].name,"")) {
+				nTrack1 = i;
+				count++;
+				bExit = 1;
+			}
+		}
+	}
+	bExit = 0;
+	for (; i < 32 && !bExit; i++) {
+		if (!cl.players[i].spectator && !strcmp(cl.players[i].team,currteam) && strcmp(cl.players[i].name,"")) {
+			nTrack2 = i;
+			count++;
+			bExit = 1;
+		}
+	}
+	bExit = 0;
+	for (; i < 32 && !bExit; i++) {
+		if (!cl.players[i].spectator && !strcmp(cl.players[i].team,currteam) && strcmp(cl.players[i].name,"")) {
+			nTrack3 = i;
+			count++;
+			bExit = 1;
+		}
+	}
+	bExit = 0;
+	for (; i < 32 && !bExit; i++) {
+		if (!cl.players[i].spectator && !strcmp(cl.players[i].team,currteam) && strcmp(cl.players[i].name,"")) {
+			nTrack4 = i;
+			count++;
+			bExit = 1;
+		}
+	}
+	Com_Printf("Now watching team: %s (%d visible)\n",currteam,count);
+	cl_multiview.value = count;
 }

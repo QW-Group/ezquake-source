@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "d_iface.h"
 #include "sound.h"
 #include "version.h"
+#include "console.h"
 
 typedef struct {
 	vrect_t	rect;
@@ -43,6 +44,8 @@ cvar_t	scr_conalpha	= {"scr_conalpha", "1"};
 cvar_t	scr_menualpha	= {"scr_menualpha", "0.7"};
 
 void customCrosshair_Init(void);
+
+extern cvar_t con_shift;
 
 //=============================================================================
 /* Support Routines */
@@ -334,8 +337,85 @@ void Draw_Crosshair(void) {
 	if (!crosshair.value)
 		return;
 
-	x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value; 
-	y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
+	// oppymv 010904
+	if (cls.mvdplayback && cl_multiview.value == 2 && CURRVIEW == 1 && !cl_mvinsetcrosshair.value)
+		return;
+
+	if (cl_multiview.value && cls.mvdplayback) {
+		if (cl_multiview.value == 1) {
+			x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value; 
+			y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
+		}
+		if (cl_multiview.value == 2) {
+			if (!cl_mvinset.value) {
+				if (CURRVIEW == 1) {
+					x = vid.width / 2; 
+					y = vid.height * 3/4;
+				} else if (CURRVIEW == 2) { // top cv2
+					x = vid.width / 2; 
+					y = vid.height / 4;
+				}
+			} else { // inset
+				if (CURRVIEW == 2) { // normal
+					x = vid.width / 2 + cl_crossx.value; 
+					if (cl_sbar.value)
+						y = vid.height / 2 + cl_crossy.value - sb_lines / 2;
+					else
+						y = vid.height / 2 + cl_crossy.value / 2;
+				} else if (CURRVIEW == 1) {
+					x = vid.width - (vid.width/3)/2 - 1;
+					if (cl_sbar.value)
+						y = ((vid.height/3)-sb_lines/3)/2;
+					else // no sbar
+						y = ((vid.height/3))/2;
+				}
+			}
+		} else if (cl_multiview.value == 3) {
+				if (CURRVIEW == 2) { // top
+					x = vid.width / 2;
+					y = vid.height / 4;
+				} else if (CURRVIEW == 3) { // bl
+					x = vid.width / 4;
+					y = vid.height/2 + vid.height/4;
+				}
+				else { // br
+					x = vid.width/2 + vid.width/4;
+					y = vid.height/2 + vid.height/4;
+				}
+
+			} else if (cl_multiview.value >= 4) {
+
+				if (CURRVIEW == 2) { // tl
+					x = vid.width/4;
+					y = vid.height/4;
+				}
+				else if (CURRVIEW == 3) { // tr
+					x = vid.width/2 + vid.width/4;
+					y = vid.height/4;
+
+				}
+				else if (CURRVIEW == 4) { // bl
+					x = vid.width/4;
+					y = vid.height/2 + vid.height/4;
+
+				}
+				else if (CURRVIEW == 1) { // br
+					x = vid.width/2 + vid.width/4;
+					y = vid.height/2 + vid.height/4;
+				}
+			}
+	} else {
+		if (cls.mvdplayback) {
+			x = vid.width / 2 + cl_crossx.value;
+			if (cl_sbar.value)
+				y = vid.height / 2 + cl_crossy.value - sb_lines / 2;
+			else
+				y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value / 2;
+		} else {
+			x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value; 
+			y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
+		}
+	}
 
 	crosshair_val = (int) crosshair.value;
 	if ((crosshair_val >= 2 && crosshair_val < 2 + NUMCROSSHAIRS) || (crosshair_val == 1 && customcrosshair_loaded)) {
@@ -647,10 +727,10 @@ void Draw_ConsoleBackground (int lines) {
 	// hack the version number directly into the pic
 
 	if (cls.download) {
-		strcpy (ver, FUH_VERSION);
+		strcpy (ver, "");
 		dest = conback->data + 320 + 320 * 186 - 11 - 8 * strlen(ver);
 	} else {
-		sprintf (ver, "FuhQuake %s", FUH_VERSION);
+		sprintf (ver, "");
 		dest = conback->data + 320 - (strlen(ver) * 8 + 11) + 320 * 186;
 	}
 
@@ -662,7 +742,7 @@ void Draw_ConsoleBackground (int lines) {
 	dest = vid.buffer;
 
 	for (y = 0; y < lines; y++, dest += vid.rowbytes) {
-		v = (vid.conheight - lines + y) * 200 / vid.conheight;
+		v = (vid.conheight - lines + y + con_shift.value) * 200 / vid.conheight;
 		src = conback->data + v * 320;
 		if (vid.conwidth == 320) {
 			memcpy (dest, src, vid.conwidth);
@@ -771,9 +851,11 @@ void Draw_Fill (int x, int y, int w, int h, int c) {
 	byte *dest;
 	int u, v;
 
+	if (!(cls.mvdplayback && cl_multiview.value == 2)) { // cough
 	if (x < 0 || x + w > vid.width || y < 0 || y + h > vid.height) {
 		Com_Printf ("Bad Draw_Fill(%d, %d, %d, %d, %c)\n", x, y, w, h, c);
 		return;
+	}
 	}
 
 	dest = vid.buffer + y*vid.rowbytes + x;

@@ -240,4 +240,4 @@ void VID_SetPalette (unsigned char *palette) {
 		*table++ = (255 << 24) + (r << 0) + (g << 8) + (b << 16);
 	}
 	d_8to24table2[255] = 0;	// 255 is transparent
-}
+} 

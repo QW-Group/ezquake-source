@@ -54,6 +54,9 @@ typedef struct entity_s {
 
 	int						dlightframe;	// dynamic lighting
 	int						dlightbits;
+
+	//VULT MOTION TRAILS
+	float alpha;
 	
 	// FIXME: could turn these into a union
 	int						trivial_accept;
@@ -117,6 +120,14 @@ void R_NewMap (void);
 typedef enum trail_type_s {
 	ROCKET_TRAIL, GRENADE_TRAIL, ALT_ROCKET_TRAIL, BLOOD_TRAIL, BIG_BLOOD_TRAIL,
 	TRACER1_TRAIL, TRACER2_TRAIL, VOOR_TRAIL,
+	//VULT PARTICLES
+	TF_TRAIL,
+	RAIL_TRAIL,
+	RAIL_TRAIL2,
+	LAVA_TRAIL,
+	AMF_ROCKET_TRAIL,
+	BLEEDING_TRAIL,
+	BLEEDING_TRAIL2,
 } trail_type_t;
 
 void R_InitParticles (void);

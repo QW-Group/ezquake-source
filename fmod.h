@@ -25,5 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void FMod_Init(void);
 void FMod_CheckModel(char *name, void *buf, int len);
 void FMod_Response (void);
+//VULT FMOD
+void FMod_Response_Detail (void);
 
 #endif

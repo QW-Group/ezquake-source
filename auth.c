@@ -115,7 +115,7 @@ static void Auth_CheckFServerResponse (char *s, int flags, int offset) {
 	int response, slot;
 	char data[16], *port;
 
-	response = Auth_CheckString("FuhQuake f_server response: ", s, flags, offset, &slot, data, sizeof(data));
+	response = Auth_CheckString("ezQuake f_server response: ", s, flags, offset, &slot, data, sizeof(data));
 	if (response == AUTH_NOTHING || (!cls.demoplayback && slot == cl.playernum))
 		return;
 
@@ -131,7 +131,7 @@ static void Auth_CheckFServerResponse (char *s, int flags, int offset) {
 
 
 static void Auth_UnauthenticateClient(int slot) {
-	if (!strlen(Info_ValueForKey(cl.players[slot].userinfo, "*FuhQuake")) && auth_validateclients.value != 2)
+	if (!strlen(Info_ValueForKey(cl.players[slot].userinfo, "*ezQuake")) && auth_validateclients.value != 2)
 		return;
 
 	cl.players[slot].validated = false;
@@ -141,7 +141,7 @@ static void Auth_UnauthenticateClient(int slot) {
 }
 
 static void Auth_AuthenticateClient(int slot) {
-	if (!strlen(Info_ValueForKey(cl.players[slot].userinfo, "*FuhQuake")) && auth_validateclients.value != 2)
+	if (!strlen(Info_ValueForKey(cl.players[slot].userinfo, "*ezQuake")) && auth_validateclients.value != 2)
 		return;
 
 	cl.players[slot].validated = true;
@@ -150,7 +150,7 @@ static void Auth_AuthenticateClient(int slot) {
 static void Auth_CheckAuthResponse (char *s, int flags, int offset) {
 	int response, slot;
 
-	response = Auth_CheckString("FuhQuake version ", s, flags, offset, &slot, NULL, 0);
+	response = Auth_CheckString("ezQuake version ", s, flags, offset, &slot, NULL, 0);
 	if (response == AUTH_NOTHING || (!cls.demoplayback && slot == cl.playernum))
 		return;
 
@@ -174,7 +174,7 @@ static void Auth_Verify_Clients_f(void) {
 	authClientsCount = unauthClientsCount = otherClientsCount = 0;
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		if (cl.players[i].name[0] && !cl.players[i].spectator && (cls.demoplayback || i != cl.playernum)) {
-			if (auth_validateclients.value != 2 && !strlen(Info_ValueForKey(cl.players[i].userinfo, "*FuhQuake"))) {
+			if (auth_validateclients.value != 2 && !strlen(Info_ValueForKey(cl.players[i].userinfo, "*ezQuake"))) {
 				otherClients[otherClientsCount++] = i;
 			} else {
 				if (cl.players[i].validated)
@@ -186,7 +186,7 @@ static void Auth_Verify_Clients_f(void) {
 	}
 
 	if (authClientsCount || auth_validateclients.value == 2) {
-		Com_Printf ("\x02" "Authenticated FuhQuake Clients:\n");
+		Com_Printf ("\x02" "Authenticated ezQuake Clients:\n");
 		for (i = 0; i < authClientsCount; i++)
 			PaddedPrint (cl.players[authClients[i]].name);
 	}
@@ -196,7 +196,7 @@ static void Auth_Verify_Clients_f(void) {
 	if (auth_validateclients.value != 2) {
 
 		if (unauthClientsCount) {
-			Com_Printf ("\x02" "Unauthenticated FuhQuake Clients:\n");
+			Com_Printf ("\x02" "Unauthenticated ezQuake Clients:\n");
 			for (i = 0; i < unauthClientsCount; i++)
 				PaddedPrint (cl.players[unauthClients[i]].name);
 		}
@@ -204,7 +204,7 @@ static void Auth_Verify_Clients_f(void) {
 			Com_Printf ("\n");
 
 		if (otherClientsCount) {
-			Com_Printf ("\x02" "Non FuhQuake Clients:\n");
+			Com_Printf ("\x02" "Non ezQuake Clients:\n");
 			for (i = 0; i < otherClientsCount; i++)
 				PaddedPrint (cl.players[otherClients[i]].name);
 		}

@@ -386,7 +386,7 @@ void R_SetupFrame (void) {
 	r_dowarpold = r_dowarp;
 	r_dowarp = r_waterwarp.value && (r_viewleaf->contents <= CONTENTS_WATER);
 
-	if (r_dowarp != r_dowarpold || r_viewchanged) {
+	if (r_dowarp != r_dowarpold || r_viewchanged || (cl_multiview.value && cls.mvdplayback)) { // oppymv 310804
 		if (r_dowarp) {
 			if (vid.width <= vid.maxwarpwidth && vid.height <= vid.maxwarpheight) {
 				vrect.x = 0;

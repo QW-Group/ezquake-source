@@ -24,6 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "utils.h"
 
+//VULT
+#include "vx_stuff.h"
+
 extern model_t *loadmodel;
 
 extern msurface_t *skychain;
@@ -199,9 +202,13 @@ void EmitWaterPolys (msurface_t *fa) {
 	float *v, s, t, os, ot;
 	int i;
 
+	vec3_t nv;
+
 	GL_DisableMultitexture();
 
-	if (r_fastturb.value) {
+	if (r_fastturb.value) 
+	{
+
 		glDisable (GL_TEXTURE_2D);
 
 		glColor3ubv ((byte *) &fa->texinfo->texture->colour);
@@ -224,8 +231,16 @@ void EmitWaterPolys (msurface_t *fa) {
 				t = ot + SINTABLE_APPROX(os * 0.125 + cl.time);
 				t *= (1.0 / 64);
 
+				//VULT RIPPLE : Not sure where this came from first, but I've seen in it more than one engine
+				//I got this one from the QMB engine though
+				VectorCopy(v, nv);
+				//Over 20 this setting gets pretty cheaty
+				if (amf_waterripple.value)
+					nv[2] = v[2] + (bound(0, amf_waterripple.value, 20)) *sin(v[0]*0.02+cl.time)*sin(v[1]*0.02+cl.time)*sin(v[2]*0.02+cl.time);
+
 				glTexCoord2f (s, t);
-				glVertex3fv (v);
+				glVertex3fv (nv);
+
 			}
 			glEnd();
 		}
@@ -277,6 +292,7 @@ void EmitSkyPolys (msurface_t *fa, qboolean mtex) {
 void R_DrawSkyChain (void) {
 	msurface_t *fa;
 	byte *col;
+	extern cvar_t gl_fogsky;
 
 	if (!skychain)
 		return;
@@ -284,6 +300,9 @@ void R_DrawSkyChain (void) {
 	GL_DisableMultitexture();
 
 	
+	if (gl_fogenable.value && !gl_fogsky.value)
+		glDisable(GL_FOG);
+
 	if (r_fastsky.value || cl.worldmodel->bspversion == HL_BSPVERSION) {
 		glDisable (GL_TEXTURE_2D);
 
@@ -333,6 +352,10 @@ void R_DrawSkyChain (void) {
 			glDisable (GL_BLEND);
 		}
 	}
+
+	if (gl_fogenable.value && !gl_fogsky.value)
+		glEnable(GL_FOG);
+
 	skychain = NULL;
 	skychain_tail = &skychain;
 }
@@ -665,6 +688,9 @@ void R_DrawSkyBox (void) {
 	if (!skychain)
 		return;
 
+	if (gl_fogenable.value)
+		glDisable(GL_FOG);
+
 	R_ClearSkyBox();
 	for (fa = skychain; fa; fa = fa->texturechain)
 		R_AddSkyBoxSurface (fa);
@@ -702,6 +728,10 @@ void R_DrawSkyBox (void) {
 
 	skychain = NULL;
 	skychain_tail = &skychain;
+
+	if (gl_fogenable.value)
+		glEnable(GL_FOG);
+
 }
 
 

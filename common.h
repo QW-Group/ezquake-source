@@ -75,6 +75,7 @@ typedef enum {false, true} qboolean;
 
 #define	MAX_MSGLEN		1450		// max length of a reliable message
 #define	MAX_DATAGRAM	1450		// max length of unreliable message
+#define	MAX_UDP_PACKET	(MAX_MSGLEN*2)	// one more than msg + header
 
 // per-level limits
 #define	MAX_EDICTS		768			// FIXME: ouch! ouch! ouch!
@@ -170,6 +171,8 @@ typedef struct sizebuf_s {
 	int		cursize;
 } sizebuf_t;
 
+char *com_args_original;
+
 void SZ_Init (sizebuf_t *buf, byte *data, int length);
 void SZ_Clear (sizebuf_t *buf);
 void *SZ_GetSpace (sizebuf_t *buf, int length);
@@ -218,7 +221,7 @@ float	FloatSwap (float f);
 
 #ifdef _WIN32
 
-#define vsnprintf _vsnprintf
+//#define vsnprintf _vsnprintf
 
 #define Q_strcasecmp(s1, s2) _stricmp((s1), (s2))
 #define Q_strncasecmp(s1, s2, n) _strnicmp((s1), (s2), (n))
@@ -229,6 +232,21 @@ float	FloatSwap (float f);
 #define Q_strncasecmp(s1, s2, n) strncasecmp((s1), (s2), (n))
 
 #endif
+
+// Added by VVD {
+#ifdef _WIN32
+#define strcasecmp(s1, s2)	_stricmp  ((s1),   (s2))
+#define strncasecmp(s1, s2, n)	_strnicmp ((s1),   (s2),   (n))
+int snprintf(char *str, size_t n, char const *fmt, ...);
+int vsnprintf(char *buffer, size_t count, const char *format, va_list argptr);
+#endif
+
+#if defined(__linux__) || defined(_WIN32)
+size_t strlcpy (char *dst, char *src, size_t siz);
+size_t strlcat (char *dst, char *src, size_t siz);
+char  *strnstr (char *s, char *find, size_t slen);
+#endif
+// Added by VVD }
 
 int	Q_atoi (char *str);
 float Q_atof (char *str);
@@ -263,6 +281,12 @@ void COM_StripExtension (char *in, char *out);
 void COM_FileBase (char *in, char *out);
 void COM_DefaultExtension (char *path, char *extension);
 void COM_ForceExtension (char *path, char *extension);
+int COM_FileLength (FILE *f);
+int COM_FileOpenRead (char *path, FILE **hndl);
+
+void COM_StoreOriginalCmdline(int argc, char **argv);
+
+extern char * SYSINFO_GetString(void);
 
 char	*va(char *format, ...);
 // does a varargs printf into a temp buffer
@@ -272,6 +296,8 @@ char *CopyString(char *s);
 //============================================================================
 
 extern int com_filesize;
+extern qboolean com_filefrompak;
+extern char *com_filesearchpath;
 extern char	com_netpath[MAX_OSPATH];
 struct cache_user_s;
 
@@ -289,6 +315,8 @@ void FS_LoadCacheFile (char *path, struct cache_user_s *cu);
 
 qboolean COM_WriteFile (char *filename, void *data, int len);
 void COM_CreatePath (char *path);
+int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode);
+int Q_strlen (char *str);
 
 void COM_CheckRegistered (void);
 
@@ -402,5 +430,7 @@ void Con_Print (char *txt);
 void SV_Init (void);
 void SV_Shutdown (char *finalmsg);
 void SV_Frame (double time);
+
+int isspace2(int c);
 
 #endif //__COMMON_H_

@@ -23,8 +23,10 @@ float Rulesets_MaxFPS(void);
 char *Rulesets_Ruleset(void);
 qboolean Rulesets_AllowTriggers(void);
 qboolean Rulesets_AllowTimerefresh(void);
+qboolean Rulesets_AllowNoShadows(void);
 qboolean RuleSets_DisallowExternalTexture(model_t *mod);
 qboolean Rulesets_NoTimers(void);
 qboolean Rulesets_RestrictTriggers(void);
+qboolean RuleSets_DisallowExternalTexture(model_t *mod);
 
 extern char ruleset[];

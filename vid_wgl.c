@@ -22,6 +22,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cdaudio.h"
 #include "gl_local.h"
 #include "keys.h"
+#ifdef WITH_KEYMAP
+#include "keymap.h"
+#endif // WITH_KEYMAP 
 #include "resource.h"
 #include "sbar.h"
 #include "sound.h"
@@ -126,7 +129,8 @@ cvar_t		vid_config_y = {"vid_config_y","600",CVAR_ARCHIVE};
 cvar_t		_windowed_mouse = {"_windowed_mouse","1",CVAR_ARCHIVE};
 cvar_t		vid_displayfrequency = {"vid_displayfrequency", "0", CVAR_INIT};
 cvar_t		vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
-
+cvar_t      vid_flashonactivity = {"vid_flashonactivity", "1", CVAR_ARCHIVE};
+qboolean allow_flash = false;
 
 typedef BOOL (APIENTRY *SWAPINTERVALFUNCPTR)(int);
 SWAPINTERVALFUNCPTR wglSwapIntervalEXT = NULL;
@@ -230,8 +234,8 @@ qboolean VID_SetWindowedMode (int modenum) {
 	// Create the DIB window
 	dibwindow = CreateWindowEx (
 		 ExWindowStyle,
-		 "FuhQuake",
-		 "FuhQuake",
+		 "ezQuake",
+		 "ezQuake",
 		 WindowStyle,
 		 rect.left, rect.top,
 		 width,
@@ -320,8 +324,8 @@ qboolean VID_SetFullDIBMode (int modenum) {
 	// Create the DIB window
 	dibwindow = CreateWindowEx (
 		 ExWindowStyle,
-		 "FuhQuake",
-		 "FuhQuake",
+		 "ezQuake",
+		 "ezQuake",
 		 WindowStyle,
 		 rect.left, rect.top,
 		 width,
@@ -557,7 +561,13 @@ void GL_EndRendering (void) {
 			wglSwapIntervalEXT(vid_vsync.value ? 1 : 0);
 		update_vsync = false;
 
-		SwapBuffers(maindc);
+		if (cl_multiview.value && cls.mvdplayback) {
+			if (CURRVIEW == 1)
+				SwapBuffers(maindc);
+		}
+		else 
+			SwapBuffers(maindc); 
+
 	}
 
 	// handle the mouse state when windowed if that's changed
@@ -682,6 +692,7 @@ void AppActivate(BOOL fActive, BOOL minimize) {
 			IN_HideMouse ();
 		}
 	} else {
+		allow_flash = true;
 		RestoreHWGamma ();
 		if (modestate == MS_FULLDIB) {
 			IN_DeactivateMouse ();
@@ -699,7 +710,10 @@ void AppActivate(BOOL fActive, BOOL minimize) {
 
 LONG CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+#ifdef WITH_KEYMAP
+#else // WITH_KEYMAP
 int IN_MapKey (int key);
+#endif // WITH_KEYMAP else
 
 
 #include "mw_hook.h"
@@ -734,12 +748,20 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
 
 		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
+#ifdef WITH_KEYMAP
+			IN_TranslateKeyEvent (lParam, true);
+#else // WITH_KEYMAP
 			Key_Event (IN_MapKey(lParam), true);
+#endif // WITH_KEYMAP else
 			break;
 
 		case WM_KEYUP:
 		case WM_SYSKEYUP:
+#ifdef WITH_KEYMAP
+			IN_TranslateKeyEvent (lParam, false);
+#else // WITH_KEYMAP
 			Key_Event (IN_MapKey(lParam), false);
+#endif // WITH_KEYMAP else
 			break;
 
 		case WM_SYSCHAR:
@@ -755,6 +777,12 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
 		case WM_MBUTTONUP:
 		case WM_XBUTTONDOWN:
 		case WM_XBUTTONUP:
+#ifdef MM_CODE
+		case WM_LBUTTONDBLCLK:
+		case WM_RBUTTONDBLCLK:
+		case WM_MBUTTONDBLCLK:
+		case WM_XBUTTONDBLCLK:
+#endif // MM_CODE
 			temp = 0;
 
 			if (wParam & MK_LBUTTON)
@@ -798,7 +826,7 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
             break;
 
    	    case WM_CLOSE:
-			if (MessageBox (mainwindow, "Are you sure you want to quit?", "FuhQuake : Confirm Exit",
+			if (MessageBox (mainwindow, "Are you sure you want to quit?", "ezQuake : Confirm Exit",
 						MB_YESNO | MB_SETFOREGROUND | MB_ICONQUESTION) == IDYES)
 			{
 				Host_Quit ();
@@ -933,7 +961,7 @@ void VID_InitDIB (HINSTANCE hInstance) {
     wc.hCursor       = LoadCursor (NULL,IDC_ARROW);
 	wc.hbrBackground = NULL;
     wc.lpszMenuName  = 0;
-    wc.lpszClassName = "FuhQuake";
+    wc.lpszClassName = "ezQuake";
 
     if (!RegisterClass (&wc) )
 		Sys_Error ("Couldn't register window class");
@@ -1085,6 +1113,7 @@ void VID_Init (unsigned char *palette) {
 	Cvar_Register (&_windowed_mouse);
 	Cvar_Register (&vid_hwgammacontrol);
 	Cvar_Register (&vid_displayfrequency);
+	Cvar_Register (&vid_flashonactivity);
 
 	Cvar_ResetCurrentGroup();
 
@@ -1342,4 +1371,11 @@ void VID_MenuKey (int key) {
 	default:
 		break;
 	}
+}
+
+void VID_NotifyActivity(void) {
+    if (!ActiveApp && vid_flashonactivity.value) { // && allow_flash
+        FlashWindow(mainwindow, TRUE);
+        allow_flash = false;
+    }
 }

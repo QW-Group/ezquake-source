@@ -42,10 +42,26 @@ cvar_t	mapname = {"mapname", "", CVAR_ROM};
 
 qboolean com_serveractive = false;
 
+qboolean com_filefrompak;
+char *com_filesearchpath;
+
+char *com_args_original;
+
 void FS_InitFilesystem (void);
 void COM_Path_f (void);
 
 char com_gamedirfile[MAX_QPATH];
+
+int Q_strlen (char *str)
+{
+    int     count;
+    
+    count = 0;
+    while (str[count])
+        count++;
+
+    return count;
+}
 
 /*
 All of Quake's data access is through a hierarchic file system, but the contents of the file system can be transparently merged from several sources.
@@ -57,6 +73,25 @@ The "game directory" is the first tree on the search path and directory that all
 */
 
 //============================================================================
+
+void COM_StoreOriginalCmdline(int argc, char **argv)
+{
+    char buf[4096]; // enough?
+    int i;
+    qboolean first = true;
+
+    buf[0] = 0;
+    for (i=0; i < argc; i++)
+    {
+        if (!first)
+            strcat(buf, " ");
+        first = false;
+
+        strcat(buf, argv[i]);
+    }
+
+    com_args_original = strdup(buf);
+}
 
 // ClearLink is used for new headnodes
 void ClearLink (link_t *l) {
@@ -216,6 +251,103 @@ int Com_HashKey (char *name) {
 	return v % 32; 
 } 
 
+// Added by VVD {
+#ifdef _WIN32
+int snprintf(char *buffer, size_t count, char const *format, ...)
+{
+	int ret;
+	va_list argptr;
+	if (!count) return 0;
+	va_start(argptr, format);
+	ret = _vsnprintf(buffer, count, format, argptr);
+	buffer[count - 1] = 0;
+	va_end(argptr);
+	return ret;
+}
+int vsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
+{
+	int ret;
+	if (!count) return 0;
+	ret = _vsnprintf(buffer, count, format, argptr);
+	buffer[count - 1] = 0;
+	return ret;
+}
+#endif
+
+#if defined(__linux__) || defined(_WIN32)
+size_t strlcpy(char *dst, char *src, size_t siz)
+{
+	register char *d = dst;
+	register const char *s = src;
+	register size_t n = siz;
+
+	/* Copy as many bytes as will fit */
+	if (n != 0 && --n != 0) {
+		do {
+			if ((*d++ = *s++) == 0)
+				break;
+		} while (--n != 0);
+	}
+
+		/* Not enough room in dst, add NUL and traverse rest of src */
+	if (n == 0) {
+		if (siz != 0)
+			*d = '\0';		/* NUL-terminate dst */
+		while (*s++)
+			;
+	}
+
+	return(s - src - 1);	/* count does not include NUL */
+}
+
+size_t strlcat(char *dst, char *src, size_t siz)
+{
+	register char *d = dst;
+	register const char *s = src;
+	register size_t n = siz;
+	size_t dlen;
+
+	/* Find the end of dst and adjust bytes left but don't go past end */
+	while (n-- != 0 && *d != '\0')
+		d++;
+	dlen = d - dst;
+	n = siz - dlen;
+
+	if (n == 0)
+		return(dlen + strlen(s));
+	while (*s != '\0') {
+		if (n != 1) {
+			*d++ = *s;
+			n--;
+		}
+		s++;
+	}
+	*d = '\0';
+
+	return(dlen + (s - src));       /* count does not include NUL */
+}
+char *strnstr(char *s, char *find, size_t slen)
+{
+	char c, sc;
+	size_t len;
+
+	if ((c = *find++) != '\0') {
+		len = strlen(find);
+		do {
+			do {
+				if ((sc = *s++) == '\0' || slen-- < 1)
+					return (NULL);
+			} while (sc != c);
+			if (len > slen)
+				return (NULL);
+		} while (strncmp(s, find, len) != 0);
+		s--;
+	}
+	return ((char *)s);
+}
+#endif
+// Added by VVD }
+
 
 /*
 ============================================================================
@@ -275,10 +407,10 @@ void *SZ_GetSpace (sizebuf_t *buf, int length) {
 
 	if (buf->cursize + length > buf->maxsize) {
 		if (!buf->allowoverflow)
-			Sys_Error ("SZ_GetSpace: overflow without allowoverflow set (%d)", buf->maxsize);
+			Sys_Error ("SZ_GetSpace: overflow without allowoverflow set (%i/%i/%i)", buf->cursize, length, buf->maxsize);
 
 		if (length > buf->maxsize)
-			Sys_Error ("SZ_GetSpace: %i is > full buffer size", length);
+			Sys_Error ("SZ_GetSpace: %i/%i is > full buffer size", length, buf->maxsize);
 
 		Sys_Printf ("SZ_GetSpace: overflow\n");	// because Com_Printf may be redirected
 		SZ_Clear (buf); 
@@ -612,8 +744,15 @@ typedef struct searchpath_s {
 searchpath_t	*com_searchpaths;
 searchpath_t	*com_base_searchpaths;	// without gamedirs
 
-int COM_filelength (FILE *f) {
-	int pos, end;
+/*
+================
+COM_FileLength
+================
+*/
+int COM_FileLength (FILE *f)
+{
+	int		pos;
+	int		end;
 
 	pos = ftell (f);
 	fseek (f, 0, SEEK_END);
@@ -632,7 +771,7 @@ int COM_FileOpenRead (char *path, FILE **hndl) {
 	}
 	*hndl = f;
 
-	return COM_filelength(f);
+	return COM_FileLength(f);
 }
 
 void COM_Path_f (void) {
@@ -647,6 +786,52 @@ void COM_Path_f (void) {
 		else
 			Com_Printf ("%s\n", s->filename);
 	}
+}
+
+int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
+{
+    searchpath_t *search;
+    char fullpath[MAX_QPATH];
+
+    if (path == NULL)
+        path = com_gamedir;
+    else
+    {
+        // check if given path is in one of mounted filesystem
+        // we do not allow others
+        for (search = com_searchpaths ; search ; search = search->next)
+        {
+            if (search->pack != NULL)
+                continue;   // no writes to pak files
+
+            if (strlen(search->filename) > strlen(path)  &&
+                !strcmp(search->filename + strlen(search->filename) - strlen(path), path) &&
+                *(search->filename + strlen(search->filename) - strlen(path) - 1) == '/')
+            {
+                break;
+            }
+        }
+        if (search == NULL)
+            Sys_Error("COM_FCreateFile: out of Quake filesystem");
+    }
+
+    if (mode == NULL)
+        mode = "wb";
+
+    // try to create
+    sprintf(fullpath, "%s/%s/%s", com_basedir, path, filename);
+    COM_CreatePath(fullpath);
+    *file = fopen(fullpath, mode);
+
+    if (*file == NULL)
+    {
+        // no Sys_Error, quake can be run from read-only media like cd-rom
+        return 0;
+    }
+
+    Sys_Printf ("FCreateFile: %s", filename);
+
+    return 1;
 }
 
 //The filename will be prefixed by com_basedir
@@ -669,7 +854,7 @@ qboolean COM_WriteFile (char *filename, void *data, int len) {
 
 //Only used for CopyFile and download
 
-
+#ifdef _WIN32
 #define _MAX_SUBSIRS	8
 void COM_CreatePath (char *path) {
 	char *slash = NULL;
@@ -699,6 +884,28 @@ void COM_CreatePath (char *path) {
 		path[slash_indices[i]] = '/';
 	}
 }
+#else
+void	COM_CreatePath (char *path)
+{
+	char	*ofs;
+
+	if (!path)
+		return;
+
+	if (strstr(path, ".."))
+		return;
+	
+	for (ofs = path+1 ; *ofs ; ofs++)
+	{
+		if (*ofs == '/')
+		{	// create the directory
+			*ofs = 0;
+			Sys_mkdir (path);
+			*ofs = '/';
+		}
+	}
+}
+#endif
 
 //Copies a file over from the net to the local cache, creating any directories
 //needed.  This is for the convenience of developers using ISDN from home.
@@ -761,6 +968,8 @@ int FS_FOpenFile (char *filename, FILE **file) {
 						Sys_Error ("Couldn't reopen %s", pak->filename);	
 					fseek (*file, pak->files[i].filepos, SEEK_SET);
 					com_filesize = pak->files[i].filelen;
+					com_filefrompak = true;
+                    com_filesearchpath = search->filename;
 
 					file_from_pak = 1;
 					Q_snprintfz (com_netpath, sizeof(com_netpath), "%s#%i", pak->filename, i);
@@ -776,7 +985,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 			if (developer.value)
 				Sys_Printf ("FindFile: %s\n", com_netpath);
 
-			com_filesize = COM_filelength (*file);
+			com_filesize = COM_FileLength (*file);
 			return com_filesize;
 		}
 	}
@@ -976,7 +1185,7 @@ void FS_SetGamedir (char *dir) {
 
 	sprintf (com_gamedir, "%s/%s", com_basedir, dir);
 
-	if (!strcmp(dir, "id1") || !strcmp(dir, "qw") || !strcmp(dir, "fuhquake"))	
+	if (!strcmp(dir, "id1") || !strcmp(dir, "qw") || !strcmp(dir, "ezquake"))	
 		return;
 
 	// add the directory to the search path
@@ -1018,7 +1227,7 @@ void FS_InitFilesystem (void) {
 
 	// start up with id1 by default
 	FS_AddGameDirectory ( va("%s/id1", com_basedir) );
-	FS_AddGameDirectory ( va("%s/fuhquake", com_basedir) );	
+	FS_AddGameDirectory ( va("%s/ezquake", com_basedir) );	
 	FS_AddGameDirectory ( va("%s/qw", com_basedir) );
 
 	// any set gamedirs will be freed up to here
@@ -1367,6 +1576,7 @@ void Com_Printf (char *fmt, ...) {
 	Sys_Printf ("%s", msg);
 
 	// write it to the scrollable buffer
+//	Con_Print (va("ezQuake: %s", msg));
 	Con_Print (msg);
 }
 
@@ -1384,3 +1594,10 @@ void Com_DPrintf (char *fmt, ...) {
 	
 	Com_Printf ("%s", msg);
 }
+
+int isspace2(int c)
+{
+    if (c == 0x09 || c == 0x0D || c == 0x0A || c == 0x20)
+        return 1;
+    return 0;
+} 

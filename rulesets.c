@@ -56,8 +56,21 @@ qboolean Rulesets_AllowTimerefresh(void) {
 	}
 }
 
+qboolean Rulesets_AllowNoShadows(void) {
+	switch(ruleset) {
+	case rs_smackdown:
+		return false;
+	default:
+		return true;
+	}
+}
+
 float Rulesets_MaxFPS(void) {
-	return maxfps;
+
+	if (cl_multiview.value && cls.mvdplayback)
+		return nNumViews*maxfps;
+
+	return maxfps; 
 }
 
 qboolean Rulesets_AllowTriggers(void) {
@@ -75,9 +88,16 @@ char *Rulesets_Ruleset(void) {
 
 static void Rulesets_Smackdown(void) {
 	extern cvar_t tp_triggers, tp_msgtriggers, cl_trueLightning, scr_clock, r_aliasstats;
+#ifdef GLQUAKE
+	extern cvar_t amf_camera_death, amf_camera_chase;
+#endif
 	int i;
 
 	locked_cvar_t disabled_cvars[] = {
+#ifdef GLQUAKE
+		{&amf_camera_chase, "0"},
+		{&amf_camera_death, "0"},
+#endif
 		{&tp_msgtriggers, "0"},
 		{&cl_trueLightning, "0"},
 	#ifdef GLQUAKE

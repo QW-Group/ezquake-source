@@ -26,7 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_TEAMIGNORELIST	4
 #define	FLOODLIST_SIZE		10
 
-cvar_t		ignore_spec				= {"ignore_spec", "0"};			
+cvar_t		ignore_spec				= {"ignore_spec", "0"};		
+cvar_t		ignore_qizmo_spec		= {"ignore_qizmo_spec", "0"};
 cvar_t		ignore_mode				= {"ignore_mode", "0"};
 cvar_t		ignore_flood_duration	= {"ignore_flood_duration", "4"};
 cvar_t		ignore_flood			= {"ignore_flood", "0"};		
@@ -403,6 +404,7 @@ void Ignore_Init(void) {
 	Cvar_Register (&ignore_flood_duration);
 	Cvar_Register (&ignore_flood);
 	Cvar_Register (&ignore_spec);
+	Cvar_Register (&ignore_qizmo_spec);
 	Cvar_Register (&ignore_mode);
 	Cvar_Register (&ignore_opponents);
 

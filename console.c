@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "keys.h"
+
 #include <fcntl.h>
 
 #ifdef _WIN32
@@ -33,11 +34,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "ignore.h"
 #include "logging.h"
 
+#include "localtime.h"
+
+
 #define		MINIMUM_CONBUFSIZE	(1 << 15)
 #define		DEFAULT_CONBUFSIZE	(1 << 16)
 #define		MAXIMUM_CONBUFSIZE	(1 << 22)
 
 console_t	con;
+
+qboolean    con_addtimestamp;
 
 int			con_ormask;
 int 		con_linewidth;		// characters across screen
@@ -48,6 +54,20 @@ cvar_t		_con_notifylines = {"con_notifylines","4"};
 cvar_t		con_notifytime = {"con_notifytime","3"};		//seconds
 cvar_t		con_wordwrap = {"con_wordwrap","1"};
 cvar_t		con_clearnotify = {"con_clearnotify","1"};
+cvar_t	    x                = {"x", "$x", CVAR_ROM};
+
+cvar_t      con_sound_mm1_file      = {"con_sound_mm1_file",      "misc/talk.wav"};
+cvar_t      con_sound_mm2_file      = {"con_sound_mm2_file",      "misc/talk.wav"};
+cvar_t      con_sound_spec_file     = {"con_sound_spec_file",     "misc/talk.wav"};
+cvar_t      con_sound_other_file    = {"con_sound_other_file",    "misc/talk.wav"};
+cvar_t      con_sound_mm1_volume    = {"con_sound_mm1_volume",    "1"};
+cvar_t      con_sound_mm2_volume    = {"con_sound_mm2_volume",    "1"};
+cvar_t      con_sound_spec_volume   = {"con_sound_spec_volume",   "1"};
+cvar_t      con_sound_other_volume  = {"con_sound_other_volume",  "1"};
+
+cvar_t      con_timestamps  = {"con_timestamps", "0"};
+
+cvar_t      con_shift  = {"con_shift", "0"};
 
 #define	NUM_CON_TIMES 16
 float		con_times[NUM_CON_TIMES];	// cls.realtime time the line was generated
@@ -65,6 +85,136 @@ qboolean	con_initialized = false;
 qboolean	con_suppress = false;
 
 FILE		*qconsole_log;
+
+
+char *months[12] = {
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec" };
+
+char *days[7] = {
+    "Sun",
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat"}; 
+
+void Date_f (void)
+{
+    // Sun  Nov 05 2000, 16:39
+    SYSTEMTIME tm;
+    char *day, *month;
+    GetLocalTime(&tm);
+    month = months[tm.wMonth-1];
+    day = days[tm.wDayOfWeek];
+
+    con_ormask = 128;
+    Com_Printf ("%s %s %02d, %2d:%02d %d\n", day, month, tm.wDay, tm.wHour, tm.wMinute, tm.wYear);
+    con_ormask = 0;
+}
+
+void MakeStringRed(char *s)
+{
+    while (*s)
+    {
+        if (*s >= '0'  &&  *s <= '9')
+            *s |= 128;
+        s++;
+    }
+}
+
+void MakeStringYellow(char *s)
+{
+    while (*s)
+    {
+        if (*s >= '0'  &&  *s <= '9')
+            *s -= 30;
+        s++;
+    }
+}
+
+/*
+==================
+Calendar_f - prints calendar
+==================
+*/
+void Calendar_f(void)
+{
+    int alldays, day, column;
+    SYSTEMTIME tm;
+    GetLocalTime(&tm);
+
+    Date_f();
+    Com_Printf (" mo tu we th fr sa su\n");
+
+    alldays = 31;
+    day = tm.wDay;
+    day -= (tm.wDayOfWeek==0 ? 7 : tm.wDayOfWeek) - 1;
+    day = (day % 7);
+    if (day > 1)
+        day -= 7;
+    column = 0;
+
+    switch (tm.wMonth)
+    {
+    case  1:    alldays = 31; break;
+	case  2:    alldays = (tm.wYear % 400 ? 28 : (tm.wYear % 100 ? 29 : (tm.wYear % 4) ? 28 : 29)); break;
+    case  3:    alldays = 31; break;
+    case  4:    alldays = 30; break;
+    case  5:    alldays = 31; break;
+    case  6:    alldays = 30; break;
+    case  7:    alldays = 31; break;
+    case  8:    alldays = 31; break;
+    case  9:    alldays = 30; break;
+    case 10:    alldays = 31; break;
+    case 11:    alldays = 30; break;
+    case 12:    alldays = 31; break;
+    default:    alldays = 31; break;
+    }
+
+    while (day <= alldays)
+    {
+        column ++;
+
+        if (day > 0)
+        {
+            char buf[8];
+            sprintf(buf, "%3d", day);
+            if (day == tm.wDay)
+                ; // MakeStringYellow(buf);
+            else
+            {
+                if (column == 7)
+                    MakeStringYellow(buf);
+                else
+                    MakeStringRed(buf);
+            }
+            Com_Printf ("%s", buf);
+        }
+        else
+            Com_Printf ("   ");
+
+
+        if (day == alldays  ||  column == 7)
+        {
+            column = 0;
+            Com_Printf ("\n");
+        }
+
+        day++;
+    }
+}
 
 void Key_ClearTyping (void) {
 	key_lines[edit_line][1] = 0;	// clear any typing
@@ -222,6 +372,19 @@ void Con_Init (void) {
 	Cvar_Register (&con_notifytime);
 	Cvar_Register (&con_wordwrap);
 	Cvar_Register (&con_clearnotify);
+	Cvar_Register (&x); 
+
+	Cvar_Register (&con_sound_mm1_file); 
+	Cvar_Register (&con_sound_mm2_file); 
+	Cvar_Register (&con_sound_spec_file); 
+	Cvar_Register (&con_sound_other_file); 
+	Cvar_Register (&con_sound_mm1_volume); 
+	Cvar_Register (&con_sound_mm2_volume); 
+	Cvar_Register (&con_sound_spec_volume); 
+	Cvar_Register (&con_sound_other_volume); 
+
+	Cvar_Register (&con_timestamps); 
+	Cvar_Register (&con_shift); 
 
 	Cvar_ResetCurrentGroup();
 
@@ -229,6 +392,9 @@ void Con_Init (void) {
 	Cmd_AddCommand ("messagemode", Con_MessageMode_f);
 	Cmd_AddCommand ("messagemode2", Con_MessageMode2_f);
 	Cmd_AddCommand ("clear", Con_Clear_f);
+    Cmd_AddCommand ("date", Date_f);
+	Cmd_AddCommand ("calendar", Calendar_f);
+  
 }
 
 void Con_Shutdown (void) {
@@ -357,7 +523,7 @@ void Con_DrawInput (void) {
 		text += 1 + key_linepos - con_linewidth;
 
 	// draw it
-	Draw_String(8, con_vislines-22, text);
+	Draw_String(8, con_vislines-22 + bound(0, con_shift.value, 8), text);
 }
 
 //Draws the last few lines of output transparently over the game top
@@ -388,7 +554,7 @@ void Con_DrawNotify (void) {
 		scr_copytop = 1;
 
 		for (x = 0 ; x < con_linewidth ; x++)
-			Draw_Character ( (x+1)<<3, v, text[x]);
+			Draw_Character ( (x+1)<<3, v + bound(0, con_shift.value, 8), text[x]);
 
 		v += 8;
 	}
@@ -401,10 +567,10 @@ void Con_DrawNotify (void) {
 		scr_copytop = 1;
 
 		if (chat_team) {
-			Draw_String (8, v, "say_team:");
+			Draw_String (8, v + bound(0, con_shift.value, 8), "say_team:");
 			skip = 11;
 		} else {
-			Draw_String (8, v, "say:");
+			Draw_String (8, v + bound(0, con_shift.value, 8), "say:");
 			skip = 5;
 		}
 
@@ -424,14 +590,14 @@ void Con_DrawNotify (void) {
 
 		x = 0;
 		while (s[x] && x+skip < (vid.width>>3)) {
-			Draw_Character ( (x+skip)<<3, v, s[x]);
+			Draw_Character ( (x+skip)<<3, v + bound(0, con_shift.value, 8), s[x]);
 			x++;
 		}
 		v += 8;
 	}
 
 	if (v > con_notifylines)
-		con_notifylines = v;
+		con_notifylines = v + bound(0, con_shift.value, 8);
 }
 
 //Draws the console with the solid background
@@ -462,7 +628,7 @@ void Con_DrawConsole (int lines) {
 	if (con.display != con.current) {
 	// draw arrows to show the buffer is backscrolled
 		for (x = 0; x < con_linewidth; x += 4)
-			Draw_Character ((x + 1) << 3, y, '^');
+			Draw_Character ((x + 1) << 3, y + bound(0, con_shift.value, 8), '^');
 
 		y -= 8;
 		rows--;
@@ -478,7 +644,7 @@ void Con_DrawConsole (int lines) {
 		text = con.text + (row % con_totallines)*con_linewidth;
 
 		for (x = 0; x < con_linewidth; x++)
-			Draw_Character ((x + 1) << 3, y, text[x]);
+			Draw_Character ((x + 1) << 3, y + bound(0, con_shift.value, 8), text[x]);
 	}
 
 	// draw the download bar
@@ -520,7 +686,7 @@ void Con_DrawConsole (int lines) {
 
 		// draw it
 		y = con_vislines - 22 + 8;
-		Draw_String (8, y, dlbar);
+		Draw_String (8, y + bound(0, con_shift.value, 8), dlbar);
 	}
 
 	// draw the input prompt, user text, and cursor if desired

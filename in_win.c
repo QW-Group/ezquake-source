@@ -27,6 +27,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "input.h"
 #include "keys.h"
 
+#ifdef WITH_KEYMAP
+#include "keymap.h"
+#endif // WITH_KEYMAP
+
 #include "movie.h"
 
 #define DINPUT_BUFFERSIZE 16
@@ -699,6 +703,10 @@ void IN_Init (void) {
 	// keyboard variables
 	Cvar_Register (&cl_keypad);
 
+#ifdef WITH_KEYMAP
+	IN_StartupKeymap();
+#endif // WITH_KEYMAP
+
 	// joystick variables
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_JOY);
 	Cvar_Register (&in_joystick);
@@ -1249,6 +1257,8 @@ void IN_JoyMove (usercmd_t *cmd) {
 
 //==========================================================================
 
+#ifdef WITH_KEYMAP
+#else
 static byte scantokey[128] = {
 //  0       1        2       3       4       5       6       7
 //  8       9        A       B       C       D       E       F
@@ -1316,4 +1326,30 @@ int IN_MapKey (int key) {
 	}
 
 	return key;
+}
+#endif // WITH_KEYMAP else
+
+int isAltDown(void)
+{
+    if (GetKeyState(VK_MENU) < 0)
+        return 1;
+    return 0;
+//    extern qboolean    keydown[256];
+//    return keydown[K_ALT] || keydown[K_RALT];
+}
+int isCtrlDown(void)
+{
+    if (GetKeyState(VK_CONTROL) < 0)
+        return 1;
+    return 0;
+//    extern qboolean    keydown[256];
+//    return keydown[K_CTRL] || keydown[K_RCTRL];
+}
+int isShiftDown(void)
+{
+    if (GetKeyState(VK_SHIFT) < 0)
+        return 1;
+    return 0;
+//    extern qboolean    keydown[256];
+//    return keydown[K_SHIFT] || keydown[K_RSHIFT];
 }
