@@ -95,6 +95,7 @@ LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam) {
 			case VK_LWIN: Key_Event (K_LWIN, !(p->flags & LLKHF_UP)); return 1;
 			case VK_RWIN: Key_Event (K_RWIN, !(p->flags & LLKHF_UP)); return 1;
 			case VK_APPS: Key_Event (K_MENU, !(p->flags & LLKHF_UP)); return 1;
+			case VK_SNAPSHOT: Key_Event (K_PRINTSCR, !(p->flags & LLKHF_UP)); return 1;
 		}
 	}
 
