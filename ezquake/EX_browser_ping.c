@@ -761,9 +761,8 @@ void SB_Test_CalcNet(void)
 {
     int i, a;
 
-    //extern hud_t *
-    extern cvar_t r_netgraph;
-    cvar_t *netgraph_inframes = &r_netgraph;
+    extern hud_t * r_netgraph;
+    cvar_t *netgraph_inframes = HUD_FindVar(r_netgraph, "inframes");
 
     for (i=0; i < NET_TIMINGS; i++)
     {
