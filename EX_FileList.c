@@ -647,7 +647,7 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
     }
 
     // change drive
-#ifdef WIN32
+#ifdef _WIN32
     if (isAltDown()  &&  isCtrlDown()  &&
         tolower(key) >= 'a'  &&  tolower(key) <= 'z')
     {

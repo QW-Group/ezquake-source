@@ -313,7 +313,7 @@
 #endif
 
 /* Codewarrior on NT has linking problems without this. */
-#if (defined(__MWERKS__) && defined(WIN32)) || defined(__STDC__)
+#if (defined(__MWERKS__) && defined(_WIN32)) || defined(__STDC__)
 #  define PNG_ALWAYS_EXTERN
 #endif
 
