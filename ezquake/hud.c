@@ -1019,7 +1019,7 @@ cvar_t *HUD_FindVar(hud_t *hud, char *subvar)
     int i;
     char buf[128];
 
-    sprintf(buf, "hud_%s_%s", hud->name, subvar);
+    snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, subvar);
 
     for (i=0; i < hud->num_params; i++)
         if (!strcmp(buf, hud->params[i]->name))
