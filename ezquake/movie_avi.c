@@ -337,7 +337,7 @@ qboolean Capture_Open (char* filename)
 		// this should be moved to Capture_InitAVI()
 		had = NULL;
 		mp3_driver = false;
-		qacmDriverEnum (acmDriverEnumCallback, 0, 0);
+		//qacmDriverEnum (acmDriverEnumCallback, 0, 0);
 		if (!mp3_driver)
 		{
 			Com_Printf ("ERROR: Couldn't find any MP3 decoder\n");

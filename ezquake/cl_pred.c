@@ -22,6 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 
 cvar_t	cl_nopred	= {"cl_nopred", "0"};
+// shaman RFE 1036160 {
+cvar_t	cl_pushlatency = {"pushlatency", "0"};
+// } shaman RFE 1036160
+
 extern cvar_t cl_independentPhysics;
 
 void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) {
@@ -139,7 +143,7 @@ extern qboolean physframe; //#fps
 //#fps
 // for fps-independent physics
 
-static void CL_LerpMove (double msgtime)
+static void CL_LerpMove (double msgtime, float f)
 {
 	
 	static int		lastsequence = 0;
@@ -230,9 +234,16 @@ if (physframe)	//##testing
 
 	if (nolerp[to])
 		return;
+// shaman RFE 1036160 {
+	if (cl_pushlatency.value < 0) {
+        frac = f;
+	}
+	else {
+// } shaman RFE 1036160 
+    	frac = (simtime - lerp_times[from]) / (lerp_times[to] - lerp_times[from]);    	frac = bound (0, frac, 1);// shaman RFE 1036160 {
+	}
+// } shaman RFE 1036160 
 
-	frac = (simtime - lerp_times[from]) / (lerp_times[to] - lerp_times[from]);
-	frac = bound (0, frac, 1);
 
 //Com_Printf ("%f\n", frac);
 
@@ -248,7 +259,16 @@ double lerp_time;
 void CL_PredictMove (void) {
 	int i, oldphysent;
 	frame_t *from = NULL, *to;
+// shaman RFE 1036160 {
+	double playertime;
+    float f;
+	if (cl_pushlatency.value > 0)
+		Cvar_Set (&cl_pushlatency, "0");
 
+	playertime = cls.realtime - cls.latency - cl_pushlatency.value * 0.001;
+	if (playertime > cls.realtime)
+		playertime = cls.realtime;
+// } shaman RFE 1036160 
 	if (cl.paused)
 		return;
 
@@ -298,27 +318,51 @@ if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.val
 		to = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
 		CL_PredictUsercmd (&from->playerstate[cl.playernum], &to->playerstate[cl.playernum], &to->cmd);
 		cl.onground = pmove.onground;
+		if (to->senttime >= playertime)
+			break; 
 	}
 
 	pmove.numphysent = oldphysent;
 
+// shaman RFE 1036160 {
+/*
 	// copy results out for rendering
 	VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
 	VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
 	if (physframe && cl_independentPhysics.value != 0)
 		lerp_time = cls.realtime;
+*/
+	if (to->senttime == from->senttime) {
+		f = 0;
+	} else {
+		f = (playertime - from->senttime) / (to->senttime - from->senttime);
+		f = bound(0, f, 1);
+	}
+
+	for (i = 0; i < 3; i++) {
+		if ( fabs(from->playerstate[cl.playernum].origin[i] - to->playerstate[cl.playernum].origin[i]) > 128) {
+			// teleported, so don't lerp
+			VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
+			VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
+			goto out;
+		}
+	} 
+// } shaman RFE 1036160
 }
 
 out:
 if (!cls.demoplayback && cl_independentPhysics.value != 0)
-	CL_LerpMove (lerp_time);
-CL_CalcCrouch ();
+	CL_LerpMove (lerp_time, f);
+    CL_CalcCrouch ();
 	cl.waterlevel = pmove.waterlevel;
 }
 
 void CL_InitPrediction (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register(&cl_nopred);
+// shaman RFE 1036160 {
+    Cvar_Register(&cl_pushlatency); 
+// } shaman RFE 1036160
 
 	Cvar_ResetCurrentGroup();
 } 

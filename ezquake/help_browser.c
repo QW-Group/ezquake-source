@@ -9,7 +9,7 @@ CPageViewer_t help_viewer;
 void Help_Browser_Init(void)
 {
     CPageViewer_Init(&help_viewer);
-    CPageViewer_GoUrl(&help_viewer, "help/test.xml");
+    CPageViewer_GoUrl(&help_viewer, "help/index.xml");
 }
 
 int Help_Browser_Key(int key, CTab_t *tab, CTabPage_t *page)
