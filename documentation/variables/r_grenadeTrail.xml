@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>r_grenadetrail</name><description>Customizable grenade trails
+Works the same way as r_rockettrail, but for grenades.
+</description><remarks></remarks></variable>

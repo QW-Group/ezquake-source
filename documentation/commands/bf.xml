@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>bf</name><description>
+This command shows a background screen flash
+that is the same one that is
+ produced when the player picked up an item in the game. This
+command basically
+ serves no useful function except when people want to use it in
+scripts to give
+ the user some visual feedback when an aliases is used for
+example.</description><syntax></syntax><remarks></remarks></command>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>filter</name><description>
+Message filtering system. Only team messages
+are filtered.
+ Use filter with no parameters to list current filters and filter
+clear to remove all filters.
+ Example:
+ filter #a
+ say_team i can see this message #a.
+ say_team i can't see this message #d.</description><syntax></syntax><remarks></remarks></command>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>+mlook</name><description>
+When active moving the mouse or joystick
+forwards and backwards performs
+ "+lookup" and "+lookdown" respectively. This command is very
+useful if the
+ player needs to look at objects which are above or below him.
+Most players
+ execute this command and never remove it. This way they can use
+the keyboard to
+ move the player forward and back and strafe left and right,
+while using the
+ mouse to turn the player left and right and to make him look up
+and down. In
+ order to have this command set permanently you will have to
+create a file called
+ autoexec.cfg in the qw/ directory and put in the line "+mlook"
+into that file.
+ By doing this the game will automatically execute the
+autoexec.cfg file and it
+ will also active that command.
+ Almost every player uses this command nowadays, because the
+combination of using
+ mouse and keyboard is widely considered the best.</description><syntax></syntax><remarks></remarks></command>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>+klook</name><description>
+When active, "+forward" and "+back" become
+"+lookup" and "+lookdown"
+ respectively. This command is useful if the player needs to look
+at objects
+ which are above or below him.</description><syntax></syntax><remarks></remarks></command>

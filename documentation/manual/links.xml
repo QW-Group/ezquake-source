@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/document.xsl"?>
+<document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/document.xsd">
+	<head>
+		<title>ezQuake Manual - Where is the Quake World?</title>
+		<date>2004-10-16</date>
+	</head>
+	<body>
+		<h align="center">Where is the Quake World?</h>
+		<br />
+		<p>Being a new player you surely not only want to know how to play and set up QW properly but also where the popular servers, the news and the tournaments are. So we will provide you with the most important adresses of Quake World.</p>
+		<h>News and coverage</h>
+		<list>
+			<li>
+				<h><a href="http://www.quakeworld.nu/">QuakeWorld.nu</a></h>
+				The best portal to get news about QW. Has a crew of dedicated writers who bring you the latest QW news from all over the world, including coverage of important league/tournament games, articles, interviews, and a lot more.
+			</li>
+			<li>
+				<h><a href="http://www.besmella-quake.com/">Besmella.Quake</a></h>
+				Another QW news site, used to be swedish now in english.
+			</li>
+			<li>
+				<h><a href="http://www.quakeworld.ru/">QuakeWorld.ru</a></h>
+				Russian QuakeWorld news site, available both in russian and english versions.
+			</li>			
+			<li>
+				<h><a href="http://members.webdeveloping.nl/~trouby/nqeu/">NetQuake Europe</a></h>
+				European NetQuake community site.
+			</li>			
+			<li>
+				<h><a href="http://www.planetquake.com/quake1/">PlanetQuake</a></h>
+				Still the place for everything Quake1, especially for all sorts of files and mods.
+			</li>
+		</list>		
+		<h>Competitions</h>
+		<list>
+			<li>
+				<h><a href="http://www.nqr.nu/">Nations Quake Rank</a></h>
+				NQR is currently the largest and most important QW 4on4 league. The league is divided into divisions based on skill. It is open for everyone, ranging from hardcore clans to complete newbie teams. Last season had over 90 teams participating!
+			</li>
+			<li>
+				<h><a href="http://www.norrteljeporten.se/robert/rmr/news.php">Ride My Rocket</a></h>
+				Ride My Rocket (RMR) is an online QuakeWorld Free For All (FFA) tournament. As the tournament's first goal is to provide fun and entertainment for everyone involved, and will not result in any substantial financial benefits for the winners, it may seem strange to have rules in the first place. However, whenever a competitive aspect is present, some rules will be necessary to make sure everyone can face eachother in a fair environment.</a>
+			<li>
+				<h><a href="http://ibc.quakeworld.nu/">International QuakeWorld Bot Challenge</a></h>
+				A competition where players try to achieve best Lightning Gun efficiency.
+			</li>			
+			<li>
+				<h><a href="http://qwwc.quakeworld.nu/">QuakeWorld World Championships</a></h>
+				National teams from all over the Europe and one from North America participate to win the World Championship title.
+			</li>
+			<li>
+				<h><a href="http://duelmania.quakeworld.nu/">DuelMania</a></h>
+				Currently the largest online duel tournament going on.
+			</li>
+			<li>
+				<h><a href="http://hem.bredband.net/b246801/">Suddendeath Invitational Tournament</a></h>
+				The invitational tournament which goal is equal and fun competition.
+			</li>			
+			<li>
+				<h><a href="http://www.qhlan.org/">QH-LAN</a></h>
+				Held in Stockholm, Sweden, around two times each year - this is the largest and only serious QW event going on. Many of the best players and clans in the world use to visit this event to have fun and compete in the tournaments for 1on1, 2on2 and 4on4.
+			</li>
+		</list>
+		<h>Various</h>				
+		<list>
+			<li>
+				<h><a href="http://www.udpsoft.com/eye/">The All-Seeing Eye</a></h>
+				Looking for a good server to play QW on? Or maybe you just want to spectate all the big hot shots playing? This is one of the best server browsers that supports QW.
+			</li>
+			<li>
+				<h><a href="http://www.challenge-tv.com/">Challenge-TV</a></h>
+				All the QW demos you ever wanted. You name it, they got it. They host other games' demos as well but those are boring.
+			</li>
+		</list>
+	</body>
+</document>

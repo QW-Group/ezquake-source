@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>keymap_init</name><description>
+This resets the current keymapping and then generates a copy of the internal defaults (US keyboard) to be the new keymappings. This can be used as a base to generate a new keymapping file. It has the same (unchangeable) mapping as the example keymap-file "default.kmap"</description><syntax></syntax><remarks></remarks></command>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>+strafe</name><description>
+When active, "+left" and "+right" function
+like "+moveleft" and "+moveright",
+ strafing in that direction.</description><syntax></syntax><remarks></remarks></command>

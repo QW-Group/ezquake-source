@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>packet</name><description>
+Sends a packet with specified contents to the
+destination.
+ Example:
+ packet 123.123.123.123:27500 "status"</description><syntax>(address)</syntax><remarks></remarks></command>

@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:element name="document">
+		<xs:annotation>
+			<xs:documentation>document</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="head">
+					<xs:annotation>
+						<xs:documentation>document information</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="title" type="xs:string"/>
+							<xs:element name="date" type="xs:date" minOccurs="0"/>
+							<xs:element name="authors" minOccurs="0">
+								<xs:complexType>
+									<xs:sequence maxOccurs="unbounded">
+										<xs:element name="author">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="name" type="xs:string"/>
+													<xs:element name="email" type="xs:string" minOccurs="0"/>
+													<xs:element name="im" type="xs:string" minOccurs="0"/>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="body" type="blocks">
+					<xs:annotation>
+						<xs:documentation>document content</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="blocks" mixed="true">
+		<xs:choice minOccurs="0" maxOccurs="unbounded">
+			<xs:element ref="section"/>
+			<xs:element ref="h"/>
+			<xs:element ref="p"/>
+			<xs:element ref="list"/>
+			<xs:element ref="dict"/>
+			<xs:element ref="hr"/>
+			<xs:element ref="pre"/>
+			<xs:element ref="color"/>
+			<xs:element ref="em"/>
+			<xs:element ref="a"/>
+			<xs:element ref="img"/>
+			<xs:element ref="br"/>
+			<xs:element ref="sp"/>
+		</xs:choice>
+	</xs:complexType>
+	<xs:element name="h">
+		<xs:annotation>
+			<xs:documentation>header (block)</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:complexContent>
+				<xs:extension base="inline">
+					<xs:attribute name="align" use="optional">
+						<xs:simpleType>
+							<xs:restriction base="xs:string">
+								<xs:enumeration value="left"/>
+								<xs:enumeration value="center"/>
+								<xs:enumeration value="right"/>
+							</xs:restriction>
+						</xs:simpleType>
+					</xs:attribute>
+				</xs:extension>
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="p">
+		<xs:annotation>
+			<xs:documentation>paragraph (block)</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:complexContent>
+				<xs:extension base="blocks">
+					<xs:attribute name="indent" type="xs:boolean" use="optional"/>
+					<xs:attribute name="align" use="optional">
+						<xs:simpleType>
+							<xs:restriction base="xs:string">
+								<xs:enumeration value="left"/>
+								<xs:enumeration value="center"/>
+								<xs:enumeration value="right"/>
+							</xs:restriction>
+						</xs:simpleType>
+					</xs:attribute>
+				</xs:extension>
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="list">
+		<xs:annotation>
+			<xs:documentation>list (block)</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence maxOccurs="unbounded">
+				<xs:element ref="li"/>
+			</xs:sequence>
+			<xs:attribute name="bullet" use="optional">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="none"/>
+						<xs:enumeration value="dot"/>
+						<xs:enumeration value="number"/>
+						<xs:enumeration value="letter"/>
+						<xs:enumeration value="big-letter"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="separator" use="optional">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="none"/>
+						<xs:enumeration value="dot"/>
+						<xs:enumeration value="par"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="dict">
+		<xs:annotation>
+			<xs:documentation>dictionary (block)</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence maxOccurs="unbounded">
+				<xs:element ref="di"/>
+			</xs:sequence>
+			<xs:attribute name="bullet" use="optional">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="none"/>
+						<xs:enumeration value="dot"/>
+						<xs:enumeration value="number"/>
+						<xs:enumeration value="letter"/>
+						<xs:enumeration value="big-letter"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="separator" use="optional">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="none"/>
+						<xs:enumeration value="dot"/>
+						<xs:enumeration value="par"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="style" use="optional">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="block"/>
+						<xs:enumeration value="inline"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="hr" type="empty">
+		<xs:annotation>
+			<xs:documentation>horizontal rule (block)</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="pre">
+		<xs:annotation>
+			<xs:documentation>preformatted text (block)</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:simpleContent>
+				<xs:extension base="xs:string">
+					<xs:attribute name="alt" type="xs:string" use="required"/>
+				</xs:extension>
+			</xs:simpleContent>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="inline" mixed="true">
+		<xs:choice minOccurs="0" maxOccurs="unbounded">
+			<xs:element ref="color"/>
+			<xs:element ref="em"/>
+			<xs:element ref="a"/>
+			<xs:element ref="img"/>
+			<xs:element ref="br"/>
+			<xs:element ref="sp"/>
+		</xs:choice>
+	</xs:complexType>
+	<xs:element name="color" type="inline">
+		<xs:annotation>
+			<xs:documentation>coloured (inline)</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="em" type="inline">
+		<xs:annotation>
+			<xs:documentation>emphasis (inline)</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="a">
+		<xs:annotation>
+			<xs:documentation>anchor (inline)</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:simpleContent>
+				<xs:extension base="xs:string">
+					<xs:attribute name="href" type="xs:string" use="required"/>
+				</xs:extension>
+			</xs:simpleContent>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="img">
+		<xs:annotation>
+			<xs:documentation>image (inline)</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:simpleContent>
+				<xs:extension base="xs:string">
+					<xs:attribute name="src" type="xs:string" use="required"/>
+				</xs:extension>
+			</xs:simpleContent>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="br" type="empty">
+		<xs:annotation>
+			<xs:documentation>line break (inline)</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="sp" type="empty">
+		<xs:annotation>
+			<xs:documentation>space (inline)</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:simpleType name="empty">
+		<xs:restriction base="xs:string">
+			<xs:length value="0"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:element name="li" type="blocks">
+		<xs:annotation>
+			<xs:documentation>list entry</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="di">
+		<xs:annotation>
+			<xs:documentation>dictionary entry</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="name" type="inline"/>
+				<xs:element name="description" type="blocks"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="section">
+		<xs:annotation>
+			<xs:documentation>section (block)</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:complexContent>
+				<xs:extension base="blocks">
+					<xs:attribute name="id" type="xs:string" use="optional"/>
+					<xs:attribute name="title" type="xs:string" use="required"/>
+					<xs:attribute name="indent" type="xs:boolean" use="optional"/>
+				</xs:extension>
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

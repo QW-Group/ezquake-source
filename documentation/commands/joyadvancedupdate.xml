@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>joyadvancedupdate</name><description>
+This command initializes the joystick's
+advanced features. It is necessary to
+ issue this command after making any changes to the other
+joystick commands. This
+ command will initialize all of the settings.</description><syntax></syntax><remarks></remarks></command>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/document.xsl"?>
+<document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/document.xsd">
+	<head>
+		<title>ezQuake Manual - Quake history</title>
+		<date>2004-10-07</date>
+	</head>
+	<body>
+		<h align="center">Quake history</h>
+		<br />
+		<h>Links</h>
+			<list>
+			<li>
+				<h><a href="http://www.planetquake.com/features/articles/classicpq/qw1.shtml">TheQuakeWorld Chronicles</a></h>
+				(By Stephen "Blue" Heaslip, April 1997) 
+				Early QW client history. 
+			</li>
+			<li>
+				<h><a href="http://web.archive.org/web/19980126030535/http://www.mpog.com/clanring/history/">Twenty Minutes Later: The History of ClanRing</a></h>
+				(By Jeremy "Lindril" Degroat, September 1997) 
+				An historical perspective concerning the first clans of Quake in North America. 
+
+			</li>
+			<li>
+				<h><a href="http://www.planetquake.com/articles/drvs9.shtm">Clan 9 vs Deathrow</a></h>
+				(By SumFuka and FragBate, August 1998) 
+
+			</li>
+			<li>
+				<h><a href="http://www.gamespy.com/legacy/articles/quakeworld_a.shtm">The History of QuakeWorld</a></h>
+				(By John "JCal" Callaham, November 1999) 
+			</li>
+			<li>
+				<h><a href="http://www.challenge-au.com/history/history.html">Australian History of Quaking</a></h>
+				(By Richard "Hoony" Sandlant)
+			</li>
+			<li>
+				<h><a href="http://www.methosq.com/newsjuly01.htm">Quake History In A Nutshell</a></h>
+				(By Methos, June 2001 (halfway down the page)) 
+			</li>
+			<li>
+				<h><a href="http://www.challenge-tv.com/index.php?mode=articles">TGi Revisited</a></h>
+				(By DonKing, September 2003) 
+			</li>
+			<li>
+				<h><a href="http://www.challenge-smackdown.com/div_eu/columns/purity/">Purity's column</a></h>
+				A good source for later QW history from 2001-2004. Contains some massive reviews of the years 2001, 2002, fall 2003, and a lot more. 
+			</li>
+			</list>
+	</body>
+</document>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>give</name><description>
+Give user a certain amount of an item.
+ Items:
+ 1 - Axe
+ 2 - Shotgun
+ 3 - Double-Barrelled Shotgun
+ 4 - Nailgun
+ 5 - Super Nailgun
+ 6 - Grenade Launcher
+ 7 - Rocket Launcher
+ 8 - ThunderBolt
+ C - Cells
+ H - Health
+ N - Nails
+ R - Rockets
+ S - Shells
+ Note: The -cheats parameter must be used to launch the server to
+use
+ the give command. Also the key and value *cheats ON will be
+displayed
+ in the serverinfo information.
+ Examples:
+ give 1234 R 99 will give for user 1234 99 rockets.
+ give 1234 7 will give for user 1234 rocket
+launcher.</description><syntax></syntax><remarks></remarks></command>

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/document.xsl"?>
+<document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/document.xsd">
+	<head>
+		<title>ezQuake Manual - Server manual</title>
+		<date>2004-10-16</date>
+	</head>
+	<body>
+		<h align="center">Server manual</h>
+		<br />
+		<h>Requirements</h>
+		<p>To play QW you always have to connect to a server. Other than in NetQuake, where the servercode is implemented into the client, you need an extra program to start a game in QW: the QW server. This server program handles the connections to all clients and calculates all actions players do.</p>
+		<p>To run a QW server you need a computer who is fast enough. Don't be afraid: a Pentium with 90 mhz and 32 mb free ram is more than enough to host a clanwar with 8 players and some spectators. To calculate ressources of a machine for a QW server, take the amount of players you want to host and multiply it with 4 to get the amount of mhz you need or multiply it with 3 and you'll get the amount of mb ram. But be careful, the operating system will also consume some percents of your performance. You can limit the maximum amount of ram a server should use with the commandline parameter <color>-mem [x]</color>.</p>
+		<p>Even if you don't have a wintel pc, there are good chances that the QW server works on your machine: id Software have ported their <a href="http://www.quakeworld.net/">QW server</a> to many platforms: Win 32, Linux, FreeBSD, Solaris, Macintosh and some more. Since the QW sourcecode is available free, some talented coders have added some features to the QW server. I recommend the use of stable versions of the <a href="http://mvdsv.sourceforge.net/">Multiview Demo Server</a> (mvdsv) by HighlandeR.</p>
+		<p>Generally, I recommend the use of Windows NT or Unix based plattforms, because of better network stack, performance, security reasons and longer uptime. On Linux you can use Crontab, a tool to periodically check the QW server process and restart it if needed.</p>
+		<h>Network connection</h>
+		<p>Furthermore, you need a network connection which is good enough to give all your clients their bandwidth. If you want to host a server on the internet, you need at least dsl or cable. To calculate the amount of bandwidth your server need, you can use this small algorithm: take the maximal rate clients can use (at the internet players typically uses a isdn connection and a rate arround 7000, on a lan up to 25000) divide it by 1000 and multiply it with the amount of players you want to host on your server and you get the needed bandwidth in kilobyte per second. You will see, a teamplay server with 8 players need at least 60 kb/s.</p>
+		<p>Every QW server on your machine is linked to a special udp-port of a ip-interface, by default it use the port 27500 on all available interfaces. Every port only can be used by one application, so if you want to host more than one server, you need to link every QW server to a separate port (e.g. 27500, 27501 or 27666). Alternately you can use a different ip-interface like another networkcard or an additional ip address. To do this, you'll have to use the command line parameters <color>-ip</color> and <color>-port</color>.</p>
+		<p> QW server in the internet can be found by scanning a computer on the udp port 27500. But this method has disadvantages: it takes a long time if you scan many computers and you don't find servers on non-standard ports. That's why the developers of QW have implemented a possibility to report your server to a masterserver: the command "setmaster". Now players can use pingtools like gamespy, pingtool and qview or the internal serverbrowser from qizmo to find you. Public masterservers you'll find with ease, because most pingtools have listed them internally. If you want to set up a own masterserver (e.g. for lanparties) download the nitromaster <a href="help/not working">here</a>.</p>
+		<p>It's a good idea to install <a href="http://www.udpsoft.com/qizmo/">Qizmo</a> on your QW server. Clients can connect to the qizmo, enable the compression and will get a better gameplay with less lag and packetloss. With a server-side qizmo the players have the possibility to observe and follow other players. There is also a possibility to safe an extra amount of bandwith by patching the server with the Qizmo nailhack. Please read the <a href="help/qizmo.xml">Qizmo section</a> and the Qizmo readme for further information to installation and configuration of Qizmo.</p>
+		<h>Setting up and configuration</h>
+		<p>The QW server usually try to execute a config file called server.cfg. You should use this config file to configure your server. Every mod directory should contain one (even if they is empty or contains only general stuff), to ensure that QW don't load the server.cfg from other directories (e.g. ../qw/server.cfg is automatically loaded if the server don't find another server.cfg in the mod directory). If you want to execute other config use "exec".</p>
+		<p>The client config files config.cfg and autoexec.cfg won't be executed. This gives the possibility of a functional QW client/server installation together on the same quake files. On windows 9x machines you need a small program called <a href="http://www.planetfortress.com/tfdone_easy/files/zips/priority.zip">priority.exe</a> to ensure that, if you run the QW server and client together on the same machine like (e.g. on lanparties or for testing purposes), the packetloss and pings keeps constantly. On windows nt/2000, linux and unix you won't have this problems. You also work around this problem by using qizmo along with your client or use the quakeforge server.</p>
+		<p>The QW server is very similar to the client. Many of the commands won't be new to you. You also need a version of quake and a install of QW, so the directory structure is the same. The server uses the same parts of the game besides the executable. Be sure that you don't have changed parts of the gamefiles, especially original maps won't work with all clients if they are patched with some sort of waterhack or watervis to get transparent surfaces.</p>
+		<p>If you want to run custom maps, you'll have to copy this maps to ../qw/maps/ or ../id1/maps/ and the server will find them if needed. Make sure that you use common ones, otherwise you have to allow the download to clients. There is a couple of good custom maps you'll need on your server, depending on the gametype you want to host. Most common on the servers are: death32c and base32b (maps for up to 32 players), aerowalk, dm7, warfare3, hop3 (a bunny hop map) and some map collections like cmt, ukool, efdm, skis, exdm, dapak and ukpak, ztndm (with the incredible ztndm3). Which one is used for what gametype, you'll find out by yourself by playing online :-)</p>
+		<p>QW gives players the possibility to use skins. When enabled, players can download needed skins from the server. You can take some skin collections from here and copy to ../qw/skins/, but most online players won't see them because they use their own enemy and team skin.</p>
+		<h>Modifications</h>
+		<p>If you want to set up a server, you'll have to decide which modification you use. Without any modification, it only makes sense to host a classic deathmatch game. If you need a good alround config for deathmatches, you can download this one and modify it in the way you want. Rename it to server.cfg and copy it to ../qw/ and they will be your standard config if you load the server without any modification.</p>
+		<p>For duels and teamplay you need a more advanced mod, because QW gives you no possibility to let clients change settings and maps without access to your server console. In Europe, serveradmins commonly use <a href="http://rxr.quakeworld.nu/ktpro/">Kombat Teams Pro</a>. Duels and teamplays can be held, without the need of an admin. Players can vote the map, important settings like timelimit, fraglimit and deathmatchmode or elect a referee for a game. Good alround kombat teams configs for duel and teamplay can be found here. Load kombat teams with the "gamedir" command and execute one of this configs. For further information read the kombat teams manual.</p>
+		<p>Free-for-all deathmatches can also be hosted by using kombat teams pro. This ensures a game without cheats and also provides the possibility of voting.</p>
+		<p>Another very popular modification is <a href="http://www.planetquake.com/captured/">capture the flag</a>. In this mod a team try to capture the enemy flag and return them to the own flag. Many modifications to modern games have their roots in this mod. Also <a href="http://www.planetfortress.com/teamfortress/">Team Fortress</a> is a ctf based modification, but it has some additions like different classes for players and advanced map control.</p>
+		<p>The modifications rocketarena and clanarena are round based games. Every player is provided with all weapons and a amount of ammo, health and armor. A round of a duel in rocketarena or a round of a teamgame in clanarena is over, if one side is hunted to death. The player or the clan who wins the most rounds is victorious.</p>
+		<p>Modifications needs to be installed in a separate directory in the quake root dir (e.g. ../modname/), they are loaded with the "gamedir" command. Sometimes it's recommended that also clients have installed the mods on their machine. You should have a look in the manuals for more informations. There are some other popular modifications for QW: <a href="http://www.planetquake.com/holywars/">holywars</a>, <a href="http://www.teamevolve.com/products/painkeep/">painkeep</a> and <a href="http://www.planetquake.com/headhunters/">headhunters</a>. Servers are rare, maybe you want to set up a server for this mods :-)</p>
+		<h>Controlling</h>
+		<p>There is the possibility to remotely control your QW server from another computer. After starting the QW client, enter the <color>rcon_password</color> and <color>rcon_address</color> of the server you want to control. Now you can control your server by typing <color>rcon</color> followed by console commands or variables. There are some tools which use this or similar techniques to control a server remotely, but don't need the graphics of the QW client. I recommend <a href="http://blip.nevada.net.nz/watcher/">Watcher</a></p>
+		<p>If you want to see who is on your server, use <color>status</color>. The server will print out a table with informations on connected players, sorted by a key called userid. If you want, for example, kick a user, get the userid and write <color>kick [userid]</color> and the player will be disconnected. QW also provides a method to permanentally ban users or ip addresses.</p>
+		<p>To change a modification on a running server you have to use the <color>gamedir</color> command. Then manually execute the server.cfg and load a map. But be warned: some mods won't work if you change them on thy fly. The better method is to quit the server and restart with the new mod.</p>
+		<h>Console variables and commands</h>
+		<p>The following list give you a short view over the most importants console variables and console commands. In most cases you don't need them all and some aren't useful in a config file. If you unsure how to use a command or a variable, have a look in this sample config. For a complete list you should have a look at <a href="http://www.planetquake.com/console/commands.html">this site</a>.</p>
+		<list>
+			<li><h>deathmatch 1|2|3|4|5|6|7</h>
+				This variable modifies the gameplay in the following way:
+				<pre>
+				1: Weapons don't stay on the map. Items and weapons will respawn.
+				2: Weapons stay on the map - you can only pick up a weapon once. Items will not respawn.
+				3: Weapons stay on the map - you can only pick up a weapon once. Items will respawn.
+				</pre>
+				The most popular deathmatch modes (dmm) are 1 and 3. Usually new clans and players prefer dmm3. Advanced clans often choose dmm1, because of the more tactical gameplay. Some mods also supports more modes: dmm4/5 are rocketarena style gametypes and good for duel.
+			</li>
+			<li><h>teamplay 0|1|2|3</h>
+				This will modify the way the server will handle the cases of insuring of teammates:
+				<pre>
+				0: No teams. You can hurt yourself and others.
+				1: You can't hurt yourself nor your teammates.
+				2: You can hurt yourself, your teammates, and you will lose one frag for killing a teammate.
+				3: You can hurt yourself but you can't hurt your teammates.
+				</pre>
+				Duels and deathmatches are played with teamplay mode (tp) 0. For teamgames normally tp2 is choosed, even if some new clans prefer tp1.
+			</li>
+			<li><h>timelimit [x]</h>
+				<h>fraglimit [x]</h>
+				This let you control the time a map is running. The server will change the map after a given amount of minutes via timelimit, if the fraglimit is not hit before.
+			</li>
+			<li><h>maxclients [x]</h>
+				<h>maxspectators [x]</h>
+				With this variables you control the amount of players and spectators allowed on your server. Maxclients includes players and spectators, so maxspectators should always be equal-to or less-then the maxclients value. The maximum amount of clients on a QW server is 32.
+			</li>
+			<li><h>hostname ["name"]</h>
+				Here you can define a name for your server. This will be useful especially if you report your server to a masterserver.
+			</li>
+			<li><h>samelevel 0|1|2|3</h>
+				This variable determines the rules for level changing and exiting:
+				<pre>
+				0: Allows advancing to the next level.
+				1: The same level will be played until someone exits.
+				2: The same level will be played and the exit will kill anybody that tries to exit.
+				3: The same level will be played and the exit will kill anybody that tries to exit, except on the Start map.
+				</pre>
+				On public servers you should always set samelevel to 2 or 3.
+			</li>
+			<li><h>serverinfo [key] [x]</h>
+				With this variable you can define informations about your server. There are some special values:
+				<pre>
+				dq: Drop Quad Damage when a player dies.
+				dr: Drop Ring of Shadows when a player dies.
+				rj: Sets the multiplier rate for splash damage kick.
+				fpd: This is checked by most proxies and will disable some "cheat" features.
+				</pre>
+				You also can add some more keys with info about your server, like url or email.
+			</li>
+			<li><h>localinfo [key] [x]</h>
+				This variable is used in interaction with the mod. This variable also gives you the possibility of defining a mapcycle:
+				<pre>localinfo oldmap newmap</pre>
+				To get a complete cycle you have to return from the last map in your cycle to the first map! To initiate the cycle you have to launch a map included into it with the "map" command.
+			</li>
+			<li><h>map [mapname]</h>
+				You can change the map manually by using map.
+			</li>
+			<li><h>gamedir [directory]</h>
+				<h>sv_gamedir [directory]</h>
+				If you want to use a custom mod, you have to use gamedir to give the server the directory where the mod is located. If this directory differs from the commonly used one you can correct this with sv_gamedir.
+			</li>
+			<li><h>allow_download 0|1</h>
+				<pre>
+				allow_download_maps "0/1"
+				allow_download_models "0/1"
+				allow_download_sounds "0/1"
+				allow_download_skins "0/1"
+				</pre>
+				Here you can control how the server reacts if a client need a file from the server. Most additional files likes skins or sounds are not necessary to play on a server. If you run a custom mod or have some additional maps on your server, you have to let the clients download this files, otherwise they can't play on your server. But remember: downloads can raise pings and packetloss!
+			</li>
+			<li>
+				<h>floodprot [number of messages] [number of seconds] [silence time in seconds]</h>
+			</li>			
+			<li><h>floodprotmsg [x]</h>
+				<h>sv_spectalk 0|1</h>
+				These variables let you control the floodprotection. If players talk to much, their messages are blocked by the server. You also can disable spectator talk, but this should only be done if necessary.
+			</li>
+			<li><h>setmaster [x]</h>
+				<h>heartbeat</h>
+				If you want to report your server to a masterserver, you have to define this masterserver. If clients use pingtools like gamespy or the internal serverbrowser of qizmo they can find your server. Every 5 minutes your server will send a heartbeat to the masterserver - you also can manually send one.
+			</li>
+			<li><h>password [x]</h>
+				<h>spectator_password [x]</h>
+				<h>rcon_password [x]</h>
+				If you want to lock your server for some reason, or need a locked admin spectator port, you should use this variables. If you want to control your server remotely from your client use rcon_password.
+			</li>
+			<li><h>sv_aim 0|1</h>
+				For competitions you should set this to 0, otherwise clients have the possibility to use the autoaim function, which is implemented into Quake for keyboard players.
+			</li>
+			<li><h>pausable 0|1</h>
+				To allow clients to pause a game set this to 1. But remember: some lame guys can disturb games in action.
+			</li>
+			<li><h>status [userid]</h>
+				<h>kick [userid]</h>
+				This gives you the possibility to get information on players and kick them from the server if necessary. User are listed in a table sorted by a key called userid.
+			</li>
+			<li><h>alias</h>
+				<h>exec</h>
+				<h>quit</h>
+				<h>say</h>
+				These commands works like in the client. Define aliases, execute configs, send messages to connected clients or quit the server.			
+			</li>
+		</list>
+		<h>Command line parameters</h>
+		<p>The here listed parameters could be used from the commandline. You can't alter them if the server is started. Also consolevariables from above can be set in the commandoline, they need + as prefix. All console variables you define over the commandline you can overwrite with the console or with a config.</p>
+		<list>
+			<li><h>-condebug</h>
+				Use this parameter to activate logging. Logfiles can be used to calculate statistics with tools like <a href="http://www.planetquake.com/gibstats/">gibstats</a>. You can also use the console parameter "logfile".
+			</li>
+			<li><h>-mem [x]</h>
+				Limit the amount of ram the QW server allocates by using -mem. This value refers to megabyte.
+			</li>		
+			<li><h>-port [port]</h>
+			If you want to start more than one QW server on one computer, you'll have to use one of the parameters above. The standard port is 27500, the standard ip refers to all open network connections. This parameters lets you choose the exact network port the server should use.
+			</li>
+			<li><h>-cheats</h>
+			Sometimes it's fun to enable cheats on a server. All clients will be warned when they connect.
+			</li>
+			<li><h>+gamedir [directory]</h>
+			Normally a console variable, the gamedir is often defined over the commandline, to start the server start with the right modification.
+			</li>
+		</list>
+	</body>
+</document>

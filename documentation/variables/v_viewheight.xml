@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>v_viewheight</name><description>
+
+New variable v_viewheight cam be used to get the effect of negative/zero values 
+of cl_bobcycle etc in qw 2.33 . Negative values of v_viewheight = lower viewheight, 
+positive = higher. Can't go below -7 or above 4 because that's the range you can get 
+with qw 2.33 by exploiting the bob cycle bug. Using v_viewheight automatically 
+turns off weapon model bobbing (cl_bob*).
+
+</description><remarks></remarks></variable>

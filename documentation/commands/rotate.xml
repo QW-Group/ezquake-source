@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>rotate</name><description>
+rotates the player by x degrees.
+ Note: Negative values can also be used for the desired
+angle.
+ Example: "rotate 180" will rotate your pov by 180
+degrees.</description><syntax></syntax><remarks></remarks></command>

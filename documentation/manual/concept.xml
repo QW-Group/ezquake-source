@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/document.xsl"?>
+<document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/document.xsd">
+	<head>
+		<title>ezQuake Manual - The concept of the game</title>
+		<date>2004-10-16</date>
+	</head>
+	<body>
+		<h align="center">The concept of the game</h>
+		<br />
+		<p>Quake is a game which can be classified as a shooter. In this shooter you can see everything from the first person point of view, that is as through the eyes of your player character, or from the third point of view (so you always see Ranger's back). That naturally makes the environment in which you play three dimensional. Most of the time you are moving through some sort of maze that represents an ancient castle, a tomb, sewers or simpley a building. That depends on the setting of the respective game (QW has a somewhat "medieval" setting). Along your way you encounter a lot of enemies which you dispatch with the weapons you found previously. Besides the weapons there are also other items to pick up like health, ammunition or powerups which help you on your quest.</p>
+		<p>The goal of the game depends a lot on which mode you play. In single player the goal is more or less to find the exit of the maze. Before reaching that you usually have to kill a boss monster blocking the exit. Often you have to solve some puzzles as well, like finding a key to open a door.</p>
+		<br />
+		<p>In multiplayer the concept is much different. In short words it is to kill the enemy player.There are many different styles though. In deathmatch or "free for all" two or more players kill each other until someone reaches the fraglimit that is has killed his enemies a certain number of times. Once the limit is reached you start over, either on the same map or a different one. In duel or 1on1 you only have a single enemy at the same time. Usually you play for like 10 minutes. Whoever gets the most frags(kills) wins the duel. In contradiction to raw deathmatch this mode requires much more knowledge about various aspects of the game.</p>
+		<p>Teamplay means that you play together with your team against another team. This can be 2on2, 4on4 or even 10on10. Teamplay is perhaps the most difficult mode to master in a shooter since you not only have to care about yourself but you also have to pay a lot of attention towards what your teammates are doing. This is if you want your team to win of course.</p>
+		<br />
+		<p>For a newbie QW might not be the best game to try because it is very hard to get into it. However here in our guide we will provide you with all the information you need and it is worth the effort. QW is considerably better than the modern shooter games when it comes down to what a game is all about: gameplay.</p>
+	</body>
+</document>

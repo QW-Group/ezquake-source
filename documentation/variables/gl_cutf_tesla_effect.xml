@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>gl_cutf_tesla_effect</name><description>When a shambler is preparing to throw lightning, or a tesla coil (TF) is charging to fire, a particle effect is generated.</description><remarks></remarks></variable>

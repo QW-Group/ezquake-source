@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>cfg_load</name><description>
+This will do a cfg_reset and then execute
+filename.cfg (ezquake/configs).</description><syntax>(filename)</syntax><remarks></remarks></command>

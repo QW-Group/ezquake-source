@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>tp_point</name><description>
+Item can be: powerups, quad, pent, ring, armor, ra, ya, ga, 
+weapons, lg, rl, gl, sng, ng, ssg, 
+ammo, cells, rockets, nails, shells, 
+players, eyes, teammate, enemy, 
+mh, health, pack, flag, all, default, none, suit 
+Item names can be customized with tp_name_item</description><syntax>
+[item1] [item2] ...</syntax><remarks></remarks></command>

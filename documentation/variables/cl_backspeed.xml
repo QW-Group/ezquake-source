@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>cl_backspeed</name><description>
+
+This allows you to set your backward speed. Obviously this is also limited by
+the server, usually to "320".
+
+</description><remarks></remarks></variable>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>fraglogfile</name><description>
+Enables logging of kills to a file. Useful for
+external frag polling programs.
+ The file name is frag_##.log</description><syntax></syntax><remarks></remarks></command>

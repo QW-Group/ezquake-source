@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>match_save</name><description>
+If you are using 'match_auto_record 1' then a
+temp demo will be recorded to
+ c:\quake\ezquake\temp\_!_temp_!_.qwd each time a map starts.
+This temp demo will be overwritten
+ when the next match starts. If you want to keep the temp demo,
+use the "match_save" command.
+ This will move the demo to the same folder and filename that
+easyrecord would have used.</description><syntax></syntax><remarks></remarks></command>

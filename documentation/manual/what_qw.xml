@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/document.xsl"?>
+<document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/document.xsd">
+	<head>
+		<title>ezQuake Manual - What is QuakeWorld?</title>
+		<date>2004-10-16</date>
+	</head>
+	<body>
+		<h align="center">What is QuakeWorld?</h>
+		<br />
+		<p>QuakeWorld is a modification made by <a href="http://www.idsoftware.com/">id Software</a> for their original Quake which was developed in 1996. It improves the flaws Quake had for Internet play (more on that later). Since QuakeWorld is in the end just another .exe for Quake our explanations will start with that, the game that started online gaming (together with Ultima Online) as we know it today. Later we will explain how and where QuakeWorld and Quake differ from each other.</p>
+		<br />
+		<h>Quake</h>
+		<p>(Also known as NetQuake or Regular Quake)</p>
+		<p>Quake was the follow up to the legendary DOOM series by id Software. The first test version was released in early 1996, the shareware was released in summer of that year, the full version a few weeks later. Although already the third generation shooter it was the first game of the genre that had a true 3D environment. Quake was also the first game to offer easy Internet play right out of the box. It introduced the server/client concept as well. Furthermore it was one of the first games that had support for the brand new 3D graphic boards (a few months after its release). Many people bought their first Voodoo1 just for Quake. Since there is no need here we will only briefly discuss Quake itself.</p>
+		<p>There are several versions of Quake. First, there are (DOS)Quake and WinQuake. (DOS)Quake is the one that comes right out of the box. It can easily be run from a Windows environment. WinQuake mainly offers support to play Quake in a window (it has some bugs that Quake for DOS does not have, too). Then we have software and GLQuake. Software means that the graphics are not hardware accelerated. GLQuake was released later and has 3D acceleration for OpenGL based boards/drivers. With todays computers there is not much difference in FPS (frames per second) for both versions, except that GL runs in higher resolutions and can look much nicer too.</p>
+		<h>QuakeWorld</h>
+		<p>Basically QuakeWorld is Quake for Internet play. When Quake was released it already featured network and Internet playability. It worked (and still works) very well in local network but over the Internet it was almost unplayable unless you had a very good connection (i.e. T1), which were even less abundant than nowadays. So id started working on QuakeWorld which was eventually finished about a year later by Zoid who took over development after id started working on Quake 2. The latest version of QuakeWorld is 2.33 (0005 build) and it is very unlikely that it will be developed any further. The main difference between QuakeWorld and NetQuake, how normal Quake is called since the birth of QW, is the much improved netcode which makes it very playable over the internet, even for low bandwidth connections. This was mainly achieved by integrating client side player movement prediction. There are more things like that but they are quite technical and it's not necessary to understand them to play QW.</p>
+		<p>The physics are also a bit different from NetQuake, for example speedjumping is a lot easier and you got more aircontrol. Against common belief the splash damage of rockets was not increased in QW compared to NetQuake. According to Zoid, it is just the prediction that makes it look bigger sometimes. Overall QuakeWorld is a much improved version of Quake and has developed to be the standard, even for lan play.</p>
+		<h>Custom QW clients</h>
+		<p>Back in December 1999, <a href="http://www.idsoftware.com/">id Software</a> released the complete Quake source code, which allowed people to modify the client itself. Many cheat clients got created (of course), but also clients which had as goal to make QW a better game. Two of these clients came to be the standard of the QW community. The first one to get accepted was <a href="http://mqwcl.qhlan.org/">More QuakeWorld</a> (alias MQWCL) which is now a dead project, but still many top players prefer this client over anything else.</p>
+		<p>The second was <a href="http://www.fuhquake.net/">FuhQuake</a>, which will have its last release soon. FuhQuake enhanced the graphics, gameplay, teamplay, removes bugs, etc - the list is long. FuhQuake is an open source (GPL) client and is based on <a href="http://zquake.frag.ru/">ZQuake</a>. Since there is no cheating prevention code in the regular QW client, you have to use FuhQuake or More QuakeWorld (although MQW is getting slowly unaccepted) when you play in official tournaments. However, you can play with the standard QW client combined with <a href="http://www.udpsoft.com/qizmo/">Qizmo</a> for cheating prevention.</p>
+		<p>Because of this, and besides the fact that ezQuake is just an amazing client, much of the content in this guide will be focused on it.</p>
+	</body>
+</document>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>r_speeds</name><description>
+
+Toggles the displaying of drawing time and stats of what is
+currently being viewed.
+Example:
+32.7 ms 267/196/ 74 poly   3 surf
+38.6 ms 267/196/ 74 poly  20 surf
+60.4 ms 267/196/ 74 poly  18 surf
+38.2 ms 267/196/ 73 poly  18 surf
+
+</description><remarks></remarks></variable>

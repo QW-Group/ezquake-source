@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>alias</name><description>
+Used to create a reference to a command or
+list of commands. When used without
+ parameters, displays all current aliases.
+ Note: Enclose multiple commands within quotes and seperate each
+command with a semi-colon.</description><syntax></syntax><remarks></remarks></command>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>gl_checkmodels</name><description>
+Not well implemented yet. Quickly looks at the pmodel and emodel listed in every player's infokey and reports anything unusual it finds. Basically it saves you having to type "users. user x" and then comparing the models for everyone.</description><syntax></syntax><remarks></remarks></command>

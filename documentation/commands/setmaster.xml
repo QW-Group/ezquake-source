@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>setmaster</name><description>
+Lists the server with up to eight masters.
+When a server is listed with a master,
+ the master is aware of the server's IP address and port and it
+is added to the
+ list of current server connected to a master. A heartbeat is
+sent to the master
+ from the server to indicated that the server is still running
+and alive.
+ Examples:
+ setmaster 192.246.40.12:27002
+ setmaster 192.246.40.12:27002 192.246.40.12:27004</description><syntax></syntax><remarks></remarks></command>

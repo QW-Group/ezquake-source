@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>devmap</name><description>
+Try it in cheats mode, start a map (devmap
+dm6) and type fly.</description><syntax></syntax><remarks>
+bind space +up</remarks></command>

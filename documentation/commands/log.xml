@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>log</name><description>
+If you type "log filename" it will log console
+to filename.log in your gamedir.
+ It overwrites logs without asking.</description><syntax>(filename)</syntax><remarks></remarks></command>

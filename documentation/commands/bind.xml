@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>bind</name><description>
+This command binds one or several commands to
+a key. To bind multiple commands
+ to a key, enclose the commands in double-quotes (") and separate
+them with
+ semicolons (;).</description><syntax></syntax><remarks></remarks></command>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>loadloc</name><description>
+Loads a loc file (must be located in id1/locs,
+qw/locs, or ezquake/locs.
+ The ".loc" extention is optional, for example, "loadloc dm6"; if
+the file name has
+ no extension, use its explicit name ("loadloc
+dm6.").</description><syntax>(filename)</syntax><remarks></remarks></command>

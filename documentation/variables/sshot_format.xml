@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>sshot_format</name><description>
+
+tga = Tga screenshots (gl only)
+png = Png screenshots
+jpg = Jpg screenshots (gl only)
+pcx = Pcx screenshots (software only)
+
+</description><remarks></remarks></variable>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/document.xsl"?>
+<document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/document.xsd">
+	<head>
+		<title>ezQuake Manual - External resources</title>
+		<date>2004-10-07</date>
+	</head>
+	<body>
+		<br />
+		<p>Before we move on to the core of this guide, it is important that you know some places where to get additional help on QW, in case you need more information or are just confused. There are a few other sites on the web offering help about QW. You can also find lots of experienced QW players on IRC (check channels below), just ask us.</p>
+		<br />
+		<h>Guides and forums</h>
+			<list>
+			<li>
+				<h><a href="http://equake.quakeworld.nu/">eQuake</a></h>
+				We will explain to you what an FPS is, the general structure of playing an FPS and how to play QuakeWorld which in our opinion is still the best multiplayer FPS.
+			</li>
+			<li>
+				<h><a href="http://ezQuake.SF.net/">ezQuake</a></h>
+				The ezQuake website has documentation that explains most of ezQuake's features, all the necessary files and more. There is also a RFE (Request FeaturE) page and a bug report page.
+			</li>
+			<li>
+				<h><a href="http://ezQuake.SF.net/docs/">ezQuake Documentation</a></h>
+				Explains all of ezQuake's variables, console commands, command line parameters and more. 
+			</li>
+			<li>
+				<h><a href="http://www.quakeworld.nu/forum/">QuakeWorld.nu Forum</a></h>
+				For any questions related to QW. See the Help or Client Talk sections.
+			</li>
+			<li>
+				<h><a href="http://gibbage.mine.nu/forum/viewforum.php?f=4">Linux Quake Forum</a></h>
+				For help on how to set up QW under Linux.
+			</li>
+			<li>
+				<h><a href="http://www.quaketerminus.com/quakebible/">Thresh's Quake Bible</a></h>
+				Written by the master himself; Dennis Fong alias Thresh. This comprehensive guide to Quake (NetQuake) goes thoroughly every aspect of the game from game controls to rocket jumping and advanced team strategy. Although many of the strategies explained are a bit outdated, it's still a good read that every true Quaker should have read!  
+			</li>
+			</list>
+		<h>IRC channels</h>
+			<list>
+			<li>
+				<h>#ezQuake (IRC.QuakeNet.org)</h>
+				The official ezQuake IRC channel. This is the best place to ask if your question is directly related to ezQuake. It is also a place to discuss new features which are under development. 
+			</li>
+			<li>
+				<h>#QuakeWorld (IRC.QuakeNet.org)</h>
+				The largest QW community channel on QuakeNet and also the official channel for the QuakeWorld.nu website. You'll always find experienced people here who are willing to help. 
+			</li>
+			<li>
+				<h>#QWPlayers (IRC.EnterTheGame.com)</h>
+				North American QW community channel. 
+			</li>
+			<li>
+				<h>#Besmella (IRC.EnterTheGame.com)</h>
+				Australian QW community channel.
+			</li>
+			</list>	
+	</body>
+</document>

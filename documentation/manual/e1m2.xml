@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/document.xsl"?>
+<document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/document.xsd">
+	<head>
+		<title>ezQuake Manual - E1M2: Castle of the Damned</title>
+		<date>2003-10-07</date>
+	</head>
+	<body>
+		<h align="center">E1M2: Castle of the Damned</h>
+		<br />
+		<h>Introduction</h>
+		<p>E1M2, Castle of the Damned, is both a classic teamplay and duel map. A lot of important matches took place here, like the one in which Tresh won his Ferrari in the Red Annihilation tournament or the famous games between Deathrow and Clan 9. As a teamplay map it has always been the map of the top clans who are able to score bigtime here against weaker teams and as soon as two equally skilled teams meet here you can be sure to see and exciting match. E1M2 favours teamplay and good communication over personal skill and this is probably the reason for its huge popularity.</p>
+		<br />
+		<h>Items available</h>			
+			<h>Weapons</h>
+			<list>
+				<li>1 Rocket Launcher</li>
+				<li>1 Grenade Launcher</li>
+				<li>2 Super Nailguns</li>
+				<li>1 Super Shotgun</li>
+				<li>1 Nailgun</li>
+			</list>
+			<h>Armor</h>
+			<list>
+				<li>1 Red Armor</li>
+				<li>1 Green Armor</li>
+			</list>
+			<h>Powerups</h>
+			<list>
+				<li>1 Quad damage</li>
+				<li>1 Megahealth</li>
+			</list>
+			<br />
+			<h>Important areas</h>
+			<p>The most important area on E1M2 is the area spanning the YA area, over the GL room to the Quad area. Most of the action during a match takes place there and strategy evolves around controlling both YA and Quad. Contrary to any other map, the room where the RL is located is of minor significance. An area that should not be neglected is the Megahealth area near the single player level exit. Attacks are often launched from there. Then there is also the bridge leading to the YA area which has some nail traps in the walls that are very noisy and, at times, deadly. Finally there is the start area with a submerged entrance to the RL room and the central bridge area connecting several several sections of the map.</p>
+			<list>
+			<li>
+				<h>YA</h>
+				The YA resides on a tiny bridge over a shallow pool of dirty water. 
+				A 'U' shaped walkway leads on one side to the GL area and on the other side, through the nail traps, to the central bridge. The water contains a teleporter to the central bridge area.
+			</li>
+			<li>
+				<h>GL</h>
+				The GL lies behind a column in a rather large room with a tall roof, lots of healthpacks and some nail ammo. 
+				A passage leads down some steps into the YA area. At the opposite side, an opened door gives out into the Quad area. 
+				At the start of the match, part of the room is locked by walls that can be lowered by walking through the YA passage. Next to the GL is a switch. Activating it extends a narrow bridge to a small niche with a box of rockets. Below this bridge is a SNG and jumping down to that will lower yet another wall, reavealing a passage leading right under the YA.
+			</li>			
+			<li>
+				<h>Quad and Crossing</h>
+				The Quad lies in a small niche of a smallish room that is connected both to the GL area and to the crossroad area which connects the Megahealth room, the exit of the RL room and the central bridges area. 
+				At the start the Quads niche is closed and needs to be opened by pressing the nearby switch, attached to the pillar in the middle of the room.
+			</li>			
+			<li>
+				<h>Megahealth</h>
+				The Megahealth sits on a high ledge in a large room with only a small entrance. At the bottom, in the corners of the room, there are teleporters which will take you up onto that ledge. Nearby the megahealth you can also find some health and ammo. A passage right below the Megahealth leads into the exit area (which cannot be used in multiplayer games). The exit area also contains a SNG, one of the few good weapons on the map.
+			</li>			
+			<li>
+				<h>Bridges</h>
+				Actually, three bridges run parallel to each other here. The central one extends from the exit of the Nailgun room. The teleport in the YA area ens on a side bridge which also holds a Green armor. The third bridge has a Super shotgun and connects to the YA area through the nail trap. A sliding door gives access to the crossroads. 
+				The water below the bridges offers additional interconnectivity. Below the bridge with the Super shotgun, a small stream flows from the YA area. Another water filled room leads to the RL. Last but not least, an elevator can be used to get out of the water onto the bridges.
+			</li>				
+			<li>
+				<h>Start</h>
+				This room, which is the single player start area, contains a (fairly useless) Nailgun. An underwater exit leads to the RL while the central bridge area can be reached without taking a dip.
+			</li>
+			<li>
+				<h>RL room</h>
+				The RL lies in a very small and tight room which has two entrances and three exits. Both entrances come from the water and since you cannot see through the murky water, attacks from there are almost always surprising. The third exit leads also into water that can be exited towards the crossroads.
+			</li>								
+			</list>
+			<h>Popular shortcuts</h>
+			<p>Unlike the other maps, E1M2 offers only a few shortcuts. The few there are are easy to perform as well. Obviously jumping over bridges like at the YA area is easy. The only other shortcut that is at least hard to find and involves some minimum strafe jumping skill is the jump to the SNG in the YA water area. Usually you can only access it by jumping down from the GL area and getting onto the ledge from the water seems to be impossible. But the threshold of the passage out of there is slightly higher than the rest of the ground. From there you can easily jump to the SNG ledge. Bunnyhopping plays a mayor part nowadays on this map because it is important to get from one area to the other in a short time.</p>
+			<h>Basic strategies</h>
+			<p>The strategy in E1M2 is to control the YA, GA and Quad areas. Unlike many other maps the RL is not camped. The reason is that defending the small room for a longer time is almost impossible since there is very little armor on the map and you easily frag yourself when shooting rockets in the tight quarters of the RL, especially when it gets crowded by enemies. Since there are only two armors (of which the Green one is quite weak), weapons other than the RL become more important. In this case it's the SNGs. A SNG protected by an YA can easily defend against attacks, even with RLs.</p>
+			<p>Controling the important area requires good strategy and communication because positions are often switched. Usually one player waits until the YA spawns, takes it and then moves on to the Quad area. Enemies will often 'bring' you the RLs. Sometimes enemies that snatched an RL retreat to the Megahealth room an try to stock up on ammo and health before they go on to attack the Quad area. Since there is only a small entrance to that Megahealth area, its rather easy to defend so you can sit there until your teammates all have SNGs. The classic Quadrun on E1M2 takes care of that situation by cleaning the Megahealth room.</p>	
+			<p>Attacks on the important area are either sneaky or involve flooding. There are only two ways to enter the YA/Quad area (besides spawning). Sometimes players with an RL will try to attack the YA area from below, from within the water. Once in a while they manage to get there unnoticed and might rocketjump right onto the YA or in the face of the guy camping there. Often areas are 'flooded' by attackers just with their shotguns. Since there is not much armor around this is a quite successful tactic.</p>
+			<h>Tours</h>
+			<list>
+				<li><a href="help/gfx/maps/dm6_tour1.gif">From Start to the RL and further to the YA</a></li>
+				<li><a href="help/gfx/maps/dm6_tour2.gif">From YA to the Megahealth passing the GA</a></li>
+				<li><a href="help/gfx/maps/dm6_tour3.gif">From the Megahealth to the Quad and the GL and back to the YA</a></li>
+			</list>
+	</body>
+</document>

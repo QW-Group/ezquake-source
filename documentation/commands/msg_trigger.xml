@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>msg_trigger</name><description>
+msg_trigger <alias> <string>, but
+you can have nested aliases like this :
+ "alias d c; alias c b; alias b a; alias a say hello" and
+then
+ msg_trigger d "hi" will say 'hello' whenever someone says
+'hi'.
+ Of course there's much more useful examples of nested
+aliases.
+ Also there is no way of executing forbidden msg_trigger commands
+in ezQuake.</description><syntax></syntax><remarks></remarks></command>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>tp_pickup</name><description>
+Item can be: quad, pent, ring, suit, ra, ya, ga, mh, health, lg, 
+rl, gl, sng, ng, ssg, pack, cells, rockets, nails, shells, flag, 
+armor, weapons, powerups, ammo, all, default, none</description><syntax></syntax><remarks></remarks></command>

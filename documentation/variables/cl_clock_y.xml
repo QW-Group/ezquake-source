@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>cl_clock_y</name><description>
+
+Vertical coordinates of the clock.
+If < 0, the coordinates are calculated from bottom up, e.g. -1 means the screen line just above the scoreboard.
+
+</description><remarks></remarks></variable>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>vid_nopageflip</name><description>
+
+This variable toggles the use of page-flipping during supported video modes. By 
+default the game will allow for page-flipping for video modes that support this 
+feature. For example if a given VESA mode can support page flipping, then it 
+defaults to page-flipped operation.  A VESA mode can be forced to 
+non-page-flipped operation by setting the "vid_nopageflip" variable to "1", then
+setting the mode (note that "vid_nopageflip" takes operation on the next, 
+not the current video mode, and note that it then stays in effect permanently, 
+even when FuhQuake is exited and restarted, unless it is manually set back to "0").
+If there is not enough memory for two pages in a VESA mode, or if the adapter 
+doesn't support page flipping, then the mode will automatically be 
+non-page-flipped.  
+Page-flipping works by drawing multiple virtual game screens at the same time in 
+the video memory and then switching among them to display the current 
+gamescreen. Page-flipped modes thus use less system memory than non-page-flipped 
+modes, but require more video memory. When using page-flipping, visual quality 
+may be higher, but performance of the game can change to better or worse, 
+depending on the graphics adapter and other hardware (see the discussion of the 
+Pentium Pro below, for a discussion of why page flipping can be faster but is 
+sometimes much slower on that processor). However in most cases the performance 
+(and thus frame rate) will be increased, but for people with hardware that has 
+problems with page-flipping "vid_nopageflip 1" may help.
+The Pentium Pro is an example for such a hardware: it is a fast FuhQuake platform, 
+but it has one weak spot, it is by default very slow on writes to video memory.  
+This means that in default hardware configurations, you are usually much better 
+off setting "vid_nopageflip" to "1" if you use VESA modes, so drawing is done to 
+system memory instead of to video memory. Remember that you must set the mode
+after setting "vid_nopageflip" to "1" in order to get "vid_nopageflip" to take
+effect. "vid_nopageflip 1" can sometimes be faster on a Pentium too, but not by 
+nearly as much in general, and it's often slower.
+
+</description><remarks></remarks></variable>

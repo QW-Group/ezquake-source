@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/document.xsl"?>
+<document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/document.xsd">
+	<head>
+		<title>ezQuake Manual - E3M7: The Haunted Halls</title>
+		<date>2003-10-07</date>
+	</head>
+	<body>
+		<h align="center">E3M7: The Haunted Halls</h>
+		<br />
+		<h>Introduction</h>
+		<p>The Haunted Halls is a pretty small map with tight tunnels and many powerups. The respawns are easy to camp on this map, so a good clan with control can get many frags in a short time.</p>
+		<br />
+		<h>Items available</h>			
+			<h>Weapons</h>
+			<list>
+				<li>2 Rocket Launchers</li>
+				<li>1 Grenade Launcher</li>
+				<li>1 Super Nailgun</li>
+				<li>1 Nailgun</li>
+			</list>
+			<h>Armor</h>
+			<list>
+				<li>1 Red Armor</li>
+				<li>2 Yellow Armors</li>				
+				<li>1 Green Armor</li>
+			</list>
+			<h>Powerups</h>
+			<list>
+				<li>2 Quad damage</li>
+				<li>1 Pentagram of Protection</li>
+				<li>1 Ring of Shadows magic</li>
+				<li>1 Ring of Shadows magic</li>
+			</list>
+			<br />
+			<h>Important areas</h>
+			<p>This map is basically laid out as a string of rooms and areas connected by a few narrow corridors. There are two areas which are far more important then the rest of the map. One of them forms one end of the 'string' and contains RL, the Ring, the Pentagram, a Quad, a Megahealth and a Yellow armor. The second important area, somwhere in the middle of the map, holds another RL, a Quad, a Megahealth and a Yellow armor. The other extreme of the playing field contains the Grenade launcher, SNG and GA but doesn't usually see much action during a game. The best use of this area is as a hide-out when things get rough in the rest of the map. The descriptions below start from here.</p>
+			<list>
+			<li>
+				<h>GA and SNG</h>
+				This area is at one end of the map. Besides the GA and the SNG there really isn't much of interest here. 
+				The only way out is through a teleporter (with a Nailgun in front) that takes you to a higher level. Should you ever want to come back here, just drop down again near the teleporter.
+			</li>
+			<li>
+				<h>GL</h>
+				From the teleport exit of the GA area, a small elevator goes up one more level to a tiny room with a Grenade launcher. 
+				A passage leads further to the Tower RL area. The only other way out of here is back down to the GA area. As with the GA area, unless you are hiding from your enemies you shouldn't be here.
+			</li>			
+			<li>
+				<h>RL Tower</h>
+				This is one of the two key areas. The RL is on the small 'tower' or 'castle' and can be reached by a small elevator of the side. Under this elevator, a Megahealth is hidden. Below and in front of the RL sits a Quad in a tiny alcove. In case you accidentally end up in the lava, a few stairs can help you out again if you're quick. This is a great place to camp since there are many spawns here. 
+				From this place a passage leads to the Grenade launcher area. The other direction leads across the cage room to the RA and the other vital place with RL.
+			</li>			
+			<li>
+				<h>Cage room</h>
+				This room serves as the connection from the tower area to the RA. The only interesting feature is a cage in the lava. To get out of this trap, you have to shoot a switch to activate a teleport.
+			</li>			
+			<li>
+				<h>RA stairs and Nails</h>
+				The only RA of the map can be found next to a short staircase. These stairs connect the cage room to a corridor with automatic spike traps in the wall. The spikes make a lot of noise and thus anounce your arrival in the final part of the map well in advance.
+			</li>				
+			<li>
+				<h>RL Bridge</h>
+				This room is split in two by a gap filled with lava. Lifts go up to a bridge that connects the two sides. The RL sits in the middle of this bridge. In a small cubbyhole down a side, you find a Yellow armor, Megahealth and a Quad. Across the lava is the entrance to an elongated room with the Ring. 
+				From the RL, you can also jump to a hidden door in the wall. Behind this resides the Pentagram. 
+				As this area forms the end of the map, there is only one entrance to it: the passage with spikes to the RA.
+			</li>
+			</list>
+			<h>Popular shortcuts</h>
+			<p>This is a fairly easy map in terms of shortcuts. There is no hard individual trick or good shortcut to be learned here. One easy shortcut you can use is to rocketjump up to the Pentagram instead of going past the RL on the bridge. Another very basic shortcut is to jump across the lava below the bridge. A funny thing to try in teamplay involes the cage (which is opened by shooting at a button on the wall) in the middle of the map. Put a teammate in the cage and let another teammate look at the RL Tower direction. When the teammate sees an enemy coming through the teleport destination, shoot on the button in the cage to telefrag him.</p>
+			<h>Basic strategies</h>
+			<p>Like all maps, it's the eternal struggle to get the guns, armors and powerups under control. You fight until you get either of the RL areas under control and from there use a Quad to try and take over the other area. Instead of a Quad, the Pentagram can also be used to clear the tower area.</p>
+			<p>Once everything is under control, the positions would be one player at the bridge RL area, one at RA, one at the tower RL area and one chasing the probably hiding enemies in the GL to exit area.</p>	
+			<h>Tours</h>
+			<list>
+				<li><a href="help/gfx/maps/e3m7_tour1.gif">To the GA, SNG and GL</a></li>
+				<li><a href="help/gfx/maps/e3m7_tour2.gif">From the GL to the Quad and up to the RL</a></li>
+				<li><a href="help/gfx/maps/e3m7_tour3.gif">Past the RA to the bridge area with Pent and Ring</a></li>
+			</list>
+	</body>
+</document>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/document.xsl"?>
+<document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/document.xsd">
+	<head>
+		<title>ezQuake Manual - Frequently Asked Questions</title>
+		<date>2003-10-07</date>
+	</head>
+	<body>
+		<h align="center">Frequently Asked Questions</h>
+		<hr />
+		<h>What do I need in order to play QW?</h>
+			<p>A great place to start is <a href="http://equake.quakeworld.nu/">eQuake</a>. This is a pack that contains everything you need in order to play (ezQuake client, configs, maps, textures, tools, scripts, Frogbots, documentation and more). Put together to supply beginners as well as veterans with an easy-to-use QuakeWorld installation.</p>
+		<h>I need a good cfg, and what commands should I know?</h>
+			<p>Go to the <a href="help/manual/configs.xml">configs section</a> to find an easy-to-use cfg.  To see a list of important commands, <a href="help/manual/important_commands.xml">go here</a>.</p>
+		<h>Where can I find servers?</h>
+			<p>The best way to find servers is with a server browser. Hit Escape, choose Multiplayer, and then Server Browser.</p>
+			<p>If you're a lazy bastard or you're seeking specific servers, you can view a good online browser <a href="http://servu.quakeworld.nu/?a=findserver">here</a>.</p>
+		<h>How do I bunnyhop?</h>
+			<p>Bunnyhopping is rather easy if you know how to do it. Unfortunately it is not nearly as easy to explain it but I will try my best.</p>
+			<p>The first skill to master is strafe jumping. Strafe jumping is very easy (and people coming form Quake3 will know how to do it). Just hold one of the strafe buttons pressed while jumping and use your mouse to keep jumping forward. In QW you gain a lot of speed by strafe jumping (actually you strafe faster than running forward, thats the reason). Now to bunnyhop you have to start with a strafe jump. After taking off you have to release the forward button. Keep the strafe button pressed. If you now jump again before you land on the ground you will not only keep on jumping forward again but also keep your speed. Doing that is rather easy the tricky part is to gain speed while doing it. In order to gain speed you have to move the mouse a bit into the same direction into which you strafe. If you move too far your jumps will go off so be careful. Try changing the strafe keys in between each jump. It will be easier to keep your intended direction (and its not very usefull to jump around in a circle really). You can gain even more speed after a rocket jump ar by jumping down a slope.</p>
+			<p>If you use ezQuake you can check the speed at which you are at. Type <color>show_speed 1</color> (0 to remove it again). Default maximum running speed is 320, with a strafe jump you can reach over 400, with bunnyhopping you can easily reach 700-800. Values over 1000 are possible but you need lots of space only a few maps offer.</p>
+			<p>For a much wider guide to QW's jumping techniques, read Cinclant's excellent <a href="help/jumping.xml">guide to bunny hopping</a>.</p>
+		<hr />
+		<h>How do I change resolution in OpenGL?</h>
+			<p>Using the command line. Create a shortcut/bat-file with the following command line parameters: <color>[client] -width [x] -height [x] -bpp [x]</color>.</p>
+			<p>Example:</p>
+			<pre>ezquake-gl.exe -width 800 -height 600 -bpp 32</pre>
+		<h>Where can I get fullbright skins and how to use them?</h>
+			<p>Grab them <a href="ftp://gibbage.mine.nu/skins/fullbrightskins.zip">here</a> and extract to qw\skins. Make sure that <color>noskins 2</color> is enabled.</p> 
+			<p>Set <color>teamskin [skin]</color> and <color>enemyskin [skin]</color>. You can also set individual skins for players who have quad/pent, but it's not really necessary (look in the cfg for more info on that).</p>
+			<p>Most people use a white fullbright skin for enemies and a red one for teammates, this because white is a bit easier to distinguish.</p>
+		<h>How do I disable powerup blends?</h>
+			<p>In software mode use <color>v_quadcshift 0</color> to disable quad screen blending and simarly for <color>v_pentcshift</color>, <color>v_ringcshift</color> and <color>v_suitcshift</color>. <color>v_contentblend 0</color> will disable screen blending when underwater (or slime etc). 
+			Note that these variables are more than just 0/1 variables. For example <color>v_quadcshift 0.3</color> will still use quad screen blending, but only by 30% as much as <color>v_quadcshift 1</color>.</p>
+		<h>How do I get low detailed textures?</h>
+			<list>
+				<li><h>OpenGL mode:</h>
+					Try experimenting with <color>gl_picmip [1-6]</color> (the higher value, the lesser detail). If you use ezQuake GL you might also be interested in the custom made <a href="http://www.drugs-bunny.tk/">Simple Quake Textures</a>.
+				</li>
+				<li><h>Software mode:</h>
+					Use <color>r_max_size_1 1</color> to enable "simple textures", similiar to the <color>gl_picmip</color> command for OpenGL. Most software users though, play with so called "lego" textures. Just set <color>d_mipcap 3</color> to enable this. You can also get this effect in ezQuake GL (see below).
+				</li>
+			</list>
+		<h>How do I make ezQuake GL look like software in "lego" mode?</h>
+			<p>ezQuake has inbuilt support for so called Degeneration textures, which make ezQuake GL look like software Quake with <color>d_mipcap 3</color> enabled. If you don't know what this is, then don't worry about it.</p>
+			<p>The following alias will enable this effect:</p>
+			<pre>
+				alias degeneration-2 "gl_lightmode 2;gl_scaleTurbTextures 0;gl_scaleModelTextures 1;gl_texturemode gl_nearest;gl_externalTextures_bmodels 0;gl_externalTextures_world 0;gl_picmip 0;gl_miptexLevel 3;cvar_reset gl_max_size"
+			</pre>
+			<p>It's also a good idea to create an alias that switches back to normal texture mode, if you'd get tired of all those lego pixels:</p>
+			<pre>
+				alias regeneration-1 "gl_lightmode 0;gl_scaleTurbTextures 0;gl_scaleModelTextures 0;gl_texturemode gl_linear_mipmap_nearest;gl_externalTextures_bmodels 1;gl_externalTextures_world 1;gl_picmip 0;gl_miptexLevel 0;cvar_reset gl_max_size"
+			</pre>
+		<h>How do I disable the 24bit textures in ezQuake GL?</h>
+			<p>Put <color>-no24bit</color> in the command line.</p>
+		<h>How do I enable/disable the coloured lightning in ezQuake GL?</h>
+			<p>With <color>gl_loadlitfiles 0|1</color>.</p>
+		<h>How do I enable the particle effects in ezQuake GL?</h>
+			<p>Set all <color>gl_part_*</color> commands to 1. Be sure to check out <color>gl_particle_*</color> for enhanced and flexible effects.</p>
+		<h>How do I make my weapon model transparent in ezQuake GL?</h>
+			<p>Change <color>r_drawviewmodel</color> to a value between 1 and 0. Example: <color>r_drawviewmodel 0.5</color>.</p>
+		<hr />
+		<h>How do I turn off mouse acceleration in Windows XP?</h>
+			<p>Download <a href="http://koti.mbnet.fi/lamuh/files/xpmousefix.zip">this fix</a> (<a href="http://porter99.customer.netspace.net.au/xpmousefix.zip">an Australian mirror</a>) and reboot. You can also try using <color>-noforcemparms</color> <color>-noforcemaccel</color> <color>-noforcespd</color> on your cmdline, or <color>-dinput</color> (has sideaffects; use ezStart to configure your command line).</p>
+		<h>My mouse keeps locking up and not moving every now and then. What should I do?</h>
+			<p>Put <color>sys_yieldcpu 1</color> and <color>sys_highpriority 1</color> in your config.</p>
+		<h>My (Logitech) mouse is still behaving a bit shitty, laggy and the buttons don't work too reliably.</h>
+			<p>Assign the mousedriver em_exec.exe realtime priority in taskmanager. You can get it to autostart in realtime priority by doing the following:</p>
+			<pre>Start > Run > msconfig > Startup > Untick "Logi_mwx.exe"</pre>
+			<p>Now make a batch file (text file with .bat extension) in your windows startup folder with the following:</p>
+			<pre>
+				start /realtime path\to\em_exec.exe 
+				(I.e. something like:)
+				start /realtime c:\progra~1\logitech\mousew~1\system\em_exec.exe 
+			</pre>
+		<h>How do I get my mousewheel to work in ezQuake?</h>
+			<p>You bind things to <color>MWHEELUP</color> and <color>MWHEELDOWN</color> to use the mousewheel. In Win32 clients, if you're mousewheel isn't working even with the <color>-dinput</color> command line parameter enabled, then <color>m_forcewheel 1</color> should fix it.</p>
+			<p>You can get the mouse wheel working in Linux X11 and GLX clients too. Read linux.txt (in ezQuake\docs) for more info on this.</p>
+		<hr />
+		<h>The screen turns black or the desktop colors are fuhed up after I quit in software mode</h>
+			<p>Try adding <color>-dinput</color> to the command line.</p>
+		<h>I get "Couldn't find glide2x.dll" or "Could not initialize GL" when I launch QW</h>
+			<p>Remove opengl32.dll from your Quake directory.</p>
+		<h>I get "W_LoadWadFile: Couldn't load gfx.wad" when I launch QW</h>
+			<p>This error often occurs when the main pak0.pak (17.8 MB) is not available to Quake. Check that it exists and that nothing else is using it, and try again.</p>
+			<p>Note: If this occurs when you're playing a mod that has its own engine, try running it with <color>-game [moddir]</color> on the commandline, because it might not default to its own directory.</p>
+		<h>I get "UDP_OpenSocket: bind: Unknown error" when I launch QW</h>
+			<p>You're probably running an old version of <a href="http://www.steampowered.com/">Steam</a> on your computer which uses/blocks the default QW port. Update your Steam client or close it temporary.</p>
+		<h>I'm only getting ~60 fps in ezQuake GL even though I have all low quality settings enabled</h>			
+			<p>Make sure that Vertical Sync is disabled (<color>vid_vsync 0</color>).</p>
+		<hr />
+		<h>Where can I find QW demos?</h>
+			<p><a href="http://www.challenge-tv.com/index.php?mode=demos&game=2">Challenge-TV</a> is the #1 source for QW demos out there, you name it they got it! Many of the big leagues/tournaments also host demos on their sites (<a href="http://www.nqr.nu/">NQR</a> and <a href="http://demo.qhlan.org/">QH-LAN</a> for example).</p>
+		<h>How can I watch QW demos?</h>
+			<p>QW demos come in three formats:</p>
+			<list>
+				<li><h>DEM - Quake Demo</h>
+					This is the original uncompressed Quake demo format. It is not supported in ezQuake yet.
+				</li>
+				<li><h>DZ - Quake Compressed Demo</h>
+					This is the original compressed Quake demo format. It is not supported in ezQuake yet.
+				</li>
+				<li><h>QWD - QuakeWorld Demo</h>
+					This is the original uncompressed QW demo format. Can be played with any QW client, either via the console (<color>playdemo [demoname.qwd]</color>), or if you run some newer client via the menu ('Multiplayer -> Demos' in ezQuake).
+				</li>
+				<li><h>QWZ - QuakeWorld Compressed Demo</h>
+					These are standard .qwd demos compressed with <a href="http://www.udpsoft.com/qizmo/">Qizmo</a> to reduce filesize. You will need to have Qizmo installed and <color>qizmo_dir</color> set to where Qizmo is located, e.g. <color>qizmo_dir qizmo</color> if it's in '../qizmo'. You can find more info on how to setup and connect to a local Qizmo <a href="help/qizmo.xml">here</a>.
+				</li>
+				<li><h>MVD - Multi View Demo</h>
+					These are multiview demos recorded by the server. This is the best and most commonly used format for QW demos. Just go to the menu and select the demo ('Multiplayer -> Demos' in ezQuake) or type <color>playdemo [demoname]</color> in the console. Standard QWD/QWZ demos can also be compressed to this format, but the single POV will remain.
+				</li>
+			</list>
+			<p>Demos should be put in the ../qw/ directory.</p>
+		<h>How do I download a demo from the QW server?</h>
+			<p>Type <color>cmd dl .</color> at the console to download the latest demo recorded (or <color>cmd dl ..</color> to get the second latest demo). If you want to see a list of all demos on the server you can type <color>cmd dlist</color>, and then <color>cmd dl [number]</color> to get your demo . If you feel that the downloading is going too slow you can try increasing your rate, e.g. <color>rate 10000</color> and <color>setinfo drate 99999999</color>. Note that only servers that run the <a href="http://mvdsv.sourceforge.net">Multiview Demo Server (mvdsv)</a> will be able to record demos.</p>
+		<h>How do I convert/compress a demo to another format?</h>
+			<p>Download <a href="http://quakeworld.ru/file.:)?id=276">these demotools</a> and extract it somewhere in your Quake directory (e.g. ..\tools\demotools\). Then just place the demo(s) you want to convert in the same directory and run the batch file matching your needs.</p>
+			<p>Possible conversions:</p> 
+			<pre>
+			QWD to MVD (Run: <color>qwdtools.exe [demo]</color>) 
+			QWD to QWZ (Run: <color>qizmo.exe -C [demo]</color>) 
+			QWZ to QWD (Run: <color>qizmo.exe -D [demo]</color>)
+			</pre>		
+		<hr /> 	
+		<h>How do I disable ambient sounds in QW?</h>
+			<p><color>cl_staticSounds 0</color> and <color>s_ambientlevel 0</color> to disable ambient/static sounds.</p>
+		<h>How do I observe games through a public Qizmo?</h>
+			<p>A <a href="http://equake.quakeworld.nu/qizmo.jpg">picture</a> best explains</p>
+			<p>For further information on Qizmo, go the the <a href="help/manual/qizmo.xml">Qizmo section</a> or read below.</p>
+		<h>What is Qizmo and how to use it?</h>
+			<p>Qizmo is a so-called proxy that can change the packets sent between the client and the server. Its main features are compression of the traffic, teamplay enhancements and cheat checks. It has lots of other useful features like a server browser, fun name convertion and FPS-improving settings. Qizmo is shareware and can be downloaded <a href="http://www.udpsoft.com/qizmo/">here</a>. The shareware version can be used for an unlimited time and has almost no restrictions. When you register it you get an even better compression and you will be able to play demos compressed with zip.</p>
+			<p>The best way to start Qizmo is to create a shortcut or batchfile (.bat) with this string: <color>qizmo c:\quake\ezQuake-gl.exe</color>. This way you will start up Qizmo and QW at the same time and QW will connect to the Qizmo. This way it will also be possible to check your clients for certain cheats, like hacked models. The next thing to do is to type <color>.menu bindstd</color> in the console. This will bind menu keys to your arrowkeys, enter, backspace, insert, home, pageup, pagedown, end, delete and pause. If you don't like it, change the configuration in the menu.cfg file. Browse the menu and change everything you like. After that go to config and save everything. The next time you connect to that Qizmo with the same name all your settings will be restored.</p>
+			<p>For much more information about using Qizmo, go to the <a href="help/manual/qizmo.xml">Qizmo section.</a></p>
+		<h>What about all these f_ queries?</h>
+			<p>The <color>f_</color> queries enable you to check some things out about the other players on the same server. Most of them derives from various proxies like <a href="help/manual/qizmo.xml">Qizmo</a>. These queries/commands are important for playing in online competitions because they are the only way to check clients for cheats like hacked client/models/sounds, speed cheat etc. (although they will never provide 100% protection from cheats, they still make cheating much harder).</p>
+			<p>The most important commands are <color>f_modified</color>, <color>f_version</color>, <color>f_speed</color>, and <color>f_server</color>. Go to the Qizmo section to see an explanation of each command.</p>
+		<h>Where can I get custom maps?</h>
+			<p><a href="http://maps.quakeworld.nu/">maps.quakeworld.nu</a> has an archive with all the maps you'll ever need, including screenshots, textures, lit-files etc.</p>
+		<h>Where can I get .loc files for maps?</h>
+			<p>Get flintheart's <a href="http://maps.quakeworld.nu/locs/">loc collection</a>. It contains customizable .loc files for all id maps as well as the most popular custom maps. Make sure to read the instructions!</p>
+		<h>Where can I find nice QW movies?</h>
+			<p>There are a bunch of great QW movies out there. The most popular ones are probably <a href="http://fde.qhlan.org/">Frags Done Extreme 1 and 2</a>, <a href="http://www.planetquake.com/dde/">Dag Def Extreme 1 and 2</a>, <a href="http://tfde.quakeworld.nu/">TeamFortress Done Extreme 1 and 2</a>, <a href="http://gamefiles.blueyonder.co.uk/blueyondergames/trailers/movies/quakeworld/qwre-hq.zip">QuakeWorld Reloaded</a>, <a href="http://gamefiles.blueyonder.co.uk/blueyondergames/trailers/movies/quakeworld/bef-hi.zip">Brazilian Extreme Frags</a> and <a href="http://gamefiles.blueyonder.co.uk/blueyondergames/trailers/movies/quakeworld/fdsr-hq.avi">Frags Done Satanic 2: Refragged</a>. Then there are a bunch of other pretty good movies as well. You can find all QW movies ever released over at <a href="http://gamefiles.blueyonder.co.uk/blueyondergames/trailers/movies/quakeworld/">blueyonder</a>.</p>
+		<h>I am still confused and need more help/information</h>
+			<p>Just ask us. You can find lots of experienced QW players on IRC. Try #ezQuake or #QuakeWorld on <a href="http://www.quakenet.org/">QuakeNet</a> or #QWPlayers on the ETG network.</p>
+			<p>Also check out <a href="help/manual/external_resources.html">this section</a> for some useful links to more websites/IRC channels offering help about QW.</p>
+
+	</body>
+</document>

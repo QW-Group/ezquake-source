@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>join</name><description>
+joins a specified server as player. If no
+address is specified, join will reconnect to the last visited
+server as a player.
+ Example:
+ join 123.124.125.126
+</description><syntax>(address)</syntax><remarks></remarks></command>

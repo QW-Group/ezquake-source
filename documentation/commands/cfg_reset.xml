@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>cfg_reset</name><description>
+This command will unbind all keys, delete all
+aliases, msg_triggers,
+ reset all plus commands, teamplay settings and reset all
+variables.
+ User made variables (created with set/seta) are deleted.
+ After resetting all the above, it executes default.cfg and then
+autoexec.cfg.</description><syntax></syntax><remarks></remarks></command>

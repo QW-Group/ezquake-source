@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/document.xsl"?>
+<document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/document.xsd">
+	<head>
+		<title>ezQuake Manual - Quick guide</title>
+		<date>2004-10-16</date>
+	</head>
+	<body>
+		<h align="center">Quick guide</h>
+		<br />
+		<h>Step 1: Downloading QuakeWorld</h>
+		<p>In order to be able to play Quake on the Internet you have to download and install QuakeWorld, which was designed specifically for that purpose - Internet play. Basically QuakeWorld is a new client that improves the netcode of Quake dramatically and also adds some new features like player prediction and <a href="help/jumping.xml">bunnyhopping</a>.</p>
+		<p>Since finding and configuring all the files you need to play QW can be quite a pain for newcomers, there is a solution. <a href="http://equake.quakeworld.nu/">eQuake</a> is a handy installer that contains basically everything you need in order to play: <a href="http://ezQuake.SF.net/">ezQuake client</a>, PAK-files, maps, textures, locs, scripts and a lot more. All put together to supply beginners as well as veterans with an easy-to-use QW installation. Get <a href="http://equake.quakeworld.nu/">eQuake</a> now!</p>
+		<h>Step 2: Configuring</h>
+		<p>eQuake comes together with configs that use the most common and optimized settings. However there might be a few things you may want to change to suit your needs, like movement/weapon keys, sensitivity, graphics settings etc.</p>
+		<p>The configs that ezQuake uses are stored in ezquake/cfg, so go there and edit your config. Please refer to the <a href="http://ezQuake.SF.net/docs/">ezQuake Documentation</a> if you want an explanation on all of the variables in the config.</p>
+		<p>You can also edit your config via the QW console (loaded upon start, or bring it down with the tilde (~) key). Load your config with the <color>cfg_load</color> command, e.g <color>cfg_load gl</color>. Change the settings to suit your needs, and when you've done editing you'll need to save your config. This is done with the <color>cfg_save</color> command, e.g <color>cfg_save gl</color>.</p>
+		<h>Step 3: Connecting to a server</h>
+		<p>Connecting to a server can be done in two ways. Either via the console or more easily through an server browser. You might already know a server IP that you got on IRC for example. To connect to the server through the console just type <color>connect [ip:port]</color>. If you don't specify a port it will try to use 27500, which is the standard port for QW servers. Most servers use 275xx as ports. Addresses that you have copied under Windows can be pasted with Ctrl+V in QW, so you don't have to type it manually all the time.</p>
+		<p>From here on you should be able to play QW on your own. We hope that you have a lot of fun and enjoy it. If you want to know more about QW, how it works and what can be done with it head over to our next section.</p>
+	</body>
+</document>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>f_modified</name><description>
+All the usual dm models, sounds, palettes etc
+are included in the check.
+ In teamfortress the teamfortress flag, dispensers and sentry
+guns are also
+ checked. There is also an f_modified command which will print
+your
+ f_modified response.
+ Note: You need to install security files.</description><syntax></syntax><remarks></remarks></command>

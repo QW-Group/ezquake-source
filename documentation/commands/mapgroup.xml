@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>mapgroup</name><description>
+mapgroup 2fort5r 2fort5: will make 2fort5r and
+2fort5 use the 2fort5r textures, locs and etc...</description><syntax></syntax><remarks></remarks></command>

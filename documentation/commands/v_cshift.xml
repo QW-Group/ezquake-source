@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>v_cshift</name><description>
+This adjusts all of the colors currently being
+displayed.
+ Used when you are underwater, hit, have the Ring of Shadows,
+or
+ Quad Damage.
+ Example: v_cshift 16 32 64
+ Note: v_cshift (red) (green) (blue) (intensity)</description><syntax></syntax><remarks></remarks></command>

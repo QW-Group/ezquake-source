@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>timedemo</name><description>
+This command can be used to test how fast your
+computer is by looking at the
+ frames-per-second rate achieved by playing back a demod at top
+speed. This
+ command will play back all of the frames for a given demo as
+fast as possible
+ and then record the amount of time that it took to play back all
+of the frames
+ from that demo. Then this command will take the total number of
+frames in a
+ demo, divide that number by the amount of time that it took to
+play back those
+ demos, and calculate the average frames-per-second rate.
+ Example:
+ timedemo 123.qwd
+ timedemo 123.mvd</description><syntax>(filename)</syntax><remarks></remarks></command>

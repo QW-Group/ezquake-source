@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>match_forcestart</name><description>
+Simulates the start of a match (so that auto
+recording etc is triggered). Useful if you join a
+ ktpro server after countdown has started, or you are playing a
+mode that doesn't have a
+ proper countdown (eg race mode).
+ Most importantly this is useful for tf servers, since you can
+use a msg_trigger to execute
+ match_forcestart on "MATCH BEGINS NOW".</description><syntax></syntax><remarks></remarks></command>

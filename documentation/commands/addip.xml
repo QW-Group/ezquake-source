@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>addip</name><description>
+Add a single IP or a domain of IPs to the IP
+list of the server. Very useful for
+ banning people or for specifing which IPs only have access to
+the server.
+ Examples:
+ addip 123.123.123.123
+ addip 123.123.123</description><syntax>(ip)</syntax><remarks></remarks></command>

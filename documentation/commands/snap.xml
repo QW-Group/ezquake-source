@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>snap</name><description>
+Remote screenshot from a player.
+ Example:
+ snap 1234 (server request remote screenshot from user
+1234)</description><syntax>(userid)</syntax><remarks></remarks></command>

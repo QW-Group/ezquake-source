@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>keycode</name><description>
+This command enables the setting of a new keymapping.</description><syntax>
+keycode [ext] <scancode> <key> [<shiftmap>] [<altgrmap>]</syntax><remarks>
+If no key is given, the current mapping of the scancode will be printed. The first call to that command (when no keymapping is active) copies the internal used default for an US keyboard to the keymapping tables.</remarks></command>

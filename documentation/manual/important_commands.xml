@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/document.xsl"?>
+<document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/document.xsd">
+	<head>
+		<title>ezQuake Manual - Important commands</title>
+		<date>2004-10-16</date>
+	</head>
+	<body>
+		<h align="center">Important commands</h>
+		<br />
+		<p>The most important and commonly used commands which are used while playing QW will be explained below. All have to be entered into the console which can be brought up by the tilde (~) key:</p>
+		
+		<list>
+			<li>
+				<h>connect [ip:port]</h>
+				The "connect" command is always followed by an IP address/hostname and will connect you to the server specified. Sometimes you also have to add the port after the IP address unless the server runs on the default port 27500. You can paste addresses for example from IRC into the QW console by pressing Ctrl+V at the same time. Examples:
+				<pre>
+				connect 160.45.32.200:27501
+				connect archroy.barrysworld.com
+				</pre>
+			</li>
+			<li>
+				<h>disconnect</h>
+				This command is needed to disconnect you from a server.
+			</li>
+			<li>
+				<h>reconnect</h>
+				You need this to reconnect to the last server you were connected to because you either timed out, QW loaded the map but you didn't spawn or something else happened. You also need to reconnect if you want to changer into spectator mode or vice versa.
+			</li>
+			<li>
+				<h>spectator 0|1</h>
+				If you want to spectate a game you have to set spectator to 1 before connecting or reconnecting to a server. If you want to connect as player you have to set it to 0 (default) before connecting or reconnecting to a server.
+			</li>	
+			<li>
+				<h>join</h>
+				If you are already on a server as a spectator and want to join the game, just type this command instead of writing <color>spectator 0</color> followed by <color>reconnect</color>. Faster and easier!
+			</li>
+			<li>
+				<h>observe</h>
+				Works the same way as the <color>join</color> command. If you are playing on a server and want to reconnect as a spectator, use this command.
+			</li>
+			<li>
+				<h>cl_chasecam 0|1</h>
+				<h>cl_hightrack 0|1</h>
+				There are different modes of spectating. When chasecam is set to 0 you can float around the map yourself with the movement keys and position yourself to any area you are interested to. When chasecam is set to 1 the cam will follow one player. You can use the attack/jump button to change the tracked player and wether you see everything through the players eyes or wether the cam is positioned above him. If hightrack is turned on the camera will always follow the player who has the most frags.
+			</li>
+			<li>
+				<h>password [x]</h>
+				Some servers are password protected. If you happen to know the password you have to type password and after that the password itself before connecting to that server. Sometimes the observer spots on a server are also password protected and the password is submitted in a different way. Type spectator followed by the password in the console before connecting. Examples:
+				<pre>
+				password hejsan (then connect ip:port)
+				spectator pylly (then connect ip:port)
+				</pre>
+			</li>
+			<li>
+				<h>quit</h>
+				If you are fed up with playing just type this at the console and you are relieved...
+			</li>
+			<li>
+				<h>team [x]</h>
+				When playing a team game you have to set your team by typing "team" followed by the teamname which can be up to four letters long. Note that teamnames are case sensitive and can contain spaces and special characters. Examples:
+				<pre>
+				team red (puts you in team red)
+				team " red" (puts you in team _red, therefore the ")
+				team "^-ff^-" (puts you in team -ff- (putting the ^ before a character will make it appear red instead of gray))
+				</pre>
+			</li>
+			<li>
+				<h>sensitivity [x]</h>
+				This controls the sensitivity at which your mouse works and has to be followed by a number. Example:
+				<pre>sensitivity 5.2</pre>
+			</li>
+			<li>
+				<h>fov [x]</h>
+				This command determines your field of view. Allowed values range from 10 to 170. Much more than 130 and less than 90 are not very useful though.
+			</li>																										
+		</list>
+		<h>Kombat Teams/KTPro commands</h>
+		<p>Most QW servers run a mod called either Kombat Teams or KTPro (KTPro is a newer and improved version of the older Kombat Teams). These are modifications of the QW server designed specifically to make competitive play more easy (no changes to the general gameplay have been made though). The most important commands on these servers are explained below:</p>
+		<list>
+			<li>
+				<h>ready</h>
+				Everyone has to type this before the countdown that starts the game begins.
+			</li>
+			<li>
+				<h>break</h>
+				This will either stop the countdown or, if a match is going on, vote to stop the match. Matches will only be stopped if the majority of players votes for breaking.
+			</li>
+			<li>
+				<h>timeup</h>
+				<h>timedown</h>
+				Change the timelimit by 5 min increments.
+			</li>
+			<li>
+				<h>dmm[1-7]</h>
+				Changes the deathmatch mode. The usual deathmatch modes are dmm1 (standard in 4on4) and dmm3 (standard in 1on1 and 2on2). All the different modes are explained below:
+				<pre>
+				dmm1 = weapons disappear when you take them and return after 30 seconds, ammo returns after 20 seconds. 
+				dmm2 = as described above, but no health or armor on maps. 
+				dmm3 = weapons stay when you take them, ammo returns after 20 seconds. 
+				dmm4 = spawn with 255 armor and health, plus all weapons except for the grenade launcher.
+				</pre>
+			</li>
+			<li>
+				<h>powerups</h>
+				Toggle powerups on or off.
+			</li>
+			<li>
+				<h>[mapname]</h>
+				You can vote for a mapchange by simply typing in the name of the new map you wish to play (it has to be supported by the server though). A majority of all players on the server has to vote for the map to change.
+			</li>
+			<li>
+				<h>whonot</h>
+				Check who has already gone ready and who is holding things up.
+			</li>
+			<li>
+				<h>commands</h>
+				<h>advanced</h>
+				Use these two to get a more detailed list of commands and settings available in KTeam/KTpro.
+			</li>
+		</list>																			
+	</body>
+</document>

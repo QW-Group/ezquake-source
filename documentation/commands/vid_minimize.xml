@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>vid_minimize</name><description>
+This command will minimize the windowed game
+screen. It was made available
+ because the game takes control over the mouse when it is moved
+onto the game
+ window thus prohibiting the normal minimization of the game
+window.</description><syntax></syntax><remarks></remarks></command>

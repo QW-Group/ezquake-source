@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>enemycolor</name><description>
+This will overwride enemy color.
+ Example:
+ enemycolor 12 13
+ Note: If only the shirt color is given, the pant color will
+match.</description><syntax></syntax><remarks></remarks></command>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>mp3_playtrack</name><description>
+Play track number #num from playlist.
+ Example:
+ mp3_playtrack 5 will play track 5 from playlist.</description><syntax>(track)</syntax><remarks></remarks></command>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>listip</name><description>
+Prints out the current list of IPs on the
+server list. Not to be confused with
+ the status command which prints out the list of the IPs of the
+connected players.</description><syntax></syntax><remarks></remarks></command>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>demo_setspeed</name><description>
+You can vary the speed of demo playback with
+the 'demo_setspeed' command.
+ 'demo_setspeed x' sets the playback speed to x% of normal speed
+so that 'demo_setspeed 50'
+ is half speed and 'demo_setspeed 300' gives you triple
+speed.</description><syntax>[default: 100]</syntax><remarks></remarks></command>

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="xsl/document.xsl"?>
+<document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/document.xsd">
+	<head>
+		<title>ezQuake Manual - QuakeWorld for Freshies</title>
+		<date>2004-10-16</date>
+	</head>
+	<body>
+		<h align="center">QuakeWorld for Freshies</h>
+		<hr />
+		<p>Welcome to QuakeWorld! This manual covers most aspects of what you need to know in order to play, to enjoy and to be successful with this game called QuakeWorld. This is a work in progress and is regularly updated.</p>
+		<br />
+		<h>Table of Contents</h>
+			<list>
+				<li><h>Introduction</h>
+					<list>
+						<li><a href="help/manual/welcome.xml">Welcome</a></li>
+						<li><a href="help/manual/external_resources.xml">External resources</a></li>
+						<li><a href="help/manual/faq.xml">Frequently Asked Questions</a></li>
+					</list>
+				</li>
+			</list>
+			<list>
+			<li><h>Entering QuakeWorld</h>
+				<list>
+						<li><a href="help/manual/quick.xml">Quick guide</a>
+							<list>
+								<li>Downloading QW</li>
+								<li>Connecting to a server</li>
+							</list>
+						</li>
+						<li><a href="help/manual/concept.xml">The concept of the game</a></li>
+						<li><a href="help/manual/what_qw.xml">What is QuakeWorld?</a>
+							<list>
+								<li>NetQuake</li>
+								<li>QuakeWorld</li>
+								<li>Custom QW clients</li>
+							</list>
+						</li>
+						<li><a href="help/manual/links.xml">Where is the Quake World?</a>
+							<list>
+								<li>Places to know</li>
+								<li>Places to be</li>
+							</list>
+						</li>	
+					</list>
+					<list>		
+						<li><a href="help/manual/items.xml">Items</a>
+							<list>
+								<li>Weapons</li>
+								<li>Ammo and health</li>
+								<li>Armors</li>
+								<li>Powerups</li>
+							</list>
+						</li>					
+						<li><a href="help/manual/maps.xml">Maps</a>
+							<list>
+								<li>Deathmatch maps</li>
+								<li>Episode maps</li>
+								<li>Custom maps</li>
+							</list>
+						</li>
+					</list>
+				</li>
+			</list>
+			<list>
+				<li><h>How to play QuakeWorld</h>
+					<list>
+						<li><a href="help/manual/important_commands.xml">Important commands</a></li>
+						<li><a href="help/manual/jumping.xml">QuakeWorld jumping</a></li>
+						<li><a href="help/manual/ping_lag.xml">Ping and lag</a></li>
+						<li><a href="help/manual/etiquette.xml">QuakeWorld etiquette</a></li>					
+					</list>
+				</li>
+			</list>
+			<list>
+				<li><h>Strategies</h>
+					<list>
+						<li><a href="help/manual/teamplay.xml">Teamplay manual</a></li>
+						<li><a href="help/manual/dm2.xml">DM2 overview</a></li>
+						<li><a href="help/manual/dm3.xml">DM3 overview</a></li>
+						<li><a href="help/manual/dm6.xml">DM6 overview</a></li>		
+						<li><a href="help/manual/e1m2.xml">E1M2 overview</a></li>
+						<li><a href="help/manual/e3m7.xml">E3M7 overview</a></li>					
+					</list>
+				</li>
+			</list>
+			<list>
+				<li><h>Configuration and settings</h>
+					<list>
+						<li><a href="help/manual/structure.xml">Files and structure</a>
+							<list>
+								<li>Quake and QW directory structures</li>
+								<li>Quake and QW files</li>
+								<li>Quake cfg structure</li>
+							</list>
+						</li>
+						<li><a href="help/manual/cmdline.xml">Command line parameters</a></li>			
+						<li><a href="help/manual/commands.xml">Commands and variables</a>
+							<list>
+								<li>QW console</li>
+								<li>General commands</li>
+								<li>Advanced commands</li>
+							</list>
+						</li>			
+						<li><a href="help/manual/scripts.xml">Scripts</a>
+							<list>
+								<li>Weapon scripts</li>
+								<li>Jumping scripts</li>
+							</list>
+						</li>			 
+						<li><a href="help/manual/video.xml">Video/graphics settings</a>
+							<list>
+								<li>OpenGL or software?</li>
+								<li>OpenGL settings</li>
+								<li>Software settings</li>
+								<li>Tweaking</li>
+							</list>
+						</li>		 
+						<li><a href="help/manual/qizmo.xml">Qizmo</a>
+							<list>
+								<li>What is a proxy?</li>
+								<li>Using Qizmo</li>
+							</list>
+						</li>
+						<li><a href="help/manual/configs/autoexec.cfg">A commented cfg</a></li>
+					</list>
+				</li>
+			</list>
+			<list>
+				<li><h>Miscellaneous</h>
+					<list>
+						<li><a href="help/manual/server.xml">Server manual</a>
+							<list>
+								<li>Requirements</li>
+								<li>Network connection</li>
+								<li>Modifications</li>
+								<li>Controlling</li>
+								<li>Console variables and commands</li>
+								<li>Command line parameters</li>
+							</list>
+						</li>
+						<li><a href="help/manual/history.xml">Quake history</a>
+							<list>
+								<li>Quake/QW version history</li>
+								<li>Leagues and tournaments</li>
+								<li>Events</li>
+								<li>Mods and proxies </li>
+							</list>
+						</li>
+					 </list>
+				 </li>
+		 	</list>
+
+
+		
+		</body>
+</document>

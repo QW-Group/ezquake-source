@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>force_centerview</name><description>
+This command centers the player's screen. It
+was created because the original
+ "centerview" command did not work when "+mlook" was enabled.
+This command will
+ center the screen in any mode no matter commands are
+active.</description><syntax></syntax><remarks></remarks></command>

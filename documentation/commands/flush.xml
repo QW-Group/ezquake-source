@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>flush</name><description>
+This command will clear the current game
+cache. It is usually used by developers
+ to flush the memory of all game information and objects to test
+if the mechanism
+ which handles the loading of the necessary files into memory
+works properly.
+ Sometimes the game cache can become filled with unnecessary
+information and may
+ need to be flushed manually. This is usually not necessary since
+the game
+ automatically flushes all the data between every
+map.</description><syntax></syntax><remarks></remarks></command>

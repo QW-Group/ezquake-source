@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>crosshairimage</name><description>
+
+To load the crosshair in FuhQuake use "crosshairimage image_name" where
+'image_name' is the name of the crosshair image you put in the above directory.
+Example, if I have c:\quake\fuhquake\crosshairs\cross.png I'd use
+"crosshairimage cross" to load it.
+
+</description><remarks></remarks></variable>

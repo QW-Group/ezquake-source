@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>demo_jump</name><description>
+This jumps playback to a point in time you
+specify.
+ Examples:
+ demo_jump 120 will make playback jump to 120 seconds from the
+start of
+ the demo.
+ demo_jump 4:30 will make playback jump to 4 minutes and 30
+seconds
+ from the start of the demo.</description><syntax></syntax><remarks></remarks></command>

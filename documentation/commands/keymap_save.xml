@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>keymap_save</name><description>
+With this command the active keymappings will be written to a kmap-file (including a descriptive header which explains the usage).</description><syntax>
+[layoutname] <filename></syntax><remarks>
+If the layoutname is given, "keymap_name" will be set before saving. If the filename contains no directory, it writes itself to the "qw"-directory.</remarks></command>

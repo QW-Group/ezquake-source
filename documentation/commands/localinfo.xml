@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>localinfo</name><description>
+Shows or sets localinfo variables. Useful for
+mod programmers who need to allow the admin
+ to change settings. This is an alternative storage space to the
+serverinfo space for mod
+ variables. The variables stored in this space are not broadcast
+on the network.
+ This space also has a 32-kilobyte limit which is much greater
+then the 512-byte limit on
+ the serverinfo space.
+ Special Keys: (current map) (next map) - Using this combination
+will allow the creation
+ of a custom map cycle without editing code.
+ Examples:
+ localinfo dm2 dm4
+ localinfo dm4 dm6
+ localinfo dm6 dm2</description><syntax></syntax><remarks></remarks></command>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>rcon</name><description>
+Issue the set of commands to the server you
+are currently connected to or
+ have set in rcon_address. You must know the rcon password for
+that specific
+ server.</description><syntax></syntax><remarks></remarks></command>

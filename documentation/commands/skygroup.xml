@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>skygroup</name><description>
+In basics works same as mapgroup.</description><syntax>
+skyboxname map1 [map2] ...</syntax><remarks>
+You assing one skybox texture to group of maps.</remarks></command>

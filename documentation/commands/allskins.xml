@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>allskins</name><description>
+Downloads all skins that is currently in use.
+Useful for refreshing skins without
+ exiting the level</description><syntax></syntax><remarks></remarks></command>

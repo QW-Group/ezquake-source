@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>heartbeat</name><description>
+Forces a heartbeat to be sent to the master
+server. A heartbeat informs
+ the master server of the server's IP address thus making sure
+that
+ the master server knows that the server is still
+alive.</description><syntax></syntax><remarks></remarks></command>

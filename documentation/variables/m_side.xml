@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>m_side</name><description>
+When the +strafe command is active or when "lookspring" is set to "1" this 
+variable is used to control the sensitivity when the mouse is moved left and 
+right to make the player move left and right.
+
+</description><remarks></remarks></variable>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/document.xsl"?>
+<document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/document.xsd">
+	<head>
+		<title>ezQuake Manual - Scripts</title>
+		<date>2004-10-16</date>
+	</head>
+	<body>
+		<h align="center">Scripts</h>
+		<br />
+		<p><color>Note:</color> Since some commands tend to work a bit different depending on which QW client you use, the scripting system works a bit different as well. It is mentioned above the script examples as to which client each script is adapted for. Else it works the same way in all clients.</p>
+		<h>Weapon scripts</h>
+		<p>If you want to make your life as a QW player easier, you can start by using a weapon script. What a weapon script does is that it selects the wanted weapon, and if it doesn't exist, it chooses the best weapon available. When you've fired the weapon it switches to the Shotgun or the Axe (cannot be dropped in backpack) to ensure that the enemy does not get a valuable weapon if he manages to kill you.</p>
+		<p>You can write all sorts of scripts, the only thing holding you back is your own imagination!</p>
+		<h>Boomstick/Axe script</h>
+		<p>What about not giving away the powerful Rocket Launcher? When you get fragged by another player he will get the weapon which you had selected last. If you are clever you would manually change to a weaker weapon before he kills you but you can make a script which does that for you in the heat of the battle.</p>
+		<pre>
+		alias +rl "impulse 6;+attack"
+		alias -rl "-attack;impulse 1"
+		bind mouse1 "+rl"
+		</pre>
+		<p>This could also be put into a single script without the + and - but in this way it is more elegant. What it actually does is to select the rocket launcher fire a shot and change back to the shotgun. It is quite unlikely that the other player frags you during the short time you actually carry the rocketlauncher. It will also be impossible to get your rocketlauncher by a surprise shot that kills you. Since everybody already starts with the shotgun and the axe enemies do not benefit from your backpacks, they only get the ammo.</p>
+		<br />
+		<h>Quick Grenade</h>
+		<pre>
+		alias +gl "impulse 5;+attack"
+		alias -gl "-attack;impulse1"
+		</pre>
+		<p>The quick grenade script is probably the most abundant weapon script. It is used to fire a single grenade and is usually bound to another key but the mousebuttons because these are used for other bindings. Again the script will change to the shotgun after firing the grenade launcher once.</p>
+		<h>Best weapon</h>	
+		<p>People often bind their left button to fire the best non-explosive weapon they have, the right mousebutton to fire the rocket launcher and the middle button to fire grenades.</p>
+		<p><color>in ezQuake:</color></p>
+		<pre>
+		alias +best "impulse 8 5 3 2 4 1;+attack"
+		alias -best "-attack;impulse 1"
+		bind mouse3 "+best"
+		</pre>
+		<p><color>in More QuakeWorld:</color></p>
+		<pre>
+		alias +best "weapon 853241;+attack"
+		alias -best "-attack;impulse 1"
+		bind mouse3 "+best"
+		</pre>
+		<p><color>in original QW:</color></p>
+		<pre>
+		alias +best "impulse 1;impulse 4;impulse 2;impulse 3;impulse 5;impulse 8;+attack"
+		alias -best "-attack;impulse 1"
+		bind mouse3 "+best"
+		</pre>	
+		<p>This script selects the best non-explosive weapon you currently have, in the following priority order: Shaft, Super Nailgun, Super Shotgun, Shotgun, Nailgun, Axe. It excludes the Rocket and Grenade Launcher because they are used through the other scripts mentioned above. This also has the advantage that you cannot kill yourself when you have the Quad because you can't hurt yourself with the weapons in it and again it includes a boomstick script. If you do not have any of the weapons or any ammo left you will fire with the Axe, because in that case it is the last weapon selected.</p>
+		<h>Rocket jump scripts</h>
+		<br />
+		<p><color>Simple rocket jump</color></p>
+		<pre>
+		alias rjump "cl_pitchspeed 32767;impulse 7;+lookdown;+jump;+attack;wait;-attack;-jump;-lookdown;force_centerview;cl_pitchspeed 150;impulse 2"
+		</pre>
+		<p>This script will execute a simple rocket jump high into the air. What it does it to change the speed at which you look up and down to a very high value. Then it selects the rocketlauncher, looks down, jumps and attacks at the same time. After that the view will be returned to the center and return the pitchspeed to a normal value. All this happens so fast that you won't notice anything but the sound of jumping, firing the rocket launcher and yourself flying through the level. So it actually does what you would do manually only much faster and more precise.</p>
+		<h>Forward rocket jump</h>		
+		<p><color>in ezQuake:</color></p>
+		<pre>
+		alias fwrj "impulse 7;-forward;rotate 180;+jump;+attack;wait;-attack;-jump;rotate 180;impulse 1"
+		</pre>
+		<p><color>in More QuakeWorld / original QuakeWorld:</color></p>
+		<pre>
+		alias fwrj "impulse 7;-forward;+back;+left;+jump;+attack;wait;-attack;-jump;-left;-back;+forward;+right;wait;-right;-forward;impulse 1"
+		</pre>						
+		<p>This script does basically the same but in this case it's a so called "forward rocket jump". This is a flat rocket jump that rather aims for distance than for height. Forward rocket jumps became quite common lately because you can pick up speed for bunnyhopping with them and use them to move around certain maps much faster.</p>
+		<h>Misc. scripts</h>
+		<p><color>The hop</color></p>
+		<pre>
+		alias +hop "+jump;+moveup"
+		alias -hop "-jump;-moveup"
+		</pre>
+		<p>These two aliases are useful because they bind two actions to the same key. You can both jump with it and at the same time you can swim up while in water (where you can of course not jump) which is quite useful in underwater fights. Your jumps will also be slightly higher due to the +moveup commands.</p>
+		<p><color>Show info</color></p>
+		<pre>
+		alias +showinfo "+showscores;r_netgraph 1;show_fps 1;bind CTRL -showinfo"
+		alias -showinfo "-showscores;r_netgraph 0;show_fps 0;bind CTRL +showinfo"
+		</pre>	
+		<p>This script displays usefull info like the netgraph, the scores and the frames per second at the same time. (Note that in lower resolutions like 320x200 these graphs don't fit into each other very well)</p>
+		<p><color>Zoom</color></p>
+		<pre>
+		alias "+zoom" "r_drawviewmodel 0;fov 110;wait;fov 100fov 90;wait;fov 80;wait;fov 70;wait;fov 60;wait;fov 50;wait;fov 40;wait;fov 30;wait;fov 25;wait;sensitivity 3"
+		alias "-zoom" "fov 25;wait;fov 30;wait;fov 40;wait;fov 50;wait;fov 60;wait;fov 70;wait;fov 80;wait;fov 90;wait;fov 100;wait;fov 110;wait;sensitivity 7.5"
+		</pre>
+		<p>Zooming is not very useful in QW but some people like it. Note how the sensitivity is changed by the script to adapt to the different fov.</p>
+		<p><color>Clear screenshot</color></p>
+		<pre>
+		alias screenshot "viewsize 120;crosshair 0;wait;screenshot;wait;crosshair 1;viewsize 100"
+		</pre>
+		<p>This will create a clear screenshot. Good for keeping results.</p>
+		<p><color>Multiple key binding</color></p>
+		<p>Although a common board has more than 100 keys those are often not enough for a serious quaker especially when you are into teamplay and need many keybindings near to each other. Here, multiple keybinding becomes very usefull. For example you could use your mousebuttons twice. Once for shooting weapons and also for issueing messages to your team:</p>
+		<pre>
+		bind mouse1 "+rl"
+		bind mouse2 "+hop
+		bind mouse3 "+best"
+		bind space "+team_m"
+		
+		alias +team_m "bind mouse1 team_m1;bind mouse2 team_m2;bind mouse3 team_m3"
+		alias -team_m "bind mouse1 +rl;bind mouse2 +hop;bind mouse3 +best"
+		
+		alias team_m1 "say_team Enemy has Quad!"
+		alias team_m2 "say_team I have Quad!"
+		alias team_m3 "say_team Quad in 30 seconds"
+		</pre>
+		<p>As long as the spacebar is not pressed the mousebuttons are bound to common binds for firing weapons and jumping. When the spacebar is pressed you can say something to your teammates. In the beginning it feels a bit awkward to use a single mousebutton for two different things but you get used to it very fast and it turns out to be very effective.</p>
+	</body>
+</document>

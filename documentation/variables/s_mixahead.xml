@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>s_mixahead</name><description>
+This variable defines the delay time for sounds. How low you can set your sound
+mixahead depends on your FPS, when you set it too low, your sound will start 
+crackling. Generally, with 72 FPS you should be able to use a delay of 0.06 
+seconds, if you use the command-line switch "-primarysound", you may be able to
+go even lower, but results may vary on this.
+
+</description><remarks></remarks></variable>

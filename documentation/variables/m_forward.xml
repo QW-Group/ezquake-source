@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>m_forward</name><description>
+This variable controls how fast the player should move forward and back when the 
+mouse is moved forward and back. This command has no effect if the +mlook 
+command is in effect because when the mouse is moved forward and back the 
+player looks up and down instead of moving forward and back. Some players might 
+want to set this variable to "0" if they happen not to use +mlook constantly and 
+they only want to use the mouse to turn the player. Setting this variable to "0"
+will prevent the inadvertent movement of the player forward and back while 
+trying to make precise turns with the mouse.
+
+</description><remarks></remarks></variable>

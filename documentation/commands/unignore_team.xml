@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>unignore_team</name><description>
+If you have ignored team nine and wan't to
+remove team nine from ignore so type unignore_team nine
+ to remove ignore.</description><syntax></syntax><remarks></remarks></command>

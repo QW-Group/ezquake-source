@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>tp_weaponorder</name><description>
+This allows you to define the order from best to worst weapon. The default value
+is "78564321", which means that the Rocket Launcher is the best weapon (impulse 7)
+then Lightning Gun (impulse 8), Super Nailgun (impulse 5), Grenade Launcher
+(impulse 6), Nailgun (impulse 4), Super Shotgun (impulse 3), Shotgun (impulse 2),
+Axe (impulse 1).
+
+</description><remarks></remarks></variable>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>observe</name><description>
+observe connects you to a server as a
+spectator. If no address is specified, observe will reconnect to
+the last visited server as a spectator.
+ Example:
+ observe 123.124.125.126</description><syntax>(address)</syntax><remarks></remarks></command>

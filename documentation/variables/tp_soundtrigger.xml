@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>tp_soundtrigger</name><description>
+SoundTrigger like proxys.
+A SoundTrigger must be terminated by either a CR, LF or filter. The .wav extension is not required at the end. Trigger is a character before the sound file.
+Example:
+filter #a
+say_team I'm at %l ~location.wav"
+say_team ~location.wav$\me: I'm at %l #a"
+say_team ~location$\me: I'm at %l #a"
+say_team I'm at %l ~location #a"
+
+</description><remarks></remarks></variable>

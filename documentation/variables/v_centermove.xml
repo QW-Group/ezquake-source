@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>v_centermove</name><description>
+This variable sets the distance that the player must move before the screen 
+automatically centers itself when "lookspring" is set to "1". This variable is 
+only useful to people who only play with the keyboard, have "lookspring" set to
+"1" and do not have "+klook" or "+mlook" enabled at that time. When the player 
+moves the distance specified in this variable the screen will pop back to the 
+center position.
+
+</description><remarks></remarks></variable>

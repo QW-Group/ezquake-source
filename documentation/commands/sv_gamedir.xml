@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>sv_gamedir</name><description>
+Displays or determines the value of the
+serverinfo *gamedir variable.
+ Note: Useful when the physical gamedir directory has a
+different
+ name than the widely accepted gamedir directory.
+ Examples:
+ gamedir tf2_5; sv_gamedir fortress
+ gamedir ctf4_2; sv_gamedir ctf</description><syntax></syntax><remarks></remarks></command>

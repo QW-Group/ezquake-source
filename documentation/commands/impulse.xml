@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>impulse</name><description>
+This command calls a game function or QuakeC
+function. Often impulses are used
+ by the mod by defining aliases for game functions like "ready"
+and "break" that
+ call certain impulses.</description><syntax></syntax><remarks></remarks></command>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>demo_capture</name><description>
+demo_capture start x will capture screenshots
+of the demo you are
+ playing for x seconds. The screenshots are captured at a
+constant 30
+ fps and written to demo_capture_dir (default: /capture). You
+can
+ use 'demo_capture stop' to stop capturing
+prematurely.</description><syntax>(start/stop)</syntax><remarks></remarks></command>

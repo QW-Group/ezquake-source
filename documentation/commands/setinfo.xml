@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>setinfo</name><description>
+Sets information about your FuhWorld user.
+Used without a key it will list
+ all of your current settings. Specifying a non-existent key and
+a value will
+ create the new key.</description><syntax></syntax><remarks></remarks></command>

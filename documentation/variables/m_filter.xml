@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+<name>m_filter</name><description>
+
+This variable toggles mouse input filtering. When set to "1", the values which
+are received from the mouse's input will first be averaged together and then 
+that value will be used in the game. 
+The reason for this command is that some mice had problems with sending sporadic
+coordinates which make the input from the mouse jerky, also when using a serial 
+or PS/2 mouse, the Windows operating system will only sample mouse input every 
+25ms, that is 40 times a second (for USB mice the sample rate is 125 Hz, that is
+every 8 ms). When set to "1" this variable will smooth out the input but it will 
+cause latency between the movement of the mouse and the actual response in the 
+game. When using a PS/2 mouse it is thus first recommended to try to increase 
+the sampling rate either by changing it via your mouse driver or by using the 
+ps2rate program which can be downloaded at ps2rate homepage . 
+If you are playing the game at frame rates above 40 FPS and if you can't 
+increase the sampling rate of your PS/2 rate or if you are playing with a serial 
+mouse it is recommended that you enable this toggle.
+
+</description><remarks></remarks></variable>

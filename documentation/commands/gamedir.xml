@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>gamedir</name><description>
+Specifies the directory where the QWPROGS.DAT
+file is found and other additional
+ files such as maps, models, sound, and skins for Quake
+modifications.
+ Note: This command can be specified while a game is in progress,
+after the current
+ map ends this command will take effect.</description><syntax></syntax><remarks></remarks></command>

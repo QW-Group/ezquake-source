@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>track-</name><description>
+This means when you are spectating or watching
+an mvd, keys will automatically be assigned
+ to track certain players (so in a 4v4 8 keys are needed, the
+first 4 make you track the
+ 4 players in the first team and the last 4 make you track the
+second team).</description><syntax></syntax><remarks></remarks></command>

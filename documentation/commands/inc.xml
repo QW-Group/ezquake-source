@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>inc</name><description>
+Increments a variable by one or adds to it the
+optional second argument.
+ There are no 'add' or 'dec' commands because 'inc' can handle
+both addition and
+ subtraction.
+ Example:
+ inc sensitivity -2 would subtract 2 from
+sensitivity.</description><syntax></syntax><remarks></remarks></command>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>keymap_load</name><description>
+This command first resets the current keymappings and then loads a new mapping from the given file.</description><syntax>
+keymap_load [layoutname] <filename></syntax><remarks>
+Fore more info see Keymap support manual section.</remarks></command>
