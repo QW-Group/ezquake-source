@@ -446,6 +446,12 @@ void DumpMisc(FILE *f) {
 #endif
 // } END shaman RFE 1032143
 
+// START johnnycz RFE 1157227 {
+#ifdef GLQUAKE
+	fprintf(f, "hud_recalculate\n");
+#endif
+// } END johnnycz RFE 1157227
+
 	if (cl.teamfortress) {
 		if (!Q_strcasecmp(Info_ValueForKey (cls.userinfo, "ec"), "on") || 
 			!Q_strcasecmp(Info_ValueForKey (cls.userinfo, "exec_class"), "on")
