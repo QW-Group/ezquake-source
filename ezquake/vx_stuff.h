@@ -55,8 +55,9 @@ extern cvar_t amf_extratrails;
 extern cvar_t amf_detpacklights;
 extern cvar_t amf_buildingsparks;
 extern cvar_t amf_lightning;
+// START shaman RFE 1022310
 extern cvar_t amf_lightning_size;
-
+// END shaman RFE 1022310
 extern cvar_t amf_lightning_sparks;
 extern cvar_t amf_motiontrails;
 extern cvar_t amf_motiontrails_wtf;
