@@ -1214,6 +1214,9 @@ void CL_Play_f (void) {
 			playbackfile = fopen (va("%s/%s", com_basedir, name + 3), "rb");
 		else
 			FS_FOpenFile (name, &playbackfile);
+
+		if (!playbackfile) // hexum -> look in demo dir too
+			playbackfile = fopen (va("%s/%s/%s", com_basedir, demo_dir.string, name), "rb");
 	}
 
 	if (!playbackfile) {
