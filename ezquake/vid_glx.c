@@ -444,6 +444,7 @@ static void GetEvent(void) {
 
 void signal_handler(int sig) {
 	printf("Received signal %d, exiting...\n", sig);
+	VID_Shutdown();
 	Sys_Quit();
 	exit(0);
 }
