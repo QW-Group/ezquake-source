@@ -306,7 +306,7 @@ qboolean Movie_GetSoundtime(void) {
 	if (cl_multiview.value)
 		views = cl_multiview.value;
 
-	soundtime += (int)(0.5 + cls.frametime * shm->speed) * views * (1.0 / cl_demospeed.value); //joe: fix for slowmo/fast forward
+	soundtime += (int)(0.5 + cls.frametime * shm->speed * views * (1.0 / cl_demospeed.value)); //joe: fix for slowmo/fast forward
 	return true;
 }
 #endif

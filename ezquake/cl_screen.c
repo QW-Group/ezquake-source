@@ -1555,15 +1555,19 @@ void SCR_Movieshot(char *name) {
 		int i, j, rowp;
 		byte *buffer, *p;
 
-		buffer = Q_Malloc (vid.width * vid.height);
+		buffer = Q_Malloc (vid.width * vid.height * 3);
 
 		D_EnableBackBufferAccess ();
 
 		p = buffer;
 		for (i = vid.height - 1; i >= 0; i--) {
 			rowp = i * vid.rowbytes;
-			for (j = 0; j < vid.width; j++)
-				*p++ = vid.buffer[rowp++];
+			for (j = 0; j < vid.width; j++) {
+				*p++ = current_pal[vid.buffer[rowp]*3+2];
+				*p++ = current_pal[vid.buffer[rowp]*3+1];
+				*p++ = current_pal[vid.buffer[rowp]*3+0];
+				rowp++;
+			}
 		}
 
 		D_DisableBackBufferAccess ();

@@ -68,6 +68,7 @@ MPEGLAYER3WAVEFORMAT mp3_format;
 qboolean	mp3_driver;
 HACMDRIVER	had;
 HACMSTREAM	hstr;
+ACMSTREAMHEADER	strhdr;
 
 extern qboolean movie_avi_loaded, movie_acm_loaded;
 extern	cvar_t	movie_codec, movie_fps, movie_mp3, movie_mp3_kbps;
@@ -165,7 +166,7 @@ PAVISTREAM Capture_VideoStream (void)
 	return m_codec_fourcc ? m_compressed_video_stream : m_uncompressed_video_stream;
 }
 
-qboolean CALLBACK acmDriverEnumCallback (HACMDRIVERID hadid, DWORD dwInstance, DWORD fdwSupport)
+BOOL CALLBACK acmDriverEnumCallback (HACMDRIVERID hadid, DWORD dwInstance, DWORD fdwSupport)
 {
 	if (fdwSupport & ACMDRIVERDETAILS_SUPPORTF_CODEC)
 	{
@@ -199,18 +200,12 @@ qboolean CALLBACK acmDriverEnumCallback (HACMDRIVERID hadid, DWORD dwInstance, D
 	return true;
 }
 
-qboolean Capture_Open (char* filename)
+qboolean Capture_Open (char *filename)
 {
-	HRESULT		hr;
-	LPBITMAPINFO	bitmap_info;
-	AVISTREAMINFO	stream_header;
-	char		*fourcc;
-#ifdef GLQUAKE
-	int		palsize = 0;
-#else
-	int		i, palsize = 256 * sizeof(RGBQUAD);
-	extern	byte	current_pal[768];
-#endif
+	HRESULT			hr;
+	BITMAPINFOHEADER	bitmap_info_header;
+	AVISTREAMINFO		stream_header;
+	char			*fourcc;
 
 	m_video_frame_counter = m_audio_frame_counter = 0;
 	m_file = NULL;
@@ -233,49 +228,35 @@ qboolean Capture_Open (char* filename)
 #ifdef GLQUAKE
 	m_video_frame_size = glwidth * glheight * 3;
 #else
-	m_video_frame_size = vid.width * vid.height;
+	m_video_frame_size = vid.width * vid.height * 3;
 #endif
 
-	bitmap_info = Q_Calloc (sizeof(BITMAPINFOHEADER) + palsize, 1);
-	bitmap_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	memset (&bitmap_info_header, 0, sizeof(bitmap_info_header));
+	bitmap_info_header.biSize = sizeof(BITMAPINFOHEADER);
 #ifdef GLQUAKE
-	bitmap_info->bmiHeader.biWidth = glwidth;
-	bitmap_info->bmiHeader.biHeight = glheight;
-	bitmap_info->bmiHeader.biBitCount = 24;
+	bitmap_info_header.biWidth = glwidth;
+	bitmap_info_header.biHeight = glheight;
 #else
-	bitmap_info->bmiHeader.biWidth = vid.width;
-	bitmap_info->bmiHeader.biHeight = vid.height;
-	bitmap_info->bmiHeader.biBitCount = 8;
+	bitmap_info_header.biWidth = vid.width;
+	bitmap_info_header.biHeight = vid.height;
 #endif
-	bitmap_info->bmiHeader.biPlanes = 1;
-	bitmap_info->bmiHeader.biCompression = BI_RGB;
-	bitmap_info->bmiHeader.biSizeImage = m_video_frame_size;
-
-#ifndef GLQUAKE
-	bitmap_info->bmiHeader.biClrUsed = 256;
-	bitmap_info->bmiHeader.biClrImportant = 256;
-
-	for (i=0 ; i<bitmap_info->bmiHeader.biClrUsed ; i++)
-	{
-		bitmap_info->bmiColors[i].rgbRed = current_pal[i*3+0];
-		bitmap_info->bmiColors[i].rgbGreen = current_pal[i*3+1];
-		bitmap_info->bmiColors[i].rgbBlue = current_pal[i*3+2];
-	}
-#endif
+	bitmap_info_header.biPlanes = 1;
+	bitmap_info_header.biBitCount = 24;
+	bitmap_info_header.biCompression = BI_RGB;
+	bitmap_info_header.biSizeImage = m_video_frame_size;
 
 	memset (&stream_header, 0, sizeof(stream_header));
 	stream_header.fccType = streamtypeVIDEO;
 	stream_header.fccHandler = m_codec_fourcc;
 	stream_header.dwScale = 1;
 	stream_header.dwRate = (unsigned long)(0.5 + movie_fps.value);
-	stream_header.dwSuggestedBufferSize = bitmap_info->bmiHeader.biSizeImage;
-	SetRect (&stream_header.rcFrame, 0, 0, bitmap_info->bmiHeader.biWidth, bitmap_info->bmiHeader.biHeight);
+	stream_header.dwSuggestedBufferSize = bitmap_info_header.biSizeImage;
+	SetRect (&stream_header.rcFrame, 0, 0, bitmap_info_header.biWidth, bitmap_info_header.biHeight);
 
 	hr = qAVIFileCreateStream (m_file, &m_uncompressed_video_stream, &stream_header);
 	if (FAILED(hr))
 	{
 		Com_Printf ("ERROR: Couldn't create video stream\n");
-		free (bitmap_info);
 		return false;
 	}
 
@@ -292,20 +273,16 @@ qboolean Capture_Open (char* filename)
 		if (FAILED(hr))
 		{
 			Com_Printf ("ERROR: Couldn't make compressed video stream\n");
-			free (bitmap_info);
 			return false;
 		}
 	}
 
-	hr = qAVIStreamSetFormat (Capture_VideoStream(), 0, bitmap_info, bitmap_info->bmiHeader.biSize + palsize);
+	hr = qAVIStreamSetFormat (Capture_VideoStream(), 0, &bitmap_info_header, bitmap_info_header.biSize);
 	if (FAILED(hr))
 	{
 		Com_Printf ("ERROR: Couldn't set video stream format\n");
-		free (bitmap_info);
 		return false;
 	}
-
-	free (bitmap_info);
 
 	// initialize audio data
 	memset (&m_wave_format, 0, sizeof(m_wave_format));
@@ -334,10 +311,9 @@ qboolean Capture_Open (char* filename)
 		MMRESULT	mmr;
 
 		// try to find an MP3 codec
-		// this should be moved to Capture_InitAVI()
 		had = NULL;
 		mp3_driver = false;
-		//qacmDriverEnum (acmDriverEnumCallback, 0, 0);
+		qacmDriverEnum (acmDriverEnumCallback, 0, 0);
 		if (!mp3_driver)
 		{
 			Com_Printf ("ERROR: Couldn't find any MP3 decoder\n");
@@ -359,7 +335,7 @@ qboolean Capture_Open (char* filename)
 		mp3_format.nCodecDelay = 1393;
 
 		hstr = NULL;
-		if ((mmr = qacmStreamOpen (&hstr, had, &m_wave_format, &mp3_format.wfx, NULL, 0, 0, 0)))
+		if ((mmr = qacmStreamOpen(&hstr, had, &m_wave_format, &mp3_format.wfx, NULL, 0, 0, 0)))
 		{
 			switch (mmr)
 			{
@@ -422,7 +398,7 @@ void Capture_WriteVideo (byte *pixel_buffer)
 #ifdef GLQUAKE
 	int	size = glwidth * glheight * 3;
 #else
-	int	size = vid.width * vid.height;
+	int	size = vid.width * vid.height * 3;
 #endif
 
 	// check frame size (TODO: other things too?) hasn't changed
@@ -461,11 +437,10 @@ void Capture_WriteAudio (int samples, byte *sample_buffer)
 	if (m_audio_is_mp3)
 	{
 		MMRESULT	mmr;
-		ACMSTREAMHEADER	strhdr;
 		byte		*mp3_buffer;
 		unsigned long	mp3_bufsize;
 
-		if ((mmr = qacmStreamSize (hstr, sample_bufsize, &mp3_bufsize, ACM_STREAMSIZEF_SOURCE)))
+		if ((mmr = qacmStreamSize(hstr, sample_bufsize, &mp3_bufsize, ACM_STREAMSIZEF_SOURCE)))
 		{
 			Com_Printf ("ERROR: Couldn't get mp3bufsize\n");
 			return;
@@ -484,14 +459,14 @@ void Capture_WriteAudio (int samples, byte *sample_buffer)
 		strhdr.pbDst = mp3_buffer;
 		strhdr.cbDstLength = mp3_bufsize;
 
-		if ((mmr = qacmStreamPrepareHeader (hstr, &strhdr, 0)))
+		if ((mmr = qacmStreamPrepareHeader(hstr, &strhdr, 0)))
 		{
 			Com_Printf ("ERROR: Couldn't prepare header\n");
 			free (mp3_buffer);
 			return;
 		}
 
-		if ((mmr = qacmStreamConvert (hstr, &strhdr, ACM_STREAMCONVERTF_BLOCKALIGN)))
+		if ((mmr = qacmStreamConvert(hstr, &strhdr, ACM_STREAMCONVERTF_BLOCKALIGN)))
 		{
 			Com_Printf ("ERROR: Couldn't convert audio stream\n");
 			goto clean;
@@ -500,7 +475,7 @@ void Capture_WriteAudio (int samples, byte *sample_buffer)
 		hr = qAVIStreamWrite (m_audio_stream, m_audio_frame_counter++, 1, mp3_buffer, strhdr.cbDstLengthUsed, AVIIF_KEYFRAME, NULL, NULL);
 
 clean:
-		if ((mmr = qacmStreamUnprepareHeader (hstr, &strhdr, 0)))
+		if ((mmr = qacmStreamUnprepareHeader(hstr, &strhdr, 0)))
 		{
 			Com_Printf ("ERROR: Couldn't unprepare header\n");
 			free (mp3_buffer);
