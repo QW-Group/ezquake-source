@@ -115,7 +115,7 @@ cvar_t	m_filter = {"m_filter", "0"};
 cvar_t	cl_keypad = {"cl_keypad", "1"};
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
 
-#define SGISWAPINTERVAL
+//#define SGISWAPINTERVAL
 
 const char *glx_extensions=NULL;
 
@@ -581,9 +581,11 @@ void GL_EndRendering (void) {
 	double glx_frametime;
 
 	glx_frametime = Sys_DoubleTime();
-	if (glx_frametime-glx_startframetime < 1.0/X_vrefresh_rate)
-		if (glXGetVideoSyncSGI && glXWaitVideoSyncSGI && update_vsync && vid_vsync.string[0])
+	if ((double)(glx_frametime-glx_startframetime) <= (double)(1.0/X_vrefresh_rate))
+		if (glXGetVideoSyncSGI && glXWaitVideoSyncSGI && update_vsync && vid_vsync.string[0]) {
+//			glXGetVideoSyncSGI(&vsync_count);
 			glXWaitVideoSyncSGI(1, 0, &vsync_count);
+		}
 #endif
 
 	if (vid_minimized) { usleep(10*1000); return; }
@@ -1039,7 +1041,7 @@ void EvDev_UpdateMouse(void *v) {
 	int ret;
 
 	while ((ret = read(evdev_fd, &event, sizeof(struct input_event))) > 0) {
-		if (vid_minimized)
+		if (vid_minimized || !_windowed_mouse.value)
 			if (evdev_mt) { usleep(10*1000); continue; }
 			else continue;
 
