@@ -106,6 +106,7 @@ char *Rulesets_Ruleset(void) {
 
 static void Rulesets_Smackdown(void) {
 	extern cvar_t tp_triggers, tp_msgtriggers, cl_trueLightning, scr_clock, r_aliasstats;
+	extern cvar_t cl_independentPhysics, cl_c2spps;
 #ifdef GLQUAKE
 	extern cvar_t amf_camera_death, amf_camera_chase;
 	extern qboolean qmb_initialized;
@@ -120,18 +121,24 @@ static void Rulesets_Smackdown(void) {
 		{&tp_msgtriggers, "0"},
 		{&cl_trueLightning, "0"},
 #ifndef GLQUAKE
-		{&r_aliasstats, "0"},
+		{&r_aliasstats, "0"}
 #endif
 	};
 
 #ifdef GLQUAKE
-	if (!qmb_initialized) i = 2;
+	if (!qmb_initialized)
+		i = 2;
 	else
 #endif
-	i = 0;
+		i = 0;
 	for (; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
 		Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
 		Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
+	}
+	if (cl_independentPhysics.value)
+	{
+		Cvar_Set(&cl_c2spps, "0");
+		Cvar_SetFlags(&cl_c2spps, Cvar_GetFlags(&cl_c2spps) | CVAR_ROM);
 	}
 
 	maxfps = 77;
