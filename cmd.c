@@ -459,7 +459,7 @@ void Cmd_EditAlias_f (void){
 	cmd_alias_t	*a;
 	char *s, final_string[MAXCMDLINE -1];
 	int c;
-	
+	extern void Key_ClearTyping();
 
 	c = Cmd_Argc();
 	if (c == 1)	{
