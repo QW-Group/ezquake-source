@@ -4,7 +4,7 @@
 
 <name>r_drawflat</name>
 <description>
-Changes walls and floors texture rendering.
+Disables textures and fills them with a color (/r_wallcolor or /r_floorcolor) depending on the angle.
 </description>
 <value><enum>
 	<value><name>

@@ -2,14 +2,11 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
-<name>r_floorcolor</name>
+<name>demo_capture_mp3_kbps</name>
 <description>
-Changes color of floors and ceilings when r_drawflat is set to 1.
-Enter RGB value here, e.g. r_floorcolor &quot;128 128 128&quot; goes for gray floor.
+
+
+Sets bitrate for captured sound stream when demo_capture_mp3 is set to 1.
 
 </description>
-<remarks>
-
-
-</remarks>
 </variable>

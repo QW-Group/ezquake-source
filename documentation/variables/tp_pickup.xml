@@ -4,11 +4,13 @@
 
 <name>tp_pickup</name>
 <description>
-
 Set items you want to report ($took)
 Item can be: quad, pent, ring, suit, ra, ya, ga, mh, health, lg, 
 rl, gl, sng, ng, ssg, pack, cells, rockets, nails, shells, flag, 
 armor, weapons, powerups, ammo, all, default, none
 
 </description>
+<remarks>
+
+</remarks>
 </variable>

@@ -4,10 +4,12 @@
 
 <name>cl_c2sImpulseBackup</name>
 <description>
-
 Used with cl_c2spps, it controls how many backup copies of packets with non-zero 
 impulses are to be sent to the server. The recommended value is 3, 
 but you can try 2 or even 1 to reduce traffic if you don't have any packet loss.
 
 </description>
+<remarks>
+
+</remarks>
 </variable>

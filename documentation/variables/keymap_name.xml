@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>keymap_name</name>
+<description>
+
+
+This holds the name of the current keymappings; it has (currently) only informational purposes. If no keymapping is active, it will contain the name &quot;Default&quot;. If a keymapping will be active and no name has been set, &quot;Custom&quot; will be used as name. It can easily be set with &quot;keymap_name &lt;layoutname&gt;&quot;
+
+</description>
+</variable>

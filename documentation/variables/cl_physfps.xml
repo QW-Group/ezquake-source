@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>cl_physfps</name>
+<description>
+Sets amount of FPS used to communicate with server. This variable is used when +set cl_independentphysics 1 is set so your current amount of FPS is limited by cl_maxfps while this variable limits amout of FPS sent/received to/from server.
+When set to zero current cl_maxfps value is used. When cl_maxfps is set to zero too, client displays as much FPS as server and data rate allows.
+
+</description>
+<remarks>
+
+
+</remarks>
+</variable>

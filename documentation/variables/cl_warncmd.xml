@@ -4,7 +4,6 @@
 
 <name>cl_warncmd</name>
 <description>
-
 </description>
 <value><enum>
 	<value><name>
@@ -12,6 +11,7 @@
 	<value><name>1</name><description>Enable the uknown command messages.</description></value>
 </enum></value>
 <remarks>
+
 
 Note: Not saved to config with cfg_save command.
 

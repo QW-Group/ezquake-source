@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>scr_tracking</name>
+<description>
+When tracking a player (e.g. when playing a .MVD) you can see a text saying &quot;Tracking UnnamedPlayer&quot;.
+When left blank &quot;Tracking [player-nick]&quot; is displayed otherwise value of this variable is displayed.
+Note: Set it to &quot; &quot; (space character) to hide any &quot;Tracking&quot; text from the screen.
+
+</description>
+<remarks>
+
+
+</remarks>
+</variable>

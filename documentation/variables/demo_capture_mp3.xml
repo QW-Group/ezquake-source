@@ -2,18 +2,20 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
-<name>teamcolor</name>
+<name>demo_capture_mp3</name>
 <description>
-Set the teammates top- and bottomcolor.
+
+
+When set to 1 .avi capturing captures sound compressed in MP3 format.
 </description>
 <value><enum>
 	<value><name>
--1</name><description>The color pf teammates depends on theirs /color settings.</description></value>
-	<value><name>0</name><description>Light-gray color</description></value>
+0</name><description>Captures uncompressed sound</description></value>
+	<value><name>1</name><description>Captures sound in MP3 format</description></value>
 </enum></value>
 <remarks>
 
-
+See demo_capture_mp3_kbps too.
 
 
 </remarks>

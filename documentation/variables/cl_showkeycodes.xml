@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>cl_showkeycodes</name>
+<description>
+
+
+This variable enables/disables the output of informations to the currently pressed and/or released keys.
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Switch off output of scancode/keymapping information (Default)</description></value>
+	<value><name>1</name><description>information about keys will be printed when the keys are pressed.</description></value>
+	<value><name>2</name><description>information about keys will be printed when releasing the keys.</description></value>
+	<value><name>3</name><description>information about keys will be printed when the keys are pressed and also when they are released.</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+
+</remarks>
+</variable>

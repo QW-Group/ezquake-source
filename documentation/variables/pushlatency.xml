@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>pushlatency</name>
+<description>
+This variable adjusts client side prediction by negating the effects of latency.
+</description>
+<value><enum>
+	<value><name>
+0</name><description>automatic pushlatency adjusting</description></value>
+	<value><name>-50</name><description>Default QWCL value.</description></value>
+	<value><name>-999</name><description>Gives better results.</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+Some people suggest to use the negative value of your ping to achieve the best 
+results, however in most cases the default value of &quot;-999&quot; should be fine.
+
+
+</remarks>
+</variable>

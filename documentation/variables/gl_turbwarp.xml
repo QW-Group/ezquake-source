@@ -2,14 +2,13 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
-<name>teamcolor</name>
+<name>gl_turbwarp</name>
 <description>
-Set the teammates top- and bottomcolor.
 </description>
 <value><enum>
 	<value><name>
--1</name><description>The color pf teammates depends on theirs /color settings.</description></value>
-	<value><name>0</name><description>Light-gray color</description></value>
+0</name><description>Disable warping of surfaces.</description></value>
+	<value><name>1</name><description>Enable warping of surfaces.</description></value>
 </enum></value>
 <remarks>
 

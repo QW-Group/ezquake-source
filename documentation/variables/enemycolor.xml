@@ -5,9 +5,16 @@
 <name>enemycolor</name>
 <description>
 Set the enemies top- and bottomcolor
-
 </description>
+<value><enum>
+	<value><name>
+-1</name><description>The color of enemies depends on theirs /color settings.</description></value>
+	<value><name>0</name><description>Light-gray color</description></value>
+</enum></value>
 <remarks>
+
+
+
 
 </remarks>
 </variable>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>con_timestamps</name>
+<description>
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Console timesptamps turned OFF</description></value>
+	<value><name>1</name><description>will enable timestamps for chat text in
+            console, every chat message will begin with timestamp
+            (hour:minute) followed by a message</description></value>
+	<value><name>2</name><description>will also add timestamps to all server prints (someone entered
+            the game, frag messages etc.)</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+
+
+</remarks>
+</variable>

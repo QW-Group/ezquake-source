@@ -2,14 +2,11 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
-<name>r_floorcolor</name>
+<name>cl_confirmquit</name>
 <description>
-Changes color of floors and ceilings when r_drawflat is set to 1.
-Enter RGB value here, e.g. r_floorcolor &quot;128 128 128&quot; goes for gray floor.
+
+
+When set to 1 you don't have to confirm the Quit screen with [Y] key.
 
 </description>
-<remarks>
-
-
-</remarks>
 </variable>

@@ -9,7 +9,7 @@ This server-side cvar is mirrored to serverinfo as a hint to clients on whether 
 <value><enum>
 	<value><name>
 0</name><description>No watervis.</description></value>
-	<value><name>1</name><description>GLQuake users can see through water if they set r_turbalpha to a value &lt; 1.</description></value>
+	<value><name>1</name><description>GLQuake users can see through water if they set gl_turbalpha to a value &lt; 1.</description></value>
 </enum></value>
 <remarks>
 
