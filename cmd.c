@@ -1291,7 +1291,7 @@ void Cmd_Init (void) {
 	Cmd_AddCommand ("exec", Cmd_Exec_f);
 	Cmd_AddCommand ("echo", Cmd_Echo_f);
 	Cmd_AddCommand ("aliaslist", Cmd_AliasList_f);
-	Cmd_AddCommand ("editalias", Cmd_EditAlias_f);
+	Cmd_AddCommand ("aliasedit", Cmd_EditAlias_f);
 	//Cmd_AddCommand ("aliasa", Cmd_Alias_f);
 	Cmd_AddCommand ("alias", Cmd_Alias_f);
 	Cmd_AddCommand ("tempalias", Cmd_Alias_f);
