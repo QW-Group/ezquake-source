@@ -958,7 +958,7 @@ void R_RenderView_ (void) {
 	if (r_timegraph.value)
 		R_TimeGraph ();
 
-	if (r_netgraph.value && !scr_newHud.value) { // HUD -> hexum
+	if (r_netgraph.value && scr_newHud.value != 1) { // HUD -> hexum
 		// FIXME: ugly hack :(
 		float temp = hud_netgraph->show->value;
 
@@ -967,7 +967,7 @@ void R_RenderView_ (void) {
 		Cvar_SetValue(hud_netgraph->show, temp);
 	}
 
-	if (r_netstats.value && !scr_newHud.value) {
+	if (r_netstats.value && scr_newHud.value != 1) {
 		// FIXME: ugly hack :(
 		float temp = hud_netstats->show->value;
 

@@ -156,6 +156,7 @@ byte		*host_basepal;
 byte		*host_colormap;
 
 int			fps_count;
+double		lastfps;
 
 void CL_Multiview(void);
 
@@ -1066,17 +1067,15 @@ static double MinPhysFrameTime ()
 	return 1 / fpscap;
 }
 
-void CL_CalcFPS(void) { // HUD -> hexum
+void CL_CalcFPS(void)
+{ // HUD -> hexum
 	double t;
-	static double lastfps;
 	static double lastframetime;
 	extern cvar_t scr_newHud;
 
-	if (!scr_newHud.value) // so we dont stomp on show_fps 1 in original hud
-		return;
-
 	t = Sys_DoubleTime();
-	if ((t - lastframetime) >= 1.0) {
+	if ((t - lastframetime) >= 1.0)
+	{
 		lastfps = (double)fps_count / (t - lastframetime);
 		fps_count = 0;
 		lastframetime = t;

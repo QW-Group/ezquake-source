@@ -1698,7 +1698,7 @@ void Sbar_Draw(void) {
 		sbar_xofs = 0;
 
 	// top line
-	if (sb_lines > 24 && !scr_newHud.value) {  // HUD -> hexum
+	if (sb_lines > 24 && scr_newHud.value != 1) {  // HUD -> hexum
 		if (!cl.spectator || autocam == CAM_TRACK)
 			Sbar_DrawInventory();
 		
@@ -1707,7 +1707,7 @@ void Sbar_Draw(void) {
 	}	
 
 	// main area
-	if (sb_lines > 0 && !scr_newHud.value) {  // HUD -> hexum
+	if (sb_lines > 0 && scr_newHud.value != 1) {  // HUD -> hexum
 		if (cl.spectator) {
 			if (autocam != CAM_TRACK) {
 				// START shaman RFE 1022309
@@ -1798,7 +1798,7 @@ void Sbar_Draw(void) {
 	if (sb_showscores || sb_showteamscores || cl.stats[STAT_HEALTH] <= 0)
 		sb_updates = 0;
 
-	if (scr_newHud.value) // HUD -> hexum
+	if (scr_newHud.value == 1) // HUD -> hexum
 		return;
 
 	// clear unused areas in GL
@@ -1810,7 +1810,7 @@ void Sbar_Draw(void) {
 	if (!headsup && cl.spectator && autocam != CAM_TRACK && sb_lines > SBAR_HEIGHT)
 		Draw_TileClear (sbar_xofs, vid.height - sb_lines, 320, sb_lines - SBAR_HEIGHT);
 #else // HUD -> hexum
-	if (scr_newHud.value)
+	if (scr_newHud.value == 1)
 		return;
 #endif
 
