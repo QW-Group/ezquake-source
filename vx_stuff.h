@@ -50,6 +50,7 @@ extern cvar_t tei_lavafire;
 extern cvar_t tei_slime;
 
 extern cvar_t amf_coronas;
+extern cvar_t amf_coronas_tele;
 extern cvar_t amf_weather_rain;
 extern cvar_t amf_weather_rain_fast;
 extern cvar_t amf_nailtrail;
