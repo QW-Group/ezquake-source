@@ -158,19 +158,17 @@ void Movie_FinishFrame(void) {
 	//SCR_Screenshot(fname);
 	//movie_frame_count++;
 
-	if (cl_multiview.value) {
+	if (cl_multiview.value && cls.mvdplayback) {
 		if (CURRVIEW == 1)
 			SCR_Screenshot(fname);
-	} else {
+	} else
 		SCR_Screenshot(fname);
-	}
 	con_suppress = false;
-	if (cl_multiview.value) {
+	if (cl_multiview.value && cls.mvdplayback) {
 		if (CURRVIEW == 1)
 			movie_frame_count++;
-	} else {
+	} else
 		movie_frame_count++;
-	}
 
 	if (cls.realtime >= movie_start_time + movie_len)
 		Movie_Stop();
