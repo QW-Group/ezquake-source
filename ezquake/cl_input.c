@@ -31,6 +31,10 @@ cvar_t	cl_c2sImpulseBackup = {"cl_c2sImpulseBackup","3"};
 
 cvar_t	cl_smartjump = {"cl_smartjump", "0"};
 
+extern cvar_t allow_scripts;
+extern cvar_t cl_independentPhysics;
+extern qboolean physframe;
+extern double physframetime;
 
 /*
 ===============================================================================
@@ -297,6 +301,8 @@ cvar_t	cl_anglespeedkey = {"cl_anglespeedkey","1.5"};
 cvar_t	cl_yawspeed = {"cl_yawspeed","140"};
 cvar_t	cl_pitchspeed = {"cl_pitchspeed","150"};
 
+cvar_t  allow_scripts = {"allow_scripts", "2"};
+ 
 cvar_t	lookspring = {"lookspring","0",CVAR_ARCHIVE};
 cvar_t	lookstrafe = {"lookstrafe","0",CVAR_ARCHIVE};
 cvar_t	sensitivity = {"sensitivity","3",CVAR_ARCHIVE};
@@ -314,7 +320,7 @@ void CL_Rotate_f (void) {
 		Com_Printf("Usage: %s <degrees>\n", Cmd_Argv(0));
 		return;
 	}
-	if (cl.fpd & FPD_LIMIT_YAW)
+	if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2 || com_blockscripts == true)
 		return;
 	cl.viewangles[YAW] += atof(Cmd_Argv(1));
 	cl.viewangles[YAW] = anglemod(cl.viewangles[YAW]);
@@ -334,7 +340,7 @@ void CL_AdjustAngles (void) {
 	
 	if (!(in_strafe.state & 1)) {
 		speed = basespeed * cl_yawspeed.value;
-		if (cl.fpd & FPD_LIMIT_YAW)
+		if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2 || com_blockscripts == true)
 			speed = bound(-900, speed, 900);
 		speed *= frametime;
 		cl.viewangles[YAW] -= speed * CL_KeyState(&in_right);
@@ -344,7 +350,7 @@ void CL_AdjustAngles (void) {
 
 	
 	speed = basespeed * cl_pitchspeed.value;
-	if (cl.fpd & FPD_LIMIT_PITCH)
+	if (cl.fpd & FPD_LIMIT_PITCH || allow_scripts.value == 0)
 		speed = bound(-700, speed, 700);
 	speed *= frametime;
 	if (in_klook.state & 1)	{
@@ -363,7 +369,7 @@ void CL_AdjustAngles (void) {
 
 	cl.viewangles[PITCH] = bound(-70, cl.viewangles[PITCH], 80);
 	cl.viewangles[ROLL] = bound(-50, cl.viewangles[ROLL], 50);		
-}
+} 
 
 //Send the intended movement message to the server
 void CL_BaseMove (usercmd_t *cmd) {	
@@ -429,7 +435,8 @@ void CL_FinishMove (usercmd_t *cmd) {
 	in_use.state &= ~2;
 
 	// send milliseconds of time to apply the move
-	extramsec += frametime * 1000;
+	//#fps	extramsec += cls.frametime * 1000;
+	extramsec += (cl_independentPhysics.value == 0 ? frametime : physframetime) * 1000;	//#fps
 	ms = extramsec;
 	extramsec -= ms;
 	if (ms > 250)
@@ -472,7 +479,11 @@ void CL_SendCmd (void) {
 	CL_BaseMove (cmd);
 
 	// allow mice or other external controllers to add to the move
-	IN_Move (cmd);
+
+	if (cl_independentPhysics.value == 0 || (physframe && cl_independentPhysics.value != 0)) {
+		IN_Move(cmd);
+	}
+
 
 	// if we are spectator, try autocam
 	if (cl.spectator)
@@ -483,7 +494,8 @@ void CL_SendCmd (void) {
 	Cam_FinishMove(cmd);
 
 	if (cls.mvdplayback) {		
-		cls.netchan.outgoing_sequence++;
+		CL_CalcPlayerFPS(&cl.players[cl.playernum], cmd->msec);
+        cls.netchan.outgoing_sequence++;
 		return;
 	}
 
@@ -630,6 +642,8 @@ void CL_InitInput (void) {
 	Cvar_Register (&cl_pitchspeed);
 	Cvar_Register (&cl_anglespeedkey);
 
+	Cvar_Register (&allow_scripts); 
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MISC);
 	Cvar_Register (&lookspring);
 	Cvar_Register (&lookstrafe);
@@ -651,4 +665,4 @@ void CL_InitInput (void) {
 	Cvar_ResetCurrentGroup();
 }
 
-void CL_ClearStates (void) {}
+void CL_ClearStates (void) {} 

@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -44,6 +44,11 @@ typedef unsigned int	PIXEL24;
 #include "d_local.h"
 #include "input.h"
 #include "keys.h"
+
+#ifdef WITH_KEYMAP
+#include "keymap.h"
+extern void IN_Keycode_Print_f( XKeyEvent *ev, qboolean ext, qboolean down, int key );
+#endif // WITH_KEYMAP
 
 cvar_t		vid_ref = {"vid_ref", "soft", CVAR_ROM};
 cvar_t		_windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE};
@@ -140,7 +145,7 @@ void shiftmask_init(void) {
 PIXEL16 xlib_rgb16(int r,int g,int b) {
     PIXEL16 p;
 
-    if (shiftmask_fl == 0) 
+    if (shiftmask_fl == 0)
 		shiftmask_init();
     p = 0;
 
@@ -174,7 +179,7 @@ PIXEL16 xlib_rgb16(int r,int g,int b) {
 PIXEL24 xlib_rgb24(int r,int g,int b) {
     PIXEL24 p;
 
-    if (shiftmask_fl == 0) 
+    if (shiftmask_fl == 0)
 		shiftmask_init();
     p = 0;
 
@@ -254,7 +259,7 @@ void TragicDeath(int signal_num) {
 // ========================================================================
 
 static Cursor CreateNullCursor(Display *display, Window root) {
-    Pixmap cursormask; 
+    Pixmap cursormask;
     XGCValues xgc;
     GC gc;
     XColor dummycolour;
@@ -418,7 +423,7 @@ void VID_Init (unsigned char *palette) {
 	//	vid.cbits = VID_CBITS;
 	//	vid.grades = VID_GRADES;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
-	
+
 	srandom(getpid());
 
 	verbose = COM_CheckParm("-verbose");
@@ -521,9 +526,9 @@ void VID_Init (unsigned char *palette) {
 		int attribmask = CWEventMask  | CWColormap | CWBorderPixel;
 		XSetWindowAttributes attribs;
 		Colormap tmpcmap;
-		
+
 		tmpcmap = XCreateColormap(x_disp, XRootWindow(x_disp, x_visinfo->screen), x_vis, AllocNone);
-		
+
 		attribs.event_mask = StructureNotifyMask|KeyPressMask|KeyReleaseMask|ExposureMask|PointerMotionMask|ButtonPressMask|ButtonReleaseMask;
 		attribs.border_pixel = 0;
 		attribs.colormap = tmpcmap;
@@ -539,7 +544,7 @@ void VID_Init (unsigned char *palette) {
 			x_vis,
 			attribmask,
 			&attribs );
-		XStoreName( x_disp,x_win,"FuhQuake");
+		XStoreName( x_disp,x_win,"ezquake");
 
 		if (x_visinfo->class != TrueColor)
 			XFreeColormap(x_disp, tmpcmap);
@@ -728,16 +733,16 @@ int XLateKey(XKeyEvent *ev) {
 
 		case XK_Pause:			key = K_PAUSE; break;
 
-		case XK_Shift_L:		key = K_LSHIFT; break;								
+		case XK_Shift_L:		key = K_LSHIFT; break;
 		case XK_Shift_R:		key = K_RSHIFT; break;
 
-		case XK_Execute: 
+		case XK_Execute:
 		case XK_Control_L:		key = K_LCTRL; break;
 		case XK_Control_R:		key = K_RCTRL; break;
 
-		case XK_Alt_L:	
-		case XK_Meta_L:			key = K_LALT; break;								
-		case XK_Alt_R:	
+		case XK_Alt_L:
+		case XK_Meta_L:			key = K_LALT; break;
+		case XK_Alt_R:
 		case XK_Meta_R:			key = K_RALT; break;
 
 		case XK_Super_L:		key = K_LWIN; break;
@@ -786,11 +791,23 @@ void GetEvent(void) {
 	case KeyPress:
 		keyq[keyq_head].key = XLateKey(&event.xkey);
 		keyq[keyq_head].down = true;
+#ifdef WITH_KEYMAP
+		// if set, print the current Key information
+		if (cl_showkeycodes.value > 0) {
+			IN_Keycode_Print_f (&event.xkey, false, true, keyq[keyq_head].key);
+		}
+#endif // WITH_KEYMAP
 		keyq_head = (keyq_head + 1) & 63;
 		break;
 	case KeyRelease:
 		keyq[keyq_head].key = XLateKey(&event.xkey);
 		keyq[keyq_head].down = false;
+#ifdef WITH_KEYMAP
+		// if set, print the current Key information
+		if (cl_showkeycodes.value > 0) {
+			IN_Keycode_Print_f (&event.xkey, false, false, keyq[keyq_head].key);
+		}
+#endif // WITH_KEYMAP
 		keyq_head = (keyq_head + 1) & 63;
 		break;
 
@@ -804,7 +821,7 @@ void GetEvent(void) {
 				|KeyReleaseMask|ExposureMask
 				|ButtonPressMask
 				|ButtonReleaseMask);
-			XWarpPointer(x_disp,None,x_win,0,0,0,0, 
+			XWarpPointer(x_disp,None,x_win,0,0,0,0,
 				(vid.width/2),(vid.height/2));
 			XSelectInput(x_disp,x_win,StructureNotifyMask|KeyPressMask
 				|KeyReleaseMask|ExposureMask
@@ -830,10 +847,10 @@ void GetEvent(void) {
 		case 4:
 			Key_Event(K_MWHEELUP, event.type == ButtonPress); break;
 		case 5:
-			Key_Event(K_MWHEELDOWN, event.type == ButtonPress); break;			
+			Key_Event(K_MWHEELDOWN, event.type == ButtonPress); break;
 		}
 		break;
-	
+
 	case ConfigureNotify:
 		config_notify_width = event.xconfigure.width;
 		config_notify_height = event.xconfigure.height;
@@ -844,7 +861,7 @@ void GetEvent(void) {
 		if (doShm && event.type == x_shmeventtype)
 			oktodraw = true;
 	}
-   
+
 	if (old_windowed_mouse != _windowed_mouse.value) {
 		old_windowed_mouse = _windowed_mouse.value;
 
@@ -881,7 +898,12 @@ void VID_Update (vrect_t *rects) {
 		return;
 	}
 
+
+
+
 	if (doShm) {
+	// oppymv 010904 - FIXME
+	if (!cls.mvdplayback || !cl_multiview.value || (cl_multiview.value>0 && CURRVIEW == 1)) {
 		while (rects){
 			if (x_visinfo->depth == 24)
 				st3_fixup(x_framebuffer[current_framebuffer], rects->x, rects->y, rects->width, rects->height);
@@ -897,6 +919,7 @@ void VID_Update (vrect_t *rects) {
 		current_framebuffer = !current_framebuffer;
 		vid.buffer = x_framebuffer[current_framebuffer]->data;
 		XSync(x_disp, False);
+	}
 	} else {
 		while (rects) {
 			if (x_visinfo->depth != 8)
@@ -969,6 +992,9 @@ void IN_Init (void) {
 	Cvar_Register (&m_filter);
 	Cvar_Register (&_windowed_mouse);
 	Cvar_ResetCurrentGroup();
+#ifdef WITH_KEYMAP
+	IN_StartupKeymap ();
+#endif // WITH_KEYMAP
 	mouse_x = mouse_y = 0.0;
 	mouse_avail = 1;
 }
@@ -979,9 +1005,9 @@ void IN_Shutdown (void) {
 
 void IN_Commands (void) {
 	int i;
-   
+
 	if (!mouse_avail) return;
-   
+
 	for (i = 0; i < mouse_buttons; i++) {
 		if ( (mouse_buttonstate & (1 << i)) && !(mouse_oldbuttonstate & (1<<i)) )
 			Key_Event (K_MOUSE1 + i, true);
@@ -996,7 +1022,7 @@ void IN_Move (usercmd_t *cmd) {
     float tx, ty, filterfrac, mousespeed;
 
 	if (!mouse_avail)
-		return;   
+		return;
 
     tx = mouse_x;
     ty = mouse_y;

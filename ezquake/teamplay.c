@@ -822,6 +822,7 @@ char *Macro_LastSeenPowerup(void) {
 
 
 qboolean TP_SuppressMessage(char *buf) {
+
 	char *s;
 
 	for (s = buf; *s && *s != 0x7f; s++)
@@ -833,14 +834,15 @@ qboolean TP_SuppressMessage(char *buf) {
 
 		return (!cls.demoplayback && !cl.spectator && *s - 'A' == cl.playernum);
 	}
-	return false;
+	return false; 
+
 }
 
-void TP_PrintHiddenMessage(char *buf) {
+void TP_PrintHiddenMessage(char *buf, int nodisplay) {
     qboolean hide = false;
     char dest[4096], msg[4096], *s, *d, c, *name;
 	int length, offset, flags;
-	extern cvar_t cl_chatsound;
+	extern cvar_t cl_chatsound, con_sound_mm2_file, con_sound_mm2_volume;
 
 	if (!buf || !(length = strlen(buf)))
 		return;
@@ -853,7 +855,7 @@ void TP_PrintHiddenMessage(char *buf) {
 	s = buf;
 	d = dest;
 
-    while ((c = *s++)) {
+    while ((c = *s++) && (c != '\x7f')) {
         if (c == '\xff') {
 			if ((hide = !hide)) {
 				*d++ = (*s == 'z') ? 'x' : 139;	
@@ -884,19 +886,23 @@ void TP_PrintHiddenMessage(char *buf) {
 
 	flags = TP_CategorizeMessage (msg, &offset);
 
-	if (flags == 2 && !TP_FilterMessage(msg + offset))
-		return;
+		if (flags == 2 && !TP_FilterMessage(msg + offset))
+			return;
 
-	if (cl_chatsound.value)
-		S_LocalSound ("misc/talk.wav");
+		if (con_sound_mm2_volume.value > 0 && nodisplay == 0) {
+            S_LocalSoundWithVol(con_sound_mm2_file.string, con_sound_mm2_volume.value);
+		}
 
-	if (cl_nofake.value == 1 || (cl_nofake.value == 2 && flags != 2)) {
-		for (s = msg; *s; s++)
-			if (*s == 0x0D || (*s == 0x0A && s[1]))
-				*s = ' ';
-	}
+		if (cl_nofake.value == 1 || (cl_nofake.value == 2 && flags != 2)) {
+			for (s = msg; *s; s++)
+				if (*s == 0x0D || (*s == 0x0A && s[1]))
+					*s = ' ';
+		}
 
-	Com_Printf(TP_ParseWhiteText (msg, false, offset));
+		if (nodisplay == 0) {
+			Com_Printf(TP_ParseWhiteText (msg, false, offset));
+		}
+	
 }
 
 #define ISDEAD(i) ( (i) >= 41 && (i) <= 102 )
@@ -1063,12 +1069,20 @@ char *TP_ParseWhiteText(char *s, qboolean team, int offset) {
 char *TP_ParseMacroString (char *s) {
 	static char	buf[MAX_MACRO_STRING];
 	int i = 0;
+    int pN, pn;
 	char *macro_string;
+
+	int r = 0;
+			
+	player_state_t *state;
+	player_info_t *info;
+	static int lastframecount = -1;
 
 	if (!cl_parseSay.value)
 		return s;
 
-	suppress = false;		
+	suppress = false;
+	pn = pN = 0;
 
 	while (*s && i < MAX_MACRO_STRING - 1) {
 		// check %[P], etc
@@ -1120,6 +1134,10 @@ char *TP_ParseMacroString (char *s) {
 		// check %a, etc
 		if (*s == '%') {
 			switch (s[1]) {
+				//case '\x7f': macro_string = ""; break;// skip cause we use this to hide mesgs
+                //case '\xff': macro_string = ""; break;
+                case 'n':   pn = 1; macro_string = ""; break;
+                case 'N':   pN = 1; macro_string = ""; break;
 				case 'a':	macro_string = Macro_Armor(); break;
 				case 'A':	macro_string = Macro_ArmorType(); break;
 				case 'b':	macro_string = Macro_BestWeaponAndAmmo(); break;
@@ -1166,20 +1184,60 @@ char *TP_ParseMacroString (char *s) {
 	}
 	buf[i] = 0;
 
-	
+		i = strlen(buf);
+
+		if (pN) {
+			buf[i++] = 0x7f;
+			buf[i++] = '!';
+   			buf[i++] = 'A' + cl.playernum;
+		}
+		if (pn) {
+			
+			if (!pN)
+				buf[i++] = 0x7f;
+
+			if (cls.framecount != lastframecount) {
+			
+				lastframecount = cls.framecount;
+ 			
+				if (!(!cl.oldparsecount || !cl.parsecount || cls.state < ca_active)) {
+
+					state = cl.frames[cl.oldparsecount & UPDATE_MASK].playerstate;
+					info = cl.players; 
+				
+					for (r = 0; r < MAX_CLIENTS; r++, info++, state++) {			
+						if (r != cl.playernum && state->messagenum == cl.oldparsecount && !info->spectator && !ISDEAD(state->frame)) {
+							if (cl.teamplay && !strcmp(info->team, TP_PlayerTeam()))
+								buf[i++] = 'A' + r;
+						}
+					} 
+
+				}
+
+			}
+		}
+
 	if (suppress) {
 		qboolean quotes = false;
 
-		TP_PrintHiddenMessage(buf);
+		TP_PrintHiddenMessage(buf,pN);
+
 		i = strlen(buf);
+
 		if (i > 0 && buf[i - 1] == '\"') {
 			buf[i - 1] = 0;
 			quotes = true;
 			i--;
 		}
-		buf[i++] = 0x7f;
-		buf[i++] = '!';
-        buf[i++]= 'A' + cl.playernum;
+
+		if (!pN) {
+			if (!pn) {
+				buf[i++] = 0x7f;
+			}
+			buf[i++] = '!';
+    		buf[i++] = 'A' + cl.playernum;
+		}
+
 		if (quotes)
 			buf[i++] = '\"';
 		buf[i] = 0;
@@ -1388,6 +1446,7 @@ void TP_EnemyColor_f(void) {
 }
 
 /********************************* .LOC FILES *********************************/
+ 
 
 typedef struct locdata_s {
 	vec3_t coord;
@@ -1777,8 +1836,9 @@ void TP_SearchForMsgTriggers (char *s, int level) {
 	for (t = msg_triggers; t; t = t->next) {
 		if ((t->level == level || (t->level == 3 && level == 4)) && t->string[0] && strstr(s, t->string)) {
 			if	(	level == PRINT_CHAT && (
-					strstr (s, "fuh_version") || strstr (s, "f_version") || strstr (s, "f_system") ||
-					strstr (s, "f_server") || strstr (s, "f_speed") || strstr (s, "f_modified"))
+					strstr (s, "f_version") || 
+					strstr (s, "f_server") || strstr (s, "f_scripts") || strstr (s, "f_cmdline") ||
+					strstr (s, "f_system") || strstr (s, "f_speed") || strstr (s, "f_modified"))
 				)
 				continue; 	// don't let llamas fake proxy replies
 
@@ -2968,10 +3028,15 @@ void TP_Init (void) {
 	Cvar_Register (&tp_name_at);
 	Cvar_Register (&tp_name_someplace);
 
-	Cvar_Register(&tp_name_status_blue);
-	Cvar_Register(&tp_name_status_red);
-	Cvar_Register(&tp_name_status_yellow);
-	Cvar_Register(&tp_name_status_green);
+	Cvar_Register (&tp_name_rune_1); 
+	Cvar_Register (&tp_name_rune_2); 
+	Cvar_Register (&tp_name_rune_3); 
+	Cvar_Register (&tp_name_rune_4); 
+
+	Cvar_Register (&tp_name_status_blue);
+	Cvar_Register (&tp_name_status_red);
+	Cvar_Register (&tp_name_status_yellow);
+	Cvar_Register (&tp_name_status_green);
 
 	Cvar_Register (&tp_name_pented);
 	Cvar_Register (&tp_name_quaded);

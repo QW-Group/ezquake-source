@@ -37,4 +37,6 @@ void M_ToggleMenu_f (void);
 void M_DrawTextBox (int x, int y, int width, int lines);
 void M_Menu_Quit_f (void);
 
-
+extern enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer,
+	m_setup, m_options, m_video, m_keys, m_help, m_quit,
+	m_gameoptions, m_slist, m_sedit, m_fps, m_demos, m_mp3_control, m_mp3_playlist} m_state;

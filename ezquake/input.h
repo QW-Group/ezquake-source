@@ -51,6 +51,8 @@ void CL_BaseMove (usercmd_t *cmd);
 float CL_KeyState (kbutton_t *key);
 
 
+extern cvar_t	allow_scripts;
+
 extern cvar_t	cl_upspeed;
 extern cvar_t	cl_forwardspeed;
 extern cvar_t	cl_backspeed;

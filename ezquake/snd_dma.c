@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "sound.h"
+#include "EX_misc.h"
 
 #ifdef _WIN32
 #include "winquake.h"
@@ -825,6 +826,25 @@ void S_LocalSound (char *sound) {
 	}
 	S_StartSound (cl.playernum+1, -1, sfx, vec3_origin, 1, 0);
 }
+
+void S_LocalSoundWithVol(char *sound, float volume) {
+    sfx_t   *sfx;
+
+    clamp(volume, 0, 1.0);
+    if (s_nosound.value)
+        return;
+    if (!sound_started)
+        return;
+        
+    sfx = S_PrecacheSound (sound);
+    if (!sfx)
+    {
+        Com_Printf ("S_LocalSound: can't cache %s\n", sound);
+        return;
+    }
+    S_StartSound (cl.playernum+1, -1, sfx, vec3_origin, volume, 1);
+}
+
 
 void S_ClearPrecache (void) {}
 

@@ -1,0 +1,1325 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: ezquake - Win32 GLDebug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "c:\tmp\RSP630.bat" with contents
+[
+@echo off
+cl /D "GLQUAKE" /nologo /EP > .\Debug-gl\sys_x86.spp .\sys_x86.s
+gas2masm < .\Debug-gl\sys_x86.spp >.\Debug-gl\sys_x86.asm
+ml /nologo /c /Cp /coff /Fo.\Debug-gl\sys_x86.obj /Zm /Zi .\Debug-gl\sys_x86.asm
+del .\Debug-gl\sys_x86.spp
+]
+Creating command line "c:\tmp\RSP630.bat"
+Creating temporary file "c:\tmp\RSP631.bat" with contents
+[
+@echo off
+cl /D "GLQUAKE" /nologo /EP > .\Debug-gl\snd_mixa.spp .\snd_mixa.s
+gas2masm < .\Debug-gl\snd_mixa.spp >.\Debug-gl\snd_mixa.asm
+ml /nologo /c /Cp /coff /Fo.\Debug-gl\snd_mixa.obj /Zm /Zi .\Debug-gl\snd_mixa.asm
+del .\Debug-gl\snd_mixa.spp
+]
+Creating command line "c:\tmp\RSP631.bat"
+Creating temporary file "c:\tmp\RSP632.bat" with contents
+[
+@echo off
+cl /D "GLQUAKE" /nologo /EP > .\Debug-gl\math.spp .\math.s
+gas2masm < .\Debug-gl\math.spp >.\Debug-gl\math.asm
+ml /nologo /c /Cp /coff /Fo.\Debug-gl\math.obj /Zm /Zi .\Debug-gl\math.asm
+del .\Debug-gl\math.spp
+]
+Creating command line "c:\tmp\RSP632.bat"
+Creating temporary file "c:\tmp\RSP633.bat" with contents
+[
+@echo off
+cl /D "GLQUAKE" /nologo /EP > .\Debug-gl\cl_math.spp .\cl_math.s
+gas2masm < .\Debug-gl\cl_math.spp >.\Debug-gl\cl_math.asm
+ml /nologo /c /Cp /coff /Fo.\Debug-gl\cl_math.obj /Zm /Zi .\Debug-gl\cl_math.asm
+del .\Debug-gl\cl_math.spp
+]
+Creating command line "c:\tmp\RSP633.bat"
+Creating command line "rc.exe /l 0xc09 /fo".\Debug-gl/winquake.res" /d "_DEBUG" "C:\fuhsrc\source\winquake.rc"" 
+Performing Custom Build Step on .\sys_x86.s
+sys_x86.s
+ Assembling: .\Debug-gl\sys_x86.asm
+Performing Custom Build Step on .\snd_mixa.s
+snd_mixa.s
+ Assembling: .\Debug-gl\snd_mixa.asm
+Performing Custom Build Step on .\math.s
+math.s
+ Assembling: .\Debug-gl\math.asm
+Performing Custom Build Step on .\cl_math.s
+cl_math.s
+ Assembling: .\Debug-gl\cl_math.asm
+Creating temporary file "c:\tmp\RSP634.tmp" with contents
+[
+/nologo /G6 /ML /W3 /WX /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "id386" /D "GLQUAKE" /D "WITH_JPEG" /D "WITH_PNG" /D "WITH_KEYMAP" /Fr".\Debug-gl/" /Fo".\Debug-gl/" /Fd".\Debug-gl/" /GZ PRECOMP_VC7_TOBEREMOVED /c 
+"C:\fuhsrc\source\gl_draw.c"
+"C:\fuhsrc\source\gl_mesh.c"
+"C:\fuhsrc\source\gl_model.c"
+"C:\fuhsrc\source\gl_ngraph.c"
+"C:\fuhsrc\source\gl_refrag.c"
+"C:\fuhsrc\source\gl_rmain.c"
+"C:\fuhsrc\source\gl_rmisc.c"
+"C:\fuhsrc\source\gl_rpart.c"
+"C:\fuhsrc\source\gl_rsurf.c"
+"C:\fuhsrc\source\gl_screen.c"
+"C:\fuhsrc\source\gl_texture.c"
+"C:\fuhsrc\source\gl_warp.c"
+"C:\fuhsrc\source\sys_win.c"
+"C:\fuhsrc\source\cd_win.c"
+"C:\fuhsrc\source\snd_dma.c"
+"C:\fuhsrc\source\snd_mem.c"
+"C:\fuhsrc\source\snd_mix.c"
+"C:\fuhsrc\source\snd_win.c"
+"C:\fuhsrc\source\cl_input.c"
+"C:\fuhsrc\source\in_win.c"
+"C:\fuhsrc\source\keys.c"
+"C:\fuhsrc\source\sv_ccmds.c"
+"C:\fuhsrc\source\sv_ents.c"
+"C:\fuhsrc\source\sv_init.c"
+"C:\fuhsrc\source\sv_main.c"
+"C:\fuhsrc\source\sv_move.c"
+"C:\fuhsrc\source\sv_nchan.c"
+"C:\fuhsrc\source\sv_phys.c"
+"C:\fuhsrc\source\sv_save.c"
+"C:\fuhsrc\source\sv_send.c"
+"C:\fuhsrc\source\sv_user.c"
+"C:\fuhsrc\source\sv_world.c"
+"C:\fuhsrc\source\net_chan.c"
+"C:\fuhsrc\source\net_wins.c"
+"C:\fuhsrc\source\pr_cmds.c"
+"C:\fuhsrc\source\pr_edict.c"
+"C:\fuhsrc\source\pr_exec.c"
+"C:\fuhsrc\source\cmd.c"
+"C:\fuhsrc\source\common.c"
+"C:\fuhsrc\source\console.c"
+"C:\fuhsrc\source\crc.c"
+"C:\fuhsrc\source\cvar.c"
+"C:\fuhsrc\source\host.c"
+"C:\fuhsrc\source\image.c"
+"C:\fuhsrc\source\mathlib.c"
+"C:\fuhsrc\source\mdfour.c"
+"C:\fuhsrc\source\menu.c"
+"C:\fuhsrc\source\pmove.c"
+"C:\fuhsrc\source\pmovetst.c"
+"C:\fuhsrc\source\sbar.c"
+"C:\fuhsrc\source\skin.c"
+"C:\fuhsrc\source\teamplay.c"
+"C:\fuhsrc\source\version.c"
+"C:\fuhsrc\source\wad.c"
+"C:\fuhsrc\source\zone.c"
+"C:\fuhsrc\source\r_part.c"
+"C:\fuhsrc\source\vid_common_gl.c"
+"C:\fuhsrc\source\vid_wgl.c"
+"C:\fuhsrc\source\cl_cam.c"
+"C:\fuhsrc\source\cl_cmd.c"
+"C:\fuhsrc\source\cl_demo.c"
+"C:\fuhsrc\source\cl_ents.c"
+"C:\fuhsrc\source\cl_main.c"
+"C:\fuhsrc\source\cl_parse.c"
+"C:\fuhsrc\source\cl_pred.c"
+"C:\fuhsrc\source\cl_slist.c"
+"C:\fuhsrc\source\cl_tent.c"
+"C:\fuhsrc\source\cl_view.c"
+"C:\fuhsrc\source\auth.c"
+"C:\fuhsrc\source\config_manager.c"
+"C:\fuhsrc\source\fchecks.c"
+"C:\fuhsrc\source\fmod.c"
+"C:\fuhsrc\source\gl_image.c"
+"C:\fuhsrc\source\ignore.c"
+"C:\fuhsrc\source\logging.c"
+"C:\fuhsrc\source\modules.c"
+"C:\fuhsrc\source\movie.c"
+"C:\fuhsrc\source\mp3_player.c"
+"C:\fuhsrc\source\rulesets.c"
+"C:\fuhsrc\source\utils.c"
+]
+Creating command line "cl.exe @c:\tmp\RSP634.tmp" 
+Creating temporary file "c:\tmp\RSP635.tmp" with contents
+[
+/nologo /G6 /ML /W3 /WX /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "id386" /D "GLQUAKE" /D "WITH_JPEG" /D "WITH_PNG" /D "WITH_KEYMAP" /Fr".\Debug-gl/" /Fo".\Debug-gl/" /Fd".\Debug-gl/" /GZ  /GZ PRECOMP_VC7_TOBEREMOVED /c 
+"C:\fuhsrc\source\gl_rlight.c"
+]
+Creating command line "cl.exe @c:\tmp\RSP635.tmp" 
+Creating temporary file "c:\tmp\RSP636.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libjpeg.lib libpng.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib /nologo /subsystem:windows /incremental:yes /pdb:".\Debug-gl\ezquake-gl.pdb" /debug /machine:I386 /out:".\Debug-gl\ezquake.exe" /pdbtype:sept 
+".\Debug-gl\gl_draw.obj"
+".\Debug-gl\gl_mesh.obj"
+".\Debug-gl\gl_model.obj"
+".\Debug-gl\gl_ngraph.obj"
+".\Debug-gl\gl_refrag.obj"
+".\Debug-gl\gl_rlight.obj"
+".\Debug-gl\gl_rmain.obj"
+".\Debug-gl\gl_rmisc.obj"
+".\Debug-gl\gl_rpart.obj"
+".\Debug-gl\gl_rsurf.obj"
+".\Debug-gl\gl_screen.obj"
+".\Debug-gl\gl_texture.obj"
+".\Debug-gl\gl_warp.obj"
+".\Debug-gl\sys_win.obj"
+".\Debug-gl\cd_win.obj"
+".\Debug-gl\snd_dma.obj"
+".\Debug-gl\snd_mem.obj"
+".\Debug-gl\snd_mix.obj"
+".\Debug-gl\snd_win.obj"
+".\Debug-gl\cl_input.obj"
+".\Debug-gl\in_win.obj"
+".\Debug-gl\keys.obj"
+".\Debug-gl\sv_ccmds.obj"
+".\Debug-gl\sv_ents.obj"
+".\Debug-gl\sv_init.obj"
+".\Debug-gl\sv_main.obj"
+".\Debug-gl\sv_move.obj"
+".\Debug-gl\sv_nchan.obj"
+".\Debug-gl\sv_phys.obj"
+".\Debug-gl\sv_save.obj"
+".\Debug-gl\sv_send.obj"
+".\Debug-gl\sv_user.obj"
+".\Debug-gl\sv_world.obj"
+".\Debug-gl\net_chan.obj"
+".\Debug-gl\net_wins.obj"
+".\Debug-gl\pr_cmds.obj"
+".\Debug-gl\pr_edict.obj"
+".\Debug-gl\pr_exec.obj"
+".\Debug-gl\cmd.obj"
+".\Debug-gl\common.obj"
+".\Debug-gl\console.obj"
+".\Debug-gl\crc.obj"
+".\Debug-gl\cvar.obj"
+".\Debug-gl\host.obj"
+".\Debug-gl\image.obj"
+".\Debug-gl\mathlib.obj"
+".\Debug-gl\mdfour.obj"
+".\Debug-gl\menu.obj"
+".\Debug-gl\pmove.obj"
+".\Debug-gl\pmovetst.obj"
+".\Debug-gl\sbar.obj"
+".\Debug-gl\skin.obj"
+".\Debug-gl\teamplay.obj"
+".\Debug-gl\version.obj"
+".\Debug-gl\wad.obj"
+".\Debug-gl\zone.obj"
+".\Debug-gl\r_part.obj"
+".\Debug-gl\vid_common_gl.obj"
+".\Debug-gl\vid_wgl.obj"
+".\Debug-gl\cl_cam.obj"
+".\Debug-gl\cl_cmd.obj"
+".\Debug-gl\cl_demo.obj"
+".\Debug-gl\cl_ents.obj"
+".\Debug-gl\cl_main.obj"
+".\Debug-gl\cl_parse.obj"
+".\Debug-gl\cl_pred.obj"
+".\Debug-gl\cl_slist.obj"
+".\Debug-gl\cl_tent.obj"
+".\Debug-gl\cl_view.obj"
+".\Debug-gl\auth.obj"
+".\Debug-gl\config_manager.obj"
+".\Debug-gl\fchecks.obj"
+".\Debug-gl\fmod.obj"
+".\Debug-gl\gl_image.obj"
+".\Debug-gl\ignore.obj"
+".\Debug-gl\logging.obj"
+".\Debug-gl\modules.obj"
+".\Debug-gl\movie.obj"
+".\Debug-gl\mp3_player.obj"
+".\Debug-gl\rulesets.obj"
+".\Debug-gl\utils.obj"
+".\Debug-gl\winquake.res"
+".\Debug-gl\cl_math.obj"
+".\Debug-gl\math.obj"
+".\Debug-gl\snd_mixa.obj"
+".\Debug-gl\sys_x86.obj"
+]
+Creating command line "link.exe @c:\tmp\RSP636.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+Command line warning D4024 : unrecognized source file type 'PRECOMP_VC7_TOBEREMOVED', object file assumed
+Command line warning D4027 : source file 'PRECOMP_VC7_TOBEREMOVED' ignored
+gl_draw.c
+gl_mesh.c
+gl_model.c
+gl_ngraph.c
+gl_refrag.c
+gl_rmain.c
+gl_rmisc.c
+gl_rpart.c
+gl_rsurf.c
+gl_screen.c
+gl_texture.c
+gl_warp.c
+sys_win.c
+cd_win.c
+snd_dma.c
+snd_mem.c
+snd_mix.c
+snd_win.c
+cl_input.c
+in_win.c
+Generating Code...
+Compiling...
+keys.c
+sv_ccmds.c
+sv_ents.c
+sv_init.c
+sv_main.c
+sv_move.c
+sv_nchan.c
+sv_phys.c
+sv_save.c
+sv_send.c
+sv_user.c
+sv_world.c
+net_chan.c
+net_wins.c
+pr_cmds.c
+pr_edict.c
+pr_exec.c
+cmd.c
+common.c
+console.c
+Generating Code...
+Compiling...
+crc.c
+cvar.c
+host.c
+image.c
+mathlib.c
+mdfour.c
+menu.c
+pmove.c
+pmovetst.c
+sbar.c
+skin.c
+teamplay.c
+version.c
+wad.c
+zone.c
+r_part.c
+vid_common_gl.c
+vid_wgl.c
+cl_cam.c
+cl_cmd.c
+Generating Code...
+Compiling...
+cl_demo.c
+cl_ents.c
+cl_main.c
+cl_parse.c
+cl_pred.c
+cl_slist.c
+cl_tent.c
+cl_view.c
+auth.c
+config_manager.c
+fchecks.c
+fmod.c
+gl_image.c
+ignore.c
+logging.c
+modules.c
+movie.c
+mp3_player.c
+rulesets.c
+utils.c
+Generating Code...
+Compiling...
+Command line warning D4024 : unrecognized source file type 'PRECOMP_VC7_TOBEREMOVED', object file assumed
+Command line warning D4027 : source file 'PRECOMP_VC7_TOBEREMOVED' ignored
+gl_rlight.c
+Linking...
+
+
+
+<h3>Results</h3>
+ezquake.exe - 0 error(s), 4 warning(s)
+<h3>
+--------------------Configuration: ezquake - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "c:\tmp\RSP638.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\sys_x86.spp .\sys_x86.s
+gas2masm < .\Release\sys_x86.spp >.\Release\sys_x86.asm
+ml /nologo /c /Cp /coff /Fo.\Release\sys_x86.obj /Zm /Zi .\Release\sys_x86.asm
+del .\Release\sys_x86.spp
+]
+Creating command line "c:\tmp\RSP638.bat"
+Creating temporary file "c:\tmp\RSP639.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\surf8.spp .\surf8.s
+gas2masm < .\Release\surf8.spp >.\Release\surf8.asm
+ml /nologo /c /Cp /coff /Fo.\Release\surf8.obj /Zm /Zi .\Release\surf8.asm
+del .\Release\surf8.spp
+]
+Creating command line "c:\tmp\RSP639.bat"
+Creating temporary file "c:\tmp\RSP63A.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\surf16.spp .\surf16.s
+gas2masm < .\Release\surf16.spp >.\Release\surf16.asm
+ml /nologo /c /Cp /coff /Fo.\Release\surf16.obj /Zm /Zi .\Release\surf16.asm
+del .\Release\surf16.spp
+]
+Creating command line "c:\tmp\RSP63A.bat"
+Creating temporary file "c:\tmp\RSP63B.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\snd_mixa.spp .\snd_mixa.s
+gas2masm < .\Release\snd_mixa.spp >.\Release\snd_mixa.asm
+ml /nologo /c /Cp /coff /Fo.\Release\snd_mixa.obj /Zm /Zi .\Release\snd_mixa.asm
+del .\Release\snd_mixa.spp
+]
+Creating command line "c:\tmp\RSP63B.bat"
+Creating temporary file "c:\tmp\RSP63C.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\r_varsa.spp .\r_varsa.s
+gas2masm < .\Release\r_varsa.spp >.\Release\r_varsa.asm
+ml /nologo /c /Cp /coff /Fo.\Release\r_varsa.obj /Zm /Zi .\Release\r_varsa.asm
+del .\Release\r_varsa.spp
+]
+Creating command line "c:\tmp\RSP63C.bat"
+Creating temporary file "c:\tmp\RSP63D.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\r_edgea.spp .\r_edgea.s
+gas2masm < .\Release\r_edgea.spp >.\Release\r_edgea.asm
+ml /nologo /c /Cp /coff /Fo.\Release\r_edgea.obj /Zm /Zi .\Release\r_edgea.asm
+del .\Release\r_edgea.spp
+]
+Creating command line "c:\tmp\RSP63D.bat"
+Creating temporary file "c:\tmp\RSP63E.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\r_drawa.spp .\r_drawa.s
+gas2masm < .\Release\r_drawa.spp >.\Release\r_drawa.asm
+ml /nologo /c /Cp /coff /Fo.\Release\r_drawa.obj /Zm /Zi .\Release\r_drawa.asm
+del .\Release\r_drawa.spp
+]
+Creating command line "c:\tmp\RSP63E.bat"
+Creating temporary file "c:\tmp\RSP63F.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\r_aliasa.spp .\r_aliasa.s
+gas2masm < .\Release\r_aliasa.spp >.\Release\r_aliasa.asm
+ml /nologo /c /Cp /coff /Fo.\Release\r_aliasa.obj /Zm /Zi .\Release\r_aliasa.asm
+del .\Release\r_aliasa.spp
+]
+Creating command line "c:\tmp\RSP63F.bat"
+Creating temporary file "c:\tmp\RSP640.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\r_aclipa.spp .\r_aclipa.s
+gas2masm < .\Release\r_aclipa.spp >.\Release\r_aclipa.asm
+ml /nologo /c /Cp /coff /Fo.\Release\r_aclipa.obj /Zm /Zi .\Release\r_aclipa.asm
+del .\Release\r_aclipa.spp
+]
+Creating command line "c:\tmp\RSP640.bat"
+Creating temporary file "c:\tmp\RSP641.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\math.spp .\math.s
+gas2masm < .\Release\math.spp >.\Release\math.asm
+ml /nologo /c /Cp /coff /Fo.\Release\math.obj /Zm /Zi .\Release\math.asm
+del .\Release\math.spp
+]
+Creating command line "c:\tmp\RSP641.bat"
+Creating temporary file "c:\tmp\RSP642.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\d_varsa.spp .\d_varsa.s
+gas2masm < .\Release\d_varsa.spp >.\Release\d_varsa.asm
+ml /nologo /c /Cp /coff /Fo.\Release\d_varsa.obj /Zm /Zi .\Release\d_varsa.asm
+del .\Release\d_varsa.spp
+]
+Creating command line "c:\tmp\RSP642.bat"
+Creating temporary file "c:\tmp\RSP643.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\d_spr8.spp .\d_spr8.s
+gas2masm < .\Release\d_spr8.spp >.\Release\d_spr8.asm
+ml /nologo /c /Cp /coff /Fo.\Release\d_spr8.obj /Zm /Zi .\Release\d_spr8.asm
+del .\Release\d_spr8.spp
+]
+Creating command line "c:\tmp\RSP643.bat"
+Creating temporary file "c:\tmp\RSP644.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\d_scana.spp .\d_scana.s
+gas2masm < .\Release\d_scana.spp >.\Release\d_scana.asm
+ml /nologo /c /Cp /coff /Fo.\Release\d_scana.obj /Zm /Zi .\Release\d_scana.asm
+del .\Release\d_scana.spp
+]
+Creating command line "c:\tmp\RSP644.bat"
+Creating temporary file "c:\tmp\RSP645.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\d_polysa.spp .\d_polysa.s
+gas2masm < .\Release\d_polysa.spp >.\Release\d_polysa.asm
+ml /nologo /c /Cp /coff /Fo.\Release\d_polysa.obj /Zm /Zi .\Release\d_polysa.asm
+del .\Release\d_polysa.spp
+]
+Creating command line "c:\tmp\RSP645.bat"
+Creating temporary file "c:\tmp\RSP646.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\d_parta.spp .\d_parta.s
+gas2masm < .\Release\d_parta.spp >.\Release\d_parta.asm
+ml /nologo /c /Cp /coff /Fo.\Release\d_parta.obj /Zm /Zi .\Release\d_parta.asm
+del .\Release\d_parta.spp
+]
+Creating command line "c:\tmp\RSP646.bat"
+Creating temporary file "c:\tmp\RSP647.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\d_draw16.spp .\d_draw16.s
+gas2masm < .\Release\d_draw16.spp >.\Release\d_draw16.asm
+ml /nologo /c /Cp /coff /Fo.\Release\d_draw16.obj /Zm /Zi .\Release\d_draw16.asm
+del .\Release\d_draw16.spp
+]
+Creating command line "c:\tmp\RSP647.bat"
+Creating temporary file "c:\tmp\RSP648.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\d_draw.spp .\d_draw.s
+gas2masm < .\Release\d_draw.spp >.\Release\d_draw.asm
+ml /nologo /c /Cp /coff /Fo.\Release\d_draw.obj /Zm /Zi .\Release\d_draw.asm
+del .\Release\d_draw.spp
+]
+Creating command line "c:\tmp\RSP648.bat"
+Creating temporary file "c:\tmp\RSP649.bat" with contents
+[
+@echo off
+cl /nologo /EP > .\Release\cl_math.spp .\cl_math.s
+gas2masm < .\Release\cl_math.spp >.\Release\cl_math.asm
+ml /nologo /c /Cp /coff /Fo.\Release\cl_math.obj /Zm /Zi .\Release\cl_math.asm
+del .\Release\cl_math.spp
+]
+Creating command line "c:\tmp\RSP649.bat"
+Creating command line "rc.exe /l 0xc09 /fo".\Release/winquake.res" /d "NDEBUG" "C:\fuhsrc\source\winquake.rc"" 
+Performing Custom Build Step on .\sys_x86.s
+sys_x86.s
+ Assembling: .\Release\sys_x86.asm
+Performing Custom Build Step on .\surf8.s
+surf8.s
+ Assembling: .\Release\surf8.asm
+Performing Custom Build Step on .\surf16.s
+surf16.s
+ Assembling: .\Release\surf16.asm
+Performing Custom Build Step on .\snd_mixa.s
+snd_mixa.s
+ Assembling: .\Release\snd_mixa.asm
+Performing Custom Build Step on .\r_varsa.s
+r_varsa.s
+ Assembling: .\Release\r_varsa.asm
+Performing Custom Build Step on .\r_edgea.s
+r_edgea.s
+ Assembling: .\Release\r_edgea.asm
+Performing Custom Build Step on .\r_drawa.s
+r_drawa.s
+ Assembling: .\Release\r_drawa.asm
+Performing Custom Build Step on .\r_aliasa.s
+r_aliasa.s
+ Assembling: .\Release\r_aliasa.asm
+Performing Custom Build Step on .\r_aclipa.s
+r_aclipa.s
+ Assembling: .\Release\r_aclipa.asm
+Performing Custom Build Step on .\math.s
+math.s
+ Assembling: .\Release\math.asm
+Performing Custom Build Step on .\d_varsa.s
+d_varsa.s
+ Assembling: .\Release\d_varsa.asm
+Performing Custom Build Step on .\d_spr8.s
+d_spr8.s
+ Assembling: .\Release\d_spr8.asm
+Performing Custom Build Step on .\d_scana.s
+d_scana.s
+ Assembling: .\Release\d_scana.asm
+Performing Custom Build Step on .\d_polysa.s
+d_polysa.s
+ Assembling: .\Release\d_polysa.asm
+Performing Custom Build Step on .\d_parta.s
+d_parta.s
+ Assembling: .\Release\d_parta.asm
+Performing Custom Build Step on .\d_draw16.s
+d_draw16.s
+ Assembling: .\Release\d_draw16.asm
+Performing Custom Build Step on .\d_draw.s
+d_draw.s
+ Assembling: .\Release\d_draw.asm
+Performing Custom Build Step on .\cl_math.s
+cl_math.s
+ Assembling: .\Release\cl_math.asm
+Creating temporary file "c:\tmp\RSP64A.tmp" with contents
+[
+/nologo /G6 /ML /W3 /WX /GX /Oi /Oy /Ob2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "id386" /Fr".\Release/" /Fo".\Release/" /GF PRECOMP_VC7_TOBEREMOVED /c 
+"C:\fuhsrc\source\sys_win.c"
+"C:\fuhsrc\source\cd_win.c"
+"C:\fuhsrc\source\snd_dma.c"
+"C:\fuhsrc\source\snd_mem.c"
+"C:\fuhsrc\source\snd_mix.c"
+"C:\fuhsrc\source\snd_win.c"
+"C:\fuhsrc\source\cl_input.c"
+"C:\fuhsrc\source\in_win.c"
+"C:\fuhsrc\source\keys.c"
+"C:\fuhsrc\source\sv_ccmds.c"
+"C:\fuhsrc\source\sv_ents.c"
+"C:\fuhsrc\source\sv_init.c"
+"C:\fuhsrc\source\sv_main.c"
+"C:\fuhsrc\source\sv_move.c"
+"C:\fuhsrc\source\sv_nchan.c"
+"C:\fuhsrc\source\sv_phys.c"
+"C:\fuhsrc\source\sv_save.c"
+"C:\fuhsrc\source\sv_send.c"
+"C:\fuhsrc\source\sv_user.c"
+"C:\fuhsrc\source\sv_world.c"
+"C:\fuhsrc\source\net_chan.c"
+"C:\fuhsrc\source\net_wins.c"
+"C:\fuhsrc\source\pr_cmds.c"
+"C:\fuhsrc\source\pr_edict.c"
+"C:\fuhsrc\source\pr_exec.c"
+"C:\fuhsrc\source\cmd.c"
+"C:\fuhsrc\source\common.c"
+"C:\fuhsrc\source\console.c"
+"C:\fuhsrc\source\crc.c"
+"C:\fuhsrc\source\cvar.c"
+"C:\fuhsrc\source\host.c"
+"C:\fuhsrc\source\image.c"
+"C:\fuhsrc\source\mathlib.c"
+"C:\fuhsrc\source\mdfour.c"
+"C:\fuhsrc\source\menu.c"
+"C:\fuhsrc\source\pmove.c"
+"C:\fuhsrc\source\pmovetst.c"
+"C:\fuhsrc\source\sbar.c"
+"C:\fuhsrc\source\screen.c"
+"C:\fuhsrc\source\skin.c"
+"C:\fuhsrc\source\teamplay.c"
+"C:\fuhsrc\source\version.c"
+"C:\fuhsrc\source\wad.c"
+"C:\fuhsrc\source\zone.c"
+"C:\fuhsrc\source\r_aclip.c"
+"C:\fuhsrc\source\r_alias.c"
+"C:\fuhsrc\source\r_bsp.c"
+"C:\fuhsrc\source\r_draw.c"
+"C:\fuhsrc\source\r_edge.c"
+"C:\fuhsrc\source\r_efrag.c"
+"C:\fuhsrc\source\r_light.c"
+"C:\fuhsrc\source\r_main.c"
+"C:\fuhsrc\source\r_misc.c"
+"C:\fuhsrc\source\r_model.c"
+"C:\fuhsrc\source\r_part.c"
+"C:\fuhsrc\source\r_rast.c"
+"C:\fuhsrc\source\r_sky.c"
+"C:\fuhsrc\source\r_sprite.c"
+"C:\fuhsrc\source\r_surf.c"
+"C:\fuhsrc\source\r_vars.c"
+"C:\fuhsrc\source\d_edge.c"
+"C:\fuhsrc\source\d_fill.c"
+"C:\fuhsrc\source\d_init.c"
+"C:\fuhsrc\source\d_modech.c"
+"C:\fuhsrc\source\d_part.c"
+"C:\fuhsrc\source\d_polyse.c"
+"C:\fuhsrc\source\d_scan.c"
+"C:\fuhsrc\source\d_sky.c"
+"C:\fuhsrc\source\d_sprite.c"
+"C:\fuhsrc\source\d_surf.c"
+"C:\fuhsrc\source\d_vars.c"
+"C:\fuhsrc\source\d_zpoint.c"
+"C:\fuhsrc\source\vid_win.c"
+"C:\fuhsrc\source\cl_cam.c"
+"C:\fuhsrc\source\cl_cmd.c"
+"C:\fuhsrc\source\cl_demo.c"
+"C:\fuhsrc\source\cl_ents.c"
+"C:\fuhsrc\source\cl_main.c"
+"C:\fuhsrc\source\cl_parse.c"
+"C:\fuhsrc\source\cl_pred.c"
+"C:\fuhsrc\source\cl_slist.c"
+"C:\fuhsrc\source\cl_tent.c"
+"C:\fuhsrc\source\cl_view.c"
+"C:\fuhsrc\source\auth.c"
+"C:\fuhsrc\source\config_manager.c"
+"C:\fuhsrc\source\fchecks.c"
+"C:\fuhsrc\source\fmod.c"
+"C:\fuhsrc\source\ignore.c"
+"C:\fuhsrc\source\logging.c"
+"C:\fuhsrc\source\modules.c"
+"C:\fuhsrc\source\movie.c"
+"C:\fuhsrc\source\mp3_player.c"
+"C:\fuhsrc\source\rulesets.c"
+"C:\fuhsrc\source\utils.c"
+]
+Creating command line "cl.exe @c:\tmp\RSP64A.tmp" 
+Creating temporary file "c:\tmp\RSP64B.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib mglfx.lib dxguid.lib wsock32.lib winmm.lib /nologo /subsystem:windows /incremental:no /pdb:".\Release/ezquake.pdb" /machine:I386 /nodefaultlib:"libcmt" /out:".\Release\ezquake.exe" /pdbtype:sept /release 
+.\Release\sys_win.obj
+.\Release\cd_win.obj
+.\Release\snd_dma.obj
+.\Release\snd_mem.obj
+.\Release\snd_mix.obj
+.\Release\snd_win.obj
+.\Release\cl_input.obj
+.\Release\in_win.obj
+.\Release\keys.obj
+.\Release\sv_ccmds.obj
+.\Release\sv_ents.obj
+.\Release\sv_init.obj
+.\Release\sv_main.obj
+.\Release\sv_move.obj
+.\Release\sv_nchan.obj
+.\Release\sv_phys.obj
+.\Release\sv_save.obj
+.\Release\sv_send.obj
+.\Release\sv_user.obj
+.\Release\sv_world.obj
+.\Release\net_chan.obj
+.\Release\net_wins.obj
+.\Release\pr_cmds.obj
+.\Release\pr_edict.obj
+.\Release\pr_exec.obj
+.\Release\cmd.obj
+.\Release\common.obj
+.\Release\console.obj
+.\Release\crc.obj
+.\Release\cvar.obj
+.\Release\host.obj
+.\Release\image.obj
+.\Release\mathlib.obj
+.\Release\mdfour.obj
+.\Release\menu.obj
+.\Release\pmove.obj
+.\Release\pmovetst.obj
+.\Release\sbar.obj
+.\Release\screen.obj
+.\Release\skin.obj
+.\Release\teamplay.obj
+.\Release\version.obj
+.\Release\wad.obj
+.\Release\zone.obj
+.\Release\r_aclip.obj
+.\Release\r_alias.obj
+.\Release\r_bsp.obj
+.\Release\r_draw.obj
+.\Release\r_edge.obj
+.\Release\r_efrag.obj
+.\Release\r_light.obj
+.\Release\r_main.obj
+.\Release\r_misc.obj
+.\Release\r_model.obj
+.\Release\r_part.obj
+.\Release\r_rast.obj
+.\Release\r_sky.obj
+.\Release\r_sprite.obj
+.\Release\r_surf.obj
+.\Release\r_vars.obj
+.\Release\d_edge.obj
+.\Release\d_fill.obj
+.\Release\d_init.obj
+.\Release\d_modech.obj
+.\Release\d_part.obj
+.\Release\d_polyse.obj
+.\Release\d_scan.obj
+.\Release\d_sky.obj
+.\Release\d_sprite.obj
+.\Release\d_surf.obj
+.\Release\d_vars.obj
+.\Release\d_zpoint.obj
+.\Release\vid_win.obj
+.\Release\cl_cam.obj
+.\Release\cl_cmd.obj
+.\Release\cl_demo.obj
+.\Release\cl_ents.obj
+.\Release\cl_main.obj
+.\Release\cl_parse.obj
+.\Release\cl_pred.obj
+.\Release\cl_slist.obj
+.\Release\cl_tent.obj
+.\Release\cl_view.obj
+.\Release\auth.obj
+.\Release\config_manager.obj
+.\Release\fchecks.obj
+.\Release\fmod.obj
+.\Release\ignore.obj
+.\Release\logging.obj
+.\Release\modules.obj
+.\Release\movie.obj
+.\Release\mp3_player.obj
+.\Release\rulesets.obj
+.\Release\utils.obj
+.\Release\winquake.res
+.\Release\cl_math.obj
+.\Release\d_draw.obj
+.\Release\d_draw16.obj
+.\Release\d_parta.obj
+.\Release\d_polysa.obj
+.\Release\d_scana.obj
+.\Release\d_spr8.obj
+.\Release\d_varsa.obj
+.\Release\math.obj
+.\Release\r_aclipa.obj
+.\Release\r_aliasa.obj
+.\Release\r_drawa.obj
+.\Release\r_edgea.obj
+.\Release\r_varsa.obj
+.\Release\snd_mixa.obj
+.\Release\surf16.obj
+.\Release\surf8.obj
+.\Release\sys_x86.obj
+]
+Creating command line "link.exe @c:\tmp\RSP64B.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+Command line warning D4024 : unrecognized source file type 'PRECOMP_VC7_TOBEREMOVED', object file assumed
+Command line warning D4027 : source file 'PRECOMP_VC7_TOBEREMOVED' ignored
+sys_win.c
+cd_win.c
+snd_dma.c
+snd_mem.c
+snd_mix.c
+snd_win.c
+cl_input.c
+in_win.c
+keys.c
+sv_ccmds.c
+sv_ents.c
+sv_init.c
+sv_main.c
+sv_move.c
+sv_nchan.c
+sv_phys.c
+sv_save.c
+sv_send.c
+Generating Code...
+Compiling...
+sv_user.c
+sv_world.c
+net_chan.c
+net_wins.c
+pr_cmds.c
+pr_edict.c
+pr_exec.c
+cmd.c
+common.c
+console.c
+crc.c
+cvar.c
+host.c
+image.c
+mathlib.c
+mdfour.c
+menu.c
+pmove.c
+Generating Code...
+Compiling...
+pmovetst.c
+sbar.c
+screen.c
+skin.c
+teamplay.c
+version.c
+wad.c
+zone.c
+r_aclip.c
+r_alias.c
+r_bsp.c
+r_draw.c
+r_edge.c
+r_efrag.c
+r_light.c
+r_main.c
+r_misc.c
+r_model.c
+Generating Code...
+Compiling...
+r_part.c
+r_rast.c
+r_sky.c
+r_sprite.c
+r_surf.c
+r_vars.c
+d_edge.c
+d_fill.c
+d_init.c
+d_modech.c
+d_part.c
+d_polyse.c
+d_scan.c
+d_sky.c
+d_sprite.c
+d_surf.c
+d_vars.c
+d_zpoint.c
+Generating Code...
+Compiling...
+vid_win.c
+C:\fuhsrc\source\vid_win.c(121) : error C2065: 'grDETECT' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(121) : error C2099: initializer is not a constant
+C:\fuhsrc\source\vid_win.c(123) : error C2143: syntax error : missing '{' before '*'
+C:\fuhsrc\source\vid_win.c(262) : warning C4013: 'MGL_exit' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(263) : warning C4013: 'MGL_fatalError' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(263) : warning C4013: 'MGL_errorMsg' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(263) : warning C4013: 'MGL_result' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(267) : error C2143: syntax error : missing ')' before '*'
+C:\fuhsrc\source\vid_win.c(267) : error C2143: syntax error : missing '{' before '*'
+C:\fuhsrc\source\vid_win.c(267) : error C2059: syntax error : 'type'
+C:\fuhsrc\source\vid_win.c(267) : error C2059: syntax error : ')'
+C:\fuhsrc\source\vid_win.c(303) : warning C4013: 'MGL_registerDriver' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(303) : error C2065: 'MGL_VGA8NAME' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(303) : error C2065: 'VGA8_driver' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(306) : error C2065: 'MGL_LINEAR8NAME' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(306) : error C2065: 'LINEAR8_driver' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(309) : error C2065: 'MGL_ACCEL8NAME' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(309) : error C2065: 'ACCEL8_driver' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(313) : error C2065: 'MGL_DDRAW8NAME' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(313) : error C2065: 'DDRAW8_driver' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(318) : error C2065: 'MGL_PACKED8NAME' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(318) : error C2065: 'PACKED8_driver' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(330) : error C2065: 'uchar' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(330) : error C2065: 'm' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(330) : warning C4552: '*' : operator has no effect; expected operator with side-effect
+C:\fuhsrc\source\vid_win.c(340) : warning C4013: 'MGL_unregisterAllDrivers' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(343) : warning C4013: 'MGL_detectGraph' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(344) : warning C4013: 'MGL_availableModes' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(346) : error C2109: subscript requires array or pointer type
+C:\fuhsrc\source\vid_win.c(353) : error C2109: subscript requires array or pointer type
+C:\fuhsrc\source\vid_win.c(354) : warning C4013: 'MGL_modeResolution' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(354) : error C2109: subscript requires array or pointer type
+C:\fuhsrc\source\vid_win.c(357) : error C2109: subscript requires array or pointer type
+C:\fuhsrc\source\vid_win.c(357) : error C2065: 'grVGA_320x200x256' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(361) : error C2109: subscript requires array or pointer type
+C:\fuhsrc\source\vid_win.c(392) : error C2109: subscript requires array or pointer type
+C:\fuhsrc\source\vid_win.c(393) : error C2109: subscript requires array or pointer type
+C:\fuhsrc\source\vid_win.c(412) : error C2109: subscript requires array or pointer type
+C:\fuhsrc\source\vid_win.c(417) : error C2109: subscript requires array or pointer type
+C:\fuhsrc\source\vid_win.c(436) : error C2109: subscript requires array or pointer type
+C:\fuhsrc\source\vid_win.c(438) : warning C4013: 'MGL_init' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(442) : warning C4013: 'MGL_setSuspendAppCallback' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(442) : error C2065: 'VID_Suspend' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(445) : error C2143: syntax error : missing '{' before '*'
+C:\fuhsrc\source\vid_win.c(458) : error C2065: 'MGLDC' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(458) : error C2297: '*' : illegal, right operand has type 'int *'
+C:\fuhsrc\source\vid_win.c(459) : error C2065: 'pixel_format_t' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(459) : error C2146: syntax error : missing ';' before identifier 'pf'
+C:\fuhsrc\source\vid_win.c(459) : error C2065: 'pf' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(460) : error C2143: syntax error : missing ';' before 'type'
+C:\fuhsrc\source\vid_win.c(463) : warning C4013: 'MGL_changeDisplayMode' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(466) : error C2065: 'npages' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(466) : warning C4013: 'MGL_availablePages' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(474) : warning C4013: 'MGL_createDisplayDC' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(474) : warning C4047: '=' : 'int *' differs in levels of indirection from 'int '
+C:\fuhsrc\source\vid_win.c(477) : warning C4013: 'MGL_surfaceAccessType' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(477) : error C2065: 'MGL_LINEAR_ACCESS' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(477) : error C2223: left of '->mi' must point to struct/union
+C:\fuhsrc\source\vid_win.c(478) : warning C4013: 'MGL_makeCurrentDC' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(482) : warning C4013: 'MGL_createMemoryDC' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(482) : warning C4013: 'MGL_sizex' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(482) : warning C4013: 'MGL_sizey' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(482) : warning C4047: '=' : 'int *' differs in levels of indirection from 'int '
+C:\fuhsrc\source\vid_win.c(490) : error C2223: left of '->mi' must point to struct/union
+C:\fuhsrc\source\vid_win.c(494) : warning C4013: 'MGL_setActivePage' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(495) : warning C4013: 'MGL_setVisualPage' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(529) : warning C4013: 'MGL_setAppInstance' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(531) : warning C4013: 'MGL_initWindowed' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(919) : warning C4013: 'MGL_modeDriverName' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(933) : warning C4013: 'MGL_destroyDC' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(966) : error C2146: syntax error : missing ';' before identifier 'pf'
+C:\fuhsrc\source\vid_win.c(967) : error C2275: 'qboolean' : illegal use of this type as an expression
+        C:\fuhsrc\source\common.h(43) : see declaration of 'qboolean'
+C:\fuhsrc\source\vid_win.c(967) : error C2146: syntax error : missing ';' before identifier 'stretched'
+C:\fuhsrc\source\vid_win.c(967) : error C2065: 'stretched' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(968) : error C2143: syntax error : missing ';' before 'type'
+C:\fuhsrc\source\vid_win.c(981) : error C2065: 'lastmodestate' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(993) : error C2065: 'grWINDOWED' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(1035) : warning C4013: 'MGL_registerFullScreenWindow' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(1082) : warning C4013: 'MGL_createWindowedDC' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(1082) : warning C4047: '=' : 'int *' differs in levels of indirection from 'int '
+C:\fuhsrc\source\vid_win.c(1085) : warning C4047: '=' : 'int *' differs in levels of indirection from 'int '
+C:\fuhsrc\source\vid_win.c(1090) : error C2223: left of '->surface' must point to struct/union
+C:\fuhsrc\source\vid_win.c(1091) : error C2223: left of '->mi' must point to struct/union
+C:\fuhsrc\source\vid_win.c(1159) : error C2146: syntax error : missing ';' before identifier 'pf'
+C:\fuhsrc\source\vid_win.c(1160) : error C2143: syntax error : missing ';' before 'type'
+C:\fuhsrc\source\vid_win.c(1183) : error C2065: 'freq' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(1241) : warning C4047: '=' : 'int *' differs in levels of indirection from 'int '
+C:\fuhsrc\source\vid_win.c(1244) : warning C4047: '=' : 'int *' differs in levels of indirection from 'int '
+C:\fuhsrc\source\vid_win.c(1249) : error C2223: left of '->surface' must point to struct/union
+C:\fuhsrc\source\vid_win.c(1250) : error C2223: left of '->mi' must point to struct/union
+C:\fuhsrc\source\vid_win.c(1429) : warning C4013: 'MGL_beginDirectAccess' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(1433) : error C2223: left of '->surface' must point to struct/union
+C:\fuhsrc\source\vid_win.c(1434) : error C2223: left of '->mi' must point to struct/union
+C:\fuhsrc\source\vid_win.c(1437) : error C2223: left of '->surface' must point to struct/union
+C:\fuhsrc\source\vid_win.c(1438) : error C2223: left of '->mi' must point to struct/union
+C:\fuhsrc\source\vid_win.c(1464) : warning C4013: 'MGL_endDirectAccess' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(1473) : error C2065: 'palette_t' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(1473) : error C2146: syntax error : missing ';' before identifier 'pal'
+C:\fuhsrc\source\vid_win.c(1473) : error C2065: 'pal' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(1473) : error C2109: subscript requires array or pointer type
+C:\fuhsrc\source\vid_win.c(1474) : error C2275: 'HDC' : illegal use of this type as an expression
+        C:\Archivos de programa\Microsoft Visual Studio\VC98\INCLUDE\windef.h(239) : see declaration of 'HDC'
+C:\fuhsrc\source\vid_win.c(1474) : error C2146: syntax error : missing ';' before identifier 'hdc'
+C:\fuhsrc\source\vid_win.c(1474) : error C2065: 'hdc' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(1480) : warning C4047: '=' : 'int ' differs in levels of indirection from 'struct HDC__ *'
+C:\fuhsrc\source\vid_win.c(1483) : warning C4047: 'function' : 'struct HDC__ *' differs in levels of indirection from 'int '
+C:\fuhsrc\source\vid_win.c(1483) : warning C4024: 'GetSystemPaletteUse' : different types for formal and actual parameter 1
+C:\fuhsrc\source\vid_win.c(1485) : warning C4047: 'function' : 'struct HDC__ *' differs in levels of indirection from 'int '
+C:\fuhsrc\source\vid_win.c(1485) : warning C4024: 'SetSystemPaletteUse' : different types for formal and actual parameter 1
+C:\fuhsrc\source\vid_win.c(1491) : warning C4047: 'function' : 'struct HDC__ *' differs in levels of indirection from 'int '
+C:\fuhsrc\source\vid_win.c(1491) : warning C4024: 'ReleaseDC' : different types for formal and actual parameter 2
+C:\fuhsrc\source\vid_win.c(1496) : error C2109: subscript requires array or pointer type
+C:\fuhsrc\source\vid_win.c(1496) : error C2224: left of '.red' must have struct/union type
+C:\fuhsrc\source\vid_win.c(1497) : error C2109: subscript requires array or pointer type
+C:\fuhsrc\source\vid_win.c(1497) : error C2224: left of '.green' must have struct/union type
+C:\fuhsrc\source\vid_win.c(1498) : error C2109: subscript requires array or pointer type
+C:\fuhsrc\source\vid_win.c(1498) : error C2224: left of '.blue' must have struct/union type
+C:\fuhsrc\source\vid_win.c(1505) : warning C4013: 'MGL_setPalette' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(1506) : warning C4013: 'MGL_realizePalette' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(1760) : warning C4013: 'MGL_stretchBltCoord' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(1770) : warning C4013: 'MGL_bitBltCoord' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(1774) : error C2065: 'MGL_REPLACE_MODE' : undeclared identifier
+C:\fuhsrc\source\vid_win.c(1795) : warning C4013: 'MGL_setWinDC' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(1956) : error C2223: left of '->surface' must point to struct/union
+C:\fuhsrc\source\vid_win.c(1956) : error C2223: left of '->mi' must point to struct/union
+C:\fuhsrc\source\vid_win.c(1956) : warning C4022: 'memcpy' : pointer mismatch for actual parameter 2
+C:\fuhsrc\source\vid_win.c(1956) : error C2168: 'memcpy' : too few actual parameters for intrinsic function
+C:\fuhsrc\source\vid_win.c(1957) : error C2223: left of '->surface' must point to struct/union
+C:\fuhsrc\source\vid_win.c(1957) : error C2223: left of '->mi' must point to struct/union
+C:\fuhsrc\source\vid_win.c(1958) : warning C4022: 'memcpy' : pointer mismatch for actual parameter 2
+C:\fuhsrc\source\vid_win.c(1958) : error C2168: 'memcpy' : too few actual parameters for intrinsic function
+C:\fuhsrc\source\vid_win.c(2018) : error C2223: left of '->surface' must point to struct/union
+C:\fuhsrc\source\vid_win.c(2018) : error C2223: left of '->mi' must point to struct/union
+C:\fuhsrc\source\vid_win.c(2019) : warning C4022: 'memcpy' : pointer mismatch for actual parameter 2
+C:\fuhsrc\source\vid_win.c(2019) : error C2168: 'memcpy' : too few actual parameters for intrinsic function
+C:\fuhsrc\source\vid_win.c(2058) : warning C4013: 'MGL_appActivate' undefined; assuming extern returning int
+C:\fuhsrc\source\vid_win.c(2253) : warning C4013: 'MGL_activatePalette' undefined; assuming extern returning int
+cl_cam.c
+cl_cmd.c
+cl_demo.c
+cl_ents.c
+cl_main.c
+cl_parse.c
+cl_pred.c
+cl_slist.c
+cl_tent.c
+cl_view.c
+auth.c
+config_manager.c
+fchecks.c
+fmod.c
+ignore.c
+logging.c
+modules.c
+Generating Code...
+Compiling...
+movie.c
+mp3_player.c
+rulesets.c
+utils.c
+Generating Code...
+Error executing cl.exe.
+
+
+
+<h3>Results</h3>
+ezquake.exe - 83 error(s), 55 warning(s)
+<h3>
+--------------------Configuration: ezquake - Win32 GLRelease--------------------
+</h3>
+<h3>Command Lines</h3>
+
+
+
+<h3>Results</h3>
+sopa.exe - 0 error(s), 0 warning(s)
+<h3>
+--------------------Configuration: ezquake - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "c:\tmp\RSP64C.tmp" with contents
+[
+/nologo /G6 /ML /W3 /WX /GX /ZI /Od /I "d:\quake-work\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "id386" /Fr".\Debug/" /Fo".\Debug/" /Fd".\Debug/" /GZ PRECOMP_VC7_TOBEREMOVED /c 
+"C:\fuhsrc\source\vid_win.c"
+"C:\fuhsrc\source\cl_main.c"
+]
+Creating command line "cl.exe @c:\tmp\RSP64C.tmp" 
+Creating temporary file "c:\tmp\RSP64D.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib mglfx.lib dxguid.lib wsock32.lib winmm.lib /nologo /subsystem:windows /incremental:yes /pdb:".\Debug/ezquake.pdb" /debug /machine:I386 /nodefaultlib:"libcmt" /out:".\Debug\ezquake.exe" /pdbtype:sept /libpath:"d:\quake-work\lib" 
+.\Debug\sys_win.obj
+.\Debug\cd_win.obj
+.\Debug\snd_dma.obj
+.\Debug\snd_mem.obj
+.\Debug\snd_mix.obj
+.\Debug\snd_win.obj
+.\Debug\cl_input.obj
+.\Debug\in_win.obj
+.\Debug\keys.obj
+.\Debug\sv_ccmds.obj
+.\Debug\sv_ents.obj
+.\Debug\sv_init.obj
+.\Debug\sv_main.obj
+.\Debug\sv_move.obj
+.\Debug\sv_nchan.obj
+.\Debug\sv_phys.obj
+.\Debug\sv_save.obj
+.\Debug\sv_send.obj
+.\Debug\sv_user.obj
+.\Debug\sv_world.obj
+.\Debug\net_chan.obj
+.\Debug\net_wins.obj
+.\Debug\pr_cmds.obj
+.\Debug\pr_edict.obj
+.\Debug\pr_exec.obj
+.\Debug\cmd.obj
+.\Debug\common.obj
+.\Debug\console.obj
+.\Debug\crc.obj
+.\Debug\cvar.obj
+.\Debug\host.obj
+.\Debug\image.obj
+.\Debug\mathlib.obj
+.\Debug\mdfour.obj
+.\Debug\menu.obj
+.\Debug\pmove.obj
+.\Debug\pmovetst.obj
+.\Debug\sbar.obj
+.\Debug\screen.obj
+.\Debug\skin.obj
+.\Debug\teamplay.obj
+.\Debug\version.obj
+.\Debug\wad.obj
+.\Debug\zone.obj
+.\Debug\r_aclip.obj
+.\Debug\r_alias.obj
+.\Debug\r_bsp.obj
+.\Debug\r_draw.obj
+.\Debug\r_edge.obj
+.\Debug\r_efrag.obj
+.\Debug\r_light.obj
+.\Debug\r_main.obj
+.\Debug\r_misc.obj
+.\Debug\r_model.obj
+.\Debug\r_part.obj
+.\Debug\r_rast.obj
+.\Debug\r_sky.obj
+.\Debug\r_sprite.obj
+.\Debug\r_surf.obj
+.\Debug\r_vars.obj
+.\Debug\d_edge.obj
+.\Debug\d_fill.obj
+.\Debug\d_init.obj
+.\Debug\d_modech.obj
+.\Debug\d_part.obj
+.\Debug\d_polyse.obj
+.\Debug\d_scan.obj
+.\Debug\d_sky.obj
+.\Debug\d_sprite.obj
+.\Debug\d_surf.obj
+.\Debug\d_vars.obj
+.\Debug\d_zpoint.obj
+.\Debug\vid_win.obj
+.\Debug\cl_cam.obj
+.\Debug\cl_cmd.obj
+.\Debug\cl_demo.obj
+.\Debug\cl_ents.obj
+.\Debug\cl_main.obj
+.\Debug\cl_parse.obj
+.\Debug\cl_pred.obj
+.\Debug\cl_slist.obj
+.\Debug\cl_tent.obj
+.\Debug\cl_view.obj
+.\Debug\auth.obj
+.\Debug\config_manager.obj
+.\Debug\fchecks.obj
+.\Debug\fmod.obj
+.\Debug\ignore.obj
+.\Debug\logging.obj
+.\Debug\modules.obj
+.\Debug\movie.obj
+.\Debug\mp3_player.obj
+.\Debug\rulesets.obj
+.\Debug\utils.obj
+.\Debug\winquake.res
+.\Debug\cl_math.obj
+.\Debug\d_draw.obj
+.\Debug\d_draw16.obj
+.\Debug\d_parta.obj
+.\Debug\d_polysa.obj
+.\Debug\d_scana.obj
+.\Debug\d_spr8.obj
+.\Debug\d_varsa.obj
+.\Debug\math.obj
+.\Debug\r_aclipa.obj
+.\Debug\r_aliasa.obj
+.\Debug\r_drawa.obj
+.\Debug\r_edgea.obj
+.\Debug\r_varsa.obj
+.\Debug\snd_mixa.obj
+.\Debug\surf16.obj
+.\Debug\surf8.obj
+.\Debug\sys_x86.obj
+]
+Creating command line "link.exe @c:\tmp\RSP64D.tmp"
+<h3>Output Window</h3>
+Compiling...
+Command line warning D4024 : unrecognized source file type 'PRECOMP_VC7_TOBEREMOVED', object file assumed
+Command line warning D4027 : source file 'PRECOMP_VC7_TOBEREMOVED' ignored
+vid_win.c
+c:\fuhsrc\source\vid_win.c(121) : error C2065: 'grDETECT' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(121) : error C2099: initializer is not a constant
+c:\fuhsrc\source\vid_win.c(123) : error C2143: syntax error : missing '{' before '*'
+c:\fuhsrc\source\vid_win.c(262) : warning C4013: 'MGL_exit' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(263) : warning C4013: 'MGL_fatalError' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(263) : warning C4013: 'MGL_errorMsg' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(263) : warning C4013: 'MGL_result' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(267) : error C2143: syntax error : missing ')' before '*'
+c:\fuhsrc\source\vid_win.c(267) : error C2143: syntax error : missing '{' before '*'
+c:\fuhsrc\source\vid_win.c(267) : error C2059: syntax error : 'type'
+c:\fuhsrc\source\vid_win.c(267) : error C2059: syntax error : ')'
+c:\fuhsrc\source\vid_win.c(303) : warning C4013: 'MGL_registerDriver' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(303) : error C2065: 'MGL_VGA8NAME' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(303) : error C2065: 'VGA8_driver' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(306) : error C2065: 'MGL_LINEAR8NAME' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(306) : error C2065: 'LINEAR8_driver' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(309) : error C2065: 'MGL_ACCEL8NAME' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(309) : error C2065: 'ACCEL8_driver' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(313) : error C2065: 'MGL_DDRAW8NAME' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(313) : error C2065: 'DDRAW8_driver' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(318) : error C2065: 'MGL_PACKED8NAME' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(318) : error C2065: 'PACKED8_driver' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(330) : error C2065: 'uchar' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(330) : error C2065: 'm' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(330) : warning C4552: '*' : operator has no effect; expected operator with side-effect
+c:\fuhsrc\source\vid_win.c(340) : warning C4013: 'MGL_unregisterAllDrivers' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(343) : warning C4013: 'MGL_detectGraph' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(344) : warning C4013: 'MGL_availableModes' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(346) : error C2109: subscript requires array or pointer type
+c:\fuhsrc\source\vid_win.c(353) : error C2109: subscript requires array or pointer type
+c:\fuhsrc\source\vid_win.c(354) : warning C4013: 'MGL_modeResolution' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(354) : error C2109: subscript requires array or pointer type
+c:\fuhsrc\source\vid_win.c(357) : error C2109: subscript requires array or pointer type
+c:\fuhsrc\source\vid_win.c(357) : error C2065: 'grVGA_320x200x256' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(361) : error C2109: subscript requires array or pointer type
+c:\fuhsrc\source\vid_win.c(392) : error C2109: subscript requires array or pointer type
+c:\fuhsrc\source\vid_win.c(393) : error C2109: subscript requires array or pointer type
+c:\fuhsrc\source\vid_win.c(412) : error C2109: subscript requires array or pointer type
+c:\fuhsrc\source\vid_win.c(417) : error C2109: subscript requires array or pointer type
+c:\fuhsrc\source\vid_win.c(436) : error C2109: subscript requires array or pointer type
+c:\fuhsrc\source\vid_win.c(438) : warning C4013: 'MGL_init' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(442) : warning C4013: 'MGL_setSuspendAppCallback' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(442) : error C2065: 'VID_Suspend' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(445) : error C2143: syntax error : missing '{' before '*'
+c:\fuhsrc\source\vid_win.c(458) : error C2065: 'MGLDC' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(458) : error C2297: '*' : illegal, right operand has type 'int *'
+c:\fuhsrc\source\vid_win.c(459) : error C2065: 'pixel_format_t' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(459) : error C2146: syntax error : missing ';' before identifier 'pf'
+c:\fuhsrc\source\vid_win.c(459) : error C2065: 'pf' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(460) : error C2143: syntax error : missing ';' before 'type'
+c:\fuhsrc\source\vid_win.c(463) : warning C4013: 'MGL_changeDisplayMode' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(466) : error C2065: 'npages' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(466) : warning C4013: 'MGL_availablePages' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(474) : warning C4013: 'MGL_createDisplayDC' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(474) : warning C4047: '=' : 'int *' differs in levels of indirection from 'int '
+c:\fuhsrc\source\vid_win.c(477) : warning C4013: 'MGL_surfaceAccessType' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(477) : error C2065: 'MGL_LINEAR_ACCESS' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(477) : error C2223: left of '->mi' must point to struct/union
+c:\fuhsrc\source\vid_win.c(478) : warning C4013: 'MGL_makeCurrentDC' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(482) : warning C4013: 'MGL_createMemoryDC' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(482) : warning C4013: 'MGL_sizex' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(482) : warning C4013: 'MGL_sizey' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(482) : warning C4047: '=' : 'int *' differs in levels of indirection from 'int '
+c:\fuhsrc\source\vid_win.c(490) : error C2223: left of '->mi' must point to struct/union
+c:\fuhsrc\source\vid_win.c(494) : warning C4013: 'MGL_setActivePage' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(495) : warning C4013: 'MGL_setVisualPage' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(529) : warning C4013: 'MGL_setAppInstance' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(531) : warning C4013: 'MGL_initWindowed' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(919) : warning C4013: 'MGL_modeDriverName' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(933) : warning C4013: 'MGL_destroyDC' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(966) : error C2146: syntax error : missing ';' before identifier 'pf'
+c:\fuhsrc\source\vid_win.c(967) : error C2275: 'qboolean' : illegal use of this type as an expression
+        c:\fuhsrc\source\common.h(43) : see declaration of 'qboolean'
+c:\fuhsrc\source\vid_win.c(967) : error C2146: syntax error : missing ';' before identifier 'stretched'
+c:\fuhsrc\source\vid_win.c(967) : error C2065: 'stretched' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(968) : error C2143: syntax error : missing ';' before 'type'
+c:\fuhsrc\source\vid_win.c(981) : error C2065: 'lastmodestate' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(993) : error C2065: 'grWINDOWED' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(1035) : warning C4013: 'MGL_registerFullScreenWindow' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(1082) : warning C4013: 'MGL_createWindowedDC' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(1082) : warning C4047: '=' : 'int *' differs in levels of indirection from 'int '
+c:\fuhsrc\source\vid_win.c(1085) : warning C4047: '=' : 'int *' differs in levels of indirection from 'int '
+c:\fuhsrc\source\vid_win.c(1090) : error C2223: left of '->surface' must point to struct/union
+c:\fuhsrc\source\vid_win.c(1091) : error C2223: left of '->mi' must point to struct/union
+c:\fuhsrc\source\vid_win.c(1159) : error C2146: syntax error : missing ';' before identifier 'pf'
+c:\fuhsrc\source\vid_win.c(1160) : error C2143: syntax error : missing ';' before 'type'
+c:\fuhsrc\source\vid_win.c(1183) : error C2065: 'freq' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(1241) : warning C4047: '=' : 'int *' differs in levels of indirection from 'int '
+c:\fuhsrc\source\vid_win.c(1244) : warning C4047: '=' : 'int *' differs in levels of indirection from 'int '
+c:\fuhsrc\source\vid_win.c(1249) : error C2223: left of '->surface' must point to struct/union
+c:\fuhsrc\source\vid_win.c(1250) : error C2223: left of '->mi' must point to struct/union
+c:\fuhsrc\source\vid_win.c(1429) : warning C4013: 'MGL_beginDirectAccess' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(1433) : error C2223: left of '->surface' must point to struct/union
+c:\fuhsrc\source\vid_win.c(1434) : error C2223: left of '->mi' must point to struct/union
+c:\fuhsrc\source\vid_win.c(1437) : error C2223: left of '->surface' must point to struct/union
+c:\fuhsrc\source\vid_win.c(1438) : error C2223: left of '->mi' must point to struct/union
+c:\fuhsrc\source\vid_win.c(1464) : warning C4013: 'MGL_endDirectAccess' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(1473) : error C2065: 'palette_t' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(1473) : error C2146: syntax error : missing ';' before identifier 'pal'
+c:\fuhsrc\source\vid_win.c(1473) : error C2065: 'pal' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(1473) : error C2109: subscript requires array or pointer type
+c:\fuhsrc\source\vid_win.c(1474) : error C2275: 'HDC' : illegal use of this type as an expression
+        c:\archivos de programa\microsoft visual studio\vc98\include\windef.h(239) : see declaration of 'HDC'
+c:\fuhsrc\source\vid_win.c(1474) : error C2146: syntax error : missing ';' before identifier 'hdc'
+c:\fuhsrc\source\vid_win.c(1474) : error C2065: 'hdc' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(1480) : warning C4047: '=' : 'int ' differs in levels of indirection from 'struct HDC__ *'
+c:\fuhsrc\source\vid_win.c(1483) : warning C4047: 'function' : 'struct HDC__ *' differs in levels of indirection from 'int '
+c:\fuhsrc\source\vid_win.c(1483) : warning C4024: 'GetSystemPaletteUse' : different types for formal and actual parameter 1
+c:\fuhsrc\source\vid_win.c(1485) : warning C4047: 'function' : 'struct HDC__ *' differs in levels of indirection from 'int '
+c:\fuhsrc\source\vid_win.c(1485) : warning C4024: 'SetSystemPaletteUse' : different types for formal and actual parameter 1
+c:\fuhsrc\source\vid_win.c(1491) : warning C4047: 'function' : 'struct HDC__ *' differs in levels of indirection from 'int '
+c:\fuhsrc\source\vid_win.c(1491) : warning C4024: 'ReleaseDC' : different types for formal and actual parameter 2
+c:\fuhsrc\source\vid_win.c(1496) : error C2109: subscript requires array or pointer type
+c:\fuhsrc\source\vid_win.c(1496) : error C2224: left of '.red' must have struct/union type
+c:\fuhsrc\source\vid_win.c(1497) : error C2109: subscript requires array or pointer type
+c:\fuhsrc\source\vid_win.c(1497) : error C2224: left of '.green' must have struct/union type
+c:\fuhsrc\source\vid_win.c(1498) : error C2109: subscript requires array or pointer type
+c:\fuhsrc\source\vid_win.c(1498) : error C2224: left of '.blue' must have struct/union type
+c:\fuhsrc\source\vid_win.c(1505) : warning C4013: 'MGL_setPalette' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(1506) : warning C4013: 'MGL_realizePalette' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(1760) : warning C4013: 'MGL_stretchBltCoord' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(1770) : warning C4013: 'MGL_bitBltCoord' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(1774) : error C2065: 'MGL_REPLACE_MODE' : undeclared identifier
+c:\fuhsrc\source\vid_win.c(1795) : warning C4013: 'MGL_setWinDC' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(1956) : error C2223: left of '->surface' must point to struct/union
+c:\fuhsrc\source\vid_win.c(1956) : error C2223: left of '->mi' must point to struct/union
+c:\fuhsrc\source\vid_win.c(1956) : warning C4022: 'memcpy' : pointer mismatch for actual parameter 2
+c:\fuhsrc\source\vid_win.c(1956) : error C2198: 'memcpy' : too few actual parameters
+c:\fuhsrc\source\vid_win.c(1957) : error C2223: left of '->surface' must point to struct/union
+c:\fuhsrc\source\vid_win.c(1957) : error C2223: left of '->mi' must point to struct/union
+c:\fuhsrc\source\vid_win.c(1958) : warning C4022: 'memcpy' : pointer mismatch for actual parameter 2
+c:\fuhsrc\source\vid_win.c(1958) : error C2198: 'memcpy' : too few actual parameters
+c:\fuhsrc\source\vid_win.c(2018) : error C2223: left of '->surface' must point to struct/union
+c:\fuhsrc\source\vid_win.c(2018) : error C2223: left of '->mi' must point to struct/union
+c:\fuhsrc\source\vid_win.c(2019) : warning C4022: 'memcpy' : pointer mismatch for actual parameter 2
+c:\fuhsrc\source\vid_win.c(2019) : error C2198: 'memcpy' : too few actual parameters
+c:\fuhsrc\source\vid_win.c(2058) : warning C4013: 'MGL_appActivate' undefined; assuming extern returning int
+c:\fuhsrc\source\vid_win.c(2253) : warning C4013: 'MGL_activatePalette' undefined; assuming extern returning int
+cl_main.c
+Generating Code...
+Error executing cl.exe.
+
+
+
+<h3>Results</h3>
+ezquake.exe - 83 error(s), 55 warning(s)
+</pre>
+</body>
+</html>

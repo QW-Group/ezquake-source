@@ -20,10 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "winquake.h"
-#include "cl_slist.h"
+//#include "cl_slist.h"
 #include "input.h"
 #include "keys.h"
 #include "sound.h"
+#include "console.h"
 #include "version.h"
 #ifndef CLIENTONLY
 #include "server.h"
@@ -31,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "utils.h"
 #include "mp3_player.h"
+#include "EX_browser.h"
 
 #ifdef GLQUAKE
 #include "gl_local.h"
@@ -44,6 +46,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 qboolean vid_windowedmouse = true;
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
+
+extern void Browser_Init(void);
+extern void Browser_Draw(int, int, int, int);
+extern cvar_t con_shift;
+extern cvar_t sb_maxwidth, sb_maxheight;
 
 enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer,
 	m_setup, m_options, m_video, m_keys, m_help, m_quit,
@@ -112,7 +119,6 @@ int			m_topmenu;			// set if a submenu was entered via a
 /* Support Routines */
 
 #ifdef GLQUAKE
-cvar_t	scr_scaleMenu = {"scr_scaleMenu","1"};
 int		menuwidth = 320;
 int		menuheight = 240;
 #else
@@ -302,7 +308,8 @@ void M_Main_Key (int key) {
 	#endif
 
 		case 4:
-			M_Menu_Quit_f ();
+			//M_Menu_Quit_f ();
+			Host_Quit ();
 			break;
 		}
 	}
@@ -712,12 +719,21 @@ void M_Keys_Draw (void) {
 		if (keys[0] == -1) {
 			M_Print (156, y, "???");
 		} else {
+#ifdef WITH_KEYMAP
+			char    str[256];
+			name = Key_KeynumToString (keys[0], str);
+#else // WITH_KEYMAP
 			name = Key_KeynumToString (keys[0]);
+#endif // WITH_KEYMAP else
 			M_Print (156, y, name);
 			x = strlen(name) * 8;
 			if (keys[1] != -1) {
 				M_Print (156 + x + 8, y, "or");
+#ifdef WITH_KEYMAP
+				M_Print (156 + x + 32, y, Key_KeynumToString (keys[1], str));
+#else // WITH_KEYMAP
 				M_Print (156 + x + 32, y, Key_KeynumToString (keys[1]));
+#endif // WITH_KEYMAP else
 			}
 		}
 	}
@@ -737,7 +753,12 @@ void M_Keys_Key (int k) {
 		S_LocalSound ("misc/menu1.wav");
 		if (k == K_ESCAPE)
 			bind_grab = false;
+#ifdef WITH_KEYMAP
+		/* Massa: all keys should be bindable, including the console switching */
+		else
+#else // WITH_KEYMAP
 		else if (k != '`')
+#endif // WITH_KEYMAP else
 			Key_SetBinding (k, bindnames[keys_cursor][0]);
 		
 		bind_grab = false;
@@ -1079,7 +1100,6 @@ int		help_page;
 
 void M_Menu_Help_f (void) {
 	M_EnterMenu (m_help);
-	help_page = 0;
 }
 
 void M_Help_Draw (void) {
@@ -1519,7 +1539,7 @@ void M_MultiPlayer_Draw (void) {
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
 	p = Draw_CachePic ("gfx/p_multi.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
-	M_Print (80, 40, "Server List");
+	M_Print (80, 40, "Server Browser");
 	M_Print (80, 48, "Player Setup");
 	M_Print (80, 56, "Demos");
 #ifndef CLIENTONLY
@@ -3055,14 +3075,23 @@ void M_Setup_Key (int k) {
 #define MENU_Y 21
 #define STAT_Y 166
 
-int m_multip_cursor = 0, m_multip_mins = 0, m_multip_maxs = 16, m_multip_state;
+//int m_multip_cursor = 0, m_multip_mins = 0, m_multip_maxs = 16, m_multip_state;
 
 void M_Menu_ServerList_f (void) {
 	M_EnterMenu (m_slist);
-	m_multip_state = 0;
+//	m_multip_state = 0;
 }
 
 void M_ServerList_Draw (void) {
+    int x, y, w, h;
+
+    w = min(max(sb_maxwidth.value, 320), vid.width)   - 8;
+    h = min(max(sb_maxheight.value, 200), vid.height) - 8;
+    x = (vid.width - w) / 2;
+    y = (vid.height - h) / 2;
+
+	Browser_Draw (x, y + con_shift.value, w, h - con_shift.value);
+/*
 	int serv, line;
 
 	M_DrawTransPic(16, 4, Draw_CachePic("gfx/qplaque.lmp"));
@@ -3082,10 +3111,15 @@ void M_ServerList_Draw (void) {
 		M_Print(MENU_X + 18, line * 8 + MENU_Y, va("%1.21s", slist[serv].description));
 	M_PrintWhite(MENU_X + 18, STAT_Y + 8, va("%1.22s", slist[m_multip_cursor].server));
 	M_DrawCharacter(MENU_X + 8, (m_multip_cursor - m_multip_mins + 1) * 8 + MENU_Y, 12 + ((int) (curtime * 4) & 1));
+*/
 }
 
 void M_ServerList_Key (key) {
-	int slist_length;
+
+	extern void Browser_Key(int key);
+	Browser_Key(key);
+
+/*	int slist_length;
 	extern cvar_t spectator;
 
 	if (!slist[0].server && key != K_ESCAPE && key != K_INS)
@@ -3350,30 +3384,31 @@ void M_SEdit_Key (int key) {
 				}
 			}
 	}
+*/
 }
 
 // <-- SLIST
 
 void M_Quit_Draw (void) {
 	static char *quitmsg[] = {
-	"0FuhQuake " FUH_VERSION,
 	"1",
-	"1http://www.fuhquake.net",
 	"1",
-	"0Programming",
-	"1A 'fuh' Nourai",
 	"1",
-	"0Based on ZQuake by Anton Gavrilov",
 	"1",
-	"0Id Software is not responsible for",
-    "0providing technical support for",
-	"0FuhQuake.",
-	"1NOTICE: The copyright and trademark",
-	"1 notices appearing  in your copy of",
-	"1Quake(r) are not modified by the use",
-	"1of FuhQuake and remain in full force.",
-	"0QuakeWorld(tm) is a trademark of",
-	"0Id Software, Inc.",
+	"1",
+	"1",
+	"1",
+	"1",
+	"1",
+	"1",
+	"1",
+	"1",
+	"1",
+	"1",
+	"1",
+	"1",
+	"1",
+	"1",
 	NULL};
 	char **p;
 	int x, y;
@@ -3396,11 +3431,9 @@ void M_Init (void) {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&scr_centerMenu);
-#ifdef GLQUAKE
-	Cvar_Register (&scr_scaleMenu);
-#endif
 
 	Cvar_ResetCurrentGroup();
+	Browser_Init();
 
 	Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
 
@@ -3424,7 +3457,7 @@ void M_Init (void) {
 	Cmd_AddCommand ("menu_video", M_Menu_Video_f);
 	Cmd_AddCommand ("help", M_Menu_Help_f);
 	Cmd_AddCommand ("menu_help", M_Menu_Help_f);
-	Cmd_AddCommand ("menu_quit", M_Menu_Quit_f);
+	//Cmd_AddCommand ("menu_quit", M_Menu_Quit_f);
 }
 
 void M_Draw (void) {
@@ -3448,18 +3481,8 @@ void M_Draw (void) {
 		m_recursiveDraw = false;
 	}
 
-#ifdef GLQUAKE
-	if (scr_scaleMenu.value) {
-		menuwidth = 320;
-		menuheight = min (vid.height, 240);
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity ();
-		glOrtho  (0, menuwidth, menuheight, 0, -99999, 99999);
-	} else {
-		menuwidth = vid.width;
-		menuheight = vid.height;
-	}
-#endif
+	menuwidth = vid.width;
+	menuheight = vid.height;
 
 	if (scr_centerMenu.value)
 		m_yofs = (menuheight - 200) / 2;
@@ -3529,11 +3552,11 @@ void M_Draw (void) {
 	case m_slist:
 		M_ServerList_Draw ();
 		break;
-
+/*
 	case m_sedit:
 		M_SEdit_Draw ();
 		break;
-
+*/
 	case m_demos:
 		M_Demos_Draw ();
 		break;
@@ -3548,14 +3571,6 @@ void M_Draw (void) {
 		break;
 #endif
 	}
-
-#ifdef GLQUAKE
-	if (scr_scaleMenu.value) {
-		glMatrixMode (GL_PROJECTION);
-		glLoadIdentity ();
-		glOrtho  (0, vid.width, vid.height, 0, -99999, 99999);
-	}
-#endif
 
 	if (m_entersound) {
 		S_LocalSound ("misc/menu2.wav");
@@ -3631,11 +3646,11 @@ void M_Keydown (int key) {
 	case m_slist:
 		M_ServerList_Key (key);
 		return;
-
+/*
 	case m_sedit:
 		M_SEdit_Key (key);
 		break;
-
+*/
 	case m_demos:
 		M_Demos_Key (key);
 		break;

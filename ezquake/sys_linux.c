@@ -36,6 +36,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/mman.h>
 #include <errno.h>
 
+#include <pthread.h>
+
 #include "quakedef.h"
 
 int noconinput = 0;
@@ -217,6 +219,19 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length) {
 	r = mprotect((char*) addr, length + startaddr - addr + psize, 7);
 	if (r < 0)
     		Sys_Error("Protection change failed");
+}
+
+int  Sys_CreateThread(DWORD WINAPI (*func)(void *), void *param)
+{
+    pthread_t thread;
+    pthread_attr_t attr;
+    
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    pthread_attr_setschedpolicy(&attr, SCHED_OTHER);   // ale gowno
+    
+    pthread_create(&thread, &attr, func, param);
+    return 1;
 }
 
 /********************************* CLIPBOARD *********************************/

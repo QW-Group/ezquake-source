@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_local.h"
+#include "rulesets.h"
 
 #define	BLOCK_WIDTH		128
 #define	BLOCK_HEIGHT	128
@@ -107,7 +108,9 @@ void R_RenderLumas (void) {
 	int i;
 	glpoly_t *p;
 
-	if (!drawlumas)
+	extern cvar_t gl_lumaTextures;
+
+	if (!drawlumas || !gl_lumaTextures.value)
 		return;
 
 	glDepthMask (GL_FALSE);	// don't bother writing Z
@@ -571,7 +574,7 @@ void R_DrawAlphaChain (void) {
 			if (lightmap_modified[k])
 				R_UploadLightMap(k);
 		}
-		
+
 		glBegin(GL_POLYGON);
 		v = s->polys->verts[0];
 		for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
@@ -628,6 +631,7 @@ static void R_ClearTextureChains(model_t *clmodel) {
 }
 
 void DrawTextureChains (model_t *model) {
+
 	int waterline, i, k, GL_LIGHTMAP_TEXTURE, GL_FB_TEXTURE;
 	msurface_t *s;
 	texture_t *t;
@@ -644,8 +648,7 @@ void DrawTextureChains (model_t *model) {
 
 	qboolean mtex_lightmaps, mtex_fbs;
 
-
-	drawLumasGlowing = (com_serveractive || cl.allow_lumas) && gl_fb_bmodels.value;
+	drawLumasGlowing = (com_serveractive || cl.allow_lumas) && (gl_fb_bmodels.value || gl_fogenable.value);
 
 	draw_caustics = underwatertexture && gl_caustics.value;
 	draw_details = detailtexture && gl_detail.value;
@@ -659,6 +662,10 @@ void DrawTextureChains (model_t *model) {
 	}
 
 	GL_DisableMultitexture();
+
+	if (gl_fogenable.value)
+		glEnable(GL_FOG);
+
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 	for (i = 0; i < model->numtextures; i++) {
@@ -796,12 +803,17 @@ void DrawTextureChains (model_t *model) {
 	if (gl_mtexable)
 		GL_SelectTexture(GL_TEXTURE0_ARB);
 
+	if (gl_fogenable.value)
+		glDisable(GL_FOG);
+
 	if (drawLumasGlowing) {
+		if (gl_fogenable.value)
+			glEnable(GL_FOG);
 		if (render_lightmaps)
 			R_BlendLightmaps();
 		if (drawfullbrights)
 			R_RenderFullbrights();
-		if (drawlumas)
+		if (drawlumas && !gl_fogenable.value)
 			R_RenderLumas();
 	} else {
 		if (drawlumas)
@@ -1215,6 +1227,7 @@ void GL_CreateSurfaceLightmap (msurface_t *surf) {
 //Builds the lightmap texture with all the surfaces from all brush models
 void GL_BuildLightmaps (void) {
 	int i, j;
+	int lightmaptexturenum;
 	model_t	*m;
 
 	memset (allocated, 0, sizeof(allocated));
@@ -1224,6 +1237,19 @@ void GL_BuildLightmaps (void) {
 	if (!lightmap_textures) {
 		lightmap_textures = texture_extension_number;
 		texture_extension_number += MAX_LIGHTMAPS;
+	}
+
+	gl_lightmap_format = GL_RGB;
+	if (COM_CheckParm ("-noshadows") && Rulesets_AllowNoShadows())
+		gl_lightmap_format = GL_RGBA4;
+
+	switch (gl_lightmap_format) {
+		case GL_RGBA4:
+			lightmaptexturenum = 2;
+			break;
+		case GL_RGB:
+			lightmaptexturenum = 3;
+			break;
 	}
 
 	for (j = 1; j < MAX_MODELS; j++) {
@@ -1256,8 +1282,8 @@ void GL_BuildLightmaps (void) {
 		GL_Bind(lightmap_textures + i);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D (GL_TEXTURE_2D, 0, gl_lightmap_format, BLOCK_WIDTH, BLOCK_HEIGHT, 0,
-			GL_RGB, GL_UNSIGNED_BYTE, lightmaps + i * BLOCK_WIDTH * BLOCK_HEIGHT * 3);
+		glTexImage2D (GL_TEXTURE_2D, 0, lightmaptexturenum, BLOCK_WIDTH, BLOCK_HEIGHT, 0,
+			gl_lightmap_format, GL_UNSIGNED_BYTE, lightmaps + i * BLOCK_WIDTH * BLOCK_HEIGHT * lightmaptexturenum);
 	}
 
 	if (gl_mtexable)

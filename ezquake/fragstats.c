@@ -706,3 +706,9 @@ void Stats_Init(void) {
 	Cvar_Register(&cl_loadFragfiles);
 	Cmd_AddCommand("loadFragfile", Load_FragFile_f);
 }
+
+//VULT DISPLAYNAMES
+char *GetWeaponName (int num)
+{
+	return wclasses[num].name;
+}

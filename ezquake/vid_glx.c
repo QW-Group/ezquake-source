@@ -43,6 +43,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <X11/extensions/xf86dga.h>
 #endif
 
+#ifdef WITH_KEYMAP
+#include "keymap.h"
+extern void IN_Keycode_Print_f( XKeyEvent *ev, qboolean ext, qboolean down, int key );
+#endif // WITH_KEYMAP
+
 static Display *dpy = NULL;
 static Window win;
 static GLXContext ctx = NULL;
@@ -283,6 +288,10 @@ qboolean OnChange_windowed_mouse(cvar_t *var, char *value) {
 static void GetEvent(void) {
 	XEvent event;
 
+#ifdef WITH_KEYMAP
+	int    key;
+#endif // WITH_KEYMAP 
+
 	if (!dpy)
 		return;
 
@@ -291,7 +300,16 @@ static void GetEvent(void) {
 	switch (event.type) {
 	case KeyPress:
 	case KeyRelease:
+#ifdef WITH_KEYMAP
+		key = XLateKey(&event.xkey);
+		// if set, print the current Key information
+		if (cl_showkeycodes.value > 0) {
+			IN_Keycode_Print_f (&event.xkey, false, event.type == KeyPress, key);
+		}
+		Key_Event(key, event.type == KeyPress);
+#else // WITH_KEYMAP
 		Key_Event(XLateKey(&event.xkey), event.type == KeyPress);
+#endif // WITH_KEYMAP else
 		break;
 
 	case MotionNotify:
@@ -500,6 +518,9 @@ void VID_Init(unsigned char *palette) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
 	Cvar_Register(&cl_keypad);
 	Cvar_ResetCurrentGroup();
+#ifdef WITH_KEYMAP
+	IN_StartupKeymap();
+#endif // WITH_KEYMAP
 
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;

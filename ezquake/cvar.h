@@ -46,8 +46,6 @@ typedef struct cvar_s {
 	struct cvar_s *next;
 } cvar_t;
 
-
-
 typedef struct cvar_group_s {
 	char	name[65];
 	int		count;
@@ -105,6 +103,9 @@ qboolean Cvar_Delete (char *name);
 
 void Cvar_Init (void);
 
+#ifdef WITH_KEYMAP
+void Cvar_ResetVar (cvar_t *var);
+#endif // WITH_KEYMAP 
 
 void Cvar_SetCurrentGroup(char *name);
 void Cvar_ResetCurrentGroup(void);

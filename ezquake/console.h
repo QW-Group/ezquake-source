@@ -38,6 +38,9 @@ typedef struct
 } console_t;
 
 extern	console_t	con;
+
+extern  qboolean    con_addtimestamp;
+
 extern	int			con_ormask;
 
 extern int con_totallines;
@@ -53,5 +56,18 @@ void Con_Clear_f (void);
 void Con_DrawNotify (void);
 void Con_ClearNotify (void);
 void Con_ToggleConsole_f (void);
+
+extern cvar_t con_timestamps;
+
+extern cvar_t con_shift;
+
+extern cvar_t con_sound_mm1_file;
+extern cvar_t con_sound_mm1_volume;
+extern cvar_t con_sound_mm2_file;
+extern cvar_t con_sound_mm2_volume;
+extern cvar_t con_sound_spec_file;
+extern cvar_t con_sound_spec_volume;
+extern cvar_t con_sound_other_file;
+extern cvar_t con_sound_other_volume;
 
 #endif		//_CONSOLE_H_

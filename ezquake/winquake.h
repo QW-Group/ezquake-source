@@ -43,6 +43,7 @@ typedef struct {
     DWORD   flags;
     DWORD   time;
     ULONG_PTR dwExtraInfo;
+//	ULONG   dwExtraInfo;
 } *PKBDLLHOOKSTRUCT;
 
 #endif
@@ -81,6 +82,8 @@ extern RECT		window_rect;
 extern HANDLE	hinput, houtput;
 
 void IN_UpdateClipCursor (void);
+
+void VID_NotifyActivity(void);
 
 void S_BlockSound (void);
 void S_UnblockSound (void);

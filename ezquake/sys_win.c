@@ -59,6 +59,7 @@ void Sys_PushFPCW_SetHigh (void);
 
 static HHOOK WinKeyHook;
 static qboolean WinKeyHook_isActive;
+static qboolean ScreenSaver_isDisabled;
 
 LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam);
 qboolean OnChange_sys_disableWinKeys(cvar_t *var, char *string);
@@ -194,6 +195,9 @@ void Sys_Error (char *error, ...) {
 	if (qwclsemaphore)
 		CloseHandle (qwclsemaphore);
 
+    if (ScreenSaver_isDisabled)
+        SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, TRUE, 0, SPIF_SENDWININICHANGE);
+ 
 	exit (1);
 }
 
@@ -225,6 +229,10 @@ void Sys_Quit (void) {
 	if (WinKeyHook_isActive)
 		UnhookWindowsHookEx(WinKeyHook);
 #endif
+
+    if (ScreenSaver_isDisabled)
+        SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, TRUE, 0, SPIF_SENDWININICHANGE);
+ 
 	exit (0);
 }
 
@@ -424,7 +432,7 @@ void Sys_Init_ (void) {
 		Sys_Error ("Couldn't get OS info");
 
 	if ((vinfo.dwMajorVersion < 4) || (vinfo.dwPlatformId == VER_PLATFORM_WIN32s))
-		Sys_Error ("FuhQuake requires at least Win95 or NT 4.0");
+		Sys_Error ("ezQuake requires at least Win95 or NT 4.0");
 
 	WinNT = (vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) ? true : false;
 }
@@ -538,9 +546,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	int memsize;
 	double time, oldtime, newtime;
 	MEMORYSTATUS lpBuffer;
+	int bIsEnabled = 0;
 
 	global_hInstance = hInstance;
 
+    ScreenSaver_isDisabled = false;
+ 
 	ParseCommandLine (lpCmdLine);
 
 	// we need to check some parms before Host_Init is called
@@ -557,6 +568,13 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		SetConsoleTitle ("fqds");
 		hinput = GetStdHandle (STD_INPUT_HANDLE);
 		houtput = GetStdHandle (STD_OUTPUT_HANDLE);
+	}
+	else {
+		if ( SystemParametersInfo(SPI_GETSCREENSAVEACTIVE, 0, (PVOID)(&bIsEnabled), 0) && bIsEnabled ) {
+            if ( SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, FALSE, 0, SPIF_SENDWININICHANGE) ) {
+				ScreenSaver_isDisabled = true;
+			}
+		}
 	}
 
 	// take the greater of all the available memory or half the total memory,
@@ -607,4 +625,23 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	}
     return TRUE;	/* return success of application */
+}
+
+int  Sys_CreateThread(DWORD (WINAPI *func)(void *), void *param)
+{
+    DWORD threadid;
+    HANDLE thread;
+
+    thread = CreateThread (
+        NULL,               // pointer to security attributes
+        0,                  // initial thread stack size
+        func,               // pointer to thread function
+        param,              // argument for new thread
+        CREATE_SUSPENDED,   // creation flags
+        &threadid);         // pointer to receive thread ID
+
+    SetThreadPriority(thread, THREAD_PRIORITY_HIGHEST);
+    ResumeThread(thread);
+
+    return 1;
 }

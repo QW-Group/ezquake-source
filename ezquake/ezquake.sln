@@ -1,0 +1,27 @@
+Microsoft Visual Studio Solution File, Format Version 7.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ezquake", "ezquake.vcproj", "{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}"
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		ConfigName.0 = Debug
+		ConfigName.1 = GLDebug
+		ConfigName.2 = GLRelease
+		ConfigName.3 = Release
+	EndGlobalSection
+	GlobalSection(ProjectDependencies) = postSolution
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Debug.ActiveCfg = Debug|Win32
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Debug.Build.0 = Debug|Win32
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.GLDebug.ActiveCfg = GLDebug|Win32
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.GLDebug.Build.0 = GLDebug|Win32
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.GLRelease.ActiveCfg = GLRelease|Win32
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.GLRelease.Build.0 = GLRelease|Win32
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Release.ActiveCfg = Release|Win32
+		{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

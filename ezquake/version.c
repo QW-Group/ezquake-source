@@ -70,7 +70,7 @@ CL_Version_f
 */
 void CL_Version_f (void)
 {
-	Com_Printf ("FuhQuake version %s\n", VersionString());	
+	Com_Printf ("ezQuake version %s\n", VersionString());	
 	Com_Printf ("Exe: "__TIME__" "__DATE__"\n");
 }
 
@@ -82,8 +82,15 @@ VersionString
 char *VersionString (void)
 {
 	static char str[32];
+	char st[256];
 
-	Q_snprintfz (str, sizeof(str), "%s (build %i)", FUH_VERSION, build_number());
+	st[0] = 0;
+
+    if (COM_CheckParm("-noscripts")) {
+        strcpy (st, " noscripts");
+    }
+
+	Q_snprintfz (str, sizeof(str), "%s (build %i)%s", EZ_VERSION, build_number(), st);
 
 	return str;
 }

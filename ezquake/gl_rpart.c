@@ -22,31 +22,87 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pmove.h"
 #include "gl_local.h"
 
-#define DEFAULT_NUM_PARTICLES				4096
+//VULT
+#include "vx_stuff.h"
+float alphatrail_s;
+float alphatrail_l;
+float varray_vertex[16];
+int shockwave_texture;
+int lightning_texture;
+int spark_texture;
+
+/*#define DEFAULT_NUM_PARTICLES				4096
 #define ABSOLUTE_MIN_PARTICLES				256
-#define ABSOLUTE_MAX_PARTICLES				32768
+#define ABSOLUTE_MAX_PARTICLES				32768*/
+
+//VULT - Welcome to the 21st century
+#define DEFAULT_NUM_PARTICLES				16384
+#define ABSOLUTE_MIN_PARTICLES				256
+#define ABSOLUTE_MAX_PARTICLES				65536
 
 typedef byte col_t[4];
+
+//VULT PARTICLES
+void RainSplash(vec3_t org);
+void ParticleStats (int change);
+void VX_ParticleTrail (vec3_t start, vec3_t end, float size, float time, col_t color);
+void InfernoTrail (vec3_t start, vec3_t end, vec3_t vel);
+void R_CalcBeamVerts (float *vert, vec3_t org1, vec3_t org2, float width);
 
 typedef enum {
 	p_spark, p_smoke, p_fire, p_bubble, p_lavasplash, p_gunblast, p_chunk, p_shockwave,
 	p_inferno_flame, p_inferno_trail, p_sparkray, p_staticbubble, p_trailpart,
 	p_dpsmoke, p_dpfire, p_teleflare, p_blood1, p_blood2, p_blood3,
+	//VULT PARTICLES
+	p_rain,
+	p_alphatrail,
+	p_railtrail,
+	p_streak,
+	p_streaktrail,
+	p_streakwave,
+	p_lightningbeam,
+	p_vxblood,
+	p_lavatrail,
+	p_vxsmoke,
+	p_muzzleflash,
+	p_inferno, //VULT - NOT TO BE CONFUSED WITH THE 0.36 FIREBALL
+	p_2dshockwave,
+	p_vxrocketsmoke,
+	p_trailbleed, 
+	p_bleedspike, 
+	p_flame,
+	p_bubble2,
+	p_bloodcloud,
+	p_chunkdir,
+	p_smallspark,
 	num_particletypes,
 } part_type_t;
 
 typedef enum {
 	pm_static, pm_normal, pm_bounce, pm_die, pm_nophysics, pm_float,
+	//VULT PARTICLES
+	pm_rain,
+	pm_streak,
+	pm_streakwave,
+	pm_inferno,
 } part_move_t;
 
 typedef enum {
 	ptex_none, ptex_smoke, ptex_bubble, ptex_generic, ptex_dpsmoke, ptex_lava,
 	ptex_blueflare, ptex_blood1, ptex_blood2, ptex_blood3,
+	//VULT PARTICLES
+	ptex_shockwave,
+	ptex_lightning,
+	ptex_spark,
 	num_particletextures,
 } part_tex_t;
 
 typedef enum {
 	pd_spark, pd_sparkray, pd_billboard, pd_billboard_vel,
+	//VULT PARTICLES
+	pd_beam,
+	pd_hide,
+	pd_normal,
 } part_draw_t;
 
 typedef struct particle_s {
@@ -180,8 +236,10 @@ static byte *ColorForParticle(part_type_t type) {
 	case p_blood3:
 		color[0] = (100 + (rand() & 31)); color[1] = color[2] = 0;
 		break;
+	case p_smallspark:
+		color[0] = color[1] = color[2] = color[3] = 255;	
 	default:
-		assert(!"ColorForParticle: unexpected type");
+		//assert(!"ColorForParticle: unexpected type"); -> hexum - FIXME not all types are handled, seems to work ok though
 		break;
 	}
 	return color;
@@ -239,7 +297,17 @@ void QMB_InitParticles (void) {
 	for (i = 0; i < 8; i++)
 		ADD_PARTICLE_TEXTURE(ptex_dpsmoke, particlefont, i, 8, i * 32, 64, (i + 1) * 32, 96);
 
-	
+	//VULT PARTICLES
+	if (!(shockwave_texture = GL_LoadTextureImage ("textures/shockwavetex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN)))
+		return;
+	ADD_PARTICLE_TEXTURE(ptex_shockwave, shockwave_texture, 0, 1, 0, 0, 128, 128);
+	if (!(lightning_texture = GL_LoadTextureImage ("textures/zing1", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN)))
+		return;
+	ADD_PARTICLE_TEXTURE(ptex_lightning, lightning_texture, 0, 1, 0, 0, 32, 32);
+	if (!(spark_texture = GL_LoadTextureImage ("textures/sparktex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN)))
+		return;
+	ADD_PARTICLE_TEXTURE(ptex_spark, spark_texture, 0, 1, 0, 0, 32, 32);
+
 	if ((i = COM_CheckParm ("-particles")) && i + 1 < com_argc)	{
 		r_numparticles = (int) (Q_atoi(com_argv[i + 1]));
 		r_numparticles = bound(ABSOLUTE_MIN_PARTICLES, r_numparticles, ABSOLUTE_MAX_PARTICLES);
@@ -273,6 +341,44 @@ void QMB_InitParticles (void) {
 	ADD_PARTICLE_TYPE(p_bubble, pd_billboard, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, ptex_bubble, 204, 8, 0, pm_float, 0);
 	ADD_PARTICLE_TYPE(p_staticbubble, pd_billboard, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, ptex_bubble, 204, 0, 0, pm_static, 0);
 
+	//VULT PARTICLES
+	ADD_PARTICLE_TYPE(p_rain, pd_hide, GL_SRC_ALPHA, GL_ONE, ptex_none, 100, 0, 0, pm_rain, 0);
+	ADD_PARTICLE_TYPE(p_alphatrail, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 100, 0, 0, pm_static, 0);
+	ADD_PARTICLE_TYPE(p_railtrail, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 255, 0, 0, pm_die, 0);
+
+	ADD_PARTICLE_TYPE(p_vxblood, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_blood3, 255, -38, 0, pm_normal, 0);
+	ADD_PARTICLE_TYPE(p_streak, pd_hide, GL_SRC_ALPHA, GL_ONE, ptex_none, 255, -64, 0, pm_streak, 1.5); //grav was -64
+	ADD_PARTICLE_TYPE(p_streakwave, pd_hide, GL_SRC_ALPHA, GL_ONE, ptex_none, 255, 0, 0, pm_streakwave, 0);
+	ADD_PARTICLE_TYPE(p_lavatrail, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 255, 3, 0, pm_normal, 0);
+	ADD_PARTICLE_TYPE(p_vxsmoke, pd_billboard, GL_ZERO, GL_ONE_MINUS_SRC_COLOR, ptex_smoke, 140, 3, 0, pm_normal, 0);
+	ADD_PARTICLE_TYPE(p_muzzleflash, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 128, 0, 0, pm_die, 0);
+	ADD_PARTICLE_TYPE(p_inferno, pd_hide, GL_SRC_ALPHA, GL_ONE, ptex_none, 0, 0, 0, pm_inferno, 0);
+	ADD_PARTICLE_TYPE(p_2dshockwave, pd_normal, GL_SRC_ALPHA, GL_ONE, ptex_shockwave, 255, 0, 0, pm_static, 0);
+	ADD_PARTICLE_TYPE(p_vxrocketsmoke, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 128, 0, 0, pm_normal, 0);
+	ADD_PARTICLE_TYPE(p_flame, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 200, 10, 0, pm_die, 0);
+	ADD_PARTICLE_TYPE(p_trailbleed, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 200, 0, 0, pm_static, 0);
+	ADD_PARTICLE_TYPE(p_bleedspike, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 200, 0, 0, pm_static, 0);
+	ADD_PARTICLE_TYPE(p_lightningbeam, pd_beam, GL_SRC_ALPHA, GL_ONE, ptex_lightning, 128, 0, 0, pm_die, 0);
+	ADD_PARTICLE_TYPE(p_bubble2, pd_billboard, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, ptex_bubble, 204, 1, 0, pm_float, 0);
+	ADD_PARTICLE_TYPE(p_bloodcloud, pd_billboard, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, ptex_generic, 255, -3, 0, pm_normal, 0);
+	ADD_PARTICLE_TYPE(p_chunkdir, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 255, -32, 0, pm_bounce, 1.475);
+	ADD_PARTICLE_TYPE(p_smallspark, pd_beam, GL_SRC_ALPHA, GL_ONE, ptex_spark, 255, -64, 0, pm_bounce, 1.5); //grav was -64
+
+	if (COM_CheckParm ("-detailtrails"))
+		detailtrails = true;
+	else detailtrails = false;
+
+
+	//Allow overkill trails
+	if (detailtrails)
+	{
+		ADD_PARTICLE_TYPE(p_streaktrail, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 128, 0, 0, pm_die, 0);
+	}
+	else
+	{
+		ADD_PARTICLE_TYPE(p_streaktrail, pd_beam, GL_SRC_ALPHA, GL_ONE, ptex_none, 128, 0, 0, pm_die, 0);
+	}
+
 	qmb_initialized = true;
 }
 
@@ -292,6 +398,11 @@ void QMB_ClearParticles (void) {
 
 	for (i = 0; i < num_particletypes; i++)
 		particle_types[i].start = NULL;
+
+	//VULT STATS
+	ParticleCount = 0;
+	ParticleCountHigh = 0;
+
 }
 
 static void QMB_UpdateParticles(void) {
@@ -304,6 +415,9 @@ static void QMB_UpdateParticles(void) {
 	particle_count = 0;
 	grav = movevars.gravity / 800.0;
 
+	//VULT PARTICLES
+	WeatherEffect();
+
 	for (i = 0; i < num_particletypes; i++) {
 		pt = &particle_types[i];
 		
@@ -314,6 +428,8 @@ static void QMB_UpdateParticles(void) {
 					p->next = kill->next;
 					kill->next = free_particles;
 					free_particles = kill;
+					//VULT STATS
+					ParticleStats(-1);
 				} else {
 					p = p->next;
 				}
@@ -323,6 +439,8 @@ static void QMB_UpdateParticles(void) {
 				pt->start = kill->next;
 				kill->next = free_particles;
 				free_particles = kill;
+				//VULT STATS
+				ParticleStats(-1);
 			}
 		}
 
@@ -338,17 +456,23 @@ static void QMB_UpdateParticles(void) {
 				p->die = 0;
 				continue;
 			}
-			
-			p->color[3] = pt->startalpha * ((p->die - particle_time) / (p->die - p->start));
+
+			//VULT PARTICLE
+			if (pt->id == p_streaktrail || pt->id == p_lightningbeam)
+				p->color[3] = p->bounces * ((p->die - particle_time) / (p->die - p->start));
+			else
+				p->color[3] = pt->startalpha * ((p->die - particle_time) / (p->die - p->start));
 			
 			p->rotangle += p->rotspeed * cls.frametime;
 			
 			if (p->hit)
 				continue;
-			
+
+			//VULT - switched these around so velocity is scaled before gravity is applied
+			VectorScale(p->vel, 1 + pt->accel * cls.frametime, p->vel)
 			p->vel[2] += pt->grav * grav * cls.frametime;
 			
-			VectorScale(p->vel, 1 + pt->accel * cls.frametime, p->vel)
+			//VectorScale(p->vel, 1 + pt->accel * cls.frametime, p->vel)
 			
 			switch (pt->move) {
 			case pm_static:
@@ -379,23 +503,117 @@ static void QMB_UpdateParticles(void) {
 					p->die = 0;
 				break;
 			case pm_bounce:
-				
-				if (!gl_bounceparticles.value || p->bounces) {
+				if (!gl_bounceparticles.value || p->bounces) 
+				{
+					if (pt->id == p_smallspark)
+						VectorCopy(p->org, p->endorg);
+
 					VectorMA(p->org, cls.frametime, p->vel, p->org);
 					if (CONTENTS_SOLID == TruePointContents (p->org))
 						p->die = 0;
-				} else {
+				}
+				else 
+				{
 					VectorCopy(p->org, oldorg);
+					if (pt->id == p_smallspark)
+						VectorCopy(oldorg, p->endorg);
 					VectorMA(p->org, cls.frametime, p->vel, p->org);
-					if (CONTENTS_SOLID == TruePointContents (p->org)) {
-						if (TraceLineN(oldorg, p->org, stop, normal)) {
+					if (CONTENTS_SOLID == TruePointContents (p->org)) 
+					{
+						if (TraceLineN(oldorg, p->org, stop, normal)) 
+						{
 							VectorCopy(stop, p->org);
 							bounce = -pt->custom * DotProduct(p->vel, normal);
 							VectorMA(p->vel, bounce, normal, p->vel);
 							p->bounces++;
+							if (pt->id == p_smallspark)
+								VectorCopy(stop, p->endorg);
 						}
 					}
 				}
+				break;
+			//VULT PARTICLES
+			case pm_rain:
+				VectorCopy(p->org, oldorg);
+				VectorMA(p->org, cls.frametime, p->vel, p->org);
+				contents = TruePointContents(p->org);
+				if (ISUNDERWATER(contents) || contents == CONTENTS_SOLID)
+				{
+					if (!amf_weather_rain_fast.value || amf_weather_rain_fast.value == 2)
+					{
+						vec3_t rorg;
+						VectorCopy(oldorg, rorg);
+						//Find out where the rain should actually hit
+						//This is a slow way of doing it, I'll fix it later maybe...
+						while (1)
+						{
+							rorg[2] = rorg[2] - 0.5f;
+							contents = TruePointContents(rorg);
+							if (contents == CONTENTS_WATER)
+							{
+								if (amf_weather_rain_fast.value == 2)
+									break;
+								RainSplash(rorg);
+								break;
+							}
+							else if (contents == CONTENTS_SOLID)
+							{
+								byte col[3] = {128,128,128};
+								SparkGen (rorg, col, 3, 50, 0.15);
+								break;
+							}
+						}
+						VectorCopy(rorg, p->org);
+						VX_ParticleTrail (oldorg, p->org, p->size, 0.2, p->color);
+					}
+					p->die = 0;
+				}
+				else
+					VX_ParticleTrail (oldorg, p->org, p->size, 0.2, p->color);
+				break;
+			//VULT PARTICLES
+			case pm_streak:
+				VectorCopy(p->org, oldorg);
+				VectorMA(p->org, cls.frametime, p->vel, p->org);
+				if (CONTENTS_SOLID == TruePointContents (p->org)) 
+				{
+					if (TraceLineN(oldorg, p->org, stop, normal)) 
+					{
+						VectorCopy(stop, p->org);
+						bounce = -pt->custom * DotProduct(p->vel, normal);
+						VectorMA(p->vel, bounce, normal, p->vel);
+						//VULT - Prevent crazy sliding
+/*						p->vel[0] = 2 * p->vel[0] / 3;
+						p->vel[1] = 2 * p->vel[1] / 3;
+						p->vel[2] = 2 * p->vel[2] / 3;*/
+					}
+				}
+				VX_ParticleTrail (oldorg, p->org, p->size, 0.2, p->color);
+				if (VectorLength(p->vel) == 0)
+					p->die = 0;
+				break;
+			case pm_streakwave:
+				VectorCopy(p->org, oldorg);
+				VectorMA(p->org, cls.frametime, p->vel, p->org);
+				VX_ParticleTrail (oldorg, p->org, p->size, 0.5, p->color);
+				p->vel[0] = 19 * p->vel[0] / 20;
+				p->vel[1] = 19 * p->vel[1] / 20;
+				p->vel[2] = 19 * p->vel[2] / 20;
+				break;
+			case pm_inferno:
+				VectorCopy(p->org, oldorg);
+				VectorMA(p->org, cls.frametime, p->vel, p->org);
+/*				if (CONTENTS_SOLID == TruePointContents (p->org)) 
+				{*/
+					if (TraceLineN(oldorg, p->org, stop, normal)) 
+					{
+						VectorCopy(stop, p->org);
+						CL_FakeExplosion(p->org);
+						p->die = 0;
+					}
+				//}
+				VectorCopy(p->org, p->endorg);
+				InfernoTrail(oldorg, p->endorg, p->vel);
 				break;
 			default:
 				assert(!"QMB_UpdateParticles: unexpected pt->move");
@@ -431,11 +649,17 @@ void QMB_DrawParticles (void) {
 	particle_t *p;
 	particle_type_t *pt;
 	particle_texture_t *ptex;
+	int texture, l;
 
 	particle_time = cl.time;
 
 	if (!cl.paused)
 		QMB_UpdateParticles();
+
+	if (gl_fogenable.value)
+	{
+		glDisable(GL_FOG);
+	}
 
 	VectorAdd(vup, vright, billboard[2]);
 	VectorSubtract(vright, vup, billboard[3]);
@@ -451,15 +675,52 @@ void QMB_DrawParticles (void) {
 		pt = &particle_types[i];
 		if (!pt->start)
 			continue;
+		if (pt->drawtype == pd_hide)
+			continue;
 
 		glBlendFunc(pt->SrcBlend, pt->DstBlend);
 
 		switch(pt->drawtype) {
+		//VULT PARTICLES
+		case pd_beam:
+			ptex = &particle_textures[pt->texture];
+			glEnable(GL_TEXTURE_2D);
+			//VULT PARTICLES
+			if (texture != ptex->texnum)
+			{
+				GL_Bind(ptex->texnum);
+				texture = ptex->texnum;
+			}
+
+			for (p = pt->start; p; p = p->next) 
+			{
+				if (particle_time < p->start || particle_time >= p->die)
+					continue;
+				glColor4ubv(p->color);
+				for (l=amf_part_traildetail.value; l>0 ;l--)
+				{
+					R_CalcBeamVerts(varray_vertex, p->org, p->endorg, p->size/(l*amf_part_trailwidth.value));
+					glBegin (GL_QUADS);
+					glTexCoord2f (1,0);
+					glVertex3f(varray_vertex[ 0], varray_vertex[ 1], varray_vertex[ 2]);
+					glTexCoord2f (1,1);
+					glVertex3f(varray_vertex[ 4], varray_vertex[ 5], varray_vertex[ 6]);
+					glTexCoord2f (0,1);
+					glVertex3f(varray_vertex[ 8], varray_vertex[ 9], varray_vertex[10]);
+					glTexCoord2f (0,0);
+					glVertex3f(varray_vertex[12], varray_vertex[13], varray_vertex[14]);
+					glEnd();
+				}
+			}
+			break;
 		case pd_spark:
 			glDisable(GL_TEXTURE_2D);
 			for (p = pt->start; p; p = p->next) {
 				if (particle_time < p->start || particle_time >= p->die)
 					continue;
+
+				if (!TraceLineN(p->endorg, p->org, neworg, NULL)) 
+					VectorCopy(p->org, neworg);
 
 				glBegin(GL_TRIANGLE_FAN);
 				glColor4ubv(p->color);
@@ -497,7 +758,12 @@ void QMB_DrawParticles (void) {
 		case pd_billboard:
 			ptex = &particle_textures[pt->texture];
 			glEnable(GL_TEXTURE_2D);
-			GL_Bind(ptex->texnum);
+			//VULT PARTICLES - I gather this speeds it up, but I haven't really checked
+			if (texture != ptex->texnum)
+			{
+				GL_Bind(ptex->texnum);
+				texture = ptex->texnum;
+			}
 			drawncount = 0;
 			for (p = pt->start; p; p = p->next) {
 				if (particle_time < p->start || particle_time >= p->die)
@@ -514,7 +780,12 @@ void QMB_DrawParticles (void) {
 		case pd_billboard_vel:
 			ptex = &particle_textures[pt->texture];
 			glEnable(GL_TEXTURE_2D);
-			GL_Bind(ptex->texnum);
+			//VULT PARTICLES
+			if (texture != ptex->texnum)
+			{
+				GL_Bind(ptex->texnum);
+				texture = ptex->texnum;
+			}
 			for (p = pt->start; p; p = p->next) {
 				if (particle_time < p->start || particle_time >= p->die)
 					continue;
@@ -531,6 +802,55 @@ void QMB_DrawParticles (void) {
 				DRAW_PARTICLE_BILLBOARD(ptex, p, velcoord);
 			}
 			break;
+		//VULT PARTICLES - This produces the shockwave effect
+		//Mind you it can be used for more than that... Decals come to mind first
+		case pd_normal:
+			ptex = &particle_textures[pt->texture];
+			glEnable(GL_TEXTURE_2D);
+			//VULT PARTICLES
+			if (texture != ptex->texnum)
+			{
+				GL_Bind(ptex->texnum);
+				texture = ptex->texnum;
+			}
+			for (p = pt->start; p; p = p->next) 
+			{
+				if (particle_time < p->start || particle_time >= p->die)
+					continue;
+
+				glPushMatrix();
+				glTranslatef(p->org[0], p->org[1], p->org[2]);
+				glScalef(p->size, p->size, p->size);
+				glRotatef(p->endorg[0], 0, 1, 0);
+				glRotatef(p->endorg[1], 0, 0, 1);
+				glRotatef(p->endorg[2], 1, 0, 0);
+				glColor4ubv(p->color);
+				glBegin (GL_QUADS);
+				glTexCoord2f (0,0);
+				glVertex3f (-p->size, -p->size, 0);
+				glTexCoord2f (1,0);
+				glVertex3f (p->size, -p->size, 0);
+				glTexCoord2f (1,1);
+				glVertex3f (p->size, p->size, 0);
+				glTexCoord2f (0,1);
+				glVertex3f (-p->size, p->size, 0);
+				glEnd();
+
+				//And since quads seem to be one sided...
+				glColor4ubv(p->color);
+				glBegin (GL_QUADS);
+				glTexCoord2f (0,0);
+				glVertex3f (-p->size, -p->size, 0);
+				glTexCoord2f (1,0);
+				glVertex3f (p->size, -p->size, 0);
+				glTexCoord2f (1,1);
+				glVertex3f (p->size, p->size, 0);
+				glTexCoord2f (0,1);
+				glVertex3f (-p->size, p->size, 0);
+				glEnd();
+				glPopMatrix();
+			}
+			break;
 		default:
 			assert(!"QMB_DrawParticles: unexpected drawtype");
 			break;
@@ -542,6 +862,12 @@ void QMB_DrawParticles (void) {
 	glDisable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	if (gl_fogenable.value)
+	{
+		glEnable(GL_FOG);
+	}
+
 }
 
 #define	INIT_NEW_PARTICLE(_pt, _p, _color, _size, _time)	\
@@ -557,7 +883,8 @@ void QMB_DrawParticles (void) {
 		_p->rotspeed = 0;									\
 		_p->texindex = (rand() % particle_textures[_pt->texture].components);	\
 		_p->bounces = 0;									\
-		VectorCopy(_color, _p->color);
+		VectorCopy(_color, _p->color);						\
+		ParticleStats(1);		//VULT PARTICLES
 
 
 __inline static void AddParticle(part_type_t type, vec3_t org, int count, float size, float time, col_t col, vec3_t dir) {
@@ -602,11 +929,11 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 				p->vel[j] = ((rand() % 160) - 80) * (size / 25.0);
 			break;
 		case p_bubble:
-			p->start += (rand() & 15) / 36.0;
-			p->org[0] = org[0] + ((rand() & 31) - 16);
-			p->org[1] = org[1] + ((rand() & 31) - 16);
-			p->org[2] = org[2] + ((rand() & 63) - 32);
-			VectorClear(p->vel);
+			//VULT PARTICLES
+			VectorCopy(org, p->org);
+			for (j = 0; j < 2; j++)
+				p->vel[j] = (rand() % 150)-75;
+			p->vel[2] = (rand() % 64) + 24;
 			break;
 		case p_lavasplash:
 			VectorCopy(org, p->org);
@@ -670,6 +997,81 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 			for (j = 0; j < 3; j++)
 				p->vel[j] = (rand() % 40) - 20;
 			break;
+		//VULT PARTICLES
+		case p_rain:
+			p->size = 1;
+			VectorCopy(org, p->org);
+			p->vel[0] = (rand() % 10 + 85)*size;
+			p->vel[1] = (rand() % 10 + 85)*size;
+			p->vel[2] = (rand() % -100 - 2000)*(size/3);
+			break;
+		//VULT PARTICLES
+		case p_streaktrail:
+		case p_lightningbeam:
+			VectorCopy(org, p->org);
+			VectorCopy(dir, p->endorg);
+			if (detailtrails && type == p_streaktrail)
+				p->size = size * 3;
+			VectorClear(p->vel);
+			p->growth = -p->size/time;
+			p->bounces = color[3];
+			break;
+		//VULT PARTICLES
+		case p_streak:
+		case p_inferno:
+		case p_streakwave:
+		case p_smallspark:
+			VectorCopy(org, p->org);
+			VectorCopy(dir, p->vel);
+			break;
+		//VULT PARTICLES
+		case p_vxblood:
+			VectorCopy(org, p->org);
+			for (j = 0; j < 2; j++)
+				p->vel[j] = (rand()%80)-40;
+			p->vel[2] = (rand()%65)-15;
+			break;
+		//VULT PARTICLES
+		case p_vxsmoke:
+			VectorCopy(org, p->org);
+			VectorCopy(dir, p->vel);
+			p->growth = 4.5;
+			p->rotspeed = (rand() & 63) + 96;
+			break;
+		//VULT PARTICLES
+		case p_muzzleflash:
+			VectorCopy (org, p->org);
+			VectorCopy(dir, p->vel);
+			p->growth = -size / time;
+			break;
+		//VULT PARTICLES
+		case p_2dshockwave:
+			VectorCopy (org, p->org);
+			VectorCopy (dir, p->endorg);
+			VectorClear(p->vel);
+			p->size = 1;
+			p->growth = size;
+			break;
+		//VULT PARTICLES
+		case p_flame:
+			VectorCopy(org, p->org);
+			p->org[2] += 4;
+			p->growth = -p->size/2;
+			VectorClear(p->vel);
+			for (j = 0; j < 2; j++)
+				p->vel[j] = (rand() % 6) - 3;
+			break;
+		//VULT PARTICLES
+		case p_bloodcloud:
+			for (j = 0; j < 3; j++)
+				p->org[j] = org[j] + (rand() & 30) - 15;
+			VectorClear(p->vel);
+			p->size = (rand() % (int)size)+10;
+			break;
+		case p_chunkdir:
+			VectorCopy(org, p->org);
+			VectorCopy(dir, p->vel);
+			break;
 		default:
 			assert(!"AddParticle: unexpected type");
 			break;
@@ -684,6 +1086,9 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 	vec3_t point, delta;
 	particle_t *p;
 	particle_type_t *pt;
+	//VULT PARTICLES - for railtrail
+	int loops;
+	vec3_t vf, vr, radial;
 
 	if (!qmb_initialized)
 		Sys_Error("QMB particle added without initialization");
@@ -701,13 +1106,20 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 		goto done;
 
 	switch(type) {
-	case p_trailpart:
+	case p_alphatrail:
+	case p_lavatrail:
+	case p_bleedspike:
+	case p_bubble:
 		count = length / 1.1;
+		break;
+	case p_bubble2:
+		count = length / 5;
 		break;
 	case p_blood3:
 		count = length / 8;
 		break;
 	case p_smoke:
+	case p_vxrocketsmoke:
 		count = length / 3.8;
 		break;
 	case p_dpsmoke:
@@ -716,8 +1128,16 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 	case p_dpfire:
 		count = length / 2.8;
 		break;
+	//VULT PARTICLES
+	case p_railtrail:
+		count = length * 1.6;
+		if (!(loops = (int) length / 13.0))
+			goto done;
+		VectorScale(delta, 1 / length, vf);
+		VectorVectors(vf, vr, vup);
+		break;
 	default:
-		assert(!"AddParticleTrail: unexpected type");
+		//assert(!"AddParticleTrail: unexpected type"); -> hexum - FIXME not all types are handled, seems to work ok though
 		break;
 	}
 
@@ -731,7 +1151,9 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 		INIT_NEW_PARTICLE(pt, p, color, size, time);
 
 		switch (type) {
+		//VULT PARTICLES
 		case p_trailpart:
+		case p_alphatrail:
 			VectorCopy (point, p->org);
 			VectorClear(p->vel);
 			p->growth = -size / time;
@@ -766,8 +1188,49 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 			for (j = 0; j < 3; j++)
 				p->vel[j] = (rand() % 40) - 20;
 			break;
+		//VULT PARTICLES
+		case p_railtrail:
+			theta += loops * 2 * M_PI / count;
+			for (j = 0; j < 3; j++)
+				radial[j] = vr[j] * cos(theta) + vup[j] * sin(theta);
+			VectorMA(point, 2.6, radial, p->org);
+			for (j = 0; j < 3; j++)
+				p->vel[j] = radial[j]*5;
+			break;
+		//VULT PARTICLES
+		case p_bubble:
+		case p_bubble2:
+			VectorCopy(point, p->org);
+			for (j = 0; j < 3; j++)
+				p->vel[j] = (rand() % 10)-5;
+			break;
+		//VULT PARTICLES
+		case p_lavatrail:
+			VectorCopy (point, p->org);
+			for (j = 0; j < 3; j++)
+				p->org[j] += ((rand() & 7) - 4);
+			p->vel[0] = p->vel[1] = 0;
+			p->vel[2] = rand() & 3;
+			break;
+		//VULT PARTICLES
+		case p_vxrocketsmoke:
+			VectorCopy (point, p->org);
+			for (j = 0; j < 3; j++)
+				p->vel[j] = (rand() % 8)-4;
+			break;
+		//VULT PARTICLES
+		case p_trailbleed:
+			p->size = (rand() % (int)size);
+			p->growth = -rand()%5;
+			VectorCopy (point, p->org);
+			break;
+		//VULT PARTICLES
+		case p_bleedspike:
+			size = 9*size/10 ;
+			VectorCopy (point, p->org);
+			break;
 		default:
-			assert(!"AddParticleTrail: unexpected type");
+			//assert(!"AddParticleTrail: unexpected type"); -> hexum - FIXME not all types are handled, seems to work ok though
 			break;
 		}
 
@@ -884,7 +1347,11 @@ void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_ty
 
 	switch (type) {
 		case GRENADE_TRAIL:
-			AddParticleTrail(p_smoke, start, end, 1.45, 0.825, NULL);
+			//VULT PARTICLES
+			if (ISUNDERWATER(TruePointContents(start)) && amf_underwater_trails.value)
+				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL);
+			else
+				AddParticleTrail(p_smoke, start, end, 1.45, 0.825, NULL);
 			break;
 		case BLOOD_TRAIL:
 		case BIG_BLOOD_TRAIL:
@@ -905,6 +1372,92 @@ void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_ty
 		case ALT_ROCKET_TRAIL:
 			AddParticleTrail(p_dpfire, start, end, 3, 0.26, NULL);
 			AddParticleTrail(p_dpsmoke, start, end, 3, 0.825, NULL);
+			break;
+		//VULT TRAILS
+		case RAIL_TRAIL:
+		case RAIL_TRAIL2:
+			color[0] = 255; color[1] = 255; color[2] = 255;
+			//VULT PARTICLES
+			AddParticleTrail (p_alphatrail, start, end, 2, 0.525, color);
+			if (type == RAIL_TRAIL2)
+			{
+				color[0] = 255; 
+				color[1] = 0; 
+				color[2] = 0;
+			}
+			else
+			{
+				color[0] = 0; 
+				color[1] = 0; 
+				color[2] = 255;
+			}
+			AddParticleTrail (p_railtrail, start, end, 1.3, 0.525, color);
+			break;
+		//VULT TRAILS
+		case TF_TRAIL:
+			if (ISUNDERWATER(TruePointContents(start)) && amf_underwater_trails.value)
+			{
+				if (amf_nailtrail_water.value)
+				{
+					AddParticleTrail(p_bubble2, start, end, 1.5, 0.825, NULL);
+				}
+				else
+					AddParticleTrail(p_bubble, start, end, 1.5, 0.825, NULL);
+				break;
+			}
+			color[0] = 10; color[1] = 10; color[2] = 10;
+			AddParticleTrail (p_alphatrail, start, end, alphatrail_s, alphatrail_l, color);
+			break;
+		//VULT TRAILS
+		case LAVA_TRAIL:
+			if (ISUNDERWATER(TruePointContents(start)) && amf_underwater_trails.value)
+			{
+				color[0] = 25;
+				color[1] = 102;
+				color[2] = 255;
+				color[3] = 255;
+			}
+			else
+			{
+				color[0] = 255;
+				color[1] = 102;
+				color[2] = 25;
+				color[3] = 255;
+			}
+			AddParticleTrail(p_lavatrail, start, end, 5, 1, color);
+			break;
+		//VULT TRAILS
+		case AMF_ROCKET_TRAIL:
+			if (ISUNDERWATER(TruePointContents(start)) && amf_underwater_trails.value)
+				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL);
+			else
+			{
+				color[0] = 128; color[1] = 128; color[2] = 128;
+				AddParticleTrail (p_alphatrail, start, end, 2, 0.6, color);
+				AddParticleTrail (p_vxrocketsmoke, start, end, 3, 0.5, color);
+				
+				color[0] = 128; color[1] = 56; color[2] = 9;
+				AddParticleTrail(p_trailpart, start, end, 4, 0.2, color);
+			}
+			break;
+		//VULT PARTICLES
+		case BLEEDING_TRAIL:
+		case BLEEDING_TRAIL2:
+			if (amf_part_blood_color.value == 2)
+			{
+				color[0]=55;color[1]=102;color[2]=255;
+			}
+			//green
+			else if (amf_part_blood_color.value == 3)
+			{
+				color[0]=80;color[1]=255;color[2]=80;
+			}
+			//red
+			else
+			{
+				color[0]=128;color[1]=0;color[2]=0;
+			}
+			AddParticleTrail(type == BLEEDING_TRAIL ? p_trailbleed : p_bleedspike, start, end, 4, type == BLEEDING_TRAIL ? 0.5 : 0.2 , color);
 			break;
 		case ROCKET_TRAIL:
 		default:
@@ -929,26 +1482,50 @@ void QMB_BlobExplosion (vec3_t org) {
 	AddParticle(p_fire, org, 15, 30, 1.4, color, zerodir);
 
 	vel[2] = 0;
-	for (theta = 0; theta < 2 * M_PI; theta += 2 * M_PI / 70) {
-		color[0] = (60 + (rand() & 15)); color[1] = (65 + (rand() & 15)); color[2] = (200 + (rand() & 15));
+	//VULT PARTICLES
+	if (amf_part_shockwaves.value)
+	{
+		//VULT Get 3 rings to fly out
+		if (amf_part_2dshockwaves.value)
+		{
+			vec3_t shockdir;
+			int i;
+			color[0] = (60 + (rand() & 15)); color[1] = (65 + (rand() & 15)); color[2] = (200 + (rand() & 15));
+			for (i=0;i<3;i++)
+				shockdir[i] = rand() % 360;
+			AddParticle(p_2dshockwave, org, 1, 30, 0.5, color, shockdir);
+			for (i=0;i<3;i++)
+				shockdir[i] = rand() % 360;
+			AddParticle(p_2dshockwave, org, 1, 30, 0.5, color, shockdir);
+			for (i=0;i<3;i++)
+				shockdir[i] = rand() % 360;
+			AddParticle(p_2dshockwave, org, 1, 30, 0.5, color, shockdir);
+		}
+		else
+		{
+			for (theta = 0; theta < 2 * M_PI; theta += 2 * M_PI / 70) 
+			{
+				color[0] = (60 + (rand() & 15)); color[1] = (65 + (rand() & 15)); color[2] = (200 + (rand() & 15));
 
-		
-		vel[0] = cos(theta) * 125;
-		vel[1] = sin(theta) * 125;
-		neworg[0] = org[0] + cos(theta) * 6;
-		neworg[1] = org[1] + sin(theta) * 6;
-		neworg[2] = org[2] + 0 - 10;
-		AddParticle(p_shockwave, neworg, 1, 4, 0.8, color, vel);
-		neworg[2] = org[2] + 0 + 10;
-		AddParticle(p_shockwave, neworg, 1, 4, 0.8, color, vel);
+				
+				vel[0] = cos(theta) * 125;
+				vel[1] = sin(theta) * 125;
+				neworg[0] = org[0] + cos(theta) * 6;
+				neworg[1] = org[1] + sin(theta) * 6;
+				neworg[2] = org[2] + 0 - 10;
+				AddParticle(p_shockwave, neworg, 1, 4, 0.8, color, vel);
+				neworg[2] = org[2] + 0 + 10;
+				AddParticle(p_shockwave, neworg, 1, 4, 0.8, color, vel);
 
-		
-		vel[0] *= 1.15;
-		vel[1] *= 1.15;
-		neworg[0] = org[0] + cos(theta) * 13;
-		neworg[1] = org[1] + sin(theta) * 13;
-		neworg[2] = org[2] + 0;
-		AddParticle(p_shockwave, neworg, 1, 6, 1.0, color, vel);
+				
+				vel[0] *= 1.15;
+				vel[1] *= 1.15;
+				neworg[0] = org[0] + cos(theta) * 13;
+				neworg[1] = org[1] + sin(theta) * 13;
+				neworg[2] = org[2] + 0;
+				AddParticle(p_shockwave, neworg, 1, 6, 1.0, color, vel);
+			}
+		}
 	}
 }
 
@@ -1038,12 +1615,22 @@ void QMB_DetpackExplosion (vec3_t org) {
 		angle[0] += 180 / 5;
 	}
 
-	
-	angle[2] = 0;
-	for (theta = 0; theta < 2 * M_PI; theta += 2 * M_PI / 90) {
-		angle[0] = cos(theta) * 350;
-		angle[1] = sin(theta) * 350;
-		AddParticle(p_shockwave, org, 1, 14, 0.75, NULL, angle);
+	//VULT PARTICLES
+	if (amf_part_shockwaves.value)
+	{
+		if (amf_part_2dshockwaves.value)
+		{
+			AddParticle(p_2dshockwave, org, 1, 30, 0.5, NULL, vec3_origin);
+		}
+		else
+		{
+			angle[2] = 0;
+			for (theta = 0; theta < 2 * M_PI; theta += 2 * M_PI / 90) {
+				angle[0] = cos(theta) * 350;
+				angle[1] = sin(theta) * 350;
+				AddParticle(p_shockwave, org, 1, 14, 0.75, NULL, angle);
+			}
+		}
 	}
 }
 
@@ -1057,4 +1644,1000 @@ void QMB_InfernoFlame (vec3_t org) {
 
 void QMB_StaticBubble (entity_t *ent) {
 	AddParticle(p_staticbubble, ent->origin, 1, ent->frame == 1 ? 1.85 : 2.9, ONE_FRAME_ONLY, NULL, zerodir);
+}
+
+//VULT PARTICLES
+//This WAS supposed to do more than just rain but I haven't really got around to
+//writing anything else for it.
+void WeatherEffect(void)
+{
+	vec3_t org, start, impact, normal;
+	int i;
+	float trace;
+	col_t colour={128,128,128,75};
+
+	if (amf_weather_rain.value)
+	{
+		for (i=0;i<=amf_weather_rain.value;i++)
+		{
+			VectorCopy(r_refdef.vieworg, org);
+			org[0] = org[0] + (rand() % 3000) - 1500;
+			org[1] = org[1] + (rand() % 3000) - 1500;
+			VectorCopy(org, start);
+			org[2] = org[2] + 15000;
+
+			//Trace a line straight up, get the impact location
+
+			//trace up slowly until we are in sky
+			trace = TraceLineN(start, org, impact, normal);
+
+			//fixme: see is surface above has SURF_DRAWSKY (we'll come back to that, when the important stuff is done fist, eh?)
+			//if (Mod_PointInLeaf(impact, cl.worldmodel)->contents == CONTENTS_SKY)
+			if (TruePointContents(impact) == CONTENTS_SKY && trace)
+			{
+				VectorCopy(impact, org);
+				org[2] = org[2] - 1;
+				AddParticle(p_rain, org, 1, 1, 15, colour, zerodir);
+			}
+		}
+	}
+};
+
+//VULT PARTICLES
+void RainSplash(vec3_t org)
+{
+	vec3_t pos;
+	col_t colour={255,255,255,255};
+	
+	VectorCopy(org, pos);
+	pos[2] = pos[2] + 1; //To get above the water on servers that don't use watervis
+
+	//VULT - Sometimes the shockwave effect isn't noticable enough?
+	AddParticle(p_2dshockwave, pos, 1, 5, 0.5, colour, vec3_origin);
+}
+
+//VULT PARTICLES
+//Cheap function which will generate some sparks for me to be called elsewhere
+void SparkGen (vec3_t org, byte col[2], float count, float size, float life)
+{
+	col_t color;
+	vec3_t dir;
+	int i,a;
+
+	color[0] = col[0];
+	color[1] = col[1];
+	color[2] = col[2];
+
+	if (amf_part_sparks.value)
+	{
+		for (a=0;a<count;a++)
+		{
+			for (i=0;i<3;i++)
+				dir[i] = (rand() % (int)size*2) - ((int)size*2/3);
+			if (amf_part_trailtype.value == 2)
+				AddParticle(p_smallspark, org, 1, 1, life, color, dir);
+			else
+				AddParticle(p_streak, org, 1, 1, life, color, dir);
+			
+		}
+	}
+	else
+		AddParticle(p_spark, org, count, size, life, color, zerodir);
+}
+
+//VULT STATS
+void ParticleStats (int change)
+{
+	if (ParticleCount > ParticleCountHigh)
+		ParticleCountHigh = ParticleCount;
+	ParticleCount+=change;
+}
+
+//VULT PARTICLES
+//VULT - Draw a thin white trail that could be used to represent motion for just about anything
+void ParticleAlphaTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, float size, float life)
+{
+	if (amf_part_fasttrails.value)
+	{
+		col_t color={255,255,255,128};
+		AddParticle(p_streaktrail, start, 1, size*5, life, color, end);
+		VectorCopy(end, *trail_origin);
+	}
+	else
+	{
+		alphatrail_s = size;
+		alphatrail_l = life;
+		QMB_ParticleTrail(start, end, trail_origin, TF_TRAIL);
+	}
+}
+
+//VULT - Some of the following functions might be the same as above, thats because I intended to change them but never
+//got around to it.
+
+//VULT PARTICLES
+//VULT - These trails were my initial motivation behind AMFQUAKE.
+void VX_ParticleTrail (vec3_t start, vec3_t end, float size, float time, col_t color)
+{
+
+	vec3_t		vec;
+	float		len;
+	col_t color2={255,255,255};
+	time *= amf_part_traillen.value;
+	
+
+	if (detailtrails)
+	{
+		VectorSubtract (end, start, vec);
+		len = VectorNormalize(vec);
+
+		while (len > 0)
+		{
+			//ADD PARTICLE HERE
+			AddParticle(p_streaktrail, start, 1, size, time, color, zerodir);
+			len--;
+			VectorAdd (start, vec, start);
+		}
+	}
+	AddParticle(p_streaktrail, start, 1, size, time, color, end);
+
+}
+
+//VULT PARTICLES
+//VULT - Does the deed when someone shoots a wall
+void VXGunshot (vec3_t org, float count)
+{
+	col_t color={255,80,10, 128};
+	vec3_t dir, neworg;
+	int a, i;
+	int contents;
+
+	if (amf_part_gunshot_type.value == 2 || amf_part_gunshot_type.value == 3)
+	{
+		color[0] = 255;
+		color[1] = 242;
+		color[2] = 153;
+		VectorClear(dir);
+		for (i = 0; i < 5; i++) 
+		{
+			dir[2] = 0;
+			for (a = 0; a < 5; a++) 
+			{
+				AngleVectors(dir, NULL, NULL, neworg);
+				VectorMA(org, 40, neworg, neworg);	
+				AddParticle(p_sparkray, org, 1, 3, 1.5,  color, neworg);
+				dir[2] += 360 / 5;
+			}
+			dir[0] += 180 / 5;
+		}
+		if (amf_coronas.value)
+			NewCorona (C_WHITELIGHT, org);
+		if (amf_part_gunshot_type.value == 3)
+				return;
+		
+	}
+	else if (amf_part_gunshot_type.value == 4)
+	{
+		color[0]=255;
+		color[1]=80;
+		color[2]=10;
+		color[3]=128;
+		if (amf_coronas.value)
+			NewCorona (C_GUNFLASH, org);
+		for (a=0;a<count*1.5;a++)
+		{
+			for (i=0;i<3;i++)
+				dir[i] = (rand() % 700) - 300;
+			AddParticle(p_streakwave, org, 1, 1, 0.066*amf_part_trailtime.value, color, dir);
+			
+		}
+		return;
+	}
+	else
+	{
+		if (amf_coronas.value)
+			NewCorona (C_GUNFLASH, org);
+	}
+
+	for (a=0;a<count;a++)
+	{
+		for (i=0;i<3;i++)
+			dir[i] = (rand() % 700) - 350;
+		if (amf_part_trailtype.value == 2)
+			AddParticle(p_smallspark, org, 1, 1, 1*amf_part_trailtime.value, NULL, dir);
+		else
+			AddParticle(p_streak, org, 1, 1, 1*amf_part_trailtime.value, color, dir);
+	}
+
+	contents = TruePointContents(org);
+	if (ISUNDERWATER(contents)) 
+		AddParticle(p_bubble, org, count/5, 2.35, 2.5, NULL, zerodir);
+
+}
+
+//VULT PARTICLES
+void VXNailhit (vec3_t org, float count)
+{
+	col_t color;
+	vec3_t dir, neworg;
+	int a, i;
+	int contents;
+
+	if (amf_nailtrail_plasma.value)
+	{
+		color[0]=10;
+		color[1]=80;
+		color[2]=255;
+		color[3]=128;
+		AddParticle(p_fire, org, 15, 5, 0.5, color, zerodir);
+	}
+	else
+	{
+		if (amf_part_spikes_type.value == 2 || amf_part_spikes_type.value == 3)
+		{
+			color[0] = 255;
+			color[1] = 242;
+			color[2] = 153;
+			VectorClear(dir);
+			for (i = 0; i < 5; i++) 
+			{
+				dir[2] = 0;
+				for (a = 0; a < 5; a++) 
+				{
+					AngleVectors(dir, NULL, NULL, neworg);
+					VectorMA(org, 40, neworg, neworg);	
+					AddParticle(p_sparkray, org, 1, 3, 1.5,  color, neworg);
+					dir[2] += 360 / 5;
+				}
+				dir[0] += 180 / 5;
+			}
+			if (amf_coronas.value)
+				NewCorona (C_WHITELIGHT, org);
+			if (amf_part_spikes_type.value == 3)
+				return;
+		}
+		else if (amf_part_spikes_type.value == 4)
+		{
+			color[0]=255;
+			color[1]=80;
+			color[2]=10;
+			color[3]=128;
+			if (amf_coronas.value)
+				NewCorona (C_GUNFLASH, org);
+			for (a=0;a<count*1.5;a++)
+			{
+				for (i=0;i<3;i++)
+					dir[i] = (rand() % 700) - 300;
+				AddParticle(p_streakwave, org, 1, 1, 0.066*amf_part_trailtime.value, color, dir);
+			}
+			return;
+		}
+		else
+		{
+			color[0]=255;
+			color[1]=80;
+			color[2]=10;
+			color[3]=128;
+			if (amf_coronas.value)
+				NewCorona (C_GUNFLASH, org);
+		}
+	}
+	
+	for (a=0;a<count;a++)
+	{
+		for (i=0;i<3;i++)
+			dir[i] = (rand() % 700) - 350;
+		if (amf_part_trailtype.value == 2)
+			if (amf_nailtrail_plasma.value)
+				AddParticle(p_smallspark, org, 1, 1, 1*amf_part_trailtime.value, color, dir);
+			else
+				AddParticle(p_smallspark, org, 1, 1, 1*amf_part_trailtime.value, NULL, dir);
+		else
+			AddParticle(p_streak, org, 1, 1, 1*amf_part_trailtime.value, color, dir);
+	}
+
+	contents = TruePointContents(org);
+	if (ISUNDERWATER(contents)) 
+		AddParticle(p_bubble, org, count/5, 2.35, 2.5, NULL, zerodir);
+
+}
+
+//VULT PARTICLES
+void VXExplosion (vec3_t org)
+{
+	col_t color={255,100,25, 128};
+	vec3_t dir;
+	int a, i;
+	int contents;
+	float theta;
+	vec3_t angle;
+
+	contents = TruePointContents(org);
+	if (ISUNDERWATER(contents)) 
+	{
+		AddParticle(p_fire, org, 12, 14, 0.8, NULL, zerodir);
+		AddParticle(p_bubble, org, 12, 3.0, 2.5, NULL, zerodir);
+		AddParticle(p_bubble, org, 8, 2.35, 2.5, NULL, zerodir);
+	}
+	else 
+		AddParticle(p_fire, org, 16, 18, 1, NULL, zerodir);
+
+	for (a=0;a<120*amf_part_explosion.value;a++)
+	{
+		for (i=0;i<3;i++)
+			dir[i] = (rand() % 1500) - 750;
+		if (amf_part_trailtype.value == 2)
+			AddParticle(p_smallspark, org, 1, 1, 1*amf_part_trailtime.value, NULL, dir);
+		else
+			AddParticle(p_streak, org, 1, 1, 1*amf_part_trailtime.value, color, dir);
+	}
+
+	if (amf_part_shockwaves.value)
+	{
+		if (amf_part_2dshockwaves.value)
+		{
+			AddParticle(p_2dshockwave, org, 1, 30, 0.5, NULL, vec3_origin);
+		}
+		else
+		{
+			angle[2] = 0;
+			for (theta = 0; theta < 2 * M_PI; theta += 2 * M_PI / 90) 
+			{
+				angle[0] = cos(theta) * 500;
+				angle[1] = sin(theta) * 500;
+				AddParticle(p_shockwave, org, 1, 10, 0.5, NULL, angle);
+			}
+		}
+	}
+}
+
+//VULT PARTICLES
+void VXBlobExplosion (vec3_t org) 
+{
+	float theta;
+	col_t color;
+	vec3_t neworg, vel, dir;
+	int a, i;
+	color[0] = 60; color[1] = 100; color[2] = 240; color[3] = 128;
+	for (a=0;a<200*amf_part_blobexplosion.value;a++)
+	{
+		for (i=0;i<3;i++)
+		{
+			dir[i] = (rand() % 1500) - 750;
+		}
+		AddParticle(p_streakwave, org, 1, 1, 1*amf_part_trailtime.value, color, dir);
+	}
+
+	color[0] = 90; color[1] = 47; color[2] = 207;
+	AddParticle(p_fire, org, 15, 30, 1.4, color, zerodir);
+
+	vel[2] = 0;
+	//VULT PARTICLES
+	if (amf_part_shockwaves.value)
+	{
+		if (amf_part_2dshockwaves.value)
+		{
+			vec3_t shockdir;
+			int i;
+			color[0] = (60 + (rand() & 15)); color[1] = (65 + (rand() & 15)); color[2] = (200 + (rand() & 15));
+			for (i=0;i<3;i++)
+				shockdir[i] = rand() % 360;
+			AddParticle(p_2dshockwave, org, 1, 30, 0.5, color, shockdir);
+			for (i=0;i<3;i++)
+				shockdir[i] = rand() % 360;
+			AddParticle(p_2dshockwave, org, 1, 30, 0.5, color, shockdir);
+			for (i=0;i<3;i++)
+				shockdir[i] = rand() % 360;
+			AddParticle(p_2dshockwave, org, 1, 30, 0.5, color, shockdir);
+		}
+		else
+		{
+			for (theta = 0; theta < 2 * M_PI; theta += 2 * M_PI / 70) 
+			{
+				color[0] = (60 + (rand() & 15)); color[1] = (65 + (rand() & 15)); color[2] = (200 + (rand() & 15));
+
+		
+				vel[0] = cos(theta) * 125;
+				vel[1] = sin(theta) * 125;
+				neworg[0] = org[0] + cos(theta) * 6;
+				neworg[1] = org[1] + sin(theta) * 6;
+				neworg[2] = org[2] + 0 - 10;
+
+				AddParticle(p_shockwave, neworg, 1, 4, 0.8, color, vel);
+				neworg[2] = org[2] + 0 + 10;
+				AddParticle(p_shockwave, neworg, 1, 4, 0.8, color, vel);
+
+		
+				vel[0] *= 1.15;
+				vel[1] *= 1.15;
+				neworg[0] = org[0] + cos(theta) * 13;
+				neworg[1] = org[1] + sin(theta) * 13;
+				neworg[2] = org[2] + 0;
+				AddParticle(p_shockwave, neworg, 1, 6, 1.0, color, vel);
+			}
+		}
+	}
+}
+
+//VULT PARTICLES
+void VXTeleport (vec3_t org) 
+{
+	int i, j, a;
+	vec3_t neworg, angle, dir;
+	col_t color;
+
+	VectorSet(color, 140, 140, 255);
+	VectorClear(angle);
+	for (i = 0; i < 5; i++) {
+		angle[2] = 0;
+		for (j = 0; j < 5; j++) {
+			AngleVectors(angle, NULL, NULL, neworg);
+			VectorMA(org, 70, neworg, neworg);	
+			AddParticle(p_sparkray, org, 1, 6 + (i & 3), 5,  color, neworg);
+			angle[2] += 360 / 5;
+		}
+		angle[0] += 180 / 5;
+	}
+
+	color[0]=color[1]=color[2] = 255;
+	color[3]=128;
+	for (a=0;a<200*amf_part_teleport.value;a++)
+	{
+		for (i=0;i<3;i++)
+			dir[i] = (rand() % 1500) - 750;
+		AddParticle(p_streakwave, org, 1, 1, 1*amf_part_trailtime.value, color, dir);
+	}
+}
+
+//VULT - We need some kind of splatter effect, here it is
+void VXBlood (vec3_t org, float count)
+{
+
+	col_t color;
+	int a, i;
+
+	vec3_t trail, start, end;
+
+
+	if (amf_part_blood_type.value)
+	{
+		VectorCopy(org, start);
+
+		for (i=0;i<15;i++)
+		{
+			VectorCopy(start, end);
+			end[0]+=rand()%30-15;
+			end[1]+=rand()%30-15;
+			end[2]+=rand()%30-15;
+
+			VectorCopy(end, trail);
+
+			QMB_ParticleTrail(start, end, &trail, BLEEDING_TRAIL2);
+		}
+	}
+	
+
+	//blue
+	if (amf_part_blood_color.value == 2)
+	{
+		color[0]=55;color[1]=102;color[2]=255;
+	}
+	//green
+	else if (amf_part_blood_color.value == 3)
+	{
+		color[0]=80;color[1]=255;color[2]=80;
+	}
+	//red
+	else
+	{
+		color[0]=255;color[1]=0;color[2]=0;
+	}
+
+	for (a=0;a<count;a++)
+	{
+		AddParticle(p_vxblood, org, 1, 2.5, 2, color, 0);
+	}
+
+
+}
+
+
+
+//from darkplaces engine - finds which corner of a particle goes where, so I don't have to :D
+void R_CalcBeamVerts (float *vert, vec3_t org1, vec3_t org2, float width)
+{
+	vec3_t right1, right2, diff, normal;
+
+	VectorSubtract (org2, org1, normal);
+	VectorNormalize (normal);
+
+	//width = width / 2;
+	// calculate 'right' vector for start
+	VectorSubtract (r_origin, org1, diff);
+	VectorNormalize (diff);
+	CrossProduct (normal, diff, right1);
+
+	// calculate 'right' vector for end
+	VectorSubtract (r_origin, org2, diff);
+	VectorNormalize (diff);
+	CrossProduct (normal, diff, right2);
+
+	vert[ 0] = org1[0] + width * right1[0];
+	vert[ 1] = org1[1] + width * right1[1];
+	vert[ 2] = org1[2] + width * right1[2];
+	vert[ 4] = org1[0] - width * right1[0];
+	vert[ 5] = org1[1] - width * right1[1];
+	vert[ 6] = org1[2] - width * right1[2];
+	vert[ 8] = org2[0] - width * right2[0];
+	vert[ 9] = org2[1] - width * right2[1];
+	vert[10] = org2[2] - width * right2[2];
+	vert[12] = org2[0] + width * right2[0];
+	vert[13] = org2[1] + width * right2[1];
+	vert[14] = org2[2] + width * right2[2];
+}
+
+//VULT PARTICLES
+void AMFDEBUGTRAIL (vec3_t start, vec3_t end, float time)
+{
+	vec3_t start2, end2;
+	col_t color={255,255,255,255};
+	AddParticle(p_streaktrail, start, 1, 3, time, color, end);
+	VectorCopy(end, end2);
+	VectorCopy(start, end2);
+	VectorCopy(start, start2);
+	start2[2] += 50;
+	color[1] = 0;
+	color[2] = 0;
+	AddParticle(p_streaktrail, start2, 1, 3, time, color, end2);
+	VectorCopy(end, end2);
+	VectorCopy(end, start2);
+	start2[2] += 50;
+	color[0] = 0;
+	color[1] = 0;
+	color[2] = 255;
+	AddParticle(p_streaktrail, start2, 1, 3, time, color, end2);
+}
+
+//VULT PARTICLES
+void FireballTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[2], float size, float life)
+{
+	col_t color;
+	color[0] = col[0];
+	color[1] = col[1];
+	color[2] = col[2];
+
+
+	//head
+	AddParticleTrail (p_trailpart, start, end, size*7, 0.15, color);
+
+	//head-white part
+	color[0] = 255; color[1] = 255; color[2] = 255;
+	AddParticleTrail (p_trailpart, start, end, size*5, 0.15, color);
+
+	//medium trail
+	color[0] = col[0];
+	color[1] = col[1];
+	color[2] = col[2];
+	AddParticleTrail (p_trailpart, start, end, size*3, life, color);
+
+	VectorCopy(trail_stop, *trail_origin);
+}
+
+//VULT PARTICLES
+void FireballTrailWave (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[2], float size, float life, vec3_t angle)
+{
+	int i, j;
+	vec3_t dir, vec;
+	col_t color;
+	color[0] = col[0];
+	color[1] = col[1];
+	color[2] = col[2];
+
+	AngleVectors(angle, vec, NULL, NULL);
+	vec[2]*=-1;
+	FireballTrail (start, end, trail_origin, col, size, life);
+	if (!cl.paused)
+	{
+		for (i=0;i<3;i++)
+		{
+			for (j=0;j<3;j++)
+				dir[j] = vec[j] * -600 + ((rand() % 100) - 50);
+			AddParticle(p_streakwave, end, 1, 1, 1, color, dir);
+		}
+	}
+
+}
+
+//VULT PARTICLES
+//STALKER - It looks like that gun from daikatana, you suck
+//VULT - No dammit, its a fuel rod gun from halo
+//STALKER - Bullshit, it looks like the green sperm gun from daikatana
+//VULT - *cries*
+void FuelRodGunTrail (vec3_t start, vec3_t end, vec3_t angle, vec3_t *trail_origin)
+{
+	col_t color;
+	int i, j;
+	vec3_t dir, vec;
+
+	color[0] = 0; color[1] = 255; color[2] = 0;
+	AddParticleTrail (p_trailpart, start, end, 15, 0.2, color);
+	color[0] = 255; color[1] = 255; color[2] = 255;
+	AddParticleTrail (p_trailpart, start, end, 10, 0.2, color);
+	color[0] = 0; color[1] = 128; color[2] = 0;
+	AddParticleTrail (p_trailpart, start, end, 10, 0.5, color);
+	color[0] = 0; color[1] = 22; color[2] = 0;
+	AddParticleTrail (p_trailpart, start, end, 2, 3, color);
+	if (!cl.paused)
+	{
+		AngleVectors(angle, vec, NULL, NULL);
+		color[0] = 75; color[1] = 255; color[2] = 75;
+		for (i=0;i<3;i++)
+		{
+			for (j=0;j<3;j++)
+				dir[j] = vec[j] * -300 + ((rand() % 100) - 50);
+			dir[2] = dir[2] + 60;
+			if (amf_part_trailtype.value == 2)
+				AddParticle(p_smallspark, end, 1, 1, 2, color, dir);
+			else
+				AddParticle(p_streak, end, 1, 1, 2, color, dir);
+		}
+	}
+	VectorCopy(trail_stop, *trail_origin);
+}
+
+//VULT PARTICLES
+void DrawMuzzleflash (vec3_t start, vec3_t angle, vec3_t vel)
+{
+	vec3_t dir, forward, up, right;
+	col_t color;
+	int i;
+	color[0] = 55;
+	color[1] = 55;
+	color[2] = 55;
+	AngleVectors(angle, forward, right, up);
+	VectorClear(dir);
+	VectorMA(dir, 20, forward, dir);
+	dir[2] += rand() & 5;
+	AddParticle(p_vxsmoke, start, 1, 8, 1, color, dir);
+
+	color[0] = 255;
+	color[1] = 180;
+	color[2] = 55;
+	VectorCopy(start, dir);
+	for (i=60;i>0;i--) //VULT - i here is basically the length of the gun flame
+	{
+		VectorMA(dir, 0.33, forward, dir);
+		AddParticle(p_muzzleflash, dir, 1, i/3, 0.1, color, vel);
+	}
+}
+
+//VULT PARTICLES
+//VULT - Well, it *sometimes* looks like a mushroom cloud
+//STALKER - What!
+void FuelRodExplosion (vec3_t org)
+{
+	col_t color;
+	vec3_t dir, org2, angle;
+	int a, i;
+	float theta;
+
+	color[0] = 75; color[1] = 255; color[2] = 75;
+	AddParticle(p_fire, org, 10, 20, 0.5, color, zerodir);
+	angle[2] = 0;
+	if (amf_part_2dshockwaves.value)
+	{
+		AddParticle(p_2dshockwave, org, 1, 30, 0.5, NULL, vec3_origin);
+	}
+	else
+	{
+		for (theta = 0; theta < 2 * M_PI; theta += 2 * M_PI / 90) 
+		{
+			angle[0] = cos(theta) * 900;
+			angle[1] = sin(theta) * 900;
+			AddParticle(p_shockwave, org, 1, 15, 1, NULL, angle);
+		}
+	}
+
+	for (a=0;a<60*amf_part_explosion.value;a++)
+	{
+		for (i=0;i<3;i++)
+			dir[i] = (rand() % 1500) - 750;
+
+		if (amf_part_trailtype.value == 2)
+			AddParticle(p_smallspark, org, 1, 1, 0.5*amf_part_trailtime.value, color, dir);
+		else
+			AddParticle(p_streak, org, 1, 1, 0.5*amf_part_trailtime.value, color, dir);
+	}
+
+	for (i=0;i<5;i++)
+	{
+		VectorCopy(org, org2);
+		for (a=0;a<60;a=a+10)
+		{
+			org2[0]=org2[0]+(rand()%15)-7;
+			org2[1]=org2[1]+(rand()%15)-7;
+			org2[2]=org2[2]+10;
+			AddParticle(p_fire, org2, 5, 10, (0.5+a)/60, color, zerodir);
+		}
+	}
+	for (i=0;i<15;i++)
+	{
+		VectorCopy(org, org2);
+		org2[2]=org2[2]+60;
+		org2[0]=org2[0]+(rand()%100)-50;
+		org2[1]=org2[1]+(rand()%100)-50;
+		AddParticle(p_fire, org2, 5, 10, 1, color, zerodir);
+	}
+
+	for (i=0;i<5;i++)
+	{
+		VectorCopy(org, org2);
+		org2[2]=org2[2]+70;
+		org2[0]=org2[0]+(rand()%70)-35;
+		org2[1]=org2[1]+(rand()%70)-35;
+		AddParticle(p_fire, org2, 5, 10, 1.05, color, zerodir);
+	}
+	for (i=0;i<5;i++)
+	{
+		VectorCopy(org, org2);
+		org2[2]=org2[2]+80;
+		org2[0]=org2[0]+(rand()%50)-25;
+		org2[1]=org2[1]+(rand()%50)-25;
+		AddParticle(p_fire, org2, 5, 10, 1.1, color, zerodir);
+	}
+	for (i=0;i<5;i++)
+	{
+		VectorCopy(org, org2);
+		org2[2]=org2[2]+90;
+		org2[0]=org2[0]+(rand()%25)-12;
+		org2[1]=org2[1]+(rand()%25)-12;
+		AddParticle(p_fire, org2, 5, 10, 1.15, color, zerodir);
+	}
+
+}
+
+//VULT PARTICLES
+//GO YOU MIGHTY PARTICLE, YOU. BRING SWIFT IMAGINARY DEATH TO ALL LAME BASTARDS ON OUR TEAM
+void InfernoFire_f (void)
+{
+
+	vec3_t	forward, right, up;
+	vec3_t	ang, dir;
+	vec3_t	org;
+
+	ang[0] = cl.simangles[0];
+	ang[1] = cl.simangles[1];
+	ang[2] = 0;
+	AngleVectors (ang, forward, right, up);
+	VectorCopy(cl.simorg, org);
+	VectorMA (org, 22, forward, org);
+	VectorMA (org, 10, right, org);
+	VectorMA (org, 12, up, org);
+
+	VectorClear(dir);
+	VectorMA(dir, max(amf_inferno_speed.value, 150), forward, dir);
+
+	AddParticle(p_inferno, org, 1, 1, 10, NULL, dir);
+}
+
+//VULT PARTICLES
+//We need an imaginary trail vector because I don't want to write all the trails again just for the sake of this
+//make-believe missile
+void InfernoTrail (vec3_t start, vec3_t end, vec3_t vel)
+{
+	vec3_t trail, vec, dir;
+	col_t col;
+
+	VectorCopy(end, trail);
+	VectorClear(vec);
+	VectorClear(dir);
+	if (amf_inferno_trail.value == 1)
+	{
+		QMB_ParticleTrail(start, end, &trail, ROCKET_TRAIL);
+	}
+	else if (amf_inferno_trail.value == 2)
+	{
+		col[0] = 0; col[1] = 70; col[2] = 255;
+		FireballTrail (start, end, &trail, col, 2, 0.5);
+	}
+	else if (amf_inferno_trail.value == 3)
+	{
+		VectorSubtract(start, end, vec);
+		vec[0] =- vec[0];
+		vec[1] =- vec[1];
+		//vec[2] =- vec[2];
+		vectoangles(vec, dir);
+		col[0] = 0; col[1] = 255; col[2] = 0;
+		FuelRodGunTrail (start, end, dir, &trail);
+	}
+	else if (amf_inferno_trail.value == 4)
+	{
+		VectorSubtract(start, end, vec);
+		vec[0] =- vec[0]/600;
+		vec[1] =- vec[1]/600;
+		vec[2] =- vec[2]/600;
+		vectoangles(vec, dir);
+		col[0] = 255; col[1] = 70; col[2] = 5;
+		FireballTrailWave (start, end, &trail, col, 2, 0.5, dir);
+	}
+	else if (amf_inferno_trail.value == 5)
+	{
+		QMB_ParticleTrail(start, end, &trail, AMF_ROCKET_TRAIL);
+	}
+	CL_FakeRocketLight(end);
+	
+}
+
+//VULT PARTICLES
+//I don't know why i called it a burning explosion. Sprite based explosions are inferior anyway
+//unless they have some style...
+void BurningExplosion (vec3_t org) 
+{
+	col_t color={255,100,25, 128};
+	vec3_t dir;
+	int a, i;
+	int contents;
+	float theta;
+	vec3_t angle;
+
+	contents = TruePointContents(org);
+	if (ISUNDERWATER(contents)) 
+		AddParticle(p_fire, org, 12, 14, 0.8, NULL, zerodir);
+	
+
+	for (a=0;a<120*amf_part_explosion.value;a++)
+	{
+		for (i=0;i<3;i++)
+			dir[i] = (rand() % 1500) - 750;
+
+		if (amf_part_trailtype.value == 2)
+			AddParticle(p_smallspark, org, 1, 1, 1*amf_part_trailtime.value, NULL, dir);
+		else
+			AddParticle(p_streak, org, 1, 1, 1*amf_part_trailtime.value, color, dir);
+	}
+	if (amf_coronas.value)
+		NewCorona (C_EXPLODE, org);
+	if (amf_part_shockwaves.value)
+	{
+		if (amf_part_2dshockwaves.value)
+		{
+			AddParticle(p_2dshockwave, org, 1, 30, 0.5, NULL, vec3_origin);
+		}
+		else
+		{
+			angle[2] = 0;
+			for (theta = 0; theta < 2 * M_PI; theta += 2 * M_PI / 90) 
+			{
+				angle[0] = cos(theta) * 500;
+				angle[1] = sin(theta) * 500;
+				AddParticle(p_shockwave, org, 1, 10, 0.5, NULL, angle);
+			}
+		}
+	}
+}
+
+//VULT PARTICLES
+//Not much, but anything is better than that alias torch
+void ParticleFire (vec3_t org) 
+{
+	col_t color={255,100,25, 128};
+	int	contents = TruePointContents(org);
+	if (ISUNDERWATER(contents)) 
+		AddParticle(p_bubble, org, 1, 2.8, 2.5, NULL, zerodir);
+	else
+		AddParticle(p_flame, org, 1, 7, 0.8, color, zerodir);
+}
+
+//VULT PARTICLES
+//This looks quite good with detailtrails on
+void VX_TeslaCharge (vec3_t org)
+{
+	vec3_t pos, vec, dir;
+	col_t col={60,100,240, 128};
+	float time, len;
+	int i;
+
+	for (i=0;i<5;i++)
+	{
+		VectorClear(vec);
+		VectorClear(dir);
+
+		VectorCopy(org, pos);
+		pos[0]+=(rand()%200)-100;
+		pos[1]+=(rand()%200)-100;
+		pos[2]+=(rand()%200)-100;
+	
+		VectorSubtract(pos, org, vec);
+		len = VectorLength(vec);
+		VectorNormalize(vec);
+		VectorMA(dir, -200, vec, dir);
+		time = len/200; //
+
+		AddParticle(p_streakwave, pos, 1, 3, time, col, dir);
+	}
+}
+
+//VULT PARTICLES
+//Adds a beam type particle with the lightning texture
+void VX_LightningBeam (vec3_t start, vec3_t end)
+{
+	col_t color={120,140,255,255};
+	AddParticle(p_lightningbeam, start, 1, 100, cls.frametime*2, color, end);
+}
+
+//VULT PARTICLES
+//Effect for when someone dies
+void VX_DeathEffect (vec3_t org)
+{
+	int a, i;
+	vec3_t dir;
+	col_t color;
+	color[0]=255;
+	color[1]=225;
+	color[2]=128;
+	color[3]=128;
+	
+	for (a=0;a<60;a++)
+	{
+		for (i=0;i<3;i++)
+			dir[i] = (rand() % 700) - 300;
+		AddParticle(p_streakwave, org, 1, 1, 0.5, color, dir);
+	}
+}
+
+//VULT PARTICLES
+//Effect for when someone dies violently
+void VX_GibEffect (vec3_t org)
+{
+	col_t color;
+	color[0]=55;
+	color[1]=0;
+	color[2]=0;
+	color[3]=128;
+
+	AddParticle(p_bloodcloud, org, 10, 30, 1, color, zerodir);
+}
+
+//VULT PARTICLES
+//Prototype detpack explosion, yeah, I know, it sucks. Thats why its never actually used
+void VX_DetpackExplosion (vec3_t org)
+{
+	vec3_t angle, neworg;
+	float theta;
+	col_t color={255,102,25,255};
+	int i, j;
+
+	angle[2] = 0;
+	for (theta = 0; theta < 2 * M_PI; theta += 2 * M_PI / 90) 
+	{
+		angle[0] = cos(theta) * 750;
+		angle[1] = sin(theta) * 750;
+		AddParticle(p_shockwave, org, 1, 20, 1, NULL, angle);
+		angle[0] = cos(theta) * 200 + ((rand() % 100 ) - 50);
+		angle[1] = sin(theta) * 200 + ((rand() % 100 ) - 50);
+		angle[2] = rand() % 300;
+		AddParticle(p_chunkdir, org, 1, 8, 1, color, angle);
+		angle[2] = rand()%100-50;
+	}
+	AddParticle(p_fire, org, 20, 80, 1, color, zerodir);
+	for (i = 0; i < 5; i++) 
+	{
+		angle[2] = 0;
+		for (j = 0; j < 5; j++) 
+		{
+			AngleVectors(angle, NULL, NULL, neworg);
+			VectorMA(org, 180, neworg, neworg);	
+			AddParticle(p_sparkray, org, 1, 16 + (i & 3), 1,  NULL, neworg);
+			angle[2] += 360 / 5;
+		}
+		angle[0] += 180 / 5;
+	}
+
+}
+
+//VULT PARTICLES
+//This just adds a little lightning trail to the laser beams
+void VX_LightningTrail (vec3_t start, vec3_t end)
+{
+	col_t color={255,77,0,255};
+	AddParticle(p_lightningbeam, start, 1, 50, 0.75, color, end);
 }

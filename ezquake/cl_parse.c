@@ -31,6 +31,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fchecks.h"
 #include "config_manager.h"
 #include "utils.h"
+#include "EX_misc.h"
+#include "localtime.h"
+
+#ifdef GLQUAKE
+#include "vx_stuff.h"
+#endif
 
 void R_TranslatePlayerSkin (int playernum);
 void R_PreMapLoad(char *mapname);
@@ -331,7 +337,7 @@ void CL_ParseDownload (void) {
 			Q_snprintfz (name, sizeof(name), "%s/%s", cls.gamedir, cls.downloadtempname);
 		else
 			Q_snprintfz (name, sizeof(name), "qw/%s", cls.downloadtempname);
-
+//Com_Printf("%s\n%s\n", cls.downloadname, cls.downloadtempname);
 		COM_CreatePath (name);
 
 		cls.download = fopen (name, "wb");
@@ -381,6 +387,131 @@ void CL_ParseDownload (void) {
 	}
 }
 
+/*
+=====================================================================
+
+  UPLOAD FILE FUNCTIONS
+
+=====================================================================
+*/
+void CL_NextUpload(void)
+{
+	static byte	buffer[MAX_MSGLEN - 14];
+	int		r;
+	int		percent;
+	int		size;
+	static int s = 0;
+	static double	time;
+
+	if ((!cls.is_file && !cls.mem_upload) || (cls.is_file && !cls.upload))
+		return;
+
+	r = min(cls.upload_size - cls.upload_pos, sizeof(buffer));
+	MSG_WriteByte (&cls.netchan.message, clc_upload);
+	MSG_WriteShort (&cls.netchan.message, r);
+
+	if (cls.is_file) {
+		//fseek(upload, upload_pos, SEEK_CUR); // er don't seek
+		fread(buffer, 1, r, cls.upload);
+	} else {
+		memcpy(buffer, cls.mem_upload + cls.upload_pos, r);
+	}
+	cls.upload_pos += r;
+	size = cls.upload_size ? cls.upload_size : 1;
+	percent = cls.upload_pos * 100 / size;
+	cls.uploadpercent = percent;
+	MSG_WriteByte (&cls.netchan.message, percent);
+	SZ_Write (&cls.netchan.message, buffer, r);
+
+	Com_DPrintf ("UPLOAD: %6d: %d written\n", cls.upload_pos - r, r);
+
+	s += r;
+	if (cls.realtime - time > 1) {
+		cls.uploadrate = s/(1024*(cls.realtime - time));
+		time = cls.realtime;
+		s = 0;
+	}
+	if (cls.upload_pos != cls.upload_size)
+		return;
+
+	Com_Printf ("Upload completed\n");
+
+	if (cls.is_file) {
+		fclose (cls.upload);
+		cls.upload = NULL;
+	} else {
+		Q_Free(cls.mem_upload);
+		cls.mem_upload = 0;
+	}
+	cls.upload_pos = 0;
+	cls.upload_size = 0;
+}
+
+void CL_StartUpload (byte *data, int size)
+{
+	if (cls.state < ca_onserver)
+		return; // gotta be connected
+
+	cls.is_file = false;
+
+	// override
+	if (cls.mem_upload)
+		Q_Free(cls.mem_upload);
+	cls.mem_upload = Q_Malloc (size);
+	memcpy(cls.mem_upload, data, size);
+	cls.upload_size = size;
+	cls.upload_pos = 0;
+	Com_Printf ("Upload starting of %d...\n", cls.upload_size);
+
+	CL_NextUpload();
+} 
+
+void CL_StartFileUpload (void)
+{
+	char path[MAX_OSPATH];
+	if (cls.state < ca_onserver)
+		return; // gotta be connected
+	cls.is_file = true;
+	// override
+	if (cls.upload) {
+		fclose(cls.upload);
+		cls.upload = NULL;
+	}
+	snprintf(path, sizeof(path), "%s/%s", Cmd_Argv(2), Cmd_Argv(3));
+	cls.upload = fopen(path, "rb"); // BINARY
+	if (!cls.upload) {
+		Com_Printf ("Bad file \"%s\"\n", path);
+		return;
+	}
+	cls.upload_size = COM_FileLength(cls.upload);
+	cls.upload_pos = 0;
+	strlcpy(cls.uploadname, Cmd_Argv(3), sizeof(cls.uploadname));
+	Com_Printf ("Upload starting: %s (%d bytes)...\n", cls.uploadname, cls.upload_size);
+	CL_NextUpload();
+}
+
+qboolean CL_IsUploading(void)
+{
+	if ((!cls.is_file && cls.mem_upload) || (cls.is_file && cls.upload))
+		return true;
+	return false;
+}
+
+void CL_StopUpload(void)
+{
+	if (cls.is_file) {
+		if (cls.upload) {
+			fclose(cls.upload);
+			cls.upload = NULL;
+		}
+	} else {
+		if (cls.mem_upload) {
+			Q_Free(cls.mem_upload);
+			cls.mem_upload = NULL;
+		}
+	}
+}
+/*
 static byte *upload_data;
 static int upload_pos;
 static int upload_size;
@@ -455,6 +586,7 @@ void CL_StartUpload (char *filename) {
 
 	CL_NextUpload();
 } 
+*/
 /*
 =====================================================================
   SERVER CONNECTING MESSAGES
@@ -479,7 +611,7 @@ void CL_ParseServerData (void) {
 	protover = MSG_ReadLong ();
 	if (protover != PROTOCOL_VERSION &&
 		!(cls.demoplayback && (protover == 26 || protover == 27 || protover == 28)))
-		Host_Error ("Server returned version %i, not %i\nYou probably need to upgrade.\nCheck http://www.fuhquake.net/", protover, PROTOCOL_VERSION);
+		Host_Error ("Server returned version %i, not %i\nYou probably need to upgrade.", protover, PROTOCOL_VERSION);
 
 	cl.protoversion = protover;
 	cl.servercount = MSG_ReadLong ();
@@ -822,7 +954,8 @@ void CL_NewTranslation (int slot) {
 	if (!cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_COLOR)) {
 		qboolean teammate;
 
-		teammate = (cl.teamplay && !strcmp(player->team, skinforcing_team)) ? true : false;
+		teammate = ( // cl.teamplay && 
+			!strcmp(player->team, skinforcing_team)) ? true : false;
 		if (cl_teamtopcolor >= 0 && teammate) {
 			player->topcolor = cl_teamtopcolor;
 			player->bottomcolor = cl_teambottomcolor;
@@ -869,7 +1002,7 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key) {
 		TP_RefreshSkin(slot);
 
 	strcpy (player->_team, player->team);
-}
+} 
 
 void CL_PlayerEnterSlot(player_info_t *player) {
 	extern player_state_t oldplayerstates[MAX_CLIENTS];
@@ -1022,14 +1155,79 @@ static void FlushString (char *s, int level, qboolean team, int offset) {
 	Stats_ParsePrint(s, level);
 }
 
+
+void MakeChatRed(char *t, int mm2)
+{
+    if (mm2)
+    {
+        int white = 0;
+        char *d, *s;
+        char *buf = (char *)malloc(strlen(t)+2);
+
+        d = buf;
+        s = t;
+        while (*s)
+        {
+            if (s-t > mm2)
+            {
+                switch (*s)
+                {
+                case '{':
+                    if (*(s+1) == '{')
+                    {
+                        *d++ = '{'|128;
+                        s++;
+                    }
+                    else
+                        white ++;
+                    break;
+                case '}':
+                    if (*(s+1) == '}')
+                    {
+                        *d++ = '}'|128;
+                        s++;
+                    }
+                    else
+                        white --;
+                    break;
+                default:
+                    *d++ = (white > 0  ||  *s <= ' ') ? *s : (*s|128);
+                }
+                white = max(0, white);
+            }
+            else
+                *d++ = *s | (isspace2(*s) ? 0 : 128);
+
+            s++;
+        }
+        *d = 0;
+        strcpy(t, buf);
+        free(buf);
+    }
+    else
+    {
+        int i;
+        for (i=0; i < strlen(t); i++)
+            if (t[i] > ' ')
+                t[i] |= 128;
+    }
+}
+
 void CL_ParsePrint (void) {
 	qboolean suppress_talksound;	
-	char *s, str[2048], *p, check_flood;		
+	qboolean cut_message = false;
+	char *s, str[2048], *p, check_flood, dest[2048], *c, *d, *f, e, b; 
 	int len, level, flags = 0, offset = 0;
-	extern cvar_t cl_chatsound;							
+	extern cvar_t cl_chatsound;
+
+    int client;
+    int type; 
+	char *msg;
 
 	extern qboolean TP_SuppressMessage(char *);
 
+    char *chat_sound_file;
+    float chat_sound_vol;
 
 	level = MSG_ReadByte ();
 	s = MSG_ReadString ();
@@ -1038,7 +1236,61 @@ void CL_ParsePrint (void) {
 	
 		if (TP_SuppressMessage(s))
 			return;
-	
+
+		/*
+        while (*s  &&  *s != 0x7f)
+            s++;
+        if (*s == 0x7f)
+        {
+            int isListed = 0;
+            int hide = 0;
+            *s = '\n';  // little dangerous but i'm senny
+            s++;
+            if (*s == '!')
+            {
+                *s = 0; // so is here
+                s++;
+                hide = 1;
+            }
+            while (*s)
+            {
+                if (*s - '@' == cl.playernum+1)
+                {   isListed = 1; *s = 0; break; }
+                *s = 0;
+                s++;
+            }
+            if (hide == isListed)   // hide && isListed || !hide && !isListed
+                if (!cls.demoplayback)
+                    return;  // don't print
+        }
+
+		*/
+
+		f = s;
+	    while (e = *f++) {
+			if (e == '\x7f') {
+				cut_message = true;
+				break;
+			}
+		}
+
+		if (cut_message == true) {
+
+			c = s;
+			d = dest;
+
+			while ((b = *c++) && (b != '\x7f')) {
+				*d++ = b;
+			}
+
+			*d++ = '\n';
+			*d++ = 0;
+
+			s = dest;
+
+		}
+
+		
 
 		flags = TP_CategorizeMessage (s, &offset);
 		FChecks_CheckRequest(s);
@@ -1065,8 +1317,76 @@ void CL_ParsePrint (void) {
 			(cl_chatsound.value == 2 && flags != 2))	// only play sound in mm2
 			suppress_talksound = true;
 
-		if (!suppress_talksound)
-			S_LocalSound ("misc/talk.wav");
+        chat_sound_file = NULL;
+
+		client = SeparateChat(s, &type, &msg);
+
+        if (client >= 0 && !suppress_talksound)
+        {
+            if (cl.players[client].spectator)
+            {
+                chat_sound_file = con_sound_spec_file.string;
+                chat_sound_vol = con_sound_spec_volume.value;
+            }
+            else
+            {
+                switch (type)
+                {
+                case CHAT_MM1:
+                    chat_sound_file = con_sound_mm1_file.string;
+                    chat_sound_vol = con_sound_mm1_volume.value;
+                    break;
+                case CHAT_MM2:
+                    chat_sound_file = con_sound_mm2_file.string;
+                    chat_sound_vol = con_sound_mm2_volume.value;
+                    break;
+                case CHAT_SPEC:
+                    chat_sound_file = con_sound_spec_file.string;
+                    chat_sound_vol = con_sound_spec_volume.value;
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        if (chat_sound_file == NULL)
+        {
+            // assign "other" if not recognized
+            chat_sound_file = con_sound_other_file.string;
+            chat_sound_vol = con_sound_other_volume.value;
+        }
+		if (chat_sound_vol > 0) {
+            S_LocalSoundWithVol(chat_sound_file, chat_sound_vol);
+		}
+
+#ifdef _WIN32
+	    if (level >= PRINT_HIGH  &&  strlen(s) > 0)
+	        VID_NotifyActivity();
+#endif
+
+		if (strlen(s) > 0)  // KT sometimes sends empty strings
+		{
+			if (con_addtimestamp)
+			{
+				con_addtimestamp = false;
+				if (con_timestamps.value)
+				{
+					if (con_timestamps.value != 0)
+					{
+						SYSTEMTIME lt;
+						char tmpbuf[16];
+						GetLocalTime (&lt);
+						sprintf(tmpbuf, "%2d:%02d ", lt.wHour, lt.wMinute);
+						//MakeChatRed(tmpbuf, false);
+						Com_Printf(tmpbuf);
+					}
+				}
+			}
+
+			if (strchr(s, '\n'))
+				con_addtimestamp = true;
+
+		}
 
 		if (cl_nofake.value == 1 || (cl_nofake.value == 2 && flags != 2)) {
 			for (p = s; *p; p++)
@@ -1149,6 +1469,135 @@ void CL_SetStat (int stat, int value) {
 	TP_StatChanged(stat, value);
 }
 
+#ifdef GLQUAKE
+void CL_MuzzleFlash (void) {
+	//VULT MUZZLEFLASH
+	vec3_t forward, right, up, org, angles;
+	model_t *mod;
+
+	dlight_t *dl;
+	int i, j, num_ent;
+	entity_state_t *ent;
+	player_state_t *state;
+	vec3_t none={0,0,0};
+
+	i = MSG_ReadShort ();
+
+	if (!cl_muzzleflash.value)
+		return;
+
+	if (!cl.validsequence)
+		return;
+
+	if ((unsigned) (i - 1) >= MAX_CLIENTS) {
+		// a monster firing
+		num_ent = cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.num_entities;
+		for (j = 0; j < num_ent; j++) {
+			ent = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.entities[j];
+			if (ent->number == i) {
+				mod = cl.model_precache[ent->modelindex];
+				//VULT MUZZLEFLASH - Special muzzleflashes for some enemies
+				if (mod->modhint == MOD_SOLDIER) //gruntor
+				{
+					AngleVectors (ent->angles, forward, right, up);
+					VectorMA (ent->origin, 22, forward, org);
+					VectorMA (org, 10, right, org);
+					VectorMA (org, 12, up, org);
+					if (amf_part_muzzleflash.value)
+					{
+						if (amf_coronas.value)
+							NewCorona (C_SMALLFLASH, org);
+						DrawMuzzleflash(org, ent->angles, none);
+					}
+				}
+				else if (mod->modhint == MOD_ENFORCER)
+				{
+					AngleVectors (ent->angles, forward, right, up);
+					VectorMA (ent->origin, 22, forward, org);
+					VectorMA (org, 10, right, org);
+					VectorMA (org, 12, up, org);
+					if (amf_part_muzzleflash.value)
+					{
+						if (amf_coronas.value)
+							NewCorona (C_SMALLFLASH, org);
+						DrawMuzzleflash(org, ent->angles, none);
+					}
+				}
+				else if (mod->modhint == MOD_OGRE)
+				{
+					AngleVectors (ent->angles, forward, right, up);
+					VectorMA (ent->origin, 22, forward, org);
+					VectorMA (org, -8, right, org);
+					VectorMA (org, 14, up, org);
+					if (amf_part_muzzleflash.value)
+					{
+						if (amf_coronas.value)
+							NewCorona (C_SMALLFLASH, org);
+						DrawMuzzleflash(org, ent->angles, none);
+					}
+				}
+				else
+				{
+					AngleVectors (ent->angles, forward, NULL, NULL);
+					VectorMA (ent->origin, 18, forward, org);
+				}
+				dl = CL_AllocDlight (-i);
+				dl->radius = 200 + (rand() & 31);
+				dl->minlight = 32;
+				dl->die = cl.time + 0.1;
+				//VULT MUZZLEFLASH - Blue muzzleflashes for shamblers/teslas
+				if (mod->modhint == MOD_SHAMBLER || mod->modhint == MOD_TESLA)
+					dl->type = lt_blue;
+				else
+					dl->type = lt_muzzleflash;
+				VectorCopy(org, dl->origin);
+
+				break;
+			}
+		}
+		return;
+	}
+	if (cl_muzzleflash.value == 2 && i - 1 == cl.viewplayernum)
+		return;
+
+	dl = CL_AllocDlight (-i);
+	state = &cl.frames[cls.mvdplayback ? oldparsecountmod : parsecountmod].playerstate[i - 1];	
+
+	//VULT MUZZLEFLASH
+	if (i-1==cl.viewplayernum)
+	{
+
+		VectorCopy(cl.simangles, angles);
+		VectorCopy(cl.simorg, org);
+	}
+	else
+	{
+		VectorCopy(state->viewangles, angles);
+		VectorCopy(state->origin, org);
+	}
+	AngleVectors (angles, forward, right, up);
+	VectorMA (org, 22, forward, org);
+	VectorMA (org, 10, right, org);
+	VectorMA (org, 12, up, org);
+	VectorCopy(org, dl->origin);
+
+	dl->radius = 200 + (rand()&31);
+	dl->minlight = 32;
+	dl->die = cl.time + 0.1;
+	dl->type = lt_muzzleflash;
+	//VULT MUZZLEFLASH
+	if (amf_part_muzzleflash.value)
+	{
+		if ((i-1 != cl.viewplayernum) || cameratype != C_NORMAL)
+		{
+			if (amf_coronas.value)
+				NewCorona (C_SMALLFLASH, dl->origin);
+			DrawMuzzleflash(org, angles, state->velocity);
+		}
+	}
+
+}
+#else
 void CL_MuzzleFlash (void) {
 	vec3_t forward;
 	dlight_t *dl;
@@ -1194,6 +1643,7 @@ void CL_MuzzleFlash (void) {
 	dl->die = cl.time + 0.1;
 	dl->type = lt_muzzleflash;
 }
+#endif
 
 void CL_ParseQizmoVoice (void) {
 	int i, seq, bits, num, unknown;
@@ -1259,6 +1709,9 @@ void CL_ParseServerMessage (void) {
 			break;
 
 		case svc_disconnect:
+#ifdef _WIN32
+			VID_NotifyActivity();
+#endif
 			if (cls.state == ca_connected) {
 				Host_Error(	"Server disconnected\n"
 							"Server version may not be compatible");

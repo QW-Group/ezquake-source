@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // cvar.c -- dynamic variable tracking
 
+#include "quakedef.h"
 #include "common.h"
 #include "console.h"
 
@@ -26,6 +27,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern void CL_UserinfoChanged (char *key, char *value);
 extern void SV_ServerinfoChanged (char *key, char *value);
+
+extern cvar_t r_fullbrightSkins;
+extern cvar_t allow_scripts;
 
 static cvar_t *cvar_hash[32];
 cvar_t *cvar_vars;
@@ -192,6 +196,28 @@ void Cvar_Set (cvar_t *var, char *value) {
 	if (var->flags & CVAR_USERINFO)
 		CL_UserinfoChanged (var->name, var->string);
 #endif
+
+	if (!cl.spectator && cls.state != ca_disconnected) {
+
+		if (!strcmp(var->name, "r_fullbrightSkins")) {
+			float fbskins;		
+			fbskins = bound(0, var->value, cl.fbskins);	
+			if (fbskins > 0) {
+				Cbuf_AddText (va("say all skins %d%% fullbright\n", (int) (fbskins * 100)));	
+			}
+			else {
+				Cbuf_AddText (va("say not using fullbright skins\n"));	
+			}
+		}
+		else if (!strcmp(var->name, "allow_scripts")) {
+			if (allow_scripts.value < 1)
+				Cbuf_AddText("say not using scripts\n");
+			else if (allow_scripts.value < 2 || com_blockscripts)
+				Cbuf_AddText("say using simple scripts\n");
+			else
+				Cbuf_AddText("say using advanced scripts\n");
+		}
+	}
 }
 
 void Cvar_ForceSet (cvar_t *var, char *value) {
@@ -209,7 +235,7 @@ void Cvar_ForceSet (cvar_t *var, char *value) {
 void Cvar_SetValue (cvar_t *var, float value) {
 	char val[128];
 	int	i;
-	
+
 	Q_snprintfz (val, sizeof(val), "%f", value);
 
 	for (i = strlen(val) - 1; i > 0 && val[i] == '0'; i--)

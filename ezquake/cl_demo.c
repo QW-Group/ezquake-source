@@ -152,6 +152,15 @@ void CL_WriteDemoMessage (sizebuf_t *msg) {
 	CL_Demo_Write(msg->data, msg->cursize);
 
 	CL_Demo_Flush();
+
+    {
+        extern void Request_Pings(void);
+        extern cvar_t demo_getpings;
+        
+        if (demo_getpings.value)
+            Request_Pings();
+    }
+
 }
 
 
@@ -574,6 +583,8 @@ readnext:
 		for (j = 0; j < 3; j++)
 			 cl.viewangles[j] = LittleFloat (cl.viewangles[j]);
 
+        CL_CalcPlayerFPS(&cl.players[cl.playernum], pcmd->msec);
+
 		if (cl.spectator)
 			Cam_TryLock();
 
@@ -684,8 +695,7 @@ static void CL_WriteDemoPimpMessage(void) {
 
 	Q_snprintfz(pimpmessage, sizeof(pimpmessage), "\n%s\n%s\n%s\n%s\n",
 		border,
-		"\x1d\x1e\x1e\x1e\x1e\x1e\x1e Recorded by FuhQuake \x1e\x1e\x1e\x1e\x1e\x1e\x1f",
-		"\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e www.fuhquake.net \x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f",
+		"\x1d\x1e\x1e\x1e\x1e\x1e\x1e Recorded by ezQuake \x1e\x1e\x1e\x1e\x1e\x1e\x1f",
 		border		
 	);
 
@@ -703,7 +713,7 @@ static void CL_StopRecording (void) {
 	if (!cls.demorecording)
 		return;
 
-	CL_WriteDemoPimpMessage();
+	// CL_WriteDemoPimpMessage();
 
 	// write a disconnect message to the demo file
 	SZ_Clear (&net_message);
@@ -739,6 +749,11 @@ static char *CL_DemoDirectory(void) {
 
 void CL_Record_f (void) {
 	char nameext[MAX_OSPATH * 2], name[MAX_OSPATH * 2];
+
+	if (cls.state != ca_active) {
+		Com_Printf ("You must be connected before using record\n");
+		return;
+	}
 
 	switch(Cmd_Argc()) {
 	case 1:
@@ -864,6 +879,11 @@ static qboolean CL_RecordDemo(char *dir, char *name, qboolean autorecord) {
 void CL_EasyRecord_f (void) {
 	int c;
 	char *name;
+
+	if (cls.state != ca_active) {
+		Com_Printf("You must be connected to easyrecord\n");
+		return;
+	}
 
 	switch((c = Cmd_Argc())) {
 		case 1:
@@ -1200,6 +1220,9 @@ void CL_Play_f (void) {
 		Com_Printf ("Error: Couldn't open %s\n", Cmd_Argv(1));
 		return;
 	}
+
+	nTrack1=nTrack2=nTrack3=nTrack4=-1;
+	nTrack1duel=nTrack2duel=0;
 
 	Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
 

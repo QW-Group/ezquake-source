@@ -79,6 +79,13 @@ typedef struct player_info_s {
 	char	team[MAX_INFO_STRING];
 	char	_team[MAX_INFO_STRING];
 
+    int    fps_msec;
+    int    last_fps;
+    int    fps;         // > 0 - fps, < 0 - invalid, 0 - collecting
+    int    fps_frames;
+    double fps_measure_time;
+    qboolean isnear;
+
 	int		spectator;
 	byte	translations[VID_GRADES*256];
 	skin_t	*skin;
@@ -90,6 +97,10 @@ typedef struct player_info_s {
 	qboolean	ignored;		//for ignore
 	qboolean	validated;		//for authentication
 	char		f_server[16];	//for f_server responses
+
+	//VULT DEATH EFFECT
+	//Better putting the dead flag here instead of on the entity so whats dead stays dead
+	qboolean dead;
 
 } player_info_t;
 
@@ -228,6 +239,16 @@ typedef struct {
 	dltype_t	downloadtype;
 	int			downloadpercent;
 
+//bliP ->
+	FILE		*upload;
+	char		uploadname[MAX_OSPATH];
+	int		uploadpercent;
+	int		uploadrate;
+	qboolean	is_file;
+	byte		*mem_upload;
+	int		upload_pos;
+	int		upload_size;
+//<-
 	// demo recording info must be here, because record is started before entering a map (and clearing clientState_t)
 	qboolean	demorecording;
 	qboolean	demoplayback;
@@ -250,6 +271,8 @@ typedef struct {
 
 extern clientPersistent_t	cls;
 
+extern qboolean com_blockscripts;
+
 
 // cl.paused flags
 
@@ -270,6 +293,8 @@ typedef struct {
 	int			fpd;			// FAQ proxy flags
 	int			z_ext;			// ZQuake protocol extensions flags
 	float		maxfps;
+
+	int			last_fps;
 
 	int			parsecount;		// server message counter
 	
@@ -393,11 +418,20 @@ extern visentlist_t cl_firstpassents, cl_visents, cl_alphaents;
 extern visentlist_t cl_visents, cl_visbents;
 #endif
 
-// FuhQuake cvars
+// ezQuake cvars
 extern cvar_t cl_floodprot;			
 extern cvar_t cl_fp_messages;		
 extern cvar_t cl_fp_persecond;	
-extern cvar_t cl_cmdline;			
+extern cvar_t cl_cmdline;
+#ifdef WITH_KEYMAP
+extern cvar_t cl_showkeycodes;
+#endif // WITH_KEYMAP
+// oppymv 310804
+extern cvar_t cl_multiview;
+extern cvar_t cl_mvdisplayhud;
+extern cvar_t cl_mvinset; 
+extern cvar_t cl_mvinsetcrosshair;
+extern cvar_t cl_mvinsethud;
 
 extern cvar_t r_rocketlight;
 extern cvar_t r_rocketlightcolor;
@@ -477,8 +511,9 @@ void CL_NewTranslation (int slot);
 qboolean CL_CheckOrDownloadFile (char *filename);
 qboolean CL_IsUploading(void);
 void CL_NextUpload(void);
-void CL_StartUpload (char *filename);
+void CL_StartUpload (byte *data, int size);
 void CL_StopUpload(void);
+void CL_StartFileUpload(void); //bliP
 
 void CL_ParseClientdata (void);	
 
@@ -534,6 +569,8 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u);
 extern int	autocam;
 extern int	spec_track; // player# of who we are tracking
 
+int WhoIsSpectated (void);
+
 qboolean Cam_DrawViewModel (void);
 qboolean Cam_DrawPlayer (int playernum);
 void Cam_Track (usercmd_t *cmd);
@@ -578,5 +615,24 @@ void Stats_GetFlagStats(int num, int *stats);
 #define RSSHOT_WIDTH 320
 #define RSSHOT_HEIGHT 200
 
+void CL_CalcPlayerFPS(player_info_t *info, int msec);
 
 dlighttype_t dlightColor(float f, dlighttype_t def, qboolean random);
+
+int CURRVIEW;
+int nNumViews;
+int nContrastExit, nViewsizeExit, nCrosshairExit;
+int nPolyblendExit, nGlClearExit;
+int nLerpframesExit;
+int nWaterwarp;
+int nContentblend;
+int nQuadshift, nPentshift, nRingshift, nDamageshift, nSuitshift;
+int nBonusflash;
+int bExitmultiview;
+int nPlayernum;
+int nTrack1, nTrack2, nTrack3, nTrack4;
+char currteam[196];
+int mvlatch;
+int nUnlock;
+int nSwapPov;
+int nTrack1duel, nTrack2duel;

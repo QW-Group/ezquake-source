@@ -26,8 +26,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "resource.h"
 #include "sound.h"
 
+#ifdef WITH_KEYMAP
+#include "keymap.h"
+#endif // WITH_KEYMAP
+
 #pragma warning( disable : 4229 )  // mgraph gets this
-#include <mgraph.h>
+#include "mgraph.h"
 
 #define	MINIMUM_MEMORY	0x550000
 
@@ -69,6 +73,8 @@ extern qboolean mouseactive; // from in_win.c
 
 cvar_t		vid_ref = {"vid_ref", "soft", CVAR_ROM};
 
+cvar_t      vid_flashonactivity = {"vid_flashonactivity", "1", CVAR_ARCHIVE};
+qboolean allow_flash = false; 
 // Note that 0 is MODE_WINDOWED
 cvar_t		vid_mode = {"vid_mode","0"};
 // Note that 0 is MODE_WINDOWED
@@ -517,7 +523,7 @@ void VID_InitMGLDIB (HINSTANCE hInstance) {
     wc.hCursor       = LoadCursor (NULL,IDC_ARROW);
 	wc.hbrBackground = NULL;
     wc.lpszMenuName  = 0;
-    wc.lpszClassName = "FuhQuake";
+    wc.lpszClassName = "ezQuake";
 
     if (!RegisterClass (&wc) )
 		Sys_Error ("Couldn't register window class");
@@ -1013,8 +1019,8 @@ qboolean VID_SetWindowedMode (int modenum) {
 	if (!vid_mode_set) {
 		mainwindow = CreateWindowEx (
 			 ExWindowStyle,
-			 "FuhQuake",
-			 "FuhQuake",
+			 "ezQuake",
+			 "ezQuake",
 			 WindowStyle,
 			 0, 0,
 			 WindowRect.right - WindowRect.left,
@@ -1105,6 +1111,7 @@ qboolean VID_SetWindowedMode (int modenum) {
 }
 
 qboolean VID_SetFullscreenMode (int modenum) {
+
 	DDActive = 1;
 
 	DestroyDIBWindow ();
@@ -1119,6 +1126,10 @@ qboolean VID_SetFullscreenMode (int modenum) {
 		MGL_destroyDC (memdc);
 	mgldc = memdc = NULL;
 
+	// oppymv 010904 - for fullscreen flipping problems
+	if (cl_multiview.value && cls.mvdplayback)
+		mgldc = createDisplayDC (1);
+	else
 	if ((mgldc = createDisplayDC (modelist[modenum].stretched || (int) vid_nopageflip.value)) == NULL)
 		return false;
 
@@ -1610,6 +1621,7 @@ void VID_Init (unsigned char *palette) {
 	Cvar_Register (&vid_window_y);
 	Cvar_Register (&vid_resetonswitch);
 	Cvar_Register (&vid_displayfrequency);
+	Cvar_Register (&vid_flashonactivity);
 
 	Cvar_ResetCurrentGroup();
 
@@ -1699,8 +1711,15 @@ void VID_Init (unsigned char *palette) {
 	vid_menukeyfn = VID_MenuKey;
 
 	strcpy (badmode.modedesc, "Bad mode");
+
 }
 
+void VID_NotifyActivity(void) {
+    if (!ActiveApp && vid_flashonactivity.value) { // && allow_flash
+        FlashWindow(mainwindow, TRUE);
+        allow_flash = false;
+    }
+}
 
 void VID_Shutdown (void) {
 	if (!vid_initialized)
@@ -1794,6 +1813,7 @@ void FlipScreen(vrect_t *rects) {
 
 				rects = rects->pnext;
 			}
+
 		}
 
 		ReleaseDC(mainwindow, hdcScreen);
@@ -1849,7 +1869,13 @@ void VID_Update (vrect_t *rects) {
 	}
 
 	// We've drawn the frame; copy it to the screen
-	FlipScreen (rects);
+
+	//oppymv 010904 FIXME
+	if (cl_multiview.value && cls.mvdplayback) {
+		if (CURRVIEW == 1)
+			FlipScreen (rects);
+	} else
+		FlipScreen (rects);
 
 	if (vid_testingmode) {
 		if (curtime >= vid_testendtime) {
@@ -1865,6 +1891,9 @@ void VID_Update (vrect_t *rects) {
 			vid_realmode = vid_modenum;
 		}
 	}
+
+	if (!ActiveApp)
+		allow_flash = true;
 
 	// handle the mouse state when windowed if that's changed
 	if (modestate == MS_WINDOWED) {
@@ -2136,8 +2165,10 @@ void AppActivate(BOOL fActive, BOOL minimize) {
 
 LONG CDAudio_MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+#ifdef WITH_KEYMAP
+#else // WITH_KEYMAP
 int IN_MapKey (int key);
-
+#endif // WITH_KEYMAP else
 
 #include "mw_hook.h"
 void MW_Hook_Message (long buttons);
@@ -2250,13 +2281,21 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
 			if (!in_mode_set)
+#ifdef WITH_KEYMAP
+				IN_TranslateKeyEvent (lParam, true);
+#else // WITH_KEYMAP
 				Key_Event (IN_MapKey(lParam), true);
+#endif // WITH_KEYMAP else
 			break;
 
 		case WM_KEYUP:
 		case WM_SYSKEYUP:
 			if (!in_mode_set)
+#ifdef WITH_KEYMAP
+				IN_TranslateKeyEvent (lParam, false);
+#else // WITH_KEYMAP
 				Key_Event (IN_MapKey(lParam), false);
+#endif // WITH_KEYMAP else
 			break;
 
 		// this is complicated because Win32 seems to pack multiple mouse events into
@@ -2269,6 +2308,12 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		case WM_MBUTTONUP:
 		case WM_XBUTTONDOWN:
 		case WM_XBUTTONUP:
+#ifdef MM_CODE
+		case WM_LBUTTONDBLCLK:
+		case WM_RBUTTONDBLCLK:
+		case WM_MBUTTONDBLCLK:
+		case WM_XBUTTONDBLCLK:
+#endif // MM_CODE
 			if (!in_mode_set) {
 				temp = 0;
 
@@ -2346,7 +2391,7 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			// this causes Close in the right-click task bar menu not to work, but right
 			// now bad things happen if Close is handled in that case (garbage and a crash on Win95)
 			if (!in_mode_set) {
-				if (MessageBox (mainwindow, "Are you sure you want to quit?", "FuhQuake : Confirm Exit",
+				if (MessageBox (mainwindow, "Are you sure you want to quit?", "ezQuake : Confirm Exit",
 							MB_YESNO | MB_SETFOREGROUND | MB_ICONQUESTION) == IDYES)
 				{
 					Host_Quit ();

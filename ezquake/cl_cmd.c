@@ -18,11 +18,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#include <time.h>
 #include "quakedef.h"
 #include "winquake.h"
 #include "menu.h"
 #include "teamplay.h"
 #include "version.h"
+#include "sha1.h"
 
 #include "config_manager.h"
 
@@ -57,13 +59,14 @@ void Cmd_ForwardToServer (void) {
 
 // don't forward the first argument
 void CL_ForwardToServer_f (void) {
+// Added by VVD {
+	char		*client_string, *server_string, client_time_str[9];
+	int		i, client_string_len, server_string_len;
+	extern cvar_t	cl_crypt_rcon;
+	time_t		client_time;
+// Added by VVD }
 	if (cls.state == ca_disconnected) {
 		Com_Printf ("Can't \"%s\", not connected\n", Cmd_Argv(0));
-		return;
-	}
-
-	if (Q_strcasecmp(Cmd_Argv(1), "snap") == 0) {
-		SCR_RSShot_f ();
 		return;
 	}
 
@@ -71,8 +74,68 @@ void CL_ForwardToServer_f (void) {
 		return;		// not really connected
 
 	if (Cmd_Argc() > 1) {
+		if (Q_strcasecmp(Cmd_Argv(1), "snap") == 0) {
+			SCR_RSShot_f ();
+			return;
+		}
+
+//bliP ->
+		if (strcasecmp(Cmd_Argv(1), "fileul") == 0) {
+			CL_StartFileUpload ();
+			return;
+		}
+//<-
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		SZ_Print (&cls.netchan.message, Cmd_Args());
+		if (strcasecmp(Cmd_Argv(1), "download") == 0 && Cmd_Argc() > 2)
+		{
+			Q_snprintfz (cls.downloadname, sizeof(cls.downloadname),
+					"%s", Cmd_Argv(2));
+			strlcpy (cls.downloadtempname, cls.downloadname, sizeof(cls.downloadtempname));
+		}
+// Added by VVD {
+		if (cl_crypt_rcon.value && strcasecmp(Cmd_Argv(1), "techlogin") == 0)
+		{
+			time(&client_time);
+			for (i = 0; i < sizeof(client_time); ++i)
+			{
+				snprintf(client_time_str + i * 2, 8 * 2 + 1 - i * 2, "%02X",
+					(client_time >> (i * 8)) & 0xFF);
+			}
+			client_string_len = Cmd_Argc() + 8;
+
+			for (i = 1; i < Cmd_Argc(); ++i)
+				client_string_len += strlen(Cmd_Argv(i));
+			server_string_len = client_string_len - strlen(Cmd_Argv(2)) + DIGEST_SIZE * 2 + 8;
+			client_string = Q_Malloc(client_string_len);
+			server_string = Q_Malloc(server_string_len);
+			*client_string = *server_string = 0;
+			strlcat(client_string, Cmd_Argv(1), client_string_len);
+			strlcat(client_string, " ", client_string_len);
+			strlcat(client_string, Cmd_Argv(2), client_string_len);
+			strlcat(client_string, client_time_str, client_string_len);
+			strlcat(client_string, " ", client_string_len);
+			for (i = 3; i < Cmd_Argc(); ++i)
+			{
+				strlcat(client_string, Cmd_Argv(i), client_string_len);
+				strlcat(client_string, " ", client_string_len);
+			}
+			strlcpy(server_string, Cmd_Argv(1), server_string_len);
+			strlcat(server_string, " ", server_string_len);
+			strlcat(server_string, SHA1(client_string, client_string_len - 1), server_string_len);
+			strlcat(server_string, client_time_str, server_string_len);
+			strlcat(server_string, " ", server_string_len);
+			Q_Free(client_string);
+			for (i = 3; i < Cmd_Argc(); ++i)
+			{
+				strlcat(server_string, Cmd_Argv(i), server_string_len);
+				strlcat(server_string, " ", server_string_len);
+			}
+			SZ_Print (&cls.netchan.message, server_string);
+			Q_Free(server_string);
+		}
+		else
+// Added by VVD }
+			SZ_Print (&cls.netchan.message, Cmd_Args());
 	}
 }
 
@@ -186,10 +249,12 @@ void CL_Packet_f (void) {
 
 //Send the rest of the command line over as an unconnected command.
 void CL_Rcon_f (void) {
+	char	*sha1, client_time_str[9];
+	time_t		client_time;
 	char message[1024] = {0};
 	int i;
 	netadr_t to;
-	extern cvar_t rcon_password, rcon_address;
+	extern cvar_t rcon_password, rcon_address, cl_crypt_rcon;
 
 	message[0] = 255;
 	message[1] = 255;
@@ -197,18 +262,51 @@ void CL_Rcon_f (void) {
 	message[3] = 255;
 	message[4] = 0;
 
-	strncat (message, "rcon ", sizeof(message) - strlen(message) - 1);
+// Added by VVD {
+	strlcat (message, "rcon ", sizeof(message));
 
-	if (rcon_password.string[0]) {
-		strncat (message, rcon_password.string, sizeof(message) - strlen(message) - 1);
-		strncat (message, " ", sizeof(message) - strlen(message) - 1);
+	if (rcon_password.string[0])
+		strlcat (message, rcon_password.string, sizeof(message));
+	if (cl_crypt_rcon.value)
+	{
+		time(&client_time);
+		for (i = 0; i < sizeof(client_time); ++i)
+		{
+			snprintf(client_time_str + i * 2, 8 * 2 + 1 - i * 2, "%02X",
+				(client_time >> (i * 8)) & 0xFF);
+//Com_Printf("client_time_str = %s\n", client_time_str);
+		}
+		strlcat (message, client_time_str, sizeof(message));
+		strlcat (message, " ", sizeof(message));
+		for (i = 1; i < Cmd_Argc(); i++)
+		{
+			strlcat (message, Cmd_Argv(i), sizeof(message));
+			strlcat (message, " ", sizeof(message));
+		}
+//Com_Printf("message = %s\n", message + 4);
+		sha1 = SHA1(message + 4, strlen(message) - 4);
+		message[4] = 0;
+//Com_Printf("sha1 = %s\n", sha1);
+		strlcat (message, "rcon ", sizeof(message));
+		strlcat (message, sha1, sizeof(message));
+		strlcat (message, client_time_str, sizeof(message));
+		strlcat (message, " ", sizeof(message));
+		for (i = 1; i < Cmd_Argc(); i++)
+		{
+			strlcat (message, Cmd_Argv(i), sizeof(message));
+			strlcat (message, " ", sizeof(message));
+		}
 	}
-
-	for (i = 1; i < Cmd_Argc(); i++) {
-		strncat (message, Cmd_Argv(i), sizeof(message) - strlen(message) - 1);
-		strncat (message, " ", sizeof(message) - strlen(message) - 1);
+	else
+	{
+		strlcat (message, " ", sizeof(message));
+		for (i=1 ; i<Cmd_Argc() ; i++)
+		{
+			strlcat (message, Cmd_Argv(i), sizeof(message));
+			strlcat (message, " ", sizeof(message));
+		}
 	}
-
+// } Added by VVD
 	if (cls.state >= ca_connected) {
 		to = cls.netchan.remote_address;
 	} else {
@@ -392,7 +490,7 @@ void CL_UserInfo_f (void) {
 void SV_Quit_f (void);
 
 void CL_Quit_f (void) {
-	extern cvar_t cl_confirmquit;
+//	extern cvar_t cl_confirmquit;
 
 #ifndef CLIENTONLY
 	if (dedicated)
@@ -400,9 +498,9 @@ void CL_Quit_f (void) {
 	else
 #endif
 	{
-		if (cl_confirmquit.value)
-			M_Menu_Quit_f ();
-		else
+//		if (cl_confirmquit.value)
+//			M_Menu_Quit_f ();
+//		else
 			Host_Quit ();
 	}
 }
@@ -438,7 +536,7 @@ void CL_WriteConfig (char *name) {
 		return;
 	}
 
-	fprintf (f, "// Generated by FuhQuake\n");	
+	fprintf (f, "// Generated by ezQuake\n");	
 	fprintf (f, "\n// Key bindings\n");
 	Key_WriteBindings (f);
 	fprintf (f, "\n// Variables\n");
@@ -586,6 +684,7 @@ svcmd_t svcmds[] = {
 	{"stopul", CL_StopUpload},
 	{"fov", CL_Fov_f},
 	{"r_drawviewmodel", CL_R_DrawViewModel_f},
+	{"fileul", CL_StartFileUpload}, //bliP
 	{NULL, NULL}
 };
 

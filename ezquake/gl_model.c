@@ -29,6 +29,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fmod.h"
 #include "rulesets.h"
 
+//VULT MODELS
+void Mod_AddModelFlags(model_t *mod);
+
 model_t	*loadmodel;
 char	loadname[32];	// for hunk tags
 
@@ -1535,6 +1538,9 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer) {
 	else
 		mod->modhint = MOD_NORMAL;
 
+	//VULT MODELS
+	Mod_AddModelFlags(mod);
+
 	if (mod->modhint == MOD_PLAYER || mod->modhint == MOD_EYES) {
 		unsigned short crc;
 		char st[40];
@@ -1840,4 +1846,106 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
 	}
 
 	mod->type = mod_sprite;
+}
+
+//VULT MODELS
+//This is incase we want to use a function other than Mod_LoadAliasModel
+//It was used in one of the older versions when it supported Q2 Models.
+void Mod_AddModelFlags(model_t *mod)
+{
+
+	//modhints
+	if(!strcmp(mod->name, "progs/player.mdl"))
+		mod->modhint = MOD_PLAYER;
+	else if(!strcmp(mod->name, "progs/eyes.mdl"))
+		mod->modhint = MOD_EYES;
+	else if (!strcmp(mod->name, "progs/flame.mdl") ||
+		!strcmp(mod->name, "progs/flame2.mdl"))
+		mod->modhint = MOD_FLAME;
+	else if (!strcmp(mod->name, "progs/bolt.mdl") ||
+		!strcmp(mod->name, "progs/bolt2.mdl") ||
+		!strcmp(mod->name, "progs/bolt3.mdl"))
+		mod->modhint = MOD_THUNDERBOLT;
+	else if(!strcmp(mod->name, "progs/minimissile.mdl"))
+		mod->modhint = MOD_CLUSTER;
+	else if (!strcmp(mod->name, "progs/flag.mdl") ||
+		!strcmp(mod->name, "progs/tf_flag.mdl") ||
+		!strcmp(mod->name, "progs/kkr.mdl") ||
+		!strcmp(mod->name, "progs/kkb") ||
+		!strcmp(mod->name, "progs/w_g_key.mdl") ||
+		!strcmp(mod->name, "progs/w_s_key.mdl") ||
+		!strcmp(mod->name, "progs/b_g_key.mdl") ||
+		!strcmp(mod->name, "progs/b_s_key.mdl") ||
+		!strcmp(mod->name, "progs/tf_stan.mdl"))
+		mod->modhint = MOD_FLAG;
+	else if (!strcmp(mod->name, "progs/spike.mdl") ||
+		!strcmp(mod->name, "progs/s_spike.mdl") ||
+		!strcmp(mod->name, "progs/amf_spike.mdl"))
+		mod->modhint = MOD_SPIKE;
+	else if (!strcmp(mod->name, "progs/caltrop.mdl") ||
+		!strcmp(mod->name, "progs/biggren.mdl") ||
+/*		!strcmp(mod->name, "progs/detpack.mdl") ||
+		!strcmp(mod->name, "progs/detpack2.mdl") ||*/
+/*		!strcmp(mod->name, "progs/dgib.mdl") ||
+		!strcmp(mod->name, "progs/dgib2.mdl") ||
+		!strcmp(mod->name, "progs/dgib3.mdl") ||*/
+		!strcmp(mod->name, "progs/flare.mdl") ||
+		!strcmp(mod->name, "progs/gren1.bsp") ||
+		//!strcmp(mod->name, "progs/grenade.mdl") ||
+		//!strcmp(mod->name, "progs/grenade2.mdl") ||
+		!strcmp(mod->name, "progs/grenade3.mdl") ||
+		!strcmp(mod->name, "progs/hook.mdl") ||
+/*		!strcmp(mod->name, "progs/tesgib1.mdl") ||
+		!strcmp(mod->name, "progs/tesgib2.mdl") ||
+		!strcmp(mod->name, "progs/tesgib3.mdl") ||
+		!strcmp(mod->name, "progs/tesgib4.mdl") ||
+//		!strcmp(mod->name, "progs/turrgun.mdl") || //turrets have dodgy origins, after all
+		!strcmp(mod->name, "progs/tgib1.mdl") ||
+		!strcmp(mod->name, "progs/tgib2.mdl") ||
+		!strcmp(mod->name, "progs/tgib3.mdl") ||*/
+		!strcmp(mod->name, "progs/hgren2.mdl"))
+		mod->modhint = MOD_TF_TRAIL;
+	else if (!strcmp(mod->name, "progs/coil.mdl") ||
+		!strcmp(mod->name, "progs/tesla.mdl"))
+		mod->modhint = MOD_TESLA;
+	else if (!strcmp(mod->name, "progs/turrgun.mdl"))
+		mod->modhint = MOD_SENTRYGUN;
+	else if (!strcmp(mod->name, "progs/detpack.mdl"))
+		mod->modhint = MOD_DETPACK;
+	else if (!strcmp(mod->name, "progs/laser.mdl"))
+		mod->modhint = MOD_LASER;
+	else if (!strcmp(mod->name, "progs/demon.mdl")/* || 
+		!strcmp(mod->name, "progs/shambler.mdl") */)
+		mod->modhint = MOD_DEMON;
+	else if(!strcmp(mod->name, "progs/soldier.mdl"))
+		mod->modhint = MOD_SOLDIER;
+	else if(!strcmp(mod->name, "progs/enforcer.mdl"))
+		mod->modhint = MOD_ENFORCER;
+	else if(!strcmp(mod->name, "progs/ogre.mdl"))
+		mod->modhint = MOD_OGRE;
+	else if(!strcmp(mod->name, "progs/shambler.mdl"))
+		mod->modhint = MOD_SHAMBLER;
+	else if(!strcmp(mod->name, "progs/v_spike.mdl"))
+		mod->modhint = MOD_VOORSPIKE;
+	else if (!strcmp(mod->name, "progs/e_spike1.mdl"))
+		mod->modhint = MOD_RAIL;
+	else if (!strcmp(mod->name, "progs/e_spike2.mdl"))
+		mod->modhint = MOD_RAIL2;
+	else if (!strcmp(mod->name, "progs/lavaball.mdl"))
+		mod->modhint = MOD_LAVABALL;
+	else if (!strcmp(mod->name, "progs/dgib.mdl") ||
+		!strcmp(mod->name, "progs/dgib2.mdl") ||
+		!strcmp(mod->name, "progs/dgib3.mdl") ||
+		!strcmp(mod->name, "progs/tesgib1.mdl") ||
+		!strcmp(mod->name, "progs/tesgib2.mdl") ||
+		!strcmp(mod->name, "progs/tesgib3.mdl") ||
+		!strcmp(mod->name, "progs/tesgib4.mdl") ||
+		!strcmp(mod->name, "progs/tgib1.mdl") ||
+		!strcmp(mod->name, "progs/tgib2.mdl") ||
+		!strcmp(mod->name, "progs/tgib3.mdl"))
+		mod->modhint = MOD_BUILDINGGIBS;
+	else if (!strcmp(mod->name, "progs/backpack.mdl"))
+		mod->modhint = MOD_BACKPACK;
+	else
+		mod->modhint = MOD_NORMAL;
 }

@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef GLQUAKE
 #include "gl_local.h"
+#include "vx_stuff.h"
 #else
 #include "r_local.h"
 #endif
@@ -126,7 +127,7 @@ static int scr_autosshot_countdown = 0;
 char auto_matchname[2 * MAX_OSPATH];
 
 static void SCR_CheckAutoScreenshot(void);
-
+void SCR_DrawStatusMultiview(void);
 
 qboolean OnChange_scr_allowsnap(cvar_t *var, char *s) {
 	return (cls.state >= ca_connected && cbuf_current == &cbuf_svc);
@@ -190,6 +191,7 @@ void SCR_DrawCenterString (void) {
 			break;
 		start++;                // skip the \n
 	}
+
 }
 
 void SCR_CheckDrawCenterString (void) {
@@ -409,7 +411,13 @@ void SCR_DrawFPS (void) {
 		lastframetime = t;
 	}
 
-	Q_snprintfz(str, sizeof(str), "%3.1f%s", lastfps + 0.05, show_fps.value == 2 ? " FPS" : "");
+	if (cl_multiview.value && cls.mvdplayback) {
+		sprintf(str, "%3.1f", (lastfps + 0.05)/nNumViews);
+	}
+	else {
+		sprintf(str, "%3.1f", lastfps + 0.05);
+	}  
+
 	x = ELEMENT_X_COORD(show_fps);
 	y = ELEMENT_Y_COORD(show_fps);
 	Draw_String (x, y, str);
@@ -590,7 +598,8 @@ void SCR_SetUpToDrawConsole (void) {
 	{
 #ifndef GLQUAKE
 		scr_copytop = 1;
-		Draw_TileClear (0, (int) scr_con_current, vid.width, vid.height - (int) scr_con_current);
+		if (!(cl_multiview.value && cls.mvdplayback)) // oppmv 040904
+			Draw_TileClear (0, (int) scr_con_current, vid.width, vid.height - (int) scr_con_current);
 #endif
 		Sbar_Changed ();
 	}
@@ -598,7 +607,9 @@ void SCR_SetUpToDrawConsole (void) {
 	{
 #ifndef GLQUAKE
 		scr_copytop = 1;
-		Draw_TileClear (0, 0, vid.width, con_notifylines);
+
+		if (!(cl_multiview.value && cls.mvdplayback))
+			Draw_TileClear (0, 0, vid.width, con_notifylines);
 #endif
 	}
 	else
@@ -610,7 +621,6 @@ void SCR_SetUpToDrawConsole (void) {
 	{
 		extern cvar_t scr_conalpha;
 		if (!scr_conalpha.value && scr_con_current) {
-
 			Draw_TileClear(0, 0, vid.width, scr_con_current);
 		}
 	}
@@ -800,6 +810,7 @@ void SCR_TileClear (void) {
 				Draw_TileClear(ELEMENT_X_COORD(scr_clock), ELEMENT_Y_COORD(scr_clock), 10 * 8, 8);
 			if (scr_democlock.value)
 				Draw_TileClear(ELEMENT_X_COORD(scr_clock), ELEMENT_Y_COORD(scr_clock), 10 * 8, 8);
+				
 		}
 	}
 }
@@ -836,7 +847,19 @@ void SCR_DrawElements(void) {
 				SCR_DrawClock ();
 				SCR_DrawDemoClock ();
 				SCR_DrawFPS ();
-				Sbar_Draw ();
+
+#ifdef GLQUAKE
+				//VULT STATS
+				SCR_DrawAMFstats();
+				//VULT DISPLAY KILLS
+				if (amf_tracker_frags.value || amf_tracker_flags.value || amf_tracker_streaks.value )
+					VX_TrackerThink();
+#endif
+
+				if (cl_multiview.value && cls.mvdplayback)
+					SCR_DrawStatusMultiview();
+
+				Sbar_Draw();
 			}
 		}
 
@@ -903,6 +926,9 @@ void SCR_UpdateScreen (void) {
 	if ((v_contrast.value > 1 && !vid_hwgamma_enabled) || gl_clear.value)
 		Sbar_Changed ();
 
+	if (cl_multiview.value && cls.mvdplayback)
+		SCR_CalcRefdef();
+ 
 	// do 3D refresh drawing, and then update the screen
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 
@@ -984,16 +1010,30 @@ void SCR_UpdateScreen (void) {
 		SCR_CalcRefdef ();
 	}
 
+
 	// do 3D refresh drawing, and then update the screen
 	D_EnableBackBufferAccess ();	// of all overlay stuff if drawing directly
 
-	SCR_TileClear ();
+	 // oppymv 040904 - dont tile over the first view
+	if (!(cl_multiview.value && cls.mvdplayback) ||
+		cl_multiview.value && cls.mvdplayback && CURRVIEW == 2)
+		SCR_TileClear ();
+
 	SCR_SetUpToDrawConsole ();
-	SCR_EraseCenterString ();
+
+
+	if (!(cl_multiview.value && cls.mvdplayback)) // oppymv 010904
+		SCR_EraseCenterString ();
+
+
+	// oppymv 010904
+	if (cl_multiview.value && cls.mvdplayback && CURRVIEW==1)
+		SCR_CalcRefdef();
 
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in for linear writes all the time
 
 	VID_LockBuffer ();
+
 	V_RenderView ();
 	VID_UnlockBuffer ();
 
@@ -1245,7 +1285,7 @@ void SCR_ScreenShot_f (void) {
 			Q_strncpyz(ext, DEFAULT_SSHOT_FORMAT, 4);
 
 		for (i = 0; i < 999; i++) {
-			Q_snprintfz(name, sizeof(name), "fuhquake%03i.%s", i, ext);
+			Q_snprintfz(name, sizeof(name), "ezquake%03i.%s", i, ext);
 			if (!(f = fopen (va("%s/%s/%s", com_basedir, sshot_dir, name), "rb")))
 				break;  // file doesn't exist
 			fclose(f);
@@ -1291,7 +1331,7 @@ void SCR_RSShot_f (void) {
 
 	Com_Printf ("Remote screenshot requested.\n");
 
-	filename = "fuhquake/temp/__rsshot__";
+	filename = "ezquake/temp/__rsshot__";
 
 #ifdef GLQUAKE
 
@@ -1337,9 +1377,28 @@ sshot_taken:
 
 #endif		//GLQUAKE
 
-	if (success == SSHOT_SUCCESS) {
-		Com_Printf ("Sending screenshot to server...\n");
-		CL_StartUpload(filename);
+	if (success == SSHOT_SUCCESS)
+	{
+		FILE	*f;
+		byte	*screen_shot;
+		int	size;
+		if ((size = COM_FileOpenRead (va("%s/%s", com_basedir, filename), &f)) == -1)
+		{
+			Com_Printf ("Can't send screenshot to server: can't open file %s\n", filename);
+		}
+		else
+		{
+			screen_shot = Q_Malloc (size);
+			if (fread(screen_shot, 1, size, f) == size)
+			{
+				Com_Printf ("Sending screenshot to server...\n");
+				CL_StartUpload(screen_shot, size);
+			}
+			else
+				Com_Printf ("Can't send screenshot to server: can't read file %s\n", filename);
+			fclose(f);
+			Q_Free(screen_shot);
+		}
 	}
 
 	remove(va("%s/%s", com_basedir, filename));
@@ -1445,4 +1504,318 @@ void SCR_Init (void) {
 	Cmd_AddCommand ("sizedown", SCR_SizeDown_f);
 
 	scr_initialized = true;
+}
+
+void SCR_DrawStatusMultiview(void) {
+	int xb, yb, xc, yc, xd, yd;
+	char strng[80];
+	char weapons[40];
+	char w1,w2;
+	char sAmmo[3];
+	char pups[4];
+	char armor;
+	char name[16];
+	byte c, c2;
+
+	int i;
+
+	if (!cl_multiview.value || !cls.mvdplayback)
+		return;
+
+	if (cl.stats[STAT_ACTIVEWEAPON] & IT_LIGHTNING || cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_LIGHTNING) {
+		w1='l'; w2='g';
+	} else if (cl.stats[STAT_ACTIVEWEAPON] & IT_ROCKET_LAUNCHER) {
+		w1='r'; w2='l';
+	} else if (cl.stats[STAT_ACTIVEWEAPON] & IT_GRENADE_LAUNCHER) {
+		w1='g'; w2='l';
+	} else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_NAILGUN) {
+		w1='s'; w2='n';
+	} else if (cl.stats[STAT_ACTIVEWEAPON] & IT_NAILGUN) {
+		w1='n'; w2='g';
+	} else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_SHOTGUN) {
+		w1='s'; w2='s';
+	} else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SHOTGUN) {
+		w1='s'; w2='g';
+	} else if (cl.stats[STAT_ACTIVEWEAPON] & IT_AXE) {
+		w1='a'; w2='x';
+	}
+	w1 |= 128; w2 |= 128;
+
+	pups[0] = pups[1] = pups[2] = ' ';
+	pups[3] = '\0';
+
+	if (cl.stats[STAT_ITEMS] & IT_QUAD) {
+		pups[0] = 'Q';
+		pups[0] |= 128;
+	}
+	if (cl.stats[STAT_ITEMS] & IT_INVISIBILITY) {
+		pups[1] = 'R';
+		pups[1] |= 128;
+	}
+	if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) {
+		pups[2] = 'P';
+		pups[2] |= 128;
+	}
+
+	strng[0]='\0';
+
+	c = (byte) 128;
+	c2 = (byte) 0;
+
+	for (i=0;i<8;i++) {
+		weapons[i]=' ';
+		weapons[8] = '\0';
+	}
+
+	if (cl.stats[STAT_ITEMS] & IT_AXE)
+		weapons[0] = '1' - '0' + 0x12;
+	if (cl.stats[STAT_ITEMS] & IT_SHOTGUN)
+		weapons[1] = '2' - '0' + 0x12;
+	if (cl.stats[STAT_ITEMS] & IT_SUPER_SHOTGUN)
+		weapons[2] = '3' - '0' + 0x12;
+	if (cl.stats[STAT_ITEMS] & IT_NAILGUN)
+		weapons[3] = '4' - '0' + 0x12;
+	if (cl.stats[STAT_ITEMS] & IT_SUPER_NAILGUN)
+		weapons[4] = '5' - '0' + 0x12;
+	if (cl.stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER)
+		weapons[5] = '6' - '0' + 0x12;
+	if (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
+		weapons[6] = '7' - '0' + 0x12;
+	if (cl.stats[STAT_ITEMS] & IT_SUPER_LIGHTNING || cl.stats[STAT_ITEMS] & IT_LIGHTNING)
+		weapons[7] = '8' - '0' + 0x12;
+
+	armor = ' ';
+	if (cl.stats[STAT_ITEMS] & IT_ARMOR1) {
+		armor='g';
+		armor |= 128;
+	}
+	else if (cl.stats[STAT_ITEMS] & IT_ARMOR2) {
+		armor='y';
+		armor |= 128;
+	}
+	else if (cl.stats[STAT_ITEMS] & IT_ARMOR3) {
+		armor='r';
+		armor |= 128;
+	}
+	
+	strcpy(name,cl.players[nPlayernum].name);
+
+
+	if (strcmp(cl.players[nPlayernum].name,"") && !cl.players[nPlayernum].spectator) {
+		if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && cl_multiview.value == 2 && cl_mvinset.value) {
+			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			sprintf(strng, "%.5s   %s %c%c:%-3s",name,
+										"dead   ",
+										w1,w2,
+										sAmmo);
+		}
+		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && vid.width < 512) {
+			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			sprintf(strng, "%.2s  %s %c%c:%-3s",name,
+										"dead   ",
+										w1,w2,
+										sAmmo);
+		}
+		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) {
+			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			sprintf(strng, "%s   %s %c%c:%-3s",name,
+										"dead   ",
+										w1,w2,
+										sAmmo);
+		}
+
+		else if (cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1) {
+			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			sprintf(strng, "%s %.5s  %c%03d %03d %c%c:%-3s",pups,
+												name,
+												armor,
+												cl.players[nPlayernum].stats[STAT_ARMOR],
+												cl.players[nPlayernum].stats[STAT_HEALTH],
+												w1,w2,
+												sAmmo);
+		} 
+		else if (cl_multiview.value && vid.width < 512) {
+			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			sprintf(strng, "%s %.2s %c%03d %03d %c%c:%-3s",pups,
+												name,
+												armor,
+												cl.players[nPlayernum].stats[STAT_ARMOR],
+												cl.players[nPlayernum].stats[STAT_HEALTH],
+												w1,w2,
+												sAmmo);
+		}
+		
+		else {
+			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			sprintf(strng, "%s %s  %c%03d %03d %c%c:%-3s",pups,
+												name,
+												armor,
+												cl.players[nPlayernum].stats[STAT_ARMOR],
+												cl.players[nPlayernum].stats[STAT_HEALTH],
+												w1,w2,
+												sAmmo);
+		}
+	}
+
+	// placement
+	if (cl_multiview.value == 1) {
+			xb = vid.width - strlen(strng) * 8 - 12;
+			yb = vid.height - sb_lines - 16;
+			xc = vid.width/2;
+			yc = vid.height/2;
+			xd = vid.width - strlen(weapons) * 8 - 84;
+			yd = vid.height - sb_lines - 8;
+	}
+
+	else if (cl_multiview.value == 2) {
+		if (!cl_mvinset.value) {
+		if (CURRVIEW == 2) { // top
+			xb = vid.width - strlen(strng) * 8 - 12;
+			yb = vid.height/2 - sb_lines - 16;
+			xc = vid.width/2;
+			yc = vid.height/4;
+			xd = vid.width - strlen(weapons) * 8 - 84;
+			yd = vid.height/2 - sb_lines - 8;
+		}
+		else if (CURRVIEW == 1) { // bottom
+			xb = vid.width - strlen(strng) * 8 - 12;
+			yb = vid.height - sb_lines - 16;
+			xc = vid.width/2;
+			yc = vid.height/2 + vid.height/4;
+			xd = vid.width - strlen(weapons) * 8 - 84;
+			yd = vid.height - sb_lines - 8;
+		}
+		} else if (cl_mvinset.value) {
+		if (CURRVIEW == 2) { // main
+			xb = vid.width - strlen(strng) * 8 - 12;
+			yb = vid.height/2 - sb_lines - 16;
+			xc = -2;
+			yc = -2;
+			xd = vid.width - strlen(weapons) * 8 - 84;
+			yd = vid.height/2 - sb_lines - 8;
+		}
+		else if (CURRVIEW == 1) { // top right
+			xb = vid.width - strlen(strng) * 8; // hud
+			yb = vid.height/3 - 16;
+			if (cl_mvinsetcrosshair.value) {
+				xc = vid.width - (double)(vid.width/3)/2-2;
+				yc = (vid.height/3)/2;
+			} else { 
+				xc=yc=-2; 
+			}
+			xd = vid.width - strlen(weapons) * 8 - 70; // weapons
+			yd = vid.height/3 - 8;
+		}
+		}
+		
+	}
+	else if (cl_multiview.value == 3) {
+		if (CURRVIEW == 2) { // top
+			xb = vid.width - strlen(strng) * 8 - 12;
+			yb = vid.height/2 - sb_lines - 16;
+			xc = vid.width/2;
+			yc = vid.height/4;
+			xd = vid.width - strlen(weapons) * 8 - 84;
+			yd = vid.height/2 - sb_lines - 8;
+		}
+		else if (CURRVIEW == 3) { // bl
+			xb = vid.width - (vid.width/2)- strlen(strng) * 8 - 12;
+			yb = vid.height - sb_lines - 16;
+			xc = vid.width/4;
+			yc = vid.height/2 + vid.height/4;
+			xd = vid.width - (vid.width/2)- strlen(weapons) * 8 - 84;
+			yd = vid.height - sb_lines - 8;
+		}
+		else if (CURRVIEW == 1) { // br
+			xb = vid.width - strlen(strng) * 8 - 12;
+			yb = vid.height - sb_lines - 16;
+			xc = vid.width/2 + vid.width/4;
+			yc = vid.height/2 + vid.height/4;
+			xd = vid.width - strlen(weapons) * 8 - 84;
+			yd = vid.height - sb_lines - 8;
+		}
+	}
+	else if (cl_multiview.value == 4) {
+		if (CURRVIEW == 2) { // tl
+			xb = vid.width - (vid.width/2)- strlen(strng) * 8 - 12;
+			yb = vid.height/2 - sb_lines - 16;
+			xc = vid.width/4;
+			yc = vid.height/4;
+			xd = vid.width - (vid.width/2)- strlen(weapons) * 8 - 84;
+			yd = vid.height/2 - sb_lines - 8;
+		}
+		else if (CURRVIEW == 3) { // tr
+			xb = vid.width - strlen(strng) * 8 - 12;
+			yb = vid.height/2 - sb_lines - 16;
+			xc = vid.width/2 + vid.width/4;
+			yc = vid.height/4;
+			xd = vid.width - strlen(weapons)-25 * 8 - 8;
+			yd = vid.height - sb_lines - (vid.height/1.9);
+			xd = vid.width - strlen(weapons) * 8 - 84;
+			yd = vid.height/2 - sb_lines - 8;
+		}
+		else if (CURRVIEW == 4) { // bl
+			xb = vid.width - (vid.width/2)- strlen(strng) * 8 - 12;
+			yb = vid.height - sb_lines - 16;
+			xc = vid.width/4;
+			yc = vid.height/2 + vid.height/4;
+			xd = vid.width - (vid.width/2)- strlen(weapons) * 8 - 84;
+			yd = vid.height - sb_lines - 8;
+		}
+		else if (CURRVIEW == 1) { // br
+			xb = vid.width - strlen(strng) * 8 - 12;
+			yb = vid.height - sb_lines - 16;
+			xc = vid.width/2 + vid.width/4;
+			yc = vid.height/2 + vid.height/4;
+			xd = vid.width - strlen(weapons) * 8 - 84;
+			yd = vid.height - sb_lines - 8;
+		}
+	}
+	if (cl_multiview.value == 2 && cl_mvinset.value)
+		memcpy(cl.stats, cl.players[nTrack1duel].stats, sizeof(cl.stats));
+
+	// fill the void
+	if (cl_sbar.value && vid.width > 512 && cl_multiview.value==2 && cl_mvinset.value && cl_mvinsethud.value && cl_mvdisplayhud.value) {
+		Draw_Fill(vid.width/3*2,vid.height/3-sb_lines/3+1,vid.width/3+2, sb_lines/3-1,c2); // oppymv 300804
+	}
+
+	// hud info
+	if (cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2 
+		|| cl_mvdisplayhud.value && cl_multiview.value != 2)
+		Draw_String(xb,yb,strng);
+	else if (cl_multiview.value == 2 && cl_mvdisplayhud.value && CURRVIEW == 1 && vid.width > 512 && cl_mvinsethud.value)
+		Draw_String(xb,yb,strng);
+
+	// weapons
+	if (cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2 
+		|| cl_mvdisplayhud.value && cl_multiview.value != 2)
+		Draw_String(xd,yd,weapons);
+	else if (cl_multiview.value == 2 && cl_mvdisplayhud.value && CURRVIEW == 1 && vid.width > 512  && cl_mvinsethud.value)
+		Draw_String(xd,yd,weapons);
+
+	// borders
+	if (cl_multiview.value == 2 && !cl_mvinset.value) {
+		Draw_Fill(0,vid.height/2,vid.width-1,1,c2); // oppymv 300804
+	}
+	else if (cl_multiview.value == 2 && cl_mvinset.value) { // oppymv 040904 - do ifdefs if over border in gl really annoys
+		if (vid.width <= 512 && cl_sbar.value) {
+			Draw_Fill(vid.width/3*2,vid.height/3-sb_lines/3,vid.width/3+2,1,c2); // oppymv 300804
+			Draw_Fill(vid.width/3*2,0,1,vid.height/3-sb_lines/3,c2);
+		} else if (vid.width>512 && cl_sbar.value && !cl_mvinsethud.value || vid.width>512 && cl_sbar.value && !cl_mvdisplayhud.value) {
+			Draw_Fill(vid.width/3*2,vid.height/3-sb_lines/3,vid.width/3,1,c2); // oppymv 300804
+			Draw_Fill(vid.width/3*2,0,1,vid.height/3-sb_lines/3,c2);
+		}
+		else {
+			Draw_Fill(vid.width/3*2,vid.height/3,vid.width/3+2,1,c2); // oppymv 300804
+			Draw_Fill(vid.width/3*2,0,1,vid.height/3,c2);
+		}
+	}
+	else if (cl_multiview.value == 3) {
+		Draw_Fill(vid.width/2,vid.height/2,1,vid.height/2,c2);
+		Draw_Fill(0,vid.height/2,vid.width-0,1,c2); // oppymv 300804
+	}
+	else if (cl_multiview.value == 4) {
+		Draw_Fill(vid.width/2,0,1,vid.height,c2);
+		Draw_Fill(0,vid.height/2,vid.width-0,1,c2); // oppymv 300804
+	}
 }

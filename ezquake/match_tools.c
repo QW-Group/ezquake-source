@@ -695,7 +695,7 @@ char *MT_TempDirectory(void) {
 	static char dir[MAX_OSPATH * 2] = {0};
 
 	if (!dir[0])
-		Q_snprintfz(dir, sizeof(dir), "%s/fuhquake/temp", com_basedir);
+		Q_snprintfz(dir, sizeof(dir), "%s/ezquake/temp", com_basedir);
 	return dir;
 }
 
@@ -1049,7 +1049,7 @@ char *Macro_MatchType(void) {
 }
 
 void MT_Init(void) {
-	Sys_mkdir(va("%s/fuhquake/temp", com_basedir));
+	Sys_mkdir(va("%s/ezquake/temp", com_basedir));
 	MT_ClearClientState();
 
 	Cmd_AddMacro("matchname", Macro_MatchName);

@@ -1,7 +1,7 @@
 // version.h
 
 #define	QW_VERSION		2.40
-#define FUH_VERSION		"0.31"
+#define EZ_VERSION		"0.31"
 #define LINUX_VERSION	0.98
 
 #ifdef _WIN32

@@ -68,18 +68,17 @@ static void *hSecurity = NULL;
 void Modules_Init(void) {
 	qboolean have_security;
 	char *version_string, binary_type[32], *renderer;
-	int allok, retval;
+	int retval;
 
 	have_security = security_loaded = false;
-	allok = SECURITY_AUTH_INITIALIZED | SECURITY_FMOD_INITIALIZED;
 
 #ifdef _WIN32
-	if (!(hSecurity = LoadLibrary("fuhquake-security.dll"))) {
+	if (!(hSecurity = LoadLibrary("ezquake-security.dll"))) {
 		Com_Printf("\x02" "Security module not found\n");
 		goto fail;
 	}
 #else
-	if (!(hSecurity = dlopen("./fuhquake-security.so", RTLD_NOW))) {
+	if (!(hSecurity = dlopen("./ezquake-security.so", RTLD_NOW))) {
 		Com_Printf("\x02" "Security module not found\n");
 		goto fail;
 	}
@@ -106,9 +105,9 @@ void Modules_Init(void) {
 	}
 
 #ifdef CLIENTONLY
-	Q_strncpyz(binary_type, "fuhqwcl", sizeof(binary_type));
+	Q_strncpyz(binary_type, "ezqwcl", sizeof(binary_type));
 #else
-	Q_strncpyz(binary_type, "fuhquake", sizeof(binary_type));
+	Q_strncpyz(binary_type, "ezquake", sizeof(binary_type));
 #endif
 
 #if defined (_Soft_X11)
@@ -118,10 +117,10 @@ void Modules_Init(void) {
 #else
 	renderer = QW_RENDERER;
 #endif
-	version_string = va ("%s-p:%s-r:%s-v:%s-b:%d", binary_type, QW_PLATFORM, renderer, FUH_VERSION, build_number());
+	version_string = va ("%s-p:%s-r:%s-v:%s-b:%d", binary_type, QW_PLATFORM, renderer, EZ_VERSION, build_number());
 
-	retval = Security_Init(version_string,(void **) &allok);
-	security_loaded = (retval >= 0 && (retval & allok)) ? true : false;
+	retval = Security_Init(version_string);
+	security_loaded = (retval == 0) ? true : false;
 
 	if (!security_loaded) {
 		switch (retval) {
@@ -219,9 +218,8 @@ void QLib_MissingModuleError(int errortype, char *libname, char *cmdline, char *
 	switch (errortype) {
 	case QLIB_ERROR_MODULE_NOT_FOUND:
 		Sys_Error(
-			"FuhQuake couldn't load the required \"%s" QLIB_LIBRARY_EXTENSION "\" library.  You must either:\n"
-			"i) (recommended) download the required libraries from www.fuhquake.net, or\n"
-			"ii) specify \"%s\" on the cmdline to disable %s.",
+			"ezQuake couldn't load the required \"%s" QLIB_LIBRARY_EXTENSION "\" library.  You must\n"
+			"specify \"%s\" on the cmdline to disable %s.",
 			libname, cmdline, features
 			);
 		break;

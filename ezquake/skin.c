@@ -165,8 +165,9 @@ void Skin_NextDownload (void) {
 	player_info_t *sc;
 	int i;
 
-	if (cls.downloadnumber == 0)
+	if (cls.downloadnumber == 0) {
 		Com_Printf ("Checking skins...\n");
+	}
 
 	cls.downloadtype = dl_skin;
 
