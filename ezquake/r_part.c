@@ -177,7 +177,7 @@ void D_DrawParticle (particle_t *pparticle) {
 #endif	// !id386
 
 #ifdef GLQUAKE
-static void Classic_LoadParticleTexures (void) {
+void Classic_LoadParticleTexures (void) {
 	int	i, x, y;
 	unsigned int data[32][32];
 

@@ -21,7 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_local.h"
 #include "version.h"
+#include "image.h"
 #include "sbar.h"
+#include "vx_stuff.h"
 
 #include "image.h"
 #include "utils.h"
@@ -287,7 +289,6 @@ mpic_t *Draw_CacheWadPic (char *name) {
 
 	p = W_GetLumpName (name);
 	pic = (mpic_t *)p;
-
 	
 	if (
 		(pic_24bit = GL_LoadPicImage(va("textures/wad/%s", name), name, 0, 0, TEX_ALPHA)) ||
@@ -460,6 +461,88 @@ void Draw_InitCharset(void) {
 
 	if (!char_texture)	
 		Sys_Error("Draw_InitCharset: Couldn't load charset");
+}
+
+void Draw_ReInit (void) {
+	int i;
+	extern void GL_Texture_Free (void);
+	extern void ReInitVXStuff(void);
+	extern void QMB_InitParticles(void);
+	extern void R_InitTextures(void);
+	extern void R_InitBubble(void);
+	extern void Classic_InitParticles(void);
+	extern void R_InitOtherTextures(void);
+	extern void Cache_Flush (void);
+	extern void R_NewMap (void);
+	extern void Hunk_Check (void);
+	extern void R_Init (void);
+	extern int numgltextures;
+	extern void R_ClearParticles (void);
+	extern void GL_BuildLightmaps (void);
+	extern void InitCoronas(void);
+	extern void CL_ClearBlurs(void);
+	extern void Classic_LoadParticleTexures (void);
+
+	numgltextures = 0;
+	Cache_Flush();
+	CL_ClearBlurs();
+	GL_BuildLightmaps ();
+	
+	R_ClearParticles ();
+	Classic_LoadParticleTexures();
+	
+	QMB_InitParticles();
+	ReInitVXStuff();
+
+	R_InitBubble();
+	R_InitTextures();
+	R_InitOtherTextures ();	
+
+	Sbar_Init();
+
+	// load the console background and the charset by hand, because we need to write the version
+	// string into the background before turning it into a texture
+	Draw_InitCharset ();
+	Draw_InitConback ();
+
+//	R_InitBubble ();
+//	Classic_InitParticles();
+// OK	InitCoronas();
+
+//	Hunk_Check();
+//	R_BlendLightmaps();
+	
+//	customCrosshair_Init();
+//	QMB_InitParticles();
+//	InitVXStuff();
+
+//	R_InitTextures();
+//	R_InitOtherTextures ();		
+
+//	R_Init();
+
+//	r_notexture_mip-> = 0;
+
+//	GL_BuildLightmaps ();
+//	GL_Texture_Init();
+
+	// save a texture slot for translated picture
+	translate_texture = texture_extension_number++;
+
+	// save slots for scraps
+	scrap_texnum = texture_extension_number;
+	texture_extension_number += MAX_SCRAPS;
+
+	// Load the crosshair pics
+	for (i = 0; i < NUMCROSSHAIRS; i++) {
+		crosshairtextures[i] = GL_LoadTexture ("", 8, 8, crosshairdata[i], TEX_ALPHA, 1);
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+	customCrosshair_Init();		
+	// get the other pics we need
+	draw_disc = Draw_CacheWadPic ("disc");
+	draw_backtile = Draw_CacheWadPic ("backtile");
 }
 
 void Draw_Init (void) {

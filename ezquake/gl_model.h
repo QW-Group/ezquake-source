@@ -288,7 +288,7 @@ extern	mtriangle_t	triangles[MAXALIASTRIS];
 extern	trivertx_t	*poseverts[MAXALIASFRAMES];
 
 
-typedef enum {mod_brush, mod_sprite, mod_alias} modtype_t;
+typedef enum {mod_brush, mod_sprite, mod_alias, mod_alias3} modtype_t;
 
 // some models are special
 //VULT MODELS
@@ -390,5 +390,7 @@ mleaf_t *Mod_PointInLeaf (float *p, model_t *model);
 byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
 
 qboolean Img_HasFullbrights (byte *pixels, int size);
+
+#include "gl_md3.h" 
 
 #endif	// __MODEL__

@@ -321,6 +321,21 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="gl_md3.c">
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCLCompilerTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCLCompilerTool"/>
+					</FileConfiguration>
+				</File>
+				<File
 					RelativePath=".\gl_mesh.c">
 					<FileConfiguration
 						Name="Release|Win32"
@@ -1616,6 +1631,21 @@
 				Filter="">
 				<File
 					RelativePath=".\gl_local.h">
+				</File>
+				<File
+					RelativePath="gl_md3.h">
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\gl_model.h">

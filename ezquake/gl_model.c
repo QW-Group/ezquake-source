@@ -129,7 +129,7 @@ void Mod_ClearAll (void) {
 	model_t	*mod;
 	
 	for (i = 0, mod = mod_known; i < mod_numknown; i++, mod++)
-		if (mod->type != mod_alias)
+		if (mod->type != mod_alias && mod->type != mod_alias3 )
 			mod->needload = true;
 }
 
@@ -161,7 +161,7 @@ void Mod_TouchModel (char *name) {
 	mod = Mod_FindName (name);
 	
 	if (!mod->needload)	{
-		if (mod->type == mod_alias)
+		if (mod->type == mod_alias || mod->type == mod_alias3)
 			Cache_Check (&mod->cache);
 	}
 }
@@ -170,10 +170,11 @@ void Mod_TouchModel (char *name) {
 model_t *Mod_LoadModel (model_t *mod, qboolean crash) {
 	void *d;
 	unsigned *buf;
+	int namelen;
 	byte stackbuf[1024];		// avoid dirtying the cache heap
 
 	if (!mod->needload)	{
-		if (mod->type == mod_alias) {
+		if (mod->type == mod_alias || mod->type == mod_alias3) {
 			d = Cache_Check (&mod->cache);
 			if (d)
 				return mod;
@@ -181,12 +182,26 @@ model_t *Mod_LoadModel (model_t *mod, qboolean crash) {
 			return mod;		// not cached at all
 		}
 	}
-
+/*
 	// because the world is so huge, load it one piece at a time
 	if (!crash)	{}
 
 	// load the file
 	buf = (unsigned *) FS_LoadStackFile (mod->name, stackbuf, sizeof(stackbuf));
+*/
+	namelen = strlen(mod->name);
+	buf = NULL;
+	if (namelen>=4 && (!strcmp(mod->name+namelen-4, ".mdl") || (namelen>=9 && mod->name[5] == 'b' && mod->name[6] == '_' && !strcmp(mod->name+namelen-4, ".bsp"))))
+	{
+		char newname[MAX_QPATH];
+		COM_StripExtension(mod->name, newname);
+		COM_DefaultExtension(newname, ".md3");
+		buf = (unsigned *)FS_LoadStackFile (newname, stackbuf, sizeof(stackbuf));
+	}
+
+	// load the file
+	if (!buf)
+		buf = (unsigned *)FS_LoadStackFile (mod->name, stackbuf, sizeof(stackbuf)); 
 	if (!buf) {
 		if (crash)
 			Host_Error ("Mod_LoadModel: %s not found", mod->name);
@@ -205,6 +220,10 @@ model_t *Mod_LoadModel (model_t *mod, qboolean crash) {
 	case IDPOLYHEADER:
 		Mod_LoadAliasModel (mod, buf);
 		break;
+
+	case MD3_IDENT:
+		Mod_LoadAlias3Model (mod, buf);
+ 		break; 
 
 	case IDSPRITEHEADER:
 		Mod_LoadSpriteModel (mod, buf);
