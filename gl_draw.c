@@ -1012,7 +1012,7 @@ void Draw_ConsoleBackground (int lines) {
 		Draw_Pic(0, lines - vid.height + con_shift.value, &conback);
 	} else {
 		if (scr_conalpha.value)
-			Draw_AlphaPic (0, lines - vid.height + con_shift.value, &conback, bound (0, scr_conalpha.value, 1));
+			Draw_AlphaPic (0, (lines - vid.height) + (int)con_shift.value, &conback, bound (0, scr_conalpha.value, 1));
 	}
 
 	//sprintf (ver, "ezQuake %s", EZ_VERSION);
