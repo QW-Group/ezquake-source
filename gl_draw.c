@@ -466,7 +466,8 @@ void Draw_InitCharset(void) {
 void Draw_ReInit (void) {
 	int i;
 	extern void GL_Texture_Free (void);
-	extern void ReInitVXStuff(void);
+	//extern void ReInitVXStuff(void);
+	extern void InitVXStuff(void);//Tei Re* doest not exist. ?:) 
 	extern void QMB_InitParticles(void);
 	extern void R_InitTextures(void);
 	extern void R_InitBubble(void);
@@ -492,7 +493,10 @@ void Draw_ReInit (void) {
 	Classic_LoadParticleTexures();
 	
 	QMB_InitParticles();
-	ReInitVXStuff();
+	
+	//Tei: this change needed to compile because ReInit.. doest not exist yet!. 
+	//ReInitVXStuff();
+	InitVXStuff();//Tei Re* doest not exist. ?:) 
 
 	R_InitBubble();
 	R_InitTextures();
