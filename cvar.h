@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_INIT			16		// can only be set during initialization
 #define	CVAR_USER_CREATED	32		// created by a set command
 #define	CVAR_USER_ARCHIVE	64		// created by a seta command
+#define CVAR_RULESET_MAX	128	
 
 typedef struct cvar_s {
 	char	*name;
@@ -39,6 +40,7 @@ typedef struct cvar_s {
 	int		flags;
 	qboolean	(*OnChange)(struct cvar_s *var, char *value);
 	float	value;
+	float	rulesetvalue;
 	char	*defaultvalue;		
 	struct cvar_group_s *group;		
 	struct cvar_s *next_in_group;	
