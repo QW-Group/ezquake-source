@@ -202,7 +202,7 @@ short	ShortSwap (short l);
 int		LongSwap (int l);
 float	FloatSwap (float f);
 
-#ifdef BIGENDIAN
+#ifdef __BIG_ENDIAN__
 #define BigShort(x) (x)
 #define BigLong(x) (x)
 #define BigFloat(x) (x)
