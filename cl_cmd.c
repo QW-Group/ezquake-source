@@ -74,7 +74,7 @@ void CL_ForwardToServer_f (void) {
 		return;		// not really connected
 
 	if (Cmd_Argc() > 1) {
-		if (Q_strcasecmp(Cmd_Argv(1), "snap") == 0) {
+		if (strcasecmp(Cmd_Argv(1), "snap") == 0) {
 			SCR_RSShot_f ();
 			return;
 		}

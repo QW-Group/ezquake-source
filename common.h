@@ -76,6 +76,7 @@ typedef enum {false, true} qboolean;
 #define	MAX_MSGLEN		1450		// max length of a reliable message
 #define	MAX_DATAGRAM	1450		// max length of unreliable message
 #define	MAX_UDP_PACKET	(MAX_MSGLEN*2)	// one more than msg + header
+#define	FILE_TRANSFER_BUF_SIZE	MAX_MSGLEN - 100
 
 // per-level limits
 #define	MAX_EDICTS		768			// FIXME: ouch! ouch! ouch!
