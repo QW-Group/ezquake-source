@@ -245,7 +245,6 @@ server_data * Create_Server(char *ip)
     s->keysn = 0;
     s->playersn = 0;
     s->spectatorsn = 0;
-    s->spectatorsn = 0;
     return s;
 }
 
@@ -269,7 +268,6 @@ server_data * Create_Server2(netadr_t n)
     s->display.fraglimit[0] = 0;
     s->display.timelimit[0] = 0;
     s->keysn = 0;
-    s->spectatorsn = 0;
     s->playersn = 0;
     s->spectatorsn = 0;
     return s;
@@ -1719,8 +1717,7 @@ void Add_Source_Key(int key)
         break;
     }
 
-    if ((!isThisCtrlDown()  ||  tolower(key)=='v') &&
- !isThisAltDown())
+    if ((!isThisCtrlDown() || tolower(key)=='v') && !isThisAltDown())
     {
         if (newsource_pos == 1)
             CEditBox_Key(&edit1, key);
@@ -1777,8 +1774,7 @@ void Add_Server_Key(int key)
         break;
     }
 
-    if ((!isThisCtrlDown()  ||  tolower(key)=='v') &&
- !isThisAltDown())
+    if ((!isThisCtrlDown() || tolower(key)=='v') && !isThisAltDown())
     {
         if (newserver_pos == 0)
             CEditBox_Key(&edit1, key);
@@ -1963,10 +1959,10 @@ void Servers_Key(int key)
             case '8':   // sorting mode
                 if (!isThisCtrlDown())
                 {
+                    char buf[30];
                     if ((sb_sortservers.string[0] == '-' && sb_sortservers.string[1] == key)
                         || sb_sortservers.string[0] == key)
                     {
-                        char buf[30];
                         if (sb_sortservers.string[0] == '-')
                             strncpy(buf, sb_sortservers.string+1, 20);
                         else
@@ -1974,17 +1970,15 @@ void Servers_Key(int key)
                             strncpy(buf+1, sb_sortservers.string, 20);
                             buf[0] = '-';
                         }
-                        buf[20] = 0;
-                        Cvar_Set(&sb_sortservers, buf);
                     }
                     else
                     {
                         char buf[30];
                         strncpy(buf+1, sb_sortservers.string, 20);
                         buf[0] = key;
-                        buf[20] = 0;
-					    Cvar_Set(&sb_sortservers, buf);
                     }
+                    buf[20] = 0;
+                    Cvar_Set(&sb_sortservers, buf);
                     resort_servers = 1;
                 }
                 else
@@ -2078,37 +2072,37 @@ void Serverinfo_Key(int key)
             serverinfo_pos--; break;
         case K_RIGHTARROW:
             serverinfo_pos++; break;
-            case 'j':
-            case 'p':
-                Join_Server(show_serverinfo);
-                break;
-            case 'o':
-            case 's':
-                Observe_Server(show_serverinfo);
-                break;
-            case 't':
-                {
-                    if (!testing_connection)
-                    {
-                        char buf[256];
-                        sprintf(buf, "%d.%d.%d.%d",
-                            show_serverinfo->address.ip[0],
-                            show_serverinfo->address.ip[1],
-                            show_serverinfo->address.ip[2],
-                            show_serverinfo->address.ip[3]);
-                        SB_Test_Init(buf);
-                        testing_connection = 1;
-                    }
-                    else
-                        testing_connection = 0;
-                    break;
-                }
-            case 'c':   // copy server to clipboard
-                    CopyServerToClipboard(show_serverinfo);
-                    break;
-            case 'v':   // past server into console
-                    PasteServerToConsole(show_serverinfo);
-                    break;
+        case 'j':
+        case 'p':
+            Join_Server(show_serverinfo);
+            break;
+        case 'o':
+        case 's':
+            Observe_Server(show_serverinfo);
+            break;
+        case 't':
+        {
+            if (!testing_connection)
+            {
+                char buf[256];
+                sprintf(buf, "%d.%d.%d.%d",
+                        show_serverinfo->address.ip[0],
+                        show_serverinfo->address.ip[1],
+                        show_serverinfo->address.ip[2],
+                        show_serverinfo->address.ip[3]);
+                SB_Test_Init(buf);
+                testing_connection = 1;
+             }
+             else
+                testing_connection = 0;
+             break;
+        }
+        case 'c':   // copy server to clipboard
+             CopyServerToClipboard(show_serverinfo);
+             break;
+        case 'v':   // past server into console
+             PasteServerToConsole(show_serverinfo);
+             break;
         default:
             switch (serverinfo_pos)
             {
