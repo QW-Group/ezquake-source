@@ -53,6 +53,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "Ctrl_PageViewer.h"    // kazik
 #include "EX_FileList.h"        // kazik
 #include "help.h"       // kazik
+#include "hud.h"        // kazik
 
 // HUD -> hexum
 extern  int         host_screenupdatecount; // kazik, incremented every screen update, never reset
