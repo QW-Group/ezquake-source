@@ -703,6 +703,8 @@ void SB_Test_Draw(void)
 {
     int x, y, w, h;
 
+	extern void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_latency, int lost, int minping, int avgping, int maxping, int devping, int posx, int posy, int width, int height, int revx, int revy);
+
     w = 240;
     h = 112;
 
@@ -714,10 +716,10 @@ void SB_Test_Draw(void)
     if (vid.height >= 240)
         y += 20;
 
-/*    R_NetGraph(sb_test_outgoing_sequence, sb_test_incoming_sequence,
+    R_MQW_NetGraph(sb_test_outgoing_sequence, sb_test_incoming_sequence,
                sb_test_packet_latency, sb_test_pl,
                sb_test_min, sb_test_avg, sb_test_max, sb_test_dev,
-               x, y, -1, -1, 0, 0);*/
+               x, y, -1, -1, 0, 0);
 }
 
 void SB_Test_Init(char *address)
