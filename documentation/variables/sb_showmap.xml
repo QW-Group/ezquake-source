@@ -2,16 +2,17 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
-<name>cl_smartjump</name>
+<name>sb_showmap</name>
 <description>
-
+This toggles whether ezQuake should display the map column in the server list.
 </description>
 <value><enum>
-	<value><name>
-0</name><description>Off.</description></value>
-	<value><name>1</name><description>Will convert +jump commands to +moveup commands when in liquid (water, lava, slime).</description></value>
+	<value><name>0</name><description>do not show the map column</description></value>
+	<value><name>1</name><description>show the map column</description></value>
 </enum></value>
 <remarks>
+
+
 
 
 

@@ -5,7 +5,7 @@
 <name>s_ambientlevel</name>
 <description>
 
-Volume level of ambient sounds (produced by water and sky brushes).
+Volume level of ambient sounds (produced by liquid and sky brushes).
 
 </description>
 </variable>

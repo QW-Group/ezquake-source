@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>sb_showplayers</name>
+<description>
+This toggles whether ezQuake should display the players column in the server list
+that shows how many players are on the server as well as how many players are 
+allowed.
+</description>
+<value><enum>
+	<value><name>0</name><description>do not show the players column</description></value>
+	<value><name>1</name><description>show the players column</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+</remarks>
+</variable>

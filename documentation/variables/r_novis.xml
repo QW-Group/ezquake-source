@@ -9,10 +9,10 @@ variable is set to &quot;1&quot; the game will calculate it's own VIS informatio
 fly instead of using the information stored in the map data, this will cause 
 a severe performance penalty in the game. When &quot;r_novis&quot; is set to &quot;1&quot;, the 
 variable &quot;gl_turbalpha&quot; has a value lower than &quot;1&quot; and the server allows the
-client to display water transparently the player will be able to see through 
+client to display liquid transparently the player will be able to see through 
 liquids. This is a nice effect to see but it is not recommended to keep this 
 variable set to &quot;1&quot; because of the huge performance penalty. 
-It is possible to enable transparent water and still keep this variable set to
+It is possible to enable transparent liquids and still keep this variable set to
 &quot;0&quot; (and thus not experience such a severe performance drop) by using maps that
 are VISed accordingly. You can visit the official Water VIS site at 
 &quot;http://www.sod.net/&quot; and download the vispatch program along with the patch 

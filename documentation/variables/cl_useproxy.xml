@@ -4,14 +4,16 @@
 
 <name>cl_useproxy</name>
 <description>
-
+This toggles whether Qizmo should be used (if detected) to a server. When
+enabled the server browser will use an existing connection to a Qizmo when 
+connecting another server by using the ezQuake Server Browser.
 </description>
 <value><enum>
-	<value><name>
-0</name><description>Disable.</description></value>
-	<value><name>1</name><description>You won't drop from qizmo if you are using connect, join and observe commands.</description></value>
+	<value><name>0</name><description>do not use Qizmo to connect a server chosen in the Server Browser</description></value>
+	<value><name>1</name><description>use Qizmo to connect a server chosen in the Server Browser</description></value>
 </enum></value>
 <remarks>
+
 
 
 

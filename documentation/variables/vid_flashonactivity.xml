@@ -6,7 +6,7 @@
 <description>
 
 
-Will cause ezQuake to flash ezQuake button in taskbar, when it is not active and there is activity (chat text, high priority messages, disconnection) in console.
+Will cause ezQuake to flash ezQuake button in the taskbar, when it is not active and there is activity (chat text, high priority messages, disconnection) in console.
 
 </description>
 </variable>

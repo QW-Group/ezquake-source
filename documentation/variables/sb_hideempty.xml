@@ -2,16 +2,18 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
-<name>cl_smartjump</name>
+<name>sb_hideempty</name>
 <description>
-
+This toggles whether ezQuake should hide empty servers.
+  
 </description>
 <value><enum>
-	<value><name>
-0</name><description>Off.</description></value>
-	<value><name>1</name><description>Will convert +jump commands to +moveup commands when in liquid (water, lava, slime).</description></value>
+	<value><name>0</name><description>don't hide empty servers</description></value>
+	<value><name>1</name><description>hide empty servers</description></value>
 </enum></value>
 <remarks>
+
+
 
 
 

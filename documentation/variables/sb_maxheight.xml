@@ -2,11 +2,11 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
-<name>con_sound_mm1_file</name>
+<name>sb_maxheight</name>
 <description>
 
 
-You can specify notification sound for messagemode1 (/messagemode or /say foo) messages.
+This set the maximum height for the server browser menu in pixels.
 
 </description>
 </variable>

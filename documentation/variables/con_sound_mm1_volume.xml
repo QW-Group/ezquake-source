@@ -6,7 +6,7 @@
 <description>
 
 
-You can specify volume of notification sound for mm1 messages.
+You can specify volume of notification sound for messagemode1 (/messagemode or /say foo) messages.
 
 </description>
 </variable>

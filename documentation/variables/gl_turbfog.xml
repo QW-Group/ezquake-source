@@ -5,7 +5,7 @@
 <name>gl_turbfog</name>
 <description>
 Controls amount of fog when inside liquid (water, lava, slime).
-Density is controlled by choosing a value between 0 and 1 and 1 and 2.
+Density is controlled by choosing a value from 0 to 1 and from 1 to 2.
 </description>
 <value><enum>
 	<value><name>

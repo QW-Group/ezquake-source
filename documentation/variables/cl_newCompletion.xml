@@ -6,7 +6,8 @@
 <description>
 
 
-Turns new console [tab] completion algorithm on when set to 1.
+Turns new console [tab] completion algorithm on when set to 1. 
+It cycles through the available options.
 
 </description>
 </variable>

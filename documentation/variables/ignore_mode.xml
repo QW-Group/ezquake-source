@@ -5,7 +5,7 @@
 <name>ignore_mode</name>
 <description>
 
-Someone is on your ignore list, you won't see any mm1 messages from them 
+Someone is on your ignore list, you won't see any messagemode (/say hello) messages from them 
 (even if they are a spec).
 </description>
 <value><enum>

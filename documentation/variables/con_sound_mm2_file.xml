@@ -6,7 +6,7 @@
 <description>
 
 
-You can specify notification sound for mm2 messages.
+You can specify notification sound for messagemode2 (/messagemode2 or /say_team foo) messages.
 
 </description>
 </variable>

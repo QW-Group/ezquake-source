@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>sb_infospersec</name>
+<description>
+
+
+This determines how many serverinfos per second ezQuake should retrieve when 
+scanning servers. When setting this value too high you will flood your line,
+causing you to not receive information from servers or lagging your connect
+to the server you are currently connected to.
+
+</description>
+</variable>

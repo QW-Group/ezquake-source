@@ -11,11 +11,11 @@ Possibility to prove, that you do NOT use scripts. Of course, values 0 and 1 wil
 <value><enum>
 	<value><name>
 0</name><description>Same as 1, but also block fast +lookdown/+lookup,
-                so even simple rjump will be impossible.</description></value>
+                so even simple rjump will be impossible. Block KTPro /kfjump and /krjump aliases.</description></value>
 	<value><name>1</name><description>Allow only simple scripts - it will block left/right
                 turning, so fjump (for example) will be impossible,
                 but normal rjump (+lookdown;+attack;+jump) will be
-                possible,</description></value>
+                possible. Blocks KTPro alias /kfjump too.</description></value>
 	<value><name>2</name><description>Allow scripts (default)</description></value>
 </enum></value>
 <remarks>
@@ -29,6 +29,7 @@ Your current 'allow_scripts' setting will be reported to
         you don't use them. And remember - scripts _are allowed_,
         so don't call ppl who use them 'cheaters'.
 
+You can't set this variable to 2 when command line parameter -noscripts is used.
 
 </remarks>
 </variable>

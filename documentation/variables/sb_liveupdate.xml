@@ -2,11 +2,13 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
-<name>con_sound_mm1_file</name>
+<name>sb_liveupdate</name>
 <description>
 
 
-You can specify notification sound for messagemode1 (/messagemode or /say foo) messages.
+This will determine how often ezQuake should refresh the serverinfo window, the
+specified value sets the delay in seconds. Setting it to &quot;0&quot; will disable
+automatic refreshing.
 
 </description>
 </variable>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>sb_mastercache</name>
+<description>
+
+
+This toggles whether ezQuake should cache the results of queries to master server 
+(in directory qw/sb/cache). If you restart ezQuake and don't update sources or if 
+a master server is down, ezQuake will use the cache.
+</description>
+<value><enum>
+	<value><name>0</name><description>don't use cache for master servers</description></value>
+	<value><name>1</name><description>use the cache for master servers when they are down or haven't been refreshed</description></value>
+</enum></value>
+<remarks>
+
+
+
+</remarks>
+</variable>

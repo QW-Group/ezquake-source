@@ -2,11 +2,11 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
-<name>con_sound_mm1_file</name>
+<name>help_files_showstatus</name>
 <description>
 
 
-You can specify notification sound for messagemode1 (/messagemode or /say foo) messages.
+Show quick info about selected help file in /help file browser.
 
 </description>
 </variable>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>sb_sortservers</name>
+<description>
+
+
+This determines sort order in the servers list. This uses the numbers from the
+description of the columns. Check &quot;Columns available in servers/players list&quot; 
+above for an explanation of each number. A &quot;-&quot; in front of the value reverses 
+the sort order for that value from ascending to descending.
+server address (ip:port).
+</description>
+</variable>

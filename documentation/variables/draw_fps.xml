@@ -6,7 +6,7 @@
 <description>
 
 
-Adds a column into scores showing how much FPS each player has.
+Substitutes substitues the &quot;time&quot; column with a &quot;FPS&quot; in scores showing how much FPS each player has.
 
 </description>
 </variable>

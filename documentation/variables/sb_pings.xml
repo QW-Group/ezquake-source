@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>sb_pings</name>
+<description>
+
+
+This determines how many pings ezQuake will send to a server when trying to
+determine your ping to it. A higher value will cause scanning servers to take
+longer, but the result may be more exact. A lower value obviously makes scanning
+faster, but pings may be inaccurate.
+
+</description>
+</variable>

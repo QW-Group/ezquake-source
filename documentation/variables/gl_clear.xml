@@ -11,7 +11,7 @@ development when the map maker must fly outside of the map to look has his map
 from the outside. Enabling this toggle will clear the areas which are not 
 rendered outside of the map thus preventing the flickering effect when images 
 repeat themselves over and over. However it causes problems when playing and 
-going through the surfaces of a liquid (for example when diving into water), as
+going through the surfaces of a liquid (for example when diving into liquid), as
 you will see a red flash where the liquid texture would normally be repeated.
 </description>
 <value><enum>

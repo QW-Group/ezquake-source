@@ -5,7 +5,8 @@
 <name>gl_caustics</name>
 <description>
 
-The underwater waves (multi-texturing is required for this variable)
+Turns reflections on walls covered with liquids (water, lava, slime) when set to 1.
+Multi-texturing is required for this variable.
 </description>
 <value><enum>
 	<value><name>

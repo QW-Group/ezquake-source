@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>sb_autohide</name>
+<description>
+
+
+This toggles in which cases the server browser should automatically hide itself 
+when connecting to a server.
+</description>
+<value><enum>
+	<value><name>0</name><description>Never hide server browser </description></value>
+	<value><name>1</name><description>This will cause the server browser to always hide after connecting</description></value>
+	<value><name>2</name><description>This will cause the server browser to hide after connecting only, if the     connected server is not a qizmo proxy, useful if you often connect to Qizmos
+    only for rerouting features (with &quot;useproxy 1&quot;)
+</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+</remarks>
+</variable>

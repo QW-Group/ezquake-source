@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>sb_showgamedir</name>
+<description>
+This toggles whether ezQuake should display the gamedir column in the server list,
+for example to see which mod is being played.
+</description>
+<value><enum>
+	<value><name>0</name><description>do not show the gamedir column</description></value>
+	<value><name>1</name><description>show the gamedir column</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+
+</remarks>
+</variable>
