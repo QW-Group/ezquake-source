@@ -104,11 +104,10 @@ qboolean OnChange_r_skyname(cvar_t *v, char *s);
 cvar_t	r_skyname			= {"r_skyname", "bloody-marvelous512", 0, OnChange_r_skyname};
 cvar_t	gl_detail			= {"gl_detail","0"};			
 // START shaman :: balancing variables
-cvar_t	gl_caustics			= {"gl_caustics", "1"};		
-cvar_t  gl_waterfog			= {"gl_turbfog", "2"};			
+cvar_t	gl_caustics			= {"gl_caustics", "0"}; // 1		
+cvar_t  gl_waterfog			= {"gl_turbfog", "0"}; // 2			
 cvar_t  gl_waterfog_density = {"gl_turbfogDensity", "1"};	
 // END shaman :: balancing variables
- 
 
 cvar_t  gl_lumaTextures = {"gl_lumaTextures", "1"};	
 cvar_t	gl_subdivide_size = {"gl_subdivide_size", "128", CVAR_ARCHIVE};
@@ -120,7 +119,7 @@ cvar_t	gl_ztrick = {"gl_ztrick", "1"};
 cvar_t	gl_smoothmodels = {"gl_smoothmodels", "1"};
 cvar_t	gl_affinemodels = {"gl_affinemodels", "0"};
 // START shaman :: balancing variables
-cvar_t	gl_polyblend = {"gl_polyblend", "0"};
+cvar_t	gl_polyblend = {"gl_polyblend", "1"}; // 0
 // END shaman :: balancing variables
 cvar_t	gl_flashblend = {"gl_flashblend", "0"};
 cvar_t	gl_playermip = {"gl_playermip", "0"};
@@ -132,19 +131,25 @@ cvar_t	gl_lightmode = {"gl_lightmode", "2"};
 cvar_t	gl_loadlitfiles = {"gl_loadlitfiles", "1"};
 
 // START shaman :: balancing variables
-cvar_t gl_solidparticles = {"gl_solidparticles", "1"};
-cvar_t gl_part_explosions = {"gl_part_explosions", "1"};
-cvar_t gl_part_trails = {"gl_part_trails", "1"};
-cvar_t gl_part_spikes = {"gl_part_spikes", "1"};
-cvar_t gl_part_gunshots = {"gl_part_gunshots", "1"};
-cvar_t gl_part_blood = {"gl_part_blood", "1"};
-cvar_t gl_part_telesplash = {"gl_part_telesplash", "1"};
-cvar_t gl_part_blobs = {"gl_part_blobs", "1"};
-cvar_t gl_part_lavasplash = {"gl_part_lavasplash", "1"};
-cvar_t gl_part_inferno = {"gl_part_inferno", "1"};
+cvar_t gl_solidparticles = {"gl_solidparticles", "0"}; // 1
+cvar_t gl_part_explosions = {"gl_part_explosions", "0"}; // 1
+cvar_t gl_part_trails = {"gl_part_trails", "0"}; // 1
+cvar_t gl_part_spikes = {"gl_part_spikes", "0"}; // 1
+cvar_t gl_part_gunshots = {"gl_part_gunshots", "0"}; // 1
+cvar_t gl_part_blood = {"gl_part_blood", "0"}; // 1
+cvar_t gl_part_telesplash = {"gl_part_telesplash", "0"}; // 1
+cvar_t gl_part_blobs = {"gl_part_blobs", "0"}; // 1
+cvar_t gl_part_lavasplash = {"gl_part_lavasplash", "0"}; // 1
+cvar_t gl_part_inferno = {"gl_part_inferno", "0"}; // 1
 // END shaman :: balancing variables
 
-cvar_t  gl_fogenable		= {"gl_fogenable", "0"};cvar_t  gl_fogstart			= {"gl_fogstart", "50.0"}; cvar_t  gl_fogend			= {"gl_fogend", "800.0"}; cvar_t  gl_fogred			= {"gl_fogred","0.6"};cvar_t  gl_foggreen			= {"gl_foggreen","0.5"}; cvar_t  gl_fogblue			= {"gl_fogblue","0.4"}; cvar_t  gl_fogsky			= {"gl_fogsky","0"}; 
+cvar_t  gl_fogenable		= {"gl_fogenable", "0"};
+cvar_t  gl_fogstart			= {"gl_fogstart", "50.0"};
+cvar_t  gl_fogend			= {"gl_fogend", "800.0"};
+cvar_t  gl_fogred			= {"gl_fogred", "0.6"};
+cvar_t  gl_foggreen			= {"gl_foggreen", "0.5"};
+cvar_t  gl_fogblue			= {"gl_fogblue", "0.4"};
+cvar_t  gl_fogsky			= {"gl_fogsky", "0"}; 
 
 int		lightmode = 2;
 

@@ -332,6 +332,7 @@ if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.val
 	if (physframe && cl_independentPhysics.value != 0)
 		lerp_time = cls.realtime;
 */
+
 	if (to->senttime == from->senttime) {
 		f = 0;
 	} else {
@@ -339,14 +340,18 @@ if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.val
 		f = bound(0, f, 1);
 	}
 
-	for (i = 0; i < 3; i++) {
-		if ( fabs(from->playerstate[cl.playernum].origin[i] - to->playerstate[cl.playernum].origin[i]) > 128) {
+//	for (i = 0; i < 3; i++) {
+//		if ( fabs(from->playerstate[cl.playernum].origin[i] - to->playerstate[cl.playernum].origin[i]) > 128) {
 			// teleported, so don't lerp
 			VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
 			VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
-			goto out;
-		}
-	} 
+//			goto out;
+//		}
+//	} 
+
+	if (physframe && cl_independentPhysics.value != 0)
+		lerp_time = playertime;
+
 // } shaman RFE 1036160
 }
 
