@@ -351,11 +351,17 @@ static void Con_InitConsoleBuffer(console_t *conbuffer, int size) {
 void Con_Init (void) {
 	int i, conbufsize;
 
+
+	//Tei: moved there, because on windows can't capture the output for debug purposes
+	if (COM_CheckParm("-condebug"))
+		qconsole_log = fopen(va("%s/qw/qconsole.log",com_basedir), "a");
+	
 	if (dedicated)
 		return;
 
-	if (COM_CheckParm("-condebug"))
-		qconsole_log = fopen(va("%s/qw/qconsole.log",com_basedir), "a");
+//	if (COM_CheckParm("-condebug"))
+//		qconsole_log = fopen(va("%s/qw/qconsole.log",com_basedir), "a");
+	
 
 	if ((i = COM_CheckParm("-conbufsize")) && i + 1 < com_argc) {
 		conbufsize = Q_atoi(com_argv[i + 1]) << 10;
