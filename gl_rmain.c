@@ -640,6 +640,7 @@ void R_DrawAliasModel (entity_t *ent) {
 		//alternativley add some kind of permanent client side TE for the torch
 		NewStaticLightCorona (C_FIRE, ent->origin);
 	}
+
 	if (amf_part_fire.value && (!strcmp (ent->model->name, "progs/flame.mdl") || !strcmp (ent->model->name, "progs/flame2.mdl") || !strcmp (ent->model->name, "progs/flame3.mdl")))
 	{
 		if (!strcmp (ent->model->name, "progs/flame.mdl") && !cl.paused)
@@ -1305,7 +1306,8 @@ void R_Init (void) {
 	R_InitParticles ();
 
 	//VULT STUFF
-	InitVXStuff();
+	if (qmb_initialized)
+		InitVXStuff();
 
 	netgraphtexture = texture_extension_number;
 	texture_extension_number++;
