@@ -672,6 +672,9 @@
 				Name="Draw"
 				Filter="">
 				<File
+					RelativePath="common_draw.c">
+				</File>
+				<File
 					RelativePath=".\r_aclip.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
@@ -1204,6 +1207,12 @@
 					RelativePath="fragstats.c">
 				</File>
 				<File
+					RelativePath="hud.c">
+				</File>
+				<File
+					RelativePath="hud_common.c">
+				</File>
+				<File
 					RelativePath=".\ignore.c">
 				</File>
 				<File
@@ -1453,6 +1462,12 @@
 					RelativePath="gl_texture.h">
 				</File>
 				<File
+					RelativePath="hud.h">
+				</File>
+				<File
+					RelativePath="hud_common.h">
+				</File>
+				<File
 					RelativePath=".\ignore.h">
 				</File>
 				<File
@@ -1594,6 +1609,9 @@
 			<Filter
 				Name="Draw_h"
 				Filter="">
+				<File
+					RelativePath="common_draw.h">
+				</File>
 				<File
 					RelativePath=".\draw.h">
 				</File>
