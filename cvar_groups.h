@@ -56,7 +56,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define CVAR_GROUP_TEXTURES					"Texture Settings"
 #define CVAR_GROUP_VIEWMODEL				"Weapon View Model Settings"
-#define CVAR_GROUP_TURB						"Water and Sky Settings"
+#define CVAR_GROUP_TURB						"Turbulency and Sky Settings"
 #define CVAR_GROUP_LIGHTING					"Lighting"
 #define CVAR_GROUP_PARTICLES				"Particle Effects"
 #define CVAR_GROUP_EYECANDY					"FPS and EyeCandy Settings"
