@@ -61,7 +61,8 @@ extern cvar_t sb_maxwidth, sb_maxheight;
 
 enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer,
 	m_setup, m_options, m_video, m_keys, m_help, m_quit,
-	m_gameoptions, m_slist, m_sedit, m_fps, m_demos, m_mp3_control, m_mp3_playlist} m_state;
+	m_gameoptions, m_slist, m_sedit, m_fps, m_demos, m_demos_del,
+	m_mp3_control, m_mp3_playlist} m_state;
 
 void M_Menu_Main_f (void);
 	void M_Menu_SinglePlayer_f (void);
@@ -72,6 +73,7 @@ void M_Menu_Main_f (void);
 			void M_Menu_SEdit_f (void);
 		void M_Menu_Setup_f (void);
 		void M_Menu_Demos_f (void);
+			void M_Menu_Demos_Del_f (void);
 		void M_Menu_GameOptions_f (void);
 	void M_Menu_Options_f (void);
 		void M_Menu_Keys_f (void);
@@ -89,6 +91,7 @@ void M_Main_Draw (void);
 			void M_SEdit_Draw (void);
 		void M_Setup_Draw (void);
 		void M_Demos_Draw (void);
+			void M_Demos_Del_Draw (void);
 		void M_GameOptions_Draw (void);
 	void M_Options_Draw (void);
 		void M_Keys_Draw (void);
@@ -106,6 +109,7 @@ void M_Main_Key (int key);
 			void M_SEdit_Key (int key);
 		void M_Setup_Key (int key);
 		void M_Demos_Key (int key);
+			void M_Demos_Del_Key (int key);
 		void M_GameOptions_Key (int key);
 	void M_Options_Key (int key);
 		void M_Keys_Key (int key);
@@ -2442,6 +2446,10 @@ void M_Menu_Demos_f (void) {
 	Demo_ReadDirectory();
 }
 
+void M_Menu_Demos_Del_f (void) {
+	M_EnterMenu(m_demos_del);
+}
+
 static void Demo_FormatSize (char *t) {
 	char *s;
 
@@ -2537,6 +2545,24 @@ void M_Demos_Draw (void) {
 		last_demo_time = 0;
 	}
 
+}
+
+#define DELETE_QUESTION "Delete this demo (Y/N)?"
+void M_Demos_Del_Draw (void) {
+	M_Demos_Draw ();
+	M_PrintWhite (160 - sizeof(DELETE_QUESTION) * 4, 40 + 8 * (DEMO_MAXLINES + 2), DELETE_QUESTION);
+}
+
+void M_Demos_Del (void)
+{
+	char *filename = va("%s%s/%s", com_basedir, demo_currentdir, demolist[demo_cursor + demo_base]->name);
+	if (!Sys_remove(filename))
+	{
+		Demo_ReadDirectory ();
+		Com_Printf("File %s succesfully removed\n", filename);
+	}
+	else
+		Com_Printf("Unable to remove file %s\n", filename);
 }
 
 void M_Demos_Key (int key) {
@@ -2659,7 +2685,32 @@ void M_Demos_Key (int key) {
 		Q_strncpyz(demo_prevdemo, demolist[demo_cursor + demo_base]->name, sizeof(demo_prevdemo));
 		Demo_ReadDirectory();
 		break;
+	case K_DEL:
+		if (keydown[K_SHIFT])
+			M_Demos_Del();
+		else
+			M_Menu_Demos_Del_f();
+		break;
 	}
+}
+
+void M_Demos_Del_Key (int key) {
+	switch (key) {
+	case K_ENTER:
+	case 'Y':
+	case 'y':
+		M_Demos_Del();
+
+	case K_ESCAPE:
+	case 'n':
+	case 'N':
+		m_state = m_demos;
+		break;
+
+	default:
+		break;
+	}
+
 }
 
 //=============================================================================
@@ -3655,6 +3706,10 @@ void M_Draw (void) {
 		M_Demos_Draw ();
 		break;
 
+	case m_demos_del:
+		M_Demos_Del_Draw ();
+		break;
+
 #if defined(_WIN32) || defined(__XMMS__)
 	case m_mp3_control:
 		M_MP3_Control_Draw ();
@@ -3747,6 +3802,10 @@ void M_Keydown (int key) {
 */
 	case m_demos:
 		M_Demos_Key (key);
+		break;
+
+	case m_demos_del:
+		M_Demos_Del_Key (key);
 		break;
 
 #if defined(_WIN32) || defined(__XMMS__)
