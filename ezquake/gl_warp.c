@@ -219,6 +219,9 @@ void EmitWaterPolys (msurface_t *fa) {
 
 	GL_DisableMultitexture();
 
+	if (gl_fogenable.value)
+		glEnable(GL_FOG);
+
 	if (r_fastturb.value)
 	{
 		glDisable (GL_TEXTURE_2D);
@@ -274,6 +277,8 @@ void EmitWaterPolys (msurface_t *fa) {
 			glEnd();
 		}
 	}
+	if (gl_fogenable.value)
+		glDisable(GL_FOG);
 }
 
 
@@ -359,16 +364,13 @@ void R_DrawSkyChain (void) {
 	msurface_t *fa;
 	byte *col;
 	extern cvar_t gl_fogsky;
-
 	if (!skychain)
 		return;
 
 	GL_DisableMultitexture();
 
-	
-	if (gl_fogenable.value && !gl_fogsky.value)
-		glDisable(GL_FOG);
-
+	if (gl_fogenable.value && gl_fogsky.value)
+		glEnable(GL_FOG);
 	if (r_fastsky.value || cl.worldmodel->bspversion == HL_BSPVERSION) {
 		glDisable (GL_TEXTURE_2D);
 
@@ -419,8 +421,8 @@ void R_DrawSkyChain (void) {
 		}
 	}
 
-	if (gl_fogenable.value && !gl_fogsky.value)
-		glEnable(GL_FOG);
+	if (gl_fogenable.value && gl_fogsky.value)
+		glDisable(GL_FOG);
 
 	skychain = NULL;
 	skychain_tail = &skychain;
@@ -766,17 +768,18 @@ void R_DrawSkyBox (void) {
 	int i;
 	msurface_t *fa;
 
+	extern cvar_t gl_fogred, gl_foggreen, gl_fogblue;
+
 	if (!skychain)
 		return;
-
-	if (gl_fogenable.value)
-		glDisable(GL_FOG);
 
 	R_ClearSkyBox();
 	for (fa = skychain; fa; fa = fa->texturechain)
 		R_AddSkyBoxSurface (fa);
 
 	GL_DisableMultitexture();
+
+	if (gl_fogenable.value && gl_fogsky.value)		glDisable(GL_FOG);
 
 	for (i = 0; i < 6; i++) {
 		if (skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])
@@ -792,26 +795,38 @@ void R_DrawSkyBox (void) {
 		glEnd ();
 	}
 
-	glDisable(GL_TEXTURE_2D);
-	glColorMask (GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ZERO, GL_ONE);
+	if (gl_fogenable.value && gl_fogsky.value) {		glEnable(GL_FOG);
+		glDisable(GL_TEXTURE_2D);
+		glColor4f(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1); 
+	    glEnable(GL_BLEND);
+		glBlendFunc(GL_ONE, GL_ZERO);		
+	}
+
+	else {
+		glDisable(GL_TEXTURE_2D);
+		glColorMask (GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_ZERO, GL_ONE);
+	}
 
 	for (fa = skychain; fa; fa = fa->texturechain)
 		EmitFlatPoly (fa);
 
-	
-	glEnable (GL_TEXTURE_2D);
-	glColorMask (GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-	glDisable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	if (gl_fogenable.value && gl_fogsky.value) {		glDisable(GL_BLEND);
+		glEnable(GL_TEXTURE_2D);
+	}
+
+	else {
+		glEnable (GL_TEXTURE_2D);
+		glColorMask (GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		glDisable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
 
 	skychain = NULL;
 	skychain_tail = &skychain;
 
-	if (gl_fogenable.value)
-		glEnable(GL_FOG);
+	if (gl_fogenable.value && gl_fogsky.value)		glDisable(GL_FOG);
 
 }
 
