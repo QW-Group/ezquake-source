@@ -69,6 +69,15 @@ void R_UpdateCoronas(void)
 		if (!VectorCompare(impact, c->origin))//Can't see it, so make it fade out(faster)
 		{
 			c->los = false;
+			
+			c->scale = 0;
+			c->alpha = 0;
+
+			//Tei: this has been commented out for multiplayer,
+			// because some coronas see trough walls and can be cheat.
+			// #1041604	Eyecandy - cheaty (2nd)
+
+			/*
 			if (c->type == C_FIRE)
 			{
 				c->fade = -0.5;
@@ -78,7 +87,7 @@ void R_UpdateCoronas(void)
 			{
 				c->fade += c->fade;
 				c->growth += c->growth;
-			}
+			}*/
 				
 		}
 		else
