@@ -37,6 +37,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define LLKHF_UP			(KF_UP >> 8)
 #define KF_UP				0x8000
 
+
+//Tei, needed to compile on vc6
+#ifndef ULONG_PTR
+
+typedef long LONG_PTR;
+typedef unsigned long ULONG_PTR;
+typedef ULONG_PTR DWORD_PTR;
+
+#endif
+//Tei, needed to compile on vc6
+
+
 typedef struct {
     DWORD   vkCode;
     DWORD   scanCode;

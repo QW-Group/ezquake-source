@@ -510,6 +510,21 @@ void R_RenderDynamicLightmaps (msurface_t *fa) {
 void R_DrawWaterSurfaces (void) {
 	msurface_t *s;
 	float wateralpha;
+	
+	//Tei particle surf
+#define ESHADER(eshadername)  extern void eshadername (vec3_t org)
+	extern void EmitParticleEffect (msurface_t *fa, void (*fun)(vec3_t nv)) ;
+	extern cvar_t tei_lavafire;
+	ESHADER(FuelRodExplosion);//green mushroom explosion
+	ESHADER(ParticleFire);//torch fire
+	ESHADER(ParticleFirePool);//lavapool alike fire 
+	ESHADER(VX_DeathEffect);//big white spark explosion
+	ESHADER(VX_GibEffect);//huge red blood cloud
+	ESHADER(VX_DetpackExplosion);//cool huge explosion
+	ESHADER(VX_Implosion);//TODO
+	ESHADER(VX_TeslaCharge);
+
+	
 
 	if (!waterchain)
 		return;
@@ -528,6 +543,36 @@ void R_DrawWaterSurfaces (void) {
 	for (s = waterchain; s; s = s->texturechain) {
 		GL_Bind (s->texinfo->texture->gl_texturenum);
 		EmitWaterPolys (s);
+
+		//Tei "eshaders". 
+		if (s &&s->texinfo && s->texinfo->texture && s->texinfo->texture->name )
+		{
+			switch(s->texinfo->texture->name[1])
+			{
+			//Lava
+			case 'l':
+			case 'L':
+				if (!tei_lavafire.value)
+					break;
+				if (tei_lavafire.value == 2)
+					EmitParticleEffect(s,ParticleFirePool);//Tei lavafire HARDCORE
+				else
+				if (tei_lavafire.value == 1)
+					EmitParticleEffect(s,ParticleFire);//Tei lavafire, normal 
+
+				//else, use wheater effect :)
+				break;
+			case 't':
+				//TODO: a cool implosion subtel fx
+		//		EmitParticleEffect(s,VX_Implosion);//Teleport
+				break;
+			case 'w':
+				EmitParticleEffect(s,VX_TeslaCharge);//Teleport
+				break;
+			default:
+				break;
+			}
+		}
 	}
 	waterchain = NULL;
 	waterchain_tail = &waterchain;
