@@ -972,7 +972,7 @@ void Cmd_SetMacro(char *s, qboolean allow)
 
 	for (i = 0; i < macro_count; i++, macro++)
 	{
-		if (!strncasecmp(s, macro->name, strlen(macro->name) + 1))
+		if (!strncasecmp(s, macro->name, strlen(macro->name)))
 		{
 			macro->allowed = allow;
 			return;
@@ -987,7 +987,7 @@ char *Cmd_MacroString (char *s, int *macro_length)
 
 	for (i = 0; i < macro_count; i++, macro++)
 	{
-		if (!strncasecmp(s, macro->name, strlen(macro->name) + 1))
+		if (!strncasecmp(s, macro->name, strlen(macro->name)))
 		{
 			if (macro->allowed)
 			{
