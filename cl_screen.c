@@ -99,6 +99,11 @@ cvar_t			gl_triplebuffer = {"gl_triplebuffer", "1", CVAR_ARCHIVE};
 cvar_t			scr_autoid		= {"scr_autoid", "0"};
 cvar_t			scr_coloredText = {"scr_coloredText", "1"};
 
+// START shaman RFE 1022309
+cvar_t			scr_tracking			= {"scr_tracking", ""};
+cvar_t			scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
+// END shaman RFE 1022309
+
 qboolean		scr_initialized;                // ready to draw
 
 mpic_t			*scr_ram;
@@ -1491,6 +1496,11 @@ void SCR_Init (void) {
 
 	Cvar_Register (&scr_autoid);
 	Cvar_Register (&scr_coloredText);
+
+	// START shaman RFE 1022309
+	Cvar_Register (&scr_tracking);
+	Cvar_Register (&scr_spectatorMessage);
+	// END shaman RFE 1022309
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREENSHOTS);
 	Cvar_Register (&scr_allowsnap);

@@ -490,7 +490,7 @@ void CL_UserInfo_f (void) {
 void SV_Quit_f (void);
 
 void CL_Quit_f (void) {
-//	extern cvar_t cl_confirmquit;
+	extern cvar_t cl_confirmquit;
 
 #ifndef CLIENTONLY
 	if (dedicated)
@@ -498,9 +498,9 @@ void CL_Quit_f (void) {
 	else
 #endif
 	{
-//		if (cl_confirmquit.value)
-//			M_Menu_Quit_f ();
-//		else
+		if (cl_confirmquit.value)
+			M_Menu_Quit_f ();
+		else
 			Host_Quit ();
 	}
 }

@@ -84,7 +84,7 @@ cvar_t	cl_oldPL = {"cl_oldPL", "0"};
 cvar_t	cl_demoPingInterval = {"cl_demoPingInterval", "5"};
 cvar_t  demo_getpings      = {"demo_getpings",    "1"};
 cvar_t	cl_chatsound = {"cl_chatsound", "1"};
-//cvar_t	cl_confirmquit = {"cl_confirmquit", "1", CVAR_INIT};
+cvar_t	cl_confirmquit = {"cl_confirmquit", "0"}; // , CVAR_INIT
 cvar_t	default_fov = {"default_fov", "0"};
 cvar_t	qizmo_dir = {"qizmo_dir", "qizmo"};
 
@@ -122,6 +122,10 @@ cvar_t	msg = {"msg", "1", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	noaim = {"noaim", "0", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	w_switch = {"w_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	b_switch = {"b_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
+
+// START shaman RFE 1022306
+cvar_t  msg_filter = {"msg_filter", "0"};
+// END shaman RFE 1022306
 
 clientPersistent_t	cls;
 clientState_t		cl;
@@ -794,6 +798,10 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_fp_messages);
 	Cvar_Register (&cl_fp_persecond);
 
+	// START shaman RFE 1022306
+	Cvar_Register (&msg_filter);
+	// END shaman RFE 1022306
+
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&cl_shownet);
@@ -872,10 +880,9 @@ void CL_InitLocal (void) {
 	Cvar_Register (&localid);
 	Cvar_Register (&cl_warncmd);
 	Cvar_Register (&cl_cmdline);
+	Cvar_Register (&cl_confirmquit);
 
 	Cvar_ResetCurrentGroup();
-
-	//Cvar_Register (&cl_confirmquit);
 
     com_blockscripts = false;
 

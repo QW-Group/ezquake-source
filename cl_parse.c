@@ -1218,7 +1218,7 @@ void CL_ParsePrint (void) {
 	qboolean cut_message = false;
 	char *s, str[2048], *p, check_flood, dest[2048], *c, *d, *f, e, b; 
 	int len, level, flags = 0, offset = 0;
-	extern cvar_t cl_chatsound;
+	extern cvar_t cl_chatsound, msg_filter;
 
     int client;
     int type; 
@@ -1323,6 +1323,21 @@ void CL_ParsePrint (void) {
 
         if (client >= 0 && !suppress_talksound)
         {
+			// START shaman RFE 1022306
+			if (
+			    (
+			         (type == CHAT_MM1 || type == CHAT_SPEC)
+			      && (msg_filter.value == 1 || msg_filter.value == 3)
+				)
+			 || (
+			         (type == CHAT_MM2)
+			      && (msg_filter.value == 2 || msg_filter.value == 3)
+			    )
+			) {
+				return;
+			}
+			// END shaman RFE 1022306
+
             if (cl.players[client].spectator)
             {
                 chat_sound_file = con_sound_spec_file.string;
