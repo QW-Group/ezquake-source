@@ -418,6 +418,13 @@ static void DumpTeamplay(FILE *f) {
 	TP_DumpTriggers(f);
 }
 
+void DumpFogSettings(FILE *f) {
+	extern cvar_t gl_fogenable, gl_fogred, gl_foggreen, gl_fogblue;
+	if (gl_fogenable.value != 0) {
+		fprintf(f, "fog %s %s %s\n", gl_fogred.string, gl_foggreen.string, gl_fogblue.string);
+	}
+}
+
 void DumpMisc(FILE *f) {
 
 	DumpMapGroups(f);
@@ -429,6 +436,13 @@ void DumpMisc(FILE *f) {
 	fprintf(f, "\n");
 #endif
 // END shaman RFE 1020608
+
+// START shaman RFE 1032143 {
+#ifdef GLQUAKE
+	DumpFogSettings(f);
+	fprintf(f, "\n");
+#endif
+// } END shaman RFE 1032143
 
 	if (cl.teamfortress) {
 		if (!Q_strcasecmp(Info_ValueForKey (cls.userinfo, "ec"), "on") || 

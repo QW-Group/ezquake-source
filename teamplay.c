@@ -1638,6 +1638,9 @@ static locmacro_t locmacros[] = {
 	{"pent", "pent"},
 	{"ring", "ring"},
 	{"suit", "suit"},
+// START shaman RFE 1031828 {
+	{"mh", "mega"},
+// } END shaman RFE 1031828
 };
 
 #define NUM_LOCMACROS	(sizeof(locmacros) / sizeof(locmacros[0]))
