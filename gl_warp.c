@@ -247,6 +247,43 @@ void EmitWaterPolys (msurface_t *fa) {
 	}
 }
 
+
+
+//Tei, add fire to lava
+void EmitParticleEffect (msurface_t *fa, void (*fun)(vec3_t nv)) {
+	glpoly_t *p;
+	float *v;//, s, t, os, ot;
+	int i;
+
+	vec3_t nv;
+
+
+	
+	for (p = fa->polys; p; p = p->next) 
+	{
+			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) 
+			{
+
+				VectorCopy(v, nv);
+
+				//glVertex3fv (nv);
+				nv[0] += rand()%100 - 50;
+				nv[1] += rand()%100 - 50;
+
+//TODO: frametime here 
+				//if( (rand()%1000) * cls.frametime>27)//not work ok
+				if (rand()%100>95)
+				{					
+					fun(nv);
+				}
+
+			}
+		
+	}
+}
+//Tei, add fire to lava
+
+
 void EmitSkyPolys (msurface_t *fa, qboolean mtex) {
 	glpoly_t *p;
 	float *v, s, t, ss, tt, length;

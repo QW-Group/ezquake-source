@@ -1655,6 +1655,8 @@ void WeatherEffect(void)
 	int i;
 	float trace;
 	col_t colour={128,128,128,75};
+	void ParticleFirePool(vec3_t);
+	extern cvar_t tei_lavafire;
 
 	if (amf_weather_rain.value)
 	{
@@ -1680,7 +1682,30 @@ void WeatherEffect(void)
 				AddParticle(p_rain, org, 1, 1, 15, colour, zerodir);
 			}
 		}
+
 	}
+
+	//Tei, lavafire on 2 or superior 
+	// this can be more better for some users than "eshaders"
+	if (tei_lavafire.value > 2)
+	for(i=0;i<tei_lavafire.value;i++)
+	{
+		
+
+			VectorCopy(r_refdef.vieworg, org);
+			org[0] = org[0] + (rand() % 3000) - 1500;
+			org[1] = org[1] + (rand() % 3000) - 1500;
+			VectorCopy(org, start);
+			org[2] = org[2] - 15000;
+
+			trace = TraceLineN(start, org, impact, normal);
+
+			if (TruePointContents(impact) == CONTENTS_LAVA && trace)
+			{
+				ParticleFirePool(impact);
+			}
+		}
+
 };
 
 //VULT PARTICLES
@@ -2527,6 +2552,16 @@ void ParticleFire (vec3_t org)
 		AddParticle(p_flame, org, 1, 7, 0.8, color, zerodir);
 }
 
+
+//TEI PARTICLES
+//Idea: lavapool fire, Result: slighty lame
+void ParticleFirePool (vec3_t org) 
+{
+	col_t color={255,100,25, 128};
+
+	AddParticle(p_flame, org, 1, rand()%32, rand()%11, color, zerodir);
+}
+
 //VULT PARTICLES
 //This looks quite good with detailtrails on
 void VX_TeslaCharge (vec3_t org)
@@ -2631,6 +2666,16 @@ void VX_DetpackExplosion (vec3_t org)
 		}
 		angle[0] += 180 / 5;
 	}
+
+}
+
+
+//TEI PARTICLES
+//Teleport dimensional implosion
+//unfinished
+void VX_Implosion (vec3_t org)
+{
+//TODO
 
 }
 

@@ -65,6 +65,9 @@ cvar_t		amf_part_trailwidth = {"amf_part_trailwidth", "3", CVAR_ARCHIVE};
 cvar_t		amf_part_traildetail = {"amf_part_traildetail", "1", CVAR_ARCHIVE};
 cvar_t		amf_part_trailtype = {"amf_part_trailtype", "1", CVAR_ARCHIVE};
 
+//Tei amf-alike new stuff 
+cvar_t		tei_lavafire = {"tei_lavafire", "1" , CVAR_ARCHIVE};
+
 int QW_strncmp (char *s1, char *s2)
 {
 	return strncmp(s1, s2, strlen(s2));
@@ -350,6 +353,11 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_part_trailtype);
 	Cvar_ResetCurrentGroup();
 	
+
+	//Tei amf-alike new stuff 
+	Cvar_SetCurrentGroup(CVAR_GROUP_AMF);
+	Cvar_Register (&tei_lavafire);
+	Cvar_ResetCurrentGroup();
 
 	Cmd_AddCommand ("amf_checkmodels", CheckModels_f);
 	Cmd_AddCommand ("amf_inferno", InfernoFire_f);
