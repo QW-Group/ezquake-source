@@ -59,6 +59,7 @@ qboolean RuleSets_DisallowExternalTexture(model_t *mod) {
 	switch (mod->modhint) {
 		case MOD_EYES: return true;
 		case MOD_BACKPACK: return (ruleset == rs_smackdown);
+		default:
 	}
 	return false;
 }
@@ -141,6 +142,7 @@ static void Rulesets_Smackdown(void) {
 		Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
 	}
 
+#ifdef GLQUAKE
 	limited_cvar_t limited_cvars[] = {
 		{&amf_part_gunshot_type, "1"},
 		{&amf_part_traillen, "1"},
@@ -149,12 +151,11 @@ static void Rulesets_Smackdown(void) {
 		{&amf_part_traildetail, "1"},
 		{&amf_part_trailtype, "1"}
 		};
-	
-	i = 0;
-	for (; i < (sizeof(limited_cvars) / sizeof(limited_cvars[0])); i++) {
+	for (i = 0; i < (sizeof(limited_cvars) / sizeof(limited_cvars[0])); i++) {
 		Cvar_RulesetSet(limited_cvars[i].var, limited_cvars[i].rulesetvalue);
 		Cvar_SetFlags(limited_cvars[i].var, Cvar_GetFlags(limited_cvars[i].var) | CVAR_RULESET_MAX);
 	}
+#endif
 
 	if (cl_independentPhysics.value)
 	{
