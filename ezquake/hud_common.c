@@ -999,7 +999,7 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qboolean low,
     int  len;
 
     int width, height, x, y;
-    int color, size;
+    int size;
     int align;
 
     clamp(num, 0, 99999);
@@ -1604,7 +1604,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
         for (i=0; i < min(n_players, a_rows*a_cols); i++)
         {
             char buf[32];
-            int tmp, posy;
+            int posy;
 
             player_info_t *info = &cl.players[sorted_players[num]->playernum];
 

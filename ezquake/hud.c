@@ -432,7 +432,6 @@ void HUD_Move_f (void)
 // place the specified hud element
 void HUD_Place_f (void)
 {
-    int i;
     hud_t *hud;
     char temp[512];
 
@@ -489,8 +488,6 @@ void HUD_Place_f (void)
 void HUD_Align_f (void)
 {
     hud_t *hud;
-    int i;
-    char temp[512];
 
     if (Cmd_Argc() != 4  &&  Cmd_Argc() != 2)
     {
@@ -668,15 +665,11 @@ qboolean HUD_PrepareDraw(
     /* in  */ hud_t *hud, int width, int height,
     /* out */ int *ret_x, int *ret_y)       // position
 {
-    int i;
     extern vrect_t scr_vrect;
     int x, y;
     int fl, fr, ft, fb; // frame left, right, top and bottom
     int ax, ay, aw, ah; // area coordinates & sizes to align
     int bx, by, bw, bh; // accepted area to draw in
-
-    char buf[128];
-    int t1, t2;
 
     if (cls.state < hud->min_state  ||  !hud->show->value)
         return false;

@@ -158,7 +158,6 @@ int CL_CalcNet (void) {
 	static cvar_t * netgraph_inframes = NULL;
 	extern hud_t * hud_netgraph;
 
-	int total_counted;
 	static int last_calculated_outgoing;
 	static int last_calculated_incoming;
 	static int last_lost;

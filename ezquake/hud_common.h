@@ -10,6 +10,7 @@ extern hud_t *hud_netgraph;
 
 void SCR_HUD_Netgraph(hud_t *hud);
 void SCR_HUD_DrawFPS(hud_t *hud);
+void SCR_HUD_DrawNetStats(hud_t *hud);
 
 void SCR_HUD_DrawGun2 (hud_t *hud);
 void SCR_HUD_DrawGun3 (hud_t *hud);
