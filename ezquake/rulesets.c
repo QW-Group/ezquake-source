@@ -123,6 +123,9 @@ static void Rulesets_Smackdown(void) {
 #ifdef GLQUAKE
 		{&amf_camera_chase, "0"},
 		{&amf_camera_death, "0"},
+		{&amf_part_sparks, "0"},
+		{&amf_waterripple, "0"},
+		{&amf_lightning_sparks, "0"}
 #endif
 		{&tp_msgtriggers, "0"},
 		{&cl_trueLightning, "0"},
@@ -139,12 +142,9 @@ static void Rulesets_Smackdown(void) {
 		{&amf_part_trailwidth, "1"},
 		{&amf_part_traildetail, "1"},
 		{&amf_part_trailtype, "1"},
-		{&amf_part_sparks, "0"},
 		{&amf_part_spikes, "1"},
 		{&amf_part_gunshot, "1"},
-		{&amf_waterripple, "0"},
 		{&amf_lightning_size, "1"},
-		{&amf_lightning_sparks, "0"}
     
 		
 		};
