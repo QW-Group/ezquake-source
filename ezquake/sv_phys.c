@@ -317,7 +317,10 @@ trace_t SV_PushEntity (edict_t *ent, vec3_t push) {
 
 	if (ent->v.movetype == MOVETYPE_FLYMISSILE)
 		trace = SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_MISSILE, ent);
-	else if (ent->v.solid == SOLID_TRIGGER || ent->v.solid == SOLID_NOT)
+        // Tonik: the check for SOLID_NOT is to fix the way dead bodies and 
+        // gibs behave (should not be blocked by players & monsters); 
+        // The SOLID_TRIGGER check is disabled lest we break frikbots 
+	else if (ent->v.solid == SOLID_TRIGGER/* || ent->v.solid == SOLID_NOT*/)
 		// only clip against bmodels
 		trace = SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_NOMONSTERS, ent);
 	else
