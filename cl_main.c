@@ -455,11 +455,10 @@ void CL_ClearState (void) {
 //This is also called on Host_Error, so it shouldn't cause any errors
 void CL_Disconnect (void) {
 
-	extern cvar_t r_lerpframes;
+	extern cvar_t r_lerpframes, cl_trueLightning;
 
 #ifdef GLQUAKE
-	extern cvar_t gl_polyblend;
-	extern cvar_t gl_clear;
+	extern cvar_t gl_polyblend, gl_clear;
 #endif
 
 #ifndef GLQUAKE
@@ -478,6 +477,7 @@ void CL_Disconnect (void) {
 	CURRVIEW = 0;
 	scr_viewsize.value =  nViewsizeExit;
 	v_contrast.value = nContrastExit;
+	cl_trueLightning.value = nTruelightning;
 #ifdef GLQUAKE
 	gl_polyblend.value = nPolyblendExit;
 	gl_clear.value = nGlClearExit;
@@ -1239,6 +1239,7 @@ void CL_Frame (double time) {
 	if (!bExitmultiview) {
 		nContrastExit = v_contrast.value;
 		nViewsizeExit = scr_viewsize.value;
+		nTruelightning = cl_trueLightning.value;
 #ifdef GLQUAKE
 		nPolyblendExit = gl_polyblend.value;
 		nGlClearExit = gl_clear.value;
@@ -1260,6 +1261,7 @@ void CL_Frame (double time) {
 	if (bExitmultiview && !cl_multiview.value) {
 		scr_viewsize.value =  nViewsizeExit;
 		v_contrast.value = nContrastExit;
+		cl_trueLightning.value = nTruelightning;
 #ifdef GLQUAKE
 		gl_polyblend.value = nPolyblendExit;
 		gl_clear.value = nGlClearExit;
@@ -1296,7 +1298,7 @@ void CL_Frame (double time) {
 		}
 		CDAudio_Update();
 		MP3_Frame();
-	} else if (!cls.mvdplayback || !cl_multiview.value) {
+	} else if (!cls.mvdplayback || cl_multiview.value < 2) {
 		if (cls.state == ca_active)	{
 			S_Update (r_origin, vpn, vright, vup);
 			CL_DecayLights ();
@@ -1380,11 +1382,21 @@ void CL_Multiview(void) {
 
 	nNumViews = cl_multiview.value;
 
+	// only refresh skins once, I think this is the best solution for multiview
+	// eg when viewing 4 players in a 2v2
 	if (!CURRVIEW && cls.state >= ca_connected)
 		TP_RefreshSkins();
 
+	// disable contrast as it blanks all but 1 view for gl
+#ifdef GLQUAKE
 	v_contrast.value = 1;
+#endif
 
+	// stop truelightning as it lerps with the other views
+	if (cl_trueLightning.value < 1 && cl_trueLightning.value > 0)
+		cl_trueLightning.value = 0;
+
+	// allow mvinset 1 to use viewsize value
 	if (!cl_mvinset.value && cl_multiview.value == 2 || cl_multiview.value != 2)
 		scr_viewsize.value = 120;
 	else
@@ -1398,9 +1410,13 @@ void CL_Multiview(void) {
 	gl_polyblend.value = 0;
 	gl_clear.value = 0;
 #endif
-	r_lerpframes.value = 0; // oppymv 310804
+
+	// stop weapon model lerping as it lerps with the other view
+	r_lerpframes.value = 0; 
 	
 #ifndef GLQUAKE
+
+	// disable these because they don't restrict the change to just the new viewport
 	r_waterwarp.value = 0;
 	v_contentblend.value = 0;
 	v_quadcshift.value = 0;
@@ -1440,7 +1456,6 @@ void CL_Multiview(void) {
 				else {
 					playernum = nTrack2duel;
 				}
-
 			}
 		} else {
 		if (CURRVIEW ==	1) {
