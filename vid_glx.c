@@ -1041,9 +1041,10 @@ void EvDev_UpdateMouse(void *v) {
 	int ret;
 
 	while ((ret = read(evdev_fd, &event, sizeof(struct input_event))) > 0) {
-		if (vid_minimized || !_windowed_mouse.value)
+		if (vid_minimized || !_windowed_mouse.value) {
 			if (evdev_mt) { usleep(10*1000); continue; }
 			else continue;
+		}
 
 		if (ret < sizeof(struct input_event)) {
 			Com_Printf("Error reading from %s (1)\nReverting to standard mouse input\n", evdev_device);

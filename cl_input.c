@@ -475,6 +475,15 @@ void CL_SendCmd (void) {
 	cl.frames[i].senttime = cls.realtime;
 	cl.frames[i].receivedtime = -1;		// we haven't gotten a reply yet
 
+	// HUD -> hexum
+	// kazik -->
+	// update network stats table
+	i = cls.netchan.outgoing_sequence&NETWORK_STATS_MASK;
+	network_stats[i].delta = 0;     // filled-in later
+	network_stats[i].sentsize = 0;  // filled-in later
+	network_stats[i].senttime = cls.realtime;
+	network_stats[i].receivedtime = -1;
+
 	// get basic movement from keyboard
 	CL_BaseMove (cmd);
 
@@ -550,6 +559,12 @@ void CL_SendCmd (void) {
 		cl.frames[cls.netchan.outgoing_sequence & UPDATE_MASK].delta_sequence = cl.delta_sequence;
 		MSG_WriteByte (&buf, clc_delta);
 		MSG_WriteByte (&buf, cl.delta_sequence & 255);
+
+		// HUD -> hexum
+		// kazik -->
+		// network stats table
+		network_stats[cls.netchan.outgoing_sequence&NETWORK_STATS_MASK].delta = 1;
+		// kazik <--
 	} else {
 		cl.frames[cls.netchan.outgoing_sequence & UPDATE_MASK].delta_sequence = -1;
 	}
@@ -583,6 +598,13 @@ void CL_SendCmd (void) {
 		pps_balance = 0;
 		dropcount = 0;
 	}
+
+	// HUD -> hexum
+        // kazik -->
+        cl.frames[cls.netchan.outgoing_sequence&UPDATE_MASK].sentsize = buf.cursize + 8;    // 8 = PACKET_HEADER
+        // network stats table
+        network_stats[cls.netchan.outgoing_sequence&NETWORK_STATS_MASK].sentsize = buf.cursize + 8;
+        // kazik <--
 
 	// deliver the message
 	Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);	

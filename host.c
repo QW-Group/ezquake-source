@@ -32,6 +32,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "EX_browser.h"
 #include <setjmp.h>
 
+#include "hud.h" // HUD -> hexum
+
 
 #if !defined(CLIENTONLY) && !defined(SERVERONLY)
 qboolean	dedicated = false;
@@ -311,6 +313,9 @@ void Host_Init (int argc, char **argv, int default_memsize) {
     SYSINFO_Init();
 
     SB_RootInit();
+
+	HUD_Init(); // HUD -> hexum
+	HUD_InitFinish(); // HUD -> hexum
 
 #ifndef SERVERONLY
 	

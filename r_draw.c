@@ -866,6 +866,85 @@ void Draw_Fill (int x, int y, int w, int h, int c) {
 
 //=============================================================================
 
+// HUD -> hexum
+#define clamp(a,b,c) (a = min(max(a, b), c))
+/*
+================
+Draw_FadeBox
+
+================
+*/
+void Draw_FadeBox (int x, int y, int width, int height,
+                   float r, float g, float b, float a)
+{
+    int         _x, _y;
+    byte        *pbuf;
+    int         col_index;
+    byte        color;
+
+    if (a <= 0)
+        return;
+
+    VID_UnlockBuffer ();
+    S_ExtraUpdate ();
+    VID_LockBuffer ();
+
+    // find color
+    clamp(r, 0, 1);
+    clamp(g, 0, 1);
+    clamp(b, 0, 1);
+    col_index = ((int)(r*63) << 12) +
+                ((int)(g*63) <<  6) +
+                ((int)(b*63) <<  0);
+    color = 0; // color = d_15to8table[col_index];
+
+    for (_y=y; _y < y + height; _y++)
+    {
+        int t;
+
+        pbuf = (byte *)(vid.buffer + vid.rowbytes*_y);
+        if (a < 0.333)
+        {
+            t = (_y & 1) << 1;
+
+            for (_x = x; _x < x + width; _x++)
+            {
+                if ((_x & 3) == t)
+                    pbuf[_x] = color;
+            }
+        }
+        else if (a < 0.666)
+        {
+            t = (_y & 1);
+
+            for (_x = x; _x < x + width; _x++)
+            {
+                if ((_x & 1) == t)
+                    pbuf[_x] = color;
+            }
+        }
+        else if (a < 1)
+        {
+            t = (_y & 1) << 1;
+
+            for (_x = x; _x < x + width; _x++)
+            {
+                if ((_x & 3) != t)
+                    pbuf[_x] = color;
+            }
+        }
+        else
+        {
+            for (_x = x; _x < x + width; _x++)
+                pbuf[_x] = color;
+        }
+    }
+
+    VID_UnlockBuffer ();
+    S_ExtraUpdate ();
+    VID_LockBuffer ();
+}
+
 void Draw_FadeScreen (void) {
 	int x,y;
 	byte *pbuf;
@@ -916,6 +995,58 @@ void Draw_FadeScreen (void) {
 	S_ExtraUpdate ();
 	VID_LockBuffer ();
 }
+
+// HUD -> hexum
+// kazik -->
+//
+// SCALE versions of some functions
+//
+
+void Draw_SCharacter (int x, int y, int num, float scale)
+{
+    // no scale in SOFT yet..
+    Draw_Character(x, y, num);
+}
+
+void Draw_SString (int x, int y, char *str, float scale)
+{
+    // no scale in SOFT yet..
+    Draw_String(x, y, str);
+}
+
+void Draw_SAlt_String (int x, int y, char *str, float scale)
+{
+    // no scale in SOFT yet..
+    Draw_Alt_String(x, y, str);
+}
+
+void Draw_SPic (int x, int y, mpic_t *pic, float scale)
+{
+    // no scale in SOFT yet..
+    // but mae it transparent
+    Draw_TransPic(x, y, pic);
+}
+
+void Draw_SSubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float scale)
+{
+    // no scale in SOFT yet..
+    // but make it transparent
+    Draw_TransSubPic(x, y, pic, srcx, srcy, width, height);
+}
+
+void Draw_STransPic (int x, int y, mpic_t *pic, float scale)
+{
+    // no scale in SOFT yet..
+    Draw_TransPic(x, y, pic);
+}
+
+void Draw_SFill (int x, int y, int w, int h, int c, float scale)
+{
+    // no scale in SOFT yet..
+    Draw_Fill(x, y, w, h, c);
+}
+
+// kazik <--
 
 //=============================================================================
 

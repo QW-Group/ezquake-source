@@ -133,6 +133,7 @@ extern	cvar_t	r_wateralpha;
 extern	cvar_t	r_dynamic;
 extern	cvar_t	r_novis;
 extern	cvar_t	r_netgraph;
+extern	cvar_t	r_netstats;
 extern	cvar_t	r_fullbrightSkins;
 extern	cvar_t	r_fastsky;
 extern	cvar_t	r_skycolor;
@@ -228,7 +229,11 @@ void R_DrawAlphaChain (void);
 void GL_BuildLightmaps (void);
 
 // gl_ngraph.c
-void R_NetGraph (void);
+//void R_NetGraph (void); // HUD -> hexum
+#define MAX_NET_GRAPHHEIGHT 256
+void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_latency,
+                int lost, int minping, int avgping, int maxping, int devping,
+                int posx, int posy, int width, int height, int revx, int revy);
 
 // gl_rmisc.c
 void R_InitOtherTextures(void);		

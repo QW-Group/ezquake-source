@@ -75,9 +75,11 @@ cvar_t	scr_scoreboard_showfrags = {"scr_scoreboard_showfrags", "1"};
 cvar_t	scr_scoreboard_drawtitle = {"scr_scoreboard_drawtitle", "1"};
 cvar_t	scr_scoreboard_borderless = {"scr_scoreboard_borderless", "0"};
 
+cvar_t	scr_newHud = {"scr_newHud", "0"}; // HUD -> hexum
+
 #ifdef GLQUAKE
 cvar_t	scr_scoreboard_fillalpha = {"scr_scoreboard_fillalpha", "0.7"};
-cvar_t	scr_scoreboard_fillcolored = {"scr_scoreboard_fillcolored", "2"};		
+cvar_t	scr_scoreboard_fillcolored = {"scr_scoreboard_fillcolored", "2"};
 
 
 int vxdamagecount;
@@ -219,6 +221,8 @@ void Sbar_Init (void) {
 	Cvar_Register (&scr_compactHud);
 	Cvar_Register (&scr_compactHudAlign);
 
+	Cvar_Register (&scr_newHud); // HUD -> hexum
+
 	Cvar_Register (&scr_drawHFrags);
 	Cvar_Register (&scr_drawVFrags);
 	Cvar_Register (&scr_scoreboard_teamsort);
@@ -331,6 +335,20 @@ static int	Sbar_ColorForMap (int m) {
 
 	return 16 * m + 8;
 }
+
+// HUD -> hexum
+
+int Sbar_TopColor(player_info_t *player)
+{
+        return Sbar_ColorForMap(player->topcolor);
+}
+
+int Sbar_BottomColor(player_info_t *player)
+{
+        return Sbar_ColorForMap(player->bottomcolor);
+}
+
+// ** HUD -> hexum
 
 /********************************* FRAG SORT *********************************/
 
@@ -1680,7 +1698,7 @@ void Sbar_Draw(void) {
 		sbar_xofs = 0;
 
 	// top line
-	if (sb_lines > 24) {
+	if (sb_lines > 24 && !scr_newHud.value) {  // HUD -> hexum
 		if (!cl.spectator || autocam == CAM_TRACK)
 			Sbar_DrawInventory();
 		
@@ -1689,7 +1707,7 @@ void Sbar_Draw(void) {
 	}	
 
 	// main area
-	if (sb_lines > 0) {
+	if (sb_lines > 0 && !scr_newHud.value) {  // HUD -> hexum
 		if (cl.spectator) {
 			if (autocam != CAM_TRACK) {
 				// START shaman RFE 1022309
@@ -1780,6 +1798,9 @@ void Sbar_Draw(void) {
 	if (sb_showscores || sb_showteamscores || cl.stats[STAT_HEALTH] <= 0)
 		sb_updates = 0;
 
+	if (scr_newHud.value) // HUD -> hexum
+		return;
+
 	// clear unused areas in GL
 	if (vid.width > 320 && !headsup) {
 		if (scr_centerSbar.value)	// left
@@ -1788,6 +1809,9 @@ void Sbar_Draw(void) {
 	}
 	if (!headsup && cl.spectator && autocam != CAM_TRACK && sb_lines > SBAR_HEIGHT)
 		Draw_TileClear (sbar_xofs, vid.height - sb_lines, 320, sb_lines - SBAR_HEIGHT);
+#else // HUD -> hexum
+	if (scr_newHud.value)
+		return;
 #endif
 
 	if (vid.width >= 512 && sb_lines > 0 && cl.gametype == GAME_DEATHMATCH && !scr_centerSbar.value)

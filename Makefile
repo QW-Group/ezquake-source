@@ -22,9 +22,9 @@ STATICLIB_DIR= /usr/X11R6/lib
 #BASE CFLAGS
 XMMS_CFLAGS=-DWITH_XMMS `glib-config --cflags`
 BASE_CFLAGS=-DWITH_ZLIB -DWITH_PNG -I$(HEADER_DIR) -funsigned-char -D__linux__ -Did386 $(XMMS_CFLAGS)
-RELEASE_CFLAGS=$(BASE_CFLAGS) -DNDEBUG -march=pentium -mcpu=pentium -O -ffast-math -funroll-loops -fomit-frame-pointer \
-	-fexpensive-optimizations -falign-loops=2 -falign-jumps=2 -falign-functions=2
-DEBUG_CFLAGS=$(BASE_CFLAGS) -g -Wall
+RELEASE_CFLAGS=$(BASE_CFLAGS) -DNDEBUG -march=pentium2 -O -ffast-math -funroll-loops -fomit-frame-pointer \
+	-fexpensive-optimizations #-falign-loops=2 -falign-jumps=2 -falign-functions=2
+DEBUG_CFLAGS=$(BASE_CFLAGS) -g -Wall -Wimplicit
 
 #BASE LDFLAGS
 LDFLAGS=-lm -ldl `glib-config --libs`
@@ -204,6 +204,9 @@ QWCL_OBJS = \
     $(BUILDDIR)/build/EX_browser_ping.o \
     $(BUILDDIR)/build/EX_browser_sources.o \
     $(BUILDDIR)/build/EX_misc.o \
+    $(BUILDDIR)/build/common_draw.o \
+    $(BUILDDIR)/build/hud.o \
+    $(BUILDDIR)/build/hud_common.o \
     $(BUILDDIR)/build/rulesets.o \
     $(BUILDDIR)/build/config_manager.o \
     $(BUILDDIR)/build/mp3_player.o \
@@ -531,6 +534,15 @@ $(BUILDDIR)/build/EX_browser_sources.o : $(SOURCE_DIR)/EX_browser_sources.c
 $(BUILDDIR)/build/EX_misc.o :           $(SOURCE_DIR)/EX_misc.c
 	$(DO_CC)
 
+$(BUILDDIR)/build/common_draw.o :           $(SOURCE_DIR)/common_draw.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/hud.o :           $(SOURCE_DIR)/hud.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/hud_common.o :           $(SOURCE_DIR)/hud_common.c
+	$(DO_CC)
+
 $(BUILDDIR)/build/rulesets.o :       $(SOURCE_DIR)/rulesets.c
 	$(DO_CC)    
 
@@ -722,6 +734,9 @@ GLQWCL_OBJS = \
     $(BUILDDIR)/build-gl/EX_browser_ping.o \
     $(BUILDDIR)/build-gl/EX_browser_sources.o \
     $(BUILDDIR)/build-gl/EX_misc.o \
+    $(BUILDDIR)/build-gl/common_draw.o \
+    $(BUILDDIR)/build-gl/hud.o \
+    $(BUILDDIR)/build-gl/hud_common.o \
     $(BUILDDIR)/build-gl/modules.o \
     $(BUILDDIR)/build-gl/rulesets.o \
     $(BUILDDIR)/build-gl/config_manager.o \
@@ -984,6 +999,15 @@ $(BUILDDIR)/build-gl/EX_browser_sources.o : $(SOURCE_DIR)/EX_browser_sources.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-gl/EX_misc.o :           $(SOURCE_DIR)/EX_misc.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/common_draw.o :           $(SOURCE_DIR)/common_draw.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/hud.o :           $(SOURCE_DIR)/hud.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/hud_common.o :           $(SOURCE_DIR)/hud_common.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-gl/EX_FunNames.o :           $(SOURCE_DIR)/EX_FunNames.c

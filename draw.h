@@ -48,12 +48,14 @@ void Draw_Character (int x, int y, int num);
 void Draw_SubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height);
 void Draw_Pic (int x, int y, mpic_t *pic);
 void Draw_TransPic (int x, int y, mpic_t *pic);
+void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height);
 void Draw_TransPicTranslate (int x, int y, mpic_t *pic, byte *translation);
 void Draw_ConsoleBackground (int lines);
 void Draw_BeginDisc (void);
 void Draw_EndDisc (void);
 void Draw_TileClear (int x, int y, int w, int h);
 void Draw_Fill (int x, int y, int w, int h, int c);
+void Draw_FadeBox (int x, int y, int width, int height, float r, float g, float b, float a); // HUD -> hexum
 void Draw_FadeScreen (void);
 void Draw_String (int x, int y, char *str);
 void Draw_Alt_String (int x, int y, char *str);
@@ -62,3 +64,13 @@ mpic_t *Draw_CachePic (char *path);
 mpic_t *Draw_CacheWadPic (char *name);
 void Draw_Crosshair(void);
 void Draw_TextBox (int x, int y, int width, int lines);
+
+// HUD -> hexum
+void Draw_SCharacter (int x, int y, int num, float scale);
+void Draw_SString (int x, int y, char *str, float scale);
+void Draw_SAlt_String (int x, int y, char *str, float scale);
+void Draw_SPic (int x, int y, mpic_t *, float scale);
+void Draw_SAlphaPic (int x, int y, mpic_t *, float alpha, float scale);
+void Draw_SSubPic(int x, int y, mpic_t *, int srcx, int srcy, int width, int height, float scale);
+void Draw_STransPic (int x, int y, mpic_t *, float scale);
+void Draw_SFill (int x, int y, int w, int h, int c, float scale);

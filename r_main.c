@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "r_local.h"
 #include "sound.h"
+#include "hud.h"
+#include "hud_common.h"
 
 void		*colormap;
 float		r_time1;
@@ -95,6 +97,7 @@ cvar_t	r_draworder = {"r_draworder", "0"};
 cvar_t	r_speeds = {"r_speeds", "0"};
 cvar_t	r_timegraph = {"r_timegraph", "0"};
 cvar_t	r_netgraph = {"r_netgraph", "0"};
+cvar_t	r_netstats = {"r_netstats", "0"};
 cvar_t	r_zgraph = {"r_zgraph", "0"};
 cvar_t	r_graphheight = {"r_graphheight", "15"};
 cvar_t	r_clearcolor = {"r_clearcolor", "2"};
@@ -136,8 +139,12 @@ cvar_t cl_mvinsetcrosshair = {"cl_mvinsetcrosshair", "1"};
 cvar_t cl_mvinsethud = {"cl_mvinsethud", "1"};
 
 extern cvar_t	scr_fov;
+extern cvar_t	scr_newHud; // HUD -> hexum
 
-void R_NetGraph (void);
+//void R_NetGraph (void); // HUD -> hexum
+//void R_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_latency,
+//                int lost, int minping, int avgping, int maxping, int devping,
+//                int posx, int posy, int width, int height, int revx, int revy);
 void R_ZGraph (void);
 
 void R_InitTextures (void) {
@@ -182,6 +189,7 @@ void R_Init (void) {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&r_netgraph);
+	Cvar_Register (&r_netstats);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_TURB);
 	Cvar_Register (&r_skycolor);
@@ -238,6 +246,20 @@ void R_Init (void) {
 
 
 	Cvar_ResetCurrentGroup();
+
+    hud_netgraph = HUD_Register("netgraph", /*"r_netgraph"*/ NULL, "Shows your network conditions in graph-form. With netgraph you can monitor your latency (ping), packet loss and network errors.",
+        HUD_PLUSMINUS | HUD_ON_SCORES, ca_onserver, 0, SCR_HUD_Netgraph,
+        "0", "top", "left", "bottom", "0", "0", "0",
+        "swap_x",       "0",
+        "swap_y",       "0",
+        "inframes",     "0",
+        "scale",        "256",
+        "ploss",        "1",
+        "width",        "256",
+        "height",       "32",
+        "lostscale",    "1",
+        "full",         "0",
+        NULL);
 
 	Cvar_SetValue (&r_maxedges, (float) NUMSTACKEDGES);
 	Cvar_SetValue (&r_maxsurfs, (float) NUMSTACKSURFACES);
@@ -867,7 +889,11 @@ void R_EdgeDrawing (void) {
 
 //r_refdef must be set before the first call
 void R_RenderView_ (void) {
+	static hud_t *hud_netstats = NULL;
 	byte warpbuffer[WARP_WIDTH * WARP_HEIGHT];
+
+	if (hud_netstats == NULL) // first time
+		hud_netstats = HUD_Find("net");
 
 	r_warpbuffer = warpbuffer;
 
@@ -932,8 +958,23 @@ void R_RenderView_ (void) {
 	if (r_timegraph.value)
 		R_TimeGraph ();
 
-	if (r_netgraph.value)
-		R_NetGraph ();
+	if (r_netgraph.value && !scr_newHud.value) { // HUD -> hexum
+		// FIXME: ugly hack :(
+		float temp = hud_netgraph->show->value;
+
+		Cvar_SetValue(hud_netgraph->show, 1);
+		SCR_HUD_Netgraph(hud_netgraph);
+		Cvar_SetValue(hud_netgraph->show, temp);
+	}
+
+	if (r_netstats.value && !scr_newHud.value) {
+		// FIXME: ugly hack :(
+		float temp = hud_netstats->show->value;
+
+		Cvar_SetValue(hud_netstats->show, 1);
+		SCR_HUD_DrawNetStats(hud_netstats);
+		Cvar_SetValue(hud_netstats->show, temp);
+	}
 
 	if (r_zgraph.value)
 		R_ZGraph ();

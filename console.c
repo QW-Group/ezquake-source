@@ -412,6 +412,31 @@ void Con_Linefeed (void) {
 	memset (&con.text[(con.current%con_totallines)*con_linewidth], ' ', con_linewidth);
 }
 
+/*
+==================
+Con_SafePrintf
+
+Okay to call even when the screen can't be updated
+
+HUD -> hexum
+==================
+*/
+void Con_SafePrintf (char *fmt, ...)
+{
+    va_list     argptr;
+    char        msg[1024];
+    int         temp;
+        
+    va_start (argptr,fmt);
+    vsprintf (msg,fmt,argptr);
+    va_end (argptr);
+    
+    temp = scr_disabled_for_loading;
+    scr_disabled_for_loading = true;
+    Com_Printf ("%s", msg);
+    scr_disabled_for_loading = temp;
+}
+
 //Handles cursor positioning, line wrapping, etc
 void Con_Print (char *txt) {
 	int y, c, l, mask;
