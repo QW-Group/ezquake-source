@@ -298,6 +298,8 @@ typedef struct {
 	qboolean	teamfortress;	// true if gamedir is "fortress"
 	int			fpd;			// FAQ proxy flags
 	int			z_ext;			// ZQuake protocol extensions flags
+	int			timelimit;
+	int			fraglimit;
 	float		maxfps;
 
 	int			last_fps;
@@ -397,6 +399,9 @@ typedef struct {
 
 	
 	qboolean	standby;
+	qboolean	countdown;
+	qboolean	match_in_progress;
+	double		match_start;
 	float		fbskins;		
 	float		truelightning;	
 	qboolean	userfb;			

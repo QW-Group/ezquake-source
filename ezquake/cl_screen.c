@@ -91,6 +91,10 @@ cvar_t			scr_democlock = {"cl_democlock", "0"};
 cvar_t			scr_democlock_x = {"cl_democlock_x", "0"};
 cvar_t			scr_democlock_y = {"cl_democlock_y", "-2"};
 
+cvar_t			scr_gameclock = {"cl_gameclock", "0"};
+cvar_t			scr_gameclock_x = {"cl_gameclock_x", "1"};
+cvar_t			scr_gameclock_y = {"cl_gameclock_y", "-1"};
+
 cvar_t			show_speed = {"show_speed", "0"};
 cvar_t			show_speed_x = {"show_speed_x", "-1"};
 cvar_t			show_speed_y = {"show_speed_y", "1"};
@@ -528,6 +532,23 @@ void SCR_DrawDemoClock (void) {
 	Draw_String (x, y, str);
 }
 
+void SCR_DrawGameClock (void) {
+	int x, y;
+	char str[80];
+	
+	if (!cl.match_in_progress || !scr_gameclock.value)
+		return;
+	
+	if (scr_gameclock.value == 1) // count down
+		Q_strncpyz (str, SecondsToMinutesString ((int) ((cl.match_start + 60 * cl.timelimit) - cls.realtime + 1)), sizeof(str));
+	else // count up
+		Q_strncpyz (str, SecondsToMinutesString ((int) (cls.realtime - cl.match_start)), sizeof(str));
+	
+	x = ELEMENT_X_COORD(scr_gameclock);
+	y = ELEMENT_Y_COORD(scr_gameclock);
+	Draw_String (x, y, str);
+}
+
 void SCR_DrawPause (void) {
 	mpic_t *pic;
 
@@ -856,6 +877,7 @@ void SCR_DrawElements(void) {
 				SCR_DrawSpeed ();
 				SCR_DrawClock ();
 				SCR_DrawDemoClock ();
+				SCR_DrawGameClock ();
 				SCR_DrawFPS ();
 
 #ifdef GLQUAKE
@@ -1617,6 +1639,10 @@ void SCR_Init (void) {
 	Cvar_Register (&scr_democlock_x);
 	Cvar_Register (&scr_democlock_y);
 	Cvar_Register (&scr_democlock);
+	
+	Cvar_Register (&scr_gameclock_x);
+	Cvar_Register (&scr_gameclock_y);
+	Cvar_Register (&scr_gameclock);
 
 	Cvar_Register (&show_speed);
 	Cvar_Register (&show_speed_x);

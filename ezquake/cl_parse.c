@@ -1388,6 +1388,14 @@ void CL_ProcessServerInfo (void) {
 	for (s = p; *s; s++)
 		*s = tolower(*s);
 	cl.standby = !strcmp(p, "standby") ? true : false;
+	if (cl.standby && cl.match_in_progress) cl.match_in_progress = false;
+	
+	if (!cl.standby && cl.countdown && strcmp(p, "countdown")) { // match has begun
+		cl.match_in_progress = true;
+		cl.match_start = cls.realtime;
+	}
+
+	cl.countdown = !strcmp(p, "countdown") ? true : false;
 
 	cl.minlight = (strlen(minlight = Info_ValueForKey(cl.serverinfo, "minlight")) ? bound(0, Q_atoi(minlight), 255) : 4);
 
@@ -1403,6 +1411,10 @@ void CL_ProcessServerInfo (void) {
 	// deathmatch and teamplay
 	cl.deathmatch = atoi(Info_ValueForKey(cl.serverinfo, "deathmatch"));
 	teamplay = atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
+	
+	// timelimit and fraglimit
+	cl.timelimit = atoi(Info_ValueForKey(cl.serverinfo, "timelimit"));
+	cl.fraglimit = atoi(Info_ValueForKey(cl.serverinfo, "fraglimit"));
 
 	// update skins if needed
 	skin_refresh = ( !teamplay != !cl.teamplay || ( (fpd ^ cl.fpd) & (FPD_NO_FORCE_COLOR|FPD_NO_FORCE_SKIN) ) );
@@ -1565,7 +1577,7 @@ void CL_ParsePrint (void) {
 
 	level = MSG_ReadByte ();
 	s = MSG_ReadString ();
-
+	
 	if (level == PRINT_CHAT) {
 	
 		if (TP_SuppressMessage(s))
