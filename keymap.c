@@ -83,7 +83,7 @@ static byte keymaps_default[ 2 ][ 256 ] =
     0,    K_ESCAPE,  '!',     '@',     '#',     '$',     '%',     '^',
    '&',     '*',     '(',     ')',     '_',     '+',   K_BACKSPACE,K_TAB,    // 0
    'Q',     'W',     'E',     'R',     'T',     'Y',     'U',     'I',
-   'O',     'P',     '[',     ']',   K_ENTER, K_LCTRL,   'A',     'S',       // 1
+   'O',     'P',     '{',     '}',   K_ENTER, K_LCTRL,   'A',     'S',       // 1
    'D',     'F',     'G',     'H',     'J',     'K',     'L',     ':',
    '"',     '~',   K_LSHIFT,  '|',     'Z',     'X',     'C',     'V',       // 2
    'B',     'N',     'M',     '<',     '>',     '?',   K_RSHIFT,KP_STAR,
@@ -245,7 +245,7 @@ void IN_TranslateKeyEvent (int lKeyData, qboolean down) {
 		IN_Keycode_Print_f (scancode, (extended > 0) ? true : false, down, key);
 	}
 
-	Key_Event (key, down);
+	Key_EventEx (key, basekey, down);
 
 	// FIXME
 	// the following is a workaround for the situation where
@@ -258,14 +258,17 @@ void IN_TranslateKeyEvent (int lKeyData, qboolean down) {
 	// So we also generate an additional release event for the unshifted key
 	//   (if it's different from the basekey)
 	// Not very smart, but it seems to work...
-	if ( (down != true) && (basekey != key) ) {
+
+	// FIXED
+	// pressed operations occur with basekey only
+/*	if ( (down != true) && (basekey != key) ) {
 #ifdef _DEBUG
 		char		str1[256];
 		char		str2[256];
     Com_Printf ("KeyFix: Down-Event for key:%u=0x%X=%s basekey=%u=0x%X=%s\n", key, key, Key_KeynumToString (key, str1), basekey, basekey, Key_KeynumToString(basekey, str2));
 #endif
 		Key_Event (basekey, down);
-	}
+	}*/
 	return;
 } /* END_FUNC IN_TranslateKeyEvent */
 
@@ -984,5 +987,7 @@ void IN_Keymaplist_f (void)
 			IN_Keymap_Print_f( i, true );
 	}
 } // END_FUNC IN_Keymaplist_f
+
 #endif // WITH_KEYMAP
+
 /* vi:set ts=2 sts=2 sw=2 noet ai: */

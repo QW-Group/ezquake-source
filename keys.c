@@ -1231,7 +1231,8 @@ void Key_Init (void) {
 }
 
 //Called by the system between frames for both key up and key down events Should NOT be called during an interrupt!
-void Key_Event (int key, qboolean down) {
+void Key_EventEx (int key, int basekey, qboolean down)
+{
 	char *kb, cmd[1024];
 
 	//	Com_Printf ("%i : %i\n", key, down); //@@@
@@ -1245,10 +1246,10 @@ void Key_Event (int key, qboolean down) {
 	else if (key == K_LWIN || key == K_RWIN)
 		Key_Event (K_WIN, down);
 
-	keydown[key] = down;
+	keydown[basekey] = down;
 
 	if (!down)
-		key_repeats[key] = 0;
+		key_repeats[basekey] = 0;
 
 #ifdef WITH_KEYMAP
 #else
@@ -1257,8 +1258,8 @@ void Key_Event (int key, qboolean down) {
 
 	// update auto-repeat status
 	if (down) {
-		key_repeats[key]++;
-		if (key_repeats[key] > 1) {
+		key_repeats[basekey]++;
+		if (key_repeats[basekey] > 1) {
 			if ((key != K_BACKSPACE && key != K_DEL
 				&& key != K_LEFTARROW && key != K_RIGHTARROW
 				&& key != K_UPARROW && key != K_DOWNARROW
@@ -1298,11 +1299,11 @@ void Key_Event (int key, qboolean down) {
 	// These will occur even in console mode, to keep the character from continuing an action started before a
 	// console switch.  Button commands include the kenum as a parameter, so multiple downs can be matched with ups
 	if (!down) {
-		kb = keybindings[key];
-		if (kb && kb[0] == '+' && keyactive[key]) {
-			sprintf (cmd, "-%s %i\n", kb+1, key);
+		kb = keybindings[basekey];
+		if (kb && kb[0] == '+' && keyactive[basekey]) {
+			sprintf (cmd, "-%s %i\n", kb+1, basekey);
 			Cbuf_AddText (cmd);
-			keyactive[key] = false;
+			keyactive[basekey] = false;
 		}
 #ifdef WITH_KEYMAP
 #else // WITH_KEYMAP
@@ -1324,12 +1325,12 @@ void Key_Event (int key, qboolean down) {
 			((key_dest == key_console || key_dest == key_message) && !consolekeys[key]) || 
 			(key_dest == key_game && (cls.state == ca_active || !consolekeys[key]))
 		) {
-		kb = keybindings[key];
+		kb = keybindings[basekey];
 		if (kb) {
 			if (kb[0] == '+'){	// button commands add keynum as a parm
-				sprintf (cmd, "%s %i\n", kb, key);
+				sprintf (cmd, "%s %i\n", kb, basekey);
 				Cbuf_AddText (cmd);
-				keyactive[key] = true;
+				keyactive[basekey] = true;
 			} else {
 				Cbuf_AddText (kb);
 				Cbuf_AddText ("\n");
@@ -1339,7 +1340,10 @@ void Key_Event (int key, qboolean down) {
 	}
 
 	if (!down)
+{
+Com_Printf("DOWN\n");
 		return;		// other systems only care about key down events
+}
 
 #ifdef WITH_KEYMAP
 #else // WITH_KEYMAP
@@ -1362,6 +1366,10 @@ void Key_Event (int key, qboolean down) {
 	default:
 		assert(!"Bad key_dest");
 	}
+}
+void Key_Event (int key, qboolean down)
+{
+	Key_EventEx (key, key, down);
 }
 
 void Key_ClearStates (void) {
