@@ -155,7 +155,7 @@ static void Rulesets_Smackdown(void) {
 
 #ifdef GLQUAKE
 	for (i = 0; i < (sizeof(limited_cvars) / sizeof(limited_cvars[0])); i++) {
-		Cvar_RulesetSet(limited_cvars[i].var, limited_cvars[i].rulesetvalue);
+		Cvar_Set(limited_cvars[i].var, limited_cvars[i].rulesetvalue);
 		Cvar_SetFlags(limited_cvars[i].var, Cvar_GetFlags(limited_cvars[i].var) | CVAR_RULESET_MAX);
 	}
 #endif
