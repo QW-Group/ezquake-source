@@ -931,7 +931,7 @@ void CL_ParseStartSoundPacket(void) {
     if (cls.mvdplayback) {
 	    tracknum = Cam_TrackNum();
 
-	    if (cl.spectator && tracknum != -1 && ent == tracknum + 1 && !cl_multiview.value)
+	    if (cl.spectator && tracknum != -1 && ent == tracknum + 1 && cl_multiview.value<2)
 		    ent = cl.playernum + 1;
     }
 
