@@ -300,7 +300,7 @@ void PR_ExecuteProgram (func_t fnum) {
 
 	f = &pr_functions[fnum];
 
-	runaway = 100000;
+	runaway = 1000000;//Tei: x10 deeper functions
 	pr_trace = false;
 
 	// make a stack frame
