@@ -280,6 +280,8 @@ char *Host_PrintBars(char *s, int len) {
 
 void CL_SaveArgv(int, char **);
 
+extern void SB_RootInit(void);
+
 void Host_Init (int argc, char **argv, int default_memsize) {
 	FILE *f;
 
@@ -314,6 +316,8 @@ void Host_Init (int argc, char **argv, int default_memsize) {
 
 	HUD_Init(); // HUD -> hexum
 	HUD_InitFinish(); // HUD -> hexum
+
+	SB_RootInit();
 
 #ifndef SERVERONLY
 	
