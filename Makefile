@@ -94,7 +94,7 @@ svga_targets: $(SVGA_TARGETS)
 #############################################################################
 
 QWCL_OBJS = \
-	$(BUILDDIR)/build/host.o \
+    $(BUILDDIR)/build/host.o \
     $(BUILDDIR)/build/sys_linux.o \
 \
     $(BUILDDIR)/build/cd_linux.o \
@@ -158,7 +158,7 @@ QWCL_OBJS = \
 \
     $(BUILDDIR)/build/cl_cam.o \
     $(BUILDDIR)/build/cl_cmd.o \
-	$(BUILDDIR)/build/cl_demo.o \
+    $(BUILDDIR)/build/cl_demo.o \
     $(BUILDDIR)/build/cl_ents.o \
     $(BUILDDIR)/build/cl_main.o \
     $(BUILDDIR)/build/cl_parse.o \
@@ -723,23 +723,24 @@ GLQWCL_OBJS = \
 \
     $(BUILDDIR)/build-gl/r_part.o \
 \
-	$(BUILDDIR)/build-gl/gl_draw.o \
-	$(BUILDDIR)/build-gl/gl_mesh.o \
-	$(BUILDDIR)/build-gl/gl_model.o \
-	$(BUILDDIR)/build-gl/gl_ngraph.o \
-	$(BUILDDIR)/build-gl/gl_refrag.o \
-	$(BUILDDIR)/build-gl/gl_rlight.o \
-	$(BUILDDIR)/build-gl/gl_rpart.o \
-	$(BUILDDIR)/build-gl/gl_rmain.o \
-	$(BUILDDIR)/build-gl/gl_rmisc.o \
-	$(BUILDDIR)/build-gl/gl_rsurf.o \
-	$(BUILDDIR)/build-gl/cl_screen.o \
-	$(BUILDDIR)/build-gl/gl_warp.o \
+    $(BUILDDIR)/build-gl/gl_draw.o \
+    $(BUILDDIR)/build-gl/gl_md3.o \
+    $(BUILDDIR)/build-gl/gl_mesh.o \
+    $(BUILDDIR)/build-gl/gl_model.o \
+    $(BUILDDIR)/build-gl/gl_ngraph.o \
+    $(BUILDDIR)/build-gl/gl_refrag.o \
+    $(BUILDDIR)/build-gl/gl_rlight.o \
+    $(BUILDDIR)/build-gl/gl_rpart.o \
+    $(BUILDDIR)/build-gl/gl_rmain.o \
+    $(BUILDDIR)/build-gl/gl_rmisc.o \
+    $(BUILDDIR)/build-gl/gl_rsurf.o \
+    $(BUILDDIR)/build-gl/cl_screen.o \
+    $(BUILDDIR)/build-gl/gl_warp.o \
     $(BUILDDIR)/build-gl/gl_texture.o \
 \
     $(BUILDDIR)/build-gl/cl_cam.o \
     $(BUILDDIR)/build-gl/cl_cmd.o \
-	$(BUILDDIR)/build-gl/cl_demo.o \
+    $(BUILDDIR)/build-gl/cl_demo.o \
     $(BUILDDIR)/build-gl/cl_ents.o \
     $(BUILDDIR)/build-gl/cl_main.o \
     $(BUILDDIR)/build-gl/cl_parse.o \
@@ -886,6 +887,9 @@ $(BUILDDIR)/build-gl/r_part.o :         $(SOURCE_DIR)/r_part.c
 $(BUILDDIR)/build-gl/gl_draw.o :        $(SOURCE_DIR)/gl_draw.c
 	$(DO_GL_CC)
          
+$(BUILDDIR)/build-gl/gl_md3.o :         $(SOURCE_DIR)/gl_md3.c
+	$(DO_GL_CC) 
+
 $(BUILDDIR)/build-gl/gl_mesh.o :        $(SOURCE_DIR)/gl_mesh.c
 	$(DO_GL_CC) 
         
@@ -976,7 +980,7 @@ $(BUILDDIR)/build-gl/teamplay.o :       $(SOURCE_DIR)/teamplay.c
 $(BUILDDIR)/build-gl/sv_ccmds.o :       $(SOURCE_DIR)/sv_ccmds.c
 	$(DO_GL_CC)                
 
-$(BUILDDIR)/build-gl/sv_save.o :       $(SOURCE_DIR)/sv_save.c
+$(BUILDDIR)/build-gl/sv_save.o :        $(SOURCE_DIR)/sv_save.c
 	$(DO_GL_CC)                
 
 $(BUILDDIR)/build-gl/sv_ents.o :        $(SOURCE_DIR)/sv_ents.c
@@ -1066,43 +1070,43 @@ $(BUILDDIR)/build-gl/EX_browser_ping.o :   $(SOURCE_DIR)/EX_browser_ping.c
 $(BUILDDIR)/build-gl/EX_browser_sources.o : $(SOURCE_DIR)/EX_browser_sources.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/EX_misc.o :           $(SOURCE_DIR)/EX_misc.c
+$(BUILDDIR)/build-gl/EX_misc.o :        $(SOURCE_DIR)/EX_misc.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/common_draw.o :           $(SOURCE_DIR)/common_draw.c
+$(BUILDDIR)/build-gl/common_draw.o :    $(SOURCE_DIR)/common_draw.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/hud.o :           $(SOURCE_DIR)/hud.c
+$(BUILDDIR)/build-gl/hud.o :            $(SOURCE_DIR)/hud.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/hud_common.o :           $(SOURCE_DIR)/hud_common.c
+$(BUILDDIR)/build-gl/hud_common.o :     $(SOURCE_DIR)/hud_common.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/EX_FunNames.o :           $(SOURCE_DIR)/EX_FunNames.c
+$(BUILDDIR)/build-gl/EX_FunNames.o :    $(SOURCE_DIR)/EX_FunNames.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/collision.o :           $(SOURCE_DIR)/collision.c
+$(BUILDDIR)/build-gl/collision.o :      $(SOURCE_DIR)/collision.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/cl_collision.o :           $(SOURCE_DIR)/cl_collision.c
+$(BUILDDIR)/build-gl/cl_collision.o :   $(SOURCE_DIR)/cl_collision.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/vx_camera.o :           $(SOURCE_DIR)/vx_camera.c
+$(BUILDDIR)/build-gl/vx_camera.o :      $(SOURCE_DIR)/vx_camera.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/vx_coronas.o :           $(SOURCE_DIR)/vx_coronas.c
+$(BUILDDIR)/build-gl/vx_coronas.o :     $(SOURCE_DIR)/vx_coronas.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/vx_motiontrail.o :           $(SOURCE_DIR)/vx_motiontrail.c
+$(BUILDDIR)/build-gl/vx_motiontrail.o : $(SOURCE_DIR)/vx_motiontrail.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/vx_stuff.o :           $(SOURCE_DIR)/vx_stuff.c
+$(BUILDDIR)/build-gl/vx_stuff.o :       $(SOURCE_DIR)/vx_stuff.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/vx_tracker.o :           $(SOURCE_DIR)/vx_tracker.c
+$(BUILDDIR)/build-gl/vx_tracker.o :     $(SOURCE_DIR)/vx_tracker.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/vx_vertexlights.o :           $(SOURCE_DIR)/vx_vertexlights.c
+$(BUILDDIR)/build-gl/vx_vertexlights.o : $(SOURCE_DIR)/vx_vertexlights.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-gl/rulesets.o :       $(SOURCE_DIR)/rulesets.c
@@ -1120,7 +1124,7 @@ $(BUILDDIR)/build-gl/modules.o :        $(SOURCE_DIR)/modules.c
 $(BUILDDIR)/build-gl/gl_texture.o :     $(SOURCE_DIR)/gl_texture.c
 	$(DO_GL_CC)                                                                            
 
-$(BUILDDIR)/build-gl/sha1.o :         $(SOURCE_DIR)/sha1.c
+$(BUILDDIR)/build-gl/sha1.o :           $(SOURCE_DIR)/sha1.c
 	$(DO_GL_CC)  
 
 $(BUILDDIR)/build-gl/mdfour.o :         $(SOURCE_DIR)/mdfour.c
@@ -1135,7 +1139,7 @@ $(BUILDDIR)/build-gl/zone.o :           $(SOURCE_DIR)/zone.c
 $(BUILDDIR)/build-gl/localtime_linux.o : $(SOURCE_DIR)/localtime_linux.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/xml_test.o :		$(SOURCE_DIR)/xml_test.c
+$(BUILDDIR)/build-gl/xml_test.o :	$(SOURCE_DIR)/xml_test.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-gl/xsd.o :		$(SOURCE_DIR)/xsd.c
