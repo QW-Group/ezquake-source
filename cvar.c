@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "common.h"
 #include "console.h"
+#include "rulesets.h"
 
 #include "utils.h"
 
@@ -414,6 +415,13 @@ qboolean Cvar_Command (void) {
 			Com_Printf ("\"%s\" is \"%s\"\n", v->name, v->string);
 		}
 	} else {
+		// hexum - do not allow crafty people to avoid use of "set" with user created variables under ruleset smackdown
+		
+		if (!Q_strcasecmp(Rulesets_Ruleset(), "smackdown") && (v->flags & CVAR_USER_CREATED)) {
+			Com_Printf ("Ruleset smackdown requires use of \"set\" with user created variables\n");
+			return true;
+		}
+
 		Cvar_Set (v, Cmd_MakeArgs(1));
 	}
 

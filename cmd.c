@@ -38,6 +38,8 @@ cbuf_t	cbuf_safe, cbuf_nocomms;
 
 cbuf_t	*cbuf_current = NULL;
 
+static qboolean cmd_tainted = false;
+
 //=============================================================================
 
 //Causes execution of the remainder of the command buffer to be delayed until next frame.
@@ -151,7 +153,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 	qboolean comment, quotes;
 
 	cbuf_current = cbuf;
-
+	
 	while (cbuf->text_end > cbuf->text_start) {
 		// find a \n or ; line break
 		text = (char *) cbuf->text_buf + cbuf->text_start;
@@ -224,8 +226,9 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 			goto done;
 		}
 	}
-
+	
 	cbuf->runAwayLoop = 0;
+	cmd_tainted = false;
 
 done:
 	cbuf_current = NULL;
@@ -985,17 +988,13 @@ char *Cmd_MacroString (char *s, int *macro_length)
 	int i;
 	macro_command_t	*macro = macro_commands;
 
-	for (i = 0; i < macro_count; i++, macro++)
-	{
-		if (!strncasecmp(s, macro->name, strlen(macro->name)))
-		{
-			if (macro->allowed)
-			{
-				*macro_length = strlen(macro->name);
-				return macro->func();
-			}
-			else
-				break;
+	for (i = 0; i < macro_count; i++, macro++) {
+		if (!strncasecmp(s, macro->name, strlen(macro->name))) {
+			if (!macro->allowed)
+				cmd_tainted = true;
+
+			*macro_length = strlen(macro->name);
+			return macro->func();
 		}
 	}
 	*macro_length = 0;
@@ -1132,10 +1131,10 @@ void Cmd_ExecuteString (char *text) {
 	cmd_alias_t *a;
 	static char buf[1024];
 	cbuf_t *inserttarget;
-
+	
 	Cmd_ExpandString (text, buf);
 	Cmd_TokenizeString (buf);
-
+	
 	if (!Cmd_Argc())
 		return;		// no tokens
 
@@ -1167,6 +1166,15 @@ void Cmd_ExecuteString (char *text) {
 				!Q_strcasecmp(cmd_argv[0], "cmd")
 				) {
 					Com_Printf("Ruleset %s restricts use of \"%s\" in f_triggers\n", Rulesets_Ruleset(), cmd_argv[0]);
+					return;
+				}
+		} else if (cbuf_current == &cbuf_main && cmd_tainted) {
+			if (
+				Q_strcasecmp(cmd_argv[0], "say") &&
+				Q_strcasecmp(cmd_argv[0], "say_team") &&
+				Q_strcasecmp(cmd_argv[0], "if")
+				) {
+					Com_Printf("Ruleset %s restricts use of \"%s\" with teamplay macros\n", Rulesets_Ruleset(), cmd_argv[0]);
 					return;
 				}
 		}
