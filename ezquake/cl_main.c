@@ -890,7 +890,7 @@ void CL_InitLocal (void) {
 
     com_blockscripts = false;
 
-    strcpy(st, "ezQuake %i", build_number());
+    Q_snprintfz(st, "ezQuake %i", build_number(), sizeof(st));
 
     if (COM_CheckParm("-noscripts"))
     {
