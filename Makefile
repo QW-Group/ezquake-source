@@ -21,9 +21,9 @@ STATICLIB_DIR= /usr/X11R6/lib
 
 #BASE CFLAGS
 XMMS_CFLAGS=-DWITH_XMMS `glib-config --cflags`
-BASE_CFLAGS=-DWITH_ZLIB -DWITH_PNG -I$(HEADER_DIR) -funsigned-char -D__linux__ -Did386 $(XMMS_CFLAGS) -pipe
-RELEASE_CFLAGS=$(BASE_CFLAGS) -DNDEBUG -march=pentium2 -O -ffast-math -funroll-loops -fomit-frame-pointer \
-	-fexpensive-optimizations #-falign-loops=2 -falign-jumps=2 -falign-functions=2
+BASE_CFLAGS=-DWITH_ZLIB -DWITH_PNG -I$(HEADER_DIR) -funsigned-char -D__linux__ -Did386 $(XMMS_CFLAGS) -pipe -fno-strict-aliasing
+RELEASE_CFLAGS=$(BASE_CFLAGS) -DNDEBUG -march=pentium2 -O3 -ffast-math -funroll-loops -fomit-frame-pointer \
+	-fexpensive-optimizations -falign-loops=2 -falign-jumps=2 -falign-functions=2
 DEBUG_CFLAGS=$(BASE_CFLAGS) -g -Wall -Wimplicit
 
 #BASE LDFLAGS
