@@ -854,6 +854,7 @@ void QMB_DrawParticles (void) {
 				glEnd();
 
 				//And since quads seem to be one sided...
+				glRotatef(180, 1, 0, 0);
 				glColor4ubv(p->color);
 				glBegin (GL_QUADS);
 				glTexCoord2f (0,0);
