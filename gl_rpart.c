@@ -43,6 +43,12 @@ int spark_texture;
 */
 // END shaman :: balancing variables
 
+
+
+//Better rand nums
+#define lhrandom(MIN,MAX) ((rand() & 32767) * (((MAX)-(MIN)) * (1.0f / 32767.0f)) + (MIN))
+
+
 typedef byte col_t[4];
 
 //VULT PARTICLES
@@ -2566,7 +2572,7 @@ void ParticleFirePool (vec3_t org)
 {
 	col_t color={255,100,25, 128};
 
-	AddParticle(p_flame, org, 1, rand()%32, rand()%11, color, zerodir);
+	AddParticle(p_flame, org, 1,lhrandom(1,32), lhrandom(1,1), color, zerodir);
 }
 
 
@@ -2580,8 +2586,9 @@ void ParticleSlimeHarcore (vec3_t org)
 	col_t color={0,200,150, 240};
 	vec3_t dir={0,0,80};
 
-	AddParticle(4, org, 1, rand()%32, rand()%3, color, dir);//zerodir);
-	AddParticle(11, org, 1, rand()%128, rand()%10, color, dir);//zerodir);
+	
+	AddParticle(4, org, 1, lhrandom(1,32), lhrandom(1,3), color, dir);//zerodir);
+	AddParticle(11, org, 1, lhrandom(1,128), lhrandom(1,10), color, dir);//zerodir);
 }
 
 void ParticleSlime (vec3_t org) 
@@ -2589,8 +2596,8 @@ void ParticleSlime (vec3_t org)
 	col_t color={0,200,150, 30};
 	vec3_t dir={0,0,80};
 
-	AddParticle(4, org, 1, rand()%32, rand()%3, color, dir);//zerodir);
-	AddParticle(11, org, 1, rand()%32, rand()%10, color, dir);//zerodir);
+	AddParticle(4, org, 1, lhrandom(1,32), lhrandom(1,3), color, dir);//zerodir);
+	AddParticle(11, org, 1, lhrandom(1,32), lhrandom(1,10), color, dir);//zerodir);
 }
 
 //TEI PARTICLES
@@ -2600,7 +2607,7 @@ void ParticleBloodPool (vec3_t org)
 	col_t color={30,100,150, 240};
 	vec3_t dir={0,0,80};
 
-	AddParticle(28, org, 1, rand()%11, rand()%3, color, dir);
+	AddParticle(28, org, 1, lhrandom(1,11), lhrandom(1,3), color, dir);
 }
 
 
