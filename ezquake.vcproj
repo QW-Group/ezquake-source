@@ -1497,6 +1497,12 @@
 				<File
 					RelativePath="vx_stuff.h">
 					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="TRUE">
+						<Tool
+							Name="VCCustomBuildTool"/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Debug|Win32"
 						ExcludedFromBuild="TRUE">
 						<Tool

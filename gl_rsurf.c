@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "rulesets.h"
 
+//VULT
+#include "vx_stuff.h"
+
 #define	BLOCK_WIDTH		128
 #define	BLOCK_HEIGHT	128
 
@@ -548,8 +551,7 @@ void R_DrawWaterSurfaces (void) {
 
 		//Tei "eshaders". 
 		if (s &&s->texinfo && s->texinfo->texture && s->texinfo->texture->name )
-		{
-			switch(s->texinfo->texture->name[1])
+		{			switch(s->texinfo->texture->name[1])
 			{
 			//Lava
 			case 'l':

@@ -50,12 +50,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef GLQUAKE
 #define CVAR_GROUP_OPENGL					"OpenGL Rendering"
-#define CVAR_GROUP_AMF   					"AMF Features"
-#define CVAR_GROUP_TEIGL 					"Tei GL Features"
 #else
 #define CVAR_GROUP_SOFTWARE					"Software Rendering"
 #endif
-#define CVAR_GROUP_TEI	 					"Tei Normal Features"
 
 #define CVAR_GROUP_TEXTURES					"Texture Settings"
 #define CVAR_GROUP_VIEWMODEL				"Weapon View Model Settings"
@@ -72,8 +69,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_GROUP_CONFIG					"Config Management"
 
 #else		// CVAR_GROUPS_DEFINE_VARIABLES
-
-#define CVAR_NUM_GROUPS 33
 
 char *cvar_groups_list[] = {
 	CVAR_GROUP_NO_GROUP,
@@ -104,12 +99,9 @@ char *cvar_groups_list[] = {
 	CVAR_GROUP_SYSTEM_SETTINGS,
 #ifdef GLQUAKE
 	CVAR_GROUP_OPENGL,
-	CVAR_GROUP_AMF,
-	CVAR_GROUP_TEIGL,
 #else
 	CVAR_GROUP_SOFTWARE,
-#endif
-	CVAR_GROUP_TEI,
+#endif	CVAR_GROUP_CONFIG,
 	CVAR_GROUP_TEXTURES,
 	CVAR_GROUP_VIEWMODEL,
 	CVAR_GROUP_TURB,
@@ -121,7 +113,6 @@ char *cvar_groups_list[] = {
 	CVAR_GROUP_SKIN,
 	CVAR_GROUP_COMMUNICATION,
 	CVAR_GROUP_USERINFO,
-	CVAR_GROUP_CONFIG,
 	NULL
 };
 

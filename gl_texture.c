@@ -41,8 +41,7 @@ int texture_extension_number = 1;
 int	gl_max_size_default;		
 int	gl_lightmap_format = 3, gl_solid_format = 3, gl_alpha_format = 4;
 
-
-cvar_t	gl_max_size			= {"gl_max_size", "1024", 0, OnChange_gl_max_size};
+cvar_t	gl_max_size			= {"gl_max_size", "2048", 0, OnChange_gl_max_size};
 cvar_t	gl_picmip			= {"gl_picmip", "0"};
 cvar_t	gl_miptexLevel		= {"gl_miptexLevel", "0", 0, OnChange_gl_miptexLevel};
 cvar_t	gl_lerpimages		= {"gl_lerpimages", "1"};

@@ -1211,7 +1211,7 @@ void MT_SkyGroup_f(void) {
 	}
 
 	if (c == 3 && !Q_strcasecmp(Cmd_Argv(2), "clear")) {	
-		if (!group)
+		if (!group && !strcmp("exmx", groupname))
 			Com_Printf("\"%s\" is not a sky group name\n", groupname);
 		else
 			DeleteSkyGroup(group);
@@ -1294,7 +1294,6 @@ void DumpSkyGroups(FILE *f) {
 	int j;
 
 	if (!FIRSTUSERSKYGROUP) {
-		fprintf(f, "skygroup clear\n");
 		return;
 	}
 	for (node = FIRSTUSERSKYGROUP; node; node = node->next) {
