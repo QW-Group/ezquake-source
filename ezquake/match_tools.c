@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // END shaman RFE 1020608
 
 #define MAX_STATIC_STRING 1024
+qboolean Match_Running ;
 
 
 cvar_t match_format_solo = {"match_format_solo", "solo/%n - [%M]"};
@@ -622,6 +623,7 @@ static void MT_EndMatch(void) {
 }
 
 static void MT_CancelMatch(void) {
+	Match_Running = 0;
 	if (matchstate.endtime)
 		MT_Delayed_EndMatch();
 
@@ -637,6 +639,7 @@ static void MT_CancelMatch(void) {
 }
 
 static void MT_StartMatch(void) {
+	Match_Running = 1;
 	if (matchstate.endtime)	
 		MT_Delayed_EndMatch();
 

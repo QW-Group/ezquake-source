@@ -25,6 +25,11 @@ typedef struct locked_cvar_s {
 	char *value;
 } locked_cvar_t;
 
+typedef struct limited_cvar_s {
+	cvar_t *var;
+	char *rulesetvalue;
+} limited_cvar_t;
+
 static char *allowed_smackdown_macros[] =
 {
 	"connectiontype",
@@ -106,9 +111,8 @@ char *Rulesets_Ruleset(void) {
 
 static void Rulesets_Smackdown(void) {
 	extern cvar_t tp_triggers, tp_msgtriggers, cl_trueLightning, scr_clock, r_aliasstats;
-	extern cvar_t cl_independentPhysics, cl_c2spps;
 #ifdef GLQUAKE
-	extern cvar_t amf_camera_death, amf_camera_chase;
+	extern cvar_t amf_camera_death, amf_camera_chase, amf_part_gunshot_type, amf_part_traillen, amf_part_trailtime, amf_part_trailwidth, amf_part_traildetail, amf_part_trailtype;
 	extern qboolean qmb_initialized;
 #endif
 	int i;
@@ -121,25 +125,37 @@ static void Rulesets_Smackdown(void) {
 		{&tp_msgtriggers, "0"},
 		{&cl_trueLightning, "0"},
 #ifndef GLQUAKE
-		{&r_aliasstats, "0"}
+		{&r_aliasstats, "0"},
 #endif
 	};
 
 #ifdef GLQUAKE
-	if (!qmb_initialized)
-		i = 2;
+	if (!qmb_initialized) i = 2;
 	else
 #endif
-		i = 0;
+	i = 0;
 	for (; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
 		Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
 		Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
 	}
-	if (cl_independentPhysics.value)
-	{
-		Cvar_Set(&cl_c2spps, "0");
-		Cvar_SetFlags(&cl_c2spps, Cvar_GetFlags(&cl_c2spps) | CVAR_ROM);
+
+	limited_cvar_t limited_cvars[] = {
+		{&amf_part_gunshot_type, "1"},
+		{&amf_part_traillen, "1"},
+		{&amf_part_trailtime, "1"},
+		{&amf_part_trailwidth, "1"},
+		{&amf_part_traildetail, "1"},
+		{&amf_part_trailtype, "1"},
+		};
+	
+	i = 0;
+	for (; i < (sizeof(limited_cvars) / sizeof(limited_cvars[0])); i++) {
+		Cvar_RulesetSet(limited_cvars[i].var, limited_cvars[i].rulesetvalue);
+		Cvar_SetFlags(limited_cvars[i].var, Cvar_GetFlags(limited_cvars[i].var) | CVAR_RULESET_MAX);
 	}
+
+
+
 
 	maxfps = 77;
 	allow_triggers = false;

@@ -150,11 +150,18 @@ int Cvar_CompleteCountPossible (char *partial) {
 	return c;
 }
 
+void Cvar_RulesetSet(cvar_t *var, char *rulesetval){
+	float rulesetval_f;
+	rulesetval_f=Q_atoi(rulesetval);
+	var->rulesetvalue=rulesetval_f;
+}
+
 void Cvar_Set (cvar_t *var, char *value) {
 #ifndef SERVERONLY
 	extern cvar_t cl_warncmd;	
 #endif
 	static qboolean	changing = false;
+	float test ;
 
 	if (!var)
 		return;
@@ -164,6 +171,16 @@ void Cvar_Set (cvar_t *var, char *value) {
 			Com_Printf ("\"%s\" is write protected\n", var->name);
 		return;
 	}
+
+	if (var->flags & CVAR_RULESET_MAX){
+	test  = Q_atof (value);
+		if (test > var->rulesetvalue){	
+		if (con_initialized)
+			Com_Printf ("\"%s\" is limited to %f\n", var->name,var->rulesetvalue);
+		return;
+		}
+	}
+		
 
 	if ((var->flags & CVAR_INIT) && host_initialized) {
 #ifndef SERVERONLY

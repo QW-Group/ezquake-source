@@ -28,6 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "config_manager.h"
 
+extern Match_Running ;
+
 void SCR_RSShot_f (void);
 void CL_ProcessServerInfo (void);
 void SV_Serverinfo_f (void);
@@ -230,6 +232,10 @@ void CL_Packet_f (void) {
 
 */
 	// END shaman RFE 1022146
+	if (Match_Running && !cl.spectator && !cls.mvdplayback) {
+	Com_Printf ("packet command disabled during match\n");
+		return;
+	}
 
 	if (Cmd_Argc() != 3) {
 		Com_Printf ("packet <destination> <contents>\n");
