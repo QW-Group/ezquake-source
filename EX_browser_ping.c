@@ -137,7 +137,7 @@ DWORD WINAPI PingRecvProc(void *lpParameter)
 
 int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 {
-	int i, j, ret, arg; // k
+	int i, j, ret, arg;
 	double interval;
 	struct sockaddr_in to;
 
@@ -189,7 +189,7 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 
 	for (i = 0; i < count && !abort_ping; i++) {
 		for (j = 0; j < hostsn && !abort_ping; j++) {
-			char *packet = "\xff\xff\xff\xffk\n"; // , buf[16];
+			char *packet = "\xff\xff\xff\xffk\n";
 
 			ping_pos = min(1, (j / (double)(hostsn * count))) + (i / (double)count);
 
