@@ -36,12 +36,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #else
 #define DWORD unsigned int
 #define WINAPI
-#endif
-
 #define _MAX_PATH 1024
 #define _MAX_FNAME 1024
 #define _MAX_EXT 64
-#define _MAX_DIR    1024
+#define _MAX_DIR 1024
+#endif
 
 #include "localtime.h"
 
