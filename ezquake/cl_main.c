@@ -95,19 +95,22 @@ cvar_t cl_cmdline			= {"cl_cmdline", "", CVAR_ROM};
 cvar_t cl_useproxy			= {"cl_useproxy", "0"};			
 
 cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};	
-cvar_t cl_nolerp			= {"cl_nolerp", "1"};
+// START shaman :: balancing variables
+cvar_t cl_nolerp			= {"cl_nolerp", "0"};
+// END shaman :: balancing variables
 
 cvar_t r_rocketlight			= {"r_rocketLight", "1"};
 cvar_t r_rocketlightcolor		= {"r_rocketLightColor", "0"};
 cvar_t r_explosionlightcolor	= {"r_explosionLightColor", "0"};
 cvar_t r_explosionlight			= {"r_explosionLight", "1"};
-cvar_t r_explosiontype			= {"r_explosionType", "0"};
 cvar_t r_flagcolor				= {"r_flagColor", "0"};
 cvar_t r_lightflicker			= {"r_lightflicker", "1"};
-//VULT - Hax to make my trail the default
-cvar_t r_rockettrail			= {"r_rocketTrail", "12"};
-cvar_t r_grenadetrail			= {"r_grenadeTrail", "1"};
 cvar_t r_powerupglow			= {"r_powerupGlow", "1"};
+// START shaman :: balancing variables
+cvar_t r_rockettrail			= {"r_rocketTrail", "9"};
+cvar_t r_grenadetrail			= {"r_grenadeTrail", "3"};
+cvar_t r_explosiontype			= {"r_explosionType", "7"};
+// END shaman :: balancing variables
 
 // info mirrors
 cvar_t	password = {"password", "", CVAR_USERINFO};

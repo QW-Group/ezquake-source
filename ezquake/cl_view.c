@@ -80,7 +80,9 @@ cvar_t	v_pentcshift = {"v_pentcshift", "1"};
 cvar_t	v_dlightcshift = {"v_dlightcshift", "1"};
 #endif
 
-cvar_t	v_bonusflash = {"cl_bonusflash", "1"};
+// START shaman :: balancing variables
+cvar_t	v_bonusflash = {"cl_bonusflash", "0"};
+// END shaman :: balancing variables
 
 float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 

@@ -31,14 +31,17 @@ int shockwave_texture;
 int lightning_texture;
 int spark_texture;
 
-/*#define DEFAULT_NUM_PARTICLES				4096
+// START shaman :: balancing variables
+#define DEFAULT_NUM_PARTICLES				2048 // 4096
 #define ABSOLUTE_MIN_PARTICLES				256
-#define ABSOLUTE_MAX_PARTICLES				32768*/
-
+#define ABSOLUTE_MAX_PARTICLES				32768
+/*
 //VULT - Welcome to the 21st century
 #define DEFAULT_NUM_PARTICLES				16384
 #define ABSOLUTE_MIN_PARTICLES				256
 #define ABSOLUTE_MAX_PARTICLES				65536
+*/
+// END shaman :: balancing variables
 
 typedef byte col_t[4];
 
@@ -161,10 +164,10 @@ static vec3_t trail_stop;
 
 qboolean qmb_initialized = false;
 
-
+// START shaman :: balancing variables
 cvar_t gl_clipparticles = {"gl_clipparticles", "1"};
 cvar_t gl_bounceparticles = {"gl_bounceparticles", "1"};
-
+// END shaman :: balancing variables
 
 #define TruePointContents(p) PM_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
 
