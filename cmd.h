@@ -166,3 +166,5 @@ void Cmd_WriteAliases (FILE *f);
 void DeleteServerAliases(void);
 
 void Cmd_AddMacro(char *s, char *(*f)(void)); 
+void Cmd_SetMacro(char *s, qboolean allow);
+void Cmd_SetAllMacros(qboolean allow);

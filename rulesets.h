@@ -28,5 +28,3 @@ qboolean RuleSets_DisallowExternalTexture(model_t *mod);
 qboolean Rulesets_NoTimers(void);
 qboolean Rulesets_RestrictTriggers(void);
 qboolean RuleSets_DisallowExternalTexture(model_t *mod);
-
-extern char ruleset[];
