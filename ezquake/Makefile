@@ -32,7 +32,7 @@ LDFLAGS=-lm -ldl `glib-config --libs`
 
 #FOR SVGALIB AND X11 BUILDS
 DO_CC=$(CC) $(CFLAGS) -o $@ -c $<
-DO_O_CC=$(CC) -O $(CFLAGS) -o $@ -c $<
+#DO_O_CC=$(CC) -O $(CFLAGS) -o $@ -c $<
 DO_AS=$(CC) $(CFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
 
 XLDFLAGS=-lpthread -L/usr/X11R6/lib -lX11 -lXext 
@@ -493,7 +493,7 @@ $(BUILDDIR)/build/fragstats.o :      $(SOURCE_DIR)/fragstats.c
 	$(DO_CC)  
 
 $(BUILDDIR)/build/match_tools.o :    $(SOURCE_DIR)/match_tools.c
-	$(DO_GL_CC)
+	$(DO_CC)
 
 $(BUILDDIR)/build/utils.o :          $(SOURCE_DIR)/utils.c
 	$(DO_CC)                                         
@@ -618,7 +618,7 @@ $(BUILDDIR)/build/vid_x11.o :          $(SOURCE_DIR)/vid_x11.c
 	$(DO_CC)
 
 $(BUILDDIR)/build/vid_svgalib.o : 	$(SOURCE_DIR)/vid_svgalib.c
-	$(DO_O_CC)
+	$(DO_CC)
 
 #############################################################################
 # GLCLIENT
