@@ -183,6 +183,7 @@ extern int 		chat_linepos;
 extern qboolean	chat_team;
 
 void Key_Event (int key, qboolean down);
+void Key_EventEx (int key, int basekey, qboolean down);
 void Key_Init (void);
 void Key_WriteBindings (FILE *f);
 void Key_SetBinding (int keynum, char *binding);
@@ -191,6 +192,7 @@ void Key_ClearStates (void);
 #ifdef WITH_KEYMAP
 int	 Key_StringToKeynum (char *str);
 char	*Key_KeynumToString (int keynum, char *buffer);
+int	IN_Key_Clean(int key);
 #else // WITH_KEYMAP
 char *Key_KeynumToString (int keynum);
 #endif // WITH_KEYMAP 
