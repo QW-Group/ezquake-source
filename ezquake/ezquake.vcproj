@@ -1254,6 +1254,9 @@
 					RelativePath=".\movie.c">
 				</File>
 				<File
+					RelativePath="movie_avi.c">
+				</File>
+				<File
 					RelativePath="mp3_player.c">
 				</File>
 				<File
@@ -1534,6 +1537,9 @@
 				</File>
 				<File
 					RelativePath=".\movie.h">
+				</File>
+				<File
+					RelativePath="movie_avi.h">
 				</File>
 				<File
 					RelativePath="mp3_player.h">
