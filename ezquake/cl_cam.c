@@ -35,6 +35,9 @@ static vec3_t desired_position; // where the camera wants to be
 static qboolean locked = false;
 static int oldbuttons;
 
+// cl_hightrack {
+cvar_t cl_hightrack = {"cl_hightrack", "0" };	// track high fragger 
+// } cl_hightrack
 cvar_t cl_chasecam = {"cl_chasecam", "1"};		// "through the eyes" view
 
 vec3_t cam_viewangles;
@@ -274,6 +277,30 @@ static qboolean InitFlyby(player_state_t *self, player_state_t *player, int chec
 	return true;
 }
 
+// cl_hightrack {
+static void Cam_CheckHighTarget(void)
+{
+	int i, j, max;
+	player_info_t	*s;
+
+	j = -1;
+	for (i = 0, max = -9999; i < MAX_CLIENTS; i++) {
+		s = &cl.players[i];
+		if (s->name[0] && !s->spectator && s->frags > max) {
+			max = s->frags;
+			j = i;
+		}
+	}
+	if (j >= 0) {
+		if (!locked || cl.players[j].frags > cl.players[spec_track].frags) {
+			Cam_Lock(j);
+			ideal_track = spec_track;	
+		}
+	} else
+		Cam_Unlock();
+} 
+// } cl_hightrack
+
 // Take over the user controls and track a player.
 // We find a nice position to watch the player and move there
 void Cam_Track(usercmd_t *cmd) {
@@ -283,13 +310,23 @@ void Cam_Track(usercmd_t *cmd) {
 
 	if (!cl.spectator)
 		return;
+
+// cl_hightrack {
+	if (cl_hightrack.value && !locked)
+		Cam_CheckHighTarget(); 
+// } cl_hightrack
 	
 	if (!autocam || cls.state != ca_active)
 		return;
 
 	if (locked && (!cl.players[spec_track].name[0] || cl.players[spec_track].spectator)) {
 		locked = false;
-		Cam_Unlock();
+// cl_hightrack {
+		if (cl_hightrack.value)
+			Cam_CheckHighTarget();
+		else 
+// } cl_hightrack
+			Cam_Unlock();
 		return;
 	}
 
@@ -394,6 +431,13 @@ void Cam_FinishMove(usercmd_t *cmd) {
 			return;
 	}
 
+// cl_hightrack {
+	if (autocam && cl_hightrack.value) {
+		Cam_CheckHighTarget();
+		return;
+	} 
+// } cl_hightrack
+
 	if (locked) {
 		if ((cmd->buttons & BUTTON_JUMP) && (oldbuttons & BUTTON_JUMP))
 			return;		// don't pogo stick
@@ -490,6 +534,9 @@ void Cam_TryLock (void) {
 
 void CL_InitCam(void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SPECTATOR);
+// cl_hightrack {
+	Cvar_Register (&cl_hightrack); 
+// } cl_hightrack
 	Cvar_Register (&cl_chasecam);
 
 	Cvar_ResetCurrentGroup();
