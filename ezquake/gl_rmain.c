@@ -654,6 +654,11 @@ void R_DrawAliasModel (entity_t *ent) {
 		NewStaticLightCorona (C_FIRE, ent->origin);
 	}
 
+	if (ent->model->modhint == MOD_TELEPORTDESTINATION && amf_coronas.value)
+	{
+		NewStaticLightCorona (C_LIGHTNING, ent->origin);
+	}
+
 	if (amf_part_fire.value && (!strcmp (ent->model->name, "progs/flame.mdl") || !strcmp (ent->model->name, "progs/flame2.mdl") || !strcmp (ent->model->name, "progs/flame3.mdl")))
 	{
 		if (!strcmp (ent->model->name, "progs/flame.mdl") && !cl.paused)
