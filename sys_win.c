@@ -416,8 +416,11 @@ void Sys_Init_ (void) {
 	OSVERSIONINFO vinfo;
 
 	// allocate a named semaphore on the client so the front end can tell if it is alive
-	if (!dedicated/* && !COM_CheckParm("-allowmultiple")*/)
-// enable for development purposes, but disable for official builds
+	if (!dedicated
+#ifdef _DEBUG
+		&& !COM_CheckParm("-allowmultiple")
+#endif// enabled for development purposes, but disabled for official builds
+	)
 	{
 		// mutex will fail if semaphore already exists
 		qwclsemaphore = CreateMutex(
