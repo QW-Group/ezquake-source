@@ -514,7 +514,7 @@ void R_DrawWaterSurfaces (void) {
 	//Tei particle surf
 #define ESHADER(eshadername)  extern void eshadername (vec3_t org)
 	extern void EmitParticleEffect (msurface_t *fa, void (*fun)(vec3_t nv)) ;
-	extern cvar_t tei_lavafire;
+	extern cvar_t tei_lavafire, tei_slime;
 	ESHADER(FuelRodExplosion);//green mushroom explosion
 	ESHADER(ParticleFire);//torch fire
 	ESHADER(ParticleFirePool);//lavapool alike fire 
@@ -523,9 +523,10 @@ void R_DrawWaterSurfaces (void) {
 	ESHADER(VX_DetpackExplosion);//cool huge explosion
 	ESHADER(VX_Implosion);//TODO
 	ESHADER(VX_TeslaCharge);
+	ESHADER(ParticleSlime);
+	ESHADER(ParticleSlimeHarcore);
 
 	
-
 	if (!waterchain)
 		return;
 
@@ -552,13 +553,14 @@ void R_DrawWaterSurfaces (void) {
 			//Lava
 			case 'l':
 			case 'L':
-				if (!tei_lavafire.value)
-					break;
+
 				if (tei_lavafire.value == 2)
 					EmitParticleEffect(s,ParticleFirePool);//Tei lavafire HARDCORE
 				else
 				if (tei_lavafire.value == 1)
 					EmitParticleEffect(s,ParticleFire);//Tei lavafire, normal 
+
+				
 
 				//else, use wheater effect :)
 				break;
@@ -566,8 +568,16 @@ void R_DrawWaterSurfaces (void) {
 				//TODO: a cool implosion subtel fx
 		//		EmitParticleEffect(s,VX_Implosion);//Teleport
 				break;
+			case 's':
+				if (tei_slime.value == 1)
+					EmitParticleEffect(s,ParticleSlime);
+				else
+				if (tei_slime.value == 2)
+					EmitParticleEffect(s,ParticleSlimeHarcore);
+
+				break;
 			case 'w':
-				EmitParticleEffect(s,VX_TeslaCharge);//Teleport
+			//	EmitParticleEffect(s,VX_TeslaCharge);
 				break;
 			default:
 				break;
