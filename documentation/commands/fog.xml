@@ -2,5 +2,5 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
 <command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
 <name>fog</name><description>
-Shortcut for assigning cvars /gl_fogred, /gl_foggreen and /gl_fogblue.</description><syntax>R G B</syntax><remarks>
-Changes color of fog.</remarks></command>
+Changes color of fog.</description><syntax>R G B</syntax><remarks>
+Type RGB value. E.g. "128 128 128" goes for gray, "192 64 64" for red-like.</remarks></command>
