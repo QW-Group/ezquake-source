@@ -169,10 +169,11 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 
 #ifndef SERVERONLY		
 		// hexum - nextsize lets us know when alias expansion is complete (including 'if' expressions)
-		// once it is complete, the next command in the buffer should not be tainted (but it can still become tainted)
+		// once it is complete, the next command in the buffer should not be marked tainted (but it can still become tainted)
 		// this avoids problems with multiple binds being hit in the same frame and other cases where multiple
 		// commands become queued up
 		// NOTE: this works because alias expansion uses Cbuf_InsertText
+		// FIXME? This would be a lot simpler if Cmd_ExecuteString was redesigned to handle aliases recursively
 		if (cursize <= nextsize)
 			cmd_tainted = false;
 #endif
