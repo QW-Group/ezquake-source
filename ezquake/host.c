@@ -338,6 +338,8 @@ void Host_Init (int argc, char **argv, int default_memsize) {
 		Com_Printf(Host_PrintBars("ezQuake Initialized", 38));
 	}
 
+	Com_Printf ("\nType /help to access the manual.\nUse /describe to learn about commands.\n", VersionString());
+
 	if (dedicated) {
 		Cbuf_AddText ("exec server.cfg\n");
 		Cmd_StuffCmds_f ();		// process command line arguments
