@@ -273,7 +273,7 @@ void CL_ParseTEnt (void) {
 #endif
 				R_TeleportSplash (pos);									//teleport splash
 #ifdef GLQUAKE
-			if (amf_coronas.value)
+			if (amf_coronas_tele.value)
 				NewCorona (C_BLUEFLASH, pos);
 #endif
 		}
@@ -407,7 +407,7 @@ void CL_ParseTEnt (void) {
 #endif
 			R_TeleportSplash (pos);									//teleport splash
 #ifdef GLQUAKE
-		if (amf_coronas.value)
+		if (amf_coronas_tele.value)
 			NewCorona (C_BLUEFLASH, pos);
 #endif
 		break;
