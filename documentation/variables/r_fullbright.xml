@@ -17,7 +17,7 @@ This variable toggles the use of lights at full brightness on the map. When this
 variable is set to &quot;1&quot; the renderer system will render all textures on the map 
 at full brightness. This will allow map authors to remove all of the lighting 
 effects from the map. 
-This variable was removed in QWCL and has been re-introduced in FuhQuake now, 
+This variable was removed in QWCL and has been re-introduced in this client, 
 however it can only be used when the server is running with cheats enabled (for 
 example &quot;qwsv -cheats&quot;), because it could be used as a cheat by making it easier
 to see players in dark corners when no fullbright skins are used.

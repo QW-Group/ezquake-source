@@ -7,8 +7,8 @@
 </description>
 <value><enum>
 	<value><name>
-0</name><description>FuhQuake eat more cpu.</description></value>
-	<value><name>1</name><description>Give more cpu for other programs.</description></value>
+0</name><description>the client eats more CPU.</description></value>
+	<value><name>1</name><description>Give more CPU for other programs.</description></value>
 </enum></value>
 <remarks>
 

@@ -5,7 +5,7 @@
 <name>show_speed</name>
 <description>
 
-Displays a speed counter in the top right corner in FuhQuake units (Horizontal velocity). (320 - Normal walking speed, 440 - Accel jump, 450 - Bunnyhopping)
+Displays a speed counter in the top right corner in the client's units (Horizontal velocity). (320 - Normal walking speed, 440 - Accel jump, 450 - Bunnyhopping)
 </description>
 <value><enum>
 	<value><name>

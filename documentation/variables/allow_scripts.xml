@@ -11,7 +11,7 @@ Possibility to prove, that you do NOT use scripts. Of course, values 0 and 1 wil
 <value><enum>
 	<value><name>
 0</name><description>Same as 1, but also block fast +lookdown/+lookup,
-                so even simple rjump will be impossible. Block KTPro /kfjump and /krjump aliases.</description></value>
+                so even simple rjump will be impossible. Blocks KTPro /kfjump and /krjump aliases.</description></value>
 	<value><name>1</name><description>Allow only simple scripts - it will block left/right
                 turning, so fjump (for example) will be impossible,
                 but normal rjump (+lookdown;+attack;+jump) will be
@@ -23,13 +23,13 @@ Possibility to prove, that you do NOT use scripts. Of course, values 0 and 1 wil
 
 Your current 'allow_scripts' setting will be reported to
         'f_scripts' query and anyone will be able to check it. If
-        anyone said 'f_scripts' since last mapchange, mqwcl will also
+        anyone said 'f_scripts' since last mapchange, the client will also
         autoreport any change of allow_scripts (just like reporting
         f_skins). So if you don't use scripts, turn them off to prove
         you don't use them. And remember - scripts _are allowed_,
         so don't call ppl who use them 'cheaters'.
 
-You can't set this variable to 2 when command line parameter -noscripts is used.
+You can't set this variable to 2 when a command line parameter -noscripts is used.
 
 </remarks>
 </variable>

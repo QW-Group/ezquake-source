@@ -9,7 +9,7 @@
 <value><enum>
 	<value><name>
 0</name><description>Off.</description></value>
-	<value><name>1</name><description>Will convert all non printable characters to printable characters in your log. This makes your log readable because all the weird ascii characters that usually occur because of different coloured text in FuhQuake (and because of weird symbols - ocrana led's etc) are converted into printable characters.</description></value>
+	<value><name>1</name><description>Will convert all non printable characters to printable characters in your log. This makes your log readable because all the weird ascii characters that usually occur because of different coloured text in the client (and because of weird symbols - ocrana led's etc) are converted into printable characters.</description></value>
 </enum></value>
 <remarks>
 

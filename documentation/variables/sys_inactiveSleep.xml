@@ -7,7 +7,7 @@
 </description>
 <value><enum>
 	<value><name>
-0</name><description>Prevent freeing of CPU when FuhQuake is minimised or not in focus.</description></value>
+0</name><description>Prevent freeing of CPU when the client is minimized or not in focus.</description></value>
 	<value><name>1</name><description>Enable inactive sleeping.</description></value>
 </enum></value>
 <remarks>

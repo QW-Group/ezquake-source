@@ -5,7 +5,7 @@
 <name>_vid_default_mode</name>
 <description>
 
-This variable sets the default video mode that FuhQuake uses.
+This variable sets the default video mode that the client uses.
 
 </description>
 </variable>

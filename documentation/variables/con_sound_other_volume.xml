@@ -4,7 +4,7 @@
 
 <name>con_sound_other_volume</name>
 <description>
-You can specify volume of notification sound for another messages (other messages than messagemode, messagemode2 and from spectators).
+You can specify volume of notification sound for other messages (than messagemode, messagemode2 and from spectators).
 
 </description>
 <remarks>

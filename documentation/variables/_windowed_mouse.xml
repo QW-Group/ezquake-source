@@ -9,7 +9,7 @@
 <value><enum>
 	<value><name>
 0</name><description>Disable windowed mouse support so you can use the mouse in other applications.</description></value>
-	<value><name>1</name><description>Enabled windowed mouse support so you can use the mouse in FuhQuake.</description></value>
+	<value><name>1</name><description>Enabled windowed mouse support so you can use the mouse in the client.</description></value>
 </enum></value>
 <remarks>
 

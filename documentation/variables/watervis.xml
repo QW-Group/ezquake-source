@@ -14,7 +14,7 @@ This server-side cvar is mirrored to serverinfo as a hint to clients on whether 
 <remarks>
 
 
-It's a bad idea to use watervis 1 if the maps the server is using are not watervised. Liquid will appear 'transparent' but you won't be able to see any items/players/etc through it.  And it is a bad idea anyway because Quake maps were not designed for transparent water (lava, slime); enabling it changes gameplay, decreases fps and produces more network traffic and puts non-GL players at a disadvantage because the software renderer doesn't support transparent water (yet).
+It's a bad idea to use watervis 1 if the maps the server is using are not watervised. Liquids will appear 'transparent' but you won't be able to see any items/players/etc through it.  And it is a bad idea anyway because Quake maps were not designed for transparent water (or other liquids); enabling it changes gameplay, decreases fps and produces more network traffic and puts non-GL players at a disadvantage because the software renderer doesn't support transparent water (yet).
 Not saved to config with cfg_save command.
 
 

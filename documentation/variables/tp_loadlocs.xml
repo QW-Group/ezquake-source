@@ -6,7 +6,7 @@
 <description>
 Controls whether to load locs for teamplay reporting.
 Note: The locs should be in your &quot;/id1/locs/&quot;,
-&quot;/fuhquake/locs&quot; or &quot;/qw/locs&quot; folder.
+&quot;/ezquake/locs&quot; or &quot;/qw/locs&quot; folder.
 </description>
 <value><enum>
 	<value><name>

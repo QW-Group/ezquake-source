@@ -6,7 +6,7 @@
 <description>
 
 
-This toggles whether MQWCL should always record pings into the demo or only
+This toggles whether the client should always record pings into the demo or only
 when the player died and show(team)scores are being shown (QWCL default).
 </description>
 <value><enum>

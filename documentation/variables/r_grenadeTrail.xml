@@ -4,6 +4,20 @@
 
 <name>r_grenadetrail</name>
 <description>Customizable grenade trails
-Works the same way as r_rockettrail, but for grenades.
+0 = No rocket trail
+1 = Normal
+2 = Grenade trail
+3 = Alt normal trail
+4 = Slight blood trail
+5 = Big blood trail
+6 = Tracer1 trail
+7 = Tracer2 trail
+8 = Plasma trail
+9 = Lavaball trail
+10 = Fuel Rod Gun trail
+11 = Plasma Rocket Mk II trail
 </description>
+<remarks>
+Works the same way as r_rockettrail, but for grenades.
+</remarks>
 </variable>

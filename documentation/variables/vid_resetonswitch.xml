@@ -13,9 +13,9 @@
 </enum></value>
 <remarks>
 
-FuhQuake and the screen gets garbaged. When enabled, FuhQuake will reset your Windows video mode 
+ezQuake and the screen gets garbaged. When enabled, the client will reset your Windows video mode 
 every time you press alt-tab. Note that some NVidia drivers lock up your system completely 
-when you alt-tab. vid_resetonswitch will not help in this case (try starting FuhQuake with -dibonly).
+when you alt-tab. vid_resetonswitch will not help in this case (try starting ezQuake with -dibonly).
 
 
 </remarks>

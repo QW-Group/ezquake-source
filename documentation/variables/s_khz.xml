@@ -7,7 +7,7 @@
 
 Sound quality. Must be set from the commandline
 Example:
-fuhquake +set s_khz 44
+ezquake-gl.exe +set s_khz 44
 
 </description>
 </variable>

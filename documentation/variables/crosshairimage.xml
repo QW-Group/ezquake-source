@@ -5,9 +5,9 @@
 <name>crosshairimage</name>
 <description>
 
-To load the crosshair in FuhQuake use &quot;crosshairimage image_name&quot; where
+To load the crosshair use &quot;crosshairimage image_name&quot; where
 'image_name' is the name of the crosshair image you put in the above directory.
-Example, if I have c:\quake\fuhquake\crosshairs\cross.png I'd use
+Example, if I have c:\quake\ezQuake\crosshairs\cross.png I'd use
 &quot;crosshairimage cross&quot; to load it.
 
 </description>

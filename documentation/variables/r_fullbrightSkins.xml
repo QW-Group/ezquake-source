@@ -5,8 +5,6 @@
 <name>r_fullbrightSkins</name>
 <description>
 Determines the fullbright percentage of skins. Fullbright skins can always be used during demo playback. 
-Finally, when the server allows fullbright skins, any user of FuhQuake using fullbright skins will respond 
-to an f_skins request. There is no response by a user of FuhQuake if he/she is not using fullbright skins. 
 The f_skins response will indicate the brightness level being used as a percentage.
 </description>
 <value><enum>

@@ -4,10 +4,9 @@
 
 <name>gl_consolefont</name>
 <description>
-In older versions of FuhQuake (v0.30 and lower), FuhQuake looked for an image called charset.png (or .tga) and if it found it then that was made to be your console font. 
-Starting from FuhQuake v0.31, you can change your console font from within FuhQuake. 
+Changes your console font.
 Put all your charset images in qw/textures/charsets/*.png (and *.tga) and use /gl_loadcharset XXX to load XXX.png (or tga). &quot;/gl_consolefont original&quot; will restore the 8bit font in your gfx.wad (this is default).
-Note: Loadcharset is shortcut for gl_consolefont.
+Note: Loadcharset is an alias for gl_consolefont.
 
 </description>
 <remarks>

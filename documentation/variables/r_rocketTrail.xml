@@ -3,17 +3,21 @@
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
 <name>r_rockettrail</name>
-<description>Added new rocket trail types (8-11)
-
-Plasma Rocket. (r_rockettrail 8)
-Well, its a blue fireball, you'll just have to take my word that its a plasma rocket.
-Lavaball. (r_rockettrail 9)
-The lavaball looks really silly with the default rocket trail, so I made it this burning ball of death thing. You can also use it for rockets.
-Fuel Rod Gun (from Halo! r_rockettrail 10)
-Any similarities between the fuel rod trail and Daikatana's ion blaster are purely coincidental.
-Plasma Rocket Mk II (r_rockettrail 11)
-Its a red plasma rocket trail, but it has... things coming off it.
-
-Note that if you use the rocket trails, you will have to change the explosion colours and things like that yourself. And you might want to try hiding the rockets with the new amf_hiderockets cvar for some trails are	intended to be &quot;beam&quot; trails.
+<description>
+0 = No rocket trail
+1 = Normal
+2 = Grenade trail
+3 = Alt normal trail
+4 = Slight blood trail
+5 = Big blood trail
+6 = Tracer1 trail
+7 = Tracer2 trail
+8 = Plasma trail
+9 = Lavaball trail
+10 = Fuel Rod Gun trail
+11 = Plasma Rocket Mk II trail
 </description>
+<remarks>
+Note that if you use the rocket trails, you will have to change the explosion colours and things like that yourself. And you might want to try hiding the rockets with the new cl_hiderockets cvar for some trails are	intended to be &quot;beam&quot; trails.
+</remarks>
 </variable>

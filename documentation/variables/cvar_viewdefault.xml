@@ -4,7 +4,7 @@
 
 <name>cvar_viewdefault</name>
 <description>
-When you type a cvar name into console (like 'gl_gamma' or 'r_rocketlight'), FuhQuake will tell you the default value of the cvar.
+When you type a cvar name into console (like 'gl_gamma' or 'r_rocketlight'), the client will tell you the default value of the cvar.
 </description>
 <value><enum>
 	<value><name>

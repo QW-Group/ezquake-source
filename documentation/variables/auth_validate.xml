@@ -7,16 +7,16 @@
 </description>
 <value><enum>
 	<value><name>
-0</name><description>If you don't want your client to validate other FuhQuake clients.</description></value>
+0</name><description>If you don't want your client to validate other ezQuake clients.</description></value>
 	<value><name>1</name><description>which performs the validation (but you need to use 'validate_clients'</description></value>
 </enum></value>
 <remarks>
 
 
-to see the results after a 'fuh_version').  If you have 
+If you have 
 'auth_warninvalid 1' and someone gives a dirty hash in a version response 
 (because they are using a hacked client that can't work out the right 
-response), FuhQuake will print something like 
+response), the client will print something like 
 'Warning Invalid Client: playername (userid)' in your console ('auth_warninvalid 0' is default).
 
 

@@ -8,12 +8,12 @@
 <value><enum>
 	<value><name>
 0</name><description>Enable.</description></value>
-	<value><name>1</name><description>Disable winkeys from alt-tabbing you (only works in NT/2K/XP, and only when FuhQuake is in focus).</description></value>
+	<value><name>1</name><description>Disable winkeys from alt-tabbing you (only works in NT/2K/XP, and only when the client is in focus).</description></value>
 </enum></value>
 <remarks>
 
 
-Note:Windows keys are now bindable (LWINKEY, RWINKEY, WINKEY, POPUPMENU). Obviously only useful on NT/2K/XP with sys_disableWinKeys 1 (and possibely useful in linux too!).
+Note: Windows keys are now bindable (LWINKEY, RWINKEY, WINKEY, POPUPMENU). Obviously only useful on NT/2K/XP with sys_disableWinKeys 1 (and possibely useful in Linux too!).
 
 
 </remarks>

@@ -7,8 +7,8 @@
 </description>
 <value><enum>
 	<value><name>
-0</name><description>FuhQuake hides the authentication crc in f_version responses.</description></value>
-	<value><name>1</name><description>FuhQuake show you the authentication crc in f_version responses.</description></value>
+0</name><description>the client hides the authentication CRC in f_version responses.</description></value>
+	<value><name>1</name><description>the client shows you the authentication CRC in f_version responses.</description></value>
 </enum></value>
 <remarks>
 

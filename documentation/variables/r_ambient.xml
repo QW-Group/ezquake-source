@@ -7,7 +7,7 @@
 This variable controls the amount of ambient lighting on the map. When this 
 variable is increased the map will become brighter and all walls and objects 
 will be rendered in a lighter color.
-It was removed in QWCL and has been re-introduced in FuhQuake now, however it 
+It was removed in QWCL and has been re-introduced in this client, however it 
 can only be used when the server is running with cheats enabled (for example 
 &quot;qwsv -cheats&quot;), because it could be used as a cheat by making it easier to see
 players in dark corners when no fullbright skins are used.
