@@ -41,6 +41,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // create thread (process under linux)
 int  Sys_CreateThread(DWORD (WINAPI *func)(void *), void *param);
 
+#define MAX_PATH_LENGTH 1024
+
+typedef struct sys_dirent_s
+{
+    int directory;
+    int hidden;
+    char fname[MAX_PATH_LENGTH];
+    unsigned int size;
+    SYSTEMTIME time;
+} sys_dirent; 
+
+char *Sys_fullpath(char *absPath, const char *relPath, int maxLength);
+unsigned long  Sys_ReadDirFirst(sys_dirent *);               // 0 if failed
+int            Sys_ReadDirNext(unsigned long, sys_dirent *); // 0 if failed (EOF)
+void           Sys_ReadDirClose(unsigned long);
+int    Sys_chdir (const char *path);
+char * Sys_getcwd (char *buf, int bufsize);
+
+
 // file IO
 int	Sys_FileTime (char *path);
 void Sys_mkdir (char *path);

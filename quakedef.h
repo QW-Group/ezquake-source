@@ -26,7 +26,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define	 __QUAKEDEF_H_
 
+#define XML_STATIC
+
 #include "common.h"
+
+#include <expat.h>
 
 #include "vid.h"
 #include "draw.h"
@@ -42,6 +46,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #else
 #include "r_model.h"
 #endif
+
+#include "xsd.h"        // kazik
+#include "Ctrl.h"       // kazik
+#include "Ctrl_Tab.h"   // kazik
+#include "Ctrl_PageViewer.h"    // kazik
+#include "EX_FileList.h"        // kazik
+#include "help.h"       // kazik
 
 // HUD -> hexum
 extern  int         host_screenupdatecount; // kazik, incremented every screen update, never reset

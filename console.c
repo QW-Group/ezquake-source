@@ -42,6 +42,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define		MAXIMUM_CONBUFSIZE	(1 << 22)
 
 console_t	con;
+int         con_margin=0;       // kazik: margin on the left side
 
 qboolean    con_addtimestamp;
 
@@ -404,6 +405,7 @@ void Con_Shutdown (void) {
 
 void Con_Linefeed (void) {
 	con.x = 0;
+    con.x = con_margin;    // kazik
 	if (con.display == con.current)
 		con.display++;
 	con.current++;

@@ -647,3 +647,80 @@ int  Sys_CreateThread(DWORD (WINAPI *func)(void *), void *param)
 
     return 1;
 }
+
+void MakeDirent(sys_dirent *ent, WIN32_FIND_DATA *data)
+{
+    FILETIME ft1;
+
+    strncpy(ent->fname, data->cFileName, min(strlen(data->cFileName)+1, MAX_PATH_LENGTH));
+    ent->fname[MAX_PATH_LENGTH-1] = 0;
+
+    if (data->nFileSizeHigh > 0)
+        ent->size = 0xffffffff;
+    else
+        ent->size = data->nFileSizeLow;
+
+    FileTimeToLocalFileTime(&data->ftLastWriteTime, &ft1);
+    FileTimeToSystemTime(&ft1, &ent->time);
+
+    if (data->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        ent->directory = 1;
+    else
+        ent->directory = 0;
+
+    if (data->dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM))
+        ent->hidden = 1;
+    else
+        ent->hidden = 0;
+}
+
+unsigned long Sys_ReadDirFirst(sys_dirent *ent)
+{
+    HANDLE search;
+    WIN32_FIND_DATA data;
+
+    search = FindFirstFile("*", &data);
+
+    if (search == (HANDLE)ERROR_INVALID_HANDLE)
+        return 0;
+
+    MakeDirent(ent, &data);
+
+    return (unsigned long) search;
+}
+
+int Sys_ReadDirNext(unsigned long search, sys_dirent *ent)
+{
+    WIN32_FIND_DATA data;
+    if (!FindNextFile((HANDLE)search, &data))
+        return 0;
+
+    MakeDirent(ent, &data);
+    return 1;
+}
+
+void Sys_ReadDirClose(unsigned long search)
+{
+    FindClose((HANDLE)search);
+}
+
+int Sys_chdir (const char *path)
+{
+    if (SetCurrentDirectory(path))
+        return 1;
+    else
+        return 0;
+}
+
+char * Sys_getcwd (char *buf, int bufsize)
+{
+    if (GetCurrentDirectory(bufsize, buf))
+        return buf;
+    else
+        return NULL;
+}
+
+char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
+{
+    return _fullpath(absPath, relPath, maxLength);
+} 
