@@ -1,17 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
 <command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
-	<name>ignore</name>
-	<description>Ignores given user, which prevents you from getting his/her chat messages.</description>
-	<syntax>[user]</syntax>
-	<arguments>
-		<argument>
-			<name>user</name>
-			<description>user which should be ignored. You can give user nickname (ie. lakerman), id (ie. 4324) or number (ie. #5). If you skip this argument, current ignore list will be printed</description>
-		</argument>
-	</arguments>
-	<remarks>
-		Ignoring a user lasts until map changes or until you explicitely unignore;
-		if you want to ignore user for longer time, you have to repeat this command after every map change.
-	</remarks>
-</command>
+<name>ignore</name><description>
+You can give ignore either a player's name
+(name completion is useful for this)
+ or a userid (ignore <name | userid >). ignore without any
+command line
+ parameters displays your ignore list.</description><syntax>(name/userid)</syntax><remarks></remarks></command>
