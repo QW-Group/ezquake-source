@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>scr_newhud</name>
+<description>
+
+
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Old standard status bar</description></value>
+	<value><name>1</name><description>New customizable status bar</description></value>
+	<value><name>2</name><description>First draws old status bar and then renders new status bar on the top of it.</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+</remarks>
+</variable>

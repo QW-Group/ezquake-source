@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>gl_fogstart</name>
+<description>
+
+
+Sets starting distance for rendering the fog. The greater the number is, the better visibility in game is and the fog is &quot;thinner&quot;.
+
+</description>
+</variable>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>r_turbalpha</name>
+<description>
+
+This variable determines the level of opacity for liquids, which requires
+the use of maps that were VISed with transparent water. When using maps that
+have not been VISed in such a way, you have to use &quot;r_novis 1&quot;. If &quot;r_novis&quot; is
+set to &quot;1&quot; or when using a map VISed with transparent water and using setting
+&quot;r_turbalpha&quot; to a value lower than &quot;1&quot;, the player will be able to see objects 
+and walls through liquids if the server allows that. This is a very nice feature 
+to have in the game, for more information refer to the &quot;r_novis&quot; command. You 
+can use any value between &quot;0&quot; and &quot;1&quot; for &quot;r_turbalpha&quot;, here are some 
+Examples:
+</description>
+<value><enum>
+	<value><name>
+0.00</name><description>Transparent.</description></value>
+	<value><name>0.25</name><description>Low opacity.</description></value>
+	<value><name>0.50</name><description>Medium opacity.</description></value>
+	<value><name>0.75</name><description>High opacity.</description></value>
+	<value><name>1.00</name><description>Solid.</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+
+
+</remarks>
+</variable>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>r_floorcolor</name>
+<description>
+Changes color of floor when r_drawflat is set to 1.
+Enter RGB value here, e.g. r_floorcolor &quot;128 128 128&quot; goes for gray floor.
+
+</description>
+<remarks>
+
+
+</remarks>
+</variable>
