@@ -121,20 +121,12 @@ cvar_t	m_filter = {"m_filter", "0"};
 cvar_t	cl_keypad = {"cl_keypad", "1"};
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
 
-//#define SGISWAPINTERVAL
-
 const char *glx_extensions=NULL;
 
-#ifdef SGISWAPINTERVAL
-extern int glXSwapIntervalSGI (int);
-#else
 extern int glXGetVideoSyncSGI (unsigned int *);
 extern int glXWaitVideoSyncSGI (int, int, unsigned int *);
-#endif
 
-qboolean OnChange_vid_vsync(cvar_t *var, char *string);
-static qboolean update_vsync = false;
-cvar_t	vid_vsync = {"vid_vsync", "", 0, OnChange_vid_vsync};
+cvar_t	vid_vsync = {"vid_vsync", "0"};
 
 void GL_Init_GLX(void);
 void VID_Minimize_f(void);
@@ -483,32 +475,13 @@ qboolean CheckGLXExtension (const char *extension) {
 }
 
 void CheckVsyncControlExtensions(void) {
-#ifdef SGISWAPINTERVAL
-    if (!COM_CheckParm("-noswapctrl") && CheckGLXExtension("GLX_SGI_swap_control")) {
-		Com_Printf("Vsync control extensions found\n");
-		Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
-		Cvar_Register (&vid_vsync);
-		Cvar_ResetCurrentGroup();
-    }
-#else
     if (!COM_CheckParm("-noswapctrl") && CheckGLXExtension("GLX_SGI_video_sync")) {
 		Com_Printf("Vsync control extensions found\n");
 		Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
 		Cvar_Register (&vid_vsync);
 		Cvar_ResetCurrentGroup();
     }
-#endif
 }
-
-qboolean OnChange_vid_vsync(cvar_t *var, char *string) {
-#ifdef SGISWAPINTERVAL
-	update_vsync = true;
-#else
-	update_vsync = atoi(string) ? true : false;
-#endif
-	return false;
-}
-
 
 void GL_Init_GLX(void) {
 	glx_extensions = glXQueryExtensionsString (dpy, scrnum);
@@ -558,10 +531,24 @@ void RestoreHWGamma (void) {
 
 /************************************* GL *************************************/
 
-static double glx_startframetime;
+void WaitForVSync (void) { // thanks to str-
+	if(vid_vsync.value) {
+		double sanity_time = Sys_DoubleTime() + 0.05;
+		unsigned int count, latest;
+
+		glXGetVideoSyncSGI(&count);
+
+		while(Sys_DoubleTime() < sanity_time) {
+			glXGetVideoSyncSGI(&latest);
+
+			if(latest != count) {
+				break;
+			}
+		}
+	}
+}
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height) {
-	glx_startframetime = Sys_DoubleTime();
 	*x = *y = 0;
 	*width = scr_width;
 	*height = scr_height;
@@ -569,6 +556,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height) {
 
 void GL_EndRendering (void) {
 	static qboolean old_hwgamma_enabled;
+	unsigned int vsync_count;
 
 	vid_hwgamma_enabled = vid_hwgammacontrol.value && vid_gammaworks;
 	if (vid_hwgamma_enabled != old_hwgamma_enabled) {
@@ -579,23 +567,9 @@ void GL_EndRendering (void) {
 			RestoreHWGamma ();
 	}
 
-#ifdef SGISWAPINTERVAL	
-	if (glXSwapIntervalSGI && update_vsync && vid_vsync.string[0])
-		glXSwapIntervalSGI((int)vid_vsync.value);
-	update_vsync = false;
-#else
-	unsigned int vsync_count;
-	double glx_frametime;
-
-	glx_frametime = Sys_DoubleTime();
-	if ((double)(glx_frametime-glx_startframetime) <= (double)(1.0/X_vrefresh_rate))
-		if (glXGetVideoSyncSGI && glXWaitVideoSyncSGI && update_vsync && vid_vsync.string[0]) {
-//			glXGetVideoSyncSGI(&vsync_count);
-			glXWaitVideoSyncSGI(1, 0, &vsync_count);
-		}
-#endif
-
 	if (vid_minimized) { usleep(10*1000); return; }
+
+	WaitForVSync();
 
 	glFlush(); /* no need for this ??? glXSwapBuffers calls it as well */
 	glXSwapBuffers(dpy, win);
