@@ -449,7 +449,13 @@ void CL_FinishMove (usercmd_t *cmd) {
 	// shaman RFE 1030281 {
 	// KTPro's KFJump == impulse 156
 	// KTPro's KRJump == impulse 164
-	if (cl.teamfortress || (!(in_impulse == 156 && (cl.fpd & FPD_LIMIT_YAW || allow_scripts.value < 2 || com_blockscripts == true)) && !(in_impulse == 164 && (cl.fpd & FPD_LIMIT_PITCH || allow_scripts.value == 0)))) {
+	if ( *Info_ValueForKey(cl.serverinfo, "kmod") && (
+		((in_impulse == 156) && (cl.fpd & FPD_LIMIT_YAW || allow_scripts.value < 2 || com_blockscripts == true)) ||
+		((in_impulse == 164) && (cl.fpd & FPD_LIMIT_PITCH || allow_scripts.value == 0))
+		)
+	) {
+			cmd->impulse = 0;
+	} else {
 		cmd->impulse = in_impulse;
 	}
 	// } shaman RFE 1030281
@@ -694,4 +700,4 @@ void CL_InitInput (void) {
 	Cvar_ResetCurrentGroup();
 }
 
-void CL_ClearStates (void) {} 
+void CL_ClearStates (void) {}
