@@ -111,8 +111,9 @@ void DumpBindings (FILE *f) {
 }
 
 #define CONFIG_MAX_COL 60
+#define MAX_DUMPED_CVARS 1024
 static void DumpVariables(FILE	*f)	{
-	cvar_t *var, *sorted_vars[256];
+	cvar_t *var, *sorted_vars[MAX_DUMPED_CVARS];
 	cvar_group_t *group;
 	char *spaces;
 	int count, i, col_size;
@@ -152,7 +153,7 @@ static void DumpVariables(FILE	*f)	{
 		skip_userinfo = ((cfg_save_userinfo.value == 1) && !strcmp(CVAR_GROUP_USERINFO, group->name)) ? true : false;
 
 	
-		for (count = 0, var = group->head; var && count < 256; var = var->next_in_group) {
+		for (count = 0, var = group->head; var && count < MAX_DUMPED_CVARS; var = var->next_in_group) {
 			if (skip_userinfo && (
 				!strcmp(var->name, "team") || !strcmp(var->name, "skin") || 
 				!strcmp(var->name, "spectator") ||!strcmp(var->name, "name") ||
@@ -194,7 +195,7 @@ static void DumpVariables(FILE	*f)	{
 	
 
 
-	for (count = 0, var = cvar_vars; var && count < 256; var = var->next) {
+	for (count = 0, var = cvar_vars; var && count < MAX_DUMPED_CVARS; var = var->next) {
 		if (!var->group && !(var->flags & (CVAR_USER_CREATED | CVAR_ROM | CVAR_INIT))) {
 			if (cfg_save_unchanged.value || strcmp(var->string, var->defaultvalue)) {
 				sorted_vars[count++] = var;
@@ -220,7 +221,7 @@ static void DumpVariables(FILE	*f)	{
 
 
 
-	for	(col_size = col_size - 2, count = 0, var = cvar_vars; var && count < 256; var = var->next)	{
+	for	(col_size = col_size - 2, count = 0, var = cvar_vars; var && count < MAX_DUMPED_CVARS; var = var->next)	{
 		if (var->flags & CVAR_USER_CREATED) {
 			sorted_vars[count++] = var;
 			col_size = max(col_size, strlen(var->name));
