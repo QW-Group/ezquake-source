@@ -27,17 +27,17 @@ typedef struct locked_cvar_s {
 
 static char *allowed_smackdown_macros[] =
 {
-	{"connectiontype"},
-	{"date"},
-	{"demoplayback"},
-	{"latency"},
-	{"matchname"},
-	{"matchstatus"},
-	{"matchtype"},
-	{"mp3info"},
-	{"qt"},
-	{"triggermatch"},
-	{NULL}
+	"connectiontype",
+	"date",
+	"demoplayback",
+	"latency",
+	"matchname",
+	"matchstatus",
+	"matchtype",
+	"mp3info",
+	"qt",
+	"triggermatch",
+	NULL
 };
 
 typedef enum {rs_default, rs_smackdown} ruleset_t;
