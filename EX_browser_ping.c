@@ -759,8 +759,9 @@ void SB_Test_CalcNet(void)
 {
     int i, a;
 
-    //extern hud_t * r_netgraph;
-    cvar_t *netgraph_inframes = 0;
+    //extern hud_t *
+    extern cvar_t r_netgraph;
+    cvar_t *netgraph_inframes = &r_netgraph;
 
     for (i=0; i < NET_TIMINGS; i++)
     {
