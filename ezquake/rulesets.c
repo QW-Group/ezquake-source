@@ -59,7 +59,7 @@ qboolean RuleSets_DisallowExternalTexture(model_t *mod) {
 	switch (mod->modhint) {
 		case MOD_EYES: return true;
 		case MOD_BACKPACK: return (ruleset == rs_smackdown);
-		default:
+		default: ;
 	}
 	return false;
 }
@@ -132,6 +132,17 @@ static void Rulesets_Smackdown(void) {
 	};
 
 #ifdef GLQUAKE
+		limited_cvar_t limited_cvars[] = {
+		{&amf_part_gunshot_type, "1"},
+		{&amf_part_traillen, "1"},
+		{&amf_part_trailtime, "1"},
+		{&amf_part_trailwidth, "1"},
+		{&amf_part_traildetail, "1"},
+		{&amf_part_trailtype, "1"}
+		};
+#endif
+
+#ifdef GLQUAKE
 	if (!qmb_initialized)
 		i = 2;
 	else
@@ -143,14 +154,6 @@ static void Rulesets_Smackdown(void) {
 	}
 
 #ifdef GLQUAKE
-	limited_cvar_t limited_cvars[] = {
-		{&amf_part_gunshot_type, "1"},
-		{&amf_part_traillen, "1"},
-		{&amf_part_trailtime, "1"},
-		{&amf_part_trailwidth, "1"},
-		{&amf_part_traildetail, "1"},
-		{&amf_part_trailtype, "1"}
-		};
 	for (i = 0; i < (sizeof(limited_cvars) / sizeof(limited_cvars[0])); i++) {
 		Cvar_RulesetSet(limited_cvars[i].var, limited_cvars[i].rulesetvalue);
 		Cvar_SetFlags(limited_cvars[i].var, Cvar_GetFlags(limited_cvars[i].var) | CVAR_RULESET_MAX);
