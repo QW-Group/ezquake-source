@@ -1434,10 +1434,9 @@ static void FlushString (char *s, int level, qboolean team, int offset) {
 
 	if (level == PRINT_CHAT)
 	{
-		if ((strstr(s, name.string)) && (con_highlight.value != 0) &&
-		    (strlen(strstr(s,name.string)) != strlen(s)) )
+		if ((strstr(s, name.string)) && (con_highlight.value != 0) && (strlen(strstr(s,name.string)) != strlen(s)) )
 		{
-			switch (con_highlight.value)
+			switch ((int)(con_highlight.value))
 			{
 			case 1:
 				Com_Printf ("%s", white_s);
@@ -1447,7 +1446,9 @@ static void FlushString (char *s, int level, qboolean team, int offset) {
 				break;
 			case 3:
 				Com_Printf ("%s%s", con_highlight_mark.string, white_s);
+				break;
 			default:
+				break;
 			}
 		}
 		else 
@@ -1456,22 +1457,24 @@ static void FlushString (char *s, int level, qboolean team, int offset) {
 	else
 	{
 		if ((strstr(s, name.string)) && (con_highlight.value != 0)  && ( strlen(strstr(s,name.string)) != strlen(s)) )
-                {
-			switch (con_highlight.value)
+        {
+			switch ((int)con_highlight.value)
 			{
 			case 1:
-                                Com_Printf ("%s", white_s);
+				Com_Printf ("%s", white_s);
 				break;
 			case 2:
-                                Com_Printf ("%s%s", con_highlight_mark.string, s);
+				Com_Printf ("%s%s", con_highlight_mark.string, s);
 				break;
 			case 3:
-                                Com_Printf ("%s%s", con_highlight_mark.string, white_s);
+				Com_Printf ("%s%s", con_highlight_mark.string, white_s);
+				break;
 			default:
-                        }       
-                }
-                else 
-			Com_Printf ("%s", s);
+				break;
+		}
+	}
+	else
+		Com_Printf ("%s", s);
 
 	}
 
