@@ -224,7 +224,7 @@ void EmitWaterPolys (msurface_t *fa) {
 		glDisable (GL_TEXTURE_2D);
 
 		// START shaman RFE 1022504
-		if (strstr (fa->texinfo->texture->name, "water")) {
+		if (strstr (fa->texinfo->texture->name, "water") || strstr (fa->texinfo->texture->name, "mwat")) {
 			col = StringToRGB(r_watercolor.string);
 		}
 		else if (strstr (fa->texinfo->texture->name, "slime")) {

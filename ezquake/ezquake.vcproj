@@ -113,7 +113,7 @@
 				BrowseInformation="0"
 				BrowseInformationFile="$(IntDir)/"
 				WarningLevel="3"
-				WarnAsError="TRUE"
+				WarnAsError="FALSE"
 				SuppressStartupBanner="TRUE"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -184,7 +184,7 @@
 				BrowseInformation="0"
 				BrowseInformationFile="$(IntDir)/"
 				WarningLevel="3"
-				WarnAsError="TRUE"
+				WarnAsError="FALSE"
 				SuppressStartupBanner="TRUE"/>
 			<Tool
 				Name="VCCustomBuildTool"/>

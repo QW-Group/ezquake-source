@@ -172,7 +172,7 @@ void D_DrawSurfaces (void) {
 				pface = s->data;
 				tx = pface->texinfo->texture;
 				// START shaman RFE 1022504
-				if (strstr (tx->name, "water")) {
+				if (strstr (tx->name, "water") || strstr (tx->name, "mwat")) {
 					D_DrawSolidSurface (s, (int) r_watercolor.value & 0xFF);
 				}
 				else if (strstr (tx->name, "slime")) {
