@@ -48,6 +48,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern void IN_Keycode_Print_f( XKeyEvent *ev, qboolean ext, qboolean down, int key );
 #endif // WITH_KEYMAP
 
+#ifdef WITH_EVDEV
+#include <linux/input.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <pthread.h>
+#endif
+
 static Display *dpy = NULL;
 static Window win;
 static GLXContext ctx = NULL;
@@ -60,7 +69,7 @@ static float old_windowed_mouse = 0, mouse_x, mouse_y, old_mouse_x, old_mouse_y;
 #define KEY_MASK (KeyPressMask | KeyReleaseMask)
 #define MOUSE_MASK (ButtonPressMask | ButtonReleaseMask | PointerMotionMask)
 
-#define X_MASK (KEY_MASK | MOUSE_MASK | VisibilityChangeMask)
+#define X_MASK (KEY_MASK | MOUSE_MASK | VisibilityChangeMask | StructureNotifyMask)
 
 unsigned short *currentgammaramp = NULL;
 static unsigned short systemgammaramp[3][256];
@@ -71,6 +80,15 @@ qboolean customgamma = false;
 
 static int scr_width, scr_height, scrnum;
 
+#ifdef WITH_EVDEV
+static int evdev_mouse;
+static char evdev_device[32];
+static int evdev_fd;
+static int evdev_mt;
+static pthread_t evdev_thread;
+void EvDev_UpdateMouse(void *v);
+#endif
+
 #ifdef WITH_DGA
 static int dgamouse, dgakeyb;
 #endif
@@ -80,7 +98,14 @@ static qboolean vidmode_ext = false;
 static XF86VidModeModeInfo **vidmodes;
 static int num_vidmodes;
 static qboolean vidmode_active = false;
+static double X_vrefresh_rate = 0;
+static int best_fit = 0;
+static Window minimized_window;
+XF86VidModeModeInfo newvmode;
+static int new_vidmode = 0;
 #endif
+
+static int vid_minimized = 0;
 
 cvar_t	vid_ref = {"vid_ref", "gl", CVAR_ROM};
 cvar_t	vid_mode = {"vid_mode", "0"};
@@ -89,6 +114,24 @@ cvar_t	_windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE, OnChange_windowe
 cvar_t	m_filter = {"m_filter", "0"};
 cvar_t	cl_keypad = {"cl_keypad", "1"};
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
+
+//#define SGISWAPINTERVAL
+
+const char *glx_extensions=NULL;
+
+#ifdef SGISWAPINTERVAL
+extern int glXSwapIntervalSGI (int);
+#else
+extern int glXGetVideoSyncSGI (unsigned int *);
+extern int glXWaitVideoSyncSGI (int, int, unsigned int *);
+#endif
+
+qboolean OnChange_vid_vsync(cvar_t *var, char *string);
+static qboolean update_vsync = false;
+cvar_t	vid_vsync = {"vid_vsync", "", 0, OnChange_vid_vsync};
+
+void GL_Init_GLX(void);
+void VID_Minimize_f(void);
 
 void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height) {}
 
@@ -314,6 +357,9 @@ static void GetEvent(void) {
 
 	case MotionNotify:
 		if (_windowed_mouse.value) {
+	#ifdef WITH_EVDEV
+			if (evdev_mouse) break;
+	#endif
 	#ifdef WITH_DGA
 			if (dgamouse) {
 				mouse_x += event.xmotion.x_root;
@@ -333,6 +379,9 @@ static void GetEvent(void) {
 
 	case ButtonPress:
 	case ButtonRelease:
+	#ifdef WITH_EVDEV
+		if (evdev_mouse) break;
+	#endif
 		switch (event.xbutton.button) {
 		case 1:
 			Key_Event(K_MOUSE1, event.type == ButtonPress); break;
@@ -345,6 +394,35 @@ static void GetEvent(void) {
 		case 5:
 			Key_Event(K_MWHEELDOWN, event.type == ButtonPress); break;			
 		}
+		break;
+
+	case MapNotify:
+		if (event.xmap.window == win) install_grabs();
+		if (!vidmode_active && !_windowed_mouse.value) Cvar_Set(&_windowed_mouse, "1");
+		if (!vid_minimized) break;
+		vid_minimized = 0;
+		if (!vid_hwgammacontrol.value && vid_gammaworks)
+			Cvar_Set(&vid_hwgammacontrol, "1");
+#ifdef WITH_VMODE
+		if (vidmode_active) {
+			XDestroyWindow(dpy, minimized_window);
+			XMapWindow(dpy, win);
+			if (new_vidmode)
+				XF86VidModeSwitchToMode(dpy, scrnum, &newvmode);
+			else
+				XF86VidModeSwitchToMode(dpy, scrnum, vidmodes[best_fit]);
+			XF86VidModeSetViewPort(dpy, scrnum, 0, 0);
+		}
+#endif
+		break;
+
+	case UnmapNotify:
+		if (event.xunmap.window != win) break;
+		Key_ClearStates();
+		if (vid_hwgammacontrol.value && vid_gammaworks)
+			Cvar_Set(&vid_hwgammacontrol, "0");
+		uninstall_grabs();
+		vid_minimized = 1;
 		break;
 	}
 
@@ -375,6 +453,62 @@ void InitSig(void) {
 	signal(SIGFPE, signal_handler);
 	signal(SIGSEGV, signal_handler);
 	signal(SIGTERM, signal_handler);
+}
+
+/******************************* GLX EXTENSIONS *******************************/
+
+qboolean CheckGLXExtension (const char *extension) {
+	const char *start;
+	char *where, *terminator;
+
+	if (!glx_extensions && !(glx_extensions = glXQueryExtensionsString (dpy, scrnum)))
+		return false;
+	
+	if (!extension || *extension == 0 || strchr (extension, ' '))
+		return false;
+
+	for (start = glx_extensions; where = strstr(start, extension); start = terminator) {
+		terminator = where + strlen (extension);
+		if ((where == start || *(where - 1) == ' ') && (*terminator == 0 || *terminator == ' '))
+			return true;
+	}
+	return false;
+}
+
+void CheckVsyncControlExtensions(void) {
+#ifdef SGISWAPINTERVAL
+    if (!COM_CheckParm("-noswapctrl") && CheckGLXExtension("GLX_SGI_swap_control")) {
+		Com_Printf("Vsync control extensions found\n");
+		Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
+		Cvar_Register (&vid_vsync);
+		Cvar_ResetCurrentGroup();
+    }
+#else
+    if (!COM_CheckParm("-noswapctrl") && CheckGLXExtension("GLX_SGI_video_sync")) {
+		Com_Printf("Vsync control extensions found\n");
+		Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
+		Cvar_Register (&vid_vsync);
+		Cvar_ResetCurrentGroup();
+    }
+#endif
+}
+
+qboolean OnChange_vid_vsync(cvar_t *var, char *string) {
+#ifdef SGISWAPINTERVAL
+	update_vsync = true;
+#else
+	update_vsync = atoi(string) ? true : false;
+#endif
+	return false;
+}
+
+
+void GL_Init_GLX(void) {
+	glx_extensions = glXQueryExtensionsString (dpy, scrnum);
+	if (COM_CheckParm("-gl_ext"))
+		Com_Printf("GLX_EXTENSIONS: %s\n", glx_extensions);
+
+	CheckVsyncControlExtensions();
 }
 
 /************************************* HW GAMMA *************************************/
@@ -417,7 +551,10 @@ void RestoreHWGamma (void) {
 
 /************************************* GL *************************************/
 
+static double glx_startframetime;
+
 void GL_BeginRendering (int *x, int *y, int *width, int *height) {
+	glx_startframetime = Sys_DoubleTime();
 	*x = *y = 0;
 	*width = scr_width;
 	*height = scr_height;
@@ -435,13 +572,74 @@ void GL_EndRendering (void) {
 			RestoreHWGamma ();
 	}
 
-	glFlush();
+#ifdef SGISWAPINTERVAL	
+	if (glXSwapIntervalSGI && update_vsync && vid_vsync.string[0])
+		glXSwapIntervalSGI((int)vid_vsync.value);
+	update_vsync = false;
+#else
+	unsigned int vsync_count;
+	double glx_frametime;
+
+	glx_frametime = Sys_DoubleTime();
+	if (glx_frametime-glx_startframetime < 1.0/X_vrefresh_rate)
+		if (glXGetVideoSyncSGI && glXWaitVideoSyncSGI && update_vsync && vid_vsync.string[0])
+			glXWaitVideoSyncSGI(1, 0, &vsync_count);
+#endif
+
+	if (vid_minimized) { usleep(10*1000); return; }
+
+	glFlush(); /* no need for this ??? glXSwapBuffers calls it as well */
 	glXSwapBuffers(dpy, win);
+}
+
+/************************************* VID MINIMIZE *************************************/
+
+void VID_Minimize_f(void) {
+#ifdef WITH_VMODE
+	if (vidmode_active) {
+		XSetWindowAttributes attr;
+		Window root = RootWindow(dpy, scrnum);
+		unsigned long mask;
+
+		attr.background_pixel = 0;
+		attr.border_pixel = 0;
+		attr.event_mask = X_MASK;
+		mask = CWBackPixel | CWBorderPixel | CWEventMask;
+		
+		minimized_window = XCreateWindow(dpy, root, 0, 0, 1, 1,0, CopyFromParent, InputOutput, CopyFromParent, mask, &attr);
+		XMapWindow(dpy, minimized_window);
+		XIconifyWindow(dpy, minimized_window, scrnum);
+
+		switch (cls.state) {
+		case ca_disconnected:
+			XStoreName(dpy, minimized_window, "ezQuake");
+			XSetIconName(dpy, minimized_window, "ezQuake");
+			break;
+
+		case ca_demostart:
+		case ca_connected:
+		case ca_onserver:
+		case ca_active:
+			XStoreName(dpy, minimized_window, va("ezQuake - %s", cls.servername));
+			XSetIconName(dpy, minimized_window, va("ezQuake - %s", cls.servername));
+			break;
+		}
+		
+		XUnmapWindow(dpy, win);
+		XF86VidModeSwitchToMode(dpy, scrnum, vidmodes[0]);
+	} else
+#endif
+	XIconifyWindow(dpy, win, scrnum);
 }
 
 /************************************* VID SHUTDOWN *************************************/
 
 void VID_Shutdown(void) {
+#ifdef WITH_EVDEV
+	if (evdev_mouse)
+		close(evdev_fd);
+#endif
+
 	if (!ctx)
 		return;
 
@@ -456,6 +654,8 @@ void VID_Shutdown(void) {
 			XDestroyWindow(dpy, win);
 		if (vidmode_active)
 			XF86VidModeSwitchToMode(dpy, scrnum, vidmodes[0]);
+		if (new_vidmode && vidmode_active)
+			XF86VidModeDeleteModeLine(dpy, scrnum, &newvmode);
 		XCloseDisplay(dpy);
 		vidmode_active = false;
 	}
@@ -522,6 +722,8 @@ void VID_Init(unsigned char *palette) {
 	IN_StartupKeymap();
 #endif // WITH_KEYMAP
 
+	Cmd_AddCommand("vid_minimize", VID_Minimize_f);
+
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
 	vid.colormap = host_colormap;
@@ -583,7 +785,7 @@ void VID_Init(unsigned char *palette) {
 
 #ifdef WITH_VMODE
 	if (vidmode_ext) {
-		int best_fit, best_dist, dist, x, y;
+		int best_dist, dist, x, y;
 
 		XF86VidModeGetAllModeLines(dpy, scrnum, &num_vidmodes, &vidmodes);
 		// Are we going fullscreen?  If so, let's change video mode
@@ -605,13 +807,47 @@ void VID_Init(unsigned char *palette) {
 			}
 
 			if (best_fit != -1) {
-				actualWidth = vidmodes[best_fit]->hdisplay;
-				actualHeight = vidmodes[best_fit]->vdisplay;
-				// change to the mode
-				XF86VidModeSwitchToMode(dpy, scrnum, vidmodes[best_fit]);
-				vidmode_active = true;
-				// Move the viewport to top left
-				XF86VidModeSetViewPort(dpy, scrnum, 0, 0);
+				if (( i = COM_CheckParm("-v_hz")) && i + 1 < com_argc) { // FIXME: wow... this is horrible
+					newvmode.hdisplay = vidmodes[best_fit]->hdisplay;
+					newvmode.hsyncstart = vidmodes[best_fit]->hsyncstart;
+					newvmode.hsyncend = vidmodes[best_fit]->hsyncend;
+					newvmode.htotal = vidmodes[best_fit]->htotal;
+					newvmode.hskew = vidmodes[best_fit]->hskew;
+					newvmode.vdisplay = vidmodes[best_fit]->vdisplay;
+					newvmode.vsyncstart = vidmodes[best_fit]->vsyncstart;
+					newvmode.vsyncend = vidmodes[best_fit]->vsyncend;
+					newvmode.vtotal = vidmodes[best_fit]->vtotal;
+					newvmode.flags = vidmodes[best_fit]->flags;
+					newvmode.dotclock = (unsigned int)rint((double)(Q_atoi(com_argv[i + 1]) * newvmode.htotal * newvmode.vtotal) / 1000.0);
+					newvmode.privsize = 0;
+					newvmode.private = NULL;
+					if (XF86VidModeValidateModeLine(dpy, scrnum, &newvmode) != 1)
+						Com_Printf("VID_Init: Refresh rate %d out of range\n", Q_atoi(com_argv[i + 1]));
+					else {
+						XF86VidModeAddModeLine(dpy, scrnum, &newvmode, NULL);
+						new_vidmode = 1;
+						actualWidth = newvmode.hdisplay;
+						actualHeight = newvmode.vdisplay;
+						X_vrefresh_rate = rint(((double)(newvmode.dotclock * 1000.0) / (double)(newvmode.htotal * newvmode.vtotal)));
+						Com_Printf("X_vrefresh_rate: %f\n", X_vrefresh_rate);
+						// change to the mode
+						XF86VidModeSwitchToMode(dpy, scrnum, &newvmode);
+						vidmode_active = true;
+						// Move the viewport to top left
+						XF86VidModeSetViewPort(dpy, scrnum, 0, 0);
+					}
+				}
+				if (!vidmode_active) {
+					actualWidth = vidmodes[best_fit]->hdisplay;
+					actualHeight = vidmodes[best_fit]->vdisplay;
+					X_vrefresh_rate = rint(((double)(vidmodes[best_fit]->dotclock * 1000.0) / (double)(vidmodes[best_fit]->htotal * vidmodes[best_fit]->vtotal)));
+					Com_Printf("X_vrefresh_rate: %f\n", X_vrefresh_rate);
+					// change to the mode
+					XF86VidModeSwitchToMode(dpy, scrnum, vidmodes[best_fit]);
+					vidmode_active = true;
+					// Move the viewport to top left
+					XF86VidModeSetViewPort(dpy, scrnum, 0, 0);
+				}
 			} else {
 				fullscreen = 0;
 			}
@@ -637,7 +873,10 @@ void VID_Init(unsigned char *palette) {
 
 	win = XCreateWindow(dpy, root, 0, 0, width, height,0, visinfo->depth, InputOutput, visinfo->visual, mask, &attr);
 
-    XDefineCursor(dpy, win, CreateNullCursor(dpy, win));
+	XDefineCursor(dpy, win, CreateNullCursor(dpy, win));
+
+	XStoreName(dpy, win, "ezQuake 0.31");
+	XSetIconName(dpy, win, "ezQuake 0.31");
 
 	XMapWindow(dpy, win);
 
@@ -673,6 +912,7 @@ void VID_Init(unsigned char *palette) {
 	InitSig(); // trap evil signals
 
 	GL_Init();
+	GL_Init_GLX();
 
 	Check_Gamma(palette);
 
@@ -686,11 +926,46 @@ void VID_Init(unsigned char *palette) {
 		vid_windowedmouse = false;
 
 	vid.recalc_refdef = 1;				// force a surface cache flush
+
+#ifdef WITH_EVDEV
+	if ((i = COM_CheckParm("-mevdev")) && i + 1 < com_argc)
+		{
+		strncpy(evdev_device, com_argv[i + 1], sizeof(evdev_device));
+
+		if (COM_CheckParm("-mmt")) {
+			evdev_fd = open(evdev_device, O_RDONLY);
+			if (!pthread_create(&evdev_thread, NULL, (void *)EvDev_UpdateMouse, NULL)) {
+				Com_Printf("Multithreaded mouse input enabled\n");
+				evdev_mt = 1;
+			}
+			else {
+				Com_Printf("Evdev error creating thread\n");
+				close(evdev_fd);
+				evdev_fd = open(evdev_device, O_RDONLY | O_NONBLOCK);
+				evdev_mt = 0;
+			}
+		} else
+			evdev_fd = open(evdev_device, O_RDONLY | O_NONBLOCK);
+
+		if (evdev_fd == -1)
+			{
+			Com_Printf("Evdev error: open %s failed\n", evdev_device);
+			evdev_mouse = 0;
+			return;
+			}
+
+		Com_Printf("Evdev %s enabled\n", evdev_device);
+		evdev_mouse = 1;
+		}
+#endif
 }
 
 void Sys_SendKeyEvents(void) {
 	if (dpy) {
-		while (XPending(dpy)) 
+	#ifdef WITH_EVDEV
+		if (evdev_mouse && !evdev_mt) EvDev_UpdateMouse(NULL);
+	#endif
+		while (XPending(dpy))
 			GetEvent();
 	}
 }
@@ -754,3 +1029,74 @@ void IN_MouseMove (usercmd_t *cmd) {
 void IN_Move (usercmd_t *cmd) {
 	IN_MouseMove(cmd);
 }
+
+#ifdef WITH_EVDEV
+/************************************* EVDEV *************************************/
+#define BTN_LOGITECH8 0x117
+
+void EvDev_UpdateMouse(void *v) {
+	struct input_event event;
+	int ret;
+
+	while ((ret = read(evdev_fd, &event, sizeof(struct input_event))) > 0) {
+		if (vid_minimized)
+			if (evdev_mt) { usleep(10*1000); continue; }
+			else continue;
+
+		if (ret < sizeof(struct input_event)) {
+			Com_Printf("Error reading from %s (1)\nReverting to standard mouse input\n", evdev_device);
+			close(evdev_fd);
+			evdev_mouse = 0;
+			return;
+			}
+
+		if (event.type == EV_REL) {
+			switch (event.code) {
+				case REL_X:
+					mouse_x += (signed int)event.value;
+					break;
+
+				case REL_Y:
+					mouse_y += (signed int)event.value;
+					break;
+
+				case REL_WHEEL:
+					switch ((signed int)event.value) {
+						case 1:
+							Key_Event(K_MWHEELUP, true); Key_Event(K_MWHEELUP, false); break;
+						case -1:
+							Key_Event(K_MWHEELDOWN, true); Key_Event(K_MWHEELDOWN, false); break;
+					}
+					break;
+			}
+		}
+
+		if (event.type == EV_KEY) {
+			switch (event.code) {
+				case BTN_LEFT:
+					Key_Event(K_MOUSE1, event.value); break;
+				case BTN_RIGHT:
+					Key_Event(K_MOUSE2, event.value); break;
+				case BTN_MIDDLE:
+					Key_Event(K_MOUSE3, event.value); break;
+				case BTN_SIDE:
+					Key_Event(K_MOUSE4, event.value); break;
+				case BTN_EXTRA:
+					Key_Event(K_MOUSE5, event.value); break;
+				case BTN_FORWARD:
+					Key_Event(K_MOUSE6, event.value); break;
+				case BTN_BACK:
+					Key_Event(K_MOUSE7, event.value); break;
+				case BTN_LOGITECH8:
+					Key_Event(K_MOUSE8, event.value); break;
+			}
+		}
+	}
+
+	if (ret == -1 && errno != EAGAIN) {
+		Com_Printf("Error reading from %s (2)\nReverting to standard mouse input\n", evdev_device);
+		close(evdev_fd);
+		evdev_mouse = 0;
+		}
+}
+#endif

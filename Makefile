@@ -39,7 +39,7 @@ XLDFLAGS=-lpthread -L/usr/X11R6/lib -lX11 -lXext
 SVGALDFLAGS=-lpthread -lvga
 
 #FOR GLX BUILDS
-GLCFLAGS=-DWITH_JPEG -DGLQUAKE -DWITH_DGA -DWITH_VMODE -I/usr/include -I/usr/X11R6/include
+GLCFLAGS=-DWITH_JPEG -DGLQUAKE -DWITH_DGA -DWITH_VMODE -DWITH_EVDEV -I/usr/include -I/usr/X11R6/include
 DO_GL_CC=$(CC) $(CFLAGS) $(GLCFLAGS) -o $@ -c $<
 DO_GL_AS=$(CC) $(CFLAGS) $(GLCFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
 
