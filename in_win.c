@@ -881,13 +881,25 @@ void IN_Accumulate (void) {
 	if (mouseactive) {
 		GetCursorPos (&current_pos);
 
-		mx_accum += current_pos.x - window_center_x;
-		my_accum += current_pos.y - window_center_y;
+		//Tei, cursor free while not ingame
+		if (key_dest == key_game)
+			{
+				mx_accum += current_pos.x - window_center_x;
+				my_accum += current_pos.y - window_center_y;
+			}
+		else
+			{
+				mx_accum = 0;
+				my_accum = 0;
+			}
 
 		// force the mouse to the center, so there's room to move
-		SetCursorPos (window_center_x, window_center_y);
+		if (key_dest == key_game)
+			SetCursorPos (window_center_x, window_center_y);
+		//Tei, avoid center with no-game mode
 	}
 }
+
 
 void IN_ClearStates (void) {
 	if (mouseactive)
