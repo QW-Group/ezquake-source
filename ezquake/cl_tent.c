@@ -57,6 +57,8 @@ model_t	*cl_explo_mod, *cl_bolt1_mod, *cl_bolt2_mod, *cl_bolt3_mod;
 
 sfx_t	*cl_sfx_wizhit, *cl_sfx_knighthit, *cl_sfx_tink1, *cl_sfx_ric1, *cl_sfx_ric2, *cl_sfx_ric3, *cl_sfx_r_exp3;
 
+cvar_t r_lgblood = {"r_lgbloodColor", "225"};
+
 void CL_InitTEnts (void) {
 	cl_sfx_wizhit = S_PrecacheSound ("wizard/hit.wav");
 	cl_sfx_knighthit = S_PrecacheSound ("hknight/hit.wav");
@@ -65,6 +67,10 @@ void CL_InitTEnts (void) {
 	cl_sfx_ric2 = S_PrecacheSound ("weapons/ric2.wav");
 	cl_sfx_ric3 = S_PrecacheSound ("weapons/ric3.wav");
 	cl_sfx_r_exp3 = S_PrecacheSound ("weapons/r_exp3.wav");
+	
+	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
+	Cvar_Register(&r_lgblood);
+	Cvar_ResetCurrentGroup();
 }
 
 void CL_ClearTEnts (void) {
@@ -442,11 +448,7 @@ void CL_ParseTEnt (void) {
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
-#ifdef GLQUAKE // hexum -> make GL lg blood more visible, like it is in software
-		R_RunParticleEffect (pos, vec3_origin, 73, 50);
-#else
-		R_RunParticleEffect (pos, vec3_origin, 225, 50);
-#endif
+		R_RunParticleEffect (pos, vec3_origin, r_lgblood.value, 50); // 225 default
 		break;
 
 	default:
