@@ -421,6 +421,9 @@ static void QMB_UpdateParticles(void) {
 	particle_type_t *pt;
 	particle_t *p, *kill;
 
+	if (!qmb_initialized)
+		return;
+
 	particle_count = 0;
 	grav = movevars.gravity / 800.0;
 
@@ -659,6 +662,9 @@ void QMB_DrawParticles (void) {
 	particle_type_t *pt;
 	particle_texture_t *ptex;
 	int texture, l;
+
+	if (!qmb_initialized)
+		return;
 
 	particle_time = cl.time;
 
@@ -1681,7 +1687,7 @@ void WeatherEffect(void)
 
 	if (amf_weather_rain.value)
 	{
-		for (i=0;i<=amf_weather_rain.value;i++)
+		for (i=0;i<=(int)amf_weather_rain.value;i++)
 		{
 			VectorCopy(r_refdef.vieworg, org);
 			org[0] = org[0] + (rand() % 3000) - 1500;
@@ -1709,7 +1715,7 @@ void WeatherEffect(void)
 	//Tei, lavafire on 2 or superior 
 	// this can be more better for some users than "eshaders"
 	if (tei_lavafire.value > 2)
-	for(i=0;i<tei_lavafire.value;i++)
+	for(i=0;i<(int)tei_lavafire.value;i++)
 	{
 		
 
