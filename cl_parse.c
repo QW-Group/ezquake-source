@@ -1023,10 +1023,13 @@ void CL_ParseModellist (void) {
 		}
 	}
 	//joe: load the extra flame0.mdl
-	if (++nummodels == MAX_MODELS)
-		Host_Error ("Server sent too many model precache");
-	Q_strncpyz (cl.model_name[nummodels], cl_modelnames[mi_flame0], sizeof(cl.model_name[nummodels]));
-	cl_modelindices[mi_flame0] = nummodels;
+	if (++nummodels == MAX_MODELS) {
+		Com_DPrintf ("Server sent too many model precache -> replacing flame0.mdl with flame.mdl\n");
+		cl_modelindices[mi_flame0] = cl_modelindices[mi_flame];
+	} else {
+		Q_strncpyz (cl.model_name[nummodels], cl_modelnames[mi_flame0], sizeof(cl.model_name[nummodels]));
+		cl_modelindices[mi_flame0] = nummodels;
+	}
 
 	if ((n = MSG_ReadByte())) {
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
