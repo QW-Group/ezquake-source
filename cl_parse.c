@@ -928,12 +928,13 @@ void CL_ParseStartSoundPacket(void) {
 
     if (cls.mvdplayback) {
 	    tracknum = Cam_TrackNum();
-	    if (cl.spectator && tracknum != -1 && ent == tracknum + 1)
+
+	    if (cl.spectator && tracknum != -1 && ent == tracknum + 1 && !cl_multiview.value)
 		    ent = cl.playernum + 1;
     }
 
-	
     S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
+
 	if (ent == cl.playernum+1)
 		TP_CheckPickupSound (cl.sound_name[sound_num], pos);
 }       
@@ -1895,7 +1896,7 @@ void CL_ParseServerMessage (void) {
 			break;
 
 		case svc_sound:
-			CL_ParseStartSoundPacket();
+				CL_ParseStartSoundPacket();
 			break;
 
 		case svc_stopsound:
