@@ -1373,7 +1373,7 @@ void R_Init (void) {
 	R_InitParticles ();
 
 	//VULT STUFF
-	if (qmb_initialized)
+//	if (qmb_initialized)
 		InitVXStuff();
 
 	netgraphtexture = texture_extension_number;
