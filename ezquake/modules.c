@@ -215,6 +215,8 @@ qboolean QLib_ProcessProcdef(QLIB_HANDLETYPE_T handle, qlib_dllfunction_t *procd
 }
 
 void QLib_MissingModuleError(int errortype, char *libname, char *cmdline, char *features) {
+	if (!COM_CheckParm("-showliberrors"))
+		return;
 	switch (errortype) {
 	case QLIB_ERROR_MODULE_NOT_FOUND:
 		Sys_Error(
