@@ -1353,7 +1353,7 @@ void CL_Demo_Init (void) {
 		democache_size = Q_atoi(com_argv[parm + 1]) * 1024;
 		democache_size = max(democache_size, DEMOCACHE_MINSIZE);
 		if ((democache_buffer = malloc(democache_size))) {
-			Com_Printf("Democache initialized (%.1fMB)\n", (float) (democache_size) / (1024 * 1024));
+			Com_Printf("Democache initialized (%.1f MB)\n", (float) (democache_size) / (1024 * 1024));
 			SZ_Init(&democache, democache_buffer, democache_size);
 			democache_available = true;
 		} else {
