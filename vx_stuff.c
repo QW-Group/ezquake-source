@@ -18,6 +18,7 @@ cvar_t		amf_extratrails = {"amf_extratrails", "1", CVAR_ARCHIVE};
 cvar_t		amf_detpacklights = {"amf_detpacklights", "1", CVAR_ARCHIVE};
 cvar_t		amf_buildingsparks = {"amf_buildingsparks", "1", CVAR_ARCHIVE};
 cvar_t		amf_lightning = {"amf_lightning", "1", CVAR_ARCHIVE};
+cvar_t		amf_lightning_size = {"amf_lightning_size", "15", CVAR_ARCHIVE};
 cvar_t		amf_lightning_sparks = {"amf_lightning_sparks", "1", CVAR_ARCHIVE};
 cvar_t		amf_showstats = {"amf_showstats", "0", CVAR_ARCHIVE};
 cvar_t		amf_motiontrails = {"amf_motiontrails", "1", CVAR_ARCHIVE};
@@ -306,6 +307,8 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_detpacklights);
 	Cvar_Register (&amf_buildingsparks);
 	Cvar_Register (&amf_lightning);
+	Cvar_Register (&amf_lightning_size);
+
 	Cvar_Register (&amf_lightning_sparks);
 	Cvar_Register (&amf_showstats);
 	Cvar_Register (&amf_motiontrails);
