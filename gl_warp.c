@@ -191,19 +191,31 @@ __inline static float SINTABLE_APPROX(float time) {
 	return -8 + 16 * lerp / 255.0;
 }
 
-
-void EmitFlatPoly (msurface_t *fa) {
+// START shaman FIX /gl_turbripples + /r_drawflat {
+void EmitFlatPoly (msurface_t *fa, qboolean skysurface) {
 	glpoly_t *p;
 	float *v;
 	int i;
-
+	vec3_t nv;
 	for (p = fa->polys; p; p = p->next) {
 		glBegin (GL_POLYGON);
-		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE)
+		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 			glVertex3fv (v);
+		}
+		glEnd ();
+	}
+	for (p = fa->polys; p; p = p->next) {
+		glBegin (GL_POLYGON);
+		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
+			VectorCopy(v, nv);
+			if (amf_waterripple.value && !strstr (fa->texinfo->texture->name, "tele") && !skysurface)
+				nv[2] = v[2] + (bound(0, amf_waterripple.value, 20)) *sin(v[0]*0.02+cl.time)*sin(v[1]*0.02+cl.time)*sin(v[2]*0.02+cl.time);
+			glVertex3fv (nv);
+		}
 		glEnd ();
 	}
 }
+// } END shaman FIX /gl_turbripples + /r_drawflat
 
 //Does a water warp on the pre-fragmented glpoly_t chain
 void EmitWaterPolys (msurface_t *fa) {
@@ -214,6 +226,7 @@ void EmitWaterPolys (msurface_t *fa) {
 	byte *col;
 	extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor;
 	// END shaman RFE 1022504
+	float wateralpha = cl.watervis ? bound(0, r_wateralpha.value, 1) : 1;
 
 	vec3_t nv;
 
@@ -244,7 +257,28 @@ void EmitWaterPolys (msurface_t *fa) {
 		}
 		glColor3ubv (col);
 
-		EmitFlatPoly (fa);
+ // START shaman FIX /gl_turbalpha + /r_fastturb {
+	if (wateralpha < 1.0 && wateralpha >= 0) {
+		glEnable (GL_BLEND);
+		col[3] = wateralpha*255;
+		glColor4ubv (col); // 1, 1, 1, wateralpha
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		if (wateralpha < 0.9)
+			glDepthMask (GL_FALSE);
+	}
+ // END shaman FIX /gl_turbalpha + /r_fastturb {
+
+		EmitFlatPoly (fa, false);
+
+ // START shaman FIX /gl_turbalpha + /r_fastturb {
+	if (wateralpha < 1.0 && wateralpha >= 0) {
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		glColor3ubv (color_white);
+		glDisable (GL_BLEND);
+		if (wateralpha < 0.9)
+			glDepthMask (GL_TRUE);
+	}
+ // END shaman FIX /gl_turbalpha + /r_fastturb {
 
 		glEnable (GL_TEXTURE_2D);
 		glColor3ubv (color_white);
@@ -267,7 +301,7 @@ void EmitWaterPolys (msurface_t *fa) {
 				//I got this one from the QMB engine though
 				VectorCopy(v, nv);
 				//Over 20 this setting gets pretty cheaty
-				if (amf_waterripple.value)
+				if (amf_waterripple.value && !strstr (fa->texinfo->texture->name, "tele"))
 					nv[2] = v[2] + (bound(0, amf_waterripple.value, 20)) *sin(v[0]*0.02+cl.time)*sin(v[1]*0.02+cl.time)*sin(v[2]*0.02+cl.time);
 
 				glTexCoord2f (s, t);
@@ -277,6 +311,7 @@ void EmitWaterPolys (msurface_t *fa) {
 			glEnd();
 		}
 	}
+
 	if (gl_fogenable.value)
 		glDisable(GL_FOG);
 }
@@ -378,7 +413,7 @@ void R_DrawSkyChain (void) {
 		glColor3ubv (col);
 
 		for (fa = skychain; fa; fa = fa->texturechain)
-			EmitFlatPoly (fa);
+			EmitFlatPoly (fa, true);
 
 		glEnable (GL_TEXTURE_2D);
 		glColor3ubv (color_white);
@@ -810,7 +845,7 @@ void R_DrawSkyBox (void) {
 	}
 
 	for (fa = skychain; fa; fa = fa->texturechain)
-		EmitFlatPoly (fa);
+		EmitFlatPoly (fa, true);
 
 	if (gl_fogenable.value && gl_fogsky.value) {		glDisable(GL_BLEND);
 		glEnable(GL_TEXTURE_2D);
