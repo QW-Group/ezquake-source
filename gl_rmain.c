@@ -1093,9 +1093,9 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max) {
 		if (CURRVIEW == 2)
 			glViewport (glx + x, gly + y2, w, h);
 		else if (CURRVIEW == 1 && !cl_sbar.value)
-			glViewport (glx + x + (glwidth/3)*2 + 1, gly + y2 + (glheight/3)*2, w/3, h/3);
+			glViewport (glx + x + (glwidth/3)*2 + 2, gly + y2 + (glheight/3)*2, w/3, h/3);
 		else if (CURRVIEW == 1 && cl_sbar.value)
-			glViewport (glx + x + (glwidth/3)*2 + 1, gly + y2 + (h/3)*2, w/3, h/3);
+			glViewport (glx + x + (glwidth/3)*2 + 2, gly + y2 + (h/3)*2, w/3, h/3);
 		else 
 			Com_Printf("ERROR!\n");
 		return;
