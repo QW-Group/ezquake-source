@@ -2562,6 +2562,31 @@ void ParticleFirePool (vec3_t org)
 	AddParticle(p_flame, org, 1, rand()%32, rand()%11, color, zerodir);
 }
 
+
+//TEI PARTICLES
+//Idea: slimepool fire, Result: slighty lame
+//4 - fantastic
+//11 - fantastic
+//28 - blood pool ULTRA FANTASTIC (movies?)
+void ParticleSlimeHarcore (vec3_t org) 
+{
+	col_t color={0,200,150, 240};
+	vec3_t dir={0,0,80};
+
+	AddParticle(4, org, 1, rand()%32, rand()%3, color, dir);//zerodir);
+	AddParticle(11, org, 1, rand()%128, rand()%10, color, dir);//zerodir);
+}
+
+void ParticleSlime (vec3_t org) 
+{
+	col_t color={0,200,150, 30};
+	vec3_t dir={0,0,80};
+
+	AddParticle(4, org, 1, rand()%32, rand()%3, color, dir);//zerodir);
+	AddParticle(11, org, 1, rand()%32, rand()%10, color, dir);//zerodir);
+}
+
+
 //VULT PARTICLES
 //This looks quite good with detailtrails on
 void VX_TeslaCharge (vec3_t org)
@@ -2672,7 +2697,8 @@ void VX_DetpackExplosion (vec3_t org)
 
 //TEI PARTICLES
 //Teleport dimensional implosion
-//unfinished
+//unfinished :(
+// testing cvs 
 void VX_Implosion (vec3_t org)
 {
 //TODO

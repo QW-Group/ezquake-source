@@ -67,6 +67,7 @@ cvar_t		amf_part_trailtype = {"amf_part_trailtype", "1", CVAR_ARCHIVE};
 
 //Tei amf-alike new stuff 
 cvar_t		tei_lavafire = {"tei_lavafire", "1" , CVAR_ARCHIVE};
+cvar_t		tei_slime	 = {"tei_slime", "1" , CVAR_ARCHIVE};
 
 int QW_strncmp (char *s1, char *s2)
 {
@@ -355,8 +356,9 @@ void InitVXStuff(void)
 	
 
 	//Tei amf-alike new stuff 
-	Cvar_SetCurrentGroup(CVAR_GROUP_AMF);
+	Cvar_SetCurrentGroup(CVAR_GROUP_TEIGL);
 	Cvar_Register (&tei_lavafire);
+	Cvar_Register (&tei_slime);
 	Cvar_ResetCurrentGroup();
 
 	Cmd_AddCommand ("amf_checkmodels", CheckModels_f);
