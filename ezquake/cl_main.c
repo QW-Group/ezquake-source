@@ -774,21 +774,9 @@ void CL_SaveArgv(int argc, char **argv) {
 void CL_InitCommands (void);
 
 #ifdef GLQUAKE
-void CL_Fog_f (void)
-{
-	extern cvar_t gl_fogred, gl_foggreen, gl_fogblue, gl_fogenable;
-	if (Cmd_Argc () == 1)
-	{
-		Com_Printf ("\"fog\" is \"%f %f %f\"\n", gl_fogred.value, gl_foggreen.value, gl_fogblue.value);
-		return;
-	}
-	gl_fogenable.value = 1;
-	
-	gl_fogred.value =  atof(Cmd_Argv(1));
-	gl_foggreen.value =  atof(Cmd_Argv(2));
-	gl_fogblue.value =  atof(Cmd_Argv(3));
-
-
+void CL_Fog_f (void) {	extern cvar_t gl_fogred, gl_foggreen, gl_fogblue, gl_fogenable;
+	if (Cmd_Argc () == 1) {		Com_Printf ("\"fog\" is \"%f %f %f\"\n", gl_fogred.value, gl_foggreen.value, gl_fogblue.value);		return;	}
+	gl_fogenable.value = 1;	gl_fogred.value    = atof(Cmd_Argv(1));	gl_foggreen.value  = atof(Cmd_Argv(2));	gl_fogblue.value   = atof(Cmd_Argv(3));
 }
 #endif
 

@@ -146,7 +146,9 @@ cvar_t gl_part_lavasplash = {"gl_part_lavasplash", "0"}; // 1
 cvar_t gl_part_inferno = {"gl_part_inferno", "0"}; // 1
 // END shaman :: balancing variables
 
-cvar_t  gl_fogenable		= {"gl_fogenable", "0"};
+// START shaman RFE 1032143 {
+cvar_t  gl_fogenable		= {"gl_fog", "0"};
+// END shaman RFE 1032143
 cvar_t  gl_fogstart			= {"gl_fogstart", "50.0"};
 cvar_t  gl_fogend			= {"gl_fogend", "800.0"};
 cvar_t  gl_fogred			= {"gl_fogred", "0.6"};
@@ -1328,10 +1330,12 @@ void R_Init (void) {
 	Cvar_Register (&gl_fogenable); 
 	Cvar_Register (&gl_fogstart); 
 	Cvar_Register (&gl_fogend); 
-	Cvar_Register (&gl_fogred); 
-	Cvar_Register (&gl_fogblue);
-	Cvar_Register (&gl_foggreen);
-	Cvar_Register (&gl_fogsky);
+// START shaman RFE 1032143 {
+//	Cvar_Register (&gl_fogred); 
+//	Cvar_Register (&gl_fogblue);
+//	Cvar_Register (&gl_foggreen);
+//	Cvar_Register (&gl_fogsky);
+// END shaman RFE 1032143 {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register (&r_drawentities);

@@ -914,7 +914,12 @@ void R_DrawFlat (model_t *model) {
 	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
 	
 	GL_DisableMultitexture();
-	
+
+	// START shaman BUG /fog not working with /r_drawflat {
+	if (gl_fogenable.value)
+		glEnable(GL_FOG);
+	// } END shaman BUG /fog not working with /r_drawflat
+
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
 	GL_SelectTexture(GL_TEXTURE0_ARB);
 	
@@ -949,11 +954,13 @@ void R_DrawFlat (model_t *model) {
 					glVertex3fv (v);
 				}
 				glEnd ();
+
 			}
 		}		
 	}
-	
+
 	glPopAttrib();
+
 }
 
 void R_DrawBrushModel (entity_t *e) {

@@ -1367,8 +1367,11 @@ void CL_ProcessServerInfo (void) {
 		cl.fbskins = cl.truelightning = 1;
 		fpd = 0;
 	} else if (cl.spectator) {
-		cl.watervis = !atoi(Info_ValueForKey(cl.serverinfo, "watervis")) ? 0 : 1;
-		cl.allow_lumas = true;
+		// START shaman - allow spectators to have transparent turbulence {
+		// cl.watervis = !atoi(Info_ValueForKey(cl.serverinfo, "watervis")) ? 0 : 1;
+		// cl.allow_lumas = true;
+		cl.watervis = cl.allow_lumas = true;
+		// } END shaman - allow spectators to have transparent turbulence
 		cl.fbskins = cl.truelightning = 1;
 		fpd = atoi(Info_ValueForKey(cl.serverinfo, "fpd"));	
 	} else {
