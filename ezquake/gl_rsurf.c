@@ -905,6 +905,7 @@ void R_DrawFlat (model_t *model) {
 	float *v;
 	vec3_t n;
 	byte *col, w[3], f[3];
+	qboolean draw_caustics = underwatertexture && gl_caustics.value;
 	
 	col = StringToRGB(r_wallcolor.string);
 	memcpy(w, col, 3);
@@ -954,7 +955,12 @@ void R_DrawFlat (model_t *model) {
 					glVertex3fv (v);
 				}
 				glEnd ();
-
+				// START shaman FIX /r_drawflat + /gl_caustics {
+				if (waterline && draw_caustics) {
+					s->polys->caustics_chain = caustics_polys;
+					caustics_polys = s->polys;
+				}
+				// } END shaman FIX /r_drawflat + /gl_caustics
 			}
 		}		
 	}
@@ -964,7 +970,9 @@ void R_DrawFlat (model_t *model) {
 
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glPopAttrib();
-
+ // START shaman FIX /r_drawflat + /gl_caustics {
+	EmitCausticsPolys();
+ // } END shaman FIX /r_drawflat + /gl_caustics
 }
 
 void R_DrawBrushModel (entity_t *e) {
