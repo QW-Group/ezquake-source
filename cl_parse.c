@@ -221,6 +221,7 @@ void Model_NextDownload (void) {
 	char mapname[MAX_QPATH];
 	int	i;
 
+
 	if (cls.downloadnumber == 0) {
 		Com_Printf ("Checking models...\n");
 		cls.downloadnumber = 1;
@@ -261,6 +262,16 @@ void Model_NextDownload (void) {
 	MT_NewMap();
 	Stats_NewMap();
 	Hunk_Check();		// make sure nothing is hurt
+
+#if 0
+//TEI: loading entitys from map, at clientside,
+// will be usefull to locate more eyecandy and cameras
+	if (cl.worldmodel->entities)
+	{	
+		CL_PR_LoadProgs();
+		CL_ED_LoadFromFile (cl.worldmodel->entities);
+	}
+#endif 
 
 	// done with modellist, request first of static signon messages
 	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
@@ -845,6 +856,30 @@ void CL_ParseStatic (void) {
 	
 	R_AddEfrags (ent);
 }
+
+//TEI: clientside autogen of entitys,
+// usefull for eyecandy and other stuff
+// somewhat evile
+//unfinished
+void CL_GenStatic (vec3_t origin) {
+	entity_t *ent;
+
+	if (cl.num_statics >= MAX_STATIC_ENTITIES)
+		Host_Error ("Too many static entities");
+	ent = &cl_static_entities[cl.num_statics];
+	cl.num_statics++;
+	
+
+	//TODO: load the correct model
+	//ent->model = cl.model_precache[copy->v.modelindex];	
+	ent->model = Mod_ForName("progs/flame2.mdl",false);//cl.model_precache[1];	
+
+	VectorCopy (origin, ent->origin);
+	
+
+	R_AddEfrags (ent);
+}
+
 
 void CL_ParseStaticSound (void) {
 	extern cvar_t cl_staticsounds;

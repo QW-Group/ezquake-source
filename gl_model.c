@@ -1526,6 +1526,8 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer) {
 	// some models are special
 	if(!strcmp(mod->name, "progs/player.mdl"))
 		mod->modhint = MOD_PLAYER;
+	if(!strcmp(mod->name, "fx_tele.mdl"))//Tei, special
+		mod->modhint = MOD_TELEPORTDESTINATION;
 	else if(!strcmp(mod->name, "progs/eyes.mdl"))
 		mod->modhint = MOD_EYES;
 	else if (!strcmp(mod->name, "progs/flame.mdl") ||

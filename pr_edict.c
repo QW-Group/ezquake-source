@@ -769,6 +769,107 @@ void ED_LoadFromFile (char *data) {
 	Com_DPrintf ("%i entities inhibited\n", inhibit);
 }
 
+
+
+//TEI: loading entitys from map, at clientside,
+// will be usefull to locate more eyecandy and cameras
+void CL_ED_LoadFromFile (char *data) {	
+	edict_t *ent;
+	static edict_t entstatic;
+	
+	ent = NULL;
+	
+	// parse ents
+	while (1) {
+	// parse the opening brace	
+		data = COM_Parse (data);
+		if (!data)
+			break;
+		if (com_token[0] != '{')
+			//error in eyecandy no crash
+			return;
+
+		ent = &entstatic;
+		data = ED_ParseEdict (data, ent);
+
+		if (!ent->v.classname) 
+			continue;
+		
+		// look for the spawn function
+		if (!strcmp("info_teleport_destination",PR_GetString(ent->v.classname)))
+			CL_GenStatic(ent->v.origin);
+			//Com_Printf("a light here\n");
+
+	}	
+}
+
+
+void CL_PR_LoadProgs (void) {
+	int i, lowmark;
+	char num[32];
+	dfunction_t *f;
+
+	// flush the non-C variable lookup cache
+
+	progs = (dprograms_t *) FS_LoadHunkFile ("qwprogs.dat");
+
+
+	if (!progs)
+		return;
+
+	// byte swap the header
+	for (i = 0; i < sizeof(*progs) / 4; i++)
+		((int *) progs)[i] = LittleLong ( ((int *)progs)[i] );		
+
+
+	pr_functions = (dfunction_t *) ((byte *) progs + progs->ofs_functions);
+	pr_strings = (char *) progs + progs->ofs_strings;
+	pr_globaldefs = (ddef_t *) ((byte *) progs + progs->ofs_globaldefs);
+	pr_fielddefs = (ddef_t *) ((byte *) progs + progs->ofs_fielddefs);
+	pr_statements = (dstatement_t *) ((byte *) progs + progs->ofs_statements);
+
+	num_prstr = 0;
+
+	pr_global_struct = (globalvars_t *) ((byte *) progs + progs->ofs_globals);
+	pr_globals = (float *) pr_global_struct;
+	
+	pr_edict_size = progs->entityfields * 4 + sizeof (edict_t) - sizeof(entvars_t);
+	
+	// byte swap the lumps
+	for (i = 0; i < progs->numstatements; i++) {
+		pr_statements[i].op = LittleShort(pr_statements[i].op);
+		pr_statements[i].a = LittleShort(pr_statements[i].a);
+		pr_statements[i].b = LittleShort(pr_statements[i].b);
+		pr_statements[i].c = LittleShort(pr_statements[i].c);
+	}
+
+	for (i = 0; i < progs->numfunctions; i++) {
+		pr_functions[i].first_statement = LittleLong (pr_functions[i].first_statement);
+		pr_functions[i].parm_start = LittleLong (pr_functions[i].parm_start);
+		pr_functions[i].s_name = LittleLong (pr_functions[i].s_name);
+		pr_functions[i].s_file = LittleLong (pr_functions[i].s_file);
+		pr_functions[i].numparms = LittleLong (pr_functions[i].numparms);
+		pr_functions[i].locals = LittleLong (pr_functions[i].locals);
+	}	
+
+	for (i = 0; i < progs->numglobaldefs; i++) {
+		pr_globaldefs[i].type = LittleShort (pr_globaldefs[i].type);
+		pr_globaldefs[i].ofs = LittleShort (pr_globaldefs[i].ofs);
+		pr_globaldefs[i].s_name = LittleLong (pr_globaldefs[i].s_name);
+	}
+
+	for (i = 0; i < progs->numfielddefs; i++) {
+		pr_fielddefs[i].type = LittleShort (pr_fielddefs[i].type);
+		pr_fielddefs[i].ofs = LittleShort (pr_fielddefs[i].ofs);
+		pr_fielddefs[i].s_name = LittleLong (pr_fielddefs[i].s_name);
+	}
+
+	for (i = 0; i < progs->numglobals; i++)
+		((int *) pr_globals)[i] = LittleLong (((int *) pr_globals)[i]);
+
+}
+
+
 void PR_LoadProgs (void) {
 	int i, lowmark;
 	char num[32];
