@@ -1784,16 +1784,43 @@ void SCR_DrawStatusMultiview(void) {
 		memcpy(cl.stats, cl.players[nTrack1duel].stats, sizeof(cl.stats));
 
 	// fill the void
-	if (cl_sbar.value && vid.width > 512 && cl_multiview.value==2 && cl_mvinset.value && cl_mvinsethud.value && cl_mvdisplayhud.value) {
-		Draw_Fill(vid.width/3*2+1,vid.height/3-sb_lines/3+1,vid.width/3+2, sb_lines/3-1,c2); // oppymv 300804
+	if (cl_sbar.value && cl_multiview.value==2 && cl_mvinset.value && cl_mvinsethud.value && cl_mvdisplayhud.value) {
+		if (vid.width > 512)
+			Draw_Fill(vid.width/3*2+1,vid.height/3-sb_lines/3+1,vid.width/3+2, sb_lines/3-1,c2);
+		else
+			Draw_Fill(vid.width/3*2+1,vid.height/3-sb_lines/3+1,vid.width/3+2, sb_lines/6 + 1,c2);
 	}
 
 	// hud info
 	if (cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2 
 		|| cl_mvdisplayhud.value && cl_multiview.value != 2)
 		Draw_String(xb,yb,strng);
-	else if (cl_multiview.value == 2 && cl_mvdisplayhud.value && CURRVIEW == 1 && vid.width > 512 && cl_mvinsethud.value)
-		Draw_String(xb,yb,strng);
+	else if (cl_multiview.value == 2 && cl_mvdisplayhud.value && CURRVIEW == 1 && cl_mvinsethud.value) {
+		if (vid.width > 512)
+			Draw_String(xb,yb,strng);
+		else { // <= 512 mvinset, just draw the name
+			int var, limit;
+			char namestr[16];
+
+			var = (vid.width - 320) * 0.05;
+			var--;
+			var |= (var >> 1);
+			var |= (var >> 2);
+			var |= (var >> 4);
+			var |= (var >> 8);
+			var |= (var >> 16);
+			var++;
+
+			limit = ceil(7.0/192 * vid.width + 4/3); // linearly limit length of name for 320->512 conwidth to fit in inset
+			Q_strncpyz(namestr,name,limit);
+
+			if (cl_sbar.value)
+				Draw_String(vid.width - strlen(namestr) * 8 - var - 2,yb + 1,namestr);
+			else
+				Draw_String(vid.width - strlen(namestr) * 8 - var - 2,yb + 4,namestr);
+		}
+	}
+
 
 	// weapons
 	if (cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2 
