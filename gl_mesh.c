@@ -308,6 +308,7 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 	paliashdr->posedata = (byte *)verts - (byte *)paliashdr;
 	for (i=0 ; i<paliashdr->numposes ; i++)
 		for (j=0 ; j<numorder ; j++)
+	//TODO: corrupted files may cause a crash here, sanity checks?
 			*verts++ = poseverts[i][vertexorder[j]];
 }
 

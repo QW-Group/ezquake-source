@@ -124,6 +124,18 @@ int	oldparsecountmod;
 int	parsecountmod;
 double	parsecounttime;
 
+//Tei: cl_messages
+
+//Cl_Messages data
+#define NUMMSG 70
+typedef struct messages_s {
+	int msgs[NUMMSG];
+	int size[NUMMSG];
+	int printed[NUMMSG];
+} messages_t;
+
+messages_t net;
+
 //=============================================================================
 
 int packet_latency[NET_TIMINGS];
@@ -1690,10 +1702,53 @@ void CL_ParseQizmoVoice (void) {
 
 #define SHOWNET(x) {if (cl_shownet.value == 2) Com_Printf ("%3i:%s\n", msg_readcount - 1, x);}
 
+//Tei: cl_messages
+void CL_Messages_f(void)
+{
+	int t;//,i;
+	int MAX = 64;
+
+	int big = 0;
+	int tope = 0;
+	int doit = true;
+
+	for (t=0;t<MAX;t++)
+		net.printed[t] = false;
+
+	Com_Printf("Received msgs:\n");
+
+    while(doit)
+	{
+		//get max
+
+		doit = false;
+		tope = 0;
+		for (t=0;t<MAX;t++)
+		{
+			if (!net.printed[t] && net.size[t] > tope )
+			{
+				tope = net.size[t];
+				big = t;
+				doit = true;
+			}
+		}
+
+		net.printed[big] = true;
+
+		if (net.msgs[big])
+		{
+			Com_Printf("%d:%s: %d msgs: %0.2fk\n",big,svc_strings[big],net.msgs[big],(float)(((float)(net.size[big]))/1024));
+		}
+	}
+}
+
 void CL_ParseServerMessage (void) {
 	int cmd, i, j;
 	extern int mvd_fixangle;		
 	int msg_svc_start;
+	int			oldread = 0;
+	int			oldcmd  = 0;
+
 
 	if (cl_shownet.value == 1)
 		Com_Printf ("%i ", net_message.cursize);
@@ -1725,6 +1780,10 @@ void CL_ParseServerMessage (void) {
 			SHOWNET("svc_qizmovoice")
 		else if (cmd < sizeof(svc_strings) / sizeof(svc_strings[0]))
 			SHOWNET(svc_strings[cmd]);
+
+     	//Update msg no:
+    	net.msgs[cmd] ++;
+	    oldread = msg_readcount;
 
 		// other commands
 		switch (cmd) {
@@ -1995,6 +2054,9 @@ void CL_ParseServerMessage (void) {
 			break;
 		}
 
+		//Tei: cl_messages, update size
+		net.size[cmd] += msg_readcount - oldread ;
+
 		if (cls.demorecording) {
 			if (!cls.demomessage.cursize) {
 				SZ_Init(&cls.demomessage, cls.demomessage_data, sizeof(cls.demomessage_data));
@@ -2012,6 +2074,7 @@ void CL_ParseServerMessage (void) {
 		if (cls.demomessage.cursize)
 			CL_WriteDemoMessage (&cls.demomessage);
 	}
+
 
 	CL_SetSolidEntities ();
 }

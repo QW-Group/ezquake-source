@@ -103,6 +103,10 @@ void *W_GetLumpName (char *name) {
 
 	lump = W_GetLumpinfo (name);
 
+    //Tei: safe checks    
+    if(!lump)
+      return 0;
+
 	if (!strcmp(name, "conchars")) {
 		if (CRC_Block (wad_base + lump->filepos, lump->size) == 798)
 			W_InsertOcranaLeds (wad_base + lump->filepos); 

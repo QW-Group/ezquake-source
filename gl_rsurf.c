@@ -525,6 +525,7 @@ void R_DrawWaterSurfaces (void) {
 	ESHADER(VX_TeslaCharge);
 	ESHADER(ParticleSlime);
 	ESHADER(ParticleSlimeHarcore);
+	ESHADER(ParticleBloodPool);
 
 	
 	if (!waterchain)
@@ -555,10 +556,16 @@ void R_DrawWaterSurfaces (void) {
 			case 'L':
 
 				if (tei_lavafire.value == 2)
+				{
 					EmitParticleEffect(s,ParticleFirePool);//Tei lavafire HARDCORE
+					EmitParticleEffect(s,ParticleBloodPool);//Tei redblood smoke
+				}
 				else
 				if (tei_lavafire.value == 1)
+				{
 					EmitParticleEffect(s,ParticleFire);//Tei lavafire, normal 
+					
+				}
 
 				
 
@@ -1082,7 +1089,7 @@ void R_DrawWorld (void) {
 
 	//set up texture chains for the world
 	R_RecursiveWorldNode (cl.worldmodel->nodes, 15);
-
+	
 	//draw the world sky
 	if (r_skyboxloaded)
 		R_DrawSkyBox ();

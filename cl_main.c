@@ -789,6 +789,7 @@ void CL_Fog_f (void)
 void CL_InitLocal (void) {
 	extern cvar_t baseskin, noskins;
 	char st[256]; 
+	extern void CL_Messages_f(void);//Tei, cl_messages
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CHAT);
 	Cvar_Register (&cl_parseWhiteText);
@@ -917,6 +918,8 @@ void CL_InitLocal (void) {
 	Cmd_AddMacro("connectiontype", CL_Macro_ConnectionType);
 	Cmd_AddMacro("demoplayback", CL_Macro_Demoplayback);
 	Cmd_AddMacro("matchstatus", CL_Macro_Serverstatus);
+
+	Cmd_AddCommand ("cl_messages", CL_Messages_f);//Tei, cl_messages
 }
 
 void CL_Init (void) {

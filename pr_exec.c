@@ -292,6 +292,21 @@ void PR_ExecuteProgram (func_t fnum) {
 	edict_t	*ed;
 	eval_t *ptr;
 
+//Tei: enhanced vm
+#if 0
+//TODO: this able self.think = remove(); 
+// ..test this. If work, enable.
+	if (fnum<0)
+	{
+		//Call a builtin
+		i = -fnum;
+		if (i >= pr_numbuiltins)
+			PR_RunError ("Bad builtin call number '%d'", i);
+		pr_builtins[i] ();
+		return;
+	}
+#endif
+
 	if (!fnum || fnum >= progs->numfunctions) {
 		if (pr_global_struct->self)
 			ED_Print (PROG_TO_EDICT(pr_global_struct->self));

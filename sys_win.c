@@ -187,6 +187,7 @@ void Sys_Error (char *error, ...) {
 	Host_Shutdown ();
 
 	va_start (argptr, error);
+//TODO: this sizeof is correct?
 	vsnprintf (text, sizeof(text), error, argptr);
 	va_end (argptr);
 
