@@ -1,0 +1,206 @@
+<h3>See also</h3>
+<ul>
+<li><a href="http://f.nu/ezquake/sshots/"><strong>ezQuake Screenshots</strong></a> - check some of top eyecandy features here</li> 
+<li><a href="http://fuhquake.quakeworld.nu/variables_list.php#ScreenandPowerupBlends">Screen And Powerup Blends</a> - FuhQuake</li>
+<li><a href="http://fuhquake.quakeworld.nu/variables_list.php#SoftwareRendering">Software Rendering</a> - FuhQuake</li>
+<li><a href="http://fuhquake.quakeworld.nu/variables_list.php#TextureSettings">Texture Settings</a> - FuhQuake</li>
+<li><a href="http://fuhquake.quakeworld.nu/variables_list.php#WaterandSkySettings">Water And Sky Settings</a> - FuhQuake</li>
+<li><a href="http://fuhquake.quakeworld.nu/variables_list.php#WeaponViewModelSettings">Weapon View Moded Settings</a> - FuhQuake</li>
+</ul>
+
+<h3>Status Bar</h3>
+<h4 class="cvar"><span class="name">r_damagestats</span> <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">0</span></h4>
+<div class="example-pic"><a href="pics/damagestats.jpg"><img src="pics/_th_damagestats.jpg" alt="thumbnail of screenshot where taken damage is displayed" /></a></div>
+<p>Displays the amount of damage taken recently on the screen above your armour and health.</p>
+
+<h3>Point of view</h3>
+<h4 class="cvar">cl_camera_chase <span class="pv" title="possible value range">0,1,2</span> <span class="default" title="defaut value">0</span></h4>
+<p>0 = 1<sup>st</sup> person view<br />
+1 = 3<sup>rd</sup> person view ala Tomb Raider (such a fun!)<br />
+2 = 3<sup>rd</sup> person view ala cl_chasecam 0 (buggy)<br />
+Disabled in <code>-ruleset smackdown</code></p>
+<h4 class="cvar">cl_camera_death <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<p>Camera view above your body after death.<br />Disabled in <code>-ruleset smackdown</code></p>
+
+<h3>Screen</h3>
+<p>Here you can also check <a href="http://fuhquake.quakeworld.nu/variables_list.php#ScreenSettings">FuhQuake Screen Settings</a>.</p>
+<h4 class="cvar">r_glstats <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">0</span></h4>
+<p>When enabled, it creates a window in the top right of the screen showing the number of particles and etc. in use.</p>
+<h4 class="cvar">r_tracker_frags <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<p>Everytime you make a kill or die, the number of kills/deaths/suicides with that weapon is displayed on the screen.</p>
+<h4 class="cvar">r_tracker_flags <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<p>Everytime you take, capture or drop a flag, the number of times is displayed on the screen.</p>
+<h4 class="cvar">r_tracker_streaks <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<p>Everytime a player makes a set number of consecutive kills, it will display a message showing they are on a streak, when the player is killed, it will display the name of the person who ended that streak.</p>
+<h4 class="cvar">r_tracker_messages <span class="pv" title="possible value range">0,1,X</span> <span class="default" title="defaut value">10</span>, r_tracker_time <span class="pv" title="possible value range">0-X</span> <span class="default" title="defaut value">4</span></h4>
+<p></p>
+
+<h3>Eyecandy</h3>
+<h4>FuhQuake's Eyecandy settings</h4>
+<p>ezQuake is based on FuhQuake so visit <a href="http://fuhquake.quakeworld.nu/variables_list.php#FPSandEyeCandySettings">FPS and EyeCandy Settings</a> manual section first. New variables and commands are following.</p>
+<h4 class="cmd">gl_inferno</h4>
+<p>Clientside (noone else can see it) hard-striking rocket, serves well for your entertainment.</p>
+<h4 class="cmd">gl_setmode</h4>
+<p>Quickly sets many variables to fit pre-defined scheme. Try using <code>"newtrails" or "vultwah"</code>.</p>
+<h4 class="cvar">cl_hiderockets <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">0</span></h4>
+<p>Toggles rockets visibility. Variable cl_r2g must be 0 to cl_hiderockets 1 work.</p>
+<h4 class="cvar">cl_hidenails <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">0</span></h4> 
+<p>Toggles nails visibility.</p>
+<h4 class="cvar">gl_surface_lava <span class="pv" title="possible value range">0,1,2</span> <span class="default" title="defaut value">0</span></h4>
+<div class="example-pic"><a href="pics/surface_lava.jpg"><img src="pics/_th_surface_lava.jpg" alt="thumbnail of screenshot with boiling bubbles of lava" /></a></div>
+<p>Adds boiling bubbles over the lava.</p>
+<h4 class="cvar">gl_surface_slime <span class="pv" title="possible value range">0,1,2</span> <span class="default" title="defaut value">0</span></h4>
+<div class="example-pic"><a href="pics/surface_slime.jpg"><img src="pics/_th_surface_slime.jpg" alt="thumbnail of screenshot with slime fumes" /></a></div>
+<p>Adds bubbles and fumes of slime over the slime.</p>
+<h4 class="cvar">gl_inferno_trail <span class="pv" title="possible value range">0,1,2,3,4,5</span> <span class="default" title="defaut value">2</span></h4>
+<p>Changes type of gl_inferno missile trail.</p>
+<h4 class="cvar">gl_inferno_speed <span class="pv" title="possible value range">0-X</span> <span class="default" title="defaut value">1000</span></h4>
+<p>Changes speed of gl_inferno missile trail.</p>
+<h4 class="cvar">r_rockettrail <span class="pv" title="possible value range">0-7,8,9,10,11</span> <span class="default" title="defaut value">1</span></h4>
+<p>Added new rocket trail types (8-11)</p>
+<ul>
+<li><strong>Plasma Rocket. (r_rockettrail 8)</strong><br />
+Well, its a blue fireball, you'll just have to take my word that its a plasma rocket.</li>
+<li><strong>Lavaball. (r_rockettrail 9)</strong><br />
+The lavaball looks really silly with the default rocket trail, so I made it this burning ball of death thing. You can also use it for rockets.</li>
+<li><strong>Fuel Rod Gun (from Halo! r_rockettrail 10)</strong><br />
+Any similarities between the fuel rod trail and Daikatana's ion blaster are purely coincidental.</li>
+<li><strong>Plasma Rocket Mk II (r_rockettrail 11)</strong><br />
+Its a red plasma rocket trail, but it has... things coming off it.</li>
+</ul>
+<p>Note that if you use the rocket trails, you will have to change the explosion colours and things like that yourself. And you might want to try hiding the rockets with the new amf_hiderockets cvar for some trails are	intended to be "beam" trails.</p>
+<h4 class="cvar">r_grenadetrail <span class="pv" title="possible value range">0,1,...,11</span> <span class="default" title="defaut value">3</span></h4>
+<p>Customizable grenade trails<br />
+Works the same way as r_rockettrail, but for grenades.</p>
+<h4 class="cvar">r_explosiontype <span class="pv" title="possible value range">0-7,8,9</span> <span class="default" title="defaut value">1</span></h4>
+<p>New Explosions types (8 and 9):</p>
+<ul>
+<li><strong>Fuel Rod Gun Explosion (r_explosiontype 8)</strong><br />
+This is a kind of mushroom cloud... Oh, and its green.</li>
+<li><strong>Sprite Explosion (r_explosiontype 9)</strong><br />
+Its just a 2d-type explosion for people who don't want great balls of orange fire.</li>
+</ul>
+<h4 class="cvar">r_lavacolor <span class="pv" title="possible value range">0-255 0-255 0-255</span> <span class="default" title="default value">73</span></h4>
+<p>Changes colour of lava when r_fastturb set to 1</p>
+<h4 class="cvar">r_skycolor <span class="pv" title="possible value range">0-255 0-255 0-255</span> <span class="default" title="default value">172</span></h4>
+<p>Changes colour of sky when r_fastsky set to 1</p>
+<h4 class="cvar">r_slimecolor <span class="pv" title="possible value range">0-255 0-255 0-255</span> <span class="default" title="default value">53</span></h4>
+<p>Changes colour of slime when r_fastturb set to 1</p>
+<h4 class="cvar">r_telecolor <span class="pv" title="possible value range">0-255 0-255 0-255</span> <span class="default" title="default value">26</span></h4>
+<p>Changes colour of teleport when r_fastturb set to 1</p>
+<h4 class="cvar">r_watercolor <span class="pv" title="possible value range">0-255 0-255 0-255</span> <span class="default" title="default value">36</span></h4>
+<p>Changes colour of lava when r_fastturb set to 1</p>
+
+
+<h3>Lighting</h3>
+<h4>FuhQuake's lighting settings</h4>
+<p><a href="http://fuhquake.quakeworld.nu/variables_list.php#Lighting">Can be found here</a>. New settings are following.</p>
+<h4 class="cvar">gl_coronas <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<p>Adds coronas to some effects:</p><ul><li>Explosions - Basically just a bright flash since the default explosions didn't feel powerful enough.</li>
+<li>Muzzleflashes.</li>
+<li>Lightning.</li>
+<li>Fire - Torches have glows.</li>
+<li>Rocket Lights.</li></ul>
+<h4 class="cvar">gl_coronas_tele <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">0</span></h4>
+<p>Allows you to turn on/off blue light when spawning.</p>
+<h4 class="cvar">gl_lighting_vertex <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<p>Alias models no longer have the same level of light on all sides. This may not work correctly if coloured lighting is disabled.</p>
+<h4 class="cvar">gl_lighting_colour <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<p>Alias models are effected by coloured lights around them.</p>
+
+<h3>Particles</h3>
+<p>There are many particle effects in this client so standard maximum number of particles is higher then somewhere else. You can still controll maximum number of particles with the <code>-particles</code> parameter.</p>
+<h4>FuhQuake's particles settings</h4>
+<p><a href="http://fuhquake.quakeworld.nu/variables_list.php#ParticleEffects">Can be found here</a>. New settings are following.</p>
+<h4 class="cvar">gl_particle_blood <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<ul>
+<li>0 = Turns blood particles off</li>
+<li>1 = Turns blood particles on</li>
+</ul>
+<h4 class="cvar">gl_particle_blood_color <span class="pv" title="possible value range">0,1,X</span> <span class="default" title="defaut value">1</span></h4>
+<p>Changes colour of blood.</p>
+<h4 class="cvar">gl_particle_blood_type <span class="pv" title="possible value range">1,X</span> <span class="default" title="defaut value">1</span></h4>
+<p>Chooses among types of blood particles.</p>
+<h4 class="cvar">gl_particle_muzzleflash <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<div class="example-pic"><a href="pics/particle_muzzleflash.jpg"><img src="pics/_th_particle_muzzleflash.jpg" alt="thumbnail of screenshot where taken damage is displayed" /></a></div>
+<p>Adds particle effect when firing a weapon.</p>
+<h4 class="cvar">gl_particle_fire <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<p>Replaces torches with a particle flame effect. Includes people being burnt by the pyro in TF.</p>
+<h4 class="cvar">gl_particle_deatheffect <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+
+<h4 class="cvar">gl_particle_gunshots <span class="pv" title="possible value range">0-X</span> <span class="default" title="defaut value">0</span></h4>
+<h4 class="cvar">gl_particle_gunshots_type <span class="pv" title="possible value range">1,2,3,4</span> <span class="default" title="defaut value">1</span></h4>
+<h4 class="cvar">gl_particle_spikes <span class="pv" title="possible value range">0-X</span> <span class="default" title="defaut value">0.1</span></h4>
+<h4 class="cvar">gl_particle_spikes_type <span class="pv" title="possible value range">1,2,3,4</span> <span class="default" title="defaut value">1</span></h4>
+<h4 class="cvar">gl_particle_explosions <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">0</span></h4>
+<p>Turns particle alternatives to each r_explosiontype on or off.</p>
+<h4 class="cvar">gl_particle_blobs <span class="pv" title="possible value range">0-X</span> <span class="default" title="defaut value">0.1</span></h4>
+<h4 class="cvar">gl_particle_sparks <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<p>Trails appear more beam-like and don't look stupid when they bounce.</p>
+<h4 class="cvar">gl_particle_shockwaves <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<p>0 - Turns off explosion shockwaves.<br />
+1 - Turns on explosion shockwaves.</p>
+<h4 class="cvar">gl_particle_shockwaves_flat <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">0</span></h4>
+<h4 class="cvar">gl_particle_gibtrails <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<h4 class="cvar">gl_particle_fasttrails <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">0</span></h4>
+<h4 class="cvar">gl_particle_trail_lenght <span class="pv" title="possible value range">0-X</span> <span class="default" title="defaut value">1</span></h4>
+<p>X - Multiplies the length of the trail on particle trails.</p>
+<h4 class="cvar">gl_particle_trail_time <span class="pv" title="possible value range">0-X</span> <span class="default" title="defaut value">1</span></h4>
+<p>X - Multiplies the length of time the particle bounces around for.</p>
+<h4 class="cvar">gl_particle_trail_detail <span class="pv" title="possible value range">0-X</span> <span class="default" title="defaut value">1</span></h4>
+<h4 class="cvar">gl_particle_trail_width <span class="pv" title="possible value range">0-X</span> <span class="default" title="defaut value">3</span></h4>
+<p>Changes width of trail particle e.g.: wall hitted by nail, explosion particles trail, etc.</p> 
+<h4 class="cvar">gl_particle_trail_type <span class="pv" title="possible value range">0,1,X</span> <span class="default" title="defaut value">1</span></h4>
+
+<h3>OpenGL</h3>
+<h4>FuhQuake's OpenGL settings</h4>
+<p><a href="http://fuhquake.quakeworld.nu/variables_list.php#OpenGLRendering">Can be found here</a>. New settings are following.</p>
+<h4 class="cvar">gl_weather_rain <span class="pv" title="possible value range">0,1,2,X</span> <span class="default" title="defaut value">0</span></h4>
+<div class="example-pic"><a href="pics/weatherrain.jpg"><img src="pics/_th_weatherrain.jpg" alt="thumbnail of screenshot with rainy aerowalk" /></a></div>
+<p>Turns on rain out of doors, the density of rain is equal to whatever gl_weather_rain is set to.<br />
+If you set gl_weather_rain_fast to 1, you can turn off all splashes, if you set it to 2, you will turn off only the water splashes.<br />
+Works on all non-iD maps except death32c, dakyne and some others.</p>
+<h4 class="cvar">gl_weather_rain_fast <span class="pv" title="possible value range">0,X</span> <span class="default" title="defaut value">0</span></h4>
+<p>Adjusts speed of rain.</p>
+<h4 class="cvar">gl_nailtrail <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<p>Adds a white trail onto nails as they fly around.<br />
+This feature wont work on servers not running with sv_nailhack set to 1.</p>
+<h4 class="cvar">gl_nailtrail_plasma <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">0</span></h4>
+<div class="example-pic"><a href="pics/nailtrail_plasma.jpg"><img src="pics/_th_nailtrail_plasma.jpg" alt="thumbnail of screenshot with plasma nail trails" /></a></div>
+<p>Adds plazma trail after nails.</p>
+<h4 class="cvar">gl_nailtrail_water <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">0</span></h4>
+<p>Switches between two type of bubbles nails leave behind in water.</p> 
+<h4 class="cvar">gl_extratrails <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<p>Misc trails that appear on objects that frequently move, such as TF grenades, caltrops, etc.<br />
+Railguns in TF also leave behind unique trails.</p>
+<h4 class="cvar">gl_underwater_trails <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<div class="example-pic"><a href="pics/underwater_trails.jpg"><img src="pics/_th_underwater_trails.jpg" alt="thumbnail of screenshot of underwater bubbles mady by nailgun" /></a></div>
+<p>This gives rockets/grenades/nails and other things an alternate underwater trail.<br />
+Very nice to have nailgun fights underwater...</p>
+<h4 class="cvar">gl_detpacklights <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<p>A little green light appears on the detpack, and when the timer reaches 5, the light changes to red. gl_coronas must be turned on for this to work.</p>
+<h4 class="cvar">gl_buildingsparks <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">1</span></h4>
+<p>Buildings that are destroyed in TF will continue to throw sparks until they disapear.</p>
+<h4 class="cvar">gl_lightning <span class="pv" title="possible value range">0,1,X</span> <span class="default" title="defaut value">1</span></h4>
+<p>0 - Turns off coronas on lightning beams<br />
+1 - Turns on coronas on lightning beams.</p>
+<h4 class="cvar">gl_lightning_size <span class="pv" title="possible value range">1-X</span> <span class="default" title="defaut value">3</span> </h4>
+<p>Adjusts size of ligtning particle beam.</p>
+<h4 class="cvar">gl_lightning_sparks <span class="pv" title="possible value range">0-X</span><span class="default" title="defaut value">0.4</span></h4>
+<div class="example-pic"><a href="pics/lightning_sparks.jpg"><img src="pics/_th_lightning_sparks.jpg" alt="thumbnail of screenshot where taken damage is displayed" /></a></div>
+<p>Sparks fly from walls when hit by lightning gun.</p> 
+<h4 class="cvar">gl_motiontrails <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">0</span></h4>
+<p>When enabled, flags and keys leave behind a kind of after-image.<br />
+Fiends also leave trails when they pounce.</p>
+<h4 class="cvar">gl_motiontrails_wtf <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">0</span></h4>
+<p>Same as gl_motiontrails but works for all players and creatures.</p>
+<div class="example-pic"><a href="pics/motiontrails_wtf.jpg"><img src="pics/_th_motiontrails_wtf.jpg" alt="thumbnail of screenshot motion-trailed creature" /></a></div>
+
+<h4 class="cvar">gl_waterripple <span class="pv" title="possible value range">0-X</span> <span class="default" title="defaut value">0</span></h4>
+<p>Put your life vests on, waves are coming!</p>
+<h4 class="cvar">gl_cutf_tesla_effect <span class="pv" title="possible value range">0,1</span> <span class="default" title="defaut value">0</span></h4>
+<p>When a shambler is preparing to throw lightning, or a tesla coil (TF) is charging to fire, a particle effect is generated.</p>
+
+<h3>Miscellaneous</h3>
+<h4 class="cmd">gl_checkmodels</h4>
+<p>Not well implemented yet. Quickly looks at the pmodel and emodel listed in every player's infokey and reports anything unusual it finds. Basically it saves you having to type "users. user x" and then comparing the models for everyone.</p>

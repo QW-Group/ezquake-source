@@ -1,0 +1,34 @@
+<dl>
+<dt>Installation</dt>
+<dd><ul><li><a href="?install">Installation readme</a></li></ul></dd> 
+<dt>Settings</dt>
+<dd>
+  <?php include("docs/Settings.html"); ?>
+  <ul>
+	<li><a href="?graphics">Graphics</a> - graphical settings based on FuhQuake's manual + full description of new AMFQuake + TEI commands/variables.</li>
+  <li><a href="?keymap">Keymap</a> - this feature allows you to use non-US keyboard layout</li>
+	<li><a href="?server-browser">Server Browser</a> - improved MQWCL's Server Browser, most missing feature in FuhQuake.</li>
+	<li><a href="?commands">Available commands</a> - all 240 commands documented here</li>
+	</ul>
+</dd>
+<dt>Miscellaneous</dt>
+<dd>
+  <ul>
+	<li><a href="?changelog">Changelog / Feature list</a> - what's new and cool in this client</li>
+	<li><a href="?fpd">FPD Calculator</a></li>
+	<li><a href="?fuhq-changes">Changes since FuhQuake 0.31</a> - list of added and removed variables and commands</li> 
+	<li><a href="?credits">Credits</a> - presenting the ezQuake team</li>
+	<li><a href="?gnu-gpl">GNU/GPL</a> - GNU General Public License</li>
+  </ul>
+</dd>
+</dl>
+
+<?php
+
+  while($a = each($sct)) {
+	  $a = $a['value'];
+	  $b = filemtime("docs/".$a['inc']); 
+	  if ($b > $maxfilectime) $maxfilectime = $b;
+	}
+
+?>

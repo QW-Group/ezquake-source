@@ -1,0 +1,90 @@
+<?php
+
+  $FPD_SOURCE = "data/fpd.txt";
+	$fpdTranslation = file($FPD_SOURCE);
+	// now we have array $fpdTranslation where key = line number, value = description
+	// so each line equals one FPD rule
+	
+  // number of rules (used within for(...) cycles)
+  $MAX_FPD = count($fpdTranslation);
+	
+	// value from "Translate FPD" form
+  $fpdnumber = hexdec($_POST["fpdnumber"]);
+	
+	// values from "Check whether FPD matches..." form
+	$fpdrequired = hexdec($_POST["fpdrequired"]);
+	$fpdusers = hexdec($_POST["fpdusers"]);
+	
+	function checkFpdIsOn ($fpd,$bit) {
+	// checks whether given FPD rule is on/off within given FPD number
+	  for($i=0;$i<=$bit;$i++) $fpd = (int) $fpd / 2;
+		return (($fpd % 2)==1);
+	}
+	
+  if ($_POST["calc"]==1) 
+	{
+	  $cFPD = 0;
+    for($i=0;$i<=$MAX_FPD;$i++) 
+			if($_POST["f".$i]=="on") $cFPD += pow(2,$i);
+    echo("<h2>Your FPD is <strong><code>".dechex($cFPD)."</code></strong></h2>");
+	} 
+ 	elseif ($_POST["check"]==1) 
+	{
+    $missing = "";
+  	for($i=0;$i<=$MAX_FPD;$i++) 
+		  if (checkFpdIsOn($fpdrequired,$i-1) && !checkFpdIsOn($fpdusers,$i-1)) $missing .= "<li>".($i+1).". ".($fpdTranslation[$i])."</li>";
+		if ($missing!="") 
+		{
+		  echo("<p>You <strong>do not</strong> fulfill FPD <code>".dechex($fpdrequired)."</code> requirements. You need to add followings:</p><ul>");
+			echo($missing);
+		  echo("</ul>");
+		} else 
+		  echo("<p>Your FPD <code>".dechex($fpdusers)."</code> completely fulfills required FPD <code>".dechex($fpdrequired)."</code></p>");			 
+	}
+	elseif ($_POST["translate"]==1)
+	{
+	  echo("<p>FPD <code>".dechex($fpdnumber)."</code> is:</p>");
+	  echo("<ul>");
+	  for($i=0;$i<=$MAX_FPD;$i++)
+		  if(checkFpdIsOn($fpdnumber,$i-1)) echo("<li>".$fpdTranslation[$i]."</li>");
+    echo("</ul>");
+	}
+	
+?>
+
+<p>This tool serves for testing purposes only. See <a href="ftp://f.nu/ezquake/fpd.txt">detailed description of this idea</a>, <a href="http://www.planetfortress.com/anticheat/cool/Proxies/NFproxy/nfproxy_fpd.htm">NFProxy FPD</a> and <a href="http://www.udpsoft.com/qizmo/info.html">Qizmo FPD</a>. Feel free to send more FPD suggestions to <a href="irc://irc.quakenet.org/ezQuake">#ezQuake</a>.</p>   
+
+<form action="?fpd" method="post">
+<fieldset>
+  <legend>Calculate Your FPD</legend>
+  <input type="hidden" name="calc" value="1"/>
+	<?php
+	  foreach($fpdTranslation as $n => $title) {
+		  echo('<label><input type="checkbox" name="f'.$n.'" />'.($n+1).'. '.$title.'</label><br />');
+		}
+	?>
+</fieldset>
+<div><button type="submit">Calculate FPD</button></div>
+</form>
+
+<form action="?fpd" method="post">
+<fieldset>
+  <legend>Translate FPD</legend>
+  <input type="hidden" name="translate" value="1" />
+  <label>Type in FPD number:
+  <input type="text" name="fpdnumber" value="<?=dechex($fpdnumber)?>" size="12" maxlength="15" /></label><br />
+</fieldset>
+<div><button type="submit">Translate FPD</button></div>
+</form>
+
+<form action="?fpd" method="post">
+<fieldset>
+  <legend>Check whether your FPD matches required FPD</legend>
+  <input type="hidden" name="check" value="1" />
+  <label>Required FPD:
+  <input type="text" name="fpdrequired" value="<?=dechex($fpdrequired)?>" size="12" maxlength="15" /></label><br />
+	<label>Your FPD:
+  <input type="text" name="fpdusers" value="<?=dechex($fpdusers)?>" size="12" maxlength="15" /></label>
+</fieldset>
+<div><button type="submit">Check validity</button></div>
+</form>

@@ -1,0 +1,3148 @@
+<?xml version="1.0"?>
+<vars>
+<item>
+<name>auth_viewcrc</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>FuhQuake hides the authentication crc in f_version responses.</dsc></value>
+<value><val>1</val><dsc>FuhQuake show you the authentication crc in f_version responses.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_floodprot</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable floodprot.</dsc></value>
+<value><val>1</val><dsc>Enable floodprot.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_fp_messages</name><range>0..10</range>
+<desc>
+This variable is used in conjunction with the variable "cl_fp_persecond" to
+define when the floodprot protection should be triggered (if "cl_floodprot"
+is set to "1").
+</desc>
+</item>
+<item>
+<name>cl_fp_persecond</name><range>0..10</range>
+<desc>
+This variable is used in conjunction with the variable "cl_fp_messages" to
+define when the floodprot protection should be triggered (if "cl_floodprot"
+is set to "1").
+</desc>
+</item>
+<item>
+<name>cl_nofake</name><range>0/1/2</range>
+<desc>
+<value><val>0</val><dsc>No unfaking.</dsc></value>
+<value><val>1</val><dsc>Unfake other players messages.</dsc></value>
+<value><val>2</val><dsc>Unfake messages from enemies.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_parseFunChars</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>You can use Ocrana LED's by hand right out of the console and chat anonymously through "$\" without showing your name (chat messages that are seen without your name at the beginning).</dsc></value>
+Full list:
+$R - red lamp
+$G - green lamp
+$B - blue lamp
+$Y - yellow lamp
+$\ - carridge return
+$( - big left bracket
+$= - big equal sign
+$) - big right bracket
+$. - red middle dot
+$, - white dot (names only)
+$&lt; - small left bracket
+$- - small equal sign
+$&gt; - small right bracket
+$a - big grey block
+$: - line feed
+$b - filled red block
+$d - right pointing red arrow
+$[ - gold left square bracket
+$] - gold right square bracket
+$^ - white ^ (names only)
+^x - red x (names only)
+$0-9 - yellow number
+$xyy - char with hex code yy
+(In order to use the lamps, you'll need the Ocrana pak).
+</desc>
+</item>
+<item>
+<name>cl_parseSay</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable %-macros (%a %h %b etc...)</dsc></value>
+<value><val>1</val><dsc>You can use macros such as %a %h %l (like in Qizmo).</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_parseWhiteText</name><range>1</range>
+<desc>
+Convert text between { and } to white or not in chat/team chat.
+<value><val>0</val><dsc>Convert none.</dsc></value>
+<value><val>1</val><dsc>Convert all (chat and team chat).</dsc></value>
+<value><val>2</val><dsc>Convert team chat only.</dsc></value>
+</desc>
+</item>
+<item>
+<name>ignore_flood</name><range>0/1/2</range>
+<desc>
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>Ignores repeated 'say' and spectator messages.</dsc></value>
+<value><val>2</val><dsc>Ignores repeated 'say', 'say_team' and spectator messages.</dsc></value>
+</desc>
+</item>
+<item>
+<name>ignore_flood_duration</name>
+<desc>
+You can change the 4 second cooldown with the 'ignore_flood_duration' variable.
+</desc>
+</item>
+<item>
+<name>ignore_mode</name><range>0/1</range>
+<desc>
+Someone is on your ignore list, you won't see any mm1 messages from them 
+(even if they are a spec).
+<value><val>0</val><dsc>Ignore say only.</dsc></value>
+<value><val>1</val><dsc>Ignore say_team too.</dsc></value>
+</desc>
+</item>
+<item>
+<name>ignore_opponents</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Not ignore opponent team.</dsc></value>
+<value><val>1</val><dsc>Ignore opponent team.</dsc></value>
+</desc>
+</item>
+<item>
+<name>ignore_spec</name><range>0/1/2</range>
+<desc>
+<value><val>0</val><dsc>Off</dsc></value>
+<value><val>1</val><dsc>Ignore spec chat unless you are a spectator.</dsc></value>
+<value><val>2</val><dsc>Ignore spec chat even if you are a spectator.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cfg_backup</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>No backup of your config.</dsc></value>
+<value><val>1</val><dsc>Backs up your old config before overwriting it with cfg_save.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cfg_legacy_exec</name><range>0/1/2/3</range>
+<desc>
+<value><val>0</val><dsc>Do not execute config.cfg and frontend.cfg in gamedir ever.</dsc></value>
+<value><val>1</val><dsc>Execute config.cfg and frontend.cfg in gamedir (unless gamedir = qw) like </dsc></value>qw 2.33.
+<value><val>2</val><dsc>Execute config.cfg and frontend.cfg even if gamedir = qw.</dsc></value>
+<value><val>3</val><dsc>Execute config.cfg and frontend.cfg even if gamedir = qw.  </dsc></value>
+If there is no config.cfg or frontend.cfg in gamedir, and gamedir != qw then try executing 
+config.cfg and frontend.cfg in qw.
+</desc>
+</item>
+<item>
+<name>cfg_legacy_write</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Will not write config.cfg.</dsc></value>
+<value><val>1</val><dsc>Will write a small config.cfg to your gamedir when quitting just like qw </dsc></value>2.33.
+</desc>
+</item>
+<item>
+<name>cfg_save_aliases</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Won't save aliases.</dsc></value>
+<value><val>1</val><dsc>cfg_save saves aliases.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cfg_save_binds</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Won't save binds.</dsc></value>
+<value><val>1</val><dsc>Toggles whether cfg_save saves binds.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cfg_save_cmdline</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Won't save command line.</dsc></value>
+<value><val>1</val><dsc>Writes your command line in configs made with cfg_save (commented out of </dsc></value>course).
+</desc>
+</item>
+<item>
+<name>cfg_save_cmds</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Won't save commands.</dsc></value>
+<value><val>1</val><dsc>Saves commands.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cfg_save_cvars</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Won't save variables.</dsc></value>
+<value><val>1</val><dsc>Saves variables.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cfg_save_sysinfo</name><range>0/1</range>
+<desc>
+Not implemented yet.
+</desc>
+</item>
+<item>
+<name>cfg_save_unchanged</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Makes cfg_save only write variables that are not default valued to the </dsc></value>config file.
+<value><val>1</val><dsc>Makes cfg_save write all variables to the config file.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cfg_save_userinfo</name><range>0/1/2</range>
+<desc>
+<value><val>0</val><dsc>Makes cfg_save not save userinfo variables.</dsc></value>
+<value><val>1</val><dsc>Makes cfg_save save all userinfo variables except spectator/name/topcolor/bottomcolor/skin/team .</dsc></value>
+<value><val>2</val><dsc>Makes cfg_save save all userinfo variables like name/team/teamcolor/rate/msg/skin/w_switch/b_switch/... .</dsc></value>
+Note :'cfg_save_userinfo 1' is best for teamfortress so you don't get kicked for changing bottom color.
+Note : cfg_save will never save the password variable, even though technically it is a userinfo variable.
+</desc>
+</item>
+<item>
+<name>cl_chatmode</name><range>0/1/2</range>
+<desc>
+Console chat mode.
+<value><val>0</val><dsc>Text in the console is always treated as a command and in order to chat you have to use messagemode/messagemode2 or use the say/say_team commands.</dsc></value>
+<value><val>1</val><dsc>Everything you type in the console goes into chat, in order to issue a command, prefix it with a slash (/).</dsc></value>
+<value><val>2</val><dsc>If the first word in the line is a command, it is executed, otherwise the line is sent as chat.</dsc></value>
+</desc>
+</item>
+<item>
+<name>con_clearnotify</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Messages stay even when you toggle console.</dsc></value>
+<value><val>1</val><dsc>Messages won't say when you toggle console.</dsc></value>
+</desc>
+</item>
+<item>
+<name>con_notifylines</name><range>0..20</range>
+<desc>
+This variable sets the number of notify lines (default 4, max 20) to be used at the top of the screen.
+<value><val>0</val><dsc>Use no notify lines at all.</dsc></value>
+<value><val>1</val><dsc>Use one notify line.</dsc></value>
+...
+<value><val>20</val><dsc>Use 20 notify lines.</dsc></value>
+</desc>
+</item>
+<item>
+<name>con_notifytime</name>
+<desc>
+How long console messages stay on screen.
+</desc>
+</item>
+<item>
+<name>con_wordwrap</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable word wrapping.</dsc></value>
+<value><val>1</val><dsc>Enable word wrapping.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cvar_viewdefault</name><range>0/1</range>
+<desc>
+When you type a cvar name into console (like 'gl_gamma' or 'r_rocketlight'), FuhQuake will tell you the default value of the cvar.
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>On.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_consolefont</name><range>filename</range>
+<desc>
+In older versions of FuhQuake (v0.30 and lower), FuhQuake looked for an image called charset.png (or .tga) and if it found it then that was made to be your console font. 
+Starting from FuhQuake v0.31, you can change your console font from within FuhQuake. 
+Put all your charset images in qw/textures/charsets/*.png (and *.tga) and use /gl_loadcharset XXX to load XXX.png (or tga). "/gl_consolefont original" will restore the 8bit font in your gfx.wad (this is default).
+Note: Loadcharset is shortcut for gl_consolefont.
+</desc>
+</item>
+<item>
+<name>gl_smoothfont</name><range>0/1</range>
+<desc>
+Smoothens out the font (which = good). But in some cases the font wasn't designed to be smoothened (sometimes the case of custom console fonts etc).
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>On.</dsc></value>
+</desc>
+</item>
+<item>
+<name>log_dir</name>
+<desc>
+The logging dir.
+</desc>
+</item>
+<item>
+<name>log_readable</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>Will convert all non printable characters to printable characters in your log. This makes your log readable because all the weird ascii characters that usually occur because of different coloured text in FuhQuake (and because of weird symbols - ocrana led's etc) are converted into printable characters.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_conalpha</name><range>0..1</range>
+<desc>
+<value><val>0</val><dsc>Transparent.</dsc></value>
+<value><val>1</val><dsc>Normal.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_consize</name><range>0..1</range>
+<desc>
+<value><val>0</val><dsc>Minimal console height.</dsc></value>
+<value><val>1</val><dsc>Maximum console height.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_conspeed</name><range>0..9999</range>
+<desc>
+This variable controls the speed at which the console screen scrolls up and down.
+</desc>
+</item>
+<item>
+<name>scr_printspeed</name>
+<desc>
+This variable controls how fast the text is displayed at the end of the single 
+player episodes.
+</desc>
+</item>
+<item>
+<name>cl_crossx</name>
+<desc>
+This variable allows you to move the position of the crosshair on the X-axis
+by the specified amount of pixels.
+</desc>
+</item>
+<item>
+<name>cl_crossy</name>
+<desc>
+This variable allows you to move the position of the crosshair on the Y-axis
+by the specified amount of pixels.
+</desc>
+</item>
+<item>
+<name>crosshair</name><range>0/1/2/3/4/5/6/7</range>
+<desc>
+<value><val>0</val><dsc>Crosshair off.</dsc></value>
+<value><val>1</val><dsc>Conchar crosshair (messagemode1 +).</dsc></value>
+<value><val>2</val><dsc>Quakeworld crosshair.</dsc></value>
+<value><val>3</val><dsc>A small cross crosshair.</dsc></value>
+<value><val>4</val><dsc>A dot crosshair.</dsc></value>
+<value><val>5</val><dsc>Star wars crosshair *gl only*.</dsc></value>
+<value><val>6</val><dsc>Happyface crosshair *gl only*.</dsc></value>
+<value><val>7</val><dsc>F22 simulator crosshair *gl only*.</dsc></value>
+</desc>
+</item>
+<item>
+<name>crosshairalpha</name><range>0..1</range>
+<desc>
+This command regulates crosshair transparency, you can use any value from "0" 
+to "1".
+<value><val>0</val><dsc>Transparent crosshair.</dsc></value>
+<value><val>1</val><dsc>Opaque crosshair.</dsc></value>
+</desc>
+</item>
+<item>
+<name>crosshaircolor</name><range>0..255</range>
+<desc>
+This variable defines the color of the crosshair.
+</desc>
+</item>
+<item>
+<name>crosshairimage</name>
+<desc>
+To load the crosshair in FuhQuake use "crosshairimage image_name" where
+'image_name' is the name of the crosshair image you put in the above directory.
+Example, if I have c:\quake\fuhquake\crosshairs\cross.png I'd use
+"crosshairimage cross" to load it.
+</desc>
+</item>
+<item>
+<name>crosshairsize</name>
+<desc>
+Basically crosshairsize scales the size of the crosshair. 
+Example:
+crosshairsize 0.5 halves the size and crosshair 2 doubles it.
+</desc>
+</item>
+<item>
+<name>cl_demopinginterval</name>
+<desc>
+How often to request ping updates when recording demos. This variable doesn't 
+affect ping updates when the scoreboard is shown (they are always one update per 2 seconds).
+<value><val>0</val><dsc>Disable automatic ping requests.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_demospeed</name>
+<desc>
+Controls the speed of demo playback in percentage (can be changed during demo playback if you wish).
+</desc>
+</item>
+<item>
+<name>demo_capture_dir</name>
+<desc>
+Change the default capture directory.
+</desc>
+</item>
+<item>
+<name>demo_capture_fps</name>
+<desc>
+Change the default capture fps.
+</desc>
+</item>
+<item>
+<name>demo_capture_steadycam</name>
+<desc>
+Changes behaviour of keyboard/mouse input when capturing.
+</desc>
+</item>
+<item>
+<name>demo_dir</name>
+<desc>
+Change the demos and autorecord directory.
+</desc>
+</item>
+<item>
+<name>qizmo_dir</name>
+<desc>
+Change the default qizmo directory.
+</desc>
+</item>
+<item>
+<name>cl_deadbodyFilter</name><range>0/1/2</range>
+<desc>
+<value><val>0</val><dsc>Don't filter dead bodies.</dsc></value>
+<value><val>1</val><dsc>Filter dead bodies.</dsc></value>
+<value><val>2</val><dsc>Filter dead bodies instant.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_gibFilter</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Gibs on.</dsc></value>
+<value><val>1</val><dsc>Gibs are turned off.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_maxfps</name>
+<desc>
+This variable sets the maximum limit for frames-per-second.
+</desc>
+</item>
+<item>
+<name>cl_model_bobbing</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>Rotating models bob up and down like in Quake3.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_muzzleflash</name><range>0/1/2</range>
+<desc>
+<value><val>0</val><dsc>All turned off.</dsc></value>
+<value><val>1</val><dsc>All turned on.</dsc></value>
+<value><val>2</val><dsc>Own's flash off, all other on.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_r2g</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Normal rockets models.</dsc></value>
+<value><val>1</val><dsc>Converts all rockets to grenades.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_trueLightning</name><range>0..1</range>
+<desc>
+Smoothes out shaft movement, 0 means no smoothing at all, 1 - 100% smoothing;
+a value of about 0.5 is recommended for modem players.
+</desc>
+</item>
+<item>
+<name>gl_caustics</name><range>0/1</range>
+<desc>
+The underwater waves (multi-texturing is required for this variable)
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>On.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_detail</name><range>0/1</range>
+<desc>
+Turns on/off fine detailed textures.
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>On (Looks awesome, but you will take a giant FPS hit if you don't have a good video card).</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_drawentities</name><range>0/1</range>
+<desc>
+This variable can be used to disable that any object entities are drawn. This 
+command is useful to map authors who wish to take a look at their map without 
+drawing any objects such as lifts, buttons, platforms or items.
+<value><val>0</val><dsc>Display no entities.</dsc></value>
+<value><val>1</val><dsc>Display all entities.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_drawflame</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Display no flames.</dsc></value>
+<value><val>1</val><dsc>Display all flames.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_explosionlight</name><range>0..1</range>
+<desc>
+<value><val>0</val><dsc>No explosion light.</dsc></value>
+<value><val>0.5</val><dsc>50% explosion light.</dsc></value>
+<value><val>1</val><dsc>100% explosion light.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_explosionLightColor</name><range>0/1/2/3/4/5/6</range>
+<desc>
+Determines the colour of the explosion light.
+<value><val>0</val><dsc>Normal</dsc></value>
+<value><val>1</val><dsc>Red</dsc></value>
+<value><val>2</val><dsc>Blue</dsc></value>
+<value><val>3</val><dsc>Purple</dsc></value>
+<value><val>4</val><dsc>Green</dsc></value>
+<value><val>5</val><dsc>White</dsc></value>
+<value><val>6</val><dsc>Random</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_explosionType</name><range>0/1/2/3/4/5/6/7</range>
+<desc>
+<value><val>0</val><dsc>Fire + sparks</dsc></value>
+<value><val>1</val><dsc>Fire only</dsc></value>
+<value><val>2</val><dsc>Teleport</dsc></value>
+<value><val>3</val><dsc>Blood</dsc></value>
+<value><val>4</val><dsc>Big blood</dsc></value>
+<value><val>5</val><dsc>Double gunshot</dsc></value>
+<value><val>6</val><dsc>Blob effect</dsc></value>
+<value><val>7</val><dsc>Big explosion</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_flagColor</name><range>0/1/2/3/4/5</range>
+<desc>
+<value><val>0</val><dsc>Normal</dsc></value>
+<value><val>1</val><dsc>Red</dsc></value>
+<value><val>2</val><dsc>Blue</dsc></value>
+<value><val>3</val><dsc>Purple</dsc></value>
+<value><val>4</val><dsc>Green</dsc></value>
+<value><val>5</val><dsc>White</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_grenadeTrail</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Hides grenade trail.</dsc></value>
+<value><val>1</val><dsc>Shows grenade trail.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_lerpframes</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable smoothing.</dsc></value>
+<value><val>1</val><dsc>Enable smoothing (watch people moving in mvd demos with cl_demospeed 0.1).</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_lerpmuzzlehack</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>No fix for interpolated muzzle flashes.</dsc></value>
+<value><val>1</val><dsc>Fix for interpolated muzzle flashes.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_lightflicker</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable rocket/explosion/flag/powerup light flickering.</dsc></value>
+<value><val>1</val><dsc>Enable rocket/explosion/flag/powerup light flickering.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_powerupGlow</name><range>0/1/2</range>
+<desc>
+<value><val>0</val><dsc>Powerup glow is turned off on all players.</dsc></value>
+<value><val>1</val><dsc>Powerup glow on.</dsc></value>
+<value><val>2</val><dsc>Disables the powerup glow from yourself only.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_rocketLight</name><range>0..1</range>
+<desc>
+<value><val>0</val><dsc>Turn off dynamic lighting of rockets.</dsc></value>
+<value><val>1</val><dsc>Turn on dynamic lighting of rockets.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_rocketLightColor</name><range>0/1/2/3/4/5</range>
+<desc>
+Determines the colour of the rocket light.
+<value><val>0</val><dsc>Normal</dsc></value>
+<value><val>1</val><dsc>Red</dsc></value>
+<value><val>2</val><dsc>Blue</dsc></value>
+<value><val>3</val><dsc>Purple</dsc></value>
+<value><val>4</val><dsc>Green</dsc></value>
+<value><val>5</val><dsc>White</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_rocketTrail</name><range>0/1/2/3/4/5/6/7/8/9</range>
+<desc>
+<value><val>0</val><dsc>No rocket trail</dsc></value>
+<value><val>1</val><dsc>Normal</dsc></value>
+<value><val>2</val><dsc>Grenade trail</dsc></value>
+<value><val>3</val><dsc>Alt normal trail</dsc></value>
+<value><val>4</val><dsc>Slight blood trail</dsc></value>
+<value><val>5</val><dsc>Big blood trail</dsc></value>
+<value><val>6</val><dsc>Tracer1 trail</dsc></value>
+<value><val>7</val><dsc>Tracer2 trail</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_anglespeedkey</name>
+<desc>
+This variable sets multiplier by which your "cl_yawspeed" (how fast you turn) is
+multiplied when running (+speed).
+</desc>
+</item>
+<item>
+<name>cl_backspeed</name>
+<desc>
+This allows you to set your backward speed. Obviously this is also limited by
+the server, usually to "320".
+</desc>
+</item>
+<item>
+<name>cl_forwardspeed</name>
+<desc>
+This allows you to set your forward speed. Obviously this is also limited by the
+server, usually to "320".
+</desc>
+</item>
+<item>
+<name>cl_keypad</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>QW compatibility where the keypad keys act the same key name, eg KP_8 acts like uparrow would.</dsc></value>
+<value><val>1</val><dsc>You will be able to bind such keys as capslock, numlock, and all numpad keys.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_movespeedkey</name>
+<desc>
+This variable is the multiplier for how fast you move when running (+speed) in
+relation to when walking (-speed).
+</desc>
+</item>
+<item>
+<name>cl_pitchspeed</name>
+<desc>
+This variable determines how fast you you turn up/down when using "+lookup" and
+"+lookdown".
+</desc>
+</item>
+<item>
+<name>cl_sidespeed</name>
+<desc>
+This allows you to set your strafe speed. Obviously this is also limited by the
+server, usually to "320".
+</desc>
+</item>
+<item>
+<name>cl_smartjump</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>Will convert +jump commands to +moveup commands when underwater.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_upspeed</name>
+<desc>
+This allows you to set the speed with which you move up and down in liquids or in spectator mode.
+Obviously this is also limited by the server, usually to 320*0.7 = 224 when underwater and to 500 in spectator mode.
+</desc>
+</item>
+<item>
+<name>cl_yawspeed</name>
+<desc>
+This variable defines how quickly you turn left (+left) or right (+right).
+</desc>
+</item>
+<item>
+<name>freelook</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Both -mlook and freelook 0 must be specified to disable free look mode.</dsc></value>
+<value><val>1</val><dsc>Enables free look mode, that is, moving the mouse forward and back moves your view </dsc></value>
+direction up or down.
+</desc>
+</item>
+<item>
+<name>lookspring</name><range>0/1</range>
+<desc>
+This variable toggles the centering of the screen after the -klook command.
+<value><val>0</val><dsc>Disable automatic force_centerview.</dsc></value>
+<value><val>1</val><dsc>Enable automatic force_centerview.</dsc></value>
+</desc>
+</item>
+<item>
+<name>lookstrafe</name><range>0/1</range>
+<desc>
+This variable toggles the automatic strafing when the +klook command is used.
+When set to "1" and the player used the +klook command, the keys that are bound 
+to the +left and +right commands will now act as if they were bound to +moveleft 
+and +moveright. This command was put it in order to allow keyboard player to 
+combine the +strafe and +klook commands into one.
+This command also has effect on the mouse controls. When set to "1" moving the 
+mouse left and right will make the player move left and right instead of making 
+him turn left and right.
+</desc>
+</item>
+<item>
+<name>sensitivity</name>
+<desc>
+This variable sets the sensitivity of the mouse, it is one of the most important 
+variables in the whole game.
+</desc>
+</item>
+<item>
+<name>m_accel</name><range>0..1</range>
+<desc>
+Sets mouse acceleration like in q3.
+</desc>
+</item>
+<item>
+<name>m_filter</name><range>0/1</range>
+<desc>
+This variable toggles mouse input filtering. When set to "1", the values which
+are received from the mouse's input will first be averaged together and then 
+that value will be used in the game. 
+The reason for this command is that some mice had problems with sending sporadic
+coordinates which make the input from the mouse jerky, also when using a serial 
+or PS/2 mouse, the Windows operating system will only sample mouse input every 
+25ms, that is 40 times a second (for USB mice the sample rate is 125 Hz, that is
+every 8 ms). When set to "1" this variable will smooth out the input but it will 
+cause latency between the movement of the mouse and the actual response in the 
+game. When using a PS/2 mouse it is thus first recommended to try to increase 
+the sampling rate either by changing it via your mouse driver or by using the 
+ps2rate program which can be downloaded at <a href="http://www.udpsoft.com/ps2rate.zip" target="_blank">ps2rate</a> homepage . 
+If you are playing the game at frame rates above 40 FPS and if you can't 
+increase the sampling rate of your PS/2 rate or if you are playing with a serial 
+mouse it is recommended that you enable this toggle.
+</desc>
+</item>
+<item>
+<name>m_forcewheel</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>If you have problems to get MWHEELUP and MWHEELDOWN working set this to 1.</dsc></value>
+</desc>
+</item>
+<item>
+<name>m_forward</name>
+<desc>
+This variable controls how fast the player should move forward and back when the 
+mouse is moved forward and back. This command has no effect if the +mlook 
+command is in effect because when the mouse is moved forward and back the 
+player looks up and down instead of moving forward and back. Some players might 
+want to set this variable to "0" if they happen not to use +mlook constantly and 
+they only want to use the mouse to turn the player. Setting this variable to "0"
+will prevent the inadvertent movement of the player forward and back while 
+trying to make precise turns with the mouse.
+</desc>
+</item>
+<item>
+<name>m_pitch</name>
+<desc>
+This variable sets the level of precision when the mouse is used to make the 
+player look up and down while the +mlook command is in effect. By default this 
+variable is set in such a way that moving the mouse forward makes the player 
+look up and moving the mouse backward makes the player look down. Some people 
+prefer to have this movement inverted just like it is inverted for airplane 
+controls. If you wish to use this inverted mouse movement then you should set 
+this variable to a negative value (for example "-0.022"). It is a matter of 
+preference which movement method is used by players. Also lowering the value 
+for this variable will increase the level of precision when the mouse is used 
+to make the player look up and down. This variable can be used separately from 
+the sensitivity variable to provide greater control over the mouse sensitivity 
+for movement along the pitch. It is advisable to keep the value for this 
+variable constant at 0.022 or -0.022 and instead use the sensitivity variable 
+to change the overall sensitivity of the mouse. Also, some script writers lower 
+the value for this variable along with a lowered value for the fov variable in 
+order to provide more precision when the fov variable is used to zoom.
+</desc>
+</item>
+<item>
+<name>m_rate</name>
+<desc>
+This variable should be set to your mouse rate (in Hz).
+Note: need -m_smooth and -dinput to commandline.
+</desc>
+</item>
+<item>
+<name>m_showrate</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable</dsc></value>
+<value><val>1</val><dsc>Print current mouse rate</dsc></value>
+Note: need -m_smooth and -dinput to commandline.
+</desc>
+</item>
+<item>
+<name>m_side</name>
+<desc>
+When the +strafe command is active or when "lookspring" is set to "1" this 
+variable is used to control the sensitivity when the mouse is moved left and 
+right to make the player move left and right.
+</desc>
+</item>
+<item>
+<name>m_yaw</name>
+<desc>
+This variable controls how fast the player turns left and right when the mouse 
+is moved left and right. It is recommended that this variable be left alone and
+instead the "sensitivity" variable is used to change the level of precision. 
+If you set this variable to a negative value you will reverse the mouse 
+movement. Some script writers use this variable to increase the level of 
+precision when the "fov" variable is used to zoom the screen.
+</desc>
+</item>
+<item><name>tp_name_axe</name><desc>Customizes item</desc></item>
+<item><name>tp_name_sg</name><desc>Customizes item</desc></item>
+<item><name>tp_name_ssg</name><desc>Customizes item</desc></item>
+<item><name>tp_name_ng</name><desc>Customizes item</desc></item>
+<item><name>tp_name_sng</name><desc>Customizes item</desc></item>
+<item><name>tp_name_gl</name><desc>Customizes item</desc></item>
+<item><name>tp_name_rl</name><desc>Customizes item</desc></item>
+<item><name>tp_name_lg</name><desc>Customizes item</desc></item>
+<item><name>tp_name_ga</name><desc>Customizes item</desc></item>
+<item><name>tp_name_ya</name><desc>Customizes item</desc></item>
+<item><name>tp_name_ra</name><desc>Customizes item</desc></item>
+<item><name>tp_name_armortype_ga</name><desc>Customizes item</desc></item>
+<item><name>tp_name_armortype_ya</name><desc>Customizes item</desc></item>
+<item><name>tp_name_armortype_ra</name><desc>Customizes item</desc></item>
+<item><name>tp_name_shells</name><desc>Customizes item</desc></item>
+<item><name>tp_name_nails</name><desc>Customizes item</desc></item>
+<item><name>tp_name_rockets</name><desc>Customizes item</desc></item>
+<item><name>tp_name_cells</name><desc>Customizes item</desc></item>
+<item><name>tp_name_quad</name><desc>Customizes item</desc></item>
+<item><name>tp_name_pent</name><desc>Customizes item</desc></item>
+<item><name>tp_name_ring</name><desc>Customizes item</desc></item>
+<item><name>tp_name_suit</name><desc>Customizes item</desc></item>
+<item><name>tp_name_mh</name><desc>Customizes item</desc></item>
+<item><name>tp_name_health</name><desc>Customizes item</desc></item>
+<item><name>tp_name_armor</name><desc>Customizes item</desc></item>
+<item><name>tp_name_weapon</name><desc>Customizes item</desc></item>
+<item><name>tp_name_backpack</name><desc>Customizes item</desc></item>
+<item><name>tp_name_flag</name><desc>Customizes item</desc></item>
+<item><name>tp_name_disp</name><desc>Customizes item</desc></item>
+<item><name>tp_name_teammate</name><desc>Customizes item</desc></item>
+<item><name>tp_name_enemy</name><desc>Customizes item</desc></item>
+<item><name>tp_name_quaded</name><desc>Customizes item</desc></item>
+<item><name>tp_name_pented</name><desc>Customizes item</desc></item>
+<item><name>tp_name_status_green</name><desc>Customizes item</desc></item>
+<item><name>tp_name_status_yellow</name><desc>Customizes item</desc></item>
+<item><name>tp_name_status_red</name><desc>Customizes item</desc></item>
+<item><name>tp_name_status_blue</name><desc>Customizes item</desc></item>
+<item><name>tp_name_someplace</name><desc>Customizes item</desc></item>
+<item><name>tp_name_at</name><desc>Customizes item</desc></item>
+<item><name>tp_name_nothing</name><desc>Customizes item</desc></item>
+<item><name>tp_name_none</name><desc>Customizes item</desc></item>
+<item><name>tp_name_separator</name><desc>Customizes item</desc></item>
+<item><name>tp_need_rl</name><desc>Customizes the %u macro</desc></item>
+<item><name>tp_need_weapon</name><desc>Customizes the %u macro</desc></item>
+<item><name>tp_need_ga</name><desc>Customizes the %u macro</desc></item>
+<item><name>tp_need_ya</name><desc>Customizes the %u macro</desc></item>
+<item><name>tp_need_ra</name><desc>Customizes the %u macro</desc></item>
+<item><name>tp_need_shells</name><desc>Customizes the %u macro</desc></item>
+<item><name>tp_need_nails</name><desc>Customizes the %u macro</desc></item>
+<item><name>tp_need_rockets</name><desc>Customizes the %u macro</desc></item>
+<item><name>tp_need_cells</name><desc>Customizes the %u macro</desc></item>
+<item><name>tp_need_health</name><desc>Customizes the %u macro</desc></item>
+<item>
+<name>gl_fb_bmodels</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Might give you a couple more fps.</dsc></value>
+<value><val>1</val><dsc>Enable "fullbright" colors on bsp models (World, health boxes, etc).</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_fb_models</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Might also give you more fps.</dsc></value>
+<value><val>1</val><dsc>Enable "fullbright" colors on alias models (grenades, player models, etc).</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_flashblend</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Use proper lighting for light sources (powerups etc.).</dsc></value>
+<value><val>1</val><dsc>Just draw a shaded ball of the color of the light.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_lightmode</name><range>0/2</range>
+<desc>
+<value><val>0</val><dsc>Makes the map lighter, but fulbrights don't look as good.</dsc></value>
+<value><val>2</val><dsc>Makes the map darker, but makes fullbrights stand out more (looks better).</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_loadlitfiles</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable lit files.</dsc></value>
+<value><val>1</val><dsc>Load lit files.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_shaftlight</name><range>0..1</range>
+<desc>
+<value><val>0</val><dsc>Dark shaft.</dsc></value>
+<value><val>1</val><dsc>Light shaft.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_ambient</name><range>0/1</range>
+<desc>
+This variable controls the amount of ambient lighting on the map. When this 
+variable is increased the map will become brighter and all walls and objects 
+will be rendered in a lighter color.
+It was removed in QWCL and has been re-introduced in FuhQuake now, however it 
+can only be used when the server is running with cheats enabled (for example 
+"qwsv -cheats"), because it could be used as a cheat by making it easier to see
+players in dark corners when no fullbright skins are used.
+</desc>
+</item>
+<item>
+<name>r_dynamic</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Do not display dynamic lighting.</dsc></value>
+<value><val>1</val><dsc>Display dynamic lighting.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_fullbright</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Do not fullbright the map.</dsc></value>
+<value><val>1</val><dsc>Enable fullbright display of the map.</dsc></value>
+This variable toggles the use of lights at full brightness on the map. When this 
+variable is set to "1" the renderer system will render all textures on the map 
+at full brightness. This will allow map authors to remove all of the lighting 
+effects from the map. 
+This variable was removed in QWCL and has been re-introduced in FuhQuake now, 
+however it can only be used when the server is running with cheats enabled (for 
+example "qwsv -cheats"), because it could be used as a cheat by making it easier
+to see players in dark corners when no fullbright skins are used.
+</desc>
+</item>
+<item>
+<name>r_lightmap</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable light sources on the map.</dsc></value>
+<value><val>1</val><dsc>Enable light sources on the map.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_shadows</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Do not display shadows for entities.</dsc></value>
+<value><val>1</val><dsc>Display shadows for entities.</dsc></value>
+</desc>
+</item>
+<item>
+<name>Match</name>
+<desc>
+Read <a href= "http://fuhquake.quakeworld.nu/readme/match_tools.txt" target= "_blank">match tools</a> readme.
+</desc>
+</item>
+<item>
+<name>cl_warncmd</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable the unknown command messages.</dsc></value>
+<value><val>1</val><dsc>Enable the uknown command messages.</dsc></value>
+Note: Not saved to config with cfg_save command.
+</desc>
+</item>
+<item>
+<name>watervis</name><range>0/1</range>
+<desc>
+This server-side cvar is mirrored to serverinfo as a hint to clients on whether the server is using the so-called watervised maps.
+<value><val>0</val><dsc>No watervis.</dsc></value>
+<value><val>1</val><dsc>GLQuake users can see through water if they set r_wateralpha to a value &lt; 1.</dsc></value>
+It's a bad idea to use watervis 1 if the maps the server is using are not watervised. Water will appear 'transparent' but you won't be able to see any items/players/etc through it.  And it is a bad idea anyway because Quake maps were not designed for transparent water; enabling it changes gameplay, decreases fps and produces more network traffic and puts non-GL players at a disadvantage because the software renderer doesn't support transparent water (yet).
+Not saved to config with cfg_save command.
+</desc>
+</item>
+<item>
+<name>MP3</name>
+<desc>
+Read <a href= "http://fuhquake.quakeworld.nu/readme/mp3.txt" target= "_blank">mp3</a> readme.
+</desc>
+</item>
+<item>
+<name>cl_c2sImpulseBackup</name><range>0/1/2/3</range>
+<desc>
+Used with cl_c2spps, it controls how many backup copies of packets with non-zero 
+impulses are to be sent to the server. The recommended value is 3, 
+but you can try 2 or even 1 to reduce traffic if you don't have any packet loss.
+</desc>
+</item>
+<item>
+<name>cl_c2spps</name><range>0..72</range>
+<desc>
+Packet filtering (a la Qizmo's .c2spps command). Use this to reduce network traffic
+if you're playing on a 28800 (or worse) connection and can't set cl_maxfps 72 
+because it causes lags.
+</desc>
+</item>
+<item>
+<name>cl_nodelta</name><range>0/1</range>
+<desc>
+Control the network packet delta compression. When you get blue lines
+in your netgraph, you should set 'cl_nodelta 1'. 
+<value><val>0</val><dsc>Enable delta compression.</dsc></value>
+<value><val>1</val><dsc>Disable delta compression.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_nopred</name><range>0/1</range>
+<desc>
+This variable toggles client-side jump prediction. Unless you are having 
+problems this variable should be left at "0".
+<value><val>0</val><dsc>Enable jump prediction.</dsc></value>
+<value><val>1</val><dsc>Disable jump prediction.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_oldpl</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable the new PL calculation algorithm.</dsc></value>
+<value><val>1</val><dsc>Enable the new PL calculation algorithm.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_predictPlayers</name><range>0/1</range>
+<desc>
+This toggles the prediction for other players' movement. Unless you are having 
+problems this variable should be left at "1".
+<value><val>0</val><dsc>Do not predict other players' movement.</dsc></value>
+<value><val>1</val><dsc>Predict other players' movement.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_solidPlayers</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>When you run into other players you will appear to clip in them.</dsc></value>
+<value><val>1</val><dsc>When you run into other players they will appear to be solid.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_timeout</name>
+<desc>
+This variable defines the timeout value in seconds until the client considers
+himself to be disconnected from the server.
+</desc>
+</item>
+<item>
+<name>cl_useproxy</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>You won't drop from qizmo if you are using connect, join and observe commands.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_affinemodels</name><range>0/1</range>
+<desc>
+Makes texture rendering quality better if set to 1.
+Note: 3dfx thing, not sure. //fuh check this.
+</desc>
+</item>
+<item>
+<name>gl_clear</name><range>0/1</range>
+<desc>
+This variable will toggle the clearing of the screen between each frame. This
+can be helpful when specing a game and flying out of the map and during map 
+development when the map maker must fly outside of the map to look has his map
+from the outside. Enabling this toggle will clear the areas which are not 
+rendered outside of the map thus preventing the flickering effect when images 
+repeat themselves over and over. However it causes problems when playing and 
+going through the surfaces of a liquid (for example when diving into water), as
+you will see a red flash where the liquid texture would normally be repeated.
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>On.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_clearColor</name>
+<desc>
+Sets clear color (gl_clear 1)
+</desc>
+</item>
+<item>
+<name>gl_cull</name><range>0/1</range>
+<desc>
+This variable toggles the use of internal OpenGL functions for removing covered 
+objects. When this variable is set to "1" the game will depend on the OpenGL 
+driver to use it's culling functions to remove certain objects from the 
+calculations because they are covered up and would not be seen anyways. It is a 
+good idea to leave this toggle enabled because it will increase rendering 
+performance.
+<value><val>0</val><dsc>Do not use culling to increase rendering performance.</dsc></value>
+<value><val>1</val><dsc>Use the OpenGL driver's culling functions.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_finish</name><range>0/1</range>
+<desc>
+This variable toggles the calling of the gl_finish() OpenGL function after each 
+rendered frame.
+<value><val>0</val><dsc>Do not call the gl_finish() function after each frame.</dsc></value>
+<value><val>1</val><dsc>Call the gl_finish() function after each frame.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_nocolors</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Normal.</dsc></value>
+<value><val>1</val><dsc>Don't use top/bottom colors.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_smoothmodels</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Do not smooth the textures on models.</dsc></value>
+<value><val>1</val><dsc>Smooth the textures on models.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_triplebuffer</name><range>0/1</range>
+<desc>
+Triple buffering of video memory related stuff (Triplebuffer = good).
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>On.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_ztrick</name><range>0/1</range>
+<desc>
+This variables toggles the use of a trick to prevent the clearning of the 
+z-buffer between frames. When this variable is set to "1", the game will not 
+clear the z-buffer between frames. This will result in increased performance 
+but might cause problems for some display hardware.
+<value><val>0</val><dsc>Do not use the z-buffer trick.</dsc></value>
+<value><val>1</val><dsc>Use the z-buffer trick.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_farclip</name>
+<desc>
+Can be used to overcome vision being limited to 4096 units in GL clients (good for xpress2 etc).
+</desc>
+</item>
+<item>
+<name>gl_bounceparticles</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Controls whether sparks rebound off walls.  </dsc></value>
+Bouncing particles look nicer, but may eat up CPU.
+</desc>
+</item>
+<item>
+<name>gl_clipparticles</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>this will limit the number of blended particles close to you. This gives a big FPS increase when blended particles take up a big proportion of your screen and challenge your video card's fillrate.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_part_blobs</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Determines particles used for blob explosions (EMP's)</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_part_blood</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Determines particles used for blood effects.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_part_explosions</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Determines particles used for explosions.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_part_gunshots</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Determines particles used for gunshots.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_part_inferno</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Determines particles used for pyro flames in TF.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_part_lavasplash</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Determines particles used for lava splashes (Spy Gren).</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_part_spikes</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Determines particles used for spikes (nailgun etc).</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_part_telesplash</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Determines particles used for teleport splashes.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_part_trails</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Determines particles used for (rocket etc) trails.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_solidparticles</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Might make tele particles faster for 3dfx wicked gl drivers.</dsc></value>
+</desc>
+</item>
+<item>
+<name>bottomcolor</name><range>0/1/2/3/4/5/6/7/8/9/10/11/12/13</range>
+<desc>
+Sets the pants color.
+</desc>
+</item>
+<item>
+<name>b_switch</name><range>1/2/3/4/5/6/7/8</range>
+<desc>
+This variable allows you to define the highest weapon that FuhQuake should switch 
+to upon a backpack pickup. The possible arguments of "b_switch" refer to the 
+impulse that is used to switch to a certain weapon:
+<value><val>1</val><dsc>Axe</dsc></value>
+<value><val>2</val><dsc>Shotgun</dsc></value>
+<value><val>3</val><dsc>Double-Barreled Shotgun</dsc></value>
+<value><val>4</val><dsc>Nailgun</dsc></value>
+<value><val>5</val><dsc>Super Nailgun</dsc></value>
+<value><val>6</val><dsc>Grenade Launcher</dsc></value>
+<value><val>7</val><dsc>Rocket Launcher</dsc></value>
+<value><val>8</val><dsc>ThunderBolt</dsc></value>
+</desc>
+</item>
+<item>
+<name>msg</name><range>0/1/2/3/4</range>
+<desc>
+<value><val>0</val><dsc>Maximum reporting of messages.</dsc></value>
+<value><val>1</val><dsc>Parsed reporting of messages.</dsc></value>
+<value><val>2</val><dsc>Limited reporting of messages.</dsc></value>
+<value><val>3</val><dsc>Minimal reporting of messages.</dsc></value>
+<value><val>4</val><dsc>No reporting of messages.</dsc></value>
+</desc>
+</item>
+<item>
+<name>name</name>
+<desc>
+Player's name.
+</desc>
+</item>
+<item>
+<name>noaim</name><range>0/1</range>
+<desc>
+This variable toggles whether a server-sided aiming-help should be used when 
+shooting rockets (not possible when the server variable "sv_aim" is set to "0").
+<value><val>0</val><dsc>Enable server-side aiming help for rockets (if allowed by the server).</dsc></value>
+<value><val>1</val><dsc>Disable server-side aiming help for rockets.</dsc></value>
+</desc>
+</item>
+<item>
+<name>rate</name>
+<desc>
+Sets the maximum amount of bytes per second that the server should send to the client.
+</desc>
+</item>
+<item>
+<name>skin</name>
+<desc>
+Sets the skin name for the player.
+</desc>
+</item>
+<item>
+<name>spectator</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Join to server as player.</dsc></value>
+<value><val>1</val><dsc>Join to server as spectator.</dsc></value>
+</desc>
+</item>
+<item>
+<name>team</name>
+<desc>
+Set the team name.
+</desc>
+</item>
+<item>
+<name>topcolor</name><range>0/1/2/3/4/5/6/7/8/9/10/11/12/13</range>
+<desc>
+Sets the shirt color.
+</desc>
+</item>
+<item>
+<name>w_switch</name><range>1/2/3/4/5/6/7/8</range>
+<desc>
+This variable allows you to define the highest weapon that FuhQuake should switch 
+to when picking it up. The possible arguments of "w_switch" refer to the impulse 
+that is used to switch to a certain weapon:
+<value><val>1</val><dsc>Axe</dsc></value>
+<value><val>2</val><dsc>Shotgun</dsc></value>
+<value><val>3</val><dsc>Double-Barreled Shotgun</dsc></value>
+<value><val>4</val><dsc>Nailgun</dsc></value>
+<value><val>5</val><dsc>Super Nailgun</dsc></value>
+<value><val>6</val><dsc>Grenade Launcher</dsc></value>
+<value><val>7</val><dsc>Rocket Launcher</dsc></value>
+<value><val>8</val><dsc>ThunderBolt</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_bonusflash</name><range>0/1</range>
+<desc>
+Controls weapon and item pickup flash.
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>On.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_cshiftpercent</name>
+<desc>
+This variable sets the percentage value for palette shifting effects (damage
+flash, powerup blend).
+</desc>
+</item>
+<item>
+<name>gl_hwblend</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>OpenGL routines.</dsc></value>
+<value><val>1</val><dsc>Hardware palette changing.</dsc></value>
+Note: 1 can be slow on wintNT/2K.
+</desc>
+</item>
+<item>
+<name>gl_polyblend</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable palette shifting when submerged or poweruped.</dsc></value>
+<value><val>1</val><dsc>Enable palette shifting when submerged or poweruped.</dsc></value>
+</desc>
+</item>
+<item>
+<name>v_contentblend</name><range>0..1</range>
+<desc>
+<value><val>0</val><dsc>Off (no palette shifting when you're in liquid).</dsc></value>
+<value><val>1</val><dsc>On  (palette shifts when you're in liquid).</dsc></value>
+</desc>
+</item>
+<item>
+<name>v_damagecshift</name><range>0..1</range>
+<desc>
+<value><val>0</val><dsc>Damage filter on.</dsc></value>
+<value><val>0.5</val><dsc>50% Damage filter on.</dsc></value>
+<value><val>1</val><dsc>Damage filter off.</dsc></value>
+</desc>
+</item>
+<item>
+<name>v_dlightcshift</name><range>0..1</range>
+<desc>
+<value><val>0</val><dsc>Turns off light blend when you're inside a light bubble (with gl_flashblend 1).</dsc></value>
+<value><val>1</val><dsc>Turns onn light blebd when you're inside a light bubble (with gl_flashblend 1).</dsc></value>
+</desc>
+</item>
+<item>
+<name>v_pentcshift</name><range>0..1</range>
+<desc>
+Flash coefficient for when you take the pent.
+</desc>
+</item>
+<item>
+<name>v_quadcshift</name><range>0..1</range>
+<desc>
+Flash coefficient for when you take the quad.
+</desc>
+</item>
+<item>
+<name>v_ringcshift</name><range>0..1</range>
+<desc>
+Flash coefficient for when you take the ring.
+</desc>
+</item>
+<item>
+<name>v_suitcshift</name><range>0..1</range>
+<desc>
+Flash coefficient for when you take the suit.
+</desc>
+</item>
+<item>
+<name>cl_clock</name><range>0/1/2</range>
+<desc>
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>Shows the time you spent on server (you'll also see it in the status bar when you press TAB).</dsc></value>
+<value><val>2</val><dsc>Shows the time of day.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_clock_x</name>
+<desc>
+Horizontal coordinates of the clock.
+</desc>
+</item>
+<item>
+<name>cl_clock_y</name>
+<desc>
+Vertical coordinates of the clock.
+If &lt; 0, the coordinates are calculated from bottom up, e.g. -1 means the screen line just above the scoreboard.
+</desc>
+</item>
+<item>
+<name>cl_democlock</name><range>0/1</range>
+<desc>
+A clock showing how much time has elapsed since the start of the demo.
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>On.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_democlock_x</name>
+<desc>
+Determine where the democlock is positioned on your screen on the X co-ordinate.
+</desc>
+</item>
+<item>
+<name>cl_democlock_y</name>
+<desc>
+Determine where the democlock is positioned on your screen on the Y co-ordinate.
+</desc>
+</item>
+<item>
+<name>cl_shownet</name><range>0/1/2</range>
+<desc>
+This variable toggles the display of current net info.
+<value><val>0</val><dsc>Do not display any information.</dsc></value>
+<value><val>1</val><dsc>Print current incoming packet size in byte.</dsc></value>
+<value><val>2</val><dsc>Print information about the current in coming packet and it's size.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_contrast</name>
+<desc>
+Change contrast.
+</desc>
+</item>
+<item>
+<name>gl_gamma</name>
+<desc>
+Change GL gamma.
+</desc>
+</item>
+<item>
+<name>r_netgraph</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Do not display the netgraph.</dsc></value>
+<value><val>1</val><dsc>Display the netgraph.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_autoid</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Hide players nick as spectator.</dsc></value>
+<value><val>1</val><dsc>Show players nick as spectator.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_centerMenu</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>Centers the menu vertically (has no effect if you're playing in 320x200 mode, same applies to scr_centersbar).</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_centertime</name>
+<desc>
+This variable sets the amount of time in seconds that centerprinted messages 
+stay on the screen. 
+<value><val>0</val><dsc>Do not display any centerprints.</dsc></value>
+<value><val>1</val><dsc>Display centerprints for 1 second.</dsc></value>
+<value><val>2</val><dsc>Display centerprints for 2 seconds.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_coloredText</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable rainbow spectator text on the scoreboard.</dsc></value>
+<value><val>1</val><dsc>Enable rainbow spectator text on the scoreboard.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_menualpha</name><range>0..1</range>
+<desc>
+<value><val>0</val><dsc>Transparent mainmenu.</dsc></value>
+<value><val>1</val><dsc>Black mainmenu.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_scaleMenu</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable scaling.</dsc></value>
+<value><val>1</val><dsc>Scales the frontend menu to match the resolution you are using.</dsc></value>
+</desc>
+</item>
+<item>
+<name>showdrop</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable output how dropped packets.</dsc></value>
+<value><val>1</val><dsc>Enable output how dropped packets.</dsc></value>
+</desc>
+</item>
+<item>
+<name>showpackets</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Do not display information about all network packets.</dsc></value>
+<value><val>1</val><dsc>Display information about all network packets.</dsc></value>
+</desc>
+</item>
+<item>
+<name>showpause</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Never display the pause icon.</dsc></value>
+<value><val>1</val><dsc>Display that the pause icon is displayed when the game is paused.</dsc></value>
+</desc>
+</item>
+<item>
+<name>showram</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Never display the ram icon</dsc></value>
+<value><val>1</val><dsc>Display the ram icon when running out of memory</dsc></value>
+</desc>
+</item>
+<item>
+<name>showturtle</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Never display the turtle icon.</dsc></value>
+<value><val>1</val><dsc>Display the turtle icon when your frame rate drops below 10.</dsc></value>
+</desc>
+</item>
+<item>
+<name>show_fps</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disables the display of the frames-per-second value.</dsc></value>
+<value><val>1</val><dsc>Enables the display of the frames-per-second value.</dsc></value>
+</desc>
+</item>
+<item>
+<name>show_fps_x</name>
+<desc>
+Determine where the show_fps is positioned on your screen on the X co-ordinate.
+</desc>
+</item>
+<item>
+<name>show_fps_y</name>
+<desc>
+Determine where the show_fps is positioned on your screen on the Y co-ordinate.
+</desc>
+</item>
+<item>
+<name>show_speed</name><range>0/1/2</range>
+<desc>
+Displays a speed counter in the top right corner in FuhQuake units (Horizontal velocity). (320 - Normal walking speed, 440 - Accel jump, 450 - Bunnyhopping)
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>More accurate counter (Best used when LPB).</dsc></value>
+<value><val>2</val><dsc>Predicted speed (Less laggy when HPB).</dsc></value>
+</desc>
+</item>
+<item>
+<name>show_speed_x</name>
+<desc>
+Determine where the show_speed is positioned on your screen on the X co-ordinate.
+</desc>
+</item>
+<item>
+<name>show_speed_y</name>
+<desc>
+Determine where the show_speed is positioned on your screen on the Y co-ordinate.
+</desc>
+</item>
+<item>
+<name>sw_contrast</name>
+<desc>
+Change contrast.
+</desc>
+</item>
+<item>
+<name>sw_gamma</name>
+<desc>
+Change gamma.
+</desc>
+</item>
+<item>
+<name>image_jpeg_quality_level</name>
+<desc>
+You can set quality of jpeg screenshots with 'image_jpeg_quality_level x' 
+where x is an integer from 0 to 100 inclusive. The larger x is, 
+the better the quality of a jpeg screenshot, but also the bigger the size.
+</desc>
+</item>
+<item>
+<name>image_png_compression_level</name>
+<desc>
+You can set the amount of png compression with 'image_png_compression_level x' 
+where x is an integer from 0 to 9 inclusive. 0 gives no compression and 9 gives 
+maximum compression (and slowest writing time).
+</desc>
+</item>
+<item>
+<name>scr_allowsnap</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable</dsc></value>
+<value><val>1</val><dsc>Allow screenshot uploads to be requested by server.</dsc></value>
+</desc>
+</item>
+<item>
+<name>sshot_dir</name>
+<desc>
+Change the screenshot directory.
+</desc>
+</item>
+<item>
+<name>sshot_format</name><range>tga/png/pcx/jpg</range>
+<desc>
+tga = Tga screenshots (gl only)
+png = Png screenshots
+jpg = Jpg screenshots (gl only)
+pcx = Pcx screenshots (software only)
+</desc>
+</item>
+<item>
+<name>coop</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable cooperative.</dsc></value>
+<value><val>1</val><dsc>Enable cooperative.</dsc></value>
+</desc>
+</item>
+<item>
+<name>filterban</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Only IP addresses on the Ban list will be allowed onto the server.</dsc></value>
+<value><val>1</val><dsc>Only IP addresses NOT on the Ban list will be allowed onto the server.</dsc></value>
+</desc>
+</item>
+<item>
+<name>floodprotmsg</name>
+<desc>
+Sets the message displayed after flood protection is invoked.
+Example: floodprotmsg "Shut up whiner!"
+</desc>
+</item>
+<item>
+<name>pausable</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable pause.</dsc></value>
+<value><val>1</val><dsc>Enable pause.</dsc></value>
+</desc>
+</item>
+<item>
+<name>skill</name><range>0/1/2/3</range>
+<desc>
+<value><val>0</val><dsc>easy level for singleplaying.</dsc></value>
+<value><val>1</val><dsc>Normal level for singleplaying.</dsc></value>
+<value><val>2</val><dsc>Hard level for singleplaying.</dsc></value>
+<value><val>3</val><dsc>Nightmare level for singleplaying.</dsc></value>
+</desc>
+</item>
+<item>
+<name>sv_aim</name>
+<desc>
+Sets the value for auto-aiming leniency.
+</desc>
+</item>
+<item>
+<name>sv_cheats</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable cheats.</dsc></value>
+<value><val>1</val><dsc>Enable cheats. (need map realoading)</dsc></value>
+</desc>
+</item>
+<item>
+<name>sv_fastconnect</name><range>0/1</range>
+<desc>
+actually no help.
+</desc>
+</item>
+<item>
+<name>sv_highchars</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Enable high character color names for players.</dsc></value>
+</desc>
+</item>
+<item>
+<name>sv_loadentfiles</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Enable custom map entity file support.</dsc></value>
+</desc>
+</item>
+<item>
+<name>sv_mapcheck</name>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Enable map checksumming to check for players who edit maps to cheat.</dsc></value>
+Note: A player who has edited his map files to cheat by removing textures 
+from walls will not be able to join the server and play.
+</desc>
+</item>
+<item>
+<name>sv_maxrate</name>
+<desc>
+Maximum rate for clients.
+</desc>
+</item>
+<item>
+<name>sv_maxtic</name><range>0..1</range>
+<desc>
+The maximum amount of time in seconds before a client a receives an update 
+from the server.
+</desc>
+</item>
+<item>
+<name>sv_mintic</name>
+<desc>
+The minimum amount of time the server will wait before sending packets to 
+a client.
+</desc>
+</item>
+<item>
+<name>sv_nailhack</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Allows nails in most cases to uses less bandwidth and to fly around </dsc></value>
+smoother and point in the right direction.
+</desc>
+</item>
+<item>
+<name>sv_phs</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Has something to do with the table which is build at the loading time</dsc></value>
+of the map.
+</desc>
+</item>
+<item>
+<name>sv_spectalk</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Players can't hear spectators.</dsc></value>
+<value><val>1</val><dsc>Players can hear spectators.</dsc></value>
+</desc>
+</item>
+<item>
+<name>timeout</name>
+<desc>
+Sets the amount of time in seconds before a client is considered disconnected 
+if the server does not receive a packet.
+</desc>
+</item>
+<item>
+<name>zombietime</name>
+<desc>
+The number of minutes that the server will keep the character of a player on 
+the map who seems to have disconnected.
+</desc>
+</item>
+<item>
+<name>allow_download</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Clients can download game data from the server.</dsc></value>
+</desc>
+</item>
+<item>
+<name>allow_download_maps</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Clients can download .bsp map files from the server.</dsc></value>
+</desc>
+</item>
+<item>
+<name>allow_download_models</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Clients can download .mdl files from the server.</dsc></value>
+</desc>
+</item>
+<item>
+<name>allow_download_pakmaps</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Clients can download map files in paks from the server.</dsc></value>
+</desc>
+</item>
+<item>
+<name>allow_download_skins</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Clients can download .pcx skin files from the server.</dsc></value>
+</desc>
+</item>
+<item>
+<name>allow_download_sounds</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Clients can download .wav sound files from the server.</dsc></value>
+</desc>
+</item>
+<item>
+<name>pm_bunnyspeedcap</name>
+<desc>
+This is experimental code intended to restore class balance in TF. If you set 
+this cvar to something like 1.5 or 2, a solider will not be able to bunnyhop as 
+fast as a scout does :) Note that this cvar is optional and disabled by default, 
+so it will in NO WAY affect gameplay unless you set it explicitly to anything 
+but 0.
+</desc>
+</item>
+<item>
+<name>pm_ktjump</name>
+<desc>
+You can change value of ktjump.
+</desc>
+</item>
+<item>
+<name>pm_slidefix</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Upon decsension from a sloped surface, the player doesn't</dsc></value>
+"drop" (which is a bug in QW), but smoothly slides, as it was in NQ.
+</desc>
+</item>
+<item>
+<name>sv_accelerate</name>
+<desc>
+Sets the acceleration value for the player.
+</desc>
+</item>
+<item>
+<name>sv_airaccelerate</name>
+<desc>
+Sets how quickly the player accelerates in air.
+</desc>
+</item>
+<item>
+<name>sv_friction</name>
+<desc>
+Sets the friction value for the player.
+</desc>
+</item>
+<item>
+<name>sv_gravity</name>
+<desc>
+Sets the global value for the amount of gravity.
+</desc>
+</item>
+<item>
+<name>sv_maxspeed</name>
+<desc>
+Sets the maximum speed a player can move.
+</desc>
+</item>
+<item>
+<name>sv_maxvelocity</name>
+<desc>
+Sets the maximum velocity an object can travel.
+</desc>
+</item>
+<item>
+<name>sv_spectatormaxspeed</name>
+<desc>
+Sets the maximum speed a spectator can move.
+</desc>
+</item>
+<item>
+<name>sv_stopspeed</name>
+<desc>
+Sets the value that determines how fast the player should come to a complete stop.
+</desc>
+</item>
+<item>
+<name>sv_wateraccelerate</name>
+<desc>
+Sets the water acceleration value.
+</desc>
+</item>
+<item>
+<name>sv_waterfriction</name>
+<desc>
+Sets the water friction value.
+</desc>
+</item>
+<item>
+<name>baseskin</name>
+<desc>
+Defines what skin u see other people using if you don't have their skin and don't have skin forcing on.
+</desc>
+</item>
+<item>
+<name>enemybothskin</name>
+<desc>
+Overrides the enemy quad pent skin so you can define the skin which applies to enemy quads pents.
+</desc>
+</item>
+<item>
+<name>enemypentskin</name>
+<desc>
+Overrides the enemy pent skin so you can define the skin which applies to enemy pents.
+</desc>
+</item>
+<item>
+<name>enemyquadskin</name>
+<desc>
+Overrides the enemy quad skin so you can define the skin which applies to enemy quads.
+</desc>
+</item>
+<item>
+<name>enemyskin</name>
+<desc>
+Overrides the enemies skin so you can define the skin which applies to enemies.
+</desc>
+</item>
+<item>
+<name>noskins</name><range>0/1/2</range>
+<desc>
+<value><val>0</val><dsc>Enable skins.</dsc></value>
+<value><val>1</val><dsc>Disable skins.</dsc></value>
+<value><val>2</val><dsc>Enable skins but do not download new skins.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_fullbrightSkins</name><range>0..1</range>
+<desc>
+Determines the fullbright percentage of skins. Fullbright skins can always be used during demo playback. 
+Finally, when the server allows fullbright skins, any user of FuhQuake using fullbright skins will respond 
+to an f_skins request. There is no response by a user of FuhQuake if he/she is not using fullbright skins. 
+The f_skins response will indicate the brightness level being used as a percentage.
+<value><val>0</val><dsc>Being 0% fullbright.</dsc></value>
+<value><val>0.5</val><dsc>Being 50% fullbright.</dsc></value>
+<value><val>1</val><dsc>Being 100% fullbright.</dsc></value>
+</desc>
+</item>
+<item>
+<name>teambothskin</name>
+<desc>
+Overrides the team quad pent skin so you can define the skin which applies to team quads pents.
+</desc>
+</item>
+<item>
+<name>teampentskin</name>
+<desc>
+Overrides the team pent skin so you can define the skin which applies to team pents.
+</desc>
+</item>
+<item>
+<name>teamquadskin</name>
+<desc>
+Overrides the team quad skin so you can define the skin which applies to team quads.
+</desc>
+</item>
+<item>
+<name>teamskin</name>
+<desc>
+Overrides the team skin so you can define the skin which applies to team mates.
+</desc>
+</item>
+<item>
+<name>r_aliastransadj</name>
+<desc>
+Not much is known about this variable except for that increasing the value will
+cause the player models to be displayed smaller.
+</desc>
+</item>
+<item>
+<name>r_aliastransbase</name>
+<desc>
+Not much is known about this variable except for that increasing the value will
+cause the player models to be displayed smaller.
+</desc>
+</item>
+<item>
+<name>r_clearcolor</name><range>0..254</range>
+<desc>
+This variable can be used to change the color for the areas which are not part 
+of the map when free floating outside of the map as spectator.
+</desc>
+</item>
+<item>
+<name>r_dspeeds</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Do not display renderer speed statistics.</dsc></value>
+<value><val>1</val><dsc>Display renderer speed statistics.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_graphheight</name>
+<desc>
+This variable used to set the number of lines displayed in the "r_timegraph" 
+command.
+</desc>
+</item>
+<item>
+<name>r_maxedges</name>
+<desc>
+This variable sets the maximum number of plane surface edges to be rendered.
+</desc>
+</item>
+<item>
+<name>r_maxsurfs</name>
+<desc>
+This variable sets the maximum number of plane surfaces to be rendered.
+</desc>
+</item>
+<item>
+<name>r_numedges</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Do not print information about the number of edges.</dsc></value>
+<value><val>1</val><dsc>Print information about the number of edges.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_numsurfs</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Do not print information about the number of surfaces.</dsc></value>
+<value><val>1</val><dsc>Print information about the number of surfaces.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_polymodelstats</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Do not print polygon model statistics.</dsc></value>
+<value><val>1</val><dsc>Print polygon model statistics.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_reportedgeout</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Do not report when running out of edges.</dsc></value>
+<value><val>1</val><dsc>Report when running out of edges.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_reportsurfout</name><range>0/1</range>
+<desc>
+Toggle the display of how many surfaces where not displayed. This
+shouldn't happen during normal game play, only when in noclip mode.
+</desc>
+</item>
+<item>
+<name>r_speeds</name><range>0/1</range>
+<desc>
+Toggles the displaying of drawing time and stats of what is
+currently being viewed.
+Example:
+32.7 ms 267/196/ 74 poly   3 surf
+38.6 ms 267/196/ 74 poly  20 surf
+60.4 ms 267/196/ 74 poly  18 surf
+38.2 ms 267/196/ 73 poly  18 surf
+</desc>
+</item>
+<item>
+<name>r_timegraph</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Do not display the timegraph.</dsc></value>
+<value><val>1</val><dsc>Display the timegraph.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_zgraph</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Do not display the z-graph.</dsc></value>
+<value><val>1</val><dsc>Display the z-graph.</dsc></value>
+</desc>
+</item>
+<item>
+<name>bgmvolume</name>
+<desc>
+This variable sets the volume of the CD music.
+</desc>
+</item>
+<item>
+<name>cl_staticSounds</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable static sounds.</dsc></value>
+<value><val>1</val><dsc>Enable static sounds.</dsc></value>
+</desc>
+</item>
+<item>
+<name>snd_swapstereo</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Off</dsc></value>
+<value><val>1</val><dsc>Will swap left and right sound channels.</dsc></value>
+</desc>
+</item>
+<item>
+<name>s_ambientfade</name>
+<desc>
+How fast the volume of ambient sounds changes as you move around the map.
+</desc>
+</item>
+<item>
+<name>s_ambientlevel</name>
+<desc>
+Volume level of ambient sounds (produced by water and sky brushes).
+</desc>
+</item>
+<item>
+<name>s_initsound</name>
+<desc>
+</desc>
+</item>
+<item>
+<name>s_khz</name><range>11/22/44</range>
+<desc>
+Sound quality. Must be set from the commandline
+Example:
+fuhquake +set s_khz 44
+</desc>
+</item>
+<item>
+<name>s_loadas8bit</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>On (The sound samples will be loaded in 8-bit mode thus making them a little smaller. </dsc></value>
+This will give a little performance boost when playing the game at the cost of 
+quality for the sound samples.)
+</desc>
+</item>
+<item>
+<name>s_mixahead</name>
+<desc>
+This variable defines the delay time for sounds. How low you can set your sound
+mixahead depends on your FPS, when you set it too low, your sound will start 
+crackling. Generally, with 72 FPS you should be able to use a delay of 0.06 
+seconds, if you use the command-line switch "-primarysound", you may be able to
+go even lower, but results may vary on this.
+</desc>
+</item>
+<item>
+<name>s_noextraupdate</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Makes Quake update its sound buffers more often to avoid choppy sound when your fps is really low (20 or worse)</dsc></value>
+<value><val>1</val><dsc>Don't use extra sound updates.  Gives a slight fps boost, but may lead to choppy sound on low-end machines</dsc></value>
+</desc>
+</item>
+<item>
+<name>s_nosound</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Enable the playback of sounds.</dsc></value>
+<value><val>1</val><dsc>Disable the playback of sounds.  Note that it effectively just resets sound volume to zero, but the sound engine still runs.  If you want disable sound in order to get more fps, use the -nosound command line option instead.</dsc></value>
+</desc>
+</item>
+<item>
+<name>s_precache</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable automatic sound caching.</dsc></value>
+<value><val>1</val><dsc>Enable automatic sound caching.</dsc></value>
+</desc>
+</item>
+<item>
+<name>s_show</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable that the number of currently playing sound files is displayed.</dsc></value>
+<value><val>1</val><dsc>Enable that the number of currently playing sound files is displayed.</dsc></value>
+</desc>
+</item>
+<item>
+<name>volume</name><range>0..1</range>
+<desc>
+<value><val>0</val><dsc>No sound.</dsc></value>
+<value><val>1</val><dsc>Maximum volume.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_chasecam</name><range>0/1</range>
+<desc>
+This variable toggles the spectator mode to eye view (1st person).
+</desc>
+</item>
+<item>
+<name>cl_hudswap</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>The inventory is drawn on the right side of the screen.</dsc></value>
+<value><val>1</val><dsc>The inventory is drawn on the left side of the screen.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_sbar</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Use the new transparent HUD.</dsc></value>
+<value><val>1</val><dsc>Use the old status bar.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_centerSbar</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>The hud display will be centered.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_compactHud</name><range>0/1/2/3/4</range>
+<desc>
+<value><val>0</val><dsc>Compact huds off.</dsc></value>
+<value><val>1</val><dsc>Will display armour/health/ammo/weapons *very* compactly.</dsc></value>
+<value><val>2</val><dsc>Will display armour/health/ammo *very* compactly.</dsc></value>
+<value><val>3</val><dsc>Displays only health/armour.</dsc></value>
+<value><val>4</val><dsc>Is just like "2" except it also displays your current weapon's ammo in big numbers.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_compactHudAlign</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>determine ammo amounts are aligned to the left.</dsc></value>
+<value><val>1</val><dsc>determine ammo amounts are aligned to the right.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_drawHFrags</name><range>0/1/2</range>
+<desc>
+<value><val>0</val><dsc>Turns frag display off.</dsc></value>
+<value><val>1</val><dsc>Individual frags.</dsc></value>
+<value><val>2</val><dsc>Teamfrags in teamplay mode.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_drawVFrags</name><range>0/1/2</range>
+<desc>
+<value><val>0</val><dsc>Turns frag display off.</dsc></value>
+<value><val>1</val><dsc>Individual frags.</dsc></value>
+<value><val>2</val><dsc>Teamfrags in teamplay mode.</dsc></value>
+Note: scr_drawVFrags only does something if your console width is >= 512 and &lt; 640.
+</desc>
+</item>
+<item>
+<name>scr_scoreboard_drawtitle</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable scoreboard title.</dsc></value>
+<value><val>1</val><dsc>Enable scoreboard title.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_scoreboard_fillalpha</name><range>0..1</range>
+<desc>
+Change scoreboard fillalpha.
+</desc>
+</item>
+<item>
+<name>scr_scoreboard_fillcolored</name>
+<desc>
+Modify scoreboard fillcolour.
+</desc>
+</item>
+<item>
+<name>scr_scoreboard_forcecolors</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>When you overwrite team/enemy color it will use only those colors for skins</dsc></value>
+<value><val>1</val><dsc>When you overwrite team/enemy color it will use only those colors for skins and scoreboard</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_scoreboard_showfrags</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable frags on the scoreboard.</dsc></value>
+<value><val>1</val><dsc>Enable frags on the scoreboard.</dsc></value>
+</desc>
+</item>
+<item>
+<name>scr_scoreboard_teamsort</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Frag sort.</dsc></value>
+<value><val>1</val><dsc>Team sort.</dsc></value>
+</desc>
+</item>
+<item>
+<name>sys_disableWinKeys</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Enable.</dsc></value>
+<value><val>1</val><dsc>Disable winkeys from alt-tabbing you (only works in NT/2K/XP, and only when FuhQuake is in focus).</dsc></value>
+Note:Windows keys are now bindable (LWINKEY, RWINKEY, WINKEY, POPUPMENU). Obviously only useful on NT/2K/XP with sys_disableWinKeys 1 (and possibely useful in linux too!).
+</desc>
+</item>
+<item>
+<name>sys_highpriority</name><range>-1/0/1</range>
+<desc>
+-1 = Sets process to idle/low priority.
+<value><val>0</val><dsc>Sets process to normal priority.</dsc></value>
+<value><val>1</val><dsc>Sets process to high priority.</dsc></value>
+</desc>
+</item>
+<item>
+<name>sys_inactiveSleep</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Prevent freeing of CPU when FuhQuake is minimised or not in focus.</dsc></value>
+<value><val>1</val><dsc>Enable inactive sleeping.</dsc></value>
+</desc>
+</item>
+<item>
+<name>sys_yieldcpu</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>FuhQuake eat more cpu.</dsc></value>
+<value><val>1</val><dsc>Give more cpu for other programs.</dsc></value>
+</desc>
+</item>
+<item>
+<name>enemycolor</name>
+<desc>
+Set the enemies top- and bottomcolor
+</desc>
+</item>
+<item>
+<name>teamcolor</name>
+<desc>
+Set the teammates top- and bottomcolor.
+</desc>
+</item>
+<item>
+<name>tp_pickup</name>
+<desc>
+Set items you want to report ($took)
+Item can be: quad, pent, ring, suit, ra, ya, ga, mh, health, lg, 
+rl, gl, sng, ng, ssg, pack, cells, rockets, nails, shells, flag, 
+armor, weapons, powerups, ammo, all, default, none
+</desc>
+</item>
+<item>
+<name>tp_point</name>
+<desc>
+What to report for pointing (%x, %y and %t).
+Item can be: powerups, quad, pent, ring, armor, ra, ya, ga,
+weapons, lg, rl, gl, sng, ng, ssg,
+ammo, cells, rockets, nails, shells,
+players, eyes, teammate, enemy,
+mh, health, pack, flag, all, default, none, suit
+Item names can be customized with tp_name_item
+Examples:
+tp_point powerups flag
+say_team I see %t!
+</desc>
+</item>
+<item>
+<name>tp_took</name>
+<desc>
+Customizes the f_took trigger.
+Item can be: quad, pent, ring, suit, ra, ya, ga, mh, health, lg, 
+rl, gl, sng, ng, ssg, pack, cells, rockets, nails, shells, flag, 
+armor, weapons, powerups, ammo, all, default, none
+Item names can be customized with tp_name_item
+Examples:
+tp_took powerups ra ya lg rl mh flag (same as "default")
+tp_took all -ammo (report everything but ammo)
+tp_took +gl (add grenade launcher to pickup list)
+alias f_took "say_team took %i"
+</desc>
+</item>
+<item>
+<name>tp_forceTriggers</name><range>0/1</range>
+<desc>
+Controls whether f_took, f_death etc are forced to execute even if the game isn't a team game.
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>On.</dsc></value>
+</desc>
+</item>
+<item>
+<name>tp_loadlocs</name><range>0/1</range>
+<desc>
+Controls whether to load locs for teamplay reporting.
+Note: The locs should be in your "/id1/locs/",
+"/fuhquake/locs" or "/qw/locs" folder.
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>On.</dsc></value>
+</desc>
+</item>
+<item>
+<name>tp_soundtrigger</name>
+<desc>
+SoundTrigger like proxys.
+A SoundTrigger must be terminated by either a CR, LF or filter. The .wav extension is not required at the end. Trigger is a character before the sound file.
+Example:
+filter #a
+say_team I'm at %l ~location.wav"
+say_team ~location.wav$\me: I'm at %l #a"
+say_team ~location$\me: I'm at %l #a"
+say_team I'm at %l ~location #a"
+</desc>
+</item>
+<item>
+<name>tp_triggers</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable tp triggers.</dsc></value>
+<value><val>1</val><dsc>Enable tp triggers.</dsc></value>
+</desc>
+</item>
+<item>
+<name>tp_weaponorder</name>
+<desc>
+This allows you to define the order from best to worst weapon. The default value
+is "78564321", which means that the Rocket Launcher is the best weapon (impulse 7)
+then Lightning Gun (impulse 8), Super Nailgun (impulse 5), Grenade Launcher
+(impulse 6), Nailgun (impulse 4), Super Shotgun (impulse 3), Shotgun (impulse 2),
+Axe (impulse 1).
+</desc>
+</item>
+<item>
+<name>d_mipcap</name><range>0/1/2/3</range>
+<desc>
+<value><val>0</val><dsc>High texture detail.</dsc></value>
+<value><val>1</val><dsc>Medium texture detail.</dsc></value>
+<value><val>2</val><dsc>Low texture detail.</dsc></value>
+<value><val>3</val><dsc>Minimum texture detail.</dsc></value>
+</desc>
+</item>
+<item>
+<name>d_mipscale</name><range>0/1/2/3</range>
+<desc>
+<value><val>0</val><dsc>Full object detail</dsc></value>
+<value><val>1</val><dsc>Some object detail</dsc></value>
+<value><val>2</val><dsc>Medium object detail</dsc></value>
+<value><val>3</val><dsc>Low object detail</dsc></value>
+</desc>
+</item>
+<item>
+<name>d_subdiv16</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Precise texture mapping (slower, more accurate).</dsc></value>
+<value><val>1</val><dsc>Perspective correction only every 16 pixels (faster, less accurate).</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_externalTextures_bmodels</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable loading of external 24bit textures for</dsc></value>
+non-world .bsp models (any .bsp that isn't the actual map.  Ex. health and ammo boxes).
+<value><val>1</val><dsc>Enable</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_externalTextures_world</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable loading of external 24bit textures for the</dsc></value>
+world .bsp model (i.e. the actual map).
+<value><val>1</val><dsc>Enable.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_ext_texture_compression</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Enable reduce memory held by textures on cards that support it (but </dsc></value>
+textures loaded slower and may have less quality).
+</desc>
+</item>
+<item>
+<name>gl_lerpimages</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Faster loading maps (not more fps).</dsc></value>
+<value><val>1</val><dsc>Better texture quality.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_max_size</name>
+<desc>
+This variable determines the detail level for loaded textures. When set to "1",
+the objects and walls will be textured with 1x1 pixel textures.
+</desc>
+</item>
+<item>
+<name>gl_miptexLevel</name><range>0/1/2/3</range>
+<desc>
+It is essentially a GL 'equivalent'
+to d_mipcap in software.  It has no affect when loading external 24bit textures.
+</desc>
+</item>
+<item>
+<name>gl_picmip</name>
+<desc>
+This variable determines the the level of detail for textures used on walls. You
+can use this variable to lower the texture detail used on walls thus increasing
+the game's performance.
+<value><val>0</val><dsc>Original size.</dsc></value>
+<value><val>1</val><dsc>Half the dimensions.</dsc></value>
+<value><val>2</val><dsc>One-fourth the dimensions.</dsc></value>
+X = etc..
+</desc>
+</item>
+<item>
+<name>gl_playermip</name>
+<desc>
+Determines the level of detail of player models. This variable is useful if you are 
+experience game slowdown during multiplayer games when there are lots of players on 
+your screen by shrinking the texture detail, but this will make the player models more blurry.
+<value><val>0</val><dsc>Full detail.</dsc></value>
+<value><val>1</val><dsc>Medium detail.</dsc></value>
+<value><val>2</val><dsc>Low detail.</dsc></value>
+X = etc.
+</desc>
+</item>
+<item>
+<name>gl_scaleModelTextures</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable scale model textures.</dsc></value>
+<value><val>1</val><dsc>Enable</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_scaleTurbTextures</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable gl_picmip/gl_max_size/gl_miptexLevel affect turb textures (lava, water, slime, teleports).</dsc></value>
+<value><val>1</val><dsc>Enable.</dsc></value>
+</desc>
+</item>
+<item>
+<name>gl_subdivide_size</name>
+<desc>
+This variable sets the division value for the sky brushes. The higher the value 
+the better the performance, but the smoothness of the sky suffers.
+</desc>
+</item>
+<item>
+<name>gl_texturemode</name>
+<desc>
+<value><val>GL_NEAREST</val><dsc>Point sampled</dsc></value>
+<value><val>GL_NEAREST_MIPMAP_NEAREST</val><dsc></dsc></value>
+<value><val>GL_LINEAR</val><dsc></dsc></value>
+<value><val>GL_LINEAR_MIPMAP_NEAREST</val><dsc></dsc></value>
+<value><val>GL_LINEAR_MIPMAP_LINEAR</val><dsc>Trilinear interpolation</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_max_size_1</name><range>0/1/2</range>
+<desc>
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>Blend map textures.</dsc></value>
+<value><val>2</val><dsc>Blend map textures and bsp entities (ammo, health etc.)</dsc></value>
+</desc>
+</item>
+<item>
+<name>auth_validate</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>If you don't want your client to validate other FuhQuake clients.</dsc></value>
+<value><val>1</val><dsc>which performs the validation (but you need to use 'validate_clients'</dsc></value>
+to see the results after a 'fuh_version').  If you have 
+'auth_warninvalid 1' and someone gives a dirty hash in a version response 
+(because they are using a hacked client that can't work out the right 
+response), FuhQuake will print something like 
+'Warning Invalid Client: playername (userid)' in your console ('auth_warninvalid 0' is default).
+</desc>
+</item>
+<item>
+<name>auth_warninvalid</name><range>0/1</range>
+<desc>
+Check auth_validate.
+</desc>
+</item>
+<item>
+<name>cl_loadFragfiles</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Enable displaying team fortress related statistics in the scoreboard (flag touches, steals, caps, etc)</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_parseFrags</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Enable displaying team fortress related statistics in the scoreboard (flag touches, steals, caps, etc)</dsc></value>
+</desc>
+</item>
+<item>
+<name>block_switch</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Do not block task-switching</dsc></value>
+<value><val>1</val><dsc>Block task-switching</dsc></value>
+</desc>
+</item>
+<item>
+<name>vid_config_x</name>
+<desc>
+This variable sets the width of the vid_mode 2 window, the minimum possible
+value is "640".
+</desc>
+</item>
+<item>
+<name>vid_config_y</name>
+<desc>
+This variable sets the width of the vid_mode 2 window, the minimum possible
+value is "400"
+</desc>
+</item>
+<item>
+<name>vid_fullscreen_mode</name>
+<desc>
+This variable sets the full screen video mode that the game will switch to when
+the "vid_fullscreen" command is executed.
+</desc>
+</item>
+<item>
+<name>vid_hwgammacontrol</name><range>0/1/2</range>
+<desc>
+<value><val>0</val><dsc>Disables hardware gamma control. </dsc></value>
+<value><val>1</val><dsc>Enables hardware gamma control.</dsc></value>
+<value><val>2</val><dsc>Enables hwgamma in windowed mode.</dsc></value>
+</desc>
+</item>
+<item>
+<name>vid_mode</name>
+<desc>
+This variables sets the next video mode to be used, any change of this variable
+will cause the video mode to be changed immediately.
+</desc>
+</item>
+<item>
+<name>vid_nopageflip</name><range>0/1</range>
+<desc>
+This variable toggles the use of page-flipping during supported video modes. By 
+default the game will allow for page-flipping for video modes that support this 
+feature. For example if a given VESA mode can support page flipping, then it 
+defaults to page-flipped operation.  A VESA mode can be forced to 
+non-page-flipped operation by setting the "vid_nopageflip" variable to "1", then
+setting the mode (note that "vid_nopageflip" takes operation on the next, 
+not the current video mode, and note that it then stays in effect permanently, 
+even when FuhQuake is exited and restarted, unless it is manually set back to "0").
+If there is not enough memory for two pages in a VESA mode, or if the adapter 
+doesn't support page flipping, then the mode will automatically be 
+non-page-flipped.  
+Page-flipping works by drawing multiple virtual game screens at the same time in 
+the video memory and then switching among them to display the current 
+gamescreen. Page-flipped modes thus use less system memory than non-page-flipped 
+modes, but require more video memory. When using page-flipping, visual quality 
+may be higher, but performance of the game can change to better or worse, 
+depending on the graphics adapter and other hardware (see the discussion of the 
+Pentium Pro below, for a discussion of why page flipping can be faster but is 
+sometimes much slower on that processor). However in most cases the performance 
+(and thus frame rate) will be increased, but for people with hardware that has 
+problems with page-flipping "vid_nopageflip 1" may help.
+The Pentium Pro is an example for such a hardware: it is a fast FuhQuake platform, 
+but it has one weak spot, it is by default very slow on writes to video memory.  
+This means that in default hardware configurations, you are usually much better 
+off setting "vid_nopageflip" to "1" if you use VESA modes, so drawing is done to 
+system memory instead of to video memory. Remember that you must set the mode
+after setting "vid_nopageflip" to "1" in order to get "vid_nopageflip" to take
+effect. "vid_nopageflip 1" can sometimes be faster on a Pentium too, but not by 
+nearly as much in general, and it's often slower.
+</desc>
+</item>
+<item>
+<name>vid_resetonswitch</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Enable (This is a workaround for the bug in some NVidia drivers, when you alt-tab out of </dsc></value>
+FuhQuake and the screen gets garbaged. When enabled, FuhQuake will reset your Windows video mode 
+every time you press alt-tab. Note that some NVidia drivers lock up your system completely 
+when you alt-tab. vid_resetonswitch will not help in this case (try starting FuhQuake with -dibonly).
+</desc>
+</item>
+<item>
+<name>vid_stretch_by_2</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable.</dsc></value>
+<value><val>1</val><dsc>Enable (This variable toggles whether in "vid_mode 2" the picture should be rendered at </dsc></value>
+half-resolution in each direction and stretched up to the specified size.)
+</desc>
+</item>
+<item>
+<name>vid_vsync</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable vsync.</dsc></value>
+<value><val>1</val><dsc>Enable vsync.</dsc></value>
+</desc>
+</item>
+<item>
+<name>vid_windowed_mode</name>
+<desc>
+This variable sets the windowed video mode that the game will switch to when the 
+"vid_windowed" command is executed.
+</desc>
+</item>
+<item>
+<name>vid_window_x</name>
+<desc>
+This variable sets the x-axis location of the top left corner of the game window 
+on the desktop.
+</desc>
+</item>
+<item>
+<name>vid_window_y</name>
+<desc>
+This variable sets the y-axis location of the top left corner of the game window 
+on the desktop.
+</desc>
+</item>
+<item>
+<name>_vid_default_mode</name>
+<desc>
+This variable sets the default video mode that FuhQuake uses.
+</desc>
+</item>
+<item>
+<name>_vid_default_mode_win</name>
+<desc>
+This variable sets the default video mode that FuhQuake uses when windowed.
+</desc>
+</item>
+<item>
+<name>_windowed_mouse</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable windowed mouse support so you can use the mouse in other applications.</dsc></value>
+<value><val>1</val><dsc>Enabled windowed mouse support so you can use the mouse in FuhQuake.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_rollangle</name>
+<desc>
+This variable controls how much your screen tilts when strafing.
+</desc>
+</item>
+<item>
+<name>cl_rollspeed</name>
+<desc>
+This variable controls how quickly you and other players straighten out after 
+strafing.
+</desc>
+</item>
+<item>
+<name>default_fov</name>
+<desc>
+Very useful in TeamFortress, and other mods that reset your fov when you spawn to 90. 
+Basically, when the server sends you "fov 90", your fov is set to default_fov.
+</desc>
+</item>
+<item>
+<name>fov</name>
+<desc>
+This variable defines your field of vision, which determines how close your 
+vision field is to the objects.
+</desc>
+</item>
+<item>
+<name>viewsize</name><range>30-120</range>
+<desc>
+This variable determines how large the viewable screen size is.
+<value><val>30</val><dsc>Minimum screen size</dsc></value>
+...
+<value><val>100</val><dsc>Normal screen size.</dsc></value>
+<value><val>110</val><dsc>Large screen size, without the weapons status bar.</dsc></value>
+<value><val>120</val><dsc>Maximum screen size, without any status bars.</dsc></value>
+</desc>
+</item>
+<item>
+<name>v_centermove</name>
+<desc>
+This variable sets the distance that the player must move before the screen 
+automatically centers itself when "lookspring" is set to "1". This variable is 
+only useful to people who only play with the keyboard, have "lookspring" set to
+"1" and do not have "+klook" or "+mlook" enabled at that time. When the player 
+moves the distance specified in this variable the screen will pop back to the 
+center position.
+</desc>
+</item>
+<item>
+<name>v_centerspeed</name>
+<desc>
+This variable sets how quickly your view returns to the center after looking up
+or down and moving after that and "lookspring" is set to "1". This variable is 
+only useful to people who only play with the keyboard, have "lookspring" set to
+"1" and do not have "+klook" or "+mlook" enabled at that time. When the player 
+moves the distance specified in this variable the screen will pop back to the 
+center position.
+</desc>
+</item>
+<item>
+<name>v_gunkick</name><range>0..1</range>
+<desc>
+Kickback effect when the weapon is fired.
+</desc>
+</item>
+<item>
+<name>v_idlescale</name>
+<desc>
+This variable controls the amount that the screen should sway automatically.
+When this variable is set to a value above "0" the screen will start swaying in 
+all directions, similar as if the player was drunk of had a concussion. If you 
+want to have some real fun, set this variable to a value of "100" and run around 
+some maps. The larger the value for this variable the more the screen will sway 
+from side to side.
+<value><val>0</val><dsc>Disable automatic swaying.</dsc></value>
+</desc>
+</item>
+<item>
+<name>v_ipitch_cycle</name>
+<desc>
+This variable controls the speed at which the screen should sway up and down
+when "v_idlescale" is set to a value above "0".
+</desc>
+</item>
+<item>
+<name>v_ipitch_level</name>
+<desc>
+This variable controls the distance that the screen should sway up and down when "v_idlescale" is set to a value above "0".
+</desc>
+</item>
+<item>
+<name>v_iroll_cycle</name>
+<desc>
+This variable controls the speed at which the screen should roll clockwise and 
+counter clockwise when "v_idlescale" is set to a value above "0".
+</desc>
+</item>
+<item>
+<name>v_iroll_level</name>
+<desc>
+This variable controls the distance the screen should roll clockwise and counter
+clockwise when "v_idlescale" is set to a value above "0".
+</desc>
+</item>
+<item>
+<name>v_iyaw_cycle</name>
+<desc>
+Sets how quickly you look left and right when v_idlescale is active.
+</desc>
+</item>
+<item>
+<name>v_iyaw_level</name>
+<desc>
+Sets how far you look left and right when v_idlescale is active.
+</desc>
+</item>
+<item>
+<name>v_kickpitch</name>
+<desc>
+This variable controls the distance that the screen should move up or down when 
+the player is shot. Most players set this variable to "0" in order to remove the 
+screen tilting effect when they are injured by a shot. This allows them to keep 
+a perfect aim while being fired upon.
+</desc>
+</item>
+<item>
+<name>v_kickroll</name>
+<desc>
+This variable controls the distance that the screen should roll clockwise or 
+counter clockwise when the player is shot. Most players set this variable to "0"
+in order to remove the screen tilting effect when they are injured by a shot. 
+This allows them to keep a perfect aim while being fired upon.
+</desc>
+</item>
+<item>
+<name>v_kicktime</name>
+<desc>
+This variable controls the amount of time that the screen should remain tilted 
+after the player has been shot. Most players set this variable to "0" in order 
+to remove the screen tilting effect when they are injured by a shot. This allows 
+them to keep a perfect aim while being fired upon.
+</desc>
+</item>
+<item>
+<name>v_viewheight</name>
+<desc>
+New variable v_viewheight cam be used to get the effect of negative/zero values 
+of cl_bobcycle etc in qw 2.33 . Negative values of v_viewheight = lower viewheight, 
+positive = higher. Can't go below -7 or above 4 because that's the range you can get 
+with qw 2.33 by exploiting the bob cycle bug. Using v_viewheight automatically 
+turns off weapon model bobbing (cl_bob*).
+</desc>
+</item>
+<item>
+<name>r_fastsky</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable fastsky. </dsc></value>
+<value><val>1</val><dsc>Enable fastsky, helps fps a bit on maps with large sky areas.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_fastturb</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>All turbulences will be displayed normally.</dsc></value>
+<value><val>1</val><dsc>All turbulences will be replaced by single-coloured surfaces.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_novis</name><range>0/1</range>
+<desc>
+This variable toggles the use of VIS information from the map data. When this 
+variable is set to "1" the game will calculate it's own VIS information on the 
+fly instead of using the information stored in the map data, this will cause 
+a severe performance penalty in the game. When "r_novis" is set to "1", the 
+variable "r_wateralpha" has a value lower than "1" and the server allows the
+client to display water transparently the player will be able to see through 
+liquids. This is a nice effect to see but it is not recommended to keep this 
+variable set to "1" because of the huge performance penalty. 
+It is possible to enable transparent water and still keep this variable set to
+"0" (and thus not experience such a severe performance drop) by using maps that
+are VISed accordingly. You can visit the official Water VIS site at 
+"http://www.sod.net/" and download the vispatch program along with the patch 
+data files which you would use to update the VIS data for all of your game maps.
+There are also map packs available that contain VISed versions of the original
+ID maps. 
+<value><val>0</val><dsc>Do not calculate VIS information for unVISed maps.</dsc></value>
+<value><val>1</val><dsc>Calculate VIS information for unVISed maps.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_skycolor</name>
+<desc>
+Change the color of sky when r_fastsky is on.
+</desc>
+</item>
+<item><name>r_skyname</name>
+<desc>
+If you wan't to use skybox name snow type r_skyname snow, disable skybox with r_skyname ""
+</desc>
+</item>
+<item>
+<name>r_wateralpha</name><range>0..1</range>
+<desc>
+This variable determines the level of opacity for liquids, which requires
+the use of maps that were VISed with transparent water. When using maps that
+have not been VISed in such a way, you have to use "r_novis 1". If "r_novis" is
+set to "1" or when using a map VISed with transparent water and using setting
+"r_wateralpha" to a value lower than "1", the player will be able to see objects 
+and walls through liquids if the server allows that. This is a very nice feature 
+to have in the game, for more information refer to the "r_novis" command. You 
+can use any value between "0" and "1" for "r_wateralpha", here are some 
+Examples:
+<value><val>0.00</val><dsc>Transparent.</dsc></value>
+<value><val>0.25</val><dsc>Low opacity.</dsc></value>
+<value><val>0.50</val><dsc>Medium opacity.</dsc></value>
+<value><val>0.75</val><dsc>High opacity.</dsc></value>
+<value><val>1.00</val><dsc>Solid.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_waterwarp</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Disable warping of surfaces.</dsc></value>
+<value><val>1</val><dsc>Enable warping of surfaces.</dsc></value>
+</desc>
+</item>
+<item>
+<name>cl_bob</name><range>0..1</range>
+<desc>
+This variable controls how much your weapon moves up and down when walking.
+</desc>
+</item>
+<item>
+<name>cl_bobcycle</name><range>0..1</range>
+<desc>
+This variable determines how quickly your weapon moves up and down when walking.
+</desc>
+</item>
+<item>
+<name>cl_bobup</name><range>0..1</range>
+<desc>
+This variable controls how long your weapon stays up before cycling when 
+walking.
+</desc>
+</item>
+<item>
+<name>cl_filterdrawviewmodel</name><range>0/1</range>
+<desc>
+<value><val>0</val><dsc>Off.</dsc></value>
+<value><val>1</val><dsc>Prevents r_drawviewmodel from being changed by servers like Rocket Arena.</dsc></value>
+</desc>
+</item>
+<item>
+<name>r_drawviewmodel</name><range>0..1</range>
+<desc>
+<value><val>0</val><dsc>Do not display the weapon model. </dsc></value>
+<value><val>0.5</val><dsc>50% transparented.</dsc></value>
+<value><val>1</val><dsc>Display the weapon model.</dsc></value>
+Note: Transparency works in GL only.
+</desc>
+</item>
+<item>
+<name>r_viewmodelSize</name><range>0..1</range>
+<desc>
+This allows you to change the size of the viewmodel (the model of your active 
+weapon displayed on the center of your screen) a little, useful if you prefer
+to use "r_drawviewmodel 1" and higher fov values (for demos for example).
+For "fov 110" you could try "r_viewmodelscale 0.8" or 0.85 for example.
+</desc>
+</item>
+<item><name>r_damagestats</name> <range>0,1</range> 
+<desc>Displays the amount of damage taken recently on the screen above your armour and health.</desc>
+</item><item><name>cl_camera_chase</name> <range>0,1,2</range> 
+<desc>0 = 1<sup>st</sup> person view<br />
+1 = 3<sup>rd</sup> person view ala Tomb Raider (such a fun!)<br />
+2 = 3<sup>rd</sup> person view ala cl_chasecam 0 (buggy)<br />
+Disabled in <code>-ruleset smackdown</code></desc>
+</item><item><name>cl_camera_death</name> <range>0,1</range> 
+<desc>Camera view above your body after death.<br />Disabled in <code>-ruleset smackdown</code></desc>
+</item><item><name>r_glstats</name> <range>0,1</range> 
+<desc>When enabled, it creates a window in the top right of the screen showing the number of particles and etc. in use.</desc>
+</item><item><name>r_tracker_frags</name> <range>0,1</range> 
+<desc>Everytime you make a kill or die, the number of kills/deaths/suicides with that weapon is displayed on the screen.</desc>
+</item><item><name>r_tracker_flags</name> <range>0,1</range> 
+<desc>Everytime you take, capture or drop a flag, the number of times is displayed on the screen.</desc>
+</item><item><name>r_tracker_streaks</name> <range>0,1</range> 
+<desc>Everytime a player makes a set number of consecutive kills, it will display a message showing they are on a streak, when the player is killed, it will display the name of the person who ended that streak.</desc>
+</item><item><name>r_tracker_messages</name> <range>0,1,X</range> 
+</item><item><name>cl_hiderockets</name> <range>0,1</range> 
+<desc>Toggles rockets visibility. Variable cl_r2g must be 0 to cl_hiderockets 1 work.</desc>
+</item><item><name>cl_hidenails</name> <range>0,1</range>  
+<desc>Toggles nails visibility.</desc>
+</item><item><name>gl_surface_lava</name> <range>0,1,2</range> 
+<desc>Adds boiling bubbles over the lava.</desc>
+</item><item><name>gl_surface_slime</name> <range>0,1,2</range> 
+<desc>Adds bubbles and fumes of slime over the slime.</desc>
+</item><item><name>gl_inferno_trail</name> <range>0,1,2,3,4,5</range> 
+<desc>Changes type of gl_inferno missile trail.</desc>
+</item><item><name>gl_inferno_speed</name> <range>0-X</range> 
+<desc>Changes speed of gl_inferno missile trail.</desc>
+</item><item><name>r_rockettrail</name> <range>0-7,8,9,10,11</range> 
+<desc>Added new rocket trail types (8-11)</desc>
+<ul>
+<li><strong>Plasma Rocket. (r_rockettrail 8)</strong><br />
+Well, its a blue fireball, you'll just have to take my word that its a plasma rocket.</li>
+<li><strong>Lavaball. (r_rockettrail 9)</strong><br />
+The lavaball looks really silly with the default rocket trail, so I made it this burning ball of death thing. You can also use it for rockets.</li>
+<li><strong>Fuel Rod Gun (from Halo! r_rockettrail 10)</strong><br />
+Any similarities between the fuel rod trail and Daikatana's ion blaster are purely coincidental.</li>
+<li><strong>Plasma Rocket Mk II (r_rockettrail 11)</strong><br />
+Its a red plasma rocket trail, but it has... things coming off it.</li>
+</ul>
+<desc>Note that if you use the rocket trails, you will have to change the explosion colours and things like that yourself. And you might want to try hiding the rockets with the new amf_hiderockets cvar for some trails are	intended to be "beam" trails.</desc>
+</item><item><name>r_grenadetrail</name> <range>0,1,...,11</range> 
+<desc>Customizable grenade trails<br />
+Works the same way as r_rockettrail, but for grenades.</desc>
+</item><item><name>r_explosiontype</name> <range>0-7,8,9</range> 
+<desc>New Explosions types (8 and 9):</desc>
+<ul>
+<li><strong>Fuel Rod Gun Explosion (r_explosiontype 8)</strong><br />
+This is a kind of mushroom cloud... Oh, and its green.</li>
+<li><strong>Sprite Explosion (r_explosiontype 9)</strong><br />
+Its just a 2d-type explosion for people who don't want great balls of orange fire.</li>
+</ul>
+</item><item><name>r_lavacolor</name> <range>0-255 0-255 0-255</range> 
+<desc>Changes colour of lava when r_fastturb set to 1</desc>
+</item><item><name>r_skycolor</name> <range>0-255 0-255 0-255</range> 
+<desc>Changes colour of sky when r_fastsky set to 1</desc>
+</item><item><name>r_slimecolor</name> <range>0-255 0-255 0-255</range> 
+<desc>Changes colour of slime when r_fastturb set to 1</desc>
+</item><item><name>r_telecolor</name> <range>0-255 0-255 0-255</range> 
+<desc>Changes colour of teleport when r_fastturb set to 1</desc>
+</item><item><name>r_watercolor</name> <range>0-255 0-255 0-255</range> 
+<desc>Changes colour of lava when r_fastturb set to 1</desc>
+</item><item><name>gl_coronas</name> <range>0,1</range> 
+<desc>Adds coronas to some effects:</desc><ul><li>Explosions - Basically just a bright flash since the default explosions didn't feel powerful enough.</li>
+<li>Muzzleflashes.</li>
+<li>Lightning.</li>
+<li>Fire - Torches have glows.</li>
+<li>Rocket Lights.</li></ul>
+</item><item><name>gl_coronas_tele</name> <range>0,1</range> 
+<desc>Allows you to turn on/off blue light when spawning.</desc>
+</item><item><name>gl_lighting_vertex</name> <range>0,1</range> 
+<desc>Alias models no longer have the same level of light on all sides. This may not work correctly if coloured lighting is disabled.</desc>
+</item><item><name>gl_lighting_colour</name> <range>0,1</range> 
+<desc>Alias models are effected by coloured lights around them.</desc>
+</item><item><name>gl_particle_blood</name> <range>0,1</range> 
+<ul>
+<li>0 = Turns blood particles off</li>
+<li>1 = Turns blood particles on</li>
+</ul>
+</item><item><name>gl_particle_blood_color</name> <range>0,1,X</range> 
+<desc>Changes colour of blood.</desc>
+</item><item><name>gl_particle_blood_type</name> <range>1,X</range> 
+<desc>Chooses among types of blood particles.</desc>
+</item><item><name>gl_particle_muzzleflash</name> <range>0,1</range> 
+<desc>Adds particle effect when firing a weapon.</desc>
+</item><item><name>gl_particle_fire</name> <range>0,1</range> 
+<desc>Replaces torches with a particle flame effect. Includes people being burnt by the pyro in TF.</desc>
+</item><item><name>gl_particle_deatheffect</name> <range>0,1</range> 
+</item><item><name>gl_particle_gunshots</name> <range>0-X</range> 
+</item><item><name>gl_particle_gunshots_type</name> <range>1,2,3,4</range> 
+</item><item><name>gl_particle_spikes</name> <range>0-X</range> 
+</item><item><name>gl_particle_spikes_type</name> <range>1,2,3,4</range> 
+</item><item><name>gl_particle_explosions</name> <range>0,1</range> 
+<desc>Turns particle alternatives to each r_explosiontype on or off.</desc>
+</item><item><name>gl_particle_blobs</name> <range>0-X</range> 
+</item><item><name>gl_particle_sparks</name> <range>0,1</range> 
+<desc>Trails appear more beam-like and don't look stupid when they bounce.</desc>
+</item><item><name>gl_particle_shockwaves</name> <range>0,1</range> 
+<desc>0 - Turns off explosion shockwaves.<br />
+1 - Turns on explosion shockwaves.</desc>
+</item><item><name>gl_particle_shockwaves_flat</name> <range>0,1</range> 
+</item><item><name>gl_particle_gibtrails</name> <range>0,1</range> 
+</item><item><name>gl_particle_fasttrails</name> <range>0,1</range> 
+</item><item><name>gl_particle_trail_lenght</name> <range>0-X</range> 
+<desc>X - Multiplies the length of the trail on particle trails.</desc>
+</item><item><name>gl_particle_trail_time</name> <range>0-X</range> 
+<desc>X - Multiplies the length of time the particle bounces around for.</desc>
+</item><item><name>gl_particle_trail_detail</name> <range>0-X</range> 
+</item><item><name>gl_particle_trail_width</name> <range>0-X</range> 
+<desc>Changes width of trail particle e.g.: wall hitted by nail, explosion particles trail, etc.</desc> 
+</item><item><name>gl_particle_trail_type</name> <range>0,1,X</range> 
+</item><item><name>gl_weather_rain</name> <range>0,1,2,X</range> 
+<desc>Turns on rain out of doors, the density of rain is equal to whatever gl_weather_rain is set to.<br />
+If you set gl_weather_rain_fast to 1, you can turn off all splashes, if you set it to 2, you will turn off only the water splashes.<br />
+Works on all non-iD maps except death32c, dakyne and some others.</desc>
+</item><item><name>gl_weather_rain_fast</name> <range>0,X</range> 
+<desc>Adjusts speed of rain.</desc>
+</item><item><name>gl_nailtrail</name> <range>0,1</range> 
+<desc>Adds a white trail onto nails as they fly around.<br />
+This feature wont work on servers not running with sv_nailhack set to 1.</desc>
+</item><item><name>gl_nailtrail_plasma</name> <range>0,1</range> 
+<desc>Adds plazma trail after nails.</desc>
+</item><item><name>gl_nailtrail_water</name> <range>0,1</range> 
+<desc>Switches between two type of bubbles nails leave behind in water.</desc> 
+</item><item><name>gl_extratrails</name> <range>0,1</range> 
+<desc>Misc trails that appear on objects that frequently move, such as TF grenades, caltrops, etc.<br />
+Railguns in TF also leave behind unique trails.</desc>
+</item><item><name>gl_underwater_trails</name> <range>0,1</range> 
+<desc>This gives rockets/grenades/nails and other things an alternate underwater trail.<br />
+Very nice to have nailgun fights underwater...</desc>
+</item><item><name>gl_detpacklights</name> <range>0,1</range> 
+<desc>A little green light appears on the detpack, and when the timer reaches 5, the light changes to red. gl_coronas must be turned on for this to work.</desc>
+</item><item><name>gl_buildingsparks</name> <range>0,1</range> 
+<desc>Buildings that are destroyed in TF will continue to throw sparks until they disapear.</desc>
+</item><item><name>gl_lightning</name> <range>0,1,X</range> 
+<desc>0 - Turns off coronas on lightning beams<br />
+1 - Turns on coronas on lightning beams.</desc>
+</item><item><name>gl_lightning_size</name> <range>1-X</range>  
+<desc>Adjusts size of ligtning particle beam.</desc>
+</item><item><name>gl_lightning_sparks</name> <range>0-X</range>
+<desc>Sparks fly from walls when hit by lightning gun.</desc> 
+</item><item><name>gl_motiontrails</name> <range>0,1</range> 
+<desc>When enabled, flags and keys leave behind a kind of after-image.<br />
+Fiends also leave trails when they pounce.</desc>
+</item><item><name>gl_motiontrails_wtf</name> <range>0,1</range> 
+<desc>Same as gl_motiontrails but works for all players and creatures.</desc>
+</item><item><name>gl_waterripple</name> <range>0-X</range> 
+<desc>Put your life vests on, waves are coming!</desc>
+</item><item><name>gl_cutf_tesla_effect</name> <range>0,1</range> 
+<desc>When a shambler is preparing to throw lightning, or a tesla coil (TF) is charging to fire, a particle effect is generated.</desc></item>
+</vars>

@@ -1,0 +1,17 @@
+<?php
+
+  echo("<dl>");
+	foreach($group as $k => $v) {
+	  $urlUberGroup = 'vars-'.urlencode(strtolower($v));
+	  echo("<dt><a href=\"?$urlUberGroup\">$v</a></dt><dd>");
+		$i = False;
+		foreach($ubergr[$k] as $n) {
+		  $urlGroup = urlencode(strtolower($n));
+		  if($i) echo(", ");
+  		echo("<a href=\"?$urlUberGroup#$urlGroup\">".htmlspecialchars($n)."</a>");
+			$i = True;
+		}
+		echo("</dd>");
+	}
+	echo("</dl>");
+?>

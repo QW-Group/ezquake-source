@@ -1,0 +1,19 @@
+Disable %-reporting
+Disable use of powerup timer (obsolete in v2.55) (old Qizmo only)
+Disable use of soundtrigger
+Disable use of lag features
+Make Qizmo report any changes in lag settins
+Silent %e enemy vicinity reporting (reporter doesn't see the message) (always on in v2.55)
+Spectators can't talk to players and vice versa (voice)
+Silent %x and %y (reporter doesn't see the message) (always on in v2.8)
+Disable skin forcing
+Disable color forcing
+Block intelligent reporting functions
+Disable the intelligent skin
+Disable intelligent cross
+Disable fullbright
+Limit cl_pitchspeed value. 
+Limit cl_yawspeed value.
+[suggestion] Disable f_took
+[suggestion] Disable scripts
+[suggestion] Disable gametimer
