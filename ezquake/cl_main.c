@@ -810,6 +810,7 @@ void CL_InitLocal (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&cl_shownet);
 	Cvar_Register (&show_fps2);
+	Cvar_Register (&cl_confirmquit);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register (&cl_sbar);
@@ -884,7 +885,6 @@ void CL_InitLocal (void) {
 	Cvar_Register (&localid);
 	Cvar_Register (&cl_warncmd);
 	Cvar_Register (&cl_cmdline);
-	Cvar_Register (&cl_confirmquit);
 
 	Cvar_ResetCurrentGroup();
 
