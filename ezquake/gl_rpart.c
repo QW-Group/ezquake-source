@@ -2555,7 +2555,7 @@ void BurningExplosion (vec3_t org)
 
 //VULT PARTICLES
 //Not much, but anything is better than that alias torch
-void ParticleFire (vec3_t org) 
+void ParticleFire (vec3_t org)
 {
 	col_t color={255,100,25, 128};
 	int	contents = TruePointContents(org);

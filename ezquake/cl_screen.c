@@ -40,6 +40,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud.h" // HUD -> hexum
 #include "hud_common.h"
 
+#ifdef _WIN32
+#include "movie_avi.h"	//joe: capturing to avi
+#endif
+
 #ifdef GLQUAKE
 int				glx, gly, glwidth, glheight;
 #endif
@@ -1537,6 +1541,41 @@ void SCR_AutoScreenshot(char *matchname) {
 		scr_autosshot_countdown = vid.numpages;
 		Q_strncpyz(auto_matchname, matchname, sizeof(auto_matchname));
 	}
+}
+
+//joe: capturing to avi
+void SCR_Movieshot(char *name) {
+#ifdef _WIN32
+	extern qboolean	movie_is_avi;
+
+	if (movie_is_avi) {
+#ifdef GLQUAKE
+		int i, size = glwidth * glheight * 3;
+		byte temp, *buffer;
+
+		buffer = Q_Malloc (size);
+		glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+		applyHWGamma (buffer, size);
+
+		for (i = 0; i < size; i += 3) {
+			temp = buffer[i];
+			buffer[i] = buffer[i+2];
+			buffer[i+2] = temp;
+		}
+
+		if (!Capture_WriteVideo(glwidth, glheight, buffer))
+			Con_Print ("Problem capturing video frame!\n");
+
+		free (buffer);
+#else
+		//joe: FIXME...
+#endif
+	} else {
+		SCR_Screenshot (name);
+	}
+#else
+	SCR_Screenshot (name);
+#endif
 }
 
 /************************************ INIT ************************************/

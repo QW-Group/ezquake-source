@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef _WIN32
 #include "winquake.h"
+#include "movie.h"	//joe: capturing audio
 #endif
 
 #define	PAINTBUFFER_SIZE	512
@@ -133,6 +134,11 @@ void S_TransferStereo16 (int endtime)
 
 		snd_p += snd_linear_count;
 		lpaintedtime += (snd_linear_count>>1);
+
+//joe: capturing audio
+#ifdef _WIN32
+		Movie_TransferStereo16 ();
+#endif
 	}
 
 #ifdef _WIN32

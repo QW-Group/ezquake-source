@@ -22,13 +22,29 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 
 #ifdef _WIN32
+#include "movie_avi.h"	//joe: capturing to avi
+#include "sound.h"	//
+#endif
+
+#ifdef _WIN32
 	#include <windows.h>
 #else
 	#include <time.h>
 #endif
 
 static qboolean OnChange_movie_dir(cvar_t *var, char *string);
-int SCR_Screenshot(char *);
+//int SCR_Screenshot(char *);
+void SCR_Movieshot (char *);	//joe: capturing to avi
+
+//joe: capturing audio
+#ifdef _WIN32
+extern short *snd_out;
+extern int snd_linear_count, soundtime;
+
+// Variables for buffering audio
+short capture_audio_samples[44100];	// big enough buffer for 1fps at 44100Hz
+int captured_audio_samples;
+#endif
 
 #ifdef GLQUAKE
 	extern cvar_t scr_sshot_type;
@@ -38,10 +54,21 @@ cvar_t   movie_fps			=  {"demo_capture_fps", "30.0"};
 cvar_t   movie_dir			=  {"demo_capture_dir",  "capture", 0, OnChange_movie_dir};
 cvar_t   movie_steadycam	=  {"demo_capture_steadycam", "0"};
 
-static qboolean	movie_is_capturing = false, movie_first_frame;
+#ifdef _WIN32
+cvar_t   movie_codec		=  {"demo_capture_codec", "0"};	//joe: capturing to avi
+#endif
+
+static qboolean movie_is_capturing = false, movie_first_frame;
 static double movie_start_time, movie_len;
 static int movie_frame_count;
 static char	image_ext[4];
+
+//joe: capturing to avi
+#ifdef _WIN32
+qboolean movie_is_avi = false, movie_avi_loaded;
+static char avipath[256];
+static FILE *avifile = NULL;
+#endif
 
 #ifdef _WIN32
 	static SYSTEMTIME	movie_start_date;
@@ -63,6 +90,9 @@ static void Movie_Start(double _time) {
 	GetLocalTime(&movie_start_date);
 #endif
 	movie_first_frame = movie_is_capturing = true;
+#ifdef _WIN32
+	movie_is_avi = !!avifile;	//joe: capturing to avi
+#endif
 	movie_len = _time;
 	movie_start_time = cls.realtime;
 
@@ -72,10 +102,21 @@ static void Movie_Start(double _time) {
 #else
 	strcpy(image_ext, "pcx");
 #endif
+
+#ifdef _WIN32
+	if (movie_is_avi)	//joe: capturing to avi
+		Capture_Open (avipath, (*movie_codec.string != '0') ? movie_codec.string : 0, movie_fps.value, shm->speed);
+#endif
 }
 
 void Movie_Stop (void) {
 	movie_is_capturing = false;
+#ifdef _WIN32
+	if (movie_is_avi) {	//joe: capturing to avi
+		Capture_Close ();
+		fclose (avifile);
+	}
+#endif
 	Com_Printf("Captured %d frames (%.2fs).\n", movie_frame_count, (float) (cls.realtime - movie_start_time));
 }
 
@@ -84,8 +125,13 @@ void Movie_Demo_Capture_f(void) {
 	double time;
 	char *error;
 	
+#ifdef _WIN32
+	error = va("Usage: %s <start time [avifile] | stop>\n", Cmd_Argv(0));
+	if ((argc = Cmd_Argc()) != 2 && argc != 3 && argc != 4) {
+#else
 	error = va("Usage: %s <start time | stop>\n", Cmd_Argv(0));
 	if ((argc = Cmd_Argc()) != 2 && argc != 3) {
+#endif
 		Com_Printf(error);
 		return;
 	}
@@ -113,6 +159,31 @@ void Movie_Demo_Capture_f(void) {
 		Com_Printf("%s : Time argument must be positive\n", Cmd_Argv(0));
 		return;
 	}
+#ifdef _WIN32
+	//joe: capturing to avi
+	if (argc == 4) {
+		char aviname[MAX_OSPATH];
+
+		Q_strncpyz (aviname, Cmd_Argv(3), sizeof(aviname));
+		if (!(Util_Is_Valid_Filename(aviname))) {
+			Com_Printf(Util_Invalid_Filename_Msg(aviname));
+			return;
+		}
+		COM_ForceExtension (aviname, ".avi");
+		Q_snprintfz (avipath, sizeof(avipath), "%s/%s/%s", com_basedir, movie_dir.string, aviname);
+		if (!(avifile = fopen(avipath, "wb"))) {
+			COM_CreatePath (avipath);
+			if (!(avifile = fopen(avipath, "wb"))) {
+				Com_Printf("Error: Couldn't open %s\n", aviname);
+				return;
+			}
+		}
+		if (!movie_avi_loaded) {
+			Com_Printf("Error: Avi capturing not initialized\n");
+			return;
+		}
+	}
+#endif
 	Movie_Start(time);
 }
 
@@ -121,10 +192,16 @@ void Movie_Init(void) {
 	Cvar_Register(&movie_fps);
 	Cvar_Register(&movie_dir);
 	Cvar_Register(&movie_steadycam);
+#ifdef _WIN32
+	Cvar_Register(&movie_codec);	//joe: capturing to avi
+#endif
 
 	Cvar_ResetCurrentGroup();
 
 	Cmd_AddCommand("demo_capture", Movie_Demo_Capture_f);
+
+	captured_audio_samples = 0;
+	Capture_InitAVI ();		//joe: capturing to avi
 }
 
 double Movie_StartFrame(void) {
@@ -160,9 +237,9 @@ void Movie_FinishFrame(void) {
 
 	if (cl_multiview.value && cls.mvdplayback) {
 		if (CURRVIEW == 1)
-			SCR_Screenshot(fname);
+			SCR_Movieshot(fname);
 	} else
-		SCR_Screenshot(fname);
+		SCR_Movieshot(fname);
 	con_suppress = false;
 	if (cl_multiview.value && cls.mvdplayback) {
 		if (CURRVIEW == 1)
@@ -173,6 +250,34 @@ void Movie_FinishFrame(void) {
 	if (cls.realtime >= movie_start_time + movie_len)
 		Movie_Stop();
 }
+
+//joe: capturing audio
+#ifdef _WIN32
+void Movie_TransferStereo16(void) {
+	if (!Movie_IsCapturing())
+		return;
+
+	// Copy last audio chunk written into our temporary buffer
+	memcpy (capture_audio_samples + (captured_audio_samples << 1), snd_out, snd_linear_count * shm->channels);
+	captured_audio_samples += (snd_linear_count >> 1);
+
+	if (captured_audio_samples >= (int)(1.0 + cls.frametime * shm->speed)) {
+		// We have enough audio samples to match one frame of video
+		if (!Capture_WriteAudio(captured_audio_samples, (byte *)capture_audio_samples))
+			Con_Print ("Problem capturing audio!\n");
+		captured_audio_samples = 0;
+	}
+}
+
+qboolean Movie_GetSoundtime(void) {
+	if (Movie_IsCapturing()) {
+		soundtime += (int)(1.0 + cls.frametime * shm->speed);
+		return true;
+	} else {
+		return false;
+	}
+}
+#endif
 
 static qboolean OnChange_movie_dir(cvar_t *var, char *string) {
 	if (Movie_IsCapturing()) {
