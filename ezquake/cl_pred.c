@@ -235,7 +235,7 @@ if (physframe)	//##testing
 	if (nolerp[to])
 		return;
 // shaman RFE 1036160 {
-	if (cl_pushlatency.value < 0) {
+	if (cl_pushlatency.value != 0) {
         frac = f;
 	}
 	else {
@@ -261,7 +261,7 @@ void CL_PredictMove (void) {
 	frame_t *from = NULL, *to;
 // shaman RFE 1036160 {
 	double playertime;
-    float f;
+    float f = 0;
 	if (cl_pushlatency.value > 0)
 		Cvar_Set (&cl_pushlatency, "0");
 
@@ -318,7 +318,7 @@ if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.val
 		to = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
 		CL_PredictUsercmd (&from->playerstate[cl.playernum], &to->playerstate[cl.playernum], &to->cmd);
 		cl.onground = pmove.onground;
-		if (to->senttime >= playertime)
+		if (cl_pushlatency.value != 0 && to->senttime >= playertime)
 			break; 
 	}
 
@@ -333,11 +333,13 @@ if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.val
 		lerp_time = cls.realtime;
 */
 
-	if (to->senttime == from->senttime) {
-		f = 0;
-	} else {
-		f = (playertime - from->senttime) / (to->senttime - from->senttime);
-		f = bound(0, f, 1);
+	if (cl_pushlatency.value != 0) {
+		if (to->senttime == from->senttime) {
+			f = 0;
+		} else {
+			f = (playertime - from->senttime) / (to->senttime - from->senttime);
+			f = bound(0, f, 1);
+		}
 	}
 
 //	for (i = 0; i < 3; i++) {
