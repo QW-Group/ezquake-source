@@ -442,7 +442,11 @@ void CL_ParseTEnt (void) {
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
+#ifdef GLQUAKE // hexum -> make GL lg blood more visible, like it is in software
+		R_RunParticleEffect (pos, vec3_origin, 73, 50);
+#else
 		R_RunParticleEffect (pos, vec3_origin, 225, 50);
+#endif
 		break;
 
 	default:
