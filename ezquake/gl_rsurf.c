@@ -962,6 +962,7 @@ void R_DrawFlat (model_t *model) {
 	if (gl_fogenable.value)
 		glDisable(GL_FOG);
 
+	glColor3f(1.0f, 1.0f, 1.0f);
 	glPopAttrib();
 
 }
