@@ -131,7 +131,7 @@ static void Auth_CheckFServerResponse (char *s, int flags, int offset) {
 
 
 static void Auth_UnauthenticateClient(int slot) {
-	if (!strlen(Info_ValueForKey(cl.players[slot].userinfo, "*ezQuake")) && auth_validateclients.value != 2)
+	if (!strlen(Info_ValueForKey(cl.players[slot].userinfo, "*client")) && auth_validateclients.value != 2)
 		return;
 
 	cl.players[slot].validated = false;
@@ -141,7 +141,7 @@ static void Auth_UnauthenticateClient(int slot) {
 }
 
 static void Auth_AuthenticateClient(int slot) {
-	if (!strlen(Info_ValueForKey(cl.players[slot].userinfo, "*ezQuake")) && auth_validateclients.value != 2)
+	if (!strlen(Info_ValueForKey(cl.players[slot].userinfo, "*client")) && auth_validateclients.value != 2)
 		return;
 
 	cl.players[slot].validated = true;
