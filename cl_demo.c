@@ -313,15 +313,17 @@ static void CL_WriteStartupData (void) {
 	n = 0;
 	s = cl.model_name[n + 1];
 	while (*s) {
-		MSG_WriteString (&buf, s);
-		if (buf.cursize > MAX_MSGLEN / 2) {
-			MSG_WriteByte (&buf, 0);
-			MSG_WriteByte (&buf, n);
-			CL_WriteStartupDemoMessage (&buf, seq++);
-			SZ_Clear (&buf); 
-			MSG_WriteByte (&buf, svc_modellist);
-			MSG_WriteByte (&buf, n + 1);
-		}
+    if (buf.cursize > MAX_MSGLEN / 2) {
+  		MSG_WriteString (&buf, s);
+  		if (buf.cursize > MAX_MSGLEN / 2) {
+  			MSG_WriteByte (&buf, 0);
+  			MSG_WriteByte (&buf, n);
+  			CL_WriteStartupDemoMessage (&buf, seq++);
+  			SZ_Clear (&buf); 
+  			MSG_WriteByte (&buf, svc_modellist);
+  			MSG_WriteByte (&buf, n + 1);
+  		}
+  	}
 		n++;
 		s = cl.model_name[n + 1];
 	}
