@@ -73,8 +73,8 @@ cvar_t  localid = {"localid", ""};
 static qboolean allowremotecmd = true;
 qboolean com_blockscripts;
 
-cvar_t	cl_deadbodyfilter = {"cl_deadbodyFilter", "0"};
-cvar_t	cl_gibfilter = {"cl_gibFilter", "0"};
+cvar_t	cl_deadbodyfilter = {"cl_deadbodyFilter", "1"};
+cvar_t	cl_gibfilter = {"cl_gibFilter", "1"};
 cvar_t	cl_muzzleflash = {"cl_muzzleflash", "1"};
 cvar_t	cl_rocket2grenade = {"cl_r2g", "0"};
 cvar_t	cl_demospeed = {"cl_demospeed", "1"};
@@ -98,7 +98,7 @@ cvar_t cl_useproxy			= {"cl_useproxy", "0"};
 
 cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};	
 // START shaman :: balancing variables
-cvar_t cl_nolerp			= {"cl_nolerp", "0"};
+cvar_t cl_nolerp			= {"cl_nolerp", "1"}; // 0
 // END shaman :: balancing variables
 
 cvar_t r_rocketlight			= {"r_rocketLight", "1"};
@@ -109,9 +109,9 @@ cvar_t r_flagcolor				= {"r_flagColor", "0"};
 cvar_t r_lightflicker			= {"r_lightflicker", "1"};
 cvar_t r_powerupglow			= {"r_powerupGlow", "1"};
 // START shaman :: balancing variables
-cvar_t r_rockettrail			= {"r_rocketTrail", "9"};
-cvar_t r_grenadetrail			= {"r_grenadeTrail", "3"};
-cvar_t r_explosiontype			= {"r_explosionType", "7"};
+cvar_t r_rockettrail			= {"r_rocketTrail", "1"}; // 9
+cvar_t r_grenadetrail			= {"r_grenadeTrail", "1"}; // 3
+cvar_t r_explosiontype			= {"r_explosionType", "1"}; // 7
 // END shaman :: balancing variables
 
 // info mirrors
