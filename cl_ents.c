@@ -73,6 +73,8 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_rocket] = "progs/missile.mdl";
 	cl_modelnames[mi_grenade] = "progs/grenade.mdl";
 	cl_modelnames[mi_bubble] = "progs/s_bubble.spr";
+	cl_modelnames[mi_flame] = "progs/flame.mdl";	//joe
+	cl_modelnames[mi_flame0] = "progs/flame0.mdl";	//
 	cl_modelnames[mi_vaxe] = "progs/v_axe.mdl";
 	cl_modelnames[mi_vbio] = "progs/v_bio.mdl";
 	cl_modelnames[mi_vgrap] = "progs/v_grap.mdl";

@@ -609,6 +609,7 @@ typedef enum cl_modelindex_s {
 	mi_spike, mi_player, mi_flag, mi_tf_flag, mi_tf_stan, mi_explod1, mi_explod2, mi_h_player,
 	mi_gib1, mi_gib2, mi_gib3, mi_rocket, mi_grenade, mi_bubble,
 	mi_vaxe, mi_vbio, mi_vgrap, mi_vknife, mi_vknife2, mi_vmedi, mi_vspan,
+	mi_flame0, mi_flame,	//joe: for changing flame/flame0 models
 	cl_num_modelindices,
 } cl_modelindex_t;		
 

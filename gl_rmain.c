@@ -650,7 +650,8 @@ void R_DrawAliasModel (entity_t *ent) {
 
 	//TODO: use modhints here? 
 	//VULT CORONAS
-	if ((!strcmp (ent->model->name, "progs/flame.mdl") /*|| !strcmp (ent->model->name, "progs/flame2.mdl")*/ || !strcmp (ent->model->name, "progs/flame3.mdl")) && (amf_coronas.value/* && (rand() % 2 < 2)*/))
+	if ((!strcmp (ent->model->name, "progs/flame.mdl") /*|| !strcmp (ent->model->name, "progs/flame2.mdl")*/ || !strcmp (ent->model->name, "progs/flame3.mdl")) && (amf_coronas.value/* && (rand() % 2 < 2)*/)
+		|| !strcmp(ent->model->name, "progs/flame0.mdl"))	//joe: support coronas for non-flamed torch too
 	{
 		//FIXME: This is slow and pathetic as hell, really we should just check the entity
 		//alternativley add some kind of permanent client side TE for the torch
@@ -662,6 +663,7 @@ void R_DrawAliasModel (entity_t *ent) {
 		NewStaticLightCorona (C_LIGHTNING, ent->origin);
 	}
 
+/* joe: replaced this with my own stuff - see R_DrawEntitiesOnList()
 	if (amf_part_fire.value && (!strcmp (ent->model->name, "progs/flame.mdl") || !strcmp (ent->model->name, "progs/flame2.mdl") || !strcmp (ent->model->name, "progs/flame3.mdl")))
 	{
 		if (!strcmp (ent->model->name, "progs/flame.mdl") && !cl.paused)
@@ -673,6 +675,7 @@ void R_DrawAliasModel (entity_t *ent) {
 			return;
 		}
 	}
+*/
 
 	clmodel = ent->model;
 	paliashdr = (aliashdr_t *) Mod_Extradata (ent->model);	//locate the proper data
@@ -894,6 +897,36 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 				//VULT MOTION TRAILS
 				if (currententity->alpha < 0)
 					break;
+
+				//joe: handle flame/flame0 model changes
+				if (qmb_initialized)
+				{
+					if (!amf_part_fire.value && !strcmp(currententity->model->name, "progs/flame0.mdl"))
+					{
+						currententity->model = cl.model_precache[cl_modelindices[mi_flame]];
+					}
+					else if (amf_part_fire.value)
+					{
+						if (!strcmp(currententity->model->name, "progs/flame0.mdl"))
+						{
+							if (!cl.paused)
+								ParticleFire (currententity->origin);
+						}
+						else if (!strcmp(currententity->model->name, "progs/flame.mdl"))
+						{
+							if (!cl.paused)
+								ParticleFire (currententity->origin);
+							currententity->model = cl.model_precache[cl_modelindices[mi_flame0]];
+						}
+						else if (!strcmp(currententity->model->name, "progs/flame2.mdl") || !strcmp(currententity->model->name, "progs/flame3.mdl"))
+						{
+							if (!cl.paused)
+								ParticleFire (currententity->origin);
+							continue;
+						}
+					}
+				}
+
 				R_DrawAliasModel (currententity);
 				break;
 			case mod_brush:

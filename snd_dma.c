@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef _WIN32
 #include "winquake.h"
+#include "movie.h"	//joe: capturing audio
 #endif
 
 void S_Play_f (void);
@@ -56,7 +57,7 @@ static vec3_t	listener_right;
 static vec3_t	listener_up;
 static vec_t	sound_nominal_clip_dist = 1000.0;
 
-static int	soundtime;		// sample PAIRS
+int		soundtime;		// sample PAIRS
 int   		paintedtime; 	// sample PAIRS
 
 #define	MAX_SFX	512
@@ -677,6 +678,12 @@ void GetSoundtime (void) {
 	int samplepos, fullsamples;
 	static int buffers, oldsamplepos;
 
+//joe: capturing audio
+#ifdef _WIN32
+	if (Movie_GetSoundtime())
+		return;
+#endif
+
 	fullsamples = shm->samples / shm->channels;
 
 	// it is possible to miscount buffers if it has wrapped twice between calls to S_Update.  Oh well.
@@ -700,6 +707,13 @@ void GetSoundtime (void) {
 void IN_Accumulate (void);
 
 void S_ExtraUpdate (void) {
+
+//joe: capturing audio
+#ifdef _WIN32
+	if (Movie_IsCapturing())
+		return;
+#endif
+
 #ifdef _WIN32
 	IN_Accumulate ();
 #endif
