@@ -351,8 +351,7 @@ void
 CompleteCommandNew (void)
 {
 	char *cmd, token[MAXCMDLINE], *s, temp[MAXCMDLINE];
-	int c, a, v, start, end, i, diff_len, size, test, my_string_length,
-		my_string_length_count;
+	int c, a, v, start, end, i, diff_len, size, my_string_length;
 
 	if (!
 		 (key_linepos < 2
@@ -550,13 +549,15 @@ CompleteCommandNew (void)
 	{
 		if (count != try)
 		{
+			int len;
+			char text[50];
+			int test;
+			int testvar;
 
 			try++;
 			//Com_Printf("%i\n",try);
-			int len;
-			char text[50];
-			int test = try - 1;
-			int testvar = key_linepos;
+			test = try - 1;
+			testvar = key_linepos;
 			
 			while ((testvar != 0)
 			       && !(isspace (key_lines[edit_line][testvar]))
