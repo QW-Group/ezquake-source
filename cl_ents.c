@@ -634,10 +634,13 @@ void CL_LinkPacketEntities (void) {
 		//VULT STUFF
 		if (model->flags & ~EF_ROTATE || model->modhint) 
 		{
-			if (!cent->oldsequence || !VectorL2Compare(cent->trail_origin, ent.origin, 140))
+			// hexum -> fix bug # 1026806
+			if (!(cent->flags & CENT_TRAILDRAWN) /*!cent->oldsequence*/ || !VectorL2Compare(cent->trail_origin, ent.origin, 140)) {
 				old_origin = &ent.origin;	//not present last frame or too far away
-			else
+				cent->flags |= CENT_TRAILDRAWN;
+			} else {
 				old_origin = &cent->trail_origin;
+			}
 
 			if (model->modhint == MOD_LAVABALL)
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, LAVA_TRAIL);
