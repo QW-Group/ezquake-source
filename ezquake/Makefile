@@ -819,7 +819,7 @@ GLQWCL_AS_OBJS = \
     $(BUILDDIR)/build-gl/cl_math.o \
     $(BUILDDIR)/build-gl/math.o \
     $(BUILDDIR)/build-gl/snd_mixa.o \
-    $(BUILDDIR)/build-gl/sys_x86.o \
+    $(BUILDDIR)/build-gl/sys_x86.o
 
 GLQWCL_X11_OBJS = $(BUILDDIR)/build-gl/vid_glx.o $(BUILDDIR)/build-gl/vid_common_gl.o
 
