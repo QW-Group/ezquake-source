@@ -1,7 +1,7 @@
 #
 # QuakeWorld Makefile for Linux >= 2.0
 #
-# April '03 by Fuh <fuh@ezquake.net>
+# April '03 by Fuh <fuh@fuhquake.net>
 #
 
 #OUTPUT DIRECTORIES
