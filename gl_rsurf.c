@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_local.h"
 #include "rulesets.h"
+#include "utils.h"
 
 //VULT
 #include "vx_stuff.h"
@@ -78,6 +79,7 @@ glpoly_t *caustics_polys = NULL;
 glpoly_t *detail_polys = NULL;
 
 void DrawGLPoly (glpoly_t *p);
+void R_DrawFlat (model_t *model);
 
 void R_RenderFullbrights (void) {
 	int i;
@@ -897,6 +899,63 @@ void DrawTextureChains (model_t *model) {
 	EmitDetailPolys();
 }
 
+void R_DrawFlat (model_t *model) {
+	msurface_t *s;
+	int waterline, i, k;
+	float *v;
+	vec3_t n;
+	byte *col, w[3], f[3];
+	
+	col = StringToRGB(r_wallcolor.string);
+	memcpy(w, col, 3);
+	col = StringToRGB(r_floorcolor.string);
+	memcpy(f, col, 3);
+	
+	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
+	
+	GL_DisableMultitexture();
+	
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
+	GL_SelectTexture(GL_TEXTURE0_ARB);
+	
+	for (i = 0; i < model->numtextures; i++) {
+		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1]))
+			continue;
+				
+		for (waterline = 0; waterline < 2; waterline++) {
+			if (!(s = model->textures[i]->texturechain[waterline]))
+				continue;
+			
+			for ( ; s; s = s->texturechain) {
+				GL_Bind (lightmap_textures + s->lightmaptexturenum);
+
+				R_RenderDynamicLightmaps (s);
+				
+				k = s->lightmaptexturenum;
+				if (lightmap_modified[k])
+					R_UploadLightMap(k);
+
+				v = s->polys->verts[0];
+				VectorCopy(s->plane->normal, n);
+				VectorNormalize(n);
+				if (n[2] < -0.5 || n[2] > 0.5) // floor or ceiling
+					glColor3ubv(f);
+				else										// walls
+					glColor3ubv(w);
+												
+				glBegin(GL_POLYGON);
+				for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
+					glTexCoord2f(v[5], v[6]);
+					glVertex3fv (v);
+				}
+				glEnd ();
+			}
+		}		
+	}
+	
+	glPopAttrib();
+}
+
 
 void R_DrawBrushModel (entity_t *e) {
 	int i, k, underwater;
@@ -1106,7 +1165,10 @@ void R_DrawWorld (void) {
 	R_DrawEntitiesOnList (&cl_firstpassents);
 
 	//draw the world
-	DrawTextureChains (cl.worldmodel);
+	if (r_drawflat.value)
+		R_DrawFlat (cl.worldmodel);
+	else
+		DrawTextureChains (cl.worldmodel);
 
 	//draw the world alpha textures
 	R_DrawAlphaChain ();
