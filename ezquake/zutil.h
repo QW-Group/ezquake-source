@@ -8,7 +8,7 @@
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zutil.h,v 1.1.1.1 2004-09-07 21:08:59 hexum Exp $ */
+/* @(#) $Id: zutil.h,v 1.2 2004-10-12 16:49:18 vvd0 Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -92,7 +92,7 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 #  define OS_CODE  0x06
 #endif
 
-#ifdef WIN32 /* Window 95 & Windows NT */
+#ifdef _WIN32 /* Window 95 & Windows NT */
 #  define OS_CODE  0x0b
 #endif
 
