@@ -12,6 +12,7 @@
 		<p>You can change nearly every setting of QW from the game within by typing it in the console. You can either reach the console through the menues (press escape -> setup -> keybindings -> go to console) or more easily by pressing the tilde (~) key (QW always switches to american/english keyboard layout where the tilde key is located on the top left below the escape key).</p>
 		<h>General commands and variables</h>
 		<p>Every console command is simply entered at the console (or in your cfg file) ,often followed by a value. The often used "bind" command requires the key which is to be bound followed by the action or alias to be bound to that key. For example if you type BIND W "+FORWARD" you will walk or run forward as long as you keep the w key pressed. The meaning of the "+" as well as other commands like "alias" will be explained further below in the advanced section.</p>
+		<p>If you find a command or a variable (called, say, foo) that you do not understand, type <color>/describe</color> foo.</p>
 		<p>Here are the most important general QW console commands you should know about and which you can put in your own config along with a short explanation:</p>
 		<p>(Some of the following settings can also be changed through the menus of Quake but not all of them.)</p>
 		
@@ -116,7 +117,7 @@
 			</li>
 			<li>
 				<h>pushlatency -999</h>
-				This setting affects the prediction of your client. -999 turned out to be a nice setting regardless of your actual latency. More info at <a href="help/ping_lag.xml">ping and lag.</a>
+				This setting affects the prediction of your client. -999 turned out to be a nice setting regardless of your actual latency. More info at <a href="help/manual/ping_lag.xml">ping and lag.</a>
 			</li>
 			<li>
 				<h>noskins 0|1|2</h>

@@ -123,7 +123,6 @@
 								<li>Using Qizmo</li>
 							</list>
 						</li>
-						<li><a href="help/manual/configs/autoexec.cfg">A commented cfg</a></li>
 					</list>
 				</li>
 			</list>
@@ -132,8 +131,7 @@
 					<list>
 						<li><a href="help/manual/server.xml">Server manual</a>
 							<list>
-								<li>Requirements</li>
-								<li>Network connection</li>
+								<li>Setting up a server</li>
 								<li>Modifications</li>
 								<li>Controlling</li>
 								<li>Console variables and commands</li>
@@ -151,8 +149,5 @@
 					 </list>
 				 </li>
 		 	</list>
-
-
-		
 		</body>
 </document>

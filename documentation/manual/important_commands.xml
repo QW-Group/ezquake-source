@@ -62,7 +62,7 @@
 				<pre>
 				team red (puts you in team red)
 				team " red" (puts you in team _red, therefore the ")
-				team "^-ff^-" (puts you in team -ff- (putting the ^ before a character will make it appear red instead of gray))
+				team "^-er^-" (puts you in team -er- (putting the ^ before a character will make it appear red instead of gray))
 				</pre>
 			</li>
 			<li>
@@ -115,8 +115,9 @@
 			</li>
 			<li>
 				<h>commands</h>
-				<h>advanced</h>
-				Use these two to get a more detailed list of commands and settings available in KTeam/KTpro.
+				<h>options</h>
+				<h>cmd help</h>
+				Use these three to get a more detailed list of commands and settings available in KTeam/KTpro.
 			</li>
 		</list>																			
 	</body>

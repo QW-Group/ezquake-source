@@ -39,8 +39,8 @@
 			<p>Unlike Quake 3, in QW one guy with an RL can hold an entire area. For instance, one of your teammates can hold Red Armor (RA) on DM3 with an RL quite easily - on his own. If he positions himself just right he can watch all the entrances. Health and ammo are available nearby. He can supply the team with that RA, he is denying it the enemy, he can get to Quad in about 3 or 4 seconds, he can hold packs for teammates. It's an important position. Once he has RA, the team can concentrate on taking the other parts of the map, once your entire team has RL's (or Lightning Guns) they should be able to take control of the map once they all move into the optimum positions.</p>
 			<h>Set tactics</h>
 			<p>There are generally set tactics for holding/controlling a map. The most played teamplay maps in QW are DM3, DM2 and E1M2 (aka The Big Three - TB3). Denying armor to the enemy was really perfected by Clan 9 when they destroyed the American clan Deathrow. Deathrow thought the most important areas on the maps were those areas which contained the best weapons. However by constant boomstick charging and gaining control of the armor areas of the maps, Clan 9 were able to deny all armor to the Americans who had little protection and lost their weapons in packs to the enemy.</p>
-			<p>On <a href="help/dm3.xml">DM3</a> and <a href="help/e1m2.xml">E1M2</a> the RL area is not of strategic importance, only very skilled teams will try and run it. The armor is the key to both those maps.</p>
-			<p><a href="help/dm2.xml">DM2</a> is slightly different. Although tactics vary alot on this map, good teams will often secure the lower YA/tele first, thus blocking off High RL/GL/Mega/Quad which enemy can only get to by rocketjumping. DM2 is small enough to attempt a complete lockdown of the map, leaving only one small area which is not covered (Bigroom - which contains 2 YA's).</p>
+			<p>On <a href="help/manual/dm3.xml">DM3</a> and <a href="help/manual/e1m2.xml">E1M2</a> the RL area is not of strategic importance, only very skilled teams will try and run it. The armor is the key to both those maps.</p>
+			<p><a href="help/manual/dm2.xml">DM2</a> is slightly different. Although tactics vary alot on this map, good teams will often secure the lower YA/tele first, thus blocking off High RL/GL/Mega/Quad which enemy can only get to by rocketjumping. DM2 is small enough to attempt a complete lockdown of the map, leaving only one small area which is not covered (Bigroom - which contains 2 YA's).</p>
 			<p>Tactics are up to the skill of the team. Make them too complicated or advanced and the guys on your team won't be able to handle it. Make them too simplified and they may not be enough to beat the enemy team.</p>
 			<h>General rules</h>
 			<p>Here are the basic rules of teamplaying:</p>
@@ -91,7 +91,7 @@
 				</li>				
 				<li>
 					<h>Locs / teamtalk</h>
-					Agree to use the same <a href="http://w1.465.telia.com/~u46505083/fuhquake_locs.zip">locs</a> (location files for maps) as the rest of your team. 
+					Agree to use the same <a href="http://maps.quakeworld.nu/locs/download/">locs</a> (location files for maps) as the rest of your team. 
 					Also use the same teamtalk format. Don't make teamtalk too fancy. Bind the most important teamtalk messages closest to your movement and weapon keys.
 					<p><color>Teamtalk commands in order of importance are:</color></p><list>
 						<li>The point command ('pack -> bridge', 'ra -> Ra', etc).</li>
@@ -101,9 +101,6 @@
 						<li>'you take', 'cancel that'.</li>
 					</list>					
 				</li>				
-				
-				
-				
 			</list>
 	</body>
 </document>

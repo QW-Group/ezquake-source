@@ -9,13 +9,23 @@
 		<h align="center">Files and structure</h>
 		<br />
 		<h>Quake and QW directory structure</h>
-		<p>By default Quake is installed into x:\quake\ (where x is the letter of the harddrive). This directory contains the executable called quake.exe as well as several other files, dll's and others. In the subdirectory called ..\id1\ the "pak" files are stored. These hold all the games' data like graphics, sounds, models and maps. These so called pak-files are used both by NetQuake as well as QW.</p>
-		<p>After installing QW the x:\quake\ directory will also hold the two QW executables (qwcl.exe for software quake and glqwcl.exe for OpenGL QW), new DLL files as well as a subdirectory called ../qw/ wherein there are various other subdirectories. Later when you downloaded maps form a server or when you have been to a server running a mod others might be created like ../maps/, ../sound/ or ../cfg/. Furthermore the first time you run glqwcl.exe the models will be meshed and stored in the ../qw/glquake/ directory. So the whole structure could look something like this:</p>
+		<p>By default Quake is installed into x:\quake\ (where x is the letter of the harddrive). This directory contains the executable called ezquake.exe as well as several other files, dll's and others. In the subdirectory called ..\id1\ the "pak" files are stored. These hold all the games' data like graphics, sounds, models and maps. These so called pak-files are used both by NetQuake as well as QW.</p>
+		<p>After installing QW the x:\quake\ directory will also hold the two QW executables (ezquake.exe for software quake and ezquake-gl.exe for OpenGL QW), new DLL files as well as a subdirectory called ../qw/ wherein there are various other subdirectories. Later when you downloaded maps form a server or when you have been to a server running a mod others might be created like ../maps/, ../sound/ or ../cfg/. Furthermore the first time you run ezquake-gl.exe the models will be meshed and stored in the ../qw/glquake/ directory. So the whole structure could look something like this:</p>
 		<pre>
 			C:\Quake\
 					\id1\
-					\ezQuake\
-						\configs\
+					\ezquake\
+						\cfg
+						\docs
+							\fuhquake
+						\help
+							\commands
+							\manual
+								\demos
+							\variables
+							\xsd
+							\xsl
+						\sb
 					\qw\
 						\demos\
 						\glquake\
@@ -29,11 +39,16 @@
 		<h>Quake and QW files</h>
 		<p>The only files absolutely required by QW from the original Quake are the two pak files in \id1\ called "pak0.pak" and "pak0.pak". In case you are using a Voodoo graphics board you also need "opengl32.dll" in the main directory. Everything else QW needs (the base.pcx and config.cfg) are created on start if they do not exist already. Thus you could get rid of everything else but the following to play QW:</p>
 		<pre>
-			qwcl.exe
-			glqwcl.exe
+			ezquake.exe
+			ezquake-gl.exe
+			libexpat.dll
+			libjpeg.dll
+			libpng.dll
+			zlib.dll
 			opengl32.dll *
 				\id1\pak0.pak
 				\id1\pak1.pak
+				\ezquake\pak0.pak
 		</pre>
 		<h>QW config files</h>
 		<p>QW's default config file called "config.cfg" which can be found in the ..\qw\ directory (don't mix it up with the file of the same name in the ..\id1\ dir, it belongs to NetQuake). This file contains all the default keybinds as well as video, mouse, etc. settings. In theory you could modify it to your own needs as much as you want but it has a mayor drawback. As soon as you quit QW it always overwrites config.cfg with the actual configuration of that session. So if you were testing some settings and you forget to reenter the previous ones you may end up getting bad settings at the next start of QW. What is also annoying is that the order of the different commands is always scrambled when it is rewritten so that the file always looks chaotic.</p>

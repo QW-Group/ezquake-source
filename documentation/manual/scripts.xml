@@ -19,7 +19,7 @@
 		alias -rl "-attack;impulse 1"
 		bind mouse1 "+rl"
 		</pre>
-		<p>This could also be put into a single script without the + and - but in this way it is more elegant. What it actually does is to select the rocket launcher fire a shot and change back to the shotgun. It is quite unlikely that the other player frags you during the short time you actually carry the rocketlauncher. It will also be impossible to get your rocketlauncher by a surprise shot that kills you. Since everybody already starts with the shotgun and the axe enemies do not benefit from your backpacks, they only get the ammo.</p>
+		<p>This could also be put into a single script without the + and - but in this way it is more elegant. What it actually does is to select the rocket launcher fire a shot and change back to the shotgun. It is quite unlikely that the other player frags you during the short time you actually carry the rocket launcher. It will also be impossible to get your rocket launcher by a surprise shot that kills you. Since everybody already starts with the shotgun and the axe enemies do not benefit from your backpacks, they only get the ammo.</p>
 		<br />
 		<h>Quick Grenade</h>
 		<pre>
@@ -29,24 +29,11 @@
 		<p>The quick grenade script is probably the most abundant weapon script. It is used to fire a single grenade and is usually bound to another key but the mousebuttons because these are used for other bindings. Again the script will change to the shotgun after firing the grenade launcher once.</p>
 		<h>Best weapon</h>	
 		<p>People often bind their left button to fire the best non-explosive weapon they have, the right mousebutton to fire the rocket launcher and the middle button to fire grenades.</p>
-		<p><color>in ezQuake:</color></p>
 		<pre>
 		alias +best "impulse 8 5 3 2 4 1;+attack"
 		alias -best "-attack;impulse 1"
 		bind mouse3 "+best"
 		</pre>
-		<p><color>in More QuakeWorld:</color></p>
-		<pre>
-		alias +best "weapon 853241;+attack"
-		alias -best "-attack;impulse 1"
-		bind mouse3 "+best"
-		</pre>
-		<p><color>in original QW:</color></p>
-		<pre>
-		alias +best "impulse 1;impulse 4;impulse 2;impulse 3;impulse 5;impulse 8;+attack"
-		alias -best "-attack;impulse 1"
-		bind mouse3 "+best"
-		</pre>	
 		<p>This script selects the best non-explosive weapon you currently have, in the following priority order: Shaft, Super Nailgun, Super Shotgun, Shotgun, Nailgun, Axe. It excludes the Rocket and Grenade Launcher because they are used through the other scripts mentioned above. This also has the advantage that you cannot kill yourself when you have the Quad because you can't hurt yourself with the weapons in it and again it includes a boomstick script. If you do not have any of the weapons or any ammo left you will fire with the Axe, because in that case it is the last weapon selected.</p>
 		<h>Rocket jump scripts</h>
 		<br />
@@ -56,22 +43,11 @@
 		</pre>
 		<p>This script will execute a simple rocket jump high into the air. What it does it to change the speed at which you look up and down to a very high value. Then it selects the rocketlauncher, looks down, jumps and attacks at the same time. After that the view will be returned to the center and return the pitchspeed to a normal value. All this happens so fast that you won't notice anything but the sound of jumping, firing the rocket launcher and yourself flying through the level. So it actually does what you would do manually only much faster and more precise.</p>
 		<h>Forward rocket jump</h>		
-		<p><color>in ezQuake:</color></p>
 		<pre>
 		alias fwrj "impulse 7;-forward;rotate 180;+jump;+attack;wait;-attack;-jump;rotate 180;impulse 1"
 		</pre>
-		<p><color>in More QuakeWorld / original QuakeWorld:</color></p>
-		<pre>
-		alias fwrj "impulse 7;-forward;+back;+left;+jump;+attack;wait;-attack;-jump;-left;-back;+forward;+right;wait;-right;-forward;impulse 1"
-		</pre>						
 		<p>This script does basically the same but in this case it's a so called "forward rocket jump". This is a flat rocket jump that rather aims for distance than for height. Forward rocket jumps became quite common lately because you can pick up speed for bunnyhopping with them and use them to move around certain maps much faster.</p>
 		<h>Misc. scripts</h>
-		<p><color>The hop</color></p>
-		<pre>
-		alias +hop "+jump;+moveup"
-		alias -hop "-jump;-moveup"
-		</pre>
-		<p>These two aliases are useful because they bind two actions to the same key. You can both jump with it and at the same time you can swim up while in water (where you can of course not jump) which is quite useful in underwater fights. Your jumps will also be slightly higher due to the +moveup commands.</p>
 		<p><color>Show info</color></p>
 		<pre>
 		alias +showinfo "+showscores;r_netgraph 1;show_fps 1;bind CTRL -showinfo"
@@ -80,7 +56,7 @@
 		<p>This script displays usefull info like the netgraph, the scores and the frames per second at the same time. (Note that in lower resolutions like 320x200 these graphs don't fit into each other very well)</p>
 		<p><color>Zoom</color></p>
 		<pre>
-		alias "+zoom" "r_drawviewmodel 0;fov 110;wait;fov 100fov 90;wait;fov 80;wait;fov 70;wait;fov 60;wait;fov 50;wait;fov 40;wait;fov 30;wait;fov 25;wait;sensitivity 3"
+		alias "+zoom" "r_drawviewmodel 0;fov 110;wait;fov 100;wait;fov 90;wait;fov 80;wait;fov 70;wait;fov 60;wait;fov 50;wait;fov 40;wait;fov 30;wait;fov 25;wait;sensitivity 3"
 		alias "-zoom" "fov 25;wait;fov 30;wait;fov 40;wait;fov 50;wait;fov 60;wait;fov 70;wait;fov 80;wait;fov 90;wait;fov 100;wait;fov 110;wait;sensitivity 7.5"
 		</pre>
 		<p>Zooming is not very useful in QW but some people like it. Note how the sensitivity is changed by the script to adapt to the different fov.</p>

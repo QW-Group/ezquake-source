@@ -8,15 +8,15 @@
 	<body>
 		<h align="center">Command line</h>
 		<br />
-		<p>QW can of course be started by simply doubleclicking on the executable, but there are a few command line parameters which should be used to make QW run even better and which can sometimes solve problems as well. The easiest way is to create a shortcut or even better a batch (.bat) file for starting QW. The most important command line parameters are described below:</p>
+		<p><color>For command line confugartion use a program called ezstart.exe</color>. QW can of course be started by simply doubleclicking on the executable, but there are a few command line parameters which should be used to make QW run even better and which can sometimes solve problems as well. The easiest way is to create a shortcut or even better a batch (.bat) file for starting QW. The most important command line parameters are described below:</p>
 			<list>
 			<li>
 				<h>-width xxx and -height xxx</h>
 				These set the video resolution (by default software QW will start in 320x200 and gl QW in 640x480). To see all the resolutions your graphic board supports you have to type "vid_describemodes" at the console. The modes available depend on your type of board, driver version and your systems ram.
 			</li>
 			<li>
-				<h>-bpp 16</h>
-				This will start QW with 16 bit colors. Actually it does not because QW doesn't support more than 8 bit but it will very likely run the fastest in that mode. When running software QW you should set it to 8.
+				<h>-bpp 32</h>
+				This will start QW with 32 bit colors. When running software QW you should set it to 8.
 			</li>
 			<li>
 				<h>-heapsize [x]</h>
@@ -27,8 +27,8 @@
 				Turning directinput on will make your mouse movement much smoother.
 			</li>
 			<li>
-				<h>-zone 1024</h>
-				This increases your keys and message memory buffer from default of 48kb to 1024kb. Your keys will respond much better.
+				<h>-zone 8192</h>
+				This increases your keys and message memory buffer from default of 48kb to 8192kb. Your keys will respond much better.
 			</li>
 			<li>
 				<h>-window</h>
@@ -36,13 +36,11 @@
 			</li>
 			<li>
 				<h>-dibonly</h>
-				This command often solves problems that occur with software QW in combination with modern Geforce graphic cards, like screen turning black when quitting QW or the colors on the desktop look wrong.
+				This command often solves problems that occur with software QW in combination with modern GeForce graphic cards, like screen turning black when quitting QW or the colors on the desktop look wrong.
 			</li>									
 			</list>
 			<h>So your QW starting command line could look something like this then:</h>
-			<p>ezQuake-gl -mem 32 -zone 512 -width 640 -height 480 -bpp 32 -conwidth 320 -dinput -m_smooth -mw_hook +set cl_confirmquit 0 +cfg_load gl +clear</p>
+			<p>ezquake-gl.exe -noscripts -ruleset smackdown -heapsize 81920 -zone 8192 -sndbits 16 -sndspeed 48000 -dinput -m_smooth -bpp 16 -width 640 -conwidth 640 +set vid_displayfrequency 85 +set s_khz 44</p>
 			<p>There are a few more commands which are not commonly used. For an explanation on those refer to the Quake and QW readme files.</p>
-			<p>For documentation on all of ezQuake's commandline parameters, check the <a href="http://ezQuake.SF.net/docs/">ezQuake Online Manual.</a></p>
-		
 	</body>
 </document>
