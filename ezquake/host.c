@@ -312,8 +312,6 @@ void Host_Init (int argc, char **argv, int default_memsize) {
 
     SYSINFO_Init();
 
-    SB_RootInit();
-
 	HUD_Init(); // HUD -> hexum
 	HUD_InitFinish(); // HUD -> hexum
 

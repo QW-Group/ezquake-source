@@ -439,7 +439,7 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
 }
 
 
-extern int PingHost(char *host_to_ping, int count, int time_out);
+extern int PingHost(char *host_to_ping, short port, int count, int time_out);
 
 void GetServerPing(server_data *serv)
 {
@@ -451,7 +451,7 @@ void GetServerPing(server_data *serv)
         serv->address.ip[2],
         serv->address.ip[3]);
 
-    p = PingHost(buf, (int)max(1, min(sb_pings.value, 10)), sb_pingtimeout.value);
+    p = PingHost(buf, serv->address.port, (int)max(1, min(sb_pings.value, 10)), sb_pingtimeout.value);
     if (p)
         SetPing(serv, p-1);
     else
@@ -483,8 +483,6 @@ DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 
 void GetServerPingsAndInfos(void)
 {
-	/*DWORD threadid;
-	HANDLE thread;*/
 
     if (rebuild_servers_list)
         Rebuild_Servers_List();
@@ -494,20 +492,6 @@ void GetServerPingsAndInfos(void)
 
     ping_phase = 1;
     ping_pos = 0;
-
-	/*thread = CreateThread (
-		NULL,				// pointer to security attributes
-		0,					// initial thread stack	size
-		GetServerPingsAndInfosProc,		// pointer to thread function
-		NULL,				// argument	for	new	thread
-		CREATE_SUSPENDED,	// creation	flags
-		&threadid			// pointer to receive thread ID
-	);
-	if (!thread)
-		return;
-	SetThreadPriority(thread, THREAD_PRIORITY_HIGHEST);
-	ResumeThread(thread);*/
- 
 
     Sys_CreateThread (GetServerPingsAndInfosProc, NULL);
 }
@@ -548,23 +532,8 @@ DWORD WINAPI AutoupdateProc(void * lpParameter)
 void Start_Autoupdate(server_data *s)
 {
 
-	/*DWORD threadid;
-	HANDLE thread;*/
     autoupdate_server = s;
 
-	/*thread = CreateThread (
-		NULL,				// pointer to security attributes
-		0,					// initial thread stack	size
-		AutoupdateProc,		// pointer to thread function
-		(void *) s,			// argument	for	new	thread
-		CREATE_SUSPENDED,	// creation	flags
-		&threadid			// pointer to receive thread ID
-	);
-	if (!thread)
-		return;
-	SetThreadPriority(thread, THREAD_PRIORITY_HIGHEST);
-	ResumeThread(thread);*/
- 
     Sys_CreateThread(AutoupdateProc, (void *) s);
 
 }
