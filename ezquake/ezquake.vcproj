@@ -204,7 +204,7 @@
 				SetChecksum="TRUE"/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
+				PreprocessorDefinitions="NDEBUG"
 				MkTypLibCompatible="TRUE"
 				SuppressStartupBanner="TRUE"
 				TargetEnvironment="1"
@@ -217,7 +217,7 @@
 				Name="VCPreLinkEventTool"/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
+				PreprocessorDefinitions="NDEBUG"
 				Culture="3081"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
@@ -239,7 +239,7 @@
 				FavorSizeOrSpeed="0"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="libexpat"
-				PreprocessorDefinitions="id386,WITH_PNG,WITH_ZLIB"
+				PreprocessorDefinitions="_DEBUG,id386,WITH_PNG,WITH_ZLIB"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="FALSE"
 				RuntimeLibrary="4"
