@@ -356,13 +356,13 @@ void R_SetVrect (vrect_t *pvrectin, vrect_t *pvrect, int lineadj) {
 			// height and width already calculated (for sbar)
 		}
 		else if (CURRVIEW == 1 && !cl_sbar.value) {
-			pvrect->x = (vid.width/3)*2;
+			pvrect->x = (vid.width/3)*2 + 1;
 			pvrect->y = 0;
 			pvrect->width = vid.width / 3 + 2;
 			pvrect->height = vid.height / 3;
 		}
 		else if (CURRVIEW == 1 && cl_sbar.value) {
-			pvrect->x = (vid.width/3)*2;
+			pvrect->x = (vid.width/3)*2 + 1;
 			pvrect->y = 0;
 			pvrect->width = vid.width / 3 + 2;
 			pvrect->height = h / 3 + 1;
