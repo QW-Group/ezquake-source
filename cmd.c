@@ -38,7 +38,9 @@ cbuf_t	cbuf_safe, cbuf_nocomms;
 
 cbuf_t	*cbuf_current = NULL;
 
+#ifndef SERVERONLY
 static qboolean cmd_tainted = false;
+#endif
 
 //=============================================================================
 
@@ -148,11 +150,15 @@ void Cbuf_InsertTextEx (cbuf_t *cbuf, char *text) {
 #define MAX_RUNAWAYLOOP 1000
 
 void Cbuf_ExecuteEx (cbuf_t *cbuf) {
-	int i, j, cursize;
+	int i, j, cursize, nextsize;
 	char *text, line[1024], *src, *dest;
 	qboolean comment, quotes;
 
 	cbuf_current = cbuf;
+	
+#ifndef SERVERONLY
+	nextsize = cbuf->text_end - cbuf->text_start;
+#endif
 	
 	while (cbuf->text_end > cbuf->text_start) {
 		// find a \n or ; line break
@@ -160,6 +166,17 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 
 		cursize = cbuf->text_end - cbuf->text_start;
 		comment = quotes = false;
+
+#ifndef SERVERONLY		
+		// hexum - nextsize lets us know when alias expansion is complete (including 'if' expressions)
+		// once it is complete, the next command in the buffer should not be tainted (but it can still become tainted)
+		// this avoids problems with multiple binds being hit in the same frame and other cases where multiple
+		// commands become queued up
+		// NOTE: this works because alias expansion uses Cbuf_InsertText
+		if (cursize <= nextsize)
+			cmd_tainted = false;
+#endif
+		
 		for (i = 0; i < cursize; i++) {
 			if (text[i] == '\n')
 				break;
@@ -175,10 +192,14 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 			else if (text[i] == ';')
 				break;
 		}
+		
+#ifndef SERVERONLY
+		if ((cursize - i) < nextsize) // have we reached the next command?
+			nextsize = cursize - i;
 
 		// don't execute lines without ending \n; this fixes problems with
 		// partially stuffed aliases not being executed properly
-#ifndef SERVERONLY
+
 		if (cbuf_current == &cbuf_svc && i == cursize)
 			break;
 #endif
@@ -228,7 +249,10 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 	}
 	
 	cbuf->runAwayLoop = 0;
+
+#ifndef SERVERONLY
 	cmd_tainted = false;
+#endif
 
 done:
 	cbuf_current = NULL;
@@ -990,8 +1014,10 @@ char *Cmd_MacroString (char *s, int *macro_length)
 
 	for (i = 0; i < macro_count; i++, macro++) {
 		if (!strncasecmp(s, macro->name, strlen(macro->name))) {
+#ifndef SERVERONLY
 			if (!macro->allowed)
 				cmd_tainted = true;
+#endif
 
 			*macro_length = strlen(macro->name);
 			return macro->func();
