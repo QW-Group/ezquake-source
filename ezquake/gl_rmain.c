@@ -605,11 +605,11 @@ void R_AliasSetupLighting(entity_t *ent) {
 
 	if (clmodel->modhint == MOD_PLAYER) {
 		fbskins = bound(0, r_fullbrightSkins.value, cl.fbskins);
-		if (r_fullbrightSkins.value == 1 && gl_fb_models.value == 1) {
+		if (fbskins == 1 && gl_fb_models.value == 1) {
 			ambientlight = shadelight = 4096;
 			full_light = true;
 		}
-		else if (r_fullbrightSkins.value == 0) {
+		else if (fbskins == 0) {
 			ambientlight = max(ambientlight, 8);
 			shadelight = max(shadelight, 8);
 			full_light = true;

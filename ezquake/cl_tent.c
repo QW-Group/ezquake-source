@@ -313,10 +313,12 @@ void CL_ParseTEnt (void) {
 		{
 			FuelRodExplosion (pos);
 		}
-		else if (r_explosiontype.value == 9)
-		{
-			BurningExplosion (pos); 
-		}
+// START shaman FIX 1026019
+//		else if (r_explosiontype.value == 9)
+//		{
+//			BurningExplosion (pos); 
+//		}
+// END shaman FIX 1026019
 #endif
 		else
 		{	//sprite and particles
