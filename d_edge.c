@@ -184,7 +184,9 @@ void D_DrawSurfaces (void) {
 				else if (strstr (tx->name, "tele")) {
 					D_DrawSolidSurface (s, (int) r_telecolor.value & 0xFF);
 				}
-				// D_DrawSolidSurface (s, *((byte*) tx + tx->offsets[0] + ((tx->width * tx->height) >> 1)));
+				else {
+					D_DrawSolidSurface (s, *((byte*) tx + tx->offsets[0] + ((tx->width * tx->height) >> 1)));
+				}
 				// END shaman RFE 1022504
 				D_DrawZSpans(s->spans);
 				continue;

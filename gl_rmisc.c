@@ -227,6 +227,12 @@ void R_PreMapLoad(char *name) {
 void R_NewMap (void) {
 	int	i, waterline;
 
+	// START shaman RFE 1020608
+	extern int R_SetSky(char *skyname);
+	
+	R_SetSky (r_skyname.string);
+	// END shaman RFE 1020608
+
 	for (i = 0; i < 256; i++)
 		d_lightstylevalue[i] = 264;		// normal light value
 
