@@ -39,13 +39,13 @@ void Auth_Init(void);
 
 
 char *Auth_Generate_Crc(void) {
-	static char hash[17], *failsafe = "";
+	static char hash[31], *failsafe = "";
 	signed_buffer_t *p;
 
 	if (!Modules_SecurityLoaded())
 		return failsafe;
 
-	p = Security_Generate_Crc();
+	p = Security_Generate_Crc(cls.userinfo);
 
 	if (!VerifyData(p))
 		return failsafe;
@@ -63,7 +63,7 @@ static qboolean verify_response(int index, unsigned char *hash) {
 	if (!Modules_SecurityLoaded())
 		return failsafe;
 
-	p = Security_Verify_Response(index, hash);
+	p = Security_Verify_Response(cl.players[index].userinfo, hash);
 
 	if (!VerifyData(p))
 		return failsafe;
@@ -76,7 +76,7 @@ static qboolean verify_response(int index, unsigned char *hash) {
 static int Auth_CheckString (char *id, char *s, int flags, int offset, int *out_slot, char *out_data, int out_size) {
 	int len, slot;
 	char name[32], *index;
-	unsigned char hash[16];
+	unsigned char hash[30];
 
 	if (!Modules_SecurityLoaded())
 		return AUTH_NOTHING;
@@ -95,10 +95,10 @@ static int Auth_CheckString (char *id, char *s, int flags, int offset, int *out_
 		*out_slot = slot;
 
 
-	if (!(index = strstr(s + offset, "  crc: ")) || strlen(index) != 16 + 1 + 7 || index[16 + 7] != '\n')
+	if (!(index = strstr(s + offset, "  crc: ")) || strlen(index) != 30 + 1 + 7 || index[30 + 7] != '\n')
 		return AUTH_BADFORMAT;
 
-	memcpy(hash, index + 7, 16);
+	memcpy(hash, index + 7, 30);
 	if (out_data)
 		Q_strncpyz(out_data, s + offset + strlen(id), bound(1, index - (s + offset + strlen(id)) + 1, out_size));
 

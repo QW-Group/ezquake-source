@@ -140,7 +140,26 @@ void SYSINFO_Init(void)
         strcat(f_system_string, SYSINFO_3D_description);
     }
 }
-#else // _WIN32
+#elif defined(__linux__)
+int     SYSINFO_memory = 0;
+int     SYSINFO_MHz = 0;
+char *  SYSINFO_processor_description = NULL;
+char *  SYSINFO_3D_description        = NULL;
+
+char f_system_string[1024] = ""; 
+
+char * SYSINFO_GetString(void)
+{
+    return f_system_string;
+}
+
+void SYSINFO_Init(void) { // hexum -> TODO
+	// get memory from proc
+	// get cpu mhz from proc
+	// get cpu desc from proc
+	// get GL desc <-- easy, comes from gl_renderer string
+}
+#else
 void SYSINFO_Init(void) {}
 #endif // _WIN32
 
