@@ -2,13 +2,9 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
 <command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
 <name>loadcharset</name><description>
-In older versions of FuhQuake (v0.30 and
-lower), FuhQuake looked for an image called
- charset.png (or .tga) and if it found it then that was made to
-be your console font.
- Starting from FuhQuake v0.31, you can change your console font
-from within FuhQuake.
- Put all your charset images in qw/textures/charsets/*.png (and
+You can change your console font
+from within ezQuake.
+Put all your charset images in qw/textures/charsets/*.png (and
 *.tga) and use
  /loadcharset XXX to load XXX.png (or tga). "/loadcharset
 original" will restore the 8bit
