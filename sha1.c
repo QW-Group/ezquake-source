@@ -13,7 +13,7 @@ A million repetitions of "a"
 */
 
 /* #define LITTLE_ENDIAN * This should be #define'd if true. */
-/* Changed LITTLE_ENDIAN to BIGENDIAN define checking (unification of defines) */
+/* Changed LITTLE_ENDIAN to __BIG_ENDIAN__ define checking (unification of defines) */
 /* #define SHA1HANDSOFF * Copies data before messing with it. */
 
 #include <stdio.h>
