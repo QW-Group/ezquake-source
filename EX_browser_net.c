@@ -21,6 +21,8 @@
 #include "keys.h"
 #include "menu.h"
 
+extern qboolean useNewPing;
+
 static int	Sbar_ColorForMap (int m) {
 	m = bound(0, m, 13);
 
@@ -438,7 +440,7 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
     return 0;
 }
 
-
+extern int oldPingHost(char *host_to_ping, int count, int time_out);
 extern int PingHost(char *host_to_ping, short port, int count, int time_out);
 
 void GetServerPing(server_data *serv)
@@ -451,19 +453,20 @@ void GetServerPing(server_data *serv)
         serv->address.ip[2],
         serv->address.ip[3]);
 
-    p = PingHost(buf, serv->address.port, (int)max(1, min(sb_pings.value, 10)), sb_pingtimeout.value);
+	p = useNewPing ? PingHost(buf, serv->address.port, (int)max(1, min(sb_pings.value, 10)), sb_pingtimeout.value) : oldPingHost(buf, (int)max(1, min(sb_pings.value, 10)), sb_pingtimeout.value);
     if (p)
         SetPing(serv, p-1);
     else
         SetPing(serv, p-1);
 }
 
+int oldPingHosts(server_data *servs[], int servsn, int count);
 int PingHosts(server_data *servs[], int servsn, int count, int time_out);
 DWORD WINAPI GetServerPingsAndInfosProc(void * lpParameter)
 {
     abort_ping = 0;
 
-    PingHosts(servers, serversn, sb_pings.value, sb_pingtimeout.value);
+	useNewPing ? PingHosts(servers, serversn, sb_pings.value, sb_pingtimeout.value) : oldPingHosts(servers, serversn, sb_pings.value);
 
     if (!abort_ping)
     {
