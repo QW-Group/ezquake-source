@@ -90,9 +90,9 @@ __published:	// IDE-managed Components
         TCheckBox *forcetex;
         TCheckBox *noscripts;
         TCheckBox *indphys;
-        TCheckBox *noroot;
         TButton *crlnk;
         TComboBox *lnkpath;
+        TCheckBox *allowmulty;
         void __fastcall FormCreate(TObject *Sender);
         void __fastcall cancelClick(TObject *Sender);
         void __fastcall gamedirsChange(TObject *Sender);

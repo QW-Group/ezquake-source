@@ -307,7 +307,7 @@ object Form1: TForm1
       Hint = 
         'Performance tweek, can speed up sound a bit, but causes glitches' +
         ' with many sound systems'
-      Caption = 'use primar'
+      Caption = 'use primary sound'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 5
@@ -405,7 +405,7 @@ object Form1: TForm1
       Hint = 'Other command line parameter can be typed here'
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 7
+      TabOrder = 6
     end
     object nohwtimer: TCheckBox
       Left = 168
@@ -432,34 +432,35 @@ object Form1: TForm1
       TabOrder = 2
     end
     object noscripts: TCheckBox
-      Left = 272
-      Top = 16
+      Left = 168
+      Top = 48
       Width = 97
       Height = 17
       Caption = 'don'#39't use scripts'
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 5
+      TabOrder = 4
     end
     object indphys: TCheckBox
       Left = 272
-      Top = 32
+      Top = 16
       Width = 118
       Height = 17
       Caption = 'independent physics'
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 6
+      TabOrder = 5
     end
-    object noroot: TCheckBox
-      Left = 168
-      Top = 48
-      Width = 97
+    object allowmulty: TCheckBox
+      Left = 272
+      Top = 32
+      Width = 113
       Height = 17
-      Caption = 'no admin rights'
+      Hint = 'Turns off new precise timer and returns back old behaviour'
+      Caption = 'multiple instances'
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 4
+      TabOrder = 7
     end
   end
   object ss: TGroupBox

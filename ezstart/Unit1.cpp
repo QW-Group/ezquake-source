@@ -32,6 +32,7 @@ void __fastcall TForm1::FormCreate(TObject *Sender)
 Application->HintHidePause=60000;
 Application->HintPause=0;
 Application->ShowHint=0;
+
 //Application->HintColor=clWindow;
 
 gamedirs->Hint=\
@@ -397,21 +398,11 @@ Be sure to separate all parameters with a spaces.";
 
 noscripts->Hint=\
 "Description:\n\
-Disables both simple and advanced scripting\n\
-(forward rocketjump as well as normal rocket jump etc.)\n\
-and adds \"noscripts\" to your userinfo.\n\
+Disables advanced scripting and adds \"noscripts\" to your userinfo.\n\
 \n\Command line parameter:\n\
 -noscripts\n\
 \n\Recommendation:\n\
 No.\n\
-\n\Notes: -";
-noroot->Hint=\
-"Description:\n\
-Allows to run client without administrator privileges\n\
-\n\Command line parameter:\n\
--nosockraw\n\
-\n\Recommendation:\n\
-Yes.\n\
 \n\Notes: -";
 indphys->Hint=\
 "Description:\n\
@@ -421,6 +412,14 @@ FPS number than the number of frames sent to the server.\n\
 +set cl_independentPhysics 1\n\
 \n\Recommendation:\n\
 Yes.\n\
+\n\Notes: -";
+allowmulty->Hint=\
+"Description:\n\
+Allows to run one more instance of ezQuake.\n\
+\n\Command line parameter:\n\
+-allowmultiple\n\
+\n\Recommendation:\n\
+No.\n\
 \n\Notes: -";
 
 
@@ -668,8 +667,8 @@ if (ruleset->Text!="" && ruleset->Enabled) cmd=cmd+"-ruleset "+ruleset->Text+" "
 if (nohwtimer->Checked && nohwtimer->Enabled) cmd=cmd+"-nohwtimer ";
 //if (noconfirmquit->Checked && noconfirmquit->Enabled) cmd=cmd+"+set cl_confirmquit 0 ";
 if (noscripts->Checked && noscripts->Enabled) cmd=cmd+"-noscripts ";
-if (noroot->Checked && noroot->Enabled) cmd=cmd+"-nosockraw ";
 if (indphys->Checked && indphys->Enabled) cmd=cmd+"+set cl_independentPhysics 1 ";
+if (allowmulty->Checked && allowmulty->Enabled) cmd=cmd+" -allowmultiple ";
 if (clcfg->Text!="" && clcfg->Enabled) cmd=cmd+"+cfg_load "+clcfg->Text+" ";
 if (other->Text!="" && other->Enabled) cmd=cmd+other->Text+" ";
 
@@ -917,13 +916,13 @@ if (cmd.SubString(cmd.Length(),1)!=" ")
     { noscripts->Checked=1;
       cmd=cmd.Delete(cmd.Pos(" -noscripts"),11);
     }
-   if (cmd.Pos(" -nosockraw"))
-    { noroot->Checked=1;
-      cmd=cmd.Delete(cmd.Pos(" -nosockraw"),11);
-    }
    if (cmd.Pos(" +set cl_independentphysics 1"))
     { indphys->Checked=1;
       cmd=cmd.Delete(cmd.Pos(" +set cl_independentphysics 1"),29);
+    }
+   if (cmd.Pos(" -allowmultiple"))
+    { allowmulty->Checked=1;
+      cmd=cmd.Delete(cmd.Pos(" -allowmultiple"),15);
     }
 
    if (cmd.Pos(" +gamedir "))
