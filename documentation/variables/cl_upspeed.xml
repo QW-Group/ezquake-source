@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>cl_upspeed</name><description>
+
+<name>cl_upspeed</name>
+<description>
 This allows you to set the speed with which you move up and down in liquids or in spectator mode.
 Obviously this is also limited by the server, usually to 320*0.7 = 224 when underwater and to 500 in spectator mode.
 
-</description><remarks></remarks></variable>
+</description>
+<remarks>
+
+</remarks>
+</variable>

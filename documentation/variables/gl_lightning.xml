@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>gl_lightning</name><description>0 - Turns off coronas on lightning beams
+
+<name>gl_lightning</name>
+<description>0 - Turns off coronas on lightning beams
 1 - Turns on coronas on lightning beams.
-</description><remarks></remarks></variable>
+</description>
+</variable>

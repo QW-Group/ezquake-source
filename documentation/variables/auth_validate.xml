@@ -1,5 +1,24 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>auth_validate</name><description></description><value><enum><value><name>
-0</name><description>If you don't want your client to validate other FuhQuake clients.</description></value><value><name>1</name><description>which performs the validation (but you need to use 'validate_clients'</description></value></enum></value><remarks></remarks></variable>
+
+<name>auth_validate</name>
+<description>
+</description>
+<value><enum>
+	<value><name>
+0</name><description>If you don't want your client to validate other FuhQuake clients.</description></value>
+	<value><name>1</name><description>which performs the validation (but you need to use 'validate_clients'</description></value>
+</enum></value>
+<remarks>
+
+
+to see the results after a 'fuh_version').  If you have 
+'auth_warninvalid 1' and someone gives a dirty hash in a version response 
+(because they are using a hacked client that can't work out the right 
+response), FuhQuake will print something like 
+'Warning Invalid Client: playername (userid)' in your console ('auth_warninvalid 0' is default).
+
+
+</remarks>
+</variable>

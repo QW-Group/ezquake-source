@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>tp_took</name><description>
+
+<name>tp_took</name>
+<description>
 
 Customizes the f_took trigger.
 Item can be: quad, pent, ring, suit, ra, ya, ga, mh, health, lg, 
@@ -9,9 +11,10 @@ rl, gl, sng, ng, ssg, pack, cells, rockets, nails, shells, flag,
 armor, weapons, powerups, ammo, all, default, none
 Item names can be customized with tp_name_item
 Examples:
-tp_took powerups ra ya lg rl mh flag (same as "default")
+tp_took powerups ra ya lg rl mh flag (same as &quot;default&quot;)
 tp_took all -ammo (report everything but ammo)
 tp_took +gl (add grenade launcher to pickup list)
-alias f_took "say_team took %i"
+alias f_took &quot;say_team took %i&quot;
 
-</description><remarks></remarks></variable>
+</description>
+</variable>

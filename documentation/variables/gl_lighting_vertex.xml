@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>gl_lighting_vertex</name><description>Alias models no longer have the same level of light on all sides. This may not work correctly if coloured lighting is disabled.
-</description><remarks></remarks></variable>
+
+<name>gl_lighting_vertex</name>
+<description>Alias models no longer have the same level of light on all sides. This may not work correctly if coloured lighting is disabled.
+</description>
+</variable>

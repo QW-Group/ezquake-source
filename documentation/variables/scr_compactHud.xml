@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>scr_compactHud</name><description></description><value><enum><value><name>
-0</name><description>Compact huds off.</description></value><value><name>1</name><description>Will display armour/health/ammo/weapons *very* compactly.</description></value><value><name>2</name><description>Will display armour/health/ammo *very* compactly.</description></value><value><name>3</name><description>Displays only health/armour.</description></value><value><name>4</name><description>Is just like &quot;2&quot; except it also displays your current weapon's ammo in big numbers.</description></value></enum></value><remarks></remarks></variable>
+
+<name>scr_compactHud</name>
+<description>
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Compact huds off.</description></value>
+	<value><name>1</name><description>Will display armour/health/ammo/weapons *very* compactly.</description></value>
+	<value><name>2</name><description>Will display armour/health/ammo *very* compactly.</description></value>
+	<value><name>3</name><description>Displays only health/armour.</description></value>
+	<value><name>4</name><description>Is just like &quot;2&quot; except it also displays your current weapon's ammo in big numbers.</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+
+
+
+</remarks>
+</variable>

@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>gl_smoothmodels</name><description></description><value><enum><value><name>
-0</name><description>Do not smooth the textures on models.</description></value><value><name>1</name><description>Smooth the textures on models.</description></value></enum></value><remarks></remarks></variable>
+
+<name>gl_smoothmodels</name>
+<description>
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Do not smooth the textures on models.</description></value>
+	<value><name>1</name><description>Smooth the textures on models.</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+</remarks>
+</variable>

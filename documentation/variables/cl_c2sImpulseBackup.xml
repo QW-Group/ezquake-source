@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>cl_c2sImpulseBackup</name><description>
+
+<name>cl_c2sImpulseBackup</name>
+<description>
 
 Used with cl_c2spps, it controls how many backup copies of packets with non-zero 
 impulses are to be sent to the server. The recommended value is 3, 
 but you can try 2 or even 1 to reduce traffic if you don't have any packet loss.
 
-</description><remarks></remarks></variable>
+</description>
+</variable>

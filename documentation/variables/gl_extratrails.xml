@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>gl_extratrails</name><description>Misc trails that appear on objects that frequently move, such as TF grenades, caltrops, etc.
+
+<name>gl_extratrails</name>
+<description>Misc trails that appear on objects that frequently move, such as TF grenades, caltrops, etc.
 Railguns in TF also leave behind unique trails.
-</description><remarks></remarks></variable>
+</description>
+</variable>

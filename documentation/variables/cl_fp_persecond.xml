@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>cl_fp_persecond</name><description>
 
-This variable is used in conjunction with the variable "cl_fp_messages" to
-define when the floodprot protection should be triggered (if "cl_floodprot"
-is set to "1").
+<name>cl_fp_persecond</name>
+<description>
 
-</description><remarks></remarks></variable>
+This variable is used in conjunction with the variable &quot;cl_fp_messages&quot; to
+define when the floodprot protection should be triggered (if &quot;cl_floodprot&quot;
+is set to &quot;1&quot;).
+
+</description>
+</variable>

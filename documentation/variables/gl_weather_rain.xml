@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>gl_weather_rain</name><description>Turns on rain out of doors, the density of rain is equal to whatever gl_weather_rain is set to.
+
+<name>gl_weather_rain</name>
+<description>Turns on rain out of doors, the density of rain is equal to whatever gl_weather_rain is set to.
 If you set gl_weather_rain_fast to 1, you can turn off all splashes, if you set it to 2, you will turn off only the water splashes.
 Works on all non-iD maps except death32c, dakyne and some others.
-</description><remarks></remarks></variable>
+</description>
+</variable>

@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>cl_trueLightning</name><description>
+
+<name>cl_trueLightning</name>
+<description>
 Smoothes out shaft movement, 0 means no smoothing at all, 1 - 100% smoothing;
 a value of about 0.5 is recommended for modem players.
 
-</description><remarks></remarks></variable>
+</description>
+<remarks>
+
+</remarks>
+</variable>

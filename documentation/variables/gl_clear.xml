@@ -1,5 +1,27 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>gl_clear</name><description></description><value><enum><value><name>
-0</name><description>Off.</description></value><value><name>1</name><description>On.</description></value></enum></value><remarks></remarks></variable>
+
+<name>gl_clear</name>
+<description>
+
+This variable will toggle the clearing of the screen between each frame. This
+can be helpful when specing a game and flying out of the map and during map 
+development when the map maker must fly outside of the map to look has his map
+from the outside. Enabling this toggle will clear the areas which are not 
+rendered outside of the map thus preventing the flickering effect when images 
+repeat themselves over and over. However it causes problems when playing and 
+going through the surfaces of a liquid (for example when diving into water), as
+you will see a red flash where the liquid texture would normally be repeated.
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Off.</description></value>
+	<value><name>1</name><description>On.</description></value>
+</enum></value>
+<remarks>
+
+
+
+</remarks>
+</variable>

@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>cl_nodelta</name><description></description><value><enum><value><name>
-0</name><description>Enable delta compression.</description></value><value><name>1</name><description>Disable delta compression.</description></value></enum></value><remarks></remarks></variable>
+
+<name>cl_nodelta</name>
+<description>
+
+Control the network packet delta compression. When you get blue lines
+in your netgraph, you should set 'cl_nodelta 1'. 
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Enable delta compression.</description></value>
+	<value><name>1</name><description>Disable delta compression.</description></value>
+</enum></value>
+<remarks>
+
+
+
+</remarks>
+</variable>

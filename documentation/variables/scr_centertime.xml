@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>scr_centertime</name><description></description><value><enum><value><name>
-0</name><description>Do not display any centerprints.</description></value><value><name>1</name><description>Display centerprints for 1 second.</description></value><value><name>2</name><description>Display centerprints for 2 seconds.</description></value></enum></value><remarks></remarks></variable>
+
+<name>scr_centertime</name>
+<description>
+This variable sets the amount of time in seconds that centerprinted messages 
+stay on the screen. 
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Do not display any centerprints.</description></value>
+	<value><name>1</name><description>Display centerprints for 1 second.</description></value>
+	<value><name>2</name><description>Display centerprints for 2 seconds.</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+
+</remarks>
+</variable>

@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>baseskin</name><description>
+
+<name>baseskin</name>
+<description>
 
 Defines what skin u see other people using if you don't have their skin and don't have skin forcing on.
 
-</description><remarks></remarks></variable>
+</description>
+</variable>

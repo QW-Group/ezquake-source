@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>v_iyaw_cycle</name><description>
+
+<name>v_iyaw_cycle</name>
+<description>
 
 Sets how quickly you look left and right when v_idlescale is active.
 
-</description><remarks></remarks></variable>
+</description>
+</variable>

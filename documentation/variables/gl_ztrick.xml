@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>gl_ztrick</name><description></description><value><enum><value><name>
-0</name><description>Do not use the z-buffer trick.</description></value><value><name>1</name><description>Use the z-buffer trick.</description></value></enum></value><remarks></remarks></variable>
+
+<name>gl_ztrick</name>
+<description>
+This variables toggles the use of a trick to prevent the clearning of the 
+z-buffer between frames. When this variable is set to &quot;1&quot;, the game will not 
+clear the z-buffer between frames. This will result in increased performance 
+but might cause problems for some display hardware.
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Do not use the z-buffer trick.</description></value>
+	<value><name>1</name><description>Use the z-buffer trick.</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+</remarks>
+</variable>

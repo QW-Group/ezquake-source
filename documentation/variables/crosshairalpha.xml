@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>crosshairalpha</name><description></description><value><enum><value><name>
-0</name><description>Transparent crosshair.</description></value><value><name>1</name><description>Opaque crosshair.</description></value></enum></value><remarks></remarks></variable>
+
+<name>crosshairalpha</name>
+<description>
+This command regulates crosshair transparency, you can use any value from &quot;0&quot; 
+to &quot;1&quot;.
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Transparent crosshair.</description></value>
+	<value><name>1</name><description>Opaque crosshair.</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+</remarks>
+</variable>

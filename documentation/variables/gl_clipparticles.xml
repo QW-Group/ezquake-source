@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>gl_clipparticles</name><description></description><value><enum><value><name>
-0</name><description>Disable.</description></value><value><name>1</name><description>this will limit the number of blended particles close to you. This gives a big FPS increase when blended particles take up a big proportion of your screen and challenge your video card's fillrate.</description></value></enum></value><remarks></remarks></variable>
+
+<name>gl_clipparticles</name>
+<description>
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Disable.</description></value>
+	<value><name>1</name><description>this will limit the number of blended particles close to you. This gives a big FPS increase when blended particles take up a big proportion of your screen and challenge your video card's fillrate.</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+</remarks>
+</variable>

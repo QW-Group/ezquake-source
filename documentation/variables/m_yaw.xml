@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>m_yaw</name><description>
+
+<name>m_yaw</name>
+<description>
 
 This variable controls how fast the player turns left and right when the mouse 
 is moved left and right. It is recommended that this variable be left alone and
-instead the "sensitivity" variable is used to change the level of precision. 
+instead the &quot;sensitivity&quot; variable is used to change the level of precision. 
 If you set this variable to a negative value you will reverse the mouse 
 movement. Some script writers use this variable to increase the level of 
-precision when the "fov" variable is used to zoom the screen.
+precision when the &quot;fov&quot; variable is used to zoom the screen.
 
-</description><remarks></remarks></variable>
+</description>
+</variable>

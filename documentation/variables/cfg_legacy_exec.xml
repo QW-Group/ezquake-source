@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>cfg_legacy_exec</name><description></description><value><enum><value><name>
-0</name><description>Do not execute config.cfg and frontend.cfg in gamedir ever.</description></value><value><name>1</name><description>Execute config.cfg and frontend.cfg in gamedir (unless gamedir = qw) like </description></value><value><name>2</name><description>Execute config.cfg and frontend.cfg even if gamedir = qw.</description></value><value><name>3</name><description>Execute config.cfg and frontend.cfg even if gamedir = qw.  </description></value></enum></value><remarks></remarks></variable>
+
+<name>cfg_legacy_exec</name>
+<description>
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Do not execute config.cfg and frontend.cfg in gamedir ever.</description></value>
+	<value><name>1</name><description>Execute config.cfg and frontend.cfg in gamedir (unless gamedir = qw) like </description></value>
+	<value><name>2</name><description>Execute config.cfg and frontend.cfg even if gamedir = qw.</description></value>
+	<value><name>3</name><description>Execute config.cfg and frontend.cfg even if gamedir = qw.  </description></value>
+</enum></value>
+<remarks>
+
+qw 2.33.
+
+
+If there is no config.cfg or frontend.cfg in gamedir, and gamedir != qw then try executing 
+config.cfg and frontend.cfg in qw.
+
+
+</remarks>
+</variable>

@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>cl_predictPlayers</name><description></description><value><enum><value><name>
-0</name><description>Do not predict other players' movement.</description></value><value><name>1</name><description>Predict other players' movement.</description></value></enum></value><remarks></remarks></variable>
+
+<name>cl_predictPlayers</name>
+<description>
+This toggles the prediction for other players' movement. Unless you are having 
+problems this variable should be left at &quot;1&quot;.
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Do not predict other players' movement.</description></value>
+	<value><name>1</name><description>Predict other players' movement.</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+</remarks>
+</variable>

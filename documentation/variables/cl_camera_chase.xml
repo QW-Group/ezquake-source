@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>cl_camera_chase</name><description>0 = 1st person view
+
+<name>cl_camera_chase</name>
+<description>0 = 1st person view
 1 = 3rd person view ala Tomb Raider (such a fun!)
 2 = 3rd person view ala cl_chasecam 0 (buggy)
 Disabled in -ruleset smackdown
-</description><remarks></remarks></variable>
+</description>
+</variable>

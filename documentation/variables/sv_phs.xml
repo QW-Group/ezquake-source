@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>sv_phs</name><description></description><value><enum><value><name>
-0</name><description>Disable.</description></value><value><name>1</name><description>Has something to do with the table which is build at the loading time</description></value></enum></value><remarks></remarks></variable>
+
+<name>sv_phs</name>
+<description>
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Disable.</description></value>
+	<value><name>1</name><description>Has something to do with the table which is build at the loading time</description></value>
+</enum></value>
+<remarks>
+
+
+of the map.
+
+
+</remarks>
+</variable>

@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>cl_keypad</name><description></description><value><enum><value><name>
-0</name><description>QW compatibility where the keypad keys act the same key name, eg KP_8 acts like uparrow would.</description></value><value><name>1</name><description>You will be able to bind such keys as capslock, numlock, and all numpad keys.</description></value></enum></value><remarks></remarks></variable>
+
+<name>cl_keypad</name>
+<description>
+
+</description>
+<value><enum>
+	<value><name>
+0</name><description>QW compatibility where the keypad keys act the same key name, eg KP_8 acts like uparrow would.</description></value>
+	<value><name>1</name><description>You will be able to bind such keys as capslock, numlock, and all numpad keys.</description></value>
+</enum></value>
+<remarks>
+
+
+
+</remarks>
+</variable>

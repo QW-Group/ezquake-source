@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>_vid_default_mode</name><description>
+
+<name>_vid_default_mode</name>
+<description>
 
 This variable sets the default video mode that FuhQuake uses.
 
-</description><remarks></remarks></variable>
+</description>
+</variable>

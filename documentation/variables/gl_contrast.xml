@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>gl_contrast</name><description>
+
+<name>gl_contrast</name>
+<description>
 Change contrast.
 
-</description><remarks></remarks></variable>
+</description>
+<remarks>
+
+</remarks>
+</variable>

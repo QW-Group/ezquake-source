@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>r_viewmodelSize</name><description>
+
+<name>r_viewmodelSize</name>
+<description>
 This allows you to change the size of the viewmodel (the model of your active 
 weapon displayed on the center of your screen) a little, useful if you prefer
-to use "r_drawviewmodel 1" and higher fov values (for demos for example).
-For "fov 110" you could try "r_viewmodelscale 0.8" or 0.85 for example.
+to use &quot;r_drawviewmodel 1&quot; and higher fov values (for demos for example).
+For &quot;fov 110&quot; you could try &quot;r_viewmodelscale 0.8&quot; or 0.85 for example.
 
-</description><remarks></remarks></variable>
+</description>
+<remarks>
+
+</remarks>
+</variable>

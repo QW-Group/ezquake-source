@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>tp_point</name><description>
+
+<name>tp_point</name>
+<description>
 
 What to report for pointing (%x, %y and %t).
 Item can be: powerups, quad, pent, ring, armor, ra, ya, ga,
@@ -14,4 +16,5 @@ Examples:
 tp_point powerups flag
 say_team I see %t!
 
-</description><remarks></remarks></variable>
+</description>
+</variable>

@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>vid_windowed_mode</name><description>
-This variable sets the windowed video mode that the game will switch to when the 
-"vid_windowed" command is executed.
 
-</description><remarks></remarks></variable>
+<name>vid_windowed_mode</name>
+<description>
+This variable sets the windowed video mode that the game will switch to when the 
+&quot;vid_windowed&quot; command is executed.
+
+</description>
+<remarks>
+
+</remarks>
+</variable>

@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>gl_lightmode</name><description></description><value><enum><value><name>
-0</name><description>Makes the map lighter, but fulbrights don't look as good.</description></value><value><name>2</name><description>Makes the map darker, but makes fullbrights stand out more (looks better).</description></value></enum></value><remarks></remarks></variable>
+
+<name>gl_lightmode</name>
+<description>
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Makes the map lighter, but fulbrights don't look as good.</description></value>
+	<value><name>2</name><description>Makes the map darker, but makes fullbrights stand out more (looks better).</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+</remarks>
+</variable>

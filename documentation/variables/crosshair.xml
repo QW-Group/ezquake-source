@@ -1,5 +1,31 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>crosshair</name><description></description><value><enum><value><name>
-0</name><description>Crosshair off.</description></value><value><name>1</name><description>Conchar crosshair (messagemode1 +).</description></value><value><name>2</name><description>Quakeworld crosshair.</description></value><value><name>3</name><description>A small cross crosshair.</description></value><value><name>4</name><description>A dot crosshair.</description></value><value><name>5</name><description>Star wars crosshair *gl only*.</description></value><value><name>6</name><description>Happyface crosshair *gl only*.</description></value><value><name>7</name><description>F22 simulator crosshair *gl only*.</description></value></enum></value><remarks></remarks></variable>
+
+<name>crosshair</name>
+<description>
+
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Crosshair off.</description></value>
+	<value><name>1</name><description>Conchar crosshair (messagemode1 +).</description></value>
+	<value><name>2</name><description>Quakeworld crosshair.</description></value>
+	<value><name>3</name><description>A small cross crosshair.</description></value>
+	<value><name>4</name><description>A dot crosshair.</description></value>
+	<value><name>5</name><description>Star wars crosshair *gl only*.</description></value>
+	<value><name>6</name><description>Happyface crosshair *gl only*.</description></value>
+	<value><name>7</name><description>F22 simulator crosshair *gl only*.</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+
+
+
+
+
+</remarks>
+</variable>

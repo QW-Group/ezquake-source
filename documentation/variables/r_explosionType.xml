@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>r_explosiontype</name><description>New Explosions types (8 and 9):
+
+<name>r_explosiontype</name>
+<description>New Explosions types (8 and 9):
 
 Fuel Rod Gun Explosion (r_explosiontype 8)
 This is a kind of mushroom cloud... Oh, and its green.
 Sprite Explosion (r_explosiontype 9)
 Its just a 2d-type explosion for people who don't want great balls of orange fire.
 
-</description><remarks></remarks></variable>
+</description>
+</variable>

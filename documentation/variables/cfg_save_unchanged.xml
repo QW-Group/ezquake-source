@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>cfg_save_unchanged</name><description></description><value><enum><value><name>
-0</name><description>Makes cfg_save only write variables that are not default valued to the </description></value><value><name>1</name><description>Makes cfg_save write all variables to the config file.</description></value></enum></value><remarks></remarks></variable>
+
+<name>cfg_save_unchanged</name>
+<description>
+
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Makes cfg_save only write variables that are not default valued to the </description></value>
+	<value><name>1</name><description>Makes cfg_save write all variables to the config file.</description></value>
+</enum></value>
+<remarks>config file.
+
+
+
+</remarks>
+</variable>

@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>show_speed</name><description></description><value><enum><value><name>
-0</name><description>Off.</description></value><value><name>1</name><description>More accurate counter (Best used when LPB).</description></value><value><name>2</name><description>Predicted speed (Less laggy when HPB).</description></value></enum></value><remarks></remarks></variable>
+
+<name>show_speed</name>
+<description>
+
+Displays a speed counter in the top right corner in FuhQuake units (Horizontal velocity). (320 - Normal walking speed, 440 - Accel jump, 450 - Bunnyhopping)
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Off.</description></value>
+	<value><name>1</name><description>More accurate counter (Best used when LPB).</description></value>
+	<value><name>2</name><description>Predicted speed (Less laggy when HPB).</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+</remarks>
+</variable>

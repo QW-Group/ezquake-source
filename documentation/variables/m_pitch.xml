@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>m_pitch</name><description>
+
+<name>m_pitch</name>
+<description>
 
 This variable sets the level of precision when the mouse is used to make the 
 player look up and down while the +mlook command is in effect. By default this 
@@ -9,7 +11,7 @@ variable is set in such a way that moving the mouse forward makes the player
 look up and moving the mouse backward makes the player look down. Some people 
 prefer to have this movement inverted just like it is inverted for airplane 
 controls. If you wish to use this inverted mouse movement then you should set 
-this variable to a negative value (for example "-0.022"). It is a matter of 
+this variable to a negative value (for example &quot;-0.022&quot;). It is a matter of 
 preference which movement method is used by players. Also lowering the value 
 for this variable will increase the level of precision when the mouse is used 
 to make the player look up and down. This variable can be used separately from 
@@ -20,4 +22,5 @@ to change the overall sensitivity of the mouse. Also, some script writers lower
 the value for this variable along with a lowered value for the fov variable in 
 order to provide more precision when the fov variable is used to zoom.
 
-</description><remarks></remarks></variable>
+</description>
+</variable>

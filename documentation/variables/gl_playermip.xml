@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>gl_playermip</name><description></description><value><enum><value><name>
-0</name><description>Full detail.</description></value><value><name>1</name><description>Medium detail.</description></value><value><name>2</name><description>Low detail.</description></value></enum></value><remarks></remarks></variable>
+
+<name>gl_playermip</name>
+<description>
+Determines the level of detail of player models. This variable is useful if you are 
+experience game slowdown during multiplayer games when there are lots of players on 
+your screen by shrinking the texture detail, but this will make the player models more blurry.
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Full detail.</description></value>
+	<value><name>1</name><description>Medium detail.</description></value>
+	<value><name>2</name><description>Low detail.</description></value>
+</enum></value>
+<remarks>
+
+
+
+X = etc.
+
+
+</remarks>
+</variable>

@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>cl_chatmode</name><description></description><value><enum><value><name>
-0</name><description>Text in the console is always treated as a command and in order to chat you have to use messagemode/messagemode2 or use the say/say_team commands.</description></value><value><name>1</name><description>Everything you type in the console goes into chat, in order to issue a command, prefix it with a slash (/).</description></value><value><name>2</name><description>If the first word in the line is a command, it is executed, otherwise the line is sent as chat.</description></value></enum></value><remarks></remarks></variable>
+
+<name>cl_chatmode</name>
+<description>
+Console chat mode.
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Text in the console is always treated as a command and in order to chat you have to use messagemode/messagemode2 or use the say/say_team commands.</description></value>
+	<value><name>1</name><description>Everything you type in the console goes into chat, in order to issue a command, prefix it with a slash (/).</description></value>
+	<value><name>2</name><description>If the first word in the line is a command, it is executed, otherwise the line is sent as chat.</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+
+</remarks>
+</variable>

@@ -1,5 +1,44 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>cl_parseFunChars</name><description></description><value><enum><value><name>
-0</name><description>Off.</description></value><value><name>1</name><description>You can use Ocrana LED's by hand right out of the console and chat anonymously through &quot;$\&quot; without showing your name (chat messages that are seen without your name at the beginning).</description></value></enum></value><remarks></remarks></variable>
+
+<name>cl_parseFunChars</name>
+<description>
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Off.</description></value>
+	<value><name>1</name><description>You can use Ocrana LED's by hand right out of the console and chat anonymously through &quot;$\&quot; without showing your name (chat messages that are seen without your name at the beginning).</description></value>
+</enum></value>
+<remarks>
+
+
+Full list:
+$R - red lamp
+$G - green lamp
+$B - blue lamp
+$Y - yellow lamp
+$\ - carridge return
+$( - big left bracket
+$= - big equal sign
+$) - big right bracket
+$. - red middle dot
+$, - white dot (names only)
+$&lt; - small left bracket
+$- - small equal sign
+$&gt; - small right bracket
+$a - big grey block
+$: - line feed
+$b - filled red block
+$d - right pointing red arrow
+$[ - gold left square bracket
+$] - gold right square bracket
+$^ - white ^ (names only)
+^x - red x (names only)
+$0-9 - yellow number
+$xyy - char with hex code yy
+(In order to use the lamps, you'll need the Ocrana pak).
+
+
+</remarks>
+</variable>
