@@ -113,7 +113,7 @@ unsigned int i, j;
 
 /* Add padding and return the message digest. */
 
-void SHA1Final(unsigned char digest[20], SHA1_CTX* context)
+void SHA1Final(unsigned char digest[DIGEST_SIZE], SHA1_CTX* context)
 {
 unsigned long i, j;
 unsigned char finalcount[8];
@@ -127,7 +127,7 @@ unsigned char finalcount[8];
         SHA1Update(context, (unsigned char *)"\0", 1);
     }
     SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
-    for (i = 0; i < 20; i++) {
+    for (i = 0; i < DIGEST_SIZE; i++) {
         digest[i] = (unsigned char)
          ((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
     }
@@ -145,15 +145,16 @@ unsigned char finalcount[8];
 //VVD: SHA1 crypt
 char *SHA1(char *string, int len)
 {
-	SHA1_CTX context;
-	unsigned char digest[DIGEST_SIZE];
-	static char ret[DIGEST_SIZE * 2 + 1];
-	int i;
+	SHA1_CTX	context;
+	unsigned char	digest[DIGEST_SIZE];
+	static char	ret[DIGEST_SIZE * 2 + 1];
+	unsigned char	*d = digest;
+	int		i;
 
 	SHA1Init(&context);
 	SHA1Update(&context, string, len);
 	SHA1Final(digest, &context);
-	for (i = 0; i < DIGEST_SIZE; ++i)
-		snprintf(ret + i * 2, DIGEST_SIZE * 2 + 1 - i * 2, "%02X", digest[i]);
+	for (i = 0; i < DIGEST_SIZE * 2; i += 2, d++)
+		snprintf(ret + i, DIGEST_SIZE * 2 + 1 - i, "%02X", *d);
 	return ret;
 }
