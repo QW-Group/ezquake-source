@@ -1600,23 +1600,22 @@ void SCR_DrawStatusMultiview(void) {
 	
 	strcpy(name,cl.players[nPlayernum].name);
 
-
 	if (strcmp(cl.players[nPlayernum].name,"") && !cl.players[nPlayernum].spectator) {
-		if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && cl_multiview.value == 2 && cl_mvinset.value) {
+		if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && cl_multiview.value == 2 && cl_mvinset.value) { // mvinset and dead
 			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			sprintf(strng, "%.5s   %s %c%c:%-3s",name,
 										"dead   ",
 										w1,w2,
 										sAmmo);
 		}
-		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && vid.width < 512) {
+		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && vid.width <= 512) { // <= 512 and dead
 			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			sprintf(strng, "%.2s  %s %c%c:%-3s",name,
 										"dead   ",
 										w1,w2,
 										sAmmo);
 		}
-		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) {
+		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) { // > 512 and dead
 			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			sprintf(strng, "%s   %s %c%c:%-3s",name,
 										"dead   ",
@@ -1624,7 +1623,7 @@ void SCR_DrawStatusMultiview(void) {
 										sAmmo);
 		}
 
-		else if (cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1) {
+		else if (cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1) { // mvinset
 			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			sprintf(strng, "%s %.5s  %c%03d %03d %c%c:%-3s",pups,
 												name,
@@ -1634,7 +1633,7 @@ void SCR_DrawStatusMultiview(void) {
 												w1,w2,
 												sAmmo);
 		} 
-		else if (cl_multiview.value && vid.width < 512) {
+		else if (cl_multiview.value && vid.width <= 512) { // <= 512 and alive
 			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			sprintf(strng, "%s %.2s %c%03d %03d %c%c:%-3s",pups,
 												name,
@@ -1646,7 +1645,7 @@ void SCR_DrawStatusMultiview(void) {
 		}
 		
 		else {
-			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]); // > 512 and alive
 			sprintf(strng, "%s %s  %c%03d %03d %c%c:%-3s",pups,
 												name,
 												armor,
@@ -1776,7 +1775,7 @@ void SCR_DrawStatusMultiview(void) {
 
 	// fill the void
 	if (cl_sbar.value && vid.width > 512 && cl_multiview.value==2 && cl_mvinset.value && cl_mvinsethud.value && cl_mvdisplayhud.value) {
-		Draw_Fill(vid.width/3*2,vid.height/3-sb_lines/3+1,vid.width/3+2, sb_lines/3-1,c2); // oppymv 300804
+		Draw_Fill(vid.width/3*2+1,vid.height/3-sb_lines/3+1,vid.width/3+2, sb_lines/3-1,c2); // oppymv 300804
 	}
 
 	// hud info
@@ -1799,15 +1798,15 @@ void SCR_DrawStatusMultiview(void) {
 	}
 	else if (cl_multiview.value == 2 && cl_mvinset.value) { // oppymv 040904 - do ifdefs if over border in gl really annoys
 		if (vid.width <= 512 && cl_sbar.value) {
-			Draw_Fill(vid.width/3*2,vid.height/3-sb_lines/3,vid.width/3+2,1,c2); // oppymv 300804
-			Draw_Fill(vid.width/3*2,0,1,vid.height/3-sb_lines/3,c2);
+			Draw_Fill(vid.width/3*2+1,vid.height/3-sb_lines/3,vid.width/3+2,1,c2); // oppymv 300804
+			Draw_Fill(vid.width/3*2+1,0,1,vid.height/3-sb_lines/3,c2);
 		} else if (vid.width>512 && cl_sbar.value && !cl_mvinsethud.value || vid.width>512 && cl_sbar.value && !cl_mvdisplayhud.value) {
 			Draw_Fill(vid.width/3*2,vid.height/3-sb_lines/3,vid.width/3,1,c2); // oppymv 300804
 			Draw_Fill(vid.width/3*2,0,1,vid.height/3-sb_lines/3,c2);
 		}
-		else {
-			Draw_Fill(vid.width/3*2,vid.height/3,vid.width/3+2,1,c2); // oppymv 300804
-			Draw_Fill(vid.width/3*2,0,1,vid.height/3,c2);
+		else { // sbar 0 and <= 512 conwidth
+			Draw_Fill(vid.width/3*2+1,vid.height/3,vid.width/3+2,1,c2); // oppymv 300804
+			Draw_Fill(vid.width/3*2+1,0,1,vid.height/3,c2);
 		}
 	}
 	else if (cl_multiview.value == 3) {
