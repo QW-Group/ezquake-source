@@ -655,8 +655,6 @@ void CL_LinkPacketEntities (void) {
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER1_TRAIL);
 					else if (r_rockettrail.value == 7)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER2_TRAIL);
-
-
 					else if (r_rockettrail.value == 3)
 						R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, ALT_ROCKET_TRAIL);
 					//VULT PARTICLES
@@ -703,7 +701,7 @@ void CL_LinkPacketEntities (void) {
 						//VULT CORONAS
 						if (!cl.paused && amf_coronas.value)
 							NewCorona(C_ROCKETLIGHT, ent.origin);
-						}
+					}
 				}
 				else if (r_rockettrail.value == 9 || r_rockettrail.value == 11)
 				{

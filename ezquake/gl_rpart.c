@@ -1118,6 +1118,13 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 	case p_bubble2:
 		count = length / 5;
 		break;
+	// START shaman FIX 1022476
+	// START shaman FIX 1025583
+	case p_trailpart:
+		count = length / 1.1;
+		break; 
+	// END shaman FIX 1025583
+	// END shaman FIX 1022476
 	case p_blood3:
 		count = length / 8;
 		break;
@@ -1373,8 +1380,12 @@ void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_ty
 			AddParticleTrail (p_trailpart, start, end, 3.75, 0.5, color);
 			break;
 		case ALT_ROCKET_TRAIL:
-			AddParticleTrail(p_dpfire, start, end, 3, 0.26, NULL);
-			AddParticleTrail(p_dpsmoke, start, end, 3, 0.825, NULL);
+			if (ISUNDERWATER(TruePointContents(start)) && amf_underwater_trails.value)
+				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL);
+			else {
+				AddParticleTrail(p_dpfire, start, end, 3, 0.26, NULL);
+				AddParticleTrail(p_dpsmoke, start, end, 3, 0.825, NULL);
+			}
 			break;
 		//VULT TRAILS
 		case RAIL_TRAIL:
@@ -1415,6 +1426,7 @@ void QMB_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trail_ty
 		case LAVA_TRAIL:
 			if (ISUNDERWATER(TruePointContents(start)) && amf_underwater_trails.value)
 			{
+				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL);
 				color[0] = 25;
 				color[1] = 102;
 				color[2] = 255;
@@ -1889,7 +1901,6 @@ void VXNailhit (vec3_t org, float count)
 	vec3_t dir, neworg;
 	int a, i;
 	int contents;
-
 	if (amf_nailtrail_plasma.value)
 	{
 		color[0]=10;
@@ -2276,10 +2287,6 @@ void FireballTrailWave (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col
 }
 
 //VULT PARTICLES
-//STALKER - It looks like that gun from daikatana, you suck
-//VULT - No dammit, its a fuel rod gun from halo
-//STALKER - Bullshit, it looks like the green sperm gun from daikatana
-//VULT - *cries*
 void FuelRodGunTrail (vec3_t start, vec3_t end, vec3_t angle, vec3_t *trail_origin)
 {
 	col_t color;
@@ -2339,8 +2346,6 @@ void DrawMuzzleflash (vec3_t start, vec3_t angle, vec3_t vel)
 }
 
 //VULT PARTICLES
-//VULT - Well, it *sometimes* looks like a mushroom cloud
-//STALKER - What!
 void FuelRodExplosion (vec3_t org)
 {
 	col_t color;
@@ -2424,7 +2429,6 @@ void FuelRodExplosion (vec3_t org)
 }
 
 //VULT PARTICLES
-//GO YOU MIGHTY PARTICLE, YOU. BRING SWIFT IMAGINARY DEATH TO ALL LAME BASTARDS ON OUR TEAM
 void InfernoFire_f (void)
 {
 
