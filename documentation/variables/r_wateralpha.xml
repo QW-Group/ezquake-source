@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="US-ASCII"?>
-<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
-<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-<name>r_wateralpha</name><description></description><value><enum><value><name>
-0.00</name><description>Transparent.</description></value><value><name>0.25</name><description>Low opacity.</description></value><value><name>0.50</name><description>Medium opacity.</description></value><value><name>0.75</name><description>High opacity.</description></value><value><name>1.00</name><description>Solid.</description></value></enum></value><remarks></remarks></variable>
