@@ -117,6 +117,16 @@ void Sys_mkdir (char *path) {
     mkdir (path, 0777);
 }
 
+/*
+================
+Sys_remove
+================
+*/
+int Sys_remove (char *path)
+{
+	return unlink(path);
+}
+
 // kazik -->
 int Sys_chdir (const char *path)
 {
