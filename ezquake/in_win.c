@@ -34,10 +34,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "movie.h"
 
 #define DINPUT_BUFFERSIZE 16
-#define iDirectInputCreate(a,b,c,d)	pDirectInputCreate(a,b,c,d)
+//#define iDirectInputCreate(a,b,c,d)	pDirectInputCreate(a,b,c,d)
 
-HRESULT (WINAPI *pDirectInputCreate)(HINSTANCE hinst, DWORD dwVersion,
-	LPDIRECTINPUT * lplpDirectInput, LPUNKNOWN punkOuter);
+//HRESULT (WINAPI *pDirectInputCreate)(HINSTANCE hinst, DWORD dwVersion,
+	//LPDIRECTINPUT * lplpDirectInput, LPUNKNOWN punkOuter);
+static HRESULT (WINAPI *pDirectInputCreateEx)(HINSTANCE hinst,
+		DWORD dwVersion, REFIID riidltf, LPVOID *ppvOut, LPUNKNOWN punkOuter) = NULL;
 
 // mouse variables
 cvar_t	m_filter = {"m_filter", "0"};
@@ -119,8 +121,8 @@ int			joy_id;
 DWORD		joy_flags;
 DWORD		joy_numbuttons;
 
-static LPDIRECTINPUT		g_pdi;
-static LPDIRECTINPUTDEVICE	g_pMouse;
+static LPDIRECTINPUT7		g_pdi;
+static LPDIRECTINPUTDEVICE7	g_pMouse;
 
 static JOYINFOEX	ji;
 
@@ -136,16 +138,24 @@ typedef struct MYDATA {
 	BYTE  bButtonB;             // Another button goes here
 	BYTE  bButtonC;             // Another button goes here
 	BYTE  bButtonD;             // Another button goes here
+	BYTE  bButtonE;             // Another button goes here
+	BYTE  bButtonF;             // Another button goes here
+	BYTE  bButtonG;             // Another button goes here
+	BYTE  bButtonH;             // Another button goes here
 } MYDATA;
 
 static DIOBJECTDATAFORMAT rgodf[] = {
-  { &GUID_XAxis,    FIELD_OFFSET(MYDATA, lX),       DIDFT_AXIS | DIDFT_ANYINSTANCE,   0,},
-  { &GUID_YAxis,    FIELD_OFFSET(MYDATA, lY),       DIDFT_AXIS | DIDFT_ANYINSTANCE,   0,},
-  { &GUID_ZAxis,    FIELD_OFFSET(MYDATA, lZ),       0x80000000 | DIDFT_AXIS | DIDFT_ANYINSTANCE,   0,},
-  { 0,              FIELD_OFFSET(MYDATA, bButtonA), DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0,},
-  { 0,              FIELD_OFFSET(MYDATA, bButtonB), DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0,},
-  { 0,              FIELD_OFFSET(MYDATA, bButtonC), 0x80000000 | DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0,},
-  { 0,              FIELD_OFFSET(MYDATA, bButtonD), 0x80000000 | DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0,},
+	{ &GUID_XAxis,	FIELD_OFFSET(MYDATA, lX),		DIDFT_AXIS | DIDFT_ANYINSTANCE, 0},
+	{ &GUID_YAxis,	FIELD_OFFSET(MYDATA, lY),		DIDFT_AXIS | DIDFT_ANYINSTANCE, 0},
+	{ &GUID_ZAxis,	FIELD_OFFSET(MYDATA, lZ),		0x80000000 | DIDFT_AXIS | DIDFT_ANYINSTANCE, 0},
+	{ 0,			FIELD_OFFSET(MYDATA, bButtonA),	DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0},
+	{ 0,			FIELD_OFFSET(MYDATA, bButtonB),	DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0},
+	{ 0,			FIELD_OFFSET(MYDATA, bButtonC),	0x80000000 | DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0},
+	{ 0,			FIELD_OFFSET(MYDATA, bButtonD),	0x80000000 | DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0},
+	{ 0,			FIELD_OFFSET(MYDATA, bButtonE),	0x80000000 | DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0},
+	{ 0,			FIELD_OFFSET(MYDATA, bButtonF),	0x80000000 | DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0},
+	{ 0,			FIELD_OFFSET(MYDATA, bButtonG),	0x80000000 | DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0},
+	{ 0,			FIELD_OFFSET(MYDATA, bButtonH),	0x80000000 | DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0}
 };
 
 #define NUM_OBJECTS (sizeof(rgodf) / sizeof(rgodf[0]))
@@ -165,12 +175,12 @@ void Joy_AdvancedUpdate_f (void);
 void IN_JoyMove (usercmd_t *cmd);
 
 
-cvar_t	m_forcewheel	= {"m_forcewheel", "0"};
+cvar_t	m_forcewheel	= {"m_forcewheel", "1"};
 
 
 
 
-cvar_t	m_rate		= {"m_rate",	"60"};
+cvar_t	m_rate		= {"m_rate",	"125"};
 cvar_t	m_showrate	= {"m_showrate", "0"};
 
 qboolean use_m_smooth;
@@ -578,6 +588,14 @@ qboolean IN_InitDInput (void) {
 		},
 		DINPUT_BUFFERSIZE,              // dwData
 	};
+	DIDATAFORMAT qdf = {
+		sizeof(DIDATAFORMAT),			// this structure
+			sizeof(DIOBJECTDATAFORMAT),		// size of object data format
+			DIDF_RELAXIS,					// absolute axis coordinates
+			sizeof(MYDATA),					// device data size
+			sizeof(rgodf)/sizeof(rgodf[0]),	// number of objects
+			rgodf							// and here they are
+	};
 
 	if (!hInstDI) {
 		hInstDI = LoadLibrary("dinput.dll");
@@ -588,22 +606,22 @@ qboolean IN_InitDInput (void) {
 		}
 	}
 
-	if (!pDirectInputCreate) {
-		pDirectInputCreate = (void *)GetProcAddress(hInstDI,"DirectInputCreateA");
-		if (!pDirectInputCreate) {
+	if (!pDirectInputCreateEx) {
+		pDirectInputCreateEx = (void *)GetProcAddress(hInstDI,"DirectInputCreateEx");
+		if (!pDirectInputCreateEx) {
 			Com_Printf ("Couldn't get DI proc addr\n");
 			return false;
 		}
 	}
 
 	// register with DirectInput and get an IDirectInput to play with.
-	hr = iDirectInputCreate(global_hInstance, DIRECTINPUT_VERSION, &g_pdi, NULL);
+	hr = pDirectInputCreateEx(global_hInstance, DIRECTINPUT_VERSION, &IID_IDirectInput7, (LPVOID *) &g_pdi, NULL);
 
 	if (FAILED(hr))
 		return false;
 
 	// obtain an interface to the system mouse device.
-	hr = IDirectInput_CreateDevice(g_pdi, &GUID_SysMouse, &g_pMouse, NULL);
+	hr = IDirectInput7_CreateDeviceEx(g_pdi, &GUID_SysMouse, &IID_IDirectInputDevice7, (LPVOID *) &g_pMouse, NULL);
 
 	if (FAILED(hr)) {
 		Com_Printf ("Couldn't open DI mouse device\n");
@@ -611,7 +629,7 @@ qboolean IN_InitDInput (void) {
 	}
 
 	// set the data format to "mouse format".
-	hr = IDirectInputDevice_SetDataFormat(g_pMouse, &df);
+	hr = IDirectInputDevice7_SetDataFormat(g_pMouse, &qdf);
 
 	if (FAILED(hr)) {
 		Com_Printf ("Couldn't set DI mouse format\n");
@@ -619,8 +637,7 @@ qboolean IN_InitDInput (void) {
 	}
 
 	// set the cooperativity level.
-	hr = IDirectInputDevice_SetCooperativeLevel(g_pMouse, mainwindow,
-			DISCL_EXCLUSIVE | DISCL_FOREGROUND);
+	hr = IDirectInputDevice7_SetCooperativeLevel(g_pMouse, mainwindow, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
 
 	if (FAILED(hr)) {
 		Com_Printf ("Couldn't set DI coop level\n");
@@ -629,7 +646,7 @@ qboolean IN_InitDInput (void) {
 
 	// set the buffer size to DINPUT_BUFFERSIZE elements.
 	// the buffer size is a DWORD property associated with the device
-	hr = IDirectInputDevice_SetProperty(g_pMouse, DIPROP_BUFFERSIZE, &dipdw.diph);
+	hr = IDirectInputDevice7_SetProperty(g_pMouse, DIPROP_BUFFERSIZE, &dipdw.diph);
 
 	if (FAILED(hr)) {
 		Com_Printf ("Couldn't set DI buffersize\n");
@@ -876,8 +893,7 @@ void IN_Move (usercmd_t *cmd) {
 		IN_JoyMove (cmd);
 	}
 }
-
-void IN_Accumulate (void) {
+void IN_Accumulate (void) {
 	if (mouseactive) {
 		GetCursorPos (&current_pos);
 
