@@ -173,30 +173,33 @@ void Parse_Serverinfo(server_data *s, char *info)
         pinfo = strchr(pinfo, '\n') + 1;
     }
 
+    {
+    void *swap;
+    int n;
     // sort players by frags
-    for (i=0; i < s->playersn + s->spectatorsn - 1; i++)
-        for (j=s->playersn-2; j >= i; j--)
+    n = s->playersn + s->spectatorsn - 2;
+    for (i = 0; i <= n; i++)
+        for (j = n; j >= i; j--)
             if (s->players[j]->frags  <  s->players[j+1]->frags)
             {
-                playerinfo *swap;
-                swap = s->players[j];
+                swap = (void*)s->players[j];
                 s->players[j] = s->players[j+1];
-                s->players[j+1] = swap;
+                s->players[j+1] = (playerinfo*)swap;
             }
-
     // sort keys
-    for (i=0; i < s->keysn-1; i++)
-        for (j=s->keysn-2; j >= i; j--)
+    n = s->keysn - 2;
+    for (i = 0; i <= n; i++)
+        for (j = n; j >= i; j--)
             if (Q_strcasecmp(s->keys[j], s->keys[j+1]) > 0)
             {
-                char *swap;
-                swap = s->keys[j];
+                swap = (void*)s->keys[j];
                 s->keys[j] = s->keys[j+1];
-                s->keys[j+1] = swap;
-                swap = s->values[j];
+                s->keys[j+1] = (char*)swap;
+                swap = (void*)s->values[j];
                 s->values[j] = s->values[j+1];
-                s->values[j+1] = swap;
+                s->values[j+1] = (char*)swap;
             }
+    }
 
     // fill-in display
     tmp = ValueForKey(s, "hostname");
