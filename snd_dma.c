@@ -710,7 +710,7 @@ void S_ExtraUpdate (void) {
 
 //joe: capturing audio
 #ifdef _WIN32
-	if (Movie_IsCapturing())
+	if (Movie_IsCapturing() && movie_is_avi)
 		return;
 #endif
 

@@ -41,7 +41,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud_common.h"
 
 #ifdef _WIN32
-#include "movie_avi.h"	//joe: capturing to avi
+#include "movie.h"	//joe: capturing to avi
+#include "movie_avi.h"	//
 #endif
 
 #ifdef GLQUAKE
@@ -1546,30 +1547,41 @@ void SCR_AutoScreenshot(char *matchname) {
 //joe: capturing to avi
 void SCR_Movieshot(char *name) {
 #ifdef _WIN32
-	extern qboolean	movie_is_avi;
-
 	if (movie_is_avi) {
 #ifdef GLQUAKE
 		int i, size = glwidth * glheight * 3;
-		byte temp, *buffer;
+		byte *buffer, temp;
 
 		buffer = Q_Malloc (size);
 		glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
 		applyHWGamma (buffer, size);
 
-		for (i = 0; i < size; i += 3) {
+		for (i = 0; i < size; i += 3)
+		{
 			temp = buffer[i];
 			buffer[i] = buffer[i+2];
 			buffer[i+2] = temp;
 		}
+#else
+		int i, j, rowp;
+		byte *buffer, *p;
 
-		if (!Capture_WriteVideo(glwidth, glheight, buffer))
-			Con_Print ("Problem capturing video frame!\n");
+		buffer = Q_Malloc (vid.width * vid.height);
+
+		D_EnableBackBufferAccess ();
+
+		p = buffer;
+		for (i = vid.height - 1; i >= 0; i--) {
+			rowp = i * vid.rowbytes;
+			for (j = 0; j < vid.width; j++)
+				*p++ = vid.buffer[rowp++];
+		}
+
+		D_DisableBackBufferAccess ();
+#endif
+		Capture_WriteVideo (buffer);
 
 		free (buffer);
-#else
-		//joe: FIXME...
-#endif
 	} else {
 		SCR_Screenshot (name);
 	}
