@@ -50,7 +50,10 @@ qboolean Rulesets_NoTimers(void) {
 qboolean Rulesets_AllowTimerefresh(void) {
 	switch(ruleset) {
 	case rs_smackdown:
-		return cl.standby;
+		// START shaman BUG 1020663
+		//return cl.standby;
+		return (cl.standby || cl.spectator || cls.demoplayback);
+		// END shaman BUG 1020663
 	default:
 		return true;
 	}

@@ -216,6 +216,13 @@ void CL_Packet_f (void) {
 	int i, l;
 	netadr_t adr;
 
+	// START shaman RFE 1022146
+	if (cls.state == ca_active && !(cl.standby || cl.spectator || cls.demoplayback)) {
+		Com_Printf ("packet's disabled during match\n");
+		return;
+	}
+	// END shaman RFE 1022146
+
 	if (Cmd_Argc() != 3) {
 		Com_Printf ("packet <destination> <contents>\n");
 		return;
