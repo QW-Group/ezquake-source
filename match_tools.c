@@ -1292,8 +1292,8 @@ char *MT_GetSkyGroupName(char *mapname, qboolean *system) {
 void DumpSkyGroups(FILE *f) {
 	skygroup_t *node;
 	int j;
-
-	if (!FIRSTUSERSKYGROUP) {
+	if (!FIRSTUSERGROUP) {
+		fprintf(f, "skygroup clear\n");
 		return;
 	}
 	for (node = FIRSTUSERSKYGROUP; node; node = node->next) {
