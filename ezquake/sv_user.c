@@ -469,7 +469,7 @@ void Cmd_Begin_f (void) {
 //=============================================================================
 
 void Cmd_NextDL_f (void) {
-	byte buffer[1024];
+	byte buffer[FILE_TRANSFER_BUF_SIZE];
 	int r, percent, size;
 
 	if (!sv_client->download)
