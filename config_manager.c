@@ -418,12 +418,14 @@ static void DumpTeamplay(FILE *f) {
 	TP_DumpTriggers(f);
 }
 
+#ifdef GLQUAKE
 void DumpFogSettings(FILE *f) {
 	extern cvar_t gl_fogenable, gl_fogred, gl_foggreen, gl_fogblue;
 	if (gl_fogenable.value != 0) {
 		fprintf(f, "fog %s %s %s\n", gl_fogred.string, gl_foggreen.string, gl_fogblue.string);
 	}
 }
+#endif GLQUAKE
 
 void DumpMisc(FILE *f) {
 
