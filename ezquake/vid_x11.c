@@ -50,6 +50,12 @@ typedef unsigned int	PIXEL24;
 extern void IN_Keycode_Print_f( XKeyEvent *ev, qboolean ext, qboolean down, int key );
 #endif // WITH_KEYMAP
 
+// kazik -->
+int ctrlDown = 0;
+int shiftDown = 0;
+int altDown = 0;
+// kazik <--
+
 cvar_t		vid_ref = {"vid_ref", "soft", CVAR_ROM};
 cvar_t		_windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE};
 cvar_t		m_filter = {"m_filter", "1", CVAR_ARCHIVE};
@@ -785,11 +791,16 @@ int config_notify_height;
 
 void GetEvent(void) {
 	XEvent event;
+	int b;
 
 	XNextEvent(x_disp, &event);
 	switch(event.type) {
 	case KeyPress:
-		keyq[keyq_head].key = XLateKey(&event.xkey);
+		b = XLateKey(&event.xkey);
+		if (b == K_CTRL)      ctrlDown = 1;
+		if (b == K_ALT)       altDown = 1;
+		if (b == K_SHIFT)     shiftDown = 1;
+		keyq[keyq_head].key = b;
 		keyq[keyq_head].down = true;
 #ifdef WITH_KEYMAP
 		// if set, print the current Key information
@@ -800,7 +811,11 @@ void GetEvent(void) {
 		keyq_head = (keyq_head + 1) & 63;
 		break;
 	case KeyRelease:
-		keyq[keyq_head].key = XLateKey(&event.xkey);
+		b = XLateKey(&event.xkey);
+		if (b == K_CTRL)      ctrlDown = 0;
+		if (b == K_ALT)       altDown = 0;
+		if (b == K_SHIFT)     shiftDown = 0;
+		keyq[keyq_head].key = b;
 		keyq[keyq_head].down = false;
 #ifdef WITH_KEYMAP
 		// if set, print the current Key information
@@ -1061,6 +1076,24 @@ void IN_Move (usercmd_t *cmd) {
 	}
 	mouse_x = mouse_y = 0.0;
 }
+
+// kazik -->
+int isAltDown(void)
+{
+//    return keyq[K_ALT].down;
+	return altDown;
+}
+int isCtrlDown(void)
+{
+//    return keyq[K_CTRL].down;
+	return ctrlDown;
+}
+int isShiftDown(void)
+{
+//    return keyq[K_SHIFT].down;
+	return shiftDown;
+}
+// kazik <--
 
 void VID_LockBuffer (void) {}
 

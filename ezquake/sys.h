@@ -38,6 +38,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define WINAPI
 #endif
 
+#define _MAX_PATH 1024
+#define _MAX_FNAME 1024
+#define _MAX_EXT 64
+#define _MAX_DIR    1024
+
+#include "localtime.h"
+
 // create thread (process under linux)
 int  Sys_CreateThread(DWORD (WINAPI *func)(void *), void *param);
 
