@@ -45,7 +45,7 @@ char *Auth_Generate_Crc(void) {
 	if (!Modules_SecurityLoaded())
 		return failsafe;
 
-	p = Security_Generate_Crc(cls.userinfo);
+	p = Security_Generate_Crc(cl.players[cl.playernum].userinfo);
 
 	if (!VerifyData(p))
 		return failsafe;
