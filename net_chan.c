@@ -187,17 +187,17 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data) {
 	static double	last_error_time = 0;
 	double	current_time;
 
-
-
+	// check for message overflow
 	current_time = Sys_DoubleTime();
-	if (chan->message.overflowed && (last_error_time - current_time > 5 || developer.value)	) {	// check for message overflow
-
-
+	if (chan->message.overflowed)
+	{
 		chan->fatal_error = true;
-		Com_Printf ("%s:Outgoing message overflow\n", NET_AdrToString (chan->remote_address));
-
-		last_error_time = current_time;
-
+		if (last_error_time - current_time > 5 || developer.value)
+		{
+			Com_Printf ("%s:Outgoing message overflow\n",
+					NET_AdrToString (chan->remote_address));
+			last_error_time = current_time;
+		}
 		return;
 	}
 
