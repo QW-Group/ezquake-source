@@ -233,13 +233,6 @@ void Parse_Serverinfo(server_data *s, char *info)
     i = s->playersn > 99 ? 99 : s->playersn;
     if (tmp != NULL)
         sprintf(s->display.players, "%2d/%-2s", i, tmp==NULL ? "" : tmp);
-
-    tmp = ValueForKey(s, "maxspectators");
-    if (tmp != NULL  &&  strlen(tmp) > 2)
-        tmp = "99";
-    i = s->spectatorsn > 99 ? 99 : s->spectatorsn;
-    if (tmp != NULL)
-        sprintf(s->display.players, "-%2d/%-2s", i, tmp==NULL ? "" : tmp);
 }
 
 int server_during_update = 0;
