@@ -1006,7 +1006,7 @@ void Draw_TransPicTranslate (int x, int y, mpic_t *pic, byte *translation) {
 }
 
 void Draw_ConsoleBackground (int lines) {
-	char ver[80];
+//	char ver[80];
 
 	if (SCR_NEED_CONSOLE_BACKGROUND) {
 		Draw_Pic(0, lines - vid.height + con_shift.value, &conback);
@@ -1015,8 +1015,8 @@ void Draw_ConsoleBackground (int lines) {
 			Draw_AlphaPic (0, (lines - vid.height) + (int)con_shift.value, &conback, bound (0, scr_conalpha.value, 1));
 	}
 
-	sprintf (ver, "ezQuake %i", build_number());
-	Draw_Alt_String (vid.conwidth - strlen(ver) * 8 - 8, lines - 10, ver);
+//	sprintf (ver, "ezQuake %i", build_number());
+//	Draw_Alt_String (vid.conwidth - strlen(ver) * 8 - 8, lines - 10, ver);
 }
 
 //This repeats a 64 * 64 tile graphic to fill the screen around a sized down refresh window.

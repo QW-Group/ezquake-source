@@ -326,7 +326,7 @@ void Host_Init (int argc, char **argv, int default_memsize) {
 	Com_Printf ("Exe: "__TIME__" "__DATE__"\n");
 	Com_Printf ("Hunk allocation: %4.1f MB.\n", (float) host_memsize / (1024 * 1024));
 
-	Com_Printf ("\nv%s\n\n", VersionString());
+	Com_Printf ("\nezQuake %s\n\n", VersionString());
 	if (dedicated) {
 		Com_Printf ("====== ezQuake.SourceForge.net ======\n\n");
 		Com_Printf ("======== ezQuake Initialized ========\n\n");
