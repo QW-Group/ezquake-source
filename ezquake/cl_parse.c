@@ -767,6 +767,7 @@ void CL_ParseSoundlist (void) {
 		numsounds++;
 		if (numsounds == MAX_SOUNDS)
 			Host_Error ("Server sent too many sound_precache");
+		if (str[0] == '/') str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
 		Q_strncpyz (cl.sound_name[numsounds], str, sizeof(cl.sound_name[numsounds]));
 	}
 
@@ -797,6 +798,7 @@ void CL_ParseModellist (void) {
 		if (++nummodels==MAX_MODELS)
 			Host_Error ("Server sent too many model_precache");
 
+		if (str[0] == '/') str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
 		Q_strncpyz (cl.model_name[nummodels], str, sizeof(cl.model_name[nummodels]));
 
 		for (i = 0; i < cl_num_modelindices; i++) {
