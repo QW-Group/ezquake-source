@@ -415,6 +415,7 @@ void CL_FinishMove (usercmd_t *cmd) {
 	int i, ms;
 	float frametime;
 	static double extramsec = 0;
+	extern cvar_t allow_scripts; 
 
 	if (Movie_IsCapturing() && movie_steadycam.value)
 		frametime = movie_fps.value > 0 ? 1.0 / movie_fps.value : 1 / 30.0;
@@ -445,7 +446,13 @@ void CL_FinishMove (usercmd_t *cmd) {
 
 	VectorCopy (cl.viewangles, cmd->angles);
 
-	cmd->impulse = in_impulse;
+	// shaman RFE 1030281 {
+	// KTPro's KFJump == impulse 156
+	// KTPro's KRJump == impulse 164
+	if (cl.teamfortress || (!(in_impulse == 156 && (cl.fpd & FPD_LIMIT_YAW || allow_scripts.value < 2 || com_blockscripts == true)) && !(in_impulse == 164 && (cl.fpd & FPD_LIMIT_PITCH || allow_scripts.value == 0)))) {
+		cmd->impulse = in_impulse;
+	}
+	// } shaman RFE 1030281
 	in_impulse = 0;
 
 	// chop down so no extra bits are kept that the server wouldn't get
