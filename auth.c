@@ -45,7 +45,7 @@ char *Auth_Generate_Crc(void) {
 	if (!Modules_SecurityLoaded())
 		return failsafe;
 
-	p = Security_Generate_Crc(cl.players[cl.playernum].userinfo);
+	p = Security_Generate_Crc(cl.playernum);
 
 	if (!VerifyData(p))
 		return failsafe;
@@ -63,7 +63,7 @@ static qboolean verify_response(int index, unsigned char *hash) {
 	if (!Modules_SecurityLoaded())
 		return failsafe;
 
-	p = Security_Verify_Response(cl.players[index].userinfo, hash);
+	p = Security_Verify_Response(index, hash);
 
 	if (!VerifyData(p))
 		return failsafe;
