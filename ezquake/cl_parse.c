@@ -1429,51 +1429,49 @@ void CL_ParseServerInfoChange (void) {
 static void FlushString (char *s, int level, qboolean team, int offset) {
 	extern cvar_t con_highlight, con_highlight_mark, name;
 	char white_s[4096];
-	int i ;
-	for ( i = 0 ; i <= strlen(s) ; i++ ){
-	white_s[i] = s[i] ;
-	}
 
+	strlcpy(white_s, s, 4096);
 
 	if (level == PRINT_CHAT)
 	{
-		if ((strstr(s, name.string)) && (con_highlight.value != 0) && ( strlen(strstr(s,name.string)) != strlen(s)) )
+		if ((strstr(s, name.string)) && (con_highlight.value != 0) &&
+		    (strlen(strstr(s,name.string)) != strlen(s)) )
 		{
-			if ( con_highlight.value == 1 )
+			switch (con_highlight.value)
 			{
+			case 1:
 				Com_Printf ("%s", white_s);
+				break;
+			case 2:
+				Com_Printf ("%s%s", con_highlight_mark.string, TP_ParseWhiteText(s, team, offset));
+				break;
+			case 3:
+				Com_Printf ("%s%s", con_highlight_mark.string, white_s);
+			default:
 			}
-			else if ( con_highlight.value == 2 ) 
-			{
-				Com_Printf ("%s%s",con_highlight_mark.string, TP_ParseWhiteText(s, team, offset));
-			}
-			else if ( con_highlight.value == 3 )
-			{
-				Com_Printf ("%s%s",con_highlight_mark.string, white_s);
-			}	
 		}
 		else 
-		Com_Printf ("%s", TP_ParseWhiteText(s, team, offset));
+			Com_Printf ("%s", TP_ParseWhiteText(s, team, offset));
 	}		
 	else
 	{
 		if ((strstr(s, name.string)) && (con_highlight.value != 0)  && ( strlen(strstr(s,name.string)) != strlen(s)) )
                 {
-                        if ( con_highlight.value == 1 )
-                        {
+			switch (con_highlight.value)
+			{
+			case 1:
                                 Com_Printf ("%s", white_s);
-                        }
-                        else if ( con_highlight.value == 2 ) 
-                        {
-                                Com_Printf ("%s%s",con_highlight_mark.string, s);
-                        }
-                        else if ( con_highlight.value == 3 )
-                        {
-                                Com_Printf ("%s%s",con_highlight_mark.string,white_s);
+				break;
+			case 2:
+                                Com_Printf ("%s%s", con_highlight_mark.string, s);
+				break;
+			case 3:
+                                Com_Printf ("%s%s", con_highlight_mark.string, white_s);
+			default:
                         }       
                 }
                 else 
-		Com_Printf ("%s", s);
+			Com_Printf ("%s", s);
 
 	}
 
