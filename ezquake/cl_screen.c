@@ -129,9 +129,11 @@ qboolean		block_drawing;
 
 
 static int scr_autosshot_countdown = 0;
+static int scr_mvsshot_countdown = 0;
 char auto_matchname[2 * MAX_OSPATH];
 
 static void SCR_CheckAutoScreenshot(void);
+static void SCR_CheckMVScreenshot(void);
 void SCR_DrawStatusMultiview(void);
 
 qboolean OnChange_scr_allowsnap(cvar_t *var, char *s) {
@@ -962,7 +964,10 @@ void SCR_UpdateScreen (void) {
 
 	V_UpdatePalette ();
 
-	SCR_CheckAutoScreenshot();	
+	SCR_CheckAutoScreenshot();
+
+	if (cls.mvdplayback && cl_multiview.value && cl_mvinset.value)
+		SCR_CheckMVScreenshot();
 
 	GL_EndRendering ();
 }
@@ -1080,6 +1085,9 @@ void SCR_UpdateScreen (void) {
 	}
 
 	SCR_CheckAutoScreenshot();
+
+	if (cls.mvdplayback && cl_multiview.value)
+		SCR_CheckMVScreenshot();
 }
 
 #endif
@@ -1274,6 +1282,34 @@ void SCR_ScreenShot_f (void) {
 	int i, success;
 	FILE *f;
 
+#ifdef GLQUAKE
+	if (cls.mvdplayback && cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW != 1) {
+		scr_mvsshot_countdown = 1;
+		return;
+	}
+#else
+	// sorry braindead atm, this can be cleaned up someday
+	if (cls.mvdplayback && cl_multiview.value && CURRVIEW != 1) {
+		if (cl_multiview.value == 2)
+			scr_mvsshot_countdown = 1;
+		else if (cl_multiview.value == 3) {
+			if (CURRVIEW == 2)
+				scr_mvsshot_countdown = 2;
+			else if (CURRVIEW == 3)
+				scr_mvsshot_countdown = 1;
+		} 
+		else if (cl_multiview.value == 4) {
+			if (CURRVIEW == 2)
+				scr_mvsshot_countdown = 3;
+			else if (CURRVIEW == 3)
+				scr_mvsshot_countdown = 2;
+			else if (CURRVIEW == 4)
+				scr_mvsshot_countdown = 1;
+		}
+		return;
+	}
+#endif
+
 	ext[0] = 0;
 	sshot_dir = scr_sshot_dir.string[0] ? scr_sshot_dir.string : cls.gamedirfile;
 
@@ -1306,7 +1342,6 @@ void SCR_ScreenShot_f (void) {
 		Com_Printf("Usage: %s [filename]\n", Cmd_Argv(0));
 		return;
 	}
-
 	
 	for (filename = name; *filename == '/' || *filename == '\\'; filename++)
 		;
@@ -1410,6 +1445,25 @@ sshot_taken:
 	}
 
 	remove(va("%s/%s", com_basedir, filename));
+}
+
+static void SCR_CheckMVScreenshot(void) {
+
+	if (!scr_mvsshot_countdown || --scr_mvsshot_countdown)
+		return;
+
+#ifdef GLQUAKE
+	glFinish();
+#endif
+
+#ifdef GLQUAKE
+	// only concerned with inset for gl
+	if (cls.mvdplayback && cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1)
+		SCR_ScreenShot_f();
+#else
+	if (cls.mvdplayback && cl_multiview.value && CURRVIEW == 1)
+		SCR_ScreenShot_f();
+#endif
 }
 
 static void SCR_CheckAutoScreenshot(void) {
