@@ -97,7 +97,7 @@ cvar_t  r_watercolor = {"r_watercolor", "36"};
 
 cvar_t	r_farclip			= {"r_farclip", "4096"};
 qboolean OnChange_r_skyname(cvar_t *v, char *s);
-cvar_t	r_skyname			= {"r_skyname", "", 0, OnChange_r_skyname};
+cvar_t	r_skyname			= {"r_skyname", "bloody-marvelous512", 0, OnChange_r_skyname};
 cvar_t	gl_detail			= {"gl_detail","0"};			
 // START shaman :: balancing variables
 cvar_t	gl_caustics			= {"gl_caustics", "1"};		
