@@ -129,10 +129,10 @@ void FMod_Init(void) {
 	FMod_AddModel("progs/suit.mdl", FMOD_DM | FMOD_TF); //x
 
 //	-> hexum - why are these added twice?
-//	FMod_AddModel("progs/end1.mdl", FMOD_DM | FMOD_TF);
-//	FMod_AddModel("progs/end2.mdl", FMOD_DM | FMOD_TF);
-//	FMod_AddModel("progs/end3.mdl", FMOD_DM | FMOD_TF);
-//	FMod_AddModel("progs/end4.mdl", FMOD_DM | FMOD_TF);
+//	FMod_AddModel("progs/end1.mdl", FMOD_DM | FMOD_TF); //x
+//	FMod_AddModel("progs/end2.mdl", FMOD_DM | FMOD_TF); //x
+//	FMod_AddModel("progs/end3.mdl", FMOD_DM | FMOD_TF); //x
+//	FMod_AddModel("progs/end4.mdl", FMOD_DM | FMOD_TF); //x
 
 	FMod_AddModel("progs/player.mdl", FMOD_DM); //x
 	FMod_AddModel("progs/player.mdl_ctf_", FMOD_DM); //x
