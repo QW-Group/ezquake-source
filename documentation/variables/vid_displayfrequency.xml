@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>vid_displayfrequency</name>
+<description>
+Sets horizontal frequency for your monitor (in hertz - Hz).
+</description>
+<remarks>
+This variable can be set only using command line switch '+set cl_independentPhysics 1'.
+</remarks>
+</variable>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>cl_independentPhysics</name>
+<description>
+It enables independent physics. This means that you can achieve more FPS in game then the server allows.
+Amount of FPS used to communicate with server is set by /cl_physfps and amount of graphics FPS is set by /cl_maxfps.
+</description>
+<value><enum>
+<value><name>0</name><description>
+Independent physics disabled.
+</description></value>
+<value><name>1</name><description>
+Independent physics enabled.
+</description></value>
+</enum></value>
+<remarks>
+This variable can be set only using command line switch '+set cl_independentPhysics 1'.
+</remarks>
+</variable>
