@@ -200,8 +200,10 @@ void Movie_Init(void) {
 
 	Cmd_AddCommand("demo_capture", Movie_Demo_Capture_f);
 
+#ifdef _WIN32
 	captured_audio_samples = 0;
 	Capture_InitAVI ();		//joe: capturing to avi
+#endif
 }
 
 double Movie_StartFrame(void) {
