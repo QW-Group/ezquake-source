@@ -1052,7 +1052,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 	int i, d, k, top, bottom, x, y, xofs, total, p, skip = 10;
 	int rank_width, leftover, startx, tempx, mynum;
 	char num[12], scorerow[64], team[5], name[MAX_SCOREBOARDNAME];
-	char myminutes[3];
+	char myminutes[4];
 	int             draw_fps;
     int             offset;     
     player_info_t *s;
