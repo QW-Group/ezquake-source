@@ -990,9 +990,9 @@ void CL_Init (void) {
 	Log_Init();
 	Movie_Init();
 	ConfigManager_Init();
-	Rulesets_Init();
 	Stats_Init();
 	MP3_Init();
+	Rulesets_Init();
 }
 
 //============================================================================
