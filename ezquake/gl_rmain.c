@@ -80,13 +80,20 @@ cvar_t	r_lightmap = {"r_lightmap", "0"};
 cvar_t	gl_shaftlight = {"gl_shaftlight", "1"};
 cvar_t	r_shadows = {"r_shadows", "0"};
 cvar_t	r_wateralpha = {"r_wateralpha", "1"};
-cvar_t  r_fastturb = {"r_fastturb", "0"};
 cvar_t	r_dynamic = {"r_dynamic", "1"};
 cvar_t	r_novis = {"r_novis", "0"};
 cvar_t	r_netgraph = {"r_netgraph", "0"};
 cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
-cvar_t	r_skycolor = {"r_skycolor", "4"};
+cvar_t  r_fastturb = {"r_fastturb", "0"};
+// START shaman RFE 1022504
+// cvar_t r_skycolor = {"r_skycolor", "4"};
+cvar_t	r_skycolor   = {"r_skycolor", "172"};
+cvar_t  r_telecolor  = {"r_telecolor", "26"};
+cvar_t  r_lavacolor  = {"r_lavacolor", "73"};
+cvar_t  r_slimecolor = {"r_slimecolor", "53"};
+cvar_t  r_watercolor = {"r_watercolor", "36"};
+// END shaman RFE 1022504
 
 cvar_t	r_farclip			= {"r_farclip", "4096"};
 qboolean OnChange_r_skyname(cvar_t *v, char *s);
@@ -1254,6 +1261,12 @@ void R_Init (void) {
 	Cvar_Register (&r_skyname);
 	Cvar_Register (&r_fastsky);
 	Cvar_Register (&r_skycolor);
+	// START shaman RFE 1022504
+	Cvar_Register (&r_telecolor);
+	Cvar_Register (&r_lavacolor);
+	Cvar_Register (&r_slimecolor);
+	Cvar_Register (&r_watercolor);
+	// END shaman RFE 1022504
 	Cvar_Register (&r_wateralpha);
 	Cvar_Register (&r_fastturb);
 	Cvar_Register (&r_novis);

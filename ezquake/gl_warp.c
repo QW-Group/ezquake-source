@@ -21,8 +21,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_local.h"
-
 #include "utils.h"
+
+// START shaman RFE 1022504
+#include "pmove.h"
+// END shaman RFE 1022504
 
 //VULT
 #include "vx_stuff.h"
@@ -31,7 +34,7 @@ extern model_t *loadmodel;
 
 extern msurface_t *skychain;
 extern msurface_t **skychain_tail;
-
+//ISUNDERWATER(TruePointContents(start)
 extern cvar_t r_fastturb;
 
 static int solidskytexture, alphaskytexture;
@@ -40,6 +43,8 @@ static float speedscale, speedscale2;		// for top sky and bottom sky
 static msurface_t *warpface;
 
 qboolean r_skyboxloaded;
+
+#define TruePointContents(p) PM_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
 
 void BoundPoly (int numverts, float *verts, vec3_t mins, vec3_t maxs) {
 	int i, j;
@@ -201,22 +206,39 @@ void EmitWaterPolys (msurface_t *fa) {
 	glpoly_t *p;
 	float *v, s, t, os, ot;
 	int i;
+	// START shaman RFE 1022504
+	byte *col;
+	extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor;
+	// END shaman RFE 1022504
 
 	vec3_t nv;
 
 	GL_DisableMultitexture();
 
-	if (r_fastturb.value) 
+	if (r_fastturb.value)
 	{
-
 		glDisable (GL_TEXTURE_2D);
 
-		glColor3ubv ((byte *) &fa->texinfo->texture->colour);
+		// START shaman RFE 1022504
+		if (strstr (fa->texinfo->texture->name, "water")) {
+			col = StringToRGB(r_watercolor.string);
+		}
+		else if (strstr (fa->texinfo->texture->name, "slime")) {
+			col = StringToRGB(r_slimecolor.string);
+		}
+		else if (strstr (fa->texinfo->texture->name, "lava")) {
+			col = StringToRGB(r_lavacolor.string);
+		}
+		else if (strstr (fa->texinfo->texture->name, "tele")) {
+			col = StringToRGB(r_telecolor.string);
+		}
+		glColor3ubv (col);
 
 		EmitFlatPoly (fa);
 
-		glColor3ubv (color_white);
 		glEnable (GL_TEXTURE_2D);
+		glColor3ubv (color_white);
+		// END shaman RFE 1022504
 	} else {
 		GL_Bind (fa->texinfo->texture->gl_texturenum);
 		for (p = fa->polys; p; p = p->next) {
