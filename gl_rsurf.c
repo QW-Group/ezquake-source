@@ -956,7 +956,6 @@ void R_DrawFlat (model_t *model) {
 	glPopAttrib();
 }
 
-
 void R_DrawBrushModel (entity_t *e) {
 	int i, k, underwater;
 	vec3_t mins, maxs;
@@ -1041,8 +1040,16 @@ void R_DrawBrushModel (entity_t *e) {
 		}
 	}
 
+	// START shaman FIX for no simple textures on world brush models {
 	//draw the textures chains for the model
-	DrawTextureChains(clmodel);
+	if (r_drawflat.value != 0 && clmodel->isworldmodel) {
+		R_DrawFlat(clmodel);
+	}
+	else {
+		DrawTextureChains(clmodel);
+	}
+	// } END shaman FIX for no simple textures on world brush models
+
 	R_DrawSkyChain();
 	R_DrawAlphaChain ();
 
