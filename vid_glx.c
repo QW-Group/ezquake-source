@@ -115,7 +115,7 @@ cvar_t	m_filter = {"m_filter", "0"};
 cvar_t	cl_keypad = {"cl_keypad", "1"};
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
 
-//#define SGISWAPINTERVAL
+#define SGISWAPINTERVAL
 
 const char *glx_extensions=NULL;
 
