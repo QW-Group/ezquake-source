@@ -8,13 +8,13 @@
 int GL_LoadTextureImage (char * , char *, int, int, int);int coronatexture;extern cvar_t gl_bounceparticles;
 // START shaman balancing variables
 cvar_t		amf_showstats = {"r_glstats", "0", CVAR_ARCHIVE};cvar_t		tei_lavafire = {"gl_surface_lava", "0", CVAR_ARCHIVE};cvar_t		tei_slime	 = {"gl_surface_slime", "0", CVAR_ARCHIVE};cvar_t		amf_coronas = {"gl_coronas", "1", CVAR_ARCHIVE};
-cvar_t		amf_coronas_tele = {"gl_coronas_tele", "0", CVAR_ARCHIVE};cvar_t		amf_weather_rain = {"gl_weather_rain", "0", CVAR_ARCHIVE};cvar_t		amf_weather_rain_fast = {"gl_weather_rain_fast", "0", CVAR_ARCHIVE};cvar_t		amf_extratrails = {"gl_extratrails", "1", CVAR_ARCHIVE};cvar_t		amf_detpacklights = {"gl_detpacklights", "1", CVAR_ARCHIVE};cvar_t		amf_buildingsparks = {"gl_buildingsparks", "1", CVAR_ARCHIVE};cvar_t		amf_waterripple = {"gl_turbripple", "0", CVAR_ARCHIVE};cvar_t		amf_cutf_tesla_effect = {"gl_cutf_tesla_effect", "1", CVAR_ARCHIVE};cvar_t		amf_underwater_trails = {"gl_underwater_trails", "1", CVAR_ARCHIVE};cvar_t		amf_hidenails = {"cl_hidenails", "0", CVAR_ARCHIVE};cvar_t		amf_hiderockets = {"cl_hiderockets", "0", CVAR_ARCHIVE};cvar_t		amf_stat_loss = {"r_damagestats", "0", CVAR_ARCHIVE};cvar_t		amf_debug = {"gl_amfdebug", "0", CVAR_ARCHIVE};
+cvar_t		amf_coronas_tele = {"gl_coronas_tele", "0", CVAR_ARCHIVE};cvar_t		amf_weather_rain = {"gl_weather_rain", "0", CVAR_ARCHIVE};cvar_t		amf_weather_rain_fast = {"gl_weather_rain_fast", "0", CVAR_ARCHIVE};cvar_t		amf_extratrails = {"gl_extratrails", "1", CVAR_ARCHIVE};cvar_t		amf_detpacklights = {"gl_detpacklights", "1", CVAR_ARCHIVE};cvar_t		amf_buildingsparks = {"gl_buildingsparks", "1", CVAR_ARCHIVE};cvar_t		amf_waterripple = {"gl_turbripple", "0", CVAR_ARCHIVE};cvar_t		amf_cutf_tesla_effect = {"gl_cutf_tesla_effect", "1", CVAR_ARCHIVE};cvar_t		amf_underwater_trails = {"gl_turb_trails", "1", CVAR_ARCHIVE};cvar_t		amf_hidenails = {"cl_hidenails", "0", CVAR_ARCHIVE};cvar_t		amf_hiderockets = {"cl_hiderockets", "0", CVAR_ARCHIVE};cvar_t		amf_stat_loss = {"r_damagestats", "0", CVAR_ARCHIVE};cvar_t		amf_debug = {"gl_amfdebug", "0", CVAR_ARCHIVE};
 cvar_t		amf_lightning = {"gl_lightning", "1", CVAR_ARCHIVE};// START shaman RFE 1022310
 cvar_t		amf_lightning_size = {"gl_lightning_size", "3", CVAR_ARCHIVE};// END shaman RFE 1022310
 cvar_t		amf_lightning_sparks = {"gl_lightning_sparks", "0.4", CVAR_ARCHIVE};
-cvar_t		amf_lighting_vertex = {"gl_lighting_vertex", "1", CVAR_ARCHIVE};cvar_t		amf_lighting_colour = {"gl_lighting_colour", "1", CVAR_ARCHIVE};cvar_t		amf_inferno_trail = {"gl_inferno_trail", "2", CVAR_ARCHIVE};cvar_t		amf_inferno_speed = {"gl_inferno_speed", "1000", CVAR_ARCHIVE};cvar_t		amf_camera_chase = {"cl_camera_chase", "0", CVAR_ARCHIVE};cvar_t		amf_camera_death = {"cl_camera_death", "1", CVAR_ARCHIVE};
+cvar_t		amf_lighting_vertex = {"gl_lighting_vertex", "1", CVAR_ARCHIVE};cvar_t		amf_lighting_colour = {"gl_lighting_colour", "1", CVAR_ARCHIVE};cvar_t		amf_inferno_trail = {"gl_inferno_trail", "2", CVAR_ARCHIVE};cvar_t		amf_inferno_speed = {"gl_inferno_speed", "1000", CVAR_ARCHIVE};cvar_t		amf_camera_chase = {"cl_camera_tpp", "0", CVAR_ARCHIVE};cvar_t		amf_camera_death = {"cl_camera_death", "1", CVAR_ARCHIVE};
 cvar_t		amf_motiontrails = {"gl_motiontrails", "0", CVAR_ARCHIVE};cvar_t		amf_motiontrails_wtf = {"gl_motiontrails_wtf", "0", CVAR_ARCHIVE};
-cvar_t		amf_nailtrail_water = {"gl_nailtrail_water", "0", CVAR_ARCHIVE};cvar_t		amf_nailtrail_plasma = {"gl_nailtrail_plasma", "0", CVAR_ARCHIVE};cvar_t		amf_nailtrail = {"gl_nailtrail", "1", CVAR_ARCHIVE};
+cvar_t		amf_nailtrail_water = {"gl_nailtrail_turb", "0", CVAR_ARCHIVE};cvar_t		amf_nailtrail_plasma = {"gl_nailtrail_plasma", "0", CVAR_ARCHIVE};cvar_t		amf_nailtrail = {"gl_nailtrail", "1", CVAR_ARCHIVE};
 cvar_t		amf_tracker_flags = {"r_tracker_flags", "1", CVAR_ARCHIVE};cvar_t		amf_tracker_frags = {"r_tracker_frags", "1", CVAR_ARCHIVE};cvar_t		amf_tracker_streaks = {"r_tracker_streaks", "1", CVAR_ARCHIVE};cvar_t		amf_tracker_time = {"r_tracker_time", "4", CVAR_ARCHIVE};cvar_t		amf_tracker_messages = {"r_tracker_messages", "10", CVAR_ARCHIVE};
 cvar_t		amf_part_gunshot = {"gl_particle_gunshots", "0", CVAR_ARCHIVE};cvar_t		amf_part_gunshot_type = {"gl_particle_gunshots_type", "1", CVAR_ARCHIVE};
 cvar_t		amf_part_spikes = {"gl_particle_spikes", "0.1", CVAR_ARCHIVE};cvar_t		amf_part_spikes_type = {"gl_particle_spikes_type", "1", CVAR_ARCHIVE};
@@ -268,10 +268,15 @@ void InitVXStuff(void)
 
 	Cvar_ResetCurrentGroup();
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);	Cvar_Register (&tei_lavafire);	Cvar_Register (&tei_slime);	Cvar_Register (&amf_weather_rain);	Cvar_Register (&amf_weather_rain_fast);	Cvar_Register (&amf_nailtrail);	Cvar_Register (&amf_nailtrail_plasma);	Cvar_Register (&amf_nailtrail_water);	Cvar_Register (&amf_extratrails);	Cvar_Register (&amf_underwater_trails);	Cvar_Register (&amf_detpacklights);	Cvar_Register (&amf_buildingsparks);	Cvar_Register (&amf_lightning);// START shaman RFE 1022310
+	Cvar_SetCurrentGroup(CVAR_GROUP_TURB);
+	Cvar_Register (&tei_lavafire);	Cvar_Register (&tei_slime);	Cvar_Register (&amf_weather_rain);	Cvar_Register (&amf_weather_rain_fast);	Cvar_Register (&amf_waterripple);
+	Cvar_Register (&amf_underwater_trails);
+	Cvar_ResetCurrentGroup();
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);	Cvar_Register (&amf_nailtrail);	Cvar_Register (&amf_nailtrail_plasma);	Cvar_Register (&amf_nailtrail_water);	Cvar_Register (&amf_extratrails);	Cvar_Register (&amf_detpacklights);	Cvar_Register (&amf_buildingsparks);	Cvar_Register (&amf_lightning);// START shaman RFE 1022310
 	Cvar_Register (&amf_lightning_size);
 // END shaman RFE 1022310
-	Cvar_Register (&amf_lightning_sparks);	Cvar_Register (&amf_motiontrails);	Cvar_Register (&amf_motiontrails_wtf);	Cvar_Register (&amf_waterripple);	Cvar_Register (&amf_debug);	Cvar_Register (&amf_inferno_trail);	Cvar_Register (&amf_inferno_speed);	Cvar_Register (&amf_cutf_tesla_effect);
+	Cvar_Register (&amf_lightning_sparks);	Cvar_Register (&amf_motiontrails);	Cvar_Register (&amf_motiontrails_wtf);	Cvar_Register (&amf_debug);	Cvar_Register (&amf_inferno_trail);	Cvar_Register (&amf_inferno_speed);	Cvar_Register (&amf_cutf_tesla_effect);
 	Cvar_ResetCurrentGroup();
 	Cmd_AddCommand ("gl_checkmodels", CheckModels_f);
 	Cmd_AddCommand ("gl_inferno", InfernoFire_f);

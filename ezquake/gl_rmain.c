@@ -79,7 +79,7 @@ cvar_t	r_fullbright = {"r_fullbright", "0"};
 cvar_t	r_lightmap = {"r_lightmap", "0"};
 cvar_t	gl_shaftlight = {"gl_shaftlight", "1"};
 cvar_t	r_shadows = {"r_shadows", "0"};
-cvar_t	r_wateralpha = {"r_turbalpha", "1"};
+cvar_t	r_wateralpha = {"gl_turbalpha", "1"};
 cvar_t	r_dynamic = {"r_dynamic", "1"};
 cvar_t	r_novis = {"r_novis", "0"};
 cvar_t	r_netgraph = {"r_netgraph", "0"};
@@ -88,11 +88,11 @@ cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t  r_fastturb = {"r_fastturb", "0"};
 // START shaman RFE 1022504
 // cvar_t r_skycolor = {"r_skycolor", "4"};
-cvar_t	r_skycolor   = {"r_skycolor", "172"};
-cvar_t  r_telecolor  = {"r_telecolor", "26"};
-cvar_t  r_lavacolor  = {"r_lavacolor", "73"};
-cvar_t  r_slimecolor = {"r_slimecolor", "53"};
-cvar_t  r_watercolor = {"r_watercolor", "36"};
+cvar_t	r_skycolor   = {"r_skycolor", "40 80 150"};
+cvar_t  r_telecolor  = {"r_telecolor", "255 60 60"};
+cvar_t  r_lavacolor  = {"r_lavacolor", "80 0 0"};
+cvar_t  r_slimecolor = {"r_slimecolor", "10 60 10"};
+cvar_t  r_watercolor = {"r_watercolor", "50 80 120"};
 // END shaman RFE 1022504
 
 cvar_t	r_farclip			= {"r_farclip", "4096"};
@@ -101,8 +101,8 @@ cvar_t	r_skyname			= {"r_skyname", "bloody-marvelous512", 0, OnChange_r_skyname}
 cvar_t	gl_detail			= {"gl_detail","0"};			
 // START shaman :: balancing variables
 cvar_t	gl_caustics			= {"gl_caustics", "1"};		
-cvar_t  gl_waterfog			= {"gl_waterfog", "2"};			
-cvar_t  gl_waterfog_density = {"gl_waterfogDensity", "1"};	
+cvar_t  gl_waterfog			= {"gl_turbfog", "2"};			
+cvar_t  gl_waterfog_density = {"gl_turbfogDensity", "1"};	
 // END shaman :: balancing variables
  
 
@@ -1265,15 +1265,28 @@ void R_Init (void) {
 	Cvar_Register (&r_skyname);
 	Cvar_Register (&r_fastsky);
 	Cvar_Register (&r_skycolor);
+	Cvar_Register (&r_fastturb);
 	// START shaman RFE 1022504
 	Cvar_Register (&r_telecolor);
 	Cvar_Register (&r_lavacolor);
 	Cvar_Register (&r_slimecolor);
 	Cvar_Register (&r_watercolor);
 	// END shaman RFE 1022504
-	Cvar_Register (&r_wateralpha);
-	Cvar_Register (&r_fastturb);
 	Cvar_Register (&r_novis);
+	Cvar_Register (&r_wateralpha);
+	Cvar_Register (&gl_caustics);
+	if (!COM_CheckParm ("-nomtex")) {
+		Cvar_Register (&gl_waterfog);
+		Cvar_Register (&gl_waterfog_density);
+	}
+
+	Cvar_Register (&gl_fogenable); 
+	Cvar_Register (&gl_fogstart); 
+	Cvar_Register (&gl_fogend); 
+	Cvar_Register (&gl_fogred); 
+	Cvar_Register (&gl_fogblue);
+	Cvar_Register (&gl_foggreen);
+	Cvar_Register (&gl_fogsky);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register (&r_drawentities);
@@ -1281,11 +1294,6 @@ void R_Init (void) {
 	Cvar_Register (&r_lerpmuzzlehack);
 	Cvar_Register (&r_drawflame);
 	Cvar_Register (&gl_detail);
-	Cvar_Register (&gl_caustics);
-	if (!COM_CheckParm ("-nomtex")) {
-		Cvar_Register (&gl_waterfog);
-		Cvar_Register (&gl_waterfog_density);
-	}
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_BLEND);
 	Cvar_Register (&gl_polyblend);
@@ -1320,13 +1328,6 @@ void R_Init (void) {
 	Cvar_Register (&gl_ztrick);
 	Cvar_Register (&gl_nocolors);
 	Cvar_Register (&gl_finish);
-	Cvar_Register (&gl_fogenable); 
-	Cvar_Register (&gl_fogstart); 
-	Cvar_Register (&gl_fogend); 
-	Cvar_Register (&gl_fogred); 
-	Cvar_Register (&gl_fogblue); 
-	Cvar_Register (&gl_foggreen);
-	Cvar_Register (&gl_fogsky);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&r_speeds);

@@ -43,6 +43,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/stat.h>
 #endif
 
+#ifdef GLQUAKE
+enum {mode_fastest, mode_faithful, mode_eyecandy, mode_movies} fps_mode;
+fps_mode = mode_eyecandy;
+#else
+enum {mode_fastest, mode_default} fps_mode;
+fps_mode = mode_default;
+#endif
+
 qboolean vid_windowedmouse = true;
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
@@ -452,6 +460,7 @@ void M_DrawCheckbox (int x, int y, int on) {
 
 void M_Options_Draw (void) {
 	float		r;
+	char temp[32];
 	mpic_t	*p;
 
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
@@ -504,7 +513,18 @@ void M_Options_Draw (void) {
 	M_Print (16, 144, "      HUD on left side");
 	M_DrawCheckbox (220, 144, cl_hudswap.value);
 
-	M_Print (16, 152, "          FPS settings");
+	M_Print (16, 152, "     Graphics settings");
+	switch (fps_mode) {
+		case mode_fastest   : strcpy(temp, "fastest"); break;
+#ifdef GLQUAKE
+		case mode_faithful	: strcpy(temp, "faithful"); break;
+		case mode_movies	: strcpy(temp, "movies"); break;
+		default : strcpy(temp, "eye candy"); break;
+#else
+		default : strcpy(temp, "default"); break;
+#endif
+	}
+	M_PrintWhite (220, 152, temp); 
 
 	if (vid_menudrawfn)
 		M_Print (16, 160, "           Video modes");
@@ -547,7 +567,61 @@ void M_Options_Key (int k) {
 		Cbuf_AddText ("exec default.cfg\n");
 		break;
 	case 15:
-		M_Menu_Fps_f ();
+//		M_Menu_Fps_f ();
+		switch (fps_mode) {
+#ifdef GLQUAKE
+		case mode_fastest:
+			fps_mode = mode_faithful;
+			break;
+		case mode_faithful:
+			fps_mode = mode_eyecandy;
+			break;
+		case mode_movies:
+			fps_mode = mode_fastest;
+			break;
+		default:
+			fps_mode = mode_movies;
+			break;
+#else
+		case mode_fastest:
+			fps_mode = mode_default;
+			break;
+		default:
+			fps_mode = mode_fastest;
+			break;
+#endif
+		}
+
+		switch (fps_mode) {
+#ifdef GLQUAKE
+		case mode_fastest:
+			Cbuf_AddText ("exec cfg/gfx_gl_fast.cfg\n");
+			if (gl_max_size.value > 64) {
+				Cvar_SetValue (&gl_max_size, 1);
+			}
+			break;
+		case mode_faithful:
+			Cbuf_AddText ("exec cfg/gfx_gl_faithful.cfg\n");
+			Cvar_SetValue (&gl_max_size, gl_max_size_default);
+			break;
+		case mode_movies:
+			Cbuf_AddText ("exec cfg/gfx_gl_movies.cfg\n");
+			Cvar_SetValue (&gl_max_size, gl_max_size_default);
+			break;
+		default:
+			Cbuf_AddText ("exec cfg/gfx_gl_eyecandy.cfg\n");
+			Cvar_SetValue (&gl_max_size, gl_max_size_default);
+			break;
+#else
+		case mode_fastest:
+			Cbuf_AddText ("exec cfg/gfx_sw_fast.cfg\n");
+			break;
+		case mode_default:
+			Cbuf_AddText ("exec cfg/gfx_sw_default.cfg\n");
+			break;
+#endif
+		}
+
 		break;
 	case 16:
 		M_Menu_Video_f ();
@@ -821,6 +895,7 @@ void M_Keys_Key (int k) {
 		break;
 	}
 }
+
 
 
 //=============================================================================
