@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //key up events are sent even if in console mode
 
 cvar_t	cl_chatmode = {"cl_chatmode", "2"};
+cvar_t cl_newCompletion = { "cl_newCompletion", "1" }; // addeded by jogi
 
 #ifdef WITH_KEYMAP
 // variable to enable/disable key informations (e.g. scancode) to the consoloe:
@@ -45,6 +46,19 @@ int		key_lastpress;
 int		edit_line=0;
 int		history_line=0;
 
+// added by jogi start
+int del_removes;
+int key_lineposorig;
+int old_keyline_length;
+int last_cmd_length = 0;
+int called_second = 0;
+int try = 0;
+int count = 0;
+int count_cmd = 0;
+int count_cvar = 0;
+int count_alias = 0;
+// added by jogi stop
+
 keydest_t	key_dest;
 
 char		*keybindings[256];
@@ -57,6 +71,14 @@ int			keyshift[256];		// key to map to if shift held down in console
 int			key_repeats[256];	// if > 1, it is autorepeating
 qboolean	keydown[256];
 qboolean	keyactive[256];	
+
+typedef struct
+{
+	char *name;
+	char *type;
+} jogi_avail_complete_t;
+jogi_avail_complete_t jogi_avail_complete[1000];
+
 
 typedef struct {
 	char	*name;
@@ -222,7 +244,36 @@ keyname_t keynames[] = {
 
 	{NULL,0}
 };
+// jogi add start
+/*
+==============================================================================
+			Flushing my array
+==============================================================================
+*/
+void
+Flush_My_Array (jogi_avail_complete_t * array, int count)
+{
+	int i;
+	for (i = 0; i <= count; i++)
+	{
+		array[count].name = '\0';
+		array[count].type = '\0';
+	}
 
+}
+
+void
+CompleteCommandNew_Reset (void)
+	{
+	if ((del_removes) && (key_linepos == key_lineposorig))
+			{
+				del_removes = 0;
+				called_second = 0;
+				try = 0;
+			}
+	}
+
+// jogi add stop
 /*
 ==============================================================================
 			LINE TYPING INTO THE CONSOLE
@@ -287,6 +338,287 @@ void CompleteName(void);
 extern cmd_function_t *cmd_functions;
 extern cmd_alias_t *cmd_alias;
 extern cvar_t *cvar_vars;
+
+
+
+
+
+// added by jogi start
+
+
+
+void
+CompleteCommandNew (void)
+{
+	char *cmd, token[MAXCMDLINE], *s, temp[MAXCMDLINE];
+	int c, a, v, start, end, i, diff_len, size, test, my_string_length,
+		my_string_length_count;
+
+	if (!
+		 (key_linepos < 2
+		  || isspace (key_lines[edit_line][key_linepos - 1]))
+		 &&  !called_second)
+	{
+
+		count = 0;
+		count_cmd = 0;
+		count_cvar = 0;
+		count_alias = 0;
+		Flush_My_Array (jogi_avail_complete, 1000);
+
+		//Com_Printf("This will print available options\n");
+		called_second = 1;
+		if (key_linepos < 2
+		    || isspace (key_lines[edit_line][key_linepos - 1]))
+			return;
+
+		for (start = key_linepos - 1;
+		     start >= 1 && !isspace (key_lines[edit_line][start]);
+		     start--)
+			;
+		if (start == 0)
+			start = 1;
+		if (isspace (key_lines[edit_line][start]))
+			start++;
+		end = key_linepos - 1;
+
+		size = min (end - start + 1, sizeof (token) - 1);
+		memcpy (token, &key_lines[edit_line][start], size);
+		token[size] = 0;
+
+		s = token;
+		if (*s == '\\' || *s == '/' || *s == '$')
+		{
+			s++;
+			start++;
+		}
+		if (start > end)
+			return;
+
+		compl_len = strlen (s);
+		compl_clen = 0;
+
+		c = Cmd_CompleteCountPossible (s);
+		a = Cmd_AliasCompleteCountPossible (s);
+		v = Cvar_CompleteCountPossible (s);
+
+		if (c + a + v > 1)
+		{
+			cmd_function_t *cmd;
+			cmd_alias_t *alias;
+			cvar_t *var;
+
+			Com_Printf ("\n");
+
+			if (c)
+			{
+				Com_Printf ("\x02" "Commands:\n");
+				for (cmd = cmd_functions; cmd;
+				     cmd = cmd->next)
+				{
+					if (!Q_strncasecmp
+					    (s, cmd->name, compl_len))
+					{
+						PaddedPrint (cmd->name);
+						FindCommonSubString (cmd->
+								     name);
+						jogi_avail_complete[count].
+							name = cmd->name;
+						jogi_avail_complete[count].
+							type = "command";
+						count++;
+						count_cmd++;
+
+					}
+				}
+				if (con.x)
+					Com_Printf ("\n");
+			}
+
+			if (v)
+			{
+				Com_Printf ("\x02" "Variables:\n");
+				for (var = cvar_vars; var; var = var->next)
+				{
+					if (!Q_strncasecmp
+					    (s, var->name, compl_len))
+					{
+						PaddedPrint (var->name);
+						FindCommonSubString (var->
+								     name);
+						jogi_avail_complete[count].
+							name = var->name;
+						jogi_avail_complete[count].
+							type = "variable";
+						count++;
+						count_cvar++;
+					}
+				}
+				if (con.x)
+					Com_Printf ("\n");
+			}
+
+			if (a)
+			{
+				Com_Printf ("\x02" "Aliases:\n");
+				for (alias = cmd_alias; alias;
+				     alias = alias->next)
+					if (!Q_strncasecmp
+					    (s, alias->name, compl_len))
+					{
+						PaddedPrint (alias->name);
+						FindCommonSubString (alias->
+								     name);
+						jogi_avail_complete[count].
+							name = alias->name;
+						jogi_avail_complete[count].
+							type = "alias";
+						count++;
+						count_alias++;
+					}
+				if (con.x)
+					Com_Printf ("\n");
+			}
+
+		}
+
+
+		if (c + a + v == 1)
+		{
+			cmd = Cmd_CompleteCommand (s);
+			if (!cmd)
+				cmd = Cvar_CompleteVariable (s);
+			if (!cmd)
+				return;	// this should never happen
+		}
+		else if (compl_clen)
+		{
+			compl_common[compl_clen] = 0;
+			cmd = compl_common;
+		}
+		else
+		{
+			CompleteName ();
+			return;
+		}
+		diff_len = strlen (cmd) - (end - start + 1);
+		Q_strncpyz (temp, key_lines[edit_line] + end + 1,
+			    sizeof (temp));
+		Q_strncpyz (key_lines[edit_line] + end + 1 + diff_len, temp,
+			    MAXCMDLINE - (end + 1 + diff_len));
+		for (i = 0; start + i < MAXCMDLINE && i < strlen (cmd); i++)
+			key_lines[edit_line][start + i] = cmd[i];
+		key_linepos += diff_len;
+		key_lines[edit_line][min
+				     (key_linepos + strlen (temp),
+				      MAXCMDLINE - 1)] = 0;
+		if (start == 1
+		    && key_linepos + strlen (temp) < MAXCMDLINE - 1)
+		{
+			for (i = key_linepos + strlen (temp); i > 0; i--)
+				key_lines[edit_line][i + 1] =
+					key_lines[edit_line][i];
+			key_lines[edit_line][1] = '/';
+			key_linepos++;
+		}
+		if (c + a + v == 1 && !key_lines[edit_line][key_linepos]
+		    && key_linepos < MAXCMDLINE - 1)
+		{
+			key_lines[edit_line][key_linepos] = ' ';
+			key_lines[edit_line][++key_linepos] = 0;
+		}
+		while (!(isspace (key_lines[edit_line][key_linepos]))
+		       && (key_lines[edit_line][key_linepos] != '\0'))
+		{
+			strcpy (key_lines[edit_line] + key_linepos,
+				key_lines[edit_line] + key_linepos + 1);
+		}
+		key_lineposorig = key_linepos;
+		try = 0;
+		last_cmd_length = 0;
+		old_keyline_length = strlen( key_lines[edit_line] );
+
+
+
+
+
+	}
+	else if ((key_linepos >= 2
+		  || isspace (key_lines[edit_line][key_linepos - 1]))
+		 &&  called_second
+		 && (key_linepos == key_lineposorig) && (old_keyline_length == strlen(key_lines[edit_line])))
+	{
+		if (count != try)
+		{
+
+			try++;
+			//Com_Printf("%i\n",try);
+			int len;
+			char text[50];
+			int test = try - 1;
+			int testvar = key_linepos;
+			
+			while ((testvar != 0)
+			       && !(isspace (key_lines[edit_line][testvar]))
+			       && (key_lines[edit_line][testvar] != '\\')
+			       && (key_lines[edit_line][testvar] != '$')
+			       && (key_lines[edit_line][testvar] != '/'))
+			{
+				testvar--;
+
+			}
+		
+			testvar = key_linepos - testvar;
+			
+			my_string_length =	strlen (jogi_avail_complete[test].name);
+			
+
+			for (i = 0; i <= (my_string_length - testvar +1); i++)
+			{
+				text[i] = jogi_avail_complete[test].name[i + testvar -1 ];
+			}
+			
+			len = strlen (text);
+
+			memmove (key_lines[edit_line] + key_linepos + len,
+				 key_lines[edit_line] + key_linepos +
+				 last_cmd_length,
+				 (MAXCMDLINE - key_linepos + 1 -
+				  last_cmd_length));
+			memcpy (key_lines[edit_line] + key_linepos, text,
+				len);
+
+			del_removes = 1;
+			last_cmd_length = strlen (text);
+
+
+		}
+		else if (count == try)
+		{
+			try = 0;
+		}
+		old_keyline_length = strlen( key_lines[edit_line] );
+	}
+
+
+	else if ((key_linepos >= 2
+		  || isspace (key_lines[edit_line][key_linepos - 1]))
+		 && called_second
+		 && (key_linepos != key_lineposorig))
+	{
+		try = 0;
+		called_second = 0;
+		del_removes = 0;
+		CompleteCommandNew ();
+	}
+
+
+}
+
+// added by jogi stop
+
+
+
 
 void CompleteCommand (void) {
 	char *cmd, token[MAXCMDLINE], *s, temp[MAXCMDLINE];
@@ -558,51 +890,106 @@ no_lf:
 			return;
 
 		case K_TAB:
-			// command completion
-			if (keydown[K_CTRL])
-				CompleteName ();
-			else
+		// command completion
+		if (!(keydown[K_SHIFT]) && keydown[K_CTRL])
+		{
+			CompleteName ();
+		}
+		// added by jogi start
+		else
+		{
+			if (cl_newCompletion.value)
+			{
+				CompleteCommandNew ();
+			}
+			else if (!(cl_newCompletion.value))
+			{
 				CompleteCommand ();
-			return;
-
-		case K_BACKSPACE:
-			if (key_linepos > 1) {
-				strcpy(key_lines[edit_line] + key_linepos - 1, key_lines[edit_line] + key_linepos);
-				key_linepos--;
 			}
-			return;
-
-		case K_DEL:
-			if (key_linepos < strlen(key_lines[edit_line]))
-				strcpy(key_lines[edit_line] + key_linepos, key_lines[edit_line] + key_linepos + 1);
-			return;
-
-		case K_RIGHTARROW:
-			if (keydown[K_CTRL]) {
-				// word right
-				i = strlen(key_lines[edit_line]);
-				while (key_linepos < i && key_lines[edit_line][key_linepos] != ' ')
-					key_linepos++;
-				while (key_linepos < i && key_lines[edit_line][key_linepos] == ' ')
-					key_linepos++;
-				return;
+			else {
+			Com_Printf("cl_newCompletion has to be set to either 0 or 1\n");
 			}
-			if (key_linepos < strlen(key_lines[edit_line]))
+		}
+		// added by stopp
+		return;
+
+
+	case K_BACKSPACE:
+	// added by jogi start
+	CompleteCommandNew_Reset();
+	// added by jogi stop
+		if (key_linepos > 1)
+		{
+			strcpy (key_lines[edit_line] + key_linepos - 1,
+				key_lines[edit_line] + key_linepos);
+			key_linepos--;
+		}
+		return;
+
+	case K_DEL:
+		// added by jogi start
+		if ((del_removes) && (key_linepos == key_lineposorig))
+		{
+			int i;
+			for (i = 0; i <= last_cmd_length; i++)
+			{
+
+				strcpy (key_lines[edit_line] + key_linepos,
+					key_lines[edit_line] + key_linepos +
+					1);
+			}
+			del_removes = 0;
+			called_second = 0;
+			try = 0;
+		}
+		// added by jogi stopp
+		if (key_linepos < strlen (key_lines[edit_line]))
+			strcpy (key_lines[edit_line] + key_linepos,
+				key_lines[edit_line] + key_linepos + 1);
+		return;
+
+	case K_RIGHTARROW:
+		if (keydown[K_CTRL])
+		{
+			// word right
+			i = strlen (key_lines[edit_line]);
+			while (key_linepos < i
+			       && key_lines[edit_line][key_linepos] != ' ')
+				key_linepos++;
+			while (key_linepos < i
+			       && key_lines[edit_line][key_linepos] == ' ')
 				key_linepos++;
 			return;
+		}
+		// added by jogi start
+			CompleteCommandNew_Reset();
+		// added by jogi stop
+		if (key_linepos < strlen (key_lines[edit_line]))
+			key_linepos++;
+		return;
 
-	    case K_LEFTARROW:
-			if (keydown[K_CTRL]) {
-				// word left
-				while (key_linepos > 1 && key_lines[edit_line][key_linepos-1] == ' ')
-					key_linepos--;
-				while (key_linepos > 1 && key_lines[edit_line][key_linepos-1] != ' ')
-					key_linepos--;
-				return;
-			}
-			if (key_linepos > 1)
+
+	case K_LEFTARROW:
+		if (keydown[K_CTRL])
+		{
+			// word left
+			while (key_linepos > 1
+			       && key_lines[edit_line][key_linepos - 1] ==
+			       ' ')
+				key_linepos--;
+			while (key_linepos > 1
+			       && key_lines[edit_line][key_linepos - 1] !=
+			       ' ')
 				key_linepos--;
 			return;
+		}
+			// addeded by jogi start
+			CompleteCommandNew_Reset();
+			// addeded by jogi start
+
+		if (key_linepos > 1)
+			key_linepos--;
+		return;
 
 	    case K_UPARROW:
 			if (keydown[K_CTRL]) {
@@ -766,11 +1153,14 @@ no_lf:
 	memmove (key_lines[edit_line]+key_linepos+1, key_lines[edit_line]+key_linepos, i-key_linepos+1);
 	key_lines[edit_line][key_linepos] = key;
 	key_linepos++;
+CompleteCommandNew_Reset ();
 }
 
 //============================================================================
 
 qboolean	chat_team;
+qboolean chat_observers;	// added by jogi
+qboolean chat_server;		// added by jogi
 char		chat_buffer[MAXCMDLINE];
 int			chat_linepos = 0;
 
@@ -1223,9 +1613,9 @@ void Key_Init (void) {
 	Cmd_AddCommand ("bind",Key_Bind_f);
 	Cmd_AddCommand ("unbind",Key_Unbind_f);
 	Cmd_AddCommand ("unbindall",Key_Unbindall_f);
-
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register (&cl_chatmode);
+	Cvar_Register (&cl_newCompletion);
 
 	Cvar_ResetCurrentGroup();
 }

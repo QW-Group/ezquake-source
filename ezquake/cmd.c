@@ -448,6 +448,43 @@ void Cmd_AliasList_f (void) {
 	Com_Printf ("----------\n%d aliases\n", count);
 }
 
+
+
+
+
+void Cmd_EditAlias_f (void){
+	#define		MAXCMDLINE	256
+	extern char	key_lines[32][MAXCMDLINE];
+	extern int		edit_line;
+	cmd_alias_t	*a;
+	char *s, final_string[MAXCMDLINE -1];
+	int c, comp_len;
+	
+
+	c = Cmd_Argc();
+	if (c == 1)	{
+		Com_Printf ("%s <name> : modify an alias\n", Cmd_Argv(0));
+		Com_Printf ("aliaslist : list all aliases\n");
+		return;
+	}
+	
+	comp_len = strlen(Cmd_Argv(1));
+	a = Cmd_FindAlias(Cmd_Argv(1));
+	if ( a == '\0' ) {
+			s="";
+	}
+	else {
+	s = CopyString(a->value);
+	}
+	
+	Q_snprintfz(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
+	Key_ClearTyping();
+	memcpy (key_lines[edit_line]+1, final_string, strlen(final_string));
+	Z_Free(s);	
+}
+
+
+
 //Creates a new command that executes a command string (possibly ; separated)
 void Cmd_Alias_f (void) {
 	cmd_alias_t	*a;
@@ -1248,11 +1285,14 @@ int Cmd_CheckParm (char *parm) {
 	return 0;
 }
 
+
+
 void Cmd_Init (void) {
 	// register our commands
 	Cmd_AddCommand ("exec", Cmd_Exec_f);
 	Cmd_AddCommand ("echo", Cmd_Echo_f);
 	Cmd_AddCommand ("aliaslist", Cmd_AliasList_f);
+	Cmd_AddCommand ("editalias", Cmd_EditAlias_f);
 	//Cmd_AddCommand ("aliasa", Cmd_Alias_f);
 	Cmd_AddCommand ("alias", Cmd_Alias_f);
 	Cmd_AddCommand ("tempalias", Cmd_Alias_f);
