@@ -1075,7 +1075,7 @@ void HUD_Draw(void)
 extern cvar_t scr_newHud;
     hud_t *hud;
 
-    if (!scr_newHud.value)
+    if (scr_newHud.value == 0)
 	return;
 
     hud = hud_huds;

@@ -411,29 +411,18 @@ void SCR_DrawNet (void) {
 #define	ELEMENT_Y_COORD(var)	((var##_y.value < 0) ? vid.height - sb_lines + 8 * var##_y.value : 8 * var##_y.value)
 
 void SCR_DrawFPS (void) {
-	double t;
 	int x, y;
 	char str[80];
-	static float lastfps;
-	static double lastframetime;
-	extern int fps_count;
+	extern double	lastfps;
+	extern int		fps_count;
 
-	if (!show_fps.value || scr_newHud.value) // HUD -> hexum - newHud has its own fps
+	if (!show_fps.value || scr_newHud.value == 1) // HUD -> hexum - newHud has its own fps
 		return;
 
-	t = Sys_DoubleTime();
-	if ((t - lastframetime) >= 1.0) {
-		lastfps = fps_count / (t - lastframetime);
-		fps_count = 0;
-		lastframetime = t;
-	}
-
-	if (cl_multiview.value && cls.mvdplayback) {
-		sprintf(str, "%3.1f", (lastfps + 0.05)/nNumViews);
-	}
-	else {
-		sprintf(str, "%3.1f", lastfps + 0.05);
-	}  
+	if (cl_multiview.value && cls.mvdplayback)
+		snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05)/nNumViews);
+	else
+		snprintf(str, sizeof(str), "%3.1f",  lastfps + 0.05);
 
 	x = ELEMENT_X_COORD(show_fps);
 	y = ELEMENT_Y_COORD(show_fps);
@@ -974,7 +963,7 @@ void SCR_UpdateScreen (void) {
 	// draw any areas not covered by the refresh
 	SCR_TileClear ();
 
-	if (r_netgraph.value && !scr_newHud.value) { // HUD -> hexum
+	if (r_netgraph.value && scr_newHud.value != 1) { // HUD -> hexum
 		// FIXME: ugly hack :(
 		float temp = hud_netgraph->show->value;
 
@@ -983,7 +972,7 @@ void SCR_UpdateScreen (void) {
 		Cvar_SetValue(hud_netgraph->show, temp);
 	}
 
-	if (r_netstats.value && !scr_newHud.value) {
+	if (r_netstats.value && scr_newHud.value != 1) {
 		// FIXME: ugly hack :(
 		float temp = hud_netstats->show->value;
 
