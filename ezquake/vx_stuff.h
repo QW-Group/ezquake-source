@@ -55,6 +55,8 @@ extern cvar_t amf_extratrails;
 extern cvar_t amf_detpacklights;
 extern cvar_t amf_buildingsparks;
 extern cvar_t amf_lightning;
+extern cvar_t amf_lightning_size;
+
 extern cvar_t amf_lightning_sparks;
 extern cvar_t amf_motiontrails;
 extern cvar_t amf_motiontrails_wtf;

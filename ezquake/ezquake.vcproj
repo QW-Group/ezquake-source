@@ -1156,7 +1156,7 @@
 				</File>
 			</Filter>
 			<Filter
-				Name="Fuh"
+				Name="Addons"
 				Filter="">
 				<File
 					RelativePath="Ctrl.c">
@@ -1408,7 +1408,7 @@
 				</File>
 			</Filter>
 			<Filter
-				Name="fuh_h"
+				Name="Addons_h"
 				Filter="h;hpp;hxx;hm;inl;fi;fd">
 				<File
 					RelativePath="Ctrl.h">

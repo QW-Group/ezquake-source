@@ -571,7 +571,10 @@ void CL_UpdateBeams (void) {
 					{
 						VectorAdd (org, dist, beamend[k]);
 						for (j=0;j<3;j++)
-						beamend[k][j]+=(rand()%40)-20;
+						// START shaman RFE 1022310
+						// beamend[k][j]+=(rand()%40)-20;
+						beamend[k][j]+=(rand()%(25+(int)bound(0, amf_lightning_size.value, 25)))-20;
+						// END shaman RFE 1022310
 						VX_LightningBeam (beamstart[k], beamend[k]);
 						VectorCopy (beamend[k], beamstart[k]);
 					}
