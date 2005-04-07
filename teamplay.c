@@ -286,7 +286,7 @@ char *Macro_Ammo (void) {
 	return macro_buf;
 }
 
-static char *Weapon_NumToString(int num) {
+char *Weapon_NumToString(int num) {
 	switch (num) {
 	case IT_AXE: return tp_name_axe.string;
 	case IT_SHOTGUN: return tp_name_sg.string;
