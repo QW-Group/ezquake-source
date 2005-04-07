@@ -150,8 +150,7 @@ int Cvar_CompleteCountPossible (char *partial) {
 
 	return c;
 }
-
-void Cvar_RulesetSet(cvar_t *var, char *rulesetval){
+void Cvar_RulesetSet(cvar_t *var, char *rulesetval) {
 	float rulesetval_f;
 	rulesetval_f=Q_atoi(rulesetval);
 	var->rulesetvalue=rulesetval_f;
@@ -177,7 +176,7 @@ void Cvar_Set (cvar_t *var, char *value) {
 	test  = Q_atof (value);
 		if (test > var->rulesetvalue){	
 		if (con_initialized)
-			Com_Printf ("\"%s\" is limited to %f\n", var->name,var->rulesetvalue);
+			Com_Printf ("\"%s\" is limited to %0.2f\n", var->name,var->rulesetvalue);
 		return;
 		}
 	}
@@ -264,8 +263,6 @@ void Cvar_SetValue (cvar_t *var, float value) {
 	Cvar_Set (var, val);
 }
 
-
-
 int Cvar_GetFlags (cvar_t *var) {
 	return var->flags;
 }
@@ -273,10 +270,6 @@ int Cvar_GetFlags (cvar_t *var) {
 void Cvar_SetFlags (cvar_t *var, int flags) {
 	var->flags = flags;
 }
-
-
-
-
 
 static cvar_group_t *current = NULL;
 cvar_group_t	*cvar_groups = NULL;

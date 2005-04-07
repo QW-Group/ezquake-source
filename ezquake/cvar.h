@@ -32,7 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_INIT			16		// can only be set during initialization
 #define	CVAR_USER_CREATED	32		// created by a set command
 #define	CVAR_USER_ARCHIVE	64		// created by a seta command
-#define CVAR_RULESET_MAX	128	
+#define CVAR_RULESET_MAX	128		// limited by ruleset
 
 typedef struct cvar_s {
 	char	*name;
@@ -72,6 +72,9 @@ void Cvar_ForceSet (cvar_t *var, char *string);
 // expands value to a string and calls Cvar_Set
 void Cvar_SetValue (cvar_t *var, float value);
 
+// sets ruleset limit for variable
+// when ruleset is active you can't set higher value than this
+void Cvar_RulesetSet(cvar_t *var, char *rulesetval);
 
 void Cvar_SetFlags (cvar_t *var, int flags);
 int Cvar_GetFlags (cvar_t *var);

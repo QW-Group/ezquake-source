@@ -30,6 +30,7 @@ typedef struct limited_cvar_s {
 	char *rulesetvalue;
 } limited_cvar_t;
 
+/* no more needed since hexum made better fix for tp macros 
 static char *allowed_smackdown_macros[] =
 {
 	"connectiontype",
@@ -44,6 +45,7 @@ static char *allowed_smackdown_macros[] =
 	"triggermatch",
 	NULL
 };
+*/
 
 typedef enum {rs_default, rs_smackdown} ruleset_t;
 
@@ -157,13 +159,13 @@ static void Rulesets_Smackdown(void) {
 #endif
 		i = 0;
 	for (; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
-		Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
+		Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value);
 		Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
 	}
 
 #ifdef GLQUAKE
 	for (i = 0; i < (sizeof(limited_cvars) / sizeof(limited_cvars[0])); i++) {
-		Cvar_Set(limited_cvars[i].var, limited_cvars[i].rulesetvalue);
+		Cvar_RulesetSet(limited_cvars[i].var, limited_cvars[i].rulesetvalue);
 		Cvar_SetFlags(limited_cvars[i].var, Cvar_GetFlags(limited_cvars[i].var) | CVAR_RULESET_MAX);
 	}
 #endif
@@ -180,9 +182,10 @@ static void Rulesets_Smackdown(void) {
 	ruleset = rs_smackdown;
 	restrictTriggers = true;
 
+/* no more needed since hexum made better fix for tp macros 
 	for (i = 0; allowed_smackdown_macros[i]; i++)
 		Cmd_SetMacro(allowed_smackdown_macros[i], true);
-
+*/
 }
 
 static void Rulesets_Default(void) {
