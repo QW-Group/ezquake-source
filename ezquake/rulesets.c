@@ -116,7 +116,7 @@ static void Rulesets_Smackdown(void) {
 	extern cvar_t tp_triggers, tp_msgtriggers, cl_trueLightning, scr_clock, r_aliasstats;
 	extern cvar_t cl_independentPhysics, cl_c2spps;
 #ifdef GLQUAKE
-	extern cvar_t amf_camera_death, amf_camera_chase, amf_part_gunshot_type, amf_part_traillen, amf_part_trailtime, amf_part_trailwidth, amf_part_traildetail, amf_part_trailtype, amf_part_sparks, amf_part_spikes, amf_part_gunshot, amf_waterripple, amf_lightning_size, amf_lightning_size, amf_lightning_sparks;
+	extern cvar_t amf_camera_death, amf_camera_chase, amf_part_gunshot_type, amf_part_traillen, amf_part_trailtime, amf_part_trailwidth, amf_part_traildetail, amf_part_trailtype, amf_part_sparks, amf_part_spikes, amf_part_gunshot, amf_waterripple, amf_lightning, amf_lightning_size, amf_lightning_size, amf_lightning_sparks;
 	extern qboolean qmb_initialized;
 #endif
 	int i;
@@ -127,6 +127,7 @@ static void Rulesets_Smackdown(void) {
 		{&amf_camera_death, "0"},
 		{&amf_part_sparks, "0"},
 		{&amf_waterripple, "0"},
+		{&amf_lightning, "0"},
 		{&amf_lightning_sparks, "0"},
 #endif
 		{&tp_msgtriggers, "0"},
@@ -160,6 +161,7 @@ static void Rulesets_Smackdown(void) {
 		i = 0;
 	for (; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
 		Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value);
+		Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
 		Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
 	}
 
