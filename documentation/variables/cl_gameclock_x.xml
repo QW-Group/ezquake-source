@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>cl_gameclock_x</name>
+<description>
+Adjusts horizontal placement of the clock with seconds.
+</description>
+<remarks>
+See cl_gameclock for detailed info about the clock.
+</remarks>
+</variable>
