@@ -38,14 +38,14 @@ entities sent from the server may not include everything in the pvs, especially
 when crossing a water boudnary.
 */
 
-cvar_t	cl_rollspeed = {"cl_rollspeed", "200"};
-cvar_t	cl_rollangle = {"cl_rollangle", "2.0"};
-cvar_t	cl_bob = {"cl_bob", "0.02"};
-cvar_t	cl_bobcycle = {"cl_bobcycle", "0.6"};
-cvar_t	cl_bobup = {"cl_bobup", "0.5"};
-cvar_t	v_kicktime = {"v_kicktime", "0.5"};
-cvar_t	v_kickroll = {"v_kickroll", "0.6"};
-cvar_t	v_kickpitch = {"v_kickpitch", "0.6"};
+cvar_t	cl_rollspeed = {"cl_rollspeed", "0"};
+cvar_t	cl_rollangle = {"cl_rollangle", "0"};
+cvar_t	cl_bob = {"cl_bob", "0.00"};
+cvar_t	cl_bobcycle = {"cl_bobcycle", "0.0"};
+cvar_t	cl_bobup = {"cl_bobup", "0.0"};
+cvar_t	v_kicktime = {"v_kicktime", "0.0"};
+cvar_t	v_kickroll = {"v_kickroll", "0.0"};
+cvar_t	v_kickpitch = {"v_kickpitch", "0.0"};
 cvar_t	v_gunkick = {"v_gunkick", "0"};
 
 
@@ -64,18 +64,18 @@ cvar_t	v_iroll_level = {"v_iroll_level", "0.1", 0, Change_v_idle};
 cvar_t	v_ipitch_level = {"v_ipitch_level", "0.3", 0, Change_v_idle};
 cvar_t	v_idlescale = {"v_idlescale", "0", 0, Change_v_idle};
 
-cvar_t	crosshair = {"crosshair", "2", CVAR_ARCHIVE};
-cvar_t	crosshaircolor = {"crosshaircolor", "79", CVAR_ARCHIVE};
+cvar_t	crosshair = {"crosshair", "3", CVAR_ARCHIVE};
+cvar_t	crosshaircolor = {"crosshaircolor", "255 255 255", CVAR_ARCHIVE};
 cvar_t	crosshairsize	= {"crosshairsize", "1"};
 cvar_t  cl_crossx = {"cl_crossx", "0", CVAR_ARCHIVE};
 cvar_t  cl_crossy = {"cl_crossy", "0", CVAR_ARCHIVE};
 
-cvar_t  v_contentblend = {"v_contentblend", "1"};
-cvar_t	v_damagecshift = {"v_damagecshift", "1"};
-cvar_t	v_quadcshift = {"v_quadcshift", "1"};
-cvar_t	v_suitcshift = {"v_suitcshift", "1"};
-cvar_t	v_ringcshift = {"v_ringcshift", "1"};
-cvar_t	v_pentcshift = {"v_pentcshift", "1"};
+cvar_t  v_contentblend = {"v_contentblend", "0.33"};
+cvar_t	v_damagecshift = {"v_damagecshift", "0.33"};
+cvar_t	v_quadcshift = {"v_quadcshift", "0.75"};
+cvar_t	v_suitcshift = {"v_suitcshift", "0.75"};
+cvar_t	v_ringcshift = {"v_ringcshift", "0.75"};
+cvar_t	v_pentcshift = {"v_pentcshift", "0.75"};
 #ifdef GLQUAKE
 cvar_t	v_dlightcshift = {"v_dlightcshift", "1"};
 #endif
@@ -235,8 +235,8 @@ cshift_t	cshift_lava = { {255,80,0}, 150 };
 cvar_t		gl_cshiftpercent = {"gl_cshiftpercent", "100"};
 cvar_t		gl_hwblend = {"gl_hwblend", "1"};
 float		v_blend[4];		// rgba 0.0 - 1.0
-cvar_t		v_gamma = {"gl_gamma", "1", CVAR_ARCHIVE};
-cvar_t		v_contrast = {"gl_contrast", "1", CVAR_ARCHIVE};
+cvar_t		v_gamma = {"gl_gamma", "0.8", CVAR_ARCHIVE};
+cvar_t		v_contrast = {"gl_contrast", "1.3", CVAR_ARCHIVE};
 unsigned short	ramps[3][256];
 
 #else
