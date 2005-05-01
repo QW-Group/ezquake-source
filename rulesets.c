@@ -104,12 +104,13 @@ qboolean Rulesets_AllowTriggers(void) {
 }
 
 char *Rulesets_Ruleset(void) {
-	switch (ruleset) {
-	case rs_smackdown:
-		return "smackdown";
-	default:
-		return "default";
-	}
+	extern cvar_t cl_independentPhysics;
+	extern cvar_t allow_scripts;
+	char * sRuleset, * sScripts, * sIPhysics;
+	sRuleset = (ruleset == rs_smackdown) ? "smackdown " : "default ";
+	sScripts = (allow_scripts.value) ? "" : "\x90scripts blocked\x91";
+	sIPhysics = (cl_independentPhysics.value) ? "" : "\x90indep. physics off\x91";
+	return va("%s %s %s", sRuleset, sScripts, sIPhysics);
 }
 
 static void Rulesets_Smackdown(void) {
