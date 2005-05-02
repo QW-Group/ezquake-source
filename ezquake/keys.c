@@ -346,12 +346,12 @@ extern cvar_t *cvar_vars;
 // added by jogi start
 
 
-
 void
 CompleteCommandNew (void)
 {
 	char *cmd, token[MAXCMDLINE], *s, temp[MAXCMDLINE];
-	int c, a, v, start, end, i, diff_len, size, my_string_length;
+	int c, a, v, start, end, i, diff_len, size, test, my_string_length,
+		my_string_length_count;
 
 	if (!
 		 (key_linepos < 2
@@ -370,14 +370,6 @@ CompleteCommandNew (void)
 		if (key_linepos < 2
 		    || isspace (key_lines[edit_line][key_linepos - 1]))
 			return;
-
-		           if (!(isspace (key_lines[edit_line][key_linepos])))
-			   {
-			   	memmove ( key_lines[edit_line] + key_linepos + 1,
-			   	key_lines[edit_line] + key_linepos ,
-			   	(MAXCMDLINE - key_linepos ));
-			   	memcpy (key_lines[edit_line] + key_linepos, " ", 1);
-			   }
 
 		for (start = key_linepos - 1;
 		     start >= 1 && !isspace (key_lines[edit_line][start]);
@@ -557,15 +549,13 @@ CompleteCommandNew (void)
 	{
 		if (count != try)
 		{
-			int len;
-			char text[50];
-			int test;
-			int testvar;
 
 			try++;
 			//Com_Printf("%i\n",try);
-			test = try - 1;
-			testvar = key_linepos;
+			int len;
+			char text[50];
+			int test = try - 1;
+			int testvar = key_linepos;
 			
 			while ((testvar != 0)
 			       && !(isspace (key_lines[edit_line][testvar]))
@@ -625,7 +615,6 @@ CompleteCommandNew (void)
 }
 
 // added by jogi stop
-
 
 
 
