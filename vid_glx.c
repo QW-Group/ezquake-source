@@ -120,6 +120,8 @@ cvar_t	_windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE, OnChange_windowe
 cvar_t	m_filter = {"m_filter", "0"};
 cvar_t	cl_keypad = {"cl_keypad", "1"};
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
+cvar_t  auto_grabmouse = {"auto_grabmouse", "0"};
+
 
 const char *glx_extensions=NULL;
 
@@ -395,8 +397,8 @@ static void GetEvent(void) {
 		break;
 
 	case MapNotify:
-		if (event.xmap.window == win) install_grabs();
-		if (!vidmode_active && !_windowed_mouse.value) Cvar_Set(&_windowed_mouse, "1");
+		if (event.xmap.window == win && auto_grabmouse.value) install_grabs();
+		if (!vidmode_active && !_windowed_mouse.value && auto_grabmouse.value) Cvar_Set(&_windowed_mouse, "1");
 		if (!vid_minimized) break;
 		vid_minimized = 0;
 		if (!vid_hwgammacontrol.value && vid_gammaworks)
@@ -706,6 +708,7 @@ void VID_Init(unsigned char *palette) {
 #endif // WITH_KEYMAP
 
 	Cmd_AddCommand("vid_minimize", VID_Minimize_f);
+	Cvar_Register(&auto_grabmouse);
 
 	vid.maxwarpwidth = WARP_WIDTH;
 	vid.maxwarpheight = WARP_HEIGHT;
