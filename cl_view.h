@@ -38,3 +38,5 @@ float V_CalcRoll (vec3_t angles, vec3_t velocity);
 
 void V_StartPitchDrift (void);
 void V_StopPitchDrift (void);
+
+void V_TF_ClearGrenadeEffects (void); // BorisU
