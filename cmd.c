@@ -551,6 +551,16 @@ void Cmd_Alias_f (void) {
 	strcpy (a->name, s);
 
 	a->flags = 0;
+// qw262 -->
+	s=Cmd_MakeArgs(2);
+	while (*s) {
+		if (*s == '%' && ( s[1]>='0' || s[1]<='9')) {
+			a->flags |= ALIAS_HAS_PARAMETERS;
+			break;
+		}
+		++s;
+	}
+// <-- qw262
 	if (!Q_strcasecmp(Cmd_Argv(0), "aliasa"))
 		a->flags |= ALIAS_ARCHIVE;
 
@@ -560,7 +570,6 @@ void Cmd_Alias_f (void) {
 	if (!Q_strcasecmp(Cmd_Argv(0), "tempalias"))
 		a->flags |= ALIAS_TEMP;
 #endif
-
 
 	// copy the rest of the command line
 	a->value = CopyString (Cmd_MakeArgs(2));
@@ -1158,6 +1167,7 @@ void Cmd_ExecuteString (char *text) {
 	cmd_alias_t *a;
 	static char buf[1024];
 	cbuf_t *inserttarget;
+	char *p, *n, *s;
 	
 	Cmd_ExpandString (text, buf);
 	Cmd_TokenizeString (buf);
@@ -1225,10 +1235,55 @@ void Cmd_ExecuteString (char *text) {
 	// check aliases
 checkaliases:
 	if ((a = Cmd_FindAlias(cmd_argv[0]))) {
+
+// qw262 -->
+			if (a->value[0]=='\0') return; // alias is empty.
+
+			if(a->flags & ALIAS_HAS_PARAMETERS) { // %parameters are given in alias definition
+				s=a->value;
+				buf[0] = '\0';
+				do {
+					n = strchr(s, '%');
+					if(n) {
+						if(*++n >= '1' && *n <= '9') {
+							n[-1] = 0;
+							strlcat(buf, s, sizeof(buf));
+							n[-1] = '%';
+							// insert numbered parameter
+							strlcat(buf,Cmd_Argv(*n-'0'), sizeof(buf));
+						} else if (*n == '0') {
+							n[-1] = 0;
+							strlcat(buf, s, sizeof(buf));
+							n[-1] = '%';
+							// insert all parameters
+							strlcat(buf, Cmd_Args(), sizeof(buf));
+						} else if (*n == '%') {
+							n[0] = 0;
+							strlcat(buf, s, sizeof(buf));
+							n[0] = '%';
+						} else {
+							if (*n) {
+								char tmp = n[1];
+								n[1] = 0;
+								strlcat(buf, s, sizeof(buf));
+								n[1] = tmp;
+							} else
+								strlcat(buf, s, sizeof(buf));
+						}
+						s=n+1;
+					}
+				} while(n);
+				strlcat(buf, s, sizeof(buf));
+				p = buf;
+
+			} else  // alias has no parameters
+				p = a->value;
+// <-- qw262
+
 #ifndef SERVERONLY
 		if (cbuf_current == &cbuf_svc)
 		{
-			Cbuf_AddText (a->value);
+			Cbuf_AddText (p);
 			Cbuf_AddText ("\n");
 		} 
 		else
@@ -1242,16 +1297,7 @@ checkaliases:
 #endif
 
 			Cbuf_InsertTextEx (inserttarget, "\n");
-
-			// if the alias value is a command or cvar and
-			// the alias is called with parameters, add them
-			if (Cmd_Argc() > 1 && !strchr(a->value, ' ') && !strchr(a->value, '\t')	&& 
-				(Cvar_FindVar(a->value) || (Cmd_FindCommand(a->value) && a->value[0] != '+' && a->value[0] != '-'))
-				) {
-					Cbuf_InsertTextEx (inserttarget, Cmd_Args());
-					Cbuf_InsertTextEx (inserttarget, " ");
-				}
-				Cbuf_InsertTextEx (inserttarget, a->value);
+			Cbuf_InsertTextEx (inserttarget, p);
 		}
 		return;
 	}
