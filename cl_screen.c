@@ -92,6 +92,7 @@ cvar_t			scr_fov = {"fov", "90", CVAR_ARCHIVE};	// 10 - 140
 cvar_t			scr_consize = {"scr_consize", "0.75"};
 cvar_t			scr_conspeed = {"scr_conspeed", "1000"};
 cvar_t			scr_centertime = {"scr_centertime", "2"};
+cvar_t		    scr_centershift = {"scr_centershift", "0"}; // BorisU
 cvar_t			scr_showram = {"showram", "1"};
 cvar_t			scr_showturtle = {"showturtle", "0"};
 cvar_t			scr_showpause = {"showpause", "1"};
@@ -272,7 +273,7 @@ void SCR_DrawCenterString (void) {
 	scr_erase_center = 0;
 	start = scr_centerstring;
 
-	y = (scr_center_lines <= 4) ? vid.height * 0.35 : 48;
+	y = (scr_center_lines <= 4) ? vid.height * 0.35 : 48 + scr_centershift.value*8;
 
 	while (1) {
 		// scan the width of the line
@@ -1891,6 +1892,7 @@ void SCR_Init (void) {
 	Cvar_Register (&scr_showturtle);
 	Cvar_Register (&scr_showpause);
 	Cvar_Register (&scr_centertime);
+	Cvar_Register (&scr_centershift); // BorisU
 
 	Cvar_Register (&scr_clock_x);
 	Cvar_Register (&scr_clock_y);
