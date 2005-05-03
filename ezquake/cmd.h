@@ -143,11 +143,13 @@ void Cmd_AddLegacyCommand (char *oldname, char *newname);
 
 #define	MAX_ALIAS_NAME	32
 
-#define ALIAS_ARCHIVE	1
+#define ALIAS_ARCHIVE			1
 
-#define ALIAS_SERVER	2
+#define ALIAS_SERVER			2
 
-#define ALIAS_TEMP		4
+#define ALIAS_TEMP				4
+
+#define	ALIAS_HAS_PARAMETERS	8
 
 
 typedef struct cmd_alias_s {
