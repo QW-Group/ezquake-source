@@ -586,6 +586,33 @@ void Cvar_Set_f (void) {
 		var->flags |= CVAR_USER_ARCHIVE;
 }
 
+// disconnect -->
+void Cvar_UnSet_f (void) {
+	cvar_t *var;
+	char *var_name;
+	
+	if (Cmd_Argc() != 2) {
+		Com_Printf ("Usage: %s <cvar>\n", Cmd_Argv(0));
+		return;
+	}
+
+	var_name = Cmd_Argv (1);
+	var = Cvar_FindVar (var_name);
+
+	if (!var) {
+	Com_Printf("Can't unset \"%s\": no such cvar\n", var_name);
+		return;
+	}
+
+	if (var->flags & CVAR_USER_CREATED) {
+		Cvar_Delete(var_name);
+	} else {
+		Com_Printf("Can't delete not user created cvars");
+		return;
+	}
+}
+// <-- disconnect
+
 void Cvar_Seta_f (void) {
 	cvar_seta = true;
 	Cvar_Set_f ();
@@ -617,6 +644,7 @@ void Cvar_Init (void) {
 	Cmd_AddCommand ("cvarlist", Cvar_CvarList_f);
 	Cmd_AddCommand ("toggle", Cvar_Toggle_f);
 	Cmd_AddCommand ("set", Cvar_Set_f);
+	Cmd_AddCommand ("unset", Cvar_UnSet_f);
 	//Cmd_AddCommand ("seta", Cvar_Seta_f);
 	Cmd_AddCommand ("inc", Cvar_Inc_f);
 
