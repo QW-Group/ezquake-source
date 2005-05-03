@@ -475,6 +475,8 @@ void CL_Disconnect (void) {
 	connect_time = 0;
     con_addtimestamp = true;
 
+	if (cl.teamfortress)
+		V_TF_ClearGrenadeEffects();
 	cl.teamfortress = false;
 
 	CURRVIEW = 0;

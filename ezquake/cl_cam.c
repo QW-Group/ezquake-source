@@ -113,6 +113,8 @@ void Cam_Unlock(void) {
 	autocam = CAM_NONE;
 	locked = false;
 	Sbar_Changed();
+	if (cls.mvdplayback && cl.teamfortress) 
+		V_TF_ClearGrenadeEffects (); // BorisU
 
 	if (TP_NeedRefreshSkins())
 		TP_RefreshSkins();
@@ -462,6 +464,8 @@ void Cam_FinishMove(usercmd_t *cmd) {
 	do {
 		s = &cl.players[i];
 		if (s->name[0] && !s->spectator) {
+			if (cls.mvdplayback && cl.teamfortress) 
+				V_TF_ClearGrenadeEffects(); // BorisU
 			Cam_Lock(i);
 			ideal_track = i;    
 			return;
@@ -591,6 +595,8 @@ void CL_Track_f(void) {
 		Cam_Lock(slot);
 		ideal_track = slot;
 		locked = true;
+		if (cls.mvdplayback && cl.teamfortress) 
+			V_TF_ClearGrenadeEffects(); // BorisU
 	}
 }
 
