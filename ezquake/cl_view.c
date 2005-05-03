@@ -70,6 +70,9 @@ cvar_t	crosshairsize	= {"crosshairsize", "1"};
 cvar_t  cl_crossx = {"cl_crossx", "0", CVAR_ARCHIVE};
 cvar_t  cl_crossy = {"cl_crossy", "0", CVAR_ARCHIVE};
 
+// from qw262: less flash grenade effect in demos
+cvar_t	cl_demoplay_flash = {"cl_demoplay_flash", "1", CVAR_ARCHIVE};
+
 cvar_t  v_contentblend = {"v_contentblend", "0.33"};
 cvar_t	v_damagecshift = {"v_damagecshift", "0.33"};
 cvar_t	v_quadcshift = {"v_quadcshift", "0.75"};
@@ -346,6 +349,9 @@ void V_cshift_f (void) {
 	cshift_empty.destcolor[1] = atoi(Cmd_Argv(2));
 	cshift_empty.destcolor[2] = atoi(Cmd_Argv(3));
 	cshift_empty.percent = atoi(Cmd_Argv(4));
+	
+	if (cls.demoplayback && cshift_empty.destcolor[0] == cshift_empty.destcolor[1])
+		cshift_empty.percent *= cl_demoplay_flash.value/1.0f;
 }
 
 //When you run over an item, the server sends this command
@@ -690,6 +696,28 @@ void V_UpdatePalette (void) {
 
 #endif	// !GLQUAKE
 
+// BorisU -->
+void V_TF_ClearGrenadeEffects ()
+{
+	cbuf_t *cbuf_tmp;
+	extern cvar_t scr_fov, default_fov;
+	
+	cbuf_tmp = cbuf_current;
+	cbuf_current = &cbuf_svc;
+	// Concussion effect off
+	// concussioned = false;
+	Cvar_SetValue (&scr_fov, default_fov.value);
+	Cvar_SetValue (&v_idlescale, 0.0f);
+
+	// Flash effect off
+	// last_flash_time = 0.0;
+	cshift_empty.destcolor[0] = 0;
+	cshift_empty.destcolor[1] = 0;
+	cshift_empty.destcolor[2] = 0;
+	cshift_empty.percent = 0;
+	cbuf_current = cbuf_tmp;
+}
+// <-- BorisU
 /* 
 ============================================================================== 
 						         VIEW RENDERING 
@@ -979,6 +1007,7 @@ void V_Init (void) {
 	Cvar_Register (&v_suitcshift);
 	Cvar_Register (&v_ringcshift);
 	Cvar_Register (&v_pentcshift);
+	Cvar_Register (&cl_demoplay_flash); // from qw262
 
 #ifdef GLQUAKE
 	Cvar_Register (&v_dlightcshift);
