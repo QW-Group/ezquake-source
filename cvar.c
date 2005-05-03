@@ -619,6 +619,156 @@ void Cvar_Seta_f (void) {
 	cvar_seta = false;
 }
 
+// --> from qw262
+
+void Cvar_Set_Calc_f(void)
+{
+	cvar_t	*var, *var2;
+	char	*var_name;
+	char	*op;
+	char	*a2, *a3;
+	float	num1;
+	float	num2;
+	float	result;
+	int		division_by_zero = 0;
+	int		pos, len;
+	char	buf[1024];
+
+	var_name = Cmd_Argv (1);
+	var = Cvar_FindVar (var_name);
+	
+	if (!var)
+		var = Cvar_Create (var_name, Cmd_Argv(2), CVAR_USER_CREATED);
+
+	a2 = Cmd_Argv(2);
+	a3 = Cmd_Argv(3);
+
+	if (!strcmp (a2, "strlen")) {
+		Cvar_SetValue (var, strlen(a3));
+		return;
+	} else if (!strcmp (a2, "int")) {
+		Cvar_SetValue (var, (int)Q_atof(a3));
+		return;
+	} else if (!strcmp (a2, "substr")) {
+		int		var2len;
+		var2 = Cvar_FindVar (a3);
+		if (!var2) {
+			Com_Printf ("Unknown variable \"%s\"\n", a3);
+			return;
+		}
+
+		pos = atoi(Cmd_Argv(4));
+		if (Cmd_Argc() < 6)
+			len = 1;
+		else
+			len = atoi(Cmd_Argv(5));
+
+		if ( len == 0 ) {
+			Cvar_Set(var, "");
+			return;
+		}
+
+		if ( len < 0 || pos < 0) {
+			Com_Printf("substr: invalid len or pos\n");
+			return;
+		}
+
+		var2len = strlen(var2->string);
+		if ( var2len < pos) {
+			Com_Printf("substr: string length exceeded\n");
+			return;
+		}
+
+		len = min ( var2len - pos, len );
+		strncpy(buf, var2->string+pos, len);
+		buf[len] = '\0';
+		Cvar_Set(var, buf);
+		return;
+	} else if (!strcmp (a2, "set_substr")) {
+		int		var1len,var2len;
+		char	buf[1024];
+		var2 = Cvar_FindVar (a3);
+		if (!var2) {
+			Com_Printf ("Unknown variable \"%s\"\n", a3);
+			return;
+		}
+		var1len = strlen(var->string);
+		var2len = strlen(var2->string);
+		pos = atoi(Cmd_Argv(4));
+		
+		strcpy(buf,var->string);
+		if (pos + var2len > var1len){ // need to expand
+			int i;
+			for (i = var1len; i < pos+var2len; i++)
+				buf[i] = ' ';
+			buf[pos+var2len] = 0;
+		}
+		
+		strncpy(buf+pos, var2->string, var2len);
+		Cvar_Set(var, buf);
+		return;
+	} else if (!strcmp (a2, "pos")) {
+		var2 = Cvar_FindVar (a3);
+		if (!var2) {
+			Com_Printf ("Unknown variable \"%s\"\n", a3);
+			return;
+		}
+		op = strstr (var2->string, Cmd_Argv(4));
+		if (op)
+			Cvar_SetValue (var, op - var2->string);
+		else
+			Cvar_SetValue (var, -1);
+		return;
+	} 
+
+	num1 = Q_atof(a2);
+	op = a3;
+	num2 = Q_atof(Cmd_Argv(4));
+
+	if (!strcmp(op, "+"))
+		result = num1 + num2;
+	else if (!strcmp(op, "-"))
+		result = num1 - num2;
+	else if (!strcmp(op, "*"))
+		result = num1 * num2;
+	else if (!strcmp(op, "/")) {
+		if (num2 != 0)
+			result = num1 / num2;
+		else 
+			division_by_zero = 1;
+	} else if (!strcmp(op, "%")) {
+		if ((int)num2 != 0)
+			result = (int)num1 % (int)num2;
+		else 
+			division_by_zero = 1;
+	} else if (!strcmp(op, "div")) {
+		if ((int)num2 != 0)
+			result = (int)num1 / (int)num2;
+		else 
+			division_by_zero = 1;
+	} else if (!strcmp(op, "and")) {
+		result = (int)num1 & (int)num2;
+	} else if (!strcmp(op, "or")) {
+		result = (int)num1 | (int)num2;
+	} else if (!strcmp(op, "xor")) {
+		result = (int)num1 ^ (int)num2;
+	}else {
+		Com_Printf("set_calc: unknown operator: %s\nvalid operators are: + - * / div %% and or xor\n", op);
+		// Com_Printf("set_calc: unknown command: %s\nvalid commands are: strlen int substr set_substr pos\n", a2);
+		return;
+	}
+	
+	if (division_by_zero) {
+		Com_Printf("set_calc: can't divide by zero\n");
+		result = 999;
+	}
+
+	Cvar_SetValue (var, result);
+}
+
+// <-- from qw262
+
+
 void Cvar_Inc_f (void) {
 	int c;
 	cvar_t *var;
@@ -647,7 +797,7 @@ void Cvar_Init (void) {
 	Cmd_AddCommand ("unset", Cvar_UnSet_f);
 	//Cmd_AddCommand ("seta", Cvar_Seta_f);
 	Cmd_AddCommand ("inc", Cvar_Inc_f);
-
+	Cmd_AddCommand ("set_calc", Cvar_Set_Calc_f);
 
 	Cmd_AddCommand ("cvar_reset", Cvar_Reset_f);
 
