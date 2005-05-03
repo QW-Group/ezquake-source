@@ -550,7 +550,7 @@ void SCR_MVDInfo (void){
 	
 	if (loc_loaded == 0){
 		mapname = TP_MapName();
-		TP_LoadLocFile (mapname, false);
+		TP_LoadLocFile (mapname, true);
 		loc_loaded = 1;
 	}
 	
