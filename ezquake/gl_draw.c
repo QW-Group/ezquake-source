@@ -1193,9 +1193,9 @@ void Draw_SCharacter (int x, int y, int num, float scale)
     glTexCoord2f (fcol + size, frow);
     glVertex2f (x+scale*8, y);
     glTexCoord2f (fcol + size, frow + size);
-    glVertex2f (x+scale*8, y+scale*8);
+    glVertex2f (x+scale*8, y+scale*8*2); // disconnect: hack, hack, hack?
     glTexCoord2f (fcol, frow + size);
-    glVertex2f (x, y+scale*8);
+    glVertex2f (x, y+scale*8*2); // disconnect: hack, hack, hack?
     glEnd ();
 }
 
