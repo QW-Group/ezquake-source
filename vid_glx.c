@@ -120,7 +120,7 @@ cvar_t	_windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE, OnChange_windowe
 cvar_t	m_filter = {"m_filter", "0"};
 cvar_t	cl_keypad = {"cl_keypad", "1"};
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
-cvar_t  auto_grabmouse = {"auto_grabmouse", "0"};
+cvar_t  auto_grabmouse = {"auto_grabmouse", "1"};
 
 
 const char *glx_extensions=NULL;
