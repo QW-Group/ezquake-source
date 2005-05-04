@@ -514,7 +514,11 @@ void Reload_Sources(void)
         char *p, *q;
 
         if (fscanf(f, "%[ -~	]s", line) != 1)
+	{
+	    while (!feof(f)  &&  c != '\n')
+		fscanf(f, "%c", &c);
             continue;
+	}
         while (!feof(f)  &&  c != '\n')
             fscanf(f, "%c", &c);
 
