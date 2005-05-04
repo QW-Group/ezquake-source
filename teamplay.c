@@ -1928,7 +1928,8 @@ void TP_NewMap (void) {
 		}
 	}
 	TP_ExecTrigger ("f_newmap");
-	V_TF_ClearGrenadeEffects ();
+	if (cl.teamfortress)
+		V_TF_ClearGrenadeEffects();
 	Ignore_ResetFloodList();
 }
 
