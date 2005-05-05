@@ -195,7 +195,17 @@ void SCR_HUD_DrawFPS(hud_t *hud)
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
         Draw_String(x, y, st);
 }
-
+void SCR_HUD_DrawTracking(hud_t *hud){    int x, y, width, height;    char st[512];	static cvar_t		*hud_tracking_alttext;	hud_tracking_alttext    = HUD_FindVar(hud, "alttext");
+	if (strlen(hud_tracking_alttext->string) == 0) {
+		Q_snprintfz(st, sizeof(st), "Tracking %-.13s", cl.players[spec_track].name);
+		if (!cls.demoplayback)
+			strcat (st, ", [JUMP] for next");
+	} else {
+		strcpy(st, hud_tracking_alttext->string);
+	}
+	width = 8*strlen(st);    height = 8;
+    if (cl.spectator && autocam == CAM_TRACK && HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))        Draw_String(x, y, st);
+}
 void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_latency,
                 int lost, int minping, int avgping, int maxping, int devping,
                 int posx, int posy, int width, int height, int revx, int revy);
@@ -1697,7 +1707,7 @@ void CommonDraw_Init(void)
         "show_dev",     "0",
         "blink",        "1",
         NULL);
-
+	HUD_Register("tracking", NULL, "Shows the name of tracked player.", 		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawTracking,		"0", "top", "left", "bottom", "0", "0", "0",		"alttext", "",		NULL);
     // init net
     HUD_Register("net", NULL, "Shows network statistics, like latency, packet loss, average packet sizes and bandwidth. Shown only when you are connected to a server.",
         HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawNetStats,
