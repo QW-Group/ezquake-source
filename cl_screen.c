@@ -832,6 +832,29 @@ void SCR_DrawLoading (void) {
 	Draw_Pic ( (vid.width - pic->width )/ 2, (vid.height - 48 - pic->height) / 2, pic);
 }
 
+void SCR_DrawTracking (void) {
+	char st[512];
+
+	// START shaman RFE 1022309
+	if (strlen(scr_tracking.string) == 0) {
+	// END shaman RFE 1022309
+		Q_snprintfz(st, sizeof(st), "Tracking %-.13s", cl.players[spec_track].name);
+		if (!cls.demoplayback)
+			strcat (st, ", [JUMP] for next");
+	// START shaman RFE 1022309				
+	}
+	else {
+		strcpy(st, scr_tracking.string);
+	}
+	// END shaman RFE 1022309	
+
+	// oppymv 300804
+	// fix displaying "tracking .." for both players with inset on
+	if (cl_multiview.value != 2 || !cls.mvdplayback)
+		Sbar_DrawString(0, -8, st);
+	else if (CURRVIEW == 1 && cl_mvinset.value)
+		Sbar_DrawString(0, -8, st);
+}
 
 
 void SCR_BeginLoadingPlaque (void) {
