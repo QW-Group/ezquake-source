@@ -191,14 +191,12 @@ model_t *Mod_LoadModel (model_t *mod, qboolean crash) {
 */
 	namelen = strlen(mod->name);
 	buf = NULL;
-	if (strcmp (Rulesets_Ruleset(), "smackdown")) { // hexum - md3s disallowed under smackdown
-		if (namelen>=4 && (!strcmp(mod->name+namelen-4, ".mdl") || (namelen>=9 && mod->name[5] == 'b' && mod->name[6] == '_' && !strcmp(mod->name+namelen-4, ".bsp"))))
-		{
-			char newname[MAX_QPATH];
-			COM_StripExtension(mod->name, newname);
-			COM_DefaultExtension(newname, ".md3");
-			buf = (unsigned *)FS_LoadStackFile (newname, stackbuf, sizeof(stackbuf));
-		}
+	if (namelen>=4 && (!strcmp(mod->name+namelen-4, ".mdl") || (namelen>=9 && mod->name[5] == 'b' && mod->name[6] == '_' && !strcmp(mod->name+namelen-4, ".bsp"))))
+	{
+		char newname[MAX_QPATH];
+		COM_StripExtension(mod->name, newname);
+		COM_DefaultExtension(newname, ".md3");
+		buf = (unsigned *)FS_LoadStackFile (newname, stackbuf, sizeof(stackbuf));
 	}
 
 	// load the file
@@ -224,10 +222,6 @@ model_t *Mod_LoadModel (model_t *mod, qboolean crash) {
 		break;
 
 	case MD3_IDENT:
-		if (!strcmp (Rulesets_Ruleset(), "smackdown")) {
-			Host_Error ("Mod_LoadModel: %s - Ruleset Smackdown disallows use of md3 models", mod->name);
-			return NULL;
-		}
 		Mod_LoadAlias3Model (mod, buf);
  		break; 
 
