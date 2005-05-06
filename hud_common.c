@@ -1440,7 +1440,7 @@ static int ComparePlayers(sort_players_info_t *p1, sort_players_info_t *p2, qboo
         d = 0;
 
         if (byTeams)
-            d = p1->team->order - p2->team->order;
+            d = p1->team->frags - p2->team->frags;
 
         if (!d)
             d = i1->frags - i2->frags;
@@ -1469,11 +1469,12 @@ static void Sort_Scoreboard(qboolean teamsort)
     // sort teams
     for (i=0; i < MAX_CLIENTS; i++)
     {
-        if (cl.players[i].name[0])
+        if (cl.players[i].name[0] && !cl.players[i].spectator)
+
         {
             // find players team
             for (team=0; team < n_teams; team++)
-                if (!strcmp(Info_ValueForKey(cl.players[i].userinfo, "team"), sort_info_teams[team].name)
+                if (!strcmp(cl.players[i].team, sort_info_teams[team].name)
                     &&  sort_info_teams[team].name[0])
                     break;
             if (team == n_teams)   // not found
@@ -1482,8 +1483,8 @@ static void Sort_Scoreboard(qboolean teamsort)
                 sort_info_teams[team].avg_ping = 0;
                 sort_info_teams[team].max_ping = 0;
                 sort_info_teams[team].min_ping = 999;
-                sort_info_teams[team].nplayers = 0;
-                sort_info_teams[team].name = Info_ValueForKey(cl.players[i].userinfo, "team");
+                sort_info_teams[team].nplayers = 0;				sort_info_teams[team].frags = 0;
+                sort_info_teams[team].name = cl.players[i].team;
                 sorted_teams[team] = &sort_info_teams[team];
             }
             sort_info_teams[team].nplayers++;
