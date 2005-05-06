@@ -70,6 +70,10 @@ static void Display_Ignorelist(void) {
 
 	if (ignore_spec.value == 2 || (ignore_spec.value == 1 && !cl.spectator))
 		Com_Printf ("\x02" "Spectators are Ignored\n");
+
+	if (ignore_qizmo_spec.value)
+		Com_Printf("\x02" "Qizmo spectators are Ignored\n");
+
 	Com_Printf("\n");
 }
 
