@@ -663,7 +663,7 @@ void QMB_DrawParticles (void) {
 	particle_t *p;
 	particle_type_t *pt;
 	particle_texture_t *ptex;
-	int texture, l;
+	int texture = 0, l;
 
 	if (!qmb_initialized)
 		return;
