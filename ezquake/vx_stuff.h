@@ -1,4 +1,9 @@
 //VultureIIC
+#ifndef __VX_STUFF__H__
+
+#define __VX_STUFF__H__
+
+
 
 float TraceLineVX (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal);
 
@@ -126,3 +131,9 @@ void VX_DeathEffect (vec3_t org);
 void VX_GibEffect (vec3_t org);
 void VX_DetpackExplosion (vec3_t org);
 void VX_LightningTrail (vec3_t start, vec3_t end);
+
+void Amf_Reset_DamageStats (void);
+
+void Draw_AMFStatLoss (int stat, hud_t* hud);
+
+#endif // __VX_STUFF__H__

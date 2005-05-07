@@ -5,6 +5,10 @@
 #include "quakedef.h"
 #include "pmove.h"
 #include "vx_stuff.h"
+#include "gl_local.h"
+#include "sbar.h"
+#include "hud_common.h"
+
 int GL_LoadTextureImage (char * , char *, int, int, int);
 int coronatexture;
 
@@ -80,6 +84,21 @@ cvar_t		amf_part_traildetail = {"gl_particle_trail_detail", "1", CVAR_ARCHIVE};
 cvar_t		amf_part_trailtype   = {"gl_particle_trail_type",   "1", CVAR_ARCHIVE};
 // END shaman :: balancing variables
 
+int vxdamagecount;
+int vxdamagecount_oldhealth;
+int vxdamagecount_time;
+int vxdamagecountarmour;
+int vxdamagecountarmour_oldhealth;
+int vxdamagecountarmour_time;
+
+void Amf_Reset_DamageStats (void) {
+	vxdamagecount = 0;
+	vxdamagecount_time = 0;
+	vxdamagecount_oldhealth = 0;
+	vxdamagecountarmour = 0;
+	vxdamagecountarmour_time = 0;
+	vxdamagecountarmour_oldhealth = 0;
+}
 
 int QW_strncmp (char *s1, char *s2)
 {
@@ -207,6 +226,63 @@ void Draw_AlphaWindow (int x1, int y1, int x2, int y2, int col, float alpha)
 	Draw_AlphaFill (x1, y1, x2-x1, y2-y1, col, alpha);
 
 }
+
+void Draw_AMFStatLoss (int stat, hud_t* hud) {
+    static int * vxdmgcnt, * vxdmgcnt_t, * vxdmgcnt_o;
+	static int x, y;
+    float alpha;
+
+	if (stat == STAT_HEALTH) {
+        vxdmgcnt = &vxdamagecount;
+        vxdmgcnt_t = &vxdamagecount_time;
+        vxdmgcnt_o = &vxdamagecount_oldhealth;
+		x = 136;
+    } else {
+        vxdmgcnt = &vxdamagecountarmour;
+        vxdmgcnt_t = &vxdamagecountarmour_time;
+        vxdmgcnt_o = &vxdamagecountarmour_oldhealth;
+		x = 24;
+    }
+
+    //VULT STAT LOSS
+	//Pretty self explanitory, I just thought it would be a nice feature to go with my "what the hell is going on?" theme
+	//and obscure even more of the screen
+	if (cl.stats[stat] < (*vxdmgcnt_o - 1))
+    {
+      	if (*vxdmgcnt_t > cl.time) //add to damage
+        		*vxdmgcnt = *vxdmgcnt + (*vxdmgcnt_o - cl.stats[stat]);
+      	else
+        		*vxdmgcnt = *vxdmgcnt_o - cl.stats[stat];
+      	*vxdmgcnt_t = cl.time + 2 * (hud ? HUD_FindVar(hud, "duration")->value : amf_stat_loss.value);
+    }
+    *vxdmgcnt_o = cl.stats[stat];
+    if (*vxdmgcnt_t > cl.time)
+    {
+      	alpha = min(1, (*vxdmgcnt_t - cl.time));
+      	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+      	glDisable(GL_ALPHA_TEST);
+      	glEnable (GL_BLEND);
+      	glColor4f(1, 1, 1, alpha);
+		if (hud) {    
+			static cvar_t *scale = NULL, *style, *digits, *align;
+			if (scale == NULL)  // first time called
+			{
+				scale  = HUD_FindVar(hud, "scale");
+				style  = HUD_FindVar(hud, "style");
+				digits = HUD_FindVar(hud, "digits");
+				align  = HUD_FindVar(hud, "align");
+			}
+			SCR_HUD_DrawNum (hud, -(*vxdmgcnt), 1,
+                scale->value, style->value, 4, align->string);
+		} else {
+      		Sbar_DrawNum (x, -24, -(*vxdmgcnt), 3, (*vxdmgcnt) > 0);
+		}
+      	glEnable(GL_ALPHA_TEST);
+      	glDisable (GL_BLEND);
+      	glColor4f(1, 1, 1, 1);
+    }
+}
+
 void SCR_DrawAMFstats (void) 
 {
 	int x, y, numlines;

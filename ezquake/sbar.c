@@ -82,12 +82,6 @@ cvar_t	scr_scoreboard_fillalpha = {"scr_scoreboard_fillalpha", "0.7"};
 cvar_t	scr_scoreboard_fillcolored = {"scr_scoreboard_fillcolored", "2"};
 
 
-int vxdamagecount;
-int vxdamagecount_oldhealth;
-int vxdamagecount_time;
-int vxdamagecountarmour;
-int vxdamagecountarmour_oldhealth;
-int vxdamagecountarmour_time;
 
 #include "vx_stuff.h"
 #include "gl_local.h"
@@ -310,7 +304,7 @@ static int Sbar_itoa (int num, char *buf) {
 	return str - buf;
 }
 
-static void Sbar_DrawNum (int x, int y, int num, int digits, int color) {
+void Sbar_DrawNum (int x, int y, int num, int digits, int color) {
 	char str[12], *ptr;
 	int l, frame;
 
@@ -851,33 +845,7 @@ static void Sbar_DrawNormal (void) {
 			Sbar_DrawPic (0, 0, sb_armor[0]);
 #ifdef GLQUAKE
 		if (amf_stat_loss.value)
-		{
-			float alpha;
-			//VULT STAT LOSS
-			//Pretty self explanitory, I just thought it would be a nice feature to go with my "what the hell is going on?" theme
-			//and obscure even more of the screen
-			if (cl.stats[STAT_ARMOR] < vxdamagecountarmour_oldhealth)
-			{
-				if (vxdamagecountarmour_time > cl.time) //add to damage
-					vxdamagecountarmour = vxdamagecountarmour + (vxdamagecountarmour_oldhealth - cl.stats[STAT_ARMOR]);
-				else
-					vxdamagecountarmour = vxdamagecountarmour_oldhealth - cl.stats[STAT_ARMOR];
-				vxdamagecountarmour_time = cl.time + 2*amf_stat_loss.value;
-			}
-			vxdamagecountarmour_oldhealth = cl.stats[STAT_ARMOR];
-			if (vxdamagecountarmour_time > cl.time)
-			{
-				alpha = min(1, (vxdamagecountarmour_time - cl.time));
-				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-				glDisable(GL_ALPHA_TEST);
-				glEnable (GL_BLEND);
-				glColor4f(1, 1, 1, alpha);
-				Sbar_DrawNum (24, -24, -vxdamagecountarmour, 3, vxdamagecountarmour>0);
-				glEnable(GL_ALPHA_TEST);
-				glDisable (GL_BLEND);
-				glColor4f(1, 1, 1, 1);
-			}
-		}
+		    Draw_AMFStatLoss (STAT_ARMOR, NULL);
 #endif
 	}
 
@@ -888,31 +856,7 @@ static void Sbar_DrawNormal (void) {
 	Sbar_DrawNum (136, 0, cl.stats[STAT_HEALTH], 3, cl.stats[STAT_HEALTH] <= 25);
 #ifdef GLQUAKE
 	if (amf_stat_loss.value)
-	{
-		//VULT STAT LOSS
-		if (cl.stats[STAT_HEALTH] < vxdamagecount_oldhealth)
-		{
-			if (vxdamagecount_time > cl.time) //add to damage
-				vxdamagecount = vxdamagecount + (vxdamagecount_oldhealth - cl.stats[STAT_HEALTH]);
-			else
-				vxdamagecount = vxdamagecount_oldhealth - cl.stats[STAT_HEALTH];
-			vxdamagecount_time = cl.time + 2 * amf_stat_loss.value;
-		}
-		vxdamagecount_oldhealth = cl.stats[STAT_HEALTH];
-		if (vxdamagecount_time > cl.time)
-		{
-			float alpha;
-			alpha = min(1, (vxdamagecount_time - cl.time));
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glDisable(GL_ALPHA_TEST);
-			glEnable (GL_BLEND);
-			glColor4f(1, 1, 1, alpha);
-			Sbar_DrawNum (136, -24, -vxdamagecount, 3, vxdamagecount>0);
-			glEnable(GL_ALPHA_TEST);
-			glDisable (GL_BLEND);
-			glColor4f(1, 1, 1, 1);
-		}
-	}	
+		Draw_AMFStatLoss (STAT_HEALTH, NULL);
 #endif
 
 	// ammo icon
@@ -1769,15 +1713,9 @@ void Sbar_Draw(void) {
 
 #ifdef GLQUAKE
 	//VULT STAT LOSS
-	if (cl.stats[STAT_HEALTH] <= 0)
+	if (amf_stat_loss.value && cl.stats[STAT_HEALTH] <= 0)
 	{
-		vxdamagecount_time = 0;
-		vxdamagecount = 0;
-		vxdamagecount_oldhealth = 0;
-		vxdamagecountarmour_time = 0;
-		vxdamagecountarmour = 0;
-		vxdamagecountarmour_oldhealth = 0;
-
+		Amf_Reset_DamageStats();
 	}
 #endif
 

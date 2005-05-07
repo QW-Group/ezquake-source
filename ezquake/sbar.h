@@ -40,3 +40,5 @@ void Sbar_FinaleOverlay (void);
 
 int Sbar_TopColor(player_info_t *player);
 int Sbar_BottomColor(player_info_t *player);
+
+void Sbar_DrawNum (int x, int y, int num, int digits, int color);
