@@ -38,11 +38,9 @@ cvar_t hud_tp_need = {"hud_tp_need",   "0"};
 int TP_IsHealthLow(void);
 int TP_IsArmorLow(void);
 int TP_IsAmmoLow(int weapon); */
-
 extern cvar_t tp_need_health, tp_need_ra, tp_need_ya, tp_need_ga,
 		tp_weapon_order, tp_need_weapon, tp_need_shells,
 		tp_need_nails, tp_need_rockets, tp_need_cells;
-
 int State_AmmoForWeapon(int weapon)
 {
     switch (weapon)
@@ -57,7 +55,6 @@ int State_AmmoForWeapon(int weapon)
         default: return 0;
     }
 }
-
 int TP_IsHealthLow(void)
 {
     return cl.stats[STAT_HEALTH] <= tp_need_health.value;
@@ -195,7 +192,13 @@ void SCR_HUD_DrawFPS(hud_t *hud)
     if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
         Draw_String(x, y, st);
 }
-void SCR_HUD_DrawTracking(hud_t *hud){    int x, y, width, height;    char st[512];	static cvar_t		*hud_tracking_alttext;	hud_tracking_alttext    = HUD_FindVar(hud, "alttext");
+void SCR_HUD_DrawTracking(hud_t *hud)
+{
+    int x, y, width, height;
+    char st[512];
+	static cvar_t
+		*hud_tracking_alttext;
+	hud_tracking_alttext    = HUD_FindVar(hud, "alttext");
 	if (strlen(hud_tracking_alttext->string) == 0) {
 		Q_snprintfz(st, sizeof(st), "Tracking %-.13s", cl.players[spec_track].name);
 		if (!cls.demoplayback)
@@ -203,9 +206,12 @@ void SCR_HUD_DrawTracking(hud_t *hud){    int x, y, width, height;    char st
 	} else {
 		strcpy(st, hud_tracking_alttext->string);
 	}
-	width = 8*strlen(st);    height = 8;
-    if (cl.spectator && autocam == CAM_TRACK && HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))        Draw_String(x, y, st);
-}
+	width = 8*strlen(st);
+    height = 8;
+    if (cl.spectator && autocam == CAM_TRACK && HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
+        Draw_String(x, y, st);
+}
+
 void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_latency,
                 int lost, int minping, int avgping, int maxping, int devping,
                 int posx, int posy, int width, int height, int revx, int revy);
@@ -1470,7 +1476,6 @@ static void Sort_Scoreboard(qboolean teamsort)
     for (i=0; i < MAX_CLIENTS; i++)
     {
         if (cl.players[i].name[0] && !cl.players[i].spectator)
-
         {
             // find players team
             for (team=0; team < n_teams; team++)
@@ -1483,7 +1488,10 @@ static void Sort_Scoreboard(qboolean teamsort)
                 sort_info_teams[team].avg_ping = 0;
                 sort_info_teams[team].max_ping = 0;
                 sort_info_teams[team].min_ping = 999;
-                sort_info_teams[team].nplayers = 0;				sort_info_teams[team].frags = 0;
+                sort_info_teams[team].nplayers = 0;
+				sort_info_teams[team].frags = 0;
+				sort_info_teams[team].top = Sbar_TopColor(&cl.players[i]);
+				sort_info_teams[team].bottom = Sbar_BottomColor(&cl.players[i]);
                 sort_info_teams[team].name = cl.players[i].team;
                 sorted_teams[team] = &sort_info_teams[team];
             }
@@ -1611,6 +1619,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
         int px;
         int py;
         int num = 0;
+		int drawBrackets;
 
         for (i=0; i < min(n_players, a_rows*a_cols); i++)
         {
@@ -1643,7 +1652,17 @@ void SCR_HUD_DrawFrags(hud_t *hud)
             posy = py+(cell_height-8)/2 - 1;
             Draw_String(px+(cell_width-8*strlen(buf))/2, posy, buf);
 
-            if (sorted_players[num]->playernum == cl.playernum)
+			drawBrackets = FALSE;
+
+			if (cls.demoplayback || cl.spectator) {
+				if (spec_track == sorted_players[num]->playernum)
+					drawBrackets = TRUE;
+			} else {
+				if (sorted_players[num]->playernum == cl.playernum)
+					drawBrackets = TRUE;
+			}
+
+			if (drawBrackets)
             {
                 int d = cell_width >= 32 ? 0 : 1;
                 Draw_Character(px-2-2*d, posy, 16);
@@ -1660,7 +1679,138 @@ void SCR_HUD_DrawFrags(hud_t *hud)
     }
 }
 
+void SCR_HUD_DrawTeamFrags(hud_t *hud)
+{
+    int width, height;
+    int x, y;
 
+    int rows, cols, cell_width, cell_height, space_x, space_y;
+    int a_rows, a_cols; // actual
+
+    static cvar_t
+        *hud_teamfrags_cell_width,
+        *hud_teamfrags_cell_height,
+        *hud_teamfrags_rows,
+        *hud_teamfrags_cols,
+        *hud_teamfrags_space_x,
+        *hud_teamfrags_space_y,
+        *hud_teamfrags_vertical,
+        *hud_teamfrags_strip;
+
+    if (hud_teamfrags_cell_width == 0)    // first time
+    {
+        hud_teamfrags_cell_width    = HUD_FindVar(hud, "cell_width");
+        hud_teamfrags_cell_height   = HUD_FindVar(hud, "cell_height");
+        hud_teamfrags_rows          = HUD_FindVar(hud, "rows");
+        hud_teamfrags_cols          = HUD_FindVar(hud, "cols");
+        hud_teamfrags_space_x       = HUD_FindVar(hud, "space_x");
+        hud_teamfrags_space_y       = HUD_FindVar(hud, "space_y");
+        hud_teamfrags_strip         = HUD_FindVar(hud, "strip");
+        hud_teamfrags_vertical      = HUD_FindVar(hud, "vertical");
+    }
+
+    rows = hud_teamfrags_rows->value;
+    clamp(rows, 1, MAX_CLIENTS);
+    cols = hud_teamfrags_cols->value;
+    clamp(cols, 1, MAX_CLIENTS);
+    cell_width = hud_teamfrags_cell_width->value;
+    clamp(cell_width, 28, 128);
+    cell_height = hud_teamfrags_cell_height->value;
+    clamp(cell_height, 7, 32);
+    space_x = hud_teamfrags_space_x->value;
+    clamp(space_x, 0, 128);
+    space_y = hud_teamfrags_space_y->value;
+    clamp(space_y, 0, 128);
+
+    Sort_Scoreboard(1);
+
+    if (hud_teamfrags_strip->value)
+    {
+        if (hud_teamfrags_vertical->value)
+        {
+            a_cols = min((n_teams+rows-1) / rows, cols);
+            a_rows = min(rows, n_teams);
+        }
+        else
+        {
+            a_rows = min((n_teams+cols-1) / cols, rows);
+            a_cols = min(cols, n_teams);
+        }
+    }
+    else
+    {
+        a_rows = rows;
+        a_cols = cols;
+    }
+
+    width  = a_cols*cell_width  + (a_cols+1)*space_x;
+    height = a_rows*cell_height + (a_rows+1)*space_y;
+
+    if (HUD_PrepareDraw(hud, width, height, &x, &y))
+    {
+        int i;
+        int px;
+        int py;
+        int num = 0;
+		qboolean drawBrackets;
+
+        for (i=0; i < min(n_teams, a_rows*a_cols); i++)
+        {
+            char buf[32];
+            int posy;
+
+            // player_info_t *info = &cl.players[sorted_players[num]->playernum];
+
+            if (hud_teamfrags_vertical->value)
+            {
+                if (i % a_rows == 0)
+                {
+                    px = x + space_x + (i/a_rows) * (cell_width+space_x);
+                    py = y + space_y;
+                }
+            }
+            else
+            {
+                if (i % a_cols == 0)
+                {
+                    px = x + space_x;
+                    py = y + space_y + (i/a_cols) * (cell_height+space_y);
+                }
+            }
+
+            Draw_Fill(px, py, cell_width, cell_height/2, sorted_teams[num]->top);
+            Draw_Fill(px, py + cell_height/2, cell_width, cell_height - cell_height/2, sorted_teams[num]->bottom);
+
+            sprintf(buf, "%3d", sorted_teams[num]->frags);
+            posy = py+(cell_height-8)/2 - 1;
+            Draw_String(px+(cell_width-8*strlen(buf))/2, posy, buf);
+
+			drawBrackets = FALSE;
+
+			if (cls.demoplayback || cl.spectator) {
+				if (!strcmp(cl.players[spec_track].team, sorted_teams[num]->name))
+					drawBrackets = TRUE;
+			} else {
+				if (!strcmp(sorted_teams[num]->name, cl.players[cl.playernum].team))
+					drawBrackets = TRUE;
+			}
+
+			if (drawBrackets)
+            {
+                int d = cell_width >= 32 ? 0 : 1;
+                Draw_Character(px-2-2*d, posy, 16);
+                Draw_Character(px+cell_width-8+1+d, posy, 17);
+            }
+
+            if (hud_teamfrags_vertical->value)
+                py += cell_height + space_y;
+            else
+                px += cell_width + space_x;
+
+            num ++;
+        }
+    }
+}
 
 // ----------------
 // Init
@@ -1708,7 +1858,11 @@ void CommonDraw_Init(void)
         "show_dev",     "0",
         "blink",        "1",
         NULL);
-	HUD_Register("tracking", NULL, "Shows the name of tracked player.", 		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawTracking,		"0", "top", "left", "bottom", "0", "0", "0",		"alttext", "",		NULL);
+	HUD_Register("tracking", NULL, "Shows the name of tracked player.", 
+		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawTracking,
+		"0", "top", "left", "bottom", "0", "0", "0",
+		"alttext", "",
+		NULL);
     // init net
     HUD_Register("net", NULL, "Shows network statistics, like latency, packet loss, average packet sizes and bandwidth. Shown only when you are connected to a server.",
         HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawNetStats,
@@ -2053,7 +2207,20 @@ void CommonDraw_Init(void)
         "strip", "1",
         "vertical", "0",
         NULL);
-
+        
+    HUD_Register("teamfrags", NULL, "Show list of team frags in short form.",
+        0, ca_active, 0, SCR_HUD_DrawTeamFrags,
+        "0", "screen", "left", "top", "0", "0", "0",
+        "cell_width", "32",
+        "cell_height", "8",
+        "rows", "1",
+        "cols", "2",
+        "space_x", "1",
+        "space_y", "1",
+        "strip", "1",
+        "vertical", "0",
+        NULL);
+        
 /* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
 #ifdef GLQUAKE
 #ifdef _DEBUG
