@@ -1156,6 +1156,7 @@ void SCR_HUD_DrawArmor(hud_t *hud)
         scale->value, style->value, digits->value, align->string);
 }
 
+#ifdef GLQUAKE
 void SCR_HUD_DrawHealthDamage(hud_t *hud)
 {
 	Draw_AMFStatLoss (STAT_HEALTH, hud);
@@ -1163,13 +1164,13 @@ void SCR_HUD_DrawHealthDamage(hud_t *hud)
 	{
 		Amf_Reset_DamageStats();
 	}
-
 }
 
 void SCR_HUD_DrawArmorDamage(hud_t *hud)
 {
 	Draw_AMFStatLoss (STAT_ARMOR, hud);
 }
+#endif
 
 void SCR_HUD_DrawAmmo(hud_t *hud, int num,
                       float scale, int style, int digits, char *s_align)
@@ -2038,6 +2039,7 @@ void CommonDraw_Init(void)
         "digits", "3",
         NULL);
 
+#ifdef GLQUAKE
 	// healthdamage
     HUD_Register("healthdamage", NULL, "Shows amount of damage done to your health.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawHealthDamage,
@@ -2059,6 +2061,7 @@ void CommonDraw_Init(void)
         "digits", "3",
 		"duration", "0.8",
         NULL);
+#endif
 
     // ammo/s
     HUD_Register("ammo", NULL, "Part of your inventory - ammo for active weapon.",
