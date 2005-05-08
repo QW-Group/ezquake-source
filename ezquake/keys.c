@@ -573,10 +573,13 @@ CompleteCommandNew (void)
 			
 			my_string_length =	strlen (jogi_avail_complete[test].name);
 			
-
+			for (i=0;i<=50;i++){
+			text[i]='\0';
+			}
 			for (i = 0; i <= (my_string_length - testvar +1); i++)
 			{
 				text[i] = jogi_avail_complete[test].name[i + testvar -1 ];
+				//Com_Printf("%s\n",text);
 			}
 			
 			len = strlen (text);
