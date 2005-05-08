@@ -32,6 +32,29 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 int sb_updates;		// if >= vid.numpages, no update needed
 extern cvar_t show_fps2;
 
+// --> mqwcl 0.96 oldhud customisation
+//cvar_t  sbar_teamfrags = {"hud_sbar_teamfrags", "1", CVAR_HUD};
+//cvar_t  sbar_fraglimit = {"hud_sbar_fraglimit", "1", CVAR_HUD};
+
+cvar_t  sbar_drawfaceicon   = {"hud_sbar_drawfaceicon", "1"};
+cvar_t  sbar_drawammoicon   = {"hud_sbar_drawammoicon", "1"};
+cvar_t  sbar_drawarmoricon  = {"hud_sbar_drawarmoricon", "1"};
+cvar_t  sbar_drawguns       = {"hud_sbar_drawguns", "1"};
+cvar_t  sbar_drawammocounts = {"hud_sbar_drawammocounts", "1"};
+cvar_t  sbar_drawitems      = {"hud_sbar_drawitems", "1"};
+cvar_t  sbar_drawsigils     = {"hud_sbar_drawsigils", "1"};
+cvar_t  sbar_drawhealth     = {"hud_sbar_drawhealth", "1"};;
+cvar_t  sbar_drawarmor      = {"hud_sbar_drawarmor",  "1"};;
+cvar_t  sbar_drawammo       = {"hud_sbar_drawammo",   "1"};;
+
+//cvar_t  hud_centerranking   = {"hud_ranks_centered",   "0", CVAR_HUD};
+//cvar_t  hud_rankingtitle    = {"hud_ranks_drawtitle",  "1", CVAR_HUD};
+//cvar_t  hud_rankingpos      = {"hud_ranks_posy",       "0", CVAR_HUD};
+//cvar_t  hud_faderankings    = {"hud_ranks_fadescreen", "0", CVAR_HUD};
+//cvar_t  hud_ranks_separate  = {"hud_ranks_separate",   "1", CVAR_HUD};
+//cvar_t  hud_ranks_teamsort  = {"hud_ranks_teamsort",   "1", CVAR_HUD};
+// <-- mqwcl 0.96 oldhud customisation
+
 #define STAT_MINUS		10	// num frame for '-' stats digit
 mpic_t		*sb_nums[2][11];
 mpic_t		*sb_colon, *sb_slash;
@@ -216,6 +239,29 @@ void Sbar_Init (void) {
 	Cvar_Register (&scr_compactHudAlign);
 
 	Cvar_Register (&scr_newHud); // HUD -> hexum
+
+// --> mqwcl 0.96 oldhud customisation
+    //Cvar_Register (&sbar_teamfrags);
+    //Cvar_Register (&sbar_fraglimit);
+
+    Cvar_Register (&sbar_drawfaceicon);
+    Cvar_Register (&sbar_drawammoicon);
+    Cvar_Register (&sbar_drawarmoricon);
+    Cvar_Register (&sbar_drawguns);
+    Cvar_Register (&sbar_drawammocounts);
+    Cvar_Register (&sbar_drawitems);
+    Cvar_Register (&sbar_drawsigils);
+    Cvar_Register (&sbar_drawhealth);
+    Cvar_Register (&sbar_drawarmor);
+    Cvar_Register (&sbar_drawammo);
+    //Cvar_Register (&hud_centerranking);
+    //Cvar_Register (&hud_rankingtitle);
+    //Cvar_Register (&hud_rankingpos);
+    //Cvar_Register (&hud_faderankings);
+    //Cvar_Register (&hud_sbar_size);
+    //Cvar_Register (&hud_ranks_separate);
+    //Cvar_Register (&hud_ranks_teamsort);
+// <-- mqwcl 0.96 oldhud customisation
 
 	Cvar_Register (&scr_drawHFrags);
 	Cvar_Register (&scr_drawVFrags);
@@ -611,79 +657,89 @@ static void Sbar_DrawInventory (void) {
 	if (!headsup)
 		Sbar_DrawPic (0, -24, sb_ibar);
 	// weapons
-	for (i = 0; i < 7; i++) {
-		if (cl.stats[STAT_ITEMS] & (IT_SHOTGUN << i) ) {
-			time = cl.item_gettime[i];
-			flashon = (int)((cl.time - time) * 10);
-			if (flashon < 0)
-				flashon = 0;
-			if (flashon >= 10)
-				flashon = (cl.stats[STAT_ACTIVEWEAPON] == (IT_SHOTGUN << i) ) ? 1 : 0;
-			else
-				flashon = (flashon % 5) + 2;
+	if (sbar_drawguns.value)    // kazik
+    {
+		for (i = 0; i < 7; i++) {
+			if (cl.stats[STAT_ITEMS] & (IT_SHOTGUN << i) ) {
+				time = cl.item_gettime[i];
+				flashon = (int)((cl.time - time) * 10);
+				if (flashon < 0)
+					flashon = 0;
+				if (flashon >= 10)
+					flashon = (cl.stats[STAT_ACTIVEWEAPON] == (IT_SHOTGUN << i) ) ? 1 : 0;
+				else
+					flashon = (flashon % 5) + 2;
 
-			if (headsup) {
-				if (i || vid.height > 200)
-					Sbar_DrawSubPic (hudswap ? 0 : vid.width - 24,-68 - (7 - i) * 16 , sb_weapons[flashon][i], 0, 0, 24, 16);
-			
-			} else {
-				Sbar_DrawPic (i * 24, -16, sb_weapons[flashon][i]);
+				if (headsup) {
+					if (i || vid.height > 200)
+						Sbar_DrawSubPic (hudswap ? 0 : vid.width - 24,-68 - (7 - i) * 16 , sb_weapons[flashon][i], 0, 0, 24, 16);
+				
+				} else {
+					Sbar_DrawPic (i * 24, -16, sb_weapons[flashon][i]);
+				}
+
+				if (flashon > 1)
+					sb_updates = 0;		// force update to remove flash
 			}
-
-			if (flashon > 1)
-				sb_updates = 0;		// force update to remove flash
 		}
 	}
-
 	// ammo counts
-	for (i = 0; i < 4; i++) {
-		Q_snprintfz (num, sizeof(num), "%3i", cl.stats[STAT_SHELLS + i]);
-		if (headsup) {
-			Sbar_DrawSubPic(hudswap ? 0 : vid.width - 42, -24 - (4 - i) * 11, sb_ibar, 3 + (i * 48), 0, 42, 11);
-			if (num[0] != ' ')
-				Draw_Character (hudswap ? 7: vid.width - 35, vid.height - SBAR_HEIGHT - 24 - (4 - i) * 11, 18 + num[0] - '0');
-			if (num[1] != ' ')
-				Draw_Character (hudswap ? 15: vid.width - 27, vid.height - SBAR_HEIGHT - 24 - (4 - i) * 11, 18 + num[1] - '0');
-			if (num[2] != ' ')
-				Draw_Character (hudswap ? 23: vid.width - 19, vid.height - SBAR_HEIGHT - 24 - (4 - i) * 11, 18 + num[2] - '0');
-		} else {
-			if (num[0] != ' ')
-				Sbar_DrawCharacter ((6 * i + 1) * 8 - 2, -24, 18 + num[0] - '0');
-			if (num[1] != ' ')
-				Sbar_DrawCharacter ((6 * i + 2) * 8 - 2, -24, 18 + num[1] - '0');
-			if (num[2] != ' ')
-				Sbar_DrawCharacter ((6 * i + 3) * 8 - 2, -24, 18 + num[2] - '0');
+	if (sbar_drawammocounts.value)  // kazik
+    {
+		for (i = 0; i < 4; i++) {
+			Q_snprintfz (num, sizeof(num), "%3i", cl.stats[STAT_SHELLS + i]);
+			if (headsup) {
+				Sbar_DrawSubPic(hudswap ? 0 : vid.width - 42, -24 - (4 - i) * 11, sb_ibar, 3 + (i * 48), 0, 42, 11);
+				if (num[0] != ' ')
+					Draw_Character (hudswap ? 7: vid.width - 35, vid.height - SBAR_HEIGHT - 24 - (4 - i) * 11, 18 + num[0] - '0');
+				if (num[1] != ' ')
+					Draw_Character (hudswap ? 15: vid.width - 27, vid.height - SBAR_HEIGHT - 24 - (4 - i) * 11, 18 + num[1] - '0');
+				if (num[2] != ' ')
+					Draw_Character (hudswap ? 23: vid.width - 19, vid.height - SBAR_HEIGHT - 24 - (4 - i) * 11, 18 + num[2] - '0');
+			} else {
+				if (num[0] != ' ')
+					Sbar_DrawCharacter ((6 * i + 1) * 8 - 2, -24, 18 + num[0] - '0');
+				if (num[1] != ' ')
+					Sbar_DrawCharacter ((6 * i + 2) * 8 - 2, -24, 18 + num[1] - '0');
+				if (num[2] != ' ')
+					Sbar_DrawCharacter ((6 * i + 3) * 8 - 2, -24, 18 + num[2] - '0');
+			}
 		}
 	}
-
 	flashon = 0;
 	// items
-	for (i = 0; i < 6; i++) {
-		if (cl.stats[STAT_ITEMS] & (1 << (17 + i))) {
-			time = cl.item_gettime[17 + i];
-			if (time &&	time > cl.time - 2 && flashon)
-				// flash frame
-				sb_updates = 0;
-			else
-				Sbar_DrawPic (192 + i * 16, -16, sb_items[i]);	
+	if (sbar_drawitems.value)   // kazik
+    {
+		for (i = 0; i < 6; i++) {
+			if (cl.stats[STAT_ITEMS] & (1 << (17 + i))) {
+				time = cl.item_gettime[17 + i];
+				if (time &&	time > cl.time - 2 && flashon)
+					// flash frame
+					sb_updates = 0;
+				else
+					Sbar_DrawPic (192 + i * 16, -16, sb_items[i]);	
 
-			if (time &&	time > cl.time - 2)
-				sb_updates = 0;
+				if (time &&	time > cl.time - 2)
+					sb_updates = 0;
+			}
 		}
 	}
 
 	// sigils
-	for (i = 0; i < 4; i++) {
-		if (cl.stats[STAT_ITEMS] & (1 << (28 + i)))	{
-			time = cl.item_gettime[28 + i];
-			if (time &&	time > cl.time - 2 && flashon )
-				// flash frame
-				sb_updates = 0;
-			else
-				Sbar_DrawPic (320 - 32 + i * 8, -16, sb_sigil[i]);	
+	if (sbar_drawsigils.value)  // kazik
+    {
+		for (i = 0; i < 4; i++) {
+			if (cl.stats[STAT_ITEMS] & (1 << (28 + i)))	{
+				time = cl.item_gettime[28 + i];
+				if (time &&	time > cl.time - 2 && flashon )
+					// flash frame
+					sb_updates = 0;
+				else
+					Sbar_DrawPic (320 - 32 + i * 8, -16, sb_sigil[i]);	
 
-			if (time &&	time > cl.time - 2)
-				sb_updates = 0;
+				if (time &&	time > cl.time - 2)
+					sb_updates = 0;
+			}
 		}
 	}
 }
@@ -833,43 +889,56 @@ static void Sbar_DrawNormal (void) {
 
 	// armor
 	if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)	{
-		Sbar_DrawNum (24, 0, 666, 3, 1);
-		Sbar_DrawPic (0, 0, draw_disc);
+		if (sbar_drawarmor.value)
+			Sbar_DrawNum (24, 0, 666, 3, 1);
+		if (sbar_drawarmoricon.value)
+			Sbar_DrawPic (0, 0, draw_disc);
 	} else {
-		Sbar_DrawNum (24, 0, cl.stats[STAT_ARMOR], 3, cl.stats[STAT_ARMOR] <= 25);
-		if (cl.stats[STAT_ITEMS] & IT_ARMOR3)
-			Sbar_DrawPic (0, 0, sb_armor[2]);
-		else if (cl.stats[STAT_ITEMS] & IT_ARMOR2)
-			Sbar_DrawPic (0, 0, sb_armor[1]);
-		else if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
-			Sbar_DrawPic (0, 0, sb_armor[0]);
+		if (sbar_drawarmor.value)
+			Sbar_DrawNum (24, 0, cl.stats[STAT_ARMOR], 3, cl.stats[STAT_ARMOR] <= 25);
+		if (sbar_drawarmoricon.value) 
+		{
+			if (cl.stats[STAT_ITEMS] & IT_ARMOR3)
+				Sbar_DrawPic (0, 0, sb_armor[2]);
+			else if (cl.stats[STAT_ITEMS] & IT_ARMOR2)
+				Sbar_DrawPic (0, 0, sb_armor[1]);
+			else if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
+				Sbar_DrawPic (0, 0, sb_armor[0]);
+		}
 #ifdef GLQUAKE
-		if (amf_stat_loss.value)
-		    Draw_AMFStatLoss (STAT_ARMOR, NULL);
+			if (amf_stat_loss.value)
+				Draw_AMFStatLoss (STAT_ARMOR, NULL);
 #endif
 	}
 
 	// face
-	Sbar_DrawFace ();
+	if (sbar_drawfaceicon.value)
+		Sbar_DrawFace ();
 	
 	// health
-	Sbar_DrawNum (136, 0, cl.stats[STAT_HEALTH], 3, cl.stats[STAT_HEALTH] <= 25);
+	if (sbar_drawhealth.value)
+	{
+		Sbar_DrawNum (136, 0, cl.stats[STAT_HEALTH], 3, cl.stats[STAT_HEALTH] <= 25);
 #ifdef GLQUAKE
-	if (amf_stat_loss.value)
-		Draw_AMFStatLoss (STAT_HEALTH, NULL);
+		if (amf_stat_loss.value)
+			Draw_AMFStatLoss (STAT_HEALTH, NULL);
 #endif
+	}
 
 	// ammo icon
-	if (cl.stats[STAT_ITEMS] & IT_SHELLS)
-		Sbar_DrawPic (224, 0, sb_ammo[0]);
-	else if (cl.stats[STAT_ITEMS] & IT_NAILS)
-		Sbar_DrawPic (224, 0, sb_ammo[1]);
-	else if (cl.stats[STAT_ITEMS] & IT_ROCKETS)
-		Sbar_DrawPic (224, 0, sb_ammo[2]);
-	else if (cl.stats[STAT_ITEMS] & IT_CELLS)
-		Sbar_DrawPic (224, 0, sb_ammo[3]);
-	
-	Sbar_DrawNum (248, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
+	if (sbar_drawammoicon.value)    // kazik
+    {
+		if (cl.stats[STAT_ITEMS] & IT_SHELLS)
+			Sbar_DrawPic (224, 0, sb_ammo[0]);
+		else if (cl.stats[STAT_ITEMS] & IT_NAILS)
+			Sbar_DrawPic (224, 0, sb_ammo[1]);
+		else if (cl.stats[STAT_ITEMS] & IT_ROCKETS)
+			Sbar_DrawPic (224, 0, sb_ammo[2]);
+		else if (cl.stats[STAT_ITEMS] & IT_CELLS)
+			Sbar_DrawPic (224, 0, sb_ammo[3]);
+	}
+	if (sbar_drawammo.value)
+		Sbar_DrawNum (248, 0, cl.stats[STAT_AMMO], 3, cl.stats[STAT_AMMO] <= 10);
 }
 
 
