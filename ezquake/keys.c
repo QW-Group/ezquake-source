@@ -265,11 +265,13 @@ Flush_My_Array (jogi_avail_complete_t * array, int count)
 void
 CompleteCommandNew_Reset (void)
 	{
-	if ((del_removes) && (key_linepos == key_lineposorig))
+	//Com_Printf("%i %i %i\n",del_removes,key_linepos,key_lineposorig);
+	if ((del_removes) || (key_linepos == key_lineposorig))
 			{
 				del_removes = 0;
 				called_second = 0;
 				try = 0;
+				//Com_Printf("I have been reseted\n");
 			}
 	}
 
@@ -579,7 +581,7 @@ CompleteCommandNew (void)
 			for (i = 0; i <= (my_string_length - testvar +1); i++)
 			{
 				text[i] = jogi_avail_complete[test].name[i + testvar -1 ];
-				//Com_Printf("%s\n",text);
+				Com_Printf("%s\n",text);
 			}
 			
 			len = strlen (text);
@@ -855,6 +857,8 @@ void Key_Console (int key) {
 
 	switch (key) {
 	    case K_ENTER:
+			CompleteCommandNew_Reset ();
+		
 			// backslash text are commands
 			if (key_lines[edit_line][1] == '/' && key_lines[edit_line][2] == '/')
 				goto no_lf;
