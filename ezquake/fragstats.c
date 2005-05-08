@@ -612,11 +612,12 @@ foundmatch:
 	case mt_death:
 		fragstats[i].totaldeaths++;
 		fragstats[i].wdeaths[fragmsg->wclass_index]++;
-
+#ifdef GLQUAKE
 		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
 			VX_TrackerDeath(fragmsg->wclass_index, fragstats[i].wdeaths[fragmsg->wclass_index]);
 		VX_TrackerStreakEnd(i, i, fragstats[i].streak);
 		fragstats[i].streak=0;
+#endif
 		break;
 
 
@@ -624,12 +625,13 @@ foundmatch:
 	case mt_suicide:
 		fragstats[i].totalsuicides++;
 		fragstats[i].totaldeaths++;
-
+#ifdef GLQUAKE
 		fragstats[i].wsuicides[fragmsg->wclass_index]++;
 		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
 			VX_TrackerSuicide(fragmsg->wclass_index, fragstats[i].wsuicides[fragmsg->wclass_index]);
 		VX_TrackerStreakEnd(i, i, fragstats[i].streak);
 		fragstats[i].streak=0;
+#endif
 		break;
 
 	case mt_fragged:
@@ -639,30 +641,33 @@ foundmatch:
 		fragstats[killer].kills[victim]++;
 		fragstats[killer].totalfrags++;
 		fragstats[killer].wkills[fragmsg->wclass_index]++;
+#ifdef GLQUAKE
 		if ((cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
 			VX_TrackerFrag(fragmsg->wclass_index, fragstats[killer].wkills[fragmsg->wclass_index], Info_ValueForKey(cl.players[victim].userinfo, "name"));
-
+#endif
 		fragstats[victim].deaths[killer]++;
 		fragstats[victim].totaldeaths++;
 		fragstats[victim].wdeaths[fragmsg->wclass_index]++;
+#ifdef GLQUAKE
 		if ((cl.playernum == victim || (victim == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
 			VX_TrackerFragged(fragmsg->wclass_index, fragstats[victim].wdeaths[fragmsg->wclass_index], Info_ValueForKey(cl.players[killer].userinfo, "name"));
-
 		fragstats[killer].streak++;
 		VX_TrackerStreak(killer, fragstats[killer].streak);
 		VX_TrackerStreakEnd(victim, killer, fragstats[victim].streak);
 		fragstats[victim].streak=0;
+#endif
 		break;
 
 	case mt_frag:
 		fragstats[i].totalfrags++;
 		fragstats[i].wkills[fragmsg->wclass_index]++;
+#ifdef GLQUAKE
 		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
 			VX_TrackerOddFrag(fragmsg->wclass_index, fragstats[i].wkills[fragmsg->wclass_index]);
 		fragstats[i].streak++;
 		VX_TrackerStreak(i, fragstats[i].streak);
+#endif
 		break;
-
 	case mt_tkilled:
 	case mt_tkills:	
 		killer = (fragmsg->type == mt_tkilled) ? j : i;
@@ -670,42 +675,53 @@ foundmatch:
 
 		fragstats[killer].teamkills[victim]++;
 		fragstats[killer].totalteamkills++;
+#ifdef GLQUAKE	
 		if ((cl.playernum == killer || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
 			VX_TrackerTeamkill(fragstats[killer].totalteamkills, fragstats[killer].teamkills[victim], Info_ValueForKey(cl.players[victim].userinfo, "name"));
-
+#endif
 		fragstats[victim].teamdeaths[killer]++;
 		fragstats[victim].totaldeaths++;
+#ifdef GLQUAKE
 		if ((cl.playernum == victim || (victim == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
 			VX_TrackerTeamkilled(fragstats[killer].totalteamkills, fragstats[victim].teamdeaths[killer], Info_ValueForKey(cl.players[killer].userinfo, "name"));
 
 		VX_TrackerStreakEnd(victim, killer, fragstats[victim].streak);
 		fragstats[victim].streak=0;
+#endif
 		break;
 
 	case mt_tkill:	
 		fragstats[i].totalteamkills++;
+#ifdef GLQUAKE	
 		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
 			VX_TrackerOddTeamkill(fragstats[i].totalteamkills);
+#endif
 		break;
 
 	case mt_flagtouch:
 		fragstats[i].touches++;
+#ifdef GLQUAKE
 		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_flags.value)
 			VX_TrackerFlagTouch(fragstats[i].touches);
+#endif
 		flag_touched = true;
 		break;
 
 	case mt_flagdrop:
 		fragstats[i].fumbles++;
+#ifdef GLQUAKE	
 		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_flags.value)
 			VX_TrackerFlagDrop(fragstats[i].fumbles);
 		flag_dropped = true;
+#endif
 		break;
 
 	case mt_flagcap:
 		fragstats[i].captures++;
+#ifdef GLQUAKE	
 		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_flags.value)
 			VX_TrackerFlagCapture(fragstats[i].captures);
+#endif
 		flag_captured = true;
 		break;
 
