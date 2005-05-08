@@ -851,24 +851,26 @@ void CL_LinkPacketEntities (void) {
 			}
 			//VULT CORONAS
 			else if (model->modhint == MOD_DETPACK)
-			{
-				vec3_t liteorg, litestop, forward, right, up;
-				VectorCopy(ent.origin, liteorg);
-				AngleVectors(ent.angles, forward, right, up);
-				VectorMA(liteorg, -15, up, liteorg);
-				VectorMA(liteorg, -10, forward, liteorg);
-				VectorCopy(*old_origin, litestop);
-				VectorMA(litestop, -15, up, litestop);
-				VectorMA(litestop, -10, forward, litestop);
-
-				//R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TF_TRAIL); //for cutf tossable dets
-				ParticleAlphaTrail (*old_origin, liteorg, &cent->trail_origin, 10, 0.8);
-				if (!cl.paused && amf_coronas.value)
+			if (qmb_initialized) {
 				{
-					if (ent.skinnum > 0)
-						NewCorona(C_REDLIGHT, liteorg);
-					else
-						NewCorona(C_GREENLIGHT, liteorg);
+					vec3_t liteorg, litestop, forward, right, up;
+					VectorCopy(ent.origin, liteorg);
+					AngleVectors(ent.angles, forward, right, up);
+					VectorMA(liteorg, -15, up, liteorg);
+					VectorMA(liteorg, -10, forward, liteorg);
+					VectorCopy(*old_origin, litestop);
+					VectorMA(litestop, -15, up, litestop);
+					VectorMA(litestop, -10, forward, litestop);
+
+					//R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TF_TRAIL); //for cutf tossable dets
+					ParticleAlphaTrail (*old_origin, liteorg, &cent->trail_origin, 10, 0.8);
+					if (!cl.paused && amf_coronas.value)
+					{
+						if (ent.skinnum > 0)
+							NewCorona(C_REDLIGHT, liteorg);
+						else
+							NewCorona(C_GREENLIGHT, liteorg);
+					}
 				}
 			}
 			//VULT BUILDING SPARKS
