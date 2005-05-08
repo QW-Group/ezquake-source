@@ -176,12 +176,8 @@ void IN_JoyMove (usercmd_t *cmd);
 
 
 cvar_t	m_forcewheel	= {"m_forcewheel", "1"};
-
-
-
-
-cvar_t	m_rate		= {"m_rate",	"125"};
-cvar_t	m_showrate	= {"m_showrate", "0"};
+cvar_t	m_rate			= {"m_rate",	"125"};
+cvar_t	m_showrate		= {"m_showrate", "0"};
 
 qboolean use_m_smooth;
 HANDLE m_event;
@@ -242,7 +238,8 @@ DWORD WINAPI IN_SMouseProc(void	* lpParameter) {
 			while (1) {
 				DWORD dwElements = 1;
 
-				hr = IDirectInputDevice_GetDeviceData(g_pMouse,	sizeof(DIDEVICEOBJECTDATA),	&od, &dwElements, 0);
+				hr = IDirectInputDevice_GetDeviceData(g_pMouse,	
+					sizeof(DIDEVICEOBJECTDATA),	&od, &dwElements, 0);
 
 				if ((hr	== DIERR_INPUTLOST)	|| (hr == DIERR_NOTACQUIRED)) {
 					dinput_acquired	= false;
@@ -378,8 +375,6 @@ void IN_SMouseRead(int *mx,	int	*my) {
 
 void IN_SMouseInit(void) {
 	HRESULT	res;
-	DWORD threadid;
-	HANDLE thread;
 
 	use_m_smooth = false;
 	if (!COM_CheckParm("-m_smooth"))
@@ -398,19 +393,8 @@ void IN_SMouseInit(void) {
 	if ((res = IDirectInputDevice_SetEventNotification(g_pMouse, m_event)) != DI_OK	 &&	 res !=	DI_POLLEDDEVICE)
 		return;
 
-	// create thread
-	thread = CreateThread (
-		NULL,				// pointer to security attributes
-		0,					// initial thread stack	size
-		IN_SMouseProc,		// pointer to thread function
-		NULL,				// argument	for	new	thread
-		CREATE_SUSPENDED,	// creation	flags
-		&threadid			// pointer to receive thread ID
-	);
-	if (!thread)
-		return;
-	SetThreadPriority(thread, THREAD_PRIORITY_HIGHEST);
-	ResumeThread(thread);
+	if (!Sys_CreateThread(IN_SMouseProc, NULL))
+        return;
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
 	Cvar_Register(&m_rate);
