@@ -532,8 +532,12 @@ void Cam_TryLock (void) {
 		locked = false;
 	}
 
-	if (autocam != old_autocam || spec_track != old_spec_track)
+	if (autocam != old_autocam || spec_track != old_spec_track) {
 		Sbar_Changed ();
+
+		if (TP_NeedRefreshSkins())
+			TP_RefreshSkins();
+	}
 }
 
 void CL_InitCam(void) {

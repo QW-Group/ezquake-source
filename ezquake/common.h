@@ -79,7 +79,6 @@ typedef enum {false, true} qboolean;
 #define	FILE_TRANSFER_BUF_SIZE	MAX_MSGLEN - 100
 
 // per-level limits
-#define	MAX_EDICTS		768			// FIXME: ouch! ouch! ouch!
 #define	MAX_LIGHTSTYLES	64
 #define	MAX_MODELS		256			// these are sent over the net as bytes
 #define	MAX_SOUNDS		256			// so they cannot be blindly increased
@@ -106,7 +105,8 @@ typedef enum {false, true} qboolean;
 #define	STAT_SECRETS		13		// bumped on client side by svc_foundsecret
 #define	STAT_MONSTERS		14		// bumped by svc_killedmonster
 #define	STAT_ITEMS			15
-#define	STAT_VIEWHEIGHT		16
+#define STAT_VIEWHEIGHT		16		// Z_EXT_VIEWHEIGHT protocol extension
+#define STAT_TIME			17		// Z_EXT_SERVERTIME protocol extension
 
 // item flags
 #define	IT_SHOTGUN				1

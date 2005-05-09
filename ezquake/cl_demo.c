@@ -366,7 +366,7 @@ static void CL_WriteStartupData (void) {
 
 	// baselines
 	memset(&blankes, 0, sizeof(blankes));
-	for (i = 0; i < MAX_EDICTS; i++) {
+	for (i = 0; i < CL_MAX_EDICTS; i++) {
 		es = &cl_entities[i].baseline;
 
 		if (memcmp(es, &blankes, sizeof(blankes))) {

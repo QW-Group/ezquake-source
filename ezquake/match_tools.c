@@ -413,7 +413,7 @@ static matchinfo_t *MT_GetMatchInfo(void) {
 
 	matchinfo.numplayers = MT_CountPlayers();
 
-	matchinfo.timelimit = Q_atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
+	matchinfo.timelimit = Q_atoi(Info_ValueForKey(cl.serverinfo, "timelimit"));
 	matchinfo.fraglimit = Q_atoi(Info_ValueForKey(cl.serverinfo, "fraglimit"));
 	matchinfo.teamplay = Q_atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
 	matchinfo.deathmatch = cl.deathmatch;
@@ -752,26 +752,24 @@ void MT_Match_ForceStart_f(void) {
 
 void MT_TakeScreenshot(void) {
 	int i;
-	qboolean have_opponent, have_scores;
+	qboolean have_opponent;
 
 	if (!match_auto_sshot.value || (cl.spectator && !match_auto_spectating.value))
 		return;
 
-
+	//don't bother screen-shotting solo games etc
 	if (!matchcvars[matchstate.matchtype].autosshot)
 		return;
 
-
-	have_opponent = have_scores = false;
+	//make sure there are actually some frags on the board, and somebody besides us
+	have_opponent = false;
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		if (!cl.players[i].name[0] || cl.players[i].spectator)
 			continue;
 		if (i != cl.playernum)
-			have_opponent = true;
-		if (cl.players[i].frags)
-			have_scores = true;				
+			have_opponent = true;		
 	}
-	if (!have_opponent || !have_scores) {
+	if (!have_opponent) {
 		Com_Printf("Auto screenshot cancelled\n");
 		return;
 	}
@@ -1353,6 +1351,7 @@ void MT_Init(void) {
 	Cvar_Register(&match_format_3on3);
 	Cvar_Register(&match_format_4on4);
 	Cvar_Register(&match_format_tdm);
+	Cvar_Register(&match_format_multiteam);
 	Cvar_Register(&match_format_arena);
 	Cvar_Register(&match_format_tf_duel);
 	Cvar_Register(&match_format_tf_clanwar);

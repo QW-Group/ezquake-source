@@ -652,6 +652,8 @@ void VID_SetPalette(unsigned char *palette) {
 
 // Called at shutdown
 void VID_Shutdown (void) {
+	if (!x_disp)
+		return;
 	Com_Printf ("VID_Shutdown\n");
 	XAutoRepeatOn(x_disp);
 	XCloseDisplay(x_disp);
@@ -863,6 +865,10 @@ void GetEvent(void) {
 			Key_Event(K_MWHEELUP, event.type == ButtonPress); break;
 		case 5:
 			Key_Event(K_MWHEELDOWN, event.type == ButtonPress); break;
+		case 6:
+			Key_Event(K_MOUSE4, event.type == ButtonPress); break;
+		case 7:
+			Key_Event(K_MOUSE5, event.type == ButtonPress); break;
 		}
 		break;
 
@@ -937,8 +943,10 @@ void VID_Update (vrect_t *rects) {
 	}
 	} else {
 		while (rects) {
-			if (x_visinfo->depth != 8)
-				st2_fixup( x_framebuffer[current_framebuffer], rects->x, rects->y, rects->width,rects->height);
+			if (x_visinfo->depth == 24)
+				st3_fixup(x_framebuffer[current_framebuffer], rects->x, rects->y, rects->width, rects->height);
+			else if (x_visinfo->depth == 16)
+				st2_fixup(x_framebuffer[current_framebuffer], rects->x, rects->y, rects->width, rects->height);
 			XPutImage(x_disp, x_win, x_gc, x_framebuffer[0], rects->x, rects->y, rects->x, rects->y, rects->width, rects->height);
 			rects = rects->pnext;
 		}

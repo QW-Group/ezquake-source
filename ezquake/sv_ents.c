@@ -23,6 +23,71 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 int SV_PMTypeForClient (client_t *cl);
 
+//tonik's baby
+int SV_TranslateEntnum(int num) {
+	int	i;
+	double	besttime, trivial_accept;
+	entity_translation_t *trans, *best;
+
+	assert(num >= 0 && num < SV_MAX_EDICTS);
+
+	if (num <= MAX_CLIENTS)					// client entitites are never translated
+		return num;
+
+	if (sv.entmap[num]) {
+		// see if the previous translation is still valid
+		trans = &sv.translations[sv.entmap[num]];
+		if (trans->original == num) {
+			// translation is still valid
+			trans->lastused = svs.realtime;
+			return sv.entmap[num];
+		}
+	}
+
+	trivial_accept = svs.realtime - 10;		// anything older than that will do
+
+	if (num < 512) {
+		// whenever possible, try to use the original number as translation
+		trans = &sv.translations[num];
+		if (!trans->lastused || trans->lastused < trivial_accept) {
+			// good, we can use it
+			trans->original = num;
+			trans->lastused = svs.realtime;
+			sv.entmap[num] = num;
+			return num;
+		}
+	}
+
+	// find a new translation slot
+	best = NULL;
+	besttime = svs.realtime;
+
+	for (i = MAX_CLIENTS + 1; i < 512; i++) {
+		if (sv.edicts[i].baseline.modelindex)
+			continue;		// never use slots with baselines
+
+		trans = &sv.translations[i];
+		if (!trans->lastused || trans->lastused < trivial_accept) {
+			best = trans;
+			break;
+		}
+
+		if (trans->lastused < besttime) {
+			besttime = trans->lastused;
+			best = trans;
+		}
+	}
+
+	if (!best)
+		Host_Error ("SV_TranslateEntnum: no free translation slots");
+
+	best->lastused = svs.realtime;
+	best->original = num;
+	sv.entmap[num] = best - sv.translations;
+
+	return sv.entmap[num];
+}
+
 //The PVS must include a small area around the client to allow head bobbing
 //or other small motion on the client side.  Otherwise, a bob might cause an
 //entity that should be visible to not show up, especially when the bob crosses a waterline.
@@ -260,87 +325,113 @@ void SV_WritePlayersToClient (client_t *client, byte *pvs, sizebuf_t *msg) {
 	}
 }
 
+static int EntityState_Compare(const void *p1, const void *p2) {
+	return ((entity_state_t *) p1)->number - ((entity_state_t *) p2)->number;
+}
+
+
+static void SV_SortPackEntities(packet_entities_t *pack) {
+	qsort(pack->entities, pack->num_entities, sizeof(entity_state_t), EntityState_Compare);
+}
+
 // we pass it to MSG_EmitPacketEntities
 static entity_state_t *SV_GetBaseline (int number) { 
 	return &EDICT_NUM(number)->baseline; 
 } 
 
+static qboolean SV_EntVisCheck(edict_t *ent, byte *pvs) {
+	int i;
+
+	// ignore if not touching a PV leaf
+	for (i = 0; i < ent->num_leafs; i++) {
+		if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i]&7) ))
+			return true;
+	}
+
+	return false;
+}
+
 //Encodes the current state of the world as a svc_packetentities messages and possibly
 //a svc_nails message and svc_playerinfo messages
 void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg) {
-	int e, i, max_edicts;
+	int e;
 	byte *pvs;
 	vec3_t org;
 	edict_t	*ent;
-	packet_entities_t *pack;
 	edict_t	*clent;
+	qboolean packSorted;
 	client_frame_t *frame;
 	entity_state_t *state;
+	packet_entities_t *pack;
 
 	// this is the frame we are creating
 	frame = &client->frames[client->netchan.incoming_sequence & UPDATE_MASK];
 
 	// find the client's PVS
 	clent = client->edict;
-	VectorAdd (clent->v.origin, clent->v.view_ofs, org);
-	pvs = SV_FatPVS (org);
+	VectorAdd(clent->v.origin, clent->v.view_ofs, org);
+	pvs = SV_FatPVS(org);
 
 	// send over the players in the PVS
-	SV_WritePlayersToClient (client, pvs, msg);
+	SV_WritePlayersToClient(client, pvs, msg);
 	
 	// put other visible entities into either a packet_entities or a nails message
 	pack = &frame->entities;
 	pack->num_entities = 0;
+	packSorted = true;
 
 	numnails = 0;
 
-	// QW protocol can only handle 512 entities. Any entity with number >= 512 will be invisible
-	max_edicts = min (sv.num_edicts, 512);
-
-	for (e = MAX_CLIENTS + 1, ent = EDICT_NUM(e); e < max_edicts; e++, ent = NEXT_EDICT(ent)) {
+	for (e = MAX_CLIENTS + 1, ent = EDICT_NUM(e); e < sv.num_edicts; e++, ent = NEXT_EDICT(ent)) {
 		// ignore ents without visible models
 		if (!ent->v.modelindex || !*PR_GetString(ent->v.model))
 			continue;
 
-		// ignore if not touching a PV leaf
-		for (i = 0; i < ent->num_leafs; i++)
-			if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i]&7) ))
-				break;
+		if (!SV_EntVisCheck(ent, pvs))
+			continue;	// not visible
 			
-		if (i == ent->num_leafs)
-			continue;		// not visible
-
-		if (SV_AddNailUpdate (ent))
+		if (SV_AddNailUpdate(ent))
 			continue;	// added to the special update list
 
-		// add to the packetentities
 		if (pack->num_entities == MAX_PACKET_ENTITIES)
 			continue;	// all full
 
+		// add to the packetentities
 		state = &pack->entities[pack->num_entities];
-		pack->num_entities++;
 
-		state->number = e;
+		state->number = SV_TranslateEntnum(e);
+		if (pack->num_entities) {
+			//not the first pack entity we are adding, see if state->number decreased
+			if (state->number < pack->entities[pack->num_entities - 1].number)
+				packSorted = false;
+		}
+
 		state->flags = 0;
-		VectorCopy (ent->v.origin, state->origin);
-		VectorCopy (ent->v.angles, state->angles);
+		VectorCopy(ent->v.origin, state->origin);
+		VectorCopy(ent->v.angles, state->angles);
 		state->modelindex = ent->v.modelindex;
 		state->frame = ent->v.frame;
 		state->colormap = ent->v.colormap;
 		state->skinnum = ent->v.skin;
 		state->effects = ent->v.effects;
+
+		pack->num_entities++;
 	}
+
+	// entity translation might have broken original entnum order so make sure entity states are sorted
+	if (!packSorted)
+		SV_SortPackEntities(pack);
 
 	if (client->delta_sequence != -1) {
 		// encode the packet entities as a delta from the
 		// last packetentities acknowledged by the client
-		MSG_EmitPacketEntities (&client->frames[client->delta_sequence & UPDATE_MASK].entities,
+		MSG_EmitPacketEntities(&client->frames[client->delta_sequence & UPDATE_MASK].entities,
 			client->delta_sequence, pack, msg, SV_GetBaseline);
 	} else {
 		// no delta
-		MSG_EmitPacketEntities (NULL, 0, pack, msg, SV_GetBaseline);
+		MSG_EmitPacketEntities(NULL, 0, pack, msg, SV_GetBaseline);
 	}
 
 	// now add the specialized nail update
-	SV_EmitNailUpdate (msg);
+	SV_EmitNailUpdate(msg);
 }

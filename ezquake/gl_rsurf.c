@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	BLOCK_WIDTH		128
 #define	BLOCK_HEIGHT	128
 
-#define MAX_LIGHTMAP_SIZE	4096
+#define MAX_LIGHTMAP_SIZE	(32 * 32) // it was 4096 for quite long time
 #define	MAX_LIGHTMAPS		64
 
 static int lightmap_textures;
@@ -49,6 +49,8 @@ static int allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
 // the lightmap texture data needs to be kept in
 // main memory so texsubimage can update properly
 byte	lightmaps[3 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
+
+static qboolean	gl_invlightmaps = true;
 
 msurface_t	*skychain = NULL;
 msurface_t	**skychain_tail = &skychain;
@@ -268,9 +270,12 @@ void R_AddDynamicLights (msurface_t *surf) {
 	tmax = (surf->extents[1]>>4)+1;
 
 	for (i = 0, light = dlightlist; i < numdlights; i++, light++) {
-		color[0] = dlightcolor[light->type][0];
-		color[1] = dlightcolor[light->type][1];
-		color[2] = dlightcolor[light->type][2];
+		extern cvar_t gl_colorlights;
+		if (gl_colorlights.value) {
+			VectorCopy(dlightcolor[light->type], color);
+		} else {
+			VectorSet(color, 128, 128, 128);
+		}
 
 		irad = light->rad;
 		iminlight = light->minlight;
@@ -320,7 +325,7 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 	// set to full bright if no light data
 	if (/* r_fullbright.value || */ !cl.worldmodel->lightdata)  {
 		for (i = 0; i < blocksize; i++)
-			blocklights[i] = 255 * 256;
+			blocklights[i] = 255 << 8;
 		goto store;
 	}
 
@@ -343,32 +348,59 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 	if (numdlights)
 		R_AddDynamicLights (surf);
 
-// bound, invert, and shift
+	// bound, invert, and shift
 store:
 	bl = blocklights;
 	stride -= smax * 3;
 	for (i = 0; i < tmax; i++, dest += stride) {
-		if (lightmode == 2) {
-			for (j = smax; j; j--) {
-				t = bl[0]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
-				dest[0] = 255 - t;
-				t = bl[1]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
-				dest[1] = 255 - t;
-				t = bl[2]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
-				dest[2] = 255 - t;
-				bl += 3;
-				dest += 3;
+
+		if (gl_invlightmaps) {
+			if (lightmode == 2) {
+				for (j = smax; j; j--) {
+					t = bl[0]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
+					dest[0] = 255 - t;
+					t = bl[1]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
+					dest[1] = 255 - t;
+					t = bl[2]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
+					dest[2] = 255 - t;
+					bl += 3;
+					dest += 3;
+				}
+			} else {
+				for (j = smax; j; j--) {
+					t = bl[0]; t = t >> 7; if (t > 255) t = 255;
+					dest[0] = 255 - t;
+					t = bl[1]; t = t >> 7; if (t > 255) t = 255;
+					dest[1] = 255 - t;
+					t = bl[2]; t = t >> 7; if (t > 255) t = 255;
+					dest[2] = 255 - t;
+					bl += 3;
+					dest += 3;
+				}
 			}
 		} else {
-			for (j = smax; j; j--) {
-				t = bl[0]; t = t >> 7; if (t > 255) t = 255;
-				dest[0] = 255 - t;
-				t = bl[1]; t = t >> 7; if (t > 255) t = 255;
-				dest[1] = 255 - t;
-				t = bl[2]; t = t >> 7; if (t > 255) t = 255;
-				dest[2] = 255 - t;
-				bl += 3;
-				dest += 3;
+			if (lightmode == 2) {
+				for (j = smax; j; j--) {
+					t = bl[0]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
+					dest[0] = t;
+					t = bl[1]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
+					dest[1] = t;
+					t = bl[2]; t = (t >> 8) + (t >> 9); if (t > 255) t = 255;
+					dest[2] = t;
+					bl += 3;
+					dest += 3;
+				}
+			} else {
+				for (j = smax; j; j--) {
+					t = bl[0]; t = t >> 7; if (t > 255) t = 255;
+					dest[0] = t;
+					t = bl[1]; t = t >> 7; if (t > 255) t = 255;
+					dest[1] = t;
+					t = bl[2]; t = t >> 7; if (t > 255) t = 255;
+					dest[2] = t;
+					bl += 3;
+					dest += 3;
+				}
 			}
 		}
 	}
@@ -433,7 +465,10 @@ void R_BlendLightmaps (void) {
 	float *v;
 
 	glDepthMask (GL_FALSE);		// don't bother writing Z
-	glBlendFunc (GL_ZERO, GL_ONE_MINUS_SRC_COLOR);	
+	if (gl_invlightmaps)
+		glBlendFunc (GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+	else
+		glBlendFunc (GL_ZERO, GL_SRC_COLOR);
 
 	if (!r_lightmap.value)
 		glEnable (GL_BLEND);
@@ -632,7 +667,7 @@ void R_DrawAlphaChain (void) {
 			//bind the lightmap texture
 			GL_EnableMultitexture();
 			GL_Bind (lightmap_textures + s->lightmaptexturenum);
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
+			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, gl_invlightmaps ? GL_BLEND : GL_MODULATE);
 			//update lightmap if its modified by dynamic lights
 			k = s->lightmaptexturenum;
 			if (lightmap_modified[k])
@@ -764,7 +799,7 @@ void DrawTextureChains (model_t *model) {
 						doMtex2 = true;
 						GL_LIGHTMAP_TEXTURE = GL_TEXTURE2_ARB;
 						GL_EnableTMU(GL_LIGHTMAP_TEXTURE);
-						glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
+						glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, gl_invlightmaps ? GL_BLEND : GL_MODULATE);
 					} else {
 						doMtex2 = false;
 						render_lightmaps = true;
@@ -778,7 +813,7 @@ void DrawTextureChains (model_t *model) {
 				doMtex1 = true;
 				GL_EnableTMU(GL_TEXTURE1_ARB);
 				GL_LIGHTMAP_TEXTURE = GL_TEXTURE1_ARB;
-				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
+				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, gl_invlightmaps ? GL_BLEND : GL_MODULATE);
 
 				mtex_lightmaps = true;
 				mtex_fbs = t->fb_texturenum && draw_mtex_fbs;
@@ -1017,12 +1052,13 @@ void R_DrawBrushModel (entity_t *e) {
 	psurf = &clmodel->surfaces[clmodel->firstmodelsurface];
 
 	// calculate dynamic lighting for bmodel if it's not an instanced model
-	if (clmodel->firstmodelsurface != 0 && !gl_flashblend.value) {
+	if (clmodel->firstmodelsurface) {
 		for (k = 0; k < MAX_DLIGHTS; k++) {
 			if ((cl_dlights[k].die < cl.time) || !cl_dlights[k].radius)
 				continue;
 
-			R_MarkLights (&cl_dlights[k], 1 << k, clmodel->nodes + clmodel->hulls[0].firstclipnode);
+			if (!gl_flashblend.value || (cl_dlights[k].bubble && gl_flashblend.value != 2))
+				R_MarkLights (&cl_dlights[k], 1 << k, clmodel->nodes + clmodel->hulls[0].firstclipnode);
 		}
 	}
 
@@ -1252,20 +1288,25 @@ void R_MarkLeaves (void) {
 // returns a texture number and the position inside it
 int AllocBlock (int w, int h, int *x, int *y) {
 	int i, j, best, best2, texnum;
+	
+	if (w < 1 || w > BLOCK_WIDTH || h < 1 || h > BLOCK_HEIGHT)
+		Sys_Error ("AllocBlock: Bad dimensions");
 
 	for (texnum = 0; texnum < MAX_LIGHTMAPS; texnum++) {
-		best = BLOCK_HEIGHT;
+		best = BLOCK_HEIGHT + 1;
 
 		for (i = 0; i < BLOCK_WIDTH - w; i++) {
 			best2 = 0;
 
-			for (j = 0; j < w; j++) {
-				if (allocated[texnum][i+j] >= best)
+			for (j = i; j < i + w; j++) {
+				if (allocated[texnum][j] >= best) {
+					i = j;
 					break;
-				if (allocated[texnum][i+j] > best2)
-					best2 = allocated[texnum][i+j];
+				}
+				if (allocated[texnum][j] > best2)
+					best2 = allocated[texnum][j];
 			}
-			if (j == w) {
+			if (j == i + w) {
 				// this is a valid spot
 				*x = i;
 				*y = best = best2;
@@ -1361,9 +1402,6 @@ void GL_CreateSurfaceLightmap (msurface_t *surf) {
 	int smax, tmax;
 	byte *base;
 
-	if (surf->flags & (SURF_DRAWSKY|SURF_DRAWTURB))
-		return;
-
 	smax = (surf->extents[0] >> 4) + 1;
 	tmax = (surf->extents[1] >> 4) + 1;
 
@@ -1388,6 +1426,8 @@ void GL_BuildLightmaps (void) {
 	model_t	*m;
 
 	memset (allocated, 0, sizeof(allocated));
+
+	gl_invlightmaps = !COM_CheckParm("-noinvlmaps");
 
 	r_framecount = 1;		// no dlightcache
 
@@ -1417,9 +1457,11 @@ void GL_BuildLightmaps (void) {
 		r_pcurrentvertbase = m->vertexes;
 		currentmodel = m;
 		for (i = 0; i < m->numsurfaces; i++) {
-			GL_CreateSurfaceLightmap (m->surfaces + i);
-			if ( m->surfaces[i].flags & (SURF_DRAWTURB | SURF_DRAWSKY) )
+			if (m->surfaces[i].flags & (SURF_DRAWTURB | SURF_DRAWSKY))
 				continue;
+			if (m->surfaces[i].texinfo->flags & TEX_SPECIAL)
+				continue;
+			GL_CreateSurfaceLightmap (m->surfaces + i);
 			BuildSurfaceDisplayList (m->surfaces + i);
 		}
 	}

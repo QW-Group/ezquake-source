@@ -122,25 +122,16 @@ static qlib_dllfunction_t xmmsProcs[] = {
 
 	{"xmms_remote_toggle_repeat", (void **) &qxmms_remote_toggle_repeat},
 	{"xmms_remote_toggle_shuffle", (void **) &qxmms_remote_toggle_shuffle},
+
+	{"g_free", (void **) &qg_free},
 };
 
 static void XMMS_LoadLibrary(void) {
-	if (!(libxmms_handle = QLIB_LOADLIBRARY("libxmms")))
+	if (!(libxmms_handle = dlopen("libxmms.so.1", RTLD_NOW)) && !(libxmms_handle = dlopen("libxmms.so", RTLD_NOW)))
 		return;
 
 	if (!QLib_ProcessProcdef(libxmms_handle, xmmsProcs, NUM_XMMSPROCS)) {
 		QLIB_FREELIBRARY(libxmms_handle);
-		return;
-	}
-
-	if (!(libglib_handle = QLIB_LOADLIBRARY("libxmms"))) {
-		QLIB_FREELIBRARY(libxmms_handle);
-		return;
-	}
-
-	if (!(qg_free = QLIB_GETPROCADDRESS(libglib_handle, "g_free"))) {
-		QLIB_FREELIBRARY(libxmms_handle);
-		QLIB_FREELIBRARY(libglib_handle);
 		return;
 	}
 }
@@ -148,7 +139,6 @@ static void XMMS_LoadLibrary(void) {
 static void XMMS_FreeLibrary(void) {
 	if (libxmms_handle) {
 		QLIB_FREELIBRARY(libxmms_handle);
-		QLIB_FREELIBRARY(libglib_handle);
 	}
 }
 

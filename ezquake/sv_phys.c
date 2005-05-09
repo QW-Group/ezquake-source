@@ -338,8 +338,8 @@ trace_t SV_PushEntity (edict_t *ent, vec3_t push) {
 qboolean SV_Push (edict_t *pusher, vec3_t move) {
 	int i, e, num_moved;
 	edict_t *check, *block;
-	vec3_t mins, maxs, pushorig, moved_from[MAX_EDICTS];
-	edict_t *moved_edict[MAX_EDICTS];
+	vec3_t mins, maxs, pushorig, moved_from[SV_MAX_EDICTS];
+	edict_t *moved_edict[SV_MAX_EDICTS];
 	float solid_save;
 
 	for (i = 0; i < 3; i++) {
@@ -631,7 +631,7 @@ void SV_Physics_Step (edict_t *ent) {
 
 		SV_AddGravity (ent, 1.0);
 		SV_CheckVelocity (ent);
-		movetype = (ent->v.solid == SOLID_NOT || ent->v.solid == SOLID_TRIGGER) ? MOVE_NOMONSTERS : MOVE_NORMAL;
+		movetype = (ent->v.solid == SOLID_NOT /* || ent->v.solid == SOLID_TRIGGER*/) ? MOVE_NOMONSTERS : MOVE_NORMAL;
 		SV_FlyMove (ent, sv_frametime, NULL, movetype); 
 		SV_LinkEdict (ent, true);
 

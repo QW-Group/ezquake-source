@@ -104,13 +104,13 @@ cvar_t			scr_clock = {"cl_clock", "0"};
 cvar_t			scr_clock_x = {"cl_clock_x", "0"};
 cvar_t			scr_clock_y = {"cl_clock_y", "-1"};
 
+cvar_t			scr_gameclock = {"cl_gameclock", "0"};
+cvar_t			scr_gameclock_x = {"cl_gameclock_x", "0"};
+cvar_t			scr_gameclock_y = {"cl_gameclock_y", "-3"};
+
 cvar_t			scr_democlock = {"cl_democlock", "0"};
 cvar_t			scr_democlock_x = {"cl_democlock_x", "0"};
 cvar_t			scr_democlock_y = {"cl_democlock_y", "-2"};
-
-cvar_t			scr_gameclock = {"cl_gameclock", "0"};
-cvar_t			scr_gameclock_x = {"cl_gameclock_x", "1"};
-cvar_t			scr_gameclock_y = {"cl_gameclock_y", "-1"};
 
 cvar_t			show_speed = {"show_speed", "0"};
 cvar_t			show_speed_x = {"show_speed_x", "-1"};
@@ -747,7 +747,7 @@ void SCR_DrawClock (void) {
 	int x, y;
 	time_t t;
 	struct tm *ptm;
-	char str[80], *s;
+	char str[80];
 
 	if (!scr_clock.value)
 		return;
@@ -760,17 +760,42 @@ void SCR_DrawClock (void) {
 			strcpy (str, "#bad date#");
 		}
 	} else {
-		Q_strncpyz (str, SecondsToHourString((int) cls.realtime), sizeof(str));
+		float time = (cl.servertime_works) ? cl.servertime : cls.realtime;
+		Q_strncpyz (str, SecondsToHourString((int) time), sizeof(str));
 	}
-
-	if (Rulesets_NoTimers() && (s = strrchr(str, ':')))
-		*s = 0;
 
 	x = ELEMENT_X_COORD(scr_clock);
 	y = ELEMENT_Y_COORD(scr_clock);
 	Draw_String (x, y, str);
 }
 
+void SCR_DrawGameClock (void) {
+	int x, y;
+	char str[80], *s;
+	float timelimit;
+
+	if (!scr_gameclock.value)
+		return;
+
+	if (scr_gameclock.value == 2 || scr_gameclock.value == 4) 
+		timelimit = 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit"));
+	else
+		timelimit = 0;
+
+	if (cl.countdown || cl.standby)
+		Q_strncpyz (str, SecondsToHourString(timelimit), sizeof(str));
+	else
+		Q_strncpyz (str, SecondsToHourString((int) abs(timelimit - cl.gametime)), sizeof(str));
+
+	if ((scr_gameclock.value == 3 || scr_gameclock.value == 4) && (s = strstr(str, ":")))
+		s++;		// or just use SecondsToMinutesString() ...
+	else
+		s = str;
+
+	x = ELEMENT_X_COORD(scr_gameclock);
+	y = ELEMENT_Y_COORD(scr_gameclock);
+	Draw_String (x, y, s);
+}
 
 void SCR_DrawDemoClock (void) {
 	int x, y;
@@ -782,30 +807,10 @@ void SCR_DrawDemoClock (void) {
 	if (scr_democlock.value == 2)
 		Q_strncpyz (str, SecondsToHourString((int) (cls.demotime)), sizeof(str));
 	else
-		// START shaman RFE 1024658
-		// Q_strncpyz (str, SecondsToHourString((int) (cls.demotime - demostarttime)), sizeof(str));
-		Q_strncpyz (str, SecondsToMinutesString((int) (cls.demotime - demostarttime)), sizeof(str));
-		// END shaman RFE 1024658
+		Q_strncpyz (str, SecondsToHourString((int) (cls.demotime - demostarttime)), sizeof(str));
 
 	x = ELEMENT_X_COORD(scr_democlock);
 	y = ELEMENT_Y_COORD(scr_democlock);
-	Draw_String (x, y, str);
-}
-
-void SCR_DrawGameClock (void) {
-	int x, y;
-	char str[80];
-	
-	if (!cl.match_in_progress || !scr_gameclock.value)
-		return;
-	
-	if (scr_gameclock.value == 1) // count down
-		Q_strncpyz (str, SecondsToMinutesString ((int) ((cl.match_start + 60 * cl.timelimit) - cls.realtime + 1)), sizeof(str));
-	else // count up
-		Q_strncpyz (str, SecondsToMinutesString ((int) (cls.realtime - cl.match_start)), sizeof(str));
-	
-	x = ELEMENT_X_COORD(scr_gameclock);
-	y = ELEMENT_Y_COORD(scr_gameclock);
 	Draw_String (x, y, str);
 }
 
@@ -1136,8 +1141,8 @@ void SCR_DrawElements(void) {
 				SCR_CheckDrawCenterString ();
 				SCR_DrawSpeed ();
 				SCR_DrawClock ();
-				SCR_DrawDemoClock ();
 				SCR_DrawGameClock ();
+				SCR_DrawDemoClock ();
 				SCR_DrawFPS ();
 				SCR_MVDInfo ();
 
@@ -1898,14 +1903,14 @@ void SCR_Init (void) {
 	Cvar_Register (&scr_clock_y);
 	Cvar_Register (&scr_clock);
 
-	Cvar_Register (&scr_democlock_x);
-	Cvar_Register (&scr_democlock_y);
-	Cvar_Register (&scr_democlock);
-	
 	Cvar_Register (&scr_gameclock_x);
 	Cvar_Register (&scr_gameclock_y);
 	Cvar_Register (&scr_gameclock);
 
+	Cvar_Register (&scr_democlock_x);
+	Cvar_Register (&scr_democlock_y);
+	Cvar_Register (&scr_democlock);
+	
 	Cvar_Register (&show_speed);
 	Cvar_Register (&show_speed_x);
 	Cvar_Register (&show_speed_y);

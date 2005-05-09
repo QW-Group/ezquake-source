@@ -227,6 +227,7 @@ typedef struct {
 	netchan_t	netchan;
 	int			qport;
 	char		servername[MAX_OSPATH];	// name of server from original connect
+	netadr_t	server_adr;
 
 	// private userinfo for sending to masterless servers
 	char		userinfo[MAX_INFO_STRING];
@@ -337,6 +338,11 @@ typedef struct {
 	// the client simulates or interpolates movement to get these values
 	double		time;			// this is the time value that the client
 								// is rendering at.  always <= realtime
+
+	double		servertime;
+	qboolean	servertime_works;
+	double		gametime;
+
 	vec3_t		simorg;
 	vec3_t		simvel;
 	vec3_t		simangles;
@@ -358,6 +364,7 @@ typedef struct {
 
 	int			intermission;	// don't change view angle, full screen, etc
 	int			completed_time;	// latched from time at intermission start
+	int			solo_completed_time;	// to draw on intermission screen
 
 	// information that is static for the entire time connected to a server
 	char		model_name[MAX_MODELS][MAX_QPATH];
@@ -400,8 +407,6 @@ typedef struct {
 	
 	qboolean	standby;
 	qboolean	countdown;
-	qboolean	match_in_progress;
-	double		match_start;
 	float		fbskins;		
 	float		truelightning;	
 	qboolean	userfb;			
@@ -467,9 +472,10 @@ extern cvar_t r_grenadetrail;
 extern cvar_t r_powerupglow;
 
 #define	MAX_STATIC_ENTITIES	128			// torches, etc
+#define	CL_MAX_EDICTS		768			// FIXME: ouch! ouch! ouch!
 
 // FIXME, allocate dynamically
-extern	centity_t		cl_entities[MAX_EDICTS];
+extern	centity_t		cl_entities[CL_MAX_EDICTS];
 extern	efrag_t			cl_efrags[MAX_EFRAGS];
 extern	entity_t		cl_static_entities[MAX_STATIC_ENTITIES];
 extern	lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];

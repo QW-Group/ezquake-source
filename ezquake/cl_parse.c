@@ -1146,7 +1146,7 @@ void CL_ParseStartSoundPacket(void) {
 	ent = (channel >> 3) & 1023;
 	channel &= 7;
 
-	if (ent > MAX_EDICTS)
+	if (ent > CL_MAX_EDICTS)
 		Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
 
 
@@ -1351,9 +1351,9 @@ void CL_SetInfo (void) {
 
 //Called by CL_FullServerinfo_f and CL_ParseServerInfoChange
 void CL_ProcessServerInfo (void) {
-	char *p, *s, *fbskins, *truelightning, *minlight;		
+	char *p, *fbskins, *truelightning, *minlight;
 	int teamplay, fpd;
-	qboolean skin_refresh;
+	qboolean skin_refresh, standby, countdown;
 
 	// game type (sbar code checks it) (GAME_DEATHMATCH default)
 	cl.gametype = *(p = Info_ValueForKey(cl.serverinfo, "deathmatch")) ? (atoi(p) ? GAME_DEATHMATCH : GAME_COOP) : GAME_DEATHMATCH;
@@ -1385,17 +1385,14 @@ void CL_ProcessServerInfo (void) {
 	}
 
 	p = Info_ValueForKey(cl.serverinfo, "status");
-	for (s = p; *s; s++)
-		*s = tolower(*s);
-	cl.standby = !strcmp(p, "standby") ? true : false;
-	if (cl.standby && cl.match_in_progress) cl.match_in_progress = false;
-	
-	if (!cl.standby && cl.countdown && strcmp(p, "countdown")) { // match has begun
-		cl.match_in_progress = true;
-		cl.match_start = cls.realtime;
-	}
+	standby = !Q_strcasecmp(p, "standby");
+	countdown = !Q_strcasecmp(p, "countdown");
 
-	cl.countdown = !strcmp(p, "countdown") ? true : false;
+	if ((cl.standby || cl.countdown) && !(standby || countdown))
+		cl.gametime = 0;
+
+	cl.standby = standby;
+	cl.countdown = countdown;
 
 	cl.minlight = (strlen(minlight = Info_ValueForKey(cl.serverinfo, "minlight")) ? bound(0, Q_atoi(minlight), 255) : 4);
 
@@ -2277,6 +2274,7 @@ void CL_ParseServerMessage (void) {
 		case svc_intermission:
 			cl.intermission = 1;
 			cl.completed_time = cls.demoplayback ? cls.demotime : cls.realtime;
+			cl.solo_completed_time = cl.servertime;
 			vid.recalc_refdef = true;	// go to full screen
 			for (i = 0; i < 3; i++)
 				cl.simorg[i] = MSG_ReadCoord ();			
@@ -2289,6 +2287,7 @@ void CL_ParseServerMessage (void) {
 		case svc_finale:
 			cl.intermission = 2;
 			cl.completed_time = cls.demoplayback ? cls.demotime : cls.realtime;
+			cl.solo_completed_time = cl.servertime;
 			vid.recalc_refdef = true;	// go to full screen
 			SCR_CenterPrint (MSG_ReadString ());			
 			break;

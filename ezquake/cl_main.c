@@ -135,7 +135,7 @@ cvar_t  msg_filter = {"msg_filter", "0"};
 clientPersistent_t	cls;
 clientState_t		cl;
 
-centity_t		cl_entities[MAX_EDICTS];
+centity_t       cl_entities[CL_MAX_EDICTS];
 efrag_t			cl_efrags[MAX_EFRAGS];
 entity_t		cl_static_entities[MAX_STATIC_ENTITIES];
 lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
@@ -238,47 +238,28 @@ void CL_UserinfoChanged (char *key, char *string) {
 }
 
 //called by CL_Connect_f and CL_CheckResend
-void CL_SendConnectPacket (void) {
-	netadr_t adr;
-	char data[2048], biguserinfo[MAX_INFO_STRING + 32];
-	double t1, t2;
+static void CL_SendConnectPacket(void) {
+	char data[2048];
 
 	if (cls.state != ca_disconnected)
 		return;
 
-// JACK: Fixed bug where DNS lookups would cause two connects real fast
-// Now, adds lookup time to the connect time.
-	t1 = Sys_DoubleTime ();
-	if (!NET_StringToAdr (cls.servername, &adr)) {
-		Com_Printf ("Bad server address\n");
-		connect_time = 0;
-		return;
-	}
-	t2 = Sys_DoubleTime ();
-	connect_time = cls.realtime + t2 - t1;	// for retransmit requests
-
-	if (adr.port == 0)
-		adr.port = BigShort (PORT_SERVER);
-
+	connect_time = cls.realtime;	// for retransmit requests
 	cls.qport = Cvar_VariableValue("qport");
 
-	// let the server know what extensions we support
-	Q_strncpyz (biguserinfo, cls.userinfo, sizeof(biguserinfo));
-	Info_SetValueForStarKey (biguserinfo, "*z_ext", va("%i", CL_SUPPORTED_EXTENSIONS), sizeof(biguserinfo));
-
-	sprintf (data, "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, biguserinfo);
-	NET_SendPacket (NS_CLIENT, strlen(data), data, adr);
+	Q_snprintfz(data, sizeof(data), "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, cls.userinfo);
+	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
 
 //Resend a connect message if the last one has timed out
 void CL_CheckForResend (void) {
-	netadr_t adr;
 	char data[2048];
 	double t1, t2;
 
 	if (cls.state == ca_disconnected && com_serveractive) {
 		// if the local server is running and we are not, then connect
 		Q_strncpyz (cls.servername, "local", sizeof(cls.servername));
+		NET_StringToAdr("local", &cls.server_adr);
 		CL_SendConnectPacket ();	// we don't need a challenge on the local server
 		// FIXME: cls.state = ca_connecting so that we don't send the packet twice?
 		return;
@@ -289,21 +270,21 @@ void CL_CheckForResend (void) {
 	if (cls.realtime - connect_time < 5.0)
 		return;
 
-	t1 = Sys_DoubleTime ();
-	if (!NET_StringToAdr (cls.servername, &adr)) {
-		Com_Printf ("Bad server address\n");
+	t1 = Sys_DoubleTime();
+	if (!NET_StringToAdr(cls.servername, &cls.server_adr)) {
+		Com_Printf("Bad server address\n");
 		connect_time = 0;
 		return;
 	}
-	t2 = Sys_DoubleTime ();
+	t2 = Sys_DoubleTime();
 	connect_time = cls.realtime + t2 - t1;	// for retransmit requests
 
-	if (adr.port == 0)
-		adr.port = BigShort (PORT_SERVER);
+	if (cls.server_adr.port == 0)
+		cls.server_adr.port = BigShort(PORT_SERVER);
 
-	Com_Printf ("Connecting to %s...\n", cls.servername);
-	sprintf (data, "\xff\xff\xff\xff" "getchallenge\n");
-	NET_SendPacket (NS_CLIENT, strlen(data), data, adr);
+	Com_Printf("Connecting to %s...\n", cls.servername);
+	Q_snprintfz(data, sizeof(data), "\xff\xff\xff\xff" "getchallenge\n");
+	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
 
 void CL_BeginServerConnect(void) {
@@ -522,7 +503,9 @@ void CL_Disconnect (void) {
 	}
 
 	memset(&cls.netchan, 0, sizeof(cls.netchan));
+	memset(&cls.server_adr, 0, sizeof(cls.server_adr));
 	cls.state = ca_disconnected;
+	connect_time = 0;
 
 	Cam_Reset();
 
@@ -565,34 +548,47 @@ void CL_Reconnect_f (void) {
 
 //Responses to broadcasts, etc
 void CL_ConnectionlessPacket (void) {
-	char *s, cmdtext[2048], data[6];
 	int c;
-
+	char *s, cmdtext[2048];
+	
     MSG_BeginReading ();
     MSG_ReadLong ();        // skip the -1
 
 	c = MSG_ReadByte ();
-	if (!cls.demoplayback)
-		Com_Printf ("%s: ", NET_AdrToString (net_from));
+
+	if (msg_badread)
+		return;			// runt packet
 
 	switch(c) {
+	case S2C_CHALLENGE:
+		if (!NET_CompareAdr(net_from, cls.server_adr))
+			return;
+		Com_Printf("%s: challenge\n", NET_AdrToString(net_from));
+		cls.challenge = atoi(MSG_ReadString());
+		CL_SendConnectPacket();
+		break;	
 	case S2C_CONNECTION:
-		Com_Printf ("connection\n");
+		if (!NET_CompareAdr(net_from, cls.server_adr))
+			return;
+		if (!com_serveractive || developer.value)
+			Com_Printf("%s: connection\n", NET_AdrToString(net_from));
+
 		if (cls.state >= ca_connected) {
 			if (!cls.demoplayback)
-				Com_Printf ("Dup connect received.  Ignored.\n");
+				Com_Printf("Dup connect received.  Ignored.\n");
 			break;
 		}
-		Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, cls.qport);
+		Netchan_Setup(NS_CLIENT, &cls.netchan, net_from, cls.qport);
 		MSG_WriteChar (&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString (&cls.netchan.message, "new");
 		cls.state = ca_connected;
-		Com_Printf ("Connected.\n");
+		if (!com_serveractive || developer.value)
+			Com_Printf("Connected.\n");
 		allowremotecmd = false; // localid required now for remote cmds
 		break;
 
 	case A2C_CLIENT_COMMAND:	// remote command from gui front end
-		Com_Printf ("client command\n");
+		Com_Printf ("%s: client command\n", NET_AdrToString (net_from));
 
 		if (!NET_IsLocalAddress(net_from)) {
 			Com_Printf ("Command packet from remote host.  Ignored.\n");
@@ -635,31 +631,8 @@ void CL_ConnectionlessPacket (void) {
 		break;
 
 	case A2C_PRINT:		// print command from somewhere
-		Com_Printf ("print\n");
-
-		s = MSG_ReadString ();
-		Com_Printf ("%s", s);
-		break;
-
-	case A2A_PING:		// ping from somewhere
-		Com_Printf ("ping\n");
-
-		data[0] = 0xff;
-		data[1] = 0xff;
-		data[2] = 0xff;
-		data[3] = 0xff;
-		data[4] = A2A_ACK;
-		data[5] = 0;
-
-		NET_SendPacket (NS_CLIENT, 6, &data, net_from);
-		break;
-
-	case S2C_CHALLENGE:
-		Com_Printf ("challenge\n");
-
-		s = MSG_ReadString ();
-		cls.challenge = atoi(s);
-		CL_SendConnectPacket ();
+		Com_Printf("%s: print\n", NET_AdrToString(net_from));
+		Com_Printf("%s", MSG_ReadString());
 		break;
 
 	case svc_disconnect:
@@ -668,10 +641,6 @@ void CL_ConnectionlessPacket (void) {
 			Host_EndGame();
 			Host_Abort();
 		}
-		break;
-
-	default:		
-		Com_Printf ("unknown:  %c\n", c);
 		break;
 	}
 }
@@ -1150,8 +1119,12 @@ void CL_Frame (double time) {
 
 	cls.realtime += cls.frametime;
 
-	if (!cl.paused)
+	if (!cl.paused) {
 		cl.time += cls.frametime;
+		cl.servertime += cls.frametime;
+		cl.stats[STAT_TIME] = (int) (cl.servertime * 1000);
+		cl.gametime += cls.frametime;
+	}
 
 	// get new key events
 

@@ -78,7 +78,7 @@ extern modestate_t	modestate;
 extern HWND			mainwindow;
 extern qboolean		ActiveApp, Minimized;
 
-extern qboolean	WinNT;
+extern qboolean WinNT, Win2K;
 
 void IN_ShowMouse (void);
 void IN_DeactivateMouse (void);

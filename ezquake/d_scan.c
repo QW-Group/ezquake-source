@@ -139,7 +139,7 @@ void Turbulent8 (espan_t *pspan) {
 														//running off the edge of the texture
 
 				tnext = (int) (tdivz * z) + tadjust;
-				tnext = bound(16, tnext, bbextents);	// guard against round-off error on <0 steps
+				tnext = bound(16, tnext, bbextentt);    // guard against round-off error on <0 steps
 
 				r_turb_sstep = (snext - r_turb_s) >> 4;
 				r_turb_tstep = (tnext - r_turb_t) >> 4;
@@ -234,7 +234,7 @@ void D_DrawSpans8 (espan_t *pspan) {
 													//running off the edge of the texture
 
 				tnext = (int) (tdivz * z) + tadjust;
-				tnext = bound(8, tnext, bbextents);// guard against round-off error on <0 steps
+				tnext = bound(8, tnext, bbextentt);// guard against round-off error on <0 steps
 
 				sstep = (snext - s) >> 3;
 				tstep = (tnext - t) >> 3;

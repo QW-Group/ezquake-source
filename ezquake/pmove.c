@@ -503,7 +503,7 @@ void PM_CategorizePosition (void) {
 	}
 
 	// snap to ground unless in fly mode or underwater
-	if (pmove.onground && pmove.pm_type != PM_FLY && pmove.waterlevel < 3) {
+	if (pmove.onground && pmove.pm_type != PM_FLY && pmove.waterlevel < 2) {
 		if (!trace.startsolid && !trace.allsolid)
 			VectorCopy (trace.endpos, pmove.origin);
 	}

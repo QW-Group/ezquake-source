@@ -854,58 +854,26 @@ qboolean COM_WriteFile (char *filename, void *data, int len) {
 
 //Only used for CopyFile and download
 
+
+void COM_CreatePath(char *path) {
+	char *s, save;
+
+	if (!*path)
+		return;
+
+	for (s = path + 1; *s; s++) {
 #ifdef _WIN32
-#define _MAX_SUBSIRS	8
-void COM_CreatePath (char *path) {
-	char *slash = NULL;
-	int slash_indices[_MAX_SUBSIRS], i, j, k;
-
-	if (!path)
-		return;
-
-	if (strstr(path, ".."))	
-		return;
-
-	while (*path == '/' || *path == '\\')
-		path++;
-
-	for (i = j = 0; j + 1 < _MAX_SUBSIRS && i < strlen(path); i++)
-		if (path[i] == '/' || path[i] == '\\')
-			slash_indices[j++] = i;
-	slash_indices[j] = -1;
-
-	for (i = 0; i < sizeof(slash_indices) && slash_indices[i] != -1; i++) {
-		path[slash_indices[i]] = 0;
-		for (k = (i > 0 ? (slash_indices[i - 1] + 1) : 0); k < strlen(path); k++)
-			if (path[k] != '.')
-				break;
-		if (k < strlen(path) && *path)
-			Sys_mkdir(path);
-		path[slash_indices[i]] = '/';
-	}
-}
+		if (*s == '/' || *s == '\\') {
 #else
-void	COM_CreatePath (char *path)
-{
-	char	*ofs;
-
-	if (!path)
-		return;
-
-	if (strstr(path, ".."))
-		return;
-	
-	for (ofs = path+1 ; *ofs ; ofs++)
-	{
-		if (*ofs == '/')
-		{	// create the directory
-			*ofs = 0;
-			Sys_mkdir (path);
-			*ofs = '/';
+		if (*s == '/') {
+#endif
+			save = *s;
+			*s = 0;
+			Sys_mkdir(path);
+			*s = save;
 		}
 	}
 }
-#endif
 
 //Copies a file over from the net to the local cache, creating any directories
 //needed.  This is for the convenience of developers using ISDN from home.
