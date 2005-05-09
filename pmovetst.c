@@ -223,7 +223,7 @@ qboolean PM_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 qboolean PM_TestPlayerPosition (vec3_t pos) {
 	int i;
 	physent_t *pe;
-	vec3_t mins, maxs, test;
+	vec3_t mins, maxs, pos_l, offset;
 	hull_t *hull;
 
 	for (i = 0; i < pmove.numphysent; i++) {
@@ -231,15 +231,17 @@ qboolean PM_TestPlayerPosition (vec3_t pos) {
 		// get the clipping hull
 		if (pe->model) {
 			hull = &pmove.physents[i].model->hulls[1];
+			VectorSubtract(hull->clip_mins, player_mins, offset);
+			VectorAdd(offset, pe->origin, offset);
+			VectorSubtract(pos, offset, pos_l);
 		} else{
 			VectorSubtract (pe->mins, player_maxs, mins);
 			VectorSubtract (pe->maxs, player_mins, maxs);
 			hull = PM_HullForBox (mins, maxs);
+			VectorSubtract(pos, pe->origin, pos_l);
 		}
 
-		VectorSubtract (pos, pe->origin, test);
-
-		if (PM_HullPointContents (hull, hull->firstclipnode, test) == CONTENTS_SOLID)
+		if (PM_HullPointContents (hull, hull->firstclipnode, pos_l) == CONTENTS_SOLID)
 			return false;
 	}
 
@@ -264,14 +266,14 @@ pmtrace_t PM_PlayerTrace (vec3_t start, vec3_t end) {
 		// get the clipping hull
 		if (pe->model) {
 			hull = &pmove.physents[i].model->hulls[1];
+			VectorSubtract(hull->clip_mins, player_mins, offset);
+			VectorAdd(offset, pe->origin, offset);
 		} else {
 			VectorSubtract (pe->mins, player_maxs, mins);
 			VectorSubtract (pe->maxs, player_mins, maxs);
 			hull = PM_HullForBox (mins, maxs);
+			VectorCopy(pe->origin, offset);
 		}
-
-		// PM_HullForEntity (ent, mins, maxs, offset);
-		VectorCopy (pe->origin, offset);
 
 		VectorSubtract (start, offset, start_l);
 		VectorSubtract (end, offset, end_l);
@@ -283,7 +285,7 @@ pmtrace_t PM_PlayerTrace (vec3_t start, vec3_t end) {
 		//trace.startsolid = true;
 		VectorCopy (end, trace.endpos);
 
-		// trace a line through the apropriate clipping hull
+		// trace a line through the appropriate clipping hull
 		PM_RecursiveHullCheck (hull, hull->firstclipnode, 0, 1, start_l, end_l, &trace);
 
 		if (trace.allsolid)

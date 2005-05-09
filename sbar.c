@@ -780,7 +780,7 @@ static void Sbar_DrawFrags (void) {
 
 	mynum = Sbar_PlayerNum();
 
-	if (scr_drawHFrags.value != 2 || !cl.teamplay) {
+	if (!cl.teamplay || scr_drawHFrags.value == 1) {
 
 		Sbar_SortFrags (false);
 		l = min(scoreboardlines, 4);
@@ -834,7 +834,7 @@ static void Sbar_DrawFrags (void) {
 			x += 4;
 		}
 
-		if (l <= 2 && !Sbar_IsSpectator(mynum)) {
+		if (scr_drawHFrags.value != 3 && l <= 2 && !Sbar_IsSpectator(mynum)) {
 			
 			x += 4 * (3 - l);
 
@@ -1028,8 +1028,10 @@ static void Sbar_DrawCompact_Bare (void) {
 
 static void Sbar_SoloScoreboard (void) {
 	char str[80];
-	double time, sbar_time;
+	double time;
 	int minutes, seconds, tens, units;
+
+	sb_updates = 0;         // because time display changes every second
 
 	Sbar_DrawPic (0, 0, sb_scorebar);
 
@@ -1042,8 +1044,13 @@ static void Sbar_SoloScoreboard (void) {
 	}
 
 	// time
-	sbar_time = cls.demoplayback ? cls.demotime : cls.realtime;
-	time = (cl.gametype == GAME_COOP) ? sbar_time - cl.players[cl.playernum].entertime : sbar_time;
+	if (cl.servertime_works) {
+		time = cl.servertime;	// good, we know real time spent on level
+	} else {
+		time = cls.demoplayback ? cls.demotime : cls.realtime;
+		if (cl.gametype == GAME_COOP)
+			time -= cl.players[cl.playernum].entertime;
+	}
 
 	minutes = time / 60;
 	seconds = time - 60 * minutes;
@@ -1367,7 +1374,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 	}
 
 	if (!scr_scoreboard_borderless.value)
-		Draw_Fill (xofs - 1, y , rank_width + 2, 1, 0); //Border - Bottom
+		Draw_Fill (xofs - 1, y - 1, rank_width + 2, 1, 0); //Border - Bottom
 }
 
 static void Sbar_TeamOverlay (void) {
@@ -1474,7 +1481,7 @@ static void Sbar_TeamOverlay (void) {
 	}
 
 	if (!scr_scoreboard_borderless.value)
-		Draw_Fill (xofs - 1, y, rank_width + 2, 1, 0);		//Border - Bottom
+		Draw_Fill (xofs - 1, y - 1, rank_width + 2, 1, 0);              //Border - Bottom
 
 	y += 14;
 	Sbar_DeathmatchOverlay(y);
@@ -1637,6 +1644,7 @@ static void Sbar_IntermissionNumber (int x, int y, int num, int digits, int colo
 
 void Sbar_IntermissionOverlay (void) {
 	mpic_t *pic;
+	float time;
 	int	dig, num, xofs;
 
 	scr_copyeverything = 1;
@@ -1658,11 +1666,16 @@ void Sbar_IntermissionOverlay (void) {
 	pic = Draw_CachePic ("gfx/inter.lmp");
 	Draw_TransPic (xofs, 56, pic);
 
+	if (cl.servertime_works)
+		time = cl.solo_completed_time;	// we know the exact time
+	else
+		time = cl.completed_time - cl.players[cl.playernum].entertime;	// use an estimate
+
 	//time
-	dig = (cl.completed_time - cl.players[cl.playernum].entertime) / 60;
+	dig = time / 60;
 	dig = max(dig, 0);
 	Sbar_IntermissionNumber (xofs + 152, 64, dig, 3, 0, true);
-	num = (cl.completed_time - cl.players[cl.playernum].entertime) - dig * 60;
+	num = time - dig * 60;
 	Draw_TransPic (xofs + 224, 64, sb_colon);
 	Draw_TransPic (xofs + 248, 64, sb_nums[0][num / 10]);
 	Draw_TransPic (xofs + 272, 64, sb_nums[0][num % 10]);

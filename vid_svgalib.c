@@ -89,15 +89,8 @@ cvar_t		vid_waitforrefresh = {"vid_waitforrefresh","0",CVAR_ARCHIVE};
 
 char	*framebuffer_ptr;
 
-cvar_t  mouse_button_commands[3] = {
-    {"mouse1","+attack"},
-    {"mouse2","+strafe"},
-    {"mouse3","+forward"},
-};
 
 int     mouse_buttons;
-int     mouse_buttonstate;
-int     mouse_oldbuttonstate;
 float   mouse_x, mouse_y;
 float	old_mouse_x, old_mouse_y;
 int		mx, my;
@@ -644,10 +637,30 @@ void Force_CenterView_f (void) {
 	cl.viewangles[PITCH] = 0;
 }
 
-void mousehandler(int buttonstate, int dx, int dy) {
-	mouse_buttonstate = buttonstate;
+static void mousehandler(int buttonstate, int dx, int dy, int dz, int drx, int dry, int drz) {
+	int i;
+	static int oldbuttonstate;
+	static int svga_buttonflags[] = {MOUSE_LEFTBUTTON, MOUSE_RIGHTBUTTON, MOUSE_MIDDLEBUTTON};
+
 	mx += dx;
 	my += dy;
+
+	for (i = 0; i < sizeof(svga_buttonflags) / sizeof(svga_buttonflags[0]); i++) {
+		if ((buttonstate & svga_buttonflags[i]) && !(oldbuttonstate & svga_buttonflags[i]))
+			Key_Event(K_MOUSE1 + i, true);
+		else if (!(buttonstate & svga_buttonflags[i]) && (oldbuttonstate & svga_buttonflags[i]))
+			Key_Event(K_MOUSE1 + i, false);
+	}
+
+	if (drx < 0) {
+		Key_Event(K_MWHEELUP, true);
+		Key_Event(K_MWHEELUP, false);
+	} else if (drx > 0) {
+		Key_Event(K_MWHEELDOWN, true);
+		Key_Event(K_MWHEELDOWN, false);
+	}
+
+	oldbuttonstate = buttonstate;
 }
 
 void IN_Init(void) {
@@ -660,9 +673,6 @@ void IN_Init(void) {
 
 	if (UseMouse) {
 		Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
-		Cvar_Register (&mouse_button_commands[0]);
-		Cvar_Register (&mouse_button_commands[1]);
-		Cvar_Register (&mouse_button_commands[2]);
 		Cvar_ResetCurrentGroup();
 		Cmd_AddCommand ("force_centerview", Force_CenterView_f);
 
@@ -704,32 +714,7 @@ void IN_Shutdown(void) {
 		mouse_close();
 }
 
-void IN_Commands (void) {
-	if (UseMouse) {
-		// poll mouse values
-		while (mouse_update())
-			;
-
-		// perform button actions
-		if ((mouse_buttonstate & MOUSE_LEFTBUTTON) && !(mouse_oldbuttonstate & MOUSE_LEFTBUTTON))
-			Key_Event (K_MOUSE1, true);
-		else if (!(mouse_buttonstate & MOUSE_LEFTBUTTON) && (mouse_oldbuttonstate & MOUSE_LEFTBUTTON))
-			Key_Event (K_MOUSE1, false);
-
-		if ((mouse_buttonstate & MOUSE_RIGHTBUTTON) && !(mouse_oldbuttonstate & MOUSE_RIGHTBUTTON))
-			Key_Event (K_MOUSE2, true);
-		else if (!(mouse_buttonstate & MOUSE_RIGHTBUTTON) && (mouse_oldbuttonstate & MOUSE_RIGHTBUTTON))
-			Key_Event (K_MOUSE2, false);
-
-		if ((mouse_buttonstate & MOUSE_MIDDLEBUTTON) &&
-			!(mouse_oldbuttonstate & MOUSE_MIDDLEBUTTON))
-			Key_Event (K_MOUSE3, true);
-		else if (!(mouse_buttonstate & MOUSE_MIDDLEBUTTON) && (mouse_oldbuttonstate & MOUSE_MIDDLEBUTTON))
-			Key_Event (K_MOUSE3, false);
-
-		mouse_oldbuttonstate = mouse_buttonstate;
-	}
-}
+void IN_Commands (void) {}
 
 void IN_MouseMove (usercmd_t *cmd) {
 	float filterfrac, mousespeed;

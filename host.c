@@ -273,7 +273,7 @@ char *Host_PrintBars(char *s, int len) {
 	for (i = 0; i < count; i++)
 		strcat(temp, "\x1e");
 	strcat(temp, "\x1f");
-	strcat(temp, "\n");
+	strcat(temp, "\n\n");
 
 	return temp;
 }
@@ -337,9 +337,11 @@ void Host_Init (int argc, char **argv, int default_memsize) {
 	if (dedicated) {
 		Com_Printf ("====== ezQuake.SourceForge.net ======\n\n");
 		Com_Printf ("======== ezQuake Initialized ========\n\n");
+		Com_Printf("\n");
 	} else {
 		Com_Printf(Host_PrintBars("ezQuake\x9c" "SourceForge\x9c" "net", 38));
 		Com_Printf(Host_PrintBars("ezQuake Initialized", 38));
+		Com_Printf("\n");
 	}
 
 	Com_Printf ("\nType /help to access the manual.\nUse /describe to learn about commands.\n", VersionString());

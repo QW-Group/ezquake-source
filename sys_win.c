@@ -37,7 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define NOT_FOCUS_SLEEP	20				// sleep time when not focus
 
 qboolean		ActiveApp, Minimized;
-qboolean		WinNT;
+qboolean        WinNT, Win2K;
 
 
 qboolean OnChange_sys_highpriority (cvar_t *, char *);
@@ -339,29 +339,27 @@ char *Sys_ConsoleInput (void) {
 						break;
 
 					default:
-						if (((ch == 'V' || ch == 'v') && (rec.Event.KeyEvent.dwControlKeyState & 
-							(LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED))) || ((rec.Event.KeyEvent.dwControlKeyState 
-							& SHIFT_PRESSED) && (rec.Event.KeyEvent.wVirtualKeyCode == VK_INSERT))) {
+						if ((ch == ('V' & 31)) /* ctrl-v */ ||
+							((rec.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED) && (rec.Event.KeyEvent.wVirtualKeyCode == VK_INSERT))) {
 
-							if ((textCopied = Sys_GetClipboardData())) {
-								i = strlen(textCopied);
-								if (i + len >= sizeof(text))
-									i = sizeof(text) - len - 1;
-								if (i > 0) {
-									textCopied[i] = 0;
-									text[len] = 0;
-									strcat(text, textCopied);
-									WriteFile(houtput, textCopied, i, &dummy, NULL);
-									len += dummy;
+								if ((textCopied = Sys_GetClipboardData())) {
+									i = strlen(textCopied);
+									if (i + len >= sizeof(text))
+										i = sizeof(text) - len - 1;
+									if (i > 0) {
+										textCopied[i] = 0;
+										text[len] = 0;
+										strcat(text, textCopied);
+										WriteFile(houtput, textCopied, i, &dummy, NULL);
+										len += dummy;
+									}
 								}
-
+							} else if (ch >= ' ') {
+								WriteFile(houtput, &ch, 1, &dummy, NULL);	
+								text[len] = ch;
+								len = (len + 1) & 0xff;
 							}
-						} else if (ch >= ' ') {
-							WriteFile(houtput, &ch, 1, &dummy, NULL);	
-							text[len] = ch;
-							len = (len + 1) & 0xff;
-						}
-						break;
+							break;
 				}
 			}
 		}
@@ -452,6 +450,7 @@ void Sys_Init_ (void) {
 		Sys_Error ("ezQuake requires at least Win95 or NT 4.0");
 
 	WinNT = (vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) ? true : false;
+	Win2K = WinNT && (vinfo.dwMajorVersion == 5);
 }
 
 /********************************* CLIPBOARD *********************************/

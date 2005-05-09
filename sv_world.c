@@ -201,49 +201,85 @@ void SV_UnlinkEdict (edict_t *ent) {
 	ent->area.prev = ent->area.next = NULL;
 }
 
-void SV_TouchLinks ( edict_t *ent, areanode_t *node ) {
-	link_t *l, *next;
+static int SV_AreaEdicts(vec3_t mins, vec3_t maxs, edict_t **edicts, int max_edicts, int area) {
+	link_t *l, *start;
 	edict_t *touch;
-	int old_self, old_other;
+	int stackdepth = 0, count = 0;
+	areanode_t *localstack[AREA_NODES], *node = sv_areanodes;
 
 	// touch linked edicts
-	for (l = node->trigger_edicts.next; l != &node->trigger_edicts; l = next) {
-		next = l->next;
-		touch = EDICT_FROM_AREA(l);
-		if (touch == ent)
+	while (1) {
+		if (area == AREA_SOLID)
+			start = &node->solid_edicts;
+		else
+			start = &node->trigger_edicts;
+
+		for (l = start->next; l != start; l = l->next) {
+			touch = EDICT_FROM_AREA(l);
+			if (touch->v.solid == SOLID_NOT)
+				continue;
+			if (
+				mins[0] > touch->v.absmax[0] || mins[1] > touch->v.absmax[1] || mins[2] > touch->v.absmax[2] ||
+				maxs[0] < touch->v.absmin[0] || maxs[1] < touch->v.absmin[1] || maxs[2] < touch->v.absmin[2]
+				)
+					continue;
+
+				edicts[count++] = touch;
+				if (count == max_edicts)
+					return count;
+		}
+
+		if (node->axis == -1)
+			goto checkstack;		// terminal node
+
+		// recurse down both sides
+		if (maxs[node->axis] > node->dist) {
+			if (mins[node->axis] < node->dist) {
+				localstack[stackdepth++] = node->children[0];
+				node = node->children[1];
+				continue;
+			}
+			node = node->children[0];
+			continue;
+		}
+		if (mins[node->axis] < node->dist) {
+			node = node->children[1];
+			continue;
+		}
+
+checkstack:
+		if (!stackdepth)
+			return count;
+		node = localstack[--stackdepth];
+	}
+
+	return count;
+}
+
+static void SV_TouchLinks(edict_t *ent, areanode_t *node) {
+	int i, numtouch, old_self, old_other;
+	edict_t *touchlist[SV_MAX_EDICTS], *touch;
+
+	numtouch = SV_AreaEdicts(ent->v.absmin, ent->v.absmax, touchlist, SV_MAX_EDICTS, AREA_TRIGGERS);
+
+	// touch linked edicts
+	for (i = 0; i < numtouch; i++) {
+		if ((touch = touchlist[i]) == ent)
 			continue;
 		if (!touch->v.touch || touch->v.solid != SOLID_TRIGGER)
 			continue;
-		if (
-			ent->v.absmin[0] > touch->v.absmax[0]
-			|| ent->v.absmin[1] > touch->v.absmax[1]
-			|| ent->v.absmin[2] > touch->v.absmax[2]
-			|| ent->v.absmax[0] < touch->v.absmin[0]
-			|| ent->v.absmax[1] < touch->v.absmin[1]
-			|| ent->v.absmax[2] < touch->v.absmin[2] 
-		)
-			continue;
-			
+
 		old_self = pr_global_struct->self;
 		old_other = pr_global_struct->other;
 
 		pr_global_struct->self = EDICT_TO_PROG(touch);
 		pr_global_struct->other = EDICT_TO_PROG(ent);
 		pr_global_struct->time = sv.time;
-		PR_ExecuteProgram (touch->v.touch);
+		PR_ExecuteProgram(touch->v.touch);
 
 		pr_global_struct->self = old_self;
 		pr_global_struct->other = old_other;
 	}
-	
-	// recurse down both sides
-	if (node->axis == -1)
-		return;
-	
-	if (ent->v.absmax[node->axis] > node->dist)
-		SV_TouchLinks (ent, node->children[0]);
-	if (ent->v.absmin[node->axis] < node->dist)
-		SV_TouchLinks (ent, node->children[1]);
 }
 
 void SV_FindTouchedLeafs (edict_t *ent, mnode_t *node) {

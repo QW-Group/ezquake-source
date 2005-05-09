@@ -521,8 +521,13 @@ static byte *LoadColoredLighting(char *name, char **litfilename) {
 	if (strcmp(name, va("maps/%s.bsp", mapname)))
 		return NULL;
 
-	*litfilename = va("maps/%s.lit", mapname);
+	*litfilename = va("maps/lits/%s.lit", mapname);
 	data = FS_LoadHunkFile (*litfilename);
+
+	if (!data) {
+		*litfilename = va("maps/%s.lit", mapname);
+		data = FS_LoadHunkFile (*litfilename);
+	}
 
 	if (!data) {
 		*litfilename = va("lits/%s.lit", mapname);
@@ -1755,7 +1760,7 @@ void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum) {
 	pspriteframe->left = origin[0];
 	pspriteframe->right = width + origin[0];
 
-	Q_snprintfz (identifier, sizeof(identifier), "%s_%i", basename, framenum);
+	Q_snprintfz (identifier, sizeof(identifier), "sprites/%s_%i", basename, framenum);
 	if (!(texnum = Mod_LoadExternalSpriteSkin(identifier, framenum)))
 		texnum = GL_LoadTexture (identifier, width, height, (byte *) (pinframe + 1), texmode, 1);
 

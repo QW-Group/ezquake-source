@@ -506,10 +506,10 @@ void CL_UpdateBeams (void) {
 				ang[0] = -ang[0];
 				if (ang[0] < -180)
 					ang[0] += 360;
-				ang[0] += (cl.viewangles[0] - ang[0]) * truelightning;
+				ang[0] += (cl.simangles[0] - ang[0]) * truelightning;
 
 				// lerp yaw
-				delta = cl.viewangles[1] - ang[1];
+				delta = cl.simangles[1] - ang[1];
 				if (delta > 180)
 					delta -= 360;
 				if (delta < -180)

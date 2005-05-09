@@ -105,6 +105,7 @@ modestate_t	modestate = MS_UNINIT;
 unsigned short *currentgammaramp = NULL;
 static unsigned short systemgammaramp[3][256];
 
+qboolean vid_3dfxgamma = false;
 qboolean vid_gammaworks = false;
 qboolean vid_hwgamma_enabled = false;
 qboolean customgamma = false;
@@ -138,6 +139,9 @@ qboolean OnChange_vid_vsync(cvar_t *var, char *string);
 static qboolean update_vsync = false;
 cvar_t	vid_vsync = {"vid_vsync", "", 0, OnChange_vid_vsync};
 
+BOOL (APIENTRY *wglGetDeviceGammaRamp3DFX)(HDC hDC, GLvoid *ramp);
+BOOL (APIENTRY *wglSetDeviceGammaRamp3DFX)(HDC hDC, GLvoid *ramp);
+
 
 int		window_center_x, window_center_y, window_x, window_y, window_width, window_height;
 RECT	window_rect;
@@ -145,7 +149,7 @@ RECT	window_rect;
 /******************************* GL EXTENSIONS *******************************/
 
 
-void CheckVsyncControlExtensions(void) {
+void GL_WGL_CheckExtensions(void) {
     if (!COM_CheckParm("-noswapctrl") && CheckExtension("WGL_EXT_swap_control")) {
 		if ((wglSwapIntervalEXT = (void *) wglGetProcAddress("wglSwapIntervalEXT"))) {
             Com_Printf("Vsync control extensions found\n");
@@ -154,6 +158,12 @@ void CheckVsyncControlExtensions(void) {
 			Cvar_ResetCurrentGroup();
 		}
     }
+
+	if (!COM_CheckParm("-no3dfxgamma") && CheckExtension("WGL_3DFX_gamma_control")) {
+		wglGetDeviceGammaRamp3DFX = (void *) wglGetProcAddress("wglGetDeviceGammaRamp3DFX");
+		wglSetDeviceGammaRamp3DFX = (void *) wglGetProcAddress("wglSetDeviceGammaRamp3DFX");
+		vid_3dfxgamma = (wglGetDeviceGammaRamp3DFX && wglSetDeviceGammaRamp3DFX);
+	}
 }
 
 qboolean OnChange_vid_vsync(cvar_t *var, char *string) {
@@ -163,7 +173,7 @@ qboolean OnChange_vid_vsync(cvar_t *var, char *string) {
 
 
 void GL_Init_Win(void) {
-	CheckVsyncControlExtensions();
+	GL_WGL_CheckExtensions();
 }
 
 /**************************** DDRAW COMPATABILITY ****************************/
@@ -511,26 +521,50 @@ BOOL bSetupPixelFormat(HDC hDC) {
 void VID_ShiftPalette (unsigned char *palette) {}
 
 //Note: ramps must point to a static array
-void VID_SetDeviceGammaRamp (unsigned short *ramps) {
-	if (vid_gammaworks) {
-		currentgammaramp = ramps;
-		if (vid_hwgamma_enabled) {
-			SetDeviceGammaRamp (maindc, ramps);
-			customgamma = true;
+void VID_SetDeviceGammaRamp(unsigned short *ramps) {
+	if (!vid_gammaworks)
+		return;
+
+	currentgammaramp = ramps;
+
+	if (!vid_hwgamma_enabled)
+		return;
+
+	customgamma = true;
+
+	if (Win2K) {
+		int i, j;
+
+		for (i = 0; i < 128; i++) {
+			for (j = 0; j < 3; j++)
+				ramps[j * 256 + i] = min(ramps[j * 256 + i], (i + 0x80) << 8);
 		}
+		for (j = 0; j < 3; j++)
+			ramps[j * 256 + 128] = min(ramps[j * 256 + 128], 0xFE00);
 	}
+
+	if (vid_3dfxgamma)
+		wglSetDeviceGammaRamp3DFX(maindc, ramps);
+	else
+		SetDeviceGammaRamp(maindc, ramps);
 }
 
 void InitHWGamma (void) {
 	if (COM_CheckParm("-nohwgamma"))
 		return;
-	vid_gammaworks = GetDeviceGammaRamp (maindc, systemgammaramp);
+	if (vid_3dfxgamma)
+		vid_gammaworks = wglGetDeviceGammaRamp3DFX(maindc, systemgammaramp);
+	else
+		vid_gammaworks = GetDeviceGammaRamp(maindc, systemgammaramp);
 }
 
-void RestoreHWGamma (void) {
+static void RestoreHWGamma(void) {
 	if (vid_gammaworks && customgamma) {
 		customgamma = false;
-		SetDeviceGammaRamp (maindc, systemgammaramp);
+		if (vid_3dfxgamma)
+			wglSetDeviceGammaRamp3DFX(maindc, systemgammaramp);
+		else
+			SetDeviceGammaRamp(maindc, systemgammaramp);
 	}
 }
 

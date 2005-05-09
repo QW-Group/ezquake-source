@@ -132,6 +132,7 @@ cvar_t	gl_fb_bmodels = {"gl_fb_bmodels", "1"};
 cvar_t	gl_fb_models = {"gl_fb_models", "1"};
 cvar_t	gl_lightmode = {"gl_lightmode", "2"};
 cvar_t	gl_loadlitfiles = {"gl_loadlitfiles", "1"};
+cvar_t	gl_colorlights = {"gl_colorlights", "1"};
 
 // START shaman :: balancing variables
 cvar_t gl_solidparticles = {"gl_solidparticles", "0"}; // 1
@@ -1376,6 +1377,7 @@ void R_Init (void) {
 	Cvar_Register (&r_lightmap);
 	Cvar_Register (&gl_shaftlight);
 	Cvar_Register (&gl_loadlitfiles);
+	Cvar_Register (&gl_colorlights);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
 	Cvar_Register (&gl_playermip);

@@ -583,7 +583,7 @@ void CL_LinkPacketEntities (void) {
 		}
 	
 
-		if (state->colormap && state->colormap < MAX_CLIENTS && ent.model->modhint == MOD_PLAYER) {
+		if (state->colormap >=1 && state->colormap <= MAX_CLIENTS && ent.model->modhint == MOD_PLAYER) {
 			ent.colormap = cl.players[state->colormap - 1].translations;
 			ent.scoreboard = &cl.players[state->colormap - 1];
 		} else {
@@ -1004,7 +1004,7 @@ void CL_LinkPacketEntities (void) {
 		}
 	
 
-		if (state->colormap && state->colormap < MAX_CLIENTS && ent.model->modhint == MOD_PLAYER) {
+		if (state->colormap >=1 && state->colormap <= MAX_CLIENTS && ent.model->modhint == MOD_PLAYER) {
 			ent.colormap = cl.players[state->colormap - 1].translations;
 			ent.scoreboard = &cl.players[state->colormap - 1];
 		} else {
@@ -1841,7 +1841,7 @@ static void MVD_InitInterpolation(void) {
 		pplayer->predict = false;
 
 		tracknum = Cam_TrackNum();
-		if ((mvd_fixangle & 1) << i) {
+		if (mvd_fixangle & (1 << i)) {
 			if (i == tracknum) {
 				VectorCopy(cl.viewangles, state->command.angles);
 				VectorCopy(cl.viewangles, state->viewangles);

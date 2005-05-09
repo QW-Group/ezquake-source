@@ -1183,9 +1183,9 @@ void PF_WriteEntity (void) {
 	if (G_FLOAT(OFS_PARM0) == MSG_ONE) {
 		client_t *cl = Write_GetClient();
 		ClientReliableCheckBlock(cl, 2);
-		ClientReliableWrite_Short(cl, G_EDICTNUM(OFS_PARM1));
+		ClientReliableWrite_Short(cl, SV_TranslateEntnum(G_EDICTNUM(OFS_PARM1)));
 	} else {
-		MSG_WriteShort (WriteDest(), G_EDICTNUM(OFS_PARM1));
+		MSG_WriteShort (WriteDest(), SV_TranslateEntnum(G_EDICTNUM(OFS_PARM1)));
 	}
 }
 

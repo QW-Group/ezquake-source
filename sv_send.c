@@ -257,7 +257,7 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 		return;
 	}
    
-	ent = NUM_FOR_EDICT(entity);
+	ent = SV_TranslateEntnum(NUM_FOR_EDICT(entity));
 
 	if ((channel & 8) || !sv_phs.value)	{ // no PHS flag
 		if (channel & 8)
@@ -362,6 +362,16 @@ void SV_WriteClientdataToMessage (client_t *client, sizebuf_t *msg) {
 		for (i = 0; i < 3; i++)
 			MSG_WriteAngle (msg, ent->v.angles[i] );
 		ent->v.fixangle = 0;
+	}
+
+	if ((SUPPORTED_EXTENSIONS & Z_EXT_SERVERTIME) && (client->extensions & Z_EXT_SERVERTIME)) {
+		if (svs.realtime - client->lastservertimeupdate > 5) {
+			MSG_WriteByte(msg, svc_updatestatlong);
+			MSG_WriteByte(msg, STAT_TIME);
+			MSG_WriteLong(msg, (int) (sv.time * 1000));
+
+			client->lastservertimeupdate = svs.realtime;
+		}
 	}
 }
 

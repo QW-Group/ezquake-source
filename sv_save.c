@@ -30,34 +30,34 @@ extern cvar_t maxclients;
 #define	SAVEGAME_VERSION	6
 
 //Writes a SAVEGAME_COMMENT_LENGTH character comment
-void SV_SavegameComment (char *text) {
+void SV_SavegameComment (char *buffer) {
 	int i;
 	char kills[20];
 
 	for (i = 0; i < SAVEGAME_COMMENT_LENGTH; i++)
-		text[i] = ' ';
-	memcpy (text, cl.levelname, strlen(cl.levelname));
+		buffer[i] = ' ';
+	memcpy (buffer, cl.levelname, strlen(cl.levelname));
 	sprintf (kills, "kills:%3i/%-3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
-	memcpy (text + 22, kills, strlen(kills));
+	memcpy (buffer + 22, kills, strlen(kills));
 
 	// convert space to _ to make stdio happy
 	for (i = 0; i < SAVEGAME_COMMENT_LENGTH; i++)
-		if (text[i] == ' ')
-			text[i] = '_';
+		if (buffer[i] == ' ')
+			buffer[i] = '_';
 
-	text[SAVEGAME_COMMENT_LENGTH] = '0';
+	buffer[SAVEGAME_COMMENT_LENGTH] = 0;
 }
 
 void SV_SaveGame_f (void) {
-	char name[MAX_OSPATH], comment[SAVEGAME_COMMENT_LENGTH+1];
+	char fname[MAX_OSPATH], comment[SAVEGAME_COMMENT_LENGTH+1];
 	FILE *f;
 	int i;
 
 	if (Cmd_Argc() != 2) {
-		Com_Printf ("Usage: %s <savename> : save a game\n", Cmd_Argv(0));
+		Com_Printf ("Usage: %s <savefname> : save a game\n", Cmd_Argv(0));
 		return;
 	} else if (strstr(Cmd_Argv(1), "..")) {
-		Com_Printf ("Relative pathnames are not allowed.\n");
+		Com_Printf ("Relative pathfnames are not allowed.\n");
 		return;
 	} else if (sv.state != ss_active) {
 		Com_Printf ("Not playing a local game.\n");
@@ -86,13 +86,13 @@ void SV_SaveGame_f (void) {
 		return;
 	}
 
-	Q_snprintfz (name, sizeof(name), "%s/save/%s", com_gamedir, Cmd_Argv(1));
-	COM_DefaultExtension (name, ".sav");
+	Q_snprintfz (fname, sizeof(fname), "%s/save/%s", com_gamedir, Cmd_Argv(1));
+	COM_DefaultExtension (fname, ".sav");
 	
-	Com_Printf ("Saving game to %s...\n", name);
-	if (!(f = fopen (name, "w"))) {		
-		COM_CreatePath (name);
-		if (!(f = fopen (name, "w"))) {
+	Com_Printf ("Saving game to %s...\n", fname);
+	if (!(f = fopen (fname, "w"))) {		
+		COM_CreatePath (fname);
+		if (!(f = fopen (fname, "w"))) {
 			Com_Printf ("ERROR: couldn't open.\n");
 			return;
 		}

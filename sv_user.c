@@ -464,6 +464,8 @@ void Cmd_Begin_f (void) {
 			MSG_WriteAngle (&sv_client->netchan.message, ent->v.v_angle[i]);
 		MSG_WriteAngle (&sv_client->netchan.message, 0);
 	}
+
+	sv_client->lastservertimeupdate = -99;		// force an update
 }
 
 //=============================================================================
@@ -776,6 +778,7 @@ void SV_TogglePause (const char *msg) {
 			continue;
 		ClientReliableWrite_Begin (cl, svc_setpause, 2);
 		ClientReliableWrite_Byte (cl, sv.paused ? 1 : 0);
+		cl->lastservertimeupdate = -99;		// force an update
 	}
 }
 
@@ -1199,7 +1202,7 @@ int SV_PMTypeForClient (client_t *cl) {
 	return PM_NORMAL;
 }
 
-static byte playertouch[(MAX_EDICTS + 7) / 8];
+static byte playertouch[(SV_MAX_EDICTS + 7) / 8];
 
 //Done before running a player command.  Clears the touch array
 void SV_PreRunCmd(void) {

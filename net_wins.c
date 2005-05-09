@@ -212,21 +212,21 @@ qboolean NET_GetPacket (netsrc_t sock) {
 	SockadrToNetadr (&from, &net_from);
 
 	if (ret == -1) {
-		int errno = WSAGetLastError();
+		int lasterror = WSAGetLastError();
 
-		if (errno == WSAEWOULDBLOCK)
+		if (lasterror == WSAEWOULDBLOCK)
 			return false;
-		if (errno == WSAEMSGSIZE) {
+		if (lasterror == WSAEMSGSIZE) {
 			Com_Printf ("Warning:  Oversize packet from %s\n",
 				NET_AdrToString (net_from));
 			return false;
 		}
-		if (errno == 10054) {
+		if (lasterror == 10054) {
 			Com_DPrintf ("NET_GetPacket: Error 10054 from %s\n", NET_AdrToString (net_from));
 			return false;
 		}
 
-		Sys_Error ("NET_GetPacket: %s", strerror(errno));
+		Sys_Error ("NET_GetPacket: %s", strerror(lasterror));
 	}
 
 	net_message.cursize = ret;
