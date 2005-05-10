@@ -30,23 +30,6 @@ typedef struct limited_cvar_s {
 	char *rulesetvalue;
 } limited_cvar_t;
 
-/* no more needed since hexum made better fix for tp macros 
-static char *allowed_smackdown_macros[] =
-{
-	"connectiontype",
-	"date",
-	"demoplayback",
-	"latency",
-	"matchname",
-	"matchstatus",
-	"matchtype",
-	"mp3info",
-	"qt",
-	"triggermatch",
-	NULL
-};
-*/
-
 typedef enum {rs_default, rs_smackdown} ruleset_t;
 
 static ruleset_t ruleset;
@@ -120,7 +103,9 @@ static void Rulesets_Smackdown(void) {
 	extern cvar_t amf_camera_death, amf_camera_chase, amf_part_gunshot_type, amf_part_traillen, amf_part_trailtime, amf_part_trailwidth, amf_part_traildetail, amf_part_trailtype, amf_part_sparks, amf_part_spikes, amf_part_gunshot, amf_waterripple, amf_lightning, amf_lightning_size, amf_lightning_size, amf_lightning_sparks;
 	extern qboolean qmb_initialized;
 #endif
-	int i = 0;
+	int i;
+
+#define NOQMB_SKIP_LOCKED 6
 
 	locked_cvar_t disabled_cvars[] = {
 #ifdef GLQUAKE
@@ -137,7 +122,7 @@ static void Rulesets_Smackdown(void) {
 		{&r_aliasstats, "0"}
 #endif
 	};
-
+	
 #ifdef GLQUAKE
 		limited_cvar_t limited_cvars[] = {
 		{&amf_part_gunshot_type, "1"},
@@ -152,10 +137,9 @@ static void Rulesets_Smackdown(void) {
 		};
 #endif
 
+	i = 0;
 #ifdef GLQUAKE
-	if (!qmb_initialized)
-		i = 6;
-	else
+	if (!qmb_initialized) i = NOQMB_SKIP_LOCKED + 1;
 #endif
 
 	for (; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
@@ -165,6 +149,7 @@ static void Rulesets_Smackdown(void) {
 	}
 
 #ifdef GLQUAKE
+	// there are no limited variables when not using GL or when not using -no24bit cmd-line option
 	if (qmb_initialized)
 	{
 		for (i = 0; i < (sizeof(limited_cvars) / sizeof(limited_cvars[0])); i++) {
