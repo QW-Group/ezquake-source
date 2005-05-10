@@ -838,12 +838,12 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_oldPL);
 	Cvar_Register (&cl_timeout);
 	Cvar_Register (&cl_useproxy);
+	Cvar_Register (&cl_crypt_rcon);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_NO_GROUP);
 	Cvar_Register (&password);
 	Cvar_Register (&rcon_password);
 	Cvar_Register (&rcon_address);
-	Cvar_Register (&cl_crypt_rcon);
 	Cvar_Register (&localid);
 	Cvar_Register (&cl_warncmd);
 	Cvar_Register (&cl_cmdline);
