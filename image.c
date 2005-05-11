@@ -502,6 +502,7 @@ static qboolean PNG_LoadLibrary(void) {
 	if (!(png_handle = dlopen("libpng12.so.0", RTLD_NOW)) && !(png_handle = dlopen("libpng.so", RTLD_NOW))) {
 		if (!(zlib_handle = dlopen("libz.so", RTLD_NOW | RTLD_GLOBAL))) {
 			QLib_MissingModuleError(QLIB_ERROR_MODULE_NOT_FOUND, "libz", "-nolibpng", "png image features");
+			png_handle = zlib_handle = NULL;
 			return false;
 		}
 		if (!(png_handle = dlopen("libpng12.so.0", RTLD_NOW)) && !(png_handle = dlopen("libpng.so", RTLD_NOW)))
@@ -509,6 +510,7 @@ static qboolean PNG_LoadLibrary(void) {
 		{
 			PNG_FreeLibrary();
 			QLib_MissingModuleError(QLIB_ERROR_MODULE_NOT_FOUND, "libpng", "-nolibpng", "png image features");
+			png_handle = zlib_handle = NULL;
 			return false;
 		}
 	}
@@ -516,6 +518,7 @@ static qboolean PNG_LoadLibrary(void) {
 	if (!QLib_ProcessProcdef(png_handle, pngprocs, NUM_PNGPROCS)) {
 		PNG_FreeLibrary();
 		QLib_MissingModuleError(QLIB_ERROR_MODULE_MISSING_PROC, "libpng", "-nolibpng", "png image features");
+		png_handle = zlib_handle = NULL;
 		return false;
 	}
 
@@ -1045,12 +1048,14 @@ static qboolean JPEG_LoadLibrary(void) {
 	if (!(jpeg_handle = dlopen("libjpeg.so.62", RTLD_NOW)) && !(jpeg_handle = dlopen("libjpeg.so", RTLD_NOW))) {
 #endif
 		QLib_MissingModuleError(QLIB_ERROR_MODULE_NOT_FOUND, "libjpeg", "-nolibjpeg", "jpeg image features");
+		jpeg_handle = NULL;
 		return false;
 	}
 
 	if (!QLib_ProcessProcdef(jpeg_handle, jpegprocs, NUM_JPEGPROCS)) {
 		JPEG_FreeLibrary();
 		QLib_MissingModuleError(QLIB_ERROR_MODULE_MISSING_PROC, "libjpeg", "-nolibjpeg", "jpeg image features");
+		jpeg_handle = NULL;
 		return false;
 	}
 
