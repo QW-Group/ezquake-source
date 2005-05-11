@@ -1577,8 +1577,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
     int a_rows, a_cols; // actual
 
     static cvar_t
-        *hud_frags_fraglimit = NULL,
-        *hud_frags_cell_width,
+        *hud_frags_cell_width = NULL,
         *hud_frags_cell_height,
         *hud_frags_rows,
         *hud_frags_cols,
@@ -1588,9 +1587,8 @@ void SCR_HUD_DrawFrags(hud_t *hud)
         *hud_frags_strip,
         *hud_frags_teamsort;
 
-    if (hud_frags_fraglimit == NULL)    // first time
+    if (hud_frags_cell_width == NULL)    // first time
     {
-        hud_frags_fraglimit     = HUD_FindVar(hud, "fraglimit");
         hud_frags_cell_width    = HUD_FindVar(hud, "cell_width");
         hud_frags_cell_height   = HUD_FindVar(hud, "cell_height");
         hud_frags_rows          = HUD_FindVar(hud, "rows");
@@ -2254,7 +2252,6 @@ void CommonDraw_Init(void)
         "space_x", "1",
         "space_y", "1",
         "teamsort", "0",
-        "fraglimit", "1",
         "strip", "1",
         "vertical", "0",
         NULL);
