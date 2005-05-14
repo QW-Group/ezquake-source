@@ -1209,6 +1209,11 @@ void Cmd_ExecuteString (char *text) {
 			if (
 				Q_strcasecmp(cmd_argv[0], "say") &&
 				Q_strcasecmp(cmd_argv[0], "say_team") &&
+				Q_strcasecmp(cmd_argv[0], "wait") &&
+				Q_strcasecmp(cmd_argv[0], "echo") &&
+				Q_strcasecmp(cmd_argv[0], "tp_point") &&
+				Q_strcasecmp(cmd_argv[0], "tp_pickup") &&
+				Q_strcasecmp(cmd_argv[0], "tp_took") &&
 				Q_strcasecmp(cmd_argv[0], "if")
 				) {
 					Com_Printf("Ruleset %s restricts use of \"%s\" with teamplay macros\n", Rulesets_Ruleset(), cmd_argv[0]);
