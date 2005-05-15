@@ -47,12 +47,10 @@ cvar_t  sbar_drawhealth     = {"hud_sbar_drawhealth", "1"};;
 cvar_t  sbar_drawarmor      = {"hud_sbar_drawarmor",  "1"};;
 cvar_t  sbar_drawammo       = {"hud_sbar_drawammo",   "1"};;
 
-//cvar_t  hud_centerranking   = {"hud_ranks_centered",   "0", CVAR_HUD};
-//cvar_t  hud_rankingtitle    = {"hud_ranks_drawtitle",  "1", CVAR_HUD};
-//cvar_t  hud_rankingpos      = {"hud_ranks_posy",       "0", CVAR_HUD};
-//cvar_t  hud_faderankings    = {"hud_ranks_fadescreen", "0", CVAR_HUD};
+cvar_t  hud_centerranking   = {"scr_scoreboard_centered",   "1"};
+cvar_t  hud_rankingpos      = {"scr_scoreboard_posy",       "0"};
+cvar_t  hud_faderankings    = {"scr_scoreboard_fadescreen", "0"};
 //cvar_t  hud_ranks_separate  = {"hud_ranks_separate",   "1", CVAR_HUD};
-//cvar_t  hud_ranks_teamsort  = {"hud_ranks_teamsort",   "1", CVAR_HUD};
 // <-- mqwcl 0.96 oldhud customisation
 
 #define STAT_MINUS		10	// num frame for '-' stats digit
@@ -254,13 +252,11 @@ void Sbar_Init (void) {
     Cvar_Register (&sbar_drawhealth);
     Cvar_Register (&sbar_drawarmor);
     Cvar_Register (&sbar_drawammo);
-    //Cvar_Register (&hud_centerranking);
-    //Cvar_Register (&hud_rankingtitle);
-    //Cvar_Register (&hud_rankingpos);
-    //Cvar_Register (&hud_faderankings);
+    Cvar_Register (&hud_centerranking);
+    Cvar_Register (&hud_rankingpos);
+    Cvar_Register (&hud_faderankings);
     //Cvar_Register (&hud_sbar_size);
     //Cvar_Register (&hud_ranks_separate);
-    //Cvar_Register (&hud_ranks_teamsort);
 // <-- mqwcl 0.96 oldhud customisation
 
 	Cvar_Register (&scr_drawHFrags);
@@ -1098,6 +1094,11 @@ static void Sbar_DeathmatchOverlay (int start) {
 
     draw_fps = show_fps2.value && !cl.intermission && !cls.mvdplayback;
     offset = 8 * draw_fps;
+    // mqwcl -->
+    if (!start  &&  hud_faderankings.value)
+        //Draw_FadeScreen(0, 0, 0, scr_menualpha.value);
+		Draw_FadeScreen();
+    // mqwcl <--
 
 #ifndef CLIENTONLY
 	// FIXME
@@ -1159,12 +1160,23 @@ static void Sbar_DeathmatchOverlay (int start) {
 	leftover = rank_width;
 	rank_width = bound(0, rank_width, vid.width - 16);
 	leftover = max(0, leftover - rank_width);
-	xofs = ((vid.width - rank_width) >> 1);
+	if (hud_centerranking.value)
+		xofs = ((vid.width - rank_width) >> 1);
+	else
+		xofs = 0;
+    
+    if (start)
+        y = start;
+	else {
+		y = hud_rankingpos.value;
+		if (y < 0  ||  y > vid.height/2)
+			y = 0;
+		}
 
 	if (!start) {
 		if (scr_scoreboard_drawtitle.value) {
 			pic = Draw_CachePic ("gfx/ranking.lmp");
-			Draw_Pic (xofs + (rank_width - pic->width) / 2, 0, pic);
+			Draw_Pic (xofs + (rank_width - pic->width) / 2, y, pic);
 			start = 36;
 		} else {
 			start = 12;
@@ -1394,6 +1406,11 @@ static void Sbar_TeamOverlay (void) {
 		Sbar_DeathmatchOverlay(0);
 		return;
 	}
+    // mqwcl -->
+    if (hud_faderankings.value)
+        //Draw_FadeScreen(0, 0, 0, scr_menualpha.value);
+		Draw_FadeScreen();
+    // mqwcl <--
 
 	scr_copyeverything = 1;
 	scr_fullupdate = 0;
@@ -1401,11 +1418,19 @@ static void Sbar_TeamOverlay (void) {
 	rank_width = cl.teamplay ? RANK_WIDTH_TEAM : RANK_WIDTH_DM;
 	rank_width = bound(0, rank_width, vid.width - 16);
 
-	xofs = (vid.width - rank_width) >> 1;
+    y = hud_rankingpos.value;
+    if (y < 0  ||  y > vid.height/2)
+		y = 0;
+
+
+	if (hud_centerranking.value)
+		xofs = (vid.width - rank_width) >> 1;
+	else
+		xofs = 0;
 
 	if (scr_scoreboard_drawtitle.value) {
 		pic = Draw_CachePic ("gfx/ranking.lmp");
-		Draw_Pic (xofs + (rank_width - pic->width) / 2, 0, pic);
+		Draw_Pic (xofs + (rank_width - pic->width) / 2, y, pic);
 		y = 26;
 	} else {
 		y = 2;
