@@ -456,6 +456,7 @@ extern cvar_t r_explosionlight;
 extern cvar_t r_explosiontype;
 extern cvar_t r_flagcolor;
 extern cvar_t r_lightflicker;
+extern cvar_t r_telesplash; // disconnect
 
 // ZQuake cvars
 extern cvar_t	cl_warncmd;
