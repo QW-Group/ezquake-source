@@ -113,6 +113,7 @@ cvar_t r_rockettrail			= {"r_rocketTrail", "1"}; // 9
 cvar_t r_grenadetrail			= {"r_grenadeTrail", "1"}; // 3
 cvar_t r_explosiontype			= {"r_explosionType", "1"}; // 7
 // END shaman :: balancing variables
+cvar_t r_telesplash				= {"r_telesplash", "1"}; // disconnect
 
 // info mirrors
 cvar_t	password = {"password", "", CVAR_USERINFO};
@@ -773,6 +774,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_shownet);
 	Cvar_Register (&show_fps2);
 	Cvar_Register (&cl_confirmquit);
+	Cvar_Register (&r_telesplash);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register (&cl_sbar);

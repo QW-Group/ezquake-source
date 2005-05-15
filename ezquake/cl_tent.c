@@ -406,6 +406,7 @@ void CL_ParseTEnt (void) {
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
+		if (r_telesplash.value){
 #ifdef GLQUAKE
 		if (amf_part_teleport.value)
 			VXTeleport(pos);
@@ -416,6 +417,7 @@ void CL_ParseTEnt (void) {
 		if (amf_coronas_tele.value)
 			NewCorona (C_BLUEFLASH, pos);
 #endif
+			}
 		break;
 
 	case TE_GUNSHOT:			// bullet hitting wall
