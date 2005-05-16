@@ -40,6 +40,8 @@ cvar_t cl_hightrack = {"cl_hightrack", "0" };	// track high fragger
 // } cl_hightrack
 cvar_t cl_chasecam = {"cl_chasecam", "1"};		// "through the eyes" view
 
+cvar_t mvd_autotrack = {"mvd_autotrack", "0"};
+
 vec3_t cam_viewangles;
 double cam_lastviewtime;
 
@@ -540,6 +542,115 @@ void Cam_TryLock (void) {
 	}
 }
 
+int CL_FindBestPlayer_f(void){
+
+	int bp_id,bp_calc_val,i,h,j = 0;
+	int bp_at,bp_bw,bp_pw;
+	int lastval = 0;
+	int z = 0;
+	player_info_t *bp_info;
+	bp_info = cl.players;
+	
+
+	typedef struct bp_var_s{
+		int id;
+		int val;
+	} bp_var_t;
+	bp_var_t bp_var[MAX_CLIENTS];
+
+
+	
+	for ( i=0, z=0; i<MAX_CLIENTS ; i++ ){
+		if (!bp_info[i].name[0])
+			continue;
+		if (bp_info[i].spectator)
+			continue;
+	
+		// get bestweapon
+		bp_bw = CL_AutoTrackBW_f(i);
+		
+		
+	
+		
+		// get armortype
+		if (bp_info[i].stats[STAT_ITEMS] & IT_ARMOR1)
+			bp_at = 1 ;
+		else if (bp_info[i].stats[STAT_ITEMS] & IT_ARMOR2)
+			bp_at = 2 ;
+		else if (bp_info[i].stats[STAT_ITEMS] & IT_ARMOR3)
+			bp_at = 3 ;
+		else
+			bp_at = 0;
+		
+		// get powerup type
+		bp_pw=0;
+		if (bp_info[i].stats[STAT_ITEMS] & IT_QUAD)
+			bp_pw += 900;
+		if (bp_info[i].stats[STAT_ITEMS] & IT_INVULNERABILITY)
+			bp_pw += 1000;
+		if (bp_info[i].stats[STAT_ITEMS] & IT_INVISIBILITY)
+			bp_pw += 300;
+		// calculating players "value"
+		bp_calc_val = (bp_info[i].stats[STAT_ARMOR] * bp_at) + (50 * bp_bw) + bp_pw + bp_info[i].frags;
+		
+		
+		bp_var[z].id 	= bp_info[i].userid;
+		bp_var[z++].val = bp_calc_val;
+	}
+	
+
+
+	// looking whos best
+	lastval=0;
+	bp_id=0;
+	for ( h=0 ; h<z ; h++ ){
+		if(lastval < bp_var[h].val){
+				lastval = bp_var[h].val;
+				bp_id 	= bp_var[h].id;
+		}
+		
+	}
+	return(bp_id);
+	
+}
+
+int CL_AutoTrackBW_f(int i){
+	extern cvar_t tp_weapon_order;
+	int j;
+	player_info_t *bp_info;
+	bp_info = cl.players;
+	
+	char *t[] = {tp_weapon_order.string, "78654321", NULL}, **s;	
+	
+		for (s = t; *s; s++) {
+			for (j = 0 ; j < strlen(*s) ; j++) {
+				switch ((*s)[j]) {
+					case '1': if (bp_info[i].stats[STAT_ITEMS] & IT_AXE) return 0; break;
+					case '2': if (bp_info[i].stats[STAT_ITEMS] & IT_SHOTGUN) return 1; break;
+					case '3': if (bp_info[i].stats[STAT_ITEMS] & IT_SUPER_SHOTGUN) return 2; break;
+					case '4': if (bp_info[i].stats[STAT_ITEMS] & IT_NAILGUN) return 3; break;
+					case '5': if (bp_info[i].stats[STAT_ITEMS] & IT_SUPER_NAILGUN) return 4; break;
+					case '6': if (bp_info[i].stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER) return 5; break;
+					case '7': if (bp_info[i].stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) return 6; break;
+					case '8': if (bp_info[i].stats[STAT_ITEMS] & IT_LIGHTNING) return 6; break;
+				}
+			}
+		}
+	return 0;
+}
+
+void CL_AutoTrack_f(void) {
+	char arg[50];
+	int i;
+	if (!mvd_autotrack.value)
+		return;
+
+	i = CL_FindBestPlayer_f();
+	arg[0]='\0';
+	sprintf(arg,"track %i \n",i);
+	Cbuf_AddText(arg);
+}
+
 void CL_InitCam(void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SPECTATOR);
 // cl_hightrack {
@@ -547,6 +658,7 @@ void CL_InitCam(void) {
 // } cl_hightrack
 	Cvar_Register (&cl_chasecam);
 
+	Cvar_Register (&mvd_autotrack);
 	Cvar_ResetCurrentGroup();
 	Cmd_AddCommand ("track", CL_Track_f);	
 
