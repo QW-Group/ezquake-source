@@ -2005,7 +2005,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 
 	// Don't allow showing the timer during ruleset smackdown,
 	// can be used for timing powerups.
-	if(!Q_strcasecmp(Rulesets_Ruleset(), "smackdown"))
+	if(!Q_strncasecmp(Rulesets_Ruleset(), "smackdown", 9))
 	{
 		sprintf(time_string, va("\x10%s\x11", "Not allowed"));
 	}
