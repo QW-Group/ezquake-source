@@ -10,6 +10,9 @@
 #include "sbar.h"
 #include "EX_misc.h"
 #include "vx_stuff.h"
+#include "utils.h"
+#include "mp3_player.h"
+#include "rulesets.h"
 #ifndef STAT_MINUS
 #define STAT_MINUS		10
 #endif
@@ -1836,6 +1839,186 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
     }
 }
 
+char *Get_MP3_HUD_style(float style, char *st)
+{
+	static char HUD_style[32];
+	if(style == 1.0)
+	{
+		Q_strncpyz(HUD_style, va("%s:", st), sizeof(HUD_style));
+	}
+	else if(style == 2.0)
+	{
+		Q_strncpyz(HUD_style, va("\x10%s\x11", st), sizeof(HUD_style));
+	}
+	else
+	{
+		Q_strncpyz(HUD_style, "", sizeof(HUD_style));
+	}
+	return HUD_style;
+}
+
+// Draws MP3 Title.
+void SCR_HUD_DrawMP3_Title(hud_t *hud)
+{
+	int x=0, y=0, n=1;
+    int width = 64;
+	int height = 8;
+	int width_as_text = 0;
+	int title_length = 0;
+	int row_break = 0;
+	int i=0;
+	int status = 0;
+	char title[MP3_MAXSONGTITLE];
+
+	static cvar_t *style = NULL, *width_var, *height_var, *scroll, *scroll_delay, *on_scoreboard, *wordwrap;
+
+	if (style == NULL)  // first time called
+    {
+        style =				HUD_FindVar(hud, "style");
+		width_var =			HUD_FindVar(hud, "width");
+		height_var =		HUD_FindVar(hud, "height");
+		scroll =			HUD_FindVar(hud, "scroll");
+		scroll_delay =		HUD_FindVar(hud, "scroll_delay");
+		on_scoreboard =		HUD_FindVar(hud, "on_scoreboard");
+		wordwrap =			HUD_FindVar(hud, "wordwrap");
+    }
+
+	if(on_scoreboard->value)
+	{
+		hud->flags |= HUD_ON_SCORES;
+	}
+	else if((int)on_scoreboard->value & HUD_ON_SCORES)
+	{
+		hud->flags -= HUD_ON_SCORES;
+	}
+
+	width = (int)width_var->value;
+	height = (int)height_var->value;
+	
+	if(width < 0) width = 0;
+	if(width > vid.width) width = vid.width;
+	if(height < 0) height = 0;
+	if(height > vid.width) height = vid.height;
+	
+	status = MP3_GetStatus();
+
+	switch(status)
+	{
+		case MP3_PLAYING :
+			title_length = sprintf(title, "%s %s", Get_MP3_HUD_style(style->value, "Playing"), MP3_Macro_MP3Info());
+			break;
+		case MP3_PAUSED :
+			title_length = sprintf(title, "%s %s", Get_MP3_HUD_style(style->value, "Paused"), MP3_Macro_MP3Info());
+			break;
+		case MP3_STOPPED :
+			title_length = sprintf(title, "%s %s", Get_MP3_HUD_style(style->value, "Stopped"), MP3_Macro_MP3Info());
+			break;
+		case MP3_NOTRUNNING	:
+		default :
+			status = MP3_NOTRUNNING;
+			title_length = sprintf(title, "%s is not running.", MP3_PLAYERNAME_ALLCAPS);
+			break;
+	}
+
+	if(title_length < 0)
+	{
+		sprintf(title, "Error retrieving current song.");
+	}
+	
+	if (HUD_PrepareDraw(hud, width , height, &x, &y))
+	{
+		SCR_DrawWordWrapString(x, y, 8, width, height, (int)wordwrap->value, (int)scroll->value, (float)scroll_delay->value, title);
+	}
+}
+
+// Draws MP3 Time as a HUD-element.
+void SCR_HUD_DrawMP3_Time(hud_t *hud)
+{
+	int x=0, y=0, width=0, height=0;
+	int elapsed = 0;
+	int remain = 0;
+	int total = 0;
+	char time_string[MP3_MAXSONGTITLE];
+	char elapsed_string[MP3_MAXSONGTITLE];
+
+
+	static cvar_t *style = NULL, *on_scoreboard;
+	
+	if(style == NULL)
+	{
+		style			= HUD_FindVar(hud, "style");
+		on_scoreboard	= HUD_FindVar(hud, "on_scoreboard");
+	}
+
+	if(on_scoreboard->value)
+	{
+		hud->flags |= HUD_ON_SCORES;
+	}
+	else if((int)on_scoreboard->value & HUD_ON_SCORES)
+	{
+		hud->flags -= HUD_ON_SCORES;
+	}
+
+	if(!MP3_GetOutputtime(&elapsed, &total) || elapsed < 0 || total < 0) 
+	{
+		sprintf(time_string, "\x10-:-\x11");
+	}
+	else
+	{
+		switch((int)style->value)
+		{
+			case 1 :
+				remain = total - elapsed;
+				Q_strncpyz(elapsed_string, SecondsToMinutesString(remain), sizeof(elapsed_string));
+				sprintf(time_string, va("\x10-%s/%s\x11", elapsed_string, SecondsToMinutesString(total)));
+				break;
+			case 2 :
+				remain = total - elapsed;
+				sprintf(time_string, va("\x10-%s\x11", SecondsToMinutesString(remain)));
+				break;
+			case 3 :
+				sprintf(time_string, va("\x10%s\x11", SecondsToMinutesString(elapsed)));
+				break;
+			case 4 :
+				remain = total - elapsed;
+				Q_strncpyz(elapsed_string, SecondsToMinutesString(remain), sizeof(elapsed_string));
+				sprintf(time_string, va("%s/%s", elapsed_string, SecondsToMinutesString(total)));
+				break;
+			case 5 :				
+				Q_strncpyz(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
+				sprintf(time_string, va("-%s/%s", elapsed_string, SecondsToMinutesString(total)));
+				break;
+			case 6 :
+				remain = total - elapsed;
+				sprintf(time_string, va("-%s", SecondsToMinutesString(remain)));
+				break;
+			case 7 :
+				sprintf(time_string, va("%s", SecondsToMinutesString(elapsed)));
+				break;
+			case 0 :
+			default :
+				Q_strncpyz(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
+				sprintf(time_string, va("\x10%s/%s\x11", elapsed_string, SecondsToMinutesString(total)));
+				break;
+		}
+	}
+
+	// Don't allow showing the timer during ruleset smackdown,
+	// can be used for timing powerups.
+	if(!Q_strcasecmp(Rulesets_Ruleset(), "smackdown"))
+	{
+		sprintf(time_string, va("\x10%s\x11", "Not allowed"));
+	}
+	
+	width = strlen(time_string)*8;
+	height = 8;
+
+	if (HUD_PrepareDraw(hud, width , height, &x, &y))
+	{
+		Draw_String(x, y, time_string);
+	}
+}
+
 // ----------------
 // Init
 // and add some common elements to hud (clock etc)
@@ -2268,6 +2451,26 @@ void CommonDraw_Init(void)
         "strip", "1",
         "vertical", "0",
         NULL);
+
+	HUD_Register("mp3_title", NULL, "Shows current mp3 playing.",
+        HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Title,
+        "0", "top", "right", "bottom", "0", "0", "0",
+		"style",	"2",
+		"width",	"512",
+		"height",	"8",
+		"scroll",	"1",
+		"scroll_delay", "0.5",
+		"on_scoreboard", "0",
+		"wordwrap", "1",
+        NULL);
+
+	HUD_Register("mp3_time", NULL, "Shows the time of the current mp3 playing.",
+        HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Time,
+        "0", "top", "left", "bottom", "0", "0", "0",
+		"style",	"0",
+		"on_scoreboard", "0",
+        NULL);
+
         
 /* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
 #ifdef GLQUAKE

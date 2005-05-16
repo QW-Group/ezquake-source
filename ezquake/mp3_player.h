@@ -100,7 +100,7 @@ void MP3_FadeOut_f(void);
 int MP3_ParsePlaylist_EXTM3U(char *, unsigned int, char *entries[], unsigned int, unsigned int);
 
 char *MP3_Menu_SongtTitle(void);
-
+char *MP3_Macro_MP3Info(void);
 
 extern cvar_t mp3_dir, mp3_scrolltitle, mp3_showtime, mp3_volume, mp3_xmms_session;
 
