@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  * Player moves as a spectator, but the camera tracks and enemy player
  */
 
+#include "cl_cam.h"
 #include "quakedef.h"
 #include "pmove.h"
 #include "sbar.h"
@@ -549,7 +550,6 @@ int CL_FindBestPlayer_f(void){
 	int lastval = 0;
 	int z = 0;
 	player_info_t *bp_info;
-	bp_info = cl.players;
 	
 
 	typedef struct bp_var_s{
@@ -557,6 +557,7 @@ int CL_FindBestPlayer_f(void){
 		int val;
 	} bp_var_t;
 	bp_var_t bp_var[MAX_CLIENTS];
+	bp_info = cl.players;
 
 
 	
@@ -618,10 +619,11 @@ int CL_AutoTrackBW_f(int i){
 	extern cvar_t tp_weapon_order;
 	int j;
 	player_info_t *bp_info;
-	bp_info = cl.players;
 	
 	char *t[] = {tp_weapon_order.string, "78654321", NULL}, **s;	
-	
+
+	bp_info = cl.players;
+
 		for (s = t; *s; s++) {
 			for (j = 0 ; j < strlen(*s) ; j++) {
 				switch ((*s)[j]) {
