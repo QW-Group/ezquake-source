@@ -49,4 +49,7 @@ void SHA1Final(unsigned char digest[DIGEST_SIZE], SHA1_CTX* context);
 #define R4(v,w,x,y,z,i) z+=(w^x^y)+blk(i)+0xCA62C1D6+rol(v,5);w=rol(w,30);
 
 //VVD: SHA1 crypt
-char *SHA1(char *string, int len);
+char *SHA1(char *string);
+void SHA1_Init(void);
+void SHA1_Update(unsigned char* data);
+char *SHA1_Final(void);

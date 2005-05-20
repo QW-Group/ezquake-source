@@ -144,18 +144,37 @@ unsigned char finalcount[8];
 }
 
 //VVD: SHA1 crypt
-char *SHA1(char *string, int len)
+char *bin2hex(unsigned char *d)
 {
-	SHA1_CTX	context;
-	unsigned char	digest[DIGEST_SIZE];
 	static char	ret[DIGEST_SIZE * 2 + 1];
-	unsigned char	*d = digest;
 	int		i;
-
-	SHA1Init(&context);
-	SHA1Update(&context, string, len);
-	SHA1Final(digest, &context);
 	for (i = 0; i < DIGEST_SIZE * 2; i += 2, d++)
 		snprintf(ret + i, DIGEST_SIZE * 2 + 1 - i, "%02X", *d);
 	return ret;
+}
+
+char *SHA1(char *string)
+{
+	SHA1_CTX	context;
+	unsigned char	digest[DIGEST_SIZE];
+	SHA1Init(&context);
+	SHA1Update(&context, string, strlen(string));
+	SHA1Final(digest, &context);
+	return bin2hex(digest);
+}
+
+SHA1_CTX	context;
+void SHA1_Init(void)
+{
+	SHA1Init(&context);
+}
+void SHA1_Update(unsigned char *string)
+{
+	SHA1Update(&context, string, strlen(string));
+}
+char *SHA1_Final(void)
+{
+	unsigned char	digest[DIGEST_SIZE];
+	SHA1Final(digest, &context);
+	return bin2hex(digest);
 }
