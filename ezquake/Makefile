@@ -178,6 +178,7 @@ QWCL_OBJS = \
     $(BUILDDIR)/build/sha1.o \
     $(BUILDDIR)/build/mdfour.o \
     $(BUILDDIR)/build/menu.o \
+    $(BUILDDIR)/build/mvd_utils.o \
     $(BUILDDIR)/build/sbar.o \
     $(BUILDDIR)/build/cl_screen.o \
     $(BUILDDIR)/build/skin.o \
@@ -214,6 +215,7 @@ QWCL_OBJS = \
     $(BUILDDIR)/build/mp3_player.o \
     $(BUILDDIR)/build/fmod.o \
     $(BUILDDIR)/build/localtime_linux.o \
+    $(BUILDDIR)/build/mvd_utils.o \
  \
     $(BUILDDIR)/build/xml_test.o \
     $(BUILDDIR)/build/xsd.o \
@@ -427,6 +429,9 @@ $(BUILDDIR)/build/mathlib.o :        $(SOURCE_DIR)/mathlib.c
 $(BUILDDIR)/build/menu.o :           $(SOURCE_DIR)/menu.c
 	$(DO_CC)
                                                                                                       
+$(BUILDDIR)/build/mvd_utils.o :           $(SOURCE_DIR)/mvd_utils.c
+	$(DO_CC)
+                                                                                                      
 $(BUILDDIR)/build/movie.o :           $(SOURCE_DIR)/movie.c
 	$(DO_CC)                              
                                                                       
@@ -569,6 +574,9 @@ $(BUILDDIR)/build/config_manager.o : $(SOURCE_DIR)/config_manager.c
 	$(DO_CC)    
 
 $(BUILDDIR)/build/localtime_linux.o : $(SOURCE_DIR)/localtime_linux.c
+	$(DO_CC)
+	
+$(BUILDDIR)/build/mvd_utils.o : $(SOURCE_DIR)/mvd_utils.c
 	$(DO_CC)
 	
 $(BUILDDIR)/build/mp3_player.o :	$(SOURCE_DIR)/mp3_player.c
@@ -760,6 +768,7 @@ GLQWCL_OBJS = \
     $(BUILDDIR)/build-gl/sha1.o \
     $(BUILDDIR)/build-gl/mdfour.o \
     $(BUILDDIR)/build-gl/menu.o \
+    $(BUILDDIR)/build-gl/mvd_utils.o \
     $(BUILDDIR)/build-gl/sbar.o \
     $(BUILDDIR)/build-gl/skin.o \
     $(BUILDDIR)/build-gl/teamplay.o \
@@ -951,6 +960,9 @@ $(BUILDDIR)/build-gl/mathlib.o :        $(SOURCE_DIR)/mathlib.c
 	$(DO_GL_CC)
                                                                                                                                   
 $(BUILDDIR)/build-gl/menu.o :           $(SOURCE_DIR)/menu.c
+	$(DO_GL_CC)
+                                                                                                                                   
+$(BUILDDIR)/build-gl/mvd_utils.o :           $(SOURCE_DIR)/mvd_utils.c
 	$(DO_GL_CC)
                                                                                                                                    
 $(BUILDDIR)/build-gl/net_chan.o :       $(SOURCE_DIR)/net_chan.c
