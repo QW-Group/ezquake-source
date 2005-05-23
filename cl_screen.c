@@ -59,11 +59,6 @@ int				glx, gly, glwidth, glheight;
 #endif
 
 
-
-extern qboolean TP_LoadLocFile (char *path, qboolean quiet);
-extern char *TP_LocationName(vec3_t location);
-extern char *Weapon_NumToString(int num);
-
 char *COM_FileExtension (char *in);
 
 

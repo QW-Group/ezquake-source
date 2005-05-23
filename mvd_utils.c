@@ -12,6 +12,9 @@ extern cvar_t tp_name_none, tp_weapon_order;
 char mvd_info_best_weapon[20], mvd_info_best_ammo[20];
 extern int loc_loaded;
 
+extern qboolean TP_LoadLocFile (char *path, qboolean quiet);
+extern char *TP_LocationName(vec3_t location);
+extern char *Weapon_NumToString(int num);
 
 // mvd_info cvars
 cvar_t			mvd_info		= {"mvd_info", "0"};
@@ -370,6 +373,9 @@ void MVD_AutoTrack_f(void) {
 }
 
 
+void MVD_Mainhook (void){
+	MVD_AutoTrack_f ();
+}
 
 void MVD_Utils_Init (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIEW);

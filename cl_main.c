@@ -1157,7 +1157,7 @@ void CL_Frame (double time) {
 
 		if (cls.mvdplayback){
 			MVD_Interpolate();
-			MVD_AutoTrack_f();
+			MVD_Mainhook_f();
 		}
 		// process stuffed commands
 		Cbuf_ExecuteEx(&cbuf_svc);
@@ -1194,7 +1194,7 @@ void CL_Frame (double time) {
 
 			if (cls.mvdplayback){
 				MVD_Interpolate();
-				MVD_AutoTrack_f();
+				MVD_Mainhook_f();
 			}
 
 			// process stuffed commands
