@@ -920,6 +920,7 @@ void CL_Init (void) {
 
 	Key_Init ();
 	V_Init ();
+	MVD_Utils_Init ();
 
 #ifdef __linux__
 	IN_Init ();
@@ -1154,7 +1155,7 @@ void CL_Frame (double time) {
 
 		if (cls.mvdplayback){
 			MVD_Interpolate();
-			CL_AutoTrack_f();
+			MVD_AutoTrack_f();
 		}
 		// process stuffed commands
 		Cbuf_ExecuteEx(&cbuf_svc);
@@ -1191,7 +1192,7 @@ void CL_Frame (double time) {
 
 			if (cls.mvdplayback){
 				MVD_Interpolate();
-				CL_AutoTrack_f();
+				MVD_AutoTrack_f();
 			}
 
 			// process stuffed commands
