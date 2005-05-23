@@ -576,9 +576,6 @@ $(BUILDDIR)/build/config_manager.o : $(SOURCE_DIR)/config_manager.c
 $(BUILDDIR)/build/localtime_linux.o : $(SOURCE_DIR)/localtime_linux.c
 	$(DO_CC)
 	
-$(BUILDDIR)/build/mvd_utils.o : $(SOURCE_DIR)/mvd_utils.c
-	$(DO_CC)
-	
 $(BUILDDIR)/build/mp3_player.o :	$(SOURCE_DIR)/mp3_player.c
 	$(DO_CC)    
 	

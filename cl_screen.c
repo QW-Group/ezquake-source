@@ -41,6 +41,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud.h" // HUD -> hexum
 #include "hud_common.h"
 
+#include "mvd_utils.h"
+
 #ifdef _WIN32
 #include "movie.h"	//joe: capturing to avi
 #include "movie_avi.h"	//
