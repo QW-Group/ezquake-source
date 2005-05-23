@@ -16,6 +16,8 @@ extern qboolean TP_LoadLocFile (char *path, qboolean quiet);
 extern char *TP_LocationName(vec3_t location);
 extern char *Weapon_NumToString(int num);
 
+int MVD_AutoTrackBW_f(int i);
+
 // mvd_info cvars
 cvar_t			mvd_info		= {"mvd_info", "0"};
 cvar_t			mvd_info_setup	= {"mvd_info_setup", "%n %f %l %a %h %w"};
@@ -373,7 +375,7 @@ void MVD_AutoTrack_f(void) {
 }
 
 
-void MVD_Mainhook (void){
+void MVD_Mainhook_f (void){
 	MVD_AutoTrack_f ();
 }
 
