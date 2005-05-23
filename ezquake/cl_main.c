@@ -44,6 +44,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mp3_player.h"
 #include "cl_cam.h"
 
+#include "mvd_utils.h"
+
 #ifndef _WIN32
 #include <netdb.h>		
 #endif
