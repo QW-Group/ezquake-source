@@ -17,6 +17,8 @@ extern char *TP_LocationName(vec3_t location);
 extern char *Weapon_NumToString(int num);
 
 int MVD_AutoTrackBW_f(int i);
+int axe_val, sg_val, ssg_val, ng_val, sng_val, gl_val, rl_val, lg_val, ga_val, ya_val, ra_val, ring_val, quad_val, pent_val ;
+
 
 // mvd_info cvars
 cvar_t			mvd_info		= {"mvd_info", "0"};
@@ -26,6 +28,15 @@ cvar_t			mvd_info_y		= {"mvd_info_y", "0"};
 
 // mvd_autotrack cvars
 cvar_t mvd_autotrack = {"mvd_autotrack", "0"};
+cvar_t mvd_autotrack_1on1 = {"mvd_autotrack_1on1", "%a * %A + 50 * %W + %p + %f"};
+cvar_t mvd_autotrack_1on1_values = {"mvd_autotrack_1on1_values", "1 2 3 2 3 5 8 8 1 2 3 0 0 0"}; 
+cvar_t mvd_autotrack_2on2 = {"mvd_autotrack_2on2", "%a * %A + 50 * %W + %p + %f"};
+cvar_t mvd_autotrack_2on2_values = {"mvd_autotrack_2on2_values", "1 2 3 2 3 5 8 8 1 2 3 500 900 1000"}; 
+cvar_t mvd_autotrack_4on4 = {"mvd_autotrack_4on4", "%a * %A + 50 * %W + %p + %f"};
+cvar_t mvd_autotrack_4on4_values = {"mvd_autotrack_4on4_values", "1 2 4 2 4 6 10 10 1 2 3 500 900 1000"}; 
+cvar_t mvd_autotrack_custom = {"mvd_autotrack_custom", "%a * %A + 50 * %W + %p + %f"};
+cvar_t mvd_autotrack_custom_values = {"mvd_autotrack_custom_values", "1 2 3 2 3 6 6 1 2 3 500 900 1000"}; 
+
 
 
 int MVD_BestWeapon (int i) {
@@ -89,19 +100,6 @@ char *MVD_BestAmmo (int i) {
 	}
 }
 
-void MVD_INFO_Usage_f (void) {
-	Com_Printf("mvd_info_setup usage:\n");
-	Com_Printf("%%a - Armor\n");
-	Com_Printf("%%f - Frags\n");
-	Com_Printf("%%h - Health\n");
-	Com_Printf("%%l - Location\n");
-	Com_Printf("%%n - Nickname\n");
-	Com_Printf("%%p - Powerups\n");
-	Com_Printf("%%P - Ping\n");
-	Com_Printf("%%w - Current Weapon:ammo\n");
-	Com_Printf("%%w - Best Weapon:ammo\n");
-
-}
 
 void MVD_Info (void){
 	char str[80];
@@ -266,22 +264,92 @@ void MVD_Info (void){
 
 int MVD_FindBestPlayer_f(void){
 
-	int bp_id,bp_calc_val,i,h,j = 0;
-	int bp_at,bp_bw,bp_pw;
+	int bp_id,bp_calc_val,i,h,j,y = 0;
+	int loop = 1;
+	int loop_count = 0;
+	
+	char val[80];
+	int bp_at,bp_bw,bp_pw,bp_h;
 	int lastval = 0;
 	int z = 0;
-	player_info_t *bp_info;
-	
+	int gtype = 0;
+
+	char eq[30][4];
 
 	typedef struct bp_var_s{
 		int id;
 		int val;
 	} bp_var_t;
+
 	bp_var_t bp_var[MAX_CLIENTS];
+
+	player_info_t *bp_info;
 	bp_info = cl.players;
 
+	for ( i=0; i<MAX_CLIENTS ; i++ ){
+		if (!bp_info[i].name[0])
+			continue;
+		if (bp_info[i].spectator)
+			continue;
+		gtype++;
+	}	
 
+	if (gtype == 2)
+		strcpy(val,mvd_autotrack_1on1_values.string);
+	else if (gtype == 4)
+		strcpy(val,mvd_autotrack_2on2_values.string);
+	else if (gtype == 8)
+		strcpy(val,mvd_autotrack_4on4_values.string);
+	else if (mvd_autotrack.value == 2)
+		strcpy(val,mvd_autotrack_custom_values.string);
+	else
+		strcpy(val,mvd_autotrack_1on1_values.string);
 	
+	
+	// checking if mvd_autotrack_xonx_values have right format
+	if (strtok(val, " ") != NULL){
+		for(y=1;y<=12;y++){
+			if (strtok(NULL, " ") != NULL){
+			}else{
+				Com_Printf("mvd_autotrack aborting due to wrong use of mvd_autotrack_*_value\n");
+				mvd_autotrack.value = 0;
+				return;
+			}
+		}
+	}else{
+	Com_Printf("mvd_autotrack aborting due to wrong use of mvd_autotrack_*_value\n");
+	mvd_autotrack.value = 0;
+	return;
+	}
+	
+	if (gtype == 2)
+		strcpy(val,mvd_autotrack_1on1_values.string);
+	else if (gtype == 4)
+		strcpy(val,mvd_autotrack_2on2_values.string);
+	else if (gtype == 8)
+		strcpy(val,mvd_autotrack_4on4_values.string);
+	else if (mvd_autotrack.value == 2)
+		strcpy(val,mvd_autotrack_custom_values.string);
+	else
+		strcpy(val,mvd_autotrack_1on1_values.string);
+
+	// getting values
+	//val = mvd_autotrack_1on1_values.string;
+	axe_val	=atoi(strtok(val, " "));
+	sg_val	=atoi(strtok(NULL, " "));
+	ssg_val	=atoi(strtok(NULL, " "));
+	ng_val	=atoi(strtok(NULL, " "));
+	sng_val	=atoi(strtok(NULL, " "));
+	gl_val	=atoi(strtok(NULL, " "));
+	rl_val	=atoi(strtok(NULL, " "));
+	lg_val	=atoi(strtok(NULL, " "));
+	ga_val	=atoi(strtok(NULL, " "));
+	ya_val	=atoi(strtok(NULL, " "));
+	ra_val	=atoi(strtok(NULL, " "));
+	ring_val=atoi(strtok(NULL, " "));
+	quad_val=atoi(strtok(NULL, " "));
+	pent_val=atoi(strtok(NULL, " "));
+
 	for ( i=0, z=0; i<MAX_CLIENTS ; i++ ){
 		if (!bp_info[i].name[0])
 			continue;
@@ -289,30 +357,44 @@ int MVD_FindBestPlayer_f(void){
 			continue;
 	
 		// get bestweapon
+		
 		bp_bw = MVD_AutoTrackBW_f(i);
 		
-		
+
 	
 		
 		// get armortype
 		if (bp_info[i].stats[STAT_ITEMS] & IT_ARMOR1)
-			bp_at = 1 ;
+			bp_at = ga_val ;
 		else if (bp_info[i].stats[STAT_ITEMS] & IT_ARMOR2)
-			bp_at = 2 ;
+			bp_at = ya_val ;
 		else if (bp_info[i].stats[STAT_ITEMS] & IT_ARMOR3)
-			bp_at = 3 ;
+			bp_at = ra_val ;
 		else
 			bp_at = 0;
 		
 		// get powerup type
 		bp_pw=0;
 		if (bp_info[i].stats[STAT_ITEMS] & IT_QUAD)
-			bp_pw += 900;
+			bp_pw += quad_val;
 		if (bp_info[i].stats[STAT_ITEMS] & IT_INVULNERABILITY)
-			bp_pw += 1000;
+			bp_pw += pent_val;
 		if (bp_info[i].stats[STAT_ITEMS] & IT_INVISIBILITY)
-			bp_pw += 300;
+			bp_pw += ring_val;
+		
+		// get health
+		bp_h=bp_info[i].stats[STAT_HEALTH];
+		
+		// parser for the equations
+//		strcpy(val,mvd_autotrack_1on1.string);
+	//	eq[0]=strtok(val, " ");
+		//while (1) {
+			//eq[++z]=strtok(NULL, " ");
+			//if((strlen(eq[z])) == 0 )
+				//return;
+		//}
 		// calculating players "value"
+		
 		bp_calc_val = (bp_info[i].stats[STAT_ARMOR] * bp_at) + (50 * bp_bw) + bp_pw + bp_info[i].frags;
 		
 		
@@ -321,10 +403,11 @@ int MVD_FindBestPlayer_f(void){
 	}
 	
 
-
+	//printf("%i\n",bp_calc_val);
 	// looking whos best
 	lastval=0;
 	bp_id=0;
+	
 	for ( h=0 ; h<z ; h++ ){
 		if(lastval < bp_var[h].val){
 				lastval = bp_var[h].val;
@@ -332,6 +415,7 @@ int MVD_FindBestPlayer_f(void){
 		}
 		
 	}
+	
 	return(bp_id);
 	
 }
@@ -386,8 +470,16 @@ void MVD_Utils_Init (void) {
 	Cvar_Register (&mvd_info_x);
 	Cvar_Register (&mvd_info_y);
 	Cvar_Register (&mvd_autotrack);
+	Cvar_Register (&mvd_autotrack_1on1);
+	Cvar_Register (&mvd_autotrack_1on1_values);
+	Cvar_Register (&mvd_autotrack_2on2);
+	Cvar_Register (&mvd_autotrack_2on2_values);
+	Cvar_Register (&mvd_autotrack_4on4);
+	Cvar_Register (&mvd_autotrack_4on4_values);
+	Cvar_Register (&mvd_autotrack_custom);
+	Cvar_Register (&mvd_autotrack_custom_values);
+
 	Cvar_ResetCurrentGroup();
-	Cmd_AddCommand ("scr_mvdinfo_setup_usage",MVD_INFO_Usage_f);
 }
 
 void MVD_Screen (void){
