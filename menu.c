@@ -130,6 +130,7 @@ int			m_topmenu;			// set if a submenu was entered via a
 /* Support Routines */
 
 #ifdef GLQUAKE
+cvar_t	scr_scaleMenu = {"scr_scaleMenu","1"};
 int		menuwidth = 320;
 int		menuheight = 240;
 #else
@@ -3574,6 +3575,9 @@ void M_Init (void) {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&scr_centerMenu);
+#ifdef GLQUAKE
+	Cvar_Register (&scr_scaleMenu);
+#endif
 
 	Cvar_ResetCurrentGroup();
 	Browser_Init();
@@ -3626,8 +3630,18 @@ void M_Draw (void) {
 		m_recursiveDraw = false;
 	}
 
-	menuwidth = vid.width;
-	menuheight = vid.height;
+#ifdef GLQUAKE
+	if (scr_scaleMenu.value) {
+		menuwidth = 320;
+		menuheight = min (vid.height, 240);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity ();
+		glOrtho  (0, menuwidth, menuheight, 0, -99999, 99999);
+	} else {
+		menuwidth = vid.width;
+		menuheight = vid.height;
+	}
+#endif
 
 	if (scr_centerMenu.value)
 		m_yofs = (menuheight - 200) / 2;
@@ -3720,6 +3734,14 @@ void M_Draw (void) {
 		break;
 #endif
 	}
+
+#ifdef GLQUAKE
+	if (scr_scaleMenu.value) {
+		glMatrixMode (GL_PROJECTION);
+		glLoadIdentity ();
+		glOrtho  (0, vid.width, vid.height, 0, -99999, 99999);
+	}
+#endif
 
 	if (m_entersound) {
 		S_LocalSound ("misc/menu2.wav");
