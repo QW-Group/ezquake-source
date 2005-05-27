@@ -777,8 +777,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_shownet);
 	Cvar_Register (&show_fps2);
 	Cvar_Register (&cl_confirmquit);
-	Cvar_Register (&r_telesplash);
-
+	
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register (&cl_sbar);
 	Cvar_Register (&cl_hudswap);
@@ -807,6 +806,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&r_explosionlightcolor);
 	Cvar_Register (&r_flagcolor);
 	Cvar_Register (&cl_trueLightning);
+	Cvar_Register (&r_telesplash);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SKIN);
 	Cvar_Register (&noskins);
