@@ -567,7 +567,6 @@ void HUD_Init(void)
     Cmd_AddCommand ("togglehud", HUD_Toggle_f);
     Cmd_AddCommand ("align", HUD_Align_f);
     Cmd_AddCommand ("hud_recalculate", HUD_Recalculate_f);
-
 // hexum -> HUD_Register is now done here
     hud_fps = HUD_Register("fps", /*"show_fps"*/ NULL, // hexum -> don't support aliases for now
         "Shows your current framerate in frames per second (fps). "
@@ -577,7 +576,6 @@ void HUD_Init(void)
         "show_min", "0",
         "title",    "1",
         NULL);
-
     CommonDraw_Init();
 }
 
@@ -863,10 +861,8 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
     char buf[128];
 
     sprintf(buf, "hud_%s_%s", hud_name, subvar);
-
     var = (cvar_t *)malloc(sizeof(cvar_t));
     memset(var, 0, sizeof(cvar_t));
-
     // set name
     var->name = CopyString(buf);
 
@@ -876,13 +872,11 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
 
 //  var->group = CVAR_HUD;
 //  var->hidden = true;
-
     var->flags = CVAR_ARCHIVE;
 
     Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
     Cvar_Register(var);
     Cvar_ResetCurrentGroup();
-
     return var;
 }
 
@@ -1077,7 +1071,6 @@ extern cvar_t scr_newHud;
 
     if (scr_newHud.value == 0)
 	return;
-
     hud = hud_huds;
 
     while (hud)
