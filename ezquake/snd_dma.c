@@ -160,7 +160,6 @@ void S_Restart_f (void) {
 	Com_Printf("sound: Shutdown OK\n");
 	SNDDMA_Init ();
 	Com_Printf("sound: Init OK.\nSound sampling rate: %i \n", sn.speed);
-//Com_Printf ("Sound sampling rate: %i\n", dma.speed);
 }
 
 void S_Init (void) {
@@ -548,7 +547,7 @@ void S_ClearBuffer (void) {
 				return;
 		}
 
-		memset(pData, clear, dma.samples * dma.samplebits/8);
+		memset(pData, clear, sn.samples * sn.samplebits/8);
 
 		pDSBuf->lpVtbl->Unlock(pDSBuf, pData, dwSize, NULL, 0);
 	
