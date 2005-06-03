@@ -504,6 +504,11 @@ void S_StopAllSounds_f (void) {
 	S_StopAllSounds (true);
 }
 
+
+#ifdef _WIN32
+extern char *DSoundError (int error);
+#endif
+
 void S_ClearBuffer (void) {
 	int clear;
 		
@@ -519,27 +524,31 @@ void S_ClearBuffer (void) {
 #ifdef _WIN32
 	if (pDSBuf)
 	{
-		DWORD dwSize, *pData;
-		int reps;
+		DWORD	dwSize;
+		DWORD	*pData;
+		int		reps;
 		HRESULT	hresult;
 
 		reps = 0;
 
-		while ((hresult = pDSBuf->lpVtbl->Lock(pDSBuf, 0, gSndBufSize, &pData, &dwSize, NULL, NULL, 0)) != DS_OK) {
-			if (hresult != DSERR_BUFFERLOST) {
-				Com_Printf ("S_ClearBuffer: DS::Lock Sound Buffer Failed\n");
+		while ((hresult = pDSBuf->lpVtbl->Lock(pDSBuf, 0, gSndBufSize, &pData, &dwSize, NULL, NULL, 0)) != DS_OK)
+		{
+			if (hresult != DSERR_BUFFERLOST)
+			{
+				Com_Printf ("S_ClearBuffer: Lock failed with error '%s'\n", DSoundError(hresult));
 				S_Shutdown ();
 				return;
+			}
+			else
+			{
+				pDSBuf->lpVtbl->Restore (pDSBuf);
 			}
 
-			if (++reps > 10000) {
-				Com_Printf ("S_ClearBuffer: DS: couldn't restore buffer\n");
-				S_Shutdown ();
+			if (++reps > 2)
 				return;
-			}
 		}
 
-		memset(pData, clear, sn.samples * sn.samplebits/8);
+		memset(pData, clear, dma.samples * dma.samplebits/8);
 
 		pDSBuf->lpVtbl->Unlock(pDSBuf, pData, dwSize, NULL, 0);
 	
