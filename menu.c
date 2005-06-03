@@ -3237,6 +3237,17 @@ void M_Menu_ServerList_f (void) {
 void M_ServerList_Draw (void) {
     int x, y, w, h;
 
+#ifdef GLQUAKE
+// disconnect: unscale serverbrowser menu
+	if (scr_scaleMenu.value) {
+		menuwidth = vid.width;
+		menuheight = vid.height;
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity ();
+		glOrtho  (0, menuwidth, menuheight, 0, -99999, 99999);
+	}
+#endif
+
     w = min(max(sb_maxwidth.value, 320), vid.width)   - 8;
     h = min(max(sb_maxheight.value, 200), vid.height) - 8;
     x = (vid.width - w) / 2;
