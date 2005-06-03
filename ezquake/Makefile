@@ -102,6 +102,8 @@ QWCL_OBJS = \
     $(BUILDDIR)/build/snd_mem.o \
     $(BUILDDIR)/build/snd_mix.o \
     $(BUILDDIR)/build/snd_linux.o \
+    $(BUILDDIR)/build/snd_oss.o \
+    $(BUILDDIR)/build/snd_alsa.o \
 \
     $(BUILDDIR)/build/cl_input.o \
     $(BUILDDIR)/build/keys.o \
@@ -269,20 +271,26 @@ $(BUILDDIR)/build/host.o :           $(SOURCE_DIR)/host.c
 
 $(BUILDDIR)/build/sys_linux.o :      $(SOURCE_DIR)/sys_linux.c
 	$(DO_CC)
-       
+
 $(BUILDDIR)/build/cd_linux.o :       $(SOURCE_DIR)/cd_linux.c
 	$(DO_CC)
 
 $(BUILDDIR)/build/snd_dma.o :        $(SOURCE_DIR)/snd_dma.c
 	$(DO_CC)
-                                                                      
+
 $(BUILDDIR)/build/snd_mem.o :        $(SOURCE_DIR)/snd_mem.c
 	$(DO_CC)
-                                                                      
+
 $(BUILDDIR)/build/snd_mix.o :        $(SOURCE_DIR)/snd_mix.c
 	$(DO_CC)
 
 $(BUILDDIR)/build/snd_linux.o :      $(SOURCE_DIR)/snd_linux.c
+	(DO_CC)
+
+$(BUILDDIR)/build/snd_oss.o :	     $(SOURCE_DIR)/snd_oss.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/snd_alsa.o :	     $(SOURCE_DIR)/snd_alsa.c
 	$(DO_CC)
 
 $(BUILDDIR)/build/cl_demo.o :        $(SOURCE_DIR)/cl_demo.c
@@ -701,6 +709,8 @@ GLQWCL_OBJS = \
     $(BUILDDIR)/build-gl/snd_mem.o \
     $(BUILDDIR)/build-gl/snd_mix.o \
     $(BUILDDIR)/build-gl/snd_linux.o \
+    $(BUILDDIR)/build-gl/snd_oss.o \
+    $(BUILDDIR)/build-gl/snd_alsa.o \
 \
     $(BUILDDIR)/build-gl/cl_input.o \
     $(BUILDDIR)/build-gl/keys.o \
@@ -852,6 +862,12 @@ $(BUILDDIR)/build-gl/snd_mix.o :        $(SOURCE_DIR)/snd_mix.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-gl/snd_linux.o :      $(SOURCE_DIR)/snd_linux.c
+	$(DO_GL_CC)
+	
+$(BUILDDIR)/build-gl/snd_oss.o :	$(SOURCE_DIR)/snd_oss.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/snd_alsa.o :	$(SOURCE_DIR)/snd_alsa.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-gl/cl_demo.o :        $(SOURCE_DIR)/cl_demo.c
