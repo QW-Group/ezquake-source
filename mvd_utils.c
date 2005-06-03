@@ -264,7 +264,7 @@ void MVD_Info (void){
 
 int MVD_FindBestPlayer_f(void){
 
-	int bp_id,bp_calc_val,i,h,j,y = 0;
+	int bp_id, bp_calc_val, i, h, y = 0;
 	int loop = 1;
 	int loop_count = 0;
 	
@@ -273,8 +273,6 @@ int MVD_FindBestPlayer_f(void){
 	int lastval = 0;
 	int z = 0;
 	int gtype = 0;
-
-	char eq[30][4];
 
 	typedef struct bp_var_s{
 		int id;
@@ -313,13 +311,13 @@ int MVD_FindBestPlayer_f(void){
 			}else{
 				Com_Printf("mvd_autotrack aborting due to wrong use of mvd_autotrack_*_value\n");
 				mvd_autotrack.value = 0;
-				return;
+				return 0;
 			}
 		}
-	}else{
-	Com_Printf("mvd_autotrack aborting due to wrong use of mvd_autotrack_*_value\n");
-	mvd_autotrack.value = 0;
-	return;
+	} else {
+		Com_Printf("mvd_autotrack aborting due to wrong use of mvd_autotrack_*_value\n");
+		mvd_autotrack.value = 0;
+	return 0;
 	}
 	
 	if (gtype == 2)
