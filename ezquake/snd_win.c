@@ -75,6 +75,25 @@ HINSTANCE hInstDS;
 qboolean SNDDMA_InitDirect (void);
 qboolean SNDDMA_InitWav (void);
 
+
+/* static */ char *DSoundError (int error)
+{
+	switch (error)
+	{
+	case DSERR_BUFFERLOST:
+		return "DSERR_BUFFERLOST";
+	case DSERR_INVALIDCALL:
+		return "DSERR_INVALIDCALLS";
+	case DSERR_INVALIDPARAM:
+		return "DSERR_INVALIDPARAM";
+	case DSERR_PRIOLEVELNEEDED:
+		return "DSERR_PRIOLEVELNEEDED";
+	}
+
+	return "unknown";
+}
+
+
 BOOL CALLBACK DS_EnumDevices(LPGUID lpGUID, LPCTSTR lpszDesc, LPCTSTR lpszDrvName, LPVOID lpContext) {
 	if (*((int *) lpContext) == currentenum++) {
 		dsdevice = lpGUID;
