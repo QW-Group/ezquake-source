@@ -78,7 +78,7 @@ cvar_t s_nosound = {"s_nosound", "0"};
 cvar_t s_precache = {"s_precache", "1"};
 cvar_t s_loadas8bit = {"s_loadas8bit", "0"};
 #ifdef _WIN32
-cvar_t s_khz = {"s_khz", "11"};
+cvar_t s_khz = {"s_khz", "44"};
 #endif
 cvar_t s_ambientlevel = {"s_ambientlevel", "0.3"};
 cvar_t s_ambientfade = {"s_ambientfade", "100"};
@@ -87,7 +87,15 @@ cvar_t s_show = {"s_show", "0"};
 cvar_t s_mixahead = {"s_mixahead", "0.1", CVAR_ARCHIVE};
 cvar_t s_swapstereo = {"s_swapstereo", "0"};
 #ifdef __linux__
-cvar_t s_noalsa = {"s_noalsa", "1"};
+/* cvar_t s_noalsa = {"s_noalsa", "0"};
+disconnect: swinching OSS<-->ALSA is broken, so i disable it.
+OSS-->ALSA is fine, but ALSA --> OSS broken.
+if u run ezQ with OSS, then switch it to ALSA it works. If u run with ALSA, "s_noalsa 1;snd_restart" --> ezQ crashes
+*/
+cvar_t s_stereo = {"s_stereo", "1", CVAR_ARCHIVE};
+cvar_t s_rate = {"s_rate", "44100", CVAR_ARCHIVE};
+cvar_t s_device = {"s_device", "plug:hw", CVAR_ARCHIVE};
+cvar_t s_bits = {"s_bits", "16", CVAR_ARCHIVE};
 #endif
 
 // ====================================================================
@@ -115,13 +123,13 @@ void S_SoundInfo_f (void) {
 		return;
 	}
 
-    Com_Printf ("%5d stereo\n", shm->channels - 1);
-    Com_Printf ("%5d samples\n", shm->samples);
-    Com_Printf ("%5d samplepos\n", shm->samplepos);
-    Com_Printf ("%5d samplebits\n", shm->samplebits);
-    Com_Printf ("%5d submission_chunk\n", shm->submission_chunk);
-    Com_Printf ("%5d speed\n", shm->speed);
-    Com_Printf ("0x%x dma buffer\n", shm->buffer);
+    Com_Printf ("%5d stereo\n", sn.channels - 1);
+    Com_Printf ("%5d samples\n", sn.samples);
+    Com_Printf ("%5d samplepos\n", sn.samplepos);
+    Com_Printf ("%5d samplebits\n", sn.samplebits);
+    Com_Printf ("%5d submission_chunk\n", sn.submission_chunk);
+    Com_Printf ("%5d speed\n", sn.speed);
+    Com_Printf ("0x%x dma buffer\n", sn.buffer);
 	Com_Printf ("%5d total_channels\n", total_channels);
 }
 
@@ -175,7 +183,11 @@ void S_Init (void) {
 	Cvar_Register(&s_mixahead);
 	Cvar_Register(&s_swapstereo);
 #ifdef __linux__
-	Cvar_Register(&s_noalsa);
+//	Cvar_Register(&s_noalsa);
+	Cvar_Register(&s_stereo);
+	Cvar_Register(&s_rate);
+	Cvar_Register(&s_device);
+	Cvar_Register(&s_bits);
 #endif
 
 	Cvar_ResetCurrentGroup();
@@ -224,16 +236,16 @@ void S_Init (void) {
 
 	if (fakedma) {
 		shm = (void *) Hunk_AllocName(sizeof(*shm), "shm");
-		shm->splitbuffer = 0;
-		shm->samplebits = 16;
-		shm->speed = 22050;
-		shm->channels = 2;
-		shm->samples = 32768;
-		shm->samplepos = 0;
-		shm->soundalive = true;
-		shm->gamealive = true;
-		shm->submission_chunk = 1;
-		shm->buffer = Hunk_AllocName(1<<16, "shmbuf");
+		sn.splitbuffer = 0;
+		sn.samplebits = 16;
+		sn.speed = 22050;
+		sn.channels = 2;
+		sn.samples = 32768;
+		sn.samplepos = 0;
+		sn.soundalive = true;
+		sn.gamealive = true;
+		sn.submission_chunk = 1;
+		sn.buffer = Hunk_AllocName(1<<16, "shmbuf");
 	}
 
 	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound ("ambience/water1.wav");
@@ -251,7 +263,7 @@ void S_Shutdown (void) {
 		return;
 
 	if (shm)
-		shm->gamealive = 0;
+		sn.gamealive = 0;
 
 	shm = 0;
 	sound_started = 0;
@@ -372,7 +384,7 @@ void SND_Spatialize (channel_t *ch) {
 	dist = VectorNormalize(source_vec) * ch->dist_mult;
 	dot = DotProduct(listener_right, source_vec);
 
-	if (shm->channels == 1) {
+	if (sn.channels == 1) {
 		rscale = 1.0;
 		lscale = 1.0;
 	} else {
@@ -447,7 +459,7 @@ void S_StartSound (int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float 
 		if (check == target_chan)
 			continue;
 		if (check->sfx == sfx && !check->pos) {
-			skip = rand () % (int)(0.1 * shm->speed);
+			skip = rand () % (int)(0.1 * sn.speed);
 			if (skip >= target_chan->end)
 				skip = target_chan->end - 1;
 			target_chan->pos += skip;
@@ -496,13 +508,13 @@ void S_ClearBuffer (void) {
 	int clear;
 		
 #ifdef _WIN32
-	if (!sound_started || !shm || (!shm->buffer && !pDSBuf))
+	if (!sound_started || !shm || (!sn.buffer && !pDSBuf))
 #else
-	if (!sound_started || !shm || !shm->buffer)
+	if (!sound_started || !shm || !sn.buffer)
 #endif
 		return;
 
-	clear = (shm->samplebits == 8) ? 0x80 : 0;
+	clear = (sn.samplebits == 8) ? 0x80 : 0;
 
 #ifdef _WIN32
 	if (pDSBuf)
@@ -527,7 +539,7 @@ void S_ClearBuffer (void) {
 			}
 		}
 
-		memset(pData, clear, shm->samples * shm->samplebits/8);
+		memset(pData, clear, sn.samples * sn.samplebits/8);
 
 		pDSBuf->lpVtbl->Unlock(pDSBuf, pData, dwSize, NULL, 0);
 	
@@ -535,7 +547,7 @@ void S_ClearBuffer (void) {
 	else
 #endif
 	{
-		memset(shm->buffer, clear, shm->samples * shm->samplebits/8);
+		memset(sn.buffer, clear, sn.samples * sn.samplebits/8);
 	}
 }
 
@@ -701,7 +713,7 @@ void GetSoundtime (void) {
 		return;
 #endif
 
-	fullsamples = shm->samples / shm->channels;
+	fullsamples = sn.samples / sn.channels;
 
 	// it is possible to miscount buffers if it has wrapped twice between calls to S_Update.  Oh well.
 	samplepos = SNDDMA_GetDMAPos();
@@ -718,7 +730,7 @@ void GetSoundtime (void) {
 	}
 	oldsamplepos = samplepos;
 
-	soundtime = buffers*fullsamples + samplepos/shm->channels;
+	soundtime = buffers*fullsamples + samplepos/sn.channels;
 }
 
 void IN_Accumulate (void);
@@ -757,8 +769,8 @@ void S_Update_ (void) {
 	}
 
 	// mix ahead of current position
-	endtime = soundtime + s_mixahead.value * shm->speed;
-	samps = shm->samples >> (shm->channels - 1);
+	endtime = soundtime + s_mixahead.value * sn.speed;
+	samps = sn.samples >> (sn.channels - 1);
 	if (endtime - soundtime > samps)
 		endtime = soundtime + samps;
 
