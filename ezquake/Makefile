@@ -217,7 +217,6 @@ QWCL_OBJS = \
     $(BUILDDIR)/build/mp3_player.o \
     $(BUILDDIR)/build/fmod.o \
     $(BUILDDIR)/build/localtime_linux.o \
-    $(BUILDDIR)/build/mvd_utils.o \
  \
     $(BUILDDIR)/build/xml_test.o \
     $(BUILDDIR)/build/xsd.o \
@@ -437,7 +436,7 @@ $(BUILDDIR)/build/mathlib.o :        $(SOURCE_DIR)/mathlib.c
 $(BUILDDIR)/build/menu.o :           $(SOURCE_DIR)/menu.c
 	$(DO_CC)
                                                                                                       
-$(BUILDDIR)/build/mvd_utils.o :           $(SOURCE_DIR)/mvd_utils.c
+$(BUILDDIR)/build/mvd_utils.o :	     $(SOURCE_DIR)/mvd_utils.c
 	$(DO_CC)
                                                                                                       
 $(BUILDDIR)/build/movie.o :           $(SOURCE_DIR)/movie.c
@@ -975,7 +974,7 @@ $(BUILDDIR)/build-gl/mathlib.o :        $(SOURCE_DIR)/mathlib.c
 $(BUILDDIR)/build-gl/menu.o :           $(SOURCE_DIR)/menu.c
 	$(DO_GL_CC)
                                                                                                                                    
-$(BUILDDIR)/build-gl/mvd_utils.o :           $(SOURCE_DIR)/mvd_utils.c
+$(BUILDDIR)/build-gl/mvd_utils.o :      $(SOURCE_DIR)/mvd_utils.c
 	$(DO_GL_CC)
                                                                                                                                    
 $(BUILDDIR)/build-gl/net_chan.o :       $(SOURCE_DIR)/net_chan.c
