@@ -37,7 +37,7 @@ int snd_inited;
 
 static char snd_dev[64] = "/dev/dsp";
 
-static int tryrates[] = {11025, 22051, 44100, 8000};
+static int tryrates[] = {44100, 11025, 22051, 8000};
 
 qboolean SNDDMA_Init_OSS(void) {
 	int rc, fmt, tmp, caps, i;
@@ -239,7 +239,6 @@ void SNDDMA_Shutdown_OSS(void) {
 		munmap(sn.buffer, sn.samples * (sn.samplebits/8));
 		}
 	close(audio_fd);
-	snd_inited = 0;
     }
 }
 

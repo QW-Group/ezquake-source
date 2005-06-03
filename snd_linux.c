@@ -32,7 +32,7 @@ qboolean SNDDMA_Init(void)
     int retval;
 
     // Give user the option to force OSS...
-    if(COM_CheckParm("-noalsa") || Cvar_VariableValue("s_noalsa") )
+    if(COM_CheckParm("-noalsa")) // || Cvar_VariableValue("s_noalsa") )
     {
         // User wants us to use OSS...
         Com_Printf("sound: Using OSS at user's request...\n");

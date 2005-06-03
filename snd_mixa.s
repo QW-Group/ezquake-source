@@ -23,7 +23,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: snd_mixa.s,v 1.1.1.2 2004-09-07 21:09:32 hexum Exp $
+	$Id: snd_mixa.s,v 1.2 2005-06-03 17:31:07 disconn3ct Exp $
 */
 
 #include "asm_i386.h"
@@ -224,6 +224,78 @@ LClampDone2:
 
 	ret
 
+.globl C(Snd_WriteLinearBlastStereo16_SwapStereo)
+C(Snd_WriteLinearBlastStereo16_SwapStereo):
+	pushl	%esi				// preserve register variables
+	pushl	%edi
+	pushl	%ebx
+
+//	int		i;
+//	int		val;
+	movl	C(snd_linear_count),%ecx
+	movl	C(snd_p),%ebx
+	movl	C(snd_vol),%esi
+	movl	C(snd_out),%edi
+
+//	for (i=0 ; i<snd_linear_count ; i+=2)
+//	{
+SwapLWLBLoopTop:
+
+//		val = (snd_p[i+1]*snd_vol)>>8;
+//		if (val > 0x7fff)
+//			snd_out[i] = 0x7fff;
+//		else if (val < (short)0x8000)
+//			snd_out[i] = (short)0x8000;
+//		else
+//			snd_out[i] = val;
+	movl	-4(%ebx,%ecx,4),%eax
+	imull	%esi,%eax
+	sarl	$8,%eax
+	cmpl	$0x7FFF,%eax
+	jg		SwapLClampHigh
+	cmpl	$0xFFFF8000,%eax
+	jnl		SwapLClampDone
+	movl	$0xFFFF8000,%eax
+	jmp		SwapLClampDone
+SwapLClampHigh:
+	movl	$0x7FFF,%eax
+SwapLClampDone:
+
+//		val = (snd_p[i]*snd_vol)>>8;
+//		if (val > 0x7fff)
+//			snd_out[i+1] = 0x7fff;
+//		else if (val < (short)0x8000)
+//			snd_out[i+1] = (short)0x8000;
+//		else
+//			snd_out[i+1] = val;
+	movl	-8(%ebx,%ecx,4),%edx
+	imull	%esi,%edx
+	sarl	$8,%edx
+	cmpl	$0x7FFF,%edx
+	jg		SwapLClampHigh2
+	cmpl	$0xFFFF8000,%edx
+	jnl		SwapLClampDone2
+	movl	$0xFFFF8000,%edx
+	jmp		SwapLClampDone2
+SwapLClampHigh2:
+	movl	$0x7FFF,%edx
+SwapLClampDone2:
+	shll	$16,%edx
+	andl	$0xFFFF,%eax
+	orl		%eax,%edx
+	movl	%edx,-4(%edi,%ecx,2)
+
+//	}
+	subl	$2,%ecx
+	jnz		SwapLWLBLoopTop
+
+//	snd_p += snd_linear_count;
+
+	popl	%ebx
+	popl	%edi
+	popl	%esi
+
+	ret
 
 #endif	// id386
 
