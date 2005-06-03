@@ -285,7 +285,7 @@ $(BUILDDIR)/build/snd_mix.o :        $(SOURCE_DIR)/snd_mix.c
 	$(DO_CC)
 
 $(BUILDDIR)/build/snd_linux.o :      $(SOURCE_DIR)/snd_linux.c
-	(DO_CC)
+	$(DO_CC)
 
 $(BUILDDIR)/build/snd_oss.o :	     $(SOURCE_DIR)/snd_oss.c
 	$(DO_CC)
