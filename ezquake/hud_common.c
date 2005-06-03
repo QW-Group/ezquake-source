@@ -17,7 +17,11 @@
 #define STAT_MINUS		10
 #endif
 
+#ifdef GLQUAKE
 void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
+#else
+void Draw_Fill (int x, int y, int w, int h, int c);
+#endif
 
 hud_t *hud_netgraph;
 
@@ -1631,8 +1635,12 @@ void Frags_DrawBackground(int px, int py, int cell_width, int cell_height,
 	if(style == 7 || style == 8)
 		bg_color = 0x4f;
 
+#ifdef GLQUAKE
 	Draw_AlphaFill(px-1, py-space_y/2, bg_width, cell_height+space_y, bg_color, bg_alpha); 
-	
+#else
+	Draw_Fill(px-1, py-space_y/2, bg_width, cell_height+space_y, bg_color); 
+#endif
+
 	if(drawBrackets && (style == 5 || style == 6)) 
 	{
 		Draw_Fill(px-1, py-1-space_y/2, bg_width, 1, 0x4f);
