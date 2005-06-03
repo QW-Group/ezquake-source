@@ -77,13 +77,18 @@ cvar_t s_volume = {"volume", "0.7", CVAR_ARCHIVE};
 cvar_t s_nosound = {"s_nosound", "0"};
 cvar_t s_precache = {"s_precache", "1"};
 cvar_t s_loadas8bit = {"s_loadas8bit", "0"};
+#ifdef _WIN32
 cvar_t s_khz = {"s_khz", "11"};
+#endif
 cvar_t s_ambientlevel = {"s_ambientlevel", "0.3"};
 cvar_t s_ambientfade = {"s_ambientfade", "100"};
 cvar_t s_noextraupdate = {"s_noextraupdate", "0"};
 cvar_t s_show = {"s_show", "0"};
 cvar_t s_mixahead = {"s_mixahead", "0.1", CVAR_ARCHIVE};
 cvar_t s_swapstereo = {"s_swapstereo", "0"};
+#ifdef __linux__
+cvar_t s_noalsa = {"s_noalsa", "1"};
+#endif
 
 // ====================================================================
 // User-setable variables
@@ -141,7 +146,14 @@ void S_Startup (void) {
 	sound_started = 1;
 }
 
-void SND_Restart_f (void) {}
+void S_Restart_f (void) {
+	Com_Printf("Restarting sound system....\n");
+	SNDDMA_Shutdown ();
+	Com_Printf("sound: Shutdown OK\n");
+	SNDDMA_Init ();
+	Com_Printf("sound: Init OK.\nSound sampling rate: %i \n", sn.speed);
+//Com_Printf ("Sound sampling rate: %i\n", dma.speed);
+}
 
 void S_Init (void) {
 //	Com_Printf ("\nSound Initialization\n");
@@ -153,13 +165,18 @@ void S_Init (void) {
 	Cvar_Register(&s_nosound);
 	Cvar_Register(&s_precache);
 	Cvar_Register(&s_loadas8bit);
+#ifdef _WIN32
 	Cvar_Register(&s_khz);
+#endif
 	Cvar_Register(&s_ambientlevel);
 	Cvar_Register(&s_ambientfade);
 	Cvar_Register(&s_noextraupdate);
 	Cvar_Register(&s_show);
 	Cvar_Register(&s_mixahead);
 	Cvar_Register(&s_swapstereo);
+#ifdef __linux__
+	Cvar_Register(&s_noalsa);
+#endif
 
 	Cvar_ResetCurrentGroup();
 
@@ -182,7 +199,7 @@ void S_Init (void) {
 	if (COM_CheckParm("-simsound"))
 		fakedma = true;
 
-	Cmd_AddCommand("snd_restart", SND_Restart_f);
+	Cmd_AddCommand("snd_restart", S_Restart_f);
 	Cmd_AddCommand("play", S_Play_f);
 	Cmd_AddCommand("playvol", S_PlayVol_f);
 	Cmd_AddCommand("stopsound", S_StopAllSounds_f);
