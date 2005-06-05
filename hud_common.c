@@ -2761,8 +2761,8 @@ void CommonDraw_Init(void)
         "teamsort", "0",
         "strip", "1",
         "vertical", "0",
-		"shownames", "1",
-		"showteams", "1",
+		"shownames", "0",
+		"showteams", "0",
 		"padtext", "1",
 		"showself_always", "1",
 		"fliptext", "0",
@@ -2780,7 +2780,7 @@ void CommonDraw_Init(void)
         "space_y", "1",
         "strip", "1",
         "vertical", "0",
-		"shownames", "1",
+		"shownames", "0",
 		"padtext", "1",
 		"fliptext", "1",
 		"style", "0",
@@ -2795,7 +2795,7 @@ void CommonDraw_Init(void)
 		"scroll",	"1",
 		"scroll_delay", "0.5",
 		"on_scoreboard", "0",
-		"wordwrap", "1",
+		"wordwrap", "0",
         NULL);
 
 	HUD_Register("mp3_time", NULL, "Shows the time of the current mp3 playing.",
