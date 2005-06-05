@@ -301,8 +301,6 @@ cvar_t	cl_anglespeedkey = {"cl_anglespeedkey","1.5"};
 cvar_t	cl_yawspeed = {"cl_yawspeed","140"};
 cvar_t	cl_pitchspeed = {"cl_pitchspeed","150"};
 
-cvar_t  allow_scripts = {"allow_scripts", "2"};
- 
 cvar_t	lookspring = {"lookspring","0",CVAR_ARCHIVE};
 cvar_t	lookstrafe = {"lookstrafe","0",CVAR_ARCHIVE};
 cvar_t	sensitivity = {"sensitivity","3",CVAR_ARCHIVE};
@@ -676,8 +674,6 @@ void CL_InitInput (void) {
 	Cvar_Register (&cl_yawspeed);
 	Cvar_Register (&cl_pitchspeed);
 	Cvar_Register (&cl_anglespeedkey);
-
-	Cvar_Register (&allow_scripts); 
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MISC);
 	Cvar_Register (&lookspring);

@@ -52,6 +52,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 int         host_screenupdatecount; // kazik - HUD -> hexum
 
+cvar_t	allow_scripts = {"allow_scripts", "2"};
 cvar_t	rcon_password = {"rcon_password", ""};
 cvar_t	rcon_address = {"rcon_address", ""};
 cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "0"};
@@ -749,9 +750,17 @@ void CL_SaveArgv(int argc, char **argv) {
 void CL_InitCommands (void);
 
 #ifdef GLQUAKE
-void CL_Fog_f (void) {	extern cvar_t gl_fogred, gl_foggreen, gl_fogblue, gl_fogenable;
-	if (Cmd_Argc () == 1) {		Com_Printf ("\"fog\" is \"%f %f %f\"\n", gl_fogred.value, gl_foggreen.value, gl_fogblue.value);		return;	}
-	gl_fogenable.value = 1;	gl_fogred.value    = atof(Cmd_Argv(1));	gl_foggreen.value  = atof(Cmd_Argv(2));	gl_fogblue.value   = atof(Cmd_Argv(3));
+void CL_Fog_f (void) {
+
+	extern cvar_t gl_fogred, gl_foggreen, gl_fogblue, gl_fogenable;
+	if (Cmd_Argc () == 1) {
+		Com_Printf ("\"fog\" is \"%f %f %f\"\n", gl_fogred.value, gl_foggreen.value, gl_fogblue.value);
+		return;
+	}
+	gl_fogenable.value = 1;
+	gl_fogred.value    = atof(Cmd_Argv(1));
+	gl_foggreen.value  = atof(Cmd_Argv(2));
+	gl_fogblue.value   = atof(Cmd_Argv(3));
 }
 #endif
 
@@ -845,6 +854,9 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_useproxy);
 	Cvar_Register (&cl_crypt_rcon);
 
+	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
+	Cvar_Register (&allow_scripts);
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_NO_GROUP);
 	Cvar_Register (&password);
 	Cvar_Register (&rcon_password);
@@ -852,18 +864,20 @@ void CL_InitLocal (void) {
 	Cvar_Register (&localid);
 	Cvar_Register (&cl_warncmd);
 	Cvar_Register (&cl_cmdline);
-
+	
 	Cvar_ResetCurrentGroup();
 
     com_blockscripts = false;
 
     Q_snprintfz(st, sizeof(st), "ezQuake %i", build_number());
 
-    if (COM_CheckParm("-noscripts"))
-    {
-        com_blockscripts = true;
+	if (COM_CheckParm("-noscripts"))
+	{
+	Cvar_SetValue(&allow_scripts, 0);
+	Cvar_SetFlags(&allow_scripts, Cvar_GetFlags(&allow_scripts) | CVAR_ROM);
+	com_blockscripts = true;
         strcat(st, " noscripts");
-    }
+	}
 
  	Info_SetValueForStarKey (cls.userinfo, "*client", st, MAX_INFO_STRING);
 
