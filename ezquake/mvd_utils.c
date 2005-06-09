@@ -22,7 +22,7 @@ int axe_val, sg_val, ssg_val, ng_val, sng_val, gl_val, rl_val, lg_val, ga_val, y
 
 // mvd_info cvars
 cvar_t			mvd_info		= {"mvd_info", "0"};
-cvar_t			mvd_info_setup	= {"mvd_info_setup", "%n %f %l %a %h %w"};
+cvar_t			mvd_info_setup	= {"mvd_info_setup", "%6n %3f %10l %4a %4h %3w"};
 cvar_t			mvd_info_x		= {"mvd_info_x", "0"};
 cvar_t			mvd_info_y		= {"mvd_info_y", "0"};
 
@@ -107,8 +107,8 @@ void MVD_Info (void){
 	char *tmpstr1, *tmpstr, *info_type;
 	char mvd_info_final_string[80], mvd_info_final_string_tmp[80], mvd_info_powerups[20];
 	char *mapname;
-	int x,y,z,i ;
-
+	int x,y,z,i,h,j,mvd_info_adjust_length ;
+	char ints[3];
 	player_state_t *mvd_state ;
 	player_info_t *mvd_info_players;
 	mvd_state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate;
@@ -153,58 +153,66 @@ void MVD_Info (void){
 	mvd_info_powerups[0]='\0';
 	mvd_info_best_ammo[0]='\0';
 	mvd_info_best_weapon[0]='\0';
+	
 	while (strstr(tmpstr,"%")){
-		
+		for (h=0;h<=3;h++){
+			ints[h]='\0';
+		}
+	
 		tmpstr1 = strstr(tmpstr,"%");
 		tmpstr=tmpstr1+1;
-		info_type = tmpstr1+1;
+		h=strcspn(tmpstr,"1234567890");
+        j=strspn(tmpstr+h,"1234567890");
+		strncpy(ints,tmpstr+h,j);
+		mvd_info_adjust_length=atoi(ints);
+		info_type = tmpstr1+j+1;
 		switch ( info_type[0] ){
 			case 'a' :
 				if(strlen(mvd_info_final_string)){
 				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %3i",mvd_info_final_string_tmp,mvd_info_players[i].stats[STAT_ARMOR]);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %*i",mvd_info_final_string_tmp,mvd_info_adjust_length,mvd_info_players[i].stats[STAT_ARMOR]);
 				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%3i",mvd_info_players[i].stats[STAT_ARMOR]);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%*i",mvd_info_adjust_length,mvd_info_players[i].stats[STAT_ARMOR]);
 				}
 				break;
 			case 'f' :
 				if(strlen(mvd_info_final_string)){
 				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %3i",mvd_info_final_string_tmp,mvd_info_players[i].frags);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %*i",mvd_info_final_string_tmp,mvd_info_adjust_length,mvd_info_players[i].frags);
 				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%3i",mvd_info_players[i].frags);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%*i",mvd_info_adjust_length,mvd_info_players[i].frags);
 				}
 				break;
 			case 'h' :
 				if(strlen(mvd_info_final_string)){
 				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %3i",mvd_info_final_string_tmp,mvd_info_players[i].stats[STAT_HEALTH]);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %*i",mvd_info_final_string_tmp,mvd_info_adjust_length,mvd_info_players[i].stats[STAT_HEALTH]);
 				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%3i",mvd_info_players[i].stats[STAT_HEALTH]);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%*i",mvd_info_adjust_length,mvd_info_players[i].stats[STAT_HEALTH]);
 				}
 				break;
 			case 'l' :
 				if(strlen(mvd_info_final_string)){
 				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %-13s",mvd_info_final_string_tmp,location);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %-*s",mvd_info_final_string_tmp,mvd_info_adjust_length,location);
 				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%-13s",location);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%-*s",mvd_info_adjust_length,location);
 				}
 				break;
 			case 'n' :
 				if(strlen(mvd_info_final_string)){
 				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %-10s",mvd_info_final_string_tmp,mvd_info_players[i].name);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %-*s",mvd_info_final_string_tmp,mvd_info_adjust_length,mvd_info_players[i].name);
 				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%-10s",mvd_info_players[i].name);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%-*s",mvd_info_adjust_length,mvd_info_players[i].name);
 				}
 				break;
 			case 'P' :
 				if(strlen(mvd_info_final_string)){
 				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %3i",mvd_info_final_string_tmp,mvd_info_players[i].ping);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %*i",mvd_info_final_string_tmp,mvd_info_adjust_length,mvd_info_players[i].ping);
 				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%3i",mvd_info_players[i].ping);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%*i",mvd_info_adjust_length,mvd_info_players[i].ping);
 				}
 				break;
 			
@@ -226,27 +234,27 @@ void MVD_Info (void){
 				
 				if(strlen(mvd_info_final_string)){
 				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %-5s",mvd_info_final_string_tmp,mvd_info_powerups);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %-*s",mvd_info_final_string_tmp,mvd_info_adjust_length,mvd_info_powerups);
 				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%-5s",mvd_info_powerups);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%-*s",mvd_info_adjust_length,mvd_info_powerups);
 				}
 				break;
 			
 			case 'w' :
 				if(strlen(mvd_info_final_string)){
 				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %3s:%-3i",mvd_info_final_string_tmp,Weapon_NumToString(mvd_info_players[i].stats[STAT_ACTIVEWEAPON]),mvd_info_players[i].stats[STAT_AMMO]);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %*s:%-*i",mvd_info_final_string_tmp,mvd_info_adjust_length,Weapon_NumToString(mvd_info_players[i].stats[STAT_ACTIVEWEAPON]),mvd_info_adjust_length,mvd_info_players[i].stats[STAT_AMMO]);
 				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%3s:%-3i",Weapon_NumToString(mvd_info_players[i].stats[STAT_ACTIVEWEAPON]),mvd_info_players[i].stats[STAT_AMMO]);
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%*s:%-*i",mvd_info_adjust_length,Weapon_NumToString(mvd_info_players[i].stats[STAT_ACTIVEWEAPON]),mvd_info_adjust_length,mvd_info_players[i].stats[STAT_AMMO]);
 				}
 				break;
 			
 			case 'W' :
 				if(strlen(mvd_info_final_string)){
 				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %3s:%-3s",mvd_info_final_string_tmp,MVD_BestWeapon_strings(i),MVD_BestAmmo(i));
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %*s:%-*s",mvd_info_final_string_tmp,mvd_info_adjust_length,MVD_BestWeapon_strings(i),mvd_info_adjust_length,MVD_BestAmmo(i));
 				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%3s:%-3s",MVD_BestWeapon_strings(i),MVD_BestAmmo(i));
+				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%*s:%-*s",mvd_info_adjust_length,MVD_BestWeapon_strings(i),mvd_info_adjust_length,MVD_BestAmmo(i));
 				}
 				break;
 			
