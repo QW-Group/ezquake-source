@@ -38,7 +38,7 @@ entities sent from the server may not include everything in the pvs, especially
 when crossing a water boudnary.
 */
 
-cvar_t	cl_rollspeed = {"cl_rollspeed", "0"};
+cvar_t	cl_rollspeed = {"cl_rollspeed", "200"};
 cvar_t	cl_rollangle = {"cl_rollangle", "0"};
 cvar_t	cl_bob = {"cl_bob", "0.00"};
 cvar_t	cl_bobcycle = {"cl_bobcycle", "0.0"};
