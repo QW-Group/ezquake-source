@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 float olddemotime, nextdemotime;		
 
-
+void Demo_playlist_f(void);
 static float		td_lastframe;		// to meter out one message a frame
 static int			td_startframe;		// cls.framecount at start
 static float		td_starttime;		// realtime at second frame of timedemo
@@ -924,9 +924,10 @@ void CL_AutoRecord_StopMatch(void) {
 	autorecording = false;
 	CL_StopRecording();
 	temp_demo_ready = true;
-	if (match_auto_record.value == 2)
+	if (match_auto_record.value == 2){
 		CL_AutoRecord_SaveMatch();
-	else
+		Com_Printf ("Auto record ok\n");
+	}else
 		Com_Printf ("Auto demo recording completed\n");
 }
 
@@ -988,7 +989,6 @@ void CL_AutoRecord_SaveMatch(void) {
 	int error, num;
 	FILE *f;
 	char *dir, *tempname, savedname[2 * MAX_OSPATH], *fullsavedname, *exts[] = {"qwd", "qwz", NULL};
-
 	if (!temp_demo_ready)
 		return;
 
@@ -998,6 +998,7 @@ void CL_AutoRecord_SaveMatch(void) {
 	tempname = va("%s/%s", MT_TempDirectory(), TEMP_DEMO_NAME);
 
 	fullsavedname = va("%s/%s", dir, auto_matchname);
+	Com_Printf("Ok its trying to save, %i %s %s %s\n",temp_demo_ready,auto_matchname,fullsavedname,tempname);
 	if ((num = Util_Extend_Filename(fullsavedname, exts)) == -1) {
 		Com_Printf("Error: no available filenames\n");
 		return;
@@ -1014,6 +1015,7 @@ void CL_AutoRecord_SaveMatch(void) {
 	if ((error = rename(tempname, fullsavedname))) {
 		COM_CreatePath(fullsavedname);
 		error = rename(tempname, fullsavedname);
+		Com_Printf("error %i\n",error);
 	}
 
 	if (!error)
@@ -1154,9 +1156,14 @@ static void PlayQWZDemo (void) {
 double		demostarttime;		
 
 void CL_StopPlayback (void) {
+	extern int demo_playlist_started;
+	
 	if (!cls.demoplayback)
 		return;
 
+	if (demo_playlist_started)
+		Demo_playlist_f();
+	
 	if (Movie_IsCapturing())	
 		Movie_Stop();
 
