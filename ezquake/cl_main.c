@@ -525,6 +525,8 @@ void CL_Disconnect (void) {
 
 void CL_Disconnect_f (void) {
 	cl.intermission = 0;
+	extern int demo_playlist_started;
+	demo_playlist_started= 0;
 	Host_EndGame();
 }
 
