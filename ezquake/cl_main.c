@@ -77,8 +77,8 @@ cvar_t  localid = {"localid", ""};
 static qboolean allowremotecmd = true;
 qboolean com_blockscripts;
 
-cvar_t	cl_deadbodyfilter = {"cl_deadbodyFilter", "1"};
-cvar_t	cl_gibfilter = {"cl_gibFilter", "1"};
+cvar_t	cl_deadbodyfilter = {"cl_deadbodyFilter", "0"};
+cvar_t	cl_gibfilter = {"cl_gibFilter", "0"};
 cvar_t	cl_muzzleflash = {"cl_muzzleflash", "1"};
 cvar_t	cl_rocket2grenade = {"cl_r2g", "0"};
 cvar_t	cl_demospeed = {"cl_demospeed", "1"};
