@@ -66,9 +66,6 @@ static int		num_sfx;
 
 static sfx_t	*ambient_sfx[NUM_AMBIENTS];
 
-static int 		desired_speed = 11025;
-static int 		desired_bits = 16;
-
 static int sound_started = 0;
 
 cvar_t bgmvolume = {"bgmvolume", "1", CVAR_ARCHIVE};
