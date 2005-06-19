@@ -2268,9 +2268,12 @@ void M_Demos_Playlist_stop_f (){
 }
 
 void Demo_playlist_start (int i){
-	
+	key_dest = key_game;
+	m_state = m_none;
 	demo_playlist_started = 1;
 	demo_playlist_current_played = i;
+	if (cls.demoplayback)
+			Cbuf_AddText("disconnect\n");
 	Cbuf_AddText (va("playdemo \"..%s\"\n", demo_playlist[demo_playlist_current_played].path));
 
 }
@@ -2545,6 +2548,8 @@ void M_Demos_Playlist_Move_Up (int i) {
 }
 
 void M_Demos_Playlist_Move_Down (int i) {
+	if(i+1 == demo_playlist_num )
+			return;
 	demo_playlist_t tmp;
 	Q_strncpyz(tmp.name,demo_playlist[i+1].name,sizeof(demo_playlist[i+1].name));
 	Q_strncpyz(tmp.path,demo_playlist[i+1].path,sizeof(demo_playlist[i+1].path));
