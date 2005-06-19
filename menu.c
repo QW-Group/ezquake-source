@@ -1200,6 +1200,17 @@ void M_Help_Draw (void) {
 
 	int x, y, w, h;
 
+#ifdef GLQUAKE
+// disconnect: unscale help menu
+	if (scr_scaleMenu.value) {
+		menuwidth = vid.width;
+		menuheight = vid.height;
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity ();
+		glOrtho  (0, menuwidth, menuheight, 0, -99999, 99999);
+	}
+#endif
+
     w = min(max(512, 320), vid.width) - 8;
     h = min(max(432, 200), vid.height) - 8;
     x = (vid.width - w) / 2;
