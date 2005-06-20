@@ -57,8 +57,7 @@ cvar_t match_name_on = {"match_name_on", "on"};
 cvar_t match_name_nick = {"match_name_nick", ""};			
 cvar_t match_name_spec = {"match_name_spec", "(SPEC)"};		
 
-int loc_loaded;
-loc_loaded = 0;
+int loc_loaded = 0;
 
 static char *MT_CleanString(char *string, qboolean allow_spaces_and_slashes) {
 	byte *in, *out, c, d, *disallowed;
