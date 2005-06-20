@@ -2589,9 +2589,9 @@ void M_Demos_Draw (void) {
 	float frac, time, elapsed;
 
 	if (demos_menu_pos == 0){
-		M_Print (32, 8, "[demos]");
-		M_PrintWhite (88, 8, " playlist ");
-		M_PrintWhite (168, 8, " options ");
+		M_Print (64, 8, "[demos]");
+		M_PrintWhite (120, 8, " playlist ");
+		M_PrintWhite (200, 8, " options ");
 			Q_strncpyz(demoname_scroll, demo_currentdir[0] ? demo_currentdir : "/", sizeof(demoname_scroll));
 	M_PrintWhite (16, 16, demoname_scroll);
 	M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f \x1d\x1e\x1e\x1e\x1e\x1e\x1f");
@@ -2662,23 +2662,30 @@ void M_Demos_Draw (void) {
 	}
 	
 	}else if(demos_menu_pos == 1){
-		M_PrintWhite (32, 8, " demos ");
-		M_Print (88, 8, "[playlist]");
-		M_PrintWhite (168, 8, " options ");
+		M_PrintWhite (64, 8, " demos ");
+		M_Print (120, 8, "[playlist]");
+		M_PrintWhite (200, 8, " options ");
 		M_Print (8, 16, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f");
 		if(demo_playlist_num == 0)
-			M_PrintWhite(60,24,"Playlist is empty");
+			M_PrintWhite(96,96,"Playlist is empty");
 		else{
 			for (i = 0; i <= demo_playlist_num - demo_playlist_base && i < DEMO_MAXLINES; i++) {
 				y = 24 + i * 8 ;
-				M_Print (24, y, demo_playlist[demo_playlist_base + i].name);
-				M_DrawCharacter (8, 24 + demo_playlist_cursor * 8, 12 + ((int) (curtime * 4) & 1));
+				if (demo_playlist_cursor == i)
+						M_PrintWhite (24, y, demo_playlist[demo_playlist_base + i].name);
+				else
+					M_Print (24, y, demo_playlist[demo_playlist_base + i].name);
 			}
+			M_DrawCharacter (8, 24 + demo_playlist_cursor * 8, 12 + ((int) (curtime * 4) & 1));
+		
+			
+			
+			
 		}
 	}else if(demos_menu_pos == 2){
-		M_PrintWhite (32, 8, " demos ");
-		M_PrintWhite (88, 8, " playlist ");
-		M_Print (168, 8, "[options]");
+		M_PrintWhite (64, 8, " demos ");
+		M_PrintWhite (120, 8, " playlist ");
+		M_Print (200, 8, "[options]");
 		
 	
 		M_Print (8, 16, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f");
