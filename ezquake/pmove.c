@@ -231,7 +231,8 @@ usedown:
 }
 
 //Handles both ground friction and water friction
-void PM_Friction (void) {
+void PM_Friction (void) 
+{
 	float	speed, newspeed, control;
 	float	friction;
 	float	drop;
@@ -242,7 +243,8 @@ void PM_Friction (void) {
 		return;
 
 	speed = VectorLength(pmove.velocity);
-	if (speed < 1) {
+	if (speed < 1) 
+	{
 		pmove.velocity[0] = pmove.velocity[1] = 0;
 		if (pmove.pm_type == PM_FLY)
 			pmove.velocity[2] = 0;
@@ -260,17 +262,13 @@ void PM_Friction (void) {
 		friction = movevars.friction;
 
 		// if the leading edge is over a dropoff, increase friction
-		if (pmove.onground) {
-			start[0] = stop[0] = pmove.origin[0] + pmove.velocity[0]/speed*16;
-			start[1] = stop[1] = pmove.origin[1] + pmove.velocity[1]/speed*16;
-			start[2] = pmove.origin[2] + player_mins[2];
-			stop[2] = start[2] - 34;
-
-			trace = PM_PlayerTrace (start, stop);
-
-			if (trace.fraction == 1)
-				friction *= 2;
-		}
+		start[0] = stop[0] = pmove.origin[0] + pmove.velocity[0]/speed*16;
+		start[1] = stop[1] = pmove.origin[1] + pmove.velocity[1]/speed*16;
+		start[2] = pmove.origin[2] + player_mins[2];
+		stop[2] = start[2] - 34;
+		trace = PM_PlayerTrace (start, stop);
+		if (trace.fraction == 1)
+			friction *= 2;
 
 		control = speed < movevars.stopspeed ? movevars.stopspeed : speed;
 		drop = control * friction * frametime;
@@ -287,7 +285,8 @@ void PM_Friction (void) {
 	VectorScale (pmove.velocity, newspeed, pmove.velocity);
 }
 
-void PM_Accelerate (vec3_t wishdir, float wishspeed, float accel) {
+void PM_Accelerate (vec3_t wishdir, float wishspeed, float accel) 
+{
 	float addspeed, accelspeed, currentspeed;
 
 	if (pmove.pm_type == PM_DEAD)
@@ -697,9 +696,15 @@ void PM_SpectatorMove (void) {
 
 //Returns with origin, angles, and velocity modified in place.
 //Numtouch and touchindex[] will be set if any of the physents were contacted during the move.
-void PM_PlayerMove (void) {
+void PM_PlayerMove (void) 
+{
 	frametime = pmove.cmd.msec * 0.001;
 	pmove.numtouch = 0;
+
+	if (pmove.pm_type == PM_NONE || pmove.pm_type == PM_FREEZE) {
+		PM_CategorizePosition ();
+		return;
+	}
 
 	// take angles directly from command
 	VectorCopy (pmove.cmd.angles, pmove.angles);
@@ -722,7 +727,8 @@ void PM_PlayerMove (void) {
 	if (pmove.velocity[2] < 0 || pmove.pm_type == PM_DEAD)
 		pmove.waterjumptime = 0;
 
-	if (pmove.waterjumptime) {
+	if (pmove.waterjumptime) 
+	{
 		pmove.waterjumptime -= frametime;
 		if (pmove.waterjumptime < 0)
 			pmove.waterjumptime = 0;

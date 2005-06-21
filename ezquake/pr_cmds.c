@@ -1286,6 +1286,9 @@ void PF_infokey (void) {
 		if (!strcmp(key, "ip")) {
 			Q_strncpyz(ov, NET_BaseAdrToString (svs.clients[e1 - 1].netchan.remote_address), sizeof(ov));
 			value = ov;
+		} else if (!strcmp(key, "*z_ext")) {
+			sprintf(ov, "%d", svs.clients[e1-1].extensions);
+			value = ov;
 		} else if (!strcmp(key, "ping")) {
 			ping = SV_CalcPing (&svs.clients[e1 - 1]);
 			Q_snprintfz(ov, sizeof(ov), "%d", ping);

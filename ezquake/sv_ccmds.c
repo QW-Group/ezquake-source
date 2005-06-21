@@ -344,6 +344,14 @@ void SV_SendServerInfoChange(char *key, char *value) {
 
 //Cvar system calls this when a CVAR_SERVERINFO cvar changes
 void SV_ServerinfoChanged (char *key, char *string) {
+	if ( (!strcmp(key, "pm_bunnyspeedcap") || !strcmp(key, "pm_slidefix")
+		|| !strcmp(key, "pm_airstep") || !strcmp(key, "pm_pground")
+		|| !strcmp(key, "samelevel") || !strcmp(key, "watervis") || !strcmp(key, "coop") )
+		&& !strcmp(string, "0") ) {
+		// don't add default values to serverinfo to keep it cleaner
+		string = "";
+	}
+
 	if (strcmp(string, Info_ValueForKey (svs.info, key))) {
 		Info_SetValueForKey (svs.info, key, string, MAX_SERVERINFO_STRING);
 		SV_SendServerInfoChange (key, string);
@@ -369,6 +377,12 @@ void SV_Serverinfo_f (void) {
 		Com_Printf ("Star variables cannot be changed.\n");
 		return;
 	}
+
+	if (!strcmp(Cmd_Argv(1), "maxpitch") || !strcmp(Cmd_Argv(1), "minpitch")) {
+		Cvar_Set (Cvar_FindVar(va("sv_%s", Cmd_Argv(1))), Cmd_Argv(2));
+		return; // cvar callbacks will take care of updating serverinfo
+	}
+
 	Info_SetValueForKey (svs.info, Cmd_Argv(1), Cmd_Argv(2), MAX_SERVERINFO_STRING);
 
 	// if this is a cvar, change it too	

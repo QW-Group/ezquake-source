@@ -1369,17 +1369,33 @@ void CL_ParsePlayerinfo (void) {
 					state->pm_type = PM_NORMAL;
 					state->jump_held = (pm_code == PMC_NORMAL_JUMP_HELD);
 				}
-			} else if (pm_code == PMC_OLD_SPECTATOR) {
-				state->pm_type = PM_OLD_SPECTATOR;
-			} else if ((cl.z_ext & Z_EXT_PM_TYPE_NEW) && pm_code == PMC_SPECTATOR) {
-				state->pm_type = PM_SPECTATOR;
-			} else if ((cl.z_ext & Z_EXT_PM_TYPE_NEW) && pm_code == PMC_FLY) {
-				state->pm_type = PM_FLY;
-			} else {
+			}
+		else if (pm_code == PMC_OLD_SPECTATOR)
+			state->pm_type = PM_OLD_SPECTATOR;
+		else {
+			if (cl.z_ext & Z_EXT_PM_TYPE_NEW) {
+				if (pm_code == PMC_SPECTATOR)
+					state->pm_type = PM_SPECTATOR;
+				else if (pm_code == PMC_FLY)
+					state->pm_type = PM_FLY;
+				else if (pm_code == PMC_NONE)
+					state->pm_type = PM_NONE;
+				else if (pm_code == PMC_FREEZE)
+					state->pm_type = PM_FREEZE;
+				else {
+					// future extension?
+					goto guess_pm_type;
+				}
+			}
+			else {
 				// future extension?
 				goto guess_pm_type;
 			}
-		} else {
+		}
+	}
+	else
+	{
+
 guess_pm_type:
 			if (cl.players[num].spectator)
 				state->pm_type = PM_OLD_SPECTATOR;
@@ -1389,6 +1405,11 @@ guess_pm_type:
 				state->pm_type = PM_NORMAL;
 		}
 	}
+
+	if (cl.z_ext & Z_EXT_PF_ONGROUND)
+		state->onground = (flags & PF_ONGROUND) != 0;
+	else
+		state->onground = false;
 
 	VectorCopy (state->command.angles, state->viewangles);
 	

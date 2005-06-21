@@ -50,7 +50,7 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	pmove.jump_held = from->jump_held;
 	pmove.waterjumptime = from->waterjumptime;
 	pmove.pm_type = from->pm_type;
-
+//	pmove.onground = from->onground;
 	pmove.cmd = *u;
 
 	movevars.entgravity = cl.entgravity;
@@ -60,6 +60,7 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	PM_PlayerMove ();
 
 	to->waterjumptime = pmove.waterjumptime;
+	to->pm_type = pmove.pm_type;
 	to->jump_held = pmove.jump_held;
 	to->jump_msec = pmove.jump_msec;
 	pmove.jump_msec = 0;
@@ -70,7 +71,6 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	to->onground = pmove.onground;
 
 	to->weaponframe = from->weaponframe;
-	to->pm_type = from->pm_type;
 }
 
 //Used when cl_nopred is 1 to determine whether we are on ground, otherwise stepup smoothing code produces ugly jump physics
@@ -234,13 +234,16 @@ if (physframe)	//##testing
 
 	if (nolerp[to])
 		return;
-// shaman RFE 1036160 {
+
+// shaman RFE 1036160 {
 	if (cl_pushlatency.value != 0) {
         frac = f;
 	}
 	else {
 // } shaman RFE 1036160 
-    	frac = (simtime - lerp_times[from]) / (lerp_times[to] - lerp_times[from]);    	frac = bound (0, frac, 1);// shaman RFE 1036160 {
+    	frac = (simtime - lerp_times[from]) / (lerp_times[to] - lerp_times[from]);
+    	frac = bound (0, frac, 1);
+// shaman RFE 1036160 {
 	}
 // } shaman RFE 1036160 
 

@@ -48,7 +48,7 @@ typedef struct {
 
 	int			flags;			// dead, gib, etc
 
-	int			pm_type;
+	byte			pm_type;
 	float		waterjumptime;
 	qboolean	onground;
 	qboolean	jump_held;
@@ -296,12 +296,14 @@ typedef struct {
 	int			deathmatch;
 	int			teamplay;
 	int			gametype;		// GAME_COOP or GAME_DEATHMATCH
-	qboolean	teamfortress;	// true if gamedir is "fortress"
+	qboolean		teamfortress;	// true if gamedir is "fortress"
 	int			fpd;			// FAQ proxy flags
 	int			z_ext;			// ZQuake protocol extensions flags
 	int			timelimit;
 	int			fraglimit;
-	float		maxfps;
+	float			maxfps;
+	float			minpitch;
+	float			maxpitch;
 
 	int			last_fps;
 
@@ -340,7 +342,7 @@ typedef struct {
 								// is rendering at.  always <= realtime
 
 	double		servertime;
-	qboolean	servertime_works;
+	qboolean	servertime_works;	// Does the server actually send STAT_TIME/svc_time?
 	double		gametime;
 
 	vec3_t		simorg;
@@ -355,6 +357,7 @@ typedef struct {
 
 	qboolean	onground;
 	float		crouch;			// local amount for smoothing stepups
+	float		viewheight;
 
 	qboolean	paused;			// a combination of PAUSED_SERVER and PAUSED_DEMO flags
 
