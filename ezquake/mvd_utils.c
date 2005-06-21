@@ -28,13 +28,13 @@ cvar_t			mvd_info_y		= {"mvd_info_y", "0"};
 
 // mvd_autotrack cvars
 cvar_t mvd_autotrack = {"mvd_autotrack", "0"};
-cvar_t mvd_autotrack_1on1 = {"mvd_autotrack_1on1", "%a * %A + 50 * %W + %p + %f"};
+//cvar_t mvd_autotrack_1on1 = {"mvd_autotrack_1on1", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_1on1_values = {"mvd_autotrack_1on1_values", "1 2 3 2 3 5 8 8 1 2 3 0 0 0"}; 
-cvar_t mvd_autotrack_2on2 = {"mvd_autotrack_2on2", "%a * %A + 50 * %W + %p + %f"};
+//cvar_t mvd_autotrack_2on2 = {"mvd_autotrack_2on2", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_2on2_values = {"mvd_autotrack_2on2_values", "1 2 3 2 3 5 8 8 1 2 3 500 900 1000"}; 
-cvar_t mvd_autotrack_4on4 = {"mvd_autotrack_4on4", "%a * %A + 50 * %W + %p + %f"};
+//cvar_t mvd_autotrack_4on4 = {"mvd_autotrack_4on4", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_4on4_values = {"mvd_autotrack_4on4_values", "1 2 4 2 4 6 10 10 1 2 3 500 900 1000"}; 
-cvar_t mvd_autotrack_custom = {"mvd_autotrack_custom", "%a * %A + 50 * %W + %p + %f"};
+//cvar_t mvd_autotrack_custom = {"mvd_autotrack_custom", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_custom_values = {"mvd_autotrack_custom_values", "1 2 3 2 3 6 6 1 2 3 500 900 1000"}; 
 
 
@@ -476,13 +476,13 @@ void MVD_Utils_Init (void) {
 	Cvar_Register (&mvd_info_x);
 	Cvar_Register (&mvd_info_y);
 	Cvar_Register (&mvd_autotrack);
-	Cvar_Register (&mvd_autotrack_1on1);
+	//Cvar_Register (&mvd_autotrack_1on1);
 	Cvar_Register (&mvd_autotrack_1on1_values);
-	Cvar_Register (&mvd_autotrack_2on2);
+	//Cvar_Register (&mvd_autotrack_2on2);
 	Cvar_Register (&mvd_autotrack_2on2_values);
-	Cvar_Register (&mvd_autotrack_4on4);
+	//Cvar_Register (&mvd_autotrack_4on4);
 	Cvar_Register (&mvd_autotrack_4on4_values);
-	Cvar_Register (&mvd_autotrack_custom);
+	//Cvar_Register (&mvd_autotrack_custom);
 	Cvar_Register (&mvd_autotrack_custom_values);
 
 	Cvar_ResetCurrentGroup();
