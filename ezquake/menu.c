@@ -2548,9 +2548,11 @@ void M_Demos_Playlist_Move_Up (int i) {
 }
 
 void M_Demos_Playlist_Move_Down (int i) {
+	demo_playlist_t tmp;
+
 	if(i+1 == demo_playlist_num )
 			return;
-	demo_playlist_t tmp;
+	
 	Q_strncpyz(tmp.name,demo_playlist[i+1].name,sizeof(demo_playlist[i+1].name));
 	Q_strncpyz(tmp.path,demo_playlist[i+1].path,sizeof(demo_playlist[i+1].path));
 	Q_strncpyz(demo_playlist[i+1].name,demo_playlist[i].name,sizeof(demo_playlist[i+1].name));
