@@ -75,12 +75,17 @@ float			scr_con_current;
 float			scr_conlines;           // lines of console to display
 
 float			oldscreensize, oldfov, oldsbar;
+
+
+qboolean OnFovChange (cvar_t *var, char *value);
+qboolean OnDefaultFovChange (cvar_t *var, char *value);
+cvar_t			scr_fov = {"fov", "90", CVAR_ARCHIVE, OnFovChange};	// 10 - 140
+cvar_t			default_fov = {"default_fov", "0", CVAR_ARCHIVE, OnDefaultFovChange};
 cvar_t			scr_viewsize = {"viewsize", "100", CVAR_ARCHIVE};
-cvar_t			scr_fov = {"fov", "90", CVAR_ARCHIVE};	// 10 - 140
 cvar_t			scr_consize = {"scr_consize", "0.75"};
 cvar_t			scr_conspeed = {"scr_conspeed", "1000"};
 cvar_t			scr_centertime = {"scr_centertime", "2"};
-cvar_t		    scr_centershift = {"scr_centershift", "0"}; // BorisU
+cvar_t		    	scr_centershift = {"scr_centershift", "0"}; // BorisU
 cvar_t			scr_showram = {"showram", "1"};
 cvar_t			scr_showturtle = {"showturtle", "0"};
 cvar_t			scr_showpause = {"showpause", "1"};
@@ -258,6 +263,58 @@ void SCR_EraseCenterString (void) {
 
 /************************************ FOV ************************************/
 
+extern	cvar_t		v_idlescale;
+qboolean	concussioned = false;
+
+qboolean OnFovChange (cvar_t *var, char *value)
+{
+	
+	float newfov = Q_atof(value);
+
+	if (newfov > 140)
+		newfov = 140;
+	else if (newfov < 10)
+		newfov = 10;
+
+	if (newfov == scr_fov.value)
+		return true;
+
+	if ( cbuf_current != &cbuf_svc) {
+		if (concussioned && !cls.demoplayback)
+			return true;
+	} else {
+		if (newfov != 90 && cl.teamfortress && v_idlescale.value >= 20) {
+			concussioned = true;
+			if (v_idlescale.value == 100)
+				TP_ExecTrigger ("f_conc");
+		} else if (newfov == 90 && cl.teamfortress) {
+			concussioned = false;
+		}
+		if (cls.demoplayback) // && !cl_fovfromdemo.value)
+			return true;
+	}
+
+	vid.recalc_refdef = true;
+	if (newfov == 90) {
+		Cvar_Set (&scr_fov,default_fov.string);
+		return true;
+	}
+
+	Cvar_SetValue (&scr_fov, newfov);
+	return true;
+}
+
+qboolean OnDefaultFovChange (cvar_t *var, char *value)
+{
+	float newfov = Q_atof(value);
+	
+	if (newfov < 10.0 || newfov > 140.0){
+		Com_Printf("Invalid default_fov\n");
+		return true;
+	}
+	return false;
+}
+
 static float CalcFov (float fov_x, float width, float height) {
 	float x;
 
@@ -289,12 +346,6 @@ static void SCR_CalcRefdef (void) {
 		Cvar_Set (&scr_viewsize, "30");
 	if (scr_viewsize.value > 120)
 		Cvar_Set (&scr_viewsize, "120");
-
-	// bound field of view
-	if (scr_fov.value < 10)
-		Cvar_Set (&scr_fov, "10");
-	if (scr_fov.value > 140)
-		Cvar_Set (&scr_fov, "140");
 
 	// intermission is always full screen   
 	size = cl.intermission ? 120 : scr_viewsize.value;
@@ -1633,6 +1684,7 @@ void SCR_Init (void) {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIEW);
 	Cvar_Register (&scr_fov);
+	Cvar_Register (&default_fov);
 	Cvar_Register (&scr_viewsize);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);

@@ -124,6 +124,7 @@ void IN_KLookUp (void) {KeyUp(&in_klook);}
 
 void IN_MLookDown (void) {KeyDown(&in_mlook);}
 void IN_MLookUp (void) {
+	if (concussioned) return;
 	KeyUp(&in_mlook);
 	if (!mlook_active && lookspring.value)
 		V_StartPitchDrift();

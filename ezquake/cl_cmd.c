@@ -642,20 +642,6 @@ void CL_FullServerinfo_f (void) {
 	CL_ProcessServerInfo ();
 }
 
-void CL_Fov_f (void) {
-	extern cvar_t scr_fov, default_fov;
-
-	if (Cmd_Argc() == 1) {
-		Com_Printf ("\"fov\" is \"%s\"\n", scr_fov.string);
-		return;
-	}
-
-	if (Q_atof(Cmd_Argv(1)) == 90.0 && default_fov.value)
-		Cvar_SetValue (&scr_fov, default_fov.value);
-	else
-		Cvar_Set (&scr_fov, Cmd_Argv(1));
-}
-
 void CL_R_DrawViewModel_f (void) {
 	extern cvar_t cl_filterdrawviewmodel;
 
@@ -674,7 +660,7 @@ svcmd_t svcmds[] = {
 	{"fullserverinfo", CL_FullServerinfo_f},
 	{"nextul", CL_NextUpload},
 	{"stopul", CL_StopUpload},
-	{"fov", CL_Fov_f},
+//	{"fov", CL_Fov_f},
 	{"r_drawviewmodel", CL_R_DrawViewModel_f},
 	{"fileul", CL_StartFileUpload}, //bliP
 	{NULL, NULL}

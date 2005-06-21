@@ -1001,6 +1001,7 @@ void D_EndDirectRect (int x, int y, int width, int height) {
 }
 
 void Force_CenterView_f (void) {
+	if (concussioned) return;
 	cl.viewangles[PITCH] = 0;
 }
 
