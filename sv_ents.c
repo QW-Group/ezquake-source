@@ -200,7 +200,7 @@ void SV_WritePlayersToClient (client_t *client, byte *pvs, sizebuf_t *msg) {
 	client_t *cl;
 	edict_t *ent;
 	usercmd_t cmd;
-	int pm_type, pm_code;
+	int pm_type = 0, pm_code = 0;
 
 	for (j = 0, cl = svs.clients; j < MAX_CLIENTS; j++, cl++) {
 		if (cl->state != cs_spawned)
@@ -247,31 +247,41 @@ void SV_WritePlayersToClient (client_t *client, byte *pvs, sizebuf_t *msg) {
 				pflags |= PF_WEAPONFRAME;
 		}
 
+		// Z_EXT_PM_TYPE protocol extension
+		// encode pm_type and jump_held into pm_code
 		pm_type = SV_PMTypeForClient (cl);
 		switch (pm_type) {
-		case PM_NORMAL:		// Z_EXT_PM_TYPE protocol extension
+		case PM_DEAD:
+			pm_code = PMC_NORMAL;	// plus PF_DEAD
+			break;
+		case PM_NORMAL:
+			pm_code = PMC_NORMAL;
 			if (cl->jump_held)
-				pm_code = PMC_NORMAL_JUMP_HELD;	// encode pm_type and jump_held into pm_code
-			else
-				pm_code = PMC_NORMAL;
+				pm_code = PMC_NORMAL_JUMP_HELD;
 			break;
 		case PM_OLD_SPECTATOR:
 			pm_code = PMC_OLD_SPECTATOR;
 			break;
-		case PM_SPECTATOR:	// Z_EXT_PM_TYPE_NEW protocol extension
+		case PM_SPECTATOR:
 			pm_code = PMC_SPECTATOR;
 			break;
 		case PM_FLY:
 			pm_code = PMC_FLY;
 			break;
-		case PM_DEAD:
-			pm_code = PMC_NORMAL;
+		case PM_NONE:
+			pm_code = PMC_NONE;
+			break;
+		case PM_FREEZE:
+			pm_code = PMC_FREEZE;
 			break;
 		default:
-			assert(!"SV_WritePlayersToClient: unexpected pm_type");
+			assert (false);
 		}
-
 		pflags |= pm_code << PF_PMC_SHIFT;
+
+		// Z_EXT_PF_ONGROUND protocol extension
+		if ((int)ent->v.flags & FL_ONGROUND)
+			pflags |= PF_ONGROUND;
 
 		if (client->spec_track && client->spec_track - 1 == j && ent->v.weaponframe) 
 			pflags |= PF_WEAPONFRAME;

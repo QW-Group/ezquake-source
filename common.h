@@ -106,7 +106,7 @@ typedef enum {false, true} qboolean;
 #define	STAT_MONSTERS		14		// bumped by svc_killedmonster
 #define	STAT_ITEMS			15
 #define STAT_VIEWHEIGHT		16		// Z_EXT_VIEWHEIGHT protocol extension
-#define STAT_TIME			17		// Z_EXT_SERVERTIME protocol extension
+#define STAT_TIME			17		// Z_EXT_TIME extension
 
 // item flags
 #define	IT_SHOTGUN				1
@@ -251,6 +251,7 @@ char  *strnstr (char *s, char *find, size_t slen);
 
 int	Q_atoi (char *str);
 float Q_atof (char *str);
+char *Q_ftos (float value);		// removes trailing zero chars
 
 void Q_strncpyz (char *dest, char *src, size_t size);
 void Q_snprintfz (char *dest, size_t size, char *fmt, ...);

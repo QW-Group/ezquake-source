@@ -29,6 +29,11 @@ usercmd_t	cmd;
 cvar_t	sv_spectalk = {"sv_spectalk", "1"};
 cvar_t	sv_mapcheck	= {"sv_mapcheck", "1"};
 
+qboolean OnChange_sv_maxpitch (cvar_t *var, char *value);
+qboolean OnChange_sv_minpitch (cvar_t *var, char *value);
+cvar_t	sv_maxpitch = {"sv_maxpitch", "80", 0, OnChange_sv_maxpitch};
+cvar_t	sv_minpitch = {"sv_minpitch", "-70", 0, OnChange_sv_minpitch};
+
 extern	vec3_t	player_mins;
 
 extern int fp_messages, fp_persecond, fp_secondsdead;
@@ -37,8 +42,48 @@ extern cvar_t	sv_pausable;
 extern cvar_t	pm_bunnyspeedcap;
 extern cvar_t	pm_ktjump;
 extern cvar_t	pm_slidefix;
+extern cvar_t	pm_airstep;
+extern cvar_t	pm_pground;
 
 extern double	sv_frametime;
+
+//
+// pitch clamping
+//
+// All this OnChange code is because we want the cvar names to have sv_ prefixes,
+// but don't want them in serverinfo (save a couple of bytes of space)
+// Value sanity checks are also done here
+//
+qboolean OnChange_sv_maxpitch (cvar_t *var, char *value) {
+	float	newval;
+	char	*newstr;
+
+	newval = bound (0, Q_atof(value), 89.0f);
+	if (newval == var->value)
+		return true;
+
+	Cvar_SetValue (var, newval);
+	newstr = (newval == 80.0f) ? "" : Q_ftos(newval);	// don't show default values in serverinfo
+	Info_SetValueForKey (svs.info, "maxpitch", newstr, MAX_SERVERINFO_STRING);
+	SV_SendServerInfoChange("maxpitch", newstr);
+	return false;
+}
+
+qboolean OnChange_sv_minpitch (cvar_t *var, char *value) {
+	float	newval;
+	char	*newstr;
+
+	newval = bound (-89.0f, Q_atof(value), 0.0f);
+	if (newval == var->value)
+		return true;
+
+	Cvar_SetValue (var, newval);
+	newstr = (newval == -70.0f) ? "" : Q_ftos(newval);	// don't show default values in serverinfo
+	Info_SetValueForKey (svs.info, "minpitch", newstr, MAX_SERVERINFO_STRING);
+	SV_SendServerInfoChange("minpitch", newstr);
+	return false;
+}
+
 
 /*
 ============================================================
@@ -861,6 +906,11 @@ void Cmd_SetInfo_f (void) {
 		return;
 	}
 
+	if (!strcmp(Cmd_Argv(1), "*z_ext")) {
+		sv_client->extensions = atoi(Cmd_Argv(2));
+		return;
+	}
+
 	if (Cmd_Argv(1)[0] == '*')
 		return;		// don't set priveledged values
 
@@ -886,16 +936,167 @@ void Cmd_SetInfo_f (void) {
 	MSG_WriteString (&sv.reliable_datagram, Info_ValueForKey(sv_client->userinfo, Cmd_Argv(1)));
 }
 
+
 //Dumps the serverinfo info string
 void Cmd_Serverinfo_f (void) {
 	Info_Print (svs.info);
 }
 
+
+// We receive this command if the client doesn't support remote screenshots or has them disabled
 void Cmd_Snap_f(void) {
 	if (*sv_client->uploadfn) {
 		*sv_client->uploadfn = 0;
 		SV_BroadcastPrintf (PRINT_HIGH, "%s refused remote screenshot\n", sv_client->name);
 	}
+}
+
+
+void SetUpClientEdict (client_t *cl, edict_t *ent)
+{
+	memset (&ent->v, 0, progs->entityfields * 4);
+	ent->v.colormap = NUM_FOR_EDICT(ent);
+	ent->v.netname = PR_SetString(cl->name);
+
+	cl->entgravity = 1.0;
+	//if (fofs_gravity)
+	//	EdictFieldFloat(ent, fofs_gravity) = 1.0; // GetEdictFieldValue(ent, "gravity")
+
+	cl->maxspeed = pm_maxspeed.value;
+	//if (fofs_maxspeed)
+	//	EdictFieldFloat(ent, fofs_maxspeed) = pm_maxspeed.value;
+}
+
+
+//Set client to player mode without reconnecting
+static void Cmd_Join_f (void)
+{
+	int		i;
+	client_t	*cl;
+	int		numclients;
+	extern cvar_t	password;
+
+	if (sv_client->state != cs_spawned)
+		return;
+	if (!sv_client->spectator)
+		return;		// already a player
+
+	if (!(sv_client->extensions & Z_EXT_JOIN_OBSERVE)) {
+		SV_ClientPrintf (sv_client, PRINT_HIGH, "Your QW client doesn't support this command\n");
+		return;
+	}
+
+	if (password.string[0] && Q_strcasecmp(password.string, "none")) {
+		SV_ClientPrintf (sv_client, PRINT_HIGH, "This server requires a %s password. Please disconnect, set the password and reconnect as %s.\n", "player", "player");
+		return;
+	}
+
+	// count players already on server
+	numclients = 0;
+	for (i=0,cl=svs.clients ; i<MAX_CLIENTS ; i++,cl++) {
+		if (cl->state != cs_free && !cl->spectator)
+			numclients++;
+	}
+	if (numclients >= maxclients.value) {
+		SV_ClientPrintf (sv_client, PRINT_HIGH, "Can't join, all player slots full\n");
+		return;
+	}
+
+	// call the prog function for removing a client
+	// this will set the body to a dead frame, among other things
+	pr_global_struct->self = EDICT_TO_PROG(sv_player);
+	if (SpectatorDisconnect)
+		PR_ExecuteProgram (SpectatorDisconnect);
+
+	sv_client->old_frags = 0;
+	SetUpClientEdict (sv_client, sv_client->edict);
+
+	// turn the spectator into a player
+	sv_client->spectator = false;
+	Info_RemoveKey (sv_client->userinfo, "*spectator");
+
+	// call the progs to get default spawn parms for the new client
+	PR_ExecuteProgram (pr_global_struct->SetNewParms);
+	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
+		sv_client->spawn_parms[i] = (&pr_global_struct->parm1)[i];
+
+	// call the spawn function
+	pr_global_struct->time = sv.time;
+	pr_global_struct->self = EDICT_TO_PROG(sv_player);
+	PR_ExecuteProgram (pr_global_struct->ClientConnect);
+
+	// actually spawn the player
+	pr_global_struct->time = sv.time;
+	pr_global_struct->self = EDICT_TO_PROG(sv_player);
+	PR_ExecuteProgram (pr_global_struct->PutClientInServer);	
+
+	// send notification to all clients
+	sv_client->sendinfo = true;
+}
+
+
+// Set client to spectator mode without reconnecting
+static void Cmd_Observe_f (void)
+{
+	int		i;
+	client_t	*cl;
+	int		numspectators;
+	extern cvar_t	maxspectators, spectator_password;
+
+	if (sv_client->state != cs_spawned)
+		return;
+	if (sv_client->spectator)
+		return;		// already a spectator
+
+	if (!(sv_client->extensions & Z_EXT_JOIN_OBSERVE)) {
+		SV_ClientPrintf (sv_client, PRINT_HIGH, "Your QW client doesn't support this command\n");
+		return;
+	}
+
+	if (spectator_password.string[0] && Q_strcasecmp(spectator_password.string, "none")) {
+		SV_ClientPrintf (sv_client, PRINT_HIGH, "This server requires a %s password. Please disconnect, set the password and reconnect as %s.\n", "spectator", "spectator");
+		return;
+	}
+
+	// count spectators already on server
+	numspectators = 0;
+	for (i=0,cl=svs.clients ; i<MAX_CLIENTS ; i++,cl++) {
+		if (cl->state != cs_free && cl->spectator)
+			numspectators++;
+	}
+	if (numspectators >= maxspectators.value) {
+		SV_ClientPrintf (sv_client, PRINT_HIGH, "Can't join, all spectator slots full\n");
+		return;
+	}
+
+	// call the prog function for removing a client
+	// this will set the body to a dead frame, among other things
+	pr_global_struct->self = EDICT_TO_PROG(sv_player);
+	PR_ExecuteProgram (pr_global_struct->ClientDisconnect);
+
+	sv_client->old_frags = 0;
+	SetUpClientEdict (sv_client, sv_client->edict);
+
+	// turn the player into a spectator
+	sv_client->spectator = true;
+	Info_SetValueForStarKey (sv_client->userinfo, "*spectator", "1", MAX_INFO_STRING);
+
+	// call the progs to get default spawn parms for the new client
+	PR_ExecuteProgram (pr_global_struct->SetNewParms);
+	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
+		sv_client->spawn_parms[i] = (&pr_global_struct->parm1)[i];
+
+	SV_SpawnSpectator ();
+	
+	// call the spawn function
+	if (SpectatorConnect) {
+		pr_global_struct->time = sv.time;
+		pr_global_struct->self = EDICT_TO_PROG(sv_player);
+		PR_ExecuteProgram (SpectatorConnect);
+	}
+
+	// send notification to all clients
+	sv_client->sendinfo = true;
 }
 
 /*
@@ -1035,6 +1236,9 @@ ucmd_t ucmds[] = {
 
 	{"setinfo", Cmd_SetInfo_f, false},
 	{"serverinfo", Cmd_Serverinfo_f, false},
+
+	{"join", Cmd_Join_f, false},
+	{"observe", Cmd_Observe_f, false},
 
 	// cheat commands
 	{"god", Cmd_God_f, true},
@@ -1189,12 +1393,19 @@ void AddAllEntsToPmove (void) {
 	}
 }
 
-int SV_PMTypeForClient (client_t *cl) { 
-	if (cl->spectator || (cl->edict->v.movetype == MOVETYPE_NOCLIP))
-		return (cl->extensions & Z_EXT_PM_TYPE_NEW) ? PM_SPECTATOR : PM_OLD_SPECTATOR;
+int SV_PMTypeForClient (client_t *cl)
+{
+	if (cl->edict->v.movetype == MOVETYPE_NOCLIP) {
+		if (cl->extensions & Z_EXT_PM_TYPE_NEW)
+			return PM_SPECTATOR;
+		return PM_OLD_SPECTATOR;
+	}
 
 	if (sv_player->v.movetype == MOVETYPE_FLY)
 		return PM_FLY;
+
+	if (sv_player->v.movetype == MOVETYPE_NONE)
+		return PM_NONE;
 
 	if (sv_player->v.health <= 0)
 		return PM_DEAD;
@@ -1236,6 +1447,14 @@ void SV_RunCmd (usercmd_t *ucmd) {
 	sv_player->v.button1 = (ucmd->buttons & 4) >> 2;
 	if (ucmd->impulse)
 		sv_player->v.impulse = ucmd->impulse;
+
+	// clamp view angles
+	if (ucmd->angles[PITCH] > sv_maxpitch.value)
+		ucmd->angles[PITCH] = sv_maxpitch.value;
+	if (ucmd->angles[PITCH] < sv_minpitch.value)
+		ucmd->angles[PITCH] = sv_minpitch.value;
+	if (!sv_player->v.fixangle)
+		VectorCopy (ucmd->angles, sv_player->v.v_angle);
 
 // angles
 // show 1/3 the pitch angle and all the roll angle	
@@ -1279,6 +1498,7 @@ void SV_RunCmd (usercmd_t *ucmd) {
 	pmove.waterjumptime = sv_player->v.teleport_time;
 	pmove.cmd = *ucmd;
 	pmove.pm_type = SV_PMTypeForClient (sv_client);
+//	pmove.onground = ((int)sv_player->v.flags & FL_ONGROUND) != 0;
 	pmove.jump_held = sv_client->jump_held;
 #ifndef SERVERONLY
 	pmove.jump_msec = 0;
@@ -1294,7 +1514,9 @@ void SV_RunCmd (usercmd_t *ucmd) {
 	movevars.maxspeed = sv_client->maxspeed;
 	movevars.bunnyspeedcap = pm_bunnyspeedcap.value;
 	movevars.ktjump = pm_ktjump.value;
-	movevars.slidefix = pm_slidefix.value;
+	movevars.slidefix = (pm_slidefix.value != 0);
+	movevars.airstep = (pm_airstep.value != 0);
+	movevars.pground = (pm_pground.value != 0);
 
 	// do the move
 	PM_PlayerMove ();

@@ -366,7 +366,12 @@ void CL_AdjustAngles (void) {
 	if (up || down)
 		V_StopPitchDrift();
 
-	cl.viewangles[PITCH] = bound(-70, cl.viewangles[PITCH], 80);
+	if (cl.viewangles[PITCH] > cl.maxpitch)
+		cl.viewangles[PITCH] = cl.maxpitch;
+	if (cl.viewangles[PITCH] < cl.minpitch)
+		cl.viewangles[PITCH] = cl.minpitch;
+
+	//cl.viewangles[PITCH] = bound(cl.min!pitch, cl.viewangles[PITCH], cl.ma!xpitch);
 	cl.viewangles[ROLL] = bound(-50, cl.viewangles[ROLL], 50);		
 } 
 

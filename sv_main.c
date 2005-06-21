@@ -1007,8 +1007,9 @@ void SV_Frame (double time) {
 void SV_InitLocal (void) {
 	int i;
 	extern cvar_t sv_spectalk, sv_mapcheck, sv_aim, sv_nailhack, sv_loadentfiles, sv_maxvelocity, sv_gravity;
+	extern cvar_t sv_maxpitch, sv_minpitch, pm_airstep, pm_pground, pm_slidefix, pm_ktjump, pm_bunnyspeedcap;
 	extern cvar_t pm_stopspeed, pm_spectatormaxspeed, pm_accelerate, pm_airaccelerate, pm_wateraccelerate;
-	extern cvar_t pm_friction, pm_waterfriction, pm_bunnyspeedcap, pm_ktjump, pm_slidefix;
+	extern cvar_t pm_friction, pm_waterfriction;
 
 	SV_InitOperatorCommands	();
 
@@ -1035,6 +1036,8 @@ void SV_InitLocal (void) {
 	Cvar_Register (&sv_spectalk);
 	Cvar_Register (&sv_mapcheck);
 	Cvar_Register (&sv_halflifebsp);
+	Cvar_Register (&sv_maxpitch);
+	Cvar_Register (&sv_minpitch);
 
 	Cvar_Register (&filterban);
 	Cvar_Register (&skill);
@@ -1065,6 +1068,8 @@ void SV_InitLocal (void) {
 	Cvar_Register (&pm_bunnyspeedcap);
 	Cvar_Register (&pm_ktjump);
 	Cvar_Register (&pm_slidefix);
+	Cvar_Register (&pm_airstep);
+	Cvar_Register (&pm_pground);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_PERMISSIONS);
 	Cvar_Register (&allow_download);

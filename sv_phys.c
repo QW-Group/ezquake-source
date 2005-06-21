@@ -38,18 +38,21 @@ solid_edge items only clip against bsp models.
 */
 
 cvar_t	sv_maxvelocity		 = {"sv_maxvelocity","2000"}; 
-cvar_t	sv_gravity			 = {"sv_gravity", "800"};
+cvar_t	sv_gravity		 = {"sv_gravity", "800"};
 cvar_t	pm_stopspeed		 = {"sv_stopspeed", "100"};
-cvar_t	pm_maxspeed			 = {"sv_maxspeed", "320"};
-cvar_t	pm_spectatormaxspeed = {"sv_spectatormaxspeed", "500"};
+cvar_t	pm_maxspeed		 = {"sv_maxspeed", "320"};
+cvar_t	pm_spectatormaxspeed	 = {"sv_spectatormaxspeed", "500"};
 cvar_t	pm_accelerate		 = {"sv_accelerate", "10"};
 cvar_t	pm_airaccelerate	 = {"sv_airaccelerate", "10"};
 cvar_t	pm_wateraccelerate	 = {"sv_wateraccelerate", "10"};
-cvar_t	pm_friction			 = {"sv_friction", "4"};
+cvar_t	pm_friction		 = {"sv_friction", "4"};
 cvar_t	pm_waterfriction	 = {"sv_waterfriction", "4"};
-cvar_t	pm_ktjump			 = {"pm_ktjump", "1", CVAR_SERVERINFO};
+cvar_t	pm_ktjump		 = {"pm_ktjump", "1", CVAR_SERVERINFO};
 cvar_t	pm_bunnyspeedcap	 = {"pm_bunnyspeedcap", "", CVAR_SERVERINFO};
-cvar_t	pm_slidefix			 = {"pm_slidefix", "", CVAR_SERVERINFO};
+cvar_t	pm_slidefix		 = {"pm_slidefix", "", CVAR_SERVERINFO};
+cvar_t	pm_airstep		 = {"pm_airstep", "0", CVAR_SERVERINFO};
+cvar_t	pm_pground		 = {"pm_pground", "0", CVAR_SERVERINFO};
+
 
 double	sv_frametime;
 
@@ -761,6 +764,9 @@ void SV_SetMoveVars(void) {
 	movevars.friction			= pm_friction.value;			 
 	movevars.waterfriction	    = pm_waterfriction.value;	 
 	movevars.entgravity			= 1.0;
-	movevars.slidefix           = pm_slidefix.value;
-	movevars.ktjump             = pm_ktjump.value;
+
+// redundant as we set them in every SV_RunCmd call anyway
+//	movevars.slidefix           = pm_slidefix.value;
+//	movevars.airstep	    = pm_airstep.value;
+//	movevars.ktjump             = pm_ktjump.value;
 }

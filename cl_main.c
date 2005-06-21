@@ -244,6 +244,7 @@ void CL_UserinfoChanged (char *key, char *string) {
 //called by CL_Connect_f and CL_CheckResend
 static void CL_SendConnectPacket(void) {
 	char data[2048];
+	char biguserinfo[MAX_INFO_STRING + 32];
 
 	if (cls.state != ca_disconnected)
 		return;
@@ -251,7 +252,11 @@ static void CL_SendConnectPacket(void) {
 	connect_time = cls.realtime;	// for retransmit requests
 	cls.qport = Cvar_VariableValue("qport");
 
-	Q_snprintfz(data, sizeof(data), "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, cls.userinfo);
+	// let the server know what extensions we support
+	strcpy (biguserinfo, cls.userinfo);
+	Info_SetValueForStarKey (biguserinfo, "*z_ext", va("%i", SUPPORTED_EXTENSIONS), sizeof(biguserinfo));
+
+	Q_snprintfz(data, sizeof(data), "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, biguserinfo);
 	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
 
@@ -344,6 +349,12 @@ void CL_Join_f (void) {
 
 	Cvar_Set(&spectator, "");
 
+	if (cl.z_ext & Z_EXT_JOIN_OBSERVE) {
+		// server supports the 'join' command, good
+		Cmd_ExecuteString("cmd join");
+		return;
+	}
+
 	if (Cmd_Argc() == 2)
 		Cbuf_AddText(va("%s %s\n", proxy ? "say ,connect" : "connect", Cmd_Argv(1)));
 	else
@@ -362,6 +373,12 @@ void CL_Observe_f (void) {
 
 	if (!spectator.string[0] || !strcmp(spectator.string, "0"))
 		Cvar_SetValue(&spectator, 1);
+
+	if (cl.z_ext & Z_EXT_JOIN_OBSERVE) {
+		// server supports the 'join' command, good
+		Cmd_ExecuteString("cmd observe");
+		return;
+	}
 
 	if (Cmd_Argc() == 2)
 		Cbuf_AddText(va("%s %s\n", proxy ? "say ,connect" : "connect", Cmd_Argv(1)));
@@ -428,6 +445,8 @@ void CL_ClearState (void) {
 	memset (cl_dlights, 0, sizeof(cl_dlights));
 	memset (cl_lightstyle, 0, sizeof(cl_lightstyle));
 	memset (cl_entities, 0, sizeof(cl_entities));
+
+	cl.viewheight = DEFAULT_VIEWHEIGHT;
 
 	// make sure no centerprint messages are left from previous level
 	scr_centertime_off = 0;

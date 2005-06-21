@@ -1396,12 +1396,21 @@ void CL_ProcessServerInfo (void) {
 
 	cl.minlight = (strlen(minlight = Info_ValueForKey(cl.serverinfo, "minlight")) ? bound(0, Q_atoi(minlight), 255) : 4);
 
-	// ZQuake extension bits
+	// Get the server's ZQuake extension bits
 	cl.z_ext = atoi(Info_ValueForKey(cl.serverinfo, "*z_ext"));
+
+	// Initialize cl.maxpitch & cl.minpitch
+	p = (cl.z_ext & Z_EXT_PITCHLIMITS) ? Info_ValueForKey (cl.serverinfo, "maxpitch") : "";
+	cl.maxpitch = *p ? Q_atof(p) : 80.0f;
+	p = (cl.z_ext & Z_EXT_PITCHLIMITS) ? Info_ValueForKey (cl.serverinfo, "minpitch") : "";
+	cl.minpitch = *p ? Q_atof(p) : -70.0f;
 
 	// movement vars for prediction
 	cl.bunnyspeedcap = Q_atof(Info_ValueForKey(cl.serverinfo, "pm_bunnyspeedcap"));
-	movevars.slidefix = Q_atoi(Info_ValueForKey(cl.serverinfo, "pm_slidefix"));
+	movevars.slidefix = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_slidefix")) != 0);
+	movevars.airstep = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_airstep")) != 0);
+	movevars.pground = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_pground")) != 0)
+		&& (cl.z_ext & Z_EXT_PF_ONGROUND) /* pground doesn't make sense without this */;
 	movevars.ktjump = *(p = Info_ValueForKey(cl.serverinfo, "pm_ktjump")) ?
 		Q_atof(p) : cl.teamfortress ? 0 : 1;
 
@@ -1837,6 +1846,14 @@ void CL_SetStat (int stat, int value) {
 	}
 
 	cl.stats[stat] = value;
+
+	if (stat == STAT_VIEWHEIGHT && cl.z_ext & Z_EXT_VIEWHEIGHT)
+		cl.viewheight = cl.stats[STAT_VIEWHEIGHT];
+
+	if (stat == STAT_TIME && cl.z_ext & Z_EXT_SERVERTIME) {
+		cl.servertime_works = true;
+		cl.servertime = cl.stats[STAT_TIME] * 0.001;
+	}
 
 	TP_StatChanged(stat, value);
 }

@@ -860,10 +860,12 @@ void V_CalcIntermissionRefdef (void) {
 
 void V_CalcRefdef (void) {
 	vec3_t forward;
+	float bob;
 	float height_adjustment;
 
 	V_DriftPitch ();
 
+	bob = V_CalcBob ();
 	
 	height_adjustment = v_viewheight.value ? bound (-7, v_viewheight.value, 4) : V_CalcBob ();
 	
@@ -884,12 +886,12 @@ void V_CalcRefdef (void) {
 	} else if (view_message->flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0)) {	
 		r_refdef.vieworg[2] -= 16;	// corpse view height
 	} else {
-		r_refdef.vieworg[2] += 22;	// normal view height
+		r_refdef.vieworg[2] += cl.viewheight;	// normal view height
 
-		
 		r_refdef.vieworg[2] += height_adjustment;
-		
 
+		r_refdef.vieworg[2] += bob;
+		
 		// smooth out stair step ups
 		r_refdef.vieworg[2] += cl.crouch;
 	}

@@ -42,12 +42,14 @@ typedef struct {
 	int		info;		// for client or server to identify
 } physent_t;
 
-typedef enum { 
-	PM_NORMAL,			// normal ground movement 
-	PM_OLD_SPECTATOR,	// fly, no clip to world (QW bug) 
-	PM_SPECTATOR,		// fly, no clip to world 
+typedef enum {
+	PM_NORMAL,			// normal ground movement
+	PM_OLD_SPECTATOR,	// fly, no clip to world (QW bug)
+	PM_SPECTATOR,		// fly, no clip to world
 	PM_DEAD,			// no acceleration
-	PM_FLY				// fly, bump into walls
+	PM_FLY,				// fly, bump into walls
+	PM_NONE,			// can't move
+	PM_FREEZE			// can't move or look around (TODO)
 } pmtype_t;
 
 typedef struct {
@@ -62,7 +64,7 @@ typedef struct {
 	int			jump_msec;	// msec since last jump
 #endif
 	float		waterjumptime;
-	pmtype_t	pm_type;
+	int	pm_type;
 
 	// world state
 	int			numphysent;
@@ -94,8 +96,12 @@ typedef struct {
 	float	entgravity;
 	float	bunnyspeedcap;
 	float	ktjump;
-	int		slidefix;
+	qboolean	slidefix;		// NQ-style movement down ramps
+	qboolean	airstep;
+	qboolean	pground;		// NQ-style "onground" flag handling.
+							// p is for persistent (accross frames)
 } movevars_t;
+
 
 extern	movevars_t		movevars;
 extern	playermove_t	pmove;

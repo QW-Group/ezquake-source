@@ -332,9 +332,9 @@ typedef struct {
 //============================================================================
 
 extern	cvar_t	sv_mintic, sv_maxtic;
-extern	cvar_t	pm_maxspeed;
-
+extern	cvar_t	maxclients;
 extern	cvar_t	sv_fastconnect;
+extern	cvar_t	pm_maxspeed;
 
 extern	netadr_t	master_adr[MAX_MASTERS];	// address of the master server
 
