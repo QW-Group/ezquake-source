@@ -30,7 +30,7 @@ typedef struct limited_cvar_s {
 	char *rulesetvalue;
 } limited_cvar_t;
 
-typedef enum {rs_default, rs_smackdown} ruleset_t;
+typedef enum {rs_default, rs_smackdown, rs_mtfl} ruleset_t;
 
 static ruleset_t ruleset;
 
@@ -67,6 +67,8 @@ qboolean Rulesets_AllowTimerefresh(void) {
 
 qboolean Rulesets_AllowNoShadows(void) {
 	switch(ruleset) {
+	case rs_mtfl:
+		return false;
 	case rs_smackdown:
 		return false;
 	default:
@@ -90,7 +92,15 @@ char *Rulesets_Ruleset(void) {
 	extern cvar_t cl_independentPhysics;
 	extern cvar_t allow_scripts;
 	char * sRuleset, * sScripts, * sIPhysics;
-	sRuleset = (ruleset == rs_smackdown) ? "smackdown " : "default ";
+
+	if (ruleset == rs_smackdown) {
+		sRuleset = "smackdown ";
+		} else if (ruleset == rs_mtfl) {
+		sRuleset = "MTFL ";
+		} else {
+		sRuleset = "default ";
+	}
+	//sRuleset = (ruleset == rs_smackdown) ? "smackdown " : "default ";
 	sScripts = (allow_scripts.value) ? "" : "\x90scripts blocked\x91";
 	sIPhysics = (cl_independentPhysics.value) ? "" : "\x90indep. physics off\x91";
 	return va("%s %s %s", sRuleset, sScripts, sIPhysics);
@@ -176,6 +186,48 @@ static void Rulesets_Smackdown(void) {
 		Cmd_SetMacro(allowed_smackdown_macros[i], true);
 */
 }
+static void Rulesets_MTFL(void) {
+	extern cvar_t cl_independentPhysics, cl_c2spps;
+	//extern cvar_t v_gamma, v_contrast;
+#ifdef GLQUAKE
+	extern cvar_t r_drawflat;
+#endif
+	extern cvar_t r_fullbrightSkins;
+
+	int i = 0;
+
+	locked_cvar_t disabled_cvars[] = {
+#ifdef GLQUAKE
+		{&r_drawflat, "0"},
+#endif
+		{&r_fullbrightSkins, "0"},
+
+	};
+
+	/*limited_cvar_t limited_cvars[] = {
+		{&v_gamma, "0.55"},
+	};*/
+
+	for (; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
+		Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value);
+		Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
+		Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
+	}
+
+	/*for (i = 0; i < (sizeof(limited_cvars) / sizeof(limited_cvars[0])); i++) {
+		Cvar_RulesetSet(limited_cvars[i].var, limited_cvars[i].rulesetvalue);
+		Cvar_SetFlags(limited_cvars[i].var, Cvar_GetFlags(limited_cvars[i].var) | CVAR_RULESET_MAX);
+	}*/
+
+	if (cl_independentPhysics.value)
+	{
+		Cvar_Set(&cl_c2spps, "0");
+		Cvar_SetFlags(&cl_c2spps, Cvar_GetFlags(&cl_c2spps) | CVAR_ROM);
+	}
+
+	ruleset = rs_mtfl;
+	Cmd_SetAllMacros(true);
+}
 
 static void Rulesets_Default(void) {
 	ruleset = rs_default;
@@ -189,6 +241,10 @@ void Rulesets_Init(void) {
 		if (!Q_strcasecmp(com_argv[temp + 1], "smackdown")) {
 			Rulesets_Smackdown();
 			Com_Printf("Ruleset Smackdown initialized\n");
+			return;
+		} else if (!Q_strcasecmp(com_argv[temp + 1], "mtfl")) {
+			Rulesets_MTFL();
+			Com_Printf("Ruleset MTFL initialized\n");
 			return;
 		} else if (Q_strcasecmp(com_argv[temp + 1], "default")){
 			Com_Printf("Unknown ruleset \"%s\"\n", com_argv[temp + 1]);

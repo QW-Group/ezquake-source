@@ -963,6 +963,7 @@ void Sys_SendKeyEvents(void) {
 /************************************* INPUT *************************************/
 
 void Force_CenterView_f (void) {
+	if (concussioned) return;
 	cl.viewangles[PITCH] = 0;
 }
 

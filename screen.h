@@ -47,3 +47,5 @@ extern	int			scr_copyeverything;
 qboolean	scr_skipupdate;
 
 qboolean	block_drawing;
+
+extern qboolean	concussioned;

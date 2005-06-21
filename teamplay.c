@@ -193,6 +193,9 @@ f_trigger_t f_triggers[] = {
 	{"f_respawn", 1, true},
 	{"f_death", 1, true},
 	{"f_flagdeath", 1, true},
+
+	{"f_conc", 1, false},
+	{"f_flash", 1, false},
 };
 
 #define num_f_triggers	(sizeof(f_triggers) / sizeof(f_triggers[0]))

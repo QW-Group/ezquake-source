@@ -340,6 +340,7 @@ void V_ParseDamage (void) {
 	v_dmg_time = v_kicktime.value;
 }
 
+float last_flash_time = -20;
 void V_cshift_f (void) {
 	// don't allow cheating in TF
 	if (cls.state >= ca_connected && cl.teamfortress && cbuf_current != &cbuf_svc)
@@ -349,7 +350,18 @@ void V_cshift_f (void) {
 	cshift_empty.destcolor[1] = atoi(Cmd_Argv(2));
 	cshift_empty.destcolor[2] = atoi(Cmd_Argv(3));
 	cshift_empty.percent = atoi(Cmd_Argv(4));
-	
+
+// QW262 -->
+	if (cshift_empty.percent == 240 ||	// Normal TF
+		cshift_empty.percent == 255 ) {	// Angel TF
+		TP_ExecTrigger ("f_flash");
+		last_flash_time = cls.realtime;
+	}
+	if (cshift_empty.percent == 160){
+		last_flash_time = cls.realtime;
+	}
+// <-- QW262
+
 	if (cls.demoplayback && cshift_empty.destcolor[0] == cshift_empty.destcolor[1])
 		cshift_empty.percent *= cl_demoplay_flash.value/1.0f;
 }
@@ -705,12 +717,12 @@ void V_TF_ClearGrenadeEffects ()
 	cbuf_tmp = cbuf_current;
 	cbuf_current = &cbuf_svc;
 	// Concussion effect off
-	// concussioned = false;
+	concussioned = false;
 	Cvar_SetValue (&scr_fov, default_fov.value);
 	Cvar_SetValue (&v_idlescale, 0.0f);
 
 	// Flash effect off
-	// last_flash_time = 0.0;
+	last_flash_time = 0.0;
 	cshift_empty.destcolor[0] = 0;
 	cshift_empty.destcolor[1] = 0;
 	cshift_empty.destcolor[2] = 0;
