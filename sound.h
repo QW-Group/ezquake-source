@@ -51,28 +51,28 @@ typedef struct
 	qboolean		gamealive;
 	qboolean		soundalive;
 	qboolean		splitbuffer;
-	int				channels;
-	int				samples;				// mono samples in buffer
-	int				submission_chunk;		// don't mix less than this #
-	int				samplepos;				// in mono samples
-	int				samplebits;
-	int				speed;
+	int			channels;
+	int			samples;			// mono samples in buffer
+	int			submission_chunk;		// don't mix less than this #
+	int			samplepos;			// in mono samples
+	int			samplebits;
+	int			speed;
 	unsigned char	*buffer;
 } dma_t;
 
 // !!! if this is changed, it much be changed in asm_i386.h too !!!
 typedef struct
 {
-	sfx_t	*sfx;			// sfx number
+	sfx_t		*sfx;			// sfx number
 	int		leftvol;		// 0-255 volume
 	int		rightvol;		// 0-255 volume
 	int		end;			// end time in global paintsamples
-	int 	pos;			// sample position in sfx
+	int 		pos;			// sample position in sfx
 	int		looping;		// where to loop, -1 = no looping
 	int		entnum;			// to allow overriding a specific sound
 	int		entchannel;		//
-	vec3_t	origin;			// origin of sound effect
-	vec_t	dist_mult;		// distance multiplier (attenuation/clipK)
+	vec3_t		origin;			// origin of sound effect
+	vec_t		dist_mult;		// distance multiplier (attenuation/clipK)
 	int		master_vol;		// 0-255 master volume
 } channel_t;
 
@@ -124,7 +124,7 @@ void SNDDMA_Shutdown(void);
 // User-setable variables
 // ====================================================================
 
-#define	MAX_CHANNELS			128
+#define	MAX_CHANNELS		128
 #define	MAX_DYNAMIC_CHANNELS	8
 
 
@@ -133,7 +133,7 @@ extern	channel_t   channels[MAX_CHANNELS];
 // MAX_DYNAMIC_CHANNELS to MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS -1 = water, etc
 // MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS to total_channels = static sounds
 
-extern	int			total_channels;
+extern	int total_channels;
 
 //
 // Fake dma is a synchronous faking of the DMA progress used for
@@ -141,16 +141,11 @@ extern	int			total_channels;
 // number of times S_Update() is called per second.
 //
 
-extern qboolean 		fakedma;
-extern int 			fakedma_updates;
+extern qboolean 	fakedma;
+extern int 		fakedma_updates;
 extern int		paintedtime;
-extern vec3_t listener_origin;
-extern vec3_t listener_forward;
-extern vec3_t listener_right;
-extern vec3_t listener_up;
-extern volatile dma_t *shm;
-extern volatile dma_t sn;
-extern vec_t sound_nominal_clip_dist;
+extern volatile dma_t 	*shm;
+extern volatile dma_t 	sn;
 
 extern cvar_t	s_loadas8bit;
 extern cvar_t	s_khz;

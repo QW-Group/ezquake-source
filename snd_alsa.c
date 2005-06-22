@@ -41,7 +41,6 @@ static ret (*alsa_##func) params;
 
 // Global Variables
 extern int paintedtime, soundtime;
-static int snd_blocked = 0;
 static snd_pcm_uframes_t buffer_size;
 static const char  *pcmname = NULL;
 static snd_pcm_t   *pcm;
