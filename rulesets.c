@@ -25,10 +25,15 @@ typedef struct locked_cvar_s {
 	char *value;
 } locked_cvar_t;
 
-typedef struct limited_cvar_s {
+typedef struct limited_cvar_max_s {
 	cvar_t *var;
-	char *rulesetvalue;
-} limited_cvar_t;
+	char *maxrulesetvalue;
+} limited_cvar_max_t;
+
+typedef struct limited_cvar_min_s {
+	cvar_t *var;
+	char *minrulesetvalue;
+} limited_cvar_min_t;
 
 typedef enum {rs_default, rs_smackdown, rs_mtfl} ruleset_t;
 
@@ -134,7 +139,7 @@ static void Rulesets_Smackdown(void) {
 	};
 	
 #ifdef GLQUAKE
-		limited_cvar_t limited_cvars[] = {
+		limited_cvar_max_t limited_max_cvars[] = {
 		{&amf_part_gunshot_type, "1"},
 		{&amf_part_traillen, "1"},
 		{&amf_part_trailtime, "1"},
@@ -153,7 +158,7 @@ static void Rulesets_Smackdown(void) {
 #endif
 
 	for (; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
-		Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value);
+		Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value, 2);
 		Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
 		Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
 	}
@@ -162,9 +167,9 @@ static void Rulesets_Smackdown(void) {
 	// there are no limited variables when not using GL or when not using -no24bit cmd-line option
 	if (qmb_initialized)
 	{
-		for (i = 0; i < (sizeof(limited_cvars) / sizeof(limited_cvars[0])); i++) {
-		Cvar_RulesetSet(limited_cvars[i].var, limited_cvars[i].rulesetvalue);
-		Cvar_SetFlags(limited_cvars[i].var, Cvar_GetFlags(limited_cvars[i].var) | CVAR_RULESET_MAX);
+		for (i = 0; i < (sizeof(limited_max_cvars) / sizeof(limited_max_cvars[0])); i++) {
+		Cvar_RulesetSet(limited_max_cvars[i].var, limited_max_cvars[i].maxrulesetvalue, 1);
+		Cvar_SetFlags(limited_max_cvars[i].var, Cvar_GetFlags(limited_max_cvars[i].var) | CVAR_RULESET_MAX);
 		}
 	}
 #endif
@@ -191,17 +196,16 @@ static void Rulesets_MTFL(void) {
 disable %e
 %x, %y - disable while flashed
 gamma 0.55 ; contrast 1 while flashed (f_flash, f_flashout?)
-gl_picmip =< 3
-gl_max_size >= ??? should be same effect as gl_picmip 3
 block all other ways to made textures flat
 ?disable external textures for detpacks, grenades, etc?
 */
-	extern cvar_t cl_c2spps;
+	extern cvar_t cl_c2spps, v_gamma, v_contrast;
 #ifdef GLQUAKE
 	extern cvar_t amf_camera_chase, amf_waterripple, amf_detpacklights;
-	extern cvar_t gl_picmip, r_drawflat;
+	extern cvar_t gl_picmip, gl_max_size, r_drawflat;
 #endif
 	extern cvar_t r_fullbrightSkins;
+	extern cvar_t sensitivity;
 
 	int i = 0;
 
@@ -218,21 +222,35 @@ block all other ways to made textures flat
 	};
 
 #ifdef GLQUAKE
-	limited_cvar_t limited_cvars[] = {
+	limited_cvar_max_t limited_max_cvars[] = {
 		{&gl_picmip, "3"},
+		//{&v_gamma, "0.55"},
+	};
+#endif
+
+#ifdef GLQUAKE
+	limited_cvar_min_t limited_min_cvars[] = {
+		{&gl_max_size, "512"},
 	};
 #endif
 
 	for (; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
-		Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value);
+		Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value, 2);
 		Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
 		Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
 	}
 
 #ifdef GLQUAKE
-	for (i = 0; i < (sizeof(limited_cvars) / sizeof(limited_cvars[0])); i++) {
-		Cvar_RulesetSet(limited_cvars[i].var, limited_cvars[i].rulesetvalue);
-		Cvar_SetFlags(limited_cvars[i].var, Cvar_GetFlags(limited_cvars[i].var) | CVAR_RULESET_MAX);
+	for (i = 0; i < (sizeof(limited_max_cvars) / sizeof(limited_max_cvars[0])); i++) {
+		Cvar_RulesetSet(limited_max_cvars[i].var, limited_max_cvars[i].maxrulesetvalue, 1);
+		Cvar_SetFlags(limited_max_cvars[i].var, Cvar_GetFlags(limited_max_cvars[i].var) | CVAR_RULESET_MAX);
+	}
+#endif
+
+#ifdef GLQUAKE
+	for (i = 0; i < (sizeof(limited_min_cvars) / sizeof(limited_min_cvars[0])); i++) {
+		Cvar_RulesetSet(limited_min_cvars[i].var, limited_min_cvars[i].minrulesetvalue, 0);
+		Cvar_SetFlags(limited_min_cvars[i].var, Cvar_GetFlags(limited_min_cvars[i].var) | CVAR_RULESET_MIN);
 	}
 #endif
 

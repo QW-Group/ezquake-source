@@ -28,11 +28,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_ARCHIVE		1
 #define CVAR_USERINFO		2       // mirrored to userinfo
 #define CVAR_SERVERINFO		4		// mirrored to serverinfo
-#define CVAR_ROM			8		// read only
-#define CVAR_INIT			16		// can only be set during initialization
+#define CVAR_ROM		8		// read only
+#define CVAR_INIT		16		// can only be set during initialization
 #define	CVAR_USER_CREATED	32		// created by a set command
 #define	CVAR_USER_ARCHIVE	64		// created by a seta command
 #define CVAR_RULESET_MAX	128		// limited by ruleset
+#define CVAR_RULESET_MIN	256		// limited by ruleset
 
 typedef struct cvar_s {
 	char	*name;
@@ -40,7 +41,8 @@ typedef struct cvar_s {
 	int		flags;
 	qboolean	(*OnChange)(struct cvar_s *var, char *value);
 	float	value;
-	float	rulesetvalue;
+	float	maxrulesetvalue;
+	float	minrulesetvalue;
 	char	*defaultvalue;		
 	struct cvar_group_s *group;		
 	struct cvar_s *next_in_group;	
@@ -73,8 +75,8 @@ void Cvar_ForceSet (cvar_t *var, char *string);
 void Cvar_SetValue (cvar_t *var, float value);
 
 // sets ruleset limit for variable
-// when ruleset is active you can't set higher value than this
-void Cvar_RulesetSet(cvar_t *var, char *rulesetval);
+// when ruleset is active you can't set lower/higher value than this
+void Cvar_RulesetSet(cvar_t *var, char *val, int m); // m=0 --> min, m=1--> max, m=2-->locked(max&min)
 
 void Cvar_SetFlags (cvar_t *var, int flags);
 int Cvar_GetFlags (cvar_t *var);
