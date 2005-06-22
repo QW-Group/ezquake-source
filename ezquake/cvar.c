@@ -150,10 +150,19 @@ int Cvar_CompleteCountPossible (char *partial) {
 
 	return c;
 }
-void Cvar_RulesetSet(cvar_t *var, char *rulesetval) {
+void Cvar_RulesetSet(cvar_t *var, char *val, int m) {
 	float rulesetval_f;
-	rulesetval_f=Q_atoi(rulesetval);
-	var->rulesetvalue=rulesetval_f;
+	rulesetval_f=Q_atoi(val);
+	if (m==0) {
+		var->minrulesetvalue=rulesetval_f;
+	} else if (m==1) {
+		var->maxrulesetvalue=rulesetval_f;
+	} else if (m==2) {
+		var->minrulesetvalue=rulesetval_f;
+		var->maxrulesetvalue=rulesetval_f;
+	} else {
+	return;
+	}
 }
 
 void Cvar_Set (cvar_t *var, char *value) {
@@ -172,15 +181,23 @@ void Cvar_Set (cvar_t *var, char *value) {
 		return;
 	}
 
-	if (var->flags & CVAR_RULESET_MAX){
+	if (var->flags & CVAR_RULESET_MIN){
 	test  = Q_atof (value);
-		if (test > var->rulesetvalue){	
+		if (test < var->minrulesetvalue){	
 		if (con_initialized)
-			Com_Printf ("\"%s\" is limited to %0.2f\n", var->name,var->rulesetvalue);
+			Com_Printf ("min \"%s\" is limited to %0.2f\n", var->name,var->minrulesetvalue);
 		return;
 		}
 	}
-		
+
+	if (var->flags & CVAR_RULESET_MAX){
+	test  = Q_atof (value);
+		if (test > var->maxrulesetvalue){	
+		if (con_initialized)
+			Com_Printf ("max \"%s\" is limited to %0.2f\n", var->name,var->maxrulesetvalue);
+		return;
+		}
+	}
 
 	if ((var->flags & CVAR_INIT) && host_initialized) {
 #ifndef SERVERONLY
