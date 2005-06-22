@@ -187,10 +187,19 @@ static void Rulesets_Smackdown(void) {
 */
 }
 static void Rulesets_MTFL(void) {
-	extern cvar_t cl_independentPhysics, cl_c2spps;
-	//extern cvar_t v_gamma, v_contrast;
+/* TODO:
+disable %e
+%x, %y - disable while flashed
+gamma 0.55 ; contrast 1 while flashed (f_flash, f_flashout?)
+gl_picmip =< 3
+gl_max_size >= ??? should be same effect as gl_picmip 3
+block all other ways to made textures flat
+?disable external textures for detpacks, grenades, etc?
+*/
+	extern cvar_t cl_c2spps;
 #ifdef GLQUAKE
-	extern cvar_t r_drawflat;
+	extern cvar_t amf_camera_chase, amf_waterripple, amf_detpacklights;
+	extern cvar_t gl_picmip, r_drawflat;
 #endif
 	extern cvar_t r_fullbrightSkins;
 
@@ -199,14 +208,20 @@ static void Rulesets_MTFL(void) {
 	locked_cvar_t disabled_cvars[] = {
 #ifdef GLQUAKE
 		{&r_drawflat, "0"},
+		{&amf_camera_chase, "0"},
+		{&amf_waterripple, "0"},
+		{&amf_detpacklights, "0"},
 #endif
 		{&r_fullbrightSkins, "0"},
+		{&cl_c2spps, "0"},
 
 	};
 
-	/*limited_cvar_t limited_cvars[] = {
-		{&v_gamma, "0.55"},
-	};*/
+#ifdef GLQUAKE
+	limited_cvar_t limited_cvars[] = {
+		{&gl_picmip, "3"},
+	};
+#endif
 
 	for (; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
 		Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value);
@@ -214,16 +229,12 @@ static void Rulesets_MTFL(void) {
 		Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
 	}
 
-	/*for (i = 0; i < (sizeof(limited_cvars) / sizeof(limited_cvars[0])); i++) {
+#ifdef GLQUAKE
+	for (i = 0; i < (sizeof(limited_cvars) / sizeof(limited_cvars[0])); i++) {
 		Cvar_RulesetSet(limited_cvars[i].var, limited_cvars[i].rulesetvalue);
 		Cvar_SetFlags(limited_cvars[i].var, Cvar_GetFlags(limited_cvars[i].var) | CVAR_RULESET_MAX);
-	}*/
-
-	if (cl_independentPhysics.value)
-	{
-		Cvar_Set(&cl_c2spps, "0");
-		Cvar_SetFlags(&cl_c2spps, Cvar_GetFlags(&cl_c2spps) | CVAR_ROM);
 	}
+#endif
 
 	ruleset = rs_mtfl;
 	Cmd_SetAllMacros(true);
