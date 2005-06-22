@@ -518,7 +518,7 @@ static char *skybox_ext[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
 int R_SetSky(char *skyname) {
 	int i, error = 0;
 	byte *data[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
-	extern int image_width, image_height, gl_max_size_default;
+	extern int image_width, image_height;
 	
 	// START shaman RFE 1020608
 	char *mapname, *groupname;
@@ -814,7 +814,8 @@ void R_DrawSkyBox (void) {
 
 	GL_DisableMultitexture();
 
-	if (gl_fogenable.value && gl_fogsky.value)		glDisable(GL_FOG);
+	if (gl_fogenable.value && gl_fogsky.value)
+		glDisable(GL_FOG);
 
 	for (i = 0; i < 6; i++) {
 		if (skymins[0][i] >= skymaxs[0][i] || skymins[1][i] >= skymaxs[1][i])
@@ -830,7 +831,8 @@ void R_DrawSkyBox (void) {
 		glEnd ();
 	}
 
-	if (gl_fogenable.value && gl_fogsky.value) {		glEnable(GL_FOG);
+	if (gl_fogenable.value && gl_fogsky.value) {
+		glEnable(GL_FOG);
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1); 
 	    glEnable(GL_BLEND);
@@ -847,7 +849,8 @@ void R_DrawSkyBox (void) {
 	for (fa = skychain; fa; fa = fa->texturechain)
 		EmitFlatPoly (fa, true);
 
-	if (gl_fogenable.value && gl_fogsky.value) {		glDisable(GL_BLEND);
+	if (gl_fogenable.value && gl_fogsky.value) {
+		glDisable(GL_BLEND);
 		glEnable(GL_TEXTURE_2D);
 	}
 
@@ -861,7 +864,8 @@ void R_DrawSkyBox (void) {
 	skychain = NULL;
 	skychain_tail = &skychain;
 
-	if (gl_fogenable.value && gl_fogsky.value)		glDisable(GL_FOG);
+	if (gl_fogenable.value && gl_fogsky.value)
+		glDisable(GL_FOG);
 
 }
 
