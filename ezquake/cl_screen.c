@@ -80,7 +80,7 @@ float			oldscreensize, oldfov, oldsbar;
 qboolean OnFovChange (cvar_t *var, char *value);
 qboolean OnDefaultFovChange (cvar_t *var, char *value);
 cvar_t			scr_fov = {"fov", "90", CVAR_ARCHIVE, OnFovChange};	// 10 - 140
-cvar_t			default_fov = {"default_fov", "0", CVAR_ARCHIVE, OnDefaultFovChange};
+cvar_t			default_fov = {"default_fov", "90", CVAR_ARCHIVE, OnDefaultFovChange};
 cvar_t			scr_viewsize = {"viewsize", "100", CVAR_ARCHIVE};
 cvar_t			scr_consize = {"scr_consize", "0.75"};
 cvar_t			scr_conspeed = {"scr_conspeed", "1000"};
