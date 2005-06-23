@@ -524,11 +524,17 @@ char *Macro_TookAtLoc (void) {
 // pointing calculations are CPU expensive, so the results are cached
 // in vars.pointname & vars.pointloc
 char *Macro_PointName (void) {
+	if (flashed) // there should be more smart way to do it
+		return tp_name_nothing.string;
+
 	TP_FindPoint ();
 	return vars.pointname;
 }
 
 char *Macro_PointLocation (void) {
+	if (flashed) // there should be more smart way to do it
+		return tp_name_nothing.string;
+
 	TP_FindPoint ();
 	return vars.pointloc[0] ? vars.pointloc : Macro_Location();
 }
@@ -542,6 +548,9 @@ char *Macro_LastPointAtLoc (void) {
 }
 
 char *Macro_PointNameAtLocation(void) {
+	if (flashed) // there should be more smart way to do it
+		return tp_name_nothing.string;
+
 	TP_FindPoint();
 	return Macro_LastPointAtLoc();
 }
@@ -942,6 +951,9 @@ static void CountNearbyPlayers(qboolean dead) {
 
 
 char *Macro_CountNearbyEnemyPlayers (void) {
+	if(!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
+		return "banned by MTFL ruleset"; // there should be more smart way to do it
+
 	CountNearbyPlayers(false);
 	sprintf(macro_buf, "\xffz%d\xff", vars.numenemies);
 	suppress = true;
@@ -950,6 +962,9 @@ char *Macro_CountNearbyEnemyPlayers (void) {
 
 
 char *Macro_Count_Last_NearbyEnemyPlayers (void) {
+	if(!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
+		return "banned by MTFL ruleset"; // there should be more smart way to do it
+
 	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5) {
 		sprintf(macro_buf, "\xffz%d\xff", vars.last_numenemies);
 	} else {
@@ -962,6 +977,9 @@ char *Macro_Count_Last_NearbyEnemyPlayers (void) {
 
 
 char *Macro_CountNearbyFriendlyPlayers (void) {
+	if(!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
+		return "banned by MTFL ruleset"; // there should be more smart way to do it
+
 	CountNearbyPlayers(false);
 	sprintf(macro_buf, "\xffz%d\xff", vars.numfriendlies);
 	suppress = true;
@@ -970,6 +988,9 @@ char *Macro_CountNearbyFriendlyPlayers (void) {
 
 
 char *Macro_Count_Last_NearbyFriendlyPlayers (void) {
+	if(!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
+		return "banned by MTFL ruleset"; // there should be more smart way to do it
+
 	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5) {
 		sprintf(macro_buf, "\xffz%d\xff", vars.last_numfriendlies);
 	} else {
