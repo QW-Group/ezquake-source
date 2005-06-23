@@ -54,6 +54,7 @@ enum {mode_fastest, mode_default} fps_mode = mode_default;
 qboolean vid_windowedmouse = true;
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
+void CL_Disconnect_f(void);
 
 extern void Browser_Init(void);
 extern void Browser_Draw(int, int, int, int);
@@ -134,6 +135,7 @@ int			m_topmenu;			// set if a submenu was entered via a
 
 
 cvar_t	demo_playlist_loop = {"demo_playlist_loop","0"};
+cvar_t	demo_playlist_track_name = {"demo_playlist_track_name",""};
 
 #ifdef GLQUAKE
 cvar_t	scr_scaleMenu = {"scr_scaleMenu","1"};
@@ -2219,6 +2221,7 @@ extern cvar_t demo_dir;
 #define MAX_DEMO_NAME	MAX_OSPATH
 #define MAX_DEMO_FILES	2048
 #define DEMO_MAXLINES	17
+#define DEMO_PLAYLIST_OPTIONS_MAX 4
 
 typedef enum direntry_type_s {dt_file = 0, dt_dir, dt_up, dt_msg} direntry_type_t;
 typedef enum demosort_type_s {ds_name = 0, ds_size, ds_time} demo_sort_t;
@@ -2233,10 +2236,15 @@ typedef struct demo_playlist_s
 demo_playlist_t demo_playlist[256];
 
 int demo_playlist_started = 0;
-int demo_playlist_current_played = 0;
+static int demo_playlist_current_played = 0;
+static int demo_playlist_started_test = 0;
 static int demo_playlist_num = 0;
 static int demo_playlist_cursor = 0;
 static int demo_playlist_base = 0;
+
+static int demo_playlist_section = 0;
+static int demo_playlist_opt_cursor = 0;
+static int demo_playlist_opt_base = 0;
 
 static int demo_options_cursor = 0;
 static int demo_options_base = 0;
@@ -2263,26 +2271,32 @@ static int			demo_base = 0;
 static demo_sort_t	demo_sorttype = ds_name;
 static qboolean		demo_reversesort = false;
 
-void M_Demos_Playlist_stop_f (){
+void M_Demos_Playlist_stop_f (void){
+	if (!demo_playlist_started_test){
 	demo_playlist_started = 0;
+	demo_playlist_started_test = 0;
+	}
 }
 
 void Demo_playlist_start (int i){
 	key_dest = key_game;
 	m_state = m_none;
-	demo_playlist_started = 1;
 	demo_playlist_current_played = i;
+	demo_playlist_started_test = 0 ;
 	if (cls.demoplayback)
-			Cbuf_AddText("disconnect\n");
+		CL_Disconnect_f();
+//		Cbuf_AddText ("disconnect\n");
+	demo_playlist_started_test = 0 ;
+	demo_playlist_started=1;
 	Cbuf_AddText (va("playdemo \"..%s\"\n", demo_playlist[demo_playlist_current_played].path));
-
+	
 }
 
 void Demo_playlist_f (void) {
 	if (demo_playlist_current_played == demo_playlist_num && demo_playlist_loop.value ){
 		demo_playlist_current_played = 0;
 		Cbuf_AddText (va("playdemo \"..%s\"\n", demo_playlist[demo_playlist_current_played].path));
-	}else if (demo_playlist_current_played > demo_playlist_num){
+	}else if (demo_playlist_current_played > demo_playlist_num ){
 	Com_Printf("End of demo playlist.\n");
 	demo_playlist_started = demo_playlist_current_played = 0;
 	}else{
@@ -2291,6 +2305,51 @@ void Demo_playlist_f (void) {
 	}
 	
 }
+
+void Demo_Playlist_Next_f (void){
+	int tmp;
+	
+	if (demo_playlist_started == 0)
+			return;
+	tmp = demo_playlist_current_played + 1 ;
+	if (tmp>demo_playlist_num-1)
+			tmp = 0 ;
+	
+	Demo_playlist_start(tmp);
+}
+
+void Demo_Playlist_Prev_f (void){
+	int tmp;
+	if (demo_playlist_started == 0)
+			return;
+	tmp = demo_playlist_current_played - 1 ;
+	if (tmp<0)
+			tmp = demo_playlist_num - 1 ;
+	
+	Com_Printf("Prev %i\n",tmp);
+	Demo_playlist_start(tmp);
+}
+
+void Demo_Playlist_Clear_f (void){
+
+	int i;
+
+	if (demo_playlist_num == 0)
+		return;
+
+	for (i=0; i<=demo_playlist_num;i++){
+		demo_playlist[i].name[0]='\0';
+		demo_playlist[i].path[0]='\0';
+	}
+	demo_playlist_num = demo_playlist_started = 0;
+	
+}
+
+void Demo_Playlist_Stop_f (void){
+	M_Demos_Playlist_stop_f();
+	Cbuf_AddText("disconnect\n");
+}
+
 
 int Demo_SortCompare(const void *p1, const void *p2) {
 	int retval;
@@ -2668,22 +2727,38 @@ void M_Demos_Draw (void) {
 		M_Print (120, 8, "[playlist]");
 		M_PrintWhite (200, 8, " options ");
 		M_Print (8, 16, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f");
-		if(demo_playlist_num == 0)
-			M_PrintWhite(96,96,"Playlist is empty");
-		else{
-			for (i = 0; i <= demo_playlist_num - demo_playlist_base && i < DEMO_MAXLINES; i++) {
-				y = 24 + i * 8 ;
-				if (demo_playlist_cursor == i)
-						M_PrintWhite (24, y, demo_playlist[demo_playlist_base + i].name);
-				else
-					M_Print (24, y, demo_playlist[demo_playlist_base + i].name);
-			}
-			M_DrawCharacter (8, 24 + demo_playlist_cursor * 8, 12 + ((int) (curtime * 4) & 1));
 		
-			
-			
-			
+		if (demo_playlist_section == 0){
+			if(demo_playlist_num == 0)
+				M_PrintWhite(96,96,"Playlist is empty");
+			else{
+				for (i = 0; i <= demo_playlist_num - demo_playlist_base && i < DEMO_MAXLINES; i++) {
+					y = 24 + i * 8 ;
+					if (demo_playlist_cursor == i)
+							M_PrintWhite (24, y, demo_playlist[demo_playlist_base + i].name);
+					else
+						M_Print (24, y, demo_playlist[demo_playlist_base + i].name);
+				}
+				M_DrawCharacter (8, 24 + demo_playlist_cursor * 8, 12 + ((int) (curtime * 4) & 1));
+				}
+		}else if (demo_playlist_section == 1){
+		
+			if (demo_playlist_started && cls.demoplayback){
+				M_Print (24, 24, "Currently playing:");
+				M_PrintWhite (24, 32, demo_playlist[demo_playlist_current_played].name);
+			}else{
+				M_Print (24, 24, "Not Playing Anything");
+			}
+			M_Print	(24, 48, "Next     demo");
+			M_Print	(24, 56, "Previous demo");
+			M_Print (24, 64, "Stop  playlist");
+			M_Print (24, 72, "Clear playlist");
+			M_DrawCharacter (8, 48 + demo_playlist_opt_cursor * 8, 12 + ((int) (curtime * 4) & 1));
 		}
+			
+			
+			
+		
 	}else if(demos_menu_pos == 2){
 		M_PrintWhite (64, 8, " demos ");
 		M_PrintWhite (120, 8, " playlist ");
@@ -2695,7 +2770,6 @@ void M_Demos_Draw (void) {
 	M_DrawCheckbox (220, 24, demo_playlist_loop.value > 0);
 	M_DrawCharacter (8, 24 + demo_options_cursor * 8, 12 + ((int) (curtime * 4) & 1));
 	}
-
 
 }
 
@@ -2740,15 +2814,20 @@ void M_Demos_Key (int key) {
 			else if (demo_base > 0)
 				demo_base--;
 		}else if (demos_menu_pos ==1){
+			if (demo_playlist_section == 0){
+				if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base > 0)
+					M_Demos_Playlist_Move_Up(demo_playlist_cursor + demo_playlist_base);
 		
-		if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base > 0)
-			M_Demos_Playlist_Move_Up(demo_playlist_cursor + demo_playlist_base);
-		
-		
-			if (demo_playlist_cursor > 0)
-				demo_playlist_cursor--;
-			else if (demo_playlist_base > 0)
-				demo_playlist_base--;
+				if (demo_playlist_cursor > 0)
+					demo_playlist_cursor--;
+				else if (demo_playlist_base > 0)
+					demo_playlist_base--;
+			}else if (demo_playlist_section == 1 ){
+				if (demo_playlist_opt_cursor > 0)
+					demo_playlist_opt_cursor--;
+				else if (demo_playlist_opt_base > 0)
+					demo_playlist_opt_base--;
+			}
 		}
 		break;
 
@@ -2763,14 +2842,23 @@ void M_Demos_Key (int key) {
 			}
 		}else if (demos_menu_pos ==1){
 		
-		if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base < demo_playlist_num)
-			M_Demos_Playlist_Move_Down(demo_playlist_cursor + demo_playlist_base);
-				
-		if (demo_playlist_cursor + demo_playlist_base < demo_playlist_num - 1) {
-				if (demo_playlist_cursor < DEMO_MAXLINES - 1)
-					demo_playlist_cursor++;
-				else
-					demo_playlist_base++;
+			if ( demo_playlist_section == 0){
+				if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base < demo_playlist_num)
+					M_Demos_Playlist_Move_Down(demo_playlist_cursor + demo_playlist_base);
+						
+				if (demo_playlist_cursor + demo_playlist_base < demo_playlist_num - 1) {
+						if (demo_playlist_cursor < DEMO_MAXLINES - 1)
+							demo_playlist_cursor++;
+						else
+							demo_playlist_base++;
+				}
+			}else if (demo_playlist_section == 1) {
+				if (demo_playlist_opt_cursor + demo_playlist_opt_base < DEMO_PLAYLIST_OPTIONS_MAX - 1) {
+						if (demo_playlist_opt_cursor < DEMO_PLAYLIST_OPTIONS_MAX - 1)
+							demo_playlist_opt_cursor++;
+						else
+							demo_playlist_opt_base++;
+				}
 			}
 		}
 		break;
@@ -2813,8 +2901,8 @@ void M_Demos_Key (int key) {
 				demo_cursor = demolist_count - 1;
 			}
 		}else if (demos_menu_pos == 1){
-			if (demo_playlist_num > DEMO_MAXLINES) {
-				demo_playlist_cursor = DEMO_MAXLINES - 1;
+			if (demo_playlist_num > DEMO_PLAYLIST_OPTIONS_MAX) {
+				demo_playlist_cursor = DEMO_PLAYLIST_OPTIONS_MAX - 1;
 				demo_playlist_base = demo_playlist_num - demo_playlist_cursor - 1;
 			} else {
 				demo_playlist_base = 0;
@@ -2834,12 +2922,22 @@ void M_Demos_Key (int key) {
 				demo_cursor = 0;
 			}
 		}else if (demos_menu_pos == 1){
-			demo_playlist_cursor -= DEMO_MAXLINES - 1;
-			if (demo_playlist_cursor < 0) {
-				demo_playlist_base += demo_playlist_cursor;
-				if (demo_playlist_base < 0)
-					demo_playlist_base = 0;
-				demo_playlist_cursor = 0;
+			if (demo_playlist_section == 0){
+				demo_playlist_cursor -= DEMO_MAXLINES - 1;
+				if (demo_playlist_cursor < 0) {
+					demo_playlist_base += demo_playlist_cursor;
+					if (demo_playlist_base < 0)
+						demo_playlist_base = 0;
+					demo_playlist_cursor = 0;
+				}
+			}else if (demo_playlist_section == 1){
+				demo_playlist_cursor -= DEMO_MAXLINES - 1;
+				if (demo_playlist_cursor < 0) {
+					demo_playlist_base += demo_playlist_cursor;
+					if (demo_playlist_base < 0)
+						demo_playlist_base = 0;
+					demo_playlist_cursor = 0;
+				}
 			}
 		}
 		break;
@@ -2905,7 +3003,18 @@ void M_Demos_Key (int key) {
 				}
 			}
 		}else if (demos_menu_pos == 1) {
-		Demo_playlist_start(demo_playlist_cursor + demo_playlist_base);
+			if (demo_playlist_section == 0 )
+					Demo_playlist_start(demo_playlist_cursor + demo_playlist_base);
+			else if (demo_playlist_section == 1 ){
+				if (demo_playlist_opt_cursor == 0)
+					Demo_Playlist_Next_f();
+				else if (demo_playlist_opt_cursor == 1)
+					Demo_Playlist_Prev_f();
+				else if (demo_playlist_opt_cursor == 2)
+					Demo_Playlist_Stop_f();
+				else if (demo_playlist_opt_cursor == 3)
+					Demo_Playlist_Clear_f();
+			}	
 		}else if (demos_menu_pos == 2) {
 		Cvar_SetValue (&demo_playlist_loop, !demo_playlist_loop.value);
 		}
@@ -2947,6 +3056,11 @@ void M_Demos_Key (int key) {
 		M_Demos_Playlist_Del(demo_playlist_cursor + demo_playlist_base);
 		}
 		break;
+	case K_TAB:
+		if (demos_menu_pos == 0){
+		}else if (demos_menu_pos == 1) {
+		demo_playlist_section = !demo_playlist_section ;
+		}
 	}
 }
 
@@ -3841,6 +3955,7 @@ void M_Init (void) {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&demo_playlist_loop);
+	Cvar_Register (&demo_playlist_track_name);
 	Cvar_Register (&scr_centerMenu);
 #ifdef GLQUAKE
 	Cvar_Register (&scr_scaleMenu);
@@ -3851,6 +3966,10 @@ void M_Init (void) {
 	Help_Init();
 
 	Cmd_AddCommand ("demo_playlist_stop", M_Demos_Playlist_stop_f);
+	Cmd_AddCommand ("demo_playlist_next", Demo_Playlist_Next_f);
+	Cmd_AddCommand ("demo_playlist_prev", Demo_Playlist_Prev_f);
+	Cmd_AddCommand ("demo_playlist_clear", Demo_Playlist_Clear_f);
+	
 
 	Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
 

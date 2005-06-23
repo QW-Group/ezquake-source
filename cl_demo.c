@@ -1161,9 +1161,6 @@ void CL_StopPlayback (void) {
 	if (!cls.demoplayback)
 		return;
 
-	if (demo_playlist_started)
-		Demo_playlist_f();
-	
 	if (Movie_IsCapturing())	
 		Movie_Stop();
 
@@ -1191,6 +1188,10 @@ void CL_StopPlayback (void) {
 			time = 1;
 		Com_Printf ("%i frames %5.1f seconds %5.1f fps\n", frames, time, frames / time);
 	}
+
+	if (demo_playlist_started)
+	Demo_playlist_f();
+
 }
 
 void CL_Play_f (void) {
