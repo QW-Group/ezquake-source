@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"	
 
 #include "utils.h"
+#include "rulesets.h"
 
 #ifdef GLQUAKE
 #include "gl_local.h"
@@ -340,7 +341,80 @@ void V_ParseDamage (void) {
 	v_dmg_time = v_kicktime.value;
 }
 
-float last_flash_time = -20;
+// disconnect -->
+qboolean flashed = false; // it should be used for f_flashout tirgger
+void V_TF_FlashSettings (qboolean flashed)
+{
+	extern cvar_t v_gamma, v_contrast;
+	float flash_gamma = 0.55;
+	float flash_contrast = 1;
+	static float old_gamma, old_contrast;
+
+	if (flashed) {
+		// store normal settings
+		old_gamma = v_gamma.value;
+		old_contrast = v_contrast.value;
+		// remove read only flag if it was set
+		if (Cvar_GetFlags(&v_gamma) & CVAR_ROM)
+			Cvar_SetFlags(&v_gamma, Cvar_GetFlags(&v_gamma) & ~CVAR_ROM);
+		if (Cvar_GetFlags(&v_contrast) & CVAR_ROM)
+			Cvar_SetFlags(&v_contrast, Cvar_GetFlags(&v_contrast) & ~CVAR_ROM);
+
+		// set MTFL flash settings	
+		Cvar_SetValue (&v_gamma, flash_gamma);
+		Cvar_SetValue (&v_contrast, flash_contrast);
+		
+		// made gamma&contrast read only
+		Cvar_SetFlags(&v_gamma, Cvar_GetFlags(&v_gamma) | CVAR_ROM);
+		Cvar_SetFlags(&v_contrast, Cvar_GetFlags(&v_contrast) | CVAR_ROM);
+	} else {
+		// remove read only flag if it was set
+		if (Cvar_GetFlags(&v_gamma) & CVAR_ROM)
+			Cvar_SetFlags(&v_gamma, Cvar_GetFlags(&v_gamma) & ~CVAR_ROM);
+		if (Cvar_GetFlags(&v_contrast) & CVAR_ROM)
+			Cvar_SetFlags(&v_contrast, Cvar_GetFlags(&v_contrast) & ~CVAR_ROM);
+		
+		// restore old settings
+		Cvar_SetValue (&v_gamma, old_gamma);
+		Cvar_SetValue (&v_contrast, old_contrast);
+	}
+	return;
+}
+
+void V_TF_FlashStuff (void) {
+	static float last_flash_time;
+	static float old_gamma, old_contrast;
+	extern cvar_t v_gamma, v_contrast;
+
+	if (cshift_empty.percent == 240 ||	// Normal TF
+		cshift_empty.percent == 255 ) {	// Angel TF
+		TP_ExecTrigger ("f_flash");
+		if (!flashed && (!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4)))
+			{V_TF_FlashSettings (true);}
+		flashed=true;
+		last_flash_time = cls.realtime;
+	}
+	if (cshift_empty.percent == 160){ // flashed by your own flash
+		if (!flashed && (!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4)))
+			{V_TF_FlashSettings (true);}
+		flashed=true;
+		last_flash_time = cls.realtime;
+	}
+	
+	// turn gamma and contrast back if
+	if ((!(cls.realtime - last_flash_time < 10.0)) || // flashed for last 10 seconds or 
+	(cshift_empty.percent == 0 && (cbuf_current = &cbuf_svc))) { // death while flashed
+		if (flashed && (!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+			V_TF_FlashSettings (false);
+			flashed = false;
+		}
+	}
+
+	if (cls.demoplayback && cshift_empty.destcolor[0] == cshift_empty.destcolor[1])
+			cshift_empty.percent *= cl_demoplay_flash.value/1.0f;
+}
+// <-- disconnect
+
 void V_cshift_f (void) {
 	// don't allow cheating in TF
 	if (cls.state >= ca_connected && cl.teamfortress && cbuf_current != &cbuf_svc)
@@ -351,19 +425,9 @@ void V_cshift_f (void) {
 	cshift_empty.destcolor[2] = atoi(Cmd_Argv(3));
 	cshift_empty.percent = atoi(Cmd_Argv(4));
 
-// QW262 -->
-	if (cshift_empty.percent == 240 ||	// Normal TF
-		cshift_empty.percent == 255 ) {	// Angel TF
-		TP_ExecTrigger ("f_flash");
-		last_flash_time = cls.realtime;
-	}
-	if (cshift_empty.percent == 160){
-		last_flash_time = cls.realtime;
-	}
-// <-- QW262
-
-	if (cls.demoplayback && cshift_empty.destcolor[0] == cshift_empty.destcolor[1])
-		cshift_empty.percent *= cl_demoplay_flash.value/1.0f;
+	// TF flash grenades stuff
+	if (cl.teamfortress)
+		V_TF_FlashStuff ();
 }
 
 //When you run over an item, the server sends this command
@@ -722,7 +786,11 @@ void V_TF_ClearGrenadeEffects ()
 	Cvar_SetValue (&v_idlescale, 0.0f);
 
 	// Flash effect off
-	last_flash_time = 0.0;
+	if (flashed && (!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+		V_TF_FlashSettings (false);
+		flashed = false;
+	}
+
 	cshift_empty.destcolor[0] = 0;
 	cshift_empty.destcolor[1] = 0;
 	cshift_empty.destcolor[2] = 0;

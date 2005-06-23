@@ -49,3 +49,4 @@ qboolean	scr_skipupdate;
 qboolean	block_drawing;
 
 extern qboolean	concussioned;
+extern qboolean flashed;
