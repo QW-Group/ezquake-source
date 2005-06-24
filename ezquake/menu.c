@@ -2293,17 +2293,16 @@ void Demo_playlist_start (int i){
 }
 
 void Demo_playlist_f (void) {
-	if (demo_playlist_current_played == demo_playlist_num && demo_playlist_loop.value ){
+	demo_playlist_current_played++;
+	if (demo_playlist_current_played == demo_playlist_num  && demo_playlist_loop.value ){
 		demo_playlist_current_played = 0;
 		Cbuf_AddText (va("playdemo \"..%s\"\n", demo_playlist[demo_playlist_current_played].path));
-	}else if (demo_playlist_current_played > demo_playlist_num ){
+	}else if (demo_playlist_current_played == demo_playlist_num ){
 	Com_Printf("End of demo playlist.\n");
 	demo_playlist_started = demo_playlist_current_played = 0;
 	}else{
-	demo_playlist_current_played++;
 	Cbuf_AddText (va("playdemo \"..%s\"\n", demo_playlist[demo_playlist_current_played].path));
 	}
-	
 }
 
 void Demo_Playlist_Next_f (void){
@@ -2640,7 +2639,7 @@ static void Demo_FormatSize (char *t) {
 
 void M_Demos_Draw (void) {
 	int i, y;
-	char *demos_test;
+//	char *demos_test;
 	direntry_t *d;
 	char demoname[DEMOLIST_NAME_WIDTH], demosize[36 - DEMOLIST_NAME_WIDTH];
 	static char last_demo_name[MAX_DEMO_NAME + 7];	
