@@ -27,7 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 float olddemotime, nextdemotime;		
 
-void Demo_playlist_f(void);
 static float		td_lastframe;		// to meter out one message a frame
 static int			td_startframe;		// cls.framecount at start
 static float		td_starttime;		// realtime at second frame of timedemo
@@ -42,6 +41,8 @@ static char tempqwd_name[256] = {0}; // this file must be deleted after playback
 
 static qboolean OnChange_demo_dir(cvar_t *var, char *string);
 cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
+
+int FindBestNick (char *s);
 
 //=============================================================================
 //								DEMO WRITING
@@ -998,7 +999,6 @@ void CL_AutoRecord_SaveMatch(void) {
 	tempname = va("%s/%s", MT_TempDirectory(), TEMP_DEMO_NAME);
 
 	fullsavedname = va("%s/%s", dir, auto_matchname);
-	Com_Printf("Ok its trying to save, %i %s %s %s\n",temp_demo_ready,auto_matchname,fullsavedname,tempname);
 	if ((num = Util_Extend_Filename(fullsavedname, exts)) == -1) {
 		Com_Printf("Error: no available filenames\n");
 		return;
@@ -1015,7 +1015,6 @@ void CL_AutoRecord_SaveMatch(void) {
 	if ((error = rename(tempname, fullsavedname))) {
 		COM_CreatePath(fullsavedname);
 		error = rename(tempname, fullsavedname);
-		Com_Printf("error %i\n",error);
 	}
 
 	if (!error)
@@ -1157,7 +1156,7 @@ double		demostarttime;
 
 void CL_StopPlayback (void) {
 	extern int demo_playlist_started;
-	
+		
 	if (!cls.demoplayback)
 		return;
 
@@ -1197,6 +1196,8 @@ void CL_StopPlayback (void) {
 void CL_Play_f (void) {
 	char name[2 * MAX_OSPATH], **s;
 	static char *ext[] = {".qwd", ".mvd", NULL};
+	extern cvar_t demo_playlist_track_name;
+	int track_player;
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("Usage: %s <demoname>\n", Cmd_Argv(0));
