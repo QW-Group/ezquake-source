@@ -143,6 +143,9 @@ void FMod_Init(void) {
 	FMod_AddModel("progs/turrgun.mdl", FMOD_TF); //x
 	FMod_AddModel("progs/disp.mdl", FMOD_TF); //x
 	FMod_AddModel("progs/tf_stan.mdl", FMOD_TF); //x
+	FMod_AddModel("progs/hgren2.mdl", FMOD_TF); // gren1
+	FMod_AddModel("progs/grenade2.mdl", FMOD_TF); // gren2
+	FMod_AddModel("progs/detpack.mdl", FMOD_TF); // detpack
 
 	FMod_AddModel("progs/s_bubble.spr", FMOD_DM | FMOD_TF); //x
 	FMod_AddModel("progs/s_explod.spr", FMOD_DM | FMOD_TF); //x
