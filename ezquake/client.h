@@ -414,7 +414,7 @@ typedef struct {
 	float		truelightning;	
 	qboolean	userfb;			
 	int			minlight;
-	qboolean	watervis;
+	float		watervis;
 	qboolean	allow_lumas;
 
 	interpolate_t	int_projectiles[MAX_PROJECTILES];

@@ -569,7 +569,7 @@ void R_DrawWaterSurfaces (void) {
 	if (!waterchain)
 		return;
 
-	wateralpha = cl.watervis ? bound(0, r_wateralpha.value, 1) : 1;
+	wateralpha = bound((1 - cl.watervis), r_wateralpha.value, 1);
 
 	if (wateralpha < 1.0) {
 		glEnable (GL_BLEND);
@@ -586,7 +586,9 @@ void R_DrawWaterSurfaces (void) {
 
 		//Tei "eshaders". 
 		if (s &&s->texinfo && s->texinfo->texture && s->texinfo->texture->name )
-		{			switch(s->texinfo->texture->name[1])
+		{
+
+			switch(s->texinfo->texture->name[1])
 			{
 			//Lava
 			case 'l':

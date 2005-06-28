@@ -226,7 +226,7 @@ void EmitWaterPolys (msurface_t *fa) {
 	byte *col;
 	extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor;
 	// END shaman RFE 1022504
-	float wateralpha = cl.watervis ? bound(0, r_wateralpha.value, 1) : 1;
+	float wateralpha = bound((1 - cl.watervis), r_wateralpha.value, 1);
 
 	vec3_t nv;
 
