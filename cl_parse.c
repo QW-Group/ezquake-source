@@ -1351,7 +1351,7 @@ void CL_SetInfo (void) {
 
 //Called by CL_FullServerinfo_f and CL_ParseServerInfoChange
 void CL_ProcessServerInfo (void) {
-	char *p, *fbskins, *truelightning, *minlight;
+	char *p, *fbskins, *truelightning, *minlight, *watervis;
 	int teamplay, fpd;
 	qboolean skin_refresh, standby, countdown;
 
@@ -1363,19 +1363,17 @@ void CL_ProcessServerInfo (void) {
 
 
 	if (cls.demoplayback) {
-		cl.watervis = cl.allow_lumas = true;
-		cl.fbskins = cl.truelightning = 1;
+		cl.allow_lumas = true;
+		cl.watervis = cl.fbskins = cl.truelightning = 1;
 		fpd = 0;
 	} else if (cl.spectator) {
 		// START shaman - allow spectators to have transparent turbulence {
-		// cl.watervis = !atoi(Info_ValueForKey(cl.serverinfo, "watervis")) ? 0 : 1;
-		// cl.allow_lumas = true;
-		cl.watervis = cl.allow_lumas = true;
+		cl.allow_lumas = true;
+		cl.watervis = cl.fbskins = cl.truelightning = 1;
 		// } END shaman - allow spectators to have transparent turbulence
-		cl.fbskins = cl.truelightning = 1;
 		fpd = atoi(Info_ValueForKey(cl.serverinfo, "fpd"));	
 	} else {
-		cl.watervis = !atoi(Info_ValueForKey(cl.serverinfo, "watervis")) ? 0 : 1;
+		cl.watervis = *(watervis = Info_ValueForKey(cl.serverinfo, "watervis")) ? bound(0, Q_atof(watervis), 1) : 1;
 		cl.allow_lumas = !strcmp(Info_ValueForKey(cl.serverinfo, "24bit_fbs"), "1") ? true : false;
 		cl.fbskins = *(fbskins = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(fbskins), 1) :
 		cl.teamfortress ? 0 : 1;
