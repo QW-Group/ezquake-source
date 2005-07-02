@@ -207,6 +207,10 @@ char *CL_Macro_Serverstatus(void) {
 	return macrobuf;
 }
 
+char *CL_Macro_ServerIp(void) {
+	return NET_AdrToString(cls.server_adr);
+}
+
 int CL_ClientState (void) {
 	return cls.state;
 }
@@ -919,6 +923,7 @@ void CL_InitLocal (void) {
 	Cmd_AddMacro("connectiontype", CL_Macro_ConnectionType);
 	Cmd_AddMacro("demoplayback", CL_Macro_Demoplayback);
 	Cmd_AddMacro("matchstatus", CL_Macro_Serverstatus);
+	Cmd_AddMacro("serverip", CL_Macro_ServerIp);
 
 	Cmd_AddCommand ("cl_messages", CL_Messages_f);//Tei, cl_messages
 }
