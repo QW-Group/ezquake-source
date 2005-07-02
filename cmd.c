@@ -1156,8 +1156,8 @@ void Cmd_ExpandString (char *data, char *dest) {
 char *safe_commands[] = {
 	"play", "playvol", "stopsound", "set", "echo", "say", "say_team",
 		"alias", "unalias", "msg_trigger", "inc", "bind", "unbind", "record",
-		"easyrecord", "stop", "if", "wait", "log", "match_forcestart",
-		NULL
+		"easyrecord", "stop", "if", "wait", "log", "match_forcestart", "dns",
+		"addserver", NULL
 };
 
 //A complete command line has been parsed, so try to execute it
@@ -1214,7 +1214,9 @@ void Cmd_ExecuteString (char *text) {
 				Q_strcasecmp(cmd_argv[0], "tp_point") &&
 				Q_strcasecmp(cmd_argv[0], "tp_pickup") &&
 				Q_strcasecmp(cmd_argv[0], "tp_took") &&
-				Q_strcasecmp(cmd_argv[0], "if")
+				Q_strcasecmp(cmd_argv[0], "if") &&
+				Q_strcasecmp(cmd_argv[0], "dns") &&
+				Q_strcasecmp(cmd_argv[0], "addserver")
 				) {
 					Com_Printf("Ruleset %s restricts use of \"%s\" with teamplay macros\n", Rulesets_Ruleset(), cmd_argv[0]);
 					return;
