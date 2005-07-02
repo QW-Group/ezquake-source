@@ -704,6 +704,44 @@ void DumpConfig(char *name)	{
 	fclose(f);
 }
 
+void Dump_HUD(char *name) {
+// Dumps all variables from CFG_GROUP_HUD into a file
+
+	FILE *f;
+	int max_width = 0, i = 0, j;
+	char *outfile, *spaces;
+	cvar_t *var;
+	cvar_t *sorted[MAX_DUMPED_CVARS];
+
+	outfile = va("%s/ezquake/configs/%s", com_basedir, name);
+	if (!(f	= fopen	(outfile, "w"))) {
+		COM_CreatePath(outfile);
+		if (!(f	= fopen	(outfile, "w"))) {
+			Com_Printf ("Couldn't write	%s.\n",	name);
+			return;
+		}
+	}
+
+	fprintf(f, "//\n");
+	fprintf(f, "// Head Up Display Configuration Dump\n");
+	fprintf(f, "//\n\n");
+
+	for(var = cvar_vars; var; var = var->next)
+		if(var->group && !strcmp(var->group->name, CVAR_GROUP_HUD)) {
+			max_width = max(max_width, strlen(var->name));
+			sorted[i++] = var;
+		}
+		
+	max_width++;
+	qsort(sorted, i, sizeof(cvar_t *), Cvar_CvarCompare);
+	
+	for(j = 0; j < i; j++) {
+		spaces = CreateSpaces(max_width - strlen(sorted[j]->name));
+		fprintf(f, "%s%s\"%s\"\n", sorted[j]->name, spaces, sorted[j]->string);
+	}
+
+	fclose(f);
+}
 /************************************ API ************************************/
 
 void SaveConfig_f(void)	{
@@ -776,10 +814,24 @@ void LoadConfig_f(void)	{
 	Cbuf_AddText ("cl_warncmd 1\n");
 }
 
+void Dump_HUD_f(void) {
+	char *filename;
+
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: %s <filename>\n", Cmd_Argv(0));
+		return;
+	}
+	filename = COM_SkipPath(Cmd_Argv(1));
+	COM_ForceExtension(filename, ".cfg");
+	Dump_HUD(filename);
+	Com_Printf("HUD variables exported.\n");
+}
+
 void ConfigManager_Init(void) {
 	Cmd_AddCommand("cfg_save", SaveConfig_f);
 	Cmd_AddCommand("cfg_load", LoadConfig_f);
 	Cmd_AddCommand("cfg_reset",	ResetConfigs_f);
+	Cmd_AddCommand("hud_export", Dump_HUD_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONFIG);
 	Cvar_Register(&cfg_save_unchanged);
