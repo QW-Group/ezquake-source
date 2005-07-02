@@ -1012,6 +1012,15 @@ void R_DrawFlat (model_t *model) {
  // } END shaman FIX /r_drawflat + /gl_caustics
 }
 
+qboolean OnChange_r_drawflat(cvar_t *v, char *skyname) {
+	if(cls.state >= ca_connected && !cl.standby && !cls.demoplayback && !cl.spectator) {
+		Com_Printf("Wall color changes are not allowed during the match.\n");
+		return true;
+	}
+	
+	return false;
+}
+
 void R_DrawBrushModel (entity_t *e) {
 	int i, k, underwater;
 	vec3_t mins, maxs;

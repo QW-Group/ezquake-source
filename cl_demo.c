@@ -44,6 +44,8 @@ cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 
 int FindBestNick (char *s);
 
+void Demo_playlist_f (void);
+
 //=============================================================================
 //								DEMO WRITING
 //=============================================================================
@@ -1197,7 +1199,7 @@ void CL_Play_f (void) {
 	char name[2 * MAX_OSPATH], **s;
 	static char *ext[] = {".qwd", ".mvd", NULL};
 	extern cvar_t demo_playlist_track_name;
-	int track_player;
+	// int track_player;
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("Usage: %s <demoname>\n", Cmd_Argv(0));
