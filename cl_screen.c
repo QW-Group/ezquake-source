@@ -124,7 +124,7 @@ cvar_t			scr_autoid		= {"scr_autoid", "0"};
 cvar_t			scr_coloredText = {"scr_coloredText", "1"};
 
 // START shaman RFE 1022309
-cvar_t			scr_tracking			= {"scr_tracking", ""};
+cvar_t			scr_tracking			= {"scr_tracking", "Tracking %t %n, [JUMP] for next"};
 cvar_t			scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
 // END shaman RFE 1022309
 

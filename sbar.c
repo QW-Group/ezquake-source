@@ -1018,7 +1018,31 @@ static void Sbar_DrawCompact_Bare (void) {
 	sbar_xofs = old_sbar_xofs;
 }
 
+void Tracking_Format(char *src, char *dest, int n) {
+/* 
+  replaces "Tracking: %t %n" in both hud_tracking_format or scr_tracking
+  to e.g. "Tracking: ]SR[ ParadokS"
+*/
+	int i = 0, j = 0;
 
+	while (src[i] && j < n) {
+		if(src[i++] != '%')
+			dest[j++] = src[i-1];
+		else
+			switch(src[i++]) {
+				case 'n':
+					strncpy(dest + j, cl.players[spec_track].name, (size_t) (n - j));
+					j += strlen(cl.players[spec_track].name);
+					break;
+				case 't':
+					if(cl.teamplay) { // doesn't make sence to display team name when teamplay is off
+						strncpy(dest + j, cl.players[spec_track].team, (size_t) (n - j));
+						j += strlen(cl.players[spec_track].team);
+					}
+					break;
+			}					
+	}
+}
 
 /******************************** SCOREBOARD ********************************/
 
@@ -1783,19 +1807,7 @@ void Sbar_Draw(void) {
 				else
 					Sbar_DrawNormal();
 
-				// START shaman RFE 1022309
-				if (strlen(scr_tracking.string) == 0) {
-				// END shaman RFE 1022309
-					Q_snprintfz(st, sizeof(st), "Tracking %-.13s", cl.players[spec_track].name);
-					if (!cls.demoplayback)
-						strcat (st, ", [JUMP] for next");
-				// START shaman RFE 1022309				
-				}
-				else {
-					strcpy(st, scr_tracking.string);
-				}
-				// END shaman RFE 1022309	
-
+				Tracking_Format(scr_tracking.string, st, sizeof(st));
 				// oppymv 300804
 				// fix displaying "tracking .." for both players with inset on
 				if (cl_multiview.value != 2 || !cls.mvdplayback)
