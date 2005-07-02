@@ -98,9 +98,10 @@ cvar_t  r_lavacolor  = {"r_lavacolor", "80 0 0"};
 cvar_t  r_slimecolor = {"r_slimecolor", "10 60 10"};
 cvar_t  r_watercolor = {"r_watercolor", "50 80 120"};
 // END shaman RFE 1022504
-cvar_t	r_drawflat   = {"r_drawflat", "0"};
-cvar_t	r_wallcolor  = {"r_wallcolor", "255 255 255"};
-cvar_t	r_floorcolor = {"r_floorcolor", "50 100 150"};
+qboolean OnChange_r_drawflat(cvar_t *v, char *skyname);
+cvar_t	r_drawflat   = {"r_drawflat", "0", 0, OnChange_r_drawflat};
+cvar_t	r_wallcolor  = {"r_wallcolor", "255 255 255", 0, OnChange_r_drawflat};
+cvar_t	r_floorcolor = {"r_floorcolor", "50 100 150", 0, OnChange_r_drawflat};
 
 cvar_t	r_farclip			= {"r_farclip", "4096"};
 qboolean OnChange_r_skyname(cvar_t *v, char *s);
