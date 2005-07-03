@@ -1169,8 +1169,13 @@ void Cmd_ExecuteString (char *text) {
 	cbuf_t *inserttarget;
 	char *p, *n, *s;
 	
-	Cmd_ExpandString (text, buf);
-	Cmd_TokenizeString (buf);
+#ifndef SERVERONLY
+	char text_exp[1024];
+	Cmd_ExpandString (text, text_exp);
+	Cmd_TokenizeString (text_exp);
+#else
+	Cmd_TokenizeString (text);
+#endif
 	
 	if (!Cmd_Argc())
 		return;		// no tokens
