@@ -42,7 +42,8 @@ static char tempqwd_name[256] = {0}; // this file must be deleted after playback
 static qboolean OnChange_demo_dir(cvar_t *var, char *string);
 cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 
-int FindBestNick (char *s);
+char Demos_Get_Trackname(void);
+void Demo_playlist_f(void);
 
 void Demo_playlist_f (void);
 
@@ -1157,7 +1158,9 @@ static void PlayQWZDemo (void) {
 double		demostarttime;		
 
 void CL_StopPlayback (void) {
+
 	extern int demo_playlist_started;
+	
 		
 	if (!cls.demoplayback)
 		return;
@@ -1199,7 +1202,8 @@ void CL_Play_f (void) {
 	char name[2 * MAX_OSPATH], **s;
 	static char *ext[] = {".qwd", ".mvd", NULL};
 	extern cvar_t demo_playlist_track_name;
-	// int track_player;
+	int track_player;
+	extern char track_name[16];
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("Usage: %s <demoname>\n", Cmd_Argv(0));
@@ -1242,7 +1246,11 @@ void CL_Play_f (void) {
 
 	Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
 
+
+	
+#ifdef _WIN32
 done:
+#endif
 	cls.demoplayback = true;
 	cls.mvdplayback = !Q_strcasecmp(name + strlen(name) - 3, "mvd") ? true : false;	
 	cls.state = ca_demostart;
@@ -1254,8 +1262,13 @@ done:
 	cls.findtrack = true;
 	cls.lastto = cls.lasttype = 0;
 	CL_ClearPredict();
-
-
+	if(strlen(track_name)){
+		track_player=FindBestNick(track_name);
+		Cbuf_AddText (va("wait;wait;wait;track %s\n",cl.players[track_player].name));
+	}else if (strlen(demo_playlist_track_name.string)){
+		track_player=FindBestNick(demo_playlist_track_name.string);
+		Cbuf_AddText (va("wait;wait;wait;track %s\n",cl.players[track_player].name));
+	}
 	
 	if (cls.mvdplayback && cls.demorecording)
 		CL_Stop_f();
