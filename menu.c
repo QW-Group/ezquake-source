@@ -2369,6 +2369,7 @@ void Demo_Playlist_Stop_f (void){
 
 void M_Demo_Playlist_Setup_f (void) {
 	Q_strncpyz(demo_track,demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,sizeof(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname));
+	Q_strncpyz(default_track,demo_playlist_track_name.string,16);
 }
 
 void M_Demo_Options_Setup_f (void) {
@@ -2666,6 +2667,7 @@ static void Demo_FormatSize (char *t) {
 
 #define DEMOLIST_NAME_WIDTH	29		
 #define DEMO_PLAYLIST_MAX 100
+#define DEMO_OPTIONS_MAX 2
 
 
 
@@ -2762,7 +2764,8 @@ void M_Demos_Draw (void) {
 			M_Print (136,8, "[newmenu]");
 			M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f \x1d\x1e\x1e\x1e\x1e\x1e\x1f");
 			M_Print (40,40,"New menu where u can");
-			M_Print (40,48,"load demoplaylists when its finished\\o/");
+			M_Print (40,48,"load demoplaylists when");
+			M_Print (40,56,"its finished \\o/");
 		
 		
 	}		
@@ -2788,7 +2791,8 @@ void M_Demos_Draw (void) {
 				M_DrawCharacter (8, 32 + demo_playlist_cursor * 8, 12 + ((int) (curtime * 4) & 1));
 				}
 		}else if (demo_playlist_section == 1){
-		
+			M_PrintWhite (64,8, " demos ");
+			M_Print (130,8, "[options]");
 			if (demo_playlist_started && cls.demoplayback){
 				M_Print (24, 32, "Currently playing:");
 				M_PrintWhite (24, 40, demo_playlist[demo_playlist_current_played].name);
@@ -2802,8 +2806,7 @@ void M_Demos_Draw (void) {
 		
 			if (demo_playlist_num > 0){
 			
-			M_PrintWhite (64,8, " demos ");
-			M_Print (130,8, "[options]");
+			
 			M_Print (24, 96, "Currently selected:");
 			M_Print (24, 104, demo_playlist[demo_playlist_cursor].name);
 			}else{
@@ -2826,6 +2829,7 @@ void M_Demos_Draw (void) {
 				z=4;
 			else
 				z=0;
+
 			M_DrawCharacter (8, 56 + (demo_playlist_opt_cursor +z) * 8, 12 + ((int) (curtime * 4) & 1));
 		}
 			
@@ -2844,12 +2848,16 @@ void M_Demos_Draw (void) {
 	
 		M_Print (16, 48, "Default track");
 		M_DrawTextBox (160, 40, 16, 1);
-		M_PrintWhite (168, 48, "test");
+		M_PrintWhite (168, 48, default_track);
 	
-		if (demo_playlist_opt_cursor >= 1 )
-				z=4;
+		if (demo_options_cursor >= 1 )
+				z=1;
 		else
 				z=0;
+
+		if (demo_options_cursor == 1)
+			M_DrawCharacter (168 + 8*strlen(default_track), 48, 10+((int)(curtime*4)&1));
+
 		M_DrawCharacter (8, 32 + (demo_options_cursor + z) * 8, 12 + ((int) (curtime * 4) & 1));
 	}
 
@@ -2897,7 +2905,7 @@ void M_Demos_Key (int key) {
 				demo_cursor--;
 			else if (demo_base > 0)
 				demo_base--;
-		}else if (demos_menu_pos ==1){
+		}else if (demos_menu_pos == 1){
 			if (demo_playlist_section == 0){
 				if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base > 0)
 					M_Demos_Playlist_Move_Up(demo_playlist_cursor + demo_playlist_base);
@@ -2914,8 +2922,13 @@ void M_Demos_Key (int key) {
 					demo_playlist_opt_base--;
 				
 			}
+		}else if (demos_menu_pos == 2){
+			if (demo_options_cursor > 0)
+					demo_options_cursor--;
+			else if (demo_options_base > 0)
+				demo_options_base--;
+			M_Demo_Playlist_Setup_f();
 		}
-		
 		break;
 
 	case K_DOWNARROW:
@@ -2927,9 +2940,9 @@ void M_Demos_Key (int key) {
 				else
 					demo_base++;
 			}
-		}else if (demos_menu_pos ==1){
+		}else if (demos_menu_pos == 1 ){
 		
-			if ( demo_playlist_section == 0){
+			if ( demo_playlist_section == 0 ){
 				if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base < demo_playlist_num)
 					M_Demos_Playlist_Move_Down(demo_playlist_cursor + demo_playlist_base);
 						
@@ -2940,7 +2953,7 @@ void M_Demos_Key (int key) {
 							demo_playlist_base++;
 				}
 				M_Demo_Playlist_Setup_f();
-			}else if (demo_playlist_section == 1) {
+			}else if (demo_playlist_section == 1 ) {
 				if (demo_playlist_opt_cursor + demo_playlist_opt_base < DEMO_PLAYLIST_OPTIONS_MAX - 1) {
 						if (demo_playlist_opt_cursor < DEMO_PLAYLIST_OPTIONS_MAX - 1)
 							demo_playlist_opt_cursor++;
@@ -2948,6 +2961,12 @@ void M_Demos_Key (int key) {
 							demo_playlist_opt_base++;
 				}
 			}
+		}else if (demos_menu_pos == 2 ){
+			if (demo_options_cursor < DEMO_OPTIONS_MAX - 1)
+				demo_options_cursor++;
+			else
+				demo_options_base++;
+			M_Demo_Playlist_Setup_f();
 		}
 		
 		break;
@@ -2957,6 +2976,7 @@ void M_Demos_Key (int key) {
 		demos_menu_pos--;
 		if(demos_menu_pos<0)
 				demos_menu_pos=2;
+		M_Demo_Playlist_Setup_f();
 		break;
 
 	
@@ -2965,6 +2985,7 @@ void M_Demos_Key (int key) {
 		demos_menu_pos++;
 		if(demos_menu_pos>2)
 				demos_menu_pos=0;
+		M_Demo_Playlist_Setup_f();
 		break;
 
 	
@@ -3133,8 +3154,10 @@ void M_Demos_Key (int key) {
 		break;
 	case K_TAB:
 		if (demos_menu_pos == 0){
+		S_LocalSound ("misc/menu1.wav");
 		demo_section = !demo_section;
 		}else if (demos_menu_pos == 1) {
+		S_LocalSound ("misc/menu1.wav");
 		demo_playlist_section = !demo_playlist_section ;
 		}
 		break;
@@ -3143,7 +3166,11 @@ void M_Demos_Key (int key) {
 			if (strlen(demo_track))
 				demo_track[strlen(demo_track)-1] = 0;
 			Q_strncpyz(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_track));
-		} else {
+		}else if (demos_menu_pos == 2 && demo_options_cursor == 1 ){
+			if (strlen(default_track))
+				default_track[strlen(default_track)-1] = 0;
+			Q_strncpyz(demo_playlist_track_name.string,default_track,sizeof(default_track));
+		}else {
 			m_topmenu = m_none;
 			M_LeaveMenu (m_multiplayer);
 		}
@@ -3165,16 +3192,25 @@ void M_Demos_Key (int key) {
 			Demo_PositionCursor();	
 		
 			}else if (demo_playlist_opt_cursor == 4 && demos_menu_pos == 1 && demo_playlist_section == 1) {
-			l = strlen(demo_track);
-			
-			if (l < 15) {
-				demo_track[l+1] = 0;
-				demo_track[l] = key;
-				Q_strncpyz(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_track));
+				l = strlen(demo_track);
+				
+				if (l < 15) {
+					demo_track[l+1] = 0;
+					demo_track[l] = key;
+					Q_strncpyz(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_track));
+				}
+			}else if (demo_options_cursor == 1 && demos_menu_pos == 2) {
+				l = strlen(default_track);
+				
+				if (l < 15) {
+					default_track[l+1] = 0;
+					default_track[l] = key;
+					Q_strncpyz(demo_playlist_track_name.string,default_track,sizeof(default_track));
+				}
 			}
-		}
-	}
+	}	
 }
+
 
 void M_Demos_Del_Key (int key) {
 	switch (key) {
