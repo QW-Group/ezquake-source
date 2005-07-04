@@ -1,6 +1,5 @@
 #include "quakedef.h"
 #include "common.h"
-#include "teamplay.h"
 #include "cl_screen.h"
 #include "utils.h"
 
