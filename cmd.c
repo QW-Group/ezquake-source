@@ -416,19 +416,41 @@ char *Cmd_AliasString (char *name) {
 }
 
 void Cmd_Viewalias_f (void) {
-	cmd_alias_t *alias;
+	cmd_alias_t	*alias;
+	char		*name;
+	int		i,m;
 
 	if (Cmd_Argc() < 2) {
 		Com_Printf ("viewalias <aliasname> : view body of alias\n");
 		return;
 	}
 
-	alias = Cmd_FindAlias(Cmd_Argv(1));
+	name = Cmd_Argv(1);
 
-	if (alias)
-		Com_Printf ("%s : \"%s\"\n", Cmd_Argv(1), alias->value);
-	else
-		Com_Printf ("No such alias: %s\n", Cmd_Argv(1));
+
+	if ( IsRegexp(name) ) {
+		if (!ReSearchInit(name))
+			return;
+		Com_Printf ("Current alias commands:\n");
+
+		for (alias = cmd_alias, i=m=0; alias ; alias=alias->next, i++)
+			if (ReSearchMatch(alias->name)) {
+				Com_Printf ("%s : %s\n", alias->name, alias->value);
+				m++;
+			}
+
+		Com_Printf ("------------\n%i/%i aliases\n", m, i);
+		ReSearchDone();
+		
+
+	} else 	{
+		alias = Cmd_FindAlias(Cmd_Argv(1));
+
+		if (alias)
+			Com_Printf ("%s : \"%s\"\n", Cmd_Argv(1), alias->value);
+		else
+			Com_Printf ("No such alias: %s\n", Cmd_Argv(1));
+	}
 }
 
 
@@ -619,20 +641,42 @@ qboolean Cmd_DeleteAlias (char *name) {
 }
 
 void Cmd_UnAlias_f (void) {
-	char*s;
+	int 		i;
+	char		*name;
+	cmd_alias_t	*a;
+	qboolean	re_search;
 
-	if (Cmd_Argc() != 2) {
-		Com_Printf ("unalias <alias>: erase an existing alias\n");
+	if (Cmd_Argc() < 2) {
+		Com_Printf ("unalias <name> [<name2>..]: erase an existing alias\n");
 		return;
 	}
 
-	s = Cmd_Argv(1);
-	if (strlen(s) >= MAX_ALIAS_NAME) {
-		Com_Printf ("Alias name is too long\n");
-		return;
-	}
+	for (i=1; i<Cmd_Argc(); i++) {
+		name = Cmd_Argv(i);
 
-	Cmd_DeleteAlias (s);
+		if ((re_search = IsRegexp(name))) 
+			if(!ReSearchInit(name))
+				continue;
+
+		if (strlen(name) >= MAX_ALIAS_NAME) {
+			Com_Printf ("Alias name is too long: \"%s\"\n", Cmd_Argv(i));
+			continue;
+		}
+
+		if (re_search) {
+			for (a = cmd_alias ; a ; a=a->next) {
+				if (ReSearchMatch(a->name))
+					Cmd_DeleteAlias(a->name);
+			}
+		} else {
+			if (!Cmd_DeleteAlias(Cmd_Argv(i)))
+				Com_Printf ("unalias: unknown alias \"%s\"\n", Cmd_Argv(i));	
+		}
+
+		if (re_search)
+			ReSearchDone();
+	
+	}
 }
 
 // remove all aliases

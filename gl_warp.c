@@ -23,10 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "utils.h"
 
-// START shaman RFE 1020608
-#include "teamplay.h"
-// END shaman RFE 1020608
-
 // START shaman RFE 1022504
 #include "pmove.h"
 // END shaman RFE 1022504
