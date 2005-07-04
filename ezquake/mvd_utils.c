@@ -16,9 +16,11 @@ extern qboolean TP_LoadLocFile (char *path, qboolean quiet);
 extern char *TP_LocationName(vec3_t location);
 extern char *Weapon_NumToString(int num);
 
+int FindBestNick(char *s);
 int MVD_AutoTrackBW_f(int i);
 int axe_val, sg_val, ssg_val, ng_val, sng_val, gl_val, rl_val, lg_val, ga_val, ya_val, ra_val, ring_val, quad_val, pent_val ;
 
+int mvd_demo_track_run = 0;
 
 // mvd_info cvars
 cvar_t			mvd_info		= {"mvd_info", "0"};
@@ -37,6 +39,27 @@ cvar_t mvd_autotrack_4on4_values = {"mvd_autotrack_4on4_values", "1 2 4 2 4 6 10
 //cvar_t mvd_autotrack_custom = {"mvd_autotrack_custom", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_custom_values = {"mvd_autotrack_custom_values", "1 2 3 2 3 6 6 1 2 3 500 900 1000"}; 
 
+
+
+
+void MVD_Demo_Track (void){
+	extern char track_name[16];
+    extern cvar_t demo_playlist_track_name;
+	
+	int track_player ;
+
+	if(strlen(track_name)){
+		track_player=FindBestNick(track_name);
+		if (track_player != -1 )
+			Cbuf_AddText (va("track %s\n",cl.players[track_player].name));
+	}else if (strlen(demo_playlist_track_name.string)){
+		track_player=FindBestNick(demo_playlist_track_name.string);
+		if (track_player != -1 )
+			Cbuf_AddText (va("track %s\n",cl.players[track_player].name));
+	}
+
+	mvd_demo_track_run = 1;
+}
 
 
 int MVD_BestWeapon (int i) {
@@ -467,6 +490,8 @@ void MVD_AutoTrack_f(void) {
 
 void MVD_Mainhook_f (void){
 	MVD_AutoTrack_f ();
+	if (cls.demotime > 220.0 && mvd_demo_track_run == 0) 
+	MVD_Demo_Track ();
 }
 
 void MVD_Utils_Init (void) {
