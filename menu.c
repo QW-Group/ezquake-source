@@ -2239,6 +2239,7 @@ typedef struct demo_playlist_s
 demo_playlist_t demo_playlist[256];
 
 char track_name[16];
+char default_track[16];
 int demo_playlist_started = 0;
 static int demo_playlist_current_played = 0;
 static int demo_playlist_started_test = 0;
@@ -2271,12 +2272,17 @@ static float		last_demo_time = 0;
 
 static int			demo_cursor = 0;
 static int			demo_base = 0;
+static int 			demo_section = 0;
+static int 			demo_playlist_browser_cursor = 0;
+static int 			demo_playlist_browser_base = 0;
 
 static demo_sort_t	demo_sorttype = ds_name;
 static qboolean		demo_reversesort = false;
 
 char demo_track[16];
 
+
+// Demo Playlist Functions
 
 void M_Demos_Playlist_stop_f (void){
 	if (!demo_playlist_started_test){
@@ -2286,14 +2292,13 @@ void M_Demos_Playlist_stop_f (void){
 }
 
 void Demo_playlist_start (int i){
-	int test;
+//	int test;
 	key_dest = key_game;
 	m_state = m_none;
 	demo_playlist_current_played = i;
 	demo_playlist_started_test = 0 ;
 	if (cls.demoplayback)
 		CL_Disconnect_f();
-//		Cbuf_AddText ("disconnect\n");
 	demo_playlist_started_test = 0 ;
 	demo_playlist_started=1;
 	Q_strncpyz(track_name,demo_playlist[demo_playlist_current_played].trackname,sizeof(demo_playlist[demo_playlist_current_played].trackname));
@@ -2364,6 +2369,10 @@ void Demo_Playlist_Stop_f (void){
 
 void M_Demo_Playlist_Setup_f (void) {
 	Q_strncpyz(demo_track,demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,sizeof(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname));
+}
+
+void M_Demo_Options_Setup_f (void) {
+	Q_strncpyz(default_track,demo_playlist_track_name.string,sizeof(demo_playlist_track_name.string ));
 }
 
 
@@ -2674,125 +2683,141 @@ void M_Demos_Draw (void) {
 	float frac, time, elapsed;
 	
 	if (demos_menu_pos == 0){
-		M_Print (64, 8, "[demos]");
-		M_PrintWhite (120, 8, " playlist ");
-		M_PrintWhite (200, 8, " options ");
+		M_Print (64, 0, "[demos]");
+		M_PrintWhite (120, 0, " playlist ");
+		M_PrintWhite (200, 0, " options ");
+		if (demo_section == 0){
+			M_Print (64,8, "[browser]");
+			M_PrintWhite (136,8, " newmenu");
 			Q_strncpyz(demoname_scroll, demo_currentdir[0] ? demo_currentdir : "/", sizeof(demoname_scroll));
-	M_PrintWhite (16, 16, demoname_scroll);
-	M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f \x1d\x1e\x1e\x1e\x1e\x1e\x1f");
-
-	for (i = 0; i < demolist_count - demo_base && i < DEMO_MAXLINES; i++) {
-		d = demolist[demo_base + i];
-		y = 32 + 8 * i;
-		Q_strncpyz (demoname, d->name, sizeof(demoname));
-
-		switch (d->type) {
-		case dt_file:
-			M_Print (24, y, demoname);
-			if (d->size > 99999 * 1024)
-				Q_snprintfz(demosize, sizeof(demosize), "%5iM", d->size >> 20);
-			else
-				Q_snprintfz(demosize, sizeof(demosize), "%5iK", d->size >> 10);
-			Demo_FormatSize(demosize);
-			M_PrintWhite (24 + 8 * DEMOLIST_NAME_WIDTH, y, demosize);
-			break;
-		case dt_dir:
-			M_PrintWhite (24, y, demoname);
-			M_PrintWhite (24 + 8 * DEMOLIST_NAME_WIDTH, y, "folder");
-			break;
-		case dt_up:
-			M_PrintWhite (24, y, demoname);
-			M_PrintWhite (24 + 8 * DEMOLIST_NAME_WIDTH, y, "    up");
-			break;
-		case dt_msg:
-			M_Print (24, y, demoname);
-			break;
-		default:
-			Sys_Error("M_Demos_Draw: unknown d->type (%d)", d->type);
-		}
-	}
-
-	M_DrawCharacter (8, 32 + demo_cursor * 8, 12 + ((int) (curtime * 4) & 1));
-
-
-	demoindex = demo_base + demo_cursor;
-	if (demolist[demoindex]->type == dt_file) {
-		time = (float) Sys_DoubleTime();
-		if (!last_demo_time || last_demo_index != demoindex) {
-			last_demo_index = demoindex;
-			last_demo_time = time;
-			frac = scroll_index = 0;
-			Q_snprintfz(last_demo_name, sizeof(last_demo_name), "%s  ***  ", demolist[demoindex]->name);
-			last_demo_length = strlen(last_demo_name);
-		} else {
-			
-			elapsed = 3.5 * max(time - last_demo_time - 0.75, 0);
-			scroll_index = (int) elapsed;
-			frac = bound(0, elapsed - scroll_index, 1);
-			scroll_index = scroll_index % last_demo_length;
-		}
-
-
-		if (last_demo_length <= 38 + 7) {
-			Q_strncpyz(demoname_scroll, demolist[demoindex]->name, sizeof(demoname_scroll));
-			M_PrintWhite (160 - strlen(demoname_scroll) * 4, 40 + 8 * DEMO_MAXLINES, demoname_scroll);
-		} else {
-			for (i = 0; i < sizeof(demoname_scroll) - 1; i++)
-				demoname_scroll[i] = last_demo_name[(scroll_index + i) % last_demo_length];
-			demoname_scroll[sizeof(demoname_scroll) - 1] = 0;
-			M_PrintWhite (12 -  (int) (8 * frac), 40 + 8 * DEMO_MAXLINES, demoname_scroll);
-		}
-	} else {
-		last_demo_time = 0;
-	}
-	
+			M_PrintWhite (16, 16, demoname_scroll);
+			M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f \x1d\x1e\x1e\x1e\x1e\x1e\x1f");
+		
+			for (i = 0; i < demolist_count - demo_base && i < DEMO_MAXLINES; i++) {
+				d = demolist[demo_base + i];
+				y = 32 + 8 * i;
+				Q_strncpyz (demoname, d->name, sizeof(demoname));
+		
+				switch (d->type) {
+				case dt_file:
+					M_Print (24, y, demoname);
+					if (d->size > 99999 * 1024)
+						Q_snprintfz(demosize, sizeof(demosize), "%5iM", d->size >> 20);
+					else
+						Q_snprintfz(demosize, sizeof(demosize), "%5iK", d->size >> 10);
+					Demo_FormatSize(demosize);
+					M_PrintWhite (24 + 8 * DEMOLIST_NAME_WIDTH, y, demosize);
+					break;
+				case dt_dir:
+					M_PrintWhite (24, y, demoname);
+					M_PrintWhite (24 + 8 * DEMOLIST_NAME_WIDTH, y, "folder");
+					break;
+				case dt_up:
+					M_PrintWhite (24, y, demoname);
+					M_PrintWhite (24 + 8 * DEMOLIST_NAME_WIDTH, y, "    up");
+					break;
+				case dt_msg:
+					M_Print (24, y, demoname);
+					break;
+				default:
+					Sys_Error("M_Demos_Draw: unknown d->type (%d)", d->type);
+				}
+			}
+		
+			M_DrawCharacter (8, 32 + demo_cursor * 8, 12 + ((int) (curtime * 4) & 1));
+		
+		
+			demoindex = demo_base + demo_cursor;
+			if (demolist[demoindex]->type == dt_file) {
+				time = (float) Sys_DoubleTime();
+				if (!last_demo_time || last_demo_index != demoindex) {
+					last_demo_index = demoindex;
+					last_demo_time = time;
+					frac = scroll_index = 0;
+					Q_snprintfz(last_demo_name, sizeof(last_demo_name), "%s  ***  ", demolist[demoindex]->name);
+					last_demo_length = strlen(last_demo_name);
+				} else {
+					
+					elapsed = 3.5 * max(time - last_demo_time - 0.75, 0);
+					scroll_index = (int) elapsed;
+					frac = bound(0, elapsed - scroll_index, 1);
+					scroll_index = scroll_index % last_demo_length;
+				}
+		
+		
+				if (last_demo_length <= 38 + 7) {
+					Q_strncpyz(demoname_scroll, demolist[demoindex]->name, sizeof(demoname_scroll));
+					M_PrintWhite (160 - strlen(demoname_scroll) * 4, 40 + 8 * DEMO_MAXLINES, demoname_scroll);
+				} else {
+					for (i = 0; i < sizeof(demoname_scroll) - 1; i++)
+						demoname_scroll[i] = last_demo_name[(scroll_index + i) % last_demo_length];
+					demoname_scroll[sizeof(demoname_scroll) - 1] = 0;
+					M_PrintWhite (12 -  (int) (8 * frac), 40 + 8 * DEMO_MAXLINES, demoname_scroll);
+				}
+			} else {
+				last_demo_time = 0;
+			}
+		}else if ( demo_section == 1 ){
+			M_PrintWhite (64,8, " browser ");
+			M_Print (136,8, "[newmenu]");
+			M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f \x1d\x1e\x1e\x1e\x1e\x1e\x1f");
+			M_Print (40,40,"New menu where u can");
+			M_Print (40,48,"load demoplaylists when its finished\\o/");
+		
+		
+	}		
 	}else if(demos_menu_pos == 1){
-		M_PrintWhite (64, 8, " demos ");
-		M_Print (120, 8, "[playlist]");
-		M_PrintWhite (200, 8, " options ");
-		M_Print (8, 16, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f");
+		M_PrintWhite (64, 0, " demos ");
+		M_Print (120, 0, "[playlist]");
+		M_PrintWhite (200, 0, " options ");
+		M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f");
 		
 		if (demo_playlist_section == 0){
+			M_Print (64,8, "[demos]");
+			M_PrintWhite (130,8, " options ");
 			if(demo_playlist_num == 0)
 				M_PrintWhite(96,96,"Playlist is empty");
 			else{
 				for (i = 0; i <= demo_playlist_num - demo_playlist_base && i < DEMO_MAXLINES; i++) {
-					y = 24 + i * 8 ;
+					y = 32 + i * 8 ;
 					if (demo_playlist_cursor == i)
 							M_PrintWhite (24, y, demo_playlist[demo_playlist_base + i].name);
 					else
 						M_Print (24, y, demo_playlist[demo_playlist_base + i].name);
 				}
-				M_DrawCharacter (8, 24 + demo_playlist_cursor * 8, 12 + ((int) (curtime * 4) & 1));
+				M_DrawCharacter (8, 32 + demo_playlist_cursor * 8, 12 + ((int) (curtime * 4) & 1));
 				}
 		}else if (demo_playlist_section == 1){
 		
 			if (demo_playlist_started && cls.demoplayback){
-				M_Print (24, 24, "Currently playing:");
-				M_PrintWhite (24, 32, demo_playlist[demo_playlist_current_played].name);
+				M_Print (24, 32, "Currently playing:");
+				M_PrintWhite (24, 40, demo_playlist[demo_playlist_current_played].name);
 			}else{
-				M_Print (24, 24, "Not playing anything");
+				M_Print (24, 32, "Not playing anything");
 			}
-			M_Print	(24, 48, "Next     demo");
-			M_Print	(24, 56, "Previous demo");
-			M_Print (24, 64, "Stop  playlist");
-			M_Print (24, 72, "Clear playlist");
+			M_Print	(24, 56, "Next     demo");
+			M_Print	(24, 64, "Previous demo");
+			M_Print (24, 72, "Stop  playlist");
+			M_Print (24, 80, "Clear playlist");
 		
 			if (demo_playlist_num > 0){
-			M_Print (24, 88, "Currently selected:");
-			M_Print (24, 96, demo_playlist[demo_playlist_cursor].name);
+			
+			M_PrintWhite (64,8, " demos ");
+			M_Print (130,8, "[options]");
+			M_Print (24, 96, "Currently selected:");
+			M_Print (24, 104, demo_playlist[demo_playlist_cursor].name);
 			}else{
-			M_Print (24, 88, "No demo in playlist");
+			M_Print (24, 96, "No demo in playlist");
 			}
 		
 			if (Q_strcasecmp(demo_playlist[demo_playlist_cursor].name + strlen(demo_playlist[demo_playlist_cursor].name) - 4, ".mvd")){
-				M_Print (24, 112, "Tracking only available with mvds");
+				M_Print (24, 120, "Tracking only available with mvds");
 			}else{
-				M_Print (24, 112, "Track");
-				M_DrawTextBox (160, 104, 16, 1);
-				M_PrintWhite (168, 112, demo_track);
+				M_Print (24, 120, "Track");
+				M_DrawTextBox (160, 112, 16, 1);
+				M_PrintWhite (168, 120, demo_track);
 				if (demo_playlist_opt_cursor == 4 && demo_playlist_num > 0)
-					M_DrawCharacter (168 + 8*strlen(demo_track), 112, 10+((int)(curtime*4)&1));
+					M_DrawCharacter (168 + 8*strlen(demo_track), 120, 10+((int)(curtime*4)&1));
 			}
 		
 		
@@ -2801,22 +2826,31 @@ void M_Demos_Draw (void) {
 				z=4;
 			else
 				z=0;
-			M_DrawCharacter (8, 48 + (demo_playlist_opt_cursor +z) * 8, 12 + ((int) (curtime * 4) & 1));
+			M_DrawCharacter (8, 56 + (demo_playlist_opt_cursor +z) * 8, 12 + ((int) (curtime * 4) & 1));
 		}
 			
 			
 			
 		
 	}else if(demos_menu_pos == 2){
-		M_PrintWhite (64, 8, " demos ");
-		M_PrintWhite (120, 8, " playlist ");
-		M_Print (200, 8, "[options]");
+		M_PrintWhite (64, 0, " demos ");
+		M_PrintWhite (120, 0, " playlist ");
+		M_Print (200, 0, "[options]");
 		
 	
-		M_Print (8, 16, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f");
-		M_Print (16, 24,  "Loop playlist");
-	M_DrawCheckbox (220, 24, demo_playlist_loop.value > 0);
-	M_DrawCharacter (8, 24 + demo_options_cursor * 8, 12 + ((int) (curtime * 4) & 1));
+		M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f");
+		M_Print (16, 32,  "Loop playlist");
+		M_DrawCheckbox (220, 32, demo_playlist_loop.value > 0);
+	
+		M_Print (16, 48, "Default track");
+		M_DrawTextBox (160, 40, 16, 1);
+		M_PrintWhite (168, 48, "test");
+	
+		if (demo_playlist_opt_cursor >= 1 )
+				z=4;
+		else
+				z=0;
+		M_DrawCharacter (8, 32 + (demo_options_cursor + z) * 8, 12 + ((int) (curtime * 4) & 1));
 	}
 
 }
@@ -3099,6 +3133,7 @@ void M_Demos_Key (int key) {
 		break;
 	case K_TAB:
 		if (demos_menu_pos == 0){
+		demo_section = !demo_section;
 		}else if (demos_menu_pos == 1) {
 		demo_playlist_section = !demo_playlist_section ;
 		}

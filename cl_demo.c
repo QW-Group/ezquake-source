@@ -44,8 +44,8 @@ cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 
 char Demos_Get_Trackname(void);
 void Demo_playlist_f(void);
-
 void Demo_playlist_f (void);
+int FindBestNick(char *s);
 
 //=============================================================================
 //								DEMO WRITING
@@ -1160,6 +1160,7 @@ double		demostarttime;
 void CL_StopPlayback (void) {
 
 	extern int demo_playlist_started;
+	extern int mvd_demo_track_run;
 	
 		
 	if (!cls.demoplayback)
@@ -1193,9 +1194,10 @@ void CL_StopPlayback (void) {
 		Com_Printf ("%i frames %5.1f seconds %5.1f fps\n", frames, time, frames / time);
 	}
 
-	if (demo_playlist_started)
+	if (demo_playlist_started){
 	Demo_playlist_f();
-
+	mvd_demo_track_run = 0;
+	}
 }
 
 void CL_Play_f (void) {
@@ -1262,14 +1264,8 @@ done:
 	cls.findtrack = true;
 	cls.lastto = cls.lasttype = 0;
 	CL_ClearPredict();
-	if(strlen(track_name)){
-		track_player=FindBestNick(track_name);
-		Cbuf_AddText (va("wait;wait;wait;track %s\n",cl.players[track_player].name));
-	}else if (strlen(demo_playlist_track_name.string)){
-		track_player=FindBestNick(demo_playlist_track_name.string);
-		Cbuf_AddText (va("wait;wait;wait;track %s\n",cl.players[track_player].name));
-	}
-	
+
+		
 	if (cls.mvdplayback && cls.demorecording)
 		CL_Stop_f();
 }
