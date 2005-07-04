@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="Windows-1252"?>
+<?xml version="1.0" encoding = "Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="7.00"
 	Name="ezquake"
 	ProjectGUID="{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}"
 	SccProjectName=""
@@ -23,7 +23,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="libexpat"
+				AdditionalIncludeDirectories="libexpat;pcre"
 				PreprocessorDefinitions="_DEBUG,id386,GLQUAKE,WITH_KEYMAP,WITH_JPEG,WITH_PNG,WITH_ZLIB"
 				StringPooling="FALSE"
 				BasicRuntimeChecks="3"
@@ -79,13 +79,7 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
 				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
@@ -105,7 +99,7 @@
 				FavorSizeOrSpeed="0"
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="libexpat"
+				AdditionalIncludeDirectories="libexpat;pcre"
 				PreprocessorDefinitions="NDEBUG,id386,WITH_KEYMAP"
 				StringPooling="TRUE"
 				RuntimeLibrary="4"
@@ -156,13 +150,7 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
 				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="GLRelease|Win32"
@@ -182,7 +170,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="libexpat"
+				AdditionalIncludeDirectories="libexpat;pcre"
 				PreprocessorDefinitions="NDEBUG,id386,WITH_KEYMAP,WITH_PNG,WITH_JPEG,GLQUAKE,WITH_ZLIB"
 				StringPooling="TRUE"
 				RuntimeLibrary="4"
@@ -234,13 +222,7 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
 				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
@@ -256,7 +238,7 @@
 				GlobalOptimizations="FALSE"
 				FavorSizeOrSpeed="0"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="libexpat"
+				AdditionalIncludeDirectories="libexpat;pcre"
 				PreprocessorDefinitions="_DEBUG,id386,WITH_PNG,WITH_ZLIB"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="FALSE"
@@ -310,17 +292,9 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
 				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
-	<References>
-	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
@@ -1205,18 +1179,6 @@
 				Name="Addons"
 				Filter="">
 				<File
-					RelativePath=".\auth.c">
-				</File>
-				<File
-					RelativePath="cl_collision.c">
-				</File>
-				<File
-					RelativePath="collision.c">
-				</File>
-				<File
-					RelativePath="config_manager.c">
-				</File>
-				<File
 					RelativePath="Ctrl.c">
 				</File>
 				<File
@@ -1229,7 +1191,10 @@
 					RelativePath="Ctrl_Tab.c">
 				</File>
 				<File
-					RelativePath="document_rendering.c">
+					RelativePath="EX_FileList.c">
+				</File>
+				<File
+					RelativePath="EX_FunNames.c">
 				</File>
 				<File
 					RelativePath="EX_browser.c">
@@ -1244,13 +1209,22 @@
 					RelativePath="EX_browser_sources.c">
 				</File>
 				<File
-					RelativePath="EX_FileList.c">
-				</File>
-				<File
-					RelativePath="EX_FunNames.c">
-				</File>
-				<File
 					RelativePath="EX_misc.c">
+				</File>
+				<File
+					RelativePath=".\auth.c">
+				</File>
+				<File
+					RelativePath="cl_collision.c">
+				</File>
+				<File
+					RelativePath="collision.c">
+				</File>
+				<File
+					RelativePath="config_manager.c">
+				</File>
+				<File
+					RelativePath="document_rendering.c">
 				</File>
 				<File
 					RelativePath=".\fchecks.c">
@@ -1415,6 +1389,16 @@
 					RelativePath="xsd_variable.c">
 				</File>
 			</Filter>
+			<Filter
+				Name="pcre"
+				Filter="">
+				<File
+					RelativePath="pcre\pcre.c">
+				</File>
+				<File
+					RelativePath="pcre\study.c">
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1505,6 +1489,30 @@
 				Name="Addons_h"
 				Filter="h;hpp;hxx;hm;inl;fi;fd">
 				<File
+					RelativePath="Ctrl.h">
+				</File>
+				<File
+					RelativePath="Ctrl_EditBox.h">
+				</File>
+				<File
+					RelativePath="Ctrl_PageViewer.h">
+				</File>
+				<File
+					RelativePath="Ctrl_Tab.h">
+				</File>
+				<File
+					RelativePath="EX_FileList.h">
+				</File>
+				<File
+					RelativePath="EX_FunNames.h">
+				</File>
+				<File
+					RelativePath="EX_browser.h">
+				</File>
+				<File
+					RelativePath="EX_misc.h">
+				</File>
+				<File
 					RelativePath=".\auth.h">
 				</File>
 				<File
@@ -1520,34 +1528,10 @@
 					RelativePath="config_manager.h">
 				</File>
 				<File
-					RelativePath="Ctrl.h">
-				</File>
-				<File
-					RelativePath="Ctrl_EditBox.h">
-				</File>
-				<File
-					RelativePath="Ctrl_PageViewer.h">
-				</File>
-				<File
-					RelativePath="Ctrl_Tab.h">
-				</File>
-				<File
 					RelativePath="cvar_groups.h">
 				</File>
 				<File
 					RelativePath="document_rendering.h">
-				</File>
-				<File
-					RelativePath="EX_browser.h">
-				</File>
-				<File
-					RelativePath="EX_FileList.h">
-				</File>
-				<File
-					RelativePath="EX_FunNames.h">
-				</File>
-				<File
-					RelativePath="EX_misc.h">
 				</File>
 				<File
 					RelativePath=".\fchecks.h">
