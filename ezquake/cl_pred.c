@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "quakedef.h"
 #include "pmove.h"
-#include "teamplay.h"
 
 cvar_t	cl_nopred	= {"cl_nopred", "0"};
 // shaman RFE 1036160 {

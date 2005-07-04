@@ -605,27 +605,52 @@ void Cvar_Set_f (void) {
 
 // disconnect -->
 void Cvar_UnSet_f (void) {
-	cvar_t *var;
-	char *var_name;
+	cvar_t		*var;
+	char		*name;
+	int		i;
+	qboolean	re_search;
 	
-	if (Cmd_Argc() != 2) {
-		Com_Printf ("Usage: %s <cvar>\n", Cmd_Argv(0));
+
+	if (Cmd_Argc() < 2) {
+		Com_Printf ("unset <name> [<name2>..]: erase an existing variable\n");
 		return;
 	}
 
-	var_name = Cmd_Argv (1);
-	var = Cvar_FindVar (var_name);
+	for (i=1; i<Cmd_Argc(); i++) {
+		name = Cmd_Argv(i);
 
-	if (!var) {
-	Com_Printf("Can't unset \"%s\": no such cvar\n", var_name);
-		return;
-	}
+		if ((re_search = IsRegexp(name))) 
+			if(!ReSearchInit(name))
+				continue;
 
-	if (var->flags & CVAR_USER_CREATED) {
-		Cvar_Delete(var_name);
-	} else {
-		Com_Printf("Can't delete not user created cvars");
-		return;
+		if (re_search) {
+			for (var = cvar_vars ; var ; var=var->next) { // ffs
+				if (ReSearchMatch(var->name)) {
+					if (var->flags & CVAR_USER_CREATED) {
+						Cvar_Delete(var->name);
+					} else {
+						Com_Printf("Can't delete not user created cvars");
+					return;
+					}
+				}
+			}
+		} else {
+			var = Cvar_FindVar(name);
+
+			if (!var) {
+				Com_Printf("Can't unset \"%s\": no such cvar\n", name);
+				continue;
+			}
+
+			if (var->flags & CVAR_USER_CREATED) {
+				Cvar_Delete(name);
+			} else {
+				Com_Printf("Can't delete not user created cvars");
+				return;
+			}
+		}
+		if (re_search)
+			ReSearchDone();
 	}
 }
 // <-- disconnect
@@ -824,3 +849,64 @@ void Cvar_Init (void) {
 
 	Cvar_ResetCurrentGroup();
 }
+
+#ifndef SERVERONLY
+// QW262 -->
+// regexp match support for group operations in scripts
+int			wildcard_level = 0;
+pcre			*wildcard_re[4];
+pcre_extra		*wildcard_re_extra[4];
+
+qboolean IsRegexp(char *str)
+{
+	if (*str == '+' || *str == '-') // +/- aliases; valid regexp can not start with +/-
+		return false;
+
+	return (strcspn(str, "\\\"()[]{}.*+?^$|")) != strlen(str) ? true : false;
+}
+
+qboolean ReSearchInit (char *wildcard)
+{
+	const char	*error;
+	int		error_offset;
+
+	if (wildcard_level == 4) {
+		Com_Printf("Error: Regexp commands nested too deep\n");
+		return false;
+	}
+	wildcard_re[wildcard_level] = pcre_compile(wildcard, 0, &error, &error_offset, NULL);
+	if (error) {
+		Com_Printf ("Invalid regexp: %s\n", error);
+		return false;
+	}
+
+	error = NULL;
+	wildcard_re_extra[wildcard_level] = pcre_study(wildcard_re[wildcard_level], 0, &error);
+	if (error) {
+		Com_Printf ("Regexp study error: %s\n", &error);
+		return false;
+	}
+
+	wildcard_level++;
+	return true;
+}
+
+qboolean ReSearchMatch (char *str)
+{
+	int result;
+	int offsets[99];
+
+	result = pcre_exec(wildcard_re[wildcard_level-1], 
+		wildcard_re_extra[wildcard_level-1], str, strlen(str), 0, 0, offsets, 99);
+	return (result>0) ? true : false;
+}
+
+void ReSearchDone (void)
+{
+	wildcard_level--;
+	if (wildcard_re[wildcard_level]) (pcre_free)(wildcard_re[wildcard_level]);
+	if (wildcard_re_extra[wildcard_level]) (pcre_free)(wildcard_re_extra[wildcard_level]);
+}
+
+// <-- QW262
+#endif

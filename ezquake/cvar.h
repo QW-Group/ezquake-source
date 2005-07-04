@@ -117,5 +117,26 @@ void Cvar_ResetVar (cvar_t *var);
 void Cvar_SetCurrentGroup(char *name);
 void Cvar_ResetCurrentGroup(void);
 
+#ifndef SERVERONLY
+
+// regexp match support for group operations in scripts
+qboolean IsRegexp(char *str);
+qboolean ReSearchInit (char *wildcard);
+qboolean ReSearchMatch (char *str);
+void ReSearchDone (void);
+
+char CharToBrown(char ch);
+char CharToWhite(char ch);
+void CharsToBrown(char* start, char* end);
+void CharsToWhite(char* start, char* end);
+
+#else
+
+#define IsRegexp(name) (false)
+#define ReSearchInit(wildcard) (true)
+#define ReSearchMatch(str) (false)
+#define ReSearchDone() {}
+
+#endif
 
 #endif	//_CVAR_H_
