@@ -1168,7 +1168,8 @@ void Cmd_ExecuteString (char *text) {
 	static char buf[1024];
 	cbuf_t *inserttarget;
 	char *p, *n, *s;
-	
+
+
 #ifndef SERVERONLY
 	char text_exp[1024];
 	Cmd_ExpandString (text, text_exp);
@@ -1309,7 +1310,16 @@ checkaliases:
 #endif
 
 			Cbuf_InsertTextEx (inserttarget, "\n");
+			//Cbuf_InsertTextEx (inserttarget, p);
+
+			// if the alias value is a command or cvar and
+			// the alias is called with parameters, add them
+			if (Cmd_Argc() > 1 && !strchr(p, ' ') && !strchr(p, '\t') && (Cvar_FindVar(p) || (Cmd_FindCommand(p) && p[0] != '+' && p[0] != '-'))) {
+					Cbuf_InsertTextEx (inserttarget, Cmd_Args());
+					Cbuf_InsertTextEx (inserttarget, " ");
+				}
 			Cbuf_InsertTextEx (inserttarget, p);
+
 		}
 		return;
 	}
