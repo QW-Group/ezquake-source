@@ -59,26 +59,40 @@ void Cvar_ResetVar (cvar_t *var) {
 }
 
 void Cvar_Reset_f (void) {
-	int c;
-	cvar_t *var;
-	char *s;
+	cvar_t		*var;
+	char		*name;
+	int		i;
+	qboolean	re_search;
 
-	if ((c = Cmd_Argc()) != 2) {
-		Com_Printf("Usage: %s <variable>\n", Cmd_Argv(0));
+
+	if (Cmd_Argc() < 2) {
+		Com_Printf("cvar_reset <cvar> [<cvar2>..]\n: reset variable to it default value");
 		return;
 	}
 
-	s = Cmd_Argv(1);
+	for (i=1; i<Cmd_Argc(); i++) {
+		name = Cmd_Argv(i);
 
-	if (var = Cvar_FindVar(s))
-		Cvar_ResetVar(var);
-	else
-		Com_Printf("%s : No variable with name %s\n", Cmd_Argv(0), s);
+		if ((re_search = IsRegexp(name))) 
+			if(!ReSearchInit(name))
+				continue;
+
+		if (re_search) {
+			for (var = cvar_vars ; var ; var=var->next) {
+				if (ReSearchMatch(var->name)) {
+					Cvar_ResetVar(var);
+				}
+			}
+		} else {
+			if (var = Cvar_FindVar(name))
+				Cvar_ResetVar(var);
+			else
+				Com_Printf("%s : No variable with name %s\n", Cmd_Argv(0), name);
+		}
+		if (re_search)
+			ReSearchDone();
+	}
 }
-
-
-
-
 
 void Cvar_SetDefault(cvar_t *var, float value) {
 	char	val[128];
@@ -454,19 +468,40 @@ void Cvar_WriteVariables (FILE *f) {
 }
 
 void Cvar_Toggle_f (void) {
-	cvar_t *var;
+	cvar_t		*var;
+	char		*name;
+	int		i;
+	qboolean	re_search;
 
-	if (Cmd_Argc() != 2) {
-		Com_Printf ("toggle <cvar> : toggle a cvar on/off\n");
+
+	if (Cmd_Argc() < 2) {
+		Com_Printf("toggle <cvar> [<cvar>..]: toggle a cvar on/off\n");
 		return;
 	}
 
-	var = Cvar_FindVar (Cmd_Argv(1));
-	if (!var) {
-		Com_Printf ("Unknown variable \"%s\"\n", Cmd_Argv(1));
-		return;
+	for (i=1; i<Cmd_Argc(); i++) {
+		name = Cmd_Argv(i);
+
+		if ((re_search = IsRegexp(name))) 
+			if(!ReSearchInit(name))
+				continue;
+
+		if (re_search) {
+			for (var = cvar_vars ; var ; var=var->next) {
+				if (ReSearchMatch(var->name)) {
+					Cvar_Set (var, var->value ? "0" : "1");
+				}
+			}
+		} else {
+			if (!(Cvar_FindVar (Cmd_Argv(i)))) {
+				Com_Printf ("Unknown variable \"%s\"\n", Cmd_Argv(1));
+				continue;
+			}
+			Cvar_Set (var, var->value ? "0" : "1");
+		}
+		if (re_search)
+			ReSearchDone();
 	}
-	Cvar_Set (var, var->value ? "0" : "1");
 }
 
 int Cvar_CvarCompare (const void *p1, const void *p2) {
@@ -475,10 +510,10 @@ int Cvar_CvarCompare (const void *p1, const void *p2) {
 
 void Cvar_CvarList_f (void) {
 	cvar_t *var;
-	int i;
+	int i, c, m = 0;
 	static int count;
 	static qboolean sorted = false;
-	static cvar_t *sorted_cvars[512];	
+	static cvar_t *sorted_cvars[2048]; // disconnect@28.06.2005: it was 512 before
 
 #define MAX_SORTED_CVARS (sizeof(sorted_cvars) / sizeof(sorted_cvars[0]))
 
@@ -492,16 +527,27 @@ void Cvar_CvarList_f (void) {
 	if (count == MAX_SORTED_CVARS)
 		assert(!"count == MAX_SORTED_CVARS");
 
+	c = Cmd_Argc();
+	if (c>1)
+		if (!ReSearchInit(Cmd_Argv(1)))
+			return;
+
+	Com_Printf ("List of cvars:\n");
 	for (i = 0; i < count; i++) {
 		var = sorted_cvars[i];
-		Com_Printf ("%c%c%c %s\n",
-			var->flags & (CVAR_ARCHIVE|CVAR_USER_ARCHIVE) ? '*' : ' ',
-			var->flags & CVAR_USERINFO ? 'u' : ' ',
-			var->flags & CVAR_SERVERINFO ? 's' : ' ',
-			var->name);
+		if (c==1 || ReSearchMatch(var->name)) {
+			Com_Printf ("%c%c%c %s\n",
+				var->flags & (CVAR_ARCHIVE|CVAR_USER_ARCHIVE) ? '*' : ' ',
+				var->flags & CVAR_USERINFO ? 'u' : ' ',
+				var->flags & CVAR_SERVERINFO ? 's' : ' ',
+				var->name);
+			m++;
+		}
 	}
 
-	Com_Printf ("-------------\n%d variables\n", count);
+	if (c>1)
+		ReSearchDone();
+	Com_Printf ("------------\n%i/%i variables\n", m, count);
 }
 
 cvar_t *Cvar_Create (char *name, char *string, int cvarflags) {
@@ -612,7 +658,7 @@ void Cvar_UnSet_f (void) {
 	
 
 	if (Cmd_Argc() < 2) {
-		Com_Printf ("unset <name> [<name2>..]: erase an existing variable\n");
+		Com_Printf ("unset <cvar> [<cvar2>..]: erase user-created variable\n");
 		return;
 	}
 
@@ -624,29 +670,25 @@ void Cvar_UnSet_f (void) {
 				continue;
 
 		if (re_search) {
-			for (var = cvar_vars ; var ; var=var->next) { // ffs
+			for (var = cvar_vars ; var ; var=var->next) {
 				if (ReSearchMatch(var->name)) {
 					if (var->flags & CVAR_USER_CREATED) {
 						Cvar_Delete(var->name);
 					} else {
-						Com_Printf("Can't delete not user created cvars");
-					return;
+						Com_Printf("Can't delete not user created cvars (\"%s\")\n", var->name);
 					}
 				}
 			}
 		} else {
-			var = Cvar_FindVar(name);
-
-			if (!var) {
-				Com_Printf("Can't unset \"%s\": no such cvar\n", name);
+			if (!(var = Cvar_FindVar(name))) {
+				Com_Printf("Can't delete \"%s\": no such cvar\n", name);
 				continue;
 			}
 
 			if (var->flags & CVAR_USER_CREATED) {
 				Cvar_Delete(name);
 			} else {
-				Com_Printf("Can't delete not user created cvars");
-				return;
+				Com_Printf("Can't delete not user created cvars (\"%s\")\n", name);
 			}
 		}
 		if (re_search)
@@ -672,8 +714,8 @@ void Cvar_Set_Calc_f(void)
 	float	num1;
 	float	num2;
 	float	result;
-	int		division_by_zero = 0;
-	int		pos, len;
+	int	division_by_zero = 0;
+	int	pos, len;
 	char	buf[1024];
 
 	var_name = Cmd_Argv (1);
@@ -818,7 +860,7 @@ void Cvar_Inc_f (void) {
 
 	c = Cmd_Argc();
 	if (c != 2 && c != 3) {
-		Com_Printf ("inc <cvar> [value]\n");
+		Com_Printf ("Usage: inc <cvar> [value]\n");
 		return;
 	}
 
