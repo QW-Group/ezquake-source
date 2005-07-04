@@ -421,35 +421,37 @@ void Cmd_Viewalias_f (void) {
 	int		i,m;
 
 	if (Cmd_Argc() < 2) {
-		Com_Printf ("viewalias <aliasname> : view body of alias\n");
+		Com_Printf ("viewalias <cvar> [<cvar2>..] : view body of alias\n");
 		return;
 	}
 
-	name = Cmd_Argv(1);
-
-
-	if ( IsRegexp(name) ) {
-		if (!ReSearchInit(name))
-			return;
-		Com_Printf ("Current alias commands:\n");
-
-		for (alias = cmd_alias, i=m=0; alias ; alias=alias->next, i++)
-			if (ReSearchMatch(alias->name)) {
-				Com_Printf ("%s : %s\n", alias->name, alias->value);
-				m++;
-			}
-
-		Com_Printf ("------------\n%i/%i aliases\n", m, i);
-		ReSearchDone();
-		
-
-	} else 	{
-		alias = Cmd_FindAlias(Cmd_Argv(1));
-
-		if (alias)
-			Com_Printf ("%s : \"%s\"\n", Cmd_Argv(1), alias->value);
-		else
-			Com_Printf ("No such alias: %s\n", Cmd_Argv(1));
+	for (i=1; i<Cmd_Argc(); i++) {
+		name = Cmd_Argv(i);
+	
+	
+		if ( IsRegexp(name) ) {
+			if (!ReSearchInit(name))
+				return;
+			Com_Printf ("Current alias commands:\n");
+	
+			for (alias = cmd_alias, i=m=0; alias ; alias=alias->next, i++)
+				if (ReSearchMatch(alias->name)) {
+					Com_Printf ("%s : %s\n", alias->name, alias->value);
+					m++;
+				}
+	
+			Com_Printf ("------------\n%i/%i aliases\n", m, i);
+			ReSearchDone();
+			
+	
+		} else 	{
+			alias = Cmd_FindAlias(Cmd_Argv(i));
+	
+			if (alias)
+				Com_Printf ("%s : \"%s\"\n", Cmd_Argv(i), alias->value);
+			else
+				Com_Printf ("No such alias: %s\n", Cmd_Argv(i));
+		}
 	}
 }
 
@@ -480,22 +482,42 @@ int Cmd_AliasCompare (const void *p1, const void *p2) {
 }
 
 void Cmd_AliasList_f (void) {
-	cmd_alias_t	*a;
-	int i, count;
-	cmd_alias_t *sorted_aliases[512];
+	cmd_alias_t *a;
+	int i, c, m = 0;
+	static int count;
+	static qboolean sorted = false;
+	static cmd_alias_t *sorted_aliases[2048];
 
 #define MAX_SORTED_ALIASES (sizeof(sorted_aliases) / sizeof(sorted_aliases[0]))
-
-	for (a = cmd_alias, count = 0; a && count < MAX_SORTED_ALIASES; a = a->next, count++)
-		sorted_aliases[count] = a;
-	qsort(sorted_aliases, count, sizeof (cmd_alias_t *), Cmd_AliasCompare);
-
-	for (i = 0; i < count; i++) {
-		Com_Printf ("\x02%s :", sorted_aliases[i]->name);
-		Com_Printf (" %s\n\n", sorted_aliases[i]->value);
+	
+	if (!sorted) {
+		for (a = cmd_alias, count = 0; a && count < MAX_SORTED_ALIASES; a = a->next, count++)
+			sorted_aliases[count] = a;
+		qsort(sorted_aliases, count, sizeof (cmd_alias_t *), Cmd_AliasCompare);
+		sorted = true;
 	}
 
-	Com_Printf ("----------\n%d aliases\n", count);
+	if (count == MAX_SORTED_ALIASES)
+		assert(!"count == MAX_SORTED_ALIASES");
+
+	c = Cmd_Argc();
+	if (c>1)
+		if (!ReSearchInit(Cmd_Argv(1)))
+			return;
+
+	Com_Printf ("List of aliases:\n");
+	for (i = 0; i < count; i++) {
+		a = sorted_aliases[i];
+		if (c==1 || ReSearchMatch(a->name)) {
+			Com_Printf ("\x02%s :", sorted_aliases[i]->name);
+			Com_Printf (" %s\n\n", sorted_aliases[i]->value);
+			m++;
+		}
+	}
+
+	if (c>1)
+		ReSearchDone();
+	Com_Printf ("------------\n%i/%i aliases\n", m, count);
 }
 
 
@@ -647,7 +669,7 @@ void Cmd_UnAlias_f (void) {
 	qboolean	re_search;
 
 	if (Cmd_Argc() < 2) {
-		Com_Printf ("unalias <name> [<name2>..]: erase an existing alias\n");
+		Com_Printf ("unalias <cvar> [<cvar2>..]: erase an existing alias\n");
 		return;
 	}
 
@@ -991,7 +1013,7 @@ int Cmd_CommandCompare (const void *p1, const void *p2) {
 
 void Cmd_CmdList_f (void) {
 	cmd_function_t *cmd;
-	int	i;
+	int i, c, m = 0;
 	static int count;
 	static qboolean sorted = false;
 	static cmd_function_t *sorted_cmds[512];	
@@ -1001,7 +1023,6 @@ void Cmd_CmdList_f (void) {
 	if (!sorted) {
 		for (cmd = cmd_functions, count = 0; cmd && count < MAX_SORTED_CMDS; cmd = cmd->next, count++)
 			sorted_cmds[count] = cmd;
-
 		qsort(sorted_cmds, count, sizeof (cmd_function_t *), Cmd_CommandCompare);
 		sorted = true;
 	}
@@ -1009,10 +1030,23 @@ void Cmd_CmdList_f (void) {
 	if (count == MAX_SORTED_CMDS)
 		assert(!"count == MAX_SORTED_CMDS");
 
-	for (i = 0; i < count; i++)
-		Com_Printf ("%s\n", sorted_cmds[i]->name);
+	c = Cmd_Argc();
+	if (c>1)
+		if (!ReSearchInit(Cmd_Argv(1)))
+			return;
 
-	Com_Printf ("------------\n%d commands\n", count);
+	Com_Printf ("List of commands:\n");
+	for (i = 0; i < count; i++) {
+		cmd = sorted_cmds[i];
+		if (c==1 || ReSearchMatch(cmd->name)) {
+			Com_Printf ("%s\n", cmd->name);
+			m++;
+		}
+	}
+
+	if (c>1)
+		ReSearchDone();
+	Com_Printf ("------------\n%i/%i commands\n", m,count);
 }
 
 
@@ -1086,7 +1120,7 @@ int Cmd_MacroCompare (const void *p1, const void *p2) {
 }
 
 void Cmd_MacroList_f (void) {
-	int	i;
+	int i, c, m = 0;
 	static qboolean sorted = false;
 	static macro_command_t *sorted_macros[MAX_MACROS];
 
@@ -1098,14 +1132,26 @@ void Cmd_MacroList_f (void) {
 	if (!sorted) {
 		for (i = 0; i < macro_count; i++)
 			sorted_macros[i] = &macro_commands[i];
-		sorted = true;
 		qsort(sorted_macros, macro_count, sizeof (macro_command_t *), Cmd_MacroCompare);
+		sorted = true;
 	}
 
-	for (i = 0; i < macro_count; i++)
-		Com_Printf ("$%s\n", sorted_macros[i]->name);
+	c = Cmd_Argc();
+	if (c>1)
+		if (!ReSearchInit(Cmd_Argv(1)))
+			return;
 
-	Com_Printf ("---------\n%d macros\n", macro_count);
+	Com_Printf ("List of macros:\n");
+	for (i = 0; i < macro_count; i++) {
+		if (c==1 || ReSearchMatch(sorted_macros[i]->name)) {
+			Com_Printf ("$%s\n", sorted_macros[i]->name);
+			m++;
+		}
+	}
+
+	if (c>1)
+		ReSearchDone();
+	Com_Printf ("------------\n%i/%i macros\n", m, macro_count);
 }
 
 
