@@ -66,7 +66,7 @@ void Sys_Printf (char *fmt, ...) {
 	char text[2048];
 	unsigned char *p;
 
-#ifndef DEBUG
+#ifdef NDEBUG
 	if (!dedicated)
 		return;
 #endif
@@ -159,7 +159,6 @@ char * Sys_getcwd (char *buf, int bufsize)
 
 double Sys_DoubleTime (void) {
     /* rtc timer vars */
-    int retval;
     unsigned long curticks = 0;
     struct pollfd pfd;
     static unsigned long totalticks;

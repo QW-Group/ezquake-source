@@ -218,7 +218,7 @@ void Sys_Printf (char *fmt, ...) {
 	char text[1024];
 	DWORD dummy;
 
-#ifndef DEBUG
+#ifdef NDEBUG
 	if (!dedicated)
 		return;
 #endif
