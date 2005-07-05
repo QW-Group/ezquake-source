@@ -766,11 +766,19 @@ void RemoveColors(char *name) {
 }
 
 
-int FindBestNick (char *s) {
+// i added a second parameter to the function, 0 will use both players and spectators, 1 ignores spectators, 2 ignores players
+int FindBestNick (char *s,int use) {
 	int i, j, bestplayer = -1, best = -1;
 	char name[MAX_SCOREBOARDNAME], *match;
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
+		if (use == 1)
+			if (cl.players[i].spectator)
+				continue;
+		if (use == 2)
+			if (!cl.players[i].spectator)
+				continue;
+
 		if (cl.players[i].name[0]) {
 			Q_strncpyz(name, cl.players[i].name, sizeof(name));
 			RemoveColors(name);
@@ -801,7 +809,7 @@ void CompleteName(void) {
 
     Q_strncpyz(s, p, q - p + 1);
 
-	best = FindBestNick (s);
+	best = FindBestNick (s,0);
     if (best >= 0) {
         Q_strncpyz(t, cl.players[best].name, sizeof(t));
 		

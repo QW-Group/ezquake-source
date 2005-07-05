@@ -123,7 +123,7 @@ void M_Main_Key (int key);
 	void M_Quit_Key (int key);
 
 
-int FindBestNick (char *s);
+int FindBestNick (char *s,int use);
 
 qboolean	m_entersound;		// play after drawing a frame, so caching
 								// won't disrupt the sound

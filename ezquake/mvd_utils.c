@@ -14,7 +14,7 @@ extern qboolean TP_LoadLocFile (char *path, qboolean quiet);
 extern char *TP_LocationName(vec3_t location);
 extern char *Weapon_NumToString(int num);
 
-int FindBestNick(char *s);
+int FindBestNick(char *s, int use);
 int MVD_AutoTrackBW_f(int i);
 int axe_val, sg_val, ssg_val, ng_val, sng_val, gl_val, rl_val, lg_val, ga_val, ya_val, ra_val, ring_val, quad_val, pent_val ;
 
@@ -47,11 +47,11 @@ void MVD_Demo_Track (void){
 	int track_player ;
 
 	if(strlen(track_name)){
-		track_player=FindBestNick(track_name);
+		track_player=FindBestNick(track_name,1);
 		if (track_player != -1 )
 			Cbuf_AddText (va("track %s\n",cl.players[track_player].name));
 	}else if (strlen(demo_playlist_track_name.string)){
-		track_player=FindBestNick(demo_playlist_track_name.string);
+		track_player=FindBestNick(demo_playlist_track_name.string,1);
 		if (track_player != -1 )
 			Cbuf_AddText (va("track %s\n",cl.players[track_player].name));
 	}
