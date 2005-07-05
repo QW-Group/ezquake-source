@@ -445,9 +445,7 @@ void Cmd_Viewalias_f (void) {
 			
 	
 		} else 	{
-			alias = Cmd_FindAlias(Cmd_Argv(i));
-	
-			if (alias)
+			if ((alias = Cmd_FindAlias(name)))
 				Com_Printf ("%s : \"%s\"\n", Cmd_Argv(i), alias->value);
 			else
 				Com_Printf ("No such alias: %s\n", Cmd_Argv(i));
