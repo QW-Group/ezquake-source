@@ -66,8 +66,10 @@ void Sys_Printf (char *fmt, ...) {
 	char text[2048];
 	unsigned char *p;
 
+#ifndef DEBUG
 	if (!dedicated)
 		return;
+#endif
 
 	va_start (argptr,fmt);
 	vsnprintf (text, sizeof(text), fmt, argptr);
