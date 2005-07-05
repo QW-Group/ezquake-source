@@ -25,6 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void FChecks_Init(void);
 void FChecks_CheckRequest(char *);
 
-extern cvar_t allow_scripts;
+extern cvar_t allow_scripts;
 
 #endif

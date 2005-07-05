@@ -1,0 +1,162 @@
+<html>
+<head>
+<META HTTP-EQUIV="Content-Type" content="text/html; charset=Windows-1252">
+</head>
+<body>
+<pre>
+<table width=100% bgcolor=#CFCFE5><tr> <td> <font face=arial size=+3>
+Build Log
+</font></table><table width=* cellspacing=0 cellpadding=0><tr><td width=0 bgcolor=#EDEDF5>&nbsp;</td><td width=0 bgcolor=#FFFFFF>&nbsp;</td><td width=*><pre>
+<h3>------- Build started: Project: ezquake, Configuration: GLRelease|Win32 -------
+</h3>
+</pre></table><table width=100% bgcolor=#DFDFE5><tr><td><font face=arial size=+2>
+Command Lines
+</font></table><table width=* cellspacing=0 cellpadding=0><tr><td width=0 bgcolor=#EDEDF5>&nbsp;</td><td width=0 bgcolor=#FFFFFF>&nbsp;</td><td width=*><pre>Creating temporary file "c:\Cvs\ezquake\Release-gl\RSP0000BA.rsp" with contents
+[
+/O2 /Ot /GL /G6 /I "libexpat" /D "NDEBUG" /D "id386" /D "WITH_KEYMAP" /D "WITH_PNG" /D "WITH_JPEG" /D "GLQUAKE" /D "WITH_ZLIB" /FD /EHsc /ML /Fp".\Release-gl/ezquake.pch" /Fo".\Release-gl/" /Fd".\Release-gl/" /W3 /c /TC
+.\menu.c
+]
+Creating command line "cl.exe @"c:\Cvs\ezquake\Release-gl\RSP0000BA.rsp" /nologo"
+Creating temporary file "c:\Cvs\ezquake\Release-gl\RSP0000BB.rsp" with contents
+[
+/OUT:".\Release-gl/ezquake-gl.exe" /INCREMENTAL:NO /NOLOGO /NODEFAULTLIB:"libcmt" /PDB:".\Release-gl/ezquake-gl.pdb" /SUBSYSTEM:WINDOWS /LTCG /RELEASE /MACHINE:I386 libexpat.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib
+".\Release-gl\winquake.res"
+".\Release-gl\gl_draw.obj"
+".\Release-gl\gl_md3.obj"
+".\Release-gl\gl_mesh.obj"
+".\Release-gl\gl_model.obj"
+".\Release-gl\gl_ngraph.obj"
+".\Release-gl\gl_refrag.obj"
+".\Release-gl\gl_rlight.obj"
+".\Release-gl\gl_rmain.obj"
+".\Release-gl\gl_rmisc.obj"
+".\Release-gl\gl_rpart.obj"
+".\Release-gl\gl_rsurf.obj"
+".\Release-gl\gl_texture.obj"
+".\Release-gl\gl_warp.obj"
+".\Release-gl\localtime_win.obj"
+".\Release-gl\sys_win.obj"
+".\Release-gl\cd_win.obj"
+".\Release-gl\snd_dma.obj"
+".\Release-gl\snd_mem.obj"
+".\Release-gl\snd_mix.obj"
+".\Release-gl\snd_win.obj"
+".\Release-gl\cl_input.obj"
+".\Release-gl\in_win.obj"
+".\Release-gl\keys.obj"
+".\Release-gl\sv_ccmds.obj"
+".\Release-gl\sv_ents.obj"
+".\Release-gl\sv_init.obj"
+".\Release-gl\sv_main.obj"
+".\Release-gl\sv_move.obj"
+".\Release-gl\sv_nchan.obj"
+".\Release-gl\sv_phys.obj"
+".\Release-gl\sv_save.obj"
+".\Release-gl\sv_send.obj"
+".\Release-gl\sv_user.obj"
+".\Release-gl\sv_world.obj"
+".\Release-gl\net_chan.obj"
+".\Release-gl\net_wins.obj"
+".\Release-gl\pr_cmds.obj"
+".\Release-gl\pr_edict.obj"
+".\Release-gl\pr_exec.obj"
+".\Release-gl\cmd.obj"
+".\Release-gl\com_msg.obj"
+".\Release-gl\common.obj"
+".\Release-gl\console.obj"
+".\Release-gl\crc.obj"
+".\Release-gl\cvar.obj"
+".\Release-gl\host.obj"
+".\Release-gl\image.obj"
+".\Release-gl\mathlib.obj"
+".\Release-gl\mdfour.obj"
+".\Release-gl\menu.obj"
+".\Release-gl\pmove.obj"
+".\Release-gl\pmovetst.obj"
+".\Release-gl\sbar.obj"
+".\Release-gl\sha1.obj"
+".\Release-gl\skin.obj"
+".\Release-gl\teamplay.obj"
+".\Release-gl\version.obj"
+".\Release-gl\wad.obj"
+".\Release-gl\zone.obj"
+".\Release-gl\common_draw.obj"
+".\Release-gl\r_part.obj"
+".\Release-gl\vid_common_gl.obj"
+".\Release-gl\vid_wgl.obj"
+".\Release-gl\cl_cam.obj"
+".\Release-gl\cl_cmd.obj"
+".\Release-gl\cl_demo.obj"
+".\Release-gl\cl_ents.obj"
+".\Release-gl\cl_main.obj"
+".\Release-gl\cl_parse.obj"
+".\Release-gl\cl_pred.obj"
+".\Release-gl\cl_screen.obj"
+".\Release-gl\cl_slist.obj"
+".\Release-gl\cl_tent.obj"
+".\Release-gl\cl_view.obj"
+".\Release-gl\auth.obj"
+".\Release-gl\cl_collision.obj"
+".\Release-gl\collision.obj"
+".\Release-gl\config_manager.obj"
+".\Release-gl\Ctrl.obj"
+".\Release-gl\Ctrl_EditBox.obj"
+".\Release-gl\Ctrl_PageViewer.obj"
+".\Release-gl\Ctrl_Tab.obj"
+".\Release-gl\document_rendering.obj"
+".\Release-gl\EX_browser.obj"
+".\Release-gl\EX_browser_net.obj"
+".\Release-gl\EX_browser_ping.obj"
+".\Release-gl\EX_browser_sources.obj"
+".\Release-gl\EX_FileList.obj"
+".\Release-gl\EX_FunNames.obj"
+".\Release-gl\EX_misc.obj"
+".\Release-gl\fchecks.obj"
+".\Release-gl\fmod.obj"
+".\Release-gl\fragstats.obj"
+".\Release-gl\help.obj"
+".\Release-gl\help_browser.obj"
+".\Release-gl\help_files.obj"
+".\Release-gl\hud.obj"
+".\Release-gl\hud_common.obj"
+".\Release-gl\ignore.obj"
+".\Release-gl\keymap.obj"
+".\Release-gl\logging.obj"
+".\Release-gl\match_tools.obj"
+".\Release-gl\modules.obj"
+".\Release-gl\movie.obj"
+".\Release-gl\movie_avi.obj"
+".\Release-gl\mp3_player.obj"
+".\Release-gl\mvd_utils.obj"
+".\Release-gl\rulesets.obj"
+".\Release-gl\utils.obj"
+".\Release-gl\vx_camera.obj"
+".\Release-gl\vx_coronas.obj"
+".\Release-gl\vx_motiontrail.obj"
+".\Release-gl\vx_stuff.obj"
+".\Release-gl\vx_tracker.obj"
+".\Release-gl\vx_vertexlights.obj"
+".\Release-gl\xml_test.obj"
+".\Release-gl\xsd.obj"
+".\Release-gl\xsd_command.obj"
+".\Release-gl\xsd_document.obj"
+".\Release-gl\xsd_variable.obj"
+".\Release-gl\cl_math.obj"
+".\Release-gl\math.obj"
+".\Release-gl\snd_mixa.obj"
+".\Release-gl\sys_x86.obj"
+]
+Creating command line "link.exe @"c:\Cvs\ezquake\Release-gl\RSP0000BB.rsp""
+</pre></table><table width=100% bgcolor=#DFDFE5><tr><td><font face=arial size=+2>
+Output Window
+</font></table><table width=* cellspacing=0 cellpadding=0><tr><td width=0 bgcolor=#EDEDF5>&nbsp;</td><td width=0 bgcolor=#FFFFFF>&nbsp;</td><td width=*><pre>Compiling...
+menu.c
+Linking...
+Generating code
+Finished generating code
+</pre></table><table width=100% bgcolor=#DFDFE5><tr><td><font face=arial size=+2>
+Results
+</font></table><table width=* cellspacing=0 cellpadding=0><tr><td width=0 bgcolor=#EDEDF5>&nbsp;</td><td width=0 bgcolor=#FFFFFF>&nbsp;</td><td width=*><pre>
+Build log was saved at "file://c:\Cvs\ezquake\Release-gl\BuildLog.htm"
+ezquake - 0 error(s), 0 warning(s)</pre></table><table   width=100% height=20 bgcolor=#CFCFE5><tr><td><font face=arial size=+2>
+</font></table></body></html>

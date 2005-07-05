@@ -23,7 +23,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: d_scana.s,v 1.1.1.2 2004-09-07 21:09:19 hexum Exp $
+	$Id: d_scana.s,v 1.1.1.3 2005-07-05 11:14:48 jogihoogi Exp $
 */
 // d_scana.s
 // x86 assembly-language turbulent texture mapping code
