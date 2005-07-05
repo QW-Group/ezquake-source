@@ -173,7 +173,7 @@ double Sys_DoubleTime (void) {
 	pfd.events = POLLIN | POLLERR;
 again:
 	if (poll(&pfd, 1, 100000) < 0) {
-	    if (errno = EINTR) {
+	    if ((errno = EINTR)) {
 		/* happens with gdb or signal exiting */
 		goto again;
 	    }

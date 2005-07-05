@@ -1616,7 +1616,7 @@ void CL_ParsePrint (void) {
 		*/
 
 		f = s;
-	    while (e = *f++) {
+	    while ((e = *f++)) {
 			if (e == '\x7f') {
 				cut_message = true;
 				break;

@@ -84,7 +84,7 @@ void Cvar_Reset_f (void) {
 				}
 			}
 		} else {
-			if (var = Cvar_FindVar(name))
+			if ((var = Cvar_FindVar(name)))
 				Cvar_ResetVar(var);
 			else
 				Com_Printf("%s : No variable with name %s\n", Cmd_Argv(0), name);
@@ -351,7 +351,7 @@ void Cvar_ResetCurrentGroup(void) {
 }
 
 static void Cvar_AddCvarToGroup(cvar_t *var) {
-	if (var->group = current) {
+	if ((var->group = current)) {
 		var->next_in_group = current->head;
 		current->head = var;
 		current->count++;
@@ -493,7 +493,9 @@ void Cvar_Toggle_f (void) {
 				}
 			}
 		} else {
-			if (!(Cvar_FindVar (Cmd_Argv(i)))) {
+			var = Cvar_FindVar (name);
+
+			if (!(var)) {
 				Com_Printf ("Unknown variable \"%s\"\n", Cmd_Argv(1));
 				continue;
 			}

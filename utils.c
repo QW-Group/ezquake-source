@@ -100,7 +100,7 @@ int Util_Extend_Filename(char *filename, char **ext) {
 			break;
 		for (s = ext; *s; s++) { 
 			Q_snprintfz (extendedname + offset, sizeof(extendedname) - offset, "_%03i.%s", i, *s);
-			if (f = fopen(extendedname, "rb")) {
+			if ((f = fopen(extendedname, "rb"))) {
 				fclose(f);
 				break;
 			}
