@@ -2,7 +2,6 @@
 #include "common.h"
 #include "cl_screen.h"
 #include "utils.h"
-#include "teamplay.h"
 
 
 extern cvar_t tp_name_quad, tp_name_pent, tp_name_ring, tp_name_separator;

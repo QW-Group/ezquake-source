@@ -1025,7 +1025,7 @@ void Tracking_Format(char *src, char *dest, int n) {
 	int i = 0, j = 0;
 
 	if (strstr(src,"%") == 0){
-		Q_strncpyz(dest,src,sizeof(src));
+		Q_strncpyz(dest,src,n);
 		return;
 	}
 
