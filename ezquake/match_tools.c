@@ -650,6 +650,11 @@ static void MT_StartMatch(void) {
 	matchstate.starttime = cls.realtime;
 	matchstate.endtime = 0;
 
+	// disconnect: match_forcestart resets gameclock
+	cl.standby=false;
+	cl.countdown = false;
+	cl.gametime = 0;
+
 	if (cls.state < ca_active) {
 		matchstate.matchtype = mt_empty;
 		Q_strncpyz(matchstate.matchname, "No match in progress", sizeof(matchstate.matchname));
