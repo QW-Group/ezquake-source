@@ -2302,7 +2302,6 @@ void Demo_playlist_start (int i){
 	demo_playlist_started_test = 0 ;
 	demo_playlist_started=1;
 	Q_strncpyz(track_name,demo_playlist[demo_playlist_current_played].trackname,sizeof(demo_playlist[demo_playlist_current_played].trackname));
-	printf("%s\n",track_name);
 	Cbuf_AddText (va("playdemo \"..%s\"\n", demo_playlist[demo_playlist_current_played].path));
 	
 }
