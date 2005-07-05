@@ -82,8 +82,8 @@ int VID_SetMode (int modenum, unsigned char *palette);
 void VID_LockBuffer (void);
 void VID_UnlockBuffer (void);
 
-#ifdef _WIN32
-void VID_NotifyActivity(void);
+#ifdef _WIN32
+void VID_NotifyActivity(void);
 #endif
 
 void VID_SetCaption (char *text);
