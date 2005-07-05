@@ -118,7 +118,7 @@ extern	int	skytexturenum;		// index in cl.loadmodel, not gl texture object
 extern	int underwatertexture, detailtexture;
 
 // Tomaz - Fog Begin
-extern  cvar_t  gl_fogenable; extern  cvar_t  gl_fogstart;extern  cvar_t  gl_fogend; extern  cvar_t  gl_fogred; extern  cvar_t  gl_fogblue; extern  cvar_t  gl_foggreen; extern  cvar_t  gl_fogsky; 
+extern  cvar_t  gl_fogenable; extern  cvar_t  gl_fogstart;extern  cvar_t  gl_fogend; extern  cvar_t  gl_fogred; extern  cvar_t  gl_fogblue; extern  cvar_t  gl_foggreen; extern  cvar_t  gl_fogsky; 
 // Tomaz - Fog End
 
 extern	cvar_t	r_drawentities;

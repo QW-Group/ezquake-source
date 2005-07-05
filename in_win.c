@@ -882,7 +882,7 @@ void IN_Move (usercmd_t *cmd) {
 		IN_JoyMove (cmd);
 	}
 }
-void IN_Accumulate (void) {
+void IN_Accumulate (void) {
 	if (mouseactive) {
 		GetCursorPos (&current_pos);
 

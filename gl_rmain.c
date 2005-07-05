@@ -1482,7 +1482,7 @@ void R_RenderScene (void) {
 	GL_DisableMultitexture();
 
 	// START shaman BUG fog was out of control when fogstart>fogend {
-	if (gl_fogenable.value && gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value)	// } END shaman BUG fog was out of control when fogstart>fogend
+	if (gl_fogenable.value && gl_fogstart.value >= 0 && gl_fogstart.value < gl_fogend.value)	// } END shaman BUG fog was out of control when fogstart>fogend
 	{
 		glFogi(GL_FOG_MODE, GL_LINEAR);
 			colors[0] = gl_fogred.value;
