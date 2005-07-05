@@ -2,7 +2,7 @@
 #include "common.h"
 #include "cl_screen.h"
 #include "utils.h"
-
+#include "teamplay.h"
 
 
 extern cvar_t tp_name_quad, tp_name_pent, tp_name_ring, tp_name_separator;
@@ -489,7 +489,7 @@ void MVD_AutoTrack_f(void) {
 
 void MVD_Mainhook_f (void){
 	MVD_AutoTrack_f ();
-	if (cls.demotime > 220.0 && mvd_demo_track_run == 0) 
+	if (cls.mvdplayback && mvd_demo_track_run == 0) 
 	MVD_Demo_Track ();
 }
 

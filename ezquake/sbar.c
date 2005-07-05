@@ -1024,6 +1024,11 @@ void Tracking_Format(char *src, char *dest, int n) {
 */
 	int i = 0, j = 0;
 
+	if (strstr(src,"%") == 0){
+		Q_strncpyz(dest,src,sizeof(src));
+		return;
+	}
+
 	while (src[i] && j < n) {
 		if(src[i++] != '%')
 			dest[j++] = src[i-1];
@@ -1806,7 +1811,10 @@ void Sbar_Draw(void) {
 				else
 					Sbar_DrawNormal();
 
-				Tracking_Format(scr_tracking.string, st, sizeof(st));
+				if (strlen(scr_tracking.string) > 0)
+					Tracking_Format(scr_tracking.string, st, sizeof(st));
+				else 
+					st[0]='\0';
 				// oppymv 300804
 				// fix displaying "tracking .." for both players with inset on
 				if (cl_multiview.value != 2 || !cls.mvdplayback)
