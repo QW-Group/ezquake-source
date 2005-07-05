@@ -810,6 +810,16 @@ void LoadConfig_f(void)	{
 
 	Cbuf_AddText ("cl_warncmd 0\n");
 	Cbuf_AddText(va("exec configs/%s\n", filename));
+	
+	/* johnnycz: 
+	  This should be called with TP_ExecTrigger("f_cfgload"); but definition
+	  of f_cfgload alias is stored in config which is waiting to be executed
+	  in command queue so nothing would happen. We have to add f_cfgload as
+	  a standard command to the queue. Since warnings are off this is OK but
+	  regarding to other f_triggers non-standard.
+	*/
+	Cbuf_AddText ("f_cfgload\n");	
+	
 	Cbuf_AddText ("cl_warncmd 1\n");
 }
 
