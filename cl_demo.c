@@ -45,7 +45,7 @@ cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 char Demos_Get_Trackname(void);
 void Demo_playlist_f(void);
 void Demo_playlist_f (void);
-int FindBestNick(char *s);
+int FindBestNick(char *s,int use);
 
 //=============================================================================
 //								DEMO WRITING
