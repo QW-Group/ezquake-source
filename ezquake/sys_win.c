@@ -218,8 +218,10 @@ void Sys_Printf (char *fmt, ...) {
 	char text[1024];
 	DWORD dummy;
 
+#ifndef DEBUG
 	if (!dedicated)
 		return;
+#endif
 
 	va_start (argptr,fmt);
 	vsnprintf (text, sizeof(text), fmt, argptr);
