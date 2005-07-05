@@ -1,5 +1,5 @@
-/*
- * MouseWare Hook
- */
-
-#define WM_MWHOOK (WM_USER + 1)
+/*
+ * MouseWare Hook
+ */
+
+#define WM_MWHOOK (WM_USER + 1)
