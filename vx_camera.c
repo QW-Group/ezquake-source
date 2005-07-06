@@ -67,8 +67,8 @@ void CameraUpdate (qboolean dead)
 	{
 		if (!dead)
 		{
-			float	dist = -56;
-			float	height = 24;
+			float	dist = amf_camera_chase_dist.value;
+			float	height = amf_camera_chase_height.value;
 			int i;
 			vec3_t	forward, up, right, normal, impact;
 			

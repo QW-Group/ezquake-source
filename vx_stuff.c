@@ -48,6 +48,8 @@ cvar_t		amf_inferno_trail = {"gl_inferno_trail", "2", CVAR_ARCHIVE};
 cvar_t		amf_inferno_speed = {"gl_inferno_speed", "1000", CVAR_ARCHIVE};
 
 cvar_t		amf_camera_chase = {"cl_camera_tpp", "0", CVAR_ARCHIVE};
+cvar_t		amf_camera_chase_dist = {"cl_camera_tpp_distance", "-56", CVAR_ARCHIVE};
+cvar_t		amf_camera_chase_height = {"cl_camera_tpp_height", "24", CVAR_ARCHIVE};
 cvar_t		amf_camera_death = {"cl_camera_death", "0", CVAR_ARCHIVE}; // 1
 cvar_t		amf_motiontrails = {"gl_motiontrails", "0", CVAR_ARCHIVE};
 cvar_t		amf_motiontrails_wtf = {"gl_motiontrails_wtf", "0", CVAR_ARCHIVE};
@@ -395,6 +397,9 @@ void InitVXStuff(void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_SPECTATOR);
 
 	Cvar_Register (&amf_camera_chase);
+	Cvar_Register (&amf_camera_chase_dist);
+	Cvar_Register (&amf_camera_chase_height);
+
 	Cvar_Register (&amf_camera_death);
 
 	Cvar_ResetCurrentGroup();
