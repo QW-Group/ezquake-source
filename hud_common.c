@@ -1869,10 +1869,10 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 			else
 				num = abs(a_rows*a_cols - (i+1)); // Always include me in the shown frags.
 		}
-	
+		num = 0;  // FIXME! johnnycz; (see fixme below)
         for (i = 0; i < limit; i++)
         {
-            player_info_t *info = &cl.players[sorted_players[num]->playernum];
+            player_info_t *info = &cl.players[sorted_players[num]->playernum]; // FIXME! johnnycz; causes crashed on some demos
 
             if (hud_frags_vertical->value)
             {
