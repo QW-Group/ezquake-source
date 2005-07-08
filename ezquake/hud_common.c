@@ -381,12 +381,12 @@ void SCR_HUD_DrawClock(hud_t *hud)
 
     if (hud_clock_big->value)
     {
-        width = 24+24+16+24+24;
+        width = 24+24+16+24+24+16+24+24;
         height = 24;
     }
     else
     {
-        width = 5*8;
+        width = 8*8;
         height = 8;
     }
 
@@ -2374,7 +2374,7 @@ void CommonDraw_Init(void)
     hud_stats[STAT_ITEMS] = 0xffffffff - IT_ARMOR2 - IT_ARMOR1;
 
     // init clock
-    HUD_Register("clock", NULL, "Shows current local time (hh:mm).",
+	HUD_Register("clock", NULL, "Shows current local time (hh:mm:ss).",
         HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawClock,
         "0", "top", "right", "console", "0", "0", "0",
         "big",      "1",

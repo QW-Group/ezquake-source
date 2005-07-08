@@ -590,7 +590,7 @@ void SCR_DrawBigClock(int x, int y, int style, int blink)
     SYSTEMTIME tm;
 
     GetLocalTime(&tm);
-    sprintf(time, "%2d:%02d", tm.wHour, tm.wMinute);
+	sprintf(time, "%2d:%02d:%02d", tm.wHour, tm.wMinute, tm.wSecond);
     t = time;
 
     if (style > 1)  style = 1;
@@ -629,7 +629,7 @@ void SCR_DrawSmallClock(int x, int y, int style, int blink)
     SYSTEMTIME tm;
 
     GetLocalTime(&tm);
-    sprintf(time, "%2d:%02d", tm.wHour, tm.wMinute);
+	sprintf(time, "%2d:%02d:%02d", tm.wHour, tm.wMinute, tm.wSecond);
     t = time;
 
     if (style > 3)  style = 3;
