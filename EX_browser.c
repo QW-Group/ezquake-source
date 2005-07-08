@@ -83,6 +83,7 @@ cvar_t  sb_hidedead      = {"sb_hidedead",         "1"};
 cvar_t  sb_sourcevalidity  = {"sb_sourcevalidity", "30"};
 cvar_t  sb_showcounters    = {"sb_showcounters",    "1"};
 cvar_t  sb_mastercache     = {"sb_mastercache",     "1"};
+cvar_t  sb_starttab        = {"sb_starttab",     "2"};
 
 // servers table
 server_data *servers[MAX_SERVERS];
@@ -344,7 +345,7 @@ void SB_Confirmation_Key(int key)
 
 /* Menu drawing */
 
-enum {pos_servers, pos_sources, pos_players, pos_options} Browser_pos;
+enum {pos_servers, pos_sources, pos_players, pos_options, pos_none} Browser_pos;
     int Servers_pos;
     int Sources_pos;
     int Players_pos;
@@ -565,6 +566,14 @@ void AddServer_f(void)
 void Browser_Draw (int x, int y, int w, int h)
 {
     char buf[500];
+
+	if (Browser_pos == pos_none) switch((int) sb_starttab.value) {
+		case 1: Browser_pos = pos_servers; break;
+		case 2: Browser_pos = pos_sources; break;
+		case 3: Browser_pos = pos_players; break;
+		case 4: Browser_pos = pos_options; break;
+		default: Browser_pos = pos_servers; break;
+	}
 
     strcpy(buf, " servers sources players options ");
     if (Browser_pos == pos_servers)
@@ -1573,7 +1582,7 @@ void Browser_Init(void)
 {
     int i;
 
-    Browser_pos = pos_sources;
+    Browser_pos = pos_none;
     Servers_pos = 0;
     Sources_pos = 0;
     Servers_disp = 0;
@@ -1617,6 +1626,7 @@ void Browser_Init(void)
     Cvar_Register(&sb_sourcevalidity);
     Cvar_Register(&sb_showcounters);
     Cvar_Register(&sb_mastercache);
+    Cvar_Register(&sb_starttab);
 	Cvar_ResetCurrentGroup();
 
 //    Cmd_AddCommand("menu_serverbrowser", M_ServerBrowser_f);
