@@ -393,6 +393,8 @@ void Host_Shutdown (void) {
 }
 
 void Host_Quit (void) {
+	TP_ExecTrigger ("f_exit");
+	Cbuf_Execute();
 	Host_Shutdown ();
 	Sys_Quit ();
 }
