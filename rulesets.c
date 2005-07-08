@@ -94,21 +94,14 @@ qboolean Rulesets_AllowTriggers(void) {
 }
 
 char *Rulesets_Ruleset(void) {
-	extern cvar_t cl_independentPhysics;
-	extern cvar_t allow_scripts;
-	char * sRuleset, * sScripts, * sIPhysics;
-
-	if (ruleset == rs_smackdown) {
-		sRuleset = "smackdown ";
-		} else if (ruleset == rs_mtfl) {
-		sRuleset = "MTFL ";
-		} else {
-		sRuleset = "default ";
+	switch(ruleset) {
+		case rs_smackdown:
+			return "smackdown";
+		case rs_mtfl:
+			return "MTFL";
+		default:
+			return "default";
 	}
-
-	sScripts = (allow_scripts.value) ? "" : "\x90scripts blocked\x91";
-	sIPhysics = (cl_independentPhysics.value) ? "" : "\x90indep. physics off\x91";
-	return va("%s %s %s", sRuleset, sScripts, sIPhysics);
 }
 
 static void Rulesets_Smackdown(void) {

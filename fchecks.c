@@ -150,11 +150,20 @@ qboolean FChecks_CheckFServerRequest (char *s) {
 }
 
 qboolean FChecks_CheckFRulesetRequest (char *s) {
+	extern cvar_t cl_independentPhysics;
+	extern cvar_t allow_scripts;
+	char *sScripts, *sIPhysics, *sp1, *sp2;
+
 	if (cl.spectator || (f_ruleset_reply_time && cls.realtime - f_ruleset_reply_time < 20))
 		return false;
 
 	if (Util_F_Match(s, "f_ruleset"))	{
-		Cbuf_AddText(va("say ezQuake Ruleset: %s\n", Rulesets_Ruleset() ));
+		sScripts = (allow_scripts.value) ? "" : "\x90scripts blocked\x91";
+		sIPhysics = (cl_independentPhysics.value) ? "" : "\x90indep. physics off\x91";
+		sp1 = *sScripts || *sIPhysics ? " " : "";
+		sp2 = *sIPhysics && *sScripts ? " " : "";
+
+		Cbuf_AddText(va("say ezQuake Ruleset: %s%s%s%s%s\n", Rulesets_Ruleset(), sp1, sScripts, sp2, sIPhysics));
 		f_ruleset_reply_time = cls.realtime;
 		return true;
 	}
