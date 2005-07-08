@@ -186,6 +186,7 @@ f_trigger_t f_triggers[] = {
 	{"f_reloadstart", 0, false},
 	{"f_reloadend", 0, false},
 	{"f_cfgload", 0, false},
+	{"f_exit", 0, false},
 
 	{"f_weaponchange", 1, false},
 
