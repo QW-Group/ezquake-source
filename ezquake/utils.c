@@ -292,6 +292,50 @@ qboolean Util_F_Match(char *_msg, char *f_request) {
 	return true;
 }
 
+
+#define MAX_REPLACEMENTS 512
+
+typedef struct {
+	char index[1];
+	char replacement[512];
+}	replacement_s;
+replacement_s replacement_t[MAX_REPLACEMENTS];
+
+void Replace_In_String (char *src, char delim, int arg, ...){
+	va_list ap;
+	char msg[1024];
+	int check = 0 , z=0 , y=0 ,x=0,i=0,j=0;
+
+	va_start(ap,arg);
+	for (check = 1 ; check <=arg ; check++){
+		strcpy(replacement_t[z].index,va_arg(ap, char *));
+		replacement_t[z].index[1]='\0';
+		strcpy(replacement_t[z].replacement,va_arg(ap, char *));
+		replacement_t[z].replacement[strlen(replacement_t[z].replacement)+1]='\0';
+		z++;
+	}
+	va_end(ap);
+
+	Q_strncpyz(msg,src,strlen(src)+1);
+	
+	while (msg[i] != '\0' && i < strlen(msg)) {
+		if(msg[i++] != delim)
+			src[j++] = msg[i-1];
+		else{
+			for (y=0 ; y <=z ; y++){
+				if (msg[i] == replacement_t[y].index[0]){
+					strncpy(src + j ,replacement_t[y].replacement,strlen(replacement_t[y].replacement)+1);
+					j+=strlen(replacement_t[y].replacement);
+					continue;
+				}
+			}
+		i++;
+		}
+	}
+	src[j]='\0';
+}
+
+
 /********************************** TF Utils ****************************************/
 
 static char *Utils_TF_ColorToTeam_Failsafe(int color) {

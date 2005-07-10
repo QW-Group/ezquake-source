@@ -78,6 +78,7 @@ qboolean	sb_showteamscores;
 int			sb_lines;			// scan lines to draw
 
 void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
+void Replace_In_String (char *src, char delim, int arg, ...);
 
 static int	sbar_xofs;
 
@@ -1811,10 +1812,18 @@ void Sbar_Draw(void) {
 				else
 					Sbar_DrawNormal();
 
+
+				Q_strncpyz(st,scr_tracking.string,strlen(scr_tracking.string)+1);
+				
+				Replace_In_String(st,'%',2,"n",cl.players[spec_track].name,"t",cl.players[spec_track].team);
+		
+
+				/*
 				if (strlen(scr_tracking.string) > 0)
 					Tracking_Format(scr_tracking.string, st, sizeof(st));
 				else 
 					st[0]='\0';
+				*/
 				// oppymv 300804
 				// fix displaying "tracking .." for both players with inset on
 				if (cl_multiview.value != 2 || !cls.mvdplayback)
