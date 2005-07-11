@@ -13,6 +13,7 @@
 #include "utils.h"
 #include "mp3_player.h"
 #include "rulesets.h"
+#include "utils.h"
 #ifndef STAT_MINUS
 #define STAT_MINUS		10
 #endif
@@ -212,16 +213,10 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 	static cvar_t
 		*hud_tracking_format;
 	hud_tracking_format    = HUD_FindVar(hud, "format");
-	Tracking_Format(hud_tracking_format->string, st, sizeof(st));
-	/*
-	if (strlen(hud_tracking_format->string) == 0) {
-		Q_snprintfz(st, sizeof(st), "Tracking %-.13s", cl.players[spec_track].name);
-		if (!cls.demoplayback)
-			strcat (st, ", [JUMP] for next");
-	} else {
-		strcpy(st, hud_tracking_format->string);
-	}
-*/
+	
+	Q_strncpyz(st, hud_tracking_format->string, sizeof(st));
+	Replace_In_String(st, '%', 2, sizeof(st), "n", cl.players[spec_track].name, "t", cl.teamplay ? cl.players[spec_track].team : "");
+
 	width = 8*strlen(st);
     height = 8;
     if (cl.spectator && autocam == CAM_TRACK && HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))

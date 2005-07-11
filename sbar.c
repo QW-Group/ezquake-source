@@ -78,7 +78,6 @@ qboolean	sb_showteamscores;
 int			sb_lines;			// scan lines to draw
 
 void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
-void Replace_In_String (char *src, char delim, int arg, ...);
 
 static int	sbar_xofs;
 
@@ -1018,37 +1017,6 @@ static void Sbar_DrawCompact_Bare (void) {
 	sbar_xofs = old_sbar_xofs;
 }
 
-void Tracking_Format(char *src, char *dest, int n) {
-/* 
-  replaces "Tracking: %t %n" in both hud_tracking_format or scr_tracking
-  to e.g. "Tracking: ]SR[ ParadokS"
-*/
-	int i = 0, j = 0;
-
-	if (strstr(src,"%") == 0){
-		Q_strncpyz(dest,src,n);
-		return;
-	}
-
-	while (src[i] && j < n) {
-		if(src[i++] != '%')
-			dest[j++] = src[i-1];
-		else
-			switch(src[i++]) {
-				case 'n':
-					strncpy(dest + j, cl.players[spec_track].name, (size_t) (n - j));
-					j += strlen(cl.players[spec_track].name);
-					break;
-				case 't':
-					if(cl.teamplay) { // doesn't make sence to display team name when teamplay is off
-						strncpy(dest + j, cl.players[spec_track].team, (size_t) (n - j));
-						j += strlen(cl.players[spec_track].team);
-					}
-					break;
-			}					
-	}
-}
-
 /******************************** SCOREBOARD ********************************/
 
 static void Sbar_SoloScoreboard (void) {
@@ -1812,12 +1780,10 @@ void Sbar_Draw(void) {
 				else
 					Sbar_DrawNormal();
 
-
-				Q_strncpyz(st,scr_tracking.string,strlen(scr_tracking.string)+1);
+				Q_strncpyz(st,scr_tracking.string,sizeof(st));
 				
-				Replace_In_String(st,'%',2,"n",cl.players[spec_track].name,"t",cl.players[spec_track].team);
+				Replace_In_String(st,'%',2,sizeof(st),"n",cl.players[spec_track].name,"t",cl.teamplay ? cl.players[spec_track].team : "");
 		
-
 				/*
 				if (strlen(scr_tracking.string) > 0)
 					Tracking_Format(scr_tracking.string, st, sizeof(st));
