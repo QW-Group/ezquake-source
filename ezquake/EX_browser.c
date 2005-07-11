@@ -84,6 +84,7 @@ cvar_t  sb_sourcevalidity  = {"sb_sourcevalidity", "30"};
 cvar_t  sb_showcounters    = {"sb_showcounters",    "1"};
 cvar_t  sb_mastercache     = {"sb_mastercache",     "1"};
 cvar_t  sb_starttab        = {"sb_starttab",     "2"};
+cvar_t  sb_autoupdate      = {"sb_autoupdate",     "0"};
 
 // servers table
 server_data *servers[MAX_SERVERS];
@@ -568,7 +569,10 @@ void Browser_Draw (int x, int y, int w, int h)
     char buf[500];
 
 	if (Browser_pos == pos_none) switch((int) sb_starttab.value) {
-		case 1: Browser_pos = pos_servers; break;
+		case 1: 
+			Browser_pos = pos_servers; 
+			if(sb_autoupdate.value) GetServerPingsAndInfos();
+			break;
 		case 2: Browser_pos = pos_sources; break;
 		case 3: Browser_pos = pos_players; break;
 		case 4: Browser_pos = pos_options; break;
@@ -1627,6 +1631,7 @@ void Browser_Init(void)
     Cvar_Register(&sb_showcounters);
     Cvar_Register(&sb_mastercache);
     Cvar_Register(&sb_starttab);
+	Cvar_Register(&sb_autoupdate);
 	Cvar_ResetCurrentGroup();
 
 //    Cmd_AddCommand("menu_serverbrowser", M_ServerBrowser_f);
