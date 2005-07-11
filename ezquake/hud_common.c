@@ -215,7 +215,7 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 	hud_tracking_format    = HUD_FindVar(hud, "format");
 	
 	Q_strncpyz(st, hud_tracking_format->string, sizeof(st));
-	Replace_In_String(st, '%', 2, sizeof(st), "n", cl.players[spec_track].name, "t", cl.teamplay ? cl.players[spec_track].team : "");
+	Replace_In_String(st, sizeof(st), '%', 2, "n", cl.players[spec_track].name, "t", cl.teamplay ? cl.players[spec_track].team : "");
 
 	width = 8*strlen(st);
     height = 8;
