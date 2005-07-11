@@ -301,38 +301,36 @@ typedef struct {
 }	replacement_s;
 replacement_s replacement_t[MAX_REPLACEMENTS];
 
-void Replace_In_String (char *src, char delim, int arg, ...){
+void Replace_In_String (char *src, char delim, int arg, size_t size, ...){
 	va_list ap;
 	char msg[1024];
-	int check = 0 , z=0 , y=0 ,x=0,i=0,j=0;
-
-	va_start(ap,arg);
-	for (check = 1 ; check <=arg ; check++){
-		strcpy(replacement_t[z].index,va_arg(ap, char *));
-		replacement_t[z].index[1]='\0';
-		strcpy(replacement_t[z].replacement,va_arg(ap, char *));
-		replacement_t[z].replacement[strlen(replacement_t[z].replacement)+1]='\0';
-		z++;
+	int z, y, i=0, j=0;
+	
+	arg = min(arg, MAX_REPLACEMENTS);
+	va_start(ap, size);
+	for(z = 0; z < arg; z++) { 
+		replacement_t[z].index[0] = *va_arg(ap, char *);
+		Q_strncpyz(replacement_t[z].replacement, va_arg(ap, char *), sizeof(replacement_t[z].replacement));
 	}
 	va_end(ap);
 
-	Q_strncpyz(msg,src,strlen(src)+1);
+	Q_strncpyz(msg, src, sizeof(msg));
 	
-	while (msg[i] != '\0' && i < strlen(msg)) {
+	while (msg[i] != '\0' && j < size) {
 		if(msg[i++] != delim)
 			src[j++] = msg[i-1];
 		else{
-			for (y=0 ; y <=z ; y++){
+			for (y=0; y < z; y++){
 				if (msg[i] == replacement_t[y].index[0]){
-					strncpy(src + j ,replacement_t[y].replacement,strlen(replacement_t[y].replacement)+1);
+					Q_strncpyz(src + j , replacement_t[y].replacement, size - j);
 					j+=strlen(replacement_t[y].replacement);
-					continue;
+					break;	// there should be no doubled replacement patterns so we can skip the rest
 				}
 			}
 		i++;
 		}
 	}
-	src[j]='\0';
+	src[min(size-1,j)] = '\0';
 }
 
 
