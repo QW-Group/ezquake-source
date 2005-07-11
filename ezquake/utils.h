@@ -49,6 +49,6 @@ qboolean Util_F_Match(char *msg, char *f_req);
 char *Utils_TF_ColorToTeam(int);
 int Utils_TF_TeamToColor(char *);
 
-void Replace_In_String (char *src, char delim, int arg, size_t size, ...);
+void Replace_In_String (char *src,int n, char delim, int arg, ...);
 
 #endif

@@ -1782,7 +1782,7 @@ void Sbar_Draw(void) {
 
 				Q_strncpyz(st,scr_tracking.string,sizeof(st));
 				
-				Replace_In_String(st,'%',2,sizeof(st),"n",cl.players[spec_track].name,"t",cl.teamplay ? cl.players[spec_track].team : "");
+				Replace_In_String(st,sizeof(st),'%',2,"n",cl.players[spec_track].name,"t",cl.teamplay ? cl.players[spec_track].team : "");
 		
 				/*
 				if (strlen(scr_tracking.string) > 0)
