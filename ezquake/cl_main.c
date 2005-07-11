@@ -957,6 +957,7 @@ void CL_Init (void) {
 	Sys_mkdir(va("%s/qw", com_basedir));
 	Sys_mkdir(va("%s/ezquake", com_basedir));	
 
+	History_Init();
 	Key_Init ();
 	V_Init ();
 	MVD_Utils_Init ();
@@ -1367,6 +1368,7 @@ void CL_Shutdown (void) {
 	Log_Shutdown();
 	if (host_basepal)
 		VID_Shutdown();
+	History_Shutdown();
 } 
 
 int CL_IncrLoop(int cview, float max) {

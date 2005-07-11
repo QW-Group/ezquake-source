@@ -32,16 +32,20 @@ cvar_t cl_newCompletion = { "cl_newCompletion", "1" }; // addeded by jogi
 
 #ifdef WITH_KEYMAP
 // variable to enable/disable key informations (e.g. scancode) to the consoloe:
-cvar_t	cl_showkeycodes  = {"cl_showkeycodes", "0"};
+cvar_t	cl_showkeycodes = {"cl_showkeycodes", "0"};
 #endif // WITH_KEYMAP
 
+// Added by VVD {
+cvar_t	cl_savehistory = {"cl_savehistory", "1"};
+#define		HISTORY_FILE_NAME	".ezquake_history"
+#define		CMDLINES	(1<<8)
+// } Added by VVD
 #define		MAXCMDLINE	256
-char	key_lines[32][MAXCMDLINE];
+char	key_lines[CMDLINES][MAXCMDLINE];
 int		key_linepos;
-#ifdef WITH_KEYMAP
-#else
+#ifndef WITH_KEYMAP
 int		key_lastpress;
-#endif // WITH_KEYMAP else
+#endif // WITH_KEYMAP
 
 int		edit_line=0;
 int		history_line=0;
@@ -64,10 +68,9 @@ keydest_t	key_dest;
 char		*keybindings[256];
 qboolean	consolekeys[256];	// if true, can't be rebound while in console
 qboolean	menubound[256];		// if true, can't be rebound while in menu
-#ifdef WITH_KEYMAP
-#else
+#ifndef WITH_KEYMAP
 int			keyshift[256];		// key to map to if shift held down in console
-#endif // WITH_KEYMAP else
+#endif // WITH_KEYMAP
 int			key_repeats[256];	// if > 1, it is autorepeating
 qboolean	keydown[256];
 qboolean	keyactive[256];	
@@ -865,36 +868,48 @@ void Key_Console (int key) {
 
 	switch (key) {
 	    case K_ENTER:
-			CompleteCommandNew_Reset ();
+		CompleteCommandNew_Reset ();
 		
 			// backslash text are commands
-			if (key_lines[edit_line][1] == '/' && key_lines[edit_line][2] == '/')
-				goto no_lf;
+		if (key_lines[edit_line][1] != '/' || key_lines[edit_line][2] != '/')
+		{
+			qboolean no_lf = true;
+//				goto no_lf;
 
-			if ((keydown[K_CTRL] || keydown[K_SHIFT]) && cls.state >= ca_connected) {
+			if ((keydown[K_CTRL] || keydown[K_SHIFT]) && cls.state >= ca_connected)
+			{
 				if (keydown[K_CTRL])
 					Cbuf_AddText ("say_team ");
 				else
 					Cbuf_AddText ("say ");
 				Cbuf_AddText (key_lines[edit_line] + 1);
-			} else if (key_lines[edit_line][1] == '\\' || key_lines[edit_line][1] == '/') {
-				Cbuf_AddText (key_lines[edit_line] + 2);	// skip the ]/
-			} else if (cl_chatmode.value != 1 && CheckForCommand()) {
-				Cbuf_AddText (key_lines[edit_line] + 1);	// valid command
-			} else if ((cls.state >= ca_connected && cl_chatmode.value == 2) || cl_chatmode.value == 1) {
-				if (cls.state < ca_connected)	// can happen if cl_chatmode is 1
-					goto no_lf;					// drop the whole line
-
-				Cbuf_AddText ("say ");
-				Cbuf_AddText (key_lines[edit_line] + 1);
-			} else {
-				Cbuf_AddText (key_lines[edit_line] + 1);	// skip the ]
 			}
+			else
+				if (key_lines[edit_line][1] == '\\' || key_lines[edit_line][1] == '/')
+					Cbuf_AddText (key_lines[edit_line] + 2);	// skip the ]/
+				else
+					if (cl_chatmode.value != 1 && CheckForCommand())
+						Cbuf_AddText (key_lines[edit_line] + 1);	// valid command
+					else
+						if (cls.state >= ca_connected)	// can happen if cl_chatmode is 1
+						{
+							if (cl_chatmode.value == 2 || cl_chatmode.value == 1)
+							{
 
-			Cbuf_AddText ("\n");
-no_lf:
+								Cbuf_AddText ("say ");
+								Cbuf_AddText (key_lines[edit_line] + 1);
+							}
+							else
+								Cbuf_AddText (key_lines[edit_line] + 1);	// skip the ]
+						}
+						else 
+							no_lf = false;
+//					goto no_lf;					// drop the whole line
+			if (no_lf) Cbuf_AddText ("\n");
+		}
+//no_lf:
 			Com_Printf ("%s\n",key_lines[edit_line]);
-			edit_line = (edit_line + 1) & 31;
+			edit_line = (edit_line + 1) & (CMDLINES - 1);
 			history_line = edit_line;
 			key_lines[edit_line][0] = ']';
 			key_lines[edit_line][1] = 0;
@@ -1012,11 +1027,11 @@ no_lf:
 				return;
 			}
 			do {
-				history_line = (history_line - 1) & 31;
+				history_line = (history_line - 1) & (CMDLINES - 1);
 			} while (history_line != edit_line
 					&& !key_lines[history_line][1]);
 			if (history_line == edit_line)
-				history_line = (edit_line+1)&31;
+				history_line = (edit_line + 1) & (CMDLINES - 1);
 			strcpy(key_lines[edit_line], key_lines[history_line]);
 			key_linepos = strlen(key_lines[edit_line]);
 			return;
@@ -1029,7 +1044,7 @@ no_lf:
 			if (history_line == edit_line) 
 				return;
 			do {
-				history_line = (history_line + 1) & 31;
+				history_line = (history_line + 1) & (CMDLINES - 1);
 			} while (history_line != edit_line
 				&& !key_lines[history_line][1]);
 
@@ -1274,17 +1289,15 @@ int Key_StringToKeynum (char *str) {
 	if (!str || !str[0])
 		return -1;
 	if (!str[1])
-#ifdef WITH_KEYMAP
 		return (int)(unsigned char)str[0];
 
+#ifdef WITH_KEYMAP
 	if (str[0] == '#') {
 		keynum = Q_atoi(str + 1);
 		if (keynum < 32 || keynum > 127)
 			return -1;
 		return keynum;
 	}
-#else // WITH_KEYMAP
-		return (unsigned char) str[0];
 #endif // WITH_KEYMAP else
 
 	for (kn = keynames; kn->name; kn++) {
@@ -1545,14 +1558,70 @@ void Key_WriteBindings (FILE *f) {
 	}
 }
 
-void Key_Init (void) {
-	int i;
+// Added by VVD {
+void History_Init (void)
+{
+	int i, c;
+	FILE *hf;
 
-	for (i = 0; i < 32; i++) {
+	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
+	Cvar_Register (&cl_savehistory);
+	Cvar_ResetCurrentGroup();
+
+	for (i = 0; i < CMDLINES; i++) {
 		key_lines[i][0] = ']';
 		key_lines[i][1] = 0;
 	}
 	key_linepos = 1;
+
+	if (cl_savehistory.value)
+		if (hf = fopen(HISTORY_FILE_NAME, "rt"))
+		{
+			do
+			{
+				i = 1;
+				do
+				{
+					c = fgetc(hf);
+					key_lines[edit_line][i++] = c;
+				} while (c != '\n' && c != EOF && i < MAXCMDLINE);
+				key_lines[edit_line][i - 1] = 0;
+				edit_line = (edit_line + 1) & (CMDLINES - 1);
+			} while (c != EOF && edit_line < CMDLINES);
+			fclose(hf);
+
+			history_line = edit_line = (edit_line - 1) & (CMDLINES - 1);
+			key_lines[edit_line][0] = ']';
+			key_lines[edit_line][1] = 0;
+		}
+}
+
+void History_Shutdown (void)
+{
+	int i;
+	FILE *hf;
+
+	if (cl_savehistory.value)
+		if (hf = fopen(HISTORY_FILE_NAME, "wt"))
+		{
+			i = edit_line;
+			do
+			{
+				i = (i + 1) & (CMDLINES - 1);
+			} while (i != edit_line && !key_lines[i][1]);
+
+			do
+			{
+				fprintf(hf, "%s\n", key_lines[i] + 1);
+				i = (i + 1) & (CMDLINES - 1);
+			} while (i != edit_line && key_lines[i][1]);
+			fclose(hf);
+		}
+}
+// } Added by VVD
+
+void Key_Init (void) {
+	int i;
 
 	// init ascii characters in console mode
 	for (i = 32; i < 128; i++)
@@ -1590,8 +1659,7 @@ void Key_Init (void) {
 	consolekeys['`'] = false;
 	consolekeys['~'] = false;
 
-#ifdef WITH_KEYMAP
-#else
+#ifndef WITH_KEYMAP
 	for (i = 0; i < 256; i++)
 		keyshift[i] = i;
 	for (i = 'a'; i <= 'z'; i++)
@@ -1617,7 +1685,7 @@ void Key_Init (void) {
 	keyshift[']'] = '}';
 	keyshift['`'] = '~';
 	keyshift['\\'] = '|';
-#endif // WITH_KEYMAP else
+#endif // WITH_KEYMAP
 
 	menubound[K_ESCAPE] = true;
 	for (i = 0; i < 12; i++)
@@ -1656,10 +1724,9 @@ void Key_EventEx (int key, int basekey, qboolean down)
 	if (!down)
 		key_repeats[basekey] = 0;
 
-#ifdef WITH_KEYMAP
-#else
+#ifndef WITH_KEYMAP
 	key_lastpress = key;
-#endif // WITH_KEYMAP else 
+#endif // WITH_KEYMAP
 
 	// update auto-repeat status
 	if (down) {
@@ -1710,8 +1777,7 @@ void Key_EventEx (int key, int basekey, qboolean down)
 			Cbuf_AddText (cmd);
 			keyactive[basekey] = false;
 		}
-#ifdef WITH_KEYMAP
-#else // WITH_KEYMAP
+#ifndef WITH_KEYMAP
 		if (keyshift[key] != key) {
 			kb = keybindings[keyshift[key]];
 			if (kb && kb[0] == '+' && keyactive[keyshift[key]]) {
@@ -1720,7 +1786,7 @@ void Key_EventEx (int key, int basekey, qboolean down)
 				keyactive[keyshift[key]] = false;
 			}
 		}
-#endif // WITH_KEYMAP else
+#endif // WITH_KEYMAP
 		return;
 	}
 
@@ -1750,11 +1816,10 @@ Com_Printf("DOWN\n");
 		return;		// other systems only care about key down events
 }
 
-#ifdef WITH_KEYMAP
-#else // WITH_KEYMAP
+#ifndef WITH_KEYMAP
 	if (keydown[K_SHIFT])
 		key = keyshift[key];
-#endif // WITH_KEYMAP else 
+#endif // WITH_KEYMAP
 
 	switch (key_dest) {
 	case key_message:

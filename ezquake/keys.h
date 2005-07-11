@@ -182,6 +182,9 @@ extern char 	chat_buffer[];
 extern int 		chat_linepos;
 extern qboolean	chat_team;
 
+void History_Init (void);
+void History_Shutdown (void);
+
 void Key_Event (int key, qboolean down);
 void Key_EventEx (int key, int basekey, qboolean down);
 void Key_Init (void);

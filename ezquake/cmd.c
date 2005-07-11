@@ -1250,7 +1250,7 @@ char *safe_commands[] = {
 
 //A complete command line has been parsed, so try to execute it
 //FIXME: lookupnoadd the token to speed search?
-void Cmd_ExecuteString (char *text) {	
+void Cmd_ExecuteString (char *text) {
 	cmd_function_t *cmd;
 	cmd_alias_t *a;
 	static char buf[1024];
@@ -1265,7 +1265,7 @@ void Cmd_ExecuteString (char *text) {
 #else
 	Cmd_TokenizeString (text);
 #endif
-	
+
 	if (!Cmd_Argc())
 		return;		// no tokens
 

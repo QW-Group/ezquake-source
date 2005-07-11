@@ -374,7 +374,7 @@ void Con_Init (void) {
 	con_linewidth = -1;
 	Con_CheckResize ();
 
-	Con_CreateReadableChars();	
+	Con_CreateReadableChars();
 
 	con_initialized = true;
 	Com_Printf ("Console initialized\n");
@@ -385,7 +385,7 @@ void Con_Init (void) {
 	Cvar_Register (&con_notifytime);
 	Cvar_Register (&con_wordwrap);
 	Cvar_Register (&con_clearnotify);
-	Cvar_Register (&x); 
+	Cvar_Register (&x);
 
 	// added by jogi start
 	Cvar_Register (&con_highlight);
