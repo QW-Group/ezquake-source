@@ -369,8 +369,12 @@ qboolean Ignore_Message(char *s, int flags, int offset) {
 		return true;
 	
 
-	if (	ignore_opponents.value && flags == 1 && !cl.spectator && slot != cl.playernum &&
-			(!cl.teamplay || strcmp(cl.players[slot].team, cl.players[cl.playernum].team))
+	if (ignore_opponents.value && (
+			(int) ignore_opponents.value == 1 ||
+			(cls.state >= ca_connected && !cl.standby && !cls.demoplayback && !cl.spectator) // match?
+			) && 
+		flags == 1 && !cl.spectator && slot != cl.playernum &&
+		(!cl.teamplay || strcmp(cl.players[slot].team, cl.players[cl.playernum].team))
 		)
 		return true;
 
