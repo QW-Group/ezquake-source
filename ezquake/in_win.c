@@ -54,7 +54,7 @@ double		mouse_x, mouse_y;
 int			old_mouse_x, old_mouse_y, mx_accum, my_accum;
 
 static qboolean	restore_spi;
-static int originalmouseparms[3], newmouseparms[3] = {0, 0, 1};
+static int originalmouseparms[3], newmouseparms[3] = {0, 0, 0};
 qboolean mouseinitialized;
 static qboolean	mouseparmsvalid, mouseactivatetoggle;
 static qboolean	mouseshowtoggle = 1;
