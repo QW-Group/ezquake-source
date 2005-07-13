@@ -61,23 +61,6 @@ double	sv_frametime;
 
 void SV_Physics_Toss (edict_t *ent);
 
-void SV_CheckAllEnts (void) {
-	int e;
-	edict_t *check;
-
-	// see if any solid entities are inside the final position
-	check = NEXT_EDICT(sv.edicts);
-	for (e = 1; e < sv.num_edicts; e++, check = NEXT_EDICT(check)) {
-		if (check->free)
-			continue;
-		if (check->v.movetype == MOVETYPE_PUSH || check->v.movetype == MOVETYPE_NONE || check->v.movetype == MOVETYPE_NOCLIP)
-			continue;
-
-		if (SV_TestEntityPosition (check))
-			Com_Printf ("entity in invalid position\n");
-	}
-}
-
 void SV_CheckVelocity (edict_t *ent) {
 	int i;
 	float wishspeed;
@@ -363,7 +346,10 @@ qboolean SV_Push (edict_t *pusher, vec3_t move) {
 	for (e = 1; e < sv.num_edicts; e++, check = NEXT_EDICT(check)) {
 		if (check->free)
 			continue;
-		if (check->v.movetype == MOVETYPE_PUSH || check->v.movetype == MOVETYPE_NONE || check->v.movetype == MOVETYPE_NOCLIP)
+
+		if (check->v.movetype == MOVETYPE_PUSH ||
+		check->v.movetype == MOVETYPE_NONE ||
+		check->v.movetype == MOVETYPE_NOCLIP)
 			continue;
 
 		solid_save = pusher->v.solid;
@@ -664,8 +650,6 @@ void SV_RunEntity (edict_t *ent) {
 	if (ent->lastruntime == sv.time)
 		return;
 	ent->lastruntime = sv.time;
-
-	ent->v.lastruntime = (float)svs.realtime; // QW compatibility (FIXME: remove?)
 
 	switch ((int) ent->v.movetype) {
 	case MOVETYPE_PUSH:

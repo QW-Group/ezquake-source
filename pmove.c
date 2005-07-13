@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "pmove.h"
 
-movevars_t		movevars;
+movevars_t	movevars;
 playermove_t	pmove;
 
 float		frametime;
@@ -53,13 +53,7 @@ void PM_Init (void) {
 //returns the blocked flags (1 = floor, 2 = step / wall)
 int PM_ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce) {
 	float backoff, change;
-	int i, blocked;
-
-	blocked = 0;
-	if (normal[2] > 0)
-		blocked |= BLOCKED_FLOOR;		// floor
-	else if (!normal[2])
-		blocked |= BLOCKED_STEP;		// step
+	int i;
 
 	backoff = DotProduct (in, normal) * overbounce;
 
@@ -69,8 +63,6 @@ int PM_ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce) {
 		if (out[i] > -STOP_EPSILON && out[i] < STOP_EPSILON)
 			out[i] = 0;
 	}
-
-	return blocked;
 }
 
 #define	MAX_CLIP_PLANES	5
@@ -173,19 +165,48 @@ int PM_SlideMove (void) {
 }
 
 //Each intersection will try to step over the obstruction instead of sliding along it.
-void PM_StepSlideMove (void) {
+int PM_StepSlideMove (qboolean in_air) {
 	vec3_t dest;
 	pmtrace_t trace;
 	vec3_t original, originalvel, down, up, downvel;
 	float downdist, updist;
+	int	blocked;
+	float	stepsize;
 
 	// try sliding forward both on ground and up 16 pixels
 	// take the move that goes farthest
 	VectorCopy (pmove.origin, original);
 	VectorCopy (pmove.velocity, originalvel);
 
-	if (!PM_SlideMove())
-		return;		// moved the entire distance
+	blocked = PM_SlideMove ();
+
+	if (!blocked)
+		return blocked; // moved the entire distance
+
+	if (in_air) {
+		// don't let us step up unless it's indeed a step we bumped in
+		// (that is, there's solid ground below)
+		float *org;
+
+		if (!(blocked & BLOCKED_STEP))
+			return blocked;
+
+		//FIXME: "pmove.velocity < 0" ???? :)
+		// Of course I meant pmove.velocity[2], but I'm afraid I don't understand
+		// the code's purpose any more, so let it stay just this way for now :)  -- Tonik
+		org = (pmove.velocity < 0) ? pmove.origin : original;	// cryptic, eh?
+		VectorCopy (org, dest);
+		dest[2] -= STEPSIZE;
+		trace = PM_PlayerTrace (org, dest);
+		if (trace.fraction == 1 || trace.plane.normal[2] < MIN_STEP_NORMAL)
+			return blocked;
+
+		// adjust stepsize, otherwise it would be possible to walk up a
+		// a step higher than STEPSIZE
+		stepsize = STEPSIZE - (org[2] - trace.endpos[2]);
+	} else {
+		stepsize = STEPSIZE;
+	}
 
 	VectorCopy (pmove.origin, down);
 	VectorCopy (pmove.velocity, downvel);
@@ -224,10 +245,22 @@ void PM_StepSlideMove (void) {
 usedown:
 		VectorCopy (down, pmove.origin);
 		VectorCopy (downvel, pmove.velocity);
-	} else { // copy z value from slide move
-		pmove.velocity[2] = downvel[2];
+		return blocked;
 	}
-	// if at a dead stop, retry the move with nudges to get around lips
+
+	// copy z value from slide move
+	pmove.velocity[2] = downvel[2];
+
+	if (!pmove.onground && pmove.waterlevel < 2 && (blocked & BLOCKED_STEP)) {
+		float scale;
+		// in pm_airstep mode, walking up a 16 unit high step
+		// will kill 16% of horizontal velocity
+		scale = 1 - 0.01*(pmove.origin[2] - original[2]);
+		pmove.velocity[0] *= scale;
+		pmove.velocity[1] *= scale;
+	}
+
+	return blocked;
 }
 
 //Handles both ground friction and water friction
@@ -366,7 +399,7 @@ void PM_WaterMove (void) {
 	// water acceleration
 	PM_Accelerate (wishdir, wishspeed, movevars.wateraccelerate);
 
-	PM_StepSlideMove ();
+	PM_StepSlideMove (false);
 }
 
 void PM_FlyMove (void) {
@@ -389,7 +422,7 @@ void PM_FlyMove (void) {
 	
 	PM_Accelerate (wishdir, wishspeed, movevars.accelerate);
 	
-	PM_StepSlideMove ();
+	PM_StepSlideMove (false);
 }
 
 void PM_AirMove (void) {
@@ -419,28 +452,43 @@ void PM_AirMove (void) {
 	}
 	
 	if (pmove.onground) {
-		if (pmove.velocity[2] > 0 || !movevars.slidefix)
+		if (movevars.slidefix)
+		{
+			pmove.velocity[2] = min(pmove.velocity[2], 0);	// bound above by 0
+			PM_Accelerate (wishdir, wishspeed, movevars.accelerate);
+			// add gravity
+			pmove.velocity[2] -= movevars.entgravity * movevars.gravity * frametime;
+		}
+		else
+		{
 			pmove.velocity[2] = 0;
-		PM_Accelerate (wishdir, wishspeed, movevars.accelerate);
-		pmove.velocity[2] -= movevars.entgravity * movevars.gravity * frametime;
-
-		if (!movevars.slidefix)
-			pmove.velocity[2] = 0;
+			PM_Accelerate (wishdir, wishspeed, movevars.accelerate);
+		}
 
 		if (!pmove.velocity[0] && !pmove.velocity[1]) {
 			pmove.velocity[2] = 0;
 			return;
 		}
 
-		PM_StepSlideMove ();
+		PM_StepSlideMove(false);
 	} else {	
+		int blocked;
 		// not on ground, so little effect on velocity
 		PM_AirAccelerate (wishdir, wishspeed, movevars.accelerate);
 
 		// add gravity
 		pmove.velocity[2] -= movevars.entgravity * movevars.gravity * frametime;
 
-		PM_SlideMove ();
+		if (movevars.airstep)
+			blocked = PM_StepSlideMove (true);
+		else
+			blocked = PM_SlideMove ();
+
+		if (movevars.pground)
+		{
+			if (blocked & BLOCKED_FLOOR)
+				pmove.onground = true;
+		}
 	}
 }
 
@@ -460,7 +508,7 @@ void PM_CategorizePosition (void) {
 	point[2] = pmove.origin[2] - 1;
 	if (pmove.velocity[2] > 180) {
 		pmove.onground = false;
-	} else {
+	} else if (!movevars.pground || pmove.onground) {
 		trace = PM_PlayerTrace (pmove.origin, point);
 		if (trace.fraction == 1 || trace.plane.normal[2] < MIN_STEP_NORMAL) {
 			pmove.onground = false;
@@ -501,10 +549,12 @@ void PM_CategorizePosition (void) {
 		}
 	}
 
-	// snap to ground unless in fly mode or underwater
-	if (pmove.onground && pmove.pm_type != PM_FLY && pmove.waterlevel < 2) {
-		if (!trace.startsolid && !trace.allsolid)
-			VectorCopy (trace.endpos, pmove.origin);
+	if (!movevars.pground) {
+		if (pmove.onground && pmove.pm_type != PM_FLY && pmove.waterlevel < 2) {
+			// snap to ground so that we can't jump higher than we're supposed to
+			if (!trace.startsolid && !trace.allsolid)
+				VectorCopy (trace.endpos, pmove.origin);
+		}
 	}
 }
 
@@ -549,11 +599,13 @@ void PM_CheckJump (void) {
 		return;		// don't pogo stick
 #endif
 
-	// check for jump bug
-	// groundplane normal was set in the call to PM_CategorizePosition
-	if (pmove.velocity[2] < 0 && DotProduct(pmove.velocity, groundplane.normal) < -0.1) {
-		// pmove.velocity is pointing into the ground, clip it
-		PM_ClipVelocity (pmove.velocity, groundplane.normal, pmove.velocity, 1);
+	if (!movevars.pground) {
+		// check for jump bug
+		// groundplane normal was set in the call to PM_CategorizePosition
+		if (pmove.velocity[2] < 0 && DotProduct(pmove.velocity, groundplane.normal) < -0.1) {
+			// pmove.velocity is pointing into the ground, clip it
+			PM_ClipVelocity (pmove.velocity, groundplane.normal, pmove.velocity, 1);
+		}
 	}
 
 	pmove.onground = false;
@@ -727,7 +779,7 @@ void PM_PlayerMove (void)
 	if (pmove.velocity[2] < 0 || pmove.pm_type == PM_DEAD)
 		pmove.waterjumptime = 0;
 
-	if (pmove.waterjumptime) 
+	if (pmove.waterjumptime)
 	{
 		pmove.waterjumptime -= frametime;
 		if (pmove.waterjumptime < 0)
@@ -756,8 +808,10 @@ void PM_PlayerMove (void)
 	// set onground, watertype, and waterlevel for final spot
 	PM_CategorizePosition ();
 
+	if (!movevars.pground) {
 	// this is to make sure landing sound is not played twice
 	// and falling damage is calculated correctly
 	if (pmove.onground && pmove.velocity[2] < -300 && DotProduct(pmove.velocity, groundplane.normal) < -0.1)
 		PM_ClipVelocity (pmove.velocity, groundplane.normal, pmove.velocity, 1);
+	}
 }
