@@ -413,12 +413,16 @@ void SV_SpawnSpectator (void) {
 	VectorClear (sv_player->v.origin);
 	VectorClear (sv_player->v.view_ofs);
 	sv_player->v.view_ofs[2] = 22;
+	sv_player->v.fixangle = true;
+	sv_player->v.movetype = MOVETYPE_NOCLIP;	// progs can change this to MOVETYPE_FLY, for example
+
 
 	// search for an info_playerstart to spawn the spectator at
 	for (i = MAX_CLIENTS - 1; i < sv.num_edicts; i++) {
 		e = EDICT_NUM(i);
 		if (!strcmp(PR_GetString(e->v.classname), "info_player_start")) {
 			VectorCopy (e->v.origin, sv_player->v.origin);
+			VectorCopy (e->v.angles, sv_player->v.angles);
 			return;
 		}
 	}
@@ -1164,6 +1168,9 @@ void Cmd_Give_f (void) {
 }
 
 void Cmd_Noclip_f (void) {
+	if (sv_client->spectator)
+		return;
+
 	if (!sv_allow_cheats) {
 		Com_Printf ("Cheats are not allowed on this server\n");
 		return;
@@ -1184,6 +1191,9 @@ void Cmd_Noclip_f (void) {
 }
 
 void Cmd_Fly_f (void) {
+	if (sv_client->spectator)
+		return;
+
 	if (!sv_allow_cheats) {
 		Com_Printf ("Cheats are not allowed on this server\n");
 		return;

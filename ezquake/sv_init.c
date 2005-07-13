@@ -59,10 +59,14 @@ void SV_FlushSignon (void) {
 //Entity baselines are used to compress the update messages to the clients --
 //only the fields that differ from the baseline will be transmitted
 void SV_CreateBaseline (void) {
-	int i, entnum;	
+	int i, entnum, max_edicts;	
 	edict_t *svent;
 
-	for (entnum = 0; entnum < sv.num_edicts; entnum++)	{
+	// because baselines for entnum >= 512 don't make sense
+	// FIXME, translate baselines nums as well as packet entity nums?
+	max_edicts = min (sv.num_edicts, 512);
+
+	for (entnum = 0; entnum < max_edicts ; entnum++) {
 		svent = EDICT_NUM(entnum);
 		if (svent->free)
 			continue;
