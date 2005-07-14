@@ -1514,7 +1514,7 @@ void SV_RunCmd (usercmd_t *ucmd) {
 	pmove.waterjumptime = sv_player->v.teleport_time;
 	pmove.cmd = *ucmd;
 	pmove.pm_type = SV_PMTypeForClient (sv_client);
-//	pmove.onground = ((int)sv_player->v.flags & FL_ONGROUND) != 0;
+	pmove.onground = ((int)sv_player->v.flags & FL_ONGROUND) != 0;
 	pmove.jump_held = sv_client->jump_held;
 #ifndef SERVERONLY
 	pmove.jump_msec = 0;
