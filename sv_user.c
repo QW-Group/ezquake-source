@@ -958,17 +958,21 @@ void Cmd_Snap_f(void) {
 
 void SetUpClientEdict (client_t *cl, edict_t *ent)
 {
+	eval_t *val;
+
 	memset (&ent->v, 0, progs->entityfields * 4);
 	ent->v.colormap = NUM_FOR_EDICT(ent);
 	ent->v.netname = PR_SetString(cl->name);
 
 	cl->entgravity = 1.0;
-	//if (fofs_gravity)
-	//	EdictFieldFloat(ent, fofs_gravity) = 1.0; // GetEdictFieldValue(ent, "gravity")
+	val = GetEdictFieldValue(ent, "gravity");
+	if (val)
+		val->_float = 1.0;
 
 	cl->maxspeed = pm_maxspeed.value;
-	//if (fofs_maxspeed)
-	//	EdictFieldFloat(ent, fofs_maxspeed) = pm_maxspeed.value;
+	val = GetEdictFieldValue(ent, "maxspeed");
+	if (val)
+		val->_float = pm_maxspeed.value;
 }
 
 
@@ -1405,6 +1409,8 @@ void AddAllEntsToPmove (void) {
 
 int SV_PMTypeForClient (client_t *cl)
 {
+	return PM_NORMAL;
+
 	if (cl->edict->v.movetype == MOVETYPE_NOCLIP) {
 		if (cl->extensions & Z_EXT_PM_TYPE_NEW)
 			return PM_SPECTATOR;
