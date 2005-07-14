@@ -199,7 +199,6 @@ static void MT_GetPlayerNames(char *name1, char *name2) {
 
 static int MT_GetTeamNames(char teams[][MAX_INFO_STRING], int max) {
 	int i, j, count = 0;
-	char *s1 = NULL, *s2 = NULL;
 
 	memset(teams, 0, sizeof(teams));
 

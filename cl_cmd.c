@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "config_manager.h"
 
-extern Match_Running ;
+extern qboolean Match_Running ;
 
 void SCR_RSShot_f (void);
 void CL_ProcessServerInfo (void);

@@ -238,7 +238,6 @@ void VXSCR_DrawTrackerString (void)
 	int             x, y;
 	int i, w;
 	float alpha = 1;
-	qboolean notdone = true;
 	vec3_t kolorkodes = {1,1,1};
 
 	
