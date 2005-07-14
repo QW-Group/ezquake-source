@@ -49,7 +49,7 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	pmove.jump_held = from->jump_held;
 	pmove.waterjumptime = from->waterjumptime;
 	pmove.pm_type = from->pm_type;
-//	pmove.onground = from->onground;
+	pmove.onground = from->onground;
 	pmove.cmd = *u;
 
 	movevars.entgravity = cl.entgravity;
