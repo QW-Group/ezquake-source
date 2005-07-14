@@ -382,7 +382,6 @@ void V_TF_FlashSettings (qboolean flashed)
 
 void V_TF_FlashStuff (void) {
 	static float last_flash_time;
-	static float old_gamma, old_contrast;
 	extern cvar_t v_gamma, v_contrast;
 
 	if (cshift_empty.percent == 240 ||	// Normal TF
@@ -491,7 +490,6 @@ void V_SetContentsColor (int contents) {
 
 #ifdef GLQUAKE
 void V_AddWaterfog (int contents) {
-	int i = 0;
 	float *colors;
 	float lava[4] =  {1.0f,   0.314f, 0.0f,   0.5f};
 	float slime[4] = {0.039f,   0.738f,  0.333f,   0.5f};

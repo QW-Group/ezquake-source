@@ -855,7 +855,7 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay) {
     qboolean hide = false;
     char dest[4096], msg[4096], *s, *d, c, *name;
 	int length, offset, flags;
-	extern cvar_t cl_chatsound, con_sound_mm2_file, con_sound_mm2_volume;
+	extern cvar_t con_sound_mm2_file, con_sound_mm2_volume;
 
 	if (!buf || !(length = strlen(buf)))
 		return;

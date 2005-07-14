@@ -479,7 +479,6 @@ void SCR_DrawFPS (void) {
 	int x, y;
 	char str[80];
 	extern double	lastfps;
-	extern int		fps_count;
 
 	if (!show_fps.value || scr_newHud.value == 1) // HUD -> hexum - newHud has its own fps
 		return;

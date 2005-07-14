@@ -206,7 +206,7 @@ if (physframe) {	// #fps
 //		Com_DPrintf ("   low clamp\n");
 		demo_latency = cls.realtime - lerp_times[2];
 	} else {
-extern cvar_t cl_physfps;
+// extern cvar_t cl_physfps;
 		// drift towards ideal latency
 		float ideal_latency = (lerp_times[0] - lerp_times[2]) * 0.6;
 //		float ideal_latency = 1.0/cl_physfps.value;

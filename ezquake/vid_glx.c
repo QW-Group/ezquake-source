@@ -562,7 +562,6 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height) {
 
 void GL_EndRendering (void) {
 	static qboolean old_hwgamma_enabled;
-	unsigned int vsync_count;
 
 	vid_hwgamma_enabled = vid_hwgammacontrol.value && vid_gammaworks;
 	if (vid_hwgamma_enabled != old_hwgamma_enabled) {
@@ -687,7 +686,6 @@ void VID_Init(unsigned char *palette) {
 		None
 	};
 	int i, width = 640, height = 480;
-	char gldir[MAX_OSPATH];
 	XSetWindowAttributes attr;
 	unsigned long mask;
 	Window root;

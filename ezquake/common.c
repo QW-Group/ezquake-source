@@ -503,7 +503,7 @@ void COM_FileBase (char *in, char *out) {
 	int	length;
 
 	if (!(end = strrchr(in, '.')))
-		end =end = in + strlen(in);
+		end = in + strlen(in);
 
 	if (!(start = strrchr(in, '/')))
 		start = in;

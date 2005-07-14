@@ -158,7 +158,7 @@ qboolean	host_skipframe;			// used in demo playback
 byte		*host_basepal;
 byte		*host_colormap;
 
-int			fps_count;
+int		fps_count;
 double		lastfps;
 
 void CL_Multiview(void);
@@ -1074,7 +1074,6 @@ void CL_CalcFPS(void)
 { // HUD -> hexum
 	double t;
 	static double lastframetime;
-	extern cvar_t scr_newHud;
 
 	t = Sys_DoubleTime();
 	if ((t - lastframetime) >= 1.0)
@@ -1395,13 +1394,10 @@ int CL_NextPlayer(int plr) {
 
 void CL_Multiview(void) {
 	static int playernum;
-	static char st[40];
-	extern cvar_t crosshair;
 
 #ifdef GLQUAKE
 	extern cvar_t gl_polyblend;
 	extern cvar_t gl_clear;
-	extern cvar_t gl_crosshairimage;
 #endif
 	extern cvar_t r_lerpframes;
 #ifndef GLQUAKE

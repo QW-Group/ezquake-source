@@ -162,7 +162,7 @@ void D_DrawSurfaces (void) {
 			D_DrawSolidSurface (s, (int)r_clearcolor.value & 0xFF);
 			D_DrawZSpans (s->spans);
 		} else if (s->flags & SURF_DRAWTURB) {
-			extern cvar_t r_fastturb, r_max_size_1;
+			extern cvar_t r_fastturb;
 			// START shaman RFE 1022504
 			extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor;
 			// END shaman RFE 1022504
