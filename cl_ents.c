@@ -230,7 +230,6 @@ void CL_DecayLights (void) {
 }
 
 void CL_SetupPacketEntity (int number, entity_state_t *state, qboolean changed) {
-	qboolean nolerp = false;
 	centity_t *cent;
 
 	cent = &cl_entities[number];

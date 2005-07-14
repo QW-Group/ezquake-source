@@ -648,9 +648,6 @@ void Con_DrawNotify (void) {
 void Con_DrawConsole (int lines) {
 	int i, j, x, y, n, rows, row;
 	char *text, dlbar[1024];
-#ifdef GLQUAKE
-	extern cvar_t gl_conalpha;
-#endif
 
 	if (lines <= 0)
 		return;
