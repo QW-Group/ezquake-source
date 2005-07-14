@@ -2021,8 +2021,8 @@ void SCR_DrawStatusMultiview(void) {
 	}
 
 	// hud info
-	if (cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2 
-		|| cl_mvdisplayhud.value && cl_multiview.value != 2)
+	if ((cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2)
+		|| (cl_mvdisplayhud.value && cl_multiview.value != 2))
 		Draw_String(xb,yb,strng);
 	else if (cl_multiview.value == 2 && cl_mvdisplayhud.value && CURRVIEW == 1 && cl_mvinsethud.value) {
 		if (vid.width > 512)
@@ -2052,8 +2052,8 @@ void SCR_DrawStatusMultiview(void) {
 
 
 	// weapons
-	if (cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2 
-		|| cl_mvdisplayhud.value && cl_multiview.value != 2)
+	if ((cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2)
+		|| (cl_mvdisplayhud.value && cl_multiview.value != 2))
 		Draw_String(xd,yd,weapons);
 	else if (cl_multiview.value == 2 && cl_mvdisplayhud.value && CURRVIEW == 1 && vid.width > 512  && cl_mvinsethud.value)
 		Draw_String(xd,yd,weapons);
@@ -2066,7 +2066,7 @@ void SCR_DrawStatusMultiview(void) {
 		if (vid.width <= 512 && cl_sbar.value) {
 			Draw_Fill(vid.width/3*2+1,vid.height/3-sb_lines/3,vid.width/3+2,1,c2); // oppymv 300804
 			Draw_Fill(vid.width/3*2+1,0,1,vid.height/3-sb_lines/3,c2);
-		} else if (vid.width>512 && cl_sbar.value && !cl_mvinsethud.value || vid.width>512 && cl_sbar.value && !cl_mvdisplayhud.value) {
+		} else if ((vid.width>512 && cl_sbar.value && !cl_mvinsethud.value) || (vid.width>512 && cl_sbar.value && !cl_mvdisplayhud.value)) {
 			Draw_Fill(vid.width/3*2,vid.height/3-sb_lines/3,vid.width/3,1,c2); // oppymv 300804
 			Draw_Fill(vid.width/3*2,0,1,vid.height/3-sb_lines/3,c2);
 		}

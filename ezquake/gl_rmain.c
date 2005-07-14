@@ -160,7 +160,7 @@ cvar_t  gl_fogsky			= {"gl_fogsky", "1"};
 
 int		lightmode = 2;
 
-static int deathframes[] = { 49, 60, 69, 77, 84, 93, 102, 0 };
+//static int deathframes[] = { 49, 60, 69, 77, 84, 93, 102, 0 };
 
 void R_MarkLeaves (void);
 void R_InitBubble (void);
