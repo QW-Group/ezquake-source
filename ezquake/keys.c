@@ -37,7 +37,7 @@ cvar_t	cl_showkeycodes = {"cl_showkeycodes", "0"};
 
 // Added by VVD {
 cvar_t	cl_savehistory = {"cl_savehistory", "1"};
-#define		HISTORY_FILE_NAME	".ezquake_history"
+#define		HISTORY_FILE_NAME	"ezquake/.ezquake_history"
 #define		CMDLINES	(1<<8)
 // } Added by VVD
 #define		MAXCMDLINE	256
@@ -1575,7 +1575,7 @@ void History_Init (void)
 	key_linepos = 1;
 
 	if (cl_savehistory.value)
-		if (hf = fopen(HISTORY_FILE_NAME, "rt"))
+		if ((hf = fopen(HISTORY_FILE_NAME, "rt")))
 		{
 			do
 			{
@@ -1602,7 +1602,7 @@ void History_Shutdown (void)
 	FILE *hf;
 
 	if (cl_savehistory.value)
-		if (hf = fopen(HISTORY_FILE_NAME, "wt"))
+		if ((hf = fopen(HISTORY_FILE_NAME, "wt")))
 		{
 			i = edit_line;
 			do
