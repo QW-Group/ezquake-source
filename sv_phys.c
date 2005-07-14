@@ -142,18 +142,12 @@ void SV_Impact (edict_t *e1, edict_t *e2) {
 }
 
 //Slide off of the impacting object
-//returns the blocked flags (1 = floor, 2 = step / wall)
 #define	STOP_EPSILON	0.1
 
-int ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce) {
+void ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce) {
 	float backoff, change;
-	int i, blocked;
+	int i;
 
-	blocked = 0;
-	if (normal[2] > 0)
-		blocked |= 1;		// floor
-	if (!normal[2])
-		blocked |= 2;		// step
 
 	backoff = DotProduct (in, normal) * overbounce;
 
@@ -163,8 +157,6 @@ int ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce) {
 		if (out[i] > -STOP_EPSILON && out[i] < STOP_EPSILON)
 			out[i] = 0;
 	}
-
-	return blocked;
 }
 
 /*
@@ -306,7 +298,7 @@ trace_t SV_PushEntity (edict_t *ent, vec3_t push) {
         // Tonik: the check for SOLID_NOT is to fix the way dead bodies and 
         // gibs behave (should not be blocked by players & monsters); 
         // The SOLID_TRIGGER check is disabled lest we break frikbots 
-	else if (ent->v.solid == SOLID_TRIGGER/* || ent->v.solid == SOLID_NOT*/)
+	else if (ent->v.solid == SOLID_TRIGGER || ent->v.solid == SOLID_NOT)
 		// only clip against bmodels
 		trace = SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_NOMONSTERS, ent);
 	else
