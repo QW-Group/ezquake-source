@@ -33,7 +33,6 @@ vec3_t	player_maxs = {16, 16, 32};
 
 #define	STEPSIZE	18
 #define	MIN_STEP_NORMAL	0.7		// roughly 45 degrees
-#define	STOP_EPSILON	0.1
 
 #define pm_flyfriction 4
 
@@ -51,7 +50,8 @@ void PM_Init (void) {
 
 //Slide off of the impacting object
 //returns the blocked flags (1 = floor, 2 = step / wall)
-int PM_ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce) {
+#define	STOP_EPSILON	0.1
+void PM_ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce) {
 	float backoff, change;
 	int i;
 
