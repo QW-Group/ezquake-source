@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+  <name>set_calc</name>
+  <description>Advanced variables customization.</description>
+  <syntax>&lt;cvar command cmdargs&gt; | &lt;cvar arg1 oper arg2&gt;</syntax>
+  <arguments>
+    <argument>
+      <name>cvar</name>
+      <description>Name of variable you want to save the result in.</description>
+    </argument>
+    <argument>
+      <name>command</name>
+      <description>Possible commands: strlen - gets length of given string, int - converts given float value to integer, substr - return substring of given string, set_substr - replaces given position in string with another string, pos - gets position of substring in given string.</description>
+    </argument>
+    <argument>
+      <name>cmdargs</name>
+      <description>Arguments of commands: strlen &lt;string&gt;; int &lt;float&gt;; substr &lt;sourcestr&gt; &lt;position&gt; [&lt;length&gt;]; set_substr - &lt;replacestr&gt; &lt;position&gt;; pos &lt;haystack&gt; &lt;needle&gt;;</description>
+    </argument>
+    <argument>
+      <name>arg1</name>
+      <description>First argument</description>
+    </argument>
+    <argument>
+      <name>oper</name>
+      <description>Possible operators: +, -, *, /, div, %%, and, or, xor.</description>
+    </argument>
+    <argument>
+      <name>arg2</name>
+      <description>Second argument.</description>
+    </argument>
+  </arguments>
+  <remarks>Examples:
+set_calc a strlen \&quot;cool string\&quot; --&gt; a=11
+You can use names of cvars instead of strings of course. That\'s the power of this scripting possibilities.
+set b \&quot;cool text\&quot;
+set_calc a pos b ext --&gt; a=6</remarks>
+</command>
