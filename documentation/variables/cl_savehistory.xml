@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>cl_savehistory</name>
+  <description>Save console commands history to .ezquake_history.
+Loads history from this file while starting ezquake.</description>
+  <value>
+    <boolean>
+      <true>save</true>
+      <false>don't save</false>
+    </boolean>
+  </value>
+</variable>

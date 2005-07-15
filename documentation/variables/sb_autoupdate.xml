@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>sb_autoupdate</name>
+  <description>Enabled auto-updates (pings &amp; refreshes status) servers from actually marked server sources in Server Browser.</description>
+  <value>
+    <boolean>
+      <true>auto-refresh server list when first entering Server Browser menu</true>
+      <false>do not refresh server list automatically</false>
+    </boolean>
+  </value>
+  <remarks>Usefull with sb_starttab 1 and '+cfg_load myconfig +menu_slist' in command-line.</remarks>
+</variable>

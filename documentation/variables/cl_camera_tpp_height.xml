@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>cl_camera_tpp_height</name>
+  <description>Sets vertical position of 3rd person camera.</description>
+  <value>
+    <float>You can use negative values too.</float>
+  </value>
+  <remarks>Set cl_camera_tpp 1 first.</remarks>
+</variable>

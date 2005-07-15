@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>sb_starttab</name>
+  <description>Sets default tab in Server Browser. This tab will be displayed when you enter Server Browser for the first time of client instance.</description>
+  <value>
+    <integer>Possible values are 1, 2, 3 and 4.</integer>
+  </value>
+  <remarks>Usefull with sb_autoupdate 1 and '+cfg_load myconfig +menu_slist' in command-line.</remarks>
+</variable>
