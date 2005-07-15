@@ -31,8 +31,8 @@
     </argument>
   </arguments>
   <remarks>Examples:
-set_calc a strlen \&quot;cool string\&quot; --&gt; a=11
-You can use names of cvars instead of strings of course. That\'s the power of this scripting possibilities.
-set b \&quot;cool text\&quot;
+set_calc a strlen &quot;cool string&quot; --&gt; a=11<br />
+You can use names of cvars instead of strings of course. That's the power of this scripting possibilities.<br />
+set b &quot;cool text&quot;<br />
 set_calc a pos b ext --&gt; a=6</remarks>
 </command>
