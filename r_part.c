@@ -58,6 +58,7 @@ static int			r_numparticles;
 
 vec3_t				r_pright, r_pup, r_ppn;
 
+#ifndef GLQUAKE 
 #if	!id386
 
 void D_DrawParticle (particle_t *pparticle) {
@@ -175,6 +176,7 @@ void D_DrawParticle (particle_t *pparticle) {
 }
 
 #endif	// !id386
+#endif	// !GLQUAKE
 
 #ifdef GLQUAKE
 void Classic_LoadParticleTexures (void) {
