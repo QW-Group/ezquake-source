@@ -1,16 +1,10 @@
-<?xml version="1.0" encoding="US-ASCII"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-
-<name>scr_tracking</name>
-<description>
-When tracking a player (e.g. when playing a .MVD) you can see a text saying &quot;Tracking UnnamedPlayer&quot;.
-When left blank &quot;Tracking [player-nick]&quot; is displayed otherwise value of this variable is displayed.
-Note: Set it to &quot; &quot; (space character) to hide any &quot;Tracking&quot; text from the screen.
-
-</description>
-<remarks>
-
-
-</remarks>
+  <name>scr_tracking</name>
+  <description>Changes the format of descriptive text displayed when you are tracking someone as spectator or watching a demo where you can see player's team and name.</description>
+  <value>
+    <string>Pattern %n will be replaced with tracked player's name, %t will be replaced with player's team.</string>
+  </value>
+  <remarks>This variable affects scr_newhud 0. To change same text in new HUD (scr_newhud 1) use /tracking format (hud_tracking_format) settings.</remarks>
 </variable>
