@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>hud_mp3_title_wordwrap</name>
+  <description>Toggles word wrapping inside mp3_title element.</description>
+  <value>
+    <boolean>
+      <true>Wrap words if more lines are allowed.</true>
+      <false>Don't wrap words, scroll if necessary and allowed.</false>
+    </boolean>
+  </value>
+  <remarks>See 'mp3_title height'.</remarks>
+</variable>
