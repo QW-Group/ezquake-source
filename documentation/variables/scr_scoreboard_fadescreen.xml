@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>scr_scoreboard_fadescreen</name>
+  <description>shadowing level, when scoreboard is displayed.</description>
+  <value>
+    <float>[0...1] 0=transparent scoreboard 1=black scoreboard</float>
+  </value>
+</variable>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>demo_playlist_track_name</name>
+  <description>will set the default track name in the demo playlist for mvd demos 
+example: jogi, will always track the player jogi or versions of it (jogihoogi, angryjogi, etc)</description>
+  <value>
+  </value>
+</variable>

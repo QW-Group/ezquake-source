@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>scr_scoreboard_centered</name>
+  <description>Controls X-position of scoreboard</description>
+  <value>
+    <boolean>
+      <true>Scoreboard will be centered</true>
+      <false>Scoreboard will not be centered</false>
+    </boolean>
+  </value>
+</variable>
