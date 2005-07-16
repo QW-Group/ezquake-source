@@ -331,6 +331,7 @@ typedef struct {
 
 //============================================================================
 
+extern	cvar_t	sv_paused; // 1 - normal, 2 - auto (single player), 3 - both
 extern	cvar_t	sv_mintic, sv_maxtic;
 extern	cvar_t	maxclients;
 extern	cvar_t	sv_fastconnect;
