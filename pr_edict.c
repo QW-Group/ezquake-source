@@ -34,25 +34,14 @@ int				pr_edict_size;	// in bytes
 
 int type_size[8] = {1, sizeof(void *) / 4, 1 ,3, 1, 1, sizeof(void *) / 4, sizeof(void *) / 4};
 
-ddef_t *ED_FieldAtOfs (int ofs);
-qboolean ED_ParseEpair (void *base, ddef_t *key, char *s);
+int fofs_maxspeed, fofs_gravity;
+//int fofs_forwardmove, fofs_sidemove, fofs_upmove;
 
-#define	MAX_FIELD_LEN	64
-#define GEFV_CACHESIZE	2
-
-typedef struct {
-	ddef_t	*pcache;
-	char	field[MAX_FIELD_LEN];
-} gefv_cache;
-
-static gefv_cache	gefvCache[GEFV_CACHESIZE] = {{NULL, ""}, {NULL, ""}};
-
-func_t SpectatorConnect;
-func_t SpectatorThink;
-func_t SpectatorDisconnect;
-
+func_t SpectatorConnect, SpectatorThink, SpectatorDisconnect;
 func_t SV_ParseClientCommand;		//KRIMZON_SV_PARSECLIENTCOMMAND
 
+ddef_t *ED_FieldAtOfs (int ofs);
+qboolean ED_ParseEpair (void *base, ddef_t *key, char *s);
 
 //Sets everything to NULL
 void ED_ClearEdict (edict_t *e) {
@@ -176,31 +165,21 @@ dfunction_t *ED_FindFunction (char *name) {
 	return NULL;
 }
 
-eval_t *GetEdictFieldValue(edict_t *ed, char *field) {
-	ddef_t *def = NULL;
-	int i;
-	static int rep = 0;
+func_t ED_FindFunctionOffset (char *name)
+{
+	dfunction_t *func;
 
-	for (i = 0; i < GEFV_CACHESIZE; i++) {
-		if (!strcmp(field, gefvCache[i].field)) {
-			def = gefvCache[i].pcache;
-			goto Done;
-		}
-	}
+	func = ED_FindFunction (name);
+	return func ? (func_t)(func - pr_functions) : 0;
+}
 
-	def = ED_FindField (field);
-
-	if (strlen(field) < MAX_FIELD_LEN) {
-		gefvCache[rep].pcache = def;
-		strcpy (gefvCache[rep].field, field);
-		rep ^= 1;
-	}
-
-Done:
-	if (!def)
-		return NULL;
-
-	return (eval_t *) ((char *)&ed->v + def->ofs*4);
+int ED_FindFieldOffset (char *field)
+{
+	ddef_t *d;
+	d = ED_FindField(field);
+	if (!d)
+		return 0;
+	return d->ofs*4;
 }
 
 //Returns a string describing *data in a type specific manner
@@ -875,11 +854,6 @@ void CL_PR_LoadProgs (void) {
 void PR_LoadProgs (void) {
 	int i, lowmark;
 	char num[32];
-	dfunction_t *f;
-
-	// flush the non-C variable lookup cache
-	for (i = 0; i < GEFV_CACHESIZE; i++)
-		gefvCache[i].field[0] = 0;
 
 	if (!deathmatch.value) {
 		extern int file_from_gamedir;
@@ -976,13 +950,21 @@ progs_loaded:
 	for (i = 0; i < progs->numglobals; i++)
 		((int *) pr_globals)[i] = LittleLong (((int *) pr_globals)[i]);
 
-	// Zoid, find the spectator functions
-	SpectatorConnect = (f = ED_FindFunction ("SpectatorConnect")) ? (func_t) (f - pr_functions) : 0;
-	SpectatorThink = (f = ED_FindFunction ("SpectatorThink")) ? (func_t) (f - pr_functions) : 0;
-	SpectatorDisconnect = (f = ED_FindFunction ("SpectatorDisconnect")) ? (func_t) (f - pr_functions) : 0;
+	// find optional QC-exported functions
+	SpectatorConnect = ED_FindFunctionOffset ("SpectatorConnect");
+	SpectatorThink = ED_FindFunctionOffset ("SpectatorThink");
+	SpectatorDisconnect = ED_FindFunctionOffset ("SpectatorDisconnect");
+
+	// find optional QC-exported fields
+	fofs_maxspeed = ED_FindFieldOffset ("maxspeed");
+	fofs_gravity = ED_FindFieldOffset ("gravity");
+//	fofs_forwardmove = ED_FindFieldOffset ("forwardmove");
+//	fofs_sidemove = ED_FindFieldOffset ("sidemove");
+//	fofs_upmove = ED_FindFieldOffset ("upmove");
 
 	//KRIMZON_SV_PARSECLIENTCOMMAND
-	SV_ParseClientCommand = (f = ED_FindFunction ("SV_ParseClientCommand")) ? (func_t) (f - pr_functions) : 0;
+	SV_ParseClientCommand = ED_FindFunction ("SV_ParseClientCommand");
+// SV_ParseClientCommand = (f = ED_FindFunction ("SV_ParseClientCommand")) ? (func_t) (f - pr_functions) : 0;
 }
 
 void PR_Init (void) {
