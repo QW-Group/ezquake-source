@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>gl_underwater_trails</name>
+<description>This gives rockets/grenades/nails and other things an alternate underwater trail.
+Very nice to have nailgun fights underwater...
+</description>
+</variable>

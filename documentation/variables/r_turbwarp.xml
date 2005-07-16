@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+
+<name>gl_turbwarp</name>
+<description>
+</description>
+<value><enum>
+	<value><name>
+0</name><description>Disable warping of surfaces.</description></value>
+	<value><name>1</name><description>Enable warping of surfaces.</description></value>
+</enum></value>
+<remarks>
+
+
+
+
+</remarks>
+</variable>
