@@ -576,6 +576,8 @@ void CL_Reconnect_f (void) {
 	CL_BeginServerConnect();
 }
 
+extern double qstat_senttime;
+extern void CL_PrintQStatReply (char *s);
 //Responses to broadcasts, etc
 void CL_ConnectionlessPacket (void) {
 	int c;
@@ -661,6 +663,13 @@ void CL_ConnectionlessPacket (void) {
 		break;
 
 	case A2C_PRINT:		// print command from somewhere
+		if (net_message.data[msg_readcount] == '\\') {
+			if (qstat_senttime && curtime - qstat_senttime < 10) {
+				CL_PrintQStatReply (MSG_ReadString());
+				return;
+			}
+		}
+
 		Com_Printf("%s: print\n", NET_AdrToString(net_from));
 		Com_Printf("%s", MSG_ReadString());
 		break;
