@@ -315,7 +315,6 @@ void Cmd_Spawn_f (void) {
 	int i;
 	client_t *client;
 	edict_t	*ent;
-	eval_t *val;
 	unsigned n;
 
 	if (sv_client->state != cs_connected) {
@@ -332,8 +331,7 @@ void Cmd_Spawn_f (void) {
 
 	n = atoi(Cmd_Argv(2));
 	if (n >= MAX_CLIENTS) {
-		SV_ClientPrintf (sv_client, PRINT_HIGH, 
-				"Cmd_Spawn_f: Invalid client start\n");
+		SV_ClientPrintf (sv_client, PRINT_HIGH, "Cmd_Spawn_f: Invalid client start\n");
 		SV_DropClient (sv_client); 
 		return;
 	}
@@ -373,13 +371,12 @@ void Cmd_Spawn_f (void) {
 	}
 
 	sv_client->entgravity = 1.0;
-	val = GetEdictFieldValue(ent, "gravity");
-	if (val)
-		val->_float = 1.0;
+	if (fofs_gravity)
+		EdictFieldFloat(ent, fofs_gravity) = 1.0;
+
 	sv_client->maxspeed = pm_maxspeed.value;
-	val = GetEdictFieldValue(ent, "maxspeed");
-	if (val)
-		val->_float = pm_maxspeed.value;
+	if (fofs_maxspeed)
+		EdictFieldFloat(ent, fofs_maxspeed) = pm_maxspeed.value;
 
 	// force stats to be updated
 	memset (sv_client->stats, 0, sizeof(sv_client->stats));
@@ -958,21 +955,17 @@ void Cmd_Snap_f(void) {
 
 void SetUpClientEdict (client_t *cl, edict_t *ent)
 {
-	eval_t *val;
-
 	memset (&ent->v, 0, progs->entityfields * 4);
 	ent->v.colormap = NUM_FOR_EDICT(ent);
 	ent->v.netname = PR_SetString(cl->name);
 
 	cl->entgravity = 1.0;
-	val = GetEdictFieldValue(ent, "gravity");
-	if (val)
-		val->_float = 1.0;
+	if (fofs_gravity)
+		EdictFieldFloat(ent, fofs_gravity) = 1.0;
 
 	cl->maxspeed = pm_maxspeed.value;
-	val = GetEdictFieldValue(ent, "maxspeed");
-	if (val)
-		val->_float = pm_maxspeed.value;
+	if (fofs_maxspeed)
+		EdictFieldFloat(ent, fofs_maxspeed) = pm_maxspeed.value;
 }
 
 
@@ -1409,8 +1402,6 @@ void AddAllEntsToPmove (void) {
 
 int SV_PMTypeForClient (client_t *cl)
 {
-	return PM_NORMAL;
-
 	if (cl->edict->v.movetype == MOVETYPE_NOCLIP) {
 		if (cl->extensions & Z_EXT_PM_TYPE_NEW)
 			return PM_SPECTATOR;
