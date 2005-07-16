@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>hud_healthdamage_duration</name>
+  <description>Sets how long healthdamage should be visible after last damage to health has been done.</description>
+  <value>
+    <float>Float number</float>
+  </value>
+</variable>

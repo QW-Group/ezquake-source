@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>hud_mp3_time_show</name>
+  <description>Toggles visibility of this HUD element.</description>
+  <value>
+    <boolean>
+      <true>Draw this element</true>
+      <false>Do not draw this element</false>
+    </boolean>
+  </value>
+</variable>

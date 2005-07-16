@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>hud_teamfrags_align_x</name>
+  <description>Sets teamfrags HUD element horizontal alignment.</description>
+  <value>
+    <string>left, center, right, before, after</string>
+  </value>
+  <remarks>See HUD manual for more info.</remarks>
+</variable>

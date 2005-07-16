@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>hud_healthdamage_align_y</name>
+  <description>Sets healthdamage HUD element vertical alignment.</description>
+  <value>
+    <string>top, center, bottom, console, before, after</string>
+  </value>
+  <remarks>See HUD manual for more info.</remarks>
+</variable>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>hud_healthdamage_place</name>
+  <description>Sets placement for this HUD element. You can align some elements relative to other elements.</description>
+  <value>
+    <string>to place this element inside element B set this variable to &quot;@B&quot;, to place it outside B element set this variable to &quot;B&quot;</string>
+  </value>
+  <remarks>First you have to decide, if the element that you are locating now (element B) is to be positioned inside another element (element A) or outside it. See HUD manual for more info.</remarks>
+</variable>
