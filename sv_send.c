@@ -116,7 +116,7 @@ void SV_BroadcastPrintf (int level, char *fmt, ...) {
 	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++) {
 		if (level < cl->messagelevel)
 			continue;
-		if (!cl->state)
+		if (cl->state < cs_connected)
 			continue;
 
 		SV_PrintToClient(cl, level, string);
@@ -620,7 +620,7 @@ void SV_SendMessagesToAll (void) {
 	client_t *c;
 
 	for (i = 0, c = svs.clients; i < MAX_CLIENTS; i++, c++) {
-		if (c->state)		// FIXME: should this only send to active?
+		if (c->state >= cs_connected) // FIXME: should this only send to active?
 			c->send_message = true;
 	}
 	SV_SendClientMessages ();
