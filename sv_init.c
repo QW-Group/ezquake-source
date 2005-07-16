@@ -245,7 +245,7 @@ void SV_SpawnServer (char *server, qboolean devmap) {
 
 	sv.state = ss_dead;
 	com_serveractive = false;
-	sv.paused = false;
+	Cvar_ForceSet (&sv_paused, "0");
 
 	Host_ClearMemory();
 

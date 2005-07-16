@@ -54,6 +54,7 @@ cvar_t	allow_download_pakmaps = {"allow_download_pakmaps", "0"};
 cvar_t	sv_highchars = {"sv_highchars", "1"};
 cvar_t	sv_phs = {"sv_phs", "1"};
 cvar_t	sv_pausable = {"pausable", "1"};
+cvar_t	sv_paused = {"sv_paused", "0", CVAR_ROM};
 cvar_t	sv_maxrate = {"sv_maxrate", "0"};
 cvar_t	sv_fastconnect = {"sv_fastconnect", "0"};
 
@@ -79,10 +80,6 @@ void SV_AcceptClient (netadr_t adr, int userid, char *userinfo);
 void Master_Shutdown (void);
 
 //============================================================================
-
-qboolean ServerPaused(void) {
-	return sv.paused;
-}
 
 /*
 Used by SV_Shutdown to send a final message to all connected clients before the server goes down.
@@ -873,7 +870,7 @@ void SV_CheckTimeouts (void) {
 		if (cl->state == cs_zombie && svs.realtime - cl->connection_started > sv_zombietime.value)
 			cl->state = cs_free;	// can now be reused
 	}
-	if (sv.paused && !nclients) {
+	if (((int) sv_paused.value & 1) && !nclients) {
 		// nobody left, unpause the server
 		SV_TogglePause("Pause released since no players are left.\n");
 	}
@@ -957,7 +954,7 @@ void SV_Frame (double time) {
 	rand ();
 
 	// decide the simulation time
-	if (!sv.paused) {
+	if (!sv_paused.value) {
 		svs.realtime += time;
 		sv.time += time;
 	}
@@ -969,7 +966,7 @@ void SV_Frame (double time) {
 	SV_CheckLog ();
 
 	// move autonomous things around if enough time has passed
-	if (!sv.paused)
+	if (!sv_paused.value)
 		SV_Physics ();
 
 	// get packets
@@ -1025,6 +1022,7 @@ void SV_InitLocal (void) {
 	Cvar_Register (&sv_aim);
 	Cvar_Register (&sv_highchars);
 	Cvar_Register (&sv_phs);
+	Cvar_Register (&sv_paused);
 	Cvar_Register (&sv_pausable);
 	Cvar_Register (&sv_nailhack);
 	Cvar_Register (&sv_maxrate);
@@ -1229,7 +1227,7 @@ void SV_ExtractFromUserinfo (client_t *cl) {
 	}
 
 	if (strncmp(val, cl->name, strlen(cl->name))) {
-		if (!sv.paused) {
+		if (!sv_paused.value) {
 			if (!cl->lastnametime || svs.realtime - cl->lastnametime > 5) {
 				cl->lastnamecount = 0;
 				cl->lastnametime = svs.realtime;

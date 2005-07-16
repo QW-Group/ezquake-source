@@ -178,6 +178,7 @@ qboolean ServerPaused(void);
 //tries to send an unreliable message to a connection, and handles the transmition / retransmition of the reliable messages.
 //A 0 length will still generate a packet and deal with the reliable messages.
 void Netchan_Transmit (netchan_t *chan, int length, byte *data) {
+	extern cvar_t sv_paused;
 	sizebuf_t send;
 	byte send_buf[MAX_MSGLEN + PACKET_HEADER];
 	qboolean send_reliable;
@@ -252,7 +253,7 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data) {
 		chan->cleartime += send.cursize * chan->rate;
 
 #ifndef CLIENTONLY
-	if (ServerPaused())
+	if (chan->sock == NS_SERVER && sv_paused.value)
 		chan->cleartime = curtime;
 #endif
 
