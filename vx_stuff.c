@@ -35,7 +35,6 @@ cvar_t		amf_hidenails = {"cl_hidenails", "0", CVAR_ARCHIVE};
 cvar_t		amf_hiderockets = {"cl_hiderockets", "0", CVAR_ARCHIVE};
 
 cvar_t		amf_stat_loss = {"r_damagestats", "0", CVAR_ARCHIVE};
-cvar_t		amf_debug = {"gl_amfdebug", "0", CVAR_ARCHIVE};
 cvar_t		amf_lightning = {"gl_lightning", "0", CVAR_ARCHIVE}; // 1
 // START shaman RFE 1022310
 cvar_t		amf_lightning_size = {"gl_lightning_size", "3", CVAR_ARCHIVE};
@@ -361,7 +360,6 @@ void Amf_SetMode_f(void)
 	else if (!strcmp(mode, "vultwah"))
 	{
 		Cvar_SetValue (&amf_showstats, 1);
-		Cvar_SetValue (&amf_debug, 1);
 		Cvar_SetValue (&amf_part_spikes, 1);
 		Cvar_SetValue (&amf_part_gunshot, 0.5);
 		Cvar_SetValue (&amf_part_explosion, 1);
@@ -483,7 +481,6 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_lightning_sparks);
 	Cvar_Register (&amf_motiontrails);
 	Cvar_Register (&amf_motiontrails_wtf);
-	Cvar_Register (&amf_debug);
 	Cvar_Register (&amf_inferno_trail);
 	Cvar_Register (&amf_inferno_speed);
 	Cvar_Register (&amf_cutf_tesla_effect);
