@@ -88,7 +88,6 @@ extern cvar_t amf_part_sparks;
 extern cvar_t amf_hiderockets;
 extern cvar_t amf_nailtrail_plasma;
 extern cvar_t amf_part_muzzleflash;
-extern cvar_t amf_debug;
 extern cvar_t amf_inferno_trail;
 extern cvar_t amf_inferno_speed;
 extern cvar_t amf_part_2dshockwaves;
