@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>hud_teamfrags_padtext</name>
+  <description>Toggles text padding in 'frags' HUD element.</description>
+  <value>
+    <boolean>
+      <true>Adds padding so frags and team tags are aligned into columns.</true>
+      <false>No spaces between text fields.</false>
+    </boolean>
+  </value>
+  <remarks>Use 'teamfrags shownames 1'.</remarks>
+</variable>
