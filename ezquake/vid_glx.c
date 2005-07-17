@@ -116,11 +116,16 @@ static int vid_minimized = 0;
 cvar_t	vid_ref = {"vid_ref", "gl", CVAR_ROM};
 cvar_t	vid_mode = {"vid_mode", "0"};
 qboolean OnChange_windowed_mouse(cvar_t *, char *);
+#ifdef NDEBUG
 cvar_t	_windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE, OnChange_windowed_mouse};
+cvar_t  auto_grabmouse = {"auto_grabmouse", "1"};
+#else
+cvar_t	_windowed_mouse = {"_windowed_mouse", "0", CVAR_ARCHIVE, OnChange_windowed_mouse};
+cvar_t  auto_grabmouse = {"auto_grabmouse", "0"};
+#endif
 cvar_t	m_filter = {"m_filter", "0"};
 cvar_t	cl_keypad = {"cl_keypad", "1"};
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
-cvar_t  auto_grabmouse = {"auto_grabmouse", "1"};
 
 
 const char *glx_extensions=NULL;
