@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>r_netstats</name>
+  <description>Shows information about ping, packetloss, average packet size and incoming/outgoing traffic. Equivalent with 'net' HUD element.</description>
+  <value>
+    <boolean>
+      <true>Draw network statistics.</true>
+      <false>Do not draw network statistics.</false>
+    </boolean>
+  </value>
+</variable>
