@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>match_auto_minlength</name>
+  <description>When using 'match_auto_record 2', temp demo's auto recorded won't be saved automatically if they are shorter than the number of seconds match_auto_minlength' is set to.</description>
+  <value>
+    <integer>number of seconds</integer>
+  </value>
+  <remarks>If a temp demo is too short to autosave, you can still save it manually with &quot;match_save&quot;.</remarks>
+</variable>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>joystick</name>
+  <description>Toggles usage of joystick device.</description>
+  <value>
+    <boolean>
+      <true>Use joystick input.</true>
+      <false>Do not use joystick.</false>
+    </boolean>
+  </value>
+</variable>

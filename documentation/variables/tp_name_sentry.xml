@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>tp_name_sentry</name>
+  <description>Sets the name for sentry tower in teamplay messages.</description>
+  <value>
+    <string>common values are 'sentry' or 'sentry gun'.</string>
+  </value>
+</variable>

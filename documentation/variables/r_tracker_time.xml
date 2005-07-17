@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>r_tracker_time</name>
+  <description>Number of seconds the tracker information is drawn on the screen.</description>
+  <value>
+    <float>Use positive numbers.</float>
+  </value>
+  <remarks>See other 'r_tracker_*' variables too.</remarks>
+</variable>

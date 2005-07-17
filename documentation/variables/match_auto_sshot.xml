@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>match_auto_sshot</name>
+  <description>Set to 1 to automatically take a screenshot of the final scoreboard when a match ends. If your console is down or you are in the menus, then the client will remove the console/menu for a split second so it can take a screenshot of the scoreboard without any interference.</description>
+  <value>
+    <boolean>
+      <true>Take auto screenshot on match end.</true>
+      <false>Do not take auto screenshot.</false>
+    </boolean>
+  </value>
+</variable>
