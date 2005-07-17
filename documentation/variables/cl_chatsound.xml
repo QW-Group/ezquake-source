@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>cl_chatsound</name>
+  <description>Controls usage of con_sound_* variables.</description>
+  <value>
+    <enum>
+    <value>
+      <name>0</name>
+      <description>Do not use con_sound_* variables settings.</description>
+    </value>
+    <value>
+      <name>1</name>
+      <description>Use settings from con_sound_* for char sounds.</description>
+    </value>
+    <value>
+      <name>2</name>
+      <description>Only play sounds in mm2.</description>
+    </value>
+    </enum>
+  </value>
+</variable>
