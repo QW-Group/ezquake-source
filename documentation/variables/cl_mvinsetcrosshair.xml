@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>cl_mvinsetcrosshair</name>
+  <description>Turn crosshair in inset POV in multiview on/off.</description>
+  <value>
+    <boolean>
+      <true>Display crosshair in inset POV.</true>
+      <false>Do not display crosshair in inset POV.</false>
+    </boolean>
+  </value>
+</variable>

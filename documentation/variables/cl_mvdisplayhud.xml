@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>cl_mvdisplayhud</name>
+  <description>Toggle drawing of small compact HUD in each screen of Multiview control.</description>
+  <value>
+    <boolean>
+      <true>Show compact HUD.</true>
+      <false>Don't draw compact HUD.</false>
+    </boolean>
+  </value>
+</variable>

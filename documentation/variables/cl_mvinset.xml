@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>cl_mvinset</name>
+  <description>Turns inset screen with multitrack on/off.</description>
+  <value>
+    <boolean>
+      <true>Display 2nd POV inside main screen in the right top corner.</true>
+      <false>Divide screen in 2/3/4 areas according to cl_multiview settings.</false>
+    </boolean>
+  </value>
+</variable>
