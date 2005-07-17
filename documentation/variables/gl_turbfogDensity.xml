@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>gl_turbfogDensity</name>
+  <description>Control of density of liquid (water, lava, slime...) fog</description>
+  <value>
+    <float>[0...1] = [minimum...maximum] liquid fog density</float>
+  </value>
+</variable>

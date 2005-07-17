@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>gl_colorlights</name>
+  <description>Switch on/off colour of lighting from glowing items (quad, pent, flags in TF, etc)</description>
+  <value>
+    <boolean>
+      <true>Coloured lighting are on</true>
+      <false>Coloured lighting are off</false>
+    </boolean>
+  </value>
+  <remarks>This implementation does not give a speed increase when gl_colorlights is set to 0, but it does not require a map restart for changes to take effect</remarks>
+</variable>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>scr_spectatormessage</name>
+  <description>Switch on/off text at bottom of screen when spectateing in free mode</description>
+  <value>
+    <boolean>
+      <true>Text at bottom of screen will be displayed</true>
+      <false>No text at bottom of screen will be displayed</false>
+    </boolean>
+  </value>
+  <remarks>/------------------------------\
+|SPECTATOR MODE                |
+|Press [ATTACK] for AutoCamera |
+\------------------------------/</remarks>
+</variable>
