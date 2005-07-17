@@ -32,24 +32,24 @@ int sb_updates;		// if >= vid.numpages, no update needed
 extern cvar_t show_fps2;
 
 // --> mqwcl 0.96 oldhud customisation
-//cvar_t  sbar_teamfrags = {"hud_sbar_teamfrags", "1", CVAR_HUD};
-//cvar_t  sbar_fraglimit = {"hud_sbar_fraglimit", "1", CVAR_HUD};
+//cvar_t  sbar_teamfrags = {"scr_sbar_teamfrags", "1"};
+//cvar_t  sbar_fraglimit = {"scr_sbar_fraglimit", "1"};
 
-cvar_t  sbar_drawfaceicon   = {"hud_sbar_drawfaceicon", "1"};
-cvar_t  sbar_drawammoicon   = {"hud_sbar_drawammoicon", "1"};
-cvar_t  sbar_drawarmoricon  = {"hud_sbar_drawarmoricon", "1"};
-cvar_t  sbar_drawguns       = {"hud_sbar_drawguns", "1"};
-cvar_t  sbar_drawammocounts = {"hud_sbar_drawammocounts", "1"};
-cvar_t  sbar_drawitems      = {"hud_sbar_drawitems", "1"};
-cvar_t  sbar_drawsigils     = {"hud_sbar_drawsigils", "1"};
-cvar_t  sbar_drawhealth     = {"hud_sbar_drawhealth", "1"};;
-cvar_t  sbar_drawarmor      = {"hud_sbar_drawarmor",  "1"};;
-cvar_t  sbar_drawammo       = {"hud_sbar_drawammo",   "1"};;
+cvar_t  sbar_drawfaceicon   = {"scr_sbar_drawfaceicon", "1"};
+cvar_t  sbar_drawammoicon   = {"scr_sbar_drawammoicon", "1"};
+cvar_t  sbar_drawarmoricon  = {"scr_sbar_drawarmoricon", "1"};
+cvar_t  sbar_drawguns       = {"scr_sbar_drawguns", "1"};
+cvar_t  sbar_drawammocounts = {"scr_sbar_drawammocounts", "1"};
+cvar_t  sbar_drawitems      = {"scr_sbar_drawitems", "1"};
+cvar_t  sbar_drawsigils     = {"scr_sbar_drawsigils", "1"};
+cvar_t  sbar_drawhealth     = {"scr_sbar_drawhealth", "1"};;
+cvar_t  sbar_drawarmor      = {"scr_sbar_drawarmor",  "1"};;
+cvar_t  sbar_drawammo       = {"scr_sbar_drawammo",   "1"};;
 
 cvar_t  hud_centerranking   = {"scr_scoreboard_centered",   "1"};
 cvar_t  hud_rankingpos      = {"scr_scoreboard_posy",       "0"};
 cvar_t  hud_faderankings    = {"scr_scoreboard_fadescreen", "0"};
-//cvar_t  hud_ranks_separate  = {"hud_ranks_separate",   "1", CVAR_HUD};
+//cvar_t  hud_ranks_separate  = {"scr_ranks_separate",   "1"};
 // <-- mqwcl 0.96 oldhud customisation
 
 #define STAT_MINUS		10	// num frame for '-' stats digit
@@ -254,7 +254,6 @@ void Sbar_Init (void) {
     Cvar_Register (&hud_centerranking);
     Cvar_Register (&hud_rankingpos);
     Cvar_Register (&hud_faderankings);
-    //Cvar_Register (&hud_sbar_size);
     //Cvar_Register (&hud_ranks_separate);
 // <-- mqwcl 0.96 oldhud customisation
 
