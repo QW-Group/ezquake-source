@@ -10,6 +10,7 @@ Displays clock with seconds on the screen.
   <value><name>0</name><description>Turned OFF</description></value>
   <value><name>1</name><description>Counts down from the start of the match.</description></value>
   <value><name>2</name><description>Counts up from the start of the match.</description></value>
+</enum></value>
 <remarks>
 Use cl_gameclock_x and cl_gameclock_y to place it anywhere on the screen.
 </remarks>
