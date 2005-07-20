@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>pm_pground</name>
+  <description>Enables 'persistent onground flag' physics tweak.  Makes pm_airstep work better;  otherwise it's pretty useless.</description>
+  <value>
+    <integer></integer>
+  </value>
+  <remarks>This extension makes use of Z_EXT_PF_ONGROUND to ensure correct movement prediction by clients.
+
+Prediction errors shouldn't be very noticeable anyway even with old clients.
+
+You're not expected to understand this.</remarks>
+</variable>
