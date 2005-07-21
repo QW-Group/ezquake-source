@@ -1008,7 +1008,7 @@ void SV_Frame (double time) {
 
 void SV_InitLocal (void) {
 	int i;
-	extern cvar_t sv_spectalk, sv_mapcheck, sv_aim, sv_nailhack, sv_loadentfiles, sv_maxvelocity, sv_gravity;
+	extern cvar_t sv_spectalk, sv_mapcheck, sv_nailhack, sv_loadentfiles, sv_maxvelocity, sv_gravity;
 	extern cvar_t sv_maxpitch, sv_minpitch, pm_airstep, pm_pground, pm_slidefix, pm_ktjump, pm_bunnyspeedcap;
 	extern cvar_t pm_stopspeed, pm_spectatormaxspeed, pm_accelerate, pm_airaccelerate, pm_wateraccelerate;
 	extern cvar_t pm_friction, pm_waterfriction;
@@ -1023,7 +1023,6 @@ void SV_InitLocal (void) {
 	Cvar_Register (&spectator_password);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_MAIN);
-	Cvar_Register (&sv_aim);
 	Cvar_Register (&sv_highchars);
 	Cvar_Register (&sv_phs);
 	Cvar_Register (&sv_paused);
