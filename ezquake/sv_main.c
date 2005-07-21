@@ -31,8 +31,8 @@ client_t	*sv_client;					// current client
 cvar_t	sv_mintic = {"sv_mintic", "0.013"};	// bound the size of the
 cvar_t	sv_maxtic = {"sv_maxtic", "0.1"};	//
 
-cvar_t	sv_timeout = {"timeout","65"};		// seconds without any message
-cvar_t	sv_zombietime = {"zombietime", "2"};	// seconds to sink messages
+cvar_t	sv_timeout = {"sv_timeout","65"};		// seconds without any message
+cvar_t	sv_zombietime = {"sv_zombietime", "2"};	// seconds to sink messages
 											// after disconnect
 
 #ifdef SERVERONLY
@@ -67,8 +67,9 @@ cvar_t	fraglimit = {"fraglimit", "0", CVAR_SERVERINFO};
 cvar_t	timelimit = {"timelimit", "0", CVAR_SERVERINFO};
 cvar_t	teamplay = {"teamplay", "0", CVAR_SERVERINFO};
 cvar_t	samelevel = {"samelevel", "0", CVAR_SERVERINFO};
-cvar_t	maxclients = {"maxclients", "8", CVAR_SERVERINFO};
-cvar_t	maxspectators = {"maxspectators", "8", CVAR_SERVERINFO};
+qboolean OnChange_maxclients (cvar_t *var, char *str);
+cvar_t	maxclients = {"maxclients","8",CVAR_SERVERINFO, OnChange_maxclients};
+cvar_t	maxspectators = {"maxspectators","8",CVAR_SERVERINFO, OnChange_maxclients};
 cvar_t	deathmatch = {"deathmatch", "1", CVAR_SERVERINFO};			// 0, 1, or 2
 cvar_t	hostname = {"hostname", "unnamed", CVAR_SERVERINFO};
 cvar_t	watervis = {"watervis", "0", CVAR_SERVERINFO};
@@ -82,6 +83,14 @@ void SV_AcceptClient (netadr_t adr, int userid, char *userinfo);
 void Master_Shutdown (void);
 
 //============================================================================
+
+// handles both maxclients and maxspectators
+qboolean OnChange_maxclients (cvar_t *var, char *str) {
+	int num = Q_atoi(str);
+	num = bound(0, num, MAX_CLIENTS);
+	Cvar_SetValue (var, num);
+	return false;
+}
 
 /*
 Used by SV_Shutdown to send a final message to all connected clients before the server goes down.
@@ -478,13 +487,9 @@ void SVC_DirectConnect (void) {
 	}
 
 	// if at server limits, refuse connection
-	if ( maxclients.value > MAX_CLIENTS )
-		Cvar_SetValue (&maxclients, MAX_CLIENTS);
-	if (maxspectators.value > MAX_CLIENTS)
-		Cvar_SetValue (&maxspectators, MAX_CLIENTS);
-	if (maxspectators.value + maxclients.value > MAX_CLIENTS)
-		Cvar_SetValue (&maxspectators, MAX_CLIENTS - maxclients.value);
-	if ((spectator && spectators >= (int)maxspectators.value) || (!spectator && clients >= (int)maxclients.value)) {
+	if ((spectator && spectators >= (int)maxspectators.value)
+		|| (!spectator && clients >= (int)maxclients.value))
+	{
 		Com_Printf ("%s:full connect\n", NET_AdrToString (adr));
 		Netchan_OutOfBandPrint (NS_SERVER, adr, "%c\nserver is full\n\n", A2C_PRINT);
 		return;
@@ -1027,7 +1032,6 @@ void SV_InitLocal (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_MAIN);
 	Cvar_Register (&sv_highchars);
 	Cvar_Register (&sv_phs);
-	Cvar_Register (&sv_paused);
 	Cvar_Register (&sv_pausable);
 	Cvar_Register (&sv_nailhack);
 	Cvar_Register (&sv_maxrate);
@@ -1036,6 +1040,7 @@ void SV_InitLocal (void) {
 	Cvar_Register (&sv_mintic);
 	Cvar_Register (&sv_maxtic);
 	Cvar_Register (&sv_timeout);
+	Cvar_Register (&sv_zombietime);
 	Cvar_Register (&sv_zombietime);
 	Cvar_Register (&sv_spectalk);
 	Cvar_Register (&sv_mapcheck);
@@ -1091,6 +1096,10 @@ void SV_InitLocal (void) {
 	Cmd_AddCommand ("removeip", SV_RemoveIP_f);
 	Cmd_AddCommand ("listip", SV_ListIP_f);
 	Cmd_AddCommand ("writeip", SV_WriteIP_f);
+
+	Cmd_AddLegacyCommand ("pausable", "sv_pausable");
+	Cmd_AddLegacyCommand ("timeout", "sv_timeout");
+	Cmd_AddLegacyCommand ("zombietime", "sv_zombietime");
 
 	if (!dedicated)
 		Cvar_SetDefault(&sv_mintic, 0);
