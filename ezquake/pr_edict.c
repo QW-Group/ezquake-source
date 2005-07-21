@@ -963,7 +963,7 @@ progs_loaded:
 //	fofs_upmove = ED_FindFieldOffset ("upmove");
 
 	//KRIMZON_SV_PARSECLIENTCOMMAND
-	SV_ParseClientCommand = ED_FindFunction ("SV_ParseClientCommand");
+	SV_ParseClientCommand = (func_t) ED_FindFunction ("SV_ParseClientCommand");
 // SV_ParseClientCommand = (f = ED_FindFunction ("SV_ParseClientCommand")) ? (func_t) (f - pr_functions) : 0;
 }
 
