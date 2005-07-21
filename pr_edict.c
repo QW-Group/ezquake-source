@@ -856,7 +856,6 @@ void PR_LoadProgs (void) {
 	char num[32];
 
 	if (!deathmatch.value) {
-		extern int file_from_gamedir;
 
 		lowmark = Hunk_LowMark();
 		

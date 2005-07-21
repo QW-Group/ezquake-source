@@ -50,6 +50,8 @@ cvar_t	allow_download_models = {"allow_download_models", "1"};
 cvar_t	allow_download_sounds = {"allow_download_sounds", "1"};
 cvar_t	allow_download_maps = {"allow_download_maps", "1"};
 cvar_t	allow_download_pakmaps = {"allow_download_pakmaps", "0"};
+cvar_t	allow_download_gfx = {"allow_download_gfx", "1"};
+cvar_t	allow_download_other = {"allow_download_other", "1"};
 
 cvar_t	sv_highchars = {"sv_highchars", "1"};
 cvar_t	sv_phs = {"sv_phs", "1"};
@@ -1080,6 +1082,8 @@ void SV_InitLocal (void) {
 	Cvar_Register (&allow_download_sounds);
 	Cvar_Register (&allow_download_maps);
 	Cvar_Register (&allow_download_pakmaps);
+	Cvar_Register (&allow_download_gfx);
+	Cvar_Register (&allow_download_other);
 
 	Cvar_ResetCurrentGroup();
 

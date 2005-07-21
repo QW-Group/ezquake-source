@@ -941,8 +941,8 @@ int FS_FOpenPathFile (char *filename, FILE **file) {
 
 //Finds the file in the search path.
 //Sets com_filesize, com_netpath and one of handle or file
-int		file_from_pak;				// global indicating file came from pack file ZOID
-int		file_from_gamedir;			
+qboolean	file_from_pak;		// global indicating file came from a packfile
+qboolean	file_from_gamedir;	// global indicating file came from a gamedir (and gamedir wasn't id1/qw)
 
 int FS_FOpenFile (char *filename, FILE **file) {
 	searchpath_t *search;
@@ -950,8 +950,8 @@ int FS_FOpenFile (char *filename, FILE **file) {
 	int i;
 
 	*file = NULL;
-	file_from_pak = 0;
-	file_from_gamedir = 1;
+	file_from_pak = false;
+	file_from_gamedir = true;
 	com_filesize = -1;
 	com_netpath[0] = 0;
 
@@ -976,7 +976,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 					com_filefrompak = true;
                     com_filesearchpath = search->filename;
 
-					file_from_pak = 1;
+					file_from_pak = true;
 					Q_snprintfz (com_netpath, sizeof(com_netpath), "%s#%i", pak->filename, i);
 					return com_filesize;
 				}
