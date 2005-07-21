@@ -1357,8 +1357,6 @@ static void CheckSPGame (void) {
 	}
 }
 
-extern int file_from_gamedir;
-
 static void StartNewGame (void) {
 	key_dest = key_game;
 	Cvar_Set (&maxclients, "1");

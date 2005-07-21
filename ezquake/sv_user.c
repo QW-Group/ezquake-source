@@ -626,68 +626,84 @@ void SV_NextUpload (void) {
 }
 
 void Cmd_Download_f (void) {
-	char *name, *p;
-	extern cvar_t allow_download, allow_download_skins, allow_download_models;
-	extern cvar_t allow_download_sounds, allow_download_maps, allow_download_pakmaps;
-	extern int file_from_pak;	// did file come from pak?
+	char	name[MAX_QPATH], dirname[MAX_QPATH], *p;
+	extern cvar_t	allow_download;
+	extern cvar_t	allow_download_skins;
+	extern cvar_t	allow_download_models;
+	extern cvar_t	allow_download_sounds;
+	extern cvar_t	allow_download_maps;
+	extern cvar_t	allow_download_pakmaps;
+	extern cvar_t	allow_download_gfx;
+	extern cvar_t	allow_download_other;
 
-	name = Cmd_Argv(1);
-	// hacked by zoid to allow more conrol over download
-		// first off, no .. or global allow check
-	if (strstr (name, "..") || !allow_download.value
-		// leading dot is no good
-		|| *name == '.' 
-		// leading slash bad as well, must be in subdir
-		|| *name == '/'
-		// next up, skin check
-		|| (!Q_strncasecmp(name, "skins/", 6) && !allow_download_skins.value)
-		// now models
-		|| (!Q_strncasecmp(name, "progs/", 6) && !allow_download_models.value)
-		// now sounds
-		|| (!Q_strncasecmp(name, "sound/", 6) && !allow_download_sounds.value)
-		// now maps (note special case for maps, must not be in pak)
-		|| (!Q_strncasecmp(name, "maps/", 5) && !allow_download_maps.value)
-		// MUST be in a subdirectory	
-		|| !strstr (name, "/") )	
-	{	// don't allow anything with .. path
-		ClientReliableWrite_Begin (sv_client, svc_download, 4);
-		ClientReliableWrite_Short (sv_client, -1);
-		ClientReliableWrite_Byte (sv_client, 0);
-		return;
-	}
+	strlcpy (name, Cmd_Argv(1), sizeof(name));
 
+	if (!allow_download.value || strstr(name, "..") || name[0] == '.' || IS_SLASH(name[0]))
+		goto deny_download;
+
+	for (p = name; *p; p++)
+		if (IS_SLASH(*p))
+			break;
+	if (!*p)
+		goto deny_download;			// must be in a subdir
+
+	memcpy (dirname, name, p - name);
+	dirname[p - name] = 0;
+
+	// categorize download and check permissions
+	if (!Q_strcasecmp(dirname, "skins")) {
+		if (!allow_download_skins.value)
+			goto deny_download;
+	} else if (Q_strcasecmp(dirname, "progs")) {
+		if (!allow_download_models.value)
+			goto deny_download;
+	} else if (Q_strcasecmp(dirname, "sound")) {
+		if (!allow_download_sounds.value)
+			goto deny_download;
+	} else if (Q_strcasecmp(dirname, "maps")) {
+		if (!allow_download_maps.value)
+			goto deny_download;
+	} else if (Q_strcasecmp(dirname, "gfx")) {
+		if (!allow_download_gfx.value)
+			goto deny_download;
+	} else if (!allow_download_other.value)
+			goto deny_download;
+
+	// cancel current download, if any
 	if (sv_client->download) {
 		fclose (sv_client->download);
 		sv_client->download = NULL;
 	}
 
 	// lowercase name (needed for casesen file systems)
+	// FIXME: why?	-- Tonik
 	for (p = name; *p; p++)
 		*p = (char)tolower(*p);
 
 	sv_client->downloadsize = FS_FOpenFile (name, &sv_client->download);
 	sv_client->downloadcount = 0;
 
-	if (
-		!sv_client->download
-		// special check for maps that came from a pak file
-		|| (!strncmp(name, "maps/", 5) && file_from_pak && !allow_download_pakmaps.value)
-		)
-	{
-		if (sv_client->download) {
-			fclose(sv_client->download);
-			sv_client->download = NULL;
-		}
-
+	if (!sv_client->download) {
 		Sys_Printf ("Couldn't download %s to %s\n", name, sv_client->name);
-		ClientReliableWrite_Begin (sv_client, svc_download, 4);
-		ClientReliableWrite_Short (sv_client, -1);
-		ClientReliableWrite_Byte (sv_client, 0);
-		return;
+		goto deny_download;
 	}
 
+	// special check for maps that came from a pak file
+	if (!Q_strcasecmp(dirname, "maps") && file_from_pak && !allow_download_pakmaps.value) {
+		fclose (sv_client->download);
+		sv_client->download = NULL;
+		goto deny_download;
+	}
+
+	// all checks passed, start downloading
 	Cmd_NextDL_f ();
 	Sys_Printf ("Downloading %s to %s\n", name, sv_client->name);
+	return;
+
+deny_download:
+	ClientReliableWrite_Begin (sv_client, svc_download, 4);
+	ClientReliableWrite_Short (sv_client, -1);
+	ClientReliableWrite_Byte (sv_client, 0);
 }
 
 //=============================================================================

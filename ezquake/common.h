@@ -45,6 +45,14 @@ typedef enum {false, true} qboolean;
 #define NULL ((void *) 0)
 #endif
 
+
+#ifdef _WIN32
+#define IS_SLASH(c) ((c) == '/' || (c) == '\\')
+#else
+#define IS_SLASH(c) ((c) == '/')
+#endif
+
+
 #ifndef min
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
@@ -305,7 +313,10 @@ struct cache_user_s;
 
 extern char	com_gamedir[MAX_OSPATH];
 extern char	com_basedir[MAX_OSPATH];
-extern char com_gamedirfile[MAX_QPATH];
+extern char	com_gamedirfile[MAX_QPATH];
+
+extern qboolean file_from_pak;		// set if file came from a pak file
+extern qboolean file_from_gamedir;	// set if file came from a gamedir (and gamedir wasn't id1/qw)
 
 void FS_InitFilesystem (void);
 void FS_SetGamedir (char *dir);
