@@ -159,3 +159,14 @@ void ClientReliableWrite_SZ(client_t *cl, void *data, int len)
 		SZ_Write(&cl->netchan.message, data, len);
 }
 
+void SV_ClearBackbuf (client_t *cl)
+{
+	cl->num_backbuf = 0;
+}
+
+// clears both cl->netchan.message and backbuf
+void SV_ClearReliable (client_t *cl)
+{
+	SZ_Clear (&cl->netchan.message);
+	SV_ClearBackbuf (cl);
+}

@@ -443,6 +443,7 @@ void ClientReliableWrite_Long(client_t *cl, int c);
 void ClientReliableWrite_Short(client_t *cl, int c);
 void ClientReliableWrite_String(client_t *cl, char *s);
 void ClientReliableWrite_SZ(client_t *cl, void *data, int len);
+void SV_ClearReliable (client_t *cl);	// clear cl->netchan.message and backbuf
  
 // sv_save.c 
 void SV_SaveGame_f (void); 

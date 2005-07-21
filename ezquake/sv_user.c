@@ -176,6 +176,7 @@ void Cmd_Soundlist_f (void) {
 
 	// handle the case of a level changing while a client was connecting
 	if (atoi(Cmd_Argv(1)) != svs.spawncount) {
+		SV_ClearReliable (sv_client);
 		Com_Printf ("Cmd_Soundlist_f from different level\n");
 		Cmd_New_f ();
 		return;
@@ -183,6 +184,7 @@ void Cmd_Soundlist_f (void) {
 
 	n = atoi(Cmd_Argv(2));
 	if (n + 1>= MAX_SOUNDS) {
+		SV_ClearReliable (sv_client);
 		SV_ClientPrintf (sv_client, PRINT_HIGH, "Cmd_Soundlist_f: Invalid soundlist index\n");
 		SV_DropClient (sv_client);
 		return;
@@ -218,6 +220,7 @@ void Cmd_Modellist_f (void) {
 	
 	// handle the case of a level changing while a client was connecting
 	if ( atoi(Cmd_Argv(1)) != svs.spawncount ) {
+		SV_ClearReliable (sv_client);
 		Com_Printf ("Cmd_Modellist_f from different level\n");
 		Cmd_New_f ();
 		return;
@@ -225,6 +228,7 @@ void Cmd_Modellist_f (void) {
 
 	n = atoi(Cmd_Argv(2));
 	if (n + 1 >= MAX_MODELS) {
+		SV_ClearReliable (sv_client);
 		SV_ClientPrintf (sv_client, PRINT_HIGH, 
 			"Cmd_Modellist_f: Invalid modellist index\n");
 		SV_DropClient (sv_client);
@@ -259,6 +263,7 @@ void Cmd_PreSpawn_f (void) {
 
 	// handle the case of a level changing while a client was connecting
 	if ( atoi(Cmd_Argv(1)) != svs.spawncount ) {
+		SV_ClearReliable (sv_client);
 		Com_Printf ("Cmd_PreSpawn_f from different level\n");
 		Cmd_New_f ();
 		return;
@@ -324,6 +329,7 @@ void Cmd_Spawn_f (void) {
 
 	// handle the case of a level changing while a client was connecting
 	if ( atoi(Cmd_Argv(1)) != svs.spawncount ) {
+		SV_ClearReliable (sv_client);
 		Com_Printf ("Cmd_Spawn_f from different level\n");
 		Cmd_New_f ();
 		return;
@@ -434,6 +440,7 @@ void Cmd_Begin_f (void) {
 	
 	// handle the case of a level changing while a client was connecting
 	if ( atoi(Cmd_Argv(1)) != svs.spawncount ) {
+		SV_ClearReliable (sv_client);
 		Com_Printf ("Cmd_Begin_f from different level\n");
 		Cmd_New_f ();
 		return;
