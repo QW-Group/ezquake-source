@@ -1,41 +1,13 @@
-variables documentation: current state + plans
-made by johnny_cz
+This text describes how scripts generating and maintaining on-line manual works.
+johnnycz, 2005-07-22
 
-we have this data sources:
-A) cvars-xml-list - single file with support info, default values and group
-B) cvars-xmls-desc - separated files with cvars description
-C) cvars-xml-desc - single huge file with cvars descriptions
-D) cvars-html-incs - +/- ten files (each for one ubergroup) with full info of cvars in HTML
-E) cvars-xml-full - single large xml file with full info about all cvars
+Input data for scripts:
+1) configs with default values 
+      config (made by cfg_save) contains all variables with default
+      settings (made by cfg_reset) and variable groups
+2) variable descriptions stored in xml files
+3) definition of major groups
 
-auto-generated:
-(A) (D) (E)
+Output data:
+  *.inc files used in HTML manual
 
-what are they used to:
-A): to generate (E)
-B): for /describe and to generate (E)
-C): to generate (B) when converting some ugly .txt files into XML
-D): for online HTML manual (online version of /describe)
-E): to generate (D)
-
-generation processes:
-1) A+B => E
-2) E => D
-3) hexum => A
-4) C => B
-
-that means (to-do):
-1) customize current scripts/html-variables.php (+ replace 'html' in name with 'xml')
-  - already mines data from (A)
-  - needs to mine data from (B) (not from (C) as it's now)
-  - it should also tell which variables are undocumented and which should be removed from (B)
-2) some nice XSLT (find&replace even) - need shaman's help
-3) already done by hexum (but I really need that 'tool' for me too)
-4) already done: scripts/parse-cvars-descs.php
-
-where are they placed:
-1) data/cvarlist.xml
-2) data/variables/*.xml
-3) data/src-cvars-data/*.xml
-4) docs/vars/*.inc
-5) needs to be created first, will be placed here: data/cvarsfull.xml
