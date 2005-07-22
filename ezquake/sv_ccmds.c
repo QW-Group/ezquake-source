@@ -137,7 +137,7 @@ void SV_Map_f (void) {
 	Q_strncpyz (level, Cmd_Argv(1), sizeof(level));
 
 	// check to make sure the level exists
-	Q_snprintfz (expanded, sizeof(expanded), "maps/%s.bsp", level);
+ Q_snprintfz (expanded, sizeof(expanded), "maps/%s.bsp", level);
 	if (FS_FOpenFile (expanded, &f) == -1) {
 		Com_Printf ("Can't find %s\n", expanded);
 		return;
@@ -361,6 +361,7 @@ void SV_ServerinfoChanged (char *key, char *string) {
 //Examine or change the serverinfo string
 void SV_Serverinfo_f (void) {
 	cvar_t *var;
+	char *key, *value;
 
 	if (Cmd_Argc() == 1) {
 		Com_Printf ("Server info settings:\n");
@@ -373,27 +374,33 @@ void SV_Serverinfo_f (void) {
 		return;
 	}
 
-	if (Cmd_Argv(1)[0] == '*') {
+	key = Cmd_Argv(1);
+	value = Cmd_Argv(2);
+
+	if (key[0] == '*') {
 		Com_Printf ("Star variables cannot be changed.\n");
 		return;
 	}
 
-	if (!strcmp(Cmd_Argv(1), "maxpitch") || !strcmp(Cmd_Argv(1), "minpitch")) {
+	if (!strcmp(key, "maxpitch") || !strcmp(Cmd_Argv(1), "minpitch")) {
 		Cvar_Set (Cvar_FindVar(va("sv_%s", Cmd_Argv(1))), Cmd_Argv(2));
 		return; // cvar callbacks will take care of updating serverinfo
 	}
 
-	Info_SetValueForKey (svs.info, Cmd_Argv(1), Cmd_Argv(2), MAX_SERVERINFO_STRING);
+	Info_SetValueForKey (svs.info, key, value, MAX_SERVERINFO_STRING);
 
 	// if this is a cvar, change it too	
-	var = Cvar_FindVar (Cmd_Argv(1));
-	if (var) {
-		Z_Free (var->string);	// free the old value string	
-		var->string = CopyString (Cmd_Argv(2));
-		var->value = Q_atof (var->string);
+	var = Cvar_FindVar (key);
+	if (var && (var->flags & CVAR_SERVERINFO)) {
+		// a hack - strip the serverinfo flag so that the Cvar_Set
+		// doesn't trigger SV_ServerinfoChanged
+		var->flags &= ~CVAR_SERVERINFO;
+		Cvar_Set (var, Cmd_Argv(2));
+		var->flags |= CVAR_SERVERINFO;		// put it back
 	}
 
-	SV_SendServerInfoChange(Cmd_Argv(1), Cmd_Argv(2));
+	// FIXME, don't send if the key hasn't changed
+	SV_SendServerInfoChange (key, value);
 }
 
 //Examine or change the localinfo string
@@ -531,7 +538,7 @@ void SV_Snap (int uid) {
 	FILE *f;
 
 	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++) {
-		if (!cl->state)
+		if (cl->state < cs_connected)
 			continue;
 		if (cl->userid == uid)
 			break;
