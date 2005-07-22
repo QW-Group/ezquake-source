@@ -1032,6 +1032,7 @@ void SV_InitLocal (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_MAIN);
 	Cvar_Register (&sv_highchars);
 	Cvar_Register (&sv_phs);
+	Cvar_Register (&sv_paused);
 	Cvar_Register (&sv_pausable);
 	Cvar_Register (&sv_nailhack);
 	Cvar_Register (&sv_maxrate);
@@ -1040,7 +1041,6 @@ void SV_InitLocal (void) {
 	Cvar_Register (&sv_mintic);
 	Cvar_Register (&sv_maxtic);
 	Cvar_Register (&sv_timeout);
-	Cvar_Register (&sv_zombietime);
 	Cvar_Register (&sv_zombietime);
 	Cvar_Register (&sv_spectalk);
 	Cvar_Register (&sv_mapcheck);
