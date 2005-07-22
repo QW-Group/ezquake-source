@@ -673,21 +673,22 @@ qboolean StringToFilter (char *s, ipfilter_t *f) {
 	char num[128];
 	int i, j;
 	byte b[4], m[4];
-
-	for (i = 0; i < 4; i++) {
+	
+	for (i=0 ; i<4 ; i++) {
 		b[i] = 0;
 		m[i] = 0;
 	}
-
-	for (i = 0; i < 4; i++) {
-		if (*s < '0' || *s > '9') {
+	
+	for (i=0 ; i<4 ; i++) {
+		if ( !isdigit((int)(unsigned char)*s) ) {
 			Com_Printf ("Bad filter address: %s\n", s);
 			return false;
 		}
 
-		j = 0;
-		while (*s >= '0' && *s <= '9')
-			num[j++] = *s++;
+		for (j = 0;  isdigit((int)(unsigned char)*s); s++) {
+			if (j + 1 < sizeof(num))
+				num[j++] = *s;
+		}
 		num[j] = 0;
 		b[i] = atoi(num);
 		if (b[i] != 0)
@@ -697,10 +698,10 @@ qboolean StringToFilter (char *s, ipfilter_t *f) {
 			break;
 		s++;
 	}
-
+	
 	f->mask = *(unsigned *)m;
 	f->compare = *(unsigned *)b;
-
+	
 	return true;
 }
 
