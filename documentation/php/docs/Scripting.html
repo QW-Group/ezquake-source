@@ -1,0 +1,176 @@
+<p>Every game from Quake series has strong client-side scripting system.
+In modern QuakeWorld clients this has come even more far. In this client you can
+use (user) commands, (user) variables and macros in your scripts.</p>
+
+<p>Note: Advanced users may wish to skip to <a href="#advanced">Advanced
+scripting</a> section of this manual.</p>
+
+<h2>Basic scripting</h2>
+
+<h3>What is a script</h3>
+
+<p>Script is a piece of text your client understands. It means you can type
+that text into the <em>console</em> and after hitting <kbd>[Enter]</kbd>
+something happens. Example:<br />
+<code>/name superman</code><br />
+That piece of text will change your nickname to <em>superman</em> and other
+players can see you as <em>superman</em> in the scoreboard, etc.</p>
+
+<p>What have we used here:</p>
+<ul>
+<li>Forward slash - <kbd>/</kbd><br />This character tells your client
+that following text should be executed. Probably if you try to type
+only <code>name superman</code> in the console then the same thing will happen.
+That's because usualy (depends on your client settings) the client will first try
+to recognize if given text is a script. If this check is positive it will execute
+it and if the result is negative it will send that piece of text as a message
+to other players automatically.</li>
+<li>Variable - <kbd>name</kbd><br />
+<em>Name</em> is a variable. It contains your current nickname used in the game.</li>
+<li>string - <kbd>superman</kbd><br />
+That's the value we want to be saved into variable <code>name</code>.</li>
+</ul>
+
+<p>Since it's pretty boring to type long scripts containing many lines of
+stuff manually into console everytime, we are able to
+store it in a file which can be loaded on our request.
+QuakeWorld scripts are usualy stored in files with extension <kbd>.cfg</kbd>
+(which is not necessary) somewhere in your Quake directory. For a start it's good
+idea to place your configs into ID1 subdirectory, so it can be e.g.:<br />
+<code>C:\Quake\ID1\myscript.cfg</code><br />
+Such file is usually called "config" (abbrevation of "configuration file")
+or simply "script".</p>
+<p>In your client you can execute your script with command<br />
+<code>/exec myscript.cfg</code></p>
+<p>It is common that there are two types of ".cfg" files used in QuakeWorld:</p>
+<dl>
+  <dt>Configs</dt>
+  <dd>Series of all variables assignments and key bindings. In those files
+  players usually store their game configuration. You can save and load configs
+  with commands <code>cfg_save</code> and <code>cfg_load</code> but this manual
+  page is about something different:</dd>
+  <dt>Script</dt>
+  <dd>List of some commands you want to be done instantly - e.g. change some
+  keys bindings, change some of the graphic settings, create new advanced user 
+  commands.</dd>
+</dl>
+
+<p>This manual page will describe things you can use in your <strong>scripts</strong>.</p>
+
+<h3>Commands</h3>
+<p>Among simple commands like <code>/quit</code> (which will shut down your client) 
+there are commands with parameters. E.g.<br />
+<code>/demo_capture start 0:10 my.avi</code> will tell your client to
+start capturing new video file named "my.avi" and it will be 10 seconds long.</p>
+<p>Note that there are special types of commands with characters <kbd>+</kbd> and
+<kbd>-</kbd> as a first character. If you bind command with <kbd>+</kbd> to a key
+then the command will be executed when the key is pressed and same command but with
+<kbd>-</kbd> will be executed when the key is released.</p>
+<p>You can create your own commands using command<br />
+<code>alias new_command "command_definition"</code><br />
+Where <code>command_definition</code> is usually a string enclosed in quotes and it's a
+sequence of commands, user created
+commands and variables assignments separated by semicolons (<kbd>;</kbd>). E.g.:<br />
+<code>alias redteam "team red; color 4 4; ready"</code></p>
+
+<h3>Variables</h3>
+<p>Variables contain game settings. E.g. <code>name</code> contains your nickname,
+<code>volume</code> contains sound volume, etc.<br />By typing<br />
+<code>/&lt;variable_name&gt;</code> in the console the client will show you
+what is current value of that variable. E.g.<code>/name</code> will tell you
+what is your current nickname.<br />By typing <br />
+<code>/&lt;variable_name&gt; &lt;new_value&gt;</code> you will change the value
+of given variable. E.g. <code>/volume 0</code> will mute all game sounds.</p>
+
+<h2>Common scripts</h2>
+
+  <h3>Weapon scripts</h3>
+    <p>If you want to make your life as a QW player easier, you can start by using
+    a weapon script. What a weapon script does is that it selects the wanted weapon, and if it doesn't exist, it chooses the best weapon available. When you've fired the weapon it switches to the Shotgun or the Axe (cannot be dropped in backpack) to ensure that the enemy does not get a valuable weapon if he manages to kill you.</p>
+    <p>Example: this command will first try to select rocket launcher, then super-nailgun,
+    then super-shotgun and if you don't have even this weapon it will choose shotgun.<br />
+    <code>/impulse "7 5 3 2"</code></p>
+    <p>You can write all sorts of scripts, the only thing holding you back is your own imagination!</p>
+  <h3>Boomstick/Axe script</h3>
+  <p>What about not giving away the powerful Rocket Launcher? When you get fragged by another player he will get the weapon which you had selected last. If you are clever you would manually change to a weaker weapon before he kills you but you can make a script which does that for you in the heat of the battle.</p>
+  <pre><code>alias +rl "impulse 7;+attack"
+alias -rl "-attack;impulse 1"
+bind mouse1 "+rl"</code></pre>
+  <h3>Teamplay messages scripts</h3>
+  <p>Nowadays macros (see below) are used to create intelligent communication
+  messages with your team. This manual will explain you all scripting possibilities
+  but won't tell you how should such config look. You can find many popular
+  teamplay-messages configs
+  e.g. in <a href="http://www.quakeworld.nu/forum/">forums</a>.</p>
+
+
+<h2 id="advanced">Advanced scripting</h2>
+
+<h3>User-created variables</h3>
+<p>You can create your own variables with command<br />
+<code>/set variable_name value</code><br />
+and destroy them using<br />
+<code>/unset variable_name</code><br />
+You can of course check what the variable value is by typing it's name<br />
+<code>/variable_name</code><br />
+You can use the <strong>value</strong> of <strong>any variable</strong> using
+<code>$variable_name</code>, e.g.:<br />
+<code>/mp3_volume $volume</code> sets the sound volume of mp3 player to same level
+as the game volume, equals to<br />
+<code>/set mp3_volume $volume</code></p>
+
+<h3>Mathematical operations</h3>
+<p>This client allows you to use some basic mathematical operations on your variables
+using <code>set_calc</code> command:
+<code>set_calc &lt;cvar&gt; &lt;command&gt; &lt;command arguments&gt;<br />set_calc
+&lt;cvar&gt; &lt;argument1&gt; &lt;operator&gt; &lt;argument2&gt;</code><br />
+valid commands: <code>strlen int substr set_substr pos</code><br />
+valid operators: <code>+ - * / div %% and or xor</code>.<br />
+This feature was ported from QW262 QuakeWorld client.<br />
+For simple increasing and decreasing variables you can use command <code>/inc
+variable value</code>.</p>
+
+<h3>User-created commands with parameters</h3>
+<p>Example:<br />
+<code>alias cool_zoom "fov %1;sensitivity %2;v_viewheight %3;crosshaircolor %5";
+cool_zoom 30 3.2 -6 79</code><br />
+ported by from QW262.</p>
+
+<p>E.g.: <strong>zooming script</strong>:<br />
+<code>alias zoom "set_calc fov $fov * %1; set_calc sensitivity $sensitivity * %1"<br />
+bind "capslock" "zoom 0.5"</code></p>
+
+<h3>Macros</h3>
+<p>Macro is a special type of string that is replaced in your custom command with value
+given by <strong>state of the client or the game</strong>. It is very similar to accessing variable
+value by <kbd>$</kbd> character but you cannot change values of macros.</p>
+<p>Example:<br /><code>/exec my_$matchstatus.cfg</code><br />
+Will exec my_standby.cfg script when the server is in prewar mode or
+my_normal.cfg if you play a game.</p>
+<p>Here is full list of macros available in the last build of the client when
+writing this manual page:<br />
+$ammo, $armor, $armortype, $bestammo, $bestweapon, $cells, $connectiontype,
+$date, $deathloc, $demoplayback, $droploc, $droptime, $health, $latency, $ledpoint,
+$ledstatus, $location, $matchname, $matchstatus, $matchtype, $mp3info, $nails, $need,
+$point, $pointatloc, $pointloc, $powerups, $qt, $rockets, $shells, $tf_skin, $time,
+$took, $tookatloc, $tookloc, $triggermatch, $weapon, $weaponnum, $weapons</p>
+<p>Note that usage of many macros is very limited to prevent making
+the scripting possibilies not so powerful in gameplay. In Smackdown Ruleset you are
+able to use macros only in combination with "if", "say" and "say_team" commands.</p>
+
+<h3>Conditions</h3>
+<p>You can use <kbd>if</kbd> construct in your scripts with following syntax:<br />
+<code>
+if <var>&lt;expr1&gt;</var> &lt;operator&gt; <var>&lt;expr2&gt;</var> &lt;command1&gt;
+[else &lt;command2&gt;]
+</code><br />
+where <var>expr1</var> and <var>expr2</var> is a string where you usually use
+your own text, macros, and values of variables (see above, e.g. $volume). As an operator you can use
+one of the following: <code>==, =, !=, &lt;&gt;, &gt;, &lt;, &gt;=, &lt;=, isin, !isin</code>
+where <code>==</code> and <code>=</code> means "equals", <code>!=</code> and
+<code>&lt;&gt;</code> means "doesn't equal", <code>&lt;, &gt;, &lt;=, &gt;=</code>
+means "less than", "greater than", "less or equal", "greater of equal" and finally<br />
+<code>isin</code> means "<var>expr1</var> is a substring of <var>expr2</var>" and
+<code>!isin</code> is a negation of this.<br />
+The [else ...] part is optional and if used command2 will be executed only when
+the main condition is false.</p>

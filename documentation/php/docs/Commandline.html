@@ -1,0 +1,785 @@
+<p>Based on FuhQuake documentation &copy; Goljat.</p>
+
+
+<h4 class="option">
+-allow360
+</h4>
+<p>
+The default behaviour is: We only have room for 15 fullscreen modes, so don't allow 360-wide modes, because if there are 5 320-wide modes and
+5 360-wide modes, we'll run out of space.
+Using this commandline option you can change this behaviour.
+</p>
+
+<h4 class="option">
+-allowmultiple
+</h4>
+<p>
+Allows multiple instances of client. Allowed only in debug builds.</p>
+
+<h4 class="option">
+-autostretch
+</h4>
+<p>
+This switch enables the stretching of the screen through pixel doubling when 
+using high resolutions.
+</p>
+
+<h4 class="option">
+-basedir
+</h4>
+<p>
+This switch sets the location of the game data files. You can use this switch to 
+keep the executable files separate of the game files and then use this command 
+to point the game executable at the location of the game files. This might be 
+useful on networked file systems so that only one copy of the game files is kept 
+while people can use their own executable to run the game. This switch is 
+very similar to the "-path" switch.<br />
+Example:<br /><code>
+ezquake.exe -basedir c:\games\quake<br />
+ezquake.exe -basedir /usr/quake</code>
+</p>
+
+<h4 class="option">
+-bpp (16/24/32) *gl only*
+</h4>
+<p>
+This switch allows you to specify how many bits per pixel should be used.
+ezquake-gl.exe -bpp 32
+</p>
+
+<h4 class="option">
+-cdaudio
+</h4>
+<p>
+Enable Quake's ability to play CDs.</p>
+
+<h4 class="option">
+-cddev (device)
+</h4>
+<p>
+CD device, default is /dev/cdrom 
+</p>
+
+<h4 class="option">
+-cheats
+</h4>
+<p>
+Enable to use cheats (need server support).
+</p>
+
+<h4 class="option">
+-clientport &lt;port&gt;
+</h4>
+<p>
+Allows you to run client on different port than default 27001.
+</p>
+
+<h4 class="option">
+-conbufsize &lt;size_kb&gt;
+</h4>
+<p>
+Sets the console buffer size in kilobytes. Default is 64 kB. Maximum is 4 MB.</p>
+
+<h4 class="option">
+-condebug 
+</h4>
+<p>
+This switch enables logging of the console text in the "qconsole.log" file in 
+the quake/qw/ directory. This is very useful if you are trying to catch bugs in 
+the game. You can also use this command to keep a log of all the conversations 
+that go on when you play on a server.
+</p>
+
+<h4 class="option">
+-conheight *gl only*
+</h4>
+<p>
+This switch specifies the vertical resolution for the console screen.<br />
+<em>Note:</em> You can use this command to stretch the size of the console to the actual 
+      screen resolution in order to prevent the squashed font look. When you use 
+      this command you should also use the -conwidth command to specify the 
+      horizontal resolution.<br />
+Example:<br /><code>
+ezquake-gl.exe -conwidth 800 -conheight 600<br />
+ezquake-gl.exe -conwidth 640 -conheight 480</code>
+</p>
+
+<h4 class="option">
+-conwidth *gl only*
+</h4>
+<p>
+This switch will set the width of the console screen based on the resolution 
+specified.<br />
+Example: <code>
+ezquake-gl.exe -conwidth 640</code>
+</p>
+
+<h4 class="option">
+-current *gl only*
+</h4>
+<p>
+This switch can be used to start the game in the current video mode for OpenGL.
+</p>
+
+<h4 class="option">
+-dedicated
+</h4>
+<p>
+Support for dedicated "pingers", which can be set up on your isp or some close 
+by server on a fat pipe to do all the server pinging for you 
+</p>
+
+<h4 class="option">
+-detailtrails
+</h4>
+<p>More detailed particle trails. (VULT particles)</p>
+
+<h4 class="option">
+-dibonly 
+</h4>
+<p>
+Description: Enable windowed video modes only.
+</p>
+
+<h4 class="option">
+-dinput
+</h4>
+<p>
+This switch enables the use of DirectInput. This is necessary when using 
+Advanced Mouse Smoothing for example.
+</p>
+
+<h4 class="option">
+-game
+</h4>
+<p>
+Same as gamedir for server.
+</p>
+
+<h4 class="option">
+-gamma
+</h4>
+<p>
+Change the gamma. 
+</p>
+
+<h4 class="option">
+-force *gl only*
+</h4>
+<p>
+This switch will force the client to start up in the specified video mode.<br />
+Note: You can use the "vid_modelist" command to obtain a list of all the 
+      available OpenGL video modes.<br />
+Example: <code>ezquake-gl.exe -force 2</code>
+</p>
+
+<h4 class="option">
+-forceTextureReload
+</h4>
+<p>
+Forces reloading textures.</p>
+
+<h4 class="option">
+-fullsbar *gl only*
+</h4>
+<p>
+Enable the refreshing of the full status bar. <br />
+Note: Normally the game will not refresh the full status bar, only the parts 
+of it that change. This can sometimes cause flicker when a number changes on 
+the status bar. When you use this parameter the status bar will be rendered 
+with every frame thus it will remain refreshed all the time. 
+</p>
+
+<h4 class="option">
+-fullscreen
+</h4>
+<p>
+Linux (glx) only. Fullscreen mode.
+</p>
+
+<h4 class="option">
+-gl_ext
+</h4>
+<p>
+Prints loaded OpenGL extensions into the console on startup.
+</p>
+
+<h4 class="option">
+-heapsize (0..128000)
+</h4>
+<p>
+This switch will specify the amount of memory in kilobytes allocated for Quake.<br />
+Note: You might need to use this parameter when playing on or developing large 
+      maps which require a lot of memory. Also if you start receiving the 
+      microchip icon on your game screen you might need to use this parameter to 
+      allocate more memory for the game.<br />
+Example: <code>
+ezquake-gl.exe -heapsize 24576</code>
+</p>
+
+<h4 class="option">
+-height *gl only*
+</h4>
+<p>
+This switch specifies the width of the video resolution to run the game in.<br />
+Note: You should also use the "-width" parameter when using this parameter to 
+      specify the horizontal resolution.<br />
+Example: <code>
+ezquake-gl.exe -width 512 -height 384</code>
+</p>
+
+<h4 class="option">
+-ip
+</h4>
+<p>
+Server command.
+</p>
+
+<h4 class="option">
+-joystick
+</h4>
+<p>
+Enable the joystick.
+</p>
+
+<h4 class="option">
+-m_mwhook
+</h4>
+<p>
+Allows you to bind up to eight mouse buttons on Logitech mouse. You have to use MouseWare. You must have mw_hook.dll in your quake dir (same dir where the game executables are). Works both when using -dinput and not using -dinput. The idea of doing this originally came from [EZH]FAN. It was first implemented by BorisU in qw262.</p>
+
+<h4 class="option">
+-m_smooth
+</h4>
+<p>
+This is meant to smooth your mouse movements and maximize mouse responsiveness. 
+If you're unlucky and cannot get rate 200 with your mouse/windows/drivers, and 
+don't want to use m_filter, because of the latency it brings to your movements, 
+then this is for you. However, also if you have a smooth mouse with 200 Hz 
+sample rate you can give it a try.<br />
+Requirements:</p>
+<ul><li>"-dinput" in your command-line (currently it only works with direct input, 
+  but that may change in future</li>
+<li>"-m_smooth" in your command-line</li>
+<li>your mouse rate must be at least as high as the FPS you play at, or your mouse 
+  will still move roughly (if you use PS2 mouse and Win9X try ps2rate)</li>
+<li>"m_rate &lt;rate&gt; must be set to your mouse rate (use "m_showrate 1" if you are
+  not sure)</li>
+</ul>
+
+<h4 class="option">
+-maxtmu2
+</h4>
+<p>
+Prevents using more than two texture units.
+</p>
+
+<h4 class="option">
+-nomp3volumectrl
+</h4>
+<p>
+Disables control of volume of mp3 player.
+</p>
+
+<h4 class="option">
+-mdev
+</h4>
+<p>
+Mouse device, default is /dev/mouse
+</p>
+
+<h4 class="option">
+-mem
+</h4>
+<p>
+Specify memory in megabytes to allocate (default is 8MB, which should be fine for most needs). 
+</p>
+
+<h4 class="option">
+-minmemory 
+</h4>
+<p>
+This switch allows you to define the minimum amount of memory that should be
+allocated for Quake.<br />
+Example: <code>
+ezquake-gl.exe -minmemory 16000</code><br />
+Note: It is best to leave this parameter alone and instead use the "-heapsize" 
+      parameter to specify the amount of memory that the game can use.
+</p>
+
+<h4 class="option">
+-mmt
+</h4>
+<p>
+Linux only. Enables <a href="?evdev">EVDEV support</a>.
+</p>
+
+<h4 class="option">
+-mode *gl only*
+</h4>
+<p>
+This switch is used to specify the video mode that GLMQWCL should start up in.
+</p>
+
+<h4 class="option">
+-mrate
+</h4>
+<p>
+Svgalib stuff (Linux)
+</p>
+
+<h4 class="option">
+-no24bit
+</h4>
+<p>Prevents loading 24-bit textures, charsets, images, etc.</p>
+
+<h4 class="option">
+-noadjustaspect
+</h4>
+<p>
+When not used, client uses following algorithm adjusting the size of the screen: If the width is more than twice the height, reduce it by half because this is probably a dual-screen monitor.
+If this command line option is used then this algorithm will be disabled.
+</p>
+
+ 
+<h4 class="option">
+-noconinput
+</h4>
+<p>
+Linux server stuff.
+</p>
+
+<h4 class="option">
+-nodga
+</h4>
+<p>
+Linux only. Do not use direct (mouse, keyboard) input.
+</p>
+
+<h4 class="option">
+-nodirectdraw
+</h4>
+<p>
+This switch will disable support for DirectDraw video modes.
+</p>
+
+<h4 class="option">
+-noforcemaccel 
+</h4>
+<p>
+Description: Disable the forcing of mouse acceleration on startup.<br />
+Note: This parameter should only be used if you experience problems with the 
+      mouse.
+</p>
+
+<h4 class="option">
+-noforcemparms
+</h4>
+<p>
+Description: Disable the forcing of mouse parameters on startup.<br />
+Note: This parameter should only be used if you experience problems with the 
+      mouse.
+</p>
+
+<h4 class="option">
+-noforcemspd
+</h4>
+<p>
+Description: Disable the forcing of mouse speed on startup.<br />
+Note: This parameter should only be used if you experience problems with the 
+      mouse.
+</p>
+
+<h4 class="option">
+-noforcevga
+</h4>
+<p>
+Description: Disable the forcing of the VGA 0x13 video mode on startup.
+</p>
+
+<h4 class="option">
+-nofulldib [SOFT]
+</h4>
+<p>
+This will disable fullscreen, borderless window video modes.<br />
+Note: DIB full screen modes are nothing more than window display modes which 
+      have been sized to the exact size of the screen. This parameter will 
+      disable support for such modes.
+</p>
+
+<h4 class="option">
+-nohwgamma *gl only*
+</h4>
+<p>
+Disables hardware gamma control.
+</p>
+
+<h4 class="option">
+-nohwtimer
+</h4>
+<p>
+turns off new precise timer and returns back old behaviourturns off new 
+precise timer and returns back old behaviour
+</p>
+
+<h4 class="option">
+-nomdga
+</h4>
+<p>
+Linux (glx) only. Do not use direct keyboard input.
+</p>
+
+<h4 class="option">
+-nokbd
+</h4>
+<p>
+Disables the keyboard.
+</p>
+
+<h4 class="option">
+-nolibjpg
+</h4>
+<p>
+Prevents loading library for writing .jpg images.</p>
+
+<h4 class="option">
+-nolibpng
+</h4>
+<p>
+Prevents loading library for writing .png images.</p>
+
+<h4 class="option">
+-nomdga
+</h4>
+<p>
+Linux (glx) only. Do not use direct mouse input.
+</p>
+
+<h4 class="option">
+-nomouse 
+</h4>
+<p>
+This switch will disable mouse support. Using this switch will increase your
+FPS, but obviously the disadvantage of having to play without mouse will in
+almost every case outweigh the FPS gain.
+</p>
+
+<h4 class="option">
+-nomtex
+</h4>
+<p>
+This extension will be autodetected and used.  If for some reason it is not
+working correctly, specify the command line option "-nomtex" to disable it.
+Should disable waterfog.
+</p>
+
+<h4 class="option">
+-nopriority
+</h4>
+<p>
+Server for Win32 automatically sets itself as a high priority task (HIGH_PRIORITY_CLASS). 
+This is necessary for avoiding high PL when playing on localhost under Windows9x. 
+If you desire to turn this feature off, launch the server with -nopriority command-line 
+parameter. By the way, the reason for high ping (when QW2.30 server is running under Windows9x) 
+was eliminated. Server uses 32 Megabytes of memory by default.
+</p>
+
+<h4 class="option">
+-noscripts
+</h4>
+<p>
+Disables usage of movement scripts, sets allow_scripts 0 and puts information about client not using scripts in userinfo string.
+</p>
+
+<h4 class="option">
+-noshadows
+</h4>
+<p>Different map lighting mode. Not allowed in usual games.</p>
+
+<h4 class="option">
+-nosockraw
+</h4>
+<p>
+Disables usage of different pinging method (for Server Browser).
+</p>
+
+<h4 class="option">
+-nosound 
+</h4>
+<p>
+This switch will disable sound support. Using this switch will increase your
+FPS, but obviously the disadvantage of having to play without sound will in
+almost every case outweigh the FPS gain.
+</p>
+
+<h4 class="option">
+-nostdout
+</h4>
+<p>
+This behavior can be modified using the -nostdin or -allstdin flags. 
+Standard output and error are also forwarded to mpiexec, allowing redirection 
+of the outputs of all processes. This can be turned off using -nostdout so that 
+the standard output and error streams go through the normal PBS mechanisms, to the 
+batch job output files, or to your terminal in the case of an interactive job.
+</p>
+
+<h4 class="option">
+-noswapctrl
+</h4>
+<p>
+When used prevents loading Vsync control extensions.
+</p>
+
+<h4 class="option">
+-notriplebuf
+</h4>
+<p>
+This switch will disable triple-buffer page flipping for the video.<br />
+Note: This parameter will disable support for triple buffer thus it will make 
+      the performance of the Accelerated VESA video drivers similar to the 
+      Linear VESA drivers.
+</p>
+
+<h4 class="option">
+-novbeaf
+</h4>
+<p>
+This command line switch will disable support for the Accelerated VESA video 
+modes.
+</p>
+
+<h4 class="option">
+-nowd
+</h4>
+<p>
+Disable support for VESA video modes in favor of DirectX DirectDraw video modes.
+</p>
+
+<h4 class="option">
+-novesa
+</h4>
+<p>
+This command line switch will disable support for all VESA video modes.
+</p>
+
+<h4 class="option">
+-nowindirect
+</h4>
+<p>
+This switch will disable support for VESA video modes in favor of DirectX 
+DirectDraw video modes or windowed display.
+</p>
+
+<h4 class="option">
+-particles (0..5000)
+</h4>
+<p>
+This switch specifies the maximum number of particles to be rendered on the 
+screen at once.
+</p>
+
+<h4 class="option">
+-port
+</h4>
+<p>
+Set the port for game server.
+</p>
+
+<h4 class="option">
+-primarysound [WIN32]
+</h4>
+<p>
+This switch will force the client to use DirectSound's primary buffer output for 
+sound instead of secondary buffer output.<br />
+Note: Normally the game will use the secondary sound buffer because it is more 
+      compatible across more hardware. If you know that your hardware is 
+      100% DirectX DirectSound compliant you can use this setting in order to 
+      increase the performance of the game. However when you switch the focus 
+      away from QW (task-switch), you will lose sound output until you restart 
+      QW.
+</p>
+      
+<h4 class="option">
+-resetwinpos 
+</h4>
+<p>
+This switch will reset the position of the game window on the desktop. If the 
+game window will ever become inaccessible because it was moved beyond the 
+boundaries of the desktop you will have to use this command to reset the 
+position information for the game window. The position information is stored in 
+the "vid_window_x" and "vid_window_y" variables.
+</p>
+
+<h4 class="option">
+-ruleset <kbd>&lt;ruleset name&gt;</kbd>
+</h4>
+<p>
+Disables triggers,truelighting and enable to play with 77 fps on kteam server.<br />
+Example: <code>ezquake-gl.exe -ruleset smackdown</code>
+</p>
+
+<h4 class="option">
+-showliberrors
+</h4>
+<p>
+Prints all errors of loading modules.
+</p>
+
+<h4 class="option">
+-simsound 
+</h4>
+<p>
+This switch will disable sound playback but simulate sound playback for code 
+testing. When this switch is used the game will function as if sound is being 
+played back normally, except that the sound card will not be initialized and 
+nothing will be heard from the speakers. This command will cut off the sound 
+information right before it is about to leave to the sound card for processing. 
+This command was used for testing the sound code in the game.
+</p>
+
+<h4 class="option">
+-sndbits (8/16)
+</h4>
+<p>
+This defines how many sampling bits should be used, when using 16 bits the 
+interpolation quality will be better.
+</p>
+
+<h4 class="option">
+-snddev &lt;N&gt;
+</h4>
+<p>
+Allows you to choose from multiple sound devices.</p>
+
+<h4 class="option">
+-sndspeed (8000/11025/22050/44100/48000)
+</h4>
+<p>
+The client includes "sound interpolation" which allows it to play sounds at higher 
+frequencies, than the default 11025 Hz with perfect quality. In addition to 
+"-sndspeed" also "-sndbits" will have an influence on interpolation quality.
+This command-line allows you to choose the frequency you want to interpolate 
+the sounds to.
+You will quickly discover, that the shaft sound is different at increased 
+sampling rate. That's because shaft sounds were recorded at 22050 kHz, so 
+probably that's how they should sound from the beginning. If you don't like 
+it, you can always convert them to 11025.
+</p>
+
+<h4 class="option">
+-sndmono
+</h4>
+<p>
+Use the mono sound system (Linux)
+</p>
+
+<h4 class="option">
+-sndstereo
+</h4>
+<p>
+Use the stereo sound system (Linux)
+</p>
+
+<h4 class="option">
+-snoforceformat 
+</h4>
+<p>
+This switch will disable the forcing of the soundcard into the appropriate sound 
+mode.<br />
+Note: When this parameter is used the game will not try to force the sound card 
+      into the 11,025Hz at 16-bit stereo sound mode. Use this parameter if you 
+      are having problems with the sound initialization for your sound card.
+</p>
+
+<h4 class="option">
+-startwindowed
+</h4>
+<p>
+Same as "-window" option.
+</p>
+
+<h4 class="option">
+-surfcachesize
+</h4>
+<p>
+This switch sets the amount of memory in kilobytes that should be allocated in 
+kilobytes for the surface cache.<br />
+Note: It is not necessary to use this parameter by default because the game will 
+      automatically allocate the necessary amount of memory for storing 
+      textures.
+</p>
+
+<h4 class="option">
+-use8bit
+</h4>
+<p>
+Enable 8bit mode,
+</p>
+
+<h4 class="option">
+-wavonly
+</h4>
+<p>
+This switch is used to disable DirectSound support in favor of WAV playback. If 
+your sound card does not support DirectX DirectSound then you will need to 
+specify this parameter in order to force the game into use the Windows wave only 
+sound output. You can also try this switch when having sound problems, however 
+there will be a considerable loss in performance when using this parameter and
+the sound latency will be increased greatly, but at least you may be able to hear 
+sounds.
+</p>
+
+<h4 class="option">
+-width *gl only*
+</h4>
+<p>
+This switch specifies the width of the video resolution to run the game in.<br />
+Note: You also need the -height command.<br />
+Example: <code>
+ezquake-gl.exe -width 512 -height 384</code>
+</p>
+
+
+<h4 class="option">
+-window *gl only* 
+</h4>
+<p>
+This switch forces OpenGL verion of the client to run in a windowed mode.</p>
+
+
+<h4 class="option">
+-winsize
+</h4>
+<p>
+Set the winsize (Linux?)
+</p>
+
+<h4 class="option">
+-v_hz
+</h4>
+<p>
+Linux (glx) only.
+</p>
+
+<h4 class="option">
+-verbose
+</h4>
+<p>
+Linux stuff
+</p>
+
+<h4 class="option">
+-visualid
+</h4>
+<p>
+Linux stuff
+</p>
+
+<h4 class="option">
+-zone
+</h4>
+<p>
+This switch is used to allocate additional memory to the alias memory space.
+It is usually necessary when loading large scripts.
+It's already built to the client so you dont need this commandline command.
+</p>

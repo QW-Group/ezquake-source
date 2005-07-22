@@ -1,0 +1,629 @@
+<p>Since version 1000 we've ported MQWCL customizable HUD. To enable new HUD,
+you have to type <code>/scr_newhud 1</code> - which disables FuhQuake-originated 
+HUD. If you're missing some features of FuhQuake HUD, you can combine those two HUDs
+using <code>/scr_newhud 2</code>.<br />Following text is based upon MQWCL HUD readme.</p>
+<p>
+This client allows you to modify your HUD as you wish, you can
+choose which HUD elements to draw, where to draw them, how to draw them and 
+how large to draw them. This flexibility comes at a price though, it usually
+takes a while to understand how to work with the HUD system, but once you've
+managed that, it will be great fun to design your very own Quake HUD.<br />
+Check the examples throughout this document, if you have any problems with
+understanding the HUD system.</p>
+
+
+<h2>Contents of this document:</h2>
+<ol>
+<li><a href="#what-is-a-hud-element">What is a HUD element?</a></li>
+<li><a href="#showing-and-hiding">Showing and hiding</a></li>
+<li><a href="#moving-hud-elements">Moving HUD elements</a><ol>
+   <li><a href="#possible-places">Possible places</a></li>
+   <li><a href="#x-alignment">X-alignment</a></li>
+   <li><a href="#y-alignment">Y-alignment</a></li>
+   <li><a href="#relative-positioning">Relative positioning</a></li>
+   <li><a href="#add-remove-frame">Add/remove frame</a></li>
+</ol></li>
+<li><a href="#hud-elements">HUD elements</a><ol>
+   <li><a href="#armordamage">armordamage</a></li>
+   <li><a href="#clock">clock</a></li>
+   <li><a href="#frags">frags</a></li>
+   <li><a href="#fps">fps</a></li>
+   <li><a href="#healthdamage">healthdamage</a></li>
+   <li><a href="#net">net</a></li>
+   <li><a href="#netgraph">netgraph</a></li>
+   <li><a href="#ping">ping</a></li>
+   <li><a href="#speed">speed</a></li>
+   <li><a href="#teamfrags">teamfrags</a></li>
+   <li><a href="#tracking">tracking</a></li>
+</ol></li>
+<li><a href="#hud-variables">HUD variables</a><ol>
+   <li><a href="#hud-planmode">hud_planmode &lt;0|1|2&gt;</a></li>
+   <li><a href="#hud-tp-need">hud_tp_need &lt;0|1&gt;</a></li>
+</ol></li>
+</ol>
+                               
+<h2 id="what-is-a-hud-element">
+What is a HUD element?
+</h2>
+
+<p>A HUD element is a single 2D element, that can be drawn on-screen, moved to
+different positions, aligned etc. For most HUD elements it's also possible to
+display a frame in the background behind them.</p>
+
+<p>Every HUD element has a name which is a string, like "netgraph", "fps" etc..
+You use that name in HUD commands, like "show netgraph". The HUD element used
+remembers all its settings (its properties) as variables, which are named
+hud_&lt;hud_name&gt;_&lt;property_name&gt;.</p>
+
+<p>Examples:</p>
+
+<dl>
+<dt>hud_netgraph_frame</dt><dd>This will display the current setting for the netgraph 
+                       frame</dd>
+<dt>hud_ping_period</dt><dd>This will determine how often the ping display will be 
+                       updated.</dd>
+</dl>
+
+<p>Changing a property of an element is simple. Obviously, a simple way to do this
+is changing the appropriate variable, however there is a more convenient way:
+try typing the element name at console, like this:<br />
+
+<kbd>netgraph [ENTER]</kbd><br />
+
+You will see some infos about netgraph and a list of its properties with its
+current values. If you want to change some - it's easy:</p>
+
+<dl>
+<dt>netgraph frame 0</dt><dd>This will disable the background graphic drawn behind the
+                   netgraph.</dd>
+<dt>netgraph show 0</dt><dd>This will disable that the netgraph is displayed (same as 
+                   hide "netgraph").</dd>
+</dl>
+
+<p>It's possible to use TAB completion for HUD properties, so if you type
+"netgraph inf" and press [TAB], it should complete. All variables for HUD 
+elements (hud_*_*) are hidden.</p>
+
+<p>Some properties (like "show") are controlled by commands (like "show" and
+"hide"). Some of them (those for setting element position) will not have a
+effect if you change them directly by variables. If you do so and you see no
+change, try the "hud_recalculate" command.</p>
+
+
+<h2 id="showing-and-hiding">
+Showing and hiding
+</h2>
+
+<p>To show a certain HUD element, use the "show" command with the element name as
+a parameter. Giving no parameters will display a list of all HUD elements with
+their current status. There is a special parameter "all" which you can use to 
+show all elements. </p>
+
+<p>Examples: </p>
+
+<dl>
+<dt>show netgraph</dt><dd>This will display the netgraph.</dd>
+<dt>show fps</dt><dd>This will display your current FPS.</dd>
+<dt>show</dt><dd>This will print a list of all HUD elements on the
+    	        console as well as their current settings.</dd>
+<dt>show all</dt><dd>This will display all hud elements.</dd>
+</dl>
+
+<p>The opposite to "show" is the command "hide", which obviously hides the 
+specified HUD element. The current status is remembered as a "show" property,
+so typing "show netgraph" will have the same effect as typing 
+"netgraph show 1".</p>
+
+
+<h2 id="moving-hud-elements">
+Moving HUD elements
+</h2>
+
+<p>When you want to move a certain HUD element, first you have to decide what
+screen area it occupies, the command used for placing a HUD element is:
+"place &lt;element-name&gt; &lt;where-to-place&gt;".</p>
+
+
+<h3 id="possible-places">
+Possible places
+</h3>
+
+<dl>
+<dt>screen</dt><dd>visible part of the screen</dd>
+<dt>view</dt><dd>view area (depends on viewsize variable)</dd>
+<dt>top</dt><dd>area above status bar</dd>
+<dt>sbar</dt><dd>status bar area (health bar + inventory bar, no free space after sbar,
+         if you play at higher res)</dd>
+<dt>ibar</dt><dd>inventory bar (upper part of sbar)</dd>
+<dt>hbar</dt><dd>health bar (lower part of sbar)</dd>
+<dt>sfree</dt><dd>free area after status bar (if res &gt; 320 or hud_sbar_size changed)</dd>
+<dt>ifree</dt><dd>free area after inventory bar</dd>
+<dt>hfree</dt><dd>free area after health bar</dd>
+</dl>
+
+<p>Examples:</p>
+
+<dl>
+<dt>place netgraph screen</dt><dd>place the netgraph on the screen</dd>
+<dt>place fps top</dt><dd>place the fps in the area above the status bar</dd>
+<dt>place health hfree</dt><dd>place te health in the free area next to the health bar</dd>
+</dl>
+
+<p>If you have a place for your favorite element, align it to some edges. The
+command is "align &lt;element-name&gt; &lt;X-alignment&gt; &lt;Y-alignment&gt;".</p>
+
+
+<h3 id="x-alignment">
+X-alignment
+</h3>
+
+<dl>
+<dt>left</dt><dd>left edge of area chosen by "place"</dd>
+<dt>center</dt><dd>center</dd>
+<dt>right</dt><dd>right area</dd>
+<dt>before</dt><dd>explained later in this document</dd>
+<dt>after</dt><dd>explained later in this document</dd>
+</dl>
+
+<h3 id="y-alignment">
+Y-alignment
+</h3>
+
+<dl>
+<dt>top</dt><dd>top edge</dd>
+<dt>center</dt><dd>center</dd>
+<dt>bottom</dt><dd>bottom</dd>
+<dt>console</dt><dd>below console (like clock by default)</dd>
+<dt>before</dt><dd>explained later in this document</dd>
+<dt>after</dt><dd>explained later in this document</dd>
+</dl>
+
+<table class="values">
+<caption>Examples:</caption>
+<tr><td>align netgraph left top</td><td>left upper corner</td></tr>
+<tr><td>align fps right bottom</td><td>right lower corner</td></tr>
+</table>
+
+
+<p>Finally, if the element position still does not match your preferences, you can
+fine-tune it by using the command "move &lt;element_name&gt; &lt;X-offset&gt; &lt;Y-offset&gt;".
+Offsets can be either negative or positive. Setting a positive X-offset moves
+the element to the right, and a positive Y-offset moves the element to the 
+bottom.</p>
+
+<table class="values">
+<caption>Examples:</caption>
+<tr><td>move netgraph 2 2</td><td>move the netgraph 2 pixels right and 2 pixels down</td></tr>
+<tr><td>move fps -10 5</td><td>move the FPS 10 pixels left and 5 pixels down</td></tr>
+</table>
+
+<p>Note that your element will not be drawn, if you locate it off the screen, even
+partially.</p>
+
+<p>All those commands ("place", "align", "move") can be used without parameters,
+(print help then) or with on parameter - HUD element name. Then current
+values are printed.</p>
+
+<h3 id="relative-positioning">
+Relative positioning
+</h3>
+
+<p>You can align some elements relative to other elements. First you have to
+decide, if the element that you are locating now (element B) is to be positioned
+inside another element (element A) or outside it.</p>
+
+<table class="values">
+<tr><td>If inside do</td><td>place A @B</td></tr>
+<tr><td>If outside do</td><td>place A B</td></tr>
+</table>
+
+<p>Examples:</p>
+
+<ul>
+<li>place fps @net</li>
+<li>place health face</li>
+<li>place iammo health</li>
+<li>place ammo iammo</li>
+</ul>
+
+<p>Then you have to align it. If you want to place it outside, you have
+some additional alignments - before and after.</p>
+
+<p>Examples: </p>
+
+<ul>
+<li>place health after top</li>
+<li>place iammo after top</li>
+<li>place ammo after top</li>
+</ul>
+
+<p>and you have a nice chain combined of health, armor and it's icons.</p>
+
+<p>The difference between inside and outside placing can easily be seen if you add 
+a frame to your elements and enlarge them (for example by using frame 2).</p>
+
+
+<h3 id="add-remove-frame">
+Add/remove frame
+</h3>
+
+<p>Frame is a regular property, it differs a little because every HUD element
+can have a frame. Values for frame property are:</p>
+
+<table class="values">
+<tr><td>0</td><td>no frame</td></tr>
+<tr><td>(0..1)</td><td>transparent frame, lower number means more transparency</td></tr>
+<tr><td>1</td><td>black frame</td></tr>
+<tr><td>2</td><td>a box like that for netgraph</td></tr>
+</table>
+
+<p>Examples:</p>
+
+<dl>
+<dt>net frame 2</dt><dd>add nice frame for network statistics</dd>
+<dt>netgraph frame 0</dt><dd>make netgraph more useful</dd>
+<dt>fps frame 0.6</dt><dd>make FPS more readable</dd>
+</dl>
+
+<h3 id="hud-elements">
+HUD elements
+</h3>
+
+<p>Currently the list of HUD elements contains few elements for occasional use
+(like netgraph), many elements taken from your status bar (reorganize your
+screen with them) and additional "group" objects, which display nothing (except
+frame if enabled) and can be used for grouping some objects together (like ammo
+counts).</p>
+
+<table class="values"><caption>Full list is:</caption>
+<tr><td>ammo</td><td>current ammo value</td></tr>
+<tr><td>ammo1</td><td>number of shells</td></tr>
+<tr><td>ammo2</td><td>number of nails</td></tr>
+<tr><td>ammo3</td><td>number of rockets</td></tr>
+<tr><td>ammo4</td><td>number of cells</td></tr>
+<tr><td>armor</td><td>armor level</td></tr>
+<tr><td>armordamage</td><td>amounf of received damage to armor</td></tr>
+<tr><td>clock</td><td>clock</td></tr>
+<tr><td>face</td><td>player face</td></tr>
+<tr><td>fps</td><td>fps counter</td></tr>
+<tr><td>frags</td><td>small scoreboard</td></tr>
+<tr><td>group1</td><td>grouping object</td></tr>
+<tr><td>group2</td><td>grouping object</td></tr>
+<tr><td>group3</td><td>grouping object</td></tr>
+<tr><td>group4</td><td>grouping object</td></tr>
+<tr><td>group5</td><td>grouping object</td></tr>
+<tr><td>gun</td><td>current weapon icon</td></tr>
+<tr><td>gun2</td><td>shotgun icon</td></tr>
+<tr><td>gun3</td><td>super shotgun icon</td></tr>
+<tr><td>gun4</td><td>nailgun icon</td></tr>
+<tr><td>gun5</td><td>super nailgun icon</td></tr>
+<tr><td>gun6</td><td>grenade launcher icon</td></tr>
+<tr><td>gun7</td><td>rocket launcher icon</td></tr>
+<tr><td>gun8</td><td>lightning gun icon</td></tr>
+<tr><td>health</td><td>health level</td></tr>
+<tr><td>healthdamage</td><td>amounf of received damage to health</td></tr>
+<tr><td>iammo</td><td>current ammo icon</td></tr>
+<tr><td>iammo1</td><td>shells icon</td></tr>
+<tr><td>iammo2</td><td>nails icon</td></tr>
+<tr><td>iammo3</td><td>rockets icon</td></tr>
+<tr><td>iammo4</td><td>cells icon</td></tr>
+<tr><td>iarmor</td><td>armor icon</td></tr>
+<tr><td>key1</td><td>silver key</td></tr>
+<tr><td>key2</td><td>gold key</td></tr>
+<tr><td>net</td><td>net statistics</td></tr>
+<tr><td>netgraph</td><td>everything about net</td></tr>
+<tr><td>pent</td><td>pentagram icon</td></tr>
+<tr><td>ping</td><td>small net statistics</td></tr>
+<tr><td>quad</td><td>quad icon</td></tr>
+<tr><td>ring</td><td>ring icon</td></tr>
+<tr><td>sigil1</td><td>sigil 1 icon (rune)</td></tr>
+<tr><td>sigil2</td><td>sigil 2 icon</td></tr>
+<tr><td>sigil3</td><td>sigil 3 icon</td></tr>
+<tr><td>sigil4</td><td>sigil 4 icon</td></tr>
+<tr><td>speed</td><td>your current speed</td></tr>
+<tr><td>suit</td><td>suit icon</td></tr>
+<tr><td>teamfrags</td><td>number of frags per team</td></tr>
+<tr><td>tracking</td><td>name of tracked player</td></tr>
+</table>
+
+<p>Every element has its own properties. You can check them, by simply typing the
+element name in console. Some common properties are described below, which
+affect your inventory elements (guns, health etc):</p>
+
+<dl>
+<dt>align</dt><dd>used for numbers (health, armor etc..) and determines how they should
+         be aligned</dd>
+
+<dt>digits</dt><dd>used for numbers and specify how many digits they should display,
+         for example to save space, you can have your ammo printed only with
+         two digits, it will always show 99 if is more than 100</dd>
+
+<dt>frame</dt><dd>You can set the opacity of background of current element where 0
+         equals transparent background and 1 is solid background.</dd>
+
+<dt>scale</dt><dd>This is mostly for GL users and currently it doesn't work in the
+         software renderer. This lets you change the size of an element, for
+         example you can make health 2 times bigger.
+         With scale you can make a HUD that looks like in 320x200 (big numbers)
+         and still have -width 640 without conwidth, so your console holds more
+         text.</dd>
+
+<dt>style</dt><dd>This always changes the look of the element, styles are different, 
+         depending on the element type. Usually there is one style which, when 
+         enabled, enables text-mode look of element (like gun6 is "gl", health
+         level with small text etc.). Style values are cardinal numbers 
+         (0, 1, ...).</dd>
+
+<dt>wide</dt><dd>only used with "gun" and "gun8" and affects style of lightning gun
+         icon</dd>
+</dl>
+
+<p>Grouping elements have only two properties (width and height), they should be 
+self-explanatory.</p>
+
+
+<h2>
+Specific HUD elements
+</h2>
+
+<p>Below are some HUD elements that may be of interest. All of them have the 
+property "frame" even though it is not listed. You can check the status of 
+properties of a certain element by typing "&lt;name of the HUD element&gt; 
+&lt;property&gt;".</p>
+
+<p>Examples:</p>
+
+<ul>
+<li>clock style</li>
+<li>fps frame</li>
+</ul>
+
+<p>You can change their value with "&lt;name of the HUD element&gt; &lt;property&gt; &lt;value&gt;".</p>
+<p>Examples:</p>
+
+<ul>
+<li>fps frame 1</li>
+<li>ping period 0.5</li>
+</ul>
+
+<p>Also all of the below elements have +/- commands to enable/disable them 
+for easier binding. These commands always look like this: "+hud_&lt;name&gt;".</p>
+
+<p>Examples:</p>
+
+<ul>
+<li>+hud_netgraph</li>
+<li>+hud_speed</li>
+</ul>
+
+<h3 id="armordamage">
+armordamage
+</h3>
+<p>Displays amount of damage done to your armour.</p>
+<p>Properties are:</p>
+<dl>
+  <dt>duration</dt>
+  <dd>Adjusts the period of time after which the information vanishes from the screen.</dd>
+</dl>
+
+
+<h3 id="clock">
+clock
+</h3>
+
+<p>This displays the current local time (hh:mm). As stated above, it is a HUD 
+element.</p>
+
+<table class="values">
+<caption>Properties are</caption>
+<tr><td>big</td><td>if should be BIG,</td></tr>
+<tr><td>blink</td><td>if ':' should blink,</td></tr>
+<tr><td>style</td><td>check yourself, values are (0, 1) for big one, and (0, 1, 2, 3) for small one</td></tr>
+</table>
+
+<h3 id="fps">
+fps
+</h3>
+
+<p>The FPS counter is a HUD element now, so you can place it wherever you want.</p>
+
+<table class="values">
+<caption>Properties are:</caption>
+<tr><td>show_min</td><td>show minimum framerate in last second</td></tr>
+<tr><td>title</td><td>if the annoying "fps" text should be displayed</td></tr>
+</table>
+
+<h3 id="frags">
+frags
+</h3>
+<p>Displays short version of scoreboard, shows amount of frags per player.</p>
+<p>Properties are:</p>
+<dl>
+  <dt>teamsort</dt>
+  <dd>Players will be sorted according to teams first.</dd>
+  <dt>cols</dt>
+  <dd>Number of columns.</dd>
+  <dt>rows</dt>
+  <dd>Number of rows.</dd>
+  <dt>cell_width</dt>
+  <dd>Width of each table cell (pixels).</dd>
+  <dt>cell_height</dt>
+  <dd>Height of each table cell (pixels).</dd>
+  <dt>vertical</dt>
+  <dd>Sorts cells in vertical order first.</dd>
+  <dt>strip</dt>
+  <dd>Cut the element size according to number of players.</dd>
+  <dt>space_x</dt>
+  <dd>Horizontal margin.</dd>
+  <dt>space_y</dt>
+  <dd>Vertical margin.</dd>
+</dl>
+
+
+<h3 id="healthdamage">
+healthdamage
+</h3>
+<p>Displays amount of damage done to your health.</p>
+<p>Properties are:</p>
+<dl>
+  <dt>duration</dt>
+  <dd>Adjusts the period of time after which the information vanishes from the screen.</dd>
+</dl>
+
+
+<h3 id="net">
+net
+</h3>
+
+<p>This element displays statistics about your connect. It used to be "+shownet",
+but since this has now been transformed into a HUD element, there is no use for
+"+shownet" anymore.</p>
+
+<p>Properties are:</p>
+<dl><dt>period</dt><dd>time between recalculates (for example if it is "3", 
+                            the statistics are recalculated every 3 seconds and 
+                            contain data from the last 3 seconds), the minimum
+                            period is your frame time.</dd>
+</dl>
+
+<h3 id="netgraph">
+netgraph
+</h3>
+
+<p>The netgraph has been made a HUD element, it is a good tool to monitor your ping 
+and see how it changes during battles. However, in QWCL the netgraph had ugly 
+scale, and your ping was nearly invisible unless it was &gt; 100. This is changed 
+in this client and its HUD features, you can now change the scale, width, height,
+background etc.</p>
+
+<p>Properties are:</p>
+<dl>
+<dt>alpha</dt><dd>this lets you regulate netgraph transparency, 
+                             mostly for use if your netgraph does not have a 
+                             frame (netgraph frame 0), it's available only in GL version
+                             of this client.</dd>
+<dt>full</dt><dd>check yourself, netgraph is more detailed this way,
+                             but looks ugly; in GL this can be fixed with a 
+                             lower alpha value like "0.4"</dd>
+<dt>height</dt><dd>height of graph-part</dd>
+<dt>inframes</dt><dd>setting this to "1" lets you measure your latency 
+                             in an alternate way every level of netgraph will 
+                             mean one frame of delay, between sending it to 
+                             server and getting answer. On local/lan server 
+                             you'll always get one frame of delay, even with low 
+                             FPS.</dd>
+<dt>lostscale</dt><dd>lets you cut down those red, yellow, blue and gray
+                             bars, which are always full-height; possible values
+                             are the range from 0 to 1</dd>
+<dt>ploss</dt><dd>print packet loss or not</dd>
+<dt>scale</dt><dd>sets the maximum ping that the netgraph is able to 
+                             display, by default "256". As you can easily check, 
+                             netgraph has 16 levels (unless it is "full 1"), so 
+                             default value of 256 means every level is 16 ms of 
+                             ping.                 </dd>
+<dt>swap_x</dt><dd>reverse horizontally, like for placing at left edge
+                             of the screen</dd>
+<dt>swap_y</dt><dd>reverse vertically, like for top edge</dd>
+<dt>width</dt><dd>width of graph-part</dd>
+</dl>
+ 
+<p>Note, that some of these properties/variables are used by server browser 
+connection tester. These are: alpha, full, inframes, lostscale, scale.</p>
+
+
+<h3 id="ping">
+ping
+</h3>
+
+<p>This HUD element displays your ping and by default your PL as well.</p>
+
+<p>Properties are:</p>
+<dl>
+<dt>blink</dt><dd>enable yellow blinking dot, which shows when your ping is recalculated</dd>
+<dt>period</dt><dd>period of time between updates (minimum value is your frame time)</dd>
+<dt>show_dev</dt><dd>show standard deviation of each period</dd>
+<dt>show_min</dt><dd>show minimum ping of each period</dd>
+<dt>show_max</dt><dd>show maximum ping of each period</dd>
+<dt>show_pl</dt><dd>show current packet loss</dd>
+</dl>
+
+<h3 id="speed">
+speed
+</h3>
+
+<p>The speed display is a HUD element now, so the "show_speed" variable is no 
+longer needed and has thus been removed.</p>
+
+<p>Properties are:</p>
+
+<dl>
+<dt>xyz</dt><dd>This toggles whether the speed is measured over the XY axis (xyz 0) or the XYZ axis (xyz 1)</dd>
+</dl>
+
+<h3 id="teamfrags">
+teamfrags
+</h3>
+<p>Displays short version of scoreboard, shows amount of frags per team.</p>
+<p>Properties are:</p>
+<dl>
+  <dt>cols</dt>
+  <dd>Number of columns.</dd>
+  <dt>rows</dt>
+  <dd>Number of rows.</dd>
+  <dt>cell_width</dt>
+  <dd>Width of each table cell (pixels).</dd>
+  <dt>cell_height</dt>
+  <dd>Height of each table cell (pixels).</dd>
+  <dt>vertical</dt>
+  <dd>Sorts cells in vertical order first.</dd>
+  <dt>strip</dt>
+  <dd>Cut the element size according to number of teams.</dd>
+  <dt>space_x</dt>
+  <dd>Horizontal margin.</dd>
+  <dt>space_y</dt>
+  <dd>Vertical margin.</dd>
+</dl>
+
+
+<h3 id="tracking">
+tracking
+</h3>
+
+<p>Displays nickname of tracked player while being spectator or watching demo. Usually
+displays instruction how to change point of view (POV) to next player too.</p>
+
+<p>Properties are:</p>
+
+<dl>
+<dt>alttext</dt><dd>If you don't like default text content of this element you can
+change it using this property.</dd>
+</dl>
+
+
+<h2 id="hud-variables">
+HUD variables
+</h2>
+
+<p>Here are some variables, which will be useful when changing the design of your 
+HUD:</p>
+
+<dl>
+<dt id="hud-planmode">hud_planmode</dt><dd>
+<table class="values"><tr><td>0</td><td>display all items normally (default)</td></tr>
+<tr><td>1</td><td>draw all items as if you have them; this for 
+                              planning your HUD, for example you can move the 
+                              quad icon to the desired position, because you see 
+                              this icon even if you don't have quad at the 
+                              moment; you should rather not play or do 
+                              "cfg_save" with that</td></tr>
+</table></dd>
+<dt id="hud-tp-need">hud_tp_need</dt><dd>
+<table class="values"><tr><td>0</td><td>do not apply teamplay need settings to status bar
+                              drawings</td></tr>
+<tr><td>1</td><td>this will apply teamplay need settings to your 
+                              status drawings, like your health will be red if 
+                              below "tp_need_health", not if below 25, armor 
+                              will depend on tp_need_ga, tp_need_ya, tp_need_ra, 
+                              not always red if below 10 etc</td></tr>
+</table></dd>
+</dl>

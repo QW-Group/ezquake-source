@@ -1,0 +1,91 @@
+<p>This feature and manual page has been inherited from the <a href="http://www.fuhquake.net/">FuhQuake</a> client 
+made by A Nourai aka 'fuh' (#fuhquake on Quakenet irc).</p>
+
+<h2>Commands</h2>
+
+<dl>
+<dt>cfg_save &lt;filename&gt;</dt>
+
+<dd><p>This command will dump all aliases, bindings, plus commands,
+msg_triggers, teamplay settings and variables to filename.cfg .
+User made variables (created with set/seta) are saved as well.</p>
+
+<p>Note : configs saved with cfg_save are saved in quake/ezquake/configs/*.cfg</p>
+</dd>
+
+<dt>cfg_reset</dt>
+
+<dd><p>This command will unbind all keys, delete all aliases, delete all msg_triggers,
+reset all plus commands, reset all teamplay settings and reset all variables.
+User made variables (created with set/seta) are deleted.</p>
+
+<p>After resetting all the above, it executes default.cfg and then autoexec.cfg.</p>
+</dd>
+
+<dt>cfg_load &lt;filename&gt;</dt>
+
+<dd>This will firstly do a cfg_reset and then execute filename.cfg.</dd>
+</dl>
+
+
+<h2>Variables</h2>
+
+<dl>
+
+<dt>cfg_save_unchanged</dt>
+<dd><ul>
+  <li>'cfg_save_unchanged 1' makes cfg_save write all variables to the config file.</li>
+  <li>'cfg_save_unchanged 0' makes cfg_save only write variables that are not default valued to the config file.</li>
+</ul></dd>
+
+<dt>cfg_save_userinfo</dt>
+<dd><ul>
+  <li>'cfg_save_userinfo 2' makes cfg_save save all userinfo variables like name/team/teamcolor/rate/msg/skin/w_switch/b_switch/... .</li>
+  <li>'cfg_save_userinfo 1' makes cfg_save save all userinfo variables except spectator/name/topcolor/bottomcolor/skin/team .</li>
+  <li>'cfg_save_userinfo 0' makes cfg_save not save userinfo variables.</li>
+  </ul>
+  <p>Note : 'cfg_save_userinfo 1' is best for teamfortress so you dont get kicked for changing bottom color.</p>
+  <p>Note : cfg_save will never save the password variable, even though technically it is a userinfo variable.</p>
+</dd>
+
+<dt>cfg_save_aliases</dt>
+
+<dd>Toggles whether cfg_save saves aliases.</dd>
+
+
+<dt>cfg_save_binds (default is 1)</dt>
+<dd>Toggles whether cfg_save saves binds.</dd>
+
+<dt>cfg_save_cmds (default is 1)</dt>
+<dd>Toggles whether cfg_save saves commands.</dd>
+
+<dt>cfg_save_cvars (default is 1)</dt>
+<dd>Toggles whether cfg_save saves variables.</dd>
+
+<dt>cfg_legacy_write (default 0)</dt>
+<dd><ul>
+  <li>'cfg_legacy_write 1' will write a small config.cfg to your gamedir when quitting just like qw 2.33.</li>
+  <li>'cfg_legacy_write 0' will not write config.cfg.</li>
+</ul></dd>
+
+<dt>cfg_legacy_exec (default 1)</dt>
+<dd><ul>
+<li>'cfg_legacy_exec 0' = 	Do not execute config.cfg and frontend.cfg in gamedir ever.</li>
+<li>'cfg_legacy_exec 1' = 	Execute config.cfg and frontend.cfg in gamedir (unless gamedir = qw) like qw 2.33.</li>
+<li>'cfg_legacy_exec 2' = 	Execute config.cfg and frontend.cfg even if gamedir = qw.</li>
+<li>'cfg_legacy_exec 3' = 	Execute config.cfg and frontend.cfg even if gamedir = qw.<br />
+						If there is no config.cfg or frontend.cfg in gamedir, and gamedir != qw
+						then try executing config.cfg and frontend.cfg in qw.</li>
+</ul></dd>
+
+<dt>cfg_save_cmdline (default 1)</dt>
+<dd>Writes your command line in configs made with cfg_save (commented out of course).</dd>
+
+<dt>cfg_save_sysinfo</dt>
+<dd>Not implemented yet.</dd>
+
+<dt>cfg_backup (default 0)</dt>
+<dd>Backs up your old config before overwriting it with cfg_save.<br />
+For example, 'cfg_save foo' will backup foo.cfg to foo.bak and then update foo.cfg .</dd>
+</dl>
+

@@ -1,0 +1,40 @@
+<p>This feature and manual page has been inherited from the <a href="http://www.fuhquake.net/">FuhQuake</a> client 
+made by A Nourai aka 'fuh' (#fuhquake on Quakenet irc).</p>
+
+
+<h2>Introduction</h2>
+<p>This client supports binding all buttons on logitech
+mice.  This works with and without -dinput.  I have got all 8 mouse buttons
+on my logitech mx500 working.</p>
+
+<h2>Prerequisites</h2>
+<p>*) You must be using a win32 binary and a logitech mouse with
+logitech's mouseware installed.</p>
+
+<p>The following mouseware versions are known to work:
+	v9.73, v9.76, v9.77, v9.78, v9.79.</p>
+<p>The following mouseware versions are known <strong>NOT</strong> to work:
+	v9.75.</p>
+
+<p>*) You must have mw_hook.dll in your quake dir (same dir where the client
+executables are).</p>
+
+<h2>Usage</h2>
+<p>Firstly use -m_mwhook on the command line.  Ex.ezquake-gl.exe -m_mwhook -etc</p>
+
+<p>You should be able to bind MOUSE4 - MOUSE8 in the client now and have it work
+(you will have to use trial and error to see exactly which button on your
+mouse is MOUSE4 etc).</p>
+
+
+<h2>Credits</h2>
+<p>-m_mwhook works by intercepting the mouse messages logitech's mouseware
+sends to quake, and making them the 'right' messages so that the buttons
+can work in games.</p>
+
+<p>The idea of doing this originally came from [EZH]FAN.
+It was first implemented by BorisU in qw262.</p>
+
+<p>All credit should go to those 2 people for overcoming the inadequacies
+of Logitech MouseWare.</p>
+

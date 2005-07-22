@@ -1,0 +1,81 @@
+<p>This feature has been inherited from the <a href="http://www.fuhquake.net/">FuhQuake</a> client 
+made by A Nourai aka 'fuh' (#fuhquake on Quakenet irc).<br />
+Original manual page follows.</p>
+
+<p>Disclaimer : Most ppl won't be interested by this.</p>
+
+<p>FQ v0.30+ implement the Darkplaces QC extension system. Basically its a set of extensions to the server that gives more power to mod authors. I chose the DP system because its the most widely used/implemented system, and in fact pretty much 'the thing' amongst netquake engines.</p>
+
+<p>I have uploaded a <a href="http://www.fuhquake.net/files/misc/frogbot-fq30.zip">small demonstration</a>.</p>
+
+<p>It is the latest frogbot clan arena (made by paraboil) with a small example of what is made possible by the QC extensions in FQ v0.30 and above.</p>
+
+<p>Using the qwprogs.dat in the above zip, you can now change frogbot skill with "/cmd skill 5" or whatever. If you've ever played frogbot you know that it is a bit hard to change skill. Now it's pretty easy.</p>
+
+<p>The zip above contains both the qwprogs.dat, and files I modified from the frogbot source. All changes to source are marked with <code>//FUHQUAKE EXTENSIONS</code>.</p>
+
+<p>A list of the extra QC functions is given below. The name of the DP extension that defined the QC function is given above it. For example if the DP_QC_MINMAXBOUND extension is supported, you can use the min/max/bound functions. A description of what the QC functions do is given in the dpextensions.qc file in the above zip.</p>
+
+<pre><code>
+//DP_QC_COPYENTITY 
+void(entity from, entity to) copyentity = #400; 
+
+//DP_QC_ETOS 
+string(entity ent) etos = #65; 
+
+//DP_QC_FINDCHAIN 
+entity(string field, string match) findchain = #402; 
+
+//DP_QC_FINDCHAINFLOAT 
+entity(string field, float match) findchainfloat = #403; 
+
+//DP_QC_FINDFLOAT 
+entity(entity start, float fld, float match) findfloat = #98; 
+
+//DP_QC_MINMAXBOUND 
+float(float a, float b) min = #94; 
+float(float a, float b) max = #95; 
+float(float minimum, float val, float maximum) bound = #96; 
+
+//DP_QC_RANDOMVEC 
+vector() randomvec = #91; 
+
+//DP_QC_SINCOSSQRTPOW 
+float(float f) sin = #60; 
+float(float f) cos = #61; 
+float(float f) sqrt = #62; 
+float(float f, float f) pow = #97; 
+
+//DP_QC_VECTORVECTORS 
+void(vector dir) vectorvectors = #432; 
+
+//FRIK_FILE (incomplete) 
+float(string s) strlen = #114; 
+string(string s1, string s2) strcat = #115; 
+string(string s, float start, float length) substring = #116; 
+vector(string s) stov = #117; 
+
+//KRIMZON_SV_PARSECLIENTCOMMAND 
+void(entity e, string s) clientcommand = #440; 
+float(string s) tokenize = #441; 
+string(float n) argv = #442; 
+
+float(string extension) checkextension = #99; 
+</code></pre>
+
+<p>You check if an extension is supported like so:</p>
+
+<pre><code>
+   if (!cvar("pr_checkextension")) 
+      return; 
+
+   if (!checkextension("KRIMZON_SV_PARSECLIENTCOMMAND")) 
+      return; 
+</code></pre>
+
+<p>The first check checks to see if the server supports the DP extension system. If it does, it means the checkextension bultin is available. The second checks to see if it specifically supports the "KRIMZON_SV_PARSECLIENTCOMMAND" extension.</p>
+
+<p>Read dpextensions.qc for more info.</p>
+
+<p>Note that the DP system isnt perfect, but it is the system most mod authors are familiar with.</p>
+

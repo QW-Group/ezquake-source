@@ -1,0 +1,84 @@
+<p>This feature and manual page has been inherited from the <a href="http://www.fuhquake.net/">FuhQuake</a> client 
+made by A Nourai aka 'fuh' (#fuhquake on Quakenet irc).</p>
+
+<h2>Introduction</h2>
+
+<p>You can point to things and identify them and their location.
+Unlike qizmo, this client does *not* hide pointing messages from you.
+However, it does not let you point to things that you do not
+have a direct line of sight to.</p>
+
+<h2>Usage</h2>
+
+<dl>
+  <dt>$point / %x</dt><dd>item pointing to</dd>
+  <dt>$pointloc / %y</dt><dd>location of item pointing to</dd>
+  <dt>$pointatloc / %t</dt><dd>same as "%x at %y"</dd>
+</dl>
+
+<p>You use the "tp_point" command to specify what things you can point to.
+The usage is tp_point &lt;list of things you want to be able to point to&gt;</p>
+
+<p>Possible things you can point to are:<br />
+"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
+"mh", "health", "lg", "rl", "gl", "sng", "ng", "ssg", "pack",
+"cells", "rockets", "nails", "shells", "flag", 
+"teammate", "enemy", "eyes", "sentry", "disp", "runes"</p>
+
+<table>
+  <thead><tr><td>Text</td><td>Is a shortcut to</td></tr></thead>
+  <tbody>
+    <tr><td>powerups</td><td>"quad pent ring"</td></tr>
+    <tr><td>ammo</td><td>"cells shells rockets nails"</td></tr>
+    <tr><td>players</td><td>"enemy teammate eyes"</td></tr>
+    <tr><td>weapons</td><td>"sg ssg ng sng gl rl lg"</td></tr>
+    <tr><td>default</td><td>default settings.</td></tr>
+    <tr><td>all</td><td>everything.</td></tr>
+  </tbody>
+</table>
+
+<p>Also you can use "tp_point +item" to add an item to the point list.<br />
+Ex. "tp_point +pent" adds pent to your point list.
+"tp_point -item" removes an item from your point list.</p>
+
+<p>You can use tp_name_* to customise the names of things you point to.</p>
+
+
+<h2>Deathmatch Mode</h2>
+
+<p>In dm, you can't point to weapons if the deathmatch mode is 2,3 or 4
+and you can't point to ammo if the deathmatch mode is 4.  This is
+because pointing to such items makes no sense in those deathmatch modes.</p>
+
+
+<h2>People Pointing</h2>
+<p>You can point to teammates, enemies and eyes.</p>
+
+<p>If you point to an enemy it will identify him/her as "enemy" (or whatever
+is in tp_name_enemy".</p>
+
+<p>If you point to a teammate it will identify him/her as "teammate" or whatever
+is in tp_name_teammate.  One catch, if tp_name_teammate is "" (this is default)
+then it will use the player's name instead of "teammate" etc.</p>
+
+<p>If you point to eyes it will identify him/her as "eyes" (or whatever
+is in tp_name_eyes".  You cannot tell if an eyes is a teammate or an enemy.</p>
+
+<p>Also if the teammate/enemy/eyes has quad or pent, it will say "quaded enemy"
+or "quaded pented eyes" etc.  You can use tp_name_quaded and tp_name_pented
+to customise this.</p>
+
+
+<h2>Teamfortress Pointing</h2>
+<p>In teamfortress you can also point to dispensers and sentry guns.
+The pointing does not distinguish between friendly and enemy 
+sentry guns and dispensers.  Use tp_name_dispenser and tp_name_sentry
+to customise these names.</p>
+
+<p>People pointing also works slightly differently in teamfortress. You can point
+to all players in tf but you can never see their name (even if they are a 
+teammate).  Their class however is displayed.  For example "enemy soldier"
+or "teammate demoman".  You cannot use this for spy detection.  If you point
+to an enemy spy disguised as a demoman on your team, then it will say
+"teammate demoman" and not "enemy spy".</p>
+

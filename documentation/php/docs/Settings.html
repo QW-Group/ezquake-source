@@ -1,12 +1,14 @@
 <?php
 
+  require("scripts/common.php");
+  
   echo("<dl>");
 	foreach($group as $k => $v) {
-	  $urlUberGroup = 'vars-'.urlencode(strtolower($v));
+	  $urlUberGroup = 'vars-'.IdSafe($v);
 	  echo("<dt><a href=\"?$urlUberGroup\">$v</a></dt><dd>");
 		$i = False;
 		foreach($ubergr[$k] as $n) {
-		  $urlGroup = urlencode(strtolower($n));
+		  $urlGroup = IdSafe($n);
 		  if($i) echo(", ");
   		echo("<a href=\"?$urlUberGroup#$urlGroup\">".htmlspecialchars($n)."</a>");
 			$i = True;
