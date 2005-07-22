@@ -57,8 +57,6 @@ cvar_t	pm_pground		 = {"pm_pground", "0", CVAR_SERVERINFO};
 double	sv_frametime;
 
 
-#define	MOVE_EPSILON	0.01
-
 void SV_Physics_Toss (edict_t *ent);
 
 void SV_CheckVelocity (edict_t *ent) {

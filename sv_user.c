@@ -847,7 +847,7 @@ void SV_TogglePause (const char *msg) {
 
 	// send notification to all clients
 	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++) {
-		if (!cl->state)
+		if (cl->state < cs_connected)
 			continue;
 		ClientReliableWrite_Begin (cl, svc_setpause, 2);
 		ClientReliableWrite_Byte (cl, sv_paused.value ? 1 : 0);
@@ -1381,52 +1381,6 @@ void AddLinksToPmove ( areanode_t *node ) {
 		AddLinksToPmove ( node->children[1] );
 }
 
-//For debugging
-void AddAllEntsToPmove (void) {
-	int e, i, pl;
-	edict_t *check;
-	physent_t *pe;
-	vec3_t pmove_mins, pmove_maxs;
-
-	for (i = 0; i < 3; i++) { 
-		pmove_mins[i] = pmove.origin[i] - 256; 
-		pmove_maxs[i] = pmove.origin[i] + 256; 
-	}
-
-	pl = EDICT_TO_PROG(sv_player);
-	check = NEXT_EDICT(sv.edicts);
-	for (e = 1; e < sv.num_edicts; e++, check = NEXT_EDICT(check)) {
-		if (check->free)
-			continue;
-		if (check->v.owner == pl)
-			continue;
-		if (check->v.solid == SOLID_BSP || check->v.solid == SOLID_BBOX || check->v.solid == SOLID_SLIDEBOX) {
-			if (check == sv_player)
-				continue;
-
-			for (i = 0; i < 3; i++)
-				if (check->v.absmin[i] > pmove_maxs[i] || check->v.absmax[i] < pmove_mins[i])
-					break;
-			if (i != 3)
-				continue;
-			pe = &pmove.physents[pmove.numphysent];
-
-			VectorCopy (check->v.origin, pe->origin);
-			pmove.physents[pmove.numphysent].info = e;
-			if (check->v.solid == SOLID_BSP) {
-				pe->model = sv.models[(int)(check->v.modelindex)];
-			} else {
-				pe->model = NULL;
-				VectorCopy (check->v.mins, pe->mins);
-				VectorCopy (check->v.maxs, pe->maxs);
-			}
-
-			if (++pmove.numphysent == MAX_PHYSENTS)
-				break;
-		}
-	}
-}
-
 int SV_PMTypeForClient (client_t *cl)
 {
 	if (cl->edict->v.movetype == MOVETYPE_NOCLIP) {
@@ -1669,7 +1623,6 @@ void SV_ExecuteClientMessage (client_t *cl) {
 	sv_client = cl;
 	sv_player = sv_client->edict;
 
-//	seq_hash = (cl->netchan.incoming_sequence & 0xffff) ; // ^ QW_CHECK_HASH;
 	seq_hash = cl->netchan.incoming_sequence;
 
 	// mark time so clients will know how much to predict
