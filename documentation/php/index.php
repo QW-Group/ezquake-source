@@ -37,11 +37,13 @@
 
 <p id="last-update">Last update: 
 <?php
+  $ftpOffsetTime = 60*60*9;
   if($maxfilectime == 0) { 
-    echo(date("d.m.Y H:i",filemtime("docs/".$sct[$sekce]['inc'])));
+    $ludtime = filemtime("docs/".$sct[$sekce]['inc']);
 	} else {
-	  echo(date("d.m.Y H:i",$maxfilectime));
+	  $ludtime = $maxfilectime;
 	} 
-?> CET</p>
+	echo(date("d.m.Y H:i",$ludtime + $ftpOffsetTime));
+?> CET (GMT+01:00)</p>
 </body>
 </html>
