@@ -36,7 +36,7 @@ void SV_SavegameComment (char *buffer) {
 
 	for (i = 0; i < SAVEGAME_COMMENT_LENGTH; i++)
 		buffer[i] = ' ';
-	memcpy (text, levelname, min(strlen(levelname), 21));
+	memcpy (buffer, cl.levelname, min(strlen(cl.levelname), 21));
 	sprintf (kills, "kills:%3i/%-3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 	memcpy (buffer + 22, kills, strlen(kills));
 
