@@ -45,6 +45,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+// BSD only defines FNDELAY:
+#ifndef O_NDELAY
+#  define O_NDELAY	FNDELAY
+#endif
+
 
 /* needed for RTC timer */
 #define RTC_RATE 1024.00
@@ -89,7 +94,7 @@ void Sys_Printf (char *fmt, ...) {
 }
 
 void Sys_Quit (void) {
-	fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~FNDELAY);
+	fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~O_NDELAY);
 	
 	if (rtc_fd)
 	    close(rtc_fd);
@@ -105,17 +110,17 @@ void Sys_Init(void) {
 }
 
 void Sys_Error (char *error, ...) { 
-    va_list argptr;
-    char string[1024];
+	va_list argptr;
+	char string[1024];
 
-    fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~FNDELAY);	//change stdin to non blocking
-    
-    if (rtc_fd)
-	close(rtc_fd);
-    
-    va_start (argptr, error);
-    vsnprintf (string, sizeof(string), error, argptr);
-    va_end (argptr);
+	fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~O_NDELAY);	//change stdin to non blocking
+
+	if (rtc_fd)
+		close(rtc_fd);
+
+	va_start (argptr, error);
+	vsnprintf (string, sizeof(string), error, argptr);
+	va_end (argptr);
 	fprintf(stderr, "Error: %s\n", string);
 
 	Host_Shutdown ();
