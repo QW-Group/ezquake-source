@@ -1421,9 +1421,9 @@ checkaliases:
 }
 
 static qboolean is_numeric (char *c) {	
-	return (*c >= '0' && *c <= '9') ||
-		((*c == '-' || *c == '+') && (c[1] == '.' || (c[1]>='0' && c[1]<='9'))) ||
-		(*c == '.' && (c[1]>='0' && c[1]<='9'));
+	return ( isdigit((int)(unsigned char)*c) ||
+		((*c == '-' || *c == '+') && (c[1] == '.' || isdigit((int)(unsigned char)c[1]))) ||
+		(*c == '.' && isdigit((int)(unsigned char)c[1])) );
 }
 
 void Cmd_If_f (void) {
