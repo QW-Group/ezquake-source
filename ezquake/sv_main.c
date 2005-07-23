@@ -132,6 +132,7 @@ void SV_Shutdown (char *finalmsg) {
 	com_serveractive = false;
 
 	memset (svs.clients, 0, sizeof(svs.clients));
+	svs.lastuserid = 0;
 }
 
 //Called when the player is totally leaving the server, either willingly or unwillingly.
@@ -246,6 +247,24 @@ void SV_FullClientUpdateToClient (client_t *client, client_t *cl) {
 		ClientReliable_FinishWrite(cl);
 	} else
 		SV_FullClientUpdate (client, &cl->netchan.message);
+}
+
+//Returns a unique userid in 1..99 range
+int SV_GenerateUserID (void)
+{
+	int i;
+	client_t *cl;
+
+	do {
+		svs.lastuserid++;
+		if (svs.lastuserid == 100)
+			svs.lastuserid = 1;
+		for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++)
+			if (cl->state != cs_free && cl->userid == svs.lastuserid)
+				break;
+	} while (i != MAX_CLIENTS);
+	
+	return svs.lastuserid;
 }
 
 /*
@@ -369,13 +388,12 @@ void SVC_GetChallenge (void) {
 
 //A connection request that did not come from the master
 void SVC_DirectConnect (void) {
-	char userinfo[1024], *s;
-	static int	userid;
-	netadr_t adr;
-	int i, edictnum, clients, spectators, qport, version, challenge;
-	client_t *cl, *newcl, temp;
-	edict_t *ent;
-	qboolean spectator;
+	char		userinfo[1024], *s;
+	netadr_t	adr;
+	int		i, edictnum, clients, spectators, qport, version, challenge;
+	client_t	*cl, *newcl;
+	edict_t		*ent;
+	qboolean	spectator;
 
 	version = atoi(Cmd_Argv(1));
 	if (version != PROTOCOL_VERSION) {
@@ -385,11 +403,10 @@ void SVC_DirectConnect (void) {
 	}
 
 	qport = atoi(Cmd_Argv(2));
-
 	challenge = atoi(Cmd_Argv(3));
 
 	// note an extra byte is needed to replace spectator key
-	Q_strncpyz (userinfo, Cmd_Argv(4), sizeof(userinfo)-1);
+	strlcpy (userinfo, Cmd_Argv(4), sizeof(userinfo)-1);
 
 	// see if the challenge is valid
 	if (net_from.type != NA_LOOPBACK) {
@@ -433,24 +450,6 @@ void SVC_DirectConnect (void) {
 	}
 
 	adr = net_from;
-	userid++;	// so every client gets a unique id
-
-	newcl = &temp;
-	memset (newcl, 0, sizeof(client_t));
-
-	newcl->userid = userid;
-
-	// works properly
-	if (!sv_highchars.value) {
-		byte *p, *q;
-
-		for (p = (byte *)newcl->userinfo, q = (byte *) userinfo; 
-			*q && p < (byte *)newcl->userinfo + sizeof(newcl->userinfo)-1; q++)
-			if (*q > 31 && *q <= 127)
-				*p++ = *q;
-	} else {
-		Q_strncpyz (newcl->userinfo, userinfo, sizeof(newcl->userinfo));
-	}
 
 	// if there is already a slot for this ip, reuse it
 	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++,cl++) {
@@ -460,7 +459,6 @@ void SVC_DirectConnect (void) {
 			&& ( cl->netchan.qport == qport || adr.port == cl->netchan.remote_address.port )) {
 			if (cl->state == cs_connected) {
 				Com_Printf ("%s:dup connect\n", NET_AdrToString (adr));
-				userid--;
 				return;
 			}
 
@@ -475,11 +473,14 @@ void SVC_DirectConnect (void) {
 	}
 
 	// count up the clients and spectators
-	clients = 0;
-	spectators = 0;
+	clients = spectators = 0;
+	newcl = NULL;
 	for (i = 0,cl=svs.clients; i < MAX_CLIENTS; i++,cl++) {
-		if (cl->state == cs_free)
+		if (cl->state == cs_free) {
+			if (!newcl)
+				newcl = cl;		// grab first available slot
 			continue;
+		}
 		if (cl->spectator)
 			spectators++;
 		else
@@ -488,35 +489,24 @@ void SVC_DirectConnect (void) {
 
 	// if at server limits, refuse connection
 	if ((spectator && spectators >= (int)maxspectators.value)
-		|| (!spectator && clients >= (int)maxclients.value))
+		|| (!spectator && clients >= (int)maxclients.value)
+		|| !newcl)
 	{
 		Com_Printf ("%s:full connect\n", NET_AdrToString (adr));
 		Netchan_OutOfBandPrint (NS_SERVER, adr, "%c\nserver is full\n\n", A2C_PRINT);
 		return;
 	}
 
-	// find a client slot
-	newcl = NULL;
-	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; i++,cl++) {
-		if (cl->state == cs_free) {
-			newcl = cl;
-			break;
-		}
-	}
-	if (!newcl) {
-		Com_Printf ("WARNING: miscounted available clients\n");
-		return;
-	}
-	
 	// build a new connection
 	// accept the new client
 	// this is the only place a client_t is ever initialized
-	*newcl = temp;
+	memset (newcl, 0, sizeof(*newcl));
+	newcl->userid = SV_GenerateUserID();
+
+	strlcpy (newcl->userinfo, userinfo, sizeof(newcl->userinfo));
 
 	Netchan_OutOfBandPrint (NS_SERVER, adr, "%c", S2C_CONNECTION );
 
-	edictnum = (newcl-svs.clients)+1;
-	
 	Netchan_Setup (NS_SERVER, &newcl->netchan, adr, qport);
 
 	newcl->state = cs_connected;
@@ -534,7 +524,9 @@ void SVC_DirectConnect (void) {
 		newcl->extensions = atoi(Info_ValueForKey(newcl->userinfo, "*z_ext"));
 	Info_RemoveKey (newcl->userinfo, "*z_ext");
 
-	ent = EDICT_NUM(edictnum);	
+	edictnum = (newcl - svs.clients) + 1;
+	ent = EDICT_NUM(edictnum);
+	ent->free = false;
 	newcl->edict = ent;
 
 	// parse some info from the info strings
@@ -555,6 +547,7 @@ void SVC_DirectConnect (void) {
 		Com_Printf ("Spectator %s connected\n", newcl->name);
 	else
 		Com_DPrintf ("Client %s connected\n", newcl->name);
+
 	newcl->sendinfo = true;
 }
 

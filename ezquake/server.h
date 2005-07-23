@@ -245,6 +245,7 @@ typedef struct {
 
 	int			spawncount;			// number of servers spawned since start,
 									// used to check late spawns
+	int			lastuserid;			// userid of last spawned client
 	client_t	clients[MAX_CLIENTS];
 	int			serverflags;		// episode completion information
 	
