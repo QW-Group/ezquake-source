@@ -36,7 +36,7 @@ cvar_t	cl_parseFunChars = {"cl_parseFunChars", "1"};
 cvar_t	tp_triggers = {"tp_triggers", "1"};
 cvar_t	tp_msgtriggers = {"tp_msgtriggers", "1"};
 cvar_t	tp_forceTriggers = {"tp_forceTriggers", "0"};
-cvar_t	cl_nofake = {"cl_nofake", "0"};
+cvar_t	cl_nofake = {"cl_nofake", "2"};
 cvar_t	tp_loadlocs = {"tp_loadlocs", "1"};
 
 
@@ -1274,31 +1274,32 @@ char *TP_ParseMacroString (char *s) {
 
 //Doesn't check for overflows, so strlen(s) should be < MAX_MACRO_STRING
 char *TP_ParseFunChars (char *s, qboolean chat) {
-	static char	buf[MAX_MACRO_STRING];
-	char *out, c;
+	static char	 buf[MAX_MACRO_STRING];
+	char		*out = buf;
+	int			 c;
 
 	if (!cl_parseFunChars.value)
 		return s;
 
-	for (out = buf; *s && out - buf < MAX_MACRO_STRING; ) {
+	while (*s) {
 		if (*s == '$' && s[1] == 'x') {
 			int i;
 			// check for $x10, $x8a, etc
-			c = tolower(s[2]);
-			if (c >= '0' && c <= '9')
-				i = (c - '0') << 4;
-			else if (c >= 'a' && c <= 'f')
-				i = (c - 'a' + 10) << 4;
+			c = tolower((int)(unsigned char)s[2]);
+			if ( isdigit(c) )
+				i = (c - (int)'0') << 4;
+			else if ( isxdigit(c) )
+				i = (c - (int)'a' + 10) << 4;
 			else goto skip;
-			c = tolower(s[3]);
-			if (c >= '0' && c <= '9')
-				i += (c - '0');
-			else if (c >= 'a' && c <= 'f')
-				i += (c - 'a' + 10);
+			c = tolower((int)(unsigned char)s[3]);
+			if ( isdigit(c) )
+				i += (c - (int)'0');
+			else if ( isxdigit(c) )
+				i += (c - (int)'a' + 10);
 			else goto skip;
 			if (!i)
-				i = ' ';
-			*out++ = i;
+				i = (int)' ';
+			*out++ = (char)i;
 			s += 4;
 			continue;
 		}
@@ -1328,10 +1329,10 @@ char *TP_ParseFunChars (char *s, qboolean chat) {
 				case '$': c = '$'; break;
 				case '^': c = '^'; break;
 			}
-			if (s[1] >= '0' && s[1] <= '9')
-				c = s[1] - '0' + 0x12;
+			if ( isdigit((int)(unsigned char)s[1]) )
+				c = s[1] - (int)'0' + 0x12;
 			if (c) {
-				*out++ = c;
+				*out++ = (char)c;
 				s += 2;
 				continue;
 			}
@@ -1341,7 +1342,7 @@ char *TP_ParseFunChars (char *s, qboolean chat) {
 			s += 2;
 			continue;
 		}
-skip:
+skip:			
 		*out++ = *s++;
 	}
 	*out = 0;
@@ -2887,7 +2888,7 @@ qboolean TP_CheckSoundTrigger (char *str) {
 		for (j = i - 1; j >= 0; j--) {
 			// quick check for chars that cannot be used
 			// as sound triggers but might be part of a file name
-			if (isalnum(str[j]))
+   if (isalnum(str[j]))
 				continue;	// file name or chat
 
 			if (strchr(tp_soundtrigger.string, str[j]))	{
@@ -2901,7 +2902,7 @@ qboolean TP_CheckSoundTrigger (char *str) {
 				if (length >= MAX_QPATH)
 					break;
 
-				Q_strncpyz (soundname, str + start, length + 1);
+    Q_strncpyz (soundname, str + start, length + 1);
 				if (strstr(soundname, ".."))
 					break;	// no thank you
 
