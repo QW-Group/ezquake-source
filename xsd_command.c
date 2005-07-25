@@ -50,7 +50,7 @@ static void OnStartElement(void *userData, const XML_Char *name, const XML_Char 
     if (!strcmp(stack->path, "/command/arguments"))
     {
         // create new argument
-        command_argument_t *val = (command_argument_t *) malloc(sizeof(command_argument_t));
+        command_argument_t *val = (command_argument_t *) Q_malloc(sizeof(command_argument_t));
         memset(val, 0, sizeof(command_argument_t));
 
         if (document->arguments == NULL)
@@ -132,7 +132,7 @@ xml_t * XSD_Command_LoadFromHandle(FILE *f)
     xml_parser_stack_t parser_stack;
 
     // create blank document
-    document = (xml_command_t *) malloc(sizeof(xml_command_t));
+    document = (xml_command_t *) Q_malloc(sizeof(xml_command_t));
     XSD_Command_Init(document);
 
     // initialize XML parser

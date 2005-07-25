@@ -861,7 +861,7 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
     char buf[128];
 
     sprintf(buf, "hud_%s_%s", hud_name, subvar);
-    var = (cvar_t *)malloc(sizeof(cvar_t));
+    var = (cvar_t *)Q_malloc(sizeof(cvar_t));
     memset(var, 0, sizeof(cvar_t));
     // set name
     var->name = CopyString(buf);
@@ -895,7 +895,7 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
     hud_t  *hud;
     char *subvar;
 
-    hud = malloc(sizeof(hud_t));
+    hud = Q_malloc(sizeof(hud_t));
     memset(hud, 0, sizeof(hud_t));
     hud->next = hud_huds;
     hud_huds = hud;

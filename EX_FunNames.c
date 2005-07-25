@@ -176,9 +176,7 @@ char * Fun_ConvertCRLF(char *text)
     if (text == NULL  ||  Q_strlen(text) <= 0)
         return NULL;
 
-    res = (char *) malloc (Q_strlen(text)+1);
-    if (res == NULL)
-        Sys_Error("Insufficient memory!");
+    res = (char *) Q_malloc (Q_strlen(text)+1);
     s = text;
     d = res;
     while (*s)
@@ -229,7 +227,7 @@ void FunToSort(char *text)
     char *tmp;
     char *s, *d;
     unsigned char c;
-    tmp = (char *)malloc(strlen(text) + 1);
+    tmp = (char *)Q_malloc(strlen(text) + 1);
 
     s = text;
     d = tmp;

@@ -59,7 +59,7 @@ static void EnterNavigationMode(CPageViewer_t *viewer)
 
     // make links table
     viewer->current_links = (document_rendered_link_t **)
-        malloc(viewer->current_links_total*sizeof(document_rendered_link_t *));
+        Q_malloc(viewer->current_links_total*sizeof(document_rendered_link_t *));
     i = 0;
     while (from != to)
     {
@@ -125,7 +125,7 @@ static void RenderDocument(CPageViewer_t *viewer, int width)
 
 error:
 
-    viewer->page->rendered.title = (char *) malloc(viewer->page->width);
+    viewer->page->rendered.title = (char *) Q_malloc(viewer->page->width);
     memset(viewer->page->rendered.title, 0, width);
     memcpy(viewer->page->rendered.title, "Document loading error!", strlen("Document loading error!"));
     viewer->page->rendered.title_lines = 1;
@@ -134,7 +134,7 @@ error:
 
 static void AddPage(CPageViewer_t *viewer)
 {
-    CPageViewer_page_t *page = (CPageViewer_page_t *) malloc(sizeof(CPageViewer_page_t));
+    CPageViewer_page_t *page = (CPageViewer_page_t *) Q_malloc(sizeof(CPageViewer_page_t));
     memset(page, 0, sizeof(CPageViewer_page_t));
 
     page->next = viewer->page;
@@ -151,7 +151,7 @@ void CPageViewer_Init(CPageViewer_t *viewer)
 
 CPageViewer_t * CPageViewer_New(void)
 {
-    CPageViewer_t *viewer = (CPageViewer_t *) malloc(sizeof(CPageViewer_t));
+    CPageViewer_t *viewer = (CPageViewer_t *) Q_malloc(sizeof(CPageViewer_t));
 
     CPageViewer_Init(viewer);
     return viewer;

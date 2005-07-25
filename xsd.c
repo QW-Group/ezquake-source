@@ -42,13 +42,13 @@ char *XSD_AddText(char *dst, const char *src, int src_len)
 
     if (dst == NULL)
     {
-        buf = (char *) malloc(src_len + 1);
+        buf = (char *) Q_malloc(src_len + 1);
         memcpy(buf, src, src_len);
         buf[src_len] = 0;
     }
     else
     {
-        buf = (char *) malloc(src_len + 1 + strlen(dst));
+        buf = (char *) Q_malloc(src_len + 1 + strlen(dst));
         strcpy(buf, dst);
         memcpy(buf+strlen(buf), src, src_len);
         buf[src_len+strlen(dst)] = 0;
@@ -75,7 +75,7 @@ char *XSD_StripSpaces(char *str)
     if (str == NULL)
         return str;
 
-    buf = (char *) malloc(strlen(str)+1);
+    buf = (char *) Q_malloc(strlen(str)+1);
     for (p=0; p < strlen(str); p++)
     {
         if (XSD_IsSpace(str[p]))
@@ -94,8 +94,7 @@ char *XSD_StripSpaces(char *str)
         q--;
     buf[q] = 0;
 
-    ret = (char *) malloc(strlen(buf)+1);
-    strcpy(ret, buf);
+    ret = (char *) Q_strdup(buf);
     free(buf);
     free(str);
     return ret;

@@ -189,7 +189,7 @@ char * StripInlineSpaces(char *str, document_rendered_link_t *links)
     if (str == NULL)
         return str;
 
-    buf = (char *) malloc(strlen(str)+1);
+    buf = (char *) Q_malloc(strlen(str)+1);
     for (p=0; p < strlen(str); p++)
     {
         // offset links
@@ -223,8 +223,7 @@ char * StripInlineSpaces(char *str, document_rendered_link_t *links)
         q--;
     buf[q] = 0;
 
-    ret = (char *) malloc(strlen(buf)+1);
-    strcpy(ret, buf);
+	ret = (char *) Q_strdup(buf);
     free(buf);
     free(str);
     return ret;
@@ -399,7 +398,7 @@ static void Render_Pre(document_rendering_context_t *cx, document_tag_pre_t *pre
     // duplicate text and calculate width
     width = l_width = 0;
     s = pre->text;
-    d = text = (char *) malloc(strlen(s)+1);
+    d = text = (char *) Q_malloc(strlen(s)+1);
     while (*s)
     {
         char c = *s++;
@@ -705,7 +704,7 @@ static void Render_Dict(document_rendering_context_t *cx, document_tag_dict_t *d
 // adds string
 char *Add_Inline_String(char *text, char *string)
 {
-    char *buf = (char *) malloc(strlen(text) + strlen(string) + 1);
+    char *buf = (char *) Q_malloc(strlen(text) + strlen(string) + 1);
     strcpy(buf, text);
     free(text);
     strcat(buf, string);
@@ -718,7 +717,7 @@ char * Add_Inline_Text(document_rendering_context_t *cx, char *text, document_ta
     char *s, *d;
     char *buf;
 
-    buf = (char *) malloc(strlen(text) + strlen(tag->text) + 1);
+    buf = (char *) Q_malloc(strlen(text) + strlen(tag->text) + 1);
     strcpy(buf, text);
     free(text);
 
@@ -766,7 +765,7 @@ char * Add_Inline_A(document_rendering_context_t *cx, char *text, document_tag_a
     // create new link object
     document_rendered_link_t *link;
 
-    link = (document_rendered_link_t *) malloc(sizeof(document_rendered_link_t));
+    link = (document_rendered_link_t *) Q_malloc(sizeof(document_rendered_link_t));
     memset(link, 0, sizeof(document_rendered_link_t));
 
     link->tag = tag;
@@ -995,7 +994,7 @@ int XSD_RenderDocument(document_rendered_t *ret, xml_document_t *doc, int width)
         tdoc = XSD_Document_New();
 
         // create p tag
-        p = (document_tag_p_t *) malloc(sizeof(document_tag_p_t));
+        p = (document_tag_p_t *) Q_malloc(sizeof(document_tag_p_t));
         memset(p, 0, sizeof(document_tag_p_t));
         p->type = tag_p;
         p->align = align_center;
@@ -1003,7 +1002,7 @@ int XSD_RenderDocument(document_rendered_t *ret, xml_document_t *doc, int width)
         tdoc->content = (document_tag_t *) p;
 
         // create text tag
-        text = (document_tag_text_t *) malloc(sizeof(document_tag_text_t));
+        text = (document_tag_text_t *) Q_malloc(sizeof(document_tag_text_t));
         memset(text, 0, sizeof(document_tag_text_t));
         text->type = tag_text;
         text->text = strdup(doc->title);
@@ -1013,7 +1012,7 @@ int XSD_RenderDocument(document_rendered_t *ret, xml_document_t *doc, int width)
         lines = XSD_RenderDocumentOnce(tdoc, NULL, width, 0, NULL, NULL);
         if (lines > 0)
         {
-            ret->title = (byte *) malloc(lines*width);
+            ret->title = (byte *) Q_malloc(lines*width);
             ret->title_lines = XSD_RenderDocumentOnce(tdoc, ret->title, width, lines, NULL, NULL);
         }
 
@@ -1024,7 +1023,7 @@ int XSD_RenderDocument(document_rendered_t *ret, xml_document_t *doc, int width)
     lines = XSD_RenderDocumentOnce(doc, NULL, width, 0, NULL, NULL);
     if (lines <= 0)
         goto error;
-    ret->text = (byte *) malloc(lines*width);
+    ret->text = (byte *) Q_malloc(lines*width);
     ret->text_lines = XSD_RenderDocumentOnce(doc, ret->text, width, lines, &ret->links, &ret->sections);
     return 1;
 

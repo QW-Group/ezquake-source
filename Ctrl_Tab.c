@@ -26,7 +26,7 @@ void CTab_Clear(CTab_t *tab)
 // create new control
 CTab_t * CTab_New(void)
 {
-    CTab_t *tab = (CTab_t *) malloc(sizeof(CTab_t));
+    CTab_t *tab = (CTab_t *) Q_malloc(sizeof(CTab_t));
     CTab_Init(tab);
     return tab;
 }
