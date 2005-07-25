@@ -308,10 +308,11 @@ void GL_Upload8 (byte *data, int width, int height, int mode) {
 int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mode, int bpp) {
 	int	i, scaled_width, scaled_height, crc = 0;
 	gltexture_t	*glt;
+	qboolean setup_gltexture = true;
 
 	ScaleDimensions(width, height, &scaled_width, &scaled_height, mode);
 
-
+	Com_DPrintf("פורפץעו: %s\n", identifier);
 	if (identifier[0]) {
 		crc = CRC_Block (data, width * height * bpp);
 		for (i = 0, glt = gltextures; i < numgltextures; i++, glt++) {
@@ -325,23 +326,24 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 					GL_Bind(gltextures[i].texnum);
 					return gltextures[i].texnum;	
 				} else {
-					goto setup_gltexture;	
+					setup_gltexture = false;
 				}
 			}
 		}
 	}
+	if (setup_gltexture)
+	{
+		if (numgltextures == MAX_GLTEXTURES)
+			Sys_Error ("GL_LoadTexture: numgltextures == MAX_GLTEXTURES");
 
-	if (numgltextures == MAX_GLTEXTURES)
-		Sys_Error ("GL_LoadTexture: numgltextures == MAX_GLTEXTURES");
+		glt = &gltextures[numgltextures];
+		numgltextures++;
 
-	glt = &gltextures[numgltextures];
-	numgltextures++;
+		Q_strncpyz (glt->identifier, identifier, sizeof(glt->identifier));
+		glt->texnum = texture_extension_number;
+		texture_extension_number++;
+	}
 
-	Q_strncpyz (glt->identifier, identifier, sizeof(glt->identifier));
-	glt->texnum = texture_extension_number;
-	texture_extension_number++;
-
-setup_gltexture:
 	glt->width = width;
 	glt->height = height;
 	glt->scaled_width = scaled_width;
