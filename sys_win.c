@@ -438,10 +438,8 @@ void Sys_Init_ (void) {
 			"qwcl");	//Semaphore name
 	}
 
-#ifdef id386
 	MaskExceptions ();
 	Sys_SetFPCW ();
-#endif
 
 	Sys_InitDoubleTime ();
 
