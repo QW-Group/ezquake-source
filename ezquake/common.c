@@ -90,7 +90,7 @@ void COM_StoreOriginalCmdline(int argc, char **argv)
         strcat(buf, argv[i]);
     }
 
-    com_args_original = strdup(buf);
+    com_args_original = Q_strdup(buf);
 }
 
 // ClearLink is used for new headnodes

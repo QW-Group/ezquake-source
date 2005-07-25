@@ -114,16 +114,16 @@ int funcmp(const char *s1, const char *s2)
     if (s2 == NULL)
         return 1;
 
-    t1 = strdup(s1);
-    t2 = strdup(s2);
+    t1 = Q_strdup(s1);
+    t2 = Q_strdup(s2);
 
     FunToSort(t1);
     FunToSort(t2);
 
     ret = strcmp(t1, t2);
 
-    free(t1);
-    free(t2);
+    Q_free(t1);
+    Q_free(t2);
 
     return ret;
 }
@@ -139,13 +139,13 @@ int stristr(const char *s, const char *sub)
     int i;
     char *tmp;
 
-    tmp = strdup(s);
+    tmp = Q_strdup(s);
     for (i=0; i < strlen(tmp); i++)
         tmp[i] = tolower(tmp[i]);
 
     i = (int)strstr(tmp, sub);
 
-    free(tmp);
+    Q_free(tmp);
     return i;
 }
 
