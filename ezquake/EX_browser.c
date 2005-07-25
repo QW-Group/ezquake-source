@@ -222,9 +222,7 @@ server_data * Create_Server(char *ip)
 {
     server_data *s;
 
-    s = (server_data *) malloc (sizeof(server_data));
-    if (s == NULL)
-        Sys_Error("Insufficient memory!");
+    s = (server_data *) Q_malloc (sizeof(server_data));
     s->display.name[0] = 0;
     s->display.ping[0] = 0;
     s->ping = -1;
@@ -254,9 +252,7 @@ server_data * Create_Server2(netadr_t n)
 {
     server_data *s;
 
-    s = (server_data *) malloc (sizeof(server_data));
-    if (s == NULL)
-        Sys_Error("Insufficient memory!");
+    s = (server_data *) Q_malloc (sizeof(server_data));
 
     memcpy(&(s->address), &n, sizeof(n));
     strcpy(s->display.ip, NET_AdrToString(n));
@@ -2234,7 +2230,7 @@ void RemoveSourceProc(void)
         return;
     }
 
-    filebuf = (char *)malloc(length + 512);
+    filebuf = (char *)Q_malloc(length + 512);
     filebuf[0] = 0;
     while (!feof(f))
     {
@@ -2829,18 +2825,14 @@ void Rebuild_All_Players(void)
         players += servers[i]->playersn + servers[i]->spectatorsn;
 
     // alloc memory
-    all_players = (player_host **) malloc(players * sizeof(player_host *));
-    if (all_players == NULL)
-        Sys_Error("Insufficient memory!");
+    all_players = (player_host **) Q_malloc(players * sizeof(player_host *));
 
     // make players
     all_players_n = 0;
     for (i=0; i < serversn; i++)
         for (j=0; j < servers[i]->playersn + servers[i]->spectatorsn; j++)
         {
-            all_players[all_players_n] = (player_host *) malloc(sizeof(player_host));
-            if (all_players[all_players_n] == NULL)
-                Sys_Error("Insufficient memory!");
+            all_players[all_players_n] = (player_host *) Q_malloc(sizeof(player_host));
             strncpy(all_players[all_players_n]->name,
                     servers[i]->players[j]->name, 20);
             servers[i]->players[j]->name[20] = 0;

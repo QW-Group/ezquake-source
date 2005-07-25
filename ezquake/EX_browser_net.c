@@ -107,15 +107,11 @@ void Parse_Serverinfo(server_data *s, char *info)
         if (i3 == NULL)
             i3 = info + strlen(info);
 
-        s->keys[s->keysn] = (char *) malloc(i2-info);
-        if (s->keys[s->keysn] == NULL)
-            Sys_Error("Insufficient memory!");
+        s->keys[s->keysn] = (char *) Q_malloc(i2-info);
         strncpy(s->keys[s->keysn], info+1, i2-info-1);
         s->keys[s->keysn][i2-info-1] = 0;
 
-        s->values[s->keysn] = (char *) malloc(i3-i2);
-        if (s->values[s->keysn] == NULL)
-            Sys_Error("Insufficient memory!");
+        s->values[s->keysn] = (char *) Q_malloc(i3-i2);
         strncpy(s->values[s->keysn], i2+1, i3-i2-1);
         s->values[s->keysn][i3-i2-1] = 0;
 
@@ -155,9 +151,7 @@ void Parse_Serverinfo(server_data *s, char *info)
 // yes, but in next version will be \s\<name>, instead <name>(s)
         }
 
-        s->players[i] = (playerinfo *)malloc(sizeof(playerinfo));
-        if (s->players[i] == NULL)
-            Sys_Error("Insufficient memory!");
+        s->players[i] = (playerinfo *)Q_malloc(sizeof(playerinfo));
         s->players[i]->id = id;
         s->players[i]->frags = frags;
         s->players[i]->time = time;
@@ -318,9 +312,7 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
 
     // send status request
 
-    hosts = (infohost *) malloc (serversn * sizeof(infohost));
-    if (hosts == NULL)
-        Sys_Error("Insufficient memory!");
+    hosts = (infohost *) Q_malloc (serversn * sizeof(infohost));
     for (i=0; i < serversn; i++)
     {
         hosts[i].phase = 0;

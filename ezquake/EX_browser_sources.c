@@ -25,9 +25,7 @@ int sourcesn;
 source_data * Create_Source(void)
 {
     source_data *s;
-    s = (source_data *) malloc(sizeof(source_data));
-    if (s == NULL)
-        Sys_Error("Insufficient memory!");
+    s = (source_data *) Q_malloc(sizeof(source_data));
     s->serversn = 0;
     s->last_update.wYear = 0;
     s->name[0] = 0;
@@ -128,9 +126,7 @@ void Precache_Source(source_data *s)
         if (GetFileLocalTime(va("%s/%s", com_filesearchpath, name), &tm))
         {
             Reset_Source(s);
-            s->servers = (server_data **) malloc(serversn * sizeof(server_data *));
-            if (s->servers == NULL)
-                Sys_Error("Insufficient memory!");
+            s->servers = (server_data **) Q_malloc(serversn * sizeof(server_data *));
             for (i=0; i < serversn; i++)
                 s->servers[i] = servers[i];
             s->serversn = serversn;
@@ -227,9 +223,7 @@ void Update_Source(source_data *s)
     if (serversn > 0)
     {
         Reset_Source(s);
-        s->servers = (server_data **) malloc((serversn + (s->type==type_file ? MAX_UNBOUND : 0)) * sizeof(server_data *));
-        if (s->servers == NULL)
-            Sys_Error("Insufficient memory!");
+        s->servers = (server_data **) Q_malloc((serversn + (s->type==type_file ? MAX_UNBOUND : 0)) * sizeof(server_data *));
         for (i=0; i < serversn; i++)
             s->servers[i] = servers[i];
         s->serversn = serversn;
@@ -246,7 +240,7 @@ void Update_Source(source_data *s)
         if (s->type == type_file)
         {
             Reset_Source(s);
-            s->servers = (server_data **) malloc((serversn + (s->type==type_file ? MAX_UNBOUND : 0)) * sizeof(server_data *));
+            s->servers = (server_data **) Q_malloc((serversn + (s->type==type_file ? MAX_UNBOUND : 0)) * sizeof(server_data *));
         }
     
     if (should_dump)
@@ -389,9 +383,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
         if (serversn > 0)
         {
             Reset_Source(s);
-            s->servers = (server_data **) malloc(serversn * sizeof(server_data *));
-            if (s->servers == NULL)
-                Sys_Error("Insufficient memory!");
+            s->servers = (server_data **) Q_malloc(serversn * sizeof(server_data *));
             for (i=0; i < serversn; i++)
                 s->servers[i] = servers[i];
             s->serversn = serversn;
@@ -503,7 +495,7 @@ void Reload_Sources(void)
     sources[0] = Create_Source();
     sources[0]->type = type_dummy;
     strcpy(sources[0]->name, "Unbound");
-    sources[0]->servers = (server_data **) malloc(MAX_UNBOUND*sizeof(server_data *));
+    sources[0]->servers = (server_data **) Q_malloc(MAX_UNBOUND*sizeof(server_data *));
     sourcesn = 1;
 
     s = Create_Source();

@@ -192,12 +192,8 @@ int oldPingHost(char *host_to_ping, int count)
     datasize = DEF_PACKET_SIZE;
     datasize += sizeof(IcmpHeader);  
 
-    icmp_data = malloc(MAX_PACKET);
-    if (icmp_data == NULL)
-        Sys_Error("Insufficient memory!");
-    recvbuf = malloc(MAX_PACKET);
-    if (recvbuf == NULL)
-        Sys_Error("Insufficient memory!");
+    icmp_data = Q_malloc(MAX_PACKET);
+    recvbuf = Q_malloc(MAX_PACKET);
 
     if (!icmp_data)
         return 0;
@@ -355,12 +351,8 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
     datasize = DEF_PACKET_SIZE;
     datasize += sizeof(IcmpHeader);  
 
-    icmp_data = malloc(MAX_PACKET);
-    if (icmp_data == NULL)
-        Sys_Error("Insufficient memory!");
-    recvbuf = malloc(MAX_PACKET);
-    if (recvbuf == NULL)
-        Sys_Error("Insufficient memory!");
+    icmp_data = Q_malloc(MAX_PACKET);
+    recvbuf = Q_malloc(MAX_PACKET);
 
     if (!icmp_data)
     {
@@ -372,9 +364,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
 
     arg2 = success = 0;
 
-    hosts = (pinghost *) malloc(servsn * sizeof(pinghost));
-    if (hosts == NULL)
-        Sys_Error("Insufficient memory!");
+    hosts = (pinghost *) Q_malloc(servsn * sizeof(pinghost));
     hostsn = 0;
     for (i=0; i < servsn; i++)
     {
@@ -648,9 +638,7 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 	double interval;
 	struct sockaddr_in to;
 
-	hosts = (pinghost *)malloc(sizeof(pinghost) * servsn);
-	if (hosts == NULL)
-		return 0;
+	hosts = (pinghost *)Q_malloc(sizeof(pinghost) * servsn);
 
 	hostsn = 0;
 	for (i=0; i < servsn; i++) {
@@ -815,9 +803,7 @@ void SB_Test_SendPacket(void)
     datasize = DEF_PACKET_SIZE;
     datasize += sizeof(IcmpHeader);  
 
-    icmp_data = malloc(MAX_PACKET);
-    if (icmp_data == NULL)
-        Sys_Error("Insufficient memory!");
+    icmp_data = Q_malloc(MAX_PACKET);
 
     if (!icmp_data)
         return ;
@@ -874,9 +860,7 @@ void SB_Test_GetPackets(void)
     datasize = DEF_PACKET_SIZE;
     datasize += sizeof(IcmpHeader);  
 
-    recvbuf = malloc(MAX_PACKET);
-    if (recvbuf == NULL)
-        Sys_Error("Insufficient memory!");
+    recvbuf = Q_malloc(MAX_PACKET);
 
 
     while (1)
