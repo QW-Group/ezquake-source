@@ -159,7 +159,7 @@ static void AddInlineLink(document_rendering_context_t *cx, document_rendered_li
 {
     if (cx->nometadata)
     {
-        free(link);
+        Q_free(link);
     }
     else
     {
@@ -224,8 +224,8 @@ char * StripInlineSpaces(char *str, document_rendered_link_t *links)
     buf[q] = 0;
 
 	ret = (char *) Q_strdup(buf);
-    free(buf);
-    free(str);
+    Q_free(buf);
+    Q_free(str);
     return ret;
 }
 
@@ -464,7 +464,7 @@ static void Render_Pre(document_rendering_context_t *cx, document_tag_pre_t *pre
     {
         // render as link
 
-        char *t = strdup("");
+        char *t = Q_strdup("");
 
         t = Add_Inline_String(t, "\x90");
         t = Add_Inline_String(t, pre->alt ? pre->alt : "picture");
@@ -472,10 +472,10 @@ static void Render_Pre(document_rendering_context_t *cx, document_tag_pre_t *pre
 
         Render_String(cx, t);
 
-        free(t);
+        Q_free(t);
     }
 
-    free(text);
+    Q_free(text);
 }
 
 // render HR tag
@@ -706,7 +706,7 @@ char *Add_Inline_String(char *text, char *string)
 {
     char *buf = (char *) Q_malloc(strlen(text) + strlen(string) + 1);
     strcpy(buf, text);
-    free(text);
+    Q_free(text);
     strcat(buf, string);
     return buf;
 }
@@ -719,7 +719,7 @@ char * Add_Inline_Text(document_rendering_context_t *cx, char *text, document_ta
 
     buf = (char *) Q_malloc(strlen(text) + strlen(tag->text) + 1);
     strcpy(buf, text);
-    free(text);
+    Q_free(text);
 
     d = buf + strlen(buf);
     s = tag->text;
@@ -847,7 +847,7 @@ char * Add_Inline_Tag(document_rendering_context_t *cx, char *text, document_tag
 // renders inline chain, stops at first non-inline tag and returns this tag
 static document_tag_t * RenderInlineChain(document_rendering_context_t *cx, document_tag_t *tag)
 {
-    char *text = strdup("");
+    char *text = Q_strdup("");
 
     while (tag && !IsBlockElement(tag))
     {
@@ -860,7 +860,7 @@ static document_tag_t * RenderInlineChain(document_rendering_context_t *cx, docu
     Render_String(cx, text);
     LineFeed(cx);
 
-    free(text);
+    Q_free(text);
 
     return tag;
 }
@@ -1005,7 +1005,7 @@ int XSD_RenderDocument(document_rendered_t *ret, xml_document_t *doc, int width)
         text = (document_tag_text_t *) Q_malloc(sizeof(document_tag_text_t));
         memset(text, 0, sizeof(document_tag_text_t));
         text->type = tag_text;
-        text->text = strdup(doc->title);
+        text->text = Q_strdup(doc->title);
 
         p->tags = (document_tag_t *) text;
 
@@ -1044,7 +1044,7 @@ void RenderFreeSection(document_rendered_section_t *section)
         next = section->next;
 
         RenderFreeSection(section->children);
-        free(section);
+        Q_free(section);
 
         section = next;
     }
@@ -1056,16 +1056,16 @@ void XSD_RenderClear(document_rendered_t *r)
     document_rendered_link_t *link, *next;
 
     if (r->text)
-        free(r->text);
+        Q_free(r->text);
     if (r->title)
-        free(r->title);
+        Q_free(r->title);
     
     link = r->links;
     while (link)
     {
         next = link->next;
 
-        free(link);
+        Q_free(link);
         link = next;
     }
 

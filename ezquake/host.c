@@ -106,7 +106,7 @@ void SYSINFO_Init(void)
             &datasize);
     
         if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_SZ)
-            SYSINFO_processor_description = strdup((char *) data);
+            SYSINFO_processor_description = Q_strdup((char *) data);
 
         RegCloseKey(hKey);
     }
@@ -116,7 +116,7 @@ void SYSINFO_Init(void)
         extern const char *gl_renderer;
 
         if (gl_renderer  &&  gl_renderer[0])
-            SYSINFO_3D_description = strdup(gl_renderer);
+            SYSINFO_3D_description = Q_strdup(gl_renderer);
     }
 #endif
 

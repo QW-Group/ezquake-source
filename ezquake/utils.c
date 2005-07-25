@@ -264,7 +264,7 @@ qboolean Util_F_Match(char *_msg, char *f_request) {
 	int offset, i, status, flags;
 	char *s, *msg;
 
-	msg = strdup(_msg);
+	msg = Q_strdup(_msg);
 	flags = TP_CategorizeMessage(msg, &offset);
 
 	if (flags != 1 && flags != 4)
@@ -274,7 +274,7 @@ qboolean Util_F_Match(char *_msg, char *f_request) {
 		s[i] = s[i] & ~128;		
 
 	if (strstr(s, f_request) != s) {
-		free(msg);
+		Q_free(msg);
 		return false;
 	}
 	status = 0;
@@ -284,11 +284,11 @@ qboolean Util_F_Match(char *_msg, char *f_request) {
 		} else if (isspace(*s)) {
 			status = (status == 1) ? 2 : status;
 		} else {
-			free(msg);			
+			Q_free(msg);			
 			return false;
 		}
 	}
-	free(msg);
+	Q_free(msg);
 	return true;
 }
 
