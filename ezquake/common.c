@@ -595,7 +595,8 @@ char *COM_Parse (char *data) {
 		return NULL;
 
 // skip whitespace
-skipwhite:
+while (true)
+{
 	while ( (c = *data) == ' ' || c == '\t' || c == '\r' || c == '\n')
 		data++;
 
@@ -603,11 +604,12 @@ skipwhite:
 		return NULL;			// end of file;
 
 	// skip // comments
-	if (c == '/' && data[1] == '/') {
+	if (c == '/' && data[1] == '/')
 		while (*data && *data != '\n')
 			data++;
-		goto skipwhite;
-	}
+	else
+		break;
+}
 
 	// handle quoted strings specially
 	if (c == '\"') {
