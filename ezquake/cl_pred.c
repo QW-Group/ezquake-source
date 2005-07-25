@@ -296,18 +296,16 @@ void CL_PredictMove (void) {
 		VectorCopy (to->playerstate[cl.viewplayernum].origin, cl.simorg);
 		VectorCopy (to->playerstate[cl.viewplayernum].viewangles, cl.simangles);
 		CL_CategorizePosition ();
-		goto out;
 	}
-
+	else
 	if ((cl_nopred.value && !cls.mvdplayback) || cl.validsequence + 1 >= cls.netchan.outgoing_sequence) {	
 		VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
 		VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
 		CL_CategorizePosition ();
 		if (cl_independentPhysics.value != 0) 
 			lerp_time = cls.realtime;	//#fps
-		goto out;
 	}
-
+	else
 //#fps
 if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0)
 {
@@ -359,7 +357,6 @@ if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.val
 // } shaman RFE 1036160
 }
 
-out:
 if (!cls.demoplayback && cl_independentPhysics.value != 0)
 	CL_LerpMove (lerp_time, f);
     CL_CalcCrouch ();
