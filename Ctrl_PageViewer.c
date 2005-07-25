@@ -13,7 +13,7 @@ static void LeaveNavigationMode(CPageViewer_t *viewer)
 {
     if (viewer->navigation_mode)
     {
-        free(viewer->current_links);
+        Q_free(viewer->current_links);
         viewer->current_link_index = 0;
         viewer->current_links_total = 0;
         viewer->navigation_mode = false;
@@ -90,10 +90,10 @@ static void FreePage(CPageViewer_page_t *page)
 {
     FreePageRendered(page);
     if (page->url)
-        free(page->url);
+        Q_free(page->url);
     if (page->doc)
         XSD_FreeDocument((xml_t *)page->doc);
-    free(page);
+    Q_free(page);
     return;
 }
 
@@ -162,7 +162,7 @@ void CPageViewer_GoUrl(CPageViewer_t *viewer, char *url)
 {
     AddPage(viewer);
 
-    viewer->page->url = strdup(url);
+    viewer->page->url = Q_strdup(url);
     viewer->page->should_render = true;
 }
 
@@ -171,7 +171,7 @@ void CPageViewer_Go(CPageViewer_t *viewer, char *url, xml_document_t *doc)
 {
     AddPage(viewer);
 
-    viewer->page->url = strdup(url);
+    viewer->page->url = Q_strdup(url);
     viewer->page->doc = doc;
     viewer->page->should_render = true;
 }
@@ -431,5 +431,5 @@ void CPageViewer_Free(CPageViewer_t *viewer)
     CPageViewer_Clear(viewer);
 
     // and free 'this'
-    free(viewer);
+    Q_free(viewer);
 }
