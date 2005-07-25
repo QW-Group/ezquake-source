@@ -1326,15 +1326,13 @@ void Cmd_ExecuteString (char *text) {
 	}
 
 	// some bright guy decided to use "skill" as a mod command in Custom TF, sigh
-	if (!strcmp(Cmd_Argv(0), "skill") && cmd_argc == 1 && Cmd_FindAlias("skill"))
-		goto checkaliases;
-
-	// check cvars
-	if (Cvar_Command())
-		return;
-
+	if (!(!strcmp(Cmd_Argv(0), "skill") && cmd_argc == 1 && Cmd_FindAlias("skill")))
+	{
+		// check cvars
+		if (Cvar_Command())
+			return;
+	}
 	// check aliases
-checkaliases:
 	if ((a = Cmd_FindAlias(cmd_argv[0]))) {
 
 // qw262 -->
