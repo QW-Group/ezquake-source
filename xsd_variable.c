@@ -65,7 +65,7 @@ static void OnStartElement(void *userData, const XML_Char *name, const XML_Char 
     xml_variable_t *document = (xml_variable_t *) stack->document;
 
     if (stack->path[0] == 0)
-        document->document_type = strdup(name);
+        document->document_type = Q_strdup(name);
 
     if (!strcmp(stack->path, "/variable/value"))
     {
@@ -83,7 +83,7 @@ static void OnStartElement(void *userData, const XML_Char *name, const XML_Char 
     if (!strcmp(stack->path, "/variable/value/enum"))
     {
         // create new enum
-        variable_enum_value_t *val = (variable_enum_value_t *) malloc(sizeof(variable_enum_value_t));
+        variable_enum_value_t *val = (variable_enum_value_t *) Q_malloc(sizeof(variable_enum_value_t));
         memset(val, 0, sizeof(variable_enum_value_t));
 
         if (document->value.enum_value == NULL)
@@ -181,7 +181,7 @@ xml_t * XSD_Variable_LoadFromHandle(FILE *f)
     xml_parser_stack_t parser_stack;
 
     // create blank document
-    document = (xml_variable_t *) malloc(sizeof(xml_variable_t));
+    document = (xml_variable_t *) Q_malloc(sizeof(xml_variable_t));
     XSD_Variable_Init(document);
 
     // initialize XML parser
@@ -241,16 +241,16 @@ xml_document_t * XSD_Variable_Convert(xml_t *doc)
     ret = XSD_Document_New();
 
     // make head
-    ret->title = strdup(var->name);
+    ret->title = Q_strdup(var->name);
 
     // make body
     {
         document_tag_text_t *text;
 
-        text = (document_tag_text_t *) malloc(sizeof(document_tag_text_t));
+        text = (document_tag_text_t *) Q_malloc(sizeof(document_tag_text_t));
         memset(text, 0, sizeof(document_tag_text_t));
         text->type = tag_text;
-        text->text = strdup(var->description);
+        text->text = Q_strdup(var->description);
         ret->content = (document_tag_t *) text;
     }
 

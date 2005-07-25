@@ -22,9 +22,9 @@ static void XSD_Document_Init(xml_document_t *document)
 // create new document
 xml_document_t * XSD_Document_New(void)
 {
-    xml_document_t *doc = (xml_document_t *) malloc(sizeof(xml_document_t));
+    xml_document_t *doc = (xml_document_t *) Q_malloc(sizeof(xml_document_t));
     XSD_Document_Init(doc);
-    doc->document_type = strdup("document");
+    doc->document_type = Q_strdup("document");
     return doc;
 }
 
@@ -275,7 +275,7 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
         {
             const char *attr;
 
-            document_tag_p_t *p = (document_tag_p_t *) malloc(sizeof(document_tag_p_t));
+            document_tag_p_t *p = (document_tag_p_t *) Q_malloc(sizeof(document_tag_p_t));
             memset(p, 0, sizeof(document_tag_p_t));
             p->type = tag_p;
 
@@ -309,8 +309,8 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
                 xml_parser_stack_t *newstack;
                 document_parser_specific_t *specific;
 
-                newstack = (xml_parser_stack_t *) malloc(sizeof(xml_parser_stack_t));
-                specific = (document_parser_specific_t *) malloc(sizeof(document_parser_specific_t));
+                newstack = (xml_parser_stack_t *) Q_malloc(sizeof(xml_parser_stack_t));
+                specific = (document_parser_specific_t *) Q_malloc(sizeof(document_parser_specific_t));
 
                 specific->tag = &p->tags;
 
@@ -337,7 +337,7 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
         {
             const char *attr;
 
-            document_tag_section_t *p = (document_tag_section_t *) malloc(sizeof(document_tag_section_t));
+            document_tag_section_t *p = (document_tag_section_t *) Q_malloc(sizeof(document_tag_section_t));
             memset(p, 0, sizeof(document_tag_section_t));
             p->type = tag_section;
 
@@ -351,16 +351,16 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
             // check id
             attr = XSD_GetAttribute(atts, "id");
             if (attr)
-                p->id = strdup(attr);
+                p->id = Q_strdup(attr);
             else
-                p->id = strdup(va("%___%d", specific->section_num++));
+                p->id = Q_strdup(va("%___%d", specific->section_num++));
 
             // check title
             attr = XSD_GetAttribute(atts, "title");
             if (attr)
-                p->title = strdup(attr);
+                p->title = Q_strdup(attr);
             else
-                p->title = strdup("<unnamed>");
+                p->title = Q_strdup("<unnamed>");
 
             // add to list
             if (specific->tag[0] == NULL)
@@ -374,8 +374,8 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
                 xml_parser_stack_t *newstack;
                 document_parser_specific_t *specific;
 
-                newstack = (xml_parser_stack_t *) malloc(sizeof(xml_parser_stack_t));
-                specific = (document_parser_specific_t *) malloc(sizeof(document_parser_specific_t));
+                newstack = (xml_parser_stack_t *) Q_malloc(sizeof(xml_parser_stack_t));
+                specific = (document_parser_specific_t *) Q_malloc(sizeof(document_parser_specific_t));
 
                 specific->tag = &p->tags;
 
@@ -403,7 +403,7 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
             const char *attr;
 
             // create new list and add to tag list
-            document_tag_list_t *list = (document_tag_list_t *) malloc(sizeof(document_tag_list_t));
+            document_tag_list_t *list = (document_tag_list_t *) Q_malloc(sizeof(document_tag_list_t));
             memset(list, 0, sizeof(document_tag_list_t));
             list->type = tag_list;
 
@@ -442,7 +442,7 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
             const char *attr;
 
             // create new dict and add to tag list
-            document_tag_dict_t *dict = (document_tag_dict_t *) malloc(sizeof(document_tag_dict_t));
+            document_tag_dict_t *dict = (document_tag_dict_t *) Q_malloc(sizeof(document_tag_dict_t));
             memset(dict, 0, sizeof(document_tag_dict_t));
             dict->type = tag_dict;
 
@@ -478,7 +478,7 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
 
         if (!strcmp(name, "hr"))
         {
-            document_tag_hr_t *hr = (document_tag_hr_t *) malloc(sizeof(document_tag_hr_t));
+            document_tag_hr_t *hr = (document_tag_hr_t *) Q_malloc(sizeof(document_tag_hr_t));
             memset(hr, 0, sizeof(document_tag_hr_t));
             hr->type = tag_hr;
 
@@ -493,14 +493,14 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
         {
             const char *attr;
 
-            document_tag_pre_t *pre = (document_tag_pre_t *) malloc(sizeof(document_tag_pre_t));
+            document_tag_pre_t *pre = (document_tag_pre_t *) Q_malloc(sizeof(document_tag_pre_t));
             memset(pre, 0, sizeof(document_tag_pre_t));
             pre->type = tag_pre;
 
             // check alt
             attr = XSD_GetAttribute(atts, "alt");
             if (attr != NULL)
-                pre->alt = strdup(attr);
+                pre->alt = Q_strdup(attr);
 
             // add to list
             if (specific->tag[0] == NULL)
@@ -513,7 +513,7 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
         {
             const char *attr;
 
-            document_tag_h_t *h = (document_tag_h_t *) malloc(sizeof(document_tag_h_t));
+            document_tag_h_t *h = (document_tag_h_t *) Q_malloc(sizeof(document_tag_h_t));
             memset(h, 0, sizeof(document_tag_h_t));
             h->type = tag_h;
 
@@ -540,8 +540,8 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
                 xml_parser_stack_t *newstack;
                 document_parser_specific_t *specific;
 
-                newstack = (xml_parser_stack_t *) malloc(sizeof(xml_parser_stack_t));
-                specific = (document_parser_specific_t *) malloc(sizeof(document_parser_specific_t));
+                newstack = (xml_parser_stack_t *) Q_malloc(sizeof(xml_parser_stack_t));
+                specific = (document_parser_specific_t *) Q_malloc(sizeof(document_parser_specific_t));
 
                 specific->tag = &h->tags;
 
@@ -566,7 +566,7 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
 
         if (!strcmp(name, "em"))
         {
-            document_tag_em_t *i = (document_tag_em_t *) malloc(sizeof(document_tag_em_t));
+            document_tag_em_t *i = (document_tag_em_t *) Q_malloc(sizeof(document_tag_em_t));
             memset(i, 0, sizeof(document_tag_em_t));
             i->type = tag_em;
 
@@ -582,8 +582,8 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
                 xml_parser_stack_t *newstack;
                 document_parser_specific_t *specific;
 
-                newstack = (xml_parser_stack_t *) malloc(sizeof(xml_parser_stack_t));
-                specific = (document_parser_specific_t *) malloc(sizeof(document_parser_specific_t));
+                newstack = (xml_parser_stack_t *) Q_malloc(sizeof(xml_parser_stack_t));
+                specific = (document_parser_specific_t *) Q_malloc(sizeof(document_parser_specific_t));
 
                 specific->tag = &i->tags;
 
@@ -608,7 +608,7 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
 
         if (!strcmp(name, "color"))
         {
-            document_tag_color_t *i = (document_tag_color_t *) malloc(sizeof(document_tag_color_t));
+            document_tag_color_t *i = (document_tag_color_t *) Q_malloc(sizeof(document_tag_color_t));
             memset(i, 0, sizeof(document_tag_color_t));
             i->type = tag_color;
 
@@ -624,8 +624,8 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
                 xml_parser_stack_t *newstack;
                 document_parser_specific_t *specific;
 
-                newstack = (xml_parser_stack_t *) malloc(sizeof(xml_parser_stack_t));
-                specific = (document_parser_specific_t *) malloc(sizeof(document_parser_specific_t));
+                newstack = (xml_parser_stack_t *) Q_malloc(sizeof(xml_parser_stack_t));
+                specific = (document_parser_specific_t *) Q_malloc(sizeof(document_parser_specific_t));
 
                 specific->tag = &i->tags;
 
@@ -652,14 +652,14 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
         {
             const char *attr;
 
-            document_tag_a_t *i = (document_tag_a_t *) malloc(sizeof(document_tag_a_t));
+            document_tag_a_t *i = (document_tag_a_t *) Q_malloc(sizeof(document_tag_a_t));
             memset(i, 0, sizeof(document_tag_a_t));
             i->type = tag_a;
 
             // check href
             attr = XSD_GetAttribute(atts, "href");
             if (attr)
-                i->href = strdup(attr);
+                i->href = Q_strdup(attr);
 
             // add to list
             if (specific->tag[0] == NULL)
@@ -673,8 +673,8 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
                 xml_parser_stack_t *newstack;
                 document_parser_specific_t *specific;
 
-                newstack = (xml_parser_stack_t *) malloc(sizeof(xml_parser_stack_t));
-                specific = (document_parser_specific_t *) malloc(sizeof(document_parser_specific_t));
+                newstack = (xml_parser_stack_t *) Q_malloc(sizeof(xml_parser_stack_t));
+                specific = (document_parser_specific_t *) Q_malloc(sizeof(document_parser_specific_t));
 
                 specific->tag = &i->tags;
 
@@ -699,7 +699,7 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
 
         if (!strcmp(name, "img"))
         {
-            document_tag_img_t *i = (document_tag_img_t *) malloc(sizeof(document_tag_img_t));
+            document_tag_img_t *i = (document_tag_img_t *) Q_malloc(sizeof(document_tag_img_t));
             memset(i, 0, sizeof(document_tag_img_t));
             i->type = tag_img;
 
@@ -715,8 +715,8 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
                 xml_parser_stack_t *newstack;
                 document_parser_specific_t *specific;
 
-                newstack = (xml_parser_stack_t *) malloc(sizeof(xml_parser_stack_t));
-                specific = (document_parser_specific_t *) malloc(sizeof(document_parser_specific_t));
+                newstack = (xml_parser_stack_t *) Q_malloc(sizeof(xml_parser_stack_t));
+                specific = (document_parser_specific_t *) Q_malloc(sizeof(document_parser_specific_t));
 
                 specific->tag = &i->tags;
 
@@ -741,7 +741,7 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
 
         if (!strcmp(name, "br"))
         {
-            document_tag_br_t *i = (document_tag_br_t *) malloc(sizeof(document_tag_br_t));
+            document_tag_br_t *i = (document_tag_br_t *) Q_malloc(sizeof(document_tag_br_t));
             memset(i, 0, sizeof(document_tag_br_t));
             i->type = tag_br;
 
@@ -754,7 +754,7 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
 
         if (!strcmp(name, "sp"))
         {
-            document_tag_sp_t *i = (document_tag_sp_t *) malloc(sizeof(document_tag_sp_t));
+            document_tag_sp_t *i = (document_tag_sp_t *) Q_malloc(sizeof(document_tag_sp_t));
             memset(i, 0, sizeof(document_tag_sp_t));
             i->type = tag_sp;
 
@@ -777,7 +777,7 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
         assert(list->type == tag_list);
 
         // create new LI and add to list
-        item = (document_tag_li_t *) malloc(sizeof(document_tag_li_t));
+        item = (document_tag_li_t *) Q_malloc(sizeof(document_tag_li_t));
         memset(item, 0, sizeof(document_tag_li_t));
         item->type = tag_li;
         if (list->items == NULL)
@@ -788,8 +788,8 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
         // start new parser for LI
         {
             document_parser_specific_t *specific;
-            newstack = (xml_parser_stack_t *) malloc(sizeof(xml_parser_stack_t));
-            specific = (document_parser_specific_t *) malloc(sizeof(document_parser_specific_t));
+            newstack = (xml_parser_stack_t *) Q_malloc(sizeof(xml_parser_stack_t));
+            specific = (document_parser_specific_t *) Q_malloc(sizeof(document_parser_specific_t));
 
             specific->tag = &item->tags;
 
@@ -822,7 +822,7 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
         assert(dict->type == tag_dict);
 
         // create new DI and add to dict
-        item = (document_tag_di_t *) malloc(sizeof(document_tag_di_t));
+        item = (document_tag_di_t *) Q_malloc(sizeof(document_tag_di_t));
         memset(item, 0, sizeof(document_tag_di_t));
         item->type = tag_di;
         if (dict->items == NULL)
@@ -848,8 +848,8 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
         // start new parser for DI/name
         {
             document_parser_specific_t *specific;
-            newstack = (xml_parser_stack_t *) malloc(sizeof(xml_parser_stack_t));
-            specific = (document_parser_specific_t *) malloc(sizeof(document_parser_specific_t));
+            newstack = (xml_parser_stack_t *) Q_malloc(sizeof(xml_parser_stack_t));
+            specific = (document_parser_specific_t *) Q_malloc(sizeof(document_parser_specific_t));
 
             specific->tag = &item->name;
 
@@ -889,8 +889,8 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
         // start new parser for DI/name
         {
             document_parser_specific_t *specific;
-            newstack = (xml_parser_stack_t *) malloc(sizeof(xml_parser_stack_t));
-            specific = (document_parser_specific_t *) malloc(sizeof(document_parser_specific_t));
+            newstack = (xml_parser_stack_t *) Q_malloc(sizeof(xml_parser_stack_t));
+            specific = (document_parser_specific_t *) Q_malloc(sizeof(document_parser_specific_t));
 
             specific->tag = &item->description;
 
@@ -949,7 +949,7 @@ static void OnCharacterData_Blocks(void *userData, const XML_Char *s, int len)
         if (last == NULL)
         {
             // create new text tag and start chain with it
-            text = (document_tag_text_t *) malloc(sizeof(document_tag_text_t));
+            text = (document_tag_text_t *) Q_malloc(sizeof(document_tag_text_t));
             memset(text, 0, sizeof(document_tag_text_t));
             text->type = tag_text;
             specific->tag[0] = (document_tag_t *) text;
@@ -962,7 +962,7 @@ static void OnCharacterData_Blocks(void *userData, const XML_Char *s, int len)
         else
         {
             // create new text tag and add it to the chain
-            text = (document_tag_text_t *) malloc(sizeof(document_tag_text_t));
+            text = (document_tag_text_t *) Q_malloc(sizeof(document_tag_text_t));
             memset(text, 0, sizeof(document_tag_text_t));
             text->type = tag_text;
             last->next = (document_tag_t *) text;
@@ -997,11 +997,11 @@ static void OnStartElement(void *userData, const XML_Char *name, const XML_Char 
     document_parser_specific_t *specific = (document_parser_specific_t *) stack->parser_specific;
 
     if (stack->path[0] == 0)
-        document->document_type = strdup(name);
+        document->document_type = Q_strdup(name);
 
     if (!strcmp(stack->path, "/document/head/authors")  &&  !strcmp(name, "author"))
     {
-        xml_document_author_t *author = (xml_document_author_t *) malloc(sizeof(xml_document_author_t));
+        xml_document_author_t *author = (xml_document_author_t *) Q_malloc(sizeof(xml_document_author_t));
         memset(author, 0, sizeof(xml_document_author_t));
 
         if (document->authors == NULL)
@@ -1022,8 +1022,8 @@ static void OnStartElement(void *userData, const XML_Char *name, const XML_Char 
             xml_parser_stack_t *newstack;
             document_parser_specific_t *specific;
 
-            newstack = (xml_parser_stack_t *) malloc(sizeof(xml_parser_stack_t));
-            specific = (document_parser_specific_t *) malloc(sizeof(document_parser_specific_t));
+            newstack = (xml_parser_stack_t *) Q_malloc(sizeof(xml_parser_stack_t));
+            specific = (document_parser_specific_t *) Q_malloc(sizeof(document_parser_specific_t));
 
             specific->tag = &document->content;
 
@@ -1096,7 +1096,7 @@ xml_t * XSD_Document_LoadFromHandle(FILE *f)
     xml_parser_stack_t parser_stack;
 
     // create blank document
-    document = (xml_document_t *) malloc(sizeof(xml_document_t));
+    document = (xml_document_t *) Q_malloc(sizeof(xml_document_t));
     XSD_Document_Init(document);
 
     // initialize XML parser
