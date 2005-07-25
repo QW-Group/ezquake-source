@@ -1357,43 +1357,56 @@ void CL_ParsePlayerinfo (void) {
 		else
 			state->weaponframe = 0;
 
-		if (cl.z_ext & Z_EXT_PM_TYPE) {
+		if (cl.z_ext & Z_EXT_PM_TYPE)
+		{
 			pm_code = (flags >> PF_PMC_SHIFT) & PF_PMC_MASK;
-
-			if (pm_code == PMC_NORMAL || pm_code == PMC_NORMAL_JUMP_HELD) {
-				if (flags & PF_DEAD) {
+			if (pm_code == PMC_NORMAL || pm_code == PMC_NORMAL_JUMP_HELD)
+			{
+				if (flags & PF_DEAD)
+				{
 					state->pm_type = PM_DEAD;
-				} else {
+				}
+				else
+				{
 					state->pm_type = PM_NORMAL;
 					state->jump_held = (pm_code == PMC_NORMAL_JUMP_HELD);
 				}
 			}
-		else if (pm_code == PMC_OLD_SPECTATOR)
-			state->pm_type = PM_OLD_SPECTATOR;
-		else {
-			if (cl.z_ext & Z_EXT_PM_TYPE_NEW) {
-				if (pm_code == PMC_SPECTATOR)
-					state->pm_type = PM_SPECTATOR;
-				else if (pm_code == PMC_FLY)
-					state->pm_type = PM_FLY;
-				else if (pm_code == PMC_NONE)
-					state->pm_type = PM_NONE;
-				else if (pm_code == PMC_FREEZE)
-					state->pm_type = PM_FREEZE;
-				else {
-					// future extension?
-					goto guess_pm_type;
+			else
+				if (pm_code == PMC_OLD_SPECTATOR)
+					state->pm_type = PM_OLD_SPECTATOR;
+				else
+				{
+					if (cl.z_ext & Z_EXT_PM_TYPE_NEW)
+					{
+						switch (pm_code)
+						{
+							case PMC_SPECTATOR:
+								state->pm_type = PM_SPECTATOR;
+								break;
+							case PMC_FLY:
+								state->pm_type = PM_FLY;
+								break;
+							case PMC_NONE:
+								state->pm_type = PM_NONE;
+								break;
+							case PMC_FREEZE:
+								state->pm_type = PM_FREEZE;
+								break;
+							default:
+								// future extension?
+								goto guess_pm_type;
+						}
+					}
+					else
+					{
+						// future extension?
+						goto guess_pm_type;
+					}
 				}
-			}
-			else {
-				// future extension?
-				goto guess_pm_type;
-			}
 		}
-	}
-	else
-	{
-
+		else
+		{
 guess_pm_type:
 			if (cl.players[num].spectator)
 				state->pm_type = PM_OLD_SPECTATOR;

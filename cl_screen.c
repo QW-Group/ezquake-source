@@ -1509,14 +1509,11 @@ void SCR_RSShot_f (void) {
 	if (QLib_isModuleLoaded(qlib_libjpeg)) {
 		success = Image_WriteJPEG (filename, 70, pixels + 3 * width * (height - 1), -width, height)
 			? SSHOT_SUCCESS : SSHOT_FAILED;
-		goto sshot_taken;
-	}
+	} else
 #endif
 	success = Image_WriteTGA (filename, pixels, width, height)
 		? SSHOT_SUCCESS : SSHOT_FAILED;
-	goto sshot_taken;
 
-sshot_taken:
 	free(base);
 
 #else		//GLQUAKE
@@ -1527,15 +1524,10 @@ sshot_taken:
 	if (QLib_isModuleLoaded(qlib_libpng)) {
 		success = Image_WritePNGPLTE(filename, 9, vid.buffer, vid.width, vid.height, vid.rowbytes, current_pal)
 			? SSHOT_SUCCESS : SSHOT_FAILED;
-		goto sshot_taken;
-	}
+	} else
 #endif
-
 	success = Image_WritePCX (filename, vid.buffer, vid.width, vid.height, vid.rowbytes, current_pal)
 		? SSHOT_SUCCESS : SSHOT_FAILED;
-	goto sshot_taken;
-
-sshot_taken:
 
 	D_DisableBackBufferAccess();
 

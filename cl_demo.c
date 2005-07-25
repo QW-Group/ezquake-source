@@ -1220,11 +1220,8 @@ void CL_Play_f (void) {
 		PlayQWZDemo();
 		if (!playbackfile && !qwz_playback)
 			return;	
-		goto done;
-	}
+	} else {
 #endif
-
-	
 	for (s = ext; *s && !playbackfile; s++) {
 		Q_strncpyz (name, Cmd_Argv(1), sizeof(name) - 4);
 		COM_DefaultExtension (name, *s);
@@ -1247,11 +1244,8 @@ void CL_Play_f (void) {
 	nTrack1duel=nTrack2duel=0;
 
 	Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
-
-
-	
 #ifdef _WIN32
-done:
+}
 #endif
 	cls.demoplayback = true;
 	cls.mvdplayback = !Q_strcasecmp(name + strlen(name) - 3, "mvd") ? true : false;	
