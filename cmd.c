@@ -73,22 +73,31 @@ void Cbuf_Execute (void) {
 #endif
 }
 
-void Cbuf_Init (void) {
-	cbuf_main.text_start = cbuf_main.text_end = MAXCMDBUF >> 1;
-	cbuf_main.wait = false;
-	cbuf_main.runAwayLoop = 0;
+//fuh : ideally we should have 'cbuf_t *Cbuf_Register(int maxsize, int flags, qbool (*blockcmd)(void))
+//fuh : so that cbuf_svc and cbuf_safe can be registered outside cmd.c in cl_* .c
+//fuh : flags can be used to deal with newline termination etc for cbuf_svc, and *blockcmd can be used for blocking cmd's for cbuf_svc
+//fuh : this way cmd.c would be independant of '#ifdef CLIENTONLY's'.
+//fuh : I'll take care of that one day.
+static void Cbuf_Register (cbuf_t *cbuf, int maxsize) {
+	assert(!host_initialized);
+	cbuf->maxsize = maxsize;
+	cbuf->text_buf = Hunk_Alloc(maxsize);
+	cbuf->text_start = cbuf->text_end = (cbuf->maxsize >> 1);
+	cbuf->wait = false;
+}
+
+/*
+============
+Cbuf_Init
+============
+*/
+void Cbuf_Init (void)
+{
+	Cbuf_Register(&cbuf_main, 1 << 18); // 256kb
 #ifndef SERVERONLY
-	cbuf_safe.text_start = cbuf_safe.text_end = (MAXCMDBUF >> 1);
-	cbuf_safe.wait = false;
-	cbuf_safe.runAwayLoop = 0;
-
-	cbuf_nocomms.text_start = cbuf_nocomms.text_end = (MAXCMDBUF >> 1);
-	cbuf_nocomms.wait = false;
-	cbuf_nocomms.runAwayLoop = 0;
-
-	cbuf_svc.text_start = cbuf_svc.text_end = (MAXCMDBUF >> 1);
-	cbuf_svc.wait = false;
-	cbuf_svc.runAwayLoop = 0;
+	Cbuf_Register(&cbuf_svc, 1 << 13); // 8kb
+	Cbuf_Register(&cbuf_safe, 1 << 11); // 2kb
+	Cbuf_Register(&cbuf_nocomms, 1 << 11); // 2kb
 #endif
 }
 
@@ -98,20 +107,20 @@ void Cbuf_AddTextEx (cbuf_t *cbuf, char *text) {
 	
 	len = strlen (text);
 
-	if (cbuf->text_end + len <= MAXCMDBUF) {
+	if (cbuf->text_end + len <= cbuf->maxsize) {
 		memcpy (cbuf->text_buf + cbuf->text_end, text, len);
 		cbuf->text_end += len;
 		return;
 	}
 
 	new_bufsize = cbuf->text_end-cbuf->text_start+len;
-	if (new_bufsize > MAXCMDBUF) {
+	if (new_bufsize > cbuf->maxsize) {
 		Com_Printf ("Cbuf_AddText: overflow\n");
 		return;
 	}
 
 	// Calculate optimal position of text in buffer
-	new_start = ((MAXCMDBUF - new_bufsize) >> 1);
+	new_start = ((cbuf->maxsize - new_bufsize) >> 1);
 
 	memcpy (cbuf->text_buf + new_start, cbuf->text_buf + cbuf->text_start, cbuf->text_end-cbuf->text_start);
 	memcpy (cbuf->text_buf + new_start + cbuf->text_end-cbuf->text_start, text, len);
@@ -132,13 +141,13 @@ void Cbuf_InsertTextEx (cbuf_t *cbuf, char *text) {
 	}
 
 	new_bufsize = cbuf->text_end - cbuf->text_start + len;
-	if (new_bufsize > MAXCMDBUF) {
+	if (new_bufsize > cbuf->maxsize) {
 		Com_Printf ("Cbuf_InsertText: overflow\n");
 		return;
 	}
 
 	// Calculate optimal position of text in buffer
-	new_start = ((MAXCMDBUF - new_bufsize) >> 1);
+	new_start = ((cbuf->maxsize - new_bufsize) >> 1);
 
 	memmove (cbuf->text_buf + (new_start + len), cbuf->text_buf + cbuf->text_start,
 		cbuf->text_end - cbuf->text_start);
@@ -218,7 +227,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 		// delete the text from the command buffer and move remaining commands down  This is necessary
 		// because commands (exec, alias) can insert data at the beginning of the text buffer
 		if (i == cursize) {
-			cbuf->text_start = cbuf->text_end = (MAXCMDBUF >> 1);
+			cbuf->text_start = cbuf->text_end = (cbuf->maxsize >> 1);
 		} else {
 			i++;
 			cbuf->text_start += i;
@@ -234,7 +243,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 		if (cbuf->runAwayLoop > MAX_RUNAWAYLOOP) {
 			Com_Printf("\x02" "A recursive alias has caused an infinite loop.");
 			Com_Printf("\x02" " Clearing execution buffer to prevent lockup.\n");
-			cbuf->text_start = cbuf->text_end = (MAXCMDBUF >> 1);
+			cbuf->text_start = cbuf->text_end = (cbuf->maxsize >> 1);
 			cbuf->runAwayLoop = 0;
 		}
 
