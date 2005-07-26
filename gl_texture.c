@@ -308,7 +308,6 @@ void GL_Upload8 (byte *data, int width, int height, int mode) {
 int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mode, int bpp) {
 	int	i, scaled_width, scaled_height, crc = 0;
 	gltexture_t	*glt;
-	qboolean setup_gltexture = true;
 
 	ScaleDimensions(width, height, &scaled_width, &scaled_height, mode);
 
@@ -326,24 +325,23 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 					GL_Bind(gltextures[i].texnum);
 					return gltextures[i].texnum;	
 				} else {
-					setup_gltexture = false;
+					goto setup_gltexture;
 				}
 			}
 		}
 	}
-	if (setup_gltexture)
-	{
-		if (numgltextures == MAX_GLTEXTURES)
-			Sys_Error ("GL_LoadTexture: numgltextures == MAX_GLTEXTURES");
 
-		glt = &gltextures[numgltextures];
-		numgltextures++;
+	if (numgltextures == MAX_GLTEXTURES)
+		Sys_Error ("GL_LoadTexture: numgltextures == MAX_GLTEXTURES");
 
-		Q_strncpyz (glt->identifier, identifier, sizeof(glt->identifier));
-		glt->texnum = texture_extension_number;
-		texture_extension_number++;
-	}
+	glt = &gltextures[numgltextures];
+	numgltextures++;
 
+	Q_strncpyz (glt->identifier, identifier, sizeof(glt->identifier));
+	glt->texnum = texture_extension_number;
+	texture_extension_number++;
+
+setup_gltexture:
 	glt->width = width;
 	glt->height = height;
 	glt->scaled_width = scaled_width;
