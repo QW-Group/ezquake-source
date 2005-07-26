@@ -32,10 +32,9 @@ The + command line options are also added to the command buffer.
 The game starts with a Cbuf_AddText ("exec quake.rc\n"); Cbuf_Execute ();
 */
 
-#define MAXCMDBUF (1 << 18)		
-
 typedef struct cbuf_s {
-	char	text_buf[MAXCMDBUF];
+	char		*text_buf;
+	int		maxsize;
 	int		text_start;
 	int		text_end;
 	qboolean	wait;
@@ -44,8 +43,9 @@ typedef struct cbuf_s {
 
 extern cbuf_t	cbuf_main;
 #ifndef SERVERONLY
-extern cbuf_t cbuf_safe, cbuf_nocomms;
-extern cbuf_t cbuf_svc;
+extern cbuf_t cbuf_safe; // msg_trigger commands
+extern cbuf_t cbuf_nocomms;
+extern cbuf_t cbuf_svc; // svc_stufftext commands
 #endif
 extern cbuf_t	*cbuf_current;
 
