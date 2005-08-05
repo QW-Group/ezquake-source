@@ -293,34 +293,18 @@ qboolean Util_F_Match(char *_msg, char *f_request) {
 }
 
 
-#define MAX_REPLACEMENTS 512
-
-typedef struct {
-	char index[1];
-	char replacement[512];
-}	replacement_s;
-replacement_s replacement_t[MAX_REPLACEMENTS];
-
 void Replace_In_String (char *src,int n, char delim, int arg, ...){
 	
 	va_list ap;
 	char msg[1024];
-	int check = 0 , z=0 , y=0 ,x=0,i=0,j=0;
+	char count[5];
+	int check = 0 , z=0 , y=0 ,x=0,i=0,j=0,k=0,l=0,m=0;
+	char *arg1, *arg2 ;
 	
 	if (n>sizeof(msg))
 		return;
 
 
-
-	va_start(ap,arg);
-	for (check = 1 ; check <=arg ; check++){
-		strcpy(replacement_t[z].index,va_arg(ap, char *));
-		replacement_t[z].index[1]='\0';
-		strcpy(replacement_t[z].replacement,va_arg(ap, char *));
-		replacement_t[z].replacement[strlen(replacement_t[z].replacement)+1]='\0';
-		z++;
-	}
-	va_end(ap);
 
 	Q_strncpyz(msg,src,sizeof(msg));
 	
@@ -330,22 +314,57 @@ void Replace_In_String (char *src,int n, char delim, int arg, ...){
 		if(msg[i++] != delim)
 			src[j++] = msg[i-1];
 		else{
-			for (y=0 ; y <=z ; y++){
-				if (msg[i] == replacement_t[y].index[0]){
-					if (j+strlen(replacement_t[y].index)>n)
+			if (msg[i] == '-'){
+				m = 1;
+				i++;
+			}
+			if (strspn(msg+i,"1234567890")){
+					l = strspn(msg+i,"1234567890");
+					if(l>5){
+						strncpy(count,msg+i,sizeof(count));
+						k = atoi(count);
+					}else if(l == 1){
+						k = atoi(msg+i);
+					}else{
+						strncpy(count,msg+i,l);
+						k = atoi(count);
+					}
+			i += l ;
+			}
+			
+
+			va_start(ap,arg);
+			for(y=0;y<arg;y++){
+				arg1 = va_arg(ap,char *);
+				if( (arg2 = va_arg(ap,char *)) == NULL)
+					break;
+
+				if (msg[i] == *arg1){
+					if (j+strlen(arg2)>n || j + k > n)
 						break;
-                    strncpy(src + j ,replacement_t[y].replacement,strlen(replacement_t[y].replacement)+1);
-					j+=strlen(replacement_t[y].replacement);
+
+					if(k && m){
+                    strcpy(src + j ,va("%-*s",k,arg2));
+		    			j+=k;
+					}else if (k && !m){
+                    strcpy(src + j ,va("%*s",k,arg2));
+					j+=k;
+					}else{
+                    strcpy(src + j ,va("%s",arg2));
+					j+=strlen(arg2);
+					}
+					m=0;
+					
 					continue;
 				}
 			}
+			va_end(ap);
 		i++;
+		k=l=0;
 		}
-	}
-	
-	src[strlen(src)]='\0';
+	}	
+	src[j]='\0';
 }
-
 
 /********************************** TF Utils ****************************************/
 
