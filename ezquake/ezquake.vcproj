@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding = "Windows-1252"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.00"
+	Version="7.10"
 	Name="ezquake"
 	ProjectGUID="{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}"
 	SccProjectName=""
@@ -79,7 +79,13 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
 				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
@@ -150,7 +156,13 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
 				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="GLRelease|Win32"
@@ -222,7 +234,13 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
 				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
@@ -292,9 +310,17 @@
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
 				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
+	<References>
+	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
@@ -1179,6 +1205,18 @@
 				Name="Addons"
 				Filter="">
 				<File
+					RelativePath=".\auth.c">
+				</File>
+				<File
+					RelativePath="cl_collision.c">
+				</File>
+				<File
+					RelativePath="collision.c">
+				</File>
+				<File
+					RelativePath="config_manager.c">
+				</File>
+				<File
 					RelativePath="Ctrl.c">
 				</File>
 				<File
@@ -1191,10 +1229,7 @@
 					RelativePath="Ctrl_Tab.c">
 				</File>
 				<File
-					RelativePath="EX_FileList.c">
-				</File>
-				<File
-					RelativePath="EX_FunNames.c">
+					RelativePath="document_rendering.c">
 				</File>
 				<File
 					RelativePath="EX_browser.c">
@@ -1209,22 +1244,13 @@
 					RelativePath="EX_browser_sources.c">
 				</File>
 				<File
+					RelativePath="EX_FileList.c">
+				</File>
+				<File
+					RelativePath="EX_FunNames.c">
+				</File>
+				<File
 					RelativePath="EX_misc.c">
-				</File>
-				<File
-					RelativePath=".\auth.c">
-				</File>
-				<File
-					RelativePath="cl_collision.c">
-				</File>
-				<File
-					RelativePath="collision.c">
-				</File>
-				<File
-					RelativePath="config_manager.c">
-				</File>
-				<File
-					RelativePath="document_rendering.c">
 				</File>
 				<File
 					RelativePath=".\fchecks.c">
@@ -1276,6 +1302,9 @@
 				</File>
 				<File
 					RelativePath=".\mvd_utils.c">
+				</File>
+				<File
+					RelativePath=".\parser.c">
 				</File>
 				<File
 					RelativePath="rulesets.c">
@@ -1489,30 +1518,6 @@
 				Name="Addons_h"
 				Filter="h;hpp;hxx;hm;inl;fi;fd">
 				<File
-					RelativePath="Ctrl.h">
-				</File>
-				<File
-					RelativePath="Ctrl_EditBox.h">
-				</File>
-				<File
-					RelativePath="Ctrl_PageViewer.h">
-				</File>
-				<File
-					RelativePath="Ctrl_Tab.h">
-				</File>
-				<File
-					RelativePath="EX_FileList.h">
-				</File>
-				<File
-					RelativePath="EX_FunNames.h">
-				</File>
-				<File
-					RelativePath="EX_browser.h">
-				</File>
-				<File
-					RelativePath="EX_misc.h">
-				</File>
-				<File
 					RelativePath=".\auth.h">
 				</File>
 				<File
@@ -1528,10 +1533,34 @@
 					RelativePath="config_manager.h">
 				</File>
 				<File
+					RelativePath="Ctrl.h">
+				</File>
+				<File
+					RelativePath="Ctrl_EditBox.h">
+				</File>
+				<File
+					RelativePath="Ctrl_PageViewer.h">
+				</File>
+				<File
+					RelativePath="Ctrl_Tab.h">
+				</File>
+				<File
 					RelativePath="cvar_groups.h">
 				</File>
 				<File
 					RelativePath="document_rendering.h">
+				</File>
+				<File
+					RelativePath="EX_browser.h">
+				</File>
+				<File
+					RelativePath="EX_FileList.h">
+				</File>
+				<File
+					RelativePath="EX_FunNames.h">
+				</File>
+				<File
+					RelativePath="EX_misc.h">
 				</File>
 				<File
 					RelativePath=".\fchecks.h">
@@ -1571,6 +1600,9 @@
 				</File>
 				<File
 					RelativePath="mp3_player.h">
+				</File>
+				<File
+					RelativePath=".\parser.h">
 				</File>
 				<File
 					RelativePath="rulesets.h">

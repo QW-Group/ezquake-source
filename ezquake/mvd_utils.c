@@ -19,6 +19,7 @@ int MVD_AutoTrackBW_f(int i);
 int axe_val, sg_val, ssg_val, ng_val, sng_val, gl_val, rl_val, lg_val, ga_val, ya_val, ra_val, ring_val, quad_val, pent_val ;
 
 int mvd_demo_track_run = 0;
+int last_track;
 
 // mvd_info cvars
 cvar_t			mvd_info		= {"mvd_info", "0"};
@@ -28,15 +29,22 @@ cvar_t			mvd_info_y		= {"mvd_info_y", "0"};
 
 // mvd_autotrack cvars
 cvar_t mvd_autotrack = {"mvd_autotrack", "0"};
-//cvar_t mvd_autotrack_1on1 = {"mvd_autotrack_1on1", "%a * %A + 50 * %W + %p + %f"};
+cvar_t mvd_autotrack_1on1 = {"mvd_autotrack_1on1", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_1on1_values = {"mvd_autotrack_1on1_values", "1 2 3 2 3 5 8 8 1 2 3 0 0 0"}; 
-//cvar_t mvd_autotrack_2on2 = {"mvd_autotrack_2on2", "%a * %A + 50 * %W + %p + %f"};
+cvar_t mvd_autotrack_2on2 = {"mvd_autotrack_2on2", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_2on2_values = {"mvd_autotrack_2on2_values", "1 2 3 2 3 5 8 8 1 2 3 500 900 1000"}; 
-//cvar_t mvd_autotrack_4on4 = {"mvd_autotrack_4on4", "%a * %A + 50 * %W + %p + %f"};
+cvar_t mvd_autotrack_4on4 = {"mvd_autotrack_4on4", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_4on4_values = {"mvd_autotrack_4on4_values", "1 2 4 2 4 6 10 10 1 2 3 500 900 1000"}; 
-//cvar_t mvd_autotrack_custom = {"mvd_autotrack_custom", "%a * %A + 50 * %W + %p + %f"};
+cvar_t mvd_autotrack_custom = {"mvd_autotrack_custom", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_custom_values = {"mvd_autotrack_custom_values", "1 2 3 2 3 6 6 1 2 3 500 900 1000"}; 
 
+
+	typedef struct bp_var_s{
+		int id;
+		int val;
+	} bp_var_t;
+
+	bp_var_t bp_var[MAX_CLIENTS];
 
 
 
@@ -46,6 +54,12 @@ void MVD_Demo_Track (void){
 	
 	int track_player ;
 
+	
+	#ifdef DEBUG
+	printf("MVD_Demo_Track Started\n");
+	#endif
+		
+	
 	if(strlen(track_name)){
 		track_player=FindBestNick(track_name,1);
 		if (track_player != -1 )
@@ -57,6 +71,9 @@ void MVD_Demo_Track (void){
 	}
 
 	mvd_demo_track_run = 1;
+	#ifdef DEBUG
+	printf("MVD_Demo_Track Stopped\n");
+	#endif
 }
 
 
@@ -124,18 +141,18 @@ char *MVD_BestAmmo (int i) {
 
 void MVD_Info (void){
 	char str[80];
-	char location[13];
-	char *tmpstr1, *tmpstr, *info_type;
-	char mvd_info_final_string[80], mvd_info_final_string_tmp[80], mvd_info_powerups[20];
+	char mvd_info_final_string[80], mvd_info_powerups[20];
 	char *mapname;
-	int x,y,z,i,h,j,mvd_info_adjust_length ;
-	char ints[3];
+	int x,y,z,i,h,value;
 	player_state_t *mvd_state ;
 	player_info_t *mvd_info_players;
 	mvd_state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate;
 	mvd_info_players = cl.players;
 
 
+	#ifdef DEBUG
+	printf("MVD_Info Started\n");
+	#endif
 	
 	z=1;
 	
@@ -156,163 +173,79 @@ void MVD_Info (void){
 	
 	x = ELEMENT_X_COORD(mvd_info);
 	y = ELEMENT_Y_COORD(mvd_info);
-	//Q_snprintfz(str, sizeof(str),"%10s%6s%6s%7s%6s%10s","Name","Ping","Frags","Health","Armor","Location");
-	//Draw_String (x, y, str);
+
 	for ( i=0 ; i<MAX_CLIENTS ; i++ ){
 	if (!mvd_info_players[i].name[0])
 		continue;
 	if (mvd_info_players[i].spectator)
 		continue;
-	
-	Q_strncpyz(location,TP_LocationName(mvd_state[i].origin),sizeof(location));
-	
-	//Q_strncpyz(tmpstr,scr_mvdinfo_setup.string,sizeof(tmpstr));
-	tmpstr=mvd_info_setup.string;
-	
-	mvd_info_final_string[0]='\0';
-	mvd_info_final_string_tmp[0]='\0';
-	mvd_info_powerups[0]='\0';
-	mvd_info_best_ammo[0]='\0';
-	mvd_info_best_weapon[0]='\0';
-	
-	while (strstr(tmpstr,"%")){
-		for (h=0;h<=3;h++){
-			ints[h]='\0';
-		}
-	
-		tmpstr1 = strstr(tmpstr,"%");
-		tmpstr=tmpstr1+1;
-		h=strcspn(tmpstr,"1234567890");
-        j=strspn(tmpstr+h,"1234567890");
-		strncpy(ints,tmpstr+h,j);
-		mvd_info_adjust_length=atoi(ints);
-		info_type = tmpstr1+j+1;
-		switch ( info_type[0] ){
-			case 'a' :
-				if(strlen(mvd_info_final_string)){
-				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %*i",mvd_info_final_string_tmp,mvd_info_adjust_length,mvd_info_players[i].stats[STAT_ARMOR]);
-				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%*i",mvd_info_adjust_length,mvd_info_players[i].stats[STAT_ARMOR]);
-				}
-				break;
-			case 'f' :
-				if(strlen(mvd_info_final_string)){
-				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %*i",mvd_info_final_string_tmp,mvd_info_adjust_length,mvd_info_players[i].frags);
-				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%*i",mvd_info_adjust_length,mvd_info_players[i].frags);
-				}
-				break;
-			case 'h' :
-				if(strlen(mvd_info_final_string)){
-				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %*i",mvd_info_final_string_tmp,mvd_info_adjust_length,mvd_info_players[i].stats[STAT_HEALTH]);
-				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%*i",mvd_info_adjust_length,mvd_info_players[i].stats[STAT_HEALTH]);
-				}
-				break;
-			case 'l' :
-				if(strlen(mvd_info_final_string)){
-				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %-*s",mvd_info_final_string_tmp,mvd_info_adjust_length,location);
-				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%-*s",mvd_info_adjust_length,location);
-				}
-				break;
-			case 'n' :
-				if(strlen(mvd_info_final_string)){
-				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %-*s",mvd_info_final_string_tmp,mvd_info_adjust_length,mvd_info_players[i].name);
-				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%-*s",mvd_info_adjust_length,mvd_info_players[i].name);
-				}
-				break;
-			case 'P' :
-				if(strlen(mvd_info_final_string)){
-				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %*i",mvd_info_final_string_tmp,mvd_info_adjust_length,mvd_info_players[i].ping);
-				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%*i",mvd_info_adjust_length,mvd_info_players[i].ping);
-				}
-				break;
-			
-			case 'p' :
-					if (mvd_info_players[i].stats[STAT_ITEMS] & IT_QUAD)
-						Q_strncpyz(mvd_info_powerups, tp_name_quad.string, sizeof(mvd_info_powerups));
-				
-					if (mvd_info_players[i].stats[STAT_ITEMS] & IT_INVULNERABILITY) {
-						if (mvd_info_powerups[0])
-							Q_strncatz(mvd_info_powerups, tp_name_separator.string);
-						Q_strncatz(mvd_info_powerups, tp_name_pent.string);
-					}
-				
-					if (mvd_info_players[i].stats[STAT_ITEMS] & IT_INVISIBILITY) {
-						if (mvd_info_powerups[0])
-						Q_strncatz(mvd_info_powerups, tp_name_separator.string);
-					Q_strncatz(mvd_info_powerups, tp_name_ring.string);
-					}
-				
-				if(strlen(mvd_info_final_string)){
-				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %-*s",mvd_info_final_string_tmp,mvd_info_adjust_length,mvd_info_powerups);
-				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%-*s",mvd_info_adjust_length,mvd_info_powerups);
-				}
-				break;
-			
-			case 'w' :
-				if(strlen(mvd_info_final_string)){
-				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %*s:%-*i",mvd_info_final_string_tmp,mvd_info_adjust_length,Weapon_NumToString(mvd_info_players[i].stats[STAT_ACTIVEWEAPON]),mvd_info_adjust_length,mvd_info_players[i].stats[STAT_AMMO]);
-				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%*s:%-*i",mvd_info_adjust_length,Weapon_NumToString(mvd_info_players[i].stats[STAT_ACTIVEWEAPON]),mvd_info_adjust_length,mvd_info_players[i].stats[STAT_AMMO]);
-				}
-				break;
-			
-			case 'W' :
-				if(strlen(mvd_info_final_string)){
-				Q_strncpyz(mvd_info_final_string_tmp,mvd_info_final_string,sizeof(mvd_info_final_string));
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%s %*s:%-*s",mvd_info_final_string_tmp,mvd_info_adjust_length,MVD_BestWeapon_strings(i),mvd_info_adjust_length,MVD_BestAmmo(i));
-				}else{
-				Q_snprintfz(mvd_info_final_string,sizeof(mvd_info_final_string),"%*s:%-*s",mvd_info_adjust_length,MVD_BestWeapon_strings(i),mvd_info_adjust_length,MVD_BestAmmo(i));
-				}
-				break;
-			
-			default :
-				break;
-		}
-		
+
+	for(h=0;h<MAX_CLIENTS;h++){
+		if (mvd_info_players[i].userid == bp_var[h].id)
+			value = bp_var[h].val;
 	}
+
+	if (mvd_info_players[i].stats[STAT_ITEMS] & IT_QUAD)
+		Q_strncpyz(mvd_info_powerups, tp_name_quad.string, sizeof(mvd_info_powerups));
+              
+	if (mvd_info_players[i].stats[STAT_ITEMS] & IT_INVULNERABILITY) {
+		if (mvd_info_powerups[0])
+			Q_strncatz(mvd_info_powerups, tp_name_separator.string);
+		Q_strncatz(mvd_info_powerups, tp_name_pent.string);
+	}
+
+	if (mvd_info_players[i].stats[STAT_ITEMS] & IT_INVISIBILITY) {
+		if (mvd_info_powerups[0])
+			Q_strncatz(mvd_info_powerups, tp_name_separator.string);
+		Q_strncatz(mvd_info_powerups, tp_name_ring.string);
+	}
+
+
+	strcpy(mvd_info_final_string,mvd_info_setup.string);
+	printf("works before Replace_In_String ?\n");
+	Replace_In_String(mvd_info_final_string,sizeof(mvd_info_final_string),'%',\
+			9,\
+			"a",va("%i",mvd_info_players[i].stats[STAT_ARMOR]),\
+			"f",va("%i",mvd_info_players[i].frags),\
+			"h",va("%i",mvd_info_players[i].stats[STAT_HEALTH]),\
+			"l",TP_LocationName(mvd_state[i].origin),\
+			"n",mvd_info_players[i].name,\
+			"P",va("%i",mvd_info_players[i].ping),\
+			"p",mvd_info_powerups,\
+			"v",va("%i",value),\
+			"w",va("%s:%i",Weapon_NumToString(mvd_info_players[i].stats[STAT_ACTIVEWEAPON]),mvd_info_players[i].stats[STAT_AMMO]),\
+			"W",va("%s:%s",MVD_BestWeapon_strings(i),MVD_BestAmmo(i)));
+	printf("works after Replace_In_String ?\n");
 	Q_strncpyz(str, mvd_info_final_string, sizeof(str));
 	Draw_String (x, y+((z++)*8), str);
 	
+	#ifdef DEBUG
+	printf("MVD_Info Stopped\n");
+	#endif
 	}
 }
 
 
 int MVD_FindBestPlayer_f(void){
 
-	int bp_id, bp_calc_val, i, h, y = 0;
+	int bp_id, bp_calc_val, status, i, h, y = 0;
 	int loop = 1;
 	int loop_count = 0;
 	
-	char val[80];
+	char val[80],string1[80];
 	int bp_at,bp_bw,bp_pw,bp_h;
 	int lastval = 0;
 	int z = 0;
 	int gtype = 0;
 
-	typedef struct bp_var_s{
-		int id;
-		int val;
-	} bp_var_t;
-
-	bp_var_t bp_var[MAX_CLIENTS];
-
 	player_info_t *bp_info;
 	bp_info = cl.players;
 
+	#ifdef DEBUG
+	printf("MVD_FindBestPlayer_f Started\n");
+	#endif
+	
+	
 	for ( i=0; i<MAX_CLIENTS ; i++ ){
 		if (!bp_info[i].name[0])
 			continue;
@@ -320,7 +253,7 @@ int MVD_FindBestPlayer_f(void){
 			continue;
 		gtype++;
 	}	
-
+	
 	if (gtype == 2)
 		strcpy(val,mvd_autotrack_1on1_values.string);
 	else if (gtype == 4)
@@ -335,20 +268,20 @@ int MVD_FindBestPlayer_f(void){
 	
 	// checking if mvd_autotrack_xonx_values have right format
 	if (strtok(val, " ") != NULL){
-		for(y=1;y<=12;y++){
+		for(y=1;y<=13;y++){
 			if (strtok(NULL, " ") != NULL){
 			}else{
 				Com_Printf("mvd_autotrack aborting due to wrong use of mvd_autotrack_*_value\n");
-				mvd_autotrack.value = 0;
+				Cvar_SetValue(&mvd_autotrack,0);
 				return 0;
 			}
 		}
 	} else {
 		Com_Printf("mvd_autotrack aborting due to wrong use of mvd_autotrack_*_value\n");
-		mvd_autotrack.value = 0;
+		Cvar_SetValue(&mvd_autotrack,0);
 	return 0;
 	}
-	
+
 	if (gtype == 2)
 		strcpy(val,mvd_autotrack_1on1_values.string);
 	else if (gtype == 4)
@@ -359,7 +292,8 @@ int MVD_FindBestPlayer_f(void){
 		strcpy(val,mvd_autotrack_custom_values.string);
 	else
 		strcpy(val,mvd_autotrack_1on1_values.string);
-
+	
+	
 	// getting values
 	//val = mvd_autotrack_1on1_values.string;
 	axe_val	=atoi(strtok(val, " "));
@@ -376,7 +310,9 @@ int MVD_FindBestPlayer_f(void){
 	ring_val=atoi(strtok(NULL, " "));
 	quad_val=atoi(strtok(NULL, " "));
 	pent_val=atoi(strtok(NULL, " "));
-
+	//axe_val=sg_val=ssg_val=ng_val=sng_val=gl_val=rl_val=lg_val=ga_val=ya_val=ra_val=ring_val=quad_val=pent_val=10;
+	
+	
 	for ( i=0, z=0; i<MAX_CLIENTS ; i++ ){
 		if (!bp_info[i].name[0])
 			continue;
@@ -412,29 +348,47 @@ int MVD_FindBestPlayer_f(void){
 		// get health
 		bp_h=bp_info[i].stats[STAT_HEALTH];
 		
-		// parser for the equations
-//		strcpy(val,mvd_autotrack_1on1.string);
-	//	eq[0]=strtok(val, " ");
-		//while (1) {
-			//eq[++z]=strtok(NULL, " ");
-			//if((strlen(eq[z])) == 0 )
-				//return;
-		//}
-		// calculating players "value"
+	if (gtype == 2)
+		strcpy(string1,mvd_autotrack_1on1.string);
+	else if (gtype == 4)
+		strcpy(string1,mvd_autotrack_2on2.string);
+	else if (gtype == 8)
+		strcpy(string1,mvd_autotrack_4on4.string);
+	else if (mvd_autotrack.value == 2)
+		strcpy(string1,mvd_autotrack_custom.string);
+	else
+		strcpy(string1,mvd_autotrack_1on1.string);
 		
-		bp_calc_val = (bp_info[i].stats[STAT_ARMOR] * bp_at) + (50 * bp_bw) + bp_pw + bp_info[i].frags;
+	
+	Replace_In_String(string1,sizeof(string1),'%',6,\
+		"a",va("%i",bp_info[i].stats[STAT_ARMOR]),\
+		"A",va("%i",bp_at),\
+		"f",va("%i",bp_info[i].frags),\
+		"h",va("%i",bp_info[i].stats[STAT_HEALTH]),\
+		"W",va("%i",bp_bw),\
+		"p",va("%i",bp_pw));
 		
-		
+	
+	printf("%s\n",string1);
+		status=eval_string_int(string1);
+
+		if(status<0){
+			Cvar_SetValue(&mvd_autotrack,0);
+			Com_Printf("Error in your mvd_autotrack settings\n");
+			return(0);
+		}
+		printf("%s %i\n",string1,atoi(string1));
+				
 		bp_var[z].id 	= bp_info[i].userid;
-		bp_var[z++].val = bp_calc_val;
+		bp_var[z++].val = atoi(string1);
+		
+		//Com_Printf("%s\n",string1);
 	}
 	
 
-	//printf("%i\n",bp_calc_val);
-	// looking whos best
+
 	lastval=0;
 	bp_id=0;
-	
 	for ( h=0 ; h<z ; h++ ){
 		if(lastval < bp_var[h].val){
 				lastval = bp_var[h].val;
@@ -442,8 +396,11 @@ int MVD_FindBestPlayer_f(void){
 		}
 		
 	}
+	#ifdef DEBUG
+	printf("MVD_FindBestPlayer_f Stopped %i\n",bp_id);
+	#endif
+	return bp_id ;
 	
-	return(bp_id);
 	
 }
 
@@ -475,14 +432,24 @@ int MVD_AutoTrackBW_f(int i){
 
 void MVD_AutoTrack_f(void) {
 	char arg[50];
-	int i;
+	int id;
+	
+	#ifdef DEBUG
+	printf("MVD_AutoTrack_f Started\n");
+	#endif
+
 	if (!mvd_autotrack.value)
 		return;
-
-	i = MVD_FindBestPlayer_f();
-	arg[0]='\0';
-	sprintf(arg,"track %i \n",i);
-	Cbuf_AddText(arg);
+	
+	id = MVD_FindBestPlayer_f();
+	if ( id != last_track){
+		sprintf(arg,"track %i \n",id);
+		Cbuf_AddText(arg);
+		last_track = id;
+	}
+	#ifdef DEBUG
+	printf("MVD_AutoTrack_f Stopped\n");
+	#endif
 }
 
 
@@ -499,13 +466,13 @@ void MVD_Utils_Init (void) {
 	Cvar_Register (&mvd_info_x);
 	Cvar_Register (&mvd_info_y);
 	Cvar_Register (&mvd_autotrack);
-	//Cvar_Register (&mvd_autotrack_1on1);
+	Cvar_Register (&mvd_autotrack_1on1);
 	Cvar_Register (&mvd_autotrack_1on1_values);
-	//Cvar_Register (&mvd_autotrack_2on2);
+	Cvar_Register (&mvd_autotrack_2on2);
 	Cvar_Register (&mvd_autotrack_2on2_values);
-	//Cvar_Register (&mvd_autotrack_4on4);
+	Cvar_Register (&mvd_autotrack_4on4);
 	Cvar_Register (&mvd_autotrack_4on4_values);
-	//Cvar_Register (&mvd_autotrack_custom);
+	Cvar_Register (&mvd_autotrack_custom);
 	Cvar_Register (&mvd_autotrack_custom_values);
 
 	Cvar_ResetCurrentGroup();
