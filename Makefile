@@ -188,6 +188,7 @@ QWCL_OBJS = \
     $(BUILDDIR)/build/version.o \
     $(BUILDDIR)/build/wad.o \
     $(BUILDDIR)/build/zone.o \
+    $(BUILDDIR)/build/parser.o \
 \
     $(BUILDDIR)/build/modules.o \
     $(BUILDDIR)/build/ignore.o \
@@ -601,6 +602,9 @@ $(BUILDDIR)/build/wad.o :            $(SOURCE_DIR)/wad.c
 $(BUILDDIR)/build/zone.o :           $(SOURCE_DIR)/zone.c
 	$(DO_CC)
 
+$(BUILDDIR)/build/parser.o :            $(SOURCE_DIR)/parser.c
+	$(DO_CC)
+
 $(BUILDDIR)/build/xml_test.o :		$(SOURCE_DIR)/xml_test.c
 	$(DO_CC)
 
@@ -781,6 +785,7 @@ GLQWCL_OBJS = \
     $(BUILDDIR)/build-gl/version.o \
     $(BUILDDIR)/build-gl/wad.o \
     $(BUILDDIR)/build-gl/zone.o \
+    $(BUILDDIR)/build-gl/parser.o \
 \
     $(BUILDDIR)/build-gl/ignore.o \
     $(BUILDDIR)/build-gl/logging.o \
@@ -1158,6 +1163,9 @@ $(BUILDDIR)/build-gl/wad.o :            $(SOURCE_DIR)/wad.c
 	$(DO_GL_CC)
                                                                       
 $(BUILDDIR)/build-gl/zone.o :           $(SOURCE_DIR)/zone.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/parser.o :         $(SOURCE_DIR)/parser.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-gl/localtime_linux.o : $(SOURCE_DIR)/localtime_linux.c
