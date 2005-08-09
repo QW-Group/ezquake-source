@@ -439,7 +439,8 @@ void CL_DNS_f (void) {
 	Q_strncpyz(address, Cmd_Argv(1), sizeof(address));
 	if ((s = strchr(address, ':')))
 		*s = 0;
-	if (((int) addr.s_addr = inet_addr(address)) == INADDR_NONE) {
+	addr.s_addr = inet_addr(address);
+	if (inet_addr(address) == INADDR_NONE) {
 		//forward lookup
 		if (!(h = gethostbyname(address))) {
 			Com_Printf("Couldn't resolve %s\n", address);
