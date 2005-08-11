@@ -1,0 +1,22 @@
+This file describes the usage of ezquake.nsi file. That's NSIS Script file.
+See http://nsis.sf.net/
+
+You are required to place it into same dir with all game binaries:
+  ezquake.exe,
+  ezquake-gl.exe,
+  ezquake-security.*,
+  ezstart.exe
+  lib/ (dir)
+    libexpat.dll
+    libjpeg.dll
+    libpng.dll
+    mw_hook.dll
+    zlib.dll
+  ezquake/ (dir)
+    cfg/ (dir, see CVS/ezquake/misc/cfg/)
+    help/ (dir, see CVS/documentation)
+    keymaps/ (dir, see CVS/ezquake/misc/keymaps/)
+    manual/ (dir, offline version of http://ezQuake.SF.net/docs/)
+    sb/ (dir, see CVS/ezquake/misc/sb)
+
+Using NSIS, files listed above and this install script you are able to create Windows installer for ezQuake.
