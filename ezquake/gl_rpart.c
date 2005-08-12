@@ -658,7 +658,6 @@ static void QMB_UpdateParticles(void) {
 
 void QMB_DrawParticles (void) {
 	int	i, j, k, drawncount;
-	int SrcBlend = GL_SRC_ALPHA, DstBlend = GL_ONE_MINUS_SRC_ALPHA, texture2D = true;
 	vec3_t v, up, right, billboard[4], velcoord[4], neworg;
 	particle_t *p;
 	particle_type_t *pt;
@@ -1816,7 +1815,6 @@ void VX_ParticleTrail (vec3_t start, vec3_t end, float size, float time, col_t c
 
 	vec3_t		vec;
 	float		len;
-	col_t color2={255,255,255};
 	time *= amf_part_traillen.value;
 	
 

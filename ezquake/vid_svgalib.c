@@ -488,7 +488,7 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 }
 
 void VID_Init(unsigned char *palette) {
-	int i, w, h, d;
+	int w, h, d;
 
 	if (svgalib_inited)
 		return;
@@ -718,7 +718,7 @@ void IN_Shutdown(void) {
 void IN_Commands (void) {}
 
 void IN_MouseMove (usercmd_t *cmd) {
-	float filterfrac, mousespeed;
+	float filterfrac;
 
 	if (!UseMouse)
 		return;

@@ -67,7 +67,6 @@ cvar_t mp3_xmms_session = {"mp3_xmms_session", "0"};
 #if defined(__XMMS__)
 
 static QLIB_HANDLETYPE_T libxmms_handle = NULL;
-static QLIB_HANDLETYPE_T libglib_handle = NULL;
 
 void (*qxmms_remote_play)(gint session);
 void (*qxmms_remote_pause)(gint session);
@@ -526,7 +525,7 @@ char *MP3_Macro_MP3Info(void) {
 }
 
 qboolean MP3_GetOutputtime(int *elapsed, int *total) {
-	int status, pos;
+	int pos;
 
 	if (!MP3_IsPlayerRunning()) {
 		Com_Printf("%s\n", mp3_notrunning_msg);

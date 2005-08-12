@@ -298,7 +298,7 @@ void Replace_In_String (char *src,int n, char delim, int arg, ...){
 	va_list ap;
 	char msg[1024];
 	char count[5];
-	int check = 0 , z=0 , y=0 ,x=0,i=0,j=0,k=0,l=0,m=0;
+	int y=0,i=0,j=0,k=0,l=0,m=0;
 	char *arg1, *arg2 ;
 	
 	if (n>sizeof(msg))
