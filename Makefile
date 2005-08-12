@@ -13,6 +13,7 @@ BUILD_RELEASE_DIR=release-$(ARCH)-$(GLIBC)
 #COMPILATION TOOLS
 CC=gcc
 STRIP=strip
+GCC=$(shell gcc -dumpversion | tr -d 'a-z-' | head -c1)
 
 #LOCATION OF SOURCE RELATIVE TO MAKEFILE
 SOURCE_DIR=.
@@ -22,9 +23,20 @@ STATICLIB_DIR= /usr/X11R6/lib
 #BASE CFLAGS
 XMMS_CFLAGS=-DWITH_XMMS `glib-config --cflags`
 BASE_CFLAGS=-DWITH_ZLIB -DWITH_PNG -I$(HEADER_DIR) -funsigned-char -D__linux__ -Did386 $(XMMS_CFLAGS) -pipe -fno-strict-aliasing
-RELEASE_CFLAGS=$(BASE_CFLAGS) -DNDEBUG -march=pentium2 -O3 -ffast-math -funroll-loops -fomit-frame-pointer \
-	-fexpensive-optimizations -falign-loops=2 -falign-jumps=2 -falign-functions=2
+RELEASE_CFLAGS=$(BASE_CFLAGS) -DNDEBUG -march=pentium2 -O3 -ffast-math -funroll-loops -fomit-frame-pointer -fexpensive-optimizations
 DEBUG_CFLAGS=$(BASE_CFLAGS) -g -Wall -Wimplicit
+
+ifeq ($(GCC),2)
+RELEASE_CFLAGS += -malign-loops=2 -malign-jumps=2 -malign-functions=2
+else
+ifeq ($(GCC),3)
+RELEASE_CFLAGS += -falign-loops=2 -falign-jumps=2 -falign-functions=2
+else
+ifeq ($(GCC),4)
+RELEASE_CFLAGS += -falign-loops=2 -falign-jumps=2 -falign-functions=2
+endif
+endif
+endif
 
 #BASE LDFLAGS
 LDFLAGS=-lm -ldl `glib-config --libs` -lexpat -lpcre
@@ -266,343 +278,343 @@ $(BUILDDIR)/ezquake.x11 : $(QWCL_OBJS) $(QWCL_AS_OBJS) $(QWCL_X11_OBJS) # clean-
 	$(CC) $(CFLAGS) -o $@ $(QWCL_OBJS) $(QWCL_AS_OBJS) $(QWCL_X11_OBJS) \
         $(LDFLAGS) $(XLDFLAGS)
 
-$(BUILDDIR)/build/host.o :           $(SOURCE_DIR)/host.c
+$(BUILDDIR)/build/host.o :		$(SOURCE_DIR)/host.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/sys_linux.o :      $(SOURCE_DIR)/sys_linux.c
+$(BUILDDIR)/build/sys_linux.o :		$(SOURCE_DIR)/sys_linux.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/cd_linux.o :       $(SOURCE_DIR)/cd_linux.c
+$(BUILDDIR)/build/cd_linux.o :		$(SOURCE_DIR)/cd_linux.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/snd_dma.o :        $(SOURCE_DIR)/snd_dma.c
+$(BUILDDIR)/build/snd_dma.o :		$(SOURCE_DIR)/snd_dma.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/snd_mem.o :        $(SOURCE_DIR)/snd_mem.c
+$(BUILDDIR)/build/snd_mem.o :		$(SOURCE_DIR)/snd_mem.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/snd_mix.o :        $(SOURCE_DIR)/snd_mix.c
+$(BUILDDIR)/build/snd_mix.o :		$(SOURCE_DIR)/snd_mix.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/snd_linux.o :      $(SOURCE_DIR)/snd_linux.c
+$(BUILDDIR)/build/snd_linux.o :		$(SOURCE_DIR)/snd_linux.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/snd_oss.o :	     $(SOURCE_DIR)/snd_oss.c
+$(BUILDDIR)/build/snd_oss.o :		$(SOURCE_DIR)/snd_oss.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/snd_alsa.o :	     $(SOURCE_DIR)/snd_alsa.c
+$(BUILDDIR)/build/snd_alsa.o :		$(SOURCE_DIR)/snd_alsa.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/cl_demo.o :        $(SOURCE_DIR)/cl_demo.c
+$(BUILDDIR)/build/cl_demo.o :		$(SOURCE_DIR)/cl_demo.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/cl_ents.o :        $(SOURCE_DIR)/cl_ents.c
+$(BUILDDIR)/build/cl_ents.o :		$(SOURCE_DIR)/cl_ents.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/cl_input.o :       $(SOURCE_DIR)/cl_input.c
+$(BUILDDIR)/build/cl_input.o :		$(SOURCE_DIR)/cl_input.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/cl_main.o :        $(SOURCE_DIR)/cl_main.c
+$(BUILDDIR)/build/cl_main.o :		$(SOURCE_DIR)/cl_main.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/cl_parse.o :       $(SOURCE_DIR)/cl_parse.c
+$(BUILDDIR)/build/cl_parse.o :		$(SOURCE_DIR)/cl_parse.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/cl_pred.o :        $(SOURCE_DIR)/cl_pred.c
+$(BUILDDIR)/build/cl_pred.o :		$(SOURCE_DIR)/cl_pred.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/cl_tent.o :        $(SOURCE_DIR)/cl_tent.c
+$(BUILDDIR)/build/cl_tent.o :		$(SOURCE_DIR)/cl_tent.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/cl_cam.o :         $(SOURCE_DIR)/cl_cam.c
+$(BUILDDIR)/build/cl_cam.o :		$(SOURCE_DIR)/cl_cam.c
 	$(DO_CC)   
 
-$(BUILDDIR)/build/cl_view.o :        $(SOURCE_DIR)/cl_view.c
+$(BUILDDIR)/build/cl_view.o :		$(SOURCE_DIR)/cl_view.c
 	$(DO_CC)
                               
-$(BUILDDIR)/build/cl_cmd.o :         $(SOURCE_DIR)/cl_cmd.c
+$(BUILDDIR)/build/cl_cmd.o :		$(SOURCE_DIR)/cl_cmd.c
 	$(DO_CC)                
 
-$(BUILDDIR)/build/cl_slist.o :       $(SOURCE_DIR)/cl_slist.c
+$(BUILDDIR)/build/cl_slist.o :		$(SOURCE_DIR)/cl_slist.c
 	$(DO_CC)              
                                                                       
-$(BUILDDIR)/build/d_edge.o :         $(SOURCE_DIR)/d_edge.c
+$(BUILDDIR)/build/d_edge.o :		$(SOURCE_DIR)/d_edge.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/d_fill.o :         $(SOURCE_DIR)/d_fill.c
+$(BUILDDIR)/build/d_fill.o :		$(SOURCE_DIR)/d_fill.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/d_init.o :         $(SOURCE_DIR)/d_init.c
+$(BUILDDIR)/build/d_init.o :		$(SOURCE_DIR)/d_init.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/d_modech.o :       $(SOURCE_DIR)/d_modech.c
+$(BUILDDIR)/build/d_modech.o :		$(SOURCE_DIR)/d_modech.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/d_polyse.o :       $(SOURCE_DIR)/d_polyse.c
+$(BUILDDIR)/build/d_polyse.o :		$(SOURCE_DIR)/d_polyse.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/d_scan.o :         $(SOURCE_DIR)/d_scan.c
+$(BUILDDIR)/build/d_scan.o :		$(SOURCE_DIR)/d_scan.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/d_sky.o :          $(SOURCE_DIR)/d_sky.c
+$(BUILDDIR)/build/d_sky.o :		$(SOURCE_DIR)/d_sky.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/d_sprite.o :       $(SOURCE_DIR)/d_sprite.c
+$(BUILDDIR)/build/d_sprite.o :		$(SOURCE_DIR)/d_sprite.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/d_surf.o :         $(SOURCE_DIR)/d_surf.c
+$(BUILDDIR)/build/d_surf.o :		$(SOURCE_DIR)/d_surf.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/d_vars.o :         $(SOURCE_DIR)/d_vars.c
+$(BUILDDIR)/build/d_vars.o :		$(SOURCE_DIR)/d_vars.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/d_zpoint.o :       $(SOURCE_DIR)/d_zpoint.c
+$(BUILDDIR)/build/d_zpoint.o :		$(SOURCE_DIR)/d_zpoint.c
 	$(DO_CC)
                                                                 
-$(BUILDDIR)/build/r_aclip.o :        $(SOURCE_DIR)/r_aclip.c
+$(BUILDDIR)/build/r_aclip.o :		$(SOURCE_DIR)/r_aclip.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/r_alias.o :        $(SOURCE_DIR)/r_alias.c
+$(BUILDDIR)/build/r_alias.o :		$(SOURCE_DIR)/r_alias.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/r_bsp.o :          $(SOURCE_DIR)/r_bsp.c
+$(BUILDDIR)/build/r_bsp.o :		$(SOURCE_DIR)/r_bsp.c
 	$(DO_CC)         
 
-$(BUILDDIR)/build/r_draw.o :         $(SOURCE_DIR)/r_draw.c
+$(BUILDDIR)/build/r_draw.o :		$(SOURCE_DIR)/r_draw.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/r_rast.o :         $(SOURCE_DIR)/r_rast.c
+$(BUILDDIR)/build/r_rast.o :		$(SOURCE_DIR)/r_rast.c
 	$(DO_CC)
                                                                                                                                      
-$(BUILDDIR)/build/r_edge.o :         $(SOURCE_DIR)/r_edge.c
+$(BUILDDIR)/build/r_edge.o :		$(SOURCE_DIR)/r_edge.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/r_efrag.o :        $(SOURCE_DIR)/r_efrag.c
+$(BUILDDIR)/build/r_efrag.o :		$(SOURCE_DIR)/r_efrag.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/r_light.o :        $(SOURCE_DIR)/r_light.c
+$(BUILDDIR)/build/r_light.o :		$(SOURCE_DIR)/r_light.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/r_main.o :         $(SOURCE_DIR)/r_main.c
+$(BUILDDIR)/build/r_main.o :		$(SOURCE_DIR)/r_main.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/r_misc.o :         $(SOURCE_DIR)/r_misc.c
+$(BUILDDIR)/build/r_misc.o :		$(SOURCE_DIR)/r_misc.c
 	$(DO_CC)
       
-$(BUILDDIR)/build/r_model.o :        $(SOURCE_DIR)/r_model.c
+$(BUILDDIR)/build/r_model.o :		$(SOURCE_DIR)/r_model.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/r_part.o :         $(SOURCE_DIR)/r_part.c
+$(BUILDDIR)/build/r_part.o :		$(SOURCE_DIR)/r_part.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/r_sky.o :          $(SOURCE_DIR)/r_sky.c
+$(BUILDDIR)/build/r_sky.o :		$(SOURCE_DIR)/r_sky.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/r_sprite.o :       $(SOURCE_DIR)/r_sprite.c
+$(BUILDDIR)/build/r_sprite.o :		$(SOURCE_DIR)/r_sprite.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/r_surf.o :         $(SOURCE_DIR)/r_surf.c
+$(BUILDDIR)/build/r_surf.o :		$(SOURCE_DIR)/r_surf.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/r_vars.o :         $(SOURCE_DIR)/r_vars.c
+$(BUILDDIR)/build/r_vars.o :		$(SOURCE_DIR)/r_vars.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/cmd.o :            $(SOURCE_DIR)/cmd.c
+$(BUILDDIR)/build/cmd.o :		$(SOURCE_DIR)/cmd.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/common.o :         $(SOURCE_DIR)/common.c
+$(BUILDDIR)/build/common.o :		$(SOURCE_DIR)/common.c
 	$(DO_CC)         
 
-$(BUILDDIR)/build/com_msg.o :        $(SOURCE_DIR)/com_msg.c
+$(BUILDDIR)/build/com_msg.o :		$(SOURCE_DIR)/com_msg.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/console.o :        $(SOURCE_DIR)/console.c
+$(BUILDDIR)/build/console.o :		$(SOURCE_DIR)/console.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/crc.o :            $(SOURCE_DIR)/crc.c
+$(BUILDDIR)/build/crc.o :		$(SOURCE_DIR)/crc.c
 	$(DO_CC)
                                                                  
-$(BUILDDIR)/build/version.o :        $(SOURCE_DIR)/version.c
+$(BUILDDIR)/build/version.o :		$(SOURCE_DIR)/version.c
 	$(DO_CC)
                
-$(BUILDDIR)/build/cvar.o :           $(SOURCE_DIR)/cvar.c
+$(BUILDDIR)/build/cvar.o :		$(SOURCE_DIR)/cvar.c
 	$(DO_CC)
                                                                 
-$(BUILDDIR)/build/keys.o :           $(SOURCE_DIR)/keys.c
+$(BUILDDIR)/build/keys.o :		$(SOURCE_DIR)/keys.c
 	$(DO_CC)  
                                                                       
-$(BUILDDIR)/build/mathlib.o :        $(SOURCE_DIR)/mathlib.c
+$(BUILDDIR)/build/mathlib.o :		$(SOURCE_DIR)/mathlib.c
 	$(DO_CC)
                                                                                                                                   
-$(BUILDDIR)/build/menu.o :           $(SOURCE_DIR)/menu.c
+$(BUILDDIR)/build/menu.o :		$(SOURCE_DIR)/menu.c
 	$(DO_CC)
                                                                                                       
-$(BUILDDIR)/build/mvd_utils.o :	     $(SOURCE_DIR)/mvd_utils.c
+$(BUILDDIR)/build/mvd_utils.o :		$(SOURCE_DIR)/mvd_utils.c
 	$(DO_CC)
                                                                                                       
-$(BUILDDIR)/build/movie.o :           $(SOURCE_DIR)/movie.c
+$(BUILDDIR)/build/movie.o :		$(SOURCE_DIR)/movie.c
 	$(DO_CC)                              
                                                                       
-$(BUILDDIR)/build/net_chan.o :       $(SOURCE_DIR)/net_chan.c
+$(BUILDDIR)/build/net_chan.o :		$(SOURCE_DIR)/net_chan.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/net_udp.o :        $(SOURCE_DIR)/net_udp.c
+$(BUILDDIR)/build/net_udp.o :		$(SOURCE_DIR)/net_udp.c
 	$(DO_CC)
                                                                                                                                      
-$(BUILDDIR)/build/pmove.o :          $(SOURCE_DIR)/pmove.c
+$(BUILDDIR)/build/pmove.o :		$(SOURCE_DIR)/pmove.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/pmovetst.o :       $(SOURCE_DIR)/pmovetst.c
+$(BUILDDIR)/build/pmovetst.o :		$(SOURCE_DIR)/pmovetst.c
 	$(DO_CC)
                                                                                                                                             
-$(BUILDDIR)/build/sbar.o :           $(SOURCE_DIR)/sbar.c
+$(BUILDDIR)/build/sbar.o :		$(SOURCE_DIR)/sbar.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/cl_screen.o :      $(SOURCE_DIR)/cl_screen.c
+$(BUILDDIR)/build/cl_screen.o :		$(SOURCE_DIR)/cl_screen.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/skin.o :           $(SOURCE_DIR)/skin.c
+$(BUILDDIR)/build/skin.o :		$(SOURCE_DIR)/skin.c
 	$(DO_CC)
                                                                   
-$(BUILDDIR)/build/image.o :          $(SOURCE_DIR)/image.c
+$(BUILDDIR)/build/image.o :		$(SOURCE_DIR)/image.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/teamplay.o :       $(SOURCE_DIR)/teamplay.c
+$(BUILDDIR)/build/teamplay.o :		$(SOURCE_DIR)/teamplay.c
 	$(DO_CC)                
                                
-$(BUILDDIR)/build/sv_ccmds.o :       $(SOURCE_DIR)/sv_ccmds.c
+$(BUILDDIR)/build/sv_ccmds.o :		$(SOURCE_DIR)/sv_ccmds.c
 	$(DO_CC)                
                                
-$(BUILDDIR)/build/sv_save.o :       $(SOURCE_DIR)/sv_save.c
+$(BUILDDIR)/build/sv_save.o :		$(SOURCE_DIR)/sv_save.c
 	$(DO_CC)
 	
-$(BUILDDIR)/build/sv_ents.o :        $(SOURCE_DIR)/sv_ents.c
+$(BUILDDIR)/build/sv_ents.o :		$(SOURCE_DIR)/sv_ents.c
 	$(DO_CC)                
 
-$(BUILDDIR)/build/sv_init.o :        $(SOURCE_DIR)/sv_init.c
+$(BUILDDIR)/build/sv_init.o :		$(SOURCE_DIR)/sv_init.c
 	$(DO_CC)                
 
-$(BUILDDIR)/build/sv_main.o :        $(SOURCE_DIR)/sv_main.c
+$(BUILDDIR)/build/sv_main.o :		$(SOURCE_DIR)/sv_main.c
 	$(DO_CC)                
 
-$(BUILDDIR)/build/sv_move.o :        $(SOURCE_DIR)/sv_move.c
+$(BUILDDIR)/build/sv_move.o :		$(SOURCE_DIR)/sv_move.c
 	$(DO_CC)                
 
-$(BUILDDIR)/build/sv_nchan.o :       $(SOURCE_DIR)/sv_nchan.c
+$(BUILDDIR)/build/sv_nchan.o :		$(SOURCE_DIR)/sv_nchan.c
 	$(DO_CC)                
 
-$(BUILDDIR)/build/sv_phys.o :        $(SOURCE_DIR)/sv_phys.c
+$(BUILDDIR)/build/sv_phys.o :		$(SOURCE_DIR)/sv_phys.c
 	$(DO_CC)                
 
-$(BUILDDIR)/build/sv_send.o :        $(SOURCE_DIR)/sv_send.c
+$(BUILDDIR)/build/sv_send.o :		$(SOURCE_DIR)/sv_send.c
 	$(DO_CC)                
 
-$(BUILDDIR)/build/sv_user.o :        $(SOURCE_DIR)/sv_user.c
+$(BUILDDIR)/build/sv_user.o :		$(SOURCE_DIR)/sv_user.c
 	$(DO_CC)  
 
-$(BUILDDIR)/build/sv_world.o :       $(SOURCE_DIR)/sv_world.c
+$(BUILDDIR)/build/sv_world.o :		$(SOURCE_DIR)/sv_world.c
 	$(DO_CC)                
 
-$(BUILDDIR)/build/pr_edict.o :       $(SOURCE_DIR)/pr_edict.c
+$(BUILDDIR)/build/pr_edict.o :		$(SOURCE_DIR)/pr_edict.c
 	$(DO_CC)                
 
-$(BUILDDIR)/build/pr_exec.o :        $(SOURCE_DIR)/pr_exec.c
+$(BUILDDIR)/build/pr_exec.o :		$(SOURCE_DIR)/pr_exec.c
 	$(DO_CC)                
 
-$(BUILDDIR)/build/pr_cmds.o :        $(SOURCE_DIR)/pr_cmds.c
+$(BUILDDIR)/build/pr_cmds.o :		$(SOURCE_DIR)/pr_cmds.c
 	$(DO_CC)  
 
-$(BUILDDIR)/build/ignore.o :         $(SOURCE_DIR)/ignore.c
+$(BUILDDIR)/build/ignore.o :		$(SOURCE_DIR)/ignore.c
 	$(DO_CC)     
 
-$(BUILDDIR)/build/logging.o :        $(SOURCE_DIR)/logging.c
+$(BUILDDIR)/build/logging.o :		$(SOURCE_DIR)/logging.c
 	$(DO_CC)  
 
-$(BUILDDIR)/build/fragstats.o :      $(SOURCE_DIR)/fragstats.c
+$(BUILDDIR)/build/fragstats.o :		$(SOURCE_DIR)/fragstats.c
 	$(DO_CC)  
 
-$(BUILDDIR)/build/match_tools.o :    $(SOURCE_DIR)/match_tools.c
+$(BUILDDIR)/build/match_tools.o :	$(SOURCE_DIR)/match_tools.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/utils.o :          $(SOURCE_DIR)/utils.c
+$(BUILDDIR)/build/utils.o :		$(SOURCE_DIR)/utils.c
 	$(DO_CC)                                         
 
-$(BUILDDIR)/build/fchecks.o :        $(SOURCE_DIR)/fchecks.c
+$(BUILDDIR)/build/fchecks.o :		$(SOURCE_DIR)/fchecks.c
 	$(DO_CC)     
 
-$(BUILDDIR)/build/fmod.o :           $(SOURCE_DIR)/fmod.c
+$(BUILDDIR)/build/fmod.o :		$(SOURCE_DIR)/fmod.c
 	$(DO_CC)  
 
-$(BUILDDIR)/build/auth.o :           $(SOURCE_DIR)/auth.c
+$(BUILDDIR)/build/auth.o :		$(SOURCE_DIR)/auth.c
 	$(DO_CC)      
 
-$(BUILDDIR)/build/Ctrl.o :           $(SOURCE_DIR)/Ctrl.c
+$(BUILDDIR)/build/Ctrl.o :		$(SOURCE_DIR)/Ctrl.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/Ctrl_EditBox.o :   $(SOURCE_DIR)/Ctrl_EditBox.c
+$(BUILDDIR)/build/Ctrl_EditBox.o :	$(SOURCE_DIR)/Ctrl_EditBox.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/Ctrl_Tab.o :       $(SOURCE_DIR)/Ctrl_Tab.c
+$(BUILDDIR)/build/Ctrl_Tab.o :		$(SOURCE_DIR)/Ctrl_Tab.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/Ctrl_PageViewer.o :   $(SOURCE_DIR)/Ctrl_PageViewer.c
+$(BUILDDIR)/build/Ctrl_PageViewer.o :	$(SOURCE_DIR)/Ctrl_PageViewer.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/EX_FunNames.o :    $(SOURCE_DIR)/EX_FunNames.c
+$(BUILDDIR)/build/EX_FunNames.o :	$(SOURCE_DIR)/EX_FunNames.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/EX_browser.o :     $(SOURCE_DIR)/EX_browser.c
+$(BUILDDIR)/build/EX_browser.o :	$(SOURCE_DIR)/EX_browser.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/EX_browser_net.o : $(SOURCE_DIR)/EX_browser_net.c
+$(BUILDDIR)/build/EX_browser_net.o :	$(SOURCE_DIR)/EX_browser_net.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/EX_browser_ping.o :   $(SOURCE_DIR)/EX_browser_ping.c
+$(BUILDDIR)/build/EX_browser_ping.o :	$(SOURCE_DIR)/EX_browser_ping.c
 	$(DO_CC)
 
 $(BUILDDIR)/build/EX_browser_sources.o : $(SOURCE_DIR)/EX_browser_sources.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/EX_misc.o :           $(SOURCE_DIR)/EX_misc.c
+$(BUILDDIR)/build/EX_misc.o :		$(SOURCE_DIR)/EX_misc.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/common_draw.o :           $(SOURCE_DIR)/common_draw.c
+$(BUILDDIR)/build/common_draw.o :	$(SOURCE_DIR)/common_draw.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/hud.o :           $(SOURCE_DIR)/hud.c
+$(BUILDDIR)/build/hud.o :		$(SOURCE_DIR)/hud.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/hud_common.o :           $(SOURCE_DIR)/hud_common.c
+$(BUILDDIR)/build/hud_common.o :	$(SOURCE_DIR)/hud_common.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/rulesets.o :       $(SOURCE_DIR)/rulesets.c
+$(BUILDDIR)/build/rulesets.o :		$(SOURCE_DIR)/rulesets.c
 	$(DO_CC)    
 
-$(BUILDDIR)/build/config_manager.o : $(SOURCE_DIR)/config_manager.c
+$(BUILDDIR)/build/config_manager.o :	$(SOURCE_DIR)/config_manager.c
 	$(DO_CC)    
 
-$(BUILDDIR)/build/localtime_linux.o : $(SOURCE_DIR)/localtime_linux.c
+$(BUILDDIR)/build/localtime_linux.o :	$(SOURCE_DIR)/localtime_linux.c
 	$(DO_CC)
-	
+
 $(BUILDDIR)/build/mp3_player.o :	$(SOURCE_DIR)/mp3_player.c
 	$(DO_CC)    
-	
+
 $(BUILDDIR)/build/modules.o :		$(SOURCE_DIR)/modules.c
 	$(DO_CC) -D_Soft_$(BINARY_TYPE)	
 
-$(BUILDDIR)/build/sha1.o :         $(SOURCE_DIR)/sha1.c
+$(BUILDDIR)/build/sha1.o :		$(SOURCE_DIR)/sha1.c
 	$(DO_CC) 
 
-$(BUILDDIR)/build/mdfour.o :         $(SOURCE_DIR)/mdfour.c
+$(BUILDDIR)/build/mdfour.o :		$(SOURCE_DIR)/mdfour.c
 	$(DO_CC)                                         
                                                                       
-$(BUILDDIR)/build/wad.o :            $(SOURCE_DIR)/wad.c
+$(BUILDDIR)/build/wad.o :		$(SOURCE_DIR)/wad.c
 	$(DO_CC)
                                                                       
-$(BUILDDIR)/build/zone.o :           $(SOURCE_DIR)/zone.c
+$(BUILDDIR)/build/zone.o :		$(SOURCE_DIR)/zone.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/parser.o :            $(SOURCE_DIR)/parser.c
+$(BUILDDIR)/build/parser.o :		$(SOURCE_DIR)/parser.c
 	$(DO_CC)
 
 $(BUILDDIR)/build/xml_test.o :		$(SOURCE_DIR)/xml_test.c
@@ -636,65 +648,65 @@ $(BUILDDIR)/build/EX_FileList.o :	$(SOURCE_DIR)/EX_FileList.c
 	$(DO_CC)
 	
 #ASM FILES                                                                                                                                    
-$(BUILDDIR)/build/d_draw.o :         $(SOURCE_DIR)/d_draw.s
+$(BUILDDIR)/build/d_draw.o :		$(SOURCE_DIR)/d_draw.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/d_draw16.o :       $(SOURCE_DIR)/d_draw16.s
+$(BUILDDIR)/build/d_draw16.o :		$(SOURCE_DIR)/d_draw16.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/d_parta.o :        $(SOURCE_DIR)/d_parta.s
+$(BUILDDIR)/build/d_parta.o :		$(SOURCE_DIR)/d_parta.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/d_polysa.o :       $(SOURCE_DIR)/d_polysa.s
+$(BUILDDIR)/build/d_polysa.o :		$(SOURCE_DIR)/d_polysa.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/d_scana.o :        $(SOURCE_DIR)/d_scana.s
+$(BUILDDIR)/build/d_scana.o :		$(SOURCE_DIR)/d_scana.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/d_spr8.o :         $(SOURCE_DIR)/d_spr8.s
+$(BUILDDIR)/build/d_spr8.o :		$(SOURCE_DIR)/d_spr8.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/d_varsa.o :        $(SOURCE_DIR)/d_varsa.s
+$(BUILDDIR)/build/d_varsa.o :		$(SOURCE_DIR)/d_varsa.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/math.o :           $(SOURCE_DIR)/math.s
+$(BUILDDIR)/build/math.o :		$(SOURCE_DIR)/math.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/r_aclipa.o :       $(SOURCE_DIR)/r_aclipa.s
+$(BUILDDIR)/build/r_aclipa.o :		$(SOURCE_DIR)/r_aclipa.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/r_aliasa.o :       $(SOURCE_DIR)/r_aliasa.s
+$(BUILDDIR)/build/r_aliasa.o :		$(SOURCE_DIR)/r_aliasa.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/r_drawa.o :        $(SOURCE_DIR)/r_drawa.s
+$(BUILDDIR)/build/r_drawa.o :		$(SOURCE_DIR)/r_drawa.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/r_edgea.o :        $(SOURCE_DIR)/r_edgea.s
+$(BUILDDIR)/build/r_edgea.o :		$(SOURCE_DIR)/r_edgea.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/r_varsa.o :        $(SOURCE_DIR)/r_varsa.s
+$(BUILDDIR)/build/r_varsa.o :		$(SOURCE_DIR)/r_varsa.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/snd_mixa.o :       $(SOURCE_DIR)/snd_mixa.s
+$(BUILDDIR)/build/snd_mixa.o :		$(SOURCE_DIR)/snd_mixa.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/surf8.o :          $(SOURCE_DIR)/surf8.s
+$(BUILDDIR)/build/surf8.o :		$(SOURCE_DIR)/surf8.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/d_copy.o :         $(SOURCE_DIR)/d_copy.s
+$(BUILDDIR)/build/d_copy.o :		$(SOURCE_DIR)/d_copy.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/cl_math.o :        $(SOURCE_DIR)/cl_math.s
+$(BUILDDIR)/build/cl_math.o :		$(SOURCE_DIR)/cl_math.s
 	$(DO_AS)
 
-$(BUILDDIR)/build/sys_x86.o :        $(SOURCE_DIR)/sys_x86.s
+$(BUILDDIR)/build/sys_x86.o :		$(SOURCE_DIR)/sys_x86.s
 	$(DO_AS)
 
 #VIDEO FILES
-$(BUILDDIR)/build/vid_x11.o :          $(SOURCE_DIR)/vid_x11.c
+$(BUILDDIR)/build/vid_x11.o :		$(SOURCE_DIR)/vid_x11.c
 	$(DO_CC)
 
-$(BUILDDIR)/build/vid_svgalib.o : 	$(SOURCE_DIR)/vid_svgalib.c
+$(BUILDDIR)/build/vid_svgalib.o :	$(SOURCE_DIR)/vid_svgalib.c
 	$(DO_CC)
 
 #############################################################################
@@ -847,378 +859,378 @@ $(BUILDDIR)/ezquake-gl.glx : $(GLQWCL_OBJS) $(GLQWCL_X11_OBJS) $(GLQWCL_AS_OBJS)
 	$(CC) $(CFLAGS) -o $@ $(GLQWCL_OBJS) $(GLQWCL_X11_OBJS) $(GLQWCL_AS_OBJS) $(GLQWCL_STATIC_LIBS) \
 	$(LDFLAGS) $(GL_X11_LDFLAGS) 
 
-$(BUILDDIR)/build-gl/host.o :           $(SOURCE_DIR)/host.c
+$(BUILDDIR)/build-gl/host.o :			$(SOURCE_DIR)/host.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/sys_linux.o :      $(SOURCE_DIR)/sys_linux.c
+$(BUILDDIR)/build-gl/sys_linux.o :		$(SOURCE_DIR)/sys_linux.c
 	$(DO_GL_CC)
        
-$(BUILDDIR)/build-gl/cd_linux.o :       $(SOURCE_DIR)/cd_linux.c
+$(BUILDDIR)/build-gl/cd_linux.o :		$(SOURCE_DIR)/cd_linux.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/snd_dma.o :        $(SOURCE_DIR)/snd_dma.c
+$(BUILDDIR)/build-gl/snd_dma.o :		$(SOURCE_DIR)/snd_dma.c
 	$(DO_GL_CC)
                                                                       
-$(BUILDDIR)/build-gl/snd_mem.o :        $(SOURCE_DIR)/snd_mem.c
+$(BUILDDIR)/build-gl/snd_mem.o :		$(SOURCE_DIR)/snd_mem.c
 	$(DO_GL_CC)
                                                                       
-$(BUILDDIR)/build-gl/snd_mix.o :        $(SOURCE_DIR)/snd_mix.c
+$(BUILDDIR)/build-gl/snd_mix.o :		$(SOURCE_DIR)/snd_mix.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/snd_linux.o :      $(SOURCE_DIR)/snd_linux.c
+$(BUILDDIR)/build-gl/snd_linux.o :		$(SOURCE_DIR)/snd_linux.c
 	$(DO_GL_CC)
 	
-$(BUILDDIR)/build-gl/snd_oss.o :	$(SOURCE_DIR)/snd_oss.c
+$(BUILDDIR)/build-gl/snd_oss.o :		$(SOURCE_DIR)/snd_oss.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/snd_alsa.o :	$(SOURCE_DIR)/snd_alsa.c
+$(BUILDDIR)/build-gl/snd_alsa.o :		$(SOURCE_DIR)/snd_alsa.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/cl_demo.o :        $(SOURCE_DIR)/cl_demo.c
+$(BUILDDIR)/build-gl/cl_demo.o :		$(SOURCE_DIR)/cl_demo.c
 	$(DO_GL_CC)
                                                                       
-$(BUILDDIR)/build-gl/cl_ents.o :        $(SOURCE_DIR)/cl_ents.c
+$(BUILDDIR)/build-gl/cl_ents.o :		$(SOURCE_DIR)/cl_ents.c
 	$(DO_GL_CC)
                                                                       
-$(BUILDDIR)/build-gl/cl_input.o :       $(SOURCE_DIR)/cl_input.c
+$(BUILDDIR)/build-gl/cl_input.o :		$(SOURCE_DIR)/cl_input.c
 	$(DO_GL_CC)
                                                                       
-$(BUILDDIR)/build-gl/cl_main.o :        $(SOURCE_DIR)/cl_main.c
+$(BUILDDIR)/build-gl/cl_main.o :		$(SOURCE_DIR)/cl_main.c
+	$(DO_GL_CC)
+                                    	                              
+$(BUILDDIR)/build-gl/cl_parse.o :		$(SOURCE_DIR)/cl_parse.c
 	$(DO_GL_CC)
                                                                       
-$(BUILDDIR)/build-gl/cl_parse.o :       $(SOURCE_DIR)/cl_parse.c
+$(BUILDDIR)/build-gl/cl_pred.o :		$(SOURCE_DIR)/cl_pred.c
 	$(DO_GL_CC)
                                                                       
-$(BUILDDIR)/build-gl/cl_pred.o :        $(SOURCE_DIR)/cl_pred.c
+$(BUILDDIR)/build-gl/cl_tent.o :		$(SOURCE_DIR)/cl_tent.c
 	$(DO_GL_CC)
                                                                       
-$(BUILDDIR)/build-gl/cl_tent.o :        $(SOURCE_DIR)/cl_tent.c
-	$(DO_GL_CC)
-                                                                      
-$(BUILDDIR)/build-gl/cl_cam.o :         $(SOURCE_DIR)/cl_cam.c
+$(BUILDDIR)/build-gl/cl_cam.o :			$(SOURCE_DIR)/cl_cam.c
 	$(DO_GL_CC)   
 
-$(BUILDDIR)/build-gl/cl_view.o :        $(SOURCE_DIR)/cl_view.c
+$(BUILDDIR)/build-gl/cl_view.o :		$(SOURCE_DIR)/cl_view.c
 	$(DO_GL_CC)
                               
-$(BUILDDIR)/build-gl/cl_cmd.o :         $(SOURCE_DIR)/cl_cmd.c
+$(BUILDDIR)/build-gl/cl_cmd.o :			$(SOURCE_DIR)/cl_cmd.c
 	$(DO_GL_CC)                
 
-$(BUILDDIR)/build-gl/cl_slist.o :       $(SOURCE_DIR)/cl_slist.c
+$(BUILDDIR)/build-gl/cl_slist.o :		$(SOURCE_DIR)/cl_slist.c
 	$(DO_GL_CC)              
                                                                       
-$(BUILDDIR)/build-gl/r_part.o :         $(SOURCE_DIR)/r_part.c
+$(BUILDDIR)/build-gl/r_part.o :			$(SOURCE_DIR)/r_part.c
 	$(DO_GL_CC)
          
-$(BUILDDIR)/build-gl/gl_draw.o :        $(SOURCE_DIR)/gl_draw.c
+$(BUILDDIR)/build-gl/gl_draw.o :		$(SOURCE_DIR)/gl_draw.c
 	$(DO_GL_CC)
          
-$(BUILDDIR)/build-gl/gl_md3.o :         $(SOURCE_DIR)/gl_md3.c
+$(BUILDDIR)/build-gl/gl_md3.o :			$(SOURCE_DIR)/gl_md3.c
 	$(DO_GL_CC) 
 
-$(BUILDDIR)/build-gl/gl_mesh.o :        $(SOURCE_DIR)/gl_mesh.c
+$(BUILDDIR)/build-gl/gl_mesh.o :		$(SOURCE_DIR)/gl_mesh.c
 	$(DO_GL_CC) 
         
-$(BUILDDIR)/build-gl/gl_model.o :       $(SOURCE_DIR)/gl_model.c
+$(BUILDDIR)/build-gl/gl_model.o :		$(SOURCE_DIR)/gl_model.c
 	$(DO_GL_CC)  
        
-$(BUILDDIR)/build-gl/gl_ngraph.o :      $(SOURCE_DIR)/gl_ngraph.c
+$(BUILDDIR)/build-gl/gl_ngraph.o :		$(SOURCE_DIR)/gl_ngraph.c
 	$(DO_GL_CC)   
       
-$(BUILDDIR)/build-gl/gl_refrag.o :      $(SOURCE_DIR)/gl_refrag.c
+$(BUILDDIR)/build-gl/gl_refrag.o :		$(SOURCE_DIR)/gl_refrag.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/gl_rlight.o :      $(SOURCE_DIR)/gl_rlight.c
+$(BUILDDIR)/build-gl/gl_rlight.o :		$(SOURCE_DIR)/gl_rlight.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/gl_rpart.o :       $(SOURCE_DIR)/gl_rpart.c
+$(BUILDDIR)/build-gl/gl_rpart.o :		$(SOURCE_DIR)/gl_rpart.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/gl_rmain.o :       $(SOURCE_DIR)/gl_rmain.c
+$(BUILDDIR)/build-gl/gl_rmain.o :		$(SOURCE_DIR)/gl_rmain.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/gl_rmisc.o :       $(SOURCE_DIR)/gl_rmisc.c
+$(BUILDDIR)/build-gl/gl_rmisc.o :		$(SOURCE_DIR)/gl_rmisc.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/gl_rsurf.o :       $(SOURCE_DIR)/gl_rsurf.c
+$(BUILDDIR)/build-gl/gl_rsurf.o :		$(SOURCE_DIR)/gl_rsurf.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/cl_screen.o :      $(SOURCE_DIR)/cl_screen.c
+$(BUILDDIR)/build-gl/cl_screen.o :		$(SOURCE_DIR)/cl_screen.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/gl_warp.o :        $(SOURCE_DIR)/gl_warp.c
+$(BUILDDIR)/build-gl/gl_warp.o :		$(SOURCE_DIR)/gl_warp.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/cmd.o :            $(SOURCE_DIR)/cmd.c
+$(BUILDDIR)/build-gl/cmd.o :			$(SOURCE_DIR)/cmd.c
 	$(DO_GL_CC)
                                                                       
-$(BUILDDIR)/build-gl/common.o :         $(SOURCE_DIR)/common.c
+$(BUILDDIR)/build-gl/common.o :			$(SOURCE_DIR)/common.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/com_msg.o :        $(SOURCE_DIR)/com_msg.c
+$(BUILDDIR)/build-gl/com_msg.o :		$(SOURCE_DIR)/com_msg.c
 	$(DO_GL_CC)
                                                                       
-$(BUILDDIR)/build-gl/console.o :        $(SOURCE_DIR)/console.c
+$(BUILDDIR)/build-gl/console.o :		$(SOURCE_DIR)/console.c
 	$(DO_GL_CC)
                                                                       
-$(BUILDDIR)/build-gl/crc.o :            $(SOURCE_DIR)/crc.c
+$(BUILDDIR)/build-gl/crc.o :			$(SOURCE_DIR)/crc.c
 	$(DO_GL_CC)
                                                                  
-$(BUILDDIR)/build-gl/version.o :        $(SOURCE_DIR)/version.c
+$(BUILDDIR)/build-gl/version.o :		$(SOURCE_DIR)/version.c
 	$(DO_GL_CC)
                
-$(BUILDDIR)/build-gl/cvar.o :           $(SOURCE_DIR)/cvar.c
+$(BUILDDIR)/build-gl/cvar.o :			$(SOURCE_DIR)/cvar.c
 	$(DO_GL_CC)
                                                                 
-$(BUILDDIR)/build-gl/keys.o :           $(SOURCE_DIR)/keys.c
+$(BUILDDIR)/build-gl/keys.o :			$(SOURCE_DIR)/keys.c
 	$(DO_GL_CC)         
 
-$(BUILDDIR)/build-gl/mathlib.o :        $(SOURCE_DIR)/mathlib.c
+$(BUILDDIR)/build-gl/mathlib.o :		$(SOURCE_DIR)/mathlib.c
 	$(DO_GL_CC)
                                                                                                                                   
-$(BUILDDIR)/build-gl/menu.o :           $(SOURCE_DIR)/menu.c
+$(BUILDDIR)/build-gl/menu.o :			$(SOURCE_DIR)/menu.c
 	$(DO_GL_CC)
                                                                                                                                    
-$(BUILDDIR)/build-gl/mvd_utils.o :      $(SOURCE_DIR)/mvd_utils.c
+$(BUILDDIR)/build-gl/mvd_utils.o :		$(SOURCE_DIR)/mvd_utils.c
 	$(DO_GL_CC)
                                                                                                                                    
-$(BUILDDIR)/build-gl/net_chan.o :       $(SOURCE_DIR)/net_chan.c
+$(BUILDDIR)/build-gl/net_chan.o :		$(SOURCE_DIR)/net_chan.c
 	$(DO_GL_CC)
                                                                       
-$(BUILDDIR)/build-gl/net_udp.o :        $(SOURCE_DIR)/net_udp.c
+$(BUILDDIR)/build-gl/net_udp.o :		$(SOURCE_DIR)/net_udp.c
 	$(DO_GL_CC)
                                                                                                                                      
-$(BUILDDIR)/build-gl/pmove.o :          $(SOURCE_DIR)/pmove.c
+$(BUILDDIR)/build-gl/pmove.o :			$(SOURCE_DIR)/pmove.c
 	$(DO_GL_CC)
                                                                       
-$(BUILDDIR)/build-gl/pmovetst.o :       $(SOURCE_DIR)/pmovetst.c
+$(BUILDDIR)/build-gl/pmovetst.o :		$(SOURCE_DIR)/pmovetst.c
 	$(DO_GL_CC)
                                                                                                                                             
-$(BUILDDIR)/build-gl/sbar.o :           $(SOURCE_DIR)/sbar.c
+$(BUILDDIR)/build-gl/sbar.o :			$(SOURCE_DIR)/sbar.c
 	$(DO_GL_CC)
                                                                                                                                     
-$(BUILDDIR)/build-gl/skin.o :           $(SOURCE_DIR)/skin.c
+$(BUILDDIR)/build-gl/skin.o :			$(SOURCE_DIR)/skin.c
 	$(DO_GL_CC)
                                                                   
-$(BUILDDIR)/build-gl/image.o :          $(SOURCE_DIR)/image.c
+$(BUILDDIR)/build-gl/image.o :			$(SOURCE_DIR)/image.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/teamplay.o :       $(SOURCE_DIR)/teamplay.c
+$(BUILDDIR)/build-gl/teamplay.o :		$(SOURCE_DIR)/teamplay.c
 	$(DO_GL_CC)                
                                
-$(BUILDDIR)/build-gl/sv_ccmds.o :       $(SOURCE_DIR)/sv_ccmds.c
+$(BUILDDIR)/build-gl/sv_ccmds.o :		$(SOURCE_DIR)/sv_ccmds.c
 	$(DO_GL_CC)                
 
-$(BUILDDIR)/build-gl/sv_save.o :        $(SOURCE_DIR)/sv_save.c
+$(BUILDDIR)/build-gl/sv_save.o :		$(SOURCE_DIR)/sv_save.c
 	$(DO_GL_CC)                
 
-$(BUILDDIR)/build-gl/sv_ents.o :        $(SOURCE_DIR)/sv_ents.c
+$(BUILDDIR)/build-gl/sv_ents.o :		$(SOURCE_DIR)/sv_ents.c
 	$(DO_GL_CC)                
 
-$(BUILDDIR)/build-gl/sv_init.o :        $(SOURCE_DIR)/sv_init.c
+$(BUILDDIR)/build-gl/sv_init.o :		$(SOURCE_DIR)/sv_init.c
 	$(DO_GL_CC)                
 
-$(BUILDDIR)/build-gl/sv_main.o :        $(SOURCE_DIR)/sv_main.c
+$(BUILDDIR)/build-gl/sv_main.o :		$(SOURCE_DIR)/sv_main.c
 	$(DO_GL_CC)                
 
-$(BUILDDIR)/build-gl/sv_move.o :        $(SOURCE_DIR)/sv_move.c
+$(BUILDDIR)/build-gl/sv_move.o :		$(SOURCE_DIR)/sv_move.c
 	$(DO_GL_CC)                
 
-$(BUILDDIR)/build-gl/sv_nchan.o :       $(SOURCE_DIR)/sv_nchan.c
+$(BUILDDIR)/build-gl/sv_nchan.o :		$(SOURCE_DIR)/sv_nchan.c
 	$(DO_GL_CC)                
 
-$(BUILDDIR)/build-gl/sv_phys.o :        $(SOURCE_DIR)/sv_phys.c
+$(BUILDDIR)/build-gl/sv_phys.o :		$(SOURCE_DIR)/sv_phys.c
 	$(DO_GL_CC)                
 
-$(BUILDDIR)/build-gl/sv_send.o :        $(SOURCE_DIR)/sv_send.c
+$(BUILDDIR)/build-gl/sv_send.o :		$(SOURCE_DIR)/sv_send.c
 	$(DO_GL_CC)                
 
-$(BUILDDIR)/build-gl/sv_user.o :        $(SOURCE_DIR)/sv_user.c
+$(BUILDDIR)/build-gl/sv_user.o :		$(SOURCE_DIR)/sv_user.c
 	$(DO_GL_CC)  
 
-$(BUILDDIR)/build-gl/sv_world.o :       $(SOURCE_DIR)/sv_world.c
+$(BUILDDIR)/build-gl/sv_world.o :		$(SOURCE_DIR)/sv_world.c
 	$(DO_GL_CC)                
 
-$(BUILDDIR)/build-gl/pr_edict.o :       $(SOURCE_DIR)/pr_edict.c
+$(BUILDDIR)/build-gl/pr_edict.o :		$(SOURCE_DIR)/pr_edict.c
 	$(DO_GL_CC)                
 
-$(BUILDDIR)/build-gl/pr_exec.o :        $(SOURCE_DIR)/pr_exec.c
+$(BUILDDIR)/build-gl/pr_exec.o :		$(SOURCE_DIR)/pr_exec.c
 	$(DO_GL_CC)                
 
-$(BUILDDIR)/build-gl/pr_cmds.o :        $(SOURCE_DIR)/pr_cmds.c
+$(BUILDDIR)/build-gl/pr_cmds.o :		$(SOURCE_DIR)/pr_cmds.c
 	$(DO_GL_CC)  
 
-$(BUILDDIR)/build-gl/ignore.o :         $(SOURCE_DIR)/ignore.c
+$(BUILDDIR)/build-gl/ignore.o :			$(SOURCE_DIR)/ignore.c
 	$(DO_GL_CC)     
 
-$(BUILDDIR)/build-gl/logging.o :        $(SOURCE_DIR)/logging.c
+$(BUILDDIR)/build-gl/logging.o :		$(SOURCE_DIR)/logging.c
 	$(DO_GL_CC)  
 
-$(BUILDDIR)/build-gl/fragstats.o :      $(SOURCE_DIR)/fragstats.c
+$(BUILDDIR)/build-gl/fragstats.o :		$(SOURCE_DIR)/fragstats.c
 	$(DO_GL_CC)  
 
-$(BUILDDIR)/build-gl/match_tools.o :    $(SOURCE_DIR)/match_tools.c
+$(BUILDDIR)/build-gl/match_tools.o :		$(SOURCE_DIR)/match_tools.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/utils.o :          $(SOURCE_DIR)/utils.c
+$(BUILDDIR)/build-gl/utils.o :			$(SOURCE_DIR)/utils.c
 	$(DO_GL_CC)   
               
-$(BUILDDIR)/build-gl/movie.o :          $(SOURCE_DIR)/movie.c
+$(BUILDDIR)/build-gl/movie.o :			$(SOURCE_DIR)/movie.c
 	$(DO_GL_CC)                 
 
-$(BUILDDIR)/build-gl/fchecks.o :        $(SOURCE_DIR)/fchecks.c
+$(BUILDDIR)/build-gl/fchecks.o :		$(SOURCE_DIR)/fchecks.c
 	$(DO_GL_CC)     
 
-$(BUILDDIR)/build-gl/fmod.o :           $(SOURCE_DIR)/fmod.c
+$(BUILDDIR)/build-gl/fmod.o :			$(SOURCE_DIR)/fmod.c
 	$(DO_GL_CC)  
-
-$(BUILDDIR)/build-gl/auth.o :           $(SOURCE_DIR)/auth.c
+    
+$(BUILDDIR)/build-gl/auth.o :			$(SOURCE_DIR)/auth.c
 	$(DO_GL_CC)      
 
-$(BUILDDIR)/build-gl/Ctrl.o :           $(SOURCE_DIR)/Ctrl.c
+$(BUILDDIR)/build-gl/Ctrl.o :			$(SOURCE_DIR)/Ctrl.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/Ctrl_EditBox.o :   $(SOURCE_DIR)/Ctrl_EditBox.c
+$(BUILDDIR)/build-gl/Ctrl_EditBox.o :		$(SOURCE_DIR)/Ctrl_EditBox.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/Ctrl_Tab.o :       $(SOURCE_DIR)/Ctrl_Tab.c
+$(BUILDDIR)/build-gl/Ctrl_Tab.o :		$(SOURCE_DIR)/Ctrl_Tab.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/Ctrl_PageViewer.o :   $(SOURCE_DIR)/Ctrl_PageViewer.c
+$(BUILDDIR)/build-gl/Ctrl_PageViewer.o :	$(SOURCE_DIR)/Ctrl_PageViewer.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/EX_browser.o :     $(SOURCE_DIR)/EX_browser.c
+$(BUILDDIR)/build-gl/EX_browser.o :		$(SOURCE_DIR)/EX_browser.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/EX_browser_net.o : $(SOURCE_DIR)/EX_browser_net.c
+$(BUILDDIR)/build-gl/EX_browser_net.o :		$(SOURCE_DIR)/EX_browser_net.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/EX_browser_ping.o :   $(SOURCE_DIR)/EX_browser_ping.c
+$(BUILDDIR)/build-gl/EX_browser_ping.o :	$(SOURCE_DIR)/EX_browser_ping.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/EX_browser_sources.o : $(SOURCE_DIR)/EX_browser_sources.c
+$(BUILDDIR)/build-gl/EX_browser_sources.o :	$(SOURCE_DIR)/EX_browser_sources.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/EX_misc.o :        $(SOURCE_DIR)/EX_misc.c
+$(BUILDDIR)/build-gl/EX_misc.o :		$(SOURCE_DIR)/EX_misc.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/common_draw.o :    $(SOURCE_DIR)/common_draw.c
+$(BUILDDIR)/build-gl/common_draw.o :		$(SOURCE_DIR)/common_draw.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/hud.o :            $(SOURCE_DIR)/hud.c
+$(BUILDDIR)/build-gl/hud.o :			$(SOURCE_DIR)/hud.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/hud_common.o :     $(SOURCE_DIR)/hud_common.c
+$(BUILDDIR)/build-gl/hud_common.o :		$(SOURCE_DIR)/hud_common.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/EX_FunNames.o :    $(SOURCE_DIR)/EX_FunNames.c
+$(BUILDDIR)/build-gl/EX_FunNames.o :		$(SOURCE_DIR)/EX_FunNames.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/collision.o :      $(SOURCE_DIR)/collision.c
+$(BUILDDIR)/build-gl/collision.o :		$(SOURCE_DIR)/collision.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/cl_collision.o :   $(SOURCE_DIR)/cl_collision.c
+$(BUILDDIR)/build-gl/cl_collision.o :		$(SOURCE_DIR)/cl_collision.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/vx_camera.o :      $(SOURCE_DIR)/vx_camera.c
+$(BUILDDIR)/build-gl/vx_camera.o :		$(SOURCE_DIR)/vx_camera.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/vx_coronas.o :     $(SOURCE_DIR)/vx_coronas.c
+$(BUILDDIR)/build-gl/vx_coronas.o :		$(SOURCE_DIR)/vx_coronas.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/vx_motiontrail.o : $(SOURCE_DIR)/vx_motiontrail.c
+$(BUILDDIR)/build-gl/vx_motiontrail.o :		$(SOURCE_DIR)/vx_motiontrail.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/vx_stuff.o :       $(SOURCE_DIR)/vx_stuff.c
+$(BUILDDIR)/build-gl/vx_stuff.o :		$(SOURCE_DIR)/vx_stuff.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/vx_tracker.o :     $(SOURCE_DIR)/vx_tracker.c
+$(BUILDDIR)/build-gl/vx_tracker.o :		$(SOURCE_DIR)/vx_tracker.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/vx_vertexlights.o : $(SOURCE_DIR)/vx_vertexlights.c
+$(BUILDDIR)/build-gl/vx_vertexlights.o :	$(SOURCE_DIR)/vx_vertexlights.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/rulesets.o :       $(SOURCE_DIR)/rulesets.c
+$(BUILDDIR)/build-gl/rulesets.o :		$(SOURCE_DIR)/rulesets.c
 	$(DO_GL_CC)    
 
-$(BUILDDIR)/build-gl/config_manager.o : $(SOURCE_DIR)/config_manager.c
+$(BUILDDIR)/build-gl/config_manager.o :		$(SOURCE_DIR)/config_manager.c
 	$(DO_GL_CC)    
-	
-$(BUILDDIR)/build-gl/mp3_player.o :     $(SOURCE_DIR)/mp3_player.c
+
+$(BUILDDIR)/build-gl/mp3_player.o :		$(SOURCE_DIR)/mp3_player.c
 	$(DO_GL_CC)    
-	
-$(BUILDDIR)/build-gl/modules.o :        $(SOURCE_DIR)/modules.c
+
+$(BUILDDIR)/build-gl/modules.o :		$(SOURCE_DIR)/modules.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/gl_texture.o :     $(SOURCE_DIR)/gl_texture.c
+$(BUILDDIR)/build-gl/gl_texture.o :		$(SOURCE_DIR)/gl_texture.c
 	$(DO_GL_CC)                                                                            
 
-$(BUILDDIR)/build-gl/sha1.o :           $(SOURCE_DIR)/sha1.c
+$(BUILDDIR)/build-gl/sha1.o :			$(SOURCE_DIR)/sha1.c
 	$(DO_GL_CC)  
 
-$(BUILDDIR)/build-gl/mdfour.o :         $(SOURCE_DIR)/mdfour.c
+$(BUILDDIR)/build-gl/mdfour.o :			$(SOURCE_DIR)/mdfour.c
 	$(DO_GL_CC)                                         
                                                                       
-$(BUILDDIR)/build-gl/wad.o :            $(SOURCE_DIR)/wad.c
+$(BUILDDIR)/build-gl/wad.o :			$(SOURCE_DIR)/wad.c
 	$(DO_GL_CC)
                                                                       
-$(BUILDDIR)/build-gl/zone.o :           $(SOURCE_DIR)/zone.c
+$(BUILDDIR)/build-gl/zone.o :			$(SOURCE_DIR)/zone.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/parser.o :         $(SOURCE_DIR)/parser.c
+$(BUILDDIR)/build-gl/parser.o :			$(SOURCE_DIR)/parser.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/localtime_linux.o : $(SOURCE_DIR)/localtime_linux.c
+$(BUILDDIR)/build-gl/localtime_linux.o :	$(SOURCE_DIR)/localtime_linux.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/xml_test.o :	$(SOURCE_DIR)/xml_test.c
+$(BUILDDIR)/build-gl/xml_test.o :		$(SOURCE_DIR)/xml_test.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/xsd.o :		$(SOURCE_DIR)/xsd.c
+$(BUILDDIR)/build-gl/xsd.o :			$(SOURCE_DIR)/xsd.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/xsd_command.o :	$(SOURCE_DIR)/xsd_command.c
+$(BUILDDIR)/build-gl/xsd_command.o :		$(SOURCE_DIR)/xsd_command.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/xsd_document.o :	$(SOURCE_DIR)/xsd_document.c
+$(BUILDDIR)/build-gl/xsd_document.o :		$(SOURCE_DIR)/xsd_document.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/xsd_variable.o :	$(SOURCE_DIR)/xsd_variable.c
+$(BUILDDIR)/build-gl/xsd_variable.o :		$(SOURCE_DIR)/xsd_variable.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/document_rendering.o : $(SOURCE_DIR)/document_rendering.c
+$(BUILDDIR)/build-gl/document_rendering.o :	$(SOURCE_DIR)/document_rendering.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/help.o :		$(SOURCE_DIR)/help.c
+$(BUILDDIR)/build-gl/help.o :			$(SOURCE_DIR)/help.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/help_browser.o :	$(SOURCE_DIR)/help_browser.c
+$(BUILDDIR)/build-gl/help_browser.o :		$(SOURCE_DIR)/help_browser.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/help_files.o :	$(SOURCE_DIR)/help_files.c
+$(BUILDDIR)/build-gl/help_files.o :		$(SOURCE_DIR)/help_files.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-gl/EX_FileList.o :	$(SOURCE_DIR)/EX_FileList.c
+$(BUILDDIR)/build-gl/EX_FileList.o :		$(SOURCE_DIR)/EX_FileList.c
 	$(DO_GL_CC)
 
 #ASM FILES
-$(BUILDDIR)/build-gl/sys_x86.o :        $(SOURCE_DIR)/sys_x86.s
+$(BUILDDIR)/build-gl/sys_x86.o :		$(SOURCE_DIR)/sys_x86.s
 	$(DO_GL_AS)
 
-$(BUILDDIR)/build-gl/math.o :         	$(SOURCE_DIR)/math.s
+$(BUILDDIR)/build-gl/math.o :			$(SOURCE_DIR)/math.s
 	$(DO_GL_AS)
 
-$(BUILDDIR)/build-gl/snd_mixa.o :       $(SOURCE_DIR)/snd_mixa.s
+$(BUILDDIR)/build-gl/snd_mixa.o :		$(SOURCE_DIR)/snd_mixa.s
 	$(DO_GL_AS)
 
-$(BUILDDIR)/build-gl/cl_math.o :        $(SOURCE_DIR)/cl_math.s
+$(BUILDDIR)/build-gl/cl_math.o :		$(SOURCE_DIR)/cl_math.s
 	$(DO_GL_AS)
 
 #VIDEO FILES
-$(BUILDDIR)/build-gl/vid_glx.o :        $(SOURCE_DIR)/vid_glx.c
+$(BUILDDIR)/build-gl/vid_glx.o :		$(SOURCE_DIR)/vid_glx.c
 	$(DO_GL_CC)
 	
-$(BUILDDIR)/build-gl/vid_common_gl.o :  $(SOURCE_DIR)/vid_common_gl.c
+$(BUILDDIR)/build-gl/vid_common_gl.o :		$(SOURCE_DIR)/vid_common_gl.c
 	$(DO_GL_CC)
 
 #############################################################################
@@ -1235,3 +1247,4 @@ clean-release:
 
 cleanfunc:
 	-rm -f $(QWCL_OBJS) $(QWCL_AS_OBJS) $(QWCL_X11_OBJS) $(GLQWCL_X11_OBJS) $(GLQWCL_OBJS) $(GLQWCL_AS_OBJS) $(QWCL_SVGA_OBJS) $(QWCL_SVGA_AS_OBJS)
+	
