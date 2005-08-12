@@ -422,13 +422,17 @@ void Con_Shutdown (void) {
 
 void Con_Linefeed (void) {
 	con.x = 0;
-    con.x = con_margin;    // kazik
+	con.x = con_margin;    // kazik
 	if (con.display == con.current)
 		con.display++;
 	con.current++;
 	if (con.numlines < con_totallines)
 		con.numlines++;
 	memset (&con.text[(con.current%con_totallines)*con_linewidth], ' ', con_linewidth);
+
+	// mark time for transparent overlay
+	if (con.current >= 0)
+		con_times[con.current % NUM_CON_TIMES] = cls.realtime;
 }
 
 /*
@@ -467,12 +471,14 @@ void Con_Print (char *txt) {
 	}
 	if (Log_IsLogging()) {
 		if (log_readable.value) {
-			char *s, tempbuf[4096];	
+			char *s, *tempbuf;
 
-			Q_strncpyz(tempbuf, txt, sizeof(tempbuf));
+			tempbuf = Z_Malloc(strlen(txt) + 1);
+			strcpy(tempbuf, txt);
 			for (s = tempbuf; *s; s++)
 				*s = readableChars[(unsigned char) *s];
-			Log_Write(tempbuf);	
+			Log_Write(tempbuf);
+			Z_Free(tempbuf);	
 		} else {
 			Log_Write(txt);	
 		}
@@ -494,8 +500,9 @@ void Con_Print (char *txt) {
 			char d = txt[l] & 127;
 			if ((con_wordwrap.value && (!txt[l] || d == 0x09 || d == 0x0D || d == 0x0A || d == 0x20)) ||
 				(!con_wordwrap.value && txt[l] <= ' ')
-			)
-				break;
+				) {
+					break;
+				}
 		}
 
 		// word wrap
@@ -509,12 +516,8 @@ void Con_Print (char *txt) {
 			cr = false;
 		}
 
-		if (!con.x) {
+		if (!con.x)
 			Con_Linefeed ();
-		// mark time for transparent overlay
-			if (con.current >= 0)
-				con_times[con.current % NUM_CON_TIMES] = cls.realtime;
-		}
 
 		switch (c) {
 			case '\n':
@@ -527,11 +530,11 @@ void Con_Print (char *txt) {
 				break;
 
 			default:	// display character and advance
+				if (con.x >= con_linewidth)
+					Con_Linefeed ();
 				y = con.current % con_totallines;
 				con.text[y * con_linewidth+con.x] = c | mask | con_ormask;
 				con.x++;
-				if (con.x >= con_linewidth)
-					con.x = 0;
 				break;
 		}
 	}
@@ -545,21 +548,22 @@ DRAWING
 */
 
 //The input line scrolls horizontally if typing goes beyond the right edge
-void Con_DrawInput (void) {
-	int i;
-	char *text, temp[MAXCMDLINE];
+static void Con_DrawInput(void) {
+	int len;
+	char *text, temp[MAXCMDLINE + 1];	//+ 1 for cursor if strlen(key_lines[edit_line]) == (MAX_CMDLINE - 1)
 
 	if (key_dest != key_console && cls.state == ca_active)
 		return;		// don't draw anything (always draw if not active)
 
-	text = strcpy (temp, key_lines[edit_line]);
+	Q_strncpyz(temp, key_lines[edit_line], MAXCMDLINE);
+	len = strlen(temp);
+	text = temp;
 
-	// fill out remainder with spaces
-	for (i = strlen(text); i < MAXCMDLINE; i++)
-		text[i] = ' ';
+	memset(text + len, ' ', MAXCMDLINE - len);		// fill out remainder with spaces
+	text[MAXCMDLINE] = 0;
 
 	// add the cursor frame
-	if ( (int)(curtime*con_cursorspeed) & 1 )
+	if ((int) (curtime * con_cursorspeed) & 1)
 		text[key_linepos] = 11;
 
 	//	prestep if horizontally scrolling
