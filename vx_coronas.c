@@ -112,7 +112,7 @@ void R_DrawCoronas(void)
 {
 	int i;
 	int texture = 0;
-	vec3_t dist, up, right, impact={0,0,0};
+	vec3_t dist, up, right;
 	float fdist, scale, alpha;
 	corona_t *c;
 

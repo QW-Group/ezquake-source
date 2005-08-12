@@ -230,7 +230,7 @@ void Draw_AlphaWindow (int x1, int y1, int x2, int y2, int col, float alpha)
 
 void Draw_AMFStatLoss (int stat, hud_t* hud) {
     static int * vxdmgcnt, * vxdmgcnt_t, * vxdmgcnt_o;
-	static int x, y;
+	static int x;
     float alpha;
 
 	if (stat == STAT_HEALTH) {

@@ -740,7 +740,7 @@ void DrawTextureChains (model_t *model) {
 	texture_t *t;
 	float *v;
 
-	qboolean render_lightmaps = false, render_caustics = false, render_details = false;
+	qboolean render_lightmaps = false;
 	qboolean drawLumasGlowing, doMtex1, doMtex2;
 
 	qboolean draw_fbs, draw_caustics, draw_details;

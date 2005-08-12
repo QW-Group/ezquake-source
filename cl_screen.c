@@ -911,9 +911,10 @@ void SCR_TileClear (void) {
 				Draw_TileClear(ELEMENT_X_COORD(show_fps), ELEMENT_Y_COORD(show_fps), 10 * 8, 8);
 			if (scr_clock.value)
 				Draw_TileClear(ELEMENT_X_COORD(scr_clock), ELEMENT_Y_COORD(scr_clock), 10 * 8, 8);
+			if (scr_gameclock.value)
+				Draw_TileClear(ELEMENT_X_COORD(scr_gameclock), ELEMENT_Y_COORD(scr_gameclock), 10 * 8, 8);
 			if (scr_democlock.value)
 				Draw_TileClear(ELEMENT_X_COORD(scr_clock), ELEMENT_Y_COORD(scr_clock), 10 * 8, 8);
-				
 		}
 	}
 }

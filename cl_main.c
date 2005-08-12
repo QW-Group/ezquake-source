@@ -1492,7 +1492,7 @@ void CL_Multiview(void) {
 		cl_trueLightning.value = 0;
 
 	// allow mvinset 1 to use viewsize value
-	if (!cl_mvinset.value && cl_multiview.value == 2 || cl_multiview.value != 2)
+	if ((!cl_mvinset.value && cl_multiview.value == 2) || cl_multiview.value != 2)
 		scr_viewsize.value = 120;
 	else
 		scr_viewsize.value = nViewsizeExit;
