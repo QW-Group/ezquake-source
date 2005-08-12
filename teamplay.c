@@ -17,6 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
+
 #include "quakedef.h"
 #include "common.h"
 #include "sound.h"
@@ -835,30 +837,33 @@ char *Macro_LastSeenPowerup(void) {
 
 
 qboolean TP_SuppressMessage(char *buf) {
-
+	int len;
 	char *s;
 
-	for (s = buf; *s && *s != 0x7f; s++)
-		;
+	if ((len = strlen(buf)) < 4)
+		return false;
 
-	if (*s == 0x7f && *(s + 1) == '!')	{
+	s = buf + len - 4;
+
+	if (s[0] == 0x7F && s[1] == '!' && s[3] == '\n') {
 		*s++ = '\n';
 		*s++ = 0;
-
 		return (!cls.demoplayback && !cl.spectator && *s - 'A' == cl.playernum);
 	}
-	return false; 
 
+	return false; 
 }
 
 void TP_PrintHiddenMessage(char *buf, int nodisplay) {
-    qboolean hide = false;
-    char dest[4096], msg[4096], *s, *d, c, *name;
+	qboolean team, hide = false;
+	char dest[4096], msg[4096], *s, *d, c, *name;
 	int length, offset, flags;
 	extern cvar_t con_sound_mm2_file, con_sound_mm2_volume;
 
 	if (!buf || !(length = strlen(buf)))
 		return;
+
+	team = !Q_strcasecmp("say_team", Cmd_Argv(0));
 
 	if (length >= 2 && buf[0] == '\"' && buf[length - 1] == '\"') {
 		memmove(buf, buf + 1, length - 2);
@@ -868,8 +873,8 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay) {
 	s = buf;
 	d = dest;
 
-    while ((c = *s++) && (c != '\x7f')) {
-        if (c == '\xff') {
+	while ((c = *s++) && (c != '\x7f')) {
+		if (c == '\xff') {
 			if ((hide = !hide)) {
 				*d++ = (*s == 'z') ? 'x' : 139;	
 				s++;
@@ -892,29 +897,29 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay) {
 	if (strlen(name) >= 32)	
 		name[31] = 0;
 
-	if (!strcmp("say", Cmd_Argv(0)))
-		Q_snprintfz(msg, sizeof(msg), "%s: %s\n", name, TP_ParseFunChars(dest, true));
-	else
+	if (team)
 		Q_snprintfz(msg, sizeof(msg), "(%s): %s\n", name, TP_ParseFunChars(dest, true));
+	else
+		Q_snprintfz(msg, sizeof(msg), "%s: %s\n", name, TP_ParseFunChars(dest, true));
 
 	flags = TP_CategorizeMessage (msg, &offset);
 
-		if (flags == 2 && !TP_FilterMessage(msg + offset))
-			return;
+	if (flags == 2 && !TP_FilterMessage(msg + offset))
+		return;
 
-		if (con_sound_mm2_volume.value > 0 && nodisplay == 0) {
-            S_LocalSoundWithVol(con_sound_mm2_file.string, con_sound_mm2_volume.value);
+	if (con_sound_mm2_volume.value > 0 && nodisplay == 0) {
+		S_LocalSoundWithVol(con_sound_mm2_file.string, con_sound_mm2_volume.value);
+	}
+
+	if (cl_nofake.value == 1 || (cl_nofake.value == 2 && flags != 2)) {
+		for (s = msg; *s; s++)
+			if (*s == 0x0D || (*s == 0x0A && s[1]))
+				*s = ' ';
 		}
 
-		if (cl_nofake.value == 1 || (cl_nofake.value == 2 && flags != 2)) {
-			for (s = msg; *s; s++)
-				if (*s == 0x0D || (*s == 0x0A && s[1]))
-					*s = ' ';
-		}
-
-		if (nodisplay == 0) {
-			Com_Printf(TP_ParseWhiteText (msg, false, offset));
-		}
+	if (nodisplay == 0) {
+		Com_Printf(TP_ParseWhiteText (msg, team, offset));
+	}
 	
 }
 
@@ -1671,12 +1676,13 @@ static locmacro_t locmacros[] = {
 
 #define NUM_LOCMACROS	(sizeof(locmacros) / sizeof(locmacros[0]))
 
-char *TP_LocationName (vec3_t location) {
-	char *in, *out;
+char *TP_LocationName(vec3_t location) {
+	char *in, *out, *value;
 	int i;
 	float dist, mindist;
 	vec3_t vec;
 	static locdata_t *node, *best;
+	cvar_t *cvar;
 	static qboolean recursive;
 	static char	buf[1024], newbuf[MAX_LOC_NAME];
 
@@ -1687,9 +1693,10 @@ char *TP_LocationName (vec3_t location) {
 		return "";
 
 	best = NULL;
+	mindist = 0;
 
 	for (node = locdata; node; node = node->next) {
-		VectorSubtract (location, node->coord, vec);
+		VectorSubtract(location, node->coord, vec);
 		dist = vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2];
 		if (!best || dist < mindist) {
 			best = node;
@@ -1697,23 +1704,23 @@ char *TP_LocationName (vec3_t location) {
 		}
 	}
 
-	recursive = true;
-	Cmd_ExpandString (best->name, buf);
-	recursive = false; 
 
-	
 	newbuf[0] = 0;
 	out = newbuf;
-	in = buf;
+	in = best->name;
 	while (*in && out - newbuf < sizeof(newbuf) - 1) {
 		if (!Q_strncasecmp(in, "$loc_name_", 10)) {
 			in += 10;
 			for (i = 0; i < NUM_LOCMACROS; i++) {
 				if (!Q_strncasecmp(in, locmacros[i].macro, strlen(locmacros[i].macro))) {
-					if (out - newbuf >= sizeof(newbuf) - strlen(locmacros[i].val) - 1)
+					if ((cvar = Cvar_FindVar(va("loc_name_%s", locmacros[i].macro))))
+						value = cvar->string;
+					else
+						value = locmacros[i].val;
+					if (out - newbuf >= sizeof(newbuf) - strlen(value) - 1)
 						goto done_locmacros;
-					strcpy(out, locmacros[i].val);
-					out += strlen(locmacros[i].val);
+					strcpy(out, value);
+					out += strlen(value);
 					in += strlen(locmacros[i].macro);
 					break;
 				}
@@ -1731,7 +1738,12 @@ char *TP_LocationName (vec3_t location) {
 done_locmacros:
 	*out = 0;
 
-	return newbuf; 
+	buf[0] = 0;
+	recursive = true;
+	Cmd_ExpandString(newbuf, buf);
+	recursive = false;
+
+	return buf; 
 }
 
 /****************************** MESSAGE TRIGGERS ******************************/
@@ -2737,7 +2749,8 @@ void TP_FindPoint (void) {
 		qboolean teammate, eyes;
 		char *name, buf[256] = {0};
 
-		eyes = beststate->modelindex && cl.model_precache[beststate->modelindex] && cl.model_precache[beststate->modelindex]->modhint == MOD_EYES;
+		eyes = beststate->modelindex && cl.model_precache[beststate->modelindex] &&
+			cl.model_precache[beststate->modelindex]->modhint == MOD_EYES;
 		if (cl.teamfortress) {
 			teammate = !strcmp(Utils_TF_ColorToTeam(bestinfo->real_bottomcolor), TP_PlayerTeam());
 
@@ -2753,7 +2766,7 @@ void TP_FindPoint (void) {
 			if (!eyes)
 				name = va("%s%s%s", name, name[0] ? " " : "", Skin_To_TFSkin(Info_ValueForKey(bestinfo->userinfo, "skin")));
 		} else {
-			teammate = !!(cl.teamplay && !strcmp(bestinfo->team, TP_PlayerTeam()));
+			teammate = (cl.teamplay && !strcmp(bestinfo->team, TP_PlayerTeam()));
 
 			if (eyes)
 				name = tp_name_eyes.string;
@@ -2763,10 +2776,10 @@ void TP_FindPoint (void) {
 				name = teammate ? tp_name_teammate.string : tp_name_enemy.string;
 		}
 		if (beststate->effects & EF_BLUE)
-			Q_strncatz(buf, tp_name_quaded.string);
+			strncat(buf, tp_name_quaded.string, sizeof(buf) - strlen(buf) - 1);
 		if (beststate->effects & EF_RED)
-			Q_strncatz(buf, va("%s%s", buf[0] ? " " : "", tp_name_pented.string));
-		Q_strncatz(buf, va("%s%s", buf[0] ? " " : "", name));
+			strncat(buf, va("%s%s", buf[0] ? " " : "", tp_name_pented.string), sizeof(buf) - strlen(buf) - 1);
+		strncat(buf, va("%s%s", buf[0] ? " " : "", name), sizeof(buf) - strlen(buf) - 1);
 		Q_strncpyz (vars.pointname, buf, sizeof(vars.pointname));
 		Q_strncpyz (vars.pointloc, TP_LocationName (beststate->origin), sizeof(vars.pointloc));
 
