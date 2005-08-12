@@ -1,3 +1,7 @@
+/*
+	$Id: EX_browser.c,v 1.7 2005-08-12 15:57:21 vvd0 Exp $
+*/
+
 #include "quakedef.h"
 
 #ifdef _WIN32
@@ -176,13 +180,11 @@ int strcmp2(const char * s1, const char * s2)
 
 int isThisAltDown(void)
 {
-    extern qboolean    keydown[256];
 	return keydown[K_ALT] || keydown[K_RALT];
 }
 
 int isThisCtrlDown(void)
 {
-    extern qboolean    keydown[256];
 	return keydown[K_CTRL] || keydown[K_RCTRL];
 }
 

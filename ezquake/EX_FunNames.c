@@ -1,3 +1,7 @@
+/*
+	$Id: EX_FunNames.c,v 1.4 2005-08-12 15:57:21 vvd0 Exp $
+*/
+
 #include "quakedef.h"
 #include "keys.h"
 
@@ -48,12 +52,10 @@ int Fun_GetDollar(int c)
 
 int isAdAltDown(void)
 {
-    extern qboolean    keydown[256];
 	return keydown[K_ALT] || keydown[K_RALT];
 }
 int isAdCtrlDown(void)
 {
-    extern qboolean    keydown[256];
 	return keydown[K_CTRL] || keydown[K_RCTRL];
 }
 

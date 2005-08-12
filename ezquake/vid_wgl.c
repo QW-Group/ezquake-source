@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: vid_wgl.c,v 1.3 2005-08-12 15:57:21 vvd0 Exp $
+
 */
 
 #include "quakedef.h"
@@ -661,11 +663,10 @@ void VID_Shutdown (void) {
 void IN_ClearStates (void);
 
 void ClearAllStates (void) {
-	extern qboolean keydown[256];
 	int i;
 
 	// send an up event for each key, to make sure the server clears them all
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < sizeof(keydown); i++) {
 		if (keydown[i])
 			Key_Event (i, false);
 	}

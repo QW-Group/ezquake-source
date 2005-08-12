@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: menu.c,v 1.24 2005-08-12 15:57:21 vvd0 Exp $
+
 */
 
 #include "quakedef.h"
@@ -748,7 +750,7 @@ void M_FindKeysForCommand (char *command, int *twokeys) {
 	l = strlen(command);
 	count = 0;
 
-	for (j = 0 ; j < 256; j++) {
+	for (j = 0 ; j < sizeof(keybindings); j++) {
 		b = keybindings[j];
 		if (!b)
 			continue;
@@ -778,7 +780,7 @@ void M_UnbindCommand (char *command) {
 
 	l = strlen(command);
 
-	for (j = 0; j < 256; j++) {
+	for (j = 0; j < sizeof(keybindings); j++) {
 		b = keybindings[j];
 		if (!b)
 			continue;
@@ -2548,12 +2550,12 @@ static void Demo_ReadDirectory(void) {
 		demolist_data[demolist_count].size = size;
 		demolist_data[demolist_count].time = time;
 		demolist_count++;
-
+	}
 #ifdef _WIN32
-	} while (FindNextFile(h, &fd));
+	while (FindNextFile(h, &fd));
 	FindClose (h);
 #else
-	} while ((dstruct = readdir (d)));
+	while ((dstruct = readdir (d)));
 	closedir (d);
 #endif
 
