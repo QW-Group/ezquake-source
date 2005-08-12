@@ -16,11 +16,15 @@ See	the	included (GNU.txt) GNU General Public License for more details.
 You	should have	received a copy	of the GNU General Public License
 along with this	program; if	not, write to the Free Software
 Foundation,	Inc., 59 Temple	Place -	Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: config_manager.c,v 1.11 2005-08-12 15:57:21 vvd0 Exp $
+
 */
 
 #include "quakedef.h"
 #include "input.h"
 #include "utils.h"
+#include "keys.h"
 
 void Key_WriteBindings (FILE *);
 
@@ -47,7 +51,6 @@ void Cvar_ResetVar (cvar_t *var);
 int Cvar_CvarCompare (const void *p1, const void *p2);
 int Cmd_AliasCompare (const void *p1, const void *p2);
 
-extern char	*keybindings[256];
 extern void WriteSourcesConfiguration(FILE *f);
 
 extern cvar_group_t *cvar_groups;
@@ -85,7 +88,7 @@ void DumpBindings (FILE *f) {
 	char *spaces, *string;
 	qboolean printed = false;
 
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < sizeof(keybindings); i++) {
 		
 		leftright = Key_IsLeftRightSameBind(i) ? 1 : 0;
 		if (keybindings[i] || leftright) {

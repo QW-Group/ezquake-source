@@ -1,6 +1,7 @@
 /*
  * EditBox functions
  *
+ *	$Id: Ctrl_EditBox.c,v 1.3 2005-08-12 15:57:21 vvd0 Exp $
  */
 
 
@@ -14,7 +15,6 @@ char buf[MAX_EDITTEXT+1];
 
 int isThatCtrlDown(void)
 {
-    extern qboolean    keydown[256];
 	return keydown[K_CTRL] || keydown[K_RCTRL];
 }
 

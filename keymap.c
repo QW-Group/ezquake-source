@@ -16,6 +16,9 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: keymap.c,v 1.3 2005-08-12 15:57:21 vvd0 Exp $
+
 */
 // keymap.c -- support for international keyboard layouts
 
@@ -71,12 +74,13 @@ static byte keymaps_default[ 2 ][ 256 ] =
     0,       0,       0,       0,       0,    KP_NUMLOCK, 0,    K_HOME,
  K_UPARROW,K_PGUP,    0,    K_LEFTARROW,0,    K_RIGHTARROW,0,   K_END,       // 4 ext
  K_DOWNARROW,K_PGDN,K_INS,  K_DEL,      0,       0,       0,       0,
-    0,       0,       0,       0,       0,       0,       0,       0,        // 5 ext
+    0,       0,    K_WIN,   K_LWIN,  K_RWIN,  K_MENU,     0,       0,        // 5 ext
     0,       0,       0,       0,       0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0,        // 6 ext
     0,       0,       0,       0,       0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0         // 7 ext
   }, // END [0]=normal
+
   { //[1]=shifted
 //  0        1        2        3        4        5        6        7
 //  8        9        A        B        C        D        E        F
@@ -107,7 +111,7 @@ static byte keymaps_default[ 2 ][ 256 ] =
     0,       0,       0,       0,       0,    KP_NUMLOCK, 0,    K_HOME,
  K_UPARROW,K_PGUP,    0,    K_LEFTARROW,0,    K_RIGHTARROW,0,   K_END,       // 4 ext
  K_DOWNARROW,K_PGDN,K_INS,  K_DEL,      0,       0,       0,       0,
-    0,       0,       0,       0,       0,       0,       0,       0,        // 5 ext
+    0,       0,    K_WIN,   K_LWIN,  K_RWIN,  K_MENU,     0,       0,        // 5 ext
     0,       0,       0,       0,       0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0,        // 6 ext
     0,       0,       0,       0,       0,       0,       0,       0,
@@ -189,6 +193,8 @@ void IN_TranslateKeyEvent (int lKeyData, qboolean down) {
 		{
 			// use the internal default mapping:
 			key     = keymaps_default[0][scancode + (extended ? 128 : 0)];
+			if (key == 0)
+				key = UNKNOWN + scancode + (extended ? 128 : 0);
 			basekey = key;
 			if ( keydown[K_SHIFT] )
 			key = keymaps_default[1][scancode + (extended ? 128 : 0)];
@@ -891,7 +897,7 @@ static void IN_Keycode_Print_f( int scancode, qboolean ext, qboolean down, int k
 		if ( key != K_SHIFT && key != K_LSHIFT && key != K_RSHIFT &&
 		     key != K_CTRL && key != K_LCTRL && key != K_RCTRL &&
 		     key != K_ALT && key != K_LALT && key != K_RALT && key != K_ALTGR )
-			Com_Printf ("keycode %s %3.3u %s: %s%s%s%s%s\n",
+			Com_Printf ("keycode %s %3.3u %s: %s%s%s%s%s %d\n",
 			            ext == true ? "ext" : "   ",
 			            (unsigned int)scancode,
 			            down == true ? (char *)" pressed" : (char *)"released",
@@ -899,13 +905,13 @@ static void IN_Keycode_Print_f( int scancode, qboolean ext, qboolean down, int k
 			            keydown[K_CTRL] ? (char *)"CTRL+" : (char *)"\0",
 			            keydown[K_ALT] ? (char *)"ALT+" : (char *)"\0",
 			            keydown[K_ALTGR] ? (char *)"ALTGR+" : (char *)"\0",
-			            Key_KeynumToString(key, NULL) );
+			            Key_KeynumToString(key, NULL), key );
 		else
-			Com_Printf ("keycode %s %3.3u %s: %s\n",
+			Com_Printf ("keycode %s %3.3u %s: %s %i\n",
 			            ext == true ? "ext" : "   ",
 			            (unsigned int)scancode,
 			            down == true ? (char *)" pressed" : (char *)"released",
-			            Key_KeynumToString(key, NULL) );
+			            Key_KeynumToString(key, NULL), key );
 	}
 } // END_FUNC IN_Keycode_Print_f
 

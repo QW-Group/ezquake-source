@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: keys.h,v 1.4 2005-08-12 15:57:21 vvd0 Exp $
+
 */
 
 // these are the key numbers that should be passed to Key_Event
@@ -35,7 +37,7 @@ typedef enum {
 
 	K_CAPSLOCK,
 	K_PRINTSCR,
-	K_SCRLCK,
+	K_SCRLCK,		//130
 	K_PAUSE,
 
 	K_UPARROW,
@@ -50,7 +52,7 @@ typedef enum {
 #ifdef WITH_KEYMAP
 	K_ALTGR,    // Right Alt-Key (=AltGr Key; this key must be used, if a third level of mappings is needed)
 #endif // WITH_KEYMAP 
-	K_CTRL,
+	K_CTRL,			//140
 	K_LCTRL,
 	K_RCTRL,
 	K_SHIFT,
@@ -60,7 +62,7 @@ typedef enum {
 	K_F2,
 	K_F3,
 	K_F4,
-	K_F5,
+	K_F5,			//150
 	K_F6,
 	K_F7,
 	K_F8,
@@ -70,7 +72,7 @@ typedef enum {
 	K_F12,
 	K_INS,
 	K_DEL,
-	K_PGDN,
+	K_PGDN,			//160
 	K_PGUP,
 	K_HOME,
 	K_END,
@@ -86,7 +88,7 @@ typedef enum {
 
 	KP_NUMLOCK,
 	KP_SLASH,
-	KP_STAR,
+	KP_STAR,		//170
 
 	KP_HOME,
 	KP_UPARROW,
@@ -99,12 +101,12 @@ typedef enum {
 	KP_PLUS,
 
 	KP_END,
-	KP_DOWNARROW,
+	KP_DOWNARROW,	//180
 	KP_PGDN,
 
 	KP_INS,
 	KP_DEL,
-	KP_ENTER,
+	KP_ENTER,		//184
 
 //
 // mouse buttons generate virtual keys
@@ -123,7 +125,7 @@ typedef enum {
 //
 	K_JOY1,
 	K_JOY2,
-	K_JOY3,
+	K_JOY3,			//210
 	K_JOY4,
 
 //
@@ -138,7 +140,7 @@ typedef enum {
 	K_AUX6,
 	K_AUX7,
 	K_AUX8,
-	K_AUX9,
+	K_AUX9,			//220
 	K_AUX10,
 	K_AUX11,
 	K_AUX12,
@@ -148,7 +150,7 @@ typedef enum {
 	K_AUX16,
 	K_AUX17,
 	K_AUX18,
-	K_AUX19,
+	K_AUX19,		//230
 	K_AUX20,
 	K_AUX21,
 	K_AUX22,
@@ -158,7 +160,7 @@ typedef enum {
 	K_AUX26,
 	K_AUX27,
 	K_AUX28,
-	K_AUX29,
+	K_AUX29,		//240
 	K_AUX30,
 	K_AUX31,
 	K_AUX32,
@@ -166,16 +168,19 @@ typedef enum {
 // JACK: Intellimouse(c) Mouse Wheel Support
 
 	K_MWHEELUP,
-	K_MWHEELDOWN
+	K_MWHEELDOWN,	//245
+
+	UNKNOWN = 256
+
 } keynum_t;
 
 
 typedef enum {key_game, key_console, key_message, key_menu} keydest_t;
 
 extern keydest_t	key_dest;
-extern char 	*keybindings[256];
-extern int		key_repeats[256];
-extern qboolean	keydown[256];
+extern char 	*keybindings[UNKNOWN + 256];
+extern int		key_repeats[UNKNOWN + 256];
+extern qboolean	keydown[UNKNOWN + 256];
 extern int		key_lastpress;
 
 extern char 	chat_buffer[];

@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: keys.c,v 1.15 2005-08-12 15:57:21 vvd0 Exp $
+
 */
 
 #include "quakedef.h"
@@ -65,15 +67,15 @@ int count_alias = 0;
 
 keydest_t	key_dest;
 
-char		*keybindings[256];
-qboolean	consolekeys[256];	// if true, can't be rebound while in console
-qboolean	menubound[256];		// if true, can't be rebound while in menu
+char		*keybindings[UNKNOWN + 256];
+qboolean	consolekeys[UNKNOWN + 256];	// if true, can't be rebound while in console
+qboolean	menubound[UNKNOWN + 256];		// if true, can't be rebound while in menu
 #ifndef WITH_KEYMAP
-int			keyshift[256];		// key to map to if shift held down in console
+int			keyshift[UNKNOWN + 256];		// key to map to if shift held down in console
 #endif // WITH_KEYMAP
-int			key_repeats[256];	// if > 1, it is autorepeating
-qboolean	keydown[256];
-qboolean	keyactive[256];	
+int			key_repeats[UNKNOWN + 256];	// if > 1, it is autorepeating
+qboolean	keydown[UNKNOWN + 256];
+qboolean	keyactive[UNKNOWN + 256];	
 
 typedef struct
 {
@@ -1280,10 +1282,13 @@ void Key_Message (int key) {
 
 //Returns a key number to be used to index keybindings[] by looking at the given string.
 //Single ascii characters return themselves, while the K_* names are matched up.
+#define UNKNOWN_S	"UNKNOWN"
 int Key_StringToKeynum (char *str) {
 	keyname_t *kn;
 #ifdef WITH_KEYMAP
+	int        i;
 	int        keynum;
+	char       ret[11];
 #endif // WITH_KEYMAP
 	
 	if (!str || !str[0])
@@ -1294,8 +1299,8 @@ int Key_StringToKeynum (char *str) {
 #ifdef WITH_KEYMAP
 	if (str[0] == '#') {
 		keynum = Q_atoi(str + 1);
-		if (keynum < 32 || keynum > 127)
-			return -1;
+/*		if (keynum < 32 || keynum > 127)
+			return -1;*/
 		return keynum;
 	}
 #endif // WITH_KEYMAP else
@@ -1304,6 +1309,16 @@ int Key_StringToKeynum (char *str) {
 		if (!Q_strcasecmp(str,kn->name))
 			return kn->keynum;
 	}
+
+#ifdef WITH_KEYMAP
+	for (i = 0; i < 255; i++)
+	{
+		snprintf(ret, sizeof(ret), UNKNOWN_S "%d", i);
+		if (!Q_strcasecmp(str, ret))
+			return UNKNOWN + i;
+	}
+#endif // WITH_KEYMAP
+
 	return -1;
 }
 
@@ -1319,9 +1334,11 @@ given keynum.
 ===================
 */
 char *Key_KeynumToString (int keynum, char *buffer) {
-	static char  *retval       = NULL;
-	keyname_t    *kn           = NULL;
-	static char   tinystr[ 5 ] = { "\0" };
+	static char	*retval;
+	keyname_t	*kn			= NULL;
+	static char	tinystr[5]	= { "\0" };
+	static char	ret[11];
+	retval = NULL;
 
 	if ( keynum < 0 )
 		retval = "<KEY NOT FOUND>";
@@ -1350,7 +1367,10 @@ char *Key_KeynumToString (int keynum, char *buffer) {
 	}
 
 	if ( retval == NULL )
-		retval = "<UNKNOWN KEYNUM>";
+	{
+		snprintf(ret, sizeof(ret), UNKNOWN_S "%d", keynum - UNKNOWN);
+		retval = ret;
+	}
 
 	// use the buffer if given
 	if ( buffer != NULL ) {
@@ -1440,7 +1460,7 @@ void Key_Unbind_f (void) {
 void Key_Unbindall_f (void) {
 	int i;
 	
-	for (i = 0; i < 256; i++)
+	for (i = 0; i < sizeof(keybindings); i++)
 		if (keybindings[i])
 			Key_Unbind (i);
 }
@@ -1466,7 +1486,7 @@ static void Key_PrintBindInfo(int keynum, char *keyname) {
 
 //checks if LCTRL and RCTRL are both bound and bound to the same thing
 qboolean Key_IsLeftRightSameBind(int b) {
-	if (b < 0 || b >= sizeof(keybindings))
+	if (b < 0 || b >= sizeof(keybindings) - 2)
 		return false;
 
 	return	(b == K_CTRL || b == K_ALT || b == K_SHIFT || b == K_WIN) &&
@@ -1514,7 +1534,7 @@ void Key_BindList_f (void) {
 	char str[ 256 ];
 #endif // WITH_KEYMAP
 
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < sizeof(keybindings); i++) {
 		if (Key_IsLeftRightSameBind(i)) {
 #ifdef WITH_KEYMAP
 			Com_Printf ("%s \"%s\"\n", Key_KeynumToString(i, str), keybindings[i + 1]);
@@ -1540,7 +1560,7 @@ void Key_WriteBindings (FILE *f) {
 	char str[ 256 ];
 #endif // WITH_KEYMAP
 
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < sizeof(keybindings); i++) {
 		leftright = Key_IsLeftRightSameBind(i) ? 1 : 0;
 		if (leftright || keybindings[i]) {
 			if (i == ';')
@@ -1660,7 +1680,7 @@ void Key_Init (void) {
 	consolekeys['~'] = false;
 
 #ifndef WITH_KEYMAP
-	for (i = 0; i < 256; i++)
+	for (i = 0; i < sizeof(keyshift); i++)
 		keyshift[i] = i;
 	for (i = 'a'; i <= 'z'; i++)
 		keyshift[i] = i - 'a' + 'A';
@@ -1845,7 +1865,7 @@ void Key_Event (int key, qboolean down)
 void Key_ClearStates (void) {
 	int		i;
 
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < sizeof(keydown); i++) {
 		keydown[i] = false;
 		key_repeats[i] = false;
 	}
