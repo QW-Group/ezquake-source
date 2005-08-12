@@ -82,10 +82,10 @@ cvar_t	tp_name_backpack = {"tp_name_backpack", "pack"};
 cvar_t	tp_name_flag = {"tp_name_flag", "flag"};
 cvar_t	tp_name_sentry = {"tp_name_sentry", "sentry gun"};
 cvar_t	tp_name_disp = {"tp_name_disp", "dispenser"};
-cvar_t	tp_name_rune_1 = {"tp_name_rune_1", "resistance rune"};
-cvar_t	tp_name_rune_2 = {"tp_name_rune_2", "strength rune"};
-cvar_t	tp_name_rune_3 = {"tp_name_rune_3", "haste rune"};
-cvar_t	tp_name_rune_4 = {"tp_name_rune_4", "regeneration rune"};
+cvar_t	tp_name_rune1 = {"tp_name_rune1", "resistance rune"};
+cvar_t	tp_name_rune2 = {"tp_name_rune2", "strength rune"};
+cvar_t	tp_name_rune3 = {"tp_name_rune3", "haste rune"};
+cvar_t	tp_name_rune4 = {"tp_name_rune4", "regeneration rune"};
 cvar_t	tp_name_teammate = {"tp_name_teammate", ""};
 cvar_t	tp_name_enemy = {"tp_name_enemy", "enemy"};
 cvar_t	tp_name_eyes = {"tp_name_eyes", "eyes"};
@@ -2312,16 +2312,16 @@ item_t	tp_items[] = {
 	{	it_flag,	&tp_name_flag,	"progs/flag.mdl",
 		{0, 0, 14},	25,
 	},
-	{	it_runes,	&tp_name_rune_1,	"progs/end1.mdl",
+	{	it_runes,	&tp_name_rune1,	"progs/end1.mdl",
 		{0, 0, 20},	18,
 	},
-	{	it_runes,	&tp_name_rune_2,	"progs/end2.mdl",
+	{	it_runes,	&tp_name_rune2,	"progs/end2.mdl",
 		{0, 0, 20},	18,
 	},
-	{	it_runes,	&tp_name_rune_3,	"progs/end3.mdl",
+	{	it_runes,	&tp_name_rune3,	"progs/end3.mdl",
 		{0, 0, 20},	18,
 	},
-	{	it_runes,	&tp_name_rune_4,	"progs/end4.mdl",
+	{	it_runes,	&tp_name_rune4,	"progs/end4.mdl",
 		{0, 0, 20},	18,
 	},
 	{	it_ra|it_ya|it_ga, NULL,	"progs/armor.mdl",
@@ -2699,8 +2699,8 @@ void TP_FindPoint (void) {
 			continue;
 
 		if (
-			state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame) ||
-			state->modelindex == cl_modelindices[mi_h_player]
+			( state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame) ) ||
+			( state->modelindex == cl_modelindices[mi_h_player] )
 		)
 			continue;
 
@@ -3069,10 +3069,10 @@ void TP_Init (void) {
 	Cvar_Register (&tp_name_at);
 	Cvar_Register (&tp_name_someplace);
 
-	Cvar_Register (&tp_name_rune_1); 
-	Cvar_Register (&tp_name_rune_2); 
-	Cvar_Register (&tp_name_rune_3); 
-	Cvar_Register (&tp_name_rune_4); 
+	Cvar_Register (&tp_name_rune1);
+	Cvar_Register (&tp_name_rune2);
+	Cvar_Register (&tp_name_rune3);
+	Cvar_Register (&tp_name_rune4);
 
 	Cvar_Register (&tp_name_status_blue);
 	Cvar_Register (&tp_name_status_red);
