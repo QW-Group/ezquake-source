@@ -9,6 +9,8 @@
 //#define MALLOC
 #define NOMALLOC
 
+int Solve_String (char *src);
+
 // returns -1 on error
 // returns 1 on no error
 int Remove_Spaces (char *src){
@@ -94,7 +96,6 @@ int Check_For_Double_Tokens (char *src){
 	#endif
 	int i=0;
 	int j=0;
-	int gotone;
 	int found = 1;
 	char char_tok[]="+-*";
 	int amount = 2;
@@ -210,6 +211,7 @@ int Calc_AB (char type,int a, int b){
 		case '-' :
 			return (a-b);
 	}
+	return -1;
 }
 
 // will search the innermost bracket and send the content to Solve_String
@@ -466,6 +468,7 @@ int Calc_String (char *src,char tok){
 		#endif
 		return 0;
 	}
+	return -1;
 }
 
 
@@ -477,10 +480,8 @@ int Calc_String (char *src,char tok){
 	
 */
 int Solve_String (char *src){
-	int i;
 	int count =0;
 	int status =0 ;
-	char *c;
 	
 	while(!status){
 		status = Check_For_Double_Tokens(src);
@@ -533,7 +534,7 @@ int Solve_String (char *src){
 			return 1;
 	}
 		status =0 ;
-	
+    return -1;	
 }
 
 
