@@ -2,7 +2,7 @@
 #include "common.h"
 #include "cl_screen.h"
 #include "utils.h"
-
+#include "parser.h"
 
 extern cvar_t tp_name_quad, tp_name_pent, tp_name_ring, tp_name_separator;
 extern cvar_t tp_name_axe, tp_name_sg, tp_name_ssg, tp_name_ng, tp_name_sng, tp_name_gl, tp_name_rl, tp_name_lg;
@@ -228,7 +228,7 @@ void MVD_Info (void){
 
 int MVD_FindBestPlayer_f(void){
 
-	int bp_id, bp_calc_val, status, i, h, y = 0;
+	int bp_id, status, i, h, y = 0;
 	int loop = 1;
 	int loop_count = 0;
 	
