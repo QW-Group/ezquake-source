@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.15 2005-08-12 15:57:21 vvd0 Exp $
+	$Id: keys.c,v 1.16 2005-08-17 06:32:54 vvd0 Exp $
 
 */
 
@@ -246,6 +246,9 @@ keyname_t keynames[] = {
 	{"MWHEELDOWN", K_MWHEELDOWN},
 
 	{"SEMICOLON", ';'},	// because a raw semicolon separates commands
+
+	{"PRINT_SCREEN", PRINT_SCREEN},
+	{"WAKE_UP", WAKE_UP},
 
 	{NULL,0}
 };

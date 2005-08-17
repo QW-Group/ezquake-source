@@ -1,3 +1,7 @@
+/*
+	$Id: mvd_utils.c,v 1.15 2005-08-17 06:32:54 vvd0 Exp $
+*/
+
 #include "quakedef.h"
 #include "common.h"
 #include "cl_screen.h"
