@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keymap.c,v 1.3 2005-08-12 15:57:21 vvd0 Exp $
+	$Id: keymap.c,v 1.4 2005-08-17 06:32:54 vvd0 Exp $
 
 */
 // keymap.c -- support for international keyboard layouts
@@ -69,13 +69,13 @@ static byte keymaps_default[ 2 ][ 256 ] =
     0,       0,       0,       0,    KP_ENTER,K_RCTRL,    0,       0,        // 1 ext
     0,       0,       0,       0,       0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0,        // 2 ext
-    0,       0,       0,       0,       0,    KP_SLASH,   0,       0,
+    0,       0,       0,       0,       0,    KP_SLASH,   0, PRINT_SCREEN,
  K_RALT,     0,       0,       0,       0,       0,       0,       0,        // 3 ext
     0,       0,       0,       0,       0,    KP_NUMLOCK, 0,    K_HOME,
  K_UPARROW,K_PGUP,    0,    K_LEFTARROW,0,    K_RIGHTARROW,0,   K_END,       // 4 ext
  K_DOWNARROW,K_PGDN,K_INS,  K_DEL,      0,       0,       0,       0,
     0,       0,    K_WIN,   K_LWIN,  K_RWIN,  K_MENU,     0,       0,        // 5 ext
-    0,       0,       0,       0,       0,       0,       0,       0,
+    0,       0,       0,    WAKE_UP,    0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0,        // 6 ext
     0,       0,       0,       0,       0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0         // 7 ext
@@ -106,13 +106,13 @@ static byte keymaps_default[ 2 ][ 256 ] =
     0,       0,       0,       0,    KP_ENTER,K_RCTRL,    0,       0,        // 1 ext
     0,       0,       0,       0,       0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0,        // 2 ext
-    0,       0,       0,       0,       0,    KP_SLASH,   0,       0,
+    0,       0,       0,       0,       0,    KP_SLASH,   0, PRINT_SCREEN,
  K_RALT,     0,       0,       0,       0,       0,       0,       0,        // 3 ext
     0,       0,       0,       0,       0,    KP_NUMLOCK, 0,    K_HOME,
  K_UPARROW,K_PGUP,    0,    K_LEFTARROW,0,    K_RIGHTARROW,0,   K_END,       // 4 ext
  K_DOWNARROW,K_PGDN,K_INS,  K_DEL,      0,       0,       0,       0,
     0,       0,    K_WIN,   K_LWIN,  K_RWIN,  K_MENU,     0,       0,        // 5 ext
-    0,       0,       0,       0,       0,       0,       0,       0,
+    0,       0,       0,    WAKE_UP,    0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0,        // 6 ext
     0,       0,       0,       0,       0,       0,       0,       0,
     0,       0,       0,       0,       0,       0,       0,       0         // 7 ext

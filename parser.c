@@ -1,15 +1,18 @@
+/*
+	$Id: parser.c,v 1.3 2005-08-17 06:32:54 vvd0 Exp $
+*/
+
 //#include <stdio.h>
 //#include <stdlib.h>
 
 #include "common.h"
+#include "parser.h"
 
 #define SRCLIMIT 1024
 
 //#define DEBUG
 //#define MALLOC
 #define NOMALLOC
-
-int Solve_String (char *src);
 
 // returns -1 on error
 // returns 1 on no error
@@ -96,6 +99,7 @@ int Check_For_Double_Tokens (char *src){
 	#endif
 	int i=0;
 	int j=0;
+//	int gotone;
 	int found = 1;
 	char char_tok[]="+-*";
 	int amount = 2;
@@ -210,6 +214,11 @@ int Calc_AB (char type,int a, int b){
 			return (a+b);
 		case '-' :
 			return (a-b);
+		case '/' :
+			if (b)
+				return (a/b);
+			else
+				return ((unsigned)-1) >> 1;
 	}
 	return -1;
 }
@@ -534,7 +543,7 @@ int Solve_String (char *src){
 			return 1;
 	}
 		status =0 ;
-    return -1;	
+	return -1;	
 }
 
 
