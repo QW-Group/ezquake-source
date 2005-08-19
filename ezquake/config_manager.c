@@ -17,7 +17,7 @@ You	should have	received a copy	of the GNU General Public License
 along with this	program; if	not, write to the Free Software
 Foundation,	Inc., 59 Temple	Place -	Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: config_manager.c,v 1.11 2005-08-12 15:57:21 vvd0 Exp $
+	$Id: config_manager.c,v 1.12 2005-08-19 19:51:49 johnnycz Exp $
 
 */
 
@@ -253,10 +253,10 @@ static void DumpVariables(FILE	*f)	{
 static void DumpAliases(FILE *f) {
 	int maxlen, i, j, count, lonely_count, minus_index, minus_count;
 	char *spaces;
-	cmd_alias_t	*b, *a, *sorted_aliases[512], *lonely_pluses[512];
+	cmd_alias_t	*b, *a, *sorted_aliases[1024], *lonely_pluses[512];
 	qboolean partner, printed;
 
-	for (count = maxlen = 0, a = cmd_alias;	count < sizeof(sorted_aliases) && a; a = a->next) {
+	for (count = maxlen = 0, a = cmd_alias;	(count < (sizeof(sorted_aliases) / sizeof(*sorted_aliases))) && a; a = a->next) {
 		if (!(a->flags & (ALIAS_SERVER|ALIAS_TEMP))) {
 			maxlen = max(maxlen, strlen(a->name));
 			count++;
