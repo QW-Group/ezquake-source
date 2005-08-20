@@ -17,7 +17,7 @@ You	should have	received a copy	of the GNU General Public License
 along with this	program; if	not, write to the Free Software
 Foundation,	Inc., 59 Temple	Place -	Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: config_manager.c,v 1.12 2005-08-19 19:51:49 johnnycz Exp $
+	$Id: config_manager.c,v 1.13 2005-08-20 09:11:30 johnnycz Exp $
 
 */
 
@@ -737,10 +737,15 @@ void Dump_HUD(char *name) {
 	max_width++;
 	qsort(sorted, i, sizeof(cvar_t *), Cvar_CvarCompare);
 	
+	spaces = CreateSpaces(max_width - strlen("scr_newhud"));
+	fprintf(f, "%s%s\"1\"\n", "scr_newhud", spaces);
+
 	for(j = 0; j < i; j++) {
 		spaces = CreateSpaces(max_width - strlen(sorted[j]->name));
 		fprintf(f, "%s%s\"%s\"\n", sorted[j]->name, spaces, sorted[j]->string);
 	}
+
+	fprintf(f, "hud_recalculate\n");
 
 	fclose(f);
 }
