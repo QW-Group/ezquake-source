@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.16 2005-08-17 06:32:54 vvd0 Exp $
+	$Id: keys.c,v 1.17 2005-08-21 20:58:41 johnnycz Exp $
 
 */
 
@@ -1463,7 +1463,7 @@ void Key_Unbind_f (void) {
 void Key_Unbindall_f (void) {
 	int i;
 	
-	for (i = 0; i < sizeof(keybindings); i++)
+	for (i = 0; i < sizeof(keybindings) / sizeof(*keybindings); i++)
 		if (keybindings[i])
 			Key_Unbind (i);
 }
