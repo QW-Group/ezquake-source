@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.24 2005-08-12 15:57:21 vvd0 Exp $
+	$Id: menu.c,v 1.25 2005-08-21 21:38:26 johnnycz Exp $
 
 */
 
@@ -750,7 +750,7 @@ void M_FindKeysForCommand (char *command, int *twokeys) {
 	l = strlen(command);
 	count = 0;
 
-	for (j = 0 ; j < sizeof(keybindings); j++) {
+	for (j = 0 ; j < (sizeof(keybindings) / sizeof(*keybindings)); j++) {
 		b = keybindings[j];
 		if (!b)
 			continue;
@@ -780,7 +780,7 @@ void M_UnbindCommand (char *command) {
 
 	l = strlen(command);
 
-	for (j = 0; j < sizeof(keybindings); j++) {
+	for (j = 0; j < (sizeof(keybindings) / sizeof(*keybindings)); j++) {
 		b = keybindings[j];
 		if (!b)
 			continue;

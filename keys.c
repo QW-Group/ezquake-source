@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.17 2005-08-21 20:58:41 johnnycz Exp $
+	$Id: keys.c,v 1.18 2005-08-21 21:38:26 johnnycz Exp $
 
 */
 
@@ -1489,7 +1489,7 @@ static void Key_PrintBindInfo(int keynum, char *keyname) {
 
 //checks if LCTRL and RCTRL are both bound and bound to the same thing
 qboolean Key_IsLeftRightSameBind(int b) {
-	if (b < 0 || b >= sizeof(keybindings) - 2)
+	if (b < 0 || b >= (sizeof(keybindings) / sizeof(*keybindings)) - 2)
 		return false;
 
 	return	(b == K_CTRL || b == K_ALT || b == K_SHIFT || b == K_WIN) &&
@@ -1537,7 +1537,7 @@ void Key_BindList_f (void) {
 	char str[ 256 ];
 #endif // WITH_KEYMAP
 
-	for (i = 0; i < sizeof(keybindings); i++) {
+	for (i = 0; i < (sizeof(keybindings) / sizeof(*keybindings)); i++) {
 		if (Key_IsLeftRightSameBind(i)) {
 #ifdef WITH_KEYMAP
 			Com_Printf ("%s \"%s\"\n", Key_KeynumToString(i, str), keybindings[i + 1]);
@@ -1563,7 +1563,7 @@ void Key_WriteBindings (FILE *f) {
 	char str[ 256 ];
 #endif // WITH_KEYMAP
 
-	for (i = 0; i < sizeof(keybindings); i++) {
+	for (i = 0; i < (sizeof(keybindings) / sizeof(*keybindings)); i++) {
 		leftright = Key_IsLeftRightSameBind(i) ? 1 : 0;
 		if (leftright || keybindings[i]) {
 			if (i == ';')
