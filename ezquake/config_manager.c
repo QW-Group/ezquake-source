@@ -17,7 +17,7 @@ You	should have	received a copy	of the GNU General Public License
 along with this	program; if	not, write to the Free Software
 Foundation,	Inc., 59 Temple	Place -	Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: config_manager.c,v 1.14 2005-08-20 09:18:20 johnnycz Exp $
+	$Id: config_manager.c,v 1.15 2005-08-21 21:38:25 johnnycz Exp $
 
 */
 
@@ -88,7 +88,7 @@ void DumpBindings (FILE *f) {
 	char *spaces, *string;
 	qboolean printed = false;
 
-	for (i = 0; i < sizeof(keybindings); i++) {
+	for (i = 0; i < (sizeof(keybindings) / sizeof(*keybindings)); i++) {
 		
 		leftright = Key_IsLeftRightSameBind(i) ? 1 : 0;
 		if (keybindings[i] || leftright) {
