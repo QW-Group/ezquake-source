@@ -260,7 +260,7 @@ void Cvar_Set (cvar_t *var, char *value) {
 		else if (!strcmp(var->name, "allow_scripts")) {
 			if (allow_scripts.value < 1)
 				Cbuf_AddText("say not using scripts\n");
-			else if (allow_scripts.value < 2 || com_blockscripts)
+			else if (allow_scripts.value < 2)
 				Cbuf_AddText("say using simple scripts\n");
 			else
 				Cbuf_AddText("say using advanced scripts\n");
@@ -609,7 +609,7 @@ qboolean Cvar_Delete (char *name) {
 				cvar_vars = var->next;
 
 			// free
-			Z_Free (var->defaultvalue);  
+			Z_Free (var->defaultvalue);
 			Z_Free (var->string);
 			Z_Free (var->name);
 			Z_Free (var);

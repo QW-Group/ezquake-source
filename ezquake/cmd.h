@@ -44,7 +44,7 @@ typedef struct cbuf_s {
 extern cbuf_t	cbuf_main;
 #ifndef SERVERONLY
 extern cbuf_t cbuf_safe; // msg_trigger commands
-extern cbuf_t cbuf_nocomms;
+extern cbuf_t formatted_comms;
 extern cbuf_t cbuf_svc; // svc_stufftext commands
 #endif
 extern cbuf_t	*cbuf_current;
@@ -168,5 +168,4 @@ void Cmd_WriteAliases (FILE *f);
 void DeleteServerAliases(void);
 
 void Cmd_AddMacro(char *s, char *(*f)(void)); 
-void Cmd_SetMacro(char *s, qboolean allow);
-void Cmd_SetAllMacros(qboolean allow);
+void Cmd_AddMacroEx(char *s, char *(*f)(void), qboolean teamplay);

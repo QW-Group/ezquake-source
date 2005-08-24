@@ -37,29 +37,30 @@ typedef struct limited_cvar_min_s {
 
 typedef enum {rs_default, rs_smackdown, rs_mtfl} ruleset_t;
 
-static ruleset_t ruleset;
+typedef struct rulesetDef_s {
+	ruleset_t ruleset;
+	float maxfps;
+	qboolean restrictTriggers;
+	qboolean restrictPacket;
+	qboolean restrictRJScripts;
+} rulesetDef_t;
 
-static float maxfps = 72;
-static qboolean allow_triggers = true;
-static qboolean restrictTriggers = false;
+static rulesetDef_t rulesetDef = {rs_default, 72, false, false, false};
 
-static qboolean notimers = false;
+qboolean RuleSets_DisallowRJScripts(void) {
+	return rulesetDef.restrictRJScripts;
+}
 
 qboolean RuleSets_DisallowExternalTexture(model_t *mod) {
 	switch (mod->modhint) {
 		case MOD_EYES: return true;
-		case MOD_BACKPACK: return (ruleset == rs_smackdown);
-		default: ;
+		case MOD_BACKPACK: return (rulesetDef.ruleset == rs_smackdown);
+		default: return false;
 	}
-	return false;
-}
-
-qboolean Rulesets_NoTimers(void) {
-	return (!cl.spectator && !cls.demoplayback && notimers);
 }
 
 qboolean Rulesets_AllowTimerefresh(void) {
-	switch(ruleset) {
+	switch(rulesetDef.ruleset) {
 	case rs_smackdown:
 		// START shaman BUG 1020663
 		//return cl.standby;
@@ -71,7 +72,7 @@ qboolean Rulesets_AllowTimerefresh(void) {
 }
 
 qboolean Rulesets_AllowNoShadows(void) {
-	switch(ruleset) {
+	switch(rulesetDef.ruleset) {
 	case rs_mtfl:
 		return false;
 	case rs_smackdown:
@@ -84,17 +85,21 @@ qboolean Rulesets_AllowNoShadows(void) {
 float Rulesets_MaxFPS(void) {
 
 	if (cl_multiview.value && cls.mvdplayback)
-		return nNumViews*maxfps;
+		return nNumViews*rulesetDef.maxfps;
 
-	return maxfps; 
+	return rulesetDef.maxfps;
 }
 
-qboolean Rulesets_AllowTriggers(void) {
-	return allow_triggers;
+qboolean Rulesets_RestrictTriggers(void) {
+	return rulesetDef.restrictTriggers;
+}
+
+qboolean Rulesets_RestrictPacket(void) {
+	return !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictPacket;
 }
 
 char *Rulesets_Ruleset(void) {
-	switch(ruleset) {
+	switch(rulesetDef.ruleset) {
 		case rs_smackdown:
 			return "smackdown";
 		case rs_mtfl:
@@ -105,7 +110,7 @@ char *Rulesets_Ruleset(void) {
 }
 
 static void Rulesets_Smackdown(void) {
-	extern cvar_t tp_msgtriggers, cl_trueLightning;
+	extern cvar_t cl_trueLightning;
 	extern cvar_t cl_independentPhysics, cl_c2spps;
 #ifndef GLQUAKE
 	extern cvar_t r_aliasstats;
@@ -127,7 +132,6 @@ static void Rulesets_Smackdown(void) {
 		{&amf_lightning, "0"},
 		{&amf_lightning_sparks, "0"},
 #endif
-		{&tp_msgtriggers, "0"},
 		{&cl_trueLightning, "0"},
 #ifndef GLQUAKE
 		{&r_aliasstats, "0"}
@@ -176,16 +180,10 @@ static void Rulesets_Smackdown(void) {
 		Cvar_SetFlags(&cl_c2spps, Cvar_GetFlags(&cl_c2spps) | CVAR_ROM);
 	}
 
-	maxfps = 77;
-	allow_triggers = false;
-	notimers = true;
-	ruleset = rs_smackdown;
-	restrictTriggers = true;
-
-/* no more needed since hexum made better fix for tp macros 
-	for (i = 0; allowed_smackdown_macros[i]; i++)
-		Cmd_SetMacro(allowed_smackdown_macros[i], true);
-*/
+	rulesetDef.maxfps = 77;
+	rulesetDef.restrictTriggers = true;
+	rulesetDef.restrictPacket = true;
+	rulesetDef.ruleset = rs_smackdown;
 }
 static void Rulesets_MTFL(void) {
 /* TODO:
@@ -245,13 +243,11 @@ block all other ways to made textures flat(simple)
 	}
 #endif
 
-	ruleset = rs_mtfl;
-	Cmd_SetAllMacros(true);
+	rulesetDef.ruleset = rs_mtfl;
 }
 
 static void Rulesets_Default(void) {
-	ruleset = rs_default;
-	Cmd_SetAllMacros(true);
+	rulesetDef.ruleset = rs_default;
 }
 
 void Rulesets_Init(void) {
@@ -271,8 +267,4 @@ void Rulesets_Init(void) {
 		}
 	}
 	Rulesets_Default();
-}
-
-qboolean Rulesets_RestrictTriggers(void) {
-	return restrictTriggers;
 }

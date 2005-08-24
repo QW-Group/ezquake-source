@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sha1.h"
 
 #include "config_manager.h"
+#include "rulesets.h"
 
 extern qboolean Match_Running ;
 
@@ -167,8 +168,8 @@ void CL_Say_f (void) {
 	}
 
 	
-	if (!qizmo && !cl.paused && cl_floodprot.value && cl_fp_messages.value && cl_fp_persecond.value) {
-		tmp = cl.whensaidhead - cl_fp_messages.value + 1;
+	if (!qizmo && cl_floodprot.value && cl_fp_messages.value > 0 && cl_fp_persecond.value > 0) {
+		tmp = cl.whensaidhead - min(cl_fp_messages.value, 10) + 1;
 		if (tmp < 0)
 			tmp += 10;
 		if (cl.whensaid[tmp] && (cls.realtime - cl.whensaid[tmp]) < (1.02 * cl_fp_persecond.value)) {
@@ -209,56 +210,50 @@ void CL_Pause_f (void) {
 
 //packet <destination> <contents>
 //Contents allows \n escape character
-void CL_Packet_f (void) {
-	char send[2048], *in, *out;
-	int i, l;
+void CL_Packet_f(void) {
 	netadr_t adr;
-
-	// START shaman RFE 1022146
-/*
-	hexum -> enabled for now :(
-
-	if (cls.state == ca_active && !(cl.standby || cl.spectator || cls.demoplayback)) {
-		Com_Printf ("packet's disabled during match\n");
-		return;
-	}
-
-*/
-	// END shaman RFE 1022146
-	if (Match_Running && !cl.spectator && !cls.mvdplayback) {
-	Com_Printf ("packet command disabled during match\n");
-		return;
-	}
+	char send[2048], *in, *out;
 
 	if (Cmd_Argc() != 3) {
-		Com_Printf ("packet <destination> <contents>\n");
+		Com_Printf("packet <destination> <contents>\n");
 		return;
 	}
 
-	if (!NET_StringToAdr (Cmd_Argv(1), &adr)) {
-		Com_Printf ("Bad address\n");
+	if (cbuf_current && cbuf_current != &cbuf_svc && Rulesets_RestrictPacket()) {
+		Com_Printf("Packet commands is disabled during match\n");
+		return;
+	}
+
+	if (!NET_StringToAdr(Cmd_Argv(1), &adr)) {
+		Com_Printf("Bad address\n");
 		return;
 	}
 
 	if (adr.port == 0)
-		adr.port = BigShort (PORT_SERVER);
+		adr.port = BigShort(PORT_SERVER);
+
+	send[0] = send[1] = send[2] = send[3] = 0xFF;
 
 	in = Cmd_Argv(2);
 	out = send + 4;
-	send[0] = send[1] = send[2] = send[3] = 0xff;
 
-	l = strlen (in);
-	for (i = 0; i < l; i++) {
-		if (in[i] == '\\' && in[i+1] == 'n') {
-			*out++ = '\n';
-			i++;
+
+	while (*in && out - send < sizeof(send) - 2) {
+		if (in[0] == '\\' && in[1]) {
+			switch(in[1]) {
+				case 'n' : *out++ = '\n'; break;
+				case 't' : *out++ = '\t'; break;
+				case '\\' : *out++ = '\\'; break;
+				default : *out++ = in[0]; *out++ = in[1]; break;
+			}
+			in += 2;
 		} else {
-			*out++ = in[i];
+			*out++ = *in++;
 		}
 	}
 	*out = 0;
 
-	NET_SendPacket (NS_CLIENT, out-send, send, adr);
+	NET_SendPacket(NS_CLIENT, out - send, send, adr);
 }
 
 

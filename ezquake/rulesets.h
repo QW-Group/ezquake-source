@@ -18,13 +18,20 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#ifdef GLQUAKE
+#include "gl_model.h"
+#else
+#include "r_model.h"
+#endif
+
 void Rulesets_Init(void);
-float Rulesets_MaxFPS(void);
 char *Rulesets_Ruleset(void);
-qboolean Rulesets_AllowTriggers(void);
+
+
+qboolean RuleSets_DisallowRJScripts(void);
+qboolean RuleSets_DisallowExternalTexture(model_t *mod);
 qboolean Rulesets_AllowTimerefresh(void);
-qboolean Rulesets_AllowNoShadows(void);
-qboolean RuleSets_DisallowExternalTexture(model_t *mod);
-qboolean Rulesets_NoTimers(void);
+float Rulesets_MaxFPS(void);
 qboolean Rulesets_RestrictTriggers(void);
-qboolean RuleSets_DisallowExternalTexture(model_t *mod);
+qboolean Rulesets_RestrictPacket(void);
+qboolean Rulesets_AllowNoShadows(void);

@@ -28,19 +28,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 qboolean CL_CheckServerCommand (void);
 #endif
 
+static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
+
 cvar_t cl_warncmd = {"cl_warncmd", "0"};
 
 cbuf_t	cbuf_main;
 #ifndef SERVERONLY
 cbuf_t	cbuf_svc;
-cbuf_t	cbuf_safe, cbuf_nocomms;
+cbuf_t	cbuf_safe, cbuf_formatted_comms;
 #endif
 
 cbuf_t	*cbuf_current = NULL;
-
-#ifndef SERVERONLY
-static qboolean cmd_tainted = false;
-#endif
 
 //=============================================================================
 
@@ -69,7 +67,7 @@ void Cbuf_Execute (void) {
 	Cbuf_ExecuteEx (&cbuf_main);
 #ifndef SERVERONLY
 	Cbuf_ExecuteEx (&cbuf_safe);
-	Cbuf_ExecuteEx (&cbuf_nocomms);
+	Cbuf_ExecuteEx (&cbuf_formatted_comms);
 #endif
 }
 
@@ -97,7 +95,7 @@ void Cbuf_Init (void)
 #ifndef SERVERONLY
 	Cbuf_Register(&cbuf_svc, 1 << 13); // 8kb
 	Cbuf_Register(&cbuf_safe, 1 << 11); // 2kb
-	Cbuf_Register(&cbuf_nocomms, 1 << 11); // 2kb
+	Cbuf_Register(&cbuf_formatted_comms, 1 << 11); // 2kb
 #endif
 }
 
@@ -163,8 +161,6 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 	char *text, line[1024], *src, *dest;
 	qboolean comment, quotes;
 
-	cbuf_current = cbuf;
-	
 #ifndef SERVERONLY
 	nextsize = cbuf->text_end - cbuf->text_start;
 #endif
@@ -176,17 +172,6 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 		cursize = cbuf->text_end - cbuf->text_start;
 		comment = quotes = false;
 
-#ifndef SERVERONLY		
-		// hexum - nextsize lets us know when alias expansion is complete (including 'if' expressions)
-		// once it is complete, the next command in the buffer should not be marked tainted (but it can still become tainted)
-		// this avoids problems with multiple binds being hit in the same frame and other cases where multiple
-		// commands become queued up
-		// NOTE: this works because alias expansion uses Cbuf_InsertText
-		// FIXME? This would be a lot simpler if Cmd_ExecuteString was redesigned to handle aliases recursively
-		if (cursize <= nextsize)
-			cmd_tainted = false;
-#endif
-		
 		for (i = 0; i < cursize; i++) {
 			if (text[i] == '\n')
 				break;
@@ -234,7 +219,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 		}
 
 		cursize = cbuf->text_end - cbuf->text_start;
-		Cmd_ExecuteString (line);	// execute the command line
+		Cmd_ExecuteStringEx (cbuf, line);	// execute the command line
 
 		if (cbuf->text_end - cbuf->text_start > cursize)
 			cbuf->runAwayLoop++;
@@ -254,18 +239,11 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 
 			cbuf->runAwayLoop += Q_rint(0.5 * cls.frametime * MAX_RUNAWAYLOOP);
 #endif
-			goto done;
+			return;
 		}
 	}
 	
 	cbuf->runAwayLoop = 0;
-
-#ifndef SERVERONLY
-	cmd_tainted = false;
-#endif
-
-done:
-	cbuf_current = NULL;
 }
 
 /*
@@ -558,7 +536,7 @@ void Cmd_EditAlias_f (void){
 	Q_snprintfz(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
 	Key_ClearTyping();
 	memcpy (key_lines[edit_line]+1, final_string, strlen(final_string));
-	Z_Free(s);	
+	Z_Free(s);
 }
 
 
@@ -659,7 +637,7 @@ qboolean Cmd_DeleteAlias (char *name) {
 
 			// free
 			Z_Free (a->value);
-			Z_Free (a);			
+			Z_Free (a);
 			return true;
 		}
 		prev = a;
@@ -1063,60 +1041,40 @@ void Cmd_CmdList_f (void) {
 typedef struct {
 	char name[32];
 	char *(*func) (void);
-// is macro allowed - setup by ruleset; default disallowed //VVD
-	qboolean allowed;
+	qboolean teamplay;
 } macro_command_t;
 
 static macro_command_t macro_commands[MAX_MACROS];
 static int macro_count = 0;
 
-void Cmd_AddMacro(char *s, char *(*f)(void)) {
-	macro_command_t	*macro;
+void Cmd_AddMacroEx(char *s, char *(*f)(void), qboolean teamplay) {
 	if (macro_count == MAX_MACROS)
 		Sys_Error("Cmd_AddMacro: macro_count == MAX_MACROS");
-	macro = &macro_commands[macro_count++];
-	Q_strncpyz(macro->name, s, sizeof(macro->name));
-	macro->allowed = false;
-	macro->func = f;
+	Q_strncpyz(macro_commands[macro_count].name, s, sizeof(macro_commands[macro_count].name));
+	macro_commands[macro_count].func = f;
+	macro_commands[macro_count].teamplay = teamplay;
+	macro_count++;
 }
 
-void Cmd_SetAllMacros(qboolean allow)
-{
-	int i;
-	for (i = 0; i < macro_count; i++)
-		macro_commands[i].allowed = allow;
+void Cmd_AddMacro(char *s, char *(*f)(void)) {
+	Cmd_AddMacroEx(s, f, false);
 }
 
-void Cmd_SetMacro(char *s, qboolean allow)
-{
+char *Cmd_MacroString (char *s, int *macro_length) {
 	int i;
-	macro_command_t	*macro = macro_commands;
+ macro_command_t	*macro;
 
-	for (i = 0; i < macro_count; i++, macro++)
-	{
-		if (!strncasecmp(s, macro->name, strlen(macro->name)))
-		{
-			macro->allowed = allow;
-			return;
-		}
-	}
-}
-
-char *Cmd_MacroString (char *s, int *macro_length)
-{
-	int i;
-	macro_command_t	*macro = macro_commands;
-
-	for (i = 0; i < macro_count; i++, macro++) {
-		if (!strncasecmp(s, macro->name, strlen(macro->name))) {
+	for (i = 0; i < macro_count; i++) {
+		macro = &macro_commands[i];
+		if (!Q_strncasecmp(s, macro->name, strlen(macro->name))) {
 #ifndef SERVERONLY
-			if (!macro->allowed)
-				cmd_tainted = true;
+			if (cbuf_current == &cbuf_main && macro->teamplay)
+				cbuf_current = &cbuf_formatted_comms;
 #endif
-
 			*macro_length = strlen(macro->name);
 			return macro->func();
 		}
+		macro++;
 	}
 	*macro_length = 0;
 	return NULL;
@@ -1250,22 +1208,30 @@ void Cmd_ExpandString (char *data, char *dest) {
 	dest[len] = 0;
 }
 
-char *safe_commands[] = {
+char *msgtrigger_commands[] = {
 	"play", "playvol", "stopsound", "set", "echo", "say", "say_team",
 		"alias", "unalias", "msg_trigger", "inc", "bind", "unbind", "record",
-		"easyrecord", "stop", "if", "wait", "log", "match_forcestart", "dns",
-		"addserver", NULL
+		"easyrecord", "stop", "if", "wait", "log", "match_forcestart",
+		 "dns", "addserver", NULL
+};
+
+char *formatted_comms_commands[] = {
+	"if", "wait", "echo", "say", "say_team",
+	"tp_point", "tp_pickup", "tp_took",
+	NULL
 };
 
 //A complete command line has been parsed, so try to execute it
-//FIXME: lookupnoadd the token to speed search?
-void Cmd_ExecuteString (char *text) {
+static void Cmd_ExecuteStringEx (cbuf_t *context, char *text) {
+	cvar_t *v;
 	cmd_function_t *cmd;
 	cmd_alias_t *a;
 	static char buf[1024];
-	cbuf_t *inserttarget;
+	cbuf_t *inserttarget, *oldcontext;
 	char *p, *n, *s;
 
+	oldcontext = cbuf_current;
+	cbuf_current = context;
 
 #ifndef SERVERONLY
 	char text_exp[1024];
@@ -1276,12 +1242,12 @@ void Cmd_ExecuteString (char *text) {
 #endif
 
 	if (!Cmd_Argc())
-		return;		// no tokens
+		goto done;		// no tokens
 
 #ifndef SERVERONLY
 	if (cbuf_current == &cbuf_svc) {
 		if (CL_CheckServerCommand())
-			return;
+			goto done;
 	}
 #endif
 
@@ -1291,39 +1257,23 @@ void Cmd_ExecuteString (char *text) {
 		char **s;
 
 		if (cbuf_current == &cbuf_safe) {
-			for (s = safe_commands; *s; s++) {
+			for (s = msgtrigger_commands; *s; s++) {
 				if (!Q_strcasecmp(cmd_argv[0], *s))
 					break;
 			}
 			if (!*s) {
 				Com_Printf ("\"%s\" cannot be used in message triggers\n", cmd_argv[0]);
-				return;
+				goto done;
 			}
-		} else if (cbuf_current == &cbuf_nocomms) {
-			if (
-				!Q_strcasecmp(cmd_argv[0], "say") ||
-				!Q_strcasecmp(cmd_argv[0], "say_team") ||
-				!Q_strcasecmp(cmd_argv[0], "cmd")
-				) {
-					Com_Printf("Ruleset %s restricts use of \"%s\" in f_triggers\n", Rulesets_Ruleset(), cmd_argv[0]);
-					return;
-				}
-		} else if (cbuf_current == &cbuf_main && cmd_tainted) {
-			if (
-				Q_strcasecmp(cmd_argv[0], "say") &&
-				Q_strcasecmp(cmd_argv[0], "say_team") &&
-				Q_strcasecmp(cmd_argv[0], "wait") &&
-				Q_strcasecmp(cmd_argv[0], "echo") &&
-				Q_strcasecmp(cmd_argv[0], "tp_point") &&
-				Q_strcasecmp(cmd_argv[0], "tp_pickup") &&
-				Q_strcasecmp(cmd_argv[0], "tp_took") &&
-				Q_strcasecmp(cmd_argv[0], "if") &&
-				Q_strcasecmp(cmd_argv[0], "dns") &&
-				Q_strcasecmp(cmd_argv[0], "addserver")
-				) {
-					Com_Printf("Ruleset %s restricts use of \"%s\" with teamplay macros\n", Rulesets_Ruleset(), cmd_argv[0]);
-					return;
-				}
+		} else if (cbuf_current == &cbuf_formatted_comms) {
+			for (s = formatted_comms_commands; *s; s++) {
+				if (!Q_strcasecmp(cmd_argv[0], *s))
+					break;
+			}
+			if (!*s) {
+				Com_Printf("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
+				goto done;
+			}
 		}
 #endif
 
@@ -1331,21 +1281,31 @@ void Cmd_ExecuteString (char *text) {
 			cmd->function();
 		else
 			Cmd_ForwardToServer ();
-		return;
+		goto done;
 	}
 
 	// some bright guy decided to use "skill" as a mod command in Custom TF, sigh
-	if (!(!strcmp(Cmd_Argv(0), "skill") && cmd_argc == 1 && Cmd_FindAlias("skill")))
-	{
-		// check cvars
+	if (!strcmp(Cmd_Argv(0), "skill") && cmd_argc == 1 && Cmd_FindAlias("skill"))
+		goto checkaliases;
+
+	// check cvars
+	if ((v = Cvar_FindVar (Cmd_Argv(0)))) {
+#ifndef SERVERONLY
+		if (cbuf_current == &cbuf_formatted_comms) {
+			Com_Printf("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
+			goto done;
+		}
+#endif
 		if (Cvar_Command())
-			return;
+			goto done;
 	}
+
 	// check aliases
+checkaliases:
 	if ((a = Cmd_FindAlias(cmd_argv[0]))) {
 
 // qw262 -->
-			if (a->value[0]=='\0') return; // alias is empty.
+			if (a->value[0]=='\0') goto done; // alias is empty.
 
 			if(a->flags & ALIAS_HAS_PARAMETERS) { // %parameters are given in alias definition
 				s=a->value;
@@ -1393,7 +1353,7 @@ void Cmd_ExecuteString (char *text) {
 		{
 			Cbuf_AddText (p);
 			Cbuf_AddText ("\n");
-		} 
+		}
 		else
 #endif
 		{
@@ -1405,26 +1365,39 @@ void Cmd_ExecuteString (char *text) {
 #endif
 
 			Cbuf_InsertTextEx (inserttarget, "\n");
-			//Cbuf_InsertTextEx (inserttarget, p);
 
 			// if the alias value is a command or cvar and
 			// the alias is called with parameters, add them
-			if (Cmd_Argc() > 1 && !strchr(p, ' ') && !strchr(p, '\t') && (Cvar_FindVar(p) || (Cmd_FindCommand(p) && p[0] != '+' && p[0] != '-'))) {
+			if (Cmd_Argc() > 1 && !strchr(p, ' ') && !strchr(p, '\t') &&
+				(Cvar_FindVar(p) || (Cmd_FindCommand(p) && p[0] != '+' && p[0] != '-'))
+				) {
 					Cbuf_InsertTextEx (inserttarget, Cmd_Args());
 					Cbuf_InsertTextEx (inserttarget, " ");
 				}
-			Cbuf_InsertTextEx (inserttarget, p);
-
+				Cbuf_InsertTextEx (inserttarget, p);
 		}
-		return;
+		goto done;
 	}
 
 #ifndef SERVERONLY
 	if (Cmd_LegacyCommand())
-		return;
+		goto done;
 #endif
-	if (cl_warncmd.value || developer.value)
-		Com_Printf ("Unknown command \"%s\"\n", Cmd_Argv(0));	
+
+#ifndef SERVERONLY
+	if (cbuf_current != &cbuf_svc)
+#endif
+	{
+		if (cl_warncmd.value || developer.value)
+			Com_Printf ("Unknown command \"%s\"\n", Cmd_Argv(0));
+	}
+
+done:
+	cbuf_current = oldcontext;
+}
+
+void Cmd_ExecuteString (char *text) {
+	Cmd_ExecuteStringEx (NULL, text);
 }
 
 static qboolean is_numeric (char *c) {	
