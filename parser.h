@@ -1,5 +1,5 @@
 /*
-	$Id: parser.h,v 1.2 2005-08-17 06:32:54 vvd0 Exp $
+	$Id: parser.h,v 1.3 2005-08-24 13:02:03 disconn3ct Exp $
 */
 
 int eval_string_int (char *src);
