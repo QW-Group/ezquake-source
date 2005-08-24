@@ -177,28 +177,28 @@ tvars_t vars;
 
 typedef struct f_trigger_s {
 	char *name;
-	int restricted;
+	qboolean restricted;
 	qboolean teamplay;
 } f_trigger_t;
 
 f_trigger_t f_triggers[] = {
-	{"f_newmap", 0, false},
-	{"f_spawn", 0, false},
-	{"f_mapend", 0, false},
-	{"f_reloadstart", 0, false},
-	{"f_reloadend", 0, false},
-	{"f_cfgload", 0, false},
-	{"f_exit", 0, false},
+	{"f_newmap", false, false},
+	{"f_spawn", false, false},
+	{"f_mapend", false, false},
+	{"f_reloadstart", false, false},
+	{"f_reloadend", false, false},
+	{"f_cfgload", false, false},
+	{"f_exit", false, false},
 
-	{"f_weaponchange", 1, false},
+	{"f_weaponchange", false, false},
 
-	{"f_took", 2, true},
-	{"f_respawn", 1, true},
-	{"f_death", 1, true},
-	{"f_flagdeath", 1, true},
+	{"f_took", true, true},
+	{"f_respawn", true, true},
+	{"f_death", true, true},
+	{"f_flagdeath", true, true},
 
-	{"f_conc", 1, false},
-	{"f_flash", 1, false},
+	{"f_conc", true, true},
+	{"f_flash", true, true},
 };
 
 #define num_f_triggers	(sizeof(f_triggers) / sizeof(f_triggers[0]))
@@ -234,10 +234,7 @@ void TP_ExecTrigger (char *trigger) {
 	}
 
 	if ((alias = Cmd_FindAlias(trigger))) {
-		if (f_triggers[i].restricted && Rulesets_RestrictTriggers()) {
-			if (f_triggers[i].restricted < 2)
-				Cbuf_AddTextEx (&cbuf_nocomms, va("%s\n", alias->value));
-		} else {
+		if (!(f_triggers[i].restricted && Rulesets_RestrictTriggers())) {
 			Cbuf_AddTextEx (&cbuf_main, va("%s\n", alias->value));
 		}
 	}
@@ -1010,55 +1007,57 @@ char *Macro_Count_Last_NearbyFriendlyPlayers (void) {
 // Note: longer macro names like "armortype" must be defined
 // _before_ the shorter ones like "armor" to be parsed properly
 void TP_AddMacros(void) {
+	qboolean teamplay = Rulesets_RestrictTriggers();
+
 	Cmd_AddMacro("qt", Macro_Quote_f);
-
 	Cmd_AddMacro("latency", Macro_Latency);
-	Cmd_AddMacro("health", Macro_Health);
-	Cmd_AddMacro("armortype", Macro_ArmorType);
-	Cmd_AddMacro("armor", Macro_Armor);
-
-	Cmd_AddMacro("shells", Macro_Shells);
-	Cmd_AddMacro("nails", Macro_Nails);
-	Cmd_AddMacro("rockets", Macro_Rockets);
-	Cmd_AddMacro("cells", Macro_Cells);
-
-	Cmd_AddMacro("weaponnum", Macro_WeaponNum);
-	Cmd_AddMacro("weapons", Macro_Weapons);						
-	Cmd_AddMacro("weapon", Macro_Weapon);
-
-	Cmd_AddMacro("ammo", Macro_Ammo);
-
-	Cmd_AddMacro("bestweapon", Macro_BestWeapon);
-	Cmd_AddMacro("bestammo", Macro_BestAmmo);
-
-	Cmd_AddMacro("powerups", Macro_Powerups);
-
-	Cmd_AddMacro("location", Macro_Location);
-	Cmd_AddMacro("deathloc", Macro_LastDeath);
-
 	Cmd_AddMacro("time", Macro_Time);
 	Cmd_AddMacro("date", Macro_Date);
 
-	Cmd_AddMacro("tookatloc", Macro_TookAtLoc);
-	Cmd_AddMacro("tookloc", Macro_TookLoc);
-	Cmd_AddMacro("took", Macro_Took);
+	Cmd_AddMacroEx("health", Macro_Health, teamplay);
+	Cmd_AddMacroEx("armortype", Macro_ArmorType, teamplay);
+	Cmd_AddMacroEx("armor", Macro_Armor, teamplay);
 
-	Cmd_AddMacro("pointatloc", Macro_PointNameAtLocation);
-	Cmd_AddMacro("pointloc", Macro_PointLocation);
-	Cmd_AddMacro("point", Macro_PointName);
+	Cmd_AddMacroEx("shells", Macro_Shells, teamplay);
+	Cmd_AddMacroEx("nails", Macro_Nails, teamplay);
+	Cmd_AddMacroEx("rockets", Macro_Rockets, teamplay);
+	Cmd_AddMacroEx("cells", Macro_Cells, teamplay);
 
-	Cmd_AddMacro("need", Macro_Need);
+	Cmd_AddMacro("weaponnum", Macro_WeaponNum);
+	Cmd_AddMacroEx("weapons", Macro_Weapons, teamplay);			
+	Cmd_AddMacro("weapon", Macro_Weapon);
 
-	Cmd_AddMacro("droploc", Macro_LastDrop);					
-	Cmd_AddMacro("droptime", Macro_LastDropTime);				
+	Cmd_AddMacroEx("ammo", Macro_Ammo, teamplay);
 
-	Cmd_AddMacro("tf_skin", Macro_TF_Skin);						
+	Cmd_AddMacroEx("bestweapon", Macro_BestWeapon, teamplay);
+	Cmd_AddMacroEx("bestammo", Macro_BestAmmo, teamplay);
+
+	Cmd_AddMacroEx("powerups", Macro_Powerups, teamplay);
+
+	Cmd_AddMacroEx("location", Macro_Location, teamplay);
+	Cmd_AddMacroEx("deathloc", Macro_LastDeath, teamplay);
+
+
+	Cmd_AddMacroEx("tookatloc", Macro_TookAtLoc, teamplay);
+	Cmd_AddMacroEx("tookloc", Macro_TookLoc, teamplay);
+	Cmd_AddMacroEx("took", Macro_Took, teamplay);
+
+	Cmd_AddMacroEx("pointatloc", Macro_PointNameAtLocation, teamplay);
+	Cmd_AddMacroEx("pointloc", Macro_PointLocation, teamplay);
+	Cmd_AddMacroEx("point", Macro_PointName, teamplay);
+
+	Cmd_AddMacroEx("need", Macro_Need, teamplay);
+
+	Cmd_AddMacroEx("droploc", Macro_LastDrop, teamplay);
+	Cmd_AddMacroEx("droptime", Macro_LastDropTime, teamplay);
+
+	Cmd_AddMacro("tf_skin", Macro_TF_Skin);			
 
 	Cmd_AddMacro("triggermatch", Macro_LastTrigger_Match);		
 
 
-	Cmd_AddMacro("ledpoint", Macro_Point_LED);
-	Cmd_AddMacro("ledstatus", Macro_MyStatus_LED);
+	Cmd_AddMacroEx("ledpoint", Macro_Point_LED, teamplay);
+	Cmd_AddMacroEx("ledstatus", Macro_MyStatus_LED, teamplay);
 
 };
 
@@ -1871,7 +1870,9 @@ void TP_SearchForMsgTriggers (char *s, int level) {
 	msg_trigger_t	*t;
 	char *string;
 
-	if (!tp_msgtriggers.value || cls.demoplayback)
+	if (cls.demoplayback)
+		return;
+	if (!tp_msgtriggers.value || Rulesets_RestrictTriggers())
 		return;
 
 	for (t = msg_triggers; t; t = t->next) {
@@ -2428,7 +2429,7 @@ static qboolean CheckTrigger (void) {
 	player_info_t *player;
 	char *myteam;
 
-	if (cl.spectator || !Rulesets_AllowTriggers())
+	if (cl.spectator || Rulesets_RestrictTriggers())
 		return false;
 
 	if (tp_forceTriggers.value)

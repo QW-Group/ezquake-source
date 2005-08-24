@@ -74,7 +74,6 @@ cvar_t  show_fps2 = {"draw_fps","0"};
 cvar_t  localid = {"localid", ""};
 
 static qboolean allowremotecmd = true;
-qboolean com_blockscripts;
 
 cvar_t	cl_deadbodyfilter = {"cl_deadbodyFilter", "0"};
 cvar_t	cl_gibfilter = {"cl_gibFilter", "0"};
@@ -932,16 +931,13 @@ void CL_InitLocal (void) {
 	
 	Cvar_ResetCurrentGroup();
 
-    com_blockscripts = false;
+	Q_snprintfz(st, sizeof(st), "ezQuake %i", build_number());
 
-    Q_snprintfz(st, sizeof(st), "ezQuake %i", build_number());
-
-	if (COM_CheckParm("-noscripts"))
+	if (COM_CheckParm("-norjscripts"))
 	{
 	Cvar_SetValue(&allow_scripts, 0);
 	Cvar_SetFlags(&allow_scripts, Cvar_GetFlags(&allow_scripts) | CVAR_ROM);
-	com_blockscripts = true;
-        strcat(st, " noscripts");
+        strcat(st, " norjscripts");
 	}
 
  	Info_SetValueForStarKey (cls.userinfo, "*client", st, MAX_INFO_STRING);
@@ -1031,6 +1027,7 @@ void CL_Init (void) {
 	CL_InitTEnts ();
 	CL_InitPrediction ();
 	CL_InitCam ();
+	Rulesets_Init();
 	TP_Init ();
 	Sbar_Init ();
 	M_Init ();
@@ -1050,7 +1047,6 @@ void CL_Init (void) {
 	ConfigManager_Init();
 	Stats_Init();
 	MP3_Init();
-	Rulesets_Init();
 }
 
 //============================================================================

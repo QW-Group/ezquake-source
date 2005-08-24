@@ -278,8 +278,6 @@ typedef struct {
 
 extern clientPersistent_t	cls;
 
-extern qboolean com_blockscripts;
-
 
 // cl.paused flags
 

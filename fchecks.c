@@ -77,7 +77,7 @@ void FChecks_ScriptsResponse (void)
 {
     if (allow_scripts.value < 1)
         Cbuf_AddText("say not using scripts\n");
-    else if (allow_scripts.value < 2 || com_blockscripts)
+    else if (allow_scripts.value < 2)
         Cbuf_AddText("say using simple scripts\n");
     else
         Cbuf_AddText("say using advanced scripts\n");
@@ -158,7 +158,7 @@ qboolean FChecks_CheckFRulesetRequest (char *s) {
 		return false;
 
 	if (Util_F_Match(s, "f_ruleset"))	{
-		sScripts = (allow_scripts.value) ? "" : "\x90scripts blocked\x91";
+		sScripts = (allow_scripts.value) ? "" : "\x90rj scripts blocked\x91";
 		sIPhysics = (cl_independentPhysics.value) ? "" : "\x90indep. physics off\x91";
 		sp1 = *sScripts || *sIPhysics ? " " : "";
 		sp2 = *sIPhysics && *sScripts ? " " : "";

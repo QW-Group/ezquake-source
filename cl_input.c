@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "input.h"
 #include "pmove.h"		
 #include "movie.h"
+#include "rulesets.h"
 
 cvar_t	cl_nodelta = {"cl_nodelta","0"};
 cvar_t	cl_c2spps = {"cl_c2spps","0"};
@@ -30,7 +31,6 @@ cvar_t	cl_c2sImpulseBackup = {"cl_c2sImpulseBackup","3"};
 
 cvar_t	cl_smartjump = {"cl_smartjump", "0"};
 
-extern cvar_t allow_scripts;
 extern cvar_t cl_independentPhysics;
 extern qboolean physframe;
 extern double physframetime;
@@ -318,7 +318,7 @@ void CL_Rotate_f (void) {
 		Com_Printf("Usage: %s <degrees>\n", Cmd_Argv(0));
 		return;
 	}
-	if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2 || com_blockscripts == true)
+	if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2 || RuleSets_DisallowRJScripts())
 		return;
 	cl.viewangles[YAW] += atof(Cmd_Argv(1));
 	cl.viewangles[YAW] = anglemod(cl.viewangles[YAW]);
@@ -338,7 +338,7 @@ void CL_AdjustAngles (void) {
 	
 	if (!(in_strafe.state & 1)) {
 		speed = basespeed * cl_yawspeed.value;
-		if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2 || com_blockscripts == true)
+		if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2 || RuleSets_DisallowRJScripts())
 			speed = bound(-900, speed, 900);
 		speed *= frametime;
 		cl.viewangles[YAW] -= speed * CL_KeyState(&in_right);
@@ -348,7 +348,7 @@ void CL_AdjustAngles (void) {
 
 	
 	speed = basespeed * cl_pitchspeed.value;
-	if (cl.fpd & FPD_LIMIT_PITCH || allow_scripts.value == 0)
+	if ((cl.fpd & FPD_LIMIT_PITCH) || allow_scripts.value == 0 || RuleSets_DisallowRJScripts())
 		speed = bound(-700, speed, 700);
 	speed *= frametime;
 	if (in_klook.state & 1)	{
@@ -453,7 +453,7 @@ void CL_FinishMove (usercmd_t *cmd) {
 	// KTPro's KFJump == impulse 156
 	// KTPro's KRJump == impulse 164
 	if ( *Info_ValueForKey(cl.serverinfo, "kmod") && (
-		((in_impulse == 156) && (cl.fpd & FPD_LIMIT_YAW || allow_scripts.value < 2 || com_blockscripts == true)) ||
+		((in_impulse == 156) && (cl.fpd & FPD_LIMIT_YAW || allow_scripts.value < 2)) ||
 		((in_impulse == 164) && (cl.fpd & FPD_LIMIT_PITCH || allow_scripts.value == 0))
 		)
 	) {

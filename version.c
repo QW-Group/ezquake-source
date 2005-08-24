@@ -86,9 +86,9 @@ char *VersionString (void)
 
 	st[0] = 0;
 
-    if (COM_CheckParm("-noscripts")) {
-        strcpy (st, " noscripts");
-    }
+	if (COM_CheckParm("-norjscripts")) {
+	strcpy (st, " norjscripts");
+	}
 
 	Q_snprintfz (str, sizeof(str), "%i%s", build_number(), st);
 
