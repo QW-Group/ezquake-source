@@ -1229,12 +1229,12 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text) {
 	static char buf[1024];
 	cbuf_t *inserttarget, *oldcontext;
 	char *p, *n, *s;
+	char text_exp[1024];
 
 	oldcontext = cbuf_current;
 	cbuf_current = context;
 
 #ifndef SERVERONLY
-	char text_exp[1024];
 	Cmd_ExpandString (text, text_exp);
 	Cmd_TokenizeString (text_exp);
 #else
