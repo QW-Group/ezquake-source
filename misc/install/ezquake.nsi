@@ -74,6 +74,13 @@ Section "ezQuake client (required)"
 
 SectionEnd
 
+Section "Single Player and Multiplayer progs"
+  CreateDirectory $INSTDIR\qw
+  SetOutPath $INSTDIR\qw
+  File "qw\qwprogs.dat"
+  File "qw\spprogs.dat"
+SectionEnd
+
 Section "Extra Logitech Mice Support"
   SetOutPath $INSTDIR
   File "lib\mw_hook.dll"
