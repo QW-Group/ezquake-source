@@ -11,6 +11,7 @@
 ;  qw/ (dir)
 ;    qwprogs.dat (use the one delivered with ZQuake)
 ;    spprogs.dat (use the one delivered with ZQuake)
+;    fragfile.dat (CVS/ezquake/misc/fragfile/fragfile.dat)
 ;  lib/ (dir)
 ;    libexpat.dll
 ;    libjpeg.dll
@@ -78,6 +79,10 @@ Section "ezQuake client (required)"
   CreateDirectory $INSTDIR\ezquake\cfg
   SetOutPath $INSTDIR\ezquake\cfg
   File "ezquake\cfg\gfx_*.cfg"  
+
+  CreateDirectory $INSTDIR\qw
+  SetOutPath $INSTDIR\qw
+  File "qw\fragfile.dat"
 
   SetOutPath $SYSDIR
   File "lib\libjpeg.dll"
