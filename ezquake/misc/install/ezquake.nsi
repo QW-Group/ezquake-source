@@ -1,10 +1,31 @@
-; example2.nsi
+;This is NSIS Script file.
+;See http://nsis.sf.net/
 ;
-; This script is based on example1.nsi, but it remember the directory, 
-; has uninstall support and (optionally) installs start menu shortcuts.
+;You are required to place it into same dir these files:
+;  ezquake.nsi (this file)
+;  ezquake.exe (Release)
+;  ezquake-gl.exe (GLRelease)
+;  ezquake-security.dll (Closed source security module)
+;  ezstart.exe (CVS/ezstart/)
+;  qw/ (dir)
+;    qwprogs.dat (use the one delivered with ZQuake)
+;    spprogs.dat (use the one delivered with ZQuake)
+;  lib/ (dir)
+;    libexpat.dll
+;    libjpeg.dll
+;    libpng.dll
+;    mw_hook.dll
+;    zlib.dll
+;  ezquake/ (dir)
+;    pak0.pak (eyecandy, particles)
+;    cfg/ (dir, see CVS/ezquake/misc/cfg/)
+;    help/ (dir, see CVS/documentation)
+;    keymaps/ (dir, see CVS/ezquake/misc/keymaps/)
+;    manual/ (dir, offline version of http://ezQuake.SF.net/docs/)
+;    sb/ (dir, see CVS/ezquake/misc/sb)
 ;
-; It will install makensisw.exe into a directory that the user selects,
-
+;Using NSIS, files listed above and this install script you are able to create Windows installer for ezQuake.
+;
 ;--------------------------------
 
 ; The name of the installer
