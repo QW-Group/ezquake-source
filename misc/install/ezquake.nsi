@@ -7,6 +7,7 @@
 ;  ezquake-gl.exe (GLRelease)
 ;  ezquake-security.dll (Closed source security module)
 ;  ezstart.exe (CVS/ezstart/)
+;  gnugpl2.txt (GNU GENERAL PUBLIC LICENSE, Version 2, June 1991)
 ;  qw/ (dir)
 ;    qwprogs.dat (use the one delivered with ZQuake)
 ;    spprogs.dat (use the one delivered with ZQuake)
@@ -41,7 +42,7 @@ InstallDir $PROGRAMFILES\Quake
 ; overwrite the old one automatically)
 InstallDirRegKey HKLM "Software\ezQuake" "Install_dir"
 
-LicenseData licdata.txt
+LicenseData gnugpl2.txt
 
 ;--------------------------------
 
