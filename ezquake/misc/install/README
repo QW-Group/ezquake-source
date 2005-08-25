@@ -16,6 +16,7 @@ You are required to place it into same dir with all game binaries:
     mw_hook.dll
     zlib.dll
   ezquake/ (dir)
+    pak0.pak (eyecandy, particles)
     cfg/ (dir, see CVS/ezquake/misc/cfg/)
     help/ (dir, see CVS/documentation)
     keymaps/ (dir, see CVS/ezquake/misc/keymaps/)
