@@ -1,61 +1,152 @@
-#
-# QuakeWorld Makefile for Linux >= 2.0
-#
-# April '03 by Fuh <fuh@fuhquake.net>
-#
+#======================================================================
+# ezQuake Makefile for Linux >= 2.0
+# based on: Fuhquake Makefile && ZQuake Makefile
+#======================================================================
 
-#OUTPUT DIRECTORIES
-GLIBC=glibc
-ARCH=i386
-BUILD_DEBUG_DIR=debug-$(ARCH)-$(GLIBC)
-BUILD_RELEASE_DIR=release-$(ARCH)-$(GLIBC)
 
-#COMPILATION TOOLS
-CC=gcc
-STRIP=strip
-GCC=$(shell gcc -dumpversion | tr -d 'a-z-' | head -c1)
+# compilation tool and detection of targets/achitecture
+CC			=gcc
+CC_BASEVERSION		=$(shell $(CC) -dumpversion | sed -e 's/\..*//g')
+MACHINE			=$(shell $(CC) -dumpmachine)
+ARCH			=$(shell echo $(MACHINE) | sed -e 's/.*mingw32.*/mingw32/g' -e 's/\-.*//g' -e 's/i.86/x86/g')
+STRIP			=strip
 
-#LOCATION OF SOURCE RELATIVE TO MAKEFILE
-SOURCE_DIR=.
-HEADER_DIR=.
-STATICLIB_DIR= /usr/X11R6/lib
+# Mac OSX Tiger : powerpc -> ppc
+ifeq ($(MACHINE),powerpc-apple-darwin8) # MacOS-10.4/ppc
+	ARCH		= ppc
+endif
 
-#BASE CFLAGS
-XMMS_CFLAGS=-DWITH_XMMS `glib-config --cflags`
-BASE_CFLAGS=-DWITH_ZLIB -DWITH_PNG -I$(HEADER_DIR) -funsigned-char -D__linux__ -Did386 $(XMMS_CFLAGS) -pipe -fno-strict-aliasing
-RELEASE_CFLAGS=$(BASE_CFLAGS) -DNDEBUG -march=pentium2 -O3 -ffast-math -funroll-loops -fomit-frame-pointer -fexpensive-optimizations
-DEBUG_CFLAGS=$(BASE_CFLAGS) -g -Wall -Wimplicit
+# add special architecture based flags
+ifeq ($(ARCH),x86)	# Linux/x86
+	DEST_ARCH	=x86
+	ARCH_CFLAGS	=-march=$(shell echo $(MACHINE) | sed -e 's/\-.*//g')
+endif
+ifeq ($(ARCH),mingw32)  # Win32/x86 in MingW environment
+	DEST_ARCH       =x86
+	ARCH_CFLAGS     =-mwin32 -mno-cygwin
+endif
+ifeq ($(ARCH),ppc)	# MacOS-X/ppc
+	DEST_ARCH	=ppc
+	ARCH_CFLAGS	=-arch ppc -faltivec -maltivec -mcpu=7450 -mtune=7450 -mpowerpc -mpowerpc-gfxopt
+	ifeq ($(CC_BASEVERSION),4)	# auto vectorize if we're using gcc4.0+
+	    ARCH_CFLAGS	+= -ftree-vectorize
+	endif
+endif
 
-ifeq ($(GCC),2)
-RELEASE_CFLAGS += -malign-loops=2 -malign-jumps=2 -malign-functions=2
+
+#======================================================================
+# Output Directories
+#======================================================================
+# location of source relative to Makefile
+SOURCE_DIR			=.
+HEADER_DIR			=.
+
+BUILD_DEBUG_DIR			=debug-$(ARCH)
+BUILD_RELEASE_DIR		=release-$(ARCH)
+
+# compiler flags
+PRJ_CFLAGS			=-DWITH_ZLIB -DWITH_PNG
+XMMS_CFLAGS			=-DWITH_XMMS `glib-config --cflags`
+BASE_CFLAGS			=-Wall -Wno-format-y2k $(PRJ_CFLAGS) $(ARCH_CFLAGS) $(XMMS_CFLAGS)
+BASE_RELEASE_CFLAGS		=-ffast-math -fomit-frame-pointer -fexpensive-optimizations
+ifneq ($(CC_BASEVERSION),4) # if we're not auto-vectorizing then we can unroll the loops (mdfour ahoy)
+	BASE_RELEASE_CFLAGS  += -funroll-loops
+endif
+
+ifeq ($(CC_BASEVERSION),2)
+	# gcc 2.95.x does not know about -falign-XXX optimizations...
+	BASE_RELEASE_CFLAGS	+= -O3
 else
-ifeq ($(GCC),3)
-RELEASE_CFLAGS += -falign-loops=2 -falign-jumps=2 -falign-functions=2
+	BASE_RELEASE_CFLAGS	+= -O6
+ifeq ($(ARCH),ppc)
+	BASE_RELEASE_CFLAGS	+= -falign-loops=16 -falign-jumps=16 -falign-functions=16
 else
-ifeq ($(GCC),4)
-RELEASE_CFLAGS += -falign-loops=2 -falign-jumps=2 -falign-functions=2
+	BASE_RELEASE_CFLAGS	+= -falign-loops=2 -falign-jumps=2 -falign-functions=2
 endif
 endif
+BASE_DEBUG_CFLAGS		=-g -D_DEBUG
+
+ifeq ($(ARCH),x86)		# Linux/x86
+	# use define for special assembly routines and usage for DGA based mousecode:
+	BASE_CFLAGS		+= -Did386
+	CL_DLFLAGS		+= -ldl
+endif
+ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
+	# use define for special assembly routines:
+	BASE_CFLAGS		+= -Did386 -DMINGW32
+endif
+ifeq ($(ARCH),ppc)		# MacOS-X/ppc
+	BASE_CFLAGS		+= -DHAVE_STRLCAT -DHAVE_STRLCPY -DBIGENDIAN -Ddarwin
+endif
+ifeq ($(ARCH),powerpc)		# Linux/PPC
+	BASE_CFLAGS		+= -DBIGENDIAN
+	CL_DLFLAGS		+= -ldl
 endif
 
-#BASE LDFLAGS
-LDFLAGS=-lm -ldl `glib-config --libs` -lexpat -lpcre
+BASE_CFLAGS			+= -funsigned-char -pipe -fno-strict-aliasing -I$(HEADER_DIR)
+RELEASE_CFLAGS			=$(BASE_CFLAGS) $(BASE_RELEASE_CFLAGS) -DNDEBUG
+DEBUG_CFLAGS			=$(BASE_CFLAGS) $(BASE_DEBUG_CFLAGS) -Wimplicit
 
 
-#FOR SVGALIB AND X11 BUILDS
-DO_CC=$(CC) $(CFLAGS) -o $@ -c $<
-#DO_O_CC=$(CC) -O $(CFLAGS) -o $@ -c $<
-DO_AS=$(CC) $(CFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
+# software and console (svga) builds
+DO_CC				=$(CC) -DWITH_VMODE $(CFLAGS) -o $@ -c $<
+ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
+	DO_CC			+= -D_WINDOWS -mwindows
+endif
+DO_O_CC				=$(CC) -O $(CFLAGS) -o $@ -c $<
+DO_AS				=$(CC) $(CFLAGS) -x assembler-with-cpp
+ifeq ($(ARCH),x86)		# Linux/x86
+	DO_AS			+= -DELF
+endif
+DO_AS				+= -o $@ -c $<
 
-XLDFLAGS=-lpthread -L/usr/X11R6/lib -lX11 -lXext 
-SVGALDFLAGS=-lpthread -lvga
+# opengl builds
+BASE_GLCFLAGS			=-DWITH_JPEG -DGLQUAKE -I/usr/include
+ifeq ($(ARCH),x86)		# Linux/x86
+	ARCH_GLCFLAGS		=-I/usr/include -DWITH_VMODE -DWITH_DGA -DWITH_EVDEV
+endif
+ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
+	ARCH_GLCFLAGS		=-mwindows
+endif
+ifeq ($(ARCH),ppc)		# MacOS-X/ppc
+	ARCH_GLCFLAGS		=
+endif
+GLCFLAGS			=$(ARCH_GLCFLAGS) $(BASE_GLCFLAGS)
 
-#FOR GLX BUILDS
-GLCFLAGS=-DWITH_JPEG -DGLQUAKE -DWITH_DGA -DWITH_VMODE -DWITH_EVDEV -I/usr/include -I/usr/X11R6/include
-DO_GL_CC=$(CC) $(CFLAGS) $(GLCFLAGS) -o $@ -c $<
-DO_GL_AS=$(CC) $(CFLAGS) $(GLCFLAGS) -DELF -x assembler-with-cpp -o $@ -c $<
+DO_GL_CC			=$(CC) $(CFLAGS) $(GLCFLAGS) -o $@ -c $<
+DO_GL_AS			=$(CC) $(CFLAGS) $(GLCFLAGS) -x assembler-with-cpp
+ifeq ($(ARCH),x86)		# Linux/x86
+	DO_GL_AS		+= -DELF
+endif
+DO_GL_AS			+= -o $@ -c $<
 
-GL_X11_LDFLAGS=-lpthread -lGL -lm -L/usr/X11R6/lib -lX11 -lXext
+
+# linker flags
+LDFLAGS				=-lm `glib-config --libs` -lpthread -lexpat -lpcre $(CL_DLFLAGS)
+SVGALDFLAGS			=-lvga
+X11_LDFLAGS			=-L/usr/X11R6/lib -lX11 -lXext -lXxf86dga -lXxf86vm
+ifeq ($(ARCH),mingw32)  # Win32/x86 in MingW environment
+	LDFLAGS                         += -lws2_32 -luser32 -lwinmm
+endif
+ifeq ($(ARCH),ppc)		# MacOS-X/ppc
+	LDFLAGS			=-framework "CoreAudio"
+endif
+
+# opengl build
+BASE_GL_LDFLAGS			=-L/usr/X11R6/lib -lGL -lm -lX11 -lXext
+ARCH_GL_LDFLAGS			=
+ifeq ($(ARCH),x86)		# Linux/x86
+	ARCH_GL_LDFLAGS		=-lXxf86dga -lXxf86vm
+endif
+ifeq ($(ARCH),mingw32)  # Win32/x86 in MingW environment
+	BASE_GL_LDFLAGS          =
+	ARCH_GL_LDFLAGS          =-mwindows -lopengl32 -ldxguid -lgdi32
+endif
+ifeq ($(ARCH),ppc)		# MacOS-X/ppc
+	BASE_GL_LDFLAGS		=
+endif
+GL_LDFLAGS			=$(ARCH_GL_LDFLAGS) $(BASE_GL_LDFLAGS)
+
 
 #############################################################################
 # SETUP AND BUILD
@@ -267,16 +358,13 @@ QWCL_AS_OBJS = \
 QWCL_SVGA_OBJS = $(BUILDDIR)/build/vid_svgalib.o
 QWCL_X11_OBJS = $(BUILDDIR)/build/vid_x11.o
 
-#clean-module.o :
-#	-rm -rf $(BUILDDIR)/build/modules.o
-
-$(BUILDDIR)/ezquake.svga : $(QWCL_OBJS) $(QWCL_SVGA_AS_OBJS) $(QWCL_AS_OBJS) $(QWCL_SVGA_OBJS) # clean-module.o
+$(BUILDDIR)/ezquake.svga : $(QWCL_OBJS) $(QWCL_SVGA_AS_OBJS) $(QWCL_AS_OBJS) $(QWCL_SVGA_OBJS)
 	$(CC) $(CFLAGS) -o $@ $(QWCL_OBJS) $(QWCL_SVGA_AS_OBJS) $(QWCL_AS_OBJS) $(QWCL_SVGA_OBJS) \
-		$(LDFLAGS) $(SVGALDFLAGS)
+	$(LDFLAGS) $(SVGALDFLAGS)
 
-$(BUILDDIR)/ezquake.x11 : $(QWCL_OBJS) $(QWCL_AS_OBJS) $(QWCL_X11_OBJS) # clean-module.o
+$(BUILDDIR)/ezquake.x11 : $(QWCL_OBJS) $(QWCL_AS_OBJS) $(QWCL_X11_OBJS)
 	$(CC) $(CFLAGS) -o $@ $(QWCL_OBJS) $(QWCL_AS_OBJS) $(QWCL_X11_OBJS) \
-        $(LDFLAGS) $(XLDFLAGS)
+	$(LDFLAGS) $(X11_LDFLAGS)
 
 $(BUILDDIR)/build/host.o :		$(SOURCE_DIR)/host.c
 	$(DO_CC)
@@ -487,7 +575,7 @@ $(BUILDDIR)/build/sv_ccmds.o :		$(SOURCE_DIR)/sv_ccmds.c
                                
 $(BUILDDIR)/build/sv_save.o :		$(SOURCE_DIR)/sv_save.c
 	$(DO_CC)
-	
+
 $(BUILDDIR)/build/sv_ents.o :		$(SOURCE_DIR)/sv_ents.c
 	$(DO_CC)                
 
@@ -713,8 +801,6 @@ $(BUILDDIR)/build/vid_svgalib.o :	$(SOURCE_DIR)/vid_svgalib.c
 # GLCLIENT
 #############################################################################
 
-GLQWCL_STATIC_LIBS = $(STATICLIB_DIR)/libXxf86vm.a $(STATICLIB_DIR)/libXxf86dga.a
-
 GLQWCL_OBJS = \
     $(BUILDDIR)/build-gl/host.o \
     $(BUILDDIR)/build-gl/sys_linux.o \
@@ -856,8 +942,8 @@ GLQWCL_AS_OBJS = \
 GLQWCL_X11_OBJS = $(BUILDDIR)/build-gl/vid_glx.o $(BUILDDIR)/build-gl/vid_common_gl.o
 
 $(BUILDDIR)/ezquake-gl.glx : $(GLQWCL_OBJS) $(GLQWCL_X11_OBJS) $(GLQWCL_AS_OBJS)
-	$(CC) $(CFLAGS) -o $@ $(GLQWCL_OBJS) $(GLQWCL_X11_OBJS) $(GLQWCL_AS_OBJS) $(GLQWCL_STATIC_LIBS) \
-	$(LDFLAGS) $(GL_X11_LDFLAGS) 
+	$(CC) $(CFLAGS) -o $@ $(GLQWCL_OBJS) $(GLQWCL_X11_OBJS) $(GLQWCL_AS_OBJS) \
+	$(LDFLAGS) $(GL_LDFLAGS) 
 
 $(BUILDDIR)/build-gl/host.o :			$(SOURCE_DIR)/host.c
 	$(DO_GL_CC)
@@ -879,7 +965,7 @@ $(BUILDDIR)/build-gl/snd_mix.o :		$(SOURCE_DIR)/snd_mix.c
 
 $(BUILDDIR)/build-gl/snd_linux.o :		$(SOURCE_DIR)/snd_linux.c
 	$(DO_GL_CC)
-	
+
 $(BUILDDIR)/build-gl/snd_oss.o :		$(SOURCE_DIR)/snd_oss.c
 	$(DO_GL_CC)
 
@@ -1246,5 +1332,6 @@ clean-release:
 	$(MAKE) cleanfunc BUILDDIR=$(BUILD_RELEASE_DIR) CFLAGS="$(DEBUG_CFLAGS)"
 
 cleanfunc:
-	-rm -f $(QWCL_OBJS) $(QWCL_AS_OBJS) $(QWCL_X11_OBJS) $(GLQWCL_X11_OBJS) $(GLQWCL_OBJS) $(GLQWCL_AS_OBJS) $(QWCL_SVGA_OBJS) $(QWCL_SVGA_AS_OBJS)
-	
+	-rm -f $(QWCL_OBJS) $(QWCL_AS_OBJS) $(QWCL_X11_OBJS) $(GLQWCL_X11_OBJS) \
+	$(GLQWCL_OBJS) $(GLQWCL_AS_OBJS) $(QWCL_SVGA_OBJS) $(QWCL_SVGA_AS_OBJS)
+
