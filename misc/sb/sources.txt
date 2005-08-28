@@ -5,3 +5,11 @@ master "id tf" 192.246.40.37:27003
 master "id misc" 192.246.40.37:27004
 master "Poland" 150.254.66.120:27000
 master "Qizmos" 194.177.125.71:27000
+file "European Servers" eu-sv.txt
+file "European Qizmos" eu-qizmo.txt
+file "Australian Servers" au-sv.txt
+file "Capture The Flag" ctf.txt
+file "North America Servers" na-sv.txt
+file "South America Servers" sa-sv.txt
+file "Team Fortress" tf.txt
+file "World Qizmos" qizmo.txt
