@@ -120,6 +120,9 @@ void GL_CheckExtensions (void) {
 		Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
 		Cvar_Register (&gl_ext_texture_compression);	
 		Cvar_ResetCurrentGroup();
+#ifndef __APPLE__
+	// !!!	glCompressedTexImage2DARB = GL_GetProcAddress("glCompressedTexImage2DARB");
+#endif
 	}
 }
 
@@ -153,7 +156,12 @@ void GL_Init (void) {
 	Cvar_ForceSet (&gl_strings, va("GL_VENDOR: %s\nGL_RENDERER: %s\n"
 		"GL_VERSION: %s\nGL_EXTENSIONS: %s", gl_vendor, gl_renderer, gl_version, gl_extensions));
 
+#ifndef __APPLE__
 	glClearColor (1,0,0,0);
+#else
+	glClearColor (0.2,0.2,0.2,1.0);
+#endif
+
 	glCullFace(GL_FRONT);
 	glEnable(GL_TEXTURE_2D);
 
@@ -226,7 +234,11 @@ void VID_SetPalette (unsigned char *palette) {
 		v = (255 << 24) + (r << 0) + (g << 8) + (b << 16);
 		*table++ = v;
 	}
-	d_8to24table[255] = 0;	// 255 is transparent
+#ifndef __APPLE__
+	d_8to24table[255] = 0;		// 255 is transparent
+#else
+	d_8to24table[255] &= 0xffffff00;
+#endif
 
 	// Tonik: create a brighter palette for bmodel textures
 	pal = palette;
@@ -239,5 +251,9 @@ void VID_SetPalette (unsigned char *palette) {
 		pal += 3;
 		*table++ = (255 << 24) + (r << 0) + (g << 8) + (b << 16);
 	}
+#ifndef __APPLE__
 	d_8to24table2[255] = 0;	// 255 is transparent
+#else
+	d_8to24table2[255] &= 0xffffff00;
+#endif
 } 

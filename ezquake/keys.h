@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.h,v 1.5 2005-08-17 06:32:54 vvd0 Exp $
+	$Id: keys.h,v 1.6 2005-08-28 21:28:52 disconn3ct Exp $
 
 */
 
@@ -58,6 +58,10 @@ typedef enum {
 	K_SHIFT,
 	K_LSHIFT,
 	K_RSHIFT,
+#ifdef __APPLE__
+	K_CMD,
+	K_PARA,
+#endif
 	K_F1,
 	K_F2,
 	K_F3,
@@ -70,6 +74,11 @@ typedef enum {
 	K_F10,
 	K_F11,
 	K_F12,
+#ifdef __APPLE__
+	K_F13,
+	K_F14,
+	K_F15,
+#endif
 	K_INS,
 	K_DEL,
 	K_PGDN,			//160
@@ -107,6 +116,26 @@ typedef enum {
 	KP_INS,
 	KP_DEL,
 	KP_ENTER,
+
+#ifdef __APPLE__
+	// macintosh keypad
+	KP_EQUAL,
+
+	KP_7=KP_HOME,
+	KP_8=KP_UPARROW,
+	KP_9=KP_PGUP,
+
+	KP_4=KP_LEFTARROW,
+	KP_6=KP_RIGHTARROW,
+
+	KP_1=KP_END,
+	KP_2=KP_DOWNARROW,
+	KP_3=KP_PGDN,
+
+	KP_0=KP_INS,
+	KP_DOT=KP_DEL,
+#endif
+
 	PRINT_SCREEN,
 	WAKE_UP,		//186
 
