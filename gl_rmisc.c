@@ -72,7 +72,13 @@ void R_TranslatePlayerSkin (int playernum) {
 	byte translate[256], *inrow, *original;
 	char s[512];
 	int	top, bottom, i, j, scaled_width, scaled_height, inwidth, inheight, tinwidth, tinheight;
-	unsigned translate32[256], pixels[512 * 256], *out, frac, fracstep;
+	unsigned translate32[256], *out, frac, fracstep;
+
+#ifdef __APPLE__
+	static		// OS X 10.2 has too small stack segment to hold this array (512k)
+#endif
+	unsigned pixels[512 * 256];
+
 	player_info_t *player;
 	extern byte player_8bit_texels[320 * 200];
 	extern cvar_t gl_scaleModelTextures;
