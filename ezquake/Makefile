@@ -47,7 +47,7 @@ BUILD_RELEASE_DIR		=release-$(ARCH)
 # compiler flags
 PRJ_CFLAGS			=-DWITH_ZLIB -DWITH_PNG
 XMMS_CFLAGS			=-DWITH_XMMS `glib-config --cflags`
-BASE_CFLAGS			=-Wall -Wno-format-y2k $(PRJ_CFLAGS) $(ARCH_CFLAGS) $(XMMS_CFLAGS)
+BASE_CFLAGS			=-Wall -Wno-format-y2k $(PRJ_CFLAGS) $(ARCH_CFLAGS)
 BASE_RELEASE_CFLAGS		=-ffast-math -fomit-frame-pointer -fexpensive-optimizations
 ifneq ($(CC_BASEVERSION),4) # if we're not auto-vectorizing then we can unroll the loops (mdfour ahoy)
 	BASE_RELEASE_CFLAGS  += -funroll-loops
@@ -67,8 +67,7 @@ endif
 BASE_DEBUG_CFLAGS		=-g -D_DEBUG
 
 ifeq ($(ARCH),x86)		# Linux/x86
-	# use define for special assembly routines and usage for DGA based mousecode:
-	BASE_CFLAGS		+= -Did386
+	BASE_CFLAGS		+= -Did386 $(XMMS_CFLAGS)
 	CL_DLFLAGS		+= -ldl
 endif
 ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
@@ -76,10 +75,10 @@ ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
 	BASE_CFLAGS		+= -Did386 -DMINGW32
 endif
 ifeq ($(ARCH),ppc)		# MacOS-X/ppc
-	BASE_CFLAGS		+= -DHAVE_STRLCAT -DHAVE_STRLCPY -DBIGENDIAN -Ddarwin
+	BASE_CFLAGS		+= -D__BIG_ENDIAN__ -Ddarwin
 endif
 ifeq ($(ARCH),powerpc)		# Linux/PPC
-	BASE_CFLAGS		+= -DBIGENDIAN
+	BASE_CFLAGS		+= -D__BIG_ENDIAN__
 	CL_DLFLAGS		+= -ldl
 endif
 
@@ -101,15 +100,15 @@ endif
 DO_AS				+= -o $@ -c $<
 
 # opengl builds
-BASE_GLCFLAGS			=-DWITH_JPEG -DGLQUAKE -I/usr/include
-ifeq ($(ARCH),x86)		# Linux/x86
+BASE_GLCFLAGS			=-DWITH_JPEG -DGLQUAKE
+ifeq ($(ARCH),x86)		# Linux/x86 -I/usr/include
 	ARCH_GLCFLAGS		=-I/usr/include -DWITH_VMODE -DWITH_DGA -DWITH_EVDEV
 endif
 ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
 	ARCH_GLCFLAGS		=-mwindows
 endif
 ifeq ($(ARCH),ppc)		# MacOS-X/ppc
-	ARCH_GLCFLAGS		=
+	ARCH_GLCFLAGS		= -I /opt/local/include/ -I/Developer/Headers/FlatCarbon -I/sw/include -FOpenGL -FAGL
 endif
 GLCFLAGS			=$(ARCH_GLCFLAGS) $(BASE_GLCFLAGS)
 
@@ -125,11 +124,11 @@ DO_GL_AS			+= -o $@ -c $<
 LDFLAGS				=-lm `glib-config --libs` -lpthread -lexpat -lpcre $(CL_DLFLAGS)
 SVGALDFLAGS			=-lvga
 X11_LDFLAGS			=-L/usr/X11R6/lib -lX11 -lXext -lXxf86dga -lXxf86vm
-ifeq ($(ARCH),mingw32)  # Win32/x86 in MingW environment
-	LDFLAGS                         += -lws2_32 -luser32 -lwinmm
+ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
+	LDFLAGS			+= -lws2_32 -luser32 -lwinmm
 endif
 ifeq ($(ARCH),ppc)		# MacOS-X/ppc
-	LDFLAGS			=-framework "CoreAudio"
+	LDFLAGS			=-L/sw/lib/ -L/opt/local/lib -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
 endif
 
 # opengl build
