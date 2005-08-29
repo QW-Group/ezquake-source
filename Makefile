@@ -95,14 +95,14 @@ endif
 DO_O_CC				=$(CC) -O $(CFLAGS) -o $@ -c $<
 DO_AS				=$(CC) $(CFLAGS) -x assembler-with-cpp
 ifeq ($(ARCH),x86)		# Linux/x86
-	DO_AS			+= -DELF
+	DO_AS			+= -DELF -DWITH_KEYMAP
 endif
 DO_AS				+= -o $@ -c $<
 
 # opengl builds
 BASE_GLCFLAGS			=-DWITH_JPEG -DGLQUAKE
 ifeq ($(ARCH),x86)		# Linux/x86 -I/usr/include
-	ARCH_GLCFLAGS		=-I/usr/include -DWITH_VMODE -DWITH_DGA -DWITH_EVDEV
+	ARCH_GLCFLAGS		=-I/usr/include -DWITH_VMODE -DWITH_DGA -DWITH_EVDEV -DWITH_KEYMAP
 endif
 ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
 	ARCH_GLCFLAGS		=-mwindows
@@ -220,6 +220,7 @@ QWCL_OBJS = \
 \
     $(BUILDDIR)/build/cl_input.o \
     $(BUILDDIR)/build/keys.o \
+    $(BUILDDIR)/build/keymap_x11.o \
 \
     $(BUILDDIR)/build/net_chan.o \
     $(BUILDDIR)/build/net_udp.o \
@@ -539,7 +540,10 @@ $(BUILDDIR)/build/cvar.o :		$(SOURCE_DIR)/cvar.c
 	$(DO_CC)
 
 $(BUILDDIR)/build/keys.o :		$(SOURCE_DIR)/keys.c
-	$(DO_CC)  
+	$(DO_CC)
+
+$(BUILDDIR)/build/keymap_x11.o :        $(SOURCE_DIR)/keymap_x11.c
+	$(DO_CC)
 
 $(BUILDDIR)/build/mathlib.o :		$(SOURCE_DIR)/mathlib.c
 	$(DO_CC)
@@ -825,6 +829,7 @@ GLQWCL_OBJS = \
 \
     $(BUILDDIR)/build-gl/cl_input.o \
     $(BUILDDIR)/build-gl/keys.o \
+    $(BUILDDIR)/build-gl/keymap_x11.o \
 \
     $(BUILDDIR)/build-gl/net_chan.o \
     $(BUILDDIR)/build-gl/net_udp.o \
@@ -1079,6 +1084,9 @@ $(BUILDDIR)/build-gl/cvar.o :			$(SOURCE_DIR)/cvar.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-gl/keys.o :			$(SOURCE_DIR)/keys.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/keymap_x11.o :             $(SOURCE_DIR)/keymap_x11.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-gl/mathlib.o :		$(SOURCE_DIR)/mathlib.c
