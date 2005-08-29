@@ -562,6 +562,7 @@ void CL_FullInfo_f (void) {
 void CL_SetInfo_f (void) {
 	if (Cmd_Argc() == 1) {
 		Info_Print (cls.userinfo);
+		Com_Printf ("[%i/196]\n", strlen(cls.userinfo));
 		return;
 	}
 	if (Cmd_Argc() != 3) {
