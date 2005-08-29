@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.18 2005-08-21 21:38:26 johnnycz Exp $
+	$Id: keys.c,v 1.19 2005-08-29 12:30:57 vvd0 Exp $
 
 */
 
@@ -1683,7 +1683,7 @@ void Key_Init (void) {
 	consolekeys['~'] = false;
 
 #ifndef WITH_KEYMAP
-	for (i = 0; i < sizeof(keyshift); i++)
+	for (i = 0; i < sizeof(keyshift) / sizeof(*keyshift); i++)
 		keyshift[i] = i;
 	for (i = 'a'; i <= 'z'; i++)
 		keyshift[i] = i - 'a' + 'A';
@@ -1795,11 +1795,12 @@ void Key_EventEx (int key, int basekey, qboolean down)
 	// console switch.  Button commands include the kenum as a parameter, so multiple downs can be matched with ups
 	if (!down) {
 		kb = keybindings[basekey];
-		if (kb && kb[0] == '+' && keyactive[basekey]) {
-			sprintf (cmd, "-%s %i\n", kb+1, basekey);
-			Cbuf_AddText (cmd);
-			keyactive[basekey] = false;
-		}
+		if (kb)
+			if (kb[0] == '+' && keyactive[basekey]) {
+				sprintf (cmd, "-%s %i\n", kb+1, basekey);
+				Cbuf_AddText (cmd);
+				keyactive[basekey] = false;
+			}
 #ifndef WITH_KEYMAP
 		if (keyshift[key] != key) {
 			kb = keybindings[keyshift[key]];
@@ -1868,7 +1869,7 @@ void Key_Event (int key, qboolean down)
 void Key_ClearStates (void) {
 	int		i;
 
-	for (i = 0; i < sizeof(keydown); i++) {
+	for (i = 0; i < sizeof(keydown) / sizeof(*keydown); i++) {
 		keydown[i] = false;
 		key_repeats[i] = false;
 	}
