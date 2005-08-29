@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.19 2005-08-29 12:30:57 vvd0 Exp $
+	$Id: keys.c,v 1.20 2005-08-29 18:34:12 johnnycz Exp $
 
 */
 
@@ -583,10 +583,10 @@ CompleteCommandNew (void)
 			
 			my_string_length =	strlen (jogi_avail_complete[test].name);
 			
-			for (i=0;i<=50;i++){
+			for (i=0;i<50;i++){
 			text[i]='\0';
 			}
-			for (i = 0; i <= (my_string_length - testvar +1); i++)
+			for (i = 0; i < bound(0, my_string_length-testvar+1, sizeof(text)); i++)
 			{
 				text[i] = jogi_avail_complete[test].name[i + testvar -1 ];
 				//Com_Printf("%s\n",text);
