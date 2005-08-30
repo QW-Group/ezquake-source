@@ -484,8 +484,7 @@ void SV_UpdateToReliableMessages (void) {
 
 		ent = sv_client->edict;
 
-
-		if (sv_client->old_frags != ent->v.frags) {
+		if (sv_client->old_frags != (int)ent->v.frags) {
 			for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++) {
 				if (client->state < cs_connected)
 					continue;
@@ -498,8 +497,6 @@ void SV_UpdateToReliableMessages (void) {
 		}
 
 		// maxspeed/entgravity changes
-		ent = sv_client->edict;
-
 		if (fofs_gravity && sv_client->entgravity != EdictFieldFloat(ent, fofs_gravity)) {
 			sv_client->entgravity = EdictFieldFloat(ent, fofs_gravity);
 			ClientReliableWrite_Begin(sv_client, svc_entgravity, 5);
