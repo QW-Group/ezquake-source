@@ -39,7 +39,6 @@ endif
 #======================================================================
 # location of source relative to Makefile
 SOURCE_DIR			=.
-HEADER_DIR			=.
 
 BUILD_DEBUG_DIR			=debug-$(ARCH)
 BUILD_RELEASE_DIR		=release-$(ARCH)
@@ -82,7 +81,7 @@ ifeq ($(ARCH),powerpc)		# Linux/PPC
 	CL_DLFLAGS		+= -ldl
 endif
 
-BASE_CFLAGS			+= -funsigned-char -pipe -fno-strict-aliasing -I$(HEADER_DIR)
+BASE_CFLAGS			+= -funsigned-char -pipe -fno-strict-aliasing
 RELEASE_CFLAGS			=$(BASE_CFLAGS) $(BASE_RELEASE_CFLAGS) -DNDEBUG
 DEBUG_CFLAGS			=$(BASE_CFLAGS) $(BASE_DEBUG_CFLAGS) -Wimplicit
 
