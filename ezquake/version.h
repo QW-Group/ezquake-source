@@ -1,12 +1,14 @@
 // version.h
 
 #define	QW_VERSION		2.40
-//#define EZ_VERSION		"0.31"
-#define LINUX_VERSION	0.98
 
 #ifdef _WIN32
 #define QW_PLATFORM	"Win32"
-#else 
+#endif
+#ifdef __APPLE__
+#define QW_PLATFORM "MacOSX"
+#endif
+#ifndef QW_PLATFORM
 #define QW_PLATFORM	"Linux"
 #endif
 
