@@ -1,5 +1,5 @@
 #======================================================================
-# ezQuake Makefile for Linux >= 2.0
+# ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile
 #======================================================================
 
