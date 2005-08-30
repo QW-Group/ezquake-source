@@ -95,14 +95,14 @@ endif
 DO_O_CC				=$(CC) -O $(CFLAGS) -o $@ -c $<
 DO_AS				=$(CC) $(CFLAGS) -x assembler-with-cpp
 ifeq ($(ARCH),x86)		# Linux/x86
-	DO_AS			+= -DELF -DWITH_KEYMAP
+	DO_AS			+= -DELF
 endif
 DO_AS				+= -o $@ -c $<
 
 # opengl builds
 BASE_GLCFLAGS			=-DWITH_JPEG -DGLQUAKE
 ifeq ($(ARCH),x86)		# Linux/x86 -I/usr/include
-	ARCH_GLCFLAGS		=-I/usr/include -DWITH_VMODE -DWITH_DGA -DWITH_EVDEV -DWITH_KEYMAP
+	ARCH_GLCFLAGS		=-I/usr/include -DWITH_VMODE -DWITH_DGA -DWITH_EVDEV
 endif
 ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
 	ARCH_GLCFLAGS		=-mwindows
