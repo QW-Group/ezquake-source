@@ -80,11 +80,8 @@ void Sys_Printf (char *fmt, ...) {
 	vsnprintf (text, sizeof(text), fmt, argptr);
 	va_end (argptr);
 
-	if (strlen(text) > sizeof(text))
-		Sys_Error("memory overwrite in Sys_Printf");
-
-    if (sys_nostdout.value)
-        return;
+	if (sys_nostdout.value)
+		return;
 
 	for (p = (unsigned char *) text; *p; p++)
 		if ((*p > 128 || *p < 32) && *p != 10 && *p != 13 && *p != 9)
@@ -158,7 +155,7 @@ double Sys_DoubleTime (void) {
     unsigned long curticks = 0;
     struct pollfd pfd;
     static unsigned long totalticks;
-    
+
     /* old timer vars */
     struct timeval tp;
     struct timezone tzp; 
