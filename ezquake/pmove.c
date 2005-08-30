@@ -24,28 +24,44 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 movevars_t	movevars;
 playermove_t	pmove;
 
-float		frametime;
+static float	pm_frametime;
 
-vec3_t		forward, right, up;
+static vec3_t	pm_forward, pm_right;
 
 vec3_t	player_mins = {-16, -16, -24};
 vec3_t	player_maxs = {16, 16, 32};
 
 #define	STEPSIZE	18
-#define	MIN_STEP_NORMAL	0.7		// roughly 45 degrees
+#define	MIN_STEP_NORMAL	0.7 // roughly 45 degrees
 
 #define pm_flyfriction 4
 
-#define BLOCKED_FLOOR	1 
-#define BLOCKED_STEP	2 
-#define BLOCKED_OTHER	4 
-#define BLOCKED_ANY		7 
+#define BLOCKED_FLOOR	1
+#define BLOCKED_STEP	2
+#define BLOCKED_OTHER	4
+#define BLOCKED_ANY	7
 
 
 void PM_InitBoxHull (void);
 
 void PM_Init (void) {
 	PM_InitBoxHull ();
+}
+
+
+// Add an entity to touch list, discarding duplicates
+static void PM_AddTouchedEnt (int num) {
+	int i;
+
+	if (pmove.numtouch == sizeof(pmove.touchindex)/sizeof(pmove.touchindex[0]))
+		return;
+
+	for (i = 0; i < pmove.numtouch; i++)
+		if (pmove.touchindex[i] == num)
+			return;		// already added
+
+	pmove.touchindex[pmove.numtouch] = num;
+	pmove.numtouch++;
 }
 
 //Slide off of the impacting object
@@ -80,7 +96,7 @@ int PM_SlideMove (void) {
 	VectorCopy (pmove.velocity, primal_velocity);
 	numplanes = 0;
 
-	time_left = frametime;
+	time_left = pm_frametime;
 
 	for (bumpcount = 0; bumpcount < numbumps; bumpcount++) {
 		VectorMA(pmove.origin, time_left, pmove.velocity, end);
@@ -102,10 +118,7 @@ int PM_SlideMove (void) {
 			 break;		// moved the entire distance
 
 		// save entity for contact
-		if (pmove.numtouch < MAX_PHYSENTS) {
-			pmove.touchindex[pmove.numtouch] = trace.ent;
-			pmove.numtouch++;
-		}
+		PM_AddTouchedEnt (trace.ent);
 
 		if (trace.plane.normal[2] >= MIN_STEP_NORMAL)
 			blocked |= BLOCKED_FLOOR;
@@ -286,10 +299,10 @@ void PM_Friction (void)
 
 	if (pmove.waterlevel >= 2) {
 		// apply water friction, even if in fly mode
-		drop = speed * movevars.waterfriction * pmove.waterlevel * frametime;
+		drop = speed * movevars.waterfriction * pmove.waterlevel * pm_frametime;
 	} else if (pmove.pm_type == PM_FLY) {
 		// apply flymode friction
-		drop = speed * pm_flyfriction * frametime;
+		drop = speed * pm_flyfriction * pm_frametime;
 	} else if (pmove.onground) {
 		// apply ground friction
 		friction = movevars.friction;
@@ -304,7 +317,7 @@ void PM_Friction (void)
 			friction *= 2;
 
 		control = speed < movevars.stopspeed ? movevars.stopspeed : speed;
-		drop = control * friction * frametime;
+		drop = control * friction * pm_frametime;
 	}
 	else
 		return;		// in air, no friction
@@ -331,7 +344,7 @@ void PM_Accelerate (vec3_t wishdir, float wishspeed, float accel)
 	addspeed = wishspeed - currentspeed;
 	if (addspeed <= 0)
 		return;
-	accelspeed = accel * frametime * wishspeed;
+	accelspeed = accel * pm_frametime * wishspeed;
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 	
@@ -339,7 +352,7 @@ void PM_Accelerate (vec3_t wishdir, float wishspeed, float accel)
 }
 
 void PM_AirAccelerate (vec3_t wishdir, float wishspeed, float accel) {
-	float addspeed, accelspeed, currentspeed, wishspd = wishspeed, originalspeed, newspeed, speedcap;
+	float addspeed, accelspeed, currentspeed, wishspd = wishspeed, originalspeed = 0.0, newspeed = 0.0, speedcap = 0.0;
 		
 	if (pmove.pm_type == PM_DEAD)
 		return;
@@ -354,7 +367,7 @@ void PM_AirAccelerate (vec3_t wishdir, float wishspeed, float accel) {
 	addspeed = wishspd - currentspeed;
 	if (addspeed <= 0)
 		return;
-	accelspeed = accel * wishspeed * frametime;
+	accelspeed = accel * wishspeed * pm_frametime;
 	accelspeed = min(accelspeed, addspeed);
 	
 	VectorMA(pmove.velocity, accelspeed, wishdir, pmove.velocity);
@@ -380,7 +393,7 @@ void PM_WaterMove (void) {
 
 	// user intentions
 	for (i = 0; i < 3; i++)
-		wishvel[i] = forward[i] * pmove.cmd.forwardmove + right[i] * pmove.cmd.sidemove;
+		wishvel[i] = pm_forward[i] * pmove.cmd.forwardmove + pm_right[i] * pmove.cmd.sidemove;
 
 	if (pmove.pm_type != PM_FLY && !pmove.cmd.forwardmove && !pmove.cmd.sidemove && !pmove.cmd.upmove)
 		wishvel[2] -= 60;		// drift towards bottom
@@ -408,7 +421,7 @@ void PM_FlyMove (void) {
 	float	wishspeed;
 
 	for (i = 0; i < 3; i++)
-		wishvel[i] = forward[i] * pmove.cmd.forwardmove + right[i] * pmove.cmd.sidemove;
+		wishvel[i] = pm_forward[i] * pmove.cmd.forwardmove + pm_right[i] * pmove.cmd.sidemove;
 	
 	wishvel[2] += pmove.cmd.upmove;
 
@@ -433,13 +446,13 @@ void PM_AirMove (void) {
 	fmove = pmove.cmd.forwardmove;
 	smove = pmove.cmd.sidemove;
 	
-	forward[2] = 0;
-	right[2] = 0;
-	VectorNormalize (forward);
-	VectorNormalize (right);
+	pm_forward[2] = 0;
+	pm_right[2] = 0;
+	VectorNormalize (pm_forward);
+	VectorNormalize (pm_right);
 
 	for (i = 0; i < 2; i++)
-		wishvel[i] = forward[i] * fmove + right[i] * smove;
+		wishvel[i] = pm_forward[i] * fmove + pm_right[i] * smove;
 	wishvel[2] = 0;
 
 	VectorCopy (wishvel, wishdir);
@@ -457,7 +470,7 @@ void PM_AirMove (void) {
 			pmove.velocity[2] = min(pmove.velocity[2], 0);	// bound above by 0
 			PM_Accelerate (wishdir, wishspeed, movevars.accelerate);
 			// add gravity
-			pmove.velocity[2] -= movevars.entgravity * movevars.gravity * frametime;
+			pmove.velocity[2] -= movevars.entgravity * movevars.gravity * pm_frametime;
 		}
 		else
 		{
@@ -477,7 +490,7 @@ void PM_AirMove (void) {
 		PM_AirAccelerate (wishdir, wishspeed, movevars.accelerate);
 
 		// add gravity
-		pmove.velocity[2] -= movevars.entgravity * movevars.gravity * frametime;
+		pmove.velocity[2] -= movevars.entgravity * movevars.gravity * pm_frametime;
 
 		if (movevars.airstep)
 			blocked = PM_StepSlideMove (true);
@@ -520,12 +533,8 @@ void PM_CategorizePosition (void) {
 		}
 
 		// standing on an entity other than the world
-		if (trace.ent > 0) {
-			if (pmove.numtouch < MAX_PHYSENTS) {
-				pmove.touchindex[pmove.numtouch] = trace.ent;
-				pmove.numtouch++;
-			}
-		}
+		if (trace.ent > 0)
+			PM_AddTouchedEnt (trace.ent);
 	}
 
 	// get waterlevel
@@ -638,8 +647,8 @@ void PM_CheckWaterJump (void) {
 		return;
 
 	// see if near an edge
-	flatforward[0] = forward[0];
-	flatforward[1] = forward[1];
+	flatforward[0] = pm_forward[0];
+	flatforward[1] = pm_forward[1];
 	flatforward[2] = 0;
 	VectorNormalize (flatforward);
 
@@ -696,7 +705,7 @@ void PM_SpectatorMove (void) {
 	} else {
 		friction = movevars.friction * 1.5;	// extra friction
 		control = speed < movevars.stopspeed ? movevars.stopspeed : speed;
-		drop = control * friction * frametime;
+		drop = control * friction * pm_frametime;
 
 		// scale the velocity
 		newspeed = speed - drop;
@@ -711,11 +720,11 @@ void PM_SpectatorMove (void) {
 	fmove = pmove.cmd.forwardmove;
 	smove = pmove.cmd.sidemove;
 
-	VectorNormalize (forward);
-	VectorNormalize (right);
+	VectorNormalize (pm_forward);
+	VectorNormalize (pm_right);
 
 	for (i = 0; i < 3; i++)
-		wishvel[i] = forward[i] * fmove + right[i] * smove;
+		wishvel[i] = pm_forward[i] * fmove + pm_right[i] * smove;
 	wishvel[2] += pmove.cmd.upmove;
 
 	VectorCopy (wishvel, wishdir);
@@ -737,20 +746,20 @@ void PM_SpectatorMove (void) {
 	}
 
 	if (addspeed > 0) {
-		accelspeed = movevars.accelerate * frametime * wishspeed;
+		accelspeed = movevars.accelerate * pm_frametime * wishspeed;
 		accelspeed = min(accelspeed, addspeed);
 		VectorMA(pmove.velocity, accelspeed, wishdir, pmove.velocity);
 	}
 
 	// move
-	VectorMA (pmove.origin, frametime, pmove.velocity, pmove.origin);
+	VectorMA (pmove.origin, pm_frametime, pmove.velocity, pmove.origin);
 }
 
 //Returns with origin, angles, and velocity modified in place.
 //Numtouch and touchindex[] will be set if any of the physents were contacted during the move.
 void PM_PlayerMove (void) 
 {
-	frametime = pmove.cmd.msec * 0.001;
+	pm_frametime = pmove.cmd.msec * 0.001;
 	pmove.numtouch = 0;
 
 	if (pmove.pm_type == PM_NONE || pmove.pm_type == PM_FREEZE) {
@@ -760,7 +769,7 @@ void PM_PlayerMove (void)
 
 	// take angles directly from command
 	VectorCopy (pmove.cmd.angles, pmove.angles);
-	AngleVectors (pmove.angles, forward, right, up);
+	AngleVectors (pmove.angles, pm_forward, pm_right, NULL);
 
 	if (pmove.pm_type == PM_SPECTATOR || pmove.pm_type == PM_OLD_SPECTATOR) {
 		PM_SpectatorMove ();
@@ -781,7 +790,7 @@ void PM_PlayerMove (void)
 
 	if (pmove.waterjumptime)
 	{
-		pmove.waterjumptime -= frametime;
+		pmove.waterjumptime -= pm_frametime;
 		if (pmove.waterjumptime < 0)
 			pmove.waterjumptime = 0;
 	}
