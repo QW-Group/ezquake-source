@@ -939,8 +939,8 @@ hexum -> *FIXME* Don't support aliases for now, only used for show_fps and r_net
         if (flags & HUD_PLUSMINUS)
         {
             // add plus and minus commands
-            Cmd_AddCommand(va("+hud_%s", name), HUD_Plus_f);
-            Cmd_AddCommand(va("-hud_%s", name), HUD_Minus_f);
+            Cmd_AddCommand(strdup(va("+hud_%s", name)), HUD_Plus_f);
+            Cmd_AddCommand(strdup(va("-hud_%s", name)), HUD_Minus_f);
         }
     }
     else
