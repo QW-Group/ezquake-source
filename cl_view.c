@@ -387,7 +387,6 @@ void V_TF_FlashSettings (qboolean flashed)
 
 void V_TF_FlashStuff (void) {
 	static float last_flash_time;
-	extern cvar_t v_gamma, v_contrast;
 
 	if (cshift_empty.percent == 240 ||	// Normal TF
 		cshift_empty.percent == 255 ) {	// Angel TF
