@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.20 2005-08-29 18:34:12 johnnycz Exp $
+	$Id: keys.c,v 1.21 2005-08-30 03:03:21 disconn3ct Exp $
 
 */
 
@@ -101,6 +101,16 @@ keyname_t keynames[] = {
 	{"PRINTSCR", K_PRINTSCR},
 	{"SCRLCK", K_SCRLCK},
 	{"SCROLLOCK", K_SCRLCK},	// FIXME
+
+#ifdef __APPLE__
+	{"COMMAND", K_CMD},
+	{"PARA", K_PARA},
+	{"F13", K_F13},
+	{"F14", K_F14},
+	{"F15", K_F15},
+	{"KP_EQUAL", KP_EQUAL},
+#endif
+
 	{"PAUSE", K_PAUSE},
 
 	{"UPARROW", K_UPARROW},
@@ -1409,12 +1419,13 @@ void Key_SetBinding (int keynum, char *binding) {
 	if (keynum == -1)
 		return;
 
-	if (keynum == K_CTRL || keynum == K_ALT || keynum == K_SHIFT || keynum == K_WIN) {
-		
+#ifndef __APPLE__
+	if (keynum == K_CTRL || keynum == K_ALT || keynum == K_SHIFT || keynum == K_WIN) {	
 		Key_SetBinding(keynum + 1, binding);
 		Key_SetBinding(keynum + 2, binding);
 		return;
 	}
+#endif
 
 	// free old bindings
 	if (keybindings[keynum]) {
@@ -1511,6 +1522,7 @@ void Key_Bind_f (void) {
 		return;
 	}
 	if (c == 2) {
+#ifndef __APPLE__
 		if ((b == K_CTRL || b == K_ALT || b == K_SHIFT || b == K_WIN) && (keybindings[b + 1] || keybindings[b + 2])) {
 			
 			if (keybindings[b + 1] && keybindings[b + 2] && !strcmp(keybindings[b + 1], keybindings[b + 2])) {
@@ -1519,7 +1531,9 @@ void Key_Bind_f (void) {
 				Key_PrintBindInfo(b + 1, NULL);
 				Key_PrintBindInfo(b + 2, NULL);
 			}
-		} else {
+		} else
+#endif
+		{
 			
 			//		and the following should print "ctrl (etc) is not bound" since K_CTRL cannot be bound
 			Key_PrintBindInfo(b, Cmd_Argv(1));
@@ -1671,6 +1685,9 @@ void Key_Init (void) {
 	consolekeys[K_SHIFT] = true;
 	consolekeys[K_LSHIFT] = true;
 	consolekeys[K_RSHIFT] = true;
+#ifdef __APPLE__
+	consolekeys[K_CMD] = true;
+#endif
 	consolekeys[K_MWHEELUP] = true;
 	consolekeys[K_MWHEELDOWN] = true;
 #ifdef WITH_KEYMAP
