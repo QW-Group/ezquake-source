@@ -1357,6 +1357,7 @@ $(BUILDDIR)/build-gl/vid_common_gl.o :		$(SOURCE_DIR)/vid_common_gl.c
 
 GLQWCL_MAC_OBJS = \
     $(BUILDDIR)/build-mac-gl/host.o \
+    $(BUILDDIR)/build-mac-gl/sys_mac.o \
 \
     $(BUILDDIR)/build-mac-gl/snd_dma.o \
     $(BUILDDIR)/build-mac-gl/snd_mem.o \
@@ -1486,7 +1487,10 @@ $(BUILDDIR)/ezquake-gl.mac : $(GLQWCL_MAC_OBJS)
 	$(CC) $(CFLAGS) -o $@ $(GLQWCL_MAC_OBJS) \
 	$(LDFLAGS) $(GL_LDFLAGS) 
 
-$(BUILDDIR)/build-mac-gl/host.o :			$(SOURCE_DIR)/host.c
+$(BUILDDIR)/build-mac-gl/host.o :		$(SOURCE_DIR)/host.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-mac-gl/sys_mac.o :		$(SOURCE_DIR)/sys_mac.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/snd_dma.o :		$(SOURCE_DIR)/snd_dma.c
