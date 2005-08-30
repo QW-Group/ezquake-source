@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <libc.h>
 #endif
 
-#if defined(__linux__) || defined(sun)
+#if defined(__linux__) || defined(sun) || defined(darwin) || defined(hpux) || defined(__APPLE__)
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -47,21 +47,6 @@ qboolean	stdin_ready;
 */
 
 /*
-============
-Sys_FileTime
-
-returns -1 if not present
-============
-*/
-int	Sys_FileTime (char *path)
-{
-	struct	stat	buf;
-	
-	if (stat (path,&buf) == -1)
-		return -1;
-	
-	return buf.st_mtime;
-}
 
 
 /*
@@ -101,12 +86,14 @@ double Sys_DoubleTime (void)
 	return (tp.tv_sec - secbase) + tp.tv_usec/1000000.0;
 }
 
+
 /*
 ================
 Sys_Error
 ================
 */
-void Sys_Error (char *error, ...) {
+void Sys_Error (char *error, ...)
+{
 	va_list argptr;
 	char string[1024];
 	
@@ -118,12 +105,14 @@ void Sys_Error (char *error, ...) {
 	exit (1);
 }
 
+
 /*
 ================
 Sys_Printf
 ================
 */
-void Sys_Printf (char *fmt, ...) {
+void Sys_Printf (char *fmt, ...)
+{
 	va_list argptr;
 	static char text[2048];
 	unsigned char *p;
@@ -132,11 +121,8 @@ void Sys_Printf (char *fmt, ...) {
 	vsnprintf (text, sizeof(text), fmt, argptr);
 	va_end (argptr);
 
-	if (strlen(text) > sizeof(text))
-		Sys_Error("memory overwrite in Sys_Printf");
-
-    if (sys_nostdout.value)
-        return;
+	if (sys_nostdout.value)
+		return;
 
 	for (p = (unsigned char *)text; *p; p++) {
 		*p &= 0x7f;
@@ -191,6 +177,7 @@ char *Sys_ConsoleInput (void)
 	return text;
 }
 
+
 /*
 =============
 Sys_Init
@@ -210,7 +197,7 @@ void Sys_Init (void)
 main
 =============
 */
-void main (int argc, char *argv[])
+int main (int argc, char *argv[])
 {
 	double	time, oldtime, newtime;
 
