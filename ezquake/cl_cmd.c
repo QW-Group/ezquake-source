@@ -108,7 +108,7 @@ void CL_ForwardToServer_f (void) {
 			server_string_len = Cmd_Argc() + strlen(Cmd_Argv(1)) + DIGEST_SIZE * 2 + 16;
 			for (i = 3; i < Cmd_Argc(); ++i)
 				server_string_len += strlen(Cmd_Argv(i));
-			server_string = Q_Malloc(server_string_len);
+			server_string = Q_malloc(server_string_len);
 
 			SHA1_Init();
 			SHA1_Update(Cmd_Argv(1));
@@ -130,7 +130,7 @@ void CL_ForwardToServer_f (void) {
 				strlcat(server_string, " ", server_string_len);
 			}
 			SZ_Print (&cls.netchan.message, server_string);
-			Q_Free(server_string);
+			Q_free(server_string);
 		}
 		else
 // Added by VVD }

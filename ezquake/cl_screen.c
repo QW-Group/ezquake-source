@@ -1306,7 +1306,7 @@ int SCR_Screenshot(char *name) {
 	COM_ForceExtension (name, SShot_ExtForFormat(format));
 	buffersize = glwidth * glheight * 3;
 
-	buffer = Q_Malloc (buffersize);
+	buffer = Q_malloc (buffersize);
 	glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer); 
 
 #ifdef WITH_PNG
@@ -1501,7 +1501,7 @@ void SCR_RSShot_f (void) {
 #ifdef GLQUAKE
 
 	width = 400; height = 300;
-	base = Q_Malloc ((width * height + glwidth * glheight) * 3);
+	base = Q_malloc ((width * height + glwidth * glheight) * 3);
 	pixels = base + glwidth * glheight * 3;
 
 	glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, base);
@@ -1545,7 +1545,7 @@ void SCR_RSShot_f (void) {
 		}
 		else
 		{
-			screen_shot = Q_Malloc (size);
+			screen_shot = Q_malloc (size);
 			if (fread(screen_shot, 1, size, f) == size)
 			{
 				Com_Printf ("Sending screenshot to server...\n");
@@ -1554,7 +1554,7 @@ void SCR_RSShot_f (void) {
 			else
 				Com_Printf ("Can't send screenshot to server: can't read file %s\n", filename);
 			fclose(f);
-			Q_Free(screen_shot);
+			Q_free(screen_shot);
 		}
 	}
 
@@ -1630,7 +1630,7 @@ void SCR_Movieshot(char *name) {
 		int i, size = glwidth * glheight * 3;
 		byte *buffer, temp;
 
-		buffer = Q_Malloc (size);
+		buffer = Q_malloc (size);
 		glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
 		applyHWGamma (buffer, size);
 
@@ -1644,7 +1644,7 @@ void SCR_Movieshot(char *name) {
 		int i, j, rowp;
 		byte *buffer, *p;
 
-		buffer = Q_Malloc (vid.width * vid.height * 3);
+		buffer = Q_malloc (vid.width * vid.height * 3);
 
 		D_EnableBackBufferAccess ();
 

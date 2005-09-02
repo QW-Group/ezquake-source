@@ -677,7 +677,7 @@ void CL_NextUpload(void)
 		fclose (cls.upload);
 		cls.upload = NULL;
 	} else {
-		Q_Free(cls.mem_upload);
+		Q_free(cls.mem_upload);
 		cls.mem_upload = 0;
 	}
 	cls.upload_pos = 0;
@@ -693,8 +693,8 @@ void CL_StartUpload (byte *data, int size)
 
 	// override
 	if (cls.mem_upload)
-		Q_Free(cls.mem_upload);
-	cls.mem_upload = Q_Malloc (size);
+		Q_free(cls.mem_upload);
+	cls.mem_upload = Q_malloc (size);
 	memcpy(cls.mem_upload, data, size);
 	cls.upload_size = size;
 	cls.upload_pos = 0;
@@ -741,7 +741,7 @@ void CL_StopUpload(void)
 		}
 	} else {
 		if (cls.mem_upload) {
-			Q_Free(cls.mem_upload);
+			Q_free(cls.mem_upload);
 			cls.mem_upload = NULL;
 		}
 	}
@@ -808,7 +808,7 @@ void CL_StartUpload (char *filename) {
 
 	Com_DPrintf ("Upload starting of %d...\n", size);
 
-	upload_data = Q_Malloc (size);
+	upload_data = Q_malloc (size);
 	if (fread(upload_data, 1, size, f) != size) {
 		fclose(f);
 		CL_StopUpload();
