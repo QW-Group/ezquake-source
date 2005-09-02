@@ -50,7 +50,7 @@ static struct predicted_player {
 
 char *cl_modelnames[cl_num_modelindices];
 cl_modelindex_t cl_modelindices[cl_num_modelindices];
-
+model_t *cl_flame0_model;
 
 void CL_InitEnts(void) {
 	int i;
@@ -73,7 +73,6 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_grenade] = "progs/grenade.mdl";
 	cl_modelnames[mi_bubble] = "progs/s_bubble.spr";
 	cl_modelnames[mi_flame] = "progs/flame.mdl";	//joe
-	cl_modelnames[mi_flame0] = "progs/flame0.mdl";	//
 	cl_modelnames[mi_vaxe] = "progs/v_axe.mdl";
 	cl_modelnames[mi_vbio] = "progs/v_bio.mdl";
 	cl_modelnames[mi_vgrap] = "progs/v_grap.mdl";
@@ -81,7 +80,10 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_vknife2] = "progs/v_knife2.mdl";
 	cl_modelnames[mi_vmedi] = "progs/v_medi.mdl";
 	cl_modelnames[mi_vspan] = "progs/v_span.mdl";
-	
+
+	// FIXME, delay until map load time?
+	cl_flame0_model = Mod_ForName ("progs/flame0.mdl", false);
+
 	for (i = 0; i < cl_num_modelindices; i++) {
 		if (!cl_modelnames[i])
 			Sys_Error("cl_modelnames[%d] not initialized", i);

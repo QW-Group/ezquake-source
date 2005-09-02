@@ -622,12 +622,13 @@ typedef enum cl_modelindex_s {
 	mi_spike, mi_player, mi_flag, mi_tf_flag, mi_tf_stan, mi_explod1, mi_explod2, mi_h_player,
 	mi_gib1, mi_gib2, mi_gib3, mi_rocket, mi_grenade, mi_bubble,
 	mi_vaxe, mi_vbio, mi_vgrap, mi_vknife, mi_vknife2, mi_vmedi, mi_vspan,
-	mi_flame0, mi_flame,	//joe: for changing flame/flame0 models
+	mi_flame,	//joe: for changing flame/flame0 models
 	cl_num_modelindices,
 } cl_modelindex_t;		
 
 extern cl_modelindex_t cl_modelindices[cl_num_modelindices];
 extern char *cl_modelnames[cl_num_modelindices];
+extern struct model_s *cl_flame0_model;
 
 void CL_InitEnts(void);
 void CL_AddEntity (entity_t *ent);

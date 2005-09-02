@@ -925,11 +925,12 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 							if (!cl.paused)
 								ParticleFire (currententity->origin);
 						}
-						else if (!strcmp(currententity->model->name, "progs/flame.mdl"))
+						else if (!strcmp(currententity->model->name, "progs/flame.mdl")
+							&& cl_flame0_model /* do we have progs/flame0.mdl? */)
 						{
 							if (!cl.paused)
 								ParticleFire (currententity->origin);
-							currententity->model = cl.model_precache[cl_modelindices[mi_flame0]];
+							currententity->model = cl_flame0_model;
 						}
 						else if (!strcmp(currententity->model->name, "progs/flame2.mdl") || !strcmp(currententity->model->name, "progs/flame3.mdl"))
 						{
