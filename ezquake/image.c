@@ -24,11 +24,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef WITH_PNG
 #include "png.h"
+#ifdef _WIN32
+#pragma comment(lib, "libs/libpng.lib")
+#endif
 #endif
 
 #ifdef WITH_JPEG
 #include "jpeglib.h"
+#include "jerror.h"
 #include <setjmp.h>
+#ifdef _WIN32
+#pragma comment(lib, "libs/libjpeg.lib")
+#endif
 #endif
 
 #ifdef __APPLE__
