@@ -109,7 +109,7 @@ static void Image_Resample32 (void *indata, int inwidth, int inheight,
 		out = outdata;
 		fstep = (int) (inheight * 65536.0f / outheight);
 
-		memalloc = Q_Malloc(2 * outwidth4);
+		memalloc = Q_malloc(2 * outwidth4);
 		row1 = memalloc;
 		row2 = memalloc + outwidth4;
 		inrow = (byte *) indata;
@@ -167,7 +167,7 @@ static void Image_Resample32 (void *indata, int inwidth, int inheight,
 				memcpy(out, row1, outwidth4);
 			}
 		}
-		free(memalloc);
+		Q_free(memalloc);
 	} else {
 		int i, j;
 		unsigned int frac, fracstep, *inrow, *out;
@@ -210,7 +210,7 @@ static void Image_Resample24 (void *indata, int inwidth, int inheight,
 		out = outdata;
 		fstep = (int) (inheight * 65536.0f / outheight);
 
-		memalloc = Q_Malloc(2 * outwidth3);	
+		memalloc = Q_malloc(2 * outwidth3);	
 		row1 = memalloc;
 		row2 = memalloc + outwidth3;
 		inrow = (byte *) indata;
@@ -268,7 +268,7 @@ static void Image_Resample24 (void *indata, int inwidth, int inheight,
 				memcpy(out, row1, outwidth3);
 			}
 		}
-		free(memalloc);
+		Q_free(memalloc);
 	} else {
 		int i, j, f;
 		unsigned int frac, fracstep, inwidth3 = inwidth * 3;
@@ -638,8 +638,8 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight)
 		return NULL;
 	}
 
-	data = Q_Malloc(height * rowbytes );
-	rowpointers = Q_Malloc(height * sizeof(*rowpointers));
+	data = Q_malloc(height * rowbytes );
+	rowpointers = Q_malloc(height * sizeof(*rowpointers));
 
 	for (y = 0; y < height; y++)
 		rowpointers[y] = data + y * rowbytes;
@@ -648,7 +648,7 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight)
 	qpng_read_end(png_ptr, NULL);
 
 	qpng_destroy_read_struct(&png_ptr, &pnginfo, NULL);
-	free(rowpointers);
+	Q_free(rowpointers);
 	fclose(fin);
 	image_width = width;
 	image_height = height;
@@ -702,12 +702,12 @@ int Image_WritePNG (char *filename, int compression, byte *pixels, int width, in
 
 	qpng_write_info(png_ptr, info_ptr);
 
-	rowpointers = Q_Malloc (height * sizeof(*rowpointers));
+	rowpointers = Q_malloc (height * sizeof(*rowpointers));
 	for (i = 0; i < height; i++)
 		rowpointers[i] = pixels + i * width_sign * width * bpp;
 	qpng_write_image(png_ptr, rowpointers);
 	qpng_write_end(png_ptr, info_ptr);
-	free(rowpointers);
+	Q_free(rowpointers);
 	qpng_destroy_write_struct(&png_ptr, &info_ptr);
 	fclose(fp);
 	return true;
@@ -767,12 +767,12 @@ int Image_WritePNGPLTE (char *filename, int compression,
 
 	qpng_write_info(png_ptr, info_ptr);
 
-	rowpointers = Q_Malloc (height * sizeof(*rowpointers));
+	rowpointers = Q_malloc (height * sizeof(*rowpointers));
 	for (i = 0; i < height; i++)
 		rowpointers[i] = pixels + i * rowbytes;
 	qpng_write_image(png_ptr, rowpointers);
 	qpng_write_end(png_ptr, info_ptr);
-	free(rowpointers);
+	Q_free(rowpointers);
 	qpng_destroy_write_struct(&png_ptr, &info_ptr);
 	fclose(fp);
 	return true;
@@ -829,7 +829,7 @@ static void TGA_upsample32(byte *dest, byte *src) {
 }
 
 
-#define TGA_ERROR(msg)	{if (msg) {Com_DPrintf((msg), COM_SkipPath(filename));} free(fileBuffer); return NULL;}
+#define TGA_ERROR(msg)	{if (msg) {Com_DPrintf((msg), COM_SkipPath(filename));} Q_free(fileBuffer); return NULL;}
 
 static unsigned short BuffLittleShort(const byte *buffer) {
 	return (buffer[1] << 8) | buffer[0];
@@ -842,7 +842,7 @@ byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight) 
 
 	if (!fin && FS_FOpenFile (filename, &fin) == -1)
 		return NULL;
-	fileBuffer = Q_Malloc(com_filesize);
+	fileBuffer = Q_malloc(com_filesize);
 	fread(fileBuffer, 1, com_filesize, fin);
 	fclose(fin);
 
@@ -911,7 +911,7 @@ byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight) 
 	if (header.attributes & 0x10)
 		TGA_ERROR("Unsupported TGA image %s: Pixel data spans right to left.\n");
 
-	data = Q_Malloc(image_width * image_height * 4);
+	data = Q_malloc(image_width * image_height * 4);
 
 	// if bit 5 of attributes isn't set, the image has been stored from bottom to top
 	if ((header.attributes & 0x20)) {
@@ -978,7 +978,7 @@ byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight) 
 		}
 	}
 
-	free(fileBuffer);
+	Q_free(fileBuffer);
 	return data;
 }
 
@@ -988,7 +988,7 @@ int Image_WriteTGA (char *filename, byte *pixels, int width, int height) {
 	qboolean retval = true;
 
 	size = width * height * 3;
-	buffer = Q_Malloc (size + 18);
+	buffer = Q_malloc (size + 18);
 	memset (buffer, 0, 18);
 	buffer[2] = 2;          // uncompressed type
 	buffer[12] = width & 255;
@@ -1001,7 +1001,7 @@ int Image_WriteTGA (char *filename, byte *pixels, int width, int height) {
 
 	if (!(COM_WriteFile (filename, buffer, size + 18)))
 		retval = false;
-	free (buffer);
+	Q_free (buffer);
 	return retval;
 }
 
@@ -1214,11 +1214,11 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 	if (!fin && FS_FOpenFile (filename, &fin) == -1)
 		return NULL;
 
-	pcxbuf = Q_Malloc(com_filesize);
+	pcxbuf = Q_malloc(com_filesize);
 	if (fread (pcxbuf, 1, com_filesize, fin) != com_filesize) {
 		Com_DPrintf ("Image_LoadPCX: fread() failed on %s\n", COM_SkipPath(filename));
 		fclose(fin);
-		free(pcxbuf);
+		Q_free(pcxbuf);
 		return NULL;
 	}
 	fclose(fin);
@@ -1238,7 +1238,7 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 
 	if (pcx->manufacturer != 0x0a || pcx->version != 5 || pcx->encoding != 1 || pcx->bits_per_pixel != 8) {
 		Com_DPrintf ("Invalid PCX image %s\n", COM_SkipPath(filename));
-		free(pcxbuf);
+		Q_free(pcxbuf);
 		return NULL;
 	}
 
@@ -1247,23 +1247,23 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 
 	if (width > IMAGE_MAX_DIMENSIONS || height > IMAGE_MAX_DIMENSIONS) {
 		Com_DPrintf ("PCX image %s exceeds maximum supported dimensions\n", COM_SkipPath(filename));
-		free(pcxbuf);
+		Q_free(pcxbuf);
 		return NULL;
 	}
 
 	if ((matchwidth && width != matchwidth) || (matchheight && height != matchheight)) {
-		free(pcxbuf);
+		Q_free(pcxbuf);
 		return NULL;
 	}
  
-	data = out = Q_Malloc (width * height);
+	data = out = Q_malloc (width * height);
 
 	for (y = 0; y < height; y++, out += width) {
 		for (x = 0; x < width; ) {
 			if (pix - (byte *) pcx > com_filesize) {
 				Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
-				free(pcxbuf);
-				free(data);
+				Q_free(pcxbuf);
+				Q_free(data);
 				return NULL;
 			}
 
@@ -1273,8 +1273,8 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 				runLength = dataByte & 0x3F;
 				if (pix - (byte *) pcx > com_filesize) {
 					Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
-					free(pcxbuf);
-					free(data);
+					Q_free(pcxbuf);
+					Q_free(data);
 					return NULL;
 				}
 				dataByte = *pix++;
@@ -1285,8 +1285,8 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 
 			if (runLength + x > width + 1) {
 				Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
-				free(pcxbuf);
-				free(data);
+				Q_free(pcxbuf);
+				Q_free(data);
 				return NULL;
 			}
 
@@ -1297,12 +1297,12 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 
 	if (pix - (byte *) pcx > com_filesize) {
 		Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
-		free(pcxbuf);
-		free(data);
+		Q_free(pcxbuf);
+		Q_free(data);
 		return NULL;
 	}
 
-	free(pcxbuf);
+	Q_free(pcxbuf);
 	image_width = width;
 	image_height = height;
 	return data;
@@ -1321,7 +1321,7 @@ int Image_WritePCX (char *filename, byte *data, int width, int height, int rowby
 	byte *pack;
 	pcx_t *pcx;
 
-	if (!(pcx = Q_Malloc (width * height * 2 + 1000)))
+	if (!(pcx = Q_malloc (width * height * 2 + 1000)))
 		return false;
 
 	pcx->manufacturer = 0x0a;
@@ -1362,11 +1362,11 @@ int Image_WritePCX (char *filename, byte *data, int width, int height, int rowby
 
 	length = pack - (byte *) pcx;
 	if (!(COM_WriteFile (filename, pcx, length))) {
-		free(pcx);
+		Q_free(pcx);
 		return false;
 	}
 
-	free(pcx);
+	Q_free(pcx);
 	return true;
 }
 

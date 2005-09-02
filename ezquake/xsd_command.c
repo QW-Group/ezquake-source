@@ -33,7 +33,7 @@ void XSD_Command_Free(xml_t *doc)
     }
 
     if (document->document_type)
-        free(document->document_type);
+        Q_free(document->document_type);
 
     // delete document
     free(document);
@@ -45,7 +45,7 @@ static void OnStartElement(void *userData, const XML_Char *name, const XML_Char 
     xml_command_t *document = (xml_command_t *) stack->document;
 
     if (stack->path[0] == 0)
-        document->document_type = strdup(name);
+        document->document_type = Q_strdup(name);
 
     if (!strcmp(stack->path, "/command/arguments"))
     {

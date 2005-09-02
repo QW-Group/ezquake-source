@@ -400,7 +400,7 @@ void Mod_LoadTextures (lump_t *l) {
 					com_netpath[0] = 0;		
 					alpha_flag = ISALPHATEX(tx->name) ? TEX_ALPHA : 0;
 					tx->gl_texturenum = GL_LoadTexturePixels (data, tx->name, tx->width, tx->height, texmode | alpha_flag);
-					free(data);
+					Q_free(data);
 					continue;
 				}
 			}
