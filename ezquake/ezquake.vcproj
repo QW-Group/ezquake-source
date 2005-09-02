@@ -1481,6 +1481,9 @@
 					RelativePath=".\modelgen.h">
 				</File>
 				<File
+					RelativePath=".\png.h">
+				</File>
+				<File
 					RelativePath=".\sbar.h">
 				</File>
 				<File
