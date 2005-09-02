@@ -23,7 +23,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="libexpat;pcre"
+				AdditionalIncludeDirectories="libs;libexpat;pcre"
 				PreprocessorDefinitions="_DEBUG,id386,GLQUAKE,WITH_KEYMAP,WITH_JPEG,WITH_PNG,WITH_ZLIB"
 				StringPooling="FALSE"
 				BasicRuntimeChecks="3"
@@ -48,7 +48,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libexpat.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="libs/libexpat.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib"
 				ShowProgress="0"
 				OutputFile="$(Outdir)/ezquake-gl.exe"
 				Version=""
@@ -105,7 +105,7 @@
 				FavorSizeOrSpeed="0"
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="libexpat;pcre"
+				AdditionalIncludeDirectories="libs;libexpat;pcre"
 				PreprocessorDefinitions="NDEBUG,id386,WITH_KEYMAP"
 				StringPooling="TRUE"
 				RuntimeLibrary="4"
@@ -126,7 +126,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libexpat.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="libs/libexpat.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib"
 				OutputFile="$(Outdir)/ezquake.exe"
 				Version=""
 				LinkIncremental="1"
@@ -182,7 +182,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="libexpat;pcre"
+				AdditionalIncludeDirectories="libs;libexpat;pcre"
 				PreprocessorDefinitions="NDEBUG,id386,WITH_KEYMAP,WITH_PNG,WITH_JPEG,GLQUAKE,WITH_ZLIB"
 				StringPooling="TRUE"
 				RuntimeLibrary="4"
@@ -203,7 +203,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libexpat.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="libs/libexpat.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib"
 				OutputFile="$(Outdir)/ezquake-gl.exe"
 				Version=""
 				LinkIncremental="1"
@@ -256,7 +256,7 @@
 				GlobalOptimizations="FALSE"
 				FavorSizeOrSpeed="0"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="libexpat;pcre"
+				AdditionalIncludeDirectories="libs;libexpat;pcre"
 				PreprocessorDefinitions="_DEBUG,id386,WITH_PNG,WITH_ZLIB"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="FALSE"
@@ -279,7 +279,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libexpat.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="libs/libexpat.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib"
 				OutputFile="$(Outdir)/ezquake.exe"
 				Version=""
 				LinkIncremental="2"
@@ -1421,6 +1421,9 @@
 			<Filter
 				Name="pcre"
 				Filter="">
+				<File
+					RelativePath=".\pcre\chartables.c">
+				</File>
 				<File
 					RelativePath="pcre\pcre.c">
 				</File>
