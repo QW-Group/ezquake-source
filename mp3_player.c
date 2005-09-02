@@ -658,9 +658,9 @@ long MP3_GetPlaylist(char **buf) {
 	filelength = COM_FileOpenRead(path, &f);
 	if (!f)
 		return -1;
-	*buf = Q_Malloc(filelength);
+	*buf = Q_malloc(filelength);
 	if (filelength != fread(*buf, 1,  filelength, f)) {
-		free(*buf);
+		Q_free(*buf);
 		fclose(f);
 		return -1;
 	}
@@ -691,10 +691,10 @@ void MP3_PrintPlaylist_f(void) {
 
 	for (i = 0; i < playlist_size; i++) {
 		Com_Printf("%s%3d %s\n", i == current ? "\x02" : "", i + 1, entries[i]);
-		free(entries[i]);
+		Q_free(entries[i]);
 	}
 
-	free(playlist_buf);
+	Q_free(playlist_buf);
 }
 
 void MP3_PlayTrackNum_f(void) {
@@ -798,7 +798,7 @@ int MP3_ParsePlaylist_EXTM3U(char *playlist_buf, unsigned int length, char *entr
 				break;
 			if (strlen(s) > maxsonglen)
 				s[maxsonglen] = 0;
-			entries[playlist_size++] = strdup(s);
+			entries[playlist_size++] = Q_strdup(s);
 			skip = 1;
 			continue;
 		}
@@ -815,7 +815,7 @@ int MP3_ParsePlaylist_EXTM3U(char *playlist_buf, unsigned int length, char *entr
 			*t = 0;
 		if (strlen(s) > maxsonglen)
 			s[maxsonglen] = 0;
-		entries[playlist_size++] = strdup(s);
+		entries[playlist_size++] = Q_strdup(s);
 	}
 	return playlist_size;
 }

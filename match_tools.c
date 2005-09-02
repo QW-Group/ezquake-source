@@ -841,7 +841,7 @@ static void DeleteMapGroup(mapgroup_t *group) {
 		last_system_mapgroup = last_system_mapgroup->prev;
 	}
 
-	free(group);
+	Q_free(group);
 }
 
 static void ResetGroupMembers(mapgroup_t *group) {
@@ -956,7 +956,7 @@ void MT_MapGroup_f(void) {
 	
 
 	if (!group) {	
-		group = Q_Calloc(1, sizeof(mapgroup_t));
+		group = Q_calloc(1, sizeof(mapgroup_t));
 		Q_strncpyz(group->groupname, groupname, sizeof(group->groupname));
 		group->system = !mapgroups_init;
 		if (mapgroups) {	
@@ -1110,7 +1110,7 @@ static void DeleteSkyGroup(skygroup_t *group) {
 		last_system_skygroup = last_system_skygroup->prev;
 	}
 
-	free(group);
+	Q_free(group);
 }
 
 static void ResetSkyGroupMembers(skygroup_t *group) {
@@ -1227,7 +1227,7 @@ void MT_SkyGroup_f(void) {
 	
 
 	if (!group) {	
-		group = Q_Calloc(1, sizeof(skygroup_t));
+		group = Q_calloc(1, sizeof(skygroup_t));
 		Q_strncpyz(group->groupname, groupname, sizeof(group->groupname));
 		group->system = !skygroups_init;
 		if (skygroups) {	

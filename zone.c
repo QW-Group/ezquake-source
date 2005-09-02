@@ -42,29 +42,6 @@ typedef struct {
 void Cache_FreeLow (int new_low_hunk);
 void Cache_FreeHigh (int new_high_hunk);
 
-//Use it instead of malloc so that if memory allocation fails,
-//the program exits with a message saying there's not enough memory
-//instead of crashing after trying to use a NULL pointer
-void *Q_Malloc (size_t size) {
-	void *p;
-
-	if (!(p = malloc(size)))
-		Sys_Error ("Not enough memory free; check disk space");
-
-	return p;
-}
-
-//Use it instead of calloc so that if memory allocation fails,
-//the program exits with a message saying there's not enough memory
-//instead of crashing after trying to use a NULL pointer
-void *Q_Calloc (size_t n, size_t size) {
-	void *p;
-
-	if (!(p = calloc(n, size)))
-		Sys_Error ("Not enough memory free; check disk space");
-
-	return p;
-}
 
 /*
 ==============================================================================

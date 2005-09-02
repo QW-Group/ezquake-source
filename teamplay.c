@@ -1490,9 +1490,9 @@ static void TP_ClearLocs(void) {
 	locdata_t *node, *temp;
 
 	for (node = locdata; node; node = temp) {
-		free(node->name);
+		Q_free(node->name);
 		temp = node->next;
-		free(node);
+		Q_free(node);
 	}
 
 	locdata = NULL;
@@ -1501,8 +1501,8 @@ static void TP_ClearLocs(void) {
 static void TP_AddLocNode(vec3_t coord, char *name) {
 	locdata_t *newnode, *node;
 
-	newnode = Q_Malloc(sizeof(locdata_t));
-	newnode->name = strdup(name);
+	newnode = Q_malloc(sizeof(locdata_t));
+	newnode->name = Q_strdup(name);
 	newnode->next = NULL;
 	memcpy(newnode->coord, coord, sizeof(vec3_t));
 

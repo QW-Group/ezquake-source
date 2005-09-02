@@ -227,7 +227,7 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode) {
 	Q_ROUND_POWER2(width, tempwidth);
 	Q_ROUND_POWER2(height, tempheight);
 
-	newdata = Q_Malloc(tempwidth * tempheight * 4);
+	newdata = Q_malloc(tempwidth * tempheight * 4);
 	if (width < tempwidth || height < tempheight) {
 		Image_Resample (data, width, height, newdata, tempwidth, tempheight, 4, !!gl_lerpimages.value);
 		width = tempwidth;
@@ -261,7 +261,7 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 	}
 
-	free(newdata);
+	Q_free(newdata);
 }
 
 void GL_Upload8 (byte *data, int width, int height, int mode) {
@@ -386,7 +386,7 @@ int GL_LoadPicTexture (char *name, mpic_t *pic, byte *data) {
 		pic->tl = 0;
 		pic->th = 1;
 	} else {
-		buf = Q_Calloc (glwidth * glheight, 1);
+		buf = Q_calloc (glwidth * glheight, 1);
 
 		src = data;
 		dest = buf;
@@ -400,7 +400,7 @@ int GL_LoadPicTexture (char *name, mpic_t *pic, byte *data) {
 		pic->sh = (float) pic->width / glwidth;
 		pic->tl = 0;
 		pic->th = (float) pic->height / glheight;
-		free (buf);
+		Q_free (buf);
 	}
 
 	return pic->texnum;
@@ -521,7 +521,7 @@ int GL_LoadTextureImage (char *filename, char *identifier, int matchwidth, int m
 		texnum =  (gltexture && !current_texture) ? gltexture->texnum : 0;
 	} else {
 		texnum = GL_LoadTexturePixels(data, identifier, image_width, image_height, mode);
-		free(data);
+		Q_free(data);	// data was Q_malloc'ed by GL_LoadImagePixels
 	}
 
 	current_texture = NULL;
@@ -564,7 +564,7 @@ mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheig
 		pic.tl = 0;
 		pic.th = 1;
 	} else {
-		buf = Q_Calloc (width * height, 4);
+		buf = Q_calloc (width * height, 4);
 
 		src = data;
 		dest = buf;
@@ -578,10 +578,10 @@ mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheig
 		pic.sh = (float) pic.width / width;
 		pic.tl = 0;
 		pic.th = (float) pic.height / height;
-		free (buf);
+		Q_free (buf);
 	}
 
-	free(data);
+	Q_free(data);	// data was Q_malloc'ed by GL_LoadImagePixels
 	return &pic;
 }
 
@@ -600,7 +600,7 @@ int GL_LoadCharsetImage (char *filename, char *identifier) {
 
 	image_size = image_width * image_height;
 
-	buf = dest = Q_Calloc(image_size * 2, 4); 
+	buf = dest = Q_calloc(image_size * 2, 4); 
 	src = data;
 	for (i = 0 ; i < 16 ; i++) {
 		memcpy (dest, src, image_size >> 2);
@@ -610,8 +610,8 @@ int GL_LoadCharsetImage (char *filename, char *identifier) {
 
 	texnum = GL_LoadTexture (identifier, image_width, image_height * 2, buf, TEX_ALPHA | TEX_NOCOMPRESS, 4);
 
-	free(buf);
-	free(data);
+	Q_free(buf);
+	Q_free(data);	// data was Q_malloc'ed by GL_LoadImagePixels
 	return texnum;
 }
 

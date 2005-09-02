@@ -266,6 +266,7 @@ void Q_snprintfz (char *dest, size_t size, char *fmt, ...);
 
 // memory management
 void *Q_malloc (size_t size);
+void *Q_calloc (size_t n, size_t size);
 char *Q_strdup (const char *src);
 // might be turned into a function that makes sure all Q_*alloc calls are matched with Q_free
 #define Q_free(ptr) free(ptr)

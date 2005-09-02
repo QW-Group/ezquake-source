@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.25 2005-08-21 21:38:26 johnnycz Exp $
+	$Id: menu.c,v 1.26 2005-09-02 12:13:49 tonik Exp $
 
 */
 
@@ -2000,7 +2000,7 @@ void M_Menu_MP3_Playlist_Read(void) {
 
 	for (i = 0; i < playlist_size; i++) {
 		if (playlist_entries[i]) {
-			free(playlist_entries[i]);
+			Q_free(playlist_entries[i]);
 			playlist_entries[i] = NULL;
 		}
 	}
@@ -2022,7 +2022,7 @@ void M_Menu_MP3_Playlist_Read(void) {
 
 	for (i = 0; i < playlist_size; i++) {
 		if (playlist_entries[i]) {
-			free(playlist_entries[i]);
+			Q_free(playlist_entries[i]);
 			playlist_entries[i] = NULL;
 		}
 	}
@@ -2038,7 +2038,7 @@ void M_Menu_MP3_Playlist_Read(void) {
 		title = qxmms_remote_get_playlist_title(XMMS_SESSION, i);
 		if (strlen(title) > PLAYLIST_MAXTITLE)
 			title[PLAYLIST_MAXTITLE] = 0;
-		playlist_entries[i] = strdup(title);
+		playlist_entries[i] = Q_strdup(title);
 		g_free(title);
 	}
 }
@@ -2468,7 +2468,7 @@ static void Demo_ReadDirectory(void) {
 	}
 
 	if (demo_currentdir[0]) {	
-		demolist_data[0].name = strdup ("..");
+		demolist_data[0].name = Q_strdup ("..");
 		demolist_data[0].type = dt_up;
 		demolist_count = 1;
 	}
@@ -2476,7 +2476,7 @@ static void Demo_ReadDirectory(void) {
 #ifdef _WIN32
 	h = FindFirstFile (va("%s%s/*.*", com_basedir, demo_currentdir), &fd);
 	if (h == INVALID_HANDLE_VALUE) {
-		demolist_data[demolist_count].name = strdup ("Error reading directory");
+		demolist_data[demolist_count].name = Q_strdup ("Error reading directory");
 		demolist_data[demolist_count].type = dt_msg;
 		demolist_count++;
 		Demo_SortDemos();
@@ -2484,7 +2484,7 @@ static void Demo_ReadDirectory(void) {
 	}
 #else
 	if (!(d = opendir(va("%s%s", com_basedir, demo_currentdir)))) {
-		demolist_data[demolist_count].name = strdup ("Error reading directory");
+		demolist_data[demolist_count].name = Q_strdup ("Error reading directory");
 		demolist_data[demolist_count].type = dt_msg;
 		demolist_count++;
 		Demo_SortDemos();
@@ -2545,7 +2545,7 @@ static void Demo_ReadDirectory(void) {
 		if (demolist_count == MAX_DEMO_FILES)
 			break;
 
-		demolist_data[demolist_count].name = strdup(name);
+		demolist_data[demolist_count].name = Q_strdup(name);
 		demolist_data[demolist_count].type = type;
 		demolist_data[demolist_count].size = size;
 		demolist_data[demolist_count].time = time;
@@ -2560,7 +2560,7 @@ static void Demo_ReadDirectory(void) {
 #endif
 
 	if (!demolist_count) {
-		demolist_data[0].name = strdup("[ no files ]");
+		demolist_data[0].name = Q_strdup("[ no files ]");
 		demolist_data[0].type = dt_msg;
 		demolist_count = 1;
 	}

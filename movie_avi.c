@@ -450,7 +450,7 @@ void Capture_WriteAudio (int samples, byte *sample_buffer)
 			Com_Printf ("ERROR: mp3bufsize is zero\n");
 			return;
 		}
-		mp3_buffer = Q_Calloc (mp3_bufsize, 1);
+		mp3_buffer = Q_calloc (mp3_bufsize, 1);
 
 		memset (&strhdr, 0, sizeof(strhdr));
 		strhdr.cbStruct = sizeof(strhdr);
@@ -462,7 +462,7 @@ void Capture_WriteAudio (int samples, byte *sample_buffer)
 		if ((mmr = qacmStreamPrepareHeader(hstr, &strhdr, 0)))
 		{
 			Com_Printf ("ERROR: Couldn't prepare header\n");
-			free (mp3_buffer);
+			Q_free (mp3_buffer);
 			return;
 		}
 
@@ -478,11 +478,11 @@ clean:
 		if ((mmr = qacmStreamUnprepareHeader(hstr, &strhdr, 0)))
 		{
 			Com_Printf ("ERROR: Couldn't unprepare header\n");
-			free (mp3_buffer);
+			Q_free (mp3_buffer);
 			return;
 		}
 
-		free (mp3_buffer);
+		Q_free (mp3_buffer);
 	}
 	else
 	{

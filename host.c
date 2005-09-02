@@ -228,7 +228,7 @@ void Host_InitMemory (int memsize) {
 		Sys_Error ("Only %4.1f megs of memory reported, can't execute game", memsize / (float)0x100000);
 
 	host_memsize = memsize;
-	host_membase = Q_Malloc (host_memsize);
+	host_membase = Q_malloc (host_memsize);
 	Memory_Init (host_membase, host_memsize);
 }
 
