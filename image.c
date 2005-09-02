@@ -23,11 +23,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "modules.h"
 
 #ifdef WITH_PNG
-#include <png.h>
+#include "png.h"
 #endif
 
 #ifdef WITH_JPEG
-#include <jpeglib.h>
+#include "jpeglib.h"
 #include <setjmp.h>
 #endif
 
