@@ -741,7 +741,7 @@ static legacycmd_t *legacycmds = NULL;
 
 void Cmd_AddLegacyCommand (char *oldname, char *newname) {
 	legacycmd_t *cmd;
-	cmd = (legacycmd_t *) Q_Malloc (sizeof(legacycmd_t));
+	cmd = (legacycmd_t *) Q_malloc (sizeof(legacycmd_t));
 	cmd->next = legacycmds;
 	legacycmds = cmd;
 
