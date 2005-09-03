@@ -519,7 +519,7 @@ void SVC_DirectConnect (void) {
 
 	// extract extensions mask
 	if (net_from.type == NA_LOOPBACK)
-		newcl->extensions = SUPPORTED_EXTENSIONS;
+		newcl->extensions = CLIENT_EXTENSIONS;
 	else
 		newcl->extensions = atoi(Info_ValueForKey(newcl->userinfo, "*z_ext"));
 	Info_RemoveKey (newcl->userinfo, "*z_ext");
@@ -1103,7 +1103,7 @@ void SV_InitLocal (void) {
 
 	Info_SetValueForStarKey (svs.info, "*version", va("%4.2f", QW_VERSION), MAX_SERVERINFO_STRING);
 	Info_SetValueForStarKey (svs.info, "*ez_version", VersionString(), MAX_SERVERINFO_STRING);
-	Info_SetValueForStarKey (svs.info, "*z_ext", va("%i", SUPPORTED_EXTENSIONS), MAX_SERVERINFO_STRING);
+	Info_SetValueForStarKey (svs.info, "*z_ext", va("%i", SERVER_EXTENSIONS), MAX_SERVERINFO_STRING);
 
 	if (strcmp(com_gamedirfile, "qw"))
 		Info_SetValueForStarKey (svs.info, "*gamedir", com_gamedirfile, MAX_SERVERINFO_STRING); 

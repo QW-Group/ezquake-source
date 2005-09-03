@@ -255,7 +255,7 @@ static void CL_SendConnectPacket(void) {
 
 	// let the server know what extensions we support
 	strcpy (biguserinfo, cls.userinfo);
-	Info_SetValueForStarKey (biguserinfo, "*z_ext", va("%i", SUPPORTED_EXTENSIONS), sizeof(biguserinfo));
+	Info_SetValueForStarKey (biguserinfo, "*z_ext", va("%i", CLIENT_EXTENSIONS), sizeof(biguserinfo));
 
 	Q_snprintfz(data, sizeof(data), "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, biguserinfo);
 	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
