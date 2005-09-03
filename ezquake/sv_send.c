@@ -367,7 +367,7 @@ void SV_WriteClientdataToMessage (client_t *client, sizebuf_t *msg) {
 	// Z_EXT_TIME protocol extension
 	// every now and then, send an update so that extrapolation
 	// on client side doesn't stray too far off
-	if ((SUPPORTED_EXTENSIONS & Z_EXT_SERVERTIME) && (client->extensions & Z_EXT_SERVERTIME)) {
+	if ((SERVER_EXTENSIONS & Z_EXT_SERVERTIME) && (client->extensions & Z_EXT_SERVERTIME)) {
 		if (svs.realtime - client->lastservertimeupdate > 5) {
 			MSG_WriteByte(msg, svc_updatestatlong);
 			MSG_WriteByte(msg, STAT_TIME);
