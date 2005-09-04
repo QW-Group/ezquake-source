@@ -1201,9 +1201,6 @@ void CL_StopPlayback (void) {
 void CL_Play_f (void) {
 	char name[2 * MAX_OSPATH], **s;
 	static char *ext[] = {".qwd", ".mvd", NULL};
-	extern cvar_t demo_playlist_track_name;
-	// int track_player; // disconnect: M$ VC hate it :E
-	extern char track_name[16];
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("Usage: %s <demoname>\n", Cmd_Argv(0));

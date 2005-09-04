@@ -1,5 +1,5 @@
 /*
-	$Id: parser.c,v 1.3 2005-08-17 06:32:54 vvd0 Exp $
+	$Id: parser.c,v 1.4 2005-09-04 06:06:22 disconn3ct Exp $
 */
 
 //#include <stdio.h>
@@ -489,7 +489,6 @@ int Calc_String (char *src,char tok){
 	
 */
 int Solve_String (char *src){
-	int count =0;
 	int status =0 ;
 	
 	while(!status){

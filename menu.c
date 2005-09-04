@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.26 2005-09-02 12:13:49 tonik Exp $
+	$Id: menu.c,v 1.27 2005-09-04 06:06:22 disconn3ct Exp $
 
 */
 
@@ -67,7 +67,7 @@ int demos_menu_pos = 0;
 
 enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer,
 	m_setup, m_options, m_video, m_keys, m_help, m_quit,
-	m_gameoptions, m_slist, m_sedit, m_fps, m_demos, m_demos_del,
+	m_gameoptions, m_slist,/* m_sedit,*/ m_fps, m_demos, m_demos_del,
 	m_mp3_control, m_mp3_playlist} m_state;
 
 void M_Menu_Main_f (void);
@@ -2273,8 +2273,6 @@ static float		last_demo_time = 0;
 static int			demo_cursor = 0;
 static int			demo_base = 0;
 static int 			demo_section = 0;
-static int 			demo_playlist_browser_cursor = 0;
-static int 			demo_playlist_browser_base = 0;
 
 static demo_sort_t	demo_sorttype = ds_name;
 static qboolean		demo_reversesort = false;
