@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.15 2005-08-17 06:32:54 vvd0 Exp $
+	$Id: mvd_utils.c,v 1.16 2005-09-04 06:06:22 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -233,8 +233,6 @@ void MVD_Info (void){
 int MVD_FindBestPlayer_f(void){
 
 	int bp_id, status, i, h, y = 0;
-	int loop = 1;
-	int loop_count = 0;
 	
 	char val[80],string1[80];
 	int bp_at,bp_bw,bp_pw,bp_h;
