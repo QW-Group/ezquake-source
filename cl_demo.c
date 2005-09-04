@@ -717,7 +717,7 @@ static void CL_StopRecording (void) {
 	if (!cls.demorecording)
 		return;
 
-	// CL_WriteDemoPimpMessage();
+	CL_WriteDemoPimpMessage();
 
 	// write a disconnect message to the demo file
 	SZ_Clear (&net_message);
