@@ -1061,7 +1061,7 @@ void IN_Move (usercmd_t *cmd) {
 	old_mouse_y = ty;
 
 	if (m_accel.value) {
-		mousespeed = sqrt (tx * tx + ty * ty);
+		mousespeed = (sqrt (tx * tx + ty * ty)) / (1000.0f * (float)cls.trueframetime);
 		mouse_x *= (mousespeed * m_accel.value + sensitivity.value);
 		mouse_y *= (mousespeed * m_accel.value + sensitivity.value);
 	} else {

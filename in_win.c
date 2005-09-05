@@ -843,7 +843,7 @@ void IN_MouseMove (usercmd_t *cmd) {
 	old_mouse_y = my;
 
 	if (m_accel.value) {
-		float mousespeed = sqrt (mx * mx + my * my);
+		float mousespeed = (sqrt (mx * mx + my * my)) / (1000.0f * (float)cls.trueframetime);
 		mouse_x *= (mousespeed * m_accel.value + sensitivity.value);
 		mouse_y *= (mousespeed * m_accel.value + sensitivity.value);
 	} else {
