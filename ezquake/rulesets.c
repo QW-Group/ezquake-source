@@ -118,8 +118,8 @@ static void Rulesets_Smackdown(void) {
 #ifdef GLQUAKE
 	extern cvar_t amf_camera_death, amf_camera_chase, amf_part_gunshot_type, amf_part_traillen, amf_part_trailtime, amf_part_trailwidth, amf_part_traildetail, amf_part_trailtype, amf_part_sparks, amf_part_spikes, amf_part_gunshot, amf_waterripple, amf_lightning, amf_lightning_size, amf_lightning_size, amf_lightning_sparks;
 	extern qboolean qmb_initialized;
-	extern cvar_t cl_hud;
 #endif
+	extern cvar_t cl_hud;
 	int i;
 
 #define NOQMB_SKIP_LOCKED 6
