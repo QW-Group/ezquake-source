@@ -1889,7 +1889,7 @@ void TP_SearchForMsgTriggers (char *s, int level) {
 
 			if ((string = Cmd_AliasString (t->name))) {
 				Q_strncpyz(vars.lasttrigger_match, s, sizeof(vars.lasttrigger_match));	
-				Cbuf_AddTextEx (&cbuf_safe, string);
+				Cbuf_AddTextEx (&cbuf_safe, va("%s\n", string));
 			} else {
 				Com_Printf ("trigger \"%s\" has no matching alias\n", t->name);
 			}
