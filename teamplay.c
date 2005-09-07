@@ -116,7 +116,7 @@ cvar_t	tp_need_cells = {"tp_need_cells", "20"};
 cvar_t	tp_need_nails = {"tp_need_nails", "40"};
 cvar_t	tp_need_shells = {"tp_need_shells", "10"};
 
-static qboolean suppress;		
+static qboolean suppress;
 
 char *skinforcing_team = "";	
 
@@ -133,17 +133,15 @@ char *Macro_LastTookOrPointed2 (void);
 #define	POINT_TYPE_ENEMY		4
 
 #define	TP_TOOK_EXPIRE_TIME		15
-#define	TP_POINT_EXPIRE_TIME	TP_TOOK_EXPIRE_TIME
-
-#define MAX_LOC_NAME			64
+#define	TP_POINT_EXPIRE_TIME		TP_TOOK_EXPIRE_TIME
 
 // this structure is cleared after entering a new map
 typedef struct tvars_s {
-	int		health;
-	int		items;
-	int		olditems;
-	int		activeweapon;
-	int		stat_framecounts[MAX_CL_STATS];
+	int	health;
+	int	items;
+	int	olditems;
+	int	activeweapon;
+	int	stat_framecounts[MAX_CL_STATS];
 	double	deathtrigger_time;
 	float	f_skins_reply_time;
 	float	f_version_reply_time;
@@ -154,25 +152,53 @@ typedef struct tvars_s {
 	double	pointtime;					// cls.realtime for which pointitem & pointloc are valid
 	char	pointname[32];
 	char	pointloc[MAX_LOC_NAME];
-	int		pointtype;
+	int	pointtype;
 	char	nearestitemloc[MAX_LOC_NAME];
 	char	lastreportedloc[MAX_LOC_NAME];
 	double	lastdrop_time;				
 	char	lastdroploc[MAX_LOC_NAME];	
 	char	lasttrigger_match[256];	
 
-	int		numenemies;
-	int		numfriendlies;
-	int		last_numenemies;
-	int		last_numfriendlies;
+	int	numenemies;
+	int	numfriendlies;
+	int	last_numenemies;
+	int	last_numfriendlies;
 
-    int enemy_powerups;
-    double enemy_powerups_time;
-
+    	int enemy_powerups;
+    	double enemy_powerups_time;
 } tvars_t;
 
 tvars_t vars;
 
+char lastip[32];
+
+// re-triggers stuff
+cvar_t	re_sub[10]	= {	{"0", "", CVAR_ROM},
+						{"1", "", CVAR_ROM},
+						{"2", "", CVAR_ROM},
+						{"3", "", CVAR_ROM},
+						{"4", "", CVAR_ROM},
+						{"5", "", CVAR_ROM},
+						{"6", "", CVAR_ROM},
+						{"7", "", CVAR_ROM},
+						{"8", "", CVAR_ROM},
+						{"9", "", CVAR_ROM}
+ };
+
+cvar_t	re_subi[10]	= {	{"internal0"},
+						{"internal1"},
+						{"internal2"},
+						{"internal3"},
+						{"internal4"},
+						{"internal5"},
+						{"internal6"},
+						{"internal7"},
+						{"internal8"},
+						{"internal9"}
+ };
+
+static pcre_trigger_t		*re_triggers;
+static pcre_internal_trigger_t	*internal_triggers;
 /********************************** TRIGGERS **********************************/
 
 typedef struct f_trigger_s {
@@ -244,6 +270,11 @@ void TP_ExecTrigger (char *trigger) {
 
 #define MAX_MACRO_VALUE	256
 static char	macro_buf[MAX_MACRO_VALUE] = "";
+
+char *Macro_Lastip_f (void) {
+	Q_snprintfz (macro_buf, sizeof(macro_buf), "%s", lastip);
+	return macro_buf;
+}
 
 char *Macro_Quote_f (void) {
 	return "\"";
@@ -1009,6 +1040,7 @@ char *Macro_Count_Last_NearbyFriendlyPlayers (void) {
 void TP_AddMacros(void) {
 	qboolean teamplay = Rulesets_RestrictTriggers();
 
+	Cmd_AddMacro("lastip", Macro_Lastip_f);
 	Cmd_AddMacro("qt", Macro_Quote_f);
 	Cmd_AddMacro("latency", Macro_Latency);
 	Cmd_AddMacro("time", Macro_Time);
@@ -1062,8 +1094,6 @@ void TP_AddMacros(void) {
 };
 
 /********************** MACRO/FUNCHAR/WHITE TEXT PARSING **********************/
-
-#define MAX_MACRO_STRING 2048
 
 char *TP_ParseWhiteText(char *s, qboolean team, int offset) {
 	static char	buf[4096];	
@@ -1895,6 +1925,491 @@ void TP_SearchForMsgTriggers (char *s, int level) {
 			}
 		}
 	}
+}
+
+/**************************** REGEXP TRIGGERS *********************************/
+
+typedef void ReTrigger_func(pcre_trigger_t *);
+
+void Trig_ReSearch_do(ReTrigger_func f) {
+	pcre_trigger_t *trig;	
+	
+	for(trig=re_triggers; trig; trig = trig->next) {
+		if (ReSearchMatch(trig->name))
+			f(trig);
+	}
+}
+
+static pcre_trigger_t *prev;
+pcre_trigger_t *CL_FindReTrigger (char *name) {
+	pcre_trigger_t *t;
+	
+	prev=NULL;
+	for (t=re_triggers; t; t=t->next) {
+		if (!strcmp(t->name, name))
+			return t;
+		prev = t;
+	}
+		return NULL;
+}
+
+static void DeleteReTrigger(pcre_trigger_t *t) {
+	if (t->regexp) (pcre_free)(t->regexp);
+	if (t->regexp_extra) (pcre_free)(t->regexp_extra);
+	if (t->regexpstr) Z_Free(t->regexpstr);
+	Z_Free(t->name);
+	Z_Free(t);
+}
+
+static void RemoveReTrigger(pcre_trigger_t *t) {
+// remove from list
+	if (prev)
+		prev->next = t->next;
+	else
+		re_triggers = t->next;
+// free memory
+	DeleteReTrigger(t);
+}
+
+void CL_RE_Trigger_f (void) {
+	int			c,i,m;
+	char			*name;
+	char			*regexpstr;
+	pcre_trigger_t	*trig;
+	pcre			*re;
+	pcre_extra		*re_extra;
+	const char		*error;
+	int			error_offset;
+	qboolean		newtrigger=false;
+	qboolean		re_search = false;
+
+	c = Cmd_Argc();
+	if (c > 3) {
+		Com_Printf ("re_trigger <trigger name> <regexp>\n");
+		return;
+	}
+
+	if (c == 2 && IsRegexp(Cmd_Argv(1))) {
+		re_search = true;
+	}
+
+	if (c == 1 || re_search) {
+		if (!re_triggers)
+			Com_Printf ("no regexp_triggers defined\n");
+		else {
+			if (re_search && !ReSearchInit(Cmd_Argv(1)))
+				return;
+			Com_Printf ("List of re_triggers:\n");
+			for (trig=re_triggers, i=m=0; trig; trig=trig->next, i++)
+				if (!re_search || ReSearchMatch(trig->name)) {
+					Com_Printf ("%s : \"%s\" : %d\n", trig->name, trig->regexpstr, trig->counter);
+					m++;
+				}
+			Com_Printf ("------------\n%i/%i re_triggers\n", m, i);
+			if (re_search)
+				ReSearchDone();
+		}
+		return;
+	}
+
+	name = Cmd_Argv(1);
+	trig = CL_FindReTrigger (name);
+
+	if (c == 2) {
+		
+		if (trig) {
+			Com_Printf ("%s: \"%s\"\n", trig->name, trig->regexpstr);
+			Com_Printf ("  options: mask=%d interval=%g%s%s%s%s%s\n", trig->flags & 0xFF,
+				trig->min_interval,
+				trig->flags & RE_FINAL ? " final" : "",
+				trig->flags & RE_REMOVESTR ? " remove" : "",
+				trig->flags & RE_NOLOG ? " nolog" : "",
+				trig->flags & RE_ENABLED ? "" : " disabled",
+				trig->flags & RE_NOACTION ? " noaction" : ""
+				 );
+			Com_Printf ("  matched %d times\n", trig->counter);
+		}
+		else
+			Com_Printf ("re_trigger \"%s\" not found\n", name);
+		return;
+	}
+
+	if (c == 3) {
+		regexpstr = Cmd_Argv(2);
+		if (!trig) {
+			// allocate new trigger
+			newtrigger = true;
+			trig = Z_Malloc (sizeof(pcre_trigger_t));
+			trig->next = re_triggers;
+			re_triggers = trig;
+			trig->name = Z_StrDup (name);
+			trig->flags = RE_PRINT_ALL | RE_ENABLED; // catch all printed messages by default
+		}
+
+		error = NULL;
+		if( (re = pcre_compile(regexpstr, 0, &error, &error_offset, NULL)) ) {
+			error = NULL;
+			re_extra = pcre_study(re, 0, &error);
+			if (error)
+				Com_Printf ("Regexp study error: %s\n", &error);
+			else {
+				if (!newtrigger) {
+					(pcre_free)(trig->regexp);
+					if (trig->regexp_extra)
+						(pcre_free)(trig->regexp_extra);
+					Z_Free(trig->regexpstr);
+				}
+				trig->regexpstr = Z_StrDup (regexpstr);
+				trig->regexp = re;
+				trig->regexp_extra = re_extra;
+				return;
+			}
+		} else {
+			Com_Printf ("Invalid regexp: %s\n", error);
+		}
+		
+		prev = NULL;
+		RemoveReTrigger(trig);
+	}
+}
+
+void CL_RE_Trigger_Options_f (void) {
+	int		c,i;
+	char*	name;
+	pcre_trigger_t	*trig;
+
+	c = Cmd_Argc();
+	if (c < 3) {
+		Com_Printf ("re_trigger_options <trigger name> <option1> <option2>\n");
+		return;
+	}
+
+	name = Cmd_Argv(1);
+	trig = CL_FindReTrigger (name);
+
+	if (!trig) {
+		Com_Printf ("re_trigger \"%s\" not found\n", name);
+		return;
+	}
+
+	for(i=2; i<c; i++) {
+		if ( !strcmp(Cmd_Argv(i), "final") )
+			trig->flags |= RE_FINAL;
+		else if ( !strcmp(Cmd_Argv(i), "remove") )
+			trig->flags |= RE_REMOVESTR;
+		else if ( !strcmp(Cmd_Argv(i), "notfinal") )
+			trig->flags &= ~RE_FINAL;
+		else if ( !strcmp(Cmd_Argv(i), "noremove") )
+			trig->flags &= ~RE_REMOVESTR;
+		else if ( !strcmp(Cmd_Argv(i), "mask") ) {
+			trig->flags &= ~0xFF;
+			trig->flags |= 0xFF & atoi(Cmd_Argv(i+1));
+			i++;
+			}
+		else if ( !strcmp(Cmd_Argv(i), "interval") ) {
+			trig->min_interval = atof(Cmd_Argv(i+1));
+			i++;
+			}
+		else if ( !strcmp(Cmd_Argv(i), "enable") ) 
+			trig->flags |= RE_ENABLED;
+		else if ( !strcmp(Cmd_Argv(i), "disable") ) 
+			trig->flags &= ~RE_ENABLED;
+		else if ( !strcmp(Cmd_Argv(i), "noaction") ) 
+			trig->flags |= RE_NOACTION;
+		else if ( !strcmp(Cmd_Argv(i), "action") ) 
+			trig->flags &= ~RE_NOACTION;
+		else if ( !strcmp(Cmd_Argv(i), "nolog") )
+			trig->flags |= RE_NOLOG;
+		else if ( !strcmp(Cmd_Argv(i), "log") )
+			trig->flags &= ~RE_NOLOG;
+
+		else 
+			Com_Printf("re_trigger_options: invalid option.\n"
+			"valid options:\n  final\n  notfinal\n  remove\n"
+			"  noremove\n  mask <trigger_mask>\n  interval <min_interval>)\n"
+			"  enable\n  disable\n  noaction\n  action\n  nolog\n  log\n");
+	}
+}
+
+void CL_RE_Trigger_Delete_f (void) {
+	pcre_trigger_t	*trig, *next_trig;
+	char			*name;
+	int				i;
+	
+	for (i=1; i<Cmd_Argc(); i++) {	
+		name = Cmd_Argv(i);
+		if (IsRegexp(name)) {
+			if(!ReSearchInit(name))
+				return;
+			prev = NULL;
+			for(trig=re_triggers; trig; ) {
+				if (ReSearchMatch(trig->name)) {
+					next_trig = trig->next;
+					RemoveReTrigger(trig);
+					trig = next_trig;
+				} else {
+					prev = trig;
+					trig = trig->next;
+				}
+			}
+			ReSearchDone();
+		} else {
+			if ((trig = CL_FindReTrigger(name)))
+				RemoveReTrigger(trig);
+		}
+	}
+}
+
+void Trig_Enable(pcre_trigger_t	*trig) {
+	trig->flags |= RE_ENABLED;
+}
+
+void CL_RE_Trigger_Enable_f (void) {
+	pcre_trigger_t	*trig;
+	char			*name;
+	int				i;
+	
+	for (i=1; i<Cmd_Argc(); i++) {	
+		name = Cmd_Argv(i);
+		if (IsRegexp(name)) {
+			if(!ReSearchInit(name))
+				return;
+			Trig_ReSearch_do(Trig_Enable);
+			ReSearchDone();
+		} else {
+			if ((trig = CL_FindReTrigger(name)))
+				Trig_Enable(trig);	
+		}
+	}
+}
+
+void Trig_Disable(pcre_trigger_t	*trig) {
+	trig->flags &= ~RE_ENABLED;
+}
+
+void CL_RE_Trigger_Disable_f (void) {
+	pcre_trigger_t	*trig;
+	char			*name;
+	int				i;
+	
+	for (i=1; i<Cmd_Argc(); i++) {	
+		name = Cmd_Argv(i);
+		if (IsRegexp(name)) {
+			if(!ReSearchInit(name))
+				return;
+			Trig_ReSearch_do(Trig_Disable);
+			ReSearchDone();
+		} else {
+			if ((trig = CL_FindReTrigger(name)))
+				Trig_Disable(trig);	
+		}
+	}
+}
+
+void CL_RE_Trigger_ResetLasttime (void) {
+	pcre_trigger_t	*trig;
+
+	for (trig=re_triggers; trig; trig=trig->next)
+		trig->lasttime = 0.0;
+}
+
+void Re_Trigger_Copy_Subpatterns(char *s, int* offsets, int num, cvar_t	*re_sub) {
+	int	i;
+	char	tmp;
+
+	for (i=0;i<2*num;i+=2) {
+		tmp = s[offsets[i+1]];
+		s[offsets[i+1]] = '\0';
+		Cvar_ForceSet(&re_sub[i/2],s+offsets[i]);
+		s[offsets[i+1]] = tmp;
+	}
+}
+
+void CL_RE_Trigger_Match_f (void) {
+	int			c;
+	char			*tr_name;
+	char			*s;
+	pcre_trigger_t		*rt;
+	char			*string;	
+	int result;
+	int offsets[99];
+	
+	c = Cmd_Argc();
+
+	if (c != 3) {
+		Com_Printf ("re_trigger_match <trigger name> <string>\n");
+		return;
+	}
+
+	tr_name = Cmd_Argv(1);
+	s = Cmd_Argv(2);
+
+	for (rt=re_triggers; rt; rt=rt->next) 
+		if ( !strcmp(rt->name, tr_name) ) {
+			result = pcre_exec(rt->regexp, rt->regexp_extra, s, strlen(s), 0, 0, offsets, 99);
+			if (result>=0) {
+				rt->lasttime = cls.realtime;
+				rt->counter++;
+				Re_Trigger_Copy_Subpatterns(s, offsets, min(result,10), re_sub);
+				if (!(rt->flags & RE_NOACTION)) {
+					string = Cmd_AliasString (rt->name);
+					if (string) {
+						Cbuf_InsertTextEx(&cbuf_safe,"\nwait\n");
+						Cbuf_InsertTextEx(&cbuf_safe,string);
+						Cbuf_ExecuteEx(&cbuf_safe);
+					} else
+						Com_Printf ("re_trigger \"%s\" has no matching alias\n", rt->name);
+				}
+				
+			}
+			return;
+		} 
+	Com_Printf ("re_trigger \"%s\" not found\n", tr_name);
+}
+
+qboolean allow_re_triggers;
+
+qboolean CL_SearchForReTriggers (char *s, unsigned trigger_type) {
+	pcre_trigger_t			*rt;
+	pcre_internal_trigger_t		*irt;
+	cmd_alias_t			*trig_alias;
+	qboolean			removestr = false;
+	int				result;
+	int				offsets[99];
+	int				len;
+	
+	len = strlen(s);
+
+// internal triggers
+	if (trigger_type < RE_PRINT_ECHO) {
+		allow_re_triggers = true;
+		for (irt=internal_triggers; irt; irt=irt->next) {
+				if (irt->flags & trigger_type) {
+				result = pcre_exec(irt->regexp, irt->regexp_extra, s, len, 0, 0, offsets, 99);
+				if (result>=0) {
+					Re_Trigger_Copy_Subpatterns(s, offsets, min(result,10), re_subi);
+					irt->func(s);
+				}
+			}
+		}
+		if (!allow_re_triggers) return false;
+	}
+
+// TODO: allow triggers for demos/specs (it should be ruleset independent)
+	if (
+	(cls.demoplayback) || (cl.spectator) || (!tp_msgtriggers.value)
+	|| (cl.fpd & FPD_NO_SOUNDTRIGGERS) || (cl.fpd & FPS_NO_TIMERS)
+	|| Rulesets_RestrictTriggers ()
+	)
+		return false;
+
+// regexp triggers
+	for (rt=re_triggers; rt; rt=rt->next) 
+		if ( (rt->flags & RE_ENABLED) &&				// enabled
+			 (rt->flags & trigger_type) &&				// mask fits
+			 rt->regexp &&						// regexp not empty
+			 (rt->min_interval == 0.0 ||
+			 cls.realtime >= rt->min_interval + rt->lasttime))	// not too fast
+			{
+			result = pcre_exec(rt->regexp, rt->regexp_extra, s, len, 0, 0, offsets, 99);
+			if (result>=0) {
+				rt->lasttime = cls.realtime;
+				rt->counter++;
+				Re_Trigger_Copy_Subpatterns(s, offsets, min(result,10), re_sub);
+				if (!(rt->flags & RE_NOACTION)) {
+					trig_alias = Cmd_FindAlias (rt->name);
+					Print_current++;
+					if (trig_alias) {
+						Cbuf_InsertTextEx(&cbuf_safe,"\nwait\n");
+						Cbuf_InsertTextEx(&cbuf_safe,rt->name);
+						Cbuf_ExecuteEx(&cbuf_safe);
+					} else
+						Com_Printf ("re_trigger \"%s\" has no matching alias\n", rt->name);
+					Print_current--;
+				}
+				if (rt->flags & RE_REMOVESTR) 
+					removestr = true;
+				if (rt->flags & RE_NOLOG) 
+					Print_flags[Print_current] |= PR_LOG_SKIP;
+				if (rt->flags & RE_FINAL) 
+					break;
+			}
+		} 
+
+	if (removestr)
+		Print_flags[Print_current] |= PR_SKIP;
+
+	return removestr;
+}
+
+// Internal triggers
+void AddInternalTrigger(char* regexpstr, unsigned mask, internal_trigger_func func) {
+	pcre_internal_trigger_t	*trig;
+	const char		*error;
+	int			error_offset;
+
+	trig = Z_Malloc (sizeof(pcre_internal_trigger_t));
+	trig->next = internal_triggers;
+	internal_triggers = trig;
+
+	trig->regexp = pcre_compile(regexpstr, 0, &error, &error_offset, NULL);
+	trig->regexp_extra = pcre_study(trig->regexp, 0, &error);
+	trig->func = func;
+	trig->flags = mask;
+}
+
+void INTRIG_Disable (char *s) {
+	allow_re_triggers = false;
+	Print_flags[Print_current] |= PR_LOG_SKIP;
+}
+
+void INTRIG_Lastip_port (char *s) {
+	/* There are no check for overflow, because subpatterns of this regexp is maximum 21 chars. */
+
+	// reset current lastip value
+	lastip[0]='\0';
+
+	Q_strcat(lastip, re_subi[1].string);
+	Q_strcat(lastip, ".");
+	Q_strcat(lastip, re_subi[2].string);
+	Q_strcat(lastip, ".");
+	Q_strcat(lastip, re_subi[3].string);
+	Q_strcat(lastip, ".");
+	Q_strcat(lastip, re_subi[4].string);
+	Q_strcat(lastip, ":");
+	Q_strcat(lastip, re_subi[5].string);
+}
+
+void InitInternalTriggers(void)
+{
+	// dont allow cheating by triggering showloc command 
+	AddInternalTrigger("^(Location :|Angles   :)", 4, INTRIG_Disable); // showloc command
+	// dont allow cheating by triggering dispenser warning
+	AddInternalTrigger("^Enemies are using your dispenser!$", 16, INTRIG_Disable);
+	// lastip
+	AddInternalTrigger("([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\:(\\d{5})", 8, INTRIG_Lastip_port);
+}
+
+typedef void *(*pcre_malloc_type)(size_t);
+
+void TP_InitReTriggers() {
+	unsigned i;
+
+	// Using zone for PCRE library memory allocation
+	//
+	pcre_malloc = (pcre_malloc_type)Z_Malloc;
+	pcre_free = Z_Free;
+
+	for(i=0;i<10;i++)
+		Cvar_Register (re_sub+i);
+
+	Cmd_AddCommand ("re_trigger", CL_RE_Trigger_f);
+	Cmd_AddCommand ("re_trigger_options", CL_RE_Trigger_Options_f);
+	Cmd_AddCommand ("re_trigger_delete", CL_RE_Trigger_Delete_f);
+	Cmd_AddCommand ("re_trigger_enable", CL_RE_Trigger_Enable_f);
+	Cmd_AddCommand ("re_trigger_disable", CL_RE_Trigger_Disable_f);
+	Cmd_AddCommand ("re_trigger_match", CL_RE_Trigger_Match_f);
+	InitInternalTriggers();
 }
 
 /************************* BASIC MATCH INFO FUNCTIONS *************************/
@@ -3051,6 +3566,7 @@ void TP_DumpMsgFilters(FILE *f) {
 /************************************ INIT ************************************/
 
 void TP_Init (void) {
+	TP_InitReTriggers();
 	TP_AddMacros();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CHAT);

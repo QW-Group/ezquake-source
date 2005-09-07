@@ -172,6 +172,15 @@ void *Z_TagMalloc (int size, int tag) {
 	return (void *) ((byte *)base + sizeof(memblock_t));
 }
 
+char *Z_StrDup(const char *str)
+{
+	void *newstr;
+
+	newstr = Z_Malloc(strlen(str)+1);
+	strcpy(newstr, str);
+	return newstr;
+}
+
 void Z_Print (memzone_t *zone) {
 	memblock_t	*block;
 

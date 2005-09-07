@@ -53,7 +53,7 @@ mpic_t			*draw_disc;
 static mpic_t	*draw_backtile;
 
 static int		translate_texture;
-static int		char_texture;
+int		char_texture;
 
 static mpic_t	conback;
 
@@ -652,6 +652,38 @@ void Draw_String (int x, int y, char *str) {
 
 	glEnd ();
 }
+
+void Draw_AlphaString (int x, int y, char *str, float alpha)
+{
+	int num;
+
+	alpha = bound (0, alpha, 1);
+	if (!alpha)
+		return;
+
+	if (y <= -8)
+		return;			// totally off screen
+	
+	if (!str || !str[0])
+		return;
+
+	glColor4f (1, 1, 1, alpha);
+
+	GL_Bind (char_texture);
+
+	glBegin (GL_QUADS);
+
+	while (*str) {	// stop rendering when out of characters		
+		if ((num = *str++) != 32)	// skip spaces
+			Draw_CharPoly(x, y, num);
+
+		x += 8;
+	}
+
+	glEnd ();
+	glColor3ubv (color_white);
+}
+
 
 void Draw_Alt_String (int x, int y, char *str) {
 	int num;

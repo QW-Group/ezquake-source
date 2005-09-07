@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.5 2005-08-29 12:30:57 vvd0 Exp $
+	$Id: vid_win.c,v 1.6 2005-09-07 15:57:23 disconn3ct Exp $
 
 */
 
@@ -1721,6 +1721,23 @@ void VID_NotifyActivity(void) {
         allow_flash = false;
     }
 }
+
+// QW262 -->
+/*
+===================
+VID_Console functions map "window" coordinates into "console".
+===================
+*/
+int VID_ConsoleX (int x)
+{
+	return (x * vid.conwidth / window_width);
+}
+
+int VID_ConsoleY (int y)
+{
+	return (y * vid.conheight / window_height);
+}
+// <-- QW262
 
 void VID_Shutdown (void) {
 	if (!vid_initialized)

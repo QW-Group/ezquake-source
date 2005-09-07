@@ -115,6 +115,10 @@ cvar_t			show_fps_y = {"show_fps_y", "-1"};
 cvar_t			scr_sshot_format		= {"sshot_format", DEFAULT_SSHOT_FORMAT};
 cvar_t			scr_sshot_dir			= {"sshot_dir", ""};
 
+// QW262 -->
+cvar_t			cl_hud = {"cl_hud", "1"};
+// <-- QW262
+
 #ifdef GLQUAKE
 cvar_t			gl_triplebuffer = {"gl_triplebuffer", "1", CVAR_ARCHIVE};
 #endif
@@ -161,6 +165,9 @@ char auto_matchname[2 * MAX_OSPATH];
 static void SCR_CheckAutoScreenshot(void);
 static void SCR_CheckMVScreenshot(void);
 void SCR_DrawStatusMultiview(void);
+void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
+void Draw_AlphaString (int x, int y, char *str, float alpha);
+void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
 
 
 qboolean OnChange_scr_allowsnap(cvar_t *var, char *s) {
@@ -864,6 +871,790 @@ void SCR_DrawAutoID (void) {
 
 #endif
 
+/**************************************** 262 HUD *****************************/
+// QW262 -->
+#ifdef DEBUG
+static hud_element_t *hud_list=NULL;
+static hud_element_t *prev;
+
+hud_element_t *Hud_FindElement(char *name)
+{
+	hud_element_t *elem;
+
+	prev=NULL;
+	for(elem=hud_list; elem; elem = elem->next) {
+		if (!Q_strcasecmp(name, elem->name))
+			return elem;
+		prev = elem;
+	}
+
+	return NULL;
+}
+
+static hud_element_t* Hud_NewElement(void)
+{
+	hud_element_t*	elem;
+	elem = Z_Malloc (sizeof(hud_element_t));
+	elem->next = hud_list;
+	hud_list = elem;
+	elem->name = Z_StrDup( Cmd_Argv(1) );
+	return elem;
+}
+
+static void Hud_DeleteElement(hud_element_t *elem)
+{
+	if (elem->flags & (HUD_STRING|HUD_IMAGE))
+		Z_Free(elem->contents);
+	if (elem->f_hover)
+		Z_Free(elem->f_hover);
+	if (elem->f_button)
+		Z_Free(elem->f_button);
+	Z_Free(elem->name);
+	Z_Free(elem);
+}
+
+typedef void Hud_Elem_func(hud_element_t*);
+
+void Hud_ReSearch_do(Hud_Elem_func f)
+{
+	hud_element_t *elem;
+
+	for(elem=hud_list; elem; elem = elem->next) {
+		if (ReSearchMatch(elem->name))
+			f(elem);
+	}
+}
+
+void Hud_Add_f(void)
+{
+	hud_element_t*	elem;
+	struct hud_element_s*	next = NULL;	// Sergio
+	qboolean	hud_restore = false;	// Sergio
+	cvar_t		*var;
+	char		*a2, *a3;
+	//Hud_Func	func;
+	unsigned	old_coords = 0;
+	unsigned	old_width = 0;
+	float		old_alpha = 1;
+	qboolean	old_enabled = true;
+
+	if (Cmd_Argc() != 4)
+		Com_Printf("Usage: hud_add <name> <type> <param>\n");
+	else {
+		if ((elem=Hud_FindElement(Cmd_Argv(1)))) {
+			if (elem) {
+				old_coords = *((unsigned*)&(elem->coords));
+				old_width = elem->width;
+				old_alpha = elem->alpha;
+				old_enabled = elem->flags & HUD_ENABLED;
+				next = elem->next; // Sergio
+				if (prev) {
+					prev->next = elem->next;
+					hud_restore = true; // Sergio
+				} else
+					hud_list = elem->next;
+				Hud_DeleteElement(elem);
+			}
+		} 
+		
+		a2 = Cmd_Argv(2);
+		a3 = Cmd_Argv(3);
+		
+		if (!Q_strcasecmp(a2, "cvar")) {
+			if( (var = Cvar_FindVar(a3)) ) {
+				elem = Hud_NewElement();
+				elem->contents = var;
+				elem->flags = HUD_CVAR | HUD_ENABLED;
+			} else {
+				Com_Printf("cvar \"%s\" not found\n", a3);
+				return;
+			} 
+		} else if (!Q_strcasecmp(a2, "str")) {
+			elem = Hud_NewElement();
+			elem->contents = Z_StrDup( a3 );
+			elem->flags = HUD_STRING | HUD_ENABLED;
+		/*} else if (!Q_strcasecmp(a2, "std")) { // to add armor, health, ammo, speed
+			if (!Q_strcasecmp(a3, "lag"))
+				func = &Hud_LagmeterStr;
+			else if (!Q_strcasecmp(a3, "fps"))
+				func = &Hud_FpsStr;
+			else if (!Q_strcasecmp(a3, "clock"))
+				func = &Hud_ClockStr;
+			else if (!Q_strcasecmp(a3, "speed"))
+				func = &Hud_SpeedStr;
+			else {
+				Com_Printf("\"%s\" is not a standard hud function\n", a3);
+				return;
+			}
+			elem = Hud_NewElement();
+			elem->contents = func;
+			elem->flags = HUD_FUNC | HUD_ENABLED;
+		} else if (!Q_strcasecmp(a2, "img")) {
+#ifdef GLQUAKE
+			mpic_t *hud_image;
+			int texnum = loadtexture_24bit(a3, LOADTEX_GFX);
+			if (!texnum) {
+				Com_Printf("Unable to load hud image \"%s\"\n", a3);
+				return;
+			}
+			hud_image = Z_Malloc (sizeof(mpic_t));
+			hud_image->texnum = texnum;
+			if (current_texture) {
+				hud_image->width = current_texture->width;
+				hud_image->height = current_texture->height;
+			}
+			else {
+				hud_image->width = image.width;
+				hud_image->height = image.height;
+			}
+			hud_image->sl = 0;
+			hud_image->sh = 1;
+			hud_image->tl = 0;
+			hud_image->th = 1;
+			elem = Hud_NewElement();
+			elem->contents = hud_image;
+			elem->flags = HUD_IMAGE | HUD_ENABLED;
+#else
+			Com_Printf("Hud images not available in software version\n");
+			return;
+#endif
+		*/} else {
+			Com_Printf("\"%s\" is not a valid hud type\n", a2);
+			return;
+		}
+
+		*((unsigned*)&(elem->coords)) = old_coords;
+		elem->width = old_width;
+		elem->alpha = old_alpha;
+		if (!old_enabled)
+			elem->flags &= ~HUD_ENABLED;
+
+// Sergio -->
+// Restoring old hud place in hud_list
+		if (hud_restore) {
+			hud_list = elem->next;
+			elem->next = next;
+			prev->next = elem;
+			}
+// <-- Sergio
+	}
+}
+
+void Hud_Elem_Remove(hud_element_t *elem)
+{
+	if (prev) 
+		prev->next = elem->next;
+	else
+		hud_list = elem->next;
+	Hud_DeleteElement(elem);
+}
+
+void Hud_Remove_f(void)
+{
+	hud_element_t	*elem, *next_elem;
+	char			*name;
+	int				i;
+	
+	for (i=1; i<Cmd_Argc(); i++) {	
+		name = Cmd_Argv(i);
+		if (IsRegexp(name)) {
+			if(!ReSearchInit(name))
+				return;
+			prev = NULL;
+			for(elem=hud_list; elem; ) {
+				if (ReSearchMatch(elem->name)) {
+					next_elem = elem->next;
+					Hud_Elem_Remove(elem);
+					elem = next_elem;
+				} else {
+					prev = elem;
+					elem = elem->next;
+				}
+			}
+			ReSearchDone();
+		} else {
+			if ((elem = Hud_FindElement(name)))
+				Hud_Elem_Remove(elem);
+			else
+				Com_Printf("HudElement \"%s\" not found\n", name);
+		}
+	}
+}
+
+void Hud_Position_f(void)
+{
+	hud_element_t *elem;
+
+	if (Cmd_Argc() != 5) {
+		Com_Printf("Usage: hud_position <name> <pos_type> <x> <y>\n");
+		return;
+	}
+	if (!(elem = Hud_FindElement(Cmd_Argv(1)))) {
+		Com_Printf("HudElement \"%s\" not found\n", Cmd_Argv(1));
+		return;
+	}
+
+	elem->coords[0] = atoi(Cmd_Argv(2));
+	elem->coords[1] = atoi(Cmd_Argv(3));
+	elem->coords[2] = atoi(Cmd_Argv(4));
+}
+
+void Hud_Elem_Bg(hud_element_t *elem)
+{
+	elem->coords[3] = atoi(Cmd_Argv(2));
+}
+
+void Hud_Bg_f(void)
+{
+	hud_element_t *elem;
+	char	*name = Cmd_Argv(1);
+	
+	if (Cmd_Argc() != 3) 
+		Com_Printf("Usage: hud_bg <name> <bgcolor>\n");
+	else if (IsRegexp(name)) {
+		if(!ReSearchInit(name))
+			return;
+		Hud_ReSearch_do(Hud_Elem_Bg);
+		ReSearchDone();
+	} else {
+		if ((elem = Hud_FindElement(name)))
+			Hud_Elem_Bg(elem);
+		else
+			Com_Printf("HudElement \"%s\" not found\n", name);
+	}
+}
+
+void Hud_Elem_Move(hud_element_t *elem)
+{
+	elem->coords[1] += atoi(Cmd_Argv(2));
+	elem->coords[2] += atoi(Cmd_Argv(3));
+}
+
+void Hud262_Move_f(void)
+{
+	hud_element_t *elem;
+	char	*name = Cmd_Argv(1);
+		
+	if (Cmd_Argc() != 4)
+		Com_Printf("Usage: hud_move <name> <dx> <dy>\n");
+	else if (IsRegexp(name)) {
+		if(!ReSearchInit(name))
+			return;
+		Hud_ReSearch_do(Hud_Elem_Move);
+		ReSearchDone();
+	} else {
+		if ((elem = Hud_FindElement(name)))
+			Hud_Elem_Move(elem);	
+		else
+			Com_Printf("HudElement \"%s\" not found\n", name);
+	}
+}
+
+void Hud_Elem_Width(hud_element_t *elem)
+{
+	if (elem->flags & HUD_IMAGE) {
+		mpic_t *pic = elem->contents;
+		int width = atoi(Cmd_Argv(2))*8;
+		int height = width * pic->height / pic->width;
+		pic->height = height;
+		pic->width = width;
+	}
+	elem->width = max(min(atoi(Cmd_Argv(2)), 128), 0);
+}
+
+void Hud_Width_f(void)
+{
+	hud_element_t *elem;
+	char	*name = Cmd_Argv(1);
+
+	if (Cmd_Argc() != 3)
+		Com_Printf("Usage: hud_width <name> <width>\n");
+	else if (IsRegexp(name)) {
+		if(!ReSearchInit(name))
+			return;
+		Hud_ReSearch_do(Hud_Elem_Width);
+		ReSearchDone();
+	} else {
+		if ((elem = Hud_FindElement(name)))
+			Hud_Elem_Width(elem);	
+		else
+			Com_Printf("HudElement \"%s\" not found\n", name);
+	}
+}
+
+#ifdef GLQUAKE
+extern int char_texture;
+
+/*
+void Hud_Elem_Font(hud_element_t *elem)
+{
+	if (elem->flags & HUD_IMAGE)
+		return;
+
+	elem->charset = loadtexture_24bit (Cmd_Argv(2), LOADTEX_CHARS);
+
+}
+
+void Hud_Font_f(void)
+{
+	hud_element_t *elem;
+	char	*name = Cmd_Argv(1);
+		
+	if (Cmd_Argc() != 3)
+		Com_Printf("Usage: hud_font <name> <font>\n");
+	else if (IsRegexp(name)) {
+		if(!ReSearchInit(name))
+			return;
+		Hud_ReSearch_do(Hud_Elem_Font);
+		ReSearchDone();
+	} else {
+		if ((elem = Hud_FindElement(name)))
+			Hud_Elem_Font(elem);	
+		else
+			Com_Printf("HudElement \"%s\" not found\n", name);
+	}
+}*/
+
+void Hud_Elem_Alpha(hud_element_t *elem)
+{
+	float alpha = atof (Cmd_Argv(2));
+	elem->alpha = bound (0, alpha, 1);
+}
+
+void Hud_Alpha_f(void)
+{
+	hud_element_t *elem;
+	char	*name = Cmd_Argv(1);
+
+	if (Cmd_Argc() != 3)
+	{
+		Com_Printf("hud_alpha <name> <value> : set HUD transparency (0..1)\n");
+		return;
+	}
+	if (IsRegexp(name)) {
+		if(!ReSearchInit(name))
+			return;
+		Hud_ReSearch_do(Hud_Elem_Alpha);
+		ReSearchDone();
+	} else {
+		if ((elem = Hud_FindElement(name)))
+			Hud_Elem_Alpha(elem);
+		else
+			Com_Printf("HudElement \"%s\" not found\n", name);
+	}
+}
+#endif
+
+void Hud_Elem_Blink(hud_element_t *elem)
+{
+	double		blinktime;
+	unsigned	mask;
+
+	blinktime = atof(Cmd_Argv(2))/1000.0;
+	mask = atoi(Cmd_Argv(3));
+
+	if (mask < 0 || mask > 3) return; // bad mask
+	if (blinktime < 0.0 || blinktime > 5.0) return;
+
+	elem->blink = blinktime;
+	elem->flags = (elem->flags & (~(HUD_BLINK_F | HUD_BLINK_B))) | (mask << 3);
+}
+
+void Hud_Blink_f(void)
+{
+	hud_element_t *elem;
+	char	*name = Cmd_Argv(1);
+		
+	if (Cmd_Argc() != 4)
+		Com_Printf("Usage: hud_blink <name> <ms> <mask>\n");
+	else if (IsRegexp(name)) {
+		if(!ReSearchInit(name))
+			return;
+		Hud_ReSearch_do(Hud_Elem_Blink);
+		ReSearchDone();
+	} else {
+		if ((elem = Hud_FindElement(name)))
+			Hud_Elem_Blink(elem);	
+		else
+			Com_Printf("HudElement \"%s\" not found\n", name);
+	}
+}
+
+void Hud_Elem_Disable(hud_element_t *elem)
+{
+	elem->flags &= ~HUD_ENABLED;
+}
+
+void Hud_Disable_f(void)
+{
+	hud_element_t	*elem;
+	char			*name;
+	int				i;
+
+	for (i=1; i<Cmd_Argc(); i++) {	
+		name = Cmd_Argv(i);
+		if (IsRegexp(name)) {
+			if(!ReSearchInit(name))
+				return;
+			Hud_ReSearch_do(Hud_Elem_Disable);
+			ReSearchDone();
+		} else {
+			if ((elem = Hud_FindElement(name)))
+				Hud_Elem_Disable(elem);	
+			else
+				Com_Printf("HudElement \"%s\" not found\n", name);
+		}
+	}
+}
+
+void Hud_Elem_Enable(hud_element_t *elem)
+{
+	elem->flags |= HUD_ENABLED;
+}
+
+void Hud_Enable_f(void)
+{
+	hud_element_t	*elem;
+	char			*name;
+	int				i;
+
+	for (i=1; i<Cmd_Argc(); i++) {	
+		name = Cmd_Argv(i);
+		if (IsRegexp(name)) {
+			if(!ReSearchInit(name))
+				return;
+			Hud_ReSearch_do(Hud_Elem_Enable);
+			ReSearchDone();
+		} else {
+			if ((elem = Hud_FindElement(name)))
+				Hud_Elem_Enable(elem);	
+			else
+				Com_Printf("HudElement \"%s\" not found\n", name);
+		}
+	}
+}
+
+void Hud_List_f(void)
+{
+	hud_element_t	*elem;
+	char			*type;
+	char			*param;
+	int				c, i, m;
+
+	c = Cmd_Argc();
+	if (c>1)
+		if (!ReSearchInit(Cmd_Argv(1)))
+			return;
+
+	Com_Printf ("List of hud elements:\n");
+	for(elem=hud_list, i=m=0; elem; elem = elem->next, i++) {
+		if (c==1 || ReSearchMatch(elem->name)) {
+			if (elem->flags & HUD_CVAR) {
+				type = "cvar";
+				param = ((cvar_t*)elem->contents)->name;
+			} else if (elem->flags & HUD_STRING) {
+				type = "str";
+				param = elem->contents;
+			} else if (elem->flags & HUD_FUNC) {
+				type = "std";
+				param = "***";
+			} else if (elem->flags & HUD_IMAGE) {
+				type = "img";
+				param = "***";
+			} else {
+				type = "invalid type";
+				param = "***";
+			}
+			m++;
+			Com_Printf("%s : %s : %s\n", elem->name, type, param);
+		}
+	}
+	
+	Com_Printf ("------------\n%i/%i hud elements\n", m, i);
+	if (c>1)
+		ReSearchDone();
+}
+
+void Hud_BringToFront_f(void)
+{
+	hud_element_t *elem, *start, *end;
+
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: hud_bringtofront <name>\n");
+		return;
+	}
+
+	end = Hud_FindElement(Cmd_Argv(1));
+	if (end) {
+		if (end->next) {
+			start = hud_list;
+			hud_list = end->next;
+			end->next = NULL;
+			for(elem=hud_list; elem->next; elem = elem->next) {}
+			elem->next = start;
+		}
+	} else {
+		Com_Printf("HudElement \"%s\" not found\n", Cmd_Argv(1));
+	}
+}
+
+/*void Hud_Hover_f (void)
+{
+	hud_element_t *elem;
+
+	if (Cmd_Argc() != 3) {
+		Com_Printf("hud_hover <name> <alias> : call alias when mouse is over hud\n");
+		return;
+	}
+
+	elem = Hud_FindElement(Cmd_Argv(1));
+	if (elem) {
+		if (elem->f_hover)
+			Z_Free (elem->f_hover);
+		elem->f_hover = Z_StrDup (Cmd_Argv(2));
+	} else {
+		Com_Printf("HudElement \"%s\" not found\n", Cmd_Argv(1));
+	}
+}
+
+void Hud_Button_f (void)
+{
+	hud_element_t *elem;
+
+	if (Cmd_Argc() != 3) {
+		Com_Printf("hud_button <name> <alias> : call alias when mouse button pressed on hud\n");
+		return;
+	}
+
+	elem = Hud_FindElement(Cmd_Argv(1));
+	if (elem) {
+		if (elem->f_button)
+			Z_Free (elem->f_button);
+		elem->f_button = Z_StrDup (Cmd_Argv(2));
+	} else {
+		Com_Printf("HudElement \"%s\" not found\n", Cmd_Argv(1));
+	}
+}*/
+
+qboolean Hud_TranslateCoords (hud_element_t *elem, int *x, int *y)
+{
+	int l;
+
+	if (!elem->scr_width || !elem->scr_height)
+		return false;
+
+	l = elem->scr_width / 8;
+
+	switch (elem->coords[0]) {
+		case 1:	*x = elem->coords[1]*8 + 1;					// top left
+				*y = elem->coords[2]*8;
+				break;
+		case 2:	*x = vid.conwidth - (elem->coords[1] + l)*8 -1;	// top right
+				*y = elem->coords[2]*8;
+				break;
+		case 3:	*x = vid.conwidth - (elem->coords[1] + l)*8 -1;	// bottom right
+				*y = vid.conheight - sb_lines - (elem->coords[2]+1)*8;
+				break;
+		case 4:	*x = elem->coords[1]*8 + 1;					// bottom left
+				*y = vid.conheight - sb_lines - (elem->coords[2]+1)*8;
+				break;
+		case 5:	*x = vid.conwidth / 2 - l*4 + elem->coords[1]*8;// top center
+				*y = elem->coords[2]*8;
+				break;
+		case 6:	*x = vid.conwidth / 2 - l*4 + elem->coords[1]*8;// bottom center
+				*y = vid.conheight - sb_lines - (elem->coords[2]+1)*8;
+				break;
+		default:
+				return false;
+	}
+	return true;
+}
+
+void SCR_DrawHud (void)
+{
+	hud_element_t*	elem;
+	int			x,y,l;
+	char			buf[256];
+	char			*st = NULL;
+	Hud_Func		func;
+	double			tblink = 0;
+	mpic_t			*img = NULL;
+
+	if (hud_list && cl_hud.value && !cls.demoplayback && !cl.spectator) {
+
+		for (elem = hud_list; elem; elem=elem->next) {
+			if (!(elem->flags & HUD_ENABLED)) continue; // do not draw disabled elements
+
+			elem->scr_height = 8;
+		
+			if (elem->flags & HUD_CVAR) {
+				st = ((cvar_t*)elem->contents)->string;
+				strlcpy (buf, st, sizeof(buf));
+				st = buf;
+				l = strlen (st);
+			} else if (elem->flags & HUD_STRING) {
+				Cmd_ExpandString(elem->contents, buf); //, sizeof(buf));
+				st = TP_ParseMacroString(buf);
+				st = TP_ParseFunChars(st, false);
+				l = strlen(st);
+			} else if (elem->flags & HUD_FUNC) {
+				func = elem->contents;
+				st =(*func)();
+				l = strlen(st);
+			/*} else if (elem->flags & HUD_IMAGE) {
+				img = (mpic_t*)elem->contents;
+				l = img->width/8;
+				elem->scr_height = img->height;*/
+			} else
+				continue;
+
+			if (elem->width && !(elem->flags & (HUD_FUNC|HUD_IMAGE))){
+				if (elem->width < l) {
+					l = elem->width;
+					st[l] = '\0';
+				} else {
+					while (elem->width > l) {
+						st[l++] = ' ';
+					}
+					st[l] = '\0';
+				}
+			}
+			elem->scr_width = l*8;
+
+			if (!Hud_TranslateCoords (elem, &x, &y))
+				continue;
+
+			if (elem->flags & (HUD_BLINK_B|HUD_BLINK_F))
+				tblink = fmod(cls.realtime, elem->blink)/elem->blink;
+
+			if (!(elem->flags & HUD_BLINK_B) || tblink < 0.5)
+				if (elem->coords[3])
+				{
+#ifdef GLQUAKE
+					if (elem->alpha < 1)
+						Draw_AlphaFill(x, y, elem->scr_width, elem->scr_height, (unsigned char)elem->coords[3], elem->alpha);
+					else
+#endif
+						Draw_Fill(x, y, elem->scr_width, elem->scr_height, (unsigned char)elem->coords[3]);
+				}
+			if (!(elem->flags & HUD_BLINK_F) || tblink < 0.5)
+			{
+				if (!(elem->flags & HUD_IMAGE))
+				{
+#ifdef GLQUAKE
+					extern int char_texture;
+					int std_charset = char_texture;
+					if (elem->charset)
+						char_texture = elem->charset;
+					if (elem->alpha < 1)
+						Draw_AlphaString (x, y, st, elem->alpha);
+					else
+#endif
+						Draw_String (x, y, st);
+#ifdef GLQUAKE
+					char_texture = std_charset;
+#endif
+				}
+				else
+#ifdef GLQUAKE
+					if (elem->alpha < 1)
+						Draw_AlphaPic (x, y, img, elem->alpha);
+					else
+#endif
+						Draw_Pic (x, y, img);
+			}
+		}
+	}
+// Draw Input
+/*	if (key_dest == key_message && chat_team == 100) {
+		extern float	con_cursorspeed;
+		extern int	chat_bufferpos;
+
+		int	i,j;
+		char	*s;
+		char	t;
+
+		x = input.x*8 + 1; // top left
+		y = input.y*8;
+	
+		if (input.bg)
+			Draw_Fill(x, y, input.len*8, 8, input.bg);
+
+		s = chat_buffer[chat_edit];
+		t = chat_buffer[chat_edit][chat_bufferpos];
+		i = chat_bufferpos;
+
+		if (chat_bufferpos > (input.len - 1)) {
+			s += chat_bufferpos - (input.len -1);
+			i = input.len - 1;
+		}
+
+		j = 0;
+		while(s[j] && j<input.len)	{
+			Draw_Character ( x+(j<<3), y, s[j]);
+			j++;
+		}
+		Draw_Character ( x+(i<<3), y, 10+((int)(cls.realtime*con_cursorspeed)&1));
+	}*/
+
+}
+
+qboolean Hud_CheckBounds (hud_element_t *elem, int x, int y)
+{
+	int hud_x, hud_y, con_x, con_y;
+
+	con_x = VID_ConsoleX (x);
+	con_y = VID_ConsoleY (y);
+
+	if (!Hud_TranslateCoords (elem, &hud_x, &hud_y))
+		return false;
+
+	if (con_x < hud_x || con_x >= (hud_x + elem->scr_width))
+		return false;
+	if (con_y < hud_y || con_y >= (hud_y + elem->scr_height))
+		return false;
+
+	return true;
+}
+
+/*void Hud_MouseEvent (int x, int y, int buttons)
+{
+	int mouse_buttons = 5;
+	static int old_x, old_y, old_buttons;
+	hud_element_t	*elem;
+	int i;
+
+	for (i=0 ; i < mouse_buttons ; i++)
+	{
+		if ((buttons & (1<<i)) && !(old_buttons & (1<<i)))
+			break;
+	}
+	if (i < mouse_buttons)
+		++i;
+	else
+		i = 0;
+
+	for (elem = hud_list; elem; elem = elem->next)
+	{
+		if (!(elem->flags & HUD_ENABLED) || !elem->f_hover || !elem->f_button
+			|| !elem->scr_width || !elem->scr_height)
+			continue;
+
+		if (Hud_CheckBounds (elem, x, y))
+		{
+			if (elem->f_hover && !Hud_CheckBounds (elem, old_x, old_y))
+				Cbuf_AddText (va("%s 1 %s\n", elem->f_hover, elem->name));
+			if (i && elem->f_button)
+				Cbuf_AddText (va("%s %d %s\n", elem->f_button, i, elem->name));
+		}
+		else if (elem->f_hover && Hud_CheckBounds (elem, old_x, old_y))
+			Cbuf_AddText (va("%s 0 %s\n", elem->f_hover, elem->name));
+	}
+	old_x = x;
+	old_y = y;
+	old_buttons = buttons;
+}*/
+#endif
 /********************************* TILE CLEAR *********************************/
 
 #ifdef GLQUAKE
@@ -953,6 +1744,11 @@ void SCR_DrawElements(void) {
 				SCR_DrawGameClock ();
 				SCR_DrawDemoClock ();
 				SCR_DrawFPS ();
+#ifdef DEBUG
+				// QW262 -->
+				SCR_DrawHud ();
+				// <-- QW262
+#endif
 				MVD_Screen ();
 
 #ifdef GLQUAKE
@@ -1724,6 +2520,10 @@ void SCR_Init (void) {
 	Cvar_Register (&scr_autoid);
 	Cvar_Register (&scr_coloredText);
 
+// QW262 -->
+	Cvar_Register (&cl_hud);
+// <--QW262
+
 	// START shaman RFE 1022309
 	Cvar_Register (&scr_tracking);
 	Cvar_Register (&scr_spectatorMessage);
@@ -2083,3 +2883,31 @@ void SCR_DrawStatusMultiview(void) {
 		Draw_Fill(0,vid.height/2,vid.width-0,1,c2); // oppymv 300804
 	}
 }
+
+// QW262 -->
+#ifdef DEBUG
+void Hud_262Init (void)
+{
+//
+// register hud commands
+//
+	Cmd_AddCommand ("hud_add",Hud_Add_f);
+	Cmd_AddCommand ("hud_remove",Hud_Remove_f);
+	Cmd_AddCommand ("hud_position",Hud_Position_f);
+	Cmd_AddCommand ("hud_bg",Hud_Bg_f);
+	Cmd_AddCommand ("hud_move",Hud262_Move_f);
+	Cmd_AddCommand ("hud_width",Hud_Width_f);
+#ifdef GLQUAKE
+	//Cmd_AddCommandTrig ("hud_font",Hud_Font_f);
+	Cmd_AddCommand ("hud_alpha",Hud_Alpha_f);
+#endif
+	Cmd_AddCommand ("hud_blink",Hud_Blink_f);
+	Cmd_AddCommand ("hud_disable",Hud_Disable_f);
+	Cmd_AddCommand ("hud_enable",Hud_Enable_f);
+	Cmd_AddCommand ("hud_list",Hud_List_f);
+	Cmd_AddCommand ("hud_bringtofront",Hud_BringToFront_f);
+//	Cmd_AddCommand ("hud_hover",);
+//	Cmd_AddCommand ("hud_button",Hud_Button_f);
+}
+#endif
+// <-- QW262

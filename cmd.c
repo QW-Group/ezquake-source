@@ -361,12 +361,41 @@ void Cmd_Exec_f (void) {
 }
 
 //Just prints the rest of the line to the console
-void Cmd_Echo_f (void) {
+/*void Cmd_Echo_f (void) {
 	int i;
 
 	for (i = 1; i < Cmd_Argc(); i++)
 		Com_Printf ("%s ", Cmd_Argv(i));
 	Com_Printf ("\n");
+}*/
+void Cmd_Echo_f (void) {
+#ifdef SERVERONLY
+	Com_Printf ("%s\n",Cmd_Args());
+#else	
+	int	i;
+	char	*str;
+	char	args[MAX_MACRO_STRING];
+	char	buf[MAX_MACRO_STRING];
+
+
+	args[0]='\0';
+
+	str = Q_strcat(args, Cmd_Argv(1));
+	for (i=2 ; i<Cmd_Argc() ; i++) {
+		str = Q_strcat(str, " ");
+		str = Q_strcat(str, Cmd_Argv(i));
+	}
+
+//	str = TP_ParseMacroString(args);
+
+	str = TP_ParseMacroString(args);
+	str = TP_ParseFunChars(str, false);
+
+	strcpy(buf,str);
+	CL_SearchForReTriggers (buf, RE_PRINT_ECHO); 	// BorisU
+	Print_flags[Print_current] |= PR_TR_SKIP;
+	Com_Printf ("%s\n", buf);
+#endif
 }
 
 /*
@@ -580,7 +609,7 @@ void Cmd_Alias_f (void) {
 	strcpy (a->name, s);
 
 	a->flags = 0;
-// qw262 -->
+// QW262 -->
 	s=Cmd_MakeArgs(2);
 	while (*s) {
 		if (*s == '%' && ( s[1]>='0' || s[1]<='9')) {
@@ -589,7 +618,7 @@ void Cmd_Alias_f (void) {
 		}
 		++s;
 	}
-// <-- qw262
+// <-- QW262
 	if (!Q_strcasecmp(Cmd_Argv(0), "aliasa"))
 		a->flags |= ALIAS_ARCHIVE;
 
@@ -1212,7 +1241,7 @@ char *msgtrigger_commands[] = {
 	"play", "playvol", "stopsound", "set", "echo", "say", "say_team",
 		"alias", "unalias", "msg_trigger", "inc", "bind", "unbind", "record",
 		"easyrecord", "stop", "if", "wait", "log", "match_forcestart",
-		 "dns", "addserver", NULL
+		 "dns", "addserver", "connect", "join", "observe", NULL
 };
 
 char *formatted_comms_commands[] = {
@@ -1304,7 +1333,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text) {
 checkaliases:
 	if ((a = Cmd_FindAlias(cmd_argv[0]))) {
 
-// qw262 -->
+// QW262 -->
 			if (a->value[0]=='\0') goto done; // alias is empty.
 
 			if(a->flags & ALIAS_HAS_PARAMETERS) { // %parameters are given in alias definition
@@ -1346,7 +1375,7 @@ checkaliases:
 
 			} else  // alias has no parameters
 				p = a->value;
-// <-- qw262
+// <-- QW262
 
 #ifndef SERVERONLY
 		if (cbuf_current == &cbuf_svc)
@@ -1406,6 +1435,9 @@ static qboolean is_numeric (char *c) {
 		(*c == '.' && isdigit((int)(unsigned char)c[1])) );
 }
 
+void Re_Trigger_Copy_Subpatterns (char *s, int* offsets, int num, cvar_t *re_sub); // QW262
+extern cvar_t re_sub[10]; // QW262
+
 void Cmd_If_f (void) {
 	int	i, c;
 	char *op, buf[1024] = {0};
@@ -1439,9 +1471,36 @@ void Cmd_If_f (void) {
 	} else if (!strcmp(op, "!isin")) {
 		result = (strstr(Cmd_Argv(3), Cmd_Argv(1)) ? 0 : 1);
 
+	} else if (!strcmp(op, "=~") || !strcmp(op, "!~")) {
+		pcre*		regexp;
+		const char	*error;
+		int		error_offset;
+		int		rc;
+		int		offsets[99];
+
+		regexp = pcre_compile (Cmd_Argv(3), 0, &error, &error_offset, NULL);
+		if (!regexp)
+		{
+			Com_Printf ("Error in regexp: %s\n", error);
+			return;
+		}
+		rc = pcre_exec (regexp, NULL, Cmd_Argv(1), strlen(Cmd_Argv(1)),
+						0, 0, offsets, 99);
+		if (rc >= 0)
+		{
+			Re_Trigger_Copy_Subpatterns (Cmd_Argv(1), offsets, min(rc, 10), re_sub);
+			result = true;
+		}
+		else
+			result = false;
+
+		if (op[0] != '=')
+			result = !result;
+
+		pcre_free (regexp);
 	} else {
 		Com_Printf ("unknown operator: %s\n", op);
-		Com_Printf ("valid operators are ==, =, !=, <>, >, <, >=, <=, isin, !isin\n");
+		Com_Printf ("valid operators are ==, =, !=, <>, >, <, >=, <=, isin, !isin, =~, !~\n");
 		return;
 	}
 

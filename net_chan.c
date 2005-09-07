@@ -257,13 +257,17 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data) {
 		chan->cleartime = curtime;
 #endif
 
-	if (showpackets.value)
+	if (showpackets.value){
+#ifndef SERVERONLY
+		Print_flags[Print_current] |= PR_TR_SKIP;
+#endif
 		Com_Printf ("--> s=%i(%i) a=%i(%i) %i\n"
 			, chan->outgoing_sequence
 			, send_reliable
 			, chan->incoming_sequence
 			, chan->incoming_reliable_sequence
 			, send.cursize);
+	}
 
 }
 
@@ -287,22 +291,30 @@ qboolean Netchan_Process (netchan_t *chan) {
 	sequence &= ~(1 << 31);	
 	sequence_ack &= ~(1 << 31);	
 
-	if (showpackets.value)
+	if (showpackets.value){
+#ifndef SERVERONLY
+		Print_flags[Print_current] |= PR_TR_SKIP;
+#endif
 		Com_Printf ("<-- s=%i(%i) a=%i(%i) %i\n"
 			, sequence
 			, reliable_message
 			, sequence_ack
 			, reliable_ack
 			, net_message.cursize);
+	}
 
 	// discard stale or duplicated packets
 	if (sequence <= (unsigned)chan->incoming_sequence) {
-		if (showdrop.value)
+		if (showdrop.value){
+#ifndef SERVERONLY
+			Print_flags[Print_current] |= PR_TR_SKIP;
+#endif
 			Com_Printf ("%s:Out of order packet %i at %i\n"
 				, NET_AdrToString (chan->remote_address)
 				,  sequence
 				, chan->incoming_sequence);
 		return false;
+		}
 	}
 
 	// dropped packets don't keep the message from being used
@@ -310,11 +322,15 @@ qboolean Netchan_Process (netchan_t *chan) {
 	if (chan->dropped > 0) {
 		chan->drop_count += 1;
 
-		if (showdrop.value)
+		if (showdrop.value) {
+#ifndef SERVERONLY
+			Print_flags[Print_current] |= PR_TR_SKIP;
+#endif
 			Com_Printf ("%s:Dropped %i packets at %i\n"
 			, NET_AdrToString (chan->remote_address)
 			, chan->dropped
 			, sequence);
+		}
 	}
 
 	// if the current outgoing reliable message has been acknowledged

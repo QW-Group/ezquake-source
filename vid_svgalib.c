@@ -813,3 +813,20 @@ void VID_LockBuffer (void) {}
 void VID_UnlockBuffer (void) {}
 
 void VID_SetCaption (char *text) {}
+
+// QW262 -->
+/*
+===================
+VID_Console functions map "window" coordinates into "console".
+===================
+*/
+int VID_ConsoleX (int x)
+{
+	return (x * vid.conwidth / VGA_width);
+}
+
+int VID_ConsoleY (int y)
+{
+	return (y * vid.conheight / VGA_height);
+}
+// <-- QW262

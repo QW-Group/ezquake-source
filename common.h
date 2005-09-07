@@ -257,7 +257,14 @@ char  *strnstr (char *s, char *find, size_t slen);
 #endif
 // Added by VVD }
 
-int	Q_atoi (char *str);
+// QW262 -->
+// same as standard functions but
+// return pointer to the end of dest string
+char* Q_strcpy(char* dest, const char* src);
+char* Q_strcat(char* dest, const char* src);
+// <-- QW262
+
+int Q_atoi (char *str);
 float Q_atof (char *str);
 char *Q_ftos (float value);		// removes trailing zero chars
 
@@ -357,6 +364,16 @@ void Com_BeginRedirect (void (*RedirectedPrint) (char *));
 void Com_EndRedirect (void);
 void Com_Printf (char *fmt, ...);
 void Com_DPrintf (char *fmt, ...);
+
+// QW262 -->
+extern unsigned	Print_flags[16];
+extern int	Print_current;
+
+#define		PR_SKIP		1
+#define		PR_LOG_SKIP	2
+#define		PR_TR_SKIP	4
+#define		PR_IS_CHAT	8
+// <-- QW262
 
 //============================================================================
 
