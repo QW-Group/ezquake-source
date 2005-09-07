@@ -88,6 +88,7 @@ void Memory_Init (void *buf, int size);
 void Z_Free (void *ptr);
 void *Z_Malloc (int size);			// returns 0 filled memory
 void *Z_TagMalloc (int size, int tag);
+char *Z_StrDup(const char *str);
 
 void Z_DumpHeap (void);
 void Z_CheckHeap (void);

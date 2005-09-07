@@ -1439,6 +1439,8 @@ static void FlushString (char *s, int level, qboolean team, int offset) {
 
 	strlcpy(white_s, s, 4096);
 
+	CL_SearchForReTriggers (s + offset, 1<<level); // re_triggers
+
 	if (level == PRINT_CHAT)
 	{
 		if ((strstr(s, name.string)) && (con_highlight.value != 0) && (strlen(strstr(s,name.string)) != strlen(s)) )
@@ -2083,15 +2085,19 @@ void CL_Messages_f(void)
 
 void CL_ParseServerMessage (void) {
 	int cmd, i, j;
+	char *s;
 	extern int mvd_fixangle;		
 	int msg_svc_start;
 	int oldread = 0;
 
 
-	if (cl_shownet.value == 1)
+	if (cl_shownet.value == 1) {
+		Print_flags[Print_current] |= PR_TR_SKIP;
 		Com_Printf ("%i ", net_message.cursize);
-	else if (cl_shownet.value == 2)
+	} else if (cl_shownet.value == 2) {
+		Print_flags[Print_current] |= PR_TR_SKIP;
 		Com_Printf ("------------------\n");
+	}
 
 	cls.demomessage.cursize = 0;	
 
@@ -2155,7 +2161,12 @@ void CL_ParseServerMessage (void) {
 			break;
 
 		case svc_centerprint:
-			SCR_CenterPrint (MSG_ReadString ());
+			// SCR_CenterPrint (MSG_ReadString ());
+			// Centerprint re-triggers
+			s = MSG_ReadString();
+			if(!CL_SearchForReTriggers (s, RE_PRINT_CENTER)) 
+				SCR_CenterPrint (s);
+			Print_flags[Print_current] = 0;
 			break;
 
 		case svc_stufftext:

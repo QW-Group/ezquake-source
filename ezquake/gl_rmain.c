@@ -1592,6 +1592,7 @@ void R_RenderView (void) {
 
 	if (r_speeds.value) {
 		time2 = Sys_DoubleTime ();
+		Print_flags[Print_current] |= PR_TR_SKIP;
 		Com_Printf ("%3i ms  %4i wpoly %4i epoly\n", (int)((time2 - time1) * 1000), c_brush_polys, c_alias_polys); 
 	}
 }

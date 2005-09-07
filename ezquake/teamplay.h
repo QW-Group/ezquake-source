@@ -24,12 +24,35 @@
 		Boston, MA  02111-1307, USA
 */
 
+#include "pcre.h"
+
 extern cvar_t cl_parsesay;
 extern cvar_t cl_nofake;
 extern cvar_t cl_teamskin, cl_enemyskin, cl_teamquadskin, cl_enemyquadskin;
 extern cvar_t cl_teampentskin, cl_enemypentskin, cl_teambothskin, cl_enemybothskin;
 extern cvar_t snd_trigger;
 
+typedef struct pcre_trigger_s {
+	char					*name;
+	char					*regexpstr;
+	struct pcre_trigger_s*	next;
+	pcre*					regexp;
+	pcre_extra*				regexp_extra;
+	unsigned				flags;
+	float					min_interval;
+	double					lasttime;
+	int						counter;
+} pcre_trigger_t;
+
+typedef void internal_trigger_func(char *s);
+
+typedef struct pcre_internal_trigger_s {
+	struct pcre_internal_trigger_s		*next;
+	pcre					*regexp;
+	pcre_extra				*regexp_extra;
+	internal_trigger_func			*func;
+	unsigned				flags;
+} pcre_internal_trigger_t;
 
 typedef struct item_vis_s {
 	vec3_t	vieworg;
@@ -42,7 +65,39 @@ typedef struct item_vis_s {
 	float	dist;		
 } item_vis_t;
 
+
+#define		RE_PRINT_LOW		1
+#define		RE_PRINT_NEDIUM		2
+#define		RE_PRINT_HIGH		4
+#define		RE_PRINT_CHAT		8
+#define		RE_PRINT_CENTER		16
+#define		RE_PRINT_ECHO		32
+#define		RE_PRINT_INTERNAL	64
+
+// all of the above except internal
+#define		RE_PRINT_ALL		31
+
+// do not look for other triggers if matching is succesful
+#define		RE_FINAL		256
+// do not display string if matching is uccesful
+#define		RE_REMOVESTR		512
+// do not log string if matching is succesful
+#define		RE_NOLOG		1024
+// trigger is enabled
+#define		RE_ENABLED		2048
+// do not call alias
+#define		RE_NOACTION		4096
+
 qboolean TP_IsItemVisible(item_vis_t *visitem);
+
+
+// re-triggers
+void TP_InitReTriggers();
+qboolean CL_SearchForReTriggers (char *s, unsigned trigger_type);
+// if true, string should not be displayed
+pcre_trigger_t *CL_FindReTrigger (char *name);
+void CL_RE_Trigger_ResetLasttime (void);
+
 
 // triggers
 void TP_ExecTrigger (char *s);
@@ -92,7 +147,26 @@ extern char *skinforcing_team;
 void TP_Init (void);
 
 //#define FPD_NO_TEAM_MACROS	1
+#define FPS_NO_TIMERS		2
+#define FPD_NO_SOUNDTRIGGERS	4 // disables triggers
 #define FPD_NO_FORCE_SKIN	256
 #define FPD_NO_FORCE_COLOR	512
 #define FPD_LIMIT_PITCH		(1 << 14)
 #define FPD_LIMIT_YAW		(1 << 15)
+
+/*fpd values from qizmo.txt
+  1 = Disable %-reporting
+  2 = Disable use of powerup timer (obsolete in v2.55)
+  4 = Disable use of soundtrigger
+  8 = Disable use of lag features
+ 16 = Make Qizmo report any changes in lag settins
+ 32 = Silent %e enemy vicinity reporting (reporter doesn't see the message)
+      (always on in v2.55)
+ 64 = Spectators can't talk to players and vice versa (voice)
+128 = Silent %x and %y (reporter doesn't see the message) (always on in v2.8)
+256 = Disable skin forcing
+512 = Disable color forcing
+*/
+
+#define MAX_LOC_NAME		64
+#define MAX_MACRO_STRING 	2048

@@ -1029,6 +1029,9 @@ void CL_Init (void) {
 	CL_InitCam ();
 	Rulesets_Init();
 	TP_Init ();
+#ifdef DEBUG
+	Hud_262Init();
+#endif
 	Sbar_Init ();
 	M_Init ();
 

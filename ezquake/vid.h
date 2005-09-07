@@ -90,3 +90,18 @@ void VID_SetCaption (char *text);
 
 void VID_SetDeviceGammaRamp (unsigned short *ramps);
 extern qboolean vid_hwgamma_enabled;
+
+// QW262 -->
+#ifdef GLQUAKE
+// these macros map "window" coordinates into "console"
+#define VID_ConsoleX(x)		((x) * vid.conwidth / glwidth)
+#define VID_ConsoleY(y)		((y) * vid.conheight / glheight)
+
+#else // !GLQUAKE
+
+int VID_ConsoleX (int x);
+int VID_ConsoleY (int y);
+
+#endif
+
+// <-- QW262

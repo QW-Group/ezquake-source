@@ -465,24 +465,29 @@ void Con_Print (char *txt) {
 	int y, c, l, mask;
 	static int cr;
 
-	if (qconsole_log) {
-		fprintf(qconsole_log, "%s", txt);
-		fflush(qconsole_log);
-	}
-	if (Log_IsLogging()) {
-		if (log_readable.value) {
-			char *s, *tempbuf;
-
-			tempbuf = Z_Malloc(strlen(txt) + 1);
-			strcpy(tempbuf, txt);
-			for (s = tempbuf; *s; s++)
-				*s = readableChars[(unsigned char) *s];
-			Log_Write(tempbuf);
-			Z_Free(tempbuf);	
-		} else {
-			Log_Write(txt);	
+	if (!(Print_flags[Print_current] & PR_LOG_SKIP)) {
+		if (qconsole_log) {
+			fprintf(qconsole_log, "%s", txt);
+			fflush(qconsole_log);
+		}
+		if (Log_IsLogging()) {
+			if (log_readable.value) {
+				char *s, *tempbuf;
+	
+				tempbuf = Z_Malloc(strlen(txt) + 1);
+				strcpy(tempbuf, txt);
+				for (s = tempbuf; *s; s++)
+					*s = readableChars[(unsigned char) *s];
+				Log_Write(tempbuf);
+				Z_Free(tempbuf);	
+			} else {
+				Log_Write(txt);	
+			}
 		}
 	}
+
+	if ((Print_flags[Print_current] & PR_SKIP))
+		return;
 
 	if (!con_initialized || con_suppress)
 		return;

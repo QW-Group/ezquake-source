@@ -230,7 +230,8 @@ void Cvar_Set (cvar_t *var, char *value) {
 		changing = false;
 	}
 
-	Z_Free (var->string);	// free the old value string
+	if (var->string)
+		Z_Free (var->string);	// free the old value string
 
 	var->string = CopyString (value);
 	var->value = Q_atof (var->string);
@@ -705,7 +706,7 @@ void Cvar_Seta_f (void) {
 	cvar_seta = false;
 }
 
-// --> from qw262
+// QW262 -->
 
 void Cvar_Set_Calc_f(void)
 {
@@ -852,7 +853,7 @@ void Cvar_Set_Calc_f(void)
 	Cvar_SetValue (var, result);
 }
 
-// <-- from qw262
+// <-- QW262
 
 
 void Cvar_Inc_f (void) {

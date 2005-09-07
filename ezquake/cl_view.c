@@ -70,7 +70,7 @@ cvar_t	crosshairsize	= {"crosshairsize", "1"};
 cvar_t  cl_crossx = {"cl_crossx", "0", CVAR_ARCHIVE};
 cvar_t  cl_crossy = {"cl_crossy", "0", CVAR_ARCHIVE};
 
-// from qw262: less flash grenade effect in demos
+// QW262: less flash grenade effect in demos
 cvar_t	cl_demoplay_flash = {"cl_demoplay_flash", "1", CVAR_ARCHIVE};
 
 cvar_t  v_contentblend = {"v_contentblend", "0.33"};
@@ -1090,7 +1090,7 @@ void V_Init (void) {
 	Cvar_Register (&v_suitcshift);
 	Cvar_Register (&v_ringcshift);
 	Cvar_Register (&v_pentcshift);
-	Cvar_Register (&cl_demoplay_flash); // from qw262
+	Cvar_Register (&cl_demoplay_flash); // from QW262
 
 #ifdef GLQUAKE
 	Cvar_Register (&v_dlightcshift);

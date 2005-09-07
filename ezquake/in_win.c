@@ -311,6 +311,7 @@ void IN_SMouseRead(int *mx,	int	*my) {
 					   m_history_x[(m_history_x_rseq - 2) &	M_HIST_MASK].time;
 
 			if (t >	0.001)
+				Print_flags[Print_current] |= PR_TR_SKIP;
 				Com_Printf("mouse rate: %3d\n",	(int)(1	/ t));
 
 			last_wseq_printed =	m_history_x_wseq;

@@ -700,7 +700,7 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up) {
 				//Com_Printf ("%3i %3i %s\n", ch->leftvol, ch->rightvol, ch->sfx->name);
 				total++;
 			}
-
+		Print_flags[Print_current] |= PR_TR_SKIP;
 		Com_Printf ("----(%i)----\n", total);
 	}
 

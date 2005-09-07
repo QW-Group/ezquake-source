@@ -404,6 +404,7 @@ void R_PrintTimes (void) {
 
 	ms = 1000 * (r_time2 - r_time1);
 	
+	Print_flags[Print_current] |= PR_TR_SKIP;
 	Com_Printf ("%5.1f ms %3i/%3i/%3i poly %3i surf\n", ms, c_faceclip, r_polycount, r_drawnpolycount, c_surf);
 	c_surf = 0;
 }
@@ -421,11 +422,13 @@ void R_PrintDSpeeds (void) {
 	dv_time = (dv_time2 - dv_time1) * 1000;
 	ms = (r_time2 - r_time1) * 1000;
 
+	Print_flags[Print_current] |= PR_TR_SKIP;
 	Com_Printf ("%3i %4.1fp %3iw %4.1fb %3is %4.1fe %4.1fv\n",
 				(int)ms, dp_time, (int)rw_time, db_time, (int)se_time, de_time, dv_time);
 }
 
 void R_PrintAliasStats (void) {
+	Print_flags[Print_current] |= PR_TR_SKIP;
 	Com_Printf ("%3i polygon model drawn\n", r_amodels_drawn);
 }
 
@@ -501,6 +504,7 @@ void R_SetupFrame (void) {
 	if (r_numsurfs.value) {
 		if ((surface_p - surfaces) > r_maxsurfsseen) r_maxsurfsseen = surface_p - surfaces;
 
+		Print_flags[Print_current] |= PR_TR_SKIP;
 		Com_Printf ("Used %d of %d surfs; %d max\n", surface_p - surfaces, surf_max - surfaces, r_maxsurfsseen);
 	}
 
@@ -510,6 +514,7 @@ void R_SetupFrame (void) {
 		if (edgecount > r_maxedgesseen)
 			r_maxedgesseen = edgecount;
 
+		Print_flags[Print_current] |= PR_TR_SKIP;
 		Com_Printf ("Used %d of %d edges; %d max\n", edgecount, r_numallocatededges, r_maxedgesseen);
 	}
 
