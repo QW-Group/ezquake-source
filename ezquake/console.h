@@ -39,12 +39,12 @@ typedef struct
 
 extern	console_t	con;
 
-extern  qboolean    con_addtimestamp;
+extern  qbool    con_addtimestamp;
 
 extern	int			con_ormask;
 
 extern int con_totallines;
-extern qboolean con_initialized, con_suppress;
+extern qbool con_initialized, con_suppress;
 extern	int	con_notifylines;		// scan lines to clear for notify lines
 
 void Con_CheckResize (void);

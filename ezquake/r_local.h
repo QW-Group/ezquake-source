@@ -111,7 +111,7 @@ extern int	vstartscan;
 //
 // current entity info
 //
-extern	qboolean		insubmodel;
+extern	qbool		insubmodel;
 
 
 void R_DrawSprite (void);
@@ -232,8 +232,8 @@ extern float	dp_time1, dp_time2, db_time1, db_time2, rw_time1, rw_time2;
 extern float	se_time1, se_time2, de_time1, de_time2, dv_time1, dv_time2;
 extern int		r_frustum_indexes[4*6];
 extern int		r_maxsurfsseen, r_maxedgesseen, r_cnumsurfs;
-extern qboolean	r_surfsonstack;
-extern qboolean	r_dowarpold, r_viewchanged;
+extern qbool	r_surfsonstack;
+extern qbool	r_dowarpold, r_viewchanged;
 
 extern mleaf_t	*r_viewleaf, *r_oldviewleaf;
 

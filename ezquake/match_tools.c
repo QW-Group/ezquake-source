@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // END shaman RFE 1020608
 
 #define MAX_STATIC_STRING 1024
-qboolean Match_Running ;
+qbool Match_Running ;
 
 
 cvar_t match_format_solo = {"match_format_solo", "solo/%n - [%M]"};
@@ -58,7 +58,7 @@ cvar_t match_name_spec = {"match_name_spec", "(SPEC)"};
 
 int loc_loaded = 0;
 
-static char *MT_CleanString(char *string, qboolean allow_spaces_and_slashes) {
+static char *MT_CleanString(char *string, qbool allow_spaces_and_slashes) {
 	byte *in, *out, c, d, *disallowed;
 	static byte buf[MAX_STATIC_STRING], badchars[] = {' ', '\\', '/', '?', '*', ':', '<', '>', '"', '|'};
 	extern char readableChars[];
@@ -250,7 +250,7 @@ typedef struct matchcvar_s {
 	matchtype_t matchtype;
 	char		*nickname;
 	cvar_t		*format;
-	qboolean	autosshot;
+	qbool	autosshot;
 } matchcvar_t;
 
 static matchcvar_t matchcvars[mt_numtypes] = {
@@ -273,7 +273,7 @@ static matchcvar_t matchcvars[mt_numtypes] = {
 };
 
 typedef struct matchinfo_s {
-	qboolean spectator;
+	qbool spectator;
 	char myname[MAX_INFO_STRING];
 	char player1[MAX_INFO_STRING];
 	char player2[MAX_INFO_STRING];
@@ -592,7 +592,7 @@ cvar_t match_auto_spectating = {"match_auto_spectating", "0"};
 
 
 typedef struct mt_matchtstate_s {
-	qboolean standby;
+	qbool standby;
 	int intermission;
 	int status;
 	float starttime;
@@ -754,7 +754,7 @@ void MT_Match_ForceStart_f(void) {
 
 void MT_TakeScreenshot(void) {
 	int i;
-	qboolean have_opponent;
+	qbool have_opponent;
 
 	if (!match_auto_sshot.value || (cl.spectator && !match_auto_spectating.value))
 		return;
@@ -790,13 +790,13 @@ typedef struct mapgroup_s {
 	char groupname[MAX_QPATH];
 	char members[MAX_GROUP_MEMBERS][MAX_QPATH];
 	struct mapgroup_s *next, *prev;
-	qboolean system;
+	qbool system;
 	int nummembers;
 } mapgroup_t;
 
 static mapgroup_t *mapgroups = NULL;	
 static mapgroup_t *last_system_mapgroup = NULL;
-static qboolean mapgroups_init = false;	
+static qbool mapgroups_init = false;	
 
 #define FIRSTUSERGROUP (last_system_mapgroup ? last_system_mapgroup->next : mapgroups)
 
@@ -893,7 +893,7 @@ static void AddGroupMember(mapgroup_t *group, char *member) {
 
 void MT_MapGroup_f(void) {
 	int i, c, j;
-	qboolean removeflag = false;
+	qbool removeflag = false;
 	mapgroup_t *node, *group, *tempnode;
 	char *groupname, *member;
 
@@ -1020,7 +1020,7 @@ static void MT_AddMapGroups(void) {
 	mapgroups_init = true;
 }
 
-char *MT_GetMapGroupName(char *mapname, qboolean *system) {
+char *MT_GetMapGroupName(char *mapname, qbool *system) {
 	mapgroup_t *group;
 
 	group = GetGroupWithMember(mapname);
@@ -1059,13 +1059,13 @@ typedef struct skygroup_s {
 	char groupname[MAX_QPATH];
 	char members[MAX_SKYGROUP_MEMBERS][MAX_QPATH];
 	struct skygroup_s *next, *prev;
-	qboolean system;
+	qbool system;
 	int nummembers;
 } skygroup_t;
 
 static skygroup_t *skygroups = NULL;	
 static skygroup_t *last_system_skygroup = NULL;
-static qboolean skygroups_init = false;	
+static qbool skygroups_init = false;	
 
 #define FIRSTUSERSKYGROUP (last_system_skygroup ? last_system_skygroup->next : skygroups)
 
@@ -1162,7 +1162,7 @@ static void AddSkyGroupMember(skygroup_t *group, char *member) {
 
 void MT_SkyGroup_f(void) {
 	int i, c, j;
-	qboolean removeflag = false;
+	qbool removeflag = false;
 	skygroup_t *node, *group, *tempnode;
 	char *groupname, *member;
 
@@ -1282,7 +1282,7 @@ static void MT_AddSkyGroups(void) {
 	skygroups_init = true;
 }
 
-char *MT_GetSkyGroupName(char *mapname, qboolean *system) {
+char *MT_GetSkyGroupName(char *mapname, qbool *system) {
 	skygroup_t *group;
 
 	group = GetSkyGroupWithMember(mapname);

@@ -55,10 +55,10 @@ char *Auth_Generate_Crc(void) {
 	return hash;
 }
 
-static qboolean verify_response(int index, unsigned char *hash) {
+static qbool verify_response(int index, unsigned char *hash) {
 	int *n;
 	signed_buffer_t *p;
-	qboolean retval, failsafe = false;
+	qbool retval, failsafe = false;
 
 	if (!Modules_SecurityLoaded())
 		return failsafe;

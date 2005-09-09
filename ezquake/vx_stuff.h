@@ -129,14 +129,14 @@ typedef enum {
 } cameramode_t;
 
 extern cameramode_t cameratype;
-void CameraUpdate (qboolean dead);
+void CameraUpdate (qbool dead);
 void VXGunshot (vec3_t org, float count);
 void VXTeleport (vec3_t org);
 void VXBlobExplosion (vec3_t org);
 void VXExplosion (vec3_t org);
 void VXBlood (vec3_t org, float count);
 void AMFDEBUGTRAIL (vec3_t start, vec3_t end, float time);
-qboolean detailtrails;
+qbool detailtrails;
 void FuelRodGunTrail (vec3_t start, vec3_t end, vec3_t angle, vec3_t *trail_origin);
 void FireballTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[2], float size, float life);
 void FireballTrailWave (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[2], float size, float life, vec3_t angle);

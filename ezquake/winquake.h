@@ -65,7 +65,7 @@ typedef struct {
 
 extern	HINSTANCE	global_hInstance;
 
-extern qboolean		DDActive;
+extern qbool		DDActive;
 
 extern LPDIRECTSOUND		pDS;
 extern LPDIRECTSOUNDBUFFER	pDSBuf;
@@ -76,9 +76,9 @@ typedef enum {MS_WINDOWED, MS_FULLSCREEN, MS_FULLDIB, MS_UNINIT} modestate_t;
 extern modestate_t	modestate;
 
 extern HWND			mainwindow;
-extern qboolean		ActiveApp, Minimized;
+extern qbool		ActiveApp, Minimized;
 
-extern qboolean WinNT, Win2K;
+extern qbool WinNT, Win2K;
 
 void IN_ShowMouse (void);
 void IN_DeactivateMouse (void);

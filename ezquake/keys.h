@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.h,v 1.6 2005-08-28 21:28:52 disconn3ct Exp $
+	$Id: keys.h,v 1.7 2005-09-09 11:00:26 disconn3ct Exp $
 
 */
 
@@ -211,18 +211,18 @@ typedef enum {key_game, key_console, key_message, key_menu} keydest_t;
 extern keydest_t	key_dest;
 extern char 	*keybindings[UNKNOWN + 256];
 extern int		key_repeats[UNKNOWN + 256];
-extern qboolean	keydown[UNKNOWN + 256];
+extern qbool	keydown[UNKNOWN + 256];
 extern int		key_lastpress;
 
 extern char 	chat_buffer[];
 extern int 		chat_linepos;
-extern qboolean	chat_team;
+extern qbool	chat_team;
 
 void History_Init (void);
 void History_Shutdown (void);
 
-void Key_Event (int key, qboolean down);
-void Key_EventEx (int key, int basekey, qboolean down);
+void Key_Event (int key, qbool down);
+void Key_EventEx (int key, int basekey, qbool down);
 void Key_Init (void);
 void Key_WriteBindings (FILE *f);
 void Key_SetBinding (int keynum, char *binding);

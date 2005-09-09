@@ -87,13 +87,13 @@ void QMB_DetpackExplosion (vec3_t org);
 void QMB_InfernoFlame (vec3_t org);
 void QMB_StaticBubble (entity_t *ent);
 
-extern qboolean qmb_initialized;
+extern qbool qmb_initialized;
 
 
 //====================================================
 
 extern	entity_t	r_worldentity;
-extern	qboolean	r_cache_thrash;		// compatability
+extern	qbool	r_cache_thrash;		// compatability
 extern	vec3_t		modelorg, r_entorigin;
 extern	entity_t	*currententity;
 extern	int			r_visframecount;
@@ -195,7 +195,7 @@ extern	const char *gl_extensions;
 void GL_SubdivideSurface (msurface_t *fa);
 void EmitBothSkyLayers (msurface_t *fa);
 void EmitWaterPolys (msurface_t *fa);
-void EmitSkyPolys (msurface_t *fa, qboolean mtex);
+void EmitSkyPolys (msurface_t *fa, qbool mtex);
 void CalcCausticTexCoords(float *v, float *s, float *t);
 void EmitCausticsPolys (void);
 void R_DrawSkyChain (void);
@@ -203,14 +203,14 @@ void R_LoadSky_f(void);
 void R_AddSkyBoxSurface (msurface_t *fa);
 void R_ClearSkyBox (void);
 void R_DrawSkyBox (void);
-extern qboolean	r_skyboxloaded;
+extern qbool	r_skyboxloaded;
 
 // gl_draw.c
 void GL_Set2D (void);
 
 // gl_rmain.c
-qboolean R_CullBox (vec3_t mins, vec3_t maxs);
-qboolean R_CullSphere (vec3_t centre, float radius);
+qbool R_CullBox (vec3_t mins, vec3_t maxs);
+qbool R_CullSphere (vec3_t centre, float radius);
 void R_RotateForEntity (entity_t *e);
 void R_PolyBlend (void);
 void R_BrightenScreen (void);
@@ -281,12 +281,12 @@ extern lpSelTexFUNC qglActiveTexture;
 
 extern float gldepthmin, gldepthmax;
 extern byte color_white[4], color_black[4];
-extern qboolean gl_mtexable;
+extern qbool gl_mtexable;
 extern int gl_textureunits;
-extern qboolean gl_combine, gl_add_ext;
-extern qboolean gl_allow_ztrick;
+extern qbool gl_combine, gl_add_ext;
+extern qbool gl_allow_ztrick;
 
-qboolean CheckExtension (const char *extension);
+qbool CheckExtension (const char *extension);
 void Check_Gamma (unsigned char *pal);
 void VID_SetPalette (unsigned char *palette);
 void GL_Init (void);

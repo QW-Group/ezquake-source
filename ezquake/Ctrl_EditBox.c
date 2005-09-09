@@ -1,7 +1,7 @@
 /*
  * EditBox functions
  *
- *	$Id: Ctrl_EditBox.c,v 1.3 2005-08-12 15:57:21 vvd0 Exp $
+ *	$Id: Ctrl_EditBox.c,v 1.4 2005-09-09 11:00:26 disconn3ct Exp $
  */
 
 
@@ -27,7 +27,7 @@ void CEditBox_Init(CEditBox *e, int width, int max)
     e->text[0] = 0;
 }
 
-void CEditBox_Draw(CEditBox *e, int x, int y, qboolean active)
+void CEditBox_Draw(CEditBox *e, int x, int y, qbool active)
 {
     while (e->pos  >  e->disp + e->width - 1)
         e->disp ++;

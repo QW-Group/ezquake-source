@@ -18,7 +18,7 @@ typedef struct CPageViewer_page_s
 
     int current_line;
     int width;
-    qboolean should_render;
+    qbool should_render;
 
     // current settings
     int last_height;
@@ -33,11 +33,11 @@ typedef struct CPageViewer_s
     CPageViewer_page_t *page;
 
     // options
-    qboolean show_title;
-    qboolean show_status;
+    qbool show_title;
+    qbool show_status;
 
     // navigation mode
-    qboolean navigation_mode;
+    qbool navigation_mode;
     document_rendered_link_t **current_links;
     int current_link_index;
     int current_links_total;
@@ -63,7 +63,7 @@ void CPageViewer_Back(CPageViewer_t *viewer, int level);
 void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h);
 
 // handle keyboard
-qboolean CPageViewer_Key(CPageViewer_t *viewer, int key);
+qbool CPageViewer_Key(CPageViewer_t *viewer, int key);
 
 // clear control
 void CPageViewer_Clear(CPageViewer_t *viewer);

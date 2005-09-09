@@ -112,7 +112,7 @@ int TP_IsAmmoLow(int weapon)
     }
 }
 
-qboolean HUD_HealthLow(void)
+qbool HUD_HealthLow(void)
 {
     if (hud_tp_need.value)
         return TP_IsHealthLow();
@@ -120,7 +120,7 @@ qboolean HUD_HealthLow(void)
         return HUD_Stats(STAT_HEALTH) <= 25;
 }
 
-qboolean HUD_ArmorLow(void)
+qbool HUD_ArmorLow(void)
 {
     if (hud_tp_need.value)
         return (TP_IsArmorLow());
@@ -128,7 +128,7 @@ qboolean HUD_ArmorLow(void)
         return (HUD_Stats(STAT_ARMOR) <= 25);
 }
 
-qboolean HUD_AmmoLow(void)
+qbool HUD_AmmoLow(void)
 {
     if (hud_tp_need.value)
     {
@@ -1016,7 +1016,7 @@ void SCR_HUD_DrawFace(hud_t *hud)
 
 
 // status numbers
-void SCR_HUD_DrawNum(hud_t *hud, int num, qboolean low,
+void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
                      float scale, int style, int digits, char *s_align)
 {
     extern mpic_t *sb_nums[2][11];
@@ -1131,7 +1131,7 @@ void SCR_HUD_DrawHealth(hud_t *hud)
 void SCR_HUD_DrawArmor(hud_t *hud)
 {
     int level;
-    qboolean low;
+    qbool low;
     static cvar_t *scale = NULL, *style, *digits, *align;
     if (scale == NULL)  // first time called
     {
@@ -1185,7 +1185,7 @@ void SCR_HUD_DrawAmmo(hud_t *hud, int num,
 {
     extern mpic_t *sb_ibar;
     int value;
-    qboolean low;
+    qbool low;
 
     if (num < 1  ||  num > 4)
     {
@@ -1453,7 +1453,7 @@ static sort_players_info_t *sorted_players[MAX_CLIENTS];
 static sort_teams_info_t *sorted_teams[MAX_CLIENTS];
 static int n_teams, n_players, n_spectators;
 
-static qboolean isTeamplay()
+static qbool isTeamplay()
 {
     int teamplay = atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
     if (!teamplay)
@@ -1461,7 +1461,7 @@ static qboolean isTeamplay()
     return true;
 }
 
-static int ComparePlayers(sort_players_info_t *p1, sort_players_info_t *p2, qboolean byTeams)
+static int ComparePlayers(sort_players_info_t *p1, sort_players_info_t *p2, qbool byTeams)
 {
     int d;
     player_info_t *i1 = &cl.players[p1->playernum];
@@ -1495,10 +1495,10 @@ static int ComparePlayers(sort_players_info_t *p1, sort_players_info_t *p2, qboo
     return d;
 }
 
-static void Sort_Scoreboard(qboolean teamsort)
+static void Sort_Scoreboard(qbool teamsort)
 {
     int i, j;
-    qboolean isteamplay;
+    qbool isteamplay;
     int team;
 
     n_teams = 0;

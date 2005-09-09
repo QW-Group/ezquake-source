@@ -53,16 +53,16 @@ POINT		current_pos;
 double		mouse_x, mouse_y;
 int			old_mouse_x, old_mouse_y, mx_accum, my_accum;
 
-static qboolean	restore_spi;
+static qbool	restore_spi;
 static int originalmouseparms[3], newmouseparms[3] = {0, 0, 0};
-qboolean mouseinitialized;
-static qboolean	mouseparmsvalid, mouseactivatetoggle;
-static qboolean	mouseshowtoggle = 1;
-static qboolean	dinput_acquired;
+qbool mouseinitialized;
+static qbool	mouseparmsvalid, mouseactivatetoggle;
+static qbool	mouseshowtoggle = 1;
+static qbool	dinput_acquired;
 static unsigned int mstate_di;
 unsigned int uiWheelMessage;
 
-qboolean	mouseactive;
+qbool	mouseactive;
 
 // joystick defines and variables
 // where should defines be moved?
@@ -114,7 +114,7 @@ cvar_t	joy_yawsensitivity = {"joyyawsensitivity", "-1.0"};
 cvar_t	joy_wwhack1 = {"joywwhack1", "0.0"};
 cvar_t	joy_wwhack2 = {"joywwhack2", "0.0"};
 
-qboolean	joy_avail, joy_advancedinit, joy_haspov;
+qbool	joy_avail, joy_advancedinit, joy_haspov;
 DWORD		joy_oldbuttonstate, joy_oldpovstate;
 
 int			joy_id;
@@ -128,7 +128,7 @@ static JOYINFOEX	ji;
 
 static HINSTANCE hInstDI;
 
-static qboolean	dinput;
+static qbool	dinput;
 
 typedef struct MYDATA {
 	LONG  lX;                   // X axis goes here
@@ -179,7 +179,7 @@ cvar_t	m_forcewheel	= {"m_forcewheel", "1"};
 cvar_t	m_rate			= {"m_rate",	"125"};
 cvar_t	m_showrate		= {"m_showrate", "0"};
 
-qboolean use_m_smooth;
+qbool use_m_smooth;
 HANDLE m_event;
 
 #define	 M_HIST_SIZE  64
@@ -412,7 +412,7 @@ typedef int (*MW_DllFunc2)(HWND);
 
 MW_DllFunc1 DLL_MW_RemoveHook = NULL;
 MW_DllFunc2 DLL_MW_SetHook = NULL;
-qboolean MW_Hook_enabled = false;
+qbool MW_Hook_enabled = false;
 HINSTANCE mw_hDLL;
 
 static void MW_Set_Hook (void) {
@@ -563,7 +563,7 @@ void IN_RestoreOriginalMouseState (void) {
 	ShowCursor (FALSE);
 }
 
-qboolean IN_InitDInput (void) {
+qbool IN_InitDInput (void) {
     HRESULT hr;
 	DIPROPDWORD	dipdw = {
 		{
@@ -1118,7 +1118,7 @@ void IN_Commands (void) {
 	}
 }
 
-qboolean IN_ReadJoystick (void) {
+qbool IN_ReadJoystick (void) {
 	memset (&ji, 0, sizeof(ji));
 	ji.dwSize = sizeof(ji);
 	ji.dwFlags = joy_flags;
@@ -1356,7 +1356,7 @@ int isAltDown(void)
     if (GetKeyState(VK_MENU) < 0)
         return 1;
     return 0;
-//    extern qboolean    keydown[256];
+//    extern qbool    keydown[256];
 //    return keydown[K_ALT] || keydown[K_RALT];
 }
 int isCtrlDown(void)
@@ -1364,7 +1364,7 @@ int isCtrlDown(void)
     if (GetKeyState(VK_CONTROL) < 0)
         return 1;
     return 0;
-//    extern qboolean    keydown[256];
+//    extern qbool    keydown[256];
 //    return keydown[K_CTRL] || keydown[K_RCTRL];
 }
 int isShiftDown(void)
@@ -1372,6 +1372,6 @@ int isShiftDown(void)
     if (GetKeyState(VK_SHIFT) < 0)
         return 1;
     return 0;
-//    extern qboolean    keydown[256];
+//    extern qbool    keydown[256];
 //    return keydown[K_SHIFT] || keydown[K_RSHIFT];
 }

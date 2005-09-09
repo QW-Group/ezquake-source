@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.4 2005-08-29 12:30:57 vvd0 Exp $
+	$Id: vid_wgl.c,v 1.5 2005-09-09 11:00:27 disconn3ct Exp $
 
 */
 
@@ -68,7 +68,7 @@ lmode_t	lowresmodes[] = {
 	{512, 384},
 };
 
-qboolean DDActive;
+qbool DDActive;
 
 static vmode_t	modelist[MAX_MODE_LIST];
 static int		nummodes;
@@ -76,12 +76,12 @@ static vmode_t	*pcurrentmode;
 static vmode_t	badmode;
 
 static DEVMODE	gdevmode;
-static qboolean	vid_initialized = false;
-static qboolean	windowed, leavecurrentmode;
-static qboolean vid_canalttab = false;
-static qboolean vid_wassuspended = false;
+static qbool	vid_initialized = false;
+static qbool	windowed, leavecurrentmode;
+static qbool vid_canalttab = false;
+static qbool vid_wassuspended = false;
 static int		windowed_mouse;
-extern qboolean	mouseactive;  // from in_win.c
+extern qbool	mouseactive;  // from in_win.c
 static HICON	hIcon;
 
 int			DIBWidth, DIBHeight;
@@ -107,10 +107,10 @@ modestate_t	modestate = MS_UNINIT;
 unsigned short *currentgammaramp = NULL;
 static unsigned short systemgammaramp[3][256];
 
-qboolean vid_3dfxgamma = false;
-qboolean vid_gammaworks = false;
-qboolean vid_hwgamma_enabled = false;
-qboolean customgamma = false;
+qbool vid_3dfxgamma = false;
+qbool vid_gammaworks = false;
+qbool vid_hwgamma_enabled = false;
+qbool customgamma = false;
 
 void VID_MenuDraw (void);
 void VID_MenuKey (int key);
@@ -133,12 +133,12 @@ cvar_t		_windowed_mouse = {"_windowed_mouse","1",CVAR_ARCHIVE};
 cvar_t		vid_displayfrequency = {"vid_displayfrequency", "0", CVAR_INIT};
 cvar_t		vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
 cvar_t      vid_flashonactivity = {"vid_flashonactivity", "1", CVAR_ARCHIVE};
-qboolean allow_flash = false;
+qbool allow_flash = false;
 
 typedef BOOL (APIENTRY *SWAPINTERVALFUNCPTR)(int);
 SWAPINTERVALFUNCPTR wglSwapIntervalEXT = NULL;
-qboolean OnChange_vid_vsync(cvar_t *var, char *string);
-static qboolean update_vsync = false;
+qbool OnChange_vid_vsync(cvar_t *var, char *string);
+static qbool update_vsync = false;
 cvar_t	vid_vsync = {"vid_vsync", "", 0, OnChange_vid_vsync};
 
 BOOL (APIENTRY *wglGetDeviceGammaRamp3DFX)(HDC hDC, GLvoid *ramp);
@@ -168,7 +168,7 @@ void GL_WGL_CheckExtensions(void) {
 	}
 }
 
-qboolean OnChange_vid_vsync(cvar_t *var, char *string) {
+qbool OnChange_vid_vsync(cvar_t *var, char *string) {
 	update_vsync = true;
 	return false;
 }
@@ -219,7 +219,7 @@ void VID_UpdateWindowStatus (void) {
 
 /******************************** VID_SETMODE ********************************/
 
-qboolean VID_SetWindowedMode (int modenum) {
+qbool VID_SetWindowedMode (int modenum) {
 	HDC hdc;
 	int lastmodestate, width, height;
 	RECT rect;
@@ -291,7 +291,7 @@ qboolean VID_SetWindowedMode (int modenum) {
 	return true;
 }
 
-qboolean VID_SetFullDIBMode (int modenum) {
+qbool VID_SetFullDIBMode (int modenum) {
 	HDC hdc;
 	int lastmodestate, width, height;
 	RECT rect;
@@ -381,7 +381,7 @@ qboolean VID_SetFullDIBMode (int modenum) {
 
 int VID_SetMode (int modenum, unsigned char *palette) {
 	int original_mode, temp;
-	qboolean stat;
+	qbool stat;
     MSG msg;
 
 	if ((windowed && modenum) || (!windowed && modenum < 1) || (!windowed && modenum >= nummodes))
@@ -579,7 +579,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height) {
 }
 
 void GL_EndRendering (void) {
-	static qboolean old_hwgamma_enabled;
+	static qbool old_hwgamma_enabled;
 
 	vid_hwgamma_enabled = vid_hwgammacontrol.value && vid_gammaworks && ActiveApp && !Minimized;
 	vid_hwgamma_enabled = vid_hwgamma_enabled && (modestate == MS_FULLDIB || vid_hwgammacontrol.value == 2);

@@ -473,7 +473,7 @@ void CL_UpdateBeams (void) {
 
 #ifdef GLQUAKE
 	int beamstodraw, j, k;
-	qboolean sparks = false;
+	qbool sparks = false;
 	vec3_t beamstart[MAX_LIGHTNINGBEAMS], beamend[MAX_LIGHTNINGBEAMS];
 #endif
 

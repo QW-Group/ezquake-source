@@ -38,7 +38,7 @@ typedef unsigned int socklen_t;
   	 
 #define ICMP_MIN 8 // minimum 8 byte icmp packet (just header) 	 
 
-qboolean useNewPing = false;
+qbool useNewPing = false;
 
 int sock;
 

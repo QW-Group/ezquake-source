@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qwsvdef.h"
 
 cvar_t		sv_cheats = {"sv_cheats", "0"};
-qboolean	sv_allow_cheats = false;
+qbool	sv_allow_cheats = false;
 
 int fp_messages = 4, fp_persecond = 4, fp_secondsdead = 10;
 cvar_t sv_floodprotmsg = {"floodprotmsg", ""};
@@ -104,7 +104,7 @@ void SV_Fraglogfile_f (void) {
 }
 
 //Sets sv_client and sv_player to the player with idnum Cmd_Argv(1)
-qboolean SV_SetPlayer (void) {
+qbool SV_SetPlayer (void) {
 	client_t *cl;
 	int i, idnum;
 
@@ -127,7 +127,7 @@ qboolean SV_SetPlayer (void) {
 void SV_Map_f (void) {
 	char level[MAX_QPATH], expanded[MAX_QPATH];
 	FILE *f;
-	qboolean devmap;
+	qbool devmap;
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("%s <levelname> : continue game on a new level\n", Cmd_Argv(0));

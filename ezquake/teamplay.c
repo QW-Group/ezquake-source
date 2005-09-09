@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "ignore.h"
 #include "rulesets.h"
 
-qboolean OnChangeSkinForcing(cvar_t *var, char *string);	
+qbool OnChangeSkinForcing(cvar_t *var, char *string);	
 
 cvar_t	cl_parseSay = {"cl_parseSay", "1"};
 cvar_t	cl_parseFunChars = {"cl_parseFunChars", "1"};
@@ -116,14 +116,14 @@ cvar_t	tp_need_cells = {"tp_need_cells", "20"};
 cvar_t	tp_need_nails = {"tp_need_nails", "40"};
 cvar_t	tp_need_shells = {"tp_need_shells", "10"};
 
-static qboolean suppress;
+static qbool suppress;
 
 char *skinforcing_team = "";	
 
 void TP_FindModelNumbers (void);
 void TP_FindPoint (void);
 char *TP_LocationName (vec3_t location);
-static void CountNearbyPlayers(qboolean dead);	
+static void CountNearbyPlayers(qbool dead);	
 char *Macro_LastTookOrPointed (void);
 char *Macro_LastTookOrPointed2 (void);
 
@@ -203,8 +203,8 @@ static pcre_internal_trigger_t	*internal_triggers;
 
 typedef struct f_trigger_s {
 	char *name;
-	qboolean restricted;
-	qboolean teamplay;
+	qbool restricted;
+	qbool teamplay;
 } f_trigger_t;
 
 f_trigger_t f_triggers[] = {
@@ -864,7 +864,7 @@ char *Macro_LastSeenPowerup(void) {
 }
 
 
-qboolean TP_SuppressMessage(char *buf) {
+qbool TP_SuppressMessage(char *buf) {
 	int len;
 	char *s;
 
@@ -883,7 +883,7 @@ qboolean TP_SuppressMessage(char *buf) {
 }
 
 void TP_PrintHiddenMessage(char *buf, int nodisplay) {
-	qboolean team, hide = false;
+	qbool team, hide = false;
 	char dest[4096], msg[4096], *s, *d, c, *name;
 	int length, offset, flags;
 	extern cvar_t con_sound_mm2_file, con_sound_mm2_volume;
@@ -953,7 +953,7 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay) {
 
 #define ISDEAD(i) ( (i) >= 41 && (i) <= 102 )
 
-static void CountNearbyPlayers(qboolean dead) {
+static void CountNearbyPlayers(qbool dead) {
 	int i;
 	player_state_t *state;
 	player_info_t *info;
@@ -1038,7 +1038,7 @@ char *Macro_Count_Last_NearbyFriendlyPlayers (void) {
 // Note: longer macro names like "armortype" must be defined
 // _before_ the shorter ones like "armor" to be parsed properly
 void TP_AddMacros(void) {
-	qboolean teamplay = Rulesets_RestrictTriggers();
+	qbool teamplay = Rulesets_RestrictTriggers();
 
 	Cmd_AddMacro("lastip", Macro_Lastip_f);
 	Cmd_AddMacro("qt", Macro_Quote_f);
@@ -1095,11 +1095,11 @@ void TP_AddMacros(void) {
 
 /********************** MACRO/FUNCHAR/WHITE TEXT PARSING **********************/
 
-char *TP_ParseWhiteText(char *s, qboolean team, int offset) {
+char *TP_ParseWhiteText(char *s, qbool team, int offset) {
 	static char	buf[4096];	
 	char *out, *p, *p1;
 	extern cvar_t	cl_parseWhiteText;
-	qboolean	parsewhite;
+	qbool	parsewhite;
 
 	parsewhite = cl_parseWhiteText.value == 1 || (cl_parseWhiteText.value == 2 && team);
 
@@ -1277,7 +1277,7 @@ char *TP_ParseMacroString (char *s) {
 		}
 
 	if (suppress) {
-		qboolean quotes = false;
+		qbool quotes = false;
 
 		TP_PrintHiddenMessage(buf,pN);
 
@@ -1307,7 +1307,7 @@ char *TP_ParseMacroString (char *s) {
 }
 
 //Doesn't check for overflows, so strlen(s) should be < MAX_MACRO_STRING
-char *TP_ParseFunChars (char *s, qboolean chat) {
+char *TP_ParseFunChars (char *s, qbool chat) {
 	static char	 buf[MAX_MACRO_STRING];
 	char		*out = buf;
 	int			 c;
@@ -1390,7 +1390,7 @@ skip:
 
 char *Skin_FindName (player_info_t *sc);
 
-static qboolean need_skin_refresh;
+static qbool need_skin_refresh;
 void TP_UpdateSkins(void) {
 	int slot;
 
@@ -1407,7 +1407,7 @@ void TP_UpdateSkins(void) {
 	}
 }
 
-qboolean TP_NeedRefreshSkins(void) {
+qbool TP_NeedRefreshSkins(void) {
 	if (cl.teamfortress)
 		return false;
 
@@ -1439,7 +1439,7 @@ void TP_RefreshSkins(void) {
 		TP_RefreshSkin(i);
 }
 
-qboolean OnChangeSkinForcing(cvar_t *var, char *string) {
+qbool OnChangeSkinForcing(cvar_t *var, char *string) {
 	extern cvar_t noskins;
 
 	if (cl.teamfortress || (cl.fpd & FPD_NO_FORCE_SKIN))
@@ -1550,7 +1550,7 @@ static void TP_AddLocNode(vec3_t coord, char *name) {
 #define SKIPBLANKS(ptr) while (*ptr == ' ' || *ptr == '\t' || *ptr == '\r') ptr++
 #define SKIPTOEOL(ptr) {while (*ptr != '\n' && *ptr != 0) ptr++; if (*ptr == '\n') ptr++;}
 
-qboolean TP_LoadLocFile (char *path, qboolean quiet) {
+qbool TP_LoadLocFile (char *path, qbool quiet) {
 	char *buf, *p, locname[MAX_OSPATH] = {0}, location[MAX_LOC_NAME];
 	int i, n, sign, line, nameindex, mark, overflow, loc_numentries;
 	vec3_t coord;
@@ -1712,7 +1712,7 @@ char *TP_LocationName(vec3_t location) {
 	vec3_t vec;
 	static locdata_t *node, *best;
 	cvar_t *cvar;
-	static qboolean recursive;
+	static qbool recursive;
 	static char	buf[1024], newbuf[MAX_LOC_NAME];
 
 	if (!locdata || cls.state != ca_active)
@@ -1881,7 +1881,7 @@ void TP_MsgTrigger_f (void) {
 	}
 }
 
-static qboolean TP_IsFlagMessage(char *message) {
+static qbool TP_IsFlagMessage(char *message) {
 	if	(	strstr(message, " has your key!") ||
 			strstr(message, " has taken your Key") ||
 			strstr(message, " has your flag") ||
@@ -1980,8 +1980,8 @@ void CL_RE_Trigger_f (void) {
 	pcre_extra		*re_extra;
 	const char		*error;
 	int			error_offset;
-	qboolean		newtrigger=false;
-	qboolean		re_search = false;
+	qbool		newtrigger=false;
+	qbool		re_search = false;
 
 	c = Cmd_Argc();
 	if (c > 3) {
@@ -2267,13 +2267,13 @@ void CL_RE_Trigger_Match_f (void) {
 	Com_Printf ("re_trigger \"%s\" not found\n", tr_name);
 }
 
-qboolean allow_re_triggers;
+qbool allow_re_triggers;
 
-qboolean CL_SearchForReTriggers (char *s, unsigned trigger_type) {
+qbool CL_SearchForReTriggers (char *s, unsigned trigger_type) {
 	pcre_trigger_t			*rt;
 	pcre_internal_trigger_t		*irt;
 	cmd_alias_t			*trig_alias;
-	qboolean			removestr = false;
+	qbool			removestr = false;
 	int				result;
 	int				offsets[99];
 	int				len;
@@ -2444,17 +2444,17 @@ char *TP_MapName(void) {
 
 // START shaman RFE 1020608
 #ifdef GLQUAKE
-char *MT_GetSkyGroupName(char *mapname, qboolean *system);
+char *MT_GetSkyGroupName(char *mapname, qbool *system);
 
-char *TP_GetSkyGroupName(char *mapname, qboolean *system) {
+char *TP_GetSkyGroupName(char *mapname, qbool *system) {
 	return MT_GetSkyGroupName(mapname, system);
 }
 #endif
 // END shaman RFE 1020608
 
-char *MT_GetMapGroupName(char *mapname, qboolean *system);
+char *MT_GetMapGroupName(char *mapname, qbool *system);
 
-char *TP_GetMapGroupName(char *mapname, qboolean *system) {
+char *TP_GetMapGroupName(char *mapname, qbool *system) {
 	return MT_GetMapGroupName(mapname, system);
 }
 
@@ -2463,7 +2463,7 @@ char *TP_GetMapGroupName(char *mapname, qboolean *system) {
 void TP_NewMap (void) {
 	static char last_map[MAX_QPATH] = {0};
 	char *groupname, *mapname;
-	qboolean system;
+	qbool system;
 
 	memset (&vars, 0, sizeof(vars));
 	TP_FindModelNumbers ();
@@ -2655,7 +2655,7 @@ void DumpFlagCommands(FILE *f) {
 static void FlagCommand (int *flags, int defaultflags) {
 	int i, j, c, flag;
 	char *p, str[255] = {0};
-	qboolean removeflag = false;
+	qbool removeflag = false;
 
 	c = Cmd_Argc ();
 	if (c == 1)	{
@@ -2939,7 +2939,7 @@ char *Macro_LastTookOrPointed (void) {
     return macro_buf;
 }
 
-static qboolean CheckTrigger (void) {
+static qbool CheckTrigger (void) {
 	int	i, count;
 	player_info_t *player;
 	char *myteam;
@@ -2993,7 +2993,7 @@ void TP_ParsePlayerInfo(player_state_t *oldstate, player_state_t *state, player_
 	}
 
 	if (!cl.spectator && cl.teamplay && strcmp(info->team, TP_PlayerTeam())) {
-		qboolean eyes;
+		qbool eyes;
 
 		eyes = state->modelindex && cl.model_precache[state->modelindex] && cl.model_precache[state->modelindex]->modhint == MOD_EYES;
 
@@ -3068,7 +3068,7 @@ more:
 
 	// armor
 	if (!strcmp(s, "items/armor1.wav"))	{
-		qboolean armor_updated;
+		qbool armor_updated;
 		int armortype;
 
 		armor_updated = (vars.stat_framecounts[STAT_ARMOR] == cls.framecount);
@@ -3090,7 +3090,7 @@ more:
 	}
 }
 
-qboolean TP_IsItemVisible(item_vis_t *visitem) {
+qbool TP_IsItemVisible(item_vis_t *visitem) {
 	vec3_t end, v;
 	pmtrace_t trace;
 
@@ -3243,7 +3243,7 @@ void TP_FindPoint (void) {
 
 		// check if we can actually see the object
 		if ((rank < best || best < 0) && TP_IsItemVisible(&visitem)) {
-			qboolean teammate, eyes = false;
+			qbool teammate, eyes = false;
 
 			eyes = state->modelindex && cl.model_precache[state->modelindex] && cl.model_precache[state->modelindex]->modhint == MOD_EYES;
 			teammate = !!(cl.teamplay && !strcmp(info->team, TP_PlayerTeam()));
@@ -3262,7 +3262,7 @@ void TP_FindPoint (void) {
 	}
 
 	if (best >= 0 && bestinfo) {
-		qboolean teammate, eyes;
+		qbool teammate, eyes;
 		char *name, buf[256] = {0};
 
 		eyes = beststate->modelindex && cl.model_precache[beststate->modelindex] &&
@@ -3402,7 +3402,7 @@ void TP_StatChanged (int stat, int value) {
 
 //Find and execute sound triggers. A sound trigger must be terminated by either a CR or LF.
 //Returns true if a sound was found and played
-qboolean TP_CheckSoundTrigger (char *str) {
+qbool TP_CheckSoundTrigger (char *str) {
 	int i, j, start, length;
 	char soundname[MAX_OSPATH];
 	FILE *f;
@@ -3471,7 +3471,7 @@ int	num_filters = 0;
 
 //returns false if the message shouldn't be printed.
 //Matching filters are stripped from the message
-qboolean TP_FilterMessage (char *s) {
+qbool TP_FilterMessage (char *s) {
 	int i, j, len, maxlen;
 
 	if (!num_filters)

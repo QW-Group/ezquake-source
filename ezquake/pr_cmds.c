@@ -291,7 +291,7 @@ void PF_sprint (void) {
 	client_t *cl;
 	int entnum, level, buflen, len, i;
 	char *buf, *str;
-	qboolean flush = false, flushboth = false;
+	qbool flush = false, flushboth = false;
 
 	entnum = G_EDICTNUM(OFS_PARM0);
 	level = G_FLOAT(OFS_PARM1);
@@ -1610,7 +1610,7 @@ static char *ENGINE_EXTENSIONS[] = {
 //returns true if the extension is supported by the server
 void PF_checkextension (void) {
 	char **s, *extension;
-	qboolean supported = false;
+	qbool supported = false;
 
 	extension = G_STRING(OFS_PARM0);
 

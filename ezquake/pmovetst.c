@@ -119,7 +119,7 @@ LINE TESTING IN HULLS
 // 1/32 epsilon to keep floating point happy
 #define	DIST_EPSILON	(0.03125)
 
-qboolean PM_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, pmtrace_t *trace) {
+qbool PM_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, pmtrace_t *trace) {
 	dclipnode_t	*node;
 	mplane_t *plane;
 	float t1, t2, frac, midf;
@@ -220,7 +220,7 @@ qboolean PM_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 }
 
 //Returns false if the given player position is not valid (in solid)
-qboolean PM_TestPlayerPosition (vec3_t pos) {
+qbool PM_TestPlayerPosition (vec3_t pos) {
 	int i;
 	physent_t *pe;
 	vec3_t mins, maxs, pos_l, offset;

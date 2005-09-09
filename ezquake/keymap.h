@@ -38,7 +38,7 @@ void	IN_Keymaplist_f (void);     // command "keymaplist", "keymap_list"
 void	IN_Keymap_Load_f (void);    // command "keymap_load"
 void	IN_Keymap_Save_f (void);    // command "keymap_save"
 
-void  IN_TranslateKeyEvent (int lKeyData, qboolean down);
+void  IN_TranslateKeyEvent (int lKeyData, qbool down);
 
 #endif // WITH_KEYMAP
 

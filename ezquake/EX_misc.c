@@ -403,12 +403,12 @@ void StripName(char *namebuf)
 
 
 // get float value of string, false on error
-qboolean getFloatValue(char *string, float *val)
+qbool getFloatValue(char *string, float *val)
 {
     // [sign] [digits] [.digits] [ {d | D | e | E }[sign]digits]
 
     char *s;
-    qboolean percent = false;
+    qbool percent = false;
 
     s = string;
 
@@ -494,7 +494,7 @@ qboolean getFloatValue(char *string, float *val)
 }
 
 // get integer value of string, false on error
-qboolean getIntegerValue(char *string, int *val)
+qbool getIntegerValue(char *string, int *val)
 {
     // [sign]digits  ||  "0x" hex-digits
 

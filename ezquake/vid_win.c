@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.6 2005-09-07 15:57:23 disconn3ct Exp $
+	$Id: vid_win.c,v 1.7 2005-09-09 11:00:27 disconn3ct Exp $
 
 */
 
@@ -40,7 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_MODE_LIST	128
 #define VID_ROW_SIZE	3
 
-qboolean	dibonly;
+qbool	dibonly;
 
 extern int	Minimized;
 
@@ -49,7 +49,7 @@ HWND		mainwindow;
 HWND WINAPI InitializeWindow (HINSTANCE hInstance, int nCmdShow);
 
 int			DIBWidth, DIBHeight;
-qboolean	DDActive;
+qbool	DDActive;
 RECT		WindowRect;
 DWORD		WindowStyle, ExWindowStyle;
 
@@ -57,16 +57,16 @@ int			window_center_x, window_center_y, window_x, window_y, window_width, window
 RECT		window_rect;
 
 static DEVMODE	gdevmode;
-static qboolean	startwindowed = 0, windowed_mode_set;
+static qbool	startwindowed = 0, windowed_mode_set;
 static int		firstupdate = 1;
-static qboolean	vid_initialized = false, vid_palettized;
+static qbool	vid_initialized = false, vid_palettized;
 static int		lockcount;
 static int		vid_fulldib_on_focus_mode;
-static qboolean	force_minimized, in_mode_set, is_mode0x13, force_mode_set;
+static qbool	force_minimized, in_mode_set, is_mode0x13, force_mode_set;
 static int		vid_stretched, windowed_mouse;
-static qboolean	palette_changed, syscolchg, vid_mode_set, hide_window, pal_is_nostatic;
+static qbool	palette_changed, syscolchg, vid_mode_set, hide_window, pal_is_nostatic;
 static HICON	hIcon;
-extern qboolean mouseactive; // from in_win.c
+extern qbool mouseactive; // from in_win.c
 
 #define MODE_WINDOWED			0
 #define MODE_SETTABLE_WINDOW	2
@@ -76,7 +76,7 @@ extern qboolean mouseactive; // from in_win.c
 cvar_t		vid_ref = {"vid_ref", "soft", CVAR_ROM};
 
 cvar_t      vid_flashonactivity = {"vid_flashonactivity", "1", CVAR_ARCHIVE};
-qboolean allow_flash = false; 
+qbool allow_flash = false; 
 // Note that 0 is MODE_WINDOWED
 cvar_t		vid_mode = {"vid_mode","0"};
 // Note that 0 is MODE_WINDOWED
@@ -126,7 +126,7 @@ unsigned short	d_8to16table[256];
 unsigned	d_8to24table[256];
 
 int			driver = grDETECT,mode;
-qboolean	useWinDirect = true, useDirectDraw = true;
+qbool	useWinDirect = true, useDirectDraw = true;
 MGLDC		*mgldc = NULL,*memdc = NULL,*dibdc = NULL,*windc = NULL;
 
 typedef struct {
@@ -162,7 +162,7 @@ void VID_MenuKey (int key);
 LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void AppActivate(BOOL fActive, BOOL minimize);
 
-qboolean msg_suppress_1 = 0;	// suppresses resolution and cache size console output
+qbool msg_suppress_1 = 0;	// suppresses resolution and cache size console output
 								// at fullscreen DIB focus gain/loss
 
 void VID_SetCaption (char *text) {
@@ -218,7 +218,7 @@ void ClearAllStates (void) {
 	IN_ClearStates ();
 }
 
-qboolean VID_CheckAdequateMem (int width, int height) {
+qbool VID_CheckAdequateMem (int width, int height) {
 	int tbuffersize;
 
 	tbuffersize = width * height * sizeof (*d_pzbuffer);
@@ -232,7 +232,7 @@ qboolean VID_CheckAdequateMem (int width, int height) {
 	return true;
 }
 
-qboolean VID_AllocBuffers (int width, int height) {
+qbool VID_AllocBuffers (int width, int height) {
 	int tsize, tbuffersize;
 
 	tbuffersize = width * height * sizeof (*d_pzbuffer);
@@ -964,10 +964,10 @@ void DestroyFullDIBWindow (void) {
 	}
 }
 
-qboolean VID_SetWindowedMode (int modenum) {
+qbool VID_SetWindowedMode (int modenum) {
 	HDC hdc;
 	pixel_format_t pf;
-	qboolean stretched;
+	qbool stretched;
 	int lastmodestate;
 
 	if (!windowed_mode_set) {
@@ -1111,7 +1111,7 @@ qboolean VID_SetWindowedMode (int modenum) {
 	return true;
 }
 
-qboolean VID_SetFullscreenMode (int modenum) {
+qbool VID_SetFullscreenMode (int modenum) {
 
 	DDActive = 1;
 
@@ -1161,7 +1161,7 @@ qboolean VID_SetFullscreenMode (int modenum) {
 	return true;
 }
 
-qboolean VID_SetFullDIBMode (int modenum) {
+qbool VID_SetFullDIBMode (int modenum) {
 	HDC hdc;
 	pixel_format_t pf;
 	int lastmodestate, freq;
@@ -1273,7 +1273,7 @@ qboolean VID_SetFullDIBMode (int modenum) {
 }
 
 void VID_RestoreOldMode (int original_mode) {
-	static qboolean	inerror = false;
+	static qbool	inerror = false;
 
 	if (inerror)
 		return;
@@ -1296,7 +1296,7 @@ void VID_RestoreOldMode (int original_mode) {
 
 int VID_SetMode (int modenum, unsigned char *palette) {
 	int original_mode, temp;
-	qboolean stat;
+	qbool stat;
     MSG msg;
 	HDC hdc;
 
@@ -1537,7 +1537,7 @@ void VID_ShiftPalette (unsigned char *palette) {
 void VID_ModeList_f (void) {
 	int i, lnummodes;
 	char *pinfo;
-	qboolean na;
+	qbool na;
 	vmode_t *pv;
 
 	na = false;

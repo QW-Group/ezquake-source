@@ -148,7 +148,7 @@ cvar_t	sv_nailhack	= {"sv_nailhack", "0"};
 cvar_t	sv_nailhack	= {"sv_nailhack", "1"};
 #endif
 
-qboolean SV_AddNailUpdate (edict_t *ent) {
+qbool SV_AddNailUpdate (edict_t *ent) {
 	if (sv_nailhack.value)
 		return false;
 
@@ -349,7 +349,7 @@ static entity_state_t *SV_GetBaseline (int number) {
 	return &EDICT_NUM(number)->baseline; 
 } 
 
-static qboolean SV_EntVisCheck(edict_t *ent, byte *pvs) {
+static qbool SV_EntVisCheck(edict_t *ent, byte *pvs) {
 	int i;
 
 	// ignore if not touching a PV leaf
@@ -369,7 +369,7 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg) {
 	vec3_t org;
 	edict_t	*ent;
 	edict_t	*clent;
-	qboolean packSorted;
+	qbool packSorted;
 	client_frame_t *frame;
 	entity_state_t *state;
 	packet_entities_t *pack;

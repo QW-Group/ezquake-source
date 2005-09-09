@@ -29,8 +29,8 @@ usercmd_t	cmd;
 cvar_t	sv_spectalk = {"sv_spectalk", "1"};
 cvar_t	sv_mapcheck	= {"sv_mapcheck", "1"};
 
-qboolean OnChange_sv_maxpitch (cvar_t *var, char *value);
-qboolean OnChange_sv_minpitch (cvar_t *var, char *value);
+qbool OnChange_sv_maxpitch (cvar_t *var, char *value);
+qbool OnChange_sv_minpitch (cvar_t *var, char *value);
 cvar_t	sv_maxpitch = {"sv_maxpitch", "80", 0, OnChange_sv_maxpitch};
 cvar_t	sv_minpitch = {"sv_minpitch", "-70", 0, OnChange_sv_minpitch};
 
@@ -54,7 +54,7 @@ extern double	sv_frametime;
 // but don't want them in serverinfo (save a couple of bytes of space)
 // Value sanity checks are also done here
 //
-qboolean OnChange_sv_maxpitch (cvar_t *var, char *value) {
+qbool OnChange_sv_maxpitch (cvar_t *var, char *value) {
 	float	newval;
 	char	*newstr;
 
@@ -69,7 +69,7 @@ qboolean OnChange_sv_maxpitch (cvar_t *var, char *value) {
 	return false;
 }
 
-qboolean OnChange_sv_minpitch (cvar_t *var, char *value) {
+qbool OnChange_sv_minpitch (cvar_t *var, char *value) {
 	float	newval;
 	char	*newstr;
 
@@ -708,7 +708,7 @@ deny_download:
 
 //=============================================================================
 
-void SV_Say (qboolean team) {
+void SV_Say (qbool team) {
 	client_t *client;
 	int j, tmp;
 	char *p, text[2048], t1[32] = "", *t2;
@@ -1133,7 +1133,7 @@ CHEAT COMMANDS
 =============================================================================
 */
 
-extern qboolean	sv_allow_cheats;
+extern qbool	sv_allow_cheats;
 
 //Sets client to godmode
 void Cmd_God_f (void) {
@@ -1240,7 +1240,7 @@ void Cmd_Fly_f (void) {
 typedef struct {
 	char		*name;
 	void		(*func) (void);
-	qboolean	overrideable;
+	qbool	overrideable;
 } ucmd_t;
 
 ucmd_t ucmds[] = {
@@ -1283,7 +1283,7 @@ ucmd_t ucmds[] = {
 	{NULL, NULL, false}
 };
 
-void SV_ExecuteUserCommand (char *s, qboolean fromQC) {
+void SV_ExecuteUserCommand (char *s, qbool fromQC) {
 	ucmd_t *u;
 	char *command;
 
@@ -1412,7 +1412,7 @@ void SV_RunCmd (usercmd_t *ucmd) {
 	edict_t *ent;
 	int i, n, oldmsec;
 	vec3_t originalvel, offset;
-	qboolean onground;
+	qbool onground;
 
 	cmd = *ucmd;
 
@@ -1546,7 +1546,7 @@ void SV_RunCmd (usercmd_t *ucmd) {
 //Done after running a player command.
 void SV_PostRunCmd (void) {
 	vec3_t originalvel;
-	qboolean onground;
+	qbool onground;
 
 	if (!sv_client->spectator) {
 		onground = (int) sv_player->v.flags & FL_ONGROUND;
@@ -1603,7 +1603,7 @@ void SV_ExecuteClientMessage (client_t *cl) {
 	usercmd_t oldest, oldcmd, newcmd;
 	client_frame_t *frame;
 	vec3_t o;
-	qboolean move_issued = false; //only allow one move command
+	qbool move_issued = false; //only allow one move command
 	byte checksum, calculatedChecksum;
 
 	// calc ping time

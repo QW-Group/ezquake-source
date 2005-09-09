@@ -32,7 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	#include <time.h>
 #endif
 
-static qboolean OnChange_movie_dir(cvar_t *var, char *string);
+static qbool OnChange_movie_dir(cvar_t *var, char *string);
 //int SCR_Screenshot(char *);
 void SCR_Movieshot (char *);	//joe: capturing to avi
 
@@ -60,14 +60,14 @@ cvar_t   movie_mp3	= {"demo_capture_mp3", "0"};
 cvar_t   movie_mp3_kbps = {"demo_capture_mp3_kbps", "128"};
 #endif
 
-static qboolean movie_is_capturing = false;
+static qbool movie_is_capturing = false;
 static double movie_start_time, movie_len;
 static int movie_frame_count;
 static char	image_ext[4];
 
 //joe: capturing to avi
 #ifdef _WIN32
-qboolean movie_is_avi = false, movie_avi_loaded, movie_acm_loaded;
+qbool movie_is_avi = false, movie_avi_loaded, movie_acm_loaded;
 static char avipath[256];
 static FILE *avifile = NULL;
 #endif
@@ -78,7 +78,7 @@ static FILE *avifile = NULL;
 	struct tm			movie_start_date;
 #endif
 
-qboolean Movie_IsCapturing(void) {
+qbool Movie_IsCapturing(void) {
 	return cls.demoplayback && !cls.timedemo && movie_is_capturing;
 }
 
@@ -296,7 +296,7 @@ void Movie_TransferStereo16(void) {
 	}
 }
 
-qboolean Movie_GetSoundtime(void) {
+qbool Movie_GetSoundtime(void) {
 	int views = 1;
 	extern cvar_t cl_demospeed;
 
@@ -311,7 +311,7 @@ qboolean Movie_GetSoundtime(void) {
 }
 #endif
 
-static qboolean OnChange_movie_dir(cvar_t *var, char *string) {
+static qbool OnChange_movie_dir(cvar_t *var, char *string) {
 	if (Movie_IsCapturing()) {
 		Com_Printf("Cannot change demo_capture_dir whilst capturing.  Use 'demo_capture stop' to cease capturing first.\n");
 		return true;

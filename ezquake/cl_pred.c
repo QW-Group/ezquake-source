@@ -88,7 +88,7 @@ void CL_CategorizePosition (void) {
 //Smooth out stair step ups.
 //Called before CL_EmitEntities so that the player's lightning model origin is updated properly
 void CL_CalcCrouch (void) {
-	qboolean teleported;
+	qbool teleported;
 	static vec3_t oldorigin = {0, 0, 0};
 	static float oldz = 0, extracrouch = 0, crouchspeed = 100;
 
@@ -137,7 +137,7 @@ void CL_CalcCrouch (void) {
 }
 
 
-extern qboolean physframe; //#fps
+extern qbool physframe; //#fps
 
 //#fps
 // for fps-independent physics
@@ -149,7 +149,7 @@ static void CL_LerpMove (double msgtime, float f)
 	static vec3_t	lerp_angles[3];
 	static vec3_t	lerp_origin[3];
 	static double	lerp_times[3];
-	static qboolean	nolerp[2];
+	static qbool	nolerp[2];
 	static double	demo_latency = 0.01;
 	float	frac;
 	float	simtime;

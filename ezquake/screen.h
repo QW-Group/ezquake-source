@@ -36,7 +36,7 @@ extern	int			scr_fullupdate;	// set to 0 to force full redraw
 extern	int			sb_lines;
 
 extern	int			clearnotify;	// set to 0 whenever notify text is drawn
-extern	qboolean	scr_disabled_for_loading;
+extern	qbool	scr_disabled_for_loading;
 
 extern	cvar_t		scr_viewsize;
 
@@ -44,9 +44,9 @@ extern	cvar_t		scr_viewsize;
 extern	int			scr_copytop;
 extern	int			scr_copyeverything;
 
-qboolean	scr_skipupdate;
+qbool	scr_skipupdate;
 
-qboolean	block_drawing;
+qbool	block_drawing;
 
 // QW262 HUD -->
 typedef char* (*Hud_Func)();
@@ -79,5 +79,5 @@ void Hud_262Init (void);
 hud_element_t *Hud_FindElement(char *name);
 
 // Flash & Conc for TF
-extern qboolean	concussioned;
-extern qboolean flashed;
+extern qbool	concussioned;
+extern qbool flashed;

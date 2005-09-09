@@ -36,11 +36,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PAUSE_SLEEP		50				// sleep time on pause or minimization
 #define NOT_FOCUS_SLEEP	20				// sleep time when not focus
 
-qboolean		ActiveApp, Minimized;
-qboolean        WinNT, Win2K;
+qbool		ActiveApp, Minimized;
+qbool        WinNT, Win2K;
 
 
-qboolean OnChange_sys_highpriority (cvar_t *, char *);
+qbool OnChange_sys_highpriority (cvar_t *, char *);
 cvar_t	sys_highpriority = {"sys_highpriority", "0", 0, OnChange_sys_highpriority};
 
 
@@ -58,14 +58,14 @@ void Sys_PushFPCW_SetHigh (void);
 #ifndef WITHOUT_WINKEYHOOK
 
 static HHOOK WinKeyHook;
-static qboolean WinKeyHook_isActive;
-static qboolean ScreenSaver_isDisabled;
+static qbool WinKeyHook_isActive;
+static qbool ScreenSaver_isDisabled;
 
 LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam);
-qboolean OnChange_sys_disableWinKeys(cvar_t *var, char *string);
+qbool OnChange_sys_disableWinKeys(cvar_t *var, char *string);
 cvar_t	sys_disableWinKeys = {"sys_disableWinKeys", "0", 0, OnChange_sys_disableWinKeys};
 
-qboolean OnChange_sys_disableWinKeys(cvar_t *var, char *string) {
+qbool OnChange_sys_disableWinKeys(cvar_t *var, char *string) {
 	if (Q_atof(string)) {
 		if (!WinKeyHook_isActive) {
 			if ((WinKeyHook = SetWindowsHookEx(13, LLWinKeyHook, global_hInstance, 0))) {
@@ -119,7 +119,7 @@ int Sys_SetPriority(int priority) {
 	return SetPriorityClass(GetCurrentProcess(), p);
 }
 
-qboolean OnChange_sys_highpriority (cvar_t *var, char *s) {
+qbool OnChange_sys_highpriority (cvar_t *var, char *s) {
 	int ok, q_priority;
 	char *desc;
 	float priority;
@@ -240,7 +240,7 @@ void Sys_Quit (void) {
 }
 
 static double pfreq;
-static qboolean hwtimer = false;
+static qbool hwtimer = false;
 
 void Sys_InitDoubleTime (void) {
 	__int64 freq;
@@ -259,7 +259,7 @@ double Sys_DoubleTime (void) {
 	__int64 pcount;
 	static __int64 startcount;
 	static DWORD starttime;
-	static qboolean first = true;
+	static qbool first = true;
 	DWORD now;
 
 	if (hwtimer) {

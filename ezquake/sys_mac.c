@@ -35,8 +35,8 @@ void Release_Cursor_f (void);
 void Capture_Cursor_f (void);
 void VID_SetConWidth (void);
 
-qboolean forceOptions = false;
-qboolean background = false;
+qbool forceOptions = false;
+qbool background = false;
 
 static enum { QUIT, START, FAILED } action = START;
 
@@ -153,7 +153,7 @@ int Sys_FileWrite (int handle, void *src, int count)
 }
 
 // Sys_FileExists
-qboolean Sys_FileExists (char *path)
+qbool Sys_FileExists (char *path)
 {
 	struct	stat	buf;
 	
@@ -366,14 +366,14 @@ extern Point glWindowPos;
 #define keyEvents (keyDownMask|keyUpMask|autoKeyMask)
 #define notKeyEvents (everyEvent & ~keyEvents)
 
-void OnMouseButton (EventRecord *myEvent, qboolean down)
+void OnMouseButton (EventRecord *myEvent, qbool down)
 {	
 	short	    		part;
 	WindowRef		window;
 	Rect 			r;
 	GrafPtr			origPort;
 	extern WindowRef 	glWindow;
-	extern qboolean 	suspend_mouse;
+	extern qbool 	suspend_mouse;
 	
 	part = FindWindow(myEvent->where, &window);
 	
@@ -512,7 +512,7 @@ char  *commandLine;
 // OSX's cmd-q triggers this, but we DON'T quit unless the mouse is loose and we can see the menubar
 OSErr HandleQuitApplicationEvent(const AppleEvent *theAppleEvent, AppleEvent *reply, UInt32 handlerRefcon)
 {
-	extern qboolean suspend_mouse;
+	extern qbool suspend_mouse;
 	
 	Sys_Printf("Got quit event.\n");
 	
@@ -624,7 +624,7 @@ short IsPressed (unsigned short k)
 
 void VID_GetVideoModesForActiveDisplays (void);
 
-qboolean forcewindowed = false;
+qbool forcewindowed = false;
 
 // We need 8.6 or better with DrawSprocket 1.7.x and InputSprocket for classic.
 // OSX 10.1 with DrawSprocket 1.99 or better is HIGHLY recommended, but we
@@ -1130,7 +1130,7 @@ int main (int argc, char **argv)
 	if (commandLine && action != FAILED)
 	{
 		int		count = 1;// leave an initial leading space in cleanCommandLine
-		qboolean 	white = false;
+		qbool 	white = false;
 		
 		// First char is a space (this was a leftover from the old code - FIXME I guess)
 		ptr = &commandLine[1];

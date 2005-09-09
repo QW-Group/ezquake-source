@@ -67,7 +67,7 @@ cvar_t	fraglimit = {"fraglimit", "0", CVAR_SERVERINFO};
 cvar_t	timelimit = {"timelimit", "0", CVAR_SERVERINFO};
 cvar_t	teamplay = {"teamplay", "0", CVAR_SERVERINFO};
 cvar_t	samelevel = {"samelevel", "0", CVAR_SERVERINFO};
-qboolean OnChange_maxclients (cvar_t *var, char *str);
+qbool OnChange_maxclients (cvar_t *var, char *str);
 cvar_t	maxclients = {"maxclients","8",CVAR_SERVERINFO, OnChange_maxclients};
 cvar_t	maxspectators = {"maxspectators","8",CVAR_SERVERINFO, OnChange_maxclients};
 cvar_t	deathmatch = {"deathmatch", "1", CVAR_SERVERINFO};			// 0, 1, or 2
@@ -85,7 +85,7 @@ void Master_Shutdown (void);
 //============================================================================
 
 // handles both maxclients and maxspectators
-qboolean OnChange_maxclients (cvar_t *var, char *str) {
+qbool OnChange_maxclients (cvar_t *var, char *str) {
 	int num = Q_atoi(str);
 	num = bound(0, num, MAX_CLIENTS);
 	Cvar_SetValue (var, num);
@@ -393,7 +393,7 @@ void SVC_DirectConnect (void) {
 	int		i, edictnum, clients, spectators, qport, version, challenge;
 	client_t	*cl, *newcl;
 	edict_t		*ent;
-	qboolean	spectator;
+	qbool	spectator;
 
 	version = atoi(Cmd_Argv(1));
 	if (version != PROTOCOL_VERSION) {
@@ -662,7 +662,7 @@ int			numipfilters;
 
 cvar_t	filterban = {"filterban", "1"};
 
-qboolean StringToFilter (char *s, ipfilter_t *f) {
+qbool StringToFilter (char *s, ipfilter_t *f) {
 	char num[128];
 	int i, j;
 	byte b[4], m[4];
@@ -780,7 +780,7 @@ void SV_SendBan (void) {
 }
 
 //Returns true if net_from.ip is banned
-qboolean SV_FilterPacket (void) {
+qbool SV_FilterPacket (void) {
 	int	 i;
 	unsigned in;
 

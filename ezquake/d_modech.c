@@ -38,7 +38,7 @@ void D_Patch (void)
 {
 #if id386
 
-	static qboolean protectset8 = false;
+	static qbool protectset8 = false;
 
 	if (!protectset8)
 	{

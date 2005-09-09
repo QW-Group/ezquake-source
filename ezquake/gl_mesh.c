@@ -32,7 +32,7 @@ ALIAS MODEL DISPLAY LIST GENERATION
 model_t		*aliasmodel;
 aliashdr_t	*paliashdr;
 
-qboolean	used[8192];
+qbool	used[8192];
 
 // the command list holds counts and s/t values that are valid for
 // every frame

@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define __LOGGING_H_
 
-qboolean Log_IsLogging(void);
+qbool Log_IsLogging(void);
 void Log_Init(void);
 void Log_Shutdown(void);
 void Log_Write(char *s);
@@ -30,7 +30,7 @@ void Log_Write(char *s);
 void Log_AutoLogging_StopMatch(void);
 void Log_AutoLogging_CancelMatch(void);
 void Log_AutoLogging_StartMatch(char *logname);
-qboolean Log_AutoLogging_Status(void);
+qbool Log_AutoLogging_Status(void);
 void Log_AutoLogging_SaveMatch(void);
 
 extern cvar_t log_readable;

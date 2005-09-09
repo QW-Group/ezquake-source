@@ -390,7 +390,7 @@ int CL_CalcNetStatistics(
 //=============================================================================
 
 //Returns true if the file exists, otherwise it attempts to start a download from the server.
-qboolean CL_CheckOrDownloadFile (char *filename) {
+qbool CL_CheckOrDownloadFile (char *filename) {
 	FILE *f;
 
 	if (strstr (filename, "..")) {
@@ -725,7 +725,7 @@ void CL_StartFileUpload (void)
 	CL_NextUpload();
 }
 
-qboolean CL_IsUploading(void)
+qbool CL_IsUploading(void)
 {
 	if ((!cls.is_file && cls.mem_upload) || (cls.is_file && cls.upload))
 		return true;
@@ -780,7 +780,7 @@ void CL_NextUpload(void) {
 	upload_pos = upload_size = 0;
 }
 
-qboolean CL_IsUploading(void) {
+qbool CL_IsUploading(void) {
 	return !!upload_data;
 }
 
@@ -831,7 +831,7 @@ void CL_StartUpload (char *filename) {
 void CL_ParseServerData (void) {
 	char *str, fn[MAX_OSPATH];
 	FILE *f;
-	qboolean cflag = false;
+	qbool cflag = false;
 	int i, protover;
 	extern cshift_t	cshift_empty;
 
@@ -1229,7 +1229,7 @@ void CL_NewTranslation (int slot) {
 
 
 	if (!cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_COLOR)) {
-		qboolean teammate;
+		qbool teammate;
 
 		teammate = ( // cl.teamplay && 
 			!strcmp(player->team, skinforcing_team)) ? true : false;
@@ -1246,7 +1246,7 @@ void CL_NewTranslation (int slot) {
 }
 
 void CL_ProcessUserInfo (int slot, player_info_t *player, char *key) {
-	qboolean update_skin;
+	qbool update_skin;
 	int mynum;
 
 	Q_strncpyz (player->name, Info_ValueForKey (player->userinfo, "name"), sizeof(player->name));
@@ -1295,7 +1295,7 @@ void CL_PlayerLeaveSlot(player_info_t *player) {
 }
 
 void CL_UpdateUserinfo (void) {
-	qboolean was_empty_slot;
+	qbool was_empty_slot;
 	int slot;
 	player_info_t *player;
 
@@ -1344,7 +1344,7 @@ void CL_SetInfo (void) {
 void CL_ProcessServerInfo (void) {
 	char *p, *fbskins, *truelightning, *minlight, *watervis;
 	int teamplay, fpd;
-	qboolean skin_refresh, standby, countdown;
+	qbool skin_refresh, standby, countdown;
 
 	// game type (sbar code checks it) (GAME_DEATHMATCH default)
 	cl.gametype = *(p = Info_ValueForKey(cl.serverinfo, "deathmatch")) ? (atoi(p) ? GAME_DEATHMATCH : GAME_COOP) : GAME_DEATHMATCH;
@@ -1433,7 +1433,7 @@ void CL_ParseServerInfoChange (void) {
 }
 
 //for CL_ParsePrint
-static void FlushString (char *s, int level, qboolean team, int offset) {
+static void FlushString (char *s, int level, qbool team, int offset) {
 	extern cvar_t con_highlight, con_highlight_mark, name;
 	char white_s[4096];
 
@@ -1556,8 +1556,8 @@ void MakeChatRed(char *t, int mm2)
 }
 
 void CL_ParsePrint (void) {
-	qboolean suppress_talksound;	
-	qboolean cut_message = false;
+	qbool suppress_talksound;	
+	qbool cut_message = false;
 	char *s, str[2048], *p, check_flood, dest[2048], *c, *d, *f, e, b; 
 	int len, level, flags = 0, offset = 0;
 	extern cvar_t cl_chatsound, msg_filter;
@@ -1567,7 +1567,7 @@ void CL_ParsePrint (void) {
     int type; 
 	char *msg;
 
-	extern qboolean TP_SuppressMessage(char *);
+	extern qbool TP_SuppressMessage(char *);
 
     char *chat_sound_file;
     float chat_sound_vol;

@@ -39,7 +39,7 @@ void Help_Files_Init(void)
 
 int Help_Files_Key(int key, CTab_t *tab, CTabPage_t *page)
 {
-    qboolean processed;
+    qbool processed;
 
     processed = FL_Key(&help_filelist, key);
 

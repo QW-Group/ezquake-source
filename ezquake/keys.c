@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.21 2005-08-30 03:03:21 disconn3ct Exp $
+	$Id: keys.c,v 1.22 2005-09-09 11:00:26 disconn3ct Exp $
 
 */
 
@@ -68,14 +68,14 @@ int count_alias = 0;
 keydest_t	key_dest;
 
 char		*keybindings[UNKNOWN + 256];
-qboolean	consolekeys[UNKNOWN + 256];	// if true, can't be rebound while in console
-qboolean	menubound[UNKNOWN + 256];		// if true, can't be rebound while in menu
+qbool	consolekeys[UNKNOWN + 256];	// if true, can't be rebound while in console
+qbool	menubound[UNKNOWN + 256];		// if true, can't be rebound while in menu
 #ifndef WITH_KEYMAP
 int			keyshift[UNKNOWN + 256];		// key to map to if shift held down in console
 #endif // WITH_KEYMAP
 int			key_repeats[UNKNOWN + 256];	// if > 1, it is autorepeating
-qboolean	keydown[UNKNOWN + 256];
-qboolean	keyactive[UNKNOWN + 256];	
+qbool	keydown[UNKNOWN + 256];
+qbool	keyactive[UNKNOWN + 256];	
 
 typedef struct
 {
@@ -300,7 +300,7 @@ CompleteCommandNew_Reset (void)
 ==============================================================================
 */
 
-qboolean CheckForCommand (void) {
+qbool CheckForCommand (void) {
 	char command[256], *s;
 
 	Q_strncpyz(command, key_lines[edit_line] + 1, sizeof(command));
@@ -877,8 +877,8 @@ void Key_Console (int key) {
 	int i, len;
 
 #ifdef WITH_KEYMAP
-	static qboolean yellowchars = false;
-	static qboolean redchars    = false;
+	static qbool yellowchars = false;
+	static qbool redchars    = false;
 #endif // WITH_KEYMAP
 
 	switch (key) {
@@ -888,7 +888,7 @@ void Key_Console (int key) {
 			// backslash text are commands
 		if (key_lines[edit_line][1] != '/' || key_lines[edit_line][2] != '/')
 		{
-			qboolean no_lf = true;
+			qbool no_lf = true;
 //				goto no_lf;
 
 			if ((keydown[K_CTRL] || keydown[K_SHIFT]) && cls.state >= ca_connected)
@@ -1203,9 +1203,9 @@ CompleteCommandNew_Reset ();
 
 //============================================================================
 
-qboolean	chat_team;
-qboolean chat_observers;	// added by jogi
-qboolean chat_server;		// added by jogi
+qbool	chat_team;
+qbool chat_observers;	// added by jogi
+qbool chat_server;		// added by jogi
 char		chat_buffer[MAXCMDLINE];
 int			chat_linepos = 0;
 
@@ -1499,7 +1499,7 @@ static void Key_PrintBindInfo(int keynum, char *keyname) {
 }
 
 //checks if LCTRL and RCTRL are both bound and bound to the same thing
-qboolean Key_IsLeftRightSameBind(int b) {
+qbool Key_IsLeftRightSameBind(int b) {
 	if (b < 0 || b >= (sizeof(keybindings) / sizeof(*keybindings)) - 2)
 		return false;
 
@@ -1744,7 +1744,7 @@ void Key_Init (void) {
 }
 
 //Called by the system between frames for both key up and key down events Should NOT be called during an interrupt!
-void Key_EventEx (int key, int basekey, qboolean down)
+void Key_EventEx (int key, int basekey, qbool down)
 {
 	char *kb, cmd[1024];
 
@@ -1878,7 +1878,7 @@ Com_Printf("DOWN\n");
 		assert(!"Bad key_dest");
 	}
 }
-void Key_Event (int key, qboolean down)
+void Key_Event (int key, qbool down)
 {
 	Key_EventEx (key, key, down);
 }

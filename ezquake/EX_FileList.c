@@ -168,7 +168,7 @@ extern void cvar_toggle (cvar_t *var);
 //
 // is current entry a dir ?
 //
- qboolean FL_IsCurrentDir(filelist_t *fl)
+ qbool FL_IsCurrentDir(filelist_t *fl)
 {
     if (fl->num_entries <= 0)
         return true;    // we can handle that
@@ -472,7 +472,7 @@ finish:
 //
 // search by name for next item
 //
-qboolean FL_Search(filelist_t *fl)
+qbool FL_Search(filelist_t *fl)
 {
     int i;
     char tmp[512];
@@ -573,7 +573,7 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
 // keys handling
 // returns: true if processed, false if ignored
 //
- qboolean FL_Key(filelist_t *fl, int key)
+ qbool FL_Key(filelist_t *fl, int key)
 {
     // check for search
     if ((key >= ' '  &&  key <= '~')  &&

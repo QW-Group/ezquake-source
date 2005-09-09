@@ -17,7 +17,7 @@ You	should have	received a copy	of the GNU General Public License
 along with this	program; if	not, write to the Free Software
 Foundation,	Inc., 59 Temple	Place -	Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: config_manager.c,v 1.15 2005-08-21 21:38:25 johnnycz Exp $
+	$Id: config_manager.c,v 1.16 2005-09-09 11:00:26 disconn3ct Exp $
 
 */
 
@@ -40,12 +40,12 @@ void DumpSkyGroups(FILE *f);
 #endif
 // END shaman RFE 1020608
 
-qboolean Key_IsLeftRightSameBind(int b);
+qbool Key_IsLeftRightSameBind(int b);
 void DumpMapGroups(FILE *f);
 void TP_DumpTriggers(FILE *);
 void TP_DumpMsgFilters(FILE *f);
 void TP_ResetAllTriggers(void);
-qboolean Cmd_DeleteAlias (char *);
+qbool Cmd_DeleteAlias (char *);
 void DumpFlagCommands(FILE *);
 void Cvar_ResetVar (cvar_t *var);
 int Cvar_CvarCompare (const void *p1, const void *p2);
@@ -61,7 +61,7 @@ extern kbutton_t	in_mlook, in_klook,	in_left, in_right, in_forward, in_back;
 extern kbutton_t	in_lookup, in_lookdown,	in_moveleft, in_moveright;
 extern kbutton_t	in_strafe, in_speed, in_use, in_jump, in_attack, in_up,	in_down;
 
-extern qboolean		sb_showscores, sb_showteamscores;
+extern qbool		sb_showscores, sb_showteamscores;
 
 extern int		cl_teamtopcolor, cl_teambottomcolor, cl_enemytopcolor, cl_enemybottomcolor;
 extern char		allskins[128];
@@ -86,7 +86,7 @@ cvar_t	cfg_backup			=	{"cfg_backup", "0"};
 void DumpBindings (FILE *f) {
 	int i, leftright;
 	char *spaces, *string;
-	qboolean printed = false;
+	qbool printed = false;
 
 	for (i = 0; i < (sizeof(keybindings) / sizeof(*keybindings)); i++) {
 		
@@ -119,7 +119,7 @@ static void DumpVariables(FILE	*f)	{
 	cvar_group_t *group;
 	char *spaces;
 	int count, i, col_size;
-	qboolean skip_userinfo = false;
+	qbool skip_userinfo = false;
 
 
 
@@ -254,7 +254,7 @@ static void DumpAliases(FILE *f) {
 	int maxlen, i, j, count, lonely_count, minus_index, minus_count;
 	char *spaces;
 	cmd_alias_t	*b, *a, *sorted_aliases[1024], *lonely_pluses[512];
-	qboolean partner, printed;
+	qbool partner, printed;
 
 	for (count = maxlen = 0, a = cmd_alias;	(count < (sizeof(sorted_aliases) / sizeof(*sorted_aliases))) && a; a = a->next) {
 		if (!(a->flags & (ALIAS_SERVER|ALIAS_TEMP))) {
@@ -474,9 +474,9 @@ void DumpCmdLine(FILE *f) {
 
 /************************************ RESET FUNCTIONS ************************************/
 
-static void ResetVariables(int cvar_flags, qboolean userinfo) {
+static void ResetVariables(int cvar_flags, qbool userinfo) {
 	cvar_t *var;
-	qboolean check_userinfos = false;
+	qbool check_userinfos = false;
 
 	if (userinfo) {
 		if (!cfg_save_userinfo.value)
@@ -615,7 +615,7 @@ static void Config_PrintPreamble(FILE *f) {
 
 /************************************ MAIN FUCTIONS	************************************/
 
-static void ResetConfigs(qboolean resetall)	{
+static void ResetConfigs(qbool resetall)	{
 	FILE *f;
 
 	ResetVariables(CVAR_SERVERINFO, !resetall);

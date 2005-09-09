@@ -36,7 +36,7 @@ void CameraRandomPoint(vec3_t org)
 	}
 	VectorCopy(dest, camera_pos);
 }
-void CameraUpdate (qboolean dead)
+void CameraUpdate (qbool dead)
 {
 	vec3_t dest, destangles;
 	if (amf_camera_chase.value == 1)

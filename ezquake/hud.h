@@ -38,7 +38,7 @@ typedef struct hud_s
     // placement
     cvar_t *place;            // place string, parsed to:
     struct hud_s *place_hud;  // if snapped to hud element
-    qboolean place_outside;   // if hud: inside ot outside
+    qbool place_outside;   // if hud: inside ot outside
     int place_num;            // place number (our or parent if hud)
                               // note: item is placed at another HUD element
                               // if place_hud != NULL
@@ -98,11 +98,11 @@ hud_t * HUD_Find(char *name);
 // return value:
 //    true  - draw it
 //    false - don't draw, it is off screen (mayby partially)
-qboolean HUD_PrepareDraw(
+qbool HUD_PrepareDraw(
     /* in  */ hud_t *hud, int width, int height,
     /* out */ int *ret_x, int *ret_y);
 
-qboolean HUD_PrepareDrawByName(
+qbool HUD_PrepareDrawByName(
     /* in  */ char *element, int width, int height,
     /* out */ int *ret_x, int *ret_y);
 

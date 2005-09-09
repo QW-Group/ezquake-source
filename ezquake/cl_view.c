@@ -55,7 +55,7 @@ cvar_t	v_viewheight = {"v_viewheight", "0"};
 cvar_t	cl_drawgun = {"r_drawviewmodel", "1"};
 cvar_t	r_viewmodelsize = {"r_viewmodelSize", "1"};	
 
-qboolean Change_v_idle (cvar_t *var, char *value);
+qbool Change_v_idle (cvar_t *var, char *value);
 cvar_t	v_iyaw_cycle = {"v_iyaw_cycle", "2", 0, Change_v_idle};
 cvar_t	v_iroll_cycle = {"v_iroll_cycle", "0.5", 0, Change_v_idle};
 cvar_t	v_ipitch_cycle = {"v_ipitch_cycle", "1", 0, Change_v_idle};
@@ -92,7 +92,7 @@ float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 frame_t			*view_frame;
 player_state_t	*view_message;
 
-qboolean Change_v_idle (cvar_t *var, char *value) {
+qbool Change_v_idle (cvar_t *var, char *value) {
 	// Don't allow cheating in TF
 	return (cl.teamfortress && cls.state >= ca_connected &&	cbuf_current != &cbuf_svc);
 }
@@ -276,7 +276,7 @@ void BuildGammaTable (float g, float c) {
 	}
 }
 
-qboolean V_CheckGamma (void) {
+qbool V_CheckGamma (void) {
 	static float old_gamma;
 	static float old_contrast;
 	
@@ -346,8 +346,8 @@ void V_ParseDamage (void) {
 }
 
 // disconnect -->
-qboolean flashed = false; // it should be used for f_flashout tirgger
-void V_TF_FlashSettings (qboolean flashed)
+qbool flashed = false; // it should be used for f_flashout tirgger
+void V_TF_FlashSettings (qbool flashed)
 {
 	extern cvar_t v_gamma, v_contrast;
 	float flash_gamma = 0.55;
@@ -637,7 +637,7 @@ void V_AddLightBlend (float r, float g, float b, float a2) {
 
 void V_UpdatePalette (void) {
 	int i, j, c;
-	qboolean new;
+	qbool new;
 	float current_gamma, current_contrast, a, rgb[3];
 	static float prev_blend[4];
 	static float old_gamma, old_contrast, old_hwblend;
@@ -707,7 +707,7 @@ void V_UpdatePalette (void) {
 
 void V_UpdatePalette (void) {
 	int i, j, r,g,b;
-	qboolean new, force;
+	qbool new, force;
 	byte *basepal, *newpal;
 	static cshift_t	prev_cshifts[NUM_CSHIFTS];
 

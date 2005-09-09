@@ -59,8 +59,8 @@ typedef struct fragmsg_s {
 } fragmsg_t;
 
 typedef struct fragdef_s {
-	qboolean	active;		
-	qboolean	flagalerts;	
+	qbool	active;		
+	qbool	flagalerts;	
 
 	int			version;	
 	char		*gamedir;	
@@ -175,11 +175,11 @@ static void InitFragDefs(void) {
 									goto end;																					\
 								}
 
-static void LoadFragFile(char *filename, qboolean quiet) {
+static void LoadFragFile(char *filename, qbool quiet) {
 	int lowmark, c, line, i;
 	msgtype_t msgtype;
 	char save, *buffer, *start, *end, *token, fragfilename[MAX_OSPATH];
-	qboolean gotversion = false, warned_flagmsg_overflow = false;
+	qbool gotversion = false, warned_flagmsg_overflow = false;
 
 	InitFragDefs();
 
@@ -455,7 +455,7 @@ typedef struct fragstats_s {
 } fragstats_t;
 
 static fragstats_t fragstats[MAX_CLIENTS];
-static qboolean flag_dropped, flag_touched, flag_captured;
+static qbool flag_dropped, flag_touched, flag_captured;
 
 static void Stats_ParsePrintLine(char *s) {
 	int start_search, end_Search, i, j, k, p1len, msg1len, msg2len, p2len, killer, victim;
@@ -823,11 +823,11 @@ void Stats_GetFlagStats(int num, int *playerstats) {
 	playerstats[2] = fragstats[num].captures;
 }
 
-qboolean Stats_IsActive(void) {
+qbool Stats_IsActive(void) {
 	return (fragdefs.active && cl_parsefrags.value) ? true : false;
 }
 
-qboolean Stats_IsFlagsParsed(void) {
+qbool Stats_IsFlagsParsed(void) {
 	return (Stats_IsActive() && fragdefs.flagalerts) ? true : false;
 }
 

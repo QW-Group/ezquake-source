@@ -41,7 +41,7 @@ typedef struct glRect_s {
 } glRect_t;
 
 static glpoly_t	*lightmap_polys[MAX_LIGHTMAPS];
-static qboolean	lightmap_modified[MAX_LIGHTMAPS];
+static qbool	lightmap_modified[MAX_LIGHTMAPS];
 static glRect_t	lightmap_rectchange[MAX_LIGHTMAPS];
 
 static int allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
@@ -50,7 +50,7 @@ static int allocated[MAX_LIGHTMAPS][BLOCK_WIDTH];
 // main memory so texsubimage can update properly
 byte	lightmaps[3 * MAX_LIGHTMAPS * BLOCK_WIDTH * BLOCK_HEIGHT];
 
-static qboolean	gl_invlightmaps = true;
+static qbool	gl_invlightmaps = true;
 
 msurface_t	*skychain = NULL;
 msurface_t	**skychain_tail = &skychain;
@@ -76,7 +76,7 @@ msurface_t	**alphachain_tail = &alphachain;
 
 glpoly_t *fullbright_polys[MAX_GLTEXTURES];
 glpoly_t *luma_polys[MAX_GLTEXTURES];
-qboolean drawfullbrights = false, drawlumas = false;
+qbool drawfullbrights = false, drawlumas = false;
 glpoly_t *caustics_polys = NULL;
 glpoly_t *detail_polys = NULL;
 
@@ -499,7 +499,7 @@ void R_RenderDynamicLightmaps (msurface_t *fa) {
 	byte *base;
 	int maps, smax, tmax;
 	glRect_t *theRect;
-	qboolean lightstyle_modified = false;
+	qbool lightstyle_modified = false;
 
 	c_brush_polys++;
 
@@ -740,16 +740,16 @@ void DrawTextureChains (model_t *model) {
 	texture_t *t;
 	float *v;
 
-	qboolean render_lightmaps = false;
-	qboolean drawLumasGlowing, doMtex1, doMtex2;
+	qbool render_lightmaps = false;
+	qbool drawLumasGlowing, doMtex1, doMtex2;
 
-	qboolean draw_fbs, draw_caustics, draw_details;
+	qbool draw_fbs, draw_caustics, draw_details;
 
-	qboolean can_mtex_lightmaps, can_mtex_fbs;
+	qbool can_mtex_lightmaps, can_mtex_fbs;
 
-	qboolean draw_mtex_fbs;
+	qbool draw_mtex_fbs;
 
-	qboolean mtex_lightmaps, mtex_fbs;
+	qbool mtex_lightmaps, mtex_fbs;
 
 	drawLumasGlowing = (com_serveractive || cl.allow_lumas) && (gl_fb_bmodels.value || gl_fogenable.value);
 
@@ -942,7 +942,7 @@ void R_DrawFlat (model_t *model) {
 	float *v;
 	vec3_t n;
 	byte *col, w[3], f[3];
-	qboolean draw_caustics = underwatertexture && gl_caustics.value;
+	qbool draw_caustics = underwatertexture && gl_caustics.value;
 	
 	col = StringToRGB(r_wallcolor.string);
 	memcpy(w, col, 3);
@@ -1012,7 +1012,7 @@ void R_DrawFlat (model_t *model) {
  // } END shaman FIX /r_drawflat + /gl_caustics
 }
 
-qboolean OnChange_r_drawflat(cvar_t *v, char *skyname) {
+qbool OnChange_r_drawflat(cvar_t *v, char *skyname) {
 	if(cls.state >= ca_connected && !cl.standby && !cls.demoplayback && !cl.spectator) {
 		Com_Printf("Wall color changes are not allowed during the match.\n");
 		return true;
@@ -1028,7 +1028,7 @@ void R_DrawBrushModel (entity_t *e) {
 	float dot;
 	mplane_t *pplane;
 	model_t *clmodel;
-	qboolean rotated;
+	qbool rotated;
 
 	currententity = e;
 	currenttexture = -1;

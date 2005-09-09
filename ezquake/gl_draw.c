@@ -36,16 +36,16 @@ cvar_t	scr_conalpha		= {"scr_conalpha", "0.8"};
 cvar_t	scr_menualpha		= {"scr_menualpha", "0.7"};
 
 
-qboolean OnChange_gl_crosshairimage(cvar_t *, char *);
+qbool OnChange_gl_crosshairimage(cvar_t *, char *);
 cvar_t	gl_crosshairimage   = {"crosshairimage", "", 0, OnChange_gl_crosshairimage};
 
-qboolean OnChange_gl_consolefont (cvar_t *, char *);
+qbool OnChange_gl_consolefont (cvar_t *, char *);
 cvar_t	gl_consolefont		= {"gl_consolefont", "original", 0, OnChange_gl_consolefont};
 
 cvar_t	gl_crosshairalpha	= {"crosshairalpha", "1"};
 
 
-qboolean OnChange_gl_smoothfont (cvar_t *var, char *string);
+qbool OnChange_gl_smoothfont (cvar_t *var, char *string);
 cvar_t gl_smoothfont = {"gl_smoothfont", "0", 0, OnChange_gl_smoothfont};
 
 byte			*draw_chars;						// 8*8 graphic characters
@@ -127,7 +127,7 @@ static byte crosshairdata[NUMCROSSHAIRS][64] = {
 };
 
 
-qboolean OnChange_gl_smoothfont (cvar_t *var, char *string) {
+qbool OnChange_gl_smoothfont (cvar_t *var, char *string) {
 	float newval;
 
 	newval = Q_atof (string);
@@ -147,7 +147,7 @@ qboolean OnChange_gl_smoothfont (cvar_t *var, char *string) {
 }
 
 
-qboolean OnChange_gl_crosshairimage(cvar_t *v, char *s) {
+qbool OnChange_gl_crosshairimage(cvar_t *v, char *s) {
 	mpic_t *pic;
 
 	if (!s[0]) {
@@ -221,7 +221,7 @@ int			scrap_dirty = 0;	// bit mask
 int			scrap_texnum;
 
 // returns false if allocation failed
-qboolean Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y) {
+qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y) {
 	int i, j, best, best2;
 
 	best = BLOCK_HEIGHT;
@@ -428,7 +428,7 @@ done:
 	return 0;
 }
 
-qboolean OnChange_gl_consolefont(cvar_t *var, char *string) {
+qbool OnChange_gl_consolefont(cvar_t *var, char *string) {
 	return Draw_LoadCharset(string);
 }
 
@@ -722,7 +722,7 @@ static int HexToInt(char c) {
 
 void Draw_ColoredString (int x, int y, char *text, int red) {
 	int r, g, b, num;
-	qboolean white = true;
+	qbool white = true;
 
 	if (y <= -8)
 		return;			// totally off screen

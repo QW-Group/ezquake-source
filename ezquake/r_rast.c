@@ -42,9 +42,9 @@ clipplane_t	world_clipplanes[16];
 
 medge_t			*r_pedge;
 
-qboolean		r_leftclipped, r_rightclipped;
-static qboolean	makeleftedge, makerightedge;
-qboolean		r_nearzionly;
+qbool		r_leftclipped, r_rightclipped;
+static qbool	makeleftedge, makerightedge;
+qbool		r_nearzionly;
 
 int		sintable[MAXWIDTH + CYCLE];
 int		intsintable[MAXWIDTH + CYCLE];
@@ -62,7 +62,7 @@ float			r_nearzi;
 float			r_u1, r_v1, r_lzi1;
 int				r_ceilv1;
 
-qboolean	r_lastvertvalid;
+qbool	r_lastvertvalid;
 
 
 #if	!id386

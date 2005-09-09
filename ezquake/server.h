@@ -50,8 +50,8 @@ typedef struct {
 	int			lastcheck;			// used by PF_checkclient
 	double		lastchecktime;		// for monster ai 
 
-	qboolean	paused;				// are we paused?
-	qboolean	loadgame;			// handle connections specially
+	qbool	paused;				// are we paused?
+	qbool	loadgame;			// handle connections specially
 
 	//check player/eyes models for hacks
 	unsigned	model_player_checksum;
@@ -136,17 +136,17 @@ typedef struct client_s {
 	int			userid;				// identifying number
 	char		userinfo[MAX_INFO_STRING];	// infostring
 
-	qboolean	sendinfo;			// at end of frame, send info to all
+	qbool	sendinfo;			// at end of frame, send info to all
 										// this prevents malicious multiple broadcasts
 	float		lastnametime;		// time of last name change
 	int			lastnamecount;		// time of last name change
 	unsigned	checksum;			// checksum for calcs
-	qboolean	drop;				// lose this guy next opportunity
+	qbool	drop;				// lose this guy next opportunity
 	int			lossage;			// loss percentage
 
 	usercmd_t	lastcmd;			// for filling in big drops and partial predictions
 	double		cmdtime;			// realtime of last message
-	qboolean	jump_held;
+	qbool	jump_held;
 
 	float		maxspeed;			// localized maxspeed
 	float		entgravity;			// localized ent gravity
@@ -173,7 +173,7 @@ typedef struct client_s {
 	int			sprint_level;
 
 	double		connection_started;	// or time of disconnect for zombies
-	qboolean	send_message;		// set on frames a datagram arived on
+	qbool	send_message;		// set on frames a datagram arived on
 
 	// spawn parms are carried from level to level
 	float		spawn_parms[NUM_SPAWN_PARMS];
@@ -200,7 +200,7 @@ typedef struct client_s {
 	FILE		*upload;
 	char		uploadfn[MAX_QPATH];
 	netadr_t	snap_from;
-	qboolean	remote_snap;
+	qbool	remote_snap;
  
 //===== NETWORK ============
 	int			chokecount;
@@ -374,7 +374,7 @@ int SV_CalcPing (client_t *cl);
 void SV_FullClientUpdate (client_t *client, sizebuf_t *buf);
 void SV_FullClientUpdateToClient (client_t *client, client_t *cl);
 
-void SV_ExecuteUserCommand (char *s, qboolean fromQC);
+void SV_ExecuteUserCommand (char *s, qbool fromQC);
 void SV_InitOperatorCommands (void);
 
 void SV_ExtractFromUserinfo (client_t *cl);
@@ -384,21 +384,21 @@ void Master_Heartbeat (void);
 void Master_Packet (void);
 
 // sv_move.c
-qboolean SV_CheckBottom (edict_t *ent);
-qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink);
+qbool SV_CheckBottom (edict_t *ent);
+qbool SV_movestep (edict_t *ent, vec3_t move, qbool relink);
 void SV_MoveToGoal (void);
 
 // sv_init.c
 int SV_ModelIndex (char *name);
 void SV_FlushSignon (void);
 void SV_SaveSpawnparms (void);
-void SV_SpawnServer (char *server, qboolean devmap);
+void SV_SpawnServer (char *server, qbool devmap);
 
 // sv_phys.c
 void SV_ProgStartFrame (void);
 void SV_Physics (void);
 void SV_CheckVelocity (edict_t *ent);
-qboolean SV_RunThink (edict_t *ent);
+qbool SV_RunThink (edict_t *ent);
 void SV_RunNewmis (void);
 void SV_SetMoveVars(void);
 

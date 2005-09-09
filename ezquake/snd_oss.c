@@ -39,7 +39,7 @@ static char snd_dev[64] = "/dev/dsp";
 
 static int tryrates[] = {44100, 11025, 22051, 8000};
 
-qboolean SNDDMA_Init_OSS(void) {
+qbool SNDDMA_Init_OSS(void) {
 	int rc, fmt, tmp, caps, i;
     char *s;
 	struct audio_buf_info info;

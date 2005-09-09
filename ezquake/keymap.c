@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keymap.c,v 1.4 2005-08-17 06:32:54 vvd0 Exp $
+	$Id: keymap.c,v 1.5 2005-09-09 11:00:26 disconn3ct Exp $
 
 */
 // keymap.c -- support for international keyboard layouts
@@ -31,12 +31,12 @@ extern cvar_t cl_keypad;
 cvar_t	keymap_name = {"keymap_name", "Default"};
 
 // flag, which shows if a keymapping is active or not:
-static qboolean keymap_active = false; 
+static qbool keymap_active = false; 
 
 // internal functions:
-static void IN_Keycode_Print_f (int scancode, qboolean ext, qboolean down, int key);
-static void IN_Keycode_Set_f (qboolean showerr, char *filename, unsigned int linecount);
-static void IN_Keymap_Print_f (int scancode, qboolean ext);
+static void IN_Keycode_Print_f (int scancode, qbool ext, qbool down, int key);
+static void IN_Keycode_Set_f (qbool showerr, char *filename, unsigned int linecount);
+static void IN_Keymap_Print_f (int scancode, qbool ext);
 static void IN_Keymap_WriteHeader_f (FILE *f);
 static void IN_Keymap_WriteKeycode_f (FILE *f, int scancode);
 
@@ -171,7 +171,7 @@ IN_TranslateKeyEvent
 Map from windows to quake keynums and generate Key_Event
 =======
 */
-void IN_TranslateKeyEvent (int lKeyData, qboolean down) {
+void IN_TranslateKeyEvent (int lKeyData, qbool down) {
 	int		extended;
 	int		scancode;
 	int		key      = 0;
@@ -668,9 +668,9 @@ mapping, shiftmapping, altgrmapping can be
  a number, like #34      -> maps directly to the corresponding ASCII-character
 ===========
 */
-static void IN_Keycode_Set_f (qboolean showerr, char *filename, unsigned int linecount) {
+static void IN_Keycode_Set_f (qbool showerr, char *filename, unsigned int linecount) {
 	int        error, argcount, j;
-	qboolean   ext      = false;
+	qbool   ext      = false;
 	int        scancode = (int)0;
 	int        key[3];
 	char       linetext[ 256 ];
@@ -889,7 +889,7 @@ If cl_showkeycodes == 2 --> only print "key-releases"
 if cl_showkeycodes == 3 --> print "key-releases" and "key-presses"
 ===========
 */
-static void IN_Keycode_Print_f( int scancode, qboolean ext, qboolean down, int key ) {
+static void IN_Keycode_Print_f( int scancode, qbool ext, qbool down, int key ) {
 	int    flag = (int)cl_showkeycodes.value;
 
 	if (( (flag & 2) > 0 && down != true ) || 
@@ -925,7 +925,7 @@ Writes the mapping of the given scancode+ext
 to the quake console
 ===========
 */
-static void IN_Keymap_Print_f( int scancode, qboolean ext )
+static void IN_Keymap_Print_f( int scancode, qbool ext )
 {
 	int    keycode = scancode + (ext == true ? 128 : 0);
 

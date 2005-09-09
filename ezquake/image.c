@@ -503,7 +503,7 @@ static void PNG_FreeLibrary(void) {
 		QLIB_FREELIBRARY(zlib_handle);
 }
 
-static qboolean PNG_LoadLibrary(void) {
+static qbool PNG_LoadLibrary(void) {
 	if (COM_CheckParm("-nolibpng"))
 		return false;
 
@@ -814,7 +814,7 @@ typedef struct TGAHeader_s {
 } TGAHeader_t;
 
 
-static void TGA_upsample15(byte *dest, byte *src, qboolean alpha) {
+static void TGA_upsample15(byte *dest, byte *src, qbool alpha) {
 	dest[2] = (byte) ((src[0] & 0x1F) << 3);
 	dest[1] = (byte) ((((src[1] & 0x03) << 3) + ((src[0] & 0xE0) >> 5)) << 3);
 	dest[0] = (byte) (((src[1] & 0x7C) >> 2) << 3);
@@ -992,7 +992,7 @@ byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight) 
 int Image_WriteTGA (char *filename, byte *pixels, int width, int height) {
 	byte *buffer;
 	int size;
-	qboolean retval = true;
+	qbool retval = true;
 
 	size = width * height * 3;
 	buffer = Q_malloc (size + 18);
@@ -1049,7 +1049,7 @@ static void JPEG_FreeLibrary(void) {
 		QLIB_FREELIBRARY(jpeg_handle);
 }
 
-static qboolean JPEG_LoadLibrary(void) {
+static qbool JPEG_LoadLibrary(void) {
 	if (COM_CheckParm("-nolibjpeg"))
 		return false;
 
@@ -1084,7 +1084,7 @@ typedef my_destination_mgr *my_dest_ptr;
 
 #define JPEG_OUTPUT_BUF_SIZE  4096
 
-static qboolean jpeg_in_error = false;
+static qbool jpeg_in_error = false;
 
 static void JPEG_IO_init_destination(j_compress_ptr cinfo) {
 	my_dest_ptr dest = (my_dest_ptr) cinfo->dest;

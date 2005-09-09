@@ -10,7 +10,7 @@ typedef float m3by3_t[3][3];
 
 extern vec3_t	shadevector;
 extern float	shadelight, ambientlight;
-extern qboolean full_light;
+extern qbool full_light;
 
 /*
 To draw, for each surface, run through the triangles, getting tex coords from s+t, 

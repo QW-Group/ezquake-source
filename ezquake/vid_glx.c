@@ -45,7 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef WITH_KEYMAP
 #include "keymap.h"
-extern void IN_Keycode_Print_f( XKeyEvent *ev, qboolean ext, qboolean down, int key );
+extern void IN_Keycode_Print_f( XKeyEvent *ev, qbool ext, qbool down, int key );
 #endif // WITH_KEYMAP
 
 #ifdef WITH_EVDEV
@@ -80,9 +80,9 @@ static float old_windowed_mouse = 0, mouse_x, mouse_y, old_mouse_x, old_mouse_y;
 unsigned short *currentgammaramp = NULL;
 static unsigned short systemgammaramp[3][256];
 
-qboolean vid_gammaworks = false;
-qboolean vid_hwgamma_enabled = false;
-qboolean customgamma = false;
+qbool vid_gammaworks = false;
+qbool vid_hwgamma_enabled = false;
+qbool customgamma = false;
 
 static int scr_width, scr_height, scrnum;
 
@@ -100,10 +100,10 @@ static int dgamouse, dgakeyb;
 #endif
 
 #ifdef WITH_VMODE
-static qboolean vidmode_ext = false;
+static qbool vidmode_ext = false;
 static XF86VidModeModeInfo **vidmodes;
 static int num_vidmodes;
-static qboolean vidmode_active = false;
+static qbool vidmode_active = false;
 static double X_vrefresh_rate = 0;
 static int best_fit = 0;
 static Window minimized_window;
@@ -115,7 +115,7 @@ static int vid_minimized = 0;
 
 cvar_t	vid_ref = {"vid_ref", "gl", CVAR_ROM};
 cvar_t	vid_mode = {"vid_mode", "0"};
-qboolean OnChange_windowed_mouse(cvar_t *, char *);
+qbool OnChange_windowed_mouse(cvar_t *, char *);
 #ifdef NDEBUG
 cvar_t	_windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE, OnChange_windowed_mouse};
 cvar_t  auto_grabmouse = {"auto_grabmouse", "1"};
@@ -325,7 +325,7 @@ static void uninstall_grabs(void) {
 	XUngrabKeyboard(dpy, CurrentTime);
 }
 
-qboolean OnChange_windowed_mouse(cvar_t *var, char *value) {
+qbool OnChange_windowed_mouse(cvar_t *var, char *value) {
 	if (vidmode_active && !Q_atof(value)) {
 		Com_Printf("Cannot turn %s off when using -fullscreen mode\n", var->name);
 		return true;
@@ -467,7 +467,7 @@ void InitSig(void) {
 
 /******************************* GLX EXTENSIONS *******************************/
 
-qboolean CheckGLXExtension (const char *extension) {
+qbool CheckGLXExtension (const char *extension) {
 	const char *start;
 	char *where, *terminator;
 
@@ -566,7 +566,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height) {
 }
 
 void GL_EndRendering (void) {
-	static qboolean old_hwgamma_enabled;
+	static qbool old_hwgamma_enabled;
 
 	vid_hwgamma_enabled = vid_hwgammacontrol.value && vid_gammaworks;
 	if (vid_hwgamma_enabled != old_hwgamma_enabled) {
@@ -696,7 +696,7 @@ void VID_Init(unsigned char *palette) {
 	Window root;
 	XVisualInfo *visinfo;
 #ifdef WITH_VMODE
-	qboolean fullscreen = false;
+	qbool fullscreen = false;
 	int MajorVersion, MinorVersion, actualWidth, actualHeight;
 #endif
 

@@ -62,7 +62,7 @@ void Cvar_Reset_f (void) {
 	cvar_t		*var;
 	char		*name;
 	int		i;
-	qboolean	re_search;
+	qbool	re_search;
 
 
 	if (Cmd_Argc() < 2) {
@@ -183,7 +183,7 @@ void Cvar_Set (cvar_t *var, char *value) {
 #ifndef SERVERONLY
 	extern cvar_t cl_warncmd;	
 #endif
-	static qboolean	changing = false;
+	static qbool	changing = false;
 	float test ;
 
 	if (!var)
@@ -311,7 +311,7 @@ cvar_group_t	*cvar_groups = NULL;
 #undef CVAR_GROUPS_DEFINE_VARIABLES
 
 static cvar_group_t *Cvar_AddGroup(char *name) {
-	static qboolean initialised = false;
+	static qbool initialised = false;
 	cvar_group_t *newgroup;
 	char **s;
 
@@ -423,7 +423,7 @@ void Cvar_Register (cvar_t *var) {
 #endif
 }
 
-qboolean Cvar_Command (void) {
+qbool Cvar_Command (void) {
 	cvar_t *v;
 	char *spaces;
 
@@ -472,7 +472,7 @@ void Cvar_Toggle_f (void) {
 	cvar_t		*var;
 	char		*name;
 	int		i;
-	qboolean	re_search;
+	qbool	re_search;
 
 
 	if (Cmd_Argc() < 2) {
@@ -515,7 +515,7 @@ void Cvar_CvarList_f (void) {
 	cvar_t *var;
 	int i, c, m = 0;
 	static int count;
-	static qboolean sorted = false;
+	static qbool sorted = false;
 	static cvar_t *sorted_cvars[2048]; // disconnect@28.06.2005: it was 512 before
 
 #define MAX_SORTED_CVARS (sizeof(sorted_cvars) / sizeof(sorted_cvars[0]))
@@ -578,7 +578,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags) {
 }
 
 //returns true if the cvar was found (and deleted)
-qboolean Cvar_Delete (char *name) {
+qbool Cvar_Delete (char *name) {
 	cvar_t *var, *prev;
 	int key;
 
@@ -624,7 +624,7 @@ qboolean Cvar_Delete (char *name) {
 }
 
 
-static qboolean cvar_seta = false;
+static qbool cvar_seta = false;
 
 void Cvar_Set_f (void) {
 	cvar_t *var;
@@ -657,7 +657,7 @@ void Cvar_UnSet_f (void) {
 	cvar_t		*var;
 	char		*name;
 	int		i;
-	qboolean	re_search;
+	qbool	re_search;
 	
 
 	if (Cmd_Argc() < 2) {
@@ -902,7 +902,7 @@ int			wildcard_level = 0;
 pcre			*wildcard_re[4];
 pcre_extra		*wildcard_re_extra[4];
 
-qboolean IsRegexp(char *str)
+qbool IsRegexp(char *str)
 {
 	if (*str == '+' || *str == '-') // +/- aliases; valid regexp can not start with +/-
 		return false;
@@ -910,7 +910,7 @@ qboolean IsRegexp(char *str)
 	return (strcspn(str, "\\\"()[]{}.*+?^$|")) != strlen(str) ? true : false;
 }
 
-qboolean ReSearchInit (char *wildcard)
+qbool ReSearchInit (char *wildcard)
 {
 	const char	*error;
 	int		error_offset;
@@ -936,7 +936,7 @@ qboolean ReSearchInit (char *wildcard)
 	return true;
 }
 
-qboolean ReSearchMatch (char *str)
+qbool ReSearchMatch (char *str)
 {
 	int result;
 	int offsets[99];

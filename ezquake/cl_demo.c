@@ -33,13 +33,13 @@ static float		td_starttime;		// realtime at second frame of timedemo
 
 //QIZMO
 #ifdef _WIN32
-static qboolean	qwz_unpacking = false;
-static qboolean	qwz_playback = false;
+static qbool	qwz_unpacking = false;
+static qbool	qwz_playback = false;
 static HANDLE hQizmoProcess = NULL;
 static char tempqwd_name[256] = {0}; // this file must be deleted after playback is finished
 #endif
 
-static qboolean OnChange_demo_dir(cvar_t *var, char *string);
+static qbool OnChange_demo_dir(cvar_t *var, char *string);
 cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 
 char Demos_Get_Trackname(void);
@@ -62,9 +62,9 @@ static float playback_recordtime;
 #define DEMOCACHE_FLUSHSIZE	(1024 * 1024)
 
 static sizebuf_t democache;
-static qboolean democache_available = false;
+static qbool democache_available = false;
 
-static qboolean CL_Demo_Open(char *name) {
+static qbool CL_Demo_Open(char *name) {
 	if (democache_available)
 		SZ_Clear(&democache);
 	recordfile = fopen (name, "wb");
@@ -483,7 +483,7 @@ static int CL_Demo_Read(void *buf, int size) {
 //When a demo is playing back, all NET_SendMessages are skipped, and NET_GetMessages are read from the demo file.
 //Whenever cl.time gets past the last received message, another message is read from the demo file.
 
-qboolean CL_GetDemoMessage (void) {
+qbool CL_GetDemoMessage (void) {
 	int i, j, tracknum;
 	float demotime;
 	byte c, newtime;
@@ -668,12 +668,12 @@ readit:
 //=============================================================================
 
 static char demoname[2 * MAX_OSPATH];
-static qboolean autorecording = false;
+static qbool autorecording = false;
 
 void CL_AutoRecord_StopMatch(void);
 void CL_AutoRecord_CancelMatch(void);
 
-static qboolean OnChange_demo_dir(cvar_t *var, char *string) {
+static qbool OnChange_demo_dir(cvar_t *var, char *string) {
 	if (!string[0])
 		return false;
 
@@ -818,7 +818,7 @@ void CL_Record_f (void) {
 	}
 }
 
-static qboolean CL_RecordDemo(char *dir, char *name, qboolean autorecord) {
+static qbool CL_RecordDemo(char *dir, char *name, qbool autorecord) {
 	char extendedname[MAX_OSPATH * 2], strippedname[MAX_OSPATH * 2], *fullname, *exts[] = {"qwd", "qwz", NULL};
 	int num;
 
@@ -909,7 +909,7 @@ void CL_EasyRecord_f (void) {
 
 
 static char	auto_matchname[2 * MAX_OSPATH];
-static qboolean temp_demo_ready = false;
+static qbool temp_demo_ready = false;
 static float auto_starttime;
 
 char *MT_TempDirectory(void);
@@ -983,7 +983,7 @@ void CL_AutoRecord_StartMatch(char *demoname) {
 	Com_Printf ("Auto demo recording commenced\n");
 }
 
-qboolean CL_AutoRecord_Status(void) {
+qbool CL_AutoRecord_Status(void) {
 	return temp_demo_ready ? 2 : autorecording ? 1 : 0;
 }
 

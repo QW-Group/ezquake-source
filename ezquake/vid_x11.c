@@ -47,7 +47,7 @@ typedef unsigned int	PIXEL24;
 
 #ifdef WITH_KEYMAP
 #include "keymap.h"
-extern void IN_Keycode_Print_f( XKeyEvent *ev, qboolean ext, qboolean down, int key );
+extern void IN_Keycode_Print_f( XKeyEvent *ev, qbool ext, qbool down, int key );
 #endif // WITH_KEYMAP
 
 // kazik -->
@@ -66,7 +66,7 @@ float		old_windowed_mouse;
 int			VGA_width, VGA_height, VGA_rowbytes, VGA_bufferrowbytes, VGA_planar;
 byte		*VGA_pagebase;
 
-qboolean	mouse_avail;
+qbool	mouse_avail;
 int			mouse_buttons = 3;
 int			mouse_oldbuttonstate;
 int			mouse_buttonstate;
@@ -88,7 +88,7 @@ unsigned short d_8to16table[256];
 int		num_shades = 32;
 int		vid_buffersize;
 
-static qboolean		doShm;
+static qbool		doShm;
 static Display		*x_disp;
 static Colormap		x_cmap;
 static Window		x_win;
@@ -100,7 +100,7 @@ static XVisualInfo	*x_visinfo;
 static int			x_shmeventtype;
 //static XShmSegmentInfo	x_shminfo;
 
-static qboolean		oktodraw = false;
+static qbool		oktodraw = false;
 
 int XShmQueryExtension(Display *);
 int XShmGetEventBase(Display *);

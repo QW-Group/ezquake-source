@@ -32,7 +32,7 @@ cvar_t	cl_c2sImpulseBackup = {"cl_c2sImpulseBackup","3"};
 cvar_t	cl_smartjump = {"cl_smartjump", "0"};
 
 extern cvar_t cl_independentPhysics;
-extern qboolean physframe;
+extern qbool physframe;
 extern double physframetime;
 
 /*
@@ -163,7 +163,7 @@ void IN_UseUp (void) {KeyUp(&in_use);}
 
 
 void IN_JumpDown(void) {
-	qboolean condition;
+	qbool condition;
 
 	condition = (cls.state == ca_active && cl_smartjump.value);
 	if (condition && cl.stats[STAT_HEALTH] > 0 && !cls.demoplayback && !cl.spectator && 
@@ -251,7 +251,7 @@ Returns 0.25 if a key was pressed and released during the frame,
 */
 float CL_KeyState (kbutton_t *key) {
 	float val;
-	qboolean impulsedown, impulseup, down;
+	qbool impulsedown, impulseup, down;
 	
 	impulsedown = key->state & 2;
 	impulseup = key->state & 4;
@@ -478,7 +478,7 @@ void CL_SendCmd (void) {
 	byte data[128];
 	usercmd_t *cmd, *oldcmd;
 	int i, checksumIndex, lost;
-	qboolean dontdrop;
+	qbool dontdrop;
 	static float pps_balance = 0;
 	static int dropcount = 0;
 

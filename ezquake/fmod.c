@@ -25,9 +25,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void  FMod_Response (void);
 
-qboolean FMod_IsModelModified(char *name, int flags, byte *buf, int len) {
+qbool FMod_IsModelModified(char *name, int flags, byte *buf, int len) {
 	int *n;
-	qboolean retval, failsafe = true;
+	qbool retval, failsafe = true;
 	signed_buffer_t *p;
 
 	if (!Modules_SecurityLoaded())
@@ -52,8 +52,8 @@ qboolean FMod_IsModelModified(char *name, int flags, byte *buf, int len) {
 
 typedef struct check_models_s {
 	char			name[MAX_QPATH];
-	qboolean		modified;
-	qboolean		checked;
+	qbool		modified;
+	qbool		checked;
 	int				flags;
 } check_models_t;
 
@@ -63,7 +63,7 @@ int check_models_num = 0;
 
 static float fmod_warn_time = 0;
 
-static void FMod_AddModel(char *name, qboolean flags) {
+static void FMod_AddModel(char *name, qbool flags) {
     if (check_models_num >= MAX_CHECK_MODELS)
         return;
 
@@ -75,7 +75,7 @@ static void FMod_AddModel(char *name, qboolean flags) {
 
 void FMod_CheckModel(char *name, void *buf, int len) {
 	int i;
-	qboolean modified, relevent;
+	qbool modified, relevent;
 
 	for (i = 0; i < MAX_CHECK_MODELS && i < check_models_num; i++) {
 		relevent =	(cl.teamfortress && (check_models[i].flags & FMOD_TF)) || 
@@ -180,7 +180,7 @@ void FMod_Init(void) {
 void FMod_Response (void) {
 	int i, count;
 	char buf[512] = {'m', 'o', 'd', 'i', 'f', 'i', 'e', 'd', ':', '\0'};
-	qboolean relevent;
+	qbool relevent;
 
 	for (i = count = 0; i < check_models_num; i++) {
 		relevent =	(cl.teamfortress && (check_models[i].flags & FMOD_TF)) || 

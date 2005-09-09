@@ -88,12 +88,12 @@ typedef struct item_vis_s {
 // do not call alias
 #define		RE_NOACTION		4096
 
-qboolean TP_IsItemVisible(item_vis_t *visitem);
+qbool TP_IsItemVisible(item_vis_t *visitem);
 
 
 // re-triggers
 void TP_InitReTriggers();
-qboolean CL_SearchForReTriggers (char *s, unsigned trigger_type);
+qbool CL_SearchForReTriggers (char *s, unsigned trigger_type);
 // if true, string should not be displayed
 pcre_trigger_t *CL_FindReTrigger (char *name);
 void CL_RE_Trigger_ResetLasttime (void);
@@ -103,7 +103,7 @@ void CL_RE_Trigger_ResetLasttime (void);
 void TP_ExecTrigger (char *s);
 void TP_StatChanged (int stat, int value);
 void TP_CheckPickupSound (char *s, vec3_t org);
-qboolean TP_CheckSoundTrigger (char *str);
+qbool TP_CheckSoundTrigger (char *str);
 
 // message triggers
 void TP_SearchForMsgTriggers (char *s, int level);
@@ -119,27 +119,27 @@ extern int cl_teamtopcolor, cl_teambottomcolor, cl_enemytopcolor, cl_enemybottom
 
 // START shaman RFE 1020608
 #ifdef GLQUAKE
-char *TP_GetSkyGroupName(char *mapname, qboolean *system);
+char *TP_GetSkyGroupName(char *mapname, qbool *system);
 #endif
 // END shaman RFE 1020608
 
-char *TP_GetMapGroupName(char *mapname, qboolean *system);
+char *TP_GetMapGroupName(char *mapname, qbool *system);
 char *TP_ParseMacroString (char *s);
-char *TP_ParseFunChars (char *s, qboolean chat);
+char *TP_ParseFunChars (char *s, qbool chat);
 void TP_NewMap (void);
 int TP_CategorizeMessage (char *s, int *offset);
-qboolean TP_FilterMessage (char *s);
+qbool TP_FilterMessage (char *s);
 void TP_ParseWeaponModel(model_t *model);
 
 
-char *TP_ParseWhiteText(char *s, qboolean team, int offset);
+char *TP_ParseWhiteText(char *s, qbool team, int offset);
 
 
 
 void TP_UpdateSkins(void);
 void TP_RefreshSkin(int);
 void TP_RefreshSkins(void);
-qboolean TP_NeedRefreshSkins(void);
+qbool TP_NeedRefreshSkins(void);
 
 extern char *skinforcing_team;
 

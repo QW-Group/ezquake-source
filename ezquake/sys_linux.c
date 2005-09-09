@@ -58,7 +58,7 @@ static int rtc_fd;  /* file descriptor for rtc device */
 int noconinput = 0;
 
 
-qboolean stdin_ready;
+qbool stdin_ready;
 int do_stdin = 1;
 
 
@@ -340,7 +340,7 @@ int  Sys_CreateThread(DWORD WINAPI (*func)(void *), void *param)
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     pthread_attr_setschedpolicy(&attr, SCHED_OTHER);   // ale gowno
     
-    pthread_create(&thread, &attr, func, param);
+    pthread_create(&thread, &attr, (void *)func, param);
     return 1;
 }
 

@@ -32,7 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 
 static vec3_t desired_position; // where the camera wants to be
-static qboolean locked = false;
+static qbool locked = false;
 static int oldbuttons;
 
 // cl_hightrack {
@@ -87,7 +87,7 @@ void Cam_SetViewPlayer (void) {
 }
 
 // returns true if weapon model should be drawn in camera mode
-qboolean Cam_DrawViewModel(void) {
+qbool Cam_DrawViewModel(void) {
 	if (!cl.spectator)
 		return true;
 
@@ -97,7 +97,7 @@ qboolean Cam_DrawViewModel(void) {
 }
 
 // returns true if we should draw this player, we don't if we are chase camming
-qboolean Cam_DrawPlayer(int playernum) {
+qbool Cam_DrawPlayer(int playernum) {
 	if (cl.spectator && autocam && locked && cl_chasecam.value && 
 		spec_track == playernum)
 		return false;
@@ -150,7 +150,7 @@ pmtrace_t Cam_DoTrace(vec3_t vec1, vec3_t vec2) {
 }
 	
 // Returns distance or 9999 if invalid for some reason
-static float Cam_TryFlyby(player_state_t *self, player_state_t *player, vec3_t vec, qboolean checkvis) {
+static float Cam_TryFlyby(player_state_t *self, player_state_t *player, vec3_t vec, qbool checkvis) {
 	vec3_t v;
 	pmtrace_t trace;
 	float len;
@@ -181,7 +181,7 @@ static float Cam_TryFlyby(player_state_t *self, player_state_t *player, vec3_t v
 }
 
 // Is player visible?
-static qboolean Cam_IsVisible(player_state_t *player, vec3_t vec) {
+static qbool Cam_IsVisible(player_state_t *player, vec3_t vec) {
 	pmtrace_t trace;
 	vec3_t v;
 
@@ -194,7 +194,7 @@ static qboolean Cam_IsVisible(player_state_t *player, vec3_t vec) {
 	return ((v[0]*v[0]+v[1]*v[1]+v[2]*v[2]) >= 256);
 }
 
-static qboolean InitFlyby(player_state_t *self, player_state_t *player, int checkvis) {
+static qbool InitFlyby(player_state_t *self, player_state_t *player, int checkvis) {
     float f, max;
     vec3_t vec, vec2;
 	vec3_t forward, right, up;

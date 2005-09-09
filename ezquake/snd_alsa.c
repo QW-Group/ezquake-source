@@ -51,7 +51,7 @@ int SNDDMA_GetDMAPos_ALSA (void);
 
 // Main functions
 
-qboolean SNDDMA_Init_ALSA (void)
+qbool SNDDMA_Init_ALSA (void)
 {
     int                 err;
     int			bps = -1, stereo = -1;

@@ -72,8 +72,8 @@ mpic_t	*sb_face_quad;
 mpic_t	*sb_face_invuln;
 mpic_t	*sb_face_invis_invuln;
 
-qboolean	sb_showscores;
-qboolean	sb_showteamscores;
+qbool	sb_showscores;
+qbool	sb_showteamscores;
 
 int			sb_lines;			// scan lines to draw
 
@@ -397,7 +397,7 @@ typedef struct {
 	int players;
 	int plow, phigh, ptotal;
 	int topcolor, bottomcolor;	
-	qboolean myteam;			
+	qbool myteam;			
 } team_t;
 team_t teams[MAX_CLIENTS];
 
@@ -414,12 +414,12 @@ static __inline int Sbar_PlayerNum(void) {
 }
 
 
-static __inline qboolean Sbar_IsSpectator(int mynum) {
+static __inline qbool Sbar_IsSpectator(int mynum) {
 	
 	return (mynum == cl.playernum) ? cl.spectator : cl.players[mynum].spectator;
 }
 
-static void Sbar_SortFrags(qboolean spec) {
+static void Sbar_SortFrags(qbool spec) {
 	int i, j, k;
 	static int lastframecount = 0;
 
@@ -602,9 +602,9 @@ static int Sbar_SortTeamsAndFrags_Compare(int a, int b) {
     }
 }
 
-static void Sbar_SortTeamsAndFrags(qboolean specs) {
+static void Sbar_SortTeamsAndFrags(qbool specs) {
     int i, j, k;
-	qboolean real_teamplay;
+	qbool real_teamplay;
 
 	real_teamplay = cl.teamplay && (TP_CountPlayers() > 2);
 
@@ -643,7 +643,7 @@ static void Sbar_DrawInventory (void) {
 	int i, flashon;
 	char num[6];
 	float time;
-	qboolean headsup, hudswap;
+	qbool headsup, hudswap;
 
 	headsup = !(cl_sbar.value || scr_viewsize.value < 100);
 	hudswap = cl_hudswap.value; // Get that nasty float out :)
@@ -764,7 +764,7 @@ static void Sbar_DrawFrags (void) {
 	int i, k, l, top, bottom, x, y, mynum, myteam = -1;
 	player_info_t *s;
 	team_t *tm;
-	qboolean drawn_self = false, drawn_self_team = false;
+	qbool drawn_self = false, drawn_self_team = false;
 
 	if (!scr_drawHFrags.value)
 		return;
@@ -1724,7 +1724,7 @@ void Sbar_FinaleOverlay (void) {
 /********************************* INTERFACE *********************************/
 
 void Sbar_Draw(void) {
-	qboolean headsup;
+	qbool headsup;
 	char st[512];
 
 	// START shaman RFE 1022309

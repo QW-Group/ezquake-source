@@ -15,7 +15,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: mac.h,v 1.1 2005-08-30 04:09:20 disconn3ct Exp $
+ *  $Id: mac.h,v 1.2 2005-09-09 11:00:26 disconn3ct Exp $
  */
 
 #ifndef mac_h
@@ -91,7 +91,7 @@ extern video_device_t 	vid_devices[MAX_VIDEODEVICES];
 extern int 				numDevices;
 
 extern Point glWindowPos;	// The last window position
-extern qboolean suspend_mouse, inwindow, background;
+extern qbool suspend_mouse, inwindow, background;
 
 void VID_GetVideoModesForActiveDisplays (void); // We call this right away in sys_mac.c
 void VID_FadeOut (void);
