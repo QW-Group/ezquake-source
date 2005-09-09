@@ -31,11 +31,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define DEFAULT_WIDTH	800
 #define DEFAULT_HEIGHT	600
 
-extern qboolean		scr_skipupdate;
-qboolean		windowed = false;// Startup in a window
-qboolean		inwindow = false;// Can be changed at runtime
+extern qbool		scr_skipupdate;
+qbool		windowed = false;// Startup in a window
+qbool		inwindow = false;// Can be changed at runtime
 
-qboolean		vid_initialized = false;
+qbool		vid_initialized = false;
 unsigned char	vid_curpal[256*3];
 
 glvert_t glv;
@@ -48,18 +48,18 @@ float		gldepthmin, gldepthmax;
 
 void GL_Init (void);
 
-qboolean isPermedia = false;
-qboolean is3dfx = false;
-qboolean isATI = false;
-qboolean isRadeon = false;
+qbool isPermedia = false;
+qbool is3dfx = false;
+qbool isATI = false;
+qbool isRadeon = false;
 
 // pOx - Global GL Extension flags
 GLint gl_ext_multitexture_units = 0;
 GLfloat gl_ext_anisotropic_max = 0;
-qboolean gl_ext_packedpixel = false;
-qboolean gl_ext_texture_env_combine = false;
-qboolean gl_ext_texture_env_add = false;
-qboolean gl_ext_compiled_vertex_array = false;
+qbool gl_ext_packedpixel = false;
+qbool gl_ext_texture_env_combine = false;
+qbool gl_ext_texture_env_add = false;
+qbool gl_ext_compiled_vertex_array = false;
 
 //====================================
 
@@ -75,8 +75,8 @@ extern cvar_t gl_texturebits;
 
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol","1", 0}; 
 
-qboolean	vid_gammaworks = false;
-qboolean	vid_hwgamma_enabled;
+qbool	vid_gammaworks = false;
+qbool	vid_hwgamma_enabled;
 
 void RestoreHWGamma (void);
 
@@ -103,7 +103,7 @@ WindowRef 			glFullWindow = NULL;// Fullscreen window for classic
 //CGrafPtr 			gGLPort = NULL;		// DSp Front Buffer (OSX), or glFullWindow window port
 
 // on-the-fly resolution switching
-qboolean 	video_restart = false;// don't re-intialize certain things
+qbool 	video_restart = false;// don't re-intialize certain things
 
 CGDirectDisplayID 	vid_CGDevices[MAX_VIDEODEVICES];
 CGDisplayCount 		gCGNumDevices;
@@ -885,7 +885,7 @@ GL_DescribeRenderer_f
 */
 void GL_DescribeRenderer_f (void)
 {
-	qboolean ext = true;
+	qbool ext = true;
 
 	if (ext)
 		Com_Printf("OpenGL Driver:");
@@ -938,7 +938,7 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 
 void GL_EndRendering (void)
 {
-	static qboolean old_hwgamma_enabled;
+	static qbool old_hwgamma_enabled;
 
 	if (gContext == NULL) return;
 
@@ -1035,7 +1035,7 @@ void VID_ShiftPalette (unsigned char *palette)
 	}
 }
 
-static qboolean customgamma = false;
+static qbool customgamma = false;
 
 /*
 ======================
@@ -1158,13 +1158,13 @@ and saves out a list of supported video modes.
 */
 void VID_GetVideoModesForActiveDisplays (void)
 {
-	int 					i, modeCount = 0, j;
-	OSErr					err;
+	int 			i, modeCount = 0, j;
+	OSErr			err;
 	DSpContextReference 	foundCntx;
 	DSpContextAttributes 	foundAttr;
-	Fixed					refreshRate;
-	int						w, h;
-	qboolean				scrap;
+	Fixed			refreshRate;
+	int			w, h;
+	qbool			scrap;
 
 	// Fire up DrawSprocket (we've already checked it's availability & version by now)
 	if (DSpStartup()) Sys_Error ("DrawSprocket failed to initialize.");
@@ -1424,10 +1424,10 @@ the current textures, and just change the screen and/or window size.
 */
 void VID_Restart_f (void)
 {
-	qboolean		togglewindowed = false;
-	qboolean		texturereload = false;
-	extern qboolean background;
-	extern qboolean forcewindowed;
+	qbool		togglewindowed = false;
+	qbool		texturereload = false;
+	extern qbool background;
+	extern qbool forcewindowed;
 	extern qpic_t	*conback;
 
 // This looks much worse than it really is :)
@@ -1579,7 +1579,7 @@ void VID_Restart_f (void)
 	VID_ShiftPalette(NULL);
 }
 
-extern qboolean forcewindowed;
+extern qbool forcewindowed;
 
 /*
 =================

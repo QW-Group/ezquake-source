@@ -40,7 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern CGDirectDisplayID vid_CGDevices[];
 extern CGDisplayCount gCGNumDevices;
 
-extern void OnMouseButton (EventRecord *myEvent, qboolean down);
+extern void OnMouseButton (EventRecord *myEvent, qbool down);
 
 static pascal OSStatus IN_CarbonMouseEvents (EventHandlerCallRef handlerChain, EventRef event, void *userData);
 
@@ -49,8 +49,8 @@ void (*IN_GetDelta)(void);
 static void IN_GetDelta_CG (void);
 
 int mouse_buttons = 3;
-qboolean suspend_mouse = false;
-qboolean disconneted_mouse = false;
+qbool suspend_mouse = false;
+qbool disconneted_mouse = false;
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -68,13 +68,13 @@ qboolean disconneted_mouse = false;
 #define	ISP_AUX			6
 #define	ISP_DPAD		22
 
-qboolean Sprockets_Active = false;
+qbool Sprockets_Active = false;
 
 // External prototypes
 extern void Mac_StartGL (void);
 extern void Mac_StopGL (void);
 
-extern qboolean is3dfx, inwindow;
+extern qbool is3dfx, inwindow;
 extern int gScreenWidth;
 extern int gScreenHeight;
 extern AGLContext gContext;
@@ -95,7 +95,7 @@ cvar_t m_filter = {"m_filter","0.1", true};
 cvar_t m_filtercutoff = {"m_filtercutoff","80", true};
 #define	M_FILTERLEVEL	 10
 static float	history[M_FILTERLEVEL][2];
-static qboolean	filter_dirty;
+static qbool	filter_dirty;
 
 // compatibility with old Quake -- setting to 0 disables KP_* codes
 cvar_t	cl_keypad = {"cl_keypad","0"};
@@ -244,10 +244,10 @@ According to Darwin's IOEventStatusAPI.c, NXEventHandle & io_connect_t are inter
 Keyboard repeat can adversley affect the mouse on slower systems (?) so it's enabled/disabled in sync with mouse scaling.
 ============= 
 */
-static void IN_OverrideSystemPrefs (qboolean state)
+static void IN_OverrideSystemPrefs (qbool state)
 {
     NXEventHandle 			handle;
-    static qboolean         enabled = true;
+    static qbool         enabled = true;
 	static double 			scalingSave = 0.0;
 	static double			keyIntervalSave, keyThresholdSave;
 	
@@ -316,7 +316,7 @@ static pascal OSStatus IN_CarbonMouseEvents (EventHandlerCallRef handlerChain, E
 	SInt32				scroll_wheel_delta;
 	OSStatus 			err = eventNotHandledErr;
 	CGMouseDelta 		dx, dy;
-	extern qboolean		background;
+	extern qbool		background;
 
 	event_kind = GetEventKind(event);
 	event_class = GetEventClass(event);
