@@ -4,10 +4,7 @@
 
 
 #include "quakedef.h"
-#include "hud.h"
-#include "hud_common.h"
 #include "common_draw.h"
-#include "sbar.h"
 
 #define sbar_last_width 320  // yeah yeah I know, *garbage* -> leave it be :>
 hud_t *hud_fps;

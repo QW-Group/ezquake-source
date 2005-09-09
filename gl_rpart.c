@@ -19,11 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "pmove.h"
-#include "gl_local.h"
+
 
 //VULT
-#include "vx_stuff.h"
 float alphatrail_s;
 float alphatrail_l;
 float varray_vertex[16];

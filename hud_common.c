@@ -4,16 +4,9 @@
 //
 
 #include "quakedef.h"
-#include "hud.h"
-#include "hud_common.h"
 #include "common_draw.h"
-#include "sbar.h"
 #include "EX_misc.h"
-#include "vx_stuff.h"
-#include "utils.h"
 #include "mp3_player.h"
-#include "rulesets.h"
-#include "utils.h"
 #ifndef STAT_MINUS
 #define STAT_MINUS		10
 #endif

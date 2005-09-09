@@ -1,10 +1,7 @@
 #include "quakedef.h"
-
-#include "gl_local.h"
-#include "version.h"
-
 #include "gl_md3.h"
 #include "vx_vertexlights.h" 
+
 
 typedef float m3by3_t[3][3];
 

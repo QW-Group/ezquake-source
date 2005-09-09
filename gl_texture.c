@@ -19,9 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "crc.h"
-#include "image.h"
-#include "gl_local.h"
 
 
 qbool OnChange_gl_max_size (cvar_t *var, char *string);

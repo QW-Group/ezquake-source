@@ -20,18 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // gl_warp.c -- sky and water polygons
 
 #include "quakedef.h"
-#include "gl_local.h"
-#include "utils.h"
 
-// START shaman RFE 1022504
-#include "pmove.h"
-// END shaman RFE 1022504
-
-//VULT
-#include "vx_stuff.h"
 
 extern model_t *loadmodel;
-
 extern msurface_t *skychain;
 extern msurface_t **skychain_tail;
 //ISUNDERWATER(TruePointContents(start)

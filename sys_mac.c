@@ -21,8 +21,6 @@
 #include "mac.h"
 #include "mac_prefs.h"
 
-#include "keys.h"
-#include "menu.h"
 #include "gl_texture.h"
 #include <stdio.h>
 

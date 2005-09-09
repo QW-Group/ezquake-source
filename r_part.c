@@ -21,8 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef GLQUAKE
 
-#include "gl_local.h"
-
 typedef enum {
 	pt_static, pt_grav, pt_slowgrav, pt_fire, pt_explode, pt_explode2, pt_blob, pt_blob2
 } ptype_t;
@@ -40,7 +38,6 @@ typedef struct particle_s {
 #else			//software
 
 #include "d_local.h"
-#include "r_local.h"
 
 #endif
 

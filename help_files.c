@@ -1,9 +1,7 @@
 // help, browser tab
 
 #include "quakedef.h"
-#include "EX_FileList.h"
-#include "help.h"
-#include "keys.h"
+
 
 filelist_t help_filelist;
 

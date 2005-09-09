@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_aclip.c: clip routines for drawing Alias models directly to the screen
 
 #include "quakedef.h"
-#include "r_local.h"
 #include "d_local.h"
 
 static finalvert_t		fv[2][8];

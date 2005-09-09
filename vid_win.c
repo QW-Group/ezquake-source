@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.7 2005-09-09 11:00:27 disconn3ct Exp $
+	$Id: vid_win.c,v 1.8 2005-09-09 12:46:22 disconn3ct Exp $
 
 */
 
@@ -24,9 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #include "cdaudio.h"
 #include "d_local.h"
-#include "keys.h"
 #include "resource.h"
-#include "sound.h"
 
 #ifdef WITH_KEYMAP
 #include "keymap.h"

@@ -19,11 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "utils.h"
 
 #ifdef _WIN32
 #include "movie_avi.h"	//joe: capturing to avi
-#include "sound.h"	//
 #endif
 
 #ifdef _WIN32

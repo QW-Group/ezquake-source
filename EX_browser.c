@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.8 2005-09-09 11:00:26 disconn3ct Exp $
+	$Id: EX_browser.c,v 1.9 2005-09-09 12:46:22 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -12,12 +12,9 @@
 
 #include "EX_browser.h"
 #include "Ctrl_EditBox.h"
-#include "Ctrl.h"
-#include "cvar.h"
-#include "menu.h"
 #include "EX_misc.h"
 #include "EX_FunNames.h"
-#include "keys.h"
+
 
 int source_unique = 0;
 

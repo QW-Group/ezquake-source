@@ -1,7 +1,7 @@
 /*
  * EditBox functions
  *
- *	$Id: Ctrl_EditBox.c,v 1.4 2005-09-09 11:00:26 disconn3ct Exp $
+ *	$Id: Ctrl_EditBox.c,v 1.5 2005-09-09 12:49:14 disconn3ct Exp $
  */
 
 
@@ -9,7 +9,6 @@
 #include "EX_misc.h"
 #include "Ctrl_EditBox.h"
 
-#include "keys.h"
 
 char buf[MAX_EDITTEXT+1];
 

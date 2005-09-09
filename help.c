@@ -1,5 +1,4 @@
 #include "quakedef.h"
-#include "keys.h"
 
 #define CONSOLE_HELP_MARGIN 2
 

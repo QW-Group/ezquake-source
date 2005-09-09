@@ -20,13 +20,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sbar.c -- status bar code
 
 #include "quakedef.h"
-#include "sbar.h"
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
 
-#include "rulesets.h"
-#include "utils.h"
 
 int sb_updates;		// if >= vid.numpages, no update needed
 extern cvar_t show_fps2;
@@ -100,12 +97,6 @@ cvar_t	scr_newHud = {"scr_newhud", "0"}; // HUD -> hexum
 #ifdef GLQUAKE
 cvar_t	scr_scoreboard_fillalpha = {"scr_scoreboard_fillalpha", "0.7"};
 cvar_t	scr_scoreboard_fillcolored = {"scr_scoreboard_fillcolored", "2"};
-
-
-
-#include "vx_stuff.h"
-#include "gl_local.h"
-
 #endif
 
 

@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "logging.h"
-#include "utils.h"
 
 static qbool OnChange_log_dir(cvar_t *var, char *string);
 

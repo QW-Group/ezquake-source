@@ -1,8 +1,6 @@
 //VultureIIC
 
 #include "quakedef.h"
-#include "gl_local.h"
-#include "vx_stuff.h"
 
 //fixme: move to header
 extern float bubblecolor[NUM_DLIGHTTYPES][4];

@@ -25,15 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #include "quakedef.h"
-#include "pmove.h"
-#include "version.h"
-#include "modules.h"
-#include "common.h"
 #include "EX_browser.h"
 #include <setjmp.h>
-
-#include "hud.h" // HUD -> hexum
-
 
 #if !defined(CLIENTONLY) && !defined(SERVERONLY)
 qbool	dedicated = false;

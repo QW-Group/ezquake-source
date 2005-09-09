@@ -20,25 +20,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "cdaudio.h"
-#include "pmove.h"
-#include "sbar.h"
-#include "sound.h"
-#include "version.h"
-
 #include "ignore.h"
-#include "auth.h"
 #include "fchecks.h"
 #include "config_manager.h"
-#include "utils.h"
 #include "EX_misc.h"
 #include "localtime.h"
 
-#include "hud.h"
-#include "hud_common.h"
-
-#ifdef GLQUAKE
-#include "vx_stuff.h"
-#endif
 
 void R_TranslatePlayerSkin (int playernum);
 void R_PreMapLoad(char *mapname);

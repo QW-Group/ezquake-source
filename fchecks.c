@@ -23,14 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #include "quakedef.h"
-#include "version.h"
 
-#include "common.h"
-#include "auth.h"
-#include "utils.h"
-#include "fmod.h"
-#include "modules.h"
-#include "rulesets.h"
 
 static float f_system_reply_time, f_cmdline_reply_time, f_scripts_reply_time, f_ruleset_reply_time, f_reply_time, f_mod_reply_time, f_version_reply_time, f_skins_reply_time, f_server_reply_time;
 

@@ -2,7 +2,6 @@
 // for common graphics (soft and GL)
 
 #include "quakedef.h"
-#include "hud.h"
 #include "EX_misc.h"
 #include "localtime.h"
 
