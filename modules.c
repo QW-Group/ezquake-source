@@ -30,7 +30,7 @@ typedef struct registeredModule_s {
 char _temp_modulename[MAX_OSPATH];
 static registeredModule_t registeredModules[qlib_nummodules];
 
-#ifdef __linux
+#if defined __linux || defined(darwin) || defined(__APPLE__)
 #include <dlfcn.h>
 #endif
 
