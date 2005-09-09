@@ -168,7 +168,7 @@ static float particle_time;
 static vec3_t trail_stop;
 
 
-qboolean qmb_initialized = false;
+qbool qmb_initialized = false;
 
 // START shaman :: balancing variables
 cvar_t gl_clipparticles = {"gl_clipparticles", "1"};
@@ -179,7 +179,7 @@ cvar_t gl_bounceparticles = {"gl_bounceparticles", "1"};
 
 #define ISUNDERWATER(x) ((x) == CONTENTS_WATER || (x) == CONTENTS_SLIME || (x) == CONTENTS_LAVA)
 
-static qboolean TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal) {
+static qbool TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal) {
 	pmtrace_t trace;
 
 	memset (&trace, 0, sizeof(trace));

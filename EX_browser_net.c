@@ -21,7 +21,7 @@
 #include "keys.h"
 #include "menu.h"
 
-extern qboolean useNewPing;
+extern qbool useNewPing;
 
 static int	Sbar_ColorForMap (int m) {
 	m = bound(0, m, 13);

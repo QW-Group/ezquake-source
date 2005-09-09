@@ -184,7 +184,7 @@ int HUD_FindPlace(hud_t *hud)
 {
     int i;
     hud_t *par;
-    qboolean out;
+    qbool out;
     char *t;
 
     // first try standard strings
@@ -648,7 +648,7 @@ void HUD_DrawFrame(hud_t *hud, int x, int y, int width, int height)
 }
 
 // calculate element placement
-qboolean HUD_PrepareDrawByName(
+qbool HUD_PrepareDrawByName(
     /* in  */ char *name, int width, int height,
     /* out */ int *ret_x, int *ret_y)
 {
@@ -659,7 +659,7 @@ qboolean HUD_PrepareDrawByName(
 }
 
 // calculate object extents and draws frame if needed
-qboolean HUD_PrepareDraw(
+qbool HUD_PrepareDraw(
     /* in  */ hud_t *hud, int width, int height,
     /* out */ int *ret_x, int *ret_y)       // position
 {
@@ -1025,7 +1025,7 @@ cvar_t *HUD_FindVar(hud_t *hud, char *subvar)
 // draws single HUD element
 void HUD_DrawObject(hud_t *hud)     /* recurrent */
 {
-    extern qboolean /*scr_drawdialog,*/ sb_showscores, sb_showteamscores;
+    extern qbool /*scr_drawdialog,*/ sb_showscores, sb_showteamscores;
 
     if (hud->last_try_sequence == host_screenupdatecount)
         return; // allready tried to draw this frame

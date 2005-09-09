@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.16 2005-09-04 06:06:22 disconn3ct Exp $
+	$Id: mvd_utils.c,v 1.17 2005-09-09 11:00:27 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -14,7 +14,7 @@ extern cvar_t tp_name_none, tp_weapon_order;
 char mvd_info_best_weapon[20], mvd_info_best_ammo[20];
 extern int loc_loaded;
 
-extern qboolean TP_LoadLocFile (char *path, qboolean quiet);
+extern qbool TP_LoadLocFile (char *path, qbool quiet);
 extern char *TP_LocationName(vec3_t location);
 extern char *Weapon_NumToString(int num);
 

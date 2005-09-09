@@ -32,7 +32,7 @@ char *SecondsToHourString(int time);
 byte *StringToRGB(char *s);
 
 int Util_Extend_Filename(char *filename, char **ext);
-qboolean Util_Is_Valid_Filename(char *s);
+qbool Util_Is_Valid_Filename(char *s);
 char *Util_Invalid_Filename_Msg(char *s);
 void Util_Process_Filename(char *string);
 
@@ -44,7 +44,7 @@ int Player_NumtoSlot (int num);
 int Player_GetSlot(char *arg);
 char *Player_MyName(void);
 
-qboolean Util_F_Match(char *msg, char *f_req);
+qbool Util_F_Match(char *msg, char *f_req);
 
 char *Utils_TF_ColorToTeam(int);
 int Utils_TF_TeamToColor(char *);

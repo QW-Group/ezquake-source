@@ -231,10 +231,10 @@ void SV_LoadEntFile (void) {
 
 //Change the server to a new map, taking all connected clients along with it.
 //This is only called from the SV_Map_f() function.
-void SV_SpawnServer (char *server, qboolean devmap) {
+void SV_SpawnServer (char *server, qbool devmap) {
 	edict_t *ent;
 	int i;
-	extern qboolean	sv_allow_cheats;
+	extern qbool	sv_allow_cheats;
 	extern cvar_t sv_cheats;
 
 	Com_DPrintf ("SpawnServer: %s\n",server);

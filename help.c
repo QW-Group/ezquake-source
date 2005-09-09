@@ -7,7 +7,7 @@ CTab_t help_tab;
 
 void Help_Describe_f(void)
 {
-    qboolean found = false;
+    qbool found = false;
     char *name;
     xml_command_t *cmd;
     xml_variable_t *var;

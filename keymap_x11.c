@@ -199,7 +199,7 @@ If cl_showkeycodes == 2 --> only print "key-releases"
 if cl_showkeycodes == 3 --> print "key-releases" and "key-presses"
 ===========
 */
-void IN_Keycode_Print_f ( XKeyEvent *ev, qboolean ext, qboolean down, int key ) {
+void IN_Keycode_Print_f ( XKeyEvent *ev, qbool ext, qbool down, int key ) {
 	int     flag = (int)cl_showkeycodes.value;
 	char    buf[ 64 ] = "";
 	KeySym  keysym;

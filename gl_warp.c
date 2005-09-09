@@ -42,7 +42,7 @@ static float speedscale, speedscale2;		// for top sky and bottom sky
 
 static msurface_t *warpface;
 
-qboolean r_skyboxloaded;
+qbool r_skyboxloaded;
 
 #define TruePointContents(p) PM_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
 
@@ -188,7 +188,7 @@ __inline static float SINTABLE_APPROX(float time) {
 }
 
 // START shaman FIX /gl_turbripples + /r_drawflat {
-void EmitFlatPoly (msurface_t *fa, qboolean skysurface) {
+void EmitFlatPoly (msurface_t *fa, qbool skysurface) {
 	glpoly_t *p;
 	float *v;
 	int i;
@@ -349,7 +349,7 @@ void EmitParticleEffect (msurface_t *fa, void (*fun)(vec3_t nv)) {
 //Tei, add fire to lava
 
 
-void EmitSkyPolys (msurface_t *fa, qboolean mtex) {
+void EmitSkyPolys (msurface_t *fa, qbool mtex) {
 	glpoly_t *p;
 	float *v, s, t, ss, tt, length;
 	int i;
@@ -561,7 +561,7 @@ cleanup:
 	return error;
 }
 
-qboolean OnChange_r_skyname (cvar_t *v, char *skyname) {
+qbool OnChange_r_skyname (cvar_t *v, char *skyname) {
 	if (!skyname[0]) {		
 		r_skyboxloaded = false;
 		return false;
@@ -669,7 +669,7 @@ void DrawSkyPolygon (int nump, vec3_t vecs) {
 #define	MAX_CLIP_VERTS	64
 void ClipSkyPolygon (int nump, vec3_t vecs, int stage) {
 	float *norm, *v, d, e, dists[MAX_CLIP_VERTS];
-	qboolean front, back;
+	qbool front, back;
 	int sides[MAX_CLIP_VERTS], newc[2], i, j;
 	vec3_t newv[2][MAX_CLIP_VERTS];
 

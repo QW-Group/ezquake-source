@@ -147,7 +147,7 @@ void MSG_WriteDeltaUsercmd (sizebuf_t *buf, usercmd_t *from, usercmd_t *cmd) {
 
 //Writes part of a packetentities message.
 //Can delta from either a baseline or a previous packet_entity
-void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qboolean force) {
+void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qbool force) {
 	int bits, i;
 	float miss;
 
@@ -281,7 +281,7 @@ void MSG_EmitPacketEntities (packet_entities_t *from, int delta_sequence, packet
 /********************************** READING **********************************/
 
 int			msg_readcount;
-qboolean	msg_badread;
+qbool	msg_badread;
 
 void MSG_BeginReading (void) {
 	msg_readcount = 0;

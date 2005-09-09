@@ -73,7 +73,7 @@ cvar_t  show_fps2 = {"draw_fps","0"};
 
 cvar_t  localid = {"localid", ""};
 
-static qboolean allowremotecmd = true;
+static qbool allowremotecmd = true;
 
 cvar_t	cl_deadbodyfilter = {"cl_deadbodyFilter", "0"};
 cvar_t	cl_gibfilter = {"cl_gibFilter", "0"};
@@ -151,7 +151,7 @@ visentlist_t	cl_visents, cl_visbents;
 
 double		connect_time = 0;		// for connection retransmits
 
-qboolean	host_skipframe;			// used in demo playback
+qbool	host_skipframe;			// used in demo playback
 
 byte		*host_basepal;
 byte		*host_colormap;
@@ -303,7 +303,7 @@ void CL_BeginServerConnect(void) {
 }
 
 void CL_Connect_f (void) {
-	qboolean proxy;
+	qbool proxy;
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("Usage: %s <server>\n", Cmd_Argv(0));
@@ -324,7 +324,7 @@ void CL_Connect_f (void) {
 
 
 
-qboolean CL_ConnectedToProxy(void) {
+qbool CL_ConnectedToProxy(void) {
 	cmd_alias_t *alias = NULL;
 	char **s, *qizmo_aliases[] = {	"ezcomp", "ezcomp2", "ezcomp3", 
 									"f_sens", "f_fps", "f_tj", "f_ta", NULL};
@@ -338,7 +338,7 @@ qboolean CL_ConnectedToProxy(void) {
 	return true;
 }
 
-qboolean CL_ConnectedToQWServer (void) {
+qbool CL_ConnectedToQWServer (void) {
 	char *p;
 
 	if (cls.state < ca_connected)
@@ -352,7 +352,7 @@ qboolean CL_ConnectedToQWServer (void) {
 }
 
 void CL_Join_f (void) {
-	qboolean proxy;
+	qbool proxy;
 
 	proxy = cl_useproxy.value && CL_ConnectedToProxy();
 
@@ -389,7 +389,7 @@ void CL_Join_f (void) {
 
 
 void CL_Observe_f (void) {
-	qboolean proxy;
+	qbool proxy;
 
 	proxy = cl_useproxy.value && CL_ConnectedToProxy();
 
@@ -719,7 +719,7 @@ void CL_ConnectionlessPacket (void) {
 }
 
 //Handles playback of demos, on top of NET_ code
-qboolean CL_GetMessage (void) {
+qbool CL_GetMessage (void) {
 #ifdef _WIN32
 	CL_CheckQizmoCompletion ();
 #endif
@@ -795,7 +795,7 @@ void CL_SendToServer (void) {
 void CL_SaveArgv(int argc, char **argv) {
 	char saved_args[512];
 	int i, total_length, length;
-	qboolean first = true;
+	qbool first = true;
 
 	length = total_length = saved_args[0] = 0;
 	for (i = 0; i < argc; i++){
@@ -1151,7 +1151,7 @@ void CL_CalcFPS(void)
 }
 
 //#fps:
-qboolean physframe;
+qbool physframe;
 double physframetime;
 
 void CL_Frame (double time) {

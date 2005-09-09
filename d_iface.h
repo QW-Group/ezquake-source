@@ -107,7 +107,7 @@ extern int		r_framecount;		// sequence # of current frame since Quake
 									//  started
 extern float	r_aliasuvscale;		// scale-up factor for screen u and v
 									//  on Alias vertices passed to driver
-extern qboolean	r_dowarp;
+extern qbool	r_dowarp;
 
 extern affinetridesc_t	r_affinetridesc;
 extern spritedesc_t		r_spritedesc;
@@ -167,12 +167,12 @@ typedef struct {
 	int			surfmip;	// mipmapped ratio of surface texels / world pixels
 	int			surfwidth;	// in mipmapped texels
 	int			surfheight;	// in mipmapped texels
-	qboolean	dlightonly;	// only have to recalc dynamic lights
+	qbool	dlightonly;	// only have to recalc dynamic lights
 } drawsurf_t;
 
 extern drawsurf_t	r_drawsurf;
 
-qboolean R_DrawSurface (void);
+qbool R_DrawSurface (void);
 
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!
 #define TURB_TEX_SIZE	64		// base turbulent texture size

@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.7 2005-08-12 15:57:21 vvd0 Exp $
+	$Id: EX_browser.c,v 1.8 2005-09-09 11:00:26 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -298,7 +298,7 @@ void Delete_Server(server_data *s)
 
 
 char confirm_text[64];
-qboolean confirmation;
+qbool confirmation;
 void (*confirm_func)(void);
 
 void SB_Confirmation(const char *text, void (*func)(void))
@@ -502,11 +502,11 @@ void Serverinfo_Change(server_data *s)
 
 // --
 
-qboolean AddUnboundServer(char *addr)
+qbool AddUnboundServer(char *addr)
 {
     int i;
     server_data *s;
-    qboolean existed = false;
+    qbool existed = false;
 
     if (sources[0]->serversn >= MAX_UNBOUND)
         return false;
@@ -1874,7 +1874,7 @@ void Browser_Key(int key)
     Browser_pos = (Browser_pos + 4)%4;
 }
 
-qboolean SearchNextServer(int pos)
+qbool SearchNextServer(int pos)
 {
     int i;
     char tmp[1024];
@@ -2402,7 +2402,7 @@ void Sources_Key(int key)
     return;
 }
 
-qboolean SearchNextPlayer(int pos)
+qbool SearchNextPlayer(int pos)
 {
     int i;
     char tmp[1024];

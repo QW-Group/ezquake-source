@@ -19,7 +19,7 @@ typedef struct CEditBox_s
 
 void CEditBox_Init(CEditBox *e, int width, int max)
 ;
-void CEditBox_Draw(CEditBox *e, int x, int y, qboolean active)
+void CEditBox_Draw(CEditBox *e, int x, int y, qbool active)
 ;
 void CEditBox_Key(CEditBox *e, int key)
 ;

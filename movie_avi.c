@@ -61,16 +61,16 @@ unsigned long	m_codec_fourcc;
 int		m_video_frame_counter;
 int		m_video_frame_size;
 
-qboolean	m_audio_is_mp3;
+qbool	m_audio_is_mp3;
 int		m_audio_frame_counter;
 WAVEFORMATEX	m_wave_format;
 MPEGLAYER3WAVEFORMAT mp3_format;
-qboolean	mp3_driver;
+qbool	mp3_driver;
 HACMDRIVER	had;
 HACMSTREAM	hstr;
 ACMSTREAMHEADER	strhdr;
 
-extern qboolean movie_avi_loaded, movie_acm_loaded;
+extern qbool movie_avi_loaded, movie_acm_loaded;
 extern	cvar_t	movie_codec, movie_fps, movie_mp3, movie_mp3_kbps;
 
 #define AVI_GETFUNC(f) (qAVI##f = (void *)GetProcAddress(handle_avi, "AVI" #f))
@@ -200,7 +200,7 @@ BOOL CALLBACK acmDriverEnumCallback (HACMDRIVERID hadid, DWORD dwInstance, DWORD
 	return true;
 }
 
-qboolean Capture_Open (char *filename)
+qbool Capture_Open (char *filename)
 {
 	HRESULT			hr;
 	BITMAPINFOHEADER	bitmap_info_header;
@@ -211,7 +211,7 @@ qboolean Capture_Open (char *filename)
 	m_file = NULL;
 	m_codec_fourcc = 0;
 	m_compressed_video_stream = m_uncompressed_video_stream = m_audio_stream = NULL;
-	m_audio_is_mp3 = (qboolean)movie_mp3.value;
+	m_audio_is_mp3 = (qbool)movie_mp3.value;
 
 	if (*(fourcc = movie_codec.string) != '0')	// codec fourcc supplied
 		m_codec_fourcc = mmioFOURCC (fourcc[0], fourcc[1], fourcc[2], fourcc[3]);

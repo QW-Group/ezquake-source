@@ -44,20 +44,20 @@ extern	sizebuf_t	net_message;
 
 void		NET_Init (void);
 void		NET_Shutdown (void);
-void		NET_ClientConfig (qboolean enable);	// open/close client socket
-void		NET_ServerConfig (qboolean enable);	// open/close server socket
+void		NET_ClientConfig (qbool enable);	// open/close client socket
+void		NET_ServerConfig (qbool enable);	// open/close server socket
 
 void		NET_ClearLoopback (void);
-qboolean	NET_GetPacket (netsrc_t sock);
+qbool	NET_GetPacket (netsrc_t sock);
 void		NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
 void		NET_Sleep (int msec);
 
-qboolean	NET_CompareAdr (netadr_t a, netadr_t b);
-qboolean	NET_CompareBaseAdr (netadr_t a, netadr_t b);
-qboolean	NET_IsLocalAddress (netadr_t a);
+qbool	NET_CompareAdr (netadr_t a, netadr_t b);
+qbool	NET_CompareBaseAdr (netadr_t a, netadr_t b);
+qbool	NET_IsLocalAddress (netadr_t a);
 char		*NET_AdrToString (netadr_t a);
 char		*NET_BaseAdrToString (netadr_t a);
-qboolean	NET_StringToAdr (char *s, netadr_t *a);
+qbool	NET_StringToAdr (char *s, netadr_t *a);
 
 //============================================================================
 
@@ -66,7 +66,7 @@ qboolean	NET_StringToAdr (char *s, netadr_t *a);
 #define	MAX_LATENT	32
 
 typedef struct {
-	qboolean	fatal_error;
+	qbool	fatal_error;
 
 	netsrc_t	sock;
 
@@ -116,11 +116,11 @@ void Netchan_Init (void);
 void Netchan_Transmit (netchan_t *chan, int length, byte *data);
 void Netchan_OutOfBand (netsrc_t sock, netadr_t adr, int length, byte *data);
 void Netchan_OutOfBandPrint (netsrc_t sock, netadr_t adr, char *format, ...);
-qboolean Netchan_Process (netchan_t *chan);
+qbool Netchan_Process (netchan_t *chan);
 void Netchan_Setup (netsrc_t sock, netchan_t *chan, netadr_t adr, int qport);
 
-qboolean Netchan_CanPacket (netchan_t *chan);
-qboolean Netchan_CanReliable (netchan_t *chan);
+qbool Netchan_CanPacket (netchan_t *chan);
+qbool Netchan_CanReliable (netchan_t *chan);
 
 int  UDP_OpenSocket (int port);
 void NetadrToSockadr (netadr_t *a, struct sockaddr_in *s);

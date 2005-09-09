@@ -36,7 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #if !defined(CLIENTONLY) && !defined(SERVERONLY)
-qboolean	dedicated = false;
+qbool	dedicated = false;
 #endif
 
 double		curtime;
@@ -44,7 +44,7 @@ double		curtime;
 static int	host_hunklevel;
 static void	*host_membase;
 
-qboolean	host_initialized;	// true if into command execution
+qbool	host_initialized;	// true if into command execution
 int			host_memsize;
 
 static jmp_buf 	host_abort;
@@ -180,7 +180,7 @@ void Host_EndGame (void) {
 void Host_Error (char *error, ...) {
 	va_list argptr;
 	char string[1024];
-	static qboolean inerror = false;
+	static qbool inerror = false;
 
 	if (inerror)
 		Sys_Error ("Host_Error: recursively entered");
@@ -374,7 +374,7 @@ void Host_Init (int argc, char **argv, int default_memsize) {
 //FIXME: this is a callback from Sys_Quit and Sys_Error.  It would be better
 //to run quit through here before the final handoff to the sys code.
 void Host_Shutdown (void) {
-	static qboolean isdown = false;
+	static qbool isdown = false;
 
 	if (isdown) {
 		printf ("recursive shutdown\n");

@@ -46,9 +46,9 @@ cvar_t	developer = {"developer", "0"};
 cvar_t	registered = {"registered", "0"};
 cvar_t	mapname = {"mapname", "", CVAR_ROM};
 
-qboolean com_serveractive = false;
+qbool com_serveractive = false;
 
-qboolean com_filefrompak;
+qbool com_filefrompak;
 char *com_filesearchpath;
 
 char *com_args_original;
@@ -84,7 +84,7 @@ void COM_StoreOriginalCmdline(int argc, char **argv)
 {
     char buf[4096]; // enough?
     int i;
-    qboolean first = true;
+    qbool first = true;
 
     buf[0] = 0;
     for (i=0; i < argc; i++)
@@ -918,7 +918,7 @@ int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 }
 
 //The filename will be prefixed by com_basedir
-qboolean COM_WriteFile (char *filename, void *data, int len) {
+qbool COM_WriteFile (char *filename, void *data, int len) {
 	FILE *f;
 	char name[MAX_OSPATH];
 
@@ -1009,8 +1009,8 @@ int FS_FOpenPathFile (char *filename, FILE **file) {
 
 //Finds the file in the search path.
 //Sets com_filesize, com_netpath and one of handle or file
-qboolean	file_from_pak;		// global indicating file came from a packfile
-qboolean	file_from_gamedir;	// global indicating file came from a gamedir (and gamedir wasn't id1/qw)
+qbool	file_from_pak;		// global indicating file came from a packfile
+qbool	file_from_gamedir;	// global indicating file came from a gamedir (and gamedir wasn't id1/qw)
 
 int FS_FOpenFile (char *filename, FILE **file) {
 	searchpath_t *search;

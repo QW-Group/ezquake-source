@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cvar_t	sys_sleep = {"sys_sleep", "8"};
 cvar_t	sys_nostdout = {"sys_nostdout","0"};
 
-qboolean WinNT;
+qbool WinNT;
 
 /*
 ================
@@ -63,7 +63,7 @@ void Sys_Error (char *error, ...) {
 double Sys_DoubleTime (void)
 {
 	static DWORD starttime;
-	static qboolean first = true;
+	static qbool first = true;
 	DWORD now;
 
 	now = timeGetTime();

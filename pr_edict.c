@@ -41,7 +41,7 @@ func_t SpectatorConnect, SpectatorThink, SpectatorDisconnect;
 func_t SV_ParseClientCommand;		//KRIMZON_SV_PARSECLIENTCOMMAND
 
 ddef_t *ED_FieldAtOfs (int ofs);
-qboolean ED_ParseEpair (void *base, ddef_t *key, char *s);
+qbool ED_ParseEpair (void *base, ddef_t *key, char *s);
 
 //Sets everything to NULL
 void ED_ClearEdict (edict_t *e) {
@@ -543,7 +543,7 @@ char *ED_NewString (char *string) {
 
 //Can parse either fields or globals
 //returns false if error
-qboolean ED_ParseEpair (void *base, ddef_t *key, char *s) {
+qbool ED_ParseEpair (void *base, ddef_t *key, char *s) {
 	int i;
 	char string[128], *v, *w;
 	ddef_t *def;
@@ -605,7 +605,7 @@ qboolean ED_ParseEpair (void *base, ddef_t *key, char *s) {
 //Used for initial level load and for savegames.
 char *ED_ParseEdict (char *data, edict_t *ent) {
 	ddef_t *key;
-	qboolean skyhack, anglehack, init;
+	qbool skyhack, anglehack, init;
 	char keyname[256], value[1024];
 
 	init = false;

@@ -33,7 +33,7 @@ char	loadname[32];	// for hunk tags
 void Mod_LoadSpriteModel (model_t *mod, void *buffer);
 void Mod_LoadBrushModel (model_t *mod, void *buffer);
 void Mod_LoadAliasModel (model_t *mod, void *buffer);
-model_t *Mod_LoadModel (model_t *mod, qboolean crash);
+model_t *Mod_LoadModel (model_t *mod, qbool crash);
 
 byte	mod_novis[MAX_MAP_LEAFS/8];
 
@@ -164,7 +164,7 @@ void Mod_TouchModel (char *name) {
 }
 
 //Loads a model into the cache
-model_t *Mod_LoadModel (model_t *mod, qboolean crash) {
+model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 	void *d;
 	unsigned *buf;
 	byte stackbuf[1024];		// avoid dirtying the cache heap
@@ -218,7 +218,7 @@ model_t *Mod_LoadModel (model_t *mod, qboolean crash) {
 }
 
 //Loads in a model for the given name
-model_t *Mod_ForName (char *name, qboolean crash) {
+model_t *Mod_ForName (char *name, qbool crash) {
 	model_t	*mod;
 
 	mod = Mod_FindName (name);

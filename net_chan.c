@@ -155,7 +155,7 @@ void Netchan_Setup (netsrc_t sock, netchan_t *chan, netadr_t adr, int qport) {
 #define	MAX_BACKUP	200
 
 //Returns true if the bandwidth choke isn't active
-qboolean Netchan_CanPacket (netchan_t *chan) {
+qbool Netchan_CanPacket (netchan_t *chan) {
 	if (chan->remote_address.type == NA_LOOPBACK)
 		return true;	// unlimited bandwidth for local client
 
@@ -165,14 +165,14 @@ qboolean Netchan_CanPacket (netchan_t *chan) {
 }
 
 //Returns true if the bandwidth choke isn't 
-qboolean Netchan_CanReliable (netchan_t *chan) {
+qbool Netchan_CanReliable (netchan_t *chan) {
 	if (chan->reliable_length)
 		return false;			// waiting for ack
 	return Netchan_CanPacket (chan);
 }
 
 #ifndef CLIENTONLY
-qboolean ServerPaused(void);
+qbool ServerPaused(void);
 #endif
 
 //tries to send an unreliable message to a connection, and handles the transmition / retransmition of the reliable messages.
@@ -181,7 +181,7 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data) {
 	extern cvar_t sv_paused;
 	sizebuf_t send;
 	byte send_buf[MAX_MSGLEN + PACKET_HEADER];
-	qboolean send_reliable;
+	qbool send_reliable;
 	unsigned w1, w2;
 	int i;
 
@@ -273,7 +273,7 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data) {
 
 //called when the current net_message is from remote_address
 //modifies net_message so that it points to the packet payload
-qboolean Netchan_Process (netchan_t *chan) {
+qbool Netchan_Process (netchan_t *chan) {
 	unsigned sequence, sequence_ack, reliable_ack, reliable_message;
 
 	// get sequence numbers		

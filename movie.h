@@ -25,13 +25,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void Movie_Init(void);
 double Movie_StartFrame(void);
 void Movie_FinishFrame(void);
-qboolean Movie_IsCapturing(void);
+qbool Movie_IsCapturing(void);
 void Movie_Stop(void);
 void Movie_TransferStereo16(void);
-qboolean Movie_GetSoundtime(void);
+qbool Movie_GetSoundtime(void);
 
 extern cvar_t movie_fps;
 extern cvar_t movie_steadycam;
-extern qboolean	movie_is_avi;	//joe: capturing to avi
+extern qbool	movie_is_avi;	//joe: capturing to avi
 
 #endif

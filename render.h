@@ -159,7 +159,7 @@ void Classic_TeleportSplash (vec3_t org);
 void R_PushDlights (void);
 
 // surface cache related
-extern qboolean	r_cache_thrash;	// set if thrashing the surface cache
+extern qbool	r_cache_thrash;	// set if thrashing the surface cache
 
 int	D_SurfaceCacheForRes (int width, int height);
 void D_FlushCaches (void);

@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifndef SERVERONLY
-qboolean CL_CheckServerCommand (void);
+qbool CL_CheckServerCommand (void);
 #endif
 
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
@@ -159,7 +159,7 @@ void Cbuf_InsertTextEx (cbuf_t *cbuf, char *text) {
 void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 	int i, j, cursize, nextsize;
 	char *text, line[1024], *src, *dest;
-	qboolean comment, quotes;
+	qbool comment, quotes;
 
 #ifndef SERVERONLY
 	nextsize = cbuf->text_end - cbuf->text_start;
@@ -499,7 +499,7 @@ void Cmd_AliasList_f (void) {
 	cmd_alias_t *a;
 	int i, c, m = 0;
 	static int count;
-	static qboolean sorted = false;
+	static qbool sorted = false;
 	static cmd_alias_t *sorted_aliases[2048];
 
 #define MAX_SORTED_ALIASES (sizeof(sorted_aliases) / sizeof(sorted_aliases[0]))
@@ -633,7 +633,7 @@ void Cmd_Alias_f (void) {
 	a->value = CopyString (Cmd_MakeArgs(2));
 }
 
-qboolean Cmd_DeleteAlias (char *name) {
+qbool Cmd_DeleteAlias (char *name) {
 	cmd_alias_t	*a, *prev;
 	int key;
 
@@ -680,7 +680,7 @@ void Cmd_UnAlias_f (void) {
 	int 		i;
 	char		*name;
 	cmd_alias_t	*a;
-	qboolean	re_search;
+	qbool	re_search;
 
 	if (Cmd_Argc() < 2) {
 		Com_Printf ("unalias <cvar> [<cvar2>..]: erase an existing alias\n");
@@ -778,7 +778,7 @@ void Cmd_AddLegacyCommand (char *oldname, char *newname) {
 	cmd->newname = CopyString(newname);
 }
 
-qboolean Cmd_IsLegacyCommand (char *oldname) {
+qbool Cmd_IsLegacyCommand (char *oldname) {
 	legacycmd_t *cmd;
 
 	for (cmd = legacycmds; cmd; cmd = cmd->next) {
@@ -788,8 +788,8 @@ qboolean Cmd_IsLegacyCommand (char *oldname) {
 	return false;
 }
 
-static qboolean Cmd_LegacyCommand (void) {
-	qboolean recursive = false;
+static qbool Cmd_LegacyCommand (void) {
+	qbool recursive = false;
 	legacycmd_t *cmd;
 	char text[1024];
 
@@ -938,7 +938,7 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function) {
 	cmd_hash_array[key] = cmd;
 }
 
-qboolean Cmd_Exists (char *cmd_name) {
+qbool Cmd_Exists (char *cmd_name) {
 	int	key;
 	cmd_function_t	*cmd;
 
@@ -1029,7 +1029,7 @@ void Cmd_CmdList_f (void) {
 	cmd_function_t *cmd;
 	int i, c, m = 0;
 	static int count;
-	static qboolean sorted = false;
+	static qbool sorted = false;
 	static cmd_function_t *sorted_cmds[512];	
 
 #define MAX_SORTED_CMDS (sizeof(sorted_cmds) / sizeof(sorted_cmds[0]))
@@ -1070,13 +1070,13 @@ void Cmd_CmdList_f (void) {
 typedef struct {
 	char name[32];
 	char *(*func) (void);
-	qboolean teamplay;
+	qbool teamplay;
 } macro_command_t;
 
 static macro_command_t macro_commands[MAX_MACROS];
 static int macro_count = 0;
 
-void Cmd_AddMacroEx(char *s, char *(*f)(void), qboolean teamplay) {
+void Cmd_AddMacroEx(char *s, char *(*f)(void), qbool teamplay) {
 	if (macro_count == MAX_MACROS)
 		Sys_Error("Cmd_AddMacro: macro_count == MAX_MACROS");
 	Q_strncpyz(macro_commands[macro_count].name, s, sizeof(macro_commands[macro_count].name));
@@ -1115,7 +1115,7 @@ int Cmd_MacroCompare (const void *p1, const void *p2) {
 
 void Cmd_MacroList_f (void) {
 	int i, c, m = 0;
-	static qboolean sorted = false;
+	static qbool sorted = false;
 	static macro_command_t *sorted_macros[MAX_MACROS];
 
 	if (!macro_count) {
@@ -1429,7 +1429,7 @@ void Cmd_ExecuteString (char *text) {
 	Cmd_ExecuteStringEx (NULL, text);
 }
 
-static qboolean is_numeric (char *c) {	
+static qbool is_numeric (char *c) {	
 	return ( isdigit((int)(unsigned char)*c) ||
 		((*c == '-' || *c == '+') && (c[1] == '.' || isdigit((int)(unsigned char)c[1]))) ||
 		(*c == '.' && isdigit((int)(unsigned char)c[1])) );
@@ -1441,7 +1441,7 @@ extern cvar_t re_sub[10]; // QW262
 void Cmd_If_f (void) {
 	int	i, c;
 	char *op, buf[1024] = {0};
-	qboolean result;
+	qbool result;
 
 	if ((c = Cmd_Argc()) < 5) {
 		Com_Printf ("Usage: if <expr1> <op> <expr2> <command> [else <command>]\n");

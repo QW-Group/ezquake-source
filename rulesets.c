@@ -40,18 +40,18 @@ typedef enum {rs_default, rs_smackdown, rs_mtfl} ruleset_t;
 typedef struct rulesetDef_s {
 	ruleset_t ruleset;
 	float maxfps;
-	qboolean restrictTriggers;
-	qboolean restrictPacket;
-	qboolean restrictRJScripts;
+	qbool restrictTriggers;
+	qbool restrictPacket;
+	qbool restrictRJScripts;
 } rulesetDef_t;
 
 static rulesetDef_t rulesetDef = {rs_default, 72, false, false, false};
 
-qboolean RuleSets_DisallowRJScripts(void) {
+qbool RuleSets_DisallowRJScripts(void) {
 	return rulesetDef.restrictRJScripts;
 }
 
-qboolean RuleSets_DisallowExternalTexture(model_t *mod) {
+qbool RuleSets_DisallowExternalTexture(model_t *mod) {
 	switch (mod->modhint) {
 		case MOD_EYES: return true;
 		case MOD_BACKPACK: return (rulesetDef.ruleset == rs_smackdown);
@@ -59,7 +59,7 @@ qboolean RuleSets_DisallowExternalTexture(model_t *mod) {
 	}
 }
 
-qboolean Rulesets_AllowTimerefresh(void) {
+qbool Rulesets_AllowTimerefresh(void) {
 	switch(rulesetDef.ruleset) {
 	case rs_smackdown:
 		// START shaman BUG 1020663
@@ -71,7 +71,7 @@ qboolean Rulesets_AllowTimerefresh(void) {
 	}
 }
 
-qboolean Rulesets_AllowNoShadows(void) {
+qbool Rulesets_AllowNoShadows(void) {
 	switch(rulesetDef.ruleset) {
 	case rs_mtfl:
 		return false;
@@ -90,11 +90,11 @@ float Rulesets_MaxFPS(void) {
 	return rulesetDef.maxfps;
 }
 
-qboolean Rulesets_RestrictTriggers(void) {
+qbool Rulesets_RestrictTriggers(void) {
 	return rulesetDef.restrictTriggers;
 }
 
-qboolean Rulesets_RestrictPacket(void) {
+qbool Rulesets_RestrictPacket(void) {
 	return !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictPacket;
 }
 
@@ -117,7 +117,7 @@ static void Rulesets_Smackdown(void) {
 #endif
 #ifdef GLQUAKE
 	extern cvar_t amf_camera_death, amf_camera_chase, amf_part_gunshot_type, amf_part_traillen, amf_part_trailtime, amf_part_trailwidth, amf_part_traildetail, amf_part_trailtype, amf_part_sparks, amf_part_spikes, amf_part_gunshot, amf_waterripple, amf_lightning, amf_lightning_size, amf_lightning_size, amf_lightning_sparks;
-	extern qboolean qmb_initialized;
+	extern qbool qmb_initialized;
 #endif
 	extern cvar_t cl_hud;
 	int i;

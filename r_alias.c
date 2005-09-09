@@ -110,12 +110,12 @@ void R_AliasCheckBBoxFrame (int frame, trivertx_t **mins, trivertx_t **maxs) {
 	}
 }
 
-qboolean R_AliasCheckBBox (entity_t *ent) {
+qbool R_AliasCheckBBox (entity_t *ent) {
 	int i, flags, numv, minz;
 	float zi, basepts[8][3], v0, v1, frac;
 	finalvert_t *pv0, *pv1, viewpts[16];
 	auxvert_t *pa0, *pa1, viewaux[16];
-	qboolean zclipped, zfullyclipped;
+	qbool zclipped, zfullyclipped;
 	unsigned anyclip, allclip;
 	trivertx_t *mins, *maxs, *oldmins, *oldmaxs;
 

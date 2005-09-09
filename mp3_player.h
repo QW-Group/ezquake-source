@@ -74,7 +74,7 @@ extern void (*qxmms_remote_toggle_shuffle)(gint session);
 extern void (*qg_free)(gpointer);
 #endif
 
-qboolean MP3_IsActive(void);
+qbool MP3_IsActive(void);
 void MP3_Init(void);
 void MP3_Frame(void);
 void MP3_Shutdown(void);
@@ -82,8 +82,8 @@ void MP3_Shutdown(void);
 int MP3_GetStatus(void);
 void MP3_GetPlaylistInfo(int *current, int *length);
 long MP3_GetPlaylist(char **buf);
-qboolean MP3_GetOutputtime(int *elapsed, int *total);
-qboolean MP3_GetToggleState(int *shuffle, int *repeat);
+qbool MP3_GetOutputtime(int *elapsed, int *total);
+qbool MP3_GetToggleState(int *shuffle, int *repeat);
 
 void MP3_Next_f(void);
 void MP3_FastForward_f(void);
@@ -104,4 +104,4 @@ char *MP3_Macro_MP3Info(void);
 
 extern cvar_t mp3_dir, mp3_scrolltitle, mp3_showtime, mp3_volume, mp3_xmms_session;
 
-extern qboolean mp3_volumectrl_active;
+extern qbool mp3_volumectrl_active;

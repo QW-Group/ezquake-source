@@ -37,10 +37,10 @@ extern cvar_t cl_nolerp;
 
 static struct predicted_player {
 	int flags;
-	qboolean active;
+	qbool active;
 	vec3_t origin;	// predicted origin
 
-	qboolean predict;
+	qbool predict;
 	vec3_t	oldo;
 	vec3_t	olda;
 	vec3_t	oldv;
@@ -150,7 +150,7 @@ void CL_AddEntity (entity_t *ent) {
 }
 
 
-dlighttype_t dlightColor(float f, dlighttype_t def, qboolean random) {
+dlighttype_t dlightColor(float f, dlighttype_t def, qbool random) {
 	dlighttype_t colors[NUM_DLIGHTTYPES - 4] = {lt_red, lt_blue, lt_redblue, lt_green, lt_white};
 
 	if ((int) f == 1)
@@ -231,7 +231,7 @@ void CL_DecayLights (void) {
 	}
 }
 
-void CL_SetupPacketEntity (int number, entity_state_t *state, qboolean changed) {
+void CL_SetupPacketEntity (int number, entity_state_t *state, qbool changed) {
 	centity_t *cent;
 
 	cent = &cl_entities[number];
@@ -354,10 +354,10 @@ void FlushEntityPacket (void) {
 }
 
 //An svc_packetentities has just been parsed, deal with the rest of the data stream.
-void CL_ParsePacketEntities (qboolean delta) {
+void CL_ParsePacketEntities (qbool delta) {
 	int oldpacket, newpacket, oldindex, newindex, word, newnum, oldnum;
 	packet_entities_t *oldp, *newp, dummy;
-	qboolean full;
+	qbool full;
 	byte from;
 
 	newpacket = cls.netchan.incoming_sequence & UPDATE_MASK;
@@ -1127,7 +1127,7 @@ void CL_ClearProjectiles (void) {
 }
 
 //Nails are passed as efficient temporary entities
-void CL_ParseProjectiles (qboolean indexed) {					
+void CL_ParseProjectiles (qbool indexed) {					
 	int i, c, j, num;
 	byte bits[6];
 	projectile_t *pr;
@@ -1704,7 +1704,7 @@ Players are predicted twice, first without clipping other players,
 then with clipping against them.
 This sets up the first phase.
 */
-void CL_SetUpPlayerPrediction(qboolean dopred) {
+void CL_SetUpPlayerPrediction(qbool dopred) {
 	int j, msec;
 	player_state_t *state, exact;
 	double playertime;

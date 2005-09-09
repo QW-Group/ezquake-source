@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.27 2005-09-04 06:06:22 disconn3ct Exp $
+	$Id: menu.c,v 1.28 2005-09-09 11:00:26 disconn3ct Exp $
 
 */
 
@@ -53,7 +53,7 @@ enum {mode_fastest, mode_default} fps_mode = mode_default;
 #endif
 
 
-qboolean vid_windowedmouse = true;
+qbool vid_windowedmouse = true;
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
 void CL_Disconnect_f(void);
@@ -127,9 +127,9 @@ void M_Main_Key (int key);
 
 int FindBestNick (char *s,int use);
 
-qboolean	m_entersound;		// play after drawing a frame, so caching
+qbool	m_entersound;		// play after drawing a frame, so caching
 								// won't disrupt the sound
-qboolean	m_recursiveDraw;
+qbool	m_recursiveDraw;
 int			m_topmenu;			// set if a submenu was entered via a
 								// menu_* command
 
@@ -740,7 +740,7 @@ void M_Menu_Keys_f (void) {
 	M_EnterMenu (m_keys);
 }
 
-qboolean Key_IsLeftRightSameBind(int b);
+qbool Key_IsLeftRightSameBind(int b);
 
 void M_FindKeysForCommand (char *command, int *twokeys) {
 	int count, j, l;
@@ -1264,7 +1264,7 @@ void M_Help_Key (int key) {
 
 int		msgNumber;
 int		m_quit_prevstate;
-qboolean	wasInMenus;
+qbool	wasInMenus;
 
 void M_Menu_Quit_f (void) {
 	if (m_state == m_quit)
@@ -1308,8 +1308,8 @@ void M_Quit_Key (int key) {
 
 #define	SINGLEPLAYER_ITEMS	3
 int	m_singleplayer_cursor;
-qboolean m_singleplayer_confirm;
-qboolean m_singleplayer_notavail;
+qbool m_singleplayer_confirm;
+qbool m_singleplayer_notavail;
 
 extern	cvar_t	maxclients;
 
@@ -2275,7 +2275,7 @@ static int			demo_base = 0;
 static int 			demo_section = 0;
 
 static demo_sort_t	demo_sorttype = ds_name;
-static qboolean		demo_reversesort = false;
+static qbool		demo_reversesort = false;
 
 char demo_track[16];
 
@@ -2569,7 +2569,7 @@ static void Demo_ReadDirectory(void) {
 
 
 void M_Menu_Demos_f (void) {
-	static qboolean demo_currentdir_init = false;
+	static qbool demo_currentdir_init = false;
 	char *s;
 
 	M_EnterMenu(m_demos);

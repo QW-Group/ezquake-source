@@ -59,11 +59,11 @@ void Delete_Source(source_data *s)
 
 // returns true, if there were some problems (like domain-name addresses)
 // which require the source to be dumped to file in corrected form
-qboolean Update_Source_From_File(source_data *s, char *fname, server_data **servers, int *pserversn)
+qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers, int *pserversn)
 {
     FILE *f;
     int length;
-    qboolean should_dump = false;
+    qbool should_dump = false;
 
     //length = COM_FileOpenRead (fname, &f);
     length = FS_FOpenFile(fname, &f);
@@ -142,7 +142,7 @@ void Precache_Source(source_data *s)
 void Update_Source(source_data *s)
 {
     int i;
-    qboolean should_dump = false;
+    qbool should_dump = false;
     server_data *servers[MAX_SERVERS];
     int serversn = 0;
 

@@ -83,7 +83,7 @@ void FChecks_ScriptsResponse (void)
         Cbuf_AddText("say using advanced scripts\n");
 }
 
-qboolean FChecks_ScriptsRequest (char *s) {
+qbool FChecks_ScriptsRequest (char *s) {
 	if (cl.spectator || (f_scripts_reply_time && cls.realtime - f_scripts_reply_time < 20))
 		return false;
 
@@ -96,7 +96,7 @@ qboolean FChecks_ScriptsRequest (char *s) {
 }
 
 
-qboolean FChecks_VersionRequest (char *s) {
+qbool FChecks_VersionRequest (char *s) {
 	if (cl.spectator || (f_version_reply_time && cls.realtime - f_version_reply_time < 20))
 		return false;
 
@@ -108,7 +108,7 @@ qboolean FChecks_VersionRequest (char *s) {
 	return false;
 }
 
-qboolean FChecks_SkinRequest (char *s) {
+qbool FChecks_SkinRequest (char *s) {
 	float fbskins;		
 
 	fbskins = bound(0, r_fullbrightSkins.value, cl.fbskins);	
@@ -123,7 +123,7 @@ qboolean FChecks_SkinRequest (char *s) {
 	return false;
 }
 
-qboolean FChecks_CheckFModRequest (char *s) {
+qbool FChecks_CheckFModRequest (char *s) {
 	if (cl.spectator || (f_mod_reply_time && cls.realtime - f_mod_reply_time < 20))
 		return false;
 
@@ -135,7 +135,7 @@ qboolean FChecks_CheckFModRequest (char *s) {
 	return false;
 }
 
-qboolean FChecks_CheckFServerRequest (char *s) {
+qbool FChecks_CheckFServerRequest (char *s) {
 	netadr_t adr;
 
 	if (cl.spectator || (f_server_reply_time && cls.realtime - f_server_reply_time < 20))
@@ -149,7 +149,7 @@ qboolean FChecks_CheckFServerRequest (char *s) {
 	return false;
 }
 
-qboolean FChecks_CheckFRulesetRequest (char *s) {
+qbool FChecks_CheckFRulesetRequest (char *s) {
 	extern cvar_t cl_independentPhysics;
 	extern cvar_t allow_scripts;
 	char *sScripts, *sIPhysics, *sp1, *sp2;
@@ -170,7 +170,7 @@ qboolean FChecks_CheckFRulesetRequest (char *s) {
 	return false;
 }
 
-qboolean FChecks_CmdlineRequest (char *s) {
+qbool FChecks_CmdlineRequest (char *s) {
 	if (cl.spectator || (f_cmdline_reply_time && cls.realtime - f_cmdline_reply_time < 20))
 		return false;
 
@@ -189,7 +189,7 @@ qboolean FChecks_CmdlineRequest (char *s) {
 	return false;
 }
 
-qboolean FChecks_SystemRequest (char *s) {
+qbool FChecks_SystemRequest (char *s) {
 	if (cl.spectator || (f_system_reply_time && cls.realtime - f_system_reply_time < 20))
 		return false;
 
@@ -219,7 +219,7 @@ qboolean FChecks_SystemRequest (char *s) {
 }
 
 void FChecks_CheckRequest(char *s) {
-	qboolean fcheck = false;
+	qbool fcheck = false;
 
 	fcheck |= FChecks_VersionRequest (s);
 	fcheck |= FChecks_CmdlineRequest (s);

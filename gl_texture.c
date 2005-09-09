@@ -24,12 +24,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 
 
-qboolean OnChange_gl_max_size (cvar_t *var, char *string);
-qboolean OnChange_gl_texturemode (cvar_t *var, char *string);
-qboolean OnChange_gl_miptexLevel (cvar_t *var, char *string);
+qbool OnChange_gl_max_size (cvar_t *var, char *string);
+qbool OnChange_gl_texturemode (cvar_t *var, char *string);
+qbool OnChange_gl_miptexLevel (cvar_t *var, char *string);
 
 
-static qboolean no24bit, forceTextureReload;
+static qbool no24bit, forceTextureReload;
 
 
 extern unsigned d_8to24table2[256];
@@ -72,7 +72,7 @@ int	numgltextures;
 	;												\
 }
 
-qboolean OnChange_gl_max_size (cvar_t *var, char *string) {
+qbool OnChange_gl_max_size (cvar_t *var, char *string) {
 	int i;
 	float newvalue = Q_atof(string);
 
@@ -110,7 +110,7 @@ glmode_t modes[] = {
 static int gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
 static int gl_filter_max = GL_LINEAR;
 
-qboolean OnChange_gl_texturemode (cvar_t *var, char *string) {
+qbool OnChange_gl_texturemode (cvar_t *var, char *string) {
 	int i;
 	gltexture_t	*glt;
 
@@ -137,7 +137,7 @@ qboolean OnChange_gl_texturemode (cvar_t *var, char *string) {
 	return false;
 }
 
-qboolean OnChange_gl_miptexLevel (cvar_t *var, char *string) {
+qbool OnChange_gl_miptexLevel (cvar_t *var, char *string) {
 	float newval = Q_atof(string);
 
 	if (newval != 0 && newval != 1 && newval != 2 && newval != 3) {
@@ -159,7 +159,7 @@ void GL_Bind (int texnum) {
 
 static GLenum oldtarget = GL_TEXTURE0_ARB;
 static int cnttextures[4] = {-1, -1, -1, -1};   
-static qboolean mtexenabled = false;
+static qbool mtexenabled = false;
 
 
 void GL_SelectTexture (GLenum target) {
@@ -201,7 +201,7 @@ void GL_DisableTMU(GLenum target) {
 
 static void ScaleDimensions(int width, int height, int *scaled_width, int *scaled_height, int mode) {
 	int maxsize, picmip;
-	qboolean scale;
+	qbool scale;
 
 	scale = (mode & TEX_MIPMAP) && !(mode & TEX_NOSCALE);
 
@@ -426,7 +426,7 @@ static gltexture_t *current_texture = NULL;
 		return NULL;					\
 	}
 
-static qboolean CheckTextureLoaded(int mode) {
+static qbool CheckTextureLoaded(int mode) {
 	int scaled_width, scaled_height;
 
 	if (!forceTextureReload) {
@@ -476,7 +476,7 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 
 int GL_LoadTexturePixels (byte *data, char *identifier, int width, int height, int mode) {
 	int i, j, image_size;
-	qboolean gamma;
+	qbool gamma;
 
 	image_size = width * height;
 	gamma = (vid_gamma != 1);

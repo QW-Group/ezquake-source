@@ -32,7 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 entity_t	r_worldentity;
 
-qboolean	r_cache_thrash;		// compatability
+qbool	r_cache_thrash;		// compatability
 
 vec3_t		modelorg, r_entorigin;
 entity_t	*currententity;
@@ -98,13 +98,13 @@ cvar_t  r_lavacolor  = {"r_lavacolor", "80 0 0"};
 cvar_t  r_slimecolor = {"r_slimecolor", "10 60 10"};
 cvar_t  r_watercolor = {"r_watercolor", "50 80 120"};
 // END shaman RFE 1022504
-qboolean OnChange_r_drawflat(cvar_t *v, char *skyname);
+qbool OnChange_r_drawflat(cvar_t *v, char *skyname);
 cvar_t	r_drawflat   = {"r_drawflat", "0", 0, OnChange_r_drawflat};
 cvar_t	r_wallcolor  = {"r_wallcolor", "255 255 255", 0, OnChange_r_drawflat};
 cvar_t	r_floorcolor = {"r_floorcolor", "50 100 150", 0, OnChange_r_drawflat};
 
 cvar_t	r_farclip			= {"r_farclip", "4096"};
-qboolean OnChange_r_skyname(cvar_t *v, char *s);
+qbool OnChange_r_skyname(cvar_t *v, char *s);
 cvar_t	r_skyname			= {"r_skyname", "bloody-marvelous512", 0, OnChange_r_skyname};
 cvar_t	gl_detail			= {"gl_detail","0"};			
 // START shaman :: balancing variables
@@ -116,7 +116,7 @@ cvar_t  gl_waterfog_density = {"gl_turbfogDensity", "1"};
 cvar_t  gl_lumaTextures = {"gl_lumaTextures", "1"};	
 cvar_t	gl_subdivide_size = {"gl_subdivide_size", "128", CVAR_ARCHIVE};
 cvar_t	gl_clear = {"gl_clear", "0"};
-qboolean OnChange_gl_clearColor(cvar_t *v, char *s);
+qbool OnChange_gl_clearColor(cvar_t *v, char *s);
 cvar_t	gl_clearColor = {"gl_clearColor", "0 0 0", 0, OnChange_gl_clearColor};
 cvar_t	gl_cull = {"gl_cull", "1"};
 cvar_t	gl_ztrick = {"gl_ztrick", "1"};
@@ -166,7 +166,7 @@ void R_MarkLeaves (void);
 void R_InitBubble (void);
 
 //Returns true if the box is completely outside the frustom
-qboolean R_CullBox (vec3_t mins, vec3_t maxs) {
+qbool R_CullBox (vec3_t mins, vec3_t maxs) {
 	int i;
 
 	for (i = 0; i < 4; i++) {
@@ -177,7 +177,7 @@ qboolean R_CullBox (vec3_t mins, vec3_t maxs) {
 }
 
 //Returns true if the sphere is completely outside the frustum
-qboolean R_CullSphere (vec3_t centre, float radius) {
+qbool R_CullSphere (vec3_t centre, float radius) {
 	int i;
 	mplane_t *p;
 
@@ -297,7 +297,7 @@ void R_DrawSpriteModel (entity_t *e) {
 
 vec3_t	shadevector;
 
-qboolean	full_light;
+qbool	full_light;
 float		shadelight, ambientlight;
 
 // precalculated dot products for quantized angles
@@ -319,7 +319,7 @@ extern vec3_t lightcolor;
 float apitch, ayaw;
 vec3_t vertexlight;
 
-void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qboolean mtex) {
+void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) {
     int *order, count;
 	vec3_t interpolated_verts;
     float l, lerpfrac;
@@ -402,7 +402,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qboolean mte
 		glDisable(GL_BLEND);
 }
 
-void R_SetupAliasFrame (maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qboolean mtex) {
+void R_SetupAliasFrame (maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex) {
 	int oldpose, pose, numposes;
 	float interval;
 
@@ -1512,7 +1512,7 @@ void R_RenderScene (void) {
 
 int gl_ztrickframe = 0;
 
-qboolean OnChange_gl_clearColor(cvar_t *v, char *s) {
+qbool OnChange_gl_clearColor(cvar_t *v, char *s) {
 	byte *clearColor;
 
 	clearColor = StringToRGB(s);

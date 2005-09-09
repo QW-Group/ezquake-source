@@ -39,7 +39,7 @@ typedef struct cvar_s {
 	char	*name;
 	char	*string;
 	int		flags;
-	qboolean	(*OnChange)(struct cvar_s *var, char *value);
+	qbool	(*OnChange)(struct cvar_s *var, char *value);
 	float	value;
 	float	maxrulesetvalue;
 	float	minrulesetvalue;
@@ -99,14 +99,14 @@ char  *Cvar_CompleteVariable (char *partial);
 // called by Cmd_ExecuteString when Cmd_Argv(0) doesn't match a known
 // command.  Returns true if the command was a variable reference that
 // was handled. (print or change)
-qboolean Cvar_Command (void);
+qbool Cvar_Command (void);
 
 // Writes lines containing "set variable value" for all variables
 // with the archive flag set to true.
 void Cvar_WriteVariables (FILE *f);
 
 cvar_t *Cvar_FindVar (char *name);
-qboolean Cvar_Delete (char *name);
+qbool Cvar_Delete (char *name);
 
 void Cvar_Init (void);
 
@@ -120,9 +120,9 @@ void Cvar_ResetCurrentGroup(void);
 #ifndef SERVERONLY
 
 // regexp match support for group operations in scripts
-qboolean IsRegexp(char *str);
-qboolean ReSearchInit (char *wildcard);
-qboolean ReSearchMatch (char *str);
+qbool IsRegexp(char *str);
+qbool ReSearchInit (char *wildcard);
+qbool ReSearchMatch (char *str);
 void ReSearchDone (void);
 
 char CharToBrown(char ch);

@@ -178,7 +178,7 @@ int PM_SlideMove (void) {
 }
 
 //Each intersection will try to step over the obstruction instead of sliding along it.
-int PM_StepSlideMove (qboolean in_air) {
+int PM_StepSlideMove (qbool in_air) {
 	vec3_t dest;
 	pmtrace_t trace;
 	vec3_t original, originalvel, down, up, downvel;

@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "logging.h"
 #include "utils.h"
 
-static qboolean OnChange_log_dir(cvar_t *var, char *string);
+static qbool OnChange_log_dir(cvar_t *var, char *string);
 
 cvar_t		log_dir			= {"log_dir", "", 0, OnChange_log_dir};
 cvar_t		log_readable	= {"log_readable", "0"};
@@ -32,9 +32,9 @@ cvar_t		log_readable	= {"log_readable", "0"};
 static FILE		*logfile;				
 static char		logfilename[LOG_FILENAME_MAXSIZE];
 
-static qboolean autologging = false;
+static qbool autologging = false;
 
-qboolean Log_IsLogging(void) {
+qbool Log_IsLogging(void) {
 	return logfile ? true : false;
 }
 
@@ -53,7 +53,7 @@ static void Log_Stop(void) {
 	logfile = NULL;
 }
 
-static qboolean OnChange_log_dir(cvar_t *var, char *string) {
+static qbool OnChange_log_dir(cvar_t *var, char *string) {
 	if (!string[0])
 		return false;
 
@@ -156,7 +156,7 @@ void Log_Write(char *s) {
 
 
 static char	auto_matchname[2 * MAX_OSPATH];
-static qboolean temp_log_ready = false;
+static qbool temp_log_ready = false;
 static float auto_starttime;
 
 char *MT_TempDirectory(void);
@@ -243,7 +243,7 @@ void Log_AutoLogging_StartMatch(char *logname) {
 	auto_starttime = cls.realtime;
 }
 
-qboolean Log_AutoLogging_Status(void) {
+qbool Log_AutoLogging_Status(void) {
 	return temp_log_ready ? 2 : autologging ? 1 : 0;
 }
 

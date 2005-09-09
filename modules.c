@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef struct registeredModule_s {
 	qlib_id_t id;
-	qboolean loaded;
+	qbool loaded;
 	qlib_shutdown_fn shutdown;
 } registeredModule_t;
 
@@ -49,13 +49,13 @@ Security_Verify_Response_t Security_Verify_Response;
 Security_Generate_Crc_t Security_Generate_Crc;
 Security_IsModelModified_t Security_IsModelModified;
 
-static qboolean security_loaded;
+static qbool security_loaded;
 
-qboolean Modules_SecurityLoaded(void) {
+qbool Modules_SecurityLoaded(void) {
 	return security_loaded;
 }
 
-qboolean VerifyData(signed_buffer_t *p) {
+qbool VerifyData(signed_buffer_t *p) {
 	return p ? true : false;
 }
 
@@ -66,7 +66,7 @@ static void *hSecurity = NULL;
 #endif
 
 void Modules_Init(void) {
-	qboolean have_security;
+	qbool have_security;
 	char *version_string, binary_type[32], *renderer;
 	int retval;
 
@@ -194,14 +194,14 @@ void QLib_RegisterModule(qlib_id_t module, qlib_shutdown_fn shutdown) {
 	registeredModules[module].shutdown = shutdown;
 }
 
-qboolean QLib_isModuleLoaded(qlib_id_t module) {
+qbool QLib_isModuleLoaded(qlib_id_t module) {
 	if (module < 0 || module >= qlib_nummodules)
 		Sys_Error("QLib_isModuleLoaded: bad module %d", module);
 
 	return registeredModules[module].loaded;
 }
 
-qboolean QLib_ProcessProcdef(QLIB_HANDLETYPE_T handle, qlib_dllfunction_t *procdefs, int size) {
+qbool QLib_ProcessProcdef(QLIB_HANDLETYPE_T handle, qlib_dllfunction_t *procdefs, int size) {
 	int i;
 
 	for (i = 0; i < size; i++) {

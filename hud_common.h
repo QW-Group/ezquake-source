@@ -23,6 +23,6 @@ void SCR_HUD_DrawGunCurrent (hud_t *hud);
 
 
 void HudCommon_Init(void);
-void SCR_HUD_DrawNum(hud_t *hud, int num, qboolean low,
+void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
                      float scale, int style, int digits, char *s_align);
 #endif // __HUD_COMMON__H__

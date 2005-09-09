@@ -44,7 +44,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 console_t	con;
 int         con_margin=0;       // kazik: margin on the left side
 
-qboolean    con_addtimestamp;
+qbool    con_addtimestamp;
 
 int			con_ormask;
 int 		con_linewidth;		// characters across screen
@@ -88,8 +88,8 @@ extern	char	key_lines[32][MAXCMDLINE];
 extern	int		edit_line;
 extern	int		key_linepos;
 
-qboolean	con_initialized = false;
-qboolean	con_suppress = false;
+qbool	con_initialized = false;
+qbool	con_suppress = false;
 
 FILE		*qconsole_log;
 

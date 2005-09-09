@@ -77,7 +77,7 @@ void SockadrToNetadr (struct sockaddr_in *s, netadr_t *a) {
 	a->port = s->sin_port;
 }
 
-qboolean NET_CompareBaseAdr (netadr_t a, netadr_t b) {
+qbool NET_CompareBaseAdr (netadr_t a, netadr_t b) {
 	if (a.type == NA_LOOPBACK && b.type == NA_LOOPBACK)
 		return true;
 	if (a.ip[0] == b.ip[0] && a.ip[1] == b.ip[1] && a.ip[2] == b.ip[2] && a.ip[3] == b.ip[3])
@@ -85,7 +85,7 @@ qboolean NET_CompareBaseAdr (netadr_t a, netadr_t b) {
 	return false;
 }
 
-qboolean NET_CompareAdr (netadr_t a, netadr_t b) {
+qbool NET_CompareAdr (netadr_t a, netadr_t b) {
 	if (a.type == NA_LOOPBACK && b.type == NA_LOOPBACK)
 		return true;
 	if (a.ip[0] == b.ip[0] && a.ip[1] == b.ip[1] && a.ip[2] == b.ip[2] && a.ip[3] == b.ip[3] && a.port == b.port)
@@ -93,7 +93,7 @@ qboolean NET_CompareAdr (netadr_t a, netadr_t b) {
 	return false;
 }
 
-qboolean NET_IsLocalAddress (netadr_t a) {
+qbool NET_IsLocalAddress (netadr_t a) {
 	if ((*(unsigned *)a.ip == *(unsigned *)net_local_adr.ip || *(unsigned *)a.ip == htonl(INADDR_LOOPBACK)) )
 		return true;
 	
@@ -124,7 +124,7 @@ idnewt:28000
 192.246.40.70:28000
 */
 
-qboolean NET_StringToAdr (char *s, netadr_t *a) {
+qbool NET_StringToAdr (char *s, netadr_t *a) {
 	struct hostent	*h;
 	struct sockaddr_in sadr;
 	char *colon, copy[128];
@@ -169,7 +169,7 @@ LOOPBACK BUFFERS FOR LOCAL PLAYER
 =============================================================================
 */
 
-qboolean NET_GetLoopPacket (netsrc_t sock) {
+qbool NET_GetLoopPacket (netsrc_t sock) {
 	int i;
 	loopback_t *loop;
 
@@ -214,7 +214,7 @@ void NET_ClearLoopback (void) {
 	loopbacks[1].send = loopbacks[1].get = 0;
 }
 
-qboolean NET_GetPacket (netsrc_t sock) {
+qbool NET_GetPacket (netsrc_t sock) {
 	int ret;
 	struct sockaddr_in	from;
 	int fromlen;
@@ -277,7 +277,7 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to) {
 int UDP_OpenSocket (int port) {
 	int newsocket;
 	struct sockaddr_in address;
-	qboolean _true = true;
+	qbool _true = true;
 	int i;
 
 	if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
@@ -307,7 +307,7 @@ int UDP_OpenSocket (int port) {
 	return newsocket;
 }
 
-void NET_ClientConfig (qboolean enable) {
+void NET_ClientConfig (qbool enable) {
 	if (enable) {
 		if (ip_sockets[NS_CLIENT] == -1) {
 			ip_sockets[NS_CLIENT] = UDP_OpenSocket (PORT_CLIENT);
@@ -322,7 +322,7 @@ void NET_ClientConfig (qboolean enable) {
 	}
 }
 
-void NET_ServerConfig (qboolean enable) {
+void NET_ServerConfig (qbool enable) {
 	int i, port;
 
 	if (enable) {
@@ -359,7 +359,7 @@ void NET_ServerConfig (qboolean enable) {
 void NET_Sleep (int msec) {
     struct timeval timeout;
 	fd_set fdset;
-	extern qboolean do_stdin, stdin_ready;
+	extern qbool do_stdin, stdin_ready;
 
 	if (dedicated) {
 		if (ip_sockets[NS_SERVER] == -1)

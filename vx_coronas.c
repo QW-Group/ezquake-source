@@ -18,8 +18,8 @@ typedef struct
 	float alpha;
 	float fade;
 	coronatype_t type;
-	qboolean sighted;
-	qboolean los; //to prevent having to trace a line twice
+	qbool sighted;
+	qbool los; //to prevent having to trace a line twice
 	int texture;
 } corona_t;
 
@@ -419,7 +419,7 @@ void NewStaticLightCorona (coronatype_t type, vec3_t origin)
 {
 	corona_t	*c, *e;
 	int		i;
-	qboolean breakage = true;
+	qbool breakage = true;
 
 	c = r_corona;
 	for (i=0 ; i<MAX_CORONAS ; i++, c++)

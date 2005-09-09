@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef unsigned char 		byte;
 
-typedef enum {false, true} qboolean;
+typedef enum {false, true} qbool;
 
 #ifndef NULL
 #define NULL ((void *) 0)
@@ -173,8 +173,8 @@ typedef enum {false, true} qboolean;
 //============================================================================
 
 typedef struct sizebuf_s {
-	qboolean	allowoverflow;	// if false, do a Sys_Error
-	qboolean	overflowed;		// set to true if the buffer size failed
+	qbool	allowoverflow;	// if false, do a Sys_Error
+	qbool	overflowed;		// set to true if the buffer size failed
 	byte	*data;
 	int		maxsize;
 	int		cursize;
@@ -283,7 +283,7 @@ int Com_HashKey (char *name);
 //============================================================================
 
 extern	char		com_token[1024];
-extern	qboolean	com_eof;
+extern	qbool	com_eof;
 
 char *COM_Parse (char *data);
 
@@ -320,7 +320,7 @@ char *CopyString(char *s);
 //============================================================================
 
 extern int com_filesize;
-extern qboolean com_filefrompak;
+extern qbool com_filefrompak;
 extern char *com_filesearchpath;
 extern char	com_netpath[MAX_OSPATH];
 struct cache_user_s;
@@ -329,8 +329,8 @@ extern char	com_gamedir[MAX_OSPATH];
 extern char	com_basedir[MAX_OSPATH];
 extern char	com_gamedirfile[MAX_QPATH];
 
-extern qboolean file_from_pak;		// set if file came from a pak file
-extern qboolean file_from_gamedir;	// set if file came from a gamedir (and gamedir wasn't id1/qw)
+extern qbool file_from_pak;		// set if file came from a pak file
+extern qbool file_from_gamedir;	// set if file came from a gamedir (and gamedir wasn't id1/qw)
 
 void FS_InitFilesystem (void);
 void FS_SetGamedir (char *dir);
@@ -340,7 +340,7 @@ byte *FS_LoadTempFile (char *path);
 byte *FS_LoadHunkFile (char *path);
 void FS_LoadCacheFile (char *path, struct cache_user_s *cu);
 
-qboolean COM_WriteFile (char *filename, void *data, int len);
+qbool COM_WriteFile (char *filename, void *data, int len);
 void COM_CreatePath (char *path);
 int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode);
 int Q_strlen (char *str);
@@ -402,12 +402,12 @@ void MSG_WriteCoord (sizebuf_t *sb, float f);
 void MSG_WriteAngle (sizebuf_t *sb, float f);
 void MSG_WriteAngle16 (sizebuf_t *sb, float f);
 void MSG_WriteDeltaUsercmd (sizebuf_t *sb, struct usercmd_s *from, struct usercmd_s *cmd);
-void MSG_WriteDeltaEntity  (entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qboolean force);
+void MSG_WriteDeltaEntity  (entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qbool force);
 void MSG_EmitPacketEntities (packet_entities_t *from, int delta_sequence, packet_entities_t *to, 
 	sizebuf_t *msg, entity_state_t *(*GetBaseline)(int number)); 
 
 extern	int			msg_readcount;
-extern	qboolean	msg_badread;		// set if a read goes beyond end of message
+extern	qbool	msg_badread;		// set if a read goes beyond end of message
 
 void MSG_BeginReading (void);
 int MSG_GetReadCount(void);
@@ -431,20 +431,20 @@ void MSG_ReadDeltaUsercmd (struct usercmd_s *from, struct usercmd_s *cmd, int pr
 #elif CLIENTONLY
 #define	dedicated	0
 #else
-extern qboolean	dedicated;
+extern qbool	dedicated;
 #endif
 
 extern cvar_t	developer;
 extern cvar_t	registered;
 extern cvar_t	mapname;
 
-extern qboolean		com_serveractive;	// true if sv.state != ss_dead
+extern qbool		com_serveractive;	// true if sv.state != ss_dead
 extern int			CL_ClientState ();	// returns cls.state
 
 extern double		curtime;	// not bounded or scaled, shared by local client and server
 
 // host
-extern qboolean		host_initialized;
+extern qbool		host_initialized;
 extern int			host_memsize;
 
 void Host_Init (int argc, char **argv, int default_memsize);

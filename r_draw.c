@@ -239,7 +239,7 @@ void Draw_Pixel(int x, int y, byte color) {
 
 
 #define		NUMCROSSHAIRS 6
-static qboolean crosshairdata[NUMCROSSHAIRS][64] = {
+static qbool crosshairdata[NUMCROSSHAIRS][64] = {
 	false, false, false, true,  false, false, false, false,
 	false, false, false, false, false, false, false, false,
 	false, false, false, true,  false, false, false, false,
@@ -295,8 +295,8 @@ static qboolean crosshairdata[NUMCROSSHAIRS][64] = {
 	false, false, false, false, false, false, false, false
 };
 
-static qboolean customcrosshairdata[64];
-static qboolean customcrosshair_loaded;
+static qbool customcrosshairdata[64];
+static qbool customcrosshair_loaded;
 void customCrosshair_Init(void) {
 	FILE *f;
 	int i = 0, c;
@@ -332,7 +332,7 @@ void Draw_Crosshair(void) {
 	extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
 	extern vrect_t scr_vrect;
 	byte c = (byte) crosshaircolor.value;
-	qboolean *data;
+	qbool *data;
 
 	if (!crosshair.value)
 		return;

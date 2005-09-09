@@ -27,12 +27,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern	HWND	mainwindow;
 extern	cvar_t	bgmvolume;
 
-static qboolean cdValid = false;
-static qboolean	playing = false;
-static qboolean	wasPlaying = false;
-static qboolean	initialized = false;
-static qboolean	enabled = false;
-static qboolean playLooping = false;
+static qbool cdValid = false;
+static qbool	playing = false;
+static qbool	wasPlaying = false;
+static qbool	initialized = false;
+static qbool	enabled = false;
+static qbool playLooping = false;
 static float	cdvolume;
 static byte 	remap[100];
 static byte		cdrom;
@@ -101,7 +101,7 @@ static int CDAudio_GetAudioDiskInfo(void)
 }
 
 
-void CDAudio_Play(byte track, qboolean looping)
+void CDAudio_Play(byte track, qbool looping)
 {
 	DWORD				dwReturn;
     MCI_PLAY_PARMS		mciPlayParms;

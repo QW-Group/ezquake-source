@@ -142,7 +142,7 @@ typedef struct msurface_s {
 	int			lightmaptexturenum;
 	byte		styles[MAXLIGHTMAPS];
 	int			cached_light[MAXLIGHTMAPS];	// values currently used in lightmap
-	qboolean	cached_dlight;				// true if dynamic light in cache
+	qbool	cached_dlight;				// true if dynamic light in cache
 	byte		*samples;		// [numstyles*surfsize]
 } msurface_t;
 
@@ -309,7 +309,7 @@ typedef enum {MOD_NORMAL, MOD_PLAYER, MOD_EYES, MOD_FLAME, MOD_THUNDERBOLT, MOD_
 
 typedef struct model_s {
 	char		name[MAX_QPATH];
-	qboolean	needload;		// bmodels and sprites don't cache normally
+	qbool	needload;		// bmodels and sprites don't cache normally
 
 	modhint_t	modhint;
 
@@ -372,7 +372,7 @@ typedef struct model_s {
 	unsigned	checksum2;
 
 	int			bspversion;
-	qboolean	isworldmodel;
+	qbool	isworldmodel;
 
 	// additional model data
 	cache_user_t	cache;		// only access through Mod_Extradata
@@ -382,14 +382,14 @@ typedef struct model_s {
 
 void	Mod_Init (void);
 void	Mod_ClearAll (void);
-model_t *Mod_ForName (char *name, qboolean crash);
+model_t *Mod_ForName (char *name, qbool crash);
 void	*Mod_Extradata (model_t *mod);	// handles caching
 void	Mod_TouchModel (char *name);
 
 mleaf_t *Mod_PointInLeaf (float *p, model_t *model);
 byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
 
-qboolean Img_HasFullbrights (byte *pixels, int size);
+qbool Img_HasFullbrights (byte *pixels, int size);
 
 #include "gl_md3.h" 
 

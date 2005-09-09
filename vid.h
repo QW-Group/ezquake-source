@@ -54,7 +54,7 @@ typedef struct
 extern	viddef_t	vid;				// global video state
 extern	unsigned short	d_8to16table[256];
 extern	unsigned	d_8to24table[256];
-extern qboolean vid_windowedmouse;
+extern qbool vid_windowedmouse;
 extern void (*vid_menudrawfn)(void);
 extern void (*vid_menukeyfn)(int key);
 
@@ -89,7 +89,7 @@ void VID_NotifyActivity(void);
 void VID_SetCaption (char *text);
 
 void VID_SetDeviceGammaRamp (unsigned short *ramps);
-extern qboolean vid_hwgamma_enabled;
+extern qbool vid_hwgamma_enabled;
 
 // QW262 -->
 #ifdef GLQUAKE

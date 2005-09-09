@@ -125,7 +125,7 @@ void Util_Process_Filename(char *string) {
 			string[i - 1] = string[i];
 }
 
-qboolean Util_Is_Valid_Filename(char *s) {
+qbool Util_Is_Valid_Filename(char *s) {
 	static char badchars[] = {'?', '*', ':', '<', '>', '"'};
 
 	if (!s || !*s)
@@ -260,7 +260,7 @@ int Player_GetSlot(char *arg) {
 
 /********************************** String Utils ****************************************/
 
-qboolean Util_F_Match(char *_msg, char *f_request) {
+qbool Util_F_Match(char *_msg, char *f_request) {
 	int offset, i, status, flags;
 	char *s, *msg;
 

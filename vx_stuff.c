@@ -127,7 +127,7 @@ typedef struct
 	char *number;
 	char *name;
 	char *description;
-	qboolean notify;
+	qbool notify;
 } checkmodel_t;
 
 checkmodel_t tp_checkmodels[]=

@@ -42,10 +42,10 @@ int GetUserNum(char *t);
 void StripName(char *);
 
 // get float value of string, false on error
-qboolean getFloatValue(char *string, float *val);
+qbool getFloatValue(char *string, float *val);
 
 // get integer value of string, false on error
-qboolean getIntegerValue(char *string, int *val);
+qbool getIntegerValue(char *string, int *val);
 
 
 #endif //  __EX_MISC__H__

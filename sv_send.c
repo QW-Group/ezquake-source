@@ -155,7 +155,7 @@ void SV_Multicast (vec3_t origin, int to) {
 	byte *mask;
 	mleaf_t *leaf;
 	int leafnum, j;
-	qboolean reliable;
+	qbool reliable;
 	vec3_t org;
 
 	leaf = Mod_PointInLeaf (origin, sv.worldmodel);
@@ -235,7 +235,7 @@ Larger attenuations will drop off.  (max 4 attenuation)
 void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, float attenuation) {       
 	int sound_num, field_mask, i, ent;
 	vec3_t origin;
-	qboolean use_phs, reliable = false;
+	qbool use_phs, reliable = false;
 
 	if (volume < 0 || volume > 255)
 		Host_Error ("SV_StartSound: volume = %i", volume);
@@ -430,7 +430,7 @@ void SV_UpdateClientStats (client_t *client) {
 	}
 }
 
-qboolean SV_SendClientDatagram (client_t *client) {
+qbool SV_SendClientDatagram (client_t *client) {
 	byte msg_buf[MAX_DATAGRAM];
 	sizebuf_t msg;
 

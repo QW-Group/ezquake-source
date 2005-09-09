@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef struct {
 	char		name[16];
-	qboolean	failedload;		// the name isn't a valid skin
+	qbool	failedload;		// the name isn't a valid skin
 	cache_user_t	cache;
 } skin_t;
 
@@ -50,8 +50,8 @@ typedef struct {
 
 	byte			pm_type;
 	float		waterjumptime;
-	qboolean	onground;
-	qboolean	jump_held;
+	qbool	onground;
+	qbool	jump_held;
 	int			jump_msec;		// fix bunny-hop flickering
 } player_state_t;
 
@@ -84,7 +84,7 @@ typedef struct player_info_s {
     int    fps;         // > 0 - fps, < 0 - invalid, 0 - collecting
     int    fps_frames;
     double fps_measure_time;
-    qboolean isnear;
+    qbool isnear;
 
 	int		spectator;
 	byte	translations[VID_GRADES*256];
@@ -93,20 +93,20 @@ typedef struct player_info_s {
 	int		stats[MAX_CL_STATS];	
 
 
-	qboolean	skin_refresh;	
-	qboolean	ignored;		//for ignore
-	qboolean	validated;		//for authentication
+	qbool	skin_refresh;	
+	qbool	ignored;		//for ignore
+	qbool	validated;		//for authentication
 	char		f_server[16];	//for f_server responses
 
 	//VULT DEATH EFFECT
 	//Better putting the dead flag here instead of on the entity so whats dead stays dead
-	qboolean dead;
+	qbool dead;
 
 } player_info_t;
 
 
 typedef struct {
-	qboolean	interpolate;
+	qbool	interpolate;
 	vec3_t		origin;
 	vec3_t		angles;
 	int			oldindex;
@@ -125,7 +125,7 @@ typedef struct {
 	player_state_t		playerstate[MAX_CLIENTS];	// message received that reflects performing
 								// the usercmd
 	packet_entities_t	packet_entities;
-	qboolean		invalid;		// true if the packet_entities delta was invalid
+	qbool		invalid;		// true if the packet_entities delta was invalid
 	int			receivedsize;   // kazik
 	int			seq_when_received;  // kazik
 } frame_t;
@@ -248,15 +248,15 @@ typedef struct {
 	char		uploadname[MAX_OSPATH];
 	int		uploadpercent;
 	int		uploadrate;
-	qboolean	is_file;
+	qbool	is_file;
 	byte		*mem_upload;
 	int		upload_pos;
 	int		upload_size;
 //<-
 	// demo recording info must be here, because record is started before entering a map (and clearing clientState_t)
-	qboolean	demorecording;
-	qboolean	demoplayback;
-	qboolean	timedemo;
+	qbool	demorecording;
+	qbool	demoplayback;
+	qbool	timedemo;
 
 	byte		demomessage_data[MAX_MSGLEN * 2];
 	sizebuf_t	demomessage;
@@ -269,10 +269,10 @@ typedef struct {
 	float		latency;		// rolling average
 
 
-	qboolean	mvdplayback; // playing mvd 
+	qbool	mvdplayback; // playing mvd 
 	int			lastto;
 	int			lasttype;
-	qboolean	findtrack;
+	qbool	findtrack;
 
 } clientPersistent_t;
 
@@ -294,7 +294,7 @@ typedef struct {
 	int			deathmatch;
 	int			teamplay;
 	int			gametype;		// GAME_COOP or GAME_DEATHMATCH
-	qboolean		teamfortress;	// true if gamedir is "fortress"
+	qbool		teamfortress;	// true if gamedir is "fortress"
 	int			fpd;			// FAQ proxy flags
 	int			z_ext;			// ZQuake protocol extensions flags
 	int			timelimit;
@@ -340,7 +340,7 @@ typedef struct {
 								// is rendering at.  always <= realtime
 
 	double		servertime;
-	qboolean	servertime_works;	// Does the server actually send STAT_TIME/svc_time?
+	qbool	servertime_works;	// Does the server actually send STAT_TIME/svc_time?
 	double		gametime;
 
 	vec3_t		simorg;
@@ -349,15 +349,15 @@ typedef struct {
 
 	// pitch drifting vars
 	float		pitchvel;
-	qboolean	nodrift;
+	qbool	nodrift;
 	float		driftmove;
 	double		laststop;
 
-	qboolean	onground;
+	qbool	onground;
 	float		crouch;			// local amount for smoothing stepups
 	float		viewheight;
 
-	qboolean	paused;			// a combination of PAUSED_SERVER and PAUSED_DEMO flags
+	qbool	paused;			// a combination of PAUSED_SERVER and PAUSED_DEMO flags
 
 	float		ideal_punchangle;	// temporary view kick from weapon firing
 	float		punchangle;		// drifts towards ideal_punchangle
@@ -406,14 +406,14 @@ typedef struct {
  	int			whensaidhead;       // Head value for floodprots
 
 	
-	qboolean	standby;
-	qboolean	countdown;
+	qbool	standby;
+	qbool	countdown;
 	float		fbskins;		
 	float		truelightning;	
-	qboolean	userfb;			
+	qbool	userfb;			
 	int			minlight;
 	float		watervis;
-	qboolean	allow_lumas;
+	qbool	allow_lumas;
 
 	interpolate_t	int_projectiles[MAX_PROJECTILES];
 
@@ -496,13 +496,13 @@ void CL_ReadPackets (void);
 void CL_BeginServerConnect(void);
 void CL_Disconnect (void);
 void CL_Disconnect_f (void);
-qboolean CL_ConnectedToProxy(void);
+qbool CL_ConnectedToProxy(void);
 void CL_MakeActive(void);
 
 extern char emodel_name[], pmodel_name[];
 
 // cl_demo.c
-qboolean CL_GetDemoMessage (void);
+qbool CL_GetDemoMessage (void);
 void CL_WriteDemoCmd (usercmd_t *pcmd);
 void CL_WriteDemoMessage (sizebuf_t *msg);
 void CL_WriteDemoEntities (void);
@@ -514,7 +514,7 @@ void CL_Demo_Init(void);
 void CL_AutoRecord_StopMatch(void);
 void CL_AutoRecord_CancelMatch(void);
 void CL_AutoRecord_StartMatch(char *demoname);
-qboolean CL_AutoRecord_Status(void);
+qbool CL_AutoRecord_Status(void);
 void CL_AutoRecord_SaveMatch(void);
 
 extern double demostarttime;
@@ -547,7 +547,7 @@ typedef struct packet_info_s
 
     int             seq_diff;   // frames elapsed between send and recv
 
-    qboolean        delta;  // if deltaying
+    qbool        delta;  // if deltaying
 }
 packet_info_t;
 
@@ -601,8 +601,8 @@ int CL_CalcNetStatistics(
 int CL_CalcNet (void);
 void CL_ParseServerMessage (void);
 void CL_NewTranslation (int slot);
-qboolean CL_CheckOrDownloadFile (char *filename);
-qboolean CL_IsUploading(void);
+qbool CL_CheckOrDownloadFile (char *filename);
+qbool CL_IsUploading(void);
 void CL_NextUpload(void);
 void CL_StartUpload (byte *data, int size);
 void CL_StopUpload(void);
@@ -639,17 +639,17 @@ void CL_NewDlight (int key, vec3_t origin, float radius, float time, int type, i
 void CL_DecayLights (void);
 
 void CL_SetSolidPlayers (int playernum);
-void CL_SetUpPlayerPrediction(qboolean dopred);
+void CL_SetUpPlayerPrediction(qbool dopred);
 void CL_EmitEntities (void);
 void CL_ClearProjectiles (void);
-void CL_ParsePacketEntities (qboolean delta);
+void CL_ParsePacketEntities (qbool delta);
 void CL_SetSolidEntities (void);
 void CL_ParsePlayerinfo (void);
 
 
 void MVD_Interpolate(void);
 void CL_ClearPredict(void);
-void CL_ParseProjectiles(qboolean indexed);
+void CL_ParseProjectiles(qbool indexed);
 
 
 // cl_pred.c
@@ -666,8 +666,8 @@ extern int	spec_track; // player# of who we are tracking
 
 int WhoIsSpectated (void);
 
-qboolean Cam_DrawViewModel (void);
-qboolean Cam_DrawPlayer (int playernum);
+qbool Cam_DrawViewModel (void);
+qbool Cam_DrawPlayer (int playernum);
 void Cam_Track (usercmd_t *cmd);
 void Cam_FinishMove (usercmd_t *cmd);
 void Cam_Reset (void);
@@ -702,8 +702,8 @@ void Stats_NewMap(void);
 void Stats_EnterSlot(int num);
 void Stats_ParsePrint(char *s, int level);
 
-qboolean Stats_IsActive(void);
-qboolean Stats_IsFlagsParsed(void);
+qbool Stats_IsActive(void);
+qbool Stats_IsFlagsParsed(void);
 void Stats_GetBasicStats(int num, int *stats);
 void Stats_GetFlagStats(int num, int *stats);
 
@@ -712,7 +712,7 @@ void Stats_GetFlagStats(int num, int *stats);
 
 void CL_CalcPlayerFPS(player_info_t *info, int msec);
 
-dlighttype_t dlightColor(float f, dlighttype_t def, qboolean random);
+dlighttype_t dlightColor(float f, dlighttype_t def, qbool random);
 
 int CURRVIEW;
 int nNumViews;

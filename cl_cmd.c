@@ -28,13 +28,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "config_manager.h"
 #include "rulesets.h"
 
-extern qboolean Match_Running ;
+extern qbool Match_Running ;
 
 void SCR_RSShot_f (void);
 void CL_ProcessServerInfo (void);
 void SV_Serverinfo_f (void);
 void Key_WriteBindings (FILE *f);
-void S_StopAllSounds (qboolean clear);
+void S_StopAllSounds (qbool clear);
 
 
 //adds the current command line as a clc_stringcmd to the client message.
@@ -142,7 +142,7 @@ void CL_ForwardToServer_f (void) {
 void CL_Say_f (void) {
 	char *s;
 	int tmp;
-	qboolean qizmo = false;
+	qbool qizmo = false;
 
 	if (Cmd_Argc() < 2)
 		return;
@@ -775,7 +775,7 @@ svcmd_t svcmds[] = {
 };
 
 //Called by Cmd_ExecuteString if cbuf_current == &cbuf_svc
-qboolean CL_CheckServerCommand () {
+qbool CL_CheckServerCommand () {
 	svcmd_t	*cmd;
 	char *s;
 

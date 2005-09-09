@@ -4,7 +4,7 @@
 #include "xsd.h"
 
 #ifndef _WIN32
-#define boolean qboolean
+#define boolean qbool
 #endif
 
 typedef enum

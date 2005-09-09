@@ -72,13 +72,13 @@ typedef void (*qlib_shutdown_fn)(void);
 void QLib_Init(void);
 void QLib_Shutdown(void);
 void QLib_RegisterModule(qlib_id_t module, qlib_shutdown_fn shutdown);
-qboolean QLib_isModuleLoaded (qlib_id_t module);
-qboolean QLib_ProcessProcdef(QLIB_HANDLETYPE_T handle, qlib_dllfunction_t *procdefs, int size);
+qbool QLib_isModuleLoaded (qlib_id_t module);
+qbool QLib_ProcessProcdef(QLIB_HANDLETYPE_T handle, qlib_dllfunction_t *procdefs, int size);
 void QLib_MissingModuleError(int, char *libname, char *cmdline, char *features);
 
-qboolean Modules_SecurityLoaded (void);
+qbool Modules_SecurityLoaded (void);
 void Modules_Init(void);
-qboolean VerifyData(signed_buffer_t *p);
+qbool VerifyData(signed_buffer_t *p);
 void Modules_Shutdown(void);
 
 extern Security_Verify_Response_t Security_Verify_Response;

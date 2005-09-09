@@ -34,17 +34,17 @@ const char *gl_renderer;
 const char *gl_version;
 const char *gl_extensions;
 
-qboolean gl_mtexable = false;
+qbool gl_mtexable = false;
 int gl_textureunits = 1;
 lpMTexFUNC qglMultiTexCoord2f = NULL;
 lpSelTexFUNC qglActiveTexture = NULL;
 
-qboolean gl_combine = false;
+qbool gl_combine = false;
 
-qboolean gl_add_ext = false;
+qbool gl_add_ext = false;
 
 float gldepthmin, gldepthmax;
-qboolean gl_allow_ztrick = true;
+qbool gl_allow_ztrick = true;
 
 float vid_gamma = 1.0;
 byte vid_gamma_table[256];
@@ -56,14 +56,14 @@ unsigned d_8to24table2[256];
 byte color_white[4] = {255, 255, 255, 0};
 byte color_black[4] = {0, 0, 0, 0};
 
-qboolean OnChange_gl_ext_texture_compression(cvar_t *, char *);
+qbool OnChange_gl_ext_texture_compression(cvar_t *, char *);
 
 cvar_t	gl_strings = {"gl_strings", "", CVAR_ROM};
 cvar_t	gl_ext_texture_compression = {"gl_ext_texture_compression", "0", 0, OnChange_gl_ext_texture_compression};
 
 /************************************* EXTENSIONS *************************************/
 
-qboolean CheckExtension (const char *extension) {
+qbool CheckExtension (const char *extension) {
 	const char *start;
 	char *where, *terminator;
 
@@ -126,7 +126,7 @@ void GL_CheckExtensions (void) {
 	}
 }
 
-qboolean OnChange_gl_ext_texture_compression(cvar_t *var, char *string) {
+qbool OnChange_gl_ext_texture_compression(cvar_t *var, char *string) {
 	float newval = Q_atof(string);
 
 	if (!newval == !var->value)

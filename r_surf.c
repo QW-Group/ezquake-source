@@ -242,7 +242,7 @@ texture_t *R_TextureAnimation (texture_t *base) {
 }
 
 //Returns false if it wasn't hit by a dynamic light
-qboolean R_DrawSurface (void) {
+qbool R_DrawSurface (void) {
 	unsigned char *basetptr, *pcolumndest;
 	int smax, tmax, twidth, u, soffset, basetoffset, texwidth, horzblockstep;
 	void (*pblockdrawer)(void);

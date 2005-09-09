@@ -9,7 +9,7 @@ extern cvar_t chase_back;
 extern cvar_t chase_up;
 extern cvar_t chase_active;
 extern cvar_t r_externcam;
-extern qboolean chasecam_allowed;
+extern qbool chasecam_allowed;
 
 extern int externcam;
 extern vec3_t death_org;

@@ -88,7 +88,7 @@ Runs thinking code if time.  There is some play in the exact time the think func
 it is called before any movement is done in a frame.  Not used for pushmove objects, because they must be exact.
 Returns false if the entity removed itself.
 */
-qboolean SV_RunThink (edict_t *ent) {
+qbool SV_RunThink (edict_t *ent) {
 	float thinktime;
 
 	do {
@@ -311,7 +311,7 @@ trace_t SV_PushEntity (edict_t *ent, vec3_t push) {
 	return trace;
 }					
 
-qboolean SV_Push (edict_t *pusher, vec3_t move) {
+qbool SV_Push (edict_t *pusher, vec3_t move) {
 	int i, e, num_moved;
 	edict_t *check, *block;
 	vec3_t mins, maxs, pushorig, moved_from[SV_MAX_EDICTS];
@@ -598,7 +598,7 @@ This is also used for objects that have become still on the ground, but will fal
 FIXME: is this true?
 */
 void SV_Physics_Step (edict_t *ent) {
-	qboolean hitsound;
+	qbool hitsound;
 	int movetype;
 
 	// frefall if not onground

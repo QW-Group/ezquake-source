@@ -35,12 +35,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cdaudio.h"
 #include "sound.h"
 
-static qboolean cdValid = false;
-static qboolean	playing = false;
-static qboolean	wasPlaying = false;
-static qboolean	initialized = false;
-static qboolean	enabled = true;
-static qboolean playLooping = false;
+static qbool cdValid = false;
+static qbool	playing = false;
+static qbool	wasPlaying = false;
+static qbool	initialized = false;
+static qbool	enabled = true;
+static qbool playLooping = false;
 static float	cdvolume;
 static byte 	remap[100];
 static byte		playTrack;
@@ -93,7 +93,7 @@ static int CDAudio_GetAudioDiskInfo(void)
 }
 
 
-void CDAudio_Play(byte track, qboolean looping)
+void CDAudio_Play(byte track, qbool looping)
 {
 	struct cdrom_tocentry entry;
 	struct cdrom_ti ti;

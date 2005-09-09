@@ -45,7 +45,7 @@ static int		floodindex;
 
 extern void PaddedPrint (char *s);
 
-static qboolean IsIgnored(int slot) {
+static qbool IsIgnored(int slot) {
 	return cl.players[slot].ignored;
 }
 
@@ -77,7 +77,7 @@ static void Display_Ignorelist(void) {
 	Com_Printf("\n");
 }
 
-static qboolean Ignorelist_Add(int slot) {
+static qbool Ignorelist_Add(int slot) {
 	if (IsIgnored(slot))
 		return false;
 
@@ -85,7 +85,7 @@ static qboolean Ignorelist_Add(int slot) {
 	return true;
 }
 
-static qboolean Ignorelist_Del(int slot) {
+static qbool Ignorelist_Del(int slot) {
 	if (cl.players[slot].ignored == false)
 		return false;
 
@@ -333,7 +333,7 @@ void Ignore_Flood_Add(char *s) {
 }
 
 
-qboolean Ignore_Message(char *s, int flags, int offset) {
+qbool Ignore_Message(char *s, int flags, int offset) {
 	int slot, i, p, q, len;	
 	char name[32];
 

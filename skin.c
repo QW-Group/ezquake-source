@@ -54,7 +54,7 @@ char *Skin_FindName (player_info_t *sc) {
 	if (!cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_SKIN)) {
 		char *skinname = NULL;
 		player_state_t *state;
-		qboolean teammate;
+		qbool teammate;
 
 		teammate = (cl.teamplay && !strcmp(sc->team, skinforcing_team)) ? true : false;
 

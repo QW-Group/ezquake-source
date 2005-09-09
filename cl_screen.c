@@ -76,8 +76,8 @@ float			scr_conlines;           // lines of console to display
 float			oldscreensize, oldfov, oldsbar;
 
 
-qboolean OnFovChange (cvar_t *var, char *value);
-qboolean OnDefaultFovChange (cvar_t *var, char *value);
+qbool OnFovChange (cvar_t *var, char *value);
+qbool OnDefaultFovChange (cvar_t *var, char *value);
 cvar_t			scr_fov = {"fov", "90", CVAR_ARCHIVE, OnFovChange};	// 10 - 140
 cvar_t			default_fov = {"default_fov", "90", CVAR_ARCHIVE, OnDefaultFovChange};
 cvar_t			scr_viewsize = {"viewsize", "100", CVAR_ARCHIVE};
@@ -89,7 +89,7 @@ cvar_t			scr_showram = {"showram", "1"};
 cvar_t			scr_showturtle = {"showturtle", "0"};
 cvar_t			scr_showpause = {"showpause", "1"};
 cvar_t			scr_printspeed = {"scr_printspeed", "8"};
-qboolean OnChange_scr_allowsnap(cvar_t *, char *);
+qbool OnChange_scr_allowsnap(cvar_t *, char *);
 cvar_t			scr_allowsnap = {"scr_allowsnap", "1", 0, OnChange_scr_allowsnap};
 
 cvar_t			scr_clock = {"cl_clock", "0"};
@@ -134,7 +134,7 @@ cvar_t			scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
 
 
 
-qboolean		scr_initialized;                // ready to draw
+qbool		scr_initialized;                // ready to draw
 
 mpic_t			*scr_ram;
 mpic_t			*scr_net;
@@ -149,13 +149,13 @@ viddef_t		vid;                            // global video state
 
 vrect_t			scr_vrect;
 
-qboolean		scr_skipupdate;
+qbool		scr_skipupdate;
 
-qboolean		scr_drawloading;
-qboolean		scr_disabled_for_loading;
+qbool		scr_drawloading;
+qbool		scr_disabled_for_loading;
 float			scr_disabled_time;
 
-qboolean		block_drawing;
+qbool		block_drawing;
 
 
 static int scr_autosshot_countdown = 0;
@@ -170,7 +170,7 @@ void Draw_AlphaString (int x, int y, char *str, float alpha);
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
 
 
-qboolean OnChange_scr_allowsnap(cvar_t *var, char *s) {
+qbool OnChange_scr_allowsnap(cvar_t *var, char *s) {
 	return (cls.state >= ca_connected && cbuf_current == &cbuf_svc);
 }
 
@@ -270,9 +270,9 @@ void SCR_EraseCenterString (void) {
 /************************************ FOV ************************************/
 
 extern	cvar_t		v_idlescale;
-qboolean	concussioned = false;
+qbool	concussioned = false;
 
-qboolean OnFovChange (cvar_t *var, char *value)
+qbool OnFovChange (cvar_t *var, char *value)
 {
 	
 	float newfov = Q_atof(value);
@@ -310,7 +310,7 @@ qboolean OnFovChange (cvar_t *var, char *value)
 	return true;
 }
 
-qboolean OnDefaultFovChange (cvar_t *var, char *value)
+qbool OnDefaultFovChange (cvar_t *var, char *value)
 {
 	float newfov = Q_atof(value);
 	
@@ -336,7 +336,7 @@ static void SCR_CalcRefdef (void) {
 	float  size;
 #ifdef GLQUAKE
 	int h;
-	qboolean full = false;
+	qbool full = false;
 #else
 	vrect_t vrect;
 #endif
@@ -929,14 +929,14 @@ void Hud_Add_f(void)
 {
 	hud_element_t*	elem;
 	struct hud_element_s*	next = NULL;	// Sergio
-	qboolean	hud_restore = false;	// Sergio
+	qbool	hud_restore = false;	// Sergio
 	cvar_t		*var;
 	char		*a2, *a3;
 	//Hud_Func	func;
 	unsigned	old_coords = 0;
 	unsigned	old_width = 0;
 	float		old_alpha = 1;
-	qboolean	old_enabled = true;
+	qbool	old_enabled = true;
 
 	if (Cmd_Argc() != 4)
 		Com_Printf("Usage: hud_add <name> <type> <param>\n");
@@ -1436,7 +1436,7 @@ void Hud_Button_f (void)
 	}
 }*/
 
-qboolean Hud_TranslateCoords (hud_element_t *elem, int *x, int *y)
+qbool Hud_TranslateCoords (hud_element_t *elem, int *x, int *y)
 {
 	int l;
 
@@ -1599,7 +1599,7 @@ void SCR_DrawHud (void)
 
 }
 
-qboolean Hud_CheckBounds (hud_element_t *elem, int x, int y)
+qbool Hud_CheckBounds (hud_element_t *elem, int x, int y)
 {
 	int hud_x, hud_y, con_x, con_y;
 

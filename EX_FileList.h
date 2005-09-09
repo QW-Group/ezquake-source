@@ -47,7 +47,7 @@ filetype_t;
 //
 typedef struct filedesc_s
 {
-    qboolean        is_directory;
+    qbool        is_directory;
     char            name[_MAX_PATH+1];
     char            display[MAX_FILELIST_DISPLAY+1];
     unsigned long   size;
@@ -62,9 +62,9 @@ filedesc_t;
 typedef struct filelist_s
 {
     char            current_dir[_MAX_PATH+1];
-    qboolean        error;          // error reading dir
-    qboolean        need_refresh;   // dir is reread in draw func
-    qboolean        need_resort;    // dir is sorted in draw func
+    qbool        error;          // error reading dir
+    qbool        need_refresh;   // dir is reread in draw func
+    qbool        need_resort;    // dir is sorted in draw func
 
     filedesc_t      entries[MAX_FILELIST_ENTRIES];
     int             num_entries;
@@ -88,13 +88,13 @@ typedef struct filelist_s
 
     // for searching
     char            search_string[MAX_SEARCH_STRING+1];
-    qboolean        search_valid;   // if is in search mode
-    qboolean        search_dirty;   // if should research
-    qboolean        search_error;   // not found
+    qbool        search_valid;   // if is in search mode
+    qbool        search_dirty;   // if should research
+    qbool        search_error;   // not found
 
     // for cd ..
     char            cdup_name[_MAX_PATH+1];
-    qboolean        cdup_find;
+    qbool        cdup_find;
 }
 filelist_t;
 
@@ -109,7 +109,7 @@ void FL_Draw(filelist_t *, int x, int y, int w, int h);
 // send key to list
 // returns: true if processed, false if ignored
 //
-qboolean FL_Key(filelist_t *, int key);
+qbool FL_Key(filelist_t *, int key);
 
 
 //
@@ -170,7 +170,7 @@ int FL_GetCurrentEntryType(filelist_t *);
 //
 // is current entry a dir ?
 //
-qboolean FL_IsCurrentDir(filelist_t *);
+qbool FL_IsCurrentDir(filelist_t *);
 
 
 #endif // __EX_FILELIST_H__

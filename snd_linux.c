@@ -6,7 +6,7 @@
 
 #include "quakedef.h" 
 
-qboolean SNDDMA_ALSA;
+qbool SNDDMA_ALSA;
 int snd_inited;
 // Note: The functions here keep track of if the sound system is inited.
 //       They perform checks so that the real functions are only called if
@@ -15,8 +15,8 @@ int snd_inited;
 
 // Prototypes
 
-qboolean SNDDMA_Init_ALSA(void);
-qboolean SNDDMA_Init_OSS(void);
+qbool SNDDMA_Init_ALSA(void);
+qbool SNDDMA_Init_OSS(void);
 int SNDDMA_GetDMAPos_ALSA(void);
 int SNDDMA_GetDMAPos_OSS(void);
 void SNDDMA_Shutdown_ALSA(void);
@@ -27,7 +27,7 @@ void SNDDMA_Submit_OSS(void);
 
 // Main functions
 
-qboolean SNDDMA_Init(void)
+qbool SNDDMA_Init(void)
 {
     int retval;
 

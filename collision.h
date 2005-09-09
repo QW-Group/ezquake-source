@@ -11,13 +11,13 @@ typedef struct
 typedef struct
 {
 	// if true, the entire trace was in solid
-	qboolean	allsolid;
+	qbool	allsolid;
 	// if true, the initial point was in solid
-	qboolean	startsolid;
+	qbool	startsolid;
 	// if true, the trace passed through empty somewhere
-	qboolean	inopen;
+	qbool	inopen;
 	// if true, the trace passed through water somewhere
-	qboolean	inwater;
+	qbool	inwater;
 	// fraction of the total distance that was traveled before impact
 	// (1.0 = did not hit anything)
 	float		fraction;

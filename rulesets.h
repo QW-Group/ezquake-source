@@ -28,10 +28,10 @@ void Rulesets_Init(void);
 char *Rulesets_Ruleset(void);
 
 
-qboolean RuleSets_DisallowRJScripts(void);
-qboolean RuleSets_DisallowExternalTexture(model_t *mod);
-qboolean Rulesets_AllowTimerefresh(void);
+qbool RuleSets_DisallowRJScripts(void);
+qbool RuleSets_DisallowExternalTexture(model_t *mod);
+qbool Rulesets_AllowTimerefresh(void);
 float Rulesets_MaxFPS(void);
-qboolean Rulesets_RestrictTriggers(void);
-qboolean Rulesets_RestrictPacket(void);
-qboolean Rulesets_AllowNoShadows(void);
+qbool Rulesets_RestrictTriggers(void);
+qbool Rulesets_RestrictPacket(void);
+qbool Rulesets_AllowNoShadows(void);

@@ -32,13 +32,13 @@ char *COM_FileExtension(char *);
 
 cvar_t mp3_scrolltitle = {"mp3_scrolltitle", "1"};
 cvar_t mp3_showtime = {"mp3_showtime", "1"};
-qboolean OnChange_mp3_volume(cvar_t *var, char *s);
+qbool OnChange_mp3_volume(cvar_t *var, char *s);
 cvar_t mp3_volume = {"mp3_volume", "1", 0, OnChange_mp3_volume};
 cvar_t mp3_grabvolume = {"mp3_grabvolume", "2"};	
 
 static char *mp3_notrunning_msg = MP3_PLAYERNAME_LEADINGCAP " is not running";
 
-qboolean mp3_volumectrl_active = false;
+qbool mp3_volumectrl_active = false;
 
 #endif
 
@@ -143,7 +143,7 @@ static void XMMS_FreeLibrary(void) {
 
 #endif
 
-qboolean MP3_IsActive(void) {
+qbool MP3_IsActive(void) {
 #if defined(_WIN32)
 	return true;
 #elif defined(__XMMS__)
@@ -153,7 +153,7 @@ qboolean MP3_IsActive(void) {
 
 #ifdef _WIN32
 
-static qboolean MP3_IsPlayerRunning(void) {
+static qbool MP3_IsPlayerRunning(void) {
 	return ((mp3_hwnd = FindWindow("ezQuake Winamp", NULL)) || (mp3_hwnd = FindWindow("Winamp v1.x", NULL)));
 }
 
@@ -221,7 +221,7 @@ int MP3_GetStatus(void) {
 	}
 }
 
-qboolean OnChange_mp3_volume(cvar_t *var, char *s) {
+qbool OnChange_mp3_volume(cvar_t *var, char *s) {
 	int vol;
 
 	if (!MP3_IsPlayerRunning())
@@ -310,7 +310,7 @@ char *MP3_Macro_MP3Info(void) {
 	return title;
 }
 
-qboolean MP3_GetOutputtime(int *elapsed, int *total) {
+qbool MP3_GetOutputtime(int *elapsed, int *total) {
 	int ret1, ret2;
 
 	if (!MP3_IsPlayerRunning())
@@ -325,7 +325,7 @@ qboolean MP3_GetOutputtime(int *elapsed, int *total) {
 	return true;
 }
 
-qboolean MP3_GetToggleState(int *shuffle, int *repeat) {
+qbool MP3_GetToggleState(int *shuffle, int *repeat) {
 	int ret1, ret2;
 
 	if (!MP3_IsPlayerRunning())
@@ -345,7 +345,7 @@ qboolean MP3_GetToggleState(int *shuffle, int *repeat) {
 
 #ifdef __XMMS__
 
-static qboolean MP3_IsPlayerRunning(void) {
+static qbool MP3_IsPlayerRunning(void) {
 	return (qxmms_remote_is_running((gint) XMMS_SESSION));
 }
 
@@ -436,7 +436,7 @@ int MP3_GetStatus(void) {
 	return MP3_STOPPED;
 }
 
-qboolean OnChange_mp3_volume(cvar_t *var, char *s) {
+qbool OnChange_mp3_volume(cvar_t *var, char *s) {
 	int vol;
 
 	if (!MP3_IsPlayerRunning())
@@ -524,7 +524,7 @@ char *MP3_Macro_MP3Info(void) {
 	return title;
 }
 
-qboolean MP3_GetOutputtime(int *elapsed, int *total) {
+qbool MP3_GetOutputtime(int *elapsed, int *total) {
 	int pos;
 
 	if (!MP3_IsPlayerRunning()) {
@@ -537,7 +537,7 @@ qboolean MP3_GetOutputtime(int *elapsed, int *total) {
 	return true;
 }
 
-qboolean MP3_GetToggleState(int *shuffle, int *repeat) {
+qbool MP3_GetToggleState(int *shuffle, int *repeat) {
 	if (!MP3_IsPlayerRunning()) 
 		return false;
 	*shuffle = qxmms_remote_is_shuffle(XMMS_SESSION);
