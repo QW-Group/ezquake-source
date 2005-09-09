@@ -16,13 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.22 2005-09-09 11:00:26 disconn3ct Exp $
+	$Id: keys.c,v 1.23 2005-09-09 12:49:14 disconn3ct Exp $
 
 */
 
 #include "quakedef.h"
-#include "keys.h"
-#include "menu.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif

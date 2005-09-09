@@ -19,27 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "keys.h"
-#include "image.h"
-#include "menu.h"
-#include "sbar.h"
 #include "cl_screen.h"
 #include <time.h>
-
-#include "utils.h"
-#include "rulesets.h"
-#include "modules.h"
-
-#ifdef GLQUAKE
-#include "gl_local.h"
-#include "vx_stuff.h"
-#else
-#include "r_local.h"
-#endif
-
-#include "hud.h" // HUD -> hexum
-#include "hud_common.h"
-
 #include "mvd_utils.h"
 
 #ifdef _WIN32
@@ -2158,7 +2139,7 @@ int SCR_Screenshot(char *name) {
 #else
 
 int SCR_Screenshot(char *name) {
-	int success;
+	int success = -1;
 	image_format_t format;
 
 	name = (*name == '/') ? name + 1 : name;

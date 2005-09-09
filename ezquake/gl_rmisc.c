@@ -20,12 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // gl_rmisc.c
 
 #include "quakedef.h"
-#include "gl_local.h"
 
-#include "rulesets.h"
-
-//VULT
-#include "vx_stuff.h"
 
 void R_InitOtherTextures (void) {
 /*	static const int flags = TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN;

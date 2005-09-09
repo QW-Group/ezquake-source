@@ -21,18 +21,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // disable data conversion warnings
 
-#pragma warning(disable : 4244)     // MIPS
-#pragma warning(disable : 4136)     // X86
-#pragma warning(disable : 4051)     // ALPHA
-  
 #ifdef _WIN32
 #include <windows.h>
 #endif
-
-#ifndef __APPLE__
-#include <GL/gl.h>
-#else
+#if defined (__APPLE__) || defined (darwin)
 #include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#include <OpenGL/glext.h>
+#else
+#include <GL/gl.h>
+#include <GL/glu.h>
 #endif
 
 #include "gl_texture.h"

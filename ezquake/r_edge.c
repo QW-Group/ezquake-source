@@ -20,8 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_edge.c
 
 #include "quakedef.h"
-#include "r_local.h"
-#include "sound.h"
 
 edge_t	*auxedges;
 edge_t	*r_edges, *edge_p, *edge_max;

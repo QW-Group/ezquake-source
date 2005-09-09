@@ -19,17 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "pmove.h"
 
-#include "utils.h"
-#include "rulesets.h"
-
-#ifdef GLQUAKE
-#include "gl_local.h"
-#include "vx_stuff.h"
-#else
-#include "r_local.h"
-#endif
 
 /*
 The view is allowed to move slightly from its true position for bobbing,

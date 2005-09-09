@@ -16,20 +16,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.5 2005-09-09 11:00:27 disconn3ct Exp $
+	$Id: vid_wgl.c,v 1.6 2005-09-09 12:46:22 disconn3ct Exp $
 
 */
 
 #include "quakedef.h"
 #include "cdaudio.h"
-#include "gl_local.h"
-#include "keys.h"
 #ifdef WITH_KEYMAP
 #include "keymap.h"
 #endif // WITH_KEYMAP 
 #include "resource.h"
-#include "sbar.h"
-#include "sound.h"
 #include "winquake.h"
 
 #define MAX_MODE_LIST	128

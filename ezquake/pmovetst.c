@@ -18,7 +18,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 #include "quakedef.h"
-#include "pmove.h"
 
 static	hull_t		box_hull;
 static	dclipnode_t	box_clipnodes[6];

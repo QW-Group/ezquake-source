@@ -19,8 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-//VULT DISPLAY NAMES
-#include "vx_stuff.h"
+
 cvar_t cl_parsefrags = {"cl_parseFrags", "0"};
 cvar_t cl_loadFragfiles = {"cl_loadFragfiles", "0"};
 

@@ -20,10 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // console.c
 
 #include "quakedef.h"
-#include "keys.h"
-
 #include <fcntl.h>
-
 #ifdef _WIN32
 #include <io.h>
 #else

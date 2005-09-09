@@ -17,9 +17,6 @@
 #endif
 
 #include "EX_browser.h"
-#include "sbar.h"
-#include "keys.h"
-#include "menu.h"
 
 extern qbool useNewPing;
 

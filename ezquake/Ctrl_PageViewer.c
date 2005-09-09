@@ -5,9 +5,8 @@
 
 
 #include "quakedef.h"
-#include "Ctrl_PageViewer.h"
 #include "EX_misc.h"
-#include "keys.h"
+
 
 static void LeaveNavigationMode(CPageViewer_t *viewer)
 {

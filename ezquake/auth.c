@@ -20,8 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "winquake.h"
-#include "utils.h"
-#include "modules.h"
 
 cvar_t	auth_validateclients	= {"auth_validate", "1"};		
 cvar_t	auth_viewcrc			= {"auth_viewcrc", "0"};				

@@ -19,8 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "image.h"
-#include "modules.h"
+
 
 #ifdef WITH_PNG
 #include "png.h"

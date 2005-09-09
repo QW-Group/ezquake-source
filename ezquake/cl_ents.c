@@ -19,14 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "pmove.h"
 
-#ifdef GLQUAKE
-#include "gl_local.h"
-#include "vx_stuff.h"
-#endif
 
-static int MVD_TranslateFlags(int src);		
+static int MVD_TranslateFlags(int src);
 void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info);	
 
 #define ISDEAD(i) ( (i) >= 41 && (i) <= 102 )

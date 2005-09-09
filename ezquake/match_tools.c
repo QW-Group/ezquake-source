@@ -21,14 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <time.h>
 #include "quakedef.h"
-#include "utils.h"
 #include "logging.h"
-
-// START shaman RFE 1020608
-#ifdef GLQUAKE
-#include "gl_local.h"
-#endif
-// END shaman RFE 1020608
 
 #define MAX_STATIC_STRING 1024
 qbool Match_Running ;

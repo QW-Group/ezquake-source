@@ -21,12 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <time.h>
 #include "quakedef.h"
 #include "winquake.h"
-#include "menu.h"
-#include "version.h"
 #include "sha1.h"
 
 #include "config_manager.h"
-#include "rulesets.h"
 
 extern qbool Match_Running ;
 

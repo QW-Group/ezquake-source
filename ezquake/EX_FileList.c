@@ -19,8 +19,6 @@
 
 #include "quakedef.h"
 #include "localtime.h"
-#include "keys.h"
-#include "EX_FileList.h"
 #include "EX_misc.h"
 #include "EX_FunNames.h"
 

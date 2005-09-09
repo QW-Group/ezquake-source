@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "utils.h"
 
 int TP_CategorizeMessage (char *s, int *offset);
 char *COM_FileExtension (char *in);

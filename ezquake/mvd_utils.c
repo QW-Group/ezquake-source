@@ -1,11 +1,9 @@
 /*
-	$Id: mvd_utils.c,v 1.17 2005-09-09 11:00:27 disconn3ct Exp $
+	$Id: mvd_utils.c,v 1.18 2005-09-09 12:46:22 disconn3ct Exp $
 */
 
 #include "quakedef.h"
-#include "common.h"
 #include "cl_screen.h"
-#include "utils.h"
 #include "parser.h"
 
 extern cvar_t tp_name_quad, tp_name_pent, tp_name_ring, tp_name_separator;

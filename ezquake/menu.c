@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.28 2005-09-09 11:00:26 disconn3ct Exp $
+	$Id: menu.c,v 1.29 2005-09-09 12:46:22 disconn3ct Exp $
 
 */
 
@@ -24,22 +24,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 //#include "cl_slist.h"
 #include "input.h"
-#include "keys.h"
-#include "sound.h"
-#include "console.h"
-#include "version.h"
-#include "Ctrl_PageViewer.h"
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
 
-#include "utils.h"
 #include "mp3_player.h"
 #include "EX_browser.h"
-
-#ifdef GLQUAKE
-#include "gl_local.h"
-#endif
 
 #ifndef _WIN32
 #include <dirent.h>
@@ -64,11 +54,6 @@ extern cvar_t con_shift;
 extern cvar_t sb_maxwidth, sb_maxheight;
 
 int demos_menu_pos = 0;
-
-enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer,
-	m_setup, m_options, m_video, m_keys, m_help, m_quit,
-	m_gameoptions, m_slist,/* m_sedit,*/ m_fps, m_demos, m_demos_del,
-	m_mp3_control, m_mp3_playlist} m_state;
 
 void M_Menu_Main_f (void);
 	void M_Menu_SinglePlayer_f (void);

@@ -1,7 +1,6 @@
 //VULTUREIIC
 
 #include "quakedef.h"
-#include "vx_stuff.h"
 
 #define	MAX_BLURS	128
 

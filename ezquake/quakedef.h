@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "common.h"
 
 #include <expat.h>
+#include <pcre.h>
 
 #include "vid.h"
 #include "draw.h"
@@ -40,23 +41,40 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cl_view.h"
 
 #include "client.h"
+#include "qsound.h"
+#include "sbar.h"
+#include "utils.h"
+#include "hud.h"
+#include "hud_common.h"
+#include "image.h"
+#include "modules.h"
+#include "keys.h"
+#include "fmod.h"
+#include "auth.h"
+#include "menu.h"
+
+#include "version.h"
+#include "crc.h"
 
 #ifdef GLQUAKE
 #include "gl_model.h"
+#include "gl_local.h"
+#include "vx_stuff.h"
 #else
 #include "r_model.h"
+#include "r_local.h"
 #endif
 
-#include <pcre.h>
+#include "pmove.h"
+#include "rulesets.h"
 #include "teamplay.h"
 
-#include "xsd.h"        // kazik
-#include "Ctrl.h"       // kazik
-#include "Ctrl_Tab.h"   // kazik
-#include "Ctrl_PageViewer.h"    // kazik
-#include "EX_FileList.h"        // kazik
-#include "help.h"       // kazik
-#include "hud.h"        // kazik
+#include "xsd.h"
+#include "Ctrl.h"
+#include "Ctrl_Tab.h"
+#include "Ctrl_PageViewer.h"
+#include "EX_FileList.h"
+#include "help.h"
 
 // HUD -> hexum
 extern  int         host_screenupdatecount; // kazik, incremented every screen update, never reset

@@ -20,12 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_surf.c: surface-related refresh code
 
 #include "quakedef.h"
-#include "gl_local.h"
-#include "rulesets.h"
-#include "utils.h"
 
-//VULT
-#include "vx_stuff.h"
 
 #define	BLOCK_WIDTH		128
 #define	BLOCK_HEIGHT	128

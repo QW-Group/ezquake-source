@@ -21,10 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_draw.c
 
 #include "quakedef.h"
-#include "d_iface.h"
-#include "sound.h"
-#include "version.h"
-#include "console.h"
+
 
 typedef struct {
 	vrect_t	rect;

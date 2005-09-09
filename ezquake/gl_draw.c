@@ -19,15 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "gl_local.h"
-#include "version.h"
-#include "image.h"
-#include "sbar.h"
-#include "vx_stuff.h"
 
-#include "image.h"
-#include "utils.h"
-#include "console.h"
 
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
 extern cvar_t scr_coloredText, con_shift;

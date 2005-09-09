@@ -1,8 +1,5 @@
 //VULTUREIIC
-#include "common.h"
 #include "quakedef.h"
-#include "gl_local.h"
-#include "vx_stuff.h"
 
 static float tracker_time;
 int active_track;
