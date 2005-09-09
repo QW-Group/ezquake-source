@@ -100,11 +100,11 @@ DO_AS				+= -o $@ -c $<
 
 # opengl builds
 BASE_GLCFLAGS			=-DWITH_JPEG -DGLQUAKE
-ifeq ($(ARCH),x86)		# Linux/x86 -I/usr/include
+ifeq ($(ARCH),x86)		# Linux/x86
 	ARCH_GLCFLAGS		=-I/usr/include -DWITH_VMODE -DWITH_DGA -DWITH_EVDEV
 endif
 ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
-	ARCH_GLCFLAGS		=-mwindows
+	ARCH_GLCFLAGS		=-mwindows -I/opt/xmingw/include/ -I./pcre/ -I./libexpat/
 endif
 ifeq ($(ARCH),ppc)		# MacOS-X/ppc
 	ARCH_GLCFLAGS		= -I/opt/local/include/ -I/Developer/Headers/FlatCarbon -I/sw/include -FOpenGL -FAGL
@@ -1358,9 +1358,16 @@ GLQWCL_MAC_OBJS = \
     $(BUILDDIR)/build-mac-gl/host.o \
     $(BUILDDIR)/build-mac-gl/sys_mac.o \
 \
+    $(BUILDDIR)/build-mac-gl/in_mac.o \
+    $(BUILDDIR)/build-mac-gl/gl_vidmac.o \
+    $(BUILDDIR)/build-mac-gl/CarbonSndPlayDB.o \
+    $(BUILDDIR)/build-mac-gl/cd_null.o \
+    $(BUILDDIR)/build-mac-gl/mac_prefs.o \
+\
     $(BUILDDIR)/build-mac-gl/snd_dma.o \
     $(BUILDDIR)/build-mac-gl/snd_mem.o \
     $(BUILDDIR)/build-mac-gl/snd_mix.o \
+    $(BUILDDIR)/build-mac-gl/snd_mac.o \
 \
     $(BUILDDIR)/build-mac-gl/cl_input.o \
     $(BUILDDIR)/build-mac-gl/keys.o \
@@ -1492,6 +1499,21 @@ $(BUILDDIR)/build-mac-gl/host.o :		$(SOURCE_DIR)/host.c
 $(BUILDDIR)/build-mac-gl/sys_mac.o :		$(SOURCE_DIR)/sys_mac.c
 	$(DO_GL_CC)
 
+$(BUILDDIR)/build-mac-gl/in_mac.o :		$(SOURCE_DIR)/in_mac.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-mac-gl/gl_vidmac.o :		$(SOURCE_DIR)/gl_vidmac.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-mac-gl/CarbonSndPlayDB.o :	$(SOURCE_DIR)/CarbonSndPlayDB.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-mac-gl/cd_null.o :		$(SOURCE_DIR)/cd_null.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-mac-gl/mac_prefs.o :		$(SOURCE_DIR)/mac_prefs.c
+	$(DO_GL_CC)
+
 $(BUILDDIR)/build-mac-gl/snd_dma.o :		$(SOURCE_DIR)/snd_dma.c
 	$(DO_GL_CC)
 
@@ -1499,6 +1521,9 @@ $(BUILDDIR)/build-mac-gl/snd_mem.o :		$(SOURCE_DIR)/snd_mem.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/snd_mix.o :		$(SOURCE_DIR)/snd_mix.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-mac-gl/snd_mac.o :		$(SOURCE_DIR)/snd_mac.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/cl_demo.o :		$(SOURCE_DIR)/cl_demo.c

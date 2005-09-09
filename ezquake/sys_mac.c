@@ -12,6 +12,7 @@
 #include <dlfcn.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <dirent.h>
 
 #include <Carbon/Carbon.h>
 #include <AGL/agl.h>

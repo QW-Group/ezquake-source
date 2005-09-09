@@ -147,6 +147,7 @@ qbool MP3_IsActive(void) {
 #elif defined(__XMMS__)
 	return !!libxmms_handle;
 #endif
+	return false;
 }
 
 #ifdef _WIN32
@@ -910,4 +911,18 @@ void MP3_Frame(void) {}
 
 void MP3_Shutdown(void) {}
 
+#endif
+
+#if defined(darwin) || defined(__APPLE__)
+qboolean MP3_GetOutputtime {
+	retrun false;
+}
+
+int MP3_GetStatus(void) {
+	return -1;
+}
+
+char *MP3_Macro_MP3Info(void) {
+	return "";
+}
 #endif
