@@ -24,23 +24,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
-
 #include "quakedef.h"
-#include "input.h"
-
 #include <GL/glx.h>
-
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
-
 #ifdef WITH_VMODE
 #include <X11/extensions/xf86vmode.h>
 #endif
-
 #ifdef WITH_DGA
 #include <X11/extensions/xf86dga.h>
 #endif
-
 #ifdef WITH_KEYMAP
 #include "keymap.h"
 extern void IN_Keycode_Print_f( XKeyEvent *ev, qbool ext, qbool down, int key );

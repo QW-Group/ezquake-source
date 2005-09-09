@@ -24,17 +24,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
-
 #include <asm/io.h>
-
 #include "vga.h"
 #include "vgakeyboard.h"
 #include "vgamouse.h"
-
 #include "quakedef.h"
 #include "d_local.h"
-#include "input.h"
-
 #ifdef WITH_KEYMAP
 #include "keymap.h"
 #endif // WITH_KEYMAP

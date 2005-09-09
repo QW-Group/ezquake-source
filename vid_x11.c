@@ -42,7 +42,6 @@ typedef unsigned int	PIXEL24;
 
 #include "quakedef.h"
 #include "d_local.h"
-#include "input.h"
 
 #ifdef WITH_KEYMAP
 #include "keymap.h"
