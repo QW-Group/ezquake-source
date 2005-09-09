@@ -1,6 +1,6 @@
 #include "quakedef.h"
 
-void CDAudio_Play(byte track, qboolean looping)
+void CDAudio_Play(byte track, qbool looping)
 {
 }
 

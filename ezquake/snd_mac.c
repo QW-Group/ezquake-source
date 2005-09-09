@@ -39,7 +39,7 @@ SndDoubleBufferHeader 	gHeader;             // the double buffer header
 static char sRandomBuf[SoundBufferSize];
 // extern volatile dma_t *shm;
 
-qboolean SNDDMA_Init(void)
+qbool SNDDMA_Init(void)
 {
 	return 0;
 }

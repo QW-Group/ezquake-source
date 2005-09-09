@@ -914,7 +914,7 @@ void MP3_Shutdown(void) {}
 #endif
 
 #if defined(darwin) || defined(__APPLE__)
-qboolean MP3_GetOutputtime {
+qbool MP3_GetOutputtime {
 	retrun false;
 }
 
