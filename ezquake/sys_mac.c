@@ -177,7 +177,7 @@ void Sys_Init(void)
 {
 }
 
-void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length){}
+//void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length){}
 
 void Sys_Error (char *error, ...)
 {
@@ -1214,3 +1214,177 @@ int main (int argc, char **argv)
 	Sys_Quit();
 	return 0;
 }
+
+// disconnect -->
+void  Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length) {
+	int r;
+	unsigned long addr;
+	int psize = getpagesize();
+
+	addr = (startaddr & ~(psize - 1)) - psize;
+	r = mprotect((char*) addr, length + startaddr - addr + psize, 7);
+	if (r < 0)
+    		Sys_Error("Protection change failed");
+}
+
+int  Sys_CreateThread(DWORD WINAPI (*func)(void *), void *param)
+{
+    pthread_t thread;
+    pthread_attr_t attr;
+
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    pthread_attr_setschedpolicy(&attr, SCHED_OTHER);   // ale gowno
+
+    pthread_create(&thread, &attr, (void *)func, param);
+    return 1;
+}
+
+// kazik -->
+// directory listing functions
+int CopyDirent(sys_dirent *ent, struct dirent *tmpent)
+{
+    struct stat statbuf;
+    struct tm * lintime;
+    if (stat(tmpent->d_name, &statbuf) != 0)
+        return 0;
+
+    strncpy(ent->fname, tmpent->d_name, MAX_PATH_LENGTH);
+    ent->fname[MAX_PATH_LENGTH-1] = 0;
+
+    lintime = localtime(&statbuf.st_mtime);
+    UnixtimeToWintime(&ent->time, lintime);
+
+    ent->size = statbuf.st_size;
+
+    ent->directory = (statbuf.st_mode & S_IFDIR);
+
+    return 1;
+}
+
+unsigned long Sys_ReadDirFirst(sys_dirent *ent)
+{
+    struct dirent *tmpent;
+    DIR *dir = opendir(".");
+    if (dir == NULL)
+        return 0;
+
+    tmpent = readdir(dir);
+    if (tmpent == NULL)
+    {
+        closedir(dir);
+        return 0;
+    }
+
+    if (!CopyDirent(ent, tmpent))
+    {
+        closedir(dir);
+        return 0;
+    }
+
+    return (unsigned long)dir;
+}
+
+int Sys_ReadDirNext(unsigned long search, sys_dirent *ent)
+{
+    struct dirent *tmpent;
+
+    tmpent = readdir((DIR*)search);
+
+    if (tmpent == NULL)
+        return 0;
+
+    if (!CopyDirent(ent, tmpent))
+        return 0;
+
+    return 1;
+}
+
+void Sys_ReadDirClose(unsigned long search)
+{
+    closedir((DIR *)search);
+}
+
+void _splitpath(const char *path, char *drive, char *dir, char *file, char *ext)
+{
+    const char *f, *e;
+
+    if (drive)
+    drive[0] = 0;
+
+    f = path;
+    while (strchr(f, '/'))
+    f = strchr(f, '/') + 1;
+
+    if (dir)
+    {
+    strncpy(dir, path, min(f-path, _MAX_DIR));
+        dir[_MAX_DIR-1] = 0;
+    }
+
+    e = f;
+    while (*e == '.')   // skip dots at beginning
+    e++;
+    if (strchr(e, '.'))
+    {
+    while (strchr(e, '.'))
+        e = strchr(e, '.')+1;
+    e--;
+    }
+    else
+    e += strlen(e);
+
+    if (file)
+    {
+        strncpy(file, f, min(e-f, _MAX_FNAME));
+    file[min(e-f, _MAX_FNAME-1)] = 0;
+    }
+
+    if (ext)
+    {
+    strncpy(ext, e, _MAX_EXT);
+    ext[_MAX_EXT-1] = 0;
+    }
+}
+
+// full path
+char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
+{
+    if (maxLength-1 < PATH_MAX)
+    return NULL;
+
+    return realpath(relPath, absPath);
+}
+// kazik <--
+
+int Sys_remove (char *path)
+{
+	return unlink(path);
+}
+
+// kazik -->
+int Sys_chdir (const char *path)
+{
+    return (chdir(path) == 0);
+}
+
+char * Sys_getcwd (char *buf, int bufsize)
+{
+    return getcwd(buf, bufsize);
+}
+// kazik <--
+
+/********************************* CLIPBOARD *********************************/
+
+#define SYS_CLIPBOARD_SIZE		256
+static char clipboard_buffer[SYS_CLIPBOARD_SIZE] = {0};
+
+char *Sys_GetClipboardData(void) {
+	return clipboard_buffer;
+}
+
+void Sys_CopyToClipboard(char *text) {
+	Q_strncpyz(clipboard_buffer, text, SYS_CLIPBOARD_SIZE);
+}
+
+// <-- disconnect
