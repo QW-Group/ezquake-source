@@ -16,14 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.29 2005-09-09 12:46:22 disconn3ct Exp $
+	$Id: menu.c,v 1.30 2005-09-09 14:38:31 disconn3ct Exp $
 
 */
 
 #include "quakedef.h"
 #include "winquake.h"
 //#include "cl_slist.h"
-#include "input.h"
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
