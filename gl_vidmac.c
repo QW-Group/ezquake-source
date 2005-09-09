@@ -38,6 +38,12 @@ qbool		inwindow = false;// Can be changed at runtime
 qbool		vid_initialized = false;
 unsigned char	vid_curpal[256*3];
 
+// kazik -->
+int ctrlDown = 0;
+int shiftDown = 0;
+int altDown = 0;
+// kazik <--
+
 glvert_t glv;
 
 extern cvar_t	gl_ztrick;
@@ -1689,3 +1695,19 @@ void VID_Init (unsigned char *palette)
 	vid_menudrawfn = NULL;
 	vid_menukeyfn = NULL;
 }
+
+// kazik -->
+
+int isAltDown(void)
+{
+    return 0;
+}
+int isCtrlDown(void)
+{
+    return 0;
+}
+int isShiftDown(void)
+{
+    return 0;
+}
+// kazik <--

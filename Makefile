@@ -127,7 +127,7 @@ ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
 	LDFLAGS			+= -lws2_32 -luser32 -lwinmm
 endif
 ifeq ($(ARCH),ppc)		# MacOS-X/ppc
-	LDFLAGS			=-L/sw/lib/ -L/opt/local/lib -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
+	LDFLAGS			=-lpcre -lexpat -L/sw/lib/ -L/opt/local/lib -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
 endif
 
 # opengl build
