@@ -123,19 +123,19 @@ static qlib_dllfunction_t xmmsProcs[] = {
 	{"g_free", (void **) &qg_free},
 };
 
+static void XMMS_FreeLibrary(void) {
+	if (libxmms_handle) {
+		QLIB_FREELIBRARY(libxmms_handle);
+	}
+}
+
 static void XMMS_LoadLibrary(void) {
 	if (!(libxmms_handle = dlopen("libxmms.so.1", RTLD_NOW)) && !(libxmms_handle = dlopen("libxmms.so", RTLD_NOW)))
 		return;
 
 	if (!QLib_ProcessProcdef(libxmms_handle, xmmsProcs, NUM_XMMSPROCS)) {
-		QLIB_FREELIBRARY(libxmms_handle);
+		XMMS_FreeLibrary();
 		return;
-	}
-}
-
-static void XMMS_FreeLibrary(void) {
-	if (libxmms_handle) {
-		QLIB_FREELIBRARY(libxmms_handle);
 	}
 }
 
