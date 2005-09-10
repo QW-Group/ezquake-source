@@ -919,8 +919,8 @@ static void OnStartElement_Blocks(void *userData, const XML_Char *name, const XM
 static void OnEndElement_Blocks(void *userData, const XML_Char *name)
 {
     xml_parser_stack_t *stack = (xml_parser_stack_t *) userData;
-    xml_document_t *document = (xml_document_t *) stack->document;
-    document_parser_specific_t *specific = (document_parser_specific_t *) stack->parser_specific;
+//    xml_document_t *document = (xml_document_t *) stack->document;
+//    document_parser_specific_t *specific = (document_parser_specific_t *) stack->parser_specific;
 
     // if element ends and our stack is empty, it means we
     // should return to parent stack & parser
@@ -938,7 +938,7 @@ static void OnEndElement_Blocks(void *userData, const XML_Char *name)
 static void OnCharacterData_Blocks(void *userData, const XML_Char *s, int len)
 {
     xml_parser_stack_t *stack = (xml_parser_stack_t *) userData;
-    xml_document_t *document = (xml_document_t *) stack->document;
+//    xml_document_t *document = (xml_document_t *) stack->document;
     document_parser_specific_t *specific = (document_parser_specific_t *) stack->parser_specific;
 
     if (stack->path[0] == 0)
@@ -994,7 +994,7 @@ static void OnStartElement(void *userData, const XML_Char *name, const XML_Char 
 {
     xml_parser_stack_t *stack = (xml_parser_stack_t *) userData;
     xml_document_t *document = (xml_document_t *) stack->document;
-    document_parser_specific_t *specific = (document_parser_specific_t *) stack->parser_specific;
+//    document_parser_specific_t *specific = (document_parser_specific_t *) stack->parser_specific;
 
     if (stack->path[0] == 0)
         document->document_type = Q_strdup(name);

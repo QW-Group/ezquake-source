@@ -582,7 +582,7 @@ void SCR_NetStats(int x, int y, float period)
 void SCR_DrawBigClock(int x, int y, int style, int blink)
 {
     extern  mpic_t  *sb_nums[2][11];
-    extern  mpic_t  *sb_colon, *sb_slash;
+    extern  mpic_t  *sb_colon/*, *sb_slash*/;
 
     char time[32];
     char *t;
@@ -730,19 +730,19 @@ void SCR_DrawSpeed2 (int x, int y, int type)
 // ================================================================
 void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, int wordwrap, int scroll, double scroll_delay, char *txt)
 {
-	int wordlen;					// Length of words.
-	int cur_x = -1;					// the current x position.
-	int cur_y = 0;					// current y position.
-	char c;							// Current char.
-	int width_as_text = width / 8;	// How many chars that fits the given width. 
+	int wordlen = 0;			// Length of words.
+	int cur_x = -1;				// the current x position.
+	int cur_y = 0;				// current y position.
+	char c;					// Current char.
+	int width_as_text = width / 8;		// How many chars that fits the given width.
 	int height_as_rows = 0;			// How many rows that fits the given height.
 	
 	// Scroll variables.
-	double t;						// Current time.
-	static double t_last_scroll = 0;// Time at the last scroll.
-	static int scroll_position = 0; // At what index to start printing the string.
-	static int scroll_direction = 1;// The direction the string is scrolling.
-	static int last_text_length = 0;// The last text length.
+	double t;				// Current time.
+	static double t_last_scroll = 0;	// Time at the last scroll.
+	static int scroll_position = 0; 	// At what index to start printing the string.
+	static int scroll_direction = 1;	// The direction the string is scrolling.
+	static int last_text_length = 0;	// The last text length.
 	int text_length = 0;			// The current text length.
 
 	// Don't print all the char's ontop of each other :)

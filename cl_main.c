@@ -30,14 +30,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "config_manager.h"
 #include "mp3_player.h"
 #include "cl_cam.h"
-
 #include "mvd_utils.h"
 
 #ifndef _WIN32
-#include <netdb.h>		
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #endif
 
-int         host_screenupdatecount; // kazik - HUD -> hexum
+int	host_screenupdatecount; // kazik - HUD -> hexum
 
 cvar_t	allow_scripts = {"allow_scripts", "2"};
 cvar_t	rcon_password = {"rcon_password", ""};

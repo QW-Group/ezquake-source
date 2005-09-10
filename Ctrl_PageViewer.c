@@ -7,6 +7,7 @@
 #include "quakedef.h"
 #include "EX_misc.h"
 
+extern int isShiftDown(void);
 
 static void LeaveNavigationMode(CPageViewer_t *viewer)
 {
@@ -21,7 +22,7 @@ static void LeaveNavigationMode(CPageViewer_t *viewer)
 
 static void EnterNavigationMode(CPageViewer_t *viewer)
 {
-    int i;	extern int isShiftDown(void);
+    int i;
     document_rendered_link_t *from, *to;
     int screen_start, screen_end;
 

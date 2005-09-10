@@ -730,7 +730,7 @@ void DrawTextureChains (model_t *model) {
 
 	extern cvar_t gl_lumaTextures;
 
-	int waterline, i, k, GL_LIGHTMAP_TEXTURE, GL_FB_TEXTURE;
+	int waterline, i, k, GL_LIGHTMAP_TEXTURE = 0, GL_FB_TEXTURE = 0;
 	msurface_t *s;
 	texture_t *t;
 	float *v;
@@ -1428,7 +1428,7 @@ void GL_CreateSurfaceLightmap (msurface_t *surf) {
 //Builds the lightmap texture with all the surfaces from all brush models
 void GL_BuildLightmaps (void) {
 	int i, j;
-	int lightmaptexturenum;
+	int lightmaptexturenum = 0;
 	model_t	*m;
 
 	memset (allocated, 0, sizeof(allocated));

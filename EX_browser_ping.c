@@ -767,10 +767,10 @@ server_data *sb_test_server = NULL;
 
 void SB_Test_SendPacket(void)
 {
-    struct sockaddr_in dest,from;
+    struct sockaddr_in dest/*,from*/;
 //    int bread,
-	int datasize;
-    int fromlen = sizeof(from);
+    int datasize;
+//   int fromlen = sizeof(from);
     char *dest_ip;
     char *icmp_data;
     int bwrote;
@@ -782,7 +782,7 @@ void SB_Test_SendPacket(void)
     //fd_set fd_set_struct;
 
     unsigned int addr=0;
-    USHORT seq_no = 0;
+//    USHORT seq_no = 0;
 
     sent_time[sb_test_outgoing_sequence%NET_TIMINGS] = cls.realtime;
     received_time[sb_test_outgoing_sequence%NET_TIMINGS] = -1;  // no answer yet
@@ -842,7 +842,7 @@ void SB_Test_GetPackets(void)
 //    fd_set fd_set_struct;
 
     unsigned int addr=0;
-    USHORT seq_no = 0;
+//    USHORT seq_no = 0;
 
     if (sock < 0)
         return;

@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.9 2005-09-09 12:46:22 disconn3ct Exp $
+	$Id: EX_browser.c,v 1.10 2005-09-10 11:49:13 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -8,6 +8,7 @@
 #include "winquake.h"
 #else
 #include <netinet/in.h>
+#include <sys/unistd.h>
 #endif
 
 #include "EX_browser.h"

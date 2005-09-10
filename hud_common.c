@@ -1831,8 +1831,8 @@ void SCR_HUD_DrawFrags(hud_t *hud)
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
     {
         int i;
-        int px;
-        int py;
+        int px = 0;
+        int py = 0;
         int num = 0;
 		int drawBrackets;
 		int limit = min(n_players, a_rows*a_cols);
@@ -2063,8 +2063,8 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
     {
         int i;
-        int px;
-        int py;
+        int px = 0;
+        int py = 0;
 		int drawBrackets;
 		int limit = min(n_teams, a_rows*a_cols);
 
@@ -2176,13 +2176,13 @@ char *Get_MP3_HUD_style(float style, char *st)
 // Draws MP3 Title.
 void SCR_HUD_DrawMP3_Title(hud_t *hud)
 {
-	int x=0, y=0, n=1;
+	int x=0, y=0/*, n=1*/;
     int width = 64;
 	int height = 8;
-	int width_as_text = 0;
+	//int width_as_text = 0;
 	int title_length = 0;
-	int row_break = 0;
-	int i=0;
+	//int row_break = 0;
+	//int i=0;
 	int status = 0;
 	char title[MP3_MAXSONGTITLE];
 

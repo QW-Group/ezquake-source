@@ -32,6 +32,7 @@ extern int isCtrlDown(void);
 extern int isAltDown(void);
 
 extern void cvar_toggle (cvar_t *var);
+extern void _splitpath (const char *path, char *drive, char *dir, char *file, char *ext);
 
 //
 // create list
