@@ -2526,7 +2526,7 @@ void SCR_Init (void) {
 }
 
 void SCR_DrawStatusMultiview(void) {
-	int xb, yb, xc, yc, xd, yd;
+	int xb = 0, yb = 0, xc = 0, yc = 0, xd = 0, yd = 0;
 	char strng[80];
 	char weapons[40];
 	char w1,w2;

@@ -350,7 +350,7 @@ static qbool MP3_IsPlayerRunning(void) {
 
 static int XMMS_pid = 0;
 void MP3_Execute_f(void) {
-	char path[MAX_OSPATH], *argv[2] = {"xmms", NULL}, **s;
+	char path[MAX_OSPATH], *argv[2] = {"xmms", NULL}/*, **s*/;
 	int i, length;
 
 	if (MP3_IsPlayerRunning()) {

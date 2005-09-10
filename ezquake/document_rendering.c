@@ -933,9 +933,9 @@ static int XSD_RenderDocumentOnce(xml_document_t *doc, byte *buf, int width, int
 
 //    int i;
 //    int l;
-    int total_lines = 0;
-    qbool first = true;
-    document_tag_p_t *tag = (document_tag_p_t *) doc->content;
+//    int total_lines = 0;
+//    qbool first = true;
+//    document_tag_p_t *tag = (document_tag_p_t *) doc->content;
 //    byte line[1024];
 
     memset(&context, 0, sizeof(context));
