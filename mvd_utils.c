@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.18 2005-09-09 12:46:22 disconn3ct Exp $
+	$Id: mvd_utils.c,v 1.19 2005-09-10 11:06:17 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -145,7 +145,7 @@ void MVD_Info (void){
 	char str[80];
 	char mvd_info_final_string[80], mvd_info_powerups[20];
 	char *mapname;
-	int x,y,z,i,h,value;
+	int x,y,z,i,h,value = 0;
 	player_state_t *mvd_state ;
 	player_info_t *mvd_info_players;
 	mvd_state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate;

@@ -1097,12 +1097,12 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end, float size, float time, col_t col) {
 	byte *color;
 	int i, j,  num_particles;
-	float count, length, theta = 0;
+	float count = 0.0, length, theta = 0.0;
 	vec3_t point, delta;
 	particle_t *p;
 	particle_type_t *pt;
 	//VULT PARTICLES - for railtrail
-	int loops;
+	int loops = 0;
 	vec3_t vf, vr, radial;
 
 	if (!qmb_initialized)

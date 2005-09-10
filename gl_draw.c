@@ -773,7 +773,7 @@ void Draw_ColoredString (int x, int y, char *text, int red) {
 
 
 void Draw_Crosshair (void) {
-	float x, y, ofs1, ofs2, sh, th, sl, tl;
+	float x = 0.0, y = 0.0, ofs1, ofs2, sh, th, sl, tl;
 	byte *col;
 	extern vrect_t scr_vrect;
 
