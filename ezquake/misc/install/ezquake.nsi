@@ -51,7 +51,7 @@ LicenseData gnu.txt
 ; Pages
 
 PageEx license
-   LicenseText "Readme"
+   LicenseText "This will install ezQuake QuakeWorld client on your computer."
    LicenseData readme.txt
  PageExEnd
 
@@ -165,6 +165,7 @@ Section "Start Menu Shortcuts"
   CreateDirectory "$SMPROGRAMS\ezQuake"
   CreateShortCut "$SMPROGRAMS\ezQuake\Uninstall.lnk" "$INSTDIR\ezuninstall.exe" "" "$INSTDIR\ezuninstall.exe" 0
   CreateShortCut "$SMPROGRAMS\ezQuake\ezQuake.lnk" "$INSTDIR\ezstart.exe" "" "$INSTDIR\ezstart.exe" 0
+  CreateShortCut "$SMPROGRAMS\ezQuake\Manual.lnk" "$INSTDIR\ezquake\manual\index.html" "" "$INSTDIR\ezquake\manual\index.html" 0
 SectionEnd
 
 ;--------------------------------
