@@ -7,7 +7,8 @@
 ;  ezquake-gl.exe (GLRelease)
 ;  ezquake-security.dll (Closed source security module)
 ;  ezstart.exe (CVS/ezstart/)
-;  gnugpl2.txt (GNU GENERAL PUBLIC LICENSE, Version 2, June 1991)
+;  gnu.txt (GNU GENERAL PUBLIC LICENSE, Version 2, June 1991)
+;  readme.txt (CVS/ezquake/misc/install/readme.txt)
 ;  qw/ (dir)
 ;    qwprogs.dat (use the one delivered with ZQuake)
 ;    spprogs.dat (use the one delivered with ZQuake)
@@ -34,7 +35,7 @@
 Name "ezQuake"
 
 ; The file to write
-OutFile "ezQuake-installer.exe"
+OutFile "ezInstall.exe"
 
 ; The default installation directory
 InstallDir $PROGRAMFILES\Quake
@@ -43,11 +44,16 @@ InstallDir $PROGRAMFILES\Quake
 ; overwrite the old one automatically)
 InstallDirRegKey HKLM "Software\ezQuake" "Install_dir"
 
-LicenseData gnugpl2.txt
+LicenseData gnu.txt
 
 ;--------------------------------
 
 ; Pages
+
+PageEx license
+   LicenseText "Readme"
+   LicenseData readme.txt
+ PageExEnd
 
 Page license
 Page components
@@ -60,7 +66,7 @@ UninstPage instfiles
 ;--------------------------------
 
 ; The stuff to install
-Section "ezQuake client (required)"
+Section "ezQuake client"
 
   SectionIn RO
   
@@ -78,7 +84,47 @@ Section "ezQuake client (required)"
 
   CreateDirectory $INSTDIR\ezquake\cfg
   SetOutPath $INSTDIR\ezquake\cfg
-  File "ezquake\cfg\gfx_*.cfg"  
+  File "ezquake\cfg\*.cfg"
+
+  CreateDirectory $INSTDIR\ezquake\manual
+  SetOutPath $INSTDIR\ezquake\manual
+  File /r "ezquake\manual\*.*"
+
+  SetOutPath $SYSDIR
+  File "lib\libexpat.dll"
+  CreateDirectory $INSTDIR\ezquake\help
+  CreateDirectory $INSTDIR\ezquake\help\manual
+  CreateDirectory $INSTDIR\ezquake\help\xsd
+  CreateDirectory $INSTDIR\ezquake\help\xsl
+  SetOutPath $INSTDIR\ezquake\help\manual
+  File /r "ezquake\help\manual\*.*"
+  SetOutPath $INSTDIR\ezquake\help\xsd
+  File "ezquake\help\xsd\*.*"
+  SetOutPath $INSTDIR\ezquake\help\xsl
+  File "ezquake\help\xsl\*.*"
+
+  SetOutPath $SYSDIR
+  CreateDirectory $INSTDIR\ezquake\help
+  CreateDirectory $INSTDIR\ezquake\help\variables
+  CreateDirectory $INSTDIR\ezquake\help\commands
+  CreateDirectory $INSTDIR\ezquake\help\xsd
+  CreateDirectory $INSTDIR\ezquake\help\xsl
+  SetOutPath $INSTDIR\ezquake\help\variables
+  File "ezquake\help\variables\*.*"
+  SetOutPath $INSTDIR\ezquake\help\commands
+  File "ezquake\help\commands\*.*"
+  SetOutPath $INSTDIR\ezquake\help\xsd
+  File "ezquake\help\xsd\*.*"
+  SetOutPath $INSTDIR\ezquake\help\xsl
+  File "ezquake\help\xsl\*.*"
+
+  CreateDirectory $INSTDIR\ezquake\keymaps
+  SetOutPath $INSTDIR\ezquake\keymaps
+  File "ezquake\keymaps\*.*"
+
+  CreateDirectory $INSTDIR\ezquake\sb
+  SetOutPath $INSTDIR\ezquake\sb
+  File "ezquake\sb\*.*"
 
   CreateDirectory $INSTDIR\qw
   SetOutPath $INSTDIR\qw
@@ -93,11 +139,11 @@ Section "ezQuake client (required)"
   WriteRegStr HKLM SOFTWARE\ezQuake "Install_Dir" "$INSTDIR"
   
   ; Write the uninstall keys for Windows
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ezQuake" "DisplayName" "NSIS Example2"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ezQuake" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ezQuake" "ezQuake" "QuakeWorld client"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ezQuake" "UninstallString" '"$INSTDIR\ezuninstall.exe"'
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ezQuake" "NoModify" 1
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ezQuake" "NoRepair" 1
-  WriteUninstaller "uninstall.exe"
+  WriteUninstaller "ezuninstall.exe"
 
 SectionEnd
 
@@ -113,70 +159,12 @@ Section "Extra Logitech Mice Support"
   File "lib\mw_hook.dll"
 SectionEnd
 
-Section "Example configs"
-  SetOutPath $INSTDIR\ezquake\cfg
-  File "ezquake\cfg\*.cfg"
-SectionEnd
-
-Section "ezQuake Manual"
-  CreateDirectory $INSTDIR\ezquake\manual
-  SetOutPath $INSTDIR\ezquake\manual
-  File /r "ezquake\manual\*.*"
-SectionEnd
-
-Section "Inbuilt QuakeWorld Guide"
-  SetOutPath $SYSDIR
-  File "lib\libexpat.dll"
-  CreateDirectory $INSTDIR\ezquake\help
-  CreateDirectory $INSTDIR\ezquake\help\manual
-  CreateDirectory $INSTDIR\ezquake\help\xsd
-  CreateDirectory $INSTDIR\ezquake\help\xsl
-  SetOutPath $INSTDIR\ezquake\help\manual
-  File /r "ezquake\help\manual\*.*"
-  SetOutPath $INSTDIR\ezquake\help\xsd
-  File "ezquake\help\xsd\*.*"
-  SetOutPath $INSTDIR\ezquake\help\xsl
-  File "ezquake\help\xsl\*.*"
-SectionEnd
-
-Section "Inbuilt Variables and Commands manual"
-  SetOutPath $SYSDIR
-  File "lib\libexpat.dll"
-  CreateDirectory $INSTDIR\ezquake\help
-  CreateDirectory $INSTDIR\ezquake\help\variables
-  CreateDirectory $INSTDIR\ezquake\help\commands
-  CreateDirectory $INSTDIR\ezquake\help\xsd
-  CreateDirectory $INSTDIR\ezquake\help\xsl
-  SetOutPath $INSTDIR\ezquake\help\variables
-  File "ezquake\help\variables\*.*"
-  SetOutPath $INSTDIR\ezquake\help\commands
-  File "ezquake\help\commands\*.*"
-  SetOutPath $INSTDIR\ezquake\help\xsd
-  File "ezquake\help\xsd\*.*"
-  SetOutPath $INSTDIR\ezquake\help\xsl
-  File "ezquake\help\xsl\*.*"
-SectionEnd
-
-Section "Example Keymaps"
-  CreateDirectory $INSTDIR\ezquake\keymap
-  SetOutPath $INSTDIR\ezquake\keymap
-  File "ezquake\keymaps\*.*"
-SectionEnd
-
-Section "Server Browser Source Servers List"
-SectionSetText 4 "This client allows you to change standard keyboard layout. See keymap manual for more info."
-  CreateDirectory $INSTDIR\ezquake\sb
-  SetOutPath $INSTDIR\ezquake\sb
-  File "ezquake\sb\sources.txt"
-SectionEnd
-
 ; Optional section (can be disabled by the user)
 Section "Start Menu Shortcuts"
   SetOutPath $INSTDIR
   CreateDirectory "$SMPROGRAMS\ezQuake"
-  CreateShortCut "$SMPROGRAMS\ezQuake\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
-  CreateShortCut "$SMPROGRAMS\ezQuake\ezQuake OpenGL.lnk" "$INSTDIR\ezquake-gl.exe" "" "$INSTDIR\ezquake-gl.exe" 0
-  CreateShortCut "$SMPROGRAMS\ezQuake\ezQuake Software.lnk" "$INSTDIR\ezquake.exe" "" "$INSTDIR\ezquake.exe" 0
+  CreateShortCut "$SMPROGRAMS\ezQuake\Uninstall.lnk" "$INSTDIR\ezuninstall.exe" "" "$INSTDIR\ezuninstall.exe" 0
+  CreateShortCut "$SMPROGRAMS\ezQuake\ezQuake.lnk" "$INSTDIR\ezstart.exe" "" "$INSTDIR\ezstart.exe" 0
 SectionEnd
 
 ;--------------------------------
@@ -187,11 +175,19 @@ Section "Uninstall"
   
   ; Remove registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ezQuake"
-  DeleteRegKey HKLM SOFTWARE\ezQuake
+  DeleteRegKey HKLM "SOFTWARE\ezQuake"
 
   ; Remove files and uninstaller
-  Delete $INSTDIR\ezquake.exe
-  Delete $INSTDIR\ezquake-gl.exe
+  Delete "$INSTDIR\ezquake.exe"
+  Delete "$INSTDIR\ezquake-gl.exe"
+  Delete "$INSTDIR\ezquake-security.dll"
+  Delete "$INSTDIR\ezstart.exe"
+  Delete "$INSTDIR\ezuninstall.exe"
+  RMDir /r "$INSTDIR\ezquake\help"
+  RMDir /r "$INSTDIR\ezquake\keymaps"
+  RMDir /r "$INSTDIR\ezquake\manual"
+  RMDir /r "$INSTDIR\ezquake\sb"
+  Delete "$INSTDIR\ezquake\pak0.pak"
 
   ; Remove shortcuts, if any
   Delete "$SMPROGRAMS\ezQuake\*.*"
@@ -200,5 +196,6 @@ Section "Uninstall"
   RMDir "$SMPROGRAMS\ezQuake"
 
   ; Don't remove install dir because it's Quake root dir!
+  ; Don't remove ezquake\configs because users may have use of their configs in future!
 
 SectionEnd
