@@ -854,7 +854,6 @@ void SCR_DrawAutoID (void) {
 
 /**************************************** 262 HUD *****************************/
 // QW262 -->
-#ifdef DEBUG
 static hud_element_t *hud_list=NULL;
 static hud_element_t *prev;
 
@@ -1635,7 +1634,6 @@ qbool Hud_CheckBounds (hud_element_t *elem, int x, int y)
 	old_y = y;
 	old_buttons = buttons;
 }*/
-#endif
 /********************************* TILE CLEAR *********************************/
 
 #ifdef GLQUAKE
@@ -1725,11 +1723,9 @@ void SCR_DrawElements(void) {
 				SCR_DrawGameClock ();
 				SCR_DrawDemoClock ();
 				SCR_DrawFPS ();
-#ifdef DEBUG
 				// QW262 -->
 				SCR_DrawHud ();
 				// <-- QW262
-#endif
 				MVD_Screen ();
 
 #ifdef GLQUAKE
@@ -2866,29 +2862,27 @@ void SCR_DrawStatusMultiview(void) {
 }
 
 // QW262 -->
-#ifdef DEBUG
 void Hud_262Init (void)
 {
 //
 // register hud commands
 //
-	Cmd_AddCommand ("hud_add",Hud_Add_f);
-	Cmd_AddCommand ("hud_remove",Hud_Remove_f);
-	Cmd_AddCommand ("hud_position",Hud_Position_f);
-	Cmd_AddCommand ("hud_bg",Hud_Bg_f);
-	Cmd_AddCommand ("hud_move",Hud262_Move_f);
-	Cmd_AddCommand ("hud_width",Hud_Width_f);
+	Cmd_AddCommand ("hud262_add",Hud_Add_f);
+	Cmd_AddCommand ("hud262_remove",Hud_Remove_f);
+	Cmd_AddCommand ("hud262_position",Hud_Position_f);
+	Cmd_AddCommand ("hud262_bg",Hud_Bg_f);
+	Cmd_AddCommand ("hud262_move",Hud262_Move_f);
+	Cmd_AddCommand ("hud262_width",Hud_Width_f);
 #ifdef GLQUAKE
-	//Cmd_AddCommandTrig ("hud_font",Hud_Font_f);
-	Cmd_AddCommand ("hud_alpha",Hud_Alpha_f);
+	//Cmd_AddCommandTrig ("hud_262font",Hud_Font_f);
+	Cmd_AddCommand ("hud262_alpha",Hud_Alpha_f);
 #endif
-	Cmd_AddCommand ("hud_blink",Hud_Blink_f);
-	Cmd_AddCommand ("hud_disable",Hud_Disable_f);
-	Cmd_AddCommand ("hud_enable",Hud_Enable_f);
-	Cmd_AddCommand ("hud_list",Hud_List_f);
-	Cmd_AddCommand ("hud_bringtofront",Hud_BringToFront_f);
-//	Cmd_AddCommand ("hud_hover",);
-//	Cmd_AddCommand ("hud_button",Hud_Button_f);
+	Cmd_AddCommand ("hud262_blink",Hud_Blink_f);
+	Cmd_AddCommand ("hud262_disable",Hud_Disable_f);
+	Cmd_AddCommand ("hud262_enable",Hud_Enable_f);
+	Cmd_AddCommand ("hud262_list",Hud_List_f);
+	Cmd_AddCommand ("hud262_bringtofront",Hud_BringToFront_f);
+//	Cmd_AddCommand ("hud262_hover",);
+//	Cmd_AddCommand ("hud262_button",Hud_Button_f);
 }
-#endif
 // <-- QW262
