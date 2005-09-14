@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.30 2005-09-09 14:38:31 disconn3ct Exp $
+	$Id: menu.c,v 1.31 2005-09-14 10:29:06 johnnycz Exp $
 
 */
 
@@ -2671,7 +2671,7 @@ void M_Demos_Draw (void) {
 		M_PrintWhite (200, 0, " options ");
 		if (demo_section == 0){
 			M_Print (64,8, "[browser]");
-			M_PrintWhite (136,8, " newmenu");
+			//M_PrintWhite (136,8, " newmenu");
 			Q_strncpyz(demoname_scroll, demo_currentdir[0] ? demo_currentdir : "/", sizeof(demoname_scroll));
 			M_PrintWhite (16, 16, demoname_scroll);
 			M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f \x1d\x1e\x1e\x1e\x1e\x1e\x1f");
@@ -3136,7 +3136,7 @@ void M_Demos_Key (int key) {
 	case K_TAB:
 		if (demos_menu_pos == 0){
 		S_LocalSound ("misc/menu1.wav");
-		demo_section = !demo_section;
+		//demo_section = !demo_section;
 		}else if (demos_menu_pos == 1) {
 		S_LocalSound ("misc/menu1.wav");
 		demo_playlist_section = !demo_playlist_section ;
