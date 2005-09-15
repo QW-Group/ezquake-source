@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+  <name>re_trigger</name>
+  <description>when used w/o parameter, prints a list of all triggers; when regexp is not defined prints options set for rt_name trigger; otherwise creates or changes rt_name trigger.</description>
+  <syntax>re_trigger [rt_name [regexp]]</syntax>
+  <arguments>
+    <argument>
+      <name>rt_name</name>
+      <description>re_trigger name</description>
+    </argument>
+    <argument>
+      <name>regexp</name>
+      <description>regexp defines which messages (or whatever) will activate a trigger. The client uses the PCRE library (Perl-compatible regular expression library). You can find information how to write regexps in the PCRE's documentation.</description>
+    </argument>
+  </arguments>
+  <remarks>A trigger is activated as soon as a string defined in this regexp is detected. At the same time a part of this string (which caused activation of a trigger) is put into a $0 variable. Variable parts of regexp are put into $1, $2 ... $9 variables. After that an alias (which name coinsides with the a name of the trigger) is executed. Tricky, huh? ;)</remarks>
+</command>

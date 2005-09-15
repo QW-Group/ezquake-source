@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+  <name>hud262_bg</name>
+  <description>defines a color of the hud element backgdround; 0 - transparent (default).</description>
+  <syntax>hud262_bg hud_name bg_color</syntax>
+  <arguments>
+    <argument>
+      <name>hud_name</name>
+      <description>Hud element's name</description>
+    </argument>
+    <argument>
+      <name>bg_color</name>
+      <description>color 111 - yellow, 79 - red, etc</description>
+    </argument>
+  </arguments>
+</command>

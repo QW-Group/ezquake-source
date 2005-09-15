@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
+<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
+  <name>cl_hud</name>
+  <description>Enables/Disables strings-hud. Strings hud is not mqwcl hud. It gives you ability put any string (or value of some variable) on your hud.</description>
+  <value>
+    <boolean>
+      <true>Strings hud enabled</true>
+      <false>Strings hud disabled</false>
+    </boolean>
+  </value>
+  <remarks>Strings hud banned for ruleset smackdown</remarks>
+</variable>

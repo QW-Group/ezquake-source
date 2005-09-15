@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+  <name>hud262_move</name>
+  <description>moves a hud element; dx and dy deviations are measured in symbols.</description>
+  <syntax>hud262_move hud_name dx dy</syntax>
+  <arguments>
+    <argument>
+      <name>hud_name</name>
+      <description>Hud element's name</description>
+    </argument>
+    <argument>
+      <name>dx</name>
+      <description>horisontal shift</description>
+    </argument>
+    <argument>
+      <name>dy</name>
+      <description>vertical shift</description>
+    </argument>
+  </arguments>
+</command>

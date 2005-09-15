@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+  <name>hud262_width</name>
+  <description>forces a hud element width and cuts undesired space or adds it when needed. </description>
+  <syntax>hud262_width hud_name width</syntax>
+  <arguments>
+    <argument>
+      <name>hud_name</name>
+      <description>Hud element's name</description>
+    </argument>
+    <argument>
+      <name>width</name>
+      <description>The range of width is 0-128, the value 0 (default) cancels the width forcing.</description>
+    </argument>
+  </arguments>
+</command>
