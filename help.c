@@ -124,16 +124,16 @@ void Help_Describe_f(void)
 
         case t_boolean:
             con_ormask = 128;
-            Com_Printf("true ", var->name);
-            con_ormask = 0;
-            con_margin += CONSOLE_HELP_MARGIN;
-            Com_Printf(" - %s\n", var->value.boolean_value.true_description);
-            con_margin -= CONSOLE_HELP_MARGIN;
-            con_ormask = 128;
-            Com_Printf("false", var->name);
+            Com_Printf("0", var->name);
             con_ormask = 0;
             con_margin += CONSOLE_HELP_MARGIN;
             Com_Printf(" - %s\n", var->value.boolean_value.false_description);
+            con_margin -= CONSOLE_HELP_MARGIN;
+            con_ormask = 128;
+            Com_Printf("1", var->name);
+            con_ormask = 0;
+            con_margin += CONSOLE_HELP_MARGIN;
+            Com_Printf(" - %s\n", var->value.boolean_value.true_description);
             con_margin -= CONSOLE_HELP_MARGIN;
             break;
 
