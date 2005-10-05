@@ -676,8 +676,8 @@ qbool Cmd_DeleteAlias (char *name) {
 void Cmd_UnAlias_f (void) {
 	int 		i;
 	char		*name;
-	cmd_alias_t	*a;
-	qbool	re_search;
+//	cmd_alias_t	*a;
+//	qbool	re_search;
 
 	if (Cmd_Argc() < 2) {
 		Com_Printf ("unalias <cvar> [<cvar2>..]: erase an existing alias\n");
@@ -687,27 +687,27 @@ void Cmd_UnAlias_f (void) {
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-		if ((re_search = IsRegexp(name))) 
+		/*if ((re_search = IsRegexp(name))) 
 			if(!ReSearchInit(name))
-				continue;
+				continue;*/
 
 		if (strlen(name) >= MAX_ALIAS_NAME) {
 			Com_Printf ("Alias name is too long: \"%s\"\n", Cmd_Argv(i));
 			continue;
 		}
 
-		if (re_search) {
+		/*if (re_search) {
 			for (a = cmd_alias ; a ; a=a->next) {
 				if (ReSearchMatch(a->name))
 					Cmd_DeleteAlias(a->name);
 			}
-		} else {
+		} else {*/
 			if (!Cmd_DeleteAlias(Cmd_Argv(i)))
 				Com_Printf ("unalias: unknown alias \"%s\"\n", Cmd_Argv(i));	
-		}
+		/*}
 
 		if (re_search)
-			ReSearchDone();
+			ReSearchDone();*/
 	
 	}
 }
