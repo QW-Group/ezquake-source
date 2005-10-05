@@ -328,19 +328,6 @@ qbool CL_ConnectedToProxy(void) {
 	return true;
 }
 
-qbool CL_ConnectedToQWServer (void) {
-	char *p;
-
-	if (cls.state < ca_connected)
-		return false;
-
-	p = Info_ValueForKey(cl.serverinfo, "*version");
-	if (*p && strcmp(p, "2.91"))
-		return true;
-	else
-		return false;
-}
-
 void CL_Join_f (void) {
 	qbool proxy;
 
@@ -351,22 +338,14 @@ void CL_Join_f (void) {
 		return; 
 	}
 
+	Cvar_Set(&spectator, "");
+
 	if (Cmd_Argc() == 2) {
 		// a server name was given, connect directly or through Qizmo
 		Cvar_Set(&spectator, "");
 		Cbuf_AddText(va("%s %s\n", proxy ? "say ,connect" : "connect", Cmd_Argv(1)));
 		return;
 	}
-
-	if (!CL_ConnectedToQWServer()) {
-		Com_Printf ("not connected to server\n");
-		return;
-	}
-
-	if (cls.state >= ca_connected && !cl.spectator)
-		return; // already connected as player, ignore
-
-	Cvar_Set(&spectator, "");
 
 	if (cl.z_ext & Z_EXT_JOIN_OBSERVE) {
 		// server supports the 'join' command, good
@@ -388,22 +367,13 @@ void CL_Observe_f (void) {
 		return; 
 	}
 
+	Cvar_SetValue(&spectator, 1);
+
 	if (Cmd_Argc() == 2) {
 		// a server name was given, connect directly or through Qizmo
-		Cvar_SetValue(&spectator, 1);
 		Cbuf_AddText(va("%s %s\n", proxy ? "say ,connect" : "connect", Cmd_Argv(1)));
 		return;
 	}
-
-	if (!CL_ConnectedToQWServer()) {
-		Com_Printf ("not connected to server\n");
-		return;
-	}
-
-	if (cls.state >= ca_connected && cl.spectator)
-		return; // already connected as spectator, ignore
-
-	Cvar_SetValue(&spectator, 1);
 
 	if (cl.z_ext & Z_EXT_JOIN_OBSERVE) {
 		// server supports the 'join' command, good
