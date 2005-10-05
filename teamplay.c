@@ -169,16 +169,16 @@ tvars_t vars;
 char lastip[32];
 
 // re-triggers stuff
-cvar_t	re_sub[10]	= {	{"0", "", CVAR_ROM},
-						{"1", "", CVAR_ROM},
-						{"2", "", CVAR_ROM},
-						{"3", "", CVAR_ROM},
-						{"4", "", CVAR_ROM},
-						{"5", "", CVAR_ROM},
-						{"6", "", CVAR_ROM},
-						{"7", "", CVAR_ROM},
-						{"8", "", CVAR_ROM},
-						{"9", "", CVAR_ROM}
+cvar_t	re_sub[10]	= {	{"re_trigger_match_0", "", CVAR_ROM},
+						{"re_trigger_match_1", "", CVAR_ROM},
+						{"re_trigger_match_2", "", CVAR_ROM},
+						{"re_trigger_match_3", "", CVAR_ROM},
+						{"re_trigger_match_4", "", CVAR_ROM},
+						{"re_trigger_match_5", "", CVAR_ROM},
+						{"re_trigger_match_6", "", CVAR_ROM},
+						{"re_trigger_match_7", "", CVAR_ROM},
+						{"re_trigger_match_8", "", CVAR_ROM},
+						{"re_trigger_match_9", "", CVAR_ROM}
  };
 
 cvar_t	re_subi[10]	= {	{"internal0"},
