@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.23 2005-09-09 12:49:14 disconn3ct Exp $
+	$Id: keys.c,v 1.24 2005-10-05 10:32:39 disconn3ct Exp $
 
 */
 
@@ -1105,7 +1105,8 @@ void Key_Console (int key) {
 				key_linepos = strlen(key_lines[edit_line]);
 			return;
 	}
-	if ((key == 'V' || key == 'v') && keydown[K_CTRL]) {
+	if (((key == 'V' || key == 'v') && keydown[K_CTRL])
+		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT])) {
 		char *clipText;
 	
 		if ((clipText = Sys_GetClipboardData())) {
@@ -1259,18 +1260,19 @@ void Key_Message (int key) {
 		return;
 	}
 
-	if ((key == 'V' || key == 'v') && keydown[K_CTRL]) {
+	if (((key == 'V' || key == 'v') && keydown[K_CTRL])
+		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT])) {
 		char *clipText;
 	
 		if ((clipText = Sys_GetClipboardData())) {
 			len = strlen(clipText);
-			if (len + strlen(key_lines[edit_line]) > MAXCMDLINE - 1)
-				len = MAXCMDLINE - 1 - strlen(key_lines[edit_line]);
-			if (len > 0) {	// insert the string
-				memmove (key_lines[edit_line] + key_linepos + len,
-					key_lines[edit_line] + key_linepos, strlen(key_lines[edit_line]) - key_linepos + 1);
-				memcpy (key_lines[edit_line] + key_linepos, clipText, len);
-				key_linepos += len;
+			if (len + strlen(chat_buffer) > MAXCMDLINE - 1)
+				len = MAXCMDLINE - 1 - strlen(chat_buffer);
+			if (len > 0) {  // insert the string
+				memmove (chat_buffer + chat_linepos + len,
+					chat_buffer + chat_linepos, strlen(chat_buffer) - chat_linepos + 1);
+				memcpy (chat_buffer + chat_linepos, clipText, len);
+				chat_linepos += len;
 			}
 		}
 		return;
