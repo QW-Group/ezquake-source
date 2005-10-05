@@ -2221,13 +2221,13 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 	switch(status)
 	{
 		case MP3_PLAYING :
-			title_length = sprintf(title, "%s %s", Get_MP3_HUD_style(style->value, "Playing"), MP3_Macro_MP3Info());
+			title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Playing"), MP3_Macro_MP3Info());
 			break;
 		case MP3_PAUSED :
-			title_length = sprintf(title, "%s %s", Get_MP3_HUD_style(style->value, "Paused"), MP3_Macro_MP3Info());
+			title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Paused"), MP3_Macro_MP3Info());
 			break;
 		case MP3_STOPPED :
-			title_length = sprintf(title, "%s %s", Get_MP3_HUD_style(style->value, "Stopped"), MP3_Macro_MP3Info());
+			title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Stopped"), MP3_Macro_MP3Info());
 			break;
 		case MP3_NOTRUNNING	:
 		default :
