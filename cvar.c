@@ -54,11 +54,11 @@ void Cvar_ResetVar (cvar_t *var) {
 		Cvar_Set(var, var->defaultvalue);
 }
 
-void Cvar_Reset_f (void) {
-	cvar_t		*var;
-	char		*name;
+void Cvar_Reset (qbool use_regex) {
+	cvar_t	*var;
+	char	*name;
 	int		i;
-//	qbool	re_search;
+	qbool	re_search;
 
 
 	if (Cmd_Argc() < 2) {
@@ -69,25 +69,33 @@ void Cvar_Reset_f (void) {
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-		/*if ((re_search = IsRegexp(name))) 
+		if (use_regex && (re_search = IsRegexp(name))) 
 			if(!ReSearchInit(name))
-				continue;*/
+				continue;
 
-		/*if (re_search) {
+		if (use_regex && re_search) {
 			for (var = cvar_vars ; var ; var=var->next) {
 				if (ReSearchMatch(var->name)) {
 					Cvar_ResetVar(var);
 				}
 			}
-		} else {*/
+		} else {
 			if ((var = Cvar_FindVar(name)))
 				Cvar_ResetVar(var);
 			else
 				Com_Printf("%s : No variable with name %s\n", Cmd_Argv(0), name);
-		/*}
-		if (re_search)
-			ReSearchDone();*/
+		}
+		if (use_regex && re_search)
+			ReSearchDone();
 	}
+}
+
+void Cvar_Reset_f (void) {
+	Cvar_Reset(false);
+}
+
+void Cvar_Reset_re_f (void) {
+	Cvar_Reset(true);
 }
 
 void Cvar_SetDefault(cvar_t *var, float value) {
@@ -464,11 +472,11 @@ void Cvar_WriteVariables (FILE *f) {
 			fprintf (f, "seta %s \"%s\"\n", var->name, var->string);
 }
 
-void Cvar_Toggle_f (void) {
-	cvar_t		*var;
-	char		*name;
+void Cvar_Toggle (qbool use_regex) {
+	cvar_t	*var;
+	char	*name;
 	int		i;
-//	qbool	re_search;
+	qbool	re_search;
 
 
 	if (Cmd_Argc() < 2) {
@@ -479,17 +487,17 @@ void Cvar_Toggle_f (void) {
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-		/*if ((re_search = IsRegexp(name))) 
+		if (use_regex && (re_search = IsRegexp(name))) 
 			if(!ReSearchInit(name))
-				continue;*/
+				continue;
 
-		/*if (re_search) {
+		if (use_regex && re_search) {
 			for (var = cvar_vars ; var ; var=var->next) {
 				if (ReSearchMatch(var->name)) {
 					Cvar_Set (var, var->value ? "0" : "1");
 				}
 			}
-		} else {*/
+		} else {
 			var = Cvar_FindVar (name);
 
 			if (!(var)) {
@@ -497,10 +505,17 @@ void Cvar_Toggle_f (void) {
 				continue;
 			}
 			Cvar_Set (var, var->value ? "0" : "1");
-		/*}
-		if (re_search)
-			ReSearchDone();*/
+		}
+		if (use_regex && re_search)
+			ReSearchDone();
 	}
+}
+
+void Cvar_Toggle_f (void) {
+	Cvar_Toggle(false);
+}
+void Cvar_Toggle_re_f (void) {
+	Cvar_Toggle(true);
 }
 
 int Cvar_CvarCompare (const void *p1, const void *p2) {
@@ -649,11 +664,11 @@ void Cvar_Set_f (void) {
 }
 
 // disconnect -->
-void Cvar_UnSet_f (void) {
+void Cvar_UnSet (qbool use_regex) {
 	cvar_t		*var;
 	char		*name;
 	int		i;
-//	qbool	re_search;
+	qbool	re_search;
 	
 
 	if (Cmd_Argc() < 2) {
@@ -664,11 +679,11 @@ void Cvar_UnSet_f (void) {
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-		/*if ((re_search = IsRegexp(name))) 
+		if (use_regex && (re_search = IsRegexp(name))) 
 			if(!ReSearchInit(name))
-				continue;*/
+				continue;
 
-		/*if (re_search) {
+		if (use_regex && re_search) {
 			for (var = cvar_vars ; var ; var=var->next) {
 				if (ReSearchMatch(var->name)) {
 					if (var->flags & CVAR_USER_CREATED) {
@@ -678,7 +693,7 @@ void Cvar_UnSet_f (void) {
 					}
 				}
 			}
-		} else {*/
+		} else {
 			if (!(var = Cvar_FindVar(name))) {
 				Com_Printf("Can't delete \"%s\": no such cvar\n", name);
 				continue;
@@ -689,10 +704,18 @@ void Cvar_UnSet_f (void) {
 			} else {
 				Com_Printf("Can't delete not user created cvars (\"%s\")\n", name);
 			}
-		/*}
-		if (re_search)
-			ReSearchDone();*/
+		}
+		if (use_regex && re_search)
+			ReSearchDone();
 	}
+}
+
+void Cvar_UnSet_f(void) {
+	Cvar_UnSet(false);
+}
+
+void Cvar_UnSet_re_f(void) {
+	Cvar_UnSet(true);
 }
 // <-- disconnect
 
@@ -875,15 +898,16 @@ void Cvar_Inc_f (void) {
 
 void Cvar_Init (void) {
 	Cmd_AddCommand ("cvarlist", Cvar_CvarList_f);
-	Cmd_AddCommand ("toggle", Cvar_Toggle_f);
 	Cmd_AddCommand ("set", Cvar_Set_f);
-	Cmd_AddCommand ("unset", Cvar_UnSet_f);
 	//Cmd_AddCommand ("seta", Cvar_Seta_f);
+	Cmd_AddCommand ("unset", Cvar_UnSet_f);
+	Cmd_AddCommand ("unset_re", Cvar_UnSet_re_f);
+	Cmd_AddCommand ("toggle", Cvar_Toggle_f);
+	Cmd_AddCommand ("toggle_re", Cvar_Toggle_re_f);
+	Cmd_AddCommand ("cvar_reset", Cvar_Reset_f);
+	Cmd_AddCommand ("cvar_reset_re", Cvar_Reset_re_f);
 	Cmd_AddCommand ("inc", Cvar_Inc_f);
 	Cmd_AddCommand ("set_calc", Cvar_Set_Calc_f);
-
-	Cmd_AddCommand ("cvar_reset", Cvar_Reset_f);
-
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register (&cvar_viewdefault);		
