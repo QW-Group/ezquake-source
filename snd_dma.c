@@ -89,7 +89,7 @@ OSS-->ALSA is fine, but ALSA --> OSS broken.
 if u run ezQ with OSS, then switch it to ALSA it works. If u run with ALSA, "s_noalsa 1;snd_restart" --> ezQ crashes
 */
 cvar_t s_stereo = {"s_stereo", "1", CVAR_ARCHIVE};
-cvar_t s_rate = {"s_rate", "44100", CVAR_ARCHIVE};
+cvar_t s_rate = {"s_rate", "11025", CVAR_ARCHIVE};
 cvar_t s_device = {"s_device", "plug:hw", CVAR_ARCHIVE};
 cvar_t s_bits = {"s_bits", "16", CVAR_ARCHIVE};
 #endif
