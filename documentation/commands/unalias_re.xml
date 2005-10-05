@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
+<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
+<name>unalias_re</name><description>
+Deletes given alias(es). Example: unalias ^_zoom. - removes all aliases beginning with '_zoom', e.g. _zoom_in, _zoom_out</description>
+<syntax>&lt;cvar&gt; [&lt;cvar2&gt; ...]</syntax><remarks>This command supports (perl) regexp matching.</remarks></command>
