@@ -74,7 +74,7 @@ cvar_t s_nosound = {"s_nosound", "0"};
 cvar_t s_precache = {"s_precache", "1"};
 cvar_t s_loadas8bit = {"s_loadas8bit", "0"};
 #ifdef _WIN32
-cvar_t s_khz = {"s_khz", "44"};
+cvar_t s_khz = {"s_khz", "11"};
 #endif
 cvar_t s_ambientlevel = {"s_ambientlevel", "0.3"};
 cvar_t s_ambientfade = {"s_ambientfade", "100"};
