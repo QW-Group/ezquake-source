@@ -1360,6 +1360,7 @@ GLQWCL_MAC_OBJS = \
 \
     $(BUILDDIR)/build-mac-gl/in_mac.o \
     $(BUILDDIR)/build-mac-gl/gl_vidmac.o \
+    $(BUILDDIR)/build-mac-gl/vid_common_gl.o \
     $(BUILDDIR)/build-mac-gl/CarbonSndPlayDB.o \
     $(BUILDDIR)/build-mac-gl/cd_null.o \
     $(BUILDDIR)/build-mac-gl/mac_prefs.o \
@@ -1505,6 +1506,9 @@ $(BUILDDIR)/build-mac-gl/in_mac.o :		$(SOURCE_DIR)/in_mac.c
 $(BUILDDIR)/build-mac-gl/gl_vidmac.o :		$(SOURCE_DIR)/gl_vidmac.c
 	$(DO_GL_CC)
 
+$(BUILDDIR)/build-mac-gl/vid_common_gl.o :	$(SOURCE_DIR)/vid_common_gl.c
+	$(DO_GL_CC)
+
 $(BUILDDIR)/build-mac-gl/CarbonSndPlayDB.o :	$(SOURCE_DIR)/CarbonSndPlayDB.c
 	$(DO_GL_CC)
 
@@ -1547,25 +1551,25 @@ $(BUILDDIR)/build-mac-gl/cl_pred.o :		$(SOURCE_DIR)/cl_pred.c
 $(BUILDDIR)/build-mac-gl/cl_tent.o :		$(SOURCE_DIR)/cl_tent.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/cl_cam.o :			$(SOURCE_DIR)/cl_cam.c
+$(BUILDDIR)/build-mac-gl/cl_cam.o :		$(SOURCE_DIR)/cl_cam.c
 	$(DO_GL_CC)   
 
 $(BUILDDIR)/build-mac-gl/cl_view.o :		$(SOURCE_DIR)/cl_view.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/cl_cmd.o :			$(SOURCE_DIR)/cl_cmd.c
+$(BUILDDIR)/build-mac-gl/cl_cmd.o :		$(SOURCE_DIR)/cl_cmd.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/cl_slist.o :		$(SOURCE_DIR)/cl_slist.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/r_part.o :			$(SOURCE_DIR)/r_part.c
+$(BUILDDIR)/build-mac-gl/r_part.o :		$(SOURCE_DIR)/r_part.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/gl_draw.o :		$(SOURCE_DIR)/gl_draw.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/gl_md3.o :			$(SOURCE_DIR)/gl_md3.c
+$(BUILDDIR)/build-mac-gl/gl_md3.o :		$(SOURCE_DIR)/gl_md3.c
 	$(DO_GL_CC) 
 
 $(BUILDDIR)/build-mac-gl/gl_mesh.o :		$(SOURCE_DIR)/gl_mesh.c
@@ -1601,10 +1605,10 @@ $(BUILDDIR)/build-mac-gl/cl_screen.o :		$(SOURCE_DIR)/cl_screen.c
 $(BUILDDIR)/build-mac-gl/gl_warp.o :		$(SOURCE_DIR)/gl_warp.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/cmd.o :			$(SOURCE_DIR)/cmd.c
+$(BUILDDIR)/build-mac-gl/cmd.o :		$(SOURCE_DIR)/cmd.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/common.o :			$(SOURCE_DIR)/common.c
+$(BUILDDIR)/build-mac-gl/common.o :		$(SOURCE_DIR)/common.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/com_msg.o :		$(SOURCE_DIR)/com_msg.c
@@ -1613,22 +1617,22 @@ $(BUILDDIR)/build-mac-gl/com_msg.o :		$(SOURCE_DIR)/com_msg.c
 $(BUILDDIR)/build-mac-gl/console.o :		$(SOURCE_DIR)/console.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/crc.o :			$(SOURCE_DIR)/crc.c
+$(BUILDDIR)/build-mac-gl/crc.o :		$(SOURCE_DIR)/crc.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/version.o :		$(SOURCE_DIR)/version.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/cvar.o :			$(SOURCE_DIR)/cvar.c
+$(BUILDDIR)/build-mac-gl/cvar.o :		$(SOURCE_DIR)/cvar.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/keys.o :			$(SOURCE_DIR)/keys.c
+$(BUILDDIR)/build-mac-gl/keys.o :		$(SOURCE_DIR)/keys.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/mathlib.o :		$(SOURCE_DIR)/mathlib.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/menu.o :			$(SOURCE_DIR)/menu.c
+$(BUILDDIR)/build-mac-gl/menu.o :		$(SOURCE_DIR)/menu.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/mvd_utils.o :		$(SOURCE_DIR)/mvd_utils.c
@@ -1640,19 +1644,19 @@ $(BUILDDIR)/build-mac-gl/net_chan.o :		$(SOURCE_DIR)/net_chan.c
 $(BUILDDIR)/build-mac-gl/net_udp.o :		$(SOURCE_DIR)/net_udp.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/pmove.o :			$(SOURCE_DIR)/pmove.c
+$(BUILDDIR)/build-mac-gl/pmove.o :		$(SOURCE_DIR)/pmove.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/pmovetst.o :		$(SOURCE_DIR)/pmovetst.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/sbar.o :			$(SOURCE_DIR)/sbar.c
+$(BUILDDIR)/build-mac-gl/sbar.o :		$(SOURCE_DIR)/sbar.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/skin.o :			$(SOURCE_DIR)/skin.c
+$(BUILDDIR)/build-mac-gl/skin.o :		$(SOURCE_DIR)/skin.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/image.o :			$(SOURCE_DIR)/image.c
+$(BUILDDIR)/build-mac-gl/image.o :		$(SOURCE_DIR)/image.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/teamplay.o :		$(SOURCE_DIR)/teamplay.c
@@ -1700,7 +1704,7 @@ $(BUILDDIR)/build-mac-gl/pr_exec.o :		$(SOURCE_DIR)/pr_exec.c
 $(BUILDDIR)/build-mac-gl/pr_cmds.o :		$(SOURCE_DIR)/pr_cmds.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/ignore.o :			$(SOURCE_DIR)/ignore.c
+$(BUILDDIR)/build-mac-gl/ignore.o :		$(SOURCE_DIR)/ignore.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/logging.o :		$(SOURCE_DIR)/logging.c
@@ -1709,28 +1713,28 @@ $(BUILDDIR)/build-mac-gl/logging.o :		$(SOURCE_DIR)/logging.c
 $(BUILDDIR)/build-mac-gl/fragstats.o :		$(SOURCE_DIR)/fragstats.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/match_tools.o :		$(SOURCE_DIR)/match_tools.c
+$(BUILDDIR)/build-mac-gl/match_tools.o :	$(SOURCE_DIR)/match_tools.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/utils.o :			$(SOURCE_DIR)/utils.c
+$(BUILDDIR)/build-mac-gl/utils.o :		$(SOURCE_DIR)/utils.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/movie.o :			$(SOURCE_DIR)/movie.c
+$(BUILDDIR)/build-mac-gl/movie.o :		$(SOURCE_DIR)/movie.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/fchecks.o :		$(SOURCE_DIR)/fchecks.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/fmod.o :			$(SOURCE_DIR)/fmod.c
+$(BUILDDIR)/build-mac-gl/fmod.o :		$(SOURCE_DIR)/fmod.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/auth.o :			$(SOURCE_DIR)/auth.c
+$(BUILDDIR)/build-mac-gl/auth.o :		$(SOURCE_DIR)/auth.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/Ctrl.o :			$(SOURCE_DIR)/Ctrl.c
+$(BUILDDIR)/build-mac-gl/Ctrl.o :		$(SOURCE_DIR)/Ctrl.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/Ctrl_EditBox.o :		$(SOURCE_DIR)/Ctrl_EditBox.c
+$(BUILDDIR)/build-mac-gl/Ctrl_EditBox.o :	$(SOURCE_DIR)/Ctrl_EditBox.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/Ctrl_Tab.o :		$(SOURCE_DIR)/Ctrl_Tab.c
@@ -1742,7 +1746,7 @@ $(BUILDDIR)/build-mac-gl/Ctrl_PageViewer.o :	$(SOURCE_DIR)/Ctrl_PageViewer.c
 $(BUILDDIR)/build-mac-gl/EX_browser.o :		$(SOURCE_DIR)/EX_browser.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/EX_browser_net.o :		$(SOURCE_DIR)/EX_browser_net.c
+$(BUILDDIR)/build-mac-gl/EX_browser_net.o :	$(SOURCE_DIR)/EX_browser_net.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/EX_browser_ping.o :	$(SOURCE_DIR)/EX_browser_ping.c
@@ -1754,22 +1758,22 @@ $(BUILDDIR)/build-mac-gl/EX_browser_sources.o :	$(SOURCE_DIR)/EX_browser_sources
 $(BUILDDIR)/build-mac-gl/EX_misc.o :		$(SOURCE_DIR)/EX_misc.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/common_draw.o :		$(SOURCE_DIR)/common_draw.c
+$(BUILDDIR)/build-mac-gl/common_draw.o :	$(SOURCE_DIR)/common_draw.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/hud.o :			$(SOURCE_DIR)/hud.c
+$(BUILDDIR)/build-mac-gl/hud.o :		$(SOURCE_DIR)/hud.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/hud_common.o :		$(SOURCE_DIR)/hud_common.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/EX_FunNames.o :		$(SOURCE_DIR)/EX_FunNames.c
+$(BUILDDIR)/build-mac-gl/EX_FunNames.o :	$(SOURCE_DIR)/EX_FunNames.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/collision.o :		$(SOURCE_DIR)/collision.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/cl_collision.o :		$(SOURCE_DIR)/cl_collision.c
+$(BUILDDIR)/build-mac-gl/cl_collision.o :	$(SOURCE_DIR)/cl_collision.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/vx_camera.o :		$(SOURCE_DIR)/vx_camera.c
@@ -1778,7 +1782,7 @@ $(BUILDDIR)/build-mac-gl/vx_camera.o :		$(SOURCE_DIR)/vx_camera.c
 $(BUILDDIR)/build-mac-gl/vx_coronas.o :		$(SOURCE_DIR)/vx_coronas.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/vx_motiontrail.o :		$(SOURCE_DIR)/vx_motiontrail.c
+$(BUILDDIR)/build-mac-gl/vx_motiontrail.o :	$(SOURCE_DIR)/vx_motiontrail.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/vx_stuff.o :		$(SOURCE_DIR)/vx_stuff.c
@@ -1793,7 +1797,7 @@ $(BUILDDIR)/build-mac-gl/vx_vertexlights.o :	$(SOURCE_DIR)/vx_vertexlights.c
 $(BUILDDIR)/build-mac-gl/rulesets.o :		$(SOURCE_DIR)/rulesets.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/config_manager.o :		$(SOURCE_DIR)/config_manager.c
+$(BUILDDIR)/build-mac-gl/config_manager.o :	$(SOURCE_DIR)/config_manager.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/mp3_player.o :		$(SOURCE_DIR)/mp3_player.c
@@ -1805,19 +1809,19 @@ $(BUILDDIR)/build-mac-gl/modules.o :		$(SOURCE_DIR)/modules.c
 $(BUILDDIR)/build-mac-gl/gl_texture.o :		$(SOURCE_DIR)/gl_texture.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/sha1.o :			$(SOURCE_DIR)/sha1.c
+$(BUILDDIR)/build-mac-gl/sha1.o :		$(SOURCE_DIR)/sha1.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/mdfour.o :			$(SOURCE_DIR)/mdfour.c
+$(BUILDDIR)/build-mac-gl/mdfour.o :		$(SOURCE_DIR)/mdfour.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/wad.o :			$(SOURCE_DIR)/wad.c
+$(BUILDDIR)/build-mac-gl/wad.o :		$(SOURCE_DIR)/wad.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/zone.o :			$(SOURCE_DIR)/zone.c
+$(BUILDDIR)/build-mac-gl/zone.o :		$(SOURCE_DIR)/zone.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/parser.o :			$(SOURCE_DIR)/parser.c
+$(BUILDDIR)/build-mac-gl/parser.o :		$(SOURCE_DIR)/parser.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/localtime_linux.o :	$(SOURCE_DIR)/localtime_linux.c
@@ -1826,31 +1830,31 @@ $(BUILDDIR)/build-mac-gl/localtime_linux.o :	$(SOURCE_DIR)/localtime_linux.c
 $(BUILDDIR)/build-mac-gl/xml_test.o :		$(SOURCE_DIR)/xml_test.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/xsd.o :			$(SOURCE_DIR)/xsd.c
+$(BUILDDIR)/build-mac-gl/xsd.o :		$(SOURCE_DIR)/xsd.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/xsd_command.o :		$(SOURCE_DIR)/xsd_command.c
+$(BUILDDIR)/build-mac-gl/xsd_command.o :	$(SOURCE_DIR)/xsd_command.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/xsd_document.o :		$(SOURCE_DIR)/xsd_document.c
+$(BUILDDIR)/build-mac-gl/xsd_document.o :	$(SOURCE_DIR)/xsd_document.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/xsd_variable.o :		$(SOURCE_DIR)/xsd_variable.c
+$(BUILDDIR)/build-mac-gl/xsd_variable.o :	$(SOURCE_DIR)/xsd_variable.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/document_rendering.o :	$(SOURCE_DIR)/document_rendering.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/help.o :			$(SOURCE_DIR)/help.c
+$(BUILDDIR)/build-mac-gl/help.o :		$(SOURCE_DIR)/help.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/help_browser.o :		$(SOURCE_DIR)/help_browser.c
+$(BUILDDIR)/build-mac-gl/help_browser.o :	$(SOURCE_DIR)/help_browser.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/help_files.o :		$(SOURCE_DIR)/help_files.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/EX_FileList.o :		$(SOURCE_DIR)/EX_FileList.c
+$(BUILDDIR)/build-mac-gl/EX_FileList.o :	$(SOURCE_DIR)/EX_FileList.c
 	$(DO_GL_CC)
 
 #############################################################################

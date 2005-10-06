@@ -77,7 +77,7 @@ cvar_t	gl_vid_screen = {"gl_vid_screen", "0", false};// Saved in prefs, not conf
 cvar_t	gl_vid_colorbits = {"gl_vid_colorbits", "16", false};// Saved in prefs, not config
 cvar_t	vid_wait = {"vid_wait", "0", true};// VBL sync
 cvar_t	_windowed_mouse = {"_windowed_mouse","1", CVAR_ARCHIVE};
-extern cvar_t gl_texturebits;
+//extern cvar_t gl_texturebits;
 
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol","1", 0}; 
 
@@ -178,7 +178,7 @@ void MacSetupScreen ()
 		 	if (gScreen.profile->texturebits != 16)
 		 	{
 			 	gScreen.profile->texturebits = 16;
-				Cvar_Set (&gl_texturebits, "16");
+//				Cvar_Set (&gl_texturebits, "16");
 			 	gl_solid_format = GL_RGB5;
 			 	gl_alpha_format = GL_RGBA4;
 			}
@@ -1104,6 +1104,10 @@ void VID_LockBuffer (void) {}
 void VID_UnlockBuffer (void) {}
 #endif
 
+#if !defined(VID_SetCaption)
+void VID_SetCaption (char *text) {}
+#endif
+
 /*
 =================
 VID_ResCompare
@@ -1434,7 +1438,6 @@ void VID_Restart_f (void)
 	qbool		texturereload = false;
 	extern qbool background;
 	extern qbool forcewindowed;
-	extern qpic_t	*conback;
 
 // This looks much worse than it really is :)
 
@@ -1453,8 +1456,8 @@ void VID_Restart_f (void)
 	if (gl_vid_colorbits.value != 16 && gl_vid_colorbits.value != 32)
 		Cvar_SetValue (&gl_vid_colorbits, vid_currentprofile.colorbits);
 	
-	if (gl_texturebits.value != 16 && gl_texturebits.value != 32)
-		Cvar_SetValue (&gl_texturebits, vid_currentprofile.texturebits);
+/*	if (gl_texturebits.value != 16 && gl_texturebits.value != 32)
+		Cvar_SetValue (&gl_texturebits, vid_currentprofile.texturebits);*/
 		
 	// Can't use fullscreen if forcewindowed (DEBUG, or pre 1.99 DSp on OSX)
 	if (gl_vid_windowed.value || forcewindowed)	
@@ -1464,7 +1467,7 @@ void VID_Restart_f (void)
 	vid_newprofile.screen = (int)gl_vid_screen.value;
 	vid_newprofile.mode = (int)vid_mode.value;
 	vid_newprofile.colorbits = (int)gl_vid_colorbits.value;
-	vid_newprofile.texturebits = (int)gl_texturebits.value;
+//	vid_newprofile.texturebits = (int)gl_texturebits.value;
 	vid_newprofile.window = gl_vid_windowed.value ? true : false;
 	
 	// Do fades if going from full screen to windowed or vice-versa
@@ -1558,9 +1561,6 @@ void VID_Restart_f (void)
 
 	VID_SetConWidth();
 
-	conback->width = vid.width;
-	conback->height = vid.height;
-	
 	// Tell quake to use the (possibly) new dimensions
 	vid.recalc_refdef = true;
 	
@@ -1605,13 +1605,13 @@ void VID_ToggleWindow_f ()
 	old_screen = gl_vid_screen.value;
 	old_mode = vid_mode.value;
 	old_colorbits = gl_vid_colorbits.value;
-	old_texturebits = gl_texturebits.value;
+//	old_texturebits = gl_texturebits.value;
 	
 	// Make sure these aren't changed by video_restart
 	Cvar_SetValue (&gl_vid_screen, gScreen.profile->screen);
 	Cvar_SetValue (&vid_mode, gScreen.profile->mode);
 	Cvar_SetValue (&gl_vid_colorbits, gScreen.profile->colorbits);
-	Cvar_SetValue (&gl_texturebits, gScreen.profile->texturebits);	
+//	Cvar_SetValue (&gl_texturebits, gScreen.profile->texturebits);
 	
 	// Toggle windowed mode (DON'T check gl_vid_windowed! in can be different than actual state)
 	if (inwindow)	
@@ -1628,7 +1628,7 @@ void VID_ToggleWindow_f ()
 	Cvar_SetValue (&gl_vid_screen, old_screen);
 	Cvar_SetValue (&vid_mode, old_mode);
 	Cvar_SetValue (&gl_vid_colorbits, old_colorbits);
-	Cvar_SetValue (&gl_texturebits, old_texturebits);
+//	Cvar_SetValue (&gl_texturebits, old_texturebits);
 	
 	video_restart = false;
 }

@@ -21,12 +21,48 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // vid_common_gl.c -- Common code for vid_wgl.c and vid_glx.c
 
 #include "quakedef.h"
+#ifdef __APPLE__
+#include <Carbon/Carbon.h>
+#endif
 
+void* GL_GetProcAddress (char* ExtName)
+{
+#ifdef _WIN32
+			return (void *) wglGetProcAddress(ExtName);
+#else
+#ifdef __APPLE__
+	// Mac OS X don't have an OpenGL extension fetch function. Isn't that silly?
+
+	static CFBundleRef cl_gBundleRefOpenGL = 0;
+	if (cl_gBundleRefOpenGL == 0)
+	{
+		cl_gBundleRefOpenGL = CFBundleGetBundleWithIdentifier(CFSTR("com.apple.opengl"));
+		if (cl_gBundleRefOpenGL == 0)
+			Sys_Error("Unable to find com.apple.opengl bundle");
+	}
+
+	return CFBundleGetFunctionPointerForName(
+		cl_gBundleRefOpenGL,
+		CFStringCreateWithCStringNoCopy(
+			0,
+			ExtName,
+			CFStringGetSystemEncoding(),
+			0));
+#else
+			return (void *) glXGetProcAddressARB(ExtName);
+#endif /* __APPLE__ */
+#endif /* _WIN32 */
+}
+/*
 #ifdef _WIN32
 #define qglGetProcAddress wglGetProcAddress
 #else
+#define qglGetProcAddress 0
+#ifdef __APPLE__
+#else
 #define qglGetProcAddress glXGetProcAddressARB
 #endif
+#endif*/
 
 const char *gl_vendor;
 const char *gl_renderer;
@@ -85,8 +121,8 @@ void CheckMultiTextureExtensions (void) {
 	if (!COM_CheckParm("-nomtex") && CheckExtension("GL_ARB_multitexture")) {
 		if (strstr(gl_renderer, "Savage"))
 			return;
-		qglMultiTexCoord2f = (void *) qglGetProcAddress("glMultiTexCoord2fARB");
-		qglActiveTexture = (void *) qglGetProcAddress("glActiveTextureARB");
+		qglMultiTexCoord2f = GL_GetProcAddress("glMultiTexCoord2fARB");
+		qglActiveTexture = GL_GetProcAddress("glActiveTextureARB");
 		if (!qglMultiTexCoord2f || !qglActiveTexture)
 			return;
 		Com_Printf ("Multitexture extensions found\n");
@@ -119,9 +155,6 @@ void GL_CheckExtensions (void) {
 		Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
 		Cvar_Register (&gl_ext_texture_compression);	
 		Cvar_ResetCurrentGroup();
-#ifndef __APPLE__
-	// !!!	glCompressedTexImage2DARB = GL_GetProcAddress("glCompressedTexImage2DARB");
-#endif
 	}
 }
 
