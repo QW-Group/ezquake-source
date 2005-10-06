@@ -53,16 +53,6 @@ void* GL_GetProcAddress (char* ExtName)
 #endif /* __APPLE__ */
 #endif /* _WIN32 */
 }
-/*
-#ifdef _WIN32
-#define qglGetProcAddress wglGetProcAddress
-#else
-#define qglGetProcAddress 0
-#ifdef __APPLE__
-#else
-#define qglGetProcAddress glXGetProcAddressARB
-#endif
-#endif*/
 
 const char *gl_vendor;
 const char *gl_renderer;
