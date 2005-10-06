@@ -1924,7 +1924,7 @@ void SCR_UpdateScreen (void) {
 
 	 // oppymv 040904 - dont tile over the first view
 	if (!(cl_multiview.value && cls.mvdplayback) ||
-		cl_multiview.value && cls.mvdplayback && CURRVIEW == 2)
+		(cl_multiview.value && cls.mvdplayback && CURRVIEW == 2))
 		SCR_TileClear ();
 
 	SCR_SetUpToDrawConsole ();
