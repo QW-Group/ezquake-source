@@ -28,8 +28,11 @@
 char *kAppName = "ezQuake";
 
 // The following are needed for activate/deactivate
+extern qbool video_restart;
+extern AGLContext gContext;
 void MacSetupScreen (void);
 void MacShutdownScreen (void);
+GLboolean _aglSetDrawableMonitor (AGLContext inContext, Boolean inWindow);
 void Release_Cursor_f (void);
 void Capture_Cursor_f (void);
 void VID_SetConWidth (void);
@@ -84,6 +87,13 @@ static void Sys_Activate (void);
 
 //	Initialize everything for the program, make sure we can run
 
+int noconinput = 0;
+
+qbool stdin_ready;
+int do_stdin = 1;
+
+cvar_t sys_nostdout = {"sys_nostdout", "0"};	
+cvar_t sys_extrasleep = {"sys_extrasleep", "0"};
 /*
 ===============================================================================
 FILE IO
@@ -177,7 +187,7 @@ void Sys_Init(void)
 {
 }
 
-//void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length){}
+void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length){}
 
 void Sys_Error (char *error, ...)
 {
@@ -188,7 +198,7 @@ void Sys_Error (char *error, ...)
 	outTxt[0] = vsprintf (outTxt+1, error, argptr);
 	va_end (argptr);
 	Host_Shutdown ();
-
+	if (!dedicated)
 	{
 		AlertStdAlertParamRec param;
 		short itemHit;
@@ -208,6 +218,10 @@ void Sys_Error (char *error, ...)
 		c2pstrcpy (briefMsg, (char *)briefMsg);
 		
 		StandardAlert (kAlertStopAlert, briefMsg, (StringPtr) outTxt, &param, &itemHit);
+	}
+	else
+	{
+	printf ("Fatal error: %s\n",outTxt);
 	}
 	exit (1);
 }
@@ -245,7 +259,12 @@ void Sys_Message (Str255 briefMsg, char *error, ...)
 void Sys_Printf (char *fmt, ...)
 {
 	va_list         argptr;
-	
+
+#ifdef NDEBUG
+	if (!dedicated)
+		return;
+#endif
+
 	va_start (argptr,fmt);
 	vprintf (fmt,argptr);
 	va_end (argptr);
@@ -292,7 +311,28 @@ void Sys_DebugLog(char *file, char *fmt, ...)
     close(fd);
 }
 
-char *Sys_ConsoleInput (void){return NULL;}
+char *Sys_ConsoleInput (void) {
+	static char text[256];
+	int len;
+
+	if (!dedicated)
+		return NULL;
+
+	if (!stdin_ready || !do_stdin)
+		return NULL;		// the select didn't say it was ready
+	stdin_ready = false;
+
+	len = read (0, text, sizeof(text));
+	if (len == 0) {	// end of file		
+		do_stdin = 0;
+		return NULL;
+	}
+	if (len < 1)
+		return NULL;
+	text[len - 1] = 0;	// rip off the /n and terminate
+	
+	return text;
+}
 
 void Sys_Sleep (void){}
 
@@ -389,7 +429,7 @@ void OnMouseButton (EventRecord *myEvent, qbool down)
 		        DragWindow(window, myEvent->where, &r);
 		        if (window == glWindow)
 		        {
-					/*aglUpdateContext(gContext);*/ // !!!
+				aglUpdateContext(gContext);
 		        	// Update the global window position (saved in prefs)
 		        	GetWindowPortBounds(window, &r);
 		        	glWindowPos.v = r.top;
@@ -434,7 +474,7 @@ void OnMouseButton (EventRecord *myEvent, qbool down)
 	EventRecord		myEvent;
 	Boolean			gotEvent;
 	
-	/*if (video_restart) return;*/ // !!!
+	if (video_restart) return;
 
 	// FIXME! - just calling GetNextEvent in carbon seems to enable apple-tab to switch processes
 	// in OS9 which ABSOLUTELY BLOWS in fullscreen if you have TAB and COMMAND bound (like I do).
@@ -674,19 +714,19 @@ void VerifySystemSpecs (void)
 // Should probably replace these with C globals, but cvars are far easier for testing...
 void SetVideoCvarsForPrefs (void)
 {
-	/*video_restart = true;*/ // !!!
+	video_restart = true;
 	
 	Cvar_SetValue (&vid_mode, gScreen.profile->mode);
 	Cvar_SetValue (&gl_vid_screen, gScreen.profile->screen);
 	Cvar_SetValue (&gl_vid_colorbits, gScreen.profile->colorbits);
-	Cvar_SetValue (&gl_texturebits, gScreen.profile->texturebits);	
+//	Cvar_SetValue (&gl_texturebits, gScreen.profile->texturebits);
 
 	if (inwindow)
-		Cvar_Set (&gl_vid_windowed, "1");
+  		Cvar_Set (&gl_vid_windowed, "1");
 	else
 		Cvar_Set (&gl_vid_windowed, "0");
 	
-	/*video_restart = false;*/ // !!!
+	video_restart = false;
 }
 
 //====================================================================================
@@ -761,16 +801,16 @@ static void Sys_Deactivate (void)
 	// To avoid problems, we basically shut down the screen
 	if (!inwindow)
 	{
-		/*video_restart = true;// hack*/ // !!!
+		video_restart = true;// hack
 		
 		S_ClearBuffer();
 
 		VID_FadeOut ();
-		/*aglSetDrawable (gContext, NULL);*/ // !!!
+		aglSetDrawable (gContext, NULL);
 		MacShutdownScreen();
 		VID_FadeIn ();
 		
-		/*video_restart = false;// hack*/ // !!!
+		video_restart = false;// hack
 	}
 	
 	// For some reason, on OS9, the app gets an activate event the first time it deactivates (?)
@@ -793,8 +833,6 @@ static void Sys_Deactivate (void)
 //====================================================================================
 static void Sys_Activate (void)
 {
-	extern qpic_t	*conback;
-
 	Com_DPrintf ("Sys_Activate...\n");
 	
 	if (!background) {
@@ -805,25 +843,22 @@ static void Sys_Activate (void)
 	// Do a mini vid_restart for fullscreen...
 	if (!inwindow)
 	{
-		/*video_restart = true;// hack*/ // !!!
+		video_restart = true;// hack
 				
 		S_ClearBuffer();
 		VID_FadeOut ();
-		/*aglSetDrawable (gContext, NULL);*/ // !!!
+		aglSetDrawable (gContext, NULL);
 		MacSetupScreen ();
-		/*_aglSetDrawableMonitor (gContext, inwindow);*/ // !!!
+		_aglSetDrawableMonitor (gContext, inwindow);
 
 		vid.width = gScreen.mode->width;
 		vid.height = gScreen.mode->height;
 
 		VID_SetConWidth();
 
-		conback->width = vid.width;
-		conback->height = vid.height;
-		
 		vid.recalc_refdef = true;
 
-		/*video_restart = false;// hack*/ // !!!
+		video_restart = false;// hack
 		VID_FadeIn ();
 	}
 	
@@ -1188,6 +1223,10 @@ int main (int argc, char **argv)
 
 	COM_InitArgv (argc, argv);
 
+#if !defined(CLIENTONLY)
+	dedicated = COM_CheckParm ("-dedicated");
+#endif
+
 	if (COM_CheckParm ("-window"))
 		forcewindowed = true;
 
@@ -1216,17 +1255,6 @@ int main (int argc, char **argv)
 }
 
 // disconnect -->
-void  Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length) {
-	int r;
-	unsigned long addr;
-	int psize = getpagesize();
-
-	addr = (startaddr & ~(psize - 1)) - psize;
-	r = mprotect((char*) addr, length + startaddr - addr + psize, 7);
-	if (r < 0)
-    		Sys_Error("Protection change failed");
-}
-
 int  Sys_CreateThread(DWORD WINAPI (*func)(void *), void *param)
 {
     pthread_t thread;
