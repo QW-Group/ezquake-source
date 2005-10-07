@@ -540,7 +540,7 @@ static char *MT_ParseFormat(char *format, matchinfo_t *matchinfo) {
 }
 
 static char *MT_NameForMatchInfo(matchinfo_t *matchinfo) {
-	char *format;
+	char *format = NULL;
 
 	switch (matchinfo->matchtype) {
 	case mt_empty:

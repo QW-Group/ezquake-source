@@ -191,7 +191,7 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
     int i;
     int classified = -1;
     int type = 0;
-    char *msg;
+    char *msg=NULL;
     for (i=0; i <= MAX_CLIENTS; i++)
     {
         int client = -1;
