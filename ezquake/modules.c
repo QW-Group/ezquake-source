@@ -30,10 +30,6 @@ typedef struct registeredModule_s {
 char _temp_modulename[MAX_OSPATH];
 static registeredModule_t registeredModules[qlib_nummodules];
 
-#if defined __linux || defined(darwin) || defined(__APPLE__)
-#include <dlfcn.h>
-#endif
-
 #ifdef _WIN32
 #define SECURITY_GETFUNC(f) (Security_##f = (Security_##f##_t) GetProcAddress(hSecurity, "Security_" #f))
 #else

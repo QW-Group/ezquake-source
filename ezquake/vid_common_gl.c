@@ -245,6 +245,7 @@ void VID_SetPalette (unsigned char *palette) {
 	unsigned r,g,b, v, *table;
 
 	// 8 8 8 encoding
+	// Macintosh has different byte order
 	pal = palette;
 	table = d_8to24table;
 	for (i = 0; i < 256; i++) {
@@ -252,8 +253,7 @@ void VID_SetPalette (unsigned char *palette) {
 		g = pal[1];
 		b = pal[2];
 		pal += 3;
-
-		v = (255 << 24) + (r << 0) + (g << 8) + (b << 16);
+		v = LittleLong ((255 << 24) + (r << 0) + (g << 8) + (b << 16));
 		*table++ = v;
 	}
 #ifndef __APPLE__
@@ -271,7 +271,7 @@ void VID_SetPalette (unsigned char *palette) {
 		g = pal[1] * (2.0 / 1.5); if (g > 255) g = 255;
 		b = pal[2] * (2.0 / 1.5); if (b > 255) b = 255;
 		pal += 3;
-		*table++ = (255 << 24) + (r << 0) + (g << 8) + (b << 16);
+		*table++ = LittleLong ((255 << 24) + (r << 0) + (g << 8) + (b << 16));
 	}
 #ifndef __APPLE__
 	d_8to24table2[255] = 0;	// 255 is transparent

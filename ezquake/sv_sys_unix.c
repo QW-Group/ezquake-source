@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <libc.h>
 #endif
 
-#if defined(__linux__) || defined(sun) || defined(darwin) || defined(hpux) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__)
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/time.h>

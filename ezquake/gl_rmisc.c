@@ -187,22 +187,22 @@ void R_TranslatePlayerSkin (int playernum) {
 			frac = fracstep >> 1;
 			for (j = 0; j < scaled_width; j += 4) {
 				if (inrow[frac >> 16] < 224)
-					out[j] = translate32[inrow[frac >> 16]] & 0x00FFFFFF; // transparent
+					out[j] = translate32[inrow[frac >> 16]] & LittleLong(0x00FFFFFF); // transparent
 				else
 					out[j] = translate32[inrow[frac >> 16]]; // fullbright
 				frac += fracstep;
 				if (inrow[frac >> 16] < 224)
-					out[j + 1] = translate32[inrow[frac >> 16]] & 0x00FFFFFF;
+					out[j + 1] = translate32[inrow[frac >> 16]] & LittleLong(0x00FFFFFF);
 				else
 					out[j + 1] = translate32[inrow[frac >> 16]];
 				frac += fracstep;
 				if (inrow[frac >> 16] < 224)
-					out[j + 2] = translate32[inrow[frac >> 16]] & 0x00FFFFFF;
+					out[j + 2] = translate32[inrow[frac >> 16]] & LittleLong(0x00FFFFFF);
 				else
 					out[j + 2] = translate32[inrow[frac >> 16]];
 				frac += fracstep;
 				if (inrow[frac >> 16] < 224)
-					out[j + 3] = translate32[inrow[frac >> 16]] & 0x00FFFFFF;
+					out[j + 3] = translate32[inrow[frac >> 16]] & LittleLong(0x00FFFFFF);
 				else
 					out[j + 3] = translate32[inrow[frac >> 16]];
 				frac += fracstep;
