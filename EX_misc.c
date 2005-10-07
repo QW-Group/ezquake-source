@@ -8,7 +8,7 @@
 #include "EX_misc.h"
 #include "EX_FunNames.h"
 
-#if defined __linux || defined(darwin) || defined(__APPLE__)
+#if defined __linux || defined(__APPLE__)
 #define CLIPBOARDSIZE 1024
 static char clipboard[CLIPBOARDSIZE] = "\0";    // for clipboard implementation
 #endif

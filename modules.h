@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "security.h"
 
-#ifdef __linux__
+#if defined __linux || defined(__APPLE__)
 #include <dlfcn.h>
 #endif
 

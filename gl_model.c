@@ -1211,6 +1211,10 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer) {
 			header->lumps[i].filelen);
 	}
 
+	// remember: Mac is big-endian
+	mod->checksum = LittleLong (mod->checksum);
+	mod->checksum2 = LittleLong (mod->checksum2);
+
 	// load into heap
 	
 	Mod_LoadEntities (&header->lumps[LUMP_ENTITIES]);

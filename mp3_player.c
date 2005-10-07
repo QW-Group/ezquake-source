@@ -913,7 +913,7 @@ void MP3_Shutdown(void) {}
 
 #endif
 
-#if defined(darwin) || defined(__APPLE__)
+#ifdef __APPLE__
 qbool MP3_GetOutputtime (int *elapsed, int *total)  {
 	return false;
 }

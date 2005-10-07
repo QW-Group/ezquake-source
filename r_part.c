@@ -185,13 +185,13 @@ void Classic_LoadParticleTexures (void) {
 
 	// clear to transparent white
 	for (i = 0; i < 32 * 32; i++)
-		((unsigned *) data)[i] = 0x00FFFFFF;
+		((unsigned *) data)[i] = LittleLong(0x00FFFFFF);
 
 	// draw a circle in the top left corner
 	for (x = 0; x < 16; x++) {
 		for (y = 0; y < 16; y++) {
 			if ((x - 7.5) * (x - 7.5) + (y - 7.5) * (y - 7.5) <= 8 * 8)
-				data[y][x] = 0xFFFFFFFF;	// solid white
+				data[y][x] = LittleLong(0xFFFFFFFF);	// solid white
 		}
 	}
 

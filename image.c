@@ -503,7 +503,6 @@ static void PNG_FreeLibrary(void) {
 }
 
 static qbool PNG_LoadLibrary(void) {
-#if !defined(darwin) && !defined(__APPLE__)
 	if (COM_CheckParm("-nolibpng"))
 		return false;
 
@@ -532,7 +531,7 @@ static qbool PNG_LoadLibrary(void) {
 		png_handle = zlib_handle = NULL;
 		return false;
 	}
-#endif
+
 	return true;
 }
 
@@ -1050,7 +1049,6 @@ static void JPEG_FreeLibrary(void) {
 }
 
 static qbool JPEG_LoadLibrary(void) {
-#if !defined(darwin) && !defined(__APPLE__)
 	if (COM_CheckParm("-nolibjpeg"))
 		return false;
 
@@ -1070,7 +1068,7 @@ static qbool JPEG_LoadLibrary(void) {
 		jpeg_handle = NULL;
 		return false;
 	}
-#endif
+
 	return true;
 }
 
