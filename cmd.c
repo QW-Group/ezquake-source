@@ -677,7 +677,7 @@ void Cmd_UnAlias (qbool use_regex) {
 	int 		i;
 	char		*name;
 	cmd_alias_t	*a;
-	qbool		re_search;
+	qbool		re_search = false;
 
 	if (Cmd_Argc() < 2) {
 		Com_Printf ("unalias <cvar> [<cvar2>..]: erase an existing alias\n");

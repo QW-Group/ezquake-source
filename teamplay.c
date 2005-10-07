@@ -2496,7 +2496,7 @@ player "unnamed" in your team and "(unnamed)" in the enemy team. The result will
 int TP_CategorizeMessage (char *s, int *offset) {
 	int i, msglen, len, flags, tracknum;
 	player_info_t	*player;
-	char *name, *team;
+	char *name, *team=NULL;
 
 	
 	tracknum = -1;
@@ -3159,7 +3159,7 @@ void TP_FindPoint (void) {
 	entity_state_t *ent;
 	int	i, j, pointflags_dmm;
 	float best = -1, rank;
-	entity_state_t *bestent;
+	entity_state_t *bestent = NULL;
 	vec3_t ang;
 	item_t *item, *bestitem = NULL;
 	player_state_t *state, *beststate = NULL;

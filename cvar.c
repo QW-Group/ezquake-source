@@ -58,7 +58,7 @@ void Cvar_Reset (qbool use_regex) {
 	cvar_t	*var;
 	char	*name;
 	int		i;
-	qbool	re_search;
+	qbool	re_search = false;
 
 
 	if (Cmd_Argc() < 2) {
@@ -476,7 +476,7 @@ void Cvar_Toggle (qbool use_regex) {
 	cvar_t	*var;
 	char	*name;
 	int		i;
-	qbool	re_search;
+	qbool	re_search = false;
 
 
 	if (Cmd_Argc() < 2) {
@@ -668,7 +668,7 @@ void Cvar_UnSet (qbool use_regex) {
 	cvar_t		*var;
 	char		*name;
 	int		i;
-	qbool	re_search;
+	qbool	re_search = false;
 	
 
 	if (Cmd_Argc() < 2) {

@@ -415,7 +415,7 @@ void InitCoronas(void)
 //This needs fixing so it wont be called so often
 void NewStaticLightCorona (coronatype_t type, vec3_t origin)
 {
-	corona_t	*c, *e;
+	corona_t	*c, *e=NULL;
 	int		i;
 	qbool breakage = true;
 
