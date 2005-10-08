@@ -457,6 +457,7 @@ void SCR_HUD_DrawGunByNum (hud_t *hud, int num, float scale, int style, int wide
 
     switch (style)
     {
+	case 3:
     case 1:     // text
         width = 16 * scale;
         height = 8 * scale;
@@ -476,12 +477,15 @@ void SCR_HUD_DrawGunByNum (hud_t *hud, int num, float scale, int style, int wide
             default: tmp = "";
             }
 
-            if ( HUD_Stats(STAT_ACTIVEWEAPON) == (IT_SHOTGUN<<i) )
+            if ( ((HUD_Stats(STAT_ACTIVEWEAPON) == (IT_SHOTGUN<<i)) && (style==1)) ||
+				 ((HUD_Stats(STAT_ACTIVEWEAPON) != (IT_SHOTGUN<<i)) && (style==3))
+			   )
                 Draw_SString(x, y, tmp, scale);
             else
                 Draw_SAlt_String(x, y, tmp, scale);
         }
         break;
+	case 4:
     case 2:     // numbers
         width = 8 * scale;
         height = 8 * scale;
@@ -490,9 +494,9 @@ void SCR_HUD_DrawGunByNum (hud_t *hud, int num, float scale, int style, int wide
         if ( HUD_Stats(STAT_ITEMS) & (IT_SHOTGUN<<i) )
         {
             if ( HUD_Stats(STAT_ACTIVEWEAPON) == (IT_SHOTGUN<<i) )
-                num += '0';
+				num += '0' + (style == 4 ? 128 : 0);
             else
-                num += '0' + 128;
+				num += '0' + (style == 4 ? 0 : 128);
             Draw_SCharacter(x, y, num, scale);
         }
         break;
