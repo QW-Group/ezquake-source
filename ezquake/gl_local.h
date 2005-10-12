@@ -34,7 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef __GNUC__
 #include <GL/glext.h>
 #endif
-#include <GL/glx.h>
 #endif
 
 #include "gl_texture.h"
