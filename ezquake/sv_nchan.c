@@ -150,6 +150,15 @@ void ClientReliableWrite_String(client_t *cl, char *s)
 		MSG_WriteString(&cl->netchan.message, s);
 }
 
+void ClientReliableWrite_UnterminatedString(client_t *cl, char *s)
+{
+	if (cl->num_backbuf) {
+		MSG_WriteUnterminatedString(&cl->backbuf, s);
+		ClientReliable_FinishWrite(cl);
+	} else
+		MSG_WriteUnterminatedString(&cl->netchan.message, s);
+}
+
 void ClientReliableWrite_SZ(client_t *cl, void *data, int len)
 {
 	if (cl->num_backbuf) {

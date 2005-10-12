@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // server.h
 
+#ifndef __SERVER_H__
+#define __SERVER_H__
+
 #include "progs.h"
 
 #define	MAX_MASTERS	8				// max recipients for heartbeat packets
@@ -443,9 +446,12 @@ void ClientReliableWrite_Coord(client_t *cl, float f);
 void ClientReliableWrite_Long(client_t *cl, int c);
 void ClientReliableWrite_Short(client_t *cl, int c);
 void ClientReliableWrite_String(client_t *cl, char *s);
+void ClientReliableWrite_UnterminatedString(client_t *cl, char *s);
 void ClientReliableWrite_SZ(client_t *cl, void *data, int len);
 void SV_ClearReliable (client_t *cl);	// clear cl->netchan.message and backbuf
  
 // sv_save.c 
 void SV_SaveGame_f (void); 
 void SV_LoadGame_f (void); 
+
+#endif

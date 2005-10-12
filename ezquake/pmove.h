@@ -18,6 +18,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#ifndef __PMOVE_H__
+#define __PMOVE_H__
+
 typedef struct {
 	vec3_t	normal;
 	float	dist;
@@ -116,3 +119,5 @@ void PM_CategorizePosition (void);
 qbool PM_TestPlayerPosition (vec3_t point);
 pmtrace_t PM_PlayerTrace (vec3_t start, vec3_t end);
 pmtrace_t PM_TraceLine (vec3_t start, vec3_t end);
+
+#endif

@@ -1108,6 +1108,17 @@ void PF_WriteString (void) {
 	}
 }
 
+//void(float to, string s) WriteUnterminatedString = #456
+void PF_WriteUnterminatedString (void) {
+	if (G_FLOAT(OFS_PARM0) == MSG_ONE) {
+		client_t *cl = Write_GetClient();
+		ClientReliableCheckBlock(cl, strlen(G_STRING(OFS_PARM1)));
+		ClientReliableWrite_UnterminatedString(cl, G_STRING(OFS_PARM1));
+	} else {
+		MSG_WriteUnterminatedString (WriteDest(), G_STRING(OFS_PARM1));
+	}
+}
+
 //void(float to, entity e) WriteEntity = #59
 void PF_WriteEntity (void) {
 	if (G_FLOAT(OFS_PARM0) == MSG_ONE) {
@@ -1598,6 +1609,7 @@ static char *ENGINE_EXTENSIONS[] = {
 	"DP_QC_RANDOMVEC",
 	"DP_QC_SINCOSSQRTPOW",
 	"DP_QC_VECTORVECTORS",
+	"DP_SV_WRITEUNTERMINATEDSTRING",
 	//"FRIK_FILE",		//incomplete
 	"KRIMZON_SV_PARSECLIENTCOMMAND",
 	"ZQ_MOVETYPE_NOCLIP",
@@ -1774,6 +1786,20 @@ NULL,
 PF_clientcommand,	// #440 void(entity e, string s) clientcommand (KRIMZON_SV_PARSECLIENTCOMMAND)
 PF_tokenize,		// #441 float(string s) tokenize (KRIMZON_SV_PARSECLIENTCOMMAND)
 PF_argv,			// #442 string(float n) argv (KRIMZON_SV_PARSECLIENTCOMMAND
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+PF_WriteUnterminatedString
 };
 
 int pr_numbuiltins = sizeof(pr_builtins) / sizeof(pr_builtins[0]);

@@ -22,6 +22,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define DIRECTINPUT_VERSION	0x0700
 
 #include <dinput.h>
+
+#ifndef DIMOFS_BUTTON4
+	#pragma message("Warning: You don't have directx7 headers installed, directinput disabled")
+	#undef DIRECTINPUT_VERSION
+	#define DIRECTINPUT_VERSION 0
+#endif
+
+
 #include "quakedef.h"
 #include "winquake.h"
 #ifdef WITH_KEYMAP
@@ -118,10 +126,11 @@ int			joy_id;
 DWORD		joy_flags;
 DWORD		joy_numbuttons;
 
+static JOYINFOEX	ji;
+
+#if DIRECTINPUT_VERSION >= 0x700
 static LPDIRECTINPUT7		g_pdi;
 static LPDIRECTINPUTDEVICE7	g_pMouse;
-
-static JOYINFOEX	ji;
 
 static HINSTANCE hInstDI;
 
@@ -165,6 +174,9 @@ static DIDATAFORMAT	df = {
 	NUM_OBJECTS,                // number of objects
 	rgodf,                      // and here they are
 };
+#else
+#define dinput false
+#endif
 
 // forward-referenced functions
 void IN_StartupJoystick (void);
@@ -214,10 +226,11 @@ int		 wheel_dn_count	= 0;
 		INPUT_CASE_DIMOFS_BUTTON(6);		\
 		INPUT_CASE_DIMOFS_BUTTON(7);		\
 
-
+#if DIRECTINPUT_VERSION >= 0x700
 DWORD WINAPI IN_SMouseProc(void	* lpParameter) {
 	// read	mouse events and generate history tables
 	DWORD ret;
+
 	while (1) {
 		if ((ret = WaitForSingleObject(m_event,	INFINITE)) == WAIT_OBJECT_0) {
 			int	mx = 0,	my = 0;
@@ -402,6 +415,7 @@ void IN_SMouseInit(void) {
 
 	use_m_smooth = true;
 }
+#endif
 
 
 typedef void (*MW_DllFunc1)(void);
@@ -500,6 +514,7 @@ void IN_ActivateMouse (void) {
 	mouseactivatetoggle = true;
 
 	if (mouseinitialized) {
+#if DIRECTINPUT_VERSION	>= 0x0700
 		if (dinput) {
 			if (g_pMouse) {
 				if (!dinput_acquired) {
@@ -509,7 +524,9 @@ void IN_ActivateMouse (void) {
 			} else {
 				return;
 			}
-		} else {
+		} else
+#endif
+		{
 			if (mouseparmsvalid)
 				restore_spi = SystemParametersInfo (SPI_SETMOUSE, 0, newmouseparms, 0);
 
@@ -530,6 +547,7 @@ void IN_DeactivateMouse (void) {
 	mouseactivatetoggle = false;
 
 	if (mouseinitialized) {
+#if DIRECTINPUT_VERSION	>= 0x0700
 		if (dinput) {
 			if (g_pMouse) {
 				if (dinput_acquired) {
@@ -537,13 +555,15 @@ void IN_DeactivateMouse (void) {
 					dinput_acquired = false;
 				}
 			}
-		} else {
-		if (restore_spi)
-			SystemParametersInfo (SPI_SETMOUSE, 0, originalmouseparms, 0);
+		} else
+#endif
+		{
+			if (restore_spi)
+				SystemParametersInfo (SPI_SETMOUSE, 0, originalmouseparms, 0);
 
-		ClipCursor (NULL);
-		ReleaseCapture ();
-	}
+			ClipCursor (NULL);
+			ReleaseCapture ();
+		}
 
 		mouseactive = false;
 	}
@@ -561,6 +581,7 @@ void IN_RestoreOriginalMouseState (void) {
 }
 
 qbool IN_InitDInput (void) {
+#if DIRECTINPUT_VERSION	>= 0x0700
     HRESULT hr;
 	DIPROPDWORD	dipdw = {
 		{
@@ -641,6 +662,9 @@ qbool IN_InitDInput (void) {
 
 
 	return true;
+#else
+	return false;
+#endif
 }
 
 void IN_StartupMouse (void) {
@@ -650,6 +674,7 @@ void IN_StartupMouse (void) {
 	mouseinitialized = true;
 
 	if (COM_CheckParm ("-dinput")) {
+#if DIRECTINPUT_VERSION	>= 0x0700
 		dinput = IN_InitDInput ();
 
 		if (dinput) {
@@ -660,6 +685,9 @@ void IN_StartupMouse (void) {
 		} else {
 			Com_Printf ("DirectInput not initialized\n");
 		}
+#else
+		Com_Printf ("DirectInput not supported in this build\n");
+#endif
 	}
 
 	if (!dinput) {
@@ -725,6 +753,7 @@ void IN_Shutdown (void) {
 	IN_DeactivateMouse ();
 	IN_ShowMouse ();
 
+#if DIRECTINPUT_VERSION	>= 0x0700
     if (g_pMouse) {
 		IDirectInputDevice_Release(g_pMouse);
 		g_pMouse = NULL;
@@ -734,6 +763,7 @@ void IN_Shutdown (void) {
 		IDirectInput_Release(g_pdi);
 		g_pdi = NULL;
 	}
+#endif
 	MW_Shutdown();
 }
 
@@ -754,15 +784,18 @@ void IN_MouseEvent (int mstate) {
 }
 
 void IN_MouseMove (usercmd_t *cmd) {
-	int mx, my, i;
+	int mx, my;
 	float filterfrac;
+#if DIRECTINPUT_VERSION	>= 0x0700
+	int i;
 	DIDEVICEOBJECTDATA od;
 	DWORD dwElements;
 	HRESULT hr;
+#endif
 
 	if (!mouseactive)
 		return;
-
+#if DIRECTINPUT_VERSION	>= 0x0700
 	if (dinput)	{
 		mx = my = 0;
 
@@ -821,7 +854,9 @@ void IN_MouseMove (usercmd_t *cmd) {
 				Key_Event (K_MOUSE1 + i, false);
 		}
 		mouse_oldbuttonstate = mstate_di;
-	} else {
+	} else
+#endif
+	{
 		GetCursorPos (&current_pos);
 		mx = current_pos.x - window_center_x + mx_accum;
 		my = current_pos.y - window_center_y + my_accum;

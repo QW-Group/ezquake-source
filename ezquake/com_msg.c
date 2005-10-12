@@ -88,6 +88,11 @@ void MSG_WriteString (sizebuf_t *sb, char *s) {
 		SZ_Write (sb, s, strlen(s)+1);
 }
 
+void MSG_WriteUnterminatedString (sizebuf_t *sb, char *s) {
+	if (s)
+		SZ_Write (sb, s, strlen(s));
+}
+
 void MSG_WriteCoord (sizebuf_t *sb, float f) {
 	MSG_WriteShort (sb, (int)(f * 8));
 }
