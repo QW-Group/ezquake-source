@@ -186,7 +186,7 @@ qbool FChecks_SystemRequest (char *s) {
 	if (cl.spectator || (f_system_reply_time && cls.realtime - f_system_reply_time < 20))
 		return false;
 
-	#ifdef _WIN32
+	#if defined(_WIN32) || defined(__linux__)
 
 	if (Util_F_Match(s, "f_system"))	{
 	    char *sys_string;
