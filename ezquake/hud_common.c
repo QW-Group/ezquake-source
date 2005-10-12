@@ -1421,6 +1421,58 @@ void SCR_HUD_Group5(hud_t *hud)
     }
     SCR_HUD_DrawGroup(hud, width->value, height->value, picture->string, tile->value, alpha->value);
 }
+void SCR_HUD_Group6(hud_t *hud)
+{
+    static cvar_t *width = NULL, *height, *picture, *tile, *alpha;
+    if (width == NULL)  // first time called
+    {
+        width  = HUD_FindVar(hud, "width");
+        height = HUD_FindVar(hud, "height");
+        picture = HUD_FindVar(hud, "picture");
+        tile = HUD_FindVar(hud, "tile");
+        alpha = HUD_FindVar(hud, "alpha");
+    }
+    SCR_HUD_DrawGroup(hud, width->value, height->value, picture->string, tile->value, alpha->value);
+}
+void SCR_HUD_Group7(hud_t *hud)
+{
+    static cvar_t *width = NULL, *height, *picture, *tile, *alpha;
+    if (width == NULL)  // first time called
+    {
+        width  = HUD_FindVar(hud, "width");
+        height = HUD_FindVar(hud, "height");
+        picture = HUD_FindVar(hud, "picture");
+        tile = HUD_FindVar(hud, "tile");
+        alpha = HUD_FindVar(hud, "alpha");
+    }
+    SCR_HUD_DrawGroup(hud, width->value, height->value, picture->string, tile->value, alpha->value);
+}
+void SCR_HUD_Group8(hud_t *hud)
+{
+    static cvar_t *width = NULL, *height, *picture, *tile, *alpha;
+    if (width == NULL)  // first time called
+    {
+        width  = HUD_FindVar(hud, "width");
+        height = HUD_FindVar(hud, "height");
+        picture = HUD_FindVar(hud, "picture");
+        tile = HUD_FindVar(hud, "tile");
+        alpha = HUD_FindVar(hud, "alpha");
+    }
+    SCR_HUD_DrawGroup(hud, width->value, height->value, picture->string, tile->value, alpha->value);
+}
+void SCR_HUD_Group9(hud_t *hud)
+{
+    static cvar_t *width = NULL, *height, *picture, *tile, *alpha;
+    if (width == NULL)  // first time called
+    {
+        width  = HUD_FindVar(hud, "width");
+        height = HUD_FindVar(hud, "height");
+        picture = HUD_FindVar(hud, "picture");
+        tile = HUD_FindVar(hud, "tile");
+        alpha = HUD_FindVar(hud, "alpha");
+    }
+    SCR_HUD_DrawGroup(hud, width->value, height->value, picture->string, tile->value, alpha->value);
+}
 
 // player sorting
 // for frags and players
@@ -2705,7 +2757,7 @@ void CommonDraw_Init(void)
         "alpha", "1",
         NULL);
     HUD_Register("group6", NULL, "Group element.",
-        HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group2,
+        HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group6,
         "0", "screen", "left", "top", "0", "0", ".5",
         "name", "group6",
         "width", "64",
@@ -2715,7 +2767,7 @@ void CommonDraw_Init(void)
         "alpha", "1",
         NULL);
     HUD_Register("group7", NULL, "Group element.",
-        HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group3,
+        HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group7,
         "0", "screen", "left", "top", "0", "0", ".5",
         "name", "group7",
         "width", "64",
@@ -2725,7 +2777,7 @@ void CommonDraw_Init(void)
         "alpha", "1",
         NULL);
     HUD_Register("group8", NULL, "Group element.",
-        HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group4,
+        HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group8,
         "0", "screen", "left", "top", "0", "0", ".5",
         "name", "group8",
         "width", "64",
@@ -2735,7 +2787,7 @@ void CommonDraw_Init(void)
         "alpha", "1",
         NULL);
     HUD_Register("group9", NULL, "Group element.",
-        HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group5,
+        HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group9,
         "0", "screen", "left", "top", "0", "0", ".5",
         "name", "group9",
         "width", "64",
