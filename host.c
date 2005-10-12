@@ -148,11 +148,80 @@ char * SYSINFO_GetString(void)
     return f_system_string;
 }
 
-void SYSINFO_Init(void) { // hexum -> TODO
-	// get memory from proc
-	// get cpu mhz from proc
-	// get cpu desc from proc
-	// get GL desc <-- easy, comes from gl_renderer string
+void SYSINFO_Init(void) {
+// disconnect: which way is best(MEM/CPU-MHZ/CPU-MODEL)?
+	f_system_string[0] = 0;
+	char buffer[1024];
+	char cpu_model[255];
+	char *match;
+	FILE *f;
+// MEM
+	f = fopen("/proc/meminfo", "r");
+	if (f) {
+		fscanf (f, "%*s %u %*s\n", &SYSINFO_memory);
+		fclose (f);
+		SYSINFO_memory /= 1024;
+	} else {
+		Com_Printf ("could not open /proc/meminfo!\n");
+	}
+//CPU-MHZ
+	f = fopen("/proc/cpuinfo", "r");
+	if (f) {
+		fread (buffer, 1, sizeof(buffer) - 1, f);
+		fclose (f);
+		buffer[sizeof(buffer)] = '\0';
+		match = strstr (buffer, "cpu MHz");
+		sscanf (match, "cpu MHz : %i", &SYSINFO_MHz);
+	} else {
+		Com_Printf ("could not open /proc/cpuinfo!\n");
+	}
+//CPU-MODEL
+	if (( f = fopen("/proc/cpuinfo", "r")) == NULL ) {
+		Com_Printf("could not open /proc/cpuinfo!\n");
+        }
+        while(!feof(f)) {
+		fgets(buffer, 1023, f);
+		if (! strncmp( buffer, "model name", 10) ) {
+			match = strchr( buffer, ':' );
+			match++;
+			while (isspace(*match)) match++;
+			strncpy(cpu_model, match, 254 );
+			cpu_model[strlen(cpu_model) - 1] = '\0';
+			SYSINFO_processor_description= Q_strdup (cpu_model);
+		}
+	}
+        fclose(f);
+
+#ifdef GLQUAKE
+	{
+		extern const char *gl_renderer;
+
+		if (gl_renderer  &&  gl_renderer[0])
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
+	}
+#endif
+
+	f_system_string[0] = 0;
+
+	strcat(f_system_string, va("%d", (int)(SYSINFO_memory)));
+	strcat(f_system_string, "MB");
+
+	if (SYSINFO_processor_description)
+	{
+		strcat(f_system_string, ", ");
+		strcat(f_system_string, SYSINFO_processor_description);
+	}
+	if (SYSINFO_MHz)
+	{
+		strcat(f_system_string, " ");
+		strcat(f_system_string, va("%d", SYSINFO_MHz));
+		strcat(f_system_string, "MHz");
+	}
+	if (SYSINFO_3D_description)
+	{
+		strcat(f_system_string, ", ");
+		strcat(f_system_string, SYSINFO_3D_description);
+	}
 }
 #else
 void SYSINFO_Init(void) {}
@@ -305,7 +374,7 @@ void Host_Init (int argc, char **argv, int default_memsize) {
 	SV_Init ();
 	CL_Init ();
 
-    SYSINFO_Init();
+	SYSINFO_Init();
 
 	HUD_Init(); // HUD -> hexum
 	HUD_InitFinish(); // HUD -> hexum
