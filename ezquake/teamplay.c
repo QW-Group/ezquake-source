@@ -3403,6 +3403,9 @@ qbool TP_CheckSoundTrigger (char *str) {
 	char soundname[MAX_OSPATH];
 	FILE *f;
 
+	if (!*str)
+		return false;
+
 	if (!tp_soundtrigger.string[0])
 		return false;
 
@@ -3413,7 +3416,7 @@ qbool TP_CheckSoundTrigger (char *str) {
 		for (j = i - 1; j >= 0; j--) {
 			// quick check for chars that cannot be used
 			// as sound triggers but might be part of a file name
-   if (isalnum(str[j]))
+	if (isalnum(str[j]))
 				continue;	// file name or chat
 
 			if (strchr(tp_soundtrigger.string, str[j]))	{
