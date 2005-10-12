@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef WITH_PNG
 #include "png.h"
 #ifdef _WIN32
-#pragma comment(lib, "libs/libpng.lib")
+//#pragma comment(lib, "libs/libpng.lib")
 #endif
 #endif
 
@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "jerror.h"
 #include <setjmp.h>
 #ifdef _WIN32
-#pragma comment(lib, "libs/libjpeg.lib")
+//#pragma comment(lib, "libs/libjpeg.lib")
 #endif
 #endif
 
