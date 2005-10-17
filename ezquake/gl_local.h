@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: gl_local.h,v 1.12 2005-10-17 16:28:04 vvd0 Exp $
+
 */
 // gl_local.h -- private refresh defs
 
@@ -33,6 +35,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <GL/glu.h>
 #ifdef __GNUC__
 #include <GL/glext.h>
+#endif
+#ifndef _WIN32
+#include <GL/glx.h>
 #endif
 #endif
 
