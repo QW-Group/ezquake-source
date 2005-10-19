@@ -1,5 +1,5 @@
 //VULT: I'm sure this came from darkplaces but I can no longer remember
-//Lordhavoc gets credit for it anyway :\
+//Lordhavoc gets credit for it anyway
 
 #include "quakedef.h"
 #include "collision.h"

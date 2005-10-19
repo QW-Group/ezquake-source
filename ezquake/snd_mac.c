@@ -37,7 +37,7 @@ static unsigned char dma[64*1024];
 SndChannelPtr  			gChannel;            // pointer to the sound channel
 SndDoubleBufferHeader 	gHeader;             // the double buffer header
 static char sRandomBuf[SoundBufferSize];
-// disconnect: WTF?! it's already defined in qsound.h, but i got errors =:-\
+// disconnect: WTF?! it's already defined in qsound.h, but i got errors
 typedef struct
 {
 	qbool		gamealive;
