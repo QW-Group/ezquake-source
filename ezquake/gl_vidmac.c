@@ -175,8 +175,8 @@ void MacSetupScreen ()
 		 	{
 			 	gScreen.profile->texturebits = 16;
 //				Cvar_Set (&gl_texturebits, "16");
-			 	gl_solid_format = GL_RGB5;
-			 	gl_alpha_format = GL_RGBA4;
+//			 	gl_solid_format = GL_RGB5;
+//			 	gl_alpha_format = GL_RGBA4;
 			}
 		}
 
@@ -1477,6 +1477,7 @@ void VID_Restart_f (void)
 	vid_newprofile.mode = (int)vid_mode.value;
 	vid_newprofile.colorbits = (int)gl_vid_colorbits.value;
 //	vid_newprofile.texturebits = (int)gl_texturebits.value;
+	vid_newprofile.texturebits = 32;
 	vid_newprofile.window = gl_vid_windowed.value ? true : false;
 
 	// Do fades if going from full screen to windowed or vice-versa
@@ -1532,13 +1533,13 @@ void VID_Restart_f (void)
 
 	if (texturereload)
 	{
-		if (gScreen.profile->texturebits == 16) {
+/*		if (gScreen.profile->texturebits == 16) {
 			gl_solid_format = GL_RGB5;
 			gl_alpha_format = GL_RGBA4;
 		} else {
 			gl_solid_format = GL_RGB8;
 			gl_alpha_format = GL_RGBA8;
-		}
+		}*/
 	}
 
 	// Update the global windowed state
@@ -1615,6 +1616,7 @@ void VID_ToggleWindow_f ()
 	old_mode = vid_mode.value;
 	old_colorbits = gl_vid_colorbits.value;
 //	old_texturebits = gl_texturebits.value;
+	old_texturebits = 32;
 
 	// Make sure these aren't changed by video_restart
 	Cvar_SetValue (&gl_vid_screen, gScreen.profile->screen);

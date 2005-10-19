@@ -82,7 +82,7 @@ extern DSpContextReference gSprocketContext;
 extern DisplayIDType gDisplayID;
 extern Fixed gRefreshRate;	
 
-/// Function Protos
+// Function Protos
 void IN_ShowCursor (void);
 void IN_HideCursor (void);
 void IN_SuspendMouse (void);
