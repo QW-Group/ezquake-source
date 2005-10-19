@@ -509,13 +509,22 @@ static qbool PNG_LoadLibrary(void) {
 #ifdef _WIN32
 	if (!(png_handle = LoadLibrary("libpng.dll"))) {
 #else
+#ifdef __APPLE__
+	if (!(png_handle = dlopen("libpng.dylib", RTLD_NOW))) {
+		if (!(zlib_handle = dlopen("libz.dylib", RTLD_NOW))) {
+#else
 	if (!(png_handle = dlopen("libpng12.so.0", RTLD_NOW)) && !(png_handle = dlopen("libpng.so", RTLD_NOW))) {
 		if (!(zlib_handle = dlopen("libz.so", RTLD_NOW | RTLD_GLOBAL))) {
+#endif
 			QLib_MissingModuleError(QLIB_ERROR_MODULE_NOT_FOUND, "libz", "-nolibpng", "png image features");
 			png_handle = zlib_handle = NULL;
 			return false;
 		}
+#ifdef __APPLE__
+		if (!(png_handle = dlopen("libpng.dylib", RTLD_NOW)))
+#else
 		if (!(png_handle = dlopen("libpng12.so.0", RTLD_NOW)) && !(png_handle = dlopen("libpng.so", RTLD_NOW)))
+#endif
 #endif
 		{
 			PNG_FreeLibrary();
@@ -1055,7 +1064,11 @@ static qbool JPEG_LoadLibrary(void) {
 #ifdef _WIN32
 	if (!(jpeg_handle = LoadLibrary("libjpeg.dll"))) {
 #else
+#ifdef __APPLE__
+	if (!(jpeg_handle = dlopen("libjpeg.dylib", RTLD_NOW))) {
+#else
 	if (!(jpeg_handle = dlopen("libjpeg.so.62", RTLD_NOW)) && !(jpeg_handle = dlopen("libjpeg.so", RTLD_NOW))) {
+#endif
 #endif
 		QLib_MissingModuleError(QLIB_ERROR_MODULE_NOT_FOUND, "libjpeg", "-nolibjpeg", "jpeg image features");
 		jpeg_handle = NULL;
