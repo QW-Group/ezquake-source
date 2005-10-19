@@ -43,7 +43,11 @@ extern char _temp_modulename[MAX_OSPATH];
 #define QLIB_FREELIBRARY(lib) (FreeLibrary(lib), lib = NULL)
 #else
 #define QLIB_HANDLETYPE_T void *
+#ifdef __APPLE__
+#define QLIB_LIBRARY_EXTENSION ".dylib"
+#else
 #define QLIB_LIBRARY_EXTENSION ".so"
+#endif
 #define QLIB_LOADLIBRARY(lib)									\
 	(																\
 	Q_snprintfz(_temp_modulename, MAX_OSPATH, "%s.so", lib),	\
