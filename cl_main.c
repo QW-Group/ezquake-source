@@ -961,13 +961,13 @@ void CL_Init (void) {
 	V_Init ();
 	MVD_Utils_Init ();
 
-#ifdef __linux__
+#ifndef _WIN32
 	IN_Init ();
 #endif
 
 	VID_Init (host_basepal);
 
-#ifndef __linux__
+#ifdef _WIN32
 	IN_Init ();
 #endif
 

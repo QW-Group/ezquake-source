@@ -223,9 +223,55 @@ void SYSINFO_Init(void) {
 		strcat(f_system_string, SYSINFO_3D_description);
 	}
 }
+#elif defined(__APPLE__)
+int     SYSINFO_memory = 0;
+int     SYSINFO_MHz = 0;
+char *  SYSINFO_processor_description = NULL;
+char *  SYSINFO_3D_description        = NULL;
+
+char f_system_string[1024] = ""; 
+
+char * SYSINFO_GetString(void)
+{
+    return f_system_string;
+}
+
+void SYSINFO_Init(void) {
+// TODO: disconnect --> f_system for MacOSX (man sysctl)
+#ifdef GLQUAKE
+	{
+		extern const char *gl_renderer;
+
+		if (gl_renderer  &&  gl_renderer[0])
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
+	}
+#endif
+
+	f_system_string[0] = 0;
+
+	strcat(f_system_string, va("%d", (int)(SYSINFO_memory)));
+	strcat(f_system_string, "MB");
+
+	if (SYSINFO_processor_description)
+	{
+		strcat(f_system_string, ", ");
+		strcat(f_system_string, SYSINFO_processor_description);
+	}
+	if (SYSINFO_MHz)
+	{
+		strcat(f_system_string, " ");
+		strcat(f_system_string, va("%d", SYSINFO_MHz));
+		strcat(f_system_string, "MHz");
+	}
+	if (SYSINFO_3D_description)
+	{
+		strcat(f_system_string, ", ");
+		strcat(f_system_string, SYSINFO_3D_description);
+	}
+}
 #else
 void SYSINFO_Init(void) {}
-#endif // _WIN32
+#endif
 
 void Host_Abort (void) {
 	longjmp (host_abort, 1);

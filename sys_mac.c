@@ -757,7 +757,7 @@ static void SetGlobalsFromPrefs (void)
 	else
 		vid_currentprofile.colorbits = 32;
 
-	if (macPrefs.tex_depth == kMenuBpp16) {
+/*	if (macPrefs.tex_depth == kMenuBpp16) {
 		vid_currentprofile.texturebits = 16;
 		gl_solid_format = GL_RGB5;
 		gl_alpha_format = GL_RGBA4;
@@ -765,7 +765,7 @@ static void SetGlobalsFromPrefs (void)
 		vid_currentprofile.texturebits = 32;
 		gl_solid_format = GL_RGB8;
 		gl_alpha_format = GL_RGBA8;
-	}
+	}*/
 	
 	glWindowPos.v = macPrefs.glwindowpos.v ? macPrefs.glwindowpos.v : 52;
 	glWindowPos.h = macPrefs.glwindowpos.h ? macPrefs.glwindowpos.h : 52;
@@ -1115,7 +1115,7 @@ OptionsHandler( EventHandlerCallRef inHandler, EventRef inEvent, void* userData 
 // int main (int argc, char **argv)
 int main (int argc, char *argv[])
 {
-	double	time, oldtime, newtime;
+	double	now, then;
 
 	COM_InitArgv (argc, argv);
 #if !defined(CLIENTONLY)
@@ -1225,17 +1225,26 @@ int main (int argc, char *argv[])
 		SetVideoCvarsForPrefs();
 	}
 
-	oldtime = Sys_DoubleTime ();
+	/*while (alive)
+	{
+		now = Sys_DoubleTime ();
+		HandleEvents ();
+		Host_Frame (now-then);
+		then = now;
+	}
+
+	Sys_Quit();
+	return 0;*/
+
+	/*then = Sys_DoubleTime ();*/
 	while (1) {
 		if (dedicated)
 			NET_Sleep (10);
 
-		// find time spent rendering last frame
-		newtime = Sys_DoubleTime ();
-		time = newtime - oldtime;
-		oldtime = newtime;
-
-		Host_Frame(time);
+		now = Sys_DoubleTime ();
+		HandleEvents ();
+		Host_Frame (now-then);
+		then = now;
 
 		if (dedicated) {
 			if (sys_extrasleep.value)
