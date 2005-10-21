@@ -825,7 +825,17 @@ void Cvar_Set_Calc_f(void)
 		else
 			Cvar_SetValue (var, -1);
 		return;
-	} 
+	} else if (!strcmp (a2, "tobrown")) {
+		strcpy(buf, var->string);
+		CharsToBrown(buf, buf + strlen(buf));
+		Cvar_Set(var, buf);
+		return;
+	} else if (!strcmp (a2, "towhite")) {
+		strcpy(buf, var->string);
+		CharsToWhite(buf, buf + strlen(buf));
+		Cvar_Set(var, buf);
+		return;
+	}
 
 	num1 = Q_atof(a2);
 	op = a3;
@@ -973,5 +983,42 @@ void ReSearchDone (void)
 	if (wildcard_re_extra[wildcard_level]) (pcre_free)(wildcard_re_extra[wildcard_level]);
 }
 
+char CharToBrown(char ch)
+{
+	if ( ch > 32 && ch <= 127 )
+		return ch + 128;
+	else
+		return ch;
+}
+
+char CharToWhite(char ch)
+{
+	if ( ch > 160 )
+		return ch - 128;
+	else
+		return ch;
+}
+
+void CharsToBrown(char* start, char* end)
+{
+	char *p = start;
+
+	while (p < end) {
+		if ( *p > 32 && *p <= 127 )
+			*p += 128;
+		p++;
+	}
+}
+
+void CharsToWhite(char* start, char* end)
+{
+	char *p = start;
+
+	while (p < end) {
+		if ( *p > 160 )
+			*p -= 128;
+		p++;
+	}
+}
 // <-- QW262
 #endif
