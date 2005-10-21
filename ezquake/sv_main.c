@@ -24,8 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 int			current_skill;			// for entity spawnflags checking
 
-netadr_t	master_adr[MAX_MASTERS];	// address of group servers
-
 client_t	*sv_client;					// current client
 
 cvar_t	sv_mintic = {"sv_mintic", "0.013"};	// bound the size of the
@@ -80,7 +78,6 @@ cvar_t	skill = {"skill", "1"};
 FILE	*sv_fraglogfile;
 
 void SV_AcceptClient (netadr_t adr, int userid, char *userinfo);
-void Master_Shutdown (void);
 
 //============================================================================
 
@@ -1120,54 +1117,6 @@ void SV_InitLocal (void) {
 
 
 //============================================================================
-
-
-//Send a message to the master every few minutes to let it know we are alive, and log information
-#define	HEARTBEAT_SECONDS	300
-void Master_Heartbeat (void) {
-	char string[2048];
-	int active, i;
-
-	if (svs.realtime - svs.last_heartbeat < HEARTBEAT_SECONDS)
-		return;		// not time to send yet
-
-	svs.last_heartbeat = svs.realtime;
-
-	// count active users
-	active = 0;
-	for (i = 0; i < MAX_CLIENTS; i++)
-		if (svs.clients[i].state == cs_connected ||
-		svs.clients[i].state == cs_spawned )
-			active++;
-
-	svs.heartbeat_sequence++;
-	sprintf (string, "%c\n%i\n%i\n", S2M_HEARTBEAT,
-		svs.heartbeat_sequence, active);
-
-
-	// send to group master
-	for (i = 0; i < MAX_MASTERS; i++)
-		if (master_adr[i].port) {
-			Com_Printf ("Sending heartbeat to %s\n", NET_AdrToString (master_adr[i]));
-			NET_SendPacket (NS_SERVER, strlen(string), string, master_adr[i]);
-		}
-}
-
-//Informs all masters that this server is going down
-void Master_Shutdown (void) {
-	char string[2048];
-	int i;
-
-	sprintf (string, "%c\n", S2M_SHUTDOWN);
-
-	// send to group master
-	for (i = 0; i < MAX_MASTERS; i++) {
-		if (master_adr[i].port) {
-			Com_Printf ("Sending heartbeat to %s\n", NET_AdrToString (master_adr[i]));
-			NET_SendPacket (NS_SERVER, strlen(string), string, master_adr[i]);
-		}
-	}
-}
 
 //Pull specific info from a newly changed userinfo string into a more C freindly form.
 void SV_ExtractFromUserinfo (client_t *cl) {

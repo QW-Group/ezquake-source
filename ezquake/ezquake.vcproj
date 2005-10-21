@@ -603,6 +603,9 @@
 					RelativePath=".\sv_main.c">
 				</File>
 				<File
+					RelativePath=".\sv_master.c">
+				</File>
+				<File
 					RelativePath=".\sv_move.c">
 				</File>
 				<File
@@ -1746,6 +1749,9 @@
 				Filter="">
 				<File
 					RelativePath=".\pmove.h">
+				</File>
+				<File
+					RelativePath=".\server.h">
 				</File>
 			</Filter>
 			<Filter

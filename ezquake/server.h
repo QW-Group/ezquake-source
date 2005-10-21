@@ -383,7 +383,6 @@ void SV_InitOperatorCommands (void);
 void SV_ExtractFromUserinfo (client_t *cl);
 int SV_BoundRate (int rate);
 
-void Master_Heartbeat (void);
 void Master_Packet (void);
 
 // sv_move.c
@@ -453,5 +452,11 @@ void SV_ClearReliable (client_t *cl);	// clear cl->netchan.message and backbuf
 // sv_save.c 
 void SV_SaveGame_f (void); 
 void SV_LoadGame_f (void); 
+
+// sv_master.c
+void SV_SetMaster_f (void);
+void SV_Heartbeat_f (void);
+void Master_Shutdown (void);
+void Master_Heartbeat (void);
 
 #endif
