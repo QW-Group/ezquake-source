@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.25 2005-10-19 18:38:30 disconn3ct Exp $
+	$Id: keys.c,v 1.26 2005-10-21 17:14:31 disconn3ct Exp $
 
 */
 
@@ -27,7 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //key up events are sent even if in console mode
 
-cvar_t	cl_chatmode = {"cl_chatmode", "2"};
+cvar_t cl_chatmode = {"cl_chatmode", "2"};
+cvar_t con_funchars_mode = {"con_funchars_mode", "0"};
 cvar_t cl_newCompletion = { "cl_newCompletion", "1" }; // addeded by jogi
 
 #ifdef WITH_KEYMAP
@@ -1139,27 +1140,29 @@ void Key_Console (int key) {
 		return;	// non printable
 
 #ifdef WITH_KEYMAP
-	// CTRL+y toggles yellowchars
-	if (keydown[K_CTRL] && key == 'y' && !keydown[K_ALTGR] && !keydown[K_ALT]) {
-		yellowchars = !yellowchars;
-		if ( redchars )
-			Com_Printf( "input of red characters is now off!\n" );
-		redchars    = false;
-		Com_Printf( "input of yellow numbers is now o%s!\n", yellowchars ? "n" : "ff" );
-		return;
+	if (con_funchars_mode.value) {
+		// CTRL+y toggles yellowchars
+		if (keydown[K_CTRL] && key == 'y' && !keydown[K_ALTGR] && !keydown[K_ALT]) {
+			yellowchars = !yellowchars;
+			if ( redchars )
+				Com_Printf( "input of red characters is now off!\n" );
+			redchars    = false;
+			Com_Printf( "input of yellow numbers is now o%s!\n", yellowchars ? "n" : "ff" );
+			return;
+		}
+
+		// CTRL+r toggles redchars
+		if (keydown[K_CTRL] && key == 'r' && !keydown[K_ALTGR] && !keydown[K_ALT]) {
+			redchars    = !redchars;
+			if ( yellowchars )
+				Com_Printf( "input of yellow numbers is now off!\n" );
+			yellowchars = false;
+				Com_Printf( "input of red characters is now o%s!\n", redchars ? "n" : "ff" );
+			return;
+		}
 	}
 
-	// CTRL+r toggles redchars
-	if (keydown[K_CTRL] && key == 'r' && !keydown[K_ALTGR] && !keydown[K_ALT]) {
-		redchars    = !redchars;
-		if ( yellowchars )
-			Com_Printf( "input of yellow numbers is now off!\n" );
-		yellowchars = false;
-			Com_Printf( "input of red characters is now o%s!\n", redchars ? "n" : "ff" );
-		return;
-	}
-
-	if ( yellowchars ) {
+	if ( yellowchars || (keydown[K_CTRL] && !(con_funchars_mode.value))) {
 #else // WITH_KEYMAP
 	if (keydown[K_CTRL]) {
 #endif // WITH_KEYMAP else
@@ -1187,7 +1190,7 @@ void Key_Console (int key) {
 	}
 
 #ifdef WITH_KEYMAP
-	if (redchars)
+	if (redchars || (keydown[K_ALT] && !(con_funchars_mode.value)))
 #else // WITH_KEYMAP
 	if (keydown[K_ALT])
 #endif // WITH_KEYMAP else
@@ -1743,6 +1746,7 @@ void Key_Init (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register (&cl_chatmode);
 	Cvar_Register (&cl_newCompletion);
+	Cvar_Register (&con_funchars_mode);
 
 	Cvar_ResetCurrentGroup();
 }
