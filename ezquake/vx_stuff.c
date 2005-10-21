@@ -70,7 +70,7 @@ cvar_t		amf_part_fasttrails = {"gl_particle_fasttrails", "0", CVAR_ARCHIVE};
 cvar_t		amf_part_gibtrails = {"gl_particle_gibtrails", "0", CVAR_ARCHIVE}; // 1
 cvar_t		amf_part_muzzleflash = {"gl_particle_muzzleflash", "0", CVAR_ARCHIVE};
 cvar_t		amf_part_deatheffect = {"gl_particle_deatheffect", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_part_teleport = {"gl_particle_telesplash", "0", CVAR_ARCHIVE}; // shoul we remove all telesplash code?
+cvar_t		amf_part_teleport = {"gl_particle_telesplash", "0", CVAR_ARCHIVE};
 cvar_t		amf_part_fire = {"gl_particle_fire", "0", CVAR_ARCHIVE}; // 1
 cvar_t		amf_part_sparks = {"gl_particle_sparks", "0", CVAR_ARCHIVE}; // 1
 cvar_t		amf_part_traillen    = {"gl_particle_trail_lenght", "1", CVAR_ARCHIVE};
@@ -359,9 +359,9 @@ void Amf_SetMode_f(void)
 		Cvar_SetValue (&amf_part_gunshot, 0.5);
 		Cvar_SetValue (&amf_part_explosion, 1);
 		Cvar_SetValue (&amf_part_blobexplosion, 0.5);
-		// --> disconnect bugfix #1196534
-		// Cvar_SetValue (&amf_part_teleport, 0.5);
-		// <-- disconnect bugfix #1196534
+#ifdef DEBUG
+		Cvar_SetValue (&amf_part_teleport, 0.5);
+#endif
 		Cvar_SetValue (&gl_bounceparticles, 0);
 	}
 	
@@ -436,9 +436,9 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_part_spikes_type);
 	Cvar_Register (&amf_part_explosion);
 	Cvar_Register (&amf_part_blobexplosion);
-// START shaman :: balancing variables
-//	Cvar_Register (&amf_part_teleport);
-// END shaman :: balancing variables
+#ifdef DEBUG
+	Cvar_Register (&amf_part_teleport);
+#endif
 	Cvar_Register (&amf_part_sparks);
 	Cvar_Register (&amf_part_2dshockwaves);
 	Cvar_Register (&amf_part_shockwaves);
