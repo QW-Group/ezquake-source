@@ -70,14 +70,37 @@ qbool gl_ext_compiled_vertex_array = false;
 //====================================
 
 // pOx - GL video stuff - don't duplicate software names!
-// gl_texturebits is owned by gl_textures.c, but also affects vid_restart
 cvar_t	vid_mode = {"vid_mode", "0", false};// Saved in prefs, not config (list generated for each device at runtime)
 cvar_t	gl_vid_windowed = {"gl_vid_windowed", "0", false};// Saved in prefs, not config - 1 = in a window
 cvar_t	gl_vid_screen = {"gl_vid_screen", "0", false};// Saved in prefs, not config
 cvar_t	gl_vid_colorbits = {"gl_vid_colorbits", "16", false};// Saved in prefs, not config
 cvar_t	vid_wait = {"vid_wait", "0", true};// VBL sync
 cvar_t	_windowed_mouse = {"_windowed_mouse","1", CVAR_ARCHIVE};
-//extern cvar_t gl_texturebits;
+qbool OnTextureBitsChange (cvar_t *var, char *value)
+{
+	int tb = Q_atoi(value);
+
+	if (tb != 0 && tb != 16 && tb != 32){
+		Com_Printf ("Invalid gl_texturebits value\n");
+		return true;
+	}
+	switch (tb){
+		case 16:
+			gl_solid_format = GL_RGB5;
+			gl_alpha_format = GL_RGBA4;
+			break;
+		case 32:
+			gl_solid_format = GL_RGB8;
+			gl_alpha_format = GL_RGBA8;
+			break;
+		default:
+			gl_solid_format = 3;
+			gl_alpha_format = 4;
+	}
+
+	return false;
+}
+cvar_t	gl_texturebits	= {"gl_texturebits", "16", 0, OnTextureBitsChange};
 
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol","1", 0}; 
 
@@ -174,9 +197,9 @@ void MacSetupScreen ()
 		 	if (gScreen.profile->texturebits != 16)
 		 	{
 			 	gScreen.profile->texturebits = 16;
-//				Cvar_Set (&gl_texturebits, "16");
-//			 	gl_solid_format = GL_RGB5;
-//			 	gl_alpha_format = GL_RGBA4;
+				Cvar_Set (&gl_texturebits, "16");
+			 	gl_solid_format = GL_RGB5;
+			 	gl_alpha_format = GL_RGBA4;
 			}
 		}
 
@@ -762,20 +785,6 @@ static void cleanupAGL(AGLContext ctx)
 	aglSetDrawable (ctx, NULL);
 	aglDestroyContext (ctx);
 }
-
-#ifdef GLHEXEN_MAC
-void D_ShowLoadingSize(void)
-{
-	if (!vid_initialized)
-		return;
-
-	glDrawBuffer (GL_FRONT);
-	SCR_DrawLoading();
-	glFlush();
-	glFinish();
-	glDrawBuffer (GL_BACK);
-}
-#endif
 
 /* pOx - Note about extensions:
 
@@ -1465,8 +1474,8 @@ void VID_Restart_f (void)
 	if (gl_vid_colorbits.value != 16 && gl_vid_colorbits.value != 32)
 		Cvar_SetValue (&gl_vid_colorbits, vid_currentprofile.colorbits);
 
-/*	if (gl_texturebits.value != 16 && gl_texturebits.value != 32)
-		Cvar_SetValue (&gl_texturebits, vid_currentprofile.texturebits);*/
+	if (gl_texturebits.value != 16 && gl_texturebits.value != 32)
+		Cvar_SetValue (&gl_texturebits, vid_currentprofile.texturebits);
 		
 	// Can't use fullscreen if forcewindowed (DEBUG, or pre 1.99 DSp on OSX)
 	if (gl_vid_windowed.value || forcewindowed)	
@@ -1476,8 +1485,7 @@ void VID_Restart_f (void)
 	vid_newprofile.screen = (int)gl_vid_screen.value;
 	vid_newprofile.mode = (int)vid_mode.value;
 	vid_newprofile.colorbits = (int)gl_vid_colorbits.value;
-//	vid_newprofile.texturebits = (int)gl_texturebits.value;
-	vid_newprofile.texturebits = 32;
+	vid_newprofile.texturebits = (int)gl_texturebits.value;
 	vid_newprofile.window = gl_vid_windowed.value ? true : false;
 
 	// Do fades if going from full screen to windowed or vice-versa
@@ -1533,13 +1541,13 @@ void VID_Restart_f (void)
 
 	if (texturereload)
 	{
-/*		if (gScreen.profile->texturebits == 16) {
+		if (gScreen.profile->texturebits == 16) {
 			gl_solid_format = GL_RGB5;
 			gl_alpha_format = GL_RGBA4;
 		} else {
 			gl_solid_format = GL_RGB8;
 			gl_alpha_format = GL_RGBA8;
-		}*/
+		}
 	}
 
 	// Update the global windowed state
@@ -1615,14 +1623,13 @@ void VID_ToggleWindow_f ()
 	old_screen = gl_vid_screen.value;
 	old_mode = vid_mode.value;
 	old_colorbits = gl_vid_colorbits.value;
-//	old_texturebits = gl_texturebits.value;
-	old_texturebits = 32;
+	old_texturebits = gl_texturebits.value;
 
 	// Make sure these aren't changed by video_restart
 	Cvar_SetValue (&gl_vid_screen, gScreen.profile->screen);
 	Cvar_SetValue (&vid_mode, gScreen.profile->mode);
 	Cvar_SetValue (&gl_vid_colorbits, gScreen.profile->colorbits);
-//	Cvar_SetValue (&gl_texturebits, gScreen.profile->texturebits);
+	Cvar_SetValue (&gl_texturebits, gScreen.profile->texturebits);
 
 	// Toggle windowed mode (DON'T check gl_vid_windowed! in can be different than actual state)
 	if (inwindow)	
@@ -1639,7 +1646,7 @@ void VID_ToggleWindow_f ()
 	Cvar_SetValue (&gl_vid_screen, old_screen);
 	Cvar_SetValue (&vid_mode, old_mode);
 	Cvar_SetValue (&gl_vid_colorbits, old_colorbits);
-//	Cvar_SetValue (&gl_texturebits, old_texturebits);
+	Cvar_SetValue (&gl_texturebits, old_texturebits);
 
 	video_restart = false;
 }
@@ -1660,6 +1667,7 @@ void VID_Init (unsigned char *palette)
 	Cvar_Register (&vid_wait);
 	Cvar_Register (&_windowed_mouse);
 	Cvar_Register (&vid_hwgammacontrol);
+	//Cvar_Register (&gl_texturebits);
 	
 	Cmd_AddCommand ("gl_describerenderer", GL_DescribeRenderer_f);
 	Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
