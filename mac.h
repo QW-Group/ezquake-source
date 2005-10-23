@@ -15,7 +15,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: mac.h,v 1.3 2005-10-19 20:29:56 disconn3ct Exp $
+ *  $Id: mac.h,v 1.4 2005-10-23 17:44:31 disconn3ct Exp $
  */
 
 #ifndef mac_h
@@ -25,7 +25,7 @@
 
 #define MAX_VIDEODEVICES 8	// This is probably overkill (Most macs only have 3 or 4 slots)
 #define MAX_DISPLAYMODES 72 // This is NOT overkill!! (GF3 on OS9 returns > 50)
-//#define USEDSPFADES 		// Comment this out for debugging
+#define USEDSPFADES 		// Comment this out for debugging
 
 // OpenGL Vendor flags (gathered for each device at startup)
 #define MAC_GL_GENERIC		0	// No special hacks required (NVidia)
@@ -105,5 +105,5 @@ enum { kMenuBpp16, kMenuBpp32 };
 
 extern char *kAppName;
 #define kCreatorType	'GLQW'
-#define kPrefsName		"ezQuake.plist"
+#define kPrefsName	"ezQuake.plist"
 #endif

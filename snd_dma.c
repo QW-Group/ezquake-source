@@ -151,11 +151,13 @@ void S_Startup (void) {
 }
 
 void S_Restart_f (void) {
+#ifndef __APPLE__
 	Com_Printf("Restarting sound system....\n");
 	SNDDMA_Shutdown ();
 	Com_Printf("sound: Shutdown OK\n");
 	SNDDMA_Init ();
 	Com_Printf("sound: Init OK.\nSound sampling rate: %i \n", sn.speed);
+#endif
 }
 
 void S_Init (void) {
