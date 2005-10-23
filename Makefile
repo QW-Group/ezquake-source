@@ -241,6 +241,7 @@ QWCL_OBJS = \
     $(BUILDDIR)/build/sv_send.o \
     $(BUILDDIR)/build/sv_user.o \
     $(BUILDDIR)/build/sv_world.o \
+    $(BUILDDIR)/build/sv_master.o \
 \
     $(BUILDDIR)/build/r_aclip.o \
     $(BUILDDIR)/build/r_alias.o \
@@ -616,6 +617,9 @@ $(BUILDDIR)/build/sv_user.o :		$(SOURCE_DIR)/sv_user.c
 $(BUILDDIR)/build/sv_world.o :		$(SOURCE_DIR)/sv_world.c
 	$(DO_CC)
 
+$(BUILDDIR)/build/sv_master.o :		$(SOURCE_DIR)/sv_master.c
+	$(DO_CC)
+
 $(BUILDDIR)/build/pr_edict.o :		$(SOURCE_DIR)/pr_edict.c
 	$(DO_CC)
 
@@ -850,6 +854,7 @@ GLQWCL_OBJS = \
     $(BUILDDIR)/build-gl/sv_send.o \
     $(BUILDDIR)/build-gl/sv_user.o \
     $(BUILDDIR)/build-gl/sv_world.o \
+    $(BUILDDIR)/build-gl/sv_master.o \
 \
     $(BUILDDIR)/build-gl/r_part.o \
 \
@@ -1154,6 +1159,9 @@ $(BUILDDIR)/build-gl/sv_user.o :		$(SOURCE_DIR)/sv_user.c
 $(BUILDDIR)/build-gl/sv_world.o :		$(SOURCE_DIR)/sv_world.c
 	$(DO_GL_CC)
 
+$(BUILDDIR)/build-gl/sv_master.o :		$(SOURCE_DIR)/sv_master.c
+	$(DO_GL_CC)
+
 $(BUILDDIR)/build-gl/pr_edict.o :		$(SOURCE_DIR)/pr_edict.c
 	$(DO_GL_CC)
 
@@ -1393,6 +1401,7 @@ GLQWCL_MAC_OBJS = \
     $(BUILDDIR)/build-mac-gl/sv_send.o \
     $(BUILDDIR)/build-mac-gl/sv_user.o \
     $(BUILDDIR)/build-mac-gl/sv_world.o \
+    $(BUILDDIR)/build-mac-gl/sv_master.o \
 \
     $(BUILDDIR)/build-mac-gl/r_part.o \
 \
@@ -1693,6 +1702,9 @@ $(BUILDDIR)/build-mac-gl/sv_user.o :		$(SOURCE_DIR)/sv_user.c
 	$(DO_GL_CC)  
 
 $(BUILDDIR)/build-mac-gl/sv_world.o :		$(SOURCE_DIR)/sv_world.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-mac-gl/sv_master.o :		$(SOURCE_DIR)/sv_master.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/pr_edict.o :		$(SOURCE_DIR)/pr_edict.c
