@@ -32,6 +32,7 @@ static cvar_t *cvar_hash[32];
 cvar_t *cvar_vars;
 
 cvar_t	cvar_viewdefault = {"cvar_viewdefault", "1"};
+cvar_t	cvar_viewhelp = {"cvar_viewhelp", "1"};
 
 cvar_t *Cvar_FindVar (char *var_name) {
 	cvar_t *var;
@@ -436,6 +437,8 @@ qbool Cvar_Command (void) {
 		return false;
 
 	if (Cmd_Argc() == 1) {
+		xml_variable_t *var = XSD_Variable_Load(va("help/variables/%s.xml", Cmd_Argv(0)));
+
 		if (cvar_viewdefault.value) {
 			Com_Printf ("%s : default value is \"%s\"\n", v->name, v->defaultvalue);
 			spaces = CreateSpaces(strlen(v->name) + 2);
@@ -443,6 +446,10 @@ qbool Cvar_Command (void) {
 		} else {
 			Com_Printf ("\"%s\" is \"%s\"\n", v->name, v->string);
 		}
+		
+		if (cvar_viewhelp.value)
+			Help_DescribeVar(var);
+
 	} else {
 		// hexum - do not allow crafty people to avoid use of "set" with user created variables under ruleset smackdown
 		
@@ -921,6 +928,7 @@ void Cvar_Init (void) {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register (&cvar_viewdefault);		
+	Cvar_Register (&cvar_viewhelp);		
 
 	Cvar_ResetCurrentGroup();
 }

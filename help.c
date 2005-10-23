@@ -4,6 +4,151 @@
 
 CTab_t help_tab;
 
+void Help_DescribeCmd(xml_command_t *cmd)
+{
+    command_argument_t *arg;
+
+	if (!cmd) return;
+
+    // description
+    con_margin = CONSOLE_HELP_MARGIN;
+    Com_Printf("%s\n", cmd->description);
+    con_margin = 0;
+
+    // syntax
+    Com_Printf("\n");
+    con_ormask = 128;
+    Com_Printf("syntax\n");
+    con_ormask = 0;
+    con_margin = CONSOLE_HELP_MARGIN;
+    Com_Printf("%s %s\n", cmd->name, cmd->syntax);
+    con_margin = 0;
+
+    // arguments
+    if (cmd->arguments)
+    {
+        Com_Printf("\n");
+        con_ormask = 128;
+        Com_Printf("arguments\n");
+        con_ormask = 0;
+        arg = cmd->arguments;
+        while (arg)
+        {
+            con_ormask = 128;
+            con_margin = CONSOLE_HELP_MARGIN;
+            Com_Printf("%s", arg->name);
+            con_ormask = 0;
+            con_margin += CONSOLE_HELP_MARGIN;
+            Com_Printf(" - %s\n", arg->description);
+            con_margin = 0;
+            arg = arg->next;
+        }
+    }
+
+    // remarks
+    if (cmd->remarks)
+    {
+        Com_Printf("\n");
+        con_ormask = 128;
+        Com_Printf("remarks\n");
+        con_ormask = 0;
+        con_margin = CONSOLE_HELP_MARGIN;
+        Com_Printf("%s\n", cmd->remarks);
+        con_margin = 0;
+    }
+}
+
+void Help_DescribeVar(xml_variable_t *var)
+{
+	variable_enum_value_t *val;
+
+	if (!var) return;
+
+	// description
+    con_margin = CONSOLE_HELP_MARGIN;
+    Com_Printf("%s\n", var->description);
+    con_margin = 0;
+
+    // value
+    Com_Printf("\n");
+    con_ormask = 128;
+    Com_Printf("value\n");
+    con_ormask = 0;
+    con_margin = CONSOLE_HELP_MARGIN;
+    switch (var->value_type)
+    {
+    case t_string:
+        Com_Printf("%s\n", var->value.string_description);
+        break;
+
+    case t_integer:
+        Com_Printf("%s\n", var->value.integer_description);
+        break;
+
+    case t_float:
+		Com_Printf("%s\n", var->value.float_description);
+        break;
+
+    case t_boolean:
+		if (var->value.boolean_value.false_description && var->value.boolean_value.true_description
+			&&
+			(strlen(var->value.boolean_value.false_description) || strlen(var->value.boolean_value.true_description)))
+		{
+			con_ormask = 128;
+			Com_Printf("0");
+			con_ormask = 0;
+			con_margin += CONSOLE_HELP_MARGIN;
+			Com_Printf(" - %s\n", var->value.boolean_value.false_description);
+			con_margin -= CONSOLE_HELP_MARGIN;
+			con_ormask = 128;
+			Com_Printf("1");
+			con_ormask = 0;
+			con_margin += CONSOLE_HELP_MARGIN;
+			Com_Printf(" - %s\n", var->value.boolean_value.true_description);
+			con_margin -= CONSOLE_HELP_MARGIN;
+		}
+		else	// johnnycz - many cvar doc pages has been made by an automatic process and they have boolean as their type as a default
+		{
+			con_margin += CONSOLE_HELP_MARGIN;
+			Com_Printf("Boolean value. Use ");
+			con_ormask = 128;
+			Com_Printf("0 or 1");
+			con_ormask = 0;
+			Com_Printf(" as a value.\n");
+			con_margin -= CONSOLE_HELP_MARGIN;
+		}
+        break;
+
+    case t_enum:
+        val = var->value.enum_value;
+        while (val)
+        {
+            con_ormask = 128;
+            Com_Printf("%s", val->name);
+            con_ormask = 0;
+            con_margin += CONSOLE_HELP_MARGIN;
+            Com_Printf(" - %s\n", val->description);
+            con_margin -= CONSOLE_HELP_MARGIN;
+            val = val->next;
+        }
+        break;
+    }
+    con_margin = 0;
+
+    // remarks
+	if (var->remarks && strlen(var->remarks))
+    {
+        Com_Printf("\n");
+        con_ormask = 128;
+        Com_Printf("remarks\n");
+        con_ormask = 0;
+        con_margin = CONSOLE_HELP_MARGIN;
+        Com_Printf("%s\n", var->remarks);
+        con_margin = 0;
+    }
+
+}
+
 void Help_Describe_f(void)
 {
     qbool found = false;
@@ -23,7 +168,6 @@ void Help_Describe_f(void)
     cmd = XSD_Command_Load(va("help/commands/%s.xml", name));
     if (cmd)
     {
-        command_argument_t *arg;
         found = true;
         
         // name
@@ -31,52 +175,7 @@ void Help_Describe_f(void)
         Com_Printf("%s is a command\n", cmd->name);
         con_ormask = 0;
 
-        // description
-        con_margin = CONSOLE_HELP_MARGIN;
-        Com_Printf("%s\n", cmd->description);
-        con_margin = 0;
-
-        // syntax
-        Com_Printf("\n");
-        con_ormask = 128;
-        Com_Printf("syntax\n");
-        con_ormask = 0;
-        con_margin = CONSOLE_HELP_MARGIN;
-        Com_Printf("%s %s\n", cmd->name, cmd->syntax);
-        con_margin = 0;
-
-        // arguments
-        if (cmd->arguments)
-        {
-            Com_Printf("\n");
-            con_ormask = 128;
-            Com_Printf("arguments\n");
-            con_ormask = 0;
-            arg = cmd->arguments;
-            while (arg)
-            {
-                con_ormask = 128;
-                con_margin = CONSOLE_HELP_MARGIN;
-                Com_Printf("%s", arg->name);
-                con_ormask = 0;
-                con_margin += CONSOLE_HELP_MARGIN;
-                Com_Printf(" - %s\n", arg->description);
-                con_margin = 0;
-                arg = arg->next;
-            }
-        }
-
-        // remarks
-        if (cmd->remarks)
-        {
-            Com_Printf("\n");
-            con_ormask = 128;
-            Com_Printf("remarks\n");
-            con_ormask = 0;
-            con_margin = CONSOLE_HELP_MARGIN;
-            Com_Printf("%s\n", cmd->remarks);
-            con_margin = 0;
-        }
+		Help_DescribeCmd(cmd);
 
         XSD_Command_Free( (xml_t *)cmd );
     }
@@ -85,8 +184,6 @@ void Help_Describe_f(void)
     var = XSD_Variable_Load(va("help/variables/%s.xml", name));
     if (var)
     {
-        variable_enum_value_t *val;
-
         if (found)
             Com_Printf("\n\n\n");
 
@@ -97,73 +194,7 @@ void Help_Describe_f(void)
         Com_Printf("%s is a variable\n", var->name);
         con_ormask = 0;
 
-        // description
-        con_margin = CONSOLE_HELP_MARGIN;
-        Com_Printf("%s\n", var->description);
-        con_margin = 0;
-
-        // value
-        Com_Printf("\n");
-        con_ormask = 128;
-        Com_Printf("value\n");
-        con_ormask = 0;
-        con_margin = CONSOLE_HELP_MARGIN;
-        switch (var->value_type)
-        {
-        case t_string:
-            Com_Printf("%s\n", var->value.string_description);
-            break;
-
-        case t_integer:
-            Com_Printf("%s\n", var->value.integer_description);
-            break;
-
-        case t_float:
-            Com_Printf("%s\n", var->value.float_description);
-            break;
-
-        case t_boolean:
-            con_ormask = 128;
-            Com_Printf("0", var->name);
-            con_ormask = 0;
-            con_margin += CONSOLE_HELP_MARGIN;
-            Com_Printf(" - %s\n", var->value.boolean_value.false_description);
-            con_margin -= CONSOLE_HELP_MARGIN;
-            con_ormask = 128;
-            Com_Printf("1", var->name);
-            con_ormask = 0;
-            con_margin += CONSOLE_HELP_MARGIN;
-            Com_Printf(" - %s\n", var->value.boolean_value.true_description);
-            con_margin -= CONSOLE_HELP_MARGIN;
-            break;
-
-        case t_enum:
-            val = var->value.enum_value;
-            while (val)
-            {
-                con_ormask = 128;
-                Com_Printf("%s", val->name);
-                con_ormask = 0;
-                con_margin += CONSOLE_HELP_MARGIN;
-                Com_Printf(" - %s\n", val->description);
-                con_margin -= CONSOLE_HELP_MARGIN;
-                val = val->next;
-            }
-            break;
-        }
-        con_margin = 0;
-
-        // remarks
-        if (var->remarks)
-        {
-            Com_Printf("\n");
-            con_ormask = 128;
-            Com_Printf("remarks\n");
-            con_ormask = 0;
-            con_margin = CONSOLE_HELP_MARGIN;
-            Com_Printf("%s\n", var->remarks);
-            con_margin = 0;
-        }
+		Help_DescribeVar(var);
 
         XSD_Variable_Free( (xml_t *)var );
     }
