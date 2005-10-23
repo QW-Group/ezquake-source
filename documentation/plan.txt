@@ -1,0 +1,48 @@
+This is my (johnnycz) brainstorm of the issues with the documentation and it's maintenance:
+
+1) Documentation consist of three completely different parts:
+  a) description variables & commands
+  b) static html docs
+  c) in-built help system
+  - sometimes it's hard into which part of this system something belongs
+
+2) what belongs where according to subject:
+  variables & commands doc.: a
+  command line arguments doc.: b
+  list of triggers: b
+  features doc.: b
+  installation & faq: b
+  quakeworld guide (not client-related): c
+
+3) where can you see it:
+  in-built describe system: a
+  www docs: a & b
+  in-built help system: c
+
+4a) where it is stored:
+  a, b, c: CVS
+
+4b) where should be stored:
+  a, b, c: MySQL
+
+5) The Plan
+  I) create suitable database organisation
+    - sf.net allows creating more databases and has three users with different access levels
+      => create a db where all data will be publicly readable (for any purpose)
+  II) move all data from CVS there
+    - php scripts
+    - convert static pages from pseudo-html to xml-scheme according to xsd/document.xsd
+      => can be used inside the in-built help system
+  III) tools to export data to XML from the db
+    - php scripts (for the client in-built help & describe system)
+    - php scripts & xslt (for the www docs)
+  IV) delete <CVS>/commands, <CVS>/manual, <CVS>/variables; decide where <CVS>/xsd and <CVS>/xsl belongs
+  V) tools to edit data in the db
+    - php scripts
+  VI) ensure everything is where it should be:
+    - documentation data in MySQL
+      - read: everybody
+      - write: developers with special access
+    - scripts in CVS 
+      - read/write access according to standard sf.net cvs access rights (read to everybody, write for devs)
+      - release (upload to webspace) must be done by the one who has access to appropriate dirs in webspace
