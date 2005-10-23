@@ -101,7 +101,7 @@ void CL_ForwardToServer_f (void) {
 			time(&client_time);
 			for (i = 0; i < sizeof(client_time); ++i)
 				snprintf(client_time_str + i * 2, 8 * 2 + 1 - i * 2, "%02X",
-					(client_time >> (i * 8)) & 0xFF);
+					 (unsigned int)((client_time >> (i * 8)) & 0xFF));
 
 			server_string_len = Cmd_Argc() + strlen(Cmd_Argv(1)) + DIGEST_SIZE * 2 + 16;
 			for (i = 3; i < Cmd_Argc(); ++i)
@@ -375,7 +375,7 @@ void CL_Rcon_f (void) {
 		time(&client_time);
 		for (i = 0; i < sizeof(client_time); ++i)
 			snprintf(client_time_str + i * 2, 8 * 2 + 1 - i * 2, "%02X",
-				(client_time >> (i * 8)) & 0xFF);
+				 (unsigned int)((client_time >> (i * 8)) & 0xFF));
 		SHA1_Init();
 		SHA1_Update("rcon ");
 		SHA1_Update(rcon_password.string);
