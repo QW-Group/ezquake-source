@@ -4,7 +4,7 @@ This is my (johnnycz) brainstorm of the issues with the documentation and it's m
   a) description variables & commands
   b) static html docs
   c) in-built help system
-  - sometimes it's hard into which part of this system something belongs
+  - sometimes it's hard to realize into which part of this system something belongs
 
 2) what belongs where according to subject:
   variables & commands doc.: a
@@ -12,6 +12,7 @@ This is my (johnnycz) brainstorm of the issues with the documentation and it's m
   list of triggers: b
   features doc.: b
   installation & faq: b
+  changelog: b
   quakeworld guide (not client-related): c
 
 3) where can you see it:
@@ -22,7 +23,7 @@ This is my (johnnycz) brainstorm of the issues with the documentation and it's m
 4a) where it is stored:
   a, b, c: CVS
 
-4b) where should be stored:
+4b) where is should be stored:
   a, b, c: MySQL
 
 5) The Plan
