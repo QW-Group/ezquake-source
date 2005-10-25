@@ -61,7 +61,7 @@ static char *MT_CleanString(char *string, qbool allow_spaces_and_slashes) {
 	#define CLEANCHAR(c) \
 		((readableChars[(byte) c] < ' ' || strchr(disallowed, readableChars[(byte) c])) ? '_' : readableChars[(byte) c])
 
-	in = string;
+	in = (byte *) string;
 	out = buf;
 
 	while ((c = *in++) && out - buf < sizeof(buf) - 1) {
@@ -76,8 +76,8 @@ static char *MT_CleanString(char *string, qbool allow_spaces_and_slashes) {
 	#undef CLEANCHAR
 
 	*out = 0;
-	Util_Process_Filename(buf);
-	return buf;
+	Util_Process_Filename((char *) buf);
+	return (char *) buf;
 }
 
 static char *MT_PlayerName(void) {

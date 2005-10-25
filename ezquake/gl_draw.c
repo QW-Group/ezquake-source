@@ -292,7 +292,7 @@ mpic_t *Draw_CacheWadPic (char *name) {
 
 	// load little ones into the scrap
 	if (p->width < 64 && p->height < 64) {
-		int x, y, i, j, k, texnum;
+		int x = 0, y = 0, i, j, k, texnum;
 
 		texnum = memchr(p->data, 255, p->width*p->height) != NULL;
 		if (!Scrap_AllocBlock (texnum, p->width, p->height, &x, &y)) {
@@ -393,14 +393,14 @@ static int Draw_LoadCharset(char *name) {
 		char buf[128 * 256], *src, *dest;
 
 		memset (buf, 255, sizeof(buf));
-		src = draw_chars;
+		src = (char *) draw_chars;
 		dest = buf;
 		for (i = 0; i < 16; i++) {
 			memcpy (dest, src, 128 * 8);
 			src += 128 * 8;
 			dest += 128 * 8 * 2;
 		}
-		char_texture = GL_LoadTexture ("pic:charset", 128, 256, buf, TEX_ALPHA, 1);
+		char_texture = GL_LoadTexture ("pic:charset", 128, 256, (byte *)buf, TEX_ALPHA, 1);
 		goto done;
 	}
 

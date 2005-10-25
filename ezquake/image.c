@@ -182,7 +182,7 @@ static void Image_Resample32 (void *indata, int inwidth, int inheight,
 
 		fracstep = inwidth * 0x10000 / outwidth;
 		for (i = 0; i < outheight; i++) {
-			inrow = (int *) indata + inwidth * (i * inheight / outheight);
+			inrow = (unsigned int *) indata + inwidth * (i * inheight / outheight);
 			frac = fracstep >> 1;
 			j = outwidth - 4;
 			while (j >= 0) {

@@ -185,7 +185,7 @@ static void LoadFragFile(char *filename, qbool quiet) {
 	lowmark = Hunk_LowMark();
 	Q_strncpyz(fragfilename, filename, sizeof(fragfilename));
 	COM_ForceExtension(fragfilename, ".dat");
-	if (!(buffer = FS_LoadHunkFile(fragfilename))) {
+	if (!(buffer = (char *) FS_LoadHunkFile(fragfilename))) {
 		if (!quiet)
 			Com_Printf("Couldn't load fragfile \"%s\"\n", fragfilename);
 		return;
