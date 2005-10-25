@@ -474,7 +474,7 @@ void CL_Disconnect (void) {
 	byte final[10];
 
 	connect_time = 0;
-    con_addtimestamp = true;
+	con_addtimestamp = true;
 
 	if (cl.teamfortress)
 		V_TF_ClearGrenadeEffects();
@@ -516,7 +516,7 @@ void CL_Disconnect (void) {
 		CL_StopPlayback();
 	} else if (cls.state != ca_disconnected) {
 		final[0] = clc_stringcmd;
-		strcpy (final + 1, "drop");
+		strcpy ((char *)(final + 1), "drop");
 		Netchan_Transmit (&cls.netchan, 6, final);
 		Netchan_Transmit (&cls.netchan, 6, final);
 		Netchan_Transmit (&cls.netchan, 6, final);

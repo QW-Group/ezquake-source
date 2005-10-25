@@ -557,13 +557,13 @@ void CL_ParseDownload (void) {
 	// open the file if not opened yet
 	if (!cls.download) {
 		//if (strncmp(cls.downloadtempname,"skins/",6))
-		Q_snprintfz (name, sizeof(name), "%s/%s", cls.gamedir, cls.downloadtempname);
+		Q_snprintfz ((char *) name, sizeof(name), "%s/%s", cls.gamedir, cls.downloadtempname);
 		/*else
 			Q_snprintfz (name, sizeof(name), "qw/%s", cls.downloadtempname);*/
 //Com_Printf("%s\n%s\n", cls.downloadname, cls.downloadtempname);
-		COM_CreatePath (name);
+		COM_CreatePath ((char *) name);
 
-		cls.download = fopen (name, "wb");
+		cls.download = fopen ((const char *)name, "wb");
 		if (!cls.download) {
 			msg_readcount += size;
 			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
@@ -1550,14 +1550,14 @@ void CL_ParsePrint (void) {
 	extern cvar_t cl_chatsound, msg_filter;
 	extern cvar_t ignore_qizmo_spec;
 
-    int client;
-    int type; 
+	int client;
+	int type;
 	char *msg;
 
 	extern qbool TP_SuppressMessage(char *);
 
-    char *chat_sound_file;
-    float chat_sound_vol;
+	char *chat_sound_file;
+	float chat_sound_vol = 0.0;
 
 	level = MSG_ReadByte ();
 	s = MSG_ReadString ();

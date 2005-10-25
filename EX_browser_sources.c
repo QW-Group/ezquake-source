@@ -344,7 +344,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
             i = sizeof(hostaddr);
             if (ret > 0)
                 ret = recvfrom (newsocket, answer, 10000, 0,
-                        (struct sockaddr *)&hostaddr, &i);
+				(struct sockaddr *)&hostaddr, (socklen_t *)&i);
 
             if (ret > 0  &&  ret < 10000)
             {

@@ -443,7 +443,7 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 	FILE *f;
 
 	COM_StripExtension(filename, basename);
-	for (c = basename; *c; c++)
+	for (c = (byte *) basename; *c; c++)
 		if (*c == '*')
 			*c = '#';
 

@@ -245,7 +245,7 @@ int oldPingHost(char *host_to_ping, int count)
             continue;
 
         bread = recvfrom(sock, recvbuf, MAX_PACKET, 0, (struct sockaddr*)&from,
-                         &fromlen);
+			 (socklen_t *)&fromlen);
         if (bread <= 0)
             continue;
 
@@ -464,7 +464,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
 
             // there's an answer - get it!
             bread = recvfrom(sock, recvbuf, MAX_PACKET, 0, (struct sockaddr*)&from,
-                             &fromlen);
+			     (socklen_t *)&fromlen);
             if (bread <= 0)
                 continue;
 
@@ -870,7 +870,7 @@ void SB_Test_GetPackets(void)
         int seq;
 
         bread = recvfrom(sock, recvbuf, MAX_PACKET, 0, (struct sockaddr*)&from,
-                         &fromlen);
+			 (socklen_t *) &fromlen);
         if (bread <= 0)
             break;
 

@@ -215,10 +215,8 @@ void NET_ClearLoopback (void) {
 }
 
 qbool NET_GetPacket (netsrc_t sock) {
-	int ret;
+	int ret, fromlen, net_socket;
 	struct sockaddr_in	from;
-	int fromlen;
-	int net_socket;
 
 	if (NET_GetLoopPacket (sock))
 		return true;
@@ -228,7 +226,7 @@ qbool NET_GetPacket (netsrc_t sock) {
 		return false;
 
 	fromlen = sizeof(from);
-	ret = recvfrom (net_socket, net_message_buffer, sizeof(net_message_buffer), 0, (struct sockaddr *)&from, &fromlen);
+	ret = recvfrom (net_socket, (char *)net_message_buffer, sizeof(net_message_buffer), 0, (struct sockaddr *)&from, (socklen_t *)&fromlen);
 	if (ret == -1) {
 		if (errno == EWOULDBLOCK)
 			return false;

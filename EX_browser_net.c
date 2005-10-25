@@ -396,7 +396,7 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
             answer[0] = 0;
 
             i = sizeof(hostaddr);
-            ret = recvfrom (newsocket, answer, 5000, 0, (struct sockaddr *)&hostaddr, &i);
+	    ret = recvfrom (newsocket, answer, 5000, 0, (struct sockaddr *)&hostaddr, (socklen_t *)&i);
             answer[max(0, min(ret, 4999))] = 0;
 
             if (ret > 0)

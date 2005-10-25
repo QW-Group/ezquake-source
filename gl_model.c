@@ -561,7 +561,7 @@ void Mod_LoadLighting (lump_t *l) {
 	mark = Hunk_LowMark();
 	data = LoadColoredLighting(loadmodel->name, &litfilename);
 	if (data) {
-		if (com_filesize < 8 || strncmp(data, "QLIT", 4)) {
+		if (com_filesize < 8 || strncmp((char *)data, "QLIT", 4)) {
 			Com_Printf("Corrupt .lit file (%s)...ignoring\n", COM_SkipPath(litfilename));
 		} else if (l->filelen * 3 + 8 != com_filesize) {
 			Com_Printf("Warning: .lit file (%s) has incorrect size\n", COM_SkipPath(litfilename));

@@ -109,15 +109,15 @@ void CL_ForwardToServer_f (void) {
 			server_string = Q_malloc(server_string_len);
 
 			SHA1_Init();
-			SHA1_Update(Cmd_Argv(1));
-			SHA1_Update(" ");
-			SHA1_Update(Cmd_Argv(2));
-			SHA1_Update(client_time_str);
-			SHA1_Update(" ");
+			SHA1_Update((unsigned char *)Cmd_Argv(1));
+			SHA1_Update((unsigned char *)" ");
+			SHA1_Update((unsigned char *)Cmd_Argv(2));
+			SHA1_Update((unsigned char *)client_time_str);
+			SHA1_Update((unsigned char *)" ");
 			for (i = 3; i < Cmd_Argc(); ++i)
 			{
-				SHA1_Update(Cmd_Argv(i));
-				SHA1_Update(" ");
+				SHA1_Update((unsigned char *)Cmd_Argv(i));
+				SHA1_Update((unsigned char *)" ");
 			}
 
 			snprintf(server_string, server_string_len, "%s %s%s ",
@@ -377,14 +377,14 @@ void CL_Rcon_f (void) {
 			snprintf(client_time_str + i * 2, 8 * 2 + 1 - i * 2, "%02X",
 				 (unsigned int)((client_time >> (i * 8)) & 0xFF));
 		SHA1_Init();
-		SHA1_Update("rcon ");
-		SHA1_Update(rcon_password.string);
-		SHA1_Update(client_time_str);
-		SHA1_Update(" ");
+		SHA1_Update((unsigned char *)"rcon ");
+		SHA1_Update((unsigned char *)rcon_password.string);
+		SHA1_Update((unsigned char *)client_time_str);
+		SHA1_Update((unsigned char *)" ");
 		for (i = 1; i < Cmd_Argc(); i++)
 		{
-			SHA1_Update(Cmd_Argv(i));
-			SHA1_Update(" ");
+			SHA1_Update((unsigned char *)Cmd_Argv(i));
+			SHA1_Update((unsigned char *)" ");
 		}
 		strlcat (message, SHA1_Final(), sizeof(message));
 		strlcat (message, client_time_str, sizeof(message));

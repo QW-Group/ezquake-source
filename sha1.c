@@ -11,7 +11,7 @@ Test Vectors (from FIPS PUB 180-1)
 A million repetitions of "a"
   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
 
-	$Id: sha1.c,v 1.8 2005-07-11 14:20:48 vvd0 Exp $
+	$Id: sha1.c,v 1.9 2005-10-25 22:45:44 disconn3ct Exp $
 */
 
 /* #define LITTLE_ENDIAN * This should be #define'd if true. */
@@ -160,7 +160,7 @@ char *SHA1(char *string)
 	SHA1_CTX	context;
 	unsigned char	digest[DIGEST_SIZE];
 	SHA1Init(&context);
-	SHA1Update(&context, string, strlen(string));
+	SHA1Update(&context, (unsigned char*) string, strlen(string));
 	SHA1Final(digest, &context);
 	return bin2hex(digest);
 }
@@ -172,7 +172,7 @@ void SHA1_Init(void)
 }
 void SHA1_Update(unsigned char *string)
 {
-	SHA1Update(&context, string, strlen(string));
+	SHA1Update(&context, string, strlen((char *)string));
 }
 char *SHA1_Final(void)
 {

@@ -237,8 +237,6 @@ void Sys_HighFPPrecision (void) {}
 void Sys_LowFPPrecision (void) {}
 #endif
 
-int skipframes;
-
 int main (int argc, char **argv) {
 	double time, oldtime, newtime;
 
@@ -261,12 +259,12 @@ int main (int argc, char **argv) {
 		if (COM_CheckParm("-rtctimer")) {
 		    int retval;
 		    unsigned long tmpread;
-		    
+
 		    /* try accessing rtc */
 		    rtc_fd = open("/dev/rtc", O_RDONLY);
 		    if (rtc_fd < 0)
 			Sys_Error("Cannot open /dev/rtc! Exiting..\n");
-		    
+
 		    /* make sure RTC is set to RTC_RATE (1024Hz) */
 		    retval = ioctl(rtc_fd, RTC_IRQP_READ, &tmpread);
 		    if (retval < 0)
@@ -278,7 +276,7 @@ int main (int argc, char **argv) {
 		    retval = fcntl(rtc_fd, F_SETOWN, getpid());
 		    if (retval < 0)
 			Sys_Error("Cannot set ownership of /dev/rtc!\n");
-		    		    
+
 		    /* everything is nice - now turn on the RTC's periodic timer */
 		    retval = ioctl(rtc_fd, RTC_PIE_ON, 0);
 		    if (retval == -1)
@@ -301,14 +299,14 @@ int main (int argc, char **argv) {
 
     Host_Init (argc, argv, 16 * 1024 * 1024);
 
-    oldtime = Sys_DoubleTime ();
-    while (1) {
+	oldtime = Sys_DoubleTime ();
+	while (1) {
 		if (dedicated)
 			NET_Sleep (10);
 
 		// find time spent rendering last frame
-        newtime = Sys_DoubleTime ();
-        time = newtime - oldtime;
+		newtime = Sys_DoubleTime ();
+		time = newtime - oldtime;
 		oldtime = newtime;
 
 		Host_Frame(time);
@@ -335,11 +333,11 @@ int  Sys_CreateThread(DWORD WINAPI (*func)(void *), void *param)
 {
     pthread_t thread;
     pthread_attr_t attr;
-    
+
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     pthread_attr_setschedpolicy(&attr, SCHED_OTHER);   // ale gowno
-    
+
     pthread_create(&thread, &attr, (void *)func, param);
     return 1;
 }

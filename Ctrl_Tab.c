@@ -84,7 +84,7 @@ void CTab_AddPage(CTab_t *tab, char *name, int id, void *tag,
 void CTab_Draw(CTab_t *tab, int x, int y, int w, int h)
 {
     char line[1024], *s;
-    int l, r;
+    int l = 0, r = 0;
     int i;
 
     // make one string

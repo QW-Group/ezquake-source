@@ -583,7 +583,7 @@ void MP3_SongInfo_f(void) {
 
 char *MP3_Menu_SongtTitle(void) {
 	static char title[MP3_MAXSONGTITLE], *macrotitle;
-	int current;
+	int current = 0;
 
 	if (!MP3_IsPlayerRunning()) {
 		Com_Printf("%s\n", mp3_notrunning_msg);
@@ -734,7 +734,7 @@ void MP3_GetPlaylistInfo(int *current, int *length) {
 }
 
 void MP3_PrintPlaylist_f(void) {
-	int current, length, i;
+	int current = 0, length = 0, i;
 	char *title, *s;
 
 	if (!MP3_IsPlayerRunning()) {
@@ -755,7 +755,7 @@ void MP3_PrintPlaylist_f(void) {
 }
 
 void MP3_PlayTrackNum_f(void) {
-	int pos, length;
+	int pos, length = 0;
 
 	if (!MP3_IsPlayerRunning()) {
 		Com_Printf("%s\n", mp3_notrunning_msg);
