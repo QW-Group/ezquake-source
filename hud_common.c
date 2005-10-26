@@ -175,19 +175,21 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 
     static cvar_t
         *hud_fps_show_min = NULL,
-        *hud_fps_title;
+        *hud_fps_title,
+		*hud_fps_decimals;
 
     if (hud_fps_show_min == NULL)   // first time called
     {
         hud_fps_show_min = HUD_FindVar(hud, "show_min");
         hud_fps_title    = HUD_FindVar(hud, "title");
+		hud_fps_decimals = HUD_FindVar(hud, "decimals");
     }
 
 
     if (hud_fps_show_min->value)
-        sprintf(st, "%3.1f\xf%3.1f", cls.min_fps + 0.05, cls.fps + 0.05);
+        sprintf(st, "%3.*f\xf%3.*f", (int) hud_fps_decimals->value, cls.min_fps + 0.05, (int) hud_fps_decimals->value, cls.fps + 0.05);
     else
-        sprintf(st, "%3.1f", cls.fps + 0.05);
+        sprintf(st, "%3.*f", (int) hud_fps_decimals->value, cls.fps + 0.05);
 
     if (hud_fps_title->value)
         strcat(st, " fps");
