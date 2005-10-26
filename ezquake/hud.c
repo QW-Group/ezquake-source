@@ -572,6 +572,7 @@ void HUD_Init(void)
         "0", "top", "right", "bottom", "0", "0", "0",
         "show_min", "0",
         "title",    "1",
+		"decimals", "1",
         NULL);
     CommonDraw_Init();
 }
