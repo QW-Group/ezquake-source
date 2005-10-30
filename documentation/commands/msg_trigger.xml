@@ -2,7 +2,7 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
 <command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
 <name>msg_trigger</name><description>
-msg_trigger <alias> <string>, but
+msg_trigger &lt;alias&gt; &lt;string&gt;, but
 you can have nested aliases like this :
  "alias d c; alias c b; alias b a; alias a say hello" and
 then

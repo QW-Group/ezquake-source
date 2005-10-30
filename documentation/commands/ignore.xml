@@ -4,6 +4,6 @@
 <name>ignore</name><description>
 You can give ignore either a player's name
 (name completion is useful for this)
- or a userid (ignore <name | userid >). ignore without any
+ or a userid (ignore &lt;name|userid&gt;). ignore without any
 command line
- parameters displays your ignore list.</description><syntax>(name/userid)</syntax><remarks></remarks></command>
+ parameters displays your ignore list.</description><syntax>&lt;name|userid&gt;</syntax><remarks></remarks></command>
