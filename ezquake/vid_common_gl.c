@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <Carbon/Carbon.h>
 #endif
 
-void* GL_GetProcAddress (char* ExtName)
+void* GL_GetProcAddress (char *ExtName)
 {
 #ifdef _WIN32
 			return (void *) wglGetProcAddress(ExtName);
@@ -49,7 +49,7 @@ void* GL_GetProcAddress (char* ExtName)
 			CFStringGetSystemEncoding(),
 			0));
 #else
-			return (void *) glXGetProcAddressARB(ExtName);
+			return (void *) glXGetProcAddressARB((const GLubyte*) ExtName);
 #endif /* __APPLE__ */
 #endif /* _WIN32 */
 }
@@ -92,7 +92,7 @@ qbool CheckExtension (const char *extension) {
 	const char *start;
 	char *where, *terminator;
 
-	if (!gl_extensions && !(gl_extensions = glGetString (GL_EXTENSIONS)))
+	if (!gl_extensions && !(gl_extensions = (const char*) glGetString (GL_EXTENSIONS)))
 		return false;
 
 	
@@ -164,13 +164,13 @@ qbool OnChange_gl_ext_texture_compression(cvar_t *var, char *string) {
 /************************************** GL INIT **************************************/
 
 void GL_Init (void) {
-	gl_vendor = glGetString (GL_VENDOR);
+	gl_vendor = (const char*) glGetString (GL_VENDOR);
 	Com_Printf ("GL_VENDOR: %s\n", gl_vendor);
-	gl_renderer = glGetString (GL_RENDERER);
+	gl_renderer = (const char*) glGetString (GL_RENDERER);
 	Com_Printf ("GL_RENDERER: %s\n", gl_renderer);
-	gl_version = glGetString (GL_VERSION);
+	gl_version = (const char*) glGetString (GL_VERSION);
 	Com_Printf ("GL_VERSION: %s\n", gl_version);
-	gl_extensions = glGetString (GL_EXTENSIONS);
+	gl_extensions = (const char*) glGetString (GL_EXTENSIONS);
 	if (COM_CheckParm("-gl_ext"))
 		Com_Printf ("GL_EXTENSIONS: %s\n", gl_extensions);
 
