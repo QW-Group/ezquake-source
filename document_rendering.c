@@ -242,7 +242,7 @@ static char ChangeColor(char c)
 static void Render_String(document_rendering_context_t *cx, char *text)
 {
     int l;
-    char c;
+    signed char c;
     document_rendered_link_t *link;
 
     char *txt = text;
@@ -1012,8 +1012,8 @@ int XSD_RenderDocument(document_rendered_t *ret, xml_document_t *doc, int width)
         lines = XSD_RenderDocumentOnce(tdoc, NULL, width, 0, NULL, NULL);
         if (lines > 0)
         {
-            ret->title = (byte *) Q_malloc(lines*width);
-            ret->title_lines = XSD_RenderDocumentOnce(tdoc, ret->title, width, lines, NULL, NULL);
+            ret->title = (char *) Q_malloc(lines*width);
+	    ret->title_lines = XSD_RenderDocumentOnce(tdoc,(byte *) ret->title, width, lines, NULL, NULL);
         }
 
         XSD_Document_Free((xml_t *)tdoc);
@@ -1023,8 +1023,8 @@ int XSD_RenderDocument(document_rendered_t *ret, xml_document_t *doc, int width)
     lines = XSD_RenderDocumentOnce(doc, NULL, width, 0, NULL, NULL);
     if (lines <= 0)
         goto error;
-    ret->text = (byte *) Q_malloc(lines*width);
-    ret->text_lines = XSD_RenderDocumentOnce(doc, ret->text, width, lines, &ret->links, &ret->sections);
+    ret->text = (char *) Q_malloc(lines*width);
+    ret->text_lines = XSD_RenderDocumentOnce(doc,(byte *) ret->text, width, lines, &ret->links, &ret->sections);
     return 1;
 
 error:
