@@ -116,6 +116,7 @@ cvar_t	bottomcolor = {"bottomcolor","0", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	skin = {"skin", "", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	rate = {"rate", "5760", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	msg = {"msg", "1", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t  noaim = {"noaim", "1", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	w_switch = {"w_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	b_switch = {"b_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
 
@@ -865,6 +866,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&rate);
 	Cvar_Register (&name);
 	Cvar_Register (&msg);
+	Cvar_Register (&noaim);
 	Cvar_Register (&topcolor);
 	Cvar_Register (&bottomcolor);
 	Cvar_Register (&w_switch);
