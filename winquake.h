@@ -101,5 +101,5 @@ void S_BlockSound (void);
 void S_UnblockSound (void);
 
 #endif // !SERVERONLY
-
+typedef unsigned int socklen_t;
 #endif // _WIN32

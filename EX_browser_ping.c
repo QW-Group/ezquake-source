@@ -4,7 +4,6 @@
 #include "quakedef.h"
 #include "winquake.h"
 
-typedef unsigned int socklen_t;
 
 #else
 
