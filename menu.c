@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.31 2005-09-14 10:29:06 johnnycz Exp $
+	$Id: menu.c,v 1.32 2005-11-08 00:01:56 johnnycz Exp $
 
 */
 
@@ -421,8 +421,15 @@ void M_AdjustSliders (int dir) {
 		Cvar_SetValue (&m_pitch, -m_pitch.value);
 		break;
 	
-	case 12:	// lookstrafe
-		Cvar_SetValue (&lookstrafe, !lookstrafe.value);
+	case 12:	// autoswitch weapons
+		if ((w_switch.value > 2) || (!w_switch.value) || (b_switch.value > 2) || (!b_switch.value))
+		{
+			Cvar_SetValue (&w_switch, 1);
+			Cvar_SetValue (&b_switch, 1);
+		} else {
+			Cvar_SetValue (&w_switch, 8);
+			Cvar_SetValue (&b_switch, 8);
+		}
 		break;
 
 	case 13:
@@ -504,8 +511,8 @@ void M_Options_Draw (void) {
 	M_Print (16, 120, "          Invert mouse");
 	M_DrawCheckbox (220, 120, m_pitch.value < 0);
 
-	M_Print (16, 128, "            Lookstrafe");
-	M_DrawCheckbox (220, 128, lookstrafe.value);
+	M_Print (16, 128, "    Autoswitch weapons");
+	M_DrawCheckbox (220, 128, !w_switch.value || (w_switch.value > 2) || !b_switch.value || (b_switch.value > 2));
 
 	M_Print (16, 136, "    Use old status bar");
 	M_DrawCheckbox (220, 136, cl_sbar.value);

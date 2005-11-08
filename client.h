@@ -443,6 +443,8 @@ extern cvar_t cl_cmdline;
 #ifdef WITH_KEYMAP
 extern cvar_t cl_showkeycodes;
 #endif // WITH_KEYMAP
+extern cvar_t b_switch;		// added for the sake of menu.c
+extern cvar_t w_switch;		// added for the sake of menu.c
 // oppymv 310804
 extern cvar_t cl_multiview;
 extern cvar_t cl_mvdisplayhud;
