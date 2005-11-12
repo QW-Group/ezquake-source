@@ -2,7 +2,7 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
-<name>tp_weaponorder</name>
+<name>tp_weapon_order</name>
 <description>
 This allows you to define the order from best to worst weapon. The default value
 is &quot;78564321&quot;, which means that the Rocket Launcher is the best weapon (impulse 7)

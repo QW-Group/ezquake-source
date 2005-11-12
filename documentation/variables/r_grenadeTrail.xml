@@ -2,7 +2,7 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
-<name>r_grenadetrail</name>
+<name>r_grenadeTrail</name>
 <description>Customizable grenade trails
 0 = No rocket trail
 1 = Normal
