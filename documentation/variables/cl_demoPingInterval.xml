@@ -2,7 +2,7 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
-<name>cl_demopinginterval</name>
+<name>cl_demoPingInterval</name>
 <description>
 
 How often to request ping updates when recording demos. This variable doesn't 

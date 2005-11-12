@@ -2,7 +2,7 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
-<name>scr_mvdinfo_x</name>
+<name>mvd_info_x</name>
 
 <description>
 You can adjust horizontal placement of Players' info table

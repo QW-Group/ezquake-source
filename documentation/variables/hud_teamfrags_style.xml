@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-  <name>hud_frags_style</name>
+  <name>hud_teamfrags_style</name>
   <description>Sets drawing style of 'teamfrags' HUD element.</description>
   <value>
     <enum>

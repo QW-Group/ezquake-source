@@ -2,7 +2,7 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
 <variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
 
-<name>scr_mvdinfo_setup</name>
+<name>mvd_info_setup</name>
 
 <description>
 You can change the informations contained in Players' info table. Use following strings in format string:
