@@ -86,6 +86,7 @@ cvar_t cl_fp_messages		= {"cl_fp_messages", "4"};
 cvar_t cl_fp_persecond		= {"cl_fp_persecond", "4"};		
 cvar_t cl_cmdline			= {"cl_cmdline", "", CVAR_ROM};	
 cvar_t cl_useproxy			= {"cl_useproxy", "0"};			
+cvar_t cl_window_caption	= {"cl_window_caption", "1"};
 
 cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};	
 // START shaman :: balancing variables
@@ -151,6 +152,7 @@ int		fps_count;
 double		lastfps;
 
 void CL_Multiview(void);
+void CL_UpdateCaption(void);
 
 // emodel and pmodel are encrypted to prevent llamas from easily hacking them
 char emodel_name[] = { 'e'^0xe5, 'm'^0xe5, 'o'^0xe5, 'd'^0xe5, 'e'^0xe5, 'l'^0xe5, 0 };
@@ -210,8 +212,7 @@ void CL_MakeActive(void) {
 		demostarttime = cls.demotime;		
 	}
 
-	if (!cls.demoplayback)
-		VID_SetCaption (va("ezQuake: %s", cls.servername));
+	CL_UpdateCaption();
 
 	Con_ClearNotify ();
 	TP_ExecTrigger ("f_spawn");
@@ -503,7 +504,7 @@ void CL_Disconnect (void) {
 	nTrack1duel = nTrack2duel = 0;
 	bExitmultiview = 0;
 
-	VID_SetCaption("ezQuake");
+	CL_UpdateCaption();
 
 	// stop sounds (especially looping!)
 	S_StopAllSounds (true);
@@ -815,6 +816,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_shownet);
 	Cvar_Register (&show_fps2);
 	Cvar_Register (&cl_confirmquit);
+	Cvar_Register (&cl_window_caption);
 	
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register (&cl_sbar);
@@ -1566,4 +1568,19 @@ void CL_Multiview(void) {
 	}	
 
 	bExitmultiview = 1;
+}
+
+void CL_UpdateCaption(void)
+{
+	if (!cl_window_caption.value)
+	{
+		if (!cls.demoplayback && (cls.state == ca_active))
+			VID_SetCaption (va("ezQuake: %s", cls.servername));
+		else
+			VID_SetCaption("ezQuake");
+	}
+	else
+	{
+		VID_SetCaption (va("%s - %s", CL_Macro_Serverstatus(), MT_ShortStatus()));
+	}
 }

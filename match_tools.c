@@ -573,6 +573,16 @@ char *MT_MatchName(void) {
 	return buf;
 }
 
+char *MT_ShortStatus(void)
+{
+	static matchinfo_t* matchinfo;
+	matchinfo = MT_GetMatchInfo();
+	if (!matchinfo->teamplay) 
+		return va("pl: %d - %s", matchinfo->numplayers, matchinfo->mapname);
+	else
+		return va("pl: %d/%d - %s", matchinfo->team1count, matchinfo->team2count, matchinfo->mapname);
+}
+
 #define MT_SCOREBOARD_SHOWIME	4
 
 void MT_TakeScreenshot(void);

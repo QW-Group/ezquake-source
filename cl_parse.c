@@ -2407,6 +2407,8 @@ void CL_ParseServerMessage (void) {
 		}
 	}
 
+	CL_UpdateCaption();
+
 	if (cls.demorecording) {
 		
 		if (cls.demomessage.cursize)
