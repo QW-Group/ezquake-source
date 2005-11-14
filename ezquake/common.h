@@ -464,6 +464,7 @@ void CL_Shutdown (void);
 void CL_Frame (double time);
 void CL_Disconnect ();
 void CL_BeginLocalConnection (void);
+void CL_UpdateCaption (void);
 void Con_Init (void);
 void Con_Print (char *txt);
 
