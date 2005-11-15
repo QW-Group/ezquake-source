@@ -1367,7 +1367,7 @@ GLQWCL_MAC_OBJS = \
     $(BUILDDIR)/build-mac-gl/sys_mac.o \
 \
     $(BUILDDIR)/build-mac-gl/in_mac.o \
-    $(BUILDDIR)/build-mac-gl/gl_vidmac.o \
+    $(BUILDDIR)/build-mac-gl/vid_mac.o \
     $(BUILDDIR)/build-mac-gl/vid_common_gl.o \
     $(BUILDDIR)/build-mac-gl/CarbonSndPlayDB.o \
     $(BUILDDIR)/build-mac-gl/cd_null.o \
@@ -1512,7 +1512,7 @@ $(BUILDDIR)/build-mac-gl/sys_mac.o :		$(SOURCE_DIR)/sys_mac.c
 $(BUILDDIR)/build-mac-gl/in_mac.o :		$(SOURCE_DIR)/in_mac.c
 	$(DO_GL_CC)
 
-$(BUILDDIR)/build-mac-gl/gl_vidmac.o :		$(SOURCE_DIR)/gl_vidmac.c
+$(BUILDDIR)/build-mac-gl/vid_mac.o :		$(SOURCE_DIR)/vid_mac.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/vid_common_gl.o :	$(SOURCE_DIR)/vid_common_gl.c
