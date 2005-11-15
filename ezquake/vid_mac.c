@@ -828,7 +828,7 @@ void CheckTextureExtensions (void)
 	if ( strstr(gl_extensions, "GL_ARB_multitexture ") )
 	{
 		// True if gl_ext_multitexture_units > 0
-		glGetIntegerv (GL_MAX_TEXTURE_UNITS_ARB, &gl_ext_multitexture_units);
+		glGetIntegerv (GL_MAX_TEXTURE_UNITS_ARB, (GLint *)&gl_ext_multitexture_units);
 		
 		if (gl_ext_multitexture_units < 2)// This should never happen (can't mtex with 1 unit!)
 			gl_ext_multitexture_units = 0;

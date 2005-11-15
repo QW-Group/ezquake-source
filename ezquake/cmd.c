@@ -1161,7 +1161,7 @@ void Cmd_MacroList_f (void) {
 void Cmd_ExpandString (char *data, char *dest) {
 	unsigned int c;
 	char buf[255], *str;
-	int i, len, quotes = 0, name_length;
+	int i, len, quotes = 0, name_length = 0;
 	cvar_t	*var, *bestvar;
 #ifndef SERVERONLY
 	int macro_length;	
