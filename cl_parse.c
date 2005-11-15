@@ -2071,7 +2071,7 @@ void CL_Messages_f(void)
 }
 
 void CL_ParseServerMessage (void) {
-	int cmd, i, j;
+	int cmd, i, j = 0;
 	char *s;
 	extern int mvd_fixangle;		
 	int msg_svc_start;

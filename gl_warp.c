@@ -342,7 +342,7 @@ void EmitParticleEffect (msurface_t *fa, void (*fun)(vec3_t nv)) {
 
 void EmitSkyPolys (msurface_t *fa, qbool mtex) {
 	glpoly_t *p;
-	float *v, s, t, ss, tt, length;
+	float *v, s, t, ss = 0.0, tt = 0.0, length;
 	int i;
 	vec3_t dir;
 

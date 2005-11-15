@@ -1115,7 +1115,7 @@ OptionsHandler( EventHandlerCallRef inHandler, EventRef inEvent, void* userData 
 // int main (int argc, char **argv)
 int main (int argc, char *argv[])
 {
-	double	now, then;
+	double	now, then = 0.0;
 
 	COM_InitArgv (argc, argv);
 #if !defined(CLIENTONLY)

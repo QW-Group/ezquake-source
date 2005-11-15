@@ -792,7 +792,7 @@ void SCR_SetupAutoID (void) {
 
 	glGetFloatv(GL_MODELVIEW_MATRIX, model);
 	glGetFloatv(GL_PROJECTION_MATRIX, project);
-	glGetIntegerv(GL_VIEWPORT, view);
+	glGetIntegerv(GL_VIEWPORT, (GLint *)view);
 
 	if (cl.spectator)
 		tracknum = Cam_TrackNum();

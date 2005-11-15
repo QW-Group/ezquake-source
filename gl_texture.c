@@ -624,7 +624,7 @@ void GL_Texture_Init(void) {
 	Cvar_Register(&gl_externalTextures_world);
 	Cvar_Register(&gl_externalTextures_bmodels);
 
-	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_max_size_default);
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&gl_max_size_default);
 	Cvar_SetDefault(&gl_max_size, gl_max_size_default);
 
 	no24bit = COM_CheckParm("-no24bit") ? true : false;
