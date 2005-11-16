@@ -719,7 +719,7 @@ dlighttype_t dlightColor(float f, dlighttype_t def, qbool random);
 
 int CURRVIEW;
 int nNumViews;
-float nContrastExit, nViewsizeExit, nCrosshairExit, nTruelightning;
+float nContrastExit, nCrosshairExit, nTruelightning;
 int nPolyblendExit, nGlClearExit;
 int nLerpframesExit;
 int nWaterwarp;
