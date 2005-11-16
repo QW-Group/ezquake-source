@@ -142,6 +142,7 @@ visentlist_t	cl_visents, cl_visbents;
 #endif
 
 double		connect_time = 0;		// for connection retransmits
+float nViewsizeExit=100;
 
 qbool	host_skipframe;			// used in demo playback
 
