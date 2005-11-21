@@ -24,7 +24,7 @@
 				Optimization="0"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="libs;libexpat;pcre"
-				PreprocessorDefinitions="_DEBUG,id386,GLQUAKE,WITH_KEYMAP,WITH_JPEG,WITH_PNG,WITH_ZLIB"
+				PreprocessorDefinitions="_DEBUG,id386,GLQUAKE,WITH_KEYMAP,WITH_JPEG,WITH_PNG,WITH_ZLIB,EMBED_TCL"
 				StringPooling="FALSE"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="FALSE"
@@ -48,7 +48,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libs/libexpat.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="libs/libexpat.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib libs/tcl84.lib"
 				ShowProgress="0"
 				OutputFile="$(Outdir)/ezquake-gl.exe"
 				Version=""
@@ -175,6 +175,7 @@
 			WholeProgramOptimization="TRUE">
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/I.\libs /I.\pcre /I.\tcl"
 				Optimization="2"
 				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="2"
@@ -183,7 +184,7 @@
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="libs;libexpat;pcre"
-				PreprocessorDefinitions="NDEBUG,id386,WITH_KEYMAP,WITH_PNG,WITH_JPEG,GLQUAKE,WITH_ZLIB"
+				PreprocessorDefinitions="NDEBUG,id386,WITH_KEYMAP,WITH_PNG,WITH_JPEG,GLQUAKE,WITH_ZLIB, EMBED_TCL"
 				StringPooling="TRUE"
 				RuntimeLibrary="4"
 				BufferSecurityCheck="FALSE"
@@ -202,8 +203,8 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libs/libexpat.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib"
+				AdditionalOptions="/MACHINE:I386 "
+				AdditionalDependencies="libs/libexpat.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib tcl84.lib"
 				OutputFile="$(Outdir)/ezquake-gl.exe"
 				Version=""
 				LinkIncremental="1"
@@ -1196,6 +1197,9 @@
 				</File>
 				<File
 					RelativePath=".\cl_slist.c">
+				</File>
+				<File
+					RelativePath=".\cl_tcl.c">
 				</File>
 				<File
 					RelativePath=".\cl_tent.c">

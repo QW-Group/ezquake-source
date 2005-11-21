@@ -1,21 +1,21 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
-
+ 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
 of the License, or (at your option) any later version.
-
+ 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-
+ 
 See the GNU General Public License for more details.
-
+ 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
+ 
 */
 
 #include "quakedef.h"
@@ -41,7 +41,8 @@ cbuf_t	*cbuf_current = NULL;
 
 //Causes execution of the remainder of the command buffer to be delayed until next frame.
 //This allows commands like: bind g "impulse 5 ; +attack ; wait ; -attack ; impulse 2"
-void Cmd_Wait_f (void) {
+void Cmd_Wait_f (void)
+{
 	if (cbuf_current)
 		cbuf_current->wait = true;
 }
@@ -52,15 +53,18 @@ void Cmd_Wait_f (void) {
 =============================================================================
 */
 
-void Cbuf_AddText (char *text) {
+void Cbuf_AddText (char *text)
+{
 	Cbuf_AddTextEx (&cbuf_main, text);
 }
 
-void Cbuf_InsertText (char *text) {
+void Cbuf_InsertText (char *text)
+{
 	Cbuf_InsertTextEx (&cbuf_main, text);
 }
 
-void Cbuf_Execute (void) {
+void Cbuf_Execute (void)
+{
 	Cbuf_ExecuteEx (&cbuf_main);
 #ifndef SERVERONLY
 	Cbuf_ExecuteEx (&cbuf_safe);
@@ -73,7 +77,8 @@ void Cbuf_Execute (void) {
 //fuh : flags can be used to deal with newline termination etc for cbuf_svc, and *blockcmd can be used for blocking cmd's for cbuf_svc
 //fuh : this way cmd.c would be independant of '#ifdef CLIENTONLY's'.
 //fuh : I'll take care of that one day.
-static void Cbuf_Register (cbuf_t *cbuf, int maxsize) {
+static void Cbuf_Register (cbuf_t *cbuf, int maxsize)
+{
 	assert(!host_initialized);
 	cbuf->maxsize = maxsize;
 	cbuf->text_buf = Hunk_Alloc(maxsize);
@@ -97,9 +102,10 @@ void Cbuf_Init (void)
 }
 
 //Adds command text at the end of the buffer
-void Cbuf_AddTextEx (cbuf_t *cbuf, char *text) {
+void Cbuf_AddTextEx (cbuf_t *cbuf, char *text)
+{
 	int len, new_start, new_bufsize;
-	
+
 	len = strlen (text);
 
 	if (cbuf->text_end + len <= cbuf->maxsize) {
@@ -124,7 +130,8 @@ void Cbuf_AddTextEx (cbuf_t *cbuf, char *text) {
 }
 
 //Adds command text at the beginning of the buffer
-void Cbuf_InsertTextEx (cbuf_t *cbuf, char *text) {
+void Cbuf_InsertTextEx (cbuf_t *cbuf, char *text)
+{
 	int len, new_start, new_bufsize;
 
 	len = strlen(text);
@@ -145,7 +152,7 @@ void Cbuf_InsertTextEx (cbuf_t *cbuf, char *text) {
 	new_start = ((cbuf->maxsize - new_bufsize) >> 1);
 
 	memmove (cbuf->text_buf + (new_start + len), cbuf->text_buf + cbuf->text_start,
-		cbuf->text_end - cbuf->text_start);
+	         cbuf->text_end - cbuf->text_start);
 	memcpy (cbuf->text_buf + new_start, text, len);
 	cbuf->text_start = new_start;
 	cbuf->text_end = cbuf->text_start + new_bufsize;
@@ -153,7 +160,8 @@ void Cbuf_InsertTextEx (cbuf_t *cbuf, char *text) {
 
 #define MAX_RUNAWAYLOOP 1000
 
-void Cbuf_ExecuteEx (cbuf_t *cbuf) {
+void Cbuf_ExecuteEx (cbuf_t *cbuf)
+{
 	int i, j, cursize, nextsize;
 	char *text, line[1024], *src, *dest;
 	qbool comment, quotes;
@@ -161,7 +169,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 #ifndef SERVERONLY
 	nextsize = cbuf->text_end - cbuf->text_start;
 #endif
-	
+
 	while (cbuf->text_end > cbuf->text_start) {
 		// find a \n or ; line break
 		text = (char *) cbuf->text_buf + cbuf->text_start;
@@ -184,7 +192,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 			else if (text[i] == ';')
 				break;
 		}
-		
+
 #ifndef SERVERONLY
 		if ((cursize - i) < nextsize) // have we reached the next command?
 			nextsize = cursize - i;
@@ -239,7 +247,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 			return;
 		}
 	}
-	
+
 	cbuf->runAwayLoop = 0;
 }
 
@@ -252,10 +260,11 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf) {
 /*
 Set commands are added early, so they are guaranteed to be set before
 the client and server initialize for the first time.
-
+ 
 Other commands are added late, after all initialization is complete.
 */
-void Cbuf_AddEarlyCommands (void) {
+void Cbuf_AddEarlyCommands (void)
+{
 	int i;
 
 	for (i = 0; i < COM_Argc() - 2; i++) {
@@ -273,7 +282,8 @@ Commands lead with a +, and continue until a - or another +
 quake +prog jctest.qp +cmd amlev1
 quake -nosound +cmd amlev1
 */
-void Cmd_StuffCmds_f (void) {
+void Cmd_StuffCmds_f (void)
+{
 	int k, len;
 	char *s, *text, *token;
 
@@ -317,7 +327,8 @@ void Cmd_StuffCmds_f (void) {
 	Z_Free (token);
 }
 
-void Cmd_Exec_f (void) {
+void Cmd_Exec_f (void)
+{
 	char *f, name[MAX_OSPATH];
 	int mark;
 
@@ -360,15 +371,16 @@ void Cmd_Exec_f (void) {
 //Just prints the rest of the line to the console
 /*void Cmd_Echo_f (void) {
 	int i;
-
+ 
 	for (i = 1; i < Cmd_Argc(); i++)
 		Com_Printf ("%s ", Cmd_Argv(i));
 	Com_Printf ("\n");
 }*/
-void Cmd_Echo_f (void) {
+void Cmd_Echo_f (void)
+{
 #ifdef SERVERONLY
 	Com_Printf ("%s\n",Cmd_Args());
-#else	
+#else
 	int	i;
 	char	*str;
 	char	args[MAX_MACRO_STRING];
@@ -383,7 +395,7 @@ void Cmd_Echo_f (void) {
 		str = Q_strcat(str, Cmd_Argv(i));
 	}
 
-//	str = TP_ParseMacroString(args);
+	//	str = TP_ParseMacroString(args);
 
 	str = TP_ParseMacroString(args);
 	str = TP_ParseFunChars(str, false);
@@ -401,10 +413,11 @@ void Cmd_Echo_f (void) {
 =============================================================================
 */
 
-static cmd_alias_t *cmd_alias_hash[32];
+cmd_alias_t *cmd_alias_hash[32];
 cmd_alias_t	*cmd_alias;
 
-cmd_alias_t *Cmd_FindAlias (char *name) {
+cmd_alias_t *Cmd_FindAlias (char *name)
+{
 	int key;
 	cmd_alias_t *alias;
 
@@ -416,19 +429,24 @@ cmd_alias_t *Cmd_FindAlias (char *name) {
 	return NULL;
 }
 
-char *Cmd_AliasString (char *name) {
+char *Cmd_AliasString (char *name)
+{
 	int key;
 	cmd_alias_t *alias;
 
 	key = Com_HashKey (name);
 	for (alias = cmd_alias_hash[key]; alias; alias = alias->hash_next) {
 		if (!Q_strcasecmp(name, alias->name))
-			return alias->value;
+#ifdef EMBED_TCL
+			if (!(alias->flags & ALIAS_TCL))
+#endif
+				return alias->value;
 	}
 	return NULL;
 }
 
-void Cmd_Viewalias_f (void) {
+void Cmd_Viewalias_f (void)
+{
 	cmd_alias_t	*alias;
 	char		*name;
 	int		i,m;
@@ -440,26 +458,36 @@ void Cmd_Viewalias_f (void) {
 
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
-	
-	
+
+
 		if ( IsRegexp(name) ) {
 			if (!ReSearchInit(name))
 				return;
 			Com_Printf ("Current alias commands:\n");
-	
+
 			for (alias = cmd_alias, i=m=0; alias ; alias=alias->next, i++)
 				if (ReSearchMatch(alias->name)) {
-					Com_Printf ("%s : %s\n", alias->name, alias->value);
+#ifdef EMBED_TCL
+					if (alias->flags & ALIAS_TCL)
+						Com_Printf ("%s : Tcl procedure\n", alias->name);
+					else
+#endif
+						Com_Printf ("%s : %s\n", alias->name, alias->value);
 					m++;
 				}
-	
+
 			Com_Printf ("------------\n%i/%i aliases\n", m, i);
 			ReSearchDone();
-			
-	
+
+
 		} else 	{
 			if ((alias = Cmd_FindAlias(name)))
-				Com_Printf ("%s : \"%s\"\n", Cmd_Argv(i), alias->value);
+#ifdef EMBED_TCL
+				if (alias->flags & ALIAS_TCL)
+					Com_Printf ("%s : Tcl procedure\n", name);
+				else
+#endif
+					Com_Printf ("%s : \"%s\"\n", Cmd_Argv(i), alias->value);
 			else
 				Com_Printf ("No such alias: %s\n", Cmd_Argv(i));
 		}
@@ -467,7 +495,8 @@ void Cmd_Viewalias_f (void) {
 }
 
 
-int Cmd_AliasCompare (const void *p1, const void *p2) {
+int Cmd_AliasCompare (const void *p1, const void *p2)
+{
 	cmd_alias_t *a1, *a2;
 
 	a1 = *((cmd_alias_t **) p1);
@@ -492,7 +521,8 @@ int Cmd_AliasCompare (const void *p1, const void *p2) {
 	}
 }
 
-void Cmd_AliasList_f (void) {
+void Cmd_AliasList_f (void)
+{
 	cmd_alias_t *a;
 	int i, c, m = 0;
 	static int count;
@@ -500,7 +530,7 @@ void Cmd_AliasList_f (void) {
 	static cmd_alias_t *sorted_aliases[2048];
 
 #define MAX_SORTED_ALIASES (sizeof(sorted_aliases) / sizeof(sorted_aliases[0]))
-	
+
 	if (!sorted) {
 		for (a = cmd_alias, count = 0; a && count < MAX_SORTED_ALIASES; a = a->next, count++)
 			sorted_aliases[count] = a;
@@ -535,8 +565,9 @@ void Cmd_AliasList_f (void) {
 
 
 
-void Cmd_EditAlias_f (void){
-	#define		MAXCMDLINE	256
+void Cmd_EditAlias_f (void)
+{
+#define		MAXCMDLINE	256
 	extern char	key_lines[32][MAXCMDLINE];
 	extern int		edit_line;
 	cmd_alias_t	*a;
@@ -550,15 +581,14 @@ void Cmd_EditAlias_f (void){
 		Com_Printf ("aliaslist : list all aliases\n");
 		return;
 	}
-	
+
 	a = Cmd_FindAlias(Cmd_Argv(1));
 	if ( a == NULL ) {
 		s = CopyString("");
-	}
-	else {
+	} else {
 		s = CopyString(a->value);
 	}
-	
+
 	Q_snprintfz(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
 	Key_ClearTyping();
 	memcpy (key_lines[edit_line]+1, final_string, strlen(final_string));
@@ -568,7 +598,8 @@ void Cmd_EditAlias_f (void){
 
 
 //Creates a new command that executes a command string (possibly ; separated)
-void Cmd_Alias_f (void) {
+void Cmd_Alias_f (void)
+{
 	cmd_alias_t	*a;
 	char *s;
 	int c, key;
@@ -606,7 +637,7 @@ void Cmd_Alias_f (void) {
 	strcpy (a->name, s);
 
 	a->flags = 0;
-// QW262 -->
+	// QW262 -->
 	s=Cmd_MakeArgs(2);
 	while (*s) {
 		if (*s == '%' && ( s[1]>='0' || s[1]<='9')) {
@@ -615,7 +646,7 @@ void Cmd_Alias_f (void) {
 		}
 		++s;
 	}
-// <-- QW262
+	// <-- QW262
 	if (!Q_strcasecmp(Cmd_Argv(0), "aliasa"))
 		a->flags |= ALIAS_ARCHIVE;
 
@@ -630,7 +661,8 @@ void Cmd_Alias_f (void) {
 	a->value = CopyString (Cmd_MakeArgs(2));
 }
 
-qbool Cmd_DeleteAlias (char *name) {
+qbool Cmd_DeleteAlias (char *name)
+{
 	cmd_alias_t	*a, *prev;
 	int key;
 
@@ -673,7 +705,8 @@ qbool Cmd_DeleteAlias (char *name) {
 	return false;	// shut up compiler
 }
 
-void Cmd_UnAlias (qbool use_regex) {
+void Cmd_UnAlias (qbool use_regex)
+{
 	int 		i;
 	char		*name;
 	cmd_alias_t	*a;
@@ -687,7 +720,7 @@ void Cmd_UnAlias (qbool use_regex) {
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-		if (use_regex && (re_search = IsRegexp(name))) 
+		if (use_regex && (re_search = IsRegexp(name)))
 			if(!ReSearchInit(name))
 				continue;
 
@@ -703,25 +736,28 @@ void Cmd_UnAlias (qbool use_regex) {
 			}
 		} else {
 			if (!Cmd_DeleteAlias(Cmd_Argv(i)))
-				Com_Printf ("unalias: unknown alias \"%s\"\n", Cmd_Argv(i));	
+				Com_Printf ("unalias: unknown alias \"%s\"\n", Cmd_Argv(i));
 		}
 
 		if (use_regex && re_search)
 			ReSearchDone();
-	
+
 	}
 }
 
-void Cmd_UnAlias_f (void) {
+void Cmd_UnAlias_f (void)
+{
 	Cmd_UnAlias(false);
 }
 
-void Cmd_UnAlias_re_f (void) {
+void Cmd_UnAlias_re_f (void)
+{
 	Cmd_UnAlias(true);
 }
 
 // remove all aliases
-void Cmd_UnAliasAll_f (void) {
+void Cmd_UnAliasAll_f (void)
+{
 	cmd_alias_t	*a, *next;
 	int i;
 
@@ -740,7 +776,8 @@ void Cmd_UnAliasAll_f (void) {
 
 
 
-void DeleteServerAliases(void) {
+void DeleteServerAliases(void)
+{
 	extern cmd_alias_t *cmd_alias;
 	cmd_alias_t	*a;
 
@@ -752,7 +789,8 @@ void DeleteServerAliases(void) {
 
 
 
-void Cmd_WriteAliases (FILE *f) {
+void Cmd_WriteAliases (FILE *f)
+{
 	cmd_alias_t	*a;
 
 	for (a = cmd_alias ; a ; a=a->next)
@@ -766,14 +804,17 @@ void Cmd_WriteAliases (FILE *f) {
 =============================================================================
 */
 
-typedef struct legacycmd_s {
+typedef struct legacycmd_s
+{
 	char *oldname, *newname;
 	struct legacycmd_s *next;
-} legacycmd_t;
+}
+legacycmd_t;
 
 static legacycmd_t *legacycmds = NULL;
 
-void Cmd_AddLegacyCommand (char *oldname, char *newname) {
+void Cmd_AddLegacyCommand (char *oldname, char *newname)
+{
 	legacycmd_t *cmd;
 	cmd = (legacycmd_t *) Q_malloc (sizeof(legacycmd_t));
 	cmd->next = legacycmds;
@@ -783,7 +824,8 @@ void Cmd_AddLegacyCommand (char *oldname, char *newname) {
 	cmd->newname = CopyString(newname);
 }
 
-qbool Cmd_IsLegacyCommand (char *oldname) {
+qbool Cmd_IsLegacyCommand (char *oldname)
+{
 	legacycmd_t *cmd;
 
 	for (cmd = legacycmds; cmd; cmd = cmd->next) {
@@ -793,7 +835,8 @@ qbool Cmd_IsLegacyCommand (char *oldname) {
 	return false;
 }
 
-static qbool Cmd_LegacyCommand (void) {
+static qbool Cmd_LegacyCommand (void)
+{
 	qbool recursive = false;
 	legacycmd_t *cmd;
 	char text[1024];
@@ -837,18 +880,21 @@ static	char	*cmd_args = NULL;
 cmd_function_t	*cmd_hash_array[32];
 /*static*/ cmd_function_t	*cmd_functions;		// possible commands to execute
 
-int Cmd_Argc (void) {
+int Cmd_Argc (void)
+{
 	return cmd_argc;
 }
 
-char *Cmd_Argv (int arg) {
+char *Cmd_Argv (int arg)
+{
 	if (arg >= cmd_argc)
 		return cmd_null_string;
-	return cmd_argv[arg];	
+	return cmd_argv[arg];
 }
 
 //Returns a single string containing argv(1) to argv(argc() - 1)
-char *Cmd_Args (void) {
+char *Cmd_Args (void)
+{
 	if (!cmd_args)
 		return "";
 	return cmd_args;
@@ -856,9 +902,10 @@ char *Cmd_Args (void) {
 
 //Returns a single string containing argv(start) to argv(argc() - 1)
 //Unlike Cmd_Args, shrinks spaces between argvs
-char *Cmd_MakeArgs (int start) {
+char *Cmd_MakeArgs (int start)
+{
 	int i, c;
-	
+
 	static char	text[1024];
 
 	text[0] = 0;
@@ -873,7 +920,8 @@ char *Cmd_MakeArgs (int start) {
 }
 
 //Parses the given string into command line tokens.
-void Cmd_TokenizeString (char *text) {
+void Cmd_TokenizeString (char *text)
+{
 	int idx;
 	static char argv_buf[1024];
 
@@ -881,7 +929,7 @@ void Cmd_TokenizeString (char *text) {
 
 	cmd_argc = 0;
 	cmd_args = NULL;
-	
+
 	while (1) {
 		// skip whitespace
 		while (*text == ' ' || *text == '\t' || *text == '\r')
@@ -894,9 +942,9 @@ void Cmd_TokenizeString (char *text) {
 
 		if (!*text)
 			return;
-	
+
 		if (cmd_argc == 1)
-			 cmd_args = text;
+			cmd_args = text;
 
 		text = COM_Parse (text);
 		if (!text)
@@ -908,10 +956,11 @@ void Cmd_TokenizeString (char *text) {
 			idx += strlen(com_token) + 1;
 			cmd_argc++;
 		}
-	}	
+	}
 }
 
-void Cmd_AddCommand (char *cmd_name, xcommand_t function) {
+void Cmd_AddCommand (char *cmd_name, xcommand_t function)
+{
 	cmd_function_t *cmd;
 	int	key;
 
@@ -943,7 +992,8 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function) {
 	cmd_hash_array[key] = cmd;
 }
 
-qbool Cmd_Exists (char *cmd_name) {
+qbool Cmd_Exists (char *cmd_name)
+{
 	int	key;
 	cmd_function_t	*cmd;
 
@@ -955,7 +1005,8 @@ qbool Cmd_Exists (char *cmd_name) {
 	return false;
 }
 
-cmd_function_t *Cmd_FindCommand (char *cmd_name) {
+cmd_function_t *Cmd_FindCommand (const char *cmd_name)
+{
 	int	key;
 	cmd_function_t *cmd;
 
@@ -967,7 +1018,8 @@ cmd_function_t *Cmd_FindCommand (char *cmd_name) {
 	return NULL;
 }
 
-char *Cmd_CompleteCommand (char *partial) {
+char *Cmd_CompleteCommand (char *partial)
+{
 	cmd_function_t *cmd;
 	int len;
 	cmd_alias_t *alias;
@@ -996,7 +1048,8 @@ char *Cmd_CompleteCommand (char *partial) {
 	return NULL;
 }
 
-int Cmd_CompleteCountPossible (char *partial) {
+int Cmd_CompleteCountPossible (char *partial)
+{
 	cmd_function_t *cmd;
 	int len, c = 0;
 
@@ -1011,7 +1064,8 @@ int Cmd_CompleteCountPossible (char *partial) {
 	return c;
 }
 
-int Cmd_AliasCompleteCountPossible (char *partial) {
+int Cmd_AliasCompleteCountPossible (char *partial)
+{
 	cmd_alias_t *alias;
 	int len, c = 0;
 
@@ -1026,16 +1080,18 @@ int Cmd_AliasCompleteCountPossible (char *partial) {
 	return c;
 }
 
-int Cmd_CommandCompare (const void *p1, const void *p2) {
-    return strcmp((*((cmd_function_t **) p1))->name, (*((cmd_function_t **) p2))->name);
+int Cmd_CommandCompare (const void *p1, const void *p2)
+{
+	return strcmp((*((cmd_function_t **) p1))->name, (*((cmd_function_t **) p2))->name);
 }
 
-void Cmd_CmdList_f (void) {
+void Cmd_CmdList_f (void)
+{
 	cmd_function_t *cmd;
 	int i, c, m = 0;
 	static int count;
 	static qbool sorted = false;
-	static cmd_function_t *sorted_cmds[512];	
+	static cmd_function_t *sorted_cmds[512];
 
 #define MAX_SORTED_CMDS (sizeof(sorted_cmds) / sizeof(sorted_cmds[0]))
 
@@ -1072,16 +1128,19 @@ void Cmd_CmdList_f (void) {
 
 #define MAX_MACROS 64
 
-typedef struct {
+typedef struct
+{
 	char name[32];
 	char *(*func) (void);
 	qbool teamplay;
-} macro_command_t;
+}
+macro_command_t;
 
 static macro_command_t macro_commands[MAX_MACROS];
 static int macro_count = 0;
 
-void Cmd_AddMacroEx(char *s, char *(*f)(void), qbool teamplay) {
+void Cmd_AddMacroEx(char *s, char *(*f)(void), qbool teamplay)
+{
 	if (macro_count == MAX_MACROS)
 		Sys_Error("Cmd_AddMacro: macro_count == MAX_MACROS");
 	Q_strncpyz(macro_commands[macro_count].name, s, sizeof(macro_commands[macro_count].name));
@@ -1090,13 +1149,15 @@ void Cmd_AddMacroEx(char *s, char *(*f)(void), qbool teamplay) {
 	macro_count++;
 }
 
-void Cmd_AddMacro(char *s, char *(*f)(void)) {
+void Cmd_AddMacro(char *s, char *(*f)(void))
+{
 	Cmd_AddMacroEx(s, f, false);
 }
 
-char *Cmd_MacroString (char *s, int *macro_length) {
+char *Cmd_MacroString (char *s, int *macro_length)
+{
 	int i;
- macro_command_t	*macro;
+	macro_command_t	*macro;
 
 	for (i = 0; i < macro_count; i++) {
 		macro = &macro_commands[i];
@@ -1114,11 +1175,13 @@ char *Cmd_MacroString (char *s, int *macro_length) {
 	return NULL;
 }
 
-int Cmd_MacroCompare (const void *p1, const void *p2) {
-    return strcmp((*((macro_command_t **) p1))->name, (*((macro_command_t **) p2))->name);
+int Cmd_MacroCompare (const void *p1, const void *p2)
+{
+	return strcmp((*((macro_command_t **) p1))->name, (*((macro_command_t **) p2))->name);
 }
 
-void Cmd_MacroList_f (void) {
+void Cmd_MacroList_f (void)
+{
 	int i, c, m = 0;
 	static qbool sorted = false;
 	static macro_command_t *sorted_macros[MAX_MACROS];
@@ -1158,13 +1221,14 @@ void Cmd_MacroList_f (void) {
 //Expands all $cvar expressions to cvar values
 //If not SERVERONLY, also expands $macro expressions
 //Note: dest must point to a 1024 byte buffer
-void Cmd_ExpandString (char *data, char *dest) {
+void Cmd_ExpandString (char *data, char *dest)
+{
 	unsigned int c;
 	char buf[255], *str;
 	int i, len, quotes = 0, name_length = 0;
 	cvar_t	*var, *bestvar;
 #ifndef SERVERONLY
-	int macro_length;	
+	int macro_length;
 #endif
 
 	len = 0;
@@ -1192,8 +1256,7 @@ void Cmd_ExpandString (char *data, char *dest) {
 			}
 
 #ifndef SERVERONLY
-			if (!dedicated) 
-			{
+			if (!dedicated) {
 				str = Cmd_MacroString (buf, &macro_length);
 				name_length = macro_length;
 
@@ -1201,9 +1264,9 @@ void Cmd_ExpandString (char *data, char *dest) {
 					str = bestvar->string;
 					name_length = strlen(bestvar->name);
 				}
-			} else		
+			} else
 #endif
-			{	
+			{
 				if (bestvar) {
 					str = bestvar->string;
 					name_length = strlen(bestvar->name);
@@ -1211,7 +1274,7 @@ void Cmd_ExpandString (char *data, char *dest) {
 					str = NULL;
 				}
 			}
- 
+
 			if (str) {
 				// check buffer size
 				if (len + strlen(str) >= 1024 - 1)
@@ -1242,21 +1305,83 @@ void Cmd_ExpandString (char *data, char *dest) {
 	dest[len] = 0;
 }
 
+int Commands_Compare_Func(const void * arg1, const void * arg2)
+{
+	return Q_strcasecmp( * ( char** ) arg1, * ( char** ) arg2 );
+}
 char *msgtrigger_commands[] = {
-	"play", "playvol", "stopsound", "set", "echo", "say", "say_team",
-		"alias", "unalias", "msg_trigger", "inc", "bind", "unbind", "record",
-		"easyrecord", "stop", "if", "wait", "log", "match_forcestart",
-		 "dns", "addserver", "connect", "join", "observe", NULL
-};
+                                  "play", "playvol", "stopsound", "set", "echo", "say", "say_team",
+                                  "alias", "unalias", "msg_trigger", "inc", "bind", "unbind", "record",
+                                  "easyrecord", "stop", "if", "wait", "log", "match_forcestart",
+                                  "dns", "addserver", "connect", "join", "observe",
+                                  "tcl_proc", "tcl_exec", "tcl_eval", "exec",
+                                  "set_ex", "set_alias_str", "set_bind_str","unset", "unset_re" ,
+                                  "toggle", "toggle_re", "set_calc", "rcon", "user", "users",
+                                  "re_trigger", "re_trigger_options", "re_trigger_delete",
+                                  "re_trigger_enable","re_trigger_disable", "re_trigger_match",
+                                  "hud262_add","hud262_remove","hud262_position","hud262_bg",
+                                  "hud262_move","hud262_width","hud262_alpha","hud262_blink",
+                                  "hud262_disable","hud262_enable","hud262_list","hud262_bringtofront",
+                                  "hud_262font","hud262_hover","hud262_button"
+                                  //               ,NULL
+                              };
 
 char *formatted_comms_commands[] = {
-	"if", "wait", "echo", "say", "say_team",
-	"tp_point", "tp_pickup", "tp_took",
-	NULL
-};
+                                       "if", "wait", "echo", "say", "say_team",
+                                       "tp_point", "tp_pickup", "tp_took",
+                                       NULL
+                                   };
 
+float	impulse_time = -9999;
+int		impulse_counter;
+
+qbool AllowedImpulse(int imp)
+{
+
+	static int Allowed_TF_Impulses[] = {
+	                                   135, 99, 101, 102, 103, 104, 105, 106, 107, 108, 109, 23, 144, 145,
+	                                   159, 160, 161, 162, 163, 164, 165, 166, 167
+	                               };
+
+	int i;
+
+	if (!cl.teamfortress) return false;
+	for (i=0; i<sizeof(Allowed_TF_Impulses)/sizeof(Allowed_TF_Impulses[0]); i++) {
+		if (Allowed_TF_Impulses[i] == imp) {
+			if(++impulse_counter >= 30) {
+				if (cls.realtime < impulse_time + 5 && !cls.demoplayback) {
+					return false;
+				}
+				impulse_time = cls.realtime;
+				impulse_counter = 0;
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+qbool Cmd_IsCommandAllowedInMessageTrigger( const char *command )
+{
+	if( !Q_strcasecmp( command, "impulse") )
+		return AllowedImpulse(Q_atoi(Cmd_Argv(1)));
+
+	return 	  bsearch( &(command), msgtrigger_commands,
+	                   sizeof(msgtrigger_commands)/sizeof(msgtrigger_commands[0]),
+	                   sizeof(msgtrigger_commands[0]),Commands_Compare_Func) != NULL;
+}
+qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
+{
+	char **s;
+	for (s = formatted_comms_commands; *s; s++) {
+		if (!Q_strcasecmp(command, *s))
+			break;
+	}
+	return *s != NULL;
+}
 //A complete command line has been parsed, so try to execute it
-static void Cmd_ExecuteStringEx (cbuf_t *context, char *text) {
+static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
+{
 	cvar_t *v;
 	cmd_function_t *cmd;
 	cmd_alias_t *a;
@@ -1288,27 +1413,40 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text) {
 	// check functions
 	if ((cmd = Cmd_FindCommand(cmd_argv[0]))) {
 #ifndef SERVERONLY
-		char **s;
-
 		if (cbuf_current == &cbuf_safe) {
-			for (s = msgtrigger_commands; *s; s++) {
-				if (!Q_strcasecmp(cmd_argv[0], *s))
-					break;
-			}
-			if (!*s) {
+			if( !Cmd_IsCommandAllowedInMessageTrigger(cmd_argv[0])) {
 				Com_Printf ("\"%s\" cannot be used in message triggers\n", cmd_argv[0]);
 				goto done;
 			}
 		} else if (cbuf_current == &cbuf_formatted_comms) {
-			for (s = formatted_comms_commands; *s; s++) {
-				if (!Q_strcasecmp(cmd_argv[0], *s))
-					break;
-			}
-			if (!*s) {
+			if( !Cmd_IsCommandAllowedInTeamPlayMacros(cmd_argv[0]) ) {
 				Com_Printf("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
 				goto done;
 			}
 		}
+		/*
+		                char **s;
+				if (cbuf_current == &cbuf_safe) {
+					for (s = msgtrigger_commands; *s; s++) {
+						if (!Q_strcasecmp(cmd_argv[0], *s))
+							break;
+					}
+					if (!*s)
+					{
+						Com_Printf ("\"%s\" cannot be used in message triggers\n", cmd_argv[0]);
+						goto done;
+					}
+				} else if (cbuf_current == &cbuf_formatted_comms) {
+					for (s = formatted_comms_commands; *s; s++) {
+						if (!Q_strcasecmp(cmd_argv[0], *s))
+							break;
+					}
+					if (!*s) {
+						Com_Printf("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
+						goto done;
+					}
+				}*/
+
 #endif
 
 		if (cmd->function)
@@ -1338,57 +1476,64 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text) {
 checkaliases:
 	if ((a = Cmd_FindAlias(cmd_argv[0]))) {
 
-// QW262 -->
-			if (a->value[0]=='\0') goto done; // alias is empty.
+		// QW262 -->
+#ifdef EMBED_TCL
+		if (a->flags & ALIAS_TCL)
+		{
+			TCL_ExecuteAlias (a);
+			return;
+		}
+#endif
 
-			if(a->flags & ALIAS_HAS_PARAMETERS) { // %parameters are given in alias definition
-				s=a->value;
-				buf[0] = '\0';
-				do {
-					n = strchr(s, '%');
-					if(n) {
-						if(*++n >= '1' && *n <= '9') {
-							n[-1] = 0;
+		if (a->value[0]=='\0') goto done; // alias is empty.
+
+		if(a->flags & ALIAS_HAS_PARAMETERS) { // %parameters are given in alias definition
+			s=a->value;
+			buf[0] = '\0';
+			do {
+				n = strchr(s, '%');
+				if(n) {
+					if(*++n >= '1' && *n <= '9') {
+						n[-1] = 0;
+						strlcat(buf, s, sizeof(buf));
+						n[-1] = '%';
+						// insert numbered parameter
+						strlcat(buf,Cmd_Argv(*n-'0'), sizeof(buf));
+					} else if (*n == '0') {
+						n[-1] = 0;
+						strlcat(buf, s, sizeof(buf));
+						n[-1] = '%';
+						// insert all parameters
+						strlcat(buf, Cmd_Args(), sizeof(buf));
+					} else if (*n == '%') {
+						n[0] = 0;
+						strlcat(buf, s, sizeof(buf));
+						n[0] = '%';
+					} else {
+						if (*n) {
+							char tmp = n[1];
+							n[1] = 0;
 							strlcat(buf, s, sizeof(buf));
-							n[-1] = '%';
-							// insert numbered parameter
-							strlcat(buf,Cmd_Argv(*n-'0'), sizeof(buf));
-						} else if (*n == '0') {
-							n[-1] = 0;
+							n[1] = tmp;
+						} else
 							strlcat(buf, s, sizeof(buf));
-							n[-1] = '%';
-							// insert all parameters
-							strlcat(buf, Cmd_Args(), sizeof(buf));
-						} else if (*n == '%') {
-							n[0] = 0;
-							strlcat(buf, s, sizeof(buf));
-							n[0] = '%';
-						} else {
-							if (*n) {
-								char tmp = n[1];
-								n[1] = 0;
-								strlcat(buf, s, sizeof(buf));
-								n[1] = tmp;
-							} else
-								strlcat(buf, s, sizeof(buf));
-						}
-						s=n+1;
 					}
-				} while(n);
-				strlcat(buf, s, sizeof(buf));
-				p = buf;
+					s=n+1;
+				}
+			} while(n);
+			strlcat(buf, s, sizeof(buf));
+			p = buf;
 
-			} else  // alias has no parameters
-				p = a->value;
-// <-- QW262
+		} else  // alias has no parameters
+			p = a->value;
+		// <-- QW262
 
 #ifndef SERVERONLY
 		if (cbuf_current == &cbuf_svc)
 		{
 			Cbuf_AddText (p);
 			Cbuf_AddText ("\n");
-		}
-		else
+		} else
 #endif
 		{
 
@@ -1403,12 +1548,12 @@ checkaliases:
 			// if the alias value is a command or cvar and
 			// the alias is called with parameters, add them
 			if (Cmd_Argc() > 1 && !strchr(p, ' ') && !strchr(p, '\t') &&
-				(Cvar_FindVar(p) || (Cmd_FindCommand(p) && p[0] != '+' && p[0] != '-'))
-				) {
-					Cbuf_InsertTextEx (inserttarget, Cmd_Args());
-					Cbuf_InsertTextEx (inserttarget, " ");
-				}
-				Cbuf_InsertTextEx (inserttarget, p);
+			        (Cvar_FindVar(p) || (Cmd_FindCommand(p) && p[0] != '+' && p[0] != '-'))
+			   ) {
+				Cbuf_InsertTextEx (inserttarget, Cmd_Args());
+				Cbuf_InsertTextEx (inserttarget, " ");
+			}
+			Cbuf_InsertTextEx (inserttarget, p);
 		}
 		goto done;
 	}
@@ -1430,20 +1575,23 @@ done:
 	cbuf_current = oldcontext;
 }
 
-void Cmd_ExecuteString (char *text) {
+void Cmd_ExecuteString (char *text)
+{
 	Cmd_ExecuteStringEx (NULL, text);
 }
 
-static qbool is_numeric (char *c) {	
+static qbool is_numeric (char *c)
+{
 	return ( isdigit((int)(unsigned char)*c) ||
-		((*c == '-' || *c == '+') && (c[1] == '.' || isdigit((int)(unsigned char)c[1]))) ||
-		(*c == '.' && isdigit((int)(unsigned char)c[1])) );
+	         ((*c == '-' || *c == '+') && (c[1] == '.' || isdigit((int)(unsigned char)c[1]))) ||
+	         (*c == '.' && isdigit((int)(unsigned char)c[1])) );
 }
 
 void Re_Trigger_Copy_Subpatterns (char *s, int* offsets, int num, cvar_t *re_sub); // QW262
 extern cvar_t re_sub[10]; // QW262
 
-void Cmd_If_f (void) {
+void Cmd_If_f (void)
+{
 	int	i, c;
 	char *op, buf[1024] = {0};
 	qbool result;
@@ -1484,19 +1632,16 @@ void Cmd_If_f (void) {
 		int		offsets[99];
 
 		regexp = pcre_compile (Cmd_Argv(3), 0, &error, &error_offset, NULL);
-		if (!regexp)
-		{
+		if (!regexp) {
 			Com_Printf ("Error in regexp: %s\n", error);
 			return;
 		}
 		rc = pcre_exec (regexp, NULL, Cmd_Argv(1), strlen(Cmd_Argv(1)),
-						0, 0, offsets, 99);
-		if (rc >= 0)
-		{
+		                0, 0, offsets, 99);
+		if (rc >= 0) {
 			Re_Trigger_Copy_Subpatterns (Cmd_Argv(1), offsets, min(rc, 10), re_sub);
 			result = true;
-		}
-		else
+		} else
 			result = false;
 
 		if (op[0] != '=')
@@ -1537,8 +1682,48 @@ void Cmd_If_f (void) {
 	Cbuf_InsertTextEx (cbuf_current ? cbuf_current : &cbuf_main, buf);
 }
 
+void Cmd_If_Exists_f(void)
+{
+	int	argc;
+	char	*type;
+	char	*name;
+	qbool	exists;
+	qbool	iscvar, isalias, istrigger, ishud;
+
+	argc = Cmd_Argc();
+	if ( argc < 4 || argc > 5) {
+		Com_Printf ("if_exists <type> <name> <cmd1> [<cmd2>] - conditional execution\n");
+		return;
+	}
+
+	type = Cmd_Argv(1);
+	name = Cmd_Argv(2);
+	if ( ( (iscvar = !strcmp(type, "cvar")) && Cvar_FindVar (name) )			||
+	        ( (isalias = !strcmp(type, "alias")) && Cmd_FindAlias (name) )			||
+	        ( (istrigger = !strcmp(type, "trigger")) && CL_FindReTrigger (name) )	||
+	        ( (ishud = !strcmp(type, "hud")) && Hud_FindElement (name) ) )
+		exists = true;
+	else {
+		exists = false;
+		if (!(iscvar || isalias || istrigger || ishud)) {
+			Com_Printf("if_exists: <type> can be cvar, alias, trigger, hud\n");
+			return;
+		}
+	}
+
+	if (exists) {
+		Cbuf_InsertTextEx (cbuf_current ? cbuf_current : &cbuf_main,"\n");
+		Cbuf_InsertTextEx (cbuf_current ? cbuf_current : &cbuf_main,Cmd_Argv(3));
+	} else if (argc == 5) {
+		Cbuf_InsertTextEx (cbuf_current ? cbuf_current : &cbuf_main,"\n");
+		Cbuf_InsertTextEx (cbuf_current ? cbuf_current : &cbuf_main,Cmd_Argv(4));
+	} else
+		return;
+}
+
 //Returns the position (1 to argc - 1) in the command's argument list where the given parameter apears, or 0 if not present
-int Cmd_CheckParm (char *parm) {
+int Cmd_CheckParm (char *parm)
+{
 	int i, c;
 
 	if (!parm)
@@ -1554,7 +1739,8 @@ int Cmd_CheckParm (char *parm) {
 
 
 
-void Cmd_Init (void) {
+void Cmd_Init (void)
+{
 	// register our commands
 	Cmd_AddCommand ("exec", Cmd_Exec_f);
 	Cmd_AddCommand ("echo", Cmd_Echo_f);
@@ -1570,5 +1756,10 @@ void Cmd_Init (void) {
 	Cmd_AddCommand ("wait", Cmd_Wait_f);
 	Cmd_AddCommand ("cmdlist", Cmd_CmdList_f);
 	Cmd_AddCommand ("if", Cmd_If_f);
+	Cmd_AddCommand ("if_exists", Cmd_If_Exists_f);
+
 	Cmd_AddCommand ("macrolist", Cmd_MacroList_f);
+	qsort(msgtrigger_commands,
+	      sizeof(msgtrigger_commands)/sizeof(msgtrigger_commands[0]),
+	      sizeof(msgtrigger_commands[0]),Commands_Compare_Func);
 }

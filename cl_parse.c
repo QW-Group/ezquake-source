@@ -1426,7 +1426,7 @@ static void FlushString (char *s, int level, qbool team, int offset) {
 
 	strlcpy(white_s, s, 4096);
 
-	CL_SearchForReTriggers (s + offset, 1<<level); // re_triggers
+	CL_SearchForReTriggers (s /*+ offset*/, 1<<level); // re_triggers
 
 	if (level == PRINT_CHAT)
 	{

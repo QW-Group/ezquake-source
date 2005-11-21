@@ -26,7 +26,7 @@ netadr_t	net_local_adr;	// FIXME: make this work!
 
 netadr_t	net_from;
 sizebuf_t	net_message;
-byte		net_message_buffer[MAX_UDP_PACKET];
+byte		net_message_buffer[MSG_BUF_SIZE];
 
 WSADATA		winsockdata;
 

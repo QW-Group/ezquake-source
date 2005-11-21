@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.h,v 1.7 2005-09-09 11:00:26 disconn3ct Exp $
+	$Id: keys.h,v 1.8 2005-11-21 22:32:37 disconn3ct Exp $
 
 */
 
@@ -228,8 +228,8 @@ void Key_WriteBindings (FILE *f);
 void Key_SetBinding (int keynum, char *binding);
 void Key_Unbind (int keynum);
 void Key_ClearStates (void);
-#ifdef WITH_KEYMAP
 int	 Key_StringToKeynum (char *str);
+#ifdef WITH_KEYMAP
 char	*Key_KeynumToString (int keynum, char *buffer);
 int	IN_Key_Clean(int key);
 #else // WITH_KEYMAP

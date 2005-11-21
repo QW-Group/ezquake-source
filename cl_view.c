@@ -424,6 +424,13 @@ void V_cshift_f (void) {
 
 //When you run over an item, the server sends this command
 void V_BonusFlash_f (void) {
+        static double last_bonusflashtrigger = 0;
+
+	if (cls.realtime != last_bonusflashtrigger) { // do not trigger twice a frame
+		TP_ExecTrigger ("f_bonusflash");
+		last_bonusflashtrigger = cls.realtime;
+	}
+
 	if (!v_bonusflash.value && cbuf_current == &cbuf_svc)
 		return;
 

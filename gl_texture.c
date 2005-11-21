@@ -439,13 +439,49 @@ static qbool CheckTextureLoaded(int mode) {
 
 byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int mode) {
 	char basename[MAX_QPATH], name[MAX_QPATH];
-	byte *c, *data;
+	byte *c, *data = NULL;
 	FILE *f;
 
 	COM_StripExtension(filename, basename);
 	for (c = (byte *) basename; *c; c++)
 		if (*c == '*')
 			*c = '#';
+
+	Q_snprintfz (name, sizeof(name), "%s.link", basename);
+	if (FS_FOpenFile (name, &f) != -1)
+	{
+		char link[128];
+		int len;
+		fgets(link, 128, f);
+		fclose (f);
+		len = strlen(link);
+		// strip endline
+		if (link[len-1] == '\n') {
+			link[len-1] = '\0';
+			--len;
+		}
+		if (link[len-1] == '\r') {
+			link[len-1] = '\0';
+			--len;
+		}
+		Q_snprintfz (name, sizeof(name), "textures/%s", link);
+           	if (FS_FOpenFile (name, &f) != -1) {
+           		CHECK_TEXTURE_ALREADY_LOADED;
+           		if( !Q_strcasecmp(link + len - 3, "tga") )
+           		
+           		        data = Image_LoadTGA (f, name, matchwidth, matchheight);
+#ifdef WITH_PNG
+           		if( !Q_strcasecmp(link + len - 3, "png") )
+           		{
+           		        data = Image_LoadPNG (f, name, matchwidth, matchheight);
+           		}
+#endif	        
+           		if (data)
+           			return data;
+           	}
+	}
+	
+
 
 	Q_snprintfz (name, sizeof(name), "%s.tga", basename);
 	if (FS_FOpenFile (name, &f) != -1) {

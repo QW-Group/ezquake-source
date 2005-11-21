@@ -44,7 +44,7 @@ typedef struct cbuf_s {
 extern cbuf_t	cbuf_main;
 #ifndef SERVERONLY
 extern cbuf_t cbuf_safe; // msg_trigger commands
-extern cbuf_t formatted_comms;
+extern cbuf_t cbuf_formatted_comms;
 extern cbuf_t cbuf_svc; // svc_stufftext commands
 #endif
 extern cbuf_t	*cbuf_current;
@@ -99,7 +99,7 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function);
 qbool Cmd_Exists (char *cmd_name);
 // used by the cvar code to check for cvar / command name overlap
 
-cmd_function_t *Cmd_FindCommand (char *cmd_name);  // for message triggers
+cmd_function_t *Cmd_FindCommand (const char *cmd_name);  // for message triggers
 
 char 	*Cmd_CompleteCommand (char *partial);
 // attempts to match a partial command for automatic command line completion
@@ -151,6 +151,9 @@ void Cmd_AddLegacyCommand (char *oldname, char *newname);
 
 #define	ALIAS_HAS_PARAMETERS	8
 
+#ifdef EMBED_TCL
+#define		ALIAS_TCL				16
+#endif
 
 typedef struct cmd_alias_s {
 	struct cmd_alias_s	*hash_next;
@@ -169,3 +172,6 @@ void DeleteServerAliases(void);
 
 void Cmd_AddMacro(char *s, char *(*f)(void)); 
 void Cmd_AddMacroEx(char *s, char *(*f)(void), qbool teamplay);
+
+qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command );
+qbool Cmd_IsCommandAllowedInMessageTrigger( const char *command );
