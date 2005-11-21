@@ -602,6 +602,27 @@ void CL_Quit_f (void) {
 	}
 }
 
+// QW262 -->
+/*
+============
+CL_Userdir_f
+
+============
+*/
+void CL_Userdir_f (void)
+{
+	if (cls.state > ca_disconnected || Cmd_Argc() == 1) {
+		Com_Printf("Current userdir: %s\n", userdirfile);
+	} else {
+		int u = Q_atoi(Cmd_Argv(2));
+		if (u < 0 || u > 5)
+			Com_Printf("Invalid userdir type\n");
+		else
+			COM_SetUserDirectory (Cmd_Argv(1), Cmd_Argv(2));
+	}
+}
+// <-- QW262
+
 #ifdef _WIN32
 void CL_Windows_f (void) {
 	SendMessage(mainwindow, WM_SYSKEYUP, VK_TAB, 1 | (0x0F << 16) | (1<<29));
@@ -628,7 +649,13 @@ void CL_Serverinfo_f (void) {
 void CL_WriteConfig (char *name) {
 	FILE *f;
 
-	if (!(f = fopen (va("%s/%s", cls.gamedir, name), "w"))) {
+	if (UserdirSet)
+		f = fopen (va("%s/%s",com_userdir,name), "w");
+	else
+		f = fopen (va("%s/%s",com_gamedir, name), "w");
+
+	if (!f) 
+	{
 		Com_Printf ("Couldn't write %s.\n", name);
 		return;
 	}
@@ -691,7 +718,9 @@ void CL_InitCommands (void) {
 	Cmd_AddCommand ("fullinfo", CL_FullInfo_f);
 	Cmd_AddCommand ("setinfo", CL_SetInfo_f);
 	Cmd_AddCommand ("userinfo", CL_UserInfo_f);
-
+// QW262 -->
+	Cmd_AddCommand ("userdir", CL_Userdir_f);
+// <-- QW262
 	// forward to server commands
 	Cmd_AddCommand ("kill", NULL);
 	Cmd_AddCommand ("god", NULL);

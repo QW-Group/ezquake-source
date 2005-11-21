@@ -86,6 +86,7 @@ typedef enum {false, true} qbool;
 #define	MAX_MSGLEN		1450		// max length of a reliable message
 #define	MAX_DATAGRAM	1450		// max length of unreliable message
 #define	MAX_UDP_PACKET	(MAX_MSGLEN*2)	// one more than msg + header
+#define	MSG_BUF_SIZE	8192		// max length of msg buf; MVD demo need it
 #define	FILE_TRANSFER_BUF_SIZE	MAX_MSGLEN - 100
 
 // per-level limits
@@ -266,8 +267,8 @@ char* Q_strcpy(char* dest, const char* src);
 char* Q_strcat(char* dest, const char* src);
 // <-- QW262
 
-int Q_atoi (char *str);
-float Q_atof (char *str);
+int Q_atoi (const char *str);
+float Q_atof (const char *str);
 char *Q_ftos (float value);		// removes trailing zero chars
 
 void Q_strncpyz (char *dest, char *src, size_t size);
@@ -280,7 +281,7 @@ char *Q_strdup (const char *src);
 // might be turned into a function that makes sure all Q_*alloc calls are matched with Q_free
 #define Q_free(ptr) free(ptr)
 
-int Com_HashKey (char *name);
+int Com_HashKey (const char *name);
 
 //============================================================================
 
@@ -317,7 +318,7 @@ extern char * SYSINFO_GetString(void);
 char	*va(char *format, ...);
 // does a varargs printf into a temp buffer
 
-char *CopyString(char *s);
+char *CopyString(const char *s);
 
 //============================================================================
 
@@ -330,6 +331,15 @@ struct cache_user_s;
 extern char	com_gamedir[MAX_OSPATH];
 extern char	com_basedir[MAX_OSPATH];
 extern char	com_gamedirfile[MAX_QPATH];
+// QW262 -->
+#ifndef SERVERONLY
+#define UserdirSet (userdirfile[0] != '\0')
+extern	char	userdirfile[MAX_OSPATH];
+extern	char	com_userdir[MAX_OSPATH];
+void COM_SetUserDirectory (char *dir, char *type); 
+#endif
+// <-- QW262
+
 
 extern qbool file_from_pak;		// set if file came from a pak file
 extern qbool file_from_gamedir;	// set if file came from a gamedir (and gamedir wasn't id1/qw)

@@ -34,7 +34,7 @@ cvar_t *cvar_vars;
 cvar_t	cvar_viewdefault = {"cvar_viewdefault", "1"};
 cvar_t	cvar_viewhelp = {"cvar_viewhelp", "1"};
 
-cvar_t *Cvar_FindVar (char *var_name) {
+cvar_t *Cvar_FindVar (const char *var_name) {
 	cvar_t *var;
 	int key;
 
@@ -415,6 +415,10 @@ void Cvar_Register (cvar_t *var) {
 	var->next = cvar_vars;
 	cvar_vars = var;
 
+#ifdef EMBED_TCL
+	TCL_RegisterVariable (var);
+#endif
+
 	Cvar_AddCvarToGroup(var);	
 
 #ifndef CLIENTONLY
@@ -591,12 +595,15 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags) {
 	v->defaultvalue = CopyString (string);	
 	v->flags = cvarflags;
 	v->value = Q_atof (v->string);
+#ifdef EMBED_TCL
+	TCL_RegisterVariable (v);
+#endif
 
 	return v;
 }
 
 //returns true if the cvar was found (and deleted)
-qbool Cvar_Delete (char *name) {
+qbool Cvar_Delete (const char *name) {
 	cvar_t *var, *prev;
 	int key;
 
@@ -626,7 +633,9 @@ qbool Cvar_Delete (char *name) {
 				prev->next = var->next;
 			else
 				cvar_vars = var->next;
-
+#ifdef EMBED_TCL
+			TCL_UnregisterVariable (name);
+#endif
 			// free
 			Z_Free (var->defaultvalue);
 			Z_Free (var->string);
@@ -668,6 +677,138 @@ void Cvar_Set_f (void) {
 
 	if (cvar_seta)
 		var->flags |= CVAR_USER_ARCHIVE;
+}
+
+void Cvar_Set_ex_f (void)
+{
+	cvar_t	*var;
+	char	*var_name;
+	char	*st = NULL;
+	char	text_exp[1024];
+
+	if (Cmd_Argc() != 3) {
+		Com_Printf ("usage: set_ex <cvar> <value>\n");
+		return;
+	}
+
+	var_name = Cmd_Argv (1);
+	var = Cvar_FindVar (var_name);
+
+
+	if ( !var )
+	{
+		if (Cmd_Exists(var_name)) {
+			Com_Printf ("\"%s\" is a command\n", var_name);
+			return;
+		}
+		var = Cvar_Create(var_name, "", CVAR_USER_CREATED);
+	}
+
+	Cmd_ExpandString( Cmd_Argv(2), text_exp); 
+        st = TP_ParseMacroString( text_exp );
+	st = TP_ParseFunChars(st, false);
+	
+	Cvar_Set (var, st );
+
+	if (cvar_seta)
+		var->flags |= CVAR_USER_ARCHIVE;
+}
+
+void Cvar_Set_Alias_Str_f (void)
+{
+	cvar_t		*var;
+	char		*var_name;
+	char		*alias_name;
+	//char		str[1024];
+	char		*v /*,*s*/;
+	if (Cmd_Argc() != 3) {
+		Com_Printf ("usage: set_alias_str <cvar> <alias>\n");
+		return;
+	}
+
+	var_name = Cmd_Argv (1);
+	alias_name = Cmd_Argv (2);
+	var = Cvar_FindVar (var_name);
+	v = Cmd_AliasString( alias_name );
+
+	if ( !var)
+	{
+		if (Cmd_Exists(var_name)) {
+			Com_Printf ("\"%s\" is a command\n", var_name);
+			return;
+		}
+		var = Cvar_Create(var_name, "", CVAR_USER_CREATED);
+	}
+
+	if (!var) {
+		Com_Printf ("Unknown variable \"%s\"\n", var_name);
+		return;
+	} else if (!v) {
+		Com_Printf ("Unknown alias \"%s\"\n", alias_name);
+		return;
+	} else {
+/*		s = str; 
+		while (*v) {
+			if (*v == '\"') // " should be escaped
+				*s++ = '\\';
+			*s++ = *v++;
+		}
+		*s = '\0'; 
+		Cvar_Set (var, str);*/
+		Cvar_Set (var, v);
+	}
+	if (cvar_seta)
+		var->flags |= CVAR_USER_ARCHIVE;
+}
+
+void Cvar_Set_Bind_Str_f (void)
+{
+	cvar_t		*var;
+	int			keynum;
+	char		*var_name;
+	char		*key_name;
+	//char		str[1024];
+	//char		*v,*s;
+
+	if (Cmd_Argc() != 3) {
+		Com_Printf ("usage: set_bind_str <cvar> <key>\n");
+		return;
+	}
+
+	var_name = Cmd_Argv (1);
+	key_name = Cmd_Argv (2);
+	var = Cvar_FindVar (var_name);
+	keynum = Key_StringToKeynum( key_name );
+
+	if ( !var)
+	{
+		if (Cmd_Exists(var_name)) {
+			Com_Printf ("\"%s\" is a command\n", var_name);
+			return;
+		}
+		var = Cvar_Create(var_name, "", CVAR_USER_CREATED);
+	}
+
+	if (!var) {
+		Com_Printf ("Unknown variable \"%s\"\n", var_name);
+		return;
+	} else if (keynum == -1) {
+		Com_Printf ("Unknown key \"%s\"\n", key_name);
+		return;
+	} else {
+		if (keybindings[keynum]){
+/*		s = str; v = keybindings[keynum];
+			while (*v) {
+				if (*v == '\"') // " should be escaped
+					*s++ = '\\';
+				*s++ = *v++;
+			}
+			*s = '\0'; 
+			Cvar_Set (var, str);*/
+			Cvar_Set (var, keybindings[keynum]);
+		} else
+			Cvar_Set (var, "");
+	}
 }
 
 // disconnect -->
@@ -916,6 +1057,9 @@ void Cvar_Inc_f (void) {
 void Cvar_Init (void) {
 	Cmd_AddCommand ("cvarlist", Cvar_CvarList_f);
 	Cmd_AddCommand ("set", Cvar_Set_f);
+	Cmd_AddCommand ("set_ex", Cvar_Set_ex_f);
+	Cmd_AddCommand ("set_alias_str", Cvar_Set_Alias_Str_f);
+	Cmd_AddCommand ("set_bind_str", Cvar_Set_Bind_Str_f);
 	//Cmd_AddCommand ("seta", Cvar_Seta_f);
 	Cmd_AddCommand ("unset", Cvar_UnSet_f);
 	Cmd_AddCommand ("unset_re", Cvar_UnSet_re_f);

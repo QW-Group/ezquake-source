@@ -44,9 +44,9 @@ BUILD_DEBUG_DIR			=debug-$(ARCH)
 BUILD_RELEASE_DIR		=release-$(ARCH)
 
 # compiler flags
-PRJ_CFLAGS			=-DWITH_ZLIB -DWITH_PNG
+PRJ_CFLAGS			=-DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DUSE_TCL_STUBS
 XMMS_CFLAGS			=-DWITH_XMMS `glib-config --cflags`
-BASE_CFLAGS			=-Wall -Wno-format-y2k $(PRJ_CFLAGS) $(ARCH_CFLAGS)
+BASE_CFLAGS			=-Wall $(PRJ_CFLAGS) $(ARCH_CFLAGS)
 BASE_RELEASE_CFLAGS		=-ffast-math -fomit-frame-pointer -fexpensive-optimizations
 ifneq ($(CC_BASEVERSION),4) # if we're not auto-vectorizing then we can unroll the loops (mdfour ahoy)
 	BASE_RELEASE_CFLAGS  += -funroll-loops
@@ -120,7 +120,7 @@ DO_GL_AS			+= -o $@ -c $<
 
 
 # linker flags
-LDFLAGS				=-lm `glib-config --libs` -lpthread -lexpat -lpcre $(CL_DLFLAGS)
+LDFLAGS				=-lm `glib-config --libs` -lpthread -lexpat -lpcre -ltclstub $(CL_DLFLAGS)
 SVGALDFLAGS			=-lvga
 X11_LDFLAGS			=-L/usr/X11R6/lib -lX11 -lXext -lXxf86dga -lXxf86vm
 ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
@@ -274,6 +274,7 @@ QWCL_OBJS = \
 \
     $(BUILDDIR)/build/cl_cam.o \
     $(BUILDDIR)/build/cl_cmd.o \
+    $(BUILDDIR)/build/cl_tcl.o \
     $(BUILDDIR)/build/cl_demo.o \
     $(BUILDDIR)/build/cl_ents.o \
     $(BUILDDIR)/build/cl_main.o \
@@ -432,6 +433,9 @@ $(BUILDDIR)/build/cl_view.o :		$(SOURCE_DIR)/cl_view.c
 	$(DO_CC)
                               
 $(BUILDDIR)/build/cl_cmd.o :		$(SOURCE_DIR)/cl_cmd.c
+	$(DO_CC)
+
+$(BUILDDIR)/build/cl_tcl.o :		$(SOURCE_DIR)/cl_tcl.c
 	$(DO_CC)
 
 $(BUILDDIR)/build/cl_slist.o :		$(SOURCE_DIR)/cl_slist.c
@@ -875,6 +879,7 @@ GLQWCL_OBJS = \
 \
     $(BUILDDIR)/build-gl/cl_cam.o \
     $(BUILDDIR)/build-gl/cl_cmd.o \
+    $(BUILDDIR)/build-gl/cl_tcl.o \
     $(BUILDDIR)/build-gl/cl_demo.o \
     $(BUILDDIR)/build-gl/cl_ents.o \
     $(BUILDDIR)/build-gl/cl_main.o \
@@ -1019,6 +1024,9 @@ $(BUILDDIR)/build-gl/cl_view.o :		$(SOURCE_DIR)/cl_view.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-gl/cl_cmd.o :			$(SOURCE_DIR)/cl_cmd.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-gl/cl_tcl.o :			$(SOURCE_DIR)/cl_tcl.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-gl/cl_slist.o :		$(SOURCE_DIR)/cl_slist.c
@@ -1422,6 +1430,7 @@ GLQWCL_MAC_OBJS = \
 \
     $(BUILDDIR)/build-mac-gl/cl_cam.o \
     $(BUILDDIR)/build-mac-gl/cl_cmd.o \
+    $(BUILDDIR)/build-mac-gl/cl_tcl.o \
     $(BUILDDIR)/build-mac-gl/cl_demo.o \
     $(BUILDDIR)/build-mac-gl/cl_ents.o \
     $(BUILDDIR)/build-mac-gl/cl_main.o \
@@ -1567,6 +1576,9 @@ $(BUILDDIR)/build-mac-gl/cl_view.o :		$(SOURCE_DIR)/cl_view.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/cl_cmd.o :		$(SOURCE_DIR)/cl_cmd.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-mac-gl/cl_tcl.o :		$(SOURCE_DIR)/cl_tcl.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/cl_slist.o :		$(SOURCE_DIR)/cl_slist.c

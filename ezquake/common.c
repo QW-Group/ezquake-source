@@ -153,7 +153,7 @@ char* Q_strcat(char* dest, const char* src)
 	return dest;
 }
 
-int Q_atoi (char *str) {
+int Q_atoi (const char *str) {
 	int val, sign, c;
 	
 	if (*str == '-') {
@@ -196,7 +196,7 @@ int Q_atoi (char *str) {
 	return 0;
 }
 
-float Q_atof (char *str) {
+float Q_atof (const char *str) {
 	double val;
 	int sign, c, decimal, total;
 	
@@ -285,7 +285,7 @@ void Q_snprintfz (char *dest, size_t size, char *fmt, ...) {
 	dest[size - 1] = 0;
 }
 
-int Com_HashKey (char *name) { 
+int Com_HashKey (const char *name) { 
 	unsigned int v;	
 	unsigned char c; 
 
@@ -768,7 +768,7 @@ char *va (char *format, ...) {
 	return string[idx];
 }
 
-char *CopyString (char *in) {
+char *CopyString (const char *in) {
 	char *out;
 
 	out = Z_Malloc (strlen(in) + 1);
@@ -814,6 +814,14 @@ typedef struct {
 
 char	com_gamedir[MAX_OSPATH];
 char	com_basedir[MAX_OSPATH];
+
+// QW262 -->
+#ifndef SERVERONLY
+char	userdirfile[MAX_OSPATH];
+char	com_userdir[MAX_OSPATH];
+int	userdir_type;
+#endif
+// <-- QW262
 
 typedef struct searchpath_s {
 	char	filename[MAX_OSPATH];
@@ -1188,12 +1196,96 @@ pack_t *FS_LoadPackFile (char *packfile) {
 	Q_free(info);
 	return pack;
 }
+// QW262 -->
+#ifndef SERVERONLY
+/*
+================
+COM_SetUserDirectory
+================
+*/
+void COM_SetUserDirectory (char *dir, char* type)
+{
+	if (strstr(dir, "..") || strstr(dir, "/")
+		|| strstr(dir, "\\") || strstr(dir, ":") ) {
+			Com_Printf ("Userdir should be a single filename, not a path\n");
+			return;
+		}
+	strcpy(userdirfile, dir);
+	userdir_type = Q_atoi(type);
+	com_gamedirfile[0]='\0'; // force reread
+}
+#endif
+
+qbool FS_AddPak (char *pakfile)
+{
+	searchpath_t *search;
+	pack_t *pak;
+
+	pak = FS_LoadPackFile (pakfile);
+	if (!pak)
+		return false;
+
+	//search = Hunk_Alloc (sizeof(searchpath_t));
+	search = Q_malloc(sizeof(searchpath_t));
+	search->pack = pak;
+	search->next = com_searchpaths;
+	com_searchpaths = search;		
+	return true;
+}
+#ifndef SERVERONLY
+
+void FS_AddUserPaks (char *dir)
+{
+	FILE	*f;
+	char	pakfile[MAX_OSPATH];
+	char	userpak[32];
+
+	// add paks listed in paks.lst
+	sprintf (pakfile, "%s/pak.lst", dir);
+	f = fopen(pakfile, "r");
+	if (f){
+		int len;
+		while (1){
+			if (!fgets(userpak, 32, f))
+				break;
+			len = strlen(userpak);
+			// strip endline
+			if (userpak[len-1] == '\n') {
+				userpak[len-1] = '\0';
+				--len;
+			}
+			if (userpak[len-1] == '\r') {
+				userpak[len-1] = '\0';
+				--len;
+			}
+			if (len < 5)
+				continue;
+#ifdef GLQUAKE
+			if (!Q_strncasecmp(userpak,"soft",4))
+				continue;
+#else
+			if (!Q_strncasecmp(userpak,"gl", 2))
+				continue;
+#endif
+			sprintf (pakfile, "%s/%s", dir, userpak);
+			FS_AddPak(pakfile);
+		}
+		fclose(f);
+	}
+// add userdir.pak
+	if (UserdirSet) {
+		sprintf (pakfile, "%s/%s.pak", dir, userdirfile);
+		FS_AddPak(pakfile);
+	}
+}
+#endif
+
+// <-- QW262
 
 //Sets com_gamedir, adds the directory to the head of the path, then loads and adds pak1.pak pak2.pak ... 
 void FS_AddGameDirectory (char *dir) {
 	int i;
 	searchpath_t *search;
-	pack_t *pak;
 	char pakfile[MAX_OSPATH], *p;
 
 	if ((p = strrchr(dir, '/')) != NULL)
@@ -1203,8 +1295,8 @@ void FS_AddGameDirectory (char *dir) {
 	strcpy (com_gamedir, dir);
 
 	// add the directory to the search path
-	search = Hunk_Alloc (sizeof(searchpath_t));
-	strcpy (search->filename, dir);
+	search = Q_malloc (sizeof(searchpath_t));
+	strcpy (search->filename, com_gamedir);
 	search->pack = NULL;
 	search->next = com_searchpaths;
 	com_searchpaths = search;
@@ -1212,22 +1304,61 @@ void FS_AddGameDirectory (char *dir) {
 	// add any pak files in the format pak0.pak pak1.pak, ...
 	for (i = 0; ; i++) {
 		Q_snprintfz (pakfile, sizeof(pakfile), "%s/pak%i.pak", dir, i);
-		if (!(pak = FS_LoadPackFile (pakfile)))
+		if(!FS_AddPak(pakfile))
 			break;
-		search = Hunk_Alloc (sizeof(searchpath_t));
-		search->pack = pak;
-		search->next = com_searchpaths;
-		com_searchpaths = search;		
 	}
+#ifndef SERVERONLY
+// other paks
+	FS_AddUserPaks (dir);
+#endif
+}
+
+void FS_AddUserDirectory ( char *dir ) {
+	int i;
+	searchpath_t *search;
+	char pakfile[MAX_OSPATH];
+
+	if ( !UserdirSet )
+	        return;
+      	switch (userdir_type) {
+      	case 0:	Q_snprintfz (com_userdir, sizeof(com_userdir), "%s/%s", com_gamedir, userdirfile); break;
+      	case 1:	Q_snprintfz (com_userdir, sizeof(com_userdir), "%s/%s/%s", com_basedir, userdirfile, dir); break;
+      	case 2: Q_snprintfz (com_userdir, sizeof(com_userdir), "%s/qw/%s/%s", com_basedir, userdirfile, dir); break;
+      	case 3: Q_snprintfz (com_userdir, sizeof(com_userdir), "%s/qw/%s", com_basedir, userdirfile); break;
+      	case 4: Q_snprintfz (com_userdir, sizeof(com_userdir), "%s/%s", com_basedir, userdirfile); break;
+      	case 5:
+      		{
+      		char* homedir = getenv("HOME");
+      		if (homedir)
+      			Q_snprintfz (com_userdir, sizeof(com_userdir), "%s/qw/%s", homedir, userdirfile);
+      		break;
+      		}
+      	default:
+      	      return;  
+      	}
+
+	// add the directory to the search path
+	search = Q_malloc (sizeof(searchpath_t));
+	strcpy (search->filename, com_userdir);
+	search->pack = NULL;
+	search->next = com_searchpaths;
+	com_searchpaths = search;
+
+	// add any pak files in the format pak0.pak pak1.pak, ...
+	for (i = 0; ; i++) {
+		Q_snprintfz (pakfile, sizeof(pakfile), "%s/pak%i.pak", com_userdir, i);
+		if(!FS_AddPak(pakfile))
+			break;
+	}
+#ifndef SERVERONLY
+// other paks
+	FS_AddUserPaks (com_userdir);
+#endif
 }
 
 //Sets the gamedir and path to a different directory.
 void FS_SetGamedir (char *dir) {
-	searchpath_t *search, *next;
-	int i;
-	pack_t *pak;
-	char pakfile[MAX_OSPATH];
-
+	searchpath_t  *next;
 	if (strstr(dir, "..") || strstr(dir, "/")
 		|| strstr(dir, "\\") || strstr(dir, ":") ) {
 		Com_Printf ("Gamedir should be a single filename, not a path\n");
@@ -1253,32 +1384,21 @@ void FS_SetGamedir (char *dir) {
 	// flush all data, so it will be forced to reload
 	Cache_Flush ();
 
-	sprintf (com_gamedir, "%s/%s", com_basedir, dir);
+	//sprintf (com_gamedir, "%s/%s", com_basedir, dir);
 
-	if (!strcmp(dir, "id1") || !strcmp(dir, "qw") || !strcmp(dir, "ezquake"))	
-		return;
-
-	// add the directory to the search path
-	search = Q_malloc (sizeof(searchpath_t));
-	strcpy (search->filename, com_gamedir);
-	search->pack = NULL;
-	search->next = com_searchpaths;
-	com_searchpaths = search;
-
-	// add any pak files in the format pak0.pak pak1.pak, ...
-	for (i = 0; ; i++) {
-		Q_snprintfz (pakfile, sizeof(pakfile), "%s/pak%i.pak", com_gamedir, i);
-		if (!(pak = FS_LoadPackFile (pakfile)))
-			break;
-		search = Q_malloc (sizeof(searchpath_t));
-		search->pack = pak;
-		search->next = com_searchpaths;
-		com_searchpaths = search;	
+	if (strcmp(dir, "id1") && strcmp(dir, "qw") && strcmp(dir, "ezquake"))	
+	{
+		FS_AddGameDirectory ( va("%s/%s", com_basedir, dir) );
 	}
+// QW262 -->
+#ifndef SERVERONLY
+        FS_AddUserDirectory(dir);
+#endif
+// <-- QW262
 }
 
 void FS_InitFilesystem (void) {
-	int		i;
+	int i;
 
 	// -basedir <path>
 	// Overrides the system supplied base directory (under id1)
@@ -1303,11 +1423,21 @@ void FS_InitFilesystem (void) {
 	// any set gamedirs will be freed up to here
 	com_base_searchpaths = com_searchpaths;
 
+	i = COM_CheckParm("-userdir");
+	if (i && i < com_argc - 2) {
+		COM_SetUserDirectory(com_argv[i+1], com_argv[i+2]);
+	}
+
 	// the user might want to override default game directory
 	if (!(i = COM_CheckParm ("-game")))
 		i = COM_CheckParm ("+gamedir");
 	if (i && i < com_argc - 1)
 		FS_SetGamedir (com_argv[i + 1]);
+	else
+	{ 
+		if( UserdirSet ) 
+			FS_SetGamedir("qw");
+	}
 }
 
 /*
@@ -1680,3 +1810,4 @@ int isspace2(int c)
         return 1;
     return 0;
 } 
+

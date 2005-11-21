@@ -395,9 +395,14 @@ void Host_Init (int argc, char **argv, int default_memsize) {
 
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
-    
+
 	Host_InitMemory (default_memsize);
 
+#ifdef EMBED_TCL
+	// interpreter should be initialized
+	// before any cvar definitions
+	TCL_InterpInit ();
+#endif
 	Cbuf_Init ();
 	Cmd_Init ();
 	Cvar_Init ();
@@ -424,6 +429,11 @@ void Host_Init (int argc, char **argv, int default_memsize) {
 
 	HUD_Init(); // HUD -> hexum
 	HUD_InitFinish(); // HUD -> hexum
+
+#ifdef EMBED_TCL
+	if (!TCL_InterpLoaded())
+		Com_Printf ("Could not load "TCL_LIB_NAME", embedded Tcl disabled\n");
+#endif
 
 	SB_RootInit();
 
@@ -498,6 +508,9 @@ void Host_Shutdown (void) {
 	Con_Shutdown();
 #endif
 	COM_Shutdown ();
+#ifdef EMBED_TCL
+	TCL_Shutdown ();
+#endif
 }
 
 void Host_Quit (void) {

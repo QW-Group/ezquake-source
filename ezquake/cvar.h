@@ -105,8 +105,8 @@ qbool Cvar_Command (void);
 // with the archive flag set to true.
 void Cvar_WriteVariables (FILE *f);
 
-cvar_t *Cvar_FindVar (char *name);
-qbool Cvar_Delete (char *name);
+cvar_t *Cvar_FindVar (const char *name);
+qbool Cvar_Delete (const char *name);
 
 void Cvar_Init (void);
 
