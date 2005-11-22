@@ -147,7 +147,7 @@ extern char *skinforcing_team;
 void TP_Init (void);
 
 //#define FPD_NO_TEAM_MACROS	1
-#define FPS_NO_TIMERS		2
+#define FPD_NO_TIMERS		2
 #define FPD_NO_SOUNDTRIGGERS	4 // disables triggers
 #define FPD_NO_FORCE_SKIN	256
 #define FPD_NO_FORCE_COLOR	512

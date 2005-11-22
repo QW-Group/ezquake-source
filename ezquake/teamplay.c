@@ -2295,7 +2295,7 @@ qbool CL_SearchForReTriggers (char *s, unsigned trigger_type) {
 // TODO: allow triggers for demos/specs (it should be ruleset independent)
 	if (
 	(cls.demoplayback) || (cl.spectator) || (!tp_msgtriggers.value)
-	|| (cl.fpd & FPD_NO_SOUNDTRIGGERS) || (cl.fpd & FPS_NO_TIMERS)
+		   || (cl.fpd & FPD_NO_SOUNDTRIGGERS) || (cl.fpd & FPD_NO_TIMERS)
 	|| Rulesets_RestrictTriggers ()
 	)
 		return false;
