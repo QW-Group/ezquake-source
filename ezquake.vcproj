@@ -1615,6 +1615,9 @@
 					RelativePath="mp3_player.h">
 				</File>
 				<File
+					RelativePath=".\mvd_utils.h">
+				</File>
+				<File
 					RelativePath=".\parser.h">
 				</File>
 				<File
