@@ -2522,6 +2522,7 @@ void SCR_Init (void) {
 }
 
 void SCR_DrawStatusMultiview(void) {
+	
 	int xb = 0, yb = 0, xc = 0, yc = 0, xd = 0, yd = 0;
 	char strng[80];
 	char weapons[40];
@@ -2533,6 +2534,10 @@ void SCR_DrawStatusMultiview(void) {
 	byte c, c2;
 
 	int i;
+	
+	extern int powerup_cam_active,cam_1,cam_2,cam_3,cam_4;
+	extern cvar_t mvd_pc_view_1,mvd_pc_view_2,mvd_pc_view_3,mvd_pc_view_4;
+	
 
 	if (!cl_multiview.value || !cls.mvdplayback)
 		return;
@@ -2672,6 +2677,29 @@ void SCR_DrawStatusMultiview(void) {
 	}
 
 	// placement
+
+	if (CURRVIEW == 1 && strlen(mvd_pc_view_1.string) && powerup_cam_active && cam_1){
+		sAmmo[0]='\0';
+		strng[0]='\0';
+		weapons[0]='\0';
+		};
+	if (CURRVIEW == 2 && strlen(mvd_pc_view_2.string) && powerup_cam_active && cam_2){
+		sAmmo[0]='\0';
+		strng[0]='\0';
+		weapons[0]='\0';
+		};
+	if (CURRVIEW == 3 && strlen(mvd_pc_view_3.string) && powerup_cam_active && cam_3){
+		sAmmo[0]='\0';
+		strng[0]='\0';
+		weapons[0]='\0';
+		};
+	if (CURRVIEW == 4 && strlen(mvd_pc_view_4.string) && powerup_cam_active && cam_4){
+		sAmmo[0]='\0';
+		strng[0]='\0';
+		weapons[0]='\0';
+		};
+
+		
 	if (cl_multiview.value == 1) {
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;

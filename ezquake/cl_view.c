@@ -28,6 +28,8 @@ entities sent from the server may not include everything in the pvs, especially
 when crossing a water boudnary.
 */
 
+void MVD_Powerup_Cams_f(void);
+
 cvar_t	cl_rollspeed = {"cl_rollspeed", "200"};
 cvar_t	cl_rollangle = {"cl_rollangle", "0"};
 cvar_t	cl_bob = {"cl_bob", "0.00"};
@@ -1027,6 +1029,9 @@ void V_RenderView (void) {
 		V_CalcIntermissionRefdef ();	
 	else
 		V_CalcRefdef ();
+
+	if (cls.mvdplayback)
+		MVD_Powerup_Cams_f();
 
 	R_PushDlights ();
 	R_RenderView ();
