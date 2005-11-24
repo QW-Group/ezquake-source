@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.20 2005-11-23 23:11:47 johnnycz Exp $
+	$Id: mvd_utils.c,v 1.21 2005-11-24 00:39:43 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -236,13 +236,13 @@ typedef struct mvd_gameinfo_s {
 	int pcount;
 	int deathmatch;
 } mvd_gameinfo_t;
-
+/*
 typedef struct mvd_info_s {
 	mvd_gameinfo_t gameinfo;
 	mvd_player_t player[MAX_CLIENTS];
 	
 } mvd_info_t;
-
+*/
 
 
 
@@ -894,12 +894,13 @@ void MVD_AutoTrack_f(void) {
 	#endif
 }
 
-int MVD_Status_Announcer_f (int i, int z){
+void MVD_Status_Announcer_f (int i, int z){
 	char *pn;
 	vec3_t *pl;
 	pn=mvd_new_info[i].p_info->name;
 	pl=&mvd_new_info[i].p_state->origin;
-	if (mvd_new_info[i].info.info[z].mention==1){
+	if (mvd_new_info[i].info.info[z].mention==1)
+	{
 		mvd_new_info[i].info.info[z].mention = 0;
 		switch (z){
 			case 2: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ssg.string,TP_LocationName(*pl));break;
@@ -916,19 +917,20 @@ int MVD_Status_Announcer_f (int i, int z){
 			case 13: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ra.string,TP_LocationName(*pl));break;
 			case 14: Com_Printf("%s Took %s @ %s\n",pn, tp_name_mh.string,TP_LocationName(*pl));break;
 		}
-		return 0;
-	}else if (mvd_new_info[i].info.info[z].mention==-1){
+	}
+	else if (mvd_new_info[i].info.info[z].mention==-1)
+	{
 		mvd_new_info[i].info.info[z].mention = 0;
-		switch (z){
+		switch (z) {
 			case 5: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_gl.string,TP_LocationName(*pl));break;
 			case 6: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_rl.string,TP_LocationName(*pl));break;
 			case 7: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_lg.string,TP_LocationName(*pl));break;
 			case 8: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ring.string,TP_LocationName(*pl));break;
 			case 9: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_quad.string,TP_LocationName(*pl));break;
 			case 10: 
-				if (mvd_new_info[i].info.info[QUAD_INFO].starttime - cls.demotime < 30){
+				if (mvd_new_info[i].info.info[QUAD_INFO].starttime - cls.demotime < 30) {
 					Com_Printf("%s Lost %s @ %s\n",pn, tp_name_pent.string,TP_LocationName(*pl));break;
-				}else{
+				} else {
 					Com_Printf("%s's %s ended\n",pn, tp_name_pent.string,TP_LocationName(*pl));break;
 				}
 			case 11: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ga.string,TP_LocationName(*pl));break;
@@ -936,9 +938,7 @@ int MVD_Status_Announcer_f (int i, int z){
 			case 13: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ra.string,TP_LocationName(*pl));break;
 			case 14: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_mh.string,TP_LocationName(*pl));break;
 		}
-	return 0;
 	}
-
 }
 
 void MVD_Status_WP_f (int i){
@@ -1248,7 +1248,7 @@ int MVD_Stats_Gather_f (void){
 
 
 void MVD_List_Runs_f (void){
-	int i;
+//	int i;
 	/*
 	for (i=0;i<MAX_MODELS;i++)
 		Com_Printf("%s\n",cl.model_name[i]);
