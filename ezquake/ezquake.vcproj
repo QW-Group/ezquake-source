@@ -48,13 +48,14 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libs/libexpat.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib libs/tcl84.lib"
+				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib"
 				ShowProgress="0"
 				OutputFile="$(Outdir)/ezquake-gl.exe"
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories=".\libs"
+				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile=".\Debug-gl/ezquake-gl.pdb"
 				SubSystem="2"
@@ -106,7 +107,7 @@
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="libs;libexpat;pcre"
-				PreprocessorDefinitions="NDEBUG,id386,WITH_KEYMAP"
+				PreprocessorDefinitions="NDEBUG;id386;WITH_KEYMAP;EMBED_TCL"
 				StringPooling="TRUE"
 				RuntimeLibrary="4"
 				BufferSecurityCheck="FALSE"
@@ -126,7 +127,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libs/libexpat.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib"
 				OutputFile="$(Outdir)/ezquake.exe"
 				Version=""
 				LinkIncremental="1"
@@ -175,7 +176,6 @@
 			WholeProgramOptimization="TRUE">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/I.\libs /I.\pcre /I.\tcl"
 				Optimization="2"
 				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="2"
@@ -204,7 +204,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386 "
-				AdditionalDependencies="libs/libexpat.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib tcl84.lib"
+				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib"
 				OutputFile="$(Outdir)/ezquake-gl.exe"
 				Version=""
 				LinkIncremental="1"
@@ -258,7 +258,7 @@
 				FavorSizeOrSpeed="0"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="libs;libexpat;pcre"
-				PreprocessorDefinitions="_DEBUG,id386,WITH_PNG,WITH_ZLIB"
+				PreprocessorDefinitions="_DEBUG;id386;WITH_PNG;WITH_ZLIB;EMBED_TCL"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="FALSE"
 				RuntimeLibrary="4"
@@ -280,7 +280,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libs/libexpat.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib"
 				OutputFile="$(Outdir)/ezquake.exe"
 				Version=""
 				LinkIncremental="2"
@@ -1474,6 +1474,9 @@
 				</File>
 				<File
 					RelativePath=".\cvar.h">
+				</File>
+				<File
+					RelativePath=".\embed_tcl.h">
 				</File>
 				<File
 					RelativePath=".\image.h">
