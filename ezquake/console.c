@@ -580,6 +580,7 @@ static void Con_DrawInput(void) {
 void Con_DrawNotify (void) {
 	int x, v, skip, maxlines, i;
 	char *text, *s;
+	char buf[1024];
 	float time;
 
 	maxlines = _con_notifylines.value;
@@ -603,9 +604,13 @@ void Con_DrawNotify (void) {
 		clearnotify = 0;
 		scr_copytop = 1;
 
+		/*
 		for (x = 0 ; x < con_linewidth ; x++)
 			Draw_Character ( (x+1)<<3, v + bound(0, con_shift.value, 8), text[x]);
 
+		*/
+		Q_strncpyz(buf,text,con_linewidth);
+		Draw_ColoredString( 0, v + bound(0, con_shift.value, 8), buf,0);
 		v += 8;
 	}
 
@@ -654,6 +659,7 @@ void Con_DrawNotify (void) {
 void Con_DrawConsole (int lines) {
 	int i, j, x, y, n, rows, row;
 	char *text, dlbar[1024];
+	char buf[1024];
 
 	if (lines <= 0)
 		return;
@@ -690,8 +696,12 @@ void Con_DrawConsole (int lines) {
 
 		text = con.text + (row % con_totallines)*con_linewidth;
 
+		/*
 		for (x = 0; x < con_linewidth; x++)
 			Draw_Character ((x + 1) << 3, y + bound(0, con_shift.value, 8), text[x]);
+		*/
+		Q_strncpyz(buf,text,con_linewidth);
+		Draw_ColoredString( 1 << 3, y + bound(0, con_shift.value, 8), buf,0);
 	}
 
 	// draw the download bar
