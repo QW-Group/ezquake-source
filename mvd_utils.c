@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.22 2005-11-27 23:54:34 johnnycz Exp $
+	$Id: mvd_utils.c,v 1.23 2005-11-28 21:42:21 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -468,7 +468,7 @@ void MVD_Info (void){
 	char str[1024];
 	char mvd_info_final_string[1024], mvd_info_powerups[20], mvd_info_header_string[1024];
 	char *mapname;
-	int x,y,z,i,value = 0;
+	int x,y,z,i = 0;
 
 
 
@@ -810,7 +810,7 @@ void MVD_AutoTrack_f(void) {
 	#endif
 }
 
-int MVD_Status_Announcer_f (int i, int z){
+void MVD_Status_Announcer_f (int i, int z){
 	char *pn;
 	vec3_t *pl;
 	pn=mvd_new_info[i].p_info->name;
@@ -832,7 +832,7 @@ int MVD_Status_Announcer_f (int i, int z){
 			case 13: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ra.string,TP_LocationName(*pl));break;
 			case 14: Com_Printf("%s Took %s @ %s\n",pn, tp_name_mh.string,TP_LocationName(*pl));break;
 		}
-		return 0;
+		return;
 	}else if (mvd_new_info[i].info.info[z].mention==-1){
 		mvd_new_info[i].info.info[z].mention = 0;
 		switch (z){
@@ -852,7 +852,7 @@ int MVD_Status_Announcer_f (int i, int z){
 			case 13: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_ra.string,TP_LocationName(*pl));break;
 			case 14: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_mh.string,TP_LocationName(*pl));break;
 		}
-	return 0;
+	return;
 	}
 
 }
@@ -1109,11 +1109,11 @@ void MVD_List_Runs_f (void){
 void MVD_Status (void){
 	int x, y,p ;
 	char str[1024];
-	int id,i;
+	int id = 0,i;
 	int z = 0;
-	double av_f =0;
-	double av_t =0;
-	double av_tk=0;
+	double av_f  = 0.0;
+	double av_t  = 0.0;
+	double av_tk = 0.0;
 
 		
 	if (!mvd_status.value)
@@ -1366,7 +1366,7 @@ void mvd_s_p (FILE *f,int i,int k){
 			fprintf(f,"			<time>%9.3f</time>\n",mvd_new_info[i].info.runs[x].time);
 			fprintf(f,"			<frags>%i</frags>\n",mvd_new_info[i].info.runs[x].frags);
 			fprintf(f,"			<teamfrags>%i</teamfrags>\n",mvd_new_info[i].info.runs[x].teamfrags);;
-			fprintf(f,"		</run>\n",x);
+			fprintf(f,"		</run>\n");
 		}
 		fprintf(f,"	</runs>\n");
 		
@@ -1396,7 +1396,6 @@ void mvd_s_p (FILE *f,int i,int k){
 void mvd_s_t (FILE *f){
 	int i,z;
 	int static count;
-	float static time;
 
 	if (mvd_cg_info.gametype == 0 || mvd_cg_info.gametype == 4)
 		return;
