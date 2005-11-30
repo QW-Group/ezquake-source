@@ -278,7 +278,8 @@ DWORD WINAPI IN_SMouseProc(void	* lpParameter) {
 
 				
 					case DIMOFS_Z:
-						if (m_forcewheel.value) {
+						/*if (m_forcewheel.value) {*/
+						if (od.dwData & (1<<((sizeof(od.dwData)<<3)-1))) {
 							if (od.dwData &	0x80)
 								wheel_dn_count++;
 							else
@@ -832,7 +833,8 @@ void IN_MouseMove (usercmd_t *cmd) {
 					
 					case DIMOFS_Z:
 						if (m_forcewheel.value) {
-							if (od.dwData & 0x80) {
+							/*if (od.dwData & 0x80) {*/
+							if (od.dwData & (1<<((sizeof(od.dwData)<<3)-1))) {
 								Key_Event (K_MWHEELDOWN, true);
 								Key_Event (K_MWHEELDOWN, false);
 							} else {

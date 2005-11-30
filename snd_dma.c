@@ -813,13 +813,12 @@ void S_Play_f (void) {
 	int i;
 	char name[256];
 	sfx_t *sfx;
-	static int hash = 345;
 
 	for (i = 1; i < Cmd_Argc(); i++) {
 		strcpy(name, Cmd_Argv(i));
 		COM_DefaultExtension (name, ".wav");
 		sfx = S_PrecacheSound(name);
-		S_StartSound(hash++, 0, sfx, listener_origin, 1.0, 0.0);
+		S_StartSound(cl.playernum+1, 0, sfx, listener_origin, 1.0, 0.0);
 	}
 }
 
@@ -828,14 +827,13 @@ void S_PlayVol_f (void) {
 	float vol;
 	char name[256];
 	sfx_t *sfx;
-	static int hash = 543;
 
 	for (i = 1; i < Cmd_Argc(); i += 2) {
 		strcpy(name, Cmd_Argv(i));
 		COM_DefaultExtension (name, ".wav");
 		sfx = S_PrecacheSound(name);
 		vol = Q_atof(Cmd_Argv(i + 1));
-		S_StartSound(hash++, 0, sfx, listener_origin, vol, 0.0);
+		S_StartSound(cl.playernum, 0, sfx, listener_origin, vol, 0.0);
 	}
 }
 
