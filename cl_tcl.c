@@ -17,10 +17,11 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.1 2005-11-22 09:56:12 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.2 2005-11-30 21:25:57 disconn3ct Exp $
  */
 
 #ifdef EMBED_TCL
+#define STATIC_BUILD
 #include <tcl.h>
 #include <time.h>
 #include "quakedef.h"
