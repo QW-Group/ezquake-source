@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -302,7 +302,7 @@ sfx_t *S_FindName (char *name) {
 
 void S_TouchSound (char *name) {
 	sfx_t *sfx;
-	
+
 	if (!sound_started)
 		return;
 
@@ -358,8 +358,8 @@ channel_t *SND_PickChannel (int entnum, int entchannel) {
 	if (channels[first_to_die].sfx)
 		channels[first_to_die].sfx = NULL;
 
-    return &channels[first_to_die];    
-}       
+    return &channels[first_to_die];
+}
 
 void SND_Spatialize (channel_t *ch) {
     vec_t dot, dist, lscale, rscale, scale;
@@ -399,7 +399,7 @@ void SND_Spatialize (channel_t *ch) {
 	ch->leftvol = (int) (ch->master_vol * scale);
 	if (ch->leftvol < 0)
 		ch->leftvol = 0;
-}           
+}
 
 // =======================================================================
 // Start a sound effect
@@ -425,7 +425,7 @@ void S_StartSound (int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float 
 	target_chan = SND_PickChannel(entnum, entchannel);
 	if (!target_chan)
 		return;
-	
+
 	// spatialize
 	memset (target_chan, 0, sizeof(*target_chan));
 	VectorCopy(origin, target_chan->origin);
@@ -447,7 +447,7 @@ void S_StartSound (int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float 
 
 	target_chan->sfx = sfx;
 	target_chan->pos = 0.0;
-    target_chan->end = paintedtime + sc->length;	
+    target_chan->end = paintedtime + sc->length;
 
 	// if an identical sound has also been started this frame, offset the pos
 	// a bit to keep it from just making the first one louder
@@ -508,7 +508,7 @@ extern char *DSoundError (int error);
 
 void S_ClearBuffer (void) {
 	int clear;
-		
+
 #ifdef _WIN32
 	if (!sound_started || !shm || (!sn.buffer && !pDSBuf))
 #else
@@ -548,7 +548,7 @@ void S_ClearBuffer (void) {
 		memset(pData, clear, sn.samples * sn.samplebits/8);
 
 		pDSBuf->lpVtbl->Unlock(pDSBuf, pData, dwSize, NULL, 0);
-	
+
 	}
 	else
 #endif
@@ -580,13 +580,13 @@ void S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation) {
 		Com_Printf ("Sound %s not looped\n", sfx->name);
 		return;
 	}
-	
+
 	ss->sfx = sfx;
 	VectorCopy (origin, ss->origin);
 	ss->master_vol = vol;
 	ss->dist_mult = (attenuation/64) / sound_nominal_clip_dist;
-    ss->end = paintedtime + sc->length;	
-	
+    ss->end = paintedtime + sc->length;
+
 	SND_Spatialize (ss);
 }
 
@@ -613,9 +613,9 @@ void S_UpdateAmbientSounds (void) {
 	}
 
 	for (ambient_channel = 0 ; ambient_channel< NUM_AMBIENTS ; ambient_channel++) {
-		chan = &channels[ambient_channel];	
+		chan = &channels[ambient_channel];
 		chan->sfx = ambient_sfx[ambient_channel];
-	
+
 		vol = s_ambientlevel.value * l->ambient_sound_level[ambient_channel];
 		if (vol < 8)
 			vol = 0;
@@ -653,7 +653,7 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up) {
 
 	combine = NULL;
 
-	// update spatialization for static and dynamic sounds	
+	// update spatialization for static and dynamic sounds
 	ch = channels+NUM_AMBIENTS;
 	for (i = NUM_AMBIENTS; i < total_channels; i++, ch++) {
 		if (!ch->sfx)
@@ -727,7 +727,7 @@ void GetSoundtime (void) {
 	if (samplepos < oldsamplepos) {
 		buffers++;					// buffer wrapped
 
-		if (paintedtime > 0x40000000) {	
+		if (paintedtime > 0x40000000) {
 			// time to chop things off to avoid 32 bit limits
 			buffers = 0;
 			paintedtime = fullsamples;
@@ -788,10 +788,10 @@ void S_Update_ (void) {
 		if (pDSBuf) {
 			if (pDSBuf->lpVtbl->GetStatus (pDSBuf, &dwStatus) != DS_OK)
 				Com_Printf ("Couldn't get sound buffer status\n");
-			
+
 			if (dwStatus & DSBSTATUS_BUFFERLOST)
 				pDSBuf->lpVtbl->Restore (pDSBuf);
-			
+
 			if (!(dwStatus & DSBSTATUS_PLAYING))
 				pDSBuf->lpVtbl->Play(pDSBuf, 0, 0, DSBPLAY_LOOPING);
 		}
@@ -833,7 +833,7 @@ void S_PlayVol_f (void) {
 		COM_DefaultExtension (name, ".wav");
 		sfx = S_PrecacheSound(name);
 		vol = Q_atof(Cmd_Argv(i + 1));
-		S_StartSound(cl.playernum, 0, sfx, listener_origin, vol, 0.0);
+		S_StartSound(cl.playernum+1, 0, sfx, listener_origin, vol, 0.0);
 	}
 }
 
@@ -882,7 +882,7 @@ void S_LocalSoundWithVol(char *sound, float volume) {
         return;
     if (!sound_started)
         return;
-        
+
     sfx = S_PrecacheSound (sound);
     if (!sfx)
     {
