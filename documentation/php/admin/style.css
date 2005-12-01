@@ -1,0 +1,58 @@
+body {
+    background-color: #fff;
+    color: #000;
+    font-family: sans-serif;
+}
+a:hover {
+    color: #f00;
+}
+
+div.menus {
+    float: left;
+    width: 180px;
+    margin-right: 15px;
+}
+div.main {
+    margin-left: 195px;
+}
+
+div.menu {
+    background-color: #888;
+    color: #fff;
+    border: 1px solid #444;
+    margin-bottom: 1em;
+    padding-bottom: 1em;
+}
+div.menu h2 {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+div.menu a {
+    color: #ff0;
+}
+div.menu a:hover { background-color: #000;
+color: #fff; }
+div.menu ul { margin-left: 0.6em; }
+div.menu ul li { list-style: none; }
+
+input, textarea {
+    margin-bottom: 0.5em;
+    margin-left: 0.5em;
+    font-family: sans-serif;
+}
+label {
+    margin-left: 0.5em;
+}
+thead tr td {
+    padding-left: 0.5em;
+}
+fieldset {
+    margin: 1em;
+}
+
+form p {
+    margin: 0;
+    margin-left: 1em;
+    margin-bottom: 0.3em;
+    text-indent: 0;
+}
