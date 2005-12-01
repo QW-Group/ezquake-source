@@ -511,7 +511,7 @@ class VariablesData extends DocsData
                 }
                 break;
             case "enum":
-                if (!($r = my_mysql_query("SELECT value, description FROM {$this->tblPrefix}_values_enum WHERE {$this->foreignkey} = {$id};")))
+                if (!($r = my_mysql_query("SELECT value, description FROM {$this->tblPrefix}_values_enum WHERE {$this->foreignkey} = {$id} ORDER BY id ASC;")))
                     return False;
                 
                 if (!mysql_num_rows($r))
