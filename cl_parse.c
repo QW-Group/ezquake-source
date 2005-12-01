@@ -1404,6 +1404,7 @@ void CL_ProcessServerInfo (void) {
 	cl.fpd = fpd;
 	if (skin_refresh)
 		TP_RefreshSkins();
+	CL_UpdateCaption();
 }
 
 void CL_ParseServerInfoChange (void) {

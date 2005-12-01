@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.8 2005-09-09 12:46:22 disconn3ct Exp $
+	$Id: vid_win.c,v 1.9 2005-12-01 21:45:42 johnnycz Exp $
 
 */
 
@@ -164,8 +164,10 @@ qbool msg_suppress_1 = 0;	// suppresses resolution and cache size console output
 								// at fullscreen DIB focus gain/loss
 
 void VID_SetCaption (char *text) {
-	if (vid_initialized)
-		SetWindowText (mainwindow, text);
+	if (vid_initialized) {
+		SetWindowText(mainwindow, text);
+		UpdateWindow(mainwindow);
+	}
 }
 
 void VID_RememberWindowPos (void) {
