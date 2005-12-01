@@ -233,7 +233,7 @@ class VariablesRendData extends BaseRendData
         }
         
         if (strlen($var["remarks"]))
-            $this->content = "\n<p class=\"remarks\">".htmlspecialchars($var["remarks"])."</p>";
+            $this->content .= "\n<p class=\"remarks\">".htmlspecialchars($var["remarks"])."</p>";
     }
 }
 
