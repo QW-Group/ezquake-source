@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.6 2005-09-09 12:46:22 disconn3ct Exp $
+	$Id: vid_wgl.c,v 1.7 2005-12-01 21:45:42 johnnycz Exp $
 
 */
 
@@ -186,8 +186,10 @@ void D_EndDirectRect (int x, int y, int width, int height) {}
 /******************************** WINDOW STUFF ********************************/
 
 void VID_SetCaption (char *text) {
-	if (vid_initialized)
-		SetWindowText (mainwindow, text);
+	if (vid_initialized) {
+		SetWindowText(mainwindow, text);
+		UpdateWindow(mainwindow);
+	}
 }
 
 void CenterWindow(HWND hWndCenter, int width, int height, BOOL lefttopjustify) {
