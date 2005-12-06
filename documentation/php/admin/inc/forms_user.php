@@ -30,10 +30,10 @@
     }
     
 ?>
-
 <form action="index.php" method="post">
-<caption><?=$heading?></caption>
 <div><input type="hidden" name="action" id="action" value="<?=$newaction?>" /></div>
+<fieldset>
+<legend><?=$heading?></legend>
 <table>
 <?php
     foreach($elements as $element)
@@ -63,4 +63,5 @@
 ?>
 <tr><td colspan="2"><input type="submit" value="Submit" /></td></tr>
 </table>
+</fieldset>
 </form>
