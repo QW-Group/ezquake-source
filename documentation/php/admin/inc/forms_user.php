@@ -50,7 +50,7 @@
                 echo '<tr><td><label for="name">Access:</label></td><td><input type="text" size="3" maxlength="1" name="access" id="access" /></td></tr>';
                 break;
             case "password":
-                echo '<tr><td><label for="psw">Password:</label></td><td><input type="password" size="16" name="password" id="password" /></td></tr>';
+                echo '<tr><td><label for="password">Password:</label></td><td><input type="password" size="16" name="password" id="password" /></td></tr>';
                 break;
             case "newpassword1":
                 echo '<tr><td><label for="newpsw1">New Password:</label></td><td><input type="password" size="16" name="newpassword1" id="newpassword1" /></td></tr>';
