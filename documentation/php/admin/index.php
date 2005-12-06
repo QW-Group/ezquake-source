@@ -49,9 +49,16 @@
             include("inc/menu_headadmin.php");
             
       	include("inc/menu_user.php");
-        echo '<h3>'.$session->userName.'</h3>';
+        echo '<div class="menu"><h2>User</h2><ul class="mainmenu">';
+            echo '<li>Name: '.$session->userName.'</li>';
+            echo '<li>Access: '.$session->access.'</li>';
+            echo '<li><a href="?action=listusers">List Users</a></li>';
+            echo '<li><a href="?action=changepswform">Change password</a></li>';
+            echo '<li><a href="?action=logout">Log-out</a></li>';
+            echo '</ul>';
         echo '</div>';
-        
+        echo '</div>';
+                
         echo '<div class="main">';
         
         if ($session->access > 1)
