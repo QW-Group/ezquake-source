@@ -12,6 +12,9 @@ class Session
     var $access;
 
     function Session()
+    /**
+     * Initializes current user session, sets userId, userName, userAccess
+     */
     {
         $this->sId = $this->GetSessionID();
         
@@ -28,16 +31,19 @@ class Session
     }
 
     function NewSessionIdstr()
+    // new session id string (random letters)
     {
         return RandomString(IDSTRLEN);
     }
     
     function NewPassword()
+    // new user password
     {
         return RandomString(NEWPSWLEN);
     }
     
     function SetSessionCookie($idstr)
+    // wrapper for setcookie
     {
         setcookie("idstr", $idstr, time() + (SESSIONTIMEOUT*60));
     }
@@ -50,6 +56,9 @@ class Session
     }
     
     function GetSessionID()
+    /**
+     * Initializes current user Session and returns sessionID
+     */
     {
         global $foundOrCreated;
         $table = "sessions";
@@ -72,6 +81,8 @@ class Session
             $this->SetSessionCookie($newSesIdstr);
             my_mysql_query("UPDATE {$table} SET idstr = '{$newSesIdstr}' WHERE id = {$result} LIMIT 1;");
         }
+        else
+            $this->SetSessionHit($result);
         
         return $result;
     }
@@ -107,6 +118,7 @@ class Session
     }
     
     function AddUser ($login, $name, $access)
+    // form data proccessing
     {
         $access = (int) $access;
         $name = trim($name);
@@ -122,6 +134,7 @@ class Session
     }
     
     function RemoveUser ($login)
+    // data access wrapper
     {
         $login = trim($login);
         
@@ -133,6 +146,7 @@ class Session
     }
     
     function ListUsers()
+    // prints users list
     {
         echo '<h2>Users list</h2>'; // this line was outside of this function, forget why, now it seems ok here
         $res = my_mysql_query("SELECT login, name, access FROM users;");
@@ -147,6 +161,7 @@ class Session
     }
     
     function EditUser($login, $newpsw1, $newpsw2, $access)
+    // data access wrapper
     {
         $res = my_mysql_query("SELECT id FROM users WHERE login = '$login' LIMIT 1;");
         if (!res || !mysql_num_rows($res))
@@ -177,6 +192,7 @@ class Session
     }
     
     function ChangePassword($old, $new1, $new2)
+    // data access wrapper
     {
         $oldpsw = md5($old);
         
@@ -191,6 +207,7 @@ class Session
     }
     
     function SetNewPassword($userId, $new1, $new2)
+    // form data proccessing
     {
         if ($new1 != $new2) 
         {
@@ -213,10 +230,12 @@ class Session
     }
     
     function Logout()
+    // destroys session-user assignment, reset accesslevel, userid, username
     {
         $this->AssignUser2Session($this->sId, 0); // remove user from the session
         $this->access = 0;
         $this->userId = 0;
+        $this->userName = '';
         RefreshPage("index.php");
     }
 
