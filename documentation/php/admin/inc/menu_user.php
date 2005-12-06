@@ -1,17 +1,20 @@
 <div class="menu">
-<h2>User menu</h2>
-<ul>
-<li><a href="?action=editcommands">Commands</a></li>
-<li><a href="?action=editvariables">Variables</a></li>
-<li><a href="?action=vargroups">Variables Groups</a></li>
-<li><a href="?action=varsupport">Variables Support</a></li>
-<li><a href="?action=editmanuals">Manual pages</a></li>
-<li><a href="?action=addcmdform">Add Command</a></li>
-<li><a href="?action=addvarform">Add Variable</a></li>
-<li><a href="?action=addmanform">Add Manual page</a></li>
-<li><a href="?action=markuphelp">Markup Help</a></li>
-<li><a href="?action=listusers">List Users</a></li>
-<li><a href="?action=changepswform">Change password</a></li>
-<li><a href="?action=logout">Log-out</a></li>
+<h2>Editing</h2>
+<ul class="mainmenu">
+    <li>Variables<ul class="submenu">
+        <li><a href="?action=addvarform">Add</a></li>
+        <li><a href="?action=editvariables">List &amp; Edit</a></li>
+        <li><a href="?action=vargroups">Groups</a></li>
+        <li><a href="?action=varsupport">Upload Defaults</a></li>
+    </ul></li>
+    <li>Commands<ul class="submenu">
+        <li><a href="?action=addcmdform">Add</a></li>
+        <li><a href="?action=editcommands">List &amp; Edit</a></li>
+    </ul></li>
+    <li>Manual pages<ul class="submenu">
+        <li><a href="?action=addmanform">Add</a></li>
+        <li><a href="?action=editmanuals">List &amp; Edit</a></li>
+    </ul></li>
+    <li><a href="?action=markuphelp">Markup Help</a></li>
 </ul>
 </div>
