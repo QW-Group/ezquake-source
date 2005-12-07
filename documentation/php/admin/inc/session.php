@@ -71,7 +71,7 @@ class Session
         
         my_mysql_query("DELETE FROM {$table} WHERE lasthit < (now() - interval ".SESSIONTIMEOUT." MINUTE);");
         
-        $row = array("ip" => $p_ip, "host" => $p_host, "browser" => $p_browser, "idstr" => $p_idstr);
+        $row = array("ip" => $p_ip, /*"host" => $p_host,*/ "browser" => $p_browser, "idstr" => $p_idstr);
         
         $result = GetOrCreate($table, $row);
         
