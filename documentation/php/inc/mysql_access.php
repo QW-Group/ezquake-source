@@ -11,7 +11,7 @@
     default:
         $mysql_server = "mysql4-e";
         $mysql_user = "e117445rw";
-        $mysql_password = "32e477gbyz3c";
+        $mysql_password = "xxxxxxxx"; // fake password
         $mysql_db = "e117445_docs";
         break;
     }
