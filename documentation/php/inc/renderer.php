@@ -193,7 +193,6 @@ class VariablesRendData extends BaseRendData
         if (strlen($var["description"]))
             $this->content = "\n<h{$topheading}>Description</h{$topheading}><p class=\"description\">".htmlspecialchars($var["description"])."</p>";
         
-        // todo
         $this->content .= "<p class=\"support\">Support: ";
         foreach ($builds as $build)
         {   

@@ -120,5 +120,13 @@ function IsIdSafe($s)
     asort($a);
     return $a;
   }
+  
+function Cvrt($string) {
+    if (!get_magic_quotes_gpc()) {
+        return htmlspecialchars($string);
+    } else {
+        return stripslashes(htmlspecialchars($string));
+    }
+}
 
 ?>
