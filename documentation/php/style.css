@@ -109,3 +109,13 @@ table.values caption {
   font-size: 1em;
 }
 dl.changelog dd ul { margin: 0 auto; }
+
+div.option h3, h2.command {
+    background-color: transparent;
+    color: #FFF7BF;
+}
+h2.command code {
+    font-weight: bold;
+    color: #FFA280;
+    font-size: 0.8em;
+}

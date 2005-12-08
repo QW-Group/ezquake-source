@@ -176,7 +176,7 @@ CREATE TABLE manuals_groups
   id SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
   abbr CHAR(32) NOT NULL DEFAULT '',
   name CHAR(128) NOT NULL DEFAULT '',
-  PRIMARY KEY(id)
+  PRIMARY KEY(id),
   UNIQUE(abbr),
   UNIQUE(name)
 );
@@ -212,5 +212,28 @@ CREATE TABLE manuals_history
   PRIMARY KEY(id)
 );
 
+CREATE TABLE options
+(
+    id MEDIUMINT UNSIGNED AUTO_INCREMENT NOT NULL,
+    name CHAR(64) NOT NULL DEFAULT '',
+    description TEXT,
+    args CHAR(128) NOT NULL DEFAULT '',
+    argsdesc TEXT,
+    flags SET('GL only', 'Linux only', 'Win32 only', 'Software only'),
+    active TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    PRIMARY KEY(id),
+    UNIQUE(name)
+);
+
+CREATE TABLE options_history
+(
+  id INT UNSIGNED AUTO_INCREMENT NOT NULL,
+  id_option SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  id_user SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  action ENUM("created", "updated", "changed", "renamed", "deleted"),
+  id_renamedto SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  time TIMESTAMP(14),
+  PRIMARY KEY(id)
+);
 
 DROP TABLE manuals;

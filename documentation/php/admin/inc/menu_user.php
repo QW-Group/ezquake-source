@@ -11,10 +11,15 @@
         <li><a href="?action=addcmdform">Add</a></li>
         <li><a href="?action=editcommands">List &amp; Edit</a></li>
     </ul></li>
+    <li>Cmd-line options<ul class="submenu">
+        <li><a href="?action=addoptform">Add</a></li>
+        <li><a href="?action=editoptions">List &amp; Edit</a></li>
+    </ul></li>
     <li>Manual pages<ul class="submenu">
         <li><a href="?action=addmanform">Add</a></li>
         <li><a href="?action=editmanuals">List &amp; Edit</a></li>
     </ul></li>
+    <li><a href="?action=history">History</a></li>
     <li><a href="?action=markuphelp">Markup Help</a></li>
 </ul>
 </div>

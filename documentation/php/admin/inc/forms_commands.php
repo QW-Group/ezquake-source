@@ -85,6 +85,34 @@ class DocsForms
         }
         echo "\n</li>\n</ul>";        
     }
+    
+    function PrintHistory()
+    {
+        if (($rows = $_REQUEST["rows"]) < 1) $rows = 20;
+        
+        echo "<h2>".$this->whoami."s history</h2>";
+        
+        if (!($hist = $this->data->GetHistory($rows)))
+            return False;
+        
+        echo "\n\n<table><thead><tr>";
+        $head = array_keys($hist[0]);
+        foreach ($head as $fieldname)
+            echo "<td>{$fieldname}</td>";
+        
+        echo "</tr></thead>\n<tbody>\n";
+        
+        foreach ($hist as $row)
+        {   
+            echo "<tr>";
+            foreach ($row as $field) 
+                echo "<td>{$field}</td>";
+ 
+            echo "</tr>";
+        }
+        
+        echo "\n</tbody></table>\n\n";
+    }
 }
 
 class CommandsForms extends DocsForms
@@ -157,7 +185,7 @@ class VariablesForms extends DocsForms
     
     function FormVariable($id = 0)
     {
-        $id = (int) $id;
+        $id = (int) $_REQUEST["id"];
         if ($id > 0)
         {
             $d = $this->data->GetVar($id);
@@ -283,6 +311,72 @@ class ManualsForms extends DocsForms
         else
             echo "{$this->whoami} has been added / updated.";
     }
+}
+
+class OptionsForms extends DocsForms
+{
+    function OptionsForms()
+    {
+        $this->data = new OptionsData;
+        $this->editaction = "editoption";
+        $this->whoami = "Command-line option";
+    }
+    
+    function GetFlagsCheckboxes($flags_n)
+    {
+        $r = "";
+        $flags_d = $this->data->GetFlagsNames($flags_n);
+        foreach ($flags_d as $flagnum => $flagdata)
+        {
+            $checked = $flagdata["set"] ? "checked=\"checked\"" : "";
+            $r .= "\n  <li><label><input type=\"checkbox\" name=\"o_flag_{$flagnum}\" {$checked} /> ".$flagdata["name"]."</label></li>";
+        }
+        return $r;
+    }
+    
+    function FormOption($id = 0)
+    {
+        $id = (int) $id;
+        if ($id > 0)
+        {
+            $d = $this->data->GetOption($id);
+            $name = htmlspecialchars($d["name"]);
+            $description = htmlspecialchars($d["description"]);
+            $args = htmlspecialchars($d["args"]);
+            $argsdesc = htmlspecialchars($d["argsdesc"]);
+            $flags = $this->GetFlagsCheckboxes($d["flags"]);
+        }
+        else
+        {
+            $name = $title = $content = "";
+            $flags = $this->GetFlagsCheckboxes(0);
+        }
+        include("inc/form_add_option.php");
+    }
+    
+    function ReadAddOpt($userId)
+    {
+        $userId = (int) $userId;
+        $data = array();
+        $data["name"] = $_REQUEST["o_name"];
+        $data["description"] = $_REQUEST["o_description"];
+        $data["args"] = $_REQUEST["o_args"];
+        $data["argsdesc"] = $_REQUEST["o_argsdesc"];
+        
+        $flagshi = pow(2, count($this->data->GetFlagsList()) - 1);
+        $c = 0;
+        for ($i = 1; $i <= $flagshi; $i *= 2)
+            if ($_REQUEST["o_flag_".$i])
+                $c += $i;
+        
+        $data["flags"] = $c;
+
+        if (!$this->data->AddOrUpdate($data, $userId))
+            echo "{$this->whoami} has not been added / updated.";
+        else
+            echo "{$this->whoami} has been added / updated.";
+    }
+
 }
 
 class GroupsForms

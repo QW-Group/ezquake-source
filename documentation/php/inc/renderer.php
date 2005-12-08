@@ -19,6 +19,7 @@ function GetRenderer($name, &$db)
     switch ($name)
     {
         case "commands": return new CommandsAllRendData(2); return; break;
+        case "command-line": return new OptionsRendData(); return; break;
         case "main-page": return new MainPageRendData($db); return; break;
     }
     
@@ -45,6 +46,9 @@ function GetRenderer($name, &$db)
 
     if ($mid = $db["variables"]->GetId($name))
         return new VariablesRendData($mid, 4);
+    
+    if ($mid = $db["options"]->GetId($name))
+        return new OptionRendData($mid, $db["options"], 1);
     
     $default_id = $db["manuals"]->GetId(DEFAULTPAGE);
     return new ManualsRendData($default_id);
@@ -281,6 +285,51 @@ class CommandsAllRendData extends BaseRendData
             $cmd = new CommandsRendData($id);
             $this->content .= "<h{$topheading} class=\"command\" id=\"".IdSafe($name)."\">{$cmd->title}</h{$topheading}>\n";
             $this->content .= $cmd->content;
+        }
+    }
+}
+
+class OptionRendData extends BaseRendData
+{
+    function OptionRendData($id, &$db, $sideargs = 0)
+    {
+        $opt = $db->GetOption($id);
+        $this->title = $opt["name"];
+        $this->heading = $opt["name"]." Command-line option";
+        
+        $this->content = "<div class=\"option\">";
+
+        $this->content .= "<div class=\"description\">".htmlspecialchars($opt["description"])."</div>";
+        if (strlen($opt["args"]))
+            if ($sideargs)
+            	$this->content .= "<p>Arguments: <code>".htmlspecialchars($opt["args"])."</code></p>";
+            else
+                $this->title .= " <code>".htmlspecialchars($opt["args"])."</code>";
+            
+        if (strlen($opt["argsdesc"]))
+            $this->content .= "<div><h3>Arguments</h3>".htmlspecialchars($opt["argsdesc"])."</div>";
+        
+        if (strlen($opt["flagnames"]))
+            $this->content .= "<h3>Notes</h3><p>".$opt["flagnames"].".</p>";
+            
+        $this->content .= "</div>";
+    }
+}
+
+class OptionsRendData extends BaseRendData
+{
+    
+    function OptionsRendData()
+    {
+        $db = new OptionsData;
+        $options = $db->GetList();
+        $this->heading = "Command-line Options";
+        $this->title = "Command-line Options";
+        foreach ($options as $id => $name)
+        {
+            $opt = new OptionRendData($id, $db);
+            $this->content .= "<h2 class=\"command\" id=\"".IdSafe($name)."\">-{$opt->title}</h2>\n";
+            $this->content .= $opt->content;
         }
     }
 }

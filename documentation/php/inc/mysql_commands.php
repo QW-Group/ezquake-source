@@ -12,6 +12,7 @@ define (MANUALSTABLEPREFIX, 'manuals');
 define (VARMGROUPSTABLE, 'variables_mgroups');
 define (VARGROUPSTABLE, 'variables_groups');
 define (VARSUPPORTTABLE, 'variables_support');
+define (OPTIONSTABLEPREFIX, 'options');
 
 class DocsData   // abstract
 {
@@ -49,8 +50,29 @@ class DocsData   // abstract
             
         foreach ($r as $k => $v)
             $ret[$k] = stripslashes($v);
-            
+
         return $ret;
+    }
+
+    function AddBase($name, $valuessql, $userId)
+    {
+        if ($this->GetId($name))
+            return False;
+        
+        $sql = "INSERT INTO {$this->tblPrefix} (name, {$this->attrs}) VALUES (";
+        $sql .= "{$valuessql}";
+        $sql .= ");";
+        
+        if (!($r = my_mysql_query($sql)))
+            return False;
+            
+        $lid = mysql_insert_id();
+        
+        $sql = "INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$lid}, {$userId}, 'created');";
+        if (!my_mysql_query($sql))
+            return False;
+        
+        return $lid;
     }
 
     function AddOrUpdate($data, $user = 1)
@@ -169,6 +191,26 @@ class DocsData   // abstract
     }
     
     function RemoveAssigned($id) {}
+
+    function GetHistory($rows)
+    { 
+        if (($rows = (int) $rows) < 1) $rows = 20;
+        $sql = "
+        SELECT c.name as Entry, h.action as Action, u.name as User, DATE_FORMAT(h.time, '%Y-%m-%d %h:%i') as Time
+        FROM {$this->tblPrefix}_history as h, users as u, {$this->tblPrefix} as c
+        WHERE u.id = h.id_user && c.id = h.{$this->foreignkey}
+        ORDER BY h.id DESC LIMIT {$rows};
+        ";
+        
+        if (!($r = my_mysql_query($sql)))
+            return False;
+        
+        $ret = array();
+        while ($d = mysql_fetch_assoc($r))
+            $ret[] = $d;
+            
+        return $ret;
+    }
 
 }
 
@@ -433,7 +475,7 @@ class VariablesData extends DocsData
             case "enum":
                 if (!is_array($args) || !count($args))
                 {
-                    echo '<div>No arguments.</div>';
+                    //echo '<div>No arguments.</div>';
                     return True;
                 }
                 $sql = "INSERT INTO {$this->tblPrefix}_values_enum ({$this->foreignkey}, value, description) VALUES ";
@@ -582,7 +624,7 @@ class ManualsData extends DocsData
     }
 
     function Add($data, $userId = 1)
-    {
+    { // todo: rewrite using $this->AddBase(...);
         if ($this->GetId($data["name"])) return -1;
         
         $user = (int) $user;
@@ -625,6 +667,127 @@ class ManualsData extends DocsData
     }
 }
 
+class OptionsData extends DocsData
+{
+    function OptionsData()
+    {
+        $this->tblPrefix = OPTIONSTABLEPREFIX;
+        $this->detlistattrs = array(
+            'id' => 'id',
+            'name' => 'name',
+            'descr' => 'LENGTH(description)',
+            'active' => 'active'
+        );
+        $this->detlistdescs = array(
+            'id' => 'id',
+            'name' => 'Name',
+            'descr' => 'Description length',
+            'active' => 'Active'
+        );
+        $this->attrs = "description, args, argsdesc, flags";
+        $this->foreignkey = "id_option";
+    }
+    
+    function GetFlagsNum($id)
+    {
+        $id = (int) $id;
+        $sql = "SELECT floor(flags) FROM {$this->tblPrefix} WHERE id = {$id} LIMIT 1;";
+        if (!$r = my_mysql_query($sql))
+            return False;
+        
+        return mysql_result($r, 0);
+    }
+    
+    function GetOption($id)
+    {
+        $r = $this->GetContent($id);
+        $r["flagnames"] = $r["flags"];
+        $r["flags"] = $this->GetFlagsNum($id);
+        return $r;
+    }
+    
+    function Add($data, $userId = 1)
+    {
+        $name = addslashes($data["name"]);
+        $description = addslashes($data["description"]);
+        $args = addslashes($data["args"]);
+        $argsdesc = addslashes($data["argsdesc"]);
+        $flags = $data["flags"];
+        $userId = (int) $userId;
+        
+        $sql .= "'{$name}', '{$description}', '{$args}', '{$argsdesc}', '{$flags}'";
+        
+        return $this->AddBase($name, $sql, $userId);
+    }
+    
+    function Update($id, $data, $user)
+    {
+        if (!($id = (int) $id))
+            return False;
+            
+        $description = addslashes($data["description"]);
+        $args = addslashes($data["args"]);
+        $argsdesc = addslashes($data["argsdesc"]);
+        $flags = addslashes($data["flags"]);
+        $user = (int) $user;
+        
+        $change = "updated"; // todo: proper check (look e.g. at 'args')
+        
+        $sql = "UPDATE {$this->tblPrefix} SET description = '{$description}', args = '{$args}', argsdesc = '{$argsdesc}', flags = '{$flags}' WHERE id = {$id} LIMIT 1";
+        if (!my_mysql_query($sql))
+            return False;
+        
+        if (!my_mysql_query("INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$id}, {$user}, '{$change}');"))
+            return False;
+        
+        return True;
+    }
+
+    function GetFlagsList()
+    {
+        static $flg = array();  // cache
+        
+        if (count($flg))
+            return $flg;
+        
+        $sql = "DESCRIBE {$this->tblPrefix} flags;";
+        if (!$r = my_mysql_query($sql))
+            return False;
+        
+        $d = mysql_fetch_assoc($r);
+        $set = $d["Type"];
+        if (!strlen($set))
+            return False;
+        
+        ereg("^set\((.*)\)$", $set, $enums);
+        $flags = explode(",", $enums[1]);
+        $i = 1;
+        foreach ($flags as $flag)
+        {
+            $flg[$i] = trim($flag, "'\" ");
+            $i *= 2;
+        }
+
+        return $flg;
+    }
+    
+    function GetFlagsNames($setflags)
+    {
+        $avflags = $this->GetFlagsList();
+        $flags = array();
+        
+        foreach ($avflags as $flagnum => $flagname)
+        {   
+            $flags[$flagnum]["name"] = $flagname;
+            $flags[$flagnum]["set"] = $flagnum & $setflags;
+        }
+        
+        return $flags;
+    }
+
+}
+
+
 class BaseGroupsData
 {
     var $table;
@@ -656,7 +819,7 @@ class BaseGroupsData
         $name = addslashes(IdSafe($newname));
         
         $old_id = (int) $old_id;
-        echo $newname.$old_id;
+        //echo $newname.$old_id;
         
         if (!strlen($newname) || !$old_id)
             return False;

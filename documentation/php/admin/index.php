@@ -43,6 +43,7 @@
         $manForms = new ManualsForms;
         $grpForms = new GroupsForms;
         $supForms = new SupportForms;
+        $optForms = new OptionsForms;
         
         echo '<div class="menus">';
         if ($session->access > 1)
@@ -87,9 +88,11 @@
             case "addcmdform": $cmdForms->FormCommand(); break;
             case "addvarform": $varForms->FormVariable(); break;
             case "addmanform": $manForms->FormManual(); break;
+            case "addoptform": $optForms->FormOption(); break;
             case "addcmd": $cmdForms->ReadAddCmd($session->userId); break;
             case "addvar": $varForms->ReadAddVar($session->userId); break;
             case "addman": $manForms->ReadAddMan($session->userId); break;
+            case "addopt": $optForms->ReadAddOpt($session->userId); break;
             case "renamecommand":
                 $cmdForms->Rename($_REQUEST["c_oldname"], $_REQUEST["c_newname"], $session->userId);
                 break;
@@ -108,6 +111,12 @@
             case "removemanual":
                 $manForms->Remove($_REQUEST["m_name"], $_REQUEST["m_physremove"], $session->userId);
                 break;
+            case "renameoption":
+                $optForms->Rename($_REQUEST["o_oldname"], $_REQUEST["o_newname"], $session->userId);
+                break;
+            case "removeoption":
+                $optForms->Remove($_REQUEST["o_name"], $_REQUEST["o_physremove"], $session->userId);
+                break;
             case "vargroups": include "inc/form_groups.php"; break;
     	    case "markuphelp": include("inc/howto_xhtml.php"); break;
             case "changepswform": include("inc/forms_user.php"); break;
@@ -123,14 +132,18 @@
             case "editvariables":
                 $varForms->PrintList((int) $_REQUEST["detailed"], $_REQUEST["orderby"], $_REQUEST["order"]);
                 break;
-            case "editvariable":
-                $varForms->FormVariable($_REQUEST["id"]);
-                break;
+            case "editvariable": $varForms->FormVariable(); break;
             case "editmanuals":
                 $manForms->PrintList((int) $_REQUEST["detailed"], $_REQUEST["orderby"], $_REQUEST["order"]);
                 break;
             case "editmanual":
                 $manForms->FormManual($_REQUEST["id"]);
+                break;
+            case "editoptions":
+                $optForms->PrintList((int) $_REQUEST["detailed"], $_REQUEST["orderby"], $_REQUEST["order"]);
+                break;
+            case "editoption":
+                $optForms->FormOption($_REQUEST["id"]);
                 break;
             // variable groups
             case "addmgroup": $grpForms->AddMG(); break;
@@ -143,6 +156,13 @@
             // variables support
             case "varsupport": include("inc/form_support.php"); break;
             case "varssetdefaults": $supForms->ReadVarsSetDefaults(); break;
+            // history
+            case "history":
+                $varForms->PrintHistory();
+                $cmdForms->PrintHistory();
+                $manForms->PrintHistory();
+                $optForms->PrintHistory();
+                break;
             // list users
             case "listusers": $session->ListUsers(); break;
         }
