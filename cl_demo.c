@@ -695,9 +695,9 @@ static void CL_WriteDemoPimpMessage(void) {
 		strcat(border, "\x1e");
 	strcat(border, "\x1f");
 
-	Q_snprintfz(pimpmessage, sizeof(pimpmessage), "\n%s\n%s\n%s\n%s\n",
+	Q_snprintfz(pimpmessage, sizeof(pimpmessage), "\n%s\n%s\n%s\n",
 		border,
-		"\x1d\x1e\x1e\x1e\x1e\x1e\x1e Recorded by ezQuake \x1e\x1e\x1e\x1e\x1e\x1e\x1f",
+		"\x1d\x1e\x1e\x1e\x1e\x1e\x1e Recorded by ezQuake \x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f",
 		border		
 	);
 
