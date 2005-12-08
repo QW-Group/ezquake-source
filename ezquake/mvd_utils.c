@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.23 2005-11-28 21:42:21 disconn3ct Exp $
+	$Id: mvd_utils.c,v 1.24 2005-12-08 19:29:32 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -25,11 +25,11 @@
 #define AXE_INFO	0
 #define mvd_info_types 15
 
-#define gt_unknown	3	
+#define gt_unknown	3
 #define gt_4on4	3	
 #define gt_3on3	2	
 #define gt_2on2	1	
-#define gt_1on1	0		
+#define gt_1on1	0
 #define mvd_gt_types 5
 
 typedef struct mvd_ks_w_s {
@@ -54,14 +54,12 @@ typedef struct  mvd_ds_s {
 	int deathcount;
 	double alivetimestart;
 	double alivetime;
-	
 } mvd_ds_t ;
 
 typedef struct mvd_runs_s {
 	double time;
 	int frags;
 	int teamfrags;
-	
 } mvd_runs_t ;
 
 typedef struct mvd_pw_s {
@@ -87,7 +85,6 @@ typedef struct mvd_info_s {
 	int lastfrags;
 	int run;
 	int firstrun;
-	
 } mvd_info_t;
 
 typedef struct mvd_gt_info_s {
@@ -116,8 +113,8 @@ typedef struct mvd_cg_info_s {
 mvd_cg_info_s mvd_cg_info;
 
 typedef struct mvd_wp_info_s {
-	int		id;
-	char	*name;
+	int id;
+	char *name;
 } mvd_wp_info_t;
 
 
@@ -147,10 +144,10 @@ typedef struct runs_s {
 } runs_t;
 
 typedef struct kill_s {
-	int		type;	//0 - kill, 1 - selfkill
-	double	time;
-	vec3_t	location;
-	int		lwf ;
+	int type; //0 - kill, 1 - selfkill
+	double time;
+	vec3_t location;
+	int lwf ;
 } kill_t;
 
 typedef struct death_s	{
@@ -170,27 +167,27 @@ typedef struct items_s {
 } items_t;
 
 typedef struct mvd_event_s {
-	int			type;			// what happened ?	0-spawn,1-death,2-kill,3-teamkill,4-took,5-powerup_end
-	double		time;		// when did it happen ?
-	vec3_t		loc;		// where did it happen ?
-	int			info;		// for item on tooks 
-							// lfw on deaths
-							// lfw on kills 0-7 axe-lg,-1 spawn
-							// 
-	int			k_id;		// userid of the guy we killed
+	int	type;	// what happened ?	0-spawn,1-death,2-kill,3-teamkill,4-took,5-powerup_end
+	double	time;	// when did it happen ?
+	vec3_t	loc;	// where did it happen ?
+	int	info;	// for item on tooks
+			// lfw on deaths
+			// lfw on kills 0-7 axe-lg,-1 spawn
+			//
+	int	k_id;	// userid of the guy we killed
 } mvd_event_t;
 
 typedef struct mvd_new_info_s {
-	int id;							//id cl.players[id]
-	int value;						//mvd_info/mvd_autotrack value
+	int id;		//id cl.players[id]
+	int value;	//mvd_info/mvd_autotrack value
 	
-	mvd_event_t		*event;
-	items_t			item_info[mvd_info_types];
+	mvd_event_t	*event;
+	items_t		item_info[mvd_info_types];
 	player_state_t	*p_state ;
 	player_info_t	*p_info;
 	//p_state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i];
 	//p_info_players = cl.players[i];
-	int lwf;						// last weapon fired
+	int lwf;	// last weapon fired
 	mvd_info_t info;
 } mvd_new_info_t;// mvd_new_info;
 
@@ -239,9 +236,12 @@ int last_track;
 // mvd_info cvars
 cvar_t			mvd_info		= {"mvd_info", "0"};
 cvar_t			mvd_info_show_header	= {"mvd_info_show_header", "0"};
-cvar_t			mvd_info_setup	= {"mvd_info_setup", "%6n %3f %10l %4a %4h %3w"};
+cvar_t			mvd_info_setup		= {"mvd_info_setup", "%6n %3f %10l %4a %4h %3w"};
 cvar_t			mvd_info_x		= {"mvd_info_x", "0"};
 cvar_t			mvd_info_y		= {"mvd_info_y", "0"};
+
+// mvd-announcer
+cvar_t			mvd_moreinfo		= {"mvd_moreinfo", "0"};
 
 // mvd_stats cvars
 cvar_t			mvd_status		= {"mvd_status","0"};
@@ -254,7 +254,7 @@ cvar_t mvd_autotrack_1on1 = {"mvd_autotrack_1on1", "%a * %A + 50 * %W + %p + %f"
 cvar_t mvd_autotrack_1on1_values = {"mvd_autotrack_1on1_values", "1 2 3 2 3 5 8 8 1 2 3 0 0 0"}; 
 cvar_t mvd_autotrack_2on2 = {"mvd_autotrack_2on2", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_2on2_values = {"mvd_autotrack_2on2_values", "1 2 3 2 3 5 8 8 1 2 3 500 900 1000"}; 
-cvar_t mvd_autotrack_4on4 = {"mvd_autotrack_4on4", "%a * %A + 50 * %W + %p + %f"};
+cvar_t mvd_autotrack_4on4  = {"mvd_autotrack_4on4", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_4on4_values = {"mvd_autotrack_4on4_values", "1 2 4 2 4 6 10 10 1 2 3 500 900 1000"}; 
 cvar_t mvd_autotrack_custom = {"mvd_autotrack_custom", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_custom_values = {"mvd_autotrack_custom_values", "1 2 3 2 3 6 6 1 2 3 500 900 1000"}; 
@@ -280,9 +280,9 @@ char *multitrack_str ;
 
 
 
-	typedef struct bp_var_s{
-		int id;
-		int val;
+typedef struct bp_var_s{
+	int id;
+	int val;
 	} bp_var_t;
 
 bp_var_t bp_var[MAX_CLIENTS];
@@ -1076,8 +1076,10 @@ int MVD_Stats_Gather_f (void){
 				mvd_new_info[i].info.lfw=mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON];
 	
 		MVD_Status_WP_f(i);
-		for (z=0;z<13;z++)
-			MVD_Status_Announcer_f(i,z);
+
+		if (mvd_moreinfo.value)
+			for (z=0;z<13;z++)
+				MVD_Status_Announcer_f(i,z);
 		}
 
 	}	
@@ -1560,6 +1562,7 @@ void MVD_Utils_Init (void) {
 	Cvar_Register (&mvd_info_setup);
 	Cvar_Register (&mvd_info_x);
 	Cvar_Register (&mvd_info_y);
+	Cvar_Register (&mvd_moreinfo);
 	Cvar_Register (&mvd_autotrack);
 	Cvar_Register (&mvd_autotrack_1on1);
 	Cvar_Register (&mvd_autotrack_1on1_values);
