@@ -538,7 +538,9 @@ void CL_Disconnect (void) {
 	}
 
 	CL_StopUpload();
-	DeleteServerAliases();	
+	DeleteServerAliases();
+
+	cls.qport++;	//a hack I picked up from qizmo
 }
 
 void CL_Disconnect_f (void) {
