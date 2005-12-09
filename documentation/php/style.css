@@ -110,7 +110,7 @@ table.values caption {
 }
 dl.changelog dd ul { margin: 0 auto; }
 
-div.option h3, h2.command {
+div.option h3 {
     background-color: transparent;
     color: #FFF7BF;
 }
@@ -119,3 +119,13 @@ h2.command code {
     color: #FFA280;
     font-size: 0.8em;
 }
+
+p#index {
+	border-bottom: 1px solid #FFA280;
+	border-top: 1px solid #FFA280;
+    text-align: center;
+    font-size: 1.4em;
+    text-indent: 0;
+    margin: 1em 0;
+}
+p#index a { text-decoration: none; }

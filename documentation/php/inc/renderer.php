@@ -280,12 +280,30 @@ class CommandsAllRendData extends BaseRendData
         $this->heading = "Commands";
         $this->title = "Commands";
         
+        $index = "";
+        $let = ""; $oldlet = "";
         foreach ($cmds as $id => $name)
         {
+            
             $cmd = new CommandsRendData($id);
-            $this->content .= "<h{$topheading} class=\"command\" id=\"".IdSafe($name)."\">{$cmd->title}</h{$topheading}>\n";
+            $let = substr($cmd->title, 0, 1);   // first letter of the command name
+            if ($let != $oldlet)    // new letter
+            {
+                if ($oldlet != "") {
+                    $this->content .= "</div>"; // close previous letter index
+                    $index .= ", ";
+                }
+                
+                $index .= "\n  <a href=\"#index-".IdSafe($let)."\">{$let}</a>";
+                $this->content .= "<div id=\"index-".IdSafe($let)."\">\n\n";
+            }
+            $oldlet = $let;
+            $this->content .= "\n<div class=\"command\" id=\"".IdSafe($name)."\">\n  <h{$topheading}>{$cmd->title}</h{$topheading}>\n";
             $this->content .= $cmd->content;
+            $this->content .= "\n</div>\n"; // end of div.command
         }
+        $this->content .= "\n</div>"; // end of div#index-x
+        $this->content = "\n\n<p id=\"index\">{$index}\n</p>\n\n".$this->content;
     }
 }
 
@@ -297,8 +315,6 @@ class OptionRendData extends BaseRendData
         $this->title = $opt["name"];
         $this->heading = $opt["name"]." Command-line option";
         
-        $this->content = "<div class=\"option\">";
-
         $this->content .= "<div class=\"description\">".htmlspecialchars($opt["description"])."</div>";
         if (strlen($opt["args"]))
             if ($sideargs)
@@ -310,9 +326,7 @@ class OptionRendData extends BaseRendData
             $this->content .= "<div><h3>Arguments</h3>".htmlspecialchars($opt["argsdesc"])."</div>";
         
         if (strlen($opt["flagnames"]))
-            $this->content .= "<h3>Notes</h3><p>".$opt["flagnames"].".</p>";
-            
-        $this->content .= "</div>";
+            $this->content .= "<h3>Notes</h3><p>".$opt["flagnames"].".</p>";            
     }
 }
 
@@ -325,12 +339,31 @@ class OptionsRendData extends BaseRendData
         $options = $db->GetList();
         $this->heading = "Command-line Options";
         $this->title = "Command-line Options";
+        
+        $index = "";
+        $let = ""; $oldlet = "";
         foreach ($options as $id => $name)
         {
             $opt = new OptionRendData($id, $db);
-            $this->content .= "<h2 class=\"command\" id=\"".IdSafe($name)."\">-{$opt->title}</h2>\n";
+            $let = substr($opt->title, 0, 1);   // first letter of the command name
+            if ($let != $oldlet)    // new letter
+            {
+                if ($oldlet != "") {
+                    $this->content .= "</div>"; // close previous letter index
+                    $index .= ", ";
+                }
+                
+                $index .= "\n  <a href=\"#index-".IdSafe($let)."\">{$let}</a>";
+                $this->content .= "<div id=\"index-".IdSafe($let)."\">\n\n";
+            }
+            $oldlet = $let;
+
+            $this->content .= "<div class=\"option\" id=\"".IdSafe($name)."\"><h2>-{$opt->title}</h2>\n";
             $this->content .= $opt->content;
+            $this->content .= "\n</div>\n"; // end of div.command
         }
+        $this->content .= "\n</div>"; // end of div#index-x
+        $this->content = "\n\n<p id=\"index\">{$index}\n</p>\n\n".$this->content;
     }
 }
 
