@@ -1,49 +1,59 @@
 <?php
-  $sekce = each($_GET);
+
+	require_once("inc/mysql_access.php");
+	require_once("inc/mysql_commands.php");
+	require_once("inc/common.php");
+	require_once("inc/renderer.php");
+
+    $db = array();
+    $db["manuals"] = new ManualsData;
+    $db["variables"] = new VariablesData;
+    $db["groups"] = new GroupsData;
+    $db["mgroups"] = new MGroupsData;
+    $db["support"] = new SupportData;
+    $db["commands"] = new CommandsData;
+    $db["options"] = new OptionsData;
+
+    $sekce = each($_GET);
 	$sekce = $sekce['key'];
 	if ($sekce=="") { $sekce=$_SERVER["argv"][0]; }
 	$maxfilectime = 0;
-	include("sections.php");
-	if ($sct[$sekce]['title'] == "") $sekce = "main-page"; 
+    if (!$sekce) $sekce = "main-page";
+
+	$renderer = GetRenderer($sekce, $db);
 	
-	if(stristr($_SERVER["HTTP_ACCEPT"],"application/xhtml+xml"))	{ 
-  	header("Content-Type: application/xhtml+xml; charset=utf-8"); 
-    $cthdr = "<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=utf-8\" />";
-    echo('<?xml version="1.0" encoding="utf-8"?>');
-  	echo('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" 
-  	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">'); 
-  } else { 
-  	header("Content-Type: text/html; charset=windows-1250"); 
-    $cthdr = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />";
-  	echo ('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
-  	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'); 
-  }
-	
+	if(stristr($_SERVER["HTTP_ACCEPT"],"application/xhtml+xml"))	
+    { 
+      	header("Content-Type: application/xhtml+xml; charset=utf-8"); 
+        $cthdr = "<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=utf-8\" />";
+        echo('<?xml version="1.0" encoding="utf-8"?>');
+      	echo('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" 
+      	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">'); 
+    }
+    else
+    { 
+      	header("Content-Type: text/html; charset=utf-8"); 
+        $cthdr = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />";
+      	echo ('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+      	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'); 
+    }
 ?>
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
   <?=$cthdr?>
-  <meta name="keywords" content="ezQuake, manual, guide, setting, quake, quakeworld, client, help, readme, install" />
+  <meta name="keywords" content="ezQuake, manual, guide, tutorial, how-to, howto, setting, quake, quakeworld, client, help, readme, install" />
   <meta name="description" content="The Complete guide to using QuakeWorld &trade; client ezQuake" />
-  <title>ezQuake Manual: <?=$sct[$sekce]['title']?></title>
-	<link rel="stylesheet" type="text/css" href="style.css" />
+  <title>ezQuake Manual: <?=$renderer->title?></title>
+  <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
-<h1><a href=".">ezQuake Manual</a>: <?=$sct[$sekce]['title']?></h1>
-<?php
-  include("docs/".$sct[$sekce]['inc']);
-?>
+<h1><a href="./">ezQuake Manual</a>: <?=$renderer->heading?></h1>
 
-<p id="last-update">Last update: 
-<?php
-  $ftpOffsetTime = 60*60*9;
-  if($maxfilectime == 0) { 
-    $ludtime = filemtime("docs/".$sct[$sekce]['inc']);
-	} else {
-	  $ludtime = $maxfilectime;
-	} 
-	echo(date("d.m.Y H:i",$ludtime + $ftpOffsetTime));
-?> CET (GMT+01:00)</p>
+
+<?=$renderer->content?>
+
+
+<p id="last-update">Last update: <?=date("d.m.Y H:i T",$renderer->lastupdate)?></p>
 </body>
 </html>
