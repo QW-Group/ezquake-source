@@ -18,31 +18,31 @@ function GetRenderer($name, &$db)
 {
     switch ($name)
     {
-        case "commands": return new CommandsAllRendData(2); return; break;
-        case "command-line": return new OptionsRendData(); return; break;
+        case "commands": return new CommandsAllRendData(2, $db); return; break;
+        case "command-line": return new OptionsRendData($db); return; break;
         case "main-page": return new MainPageRendData($db); return; break;
     }
     
     if (substr($name, 0, VARGROUPSPREFIXLEN) == VARGROUPSPREFIX)
     {   
         if ($mid = $db["mgroups"]->GetId(substr($name, VARGROUPSPREFIXLEN)))
-            return new MGroupsRendData($mid);
+            return new MGroupsRendData($mid, 2, $db);
 
         if ($mid = $db["groups"]->GetId(substr($name, VARGROUPSPREFIXLEN)))
-            return new GroupsRendData($mid);
+            return new GroupsRendData($mid, 2, $db);
     }
     
     if ($mid = $db["manuals"]->GetId($name))
-        return new ManualsRendData($mid);
+        return new ManualsRendData($mid, $db);
 
     if ($mid = $db["mgroups"]->GetId($name))
-        return new MGroupsRendData($mid, 2);
+        return new MGroupsRendData($mid, 2, $db);
 
     if ($mid = $db["groups"]->GetId($name))
-        return new GroupsRendData($mid, 3);
+        return new GroupsRendData($mid, 3, $db);
 
     if ($mid = $db["commands"]->GetId($name))
-        return new CommandsRendData($mid);
+        return new CommandsRendData($mid, $db["commands"]);
 
     if ($mid = $db["variables"]->GetId($name))
         return new VariablesRendData($mid, 4);
@@ -51,7 +51,7 @@ function GetRenderer($name, &$db)
         return new OptionRendData($mid, $db["options"], 1);
     
     $default_id = $db["manuals"]->GetId(DEFAULTPAGE);
-    return new ManualsRendData($default_id);
+    return new ManualsRendData($default_id, $db);
 }
 
 class BaseRendData // abstract class
@@ -60,19 +60,26 @@ class BaseRendData // abstract class
     var $heading;
     var $content;
     var $lastupdate = 1131531351; // some very random constant chosen by johnny_cz
+    var $db;
+    var $id;
+    var $topheading;
+    
+    function RenderContent()
+    {
+        echo $this->content;
+    }
 }
 
 class ManualsRendData extends BaseRendData
 {
-    function ManualsRendData($id)
+    function ManualsRendData($id, &$db)
     {
-        //echo $id;
-        $mandata = new ManualsData;
-        $d = $mandata->GetMan($id);
+        $d = $db["manuals"]->GetMan($id);
         $this->title = $d["title"];
         $this->heading = $this->title;
+        $this->lastupdate = $db["manuals"]->LastUpdate($id);
         $this->content = $d["content"];
-    }
+    }    
 }
 
 class MainPageRendData extends BaseRendData
@@ -89,13 +96,13 @@ class MainPageRendData extends BaseRendData
         /* installation */
         $this->content = "<dl id=\"main-page-list\"><dt>Installation</dt><dd>";
         $mid = $db["manuals"]->GetId("installation");
-        $inst_index = new ManualsRendData($mid);
+        $inst_index = new ManualsRendData($mid, $db);
         $this->content .= $inst_index->content;
         
         /* features list */
-        $this->content .= "</dd><dt>Features</dt><dd>";
+        $this->content .= "</dd><dt id=\"features\">Features</dt><dd>";
         $mid = $db["manuals"]->GetId("features");
-        $features_list = new ManualsRendData($mid);
+        $features_list = new ManualsRendData($mid, $db);
         $this->content .= $features_list->content;
 
         /* settings */
@@ -129,7 +136,7 @@ class MainPageRendData extends BaseRendData
 
 class MGroupsRendData extends BaseRendData
 {
-    function MGroupsRendData($id, $topheading = 2)
+    function MGroupsRendData($id, $topheading, &$db)
     /* Initializes content variables - title and heading of the manual page
        and it's content 
        Should display variables major group - groups + variables of each group
@@ -138,46 +145,57 @@ class MGroupsRendData extends BaseRendData
         $topheading = (int) $topheading;
         if ($topheading < 1) $topheading = 1;
         if ($topheading > 6) $topheading = 6;
-        $db = new MGroupsData;
-        $this->title = $db->GetTitle($id)." Variables";
+        $this->id = $id;
+        $this->topheading = $topheading;
+        $this->db = $db;
+        $this->title = $this->db["mgroups"]->GetTitle($id)." Variables";
         $this->heading = $this->title;
-        
-        $groupdata = new GroupsData;
-        if (!($d = $groupdata->GetList(0, "id_mgroup = {$id}")))
+    }
+    
+    function RenderContent()
+    {
+        if (!($d = $this->db["groups"]->GetList(0, "id_mgroup = {$this->id}")))
             return;
+            
+        echo "\n<ul class=\"index\">\n";
+        foreach ($d as $k)
+            echo "\n  <li><a href=\"#".$k["name"]."\">".htmlspecialchars($k["title"])."</a></li>";        
+        
+        echo "\n</ul>\n\n";
         
         foreach ($d as $k)
         {
-            $index .= "<li><a href=\"#".$k["name"]."\">".htmlspecialchars($k["title"])."</a></li>";
-            $grouprend = new GroupsRendData($k["id"], $topheading + 1);
-            $this->content .= "\n<h{$topheading} class=\"vargroup\" id=\"".$k["name"]."\">".htmlspecialchars($grouprend->heading)."</h{$topheading}>\n";
-            $this->content .= $grouprend->content;
+            $grouprend = new GroupsRendData($k["id"], $this->topheading + 1, $this->db);
+            echo "\n<h{$this->topheading} class=\"vargroup\" id=\"".$k["name"]."\">".htmlspecialchars($grouprend->heading)."</h{$this->topheading}>\n";
+            $grouprend->RenderContent();
         }
-        
-        $this->content = "<ul class=\"index\">".$index."</ul>".$this->content;
     }
 }
 
 class GroupsRendData extends BaseRendData
 {
-    function GroupsRendData($id, $topheading = 3)
+    function GroupsRendData($id, $topheading, &$db)
     {
         $topheading = (int) $topheading;
         if ($topheading < 1) $topheading = 1;
         if ($topheading > 6) $topheading = 6;
-        $vardata = new VariablesData;
-        $groupdata = new GroupsData;
-        $this->title = $groupdata->GetTitle($id)." Variables";
-        $this->heading = $this->title;
-        
-        if (!($d = $vardata->GetList(2, "id_group = {$id}")))
+        $this->id = $id;
+        $this->topheading = $topheading;
+        $this->db = $db;
+        $this->title = $this->db["groups"]->GetTitle($id)." Variables";
+        $this->heading = $this->title;        
+    }
+    
+    function RenderContent()
+    {
+        if (!($d = $this->db["variables"]->GetList(2, "id_group = {$this->id}")))
             return;
         
         foreach ($d as $id => $name)
         {
-            $varrend = new VariablesRendData($id, $topheading + 1);
-            $this->content .= "<h{$topheading} class=\"variable\" id=\"{$name}\">{$varrend->title}&nbsp;<span>[<a href=\"?{$name}\">#</a>]</span></h{$topheading}>\n";
-            $this->content .= $varrend->content;
+            $varrend = new VariablesRendData($id, $this->topheading + 1);
+            echo "<h{$this->topheading} class=\"variable\" id=\"{$name}\">{$varrend->title}&nbsp;<span>[<a href=\"?{$name}\">#</a>]</span></h{$this->topheading}>\n";
+            $varrend->RenderContent();
         }
     }
 }
@@ -242,12 +260,13 @@ class VariablesRendData extends BaseRendData
 
 class CommandsRendData extends BaseRendData
 {
-    function CommandsRendData($id)
+    function CommandsRendData($id, &$db)
     {
-        $db = new CommandsData;
         $cmd = $db->GetCmd($id);
         $this->title = $cmd["name"];
         $this->heading = "Command ".$this->title;
+        $this->lastupdate = $db->LastUpdate($id);
+        
         if (strlen($cmd["description"]))
             $this->content .= "\n<p class=\"description\">".htmlspecialchars($cmd["description"])."</p>\n";
         
@@ -273,37 +292,49 @@ class CommandsRendData extends BaseRendData
 
 class CommandsAllRendData extends BaseRendData
 {
-    function CommandsAllRendData($topheading)
+    function CommandsAllRendData($topheading, $db)
     {
-        $db = new CommandsData;
-        $cmds = $db->GetList();
+        $this->db = $db["commands"];
         $this->heading = "Commands";
         $this->title = "Commands";
+        $this->lastupdate = $this->db->GlobalLastUpdate();
+        $this->topheading = $topheading;
+    }
+    
+    function RenderContent()
+    {
+        $cmds = $this->db->GetList();
+        $let = ""; $oldlet = "";
+
+        echo "\n\n<p id=\"index\">\n";
+        foreach ($cmds as $name)
+        {
+            $let = substr($name, 0, 1);
+            if ($let != $oldlet)    // new letter
+            {
+                if ($oldlet != "") echo ", ";
+                echo "\n  <a href=\"#index-".IdSafe($let)."\">{$let}</a>";
+            }
+            $oldlet = $let;
+        }
+        echo "\n</p>\n\n";
         
-        $index = "";
         $let = ""; $oldlet = "";
         foreach ($cmds as $id => $name)
         {
-            
-            $cmd = new CommandsRendData($id);
+            $cmd = new CommandsRendData($id, $this->db);
             $let = substr($cmd->title, 0, 1);   // first letter of the command name
             if ($let != $oldlet)    // new letter
             {
-                if ($oldlet != "") {
-                    $this->content .= "</div>"; // close previous letter index
-                    $index .= ", ";
-                }
-                
-                $index .= "\n  <a href=\"#index-".IdSafe($let)."\">{$let}</a>";
-                $this->content .= "<div id=\"index-".IdSafe($let)."\">\n\n";
+                if ($oldlet != "") echo "</div>"; // close previous letter index
+                echo "<div id=\"index-".IdSafe($let)."\">\n\n";
             }
             $oldlet = $let;
-            $this->content .= "\n<div class=\"command\" id=\"".IdSafe($name)."\">\n  <h{$topheading}>{$cmd->title}</h{$topheading}>\n";
-            $this->content .= $cmd->content;
-            $this->content .= "\n</div>\n"; // end of div.command
+            echo "\n<div class=\"command\" id=\"".IdSafe($name)."\">\n  <h{$this->topheading}>{$cmd->title}</h{$this->topheading}>\n";
+            $cmd->RenderContent();
+            echo "\n</div>\n"; // end of div.command
         }
-        $this->content .= "\n</div>"; // end of div#index-x
-        $this->content = "\n\n<p id=\"index\">{$index}\n</p>\n\n".$this->content;
+        echo "\n</div>"; // end of div#index-x
     }
 }
 
@@ -314,6 +345,7 @@ class OptionRendData extends BaseRendData
         $opt = $db->GetOption($id);
         $this->title = $opt["name"];
         $this->heading = $opt["name"]." Command-line option";
+        $this->lastupdate = $db->LastUpdate($id);
         
         $this->content .= "<div class=\"description\">".htmlspecialchars($opt["description"])."</div>";
         if (strlen($opt["args"]))
@@ -333,37 +365,49 @@ class OptionRendData extends BaseRendData
 class OptionsRendData extends BaseRendData
 {
     
-    function OptionsRendData()
+    function OptionsRendData(&$db)
     {
-        $db = new OptionsData;
-        $options = $db->GetList();
+        $this->db = $db["options"];
         $this->heading = "Command-line Options";
         $this->title = "Command-line Options";
+        $this->lastupdate = $this->db->GlobalLastUpdate();
+    }
+    
+    function RenderContent()
+    {
+        $options = $this->db->GetList();
+
+        echo "\n\n<p id=\"index\">\n";
+        $let = ""; $oldlet = "";
+        foreach ($options as $name)
+        {
+            $let = substr($name, 0, 1);   // first letter of the command name
+            if ($let != $oldlet)    // new letter
+            {
+                if ($oldlet != "") echo ", ";
+                echo "\n  <a href=\"#index-".IdSafe($let)."\">{$let}</a>";
+            }
+            $oldlet = $let;        
+        }
+        echo "\n</p>\n\n";
         
-        $index = "";
         $let = ""; $oldlet = "";
         foreach ($options as $id => $name)
         {
-            $opt = new OptionRendData($id, $db);
-            $let = substr($opt->title, 0, 1);   // first letter of the command name
+            $opt = new OptionRendData($id, $this->db);
+            $let = substr($name, 0, 1);   // first letter of the command name
             if ($let != $oldlet)    // new letter
             {
-                if ($oldlet != "") {
-                    $this->content .= "</div>"; // close previous letter index
-                    $index .= ", ";
-                }
-                
-                $index .= "\n  <a href=\"#index-".IdSafe($let)."\">{$let}</a>";
-                $this->content .= "<div id=\"index-".IdSafe($let)."\">\n\n";
+                if ($oldlet != "") echo "</div>"; // close previous letter index
+                echo "<div id=\"index-".IdSafe($let)."\">\n\n";
             }
             $oldlet = $let;
 
-            $this->content .= "<div class=\"option\" id=\"".IdSafe($name)."\"><h2>-{$opt->title}</h2>\n";
-            $this->content .= $opt->content;
-            $this->content .= "\n</div>\n"; // end of div.command
+            echo "<div class=\"option\" id=\"".IdSafe($name)."\"><h2>-{$opt->title}</h2>\n";
+            $opt->RenderContent();
+            echo "\n</div>\n"; // end of div.command
         }
-        $this->content .= "\n</div>"; // end of div#index-x
-        $this->content = "\n\n<p id=\"index\">{$index}\n</p>\n\n".$this->content;
+        echo "\n</div>"; // end of div#index-x
     }
 }
 
