@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Layer for documentation data mining from MySQL
+ * Interfaces for documentation data mining from MySQL
  */
 
 define (MAXCMDARGS, 9);
@@ -14,7 +14,8 @@ define (VARGROUPSTABLE, 'variables_groups');
 define (VARSUPPORTTABLE, 'variables_support');
 define (OPTIONSTABLEPREFIX, 'options');
 
-class DocsData   // abstract
+class DocsData
+// abstract, common functions and structures for variables, commands, command-line options and manuals
 {
     var $tblPrefix;     // table prefix
     var $detlistattrs;  // detailed list attributes
@@ -23,7 +24,7 @@ class DocsData   // abstract
     var $foreignkey;    // field name for referencing doc entry id
     
     function GetId($name)
-    {
+    {   // returns ID number of entry with that name
         $name = addslashes($name);
         if (!strlen($name))
             return False;
@@ -36,7 +37,7 @@ class DocsData   // abstract
     }
 
     function GetContent($id)
-    {
+    {   // returns associated array with content of the entry with given ID number
         $ret = array();
         $id = (int) $id;
         if (!$id)
@@ -55,6 +56,11 @@ class DocsData   // abstract
     }
 
     function AddBase($name, $valuessql, $userId)
+    /* $name - entry name
+       $valuessql - part of sql commands containing the values that should be inserted
+                    in the same order as $this->attrs are
+       $userId - ID of user doing this operation
+    */
     {
         if ($this->GetId($name))
             return False;
@@ -78,9 +84,9 @@ class DocsData   // abstract
     function AddOrUpdate($data, $user = 1)
     {
         $cId = $this->GetId($data["name"]);
-        if ($cId)
-            return $this->Update($cId, $data, $user);
-        else
+        if ($cId)   // variable does exist -> just update
+            return $this->Update($cId, $data, $user);  
+        else        // variable with given name doesn't exist -> add
             return $this->Add($data, $user);
     }
 
@@ -106,6 +112,7 @@ class DocsData   // abstract
     }
     
     function GetDetailedList($orderby = "name", $order = "ASC", $where = "1")
+    // returns list of documentation entries with more attributes, given by $this->detlistattrs
     {
         if (!isset($this->detlistattrs[$orderby])) $orderby = "name";
         
@@ -211,7 +218,6 @@ class DocsData   // abstract
             
         return $ret;
     }
-
 }
 
 class CommandsData extends DocsData // interface for data storage
@@ -439,7 +445,7 @@ class VariablesData extends DocsData
     }
     
     function AddArgs($varId, $type, $args)
-    {
+    {   // assigns detailed description of variable value(s)
         $type = strtolower(trim($type));
         $varId = (int) $varId;
         if (!$varId)
@@ -511,6 +517,8 @@ class VariablesData extends DocsData
     }
     
     function SetGroup($variable_ids, $id_group)
+    /** Assigns given variables to given group.
+        We expect more variables to be assigned in one query so $variable_ids is an array */
     {
         $c = 0; $vname = "";
         foreach ($variable_ids as $id_variable)
@@ -789,6 +797,8 @@ class OptionsData extends DocsData
 
 
 class BaseGroupsData
+/** Abstract class. Common functions and structures for variable groups and major groups.
+    Major group contains more groups. Variables are assigned to groups. */
 {
     var $table;
     var $listorder;

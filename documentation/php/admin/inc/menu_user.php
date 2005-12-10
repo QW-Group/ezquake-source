@@ -6,10 +6,12 @@
         <li><a href="?action=editvariables">List &amp; Edit</a></li>
         <li><a href="?action=vargroups">Groups</a></li>
         <li><a href="?action=varsupport">Upload Defaults</a></li>
+        <li><a href="?download=variables">Download .zip</a></li>
     </ul></li>
     <li>Commands<ul class="submenu">
         <li><a href="?action=addcmdform">Add</a></li>
         <li><a href="?action=editcommands">List &amp; Edit</a></li>
+        <li><a href="?download=commands">Download .zip</a></li>
     </ul></li>
     <li>Cmd-line options<ul class="submenu">
         <li><a href="?action=addoptform">Add</a></li>

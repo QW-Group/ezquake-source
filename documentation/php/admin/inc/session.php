@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * class Session
+ * Maintains user authentication and authorization.
+ * Requires 'sessions' and 'users' MySQL tables.
+ */
+
 define("SESSIONTIMEOUT", 20); // minutes
 define("IDSTRLEN", 32);
 define("NEWPSWLEN", 10);

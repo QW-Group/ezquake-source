@@ -1,11 +1,17 @@
 <?php
 
-    require_once("../inc/mysql_access.php");
-    require_once("../inc/common.php");
-    require_once("../inc/common-xmlparse.php");
-    require_once("../inc/common-txtparse.php");
-    require_once("inc/session.php");
-    require_once("inc/forms_commands.php");
+/**
+ * ezQuake Docs administration tool main script
+ */
+
+    require_once("../inc/mysql_access.php");    // create mysql connection resource
+    require_once("../inc/common.php");          // text and html processing functions
+    require_once("../inc/common-xmlparse.php"); // xml-parsing functions
+    require_once("../inc/common-txtparse.php"); // quakeworld configuration files parsing functions
+    require_once("../inc/describe.php");        // mysql->xml export functions
+    require_once("../inc/downloader.php");      // forwards files from /tmp/persistent/ezquake/...
+    require_once("inc/session.php");            // session authentication & authorization handling
+    require_once("inc/forms_commands.php");     // form data processing classes
 
     $session = new Session;
     
@@ -24,6 +30,15 @@
         
     if ($action == "logout" && $session->access)
         $session->Logout();
+    
+    /* Request to download archives with variables and commands describe files.
+       This requst can be made without authorization so it's possible to have publicly
+       working link to these files.
+       But since sourceforge.net /tmp/persistent/ezquake
+       isn't too secure place to store sensitive data, we won't publish this link anywhere
+    */
+    if (strlen($_REQUEST["download"]))  // we do want to transfer the file before any other data so it must go here
+        new Downloader($_REQUEST["download"]);
 
     include("inc/html_head.php");
 
@@ -36,8 +51,9 @@
         echo("<p>Cookies must be enabled.</p>");
         include("inc/forms_user.php");
     }
-    else
+    else    // for authorized users
     {
+        // forms manipulation classes
         $cmdForms = new CommandsForms;
         $varForms = new VariablesForms;
         $manForms = new ManualsForms;
@@ -49,6 +65,9 @@
         if ($session->access > 1)
             include("inc/menu_headadmin.php");
             
+        if ($session->access > 1);  // for now, release access level is the same as admin access
+            include("inc/menu_release.php");
+        
       	include("inc/menu_user.php");
         echo '<div class="menu"><h2>User</h2><ul class="mainmenu">';
             echo '<li>Name: '.$session->userName.'</li>';
@@ -62,7 +81,7 @@
                 
         echo '<div class="main">';
         
-        if ($session->access > 1)
+        if ($session->access > 1)   // admin access
         {        
             switch ($action)
             {
@@ -81,9 +100,19 @@
                     $session->EditUser($_REQUEST["login"], $_REQUEST["newpassword1"], $_REQUEST["newpassword2"], $_REQUEST["access"]);
                     break;
             }
-        }
+        }   // end of admin access
         
-    	switch ($action)
+        if ($session->access > 1)   // release access
+        {
+            echo '<pre><code>';
+            switch ($action) {
+                case "releasecommands": Archive("command"); break; // describe.php
+                case "releasevariables": Archive("variable"); break; // describe.php
+            }
+            echo '</code></pre>';
+        }   // end of release access
+        
+    	switch ($action)   // normal registered user access
     	{
             case "addcmdform": $cmdForms->FormCommand(); break;
             case "addvarform": $varForms->FormVariable(); break;
@@ -165,10 +194,10 @@
                 break;
             // list users
             case "listusers": $session->ListUsers(); break;
-        }
+        }   // end of normal user access
         
         echo '</div>';
-    }
+    }   // end of any authorized user access
 
     include("inc/html_foot.php");
     
