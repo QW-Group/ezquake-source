@@ -29,7 +29,7 @@ class DocsData
         if (!strlen($name))
             return False;
             
-        $r = my_mysql_query("SELECT id FROM {$this->tblPrefix} WHERE name = '{$name}' LIMIT 1;");
+        $r = my_mysql_query("SELECT id FROM {$this->tblPrefix} WHERE name = '{$name}' LIMIT 1");
         if (!r || !mysql_num_rows($r))
             return False;
         
@@ -43,7 +43,7 @@ class DocsData
         if (!$id)
             return False;
             
-        $r = my_mysql_query("SELECT * FROM {$this->tblPrefix} WHERE id = {$id} LIMIT 1;");
+        $r = my_mysql_query("SELECT * FROM {$this->tblPrefix} WHERE id = {$id} LIMIT 1");
         if (!$r || !mysql_num_rows($r))
             return False;
         
@@ -67,14 +67,14 @@ class DocsData
         
         $sql = "INSERT INTO {$this->tblPrefix} (name, {$this->attrs}) VALUES (";
         $sql .= "{$valuessql}";
-        $sql .= ");";
+        $sql .= ")";
         
         if (!($r = my_mysql_query($sql)))
             return False;
             
         $lid = mysql_insert_id();
         
-        $sql = "INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$lid}, {$userId}, 'created');";
+        $sql = "INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$lid}, {$userId}, 'created')";
         if (!my_mysql_query($sql))
             return False;
         
@@ -100,7 +100,7 @@ class DocsData
             case 0: default: $where = "1";
         }
         
-        $r = my_mysql_query("SELECT id, name FROM {$this->tblPrefix} WHERE {$where} ORDER BY name ASC;");
+        $r = my_mysql_query("SELECT id, name FROM {$this->tblPrefix} WHERE {$where} ORDER BY name ASC");
         if (!$r && !mysql_num_rows($r))
             return False;
             
@@ -127,7 +127,7 @@ class DocsData
 
             $select .= $v." AS ".$k;
         }
-        $query = "SELECT {$select} FROM {$this->tblPrefix} WHERE {$where} ORDER BY {$orderby} {$order}, name ASC;";
+        $query = "SELECT {$select} FROM {$this->tblPrefix} WHERE {$where} ORDER BY {$orderby} {$order}, name ASC";
         $r = my_mysql_query($query);
         if (!$r && !mysql_num_rows($r))
             return False;
@@ -148,20 +148,20 @@ class DocsData
             return False;
         
         // deactivate old command
-        $query = "UPDATE {$this->tblPrefix} SET active = 0 WHERE id = {$oldid} LIMIT 1;";
+        $query = "UPDATE {$this->tblPrefix} SET active = 0 WHERE id = {$oldid} LIMIT 1";
         if (!my_mysql_query($query)) return False;
 
         // create an active copy of it
         $newname = addslashes($newname);
         $query = "INSERT INTO {$this->tblPrefix} (name, {$this->attrs}, active) ";
-        $query .= "SELECT '{$newname}', {$this->attrs}, 1 FROM {$this->tblPrefix} WHERE id = '{$oldid}' LIMIT 1;";
+        $query .= "SELECT '{$newname}', {$this->attrs}, 1 FROM {$this->tblPrefix} WHERE id = '{$oldid}' LIMIT 1";
         if (!my_mysql_query($query)) return False;
         $newid = mysql_insert_id();
         
         // update history log
         $userId = (int) $userId;
         $query = "INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action, id_renamedto) VALUES ";
-        $query .= "({$oldid}, {$userId}, 'renamed', {$newid});";
+        $query .= "({$oldid}, {$userId}, 'renamed', {$newid})";
         if (!my_mysql_query($query)) return False;
         
         return True;
@@ -174,10 +174,10 @@ class DocsData
         
         if ($physically)
         {
-            $query = "DELETE FROM {$this->tblPrefix} WHERE id = {$id} LIMIT 1;";
+            $query = "DELETE FROM {$this->tblPrefix} WHERE id = {$id} LIMIT 1";
             if (!my_mysql_query($query)) return False;
             
-            $query = "DELETE FROM {$this->tblPrefix}_history WHERE {$this->foreignkey} = {$id};";
+            $query = "DELETE FROM {$this->tblPrefix}_history WHERE {$this->foreignkey} = {$id}";
             if (!my_mysql_query($query)) return False;
             
             $this->RemoveAssigned($id);
@@ -187,11 +187,11 @@ class DocsData
             if (!($id = (int) $id))
                 return False;
                 
-            $query = "UPDATE {$this->tblPrefix} SET active = 0 WHERE id = {$id} LIMIT 1;";
+            $query = "UPDATE {$this->tblPrefix} SET active = 0 WHERE id = {$id} LIMIT 1";
             if (!my_mysql_query($query)) return False;
             
             $userId = (int) $userId;
-            $query = "INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$id}, {$userId}, 'deleted');";
+            $query = "INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$id}, {$userId}, 'deleted')";
             if (!my_mysql_query($query)) return False;
         }
         return True;
@@ -217,6 +217,19 @@ class DocsData
             $ret[] = $d;
             
         return $ret;
+    }
+    
+    function LastUpdate($id)
+    {
+        $id = (int) $id;
+        $r = my_mysql_query("SELECT UNIX_TIMESTAMP(MAX(time)) FROM {$this->tblPrefix}_history WHERE {$this->foreignkey} = {$id}");
+        return ($r ? mysql_result($r, 0) : False);
+    }
+    
+    function GlobalLastUpdate()
+    {
+        $r = my_mysql_query("SELECT UNIX_TIMESTAMP(MAX(time)) FROM {$this->tblPrefix}_history");
+        return ($r ? mysql_result($r, 0) : False);
     }
 }
 
@@ -258,7 +271,7 @@ class CommandsData extends DocsData // interface for data storage
         $args = $data["args"];
         $user = (int) $user;
         
-        if (!($r = my_mysql_query("SELECT Count(*) FROM {$this->tblPrefix}_arguments WHERE {$this->foreignkey} = $id;")))
+        if (!($r = my_mysql_query("SELECT Count(*) FROM {$this->tblPrefix}_arguments WHERE {$this->foreignkey} = $id")))
             return False;
             
         $count_new = mysql_result($r, 0);
@@ -269,13 +282,13 @@ class CommandsData extends DocsData // interface for data storage
         if (!my_mysql_query($sql))
             return False;
         
-        if (!my_mysql_query("DELETE FROM {$this->tblPrefix}_arguments WHERE {$this->foreignkey} = {$id};"))
+        if (!my_mysql_query("DELETE FROM {$this->tblPrefix}_arguments WHERE {$this->foreignkey} = {$id}"))
             return False;
         
         if (!$this->AssignArgs($id, $args))
             return False;
         
-        if (!my_mysql_query("INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$id}, {$user}, '{$change}');"))
+        if (!my_mysql_query("INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$id}, {$user}, '{$change}')"))
             return False;
         
         return True;
@@ -291,7 +304,7 @@ class CommandsData extends DocsData // interface for data storage
         $remarks = addslashes($data["remarks"]); $syntax = addslashes($data["syntax"]);
         $args = $data["args"];
         
-        $sql = "INSERT INTO {$this->tblPrefix} (name, {$this->attrs}) VALUES ('{$name}', '{$description}', '{$syntax}', '{$remarks}');";
+        $sql = "INSERT INTO {$this->tblPrefix} (name, {$this->attrs}) VALUES ('{$name}', '{$description}', '{$syntax}', '{$remarks}')";
         $r = my_mysql_query($sql);
         if (!r)
             return False;
@@ -299,7 +312,7 @@ class CommandsData extends DocsData // interface for data storage
         
         $this->AssignArgs($lid, $args);
         
-        $sql = "INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$lid}, 1, 'created');";
+        $sql = "INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$lid}, 1, 'created')";
         if (!my_mysql_query($sql))
             return False;
         
@@ -318,7 +331,7 @@ class CommandsData extends DocsData // interface for data storage
             {
                 $arg = addslashes($arg);
                 $desc = addslashes($desc);
-                $sql = "INSERT INTO {$this->tblPrefix}_arguments ({$this->foreignkey}, name, description) VALUES ({$cId}, '{$arg}', '{$desc}');";
+                $sql = "INSERT INTO {$this->tblPrefix}_arguments ({$this->foreignkey}, name, description) VALUES ({$cId}, '{$arg}', '{$desc}')";
                 if (!my_mysql_query($sql))
                     return False;
             }
@@ -332,7 +345,7 @@ class CommandsData extends DocsData // interface for data storage
         if (!($ret = $this->GetContent($id)))
             return False;
         
-        $r = my_mysql_query("SELECT name, description FROM {$this->tblPrefix}_arguments WHERE {$this->foreignkey} = {$id};");
+        $r = my_mysql_query("SELECT name, description FROM {$this->tblPrefix}_arguments WHERE {$this->foreignkey} = {$id}");
         if (!$r)
             return False;
         
@@ -348,7 +361,7 @@ class CommandsData extends DocsData // interface for data storage
     
     function RemoveAssigned($id)
     {
-        $query = "DELETE FROM {$this->tblPrefix}_arguments WHERE {$this->foreignkey} = {$id};";
+        $query = "DELETE FROM {$this->tblPrefix}_arguments WHERE {$this->foreignkey} = {$id}";
         if (!my_mysql_query($query)) return False;
         return True;
     }
@@ -394,7 +407,7 @@ class VariablesData extends DocsData
         $type = strtolower(trim($data["type"]));
         $valdesc = $data["valdesc"];
         
-        $sql = "INSERT INTO {$this->tblPrefix} (name, {$this->attrs}) VALUES ('{$name}', '{$description}', '{$remarks}', '{$type}');";
+        $sql = "INSERT INTO {$this->tblPrefix} (name, {$this->attrs}) VALUES ('{$name}', '{$description}', '{$remarks}', '{$type}')";
         if (!($r = my_mysql_query($sql)))
             return False;
             
@@ -403,7 +416,7 @@ class VariablesData extends DocsData
         if (!$this->AddArgs($lid, $type, $valdesc))
             return False;
         
-        $sql = "INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$lid}, {$userId}, 'created');";
+        $sql = "INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$lid}, {$userId}, 'created')";
         if (!my_mysql_query($sql))
             return False;
         
@@ -421,7 +434,7 @@ class VariablesData extends DocsData
         $type = addslashes($data["type"]);
         $user = (int) $user;
         
-        if (!($r = my_mysql_query("SELECT type FROM {$this->tblPrefix} WHERE id = $id LIMIT 1;")))
+        if (!($r = my_mysql_query("SELECT type FROM {$this->tblPrefix} WHERE id = $id LIMIT 1")))
             return False;
             
         $oldtype = mysql_result($r, 0);
@@ -437,7 +450,7 @@ class VariablesData extends DocsData
         if (!$this->AddArgs($id, $data["type"], $valdesc))
             return False;
         
-        if (!my_mysql_query("INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$id}, {$user}, '{$change}');"))
+        if (!my_mysql_query("INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$id}, {$user}, '{$change}')"))
             return False;
         
         return True;
@@ -461,7 +474,7 @@ class VariablesData extends DocsData
                     return True;
                     
                 $sql = "INSERT INTO {$this->tblPrefix}_values_other ({$this->foreignkey}, description) ";
-                $sql .= " VALUES ({$varId}, '{$desc}');";
+                $sql .= " VALUES ({$varId}, '{$desc}')";
                 if (!my_mysql_query($sql))
                     return False;
                     
@@ -473,7 +486,7 @@ class VariablesData extends DocsData
                     return True;
                     
                 $sql = "INSERT INTO {$this->tblPrefix}_values_boolean ({$this->foreignkey}, true_desc, false_desc) ";
-                $sql .= "VALUES ({$varId}, '{$true}', '{$false}');";
+                $sql .= "VALUES ({$varId}, '{$true}', '{$false}')";
                 if (!my_mysql_query($sql))
                     return False;
                 
@@ -493,7 +506,6 @@ class VariablesData extends DocsData
                     $argdesc = addslashes(trim($v));
                     $sql .= "({$varId}, '{$argname}', '{$argdesc}')";
                 }
-                $sql .= ";";
                 if (!my_mysql_query($sql))
                     return False;
                     
@@ -505,7 +517,7 @@ class VariablesData extends DocsData
     function GetIds()
     /* we use this slow query function only where it saves a lot of small quick queries */
     {
-        $sql = "SELECT id, name FROM {$this->tblPrefix} WHERE 1;";
+        $sql = "SELECT id, name FROM {$this->tblPrefix} WHERE 1";
         if (!($r = my_mysql_query($sql)))
             return False;
             
@@ -529,7 +541,7 @@ class VariablesData extends DocsData
         }
 
         $id_group = (int) $id_group;
-        $sql = "UPDATE {$this->tblPrefix} SET id_group = {$id_group} WHERE {$whr} LIMIT {$c};";
+        $sql = "UPDATE {$this->tblPrefix} SET id_group = {$id_group} WHERE {$whr} LIMIT {$c}";
         if (!my_mysql_query($sql))
             return False;
         
@@ -561,7 +573,7 @@ class VariablesData extends DocsData
                 }
                 break;
             case "enum":
-                if (!($r = my_mysql_query("SELECT value, description FROM {$this->tblPrefix}_values_enum WHERE {$this->foreignkey} = {$id} ORDER BY id ASC;")))
+                if (!($r = my_mysql_query("SELECT value, description FROM {$this->tblPrefix}_values_enum WHERE {$this->foreignkey} = {$id} ORDER BY id ASC")))
                     return False;
                 
                 if (!mysql_num_rows($r))
@@ -582,7 +594,7 @@ class VariablesData extends DocsData
                 break;
         }
         
-        if (!$r = my_mysql_query("SELECT id_build, default_value FROM ".VARSUPPORTTABLE." WHERE id_variable = {$id};"))
+        if (!$r = my_mysql_query("SELECT id_build, default_value FROM ".VARSUPPORTTABLE." WHERE id_variable = {$id}"))
             return False;
         
         $supp = array();
@@ -596,9 +608,9 @@ class VariablesData extends DocsData
 
     function RemoveAssigned($id)
     {
-        if (!my_mysql_query("DELETE FROM {$this->tblPrefix}_values_other WHERE {$this->foreignkey} = {$id} LIMIT 1;")) return False;
-        if (!my_mysql_query("DELETE FROM {$this->tblPrefix}_values_enum WHERE {$this->foreignkey} = {$id};")) return False;
-        if (!my_mysql_query("DELETE FROM {$this->tblPrefix}_values_boolean WHERE {$this->foreignkey} = {$id} LIMIT 1;")) return False;
+        if (!my_mysql_query("DELETE FROM {$this->tblPrefix}_values_other WHERE {$this->foreignkey} = {$id} LIMIT 1")) return False;
+        if (!my_mysql_query("DELETE FROM {$this->tblPrefix}_values_enum WHERE {$this->foreignkey} = {$id}")) return False;
+        if (!my_mysql_query("DELETE FROM {$this->tblPrefix}_values_boolean WHERE {$this->foreignkey} = {$id} LIMIT 1")) return False;
         return True;
     }
 }
@@ -630,7 +642,7 @@ class ManualsData extends DocsData
     {
         return $this->GetContent($id);
     }
-
+    
     function Add($data, $userId = 1)
     { // todo: rewrite using $this->AddBase(...);
         if ($this->GetId($data["name"])) return -1;
@@ -640,13 +652,13 @@ class ManualsData extends DocsData
         $title = addslashes($data["title"]); 
         $content = addslashes($data["content"]);
         
-        $sql = "INSERT INTO {$this->tblPrefix} (name, {$this->attrs}) VALUES ('{$name}', '{$title}', '{$content}');";
+        $sql = "INSERT INTO {$this->tblPrefix} (name, {$this->attrs}) VALUES ('{$name}', '{$title}', '{$content}')";
         if (!($r = my_mysql_query($sql)))
             return False;
             
         $lid = mysql_insert_id();
         
-        $sql = "INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$lid}, {$userId}, 'created');";
+        $sql = "INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$lid}, {$userId}, 'created')";
         if (!my_mysql_query($sql))
             return False;
         
@@ -668,7 +680,7 @@ class ManualsData extends DocsData
         if (!my_mysql_query($sql))
             return False;
         
-        if (!my_mysql_query("INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$id}, {$user}, '{$change}');"))
+        if (!my_mysql_query("INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$id}, {$user}, '{$change}')"))
             return False;
         
         return True;
@@ -699,7 +711,7 @@ class OptionsData extends DocsData
     function GetFlagsNum($id)
     {
         $id = (int) $id;
-        $sql = "SELECT floor(flags) FROM {$this->tblPrefix} WHERE id = {$id} LIMIT 1;";
+        $sql = "SELECT floor(flags) FROM {$this->tblPrefix} WHERE id = {$id} LIMIT 1";
         if (!$r = my_mysql_query($sql))
             return False;
         
@@ -745,7 +757,7 @@ class OptionsData extends DocsData
         if (!my_mysql_query($sql))
             return False;
         
-        if (!my_mysql_query("INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$id}, {$user}, '{$change}');"))
+        if (!my_mysql_query("INSERT INTO {$this->tblPrefix}_history ({$this->foreignkey}, id_user, action) VALUES ({$id}, {$user}, '{$change}')"))
             return False;
         
         return True;
@@ -758,7 +770,7 @@ class OptionsData extends DocsData
         if (count($flg))
             return $flg;
         
-        $sql = "DESCRIBE {$this->tblPrefix} flags;";
+        $sql = "DESCRIBE {$this->tblPrefix} flags";
         if (!$r = my_mysql_query($sql))
             return False;
         
@@ -816,7 +828,7 @@ class BaseGroupsData
     function GetTitle($id)
     {
         $id = (int) $id;
-        $sql = "SELECT title FROM {$this->table} WHERE id = {$id} LIMIT 1;";
+        $sql = "SELECT title FROM {$this->table} WHERE id = {$id} LIMIT 1";
         if (!($r = mysql_query($sql)) || !mysql_num_rows($r))
             return False;
         
@@ -844,7 +856,7 @@ class BaseGroupsData
     function GetIds()
     /* we use this slow query function only where it saves a lot of small quick queries */
     {
-        $sql = "SELECT id, name FROM {$this->table} WHERE 1;";
+        $sql = "SELECT id, name FROM {$this->table} WHERE 1";
         if (!($r = my_mysql_query($sql)))
             return False;
             
@@ -861,7 +873,7 @@ class BaseGroupsData
         if (!($gr_id = (int) $gr_id))
             return False;
         
-        $sql = "DELETE FROM {$this->table} WHERE id = {$gr_id} LIMIT 1;";
+        $sql = "DELETE FROM {$this->table} WHERE id = {$gr_id} LIMIT 1";
         if (!my_mysql_query($sql))
             return False;
         
@@ -878,7 +890,7 @@ class BaseGroupsData
         $name = addslashes(IdSafe($title));
         $title = addslashes($title);
         
-        $sql = "INSERT INTO {$this->table} (name, title) VALUES ('{$name}', '{$title}');";
+        $sql = "INSERT INTO {$this->table} (name, title) VALUES ('{$name}', '{$title}')";
         if (!my_mysql_query($sql))
             return False;
         
@@ -889,7 +901,7 @@ class BaseGroupsData
     {   
         $listorder = $listorder ? "title ASC" : $this->listorder;
         // warning: $where is not addslashed, not clean object solution, expects valid input
-        $sql = "SELECT * FROM {$this->table} WHERE ({$where}) ORDER BY {$listorder};"; // tables shouldn't have more than 30 rows, each table only about 4 fields, so it's ok
+        $sql = "SELECT * FROM {$this->table} WHERE ({$where}) ORDER BY {$listorder}"; // tables shouldn't have more than 30 rows, each table only about 4 fields, so it's ok
         if (!($d = my_mysql_query($sql)))
             return False;
         
@@ -910,7 +922,7 @@ class BaseGroupsData
     
     function GetIDAssocList()
     {
-        $sql = "SELECT * FROM {$this->table} WHERE active > 0;";
+        $sql = "SELECT * FROM {$this->table} WHERE active > 0";
         if (!$r = my_mysql_query($sql))
             return False;
         
@@ -933,7 +945,7 @@ class GroupsData extends BaseGroupsData
     function Assign($id, $to)
     {
         $id = (int) $id; $to = (int) $to;
-        $sql = "UPDATE {$this->table} SET id_mgroup = {$to} WHERE id = {$id} LIMIT 1;";
+        $sql = "UPDATE {$this->table} SET id_mgroup = {$to} WHERE id = {$id} LIMIT 1";
         if (!my_mysql_query($sql))
             return False;
         
@@ -953,7 +965,7 @@ class GroupsData extends BaseGroupsData
     
     function GetGroupedList()
     {
-        $sql = "SELECT * FROM {$this->table} WHERE active > 0 ORDER BY id_mgroup ASC, title ASC;";
+        $sql = "SELECT * FROM {$this->table} WHERE active > 0 ORDER BY id_mgroup ASC, title ASC";
         if (!$r = my_mysql_query($sql))
             return False;
         
@@ -982,7 +994,7 @@ class MGroupsData extends BaseGroupsData
         if (!$this->RemoveBase($gr_id))
             return False;
             
-        $sql = "UPDATE {$this->groupstable} SET id_mgroup = {$move_asgn_to} WHERE id_mgroup = {$gr_id};";
+        $sql = "UPDATE {$this->groupstable} SET id_mgroup = {$move_asgn_to} WHERE id_mgroup = {$gr_id}";
         if (!my_mysql_query($sql))
             return False;
         
@@ -1004,7 +1016,7 @@ class SupportData
     function ClearBuildSupport($id_build)
     {
         $id_build = (int) $id_build;
-        $sql = "DELETE FROM variables_support WHERE id_build = {$id_build};";
+        $sql = "DELETE FROM variables_support WHERE id_build = {$id_build}";
         if (!my_mysql_query($sql))
             return False;
         
@@ -1029,7 +1041,6 @@ class SupportData
 
             $sql .= " ({$id_variable}, {$id_build}, '{$default}')";
         }
-        $sql .= ";";
         if (!my_mysql_query($sql))
             return False;
 
@@ -1038,7 +1049,7 @@ class SupportData
     
     function GetBuilds()
     {
-        $sql = "SELECT id, abbr, shortname, title FROM builds WHERE 1;";
+        $sql = "SELECT id, abbr, shortname, title FROM builds WHERE 1";
         if (!($r = my_mysql_query($sql)))
             return False;
         
