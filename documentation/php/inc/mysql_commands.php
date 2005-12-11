@@ -48,11 +48,11 @@ class DocsData
             return False;
         
         $r = mysql_fetch_assoc($r);
-            
-        foreach ($r as $k => $v)
-            $ret[$k] = stripslashes($v);
 
-        return $ret;
+        // i did some stripslashing here but later i found it's bahaviour is causing a flaw
+        // so i removed it .. but couldn't remember why did i do that before - johnnycz
+
+        return $r;
     }
 
     function AddBase($name, $valuessql, $userId)
@@ -493,10 +493,9 @@ class VariablesData extends DocsData
                 break;
             case "enum":
                 if (!is_array($args) || !count($args))
-                {
-                    //echo '<div>No arguments.</div>';
+                    // no arguments given
                     return True;
-                }
+
                 $sql = "INSERT INTO {$this->tblPrefix}_values_enum ({$this->foreignkey}, value, description) VALUES ";
                 $c = 0;
                 foreach ($args as $k => $v)
@@ -841,7 +840,6 @@ class BaseGroupsData
         $name = addslashes(IdSafe($newname));
         
         $old_id = (int) $old_id;
-        //echo $newname.$old_id;
         
         if (!strlen($newname) || !$old_id)
             return False;
