@@ -50,7 +50,7 @@
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib"
 				ShowProgress="0"
-				OutputFile="$(Outdir)/ezquake-gl.exe"
+				OutputFile="../ezquake-gl-debug.exe"
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
@@ -100,15 +100,17 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="4"
-				GlobalOptimizations="FALSE"
+				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="TRUE"
 				FavorSizeOrSpeed="0"
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
+				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="libs;libexpat;pcre"
-				PreprocessorDefinitions="NDEBUG;id386;WITH_KEYMAP;EMBED_TCL"
+				PreprocessorDefinitions="_DEBUG;NDEBUG;id386;WITH_KEYMAP;EMBED_TCL"
 				StringPooling="TRUE"
+				ExceptionHandling="FALSE"
 				RuntimeLibrary="4"
 				BufferSecurityCheck="FALSE"
 				EnableFunctionLevelLinking="FALSE"
@@ -121,14 +123,15 @@
 				BrowseInformationFile="$(IntDir)/"
 				WarningLevel="3"
 				WarnAsError="FALSE"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="TRUE"
+				CompileAs="1"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib"
-				OutputFile="$(Outdir)/ezquake.exe"
+				OutputFile="../ezquake.exe"
 				Version=""
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -136,6 +139,9 @@
 				IgnoreDefaultLibraryNames="libcmt"
 				ProgramDatabaseFile=".\Release/ezquake.pdb"
 				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				OptimizeForWindows98="1"
 				SetChecksum="TRUE"/>
 			<Tool
 				Name="VCMIDLTool"
@@ -183,9 +189,11 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
+				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="libs;libexpat;pcre"
-				PreprocessorDefinitions="NDEBUG,id386,WITH_KEYMAP,WITH_PNG,WITH_JPEG,GLQUAKE,WITH_ZLIB, EMBED_TCL"
+				PreprocessorDefinitions="_DEBUG,NDEBUG,id386,WITH_KEYMAP,WITH_PNG,WITH_JPEG,GLQUAKE,WITH_ZLIB, EMBED_TCL"
 				StringPooling="TRUE"
+				ExceptionHandling="FALSE"
 				RuntimeLibrary="4"
 				BufferSecurityCheck="FALSE"
 				EnableFunctionLevelLinking="FALSE"
@@ -198,14 +206,15 @@
 				BrowseInformationFile="$(IntDir)/"
 				WarningLevel="3"
 				WarnAsError="FALSE"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="TRUE"
+				CompileAs="1"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386 "
-				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib"
-				OutputFile="$(Outdir)/ezquake-gl.exe"
+				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib"
+				OutputFile="../ezquake-gl.exe"
 				Version=""
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -214,6 +223,9 @@
 				IgnoreDefaultLibraryNames="libcmt"
 				ProgramDatabaseFile=".\Release-gl/ezquake-gl.pdb"
 				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				OptimizeForWindows98="1"
 				SetChecksum="TRUE"/>
 			<Tool
 				Name="VCMIDLTool"
@@ -281,7 +293,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib"
-				OutputFile="$(Outdir)/ezquake.exe"
+				OutputFile="../ezquake-debug.exe"
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
