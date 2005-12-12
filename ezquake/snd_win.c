@@ -21,12 +21,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "winquake.h"
 
+#include <dsound.h>
 
-#define iDirectSoundCreate(a,b,c)	pDirectSoundCreate(a,b,c)
+/*VVD #define pDirectSoundCreate(a,b,c)	DirectSoundCreate(a,b,c)
+#define pDirectSoundEnumerate(a,b)	DirectSoundEnumerateA(a,b)
+#define iDirectSoundCreate(a,b,c)	DirectSoundCreate(a,b,c)
 
 HRESULT (WINAPI *pDirectSoundCreate)(GUID FAR *lpGUID, LPDIRECTSOUND FAR *lplpDS, IUnknown FAR *pUnkOuter);
 HRESULT (WINAPI *pDirectSoundEnumerate)(LPDSENUMCALLBACKA pDSEnumCallback, LPVOID pContext);
-
+*/
 // 64K is > 1 second at 16-bit, 22050 Hz
 #define	WAV_BUFFERS				64
 #define	WAV_MASK				0x3F
@@ -69,7 +72,7 @@ MMTIME		mmstarttime;
 LPDIRECTSOUND pDS;
 LPDIRECTSOUNDBUFFER pDSBuf, pDSPBuf;
 
-HINSTANCE hInstDS;
+//VVD HINSTANCE hInstDS;
 
 qbool SNDDMA_InitDirect (void);
 qbool SNDDMA_InitWav (void);
@@ -197,7 +200,7 @@ sndinitstat SNDDMA_InitDirect (void) {
     format.cbSize = 0;
     format.nAvgBytesPerSec = format.nSamplesPerSec * format.nBlockAlign; 
 
-	if (!hInstDS) {
+/*VVD	if (!hInstDS) {
 		hInstDS = LoadLibrary("dsound.dll");
 		
 		if (hInstDS == NULL) {
@@ -217,22 +220,22 @@ sndinitstat SNDDMA_InitDirect (void) {
 			return SIS_FAILURE;
 		}
 	}
-
+*/
 	dsdevice = NULL;
 	if ((temp = COM_CheckParm("-snddev")) && temp + 1 < com_argc) {
 		devicenum = Q_atoi(com_argv[temp + 1]);
 		currentenum = 0;
-		if ((hresult = pDirectSoundEnumerate(DS_EnumDevices, &devicenum)) != DS_OK) {
+		if ((hresult = DirectSoundEnumerate(DS_EnumDevices, &devicenum)) != DS_OK) {
 			Com_Printf ("Couldn't open preferred sound device. Falling back to primary sound device.\n");
 			dsdevice = NULL;
 		}
 	}
 
-	hresult = pDirectSoundCreate(dsdevice, &pDS, NULL);
+	hresult = DirectSoundCreate(dsdevice, &pDS, NULL);
 	if (hresult != DS_OK && dsdevice) {
 		Com_Printf ("Couldn't open preferred sound device. Falling back to primary sound device.\n");
 		dsdevice = NULL;
-		hresult = pDirectSoundCreate(dsdevice, &pDS, NULL);
+		hresult = DirectSoundCreate(dsdevice, &pDS, NULL);
 	}
 
 	if (hresult != DS_OK) {
