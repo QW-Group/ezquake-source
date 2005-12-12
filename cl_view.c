@@ -30,6 +30,7 @@ when crossing a water boudnary.
 
 cvar_t	cl_rollspeed = {"cl_rollspeed", "200"};
 cvar_t	cl_rollangle = {"cl_rollangle", "0"};
+cvar_t	cl_rollalpha = {"cl_rollalpha", "20"};
 cvar_t	cl_bob = {"cl_bob", "0.00"};
 cvar_t	cl_bobcycle = {"cl_bobcycle", "0.0"};
 cvar_t	cl_bobup = {"cl_bobup", "0.0"};
@@ -841,7 +842,7 @@ void V_CalcViewRoll (void) {
 	float side, adjspeed;
 
 	side = V_CalcRoll (cl.simangles, cl.simvel);
-	adjspeed = 20 * bound (2, fabs(cl_rollangle.value), 45);
+	adjspeed = cl_rollalpha.value * bound (2, fabs(cl_rollangle.value), 45);
 	if (side > cl.rollangle) {
 		cl.rollangle += cls.frametime * adjspeed;
 		if (cl.rollangle > side)
@@ -1044,6 +1045,7 @@ void V_Init (void) {
 	Cvar_Register (&v_centerspeed);
 	Cvar_Register (&cl_rollspeed);
 	Cvar_Register (&cl_rollangle);
+	Cvar_Register (&cl_rollalpha);
 
 	Cvar_Register (&v_idlescale);
 	Cvar_Register (&v_iyaw_cycle);

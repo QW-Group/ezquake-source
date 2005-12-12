@@ -120,6 +120,7 @@ static void Rulesets_Smackdown(void) {
 	extern qbool qmb_initialized;
 #endif
 	extern cvar_t cl_hud;
+	extern cvar_t cl_rollalpha;
 	int i;
 
 #define NOQMB_SKIP_LOCKED 6
@@ -135,6 +136,7 @@ static void Rulesets_Smackdown(void) {
 #endif
 		{&cl_trueLightning, "0"},
 		{&cl_hud, "0"},
+		{&cl_rollalpha, "20"},
 #ifndef GLQUAKE
 		{&r_aliasstats, "0"}
 #endif
