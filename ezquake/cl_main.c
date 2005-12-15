@@ -86,7 +86,7 @@ cvar_t cl_fp_messages		= {"cl_fp_messages", "4"};
 cvar_t cl_fp_persecond		= {"cl_fp_persecond", "4"};		
 cvar_t cl_cmdline			= {"cl_cmdline", "", CVAR_ROM};	
 cvar_t cl_useproxy			= {"cl_useproxy", "0"};			
-cvar_t cl_window_caption	= {"cl_window_caption", "1"};
+cvar_t cl_window_caption	= {"cl_window_caption", "0"};
 
 cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};	
 // START shaman :: balancing variables
