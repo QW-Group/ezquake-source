@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.9 2005-12-01 21:45:42 johnnycz Exp $
+	$Id: vid_win.c,v 1.10 2006-01-04 21:13:15 tonik Exp $
 
 */
 
@@ -1093,8 +1093,6 @@ qbool VID_SetWindowedMode (int modenum) {
 	vid.buffer = vid.direct = dibdc->surface;
 	vid.rowbytes = dibdc->mi.bytesPerLine;
 	vid.numpages = 1;
-	vid.maxwarpwidth = WARP_WIDTH;
-	vid.maxwarpheight = WARP_HEIGHT;
 	vid.height = vid.conheight = DIBHeight;
 	vid.width = vid.conwidth = DIBWidth;
 	vid.aspect = ((float) vid.height / (float) vid.width) * (320.0 / 240.0);
@@ -1138,8 +1136,6 @@ qbool VID_SetFullscreenMode (int modenum) {
 	vid_fulldib_on_focus_mode = 0;
 
 	vid.buffer = vid.direct = NULL;
-	vid.maxwarpwidth = WARP_WIDTH;
-	vid.maxwarpheight = WARP_HEIGHT;
 	DIBHeight = vid.height = vid.conheight = modelist[modenum].height;
 	DIBWidth = vid.width = vid.conwidth = modelist[modenum].width;
 	vid.aspect = ((float) vid.height / (float) vid.width) * (320.0 / 240.0);
@@ -1256,8 +1252,6 @@ qbool VID_SetFullDIBMode (int modenum) {
 	vid.buffer = vid.direct = dibdc->surface;
 	vid.rowbytes = dibdc->mi.bytesPerLine;
 	vid.numpages = 1;
-	vid.maxwarpwidth = WARP_WIDTH;
-	vid.maxwarpheight = WARP_HEIGHT;
 	vid.height = vid.conheight = DIBHeight;
 	vid.width = vid.conwidth = DIBWidth;
 	vid.aspect = ((float)vid.height / (float)vid.width) *
@@ -1649,8 +1643,6 @@ void VID_Init (unsigned char *palette) {
 	if ((nummodes == basenummodes || (nummodes == basenummodes + 1 && is_mode0x13)) && !COM_CheckParm ("-nofulldib"))
 		VID_InitFullDIB (global_hInstance);
 
-	vid.maxwarpwidth = WARP_WIDTH;
-	vid.maxwarpheight = WARP_HEIGHT;
 	vid.colormap = host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *) vid.colormap + 2048));
 	vid_testingmode = 0;

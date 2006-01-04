@@ -45,8 +45,6 @@ typedef struct
 	int				recalc_refdef;	// if true, recalc vid-based stuff
 	unsigned		conwidth;
 	unsigned		conheight;
-	int				maxwarpwidth;
-	int				maxwarpheight;
 	pixel_t			*direct;		// direct drawing to framebuffer, if not
 									//  NULL
 } viddef_t;

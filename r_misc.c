@@ -539,7 +539,7 @@ void R_SetupFrame (void) {
 
 	if (r_dowarp != r_dowarpold || r_viewchanged || (cl_multiview.value && cls.mvdplayback)) { // oppymv 310804
 		if (r_dowarp) {
-			if (vid.width <= vid.maxwarpwidth && vid.height <= vid.maxwarpheight) {
+			if (vid.width <= WARP_WIDTH && vid.height <= WARP_HEIGHT) {
 				vrect.x = 0;
 				vrect.y = 0;
 				vrect.width = vid.width;
@@ -550,14 +550,14 @@ void R_SetupFrame (void) {
 				w = vid.width;
 				h = vid.height;
 
-				if (w > vid.maxwarpwidth) {
-					h *= (float)vid.maxwarpwidth / w;
-					w = vid.maxwarpwidth;
+				if (w > WARP_WIDTH) {
+					h *= (float)WARP_WIDTH / w;
+					w = WARP_WIDTH;
 				}
 
-				if (h > vid.maxwarpheight) {
-					h = vid.maxwarpheight;
-					w *= (float)vid.maxwarpheight / h;
+				if (h > WARP_HEIGHT) {
+					h = WARP_HEIGHT;
+					w *= (float)WARP_HEIGHT / h;
 				}
 
 				vrect.x = 0;

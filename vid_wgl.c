@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.7 2005-12-01 21:45:42 johnnycz Exp $
+	$Id: vid_wgl.c,v 1.8 2006-01-04 21:13:15 tonik Exp $
 
 */
 
@@ -1283,8 +1283,6 @@ void VID_Init (unsigned char *palette) {
 	if (vid.conheight < 200)
 		vid.conheight = 200;
 
-	vid.maxwarpwidth = WARP_WIDTH;
-	vid.maxwarpheight = WARP_HEIGHT;
 	vid.colormap = host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *) vid.colormap + 2048));
 

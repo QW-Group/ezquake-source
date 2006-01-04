@@ -1705,8 +1705,6 @@ void VID_Init (unsigned char *palette)
 
 	VID_SetConWidth();
 
-	vid.maxwarpwidth = WARP_WIDTH;
-	vid.maxwarpheight = WARP_HEIGHT;
 	vid.colormap = host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
 	vid.numpages = 2;
