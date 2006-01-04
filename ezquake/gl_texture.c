@@ -277,7 +277,11 @@ void GL_Upload8 (byte *data, int width, int height, int mode) {
 		for (i = 0; i < image_size; i++) {
 			p = data[i];
 			if (p < 224)
+#ifdef __BIG_ENDIAN__
+				trans[i] = table[p] & 0xFFFFFF00;	
+#else
 				trans[i] = table[p] & 0x00FFFFFF;	
+#endif
 			else
 				trans[i] = table[p];			
 		}
