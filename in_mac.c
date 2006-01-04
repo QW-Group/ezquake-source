@@ -563,16 +563,16 @@ void IN_Move (usercmd_t *cmd)
 	// add mouse X/Y movement to cmd
 	//
 	
-	if ( (in_strafe.state & 1) || (lookstrafe.value && (in_mlook.state & 1) ))
+	if ( (in_strafe.state & 1) || (lookstrafe.value && mlook_active ))
 		cmd->sidemove += m_side.value * posx;
 	else
 		cl.viewangles[YAW] -= m_yaw.value * posx;
 	
 	// If mouselook is on and there's been motion, don't drift
-	if (in_mlook.state & 1)
+	if (mlook_active)
 		V_StopPitchDrift ();
 		
-	if ( (in_mlook.state & 1) && !(in_strafe.state & 1))
+	if (mlook_active && !(in_strafe.state & 1))
 	{
 		cl.viewangles[PITCH] += (m_pitch.value * posy);
 		cl.viewangles[PITCH] = bound(MIN_PITCH, cl.viewangles[PITCH], MAX_PITCH);
