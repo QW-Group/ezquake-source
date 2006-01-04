@@ -88,7 +88,7 @@ void IN_ConnectMouse(void);
 void IN_DisconnectMouse(void);
 
 // pOx - mouse smoothing...
-cvar_t m_filter = {"m_filter","0.1", true};
+cvar_t m_filter = {"m_filter","0", true};
 cvar_t m_filtercutoff = {"m_filtercutoff","80", true};
 #define	M_FILTERLEVEL	 10
 static float	history[M_FILTERLEVEL][2];
