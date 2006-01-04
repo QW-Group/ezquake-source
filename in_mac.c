@@ -501,8 +501,8 @@ void IN_Move (usercmd_t *cmd)
 // DEBUG - ISp & CG should end up with (around) the same delta by the time we get here.
 //if (temp1.value) Com_Printf ("\3IX: %3.2f IY: %3.2f\n", posx, posy);
 
-	posx *= sensitivity.value*4;
-    posy *= sensitivity.value*4;
+	posx *= sensitivity.value;
+    posy *= sensitivity.value;
 	
 	if (m_filter.value)
 	{
