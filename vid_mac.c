@@ -1706,7 +1706,6 @@ void VID_Init (unsigned char *palette)
 	VID_SetConWidth();
 
 	vid.colormap = host_colormap;
-	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
 	vid.numpages = 2;
 
 	vid_menudrawfn = NULL;
