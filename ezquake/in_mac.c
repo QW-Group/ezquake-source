@@ -34,9 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "mac.h"
 
-#define MIN_PITCH		-70
-#define MAX_PITCH		80
-
 extern CGDirectDisplayID vid_CGDevices[];
 extern CGDisplayCount gCGNumDevices;
 
@@ -575,7 +572,7 @@ void IN_Move (usercmd_t *cmd)
 	if (mlook_active && !(in_strafe.state & 1))
 	{
 		cl.viewangles[PITCH] += (m_pitch.value * posy);
-		cl.viewangles[PITCH] = bound(MIN_PITCH, cl.viewangles[PITCH], MAX_PITCH);
+		cl.viewangles[PITCH] = bound(cl.minpitch, cl.viewangles[PITCH], cl.maxpitch);
 	}
 	else
 		cmd->forwardmove -= m_forward.value * posy;
