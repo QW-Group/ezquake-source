@@ -74,7 +74,7 @@ cvar_t	vid_mode = {"vid_mode", "0", false};// Saved in prefs, not config (list g
 cvar_t	gl_vid_windowed = {"gl_vid_windowed", "0", false};// Saved in prefs, not config - 1 = in a window
 cvar_t	gl_vid_screen = {"gl_vid_screen", "0", false};// Saved in prefs, not config
 cvar_t	gl_vid_colorbits = {"gl_vid_colorbits", "16", false};// Saved in prefs, not config
-cvar_t	vid_wait = {"vid_wait", "0", true};// VBL sync
+cvar_t	vid_vsync = {"vid_vsync", "0", true};// VBL sync
 cvar_t	_windowed_mouse = {"_windowed_mouse","1", CVAR_ARCHIVE};
 qbool OnTextureBitsChange (cvar_t *var, char *value)
 {
@@ -385,10 +385,10 @@ void GL_SwapInterval ()
 {
 	GLint swap;
 
-	swap = vid_wait.value ? 1 : 0;
+	swap = vid_vsync.value ? 1 : 0;
 	aglSetInteger(gContext, AGL_SWAP_INTERVAL, &swap);
 
-	vblsave = vid_wait.value;
+	vblsave = vid_vsync.value;
 }
 
 void CheckArrayExtensions (void);
@@ -961,7 +961,7 @@ void GL_EndRendering (void)
 	}
 
 	// Check if VBL sync needs updating
-	if (vblsave != vid_wait.value)
+	if (vblsave != vid_vsync.value)
 		GL_SwapInterval ();
 		
 	if (!scr_skipupdate || block_drawing)
@@ -1664,7 +1664,7 @@ void VID_Init (unsigned char *palette)
 	Cvar_Register (&gl_vid_windowed);
 	Cvar_Register (&gl_vid_screen);
 	Cvar_Register (&gl_vid_colorbits);
-	Cvar_Register (&vid_wait);
+	Cvar_Register (&vid_vsync);
 	Cvar_Register (&_windowed_mouse);
 	Cvar_Register (&vid_hwgammacontrol);
 	//Cvar_Register (&gl_texturebits);
