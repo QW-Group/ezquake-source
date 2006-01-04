@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.32 2005-11-08 00:01:56 johnnycz Exp $
+	$Id: menu.c,v 1.33 2006-01-04 23:37:31 tonik Exp $
 
 */
 
@@ -376,10 +376,10 @@ void M_AdjustSliders (int dir) {
 		break;
 	case 6:	// mouse speed
 		sensitivity.value += dir * 0.5;
-		if (sensitivity.value < 1)
-			sensitivity.value = 1;
-		if (sensitivity.value > 11)
-			sensitivity.value = 11;
+		if (sensitivity.value < 3)
+			sensitivity.value = 3;
+		if (sensitivity.value > 15)
+			sensitivity.value = 15;
 		Cvar_SetValue (&sensitivity, sensitivity.value);
 		break;
 	case 7:	// music volume
@@ -491,7 +491,7 @@ void M_Options_Draw (void) {
 	M_DrawSlider (220, 72, r);
 
 	M_Print (16, 80, "           Mouse speed");
-	r = (sensitivity.value - 1)/10;
+	r = (sensitivity.value - 3)/(15 - 3);
 	M_DrawSlider (220, 80, r);
 
 	M_Print (16, 88, "       CD music volume");
