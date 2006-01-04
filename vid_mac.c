@@ -50,8 +50,6 @@ extern cvar_t gl_ztrick;
 
 extern viddef_t	vid; // global video state
 
-float		gldepthmin, gldepthmax;
-
 void GL_Init (void);
 
 qbool isPermedia = false;

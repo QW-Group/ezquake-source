@@ -68,7 +68,6 @@ qbool gl_combine = false;
 
 qbool gl_add_ext = false;
 
-float gldepthmin, gldepthmax;
 qbool gl_allow_ztrick = true;
 
 float vid_gamma = 1.0;
