@@ -44,6 +44,8 @@ int			playerfbtextures[MAX_CLIENTS];
 int			skyboxtextures;
 int			underwatertexture, detailtexture;	
 
+float		gldepthmin, gldepthmax;	// for gl_ztrick
+
 // view origin
 vec3_t		vup, vpn, vright;
 vec3_t		r_origin;
