@@ -709,7 +709,6 @@ void VID_Init(unsigned char *palette) {
 	Cvar_Register(&auto_grabmouse);
 
 	vid.colormap = host_colormap;
-	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
 
 	if (!(dpy = XOpenDisplay(NULL)))
 		Sys_Error("Error couldn't open the X display");
