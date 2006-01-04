@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.26 2005-10-21 17:14:31 disconn3ct Exp $
+	$Id: keys.c,v 1.27 2006-01-04 12:30:24 tonik Exp $
 
 */
 
@@ -881,6 +881,10 @@ void Key_Console (int key) {
 #endif // WITH_KEYMAP
 
 	switch (key) {
+		case 'M': case 'm': case 'J': case 'j':		//^M,^J = Enter
+			if (!keydown[K_CTRL])
+				break;
+		/* fall through */
 	    case K_ENTER:
 		CompleteCommandNew_Reset ();
 		
@@ -962,10 +966,13 @@ void Key_Console (int key) {
 		return;
 
 
+	case 'H': case 'h':		// ^H = BACKSPACE	
+		if (!keydown[K_CTRL])
+			break;
 	case K_BACKSPACE:
-	// added by jogi start
-	CompleteCommandNew_Reset();
-	// added by jogi stop
+		// added by jogi start
+		CompleteCommandNew_Reset();
+		// added by jogi stop
 		if (key_linepos > 1)
 		{
 			strcpy (key_lines[edit_line] + key_linepos - 1,
@@ -1039,11 +1046,16 @@ void Key_Console (int key) {
 			key_linepos--;
 		return;
 
+		case 'P': case 'p':		// ^P = back in history
+			if (!keydown[K_CTRL])
+				break;
+			goto prevline;
 	    case K_UPARROW:
 			if (keydown[K_CTRL]) {
 				AdjustConsoleHeight (-10);
 				return;
 			}
+prevline:
 			do {
 				history_line = (history_line - 1) & (CMDLINES - 1);
 			} while (history_line != edit_line
@@ -1054,11 +1066,16 @@ void Key_Console (int key) {
 			key_linepos = strlen(key_lines[edit_line]);
 			return;
 
+		case 'N': case 'n':		// ^N = forward in history
+			if (!keydown[K_CTRL])
+				break;
+			goto nextline;
 		case K_DOWNARROW:
 			if (keydown[K_CTRL]) {
 				AdjustConsoleHeight (10);
 				return;
 			}
+nextline:
 			if (history_line == edit_line) 
 				return;
 			do {
