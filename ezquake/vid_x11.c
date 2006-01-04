@@ -420,8 +420,6 @@ void VID_Init (unsigned char *palette) {
 	ignorenext=0;
 	vid.width = 320;
 	vid.height = 200;
-	vid.maxwarpwidth = WARP_WIDTH;
-	vid.maxwarpheight = WARP_HEIGHT;
 	vid.numpages = 2;
 	vid.colormap = host_colormap;
 	//	vid.cbits = VID_CBITS;
