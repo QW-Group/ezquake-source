@@ -256,11 +256,7 @@ void VID_SetPalette (unsigned char *palette) {
 		v = LittleLong ((255 << 24) + (r << 0) + (g << 8) + (b << 16));
 		*table++ = v;
 	}
-#ifndef __APPLE__
 	d_8to24table[255] = 0;		// 255 is transparent
-#else
-	d_8to24table[255] &= 0xffffff00;
-#endif
 
 	// Tonik: create a brighter palette for bmodel textures
 	pal = palette;
@@ -273,9 +269,5 @@ void VID_SetPalette (unsigned char *palette) {
 		pal += 3;
 		*table++ = LittleLong ((255 << 24) + (r << 0) + (g << 8) + (b << 16));
 	}
-#ifndef __APPLE__
 	d_8to24table2[255] = 0;	// 255 is transparent
-#else
-	d_8to24table2[255] &= 0xffffff00;
-#endif
 } 
