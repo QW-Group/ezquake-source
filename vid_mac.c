@@ -1111,19 +1111,6 @@ void VID_Shutdown (void)
 }
 
 
-// QuakeWorld wants these:
-#if !defined(VID_LockBuffer)
-void VID_LockBuffer (void) {}
-#endif
-
-#if !defined(VID_UnlockBuffer)
-void VID_UnlockBuffer (void) {}
-#endif
-
-#if !defined(VID_SetCaption)
-void VID_SetCaption (char *text) {}
-#endif
-
 /*
 =================
 VID_ResCompare
@@ -1665,7 +1652,7 @@ void VID_Init (unsigned char *palette)
 	Cvar_Register (&vid_vsync);
 	Cvar_Register (&_windowed_mouse);
 	Cvar_Register (&vid_hwgammacontrol);
-	//Cvar_Register (&gl_texturebits);
+	Cvar_Register (&gl_texturebits);
 	
 	Cmd_AddCommand ("gl_describerenderer", GL_DescribeRenderer_f);
 	Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
@@ -1709,6 +1696,11 @@ void VID_Init (unsigned char *palette)
 	vid_menudrawfn = NULL;
 	vid_menukeyfn = NULL;
 }
+
+void VID_LockBuffer (void) {}
+void VID_UnlockBuffer (void) {}
+// TODO: implement this
+void VID_SetCaption (char *text) {}
 
 // kazik -->
 
