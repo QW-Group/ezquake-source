@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mp3_player.h"
 #include "cl_cam.h"
 #include "mvd_utils.h"
+#include "EX_browser.h"
 
 #ifndef _WIN32
 #include <netdb.h>
@@ -757,29 +758,6 @@ void CL_SendToServer (void) {
 
 //=============================================================================
 
-void CL_SaveArgv(int argc, char **argv) {
-	char saved_args[512];
-	int i, total_length, length;
-	qbool first = true;
-
-	length = total_length = saved_args[0] = 0;
-	for (i = 0; i < argc; i++){
-		if (!argv[i][0])
-			continue;
-		if (!first && total_length + 1 < sizeof(saved_args)) {
-			strcat(saved_args, " ");
-			total_length++;
-		}
-		first = false;
-		length = strlen(argv[i]);
-		if (total_length + length < sizeof(saved_args)) {
-			strcat(saved_args, argv[i]);
-			total_length += length;
-		}
-	}
-	Cvar_ForceSet(&cl_cmdline, saved_args);
-}
-
 void CL_InitCommands (void);
 
 #ifdef GLQUAKE
@@ -895,6 +873,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&localid);
 	Cvar_Register (&cl_warncmd);
 	Cvar_Register (&cl_cmdline);
+	Cvar_ForceSet (&cl_cmdline, com_args_original);
 	
 	Cvar_ResetCurrentGroup();
 
@@ -1005,7 +984,6 @@ void CL_Init (void) {
 	SList_Init ();
 	SList_Load ();
 
-
 	MT_Init();
 	CL_Demo_Init();
 	Ignore_Init();
@@ -1015,6 +993,9 @@ void CL_Init (void) {
 	ConfigManager_Init();
 	Stats_Init();
 	MP3_Init();
+	HUD_Init(); // HUD -> hexum
+	HUD_InitFinish(); // HUD -> hexum
+	SB_RootInit();
 }
 
 //============================================================================
