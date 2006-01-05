@@ -386,10 +386,6 @@ char *Host_PrintBars(char *s, int len) {
 	return temp;
 }
 
-void CL_SaveArgv(int, char **);
-
-extern void SB_RootInit(void);
-
 void Host_Init (int argc, char **argv, int default_memsize) {
 	FILE *f;
 
@@ -427,20 +423,9 @@ void Host_Init (int argc, char **argv, int default_memsize) {
 
 	SYSINFO_Init();
 
-	HUD_Init(); // HUD -> hexum
-	HUD_InitFinish(); // HUD -> hexum
-
 #ifdef EMBED_TCL
 	if (!TCL_InterpLoaded())
 		Com_Printf ("Could not load "TCL_LIB_NAME", embedded Tcl disabled\n");
-#endif
-
-	SB_RootInit();
-
-#ifndef SERVERONLY
-	
-	if (!dedicated)
-		CL_SaveArgv(argc, argv);
 #endif
 
 	Hunk_AllocName (0, "-HOST_HUNKLEVEL-");
