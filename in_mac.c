@@ -47,7 +47,7 @@ static void IN_GetDelta_CG (void);
 
 int mouse_buttons = 3;
 qbool suspend_mouse = false;
-qbool disconneted_mouse = false;
+qbool disconnected_mouse = false;
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -67,17 +67,9 @@ qbool disconneted_mouse = false;
 
 qbool Sprockets_Active = false;
 
-// External prototypes
-extern void Mac_StartGL (void);
-extern void Mac_StopGL (void);
-
-extern qbool is3dfx, inwindow;
+extern qbool inwindow;
 extern int gScreenWidth;
 extern int gScreenHeight;
-extern AGLContext gContext;
-extern DSpContextReference gSprocketContext;
-extern DisplayIDType gDisplayID;
-extern Fixed gRefreshRate;	
 
 // Function Protos
 void IN_ShowCursor (void);
@@ -87,12 +79,7 @@ void IN_ResumeMouse (void);
 void IN_ConnectMouse(void);
 void IN_DisconnectMouse(void);
 
-// pOx - mouse smoothing...
 cvar_t m_filter = {"m_filter","0", true};
-cvar_t m_filtercutoff = {"m_filtercutoff","80", true};
-#define	M_FILTERLEVEL	 10
-static float	history[M_FILTERLEVEL][2];
-static qbool	filter_dirty;
 
 // compatibility with old Quake -- setting to 0 disables KP_* codes
 cvar_t	cl_keypad = {"cl_keypad","0"};
@@ -112,27 +99,11 @@ void Capture_Cursor_f (void)
 
 void Force_Centerview_f (void)
 {
-	if (concussioned) return;
+	if (concussioned)
+		return;
 	cl.viewangles[PITCH] = 0; 
 }
 
-
-/*
-=============
-IN_ClearMouseFilter
-
-Clear the history buffer if no movement
-=============
-*/
-static void IN_ClearMouseFilter (void)
-{
-	int	i;
-   
-	for (i = 0; i < M_FILTERLEVEL; i++)
-		history[i][0] = history[i][1] = 0;
-	
-	filter_dirty = false;
-}
 
 /*
 =============
@@ -173,7 +144,6 @@ void IN_Init (void)
 	
 	Cmd_AddCommand ("force_centerview", Force_Centerview_f);
 
-	Cvar_Register (&m_filtercutoff);
 	Cvar_Register (&m_filter);
 	Cvar_Register (&cl_keypad);
 	
@@ -189,14 +159,7 @@ shutdown InputSprockets mouse input
 */
 void IN_Shutdown (void)
 {
-	
-#ifdef DISABLE_MOUSE
-	return;
-#endif
-
     IN_DisconnectMouse();
-
-	return;
 }
 
 
@@ -319,7 +282,8 @@ static pascal OSStatus IN_CarbonMouseEvents (EventHandlerCallRef handlerChain, E
 	event_class = GetEventClass(event);
 	
 	// Totally ignore the mouse if we're shutting down (so error dialogs can handle it properly)
-	if (disconneted_mouse) return err;
+	if (disconnected_mouse)
+		return err;
 	
 	if (handlerChain)
 		err = CallNextEventHandler (handlerChain, event);
@@ -404,11 +368,8 @@ check for mouse button presses
 */
 void IN_Commands (void)
 {
-#ifdef DISABLE_MOUSE
-	return;
-#endif
-	
-	if (suspend_mouse) return;
+	if (suspend_mouse)
+		return;
 
 	// make sure keyup event happens
 	if (post_the_scroll_hack) {
@@ -451,12 +412,12 @@ static void IN_GetDelta_CG (void)
 	}
 	else
 		posx = posy = 0;
+
+	lastx = CG_dx; lasty = CG_dy;
 	
 	// Doesn't happen on it's own
 	CG_dx = CG_dy = 0;
 	IN_CenterMouse();
-	
-	lastx = posx; lasty = posy;
 }
 
 /*
@@ -468,94 +429,18 @@ check for mouse movement
 */
 void IN_Move (usercmd_t *cmd)
 {
-	float 	weight = 1.0;
-	float 	total = 0.0;
-	float	hisx, hisy, cutoff;
-	int		i;
-  	
-#ifdef DISABLE_MOUSE
-	return;
-#endif
-
 	if (suspend_mouse || scr_disabled_for_loading)
 	{
 		CG_dx = CG_dy = 0;
 		posx = posy = 0;
-		if (filter_dirty) IN_ClearMouseFilter();
-		memset (cmd, 0, sizeof(*cmd));
 		return;
 	}
 
-	IN_GetDelta ();// actual funtion depends on the current OS
+	IN_GetDelta ();// actual function depends on the current OS
 	
-	// if no change in position, return
-	if (!posx && !posy)
-	{
-		if (filter_dirty) IN_ClearMouseFilter();
-		return;
-	}	
-
-// DEBUG - ISp & CG should end up with (around) the same delta by the time we get here.
-//if (temp1.value) Com_Printf ("\3IX: %3.2f IY: %3.2f\n", posx, posy);
-
 	posx *= sensitivity.value;
-    posy *= sensitivity.value;
+	posy *= sensitivity.value;
 	
-	if (m_filter.value)
-	{
-		// The old cutoff values don't make much sense anymore...
-		cutoff = m_filtercutoff.value*0.1;
-		
-		// Don't let this go over 1
-		if (m_filter.value > 1.0) m_filter.value = 1.0;
-		
-		// Bump up sensitivity a bit cause the filter makes ya go SLOOOOW....
-		posx *= (1.0+m_filter.value);
-		posy *= (1.0+m_filter.value);
-		
-		// Average the new move with stored movement
-		for (i = 0; i < M_FILTERLEVEL; i++)
-		{
-			posx += weight * history[i][0];
-			posy += weight * history[i][1];
-			total += weight;
-			weight *= m_filter.value;
-		}
-
-		posx /= total;
-		posy /= total;
-		
-		// Don't average large movements
-		if ( posx < -cutoff || posx > cutoff )
-			hisx = 0;
-		else
-			hisx = posx;
-			
-		if ( posy < -cutoff || posy > cutoff )
-			hisy = 0;
-		else
-			hisy = posy;
-   		
-   		// Add the new move to the history buffer
-		for (i = M_FILTERLEVEL-1; i >= 1; i--)
-		{
-			history[i][0] = history[i-1][0];
-			history[i][1] = history[i-1][1];
-		}      
-
-		history[0][0] = hisx;
-		history[0][1] = hisy;
-		
-		filter_dirty = true;
-	}
-	
-	// Deltas on OSX blow bigtime - boost'em depending on the current framerate
-//	posx *= host_frametime*72;
-//	posy *= host_frametime*72;
-
-// DEBUG - see what we end up with...
-//if (temp1.value) Com_Printf ("\3FX: %3.2f FY: %3.2f\n", posx, posy);
-
 	//
 	// add mouse X/Y movement to cmd
 	//
@@ -588,7 +473,7 @@ connect mouse to InputSprockets
 void IN_ConnectMouse(void)
 {
 	IN_OverrideSystemPrefs (false);
-    IN_HideCursor();
+	IN_HideCursor();
 }
 
 /*
@@ -601,7 +486,7 @@ disconnect mouse from InputSprockets
 void IN_DisconnectMouse(void)
 {
 	suspend_mouse = true;
-	disconneted_mouse = true;
+	disconnected_mouse = true;
 	
 	IN_OverrideSystemPrefs (true);
 }
@@ -611,11 +496,6 @@ void IN_DisconnectMouse(void)
 //
 void IN_SuspendMouse(void)
 {
-
-#ifdef DISABLE_MOUSE
-	return;
-#endif
-	
 	suspend_mouse = true;
 
 	IN_OverrideSystemPrefs (true);
@@ -623,11 +503,6 @@ void IN_SuspendMouse(void)
 
 void IN_ResumeMouse(void)
 {
-
-#ifdef DISABLE_MOUSE
-	return;
-#endif
-	
 	suspend_mouse = false;
 	
 	IN_OverrideSystemPrefs (false);	
@@ -638,17 +513,11 @@ void IN_ResumeMouse(void)
 //
 void IN_ShowCursor (void)
 {
-#ifdef DISABLE_MOUSE
-	return;
-#endif
 	InitCursor();
 	ShowCursor();
 }
 
 void IN_HideCursor (void)
 {
-#ifdef DISABLE_MOUSE
-	return;
-#endif
 	HideCursor();
 }
