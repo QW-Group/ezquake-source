@@ -32,6 +32,7 @@ is not a staircase.
 
 =============
 */
+
 qbool SV_CheckBottom (edict_t *ent)
 {
 	vec3_t	mins, maxs, start, stop;
@@ -58,7 +59,6 @@ qbool SV_CheckBottom (edict_t *ent)
 	return true;		// we got out easy
 
 realcheck:
-
 //
 // check it for real...
 //
@@ -88,7 +88,6 @@ realcheck:
 			if (trace.fraction == 1.0 || mid - trace.endpos[2] > STEPSIZE)
 				return false;
 		}
-
 
 	return true;
 }
@@ -165,7 +164,7 @@ qbool SV_movestep (edict_t *ent, vec3_t move, qbool relink)
 	if (trace.startsolid)
 	{
 		neworg[2] -= STEPSIZE;
-		SV_Trace = SV_Trace (neworg, ent->v.mins, ent->v.maxs, end, false, ent);
+		trace = SV_Trace (neworg, ent->v.mins, ent->v.maxs, end, false, ent);
 		if (trace.allsolid || trace.startsolid)
 			return false;
 	}

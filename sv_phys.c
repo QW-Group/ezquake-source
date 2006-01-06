@@ -597,7 +597,6 @@ FIXME: is this true?
 */
 void SV_Physics_Step (edict_t *ent) {
 	qbool hitsound;
-	int movetype;
 
 	// frefall if not onground
 	if (!((int) ent->v.flags & (FL_ONGROUND | FL_FLY | FL_SWIM))) {
