@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sv_world.h
 
+#ifndef _SV_WORLD_H_
+#define _SV_WORLD_H_
+
 typedef struct
 {
 	vec3_t	normal;
@@ -37,7 +40,7 @@ typedef struct
 } trace_t;
 
 
-#define	MOVE_NORMAL		0
+#define	MOVE_NORMAL	0
 #define	MOVE_NOMONSTERS	1
 #define	MOVE_MISSILE	2
 
@@ -92,5 +95,4 @@ trace_t SV_Trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, 
 
 // passedict is explicitly excluded from clipping checks (normally NULL)
 
-
-edict_t	*SV_TestPlayerPosition (edict_t *ent, vec3_t origin);
+#endif /* _SV_WORLD_H_ */
