@@ -79,7 +79,7 @@ to the new value before sending out any replies.
 
 #include <time.h>
 
-cvar_t	showpackets = {"showpackets", "0"};
+cvar_t	showpackets	= {"showpackets", "0"};
 cvar_t	showdrop	= {"showdrop", "0"};
 cvar_t	qport		= {"qport", "0"};
 
@@ -170,10 +170,6 @@ qbool Netchan_CanReliable (netchan_t *chan) {
 		return false;			// waiting for ack
 	return Netchan_CanPacket (chan);
 }
-
-#ifndef CLIENTONLY
-qbool ServerPaused(void);
-#endif
 
 //tries to send an unreliable message to a connection, and handles the transmition / retransmition of the reliable messages.
 //A 0 length will still generate a packet and deal with the reliable messages.

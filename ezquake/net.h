@@ -18,12 +18,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // net.h -- quake's interface to the networking layer
+#ifndef _NET_H_
+#define _NET_H_
 
 #ifndef _WIN32
 #include <netinet/in.h>
 #endif
 
-#define	PORT_ANY	-1
+#define PORT_ANY -1
 
 typedef enum {NA_LOOPBACK, NA_BROADCAST, NA_IP, NA_IPX, NA_BROADCAST_IPX} netadrtype_t;
 
@@ -42,21 +44,21 @@ extern	netadr_t	net_local_adr;
 extern	netadr_t	net_from;		// address of who sent the packet
 extern	sizebuf_t	net_message;
 
-void		NET_Init (void);
-void		NET_Shutdown (void);
-void		NET_ClientConfig (qbool enable);	// open/close client socket
-void		NET_ServerConfig (qbool enable);	// open/close server socket
+void	NET_Init (void);
+void	NET_Shutdown (void);
+void	NET_ClientConfig (qbool enable);	// open/close client socket
+void	NET_ServerConfig (qbool enable);	// open/close server socket
 
-void		NET_ClearLoopback (void);
 qbool	NET_GetPacket (netsrc_t sock);
-void		NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
-void		NET_Sleep (int msec);
+void	NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
+void	NET_ClearLoopback (void);
+void	NET_Sleep (int msec);
 
 qbool	NET_CompareAdr (netadr_t a, netadr_t b);
 qbool	NET_CompareBaseAdr (netadr_t a, netadr_t b);
 qbool	NET_IsLocalAddress (netadr_t a);
-char		*NET_AdrToString (netadr_t a);
-char		*NET_BaseAdrToString (netadr_t a);
+char	*NET_AdrToString (netadr_t a);
+char	*NET_BaseAdrToString (netadr_t a);
 qbool	NET_StringToAdr (char *s, netadr_t *a);
 
 //============================================================================
@@ -70,45 +72,45 @@ typedef struct {
 
 	netsrc_t	sock;
 
-	int			dropped;			// between last packet and previous
+	int		dropped;			// between last packet and previous
 
-	float		last_received;		// for timeouts
+	float		last_received;			// for timeouts
 
 	// the statistics are cleared at each client begin, because
 	// the server connecting process gives a bogus picture of the data
-	float		frame_latency;		// rolling average
+	float		frame_latency;			// rolling average
 	float		frame_rate;
 
-	int			drop_count;			// dropped packets, cleared each level
-	int			good_count;			// cleared each level
+	int		drop_count;			// dropped packets, cleared each level
+	int		good_count;			// cleared each level
 
 	netadr_t	remote_address;
-	int			qport;
+	int		qport;
 
 	// bandwidth estimator
 	double		cleartime;			// if curtime > nc->cleartime, free to go
 	double		rate;				// seconds / byte
 
 	// sequencing variables
-	int			incoming_sequence;
-	int			incoming_acknowledged;
-	int			incoming_reliable_acknowledged;	// single bit
+	int		incoming_sequence;
+	int		incoming_acknowledged;
+	int		incoming_reliable_acknowledged;	// single bit
 
-	int			incoming_reliable_sequence;		// single bit, maintained local
+	int		incoming_reliable_sequence;	// single bit, maintained local
 
-	int			outgoing_sequence;
-	int			reliable_sequence;			// single bit
-	int			last_reliable_sequence;		// sequence number of last send
+	int		outgoing_sequence;
+	int		reliable_sequence;		// single bit
+	int		last_reliable_sequence;		// sequence number of last send
 
 	// reliable staging and holding areas
-	sizebuf_t	message;		// writing buffer to send to server
+	sizebuf_t	message;			// writing buffer to send to server
 	byte		message_buf[MAX_MSGLEN];
 
-	int			reliable_length;
+	int		reliable_length;
 	byte		reliable_buf[MAX_MSGLEN];	// unacked reliable message
 
 	// time and size data to calculate bandwidth
-	int			outgoing_size[MAX_LATENT];
+	int		outgoing_size[MAX_LATENT];
 	double		outgoing_time[MAX_LATENT];
 } netchan_t;
 
@@ -128,4 +130,7 @@ void SockadrToNetadr (struct sockaddr_in *s, netadr_t *a);
 
 #ifndef _WIN32
 #define closesocket(a) close(a)
-#endif 
+#endif
+
+#endif /* _NET_H_ */
+
