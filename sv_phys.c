@@ -100,8 +100,8 @@ qbool SV_RunThink (edict_t *ent) {
 		
 		if (thinktime < sv.time)
 			thinktime = sv.time;	// don't let things stay in the past.
-									// it is possible to start that way
-									// by a trigger with a local time.
+						// it is possible to start that way
+						// by a trigger with a local time.
 		ent->v.nextthink = 0;
 		pr_global_struct->time = thinktime;
 		pr_global_struct->self = EDICT_TO_PROG(ent);
@@ -140,8 +140,7 @@ void SV_Impact (edict_t *e1, edict_t *e2) {
 }
 
 //Slide off of the impacting object
-#define	STOP_EPSILON	0.1
-
+#define STOP_EPSILON 0.1
 void ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce) {
 	float backoff, change;
 	int i;
@@ -185,7 +184,7 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace, int type) {
 		for (i= 0; i < 3; i++)
 			end[i] = ent->v.origin[i] + time_left * ent->v.velocity[i];
 
-		trace = SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, type, ent);
+		trace = SV_Trace (ent->v.origin, ent->v.mins, ent->v.maxs, end, type, ent);
 
 		if (trace.allsolid) {	
 			// entity is trapped in another solid
@@ -193,7 +192,7 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace, int type) {
 			return 3;
 		}
 
-		if (trace.fraction > 0)	{	
+		if (trace.fraction > 0) {
 			// actually covered some distance
 			VectorCopy (trace.endpos, ent->v.origin);
 			VectorCopy (ent->v.velocity, original_velocity);
@@ -201,28 +200,28 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace, int type) {
 		}
 
 		if (trace.fraction == 1)
-			 break;		// moved the entire distance
+			 break; // moved the entire distance
 
 		if (!trace.ent)
 			Host_Error ("SV_FlyMove: !trace.ent");
 
 		if (trace.plane.normal[2] > 0.7) {
-			blocked |= 1;		// floor
+			blocked |= 1; // floor
 			if (trace.ent->v.solid == SOLID_BSP) {
 				ent->v.flags = (int)ent->v.flags | FL_ONGROUND;
 				ent->v.groundentity = EDICT_TO_PROG(trace.ent);
 			}
 		}
 		if (!trace.plane.normal[2]) {
-			blocked |= 2;		// step
+			blocked |= 2; // step
 			if (steptrace)
-				*steptrace = trace;	// save for player extrafriction
+				*steptrace = trace; // save for player extrafriction
 		}
 
 		// run the impact function
 		SV_Impact (ent, trace.ent);
 		if (ent->free)
-			break;		// removed by the impact function
+			break; // removed by the impact function
 
 		
 		time_left -= time_left * trace.fraction;
@@ -252,7 +251,8 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace, int type) {
 		if (i != numplanes) {	
 			// go along this plane
 			VectorCopy (new_velocity, ent->v.velocity);
-		} else {	// go along the crease
+		} else {
+			// go along the crease
 			if (numplanes != 2) {
 //				Com_Printf ("clip velocity, numplanes == %i\n",numplanes);
 				VectorClear (ent->v.velocity);
@@ -292,24 +292,21 @@ trace_t SV_PushEntity (edict_t *ent, vec3_t push) {
 	VectorAdd (ent->v.origin, push, end);
 
 	if (ent->v.movetype == MOVETYPE_FLYMISSILE)
-		trace = SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_MISSILE, ent);
-        // Tonik: the check for SOLID_NOT is to fix the way dead bodies and 
-        // gibs behave (should not be blocked by players & monsters); 
-        // The SOLID_TRIGGER check is disabled lest we break frikbots 
+		trace = SV_Trace (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_MISSILE, ent);
 	else if (ent->v.solid == SOLID_TRIGGER || ent->v.solid == SOLID_NOT)
 		// only clip against bmodels
-		trace = SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_NOMONSTERS, ent);
+		trace = SV_Trace (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_NOMONSTERS, ent);
 	else
-		trace = SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_NORMAL, ent);
+		trace = SV_Trace (ent->v.origin, ent->v.mins, ent->v.maxs, end, MOVE_NORMAL, ent);
 
 	VectorCopy (trace.endpos, ent->v.origin);
 	SV_LinkEdict (ent, true);
 
 	if (trace.ent)
-		SV_Impact (ent, trace.ent);		
+		SV_Impact (ent, trace.ent);
 
 	return trace;
-}					
+}
 
 qbool SV_Push (edict_t *pusher, vec3_t move) {
 	int i, e, num_moved;
@@ -337,9 +334,9 @@ qbool SV_Push (edict_t *pusher, vec3_t move) {
 		if (check->free)
 			continue;
 
-		if (check->v.movetype == MOVETYPE_PUSH ||
-		check->v.movetype == MOVETYPE_NONE ||
-		check->v.movetype == MOVETYPE_NOCLIP)
+		if (check->v.movetype == MOVETYPE_PUSH
+		|| check->v.movetype == MOVETYPE_NONE
+		|| check->v.movetype == MOVETYPE_NOCLIP)
 			continue;
 
 		solid_save = pusher->v.solid;
@@ -350,15 +347,14 @@ qbool SV_Push (edict_t *pusher, vec3_t move) {
 			continue;
 
 		// if the entity is standing on the pusher, it will definately be moved
-		if ( ! ( ((int)check->v.flags & FL_ONGROUND) && PROG_TO_EDICT(check->v.groundentity) == pusher) ) {
-			if ( 
-					check->v.absmin[0] >= maxs[0]
-					|| check->v.absmin[1] >= maxs[1]
-					|| check->v.absmin[2] >= maxs[2]
-					|| check->v.absmax[0] <= mins[0]
-					|| check->v.absmax[1] <= mins[1]
-					|| check->v.absmax[2] <= mins[2] 
-			)
+		if ( ! ( ((int)check->v.flags & FL_ONGROUND)
+		&& PROG_TO_EDICT(check->v.groundentity) == pusher) ) {
+			if ( check->v.absmin[0] >= maxs[0]
+			|| check->v.absmin[1] >= maxs[1]
+			|| check->v.absmin[2] >= maxs[2]
+			|| check->v.absmax[0] <= mins[0]
+			|| check->v.absmax[1] <= mins[1]
+			|| check->v.absmax[2] <= mins[2] )
 				continue;
 
 			// see if the ent's bbox is inside the pusher's final position
@@ -396,7 +392,7 @@ qbool SV_Push (edict_t *pusher, vec3_t move) {
 			SV_LinkEdict (check, false);
 			continue;
 		}
-		if (check->v.solid == SOLID_NOT || check->v.solid == SOLID_TRIGGER)	{	
+		if (check->v.solid == SOLID_NOT || check->v.solid == SOLID_TRIGGER) {
 			// corpse
 			check->v.mins[0] = check->v.mins[1] = 0;
 			VectorCopy (check->v.mins, check->v.maxs);
@@ -515,14 +511,14 @@ void SV_CheckWaterTransition (edict_t *ent) {
 	}
 	
 	if (cont <= CONTENTS_WATER) {
-		if (ent->v.watertype == CONTENTS_EMPTY) {	
+		if (ent->v.watertype == CONTENTS_EMPTY) {
 			// just crossed into water
 			SV_StartSound (ent, 0, "misc/h2ohit1.wav", 255, 1);
 		}		
 		ent->v.watertype = cont;
 		ent->v.waterlevel = 1;
 	} else {
-		if (ent->v.watertype != CONTENTS_EMPTY) {	
+		if (ent->v.watertype != CONTENTS_EMPTY) {
 			// just crossed into water
 			SV_StartSound (ent, 0, "misc/h2ohit1.wav", 255, 1);
 		}		
@@ -573,7 +569,7 @@ void SV_Physics_Toss (edict_t *ent) {
 	ClipVelocity (ent->v.velocity, trace.plane.normal, ent->v.velocity, backoff);
 
 	// stop if on ground
-	if (trace.plane.normal[2] > 0.7) {		
+	if (trace.plane.normal[2] > 0.7) {
 		if (ent->v.velocity[2] < 60 || ent->v.movetype != MOVETYPE_BOUNCE ) {
 			ent->v.flags = (int)ent->v.flags | FL_ONGROUND;
 			ent->v.groundentity = EDICT_TO_PROG(trace.ent);
@@ -593,8 +589,10 @@ STEPPING MOVEMENT
 */
 
 /*
-Monsters freefall when they don't have a ground entity, otherwise all movement is done with discrete steps.
-This is also used for objects that have become still on the ground, but will fall if the floor is pulled out from under them.
+Monsters freefall when they don't have a ground entity, otherwise
+all movement is done with discrete steps.
+This is also used for objects that have become still on the ground, but
+will fall if the floor is pulled out from under them.
 FIXME: is this true?
 */
 void SV_Physics_Step (edict_t *ent) {
@@ -610,8 +608,13 @@ void SV_Physics_Step (edict_t *ent) {
 
 		SV_AddGravity (ent, 1.0);
 		SV_CheckVelocity (ent);
-		movetype = (ent->v.solid == SOLID_NOT /* || ent->v.solid == SOLID_TRIGGER*/) ? MOVE_NOMONSTERS : MOVE_NORMAL;
-		SV_FlyMove (ent, sv_frametime, NULL, movetype); 
+		// Tonik: the check for SOLID_NOT is to fix the way dead bodies and
+		// gibs behave (should not be blocked by players & monsters);
+		// The SOLID_TRIGGER check is disabled lest we break frikbots
+		if (ent->v.solid == SOLID_NOT /* || ent->v.solid == SOLID_TRIGGER*/)
+			SV_FlyMove (ent, sv_frametime, NULL, MOVE_NOMONSTERS);
+		else
+			SV_FlyMove (ent, sv_frametime, NULL, MOVE_NORMAL);
 		SV_LinkEdict (ent, true);
 
 		if ((int) ent->v.flags & FL_ONGROUND) { // just hit ground
@@ -666,7 +669,7 @@ void SV_RunEntity (edict_t *ent) {
 }
 
 void SV_RunNewmis (void) {
-	edict_t	*ent;
+	edict_t *ent;
 	double save_frametime;
 
 	if (!pr_global_struct->newmis)
@@ -699,7 +702,7 @@ void SV_Physics (void) {
 			sv_frametime = sv_maxtic.value;
 		sv.old_time = sv.time;
 	} else {
-		sv_frametime = 0.1;		// initialization frame
+		sv_frametime = 0.1; // initialization frame
 	}
 
 	pr_global_struct->frametime = sv_frametime;
@@ -714,10 +717,10 @@ void SV_Physics (void) {
 			continue;
 
 		if (pr_global_struct->force_retouch)
-			SV_LinkEdict (ent, true);	// force retouch even for stationary
+			SV_LinkEdict (ent, true); // force retouch even for stationary
 
 		if (i > 0 && i <= MAX_CLIENTS)
-			continue;		// clients are run directly from packets
+			continue; // clients are run directly from packets
 
 		SV_RunEntity (ent);
 		SV_RunNewmis ();
@@ -728,19 +731,14 @@ void SV_Physics (void) {
 }
 
 void SV_SetMoveVars(void) {
-	movevars.gravity			= sv_gravity.value; 
-	movevars.stopspeed		    = pm_stopspeed.value;		 
-	movevars.maxspeed			= pm_maxspeed.value;			 
-	movevars.spectatormaxspeed  = pm_spectatormaxspeed.value; 
-	movevars.accelerate		    = pm_accelerate.value;		 
-	movevars.airaccelerate	    = pm_airaccelerate.value;	 
-	movevars.wateraccelerate	= pm_wateraccelerate.value;	   
-	movevars.friction			= pm_friction.value;			 
-	movevars.waterfriction	    = pm_waterfriction.value;	 
-	movevars.entgravity			= 1.0;
-
-// redundant as we set them in every SV_RunCmd call anyway
-//	movevars.slidefix           = pm_slidefix.value;
-//	movevars.airstep	    = pm_airstep.value;
-//	movevars.ktjump             = pm_ktjump.value;
+	movevars.gravity		= sv_gravity.value;
+	movevars.stopspeed		= pm_stopspeed.value;
+	movevars.maxspeed		= pm_maxspeed.value;
+	movevars.spectatormaxspeed 	= pm_spectatormaxspeed.value;
+	movevars.accelerate		= pm_accelerate.value;
+	movevars.airaccelerate		= pm_airaccelerate.value;
+	movevars.wateraccelerate	= pm_wateraccelerate.value;
+	movevars.friction		= pm_friction.value;
+	movevars.waterfriction		= pm_waterfriction.value;
+	movevars.entgravity		= 1.0;
 }
