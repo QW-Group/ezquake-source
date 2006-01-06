@@ -79,7 +79,7 @@ int SV_PointContents (vec3_t p);
 
 edict_t	*SV_TestEntityPosition (edict_t *ent);
 
-trace_t SV_Move (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, edict_t *passedict);
+trace_t SV_Trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, edict_t *passedict);
 // mins and maxs are relative
 
 // if the entire move stays in a solid volume, trace.allsolid will be set

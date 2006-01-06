@@ -420,7 +420,7 @@ edict_t	*SV_TestEntityPosition (edict_t *ent) {
 	int movetype;
 
 	movetype = (ent->v.solid == SOLID_TRIGGER || ent->v.solid == SOLID_NOT) ? MOVE_NOMONSTERS : MOVE_NORMAL;
-	trace = SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, ent->v.origin, movetype, ent);
+	trace = SV_Trace (ent->v.origin, ent->v.mins, ent->v.maxs, ent->v.origin, movetype, ent);
 
 	if (trace.startsolid)
 		return sv.edicts;
@@ -655,7 +655,7 @@ void SV_MoveBounds (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, vec3_t b
 	}
 }
 
-trace_t SV_Move (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, edict_t *passedict) {
+trace_t SV_Trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, edict_t *passedict) {
 	moveclip_t clip;
 	int i;
 
