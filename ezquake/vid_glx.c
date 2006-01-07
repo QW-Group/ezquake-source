@@ -77,7 +77,7 @@ static float old_windowed_mouse = 0, mouse_x, mouse_y, old_mouse_x, old_mouse_y;
 #define KEY_MASK (KeyPressMask | KeyReleaseMask)
 #define MOUSE_MASK (ButtonPressMask | ButtonReleaseMask | PointerMotionMask)
 
-#define X_MASK (KEY_MASK | MOUSE_MASK | VisibilityChangeMask | StructureNotifyMask | FocusChangeMask | )
+#define X_MASK (KEY_MASK | MOUSE_MASK | VisibilityChangeMask | StructureNotifyMask | FocusChangeMask)
 
 unsigned short *currentgammaramp = NULL;
 static unsigned short systemgammaramp[3][256];
