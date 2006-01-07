@@ -565,16 +565,14 @@ void PM_CategorizePosition (void) {
 			// snap to ground so that we can't jump higher than we're supposed to
 			if (!trace.startsolid && !trace.allsolid)
 				VectorCopy (trace.endpos, pmove.origin);
-		}
-
 #ifdef NEW_JUMPFIX
-		// check for jump bug
-		if (DotProduct(pmove.velocity, groundplane.normal) < 0)
-		{
-			// pmove.velocity is pointing into the ground, clip it
-			PM_ClipVelocity (pmove.velocity, groundplane.normal, pmove.velocity, 1);
-		}
+			// check for jump bug
+			if (DotProduct(pmove.velocity, groundplane.normal) < 0) {
+				// pmove.velocity is pointing into the ground, clip it
+				PM_ClipVelocity (pmove.velocity, groundplane.normal, pmove.velocity, 1);
+			}
 #endif
+		}
 	}
 }
 
