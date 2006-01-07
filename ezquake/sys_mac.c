@@ -494,8 +494,10 @@ void OnMouseButton (EventRecord *myEvent, qbool down)
 	else
 		gotEvent = GetNextEvent (everyEvent, &myEvent);
 	
-	if (gotEvent)
+	while (gotEvent)
 	{		
+		if (myEvent.what == nullEvent)
+			break;
 		switch(myEvent.what)
 		{
 			case nullEvent:
@@ -537,6 +539,11 @@ void OnMouseButton (EventRecord *myEvent, qbool down)
 				AEProcessAppleEvent(&myEvent);
 				break;
 		}
+
+		if (background)
+			break;
+		else
+			gotEvent = GetNextEvent (everyEvent, &myEvent);
 	}
 }
 
