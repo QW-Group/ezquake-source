@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "EX_misc.h"
+#define SELF_SOUND 0xFFEFFFFF // [EZH] Fan told me 0xFFEFFFFF is damn cool value for it :P
 
 #ifdef _WIN32
 #include "winquake.h"
@@ -367,7 +368,7 @@ void SND_Spatialize (channel_t *ch) {
 	sfx_t *snd;
 
 	// anything coming from the view entity will always be full volume
-	if (ch->entnum == cl.playernum + 1) {
+	if ((ch->entnum == cl.playernum + 1) || (ch->entnum == SELF_SOUND)) {
 		ch->leftvol = ch->master_vol;
 		ch->rightvol = ch->master_vol;
 		return;
@@ -818,7 +819,7 @@ void S_Play_f (void) {
 		strcpy(name, Cmd_Argv(i));
 		COM_DefaultExtension (name, ".wav");
 		sfx = S_PrecacheSound(name);
-		S_StartSound(cl.playernum+1, 0, sfx, listener_origin, 1.0, 0.0);
+		S_StartSound(SELF_SOUND, 0, sfx, listener_origin, 1.0, 0.0);
 	}
 }
 
