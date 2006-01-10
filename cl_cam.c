@@ -142,7 +142,7 @@ void Cam_Lock(int playernum) {
 		TP_RefreshSkins();
 }
 
-pmtrace_t Cam_DoTrace(vec3_t vec1, vec3_t vec2) {
+trace_t Cam_DoTrace(vec3_t vec1, vec3_t vec2) {
 	VectorCopy (vec1, pmove.origin);
 	return PM_PlayerTrace(pmove.origin, vec2);
 }
@@ -150,7 +150,7 @@ pmtrace_t Cam_DoTrace(vec3_t vec1, vec3_t vec2) {
 // Returns distance or 9999 if invalid for some reason
 static float Cam_TryFlyby(player_state_t *self, player_state_t *player, vec3_t vec, qbool checkvis) {
 	vec3_t v;
-	pmtrace_t trace;
+	trace_t trace;
 	float len;
 
 	vectoangles(vec, v);
@@ -180,7 +180,7 @@ static float Cam_TryFlyby(player_state_t *self, player_state_t *player, vec3_t v
 
 // Is player visible?
 static qbool Cam_IsVisible(player_state_t *player, vec3_t vec) {
-	pmtrace_t trace;
+	trace_t trace;
 	vec3_t v;
 
 	trace = Cam_DoTrace(player->origin, vec);

@@ -492,7 +492,7 @@ void CL_UpdateBeams (void) {
 			if (cl_trueLightning.value)	{
 				vec3_t	forward, v, org, ang;
 				float	delta;
-				pmtrace_t	trace;
+				trace_t	trace;
 
 				VectorSubtract (playerbeam_end, cl.simorg, v);
 				v[2] -= 22;		// adjust for view height
@@ -599,7 +599,7 @@ void CL_UpdateBeams (void) {
 			//VULT LIGHTNING SPARKS
 			if (amf_lightning_sparks.value && !sparks && !cl.paused)
 			{
-				pmtrace_t	trace;
+				trace_t	trace;
 				trace = PM_TraceLine (org, b->end);
 				if (trace.fraction < 1)
 				{

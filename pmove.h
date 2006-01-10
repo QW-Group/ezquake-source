@@ -24,17 +24,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct {
 	vec3_t	normal;
 	float	dist;
-} pmplane_t;
+} plane_t;
 
 typedef struct {
-	qbool	allsolid;	// if true, plane is not valid
-	qbool	startsolid;	// if true, the initial point was in a solid area
+	qbool	allsolid;		// if true, plane is not valid
+	qbool	startsolid;		// if true, the initial point was in a solid area
 	qbool	inopen, inwater;
-	float		fraction;		// time completed, 1.0 = didn't hit anything
-	vec3_t		endpos;			// final position
-	pmplane_t		plane;			// surface normal at impact
-	int			ent;			// entity the surface is on
-} pmtrace_t;
+	float	fraction;		// time completed, 1.0 = didn't hit anything
+	vec3_t	endpos;			// final position
+	plane_t	plane;			// surface normal at impact
+	union {				// entity the surface is on
+		int		entnum;	// for pmove
+		struct edict_s	*ent;	// for sv_world
+	} e;
+} trace_t;
+
 
 #define	MAX_PHYSENTS	64 
 
@@ -62,28 +66,28 @@ typedef struct {
 	vec3_t		origin;
 	vec3_t		angles;
 	vec3_t		velocity;
-	qbool	jump_held;
+	qbool		jump_held;
 #ifndef SERVERONLY
-	int			jump_msec;	// msec since last jump
+	int		jump_msec;		// msec since last jump
 #endif
 	float		waterjumptime;
 	int	pm_type;
 
 	// world state
-	int			numphysent;
+	int		numphysent;
 	physent_t	physents[MAX_PHYSENTS];	// 0 should be the world
 
 	// input
 	usercmd_t	cmd;
 
 	// results
-	int			numtouch;
-	int			touchindex[MAX_PHYSENTS];
-	qbool	onground;
-	int			groundent;		// index in physents array, only valid
-								// when onground is true
-	int			waterlevel;
-	int			watertype;
+	int		numtouch;
+	int		touchindex[MAX_PHYSENTS];
+	qbool		onground;
+	int		groundent;		// index in physents array, only valid
+						// when onground is true
+	int		waterlevel;
+	int		watertype;
 } playermove_t;
 
 typedef struct {
@@ -102,22 +106,22 @@ typedef struct {
 	qbool	slidefix;		// NQ-style movement down ramps
 	qbool	airstep;
 	qbool	pground;		// NQ-style "onground" flag handling.
-							// p is for persistent (accross frames)
 } movevars_t;
 
 
-extern	movevars_t		movevars;
+extern	movevars_t	movevars;
 extern	playermove_t	pmove;
 
 void PM_PlayerMove (void);
 void PM_Init (void);
 
-qbool PM_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, pmtrace_t *trace);
+qbool PM_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, trace_t *trace);
 int PM_HullPointContents (hull_t *hull, int num, vec3_t p);
+
 int PM_PointContents (vec3_t point);
 void PM_CategorizePosition (void);
 qbool PM_TestPlayerPosition (vec3_t point);
-pmtrace_t PM_PlayerTrace (vec3_t start, vec3_t end);
-pmtrace_t PM_TraceLine (vec3_t start, vec3_t end);
+trace_t PM_PlayerTrace (vec3_t start, vec3_t end);
+trace_t PM_TraceLine (vec3_t start, vec3_t end);
 
 #endif

@@ -18,48 +18,30 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // sv_world.h
-
 #ifndef _SV_WORLD_H_
 #define _SV_WORLD_H_
+#include "pmove.h" // FIXME
 
-typedef struct
-{
-	vec3_t	normal;
-	float	dist;
-} plane_t;
-
-typedef struct
-{
-	qbool	allsolid;	// if true, plane is not valid
-	qbool	startsolid;	// if true, the initial point was in a solid area
-	qbool	inopen, inwater;
-	float	fraction;		// time completed, 1.0 = didn't hit anything
-	vec3_t	endpos;			// final position
-	plane_t	plane;			// surface normal at impact
-	edict_t	*ent;			// entity the surface is on
-} trace_t;
-
-
-#define	MOVE_NORMAL	0
-#define	MOVE_NOMONSTERS	1
-#define	MOVE_MISSILE	2
+#define MOVE_NORMAL	0
+#define MOVE_NOMONSTERS	1
+#define MOVE_MISSILE	2
 
 typedef struct areanode_s
 {
-	int		axis;		// -1 = leaf node
-	float	dist;
+	int			axis; // -1 = leaf node
+	float			dist;
 	struct areanode_s	*children[2];
-	link_t	trigger_edicts;
-	link_t	solid_edicts;
+	link_t			trigger_edicts;
+	link_t			solid_edicts;
 } areanode_t;
 
 #define AREA_SOLID	0
 #define AREA_TRIGGERS	11
 
-#define	AREA_DEPTH	4
-#define	AREA_NODES	32
+#define AREA_DEPTH	4
+#define AREA_NODES	32
 
-extern	areanode_t	sv_areanodes[AREA_NODES];
+extern areanode_t sv_areanodes[AREA_NODES];
 
 
 void SV_ClearWorld (void);
@@ -80,7 +62,7 @@ int SV_PointContents (vec3_t p);
 // returns the CONTENTS_* value from the world at the given point.
 // does not check any entities at all
 
-edict_t	*SV_TestEntityPosition (edict_t *ent);
+edict_t *SV_TestEntityPosition (edict_t *ent);
 
 trace_t SV_Trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, edict_t *passedict);
 // mins and maxs are relative

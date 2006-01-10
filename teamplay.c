@@ -3089,7 +3089,7 @@ more:
 
 qbool TP_IsItemVisible(item_vis_t *visitem) {
 	vec3_t end, v;
-	pmtrace_t trace;
+	trace_t trace;
 
 	if (visitem->dist <= visitem->radius)
 		return true;
