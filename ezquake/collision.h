@@ -4,12 +4,6 @@
 
 typedef struct
 {
-	vec3_t	normal;
-	float	dist;
-} plane_t;
-
-typedef struct
-{
 	// if true, the entire trace was in solid
 	qbool	allsolid;
 	// if true, the initial point was in solid
@@ -32,11 +26,10 @@ typedef struct
 	int			startcontents;
 	// the contents that was hit at the end or impact point
 	int			endcontents;
-}
-trace_t;
+} ctrace_t; // TODO: merge it with trace_t
 
 void Collision_RoundUpToHullSize(const model_t *cmodel, const vec3_t inmins, const vec3_t inmaxs, vec3_t outmins, vec3_t outmaxs);
 void Collision_Init (void);
-void Collision_ClipTrace (trace_t *trace, const void *cent, const model_t *cmodel, const vec3_t corigin, const vec3_t cangles, const vec3_t cmins, const vec3_t cmaxs, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end);
+void Collision_ClipTrace (ctrace_t *trace, const void *cent, const model_t *cmodel, const vec3_t corigin, const vec3_t cangles, const vec3_t cmins, const vec3_t cmaxs, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end);
 
 #endif

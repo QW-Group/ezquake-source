@@ -10,7 +10,7 @@ typedef struct
 	const hull_t *hull;
 
 	// the trace structure to fill in
-	trace_t *trace;
+	ctrace_t *trace;
 
 	// start and end of the trace (in model space)
 	float start[3];
@@ -285,7 +285,7 @@ static const hull_t *HullForBrushModel (const model_t *cmodel, const vec3_t cori
 	return hull;
 }
 
-void Collision_ClipTrace (trace_t *trace, const void *cent, const model_t *cmodel, const vec3_t corigin, const vec3_t cangles, const vec3_t cmins, const vec3_t cmaxs, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end)
+void Collision_ClipTrace (ctrace_t *trace, const void *cent, const model_t *cmodel, const vec3_t corigin, const vec3_t cangles, const vec3_t cmins, const vec3_t cmaxs, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end)
 {
 	RecursiveHullCheckTraceInfo_t rhc;
 	vec3_t offset, forward, left, up;
@@ -293,7 +293,7 @@ void Collision_ClipTrace (trace_t *trace, const void *cent, const model_t *cmode
 
 	// fill in a default trace
 	memset (&rhc, 0, sizeof(rhc));
-	memset (trace, 0, sizeof(trace_t));
+	memset (trace, 0, sizeof(ctrace_t));
 
 	rhc.trace = trace;
 

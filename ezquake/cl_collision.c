@@ -38,7 +38,7 @@ float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t 
 	int n;
 	entity_t *ent;
 	float tracemins[3], tracemaxs[3];
-	trace_t trace;
+	ctrace_t trace;
 
 	if (hitent)
 		hitent = NULL;
