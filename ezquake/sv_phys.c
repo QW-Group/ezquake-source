@@ -202,14 +202,14 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace, int type) {
 		if (trace.fraction == 1)
 			 break; // moved the entire distance
 
-		if (!trace.ent)
-			Host_Error ("SV_FlyMove: !trace.ent");
+		if (!trace.e.ent)
+			Host_Error ("SV_FlyMove: !trace.e.ent");
 
 		if (trace.plane.normal[2] > 0.7) {
 			blocked |= 1; // floor
-			if (trace.ent->v.solid == SOLID_BSP) {
+			if (trace.e.ent->v.solid == SOLID_BSP) {
 				ent->v.flags = (int)ent->v.flags | FL_ONGROUND;
-				ent->v.groundentity = EDICT_TO_PROG(trace.ent);
+				ent->v.groundentity = EDICT_TO_PROG(trace.e.ent);
 			}
 		}
 		if (!trace.plane.normal[2]) {
@@ -219,7 +219,7 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace, int type) {
 		}
 
 		// run the impact function
-		SV_Impact (ent, trace.ent);
+		SV_Impact (ent, trace.e.ent);
 		if (ent->free)
 			break; // removed by the impact function
 
@@ -302,8 +302,8 @@ trace_t SV_PushEntity (edict_t *ent, vec3_t push) {
 	VectorCopy (trace.endpos, ent->v.origin);
 	SV_LinkEdict (ent, true);
 
-	if (trace.ent)
-		SV_Impact (ent, trace.ent);
+	if (trace.e.ent)
+		SV_Impact (ent, trace.e.ent);
 
 	return trace;
 }
@@ -572,7 +572,7 @@ void SV_Physics_Toss (edict_t *ent) {
 	if (trace.plane.normal[2] > 0.7) {
 		if (ent->v.velocity[2] < 60 || ent->v.movetype != MOVETYPE_BOUNCE ) {
 			ent->v.flags = (int)ent->v.flags | FL_ONGROUND;
-			ent->v.groundentity = EDICT_TO_PROG(trace.ent);
+			ent->v.groundentity = EDICT_TO_PROG(trace.e.ent);
 			VectorClear (ent->v.velocity);
 			VectorClear (ent->v.avelocity);
 		}

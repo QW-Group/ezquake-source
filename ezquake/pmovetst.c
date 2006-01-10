@@ -118,7 +118,7 @@ LINE TESTING IN HULLS
 // 1/32 epsilon to keep floating point happy
 #define	DIST_EPSILON	(0.03125)
 
-qbool PM_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, pmtrace_t *trace) {
+qbool PM_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, trace_t *trace) {
 	dclipnode_t	*node;
 	mplane_t *plane;
 	float t1, t2, frac, midf;
@@ -247,17 +247,17 @@ qbool PM_TestPlayerPosition (vec3_t pos) {
 	return true;
 }
 
-pmtrace_t PM_PlayerTrace (vec3_t start, vec3_t end) {
-	pmtrace_t trace, total;
+trace_t PM_PlayerTrace (vec3_t start, vec3_t end) {
+	trace_t trace, total;
 	vec3_t offset, start_l, end_l, mins, maxs;
 	hull_t *hull;
 	int i;
 	physent_t *pe;
 
 	// fill in a default trace
-	memset (&total, 0, sizeof(pmtrace_t));
+	memset (&total, 0, sizeof(trace_t));
 	total.fraction = 1;
-	total.ent = -1;
+	total.e.entnum = -1;
 	VectorCopy (end, total.endpos);
 
 	for (i = 0; i < pmove.numphysent; i++) {
@@ -278,7 +278,7 @@ pmtrace_t PM_PlayerTrace (vec3_t start, vec3_t end) {
 		VectorSubtract (end, offset, end_l);
 
 		// fill in a default trace
-		memset (&trace, 0, sizeof(pmtrace_t));
+		memset (&trace, 0, sizeof(trace_t));
 		trace.fraction = 1;
 		trace.allsolid = true;
 		//trace.startsolid = true;
@@ -297,7 +297,7 @@ pmtrace_t PM_PlayerTrace (vec3_t start, vec3_t end) {
 			// fix trace up by the offset
 			VectorAdd (trace.endpos, offset, trace.endpos);
 			total = trace;
-			total.ent = i;
+			total.e.entnum = i;
 		}
 
 	}
@@ -306,17 +306,17 @@ pmtrace_t PM_PlayerTrace (vec3_t start, vec3_t end) {
 }
 
 //FIXME: merge with PM_PlayerTrace (PM_Move?)
-pmtrace_t PM_TraceLine (vec3_t start, vec3_t end) {
-	pmtrace_t trace, total;
+trace_t PM_TraceLine (vec3_t start, vec3_t end) {
+	trace_t trace, total;
 	vec3_t offset, start_l, end_l;
 	hull_t *hull;
 	int i;
 	physent_t *pe;
 
 	// fill in a default trace
-	memset (&total, 0, sizeof(pmtrace_t));
+	memset (&total, 0, sizeof(trace_t));
 	total.fraction = 1;
-	total.ent = -1;
+	total.e.entnum = -1;
 	VectorCopy (end, total.endpos);
 
 	for (i = 0; i < pmove.numphysent; i++) {
@@ -334,7 +334,7 @@ pmtrace_t PM_TraceLine (vec3_t start, vec3_t end) {
 		VectorSubtract (end, offset, end_l);
 
 		// fill in a default trace
-		memset (&trace, 0, sizeof(pmtrace_t));
+		memset (&trace, 0, sizeof(trace_t));
 		trace.fraction = 1;
 		trace.allsolid = true;
 		//trace.startsolid = true;
@@ -353,7 +353,7 @@ pmtrace_t PM_TraceLine (vec3_t start, vec3_t end) {
 			// fix trace up by the offset
 			VectorAdd (trace.endpos, offset, trace.endpos);
 			total = trace;
-			total.ent = i;
+			total.e.entnum = i;
 		}
 
 	}

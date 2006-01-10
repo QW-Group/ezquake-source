@@ -564,7 +564,7 @@ trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t max
 
 	// did we clip the move?
 	if (trace.fraction < 1 || trace.startsolid  )
-		trace.ent = ent;
+		trace.e.ent = ent;
 
 	return trace;
 }
@@ -619,7 +619,7 @@ void SV_ClipToLinks ( areanode_t *node, moveclip_t *clip) {
 		else
 			trace = SV_ClipMoveToEntity (touch, clip->start, clip->mins, clip->maxs, clip->end);
 		if (trace.allsolid || trace.startsolid || trace.fraction < clip->trace.fraction) {
-			trace.ent = touch;
+			trace.e.ent = touch;
 		 	if (clip->trace.startsolid) {
 				clip->trace = trace;
 				clip->trace.startsolid = true;

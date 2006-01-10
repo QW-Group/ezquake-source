@@ -178,7 +178,7 @@ cvar_t gl_bounceparticles = {"gl_bounceparticles", "1"};
 #define ISUNDERWATER(x) ((x) == CONTENTS_WATER || (x) == CONTENTS_SLIME || (x) == CONTENTS_LAVA)
 
 static qbool TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal) {
-	pmtrace_t trace;
+	trace_t trace;
 
 	memset (&trace, 0, sizeof(trace));
 	trace.fraction = 1;
