@@ -86,6 +86,7 @@ void CL_ForwardToServer_f (void) {
 		}
 //<-
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+/* johnnycz: disabled due to security reasons -- fixme
 		if (strcasecmp(Cmd_Argv(1), "download") == 0 && Cmd_Argc() > 2)
 		{
 			strlcpy(cls.downloadname, Cmd_Argv(2), sizeof(cls.downloadname));
@@ -95,6 +96,7 @@ void CL_ForwardToServer_f (void) {
 			//Q_snprintfz (cls.downloadname, sizeof(cls.downloadname), "%s", Cmd_Argv(2));
 			//strlcpy (cls.downloadtempname, cls.downloadname, sizeof(cls.downloadtempname));
 		}
+*/
 // Added by VVD {
 		if (cl_crypt_rcon.value && strcasecmp(Cmd_Argv(1), "techlogin") == 0 && Cmd_Argc() > 2)
 		{

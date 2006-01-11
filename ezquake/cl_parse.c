@@ -692,6 +692,9 @@ void CL_StartUpload (byte *data, int size)
 
 void CL_StartFileUpload (void)
 {
+	Com_Printf("File upload function blocked due to security reasons.");
+	return; // fixme: needs proper fix - chech whether the path is 'safe' (inside 'safe' dirs of <quakedir>)
+	
 	if (cls.state < ca_onserver)
 		return; // gotta be connected
 	cls.is_file = true;
