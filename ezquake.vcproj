@@ -48,7 +48,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib"
 				ShowProgress="0"
 				OutputFile="../ezquake-gl-debug.exe"
 				Version=""
@@ -130,7 +130,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib dsound.lib"
 				OutputFile="../ezquake.exe"
 				Version=""
 				LinkIncremental="1"
@@ -292,7 +292,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib"
+				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib dsound.lib"
 				OutputFile="../ezquake-debug.exe"
 				Version=""
 				LinkIncremental="2"
