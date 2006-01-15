@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.2 2005-11-30 21:25:57 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.3 2006-01-15 15:49:04 disconn3ct Exp $
  */
 
 #ifdef EMBED_TCL
@@ -670,6 +670,7 @@ void TCL_InterpInit (void)
 
 	TCL_ReplaceProc ("exec", TCL_DenyProc);
 	TCL_ReplaceProc ("load", TCL_DenyProc);
+	TCL_ReplaceProc ("interp", TCL_DenyProc);
 	TCL_ReplaceProc ("exit", TCL_DenyProc);
 	TCL_ReplaceProc ("open", TCL_OpenProc);
 	TCL_ReplaceProc ("clock", TCL_ClockProc);
