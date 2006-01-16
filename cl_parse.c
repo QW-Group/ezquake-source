@@ -1421,6 +1421,7 @@ void CL_ParseServerInfoChange (void) {
 	Info_SetValueForKey (cl.serverinfo, key, value, MAX_SERVERINFO_STRING);
 
 	CL_ProcessServerInfo ();
+	CL_UpdateCaption();
 }
 
 //for CL_ParsePrint
