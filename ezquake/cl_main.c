@@ -506,8 +506,6 @@ void CL_Disconnect (void) {
 	nTrack1duel = nTrack2duel = 0;
 	bExitmultiview = 0;
 
-	CL_UpdateCaption();
-
 	// stop sounds (especially looping!)
 	S_StopAllSounds (true);
 
@@ -540,6 +538,7 @@ void CL_Disconnect (void) {
 
 	CL_StopUpload();
 	DeleteServerAliases();
+	CL_UpdateCaption();
 
 	cls.qport++;	//a hack I picked up from qizmo
 }
