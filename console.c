@@ -610,7 +610,7 @@ void Con_DrawNotify (void) {
 
 		*/
 		Q_strncpyz(buf,text,con_linewidth);
-		Draw_ColoredString( 0, v + bound(0, con_shift.value, 8), buf,0);
+		Draw_ColoredString( 8, v + bound(0, con_shift.value, 8), buf,0);
 		v += 8;
 	}
 
