@@ -181,21 +181,25 @@ void FMod_Response (void) {
 	char buf[512] = {'m', 'o', 'd', 'i', 'f', 'i', 'e', 'd', ':', '\0'};
 	qbool relevent;
 
-	for (i = count = 0; i < check_models_num; i++) {
-		relevent =	(cl.teamfortress && (check_models[i].flags & FMOD_TF)) || 
-					(!cl.teamfortress && (check_models[i].flags & FMOD_DM));
-		if (check_models[i].checked && check_models[i].modified && relevent ) {
-			if (strlen(buf) < 240) {
-				strcat(buf, va(" %s", COM_SkipPath(check_models[i].name)));
-				count++;
-			} else {
-				strcat(buf, " & more...");
-				break;
+	if (!Modules_SecurityLoaded())
+		strcpy(buf, "security module not initialized, skipping models check");
+	else
+	{
+		for (i = count = 0; i < check_models_num; i++) {
+			relevent =	(cl.teamfortress && (check_models[i].flags & FMOD_TF)) || 
+						(!cl.teamfortress && (check_models[i].flags & FMOD_DM));
+			if (check_models[i].checked && check_models[i].modified && relevent ) {
+				if (strlen(buf) < 240) {
+					strcat(buf, va(" %s", COM_SkipPath(check_models[i].name)));
+					count++;
+				} else {
+					strcat(buf, " & more...");
+					break;
+				}
 			}
 		}
+		if (!count)
+			strcpy(buf, "all models ok");
 	}
-	if (!count)
-		strcpy(buf, "all models ok");
-//	strcpy(buf, "not implemented yet");
 	Cbuf_AddText(va("%s %s\n", cls.state == ca_disconnected ? "echo" : "say", buf));
 }
