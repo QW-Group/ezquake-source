@@ -657,7 +657,7 @@ void Con_DrawNotify (void) {
 
 //Draws the console with the solid background
 void Con_DrawConsole (int lines) {
-	int i, j, x, y, n, rows, row;
+	int i, j, x, y, n=0, rows, row;
 	char *text, dlbar[1024];
 	char buf[1024];
 
@@ -706,11 +706,19 @@ void Con_DrawConsole (int lines) {
 
 	// draw the download bar
 	// figure out width
-	if (cls.download) {
-		if ((text = strrchr(cls.downloadname, '/')) != NULL)
-			text++;
-		else
-			text = cls.downloadname;
+	if (cls.download || cls.upload) {
+		if (cls.download) {
+			if ((text = strrchr(cls.downloadname, '/')) != NULL)
+				text++;
+			else
+				text = cls.downloadname;
+		} else if (cls.upload) {
+			if ((text = strrchr(cls.uploadname, '/')) != NULL)
+				text++;
+			else
+				text = cls.uploadname;
+		} else
+			return;
 
 		x = con_linewidth - ((con_linewidth * 7) / 40);
 		y = x - strlen(text) - 8;
@@ -726,10 +734,17 @@ void Con_DrawConsole (int lines) {
 		i = strlen(dlbar);
 		dlbar[i++] = '\x80';
 		// where's the dot go?
-		if (cls.downloadpercent == 0)
-			n = 0;
+		if (cls.download) {
+			if (cls.downloadpercent == 0)
+				n = 0;
+			else
+				n = y * cls.downloadpercent / 100;
+		} else if (cls.upload) {
+			if (cls.uploadpercent == 0)
+				n = 0;
 		else
-			n = y * cls.downloadpercent / 100;
+			n = y * cls.uploadpercent / 100;
+		}
 
 		for (j = 0; j < y; j++)
 			if (j == n)
@@ -739,7 +754,13 @@ void Con_DrawConsole (int lines) {
 		dlbar[i++] = '\x82';
 		dlbar[i] = 0;
 
-		sprintf(dlbar + strlen(dlbar), " %02d%%", cls.downloadpercent);
+		i = strlen(dlbar);
+		if (cls.download)
+			sprintf(dlbar + i, " %02d%%(%dkb/s)", cls.downloadpercent, cls.downloadrate);
+		else if (cls.upload)
+			sprintf(dlbar + i, " %02d%%(%dkb/s)", cls.uploadpercent, cls.uploadrate);
+		else
+			return;
 
 		// draw it
 		y = con_vislines - 22 + 8;
@@ -749,3 +770,6 @@ void Con_DrawConsole (int lines) {
 	// draw the input prompt, user text, and cursor if desired
 	Con_DrawInput ();
 }
+
+
+

@@ -236,19 +236,20 @@ typedef struct {
 	char		gamedirfile[MAX_QPATH];
 	char		gamedir[MAX_OSPATH];
 
-	FILE		*download;		// file transfer from server
+	FILE		*download; // file transfer from server
 	char		downloadtempname[MAX_OSPATH];
 	char		downloadname[MAX_OSPATH];
-	int			downloadnumber;
+	int		downloadnumber;
 	dltype_t	downloadtype;
-	int			downloadpercent;
+	int		downloadpercent;
+	int		downloadrate;
 
 //bliP ->
 	FILE		*upload;
 	char		uploadname[MAX_OSPATH];
 	int		uploadpercent;
 	int		uploadrate;
-	qbool	is_file;
+	qbool		is_file;
 	byte		*mem_upload;
 	int		upload_pos;
 	int		upload_size;
