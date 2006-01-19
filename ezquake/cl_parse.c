@@ -532,10 +532,27 @@ void CL_RequestNextDownload (void) {
 void CL_ParseDownload (void) {
 	int size, percent, r;
 	byte name[1024];
+	static float time = 0;
+	static int s = 0;
+
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+	if (cls.fteprotocolextensions & PEXT_CHUNKEDDOWNLOADS)
+	{
+		CL_ParseChunkedDownload();
+		return;
+	}
+#endif
 
 	// read the data
 	size = MSG_ReadShort ();
 	percent = MSG_ReadByte ();
+
+	s += size;
+	if (cls.realtime - time > 1) {
+		cls.downloadrate = s/(1024*(cls.realtime - time));
+		time = cls.realtime;
+		s = 0;
+	}
 
 	if (cls.demoplayback) {
 		if (size > 0)
@@ -576,7 +593,7 @@ void CL_ParseDownload (void) {
 	msg_readcount += size;
 
 	if (percent != 100) {
-// change display routines by zoid
+		// change display routines by zoid
 		// request next block
 		cls.downloadpercent = percent;
 
