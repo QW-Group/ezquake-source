@@ -1427,9 +1427,6 @@ void SV_RunCmd (usercmd_t *ucmd) {
 		return;
 	}
 
-	if (!sv_player->v.fixangle)
-		VectorCopy (ucmd->angles, sv_player->v.v_angle);
-
 	sv_player->v.button0 = ucmd->buttons & 1;
 	sv_player->v.button2 = (ucmd->buttons & 2) >> 1;
 	sv_player->v.button1 = (ucmd->buttons & 4) >> 2;
