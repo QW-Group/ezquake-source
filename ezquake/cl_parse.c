@@ -1371,7 +1371,7 @@ void CL_ProcessServerInfo (void) {
 		// } END shaman - allow spectators to have transparent turbulence
 		fpd = atoi(Info_ValueForKey(cl.serverinfo, "fpd"));	
 	} else {
-		cl.watervis = *(watervis = Info_ValueForKey(cl.serverinfo, "watervis")) ? bound(0, Q_atof(watervis), 1) : 1;
+		cl.watervis = *(watervis = Info_ValueForKey(cl.serverinfo, "watervis")) ? bound(0, Q_atof(watervis), 1) : 0;
 		cl.allow_lumas = !strcmp(Info_ValueForKey(cl.serverinfo, "24bit_fbs"), "1") ? true : false;
 		cl.fbskins = *(fbskins = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(fbskins), 1) :
 		cl.teamfortress ? 0 : 1;
