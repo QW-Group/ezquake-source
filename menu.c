@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.33 2006-01-04 23:37:31 tonik Exp $
+	$Id: menu.c,v 1.34 2006-01-27 15:50:33 johnnycz Exp $
 
 */
 
@@ -51,6 +51,7 @@ extern void Browser_Init(void);
 extern void Browser_Draw(int, int, int, int);
 extern cvar_t con_shift;
 extern cvar_t sb_maxwidth, sb_maxheight;
+extern cvar_t scr_fov;
 
 int demos_menu_pos = 0;
 
@@ -347,6 +348,7 @@ void M_Menu_Options_f (void) {
 
 
 void M_AdjustSliders (int dir) {
+	float valuebuf;
 	S_LocalSound ("misc/menu3.wav");
 
 	switch (options_cursor) {
@@ -383,16 +385,9 @@ void M_AdjustSliders (int dir) {
 		Cvar_SetValue (&sensitivity, sensitivity.value);
 		break;
 	case 7:	// music volume
-#ifdef _WIN32
-		bgmvolume.value += dir * 1.0;
-#else
-		bgmvolume.value += dir * 0.1;
-#endif
-		if (bgmvolume.value < 0)
-			bgmvolume.value = 0;
-		if (bgmvolume.value > 1)
-			bgmvolume.value = 1;
-		Cvar_SetValue (&bgmvolume, bgmvolume.value);
+		valuebuf = scr_fov.value + dir * 5;
+		valuebuf = bound(40, valuebuf, 140);
+		Cvar_SetValue (&scr_fov, valuebuf);
 		break;
 	case 8:	// sfx volume
 		s_volume.value += dir * 0.1;
@@ -494,8 +489,8 @@ void M_Options_Draw (void) {
 	r = (sensitivity.value - 3)/(15 - 3);
 	M_DrawSlider (220, 80, r);
 
-	M_Print (16, 88, "       CD music volume");
-	r = bgmvolume.value;
+	M_Print (16, 88, "         Field of view");
+	r = (scr_fov.value - 40) / (140 - 40);
 	M_DrawSlider (220, 88, r);
 
 	M_Print (16, 96, "          Sound volume");
