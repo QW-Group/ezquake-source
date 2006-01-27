@@ -1326,6 +1326,9 @@
 					RelativePath=".\parser.c">
 				</File>
 				<File
+					RelativePath=".\qtv.c">
+				</File>
+				<File
 					RelativePath="rulesets.c">
 				</File>
 				<File
@@ -1634,6 +1637,9 @@
 				</File>
 				<File
 					RelativePath=".\parser.h">
+				</File>
+				<File
+					RelativePath=".\qtv.h">
 				</File>
 				<File
 					RelativePath="rulesets.h">

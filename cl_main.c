@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cl_cam.h"
 #include "mvd_utils.h"
 #include "EX_browser.h"
+#include "qtv.h"
 
 #ifndef _WIN32
 #include <netdb.h>
@@ -549,6 +550,11 @@ void CL_Disconnect_f (void) {
 	cl.intermission = 0;
 	demo_playlist_started= 0;
 	mvd_demo_track_run = 0;
+	
+	// this can't go into Host_EndGame() because after QTV start, we connect to it --
+	// QTV would be turned off right after we started it - client does disconnect before every connect
+	QTV_ShutDown();	
+	
 	Host_EndGame();
 }
 
@@ -995,6 +1001,7 @@ void CL_Init (void) {
 	HUD_Init(); // HUD -> hexum
 	HUD_InitFinish(); // HUD -> hexum
 	SB_RootInit();
+	QTV_Init();
 }
 
 //============================================================================
