@@ -62,8 +62,12 @@ void W_LoadWadFile (char *filename) {
 	int infotableofs;
 
 	wad_base = FS_LoadHunkFile (filename);
-	if (!wad_base)
-		Sys_Error ("W_LoadWadFile: couldn't load %s", filename);
+	if (!wad_base) {
+		if (!strcmp(filename, "gfx.wad"))
+			Sys_Error("Couldn't load gfx.wad.\nThis usually happens when you don't have original Quake 1 files in id1 subdirectory.\nEnsure you have pak0.pak and pak1.pak in subdirectory id1.");
+		else
+			Sys_Error ("W_LoadWadFile: couldn't load %s", filename);
+	}
 
 	header = (wadinfo_t *)wad_base;
 
