@@ -574,42 +574,71 @@ void SCR_NetStats(int x, int y, float period)
     y+=8;
 }
 
+char* SCR_GetTime(SYSTEMTIME* tm)
+{
+	static char buf[32];
+	sprintf(buf, "%2d:%02d:%02d", tm->wHour, tm->wMinute, tm->wSecond);
+	return buf;
+}
+
+char* SCR_GetGameTime(int inverse)
+{
+	static char str[80];
+	float timelimit;
+
+	timelimit = inverse ? 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) : 0;
+
+	if (cl.countdown || cl.standby)
+		Q_strncpyz (str, SecondsToMinutesString(timelimit), sizeof(str));
+	else
+		Q_strncpyz (str, SecondsToMinutesString((int) abs(timelimit - cl.gametime)), sizeof(str));
+
+	return str;
+}
+
 // ------------------
 // draw BIG clock
 // style:
 //  0 - normal
 //  1 - red
-void SCR_DrawBigClock(int x, int y, int style, int blink)
+void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, int gametime)
 {
     extern  mpic_t  *sb_nums[2][11];
     extern  mpic_t  *sb_colon/*, *sb_slash*/;
 
-    char time[32];
     char *t;
     SYSTEMTIME tm;
 
     GetLocalTime(&tm);
-	sprintf(time, "%2d:%02d:%02d", tm.wHour, tm.wMinute, tm.wSecond);
-    t = time;
+
+	switch (gametime) {
+		case 0:
+			t = SCR_GetTime(&tm); break;
+		case 1:
+			t = SCR_GetGameTime(0); break;
+		default:
+			t = SCR_GetGameTime(1); break;
+	}
 
     if (style > 1)  style = 1;
     if (style < 0)  style = 0;
 
-    while (*t)
+	while (*t)
     {
         if (*t >= '0'  &&  *t <= '9')
         {
-            Draw_TransPic (x, y, sb_nums[style][*t-'0']);
-            x += 24;
+			Draw_STransPic(x, y, sb_nums[style][*t-'0'], scale);
+            x += 24*scale;
         }
         else if (*t == ':')
         {
             if (tm.wMilliseconds < 500  ||  !blink)
-                Draw_TransPic (x, y, sb_colon);
-            x += 16;
+				Draw_STransPic (x, y, sb_colon, scale);
+
+			x += 16*scale;
         }
         else
-            x += 24;
+            x += 24*scale;
         t++;
     }
 }
@@ -621,15 +650,21 @@ void SCR_DrawBigClock(int x, int y, int style, int blink)
 //  1 - small red
 //  2 - small yellow/white
 //  3 - small yellow/red
-void SCR_DrawSmallClock(int x, int y, int style, int blink)
+void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, int gametime)
 {
-    char time[32];
     char *t;
     SYSTEMTIME tm;
 
     GetLocalTime(&tm);
-	sprintf(time, "%2d:%02d:%02d", tm.wHour, tm.wMinute, tm.wSecond);
-    t = time;
+
+	switch (gametime) {
+		case 0: 
+			t = SCR_GetTime(&tm); break;
+		case 1:
+			t = SCR_GetGameTime(0); break;
+		default:
+			t = SCR_GetGameTime(1); break;
+	}
 
     if (style > 3)  style = 3;
     if (style < 0)  style = 0;
@@ -652,8 +687,8 @@ void SCR_DrawSmallClock(int x, int y, int style, int blink)
             else
                 *t = ' ';
         }
-        Draw_Character(x, y, *t);
-        x+= 8;
+        Draw_SCharacter(x, y, *t, scale);
+        x+= 8*scale;
         t++;
     }
 }

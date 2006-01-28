@@ -360,34 +360,82 @@ void SCR_HUD_DrawClock(hud_t *hud)
     static cvar_t
         *hud_clock_big = NULL,
         *hud_clock_style,
-        *hud_clock_blink;
+        *hud_clock_blink,
+		*hud_clock_scale;
 
     if (hud_clock_big == NULL)    // first time
     {
         hud_clock_big   = HUD_FindVar(hud, "big");
         hud_clock_style = HUD_FindVar(hud, "style");
         hud_clock_blink = HUD_FindVar(hud, "blink");
+		hud_clock_scale = HUD_FindVar(hud, "scale");
     }
 
     if (hud_clock_big->value)
     {
-        width = 24+24+16+24+24+16+24+24;
-        height = 24;
+        width = (24+24+16+24+24+16+24+24)*hud_clock_scale->value;
+        height = 24*hud_clock_scale->value;
     }
     else
     {
-        width = 8*8;
-        height = 8;
+        width = (8*8)*hud_clock_scale->value;
+        height = 8*hud_clock_scale->value;
     }
 
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
     {
         if (hud_clock_big->value)
-            SCR_DrawBigClock(x, y, hud_clock_style->value, hud_clock_blink->value);
+            SCR_DrawBigClock(x, y, hud_clock_style->value, hud_clock_blink->value, hud_clock_scale->value, 0);
         else
-            SCR_DrawSmallClock(x, y, hud_clock_style->value, hud_clock_blink->value);
+            SCR_DrawSmallClock(x, y, hud_clock_style->value, hud_clock_blink->value, hud_clock_scale->value, 0);
     }
 }
+
+//---------------------
+//
+// draw HUD gameclock
+//
+void SCR_HUD_DrawGameClock(hud_t *hud)
+{
+    int width, height;
+    int x, y;
+
+    static cvar_t
+        *hud_gameclock_big = NULL,
+        *hud_gameclock_style,
+        *hud_gameclock_blink,
+		*hud_gameclock_countdown,
+		*hud_gameclock_scale;
+
+    if (hud_gameclock_big == NULL)    // first time
+    {
+        hud_gameclock_big   = HUD_FindVar(hud, "big");
+        hud_gameclock_style = HUD_FindVar(hud, "style");
+        hud_gameclock_blink = HUD_FindVar(hud, "blink");
+		hud_gameclock_countdown = HUD_FindVar(hud, "countdown");
+		hud_gameclock_scale = HUD_FindVar(hud, "scale");
+    }
+
+    if (hud_gameclock_big->value)
+    {
+        width = (24+24+16+24+24)*hud_gameclock_scale->value;
+        height = 24*hud_gameclock_scale->value;
+    }
+    else
+    {
+        width = (5*8)*hud_gameclock_scale->value;
+        height = 8*hud_gameclock_scale->value;
+    }
+
+    if (HUD_PrepareDraw(hud, width, height, &x, &y))
+    {
+        if (hud_gameclock_big->value)
+            SCR_DrawBigClock(x, y, hud_gameclock_style->value, hud_gameclock_blink->value, hud_gameclock_scale->value, hud_gameclock_countdown->value + 1);
+        else
+            SCR_DrawSmallClock(x, y, hud_gameclock_style->value, hud_gameclock_blink->value, hud_gameclock_scale->value, hud_gameclock_countdown->value + 1);
+    }
+}
+
 
 //---------------------
 //
@@ -2425,7 +2473,19 @@ void CommonDraw_Init(void)
         "0", "top", "right", "console", "0", "0", "0",
         "big",      "1",
         "style",    "0",
+		"scale",    "1",
         "blink",    "1",
+        NULL);
+
+    // init gameclock
+	HUD_Register("gameclock", NULL, "Shows current local time (hh:mm:ss).",
+        HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawGameClock,
+        "0", "top", "right", "console", "0", "0", "0",
+        "big",      "1",
+        "style",    "0",
+		"scale",    "1",
+        "blink",    "1",
+		"countdown","0",
         NULL);
 
     // init ping
