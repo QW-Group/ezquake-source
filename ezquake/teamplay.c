@@ -211,6 +211,8 @@ f_trigger_t f_triggers[] = {
 	{"f_reloadend", false, false},
 	{"f_cfgload", false, false},
 	{"f_exit", false, false},
+	{"f_demostart", false, false},
+	{"f_demoend", false, false},
 
 	{"f_weaponchange", false, false},
 

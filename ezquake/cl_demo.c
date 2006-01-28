@@ -1194,6 +1194,7 @@ void CL_StopPlayback (void) {
 	Demo_playlist_f();
 	mvd_demo_track_run = 0;
 	}
+	TP_ExecTrigger("f_demoend");
 }
 
 void CL_Play_f (void) {
@@ -1206,6 +1207,8 @@ void CL_Play_f (void) {
 	}
 
 	Host_EndGame();	
+
+	TP_ExecTrigger("f_demostart");
 
 #ifdef _WIN32
 	Q_strncpyz (name, Cmd_Argv(1), sizeof(name) - 4);
