@@ -333,6 +333,7 @@ QWCL_OBJS = \
     $(BUILDDIR)/build/mp3_player.o \
     $(BUILDDIR)/build/fmod.o \
     $(BUILDDIR)/build/localtime_linux.o \
+    $(BUILDDIR)/build/qtv.o \
  \
     $(BUILDDIR)/build/xml_test.o \
     $(BUILDDIR)/build/xsd.o \
@@ -705,6 +706,9 @@ $(BUILDDIR)/build/config_manager.o :	$(SOURCE_DIR)/config_manager.c
 $(BUILDDIR)/build/localtime_linux.o :	$(SOURCE_DIR)/localtime_linux.c
 	$(DO_CC)
 
+$(BUILDDIR)/build/qtv.o :		$(SOURCE_DIR)/qtv.c
+	$(DO_CC)
+
 $(BUILDDIR)/build/mp3_player.o :	$(SOURCE_DIR)/mp3_player.c
 	$(DO_CC)
 
@@ -945,6 +949,7 @@ GLQWCL_OBJS = \
     $(BUILDDIR)/build-gl/vx_stuff.o \
     $(BUILDDIR)/build-gl/vx_tracker.o \
     $(BUILDDIR)/build-gl/vx_vertexlights.o \
+    $(BUILDDIR)/build-gl/qtv.o \
  \
     $(BUILDDIR)/build-gl/xml_test.o \
     $(BUILDDIR)/build-gl/xsd.o \
@@ -1302,6 +1307,9 @@ $(BUILDDIR)/build-gl/parser.o :			$(SOURCE_DIR)/parser.c
 $(BUILDDIR)/build-gl/localtime_linux.o :	$(SOURCE_DIR)/localtime_linux.c
 	$(DO_GL_CC)
 
+$(BUILDDIR)/build-gl/qtv.o :			$(SOURCE_DIR)/qtv.c
+	$(DO_GL_CC)
+
 $(BUILDDIR)/build-gl/xml_test.o :		$(SOURCE_DIR)/xml_test.c
 	$(DO_GL_CC)
 
@@ -1496,6 +1504,7 @@ GLQWCL_MAC_OBJS = \
     $(BUILDDIR)/build-mac-gl/vx_stuff.o \
     $(BUILDDIR)/build-mac-gl/vx_tracker.o \
     $(BUILDDIR)/build-mac-gl/vx_vertexlights.o \
+    $(BUILDDIR)/build-mac-gl/qtv.o \
  \
     $(BUILDDIR)/build-mac-gl/xml_test.o \
     $(BUILDDIR)/build-mac-gl/xsd.o \
@@ -1849,6 +1858,9 @@ $(BUILDDIR)/build-mac-gl/parser.o :		$(SOURCE_DIR)/parser.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/localtime_linux.o :	$(SOURCE_DIR)/localtime_linux.c
+	$(DO_GL_CC)
+
+$(BUILDDIR)/build-mac-gl/qtv.o :		$(SOURCE_DIR)/qtv.c
 	$(DO_GL_CC)
 
 $(BUILDDIR)/build-mac-gl/xml_test.o :		$(SOURCE_DIR)/xml_test.c
