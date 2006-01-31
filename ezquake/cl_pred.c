@@ -318,6 +318,7 @@ if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.val
 		to = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
 		CL_PredictUsercmd (&from->playerstate[cl.playernum], &to->playerstate[cl.playernum], &to->cmd);
 		cl.onground = pmove.onground;
+		cl.waterlevel = pmove.waterlevel;
 		if (cl_pushlatency.value != 0 && to->senttime >= playertime)
 			break; 
 	}
@@ -360,7 +361,6 @@ if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.val
 if (!cls.demoplayback && cl_independentPhysics.value != 0)
 	CL_LerpMove (lerp_time, f);
     CL_CalcCrouch ();
-	cl.waterlevel = pmove.waterlevel;
 }
 
 void CL_InitPrediction (void) {
