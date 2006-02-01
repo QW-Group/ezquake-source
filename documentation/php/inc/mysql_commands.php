@@ -973,6 +973,16 @@ class GroupsData extends BaseGroupsData
         
         return $ret;
     }
+    
+    function GetMGroupID($id)
+    {
+        $id = (int) $id;
+        $sql = "SELECT id_mgroup FROM {$this->table} WHERE id = {$id} LIMIT 1";
+        if ((!$r = my_mysql_query($sql)) || (!mysql_num_rows($r)))
+            return False;
+        
+        return mysql_result($r, 0);
+    }
 }
 
 class MGroupsData extends BaseGroupsData

@@ -11,9 +11,9 @@ $foundOrCreated = 0;
 function RefreshPage($page)
 {
     header("HTTP/1.1 303 Moved Permanently");
-    header("Location: index.php");
-    header("Connection: $page");
-    echo("<a href=\".\">Follow this link to continue</a>");
+    header("Location: $page");
+    header("Connection: close");
+    echo("<a href=\"$page\">Follow this link to continue</a>");
     die;
 }
 
@@ -69,6 +69,14 @@ function FileName($path)
     return substr($path, strrpos($path, "/") + 1);
 }
 
+function FilePath($path)
+{
+    $r = strrpos($path,"/");
+    if (is_bool($r) && !$r)
+        return $path;
+        
+    return substr($path, 0, $r);
+}
   
   function HasExtension($f, $e, $ignorecase = True)   
   { // checks if given file has given file extension

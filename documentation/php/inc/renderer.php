@@ -10,7 +10,6 @@
  
 define (VARGROUPSPREFIX, "vars-");
 define (VARGROUPSPREFIXLEN, 5);
-define (DEFAULTPAGE, "main-page");
 
 function GetRenderer($name, &$db)
 /* returns an initialized object which can be accessed for
@@ -31,10 +30,10 @@ function GetRenderer($name, &$db)
         if ($mid = $db["groups"]->GetId(substr($name, VARGROUPSPREFIXLEN)))
             return new GroupsRendData($mid, 2, $db);
     }
-    
+
     if ($mid = $db["manuals"]->GetId($name))
         return new ManualsRendData($mid, $db);
-
+    
     if ($mid = $db["mgroups"]->GetId($name))
         return new MGroupsRendData($mid, 2, $db);
 
@@ -44,14 +43,26 @@ function GetRenderer($name, &$db)
     if ($mid = $db["commands"]->GetId($name))
         return new CommandsRendData($mid, $db["commands"]);
 
-    if ($mid = $db["variables"]->GetId($name))
-        return new VariablesRendData($mid, 4);
+    if ($mid = $db["variables"]->GetId($name)) //         return new VariablesRendData($mid, 4);
+    // rendering every each variable on it's own page would be fine (and it's possible)
+    // but we don't want to have too much URLs because of offline manual version
+    // so we do a redirect to the page which contains all variables from 
+    // the same major group
+    { 
+        $var = $db["variables"]->GetVar($mid);
+        $group_id = $var["id_group"];
+        $mgroup_id = $db["groups"]->GetMGroupID($group_id);
+        $var_name = IdSafe($name);
+        $mgroup_name = IdSafe($db["mgroups"]->GetTitle($mgroup_id));
+        $url = "http://".$_SERVER["HTTP_HOST"].FilePath($_SERVER["SCRIPT_NAME"])."/?vars-".$mgroup_name."#".$var_name;
+        RefreshPage($url);
+    }
     
     if ($mid = $db["options"]->GetId($name))
         return new OptionRendData($mid, $db["options"], 1);
-    
-    $default_id = $db["manuals"]->GetId(DEFAULTPAGE);
-    return new ManualsRendData($default_id, $db);
+
+    $url = "http://".$_SERVER["HTTP_HOST"].FilePath($_SERVER["SCRIPT_NAME"])."/";
+    RefreshPage($url);
 }
 
 class BaseRendData // abstract class
