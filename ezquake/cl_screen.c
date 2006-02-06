@@ -2618,25 +2618,25 @@ void SCR_DrawStatusMultiview(void) {
 		armor |= 128;
 	}
 	
-	strcpy(name,cl.players[nPlayernum].name);
+	Q_strncpyz(name,cl.players[nPlayernum].name, sizeof(name));
 
 	if (strcmp(cl.players[nPlayernum].name,"") && !cl.players[nPlayernum].spectator) {
 		if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && cl_multiview.value == 2 && cl_mvinset.value) { // mvinset and dead
-			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			sprintf(strng, "%.5s   %s %c%c:%-3s",name,
 										"dead   ",
 										w1,w2,
 										sAmmo);
 		}
 		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && vid.width <= 512) { // <= 512 and dead
-			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			sprintf(strng, "%.2s  %s %c%c:%-3s",name,
 										"dead   ",
 										w1,w2,
 										sAmmo);
 		}
 		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) { // > 512 and dead
-			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			sprintf(strng, "%s   %s %c%c:%-3s",name,
 										"dead   ",
 										w1,w2,
@@ -2644,7 +2644,7 @@ void SCR_DrawStatusMultiview(void) {
 		}
 
 		else if (cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1) { // mvinset
-			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			sprintf(strng, "%s %.5s  %c%03d %03d %c%c:%-3s",pups,
 												name,
 												armor,
@@ -2654,7 +2654,7 @@ void SCR_DrawStatusMultiview(void) {
 												sAmmo);
 		} 
 		else if (cl_multiview.value && vid.width <= 512) { // <= 512 and alive
-			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
+			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
 			sprintf(strng, "%s %.2s %c%03d %03d %c%c:%-3s",pups,
 												name,
 												armor,
@@ -2665,7 +2665,7 @@ void SCR_DrawStatusMultiview(void) {
 		}
 		
 		else {
-			sprintf(sAmmo, "%02d", cl.players[nPlayernum].stats[STAT_AMMO]); // > 512 and alive
+			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]); // > 512 and alive
 			sprintf(strng, "%s %s  %c%03d %03d %c%c:%-3s",pups,
 												name,
 												armor,
@@ -2678,22 +2678,22 @@ void SCR_DrawStatusMultiview(void) {
 
 	// placement
 
-	if (CURRVIEW == 1 && strlen(mvd_pc_view_1.string) && powerup_cam_active && cam_1){
+	if (CURRVIEW == 1 && mvd_pc_view_1.string && strlen(mvd_pc_view_1.string) && powerup_cam_active && cam_1){
 		sAmmo[0]='\0';
 		strng[0]='\0';
 		weapons[0]='\0';
 		};
-	if (CURRVIEW == 2 && strlen(mvd_pc_view_2.string) && powerup_cam_active && cam_2){
+	if (CURRVIEW == 2 && mvd_pc_view_2.string && strlen(mvd_pc_view_2.string) && powerup_cam_active && cam_2){
 		sAmmo[0]='\0';
 		strng[0]='\0';
 		weapons[0]='\0';
 		};
-	if (CURRVIEW == 3 && strlen(mvd_pc_view_3.string) && powerup_cam_active && cam_3){
+	if (CURRVIEW == 3 && mvd_pc_view_3.string && strlen(mvd_pc_view_3.string) && powerup_cam_active && cam_3){
 		sAmmo[0]='\0';
 		strng[0]='\0';
 		weapons[0]='\0';
 		};
-	if (CURRVIEW == 4 && strlen(mvd_pc_view_4.string) && powerup_cam_active && cam_4){
+	if (CURRVIEW == 4 && mvd_pc_view_4.string && strlen(mvd_pc_view_4.string) && powerup_cam_active && cam_4){
 		sAmmo[0]='\0';
 		strng[0]='\0';
 		weapons[0]='\0';
