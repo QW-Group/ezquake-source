@@ -110,9 +110,9 @@ static void Log_log_f(void) {
 		}
 		COM_ForceExtension (logfilename, ".log");
 		fulllogname = va("%s/%s", Log_LogDirectory(), logfilename);
-		if (!(templog = fopen (fulllogname, "wb"))) {
+		if (!(templog = fopen (fulllogname, log_readable.value ? "w" : "wb"))) {
 			COM_CreatePath(fulllogname);
-			if (!(templog = fopen (fulllogname, "wb"))) {
+			if (!(templog = fopen (fulllogname, log_readable.value ? "w" : "wb"))) {
 				Com_Printf("Error: Couldn't open %s\n", logfilename);
 				return;
 			}
