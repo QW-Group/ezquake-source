@@ -227,9 +227,9 @@ void Log_AutoLogging_StartMatch(char *logname) {
 	fullname = va("%s/%s", MT_TempDirectory(), extendedname);
 
 
-	if (!(templog = fopen (fullname, "wb"))) {
+	if (!(templog = fopen (fullname, log_readable.value ? "w" : "wb"))) {
 		COM_CreatePath(fullname);
-		if (!(templog = fopen (fullname, "wb"))) {
+		if (!(templog = fopen (fullname, log_readable.value ? "w" : "wb"))) {
 			Com_Printf("Error: Couldn't open %s\n", fullname);
 			return;
 		}
