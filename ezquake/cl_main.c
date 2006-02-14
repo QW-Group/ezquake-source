@@ -82,6 +82,7 @@ cvar_t  demo_getpings      = {"demo_getpings",    "1"};
 cvar_t	cl_chatsound = {"cl_chatsound", "1"};
 cvar_t	cl_confirmquit = {"cl_confirmquit", "0"}; // , CVAR_INIT
 cvar_t	qizmo_dir = {"qizmo_dir", "qizmo"};
+cvar_t	qwdtools_dir = {"qwdtools_dir", "qwdtools"};
 
 cvar_t cl_floodprot			= {"cl_floodprot", "0"};		
 cvar_t cl_fp_messages		= {"cl_fp_messages", "4"};		
@@ -842,6 +843,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_demospeed);
 	Cvar_Register (&cl_demoPingInterval);
 	Cvar_Register (&qizmo_dir);
+	Cvar_Register (&qwdtools_dir);
 	Cvar_Register (&demo_getpings);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);

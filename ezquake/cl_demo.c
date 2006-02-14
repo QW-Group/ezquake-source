@@ -33,8 +33,12 @@ static float		td_starttime;		// realtime at second frame of timedemo
 #ifdef _WIN32
 static qbool	qwz_unpacking = false;
 static qbool	qwz_playback = false;
+static qbool	qwz_packing = false;
+static qbool OnChange_demo_format(cvar_t*, char*);
+cvar_t demo_format = {"demo_format", "qwz", 0, OnChange_demo_format};
 static HANDLE hQizmoProcess = NULL;
 static char tempqwd_name[256] = {0}; // this file must be deleted after playback is finished
+int CL_Demo_Compress(char*);
 #endif
 
 static qbool OnChange_demo_dir(cvar_t *var, char *string);
@@ -683,6 +687,24 @@ static qbool OnChange_demo_dir(cvar_t *var, char *string) {
 	return false;
 }
 
+static qbool OnChange_demo_format(cvar_t *var, char *string) {
+	char* allowed_formats[5] = { "qwd", "qwz", "mvd", "mvd.gz", "qwd.gz" };
+	int i;
+
+	for (i = 0; i < 5; i++)
+		if (!strcmp(allowed_formats[i], string))
+			return false;
+
+	Com_Printf("Not valid demo format. Allowed values are: ");
+	for (i = 0; i < 5; i++) {
+		if (i) Com_Printf(", ");
+		Com_Printf(allowed_formats[i]);
+	}
+	Com_Printf(".\n");
+
+	return true;
+}
+
 static void CL_WriteDemoPimpMessage(void) {
 	int i;
 	char pimpmessage[256] = {0}, border[64] = {0};
@@ -1016,6 +1038,20 @@ void CL_AutoRecord_SaveMatch(void) {
 		error = rename(tempname, fullsavedname);
 	}
 
+#ifdef _WIN32
+
+	if (!strcmp(demo_format.string, "qwz") || !strcmp(demo_format.string, "mvd")) {
+		Com_Printf("Converting QWD to %s format.\n", demo_format.string);
+		if (CL_Demo_Compress(fullsavedname)) {
+			qwz_packing = true;
+			return;
+		}
+		else
+			qwz_packing = false;
+	}
+
+#endif
+
 	if (!error)
 		Com_Printf("Match demo saved to %s\n", savedname);
 }
@@ -1025,6 +1061,29 @@ void CL_AutoRecord_SaveMatch(void) {
 //=============================================================================
 
 #ifdef _WIN32
+
+void CL_Demo_RemoveQWD(void)
+{
+	unlink(tempqwd_name);
+}
+
+void CL_Demo_GetCompressedName(char* cdemo_name)
+{
+	int namelen;
+	
+	namelen = strlen(tempqwd_name);
+	if (strlen(demo_format.string) && strlen(tempqwd_name)) {
+		strncpy(cdemo_name, tempqwd_name, namelen - 3);
+		Q_strncpyz(cdemo_name + namelen - 3, demo_format.string, 255 - (namelen - 3) - strlen(demo_format.string));
+	}
+}
+
+void CL_Demo_RemoveCompressed(void)
+{
+	char cdemo_name[255];
+	CL_Demo_GetCompressedName(cdemo_name);
+	unlink(cdemo_name);
+}
 
 static void StopQWZPlayback (void) {
 	if (!hQizmoProcess && tempqwd_name[0]) {
@@ -1045,10 +1104,15 @@ void CL_CheckQizmoCompletion (void) {
 	if (!GetExitCodeProcess (hQizmoProcess, &ExitCode)) {
 		Com_Printf ("WARINING: CL_CheckQizmoCompletion: GetExitCodeProcess failed\n");
 		hQizmoProcess = NULL;
-		qwz_unpacking = false;
-		qwz_playback = false;
-		cls.demoplayback = cls.timedemo = false;
-		StopQWZPlayback();
+		if (qwz_unpacking) {
+			qwz_unpacking = false;
+			qwz_playback = false;
+			cls.demoplayback = cls.timedemo = false;
+			StopQWZPlayback();
+		} else if (qwz_packing) {
+			qwz_packing = false;
+			CL_Demo_RemoveCompressed();
+		}
 		return;
 	}
 
@@ -1057,24 +1121,37 @@ void CL_CheckQizmoCompletion (void) {
 
 	hQizmoProcess = NULL;
 
-	if (!qwz_unpacking || !cls.demoplayback) {
+	if (!qwz_packing && (!qwz_unpacking || !cls.demoplayback)) {
 		StopQWZPlayback ();
 		return;
 	}
 
-	qwz_unpacking = false;
+	if (qwz_unpacking) {
+		qwz_unpacking = false;
 
-	if (!(playbackfile = fopen (tempqwd_name, "rb"))) {
-		Com_Printf ("Error: Couldn't open %s\n", tempqwd_name);
-		qwz_playback = false;
-		cls.demoplayback = cls.timedemo = false;
-		tempqwd_name[0] = 0;
-		return;
+		if (!(playbackfile = fopen (tempqwd_name, "rb"))) {
+			Com_Printf ("Error: Couldn't open %s\n", tempqwd_name);
+			qwz_playback = false;
+			cls.demoplayback = cls.timedemo = false;
+			tempqwd_name[0] = 0;
+			return;
+		}
+		Com_Printf("Decompression completed...playback starting\n");
+	} else if (qwz_packing) {
+		FILE* tempfile;
+		char newname[255];
+		CL_Demo_GetCompressedName(newname);
+		qwz_packing = false;
+
+		if ((tempfile = fopen(newname, "rw")) && (COM_FileLength(tempfile) > 0) && fclose(tempfile) != EOF)
+		{
+			Com_Printf("Demo saved to %s\n", newname + strlen(com_basedir));
+			CL_Demo_RemoveQWD();
+		} else {
+			Com_Printf("Compression failed, demo saved as QWD.\n");
+		}
 	}
-
-	Com_Printf("Decompression completed...playback starting\n");
 }
-
 
 static void PlayQWZDemo (void) {
 	extern cvar_t qizmo_dir;
@@ -1143,6 +1220,55 @@ static void PlayQWZDemo (void) {
 	hQizmoProcess = pi.hProcess;
 	qwz_unpacking = true;
 	qwz_playback = true;
+}
+
+int CL_Demo_Compress(char* qwdname)
+{
+	extern cvar_t qizmo_dir;
+	extern cvar_t qwdtools_dir;
+	STARTUPINFO si;
+	PROCESS_INFORMATION	pi;
+	char cmdline[1024];
+	char* execute, *path, outputpath[255];
+
+
+	if (hQizmoProcess) {
+		Com_Printf ("Cannot compress -- Qizmo still running!\n");
+		return 0;
+	}
+
+	memset (&si, 0, sizeof(si));
+	si.cb = sizeof(si);
+	si.wShowWindow = SW_HIDE;
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	if (!strcmp(demo_format.string, "qwz")) {
+		execute = "qizmo.exe -q -C";
+		path = qizmo_dir.string;
+		outputpath[0] = 0;
+	} else if (!strcmp(demo_format.string, "mvd")) {
+		execute = "qwdtools.exe -c -o * -od";
+		path = qwdtools_dir.string;
+		Q_strncpyz(outputpath, qwdname, COM_SkipPath(qwdname) - qwdname);
+	} else {
+		Com_Printf("%s demo format not yet supported.\n", demo_format.string);
+		return 0;
+	}
+
+	Q_strncpyz (cmdline, va("%s/%s/%s %s \"%s\"", com_basedir, path, execute, outputpath, qwdname), sizeof(cmdline));
+
+	if (!CreateProcess (NULL, cmdline, NULL, NULL,
+		FALSE, GetPriorityClass(GetCurrentProcess()),
+		NULL, va("%s/%s", com_basedir, path), &si, &pi))
+	{
+		Com_Printf ("Couldn't execute %s/%s/qizmo.exe\n", com_basedir, qizmo_dir.string);
+		return 0;
+	}
+
+	Q_strncpyz(tempqwd_name, qwdname, sizeof(tempqwd_name));
+
+	hQizmoProcess = pi.hProcess;
+	qwz_packing = true;
+	return 1;
 }
 
 #endif
@@ -1383,6 +1509,9 @@ void CL_Demo_Init (void) {
 	Cmd_AddCommand("demo_jump", CL_Demo_Jump_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
+#ifdef _WIN32
+	Cvar_Register(&demo_format);
+#endif
 	Cvar_Register(&demo_dir);
 
 	Cvar_ResetCurrentGroup();
