@@ -209,6 +209,7 @@ block all other ways to made textures flat(simple)
 		{&amf_camera_chase, "0"},
 		{&amf_waterripple, "0"},
 		{&amf_detpacklights, "0"},
+		{&vid_hwgammacontrol, 1}, 
 #endif
 		{&r_fullbrightSkins, "0"},
 		{&cl_c2spps, "0"},
