@@ -511,7 +511,7 @@ void VID_ShiftPalette(unsigned char *p) {}
 void InitHWGamma (void) {
 	int xf86vm_gammaramp_size;
 
-	if (COM_CheckParm("-nohwgamma"))
+	if (COM_CheckParm("-nohwgamma") && (!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) // FIXME
 		return;
 
 	XF86VidModeGetGammaRampSize(vid_dpy, scrnum, &xf86vm_gammaramp_size);

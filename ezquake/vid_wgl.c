@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.9 2006-01-04 21:19:28 tonik Exp $
+	$Id: vid_wgl.c,v 1.10 2006-03-01 15:24:05 disconn3ct Exp $
 
 */
 
@@ -550,7 +550,7 @@ void VID_SetDeviceGammaRamp(unsigned short *ramps) {
 }
 
 void InitHWGamma (void) {
-	if (COM_CheckParm("-nohwgamma"))
+	if (COM_CheckParm("-nohwgamma") && (!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) // FIXME
 		return;
 	if (vid_3dfxgamma)
 		vid_gammaworks = wglGetDeviceGammaRamp3DFX(maindc, systemgammaramp);
