@@ -609,7 +609,7 @@ void Con_DrawNotify (void) {
 			Draw_Character ( (x+1)<<3, v + bound(0, con_shift.value, 8), text[x]);
 
 		*/
-		Q_strncpyz(buf,text,con_linewidth);
+		Q_strncpyz(buf,text,con_linewidth+1);
 		Draw_ColoredString( 8, v + bound(0, con_shift.value, 8), buf,0);
 		v += 8;
 	}
@@ -700,7 +700,7 @@ void Con_DrawConsole (int lines) {
 		for (x = 0; x < con_linewidth; x++)
 			Draw_Character ((x + 1) << 3, y + bound(0, con_shift.value, 8), text[x]);
 		*/
-		Q_strncpyz(buf,text,con_linewidth);
+		Q_strncpyz(buf,text,con_linewidth+1);
 		Draw_ColoredString( 1 << 3, y + bound(0, con_shift.value, 8), buf,0);
 	}
 
