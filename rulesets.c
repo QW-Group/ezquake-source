@@ -199,6 +199,7 @@ block all other ways to made textures flat(simple)
 #ifdef GLQUAKE
 	extern cvar_t amf_camera_chase, amf_waterripple, amf_detpacklights;
 	extern cvar_t gl_picmip, gl_max_size, r_drawflat;
+	extern cvar_t vid_hwgammacontrol;
 #endif
 
 	int i = 0;
@@ -209,7 +210,7 @@ block all other ways to made textures flat(simple)
 		{&amf_camera_chase, "0"},
 		{&amf_waterripple, "0"},
 		{&amf_detpacklights, "0"},
-		{&vid_hwgammacontrol, 1}, 
+		{&vid_hwgammacontrol, "1"}, 
 #endif
 		{&r_fullbrightSkins, "0"},
 		{&cl_c2spps, "0"},
