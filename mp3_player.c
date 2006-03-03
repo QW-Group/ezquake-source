@@ -55,6 +55,8 @@ cvar_t mp3_dir = {"mp3_winamp_dir", "c:/program files/winamp"};
 #ifdef __XMMS__
 
 #include <sys/wait.h>
+#include <sys/types.h> // fork, execv, usleep
+#include <unistd.h> // fork, execv, usleep
 
 cvar_t mp3_dir = {"mp3_xmms_dir", "/usr/local/bin"};
 cvar_t mp3_xmms_session = {"mp3_xmms_session", "0"};

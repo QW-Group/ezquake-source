@@ -687,6 +687,7 @@ static qbool OnChange_demo_dir(cvar_t *var, char *string) {
 	return false;
 }
 
+#ifdef _WIN32
 static qbool OnChange_demo_format(cvar_t *var, char *string) {
 	char* allowed_formats[5] = { "qwd", "qwz", "mvd", "mvd.gz", "qwd.gz" };
 	int i;
@@ -704,6 +705,7 @@ static qbool OnChange_demo_format(cvar_t *var, char *string) {
 
 	return true;
 }
+#endif
 
 static void CL_WriteDemoPimpMessage(void) {
 	int i;
