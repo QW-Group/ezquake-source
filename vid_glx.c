@@ -724,6 +724,8 @@ void VID_Init(unsigned char *palette) {
 	if (!(vid_dpy = XOpenDisplay(NULL)))
 		Sys_Error("Error couldn't open the X display");
 
+	scrnum = DefaultScreen(vid_dpy);
+	
 	if (!(visinfo = glXChooseVisual(vid_dpy, scrnum, attrib)))
 		Sys_Error("Error couldn't get an RGB, Double-buffered, Depth visual");
 
