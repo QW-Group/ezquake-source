@@ -26,7 +26,7 @@
     { 
       	header("Content-Type: application/xhtml+xml; charset=utf-8"); 
         $cthdr = "<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=utf-8\" />";
-        echo('<?xml version="1.0" encoding="utf-8"?>');
+        echo('<?xml version="1.0" encoding="utf-8"?'.'>'."\n");
       	echo('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" 
       	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">'); 
     }
@@ -44,16 +44,17 @@
   <?=$cthdr?>
   <meta name="keywords" content="ezQuake, manual, guide, tutorial, how-to, howto, setting, quake, quakeworld, client, help, readme, install" />
   <meta name="description" content="The Complete guide to using QuakeWorld &trade; client ezQuake" />
-  <title>ezQuake Manual: <?=$renderer->title?></title>
+  <meta name="author" content="http://sourceforge.net/users/johnnycz/" />
+  <title>ezQuake Manual: <?php echo(htmlspecialchars($renderer->title)); ?></title>
   <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
-<h1><a href="./">ezQuake Manual</a>: <?=$renderer->heading?></h1>
+<h1><a href="./">ezQuake Manual</a>: <?php echo(htmlspecialchars($renderer->heading)); ?></h1>
 
 
-<?=$renderer->content?>
+<?php $renderer->RenderContent(); ?>
 
 
-<p id="last-update">Last update: <?=date("d.m.Y H:i T",$renderer->lastupdate)?></p>
+<p id="last-update">Last update: <?=date("d.m.Y H:i T",$renderer->lastupdate)?>, made by <a href="http://sourceforge.net/users/johnnycz/">JohnNy_cz</a></p>
 </body>
 </html>
