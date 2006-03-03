@@ -93,7 +93,7 @@ qbool SNDDMA_Init_ALSA (void)
 
     if(Cvar_VariableValue("s_rate")) {
         rate = Cvar_VariableValue("s_rate");
-        if(rate != 44100 && rate != 22050 && rate != 11025)
+        if(rate != 48000 && rate != 44100 && rate != 22050 && rate != 11025)
         {
             Sys_Printf("Error: invalid sample rate: %d\n", rate);
             return 0;
@@ -201,40 +201,50 @@ qbool SNDDMA_Init_ALSA (void)
     switch (rate)
     {
         case 0:
-            rate = 44100;
+            rate = 48000;
             err = alsa_snd_pcm_hw_params_set_rate_near (pcm, hw, &rate, 0);
             if(0 <= err)
-            {
-                frag_size = 32 * bps;
-            } 
-            else
-            {
-                rate = 22050;
+	    {
+                    frag_size = 8 * bps * rate / 11025;
+	    }
+	    else
+	    {
+                rate = 44100;
                 err = alsa_snd_pcm_hw_params_set_rate_near (pcm, hw, &rate, 0);
                 if(0 <= err)
                 {
-                    frag_size = 16 * bps;
-                }
+                    frag_size = 32 * bps;
+                } 
                 else
                 {
-                    rate = 11025;
-                    err = alsa_snd_pcm_hw_params_set_rate_near (pcm, hw, &rate,
-                            0);
+                    rate = 22050;
+                    err = alsa_snd_pcm_hw_params_set_rate_near (pcm, hw, &rate, 0);
                     if(0 <= err)
                     {
-                        frag_size = 8 * bps;
-                    } 
-                    else 
+                        frag_size = 16 * bps;
+                    }
+                    else
                     {
-                        Sys_Printf("ALSA: no usable rates. %s\n", alsa_snd_strerror(err));
-                        goto error;
+                        rate = 11025;
+                        err = alsa_snd_pcm_hw_params_set_rate_near (pcm, hw, &rate,
+                                0);
+                        if(0 <= err)
+                        {
+                            frag_size = 8 * bps;
+                        } 
+                        else 
+                        {
+                            Sys_Printf("ALSA: no usable rates. %s\n", alsa_snd_strerror(err));
+                            goto error;
+                        }
                     }
                 }
-            }
+	    }
             break;
         case 11025:
         case 22050:
         case 44100:
+        case 48000:
             err = alsa_snd_pcm_hw_params_set_rate_near (pcm, hw, &rate, 0);
             if(0 > err)
             {
