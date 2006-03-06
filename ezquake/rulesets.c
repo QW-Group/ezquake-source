@@ -16,6 +16,9 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: rulesets.c,v 1.33 2006-03-06 17:33:18 vvd0 Exp $
+
 */
 
 #include "quakedef.h"
@@ -112,6 +115,9 @@ char *Rulesets_Ruleset(void) {
 static void Rulesets_Smackdown(void) {
 	extern cvar_t cl_trueLightning;
 	extern cvar_t cl_independentPhysics, cl_c2spps;
+	extern cvar_t cl_hud;
+	extern cvar_t cl_rollalpha;
+	extern cvar_t r_shiftbeam;
 #ifndef GLQUAKE
 	extern cvar_t r_aliasstats;
 #endif
@@ -119,8 +125,6 @@ static void Rulesets_Smackdown(void) {
 	extern cvar_t amf_camera_death, amf_camera_chase, amf_part_gunshot_type, amf_part_traillen, amf_part_trailtime, amf_part_trailwidth, amf_part_traildetail, amf_part_trailtype, amf_part_sparks, amf_part_spikes, amf_part_gunshot, amf_waterripple, amf_lightning, amf_lightning_size, amf_lightning_size, amf_lightning_sparks;
 	extern qbool qmb_initialized;
 #endif
-	extern cvar_t cl_hud;
-	extern cvar_t cl_rollalpha;
 	int i;
 
 #define NOQMB_SKIP_LOCKED 6
@@ -137,6 +141,7 @@ static void Rulesets_Smackdown(void) {
 		{&cl_trueLightning, "0"},
 		{&cl_hud, "0"},
 		{&cl_rollalpha, "20"},
+		{&r_shiftbeam, "0"},
 #ifndef GLQUAKE
 		{&r_aliasstats, "0"}
 #endif
@@ -154,12 +159,12 @@ static void Rulesets_Smackdown(void) {
 		{&amf_part_gunshot, "1"},
 		{&amf_lightning_size, "1"},
 		};
-#endif
 
-	i = 0;
-#ifdef GLQUAKE
-	if (!qmb_initialized) i = NOQMB_SKIP_LOCKED + 1;
+	if (!qmb_initialized)
+		i = NOQMB_SKIP_LOCKED + 1;
+	else
 #endif
+		i = 0;
 
 	for (; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
 		Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value, 2);
@@ -220,9 +225,7 @@ block all other ways to made textures flat(simple)
 	limited_cvar_max_t limited_max_cvars[] = {
 		{&gl_picmip, "3"},
 	};
-#endif
 
-#ifdef GLQUAKE
 	limited_cvar_min_t limited_min_cvars[] = {
 		{&gl_max_size, "512"},
 	};
@@ -239,9 +242,7 @@ block all other ways to made textures flat(simple)
 		Cvar_RulesetSet(limited_max_cvars[i].var, limited_max_cvars[i].maxrulesetvalue, 1);
 		Cvar_SetFlags(limited_max_cvars[i].var, Cvar_GetFlags(limited_max_cvars[i].var) | CVAR_RULESET_MAX);
 	}
-#endif
 
-#ifdef GLQUAKE
 	for (i = 0; i < (sizeof(limited_min_cvars) / sizeof(limited_min_cvars[0])); i++) {
 		Cvar_RulesetSet(limited_min_cvars[i].var, limited_min_cvars[i].minrulesetvalue, 0);
 		Cvar_SetFlags(limited_min_cvars[i].var, Cvar_GetFlags(limited_min_cvars[i].var) | CVAR_RULESET_MIN);
