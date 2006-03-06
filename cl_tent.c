@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: cl_tent.c,v 1.13 2006-03-06 17:33:18 vvd0 Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -52,6 +53,7 @@ model_t	*cl_explo_mod, *cl_bolt1_mod, *cl_bolt2_mod, *cl_bolt3_mod;
 sfx_t	*cl_sfx_wizhit, *cl_sfx_knighthit, *cl_sfx_tink1, *cl_sfx_ric1, *cl_sfx_ric2, *cl_sfx_ric3, *cl_sfx_r_exp3;
 
 cvar_t r_lgblood = {"r_lgbloodColor", "225"};
+cvar_t r_shiftbeam = {"r_shiftbeam", "0"};
 
 void CL_InitTEnts (void) {
 	cl_sfx_wizhit = S_PrecacheSound ("wizard/hit.wav");
@@ -64,6 +66,7 @@ void CL_InitTEnts (void) {
 	
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register(&r_lgblood);
+	Cvar_Register(&r_shiftbeam);
 	Cvar_ResetCurrentGroup();
 }
 
@@ -489,6 +492,7 @@ void CL_UpdateBeams (void) {
 		if (b->entity == cl.viewplayernum + 1) {
 			VectorCopy (cl.simorg, b->start);
 			b->start[2] += cl.crouch + bound(-7, v_viewheight.value, 4);
+			VectorMA(b->start, r_shiftbeam.value, vright, b->start);
 			if (cl_trueLightning.value)	{
 				vec3_t	forward, v, org, ang;
 				float	delta;
