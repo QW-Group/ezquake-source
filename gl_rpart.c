@@ -294,7 +294,7 @@ void QMB_InitParticles (void) {
 		} else {
 			r_numparticles = DEFAULT_NUM_PARTICLES;
 		}
-		particles = Hunk_AllocName(r_numparticles * sizeof(particle_t), "qmb:particles");
+		particles = (particle_t *) Hunk_AllocName(r_numparticles * sizeof(particle_t), "qmb:particles");
 	}
 	else {
 		QMB_ClearParticles ();

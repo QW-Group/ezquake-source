@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.3 2006-01-15 15:49:04 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.4 2006-03-08 15:29:35 disconn3ct Exp $
  */
 
 #ifdef EMBED_TCL
@@ -118,7 +118,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 
 	// New alias
 	if (!a) {
-		a = Z_Malloc (sizeof(cmd_alias_t));
+		a = (cmd_alias_t *) Z_Malloc (sizeof(cmd_alias_t));
 		a->next = cmd_alias;
 		cmd_alias = a;
 		a->hash_next = cmd_alias_hash[h];
@@ -132,7 +132,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 	if (strlen (Tcl_GetString (objv[2])))
 		a->flags |= ALIAS_HAS_PARAMETERS;
 
-	a->value = Z_Malloc (sizeof (Tcl_CmdInfo));
+	a->value = (char *) Z_Malloc (sizeof (Tcl_CmdInfo));
 	memcpy (a->value, &info, sizeof (Tcl_CmdInfo));
 
 	Tcl_SetResult (interp, NULL, TCL_STATIC);

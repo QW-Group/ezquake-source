@@ -36,7 +36,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 	int		sample, samplefrac, fracstep;
 	sfxcache_t	*sc;
 
-	sc = Cache_Check (&sfx->cache);
+	sc = (sfxcache_t *) Cache_Check (&sfx->cache);
 	if (!sc)
 		return;
 
@@ -102,7 +102,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	byte	stackbuf[1*1024];		// avoid dirtying the cache heap
 
 // see if still in memory
-	sc = Cache_Check (&s->cache);
+	sc = (sfxcache_t *) Cache_Check (&s->cache);
 	if (sc)
 		return sc;
 
@@ -132,7 +132,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 
 	len = len * info.width * info.channels;
 
-	sc = Cache_Alloc ( &s->cache, len + sizeof(sfxcache_t), s->name);
+	sc = (sfxcache_t *) Cache_Alloc ( &s->cache, len + sizeof(sfxcache_t), s->name);
 	if (!sc)
 		return NULL;
 

@@ -1347,7 +1347,7 @@ void BuildSurfaceDisplayList (msurface_t *fa) {
 	vertpage = 0;
 
 	// draw texture
-	poly = Hunk_Alloc (sizeof(glpoly_t) + (lnumverts - 4) * VERTEXSIZE*sizeof(float));
+	poly = (glpoly_t *) Hunk_Alloc (sizeof(glpoly_t) + (lnumverts - 4) * VERTEXSIZE*sizeof(float));
 	poly->next = fa->polys;
 	fa->polys = poly;
 	poly->numverts = lnumverts;

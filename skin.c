@@ -129,7 +129,7 @@ byte *Skin_Cache (skin_t *skin) {
 	if (skin->failedload)
 		return NULL;
 
-	if ((out = Cache_Check (&skin->cache)))
+	if ((out = (byte *) Cache_Check (&skin->cache)))
 		return out;
 
 	// load the pic from disk
@@ -148,7 +148,7 @@ byte *Skin_Cache (skin_t *skin) {
 		}
 	}
 
-	if (!(out = pix = Cache_Alloc (&skin->cache, 320 * 200, skin->name)))
+	if (!(out = pix = (byte *) Cache_Alloc (&skin->cache, 320 * 200, skin->name)))
 		Sys_Error ("Skin_Cache: couldn't allocate");
 
 	memset (out, 0, 320 * 200);

@@ -1530,7 +1530,7 @@ static void TP_ClearLocs(void) {
 static void TP_AddLocNode(vec3_t coord, char *name) {
 	locdata_t *newnode, *node;
 
-	newnode = Q_malloc(sizeof(locdata_t));
+	newnode = (locdata_t *) Q_malloc(sizeof(locdata_t));
 	newnode->name = Q_strdup(name);
 	newnode->next = NULL;
 	memcpy(newnode->coord, coord, sizeof(vec3_t));
@@ -1860,7 +1860,7 @@ void TP_MsgTrigger_f (void) {
 
 		if (!(trig = TP_FindTrigger (name))) {
 			// allocate new trigger
-			trig = Z_Malloc (sizeof(msg_trigger_t));
+			trig = (msg_trigger_t *) Z_Malloc (sizeof(msg_trigger_t));
 			trig->next = msg_triggers;
 			msg_triggers = trig;
 			strcpy (trig->name, name);
@@ -2038,7 +2038,7 @@ void CL_RE_Trigger_f (void) {
 		if (!trig) {
 			// allocate new trigger
 			newtrigger = true;
-			trig = Z_Malloc (sizeof(pcre_trigger_t));
+			trig = (msg_trigger_t *) Z_Malloc (sizeof(pcre_trigger_t));
 			trig->next = re_triggers;
 			re_triggers = trig;
 			trig->name = Z_StrDup (name);
@@ -2347,7 +2347,7 @@ void AddInternalTrigger(char* regexpstr, unsigned mask, internal_trigger_func fu
 	const char		*error;
 	int			error_offset;
 
-	trig = Z_Malloc (sizeof(pcre_internal_trigger_t));
+	trig = (msg_trigger_t *) Z_Malloc (sizeof(pcre_internal_trigger_t));
 	trig->next = internal_triggers;
 	internal_triggers = trig;
 
@@ -2396,7 +2396,7 @@ void TP_InitReTriggers() {
 
 	// Using zone for PCRE library memory allocation
 	//
-	pcre_malloc = (pcre_malloc_type)Z_Malloc;
+	pcre_malloc = (pcre_malloc_type) Z_Malloc;
 	pcre_free = Z_Free;
 
 	for(i=0;i<10;i++)

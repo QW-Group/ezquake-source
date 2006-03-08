@@ -108,7 +108,7 @@ void CL_ForwardToServer_f (void) {
 			server_string_len = Cmd_Argc() + strlen(Cmd_Argv(1)) + DIGEST_SIZE * 2 + 16;
 			for (i = 3; i < Cmd_Argc(); ++i)
 				server_string_len += strlen(Cmd_Argv(i));
-			server_string = Q_malloc(server_string_len);
+			server_string = (char *) Q_malloc(server_string_len);
 
 			SHA1_Init();
 			SHA1_Update((unsigned char *)Cmd_Argv(1));

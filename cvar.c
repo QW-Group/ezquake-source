@@ -330,7 +330,7 @@ static cvar_group_t *Cvar_AddGroup(char *name) {
 		if (!Q_strcasecmp(newgroup->name, name))
 			return newgroup;
 
-	newgroup = Q_malloc(sizeof(cvar_group_t));
+	newgroup = (cvar_group_t *) Q_malloc(sizeof(cvar_group_t));
 	Q_strncpyz(newgroup->name, name, sizeof(newgroup->name));
 	newgroup->count = 0;
 	newgroup->head = NULL;

@@ -302,7 +302,7 @@ void Con_CheckResize (void) {
 		if (con_linewidth < numchars)
 			numchars = con_linewidth;
 
-		tempbuf = Hunk_TempAlloc(con.maxsize);
+		tempbuf = (char *) Hunk_TempAlloc(con.maxsize);
 		memcpy (tempbuf, con.text, con.maxsize);
 		memset (con.text, ' ', con.maxsize);
 
@@ -342,7 +342,7 @@ static void Con_CreateReadableChars(void) {
 
 static void Con_InitConsoleBuffer(console_t *conbuffer, int size) {
 	con.maxsize = size;
-	con.text = Hunk_AllocName(con.maxsize, "console_buffer");
+	con.text = (char *) Hunk_AllocName(con.maxsize, "console_buffer");
 }
 
 void Con_Init (void) {
@@ -471,7 +471,7 @@ void Con_Print (char *txt) {
 			if (log_readable.value) {
 				char *s, *tempbuf;
 	
-				tempbuf = Z_Malloc(strlen(txt) + 1);
+				tempbuf = (char *) Z_Malloc(strlen(txt) + 1);
 				strcpy(tempbuf, txt);
 				for (s = tempbuf; *s; s++)
 					*s = readableChars[(unsigned char) *s];

@@ -874,7 +874,7 @@ hud_element_t *Hud_FindElement(char *name)
 static hud_element_t* Hud_NewElement(void)
 {
 	hud_element_t*	elem;
-	elem = Z_Malloc (sizeof(hud_element_t));
+	elem = (hud_element_t *) Z_Malloc (sizeof(hud_element_t));
 	elem->next = hud_list;
 	hud_list = elem;
 	elem->name = Z_StrDup( Cmd_Argv(1) );
@@ -977,7 +977,7 @@ void Hud_Add_f(void)
 				Com_Printf("Unable to load hud image \"%s\"\n", a3);
 				return;
 			}
-			hud_image = Z_Malloc (sizeof(mpic_t));
+			hud_image = (mpic_t *) Z_Malloc (sizeof(mpic_t));
 			hud_image->texnum = texnum;
 			if (current_texture) {
 				hud_image->width = current_texture->width;
@@ -2079,7 +2079,7 @@ int SCR_Screenshot(char *name) {
 	COM_ForceExtension (name, SShot_ExtForFormat(format));
 	buffersize = glwidth * glheight * 3;
 
-	buffer = Q_malloc (buffersize);
+	buffer = (byte *) Q_malloc (buffersize);
 	glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer); 
 
 #ifdef WITH_PNG
@@ -2274,7 +2274,7 @@ void SCR_RSShot_f (void) {
 #ifdef GLQUAKE
 
 	width = 400; height = 300;
-	base = Q_malloc ((width * height + glwidth * glheight) * 3);
+	base = (byte *) Q_malloc ((width * height + glwidth * glheight) * 3);
 	pixels = base + glwidth * glheight * 3;
 
 	glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, base);
@@ -2318,7 +2318,7 @@ void SCR_RSShot_f (void) {
 		}
 		else
 		{
-			screen_shot = Q_malloc (size);
+			screen_shot = (byte *) Q_malloc (size);
 			if (fread(screen_shot, 1, size, f) == size)
 			{
 				Com_Printf ("Sending screenshot to server...\n");
@@ -2403,7 +2403,7 @@ void SCR_Movieshot(char *name) {
 		int i, size = glwidth * glheight * 3;
 		byte *buffer, temp;
 
-		buffer = Q_malloc (size);
+		buffer = (byte *) Q_malloc (size);
 		glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
 		applyHWGamma (buffer, size);
 
@@ -2417,7 +2417,7 @@ void SCR_Movieshot(char *name) {
 		int i, j, rowp;
 		byte *buffer, *p;
 
-		buffer = Q_malloc (vid.width * vid.height * 3);
+		buffer = (byte *) Q_malloc (vid.width * vid.height * 3);
 
 		D_EnableBackBufferAccess ();
 

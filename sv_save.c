@@ -185,7 +185,7 @@ void SV_LoadGame_f (void) {
 	// load the light styles
 	for (i = 0; i < MAX_LIGHTSTYLES; i++) {
 		fscanf (f, "%s\n", str);
-		sv.lightstyles[i] = Hunk_Alloc (strlen(str) + 1);
+		sv.lightstyles[i] = (char *) Hunk_Alloc (strlen(str) + 1);
 		strcpy (sv.lightstyles[i], str);
 	}
 

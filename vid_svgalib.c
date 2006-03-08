@@ -248,7 +248,7 @@ void VID_InitModes(void) {
 
 	// get complete information on all modes
 	num_modes = vga_lastmodenumber()+1;
-	modes = Z_Malloc(num_modes * sizeof(vga_modeinfo));
+	modes = (vga_modeinfo *) Z_Malloc(num_modes * sizeof(vga_modeinfo));
 	for (i = 0 ; i < num_modes; i++) {
 		if (vga_hasmode(i))
 			memcpy(&modes[i], vga_getmodeinfo(i), sizeof (vga_modeinfo));
@@ -449,7 +449,7 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 
 	VID_highhunkmark = Hunk_HighMark ();
 
-	d_pzbuffer = Hunk_HighAllocName (bsize+tsize+zsize, "video");
+	d_pzbuffer = (short *) Hunk_HighAllocName (bsize+tsize+zsize, "video");
 
 	vid_surfcache = ((byte *)d_pzbuffer) + zsize;
 

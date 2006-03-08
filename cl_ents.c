@@ -94,7 +94,7 @@ void CL_InitEnts(void) {
 	cl_alphaents.max = 64;
 	cl_alphaents.alpha = 1;
 
-	memalloc = Hunk_AllocName((cl_firstpassents.max + cl_visents.max + cl_alphaents.max) * sizeof(entity_t), "visents");
+	memalloc = (byte *) Hunk_AllocName((cl_firstpassents.max + cl_visents.max + cl_alphaents.max) * sizeof(entity_t), "visents");
 	cl_firstpassents.list = (entity_t *) memalloc;
 	cl_visents.list = (entity_t *) memalloc + cl_firstpassents.max;
 	cl_alphaents.list = (entity_t *) memalloc + cl_firstpassents.max + cl_visents.max;
@@ -105,7 +105,7 @@ void CL_InitEnts(void) {
 	cl_visbents.max = 256;
 	cl_visbents.alpha = 0;
 
-	memalloc = Hunk_AllocName((cl_visents.max + cl_visbents.max) * sizeof(entity_t), "visents");
+	memalloc = (byte *) Hunk_AllocName((cl_visents.max + cl_visbents.max) * sizeof(entity_t), "visents");
 	cl_visents.list = (entity_t *) memalloc;
 	cl_visbents.list = (entity_t *) memalloc + cl_visents.max;
 #endif

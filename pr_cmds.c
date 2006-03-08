@@ -1573,7 +1573,7 @@ void PF_tokenize (void) {
 		num_tokens = 0;
 	}
 
-	tokens = Z_Malloc(strlen(str) * sizeof(char *));
+	tokens = (char **) Z_Malloc(strlen(str) * sizeof(char *));
 	max_tokens = strlen(str);
 
 	for (data = str; (data = COM_Parse(data)) && num_tokens < max_tokens; num_tokens++)

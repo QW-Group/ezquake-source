@@ -959,7 +959,7 @@ void MT_MapGroup_f(void) {
 	
 
 	if (!group) {	
-		group = Q_calloc(1, sizeof(mapgroup_t));
+		group = (mapgroup_t *) Q_calloc(1, sizeof(mapgroup_t));
 		Q_strncpyz(group->groupname, groupname, sizeof(group->groupname));
 		group->system = !mapgroups_init;
 		if (mapgroups) {	
@@ -1230,7 +1230,7 @@ void MT_SkyGroup_f(void) {
 	
 
 	if (!group) {	
-		group = Q_calloc(1, sizeof(skygroup_t));
+		group = (skygroup_t *) Q_calloc(1, sizeof(skygroup_t));
 		Q_strncpyz(group->groupname, groupname, sizeof(group->groupname));
 		group->system = !skygroups_init;
 		if (skygroups) {	
