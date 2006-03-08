@@ -893,7 +893,7 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
     hud_t  *hud;
     char *subvar;
 
-    hud = Q_malloc(sizeof(hud_t));
+    hud = (hud_t *) Q_malloc(sizeof(hud_t));
     memset(hud, 0, sizeof(hud_t));
     hud->next = hud_huds;
     hud_huds = hud;
@@ -901,10 +901,10 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
     hud->draw_order = draw_order;
     hud->draw_func = draw_func;
 
-    hud->name = Z_Malloc(strlen(name)+1);
+    hud->name = (char *) Z_Malloc(strlen(name)+1);
     strcpy(hud->name, name);
 
-    hud->description = Z_Malloc(strlen(description)+1);
+    hud->description = (char *) Z_Malloc(strlen(description)+1);
     strcpy(hud->description, description);
 
     hud->flags = flags;

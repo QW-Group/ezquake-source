@@ -81,7 +81,7 @@ static void Cbuf_Register (cbuf_t *cbuf, int maxsize)
 {
 	assert(!host_initialized);
 	cbuf->maxsize = maxsize;
-	cbuf->text_buf = Hunk_Alloc(maxsize);
+	cbuf->text_buf = (char *) Hunk_Alloc(maxsize);
 	cbuf->text_start = cbuf->text_end = (cbuf->maxsize >> 1);
 	cbuf->wait = false;
 }
@@ -295,7 +295,7 @@ void Cmd_StuffCmds_f (void)
 	if (!len)
 		return;
 
-	text = Z_Malloc (len + 1);
+	text = (char *) Z_Malloc (len + 1);
 	for (k = 1; k < com_argc; k++) {
 		strcat (text, com_argv[k]);
 		if (k != com_argc - 1)
@@ -303,7 +303,7 @@ void Cmd_StuffCmds_f (void)
 	}
 
 	// pull out the commands
-	token = Z_Malloc (len + 1);
+	token = (char *) Z_Malloc (len + 1);
 
 	s = text;
 	while (*s) {
@@ -628,7 +628,7 @@ void Cmd_Alias_f (void)
 	}
 
 	if (!a)	{
-		a = Z_Malloc (sizeof(cmd_alias_t));
+		a = (cmd_alias_t *) Z_Malloc (sizeof(cmd_alias_t));
 		a->next = cmd_alias;
 		cmd_alias = a;
 		a->hash_next = cmd_alias_hash[key];
@@ -983,7 +983,7 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 		}
 	}
 
-	cmd = Hunk_Alloc (sizeof(cmd_function_t));
+	cmd = (cmd_function_t *) Hunk_Alloc (sizeof(cmd_function_t));
 	cmd->name = cmd_name;
 	cmd->function = function;
 	cmd->next = cmd_functions;

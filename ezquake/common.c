@@ -771,7 +771,7 @@ char *va (char *format, ...) {
 char *CopyString (const char *in) {
 	char *out;
 
-	out = Z_Malloc (strlen(in) + 1);
+	out = (char *) Z_Malloc (strlen(in) + 1);
 	strcpy (out, in);
 	return out;
 }
@@ -1096,16 +1096,16 @@ byte *FS_LoadFile (char *path, int usehunk) {
 	COM_FileBase (path, base);
 
 	if (usehunk == 1) {
-		buf = Hunk_AllocName (len + 1, base);
+		buf = (byte *) Hunk_AllocName (len + 1, base);
 	} else if (usehunk == 2) {
-		buf = Hunk_TempAlloc (len + 1);
+		buf = (byte *) Hunk_TempAlloc (len + 1);
 	} else if (usehunk == 0) {
-		buf = Z_Malloc (len + 1);
+		buf = (byte *) Z_Malloc (len + 1);
 	} else if (usehunk == 3) {
-		buf = Cache_Alloc (loadcache, len + 1, base);
+		buf = (byte *) Cache_Alloc (loadcache, len + 1, base);
 	} else if (usehunk == 4) {
 		if (len+1 > loadsize)
-			buf = Hunk_TempAlloc (len + 1);
+			buf = (byte *) Hunk_TempAlloc (len + 1);
 		else
 			buf = loadbuf;
 	} else {
@@ -1175,13 +1175,13 @@ pack_t *FS_LoadPackFile (char *packfile) {
 	header.dirofs = LittleLong (header.dirofs);
 	header.dirlen = LittleLong (header.dirlen);
 
-	pack = Q_malloc (sizeof (pack_t));
+	pack = (pack_t *) Q_malloc (sizeof (pack_t));
 	strcpy (pack->filename, packfile);
 	pack->handle = packhandle;
 	pack->numfiles = header.dirlen / sizeof(dpackfile_t);
 
-	pack->files = newfiles = Q_malloc (pack->numfiles * sizeof(packfile_t));
-	info = Q_malloc (header.dirlen);
+	pack->files = newfiles = (packfile_t *) Q_malloc (pack->numfiles * sizeof(packfile_t));
+	info = (dpackfile_t *) Q_malloc (header.dirlen);
 
 	fseek (packhandle, header.dirofs, SEEK_SET);
 	fread (info, 1, header.dirlen, packhandle);
@@ -1226,7 +1226,7 @@ qbool FS_AddPak (char *pakfile)
 		return false;
 
 	//search = Hunk_Alloc (sizeof(searchpath_t));
-	search = Q_malloc(sizeof(searchpath_t));
+	search = (searchpath_t *) Q_malloc(sizeof(searchpath_t));
 	search->pack = pak;
 	search->next = com_searchpaths;
 	com_searchpaths = search;		
@@ -1295,7 +1295,7 @@ void FS_AddGameDirectory (char *dir) {
 	strcpy (com_gamedir, dir);
 
 	// add the directory to the search path
-	search = Q_malloc (sizeof(searchpath_t));
+	search = (searchpath_t *) Q_malloc (sizeof(searchpath_t));
 	strcpy (search->filename, com_gamedir);
 	search->pack = NULL;
 	search->next = com_searchpaths;
@@ -1338,7 +1338,7 @@ void FS_AddUserDirectory ( char *dir ) {
       	}
 
 	// add the directory to the search path
-	search = Q_malloc (sizeof(searchpath_t));
+	search = (searchpath_t *) Q_malloc (sizeof(searchpath_t));
 	strcpy (search->filename, com_userdir);
 	search->pack = NULL;
 	search->next = com_searchpaths;

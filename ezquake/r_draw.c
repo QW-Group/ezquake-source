@@ -84,7 +84,7 @@ mpic_t *Draw_CachePic (char *path) {
 		strcpy (pic->name, path);
 	}
 
-	dat = Cache_Check (&pic->cache);
+	dat = (qpic_t *) Cache_Check (&pic->cache);
 
 	if (dat)
 		return (mpic_t *)dat;

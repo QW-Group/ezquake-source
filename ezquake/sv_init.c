@@ -146,7 +146,7 @@ void SV_CalcPHS (void) {
 	rowwords = (num + 31) >> 5;
 	rowbytes = rowwords * 4;
 
-	sv.pvs = Hunk_Alloc (rowbytes * num);
+	sv.pvs = (byte *) Hunk_Alloc (rowbytes * num);
 	scan = sv.pvs;
 	vcount = 0;
 	for (i = 0; i < num; i++, scan += rowbytes)	{
@@ -160,7 +160,7 @@ void SV_CalcPHS (void) {
 		}
 	}
 
-	sv.phs = Hunk_Alloc (rowbytes*num);
+	sv.phs = (byte *) Hunk_Alloc (rowbytes*num);
 	count = 0;
 	scan = sv.pvs;
 	dest = (unsigned *)sv.phs;
@@ -287,7 +287,7 @@ void SV_SpawnServer (char *server, qbool devmap) {
 	PR_LoadProgs ();
 
 	// allocate edicts
-	sv.edicts = Hunk_AllocName (SV_MAX_EDICTS*pr_edict_size, "edicts");
+	sv.edicts = (edict_t *) Hunk_AllocName (SV_MAX_EDICTS*pr_edict_size, "edicts");
 
 	// leave slots at start for clients only
 	sv.num_edicts = MAX_CLIENTS+1;

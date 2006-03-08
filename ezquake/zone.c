@@ -688,6 +688,6 @@ void Memory_Init (void *buf, int size) {
 	if ((p = COM_CheckParm ("-zone")) && p + 1 < com_argc)
 		zonesize = Q_atoi (com_argv[p + 1]) * 1024;
 
-	mainzone = Hunk_AllocName (zonesize, "zone");
+	mainzone = (memzone_t *) Hunk_AllocName (zonesize, "zone");
 	Z_ClearZone (mainzone, zonesize);
 }

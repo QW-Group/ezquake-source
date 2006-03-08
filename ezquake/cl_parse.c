@@ -698,7 +698,7 @@ void CL_StartUpload (byte *data, int size)
 	// override
 	if (cls.mem_upload)
 		Q_free(cls.mem_upload);
-	cls.mem_upload = Q_malloc (size);
+	cls.mem_upload = (byte *) Q_malloc (size);
 	memcpy(cls.mem_upload, data, size);
 	cls.upload_size = size;
 	cls.upload_pos = 0;

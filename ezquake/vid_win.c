@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.11 2006-01-04 21:19:28 tonik Exp $
+	$Id: vid_win.c,v 1.12 2006-03-08 15:29:35 disconn3ct Exp $
 
 */
 
@@ -257,7 +257,7 @@ qbool VID_AllocBuffers (int width, int height) {
 
 	VID_highhunkmark = Hunk_HighMark ();
 
-	d_pzbuffer = Hunk_HighAllocName (tbuffersize, "video");
+	d_pzbuffer = (short *) Hunk_HighAllocName (tbuffersize, "video");
 
 	vid_surfcache = (byte *) d_pzbuffer + width * height * sizeof (*d_pzbuffer);
 	

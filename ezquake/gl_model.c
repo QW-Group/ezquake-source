@@ -334,9 +334,9 @@ void Mod_LoadTextures (lump_t *l) {
 	m = (dmiptexlump_t *) (mod_base + l->fileofs);
 	m->nummiptex = LittleLong (m->nummiptex);
 	loadmodel->numtextures = m->nummiptex;
-	loadmodel->textures = Hunk_AllocName (m->nummiptex * sizeof(*loadmodel->textures), loadname);
+	loadmodel->textures = (texture_t **) Hunk_AllocName (m->nummiptex * sizeof(*loadmodel->textures), loadname);
 
-	txblock = Hunk_AllocName (m->nummiptex * sizeof(**loadmodel->textures), loadname);
+	txblock = (texture_t *) Hunk_AllocName (m->nummiptex * sizeof(**loadmodel->textures), loadname);
 
 	brighten_flag = (lightmode == 2) ? TEX_BRIGHTEN : 0;
 
@@ -552,7 +552,7 @@ void Mod_LoadLighting (lump_t *l) {
 		return;
 
 	if (loadmodel->bspversion == HL_BSPVERSION) {
-		loadmodel->lightdata = Hunk_AllocName(l->filelen, loadname);
+		loadmodel->lightdata = (byte *) Hunk_AllocName(l->filelen, loadname);
 		memcpy (loadmodel->lightdata, mod_base + l->fileofs, l->filelen);
 		return;
 	}
@@ -593,7 +593,7 @@ void Mod_LoadLighting (lump_t *l) {
 		Hunk_FreeToLowMark (mark);
 	}
 	//no .lit found, expand the white lighting data to color
-	loadmodel->lightdata = Hunk_AllocName (l->filelen * 3, va("%s_@lightdata", loadmodel->name));
+	loadmodel->lightdata = (byte *) Hunk_AllocName (l->filelen * 3, va("%s_@lightdata", loadmodel->name));
 	in = loadmodel->lightdata + l->filelen * 2; // place the file at the end, so it will not be overwritten until the very last write
 	out = loadmodel->lightdata;
 	memcpy (in, mod_base + l->fileofs, l->filelen);
@@ -608,7 +608,7 @@ void Mod_LoadVisibility (lump_t *l) {
 		loadmodel->visdata = NULL;
 		return;
 	}
-	loadmodel->visdata = Hunk_AllocName (l->filelen, loadname);	
+	loadmodel->visdata = (byte *) Hunk_AllocName (l->filelen, loadname);
 	memcpy (loadmodel->visdata, mod_base + l->fileofs, l->filelen);
 }
 
@@ -674,7 +674,7 @@ void Mod_LoadEntities (lump_t *l){
 		loadmodel->entities = NULL;
 		return;
 	}
-	loadmodel->entities = Hunk_AllocName (l->filelen, loadname);	
+	loadmodel->entities = (char *) Hunk_AllocName (l->filelen, loadname);
 	memcpy (loadmodel->entities, mod_base + l->fileofs, l->filelen);
 	if (loadmodel->bspversion == HL_BSPVERSION && !dedicated)
 		Mod_ParseWadsFromEntityLump(loadmodel->entities);
@@ -689,7 +689,7 @@ void Mod_LoadVertexes (lump_t *l) {
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadVertexes: funny lump size in %s", loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = Hunk_AllocName ( count*sizeof(*out), loadname);	
+	out = (mvertex_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	loadmodel->vertexes = out;
 	loadmodel->numvertexes = count;
@@ -711,7 +711,7 @@ void Mod_LoadSubmodels (lump_t *l) {
 	count = l->filelen / sizeof(*in);
 	if (count > MAX_MODELS)	
 		Host_Error("Mod_LoadSubmodels : count > MAX_MODELS");
-	out = Hunk_AllocName ( count*sizeof(*out), loadname);	
+	out = (dmodel_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	loadmodel->submodels = out;
 	loadmodel->numsubmodels = count;
@@ -739,7 +739,7 @@ void Mod_LoadEdges (lump_t *l) {
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadEdges: funny lump size in %s", loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = Hunk_AllocName ( (count + 1) * sizeof(*out), loadname);	
+	out = (medge_t *) Hunk_AllocName ( (count + 1) * sizeof(*out), loadname);
 
 	loadmodel->edges = out;
 	loadmodel->numedges = count;
@@ -759,7 +759,7 @@ void Mod_LoadTexinfo (lump_t *l) {
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadTexinfo: funny lump size in %s", loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = Hunk_AllocName (count*sizeof(*out), loadname);	
+	out = (mtexinfo_t *) Hunk_AllocName (count*sizeof(*out), loadname);
 
 	loadmodel->texinfo = out;
 	loadmodel->numtexinfo = count;
@@ -837,7 +837,7 @@ void Mod_LoadFaces (lump_t *l) {
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadFaces: funny lump size in %s", loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = Hunk_AllocName ( count*sizeof(*out), loadname);	
+	out = (msurface_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	loadmodel->surfaces = out;
 	loadmodel->numsurfaces = count;
@@ -908,7 +908,7 @@ void Mod_LoadNodes (lump_t *l) {
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadNodes: funny lump size in %s", loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = Hunk_AllocName (count * sizeof(*out), loadname);	
+	out = (mnode_t *) Hunk_AllocName (count * sizeof(*out), loadname);
 
 	loadmodel->nodes = out;
 	loadmodel->numnodes = count;
@@ -946,7 +946,7 @@ void Mod_LoadLeafs (lump_t *l) {
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadLeafs: funny lump size in %s", loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = Hunk_AllocName ( count*sizeof(*out), loadname);	
+	out = (mleaf_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	loadmodel->leafs = out;
 	loadmodel->numleafs = count;
@@ -986,7 +986,7 @@ void Mod_LoadClipnodes (lump_t *l) {
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadClipnodes: funny lump size in %s", loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = Hunk_AllocName ( count*sizeof(*out), loadname);	
+	out = (dclipnode_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	loadmodel->clipnodes = out;
 	loadmodel->numclipnodes = count;
@@ -1071,7 +1071,7 @@ void Mod_MakeHull0 (void) {
 	
 	in = loadmodel->nodes;
 	count = loadmodel->numnodes;
-	out = Hunk_AllocName ( count*sizeof(*out), loadname);	
+	out = (dclipnode_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
@@ -1099,7 +1099,7 @@ void Mod_LoadMarksurfaces (lump_t *l) {
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadMarksurfaces: funny lump size in %s", loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = Hunk_AllocName ( count*sizeof(*out), loadname);	
+	out = (msurface_t **) Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	loadmodel->marksurfaces = out;
 	loadmodel->nummarksurfaces = count;
@@ -1119,7 +1119,7 @@ void Mod_LoadSurfedges (lump_t *l) {
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadSurfedges: funny lump size in %s", loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = Hunk_AllocName ( count*sizeof(*out), loadname);	
+	out = (int *) Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	loadmodel->surfedges = out;
 	loadmodel->numsurfedges = count;
@@ -1137,7 +1137,7 @@ void Mod_LoadPlanes (lump_t *l) {
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadPlanes: funny lump size in %s", loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	out = Hunk_AllocName ( count*sizeof(*out), loadname);
+	out = (mplane_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
 	
 	loadmodel->planes = out;
 	loadmodel->numplanes = count;
@@ -1597,7 +1597,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer) {
 	size = 	sizeof (aliashdr_t) 
 			+ (LittleLong (pinmodel->numframes) - 1) *
 			sizeof (pheader->frames[0]);
-	pheader = Hunk_AllocName (size, loadname);
+	pheader = (aliashdr_t *) Hunk_AllocName (size, loadname);
 	
 	mod->flags = LittleLong (pinmodel->flags);
 
@@ -1743,7 +1743,7 @@ void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum) {
 	height = LittleLong (pinframe->height);
 	size = width * height;
 
-	pspriteframe = Hunk_AllocName (sizeof (mspriteframe_t),loadname);
+	pspriteframe = (mspriteframe_t *) Hunk_AllocName (sizeof (mspriteframe_t),loadname);
 
 	memset (pspriteframe, 0, sizeof (mspriteframe_t));
 
@@ -1780,7 +1780,7 @@ void *Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe, int framenum) {
 
 	numframes = LittleLong (pingroup->numframes);
 
-	pspritegroup = Hunk_AllocName (sizeof (mspritegroup_t) +
+	pspritegroup = (mspritegroup_t *) Hunk_AllocName (sizeof (mspritegroup_t) +
 				(numframes - 1) * sizeof (pspritegroup->frames[0]), loadname);
 
 	pspritegroup->numframes = numframes;
@@ -1789,7 +1789,7 @@ void *Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe, int framenum) {
 
 	pin_intervals = (dspriteinterval_t *) (pingroup + 1);
 
-	poutintervals = Hunk_AllocName (numframes * sizeof (float), loadname);
+	poutintervals = (float *) Hunk_AllocName (numframes * sizeof (float), loadname);
 
 	pspritegroup->intervals = poutintervals;
 
@@ -1829,7 +1829,7 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
 
 	size = sizeof (msprite_t) +	(numframes - 1) * sizeof (psprite->frames);
 
-	psprite = Hunk_AllocName (size, loadname);
+	psprite = (msprite_t *) Hunk_AllocName (size, loadname);
 
 	mod->cache.data = psprite;
 

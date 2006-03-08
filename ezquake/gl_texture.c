@@ -224,7 +224,7 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode) {
 	Q_ROUND_POWER2(width, tempwidth);
 	Q_ROUND_POWER2(height, tempheight);
 
-	newdata = Q_malloc(tempwidth * tempheight * 4);
+	newdata = (unsigned int *) Q_malloc(tempwidth * tempheight * 4);
 	if (width < tempwidth || height < tempheight) {
 		Image_Resample (data, width, height, newdata, tempwidth, tempheight, 4, !!gl_lerpimages.value);
 		width = tempwidth;
@@ -387,7 +387,7 @@ int GL_LoadPicTexture (char *name, mpic_t *pic, byte *data) {
 		pic->tl = 0;
 		pic->th = 1;
 	} else {
-		buf = Q_calloc (glwidth * glheight, 1);
+		buf = (byte *) Q_calloc (glwidth * glheight, 1);
 
 		src = data;
 		dest = buf;
@@ -601,7 +601,7 @@ mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheig
 		pic.tl = 0;
 		pic.th = 1;
 	} else {
-		buf = Q_calloc (width * height, 4);
+		buf = (byte *) Q_calloc (width * height, 4);
 
 		src = data;
 		dest = buf;
@@ -637,7 +637,7 @@ int GL_LoadCharsetImage (char *filename, char *identifier) {
 
 	image_size = image_width * image_height;
 
-	buf = dest = Q_calloc(image_size * 2, 4); 
+	buf = dest = (byte *) Q_calloc(image_size * 2, 4);
 	src = data;
 	for (i = 0 ; i < 16 ; i++) {
 		memcpy (dest, src, image_size >> 2);

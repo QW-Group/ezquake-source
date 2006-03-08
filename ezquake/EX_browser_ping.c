@@ -191,8 +191,8 @@ int oldPingHost(char *host_to_ping, int count)
     datasize = DEF_PACKET_SIZE;
     datasize += sizeof(IcmpHeader);  
 
-    icmp_data = Q_malloc(MAX_PACKET);
-    recvbuf = Q_malloc(MAX_PACKET);
+    icmp_data = (char *) Q_malloc(MAX_PACKET);
+    recvbuf = (char *) Q_malloc(MAX_PACKET);
 
     if (!icmp_data)
         return 0;
@@ -350,8 +350,8 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
     datasize = DEF_PACKET_SIZE;
     datasize += sizeof(IcmpHeader);  
 
-    icmp_data = Q_malloc(MAX_PACKET);
-    recvbuf = Q_malloc(MAX_PACKET);
+    icmp_data = (char *) Q_malloc(MAX_PACKET);
+    recvbuf = (char *)Q_malloc(MAX_PACKET);
 
     if (!icmp_data)
     {
@@ -802,7 +802,7 @@ void SB_Test_SendPacket(void)
     datasize = DEF_PACKET_SIZE;
     datasize += sizeof(IcmpHeader);  
 
-    icmp_data = Q_malloc(MAX_PACKET);
+    icmp_data = (char *) Q_malloc(MAX_PACKET);
 
     if (!icmp_data)
         return ;
@@ -859,7 +859,7 @@ void SB_Test_GetPackets(void)
     datasize = DEF_PACKET_SIZE;
     datasize += sizeof(IcmpHeader);  
 
-    recvbuf = Q_malloc(MAX_PACKET);
+    recvbuf = (char *) Q_malloc(MAX_PACKET);
 
 
     while (1)

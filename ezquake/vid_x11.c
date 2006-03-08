@@ -305,7 +305,7 @@ void ResetFrameBuffer(void)  {
 
 	X11_buffersize += vid_surfcachesize;
 
-	d_pzbuffer = Hunk_HighAllocName (X11_buffersize, "video");
+	d_pzbuffer = (short *) Hunk_HighAllocName (X11_buffersize, "video");
 	if (d_pzbuffer == NULL)
 		Sys_Error ("Not enough memory for video mode\n");
 
@@ -317,12 +317,12 @@ void ResetFrameBuffer(void)  {
 	if (pwidth == 3) pwidth = 4;
 	mem = ((vid.width*pwidth+7)&~7) * vid.height;
 
-	x_framebuffer[0] = XCreateImage(	x_disp,
+	x_framebuffer[0] = XCreateImage(x_disp,
 		x_vis,
 		x_visinfo->depth,
 		ZPixmap,
 		0,
-		Q_malloc (mem),
+		(char *) Q_malloc (mem),
 		vid.width, vid.height,
 		32,
 		0);
@@ -351,7 +351,7 @@ void ResetSharedFrameBuffers(void) {
 
 	X11_buffersize += vid_surfcachesize;
 
-	d_pzbuffer = Hunk_HighAllocName (X11_buffersize, "video");
+	d_pzbuffer = (short *) Hunk_HighAllocName (X11_buffersize, "video");
 	if (d_pzbuffer == NULL)
 		Sys_Error ("Not enough memory for video mode\n");
 

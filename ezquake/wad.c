@@ -241,7 +241,7 @@ void WAD3_LoadTextureWadFile (char *filename) {
 	}
 
 	lowmark = Hunk_LowMark();
-	if (!(lumps = Hunk_Alloc(sizeof(lumpinfo_t) * numlumps))) {
+	if (!(lumps = (lumpinfo_t *) Hunk_Alloc(sizeof(lumpinfo_t) * numlumps))) {
 		Com_Printf ("WAD3_LoadTextureWadFile: unable to allocate temporary memory for lump table");
 		return;
 	}
@@ -281,7 +281,7 @@ static byte *ConvertWad3ToRGBA(miptex_t *tex) {
 
 	image_size = tex->width * tex->height;
 	in = (byte *) ((byte *) tex + tex->offsets[0]);
-	data = Q_malloc(image_size * 4);
+	data = (byte *) Q_malloc(image_size * 4);
 
 	pal = in + ((image_size * 85) >> 6) + 2;
 	for (i = 0; i < image_size; i++) {
@@ -323,7 +323,7 @@ byte *WAD3_LoadTexture(miptex_t *mt) {
 			return NULL;
 		}
 		lowmark = Hunk_LowMark();
-		tex = Hunk_Alloc(texwadlump[i].size);
+		tex = (miptex_t *) Hunk_Alloc(texwadlump[i].size);
 		if (fread(tex, 1, texwadlump[i].size, file) < texwadlump[i].size) {
 			Com_Printf("WAD3_LoadTexture: corrupt WAD3 file");
 			Hunk_FreeToLowMark(lowmark);
