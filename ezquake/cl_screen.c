@@ -2558,7 +2558,8 @@ void SCR_DrawStatusMultiview(void) {
 		w1='s'; w2='g';
 	} else if (cl.stats[STAT_ACTIVEWEAPON] & IT_AXE) {
 		w1='a'; w2='x';
-	}
+	} else
+		w1='?'; w2='?';
 	w1 |= 128; w2 |= 128;
 
 	pups[0] = pups[1] = pups[2] = ' ';
