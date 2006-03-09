@@ -328,7 +328,7 @@ static void uninstall_grabs(void) {
 
 qbool OnChange_windowed_mouse(cvar_t *var, char *value) {
 	if (vidmode_active && !Q_atof(value)) {
-		Com_Printf("Cannot turn %s off when using -fullscreen mode\n", var->name);
+		Com_Printf("Cannot turn %s off when using fullscreen mode\n", var->name);
 		return true;
 	}
 	return false;
@@ -732,7 +732,7 @@ void VID_Init(unsigned char *palette) {
 	root = RootWindow(vid_dpy, scrnum);
 
 #ifdef WITH_VMODE
-	if (COM_CheckParm("-fullscreen"))
+	if (!COM_CheckParm("-window") && !COM_CheckParm("-startwindowed"))
 		fullscreen = true;
 #endif
 
