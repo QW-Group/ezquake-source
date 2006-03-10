@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.28 2006-03-10 20:06:59 tonik Exp $
+	$Id: keys.c,v 1.29 2006-03-10 21:43:16 tonik Exp $
 
 */
 
@@ -873,8 +873,8 @@ static void AdjustConsoleHeight (int delta) {
 
 #ifdef WITH_KEYMAP
 static qbool yellowchars = false;
-qbool con_redchars    = false;
 #endif // WITH_KEYMAP
+qbool con_redchars    = false;
 
 //Interactive line editing and console scrollback
 void Key_Console (int key) {
