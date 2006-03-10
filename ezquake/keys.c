@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.27 2006-01-04 12:30:24 tonik Exp $
+	$Id: keys.c,v 1.28 2006-03-10 20:06:59 tonik Exp $
 
 */
 
@@ -871,14 +871,14 @@ static void AdjustConsoleHeight (int delta) {
 	Cvar_SetValue (&scr_consize, (float)height / vid.height);
 }
 
+#ifdef WITH_KEYMAP
+static qbool yellowchars = false;
+qbool con_redchars    = false;
+#endif // WITH_KEYMAP
+
 //Interactive line editing and console scrollback
 void Key_Console (int key) {
 	int i, len;
-
-#ifdef WITH_KEYMAP
-	static qbool yellowchars = false;
-	static qbool redchars    = false;
-#endif // WITH_KEYMAP
 
 	switch (key) {
 		case 'M': case 'm': case 'J': case 'j':		//^M,^J = Enter
@@ -887,6 +887,7 @@ void Key_Console (int key) {
 		/* fall through */
 	    case K_ENTER:
 		CompleteCommandNew_Reset ();
+		con_redchars = false;
 		
 			// backslash text are commands
 		if (key_lines[edit_line][1] != '/' || key_lines[edit_line][2] != '/')
@@ -979,6 +980,9 @@ void Key_Console (int key) {
 				key_lines[edit_line] + key_linepos);
 			key_linepos--;
 		}
+		// disable red chars mode if the last character was deleted
+		if (key_linepos == 1)
+			con_redchars = false;
 		return;
 
 	case K_DEL:
@@ -1001,6 +1005,9 @@ void Key_Console (int key) {
 		if (key_linepos < strlen (key_lines[edit_line]))
 			strcpy (key_lines[edit_line] + key_linepos,
 				key_lines[edit_line] + key_linepos + 1);
+		// disable red chars mode if the last character was deleted
+		if (key_linepos == 1 && strlen(key_lines[edit_line]) == 1)
+			con_redchars = false;
 		return;
 
 	case K_RIGHTARROW:
@@ -1161,20 +1168,20 @@ nextline:
 		// CTRL+y toggles yellowchars
 		if (keydown[K_CTRL] && key == 'y' && !keydown[K_ALTGR] && !keydown[K_ALT]) {
 			yellowchars = !yellowchars;
-			if ( redchars )
-				Com_Printf( "input of red characters is now off!\n" );
-			redchars    = false;
+//			if ( con_redchars )
+//				Com_Printf( "input of red characters is now off!\n" );
+			con_redchars    = false;
 			Com_Printf( "input of yellow numbers is now o%s!\n", yellowchars ? "n" : "ff" );
 			return;
 		}
 
-		// CTRL+r toggles redchars
+		// CTRL+r toggles red chars
 		if (keydown[K_CTRL] && key == 'r' && !keydown[K_ALTGR] && !keydown[K_ALT]) {
-			redchars    = !redchars;
+			con_redchars    = !con_redchars;
 			if ( yellowchars )
 				Com_Printf( "input of yellow numbers is now off!\n" );
 			yellowchars = false;
-				Com_Printf( "input of red characters is now o%s!\n", redchars ? "n" : "ff" );
+//				Com_Printf( "input of red characters is now o%s!\n", con_redchars ? "n" : "ff" );
 			return;
 		}
 	}
@@ -1207,7 +1214,7 @@ nextline:
 	}
 
 #ifdef WITH_KEYMAP
-	if (redchars || (keydown[K_ALT] && !(con_funchars_mode.value)))
+	if (con_redchars || (keydown[K_ALT] && !(con_funchars_mode.value)))
 #else // WITH_KEYMAP
 	if (keydown[K_ALT])
 #endif // WITH_KEYMAP else
