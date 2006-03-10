@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.29 2006-03-10 21:43:16 tonik Exp $
+	$Id: keys.c,v 1.30 2006-03-10 21:55:53 tonik Exp $
 
 */
 
@@ -895,9 +895,9 @@ void Key_Console (int key) {
 			qbool no_lf = true;
 //				goto no_lf;
 
-			if ((keydown[K_CTRL] || keydown[K_SHIFT]) && cls.state >= ca_connected)
+			if (((keydown[K_CTRL] && key==K_ENTER) || keydown[K_SHIFT]) && cls.state >= ca_connected)
 			{
-				if (keydown[K_CTRL])
+				if ((keydown[K_CTRL] && key==K_ENTER))
 					Cbuf_AddText ("say_team ");
 				else
 					Cbuf_AddText ("say ");
