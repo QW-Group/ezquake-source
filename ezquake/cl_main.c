@@ -1185,6 +1185,7 @@ void CL_Frame (double time) {
 		cl.stats[STAT_TIME] = (int) (cl.servertime * 1000);
 		cl.gametime += cls.frametime;
 	}
+	r_refdef2.time = cl.time;
 
 	// get new key events
 
