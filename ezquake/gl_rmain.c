@@ -1122,10 +1122,6 @@ void R_SetupFrame (void) {
 	vec3_t testorigin;
 	mleaf_t	*leaf;
 
-	// don't allow cheats in multiplayer
-	r_fullbright.value = 0;
-	r_lightmap.value = 0;
-
 	R_AnimateLight ();
 
 	r_framecount++;

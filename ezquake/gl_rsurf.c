@@ -318,7 +318,7 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride) {
 	lightmap = surf->samples;
 
 	// set to full bright if no light data
-	if (/* r_fullbright.value || */ !cl.worldmodel->lightdata)  {
+	if ((r_fullbright.value && r_refdef2.allow_cheats) || !cl.worldmodel->lightdata)  {
 		for (i = 0; i < blocksize; i++)
 			blocklights[i] = 255 << 8;
 		goto store;
@@ -459,13 +459,16 @@ void R_BlendLightmaps (void) {
 	glpoly_t *p;
 	float *v;
 
+	if (r_fullbright.value && r_refdef2.allow_cheats)
+		return;
+
 	glDepthMask (GL_FALSE);		// don't bother writing Z
 	if (gl_invlightmaps)
 		glBlendFunc (GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
 	else
 		glBlendFunc (GL_ZERO, GL_SRC_COLOR);
 
-	if (!r_lightmap.value)
+	if (!(r_lightmap.value && r_refdef2.allow_cheats))
 		glEnable (GL_BLEND);
 
 	for (i = 0; i < MAX_LIGHTMAPS; i++) {
@@ -1008,7 +1011,7 @@ void R_DrawFlat (model_t *model) {
 }
 
 qbool OnChange_r_drawflat(cvar_t *v, char *skyname) {
-	if(cls.state >= ca_connected && !cl.standby && !cls.demoplayback && !cl.spectator) {
+	if(cls.state >= ca_connected && !cl.standby && !r_refdef2.allow_cheats && !cl.spectator) {
 		Com_Printf("Wall color changes are not allowed during the match.\n");
 		return true;
 	}
