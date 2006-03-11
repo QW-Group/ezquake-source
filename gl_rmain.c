@@ -1358,11 +1358,9 @@ void R_Init (void) {
 	Cvar_Register (&gl_fogstart); 
 	Cvar_Register (&gl_fogend); 
 	Cvar_Register (&gl_fogsky);
-// START shaman RFE 1032143 {
-//	Cvar_Register (&gl_fogred); 
-//	Cvar_Register (&gl_fogblue);
-//	Cvar_Register (&gl_foggreen);
-// END shaman RFE 1032143 {
+	Cvar_Register (&gl_fogred); 
+	Cvar_Register (&gl_fogblue);
+	Cvar_Register (&gl_foggreen);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register (&r_drawentities);
