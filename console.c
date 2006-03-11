@@ -553,6 +553,7 @@ DRAWING
 static void Con_DrawInput(void) {
 	int len;
 	char *text, temp[MAXCMDLINE + 1];	//+ 1 for cursor if strlen(key_lines[edit_line]) == (MAX_CMDLINE - 1)
+	extern qbool con_redchars;
 
 	if (key_dest != key_console && cls.state == ca_active)
 		return;		// don't draw anything (always draw if not active)
@@ -566,7 +567,7 @@ static void Con_DrawInput(void) {
 
 	// add the cursor frame
 	if ((int) (curtime * con_cursorspeed) & 1)
-		text[key_linepos] = 11;
+		text[key_linepos] = con_redchars ? (11 + 128) : 11;
 
 	//	prestep if horizontally scrolling
 	if (key_linepos >= con_linewidth)
