@@ -490,12 +490,6 @@ void R_SetupFrame (void) {
 	vrect_t vrect;
 	float w, h;
 
-	// don't allow cheats in multiplayer
-	r_draworder.value = 0;
-	r_fullbright.value = 0;
-	r_ambient.value = 0;
-	r_draworder.value = 0;	// don't let cheaters look behind walls
-
 	if (r_numsurfs.value) {
 		if ((surface_p - surfaces) > r_maxsurfsseen) r_maxsurfsseen = surface_p - surfaces;
 
@@ -513,10 +507,7 @@ void R_SetupFrame (void) {
 		Com_Printf ("Used %d of %d edges; %d max\n", edgecount, r_numallocatededges, r_maxedgesseen);
 	}
 
-	r_refdef.ambientlight = r_ambient.value;
-
-	if (r_refdef.ambientlight < 0)
-		r_refdef.ambientlight = 0;
+	r_refdef.ambientlight = r_refdef2.allow_cheats ? max(r_ambient.value, 0) : 0;
 
 	R_CheckVariables ();
 
