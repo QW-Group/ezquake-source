@@ -55,6 +55,7 @@ float	r_base_world_matrix[16];
 
 // screen size info
 refdef_t	r_refdef;
+refdef2_t	r_refdef2;
 
 mleaf_t		*r_viewleaf, *r_oldviewleaf;
 mleaf_t		*r_viewleaf2, *r_oldviewleaf2;	// for watervis hack
@@ -219,7 +220,7 @@ mspriteframe_t *R_GetSpriteFrame (entity_t *currententity) {
 		numframes = pspritegroup->numframes;
 		fullinterval = pintervals[numframes-1];
 
-		time = cl.time;
+		time = r_refdef2.time;
 
 		// when loading in Mod_LoadSpriteGroup, we guaranteed all interval values
 		// are positive, so we don't have to worry about division by 0
@@ -408,14 +409,14 @@ void R_SetupAliasFrame (maliasframedesc_t *oldframe, maliasframedesc_t *frame, a
 	numposes = oldframe->numposes;
 	if (numposes > 1) {
 		interval = oldframe->interval;
-		oldpose += (int) (cl.time / interval) % numposes;
+		oldpose += (int) (r_refdef2.time / interval) % numposes;
 	}
 
 	pose = frame->firstpose;
 	numposes = frame->numposes;
 	if (numposes > 1) {
 		interval = frame->interval;
-		pose += (int) (cl.time / interval) % numposes;
+		pose += (int) (r_refdef2.time / interval) % numposes;
 	}
 
 	GL_DrawAliasFrame (paliashdr, oldpose, pose, mtex);
@@ -501,7 +502,7 @@ void R_AliasSetupLighting(entity_t *ent) {
 	{
 		for (lnum = 0; lnum < MAX_DLIGHTS; lnum++)
 		{
-			if (cl_dlights[lnum].die < cl.time || !cl_dlights[lnum].radius)
+			if (cl_dlights[lnum].die < r_refdef2.time || !cl_dlights[lnum].radius)
 				continue;
 
 			VectorSubtract (ent->origin, cl_dlights[lnum].origin, dist);
@@ -553,7 +554,7 @@ void R_AliasSetupLighting(entity_t *ent) {
 	else
 	{
 		for (lnum = 0; lnum < MAX_DLIGHTS; lnum++) {
-			if (cl_dlights[lnum].die < cl.time || !cl_dlights[lnum].radius)
+			if (cl_dlights[lnum].die < r_refdef2.time || !cl_dlights[lnum].radius)
 				continue;
 
 			VectorSubtract (ent->origin, cl_dlights[lnum].origin, dist);
@@ -776,7 +777,7 @@ void R_DrawAliasModel (entity_t *ent) {
 		glScalef (paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
 	}
 
-	anim = (int) (cl.time * 10) & 3;
+	anim = (int) (r_refdef2.time * 10) & 3;
 	skinnum = ent->skinnum;
 	if (skinnum >= paliashdr->numskins || skinnum < 0) {
 		Com_DPrintf ("R_DrawAliasModel: no such skin # %d\n", skinnum);
@@ -995,9 +996,9 @@ void R_DrawViewModel (void) {
 
 
 	gun.frame = cent->current.frame;
-	if (cent->frametime >= 0 && cent->frametime <= cl.time) {
+	if (cent->frametime >= 0 && cent->frametime <= r_refdef2.time) {
 		gun.oldframe = cent->oldframe;
-		gun.framelerp = (cl.time - cent->frametime) * 10;
+		gun.framelerp = (r_refdef2.time - cent->frametime) * 10;
 	} else {
 		gun.oldframe = gun.frame;
 		gun.framelerp = -1;

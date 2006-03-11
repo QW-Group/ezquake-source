@@ -165,7 +165,7 @@ void R_SetSkyFrame (void) {
 	s2 = iskyspeed2 / g;
 	temp = SKYSIZE * s1 * s2;
 
-	skytime = cl.time - ((int)(cl.time / temp) * temp);
+	skytime = r_refdef2.time - ((int)(r_refdef2.time / temp) * temp);
 	skyshift = skytime * skyspeed;	
 
 	r_skymade = 0;

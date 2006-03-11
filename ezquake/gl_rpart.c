@@ -665,7 +665,7 @@ void QMB_DrawParticles (void) {
 	if (!qmb_initialized)
 		return;
 
-	particle_time = cl.time;
+	particle_time = r_refdef2.time;
 
 	if (!cl.paused)
 		QMB_UpdateParticles();
@@ -892,7 +892,7 @@ void QMB_DrawParticles (void) {
 		_pt->start = _p;									\
 		_p->size = _size;									\
 		_p->hit = 0;										\
-		_p->start = cl.time;								\
+		_p->start = r_refdef2.time;								\
 		_p->die = _p->start + _time;						\
 		_p->growth = 0;										\
 		_p->rotspeed = 0;									\

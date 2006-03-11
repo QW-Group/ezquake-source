@@ -212,7 +212,7 @@ mspriteframe_t *R_GetSpriteframe (msprite_t *psprite) {
 		numframes = pspritegroup->numframes;
 		fullinterval = pintervals[numframes-1];
 
-		time = cl.time;
+		time = r_refdef2.time;
 
 		// when loading in Mod_LoadSpriteGroup, we guaranteed all interval values
 		// are positive, so we don't have to worry about division by 0

@@ -1030,6 +1030,14 @@ void V_RenderView (void) {
 		V_CalcRefdef ();
 
 	R_PushDlights ();
+
+	r_refdef2.time = cl.time;
+//	r_refdef2.allow_cheats = false;
+//	r_refdef2.allow_fbskins = cl.allow_fbskins;
+//	r_refdef2.viewplayernum = Cam_PlayerNum();
+//	r_refdef2.watervis = (atoi(Info_ValueForKey(cl.serverinfo, "watervis")) != 0);
+//	r_refdef2.lightstyles = cl_lightstyle;
+
 	R_RenderView ();
 }
 

@@ -96,9 +96,23 @@ typedef struct {
 	int			ambientlight;
 } refdef_t;
 
+
+// eye position, enitity list, etc - filled in before calling R_RenderView (TODO: port from ZQuake)
+typedef struct {
+	float			time;
+	qbool			allow_cheats;
+	qbool			allow_fbskins;
+//	int				viewplayernum;  // don't draw own glow when gl_flashblend 1
+//	qbool			watervis;
+
+//	lightstyle_t    *lightstyles;
+} refdef2_t;
+
+
 // refresh
 
 extern refdef_t	r_refdef;
+extern refdef2_t	r_refdef2;
 extern vec3_t		r_origin, vpn, vright, vup;
 
 extern struct texture_s	*r_notexture_mip;

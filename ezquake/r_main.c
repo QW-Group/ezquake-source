@@ -51,6 +51,7 @@ vec3_t	r_origin;
 
 // screen size info
 refdef_t	r_refdef;
+refdef2_t	r_refdef2;
 float		xcenter, ycenter;
 float		xscale, yscale;
 float		xscaleinv, yscaleinv;
@@ -670,9 +671,9 @@ void R_DrawViewModel (void) {
 
 
 	gun.frame = cent->current.frame;
-	if (cent->frametime >= 0 && cent->frametime <= cl.time) {
+	if (cent->frametime >= 0 && cent->frametime <= r_refdef2.time) {
 		gun.oldframe = cent->oldframe;
-		gun.framelerp = (cl.time - cent->frametime) * 10;
+		gun.framelerp = (r_refdef2.time - cent->frametime) * 10;
 	} else {
 		gun.oldframe = gun.frame;
 		gun.framelerp = -1;
@@ -803,7 +804,7 @@ void R_DrawBEntitiesOnList (visentlist_t *vislist) {
 		// calculate dynamic lighting for bmodel if it's not an instanced model
 		if (clmodel->firstmodelsurface != 0) {
 			for (k = 0; k < MAX_DLIGHTS; k++) {
-				if (cl_dlights[k].die < cl.time || !cl_dlights[k].radius)
+				if (cl_dlights[k].die < r_refdef2.time || !cl_dlights[k].radius)
 					continue;
 
 				R_MarkLights (&cl_dlights[k], 1<<k,

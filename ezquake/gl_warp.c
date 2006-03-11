@@ -207,7 +207,7 @@ void EmitFlatWaterPoly (msurface_t *fa) {
 		glBegin (GL_POLYGON);
 		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 			VectorCopy(v, nv);
-				nv[2] = v[2] + (bound(0, amf_waterripple.value, 20))*sin(v[0]*0.02+cl.time)*sin(v[1]*0.02+cl.time)*sin(v[2]*0.02+cl.time);
+				nv[2] = v[2] + (bound(0, amf_waterripple.value, 20))*sin(v[0]*0.02+r_refdef2.time)*sin(v[1]*0.02+r_refdef2.time)*sin(v[2]*0.02+r_refdef2.time);
 			glVertex3fv (nv);
 		}
 		glEnd ();
@@ -288,10 +288,10 @@ void EmitWaterPolys (msurface_t *fa) {
 				os = v[3];
 				ot = v[4];
 
-				s = os + SINTABLE_APPROX(ot * 0.125 + cl.time);
+				s = os + SINTABLE_APPROX(ot * 0.125 + r_refdef2.time);
 				s *= (1.0 / 64);
 
-				t = ot + SINTABLE_APPROX(os * 0.125 + cl.time);
+				t = ot + SINTABLE_APPROX(os * 0.125 + r_refdef2.time);
 				t *= (1.0 / 64);
 
 				//VULT RIPPLE : Not sure where this came from first, but I've seen in it more than one engine
@@ -299,7 +299,7 @@ void EmitWaterPolys (msurface_t *fa) {
 				VectorCopy(v, nv);
 				//Over 20 this setting gets pretty cheaty
 				if (amf_waterripple.value && !strstr (fa->texinfo->texture->name, "tele"))
-					nv[2] = v[2] + (bound(0, amf_waterripple.value, 20)) *sin(v[0]*0.02+cl.time)*sin(v[1]*0.02+cl.time)*sin(v[2]*0.02+cl.time);
+					nv[2] = v[2] + (bound(0, amf_waterripple.value, 20)) *sin(v[0]*0.02+r_refdef2.time)*sin(v[1]*0.02+r_refdef2.time)*sin(v[2]*0.02+r_refdef2.time);
 
 				glTexCoord2f (s, t);
 				glVertex3fv (nv);
@@ -423,9 +423,9 @@ void R_DrawSkyChain (void) {
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 			GL_Bind (alphaskytexture);
 
-			speedscale = cl.time * 8;
+			speedscale = r_refdef2.time * 8;
 			speedscale -= (int) speedscale & ~127;
-			speedscale2 = cl.time * 16;
+			speedscale2 = r_refdef2.time * 16;
 			speedscale2 -= (int) speedscale2 & ~127;
 
 			for (fa = skychain; fa; fa = fa->texturechain)
@@ -434,7 +434,7 @@ void R_DrawSkyChain (void) {
 			GL_DisableMultitexture();
 		} else {
 			GL_Bind(solidskytexture);
-			speedscale = cl.time * 8;
+			speedscale = r_refdef2.time * 8;
 			speedscale -= (int) speedscale & ~127;
 
 			for (fa = skychain; fa; fa = fa->texturechain)
@@ -443,7 +443,7 @@ void R_DrawSkyChain (void) {
 			glEnable (GL_BLEND);
 			GL_Bind (alphaskytexture);
 
-			speedscale = cl.time * 16;
+			speedscale = r_refdef2.time * 16;
 			speedscale -= (int) speedscale & ~127;
 
 			for (fa = skychain; fa; fa = fa->texturechain)
@@ -873,10 +873,10 @@ void CalcCausticTexCoords(float *v, float *s, float *t) {
 	os = v[3];
 	ot = v[4];
 
-	*s = os + SINTABLE_APPROX(0.465 * (cl.time + ot));
+	*s = os + SINTABLE_APPROX(0.465 * (r_refdef2.time + ot));
 	*s *= -3 * (0.5 / 64);
 
-	*t = ot + SINTABLE_APPROX(0.465 * (cl.time + os));
+	*t = ot + SINTABLE_APPROX(0.465 * (r_refdef2.time + os));
 	*t *= -3 * (0.5 / 64);
 }
 void EmitCausticsPolys (void) {
