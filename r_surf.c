@@ -226,7 +226,7 @@ texture_t *R_TextureAnimation (texture_t *base) {
 	if (!base->anim_total)
 		return base;
 
-	relative = (int)(cl.time*10) % base->anim_total;
+	relative = (int)(r_refdef2.time*10) % base->anim_total;
 
 	count = 0;	
 	while (base->anim_min > relative || base->anim_max <= relative) {

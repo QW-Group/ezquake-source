@@ -294,7 +294,7 @@ void Classic_ParticleExplosion (vec3_t org) {
 		p->next = active_particles;
 		active_particles = p;
 
-		p->die = cl.time + 5;
+		p->die = r_refdef2.time + 5;
 		p->color = ramp1[0];
 		p->ramp = rand() & 3;
 		if (i & 1) {
@@ -325,7 +325,7 @@ void Classic_BlobExplosion (vec3_t org) {
 		p->next = active_particles;
 		active_particles = p;
 
-		p->die = cl.time + 1 + (rand() & 8) * 0.05;
+		p->die = r_refdef2.time + 1 + (rand() & 8) * 0.05;
 
 		if (i & 1) {
 			p->type = pt_blob;
@@ -359,7 +359,7 @@ void Classic_RunParticleEffect (vec3_t org, vec3_t dir, int color, int count) {
 		p->next = active_particles;
 		active_particles = p;
 
-		p->die = cl.time + 0.1 * (rand() % 5);
+		p->die = r_refdef2.time + 0.1 * (rand() % 5);
 		p->color = (color & ~7) + (rand() & 7);
 		p->type = pt_grav;
 		for (j = 0; j < 3; j++) {
@@ -385,7 +385,7 @@ void Classic_LavaSplash (vec3_t org) {
 				p->next = active_particles;
 				active_particles = p;
 
-				p->die = cl.time + 2 + (rand() & 31) * 0.02;
+				p->die = r_refdef2.time + 2 + (rand() & 31) * 0.02;
 				p->color = 224 + (rand() & 7);
 				p->type = pt_grav;
 
@@ -421,7 +421,7 @@ void Classic_TeleportSplash (vec3_t org) {
 				p->next = active_particles;
 				active_particles = p;
 
-				p->die = cl.time + 0.2 + (rand() & 7) * 0.02;
+				p->die = r_refdef2.time + 0.2 + (rand() & 7) * 0.02;
 				p->color = 7 + (rand() & 7);
 				p->type = pt_grav;
 
@@ -475,7 +475,7 @@ void Classic_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trai
 		active_particles = p;
 
 		VectorClear (p->vel);
-		p->die = cl.time + 2;
+		p->die = r_refdef2.time + 2;
 
 		switch(type) {		
 		case GRENADE_TRAIL:
@@ -499,7 +499,7 @@ void Classic_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trai
 			break;
 		case TRACER1_TRAIL:
 		case TRACER2_TRAIL:
-			p->die = cl.time + 0.5;
+			p->die = r_refdef2.time + 0.5;
 			p->type = pt_static;
 			if (type == TRACER1_TRAIL)
 				p->color = 52 + ((tracercount & 4) << 1);
@@ -520,7 +520,7 @@ void Classic_ParticleTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, trai
 		case VOOR_TRAIL:
 			p->color = 9 * 16 + 8 + (rand() & 3);
 			p->type = pt_static;
-			p->die = cl.time + 0.3;
+			p->die = r_refdef2.time + 0.3;
 			for (j = 0; j < 3; j++)
 				p->org[j] = point[j] + ((rand() & 15) - 8);
 			break;
@@ -589,7 +589,7 @@ void Classic_DrawParticles (void) {
 
 	while(1) {
 		kill = active_particles;
-		if (kill && kill->die < cl.time) {
+		if (kill && kill->die < r_refdef2.time) {
 			active_particles = kill->next;
 			kill->next = free_particles;
 			free_particles = kill;
@@ -601,7 +601,7 @@ void Classic_DrawParticles (void) {
 	for (p = active_particles; p ; p = p->next) {
 		while (1) {
 			kill = p->next;
-			if (kill && kill->die < cl.time) {
+			if (kill && kill->die < r_refdef2.time) {
 				p->next = kill->next;
 				kill->next = free_particles;
 				free_particles = kill;

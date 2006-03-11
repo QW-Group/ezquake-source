@@ -98,7 +98,7 @@ void R_AliasCheckBBoxFrame (int frame, trivertx_t **mins, trivertx_t **maxs) {
 
 		// when loading in Mod_LoadAliasGroup, we guaranteed all interval values
 		// are positive, so we don't have to worry about division by 0
-		targettime = cl.time - ((int) (cl.time / fullinterval)) * fullinterval;
+		targettime = r_refdef2.time - ((int) (r_refdef2.time / fullinterval)) * fullinterval;
 
 		for (i = 0; i < numframes - 1; i++) {
 			if (pintervals[i] > targettime)
@@ -490,7 +490,7 @@ void R_AliasSetupSkin (entity_t *ent) {
 		numskins = paliasskingroup->numskins;
 		fullskininterval = pskinintervals[numskins - 1];
 	
-		skintime = cl.time;
+		skintime = r_refdef2.time;
 	
 		// when loading in Mod_LoadAliasSkinGroup, we guaranteed all interval
 		// values are positive, so we don't have to worry about division by 0
@@ -530,7 +530,7 @@ void R_AliasSetupLighting (entity_t *ent) {
 	ambientlight = shadelight = R_LightPoint (currententity->origin);
 
 	for (lnum = 0; lnum < MAX_DLIGHTS; lnum++) {
-		if (cl_dlights[lnum].die < cl.time || !cl_dlights[lnum].radius)
+		if (cl_dlights[lnum].die < r_refdef2.time || !cl_dlights[lnum].radius)
 			continue;
 
 		VectorSubtract (currententity->origin, cl_dlights[lnum].origin,	dist);
@@ -598,7 +598,7 @@ void R_AliasSetupFrameVerts (int frame, trivertx_t **verts) {
 
 		// when loading in Mod_LoadAliasGroup, we guaranteed all interval values
 		// are positive, so we don't have to worry about division by 0
-		targettime = cl.time - ((int) (cl.time / fullinterval)) * fullinterval;
+		targettime = r_refdef2.time - ((int) (r_refdef2.time / fullinterval)) * fullinterval;
 
 		for (i = 0; i < numframes - 1; i++) {
 			if (pintervals[i] > targettime)
