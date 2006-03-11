@@ -178,12 +178,10 @@ __inline static float SINTABLE_APPROX(float time) {
 	return -8 + 16 * lerp / 255.0;
 }
 
-// START shaman FIX /gl_turbripples + /r_drawflat {
-void EmitFlatPoly (msurface_t *fa, qbool skysurface) {
+void EmitFlatPoly (msurface_t *fa) {
 	glpoly_t *p;
 	float *v;
 	int i;
-	vec3_t nv;
 	for (p = fa->polys; p; p = p->next) {
 		glBegin (GL_POLYGON);
 		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
@@ -191,18 +189,30 @@ void EmitFlatPoly (msurface_t *fa, qbool skysurface) {
 		}
 		glEnd ();
 	}
+}
+
+
+void EmitFlatWaterPoly (msurface_t *fa) {
+	glpoly_t *p;
+	float *v;
+	int i;
+	vec3_t nv;
+
+	if (!amf_waterripple.value || strstr(fa->texinfo->texture->name, "tele")) {
+		EmitFlatPoly (fa);
+		return;
+	}
+
 	for (p = fa->polys; p; p = p->next) {
 		glBegin (GL_POLYGON);
 		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
 			VectorCopy(v, nv);
-			if (amf_waterripple.value && !strstr (fa->texinfo->texture->name, "tele") && !skysurface)
-				nv[2] = v[2] + (bound(0, amf_waterripple.value, 20)) *sin(v[0]*0.02+cl.time)*sin(v[1]*0.02+cl.time)*sin(v[2]*0.02+cl.time);
+				nv[2] = v[2] + (bound(0, amf_waterripple.value, 20))*sin(v[0]*0.02+cl.time)*sin(v[1]*0.02+cl.time)*sin(v[2]*0.02+cl.time);
 			glVertex3fv (nv);
 		}
 		glEnd ();
 	}
 }
-// } END shaman FIX /gl_turbripples + /r_drawflat
 
 //Does a water warp on the pre-fragmented glpoly_t chain
 void EmitWaterPolys (msurface_t *fa) {
@@ -255,7 +265,7 @@ void EmitWaterPolys (msurface_t *fa) {
 	}
  // END shaman FIX /gl_turbalpha + /r_fastturb {
 
-		EmitFlatPoly (fa, false);
+		EmitFlatWaterPoly (fa);
 
  // START shaman FIX /gl_turbalpha + /r_fastturb {
 	if (wateralpha < 1.0 && wateralpha >= 0) {
@@ -400,7 +410,7 @@ void R_DrawSkyChain (void) {
 		glColor3ubv (col);
 
 		for (fa = skychain; fa; fa = fa->texturechain)
-			EmitFlatPoly (fa, true);
+			EmitFlatPoly (fa);
 
 		glEnable (GL_TEXTURE_2D);
 		glColor3ubv (color_white);
@@ -834,7 +844,7 @@ void R_DrawSkyBox (void) {
 	}
 
 	for (fa = skychain; fa; fa = fa->texturechain)
-		EmitFlatPoly (fa, true);
+		EmitFlatPoly (fa);
 
 	if (gl_fogenable.value && gl_fogsky.value) {
 		glDisable(GL_BLEND);
