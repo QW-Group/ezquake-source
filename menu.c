@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.34 2006-01-27 15:50:33 johnnycz Exp $
+	$Id: menu.c,v 1.35 2006-03-11 10:27:50 tonik Exp $
 
 */
 
@@ -402,9 +402,11 @@ void M_AdjustSliders (int dir) {
 		if (cl_forwardspeed.value > 200) {
 			Cvar_SetValue (&cl_forwardspeed, 200);
 			Cvar_SetValue (&cl_backspeed, 200);
+			Cvar_SetValue (&cl_sidespeed, 200);
 		} else {
 			Cvar_SetValue (&cl_forwardspeed, 400);
 			Cvar_SetValue (&cl_backspeed, 400);
+			Cvar_SetValue (&cl_sidespeed, 400);
 		}
 		break;
 	
