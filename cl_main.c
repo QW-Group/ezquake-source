@@ -770,14 +770,14 @@ void CL_InitCommands (void);
 void CL_Fog_f (void) {
 
 	extern cvar_t gl_fogred, gl_foggreen, gl_fogblue, gl_fogenable;
-	if (Cmd_Argc () == 1) {
+	if (Cmd_Argc() == 1) {
 		Com_Printf ("\"fog\" is \"%f %f %f\"\n", gl_fogred.value, gl_foggreen.value, gl_fogblue.value);
 		return;
 	}
-	gl_fogenable.value = 1;
-	gl_fogred.value    = atof(Cmd_Argv(1));
-	gl_foggreen.value  = atof(Cmd_Argv(2));
-	gl_fogblue.value   = atof(Cmd_Argv(3));
+	Cvar_SetValue (&gl_fogenable, 1);
+	Cvar_SetValue (&gl_fogred, atof(Cmd_Argv(1)));
+	Cvar_SetValue (&gl_foggreen, atof(Cmd_Argv(2)));
+	Cvar_SetValue (&gl_fogblue, atof(Cmd_Argv(3)));
 }
 #endif
 
