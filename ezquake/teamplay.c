@@ -15,6 +15,9 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: teamplay.c,v 1.30 2006-03-13 14:19:51 vvd0 Exp $
+
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -2038,7 +2041,7 @@ void CL_RE_Trigger_f (void) {
 		if (!trig) {
 			// allocate new trigger
 			newtrigger = true;
-			trig = (msg_trigger_t *) Z_Malloc (sizeof(pcre_trigger_t));
+			trig = (pcre_trigger_t *) Z_Malloc (sizeof(pcre_trigger_t));
 			trig->next = re_triggers;
 			re_triggers = trig;
 			trig->name = Z_StrDup (name);
@@ -2347,7 +2350,7 @@ void AddInternalTrigger(char* regexpstr, unsigned mask, internal_trigger_func fu
 	const char		*error;
 	int			error_offset;
 
-	trig = (msg_trigger_t *) Z_Malloc (sizeof(pcre_internal_trigger_t));
+	trig = (pcre_internal_trigger_t *) Z_Malloc (sizeof(pcre_internal_trigger_t));
 	trig->next = internal_triggers;
 	internal_triggers = trig;
 
