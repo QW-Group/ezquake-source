@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: sv_user.c,v 1.16 2006-03-20 13:51:28 vvd0 Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -720,7 +721,7 @@ void SV_Say (qbool team) {
 		return;
 
 	if (team)
-		Q_strncpyz (t1, Info_ValueForKey (sv_client->userinfo, "team"), sizeof(t1));
+		strlcpy (t1, Info_ValueForKey (sv_client->userinfo, "team"), sizeof(t1));
 
 	if (sv_client->spectator && (!sv_spectalk.value || team))
 		sprintf (text, "[SPEC] %s: ", sv_client->name);
@@ -946,7 +947,7 @@ void Cmd_SetInfo_f (void) {
 
 	Info_SetValueForKey (sv_client->userinfo, Cmd_Argv(1), Cmd_Argv(2), MAX_INFO_STRING);
 	// name is extracted below in ExtractFromUserInfo
-	//	Q_strncpyz (sv_client->name, Info_ValueForKey (sv_client->userinfo, "name")
+	//	strlcpy (sv_client->name, Info_ValueForKey (sv_client->userinfo, "name")
 	//		, sizeof(sv_client->name));
 	//	SV_FullClientUpdate (sv_client, &sv.reliable_datagram);
 	//	sv_client->sendinfo = true;

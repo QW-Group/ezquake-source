@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: sys_linux.c,v 1.13 2006-03-20 13:51:28 vvd0 Exp $
 */
 #include <unistd.h>
 #include <signal.h>
@@ -469,5 +470,5 @@ char *Sys_GetClipboardData(void) {
 }
 
 void Sys_CopyToClipboard(char *text) {
-	Q_strncpyz(clipboard_buffer, text, SYS_CLIPBOARD_SIZE);
+	strlcpy(clipboard_buffer, text, SYS_CLIPBOARD_SIZE);
 }

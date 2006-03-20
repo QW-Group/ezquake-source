@@ -16,6 +16,8 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: mp3_player.c,v 1.15 2006-03-20 13:51:27 vvd0 Exp $
 */
 
 
@@ -174,7 +176,7 @@ void MP3_Execute_f(void) {
 	si.wShowWindow = SW_SHOWMINNOACTIVE;
 	si.dwFlags = STARTF_USESHOWWINDOW;
 
-	Q_strncpyz(path, mp3_dir.string, sizeof(path) - strlen("/winamp.exe"));
+	strlcpy(path, mp3_dir.string, sizeof(path) - strlen("/winamp.exe"));
 	length = strlen(path);
 	if (length && (path[length - 1] == '\\' || path[length - 1] == '/'))
 		path[length - 1] = 0;
@@ -298,7 +300,7 @@ char *MP3_Macro_MP3Info(void) {
 
 	if (!MP3_IsPlayerRunning()) {
 	
-		Q_strncpyz(title, mp3_notrunning_msg, sizeof(title));
+		strlcpy(title, mp3_notrunning_msg, sizeof(title));
 		return title;
 	}
 	GetWindowText(mp3_hwnd, title, sizeof(title));
@@ -359,7 +361,7 @@ void MP3_Execute_f(void) {
 		Com_Printf("XMMS is already running\n");
 		return;
 	}
-	Q_strncpyz(path, mp3_dir.string, sizeof(path) - strlen("/xmms"));
+	strlcpy(path, mp3_dir.string, sizeof(path) - strlen("/xmms"));
 	length = strlen(path);
 	for (i = 0; i < length; i++) {
 		if (path[i] == '\\')
@@ -520,7 +522,7 @@ char *MP3_Macro_MP3Info(void) {
 	}
 	playlist_pos = qxmms_remote_get_playlist_pos(XMMS_SESSION);
 	s = qxmms_remote_get_playlist_title(XMMS_SESSION, playlist_pos);
-	Q_strncpyz(title, s ? s : "", sizeof(title));
+	strlcpy(title, s ? s : "", sizeof(title));
 	g_free(s);
 	return title;
 }
@@ -579,7 +581,7 @@ void MP3_SongInfo_f(void) {
 		Com_Printf(va("%s %s\n", status_string, title));
 		return;
 	}
-	Q_strncpyz(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
+	strlcpy(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
 	Com_Printf(va("%s %s \x10%s/%s\x11\n", status_string, title, elapsed_string, SecondsToMinutesString(total)));
 }
 
@@ -589,15 +591,15 @@ char *MP3_Menu_SongtTitle(void) {
 
 	if (!MP3_IsPlayerRunning()) {
 		Com_Printf("%s\n", mp3_notrunning_msg);
-	    Q_strncpyz(title, mp3_notrunning_msg, sizeof(title));
+	    strlcpy(title, mp3_notrunning_msg, sizeof(title));
 	    return title;
 	}
 	macrotitle = MP3_Macro_MP3Info();
 	MP3_GetPlaylistInfo(&current, NULL);
 	if (*macrotitle)
-		Q_strncpyz(title, va("%d. %s", current + 1, macrotitle), sizeof(title));
+		strlcpy(title, va("%d. %s", current + 1, macrotitle), sizeof(title));
 	else
-		Q_strncpyz(title, MP3_PLAYERNAME_ALLCAPS, sizeof(title));
+		strlcpy(title, MP3_PLAYERNAME_ALLCAPS, sizeof(title));
 	return title;
 }
 
@@ -619,7 +621,7 @@ void MP3_LoadPlaylist_f(void) {
 		return;
 	}
 
-	Q_strncpyz(playlist, Cmd_Args(), sizeof(playlist));
+	strlcpy(playlist, Cmd_Args(), sizeof(playlist));
 
 	if (!strcmp(COM_FileExtension(playlist), "pls")) {
 		Com_Printf("Error: .pls playlists are not supported.  Try loading a .m3u playlist\n");
@@ -651,7 +653,7 @@ long MP3_GetPlaylist(char **buf) {
 	SendMessage(mp3_hwnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) &cds);
 
 	SendMessage(mp3_hwnd, WM_WA_IPC, 0, IPC_WRITEPLAYLIST);
-	Q_strncpyz(path, mp3_dir.string, sizeof(path));
+	strlcpy(path, mp3_dir.string, sizeof(path));
 	pathlength = strlen(path);
 	if (pathlength && (path[pathlength - 1] == '\\' || path[pathlength - 1] == '/'))
 		path[pathlength - 1] = 0;

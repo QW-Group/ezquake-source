@@ -16,6 +16,8 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: fmod.c,v 1.7 2006-03-20 13:51:26 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -66,7 +68,7 @@ static void FMod_AddModel(char *name, qbool flags) {
     if (check_models_num >= MAX_CHECK_MODELS)
         return;
 
-    Q_strncpyz(check_models[check_models_num].name, name, sizeof(check_models[check_models_num].name));	
+    strlcpy(check_models[check_models_num].name, name, sizeof(check_models[check_models_num].name));	
 	check_models[check_models_num].checked = check_models[check_models_num].modified = false;
 	check_models[check_models_num].flags = flags;
 	check_models_num++;

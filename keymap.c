@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keymap.c,v 1.5 2005-09-09 11:00:26 disconn3ct Exp $
+	$Id: keymap.c,v 1.6 2006-03-20 13:51:27 vvd0 Exp $
 
 */
 // keymap.c -- support for international keyboard layouts
@@ -316,12 +316,12 @@ void IN_Keymap_Load_f (void)
 	name[0] = (char)'\0';
 	if (Cmd_Argc() > 2) {
 		// layout-name is also given -> store it for later usage
-		Q_strncpyz (name, Cmd_Argv(i), sizeof(name));
+		strlcpy (name, Cmd_Argv(i), sizeof(name));
 		i++;
 	}
 
 	// test, if the given file could be found and open it:
-	Q_strncpyz (filename, Cmd_Argv(i), sizeof(filename) - 5);
+	strlcpy (filename, Cmd_Argv(i), sizeof(filename) - 5);
 	COM_DefaultExtension (filename, ".kmap");
 
 	// first check in subdirectory "keymaps":
@@ -349,7 +349,7 @@ void IN_Keymap_Load_f (void)
 					if (!Q_strcasecmp(Cmd_Argv(0), "keymap_name")) {
 						if (name[0] == (char)'\0') {
 							if (Cmd_Argc() > 1)
-								Q_strncpyz (name, Cmd_Argv(1), sizeof(name));
+								strlcpy (name, Cmd_Argv(1), sizeof(name));
 						}
 					}
 					else {
@@ -422,13 +422,13 @@ void IN_Keymap_Save_f (void)
 		i++;
 	}
 
-	Q_strncpyz (filename, Cmd_Argv(i), sizeof(filename) - 5);
+	strlcpy (filename, Cmd_Argv(i), sizeof(filename) - 5);
 	COM_DefaultExtension (filename, ".kmap");
 	if ( strchr(filename, (int)'/') == NULL && strchr(filename, (int)'\\') == NULL ) {
 		// no directory given, so add "qw" to the directory...
 		char   dummy[ MAX_QPATH ];
 
-		Q_strncpyz (dummy, filename, sizeof(dummy) - 3);
+		strlcpy (dummy, filename, sizeof(dummy) - 3);
 		sprintf(filename, "qw/%s", dummy);
 	}
 

@@ -16,6 +16,8 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: image.c,v 1.18 2006-03-20 13:51:27 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -677,7 +679,7 @@ int Image_WritePNG (char *filename, int compression, byte *pixels, int width, in
 	png_structp png_ptr;
 	png_infop info_ptr;
 	png_byte **rowpointers;
-	Q_snprintfz (name, sizeof(name), "%s/%s", com_basedir, filename);
+	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);
 
 	if (!png_handle)
 		return false;
@@ -748,7 +750,7 @@ int Image_WritePNGPLTE (char *filename, int compression,
 	if (!png_handle)
 		return false;
 
-	Q_snprintfz (name, sizeof(name), "%s/%s", com_basedir, filename);
+	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);
 	
 	if (!(fp = fopen (name, "wb"))) {
 		COM_CreatePath (name);
@@ -1166,7 +1168,7 @@ int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int he
 	if (!jpeg_handle)
 		return false;
 
-	Q_snprintfz (name, sizeof(name), "%s/%s", com_basedir, filename);	
+	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);	
 	if (!(outfile = fopen (name, "wb"))) {
 		COM_CreatePath (name);
 		if (!(outfile = fopen (name, "wb")))

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.12 2006-03-08 15:29:35 disconn3ct Exp $
+	$Id: vid_win.c,v 1.13 2006-03-20 13:51:29 vvd0 Exp $
 
 */
 
@@ -326,9 +326,9 @@ void registerAllMemDrivers(void) {
 
 static void AddModeDesc(vmode_t *mode) {
 	if (mode->frequency)
-		Q_snprintfz (mode->modedesc, sizeof(mode->modedesc), "%dx%d@%d", mode->width, mode->height, mode->frequency);
+		snprintf (mode->modedesc, sizeof(mode->modedesc), "%dx%d@%d", mode->width, mode->height, mode->frequency);
 	else
-		Q_snprintfz (mode->modedesc, sizeof(mode->modedesc), "%dx%d", mode->width, mode->height);
+		snprintf (mode->modedesc, sizeof(mode->modedesc), "%dx%d", mode->width, mode->height);
 }
 
 void VID_InitMGLFull (HINSTANCE hInstance) {
@@ -899,11 +899,11 @@ char *VID_GetModeDescription2 (int mode) {
 	pv = VID_GetModePtr (mode);
 
 	if (modelist[mode].type == MS_FULLSCREEN)
-		Q_snprintfz(pinfo, sizeof(pinfo), "%s fullscreen", pv->modedesc);
+		snprintf(pinfo, sizeof(pinfo), "%s fullscreen", pv->modedesc);
 	else if (modelist[mode].type == MS_FULLDIB)
-		Q_snprintfz(pinfo, sizeof(pinfo), "%s fullscreen", pv->modedesc);
+		snprintf(pinfo, sizeof(pinfo), "%s fullscreen", pv->modedesc);
 	else
-		Q_snprintfz(pinfo, sizeof(pinfo), "%s windowed", pv->modedesc);
+		snprintf(pinfo, sizeof(pinfo), "%s windowed", pv->modedesc);
 
 	return pinfo;
 }
@@ -919,11 +919,11 @@ char *VID_GetExtModeDescription (int mode) {
 
 	pv = VID_GetModePtr (mode);
 	if (modelist[mode].type == MS_FULLSCREEN)
-		Q_snprintfz(pinfo, sizeof(pinfo), "%s fullscreen %s", pv->modedesc, MGL_modeDriverName(pv->modenum));
+		snprintf(pinfo, sizeof(pinfo), "%s fullscreen %s", pv->modedesc, MGL_modeDriverName(pv->modenum));
 	else if (modelist[mode].type == MS_FULLDIB)
-		Q_snprintfz(pinfo, sizeof(pinfo), "%s fullscreen DIB", pv->modedesc);
+		snprintf(pinfo, sizeof(pinfo), "%s fullscreen DIB", pv->modedesc);
 	else
-		Q_snprintfz(pinfo, sizeof(pinfo), "%s windowed", pv->modedesc);
+		snprintf(pinfo, sizeof(pinfo), "%s windowed", pv->modedesc);
 
 	return pinfo;
 }
@@ -2552,7 +2552,7 @@ void VID_MenuDraw (void) {
 
 	// line cursor
 	if (vid_testingmode) {
-		Q_snprintfz (temp, sizeof(temp), "TESTING %s", modedescs[vid_line].desc);
+		snprintf (temp, sizeof(temp), "TESTING %s", modedescs[vid_line].desc);
 		M_Print (13 * 8, 36 + MODE_AREA_HEIGHT * 8 + 8*4, temp);
 		M_Print (9 * 8, 36 + MODE_AREA_HEIGHT * 8 + 8*6, "Please wait 5 seconds...");
 	} else {
@@ -2561,14 +2561,14 @@ void VID_MenuDraw (void) {
 		ptr = VID_GetModeDescription2 (vid_modenum);
 
 		if (ptr) {
-			Q_snprintfz (temp, sizeof(temp), "D to set default: %s", ptr);
+			snprintf (temp, sizeof(temp), "D to set default: %s", ptr);
 			M_Print (4, 36 + MODE_AREA_HEIGHT * 8 + 8 * 5, temp);
 		}
 
 		ptr = VID_GetModeDescription2 ((int)_vid_default_mode_win.value);
 
 		if (ptr) {
-			Q_snprintfz (temp, sizeof(temp), "Current default: %s", ptr);
+			snprintf (temp, sizeof(temp), "Current default: %s", ptr);
 			M_Print (12, 36 + MODE_AREA_HEIGHT * 8 + 8 * 6, temp);
 		}
 

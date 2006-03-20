@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id:  Exp $
 */
 
 #include <unistd.h>
@@ -47,7 +48,7 @@ qbool SNDDMA_Init_OSS(void) {
 
 	// open snd_dev, confirm capability to mmap, and get size of dma buffer
 	if ((i = COM_CheckParm("-snddev"))&& i < com_argc - 1)
-		Q_strncpyz (snd_dev, com_argv[i + 1], sizeof(snd_dev));
+		strlcpy (snd_dev, com_argv[i + 1], sizeof(snd_dev));
 
     audio_fd = open(snd_dev, O_RDWR);
     if (audio_fd < 0) {

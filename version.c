@@ -22,6 +22,8 @@
 		Free Software Foundation, Inc.
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
+
+	$Id: version.c,v 1.4 2006-03-20 13:51:29 vvd0 Exp $
 */
 
 #include "common.h"
@@ -90,7 +92,7 @@ char *VersionString (void)
 	strcpy (st, " norjscripts");
 	}
 
-	Q_snprintfz (str, sizeof(str), "%i%s", build_number(), st);
+	snprintf (str, sizeof(str), "%i%s", build_number(), st);
 
 	return str;
 }

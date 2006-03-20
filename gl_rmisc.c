@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: gl_rmisc.c,v 1.7 2006-03-20 13:51:26 vvd0 Exp $
 */
 // gl_rmisc.c
 
@@ -83,7 +84,7 @@ void R_TranslatePlayerSkin (int playernum) {
 	if (!player->name[0])
 		return;
 
-	Q_strncpyz(s, Skin_FindName(player), sizeof(s));
+	strlcpy(s, Skin_FindName(player), sizeof(s));
 	COM_StripExtension(s, s);
 
 	if (player->skin && Q_strcasecmp(s, player->skin->name))

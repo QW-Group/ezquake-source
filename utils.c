@@ -16,6 +16,8 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: utils.c,v 1.12 2006-03-20 13:51:28 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -44,7 +46,7 @@ char *SecondsToMinutesString(int print_time) {
 	minutes = fmod (print_time / 60, 10);
 	tens_seconds = fmod (print_time / 10, 6);
 	seconds = fmod (print_time, 10);
-	Q_snprintfz (time, sizeof(time), "%i%i:%i%i", tens_minutes, minutes, tens_seconds, seconds);
+	snprintf (time, sizeof(time), "%i%i:%i%i", tens_minutes, minutes, tens_seconds, seconds);
 	return time;
 }
 
@@ -58,7 +60,7 @@ char *SecondsToHourString(int print_time) {
 	minutes = fmod (print_time / 60, 10);
 	tens_seconds = fmod (print_time / 10, 6);
 	seconds = fmod (print_time, 10);
-	Q_snprintfz (time, sizeof(time), "%i%i:%i%i:%i%i", tens_hours, hours, tens_minutes, minutes, tens_seconds, seconds);
+	snprintf (time, sizeof(time), "%i%i:%i%i:%i%i", tens_hours, hours, tens_minutes, minutes, tens_seconds, seconds);
 	return time;
 }
 
@@ -90,7 +92,7 @@ int Util_Extend_Filename(char *filename, char **ext) {
 	int i, offset;
 	FILE *f;
 
-	Q_strncpyz(extendedname, filename, sizeof(extendedname));
+	strlcpy(extendedname, filename, sizeof(extendedname));
 	offset = strlen(extendedname);
 
 	i = -1;
@@ -98,7 +100,7 @@ int Util_Extend_Filename(char *filename, char **ext) {
 		if (++i == 1000)
 			break;
 		for (s = ext; *s; s++) { 
-			Q_snprintfz (extendedname + offset, sizeof(extendedname) - offset, "_%03i.%s", i, *s);
+			snprintf (extendedname + offset, sizeof(extendedname) - offset, "_%03i.%s", i, *s);
 			if ((f = fopen(extendedname, "rb"))) {
 				fclose(f);
 				break;
@@ -147,7 +149,7 @@ char *Util_Invalid_Filename_Msg(char *s) {
 	if (!s)
 		return NULL;
 
-	Q_snprintfz(err, sizeof(err), "%s is not a valid filename (?*:<>\" are illegal characters)\n", s);
+	snprintf(err, sizeof(err), "%s is not a valid filename (?*:<>\" are illegal characters)\n", s);
 	return err;
 }
 
@@ -303,11 +305,7 @@ void Replace_In_String (char *src,int n, char delim, int arg, ...){
 	if (n>sizeof(msg))
 		return;
 
-
-
-	Q_strncpyz(msg,src,sizeof(msg));
-	
-	
+	strlcpy(msg,src,sizeof(msg));
 
 	while (msg[i] != '\0' && j < n) {
 		if(msg[i++] != delim)

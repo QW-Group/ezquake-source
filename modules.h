@@ -16,6 +16,8 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: modules.h,v 1.6 2006-03-20 13:51:27 vvd0 Exp $
 */
 
 #ifndef _MODULES_H
@@ -36,7 +38,7 @@ extern char _temp_modulename[MAX_OSPATH];
 #define QLIB_LIBRARY_EXTENSION ".dll"
 #define QLIB_LOADLIBRARY(lib)									\
 	(																\
-	Q_snprintfz(_temp_modulename, MAX_OSPATH, "%s.dll", lib),	\
+	snprintf(_temp_modulename, MAX_OSPATH, "%s.dll", lib),	\
 	LoadLibrary(_temp_modulename)								\
 	)
 #define QLIB_GETPROCADDRESS(lib, func) GetProcAddress(lib, func)
@@ -50,7 +52,7 @@ extern char _temp_modulename[MAX_OSPATH];
 #endif
 #define QLIB_LOADLIBRARY(lib)									\
 	(																\
-	Q_snprintfz(_temp_modulename, MAX_OSPATH, "%s.so", lib),	\
+	snprintf(_temp_modulename, MAX_OSPATH, "%s.so", lib),	\
 	dlopen(_temp_modulename, RTLD_NOW)							\
 	)
 #define QLIB_GETPROCADDRESS(lib, func) dlsym(lib, func)

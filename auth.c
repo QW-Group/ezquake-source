@@ -16,6 +16,8 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: auth.c,v 1.9 2006-03-20 13:51:26 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -84,7 +86,7 @@ static int Auth_CheckString (char *id, char *s, int flags, int offset, int *out_
 		return AUTH_NOTHING;
 
 	len = bound (0, offset - 2, sizeof(name) - 1);
-	Q_strncpyz(name, s, len + 1);
+	strlcpy(name, s, len + 1);
 
 	if ((slot = Player_NametoSlot(name)) == PLAYER_NAME_NOMATCH)
 		return AUTH_NOTHING;
@@ -98,7 +100,7 @@ static int Auth_CheckString (char *id, char *s, int flags, int offset, int *out_
 
 	memcpy(hash, index + 7, 30);
 	if (out_data)
-		Q_strncpyz(out_data, s + offset + strlen(id), bound(1, index - (s + offset + strlen(id)) + 1, out_size));
+		strlcpy(out_data, s + offset + strlen(id), bound(1, index - (s + offset + strlen(id)) + 1, out_size));
 
 	if (!auth_viewcrc.value) {
 		index[0] = 0x0A;
@@ -123,7 +125,7 @@ static void Auth_CheckFServerResponse (char *s, int flags, int offset) {
 		Auth_AuthenticateClient(slot);
 		if ((port = strchr(data, ':')))
 			*port = 0;
-		Q_strncpyz(cl.players[slot].f_server, data, sizeof(cl.players[slot].f_server));
+		strlcpy(cl.players[slot].f_server, data, sizeof(cl.players[slot].f_server));
 	}
 }
 

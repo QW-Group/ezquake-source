@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: cvar.c,v 1.23 2006-03-20 13:51:26 vvd0 Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -103,7 +104,7 @@ void Cvar_SetDefault(cvar_t *var, float value) {
 	char	val[128];
 	int i;
 	
-	Q_snprintfz (val, sizeof(val), "%f", value);
+	snprintf (val, sizeof(val), "%f", value);
 	for (i = strlen(val) - 1; i > 0 && val[i] == '0'; i--)
 		val[i] = 0;
 	if (val[i] == '.')
@@ -200,21 +201,21 @@ void Cvar_Set (cvar_t *var, char *value) {
 		return;
 	}
 
-	if (var->flags & CVAR_RULESET_MIN){
-	test  = Q_atof (value);
-		if (test < var->minrulesetvalue){	
-		if (con_initialized)
-			Com_Printf ("min \"%s\" is limited to %0.2f\n", var->name,var->minrulesetvalue);
-		return;
+	if (var->flags & CVAR_RULESET_MIN) {
+		test  = Q_atof (value);
+		if (test < var->minrulesetvalue) {	
+			if (con_initialized)
+				Com_Printf ("min \"%s\" is limited to %0.2f\n", var->name,var->minrulesetvalue);
+			return;
 		}
 	}
 
-	if (var->flags & CVAR_RULESET_MAX){
-	test  = Q_atof (value);
-		if (test > var->maxrulesetvalue){	
-		if (con_initialized)
-			Com_Printf ("max \"%s\" is limited to %0.2f\n", var->name,var->maxrulesetvalue);
-		return;
+	if (var->flags & CVAR_RULESET_MAX) {
+		test  = Q_atof (value);
+		if (test > var->maxrulesetvalue) {	
+			if (con_initialized)
+				Com_Printf ("max \"%s\" is limited to %0.2f\n", var->name,var->maxrulesetvalue);
+			return;
 		}
 	}
 
@@ -290,7 +291,7 @@ void Cvar_SetValue (cvar_t *var, float value) {
 	char val[128];
 	int	i;
 
-	Q_snprintfz (val, sizeof(val), "%f", value);
+	snprintf (val, sizeof(val), "%f", value);
 
 	for (i = strlen(val) - 1; i > 0 && val[i] == '0'; i--)
 		val[i] = 0;
@@ -331,7 +332,7 @@ static cvar_group_t *Cvar_AddGroup(char *name) {
 			return newgroup;
 
 	newgroup = (cvar_group_t *) Q_malloc(sizeof(cvar_group_t));
-	Q_strncpyz(newgroup->name, name, sizeof(newgroup->name));
+	strlcpy(newgroup->name, name, sizeof(newgroup->name));
 	newgroup->count = 0;
 	newgroup->head = NULL;
 	newgroup->next = cvar_groups;
@@ -396,7 +397,7 @@ void Cvar_Register (cvar_t *var) {
 	var->defaultvalue = CopyString (var->string);	
 	if (old) {
 		var->flags |= old->flags & ~CVAR_USER_CREATED;
-		Q_strncpyz (string, old->string, sizeof(string));
+		strlcpy (string, old->string, sizeof(string));
 		Cvar_Delete (old->name);
 		if (!(var->flags & CVAR_ROM))
 			var->string = CopyString (string);

@@ -1,3 +1,6 @@
+/*
+	$Id: sys_mac.c,v 1.12 2006-03-20 13:51:28 vvd0 Exp $
+*/
 // sys_mac.c -- Macintosh system driver
 
 #include "quakedef.h"
@@ -1406,7 +1409,7 @@ char *Sys_GetClipboardData(void) {
 }
 
 void Sys_CopyToClipboard(char *text) {
-	Q_strncpyz(clipboard_buffer, text, SYS_CLIPBOARD_SIZE);
+	strlcpy(clipboard_buffer, text, SYS_CLIPBOARD_SIZE);
 }
 
 // <-- disconnect

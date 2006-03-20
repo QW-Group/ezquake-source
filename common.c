@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: common.c,v 1.17 2006-03-20 13:51:26 vvd0 Exp $
 */
 
 #ifdef _WIN32
@@ -260,7 +261,7 @@ char *Q_ftos (float value)
 	static char str[128];
 	int	i;
 
-	Q_snprintfz (str, sizeof(str), "%f", value);
+	snprintf (str, sizeof(str), "%f", value);
 
 	for (i=strlen(str)-1 ; i>0 && str[i]=='0' ; i--)
 		str[i] = 0;
@@ -268,21 +269,6 @@ char *Q_ftos (float value)
 		str[i] = 0;
 
 	return str;
-}
-
-void Q_strncpyz (char *dest, char *src, size_t size) {
-	strncpy (dest, src, size - 1);
-	dest[size - 1] = 0;
-}
-
-void Q_snprintfz (char *dest, size_t size, char *fmt, ...) {
-	va_list		argptr;
-
-	va_start (argptr, fmt);
-	vsnprintf (dest, size, fmt, argptr);
-	va_end (argptr);
-
-	dest[size - 1] = 0;
 }
 
 int Com_HashKey (const char *name) { 
@@ -535,7 +521,7 @@ void COM_StripExtension (char *in, char *out) {
 	char *dot;
 
 	if (!(dot = strrchr(in, '.'))) {
-		Q_strncpyz(out, in, strlen(in) + 1);
+		strlcpy(out, in, strlen(in) + 1);
 		return;
 	}
 	while (*in && in != dot)
@@ -927,7 +913,7 @@ qbool COM_WriteFile (char *filename, void *data, int len) {
 	FILE *f;
 	char name[MAX_OSPATH];
 
-	Q_snprintfz (name, sizeof(name), "%s/%s", com_basedir, filename);
+	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);
 
 	if (!(f = fopen (name, "wb"))) {
 		COM_CreatePath (name);
@@ -1050,12 +1036,12 @@ int FS_FOpenFile (char *filename, FILE **file) {
                     com_filesearchpath = search->filename;
 
 					file_from_pak = true;
-					Q_snprintfz (com_netpath, sizeof(com_netpath), "%s#%i", pak->filename, i);
+					snprintf (com_netpath, sizeof(com_netpath), "%s#%i", pak->filename, i);
 					return com_filesize;
 				}
 			}
 		} else {
-			Q_snprintfz (com_netpath, sizeof(com_netpath), "%s/%s", search->filename, filename);
+			snprintf (com_netpath, sizeof(com_netpath), "%s/%s", search->filename, filename);
 
 			if (!(*file = fopen (com_netpath, "rb")))
 				continue;
@@ -1303,7 +1289,7 @@ void FS_AddGameDirectory (char *dir) {
 
 	// add any pak files in the format pak0.pak pak1.pak, ...
 	for (i = 0; ; i++) {
-		Q_snprintfz (pakfile, sizeof(pakfile), "%s/pak%i.pak", dir, i);
+		snprintf (pakfile, sizeof(pakfile), "%s/pak%i.pak", dir, i);
 		if(!FS_AddPak(pakfile))
 			break;
 	}
@@ -1321,16 +1307,16 @@ void FS_AddUserDirectory ( char *dir ) {
 	if ( !UserdirSet )
 	        return;
       	switch (userdir_type) {
-      	case 0:	Q_snprintfz (com_userdir, sizeof(com_userdir), "%s/%s", com_gamedir, userdirfile); break;
-      	case 1:	Q_snprintfz (com_userdir, sizeof(com_userdir), "%s/%s/%s", com_basedir, userdirfile, dir); break;
-      	case 2: Q_snprintfz (com_userdir, sizeof(com_userdir), "%s/qw/%s/%s", com_basedir, userdirfile, dir); break;
-      	case 3: Q_snprintfz (com_userdir, sizeof(com_userdir), "%s/qw/%s", com_basedir, userdirfile); break;
-      	case 4: Q_snprintfz (com_userdir, sizeof(com_userdir), "%s/%s", com_basedir, userdirfile); break;
+      	case 0:	snprintf (com_userdir, sizeof(com_userdir), "%s/%s", com_gamedir, userdirfile); break;
+      	case 1:	snprintf (com_userdir, sizeof(com_userdir), "%s/%s/%s", com_basedir, userdirfile, dir); break;
+      	case 2: snprintf (com_userdir, sizeof(com_userdir), "%s/qw/%s/%s", com_basedir, userdirfile, dir); break;
+      	case 3: snprintf (com_userdir, sizeof(com_userdir), "%s/qw/%s", com_basedir, userdirfile); break;
+      	case 4: snprintf (com_userdir, sizeof(com_userdir), "%s/%s", com_basedir, userdirfile); break;
       	case 5:
       		{
       		char* homedir = getenv("HOME");
       		if (homedir)
-      			Q_snprintfz (com_userdir, sizeof(com_userdir), "%s/qw/%s", homedir, userdirfile);
+      			snprintf (com_userdir, sizeof(com_userdir), "%s/qw/%s", homedir, userdirfile);
       		break;
       		}
       	default:
@@ -1346,7 +1332,7 @@ void FS_AddUserDirectory ( char *dir ) {
 
 	// add any pak files in the format pak0.pak pak1.pak, ...
 	for (i = 0; ; i++) {
-		Q_snprintfz (pakfile, sizeof(pakfile), "%s/pak%i.pak", com_userdir, i);
+		snprintf (pakfile, sizeof(pakfile), "%s/pak%i.pak", com_userdir, i);
 		if(!FS_AddPak(pakfile))
 			break;
 	}
@@ -1367,7 +1353,7 @@ void FS_SetGamedir (char *dir) {
 
 	if (!strcmp(com_gamedirfile, dir))
 		return;		// still the same
-	Q_strncpyz (com_gamedirfile, dir, sizeof(com_gamedirfile));
+	strlcpy (com_gamedirfile, dir, sizeof(com_gamedirfile));
 
 	// free up any current game dir info
 	while (com_searchpaths != com_base_searchpaths)	{
@@ -1403,7 +1389,7 @@ void FS_InitFilesystem (void) {
 	// -basedir <path>
 	// Overrides the system supplied base directory (under id1)
 	if ((i = COM_CheckParm ("-basedir")) && i < com_argc - 1)
-		Q_strncpyz (com_basedir, com_argv[i + 1], sizeof(com_basedir));
+		strlcpy (com_basedir, com_argv[i + 1], sizeof(com_basedir));
 	else
 		getcwd(com_basedir, sizeof(com_basedir) - 1);
 

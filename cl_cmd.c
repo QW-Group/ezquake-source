@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: cl_cmd.c,v 1.27 2006-03-20 13:51:26 vvd0 Exp $
 */
 
 #include <time.h>
@@ -93,7 +94,7 @@ void CL_ForwardToServer_f (void) {
 			COM_StripExtension(cls.downloadname, cls.downloadtempname);
 			strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 			cls.downloadtype = dl_single;
-			//Q_snprintfz (cls.downloadname, sizeof(cls.downloadname), "%s", Cmd_Argv(2));
+			//snprintf (cls.downloadname, sizeof(cls.downloadname), "%s", Cmd_Argv(2));
 			//strlcpy (cls.downloadtempname, cls.downloadname, sizeof(cls.downloadtempname));
 		}
 */
@@ -430,7 +431,7 @@ void CL_Download_f (void){
 		return;
 	}
 
-	/*Q_snprintfz (cls.downloadname, sizeof(cls.downloadname), "%s/%s", cls.gamedir, Cmd_Argv(1));
+	/*snprintf (cls.downloadname, sizeof(cls.downloadname), "%s/%s", cls.gamedir, Cmd_Argv(1));
 
 	p = cls.downloadname;
 	while (1) {
@@ -495,19 +496,20 @@ void CL_Color_f (void) {
 	extern cvar_t topcolor, bottomcolor;
 	int top, bottom;
 
-	if (Cmd_Argc() == 1) {
-		Com_Printf ("\"color\" is \"%s %s\"\n",
-			Info_ValueForKey (cls.userinfo, "topcolor"),
-			Info_ValueForKey (cls.userinfo, "bottomcolor") );
-		Com_Printf ("color <0-13> [0-13]\n");
-		return;
-	}
-
-	if (Cmd_Argc() == 2) {
-		top = bottom = atoi(Cmd_Argv(1));
-	} else {
-		top = atoi(Cmd_Argv(1));
-		bottom = atoi(Cmd_Argv(2));
+	switch (Cmd_Argc())
+	{
+		case 1:
+			Com_Printf ("\"color\" is \"%s %s\"\n",
+				Info_ValueForKey (cls.userinfo, "topcolor"),
+				Info_ValueForKey (cls.userinfo, "bottomcolor") );
+			Com_Printf ("color <0-13> [0-13]\n");
+			return;
+		case 2:
+			top = bottom = Q_atoi(Cmd_Argv(1));
+			break;
+		default:
+			top = Q_atoi(Cmd_Argv(1));
+			bottom = Q_atoi(Cmd_Argv(2));
 	}
 
 	top &= 15;
@@ -688,7 +690,7 @@ void CL_WriteConfig_f (void) {
 		return;
 	}
 
-	Q_strncpyz (name, Cmd_Argv(1), sizeof(name));
+	strlcpy (name, Cmd_Argv(1), sizeof(name));
 	COM_ForceExtension (name, ".cfg");
 
 	Com_Printf ("Writing %s\n", name);
@@ -770,7 +772,7 @@ void CL_FullServerinfo_f (void) {
 	if (Cmd_Argc() != 2)
 		return;
 
-	Q_strncpyz (cl.serverinfo, Cmd_Argv(1), sizeof(cl.serverinfo));
+	strlcpy (cl.serverinfo, Cmd_Argv(1), sizeof(cl.serverinfo));
 
 	p = Info_ValueForKey (cl.serverinfo, "*cheats");
 	if (*p)

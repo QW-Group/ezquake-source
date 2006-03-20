@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: common.h,v 1.16 2006-03-20 13:51:26 vvd0 Exp $
 */
 // common.h  -- general definitions
 
@@ -270,9 +271,6 @@ char* Q_strcat(char* dest, const char* src);
 int Q_atoi (const char *str);
 float Q_atof (const char *str);
 char *Q_ftos (float value);		// removes trailing zero chars
-
-void Q_strncpyz (char *dest, char *src, size_t size);
-void Q_snprintfz (char *dest, size_t size, char *fmt, ...);
 
 // memory management
 void *Q_malloc (size_t size);

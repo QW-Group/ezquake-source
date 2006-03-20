@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: vid_x11.c,v 1.15 2006-03-20 13:51:29 vvd0 Exp $
 */
 // vid_x11.c -- general x video driver
 
@@ -590,7 +591,7 @@ void VID_Init (unsigned char *palette) {
 		char displayname[MAX_OSPATH], *d;
 		doShm = true;
 		if ((d = (char *) getenv("DISPLAY"))) {
-			Q_strncpyz(displayname, d, sizeof(displayname));
+			strlcpy(displayname, d, sizeof(displayname));
 			for (d = displayname; *d && (*d != ':'); d++)
 				;
 			*d = 0;

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.30 2006-03-10 21:55:53 tonik Exp $
+	$Id: keys.c,v 1.31 2006-03-20 13:51:27 vvd0 Exp $
 
 */
 
@@ -302,7 +302,7 @@ CompleteCommandNew_Reset (void)
 qbool CheckForCommand (void) {
 	char command[256], *s;
 
-	Q_strncpyz(command, key_lines[edit_line] + 1, sizeof(command));
+	strlcpy(command, key_lines[edit_line] + 1, sizeof(command));
 	for (s = command; *s > ' '; s++)
 		;
 	*s = 0;
@@ -340,7 +340,7 @@ static int	compl_len;
 
 static void FindCommonSubString (char *s) {
 	if (!compl_clen) {
-		Q_strncpyz (compl_common, s, sizeof(compl_common));
+		strlcpy (compl_common, s, sizeof(compl_common));
 		compl_clen = strlen (compl_common);
 	} else {
 		while (compl_clen > compl_len && Q_strncasecmp(s, compl_common, compl_clen))
@@ -521,9 +521,9 @@ CompleteCommandNew (void)
 			return;
 		}
 		diff_len = strlen (cmd) - (end - start + 1);
-		Q_strncpyz (temp, key_lines[edit_line] + end + 1,
+		strlcpy (temp, key_lines[edit_line] + end + 1,
 			    sizeof (temp));
-		Q_strncpyz (key_lines[edit_line] + end + 1 + diff_len, temp,
+		strlcpy (key_lines[edit_line] + end + 1 + diff_len, temp,
 			    MAXCMDLINE - (end + 1 + diff_len));
 		for (i = 0; start + i < MAXCMDLINE && i < strlen (cmd); i++)
 			key_lines[edit_line][start + i] = cmd[i];
@@ -734,8 +734,8 @@ void CompleteCommand (void) {
 		return;
 	}
 	diff_len = strlen(cmd) - (end - start + 1);
-	Q_strncpyz(temp, key_lines[edit_line] + end + 1, sizeof(temp));
-	Q_strncpyz(key_lines[edit_line] + end + 1 + diff_len, temp, MAXCMDLINE - (end + 1 + diff_len));
+	strlcpy(temp, key_lines[edit_line] + end + 1, sizeof(temp));
+	strlcpy(key_lines[edit_line] + end + 1 + diff_len, temp, MAXCMDLINE - (end + 1 + diff_len));
 	for (i = 0; start + i < MAXCMDLINE && i < strlen(cmd); i++)	
 		key_lines[edit_line][start + i] = cmd[i];
 	key_linepos += diff_len;
@@ -797,7 +797,7 @@ int FindBestNick (char *s,int use) {
 				continue;
 
 		if (cl.players[i].name[0]) {
-			Q_strncpyz(name, cl.players[i].name, sizeof(name));
+			strlcpy(name, cl.players[i].name, sizeof(name));
 			RemoveColors(name);
 			for (j = 0; j < strlen(name); j++)
 				name[j] = tolower(name[j]);
@@ -824,11 +824,11 @@ void CompleteName(void) {
     if (q - p <= 0)
         return;
 
-    Q_strncpyz(s, p, q - p + 1);
+    strlcpy(s, p, q - p + 1);
 
 	best = FindBestNick (s,0);
     if (best >= 0) {
-        Q_strncpyz(t, cl.players[best].name, sizeof(t));
+        strlcpy(t, cl.players[best].name, sizeof(t));
 		
 		for (i = 0; t[i]; i++) {
 			if ((127 & t[i]) == ' ') {

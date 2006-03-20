@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: gl_draw.c,v 1.16 2006-03-20 13:51:26 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -332,7 +333,7 @@ mpic_t *Draw_CachePic (char *path) {
 	if (numcachepics == MAX_CACHED_PICS)
 		Sys_Error ("numcachepics == MAX_CACHED_PICS");
 	numcachepics++;
-	Q_strncpyz (pic->name, path, sizeof(pic->name));
+	strlcpy (pic->name, path, sizeof(pic->name));
 
 	// load the pic from disk
 	if (!(dat = (qpic_t *)FS_LoadTempFile (path)))

@@ -1,3 +1,6 @@
+/*
+	$Id: hud_common.c,v 1.27 2006-03-20 13:51:27 vvd0 Exp $
+*/
 //
 // common HUD elements
 // like clock etc..
@@ -209,7 +212,7 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 		*hud_tracking_format;
 	hud_tracking_format    = HUD_FindVar(hud, "format");
 	
-	Q_strncpyz(st, hud_tracking_format->string, sizeof(st));
+	strlcpy(st, hud_tracking_format->string, sizeof(st));
 	Replace_In_String(st, sizeof(st), '%', 2, "n", cl.players[spec_track].name, "t", cl.teamplay ? cl.players[spec_track].team : "");
 
 	width = 8*strlen(st);
@@ -1766,7 +1769,7 @@ int Frags_DrawText(int px, int py,
 	// Draw team
 	if(showteams && cl.teamplay)
 	{
-		Q_strncpyz(_team, team, clamp(max_team_length, 0, sizeof(_team)));
+		strlcpy(_team, team, clamp(max_team_length, 0, sizeof(_team)));
 		team_length = strlen(_team);
 
 		if(!flip)
@@ -1796,7 +1799,7 @@ int Frags_DrawText(int px, int py,
 	if(shownames)
 	{
 		// Draw name
-		Q_strncpyz(_name, name, clamp(max_name_length, 0, sizeof(_name)));
+		strlcpy(_name, name, clamp(max_name_length, 0, sizeof(_name)));
 		name_length = strlen(_name);
 
 		if(flip && pad)
@@ -2266,15 +2269,15 @@ char *Get_MP3_HUD_style(float style, char *st)
 	static char HUD_style[32];
 	if(style == 1.0)
 	{
-		Q_strncpyz(HUD_style, va("%s:", st), sizeof(HUD_style));
+		strlcpy(HUD_style, va("%s:", st), sizeof(HUD_style));
 	}
 	else if(style == 2.0)
 	{
-		Q_strncpyz(HUD_style, va("\x10%s\x11", st), sizeof(HUD_style));
+		strlcpy(HUD_style, va("\x10%s\x11", st), sizeof(HUD_style));
 	}
 	else
 	{
-		Q_strncpyz(HUD_style, "", sizeof(HUD_style));
+		strlcpy(HUD_style, "", sizeof(HUD_style));
 	}
 	return HUD_style;
 }
@@ -2391,7 +2394,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 		{
 			case 1 :
 				remain = total - elapsed;
-				Q_strncpyz(elapsed_string, SecondsToMinutesString(remain), sizeof(elapsed_string));
+				strlcpy(elapsed_string, SecondsToMinutesString(remain), sizeof(elapsed_string));
 				sprintf(time_string, va("\x10-%s/%s\x11", elapsed_string, SecondsToMinutesString(total)));
 				break;
 			case 2 :
@@ -2403,11 +2406,11 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 				break;
 			case 4 :
 				remain = total - elapsed;
-				Q_strncpyz(elapsed_string, SecondsToMinutesString(remain), sizeof(elapsed_string));
+				strlcpy(elapsed_string, SecondsToMinutesString(remain), sizeof(elapsed_string));
 				sprintf(time_string, va("%s/%s", elapsed_string, SecondsToMinutesString(total)));
 				break;
 			case 5 :				
-				Q_strncpyz(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
+				strlcpy(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
 				sprintf(time_string, va("-%s/%s", elapsed_string, SecondsToMinutesString(total)));
 				break;
 			case 6 :
@@ -2419,7 +2422,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 				break;
 			case 0 :
 			default :
-				Q_strncpyz(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
+				strlcpy(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
 				sprintf(time_string, va("\x10%s/%s\x11", elapsed_string, SecondsToMinutesString(total)));
 				break;
 		}

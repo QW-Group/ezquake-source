@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: skin.c,v 1.6 2006-03-20 13:51:28 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -37,13 +38,13 @@ char *Skin_FindName (player_info_t *sc) {
 	static char name[MAX_OSPATH];
 
 	if (allskins[0]) {
-		Q_strncpyz(name, allskins, sizeof(name));
+		strlcpy(name, allskins, sizeof(name));
 	} else {
 		s = Info_ValueForKey(sc->userinfo, "skin");
 		if (s && s[0])
-			Q_strncpyz(name, s, sizeof(name));
+			strlcpy(name, s, sizeof(name));
 		else
-			Q_strncpyz(name, baseskin.string, sizeof(name));
+			strlcpy(name, baseskin.string, sizeof(name));
 	}
 
 	if (cl.spectator && (tracknum = Cam_TrackNum()) != -1)
@@ -77,11 +78,11 @@ char *Skin_FindName (player_info_t *sc) {
 		if (!skinname || !skinname[0])
 			skinname = teammate ? cl_teamskin.string : cl_enemyskin.string;
 		if (skinname[0])
-			Q_strncpyz(name, skinname, sizeof(name));
+			strlcpy(name, skinname, sizeof(name));
 	}
 
 	if (strstr(name, "..") || *name == '.')
-		Q_strncpyz(name, baseskin.string, sizeof(name));
+		strlcpy(name, baseskin.string, sizeof(name));
 
 	return name;
 }
@@ -92,7 +93,7 @@ void Skin_Find (player_info_t *sc) {
 	int i;
 	char name[MAX_OSPATH];
 
-	Q_strncpyz(name, Skin_FindName(sc), sizeof(name));
+	strlcpy(name, Skin_FindName(sc), sizeof(name));
 	COM_StripExtension(name, name);
 
 	for (i = 0; i < numskins; i++) {
@@ -113,7 +114,7 @@ void Skin_Find (player_info_t *sc) {
 	numskins++;
 
 	memset (skin, 0, sizeof(*skin));
-	Q_strncpyz(skin->name, name, sizeof(skin->name));
+	strlcpy(skin->name, name, sizeof(skin->name));
 }
 
 //Returns a pointer to the skin bitmap, or NULL to use the default
@@ -133,13 +134,13 @@ byte *Skin_Cache (skin_t *skin) {
 		return out;
 
 	// load the pic from disk
-	Q_snprintfz (name, sizeof(name), "skins/%s.pcx", skin->name);
+	snprintf (name, sizeof(name), "skins/%s.pcx", skin->name);
 	if (!(pic = Image_LoadPCX (NULL, name, 0, 0)) || image_width > 320 || image_height > 200) {
 		if (pic)
 			free (pic);
 		Com_Printf ("Couldn't load skin %s\n", name);
 
-		Q_snprintfz (name, sizeof(name), "skins/%s.pcx", baseskin.string);
+		snprintf (name, sizeof(name), "skins/%s.pcx", baseskin.string);
 		if (!(pic = Image_LoadPCX (NULL, name, 0, 0)) || image_width > 320 || image_height > 200) {
 			if (pic)
 				free (pic);
@@ -224,6 +225,6 @@ void Skin_AllSkins_f (void) {
 		Com_Printf("Usage: %s [skin]\n", Cmd_Argv(0));
 		return;
 	}
-	Q_strncpyz (allskins, Cmd_Argv(1), sizeof(allskins));
+	strlcpy (allskins, Cmd_Argv(1), sizeof(allskins));
 	Skin_Skins_f();
 }

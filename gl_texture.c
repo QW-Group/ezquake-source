@@ -16,6 +16,8 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: gl_texture.c,v 1.13 2006-03-20 13:51:26 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -338,7 +340,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 	glt = &gltextures[numgltextures];
 	numgltextures++;
 
-	Q_strncpyz (glt->identifier, identifier, sizeof(glt->identifier));
+	strlcpy (glt->identifier, identifier, sizeof(glt->identifier));
 	glt->texnum = texture_extension_number;
 	texture_extension_number++;
 
@@ -379,7 +381,7 @@ int GL_LoadPicTexture (char *name, mpic_t *pic, byte *data) {
 	Q_ROUND_POWER2(pic->width, glwidth);
 	Q_ROUND_POWER2(pic->height, glheight);
 
-	Q_strncpyz (fullname + 4, name, sizeof(fullname) - 4);
+	strlcpy (fullname + 4, name, sizeof(fullname) - 4);
 	if (glwidth == pic->width && glheight == pic->height) {
 		pic->texnum = GL_LoadTexture (fullname, glwidth, glheight, data, TEX_ALPHA, 1);
 		pic->sl = 0;
@@ -451,7 +453,7 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 		if (*c == '*')
 			*c = '#';
 
-	Q_snprintfz (name, sizeof(name), "%s.link", basename);
+	snprintf (name, sizeof(name), "%s.link", basename);
 	if (FS_FOpenFile (name, &f) != -1)
 	{
 		char link[128];
@@ -468,7 +470,7 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 			link[len-1] = '\0';
 			--len;
 		}
-		Q_snprintfz (name, sizeof(name), "textures/%s", link);
+		snprintf (name, sizeof(name), "textures/%s", link);
            	if (FS_FOpenFile (name, &f) != -1) {
            		CHECK_TEXTURE_ALREADY_LOADED;
            		if( !Q_strcasecmp(link + len - 3, "tga") )
@@ -487,7 +489,7 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 	
 
 
-	Q_snprintfz (name, sizeof(name), "%s.tga", basename);
+	snprintf (name, sizeof(name), "%s.tga", basename);
 	if (FS_FOpenFile (name, &f) != -1) {
 		CHECK_TEXTURE_ALREADY_LOADED;
 		if ((data = Image_LoadTGA (f, name, matchwidth, matchheight)))
@@ -495,7 +497,7 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 	}
 
 #ifdef WITH_PNG
-	Q_snprintfz (name, sizeof(name), "%s.png", basename);
+	snprintf (name, sizeof(name), "%s.png", basename);
 	if (FS_FOpenFile (name, &f) != -1) {
 		CHECK_TEXTURE_ALREADY_LOADED;
 		if ((data = Image_LoadPNG (f, name, matchwidth, matchheight)))
@@ -593,7 +595,7 @@ mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheig
 	Q_ROUND_POWER2(pic.width, width);
 	Q_ROUND_POWER2(pic.height, height);
 
-	Q_strncpyz (identifier + 4, id ? id : filename, sizeof(identifier) - 4);
+	strlcpy (identifier + 4, id ? id : filename, sizeof(identifier) - 4);
 	if (width == pic.width && height == pic.height) {
 		pic.texnum = GL_LoadTexture (identifier, pic.width, pic.height, data, mode, 4);
 		pic.sl = 0;

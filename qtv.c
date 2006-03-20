@@ -1,5 +1,7 @@
 /*
 	Support for FTE QuakeTV automated startup and connecting
+
+	$Id: qtv.c,v 1.3 2006-03-20 13:51:28 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -72,7 +74,7 @@ qbool QTV_RunProcess(int port, char* ip)
 	char cmdline[255];
 	int retbuf;
 
-	Q_strncpyz(cmdline, va("%s/qtvprox.exe +port %d +connect %s", com_basedir, port, ip), sizeof(cmdline));
+	strlcpy(cmdline, va("%s/qtvprox.exe +port %d +connect %s", com_basedir, port, ip), sizeof(cmdline));
 
 	memset (&si, 0, sizeof(si));
 	si.cb = sizeof(si);
@@ -133,7 +135,7 @@ void StartQTV(void)
 		return;
 	}
 
-	Q_strncpyz(cmd, va("connect localhost:%i", qtvport), sizeof(cmd));
+	strlcpy(cmd, va("connect localhost:%i", qtvport), sizeof(cmd));
 
 	Cbuf_AddText(cmd);
 }
