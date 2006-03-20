@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_edict.c,v 1.13 2006-03-20 13:51:27 vvd0 Exp $
+	$Id: pr_edict.c,v 1.14 2006-03-20 21:13:20 tonik Exp $
 */
 // sv_edict.c -- entity dictionary
 
@@ -35,7 +35,7 @@ int				pr_edict_size;	// in bytes
 
 int type_size[8] = {1, sizeof(void *) / 4, 1 ,3, 1, 1, sizeof(void *) / 4, sizeof(void *) / 4};
 
-int fofs_maxspeed, fofs_gravity;
+int fofs_maxspeed, fofs_gravity, fofs_brokenankle;
 //int fofs_forwardmove, fofs_sidemove, fofs_upmove;
 
 func_t SpectatorConnect, SpectatorThink, SpectatorDisconnect;
@@ -958,6 +958,7 @@ progs_loaded:
 	// find optional QC-exported fields
 	fofs_maxspeed = ED_FindFieldOffset ("maxspeed");
 	fofs_gravity = ED_FindFieldOffset ("gravity");
+	fofs_brokenankle = ED_FindFieldOffset ("brokenankle");
 //	fofs_forwardmove = ED_FindFieldOffset ("forwardmove");
 //	fofs_sidemove = ED_FindFieldOffset ("sidemove");
 //	fofs_upmove = ED_FindFieldOffset ("upmove");
