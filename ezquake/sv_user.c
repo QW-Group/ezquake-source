@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.16 2006-03-20 13:51:28 vvd0 Exp $
+	$Id: sv_user.c,v 1.17 2006-03-20 21:13:21 tonik Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -1489,6 +1489,9 @@ void SV_RunCmd (usercmd_t *ucmd) {
 #ifndef SERVERONLY
 	pmove.jump_msec = 0;
 #endif
+	// let KTeams'/KTPro's "broken ankle" code work
+	if (fofs_brokenankle && (EdictFieldFloat(sv_player, fofs_brokenankle) != 0 && pmove.velocity[2] == -270) && (pmove.cmd.buttons & BUTTON_JUMP))
+		pmove.jump_held = true;
 
 	// build physent list
 	pmove.numphysent = 1;
