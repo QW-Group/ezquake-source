@@ -1032,7 +1032,8 @@ void V_RenderView (void) {
 	R_PushDlights ();
 
 	r_refdef2.time = cl.time;
-//	r_refdef2.allow_cheats = false;
+	r_refdef2.allow_cheats = (Info_ValueForKey(cl.serverinfo, "*cheats")[0] && com_serveractive)
+		|| cls.demoplayback;
 //	r_refdef2.allow_fbskins = cl.allow_fbskins;
 //	r_refdef2.viewplayernum = Cam_PlayerNum();
 //	r_refdef2.watervis = (atoi(Info_ValueForKey(cl.serverinfo, "watervis")) != 0);
