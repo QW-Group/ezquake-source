@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: wad.c,v 1.9 2006-03-20 13:51:29 vvd0 Exp $
 */
 // wad.c
 
@@ -261,7 +262,7 @@ void WAD3_LoadTextureWadFile (char *filename) {
 		if (j == TEXWAD_MAXIMAGES)
 			break; // we are full, don't load any more
 		if (!texwadlump[j].name[0])
-			Q_strncpyz (texwadlump[j].name, lump_p->name, sizeof(texwadlump[j].name));
+			strlcpy (texwadlump[j].name, lump_p->name, sizeof(texwadlump[j].name));
 		texwadlump[j].file = file;
 		texwadlump[j].position = LittleLong(lump_p->filepos);
 		texwadlump[j].size = LittleLong(lump_p->disksize);

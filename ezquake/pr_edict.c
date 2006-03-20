@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: pr_edict.c,v 1.13 2006-03-20 13:51:27 vvd0 Exp $
 */
 // sv_edict.c -- entity dictionary
 
@@ -280,7 +281,7 @@ char *PR_GlobalString (int ofs) {
 		sprintf (line,"%i(?""?""?)", ofs);	// separate the ?'s to shut up gcc
 	} else {
 		s = PR_ValueString (def->type, val);
-		Q_snprintfz (line, sizeof(line), "%i(%s)%s", ofs, PR_GetString(def->s_name), s);
+		snprintf (line, sizeof(line), "%i(%s)%s", ofs, PR_GetString(def->s_name), s);
 	}
 	
 	i = strlen(line);
@@ -625,7 +626,7 @@ char *ED_ParseEdict (char *data, edict_t *ent) {
 		if (!data)
 			Host_Error ("ED_ParseEntity: EOF without closing brace");
 
-		Q_strncpyz (keyname, com_token, sizeof(keyname));
+		strlcpy (keyname, com_token, sizeof(keyname));
 
 		// parse value	
 		if (!(data = COM_Parse (data)))
@@ -634,7 +635,7 @@ char *ED_ParseEdict (char *data, edict_t *ent) {
 		if (com_token[0] == '}')
 			Host_Error ("ED_ParseEntity: closing brace without data");
 
-		Q_strncpyz (value, com_token, sizeof(value));
+		strlcpy (value, com_token, sizeof(value));
 
 		init = true;
 
@@ -651,7 +652,7 @@ char *ED_ParseEdict (char *data, edict_t *ent) {
 		} else if (!strcmp(keyname, "sky") || !strcmp(keyname, "skyname")) {
 			if (ent == sv.edicts && !strstr(value, "..")) {
 				skyhack = true;
-				Q_strncpyz (sv.sky, value, sizeof(sv.sky));
+				strlcpy (sv.sky, value, sizeof(sv.sky));
 			}
 		}
 
@@ -662,7 +663,7 @@ char *ED_ParseEdict (char *data, edict_t *ent) {
 		}
 
 		if (anglehack)
-			Q_strncpyz (value, va("0 %s 0", value), sizeof(value));
+			strlcpy (value, va("0 %s 0", value), sizeof(value));
 
 		if (!ED_ParseEpair ((void *) &ent->v, key, value))
 			Host_Error ("ED_ParseEdict: parse error");

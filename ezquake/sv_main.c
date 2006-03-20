@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: sv_main.c,v 1.17 2006-03-20 13:51:28 vvd0 Exp $
 */
 
 #include "qwsvdef.h"
@@ -748,7 +749,7 @@ void SV_WriteIP_f (void) {
 	byte b[4];
 	int i;
 
-	Q_snprintfz (name, sizeof(name), "%s/listip.cfg", com_gamedir);
+	snprintf (name, sizeof(name), "%s/listip.cfg", com_gamedir);
 
 	Com_Printf ("Writing %s.\n", name);
 
@@ -912,8 +913,8 @@ void SV_CheckVars (void) {
 
 	// check password and spectator_password
 	if (strcmp(password.string, pw) || strcmp(spectator_password.string, spw)) {
-		Q_strncpyz (pw, password.string, sizeof(pw));
-		Q_strncpyz (spw, spectator_password.string, sizeof(spw));
+		strlcpy (pw, password.string, sizeof(pw));
+		strlcpy (spw, spectator_password.string, sizeof(spw));
 		Cvar_Set (&password, pw);
 		Cvar_Set (&spectator_password, spw);
 
@@ -1096,7 +1097,7 @@ void SV_InitLocal (void) {
 		Cvar_SetDefault(&sv_mintic, 0);
 
 	for (i = 1; i < MAX_MODELS; i++)
-		Q_snprintfz (localmodels[i], sizeof(localmodels[i]), "*%i", i);
+		snprintf (localmodels[i], sizeof(localmodels[i]), "*%i", i);
 
 	Info_SetValueForStarKey (svs.info, "*version", va("ezQuake %s", VersionString()), MAX_SERVERINFO_STRING);
 //	Info_SetValueForStarKey (svs.info, "*ez_version", VersionString(), MAX_SERVERINFO_STRING);
@@ -1128,7 +1129,7 @@ void SV_ExtractFromUserinfo (client_t *cl) {
 	val = Info_ValueForKey (cl->userinfo, "name");
 
 	// trim user name
-	Q_strncpyz (newname, val, sizeof(newname));
+	strlcpy (newname, val, sizeof(newname));
 
 	for (p = newname; (*p == ' ' || *p == '\r' || *p == '\n') && *p; p++)
 		;
@@ -1202,7 +1203,7 @@ void SV_ExtractFromUserinfo (client_t *cl) {
 			SV_BroadcastPrintf (PRINT_HIGH, "%s changed name to %s\n", cl->name, val);
 	}
 
-	Q_strncpyz (cl->name, val, sizeof(cl->name));
+	strlcpy (cl->name, val, sizeof(cl->name));
 
 	// rate
 	val = Info_ValueForKey (cl->userinfo, "rate");

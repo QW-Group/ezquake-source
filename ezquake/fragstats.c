@@ -16,6 +16,8 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: fragstats.c,v 1.7 2006-03-20 13:51:26 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -183,7 +185,7 @@ static void LoadFragFile(char *filename, qbool quiet) {
 	InitFragDefs();
 
 	lowmark = Hunk_LowMark();
-	Q_strncpyz(fragfilename, filename, sizeof(fragfilename));
+	strlcpy(fragfilename, filename, sizeof(fragfilename));
 	COM_ForceExtension(fragfilename, ".dat");
 	if (!(buffer = (char *) FS_LoadHunkFile(fragfilename))) {
 		if (!quiet)
@@ -769,7 +771,7 @@ void Stats_NewMap(void) {
 
 	if (!last_gamedir[0] || Q_strcasecmp(last_gamedir, cls.gamedirfile)) {
 		if (cl_loadFragfiles.value) {
-			Q_strncpyz(last_gamedir, cls.gamedirfile, sizeof(last_gamedir));
+			strlcpy(last_gamedir, cls.gamedirfile, sizeof(last_gamedir));
 			LoadFragFile("fragfile", true);
 		} else {
 			InitFragDefs();

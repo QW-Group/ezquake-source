@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: sbar.c,v 1.24 2006-03-20 13:51:28 vvd0 Exp $
 */
 // sbar.c -- status bar code
 
@@ -473,7 +474,7 @@ static void Sbar_SortTeams (void) {
 			continue;
 
 		// find his team in the list
-		Q_strncpyz (t, s->team, sizeof(t));
+		strlcpy (t, s->team, sizeof(t));
 		if (!t[0])
 			continue; // not on team
 
@@ -502,7 +503,7 @@ static void Sbar_SortTeams (void) {
 				teams[j].bottomcolor = scr_scoreboard_forcecolors.value ? s->bottomcolor : s->real_bottomcolor;
 				teams[j].topcolor = scr_scoreboard_forcecolors.value ? s->topcolor : s->real_topcolor;
 			}
-			Q_strncpyz(teams[j].team, t, sizeof(teams[j].team));
+			strlcpy(teams[j].team, t, sizeof(teams[j].team));
 
 			if (!Sbar_IsSpectator(mynum) && !strncmp(cl.players[mynum].team, t, sizeof(t) - 1))
 				teams[j].myteam = true;
@@ -672,7 +673,7 @@ static void Sbar_DrawInventory (void) {
 	if (sbar_drawammocounts.value)  // kazik
     {
 		for (i = 0; i < 4; i++) {
-			Q_snprintfz (num, sizeof(num), "%3i", cl.stats[STAT_SHELLS + i]);
+			snprintf (num, sizeof(num), "%3i", cl.stats[STAT_SHELLS + i]);
 			if (headsup) {
 				Sbar_DrawSubPic(hudswap ? 0 : vid.width - 42, -24 - (4 - i) * 11, sb_ibar, 3 + (i * 48), 0, 42, 11);
 				if (num[0] != ' ')
@@ -739,7 +740,7 @@ static void Sbar_DrawFrags_DrawCell(int x, int y, int topcolor, int bottomcolor,
 	Draw_Fill (sbar_xofs + x * 8 + 10, y + 4, 28, 3, Sbar_ColorForMap (bottomcolor));
 
 	// draw number
-	Q_snprintfz (num, sizeof(num), "%3i", frags);
+	snprintf (num, sizeof(num), "%3i", frags);
 
 	Sbar_DrawCharacter ((x + 1) * 8 , -24, num[0]);
 	Sbar_DrawCharacter ((x + 2) * 8 , -24, num[1]);
@@ -947,7 +948,7 @@ static void Sbar_DrawCompact(void) {
 
 	align = scr_compactHudAlign.value ? 1 : 0;
 	for (i = 0; i < 4; i++) {
-		Q_snprintfz(str, sizeof(str), "%d", cl.stats[STAT_SHELLS + i]);
+		snprintf(str, sizeof(str), "%d", cl.stats[STAT_SHELLS + i]);
 		if (cl.stats[STAT_SHELLS + i] < 5)
 			Sbar_DrawAltString(align * 8 * (3 - strlen(str)) + 174 + 32 * i, 3, str);
 		else
@@ -981,7 +982,7 @@ static void Sbar_DrawCompact_TF(void) {
 		Sbar_DrawNum (2, 0, cl.stats[STAT_ARMOR], 3, cl.stats[STAT_ARMOR] <= 25);
 	Sbar_DrawNum (86, 0, cl.stats[STAT_HEALTH], 3, cl.stats[STAT_HEALTH] <= 25);
 	for (i = 0; i < 4; i++) {
-			Q_snprintfz(str, sizeof(str), "%d", cl.stats[STAT_SHELLS + i]);
+			snprintf(str, sizeof(str), "%d", cl.stats[STAT_SHELLS + i]);
 			if (cl.stats[STAT_SHELLS + i] < 5)
 				Sbar_DrawAltString(align * 8 * (3 - strlen(str)) + 166 + 32 * (i % 2), i >= 2 ? 14 : 3, str);
 			else
@@ -1019,10 +1020,10 @@ static void Sbar_SoloScoreboard (void) {
 	Sbar_DrawPic (0, 0, sb_scorebar);
 
 	if (cl.gametype == GAME_COOP) {
-		Q_snprintfz(str, sizeof(str), "Monsters:%3i /%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+		snprintf(str, sizeof(str), "Monsters:%3i /%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 		Sbar_DrawString (8, 4, str);
 
-		Q_snprintfz(str, sizeof(str), "Secrets :%3i /%3i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
+		snprintf(str, sizeof(str), "Secrets :%3i /%3i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
 		Sbar_DrawString (8, 12, str);
 	}
 
@@ -1039,7 +1040,7 @@ static void Sbar_SoloScoreboard (void) {
 	seconds = time - 60 * minutes;
 	tens = seconds / 10;
 	units = seconds - 10 * tens;
-	Q_snprintfz (str, sizeof(str), "Time :%3i:%i%i", minutes, tens, units);
+	snprintf (str, sizeof(str), "Time :%3i:%i%i", minutes, tens, units);
 	Sbar_DrawString (184, 4, str);
 
 	if (cl.gametype == GAME_COOP) {
@@ -1242,7 +1243,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 			) {
 				Draw_AlphaFill (xofs, y, rank_width, skip, 2, SCOREBOARD_ALPHA);
 			} else {
-				Q_strncpyz (team, s->team, sizeof(team));
+				strlcpy (team, s->team, sizeof(team));
 				if (k == mynum) {
 					float alpha;
 					alpha = 1.7 * SCOREBOARD_ALPHA;
@@ -1264,7 +1265,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 			if (p < 0 || p > 999)
 				p = 999;
 
-			Q_snprintfz (num, sizeof(num), "&cAAD%4i", p);
+			snprintf (num, sizeof(num), "&cAAD%4i", p);
 			Draw_ColoredString(x, y, num, 0);
 			x += 32; // move it forward, ready to print next column
 
@@ -1272,10 +1273,10 @@ static void Sbar_DeathmatchOverlay (int start) {
 			p = s->pl;
 
 			if (p > 25) {
-				Q_snprintfz (num, sizeof(num), "&cD33%3i", p);
+				snprintf (num, sizeof(num), "&cD33%3i", p);
 				Draw_ColoredString (x, y, num, 1);
 			} else {
-				Q_snprintfz (num, sizeof(num), "&cDB0%3i", p);
+				snprintf (num, sizeof(num), "&cDB0%3i", p);
 				Draw_ColoredString (x, y, num, 0);
 			}
 
@@ -1286,7 +1287,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 
 				x += cl.teamplay ? 128 : 88; // move across to print the name
 
-				Q_strncpyz(name, s->name, sizeof(name));
+				strlcpy(name, s->name, sizeof(name));
 				if (leftover > 0) {
 					int truncate = (leftover / 8) + (leftover % 8 ? 1 : 0);
 
@@ -1322,7 +1323,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 			Draw_Fill (cl.teamplay ? tempx - 40 : tempx, y + 4, 40, 4, Sbar_ColorForMap (bottom));
 
 			// name
-			Q_strncpyz(name, s->name, sizeof(name));
+			strlcpy(name, s->name, sizeof(name));
 			if (leftover > 0) {
 				int truncate = (leftover / 8) + (leftover % 8 ? 1 : 0);
 
@@ -1332,10 +1333,10 @@ static void Sbar_DeathmatchOverlay (int start) {
 
 			// team
 			if (cl.teamplay) {
-				Q_strncpyz  (team, s->team, sizeof(team));
-				Q_snprintfz (scorerow, sizeof(scorerow), " %s  %3i  %-4s %s", myminutes, s->frags, team, name);
+				strlcpy  (team, s->team, sizeof(team));
+				snprintf (scorerow, sizeof(scorerow), " %s  %3i  %-4s %s", myminutes, s->frags, team, name);
 			} else {
-				Q_snprintfz (scorerow, sizeof(scorerow), " %s  %3i  %s", myminutes, s->frags, name);
+				snprintf (scorerow, sizeof(scorerow), " %s  %3i  %s", myminutes, s->frags, name);
 			}
 			Draw_String (x, y, scorerow);
 
@@ -1348,9 +1349,9 @@ static void Sbar_DeathmatchOverlay (int start) {
 				scorerow[0] = 0;
 
 				if (stats_team)
-					Q_snprintfz (scorerow, sizeof(scorerow), " &c0B4%3i  &cF60%3i &cF00%3i ", playerstats[0], playerstats[2], playerstats[1]);
+					snprintf (scorerow, sizeof(scorerow), " &c0B4%3i  &cF60%3i &cF00%3i ", playerstats[0], playerstats[2], playerstats[1]);
 				else
-					Q_snprintfz (scorerow, sizeof(scorerow), " &c0B4%3i  &cF00%3i ", playerstats[0], playerstats[1]);
+					snprintf (scorerow, sizeof(scorerow), " &c0B4%3i  &cF00%3i ", playerstats[0], playerstats[1]);
 
 				if (stats_touches)
 					strcat (scorerow, va("  &cFD0%2i ", playerstats[4]));
@@ -1467,19 +1468,19 @@ static void Sbar_TeamOverlay (void) {
 		if (pavg < 0 || pavg > 999)
 			pavg = 999;
 
-		Q_snprintfz (num, sizeof(num), "%3i/%3i/%3i", plow, pavg, phigh);
+		snprintf (num, sizeof(num), "%3i/%3i/%3i", plow, pavg, phigh);
 		Draw_String (x, y, num);
 
 		// draw team
-		Q_strncpyz (team, tm->team, sizeof(team));
+		strlcpy (team, tm->team, sizeof(team));
 		Draw_String (x + 104, y, team);
 
 		// draw total
-		Q_snprintfz (num, sizeof(num), "%5i", tm->frags);
+		snprintf (num, sizeof(num), "%5i", tm->frags);
 		Draw_String (x + 104 + 40, y, num);
 
 		// draw players
-		Q_snprintfz (num, sizeof(num), "%5i", tm->players);
+		snprintf (num, sizeof(num), "%5i", tm->players);
 		Draw_String (x + 104 + 88, y, num);
 
 		if (!cls.mvdplayback || !cl_multiview.value) {
@@ -1561,7 +1562,7 @@ static void Sbar_MiniDeathmatchOverlay (void) {
 		Draw_Fill (x, y + 4, 40, 4, Sbar_ColorForMap (bottom));
 
 		// draw number
-		Q_snprintfz (num, sizeof(num), "%3i", s->frags);
+		snprintf (num, sizeof(num), "%3i", s->frags);
 
 		Draw_Character (x + 8 , y, num[0]);
 		Draw_Character (x + 16, y, num[1]);
@@ -1576,12 +1577,12 @@ static void Sbar_MiniDeathmatchOverlay (void) {
 
 		// team
 		if (cl.teamplay) {
-			Q_strncpyz (team, s->team, sizeof(team));
+			strlcpy (team, s->team, sizeof(team));
 			Draw_String (x + 48, y, team);
 		}
 
 		// draw name
-		Q_strncpyz (name, s->name, sizeof(name));
+		strlcpy (name, s->name, sizeof(name));
 		if (cl.teamplay)
 			Draw_String (x + 48 + 40, y, name);
 		else
@@ -1614,13 +1615,13 @@ drawteams:
 		tm = teams + k;
 
 		//draw name
-		Q_strncpyz (team, tm->team, sizeof(team));
+		strlcpy (team, tm->team, sizeof(team));
 		Draw_String (x, y, team);
 
 		// draw total
 		Draw_Fill (x + 40, y + 1, 48, 3, Sbar_ColorForMap (tm->topcolor));
 		Draw_Fill (x + 40, y + 4, 48, 4, Sbar_ColorForMap (tm->bottomcolor));
-		Q_snprintfz (num, sizeof(num), "%4i", tm->frags);
+		snprintf (num, sizeof(num), "%4i", tm->frags);
 		Draw_Character (x + 40 + 8 , y, num[0]);
 		Draw_Character (x + 40 + 16, y, num[1]);
 		Draw_Character (x + 40 + 24, y, num[2]);
@@ -1770,7 +1771,7 @@ void Sbar_Draw(void) {
 				else
 					Sbar_DrawNormal();
 
-				Q_strncpyz(st,scr_tracking.string,sizeof(st));
+				strlcpy(st,scr_tracking.string,sizeof(st));
 				
 				Replace_In_String(st,sizeof(st),'%',2,"n",cl.players[spec_track].name,"t",cl.teamplay ? cl.players[spec_track].team : "");
 		

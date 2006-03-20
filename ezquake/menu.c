@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.35 2006-03-11 10:27:50 tonik Exp $
+	$Id: menu.c,v 1.36 2006-03-20 13:51:27 vvd0 Exp $
 
 */
 
@@ -1496,12 +1496,12 @@ void M_ScanSaves (char *sp_gamedir) {
 	for (i = 0; i < MAX_SAVEGAMES; i++) {
 		strcpy (m_filenames[i], "--- UNUSED SLOT ---");
 		loadable[i] = false;
-		Q_snprintfz (name, sizeof(name), "%s/save/s%i.sav", sp_gamedir, i);
+		snprintf (name, sizeof(name), "%s/save/s%i.sav", sp_gamedir, i);
 		if (!(f = fopen (name, "r")))
 			continue;
 		fscanf (f, "%i\n", &version);
 		fscanf (f, "%79s\n", name);
-		Q_strncpyz (m_filenames[i], name, sizeof(m_filenames[i]));
+		strlcpy (m_filenames[i], name, sizeof(m_filenames[i]));
 
 		// change _ back to space
 		for (j = 0; j < SAVEGAME_COMMENT_LENGTH; j++)
@@ -1791,8 +1791,8 @@ void M_MP3_Control_Draw (void) {
 		frac = bound(0, elapsed - scroll_index, 1);
 		scroll_index = scroll_index % last_length;
 	} else {
-		Q_snprintfz(lastsonginfo, sizeof(lastsonginfo), "%s  ***  ", s);
-		Q_strncpyz(last_title, s, sizeof(last_title));
+		snprintf(lastsonginfo, sizeof(lastsonginfo), "%s  ***  ", s);
+		strlcpy(last_title, s, sizeof(last_title));
 		last_length = strlen(lastsonginfo);
 		initial_time = realtime;
 		frac = scroll_index = 0;
@@ -1800,7 +1800,7 @@ void M_MP3_Control_Draw (void) {
 
 	if ((!mp3_scrolltitle.value || last_length <= 38 + 7) && mp3_scrolltitle.value != 2) {
 		char name[38 + 1];
-		Q_strncpyz(name, last_title, sizeof(name));
+		strlcpy(name, last_title, sizeof(name));
 		M_PrintWhite(max(8, (320 - (last_length - 7) * 8) >> 1), M_MP3_CONTROL_HEADINGROW + 32, name);
 		initial_time = realtime;
 	} else {
@@ -2087,7 +2087,7 @@ menu_items:
 			spaces = " ";
 		else
 			spaces = "";
-		Q_strncpyz(name, playlist_entries[index], sizeof(name));
+		strlcpy(name, playlist_entries[index], sizeof(name));
 		if (last_current != index)
 			M_Print (16, PLAYLIST_HEADING_ROW + 24 + (index - playlist_base) * 8, va("%s%d %s", spaces, index + 1, name));
 		else
@@ -2287,14 +2287,14 @@ void Demo_playlist_start (int i){
 		CL_Disconnect_f();
 	demo_playlist_started_test = 0 ;
 	demo_playlist_started=1;
-	Q_strncpyz(track_name,demo_playlist[demo_playlist_current_played].trackname,sizeof(demo_playlist[demo_playlist_current_played].trackname));
+	strlcpy(track_name,demo_playlist[demo_playlist_current_played].trackname,sizeof(demo_playlist[demo_playlist_current_played].trackname));
 	Cbuf_AddText (va("playdemo \"..%s\"\n", demo_playlist[demo_playlist_current_played].path));
 	
 }
 
 void Demo_playlist_f (void) {
 	demo_playlist_current_played++;
-	Q_strncpyz(track_name,demo_playlist[demo_playlist_current_played].trackname,sizeof(demo_playlist[demo_playlist_current_played].trackname));
+	strlcpy(track_name,demo_playlist[demo_playlist_current_played].trackname,sizeof(demo_playlist[demo_playlist_current_played].trackname));
 
 	if (demo_playlist_current_played == demo_playlist_num  && demo_playlist_loop.value ){
 		demo_playlist_current_played = 0;
@@ -2353,12 +2353,12 @@ void Demo_Playlist_Stop_f (void){
 }
 
 void M_Demo_Playlist_Setup_f (void) {
-	Q_strncpyz(demo_track,demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,sizeof(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname));
-	Q_strncpyz(default_track,demo_playlist_track_name.string,16);
+	strlcpy(demo_track,demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,sizeof(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname));
+	strlcpy(default_track,demo_playlist_track_name.string,16);
 }
 
 void M_Demo_Options_Setup_f (void) {
-	Q_strncpyz(default_track,demo_playlist_track_name.string,sizeof(demo_playlist_track_name.string ));
+	strlcpy(default_track,demo_playlist_track_name.string,sizeof(demo_playlist_track_name.string ));
 }
 
 
@@ -2502,7 +2502,7 @@ static void Demo_ReadDirectory(void) {
 			time = fd.ftLastWriteTime;
 		}
 
-		Q_strncpyz (name, fd.cFileName, sizeof(name));
+		strlcpy (name, fd.cFileName, sizeof(name));
 	#else
 		stat (va("%s%s/%s", com_basedir, demo_currentdir, dstruct->d_name), &fileinfo);
 
@@ -2525,7 +2525,7 @@ static void Demo_ReadDirectory(void) {
 			time = fileinfo.st_mtime;
 		}
 
-		Q_strncpyz (name, dstruct->d_name, sizeof(name));
+		strlcpy (name, dstruct->d_name, sizeof(name));
 	#endif
 
 		if (demolist_count == MAX_DEMO_FILES)
@@ -2594,9 +2594,9 @@ void M_Demos_Playlist_Del (int i) {
 	demo_playlist[i].trackname[0] = '\0';
 
 	for (y=i ; y<=256 && demo_playlist[y+1].name[0]!='\0'; y++ ){
-	Q_strncpyz(demo_playlist[y].name,demo_playlist[y+1].name,sizeof(demo_playlist[y+1].name)) ;
-	Q_strncpyz(demo_playlist[y].path,demo_playlist[y+1].path,sizeof(demo_playlist[y+1].path)) ;
-	Q_strncpyz(demo_playlist[y].trackname,demo_playlist[y+1].trackname,sizeof(demo_playlist[y+1].trackname)) ;
+	strlcpy(demo_playlist[y].name,demo_playlist[y+1].name,sizeof(demo_playlist[y+1].name)) ;
+	strlcpy(demo_playlist[y].path,demo_playlist[y+1].path,sizeof(demo_playlist[y+1].path)) ;
+	strlcpy(demo_playlist[y].trackname,demo_playlist[y+1].trackname,sizeof(demo_playlist[y+1].trackname)) ;
 	demo_playlist[y+1].name[0] = '\0';
 	demo_playlist[y+1].path[0] = '\0';
 	demo_playlist[y+1].trackname[0] = '\0';
@@ -2611,15 +2611,15 @@ void M_Demos_Playlist_Del (int i) {
 
 void M_Demos_Playlist_Move_Up (int i) {
 	demo_playlist_t tmp;
-	Q_strncpyz(tmp.name,demo_playlist[i-1].name,sizeof(demo_playlist[i-1].name));
-	Q_strncpyz(tmp.path,demo_playlist[i-1].path,sizeof(demo_playlist[i-1].path));
-	Q_strncpyz(tmp.trackname,demo_playlist[i-1].trackname,sizeof(demo_playlist[i-1].trackname));
-	Q_strncpyz(demo_playlist[i-1].name,demo_playlist[i].name,sizeof(demo_playlist[i-1].name));
-	Q_strncpyz(demo_playlist[i-1].path,demo_playlist[i].path,sizeof(demo_playlist[i-1].path));
-	Q_strncpyz(demo_playlist[i-1].trackname,demo_playlist[i].trackname,sizeof(demo_playlist[i-1].trackname));
-	Q_strncpyz(demo_playlist[i].name,tmp.name,sizeof(tmp.name));
-	Q_strncpyz(demo_playlist[i].path,tmp.path,sizeof(tmp.path));
-	Q_strncpyz(demo_playlist[i].trackname,tmp.trackname,sizeof(tmp.trackname));
+	strlcpy(tmp.name,demo_playlist[i-1].name,sizeof(demo_playlist[i-1].name));
+	strlcpy(tmp.path,demo_playlist[i-1].path,sizeof(demo_playlist[i-1].path));
+	strlcpy(tmp.trackname,demo_playlist[i-1].trackname,sizeof(demo_playlist[i-1].trackname));
+	strlcpy(demo_playlist[i-1].name,demo_playlist[i].name,sizeof(demo_playlist[i-1].name));
+	strlcpy(demo_playlist[i-1].path,demo_playlist[i].path,sizeof(demo_playlist[i-1].path));
+	strlcpy(demo_playlist[i-1].trackname,demo_playlist[i].trackname,sizeof(demo_playlist[i-1].trackname));
+	strlcpy(demo_playlist[i].name,tmp.name,sizeof(tmp.name));
+	strlcpy(demo_playlist[i].path,tmp.path,sizeof(tmp.path));
+	strlcpy(demo_playlist[i].trackname,tmp.trackname,sizeof(tmp.trackname));
 }
 
 void M_Demos_Playlist_Move_Down (int i) {
@@ -2628,15 +2628,15 @@ void M_Demos_Playlist_Move_Down (int i) {
 	if(i+1 == demo_playlist_num )
 			return;
 	
-	Q_strncpyz(tmp.name,demo_playlist[i+1].name,sizeof(demo_playlist[i+1].name));
-	Q_strncpyz(tmp.path,demo_playlist[i+1].path,sizeof(demo_playlist[i+1].path));
-	Q_strncpyz(tmp.trackname,demo_playlist[i+1].trackname,sizeof(demo_playlist[i+1].trackname));
-	Q_strncpyz(demo_playlist[i+1].name,demo_playlist[i].name,sizeof(demo_playlist[i+1].name));
-	Q_strncpyz(demo_playlist[i+1].path,demo_playlist[i].path,sizeof(demo_playlist[i+1].path));
-	Q_strncpyz(demo_playlist[i+1].trackname,demo_playlist[i].trackname,sizeof(demo_playlist[i+1].trackname));
-	Q_strncpyz(demo_playlist[i].name,tmp.name,sizeof(tmp.name));
-	Q_strncpyz(demo_playlist[i].path,tmp.path,sizeof(tmp.path));
-	Q_strncpyz(demo_playlist[i].trackname,tmp.trackname,sizeof(tmp.trackname));
+	strlcpy(tmp.name,demo_playlist[i+1].name,sizeof(demo_playlist[i+1].name));
+	strlcpy(tmp.path,demo_playlist[i+1].path,sizeof(demo_playlist[i+1].path));
+	strlcpy(tmp.trackname,demo_playlist[i+1].trackname,sizeof(demo_playlist[i+1].trackname));
+	strlcpy(demo_playlist[i+1].name,demo_playlist[i].name,sizeof(demo_playlist[i+1].name));
+	strlcpy(demo_playlist[i+1].path,demo_playlist[i].path,sizeof(demo_playlist[i+1].path));
+	strlcpy(demo_playlist[i+1].trackname,demo_playlist[i].trackname,sizeof(demo_playlist[i+1].trackname));
+	strlcpy(demo_playlist[i].name,tmp.name,sizeof(tmp.name));
+	strlcpy(demo_playlist[i].path,tmp.path,sizeof(tmp.path));
+	strlcpy(demo_playlist[i].trackname,tmp.trackname,sizeof(tmp.trackname));
 }
 
 static void Demo_FormatSize (char *t) {
@@ -2676,22 +2676,22 @@ void M_Demos_Draw (void) {
 		if (demo_section == 0){
 			M_Print (64,8, "[browser]");
 			//M_PrintWhite (136,8, " newmenu");
-			Q_strncpyz(demoname_scroll, demo_currentdir[0] ? demo_currentdir : "/", sizeof(demoname_scroll));
+			strlcpy(demoname_scroll, demo_currentdir[0] ? demo_currentdir : "/", sizeof(demoname_scroll));
 			M_PrintWhite (16, 16, demoname_scroll);
 			M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f \x1d\x1e\x1e\x1e\x1e\x1e\x1f");
 		
 			for (i = 0; i < demolist_count - demo_base && i < DEMO_MAXLINES; i++) {
 				d = demolist[demo_base + i];
 				y = 32 + 8 * i;
-				Q_strncpyz (demoname, d->name, sizeof(demoname));
+				strlcpy (demoname, d->name, sizeof(demoname));
 		
 				switch (d->type) {
 				case dt_file:
 					M_Print (24, y, demoname);
 					if (d->size > 99999 * 1024)
-						Q_snprintfz(demosize, sizeof(demosize), "%5iM", d->size >> 20);
+						snprintf(demosize, sizeof(demosize), "%5iM", d->size >> 20);
 					else
-						Q_snprintfz(demosize, sizeof(demosize), "%5iK", d->size >> 10);
+						snprintf(demosize, sizeof(demosize), "%5iK", d->size >> 10);
 					Demo_FormatSize(demosize);
 					M_PrintWhite (24 + 8 * DEMOLIST_NAME_WIDTH, y, demosize);
 					break;
@@ -2721,7 +2721,7 @@ void M_Demos_Draw (void) {
 					last_demo_index = demoindex;
 					last_demo_time = time;
 					frac = scroll_index = 0;
-					Q_snprintfz(last_demo_name, sizeof(last_demo_name), "%s  ***  ", demolist[demoindex]->name);
+					snprintf(last_demo_name, sizeof(last_demo_name), "%s  ***  ", demolist[demoindex]->name);
 					last_demo_length = strlen(last_demo_name);
 				} else {
 					
@@ -2733,7 +2733,7 @@ void M_Demos_Draw (void) {
 		
 		
 				if (last_demo_length <= 38 + 7) {
-					Q_strncpyz(demoname_scroll, demolist[demoindex]->name, sizeof(demoname_scroll));
+					strlcpy(demoname_scroll, demolist[demoindex]->name, sizeof(demoname_scroll));
 					M_PrintWhite (160 - strlen(demoname_scroll) * 4, 40 + 8 * DEMO_MAXLINES, demoname_scroll);
 				} else {
 					for (i = 0; i < sizeof(demoname_scroll) - 1; i++)
@@ -2878,7 +2878,7 @@ void M_Demos_Key (int key) {
 	switch (key) {
 	
 	case K_ESCAPE:
-		Q_strncpyz(demo_prevdemo, demolist[demo_cursor + demo_base]->name, sizeof(demo_prevdemo));
+		strlcpy(demo_prevdemo, demolist[demo_cursor + demo_base]->name, sizeof(demo_prevdemo));
 		M_LeaveMenu (m_multiplayer);
 		break;
 
@@ -3077,7 +3077,7 @@ void M_Demos_Key (int key) {
 			if (demolist[demo_base + demo_cursor]->type != dt_file) {		
 				if (demolist[demo_base + demo_cursor]->type == dt_up) {
 					if ((p = strrchr(demo_currentdir, '/')) != NULL) {
-						Q_strncpyz(demo_prevdemo, p + 1, sizeof(demo_prevdemo));
+						strlcpy(demo_prevdemo, p + 1, sizeof(demo_prevdemo));
 						*p = 0;
 					}
 				} else {	
@@ -3099,7 +3099,7 @@ void M_Demos_Key (int key) {
 				
 				}else{
 					Cbuf_AddText (va("playdemo \"..%s/%s\"\n", demo_currentdir, demolist[demo_cursor + demo_base]->name));
-				Q_strncpyz(demo_prevdemo, demolist[demo_base + demo_cursor]->name, sizeof(demo_prevdemo));
+				strlcpy(demo_prevdemo, demolist[demo_base + demo_cursor]->name, sizeof(demo_prevdemo));
 				}
 			}
 		}else if (demos_menu_pos == 1) {
@@ -3123,7 +3123,7 @@ void M_Demos_Key (int key) {
 	
 	case K_SPACE:
 		if (demos_menu_pos == 0){
-			Q_strncpyz(demo_prevdemo, demolist[demo_cursor + demo_base]->name, sizeof(demo_prevdemo));
+			strlcpy(demo_prevdemo, demolist[demo_cursor + demo_base]->name, sizeof(demo_prevdemo));
 			Demo_ReadDirectory();
 		}
 		break;
@@ -3150,11 +3150,11 @@ void M_Demos_Key (int key) {
 		if (demo_playlist_opt_cursor == 4 && demos_menu_pos == 1 && demo_playlist_section == 1) {
 			if (strlen(demo_track))
 				demo_track[strlen(demo_track)-1] = 0;
-			Q_strncpyz(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_track));
+			strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_track));
 		}else if (demos_menu_pos == 2 && demo_options_cursor == 1 ){
 			if (strlen(default_track))
 				default_track[strlen(default_track)-1] = 0;
-			Q_strncpyz(demo_playlist_track_name.string,default_track,sizeof(default_track));
+			strlcpy(demo_playlist_track_name.string,default_track,sizeof(default_track));
 		}else {
 			m_topmenu = m_none;
 			M_LeaveMenu (m_multiplayer);
@@ -3172,7 +3172,7 @@ void M_Demos_Key (int key) {
 				demo_sorttype = sort_target;
 				demo_reversesort = false;
 			}
-			Q_strncpyz(demo_prevdemo, demolist[demo_cursor + demo_base]->name, sizeof(demo_prevdemo));
+			strlcpy(demo_prevdemo, demolist[demo_cursor + demo_base]->name, sizeof(demo_prevdemo));
 			Demo_SortDemos();
 			Demo_PositionCursor();	
 		
@@ -3182,7 +3182,7 @@ void M_Demos_Key (int key) {
 				if (l < 15) {
 					demo_track[l+1] = 0;
 					demo_track[l] = key;
-					Q_strncpyz(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_track));
+					strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_track));
 				}
 			}else if (demo_options_cursor == 1 && demos_menu_pos == 2) {
 				l = strlen(default_track);
@@ -3190,7 +3190,7 @@ void M_Demos_Key (int key) {
 				if (l < 15) {
 					default_track[l+1] = 0;
 					default_track[l] = key;
-					Q_strncpyz(demo_playlist_track_name.string,default_track,sizeof(default_track));
+					strlcpy(demo_playlist_track_name.string,default_track,sizeof(default_track));
 				}
 			}
 	}	
@@ -3570,8 +3570,8 @@ extern cvar_t	topcolor, bottomcolor;
 
 void M_Menu_Setup_f (void) {
 	M_EnterMenu (m_setup);
-	Q_strncpyz (setup_name, name.string, sizeof(setup_name));
-	Q_strncpyz (setup_team, team.string, sizeof(setup_team));
+	strlcpy (setup_name, name.string, sizeof(setup_name));
+	strlcpy (setup_team, team.string, sizeof(setup_team));
 	setup_top = setup_oldtop = (int)topcolor.value;
 	setup_bottom = setup_oldbottom = (int)bottomcolor.value;
 }
@@ -3936,8 +3936,8 @@ void M_Menu_SEdit_f (void) {
 
 	M_EnterMenu (m_sedit);
 	sedit_state = 0;
-	Q_strncpyz (slist_serv, slist[m_multip_cursor].server, sizeof(slist_serv));
-	Q_strncpyz (slist_desc, slist[m_multip_cursor].description, sizeof(slist_desc));
+	strlcpy (slist_serv, slist[m_multip_cursor].server, sizeof(slist_serv));
+	strlcpy (slist_desc, slist[m_multip_cursor].description, sizeof(slist_desc));
 	slist_serv_max = (size = strlen(slist_serv)) > SERV_L ? size : SERV_L;
 	slist_serv_min = slist_serv_max - SERV_L;
 	slist_desc_max = (size = strlen(slist_desc)) > DESC_L ? size : DESC_L;

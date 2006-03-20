@@ -15,6 +15,8 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: r_part.c,v 1.7 2006-03-20 13:51:28 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -241,7 +243,7 @@ void R_ReadPointFile_f (void) {
 	if (!com_serveractive)
 		return;
 
-	Q_snprintfz (name, sizeof(name), "maps/%s.pts", mapname.string);
+	snprintf (name, sizeof(name), "maps/%s.pts", mapname.string);
 
 	if (FS_FOpenFile (name, &f) == -1) {
 		Com_Printf ("couldn't open %s\n", name);

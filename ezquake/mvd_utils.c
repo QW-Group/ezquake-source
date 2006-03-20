@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.24 2005-12-08 19:29:32 disconn3ct Exp $
+	$Id: mvd_utils.c,v 1.25 2006-03-20 13:51:27 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -470,8 +470,6 @@ void MVD_Info (void){
 	char *mapname;
 	int x,y,z,i = 0;
 
-
-
 	#ifdef DEBUG
 	printf("MVD_Info Started\n");
 	#endif
@@ -483,8 +481,6 @@ void MVD_Info (void){
 		TP_LoadLocFile (mapname, true);
 		loc_loaded = 1;
 	}
-	
-	
 
 	if (!mvd_info.value)
 		return;
@@ -496,7 +492,7 @@ void MVD_Info (void){
 	y = ELEMENT_Y_COORD(mvd_info);
 
 	if (mvd_info_show_header.value){
-		strcpy(mvd_info_header_string,mvd_info_setup.string);
+		strlcpy(mvd_info_header_string, mvd_info_setup.string, sizeof(mvd_info_header_string));
 		Replace_In_String(mvd_info_header_string,sizeof(mvd_info_header_string),'%',\
 			10,\
 			"a","Armor",\
@@ -509,7 +505,7 @@ void MVD_Info (void){
 			"v","Value",\
 			"w","Cur.Weap.",\
 			"W","Best Weap.");
-		strcpy(mvd_info_header_string,Make_Red(mvd_info_header_string,0));
+		strlcpy(mvd_info_header_string, Make_Red(mvd_info_header_string, 0), sizeof(mvd_info_header_string));
 		Draw_String (x, y+((z++)*8), mvd_info_header_string);
 	}
 
@@ -518,22 +514,22 @@ void MVD_Info (void){
 
 	mvd_info_powerups[0]=0;
 	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_QUAD)
-		Q_strncpyz(mvd_info_powerups, tp_name_quad.string, sizeof(mvd_info_powerups));
+		strlcpy(mvd_info_powerups, tp_name_quad.string, sizeof(mvd_info_powerups));
               
 	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_INVULNERABILITY) {
 		if (mvd_info_powerups[0])
-			Q_strncatz(mvd_info_powerups, tp_name_separator.string);
-		Q_strncatz(mvd_info_powerups, tp_name_pent.string);
+			strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
+		strlcat(mvd_info_powerups, tp_name_pent.string, sizeof(mvd_info_powerups));
 	}
 
 	if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_INVISIBILITY) {
 		if (mvd_info_powerups[0])
-			Q_strncatz(mvd_info_powerups, tp_name_separator.string);
-		Q_strncatz(mvd_info_powerups, tp_name_ring.string);
+			strlcat(mvd_info_powerups, tp_name_separator.string, sizeof(mvd_info_powerups));
+		strlcat(mvd_info_powerups, tp_name_ring.string, sizeof(mvd_info_powerups));
 	}
 
 
-	strcpy(mvd_info_final_string,mvd_info_setup.string);
+	strlcpy(mvd_info_final_string, mvd_info_setup.string, sizeof(mvd_info_final_string));
     Replace_In_String(mvd_info_final_string,sizeof(mvd_info_final_string),'%',\
 			10,\
 			"w",va("%s:%i",Weapon_NumToString(mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON]),mvd_new_info[i].p_info->stats[STAT_AMMO]),\
@@ -546,7 +542,7 @@ void MVD_Info (void){
 			"P",va("%i",mvd_new_info[i].p_info->ping),\
 			"p",mvd_info_powerups,\
 			"v",va("%i",cl_multiview.value ? 0 : mvd_new_info[i].value));
-	strcpy(str, mvd_info_final_string);
+	strlcpy(str, mvd_info_final_string, sizeof(str));
 	Draw_String (x, y+((z++)*8), str);
 	
 	#ifdef DEBUG
@@ -569,15 +565,15 @@ int MVD_FindBestPlayer_f(void){
 	#endif
 	
 	if (mvd_cg_info.gametype == 2)
-		strcpy(val,mvd_autotrack_1on1_values.string);
+		strlcpy(val, mvd_autotrack_1on1_values.string, sizeof(val));
 	else if (mvd_cg_info.gametype == 4)
-		strcpy(val,mvd_autotrack_2on2_values.string);
+		strlcpy(val, mvd_autotrack_2on2_values.string, sizeof(val));
 	else if (mvd_cg_info.gametype == 8)
-		strcpy(val,mvd_autotrack_4on4_values.string);
+		strlcpy(val, mvd_autotrack_4on4_values.string, sizeof(val));
 	else if (mvd_autotrack.value == 2)
-		strcpy(val,mvd_autotrack_custom_values.string);
+		strlcpy(val, mvd_autotrack_custom_values.string, sizeof(val));
 	else
-		strcpy(val,mvd_autotrack_1on1_values.string);
+		strlcpy(val, mvd_autotrack_1on1_values.string, sizeof(val));
 	
 	
 	// checking if mvd_autotrack_xonx_values have right format
@@ -597,37 +593,37 @@ int MVD_FindBestPlayer_f(void){
 	}
 
 	if (mvd_cg_info.gametype == 2)
-		strcpy(val,mvd_autotrack_1on1_values.string);
+		strlcpy(val, mvd_autotrack_1on1_values.string, sizeof(val));
 	else if (mvd_cg_info.gametype == 4)
-		strcpy(val,mvd_autotrack_2on2_values.string);
+		strlcpy(val, mvd_autotrack_2on2_values.string, sizeof(val));
 	else if (mvd_cg_info.gametype == 8)
-		strcpy(val,mvd_autotrack_4on4_values.string);
+		strlcpy(val, mvd_autotrack_4on4_values.string, sizeof(val));
 	else if (mvd_autotrack.value == 2)
-		strcpy(val,mvd_autotrack_custom_values.string);
+		strlcpy(val, mvd_autotrack_custom_values.string, sizeof(val));
 	else
-		strcpy(val,mvd_autotrack_1on1_values.string);
+		strlcpy(val, mvd_autotrack_1on1_values.string, sizeof(val));
 
 	if (mvd_autotrack.value == 2)
-		strcpy(val,mvd_autotrack_custom_values.string);
+		strlcpy(val, mvd_autotrack_custom_values.string, sizeof(val));
 	else if (mvd_autotrack.value == 3 && cl_multiview.value)
-		strcpy(val,multitrack_val);
+		strlcpy(val, multitrack_val, sizeof(val));
 	
 	// getting values
 	//val = mvd_autotrack_1on1_values.string;
-	axe_val	=atoi(strtok(val, " "));
-	sg_val	=atoi(strtok(NULL, " "));
-	ssg_val	=atoi(strtok(NULL, " "));
-	ng_val	=atoi(strtok(NULL, " "));
-	sng_val	=atoi(strtok(NULL, " "));
-	gl_val	=atoi(strtok(NULL, " "));
-	rl_val	=atoi(strtok(NULL, " "));
-	lg_val	=atoi(strtok(NULL, " "));
-	ga_val	=atoi(strtok(NULL, " "));
-	ya_val	=atoi(strtok(NULL, " "));
-	ra_val	=atoi(strtok(NULL, " "));
-	ring_val=atoi(strtok(NULL, " "));
-	quad_val=atoi(strtok(NULL, " "));
-	pent_val=atoi(strtok(NULL, " "));
+	axe_val	= Q_atoi(strtok(val, " "));
+	sg_val	= Q_atoi(strtok(NULL, " "));
+	ssg_val	= Q_atoi(strtok(NULL, " "));
+	ng_val	= Q_atoi(strtok(NULL, " "));
+	sng_val	= Q_atoi(strtok(NULL, " "));
+	gl_val	= Q_atoi(strtok(NULL, " "));
+	rl_val	= Q_atoi(strtok(NULL, " "));
+	lg_val	= Q_atoi(strtok(NULL, " "));
+	ga_val	= Q_atoi(strtok(NULL, " "));
+	ya_val	= Q_atoi(strtok(NULL, " "));
+	ra_val	= Q_atoi(strtok(NULL, " "));
+	ring_val= Q_atoi(strtok(NULL, " "));
+	quad_val= Q_atoi(strtok(NULL, " "));
+	pent_val= Q_atoi(strtok(NULL, " "));
 	//axe_val=sg_val=ssg_val=ng_val=sng_val=gl_val=rl_val=lg_val=ga_val=ya_val=ra_val=ring_val=quad_val=pent_val=10;
 	
 	
@@ -635,11 +631,8 @@ int MVD_FindBestPlayer_f(void){
 	
 		// get bestweapon
 		
-		bp_bw = MVD_AutoTrackBW_f(i);
-		
+		bp_bw = MVD_AutoTrackBW_f(i);	
 
-	
-		
 		// get armortype
 		if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_ARMOR1)
 			bp_at = ga_val ;
@@ -663,18 +656,18 @@ int MVD_FindBestPlayer_f(void){
 		bp_h=mvd_new_info[i].p_info->stats[STAT_HEALTH];
 		
 	if (mvd_cg_info.pcount == 2)
-		strcpy(string1,mvd_autotrack_1on1.string);
+		strlcpy(string1, mvd_autotrack_1on1.string, sizeof(string1));
 	else if (mvd_cg_info.pcount == 4)
-		strcpy(string1,mvd_autotrack_2on2.string);
+		strlcpy(string1,mvd_autotrack_2on2.string, sizeof(string1));
 	else if (mvd_cg_info.pcount == 8)
-		strcpy(string1,mvd_autotrack_4on4.string);
+		strlcpy(string1,mvd_autotrack_4on4.string, sizeof(string1));
 	else
-		strcpy(string1,mvd_autotrack_1on1.string);
+		strlcpy(string1,mvd_autotrack_1on1.string, sizeof(string1));
 		
 	if (mvd_autotrack.value == 2)
-		strcpy(string1,mvd_autotrack_custom.string);
+		strlcpy(string1, mvd_autotrack_custom.string, sizeof(string1));
 	else if (mvd_autotrack.value == 3 && cl_multiview.value)
-		strcpy(string1,multitrack_str);
+		strlcpy(string1, multitrack_str, sizeof(string1));
 		
 	//Com_Printf("String1b : %s\n",string1);
 	Replace_In_String(string1,sizeof(string1),'%',6,\
@@ -689,16 +682,12 @@ int MVD_FindBestPlayer_f(void){
 
 		if(status<0){
 			Cvar_SetValue(&mvd_autotrack,0);
-		
 			return(0);
 		}
-		
-				
+
 		mvd_new_info[i].value = atoi(string1);
 		
 	}
-	
-
 
 	lastval=0;
 	bp_id=0;
@@ -707,14 +696,11 @@ int MVD_FindBestPlayer_f(void){
 			lastval = mvd_new_info[h].value;
 			bp_id 	= mvd_new_info[h].id;
 		}
-		
 	}
 	#ifdef DEBUG
 	printf("MVD_FindBestPlayer_f Stopped %i\n",bp_id);
 	#endif
 	return bp_id ;
-	
-	
 }
 
 int MVD_AutoTrackBW_f(int i){
@@ -760,7 +746,7 @@ void MVD_AutoTrack_f(void) {
 			multitrack_val = mvd_multitrack_1_values.string;
 			id = MVD_FindBestPlayer_f();
 			if ( id != multitrack_id_1){
-				sprintf(arg,"track1 %i \n",id);
+				snprintf(arg, sizeof(arg), "track1 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_1 = id;
 			}
@@ -770,7 +756,7 @@ void MVD_AutoTrack_f(void) {
 			multitrack_val = mvd_multitrack_2_values.string;
 			id = MVD_FindBestPlayer_f();
 			if ( id != multitrack_id_2){
-				sprintf(arg,"track2 %i \n",id);
+				snprintf(arg, sizeof(arg), "track2 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_2 = id;
 			}
@@ -780,7 +766,7 @@ void MVD_AutoTrack_f(void) {
 			multitrack_val = mvd_multitrack_3_values.string;
 			id = MVD_FindBestPlayer_f();
 			if ( id != multitrack_id_3){
-				sprintf(arg,"track3 %i \n",id);
+				snprintf(arg, sizeof(arg), "track3 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_3 = id;
 			}
@@ -790,7 +776,7 @@ void MVD_AutoTrack_f(void) {
 	 		multitrack_val = mvd_multitrack_4_values.string;
 			id = MVD_FindBestPlayer_f();
 			if ( id != multitrack_id_4){
-				sprintf(arg,"track4 %i \n",id);
+				snprintf(arg, sizeof(arg), "track4 %i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_4 = id;
 			}
@@ -800,7 +786,7 @@ void MVD_AutoTrack_f(void) {
 	
 		id = MVD_FindBestPlayer_f();
 		if ( id != last_track){
-			sprintf(arg,"track %i \n",id);
+			snprintf(arg, sizeof(arg), "track %i \n",id);
 			Cbuf_AddText(arg);
 			last_track = id;
 		}

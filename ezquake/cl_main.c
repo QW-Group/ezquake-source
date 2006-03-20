@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: cl_main.c,v 1.67 2006-03-20 13:51:26 vvd0 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -179,7 +180,7 @@ char *CL_Macro_ConnectionType(void) {
 	static char macrobuf[16];
 
 	s = (cls.state < ca_connected) ? "disconnected" : cl.spectator ? "spectator" : "player";
-	Q_strncpyz(macrobuf, s, sizeof(macrobuf));
+	strlcpy(macrobuf, s, sizeof(macrobuf));
 	return macrobuf;
 }
 
@@ -188,7 +189,7 @@ char *CL_Macro_Demoplayback(void) {
 	static char macrobuf[16];
 
 	s = cls.mvdplayback ? "mvdplayback" : cls.demoplayback ? "qwdplayback" : "0";
-	Q_strncpyz(macrobuf, s, sizeof(macrobuf));
+	strlcpy(macrobuf, s, sizeof(macrobuf));
 	return macrobuf;
 }
 
@@ -197,7 +198,7 @@ char *CL_Macro_Serverstatus(void) {
 	static char macrobuf[16];
 
 	s = (cls.state < ca_connected) ? "disconnected" : cl.standby ? "standby" : "normal";
-	Q_strncpyz(macrobuf, s, sizeof(macrobuf));
+	strlcpy(macrobuf, s, sizeof(macrobuf));
 	return macrobuf;
 }
 
@@ -253,7 +254,7 @@ static void CL_SendConnectPacket(void) {
 	strcpy (biguserinfo, cls.userinfo);
 	Info_SetValueForStarKey (biguserinfo, "*z_ext", va("%i", CLIENT_EXTENSIONS), sizeof(biguserinfo));
 
-	Q_snprintfz(data, sizeof(data), "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, biguserinfo);
+	snprintf(data, sizeof(data), "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, biguserinfo);
 	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
 
@@ -264,7 +265,7 @@ void CL_CheckForResend (void) {
 
 	if (cls.state == ca_disconnected && com_serveractive) {
 		// if the local server is running and we are not, then connect
-		Q_strncpyz (cls.servername, "local", sizeof(cls.servername));
+		strlcpy (cls.servername, "local", sizeof(cls.servername));
 		NET_StringToAdr("local", &cls.server_adr);
 		CL_SendConnectPacket ();	// we don't need a challenge on the local server
 		// FIXME: cls.state = ca_connecting so that we don't send the packet twice?
@@ -289,7 +290,7 @@ void CL_CheckForResend (void) {
 		cls.server_adr.port = BigShort(PORT_SERVER);
 
 	Com_Printf("Connecting to %s...\n", cls.servername);
-	Q_snprintfz(data, sizeof(data), "\xff\xff\xff\xff" "getchallenge\n");
+	snprintf(data, sizeof(data), "\xff\xff\xff\xff" "getchallenge\n");
 	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
 
@@ -312,7 +313,7 @@ void CL_Connect_f (void) {
 		Cbuf_AddText(va("say ,connect %s", Cmd_Argv(1)));
 	} else {
 		Host_EndGame();
-		Q_strncpyz(cls.servername, Cmd_Argv (1), sizeof(cls.servername));
+		strlcpy(cls.servername, Cmd_Argv (1), sizeof(cls.servername));
 		CL_BeginServerConnect();
 	}
 }
@@ -401,7 +402,7 @@ void CL_DNS_f (void) {
 		Com_Printf("Usage: %s <address>\n", Cmd_Argv(0));
 		return;
 	}
-	Q_strncpyz(address, Cmd_Argv(1), sizeof(address));
+	strlcpy(address, Cmd_Argv(1), sizeof(address));
 	if ((s = strchr(address, ':')))
 		*s = 0;
 	addr.s_addr = inet_addr(address);
@@ -637,7 +638,7 @@ void CL_ConnectionlessPacket (void) {
 		SetForegroundWindow (mainwindow);
 #endif
 		s = MSG_ReadString ();
-		Q_strncpyz (cmdtext, s, sizeof(cmdtext));
+		strlcpy (cmdtext, s, sizeof(cmdtext));
 		s = MSG_ReadString ();
 
 		while (*s && isspace(*s))
@@ -884,7 +885,7 @@ void CL_InitLocal (void) {
 	
 	Cvar_ResetCurrentGroup();
 
-	Q_snprintfz(st, sizeof(st), "ezQuake %i", build_number());
+	snprintf(st, sizeof(st), "ezQuake %i", build_number());
 
 	if (COM_CheckParm("-norjscripts"))
 	{

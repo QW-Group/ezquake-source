@@ -1,3 +1,6 @@
+/*
+	$Id: common_draw.c,v 1.7 2006-03-20 13:51:26 vvd0 Exp $
+*/
 // module added by kazik
 // for common graphics (soft and GL)
 
@@ -589,9 +592,9 @@ char* SCR_GetGameTime(int inverse)
 	timelimit = inverse ? 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) : 0;
 
 	if (cl.countdown || cl.standby)
-		Q_strncpyz (str, SecondsToMinutesString(timelimit), sizeof(str));
+		strlcpy (str, SecondsToMinutesString(timelimit), sizeof(str));
 	else
-		Q_strncpyz (str, SecondsToMinutesString((int) abs(timelimit - cl.gametime)), sizeof(str));
+		strlcpy (str, SecondsToMinutesString((int) abs(timelimit - cl.gametime)), sizeof(str));
 
 	return str;
 }

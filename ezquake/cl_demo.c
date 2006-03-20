@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: cl_demo.c,v 1.26 2006-03-20 13:51:26 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -719,7 +720,7 @@ static void CL_WriteDemoPimpMessage(void) {
 		strcat(border, "\x1e");
 	strcat(border, "\x1f");
 
-	Q_snprintfz(pimpmessage, sizeof(pimpmessage), "\n%s\n%s\n%s\n",
+	snprintf(pimpmessage, sizeof(pimpmessage), "\n%s\n%s\n%s\n",
 		border,
 		"\x1d\x1e\x1e\x1e\x1e\x1e\x1e Recorded by ezQuake \x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f",
 		border		
@@ -769,7 +770,7 @@ void CL_Stop_f (void) {
 static char *CL_DemoDirectory(void) {
 	static char dir[MAX_OSPATH * 2];
 
-	Q_strncpyz(dir, demo_dir.string[0] ? va("%s/%s", com_basedir, demo_dir.string) : cls.gamedir, sizeof(dir));
+	strlcpy(dir, demo_dir.string[0] ? va("%s/%s", com_basedir, demo_dir.string) : cls.gamedir, sizeof(dir));
 	return dir;
 }
 
@@ -816,10 +817,10 @@ void CL_Record_f (void) {
 		}
 
 		// open the demo file
-		Q_strncpyz(nameext, Cmd_Argv(1), sizeof(nameext));
+		strlcpy(nameext, Cmd_Argv(1), sizeof(nameext));
 		COM_ForceExtension (nameext, ".qwd");	
 
-		Q_snprintfz (name, sizeof(name), "%s/%s", cls.gamedir, nameext);
+		snprintf (name, sizeof(name), "%s/%s", cls.gamedir, nameext);
 		if (!CL_Demo_Open(name)) {
 			Com_Printf ("Error: Couldn't record to %s. Make sure path exists.\n", name);
 			return;
@@ -829,7 +830,7 @@ void CL_Record_f (void) {
 		if (cls.state == ca_active)
 			CL_WriteStartupData();	
 
-		Q_strncpyz(demoname, nameext, sizeof(demoname));	
+		strlcpy(demoname, nameext, sizeof(demoname));	
 
 		Com_Printf ("Recording to %s\n", nameext);
 
@@ -869,7 +870,7 @@ static qbool CL_RecordDemo(char *dir, char *name, qbool autorecord) {
 
 	COM_ForceExtension(name, ".qwd");
 	if (autorecord) {
-		Q_strncpyz (extendedname, name, sizeof(extendedname));
+		strlcpy (extendedname, name, sizeof(extendedname));
 	} else {
 		COM_StripExtension(name, strippedname);
 		fullname = va("%s/%s", dir, strippedname);
@@ -877,7 +878,7 @@ static qbool CL_RecordDemo(char *dir, char *name, qbool autorecord) {
 			Com_Printf("Error: no available filenames\n");
 			return false;
 		}
-		Q_snprintfz (extendedname, sizeof(extendedname), "%s_%03i.qwd", strippedname, num);
+		snprintf (extendedname, sizeof(extendedname), "%s_%03i.qwd", strippedname, num);
 	}
 
 	fullname = va("%s/%s", dir, extendedname);
@@ -896,7 +897,7 @@ static qbool CL_RecordDemo(char *dir, char *name, qbool autorecord) {
 
 	if (!autorecord) {
 		Com_Printf ("Recording to %s\n", extendedname);
-		Q_strncpyz(demoname, extendedname, sizeof(demoname));	
+		strlcpy(demoname, extendedname, sizeof(demoname));	
 	}
 
 	return true;
@@ -992,7 +993,7 @@ void CL_AutoRecord_StartMatch(char *demoname) {
 		}
 	}
 
-	Q_strncpyz(auto_matchname, demoname, sizeof(auto_matchname));
+	strlcpy(auto_matchname, demoname, sizeof(auto_matchname));
 
 	
 	if (!CL_RecordDemo(MT_TempDirectory(), TEMP_DEMO_NAME, true)) {
@@ -1026,7 +1027,7 @@ void CL_AutoRecord_SaveMatch(void) {
 		Com_Printf("Error: no available filenames\n");
 		return;
 	}
-	Q_snprintfz (savedname, sizeof(savedname), "%s_%03i.qwd", auto_matchname, num);
+	snprintf (savedname, sizeof(savedname), "%s_%03i.qwd", auto_matchname, num);
 
 	fullsavedname = va("%s/%s", dir, savedname);
 
@@ -1076,7 +1077,7 @@ void CL_Demo_GetCompressedName(char* cdemo_name)
 	namelen = strlen(tempqwd_name);
 	if (strlen(demo_format.string) && strlen(tempqwd_name)) {
 		strncpy(cdemo_name, tempqwd_name, namelen - 3);
-		Q_strncpyz(cdemo_name + namelen - 3, demo_format.string, 255 - (namelen - 3) - strlen(demo_format.string));
+		strlcpy(cdemo_name + namelen - 3, demo_format.string, 255 - (namelen - 3) - strlen(demo_format.string));
 	}
 }
 
@@ -1169,12 +1170,12 @@ static void PlayQWZDemo (void) {
 	name = Cmd_Argv(1);
 
 	if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3)) {
-		Q_strncpyz (qwz_name, va("%s/%s", com_basedir, name + 3), sizeof(qwz_name));
+		strlcpy (qwz_name, va("%s/%s", com_basedir, name + 3), sizeof(qwz_name));
 	} else {
 		if (name[0] == '/' || name[0] == '\\')
-			Q_strncpyz (qwz_name, va("%s/%s", cls.gamedir, name + 1), sizeof(qwz_name));
+			strlcpy (qwz_name, va("%s/%s", cls.gamedir, name + 1), sizeof(qwz_name));
 		else
-			Q_strncpyz (qwz_name, va("%s/%s", cls.gamedir, name), sizeof(qwz_name));
+			strlcpy (qwz_name, va("%s/%s", cls.gamedir, name), sizeof(qwz_name));
 	}
 
 	// Qizmo needs an absolute file name
@@ -1189,7 +1190,7 @@ static void PlayQWZDemo (void) {
 	fclose (playbackfile);
 	playbackfile = NULL;
 
-	Q_strncpyz (tempqwd_name, qwz_name, sizeof(tempqwd_name) - 4);
+	strlcpy (tempqwd_name, qwz_name, sizeof(tempqwd_name) - 4);
 
 	// the way Qizmo does it, sigh
 	if (!(p = strstr (tempqwd_name, ".qwz")))
@@ -1209,7 +1210,7 @@ static void PlayQWZDemo (void) {
 	si.wShowWindow = SW_HIDE;
 	si.dwFlags = STARTF_USESHOWWINDOW;
 
-	Q_strncpyz (cmdline, va("%s/%s/qizmo.exe -q -u -3 -D \"%s\"", com_basedir, qizmo_dir.string, qwz_name), sizeof(cmdline));
+	strlcpy (cmdline, va("%s/%s/qizmo.exe -q -u -3 -D \"%s\"", com_basedir, qizmo_dir.string, qwz_name), sizeof(cmdline));
 
 	if (!CreateProcess (NULL, cmdline, NULL, NULL,
 		FALSE, GetPriorityClass(GetCurrentProcess()),
@@ -1250,13 +1251,13 @@ int CL_Demo_Compress(char* qwdname)
 	} else if (!strcmp(demo_format.string, "mvd")) {
 		execute = "qwdtools.exe -c -o * -od";
 		path = qwdtools_dir.string;
-		Q_strncpyz(outputpath, qwdname, COM_SkipPath(qwdname) - qwdname);
+		strlcpy(outputpath, qwdname, COM_SkipPath(qwdname) - qwdname);
 	} else {
 		Com_Printf("%s demo format not yet supported.\n", demo_format.string);
 		return 0;
 	}
 
-	Q_strncpyz (cmdline, va("%s/%s/%s %s \"%s\"", com_basedir, path, execute, outputpath, qwdname), sizeof(cmdline));
+	strlcpy (cmdline, va("%s/%s/%s %s \"%s\"", com_basedir, path, execute, outputpath, qwdname), sizeof(cmdline));
 
 	if (!CreateProcess (NULL, cmdline, NULL, NULL,
 		FALSE, GetPriorityClass(GetCurrentProcess()),
@@ -1266,7 +1267,7 @@ int CL_Demo_Compress(char* qwdname)
 		return 0;
 	}
 
-	Q_strncpyz(tempqwd_name, qwdname, sizeof(tempqwd_name));
+	strlcpy(tempqwd_name, qwdname, sizeof(tempqwd_name));
 
 	hQizmoProcess = pi.hProcess;
 	qwz_packing = true;
@@ -1339,7 +1340,7 @@ void CL_Play_f (void) {
 	TP_ExecTrigger("f_demostart");
 
 #ifdef _WIN32
-	Q_strncpyz (name, Cmd_Argv(1), sizeof(name) - 4);
+	strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
 	if (strlen(name) > 4 && !Q_strcasecmp(name + strlen(name) - 4, ".qwz")) {
 		PlayQWZDemo();
 		if (!playbackfile && !qwz_playback)
@@ -1347,7 +1348,7 @@ void CL_Play_f (void) {
 	} else {
 #endif
 	for (s = ext; *s && !playbackfile; s++) {
-		Q_strncpyz (name, Cmd_Argv(1), sizeof(name) - 4);
+		strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
 		COM_DefaultExtension (name, *s);
 
 		if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))

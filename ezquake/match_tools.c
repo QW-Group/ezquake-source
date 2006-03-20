@@ -16,6 +16,8 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: match_tools.c,v 1.20 2006-03-20 13:51:27 vvd0 Exp $
 */
 
 
@@ -164,7 +166,7 @@ static char *MT_NameAndClean_TeamMembers(char *team) {
 static char *MT_MapName(void) {
 	static char buf[MAX_OSPATH];
 
-	Q_strncpyz(buf, TP_MapName(), sizeof(buf));
+	strlcpy(buf, TP_MapName(), sizeof(buf));
 	return buf;
 }
 
@@ -219,7 +221,7 @@ static int MT_GetTeamNames(char teams[][MAX_INFO_STRING], int max) {
 static char *MT_Serverinfo_Race(void) {
 	static char buf[MAX_OSPATH];
 
-	Q_strncpyz(buf, Info_ValueForKey(cl.serverinfo, "race"), sizeof(buf));
+	strlcpy(buf, Info_ValueForKey(cl.serverinfo, "race"), sizeof(buf));
 	return buf;
 }
 
@@ -351,28 +353,28 @@ static matchinfo_t *MT_GetMatchInfo(void) {
 	numteams = MT_GetTeamNames(teamnames, MAX_CLIENTS);
 
 	matchinfo.spectator = cl.spectator;
-	Q_strncpyz(matchinfo.myname, MT_PlayerName(), sizeof(matchinfo.myname));
+	strlcpy(matchinfo.myname, MT_PlayerName(), sizeof(matchinfo.myname));
 
 	if (cl.spectator) {
 		MT_GetPlayerNames(matchinfo.player1, matchinfo.player2);
-		Q_strncpyz(matchinfo.team1, teamnames[0], sizeof(matchinfo.team1));
-		Q_strncpyz(matchinfo.team2, teamnames[1], sizeof(matchinfo.team2));
+		strlcpy(matchinfo.team1, teamnames[0], sizeof(matchinfo.team1));
+		strlcpy(matchinfo.team2, teamnames[1], sizeof(matchinfo.team2));
 	} else {
-		Q_strncpyz(matchinfo.player1, MT_PlayerName(), sizeof(matchinfo.player1));
-		Q_strncpyz(matchinfo.player2, MT_EnemyName(), sizeof(matchinfo.player2));
-		Q_strncpyz(matchinfo.team1, MT_PlayerTeam(), sizeof(matchinfo.team1));
-		Q_strncpyz(matchinfo.team2, MT_EnemyTeam(), sizeof(matchinfo.team2));
+		strlcpy(matchinfo.player1, MT_PlayerName(), sizeof(matchinfo.player1));
+		strlcpy(matchinfo.player2, MT_EnemyName(), sizeof(matchinfo.player2));
+		strlcpy(matchinfo.team1, MT_PlayerTeam(), sizeof(matchinfo.team1));
+		strlcpy(matchinfo.team2, MT_EnemyTeam(), sizeof(matchinfo.team2));
 	}
 
 
 	matchinfo.team1count = MT_CountTeamMembers(matchinfo.team1);
 	matchinfo.team2count = MT_CountTeamMembers(matchinfo.team2);
 	matchinfo.numteams = numteams;
-	Q_strncpyz(matchinfo.team1names, MT_NameAndClean_TeamMembers(matchinfo.team1), sizeof(matchinfo.team1names));
-	Q_strncpyz(matchinfo.team2names, MT_NameAndClean_TeamMembers(matchinfo.team2), sizeof(matchinfo.team2names));
+	strlcpy(matchinfo.team1names, MT_NameAndClean_TeamMembers(matchinfo.team1), sizeof(matchinfo.team1names));
+	strlcpy(matchinfo.team2names, MT_NameAndClean_TeamMembers(matchinfo.team2), sizeof(matchinfo.team2names));
 
 
-#define CLEANFIELD(x) Q_strncpyz(matchinfo.x, MT_CleanString(matchinfo.x, false), sizeof(matchinfo.x));	
+#define CLEANFIELD(x) strlcpy(matchinfo.x, MT_CleanString(matchinfo.x, false), sizeof(matchinfo.x));	
 	CLEANFIELD(myname);
 	CLEANFIELD(player1);
 	CLEANFIELD(player2);
@@ -408,8 +410,8 @@ static matchinfo_t *MT_GetMatchInfo(void) {
 	matchinfo.teamplay = Q_atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
 	matchinfo.deathmatch = cl.deathmatch;
 
-	Q_strncpyz(matchinfo.mapname, MT_MapName(), sizeof(matchinfo.mapname));
-	Q_strncpyz(matchinfo.gamedir, cls.gamedirfile, sizeof(matchinfo.gamedir));
+	strlcpy(matchinfo.mapname, MT_MapName(), sizeof(matchinfo.mapname));
+	strlcpy(matchinfo.gamedir, cls.gamedirfile, sizeof(matchinfo.gamedir));
 
 	matchinfo.matchtype = MT_GetMatchType(&matchinfo);
 
@@ -528,7 +530,7 @@ static char *MT_ParseFormat(char *format, matchinfo_t *matchinfo) {
 				default:
 					temp = va("%%%c", c); break;
 			}
-			Q_strncpyz(out, temp, sizeof(buf) - (out - buf));
+			strlcpy(out, temp, sizeof(buf) - (out - buf));
 			out += strlen(temp);
 		} else {
 			*out++ = c;
@@ -569,7 +571,7 @@ char *Macro_MatchName(void) {
 char *MT_MatchName(void) {
 	static char buf[MAX_STATIC_STRING];
 
-	Q_strncpyz(buf, Macro_MatchName(), sizeof(buf));
+	strlcpy(buf, Macro_MatchName(), sizeof(buf));
 	return buf;
 }
 
@@ -659,11 +661,11 @@ static void MT_StartMatch(void) {
 
 	if (cls.state < ca_active) {
 		matchstate.matchtype = mt_empty;
-		Q_strncpyz(matchstate.matchname, "No match in progress", sizeof(matchstate.matchname));
+		strlcpy(matchstate.matchname, "No match in progress", sizeof(matchstate.matchname));
 	} else {
 		matchinfo_t *matchinfo = MT_GetMatchInfo();
 		matchstate.matchtype = matchinfo->matchtype;
-		Q_strncpyz(matchstate.matchname, MT_NameForMatchInfo(matchinfo), sizeof(matchstate.matchname));
+		strlcpy(matchstate.matchname, MT_NameForMatchInfo(matchinfo), sizeof(matchstate.matchname));
 	}
 
 	CL_AutoRecord_StartMatch(matchstate.matchname);
@@ -712,7 +714,7 @@ char *MT_TempDirectory(void) {
 	static char dir[MAX_OSPATH * 2] = {0};
 
 	if (!dir[0])
-		Q_snprintfz(dir, sizeof(dir), "%s/ezquake/temp", com_basedir);
+		snprintf(dir, sizeof(dir), "%s/ezquake/temp", com_basedir);
 	return dir;
 }
 
@@ -782,7 +784,7 @@ void MT_TakeScreenshot(void) {
 	if (!matchstate.status) {
 		matchinfo_t *matchinfo = MT_GetMatchInfo();
 		matchstate.matchtype = matchinfo->matchtype;
-		Q_strncpyz(matchstate.matchname, MT_NameForMatchInfo(matchinfo), sizeof(matchstate.matchname));
+		strlcpy(matchstate.matchname, MT_NameForMatchInfo(matchinfo), sizeof(matchstate.matchname));
 	}
 	SCR_AutoScreenshot(matchstate.matchname);
 }
@@ -890,7 +892,7 @@ static void AddGroupMember(mapgroup_t *group, char *member) {
 			return;
 	}
 
-	Q_strncpyz(group->members[group->nummembers], member, sizeof(group->members[group->nummembers]));
+	strlcpy(group->members[group->nummembers], member, sizeof(group->members[group->nummembers]));
 	group->nummembers++;
 }
 
@@ -960,7 +962,7 @@ void MT_MapGroup_f(void) {
 
 	if (!group) {	
 		group = (mapgroup_t *) Q_calloc(1, sizeof(mapgroup_t));
-		Q_strncpyz(group->groupname, groupname, sizeof(group->groupname));
+		strlcpy(group->groupname, groupname, sizeof(group->groupname));
 		group->system = !mapgroups_init;
 		if (mapgroups) {	
 			for (tempnode = mapgroups; tempnode->next; tempnode = tempnode->next)
@@ -1159,7 +1161,7 @@ static void AddSkyGroupMember(skygroup_t *group, char *member) {
 			return;
 	}
 
-	Q_strncpyz(group->members[group->nummembers], member, sizeof(group->members[group->nummembers]));
+	strlcpy(group->members[group->nummembers], member, sizeof(group->members[group->nummembers]));
 	group->nummembers++;
 }
 
@@ -1231,7 +1233,7 @@ void MT_SkyGroup_f(void) {
 
 	if (!group) {	
 		group = (skygroup_t *) Q_calloc(1, sizeof(skygroup_t));
-		Q_strncpyz(group->groupname, groupname, sizeof(group->groupname));
+		strlcpy(group->groupname, groupname, sizeof(group->groupname));
 		group->system = !skygroups_init;
 		if (skygroups) {	
 			for (tempnode = skygroups; tempnode->next; tempnode = tempnode->next)

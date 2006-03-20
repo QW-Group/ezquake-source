@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: gl_model.c,v 1.14 2006-03-20 13:51:26 vvd0 Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -350,7 +351,7 @@ void Mod_LoadTextures (lump_t *l) {
 
 		memcpy (tx->name, mt->name, sizeof(tx->name));
 		if (!tx->name[0]) {
-			Q_snprintfz(tx->name, sizeof(tx->name), "unnamed%d", i);
+			snprintf(tx->name, sizeof(tx->name), "unnamed%d", i);
 			Com_DPrintf("Warning: unnamed texture in %s, renaming to %s\n", loadmodel->name, tx->name);
 		}
 
@@ -630,7 +631,7 @@ static void Mod_ParseWadsFromEntityLump(char *data) {
 		if (com_token[0] == '}')
 			break; // end of worldspawn
 
-		Q_strncpyz(key, (com_token[0] == '_') ? com_token + 1 : com_token, sizeof(key));
+		strlcpy(key, (com_token[0] == '_') ? com_token + 1 : com_token, sizeof(key));
 
 		for (s = key + strlen(key) - 1; s >= key && *s == ' '; s--)		// remove trailing spaces
 			*s = 0;
@@ -638,7 +639,7 @@ static void Mod_ParseWadsFromEntityLump(char *data) {
 		if (!(data = COM_Parse(data)))
 			return; // error
 
-		Q_strncpyz(value, com_token, sizeof(value));
+		strlcpy(value, com_token, sizeof(value));
 
 		if (!strcmp("sky", key) || !strcmp("skyname", key))
 			Cvar_Set(&r_skyname, value);
@@ -1434,11 +1435,11 @@ static int Mod_LoadExternalSkin(char *identifier, int *fb_texnum) {
 	if (!gl_scaleModelTextures.value)
 		texmode |= TEX_NOSCALE;
 
-	Q_snprintfz (loadpath, sizeof(loadpath), "textures/models/%s", identifier);
+	snprintf (loadpath, sizeof(loadpath), "textures/models/%s", identifier);
 	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 
 	if (!texnum) {
-		Q_snprintfz (loadpath, sizeof(loadpath), "textures/%s", identifier);
+		snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
 		texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 	}
 
@@ -1477,7 +1478,7 @@ static void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype) {
 				memcpy (player_8bit_texels, (byte *) (pskintype + 1), s);
 			}
 
-			Q_snprintfz (identifier, sizeof(identifier), "%s_%i", basename, i);
+			snprintf (identifier, sizeof(identifier), "%s_%i", basename, i);
 
 			gl_texnum = fb_texnum = 0;
 			if (!(gl_texnum = Mod_LoadExternalSkin(identifier, &fb_texnum))) {
@@ -1508,7 +1509,7 @@ static void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype) {
 			for (j = 0; j < groupskins; j++) {
 				Mod_FloodFillSkin (skin, pheader->skinwidth, pheader->skinheight);
 
-				Q_snprintfz (identifier, sizeof(identifier), "%s_%i_%i", basename, i, j);
+				snprintf (identifier, sizeof(identifier), "%s_%i_%i", basename, i, j);
 
 				gl_texnum = fb_texnum = 0;
 				if (!(gl_texnum = Mod_LoadExternalSkin(identifier, &fb_texnum))) {
@@ -1714,11 +1715,11 @@ int Mod_LoadExternalSpriteSkin(char *identifier, int framenum) {
 	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel)
 		texmode |= TEX_NOSCALE;
 
-	Q_snprintfz (loadpath, sizeof(loadpath), "textures/sprites/%s", identifier);
+	snprintf (loadpath, sizeof(loadpath), "textures/sprites/%s", identifier);
 	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 
 	if (!texnum) {
-		Q_snprintfz (loadpath, sizeof(loadpath), "textures/%s", identifier);
+		snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
 		texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 	}
 
@@ -1759,7 +1760,7 @@ void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum) {
 	pspriteframe->left = origin[0];
 	pspriteframe->right = width + origin[0];
 
-	Q_snprintfz (identifier, sizeof(identifier), "sprites/%s_%i", basename, framenum);
+	snprintf (identifier, sizeof(identifier), "sprites/%s_%i", basename, framenum);
 	if (!(texnum = Mod_LoadExternalSpriteSkin(identifier, framenum)))
 		texnum = GL_LoadTexture (identifier, width, height, (byte *) (pinframe + 1), texmode, 1);
 

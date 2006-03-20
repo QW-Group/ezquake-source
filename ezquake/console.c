@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: console.c,v 1.21 2006-03-20 13:51:26 vvd0 Exp $
 */
 // console.c
 
@@ -558,7 +559,7 @@ static void Con_DrawInput(void) {
 	if (key_dest != key_console && cls.state == ca_active)
 		return;		// don't draw anything (always draw if not active)
 
-	Q_strncpyz(temp, key_lines[edit_line], MAXCMDLINE);
+	strlcpy(temp, key_lines[edit_line], MAXCMDLINE);
 	len = strlen(temp);
 	text = temp;
 
@@ -610,7 +611,7 @@ void Con_DrawNotify (void) {
 			Draw_Character ( (x+1)<<3, v + bound(0, con_shift.value, 8), text[x]);
 
 		*/
-		Q_strncpyz(buf,text,con_linewidth+1);
+		strlcpy(buf,text,con_linewidth+1);
 		Draw_ColoredString( 8, v + bound(0, con_shift.value, 8), buf,0);
 		v += 8;
 	}
@@ -701,7 +702,7 @@ void Con_DrawConsole (int lines) {
 		for (x = 0; x < con_linewidth; x++)
 			Draw_Character ((x + 1) << 3, y + bound(0, con_shift.value, 8), text[x]);
 		*/
-		Q_strncpyz(buf,text,con_linewidth+1);
+		strlcpy(buf,text,con_linewidth+1);
 		Draw_ColoredString( 1 << 3, y + bound(0, con_shift.value, 8), buf,0);
 	}
 
@@ -726,10 +727,10 @@ void Con_DrawConsole (int lines) {
 		i = con_linewidth/3;
 		if (strlen(text) > i) {
 			y = x - i - 11;
-			Q_strncpyz (dlbar, text, i+1);
-			strcat(dlbar, "...");
+			strlcpy(dlbar, text, sizeof(dlbar));
+			strlcat(dlbar, "...", sizeof(dlbar));
 		} else {
-			strcpy(dlbar, text);
+			strlcpy(dlbar, text, sizeof(dlbar));
 		}
 		strcat(dlbar, ": ");
 		i = strlen(dlbar);

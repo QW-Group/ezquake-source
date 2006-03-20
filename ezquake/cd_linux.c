@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: cd_linux.c,v 1.5 2006-03-20 13:51:26 vvd0 Exp $
 */
 // cd_linux.c
 
@@ -345,7 +346,7 @@ int CDAudio_Init(void)
 		return -1;
 
 	if ((i = COM_CheckParm("-cddev")) != 0 && i < com_argc - 1)
-		Q_strncpyz (cd_dev, com_argv[i + 1], sizeof(cd_dev));
+		strlcpy (cd_dev, com_argv[i + 1], sizeof(cd_dev));
 
 	if ((cdfile = open(cd_dev, O_RDONLY)) == -1) {
 		Com_Printf ("CDAudio_Init: open of \"%s\" failed (%i)\n", cd_dev, errno);

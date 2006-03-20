@@ -16,6 +16,8 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: modules.c,v 1.8 2006-03-20 13:51:27 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -100,9 +102,9 @@ void Modules_Init(void) {
 	}
 
 #ifdef CLIENTONLY
-	Q_strncpyz(binary_type, "ezqwcl", sizeof(binary_type));
+	strlcpy(binary_type, "ezqwcl", sizeof(binary_type));
 #else
-	Q_strncpyz(binary_type, "ezquake", sizeof(binary_type));
+	strlcpy(binary_type, "ezquake", sizeof(binary_type));
 #endif
 
 #if defined (_Soft_X11)

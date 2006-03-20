@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: sv_ccmds.c,v 1.6 2006-03-20 13:51:28 vvd0 Exp $
 */
 
 #include "qwsvdef.h"
@@ -57,7 +58,7 @@ void SV_Fraglogfile_f (void) {
 
 	// find an unused name
 	for (i = 0; i < MAX_LOGFILES; i++) {
-		Q_snprintfz (name, sizeof(name), "%s/frag_%i.log", com_gamedir, i);
+		snprintf (name, sizeof(name), "%s/frag_%i.log", com_gamedir, i);
 		sv_fraglogfile = fopen (name, "r");
 		if (!sv_fraglogfile) {	
 			// can't read it, so create this one
@@ -107,10 +108,10 @@ void SV_Map_f (void) {
 		return;
 	}
 	devmap = !Q_strcasecmp (Cmd_Argv(0), "devmap");
-	Q_strncpyz (level, Cmd_Argv(1), sizeof(level));
+	strlcpy (level, Cmd_Argv(1), sizeof(level));
 
 	// check to make sure the level exists
- Q_snprintfz (expanded, sizeof(expanded), "maps/%s.bsp", level);
+	snprintf (expanded, sizeof(expanded), "maps/%s.bsp", level);
 	if (FS_FOpenFile (expanded, &f) == -1) {
 		Com_Printf ("Can't find %s\n", expanded);
 		return;
@@ -522,7 +523,7 @@ void SV_Snap (int uid) {
 	for (i = 0; i <= 99; i++) { 
 		pcxname[strlen(pcxname) - 6] = i / 10 + '0'; 
 		pcxname[strlen(pcxname) - 5] = i % 10 + '0'; 
-		Q_snprintfz (checkname, sizeof(checkname), "%s/snap/%s", com_gamedir, pcxname);
+		snprintf (checkname, sizeof(checkname), "%s/snap/%s", com_gamedir, pcxname);
 		if (!(f = fopen (checkname, "rb")))
 			break;  // file doesn't exist
 		fclose (f);

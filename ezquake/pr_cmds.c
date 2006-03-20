@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: pr_cmds.c,v 1.12 2006-03-20 13:51:27 vvd0 Exp $
 */
 
 #include "qwsvdef.h"
@@ -746,9 +747,9 @@ void PF_ftos (void) {
 	tempstring = PR_GetTempString();
 
 	if (v == (int) v) {
-		Q_snprintfz (tempstring, STRINGTEMP_LENGTH, "%d", (int) v);
+		snprintf (tempstring, STRINGTEMP_LENGTH, "%d", (int) v);
 	} else {
-		Q_snprintfz (tempstring, STRINGTEMP_LENGTH, "%f", v);
+		snprintf (tempstring, STRINGTEMP_LENGTH, "%f", v);
 
 		for (i = strlen(tempstring) - 1; i > 0 && tempstring[i] == '0'; i--)
 			tempstring[i] = 0;
@@ -771,7 +772,7 @@ void PF_vtos (void) {
 	char *s;
 
 	s = PR_GetTempString();
-	Q_snprintfz (s, STRINGTEMP_LENGTH,"'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
+	snprintf (s, STRINGTEMP_LENGTH,"'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
 	G_INT(OFS_RETURN) = PR_SetString(s);
 }
 
@@ -1225,14 +1226,14 @@ void PF_infokey (void) {
 			value = Info_ValueForKey(localinfo, key);
 	} else if (e1 <= MAX_CLIENTS) {
 		if (!strcmp(key, "ip")) {
-			Q_strncpyz(ov, NET_BaseAdrToString (svs.clients[e1 - 1].netchan.remote_address), sizeof(ov));
+			strlcpy(ov, NET_BaseAdrToString (svs.clients[e1 - 1].netchan.remote_address), sizeof(ov));
 			value = ov;
 		} else if (!strcmp(key, "*z_ext")) {
 			sprintf(ov, "%d", svs.clients[e1-1].extensions);
 			value = ov;
 		} else if (!strcmp(key, "ping")) {
 			ping = SV_CalcPing (&svs.clients[e1 - 1]);
-			Q_snprintfz(ov, sizeof(ov), "%d", ping);
+			snprintf(ov, sizeof(ov), "%d", ping);
 			value = ov;
 		} else {
 			value = Info_ValueForKey (svs.clients[e1 - 1].userinfo, key);
@@ -1284,7 +1285,7 @@ void PF_etos (void) {
 	char *s;
 
 	s = PR_GetTempString();
-	Q_snprintfz (s, STRINGTEMP_LENGTH, "entity %i", G_EDICTNUM(OFS_PARM0));
+	snprintf (s, STRINGTEMP_LENGTH, "entity %i", G_EDICTNUM(OFS_PARM0));
 	G_INT(OFS_RETURN) = PR_SetString(s);
 }
 

@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: cl_screen.c,v 1.45 2006-03-20 13:51:26 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -169,7 +170,7 @@ int			scr_erase_center;
 
 //Called for important messages that should stay in the center of the screen for a few moments
 void SCR_CenterPrint (char *str) {
-	Q_strncpyz (scr_centerstring, str, sizeof(scr_centerstring));
+	strlcpy (scr_centerstring, str, sizeof(scr_centerstring));
 	scr_centertime_off = scr_centertime.value;
 	scr_centertime_start = cl.time;
 
@@ -520,7 +521,7 @@ void SCR_DrawSpeed (void) {
 	maxspeed = max(maxspeed, speed);
 
 	if (display_speed >= 0) {
-		Q_snprintfz(str, sizeof(str), "%3d%s", (int) display_speed, show_speed.value == 2 ? " SPD" : "");
+		snprintf(str, sizeof(str), "%3d%s", (int) display_speed, show_speed.value == 2 ? " SPD" : "");
 		x = ELEMENT_X_COORD(show_speed);
 		y = ELEMENT_Y_COORD(show_speed);
 		Draw_String (x, y, str);
@@ -551,7 +552,7 @@ void SCR_DrawClock (void) {
 		}
 	} else {
 		float time = (cl.servertime_works) ? cl.servertime : cls.realtime;
-		Q_strncpyz (str, SecondsToHourString((int) time), sizeof(str));
+		strlcpy (str, SecondsToHourString((int) time), sizeof(str));
 	}
 
 	x = ELEMENT_X_COORD(scr_clock);
@@ -573,9 +574,9 @@ void SCR_DrawGameClock (void) {
 		timelimit = 0;
 
 	if (cl.countdown || cl.standby)
-		Q_strncpyz (str, SecondsToHourString(timelimit), sizeof(str));
+		strlcpy (str, SecondsToHourString(timelimit), sizeof(str));
 	else
-		Q_strncpyz (str, SecondsToHourString((int) abs(timelimit - cl.gametime)), sizeof(str));
+		strlcpy (str, SecondsToHourString((int) abs(timelimit - cl.gametime)), sizeof(str));
 
 	if ((scr_gameclock.value == 3 || scr_gameclock.value == 4) && (s = strstr(str, ":")))
 		s++;		// or just use SecondsToMinutesString() ...
@@ -595,9 +596,9 @@ void SCR_DrawDemoClock (void) {
 		return;
 
 	if (scr_democlock.value == 2)
-		Q_strncpyz (str, SecondsToHourString((int) (cls.demotime)), sizeof(str));
+		strlcpy (str, SecondsToHourString((int) (cls.demotime)), sizeof(str));
 	else
-		Q_strncpyz (str, SecondsToHourString((int) (cls.demotime - demostarttime)), sizeof(str));
+		strlcpy (str, SecondsToHourString((int) (cls.demotime - demostarttime)), sizeof(str));
 
 	x = ELEMENT_X_COORD(scr_democlock);
 	y = ELEMENT_Y_COORD(scr_democlock);
@@ -2209,22 +2210,22 @@ void SCR_ScreenShot_f (void) {
 	sshot_dir = scr_sshot_dir.string[0] ? scr_sshot_dir.string : cls.gamedirfile;
 
 	if (Cmd_Argc() == 2) {
-		Q_strncpyz (name, Cmd_Argv(1), sizeof(name));
+		strlcpy (name, Cmd_Argv(1), sizeof(name));
 	} else if (Cmd_Argc() == 1) {
 		// find a file name to save it to
 #ifdef WITH_PNG
 		if (!Q_strcasecmp(scr_sshot_format.string, "png"))
-			Q_strncpyz(ext, "png", 4);
+			strlcpy(ext, "png", 4);
 #endif
 #ifdef WITH_JPEG
 		if (!Q_strcasecmp(scr_sshot_format.string, "jpeg") || !Q_strcasecmp(scr_sshot_format.string, "jpg"))
-			Q_strncpyz(ext, "jpg", 4);
+			strlcpy(ext, "jpg", 4);
 #endif
 		if (!ext[0])
-			Q_strncpyz(ext, DEFAULT_SSHOT_FORMAT, 4);
+			strlcpy(ext, DEFAULT_SSHOT_FORMAT, 4);
 
 		for (i = 0; i < 999; i++) {
-			Q_snprintfz(name, sizeof(name), "ezquake%03i.%s", i, ext);
+			snprintf(name, sizeof(name), "ezquake%03i.%s", i, ext);
 			if (!(f = fopen (va("%s/%s/%s", com_basedir, sshot_dir, name), "rb")))
 				break;  // file doesn't exist
 			fclose(f);
@@ -2377,7 +2378,7 @@ static void SCR_CheckAutoScreenshot(void) {
 		return;
 	}
 
-	Q_snprintfz (savedname, sizeof(savedname), "%s_%03i%s", auto_matchname, num, ext);
+	snprintf (savedname, sizeof(savedname), "%s_%03i%s", auto_matchname, num, ext);
 	fullsavedname = va("%s/%s", sshot_dir, savedname);
 
 #ifdef GLQUAKE
@@ -2391,7 +2392,7 @@ static void SCR_CheckAutoScreenshot(void) {
 void SCR_AutoScreenshot(char *matchname) {
 	if (cl.intermission == 1) {
 		scr_autosshot_countdown = vid.numpages;
-		Q_strncpyz(auto_matchname, matchname, sizeof(auto_matchname));
+		strlcpy(auto_matchname, matchname, sizeof(auto_matchname));
 	}
 }
 
@@ -2619,7 +2620,7 @@ void SCR_DrawStatusMultiview(void) {
 		armor |= 128;
 	}
 	
-	Q_strncpyz(name,cl.players[nPlayernum].name, sizeof(name));
+	strlcpy(name,cl.players[nPlayernum].name, sizeof(name));
 
 	if (strcmp(cl.players[nPlayernum].name,"") && !cl.players[nPlayernum].spectator) {
 		if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && cl_multiview.value == 2 && cl_mvinset.value) { // mvinset and dead
@@ -2846,7 +2847,7 @@ void SCR_DrawStatusMultiview(void) {
 			var++;
 
 			limit = ceil(7.0/192 * vid.width + 4/3); // linearly limit length of name for 320->512 conwidth to fit in inset
-			Q_strncpyz(namestr,name,limit);
+			strlcpy(namestr,name,limit);
 
 			if (cl_sbar.value)
 				Draw_String(vid.width - strlen(namestr) * 8 - var - 2,yb + 1,namestr);

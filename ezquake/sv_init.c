@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: sv_init.c,v 1.8 2006-03-20 13:51:28 vvd0 Exp $
 */
 
 #include "qwsvdef.h"
@@ -308,8 +309,8 @@ void SV_SpawnServer (char *server, qbool devmap) {
 #endif
 
 	com_serveractive = true;
-	Q_strncpyz (sv.name, server, sizeof(sv.name));
-	Q_snprintfz (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", server);
+	strlcpy (sv.name, server, sizeof(sv.name));
+	snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", server);
 	sv.worldmodel = Mod_ForName (sv.modelname, true);
 	SV_CalcPHS ();
 

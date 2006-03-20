@@ -15,7 +15,8 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- 
+
+	$Id: cmd.c,v 1.35 2006-03-20 13:51:26 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -337,7 +338,7 @@ void Cmd_Exec_f (void)
 		return;
 	}
 
-	Q_strncpyz (name, Cmd_Argv(1), sizeof(name) - 4);
+	strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
 	mark = Hunk_LowMark();
 	if (!(f = (char *) FS_LoadHunkFile (name)))	{
 		char *p;
@@ -589,7 +590,7 @@ void Cmd_EditAlias_f (void)
 		s = CopyString(a->value);
 	}
 
-	Q_snprintfz(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
+	snprintf(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
 	Key_ClearTyping();
 	memcpy (key_lines[edit_line]+1, final_string, strlen(final_string));
 	Z_Free(s);
@@ -852,9 +853,9 @@ static qbool Cmd_LegacyCommand (void)
 		return true;		// just ignore this command
 
 	// build new command string
-	Q_strncpyz (text, cmd->newname, sizeof(text) - 1);
-	strcat (text, " ");
-	strncat (text, Cmd_Args(), sizeof(text) - strlen(text) - 1);
+	strlcpy (text, cmd->newname, sizeof(text));
+	strlcat (text, " ", sizeof(text));
+	strlcat (text, Cmd_Args(), sizeof(text));
 
 	assert (!recursive);
 	recursive = true;
@@ -1143,7 +1144,7 @@ void Cmd_AddMacroEx(char *s, char *(*f)(void), qbool teamplay)
 {
 	if (macro_count == MAX_MACROS)
 		Sys_Error("Cmd_AddMacro: macro_count == MAX_MACROS");
-	Q_strncpyz(macro_commands[macro_count].name, s, sizeof(macro_commands[macro_count].name));
+	strlcpy(macro_commands[macro_count].name, s, sizeof(macro_commands[macro_count].name));
 	macro_commands[macro_count].func = f;
 	macro_commands[macro_count].teamplay = teamplay;
 	macro_count++;

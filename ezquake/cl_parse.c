@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: cl_parse.c,v 1.43 2006-03-20 13:51:26 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -574,9 +575,9 @@ void CL_ParseDownload (void) {
 	// open the file if not opened yet
 	if (!cls.download) {
 		//if (strncmp(cls.downloadtempname,"skins/",6))
-		Q_snprintfz ((char *) name, sizeof(name), "%s/%s", cls.gamedir, cls.downloadtempname);
+		snprintf ((char *) name, sizeof(name), "%s/%s", cls.gamedir, cls.downloadtempname);
 		/*else
-			Q_snprintfz (name, sizeof(name), "qw/%s", cls.downloadtempname);*/
+			snprintf (name, sizeof(name), "qw/%s", cls.downloadtempname);*/
 //Com_Printf("%s\n%s\n", cls.downloadname, cls.downloadtempname);
 		COM_CreatePath ((char *) name);
 
@@ -878,8 +879,8 @@ void CL_ParseServerData (void) {
 	if (Q_strcasecmp(cls.gamedirfile, str)) {
 		// save current config
 		CL_WriteConfiguration ();
-		Q_strncpyz (cls.gamedirfile, str, sizeof(cls.gamedirfile));
-		Q_snprintfz (cls.gamedir, sizeof(cls.gamedir),
+		strlcpy (cls.gamedirfile, str, sizeof(cls.gamedirfile));
+		snprintf (cls.gamedir, sizeof(cls.gamedir),
 			"%s/%s", com_basedir, cls.gamedirfile);
 		cflag = true;
 	}
@@ -893,7 +894,7 @@ void CL_ParseServerData (void) {
 	
 	
 	if (cfg_legacy_exec.value && (cflag || cfg_legacy_exec.value >= 2)) {
-		Q_snprintfz (fn, sizeof(fn), "%s/%s", cls.gamedir, "config.cfg");		
+		snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "config.cfg");		
 		Cbuf_AddText ("cl_warncmd 0\n");
 		if ((f = fopen(fn, "r")) != NULL) {
 			fclose(f);
@@ -903,13 +904,13 @@ void CL_ParseServerData (void) {
 				Cbuf_AddText (va("exec ../%s/config.cfg\n", cls.gamedirfile));
 		} else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw")){
 			
-			Q_snprintfz (fn, sizeof(fn), "qw/%s", "config.cfg");
+			snprintf (fn, sizeof(fn), "qw/%s", "config.cfg");
 			if ((f = fopen(fn, "r")) != NULL) {
 				fclose(f);
 				Cbuf_AddText ("exec config.cfg\n");
 			}
 		}
-		Q_snprintfz (fn, sizeof(fn), "%s/%s", cls.gamedir, "frontend.cfg");
+		snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "frontend.cfg");
 		if ((f = fopen(fn, "r")) != NULL) {
 			fclose(f);
 			if (!strcmp(cls.gamedirfile, com_gamedirfile))
@@ -918,7 +919,7 @@ void CL_ParseServerData (void) {
 				Cbuf_AddText (va("exec ../%s/frontend.cfg\n", cls.gamedirfile));
 		} else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw")){
 			
-			Q_snprintfz (fn, sizeof(fn), "qw/%s", "frontend.cfg");
+			snprintf (fn, sizeof(fn), "qw/%s", "frontend.cfg");
 			if ((f = fopen(fn, "r")) != NULL) {
 				fclose(f);
 				Cbuf_AddText ("exec frontend.cfg\n");
@@ -944,7 +945,7 @@ void CL_ParseServerData (void) {
 
 	// get the full level name
 	str = MSG_ReadString ();
-	Q_strncpyz (cl.levelname, str, sizeof(cl.levelname));
+	strlcpy (cl.levelname, str, sizeof(cl.levelname));
 
 	// get the movevars
 	movevars.gravity			= MSG_ReadFloat();
@@ -988,7 +989,7 @@ void CL_ParseSoundlist (void) {
 		if (numsounds == MAX_SOUNDS)
 			Host_Error ("Server sent too many sound_precache");
 		if (str[0] == '/') str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
-		Q_strncpyz (cl.sound_name[numsounds], str, sizeof(cl.sound_name[numsounds]));
+		strlcpy (cl.sound_name[numsounds], str, sizeof(cl.sound_name[numsounds]));
 	}
 
 	n = MSG_ReadByte();
@@ -1019,7 +1020,7 @@ void CL_ParseModellist (void) {
 			Host_Error ("Server sent too many model_precache");
 
 		if (str[0] == '/') str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
-		Q_strncpyz (cl.model_name[nummodels], str, sizeof(cl.model_name[nummodels]));
+		strlcpy (cl.model_name[nummodels], str, sizeof(cl.model_name[nummodels]));
 
 		for (i = 0; i < cl_num_modelindices; i++) {
 			if (!strcmp(cl_modelnames[i], cl.model_name[nummodels])) {
@@ -1256,7 +1257,7 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key) {
 	qbool update_skin;
 	int mynum;
 
-	Q_strncpyz (player->name, Info_ValueForKey (player->userinfo, "name"), sizeof(player->name));
+	strlcpy (player->name, Info_ValueForKey (player->userinfo, "name"), sizeof(player->name));
 	if (!player->name[0] && player->userid && strlen(player->userinfo) >= MAX_INFO_STRING - 17) {
 		// somebody's trying to hide himself by overloading userinfo
 		strcpy (player->name, " ");
@@ -1315,7 +1316,7 @@ void CL_UpdateUserinfo (void) {
 	was_empty_slot = player->name[0] ? false : true;
 
 	player->userid = MSG_ReadLong ();
-	Q_strncpyz (player->userinfo, MSG_ReadString(), sizeof(player->userinfo));
+	strlcpy (player->userinfo, MSG_ReadString(), sizeof(player->userinfo));
 
 	CL_ProcessUserInfo (slot, player, NULL);	
 
@@ -1336,8 +1337,8 @@ void CL_SetInfo (void) {
 
 	player = &cl.players[slot];
 
-	Q_strncpyz (key, MSG_ReadString(), sizeof(key));
-	Q_strncpyz (value, MSG_ReadString(), sizeof(value));
+	strlcpy (key, MSG_ReadString(), sizeof(key));
+	strlcpy (value, MSG_ReadString(), sizeof(value));
 
 	if (!cl.teamfortress)	// don't allow cheating in TF
 		Com_DPrintf ("SETINFO %s: %s=%s\n", player->name, key, value);
@@ -1430,8 +1431,8 @@ void CL_ProcessServerInfo (void) {
 void CL_ParseServerInfoChange (void) {
 	char key[MAX_INFO_STRING], value[MAX_INFO_STRING];
 
-	Q_strncpyz (key, MSG_ReadString(), sizeof(key));
-	Q_strncpyz (value, MSG_ReadString(), sizeof(value));
+	strlcpy (key, MSG_ReadString(), sizeof(key));
+	strlcpy (value, MSG_ReadString(), sizeof(value));
 
 	Com_DPrintf ("SERVERINFO: %s=%s\n", key, value);
 
@@ -1794,7 +1795,7 @@ void CL_ParsePrint (void) {
 		len = p - cl.sprint_buf + 1;
 		memcpy(str, cl.sprint_buf, len);
 		str[len] = '\0';
-		Q_strncpyz (cl.sprint_buf, p + 1, sizeof(cl.sprint_buf));
+		strlcpy (cl.sprint_buf, p + 1, sizeof(cl.sprint_buf));
 		FlushString (str, level, (flags == 2), offset);
 	}
 }
@@ -2211,7 +2212,7 @@ void CL_ParseServerMessage (void) {
 			i = MSG_ReadByte ();
 			if (i >= MAX_LIGHTSTYLES)
 				Host_Error ("svc_lightstyle > MAX_LIGHTSTYLES");
-			Q_strncpyz (cl_lightstyle[i].map,  MSG_ReadString(), sizeof(cl_lightstyle[i].map));
+			strlcpy (cl_lightstyle[i].map,  MSG_ReadString(), sizeof(cl_lightstyle[i].map));
 			cl_lightstyle[i].length = strlen(cl_lightstyle[i].map);
 			break;
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: teamplay.c,v 1.30 2006-03-13 14:19:51 vvd0 Exp $
+	$Id: teamplay.c,v 1.31 2006-03-20 13:51:28 vvd0 Exp $
 
 */
 
@@ -274,7 +274,7 @@ void TP_ExecTrigger (char *trigger) {
 static char	macro_buf[MAX_MACRO_VALUE] = "";
 
 char *Macro_Lastip_f (void) {
-	Q_snprintfz (macro_buf, sizeof(macro_buf), "%s", lastip);
+	snprintf (macro_buf, sizeof(macro_buf), "%s", lastip);
 	return macro_buf;
 }
 
@@ -283,42 +283,42 @@ char *Macro_Quote_f (void) {
 }
 
 char *Macro_Latency (void) {
-	Q_snprintfz(macro_buf, sizeof(macro_buf), "%i", Q_rint(cls.latency * 1000));
+	snprintf(macro_buf, sizeof(macro_buf), "%i", Q_rint(cls.latency * 1000));
 	return macro_buf;
 }
 
 char *Macro_Health (void) {
-	Q_snprintfz(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_HEALTH]);
+	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_HEALTH]);
 	return macro_buf;
 }
 
 char *Macro_Armor (void) {
-	Q_snprintfz(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ARMOR]);
+	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ARMOR]);
 	return macro_buf;
 }
 
 char *Macro_Shells (void) {
-	Q_snprintfz(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_SHELLS]);
+	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_SHELLS]);
 	return macro_buf;
 }
 
 char *Macro_Nails (void) {
-	Q_snprintfz(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_NAILS]);
+	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_NAILS]);
 	return macro_buf;
 }
 
 char *Macro_Rockets (void) {
-	Q_snprintfz(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ROCKETS]);
+	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ROCKETS]);
 	return macro_buf;
 }
 
 char *Macro_Cells (void) {
-	Q_snprintfz(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_CELLS]);
+	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_CELLS]);
 	return macro_buf;
 }
 
 char *Macro_Ammo (void) {
-	Q_snprintfz(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_AMMO]);
+	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_AMMO]);
 	return macro_buf;
 }
 
@@ -342,8 +342,8 @@ char *Macro_Weapon (void) {
 
 char *Macro_WeaponAndAmmo (void) {
 	char buf[MAX_MACRO_VALUE];
-	Q_snprintfz (buf, sizeof(buf), "%s:%s", Macro_Weapon(), Macro_Ammo());
-	Q_strncpyz (macro_buf, buf, sizeof(macro_buf));
+	snprintf (buf, sizeof(buf), "%s:%s", Macro_Weapon(), Macro_Ammo());
+	strlcpy (macro_buf, buf, sizeof(macro_buf));
 	return macro_buf;
 }
 
@@ -401,19 +401,19 @@ char *Macro_BestWeapon (void) {
 char *Macro_BestAmmo (void) {
 	switch (BestWeapon()) {
 	case IT_SHOTGUN: case IT_SUPER_SHOTGUN:
-		Q_snprintfz(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_SHELLS]);
+		snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_SHELLS]);
 		return macro_buf;
 
 	case IT_NAILGUN: case IT_SUPER_NAILGUN:
-		Q_snprintfz(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_NAILS]);
+		snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_NAILS]);
 		return macro_buf;
 
 	case IT_GRENADE_LAUNCHER: case IT_ROCKET_LAUNCHER:
-		Q_snprintfz(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ROCKETS]);
+		snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ROCKETS]);
 		return macro_buf;
 
 	case IT_LIGHTNING:
-		Q_snprintfz(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_CELLS]);
+		snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_CELLS]);
 		return macro_buf;
 
 	default: return "0";
@@ -424,8 +424,8 @@ char *Macro_BestAmmo (void) {
 char *Macro_BestWeaponAndAmmo (void) {
 	char buf[MAX_MACRO_VALUE];
 
-	Q_snprintfz (buf, sizeof(buf), "%s:%s", Macro_BestWeapon(), Macro_BestAmmo());
-	Q_strncpyz (macro_buf, buf, sizeof(buf));
+	snprintf (buf, sizeof(buf), "%s:%s", Macro_BestWeapon(), Macro_BestAmmo());
+	strlcpy (macro_buf, buf, sizeof(buf));
 	return macro_buf;
 }
 
@@ -440,49 +440,42 @@ char *Macro_ArmorType (void) {
 		return tp_name_none.string;
 }
 
-
-#define Q_strncatz(dest, src)	\
-	do {	\
-		strncat(dest, src, sizeof(dest) - strlen(dest) - 1);	\
-		dest[sizeof(dest) - 1] = 0;	\
-	} while (0)
-
 char *Macro_Powerups (void) {
 	int effects;
 
 	macro_buf[0] = 0;
 
 	if (cl.stats[STAT_ITEMS] & IT_QUAD)
-		Q_strncpyz(macro_buf, tp_name_quad.string, sizeof(macro_buf));
+		strlcpy(macro_buf, tp_name_quad.string, sizeof(macro_buf));
 
 	if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) {
 		if (macro_buf[0])
-			Q_strncatz(macro_buf, tp_name_separator.string);
-		Q_strncatz(macro_buf, tp_name_pent.string);
+			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		strlcat(macro_buf, tp_name_pent.string, sizeof(macro_buf));
 	}
 
 	if (cl.stats[STAT_ITEMS] & IT_INVISIBILITY) {
 		if (macro_buf[0])
-			Q_strncatz(macro_buf, tp_name_separator.string);
-		Q_strncatz(macro_buf, tp_name_ring.string);
+			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		strlcat(macro_buf, tp_name_ring.string, sizeof(macro_buf));
 	}
 
 	effects = cl.frames[cl.parsecount & UPDATE_MASK].playerstate[cl.playernum].effects;
 	if ( (effects & (EF_FLAG1|EF_FLAG2)) /* CTF */ ||		
 		(cl.teamfortress && cl.stats[STAT_ITEMS] & (IT_KEY1|IT_KEY2)) /* TF */ ) {
 		if (macro_buf[0])
-			Q_strncatz(macro_buf, tp_name_separator.string);
-		Q_strncatz(macro_buf, tp_name_flag.string);
+			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		strlcat(macro_buf, tp_name_flag.string, sizeof(macro_buf));
 	}
 
 	if (!macro_buf[0])			
-		Q_strncpyz(macro_buf, tp_name_none.string, sizeof(macro_buf));
+		strlcpy(macro_buf, tp_name_none.string, sizeof(macro_buf));
 
 	return macro_buf;
 }
 
 char *Macro_Location (void) {
-	Q_strncpyz(vars.lastreportedloc, TP_LocationName (cl.simorg), sizeof(vars.lastreportedloc));
+	strlcpy(vars.lastreportedloc, TP_LocationName (cl.simorg), sizeof(vars.lastreportedloc));
 	return vars.lastreportedloc;
 }
 
@@ -492,9 +485,9 @@ char *Macro_LastDeath (void) {
 
 char *Macro_Last_Location (void) {
 	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5)
-		Q_strncpyz(vars.lastreportedloc, vars.lastdeathloc, sizeof(vars.lastreportedloc));
+		strlcpy(vars.lastreportedloc, vars.lastdeathloc, sizeof(vars.lastreportedloc));
 	else		
-		Q_strncpyz(vars.lastreportedloc, TP_LocationName (cl.simorg), sizeof(vars.lastreportedloc));
+		strlcpy(vars.lastreportedloc, TP_LocationName (cl.simorg), sizeof(vars.lastreportedloc));
 	return vars.lastreportedloc;
 }
 
@@ -529,27 +522,27 @@ char *Macro_Date (void) {
 // returns the last item picked up
 char *Macro_Took (void) {
 	if (!vars.tooktime || cls.realtime > vars.tooktime + TP_TOOK_EXPIRE_TIME)
-		Q_strncpyz (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
+		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 	else
-		Q_strncpyz (macro_buf, vars.tookname, sizeof(macro_buf));
+		strlcpy (macro_buf, vars.tookname, sizeof(macro_buf));
 	return macro_buf;
 }
 
 // returns location of the last item picked up
 char *Macro_TookLoc (void) {
 	if (!vars.tooktime || cls.realtime > vars.tooktime + TP_TOOK_EXPIRE_TIME)
-		Q_strncpyz (macro_buf, tp_name_someplace.string, sizeof(macro_buf));
+		strlcpy (macro_buf, tp_name_someplace.string, sizeof(macro_buf));
 	else
-		Q_strncpyz (macro_buf, vars.tookloc, sizeof(macro_buf));
+		strlcpy (macro_buf, vars.tookloc, sizeof(macro_buf));
 	return macro_buf;
 }
 
 // %i macro - last item picked up in "name at location" style
 char *Macro_TookAtLoc (void) {
 	if (!vars.tooktime || cls.realtime > vars.tooktime + TP_TOOK_EXPIRE_TIME)
-		Q_strncpyz (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
+		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 	else {
-		Q_strncpyz (macro_buf, va("%s %s %s", vars.tookname, tp_name_at.string, vars.tookloc), sizeof(macro_buf));
+		strlcpy (macro_buf, va("%s %s %s", vars.tookname, tp_name_at.string, vars.tookloc), sizeof(macro_buf));
 	}
 	return macro_buf;
 }
@@ -574,9 +567,9 @@ char *Macro_PointLocation (void) {
 
 char *Macro_LastPointAtLoc (void) {
 	if (!vars.pointtime || cls.realtime - vars.pointtime > TP_POINT_EXPIRE_TIME)
-		Q_strncpyz (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
+		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 	else
-		Q_snprintfz (macro_buf, sizeof(macro_buf), "%s %s %s", vars.pointname, tp_name_at.string, vars.pointloc[0] ? vars.pointloc : Macro_Location());		
+		snprintf (macro_buf, sizeof(macro_buf), "%s %s %s", vars.pointname, tp_name_at.string, vars.pointloc[0] ? vars.pointloc : Macro_Location());		
 	return macro_buf;
 }
 
@@ -592,64 +585,64 @@ char *Macro_Weapons (void) {
 	macro_buf[0] = 0;
 
 	if (cl.stats[STAT_ITEMS] & IT_LIGHTNING)
-		Q_strncpyz(macro_buf, tp_name_lg.string, sizeof(macro_buf));
+		strlcpy(macro_buf, tp_name_lg.string, sizeof(macro_buf));
 
 	if (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) {
 		if (macro_buf[0])
-			Q_strncatz(macro_buf, tp_name_separator.string);
-		Q_strncatz(macro_buf, tp_name_rl.string);
+			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		strlcat(macro_buf, tp_name_rl.string, sizeof(macro_buf));
 	}
 	if (cl.stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER) {
 		if (macro_buf[0])
-			Q_strncatz(macro_buf, tp_name_separator.string);
-		Q_strncatz(macro_buf, tp_name_gl.string);
+			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		strlcat(macro_buf, tp_name_gl.string, sizeof(macro_buf));
 	}
 	if (cl.stats[STAT_ITEMS] & IT_SUPER_NAILGUN) {
 		if (macro_buf[0])
-			Q_strncatz(macro_buf, tp_name_separator.string);
-		Q_strncatz(macro_buf, tp_name_sng.string);
+			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		strlcat(macro_buf, tp_name_sng.string, sizeof(macro_buf));
 	}
 	if (cl.stats[STAT_ITEMS] & IT_NAILGUN) {
 		if (macro_buf[0])
-			Q_strncatz(macro_buf, tp_name_separator.string);
-		Q_strncatz(macro_buf, tp_name_ng.string);
+			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		strlcat(macro_buf, tp_name_ng.string, sizeof(macro_buf));
 	}
 	if (cl.stats[STAT_ITEMS] & IT_SUPER_SHOTGUN) {
 		if (macro_buf[0])
-			Q_strncatz(macro_buf, tp_name_separator.string);
-		Q_strncatz(macro_buf, tp_name_ssg.string);
+			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		strlcat(macro_buf, tp_name_ssg.string, sizeof(macro_buf));
 	}
 	if (cl.stats[STAT_ITEMS] & IT_SHOTGUN) {
 		if (macro_buf[0])
-			Q_strncatz(macro_buf, tp_name_separator.string);
-		Q_strncatz(macro_buf, tp_name_sg.string);
+			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		strlcat(macro_buf, tp_name_sg.string, sizeof(macro_buf));
 	}
 	if (cl.stats[STAT_ITEMS] & IT_AXE) {
 		if (macro_buf[0])
-			Q_strncatz(macro_buf, tp_name_separator.string);
-		Q_strncatz(macro_buf, tp_name_axe.string);
+			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		strlcat(macro_buf, tp_name_axe.string, sizeof(macro_buf));
 	}
 
 	if (!macro_buf[0])	
-		Q_strncpyz(macro_buf, tp_name_none.string, sizeof(macro_buf));
+		strlcpy(macro_buf, tp_name_none.string, sizeof(macro_buf));
 
 	return macro_buf;
 }
 
 static char *Skin_To_TFSkin (char *myskin) {
 	if (!cl.teamfortress || cl.spectator || Q_strncasecmp(myskin, "tf_", 3)) {
-		Q_strncpyz(macro_buf, myskin, sizeof(macro_buf));
+		strlcpy(macro_buf, myskin, sizeof(macro_buf));
 	} else {
 		if (!Q_strcasecmp(myskin, "tf_demo"))
-			Q_strncpyz(macro_buf, "demoman", sizeof(macro_buf));
+			strlcpy(macro_buf, "demoman", sizeof(macro_buf));
 		else if (!Q_strcasecmp(myskin, "tf_eng"))
-			Q_strncpyz(macro_buf, "engineer", sizeof(macro_buf));
+			strlcpy(macro_buf, "engineer", sizeof(macro_buf));
 		else if (!Q_strcasecmp(myskin, "tf_snipe"))
-			Q_strncpyz(macro_buf, "sniper", sizeof(macro_buf));
+			strlcpy(macro_buf, "sniper", sizeof(macro_buf));
 		else if (!Q_strcasecmp(myskin, "tf_sold"))
-			Q_strncpyz(macro_buf, "soldier", sizeof(macro_buf));
+			strlcpy(macro_buf, "soldier", sizeof(macro_buf));
 		else
-			Q_strncpyz(macro_buf, myskin + 3, sizeof(macro_buf));
+			strlcpy(macro_buf, myskin + 3, sizeof(macro_buf));
 	}
 	return macro_buf;
 }
@@ -671,9 +664,9 @@ char *Macro_LastTrigger_Match(void) {
 
 char *Macro_LastDropTime (void)	{		
 	if (vars.lastdrop_time)
-		Q_snprintfz (macro_buf, 32, "%d", (int) (cls.realtime - vars.lastdrop_time));
+		snprintf (macro_buf, 32, "%d", (int) (cls.realtime - vars.lastdrop_time));
 	else
-		Q_snprintfz (macro_buf, 32, "%d", -1);
+		snprintf (macro_buf, 32, "%d", -1);
 	return macro_buf;
 }
 
@@ -689,35 +682,35 @@ char *Macro_Need (void) {
 		|| ((cl.stats[STAT_ITEMS] & IT_ARMOR3) && cl.stats[STAT_ARMOR] < tp_need_ra.value)
 		|| (!(cl.stats[STAT_ITEMS] & (IT_ARMOR1|IT_ARMOR2|IT_ARMOR3))
 			&& (tp_need_ga.value || tp_need_ya.value || tp_need_ra.value)))
-		Q_strncpyz (macro_buf, tp_name_armor.string, sizeof(macro_buf));
+		strlcpy (macro_buf, tp_name_armor.string, sizeof(macro_buf));
 
 	// check health
 	if (tp_need_health.value && cl.stats[STAT_HEALTH] < tp_need_health.value) {
 		if (macro_buf[0])
-			Q_strncatz (macro_buf, tp_name_separator.string);
-		Q_strncatz (macro_buf, tp_name_health.string);
+			strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		strlcat (macro_buf, tp_name_health.string, sizeof(macro_buf));
 	}
 
 	if (cl.teamfortress) {					
 		if (cl.stats[STAT_ROCKETS] < tp_need_rockets.value)	{
 			if (macro_buf[0])
-				Q_strncatz (macro_buf, tp_name_separator.string);
-			Q_strncatz (macro_buf, tp_name_rockets.string);
+				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			strlcat (macro_buf, tp_name_rockets.string, sizeof(macro_buf));
 		}
 		if (cl.stats[STAT_SHELLS] < tp_need_shells.value) {
 			if (macro_buf[0])
-				Q_strncatz (macro_buf, tp_name_separator.string);
-			Q_strncatz (macro_buf, tp_name_shells.string);
+				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			strlcat (macro_buf, tp_name_shells.string, sizeof(macro_buf));
 		}
 		if (cl.stats[STAT_NAILS] < tp_need_nails.value)	{
 			if (macro_buf[0])
-				Q_strncatz (macro_buf, tp_name_separator.string);
-			Q_strncatz (macro_buf, tp_name_nails.string);
+				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			strlcat (macro_buf, tp_name_nails.string, sizeof(macro_buf));
 		}
 		if (cl.stats[STAT_CELLS] < tp_need_cells.value)	{
 			if (macro_buf[0])
-				Q_strncatz (macro_buf, tp_name_separator.string);
-			Q_strncatz (macro_buf, tp_name_cells.string);
+				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			strlcat (macro_buf, tp_name_cells.string, sizeof(macro_buf));
 		}
 		goto done;
 	}
@@ -739,13 +732,13 @@ char *Macro_Need (void) {
 
 	if (!weapon) {
 		if (macro_buf[0])
-			Q_strncatz (macro_buf, tp_name_separator.string);
-		Q_strncatz (macro_buf, tp_name_weapon.string);
+			strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+		strlcat (macro_buf, tp_name_weapon.string, sizeof(macro_buf));
 	} else {
 		if (tp_need_rl.value && !(cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)) {
 			if (macro_buf[0])
-				Q_strncatz (macro_buf, tp_name_separator.string);
-			Q_strncatz (macro_buf, tp_name_rl.string);
+				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			strlcat (macro_buf, tp_name_rl.string, sizeof(macro_buf));
 		}
 
 		switch (weapon) {
@@ -765,14 +758,14 @@ char *Macro_Need (void) {
 
 		if (needammo) {
 			if (macro_buf[0])
-				Q_strncatz (macro_buf, tp_name_separator.string);
-			Q_strncatz (macro_buf, needammo);
+				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			strlcat (macro_buf, needammo, sizeof(macro_buf));
 		}
 	}
 
 done:
 	if (!macro_buf[0])
-		Q_strncpyz (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
+		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 
 	return macro_buf;
 }
@@ -817,11 +810,11 @@ char *Macro_MyStatus_LED(void) {
 	}	
 
 	if (count == 0)
-		Q_snprintfz(macro_buf, sizeof(macro_buf), "%s", tp_name_status_green.string);
+		snprintf(macro_buf, sizeof(macro_buf), "%s", tp_name_status_green.string);
 	else if (count <= 1)
-		Q_snprintfz(macro_buf, sizeof(macro_buf), "%s", tp_name_status_yellow.string);
+		snprintf(macro_buf, sizeof(macro_buf), "%s", tp_name_status_yellow.string);
 	else
-		Q_snprintfz(macro_buf, sizeof(macro_buf), "%s", tp_name_status_red.string);	
+		snprintf(macro_buf, sizeof(macro_buf), "%s", tp_name_status_red.string);	
 
 	return macro_buf;
 }
@@ -829,11 +822,11 @@ char *Macro_MyStatus_LED(void) {
 char *Macro_EnemyStatus_LED(void) {
 	CountNearbyPlayers(false);
 	if (vars.numenemies == 0)
-		Q_snprintfz(macro_buf, sizeof(macro_buf), "\xffl%s\xff", tp_name_status_green.string);
+		snprintf(macro_buf, sizeof(macro_buf), "\xffl%s\xff", tp_name_status_green.string);
 	else if (vars.numenemies <= vars.numfriendlies)
-		Q_snprintfz(macro_buf, sizeof(macro_buf), "\xffl%s\xff", tp_name_status_yellow.string);
+		snprintf(macro_buf, sizeof(macro_buf), "\xffl%s\xff", tp_name_status_yellow.string);
 	else
-		Q_snprintfz(macro_buf, sizeof(macro_buf), "\xffl%s\xff", tp_name_status_red.string);
+		snprintf(macro_buf, sizeof(macro_buf), "\xffl%s\xff", tp_name_status_red.string);
 
 	suppress = true;
 	return macro_buf;
@@ -846,20 +839,20 @@ char *Macro_EnemyStatus_LED(void) {
 
 char *Macro_LastSeenPowerup(void) {
 	if (!vars.enemy_powerups_time || cls.realtime - vars.enemy_powerups_time > 5) {
-		Q_strncpyz(macro_buf, tp_name_quad.string, sizeof(macro_buf));
+		strlcpy(macro_buf, tp_name_quad.string, sizeof(macro_buf));
 	} else {
 		macro_buf[0] = 0;
 		if (vars.enemy_powerups & TP_QUAD)
-			Q_strncatz(macro_buf, tp_name_quad.string);
+			strlcat(macro_buf, tp_name_quad.string, sizeof(macro_buf));
 		if (vars.enemy_powerups & TP_PENT) {
 			if (macro_buf[0])  
-				Q_strncatz(macro_buf, tp_name_separator.string);
-			Q_strncatz(macro_buf, tp_name_pent.string);
+				strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			strlcat(macro_buf, tp_name_pent.string, sizeof(macro_buf));
 		}
 		if (vars.enemy_powerups & TP_RING) {
 			if (macro_buf[0])  
-				Q_strncatz(macro_buf, tp_name_separator.string);
-			Q_strncatz(macro_buf, tp_name_ring.string);
+				strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
+			strlcat(macro_buf, tp_name_ring.string, sizeof(macro_buf));
 		}
 	}
 	return macro_buf;
@@ -928,9 +921,9 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay) {
 		name[31] = 0;
 
 	if (team)
-		Q_snprintfz(msg, sizeof(msg), "(%s): %s\n", name, TP_ParseFunChars(dest, true));
+		snprintf(msg, sizeof(msg), "(%s): %s\n", name, TP_ParseFunChars(dest, true));
 	else
-		Q_snprintfz(msg, sizeof(msg), "%s: %s\n", name, TP_ParseFunChars(dest, true));
+		snprintf(msg, sizeof(msg), "%s: %s\n", name, TP_ParseFunChars(dest, true));
 
 	flags = TP_CategorizeMessage (msg, &offset);
 
@@ -1156,17 +1149,17 @@ char *TP_ParseMacroString (char *s) {
 				if (!strcmp(macro_string, tp_name_none.string))
 					macro_string = "a";
 				if (cl.stats[STAT_ARMOR] < 30)
-					Q_snprintfz (mbuf, sizeof(mbuf), "\x10%s:%i\x11", macro_string, cl.stats[STAT_ARMOR]);
+					snprintf (mbuf, sizeof(mbuf), "\x10%s:%i\x11", macro_string, cl.stats[STAT_ARMOR]);
 				else
-					Q_snprintfz (mbuf, sizeof(mbuf), "%s:%i", macro_string, cl.stats[STAT_ARMOR]);
+					snprintf (mbuf, sizeof(mbuf), "%s:%i", macro_string, cl.stats[STAT_ARMOR]);
 				macro_string = mbuf;
 				break;
 
 			case 'h':
 				if (cl.stats[STAT_HEALTH] >= 50)
-					Q_snprintfz (macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_HEALTH]);
+					snprintf (macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_HEALTH]);
 				else
-					Q_snprintfz (macro_buf, sizeof(macro_buf), "\x10%i\x11", cl.stats[STAT_HEALTH]);
+					snprintf (macro_buf, sizeof(macro_buf), "\x10%i\x11", cl.stats[STAT_HEALTH]);
 				macro_string = macro_buf;
 				break;
 
@@ -1174,7 +1167,7 @@ char *TP_ParseMacroString (char *s) {
 			case 'P':
 				macro_string = Macro_Powerups();
 				if (strcmp(macro_string, tp_name_none.string))
-					Q_snprintfz (mbuf, sizeof(mbuf), "\x10%s\x11", macro_string);
+					snprintf (mbuf, sizeof(mbuf), "\x10%s\x11", macro_string);
 				else
 					mbuf[0] = 0;
 				macro_string = mbuf;
@@ -1186,7 +1179,7 @@ char *TP_ParseMacroString (char *s) {
 			}
 			if (i + strlen(macro_string) >= MAX_MACRO_STRING - 1)
 				Sys_Error("TP_ParseMacroString: macro string length > MAX_MACRO_STRING)");
-			Q_strncpyz (&buf[i], macro_string, MAX_MACRO_STRING - i);
+			strlcpy (&buf[i], macro_string, MAX_MACRO_STRING - i);
 			i += strlen(macro_string);
 			s += 4;	// skip %[<char>]
 			continue;
@@ -1236,7 +1229,7 @@ char *TP_ParseMacroString (char *s) {
 			}
 			if (i + strlen(macro_string) >= MAX_MACRO_STRING - 1)
 				Sys_Error("TP_ParseMacroString: macro string length > MAX_MACRO_STRING)");
-			Q_strncpyz (&buf[i], macro_string, MAX_MACRO_STRING - i);
+			strlcpy (&buf[i], macro_string, MAX_MACRO_STRING - i);
 			i += strlen(macro_string);
 			s += 2;	// skip % and letter
 			continue;
@@ -1870,7 +1863,7 @@ void TP_MsgTrigger_f (void) {
 			trig->level = PRINT_HIGH;
 		}
 
-		Q_strncpyz (trig->string, Cmd_Argv(2), sizeof(trig->string));
+		strlcpy (trig->string, Cmd_Argv(2), sizeof(trig->string));
 		if (c == 5 && !Q_strcasecmp (Cmd_Argv(3), "-l")) {
 			if (!strcmp(Cmd_Argv(4), "t")) {
 				trig->level = 4;
@@ -1920,7 +1913,7 @@ void TP_SearchForMsgTriggers (char *s, int level) {
 				continue;
 
 			if ((string = Cmd_AliasString (t->name))) {
-				Q_strncpyz(vars.lasttrigger_match, s, sizeof(vars.lasttrigger_match));	
+				strlcpy(vars.lasttrigger_match, s, sizeof(vars.lasttrigger_match));	
 				Cbuf_AddTextEx (&cbuf_safe, va("%s\n", string));
 			} else {
 				Com_Printf ("trigger \"%s\" has no matching alias\n", t->name);
@@ -2478,7 +2471,7 @@ void TP_NewMap (void) {
 				if ((groupname = TP_GetMapGroupName(mapname, &system)) && !system)
 					TP_LoadLocFile (va("%s.loc", groupname), true);
 			}
-			Q_strncpyz (last_map, mapname, sizeof(last_map));
+			strlcpy (last_map, mapname, sizeof(last_map));
 		} else {
 			last_map[0] = 0;
 		}
@@ -2921,7 +2914,7 @@ static int FindNearestItem (int flags, item_t **pitem) {
 	}
 
 	if (bestent)
-		Q_strncpyz(vars.nearestitemloc, TP_LocationName(bestent->origin), sizeof(vars.nearestitemloc));
+		strlcpy(vars.nearestitemloc, TP_LocationName(bestent->origin), sizeof(vars.nearestitemloc));
 	else
 		vars.nearestitemloc[0] = 0;
 
@@ -2937,7 +2930,7 @@ char *Macro_LastTookOrPointed (void) {
 	else if (vars.pointtime && vars.tooktime <= vars.pointtime && cls.realtime - vars.pointtime < 5)
 		return Macro_LastPointAtLoc();
 
-	Q_snprintfz(macro_buf, sizeof(macro_buf), "%s %s %s", tp_name_nothing.string, tp_name_at.string, tp_name_someplace.string);
+	snprintf(macro_buf, sizeof(macro_buf), "%s %s %s", tp_name_nothing.string, tp_name_at.string, tp_name_someplace.string);
     return macro_buf;
 }
 
@@ -3298,8 +3291,8 @@ void TP_FindPoint (void) {
 		if (beststate->effects & EF_RED)
 			strncat(buf, va("%s%s", buf[0] ? " " : "", tp_name_pented.string), sizeof(buf) - strlen(buf) - 1);
 		strncat(buf, va("%s%s", buf[0] ? " " : "", name), sizeof(buf) - strlen(buf) - 1);
-		Q_strncpyz (vars.pointname, buf, sizeof(vars.pointname));
-		Q_strncpyz (vars.pointloc, TP_LocationName (beststate->origin), sizeof(vars.pointloc));
+		strlcpy (vars.pointname, buf, sizeof(vars.pointname));
+		strlcpy (vars.pointloc, TP_LocationName (beststate->origin), sizeof(vars.pointloc));
 
 		vars.pointtype = (teammate && !eyes) ? POINT_TYPE_TEAMMATE : POINT_TYPE_ENEMY;
 	} else if (best >= 0) {
@@ -3317,12 +3310,12 @@ void TP_FindPoint (void) {
 		}
 
 		vars.pointtype = (bestitem->itemflag & (it_powerups|it_flag)) ? POINT_TYPE_POWERUP : POINT_TYPE_ITEM;
-		Q_strncpyz (vars.pointname, p, sizeof(vars.pointname));
-		Q_strncpyz (vars.pointloc, TP_LocationName (bestent->origin), sizeof(vars.pointloc));
+		strlcpy (vars.pointname, p, sizeof(vars.pointname));
+		strlcpy (vars.pointloc, TP_LocationName (bestent->origin), sizeof(vars.pointloc));
 	}
 	else {
 nothing:
-		Q_strncpyz (vars.pointname, tp_name_nothing.string, sizeof(vars.pointname));
+		strlcpy (vars.pointname, tp_name_nothing.string, sizeof(vars.pointname));
 		vars.pointloc[0] = 0;
 		vars.pointtype = POINT_TYPE_ITEM;
 	}
@@ -3436,7 +3429,7 @@ qbool TP_CheckSoundTrigger (char *str) {
 				if (length >= MAX_QPATH)
 					break;
 
-    Q_strncpyz (soundname, str + start, length + 1);
+    strlcpy (soundname, str + start, length + 1);
 				if (strstr(soundname, ".."))
 					break;	// no thank you
 
@@ -3548,7 +3541,7 @@ void TP_MsgFilter_f (void) {
 			Com_Printf ("A filter may not contain spaces\n");
 			return;
 		}
-		Q_strncpyz (filter_strings[num_filters], s + 1, sizeof(filter_strings[0]));
+		strlcpy (filter_strings[num_filters], s + 1, sizeof(filter_strings[0]));
 		num_filters++;
 		if (num_filters >= 8)
 			break;

@@ -16,6 +16,8 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: logging.c,v 1.7 2006-03-20 13:51:27 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -40,7 +42,7 @@ qbool Log_IsLogging(void) {
 static char *Log_LogDirectory(void) {
 	static char dir[LOG_FILENAME_MAXSIZE];
 
-	Q_strncpyz(dir, log_dir.string[0] ? va("%s/%s", com_basedir, log_dir.string) : cls.gamedir, sizeof(dir));
+	strlcpy(dir, log_dir.string[0] ? va("%s/%s", com_basedir, log_dir.string) : cls.gamedir, sizeof(dir));
 	return dir;
 }
 
@@ -102,7 +104,7 @@ static void Log_log_f(void) {
 			Com_Printf("Stopped logging to %s\n", logfilename);
 		}
 
-		Q_strncpyz(logfilename, Cmd_Argv(1), sizeof(logfilename) - 4);
+		strlcpy(logfilename, Cmd_Argv(1), sizeof(logfilename) - 4);
 		Util_Process_Filename(logfilename);
 		if (!Util_Is_Valid_Filename(logfilename)) {
 			Com_Printf(Util_Invalid_Filename_Msg("filename"));
@@ -220,9 +222,9 @@ void Log_AutoLogging_StartMatch(char *logname) {
 	}
 
 
-	Q_strncpyz(auto_matchname, logname, sizeof(auto_matchname));
+	strlcpy(auto_matchname, logname, sizeof(auto_matchname));
 
-	Q_strncpyz (extendedname, TEMP_LOG_NAME, sizeof(extendedname));
+	strlcpy (extendedname, TEMP_LOG_NAME, sizeof(extendedname));
 	COM_ForceExtension(extendedname, ".log");
 	fullname = va("%s/%s", MT_TempDirectory(), extendedname);
 
@@ -264,7 +266,7 @@ void Log_AutoLogging_SaveMatch(void) {
 		Com_Printf("Error: no available filenames\n");
 		return;
 	}
-	Q_snprintfz (savedname, sizeof(savedname), "%s_%03i.log", auto_matchname, num);
+	snprintf (savedname, sizeof(savedname), "%s_%03i.log", auto_matchname, num);
 
 	fullsavedname = va("%s/%s", dir, savedname);
 

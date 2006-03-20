@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: sv_save.c,v 1.7 2006-03-20 13:51:28 vvd0 Exp $
 */
 
 #ifndef SERVERONLY
@@ -86,7 +87,7 @@ void SV_SaveGame_f (void) {
 		return;
 	}
 
-	Q_snprintfz (fname, sizeof(fname), "%s/save/%s", com_gamedir, Cmd_Argv(1));
+	snprintf (fname, sizeof(fname), "%s/save/%s", com_gamedir, Cmd_Argv(1));
 	COM_DefaultExtension (fname, ".sav");
 	
 	Com_Printf ("Saving game to %s...\n", fname);

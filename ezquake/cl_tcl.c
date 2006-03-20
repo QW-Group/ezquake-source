@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.4 2006-03-08 15:29:35 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.5 2006-03-20 13:51:26 vvd0 Exp $
  */
 
 #ifdef EMBED_TCL
@@ -208,7 +208,7 @@ static int TCL_DenyProc (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj 
 	char result[80];
 	const char* command = Tcl_GetString (objv[0]);
 
-	Q_snprintfz (result, 80, "Tcl command \"%s\" not allowed in Quakeworld", command);
+	snprintf (result, 80, "Tcl command \"%s\" not allowed in Quakeworld", command);
 	Tcl_SetResult (interp, result, TCL_VOLATILE);
 	return (TCL_ERROR);
 }

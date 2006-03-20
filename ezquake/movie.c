@@ -16,6 +16,8 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: movie.c,v 1.10 2006-03-20 13:51:27 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -170,13 +172,13 @@ void Movie_Demo_Capture_f(void) {
 			Com_Printf("Error: Avi capturing not initialized\n");
 			return;
 		}
-		Q_strncpyz (aviname, Cmd_Argv(3), sizeof(aviname));
+		strlcpy (aviname, Cmd_Argv(3), sizeof(aviname));
 		if (!(Util_Is_Valid_Filename(aviname))) {
 			Com_Printf(Util_Invalid_Filename_Msg(aviname));
 			return;
 		}
 		COM_ForceExtension (aviname, ".avi");
-		Q_snprintfz (avipath, sizeof(avipath), "%s/%s/%s", com_basedir, movie_dir.string, aviname);
+		snprintf (avipath, sizeof(avipath), "%s/%s/%s", com_basedir, movie_dir.string, aviname);
 		if (!(avifile = fopen(avipath, "wb"))) {
 			COM_CreatePath (avipath);
 			if (!(avifile = fopen(avipath, "wb"))) {
@@ -240,14 +242,14 @@ void Movie_FinishFrame(void) {
 
 #ifdef _WIN32
 	if (!movie_is_avi) {
-		Q_snprintfz(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
+		snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
 			movie_dir.string, movie_start_date.wDay, movie_start_date.wMonth, movie_start_date.wYear,
 			movie_start_date.wHour,	movie_start_date.wMinute, movie_start_date.wSecond, movie_frame_count, image_ext);
 
 		con_suppress = true;
 	}
 #else
-	Q_snprintfz(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
+	snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
 		movie_dir.string, movie_start_date.tm_mday, movie_start_date.tm_mon, movie_start_date.tm_year,
 		movie_start_date.tm_hour, movie_start_date.tm_min, movie_start_date.tm_sec, movie_frame_count, image_ext);
 
