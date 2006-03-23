@@ -9,7 +9,7 @@ CC			=gcc
 CC_BASEVERSION		=$(shell $(CC) -dumpversion | sed -e 's/\..*//g')
 MACHINE			=$(shell $(CC) -dumpmachine)
 ARCH			=$(shell echo $(MACHINE) | sed -e 's/.*mingw32.*/mingw32/g' -e 's/\-.*//g' -e 's/i.86/x86/g')
-STRIP			=strip
+STRIP			=strip --strip-unneeded --remove-section=.comment
 
 # Mac OSX Tiger : powerpc -> ppc
 ifeq ($(MACHINE),powerpc-apple-darwin8) # MacOS-10.4/ppc
