@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.10 2005-09-10 11:49:13 disconn3ct Exp $
+	$Id: EX_browser.c,v 1.11 2006-03-25 17:19:20 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -513,7 +513,7 @@ qbool AddUnboundServer(char *addr)
         return false;
 
     for (i=0; i < sources[0]->serversn; i++)
-        if (!memcmp(&s->address, &sources[0]->servers[i]->address, 6))
+        if (!memcmp(&s->address, &sources[0]->servers[i]->address, sizeof(netadr_t)))
         {
             free(s);
             s = sources[0]->servers[i];
