@@ -428,7 +428,7 @@ qbool getFloatValue(char *string, float *val)
         s++;
 
     // digits
-    if ((*s >= 0  &&  *s <= '9')  ||  *s == '.')
+    if ((*s >= '0'  &&  *s <= '9')  ||  *s == '.')
     {
         while (*s >= '0'  &&  *s <= '9')
             s++;
