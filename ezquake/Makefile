@@ -16,6 +16,12 @@ ifeq ($(MACHINE),powerpc-apple-darwin8) # MacOS-10.4/ppc
 	ARCH		= ppc
 endif
 
+# Mac OSX Tiger : i686 -> macx86
+ifeq ($(MACHINE),i686-apple-darwin8) # MacOS-10.4/x86
+	ARCH		= macx86
+	STRIP		= strip
+endif
+
 # add special architecture based flags
 ifeq ($(ARCH),x86)	# Linux/x86
 	DEST_ARCH	=x86
@@ -44,7 +50,7 @@ BUILD_DEBUG_DIR			=debug-$(ARCH)
 BUILD_RELEASE_DIR		=release-$(ARCH)
 
 # compiler flags
-PRJ_CFLAGS			=-DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DUSE_TCL_STUBS
+PRJ_CFLAGS			=-DWITH_ZLIB -DWITH_PNG #-DEMBED_TCL -DUSE_TCL_STUBS
 XMMS_CFLAGS			=-DWITH_XMMS `glib-config --cflags`
 BASE_CFLAGS			=-Wall $(PRJ_CFLAGS) $(ARCH_CFLAGS)
 BASE_RELEASE_CFLAGS		=-ffast-math -fomit-frame-pointer -fexpensive-optimizations
@@ -75,6 +81,9 @@ ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
 endif
 ifeq ($(ARCH),ppc)		# MacOS-X/ppc
 	BASE_CFLAGS		+= -D__BIG_ENDIAN__ -Ddarwin
+endif
+ifeq ($(ARCH),macx86)		# MacOS-X/x86
+	BASE_CFLAGS		+= -Ddarwin
 endif
 ifeq ($(ARCH),powerpc)		# Linux/PPC
 	BASE_CFLAGS		+= -D__BIG_ENDIAN__
@@ -109,6 +118,10 @@ endif
 ifeq ($(ARCH),ppc)		# MacOS-X/ppc
 	ARCH_GLCFLAGS		= -I/opt/local/include/ -I/Developer/Headers/FlatCarbon -I/sw/include -FOpenGL -FAGL
 endif
+ifeq ($(ARCH),macx86)		# MacOS-X/x86
+	ARCH_GLCFLAGS		= -I/opt/local/include/ -I/Developer/Headers/FlatCarbon -I/sw/include -FOpenGL -FAGL `pcre-config --cflags` -I./libs
+endif
+
 GLCFLAGS			=$(ARCH_GLCFLAGS) $(BASE_GLCFLAGS)
 
 DO_GL_CC			=$(CC) $(CFLAGS) $(GLCFLAGS) -o $@ -c $<
@@ -120,14 +133,17 @@ DO_GL_AS			+= -o $@ -c $<
 
 
 # linker flags
-LDFLAGS				=-lm `glib-config --libs` -lpthread -lexpat -lpcre -ltclstub $(CL_DLFLAGS)
+LDFLAGS				=-lm `glib-config --libs` -lpthread -lexpat `pcre-config --libs` -ltclstub $(CL_DLFLAGS)
 SVGALDFLAGS			=-lvga
 X11_LDFLAGS			=-L/usr/X11R6/lib -lX11 -lXext -lXxf86dga -lXxf86vm
 ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
 	LDFLAGS			+= -lws2_32 -luser32 -lwinmm
 endif
 ifeq ($(ARCH),ppc)		# MacOS-X/ppc
-	LDFLAGS			=-lpcre -lexpat -L/sw/lib/ -L/opt/local/lib -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
+	LDFLAGS			=`pcre-config --libs` -lexpat -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
+endif
+ifeq ($(ARCH),macx86)		# MacOS-X/x86
+	LDFLAGS			=`pcre-config --libs` -lexpat -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
 endif
 
 # opengl build
@@ -141,6 +157,9 @@ ifeq ($(ARCH),mingw32)  # Win32/x86 in MingW environment
 	ARCH_GL_LDFLAGS          =-mwindows -lopengl32 -ldxguid -lgdi32
 endif
 ifeq ($(ARCH),ppc)		# MacOS-X/ppc
+	BASE_GL_LDFLAGS		=
+endif
+ifeq ($(ARCH),macx86)		# MacOS-X/x86
 	BASE_GL_LDFLAGS		=
 endif
 GL_LDFLAGS			=$(ARCH_GL_LDFLAGS) $(BASE_GL_LDFLAGS)
