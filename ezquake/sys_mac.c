@@ -1,5 +1,5 @@
 /*
-	$Id: sys_mac.c,v 1.12 2006-03-20 13:51:28 vvd0 Exp $
+	$Id: sys_mac.c,v 1.13 2006-03-29 12:37:02 oldmanuk Exp $
 */
 // sys_mac.c -- Macintosh system driver
 
@@ -21,6 +21,7 @@
 #include <AGL/agl.h>
 #include <Gestalt.h>
 #include <DrawSprocket/DrawSprocket.h>
+#include <CFString.h>
 
 #include "mac.h"
 #include "mac_prefs.h"
@@ -366,14 +367,23 @@ void Sys_SendKeyEvents (void)
 	for (i=0;i<4;i++)
 	{
 		// if the keymap has changed then generate an event
+#ifdef __BIG_ENDIAN__
 		if (oldKeyMap[i] != newKeyMap[i])
+#else
+		if (oldKeyMap[i].bigEndianValue != newKeyMap[i].bigEndianValue)
+#endif
 		{	
 			// if a bit is different, the key state has changed
 					
 			for (n=0;n<32;n++)
 			{			
+#ifdef __BIG_ENDIAN__
 				newBit = ((newKeyMap[i] >> n) & 1);
 				oldBit = ((oldKeyMap[i] >> n) & 1);
+#else
+				newBit = ((BigLong(newKeyMap[i].bigEndianValue) >> n) & 1);
+				oldBit = ((BigLong(oldKeyMap[i].bigEndianValue) >> n) & 1);
+#endif
 
 				if (newBit != oldBit)
 				{
