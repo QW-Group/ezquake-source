@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: image.c,v 1.18 2006-03-20 13:51:27 vvd0 Exp $
+	$Id: image.c,v 1.19 2006-03-29 17:38:13 oldmanuk Exp $
 */
 
 #include "quakedef.h"
@@ -512,7 +512,7 @@ static qbool PNG_LoadLibrary(void) {
 	if (!(png_handle = LoadLibrary("libpng.dll"))) {
 #else
 #ifdef __APPLE__
-	if (!(png_handle = dlopen("libpng.dylib", RTLD_NOW))) {
+	if (!(png_handle = dlopen("libpng12.dylib", RTLD_NOW))) {
 		if (!(zlib_handle = dlopen("libz.dylib", RTLD_NOW))) {
 #else
 	if (!(png_handle = dlopen("libpng12.so.0", RTLD_NOW)) && !(png_handle = dlopen("libpng.so", RTLD_NOW))) {
@@ -523,7 +523,7 @@ static qbool PNG_LoadLibrary(void) {
 			return false;
 		}
 #ifdef __APPLE__
-		if (!(png_handle = dlopen("libpng.dylib", RTLD_NOW)))
+		if (!(png_handle = dlopen("libpng12.dylib", RTLD_NOW)))
 #else
 		if (!(png_handle = dlopen("libpng12.so.0", RTLD_NOW)) && !(png_handle = dlopen("libpng.so", RTLD_NOW)))
 #endif
@@ -1067,7 +1067,7 @@ static qbool JPEG_LoadLibrary(void) {
 	if (!(jpeg_handle = LoadLibrary("libjpeg.dll"))) {
 #else
 #ifdef __APPLE__
-	if (!(jpeg_handle = dlopen("libjpeg.dylib", RTLD_NOW))) {
+	if (!(jpeg_handle = dlopen("libjpeg.62.dylib", RTLD_NOW))) {
 #else
 	if (!(jpeg_handle = dlopen("libjpeg.so.62", RTLD_NOW)) && !(jpeg_handle = dlopen("libjpeg.so", RTLD_NOW))) {
 #endif
