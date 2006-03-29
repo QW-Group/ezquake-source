@@ -394,7 +394,7 @@ int GetTag(model_t *mod, char *tagname, int frame, float **org, m3by3_t **ang)	/
 	md3tag_t *tag;
 	int tnum;
 	float bad[3]={0};
-	m3by3_t badm={0};
+	m3by3_t badm= {{0}};
 
 	*org = bad;
 	*ang = &badm;

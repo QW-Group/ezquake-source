@@ -18,7 +18,7 @@
 #include <sys/uio.h>
 #include <arpa/inet.h>
 #include <errno.h>
-#include <sys/unistd.h>
+#include <unistd.h>
 
 #define SO_DONTLINGER 0 	 
 #define USHORT unsigned short 	 

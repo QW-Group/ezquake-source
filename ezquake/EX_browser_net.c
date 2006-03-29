@@ -13,7 +13,7 @@
 #include <sys/uio.h>
 #include <arpa/inet.h>
 #include <errno.h>
-#include <sys/unistd.h>
+#include <unistd.h>
 #endif
 
 #include "EX_browser.h"

@@ -839,6 +839,18 @@ char * Add_Inline_Tag(document_rendering_context_t *cx, char *text, document_tag
     case tag_sp:
         text = Add_Inline_Sp(cx, text, (document_tag_sp_t *) tag);
         break;
+
+    case tag_di:
+    case tag_dict:
+    case tag_h:
+    case tag_hr:
+    case tag_li:
+    case tag_list:
+    case tag_p:
+    case tag_pre:
+    case tag_section:
+	/* TODO */
+	break;
     }
 
     return text;

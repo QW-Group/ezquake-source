@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.27 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: cl_cmd.c,v 1.28 2006-03-29 20:38:28 oldmanuk Exp $
 */
 
 #include <time.h>
@@ -311,7 +311,7 @@ void CL_PrintQStatReply (char *s) {
 		while (p)
 		{
 			sscanf (p, "%d %d %d %d \"%32[^\"]\" \"%16[^\"]\" %d %d",
-				&userid, &frags, &time, &ping, &name, &skin, &topcolor, &bottomcolor);
+				&userid, &frags, &time, &ping, (char *)&name, (char *)&skin, &topcolor, &bottomcolor);
 			Com_Printf("%4d %4d %4d  %-16.16s\n", ping, time, frags, name);
 			p = strtok (NULL, "\n");
 		}

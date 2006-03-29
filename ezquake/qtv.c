@@ -1,7 +1,7 @@
 /*
 	Support for FTE QuakeTV automated startup and connecting
 
-	$Id: qtv.c,v 1.3 2006-03-20 13:51:28 vvd0 Exp $
+	$Id: qtv.c,v 1.4 2006-03-29 20:38:29 oldmanuk Exp $
 */
 
 #include "quakedef.h"
@@ -26,6 +26,7 @@ qbool QTV_Running(void)
 #else
 	// todo: linux / mac
 	Com_Printf("Not implemented.\n");
+	return false;
 #endif
 }
 

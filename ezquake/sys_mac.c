@@ -1,5 +1,5 @@
 /*
-	$Id: sys_mac.c,v 1.13 2006-03-29 12:37:02 oldmanuk Exp $
+	$Id: sys_mac.c,v 1.14 2006-03-29 20:38:29 oldmanuk Exp $
 */
 // sys_mac.c -- Macintosh system driver
 
@@ -252,7 +252,7 @@ void Sys_Message (Str255 briefMsg, char *error, ...)
 		
 		param.movable 		= 0;
 		param.filterProc 	= NULL;
-		param.defaultText	= "\pOK";
+		param.defaultText	= "OK";
 		param.cancelText 	= NULL;
 		param.otherText 	= NULL;
 		param.helpButton 	= false;
