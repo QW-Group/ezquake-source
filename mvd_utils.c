@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.25 2006-03-20 13:51:27 vvd0 Exp $
+	$Id: mvd_utils.c,v 1.26 2006-03-29 20:38:29 oldmanuk Exp $
 */
 
 #include "quakedef.h"
@@ -1048,7 +1048,7 @@ int MVD_Stats_Gather_f (void){
 		}
 
 		mvd_new_info[i].info.runs[mvd_new_info[i].info.run].time=cls.demotime - mvd_new_info[i].info.das.alivetimestart;
-				
+
 		if (mvd_new_info[i].info.lfw == -1){
 			if (mvd_new_info[i].info.lastfrags > mvd_new_info[i].p_info->frags ){
 				mvd_new_info[i].info.teamspawntelefrags += mvd_new_info[i].p_info->frags - mvd_new_info[i].info.lastfrags ;
@@ -1058,9 +1058,10 @@ int MVD_Stats_Gather_f (void){
 			mvd_new_info[i].info.lastfrags = mvd_new_info[i].p_info->frags;
 		}
 
+		// FIXME: misplaced comma here?
 		if (mvd_new_info[i].p_info->name,mvd_new_info[i].p_state->weaponframe > 0)
 				mvd_new_info[i].info.lfw=mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON];
-	
+
 		MVD_Status_WP_f(i);
 
 		if (mvd_moreinfo.value)
@@ -1182,9 +1183,10 @@ void MVD_Status (void){
 	if (p<0)
 		p=0;
 	//&& mvd_new_info[id].info.runs[p].time
-	for(p;p<=mvd_new_info[id].info.run ;p++){
+	while(p <= mvd_new_info[id].info.run) {
 		strcpy(str,va("%3i %9.3f %5i %3i",p+1,mvd_new_info[id].info.runs[p].time,mvd_new_info[id].info.runs[p].frags,mvd_new_info[id].info.runs[p].teamfrags));
 		Draw_ColoredString (x, y+((z++)*8),str,1);
+		p++;
 	}
 	strcpy(str,va("Last Fired Weapon: %s",MVD_Weapon_strings(mvd_new_info[id].info.lfw)));
 	strcpy(str,Make_Red(str,1));
@@ -1250,9 +1252,11 @@ void MVD_Status (void){
 	p=mvd_new_info[id].info.info[QUAD_INFO].run-3;
 	if (p<0)
 		p=0;
-	for(p;p<=mvd_new_info[id].info.info[QUAD_INFO].run && mvd_new_info[id].info.info[QUAD_INFO].runs[p].time ;p++){
+
+	while(p <= mvd_new_info[id].info.info[QUAD_INFO].run && mvd_new_info[id].info.info[QUAD_INFO].runs[p].time){
 		strcpy(str,va("%3i %9.3f %5i %3i",p+1,mvd_new_info[id].info.info[QUAD_INFO].runs[p].time,mvd_new_info[id].info.info[QUAD_INFO].runs[p].frags,mvd_new_info[id].info.info[QUAD_INFO].runs[p].teamfrags));
 		Draw_ColoredString (x, y+((z++)*8),str,1);
+		p++;
 	}
 
 	

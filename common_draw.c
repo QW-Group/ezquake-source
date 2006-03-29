@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.7 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: common_draw.c,v 1.8 2006-03-29 20:38:28 oldmanuk Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -860,7 +860,7 @@ void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, 
 			{
 				// Make sure the char isn't above 127.
 				char ch = txt[wordlen] & 127;
-				if(wordwrap && (!txt[wordlen] || ch == 0x09 || ch == 0x0D ||ch == 0x0A || ch == 0x20) || (!wordwrap && txt[wordlen] <= ' '))
+				if((wordwrap && (!txt[wordlen] || ch == 0x09 || ch == 0x0D ||ch == 0x0A || ch == 0x20)) || (!wordwrap && txt[wordlen] <= ' '))
 				{
 					break;
 				}

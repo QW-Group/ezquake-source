@@ -1,5 +1,5 @@
 /*
-	$Id: parser.c,v 1.4 2005-09-04 06:06:22 disconn3ct Exp $
+	$Id: parser.c,v 1.5 2006-03-29 20:38:29 oldmanuk Exp $
 */
 
 //#include <stdio.h>
@@ -549,39 +549,42 @@ int Solve_String (char *src){
 /*
 returns:
 	 0: if no error occured
-	-1:	error while removing spaces 
+	-1:	error while removing spaces
 	-2: error while checking bracket count
 	-3: error while solcing the bracket
 	-4:	error during Solve_String (error in Check_For_Double_Tokens)
 	-5:	error during Solve_String (error in Calc_String)
 	-6: unrecognized chars in the src string
 */
+// oldman: did someone's five year old child code this method originally? its
+// horrible :)
 int eval_string_int (char *src){
-	int status,status2;
-	printf("Parser Works\n");
-	status=Remove_Spaces(src);
-	if (status==-1)
+	int status, status2;
+
+	status = Remove_Spaces(src);
+	if (status == -1)
 		return -1;
-	
-	status=Check_Tokens(src);
-		if (status==-1)
+
+	status = Check_Tokens(src);
+	if (status == -1)
 		return -6;
-	
-	while(status=Check_Brackets(src)){
-		if(status>0){
-				status2=Solve_Brackets(src);
-				if (status2 == -1)
-					return -3;
-		}else if(status==-1){
+
+	while ((status = Check_Brackets(src))) {
+		if (status > 0) {
+			status2 = Solve_Brackets(src);
+			if (status2 == -1)
+				return -3;
+		} else if (status == -1)  {
 			return -2;
-			
 		}
 	}
-	status=Solve_String(src);
-	if (status == -1 )
+
+	status = Solve_String(src);
+	if (status == -1)
 		return -4;
-	if (status == -2 )
+
+	if (status == -2)
 		return -5;
-	printf("Reached the end !\n");
+
 	return 0;
 }

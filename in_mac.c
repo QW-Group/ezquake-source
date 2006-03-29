@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <CGDirectDisplay.h>
 #include <IOKit/hidsystem/IOHIDLib.h>
 #include <IOKit/hidsystem/IOHIDParameter.h>
-#include <drivers/event_status_driver.h>
+#include <IOKit/hidsystem/event_status_driver.h>
 
 #include "mac.h"
 

@@ -98,7 +98,7 @@ qbool CheckExtension (const char *extension) {
 	if (!extension || *extension == 0 || strchr (extension, ' '))
 		return false;
 
-	for (start = gl_extensions; where = strstr(start, extension); start = terminator) {
+	for (start = gl_extensions; (where = strstr(start, extension)); start = terminator) {
 		terminator = where + strlen (extension);
 		if ((where == start || *(where - 1) == ' ') && (*terminator == 0 || *terminator == ' '))
 			return true;

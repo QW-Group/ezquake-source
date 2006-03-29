@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.36 2006-03-20 13:51:27 vvd0 Exp $
+	$Id: menu.c,v 1.37 2006-03-29 20:38:29 oldmanuk Exp $
 
 */
 
@@ -1949,9 +1949,11 @@ void M_Menu_MP3_Control_Key(int key) {
 	con_suppress = false;
 }
 
+#if defined(_WIN32) || defined(__XMMS__)
 void M_Menu_MP3_Control_f (void){
 	M_EnterMenu (m_mp3_control);
 }
+#endif
 
 #define PLAYLIST_MAXENTRIES		2048	
 #define PLAYLIST_MAXLINES		17

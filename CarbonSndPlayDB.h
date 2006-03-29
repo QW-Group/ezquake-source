@@ -90,7 +90,5 @@ enum {
   dbLastBuffer                  = 0x00000004  /*last double buffer to play*/
 };
 
-#pragma export on
-				OSErr	CarbonSndPlayDoubleBuffer (SndChannelPtr chan, SndDoubleBufferHeaderPtr theParams);
-				OSErr	MySndDoImmediate (SndChannelPtr chan, SndCommand * cmd);
-#pragma export off
+OSErr	CarbonSndPlayDoubleBuffer (SndChannelPtr chan, SndDoubleBufferHeaderPtr theParams);
+OSErr	MySndDoImmediate (SndChannelPtr chan, SndCommand * cmd);
