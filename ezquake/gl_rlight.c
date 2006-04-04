@@ -583,7 +583,7 @@ int R_LightPoint (vec3_t p)
 {
 	vec3_t		end;
 	
-	if (r_fullbright.value || !cl.worldmodel->lightdata)
+	if ((r_fullbright.value && r_refdef2.allow_cheats) || !cl.worldmodel->lightdata)
 	{
 		lightcolor[0] = lightcolor[1] = lightcolor[2] = 255;
 		return 255;
