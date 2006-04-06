@@ -28,7 +28,7 @@ void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info)
 
 extern cvar_t cl_predictPlayers, cl_solidPlayers, cl_rocket2grenade;
 extern cvar_t cl_model_bobbing;		
-extern cvar_t cl_nolerp;
+extern cvar_t cl_nolerp, cl_lerp_monsters;
 
 static struct predicted_player {
 	int flags;
@@ -75,6 +75,19 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_vknife2] = "progs/v_knife2.mdl";
 	cl_modelnames[mi_vmedi] = "progs/v_medi.mdl";
 	cl_modelnames[mi_vspan] = "progs/v_span.mdl";
+	cl_modelnames[mi_monster1] = "progs/soldier.mdl";
+	cl_modelnames[mi_m2] = "progs/dog.mdl";
+	cl_modelnames[mi_m3] = "progs/demon.mdl";
+	cl_modelnames[mi_m4] = "progs/ogre.mdl";
+	cl_modelnames[mi_m5] = "progs/shambler.mdl";
+	cl_modelnames[mi_m6] = "progs/knight.mdl";
+	cl_modelnames[mi_m7] = "progs/zombie.mdl";
+	cl_modelnames[mi_m8] = "progs/wizard.mdl";
+	cl_modelnames[mi_m9] = "progs/enforcer.mdl";
+	cl_modelnames[mi_m10] = "progs/fish.mdl";
+	cl_modelnames[mi_m11] = "progs/hknight.mdl";
+	cl_modelnames[mi_m12] = "progs/shalrath.mdl";
+	cl_modelnames[mi_monster13] = "progs/tarbaby";
 
 	// FIXME, delay until map load time?
 	cl_flame0_model = Mod_ForName ("progs/flame0.mdl", false);
@@ -111,6 +124,17 @@ void CL_InitEnts(void) {
 #endif
 
 	CL_ClearScene();
+}
+
+static qbool is_monster (int modelindex)
+{
+	int i;
+	if (!cl_lerp_monsters.value)
+		return false;
+	for (i = 1; i < 13; i++)
+		if (modelindex == cl_modelindices[mi_monster1 + i - 1])
+			return true;
+	return false;
 }
 
 void CL_ClearScene (void) {
@@ -587,7 +611,8 @@ void CL_LinkPacketEntities (void) {
 		}
 
 	
-		if ((cl_nolerp.value && !cls.mvdplayback) || cent->deltalerp <= 0) {
+		if ((cl_nolerp.value && !cls.mvdplayback && !is_monster(state->modelindex))
+		|| cent->deltalerp <= 0) {
 			lerp = -1;
 			VectorCopy(cent->current.origin, ent.origin);
 		} else {
@@ -1008,7 +1033,8 @@ void CL_LinkPacketEntities (void) {
 		}
 
 	
-		if ((cl_nolerp.value && !cls.mvdplayback) || cent->deltalerp <= 0) {
+		if ((cl_nolerp.value && !cls.mvdplayback && !is_monster(state->modelindex))
+		|| cent->deltalerp <= 0) {
 			lerp = -1;
 			VectorCopy(cent->current.origin, ent.origin);
 		} else {
