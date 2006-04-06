@@ -508,7 +508,7 @@ qbool SNDDMA_InitWav (void) {
 
 //Try to find a sound device to mix for.
 //Returns false if nothing is found.
-int SNDDMA_Init(void) {
+qbool SNDDMA_Init(void) {
 	sndinitstat	stat;
 
 	if (COM_CheckParm ("-wavonly"))
@@ -555,10 +555,10 @@ int SNDDMA_Init(void) {
 		if (snd_firsttime)
 			Com_Printf ("No sound device initialized\n");
 
-		return 0;
+		return false;
 	}
 
-	return 1;
+	return true;
 }
 
 //return the current sample position (in mono samples read) inside the recirculating dma buffer,
