@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.26 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: cl_demo.c,v 1.27 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1341,7 +1341,7 @@ void CL_Play_f (void) {
 
 #ifdef _WIN32
 	strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
-	if (strlen(name) > 4 && !Q_strcasecmp(name + strlen(name) - 4, ".qwz")) {
+	if (strlen(name) > 4 && !strcasecmp(name + strlen(name) - 4, ".qwz")) {
 		PlayQWZDemo();
 		if (!playbackfile && !qwz_playback)
 			return;	
@@ -1373,7 +1373,7 @@ void CL_Play_f (void) {
 }
 #endif
 	cls.demoplayback = true;
-	cls.mvdplayback = !Q_strcasecmp(name + strlen(name) - 3, "mvd") ? true : false;	
+	cls.mvdplayback = !strcasecmp(name + strlen(name) - 3, "mvd") ? true : false;	
 	cls.state = ca_demostart;
 	Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, 0);
 	cls.demotime = 0;

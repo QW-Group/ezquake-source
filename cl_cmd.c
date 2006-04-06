@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.28 2006-03-29 20:38:28 oldmanuk Exp $
+	$Id: cl_cmd.c,v 1.29 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 #include <time.h>
@@ -553,7 +553,7 @@ void CL_FullInfo_f (void) {
 		if (*s)
 			s++;
 
-		if (!Q_strcasecmp(key, pmodel_name) || !Q_strcasecmp(key, emodel_name))
+		if (!strcasecmp(key, pmodel_name) || !strcasecmp(key, emodel_name))
 			continue;
 
 		Info_SetValueForKey (cls.userinfo, key, value, MAX_INFO_STRING);
@@ -571,7 +571,7 @@ void CL_SetInfo_f (void) {
 		Com_Printf ("Usage: %s [ <key> <value> ]\n", Cmd_Argv(0));
 		return;
 	}
-	if (!Q_strcasecmp(Cmd_Argv(1), pmodel_name) || !strcmp(Cmd_Argv(1), emodel_name))
+	if (!strcasecmp(Cmd_Argv(1), pmodel_name) || !strcmp(Cmd_Argv(1), emodel_name))
 		return;
 
 	Info_SetValueForKey (cls.userinfo, Cmd_Argv(1), Cmd_Argv(2), MAX_INFO_STRING);

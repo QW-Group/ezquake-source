@@ -290,7 +290,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
 
     // directories sorted always by name, ascending
     if (d1->is_directory && d2->is_directory)
-        return Q_strcasecmp(d1->name, d2->name);
+        return strcasecmp(d1->name, d2->name);
 
     while (true)
     {
@@ -306,7 +306,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
         switch (c)
         {
             case '1':   // name
-                d = Q_strcasecmp(d1->name, d2->name); break;
+                d = strcasecmp(d1->name, d2->name); break;
             case '2':   // size
 		        d = d1->size - d2->size;
                 break;
@@ -317,7 +317,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
             {
                 char *ext1 = fl->filetypes[d1->type_index].extension;
                 char *ext2 = fl->filetypes[d2->type_index].extension;
-                d = Q_strcasecmp(ext1, ext2);
+                d = strcasecmp(ext1, ext2);
                 break;
             }
             default:
@@ -402,7 +402,7 @@ void FL_ReadDir(filelist_t *fl)
 
                 _splitpath(ent.fname, NULL, NULL, NULL, ext);
    
-                if (!Q_strcasecmp(fl->filetypes[i].extension, ext))
+                if (!strcasecmp(fl->filetypes[i].extension, ext))
                 {
                     f->type_index = i;
                     break;
@@ -917,7 +917,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 
         if (fl->search_valid)
         {
-            strcpy(line, "óåáòãè æïòº ");   // seach for:
+            strcpy(line, "ï¿½ï¿½ï¿½ ï¿½ï¿½");   // seach for:
             if (fl->search_error)
             {
                 strcat(line, "not found");

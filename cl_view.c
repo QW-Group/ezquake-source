@@ -382,13 +382,13 @@ void V_TF_FlashStuff (void) {
 	if (cshift_empty.percent == 240 ||	// Normal TF
 		cshift_empty.percent == 255 ) {	// Angel TF
 		TP_ExecTrigger ("f_flash");
-		if (!flashed && (!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4)))
+		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)))
 			{V_TF_FlashSettings (true);}
 		flashed=true;
 		last_flash_time = cls.realtime;
 	}
 	if (cshift_empty.percent == 160){ // flashed by your own flash
-		if (!flashed && (!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4)))
+		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)))
 			{V_TF_FlashSettings (true);}
 		flashed=true;
 		last_flash_time = cls.realtime;
@@ -397,7 +397,7 @@ void V_TF_FlashStuff (void) {
 	// turn gamma and contrast back if
 	if ((!(cls.realtime - last_flash_time < 10.0)) || // flashed for last 10 seconds or 
 	(cshift_empty.percent == 0 && (cbuf_current = &cbuf_svc))) { // death while flashed
-		if (flashed && (!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+		if (flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
 			V_TF_FlashSettings (false);
 			flashed = false;
 		}
@@ -785,7 +785,7 @@ void V_TF_ClearGrenadeEffects ()
 	Cvar_SetValue (&v_idlescale, 0.0f);
 
 	// Flash effect off
-	if (flashed && (!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+	if (flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
 		V_TF_FlashSettings (false);
 		flashed = false;
 	}

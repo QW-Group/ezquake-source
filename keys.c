@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.31 2006-03-20 13:51:27 vvd0 Exp $
+	$Id: keys.c,v 1.32 2006-04-06 23:23:18 disconn3ct Exp $
 
 */
 
@@ -343,7 +343,7 @@ static void FindCommonSubString (char *s) {
 		strlcpy (compl_common, s, sizeof(compl_common));
 		compl_clen = strlen (compl_common);
 	} else {
-		while (compl_clen > compl_len && Q_strncasecmp(s, compl_common, compl_clen))
+		while (compl_clen > compl_len && strncasecmp(s, compl_common, compl_clen))
 			compl_clen--;
 	}
 }
@@ -435,7 +435,7 @@ CompleteCommandNew (void)
 				for (cmd = cmd_functions; cmd;
 				     cmd = cmd->next)
 				{
-					if (!Q_strncasecmp
+					if (!strncasecmp
 					    (s, cmd->name, compl_len))
 					{
 						PaddedPrint (cmd->name);
@@ -459,7 +459,7 @@ CompleteCommandNew (void)
 				Com_Printf ("\x02" "Variables:\n");
 				for (var = cvar_vars; var; var = var->next)
 				{
-					if (!Q_strncasecmp
+					if (!strncasecmp
 					    (s, var->name, compl_len))
 					{
 						PaddedPrint (var->name);
@@ -482,7 +482,7 @@ CompleteCommandNew (void)
 				Com_Printf ("\x02" "Aliases:\n");
 				for (alias = cmd_alias; alias;
 				     alias = alias->next)
-					if (!Q_strncasecmp
+					if (!strncasecmp
 					    (s, alias->name, compl_len))
 					{
 						PaddedPrint (alias->name);
@@ -686,7 +686,7 @@ void CompleteCommand (void) {
 		if (c) {
 			Com_Printf ("\x02" "Commands:\n");
 			for (cmd=cmd_functions ; cmd ; cmd=cmd->next) {
-				if (!Q_strncasecmp (s, cmd->name, compl_len)) {
+				if (!strncasecmp (s, cmd->name, compl_len)) {
 					PaddedPrint (cmd->name);
 					FindCommonSubString (cmd->name);
 				}
@@ -698,7 +698,7 @@ void CompleteCommand (void) {
 		if (v) {
 			Com_Printf ("\x02" "Variables:\n");
 			for (var=cvar_vars ; var ; var=var->next) {
-				if (!Q_strncasecmp (s, var->name, compl_len)) {
+				if (!strncasecmp (s, var->name, compl_len)) {
 					PaddedPrint (var->name);
 					FindCommonSubString (var->name);
 				}
@@ -710,7 +710,7 @@ void CompleteCommand (void) {
 		if (a) {
 			Com_Printf ("\x02" "Aliases:\n");
 			for (alias=cmd_alias ; alias ; alias=alias->next)
-				if (!Q_strncasecmp (s, alias->name, compl_len)) {
+				if (!strncasecmp (s, alias->name, compl_len)) {
 					PaddedPrint (alias->name);
 					FindCommonSubString (alias->name);
 				}
@@ -1350,7 +1350,7 @@ int Key_StringToKeynum (char *str) {
 #endif // WITH_KEYMAP else
 
 	for (kn = keynames; kn->name; kn++) {
-		if (!Q_strcasecmp(str,kn->name))
+		if (!strcasecmp(str,kn->name))
 			return kn->keynum;
 	}
 
@@ -1358,7 +1358,7 @@ int Key_StringToKeynum (char *str) {
 	for (i = 0; i < 255; i++)
 	{
 		snprintf(ret, sizeof(ret), UNKNOWN_S "%d", i);
-		if (!Q_strcasecmp(str, ret))
+		if (!strcasecmp(str, ret))
 			return UNKNOWN + i;
 	}
 #endif // WITH_KEYMAP
@@ -1460,7 +1460,7 @@ void Key_SetBinding (int keynum, char *binding) {
 
 	// free old bindings
 	if (keybindings[keynum]) {
-		Z_Free (keybindings[keynum]);
+		Q_free (keybindings[keynum]);
 		keybindings[keynum] = NULL;
 	}
 
@@ -1480,7 +1480,7 @@ void Key_Unbind (int keynum) {
 	}
 
 	if (keybindings[keynum]) {
-		Z_Free (keybindings[keynum]);
+		Q_free (keybindings[keynum]);
 		keybindings[keynum] = NULL;
 	}
 }

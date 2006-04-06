@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.24 2006-03-20 13:51:28 vvd0 Exp $
+	$Id: sbar.c,v 1.25 2006-04-06 23:23:18 disconn3ct Exp $
 */
 // sbar.c -- status bar code
 
@@ -565,7 +565,7 @@ static int Sbar_SortTeamsAndFrags_Compare(int a, int b) {
 	p2 = &cl.players[b];
 
 	if (p1->spectator)
-		return p2->spectator ? Q_strcasecmp(p1->name, p2->name) : 1;
+		return p2->spectator ? strcasecmp(p1->name, p2->name) : 1;
     else if (p2->spectator)
         return -1;
 
@@ -590,7 +590,7 @@ static int Sbar_SortTeamsAndFrags_Compare(int a, int b) {
 		}
 		return (t1 && t2 && t1->frags != t2->frags) ? (t2->frags - t1->frags) : team_comp;
     } else {
-		return (frag_comp = p2->frags - p1->frags) ? frag_comp : Q_strcasecmp(p1->name, p2->name);
+		return (frag_comp = p2->frags - p1->frags) ? frag_comp : strcasecmp(p1->name, p2->name);
     }
 }
 

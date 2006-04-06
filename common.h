@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: common.h,v 1.16 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: common.h,v 1.17 2006-04-06 23:23:18 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -70,30 +70,30 @@ typedef enum {false, true} qbool;
 //============================================================================
 
 #if id386
-#define UNALIGNED_OK	1	// set to 0 if unaligned accesses are not supported
+#define UNALIGNED_OK		1		// set to 0 if unaligned accesses are not supported
 #else
-#define UNALIGNED_OK	0
+#define UNALIGNED_OK		0
 #endif
 
 //============================================================================
 
 #define	MINIMUM_MEMORY	0x550000
 
-#define	MAX_QPATH		64			// max length of a quake game pathname
-#define	MAX_OSPATH		128			// max length of a filesystem pathname
+#define	MAX_QPATH		64		// max length of a quake game pathname
+#define	MAX_OSPATH		128		// max length of a filesystem pathname
 
-#define	ON_EPSILON		0.1			// point on plane side epsilon
+#define	ON_EPSILON		0.1		// point on plane side epsilon
 
 #define	MAX_MSGLEN		1450		// max length of a reliable message
-#define	MAX_DATAGRAM	1450		// max length of unreliable message
-#define	MAX_UDP_PACKET	(MAX_MSGLEN*2)	// one more than msg + header
-#define	MSG_BUF_SIZE	8192		// max length of msg buf; MVD demo need it
+#define	MAX_DATAGRAM		1450		// max length of unreliable message
+#define	MAX_UDP_PACKET		(MAX_MSGLEN*2)	// one more than msg + header
+#define	MSG_BUF_SIZE		8192		// max length of msg buf; MVD demo need it
 #define	FILE_TRANSFER_BUF_SIZE	MAX_MSGLEN - 100
 
 // per-level limits
 #define	MAX_LIGHTSTYLES	64
-#define	MAX_MODELS		256			// these are sent over the net as bytes
-#define	MAX_SOUNDS		256			// so they cannot be blindly increased
+#define	MAX_MODELS		256		// these are sent over the net as bytes
+#define	MAX_SOUNDS		256		// so they cannot be blindly increased
 
 #define	SAVEGAME_COMMENT_LENGTH	39
 
@@ -101,73 +101,72 @@ typedef enum {false, true} qbool;
 
 // stats are integers communicated to the client by the server
 #define	MAX_CL_STATS		32
-#define	STAT_HEALTH			0
-//define STAT_FRAGS			1
-#define	STAT_WEAPON			2
-#define	STAT_AMMO			3
-#define	STAT_ARMOR			4
+#define	STAT_HEALTH		0
+//define STAT_FRAGS		1
+#define	STAT_WEAPON		2
+#define	STAT_AMMO		3
+#define	STAT_ARMOR		4
 //define STAT_WEAPONFRAME	5
-#define	STAT_SHELLS			6
-#define	STAT_NAILS			7
+#define	STAT_SHELLS		6
+#define	STAT_NAILS		7
 #define	STAT_ROCKETS		8
-#define	STAT_CELLS			9
+#define	STAT_CELLS		9
 #define	STAT_ACTIVEWEAPON	10
 #define	STAT_TOTALSECRETS	11
 #define	STAT_TOTALMONSTERS	12
 #define	STAT_SECRETS		13		// bumped on client side by svc_foundsecret
 #define	STAT_MONSTERS		14		// bumped by svc_killedmonster
-#define	STAT_ITEMS			15
+#define	STAT_ITEMS		15
 #define STAT_VIEWHEIGHT		16		// Z_EXT_VIEWHEIGHT protocol extension
-#define STAT_TIME			17		// Z_EXT_TIME extension
+#define STAT_TIME		17		// Z_EXT_TIME extension
 
 // item flags
-#define	IT_SHOTGUN				1
-#define	IT_SUPER_SHOTGUN		2
-#define	IT_NAILGUN				4
-#define	IT_SUPER_NAILGUN		8
+#define	IT_SHOTGUN		1
+#define	IT_SUPER_SHOTGUN	2
+#define	IT_NAILGUN		4
+#define	IT_SUPER_NAILGUN	8
+#define	IT_GRENADE_LAUNCHER	16
+#define	IT_ROCKET_LAUNCHER	32
+#define	IT_LIGHTNING		64
+#define	IT_SUPER_LIGHTNING	128
 
-#define	IT_GRENADE_LAUNCHER		16
-#define	IT_ROCKET_LAUNCHER		32
-#define	IT_LIGHTNING			64
-#define	IT_SUPER_LIGHTNING		128
+#define	IT_SHELLS		256
+#define	IT_NAILS		512
+#define	IT_ROCKETS		1024
+#define	IT_CELLS		2048
 
-#define	IT_SHELLS				256
-#define	IT_NAILS				512
-#define	IT_ROCKETS				1024
-#define	IT_CELLS				2048
+#define	IT_AXE			4096
 
-#define	IT_AXE					4096
+#define	IT_ARMOR1		8192
+#define	IT_ARMOR2		16384
+#define	IT_ARMOR3		32768
 
-#define	IT_ARMOR1				8192
-#define	IT_ARMOR2				16384
-#define	IT_ARMOR3				32768
+#define	IT_SUPERHEALTH		65536
 
-#define	IT_SUPERHEALTH			65536
+#define	IT_KEY1			131072
+#define	IT_KEY2			262144
 
-#define	IT_KEY1					131072
-#define	IT_KEY2					262144
+#define	IT_INVISIBILITY		524288
 
-#define	IT_INVISIBILITY			524288
+#define	IT_INVULNERABILITY	1048576
+#define	IT_SUIT			2097152
+#define	IT_QUAD			4194304
 
-#define	IT_INVULNERABILITY		1048576
-#define	IT_SUIT					2097152
-#define	IT_QUAD					4194304
+#define	IT_SIGIL1		(1<<28)
 
-#define	IT_SIGIL1				(1<<28)
-
-#define	IT_SIGIL2				(1<<29)
-#define	IT_SIGIL3				(1<<30)
-#define	IT_SIGIL4				(1<<31)
+#define	IT_SIGIL2		(1<<29)
+#define	IT_SIGIL3		(1<<30)
+#define	IT_SIGIL4		(1<<31)
 
 // print flags
-#define	PRINT_LOW			0		// pickup messages
+#define	PRINT_LOW		0		// pickup messages
 #define	PRINT_MEDIUM		1		// death messages
-#define	PRINT_HIGH			2		// critical messages
-#define	PRINT_CHAT			3		// chat messages
+#define	PRINT_HIGH		2		// critical messages
+#define	PRINT_CHAT		3		// chat messages
 
 // game types sent by serverinfo
 // these determine which intermission screen plays
-#define	GAME_COOP			0
+#define	GAME_COOP		0
 #define	GAME_DEATHMATCH		1
 
 #define	MAX_INFO_STRING	384
@@ -232,20 +231,6 @@ float	FloatSwap (float f);
 
 //============================================================================
 
-#ifdef _WIN32
-
-//#define vsnprintf _vsnprintf
-
-#define Q_strcasecmp(s1, s2) _stricmp((s1), (s2))
-#define Q_strncasecmp(s1, s2, n) _strnicmp((s1), (s2), (n))
-
-#else
-
-#define Q_strcasecmp(s1, s2) strcasecmp((s1), (s2))
-#define Q_strncasecmp(s1, s2, n) strncasecmp((s1), (s2), (n))
-
-#endif
-
 // Added by VVD {
 #ifdef _WIN32
 #define strcasecmp(s1, s2)	_stricmp  ((s1),   (s2))
@@ -270,7 +255,7 @@ char* Q_strcat(char* dest, const char* src);
 
 int Q_atoi (const char *str);
 float Q_atof (const char *str);
-char *Q_ftos (float value);		// removes trailing zero chars
+char *Q_ftos (float value); // removes trailing zero chars
 
 // memory management
 void *Q_malloc (size_t size);
@@ -417,8 +402,8 @@ void MSG_WriteDeltaEntity  (entity_state_t *from, entity_state_t *to, sizebuf_t 
 void MSG_EmitPacketEntities (packet_entities_t *from, int delta_sequence, packet_entities_t *to, 
 	sizebuf_t *msg, entity_state_t *(*GetBaseline)(int number)); 
 
-extern	int			msg_readcount;
-extern	qbool	msg_badread;		// set if a read goes beyond end of message
+extern	int	msg_readcount;
+extern	qbool	msg_badread; // set if a read goes beyond end of message
 
 void MSG_BeginReading (void);
 int MSG_GetReadCount(void);
@@ -438,9 +423,9 @@ void MSG_ReadDeltaUsercmd (struct usercmd_s *from, struct usercmd_s *cmd, int pr
 //============================================================================
 
 #ifdef SERVERONLY
-#define	dedicated	1
+#define dedicated 1
 #elif CLIENTONLY
-#define	dedicated	0
+#define dedicated 0
 #else
 extern qbool	dedicated;
 #endif
@@ -449,21 +434,21 @@ extern cvar_t	developer;
 extern cvar_t	registered;
 extern cvar_t	mapname;
 
-extern qbool		com_serveractive;	// true if sv.state != ss_dead
-extern int			CL_ClientState ();	// returns cls.state
+extern qbool	com_serveractive; // true if sv.state != ss_dead
+extern int	CL_ClientState (); // returns cls.state
 
-extern double		curtime;	// not bounded or scaled, shared by local client and server
+extern double	curtime; // not bounded or scaled, shared by local client and server
 
 // host
-extern qbool		host_initialized;
-extern int			host_memsize;
+extern qbool	host_initialized;
+extern int	host_memsize;
 
 void Host_Init (int argc, char **argv, int default_memsize);
 void Host_ClearMemory ();
 void Host_Shutdown (void);
 void Host_Frame (double time);
-void Host_Abort (void);			// longjmp() to Host_Frame
-void Host_EndGame (void);		// kill local client and server
+void Host_Abort (void);	 // longjmp() to Host_Frame
+void Host_EndGame (void); // kill local client and server
 void Host_Error (char *error, ...);
 void Host_Quit (void);
 

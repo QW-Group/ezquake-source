@@ -23,7 +23,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: version.c,v 1.4 2006-03-20 13:51:29 vvd0 Exp $
+	$Id: version.c,v 1.5 2006-04-06 23:23:19 disconn3ct Exp $
 */
 
 #include "common.h"
@@ -47,7 +47,7 @@ int build_number (void) {
 		return b;
 
 	for (m = 0; m < 11; m++) {
-		if (Q_strncasecmp( &date[0], mon[m], 3 ) == 0)
+		if (strncasecmp( &date[0], mon[m], 3 ) == 0)
 			break;
 		d += mond[m];
 	}

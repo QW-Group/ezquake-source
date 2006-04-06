@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cvar.c,v 1.24 2006-04-06 22:32:30 disconn3ct Exp $
+	$Id: cvar.c,v 1.25 2006-04-06 23:23:18 disconn3ct Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -41,7 +41,7 @@ cvar_t *Cvar_FindVar (const char *var_name) {
 
 	key = Com_HashKey (var_name);
 	for (var = cvar_hash[key]; var; var = var->hash_next) {
-		if (!Q_strcasecmp (var_name, var->name)) {
+		if (!strcasecmp (var_name, var->name)) {
 			return var;
 		}
 	}
@@ -109,7 +109,7 @@ void Cvar_SetDefault(cvar_t *var, float value) {
 		val[i] = 0;
 	if (val[i] == '.')
 		val[i] = 0;
-	Z_Free (var->defaultvalue);
+	Q_free (var->defaultvalue);
 	var->defaultvalue = CopyString(val);
 	Cvar_Set(var, val);
 }
@@ -145,12 +145,12 @@ char *Cvar_CompleteVariable (char *partial) {
 
 	// check exact match
 	for (cvar = cvar_vars; cvar; cvar = cvar->next)
-		if (!Q_strcasecmp (partial,cvar->name))
+		if (!strcasecmp (partial,cvar->name))
 			return cvar->name;
 
 	// check partial match
 	for (cvar = cvar_vars; cvar; cvar = cvar->next)
-		if (!Q_strncasecmp (partial,cvar->name, len))
+		if (!strncasecmp (partial,cvar->name, len))
 			return cvar->name;
 
 	return NULL;
@@ -165,7 +165,7 @@ int Cvar_CompleteCountPossible (char *partial) {
 
 	// check partial match
 	for (cvar = cvar_vars; cvar; cvar = cvar->next)
-		if (!Q_strncasecmp (partial, cvar->name, len))
+		if (!strncasecmp (partial, cvar->name, len))
 			c++;
 
 	return c;
@@ -237,7 +237,7 @@ void Cvar_Set (cvar_t *var, char *value) {
 	}
 
 	if (var->string)
-		Z_Free (var->string);	// free the old value string
+		Q_free (var->string);	// free the old value string
 
 	var->string = CopyString (value);
 	var->value = Q_atof (var->string);
@@ -328,7 +328,7 @@ static cvar_group_t *Cvar_AddGroup(char *name) {
 	}
 
 	for (newgroup = cvar_groups; newgroup; newgroup = newgroup->next)
-		if (!Q_strcasecmp(newgroup->name, name))
+		if (!strcasecmp(newgroup->name, name))
 			return newgroup;
 
 	newgroup = (cvar_group_t *) Q_malloc(sizeof(cvar_group_t));
@@ -404,7 +404,7 @@ void Cvar_Register (cvar_t *var) {
 		else
 			var->string = CopyString (var->string);
 	} else {
-		// allocate the string on zone because future sets will Z_Free it
+		// allocate the string on zone because future sets will Q_free it
 		var->string = CopyString (var->string);
 	}
 	var->value = Q_atof (var->string);
@@ -458,7 +458,7 @@ qbool Cvar_Command (void) {
 	} else {
 		// hexum - do not allow crafty people to avoid use of "set" with user created variables under ruleset smackdown
 		
-		if (!Q_strcasecmp(Rulesets_Ruleset(), "smackdown") && (v->flags & CVAR_USER_CREATED)) {
+		if (!strcasecmp(Rulesets_Ruleset(), "smackdown") && (v->flags & CVAR_USER_CREATED)) {
 			Com_Printf ("Ruleset smackdown requires use of \"set\" with user created variables\n");
 			return true;
 		}
@@ -583,7 +583,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags) {
 
 	if ((v = Cvar_FindVar(name)))
 		return v;
-	v = (cvar_t *) Z_Malloc(sizeof(cvar_t));
+	v = (cvar_t *) Q_malloc(sizeof(cvar_t));
 	// Cvar doesn't exist, so we create it
 	v->next = cvar_vars;
 	cvar_vars = v;
@@ -613,7 +613,7 @@ qbool Cvar_Delete (const char *name) {
 
 	prev = NULL;
 	for (var = cvar_hash[key]; var; var = var->hash_next) {
-		if (!Q_strcasecmp(var->name, name)) {
+		if (!strcasecmp(var->name, name)) {
 			// unlink from hash
 			if (prev)
 				prev->hash_next = var->hash_next;
@@ -629,7 +629,7 @@ qbool Cvar_Delete (const char *name) {
 
 	prev = NULL;
 	for (var = cvar_vars; var; var=var->next)	{
-		if (!Q_strcasecmp(var->name, name)) {
+		if (!strcasecmp(var->name, name)) {
 			// unlink from cvar list
 			if (prev)
 				prev->next = var->next;
@@ -639,10 +639,10 @@ qbool Cvar_Delete (const char *name) {
 			TCL_UnregisterVariable (name);
 #endif
 			// free
-			Z_Free (var->defaultvalue);
-			Z_Free (var->string);
-			Z_Free (var->name);
-			Z_Free (var);
+			Q_free (var->defaultvalue);
+			Q_free (var->string);
+			Q_free (var->name);
+			Q_free (var);
 			return true;
 		}
 		prev = var;

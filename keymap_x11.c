@@ -150,7 +150,7 @@ Resets the current keymapping
 ===========
 */
 void IN_Keymap_Reset_f (void) {
-	if (!Q_strcasecmp(Cmd_Argv(0), "keymap_reset") && Cmd_Argc() > 1) {
+	if (!strcasecmp(Cmd_Argv(0), "keymap_reset") && Cmd_Argc() > 1) {
 		Com_Printf ("Usage: %s\n"
 		            "Resets the active keymappings and sets it to the internal defaults (US keyboard).\n",
 		            Cmd_Argv(0) );
@@ -174,7 +174,7 @@ based on the internal defaults (US keyboard)
 void IN_Keymap_Init_f (void) {
 	int  i;
 
-	if (!Q_strcasecmp(Cmd_Argv(0), "keymap_init") && Cmd_Argc() > 1) {
+	if (!strcasecmp(Cmd_Argv(0), "keymap_init") && Cmd_Argc() > 1) {
 		Com_Printf ("Usage: %s\n"
 		            "Initializes the active keymappings:\n"
 		            "resets an active keymapping and uses the\n"

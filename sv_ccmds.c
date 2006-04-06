@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_ccmds.c,v 1.6 2006-03-20 13:51:28 vvd0 Exp $
+	$Id: sv_ccmds.c,v 1.7 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -107,7 +107,7 @@ void SV_Map_f (void) {
 		Com_Printf ("%s <levelname> : continue game on a new level\n", Cmd_Argv(0));
 		return;
 	}
-	devmap = !Q_strcasecmp (Cmd_Argv(0), "devmap");
+	devmap = !strcasecmp (Cmd_Argv(0), "devmap");
 	strlcpy (level, Cmd_Argv(1), sizeof(level));
 
 	// check to make sure the level exists
@@ -185,7 +185,7 @@ void SV_Status_f (void) {
 
 #ifndef SERVERONLY
 	// some mods use a "status" alias for their own needs, sigh
-	if (!sv_redirected && !Q_strcasecmp(Cmd_Argv(0), "status")
+	if (!sv_redirected && !strcasecmp(Cmd_Argv(0), "status")
 		&& CL_ClientState() && Cmd_FindAlias("status")) {
 		Cmd_ExecuteString (Cmd_AliasString("status"));
 		return;

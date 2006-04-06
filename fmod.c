@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fmod.c,v 1.7 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: fmod.c,v 1.8 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -34,7 +34,7 @@ qbool FMod_IsModelModified(char *name, int flags, byte *buf, int len) {
 	if (!Modules_SecurityLoaded())
 		return failsafe;
 
-	if (!Q_strcasecmp(cls.gamedirfile, "ctf") && !strcmp(name, "progs/player.mdl"))
+	if (!strcasecmp(cls.gamedirfile, "ctf") && !strcmp(name, "progs/player.mdl"))
 		name = "progs/player.mdl_ctf_";
 
 	p = Security_IsModelModified(name, flags, buf, len);
@@ -81,7 +81,7 @@ void FMod_CheckModel(char *name, void *buf, int len) {
 	for (i = 0; i < MAX_CHECK_MODELS && i < check_models_num; i++) {
 		relevent =	(cl.teamfortress && (check_models[i].flags & FMOD_TF)) || 
 					(!cl.teamfortress && (check_models[i].flags & FMOD_DM));
-		if (relevent && !Q_strcasecmp(name, check_models[i].name))
+		if (relevent && !strcasecmp(name, check_models[i].name))
 			break;
 	}
 	if (i >= check_models_num)

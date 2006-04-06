@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.17 2006-03-20 21:13:21 tonik Exp $
+	$Id: sv_user.c,v 1.18 2006-04-06 23:23:18 disconn3ct Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -652,19 +652,19 @@ void Cmd_Download_f (void) {
 	dirname[p - name] = 0;
 
 	// categorize download and check permissions
-	if (!Q_strcasecmp(dirname, "skins")) {
+	if (!strcasecmp(dirname, "skins")) {
 		if (!allow_download_skins.value)
 			goto deny_download;
-	} else if (Q_strcasecmp(dirname, "progs")) {
+	} else if (strcasecmp(dirname, "progs")) {
 		if (!allow_download_models.value)
 			goto deny_download;
-	} else if (Q_strcasecmp(dirname, "sound")) {
+	} else if (strcasecmp(dirname, "sound")) {
 		if (!allow_download_sounds.value)
 			goto deny_download;
-	} else if (Q_strcasecmp(dirname, "maps")) {
+	} else if (strcasecmp(dirname, "maps")) {
 		if (!allow_download_maps.value)
 			goto deny_download;
-	} else if (Q_strcasecmp(dirname, "gfx")) {
+	} else if (strcasecmp(dirname, "gfx")) {
 		if (!allow_download_gfx.value)
 			goto deny_download;
 	} else if (!allow_download_other.value)
@@ -690,7 +690,7 @@ void Cmd_Download_f (void) {
 	}
 
 	// special check for maps that came from a pak file
-	if (!Q_strcasecmp(dirname, "maps") && file_from_pak && !allow_download_pakmaps.value) {
+	if (!strcasecmp(dirname, "maps") && file_from_pak && !allow_download_pakmaps.value) {
 		fclose (sv_client->download);
 		sv_client->download = NULL;
 		goto deny_download;
@@ -1015,7 +1015,7 @@ static void Cmd_Join_f (void)
 		return;
 	}
 
-	if (password.string[0] && Q_strcasecmp(password.string, "none")) {
+	if (password.string[0] && strcasecmp(password.string, "none")) {
 		SV_ClientPrintf (sv_client, PRINT_HIGH, "This server requires a %s password. Please disconnect, set the password and reconnect as %s.\n", "player", "player");
 		return;
 	}
@@ -1082,7 +1082,7 @@ static void Cmd_Observe_f (void)
 		return;
 	}
 
-	if (spectator_password.string[0] && Q_strcasecmp(spectator_password.string, "none")) {
+	if (spectator_password.string[0] && strcasecmp(spectator_password.string, "none")) {
 		SV_ClientPrintf (sv_client, PRINT_HIGH, "This server requires a %s password. Please disconnect, set the password and reconnect as %s.\n", "spectator", "spectator");
 		return;
 	}

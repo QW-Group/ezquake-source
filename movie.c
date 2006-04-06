@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: movie.c,v 1.10 2006-03-20 13:51:27 vvd0 Exp $
+	$Id: movie.c,v 1.11 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -140,7 +140,7 @@ void Movie_Demo_Capture_f(void) {
 		return;
 	}
 	if (argc == 2) {
-		if (Q_strncasecmp("stop", Cmd_Argv(1), 4))
+		if (strncasecmp("stop", Cmd_Argv(1), 4))
 			Com_Printf(error);
 		else if (Movie_IsCapturing())
 			Movie_Stop();
@@ -148,7 +148,7 @@ void Movie_Demo_Capture_f(void) {
 			Com_Printf("%s : Not capturing\n", Cmd_Argv(0));
 		return;
 	}
-	if (Q_strncasecmp("start", Cmd_Argv(1), 5)) {
+	if (strncasecmp("start", Cmd_Argv(1), 5)) {
 		Com_Printf(error);
 		return;
 	} else if (Movie_IsCapturing()) {

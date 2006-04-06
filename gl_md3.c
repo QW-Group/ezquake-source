@@ -333,7 +333,7 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer)
 						nl = strchr(sfile, '\n');
 						if (!nl)
 							nl = sfile + strlen(sfile);
-						if (sfile[len] == ',' && !Q_strncasecmp(surf->name, sfile, len))
+						if (sfile[len] == ',' && !strncasecmp(surf->name, sfile, len))
 						{
 							strncpy(skinfileskinname, sfile+len+1, nl-(sfile+len)-2);
 							skinfileskinname[nl-(sfile+len)-2] = '\0';
@@ -341,7 +341,7 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer)
 						}
 						sfile = nl+1;
 					}
-					Z_Free(sfilestart);
+					Q_free(sfilestart);
 				}
 				
 			}
@@ -412,7 +412,7 @@ int GetTag(model_t *mod, char *tagname, int frame, float **org, m3by3_t **ang)	/
 	
 	for(tnum=0;tnum<mhead->numtags; tnum++)
 	{
-		if (!Q_strcasecmp(tag->name, tagname))
+		if (!strcasecmp(tag->name, tagname))
 		{
 			*org = tag->org;
 			*ang = &tag->ang;

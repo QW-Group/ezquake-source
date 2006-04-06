@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_screen.c,v 1.45 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: cl_screen.c,v 1.46 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -864,7 +864,7 @@ hud_element_t *Hud_FindElement(char *name)
 
 	prev=NULL;
 	for(elem=hud_list; elem; elem = elem->next) {
-		if (!Q_strcasecmp(name, elem->name))
+		if (!strcasecmp(name, elem->name))
 			return elem;
 		prev = elem;
 	}
@@ -874,24 +874,24 @@ hud_element_t *Hud_FindElement(char *name)
 
 static hud_element_t* Hud_NewElement(void)
 {
-	hud_element_t*	elem;
-	elem = (hud_element_t *) Z_Malloc (sizeof(hud_element_t));
+	hud_element_t* elem;
+	elem = (hud_element_t *) Q_malloc (sizeof(hud_element_t));
 	elem->next = hud_list;
 	hud_list = elem;
-	elem->name = Z_StrDup( Cmd_Argv(1) );
+	elem->name = Q_strdup( Cmd_Argv(1) );
 	return elem;
 }
 
 static void Hud_DeleteElement(hud_element_t *elem)
 {
 	if (elem->flags & (HUD_STRING|HUD_IMAGE))
-		Z_Free(elem->contents);
+		Q_free(elem->contents);
 	if (elem->f_hover)
-		Z_Free(elem->f_hover);
+		Q_free(elem->f_hover);
 	if (elem->f_button)
-		Z_Free(elem->f_button);
-	Z_Free(elem->name);
-	Z_Free(elem);
+		Q_free(elem->f_button);
+	Q_free(elem->name);
+	Q_free(elem);
 }
 
 typedef void Hud_Elem_func(hud_element_t*);
@@ -941,7 +941,7 @@ void Hud_Add_f(void)
 		a2 = Cmd_Argv(2);
 		a3 = Cmd_Argv(3);
 		
-		if (!Q_strcasecmp(a2, "cvar")) {
+		if (!strcasecmp(a2, "cvar")) {
 			if( (var = Cvar_FindVar(a3)) ) {
 				elem = Hud_NewElement();
 				elem->contents = var;
@@ -950,18 +950,18 @@ void Hud_Add_f(void)
 				Com_Printf("cvar \"%s\" not found\n", a3);
 				return;
 			} 
-		} else if (!Q_strcasecmp(a2, "str")) {
+		} else if (!strcasecmp(a2, "str")) {
 			elem = Hud_NewElement();
-			elem->contents = Z_StrDup( a3 );
+			elem->contents = Q_strdup( a3 );
 			elem->flags = HUD_STRING | HUD_ENABLED;
-		/*} else if (!Q_strcasecmp(a2, "std")) { // to add armor, health, ammo, speed
-			if (!Q_strcasecmp(a3, "lag"))
+		/*} else if (!strcasecmp(a2, "std")) { // to add armor, health, ammo, speed
+			if (!strcasecmp(a3, "lag"))
 				func = &Hud_LagmeterStr;
-			else if (!Q_strcasecmp(a3, "fps"))
+			else if (!strcasecmp(a3, "fps"))
 				func = &Hud_FpsStr;
-			else if (!Q_strcasecmp(a3, "clock"))
+			else if (!strcasecmp(a3, "clock"))
 				func = &Hud_ClockStr;
-			else if (!Q_strcasecmp(a3, "speed"))
+			else if (!strcasecmp(a3, "speed"))
 				func = &Hud_SpeedStr;
 			else {
 				Com_Printf("\"%s\" is not a standard hud function\n", a3);
@@ -970,7 +970,7 @@ void Hud_Add_f(void)
 			elem = Hud_NewElement();
 			elem->contents = func;
 			elem->flags = HUD_FUNC | HUD_ENABLED;
-		} else if (!Q_strcasecmp(a2, "img")) {
+		} else if (!strcasecmp(a2, "img")) {
 #ifdef GLQUAKE
 			mpic_t *hud_image;
 			int texnum = loadtexture_24bit(a3, LOADTEX_GFX);
@@ -978,7 +978,7 @@ void Hud_Add_f(void)
 				Com_Printf("Unable to load hud image \"%s\"\n", a3);
 				return;
 			}
-			hud_image = (mpic_t *) Z_Malloc (sizeof(mpic_t));
+			hud_image = (mpic_t *) Q_malloc (sizeof(mpic_t));
 			hud_image->texnum = texnum;
 			if (current_texture) {
 				hud_image->width = current_texture->width;
@@ -1391,8 +1391,8 @@ void Hud_BringToFront_f(void)
 	elem = Hud_FindElement(Cmd_Argv(1));
 	if (elem) {
 		if (elem->f_hover)
-			Z_Free (elem->f_hover);
-		elem->f_hover = Z_StrDup (Cmd_Argv(2));
+			Q_free (elem->f_hover);
+		elem->f_hover = Q_strdup (Cmd_Argv(2));
 	} else {
 		Com_Printf("HudElement \"%s\" not found\n", Cmd_Argv(1));
 	}
@@ -1410,8 +1410,8 @@ void Hud_Button_f (void)
 	elem = Hud_FindElement(Cmd_Argv(1));
 	if (elem) {
 		if (elem->f_button)
-			Z_Free (elem->f_button);
-		elem->f_button = Z_StrDup (Cmd_Argv(2));
+			Q_free (elem->f_button);
+		elem->f_button = Q_strdup (Cmd_Argv(2));
 	} else {
 		Com_Printf("HudElement \"%s\" not found\n", Cmd_Argv(1));
 	}
@@ -2018,30 +2018,30 @@ static image_format_t SShot_FormatForName(char *name) {
 	ext = COM_FileExtension(name);
 
 #ifdef GLQUAKE
-	if (!Q_strcasecmp(ext, "tga"))
+	if (!strcasecmp(ext, "tga"))
 		return IMAGE_TGA;
 #else
-	if (!Q_strcasecmp(ext, "pcx"))
+	if (!strcasecmp(ext, "pcx"))
 		return IMAGE_PCX;
 #endif
 
 #ifdef WITH_PNG
-	else if (!Q_strcasecmp(ext, "png"))
+	else if (!strcasecmp(ext, "png"))
 		return IMAGE_PNG;
 #endif
 
 #ifdef WITH_JPEG
-	else if (!Q_strcasecmp(ext, "jpg"))
+	else if (!strcasecmp(ext, "jpg"))
 		return IMAGE_JPEG;
 #endif
 
 #ifdef WITH_PNG
-	else if (!Q_strcasecmp(scr_sshot_format.string, "png"))
+	else if (!strcasecmp(scr_sshot_format.string, "png"))
 		return IMAGE_PNG;
 #endif
 
 #ifdef WITH_JPEG
-	else if (!Q_strcasecmp(scr_sshot_format.string, "jpg") || !Q_strcasecmp(scr_sshot_format.string, "jpeg"))
+	else if (!strcasecmp(scr_sshot_format.string, "jpg") || !strcasecmp(scr_sshot_format.string, "jpeg"))
 		return IMAGE_JPEG;
 #endif
 
@@ -2214,11 +2214,11 @@ void SCR_ScreenShot_f (void) {
 	} else if (Cmd_Argc() == 1) {
 		// find a file name to save it to
 #ifdef WITH_PNG
-		if (!Q_strcasecmp(scr_sshot_format.string, "png"))
+		if (!strcasecmp(scr_sshot_format.string, "png"))
 			strlcpy(ext, "png", 4);
 #endif
 #ifdef WITH_JPEG
-		if (!Q_strcasecmp(scr_sshot_format.string, "jpeg") || !Q_strcasecmp(scr_sshot_format.string, "jpg"))
+		if (!strcasecmp(scr_sshot_format.string, "jpeg") || !strcasecmp(scr_sshot_format.string, "jpg"))
 			strlcpy(ext, "jpg", 4);
 #endif
 		if (!ext[0])

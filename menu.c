@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.37 2006-03-29 20:38:29 oldmanuk Exp $
+	$Id: menu.c,v 1.38 2006-04-06 23:23:18 disconn3ct Exp $
 
 */
 
@@ -2377,14 +2377,14 @@ int Demo_SortCompare(const void *p1, const void *p2) {
 
 	
 	if (d1->type == dt_dir)
-		return Q_strcasecmp(d1->name, d2->name);
+		return strcasecmp(d1->name, d2->name);
 
 	
 	sign = demo_reversesort ? -1 : 1;
 
 	switch (demo_sorttype) {
 	case ds_name:
-		return sign * Q_strcasecmp(d1->name, d2->name);
+		return sign * strcasecmp(d1->name, d2->name);
 	case ds_size:
 		return sign * (d1->size - d2->size);		
 	case ds_time:
@@ -2493,9 +2493,9 @@ static void Demo_ReadDirectory(void) {
 			i = strlen(fd.cFileName);
 			if (i < 5 ||
 				(
-					Q_strcasecmp(fd.cFileName + i - 4, ".qwd") && 
-					Q_strcasecmp(fd.cFileName +i - 4, ".qwz") && 
-					Q_strcasecmp(fd.cFileName + i - 4, ".mvd")	
+					strcasecmp(fd.cFileName + i - 4, ".qwd") && 
+					strcasecmp(fd.cFileName +i - 4, ".qwz") && 
+					strcasecmp(fd.cFileName + i - 4, ".mvd")	
 				)
 			)
 				continue;
@@ -2517,8 +2517,8 @@ static void Demo_ReadDirectory(void) {
 			i = strlen(dstruct->d_name);
 			if (i < 5 ||
 				(
-					Q_strcasecmp(dstruct->d_name + i - 4, ".qwd")
-					&& Q_strcasecmp(dstruct->d_name + i - 4, ".mvd")	
+					strcasecmp(dstruct->d_name + i - 4, ".qwd")
+					&& strcasecmp(dstruct->d_name + i - 4, ".mvd")	
 				)
 			)
 				continue;
@@ -2800,7 +2800,7 @@ void M_Demos_Draw (void) {
 			M_Print (24, 96, "No demo in playlist");
 			}
 		
-			if (Q_strcasecmp(demo_playlist[demo_playlist_cursor].name + strlen(demo_playlist[demo_playlist_cursor].name) - 4, ".mvd")){
+			if (strcasecmp(demo_playlist[demo_playlist_cursor].name + strlen(demo_playlist[demo_playlist_cursor].name) - 4, ".mvd")){
 				M_Print (24, 120, "Tracking only available with mvds");
 			}else{
 				M_Print (24, 120, "Track");

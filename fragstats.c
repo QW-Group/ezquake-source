@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fragstats.c,v 1.7 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: fragstats.c,v 1.8 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -101,9 +101,9 @@ int Compare_FragMsg (const void *p1, const void *p2) {
 	b = tolower(*s & 127);
 
 	if (MYISLOWER(a) && MYISLOWER(b)) {
-		return (a != b) ? a - b : -1 * Q_strcasecmp(s1, s2);
+		return (a != b) ? a - b : -1 * strcasecmp(s1, s2);
 	} else {	
-		return MYISLOWER(a) ? 1 : MYISLOWER(b) ? -1 : a != b ? a - b : -1 * Q_strcasecmp(s1, s2);
+		return MYISLOWER(a) ? 1 : MYISLOWER(b) ? -1 : a != b ? a - b : -1 * strcasecmp(s1, s2);
 	}
 }
 
@@ -133,7 +133,7 @@ static void Build_FragMsg_Indices(void) {
 static void InitFragDefs(void) {
 	int i;
 
-	#define CHECK_AND_FREE(x)	{if (x) Z_Free(x);}
+	#define CHECK_AND_FREE(x)	{if (x) Q_free(x);}
 
 	CHECK_AND_FREE(fragdefs.gamedir);
 	CHECK_AND_FREE(fragdefs.title);
@@ -207,25 +207,25 @@ static void LoadFragFile(char *filename, qbool quiet) {
 		if (!(c = Cmd_Argc()))
 			goto nextline;
 
-		if (!Q_strcasecmp(Cmd_Argv(0), "#FRAGFILE")) {
+		if (!strcasecmp(Cmd_Argv(0), "#FRAGFILE")) {
 		
 			_checkargs(3);
-			if (!Q_strcasecmp(Cmd_Argv(1), "VERSION")) {
+			if (!strcasecmp(Cmd_Argv(1), "VERSION")) {
 				if (gotversion) {
 					Com_Printf("Fragfile error (line %d): VERSION redefined\n", line);
 					goto end;
 				}
 				token = Cmd_Argv(2);
-				if (!Q_strcasecmp(token, FRAGFILE_VERSION)) {
+				if (!strcasecmp(token, FRAGFILE_VERSION)) {
 					fragdefs.version = (int) (100 * Q_atof(token));
 					gotversion = true;
 				} else {
 					Com_Printf("Error: fragfile version (\"%s\") unsupported \n", token);
 					goto end;
 				}
-			} else if (!Q_strcasecmp(Cmd_Argv(1), "GAMEDIR")) {
+			} else if (!strcasecmp(Cmd_Argv(1), "GAMEDIR")) {
 				_check_version_defined;
-				if (!Q_strcasecmp(Cmd_Argv(2), "ANY"))
+				if (!strcasecmp(Cmd_Argv(2), "ANY"))
 					fragdefs.gamedir = NULL;
 				else
 					fragdefs.gamedir = CopyString(Cmd_Argv(2));
@@ -234,36 +234,36 @@ static void LoadFragFile(char *filename, qbool quiet) {
 				Com_Printf("Fragfile warning (line %d): unexpected token \"%s\"\n", line, Cmd_Argv(1));
 				goto nextline;	
 			}
-		} else if (!Q_strcasecmp(Cmd_Argv(0), "#META")) {
+		} else if (!strcasecmp(Cmd_Argv(0), "#META")) {
 		
 			_check_version_defined;
 			_checkargs(3);
-			if (!Q_strcasecmp(Cmd_Argv(1), "TITLE")) {
+			if (!strcasecmp(Cmd_Argv(1), "TITLE")) {
 				fragdefs.title = CopyString(Cmd_Argv(2));
-			} else if (!Q_strcasecmp(Cmd_Argv(1), "AUTHOR")) {
+			} else if (!strcasecmp(Cmd_Argv(1), "AUTHOR")) {
 				fragdefs.author = CopyString(Cmd_Argv(2));
-			} else if (!Q_strcasecmp(Cmd_Argv(1), "DESCRIPTION")) {
+			} else if (!strcasecmp(Cmd_Argv(1), "DESCRIPTION")) {
 				fragdefs.description = CopyString(Cmd_Argv(2));
-			} else if (!Q_strcasecmp(Cmd_Argv(1), "EMAIL")) {
+			} else if (!strcasecmp(Cmd_Argv(1), "EMAIL")) {
 				fragdefs.email = CopyString(Cmd_Argv(2));
-			} else if (!Q_strcasecmp(Cmd_Argv(1), "WEBPAGE")) {
+			} else if (!strcasecmp(Cmd_Argv(1), "WEBPAGE")) {
 				fragdefs.webpage = CopyString(Cmd_Argv(2));
 			} else {
 				Com_Printf("Fragfile warning (line %d): unexpected token \"%s\"\n", line, Cmd_Argv(1));
 				goto nextline;
 			}
-		} else if (!Q_strcasecmp(Cmd_Argv(0), "#DEFINE")) {
+		} else if (!strcasecmp(Cmd_Argv(0), "#DEFINE")) {
 			_check_version_defined;
-			if (!Q_strcasecmp(Cmd_Argv(1), "WEAPON_CLASS") || !Q_strcasecmp(Cmd_Argv(1), "WC")) {
+			if (!strcasecmp(Cmd_Argv(1), "WEAPON_CLASS") || !strcasecmp(Cmd_Argv(1), "WC")) {
 			
 				_checkargs2(4, 5);
 				token = Cmd_Argv(2);
-				if (!Q_strcasecmp(token, "NOWEAPON") || !Q_strcasecmp(token, "NONE") || !Q_strcasecmp(token, "NULL")) {
+				if (!strcasecmp(token, "NOWEAPON") || !strcasecmp(token, "NONE") || !strcasecmp(token, "NULL")) {
 					Com_Printf("Fragfile warning (line %d): \"%s\" is a reserved keyword\n", line, token);
 					goto nextline;
 				}
 				for (i = 1; i < num_wclasses; i++) {
-					if (!Q_strcasecmp(token, wclasses[i].keyword)) {
+					if (!strcasecmp(token, wclasses[i].keyword)) {
 						Com_Printf("Fragfile warning (line %d): WEAPON_CLASS \"%s\" already defined\n", line, wclasses[i].keyword);
 						goto nextline;
 					}
@@ -278,30 +278,30 @@ static void LoadFragFile(char *filename, qbool quiet) {
 				if (c == 5)
 					wclasses[num_wclasses].name = CopyString(Cmd_Argv(4));
 				num_wclasses++;
-			} else if (	!Q_strcasecmp(Cmd_Argv(1), "OBITUARY") || !Q_strcasecmp(Cmd_Argv(1), "OBIT")) {
+			} else if (	!strcasecmp(Cmd_Argv(1), "OBITUARY") || !strcasecmp(Cmd_Argv(1), "OBIT")) {
 			
-				if (!Q_strcasecmp(Cmd_Argv(2), "PLAYER_DEATH")) {
+				if (!strcasecmp(Cmd_Argv(2), "PLAYER_DEATH")) {
 					_checkargs(5);
 					msgtype = mt_death;
-				} else if (!Q_strcasecmp(Cmd_Argv(2), "PLAYER_SUICIDE")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "PLAYER_SUICIDE")) {
 					_checkargs(5);
 					msgtype = mt_suicide;
-				} else if (!Q_strcasecmp(Cmd_Argv(2), "X_FRAGS_UNKNOWN")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "X_FRAGS_UNKNOWN")) {
 					_checkargs(5);
 					msgtype = mt_frag;
-				} else if (!Q_strcasecmp(Cmd_Argv(2), "X_TEAMKILLS_UNKNOWN")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "X_TEAMKILLS_UNKNOWN")) {
 					_checkargs(5);
 					msgtype = mt_tkill;
-				} else if (!Q_strcasecmp(Cmd_Argv(2), "X_FRAGS_Y")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "X_FRAGS_Y")) {
 					_checkargs2(5, 6);
 					msgtype = mt_frags;
-				} else if (!Q_strcasecmp(Cmd_Argv(2), "X_FRAGGED_BY_Y")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "X_FRAGGED_BY_Y")) {
 					_checkargs2(5, 6);
 					msgtype = mt_fragged;
-				} else if (!Q_strcasecmp(Cmd_Argv(2), "X_TEAMKILLS_Y")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "X_TEAMKILLS_Y")) {
 					_checkargs2(5, 6);
 					msgtype = mt_tkills;
-				} else if (!Q_strcasecmp(Cmd_Argv(2), "X_TEAMKILLED_BY_Y")) {
+				} else if (!strcasecmp(Cmd_Argv(2), "X_TEAMKILLED_BY_Y")) {
 					_checkargs2(5, 6);
 					msgtype = mt_tkilled;
 				} else {
@@ -324,11 +324,11 @@ static void LoadFragFile(char *filename, qbool quiet) {
 				}
 
 				token = Cmd_Argv(3);
-				if (!Q_strcasecmp(token, "NOWEAPON") || !Q_strcasecmp(token, "NONE") || !Q_strcasecmp(token, "NULL")) {
+				if (!strcasecmp(token, "NOWEAPON") || !strcasecmp(token, "NONE") || !strcasecmp(token, "NULL")) {
 					fragdefs.msgdata[fragdefs.num_fragmsgs].wclass_index = 0;
 				} else {
 					for (i = 1; i < num_wclasses; i++) {
-						if (!Q_strcasecmp(token, wclasses[i].keyword)) {
+						if (!strcasecmp(token, wclasses[i].keyword)) {
 							fragdefs.msgdata[fragdefs.num_fragmsgs].wclass_index = i;
 							break;
 						}
@@ -343,28 +343,28 @@ static void LoadFragFile(char *filename, qbool quiet) {
 				fragdefs.msgdata[fragdefs.num_fragmsgs].msg1 = CopyString(Cmd_Argv(4));
 				fragdefs.msgdata[fragdefs.num_fragmsgs].msg2 = (c == 6) ? CopyString(Cmd_Argv(5)) : NULL;
 				fragdefs.num_fragmsgs++;
-			} else if (!Q_strcasecmp(Cmd_Argv(1), "FLAG_ALERT") || !Q_strcasecmp(Cmd_Argv(1), "FLAG_MSG")) {
+			} else if (!strcasecmp(Cmd_Argv(1), "FLAG_ALERT") || !strcasecmp(Cmd_Argv(1), "FLAG_MSG")) {
 			
 				_checkargs(4);
 				if
 				(
-					!Q_strcasecmp(Cmd_Argv(2), "X_TOUCHES_FLAG") ||
-					!Q_strcasecmp(Cmd_Argv(2), "X_GETS_FLAG") ||
-					!Q_strcasecmp(Cmd_Argv(2), "X_TAKES_FLAG")
+					!strcasecmp(Cmd_Argv(2), "X_TOUCHES_FLAG") ||
+					!strcasecmp(Cmd_Argv(2), "X_GETS_FLAG") ||
+					!strcasecmp(Cmd_Argv(2), "X_TAKES_FLAG")
 				) {
 					msgtype = mt_flagtouch;
 				} else if
 				(
-					!Q_strcasecmp(Cmd_Argv(2), "X_DROPS_FLAG") ||
-					!Q_strcasecmp(Cmd_Argv(2), "X_FUMBLES_FLAG") ||
-					!Q_strcasecmp(Cmd_Argv(2), "X_LOSES_FLAG")
+					!strcasecmp(Cmd_Argv(2), "X_DROPS_FLAG") ||
+					!strcasecmp(Cmd_Argv(2), "X_FUMBLES_FLAG") ||
+					!strcasecmp(Cmd_Argv(2), "X_LOSES_FLAG")
 				) {
 					msgtype = mt_flagdrop;
 				} else if
 				(
-					!Q_strcasecmp(Cmd_Argv(2), "X_CAPTURES_FLAG") ||
-					!Q_strcasecmp(Cmd_Argv(2), "X_CAPS_FLAG") ||
-					!Q_strcasecmp(Cmd_Argv(2), "X_SCORES")
+					!strcasecmp(Cmd_Argv(2), "X_CAPTURES_FLAG") ||
+					!strcasecmp(Cmd_Argv(2), "X_CAPS_FLAG") ||
+					!strcasecmp(Cmd_Argv(2), "X_SCORES")
 				) {
 					msgtype = mt_flagcap;
 				} else {
@@ -769,7 +769,7 @@ void Stats_NewMap(void) {
 	static char last_gamedir[MAX_OSPATH] = {0};
 
 
-	if (!last_gamedir[0] || Q_strcasecmp(last_gamedir, cls.gamedirfile)) {
+	if (!last_gamedir[0] || strcasecmp(last_gamedir, cls.gamedirfile)) {
 		if (cl_loadFragfiles.value) {
 			strlcpy(last_gamedir, cls.gamedirfile, sizeof(last_gamedir));
 			LoadFragFile("fragfile", true);
