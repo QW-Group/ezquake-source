@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.67 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: cl_main.c,v 1.68 2006-04-06 13:51:35 tonik Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -96,6 +96,7 @@ cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};
 // START shaman :: balancing variables
 cvar_t cl_nolerp			= {"cl_nolerp", "1"}; // 0
 // END shaman :: balancing variables
+cvar_t cl_lerp_monsters			= {"cl_lerp_monsters", "1"};
 
 cvar_t r_rocketlight			= {"r_rocketLight", "1"};
 cvar_t r_rocketlightcolor		= {"r_rocketLightColor", "0"};
@@ -816,6 +817,7 @@ void CL_InitLocal (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register (&cl_model_bobbing);
 	Cvar_Register (&cl_nolerp);
+	Cvar_Register (&cl_lerp_monsters);
 	Cvar_Register (&cl_maxfps);
 	Cvar_Register (&cl_physfps);	//#fps
 	Cvar_Register (&cl_independentPhysics);	//#fps
