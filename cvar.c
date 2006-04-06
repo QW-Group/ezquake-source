@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cvar.c,v 1.23 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: cvar.c,v 1.24 2006-04-06 22:32:30 disconn3ct Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -437,13 +437,17 @@ qbool Cvar_Command (void) {
 	cvar_t *v;
 	char *spaces;
 
+
 	// check variables
 	if (!(v = Cvar_FindVar (Cmd_Argv(0))))
 		return false;
 
 	if (Cmd_Argc() == 1) {
 		xml_variable_t *var = XSD_Variable_Load(va("help/variables/%s.xml", Cmd_Argv(0)));
-
+	
+		if (cvar_viewhelp.value)
+			Help_DescribeVar(var);
+		
 		if (cvar_viewdefault.value) {
 			Com_Printf ("%s : default value is \"%s\"\n", v->name, v->defaultvalue);
 			spaces = CreateSpaces(strlen(v->name) + 2);
@@ -451,10 +455,6 @@ qbool Cvar_Command (void) {
 		} else {
 			Com_Printf ("\"%s\" is \"%s\"\n", v->name, v->string);
 		}
-		
-		if (cvar_viewhelp.value)
-			Help_DescribeVar(var);
-
 	} else {
 		// hexum - do not allow crafty people to avoid use of "set" with user created variables under ruleset smackdown
 		
@@ -473,6 +473,7 @@ qbool Cvar_Command (void) {
 void Cvar_WriteVariables (FILE *f) {
 	cvar_t *var;
 
+
 	// write builtin cvars in a QW compatible way
 	for (var = cvar_vars ; var ; var = var->next)
 		if (var->flags & CVAR_ARCHIVE)
@@ -487,7 +488,7 @@ void Cvar_WriteVariables (FILE *f) {
 void Cvar_Toggle (qbool use_regex) {
 	cvar_t	*var;
 	char	*name;
-	int		i;
+	int	i;
 	qbool	re_search = false;
 
 
