@@ -20,8 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-#define NEW_JUMPFIX	// new (Jan 2006) fix for the jump bug that doesn't
-			// interfere with KTeams/KTPro "broken ankle" code
+//#define NEW_JUMPFIX	// new (Jan 2006) fix for the "jump bug"
 
 movevars_t	movevars;
 playermove_t	pmove;
