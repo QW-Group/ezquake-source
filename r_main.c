@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -313,7 +313,9 @@ void R_NewMap (void) {
 		// surface 0 doesn't really exist; it's just a dummy because index 0
 		// is used to indicate no edge attached to surface
 		surfaces--;
+#if id386
 		R_SurfacePatch ();
+#endif
 	} else {
 		r_surfsonstack = true;
 	}
@@ -854,7 +856,9 @@ void R_EdgeDrawing (void) {
 		// surface 0 doesn't really exist; it's just a dummy because index 0
 		// is used to indicate no edge attached to surface
 		surfaces--;
+#if id386
 		R_SurfacePatch ();
+#endif
 	}
 
 	R_BeginEdgeFrame ();

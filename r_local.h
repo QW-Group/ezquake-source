@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -199,7 +199,9 @@ extern auxvert_t		*pauxverts;
 
 //=========================================================
 
+#if id386
 void R_SurfacePatch (void);
+#endif
 
 extern int		r_amodels_drawn;
 extern edge_t	*auxedges;
