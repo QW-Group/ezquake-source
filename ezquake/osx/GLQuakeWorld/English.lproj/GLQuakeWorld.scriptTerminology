@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Classes</key>
+	<dict>
+		<key>QuakeApplication</key>
+		<dict>
+			<key>Description</key>
+			<string>GLQuakeWorld's top level scripting object.</string>
+			<key>Name</key>
+			<string>application</string>
+			<key>PluralName</key>
+			<string>applications</string>
+		</dict>
+	</dict>
+	<key>Commands</key>
+	<dict>
+		<key>QuakeConsole</key>
+		<dict>
+			<key>Arguments</key>
+			<dict>
+				<key>QuakeCommandlist</key>
+				<dict>
+					<key>Description</key>
+					<string>Executes the GLQuakeWorld commands that follow, quoted.</string>
+					<key>Name</key>
+					<string>execute</string>
+				</dict>
+			</dict>
+			<key>Description</key>
+			<string>Send a command to the GLQuakeWorld console.</string>
+			<key>Name</key>
+			<string>console</string>
+		</dict>
+		<key>QuakeRun</key>
+		<dict>
+			<key>Arguments</key>
+			<dict>
+				<key>QuakeParameters</key>
+				<dict>
+					<key>Description</key>
+					<string>The command-line parameters to use should follow, quoted.</string>
+					<key>Name</key>
+					<string>params</string>
+				</dict>
+			</dict>
+			<key>Description</key>
+			<string>Start GLQuakeWorld with command-line parameters.</string>
+			<key>Name</key>
+			<string>run</string>
+		</dict>
+	</dict>
+	<key>Description</key>
+	<string>AppleScript commands and classes specific to GLQuakeWorld.</string>
+	<key>Name</key>
+	<string>GLQuakeWorld suite</string>
+	<key>Synonyms</key>
+	<dict/>
+</dict>
+</plist>
