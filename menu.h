@@ -19,15 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 //
-// the net drivers should just set the apropriate bits in m_activenet,
-// instead of having the menu code look through their internal tables
-//
-#define	MNET_IPX		1
-#define	MNET_TCP		2
-
-extern	int	m_activenet;
-
-//
 // menus
 //
 void M_Init (void);
@@ -43,7 +34,7 @@ enum {
     m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer,
     m_setup, m_options, m_video, m_keys, m_help, m_quit,
     m_gameoptions, m_slist,/* m_sedit,*/ m_fps, m_demos, m_demos_del
-#if defined(_WIN32) || defined(__XMMS__)
+#if defined(_WIN32) || (defined(__linux__) && defined(WITH_XMMS))
     , m_mp3_control, m_mp3_playlist
 #endif
 } m_state;
