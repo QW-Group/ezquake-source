@@ -186,7 +186,7 @@ int HUD_FindPlace(hud_t *hud)
 
     // first try standard strings
     for (i=0; i < num_snap_strings; i++)
-        if (!Q_strcasecmp(hud->place->string, snap_strings[i]))
+        if (!strcasecmp(hud->place->string, snap_strings[i]))
             break;
     if (i < num_snap_strings)
     {
@@ -232,7 +232,7 @@ int HUD_FindAlignX(hud_t *hud)
 
     // first try standard strings
     for (i=0; i < num_align_strings_x; i++)
-        if (!Q_strcasecmp(hud->align_x->string, align_strings_x[i]))
+        if (!strcasecmp(hud->align_x->string, align_strings_x[i]))
             break;
     if (i < num_align_strings_x)
     {
@@ -254,7 +254,7 @@ int HUD_FindAlignY(hud_t *hud)
 
     // first try standard strings
     for (i=0; i < num_align_strings_y; i++)
-        if (!Q_strcasecmp(hud->align_y->string, align_strings_y[i]))
+        if (!strcasecmp(hud->align_y->string, align_strings_y[i]))
             break;
     if (i < num_align_strings_y)
     {
@@ -300,7 +300,7 @@ void HUD_Show_f (void)
         return;
     }
 
-    if (!Q_strcasecmp(Cmd_Argv(1), "all"))
+    if (!strcasecmp(Cmd_Argv(1), "all"))
     {
         hud = hud_huds;
         while (hud)
@@ -339,7 +339,7 @@ void HUD_Hide_f (void)
         return;
     }
 
-    if (!Q_strcasecmp(Cmd_Argv(1), "all"))
+    if (!strcasecmp(Cmd_Argv(1), "all"))
     {
         hud = hud_huds;
         while (hud)
@@ -901,10 +901,10 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
     hud->draw_order = draw_order;
     hud->draw_func = draw_func;
 
-    hud->name = (char *) Z_Malloc(strlen(name)+1);
+    hud->name = (char *) Q_malloc((strlen(name)+1));
     strcpy(hud->name, name);
 
-    hud->description = (char *) Z_Malloc(strlen(description)+1);
+    hud->description = (char *) Q_malloc((strlen(description)+1));
     strcpy(hud->description, description);
 
     hud->flags = flags;

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.c,v 1.15 2006-03-20 13:51:27 vvd0 Exp $
+	$Id: mp3_player.c,v 1.16 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 
@@ -253,11 +253,11 @@ static void WINAMP_Set_ToggleFn(char *name, int setparam, int getparam) {
 		Com_Printf("%s is %s\n", name, (ret == 1) ? "on" : "off");
 		return;
 	}
-	if (!Q_strcasecmp(Cmd_Argv(1), "on")) {
+	if (!strcasecmp(Cmd_Argv(1), "on")) {
 		set = 1;
-	} else if (!Q_strcasecmp(Cmd_Argv(1), "off")) {
+	} else if (!strcasecmp(Cmd_Argv(1), "off")) {
 		set = 0;
-	} else if (!Q_strcasecmp(Cmd_Argv(1), "toggle")) {
+	} else if (!strcasecmp(Cmd_Argv(1), "toggle")) {
 		set = ret ? 0 : 1;
 	} else {
 		Com_Printf("Usage: %s [on|off|toggle]\n", Cmd_Argv(0));
@@ -470,11 +470,11 @@ static void XMMS_Set_ToggleFn(char *name, void *togglefunc, void *getfunc) {
 		Com_Printf("%s is %s\n", name, (ret == 1) ? "on" : "off");
 		return;
 	}
-	if (!Q_strcasecmp(Cmd_Argv(1), "on")) {
+	if (!strcasecmp(Cmd_Argv(1), "on")) {
 		set = 1;
-	} else if (!Q_strcasecmp(Cmd_Argv(1), "off")) {
+	} else if (!strcasecmp(Cmd_Argv(1), "off")) {
 		set = 0;
-	} else if (!Q_strcasecmp(Cmd_Argv(1), "toggle")) {
+	} else if (!strcasecmp(Cmd_Argv(1), "toggle")) {
 		set = ret ? 0 : 1;
 	} else {
 		Com_Printf("Usage: %s [on|off|toggle]\n", Cmd_Argv(0));

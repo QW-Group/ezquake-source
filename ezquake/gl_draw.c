@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.17 2006-03-29 20:38:28 oldmanuk Exp $
+	$Id: gl_draw.c,v 1.18 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -395,7 +395,7 @@ void Draw_InitConback (void) {
 static int Draw_LoadCharset(char *name) {
 	int texnum;
 
-	if (!Q_strcasecmp(name, "original")) {
+	if (!strcasecmp(name, "original")) {
 		int i;
 		char buf[128 * 256], *src, *dest;
 

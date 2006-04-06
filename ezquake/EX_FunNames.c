@@ -1,5 +1,5 @@
 /*
-	$Id: EX_FunNames.c,v 1.6 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: EX_FunNames.c,v 1.7 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -92,9 +92,9 @@ void Fun_ConvertText(char *name)
     if (name == NULL  ||  Q_strlen(name) <= 0)
         return;
 
-    res = (char *) Z_Malloc (Q_strlen(name)+10);
-    text = (char *) Z_Malloc (Q_strlen(name)+10);
-    strlcpy(text, name, Q_strlen(name));
+    res = (char *) Q_malloc (Q_strlen(name)+10);
+    text = (char *) Q_malloc (Q_strlen(name)+10);
+    strlcpy(text, name, Q_strlen(name)); // FIXME: Q_strlen? =:-)
     len = Q_strlen(text);
     d = 0;
     for (s=0; s < len; )
@@ -155,8 +155,8 @@ void Fun_ConvertText(char *name)
     res[d] = 0;
 
     strlcpy(name, res, Q_strlen(res));
-    Z_Free (res);
-    Z_Free (text);
+    Q_free (res);
+    Q_free (text);
 }
 
 

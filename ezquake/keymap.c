@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keymap.c,v 1.6 2006-03-20 13:51:27 vvd0 Exp $
+	$Id: keymap.c,v 1.7 2006-04-06 23:23:18 disconn3ct Exp $
 
 */
 // keymap.c -- support for international keyboard layouts
@@ -346,14 +346,14 @@ void IN_Keymap_Load_f (void)
 				Cmd_TokenizeString (data);
 
 				if (Cmd_Argc() > 0) {
-					if (!Q_strcasecmp(Cmd_Argv(0), "keymap_name")) {
+					if (!strcasecmp(Cmd_Argv(0), "keymap_name")) {
 						if (name[0] == (char)'\0') {
 							if (Cmd_Argc() > 1)
 								strlcpy (name, Cmd_Argv(1), sizeof(name));
 						}
 					}
 					else {
-						if (!Q_strcasecmp(Cmd_Argv(0), "keycode")) {
+						if (!strcasecmp(Cmd_Argv(0), "keycode")) {
 							IN_Keycode_Set_f (true, filename, linecount);
 						}
 						else {
@@ -690,7 +690,7 @@ static void IN_Keycode_Set_f (qbool showerr, char *filename, unsigned int lineco
 
 	argcount = 1;
 	if ( error == 0 ) {
-		if (!Q_strcasecmp( Cmd_Argv(argcount), "ext" )) {
+		if (!strcasecmp( Cmd_Argv(argcount), "ext" )) {
 			ext = true;
 			argcount++;
 			// only "ext", without a scancode:
@@ -699,7 +699,7 @@ static void IN_Keycode_Set_f (qbool showerr, char *filename, unsigned int lineco
 					Com_Printf ("%sSYNTAX error in command%s!\n", linetext);
 				error = 1;
 			}
-		} // END if (!Q_strcasecmp( Cmd_Argv(argcount), "ext" )) 
+		} // END if (!strcasecmp( Cmd_Argv(argcount), "ext" )) 
 	} // END if ( error == 0 ) 
 
 	if ( error == 0 ) {
@@ -809,7 +809,7 @@ Resets the current keymapping
 ===========
 */
 void IN_Keymap_Reset_f (void) {
-	if (!Q_strcasecmp(Cmd_Argv(0), "keymap_reset") && Cmd_Argc() > 1) {
+	if (!strcasecmp(Cmd_Argv(0), "keymap_reset") && Cmd_Argc() > 1) {
 		Com_Printf ("Usage: %s\n"
 		            "Resets the active keymappings and sets it to the internal defaults (US keyboard).\n",
 		            Cmd_Argv(0) );
@@ -842,7 +842,7 @@ based on the internal defaults (US keyboard)
 void IN_Keymap_Init_f (void) {
 	int  i;
 
-	if (!Q_strcasecmp(Cmd_Argv(0), "keymap_init") && Cmd_Argc() > 1) {
+	if (!strcasecmp(Cmd_Argv(0), "keymap_init") && Cmd_Argc() > 1) {
 		Com_Printf ("Usage: %s\n"
 		            "Initializes the active keymappings:\n"
 		            "resets an active keymapping and uses the\n"

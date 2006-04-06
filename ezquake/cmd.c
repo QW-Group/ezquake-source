@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cmd.c,v 1.35 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: cmd.c,v 1.36 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -269,7 +269,7 @@ void Cbuf_AddEarlyCommands (void)
 	int i;
 
 	for (i = 0; i < COM_Argc() - 2; i++) {
-		if (Q_strcasecmp(COM_Argv(i), "+set"))
+		if (strcasecmp(COM_Argv(i), "+set"))
 			continue;
 		Cbuf_AddText (va("set %s %s\n", COM_Argv(i+1), COM_Argv(i+2)));
 		i += 2;
@@ -296,7 +296,7 @@ void Cmd_StuffCmds_f (void)
 	if (!len)
 		return;
 
-	text = (char *) Z_Malloc (len + 1);
+	text = (char *) Q_malloc (len + 1);
 	for (k = 1; k < com_argc; k++) {
 		strcat (text, com_argv[k]);
 		if (k != com_argc - 1)
@@ -304,7 +304,7 @@ void Cmd_StuffCmds_f (void)
 	}
 
 	// pull out the commands
-	token = (char *) Z_Malloc (len + 1);
+	token = (char *) Q_malloc (len + 1);
 
 	s = text;
 	while (*s) {
@@ -314,7 +314,7 @@ void Cmd_StuffCmds_f (void)
 				token[k++] = s[0];
 			token[k++] = '\n';
 			token[k] = 0;
-			if (Q_strncasecmp(token, "set ", 4))
+			if (strncasecmp(token, "set ", 4))
 				Cbuf_AddText (token);
 		} else if (*s == '-') {
 			for (s = s + 1; s[0] && s[0] != ' '; s++)
@@ -324,8 +324,8 @@ void Cmd_StuffCmds_f (void)
 		}
 	}
 
-	Z_Free (text);
-	Z_Free (token);
+	Q_free (text);
+	Q_free (token);
 }
 
 void Cmd_Exec_f (void)
@@ -424,7 +424,7 @@ cmd_alias_t *Cmd_FindAlias (char *name)
 
 	key = Com_HashKey (name);
 	for (alias = cmd_alias_hash[key]; alias; alias = alias->hash_next) {
-		if (!Q_strcasecmp(name, alias->name))
+		if (!strcasecmp(name, alias->name))
 			return alias;
 	}
 	return NULL;
@@ -437,7 +437,7 @@ char *Cmd_AliasString (char *name)
 
 	key = Com_HashKey (name);
 	for (alias = cmd_alias_hash[key]; alias; alias = alias->hash_next) {
-		if (!Q_strcasecmp(name, alias->name))
+		if (!strcasecmp(name, alias->name))
 #ifdef EMBED_TCL
 			if (!(alias->flags & ALIAS_TCL))
 #endif
@@ -505,20 +505,20 @@ int Cmd_AliasCompare (const void *p1, const void *p2)
 
 	if (a1->name[0] == '+') {
 		if (a2->name[0] == '+')
-			return Q_strcasecmp(a1->name + 1, a2->name + 1);
+			return strcasecmp(a1->name + 1, a2->name + 1);
 		else
 			return -1;
 	} else if (a1->name[0] == '-') {
 		if (a2->name[0] == '+')
 			return 1;
 		else if (a2->name[0] == '-')
-			return Q_strcasecmp(a1->name + 1, a2->name + 1);
+			return strcasecmp(a1->name + 1, a2->name + 1);
 		else
 			return -1;
 	} else if (a2->name[0] == '+' || a2->name[0] == '-') {
 		return 1;
 	} else {
-		return Q_strcasecmp(a1->name, a2->name);
+		return strcasecmp(a1->name, a2->name);
 	}
 }
 
@@ -593,7 +593,7 @@ void Cmd_EditAlias_f (void)
 	snprintf(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
 	Key_ClearTyping();
 	memcpy (key_lines[edit_line]+1, final_string, strlen(final_string));
-	Z_Free(s);
+	Q_free(s);
 }
 
 
@@ -622,14 +622,14 @@ void Cmd_Alias_f (void)
 
 	// if the alias already exists, reuse it
 	for (a = cmd_alias_hash[key]; a; a = a->hash_next) {
-		if (!Q_strcasecmp(a->name, s)) {
-			Z_Free (a->value);
+		if (!strcasecmp(a->name, s)) {
+			Q_free (a->value);
 			break;
 		}
 	}
 
 	if (!a)	{
-		a = (cmd_alias_t *) Z_Malloc (sizeof(cmd_alias_t));
+		a = (cmd_alias_t *) Q_malloc (sizeof(cmd_alias_t));
 		a->next = cmd_alias;
 		cmd_alias = a;
 		a->hash_next = cmd_alias_hash[key];
@@ -648,13 +648,13 @@ void Cmd_Alias_f (void)
 		++s;
 	}
 	// <-- QW262
-	if (!Q_strcasecmp(Cmd_Argv(0), "aliasa"))
+	if (!strcasecmp(Cmd_Argv(0), "aliasa"))
 		a->flags |= ALIAS_ARCHIVE;
 
 #ifndef SERVERONLY
 	if (cbuf_current == &cbuf_svc)
 		a->flags |= ALIAS_SERVER;
-	if (!Q_strcasecmp(Cmd_Argv(0), "tempalias"))
+	if (!strcasecmp(Cmd_Argv(0), "tempalias"))
 		a->flags |= ALIAS_TEMP;
 #endif
 
@@ -671,7 +671,7 @@ qbool Cmd_DeleteAlias (char *name)
 
 	prev = NULL;
 	for (a = cmd_alias_hash[key]; a; a = a->hash_next) {
-		if (!Q_strcasecmp(a->name, name)) {
+		if (!strcasecmp(a->name, name)) {
 			// unlink from hash
 			if (prev)
 				prev->hash_next = a->hash_next;
@@ -687,7 +687,7 @@ qbool Cmd_DeleteAlias (char *name)
 
 	prev = NULL;
 	for (a = cmd_alias; a; a = a->next) {
-		if (!Q_strcasecmp(a->name, name)) {
+		if (!strcasecmp(a->name, name)) {
 			// unlink from alias list
 			if (prev)
 				prev->next = a->next;
@@ -695,8 +695,8 @@ qbool Cmd_DeleteAlias (char *name)
 				cmd_alias = a->next;
 
 			// free
-			Z_Free (a->value);
-			Z_Free (a);
+			Q_free (a->value);
+			Q_free (a);
 			return true;
 		}
 		prev = a;
@@ -764,8 +764,8 @@ void Cmd_UnAliasAll_f (void)
 
 	for (a = cmd_alias; a ; a = next) {
 		next = a->next;
-		Z_Free (a->value);
-		Z_Free (a);
+		Q_free (a->value);
+		Q_free (a);
 	}
 	cmd_alias = NULL;
 
@@ -830,7 +830,7 @@ qbool Cmd_IsLegacyCommand (char *oldname)
 	legacycmd_t *cmd;
 
 	for (cmd = legacycmds; cmd; cmd = cmd->next) {
-		if (!Q_strcasecmp(cmd->oldname, oldname))
+		if (!strcasecmp(cmd->oldname, oldname))
 			return true;
 	}
 	return false;
@@ -843,7 +843,7 @@ static qbool Cmd_LegacyCommand (void)
 	char text[1024];
 
 	for (cmd = legacycmds; cmd; cmd = cmd->next) {
-		if (!Q_strcasecmp(cmd->oldname, Cmd_Argv(0)))
+		if (!strcasecmp(cmd->oldname, Cmd_Argv(0)))
 			break;
 	}
 	if (!cmd)
@@ -978,7 +978,7 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 
 	// fail if the command already exists
 	for (cmd = cmd_hash_array[key]; cmd; cmd=cmd->hash_next) {
-		if (!Q_strcasecmp (cmd_name, cmd->name)) {
+		if (!strcasecmp (cmd_name, cmd->name)) {
 			Com_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
 			return;
 		}
@@ -1000,7 +1000,7 @@ qbool Cmd_Exists (char *cmd_name)
 
 	key = Com_HashKey (cmd_name);
 	for (cmd=cmd_hash_array[key]; cmd; cmd = cmd->hash_next) {
-		if (!Q_strcasecmp (cmd_name, cmd->name))
+		if (!strcasecmp (cmd_name, cmd->name))
 			return true;
 	}
 	return false;
@@ -1013,7 +1013,7 @@ cmd_function_t *Cmd_FindCommand (const char *cmd_name)
 
 	key = Com_HashKey (cmd_name);
 	for (cmd = cmd_hash_array[key]; cmd; cmd = cmd->hash_next) {
-		if (!Q_strcasecmp (cmd_name, cmd->name))
+		if (!strcasecmp (cmd_name, cmd->name))
 			return cmd;
 	}
 	return NULL;
@@ -1032,18 +1032,18 @@ char *Cmd_CompleteCommand (char *partial)
 
 	// check for exact match
 	for (cmd = cmd_functions; cmd; cmd = cmd->next)
-		if (!Q_strcasecmp (partial, cmd->name))
+		if (!strcasecmp (partial, cmd->name))
 			return cmd->name;
 	for (alias = cmd_alias; alias; alias = alias->next)
-		if (!Q_strcasecmp (partial, alias->name))
+		if (!strcasecmp (partial, alias->name))
 			return alias->name;
 
 	// check for partial match
 	for (cmd = cmd_functions; cmd; cmd = cmd->next)
-		if (!Q_strncasecmp (partial, cmd->name, len))
+		if (!strncasecmp (partial, cmd->name, len))
 			return cmd->name;
 	for (alias = cmd_alias; alias; alias = alias->next)
-		if (!Q_strncasecmp (partial, alias->name, len))
+		if (!strncasecmp (partial, alias->name, len))
 			return alias->name;
 
 	return NULL;
@@ -1059,7 +1059,7 @@ int Cmd_CompleteCountPossible (char *partial)
 		return 0;
 
 	for (cmd = cmd_functions; cmd; cmd = cmd->next)
-		if (!Q_strncasecmp (partial, cmd->name, len))
+		if (!strncasecmp (partial, cmd->name, len))
 			c++;
 
 	return c;
@@ -1075,7 +1075,7 @@ int Cmd_AliasCompleteCountPossible (char *partial)
 		return 0;
 
 	for (alias = cmd_alias; alias; alias = alias->next)
-		if (!Q_strncasecmp (partial, alias->name, len))
+		if (!strncasecmp (partial, alias->name, len))
 			c++;
 
 	return c;
@@ -1162,7 +1162,7 @@ char *Cmd_MacroString (char *s, int *macro_length)
 
 	for (i = 0; i < macro_count; i++) {
 		macro = &macro_commands[i];
-		if (!Q_strncasecmp(s, macro->name, strlen(macro->name))) {
+		if (!strncasecmp(s, macro->name, strlen(macro->name))) {
 #ifndef SERVERONLY
 			if (cbuf_current == &cbuf_main && macro->teamplay)
 				cbuf_current = &cbuf_formatted_comms;
@@ -1308,7 +1308,7 @@ void Cmd_ExpandString (char *data, char *dest)
 
 int Commands_Compare_Func(const void * arg1, const void * arg2)
 {
-	return Q_strcasecmp( * ( char** ) arg1, * ( char** ) arg2 );
+	return strcasecmp( * ( char** ) arg1, * ( char** ) arg2 );
 }
 char *msgtrigger_commands[] = {
                                   "play", "playvol", "stopsound", "set", "echo", "say", "say_team",
@@ -1364,7 +1364,7 @@ qbool AllowedImpulse(int imp)
 
 qbool Cmd_IsCommandAllowedInMessageTrigger( const char *command )
 {
-	if( !Q_strcasecmp( command, "impulse") )
+	if( !strcasecmp( command, "impulse") )
 		return AllowedImpulse(Q_atoi(Cmd_Argv(1)));
 
 	return 	  bsearch( &(command), msgtrigger_commands,
@@ -1375,7 +1375,7 @@ qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
 {
 	char **s;
 	for (s = formatted_comms_commands; *s; s++) {
-		if (!Q_strcasecmp(command, *s))
+		if (!strcasecmp(command, *s))
 			break;
 	}
 	return *s != NULL;
@@ -1429,7 +1429,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 		                char **s;
 				if (cbuf_current == &cbuf_safe) {
 					for (s = msgtrigger_commands; *s; s++) {
-						if (!Q_strcasecmp(cmd_argv[0], *s))
+						if (!strcasecmp(cmd_argv[0], *s))
 							break;
 					}
 					if (!*s)
@@ -1439,7 +1439,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 					}
 				} else if (cbuf_current == &cbuf_formatted_comms) {
 					for (s = formatted_comms_commands; *s; s++) {
-						if (!Q_strcasecmp(cmd_argv[0], *s))
+						if (!strcasecmp(cmd_argv[0], *s))
 							break;
 					}
 					if (!*s) {
@@ -1657,9 +1657,9 @@ void Cmd_If_f (void)
 
 	if (result)	{
 		for (i = 4; i < c; i++) {
-			if ((i == 4) && !Q_strcasecmp(Cmd_Argv(i), "then"))
+			if ((i == 4) && !strcasecmp(Cmd_Argv(i), "then"))
 				continue;
-			if (!Q_strcasecmp(Cmd_Argv(i), "else"))
+			if (!strcasecmp(Cmd_Argv(i), "else"))
 				break;
 			if (buf[0])
 				strncat (buf, " ", sizeof(buf) - strlen(buf) - 2);
@@ -1667,7 +1667,7 @@ void Cmd_If_f (void)
 		}
 	} else {
 		for (i = 4; i < c ; i++) {
-			if (!Q_strcasecmp(Cmd_Argv(i), "else"))
+			if (!strcasecmp(Cmd_Argv(i), "else"))
 				break;
 		}
 		if (i == c)
@@ -1732,7 +1732,7 @@ int Cmd_CheckParm (char *parm)
 
 	c = Cmd_Argc();
 	for (i = 1; i < c; i++)
-		if (! Q_strcasecmp (parm, Cmd_Argv (i)))
+		if (! strcasecmp (parm, Cmd_Argv (i)))
 			return i;
 
 	return 0;

@@ -17,7 +17,7 @@ You	should have	received a copy	of the GNU General Public License
 along with this	program; if	not, write to the Free Software
 Foundation,	Inc., 59 Temple	Place -	Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: config_manager.c,v 1.19 2006-03-08 15:29:35 disconn3ct Exp $
+	$Id: config_manager.c,v 1.20 2006-04-06 23:23:18 disconn3ct Exp $
 
 */
 
@@ -297,7 +297,7 @@ static void DumpAliases(FILE *f) {
 		for (partner = false, j = minus_index; j >= 0 && j < minus_index + minus_count; j++) {
 			b = sorted_aliases[j];
 
-			if (!Q_strcasecmp(b->name + 1, a->name + 1)) {
+			if (!strcasecmp(b->name + 1, a->name + 1)) {
 			
 				spaces = CreateSpaces(maxlen + 3 - strlen(a->name));
 				fprintf	(f, "alias %s%s\"%s\"\n", a->name, spaces, a->value);
@@ -328,7 +328,7 @@ static void DumpAliases(FILE *f) {
 		for (partner = false, j = 0; j < minus_index; j++) {
 			b = sorted_aliases[j];
 
-			if (!Q_strcasecmp(b->name + 1, a->name + 1)) {
+			if (!strcasecmp(b->name + 1, a->name + 1)) {
 			
 				partner = true;
 				break;
@@ -453,13 +453,13 @@ void DumpMisc(FILE *f) {
 // } END johnnycz RFE 1157227
 
 	if (cl.teamfortress) {
-		if (!Q_strcasecmp(Info_ValueForKey (cls.userinfo, "ec"), "on") || 
-			!Q_strcasecmp(Info_ValueForKey (cls.userinfo, "exec_class"), "on")
+		if (!strcasecmp(Info_ValueForKey (cls.userinfo, "ec"), "on") || 
+			!strcasecmp(Info_ValueForKey (cls.userinfo, "exec_class"), "on")
 		) {
 			fprintf(f, "setinfo ec on\n");
 		}
-		if (!Q_strcasecmp(Info_ValueForKey (cls.userinfo, "em"), "on") || 
-			!Q_strcasecmp(Info_ValueForKey (cls.userinfo, "exec_map"), "on")
+		if (!strcasecmp(Info_ValueForKey (cls.userinfo, "em"), "on") || 
+			!strcasecmp(Info_ValueForKey (cls.userinfo, "exec_map"), "on")
 		) {
 			fprintf(f, "setinfo em on\n");
 		}
@@ -767,7 +767,7 @@ void SaveConfig_f(void)	{
 		filename_ext = va("%s/ezquake/configs/%s", com_basedir, filename);
 		if ((f = fopen(filename_ext, "r"))) {
 			fclose(f);
-			backupname_ext = (char *) Z_Malloc(strlen(filename_ext) + 4);
+			backupname_ext = (char *) Q_malloc((strlen(filename_ext) + 4));
 			strcpy(backupname_ext, filename_ext);
 			strcat(backupname_ext, ".bak");
 			if ((f = fopen(backupname_ext, "r"))) {
@@ -775,7 +775,7 @@ void SaveConfig_f(void)	{
 				remove(backupname_ext);
 			}
 			rename(filename_ext, backupname_ext);
-			Z_Free(backupname_ext);
+			Q_free(backupname_ext);
 		}
 	}
 

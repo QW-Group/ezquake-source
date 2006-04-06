@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.12 2006-03-20 13:51:28 vvd0 Exp $
+	$Id: utils.c,v 1.13 2006-04-06 23:23:19 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -423,13 +423,13 @@ char *Utils_TF_ColorToTeam(int color) {
 }
 
 int Utils_TF_TeamToColor(char *team) {
-	if (!Q_strcasecmp(team, Utils_TF_ColorToTeam(13)))
+	if (!strcasecmp(team, Utils_TF_ColorToTeam(13)))
 		return 13;
-	if (!Q_strcasecmp(team, Utils_TF_ColorToTeam(4)))
+	if (!strcasecmp(team, Utils_TF_ColorToTeam(4)))
 		return 4;
-	if (!Q_strcasecmp(team, Utils_TF_ColorToTeam(12)))
+	if (!strcasecmp(team, Utils_TF_ColorToTeam(12)))
 		return 12;
-	if (!Q_strcasecmp(team, Utils_TF_ColorToTeam(11)))
+	if (!strcasecmp(team, Utils_TF_ColorToTeam(11)))
 		return 11;
 	return 0;
 }

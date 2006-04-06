@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_texture.c,v 1.13 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: gl_texture.c,v 1.14 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -114,7 +114,7 @@ qbool OnChange_gl_texturemode (cvar_t *var, char *string) {
 	gltexture_t	*glt;
 
 	for (i = 0; i < GLMODE_NUMODES; i++) {
-		if (!Q_strcasecmp (modes[i].name, string ) )
+		if (!strcasecmp (modes[i].name, string ) )
 			break;
 	}
 	if (i == GLMODE_NUMODES) {
@@ -314,7 +314,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 
 	ScaleDimensions(width, height, &scaled_width, &scaled_height, mode);
 
-	Com_DPrintf("ôåøôõòå: %s\n", identifier);
+	Com_DPrintf("ï¿½ï¿½ï¿½: %s\n", identifier);
 	if (identifier[0]) {
 		crc = CRC_Block (data, width * height * bpp);
 		for (i = 0, glt = gltextures; i < numgltextures; i++, glt++) {
@@ -353,7 +353,7 @@ setup_gltexture:
 	glt->crc = crc;
 	glt->bpp = bpp;
 	if (glt->pathname) {
-		Z_Free(glt->pathname);
+		Q_free(glt->pathname);
 		glt->pathname = NULL;
 	}
 	if (bpp == 4 && com_netpath[0])	
@@ -473,11 +473,11 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 		snprintf (name, sizeof(name), "textures/%s", link);
            	if (FS_FOpenFile (name, &f) != -1) {
            		CHECK_TEXTURE_ALREADY_LOADED;
-           		if( !Q_strcasecmp(link + len - 3, "tga") )
+           		if( !strcasecmp(link + len - 3, "tga") )
            		
            		        data = Image_LoadTGA (f, name, matchwidth, matchheight);
 #ifdef WITH_PNG
-           		if( !Q_strcasecmp(link + len - 3, "png") )
+           		if( !strcasecmp(link + len - 3, "png") )
            		{
            		        data = Image_LoadPNG (f, name, matchwidth, matchheight);
            		}

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_misc.c,v 1.9 2006-03-20 13:51:28 vvd0 Exp $
+	$Id: r_misc.c,v 1.10 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -38,7 +38,7 @@ void R_TranslatePlayerSkin (int playernum) {
 	strlcpy(s, Skin_FindName(player), sizeof(s));
 	COM_StripExtension(s, s);
 
-	if (player->skin && Q_strcasecmp(s, player->skin->name))
+	if (player->skin && strcasecmp(s, player->skin->name))
 		player->skin = NULL;
 
 	if (player->_topcolor != player->topcolor || player->_bottomcolor != player->bottomcolor || !player->skin) {

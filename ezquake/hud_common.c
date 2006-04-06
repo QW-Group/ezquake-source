@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.27 2006-03-20 13:51:27 vvd0 Exp $
+	$Id: hud_common.c,v 1.28 2006-04-06 23:23:18 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -2430,7 +2430,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 
 	// Don't allow showing the timer during ruleset smackdown,
 	// can be used for timing powerups.
-	if(!Q_strncasecmp(Rulesets_Ruleset(), "smackdown", 9))
+	if(!strncasecmp(Rulesets_Ruleset(), "smackdown", 9))
 	{
 		sprintf(time_string, va("\x10%s\x11", "Not allowed"));
 	}

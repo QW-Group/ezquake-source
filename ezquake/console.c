@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.21 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: console.c,v 1.22 2006-04-06 23:23:18 disconn3ct Exp $
 */
 // console.c
 
@@ -472,12 +472,12 @@ void Con_Print (char *txt) {
 			if (log_readable.value) {
 				char *s, *tempbuf;
 	
-				tempbuf = (char *) Z_Malloc(strlen(txt) + 1);
+				tempbuf = (char *) Q_malloc((strlen(txt) + 1));
 				strcpy(tempbuf, txt);
 				for (s = tempbuf; *s; s++)
 					*s = readableChars[(unsigned char) *s];
 				Log_Write(tempbuf);
-				Z_Free(tempbuf);	
+				Q_free(tempbuf);	
 			} else {
 				Log_Write(txt);	
 			}

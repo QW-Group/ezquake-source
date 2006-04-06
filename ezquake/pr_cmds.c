@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_cmds.c,v 1.12 2006-03-20 13:51:27 vvd0 Exp $
+	$Id: pr_cmds.c,v 1.13 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -683,7 +683,7 @@ void PF_cvar (void) {
 	str = G_STRING(OFS_PARM0);
 
 	//QC queries cvar("pr_checkextension") to see if an extension system is present
-	if (!Q_strcasecmp(str, "pr_checkextension")) {
+	if (!strcasecmp(str, "pr_checkextension")) {
 		G_FLOAT(OFS_RETURN) = 1.0;
 		return;
 	}
@@ -1569,12 +1569,12 @@ void PF_tokenize (void) {
 
 	if (tokens) {
 		for (i = 0; i < num_tokens; i++)
-			Z_Free(tokens[i]);
-		Z_Free(tokens);
+			Q_free(tokens[i]);
+		Q_free(tokens);
 		num_tokens = 0;
 	}
 
-	tokens = (char **) Z_Malloc(strlen(str) * sizeof(char *));
+	tokens = (char **) Q_malloc(strlen(str) * sizeof(char *));
 	max_tokens = strlen(str);
 
 	for (data = str; (data = COM_Parse(data)) && num_tokens < max_tokens; num_tokens++)
@@ -1629,7 +1629,7 @@ void PF_checkextension (void) {
 	extension = G_STRING(OFS_PARM0);
 
 	for (s = ENGINE_EXTENSIONS; *s; s++) {
-		if (!Q_strcasecmp(*s, extension)) {
+		if (!strcasecmp(*s, extension)) {
 			supported = true;
 			break;
 		}

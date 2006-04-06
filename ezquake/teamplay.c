@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: teamplay.c,v 1.31 2006-03-20 13:51:28 vvd0 Exp $
+	$Id: teamplay.c,v 1.32 2006-04-06 23:23:19 disconn3ct Exp $
 
 */
 
@@ -630,16 +630,16 @@ char *Macro_Weapons (void) {
 }
 
 static char *Skin_To_TFSkin (char *myskin) {
-	if (!cl.teamfortress || cl.spectator || Q_strncasecmp(myskin, "tf_", 3)) {
+	if (!cl.teamfortress || cl.spectator || strncasecmp(myskin, "tf_", 3)) {
 		strlcpy(macro_buf, myskin, sizeof(macro_buf));
 	} else {
-		if (!Q_strcasecmp(myskin, "tf_demo"))
+		if (!strcasecmp(myskin, "tf_demo"))
 			strlcpy(macro_buf, "demoman", sizeof(macro_buf));
-		else if (!Q_strcasecmp(myskin, "tf_eng"))
+		else if (!strcasecmp(myskin, "tf_eng"))
 			strlcpy(macro_buf, "engineer", sizeof(macro_buf));
-		else if (!Q_strcasecmp(myskin, "tf_snipe"))
+		else if (!strcasecmp(myskin, "tf_snipe"))
 			strlcpy(macro_buf, "sniper", sizeof(macro_buf));
-		else if (!Q_strcasecmp(myskin, "tf_sold"))
+		else if (!strcasecmp(myskin, "tf_sold"))
 			strlcpy(macro_buf, "soldier", sizeof(macro_buf));
 		else
 			strlcpy(macro_buf, myskin + 3, sizeof(macro_buf));
@@ -886,7 +886,7 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay) {
 	if (!buf || !(length = strlen(buf)))
 		return;
 
-	team = !Q_strcasecmp("say_team", Cmd_Argv(0));
+	team = !strcasecmp("say_team", Cmd_Argv(0));
 
 	if (length >= 2 && buf[0] == '\"' && buf[length - 1] == '\"') {
 		memmove(buf, buf + 1, length - 2);
@@ -980,7 +980,7 @@ static void CountNearbyPlayers(qbool dead) {
 
 
 char *Macro_CountNearbyEnemyPlayers (void) {
-	if(!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
+	if(!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
 		return "banned by MTFL ruleset"; // there should be more smart way to do it
 
 	CountNearbyPlayers(false);
@@ -991,7 +991,7 @@ char *Macro_CountNearbyEnemyPlayers (void) {
 
 
 char *Macro_Count_Last_NearbyEnemyPlayers (void) {
-	if(!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
+	if(!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
 		return "banned by MTFL ruleset"; // there should be more smart way to do it
 
 	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5) {
@@ -1006,7 +1006,7 @@ char *Macro_Count_Last_NearbyEnemyPlayers (void) {
 
 
 char *Macro_CountNearbyFriendlyPlayers (void) {
-	if(!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
+	if(!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
 		return "banned by MTFL ruleset"; // there should be more smart way to do it
 
 	CountNearbyPlayers(false);
@@ -1017,7 +1017,7 @@ char *Macro_CountNearbyFriendlyPlayers (void) {
 
 
 char *Macro_Count_Last_NearbyFriendlyPlayers (void) {
-	if(!Q_strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
+	if(!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
 		return "banned by MTFL ruleset"; // there should be more smart way to do it
 
 	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5) {
@@ -1468,7 +1468,7 @@ void TP_ColorForcing (int *topcolor, int *bottomcolor) {
 		return;
 	}
 
-	if (!Q_strcasecmp(Cmd_Argv(1), "off")) {
+	if (!strcasecmp(Cmd_Argv(1), "off")) {
 		*topcolor = -1;
 		TP_RefreshSkins();
 		return;
@@ -1733,10 +1733,10 @@ char *TP_LocationName(vec3_t location) {
 	out = newbuf;
 	in = best->name;
 	while (*in && out - newbuf < sizeof(newbuf) - 1) {
-		if (!Q_strncasecmp(in, "$loc_name_", 10)) {
+		if (!strncasecmp(in, "$loc_name_", 10)) {
 			in += 10;
 			for (i = 0; i < NUM_LOCMACROS; i++) {
-				if (!Q_strncasecmp(in, locmacros[i].macro, strlen(locmacros[i].macro))) {
+				if (!strncasecmp(in, locmacros[i].macro, strlen(locmacros[i].macro))) {
 					if ((cvar = Cvar_FindVar(va("loc_name_%s", locmacros[i].macro))))
 						value = cvar->string;
 					else
@@ -1786,7 +1786,7 @@ void TP_ResetAllTriggers(void) {
 
 	while (msg_triggers) {
 		temp = msg_triggers->next;
-		Z_Free(msg_triggers);
+		Q_free(msg_triggers);
 		msg_triggers = temp;
 	}
 }
@@ -1856,7 +1856,7 @@ void TP_MsgTrigger_f (void) {
 
 		if (!(trig = TP_FindTrigger (name))) {
 			// allocate new trigger
-			trig = (msg_trigger_t *) Z_Malloc (sizeof(msg_trigger_t));
+			trig = (msg_trigger_t *) Q_malloc (sizeof(msg_trigger_t));
 			trig->next = msg_triggers;
 			msg_triggers = trig;
 			strcpy (trig->name, name);
@@ -1864,7 +1864,7 @@ void TP_MsgTrigger_f (void) {
 		}
 
 		strlcpy (trig->string, Cmd_Argv(2), sizeof(trig->string));
-		if (c == 5 && !Q_strcasecmp (Cmd_Argv(3), "-l")) {
+		if (c == 5 && !strcasecmp (Cmd_Argv(3), "-l")) {
 			if (!strcmp(Cmd_Argv(4), "t")) {
 				trig->level = 4;
 			} else {
@@ -1881,8 +1881,8 @@ static qbool TP_IsFlagMessage(char *message) {
 			strstr(message, " has taken your Key") ||
 			strstr(message, " has your flag") ||
 			strstr(message, " took your flag!") ||
-			strstr(message, " ÔÏÏË ÙÏÕÒ flag!") ||
-			strstr(message, " çïô òåä§ó æìáç®") || strstr(message, " çïô âìõå§ó æìáç®") ||
+			strstr(message, " ï¿½ï¿½ ï¿½ï¿½ flag!") ||
+			strstr(message, " ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½") || strstr(message, " ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½") ||
 			strstr(message, " took the blue flag") || strstr(message, " took the red flag") ||
 			strstr(message, " Has the Red Flag") || strstr(message, " Has the Blue Flag")
 		)
@@ -1951,9 +1951,9 @@ pcre_trigger_t *CL_FindReTrigger (char *name) {
 static void DeleteReTrigger(pcre_trigger_t *t) {
 	if (t->regexp) (pcre_free)(t->regexp);
 	if (t->regexp_extra) (pcre_free)(t->regexp_extra);
-	if (t->regexpstr) Z_Free(t->regexpstr);
-	Z_Free(t->name);
-	Z_Free(t);
+	if (t->regexpstr) Q_free(t->regexpstr);
+	Q_free(t->name);
+	Q_free(t);
 }
 
 static void RemoveReTrigger(pcre_trigger_t *t) {
@@ -2034,10 +2034,10 @@ void CL_RE_Trigger_f (void) {
 		if (!trig) {
 			// allocate new trigger
 			newtrigger = true;
-			trig = (pcre_trigger_t *) Z_Malloc (sizeof(pcre_trigger_t));
+			trig = (pcre_trigger_t *) Q_malloc (sizeof(pcre_trigger_t));
 			trig->next = re_triggers;
 			re_triggers = trig;
-			trig->name = Z_StrDup (name);
+			trig->name = Q_strdup (name);
 			trig->flags = RE_PRINT_ALL | RE_ENABLED; // catch all printed messages by default
 		}
 
@@ -2052,9 +2052,9 @@ void CL_RE_Trigger_f (void) {
 					(pcre_free)(trig->regexp);
 					if (trig->regexp_extra)
 						(pcre_free)(trig->regexp_extra);
-					Z_Free(trig->regexpstr);
+					Q_free(trig->regexpstr);
 				}
-				trig->regexpstr = Z_StrDup (regexpstr);
+				trig->regexpstr = Q_strdup (regexpstr);
 				trig->regexp = re;
 				trig->regexp_extra = re_extra;
 				return;
@@ -2343,7 +2343,7 @@ void AddInternalTrigger(char* regexpstr, unsigned mask, internal_trigger_func fu
 	const char		*error;
 	int			error_offset;
 
-	trig = (pcre_internal_trigger_t *) Z_Malloc (sizeof(pcre_internal_trigger_t));
+	trig = (pcre_internal_trigger_t *) Q_malloc (sizeof(pcre_internal_trigger_t));
 	trig->next = internal_triggers;
 	internal_triggers = trig;
 
@@ -2392,8 +2392,8 @@ void TP_InitReTriggers() {
 
 	// Using zone for PCRE library memory allocation
 	//
-	pcre_malloc = (pcre_malloc_type) Z_Malloc;
-	pcre_free = Z_Free;
+	pcre_malloc = (pcre_malloc_type) Q_malloc;
+	pcre_free = free; // Q_free = free
 
 	for(i=0;i<10;i++)
 		Cvar_Register (re_sub+i);
@@ -2666,7 +2666,7 @@ static void FlagCommand (int *flags, int defaultflags) {
 		return;
 	}
 
-	if (c == 2 && !Q_strcasecmp(Cmd_Argv(1), "none")) {
+	if (c == 2 && !strcasecmp(Cmd_Argv(1), "none")) {
 		*flags = 0;
 		return;
 	}
@@ -2686,26 +2686,26 @@ static void FlagCommand (int *flags, int defaultflags) {
 
 		flag = 0;
 		for (j=0 ; j<NUM_ITEMFLAGS ; j++) {
-			if (!Q_strncasecmp (p, pknames[j], 3)) {
+			if (!strncasecmp (p, pknames[j], 3)) {
 				flag = 1<<j;
 				break;
 			}
 		}
 
 		if (!flag) {
-			if (!Q_strcasecmp (p, "armor"))
+			if (!strcasecmp (p, "armor"))
 				flag = it_armor;
-			else if (!Q_strcasecmp (p, "weapons"))
+			else if (!strcasecmp (p, "weapons"))
 				flag = it_weapons;
-			else if (!Q_strcasecmp (p, "powerups"))
+			else if (!strcasecmp (p, "powerups"))
 				flag = it_powerups;
-			else if (!Q_strcasecmp (p, "ammo"))
+			else if (!strcasecmp (p, "ammo"))
 				flag = it_ammo;
-			else if (!Q_strcasecmp (p, "players"))
+			else if (!strcasecmp (p, "players"))
 				flag = it_players;
-			else if (!Q_strcasecmp (p, "default"))
+			else if (!strcasecmp (p, "default"))
 				flag = defaultflags;
-			else if (!Q_strcasecmp (p, "all"))
+			else if (!strcasecmp (p, "all"))
 				flag = (1<<NUM_ITEMFLAGS)-1;
 		}
 
@@ -3492,7 +3492,7 @@ qbool TP_FilterMessage (char *s) {
 	s[len - 1] = 0;	// so that strcmp works properly
 
 	for (j = 0; j < num_filters; j++)
-		if (!Q_strcasecmp(s + i + 1, filter_strings[j])) {
+		if (!strcasecmp(s + i + 1, filter_strings[j])) {
 			// strip the filter from message
 			if (i && s[i - 1] == ' ')	{	
 				// there's a space just before the filter, remove it
@@ -3525,7 +3525,7 @@ void TP_MsgFilter_f (void) {
 		return;
 	}
 
-	if (c == 2 && (Cmd_Argv(1)[0] == 0 || !Q_strcasecmp(Cmd_Argv(1), "clear"))) {
+	if (c == 2 && (Cmd_Argv(1)[0] == 0 || !strcasecmp(Cmd_Argv(1), "clear"))) {
 		num_filters = 0;
 		return;
 	}

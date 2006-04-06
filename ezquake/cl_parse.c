@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.43 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: cl_parse.c,v 1.44 2006-04-06 23:23:18 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -862,7 +862,7 @@ void CL_ParseServerData (void) {
 	// game directory
 	str = MSG_ReadString ();
 
-	cl.teamfortress = !Q_strcasecmp(str, "fortress");
+	cl.teamfortress = !strcasecmp(str, "fortress");
 	if (cl.teamfortress) {
 		extern cvar_t	v_iyaw_cycle, v_iroll_cycle, v_ipitch_cycle,
 			v_iyaw_level, v_iroll_level, v_ipitch_level, v_idlescale;
@@ -876,7 +876,7 @@ void CL_ParseServerData (void) {
 		Cvar_SetValue (&v_idlescale, 0);
 	}
 
-	if (Q_strcasecmp(cls.gamedirfile, str)) {
+	if (strcasecmp(cls.gamedirfile, str)) {
 		// save current config
 		CL_WriteConfiguration ();
 		strlcpy (cls.gamedirfile, str, sizeof(cls.gamedirfile));
@@ -1382,8 +1382,8 @@ void CL_ProcessServerInfo (void) {
 	}
 
 	p = Info_ValueForKey(cl.serverinfo, "status");
-	standby = !Q_strcasecmp(p, "standby");
-	countdown = !Q_strcasecmp(p, "countdown");
+	standby = !strcasecmp(p, "standby");
+	countdown = !strcasecmp(p, "countdown");
 
 	if ((cl.standby || cl.countdown) && !(standby || countdown))
 		cl.gametime = 0;
