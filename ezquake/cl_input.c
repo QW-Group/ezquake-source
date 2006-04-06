@@ -27,7 +27,7 @@ cvar_t	cl_nodelta = {"cl_nodelta","0"};
 cvar_t	cl_c2spps = {"cl_c2spps","0"};
 cvar_t	cl_c2sImpulseBackup = {"cl_c2sImpulseBackup","3"};
 
-cvar_t	cl_smartjump = {"cl_smartjump", "0"};
+cvar_t	cl_smartjump = {"cl_smartjump", "1"};
 
 extern cvar_t cl_independentPhysics;
 extern qbool physframe;
