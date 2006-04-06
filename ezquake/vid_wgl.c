@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.10 2006-03-01 15:24:05 disconn3ct Exp $
+	$Id: vid_wgl.c,v 1.11 2006-04-06 14:56:44 tonik Exp $
 
 */
 
@@ -1193,7 +1193,7 @@ void VID_Init (unsigned char *palette) {
 				bpp = Q_atoi(com_argv[temp + 1]);
 				findbpp = 0;
 			} else {
-				bpp = 15;
+				bpp = 32;
 				findbpp = 1;
 			}
 
@@ -1244,11 +1244,11 @@ void VID_Init (unsigned char *palette) {
 
 				if (findbpp && !done) {
 					switch (bpp) {
-					case 15:
+					case 32:
 						bpp = 16; break;
 					case 16:
-						bpp = 32; break;
-					case 32:
+						bpp = 15; break;
+					case 15:
 						bpp = 24; break;
 					case 24:
 						done = 1; break;
