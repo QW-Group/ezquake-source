@@ -1,0 +1,42 @@
+{
+    IBClasses = (
+        {CLASS = FDLinkView; LANGUAGE = ObjC; SUPERCLASS = NSView; }, 
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {
+            ACTIONS = {
+                newGame = id; 
+                selectMP3Folder = id; 
+                stopMediaScan = id; 
+                toggleMP3Playback = id; 
+                toggleParameterTextField = id; 
+                visitFOD = id; 
+            }; 
+            CLASS = Quake; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                aboutView = id; 
+                audioView = id; 
+                displayPopUp = id; 
+                fadeAllCheckBox = id; 
+                linkView = id; 
+                mediascanProgressIndicator = id; 
+                mediascanTextField = id; 
+                mediascanWindow = id; 
+                mp3Button = id; 
+                mp3CheckBox = id; 
+                mp3HelpView = id; 
+                mp3TextField = id; 
+                optionCheckBox = id; 
+                parameterCheckBox = id; 
+                parameterTextField = id; 
+                parameterView = id; 
+                pasteMenuItem = id; 
+                settingsWindow = id; 
+                videoView = id; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {CLASS = QuakeApplication; LANGUAGE = ObjC; SUPERCLASS = NSApplication; }
+    ); 
+    IBVersion = 1; 
+}
