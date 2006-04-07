@@ -629,7 +629,7 @@ void	CD_f (void)
     myCommandOption = Cmd_Argv (1);
     
     // turn CD playback on:
-    if (Q_strcasecmp (myCommandOption, "on") == 0)
+    if (strcasecmp (myCommandOption, "on") == 0)
     {
         if (gCDTrackList == NULL)
         {
@@ -641,7 +641,7 @@ void	CD_f (void)
     }
     
     // turn CD playback off:
-    if (Q_strcasecmp (myCommandOption, "off") == 0)
+    if (strcasecmp (myCommandOption, "off") == 0)
     {
         CDAudio_Shutdown ();
         
@@ -649,13 +649,13 @@ void	CD_f (void)
     }
 
     // just for compatibility:
-    if (Q_strcasecmp (myCommandOption, "remap") == 0)
+    if (strcasecmp (myCommandOption, "remap") == 0)
     {
         return;
     }
 
     // reset the current CD:
-    if (Q_strcasecmp (myCommandOption, "reset") == 0)
+    if (strcasecmp (myCommandOption, "reset") == 0)
     {
         CDAudio_Stop ();
         if (CDAudio_GetTrackList ())
@@ -690,7 +690,7 @@ void	CD_f (void)
     }
     
     // play the selected track:
-    if (Q_strcasecmp (myCommandOption, "play") == 0)
+    if (strcasecmp (myCommandOption, "play") == 0)
     {
         CDAudio_Play (atoi (Cmd_Argv (2)), 0);
         
@@ -698,7 +698,7 @@ void	CD_f (void)
     }
     
     // loop the selected track:
-    if (Q_strcasecmp (myCommandOption, "loop") == 0)
+    if (strcasecmp (myCommandOption, "loop") == 0)
     {
         CDAudio_Play (atoi (Cmd_Argv (2)), 1);
         
@@ -706,7 +706,7 @@ void	CD_f (void)
     }
     
     // stop the current track:
-    if (Q_strcasecmp (myCommandOption, "stop") == 0)
+    if (strcasecmp (myCommandOption, "stop") == 0)
     {
         CDAudio_Stop ();
         
@@ -714,7 +714,7 @@ void	CD_f (void)
     }
     
     // pause the current track:
-    if (Q_strcasecmp (myCommandOption, "pause") == 0)
+    if (strcasecmp (myCommandOption, "pause") == 0)
     {
         CDAudio_Pause ();
         
@@ -722,7 +722,7 @@ void	CD_f (void)
     }
     
     // resume the current track:
-    if (Q_strcasecmp (myCommandOption, "resume") == 0)
+    if (strcasecmp (myCommandOption, "resume") == 0)
     {
         CDAudio_Resume ();
         
@@ -730,7 +730,7 @@ void	CD_f (void)
     }
     
     // eject the CD:
-    if ([[NSApp delegate] mediaFolder] == NULL && Q_strcasecmp (myCommandOption, "eject") == 0)
+    if ([[NSApp delegate] mediaFolder] == NULL && strcasecmp (myCommandOption, "eject") == 0)
     {
         // eject the CD:
         if (gCDDevice[0] != 0x00)
@@ -760,7 +760,7 @@ void	CD_f (void)
     }
     
     // output CD info:
-    if (Q_strcasecmp(myCommandOption, "info") == 0)
+    if (strcasecmp(myCommandOption, "info") == 0)
     {
         if (gCDTrackCount == 0)
         {
