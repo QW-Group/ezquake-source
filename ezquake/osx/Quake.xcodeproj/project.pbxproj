@@ -1008,8 +1008,8 @@
 		D21167C209C8DC45002C3564 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = Info.plist; path = "Read Me/Info.plist"; sourceTree = "<group>"; };
 		D212A48A09D8763B00DDA1F3 /* Quake Help.helpindex */ = {isa = PBXFileReference; lastKnownFileType = file; name = "Quake Help.helpindex"; path = "Help/English/Quake Help.helpindex"; sourceTree = "<group>"; };
 		D284547309C645EA003F47E0 /* Quake.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Quake.h; sourceTree = "<group>"; };
-		D29BE27B09C61F4200EBE023 /* QuakeWorld.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QuakeWorld.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		D29BE28509C61F5200EBE023 /* GLQuakeWorld.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GLQuakeWorld.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D29BE27B09C61F4200EBE023 /* EZQuake.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = EZQuake.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D29BE28509C61F5200EBE023 /* EZQuake-GL.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "EZQuake-GL.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D29BE2A509C6207C00EBE023 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = /System/Library/Frameworks/CoreAudio.framework; sourceTree = "<absolute>"; };
 		D29BE2AA09C6208E00EBE023 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
 		D29BE2AF09C6209F00EBE023 /* QuickTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickTime.framework; path = /System/Library/Frameworks/QuickTime.framework; sourceTree = "<absolute>"; };
@@ -1413,8 +1413,8 @@
 		19C28FACFE9D520D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				D29BE27B09C61F4200EBE023 /* QuakeWorld.app */,
-				D29BE28509C61F5200EBE023 /* GLQuakeWorld.app */,
+				D29BE27B09C61F4200EBE023 /* EZQuake.app */,
+				D29BE28509C61F5200EBE023 /* EZQuake-GL.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1954,9 +1954,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		D29BE27A09C61F4200EBE023 /* QuakeWorld */ = {
+		D29BE27A09C61F4200EBE023 /* EZQuake */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = D29BE27E09C61F4300EBE023 /* Build configuration list for PBXNativeTarget "QuakeWorld" */;
+			buildConfigurationList = D29BE27E09C61F4300EBE023 /* Build configuration list for PBXNativeTarget "EZQuake" */;
 			buildPhases = (
 				D29BE27709C61F4200EBE023 /* Resources */,
 				D2B98F1B09C7A8CE00727E3D /* CopyFiles */,
@@ -1988,9 +1988,9 @@
 			};
 			dependencies = (
 			);
-			name = QuakeWorld;
+			name = EZQuake;
 			productName = QuakeWorld;
-			productReference = D29BE27B09C61F4200EBE023 /* QuakeWorld.app */;
+			productReference = D29BE27B09C61F4200EBE023 /* EZQuake.app */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
 <plist version=\"1.0\">
@@ -2018,9 +2018,9 @@
 ";
 			productType = "com.apple.product-type.application";
 		};
-		D29BE28409C61F5200EBE023 /* GLQuakeWorld */ = {
+		D29BE28409C61F5200EBE023 /* EZQuake-GL */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = D29BE28809C61F5200EBE023 /* Build configuration list for PBXNativeTarget "GLQuakeWorld" */;
+			buildConfigurationList = D29BE28809C61F5200EBE023 /* Build configuration list for PBXNativeTarget "EZQuake-GL" */;
 			buildPhases = (
 				D29BE28109C61F5200EBE023 /* Resources */,
 				D2B98F1D09C7A8DC00727E3D /* CopyFiles */,
@@ -2052,9 +2052,9 @@
 			};
 			dependencies = (
 			);
-			name = GLQuakeWorld;
+			name = "EZQuake-GL";
 			productName = GLQuakeWorld;
-			productReference = D29BE28509C61F5200EBE023 /* GLQuakeWorld.app */;
+			productReference = D29BE28509C61F5200EBE023 /* EZQuake-GL.app */;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
 <plist version=\"1.0\">
@@ -2105,8 +2105,8 @@
 			mainGroup = 29B97314FDCFA39411CA2CEA /* Quake */;
 			projectDirPath = "";
 			targets = (
-				D29BE27A09C61F4200EBE023 /* QuakeWorld */,
-				D29BE28409C61F5200EBE023 /* GLQuakeWorld */,
+				D29BE27A09C61F4200EBE023 /* EZQuake */,
+				D29BE28409C61F5200EBE023 /* EZQuake-GL */,
 			);
 		};
 /* End PBXProject section */
@@ -2638,7 +2638,7 @@
 					"-lexpat",
 				);
 				PREBINDING = NO;
-				PRODUCT_NAME = QuakeWorld;
+				PRODUCT_NAME = EZQuake;
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
 			};
@@ -2672,7 +2672,7 @@
 					"-lexpat",
 				);
 				PREBINDING = NO;
-				PRODUCT_NAME = QuakeWorld;
+				PRODUCT_NAME = EZQuake;
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -2752,7 +2752,7 @@
 					"-lpng",
 				);
 				PREBINDING = NO;
-				PRODUCT_NAME = GLQuakeWorld;
+				PRODUCT_NAME = "EZQuake-GL";
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -2771,7 +2771,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		D29BE27E09C61F4300EBE023 /* Build configuration list for PBXNativeTarget "QuakeWorld" */ = {
+		D29BE27E09C61F4300EBE023 /* Build configuration list for PBXNativeTarget "EZQuake" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D29BE27F09C61F4300EBE023 /* Debug */,
@@ -2780,7 +2780,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		D29BE28809C61F5200EBE023 /* Build configuration list for PBXNativeTarget "GLQuakeWorld" */ = {
+		D29BE28809C61F5200EBE023 /* Build configuration list for PBXNativeTarget "EZQuake-GL" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D29BE28909C61F5200EBE023 /* Debug */,
