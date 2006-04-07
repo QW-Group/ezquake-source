@@ -206,8 +206,8 @@ BOOL				GL_CheckARBMultisampleExtension (CGDirectDisplayID theDisplay);
 static	BOOL		GL_ExtensionSupported (const char *theExtension);
 #if 0
 static	void		GL_CheckMultiTextureExtensions (void);
-#endif
 static	void		GL_CheckPalettedTexture (void);
+#endif
 static	void		GL_CheckPNTrianglesExtensions (void);
 static	void		GL_CheckSwitchFSAAOnTheFly (void);
 static	void		GL_CheckTextureFilterAnisotropic (void);
@@ -865,7 +865,7 @@ void	VID_Shutdown (void)
 
 void	VID_MenuDraw (void)
 {
-    qpic_t	*myPicture;
+    mpic_t	*myPicture;
     UInt8	myRow = VID_FIRST_MENU_LINE;
 	char	myString[16];
 
@@ -1146,6 +1146,7 @@ void	GL_CheckMultiTextureExtensions (void)
 
 //___________________________________________________________________________________________________GL_CheckPalettedTexture()
 
+#if 0
 void	GL_CheckPalettedTexture (void)
 {
     // will never be supported under MacOS X. nevertheless here we go...
@@ -1159,6 +1160,7 @@ void	GL_CheckPalettedTexture (void)
         gl_palettedtex = NO;
     }
 }
+#endif
 
 //_____________________________________________________________________________________________GL_CheckPNTrianglesExtensions()
 
@@ -1742,7 +1744,9 @@ void	GL_EndRendering (void)
     if (gVidDisplayFullscreen == YES)
     {
         VID_SetGamma ();
-        CGLFlushDrawable ([gGLContext cglContext]);//CGLGetCurrentContext ());
+	if (cl_multiview.value && CURRVIEW == 1 || !cl_multiview.value) {
+	    CGLFlushDrawable ([gGLContext cglContext]);//CGLGetCurrentContext ());
+	}
     }
     else
     {
