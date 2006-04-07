@@ -1508,8 +1508,10 @@ void	VID_Update (vrect_t *theRects)
 		VID_SetBlitter (_vid_default_blit_mode.value, VID_BUFFER_UPDATE);
 	}
 	
-    // blit the rendered scene to the video card:
-    gVidGraphMode.Blitter ();
+    if (cl_multiview.value && CURRVIEW == 1 || !cl_multiview.value) {
+        // blit the rendered scene to the video card:
+        gVidGraphMode.Blitter ();
+    }
 }
 
 //_________________________________________________________________________________________________________D_BeginDirectRect()
