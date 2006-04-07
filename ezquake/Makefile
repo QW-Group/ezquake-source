@@ -50,7 +50,7 @@ BUILD_DEBUG_DIR			=debug-$(ARCH)
 BUILD_RELEASE_DIR		=release-$(ARCH)
 
 # compiler flags
-PRJ_CFLAGS			=-DWITH_ZLIB -DWITH_PNG #-DEMBED_TCL -DUSE_TCL_STUBS
+PRJ_CFLAGS			=-DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DUSE_TCL_STUBS
 XMMS_CFLAGS			=-DWITH_XMMS `glib-config --cflags`
 BASE_CFLAGS			=-Wall $(PRJ_CFLAGS) $(ARCH_CFLAGS)
 BASE_RELEASE_CFLAGS		=-ffast-math -fomit-frame-pointer -fexpensive-optimizations
