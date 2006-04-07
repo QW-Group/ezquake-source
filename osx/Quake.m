@@ -1592,7 +1592,6 @@ NSLog (@"C!");
 #if 0
     quakeparms_t    myParameters;
 #endif
-    SInt32			j;
 
     // close the media scan window:
     [mediascanProgressIndicator stopAnimation: self];
