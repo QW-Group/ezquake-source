@@ -17,6 +17,7 @@
 #ifndef PNGCONF_H
 #define PNGCONF_H
 
+#define PNG_STATIC
 #define PNG_1_2_X
 
 /* 
