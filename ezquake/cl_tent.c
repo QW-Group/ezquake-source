@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.13 2006-03-06 17:33:18 vvd0 Exp $
+	$Id: cl_tent.c,v 1.14 2006-04-08 16:28:16 tonik Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -135,7 +135,7 @@ void CL_ParseBeam (model_t *m) {
 	end[2] = MSG_ReadCoord ();
 
 	if (ent == cl.viewplayernum + 1)
-		VectorCopy (end, playerbeam_end);	// for cl_trueLightning
+		VectorCopy (end, playerbeam_end);	// for cl_fakeshaft
 
 	// override any beam with the same entity
 	for (i = 0, b = cl_beams; i < MAX_BEAMS; i++, b++) {
@@ -465,7 +465,7 @@ void CL_UpdateBeams (void) {
 	beam_t *b;	
 	vec3_t dist, org;
 	entity_t ent;
-	float d, yaw, pitch, forward, truelightning;
+	float d, yaw, pitch, forward, fakeshaft;
 	extern cvar_t v_viewheight;
 
 #ifdef GLQUAKE
@@ -481,7 +481,7 @@ void CL_UpdateBeams (void) {
 	beamstodraw = bound(1, amf_lightning.value, MAX_LIGHTNINGBEAMS);
 #endif
 	
-	truelightning = bound(0, cl_trueLightning.value, cl.truelightning);
+	fakeshaft = bound(0, cl_fakeshaft.value, cl.fakeshaft);
 
 	// update lightning
 	for (i = 0, b = cl_beams; i < MAX_BEAMS; i++, b++)	{
@@ -493,7 +493,7 @@ void CL_UpdateBeams (void) {
 			VectorCopy (cl.simorg, b->start);
 			b->start[2] += cl.crouch + bound(-7, v_viewheight.value, 4);
 			VectorMA(b->start, r_shiftbeam.value, vright, b->start);
-			if (cl_trueLightning.value)	{
+			if (cl_fakeshaft.value)	{
 				vec3_t	forward, v, org, ang;
 				float	delta;
 				trace_t	trace;
@@ -506,7 +506,7 @@ void CL_UpdateBeams (void) {
 				ang[0] = -ang[0];
 				if (ang[0] < -180)
 					ang[0] += 360;
-				ang[0] += (cl.simangles[0] - ang[0]) * truelightning;
+				ang[0] += (cl.simangles[0] - ang[0]) * fakeshaft;
 
 				// lerp yaw
 				delta = cl.simangles[1] - ang[1];
@@ -514,7 +514,7 @@ void CL_UpdateBeams (void) {
 					delta -= 360;
 				if (delta < -180)
 					delta += 360;
-				ang[1] += delta * truelightning;
+				ang[1] += delta * fakeshaft;
 				ang[2] = 0;
 
 				AngleVectors (ang, forward, NULL, NULL);

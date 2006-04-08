@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.34 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: rulesets.c,v 1.35 2006-04-08 16:28:16 tonik Exp $
 
 */
 
@@ -113,7 +113,7 @@ char *Rulesets_Ruleset(void) {
 }
 
 static void Rulesets_Smackdown(void) {
-	extern cvar_t cl_trueLightning;
+	extern cvar_t cl_fakeshaft;
 	extern cvar_t cl_independentPhysics, cl_c2spps;
 	extern cvar_t cl_hud;
 	extern cvar_t cl_rollalpha;
@@ -138,7 +138,7 @@ static void Rulesets_Smackdown(void) {
 		{&amf_lightning, "0"},
 		{&amf_lightning_sparks, "0"},
 #endif
-		{&cl_trueLightning, "0"},
+		{&cl_fakeshaft, "0"},
 		{&cl_hud, "0"},
 		{&cl_rollalpha, "20"},
 		{&r_shiftbeam, "0"},

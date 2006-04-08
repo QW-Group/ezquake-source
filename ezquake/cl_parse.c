@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.44 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: cl_parse.c,v 1.45 2006-04-08 16:28:16 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -1350,7 +1350,7 @@ void CL_SetInfo (void) {
 
 //Called by CL_FullServerinfo_f and CL_ParseServerInfoChange
 void CL_ProcessServerInfo (void) {
-	char *p, *fbskins, *truelightning, *minlight, *watervis;
+	char *p, *fbskins, *minlight, *watervis;
 	int teamplay, fpd;
 	qbool skin_refresh, standby, countdown;
 
@@ -1363,12 +1363,12 @@ void CL_ProcessServerInfo (void) {
 
 	if (cls.demoplayback) {
 		cl.allow_lumas = true;
-		cl.watervis = cl.fbskins = cl.truelightning = 1;
+		cl.watervis = cl.fbskins = cl.fakeshaft = 1;
 		fpd = 0;
 	} else if (cl.spectator) {
 		// START shaman - allow spectators to have transparent turbulence {
 		cl.allow_lumas = true;
-		cl.watervis = cl.fbskins = cl.truelightning = 1;
+		cl.watervis = cl.fbskins = cl.fakeshaft = 1;
 		// } END shaman - allow spectators to have transparent turbulence
 		fpd = atoi(Info_ValueForKey(cl.serverinfo, "fpd"));	
 	} else {
@@ -1376,8 +1376,10 @@ void CL_ProcessServerInfo (void) {
 		cl.allow_lumas = !strcmp(Info_ValueForKey(cl.serverinfo, "24bit_fbs"), "1") ? true : false;
 		cl.fbskins = *(fbskins = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(fbskins), 1) :
 		cl.teamfortress ? 0 : 1;
-		cl.truelightning = *(truelightning = Info_ValueForKey(cl.serverinfo, "truelightning")) ?
-			bound(0, Q_atof(truelightning), 1) : 1;
+		cl.fakeshaft = *(p = Info_ValueForKey(cl.serverinfo, "fakeshaft")) ?
+			bound(0, Q_atof(p), 1) :
+			*(p = Info_ValueForKey(cl.serverinfo, "truelightning")) ?
+			bound(0, Q_atof(p), 1) : 1;
 		fpd = atoi(Info_ValueForKey(cl.serverinfo, "fpd"));
 	}
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.68 2006-04-06 13:51:35 tonik Exp $
+	$Id: cl_main.c,v 1.69 2006-04-08 16:28:16 tonik Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -74,7 +74,7 @@ cvar_t	cl_muzzleflash = {"cl_muzzleflash", "1"};
 cvar_t	cl_rocket2grenade = {"cl_r2g", "0"};
 cvar_t	cl_demospeed = {"cl_demospeed", "1"};
 cvar_t	cl_staticsounds = {"cl_staticSounds", "1"};
-cvar_t	cl_trueLightning = {"cl_trueLightning", "0"};
+cvar_t	cl_fakeshaft = {"cl_fakeshaft", "0"};
 cvar_t	cl_parseWhiteText = {"cl_parseWhiteText", "1"};
 cvar_t	cl_filterdrawviewmodel = {"cl_filterdrawviewmodel", "0"};
 cvar_t	cl_oldPL = {"cl_oldPL", "0"};
@@ -467,7 +467,7 @@ void CL_ClearState (void) {
 //This is also called on Host_Error, so it shouldn't cause any errors
 void CL_Disconnect (void) {
 
-	extern cvar_t r_lerpframes, cl_trueLightning;
+	extern cvar_t r_lerpframes, cl_fakeshaft;
 
 #ifdef GLQUAKE
 	extern cvar_t gl_polyblend, gl_clear;
@@ -491,7 +491,7 @@ void CL_Disconnect (void) {
 	CURRVIEW = 0;
 	scr_viewsize.value =  nViewsizeExit;
 	v_contrast.value = nContrastExit;
-	cl_trueLightning.value = nTruelightning;
+	cl_fakeshaft.value = nfakeshaft;
 #ifdef GLQUAKE
 	gl_polyblend.value = nPolyblendExit;
 	gl_clear.value = nGlClearExit;
@@ -835,7 +835,8 @@ void CL_InitLocal (void) {
 	Cvar_Register (&r_rocketlightcolor);
 	Cvar_Register (&r_explosionlightcolor);
 	Cvar_Register (&r_flagcolor);
-	Cvar_Register (&cl_trueLightning);
+	Cvar_Register (&cl_fakeshaft);
+	Cmd_AddLegacyCommand ("cl_truelightning", "cl_fakeshaft");
 	Cvar_Register (&r_telesplash);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SKIN);
@@ -1291,7 +1292,7 @@ void CL_Frame (double time) {
 	if (!bExitmultiview) {
 		nContrastExit = v_contrast.value;
 		nViewsizeExit = scr_viewsize.value;
-		nTruelightning = cl_trueLightning.value;
+		nfakeshaft = cl_fakeshaft.value;
 #ifdef GLQUAKE
 		nPolyblendExit = gl_polyblend.value;
 		nGlClearExit = gl_clear.value;
@@ -1313,7 +1314,7 @@ void CL_Frame (double time) {
 	if (bExitmultiview && !cl_multiview.value) {
 		scr_viewsize.value =  nViewsizeExit;
 		v_contrast.value = nContrastExit;
-		cl_trueLightning.value = nTruelightning;
+		cl_fakeshaft.value = nfakeshaft;
 #ifdef GLQUAKE
 		gl_polyblend.value = nPolyblendExit;
 		gl_clear.value = nGlClearExit;
@@ -1444,9 +1445,9 @@ void CL_Multiview(void) {
 	v_contrast.value = 1;
 #endif
 
-	// stop truelightning as it lerps with the other views
-	if (cl_trueLightning.value < 1 && cl_trueLightning.value > 0)
-		cl_trueLightning.value = 0;
+	// stop fakeshaft as it lerps with the other views
+	if (cl_fakeshaft.value < 1 && cl_fakeshaft.value > 0)
+		cl_fakeshaft.value = 0;
 
 	// allow mvinset 1 to use viewsize value
 	if ((!cl_mvinset.value && cl_multiview.value == 2) || cl_multiview.value != 2)
