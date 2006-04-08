@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: image.c,v 1.19 2006-03-29 17:38:13 oldmanuk Exp $
+	$Id: image.c,v 1.20 2006-04-08 13:15:01 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -420,9 +420,9 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp) {
 #endif
 
 /************************************ PNG ************************************/
-
 #ifdef WITH_PNG
 
+#ifndef WITH_PNG_STATIC
 
 static QLIB_HANDLETYPE_T png_handle = NULL;
 static QLIB_HANDLETYPE_T zlib_handle = NULL;
@@ -795,6 +795,247 @@ int Image_WritePNGPLTE (char *filename, int compression,
 	return true;
 }
 
+#else
+
+static void PNG_IO_user_read_data(png_structp png_ptr, png_bytep data, png_size_t length) {
+	FILE *f = (FILE *) png_get_io_ptr(png_ptr);
+	fread(data, 1, length, f);
+}
+
+static void PNG_IO_user_write_data(png_structp png_ptr, png_bytep data, png_size_t length) {
+	FILE *f = (FILE *) png_get_io_ptr(png_ptr);
+	fwrite(data, 1, length, f);
+}
+
+static void PNG_IO_user_flush_data(png_structp png_ptr) {
+	FILE *f = (FILE *) png_get_io_ptr(png_ptr);
+	fflush(f);
+}
+
+
+byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight) {
+	byte header[8], **rowpointers, *data;
+	png_structp png_ptr;
+	png_infop pnginfo;
+	int y, width, height, bitdepth, colortype, interlace, compression, filter, bytesperpixel;
+	unsigned long rowbytes;
+
+	if (!fin && FS_FOpenFile (filename, &fin) == -1)
+		return NULL;
+
+	fread(header, 1, 8, fin);
+
+	if (png_sig_cmp(header, 0, 8)) {
+		Com_DPrintf ("Invalid PNG image %s\n", COM_SkipPath(filename));
+		fclose(fin);
+		return NULL;
+	}
+
+	if (!(png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) {
+		fclose(fin);
+		return NULL;
+	}
+
+	if (!(pnginfo = png_create_info_struct(png_ptr))) {
+		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+		fclose(fin);
+		return NULL;
+	}
+
+	if (setjmp(png_ptr->jmpbuf)) {
+		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+		fclose(fin);
+		return NULL;
+	}
+
+    png_set_read_fn(png_ptr, fin, PNG_IO_user_read_data);
+	png_set_sig_bytes(png_ptr, 8);
+	png_read_info(png_ptr, pnginfo);
+	png_get_IHDR(png_ptr, pnginfo, (png_uint_32 *) &width, (png_uint_32 *) &height, &bitdepth,
+		&colortype, &interlace, &compression, &filter);
+
+	if (width > IMAGE_MAX_DIMENSIONS || height > IMAGE_MAX_DIMENSIONS) {
+		Com_DPrintf ("PNG image %s exceeds maximum supported dimensions\n", COM_SkipPath(filename));
+		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+		fclose(fin);
+		return NULL;
+	}
+
+	if ((matchwidth && width != matchwidth) || (matchheight && height != matchheight)) {
+		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+		fclose(fin);
+		return NULL;
+	}
+
+	if (colortype == PNG_COLOR_TYPE_PALETTE) {
+		png_set_palette_to_rgb(png_ptr);
+		png_set_filler(png_ptr, 255, PNG_FILLER_AFTER);		
+	}
+
+	if (colortype == PNG_COLOR_TYPE_GRAY && bitdepth < 8) 
+		png_set_gray_1_2_4_to_8(png_ptr);
+	
+	if (png_get_valid(png_ptr, pnginfo, PNG_INFO_tRNS))	
+		png_set_tRNS_to_alpha(png_ptr);
+
+	if (colortype == PNG_COLOR_TYPE_GRAY || colortype == PNG_COLOR_TYPE_GRAY_ALPHA)
+		png_set_gray_to_rgb(png_ptr);
+
+	if (colortype != PNG_COLOR_TYPE_RGBA)				
+		png_set_filler(png_ptr, 255, PNG_FILLER_AFTER);
+
+	if (bitdepth < 8)
+		png_set_expand (png_ptr);
+	else if (bitdepth == 16)
+		png_set_strip_16(png_ptr);
+
+
+	png_read_update_info(png_ptr, pnginfo);
+	rowbytes = png_get_rowbytes(png_ptr, pnginfo);
+	bytesperpixel = png_get_channels(png_ptr, pnginfo);
+	bitdepth = png_get_bit_depth(png_ptr, pnginfo);
+
+	if (bitdepth != 8 || bytesperpixel != 4) {
+		Com_DPrintf ("Unsupported PNG image %s: Bad color depth and/or bpp\n", COM_SkipPath(filename));
+		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+		fclose(fin);
+		return NULL;
+	}
+
+	data = (byte *) Q_malloc(height * rowbytes );
+	rowpointers = (byte **) Q_malloc(height * sizeof(*rowpointers));
+
+	for (y = 0; y < height; y++)
+		rowpointers[y] = data + y * rowbytes;
+
+	png_read_image(png_ptr, rowpointers);
+	png_read_end(png_ptr, NULL);
+
+	png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+	Q_free(rowpointers);
+	fclose(fin);
+	image_width = width;
+	image_height = height;
+	return data;
+}
+
+int Image_WritePNG (char *filename, int compression, byte *pixels, int width, int height) {
+	char name[MAX_OSPATH];
+	int i, bpp = 3, pngformat, width_sign;
+	FILE *fp;
+	png_structp png_ptr;
+	png_infop info_ptr;
+	png_byte **rowpointers;
+	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);
+
+	width_sign = (width < 0) ? -1 : 1;
+	width = abs(width);
+
+	if (!(fp = fopen (name, "wb"))) {
+		COM_CreatePath (name);
+		if (!(fp = fopen (name, "wb")))
+			return false;
+	}
+
+	if (!(png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) {
+		fclose(fp);
+		return false;
+	}
+
+	if (!(info_ptr = png_create_info_struct(png_ptr))) {
+		png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
+		fclose(fp);
+		return false;
+	}
+
+	if (setjmp(png_ptr->jmpbuf)) {
+		png_destroy_write_struct(&png_ptr, &info_ptr);
+		fclose(fp);
+		return false;
+	}
+
+    png_set_write_fn(png_ptr, fp, PNG_IO_user_write_data, PNG_IO_user_flush_data);
+	png_set_compression_level(png_ptr, bound(Z_NO_COMPRESSION, compression, Z_BEST_COMPRESSION));
+
+	pngformat = (bpp == 4) ? PNG_COLOR_TYPE_RGBA : PNG_COLOR_TYPE_RGB;
+	png_set_IHDR(png_ptr, info_ptr, width, height, 8, pngformat,
+		PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+
+	png_write_info(png_ptr, info_ptr);
+
+	rowpointers = (png_byte **) Q_malloc (height * sizeof(*rowpointers));
+	for (i = 0; i < height; i++)
+		rowpointers[i] = pixels + i * width_sign * width * bpp;
+	png_write_image(png_ptr, rowpointers);
+	png_write_end(png_ptr, info_ptr);
+	Q_free(rowpointers);
+	png_destroy_write_struct(&png_ptr, &info_ptr);
+	fclose(fp);
+	return true;
+}
+
+int Image_WritePNGPLTE (char *filename, int compression,
+#ifdef GLQUAKE
+	byte *pixels, int width, int height, byte *palette)
+#else
+	byte *pixels, int width, int height, int rowbytes, byte *palette)
+#endif
+{
+#ifdef GLQUAKE
+	int rowbytes = width;
+#endif
+	int i;
+	char name[MAX_OSPATH];
+	FILE *fp;
+	png_structp png_ptr;
+	png_infop info_ptr;
+	png_byte **rowpointers;
+
+	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);
+	
+	if (!(fp = fopen (name, "wb"))) {
+		COM_CreatePath (name);
+		if (!(fp = fopen (name, "wb")))
+			return false;
+	}
+
+	if (!(png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) {
+		fclose(fp);
+		return false;
+	}
+
+	if (!(info_ptr = png_create_info_struct(png_ptr))) {
+		png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
+		fclose(fp);
+		return false;
+	}
+
+	if (setjmp(png_ptr->jmpbuf)) {
+		png_destroy_write_struct(&png_ptr, &info_ptr);
+		fclose(fp);
+		return false;
+	}
+
+    png_set_write_fn(png_ptr, fp, PNG_IO_user_write_data, PNG_IO_user_flush_data);
+	png_set_compression_level(png_ptr, bound(Z_NO_COMPRESSION, compression, Z_BEST_COMPRESSION));
+
+	png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_PALETTE,
+		PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	png_set_PLTE(png_ptr, info_ptr, (png_color *) palette, 256);
+
+	png_write_info(png_ptr, info_ptr);
+
+	rowpointers = (png_byte **) Q_malloc (height * sizeof(*rowpointers));
+	for (i = 0; i < height; i++)
+		rowpointers[i] = pixels + i * rowbytes;
+	png_write_image(png_ptr, rowpointers);
+	png_write_end(png_ptr, info_ptr);
+	Q_free(rowpointers);
+	png_destroy_write_struct(&png_ptr, &info_ptr);
+	fclose(fp);
+	return true;
+}
+#endif
 #endif
 
 /************************************ TGA ************************************/
@@ -1026,6 +1267,7 @@ int Image_WriteTGA (char *filename, byte *pixels, int width, int height) {
 
 #ifdef WITH_JPEG
 
+#ifndef WITH_JPEG_STATIC
 
 static QLIB_HANDLETYPE_T jpeg_handle = NULL;
 
@@ -1207,6 +1449,128 @@ int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int he
 	return true;
 }
 
+#else
+
+#define jpeg_create_compress(cinfo) \
+    jpeg_CreateCompress((cinfo), JPEG_LIB_VERSION, (size_t) sizeof(struct jpeg_compress_struct))
+
+typedef struct {
+  struct jpeg_destination_mgr pub; 
+  FILE *outfile;
+  JOCTET *buffer;
+} my_destination_mgr;
+
+typedef my_destination_mgr *my_dest_ptr;
+
+#define JPEG_OUTPUT_BUF_SIZE  4096
+
+static qbool jpeg_in_error = false;
+
+static void JPEG_IO_init_destination(j_compress_ptr cinfo) {
+	my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
+	dest->buffer = (JOCTET *) (cinfo->mem->alloc_small)
+		((j_common_ptr) cinfo, JPOOL_IMAGE, JPEG_OUTPUT_BUF_SIZE * sizeof(JOCTET));
+	dest->pub.next_output_byte = dest->buffer;
+	dest->pub.free_in_buffer = JPEG_OUTPUT_BUF_SIZE;
+}
+
+static boolean JPEG_IO_empty_output_buffer (j_compress_ptr cinfo) {
+	my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
+
+	if (fwrite(dest->buffer, 1, JPEG_OUTPUT_BUF_SIZE, dest->outfile) != JPEG_OUTPUT_BUF_SIZE) {
+		jpeg_in_error = true;
+		return false;
+	}
+	dest->pub.next_output_byte = dest->buffer;
+	dest->pub.free_in_buffer = JPEG_OUTPUT_BUF_SIZE;
+	return true;
+}
+
+static void JPEG_IO_term_destination (j_compress_ptr cinfo) {
+	my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
+	size_t datacount = JPEG_OUTPUT_BUF_SIZE - dest->pub.free_in_buffer;
+
+	if (datacount > 0) {
+		if (fwrite(dest->buffer, 1, datacount, dest->outfile) != datacount) {
+			jpeg_in_error = true;
+			return;
+		}
+	}
+	fflush(dest->outfile);
+}
+
+static void JPEG_IO_set_dest (j_compress_ptr cinfo, FILE *outfile) {
+	my_dest_ptr dest;
+
+	if (!cinfo->dest) {
+		cinfo->dest = (struct jpeg_destination_mgr *) (cinfo->mem->alloc_small)(
+							(j_common_ptr) cinfo,JPOOL_PERMANENT, sizeof(my_destination_mgr));
+	}
+
+	dest = (my_dest_ptr) cinfo->dest;
+	dest->pub.init_destination = JPEG_IO_init_destination;
+	dest->pub.empty_output_buffer = JPEG_IO_empty_output_buffer;
+	dest->pub.term_destination = JPEG_IO_term_destination;
+	dest->outfile = outfile;
+}
+
+typedef struct my_error_mgr {
+  struct jpeg_error_mgr pub;
+  jmp_buf setjmp_buffer;
+} jpeg_error_mgr_wrapper;
+
+void jpeg_error_exit (j_common_ptr cinfo) {	
+  longjmp(((jpeg_error_mgr_wrapper *) cinfo->err)->setjmp_buffer, 1);
+}
+
+
+int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int height) {
+	char name[MAX_OSPATH];
+	FILE *outfile;
+	jpeg_error_mgr_wrapper jerr;
+	struct jpeg_compress_struct cinfo;
+	JSAMPROW row_pointer[1];
+
+	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);	
+	if (!(outfile = fopen (name, "wb"))) {
+		COM_CreatePath (name);
+		if (!(outfile = fopen (name, "wb")))
+			return false;
+	}
+
+	cinfo.err = jpeg_std_error(&jerr.pub);
+	jerr.pub.error_exit = jpeg_error_exit;
+	if (setjmp(jerr.setjmp_buffer)) {
+		fclose(outfile);
+		return false;
+	}
+	jpeg_create_compress(&cinfo);
+
+	jpeg_in_error = false;
+	JPEG_IO_set_dest(&cinfo, outfile);
+
+	cinfo.image_width = abs(width); 	
+	cinfo.image_height = height;
+	cinfo.input_components = 3;
+	cinfo.in_color_space = JCS_RGB;
+	jpeg_set_defaults(&cinfo);
+	jpeg_set_quality (&cinfo, bound(0, quality, 100), true);
+	jpeg_start_compress(&cinfo, true);
+
+	while (cinfo.next_scanline < height) {
+	    *row_pointer = &pixels[cinfo.next_scanline * width * 3];
+	    jpeg_write_scanlines(&cinfo, row_pointer, 1);
+		if (jpeg_in_error)
+			break;
+	}
+
+	jpeg_finish_compress(&cinfo);
+	fclose(outfile);
+	jpeg_destroy_compress(&cinfo);
+	return true;
+}
+
+#endif
 #endif
 
 /************************************ PCX ************************************/
@@ -1396,13 +1760,17 @@ int Image_WritePCX (char *filename, byte *data, int width, int height, int rowby
 void Image_Init(void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREENSHOTS);
 #ifdef WITH_PNG
+#ifndef WITH_PNG_STATIC
 	if (PNG_LoadLibrary())
 		QLib_RegisterModule(qlib_libpng, PNG_FreeLibrary);
+#endif
 	Cvar_Register (&image_png_compression_level);
 #endif
 #ifdef WITH_JPEG
+#ifndef WITH_JPEG_STATIC
 	if (JPEG_LoadLibrary())
 		QLib_RegisterModule(qlib_libjpeg, JPEG_FreeLibrary);
+#endif
 	Cvar_Register (&image_jpeg_quality_level);
 #endif
 

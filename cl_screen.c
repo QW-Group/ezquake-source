@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_screen.c,v 1.46 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: cl_screen.c,v 1.47 2006-04-08 13:15:01 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -33,15 +33,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 int				glx, gly, glwidth, glheight;
 #endif
 
+/*
 #ifdef GLQUAKE
 #define			DEFAULT_SSHOT_FORMAT		"tga"
 #else
 #define			DEFAULT_SSHOT_FORMAT		"pcx"
 #endif
+*/
+#define			DEFAULT_SSHOT_FORMAT		"png"
 
 
 char *COM_FileExtension (char *in);
-
 
 extern byte	current_pal[768];	// Tonik
 
@@ -49,95 +51,95 @@ extern cvar_t	scr_newHud;		// HUD -> hexum
 
 
 // only the refresh window will be updated unless these variables are flagged 
-int				scr_copytop;
-int				scr_copyeverything;
+int		scr_copytop;
+int		scr_copyeverything;
 
-float			scr_con_current;
-float			scr_conlines;           // lines of console to display
+float	scr_con_current;
+float	scr_conlines;           // lines of console to display
 
-float			oldscreensize, oldfov, oldsbar;
+float	oldscreensize, oldfov, oldsbar;
 
 
-qbool OnFovChange (cvar_t *var, char *value);
-qbool OnDefaultFovChange (cvar_t *var, char *value);
-cvar_t			scr_fov = {"fov", "90", CVAR_ARCHIVE, OnFovChange};	// 10 - 140
-cvar_t			default_fov = {"default_fov", "90", CVAR_ARCHIVE, OnDefaultFovChange};
-cvar_t			scr_viewsize = {"viewsize", "100", CVAR_ARCHIVE};
-cvar_t			scr_consize = {"scr_consize", "0.75"};
-cvar_t			scr_conspeed = {"scr_conspeed", "1000"};
-cvar_t			scr_centertime = {"scr_centertime", "2"};
-cvar_t		    	scr_centershift = {"scr_centershift", "0"}; // BorisU
-cvar_t			scr_showram = {"showram", "1"};
-cvar_t			scr_showturtle = {"showturtle", "0"};
-cvar_t			scr_showpause = {"showpause", "1"};
-cvar_t			scr_printspeed = {"scr_printspeed", "8"};
-qbool OnChange_scr_allowsnap(cvar_t *, char *);
-cvar_t			scr_allowsnap = {"scr_allowsnap", "1", 0, OnChange_scr_allowsnap};
+qbool	OnFovChange (cvar_t *var, char *value);
+qbool	OnDefaultFovChange (cvar_t *var, char *value);
+cvar_t	scr_fov = {"fov", "90", CVAR_ARCHIVE, OnFovChange};	// 10 - 140
+cvar_t	default_fov = {"default_fov", "90", CVAR_ARCHIVE, OnDefaultFovChange};
+cvar_t	scr_viewsize = {"viewsize", "100", CVAR_ARCHIVE};
+cvar_t	scr_consize = {"scr_consize", "0.75"};
+cvar_t	scr_conspeed = {"scr_conspeed", "1000"};
+cvar_t	scr_centertime = {"scr_centertime", "2"};
+cvar_t	scr_centershift = {"scr_centershift", "0"}; // BorisU
+cvar_t	scr_showram = {"showram", "1"};
+cvar_t	scr_showturtle = {"showturtle", "0"};
+cvar_t	scr_showpause = {"showpause", "1"};
+cvar_t	scr_printspeed = {"scr_printspeed", "8"};
+qbool	OnChange_scr_allowsnap(cvar_t *, char *);
+cvar_t	scr_allowsnap = {"scr_allowsnap", "1", 0, OnChange_scr_allowsnap};
 
-cvar_t			scr_clock = {"cl_clock", "0"};
-cvar_t			scr_clock_x = {"cl_clock_x", "0"};
-cvar_t			scr_clock_y = {"cl_clock_y", "-1"};
+cvar_t	scr_clock = {"cl_clock", "0"};
+cvar_t	scr_clock_x = {"cl_clock_x", "0"};
+cvar_t	scr_clock_y = {"cl_clock_y", "-1"};
 
-cvar_t			scr_gameclock = {"cl_gameclock", "0"};
-cvar_t			scr_gameclock_x = {"cl_gameclock_x", "0"};
-cvar_t			scr_gameclock_y = {"cl_gameclock_y", "-3"};
+cvar_t	scr_gameclock = {"cl_gameclock", "0"};
+cvar_t	scr_gameclock_x = {"cl_gameclock_x", "0"};
+cvar_t	scr_gameclock_y = {"cl_gameclock_y", "-3"};
 
-cvar_t			scr_democlock = {"cl_democlock", "0"};
-cvar_t			scr_democlock_x = {"cl_democlock_x", "0"};
-cvar_t			scr_democlock_y = {"cl_democlock_y", "-2"};
+cvar_t	scr_democlock = {"cl_democlock", "0"};
+cvar_t	scr_democlock_x = {"cl_democlock_x", "0"};
+cvar_t	scr_democlock_y = {"cl_democlock_y", "-2"};
 
-cvar_t			show_speed = {"show_speed", "0"};
-cvar_t			show_speed_x = {"show_speed_x", "-1"};
-cvar_t			show_speed_y = {"show_speed_y", "1"};
+cvar_t	show_speed = {"show_speed", "0"};
+cvar_t	show_speed_x = {"show_speed_x", "-1"};
+cvar_t	show_speed_y = {"show_speed_y", "1"};
 
-cvar_t			show_fps = {"show_fps", "0"};
-cvar_t			show_fps_x = {"show_fps_x", "-5"};
-cvar_t			show_fps_y = {"show_fps_y", "-1"};
+cvar_t	show_fps = {"show_fps", "0"};
+cvar_t	show_fps_x = {"show_fps_x", "-5"};
+cvar_t	show_fps_y = {"show_fps_y", "-1"};
 
-cvar_t			scr_sshot_format		= {"sshot_format", DEFAULT_SSHOT_FORMAT};
-cvar_t			scr_sshot_dir			= {"sshot_dir", ""};
+cvar_t	scr_sshot_format		= {"sshot_format", DEFAULT_SSHOT_FORMAT};
+cvar_t	scr_sshot_dir			= {"sshot_dir", ""};
 
 // QW262 -->
-cvar_t			cl_hud = {"cl_hud", "1"};
+cvar_t	cl_hud = {"cl_hud", "1"};
 // <-- QW262
 
 #ifdef GLQUAKE
-cvar_t			gl_triplebuffer = {"gl_triplebuffer", "1", CVAR_ARCHIVE};
+cvar_t	gl_triplebuffer = {"gl_triplebuffer", "1", CVAR_ARCHIVE};
 #endif
 
-cvar_t			scr_autoid		= {"scr_autoid", "0"};
-cvar_t			scr_coloredText = {"scr_coloredText", "1"};
+cvar_t	scr_autoid		= {"scr_autoid", "0"};
+cvar_t	scr_coloredText = {"scr_coloredText", "1"};
 
 // START shaman RFE 1022309
-cvar_t			scr_tracking			= {"scr_tracking", "Tracking %t %n, [JUMP] for next"};
-cvar_t			scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
+cvar_t	scr_tracking			= {"scr_tracking", "Tracking %t %n, [JUMP] for next"};
+cvar_t	scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
 // END shaman RFE 1022309
 
 
 
 
-qbool		scr_initialized;                // ready to draw
+qbool	scr_initialized;                // ready to draw
 
-mpic_t			*scr_ram;
-mpic_t			*scr_net;
-mpic_t			*scr_turtle;
+mpic_t	*scr_ram;
+mpic_t	*scr_net;
+mpic_t	*scr_turtle;
 
-int				scr_fullupdate;
+int		scr_fullupdate;
 
-int				clearconsole;
-int				clearnotify;
+int		clearconsole;
+int		clearnotify;
 
-viddef_t		vid;                            // global video state
+viddef_t vid; // global video state
 
-vrect_t			scr_vrect;
+vrect_t	scr_vrect;
 
-qbool		scr_skipupdate;
+qbool	scr_skipupdate;
 
-qbool		scr_drawloading;
-qbool		scr_disabled_for_loading;
-float			scr_disabled_time;
+qbool	scr_drawloading;
+qbool	scr_disabled_for_loading;
+float	scr_disabled_time;
 
-qbool		block_drawing;
+qbool	block_drawing;
 
 
 static int scr_autosshot_countdown = 0;
@@ -874,7 +876,7 @@ hud_element_t *Hud_FindElement(char *name)
 
 static hud_element_t* Hud_NewElement(void)
 {
-	hud_element_t* elem;
+	hud_element_t*	elem;
 	elem = (hud_element_t *) Q_malloc (sizeof(hud_element_t));
 	elem->next = hud_list;
 	hud_list = elem;
@@ -957,11 +959,11 @@ void Hud_Add_f(void)
 		/*} else if (!strcasecmp(a2, "std")) { // to add armor, health, ammo, speed
 			if (!strcasecmp(a3, "lag"))
 				func = &Hud_LagmeterStr;
-			else if (!strcasecmp(a3, "fps"))
+			else if (!Q_strcasecmp(a3, "fps"))
 				func = &Hud_FpsStr;
 			else if (!strcasecmp(a3, "clock"))
 				func = &Hud_ClockStr;
-			else if (!strcasecmp(a3, "speed"))
+			else if (!Q_strcasecmp(a3, "speed"))
 				func = &Hud_SpeedStr;
 			else {
 				Com_Printf("\"%s\" is not a standard hud function\n", a3);
@@ -2085,11 +2087,14 @@ int SCR_Screenshot(char *name) {
 
 #ifdef WITH_PNG
 	if (format == IMAGE_PNG) {
+#ifndef WITH_PNG_STATIC
 		if (QLib_isModuleLoaded(qlib_libpng)) {
+#endif
 			applyHWGamma(buffer, buffersize);
 			success = Image_WritePNG(name, image_png_compression_level.value,
 					buffer + buffersize - 3 * glwidth, -glwidth, glheight)
 				? SSHOT_SUCCESS : SSHOT_FAILED;
+#ifndef WITH_PNG_STATIC
 		} else {
 			Com_Printf("Can't take a PNG screenshot without libpng.");
 			if (SShot_FormatForName("noext") == IMAGE_PNG)
@@ -2097,16 +2102,20 @@ int SCR_Screenshot(char *name) {
 			Com_Printf("\n");
 			success = SSHOT_FAILED_QUIET;
 		}
+#endif
 	}
 #endif
 
 #ifdef WITH_JPEG
 	if (format == IMAGE_JPEG) {
+#ifndef WITH_JPEG_STATIC
 		if (QLib_isModuleLoaded(qlib_libjpeg)) {
+#endif
 			applyHWGamma(buffer, buffersize);
 			success = Image_WriteJPEG(name, image_jpeg_quality_level.value,
 					buffer + buffersize - 3 * glwidth, -glwidth, glheight)
 				? SSHOT_SUCCESS : SSHOT_FAILED;;
+#ifndef WITH_JPEG_STATIC
 		} else {
 			Com_Printf("Can't take a JPEG screenshot without libjpeg.");
 			if (SShot_FormatForName("noext") == IMAGE_JPEG)
@@ -2114,6 +2123,7 @@ int SCR_Screenshot(char *name) {
 			Com_Printf("\n");
 			success = SSHOT_FAILED_QUIET;
 		}
+#endif
 	}
 #endif
 
@@ -2147,10 +2157,13 @@ int SCR_Screenshot(char *name) {
 
 #ifdef WITH_PNG
 	if (format == IMAGE_PNG) {
+#ifndef WITH_PNG_STATIC
 		if (QLib_isModuleLoaded(qlib_libpng)) {
+#endif
 			success = Image_WritePNGPLTE(name, image_png_compression_level.value,
 					vid.buffer, vid.width, vid.height, vid.rowbytes, current_pal)
 					? SSHOT_SUCCESS : SSHOT_FAILED;
+#ifndef WITH_PNG_STATIC
 		} else {
 			Com_Printf("Can't take a PNG screenshot without libpng.");
 			if (SShot_FormatForName("noext") == IMAGE_PNG)
@@ -2158,6 +2171,7 @@ int SCR_Screenshot(char *name) {
 			Com_Printf("\n");
 			success = SSHOT_FAILED_QUIET;
 		}
+#endif
 	}
 #endif
 
@@ -2222,7 +2236,7 @@ void SCR_ScreenShot_f (void) {
 			strlcpy(ext, "jpg", 4);
 #endif
 		if (!ext[0])
-			strlcpy(ext, DEFAULT_SSHOT_FORMAT, 4);
+			strlcpy(ext, DEFAULT_SSHOT_FORMAT, sizeof(ext));
 
 		for (i = 0; i < 999; i++) {
 			snprintf(name, sizeof(name), "ezquake%03i.%s", i, ext);
@@ -2281,10 +2295,14 @@ void SCR_RSShot_f (void) {
 	glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, base);
 	Image_Resample (base, glwidth, glheight, pixels, width, height, 3, 0);
 #ifdef WITH_JPEG
+#ifndef WITH_JPEG_STATIC
 	if (QLib_isModuleLoaded(qlib_libjpeg)) {
+#endif
 		success = Image_WriteJPEG (filename, 70, pixels + 3 * width * (height - 1), -width, height)
 			? SSHOT_SUCCESS : SSHOT_FAILED;
+#ifndef WITH_JPEG_STATIC
 	} else
+#endif
 #endif
 	success = Image_WriteTGA (filename, pixels, width, height)
 		? SSHOT_SUCCESS : SSHOT_FAILED;
@@ -2296,10 +2314,14 @@ void SCR_RSShot_f (void) {
 	D_EnableBackBufferAccess ();
 
 #ifdef WITH_PNG
+#ifndef WITH_PNG_STATIC
 	if (QLib_isModuleLoaded(qlib_libpng)) {
+#endif
 		success = Image_WritePNGPLTE(filename, 9, vid.buffer, vid.width, vid.height, vid.rowbytes, current_pal)
 			? SSHOT_SUCCESS : SSHOT_FAILED;
+#ifndef WITH_PNG_STATIC
 	} else
+#endif
 #endif
 	success = Image_WritePCX (filename, vid.buffer, vid.width, vid.height, vid.rowbytes, current_pal)
 		? SSHOT_SUCCESS : SSHOT_FAILED;
