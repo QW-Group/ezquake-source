@@ -410,7 +410,7 @@ typedef struct {
 	qbool	standby;
 	qbool	countdown;
 	float		fbskins;		
-	float		truelightning;	
+	float		fakeshaft;	
 	qbool	userfb;			
 	int			minlight;
 	float		watervis;
@@ -470,7 +470,7 @@ extern	cvar_t	cl_hudswap;
 extern	cvar_t	cl_deadbodyfilter;
 extern	cvar_t	cl_gibfilter;
 extern	cvar_t	cl_muzzleflash;
-extern	cvar_t	cl_trueLightning;
+extern	cvar_t	cl_fakeshaft;
 
 extern cvar_t r_rockettrail;
 extern cvar_t r_grenadetrail;
@@ -722,7 +722,7 @@ dlighttype_t dlightColor(float f, dlighttype_t def, qbool random);
 
 int CURRVIEW;
 int nNumViews;
-float nContrastExit, nCrosshairExit, nTruelightning;
+float nContrastExit, nCrosshairExit, nfakeshaft;
 int nPolyblendExit, nGlClearExit;
 int nLerpframesExit;
 int nWaterwarp;
