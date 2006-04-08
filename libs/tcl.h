@@ -13,7 +13,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tcl.h,v 1.1 2005-11-25 14:50:53 disconn3ct Exp $
+ * RCS: @(#) $Id: tcl.h,v 1.2 2006-04-08 13:10:52 disconn3ct Exp $
  */
 
 #ifndef _TCL
@@ -26,7 +26,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 /*
  * The following defines are used to indicate the various release levels.
  */
@@ -46,7 +46,8 @@ extern "C" {
  * win/makefile.vc	(not patchlevel) 2 LOC
  * README		(sections 0 and 2)
  * mac/README		(2 LOC, not patchlevel)
- * macosx/Tcl.pbproj/project.pbxproj (not patchlevel) 2 LOC
+ * macosx/Tcl.pbproj/project.pbxproj (not patchlevel) 1 LOC
+ * macosx/Tcl.pbproj/default.pbxuser (not patchlevel) 1 LOC
  * win/README.binary	(sections 0-4)
  * win/README		(not patchlevel) (sections 0 and 2)
  * unix/tcl.spec	(2 LOC Major/Minor, 1 LOC patch)
@@ -58,10 +59,10 @@ extern "C" {
 #define TCL_MAJOR_VERSION   8
 #define TCL_MINOR_VERSION   4
 #define TCL_RELEASE_LEVEL   TCL_FINAL_RELEASE
-#define TCL_RELEASE_SERIAL  9
+#define TCL_RELEASE_SERIAL  12
 
 #define TCL_VERSION	    "8.4"
-#define TCL_PATCH_LEVEL	    "8.4.9"
+#define TCL_PATCH_LEVEL	    "8.4.12"
 
 /*
  * The following definitions set up the proper options for Windows
@@ -326,6 +327,21 @@ typedef long LONG;
 #   endif
 #   define _CLIENTDATA
 #endif
+
+/*
+ * Darwin specifc configure overrides (to support fat compiles, where
+ * configure runs only once for multiple architectures):
+ */
+
+#ifdef __APPLE__
+#   ifdef __LP64__
+#	undef TCL_WIDE_INT_TYPE
+#	define TCL_WIDE_INT_IS_LONG 1
+#    else /* !__LP64__ */
+#	define TCL_WIDE_INT_TYPE long long
+#	undef TCL_WIDE_INT_IS_LONG
+#    endif /* __LP64__ */
+#endif /* __APPLE__ */
 
 /*
  * Define Tcl_WideInt to be a type that is (at least) 64-bits wide,
@@ -1425,6 +1441,14 @@ typedef int (Tcl_WaitForEventProc) _ANSI_ARGS_((Tcl_Time *timePtr));
 #define TCL_CHANNEL_VERSION_1	((Tcl_ChannelTypeVersion) 0x1)
 #define TCL_CHANNEL_VERSION_2	((Tcl_ChannelTypeVersion) 0x2)
 #define TCL_CHANNEL_VERSION_3	((Tcl_ChannelTypeVersion) 0x3)
+#define TCL_CHANNEL_VERSION_4	((Tcl_ChannelTypeVersion) 0x4)
+
+/*
+ * TIP #218: Channel Actions, Ids for Tcl_DriverThreadActionProc
+ */
+
+#define TCL_CHANNEL_THREAD_INSERT (0)
+#define TCL_CHANNEL_THREAD_REMOVE (1)
 
 /*
  * Typedefs for the various operations in a channel type:
@@ -1460,6 +1484,9 @@ typedef Tcl_WideInt (Tcl_DriverWideSeekProc) _ANSI_ARGS_((
 		    ClientData instanceData, Tcl_WideInt offset,
 		    int mode, int *errorCodePtr));
 
+  /* TIP #218, Channel Thread Actions */
+typedef void     (Tcl_DriverThreadActionProc) _ANSI_ARGS_ ((
+		    ClientData instanceData, int action));
 
 /*
  * The following declarations either map ckalloc and ckfree to
@@ -1550,6 +1577,16 @@ typedef struct Tcl_ChannelType {
 					 * handle 64-bit offsets. May be
 					 * NULL, and must be NULL if
 					 * seekProc is NULL. */
+
+     /*
+      * Only valid in TCL_CHANNEL_VERSION_4 channels or later
+      * TIP #218, Channel Thread Actions
+      */
+     Tcl_DriverThreadActionProc *threadActionProc;
+ 					/* Procedure to call to notify
+ 					 * the driver of thread specific
+ 					 * activity for a channel.
+					 * May be NULL. */
 } Tcl_ChannelType;
 
 /*
