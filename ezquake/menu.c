@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.38 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: menu.c,v 1.39 2006-04-09 17:24:06 oldmanuk Exp $
 
 */
 
@@ -181,7 +181,7 @@ void M_BuildTranslationTable(int top, int bottom) {
 		memcpy (dest + BOTTOM_RANGE, source + bottom, 16);
 	else
 		for (j = 0; j < 16; j++)
-			dest[BOTTOM_RANGE + j] = source[bottom + 15 - j];		
+			dest[BOTTOM_RANGE + j] = source[bottom + 15 - j];
 }
 
 
@@ -195,7 +195,7 @@ void M_DrawTextBox (int x, int y, int width, int lines) {
 }
 
 //=============================================================================
-		
+
 void M_ToggleMenu_f (void) {
 	m_entersound = true;
 
@@ -237,7 +237,7 @@ void M_LeaveMenu (int parent) {
 		m_entersound = true;
 	}
 }
-		
+
 //=============================================================================
 /* MAIN MENU */
 
@@ -247,7 +247,7 @@ int	m_main_cursor;
 
 void M_Menu_Main_f (void) {
 	M_EnterMenu (m_main);
-}	
+}
 
 void M_Main_Draw (void) {
 	int f;
@@ -259,7 +259,7 @@ void M_Main_Draw (void) {
 	M_DrawTransPic (72, 32, Draw_CachePic ("gfx/mainmenu.lmp") );
 
 	f = (int)(curtime * 10)%6;
-	
+
 	M_DrawTransPic (54, 32 + m_main_cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
 }
 
@@ -270,7 +270,7 @@ void M_Main_Key (int key) {
 		key_dest = key_game;
 		m_state = m_none;
 		break;
-		
+
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
 		if (--m_main_cursor < 0)
@@ -294,7 +294,7 @@ void M_Main_Key (int key) {
 		S_LocalSound ("misc/menu1.wav");
 		m_main_cursor = MAIN_ITEMS - 1;
 		break;
-	
+
 	case K_ENTER:
 		m_entersound = true;
 
@@ -397,7 +397,7 @@ void M_AdjustSliders (int dir) {
 			s_volume.value = 1;
 		Cvar_SetValue (&s_volume, s_volume.value);
 		break;
-		
+
 	case 9:	// always run
 		if (cl_forwardspeed.value > 200) {
 			Cvar_SetValue (&cl_forwardspeed, 200);
@@ -409,15 +409,15 @@ void M_AdjustSliders (int dir) {
 			Cvar_SetValue (&cl_sidespeed, 400);
 		}
 		break;
-	
+
 	case 10:	// mouse look
 		Cvar_SetValue (&freelook, !freelook.value);
 		break;
-	
+
 	case 11:	// invert mouse
 		Cvar_SetValue (&m_pitch, -m_pitch.value);
 		break;
-	
+
 	case 12:	// autoswitch weapons
 		if ((w_switch.value > 2) || (!w_switch.value) || (b_switch.value > 2) || (!b_switch.value))
 		{
@@ -528,7 +528,7 @@ void M_Options_Draw (void) {
 		default : strcpy(temp, "default"); break;
 #endif
 	}
-	M_PrintWhite (220, 152, temp); 
+	M_PrintWhite (220, 152, temp);
 
 	if (vid_menudrawfn)
 		M_Print (16, 160, "           Video modes");
@@ -648,7 +648,7 @@ void M_Options_Key (int k) {
 		options_cursor++;
 		if (options_cursor >= OPTIONS_ITEMS)
 			options_cursor = 0;
-		break;	
+		break;
 
 	case K_HOME:
 	case K_PGUP:
@@ -790,7 +790,7 @@ void M_Keys_Draw (void) {
 		M_Print (12, 32, "Press a key or button for this action");
 	else
 		M_Print (18, 32, "Enter to change, del to clear");
-		
+
 // search for known bindings
 	for (i = 0; i < NUMCOMMANDS; i++) {
 		y = 48 + 8*i;
@@ -798,9 +798,9 @@ void M_Keys_Draw (void) {
 		M_Print (16, y, bindnames[i][1]);
 
 		l = strlen (bindnames[i][0]);
-		
+
 		M_FindKeysForCommand (bindnames[i][0], keys);
-		
+
 		if (keys[0] == -1) {
 			M_Print (156, y, "???");
 		} else {
@@ -822,7 +822,7 @@ void M_Keys_Draw (void) {
 			}
 		}
 	}
-	
+
 	if (bind_grab)
 		M_DrawCharacter (142, 48 + keys_cursor*8, '=');
 	else
@@ -832,7 +832,7 @@ void M_Keys_Draw (void) {
 
 void M_Keys_Key (int k) {
 	int keys[2];
-	
+
 	if (bind_grab) {
 		// defining a key
 		S_LocalSound ("misc/menu1.wav");
@@ -845,11 +845,11 @@ void M_Keys_Key (int k) {
 		else if (k != '`')
 #endif // WITH_KEYMAP else
 			Key_SetBinding (k, bindnames[keys_cursor][0]);
-		
+
 		bind_grab = false;
 		return;
 	}
-	
+
 	switch (k) {
 	case K_BACKSPACE:
 		m_topmenu = m_none;	// intentional fallthrough
@@ -1223,7 +1223,7 @@ void M_Help_Key (int key) {
 	case K_ESCAPE:
 		M_LeaveMenu (m_main);
 		break;
-		
+
 	case K_UPARROW:
 	case K_RIGHTARROW:
 		m_entersound = true;
@@ -1314,7 +1314,7 @@ void M_SinglePlayer_Draw (void) {
 	if (m_singleplayer_notavail) {
 		p = Draw_CachePic ("gfx/ttl_sgl.lmp");
 		M_DrawPic ( (320-p->width)/2, 4, p);
-		M_DrawTextBox (60, 10*8, 24, 4);	
+		M_DrawTextBox (60, 10*8, 24, 4);
 		M_PrintWhite (80, 12*8, " Cannot start a game");
 		M_PrintWhite (80, 13*8, "spprogs.dat not found");
 		return;
@@ -1357,9 +1357,9 @@ static void StartNewGame (void) {
 	if (com_serveractive)
 		Cbuf_AddText ("disconnect\n");
 
-	
+
 	progs = (dprograms_t *) FS_LoadHunkFile ("spprogs.dat");
-	if (progs && !file_from_gamedir)	
+	if (progs && !file_from_gamedir)
 		Cbuf_AddText ("gamedir qw\n");
 	Cbuf_AddText ("map start\n");
 }
@@ -1459,7 +1459,7 @@ void M_SinglePlayer_Draw (void) {
 	M_DrawPic ( (320-p->width)/2, 4, p);
 //	M_DrawTransPic (72, 32, Draw_CachePic ("gfx/sp_menu.lmp") );
 
-	M_DrawTextBox (60, 10*8, 23, 4);	
+	M_DrawTextBox (60, 10*8, 23, 4);
 	M_PrintWhite (88, 12*8, "This client is for");
 	M_PrintWhite (88, 13*8, "Internet play only");
 }
@@ -1766,7 +1766,7 @@ void M_MP3_Control_Draw (void) {
 		M_PrintWhite(312 - 6 * 8, M_MP3_CONTROL_HEADINGROW + 8, "Paused");
 	else if (last_status == MP3_STOPPED)
 		M_PrintWhite(312 - 7 * 8, M_MP3_CONTROL_HEADINGROW + 8, "Stopped");
-	else		
+	else
 		M_PrintWhite(312 - 11 * 8, M_MP3_CONTROL_HEADINGROW + 8, "Not Running");
 
 	if (last_status == MP3_NOTRUNNING) {
@@ -1862,7 +1862,7 @@ void M_Menu_MP3_Control_Key(int key) {
 			case K_ESCAPE:
 				M_LeaveMenu (m_main);
 				break;
-			case K_ENTER:				
+			case K_ENTER:
 				if (MP3_IsActive())
 					MP3_Execute_f();
 				break;
@@ -1917,7 +1917,7 @@ void M_Menu_MP3_Control_Key(int key) {
 			switch(mp3_cursor) {
 				case 7:
 					volume = bound(0, mp3_volume.value, 1);
-					Cvar_SetValue(&mp3_volume, bound(0, volume + 0.02, 1));					
+					Cvar_SetValue(&mp3_volume, bound(0, volume + 0.02, 1));
 					break;
 				default:
 					MP3_FastForward_f();
@@ -1928,7 +1928,7 @@ void M_Menu_MP3_Control_Key(int key) {
 			switch(mp3_cursor) {
 				case 7:
 					volume = bound(0, mp3_volume.value, 1);
-					Cvar_SetValue(&mp3_volume, bound(0, volume - 0.02, 1));		
+					Cvar_SetValue(&mp3_volume, bound(0, volume - 0.02, 1));
 					break;
 				default:
 					MP3_Rewind_f();
@@ -1955,7 +1955,7 @@ void M_Menu_MP3_Control_f (void){
 }
 #endif
 
-#define PLAYLIST_MAXENTRIES		2048	
+#define PLAYLIST_MAXENTRIES		2048
 #define PLAYLIST_MAXLINES		17
 #define PLAYLIST_HEADING_ROW	8
 
@@ -1985,7 +1985,7 @@ static char *playlist_entries[PLAYLIST_MAXENTRIES];
 
 void M_Menu_MP3_Playlist_Read(void) {
 	int i, count = 0, skip = 0;
-	long length;	
+	long length;
 	char *playlist_buf = NULL;
 
 	for (i = 0; i < playlist_size; i++) {
@@ -2078,7 +2078,7 @@ menu_items:
 		return;
 	}
 
-	MP3_GetPlaylistInfo(&last_current, NULL);	
+	MP3_GetPlaylistInfo(&last_current, NULL);
 
 	for (index = playlist_base; index < playlist_size && index < playlist_base + PLAYLIST_MAXLINES; index++) {
 		char *spaces;
@@ -2094,7 +2094,7 @@ menu_items:
 			M_Print (16, PLAYLIST_HEADING_ROW + 24 + (index - playlist_base) * 8, va("%s%d %s", spaces, index + 1, name));
 		else
 			M_PrintWhite (16, PLAYLIST_HEADING_ROW + 24 + (index - playlist_base) * 8, va("%s%d %s", spaces, index + 1, name));
-	}	
+	}
 	M_DrawCharacter (8, PLAYLIST_HEADING_ROW + 24 + playlist_cursor * 8, 12 + ((int)(curtime * 4) & 1));
 
 	M_DrawCharacter (16, M_MP3_CONTROL_BARHEIGHT, 128);
@@ -2258,7 +2258,7 @@ static int			demolist_count;
 static char			demo_currentdir[MAX_OSPATH] = {0};
 static char			demo_prevdemo[MAX_DEMO_NAME] = {0};
 
-static float		last_demo_time = 0;	
+static float		last_demo_time = 0;
 
 static int			demo_cursor = 0;
 static int			demo_base = 0;
@@ -2291,7 +2291,7 @@ void Demo_playlist_start (int i){
 	demo_playlist_started=1;
 	strlcpy(track_name,demo_playlist[demo_playlist_current_played].trackname,sizeof(demo_playlist[demo_playlist_current_played].trackname));
 	Cbuf_AddText (va("playdemo \"..%s\"\n", demo_playlist[demo_playlist_current_played].path));
-	
+
 }
 
 void Demo_playlist_f (void) {
@@ -2311,13 +2311,13 @@ void Demo_playlist_f (void) {
 
 void Demo_Playlist_Next_f (void){
 	int tmp;
-	
+
 	if (demo_playlist_started == 0)
 			return;
 	tmp = demo_playlist_current_played + 1 ;
 	if (tmp>demo_playlist_num-1)
 			tmp = 0 ;
-	
+
 	Demo_playlist_start(tmp);
 }
 
@@ -2328,7 +2328,7 @@ void Demo_Playlist_Prev_f (void){
 	tmp = demo_playlist_current_played - 1 ;
 	if (tmp<0)
 			tmp = demo_playlist_num - 1 ;
-	
+
 	Com_Printf("Prev %i\n",tmp);
 	Demo_playlist_start(tmp);
 }
@@ -2346,7 +2346,7 @@ void Demo_Playlist_Clear_f (void){
 		demo_playlist[i].trackname[0]='\0';
 	}
 	demo_playlist_num = demo_playlist_started = 0;
-	
+
 }
 
 void Demo_Playlist_Stop_f (void){
@@ -2375,18 +2375,18 @@ int Demo_SortCompare(const void *p1, const void *p2) {
 	if ((retval = d2->type - d1->type) || d1->type > dt_dir)
 		return retval;
 
-	
+
 	if (d1->type == dt_dir)
 		return strcasecmp(d1->name, d2->name);
 
-	
+
 	sign = demo_reversesort ? -1 : 1;
 
 	switch (demo_sorttype) {
 	case ds_name:
 		return sign * strcasecmp(d1->name, d2->name);
 	case ds_size:
-		return sign * (d1->size - d2->size);		
+		return sign * (d1->size - d2->size);
 	case ds_time:
 #ifdef _WIN32
 		return -sign * CompareFileTime(&d1->time, &d2->time);
@@ -2402,7 +2402,7 @@ int Demo_SortCompare(const void *p1, const void *p2) {
 static void Demo_SortDemos(void) {
 	int i;
 
-	last_demo_time = 0;		
+	last_demo_time = 0;
 
 	for (i = 0; i < demolist_count; i++)
 		demolist[i] = &demolist_data[i];
@@ -2413,8 +2413,8 @@ static void Demo_SortDemos(void) {
 static void Demo_PositionCursor(void) {
 	int i;
 
-	last_demo_time = 0;		
-	demo_base = demo_cursor = 0;	
+	last_demo_time = 0;
+	demo_base = demo_cursor = 0;
 
 	if (demo_prevdemo[0]) {
 		for (i = 0; i < demolist_count; i++) {
@@ -2440,7 +2440,7 @@ static void Demo_ReadDirectory(void) {
 #ifdef _WIN32
 	HANDLE h;
 	WIN32_FIND_DATA fd;
-#else	
+#else
 	DIR *d;
 	struct dirent *dstruct;
 	struct stat fileinfo;
@@ -2455,7 +2455,7 @@ static void Demo_ReadDirectory(void) {
 		}
 	}
 
-	if (demo_currentdir[0]) {	
+	if (demo_currentdir[0]) {
 		demolist_data[0].name = Q_strdup ("..");
 		demolist_data[0].type = dt_up;
 		demolist_count = 1;
@@ -2493,9 +2493,9 @@ static void Demo_ReadDirectory(void) {
 			i = strlen(fd.cFileName);
 			if (i < 5 ||
 				(
-					strcasecmp(fd.cFileName + i - 4, ".qwd") && 
-					strcasecmp(fd.cFileName +i - 4, ".qwz") && 
-					strcasecmp(fd.cFileName + i - 4, ".mvd")	
+					strcasecmp(fd.cFileName + i - 4, ".qwd") &&
+					strcasecmp(fd.cFileName +i - 4, ".qwz") &&
+					strcasecmp(fd.cFileName + i - 4, ".mvd")
 				)
 			)
 				continue;
@@ -2518,7 +2518,7 @@ static void Demo_ReadDirectory(void) {
 			if (i < 5 ||
 				(
 					strcasecmp(dstruct->d_name + i - 4, ".qwd")
-					&& strcasecmp(dstruct->d_name + i - 4, ".mvd")	
+					&& strcasecmp(dstruct->d_name + i - 4, ".mvd")
 				)
 			)
 				continue;
@@ -2564,24 +2564,24 @@ void M_Menu_Demos_f (void) {
 
 	M_EnterMenu(m_demos);
 
-	
+
 	if (!demo_currentdir_init) {
 		demo_currentdir_init = true;
 		if (demo_dir.string[0]) {
 			for (s = demo_dir.string; *s == '/' || *s == '\\'; s++)
 				;
-			if (*s) {	
+			if (*s) {
 				strcpy(demo_currentdir, "/");
 				strncat(demo_currentdir, s, sizeof(demo_currentdir) - 1 - 1);
-				
+
 				for (s = demo_currentdir + strlen(demo_currentdir) - 1; *s == '/' || *s == '\\'; s--)
 					*s = 0;
 			}
 		} else {
-			strcpy(demo_currentdir, "/qw");	
+			strcpy(demo_currentdir, "/qw");
 		}
 	}
-	
+
 	Demo_ReadDirectory();
 }
 
@@ -2629,7 +2629,7 @@ void M_Demos_Playlist_Move_Down (int i) {
 
 	if(i+1 == demo_playlist_num )
 			return;
-	
+
 	strlcpy(tmp.name,demo_playlist[i+1].name,sizeof(demo_playlist[i+1].name));
 	strlcpy(tmp.path,demo_playlist[i+1].path,sizeof(demo_playlist[i+1].path));
 	strlcpy(tmp.trackname,demo_playlist[i+1].trackname,sizeof(demo_playlist[i+1].trackname));
@@ -2652,7 +2652,7 @@ static void Demo_FormatSize (char *t) {
 	}
 }
 
-#define DEMOLIST_NAME_WIDTH	29		
+#define DEMOLIST_NAME_WIDTH	29
 #define DEMO_PLAYLIST_MAX 100
 #define DEMO_OPTIONS_MAX 2
 
@@ -2665,12 +2665,12 @@ void M_Demos_Draw (void) {
 //	char *demos_test;
 	direntry_t *d;
 	char demoname[DEMOLIST_NAME_WIDTH], demosize[36 - DEMOLIST_NAME_WIDTH];
-	static char last_demo_name[MAX_DEMO_NAME + 7];	
-	static int last_demo_index = 0, last_demo_length = 0;	
+	static char last_demo_name[MAX_DEMO_NAME + 7];
+	static int last_demo_index = 0, last_demo_length = 0;
 	char demoname_scroll[38 + 1];
 	int demoindex, scroll_index;
 	float frac, time, elapsed;
-	
+
 	if (demos_menu_pos == 0){
 		M_Print (64, 0, "[demos]");
 		M_PrintWhite (120, 0, " playlist ");
@@ -2681,12 +2681,12 @@ void M_Demos_Draw (void) {
 			strlcpy(demoname_scroll, demo_currentdir[0] ? demo_currentdir : "/", sizeof(demoname_scroll));
 			M_PrintWhite (16, 16, demoname_scroll);
 			M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f \x1d\x1e\x1e\x1e\x1e\x1e\x1f");
-		
+
 			for (i = 0; i < demolist_count - demo_base && i < DEMO_MAXLINES; i++) {
 				d = demolist[demo_base + i];
 				y = 32 + 8 * i;
 				strlcpy (demoname, d->name, sizeof(demoname));
-		
+
 				switch (d->type) {
 				case dt_file:
 					M_Print (24, y, demoname);
@@ -2712,10 +2712,10 @@ void M_Demos_Draw (void) {
 					Sys_Error("M_Demos_Draw: unknown d->type (%d)", d->type);
 				}
 			}
-		
+
 			M_DrawCharacter (8, 32 + demo_cursor * 8, 12 + ((int) (curtime * 4) & 1));
-		
-		
+
+
 			demoindex = demo_base + demo_cursor;
 			if (demolist[demoindex]->type == dt_file) {
 				time = (float) Sys_DoubleTime();
@@ -2726,14 +2726,14 @@ void M_Demos_Draw (void) {
 					snprintf(last_demo_name, sizeof(last_demo_name), "%s  ***  ", demolist[demoindex]->name);
 					last_demo_length = strlen(last_demo_name);
 				} else {
-					
+
 					elapsed = 3.5 * max(time - last_demo_time - 0.75, 0);
 					scroll_index = (int) elapsed;
 					frac = bound(0, elapsed - scroll_index, 1);
 					scroll_index = scroll_index % last_demo_length;
 				}
-		
-		
+
+
 				if (last_demo_length <= 38 + 7) {
 					strlcpy(demoname_scroll, demolist[demoindex]->name, sizeof(demoname_scroll));
 					M_PrintWhite (160 - strlen(demoname_scroll) * 4, 40 + 8 * DEMO_MAXLINES, demoname_scroll);
@@ -2753,15 +2753,15 @@ void M_Demos_Draw (void) {
 			M_Print (40,40,"New menu where u can");
 			M_Print (40,48,"load demoplaylists when");
 			M_Print (40,56,"its finished \\o/");
-		
-		
-	}		
+
+
+	}
 	}else if(demos_menu_pos == 1){
 		M_PrintWhite (64, 0, " demos ");
 		M_Print (120, 0, "[playlist]");
 		M_PrintWhite (200, 0, " options ");
 		M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f");
-		
+
 		if (demo_playlist_section == 0){
 			M_Print (64,8, "[demos]");
 			M_PrintWhite (130,8, " options ");
@@ -2790,16 +2790,16 @@ void M_Demos_Draw (void) {
 			M_Print	(24, 64, "Previous demo");
 			M_Print (24, 72, "Stop  playlist");
 			M_Print (24, 80, "Clear playlist");
-		
+
 			if (demo_playlist_num > 0){
-			
-			
+
+
 			M_Print (24, 96, "Currently selected:");
 			M_Print (24, 104, demo_playlist[demo_playlist_cursor].name);
 			}else{
 			M_Print (24, 96, "No demo in playlist");
 			}
-		
+
 			if (strcasecmp(demo_playlist[demo_playlist_cursor].name + strlen(demo_playlist[demo_playlist_cursor].name) - 4, ".mvd")){
 				M_Print (24, 120, "Tracking only available with mvds");
 			}else{
@@ -2809,9 +2809,9 @@ void M_Demos_Draw (void) {
 				if (demo_playlist_opt_cursor == 4 && demo_playlist_num > 0)
 					M_DrawCharacter (168 + 8*strlen(demo_track), 120, 10+((int)(curtime*4)&1));
 			}
-		
-		
-		
+
+
+
 			if (demo_playlist_opt_cursor >= 4 )
 				z=4;
 			else
@@ -2819,24 +2819,24 @@ void M_Demos_Draw (void) {
 
 			M_DrawCharacter (8, 56 + (demo_playlist_opt_cursor +z) * 8, 12 + ((int) (curtime * 4) & 1));
 		}
-			
-			
-			
-		
+
+
+
+
 	}else if(demos_menu_pos == 2){
 		M_PrintWhite (64, 0, " demos ");
 		M_PrintWhite (120, 0, " playlist ");
 		M_Print (200, 0, "[options]");
-		
-	
+
+
 		M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f");
 		M_Print (16, 32,  "Loop playlist");
 		M_DrawCheckbox (220, 32, demo_playlist_loop.value > 0);
-	
+
 		M_Print (16, 48, "Default track");
 		M_DrawTextBox (160, 40, 16, 1);
 		M_PrintWhite (168, 48, default_track);
-	
+
 		if (demo_options_cursor >= 1 )
 				z=1;
 		else
@@ -2875,17 +2875,17 @@ void M_Demos_Key (int key) {
 	int l;
 	char *p;
 	demo_sort_t sort_target;
-	
+
 
 	switch (key) {
-	
+
 	case K_ESCAPE:
 		strlcpy(demo_prevdemo, demolist[demo_cursor + demo_base]->name, sizeof(demo_prevdemo));
 		M_LeaveMenu (m_multiplayer);
 		break;
 
 	case K_UPARROW:
-		
+
 		S_LocalSound ("misc/menu1.wav");
 		if (demos_menu_pos == 0){
 			if (demo_cursor > 0)
@@ -2896,7 +2896,7 @@ void M_Demos_Key (int key) {
 			if (demo_playlist_section == 0){
 				if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base > 0)
 					M_Demos_Playlist_Move_Up(demo_playlist_cursor + demo_playlist_base);
-		
+
 				if (demo_playlist_cursor > 0)
 					demo_playlist_cursor--;
 				else if (demo_playlist_base > 0)
@@ -2907,7 +2907,7 @@ void M_Demos_Key (int key) {
 					demo_playlist_opt_cursor--;
 				else if (demo_playlist_opt_base > 0)
 					demo_playlist_opt_base--;
-				
+
 			}
 		}else if (demos_menu_pos == 2){
 			if (demo_options_cursor > 0)
@@ -2928,11 +2928,11 @@ void M_Demos_Key (int key) {
 					demo_base++;
 			}
 		}else if (demos_menu_pos == 1 ){
-		
+
 			if ( demo_playlist_section == 0 ){
 				if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base < demo_playlist_num)
 					M_Demos_Playlist_Move_Down(demo_playlist_cursor + demo_playlist_base);
-						
+
 				if (demo_playlist_cursor + demo_playlist_base < demo_playlist_num - 1) {
 						if (demo_playlist_cursor < DEMO_MAXLINES - 1)
 							demo_playlist_cursor++;
@@ -2955,7 +2955,7 @@ void M_Demos_Key (int key) {
 				demo_options_base++;
 			M_Demo_Playlist_Setup_f();
 		}
-		
+
 		break;
 
 	case K_LEFTARROW:
@@ -2966,7 +2966,7 @@ void M_Demos_Key (int key) {
 		M_Demo_Playlist_Setup_f();
 		break;
 
-	
+
 	case K_RIGHTARROW:
 		S_LocalSound ("misc/menu1.wav");
 		demos_menu_pos++;
@@ -2975,7 +2975,7 @@ void M_Demos_Key (int key) {
 		M_Demo_Playlist_Setup_f();
 		break;
 
-	
+
 	case K_HOME:
 		S_LocalSound ("misc/menu1.wav");
 		if (demos_menu_pos == 0){
@@ -3066,23 +3066,23 @@ void M_Demos_Key (int key) {
 			}
 		M_Demo_Playlist_Setup_f();
 		}
-		
+
 		break;
 
 	case K_ENTER:
 		if (demos_menu_pos == 0){
 			if (!demolist_count || demolist[demo_base + demo_cursor]->type == dt_msg)
 				break;
-	
-			
-			
-			if (demolist[demo_base + demo_cursor]->type != dt_file) {		
+
+
+
+			if (demolist[demo_base + demo_cursor]->type != dt_file) {
 				if (demolist[demo_base + demo_cursor]->type == dt_up) {
 					if ((p = strrchr(demo_currentdir, '/')) != NULL) {
 						strlcpy(demo_prevdemo, p + 1, sizeof(demo_prevdemo));
 						*p = 0;
 					}
-				} else {	
+				} else {
 					strncat(demo_currentdir, "/", sizeof(demo_currentdir) - strlen(demo_currentdir) - 1);
 					strncat(demo_currentdir, demolist[demo_base + demo_cursor]->name, sizeof(demo_currentdir) - strlen(demo_currentdir) - 1);
 				}
@@ -3098,7 +3098,7 @@ void M_Demos_Key (int key) {
 				m_state = m_none;
 				if (keydown[K_SHIFT]){
 					Cbuf_AddText (va("timedemo \"..%s/%s\"\n", demo_currentdir, demolist[demo_cursor + demo_base]->name));
-				
+
 				}else{
 					Cbuf_AddText (va("playdemo \"..%s/%s\"\n", demo_currentdir, demolist[demo_cursor + demo_base]->name));
 				strlcpy(demo_prevdemo, demolist[demo_base + demo_cursor]->name, sizeof(demo_prevdemo));
@@ -3116,13 +3116,13 @@ void M_Demos_Key (int key) {
 					Demo_Playlist_Stop_f();
 				else if (demo_playlist_opt_cursor == 3)
 					Demo_Playlist_Clear_f();
-			}	
+			}
 		}else if (demos_menu_pos == 2) {
 		Cvar_SetValue (&demo_playlist_loop, !demo_playlist_loop.value);
 		}
 		break;
 
-	
+
 	case K_SPACE:
 		if (demos_menu_pos == 0){
 			strlcpy(demo_prevdemo, demolist[demo_cursor + demo_base]->name, sizeof(demo_prevdemo));
@@ -3165,7 +3165,7 @@ void M_Demos_Key (int key) {
 	default:
 		if (key < 32 || key > 127)
 			break;
-		
+
 			if (demos_menu_pos == 0){
 			sort_target = (key == 'n') ? ds_name : (key == 's') ? ds_size : ds_time;
 			if (demo_sorttype == sort_target) {
@@ -3176,11 +3176,11 @@ void M_Demos_Key (int key) {
 			}
 			strlcpy(demo_prevdemo, demolist[demo_cursor + demo_base]->name, sizeof(demo_prevdemo));
 			Demo_SortDemos();
-			Demo_PositionCursor();	
-		
+			Demo_PositionCursor();
+
 			}else if (demo_playlist_opt_cursor == 4 && demos_menu_pos == 1 && demo_playlist_section == 1) {
 				l = strlen(demo_track);
-				
+
 				if (l < 15) {
 					demo_track[l+1] = 0;
 					demo_track[l] = key;
@@ -3188,14 +3188,14 @@ void M_Demos_Key (int key) {
 				}
 			}else if (demo_options_cursor == 1 && demos_menu_pos == 2) {
 				l = strlen(default_track);
-				
+
 				if (l < 15) {
 					default_track[l+1] = 0;
 					default_track[l] = key;
 					strlcpy(demo_playlist_track_name.string,default_track,sizeof(default_track));
 				}
 			}
-	}	
+	}
 }
 
 
@@ -3359,7 +3359,7 @@ void M_GameOptions_Draw (void) {
 			M_Print (160, 72, "none");
 		else
 			M_Print (160, 72, va("%i frags", _fraglimit));
-		
+
 		M_Print (0, 80, "        timelimit");
 		if (_timelimit == 0)
 			M_Print (160, 80, "none");
@@ -3519,7 +3519,7 @@ void M_GameOptions_Key (int key) {
 		{
 			key_dest = key_game;
 
-			// Kill the server, unless we continue playing 
+			// Kill the server, unless we continue playing
 			// deathmatch on another level
 			if (!_deathmatch || !deathmatch.value)
 				Cbuf_AddText ("disconnect\n");
@@ -4079,7 +4079,7 @@ void M_Quit_Draw (void) {
 	M_PrintWhite (16, 156, "rights reserved. NIN logo is a\n");
 	M_PrintWhite (16, 164, "registered trademark licensed to\n");
 	M_PrintWhite (16, 172, "Nothing Interactive, Inc. All rights\n");
-	M_PrintWhite (16, 180, "reserved. Press y to exit\n"); 
+	M_PrintWhite (16, 180, "reserved. Press y to exit\n");
 }
 // END shaman [Quake 1.09 quit screen]
 
@@ -4104,7 +4104,7 @@ void M_Init (void) {
 	Cmd_AddCommand ("demo_playlist_next", Demo_Playlist_Next_f);
 	Cmd_AddCommand ("demo_playlist_prev", Demo_Playlist_Prev_f);
 	Cmd_AddCommand ("demo_playlist_clear", Demo_Playlist_Clear_f);
-	
+
 
 	Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
 
