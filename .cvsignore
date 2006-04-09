@@ -6,3 +6,5 @@ Debug
 Release
 ezquake.suo
 ezquake.ncb
+.DS_Store
+osx/build
