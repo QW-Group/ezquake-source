@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.39 2006-04-09 17:24:06 oldmanuk Exp $
+	$Id: menu.c,v 1.40 2006-04-09 17:41:05 oldmanuk Exp $
 
 */
 
@@ -53,7 +53,10 @@ extern cvar_t con_shift;
 extern cvar_t sb_maxwidth, sb_maxheight;
 extern cvar_t scr_fov;
 
-int demos_menu_pos = 0;
+#define DEMOS_TAB_MAIN 0
+#define DEMOS_TAB_PLAYLIST 1
+#define DEMOS_TAB_OPTIONS 2
+int demos_menu_tab = DEMOS_TAB_MAIN;
 
 void M_Menu_Main_f (void);
 	void M_Menu_SinglePlayer_f (void);
@@ -2671,7 +2674,7 @@ void M_Demos_Draw (void) {
 	int demoindex, scroll_index;
 	float frac, time, elapsed;
 
-	if (demos_menu_pos == 0){
+	if (demos_menu_tab == DEMOS_TAB_MAIN){
 		M_Print (64, 0, "[demos]");
 		M_PrintWhite (120, 0, " playlist ");
 		M_PrintWhite (200, 0, " options ");
@@ -2756,7 +2759,7 @@ void M_Demos_Draw (void) {
 
 
 	}
-	}else if(demos_menu_pos == 1){
+	}else if(demos_menu_tab == DEMOS_TAB_PLAYLIST){
 		M_PrintWhite (64, 0, " demos ");
 		M_Print (120, 0, "[playlist]");
 		M_PrintWhite (200, 0, " options ");
@@ -2823,7 +2826,7 @@ void M_Demos_Draw (void) {
 
 
 
-	}else if(demos_menu_pos == 2){
+	}else if(demos_menu_tab == DEMOS_TAB_OPTIONS){
 		M_PrintWhite (64, 0, " demos ");
 		M_PrintWhite (120, 0, " playlist ");
 		M_Print (200, 0, "[options]");
@@ -2876,7 +2879,6 @@ void M_Demos_Key (int key) {
 	char *p;
 	demo_sort_t sort_target;
 
-
 	switch (key) {
 
 	case K_ESCAPE:
@@ -2887,13 +2889,13 @@ void M_Demos_Key (int key) {
 	case K_UPARROW:
 
 		S_LocalSound ("misc/menu1.wav");
-		if (demos_menu_pos == 0){
+		if (demos_menu_tab == DEMOS_TAB_MAIN) {
 			if (demo_cursor > 0)
 				demo_cursor--;
 			else if (demo_base > 0)
 				demo_base--;
-		}else if (demos_menu_pos == 1){
-			if (demo_playlist_section == 0){
+		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
+			if (demo_playlist_section == 0) {
 				if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base > 0)
 					M_Demos_Playlist_Move_Up(demo_playlist_cursor + demo_playlist_base);
 
@@ -2902,14 +2904,14 @@ void M_Demos_Key (int key) {
 				else if (demo_playlist_base > 0)
 					demo_playlist_base--;
 				M_Demo_Playlist_Setup_f();
-			}else if (demo_playlist_section == 1 ){
+			} else if (demo_playlist_section == 1 ) {
 				if (demo_playlist_opt_cursor > 0)
 					demo_playlist_opt_cursor--;
 				else if (demo_playlist_opt_base > 0)
 					demo_playlist_opt_base--;
 
 			}
-		}else if (demos_menu_pos == 2){
+		} else if (demos_menu_tab == DEMOS_TAB_OPTIONS) {
 			if (demo_options_cursor > 0)
 					demo_options_cursor--;
 			else if (demo_options_base > 0)
@@ -2920,16 +2922,16 @@ void M_Demos_Key (int key) {
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
-		if (demos_menu_pos == 0){
+		if (demos_menu_tab == DEMOS_TAB_MAIN) {
 			if (demo_cursor + demo_base < demolist_count - 1) {
 				if (demo_cursor < DEMO_MAXLINES - 1)
 					demo_cursor++;
 				else
 					demo_base++;
 			}
-		}else if (demos_menu_pos == 1 ){
+		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST ) {
 
-			if ( demo_playlist_section == 0 ){
+			if ( demo_playlist_section == 0 ) {
 				if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base < demo_playlist_num)
 					M_Demos_Playlist_Move_Down(demo_playlist_cursor + demo_playlist_base);
 
@@ -2940,7 +2942,7 @@ void M_Demos_Key (int key) {
 							demo_playlist_base++;
 				}
 				M_Demo_Playlist_Setup_f();
-			}else if (demo_playlist_section == 1 ) {
+			} else if (demo_playlist_section == 1 ) {
 				if (demo_playlist_opt_cursor + demo_playlist_opt_base < DEMO_PLAYLIST_OPTIONS_MAX - 1) {
 						if (demo_playlist_opt_cursor < DEMO_PLAYLIST_OPTIONS_MAX - 1)
 							demo_playlist_opt_cursor++;
@@ -2948,7 +2950,7 @@ void M_Demos_Key (int key) {
 							demo_playlist_opt_base++;
 				}
 			}
-		}else if (demos_menu_pos == 2 ){
+		} else if (demos_menu_tab == DEMOS_TAB_OPTIONS ) {
 			if (demo_options_cursor < DEMO_OPTIONS_MAX - 1)
 				demo_options_cursor++;
 			else
@@ -2960,28 +2962,28 @@ void M_Demos_Key (int key) {
 
 	case K_LEFTARROW:
 		S_LocalSound ("misc/menu1.wav");
-		demos_menu_pos--;
-		if(demos_menu_pos<0)
-				demos_menu_pos=2;
+		demos_menu_tab--;
+		if(demos_menu_tab<0)
+				demos_menu_tab=2;
 		M_Demo_Playlist_Setup_f();
 		break;
 
 
 	case K_RIGHTARROW:
 		S_LocalSound ("misc/menu1.wav");
-		demos_menu_pos++;
-		if(demos_menu_pos>2)
-				demos_menu_pos=0;
+		demos_menu_tab++;
+		if(demos_menu_tab>2)
+				demos_menu_tab=0;
 		M_Demo_Playlist_Setup_f();
 		break;
 
 
 	case K_HOME:
 		S_LocalSound ("misc/menu1.wav");
-		if (demos_menu_pos == 0){
+		if (demos_menu_tab == DEMOS_TAB_MAIN) {
 			demo_cursor = 0;
 			demo_base = 0;
-		}else if (demos_menu_pos == 1 ) {
+		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST ) {
 			demo_playlist_cursor = 0;
 			demo_playlist_base = 0;
 		}
@@ -2990,7 +2992,7 @@ void M_Demos_Key (int key) {
 
 	case K_END:
 		S_LocalSound ("misc/menu1.wav");
-		if (demos_menu_pos == 0){
+		if (demos_menu_tab == DEMOS_TAB_MAIN) {
 			if (demolist_count > DEMO_MAXLINES) {
 				demo_cursor = DEMO_MAXLINES - 1;
 				demo_base = demolist_count - demo_cursor - 1;
@@ -2998,7 +3000,7 @@ void M_Demos_Key (int key) {
 				demo_base = 0;
 				demo_cursor = demolist_count - 1;
 			}
-		}else if (demos_menu_pos == 1){
+		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
 			if (demo_playlist_num > DEMO_PLAYLIST_OPTIONS_MAX) {
 				demo_playlist_cursor = DEMO_PLAYLIST_OPTIONS_MAX - 1;
 				demo_playlist_base = demo_playlist_num - demo_playlist_cursor - 1;
@@ -3012,7 +3014,7 @@ void M_Demos_Key (int key) {
 
 	case K_PGUP:
 		S_LocalSound ("misc/menu1.wav");
-		if (demos_menu_pos == 0){
+		if (demos_menu_tab == DEMOS_TAB_MAIN) {
 			demo_cursor -= DEMO_MAXLINES - 1;
 			if (demo_cursor < 0) {
 				demo_base += demo_cursor;
@@ -3020,8 +3022,8 @@ void M_Demos_Key (int key) {
 					demo_base = 0;
 				demo_cursor = 0;
 			}
-		}else if (demos_menu_pos == 1){
-			if (demo_playlist_section == 0){
+		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
+			if (demo_playlist_section == 0) {
 				demo_playlist_cursor -= DEMO_MAXLINES - 1;
 				if (demo_playlist_cursor < 0) {
 					demo_playlist_base += demo_playlist_cursor;
@@ -3030,7 +3032,7 @@ void M_Demos_Key (int key) {
 					demo_playlist_cursor = 0;
 				}
 			M_Demo_Playlist_Setup_f();
-			}else if (demo_playlist_section == 1){
+			} else if (demo_playlist_section == 1) {
 				demo_playlist_cursor -= DEMO_MAXLINES - 1;
 				if (demo_playlist_cursor < 0) {
 					demo_playlist_base += demo_playlist_cursor;
@@ -3044,7 +3046,7 @@ void M_Demos_Key (int key) {
 
 	case K_PGDN:
 		S_LocalSound ("misc/menu1.wav");
-		if (demos_menu_pos == 0){
+		if (demos_menu_tab == DEMOS_TAB_MAIN) {
 			demo_cursor += DEMO_MAXLINES - 1;
 			if (demo_base + demo_cursor >= demolist_count)
 				demo_cursor = demolist_count - demo_base - 1;
@@ -3054,7 +3056,7 @@ void M_Demos_Key (int key) {
 				if (demo_base + demo_cursor >= demolist_count)
 					demo_base = demolist_count - demo_cursor - 1;
 			}
-		}else if (demos_menu_pos == 1){
+		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
 		demo_playlist_cursor += DEMO_MAXLINES - 1;
 			if (demo_playlist_base + demo_playlist_cursor >= demo_playlist_num)
 				demo_playlist_cursor = demo_playlist_num - demo_playlist_base - 1;
@@ -3070,7 +3072,7 @@ void M_Demos_Key (int key) {
 		break;
 
 	case K_ENTER:
-		if (demos_menu_pos == 0){
+		if (demos_menu_tab == DEMOS_TAB_MAIN) {
 			if (!demolist_count || demolist[demo_base + demo_cursor]->type == dt_msg)
 				break;
 
@@ -3088,7 +3090,7 @@ void M_Demos_Key (int key) {
 				}
 				demo_cursor = 0;
 				Demo_ReadDirectory();
-			} else if (keydown[K_CTRL]){
+			} else if (keydown[K_CTRL]) {
 					sprintf(demo_playlist[demo_playlist_num].name,"%s",demolist[demo_cursor + demo_base]->name);
 					sprintf(demo_playlist[demo_playlist_num].path,"%s/%s",demo_currentdir,demolist[demo_cursor + demo_base]->name);
 					demo_playlist_num++;
@@ -3096,18 +3098,18 @@ void M_Demos_Key (int key) {
 			} else {
 				key_dest = key_game;
 				m_state = m_none;
-				if (keydown[K_SHIFT]){
+				if (keydown[K_SHIFT]) {
 					Cbuf_AddText (va("timedemo \"..%s/%s\"\n", demo_currentdir, demolist[demo_cursor + demo_base]->name));
 
-				}else{
+				} else{
 					Cbuf_AddText (va("playdemo \"..%s/%s\"\n", demo_currentdir, demolist[demo_cursor + demo_base]->name));
 				strlcpy(demo_prevdemo, demolist[demo_base + demo_cursor]->name, sizeof(demo_prevdemo));
 				}
 			}
-		}else if (demos_menu_pos == 1) {
+		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
 			if (demo_playlist_section == 0 )
 					Demo_playlist_start(demo_playlist_cursor + demo_playlist_base);
-			else if (demo_playlist_section == 1 ){
+			else if (demo_playlist_section == 1 ) {
 				if (demo_playlist_opt_cursor == 0)
 					Demo_Playlist_Next_f();
 				else if (demo_playlist_opt_cursor == 1)
@@ -3117,47 +3119,47 @@ void M_Demos_Key (int key) {
 				else if (demo_playlist_opt_cursor == 3)
 					Demo_Playlist_Clear_f();
 			}
-		}else if (demos_menu_pos == 2) {
+		} else if (demos_menu_tab == DEMOS_TAB_OPTIONS) {
 		Cvar_SetValue (&demo_playlist_loop, !demo_playlist_loop.value);
 		}
 		break;
 
 
 	case K_SPACE:
-		if (demos_menu_pos == 0){
+		if (demos_menu_tab == DEMOS_TAB_MAIN) {
 			strlcpy(demo_prevdemo, demolist[demo_cursor + demo_base]->name, sizeof(demo_prevdemo));
 			Demo_ReadDirectory();
 		}
 		break;
 	case K_DEL:
-		if (demos_menu_pos == 0){
+		if (demos_menu_tab == DEMOS_TAB_MAIN) {
 			if (keydown[K_SHIFT])
 				M_Demos_Del();
 			else
 				M_Menu_Demos_Del_f();
-		}else if (demos_menu_pos == 1){
+		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
 		M_Demos_Playlist_Del(demo_playlist_cursor + demo_playlist_base);
 		}
 		break;
 	case K_TAB:
-		if (demos_menu_pos == 0){
+		if (demos_menu_tab == DEMOS_TAB_MAIN) {
 		S_LocalSound ("misc/menu1.wav");
 		//demo_section = !demo_section;
-		}else if (demos_menu_pos == 1) {
+		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
 		S_LocalSound ("misc/menu1.wav");
 		demo_playlist_section = !demo_playlist_section ;
 		}
 		break;
 	case K_BACKSPACE:
-		if (demo_playlist_opt_cursor == 4 && demos_menu_pos == 1 && demo_playlist_section == 1) {
+		if (demo_playlist_opt_cursor == 4 && demos_menu_tab == DEMOS_TAB_PLAYLIST && demo_playlist_section == 1) {
 			if (strlen(demo_track))
 				demo_track[strlen(demo_track)-1] = 0;
 			strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_track));
-		}else if (demos_menu_pos == 2 && demo_options_cursor == 1 ){
+		} else if (demos_menu_tab == DEMOS_TAB_OPTIONS && demo_options_cursor == 1 ) {
 			if (strlen(default_track))
 				default_track[strlen(default_track)-1] = 0;
 			strlcpy(demo_playlist_track_name.string,default_track,sizeof(default_track));
-		}else {
+		} else {
 			m_topmenu = m_none;
 			M_LeaveMenu (m_multiplayer);
 		}
@@ -3166,7 +3168,7 @@ void M_Demos_Key (int key) {
 		if (key < 32 || key > 127)
 			break;
 
-			if (demos_menu_pos == 0){
+			if (demos_menu_tab == DEMOS_TAB_MAIN) {
 			sort_target = (key == 'n') ? ds_name : (key == 's') ? ds_size : ds_time;
 			if (demo_sorttype == sort_target) {
 				demo_reversesort = !demo_reversesort;
@@ -3178,7 +3180,7 @@ void M_Demos_Key (int key) {
 			Demo_SortDemos();
 			Demo_PositionCursor();
 
-			}else if (demo_playlist_opt_cursor == 4 && demos_menu_pos == 1 && demo_playlist_section == 1) {
+			} else if (demo_playlist_opt_cursor == 4 && demos_menu_tab == DEMOS_TAB_PLAYLIST && demo_playlist_section == 1) {
 				l = strlen(demo_track);
 
 				if (l < 15) {
@@ -3186,7 +3188,7 @@ void M_Demos_Key (int key) {
 					demo_track[l] = key;
 					strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_track));
 				}
-			}else if (demo_options_cursor == 1 && demos_menu_pos == 2) {
+			} else if (demo_options_cursor == 1 && demos_menu_tab == DEMOS_TAB_OPTIONS) {
 				l = strlen(default_track);
 
 				if (l < 15) {
