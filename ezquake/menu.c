@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.40 2006-04-09 17:41:05 oldmanuk Exp $
+	$Id: menu.c,v 1.41 2006-04-09 20:44:54 oldmanuk Exp $
 
 */
 
@@ -2887,13 +2887,17 @@ void M_Demos_Key (int key) {
 		break;
 
 	case K_UPARROW:
-
 		S_LocalSound ("misc/menu1.wav");
 		if (demos_menu_tab == DEMOS_TAB_MAIN) {
 			if (demo_cursor > 0)
 				demo_cursor--;
 			else if (demo_base > 0)
 				demo_base--;
+			else {
+				// cursor wrap around
+				demo_base = max(0, demolist_count - DEMO_MAXLINES);
+				demo_cursor = demolist_count - demo_base - 1;
+			}
 		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
 			if (demo_playlist_section == 0) {
 				if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base > 0)
@@ -2928,6 +2932,8 @@ void M_Demos_Key (int key) {
 					demo_cursor++;
 				else
 					demo_base++;
+			} else {
+				demo_base = demo_cursor = 0;
 			}
 		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST ) {
 
