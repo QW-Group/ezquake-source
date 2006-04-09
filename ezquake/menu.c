@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.41 2006-04-09 20:44:54 oldmanuk Exp $
+	$Id: menu.c,v 1.42 2006-04-09 21:48:37 oldmanuk Exp $
 
 */
 
@@ -56,6 +56,7 @@ extern cvar_t scr_fov;
 #define DEMOS_TAB_MAIN 0
 #define DEMOS_TAB_PLAYLIST 1
 #define DEMOS_TAB_OPTIONS 2
+#define DEMOS_TAB_MAX 2
 int demos_menu_tab = DEMOS_TAB_MAIN;
 
 void M_Menu_Main_f (void);
@@ -2240,7 +2241,9 @@ static int demo_playlist_num = 0;
 static int demo_playlist_cursor = 0;
 static int demo_playlist_base = 0;
 
-static int demo_playlist_section = 0;
+#define DEMO_PLAYLIST_TAB_MAIN 0
+#define DEMO_PLAYLIST_TAB_OPTIONS 1
+static int demo_playlist_section = DEMO_PLAYLIST_TAB_MAIN;
 static int demo_playlist_opt_cursor = 0;
 static int demo_playlist_opt_base = 0;
 
@@ -2765,7 +2768,7 @@ void M_Demos_Draw (void) {
 		M_PrintWhite (200, 0, " options ");
 		M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f");
 
-		if (demo_playlist_section == 0){
+		if (demo_playlist_section == DEMO_PLAYLIST_TAB_MAIN){
 			M_Print (64,8, "[demos]");
 			M_PrintWhite (130,8, " options ");
 			if(demo_playlist_num == 0)
@@ -2780,7 +2783,7 @@ void M_Demos_Draw (void) {
 				}
 				M_DrawCharacter (8, 32 + demo_playlist_cursor * 8, 12 + ((int) (curtime * 4) & 1));
 				}
-		}else if (demo_playlist_section == 1){
+		}else if (demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS){
 			M_PrintWhite (64,8, " demos ");
 			M_Print (130,8, "[options]");
 			if (demo_playlist_started && cls.demoplayback){
@@ -2899,7 +2902,7 @@ void M_Demos_Key (int key) {
 				demo_cursor = demolist_count - demo_base - 1;
 			}
 		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
-			if (demo_playlist_section == 0) {
+			if (demo_playlist_section == DEMO_PLAYLIST_TAB_MAIN) {
 				if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base > 0)
 					M_Demos_Playlist_Move_Up(demo_playlist_cursor + demo_playlist_base);
 
@@ -2908,7 +2911,7 @@ void M_Demos_Key (int key) {
 				else if (demo_playlist_base > 0)
 					demo_playlist_base--;
 				M_Demo_Playlist_Setup_f();
-			} else if (demo_playlist_section == 1 ) {
+			} else if (demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS ) {
 				if (demo_playlist_opt_cursor > 0)
 					demo_playlist_opt_cursor--;
 				else if (demo_playlist_opt_base > 0)
@@ -2937,7 +2940,7 @@ void M_Demos_Key (int key) {
 			}
 		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST ) {
 
-			if ( demo_playlist_section == 0 ) {
+			if ( demo_playlist_section == DEMO_PLAYLIST_TAB_MAIN ) {
 				if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base < demo_playlist_num)
 					M_Demos_Playlist_Move_Down(demo_playlist_cursor + demo_playlist_base);
 
@@ -2948,7 +2951,7 @@ void M_Demos_Key (int key) {
 							demo_playlist_base++;
 				}
 				M_Demo_Playlist_Setup_f();
-			} else if (demo_playlist_section == 1 ) {
+			} else if (demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS ) {
 				if (demo_playlist_opt_cursor + demo_playlist_opt_base < DEMO_PLAYLIST_OPTIONS_MAX - 1) {
 						if (demo_playlist_opt_cursor < DEMO_PLAYLIST_OPTIONS_MAX - 1)
 							demo_playlist_opt_cursor++;
@@ -2969,8 +2972,8 @@ void M_Demos_Key (int key) {
 	case K_LEFTARROW:
 		S_LocalSound ("misc/menu1.wav");
 		demos_menu_tab--;
-		if(demos_menu_tab<0)
-				demos_menu_tab=2;
+		if(demos_menu_tab < DEMOS_TAB_MAIN)
+				demos_menu_tab = DEMOS_TAB_MAX;
 		M_Demo_Playlist_Setup_f();
 		break;
 
@@ -2978,8 +2981,8 @@ void M_Demos_Key (int key) {
 	case K_RIGHTARROW:
 		S_LocalSound ("misc/menu1.wav");
 		demos_menu_tab++;
-		if(demos_menu_tab>2)
-				demos_menu_tab=0;
+		if(demos_menu_tab > DEMOS_TAB_MAX)
+				demos_menu_tab = DEMOS_TAB_MAIN;
 		M_Demo_Playlist_Setup_f();
 		break;
 
@@ -3029,7 +3032,7 @@ void M_Demos_Key (int key) {
 				demo_cursor = 0;
 			}
 		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
-			if (demo_playlist_section == 0) {
+			if (demo_playlist_section == DEMO_PLAYLIST_TAB_MAIN) {
 				demo_playlist_cursor -= DEMO_MAXLINES - 1;
 				if (demo_playlist_cursor < 0) {
 					demo_playlist_base += demo_playlist_cursor;
@@ -3038,7 +3041,7 @@ void M_Demos_Key (int key) {
 					demo_playlist_cursor = 0;
 				}
 			M_Demo_Playlist_Setup_f();
-			} else if (demo_playlist_section == 1) {
+			} else if (demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS) {
 				demo_playlist_cursor -= DEMO_MAXLINES - 1;
 				if (demo_playlist_cursor < 0) {
 					demo_playlist_base += demo_playlist_cursor;
@@ -3113,9 +3116,9 @@ void M_Demos_Key (int key) {
 				}
 			}
 		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
-			if (demo_playlist_section == 0 )
+			if (demo_playlist_section == DEMO_PLAYLIST_TAB_MAIN )
 					Demo_playlist_start(demo_playlist_cursor + demo_playlist_base);
-			else if (demo_playlist_section == 1 ) {
+			else if (demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS ) {
 				if (demo_playlist_opt_cursor == 0)
 					Demo_Playlist_Next_f();
 				else if (demo_playlist_opt_cursor == 1)
@@ -3157,7 +3160,7 @@ void M_Demos_Key (int key) {
 		}
 		break;
 	case K_BACKSPACE:
-		if (demo_playlist_opt_cursor == 4 && demos_menu_tab == DEMOS_TAB_PLAYLIST && demo_playlist_section == 1) {
+		if (demo_playlist_opt_cursor == 4 && demos_menu_tab == DEMOS_TAB_PLAYLIST && demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS) {
 			if (strlen(demo_track))
 				demo_track[strlen(demo_track)-1] = 0;
 			strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_track));
@@ -3186,7 +3189,7 @@ void M_Demos_Key (int key) {
 			Demo_SortDemos();
 			Demo_PositionCursor();
 
-			} else if (demo_playlist_opt_cursor == 4 && demos_menu_tab == DEMOS_TAB_PLAYLIST && demo_playlist_section == 1) {
+			} else if (demo_playlist_opt_cursor == 4 && demos_menu_tab == DEMOS_TAB_PLAYLIST && demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS) {
 				l = strlen(demo_track);
 
 				if (l < 15) {
