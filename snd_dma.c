@@ -776,7 +776,7 @@ void S_Update_ (void) {
 	}
 
 	// mix ahead of current position
-	endtime = soundtime + s_mixahead.value * sn.speed;
+	endtime = (int) (soundtime + s_mixahead.value * sn.speed);
 	samps = sn.samples >> (sn.channels - 1);
 	if (endtime - soundtime > samps)
 		endtime = soundtime + samps;
