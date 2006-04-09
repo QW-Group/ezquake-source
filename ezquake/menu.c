@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.42 2006-04-09 21:48:37 oldmanuk Exp $
+	$Id: menu.c,v 1.43 2006-04-09 22:13:29 oldmanuk Exp $
 
 */
 
@@ -563,80 +563,80 @@ void M_Options_Key (int k) {
 	case K_ENTER:
 		m_entersound = true;
 		switch (options_cursor) {
-	case 0:
-		M_Menu_Keys_f ();
-		break;
-	case 1:
-		m_state = m_none;
-		key_dest = key_console;
-		//			Con_ToggleConsole_f ();
-		break;
-	case 2:
-		Cbuf_AddText ("exec default.cfg\n");
-		break;
-	case 15:
-//		M_Menu_Fps_f ();
-		switch (fps_mode) {
+			case 0:
+				M_Menu_Keys_f ();
+				break;
+			case 1:
+				m_state = m_none;
+				key_dest = key_console;
+				//			Con_ToggleConsole_f ();
+				break;
+			case 2:
+				Cbuf_AddText ("exec default.cfg\n");
+				break;
+			case 15:
+				//		M_Menu_Fps_f ();
+				switch (fps_mode) {
 #ifdef GLQUAKE
-		case mode_fastest:
-			fps_mode = mode_faithful;
-			break;
-		case mode_faithful:
-			fps_mode = mode_eyecandy;
-			break;
-		case mode_movies:
-			fps_mode = mode_fastest;
-			break;
-		default:
-			fps_mode = mode_movies;
-			break;
+					case mode_fastest:
+						fps_mode = mode_faithful;
+						break;
+					case mode_faithful:
+						fps_mode = mode_eyecandy;
+						break;
+					case mode_movies:
+						fps_mode = mode_fastest;
+						break;
+					default:
+						fps_mode = mode_movies;
+						break;
 #else
-		case mode_fastest:
-			fps_mode = mode_default;
-			break;
-		default:
-			fps_mode = mode_fastest;
-			break;
+					case mode_fastest:
+						fps_mode = mode_default;
+						break;
+					default:
+						fps_mode = mode_fastest;
+						break;
 #endif
-		}
+				}
 
-		switch (fps_mode) {
+				switch (fps_mode) {
 #ifdef GLQUAKE
-		case mode_fastest:
-			Cbuf_AddText ("exec cfg/gfx_gl_fast.cfg\n");
-			if (gl_max_size.value > 64) {
-				Cvar_SetValue (&gl_max_size, 1);
-			}
-			break;
-		case mode_faithful:
-			Cbuf_AddText ("exec cfg/gfx_gl_faithful.cfg\n");
-			Cvar_SetValue (&gl_max_size, gl_max_size_default);
-			break;
-		case mode_movies:
-			Cbuf_AddText ("exec cfg/gfx_gl_movies.cfg\n");
-			Cvar_SetValue (&gl_max_size, gl_max_size_default);
-			break;
-		default:
-			Cbuf_AddText ("exec cfg/gfx_gl_eyecandy.cfg\n");
-			Cvar_SetValue (&gl_max_size, gl_max_size_default);
-			break;
+					case mode_fastest:
+						Cbuf_AddText ("exec cfg/gfx_gl_fast.cfg\n");
+						if (gl_max_size.value > 64) {
+							Cvar_SetValue (&gl_max_size, 1);
+						}
+						break;
+					case mode_faithful:
+						Cbuf_AddText ("exec cfg/gfx_gl_faithful.cfg\n");
+						Cvar_SetValue (&gl_max_size, gl_max_size_default);
+						break;
+					case mode_movies:
+						Cbuf_AddText ("exec cfg/gfx_gl_movies.cfg\n");
+						Cvar_SetValue (&gl_max_size, gl_max_size_default);
+						break;
+					default:
+						Cbuf_AddText ("exec cfg/gfx_gl_eyecandy.cfg\n");
+						Cvar_SetValue (&gl_max_size, gl_max_size_default);
+						break;
 #else
-		case mode_fastest:
-			Cbuf_AddText ("exec cfg/gfx_sw_fast.cfg\n");
-			break;
-		case mode_default:
-			Cbuf_AddText ("exec cfg/gfx_sw_default.cfg\n");
-			break;
+					case mode_fastest:
+						Cbuf_AddText ("exec cfg/gfx_sw_fast.cfg\n");
+						break;
+					case mode_default:
+						Cbuf_AddText ("exec cfg/gfx_sw_default.cfg\n");
+						break;
 #endif
-		}
+				}
 
-		break;
-	case 16:
-		M_Menu_Video_f ();
-		break;
-	default:
-		M_AdjustSliders (1);
-		break;
+				break;
+			case 16:
+				M_Menu_Video_f ();
+				break;
+			default:
+				M_AdjustSliders (1);
+				break;
 		}
 		return;
 
@@ -681,7 +681,7 @@ void M_Options_Key (int k) {
 #else
 		if (options_cursor == 17 && !vid_windowedmouse)
 #endif
-			options_cursor = 16;
+				options_cursor = 16;
 
 		if (options_cursor == 16 && vid_menudrawfn == NULL)
 			options_cursor = 15;
@@ -694,7 +694,7 @@ void M_Options_Key (int k) {
 #else
 		if (options_cursor == 17 && !vid_windowedmouse)
 #endif
-			options_cursor = 0;
+				options_cursor = 0;
 	}
 }
 
@@ -704,23 +704,23 @@ void M_Options_Key (int k) {
 
 char *bindnames[][2] =
 {
-{"+attack", 		"attack"},
-{"+use", 			"use"},
-{"+jump", 			"jump"},
-{"+forward", 		"move forward"},
-{"+back", 			"move back"},
-{"+moveleft", 		"move left"},
-{"+moveright", 		"move right"},
-{"impulse 12", 		"previous weapon"},
-{"impulse 10", 		"next weapon"},
-{"impulse 1", 		"axe"},
-{"impulse 2",		"shotgun"},
-{"impulse 3",		"super shotgun"},
-{"impulse 4", 		"nailgun"},
-{"impulse 5",		"super nailgun"},
-{"impulse 6",		"grenade launcher"},
-{"impulse 7",		"rocket launcher"},
-{"impulse 8", 		"thunderbolt"},
+	{"+attack",			"attack"},
+	{"+use",			"use"},
+	{"+jump",			"jump"},
+	{"+forward",		"move forward"},
+	{"+back",			"move back"},
+	{"+moveleft",		"move left"},
+	{"+moveright",		"move right"},
+	{"impulse 12",		"previous weapon"},
+	{"impulse 10",		"next weapon"},
+	{"impulse 1",		"axe"},
+	{"impulse 2",		"shotgun"},
+	{"impulse 3",		"super shotgun"},
+	{"impulse 4",		"nailgun"},
+	{"impulse 5",		"super nailgun"},
+	{"impulse 6",		"grenade launcher"},
+	{"impulse 7",		"rocket launcher"},
+	{"impulse 8",		"thunderbolt"},
 };
 
 #define	NUMCOMMANDS	(sizeof(bindnames)/sizeof(bindnames[0]))
@@ -795,7 +795,7 @@ void M_Keys_Draw (void) {
 	else
 		M_Print (18, 32, "Enter to change, del to clear");
 
-// search for known bindings
+	// search for known bindings
 	for (i = 0; i < NUMCOMMANDS; i++) {
 		y = 48 + 8*i;
 
@@ -846,61 +846,61 @@ void M_Keys_Key (int k) {
 		/* Massa: all keys should be bindable, including the console switching */
 		else
 #else // WITH_KEYMAP
-		else if (k != '`')
+			else if (k != '`')
 #endif // WITH_KEYMAP else
-			Key_SetBinding (k, bindnames[keys_cursor][0]);
+				Key_SetBinding (k, bindnames[keys_cursor][0]);
 
-		bind_grab = false;
-		return;
+			bind_grab = false;
+			return;
 	}
 
 	switch (k) {
-	case K_BACKSPACE:
-		m_topmenu = m_none;	// intentional fallthrough
-	case K_ESCAPE:
-		M_LeaveMenu (m_options);
-		break;
+		case K_BACKSPACE:
+			m_topmenu = m_none;	// intentional fallthrough
+		case K_ESCAPE:
+			M_LeaveMenu (m_options);
+			break;
 
-	case K_LEFTARROW:
-	case K_UPARROW:
-		S_LocalSound ("misc/menu1.wav");
-		keys_cursor--;
-		if (keys_cursor < 0)
-			keys_cursor = NUMCOMMANDS-1;
-		break;
+		case K_LEFTARROW:
+		case K_UPARROW:
+			S_LocalSound ("misc/menu1.wav");
+			keys_cursor--;
+			if (keys_cursor < 0)
+				keys_cursor = NUMCOMMANDS-1;
+			break;
 
-	case K_DOWNARROW:
-	case K_RIGHTARROW:
-		S_LocalSound ("misc/menu1.wav");
-		keys_cursor++;
-		if (keys_cursor >= NUMCOMMANDS)
+		case K_DOWNARROW:
+		case K_RIGHTARROW:
+			S_LocalSound ("misc/menu1.wav");
+			keys_cursor++;
+			if (keys_cursor >= NUMCOMMANDS)
+				keys_cursor = 0;
+			break;
+
+		case K_HOME:
+		case K_PGUP:
+			S_LocalSound ("misc/menu1.wav");
 			keys_cursor = 0;
-		break;
+			break;
 
-	case K_HOME:
-	case K_PGUP:
-		S_LocalSound ("misc/menu1.wav");
-		keys_cursor = 0;
-		break;
+		case K_END:
+		case K_PGDN:
+			S_LocalSound ("misc/menu1.wav");
+			keys_cursor = NUMCOMMANDS - 1;
+			break;
 
-	case K_END:
-	case K_PGDN:
-		S_LocalSound ("misc/menu1.wav");
-		keys_cursor = NUMCOMMANDS - 1;
-		break;
+		case K_ENTER:		// go into bind mode
+			M_FindKeysForCommand (bindnames[keys_cursor][0], keys);
+			S_LocalSound ("misc/menu2.wav");
+			if (keys[1] != -1)
+				M_UnbindCommand (bindnames[keys_cursor][0]);
+			bind_grab = true;
+			break;
 
-	case K_ENTER:		// go into bind mode
-		M_FindKeysForCommand (bindnames[keys_cursor][0], keys);
-		S_LocalSound ("misc/menu2.wav");
-		if (keys[1] != -1)
+		case K_DEL:				// delete bindings
+			S_LocalSound ("misc/menu2.wav");
 			M_UnbindCommand (bindnames[keys_cursor][0]);
-		bind_grab = true;
-		break;
-
-	case K_DEL:				// delete bindings
-		S_LocalSound ("misc/menu2.wav");
-		M_UnbindCommand (bindnames[keys_cursor][0]);
-		break;
+			break;
 	}
 }
 
@@ -1003,7 +1003,7 @@ void M_Fps_Draw (void) {
 
 	M_PrintWhite (16, 144, "         High quality");
 
-// cursor
+	// cursor
 	M_DrawCharacter (196, 32 + fps_cursor * 8, 12 + ((int) (curtime * 4) & 1));
 }
 
@@ -1011,158 +1011,158 @@ void M_Fps_Key (int k) {
 	int i;
 
 	switch (k) {
-	case K_BACKSPACE:
-		m_topmenu = m_none;	// intentional fallthrough
-	case K_ESCAPE:
-		M_LeaveMenu (m_options);
-		break;
+		case K_BACKSPACE:
+			m_topmenu = m_none;	// intentional fallthrough
+		case K_ESCAPE:
+			M_LeaveMenu (m_options);
+			break;
 
-	case K_UPARROW:
-		S_LocalSound ("misc/menu1.wav");
-		fps_cursor--;
+		case K_UPARROW:
+			S_LocalSound ("misc/menu1.wav");
+			fps_cursor--;
 #ifndef GLQUAKE
-		if (fps_cursor == 12)
-			fps_cursor = 11;
+			if (fps_cursor == 12)
+				fps_cursor = 11;
 #endif
-		if (fps_cursor < 0)
-			fps_cursor = FPS_ITEMS - 1;
-		break;
+			if (fps_cursor < 0)
+				fps_cursor = FPS_ITEMS - 1;
+			break;
 
-	case K_DOWNARROW:
-		S_LocalSound ("misc/menu1.wav");
-		fps_cursor++;
+		case K_DOWNARROW:
+			S_LocalSound ("misc/menu1.wav");
+			fps_cursor++;
 #ifndef GLQUAKE
-		if (fps_cursor == 12)
-			fps_cursor = 13;
+			if (fps_cursor == 12)
+				fps_cursor = 13;
 #endif
-		if (fps_cursor >= FPS_ITEMS)
+			if (fps_cursor >= FPS_ITEMS)
+				fps_cursor = 0;
+			break;
+
+		case K_HOME:
+		case K_PGUP:
+			S_LocalSound ("misc/menu1.wav");
 			fps_cursor = 0;
-		break;
+			break;
 
-	case K_HOME:
-	case K_PGUP:
-		S_LocalSound ("misc/menu1.wav");
-		fps_cursor = 0;
-		break;
+		case K_END:
+		case K_PGDN:
+			S_LocalSound ("misc/menu1.wav");
+			fps_cursor = FPS_ITEMS - 1;
+			break;
 
-	case K_END:
-	case K_PGDN:
-		S_LocalSound ("misc/menu1.wav");
-		fps_cursor = FPS_ITEMS - 1;
-		break;
-
-	case K_RIGHTARROW:
-	case K_ENTER:
-		S_LocalSound ("misc/menu2.wav");
-		switch (fps_cursor) {
-		case 0:
-			i = r_explosiontype.value + 1;
-			if (i > 7 || i < 0)
-				i = 0;
-			Cvar_SetValue (&r_explosiontype, i);
-			break;
-		case 1:
-			Cvar_SetValue (&cl_muzzleflash, cl_muzzleflash.value == 2 ? 1 : cl_muzzleflash.value ? 0 : 2);
-			break;
-		case 2:
-			Cvar_SetValue (&cl_gibfilter, !cl_gibfilter.value);
-			break;
-		case 3:
-			Cvar_SetValue (&cl_deadbodyfilter, cl_deadbodyfilter.value == 2 ? 1 : cl_deadbodyfilter.value ? 0 : 2);
-			break;
-		case 4:
-			Cvar_SetValue (&cl_rocket2grenade, !cl_rocket2grenade.value);
-			break;
-		case 5:
-			i = r_rockettrail.value + 1;
-			if (i < 0 || i > 7)
-				i = 0;
-			Cvar_SetValue (&r_rockettrail, i);
-			break;
-		case 6:
-			Cvar_SetValue (&r_rocketlight, !r_rocketlight.value);
-			break;
-		case 7:
-			Cvar_SetValue (&v_damagecshift, !v_damagecshift.value);
-			break;
-		case 8:
-			Cvar_SetValue (&v_bonusflash, !v_bonusflash.value);
-			break;
-		case 9:
-			i = r_powerupglow.value + 1;
-				if (i < 0 || i > 2)
-					i = 0;
-			Cvar_SetValue (&r_powerupglow, i);
-			break;
-		case 10:
-			Cvar_SetValue (&r_drawflame, !r_drawflame.value);
-			break;
-		case 11:
-			Cvar_SetValue (&r_fastsky, !r_fastsky.value);
-			break;
+		case K_RIGHTARROW:
+		case K_ENTER:
+			S_LocalSound ("misc/menu2.wav");
+			switch (fps_cursor) {
+				case 0:
+					i = r_explosiontype.value + 1;
+					if (i > 7 || i < 0)
+						i = 0;
+					Cvar_SetValue (&r_explosiontype, i);
+					break;
+				case 1:
+					Cvar_SetValue (&cl_muzzleflash, cl_muzzleflash.value == 2 ? 1 : cl_muzzleflash.value ? 0 : 2);
+					break;
+				case 2:
+					Cvar_SetValue (&cl_gibfilter, !cl_gibfilter.value);
+					break;
+				case 3:
+					Cvar_SetValue (&cl_deadbodyfilter, cl_deadbodyfilter.value == 2 ? 1 : cl_deadbodyfilter.value ? 0 : 2);
+					break;
+				case 4:
+					Cvar_SetValue (&cl_rocket2grenade, !cl_rocket2grenade.value);
+					break;
+				case 5:
+					i = r_rockettrail.value + 1;
+					if (i < 0 || i > 7)
+						i = 0;
+					Cvar_SetValue (&r_rockettrail, i);
+					break;
+				case 6:
+					Cvar_SetValue (&r_rocketlight, !r_rocketlight.value);
+					break;
+				case 7:
+					Cvar_SetValue (&v_damagecshift, !v_damagecshift.value);
+					break;
+				case 8:
+					Cvar_SetValue (&v_bonusflash, !v_bonusflash.value);
+					break;
+				case 9:
+					i = r_powerupglow.value + 1;
+					if (i < 0 || i > 2)
+						i = 0;
+					Cvar_SetValue (&r_powerupglow, i);
+					break;
+				case 10:
+					Cvar_SetValue (&r_drawflame, !r_drawflame.value);
+					break;
+				case 11:
+					Cvar_SetValue (&r_fastsky, !r_fastsky.value);
+					break;
 
 #ifdef GLQUAKE
-		case 12:
-			Cvar_SetValue (&gl_flashblend, !gl_flashblend.value);
-			Cvar_SetValue (&r_dynamic, gl_flashblend.value);
-			break;
+				case 12:
+					Cvar_SetValue (&gl_flashblend, !gl_flashblend.value);
+					Cvar_SetValue (&r_dynamic, gl_flashblend.value);
+					break;
 #endif
 
-		// fast
-		case 13:
-			Cvar_SetValue (&r_explosiontype, 1);
-			Cvar_SetValue (&r_explosionlight, 0);
-			Cvar_SetValue (&cl_muzzleflash, 0);
-			Cvar_SetValue (&cl_gibfilter, 1);
-			Cvar_SetValue (&cl_deadbodyfilter, 1);
-			Cvar_SetValue (&r_rocketlight, 0);
-			Cvar_SetValue (&r_powerupglow, 0);
-			Cvar_SetValue (&r_drawflame, 0);
-			Cvar_SetValue (&r_fastsky, 1);
-			Cvar_SetValue (&r_rockettrail, 1);
-			Cvar_SetValue (&v_damagecshift, 0);
+					// fast
+				case 13:
+					Cvar_SetValue (&r_explosiontype, 1);
+					Cvar_SetValue (&r_explosionlight, 0);
+					Cvar_SetValue (&cl_muzzleflash, 0);
+					Cvar_SetValue (&cl_gibfilter, 1);
+					Cvar_SetValue (&cl_deadbodyfilter, 1);
+					Cvar_SetValue (&r_rocketlight, 0);
+					Cvar_SetValue (&r_powerupglow, 0);
+					Cvar_SetValue (&r_drawflame, 0);
+					Cvar_SetValue (&r_fastsky, 1);
+					Cvar_SetValue (&r_rockettrail, 1);
+					Cvar_SetValue (&v_damagecshift, 0);
 #ifdef GLQUAKE
-			Cvar_SetValue (&gl_flashblend, 1);
-			Cvar_SetValue (&r_dynamic, 0);
-			Cvar_SetValue (&gl_part_explosions, 0);
-			Cvar_SetValue (&gl_part_trails, 0);
-			Cvar_SetValue (&gl_part_spikes, 0);
-			Cvar_SetValue (&gl_part_gunshots, 0);
-			Cvar_SetValue (&gl_part_blood, 0);
-			Cvar_SetValue (&gl_part_telesplash, 0);
-			Cvar_SetValue (&gl_part_blobs, 0);
-			Cvar_SetValue (&gl_part_lavasplash, 0);
-			Cvar_SetValue (&gl_part_inferno, 0);
+					Cvar_SetValue (&gl_flashblend, 1);
+					Cvar_SetValue (&r_dynamic, 0);
+					Cvar_SetValue (&gl_part_explosions, 0);
+					Cvar_SetValue (&gl_part_trails, 0);
+					Cvar_SetValue (&gl_part_spikes, 0);
+					Cvar_SetValue (&gl_part_gunshots, 0);
+					Cvar_SetValue (&gl_part_blood, 0);
+					Cvar_SetValue (&gl_part_telesplash, 0);
+					Cvar_SetValue (&gl_part_blobs, 0);
+					Cvar_SetValue (&gl_part_lavasplash, 0);
+					Cvar_SetValue (&gl_part_inferno, 0);
 #endif
-			break;
+					break;
 
-		// high quality
-		case 14:
-			Cvar_SetValue (&r_explosiontype, 0);
-			Cvar_SetValue (&r_explosionlight, 1);
-			Cvar_SetValue (&cl_muzzleflash, 1);
-			Cvar_SetValue (&cl_gibfilter, 0);
-			Cvar_SetValue (&cl_deadbodyfilter, 0);
-			Cvar_SetValue (&r_rocketlight, 1);
-			Cvar_SetValue (&r_powerupglow, 2);
-			Cvar_SetValue (&r_drawflame, 1);
-			Cvar_SetValue (&r_fastsky, 0);
-			Cvar_SetValue (&r_rockettrail, 1);
-			Cvar_SetValue (&v_damagecshift, 1);
+					// high quality
+				case 14:
+					Cvar_SetValue (&r_explosiontype, 0);
+					Cvar_SetValue (&r_explosionlight, 1);
+					Cvar_SetValue (&cl_muzzleflash, 1);
+					Cvar_SetValue (&cl_gibfilter, 0);
+					Cvar_SetValue (&cl_deadbodyfilter, 0);
+					Cvar_SetValue (&r_rocketlight, 1);
+					Cvar_SetValue (&r_powerupglow, 2);
+					Cvar_SetValue (&r_drawflame, 1);
+					Cvar_SetValue (&r_fastsky, 0);
+					Cvar_SetValue (&r_rockettrail, 1);
+					Cvar_SetValue (&v_damagecshift, 1);
 #ifdef GLQUAKE
-			Cvar_SetValue (&gl_flashblend, 0);
-			Cvar_SetValue (&r_dynamic, 1);
-			Cvar_SetValue (&gl_part_explosions, 1);
-			Cvar_SetValue (&gl_part_trails, 1);
-			Cvar_SetValue (&gl_part_spikes, 1);
-			Cvar_SetValue (&gl_part_gunshots, 1);
-			Cvar_SetValue (&gl_part_blood, 1);
-			Cvar_SetValue (&gl_part_telesplash, 1);
-			Cvar_SetValue (&gl_part_blobs, 1);
-			Cvar_SetValue (&gl_part_lavasplash, 1);
-			Cvar_SetValue (&gl_part_inferno, 1);
+					Cvar_SetValue (&gl_flashblend, 0);
+					Cvar_SetValue (&r_dynamic, 1);
+					Cvar_SetValue (&gl_part_explosions, 1);
+					Cvar_SetValue (&gl_part_trails, 1);
+					Cvar_SetValue (&gl_part_spikes, 1);
+					Cvar_SetValue (&gl_part_gunshots, 1);
+					Cvar_SetValue (&gl_part_blood, 1);
+					Cvar_SetValue (&gl_part_telesplash, 1);
+					Cvar_SetValue (&gl_part_blobs, 1);
+					Cvar_SetValue (&gl_part_lavasplash, 1);
+					Cvar_SetValue (&gl_part_inferno, 1);
 #endif
-		}
+			}
 	}
 }
 
@@ -1193,13 +1193,13 @@ void M_Menu_Help_f (void) {
 }
 
 void M_Help_Draw (void) {
-//	M_DrawPic (0, 0, Draw_CachePic ( va("gfx/help%i.lmp", help_page)) );
-    extern void Help_Draw(int, int, int, int);
+	//	M_DrawPic (0, 0, Draw_CachePic ( va("gfx/help%i.lmp", help_page)) );
+	extern void Help_Draw(int, int, int, int);
 
 	int x, y, w, h;
 
 #ifdef GLQUAKE
-// disconnect: unscale help menu
+	// disconnect: unscale help menu
 	if (scr_scaleMenu.value) {
 		menuwidth = vid.width;
 		menuheight = vid.height;
@@ -1209,45 +1209,45 @@ void M_Help_Draw (void) {
 	}
 #endif
 
-    w = min(max(512, 320), vid.width) - 8;
-    h = min(max(432, 200), vid.height) - 8;
-    x = (vid.width - w) / 2;
-    y = (vid.height - h) / 2;
+	w = min(max(512, 320), vid.width) - 8;
+	h = min(max(432, 200), vid.height) - 8;
+	x = (vid.width - w) / 2;
+	y = (vid.height - h) / 2;
 
-    Help_Draw (x, y, w, h);
+	Help_Draw (x, y, w, h);
 }
 
 void M_Help_Key (int key) {
 
-/*
+	/*
 
-	switch (key) {
-	case K_BACKSPACE:
-		m_topmenu = m_none;	// intentional fallthrough
-	case K_ESCAPE:
-		M_LeaveMenu (m_main);
-		break;
+	   switch (key) {
+	   case K_BACKSPACE:
+	   m_topmenu = m_none;	// intentional fallthrough
+	   case K_ESCAPE:
+	   M_LeaveMenu (m_main);
+	   break;
 
-	case K_UPARROW:
-	case K_RIGHTARROW:
-		m_entersound = true;
-		if (++help_page >= NUM_HELP_PAGES)
-			help_page = 0;
-		break;
+	   case K_UPARROW:
+	   case K_RIGHTARROW:
+	   m_entersound = true;
+	   if (++help_page >= NUM_HELP_PAGES)
+	   help_page = 0;
+	   break;
 
-	case K_DOWNARROW:
-	case K_LEFTARROW:
-		m_entersound = true;
-		if (--help_page < 0)
-			help_page = NUM_HELP_PAGES-1;
-		break;
-	}
+	   case K_DOWNARROW:
+	   case K_LEFTARROW:
+	   m_entersound = true;
+	   if (--help_page < 0)
+	   help_page = NUM_HELP_PAGES-1;
+	   break;
+	   }
 
-*/
+	 */
 
-    extern void Help_Key(int key);
+	extern void Help_Key(int key);
 
-    Help_Key(key);
+	Help_Key(key);
 
 }
 
@@ -1269,27 +1269,27 @@ void M_Menu_Quit_f (void) {
 
 void M_Quit_Key (int key) {
 	switch (key) {
-	case K_ESCAPE:
-	case 'n':
-	case 'N':
-		if (wasInMenus) {
-			m_state = m_quit_prevstate;
-			m_entersound = true;
-		} else {
-			key_dest = key_game;
-			m_state = m_none;
-		}
-		break;
+		case K_ESCAPE:
+		case 'n':
+		case 'N':
+			if (wasInMenus) {
+				m_state = m_quit_prevstate;
+				m_entersound = true;
+			} else {
+				key_dest = key_game;
+				m_state = m_none;
+			}
+			break;
 
-	case K_ENTER:
-	case 'Y':
-	case 'y':
-		key_dest = key_console;
-		Host_Quit ();
-		break;
+		case K_ENTER:
+		case 'Y':
+		case 'y':
+			key_dest = key_console;
+			Host_Quit ();
+			break;
 
-	default:
-		break;
+		default:
+			break;
 	}
 }
 
@@ -1371,11 +1371,11 @@ static void StartNewGame (void) {
 void M_SinglePlayer_Key (int key) {
 	if (m_singleplayer_notavail) {
 		switch (key) {
-		case K_BACKSPACE:
-		case K_ESCAPE:
-		case K_ENTER:
-			m_singleplayer_notavail = false;
-			break;
+			case K_BACKSPACE:
+			case K_ESCAPE:
+			case K_ENTER:
+				m_singleplayer_notavail = false;
+				break;
 		}
 		return;
 	}
@@ -1391,61 +1391,61 @@ void M_SinglePlayer_Key (int key) {
 	}
 
 	switch (key) {
-	case K_BACKSPACE:
-		m_topmenu = m_none;	// intentional fallthrough
-	case K_ESCAPE:
-		M_LeaveMenu (m_main);
-		break;
+		case K_BACKSPACE:
+			m_topmenu = m_none;	// intentional fallthrough
+		case K_ESCAPE:
+			M_LeaveMenu (m_main);
+			break;
 
-	case K_DOWNARROW:
-		S_LocalSound ("misc/menu1.wav");
-		if (++m_singleplayer_cursor >= SINGLEPLAYER_ITEMS)
+		case K_DOWNARROW:
+			S_LocalSound ("misc/menu1.wav");
+			if (++m_singleplayer_cursor >= SINGLEPLAYER_ITEMS)
+				m_singleplayer_cursor = 0;
+			break;
+
+		case K_UPARROW:
+			S_LocalSound ("misc/menu1.wav");
+			if (--m_singleplayer_cursor < 0)
+				m_singleplayer_cursor = SINGLEPLAYER_ITEMS - 1;
+			break;
+
+		case K_HOME:
+		case K_PGUP:
+			S_LocalSound ("misc/menu1.wav");
 			m_singleplayer_cursor = 0;
-		break;
+			break;
 
-	case K_UPARROW:
-		S_LocalSound ("misc/menu1.wav");
-		if (--m_singleplayer_cursor < 0)
+		case K_END:
+		case K_PGDN:
+			S_LocalSound ("misc/menu1.wav");
 			m_singleplayer_cursor = SINGLEPLAYER_ITEMS - 1;
-		break;
+			break;
 
-	case K_HOME:
-	case K_PGUP:
-		S_LocalSound ("misc/menu1.wav");
-		m_singleplayer_cursor = 0;
-		break;
+		case K_ENTER:
+			switch (m_singleplayer_cursor) {
+				case 0:
+					CheckSPGame ();
+					if (m_singleplayer_notavail) {
+						m_entersound = true;
+						return;
+					}
+					if (com_serveractive) {
+						// bring up confirmation dialog
+						m_singleplayer_confirm = true;
+						m_entersound = true;
+					} else {
+						StartNewGame ();
+					}
+					break;
 
-	case K_END:
-	case K_PGDN:
-		S_LocalSound ("misc/menu1.wav");
-		m_singleplayer_cursor = SINGLEPLAYER_ITEMS - 1;
-		break;
+				case 1:
+					M_Menu_Load_f ();
+					break;
 
-	case K_ENTER:
-		switch (m_singleplayer_cursor) {
-		case 0:
-			CheckSPGame ();
-			if (m_singleplayer_notavail) {
-				m_entersound = true;
-				return;
+				case 2:
+					M_Menu_Save_f ();
+					break;
 			}
-			if (com_serveractive) {
-				// bring up confirmation dialog
-				m_singleplayer_confirm = true;
-				m_entersound = true;
-			} else {
-				StartNewGame ();
-			}
-			break;
-
-		case 1:
-			M_Menu_Load_f ();
-			break;
-
-		case 2:
-			M_Menu_Save_f ();
-			break;
-		}
 	}
 }
 
@@ -1461,7 +1461,7 @@ void M_SinglePlayer_Draw (void) {
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
 	p = Draw_CachePic ("gfx/ttl_sgl.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
-//	M_DrawTransPic (72, 32, Draw_CachePic ("gfx/sp_menu.lmp") );
+	//	M_DrawTransPic (72, 32, Draw_CachePic ("gfx/sp_menu.lmp") );
 
 	M_DrawTextBox (60, 10*8, 23, 4);
 	M_PrintWhite (88, 12*8, "This client is for");
@@ -1470,12 +1470,12 @@ void M_SinglePlayer_Draw (void) {
 
 void M_SinglePlayer_Key (key) {
 	switch (key) {
-	case K_BACKSPACE:
-		m_topmenu = m_none;	// intentional fallthrough
-	case K_ESCAPE:
-	case K_ENTER:
-		M_LeaveMenu (m_main);
-		break;
+		case K_BACKSPACE:
+			m_topmenu = m_none;	// intentional fallthrough
+		case K_ESCAPE:
+		case K_ENTER:
+			M_LeaveMenu (m_main);
+			break;
 	}
 }
 #endif	// CLIENTONLY
@@ -1546,7 +1546,7 @@ void M_Load_Draw (void) {
 	for (i = 0; i < MAX_SAVEGAMES; i++)
 		M_Print (16, 32 + 8*i, m_filenames[i]);
 
-// line cursor
+	// line cursor
 	M_DrawCharacter (8, 32 + load_cursor * 8, 12 + ((int)(curtime * 4) & 1));
 }
 
@@ -1560,78 +1560,78 @@ void M_Save_Draw (void) {
 	for (i = 0; i < MAX_SAVEGAMES; i++)
 		M_Print (16, 32 + 8 * i, m_filenames[i]);
 
-// line cursor
+	// line cursor
 	M_DrawCharacter (8, 32 + load_cursor * 8, 12 + ((int)(curtime * 4) & 1));
 }
 
 void M_Load_Key (int key) {
 	switch (key) {
-	case K_BACKSPACE:
-		m_topmenu = m_none;	// intentional fallthrough
-	case K_ESCAPE:
-		M_LeaveMenu (m_singleplayer);
-		break;
+		case K_BACKSPACE:
+			m_topmenu = m_none;	// intentional fallthrough
+		case K_ESCAPE:
+			M_LeaveMenu (m_singleplayer);
+			break;
 
-	case K_ENTER:
-		S_LocalSound ("misc/menu2.wav");
-		if (!loadable[load_cursor])
+		case K_ENTER:
+			S_LocalSound ("misc/menu2.wav");
+			if (!loadable[load_cursor])
+				return;
+			m_state = m_none;
+			key_dest = key_game;
+
+			// issue the load command
+			if (FS_LoadHunkFile ("spprogs.dat") && !file_from_gamedir)
+				Cbuf_AddText("disconnect; gamedir qw\n");
+			Cbuf_AddText (va ("load s%i\n", load_cursor) );
 			return;
-		m_state = m_none;
-		key_dest = key_game;
 
-		// issue the load command
-		if (FS_LoadHunkFile ("spprogs.dat") && !file_from_gamedir)
-			Cbuf_AddText("disconnect; gamedir qw\n");
-		Cbuf_AddText (va ("load s%i\n", load_cursor) );
-		return;
+		case K_UPARROW:
+		case K_LEFTARROW:
+			S_LocalSound ("misc/menu1.wav");
+			load_cursor--;
+			if (load_cursor < 0)
+				load_cursor = MAX_SAVEGAMES - 1;
+			break;
 
-	case K_UPARROW:
-	case K_LEFTARROW:
-		S_LocalSound ("misc/menu1.wav");
-		load_cursor--;
-		if (load_cursor < 0)
-			load_cursor = MAX_SAVEGAMES - 1;
-		break;
-
-	case K_DOWNARROW:
-	case K_RIGHTARROW:
-		S_LocalSound ("misc/menu1.wav");
-		load_cursor++;
-		if (load_cursor >= MAX_SAVEGAMES)
-			load_cursor = 0;
-		break;
+		case K_DOWNARROW:
+		case K_RIGHTARROW:
+			S_LocalSound ("misc/menu1.wav");
+			load_cursor++;
+			if (load_cursor >= MAX_SAVEGAMES)
+				load_cursor = 0;
+			break;
 	}
 }
 
 void M_Save_Key (int key) {
 	switch (key) {
-	case K_BACKSPACE:
-		m_topmenu = m_none;	// intentional fallthrough
-	case K_ESCAPE:
-		M_LeaveMenu (m_singleplayer);
-		break;
+		case K_BACKSPACE:
+			m_topmenu = m_none;	// intentional fallthrough
+		case K_ESCAPE:
+			M_LeaveMenu (m_singleplayer);
+			break;
 
-	case K_ENTER:
-		m_state = m_none;
-		key_dest = key_game;
-		Cbuf_AddText (va("save s%i\n", load_cursor));
-		return;
+		case K_ENTER:
+			m_state = m_none;
+			key_dest = key_game;
+			Cbuf_AddText (va("save s%i\n", load_cursor));
+			return;
 
-	case K_UPARROW:
-	case K_LEFTARROW:
-		S_LocalSound ("misc/menu1.wav");
-		load_cursor--;
-		if (load_cursor < 0)
-			load_cursor = MAX_SAVEGAMES-1;
-		break;
+		case K_UPARROW:
+		case K_LEFTARROW:
+			S_LocalSound ("misc/menu1.wav");
+			load_cursor--;
+			if (load_cursor < 0)
+				load_cursor = MAX_SAVEGAMES-1;
+			break;
 
-	case K_DOWNARROW:
-	case K_RIGHTARROW:
-		S_LocalSound ("misc/menu1.wav");
-		load_cursor++;
-		if (load_cursor >= MAX_SAVEGAMES)
-			load_cursor = 0;
-		break;
+		case K_DOWNARROW:
+		case K_RIGHTARROW:
+			S_LocalSound ("misc/menu1.wav");
+			load_cursor++;
+			if (load_cursor >= MAX_SAVEGAMES)
+				load_cursor = 0;
+			break;
 	}
 }
 
@@ -1664,63 +1664,63 @@ void M_MultiPlayer_Draw (void) {
 	M_Print (80, 64, "New Game");
 #endif
 
-// cursor
+	// cursor
 	M_DrawCharacter (64, 40 + m_multiplayer_cursor * 8, 12 + ((int) (curtime * 4) & 1));
 }
 
 void M_MultiPlayer_Key (int key) {
 	switch (key) {
-	case K_BACKSPACE:
-		m_topmenu = m_none;	// intentional fallthrough
-	case K_ESCAPE:
-		M_LeaveMenu (m_main);
-		break;
+		case K_BACKSPACE:
+			m_topmenu = m_none;	// intentional fallthrough
+		case K_ESCAPE:
+			M_LeaveMenu (m_main);
+			break;
 
-	case K_DOWNARROW:
-		S_LocalSound ("misc/menu1.wav");
-		if (++m_multiplayer_cursor >= MULTIPLAYER_ITEMS)
+		case K_DOWNARROW:
+			S_LocalSound ("misc/menu1.wav");
+			if (++m_multiplayer_cursor >= MULTIPLAYER_ITEMS)
+				m_multiplayer_cursor = 0;
+			break;
+
+		case K_UPARROW:
+			S_LocalSound ("misc/menu1.wav");
+			if (--m_multiplayer_cursor < 0)
+				m_multiplayer_cursor = MULTIPLAYER_ITEMS - 1;
+			break;
+
+		case K_HOME:
+		case K_PGUP:
+			S_LocalSound ("misc/menu1.wav");
 			m_multiplayer_cursor = 0;
-		break;
+			break;
 
-	case K_UPARROW:
-		S_LocalSound ("misc/menu1.wav");
-		if (--m_multiplayer_cursor < 0)
+		case K_END:
+		case K_PGDN:
+			S_LocalSound ("misc/menu1.wav");
 			m_multiplayer_cursor = MULTIPLAYER_ITEMS - 1;
-		break;
-
-	case K_HOME:
-	case K_PGUP:
-		S_LocalSound ("misc/menu1.wav");
-		m_multiplayer_cursor = 0;
-		break;
-
-	case K_END:
-	case K_PGDN:
-		S_LocalSound ("misc/menu1.wav");
-		m_multiplayer_cursor = MULTIPLAYER_ITEMS - 1;
-		break;
-
-	case K_ENTER:
-		m_entersound = true;
-		switch (m_multiplayer_cursor) {
-		case 0:
-			M_Menu_ServerList_f ();
 			break;
 
-		case 1:
-			M_Menu_Setup_f ();
-			break;
+		case K_ENTER:
+			m_entersound = true;
+			switch (m_multiplayer_cursor) {
+				case 0:
+					M_Menu_ServerList_f ();
+					break;
 
-		case 2:
-			M_Menu_Demos_f ();
-			break;
+				case 1:
+					M_Menu_Setup_f ();
+					break;
+
+				case 2:
+					M_Menu_Demos_f ();
+					break;
 
 #ifndef CLIENTONLY
-		case 3:
-			M_Menu_GameOptions_f ();
-			break;
+				case 3:
+					M_Menu_GameOptions_f ();
+					break;
 #endif
-		}
+			}
 	}
 }
 
@@ -2111,9 +2111,9 @@ menu_items:
 void M_Menu_MP3_Playlist_Key (int k) {
 	con_suppress = true;
 	switch (k) {
-         case K_BACKSPACE:
+		case K_BACKSPACE:
 			m_topmenu = m_none;
-         case K_ESCAPE:
+		case K_ESCAPE:
 			M_LeaveMenu (m_mp3_control);
 			break;
 
@@ -2268,7 +2268,7 @@ static float		last_demo_time = 0;
 
 static int			demo_cursor = 0;
 static int			demo_base = 0;
-static int 			demo_section = 0;
+static int			demo_section = 0;
 
 static demo_sort_t	demo_sorttype = ds_name;
 static qbool		demo_reversesort = false;
@@ -2280,13 +2280,13 @@ char demo_track[16];
 
 void M_Demos_Playlist_stop_f (void){
 	if (!demo_playlist_started_test){
-	demo_playlist_started = 0;
-	demo_playlist_started_test = 0;
+		demo_playlist_started = 0;
+		demo_playlist_started_test = 0;
 	}
 }
 
 void Demo_playlist_start (int i){
-//	int test;
+	//	int test;
 	key_dest = key_game;
 	m_state = m_none;
 	demo_playlist_current_played = i;
@@ -2307,11 +2307,11 @@ void Demo_playlist_f (void) {
 	if (demo_playlist_current_played == demo_playlist_num  && demo_playlist_loop.value ){
 		demo_playlist_current_played = 0;
 		Cbuf_AddText (va("playdemo \"..%s\"\n", demo_playlist[demo_playlist_current_played].path));
-	}else if (demo_playlist_current_played == demo_playlist_num ){
-	Com_Printf("End of demo playlist.\n");
-	demo_playlist_started = demo_playlist_current_played = 0;
-	}else{
-	Cbuf_AddText (va("playdemo \"..%s\"\n", demo_playlist[demo_playlist_current_played].path));
+	} else if (demo_playlist_current_played == demo_playlist_num ){
+		Com_Printf("End of demo playlist.\n");
+		demo_playlist_started = demo_playlist_current_played = 0;
+	} else{
+		Cbuf_AddText (va("playdemo \"..%s\"\n", demo_playlist[demo_playlist_current_played].path));
 	}
 }
 
@@ -2319,10 +2319,10 @@ void Demo_Playlist_Next_f (void){
 	int tmp;
 
 	if (demo_playlist_started == 0)
-			return;
+		return;
 	tmp = demo_playlist_current_played + 1 ;
 	if (tmp>demo_playlist_num-1)
-			tmp = 0 ;
+		tmp = 0 ;
 
 	Demo_playlist_start(tmp);
 }
@@ -2330,10 +2330,10 @@ void Demo_Playlist_Next_f (void){
 void Demo_Playlist_Prev_f (void){
 	int tmp;
 	if (demo_playlist_started == 0)
-			return;
+		return;
 	tmp = demo_playlist_current_played - 1 ;
 	if (tmp<0)
-			tmp = demo_playlist_num - 1 ;
+		tmp = demo_playlist_num - 1 ;
 
 	Com_Printf("Prev %i\n",tmp);
 	Demo_playlist_start(tmp);
@@ -2389,19 +2389,19 @@ int Demo_SortCompare(const void *p1, const void *p2) {
 	sign = demo_reversesort ? -1 : 1;
 
 	switch (demo_sorttype) {
-	case ds_name:
-		return sign * strcasecmp(d1->name, d2->name);
-	case ds_size:
-		return sign * (d1->size - d2->size);
-	case ds_time:
+		case ds_name:
+			return sign * strcasecmp(d1->name, d2->name);
+		case ds_size:
+			return sign * (d1->size - d2->size);
+		case ds_time:
 #ifdef _WIN32
-		return -sign * CompareFileTime(&d1->time, &d2->time);
+			return -sign * CompareFileTime(&d1->time, &d2->time);
 #else
-		return -sign * (d1->time - d2->time);
+			return -sign * (d1->time - d2->time);
 #endif
-	default:
-		Sys_Error("Demo_SortCompare: unknown demo_sorttype (%d)", demo_sorttype);
-		return 0;
+		default:
+			Sys_Error("Demo_SortCompare: unknown demo_sorttype (%d)", demo_sorttype);
+			return 0;
 	}
 }
 
@@ -2488,7 +2488,7 @@ static void Demo_ReadDirectory(void) {
 #endif
 
 	do {
-	#ifdef _WIN32
+#ifdef _WIN32
 		if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 			if (!strcmp(fd.cFileName, ".") || !strcmp(fd.cFileName, ".."))
 				continue;
@@ -2499,11 +2499,11 @@ static void Demo_ReadDirectory(void) {
 			i = strlen(fd.cFileName);
 			if (i < 5 ||
 				(
-					strcasecmp(fd.cFileName + i - 4, ".qwd") &&
-					strcasecmp(fd.cFileName +i - 4, ".qwz") &&
-					strcasecmp(fd.cFileName + i - 4, ".mvd")
+				 strcasecmp(fd.cFileName + i - 4, ".qwd") &&
+				 strcasecmp(fd.cFileName +i - 4, ".qwz") &&
+				 strcasecmp(fd.cFileName + i - 4, ".mvd")
 				)
-			)
+			   )
 				continue;
 			type = dt_file;
 			size = fd.nFileSizeLow;
@@ -2511,7 +2511,7 @@ static void Demo_ReadDirectory(void) {
 		}
 
 		strlcpy (name, fd.cFileName, sizeof(name));
-	#else
+#else
 		stat (va("%s%s/%s", com_basedir, demo_currentdir, dstruct->d_name), &fileinfo);
 
 		if (S_ISDIR(fileinfo.st_mode)) {
@@ -2523,10 +2523,10 @@ static void Demo_ReadDirectory(void) {
 			i = strlen(dstruct->d_name);
 			if (i < 5 ||
 				(
-					strcasecmp(dstruct->d_name + i - 4, ".qwd")
-					&& strcasecmp(dstruct->d_name + i - 4, ".mvd")
+				 strcasecmp(dstruct->d_name + i - 4, ".qwd")
+				 && strcasecmp(dstruct->d_name + i - 4, ".mvd")
 				)
-			)
+			   )
 				continue;
 			type = dt_file;
 			size = fileinfo.st_size;
@@ -2534,7 +2534,7 @@ static void Demo_ReadDirectory(void) {
 		}
 
 		strlcpy (name, dstruct->d_name, sizeof(name));
-	#endif
+#endif
 
 		if (demolist_count == MAX_DEMO_FILES)
 			break;
@@ -2602,12 +2602,12 @@ void M_Demos_Playlist_Del (int i) {
 	demo_playlist[i].trackname[0] = '\0';
 
 	for (y=i ; y<=256 && demo_playlist[y+1].name[0]!='\0'; y++ ){
-	strlcpy(demo_playlist[y].name,demo_playlist[y+1].name,sizeof(demo_playlist[y+1].name)) ;
-	strlcpy(demo_playlist[y].path,demo_playlist[y+1].path,sizeof(demo_playlist[y+1].path)) ;
-	strlcpy(demo_playlist[y].trackname,demo_playlist[y+1].trackname,sizeof(demo_playlist[y+1].trackname)) ;
-	demo_playlist[y+1].name[0] = '\0';
-	demo_playlist[y+1].path[0] = '\0';
-	demo_playlist[y+1].trackname[0] = '\0';
+		strlcpy(demo_playlist[y].name,demo_playlist[y+1].name,sizeof(demo_playlist[y+1].name)) ;
+		strlcpy(demo_playlist[y].path,demo_playlist[y+1].path,sizeof(demo_playlist[y+1].path)) ;
+		strlcpy(demo_playlist[y].trackname,demo_playlist[y+1].trackname,sizeof(demo_playlist[y+1].trackname)) ;
+		demo_playlist[y+1].name[0] = '\0';
+		demo_playlist[y+1].path[0] = '\0';
+		demo_playlist[y+1].trackname[0] = '\0';
 	}
 	demo_playlist_num--;
 	if (demo_playlist_num < 0 )
@@ -2634,7 +2634,7 @@ void M_Demos_Playlist_Move_Down (int i) {
 	demo_playlist_t tmp;
 
 	if(i+1 == demo_playlist_num )
-			return;
+		return;
 
 	strlcpy(tmp.name,demo_playlist[i+1].name,sizeof(demo_playlist[i+1].name));
 	strlcpy(tmp.path,demo_playlist[i+1].path,sizeof(demo_playlist[i+1].path));
@@ -2662,13 +2662,9 @@ static void Demo_FormatSize (char *t) {
 #define DEMO_PLAYLIST_MAX 100
 #define DEMO_OPTIONS_MAX 2
 
-
-
-
-
 void M_Demos_Draw (void) {
 	int i, y,z;
-//	char *demos_test;
+	//	char *demos_test;
 	direntry_t *d;
 	char demoname[DEMOLIST_NAME_WIDTH], demosize[36 - DEMOLIST_NAME_WIDTH];
 	static char last_demo_name[MAX_DEMO_NAME + 7];
@@ -2694,28 +2690,28 @@ void M_Demos_Draw (void) {
 				strlcpy (demoname, d->name, sizeof(demoname));
 
 				switch (d->type) {
-				case dt_file:
-					M_Print (24, y, demoname);
-					if (d->size > 99999 * 1024)
-						snprintf(demosize, sizeof(demosize), "%5iM", d->size >> 20);
-					else
-						snprintf(demosize, sizeof(demosize), "%5iK", d->size >> 10);
-					Demo_FormatSize(demosize);
-					M_PrintWhite (24 + 8 * DEMOLIST_NAME_WIDTH, y, demosize);
-					break;
-				case dt_dir:
-					M_PrintWhite (24, y, demoname);
-					M_PrintWhite (24 + 8 * DEMOLIST_NAME_WIDTH, y, "folder");
-					break;
-				case dt_up:
-					M_PrintWhite (24, y, demoname);
-					M_PrintWhite (24 + 8 * DEMOLIST_NAME_WIDTH, y, "    up");
-					break;
-				case dt_msg:
-					M_Print (24, y, demoname);
-					break;
-				default:
-					Sys_Error("M_Demos_Draw: unknown d->type (%d)", d->type);
+					case dt_file:
+						M_Print (24, y, demoname);
+						if (d->size > 99999 * 1024)
+							snprintf(demosize, sizeof(demosize), "%5iM", d->size >> 20);
+						else
+							snprintf(demosize, sizeof(demosize), "%5iK", d->size >> 10);
+						Demo_FormatSize(demosize);
+						M_PrintWhite (24 + 8 * DEMOLIST_NAME_WIDTH, y, demosize);
+						break;
+					case dt_dir:
+						M_PrintWhite (24, y, demoname);
+						M_PrintWhite (24 + 8 * DEMOLIST_NAME_WIDTH, y, "folder");
+						break;
+					case dt_up:
+						M_PrintWhite (24, y, demoname);
+						M_PrintWhite (24 + 8 * DEMOLIST_NAME_WIDTH, y, "    up");
+						break;
+					case dt_msg:
+						M_Print (24, y, demoname);
+						break;
+					default:
+						Sys_Error("M_Demos_Draw: unknown d->type (%d)", d->type);
 				}
 			}
 
@@ -2752,7 +2748,7 @@ void M_Demos_Draw (void) {
 			} else {
 				last_demo_time = 0;
 			}
-		}else if ( demo_section == 1 ){
+		} else if ( demo_section == 1 ){
 			M_PrintWhite (64,8, " browser ");
 			M_Print (136,8, "[newmenu]");
 			M_Print (8, 24, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f \x1d\x1e\x1e\x1e\x1e\x1e\x1f");
@@ -2761,8 +2757,8 @@ void M_Demos_Draw (void) {
 			M_Print (40,56,"its finished \\o/");
 
 
-	}
-	}else if(demos_menu_tab == DEMOS_TAB_PLAYLIST){
+		}
+	} else if(demos_menu_tab == DEMOS_TAB_PLAYLIST){
 		M_PrintWhite (64, 0, " demos ");
 		M_Print (120, 0, "[playlist]");
 		M_PrintWhite (200, 0, " options ");
@@ -2777,19 +2773,19 @@ void M_Demos_Draw (void) {
 				for (i = 0; i <= demo_playlist_num - demo_playlist_base && i < DEMO_MAXLINES; i++) {
 					y = 32 + i * 8 ;
 					if (demo_playlist_cursor == i)
-							M_PrintWhite (24, y, demo_playlist[demo_playlist_base + i].name);
+						M_PrintWhite (24, y, demo_playlist[demo_playlist_base + i].name);
 					else
 						M_Print (24, y, demo_playlist[demo_playlist_base + i].name);
 				}
 				M_DrawCharacter (8, 32 + demo_playlist_cursor * 8, 12 + ((int) (curtime * 4) & 1));
-				}
-		}else if (demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS){
+			}
+		} else if (demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS){
 			M_PrintWhite (64,8, " demos ");
 			M_Print (130,8, "[options]");
 			if (demo_playlist_started && cls.demoplayback){
 				M_Print (24, 32, "Currently playing:");
 				M_PrintWhite (24, 40, demo_playlist[demo_playlist_current_played].name);
-			}else{
+			} else{
 				M_Print (24, 32, "Not playing anything");
 			}
 			M_Print	(24, 56, "Next     demo");
@@ -2800,23 +2796,21 @@ void M_Demos_Draw (void) {
 			if (demo_playlist_num > 0){
 
 
-			M_Print (24, 96, "Currently selected:");
-			M_Print (24, 104, demo_playlist[demo_playlist_cursor].name);
-			}else{
-			M_Print (24, 96, "No demo in playlist");
+				M_Print (24, 96, "Currently selected:");
+				M_Print (24, 104, demo_playlist[demo_playlist_cursor].name);
+			} else{
+				M_Print (24, 96, "No demo in playlist");
 			}
 
 			if (strcasecmp(demo_playlist[demo_playlist_cursor].name + strlen(demo_playlist[demo_playlist_cursor].name) - 4, ".mvd")){
 				M_Print (24, 120, "Tracking only available with mvds");
-			}else{
+			} else{
 				M_Print (24, 120, "Track");
 				M_DrawTextBox (160, 112, 16, 1);
 				M_PrintWhite (168, 120, demo_track);
 				if (demo_playlist_opt_cursor == 4 && demo_playlist_num > 0)
 					M_DrawCharacter (168 + 8*strlen(demo_track), 120, 10+((int)(curtime*4)&1));
 			}
-
-
 
 			if (demo_playlist_opt_cursor >= 4 )
 				z=4;
@@ -2825,11 +2819,7 @@ void M_Demos_Draw (void) {
 
 			M_DrawCharacter (8, 56 + (demo_playlist_opt_cursor +z) * 8, 12 + ((int) (curtime * 4) & 1));
 		}
-
-
-
-
-	}else if(demos_menu_tab == DEMOS_TAB_OPTIONS){
+	} else if(demos_menu_tab == DEMOS_TAB_OPTIONS){
 		M_PrintWhite (64, 0, " demos ");
 		M_PrintWhite (120, 0, " playlist ");
 		M_Print (200, 0, "[options]");
@@ -2844,9 +2834,9 @@ void M_Demos_Draw (void) {
 		M_PrintWhite (168, 48, default_track);
 
 		if (demo_options_cursor >= 1 )
-				z=1;
+			z=1;
 		else
-				z=0;
+			z=0;
 
 		if (demo_options_cursor == 1)
 			M_DrawCharacter (168 + 8*strlen(default_track), 48, 10+((int)(curtime*4)&1));
@@ -2920,7 +2910,7 @@ void M_Demos_Key (int key) {
 			}
 		} else if (demos_menu_tab == DEMOS_TAB_OPTIONS) {
 			if (demo_options_cursor > 0)
-					demo_options_cursor--;
+				demo_options_cursor--;
 			else if (demo_options_base > 0)
 				demo_options_base--;
 			M_Demo_Playlist_Setup_f();
@@ -2939,24 +2929,23 @@ void M_Demos_Key (int key) {
 				demo_base = demo_cursor = 0;
 			}
 		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST ) {
-
 			if ( demo_playlist_section == DEMO_PLAYLIST_TAB_MAIN ) {
 				if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base < demo_playlist_num)
 					M_Demos_Playlist_Move_Down(demo_playlist_cursor + demo_playlist_base);
 
 				if (demo_playlist_cursor + demo_playlist_base < demo_playlist_num - 1) {
-						if (demo_playlist_cursor < DEMO_MAXLINES - 1)
-							demo_playlist_cursor++;
-						else
-							demo_playlist_base++;
+					if (demo_playlist_cursor < DEMO_MAXLINES - 1)
+						demo_playlist_cursor++;
+					else
+						demo_playlist_base++;
 				}
 				M_Demo_Playlist_Setup_f();
 			} else if (demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS ) {
 				if (demo_playlist_opt_cursor + demo_playlist_opt_base < DEMO_PLAYLIST_OPTIONS_MAX - 1) {
-						if (demo_playlist_opt_cursor < DEMO_PLAYLIST_OPTIONS_MAX - 1)
-							demo_playlist_opt_cursor++;
-						else
-							demo_playlist_opt_base++;
+					if (demo_playlist_opt_cursor < DEMO_PLAYLIST_OPTIONS_MAX - 1)
+						demo_playlist_opt_cursor++;
+					else
+						demo_playlist_opt_base++;
 				}
 			}
 		} else if (demos_menu_tab == DEMOS_TAB_OPTIONS ) {
@@ -2973,19 +2962,17 @@ void M_Demos_Key (int key) {
 		S_LocalSound ("misc/menu1.wav");
 		demos_menu_tab--;
 		if(demos_menu_tab < DEMOS_TAB_MAIN)
-				demos_menu_tab = DEMOS_TAB_MAX;
+			demos_menu_tab = DEMOS_TAB_MAX;
 		M_Demo_Playlist_Setup_f();
 		break;
-
 
 	case K_RIGHTARROW:
 		S_LocalSound ("misc/menu1.wav");
 		demos_menu_tab++;
 		if(demos_menu_tab > DEMOS_TAB_MAX)
-				demos_menu_tab = DEMOS_TAB_MAIN;
+			demos_menu_tab = DEMOS_TAB_MAIN;
 		M_Demo_Playlist_Setup_f();
 		break;
-
 
 	case K_HOME:
 		S_LocalSound ("misc/menu1.wav");
@@ -3017,7 +3004,7 @@ void M_Demos_Key (int key) {
 				demo_playlist_base = 0;
 				demo_playlist_cursor = demo_playlist_num - 1;
 			}
-		M_Demo_Playlist_Setup_f();
+			M_Demo_Playlist_Setup_f();
 		}
 		break;
 
@@ -3040,7 +3027,7 @@ void M_Demos_Key (int key) {
 						demo_playlist_base = 0;
 					demo_playlist_cursor = 0;
 				}
-			M_Demo_Playlist_Setup_f();
+				M_Demo_Playlist_Setup_f();
 			} else if (demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS) {
 				demo_playlist_cursor -= DEMO_MAXLINES - 1;
 				if (demo_playlist_cursor < 0) {
@@ -3066,7 +3053,7 @@ void M_Demos_Key (int key) {
 					demo_base = demolist_count - demo_cursor - 1;
 			}
 		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
-		demo_playlist_cursor += DEMO_MAXLINES - 1;
+			demo_playlist_cursor += DEMO_MAXLINES - 1;
 			if (demo_playlist_base + demo_playlist_cursor >= demo_playlist_num)
 				demo_playlist_cursor = demo_playlist_num - demo_playlist_base - 1;
 			if (demo_playlist_cursor >= DEMO_MAXLINES) {
@@ -3075,7 +3062,7 @@ void M_Demos_Key (int key) {
 				if (demo_playlist_base + demo_playlist_cursor >= demo_playlist_num)
 					demo_playlist_base = demo_playlist_num - demo_playlist_cursor - 1;
 			}
-		M_Demo_Playlist_Setup_f();
+			M_Demo_Playlist_Setup_f();
 		}
 
 		break;
@@ -3084,8 +3071,6 @@ void M_Demos_Key (int key) {
 		if (demos_menu_tab == DEMOS_TAB_MAIN) {
 			if (!demolist_count || demolist[demo_base + demo_cursor]->type == dt_msg)
 				break;
-
-
 
 			if (demolist[demo_base + demo_cursor]->type != dt_file) {
 				if (demolist[demo_base + demo_cursor]->type == dt_up) {
@@ -3100,10 +3085,10 @@ void M_Demos_Key (int key) {
 				demo_cursor = 0;
 				Demo_ReadDirectory();
 			} else if (keydown[K_CTRL]) {
-					sprintf(demo_playlist[demo_playlist_num].name,"%s",demolist[demo_cursor + demo_base]->name);
-					sprintf(demo_playlist[demo_playlist_num].path,"%s/%s",demo_currentdir,demolist[demo_cursor + demo_base]->name);
-					demo_playlist_num++;
-					break;
+				sprintf(demo_playlist[demo_playlist_num].name,"%s",demolist[demo_cursor + demo_base]->name);
+				sprintf(demo_playlist[demo_playlist_num].path,"%s/%s",demo_currentdir,demolist[demo_cursor + demo_base]->name);
+				demo_playlist_num++;
+				break;
 			} else {
 				key_dest = key_game;
 				m_state = m_none;
@@ -3112,12 +3097,12 @@ void M_Demos_Key (int key) {
 
 				} else{
 					Cbuf_AddText (va("playdemo \"..%s/%s\"\n", demo_currentdir, demolist[demo_cursor + demo_base]->name));
-				strlcpy(demo_prevdemo, demolist[demo_base + demo_cursor]->name, sizeof(demo_prevdemo));
+					strlcpy(demo_prevdemo, demolist[demo_base + demo_cursor]->name, sizeof(demo_prevdemo));
 				}
 			}
 		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
 			if (demo_playlist_section == DEMO_PLAYLIST_TAB_MAIN )
-					Demo_playlist_start(demo_playlist_cursor + demo_playlist_base);
+				Demo_playlist_start(demo_playlist_cursor + demo_playlist_base);
 			else if (demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS ) {
 				if (demo_playlist_opt_cursor == 0)
 					Demo_Playlist_Next_f();
@@ -3129,7 +3114,7 @@ void M_Demos_Key (int key) {
 					Demo_Playlist_Clear_f();
 			}
 		} else if (demos_menu_tab == DEMOS_TAB_OPTIONS) {
-		Cvar_SetValue (&demo_playlist_loop, !demo_playlist_loop.value);
+			Cvar_SetValue (&demo_playlist_loop, !demo_playlist_loop.value);
 		}
 		break;
 
@@ -3147,16 +3132,16 @@ void M_Demos_Key (int key) {
 			else
 				M_Menu_Demos_Del_f();
 		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
-		M_Demos_Playlist_Del(demo_playlist_cursor + demo_playlist_base);
+			M_Demos_Playlist_Del(demo_playlist_cursor + demo_playlist_base);
 		}
 		break;
 	case K_TAB:
 		if (demos_menu_tab == DEMOS_TAB_MAIN) {
-		S_LocalSound ("misc/menu1.wav");
-		//demo_section = !demo_section;
+			S_LocalSound ("misc/menu1.wav");
+			//demo_section = !demo_section;
 		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
-		S_LocalSound ("misc/menu1.wav");
-		demo_playlist_section = !demo_playlist_section ;
+			S_LocalSound ("misc/menu1.wav");
+			demo_playlist_section = !demo_playlist_section ;
 		}
 		break;
 	case K_BACKSPACE:
@@ -3177,7 +3162,7 @@ void M_Demos_Key (int key) {
 		if (key < 32 || key > 127)
 			break;
 
-			if (demos_menu_tab == DEMOS_TAB_MAIN) {
+		if (demos_menu_tab == DEMOS_TAB_MAIN) {
 			sort_target = (key == 'n') ? ds_name : (key == 's') ? ds_size : ds_time;
 			if (demo_sorttype == sort_target) {
 				demo_reversesort = !demo_reversesort;
@@ -3189,42 +3174,42 @@ void M_Demos_Key (int key) {
 			Demo_SortDemos();
 			Demo_PositionCursor();
 
-			} else if (demo_playlist_opt_cursor == 4 && demos_menu_tab == DEMOS_TAB_PLAYLIST && demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS) {
-				l = strlen(demo_track);
+		} else if (demo_playlist_opt_cursor == 4 && demos_menu_tab == DEMOS_TAB_PLAYLIST && demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS) {
+			l = strlen(demo_track);
 
-				if (l < 15) {
-					demo_track[l+1] = 0;
-					demo_track[l] = key;
-					strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_track));
-				}
-			} else if (demo_options_cursor == 1 && demos_menu_tab == DEMOS_TAB_OPTIONS) {
-				l = strlen(default_track);
-
-				if (l < 15) {
-					default_track[l+1] = 0;
-					default_track[l] = key;
-					strlcpy(demo_playlist_track_name.string,default_track,sizeof(default_track));
-				}
+			if (l < 15) {
+				demo_track[l+1] = 0;
+				demo_track[l] = key;
+				strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_track));
 			}
+		} else if (demo_options_cursor == 1 && demos_menu_tab == DEMOS_TAB_OPTIONS) {
+			l = strlen(default_track);
+
+			if (l < 15) {
+				default_track[l+1] = 0;
+				default_track[l] = key;
+				strlcpy(demo_playlist_track_name.string,default_track,sizeof(default_track));
+			}
+		}
 	}
 }
 
 
 void M_Demos_Del_Key (int key) {
 	switch (key) {
-	case K_ENTER:
-	case 'Y':
-	case 'y':
-		M_Demos_Del();
+		case K_ENTER:
+		case 'Y':
+		case 'y':
+			M_Demos_Del();
 
-	case K_ESCAPE:
-	case 'n':
-	case 'N':
-		m_state = m_demos;
-		break;
+		case K_ESCAPE:
+		case 'n':
+		case 'N':
+			m_state = m_demos;
+			break;
 
-	default:
-		break;
+		default:
+			break;
 	}
 
 }
@@ -3359,10 +3344,10 @@ void M_GameOptions_Draw (void) {
 	if (_deathmatch == 0) {
 		M_Print (0, 72, "            skill");
 		switch (_skill) {
-		case 0:  M_Print (160, 72, "Easy"); break;
-		case 1:  M_Print (160, 72, "Normal"); break;
-		case 2:  M_Print (160, 72, "Hard"); break;
-		default: M_Print (160, 72, "Nightmare");
+			case 0:  M_Print (160, 72, "Easy"); break;
+			case 1:  M_Print (160, 72, "Normal"); break;
+			case 2:  M_Print (160, 72, "Hard"); break;
+			default: M_Print (160, 72, "Nightmare");
 		}
 	} else {
 		M_Print (0, 72, "        fraglimit");
@@ -3384,13 +3369,13 @@ void M_GameOptions_Draw (void) {
 	M_Print (160, 104, va("%i", _maxspectators) );
 
 	M_Print (0, 120, "         Episode");
-    M_Print (160, 120, episodes[startepisode].description);
+	M_Print (160, 120, episodes[startepisode].description);
 
 	M_Print (0, 128, "           Level");
-    M_Print (160, 128, levels[episodes[startepisode].firstLevel + startlevel].description);
+	M_Print (160, 128, levels[episodes[startepisode].firstLevel + startlevel].description);
 	M_Print (160, 136, levels[episodes[startepisode].firstLevel + startlevel].name);
 
-// line cursor
+	// line cursor
 	M_DrawCharacter (144, gameoptions_cursor_table[gameoptions_cursor], 12+((int)(curtime*4)&1));
 }
 
@@ -3399,166 +3384,166 @@ void M_NetStart_Change (int dir) {
 	extern cvar_t	registered;
 
 	switch (gameoptions_cursor) {
-	case 1:
-		_deathmatch += dir;
-		if (_deathmatch < 0) _deathmatch = 5;
-		else if (_deathmatch > 5) _deathmatch = 0;
-		break;
+		case 1:
+			_deathmatch += dir;
+			if (_deathmatch < 0) _deathmatch = 5;
+			else if (_deathmatch > 5) _deathmatch = 0;
+			break;
 
-	case 2:
-		_teamplay += dir;
-		if (_teamplay < 0) _teamplay = 2;
-		else if (_teamplay > 2) _teamplay = 0;
-		break;
+		case 2:
+			_teamplay += dir;
+			if (_teamplay < 0) _teamplay = 2;
+			else if (_teamplay > 2) _teamplay = 0;
+			break;
 
-	case 3:
-		if (_deathmatch == 0) {
-			_skill += dir;
-			if (_skill < 0) _skill = 3;
-			else if (_skill > 3) _skill = 0;
-		} else {
-			_fraglimit += dir * 10;
-			if (_fraglimit < 0) _fraglimit = 100;
-			else if (_fraglimit > 100) _fraglimit = 0;
-		}
-		break;
+		case 3:
+			if (_deathmatch == 0) {
+				_skill += dir;
+				if (_skill < 0) _skill = 3;
+				else if (_skill > 3) _skill = 0;
+			} else {
+				_fraglimit += dir * 10;
+				if (_fraglimit < 0) _fraglimit = 100;
+				else if (_fraglimit > 100) _fraglimit = 0;
+			}
+			break;
 
-	case 4:
-		_timelimit += dir*5;
-		if (_timelimit < 0) _timelimit = 60;
-		else if (_timelimit > 60) _timelimit = 0;
-		break;
+		case 4:
+			_timelimit += dir*5;
+			if (_timelimit < 0) _timelimit = 60;
+			else if (_timelimit > 60) _timelimit = 0;
+			break;
 
-	case 5:
-		_maxclients += dir;
-		if (_maxclients > 16)
-			_maxclients = 2;
-		else if (_maxclients < 2)
-			_maxclients = 16;
-		break;
+		case 5:
+			_maxclients += dir;
+			if (_maxclients > 16)
+				_maxclients = 2;
+			else if (_maxclients < 2)
+				_maxclients = 16;
+			break;
 
-	case 6:
-		_maxspectators += dir;
-		if (_maxspectators > 8)
-			_maxspectators = 0;
-		else if (_maxspectators < 0)
-			_maxspectators = 8;
-		break;
+		case 6:
+			_maxspectators += dir;
+			if (_maxspectators > 8)
+				_maxspectators = 0;
+			else if (_maxspectators < 0)
+				_maxspectators = 8;
+			break;
 
-	case 7:
-		startepisode += dir;
-		if (registered.value)
-			count = 7;
-		else
-			count = 2;
+		case 7:
+			startepisode += dir;
+			if (registered.value)
+				count = 7;
+			else
+				count = 2;
 
-		if (startepisode < 0)
-			startepisode = count - 1;
+			if (startepisode < 0)
+				startepisode = count - 1;
 
-		if (startepisode >= count)
-			startepisode = 0;
+			if (startepisode >= count)
+				startepisode = 0;
 
-		startlevel = 0;
-		break;
-
-	case 8:
-		startlevel += dir;
-		count = episodes[startepisode].levels;
-
-		if (startlevel < 0)
-			startlevel = count - 1;
-
-		if (startlevel >= count)
 			startlevel = 0;
-		break;
+			break;
+
+		case 8:
+			startlevel += dir;
+			count = episodes[startepisode].levels;
+
+			if (startlevel < 0)
+				startlevel = count - 1;
+
+			if (startlevel >= count)
+				startlevel = 0;
+			break;
 	}
 }
 
 void M_GameOptions_Key (int key) {
 	switch (key) {
-	case K_BACKSPACE:
-		m_topmenu = m_none;	// intentional fallthrough
-	case K_ESCAPE:
-		M_LeaveMenu (m_multiplayer);
-		break;
+		case K_BACKSPACE:
+			m_topmenu = m_none;	// intentional fallthrough
+		case K_ESCAPE:
+			M_LeaveMenu (m_multiplayer);
+			break;
 
-	case K_UPARROW:
-		S_LocalSound ("misc/menu1.wav");
-		gameoptions_cursor--;
-		if (!_deathmatch && gameoptions_cursor == 4)
+		case K_UPARROW:
+			S_LocalSound ("misc/menu1.wav");
 			gameoptions_cursor--;
-		if (gameoptions_cursor < 0)
-			gameoptions_cursor = NUM_GAMEOPTIONS-1;
-		break;
+			if (!_deathmatch && gameoptions_cursor == 4)
+				gameoptions_cursor--;
+			if (gameoptions_cursor < 0)
+				gameoptions_cursor = NUM_GAMEOPTIONS-1;
+			break;
 
-	case K_DOWNARROW:
-		S_LocalSound ("misc/menu1.wav");
-		gameoptions_cursor++;
-		if (!_deathmatch && gameoptions_cursor == 4)
+		case K_DOWNARROW:
+			S_LocalSound ("misc/menu1.wav");
 			gameoptions_cursor++;
-		if (gameoptions_cursor >= NUM_GAMEOPTIONS)
+			if (!_deathmatch && gameoptions_cursor == 4)
+				gameoptions_cursor++;
+			if (gameoptions_cursor >= NUM_GAMEOPTIONS)
+				gameoptions_cursor = 0;
+			break;
+
+		case K_HOME:
+			S_LocalSound ("misc/menu1.wav");
 			gameoptions_cursor = 0;
-		break;
-
-	case K_HOME:
-		S_LocalSound ("misc/menu1.wav");
-		gameoptions_cursor = 0;
-		break;
-
-	case K_END:
-		S_LocalSound ("misc/menu1.wav");
-		gameoptions_cursor = NUM_GAMEOPTIONS-1;
-		break;
-
-	case K_LEFTARROW:
-		if (gameoptions_cursor == 0)
 			break;
-		S_LocalSound ("misc/menu3.wav");
-		M_NetStart_Change (-1);
-		break;
 
-	case K_RIGHTARROW:
-		if (gameoptions_cursor == 0)
+		case K_END:
+			S_LocalSound ("misc/menu1.wav");
+			gameoptions_cursor = NUM_GAMEOPTIONS-1;
 			break;
-		S_LocalSound ("misc/menu3.wav");
-		M_NetStart_Change (1);
-		break;
 
-	case K_ENTER:
-		S_LocalSound ("misc/menu2.wav");
-//		if (gameoptions_cursor == 0)
-		{
-			key_dest = key_game;
+		case K_LEFTARROW:
+			if (gameoptions_cursor == 0)
+				break;
+			S_LocalSound ("misc/menu3.wav");
+			M_NetStart_Change (-1);
+			break;
 
-			// Kill the server, unless we continue playing
-			// deathmatch on another level
-			if (!_deathmatch || !deathmatch.value)
-				Cbuf_AddText ("disconnect\n");
+		case K_RIGHTARROW:
+			if (gameoptions_cursor == 0)
+				break;
+			S_LocalSound ("misc/menu3.wav");
+			M_NetStart_Change (1);
+			break;
 
-			if (_deathmatch == 0) {
-				_coop = 1;
-				_timelimit = 0;
-				_fraglimit = 0;
-			} else {
-				_coop = 0;
+		case K_ENTER:
+			S_LocalSound ("misc/menu2.wav");
+			//		if (gameoptions_cursor == 0)
+			{
+				key_dest = key_game;
+
+				// Kill the server, unless we continue playing
+				// deathmatch on another level
+				if (!_deathmatch || !deathmatch.value)
+					Cbuf_AddText ("disconnect\n");
+
+				if (_deathmatch == 0) {
+					_coop = 1;
+					_timelimit = 0;
+					_fraglimit = 0;
+				} else {
+					_coop = 0;
+				}
+
+				Cvar_Set (&deathmatch, va("%i", _deathmatch));
+				Cvar_Set (&skill, va("%i", _skill));
+				Cvar_Set (&coop, va("%i", _coop));
+				Cvar_Set (&fraglimit, va("%i", _fraglimit));
+				Cvar_Set (&timelimit, va("%i", _timelimit));
+				Cvar_Set (&teamplay, va("%i", _teamplay));
+				Cvar_Set (&maxclients, va("%i", _maxclients));
+				Cvar_Set (&maxspectators, va("%i", _maxspectators));
+
+				// Cbuf_AddText ("gamedir qw\n");
+				Cbuf_AddText ( va ("map %s\n", levels[episodes[startepisode].firstLevel + startlevel].name) );
+				return;
 			}
 
-			Cvar_Set (&deathmatch, va("%i", _deathmatch));
-			Cvar_Set (&skill, va("%i", _skill));
-			Cvar_Set (&coop, va("%i", _coop));
-			Cvar_Set (&fraglimit, va("%i", _fraglimit));
-			Cvar_Set (&timelimit, va("%i", _timelimit));
-			Cvar_Set (&teamplay, va("%i", _teamplay));
-			Cvar_Set (&maxclients, va("%i", _maxclients));
-			Cvar_Set (&maxspectators, va("%i", _maxspectators));
-
-			// Cbuf_AddText ("gamedir qw\n");
-			Cbuf_AddText ( va ("map %s\n", levels[episodes[startepisode].firstLevel + startlevel].name) );
-			return;
-		}
-
-//		M_NetStart_Change (1);
-		break;
+			//		M_NetStart_Change (1);
+			break;
 	}
 }
 #endif	// !CLIENTONLY
@@ -3629,100 +3614,100 @@ void M_Setup_Key (int k) {
 	int l;
 
 	switch (k) {
-	case K_ESCAPE:
-		M_LeaveMenu (m_multiplayer);
-		break;
-
-	case K_UPARROW:
-		S_LocalSound ("misc/menu1.wav");
-		setup_cursor--;
-		if (setup_cursor < 0)
-			setup_cursor = NUM_SETUP_CMDS-1;
-		break;
-
-	case K_DOWNARROW:
-		S_LocalSound ("misc/menu1.wav");
-		setup_cursor++;
-		if (setup_cursor >= NUM_SETUP_CMDS)
-			setup_cursor = 0;
-		break;
-
-	case K_HOME:
-		S_LocalSound ("misc/menu1.wav");
-		setup_cursor = 0;
-		break;
-
-	case K_END:
-		S_LocalSound ("misc/menu1.wav");
-		setup_cursor = NUM_SETUP_CMDS-1;
-		break;
-
-	case K_LEFTARROW:
-		if (setup_cursor < 2)
-			return;
-		S_LocalSound ("misc/menu3.wav");
-		if (setup_cursor == 2)
-			setup_top = setup_top - 1;
-		if (setup_cursor == 3)
-			setup_bottom = setup_bottom - 1;
-		break;
-	case K_RIGHTARROW:
-		if (setup_cursor < 2)
-			return;
-//forward:
-		S_LocalSound ("misc/menu3.wav");
-		if (setup_cursor == 2)
-			setup_top = setup_top + 1;
-		if (setup_cursor == 3)
-			setup_bottom = setup_bottom + 1;
-		break;
-
-	case K_ENTER:
-//		if (setup_cursor == 0 || setup_cursor == 1)
-//			return;
-
-//		if (setup_cursor == 2 || setup_cursor == 3)
-//			goto forward;
-
-		// setup_cursor == 4 (OK)
-		Cvar_Set (&name, setup_name);
-		Cvar_Set (&team, setup_team);
-		Cvar_Set (&topcolor, va("%i", setup_top));
-		Cvar_Set (&bottomcolor, va("%i", setup_bottom));
-		m_entersound = true;
-		M_Menu_MultiPlayer_f ();
-		break;
-
-	case K_BACKSPACE:
-		if (setup_cursor == 0) {
-			if (strlen(setup_name))
-				setup_name[strlen(setup_name)-1] = 0;
-		} else if (setup_cursor == 1) {
-			if (strlen(setup_team))
-				setup_team[strlen(setup_team)-1] = 0;
-		} else {
-			m_topmenu = m_none;
+		case K_ESCAPE:
 			M_LeaveMenu (m_multiplayer);
-		}
-		break;
-
-	default:
-		if (k < 32 || k > 127)
 			break;
-		if (setup_cursor == 0) {
-			l = strlen(setup_name);
-			if (l < 15) {
-				setup_name[l+1] = 0;
-				setup_name[l] = k;
+
+		case K_UPARROW:
+			S_LocalSound ("misc/menu1.wav");
+			setup_cursor--;
+			if (setup_cursor < 0)
+				setup_cursor = NUM_SETUP_CMDS-1;
+			break;
+
+		case K_DOWNARROW:
+			S_LocalSound ("misc/menu1.wav");
+			setup_cursor++;
+			if (setup_cursor >= NUM_SETUP_CMDS)
+				setup_cursor = 0;
+			break;
+
+		case K_HOME:
+			S_LocalSound ("misc/menu1.wav");
+			setup_cursor = 0;
+			break;
+
+		case K_END:
+			S_LocalSound ("misc/menu1.wav");
+			setup_cursor = NUM_SETUP_CMDS-1;
+			break;
+
+		case K_LEFTARROW:
+			if (setup_cursor < 2)
+				return;
+			S_LocalSound ("misc/menu3.wav");
+			if (setup_cursor == 2)
+				setup_top = setup_top - 1;
+			if (setup_cursor == 3)
+				setup_bottom = setup_bottom - 1;
+			break;
+		case K_RIGHTARROW:
+			if (setup_cursor < 2)
+				return;
+			//forward:
+			S_LocalSound ("misc/menu3.wav");
+			if (setup_cursor == 2)
+				setup_top = setup_top + 1;
+			if (setup_cursor == 3)
+				setup_bottom = setup_bottom + 1;
+			break;
+
+		case K_ENTER:
+			//		if (setup_cursor == 0 || setup_cursor == 1)
+			//			return;
+
+			//		if (setup_cursor == 2 || setup_cursor == 3)
+			//			goto forward;
+
+			// setup_cursor == 4 (OK)
+			Cvar_Set (&name, setup_name);
+			Cvar_Set (&team, setup_team);
+			Cvar_Set (&topcolor, va("%i", setup_top));
+			Cvar_Set (&bottomcolor, va("%i", setup_bottom));
+			m_entersound = true;
+			M_Menu_MultiPlayer_f ();
+			break;
+
+		case K_BACKSPACE:
+			if (setup_cursor == 0) {
+				if (strlen(setup_name))
+					setup_name[strlen(setup_name)-1] = 0;
+			} else if (setup_cursor == 1) {
+				if (strlen(setup_team))
+					setup_team[strlen(setup_team)-1] = 0;
+			} else {
+				m_topmenu = m_none;
+				M_LeaveMenu (m_multiplayer);
 			}
-		}
-		if (setup_cursor == 1) {
-			l = strlen(setup_team);
-			if (l < 15) {
-				setup_team[l + 1] = 0;
-				setup_team[l] = k;
+			break;
+
+		default:
+			if (k < 32 || k > 127)
+				break;
+			if (setup_cursor == 0) {
+				l = strlen(setup_name);
+				if (l < 15) {
+					setup_name[l+1] = 0;
+					setup_name[l] = k;
+				}
 			}
-		}
+			if (setup_cursor == 1) {
+				l = strlen(setup_team);
+				if (l < 15) {
+					setup_team[l + 1] = 0;
+					setup_team[l] = k;
+				}
+			}
 	}
 
 	if (setup_top > 13)
@@ -3746,14 +3731,14 @@ void M_Setup_Key (int k) {
 
 void M_Menu_ServerList_f (void) {
 	M_EnterMenu (m_slist);
-//	m_multip_state = 0;
+	//	m_multip_state = 0;
 }
 
 void M_ServerList_Draw (void) {
-    int x, y, w, h;
+	int x, y, w, h;
 
 #ifdef GLQUAKE
-// disconnect: unscale serverbrowser menu
+	// disconnect: unscale serverbrowser menu
 	if (scr_scaleMenu.value) {
 		menuwidth = vid.width;
 		menuheight = vid.height;
@@ -3763,33 +3748,33 @@ void M_ServerList_Draw (void) {
 	}
 #endif
 
-    w = min(max(sb_maxwidth.value, 320), vid.width)   - 8;
-    h = min(max(sb_maxheight.value, 200), vid.height) - 8;
-    x = (vid.width - w) / 2;
-    y = (vid.height - h) / 2;
+	w = min(max(sb_maxwidth.value, 320), vid.width)   - 8;
+	h = min(max(sb_maxheight.value, 200), vid.height) - 8;
+	x = (vid.width - w) / 2;
+	y = (vid.height - h) / 2;
 
 	Browser_Draw (x, y + con_shift.value, w, h - con_shift.value);
-/*
-	int serv, line;
+	/*
+	   int serv, line;
 
-	M_DrawTransPic(16, 4, Draw_CachePic("gfx/qplaque.lmp"));
-	M_DrawTextBox(MENU_X, TITLE_Y, 23, 1);
-	M_PrintWhite(MENU_X + 60, TITLE_Y + 8, "Server List");
+	   M_DrawTransPic(16, 4, Draw_CachePic("gfx/qplaque.lmp"));
+	   M_DrawTextBox(MENU_X, TITLE_Y, 23, 1);
+	   M_PrintWhite(MENU_X + 60, TITLE_Y + 8, "Server List");
 
-	if (!slist[0].server) {
-		M_PrintWhite(84, MENU_Y + 16 + 16, "Empty server list");
-		M_Print(60, MENU_Y + 16 + 32, "Press INS to add a server");
-		M_Print(64, MENU_Y + 16 + 40, "Press E to edit a server");
-		return;
-	}
+	   if (!slist[0].server) {
+	   M_PrintWhite(84, MENU_Y + 16 + 16, "Empty server list");
+	   M_Print(60, MENU_Y + 16 + 32, "Press INS to add a server");
+	   M_Print(64, MENU_Y + 16 + 40, "Press E to edit a server");
+	   return;
+	   }
 
-	M_DrawTextBox(MENU_X, STAT_Y, 23, 1);
-	M_DrawTextBox(MENU_X, MENU_Y, 23, m_multip_maxs - m_multip_mins + 1);
-	for (serv = m_multip_mins, line = 1; serv <= m_multip_maxs && serv < MAX_SERVER_LIST && slist[serv].server; serv++, line++)
-		M_Print(MENU_X + 18, line * 8 + MENU_Y, va("%1.21s", slist[serv].description));
-	M_PrintWhite(MENU_X + 18, STAT_Y + 8, va("%1.22s", slist[m_multip_cursor].server));
-	M_DrawCharacter(MENU_X + 8, (m_multip_cursor - m_multip_mins + 1) * 8 + MENU_Y, 12 + ((int) (curtime * 4) & 1));
-*/
+	   M_DrawTextBox(MENU_X, STAT_Y, 23, 1);
+	   M_DrawTextBox(MENU_X, MENU_Y, 23, m_multip_maxs - m_multip_mins + 1);
+	   for (serv = m_multip_mins, line = 1; serv <= m_multip_maxs && serv < MAX_SERVER_LIST && slist[serv].server; serv++, line++)
+	   M_Print(MENU_X + 18, line * 8 + MENU_Y, va("%1.21s", slist[serv].description));
+	   M_PrintWhite(MENU_X + 18, STAT_Y + 8, va("%1.22s", slist[m_multip_cursor].server));
+	   M_DrawCharacter(MENU_X + 8, (m_multip_cursor - m_multip_mins + 1) * 8 + MENU_Y, 12 + ((int) (curtime * 4) & 1));
+	 */
 }
 
 void M_ServerList_Key (key) {
@@ -3797,73 +3782,73 @@ void M_ServerList_Key (key) {
 	extern void Browser_Key(int key);
 	Browser_Key(key);
 
-/*	int slist_length;
-	extern cvar_t spectator;
+	/*	int slist_length;
+		extern cvar_t spectator;
 
-	if (!slist[0].server && key != K_ESCAPE && key != K_INS)
+		if (!slist[0].server && key != K_ESCAPE && key != K_INS)
 		return;
 
-	switch(key)	{
-	case K_BACKSPACE:
+		switch(key)	{
+		case K_BACKSPACE:
 		m_topmenu = m_none;	// intentional fallthrough
-	case K_ESCAPE:
+		case K_ESCAPE:
 		M_LeaveMenu (m_multiplayer);
 		break;
 
-	case K_UPARROW:
+		case K_UPARROW:
 		S_LocalSound("misc/menu1.wav");
 		if (m_multip_cursor > 0) {
-			if (keydown[K_CTRL]) {
-				SList_Switch(m_multip_cursor, m_multip_cursor - 1);
-				m_multip_cursor--;
-			} else {
-				m_multip_cursor--;
-			}
+		if (keydown[K_CTRL]) {
+		SList_Switch(m_multip_cursor, m_multip_cursor - 1);
+		m_multip_cursor--;
+		} else {
+		m_multip_cursor--;
+		}
 		}
 		break;
 
-	case K_DOWNARROW:
+		case K_DOWNARROW:
 		S_LocalSound("misc/menu1.wav");
 		if (keydown[K_CTRL]) {
-			if (m_multip_cursor != SList_Length() - 1) {
-				SList_Switch(m_multip_cursor, m_multip_cursor + 1);
-				m_multip_cursor++;
-			}
+		if (m_multip_cursor != SList_Length() - 1) {
+		SList_Switch(m_multip_cursor, m_multip_cursor + 1);
+		m_multip_cursor++;
+		}
 		} else if (m_multip_cursor < MAX_SERVER_LIST - 1 && slist[m_multip_cursor + 1].server) {
-			m_multip_cursor++;
+		m_multip_cursor++;
 		}
 		break;
 
-	case K_HOME:
+		case K_HOME:
 		S_LocalSound("misc/menu1.wav");
 		m_multip_cursor = 0;
 		break;
 
-	case K_END:
+		case K_END:
 		S_LocalSound("misc/menu1.wav");
 		m_multip_cursor = SList_Length() - 1;
 		break;
 
-	case K_PGUP:
+		case K_PGUP:
 		S_LocalSound("misc/menu1.wav");
 		m_multip_cursor -= (m_multip_maxs - m_multip_mins);
 		if (m_multip_cursor < 0)
-			m_multip_cursor = 0;
+		m_multip_cursor = 0;
 		break;
 
-	case K_PGDN:
+		case K_PGDN:
 		S_LocalSound("misc/menu1.wav");
 		m_multip_cursor += (m_multip_maxs - m_multip_mins);
 		if (m_multip_cursor >= MAX_SERVER_LIST)
-			m_multip_cursor = MAX_SERVER_LIST - 1;
+		m_multip_cursor = MAX_SERVER_LIST - 1;
 		while (!(slist[m_multip_cursor].server))
-			m_multip_cursor--;
+		m_multip_cursor--;
 		break;
 
-	case K_ENTER:
+		case K_ENTER:
 		if (keydown[K_CTRL]) {
-			M_Menu_SEdit_f();
-			break;
+		M_Menu_SEdit_f();
+		break;
 		}
 		m_state = m_main;
 		M_ToggleMenu_f();
@@ -3871,66 +3856,66 @@ void M_ServerList_Key (key) {
 		break;
 
 	case 'j': case 'J':
-		m_state = m_main;
-		M_ToggleMenu_f();
-		Cbuf_AddText(va("join %s\n", slist[m_multip_cursor].server));
-		break;
+	m_state = m_main;
+	M_ToggleMenu_f();
+	Cbuf_AddText(va("join %s\n", slist[m_multip_cursor].server));
+	break;
 
 	case 'o': case 'O':
-		m_state = m_main;
-		M_ToggleMenu_f();
-		Cbuf_AddText(va("observe %s\n", slist[m_multip_cursor].server));
-		break;
+	m_state = m_main;
+	M_ToggleMenu_f();
+	Cbuf_AddText(va("observe %s\n", slist[m_multip_cursor].server));
+	break;
 
 	case 'e': case 'E':
-		M_Menu_SEdit_f();
-		break;
+	M_Menu_SEdit_f();
+	break;
 
 	case 'c': case 'C':
 	case 'x': case 'X':
-		if (keydown[K_CTRL])
-			Sys_CopyToClipboard(slist[m_multip_cursor].server);
-		break;
+	if (keydown[K_CTRL])
+		Sys_CopyToClipboard(slist[m_multip_cursor].server);
+	break;
 
 	case K_INS:
-		S_LocalSound("misc/menu2.wav");
-		if ((slist_length = SList_Length()) < MAX_SERVER_LIST) {
-			if (keydown[K_CTRL] && slist_length > 0) {
-				if (m_multip_cursor < slist_length - 1)
-					memmove(&slist[m_multip_cursor + 2], &slist[m_multip_cursor + 1], (slist_length - m_multip_cursor - 1) * sizeof(slist[0]));
-				SList_Reset_NoFree(m_multip_cursor + 1);
-				SList_Set(m_multip_cursor + 1, "127.0.0.1", "<BLANK>");
-				if (slist_length)
-					m_multip_cursor++;
-			} else {
-				memmove(&slist[m_multip_cursor + 1], &slist[m_multip_cursor], (slist_length - m_multip_cursor) * sizeof(slist[0]));
-				SList_Reset_NoFree(m_multip_cursor);
-				SList_Set(m_multip_cursor, "127.0.0.1", "<BLANK>");
-			}
+	S_LocalSound("misc/menu2.wav");
+	if ((slist_length = SList_Length()) < MAX_SERVER_LIST) {
+		if (keydown[K_CTRL] && slist_length > 0) {
+			if (m_multip_cursor < slist_length - 1)
+				memmove(&slist[m_multip_cursor + 2], &slist[m_multip_cursor + 1], (slist_length - m_multip_cursor - 1) * sizeof(slist[0]));
+			SList_Reset_NoFree(m_multip_cursor + 1);
+			SList_Set(m_multip_cursor + 1, "127.0.0.1", "<BLANK>");
+			if (slist_length)
+				m_multip_cursor++;
+		} else {
+			memmove(&slist[m_multip_cursor + 1], &slist[m_multip_cursor], (slist_length - m_multip_cursor) * sizeof(slist[0]));
+			SList_Reset_NoFree(m_multip_cursor);
+			SList_Set(m_multip_cursor, "127.0.0.1", "<BLANK>");
 		}
-		break;
+	}
+	break;
 
 	case K_DEL:
-		S_LocalSound("misc/menu2.wav");
-		if ((slist_length = SList_Length()) > 0) {
-			SList_Reset(m_multip_cursor);
-			if (m_multip_cursor > 0 && slist_length - 1 == m_multip_cursor) {
-				m_multip_cursor--;
-			} else {
-				memmove(&slist[m_multip_cursor], &slist[m_multip_cursor + 1], (slist_length - m_multip_cursor - 1) * sizeof(slist[0]));
-				SList_Reset_NoFree(slist_length - 1);
-			}
+	S_LocalSound("misc/menu2.wav");
+	if ((slist_length = SList_Length()) > 0) {
+		SList_Reset(m_multip_cursor);
+		if (m_multip_cursor > 0 && slist_length - 1 == m_multip_cursor) {
+			m_multip_cursor--;
+		} else {
+			memmove(&slist[m_multip_cursor], &slist[m_multip_cursor + 1], (slist_length - m_multip_cursor - 1) * sizeof(slist[0]));
+			SList_Reset_NoFree(slist_length - 1);
 		}
-		break;
 	}
-	if (m_multip_cursor < m_multip_mins) {
-		m_multip_maxs -= (m_multip_mins - m_multip_cursor);
-		m_multip_mins = m_multip_cursor;
-	}
-	if (m_multip_cursor > m_multip_maxs) {
-		m_multip_mins += (m_multip_cursor - m_multip_maxs);
-		m_multip_maxs = m_multip_cursor;
-	}
+	break;
+}
+if (m_multip_cursor < m_multip_mins) {
+	m_multip_maxs -= (m_multip_mins - m_multip_cursor);
+	m_multip_mins = m_multip_cursor;
+}
+if (m_multip_cursor > m_multip_maxs) {
+	m_multip_mins += (m_multip_cursor - m_multip_maxs);
+	m_multip_maxs = m_multip_cursor;
+}
 }
 #define SERV_X 60
 #define SERV_Y 64
@@ -4062,7 +4047,7 @@ void M_SEdit_Key (int key) {
 				}
 			}
 	}
-*/
+	*/
 }
 
 // <-- SLIST
@@ -4116,7 +4101,6 @@ void M_Init (void) {
 	Cmd_AddCommand ("demo_playlist_prev", Demo_Playlist_Prev_f);
 	Cmd_AddCommand ("demo_playlist_clear", Demo_Playlist_Clear_f);
 
-
 	Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
 
 	Cmd_AddCommand ("menu_main", M_Menu_Main_f);
@@ -4140,7 +4124,6 @@ void M_Init (void) {
 	Cmd_AddCommand ("help", M_Menu_Help_f);
 	Cmd_AddCommand ("menu_help", M_Menu_Help_f);
 	Cmd_AddCommand ("menu_quit", M_Menu_Quit_f);
-
 }
 
 void M_Draw (void) {
@@ -4183,89 +4166,89 @@ void M_Draw (void) {
 		m_yofs = 0;
 
 	switch (m_state) {
-	case m_none:
-		break;
+		case m_none:
+			break;
 
-	case m_main:
-		M_Main_Draw ();
-		break;
+		case m_main:
+			M_Main_Draw ();
+			break;
 
-	case m_singleplayer:
-		M_SinglePlayer_Draw ();
-		break;
-
-#ifndef CLIENTONLY
-	case m_load:
-		M_Load_Draw ();
-		break;
-
-	case m_save:
-		M_Save_Draw ();
-		break;
-#endif
-
-	case m_multiplayer:
-		M_MultiPlayer_Draw ();
-		break;
-
-	case m_setup:
-		M_Setup_Draw ();
-		break;
-
-	case m_options:
-		M_Options_Draw ();
-		break;
-
-	case m_keys:
-		M_Keys_Draw ();
-		break;
-
-	case m_fps:
-		M_Fps_Draw ();
-		break;
-
-	case m_video:
-		M_Video_Draw ();
-		break;
-
-	case m_help:
-		M_Help_Draw ();
-		break;
-
-	case m_quit:
-		M_Quit_Draw ();
-		break;
+		case m_singleplayer:
+			M_SinglePlayer_Draw ();
+			break;
 
 #ifndef CLIENTONLY
-	case m_gameoptions:
-		M_GameOptions_Draw ();
-		break;
+		case m_load:
+			M_Load_Draw ();
+			break;
+
+		case m_save:
+			M_Save_Draw ();
+			break;
 #endif
 
-	case m_slist:
-		M_ServerList_Draw ();
-		break;
-/*
-	case m_sedit:
-		M_SEdit_Draw ();
-		break;
-*/
-	case m_demos:
-		M_Demos_Draw ();
-		break;
+		case m_multiplayer:
+			M_MultiPlayer_Draw ();
+			break;
 
-	case m_demos_del:
-		M_Demos_Del_Draw ();
-		break;
+		case m_setup:
+			M_Setup_Draw ();
+			break;
+
+		case m_options:
+			M_Options_Draw ();
+			break;
+
+		case m_keys:
+			M_Keys_Draw ();
+			break;
+
+		case m_fps:
+			M_Fps_Draw ();
+			break;
+
+		case m_video:
+			M_Video_Draw ();
+			break;
+
+		case m_help:
+			M_Help_Draw ();
+			break;
+
+		case m_quit:
+			M_Quit_Draw ();
+			break;
+
+#ifndef CLIENTONLY
+		case m_gameoptions:
+			M_GameOptions_Draw ();
+			break;
+#endif
+
+		case m_slist:
+			M_ServerList_Draw ();
+			break;
+			/*
+			   case m_sedit:
+			   M_SEdit_Draw ();
+			   break;
+			 */
+		case m_demos:
+			M_Demos_Draw ();
+			break;
+
+		case m_demos_del:
+			M_Demos_Del_Draw ();
+			break;
 
 #if defined(_WIN32) || defined(__XMMS__)
-	case m_mp3_control:
-		M_MP3_Control_Draw ();
-		break;
+		case m_mp3_control:
+			M_MP3_Control_Draw ();
+			break;
 
-	case m_mp3_playlist:
-		M_Menu_MP3_Playlist_Draw();
-		break;
+		case m_mp3_playlist:
+			M_Menu_MP3_Playlist_Draw();
+			break;
 #endif
 	}
 
@@ -4289,89 +4272,90 @@ void M_Draw (void) {
 
 void M_Keydown (int key) {
 	switch (m_state) {
-	case m_none:
-		return;
+		case m_none:
+			return;
 
-	case m_main:
-		M_Main_Key (key);
-		return;
+		case m_main:
+			M_Main_Key (key);
+			return;
 
-	case m_singleplayer:
-		M_SinglePlayer_Key (key);
-		return;
-
-#ifndef CLIENTONLY
-	case m_load:
-		M_Load_Key (key);
-		return;
-
-	case m_save:
-		M_Save_Key (key);
-		return;
-#endif
-
-	case m_multiplayer:
-		M_MultiPlayer_Key (key);
-		return;
-
-	case m_setup:
-		M_Setup_Key (key);
-		return;
-
-	case m_options:
-		M_Options_Key (key);
-		return;
-
-	case m_keys:
-		M_Keys_Key (key);
-		return;
-
-	case m_fps:
-		M_Fps_Key (key);
-		return;
-
-	case m_video:
-		M_Video_Key (key);
-		return;
-
-	case m_help:
-		M_Help_Key (key);
-		return;
-
-	case m_quit:
-		M_Quit_Key (key);
-		return;
+		case m_singleplayer:
+			M_SinglePlayer_Key (key);
+			return;
 
 #ifndef CLIENTONLY
-	case m_gameoptions:
-		M_GameOptions_Key (key);
-		return;
+		case m_load:
+			M_Load_Key (key);
+			return;
+
+		case m_save:
+			M_Save_Key (key);
+			return;
 #endif
 
-	case m_slist:
-		M_ServerList_Key (key);
-		return;
-/*
-	case m_sedit:
-		M_SEdit_Key (key);
-		break;
-*/
-	case m_demos:
-		M_Demos_Key (key);
-		break;
+		case m_multiplayer:
+			M_MultiPlayer_Key (key);
+			return;
 
-	case m_demos_del:
-		M_Demos_Del_Key (key);
-		break;
+		case m_setup:
+			M_Setup_Key (key);
+			return;
+
+		case m_options:
+			M_Options_Key (key);
+			return;
+
+		case m_keys:
+			M_Keys_Key (key);
+			return;
+
+		case m_fps:
+			M_Fps_Key (key);
+			return;
+
+		case m_video:
+			M_Video_Key (key);
+			return;
+
+		case m_help:
+			M_Help_Key (key);
+			return;
+
+		case m_quit:
+			M_Quit_Key (key);
+			return;
+
+#ifndef CLIENTONLY
+		case m_gameoptions:
+			M_GameOptions_Key (key);
+			return;
+#endif
+
+		case m_slist:
+			M_ServerList_Key (key);
+			return;
+			/*
+			   case m_sedit:
+			   M_SEdit_Key (key);
+			   break;
+			 */
+		case m_demos:
+			M_Demos_Key (key);
+			break;
+
+		case m_demos_del:
+			M_Demos_Del_Key (key);
+			break;
 
 #if defined(_WIN32) || defined(__XMMS__)
-	case m_mp3_control:
-		M_Menu_MP3_Control_Key (key);
-		break;
+		case m_mp3_control:
+			M_Menu_MP3_Control_Key (key);
+			break;
 
-	case m_mp3_playlist:
-		M_Menu_MP3_Playlist_Key (key);
-		break;
+		case m_mp3_playlist:
+			M_Menu_MP3_Playlist_Key (key);
+			break;
 #endif
 	}
 }
+
