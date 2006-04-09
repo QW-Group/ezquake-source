@@ -776,10 +776,9 @@ void S_Update_ (void) {
 	}
 
 	// mix ahead of current position
-	endtime = (int) (soundtime + s_mixahead.value * sn.speed);
+	endtime = soundtime + (unsigned int)(s_mixahead.value * sn.speed);
 	samps = sn.samples >> (sn.channels - 1);
-	if (endtime - soundtime > samps)
-		endtime = soundtime + samps;
+	endtime = min(endtime, (unsigned int)(soundtime + samps));
 
 #ifdef _WIN32
 	// if the buffer was lost or stopped, restore it and/or restart it
