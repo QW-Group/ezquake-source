@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.43 2006-04-09 22:13:29 oldmanuk Exp $
+	$Id: menu.c,v 1.44 2006-04-10 19:57:53 oldmanuk Exp $
 
 */
 
@@ -116,31 +116,31 @@ void M_Main_Key (int key);
 
 int FindBestNick (char *s,int use);
 
-qbool	m_entersound;		// play after drawing a frame, so caching
-								// won't disrupt the sound
-qbool	m_recursiveDraw;
-int			m_topmenu;			// set if a submenu was entered via a
-								// menu_* command
+qbool    m_entersound;          // play after drawing a frame, so caching
+                                // won't disrupt the sound
+qbool    m_recursiveDraw;
+int            m_topmenu;       // set if a submenu was entered via a
+                                // menu_* command
 
 
 //=============================================================================
 /* Support Routines */
 
 
-cvar_t	demo_playlist_loop = {"demo_playlist_loop","0"};
-cvar_t	demo_playlist_track_name = {"demo_playlist_track_name",""};
+cvar_t    demo_playlist_loop = {"demo_playlist_loop","0"};
+cvar_t    demo_playlist_track_name = {"demo_playlist_track_name",""};
 
 #ifdef GLQUAKE
-cvar_t	scr_scaleMenu = {"scr_scaleMenu","1"};
-int		menuwidth = 320;
-int		menuheight = 240;
+cvar_t     scr_scaleMenu = {"scr_scaleMenu","1"};
+int        menuwidth = 320;
+int        menuheight = 240;
 #else
 #define menuwidth vid.width
 #define menuheight vid.height
 #endif
 
-cvar_t	scr_centerMenu = {"scr_centerMenu","1"};
-int		m_yofs = 0;
+cvar_t     scr_centerMenu = {"scr_centerMenu","1"};
+int        m_yofs = 0;
 
 void M_DrawCharacter (int cx, int line, int num) {
 	Draw_Character (cx + ((menuwidth - 320)>>1), line + m_yofs, num);
@@ -166,8 +166,8 @@ byte identityTable[256];
 byte translationTable[256];
 
 void M_BuildTranslationTable(int top, int bottom) {
-	int		j;
-	byte	*dest, *source;
+	int        j;
+	byte    *dest, *source;
 
 	for (j = 0; j < 256; j++)
 		identityTable[j] = j;
@@ -175,7 +175,7 @@ void M_BuildTranslationTable(int top, int bottom) {
 	source = identityTable;
 	memcpy (dest, source, 256);
 
-	if (top < 128)	// the artists made some backwards ranges.  sigh.
+	if (top < 128)    // the artists made some backwards ranges.  sigh.
 		memcpy (dest + TOP_RANGE, source + top, 16);
 	else
 		for (j = 0; j < 16; j++)
@@ -245,8 +245,8 @@ void M_LeaveMenu (int parent) {
 //=============================================================================
 /* MAIN MENU */
 
-int	m_main_cursor;
-#define	MAIN_ITEMS	5
+int    m_main_cursor;
+#define    MAIN_ITEMS    5
 
 
 void M_Menu_Main_f (void) {
@@ -339,11 +339,11 @@ void M_Main_Key (int key) {
 //=============================================================================
 /* OPTIONS MENU */
 
-#define	OPTIONS_ITEMS	18
+#define    OPTIONS_ITEMS    18
 
-#define	SLIDER_RANGE	10
+#define    SLIDER_RANGE    10
 
-int		options_cursor;
+int        options_cursor;
 
 
 void M_Menu_Options_f (void) {
@@ -356,7 +356,7 @@ void M_AdjustSliders (int dir) {
 	S_LocalSound ("misc/menu3.wav");
 
 	switch (options_cursor) {
-	case 3:	// screen size
+	case 3:    // screen size
 		scr_viewsize.value += dir * 10;
 		if (scr_viewsize.value < 30)
 			scr_viewsize.value = 30;
@@ -364,7 +364,7 @@ void M_AdjustSliders (int dir) {
 			scr_viewsize.value = 120;
 		Cvar_SetValue (&scr_viewsize, scr_viewsize.value);
 		break;
-	case 4:	// gamma
+	case 4:    // gamma
 		v_gamma.value -= dir * 0.05;
 		if (v_gamma.value < 0.5)
 			v_gamma.value = 0.5;
@@ -372,7 +372,7 @@ void M_AdjustSliders (int dir) {
 			v_gamma.value = 1;
 		Cvar_SetValue (&v_gamma, v_gamma.value);
 		break;
-	case 5:	// contrast
+	case 5:    // contrast
 		v_contrast.value += dir * 0.1;
 		if (v_contrast.value < 1)
 			v_contrast.value = 1;
@@ -380,7 +380,7 @@ void M_AdjustSliders (int dir) {
 			v_contrast.value = 2;
 		Cvar_SetValue (&v_contrast, v_contrast.value);
 		break;
-	case 6:	// mouse speed
+	case 6:    // mouse speed
 		sensitivity.value += dir * 0.5;
 		if (sensitivity.value < 3)
 			sensitivity.value = 3;
@@ -388,12 +388,12 @@ void M_AdjustSliders (int dir) {
 			sensitivity.value = 15;
 		Cvar_SetValue (&sensitivity, sensitivity.value);
 		break;
-	case 7:	// music volume
+	case 7:    // music volume
 		valuebuf = scr_fov.value + dir * 5;
 		valuebuf = bound(40, valuebuf, 140);
 		Cvar_SetValue (&scr_fov, valuebuf);
 		break;
-	case 8:	// sfx volume
+	case 8:    // sfx volume
 		s_volume.value += dir * 0.1;
 		if (s_volume.value < 0)
 			s_volume.value = 0;
@@ -402,7 +402,7 @@ void M_AdjustSliders (int dir) {
 		Cvar_SetValue (&s_volume, s_volume.value);
 		break;
 
-	case 9:	// always run
+	case 9:    // always run
 		if (cl_forwardspeed.value > 200) {
 			Cvar_SetValue (&cl_forwardspeed, 200);
 			Cvar_SetValue (&cl_backspeed, 200);
@@ -414,15 +414,15 @@ void M_AdjustSliders (int dir) {
 		}
 		break;
 
-	case 10:	// mouse look
+	case 10:    // mouse look
 		Cvar_SetValue (&freelook, !freelook.value);
 		break;
 
-	case 11:	// invert mouse
+	case 11:    // invert mouse
 		Cvar_SetValue (&m_pitch, -m_pitch.value);
 		break;
 
-	case 12:	// autoswitch weapons
+	case 12:    // autoswitch weapons
 		if ((w_switch.value > 2) || (!w_switch.value) || (b_switch.value > 2) || (!b_switch.value))
 		{
 			Cvar_SetValue (&w_switch, 1);
@@ -441,7 +441,7 @@ void M_AdjustSliders (int dir) {
 		Cvar_SetValue (&cl_hudswap, !cl_hudswap.value);
 		break;
 
-	case 17:	// _windowed_mouse
+	case 17:    // _windowed_mouse
 		Cvar_SetValue (&_windowed_mouse, !_windowed_mouse.value);
 		break;
 	}
@@ -449,7 +449,7 @@ void M_AdjustSliders (int dir) {
 
 
 void M_DrawSlider (int x, int y, float range) {
-	int	i;
+	int    i;
 
 	range = bound(0, range, 1);
 	M_DrawCharacter (x-8, y, 128);
@@ -467,9 +467,9 @@ void M_DrawCheckbox (int x, int y, int on) {
 }
 
 void M_Options_Draw (void) {
-	float		r;
+	float        r;
 	char temp[32];
-	mpic_t	*p;
+	mpic_t    *p;
 
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
 	p = Draw_CachePic ("gfx/p_option.lmp");
@@ -525,8 +525,8 @@ void M_Options_Draw (void) {
 	switch (fps_mode) {
 		case mode_fastest   : strcpy(temp, "fastest"); break;
 #ifdef GLQUAKE
-		case mode_faithful	: strcpy(temp, "faithful"); break;
-		case mode_movies	: strcpy(temp, "movies"); break;
+		case mode_faithful    : strcpy(temp, "faithful"); break;
+		case mode_movies    : strcpy(temp, "movies"); break;
 		default : strcpy(temp, "eye candy"); break;
 #else
 		default : strcpy(temp, "default"); break;
@@ -555,7 +555,7 @@ void M_Options_Draw (void) {
 void M_Options_Key (int k) {
 	switch (k) {
 	case K_BACKSPACE:
-		m_topmenu = m_none;	// intentional fallthrough
+		m_topmenu = m_none;    // intentional fallthrough
 	case K_ESCAPE:
 		M_LeaveMenu (m_main);
 		break;
@@ -569,13 +569,13 @@ void M_Options_Key (int k) {
 			case 1:
 				m_state = m_none;
 				key_dest = key_console;
-				//			Con_ToggleConsole_f ();
+				//            Con_ToggleConsole_f ();
 				break;
 			case 2:
 				Cbuf_AddText ("exec default.cfg\n");
 				break;
 			case 15:
-				//		M_Menu_Fps_f ();
+				//        M_Menu_Fps_f ();
 				switch (fps_mode) {
 #ifdef GLQUAKE
 					case mode_fastest:
@@ -704,29 +704,29 @@ void M_Options_Key (int k) {
 
 char *bindnames[][2] =
 {
-	{"+attack",			"attack"},
-	{"+use",			"use"},
-	{"+jump",			"jump"},
-	{"+forward",		"move forward"},
-	{"+back",			"move back"},
-	{"+moveleft",		"move left"},
-	{"+moveright",		"move right"},
-	{"impulse 12",		"previous weapon"},
-	{"impulse 10",		"next weapon"},
-	{"impulse 1",		"axe"},
-	{"impulse 2",		"shotgun"},
-	{"impulse 3",		"super shotgun"},
-	{"impulse 4",		"nailgun"},
-	{"impulse 5",		"super nailgun"},
-	{"impulse 6",		"grenade launcher"},
-	{"impulse 7",		"rocket launcher"},
-	{"impulse 8",		"thunderbolt"},
+	{"+attack",            "attack"},
+	{"+use",            "use"},
+	{"+jump",            "jump"},
+	{"+forward",        "move forward"},
+	{"+back",            "move back"},
+	{"+moveleft",        "move left"},
+	{"+moveright",        "move right"},
+	{"impulse 12",        "previous weapon"},
+	{"impulse 10",        "next weapon"},
+	{"impulse 1",        "axe"},
+	{"impulse 2",        "shotgun"},
+	{"impulse 3",        "super shotgun"},
+	{"impulse 4",        "nailgun"},
+	{"impulse 5",        "super nailgun"},
+	{"impulse 6",        "grenade launcher"},
+	{"impulse 7",        "rocket launcher"},
+	{"impulse 8",        "thunderbolt"},
 };
 
-#define	NUMCOMMANDS	(sizeof(bindnames)/sizeof(bindnames[0]))
+#define    NUMCOMMANDS    (sizeof(bindnames)/sizeof(bindnames[0]))
 
-int		keys_cursor;
-int		bind_grab;
+int        keys_cursor;
+int        bind_grab;
 
 void M_Menu_Keys_f (void) {
 	M_EnterMenu (m_keys);
@@ -856,7 +856,7 @@ void M_Keys_Key (int k) {
 
 	switch (k) {
 		case K_BACKSPACE:
-			m_topmenu = m_none;	// intentional fallthrough
+			m_topmenu = m_none;    // intentional fallthrough
 		case K_ESCAPE:
 			M_LeaveMenu (m_options);
 			break;
@@ -889,7 +889,7 @@ void M_Keys_Key (int k) {
 			keys_cursor = NUMCOMMANDS - 1;
 			break;
 
-		case K_ENTER:		// go into bind mode
+		case K_ENTER:        // go into bind mode
 			M_FindKeysForCommand (bindnames[keys_cursor][0], keys);
 			S_LocalSound ("misc/menu2.wav");
 			if (keys[1] != -1)
@@ -897,7 +897,7 @@ void M_Keys_Key (int k) {
 			bind_grab = true;
 			break;
 
-		case K_DEL:				// delete bindings
+		case K_DEL:                // delete bindings
 			S_LocalSound ("misc/menu2.wav");
 			M_UnbindCommand (bindnames[keys_cursor][0]);
 			break;
@@ -909,9 +909,9 @@ void M_Keys_Key (int k) {
 //=============================================================================
 /* FPS SETTINGS MENU */
 
-#define	FPS_ITEMS	15
+#define    FPS_ITEMS    15
 
-int		fps_cursor = 0;
+int        fps_cursor = 0;
 
 extern cvar_t v_bonusflash;
 extern cvar_t cl_rocket2grenade;
@@ -924,10 +924,10 @@ void M_Menu_Fps_f (void) {
 	M_EnterMenu (m_fps);
 }
 
-#define ALIGN_FPS_OPTIONS	208
+#define ALIGN_FPS_OPTIONS    208
 
 void M_Fps_Draw (void) {
-	mpic_t	*p;
+	mpic_t    *p;
 	char temp[32];
 
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp"));
@@ -936,14 +936,14 @@ void M_Fps_Draw (void) {
 
 	M_Print (16, 32, "            Explosions");
 	switch ((int) r_explosiontype.value) {
-		case 0	: strcpy(temp, "fire + sparks"); break;
-		case 1	: strcpy(temp, "fire only"); break;
-		case 2	: strcpy(temp, "teleport"); break;
-		case 3	: strcpy(temp, "blood"); break;
-		case 4	: strcpy(temp, "big blood"); break;
-		case 5	: strcpy(temp, "dbl gunshot"); break;
-		case 6	: strcpy(temp, "blob effect"); break;
-		case 7	: strcpy(temp, "big explosion"); break;
+		case 0    : strcpy(temp, "fire + sparks"); break;
+		case 1    : strcpy(temp, "fire only"); break;
+		case 2    : strcpy(temp, "teleport"); break;
+		case 3    : strcpy(temp, "blood"); break;
+		case 4    : strcpy(temp, "big blood"); break;
+		case 5    : strcpy(temp, "dbl gunshot"); break;
+		case 6    : strcpy(temp, "blob effect"); break;
+		case 7    : strcpy(temp, "big explosion"); break;
 		default : strcpy(temp, "fire + sparks"); break;
 	}
 	M_Print (ALIGN_FPS_OPTIONS, 32, temp);
@@ -961,14 +961,14 @@ void M_Fps_Draw (void) {
 	M_Print (ALIGN_FPS_OPTIONS, 64, cl_rocket2grenade.value ? "grenade" : "normal");
 
 	switch ((int) r_rockettrail.value) {
-		case 0	: strcpy(temp, "off"); break;
-		case 1	: strcpy(temp, "normal"); break;
-		case 2	: strcpy(temp, "grenade"); break;
-		case 3	: strcpy(temp, "alt normal"); break;
-		case 4	: strcpy(temp, "slight blood"); break;
-		case 5	: strcpy(temp, "big blood"); break;
-		case 6	: strcpy(temp, "tracer 1"); break;
-		case 7	: strcpy(temp, "tracer 2"); break;
+		case 0    : strcpy(temp, "off"); break;
+		case 1    : strcpy(temp, "normal"); break;
+		case 2    : strcpy(temp, "grenade"); break;
+		case 3    : strcpy(temp, "alt normal"); break;
+		case 4    : strcpy(temp, "slight blood"); break;
+		case 5    : strcpy(temp, "big blood"); break;
+		case 6    : strcpy(temp, "tracer 1"); break;
+		case 7    : strcpy(temp, "tracer 2"); break;
 		default : strcpy(temp, "normal"); break;
 	}
 
@@ -1012,7 +1012,7 @@ void M_Fps_Key (int k) {
 
 	switch (k) {
 		case K_BACKSPACE:
-			m_topmenu = m_none;	// intentional fallthrough
+			m_topmenu = m_none;    // intentional fallthrough
 		case K_ESCAPE:
 			M_LeaveMenu (m_options);
 			break;
@@ -1185,15 +1185,15 @@ void M_Video_Key (int key) {
 //=============================================================================
 /* HELP MENU */
 
-int		help_page;
-#define	NUM_HELP_PAGES	6
+int        help_page;
+#define    NUM_HELP_PAGES    6
 
 void M_Menu_Help_f (void) {
 	M_EnterMenu (m_help);
 }
 
 void M_Help_Draw (void) {
-	//	M_DrawPic (0, 0, Draw_CachePic ( va("gfx/help%i.lmp", help_page)) );
+	//    M_DrawPic (0, 0, Draw_CachePic ( va("gfx/help%i.lmp", help_page)) );
 	extern void Help_Draw(int, int, int, int);
 
 	int x, y, w, h;
@@ -1223,7 +1223,7 @@ void M_Help_Key (int key) {
 
 	   switch (key) {
 	   case K_BACKSPACE:
-	   m_topmenu = m_none;	// intentional fallthrough
+	   m_topmenu = m_none;    // intentional fallthrough
 	   case K_ESCAPE:
 	   M_LeaveMenu (m_main);
 	   break;
@@ -1254,9 +1254,9 @@ void M_Help_Key (int key) {
 //=============================================================================
 /* QUIT MENU */
 
-int		msgNumber;
-int		m_quit_prevstate;
-qbool	wasInMenus;
+int        msgNumber;
+int        m_quit_prevstate;
+qbool    wasInMenus;
 
 void M_Menu_Quit_f (void) {
 	if (m_state == m_quit)
@@ -1298,12 +1298,12 @@ void M_Quit_Key (int key) {
 
 #ifndef CLIENTONLY
 
-#define	SINGLEPLAYER_ITEMS	3
-int	m_singleplayer_cursor;
+#define    SINGLEPLAYER_ITEMS    3
+int    m_singleplayer_cursor;
 qbool m_singleplayer_confirm;
 qbool m_singleplayer_notavail;
 
-extern	cvar_t	maxclients;
+extern    cvar_t    maxclients;
 
 void M_Menu_SinglePlayer_f (void) {
 	M_EnterMenu (m_singleplayer);
@@ -1392,7 +1392,7 @@ void M_SinglePlayer_Key (int key) {
 
 	switch (key) {
 		case K_BACKSPACE:
-			m_topmenu = m_none;	// intentional fallthrough
+			m_topmenu = m_none;    // intentional fallthrough
 		case K_ESCAPE:
 			M_LeaveMenu (m_main);
 			break;
@@ -1449,7 +1449,7 @@ void M_SinglePlayer_Key (int key) {
 	}
 }
 
-#else	// !CLIENTONLY
+#else    // !CLIENTONLY
 
 void M_Menu_SinglePlayer_f (void) {
 	M_EnterMenu (m_singleplayer);
@@ -1461,7 +1461,7 @@ void M_SinglePlayer_Draw (void) {
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
 	p = Draw_CachePic ("gfx/ttl_sgl.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
-	//	M_DrawTransPic (72, 32, Draw_CachePic ("gfx/sp_menu.lmp") );
+	//    M_DrawTransPic (72, 32, Draw_CachePic ("gfx/sp_menu.lmp") );
 
 	M_DrawTextBox (60, 10*8, 23, 4);
 	M_PrintWhite (88, 12*8, "This client is for");
@@ -1471,14 +1471,14 @@ void M_SinglePlayer_Draw (void) {
 void M_SinglePlayer_Key (key) {
 	switch (key) {
 		case K_BACKSPACE:
-			m_topmenu = m_none;	// intentional fallthrough
+			m_topmenu = m_none;    // intentional fallthrough
 		case K_ESCAPE:
 		case K_ENTER:
 			M_LeaveMenu (m_main);
 			break;
 	}
 }
-#endif	// CLIENTONLY
+#endif    // CLIENTONLY
 
 
 //=============================================================================
@@ -1486,11 +1486,11 @@ void M_SinglePlayer_Key (key) {
 
 #ifndef CLIENTONLY
 
-#define	MAX_SAVEGAMES		12
+#define    MAX_SAVEGAMES        12
 
-int		load_cursor;		// 0 < load_cursor < MAX_SAVEGAMES
-char	m_filenames[MAX_SAVEGAMES][SAVEGAME_COMMENT_LENGTH + 1];
-int		loadable[MAX_SAVEGAMES];
+int        load_cursor;        // 0 < load_cursor < MAX_SAVEGAMES
+char    m_filenames[MAX_SAVEGAMES][SAVEGAME_COMMENT_LENGTH + 1];
+int        loadable[MAX_SAVEGAMES];
 
 void M_ScanSaves (char *sp_gamedir) {
 	int i, j, version;
@@ -1567,7 +1567,7 @@ void M_Save_Draw (void) {
 void M_Load_Key (int key) {
 	switch (key) {
 		case K_BACKSPACE:
-			m_topmenu = m_none;	// intentional fallthrough
+			m_topmenu = m_none;    // intentional fallthrough
 		case K_ESCAPE:
 			M_LeaveMenu (m_singleplayer);
 			break;
@@ -1606,7 +1606,7 @@ void M_Load_Key (int key) {
 void M_Save_Key (int key) {
 	switch (key) {
 		case K_BACKSPACE:
-			m_topmenu = m_none;	// intentional fallthrough
+			m_topmenu = m_none;    // intentional fallthrough
 		case K_ESCAPE:
 			M_LeaveMenu (m_singleplayer);
 			break;
@@ -1640,11 +1640,11 @@ void M_Save_Key (int key) {
 //=============================================================================
 /* MULTIPLAYER MENU */
 
-int	m_multiplayer_cursor;
+int    m_multiplayer_cursor;
 #ifdef CLIENTONLY
-#define	MULTIPLAYER_ITEMS	3
+#define    MULTIPLAYER_ITEMS    3
 #else
-#define	MULTIPLAYER_ITEMS	4
+#define    MULTIPLAYER_ITEMS    4
 #endif
 
 void M_Menu_MultiPlayer_f (void) {
@@ -1652,7 +1652,7 @@ void M_Menu_MultiPlayer_f (void) {
 }
 
 void M_MultiPlayer_Draw (void) {
-	mpic_t	*p;
+	mpic_t    *p;
 
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
 	p = Draw_CachePic ("gfx/p_multi.lmp");
@@ -1671,7 +1671,7 @@ void M_MultiPlayer_Draw (void) {
 void M_MultiPlayer_Key (int key) {
 	switch (key) {
 		case K_BACKSPACE:
-			m_topmenu = m_none;	// intentional fallthrough
+			m_topmenu = m_none;    // intentional fallthrough
 		case K_ESCAPE:
 			M_LeaveMenu (m_main);
 			break;
@@ -1728,11 +1728,11 @@ void M_MultiPlayer_Key (int key) {
 
 #if _WIN32 || defined(__XMMS__)
 
-#define M_MP3_CONTROL_HEADINGROW	8
-#define M_MP3_CONTROL_MENUROW		(M_MP3_CONTROL_HEADINGROW + 56)
-#define M_MP3_CONTROL_COL			104
-#define M_MP3_CONTROL_NUMENTRIES	12
-#define M_MP3_CONTROL_BARHEIGHT		(200 - 24)
+#define M_MP3_CONTROL_HEADINGROW    8
+#define M_MP3_CONTROL_MENUROW        (M_MP3_CONTROL_HEADINGROW + 56)
+#define M_MP3_CONTROL_COL            104
+#define M_MP3_CONTROL_NUMENTRIES    12
+#define M_MP3_CONTROL_BARHEIGHT        (200 - 24)
 
 static int mp3_cursor = 0;
 static int last_status;
@@ -1903,11 +1903,11 @@ void M_Menu_MP3_Control_Key(int key) {
 			break;
 		case K_ENTER:
 			switch (mp3_cursor) {
-				case 0:	MP3_Play_f(); break;
-				case 1:	MP3_Pause_f(); break;
-				case 2:	MP3_Stop_f(); break;
+				case 0:    MP3_Play_f(); break;
+				case 1:    MP3_Pause_f(); break;
+				case 2:    MP3_Stop_f(); break;
 				case 3: MP3_Next_f(); break;
-				case 4:	MP3_Prev_f(); break;
+				case 4:    MP3_Prev_f(); break;
 				case 5: MP3_FastForward_f(); break;
 				case 6: MP3_Rewind_f(); break;
 				case 7: break;
@@ -1944,8 +1944,8 @@ void M_Menu_MP3_Control_Key(int key) {
 		case KP_LEFTARROW: case 'z': MP3_Prev_f(); break;
 		case KP_5: case 'x': MP3_Play_f(); break;
 		case 'c': MP3_Pause_f(); break;
-		case 'v': MP3_Stop_f(); 	break;
-		case 'V': MP3_FadeOut_f();	break;
+		case 'v': MP3_Stop_f();     break;
+		case 'V': MP3_FadeOut_f();    break;
 		case KP_RIGHTARROW: case 'b': MP3_Next_f(); break;
 		case KP_HOME: MP3_Rewind_f(); break;
 		case KP_PGUP: MP3_FastForward_f(); break;
@@ -1959,11 +1959,11 @@ void M_Menu_MP3_Control_f (void){
 }
 #endif
 
-#define PLAYLIST_MAXENTRIES		2048
-#define PLAYLIST_MAXLINES		17
-#define PLAYLIST_HEADING_ROW	8
+#define PLAYLIST_MAXENTRIES        2048
+#define PLAYLIST_MAXLINES        17
+#define PLAYLIST_HEADING_ROW    8
 
-#define PLAYLIST_MAXTITLE	(32 + 1)
+#define PLAYLIST_MAXTITLE    (32 + 1)
 
 static int playlist_size = 0;
 static int playlist_cursor = 0, playlist_base = 0;
@@ -2040,7 +2040,7 @@ void M_Menu_MP3_Playlist_Read(void) {
 #endif
 
 void M_Menu_MP3_Playlist_Draw(void) {
-	int	index, print_time, i;
+	int    index, print_time, i;
 	char name[PLAYLIST_MAXTITLE];
 	float realtime;
 
@@ -2181,8 +2181,8 @@ void M_Menu_MP3_Playlist_Key (int k) {
 		case KP_LEFTARROW: case 'z': MP3_Prev_f(); break;
 		case KP_5: case 'x': MP3_Play_f(); break;
 		case 'c': MP3_Pause_f(); break;
-		case 'v': MP3_Stop_f(); 	break;
-		case 'V': MP3_FadeOut_f();	break;
+		case 'v': MP3_Stop_f();     break;
+		case 'V': MP3_FadeOut_f();    break;
 		case KP_RIGHTARROW: case 'b': MP3_Next_f(); break;
 		case KP_HOME: case K_LEFTARROW:  MP3_Rewind_f(); break;
 		case KP_PGUP: case K_RIGHTARROW: MP3_FastForward_f(); break;
@@ -2209,14 +2209,14 @@ void M_Menu_MP3_Playlist_f (void){
 extern cvar_t demo_dir;
 
 #ifdef _WIN32
-#define	DEMO_TIME	FILETIME
+#define    DEMO_TIME    FILETIME
 #else
-#define	DEMO_TIME	time_t
+#define    DEMO_TIME    time_t
 #endif
 
-#define MAX_DEMO_NAME	MAX_OSPATH
-#define MAX_DEMO_FILES	2048
-#define DEMO_MAXLINES	17
+#define MAX_DEMO_NAME    MAX_OSPATH
+#define MAX_DEMO_FILES    2048
+#define DEMO_MAXLINES    17
 #define DEMO_PLAYLIST_OPTIONS_MAX 5
 
 typedef enum direntry_type_s {dt_file = 0, dt_dir, dt_up, dt_msg} direntry_type_t;
@@ -2252,26 +2252,26 @@ static int demo_options_base = 0;
 
 
 typedef struct direntry_s {
-	direntry_type_t	type;
-	char			*name;
-	int				size;
-	DEMO_TIME		time;
+	direntry_type_t    type;
+	char            *name;
+	int                size;
+	DEMO_TIME        time;
 } direntry_t;
 
-static direntry_t	demolist_data[MAX_DEMO_FILES];
-static direntry_t	*demolist[MAX_DEMO_FILES];
-static int			demolist_count;
-static char			demo_currentdir[MAX_OSPATH] = {0};
-static char			demo_prevdemo[MAX_DEMO_NAME] = {0};
+static direntry_t    demolist_data[MAX_DEMO_FILES];
+static direntry_t    *demolist[MAX_DEMO_FILES];
+static int            demolist_count;
+static char            demo_currentdir[MAX_OSPATH] = {0};
+static char            demo_prevdemo[MAX_DEMO_NAME] = {0};
 
-static float		last_demo_time = 0;
+static float        last_demo_time = 0;
 
-static int			demo_cursor = 0;
-static int			demo_base = 0;
-static int			demo_section = 0;
+static int            demo_cursor = 0;
+static int            demo_base = 0;
+static int            demo_section = 0;
 
-static demo_sort_t	demo_sorttype = ds_name;
-static qbool		demo_reversesort = false;
+static demo_sort_t    demo_sorttype = ds_name;
+static qbool        demo_reversesort = false;
 
 char demo_track[16];
 
@@ -2286,7 +2286,7 @@ void M_Demos_Playlist_stop_f (void){
 }
 
 void Demo_playlist_start (int i){
-	//	int test;
+	//    int test;
 	key_dest = key_game;
 	m_state = m_none;
 	demo_playlist_current_played = i;
@@ -2658,13 +2658,13 @@ static void Demo_FormatSize (char *t) {
 	}
 }
 
-#define DEMOLIST_NAME_WIDTH	29
+#define DEMOLIST_NAME_WIDTH    29
 #define DEMO_PLAYLIST_MAX 100
 #define DEMO_OPTIONS_MAX 2
 
 void M_Demos_Draw (void) {
 	int i, y,z;
-	//	char *demos_test;
+	//    char *demos_test;
 	direntry_t *d;
 	char demoname[DEMOLIST_NAME_WIDTH], demosize[36 - DEMOLIST_NAME_WIDTH];
 	static char last_demo_name[MAX_DEMO_NAME + 7];
@@ -2788,8 +2788,8 @@ void M_Demos_Draw (void) {
 			} else{
 				M_Print (24, 32, "Not playing anything");
 			}
-			M_Print	(24, 56, "Next     demo");
-			M_Print	(24, 64, "Previous demo");
+			M_Print    (24, 56, "Next     demo");
+			M_Print    (24, 64, "Previous demo");
 			M_Print (24, 72, "Stop  playlist");
 			M_Print (24, 80, "Clear playlist");
 
@@ -3220,14 +3220,14 @@ void M_Demos_Del_Key (int key) {
 #ifndef CLIENTONLY
 
 typedef struct {
-	char	*name;
-	char	*description;
+	char    *name;
+	char    *description;
 } level_t;
 
-level_t		levels[] = {
-	{"start", "Entrance"},	// 0
+level_t        levels[] = {
+	{"start", "Entrance"},    // 0
 
-	{"e1m1", "Slipgate Complex"},				// 1
+	{"e1m1", "Slipgate Complex"},                // 1
 	{"e1m2", "Castle of the Damned"},
 	{"e1m3", "The Necropolis"},
 	{"e1m4", "The Grisly Grotto"},
@@ -3236,7 +3236,7 @@ level_t		levels[] = {
 	{"e1m7", "The House of Chthon"},
 	{"e1m8", "Ziggurat Vertigo"},
 
-	{"e2m1", "The Installation"},				// 9
+	{"e2m1", "The Installation"},                // 9
 	{"e2m2", "Ogre Citadel"},
 	{"e2m3", "Crypt of Decay"},
 	{"e2m4", "The Ebon Fortress"},
@@ -3244,7 +3244,7 @@ level_t		levels[] = {
 	{"e2m6", "The Dismal Oubliette"},
 	{"e2m7", "Underearth"},
 
-	{"e3m1", "Termination Central"},			// 16
+	{"e3m1", "Termination Central"},            // 16
 	{"e3m2", "The Vaults of Zin"},
 	{"e3m3", "The Tomb of Terror"},
 	{"e3m4", "Satan's Dark Delight"},
@@ -3252,7 +3252,7 @@ level_t		levels[] = {
 	{"e3m6", "Chambers of Torment"},
 	{"e3m7", "The Haunted Halls"},
 
-	{"e4m1", "The Sewage System"},				// 23
+	{"e4m1", "The Sewage System"},                // 23
 	{"e4m2", "The Tower of Despair"},
 	{"e4m3", "The Elder God Shrine"},
 	{"e4m4", "The Palace of Hate"},
@@ -3261,9 +3261,9 @@ level_t		levels[] = {
 	{"e4m7", "Azure Agony"},
 	{"e4m8", "The Nameless City"},
 
-	{"end", "Shub-Niggurath's Pit"},			// 31
+	{"end", "Shub-Niggurath's Pit"},            // 31
 
-	{"dm1", "Place of Two Deaths"},				// 32
+	{"dm1", "Place of Two Deaths"},                // 32
 	{"dm2", "Claustrophobopolis"},
 	{"dm3", "The Abandoned Base"},
 	{"dm4", "The Bad Place"},
@@ -3272,12 +3272,12 @@ level_t		levels[] = {
 };
 
 typedef struct {
-	char	*description;
-	int		firstLevel;
-	int		levels;
+	char    *description;
+	int        firstLevel;
+	int        levels;
 } episode_t;
 
-episode_t	episodes[] = {
+episode_t    episodes[] = {
 	{"Welcome to Quake", 0, 1},
 	{"Doomed Dimension", 1, 8},
 	{"Realm of Black Magic", 9, 7},
@@ -3289,8 +3289,8 @@ episode_t	episodes[] = {
 
 extern cvar_t maxclients, maxspectators;
 
-int	startepisode;
-int	startlevel;
+int    startepisode;
+int    startlevel;
 int _maxclients, _maxspectators;
 int _deathmatch, _teamplay, _skill, _coop;
 int _fraglimit, _timelimit;
@@ -3312,8 +3312,8 @@ void M_Menu_GameOptions_f (void) {
 }
 
 int gameoptions_cursor_table[] = {40, 56, 64, 72, 80, 96, 104, 120, 128};
-#define	NUM_GAMEOPTIONS	9
-int		gameoptions_cursor;
+#define    NUM_GAMEOPTIONS    9
+int        gameoptions_cursor;
 
 void M_GameOptions_Draw (void) {
 	mpic_t *p;
@@ -3381,7 +3381,7 @@ void M_GameOptions_Draw (void) {
 
 void M_NetStart_Change (int dir) {
 	int count;
-	extern cvar_t	registered;
+	extern cvar_t    registered;
 
 	switch (gameoptions_cursor) {
 		case 1:
@@ -3462,7 +3462,7 @@ void M_NetStart_Change (int dir) {
 void M_GameOptions_Key (int key) {
 	switch (key) {
 		case K_BACKSPACE:
-			m_topmenu = m_none;	// intentional fallthrough
+			m_topmenu = m_none;    // intentional fallthrough
 		case K_ESCAPE:
 			M_LeaveMenu (m_multiplayer);
 			break;
@@ -3511,7 +3511,7 @@ void M_GameOptions_Key (int key) {
 
 		case K_ENTER:
 			S_LocalSound ("misc/menu2.wav");
-			//		if (gameoptions_cursor == 0)
+			//        if (gameoptions_cursor == 0)
 			{
 				key_dest = key_game;
 
@@ -3542,29 +3542,29 @@ void M_GameOptions_Key (int key) {
 				return;
 			}
 
-			//		M_NetStart_Change (1);
+			//        M_NetStart_Change (1);
 			break;
 	}
 }
-#endif	// !CLIENTONLY
+#endif    // !CLIENTONLY
 
 //=============================================================================
 /* SETUP MENU */
 
-int		setup_cursor = 0;
-int		setup_cursor_table[] = {40, 56, 80, 104, 140};
+int        setup_cursor = 0;
+int        setup_cursor_table[] = {40, 56, 80, 104, 140};
 
-char	setup_name[16];
-char	setup_team[16];
-int		setup_oldtop;
-int		setup_oldbottom;
-int		setup_top;
-int		setup_bottom;
+char    setup_name[16];
+char    setup_team[16];
+int        setup_oldtop;
+int        setup_oldbottom;
+int        setup_top;
+int        setup_bottom;
 
-extern cvar_t	name, team;
-extern cvar_t	topcolor, bottomcolor;
+extern cvar_t    name, team;
+extern cvar_t    topcolor, bottomcolor;
 
-#define	NUM_SETUP_CMDS	5
+#define    NUM_SETUP_CMDS    5
 
 void M_Menu_Setup_f (void) {
 	M_EnterMenu (m_setup);
@@ -3575,7 +3575,7 @@ void M_Menu_Setup_f (void) {
 }
 
 void M_Setup_Draw (void) {
-	mpic_t	*p;
+	mpic_t    *p;
 
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
 	p = Draw_CachePic ("gfx/p_multi.lmp");
@@ -3663,11 +3663,11 @@ void M_Setup_Key (int k) {
 			break;
 
 		case K_ENTER:
-			//		if (setup_cursor == 0 || setup_cursor == 1)
-			//			return;
+			//        if (setup_cursor == 0 || setup_cursor == 1)
+			//            return;
 
-			//		if (setup_cursor == 2 || setup_cursor == 3)
-			//			goto forward;
+			//        if (setup_cursor == 2 || setup_cursor == 3)
+			//            goto forward;
 
 			// setup_cursor == 4 (OK)
 			Cvar_Set (&name, setup_name);
@@ -3731,7 +3731,7 @@ void M_Setup_Key (int k) {
 
 void M_Menu_ServerList_f (void) {
 	M_EnterMenu (m_slist);
-	//	m_multip_state = 0;
+	//    m_multip_state = 0;
 }
 
 void M_ServerList_Draw (void) {
@@ -3782,15 +3782,15 @@ void M_ServerList_Key (key) {
 	extern void Browser_Key(int key);
 	Browser_Key(key);
 
-	/*	int slist_length;
+	/*    int slist_length;
 		extern cvar_t spectator;
 
 		if (!slist[0].server && key != K_ESCAPE && key != K_INS)
 		return;
 
-		switch(key)	{
+		switch(key)    {
 		case K_BACKSPACE:
-		m_topmenu = m_none;	// intentional fallthrough
+		m_topmenu = m_none;    // intentional fallthrough
 		case K_ESCAPE:
 		M_LeaveMenu (m_multiplayer);
 		break;
@@ -3962,7 +3962,7 @@ void M_SEdit_Draw (void) {
 }
 
 void M_SEdit_Key (int key) {
-	int	l;
+	int    l;
 	char *cliptext;
 
 	switch (key) {
