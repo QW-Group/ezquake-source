@@ -308,7 +308,12 @@ int UDP_OpenSocket (int port) {
 void NET_ClientConfig (qbool enable) {
 	if (enable) {
 		if (ip_sockets[NS_CLIENT] == -1) {
+			// try the default port first
 			ip_sockets[NS_CLIENT] = UDP_OpenSocket (PORT_CLIENT);
+#ifdef _DEBUG
+			if (ip_sockets[NS_CLIENT] == -1)
+				ip_sockets[NS_CLIENT] = UDP_OpenSocket (PORT_ANY); // any dynamic port
+#endif
 			if (ip_sockets[NS_CLIENT] == -1)
 				Sys_Error ("Couldn't allocate client socket");
 		}
