@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.26 2006-03-29 20:38:29 oldmanuk Exp $
+	$Id: mvd_utils.c,v 1.27 2006-04-11 23:10:59 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1058,8 +1058,7 @@ int MVD_Stats_Gather_f (void){
 			mvd_new_info[i].info.lastfrags = mvd_new_info[i].p_info->frags;
 		}
 
-		// FIXME: misplaced comma here?
-		if (mvd_new_info[i].p_info->name,mvd_new_info[i].p_state->weaponframe > 0)
+		if (mvd_new_info[i].p_info->name > 0 && mvd_new_info[i].p_state->weaponframe > 0)
 				mvd_new_info[i].info.lfw=mvd_new_info[i].p_info->stats[STAT_ACTIVEWEAPON];
 
 		MVD_Status_WP_f(i);
