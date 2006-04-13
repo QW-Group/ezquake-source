@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: auth.c,v 1.9 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: auth.c,v 1.10 2006-04-13 00:27:28 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -45,7 +45,7 @@ char *Auth_Generate_Crc(void) {
 	if (!Modules_SecurityLoaded())
 		return failsafe;
 
-	p = Security_Generate_Crc(cl.playernum);
+	p = Security_Generate_Crc(cl.playernum, cl.players[cl.playernum].userinfo, cl.serverinfo);
 
 	if (!VerifyData(p))
 		return failsafe;
@@ -63,7 +63,7 @@ static qbool verify_response(int index, unsigned char *hash) {
 	if (!Modules_SecurityLoaded())
 		return failsafe;
 
-	p = Security_Verify_Response(index, hash);
+	p = Security_Verify_Response(index, hash, cl.players[index].userinfo, cl.serverinfo);
 
 	if (!VerifyData(p))
 		return failsafe;
@@ -76,7 +76,7 @@ static qbool verify_response(int index, unsigned char *hash) {
 static int Auth_CheckString (char *id, char *s, int flags, int offset, int *out_slot, char *out_data, int out_size) {
 	int len, slot;
 	char name[32], *index;
-	unsigned char hash[30];
+	unsigned char hash[31];
 
 	if (!Modules_SecurityLoaded())
 		return AUTH_NOTHING;
@@ -98,7 +98,7 @@ static int Auth_CheckString (char *id, char *s, int flags, int offset, int *out_
 	if (!(index = strstr(s + offset, "  crc: ")) || strlen(index) != 30 + 1 + 7 || index[30 + 7] != '\n')
 		return AUTH_BADFORMAT;
 
-	memcpy(hash, index + 7, 30);
+	snprintf (hash, sizeof(hash), "%s", index + 7);
 	if (out_data)
 		strlcpy(out_data, s + offset + strlen(id), bound(1, index - (s + offset + strlen(id)) + 1, out_size));
 
