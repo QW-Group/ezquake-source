@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.44 2006-04-10 19:57:53 oldmanuk Exp $
+	$Id: menu.c,v 1.45 2006-04-14 08:58:54 oldmanuk Exp $
 
 */
 
@@ -52,12 +52,6 @@ extern void Browser_Draw(int, int, int, int);
 extern cvar_t con_shift;
 extern cvar_t sb_maxwidth, sb_maxheight;
 extern cvar_t scr_fov;
-
-#define DEMOS_TAB_MAIN 0
-#define DEMOS_TAB_PLAYLIST 1
-#define DEMOS_TAB_OPTIONS 2
-#define DEMOS_TAB_MAX 2
-int demos_menu_tab = DEMOS_TAB_MAIN;
 
 void M_Menu_Main_f (void);
 	void M_Menu_SinglePlayer_f (void);
@@ -125,10 +119,6 @@ int            m_topmenu;       // set if a submenu was entered via a
 
 //=============================================================================
 /* Support Routines */
-
-
-cvar_t    demo_playlist_loop = {"demo_playlist_loop","0"};
-cvar_t    demo_playlist_track_name = {"demo_playlist_track_name",""};
 
 #ifdef GLQUAKE
 cvar_t     scr_scaleMenu = {"scr_scaleMenu","1"};
@@ -210,7 +200,6 @@ void M_ToggleMenu_f (void) {
 		}
 		key_dest = key_game;
 		m_state = m_none;
-		return;
 	} else {
 		M_Menu_Main_f ();
 	}
@@ -704,23 +693,23 @@ void M_Options_Key (int k) {
 
 char *bindnames[][2] =
 {
-	{"+attack",            "attack"},
+	{"+attack",         "attack"},
 	{"+use",            "use"},
-	{"+jump",            "jump"},
+	{"+jump",           "jump"},
 	{"+forward",        "move forward"},
-	{"+back",            "move back"},
-	{"+moveleft",        "move left"},
-	{"+moveright",        "move right"},
-	{"impulse 12",        "previous weapon"},
-	{"impulse 10",        "next weapon"},
-	{"impulse 1",        "axe"},
-	{"impulse 2",        "shotgun"},
-	{"impulse 3",        "super shotgun"},
-	{"impulse 4",        "nailgun"},
-	{"impulse 5",        "super nailgun"},
-	{"impulse 6",        "grenade launcher"},
-	{"impulse 7",        "rocket launcher"},
-	{"impulse 8",        "thunderbolt"},
+	{"+back",           "move back"},
+	{"+moveleft",       "move left"},
+	{"+moveright",      "move right"},
+	{"impulse 12",      "previous weapon"},
+	{"impulse 10",      "next weapon"},
+	{"impulse 1",       "axe"},
+	{"impulse 2",       "shotgun"},
+	{"impulse 3",       "super shotgun"},
+	{"impulse 4",       "nailgun"},
+	{"impulse 5",       "super nailgun"},
+	{"impulse 6",       "grenade launcher"},
+	{"impulse 7",       "rocket launcher"},
+	{"impulse 8",       "thunderbolt"},
 };
 
 #define    NUMCOMMANDS    (sizeof(bindnames)/sizeof(bindnames[0]))
@@ -746,7 +735,7 @@ void M_FindKeysForCommand (char *command, int *twokeys) {
 		b = keybindings[j];
 		if (!b)
 			continue;
-		if (!strncmp (b, command, l) ) {
+		if (!strncmp (b, command, l)) {
 			if (count) {
 				if (j == twokeys[0] + 1 && (twokeys[0] == K_LCTRL || twokeys[0] == K_LSHIFT || twokeys[0] == K_LALT)) {
 
@@ -846,9 +835,9 @@ void M_Keys_Key (int k) {
 		/* Massa: all keys should be bindable, including the console switching */
 		else
 #else // WITH_KEYMAP
-			else if (k != '`')
+        else if (k != '`')
 #endif // WITH_KEYMAP else
-				Key_SetBinding (k, bindnames[keys_cursor][0]);
+            Key_SetBinding (k, bindnames[keys_cursor][0]);
 
 			bind_grab = false;
 			return;
@@ -1903,16 +1892,16 @@ void M_Menu_MP3_Control_Key(int key) {
 			break;
 		case K_ENTER:
 			switch (mp3_cursor) {
-				case 0:    MP3_Play_f(); break;
-				case 1:    MP3_Pause_f(); break;
-				case 2:    MP3_Stop_f(); break;
-				case 3: MP3_Next_f(); break;
-				case 4:    MP3_Prev_f(); break;
-				case 5: MP3_FastForward_f(); break;
-				case 6: MP3_Rewind_f(); break;
-				case 7: break;
-				case 8: MP3_ToggleShuffle_f(); break;
-				case 9: MP3_ToggleRepeat_f(); break;
+				case 0:  MP3_Play_f(); break;
+				case 1:  MP3_Pause_f(); break;
+				case 2:  MP3_Stop_f(); break;
+				case 3:  MP3_Next_f(); break;
+				case 4:  MP3_Prev_f(); break;
+				case 5:  MP3_FastForward_f(); break;
+				case 6:  MP3_Rewind_f(); break;
+				case 7:  break;
+				case 8:  MP3_ToggleShuffle_f(); break;
+				case 9:  MP3_ToggleRepeat_f(); break;
 				case 10: break;
 				case 11: M_Menu_MP3_Playlist_f(); break;
 			}
@@ -1953,11 +1942,9 @@ void M_Menu_MP3_Control_Key(int key) {
 	con_suppress = false;
 }
 
-#if defined(_WIN32) || defined(__XMMS__)
 void M_Menu_MP3_Control_f (void){
 	M_EnterMenu (m_mp3_control);
 }
-#endif
 
 #define PLAYLIST_MAXENTRIES        2048
 #define PLAYLIST_MAXLINES        17
@@ -2222,6 +2209,14 @@ extern cvar_t demo_dir;
 typedef enum direntry_type_s {dt_file = 0, dt_dir, dt_up, dt_msg} direntry_type_t;
 typedef enum demosort_type_s {ds_name = 0, ds_size, ds_time} demo_sort_t;
 
+#define DEMO_TAB_MAIN 0
+#define DEMO_TAB_PLAYLIST 1
+#define DEMO_TAB_OPTIONS 2
+#define DEMO_TAB_MAX 2
+int demo_menu_tab = DEMO_TAB_MAIN;
+
+#define DEMO_PLAYLIST_TAB_MAIN 0
+#define DEMO_PLAYLIST_TAB_OPTIONS 1
 
 typedef struct demo_playlist_s
 {
@@ -2235,21 +2230,21 @@ demo_playlist_t demo_playlist[256];
 char track_name[16];
 char default_track[16];
 int demo_playlist_started = 0;
-static int demo_playlist_current_played = 0;
-static int demo_playlist_started_test = 0;
-static int demo_playlist_num = 0;
-static int demo_playlist_cursor = 0;
-static int demo_playlist_base = 0;
 
-#define DEMO_PLAYLIST_TAB_MAIN 0
-#define DEMO_PLAYLIST_TAB_OPTIONS 1
-static int demo_playlist_section = DEMO_PLAYLIST_TAB_MAIN;
-static int demo_playlist_opt_cursor = 0;
+cvar_t    demo_playlist_loop = {"demo_playlist_loop","0"};
+cvar_t    demo_playlist_track_name = {"demo_playlist_track_name",""};
+
+static int demo_playlist_base = 0;
+static int demo_playlist_current_played = 0;
+static int demo_playlist_cursor = 0;
+static int demo_playlist_num = 0;
 static int demo_playlist_opt_base = 0;
+static int demo_playlist_opt_cursor = 0;
+static int demo_playlist_section = DEMO_PLAYLIST_TAB_MAIN;
+static int demo_playlist_started_test = 0;
 
 static int demo_options_cursor = 0;
 static int demo_options_base = 0;
-
 
 typedef struct direntry_s {
 	direntry_type_t    type;
@@ -2258,23 +2253,22 @@ typedef struct direntry_s {
 	DEMO_TIME        time;
 } direntry_t;
 
-static direntry_t    demolist_data[MAX_DEMO_FILES];
-static direntry_t    *demolist[MAX_DEMO_FILES];
-static int            demolist_count;
-static char            demo_currentdir[MAX_OSPATH] = {0};
-static char            demo_prevdemo[MAX_DEMO_NAME] = {0};
+static direntry_t  demolist_data[MAX_DEMO_FILES];
+static direntry_t  *demolist[MAX_DEMO_FILES];
+static int         demolist_count;
+static char        demo_currentdir[MAX_OSPATH] = {0};
+static char        demo_prevdemo[MAX_DEMO_NAME] = {0};
 
-static float        last_demo_time = 0;
+static float       last_demo_time = 0;
 
-static int            demo_cursor = 0;
-static int            demo_base = 0;
-static int            demo_section = 0;
+static int         demo_cursor = 0;
+static int         demo_base = 0;
+static int         demo_section = 0;
 
-static demo_sort_t    demo_sorttype = ds_name;
-static qbool        demo_reversesort = false;
+static demo_sort_t demo_sorttype = ds_name;
+static qbool       demo_reversesort = false;
 
 char demo_track[16];
-
 
 // Demo Playlist Functions
 
@@ -2673,7 +2667,7 @@ void M_Demos_Draw (void) {
 	int demoindex, scroll_index;
 	float frac, time, elapsed;
 
-	if (demos_menu_tab == DEMOS_TAB_MAIN){
+	if (demo_menu_tab == DEMO_TAB_MAIN){
 		M_Print (64, 0, "[demos]");
 		M_PrintWhite (120, 0, " playlist ");
 		M_PrintWhite (200, 0, " options ");
@@ -2758,7 +2752,7 @@ void M_Demos_Draw (void) {
 
 
 		}
-	} else if(demos_menu_tab == DEMOS_TAB_PLAYLIST){
+	} else if(demo_menu_tab == DEMO_TAB_PLAYLIST){
 		M_PrintWhite (64, 0, " demos ");
 		M_Print (120, 0, "[playlist]");
 		M_PrintWhite (200, 0, " options ");
@@ -2819,7 +2813,7 @@ void M_Demos_Draw (void) {
 
 			M_DrawCharacter (8, 56 + (demo_playlist_opt_cursor +z) * 8, 12 + ((int) (curtime * 4) & 1));
 		}
-	} else if(demos_menu_tab == DEMOS_TAB_OPTIONS){
+	} else if(demo_menu_tab == DEMO_TAB_OPTIONS){
 		M_PrintWhite (64, 0, " demos ");
 		M_PrintWhite (120, 0, " playlist ");
 		M_Print (200, 0, "[options]");
@@ -2881,7 +2875,7 @@ void M_Demos_Key (int key) {
 
 	case K_UPARROW:
 		S_LocalSound ("misc/menu1.wav");
-		if (demos_menu_tab == DEMOS_TAB_MAIN) {
+		if (demo_menu_tab == DEMO_TAB_MAIN) {
 			if (demo_cursor > 0)
 				demo_cursor--;
 			else if (demo_base > 0)
@@ -2891,7 +2885,7 @@ void M_Demos_Key (int key) {
 				demo_base = max(0, demolist_count - DEMO_MAXLINES);
 				demo_cursor = demolist_count - demo_base - 1;
 			}
-		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
+		} else if (demo_menu_tab == DEMO_TAB_PLAYLIST) {
 			if (demo_playlist_section == DEMO_PLAYLIST_TAB_MAIN) {
 				if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base > 0)
 					M_Demos_Playlist_Move_Up(demo_playlist_cursor + demo_playlist_base);
@@ -2908,7 +2902,7 @@ void M_Demos_Key (int key) {
 					demo_playlist_opt_base--;
 
 			}
-		} else if (demos_menu_tab == DEMOS_TAB_OPTIONS) {
+		} else if (demo_menu_tab == DEMO_TAB_OPTIONS) {
 			if (demo_options_cursor > 0)
 				demo_options_cursor--;
 			else if (demo_options_base > 0)
@@ -2919,7 +2913,7 @@ void M_Demos_Key (int key) {
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
-		if (demos_menu_tab == DEMOS_TAB_MAIN) {
+		if (demo_menu_tab == DEMO_TAB_MAIN) {
 			if (demo_cursor + demo_base < demolist_count - 1) {
 				if (demo_cursor < DEMO_MAXLINES - 1)
 					demo_cursor++;
@@ -2928,7 +2922,7 @@ void M_Demos_Key (int key) {
 			} else {
 				demo_base = demo_cursor = 0;
 			}
-		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST ) {
+		} else if (demo_menu_tab == DEMO_TAB_PLAYLIST ) {
 			if ( demo_playlist_section == DEMO_PLAYLIST_TAB_MAIN ) {
 				if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base < demo_playlist_num)
 					M_Demos_Playlist_Move_Down(demo_playlist_cursor + demo_playlist_base);
@@ -2948,7 +2942,7 @@ void M_Demos_Key (int key) {
 						demo_playlist_opt_base++;
 				}
 			}
-		} else if (demos_menu_tab == DEMOS_TAB_OPTIONS ) {
+		} else if (demo_menu_tab == DEMO_TAB_OPTIONS ) {
 			if (demo_options_cursor < DEMO_OPTIONS_MAX - 1)
 				demo_options_cursor++;
 			else
@@ -2960,26 +2954,26 @@ void M_Demos_Key (int key) {
 
 	case K_LEFTARROW:
 		S_LocalSound ("misc/menu1.wav");
-		demos_menu_tab--;
-		if(demos_menu_tab < DEMOS_TAB_MAIN)
-			demos_menu_tab = DEMOS_TAB_MAX;
+		demo_menu_tab--;
+		if(demo_menu_tab < DEMO_TAB_MAIN)
+			demo_menu_tab = DEMO_TAB_MAX;
 		M_Demo_Playlist_Setup_f();
 		break;
 
 	case K_RIGHTARROW:
 		S_LocalSound ("misc/menu1.wav");
-		demos_menu_tab++;
-		if(demos_menu_tab > DEMOS_TAB_MAX)
-			demos_menu_tab = DEMOS_TAB_MAIN;
+		demo_menu_tab++;
+		if(demo_menu_tab > DEMO_TAB_MAX)
+			demo_menu_tab = DEMO_TAB_MAIN;
 		M_Demo_Playlist_Setup_f();
 		break;
 
 	case K_HOME:
 		S_LocalSound ("misc/menu1.wav");
-		if (demos_menu_tab == DEMOS_TAB_MAIN) {
+		if (demo_menu_tab == DEMO_TAB_MAIN) {
 			demo_cursor = 0;
 			demo_base = 0;
-		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST ) {
+		} else if (demo_menu_tab == DEMO_TAB_PLAYLIST ) {
 			demo_playlist_cursor = 0;
 			demo_playlist_base = 0;
 		}
@@ -2988,7 +2982,7 @@ void M_Demos_Key (int key) {
 
 	case K_END:
 		S_LocalSound ("misc/menu1.wav");
-		if (demos_menu_tab == DEMOS_TAB_MAIN) {
+		if (demo_menu_tab == DEMO_TAB_MAIN) {
 			if (demolist_count > DEMO_MAXLINES) {
 				demo_cursor = DEMO_MAXLINES - 1;
 				demo_base = demolist_count - demo_cursor - 1;
@@ -2996,7 +2990,7 @@ void M_Demos_Key (int key) {
 				demo_base = 0;
 				demo_cursor = demolist_count - 1;
 			}
-		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
+		} else if (demo_menu_tab == DEMO_TAB_PLAYLIST) {
 			if (demo_playlist_num > DEMO_PLAYLIST_OPTIONS_MAX) {
 				demo_playlist_cursor = DEMO_PLAYLIST_OPTIONS_MAX - 1;
 				demo_playlist_base = demo_playlist_num - demo_playlist_cursor - 1;
@@ -3010,7 +3004,7 @@ void M_Demos_Key (int key) {
 
 	case K_PGUP:
 		S_LocalSound ("misc/menu1.wav");
-		if (demos_menu_tab == DEMOS_TAB_MAIN) {
+		if (demo_menu_tab == DEMO_TAB_MAIN) {
 			demo_cursor -= DEMO_MAXLINES - 1;
 			if (demo_cursor < 0) {
 				demo_base += demo_cursor;
@@ -3018,7 +3012,7 @@ void M_Demos_Key (int key) {
 					demo_base = 0;
 				demo_cursor = 0;
 			}
-		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
+		} else if (demo_menu_tab == DEMO_TAB_PLAYLIST) {
 			if (demo_playlist_section == DEMO_PLAYLIST_TAB_MAIN) {
 				demo_playlist_cursor -= DEMO_MAXLINES - 1;
 				if (demo_playlist_cursor < 0) {
@@ -3042,7 +3036,7 @@ void M_Demos_Key (int key) {
 
 	case K_PGDN:
 		S_LocalSound ("misc/menu1.wav");
-		if (demos_menu_tab == DEMOS_TAB_MAIN) {
+		if (demo_menu_tab == DEMO_TAB_MAIN) {
 			demo_cursor += DEMO_MAXLINES - 1;
 			if (demo_base + demo_cursor >= demolist_count)
 				demo_cursor = demolist_count - demo_base - 1;
@@ -3052,7 +3046,7 @@ void M_Demos_Key (int key) {
 				if (demo_base + demo_cursor >= demolist_count)
 					demo_base = demolist_count - demo_cursor - 1;
 			}
-		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
+		} else if (demo_menu_tab == DEMO_TAB_PLAYLIST) {
 			demo_playlist_cursor += DEMO_MAXLINES - 1;
 			if (demo_playlist_base + demo_playlist_cursor >= demo_playlist_num)
 				demo_playlist_cursor = demo_playlist_num - demo_playlist_base - 1;
@@ -3068,7 +3062,7 @@ void M_Demos_Key (int key) {
 		break;
 
 	case K_ENTER:
-		if (demos_menu_tab == DEMOS_TAB_MAIN) {
+		if (demo_menu_tab == DEMO_TAB_MAIN) {
 			if (!demolist_count || demolist[demo_base + demo_cursor]->type == dt_msg)
 				break;
 
@@ -3100,7 +3094,7 @@ void M_Demos_Key (int key) {
 					strlcpy(demo_prevdemo, demolist[demo_base + demo_cursor]->name, sizeof(demo_prevdemo));
 				}
 			}
-		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
+		} else if (demo_menu_tab == DEMO_TAB_PLAYLIST) {
 			if (demo_playlist_section == DEMO_PLAYLIST_TAB_MAIN )
 				Demo_playlist_start(demo_playlist_cursor + demo_playlist_base);
 			else if (demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS ) {
@@ -3113,43 +3107,43 @@ void M_Demos_Key (int key) {
 				else if (demo_playlist_opt_cursor == 3)
 					Demo_Playlist_Clear_f();
 			}
-		} else if (demos_menu_tab == DEMOS_TAB_OPTIONS) {
+		} else if (demo_menu_tab == DEMO_TAB_OPTIONS) {
 			Cvar_SetValue (&demo_playlist_loop, !demo_playlist_loop.value);
 		}
 		break;
 
 
 	case K_SPACE:
-		if (demos_menu_tab == DEMOS_TAB_MAIN) {
+		if (demo_menu_tab == DEMO_TAB_MAIN) {
 			strlcpy(demo_prevdemo, demolist[demo_cursor + demo_base]->name, sizeof(demo_prevdemo));
 			Demo_ReadDirectory();
 		}
 		break;
 	case K_DEL:
-		if (demos_menu_tab == DEMOS_TAB_MAIN) {
+		if (demo_menu_tab == DEMO_TAB_MAIN) {
 			if (keydown[K_SHIFT])
 				M_Demos_Del();
 			else
 				M_Menu_Demos_Del_f();
-		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
+		} else if (demo_menu_tab == DEMO_TAB_PLAYLIST) {
 			M_Demos_Playlist_Del(demo_playlist_cursor + demo_playlist_base);
 		}
 		break;
 	case K_TAB:
-		if (demos_menu_tab == DEMOS_TAB_MAIN) {
+		if (demo_menu_tab == DEMO_TAB_MAIN) {
 			S_LocalSound ("misc/menu1.wav");
 			//demo_section = !demo_section;
-		} else if (demos_menu_tab == DEMOS_TAB_PLAYLIST) {
+		} else if (demo_menu_tab == DEMO_TAB_PLAYLIST) {
 			S_LocalSound ("misc/menu1.wav");
 			demo_playlist_section = !demo_playlist_section ;
 		}
 		break;
 	case K_BACKSPACE:
-		if (demo_playlist_opt_cursor == 4 && demos_menu_tab == DEMOS_TAB_PLAYLIST && demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS) {
+		if (demo_playlist_opt_cursor == 4 && demo_menu_tab == DEMO_TAB_PLAYLIST && demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS) {
 			if (strlen(demo_track))
 				demo_track[strlen(demo_track)-1] = 0;
 			strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_track));
-		} else if (demos_menu_tab == DEMOS_TAB_OPTIONS && demo_options_cursor == 1 ) {
+		} else if (demo_menu_tab == DEMO_TAB_OPTIONS && demo_options_cursor == 1 ) {
 			if (strlen(default_track))
 				default_track[strlen(default_track)-1] = 0;
 			strlcpy(demo_playlist_track_name.string,default_track,sizeof(default_track));
@@ -3162,7 +3156,7 @@ void M_Demos_Key (int key) {
 		if (key < 32 || key > 127)
 			break;
 
-		if (demos_menu_tab == DEMOS_TAB_MAIN) {
+		if (demo_menu_tab == DEMO_TAB_MAIN) {
 			sort_target = (key == 'n') ? ds_name : (key == 's') ? ds_size : ds_time;
 			if (demo_sorttype == sort_target) {
 				demo_reversesort = !demo_reversesort;
@@ -3174,7 +3168,7 @@ void M_Demos_Key (int key) {
 			Demo_SortDemos();
 			Demo_PositionCursor();
 
-		} else if (demo_playlist_opt_cursor == 4 && demos_menu_tab == DEMOS_TAB_PLAYLIST && demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS) {
+		} else if (demo_playlist_opt_cursor == 4 && demo_menu_tab == DEMO_TAB_PLAYLIST && demo_playlist_section == DEMO_PLAYLIST_TAB_OPTIONS) {
 			l = strlen(demo_track);
 
 			if (l < 15) {
@@ -3182,7 +3176,7 @@ void M_Demos_Key (int key) {
 				demo_track[l] = key;
 				strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_track));
 			}
-		} else if (demo_options_cursor == 1 && demos_menu_tab == DEMOS_TAB_OPTIONS) {
+		} else if (demo_options_cursor == 1 && demo_menu_tab == DEMO_TAB_OPTIONS) {
 			l = strlen(default_track);
 
 			if (l < 15) {
