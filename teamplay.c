@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: teamplay.c,v 1.32 2006-04-06 23:23:19 disconn3ct Exp $
+	$Id: teamplay.c,v 1.33 2006-04-18 20:59:56 disconn3ct Exp $
 
 */
 
@@ -1786,7 +1786,7 @@ void TP_ResetAllTriggers(void) {
 
 	while (msg_triggers) {
 		temp = msg_triggers->next;
-		Q_free(msg_triggers);
+		Z_Free(msg_triggers);
 		msg_triggers = temp;
 	}
 }
@@ -1856,7 +1856,7 @@ void TP_MsgTrigger_f (void) {
 
 		if (!(trig = TP_FindTrigger (name))) {
 			// allocate new trigger
-			trig = (msg_trigger_t *) Q_malloc (sizeof(msg_trigger_t));
+			trig = (msg_trigger_t *) Z_Malloc (sizeof(msg_trigger_t));
 			trig->next = msg_triggers;
 			msg_triggers = trig;
 			strcpy (trig->name, name);
@@ -1951,9 +1951,9 @@ pcre_trigger_t *CL_FindReTrigger (char *name) {
 static void DeleteReTrigger(pcre_trigger_t *t) {
 	if (t->regexp) (pcre_free)(t->regexp);
 	if (t->regexp_extra) (pcre_free)(t->regexp_extra);
-	if (t->regexpstr) Q_free(t->regexpstr);
-	Q_free(t->name);
-	Q_free(t);
+	if (t->regexpstr) Z_Free(t->regexpstr);
+	Z_Free(t->name);
+	Z_Free(t);
 }
 
 static void RemoveReTrigger(pcre_trigger_t *t) {
@@ -2034,10 +2034,10 @@ void CL_RE_Trigger_f (void) {
 		if (!trig) {
 			// allocate new trigger
 			newtrigger = true;
-			trig = (pcre_trigger_t *) Q_malloc (sizeof(pcre_trigger_t));
+			trig = (pcre_trigger_t *) Z_Malloc (sizeof(pcre_trigger_t));
 			trig->next = re_triggers;
 			re_triggers = trig;
-			trig->name = Q_strdup (name);
+			trig->name = Z_StrDup (name);
 			trig->flags = RE_PRINT_ALL | RE_ENABLED; // catch all printed messages by default
 		}
 
@@ -2052,9 +2052,9 @@ void CL_RE_Trigger_f (void) {
 					(pcre_free)(trig->regexp);
 					if (trig->regexp_extra)
 						(pcre_free)(trig->regexp_extra);
-					Q_free(trig->regexpstr);
+					Z_Free(trig->regexpstr);
 				}
-				trig->regexpstr = Q_strdup (regexpstr);
+				trig->regexpstr = Z_StrDup (regexpstr);
 				trig->regexp = re;
 				trig->regexp_extra = re_extra;
 				return;
@@ -2343,7 +2343,7 @@ void AddInternalTrigger(char* regexpstr, unsigned mask, internal_trigger_func fu
 	const char		*error;
 	int			error_offset;
 
-	trig = (pcre_internal_trigger_t *) Q_malloc (sizeof(pcre_internal_trigger_t));
+	trig = (pcre_internal_trigger_t *) Z_Malloc (sizeof(pcre_internal_trigger_t));
 	trig->next = internal_triggers;
 	internal_triggers = trig;
 
@@ -2392,8 +2392,8 @@ void TP_InitReTriggers() {
 
 	// Using zone for PCRE library memory allocation
 	//
-	pcre_malloc = (pcre_malloc_type) Q_malloc;
-	pcre_free = free; // Q_free = free
+	pcre_malloc = (pcre_malloc_type) Z_Malloc;
+	pcre_free = Z_Free;
 
 	for(i=0;i<10;i++)
 		Cvar_Register (re_sub+i);

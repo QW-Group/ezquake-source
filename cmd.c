@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cmd.c,v 1.36 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: cmd.c,v 1.37 2006-04-18 20:59:55 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -296,7 +296,7 @@ void Cmd_StuffCmds_f (void)
 	if (!len)
 		return;
 
-	text = (char *) Q_malloc (len + 1);
+	text = (char *) Z_Malloc (len + 1);
 	for (k = 1; k < com_argc; k++) {
 		strcat (text, com_argv[k]);
 		if (k != com_argc - 1)
@@ -304,7 +304,7 @@ void Cmd_StuffCmds_f (void)
 	}
 
 	// pull out the commands
-	token = (char *) Q_malloc (len + 1);
+	token = (char *) Z_Malloc (len + 1);
 
 	s = text;
 	while (*s) {
@@ -324,8 +324,8 @@ void Cmd_StuffCmds_f (void)
 		}
 	}
 
-	Q_free (text);
-	Q_free (token);
+	Z_Free (text);
+	Z_Free (token);
 }
 
 void Cmd_Exec_f (void)
@@ -593,7 +593,7 @@ void Cmd_EditAlias_f (void)
 	snprintf(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
 	Key_ClearTyping();
 	memcpy (key_lines[edit_line]+1, final_string, strlen(final_string));
-	Q_free(s);
+	Z_Free(s);
 }
 
 
@@ -623,13 +623,13 @@ void Cmd_Alias_f (void)
 	// if the alias already exists, reuse it
 	for (a = cmd_alias_hash[key]; a; a = a->hash_next) {
 		if (!strcasecmp(a->name, s)) {
-			Q_free (a->value);
+			Z_Free (a->value);
 			break;
 		}
 	}
 
 	if (!a)	{
-		a = (cmd_alias_t *) Q_malloc (sizeof(cmd_alias_t));
+		a = (cmd_alias_t *) Z_Malloc (sizeof(cmd_alias_t));
 		a->next = cmd_alias;
 		cmd_alias = a;
 		a->hash_next = cmd_alias_hash[key];
@@ -695,8 +695,8 @@ qbool Cmd_DeleteAlias (char *name)
 				cmd_alias = a->next;
 
 			// free
-			Q_free (a->value);
-			Q_free (a);
+			Z_Free (a->value);
+			Z_Free (a);
 			return true;
 		}
 		prev = a;
@@ -764,8 +764,8 @@ void Cmd_UnAliasAll_f (void)
 
 	for (a = cmd_alias; a ; a = next) {
 		next = a->next;
-		Q_free (a->value);
-		Q_free (a);
+		Z_Free (a->value);
+		Z_Free (a);
 	}
 	cmd_alias = NULL;
 

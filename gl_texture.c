@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_texture.c,v 1.14 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: gl_texture.c,v 1.15 2006-04-18 20:59:55 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -353,7 +353,7 @@ setup_gltexture:
 	glt->crc = crc;
 	glt->bpp = bpp;
 	if (glt->pathname) {
-		Q_free(glt->pathname);
+		Z_Free(glt->pathname);
 		glt->pathname = NULL;
 	}
 	if (bpp == 4 && com_netpath[0])	

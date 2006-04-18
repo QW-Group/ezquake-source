@@ -17,7 +17,7 @@ You	should have	received a copy	of the GNU General Public License
 along with this	program; if	not, write to the Free Software
 Foundation,	Inc., 59 Temple	Place -	Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: config_manager.c,v 1.20 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: config_manager.c,v 1.21 2006-04-18 20:59:55 disconn3ct Exp $
 
 */
 
@@ -767,7 +767,7 @@ void SaveConfig_f(void)	{
 		filename_ext = va("%s/ezquake/configs/%s", com_basedir, filename);
 		if ((f = fopen(filename_ext, "r"))) {
 			fclose(f);
-			backupname_ext = (char *) Q_malloc((strlen(filename_ext) + 4));
+			backupname_ext = (char *) Z_Malloc(strlen(filename_ext) + 4);
 			strcpy(backupname_ext, filename_ext);
 			strcat(backupname_ext, ".bak");
 			if ((f = fopen(backupname_ext, "r"))) {
@@ -775,7 +775,7 @@ void SaveConfig_f(void)	{
 				remove(backupname_ext);
 			}
 			rename(filename_ext, backupname_ext);
-			Q_free(backupname_ext);
+			Z_Free(backupname_ext);
 		}
 	}
 

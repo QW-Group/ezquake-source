@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_slist.c,v 1.6 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: cl_slist.c,v 1.7 2006-04-18 20:59:55 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -49,9 +49,9 @@ void SList_Set (int i, char *addr, char *desc) {
 		Sys_Error("SList_Switch: Bad index %d", i);
 
 	if (slist[i].server)
-		Q_free(slist[i].server);
+		Z_Free(slist[i].server);
 	if (slist[i].description)
-		Q_free(slist[i].description);
+		Z_Free(slist[i].description);
 
 	slist[i].server = CopyString (addr);
 	slist[i].description = CopyString (desc);
@@ -69,12 +69,12 @@ void SList_Reset (int i) {
 		Sys_Error("SList_Switch: Bad index %d", i);
 
 	if (slist[i].server) {
-		Q_free(slist[i].server);
+		Z_Free(slist[i].server);
 		slist[i].server = NULL;
 	}
 
 	if (slist[i].description) {
-		Q_free(slist[i].description);
+		Z_Free(slist[i].description);
 		slist[i].description = NULL;
 	}
 }
