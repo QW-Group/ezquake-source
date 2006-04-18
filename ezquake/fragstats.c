@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fragstats.c,v 1.8 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: fragstats.c,v 1.9 2006-04-18 20:59:55 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -133,7 +133,7 @@ static void Build_FragMsg_Indices(void) {
 static void InitFragDefs(void) {
 	int i;
 
-	#define CHECK_AND_FREE(x)	{if (x) Q_free(x);}
+	#define CHECK_AND_FREE(x)	{if (x) Z_Free(x);}
 
 	CHECK_AND_FREE(fragdefs.gamedir);
 	CHECK_AND_FREE(fragdefs.title);

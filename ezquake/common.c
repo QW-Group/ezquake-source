@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: common.c,v 1.19 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: common.c,v 1.20 2006-04-18 20:59:55 disconn3ct Exp $
 */
 
 #ifdef _WIN32
@@ -58,8 +58,8 @@ char com_gamedirfile[MAX_QPATH];
 
 int Q_strlen (char *str)
 {
-    int  count;
-
+    int     count;
+    
     count = 0;
     while (str[count])
         count++;
@@ -760,7 +760,7 @@ char *va (char *format, ...) {
 char *CopyString (const char *in) {
 	char *out;
 
-	out = (char *) Q_malloc ((strlen(in) + 1));
+	out = (char *) Z_Malloc (strlen(in) + 1);
 	strcpy (out, in);
 	return out;
 }
@@ -1089,7 +1089,7 @@ byte *FS_LoadFile (char *path, int usehunk) {
 	} else if (usehunk == 2) {
 		buf = (byte *) Hunk_TempAlloc (len + 1);
 	} else if (usehunk == 0) {
-		buf = (byte *) Q_malloc (len + 1);
+		buf = (byte *) Z_Malloc (len + 1);
 	} else if (usehunk == 3) {
 		buf = (byte *) Cache_Alloc (loadcache, len + 1, base);
 	} else if (usehunk == 4) {
@@ -1783,7 +1783,7 @@ void Com_DPrintf (char *fmt, ...) {
 	char msg[MAXPRINTMSG];
 
 	if (!developer.value)
-		return;	 // don't confuse non-developers with techie stuff...
+		return;			// don't confuse non-developers with techie stuff...
 
 	Print_flags[Print_current] |= PR_TR_SKIP;
 	va_start (argptr,fmt);
@@ -1798,5 +1798,5 @@ int isspace2(int c)
     if (c == 0x09 || c == 0x0D || c == 0x0A || c == 0x20)
         return 1;
     return 0;
-}
+} 
 

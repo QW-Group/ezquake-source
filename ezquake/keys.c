@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.32 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: keys.c,v 1.33 2006-04-18 20:59:56 disconn3ct Exp $
 
 */
 
@@ -1460,7 +1460,7 @@ void Key_SetBinding (int keynum, char *binding) {
 
 	// free old bindings
 	if (keybindings[keynum]) {
-		Q_free (keybindings[keynum]);
+		Z_Free (keybindings[keynum]);
 		keybindings[keynum] = NULL;
 	}
 
@@ -1480,7 +1480,7 @@ void Key_Unbind (int keynum) {
 	}
 
 	if (keybindings[keynum]) {
-		Q_free (keybindings[keynum]);
+		Z_Free (keybindings[keynum]);
 		keybindings[keynum] = NULL;
 	}
 }

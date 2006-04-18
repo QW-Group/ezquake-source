@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cvar.c,v 1.25 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: cvar.c,v 1.26 2006-04-18 20:59:55 disconn3ct Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -109,7 +109,7 @@ void Cvar_SetDefault(cvar_t *var, float value) {
 		val[i] = 0;
 	if (val[i] == '.')
 		val[i] = 0;
-	Q_free (var->defaultvalue);
+	Z_Free (var->defaultvalue);
 	var->defaultvalue = CopyString(val);
 	Cvar_Set(var, val);
 }
@@ -237,7 +237,7 @@ void Cvar_Set (cvar_t *var, char *value) {
 	}
 
 	if (var->string)
-		Q_free (var->string);	// free the old value string
+		Z_Free (var->string);	// free the old value string
 
 	var->string = CopyString (value);
 	var->value = Q_atof (var->string);
@@ -404,7 +404,7 @@ void Cvar_Register (cvar_t *var) {
 		else
 			var->string = CopyString (var->string);
 	} else {
-		// allocate the string on zone because future sets will Q_free it
+		// allocate the string on zone because future sets will Z_Free it
 		var->string = CopyString (var->string);
 	}
 	var->value = Q_atof (var->string);
@@ -437,17 +437,16 @@ qbool Cvar_Command (void) {
 	cvar_t *v;
 	char *spaces;
 
-
 	// check variables
 	if (!(v = Cvar_FindVar (Cmd_Argv(0))))
 		return false;
 
 	if (Cmd_Argc() == 1) {
 		xml_variable_t *var = XSD_Variable_Load(va("help/variables/%s.xml", Cmd_Argv(0)));
-	
+
 		if (cvar_viewhelp.value)
 			Help_DescribeVar(var);
-		
+
 		if (cvar_viewdefault.value) {
 			Com_Printf ("%s : default value is \"%s\"\n", v->name, v->defaultvalue);
 			spaces = CreateSpaces(strlen(v->name) + 2);
@@ -473,7 +472,6 @@ qbool Cvar_Command (void) {
 void Cvar_WriteVariables (FILE *f) {
 	cvar_t *var;
 
-
 	// write builtin cvars in a QW compatible way
 	for (var = cvar_vars ; var ; var = var->next)
 		if (var->flags & CVAR_ARCHIVE)
@@ -488,7 +486,7 @@ void Cvar_WriteVariables (FILE *f) {
 void Cvar_Toggle (qbool use_regex) {
 	cvar_t	*var;
 	char	*name;
-	int	i;
+	int		i;
 	qbool	re_search = false;
 
 
@@ -583,7 +581,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags) {
 
 	if ((v = Cvar_FindVar(name)))
 		return v;
-	v = (cvar_t *) Q_malloc(sizeof(cvar_t));
+	v = (cvar_t *) Z_Malloc(sizeof(cvar_t));
 	// Cvar doesn't exist, so we create it
 	v->next = cvar_vars;
 	cvar_vars = v;
@@ -639,10 +637,10 @@ qbool Cvar_Delete (const char *name) {
 			TCL_UnregisterVariable (name);
 #endif
 			// free
-			Q_free (var->defaultvalue);
-			Q_free (var->string);
-			Q_free (var->name);
-			Q_free (var);
+			Z_Free (var->defaultvalue);
+			Z_Free (var->string);
+			Z_Free (var->name);
+			Z_Free (var);
 			return true;
 		}
 		prev = var;

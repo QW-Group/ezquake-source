@@ -341,7 +341,7 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer)
 						}
 						sfile = nl+1;
 					}
-					Q_free(sfilestart);
+					Z_Free(sfilestart);
 				}
 				
 			}

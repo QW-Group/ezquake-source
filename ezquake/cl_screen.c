@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_screen.c,v 1.47 2006-04-08 13:15:01 disconn3ct Exp $
+	$Id: cl_screen.c,v 1.48 2006-04-18 20:59:55 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -877,23 +877,23 @@ hud_element_t *Hud_FindElement(char *name)
 static hud_element_t* Hud_NewElement(void)
 {
 	hud_element_t*	elem;
-	elem = (hud_element_t *) Q_malloc (sizeof(hud_element_t));
+	elem = (hud_element_t *) Z_Malloc (sizeof(hud_element_t));
 	elem->next = hud_list;
 	hud_list = elem;
-	elem->name = Q_strdup( Cmd_Argv(1) );
+	elem->name = Z_StrDup( Cmd_Argv(1) );
 	return elem;
 }
 
 static void Hud_DeleteElement(hud_element_t *elem)
 {
 	if (elem->flags & (HUD_STRING|HUD_IMAGE))
-		Q_free(elem->contents);
+		Z_Free(elem->contents);
 	if (elem->f_hover)
-		Q_free(elem->f_hover);
+		Z_Free(elem->f_hover);
 	if (elem->f_button)
-		Q_free(elem->f_button);
-	Q_free(elem->name);
-	Q_free(elem);
+		Z_Free(elem->f_button);
+	Z_Free(elem->name);
+	Z_Free(elem);
 }
 
 typedef void Hud_Elem_func(hud_element_t*);
@@ -954,16 +954,16 @@ void Hud_Add_f(void)
 			} 
 		} else if (!strcasecmp(a2, "str")) {
 			elem = Hud_NewElement();
-			elem->contents = Q_strdup( a3 );
+			elem->contents = Z_StrDup( a3 );
 			elem->flags = HUD_STRING | HUD_ENABLED;
 		/*} else if (!strcasecmp(a2, "std")) { // to add armor, health, ammo, speed
 			if (!strcasecmp(a3, "lag"))
 				func = &Hud_LagmeterStr;
-			else if (!Q_strcasecmp(a3, "fps"))
+			else if (!strcasecmp(a3, "fps"))
 				func = &Hud_FpsStr;
 			else if (!strcasecmp(a3, "clock"))
 				func = &Hud_ClockStr;
-			else if (!Q_strcasecmp(a3, "speed"))
+			else if (!strcasecmp(a3, "speed"))
 				func = &Hud_SpeedStr;
 			else {
 				Com_Printf("\"%s\" is not a standard hud function\n", a3);
@@ -980,7 +980,7 @@ void Hud_Add_f(void)
 				Com_Printf("Unable to load hud image \"%s\"\n", a3);
 				return;
 			}
-			hud_image = (mpic_t *) Q_malloc (sizeof(mpic_t));
+			hud_image = (mpic_t *) Z_malloc (sizeof(mpic_t));
 			hud_image->texnum = texnum;
 			if (current_texture) {
 				hud_image->width = current_texture->width;
@@ -1393,8 +1393,8 @@ void Hud_BringToFront_f(void)
 	elem = Hud_FindElement(Cmd_Argv(1));
 	if (elem) {
 		if (elem->f_hover)
-			Q_free (elem->f_hover);
-		elem->f_hover = Q_strdup (Cmd_Argv(2));
+			Z_Free (elem->f_hover);
+		elem->f_hover = Z_StrDup (Cmd_Argv(2));
 	} else {
 		Com_Printf("HudElement \"%s\" not found\n", Cmd_Argv(1));
 	}
@@ -1412,8 +1412,8 @@ void Hud_Button_f (void)
 	elem = Hud_FindElement(Cmd_Argv(1));
 	if (elem) {
 		if (elem->f_button)
-			Q_free (elem->f_button);
-		elem->f_button = Q_strdup (Cmd_Argv(2));
+			Z_Free (elem->f_button);
+		elem->f_button = Z_StrDup (Cmd_Argv(2));
 	} else {
 		Com_Printf("HudElement \"%s\" not found\n", Cmd_Argv(1));
 	}

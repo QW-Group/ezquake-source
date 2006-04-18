@@ -901,10 +901,10 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
     hud->draw_order = draw_order;
     hud->draw_func = draw_func;
 
-    hud->name = (char *) Q_malloc((strlen(name)+1));
+    hud->name = (char *) Z_Malloc(strlen(name)+1);
     strcpy(hud->name, name);
 
-    hud->description = (char *) Q_malloc((strlen(description)+1));
+    hud->description = (char *) Z_Malloc(strlen(description)+1);
     strcpy(hud->description, description);
 
     hud->flags = flags;
