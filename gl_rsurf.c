@@ -1010,9 +1010,16 @@ void R_DrawFlat (model_t *model) {
  // } END shaman FIX /r_drawflat + /gl_caustics
 }
 
-qbool OnChange_r_drawflat(cvar_t *v, char *skyname) {
-	if(cls.state >= ca_connected && !cl.standby && !r_refdef2.allow_cheats && !cl.spectator) {
-		Com_Printf("Wall color changes are not allowed during the match.\n");
+qbool OnChange_r_drawflat (void) {
+	char *p;
+	qbool progress = false;
+
+
+	p = Info_ValueForKey (cl.serverinfo, "status");
+	progress = (strstr (p, "left")) ? true : false;
+
+	if (cls.state >= ca_connected && progress && !r_refdef2.allow_cheats && !cl.spectator) {
+		Com_Printf ("Wall color changes are not allowed during the match.\n");
 		return true;
 	}
 	
