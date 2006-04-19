@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.45 2006-04-08 16:28:16 tonik Exp $
+	$Id: cl_parse.c,v 1.46 2006-04-19 16:09:18 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -708,28 +708,69 @@ void CL_StartUpload (byte *data, int size)
 	CL_NextUpload();
 } 
 
+static void ReplaceChar(char *s, char from, char to)
+{
+	if (s)
+		for ( ;*s ; ++s)
+			if (*s == from)
+				*s = to;
+}
+
 void CL_StartFileUpload (void)
 {
-	Com_Printf("File upload function blocked due to security reasons.");
-	return; // fixme: needs proper fix - chech whether the path is 'safe' (inside 'safe' dirs of <quakedir>)
-	
-	if (cls.state < ca_onserver)
+	char *name;
+	int i;
+
+
+	if (cls.state < ca_onserver) {
+		Com_Printf("must be connected\n");
 		return; // gotta be connected
+	}
+
+	name = Cmd_Argv (2);
+
+	ReplaceChar(name, '\\', '/');
+
+	if (
+//		TODO: split name to pathname and filename
+//		and check for 'bad symbols' only in pathname
+		*name == '/' //no absolute
+		|| !strncmp(name, "../", 3) // no leading ../
+		|| strstr (name, "/../") // no /../
+		|| ((i = strlen(name)) < 3 ? 0 : !strncmp(name + i - 3, "/..", 4)) // no /.. at end
+		|| *name == '.' //relative is pointless
+		|| ((i = strlen(name)) < 4 ? 0 : !strncasecmp(name+i-4,".log",4)) // no logs
+#ifdef _WIN32
+		// no leading X:
+		|| ( name[1] == ':' && (*name >= 'a' && *name <= 'z' ||
+			*name >= 'A' && *name <= 'Z') )
+#endif //_WIN32
+	) {
+		Com_Printf ("File upload: bad path/name \"%s\"", name);
+		return;
+	}
+
 	cls.is_file = true;
+
 	// override
 	if (cls.upload) {
 		fclose(cls.upload);
 		cls.upload = NULL;
 	}
+
 	strlcpy(cls.uploadname, Cmd_Argv(2), sizeof(cls.uploadname));
 	cls.upload = fopen(cls.uploadname, "rb"); // BINARY
+
 	if (!cls.upload) {
 		Com_Printf ("Bad file \"%s\"\n", cls.uploadname);
 		return;
 	}
+
 	cls.upload_size = COM_FileLength(cls.upload);
 	cls.upload_pos = 0;
+
 	Com_Printf ("Upload starting: %s (%d bytes)...\n", cls.uploadname, cls.upload_size);
+
 	CL_NextUpload();
 }
 
