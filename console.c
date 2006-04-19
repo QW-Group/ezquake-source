@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.23 2006-04-18 20:59:55 disconn3ct Exp $
+	$Id: console.c,v 1.24 2006-04-19 16:29:52 disconn3ct Exp $
 */
 // console.c
 
@@ -727,13 +727,13 @@ void Con_DrawConsole (int lines) {
 		i = con_linewidth/3;
 		if (strlen(text) > i) {
 			y = x - i - 11;
-			strlcpy(dlbar, text, sizeof(dlbar));
-			strlcat(dlbar, "...", sizeof(dlbar));
+			strlcpy (dlbar, text, i);
+			strlcat (dlbar, "...", sizeof (dlbar));
 		} else {
-			strlcpy(dlbar, text, sizeof(dlbar));
+			strlcpy (dlbar, text, sizeof (dlbar));
 		}
-		strcat(dlbar, ": ");
-		i = strlen(dlbar);
+		strlcat (dlbar, ": ", sizeof (dlbar));
+		i = strlen (dlbar);
 		dlbar[i++] = '\x80';
 		// where's the dot go?
 		if (cls.download) {
@@ -756,11 +756,11 @@ void Con_DrawConsole (int lines) {
 		dlbar[i++] = '\x82';
 		dlbar[i] = 0;
 
-		i = strlen(dlbar);
+		i = strlen (dlbar);
 		if (cls.download)
-			sprintf(dlbar + i, " %02d%%(%dkb/s)", cls.downloadpercent, cls.downloadrate);
+			snprintf (dlbar + i, sizeof (dlbar), " %02d%%(%dkb/s)", cls.downloadpercent, cls.downloadrate);
 		else if (cls.upload)
-			sprintf(dlbar + i, " %02d%%(%dkb/s)", cls.uploadpercent, cls.uploadrate);
+			snprintf (dlbar + i, sizeof (dlbar), " %02d%%(%dkb/s)", cls.uploadpercent, cls.uploadrate);
 		else
 			return;
 
