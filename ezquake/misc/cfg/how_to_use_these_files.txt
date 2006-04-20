@@ -1,0 +1,27 @@
+Configuration files (configs) stored in this folder contain variety
+of scripts and settings of features.
+
+You can execute these configs by typing e.g. "/exec cfg/movement.cfg"
+into the console.
+
+Configuration file movement.cfg contains some basic movement and weapons
+keyboard binds, basic commands like ready/break and player tracking on numpad,
+very basic screen setup and Qizmo proxy navigation keyboard binds. 
+Configuration files teamplay.cfg and eq260.cfg contain keyboard binds for
+teamplay communication messages.
+
+Configs with the name starting with 'hud_*' are Head Up Display configuration
+files. Some of them require specific 'conwidth' and 'conheight' settings (see
+ezStart utility).
+
+
+Advanced
+---
+Configuration file teamtime.cfg contains script that helps you time items
+through teamplay messages with your teammates.
+
+Configs with the name starting with 'gfx_*' are used by the game engine when
+you choose different values for "Graphics settings" option in the Options menu.
+Usually you don't care much what is in those files and you don't need to
+customize them but you might wish to change something in them so the menu option
+suits your needs.
