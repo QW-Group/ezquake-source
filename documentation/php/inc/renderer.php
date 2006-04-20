@@ -50,7 +50,10 @@ function GetRenderer($name, &$db)
     // the same major group
     { 
         $var = $db["variables"]->GetVar($mid);
-        $group_id = $var["id_group"];
+        $group_id = (int) $var["id_group"];
+        if (!$group_id)
+            return new VariablesRendData($mid);
+
         $mgroup_id = $db["groups"]->GetMGroupID($group_id);
         $var_name = IdSafe($name);
         $mgroup_name = IdSafe($db["mgroups"]->GetTitle($mgroup_id));
@@ -117,7 +120,9 @@ class MainPageRendData extends BaseRendData
         $this->content .= $features_list->content;
 
         /* settings */
-        $this->content .= "</dd><dt>Settings</dt><dd><dl id=\"settings-list\"><dt>Variables</dt><dd>";
+        $this->content .= "</dd><dt>Settings</dt><dd>";
+        $this->content .= "<p>Note that you can put the name of any variable, command, command-line option or manual page into the URL and you'll get corresponding manual page displayed. E.g. http://ezquake.sourceforge.net/docs/?cl_maxfps</p>";
+        $this->content .= "<dl id=\"settings-list\"><dt>Variables</dt><dd>";
         
         /* variables menu */
         $this->content .= "<dl>";
@@ -205,7 +210,9 @@ class GroupsRendData extends BaseRendData
         foreach ($d as $id => $name)
         {
             $varrend = new VariablesRendData($id, $this->topheading + 1);
-            echo "<h{$this->topheading} class=\"variable\" id=\"{$name}\">{$varrend->title}&nbsp;<span>[<a href=\"?{$name}\">#</a>]</span></h{$this->topheading}>\n";
+            echo "<h{$this->topheading} class=\"variable\" id=\"{$name}\">{$varrend->title}&nbsp;";
+            // no need for this URL - echo "<span>[<a href=\"?{$name}\">#</a>]</span>";
+            echo "</h{$this->topheading}>\n";
             $varrend->RenderContent();
         }
     }
