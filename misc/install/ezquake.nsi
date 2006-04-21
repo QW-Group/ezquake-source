@@ -1,11 +1,10 @@
 ;This is NSIS Script file.
 ;See http://nsis.sf.net/
 ;
-;You are required to place it into same dir these files:
+;You are required to place it into same dir with these files:
 ;  ezquake.nsi (this file)
 ;  ezquake.exe (Release)
 ;  ezquake-gl.exe (GLRelease)
-;  ezquake-security.dll (Closed source security module)
 ;  ezstart.exe (CVS/ezstart/)
 ;  gnu.txt (GNU GENERAL PUBLIC LICENSE, Version 2, June 1991)
 ;  readme.txt (CVS/ezquake/misc/install/readme.txt)
@@ -14,11 +13,7 @@
 ;    spprogs.dat (use the one delivered with ZQuake)
 ;    fragfile.dat (CVS/ezquake/misc/fragfile/fragfile.dat)
 ;  lib/ (dir)
-;    libexpat.dll
-;    libjpeg.dll
-;    libpng.dll
 ;    mw_hook.dll
-;    zlib.dll
 ;  ezquake/ (dir)
 ;    pak0.pak (eyecandy, particles)
 ;    cfg/ (dir, see CVS/ezquake/misc/cfg/)
@@ -38,7 +33,7 @@ Name "ezQuake"
 OutFile "ezInstall.exe"
 
 ; The default installation directory
-InstallDir $PROGRAMFILES\Quake
+InstallDir "C:\Quake\"
 
 ; Registry key to check for directory (so if you install again, it will 
 ; overwrite the old one automatically)
@@ -90,8 +85,14 @@ Section "ezQuake client"
   SetOutPath $INSTDIR\ezquake\manual
   File /r "ezquake\manual\*.*"
 
-  SetOutPath $SYSDIR
-  File "lib\libexpat.dll"
+  CreateDirectory $INSTDIR\ezquake\textures
+  CreateDirectory $INSTDIR\ezquake\textures\wad
+  SetOutPath $INSTDIR\ezquake\textures\wad
+  File /r "ezquake\textures\wad\*.png"
+  CreateDirectory $INSTDIR\ezquake\textures\charsets
+  SetOutPath $INSTDIR\ezquake\textures\charsets
+  File /r "ezquake\textures\charsets\*.png"
+
   CreateDirectory $INSTDIR\ezquake\help
   CreateDirectory $INSTDIR\ezquake\help\manual
   CreateDirectory $INSTDIR\ezquake\help\xsd
@@ -103,7 +104,6 @@ Section "ezQuake client"
   SetOutPath $INSTDIR\ezquake\help\xsl
   File "ezquake\help\xsl\*.*"
 
-  SetOutPath $SYSDIR
   CreateDirectory $INSTDIR\ezquake\help
   CreateDirectory $INSTDIR\ezquake\help\variables
   CreateDirectory $INSTDIR\ezquake\help\commands
@@ -129,11 +129,6 @@ Section "ezQuake client"
   CreateDirectory $INSTDIR\qw
   SetOutPath $INSTDIR\qw
   File "qw\fragfile.dat"
-
-  SetOutPath $SYSDIR
-  File "lib\libjpeg.dll"
-  File "lib\libpng.dll"
-  File "lib\zlib.dll"
 
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\ezQuake "Install_Dir" "$INSTDIR"
@@ -164,7 +159,7 @@ Section "Start Menu Shortcuts"
   SetOutPath $INSTDIR
   CreateDirectory "$SMPROGRAMS\ezQuake"
   CreateShortCut "$SMPROGRAMS\ezQuake\Uninstall.lnk" "$INSTDIR\ezuninstall.exe" "" "$INSTDIR\ezuninstall.exe" 0
-  CreateShortCut "$SMPROGRAMS\ezQuake\ezQuake.lnk" "$INSTDIR\ezstart.exe" "" "$INSTDIR\ezstart.exe" 0
+  CreateShortCut "$SMPROGRAMS\ezQuake\ezQuake.lnk" "$INSTDIR\ezstart.exe" "" "$INSTDIR\ezquake.exe" 0
   CreateShortCut "$SMPROGRAMS\ezQuake\Manual.lnk" "$INSTDIR\ezquake\manual\index.html" "" "$INSTDIR\ezquake\manual\index.html" 0
 SectionEnd
 
