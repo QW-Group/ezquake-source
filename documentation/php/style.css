@@ -28,6 +28,14 @@ p#last-update {
   background-color: #FFD0BF;
   color: #B36B00;
 }
+p#last-update a {
+  color: #B33000;
+  text-decoration: none;
+  font-style: italic;
+}
+p#last-update a:hover {
+  color: #B36B00;
+}
 h4.cvar span.default {
   background-color: #B39B00;
 /* border: 1px dotted black; */
@@ -129,3 +137,16 @@ p#index {
     margin: 1em 0;
 }
 p#index a { text-decoration: none; }
+
+table#index td.var span, td.cmd span, td.opt span {
+    font-size: 0.66em;
+    font-family: monospace;
+}
+table#index td.cmd span { background-color: red; }
+table#index td.var span { background-color: green; }
+table#index td.opt span { background-color: blue; }
+table#index tr.section { background-color: black; font-size: 3em; }
+p#top.index a {
+	font-family: "Courier New", Courier, monospace;
+	font-size: 1.33em;
+}

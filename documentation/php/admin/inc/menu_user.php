@@ -17,6 +17,7 @@
         <li><a href="?action=addoptform">Add</a></li>
         <li><a href="?action=editoptions">List &amp; Edit</a></li>
     </ul></li>
+    <li><a href="?action=updateindex">Update Index</a></li>
     <li>Manual pages<ul class="submenu">
         <li><a href="?action=addmanform">Add</a></li>
         <li><a href="?action=editmanuals">List &amp; Edit</a></li>

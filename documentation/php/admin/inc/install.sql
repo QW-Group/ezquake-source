@@ -237,3 +237,13 @@ CREATE TABLE options_history
 );
 
 DROP TABLE manuals;
+
+CREATE TABLE settings_index
+(
+  name CHAR(64) NOT NULL,
+  itype ENUM("variable", "command", "command-line option"),
+  desc1 char(255) NOT NULL DEFAULT '',
+  desc2 char(255) NOT NULL DEFAULT '',
+  desc3 char(255) NOT NULL DEFAULT '',
+  PRIMARY KEY(name, itype)
+);

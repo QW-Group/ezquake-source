@@ -578,4 +578,19 @@ class SupportForms
     }
 }
 
+class IndexForms
+{
+    var $data;
+    function IndexForms() {
+        $this->data = new IndexData;
+    }
+    
+    function Update() {
+        if ($this->data->Refresh())
+            echo "<p>Index updated.</p>";
+        else
+            echo "<p>Update failed.</p><p><code>".mysql_error()."</code></p>";
+    }
+}
+
 ?>

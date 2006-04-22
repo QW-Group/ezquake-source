@@ -13,6 +13,7 @@
     $db["support"] = new SupportData;
     $db["commands"] = new CommandsData;
     $db["options"] = new OptionsData;
+    $db["index"] = new IndexData;
 
     $sekce = each($_GET);
 	$sekce = $sekce['key'];

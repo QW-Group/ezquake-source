@@ -13,6 +13,7 @@ define (VARMGROUPSTABLE, 'variables_mgroups');
 define (VARGROUPSTABLE, 'variables_groups');
 define (VARSUPPORTTABLE, 'variables_support');
 define (OPTIONSTABLEPREFIX, 'options');
+define (INDEXTABLE, 'settings_index');
 
 class DocsData
 // abstract, common functions and structures for variables, commands, command-line options and manuals
@@ -828,7 +829,7 @@ class BaseGroupsData
     {
         $id = (int) $id;
         $sql = "SELECT title FROM {$this->table} WHERE id = {$id} LIMIT 1";
-        if (!($r = mysql_query($sql)) || !mysql_num_rows($r))
+        if (!($r = my_mysql_query($sql)) || !mysql_num_rows($r))
             return False;
         
         return mysql_result($r, 0);
@@ -1041,7 +1042,7 @@ class SupportData
             $id_build = (int) $d["id_build"];
             $default = addslashes($d["default"]);
         
-            if (!$id_variable || !$id_build || !strlen($default))
+            if (!$id_variable || !$id_build)
                 continue;
         
             if ($c++)
@@ -1067,6 +1068,73 @@ class SupportData
             $ret[] = $d;    // zzz .. we don't want the last 'empty' line so i can't put it inside the condition
     
         return $ret;
+    }
+}
+
+class IndexData
+{
+    var $tableindex;
+    
+    function IndexData()
+    {
+        $this->tableindex = INDEXTABLE; 
+    }
+    
+    function FetchList(&$buffer)
+    {
+        $sql = "SELECT name, itype, desc1, desc2, desc3 FROM {$this->tableindex} ORDER BY name, itype ASC";
+        if (!($r = my_mysql_query($sql)))
+            return False;
+        
+        while ($d = mysql_fetch_assoc($r))
+        {
+            $new = array();
+            $new["type"] = $d["itype"];
+            $l1 = strlen($d["desc1"]);
+            $l2 = strlen($d["desc2"]);
+            $l3 = strlen($d["desc3"]);
+            
+            if ($l1 > $l2)
+            {
+                if ($l3 > $l1)
+                    $desc = $d["desc3"];
+                else
+                    $desc = $d["desc1"];
+            } else {
+                if ($l2 > $l3)
+                    $desc = $d["desc2"];
+                else
+                    $desc = $d["desc3"];
+            }
+            $new["desc"] = $desc;
+            $buffer[$d["name"]] = $new; 
+        }
+        
+        return True; 
+    }
+    
+    function Refresh()
+    {
+        $sql = "DELETE FROM {$this->tableindex} WHERE 1";
+        if (!my_mysql_query($sql))
+            return False;
+    
+        $sql  = "INSERT INTO {$this->tableindex} (name, itype, desc1, desc2) ";
+        $sql .= "SELECT name, \"variable\", description, remarks FROM ".VARIABLESTABLEPREFIX;
+        if (!my_mysql_query($sql))
+            return False;
+        
+        $sql  = "INSERT INTO {$this->tableindex} (name, itype, desc1, desc2, desc3) ";
+        $sql .= "SELECT name, \"command\", description, remarks, syntax FROM ".COMMANDSTABLEPREFIX;
+        if (!my_mysql_query($sql))
+            return False;
+        
+        $sql  = "INSERT INTO {$this->tableindex} (name, itype, desc1, desc2) ";
+        $sql .= "SELECT name, \"command-line option\", description, argsdesc FROM ".OPTIONSTABLEPREFIX;
+        if (!my_mysql_query($sql))
+            return False;
+        
+        return True;
     }
 }
 

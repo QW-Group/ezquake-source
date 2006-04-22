@@ -20,6 +20,7 @@ function GetRenderer($name, &$db)
         case "commands": return new CommandsAllRendData(2, $db); return; break;
         case "command-line": return new OptionsRendData($db); return; break;
         case "main-page": return new MainPageRendData($db); return; break;
+        case "index": return new IndexRendData($db); return; break;
     }
     
     if (substr($name, 0, VARGROUPSPREFIXLEN) == VARGROUPSPREFIX)
@@ -106,6 +107,7 @@ class MainPageRendData extends BaseRendData
     {
         $this->heading = "Index";
         $this->title = "Index";
+        $this->lastupdate = $db["manuals"]->GlobalLastUpdate();
         
         /* installation */
         $this->content = "<dl id=\"main-page-list\"><dt>Installation</dt><dd>";
@@ -121,6 +123,7 @@ class MainPageRendData extends BaseRendData
 
         /* settings */
         $this->content .= "</dd><dt>Settings</dt><dd>";
+        $this->content .= "<p><strong><a href=\"?index\">Index</a></strong> - Full list of variables, commands and command-line options</p>";
         $this->content .= "<p>Note that you can put the name of any variable, command, command-line option or manual page into the URL and you'll get corresponding manual page displayed. E.g. http://ezquake.sourceforge.net/docs/?cl_maxfps</p>";
         $this->content .= "<dl id=\"settings-list\"><dt>Variables</dt><dd>";
         
@@ -426,6 +429,58 @@ class OptionsRendData extends BaseRendData
             echo "\n</div>\n"; // end of div.command
         }
         echo "\n</div>"; // end of div#index-x
+    }
+}
+
+class IndexRendData extends BaseRendData
+{
+    function IndexRendData(&$db)
+    {
+        $this->db = $db["index"];
+        $this->heading = "Settings Index";
+        $this->title = "Index";
+        $this->lastupdate = $db["commands"]->GlobalLastUpdate();
+    }
+    
+    function RenderContent()
+    {
+        $r = array();
+        if (!$this->db->FetchList($r)) {
+            echo "<p>Database error. Try again later.</p>";
+            return;
+        }
+        
+        $alphabet = "+-abcdefghijklmnopqrstuvwxyz";
+        $alphlen = strlen($alphabet);
+        echo "<p id=\"top\" class=\"index\">";
+        for ($i = 0; $i < $alphlen; $i++) {
+            echo "<a href=\"#letter-".$alphabet{$i}."\">".$alphabet{$i}."</a>";
+            if ($i < $alphlen-1)
+                echo ", ";
+        }
+        
+        echo "</p>";
+        
+        echo "<table id=\"index\">\n<col id=\"type\" /><col id=\"name\" /><col id=\"desc\" />\n";
+        echo "<thead><tr><td>Type</td><td>Name</td><td>Short description</td></tr></thead>\n<tbody>\n";
+        
+        $oldletter = "";            
+        foreach($r as $k => $v) {
+            if ($k{0} != $oldletter) {
+                echo "\n\t<tr class=\"section\"><td colspan=\"3\" id=\"letter-".$k{0}."\">&middot;{$k{0}}&middot;</td></tr>";
+                echo "\n\t<tr><td colspan=\"3\"><a href=\"#top\">Back to the top</a></td></tr>";
+                $oldletter = $k{0};
+            }
+            echo "\n\t<tr><td class=\"";
+            switch ($v["type"]) {
+                case "variable": echo "var\"><span>var"; break;
+                case "command": echo "cmd\"><span>cmd"; break;
+                case "command-line option": default: echo "opt\"><span>opt"; break;
+            } 
+            echo "</span></td><td><a href=\"?".IdSafe($k)."\">$k</a></td><td>".htmlspecialchars(substr($v["desc"], 0, 100)).(strlen($v["desc"])>100 ? "..." : "")."</td></tr>";
+        }
+        
+        echo "\n</tbody>\n</table>\n\n";    
     }
 }
 
