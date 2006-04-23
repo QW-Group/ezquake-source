@@ -769,13 +769,10 @@ NSLog (@"C!");
     [settingsWindow setContentView: mEmptyView];
 
     [settingsWindow setTitle: [NSString stringWithFormat:
+                                                          @"EZQuake"
 #if defined (GLQUAKE)
-                                                          @"GL"
+														  @"-GL"
 #endif /* GLQUAKE */
-                                                          @"Quake"
-#if defined (QUAKE_WORLD)
-                                                          @"World"
-#endif /* QUAKE_WORLD */
                                                           @" (%@)", theTitle]];
 
     myNewHeight = NSHeight ([theView frame]);
@@ -1179,7 +1176,7 @@ NSLog (@"C!");
 
 - (IBAction) visitFOD: (id) theSender
 {
-	[[NSWorkspace sharedWorkspace] openURL: [NSURL URLWithString: FRUITZ_OF_DOJO_URL]];
+	[[NSWorkspace sharedWorkspace] openURL: [NSURL URLWithString: EZQUAKE_URL]];
 }
 
 @end
@@ -1359,7 +1356,7 @@ NSLog (@"C!");
         [self enableAppleScriptRun: NO];
     
         // set the URL at the FDLinkView:
-        [linkView setURLString: FRUITZ_OF_DOJO_URL];
+        [linkView setURLString: EZQUAKE_URL];
     
         myDefaults = [NSUserDefaults standardUserDefaults];
     

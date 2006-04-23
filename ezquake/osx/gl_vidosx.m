@@ -322,7 +322,7 @@ void	VID_SetGamma (void)
             }
             else
             {
-                Com_Printf ("Can\'t set the requested gamma value!\n");
+                Com_Printf ("Can\'t set the requested gamma value! (gVshGammaTable == null)\n");
             }
         }
         else
@@ -355,7 +355,7 @@ void	VID_SetGamma (void)
             }
             else
             {
-                Com_Printf ("Can\'t set the requested gamma value!\n");
+                Com_Printf ("Can\'t set the requested gamma value! (gVshOriginalGamma == null)\n");
             }
             
             // has to be 0 or 1:
@@ -627,7 +627,7 @@ BOOL	VID_SetDisplayMode (void)
                                                             NSResizableWindowMask
                                                    backing: NSBackingStoreBuffered
                                                      defer: NO];
-        [gVidWindow setTitle: @"GLQuakeWorld"];
+        [gVidWindow setTitle: @"EZQuake-GL"];
 
         gGLWindowView = [[QuakeView alloc] initWithFrame: myContentRect];
 		
@@ -700,6 +700,7 @@ void	VID_Init (unsigned char *thePalette)
     Cvar_Register (&vid_wait);
     Cvar_Register (&vid_redrawfull);
     Cvar_Register (&vid_overbright);
+	Cvar_Register(&vid_hwgammacontrol);
     Cvar_Register (&_windowed_mouse);
     Cvar_Register (&gl_anisotropic);
     Cvar_Register (&gl_fsaa);

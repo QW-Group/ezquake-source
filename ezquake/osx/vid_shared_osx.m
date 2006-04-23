@@ -243,12 +243,17 @@ BOOL	VSH_FadeGammaInit (BOOL theFadeOnAllDisplays)
                                                  &gVshOriginalGamma[i].component[6],
                                                  &gVshOriginalGamma[i].component[7],
                                                  &gVshOriginalGamma[i].component[8]);
-        if (myError != CGDisplayNoErr)
+        
+		// XXX: error checking doesn't seem to work on Intel? always seem to get kCGErrorNoneAvailable
+		/*
+		if (myError != CGDisplayNoErr)
         {
+			Com_Printf("GAMMA FAILED %d\n", myError);
             free (gVshOriginalGamma);
             gVshOriginalGamma = NULL;
             return (NO);
         }
+		 */
     }
 
 #if defined (GLQUAKE)
@@ -310,6 +315,7 @@ void	VSH_FadeGammaOut (BOOL theFadeOnAllDisplays, float theDuration)
     // check if initialized:
     if (VSH_FadeGammaInit (theFadeOnAllDisplays) == NO)
     {
+		Com_Printf("Failed to fade!\n");
         return;
     }
     

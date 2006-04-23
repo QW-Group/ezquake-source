@@ -18,7 +18,7 @@
 
 #pragma mark =Defines=
 
-#define FRUITZ_OF_DOJO_URL			@"http://www.fruitz-of-dojo.de/"
+#define EZQUAKE_URL					@"http://ezquake.sf.net/"
 
 #define	DEFAULT_BASE_PATH			@"Quake ID1 Path"
 #define	DEFAULT_OPTION_KEY			@"Quake Dialog Requires Option Key"
