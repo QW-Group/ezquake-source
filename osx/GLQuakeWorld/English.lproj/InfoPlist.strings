@@ -1,6 +1,6 @@
 /* Localized versions of Info.plist keys */
 
-CFBundleName = "GLQuakeWorld";
-CFBundleShortVersionString = "1.1";
-CFBundleGetInfoString = "GLQuakeWorld version 1.1, Copyright 2001-2006 Fruitz Of Dojo.";
-NSHumanReadableCopyright = "Copyright 2001-2006 Fruitz Of Dojo.";
+CFBundleName = "EZQuake-GL";
+CFBundleShortVersionString = "1517";
+CFBundleGetInfoString = "EZQuake-GL build 1517";
+NSHumanReadableCopyright = "Copyright 2001-2006 EZQuake";

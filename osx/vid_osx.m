@@ -1335,7 +1335,7 @@ void	VID_SetWindowTitle (char *theTitle)
         }
         else
         {
-            [gVidWindow setTitle: @"GLQuakeWorld"];
+            [gVidWindow setTitle: @"EZQuake"];
         }
     }
 }
@@ -1365,10 +1365,10 @@ void	VID_OpenWindow (UInt16 theWidth, UInt16 theHeight)
 #ifdef QUAKE_WORLD
     if (gVidWindowTitle == NULL)
     {
-        gVidWindowTitle = [[NSString alloc] initWithString: @"QuakeWorld"];
+        gVidWindowTitle = [[NSString alloc] initWithString: @"EZQuake"];
         if (gVidWindowTitle == NULL)
         {
-            [gVidWindow setTitle: @"QuakeWorld"];
+            [gVidWindow setTitle: @"EZQuake"];
         }
         else
         {
@@ -1380,7 +1380,7 @@ void	VID_OpenWindow (UInt16 theWidth, UInt16 theHeight)
         [gVidWindow setTitle: gVidWindowTitle];
     }
 #else
-    [gVidWindow setTitle: @"Quake"];
+    [gVidWindow setTitle: @"EZQuake"];
 #endif /* QUAKE_WORLD */
 
     // setup the content view:
