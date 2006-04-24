@@ -189,6 +189,8 @@ static vid_glpntrianglesfatix_t	gGLPNTrianglesfATIX = NULL;
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol","1", 0};
 qbool	vid_hwgamma_enabled = FALSE;
 
+extern cvar_t	gl_strings;
+
 #pragma mark -
 
 //_________________________________________________________________________________________________________fUNCTION_pROTOTYPES
@@ -1356,6 +1358,7 @@ void	GL_CheckTextureRAM (GLenum theTarget, GLint theLevel, GLint theInternalForm
 
 //___________________________________________________________________________________________________________________GL_InitMac()
 
+// FIXME: use generic gl_init in vid_common_gl
 void	GL_InitMac (void)
 {
     // show OpenGL stats at the console:
@@ -1367,10 +1370,15 @@ void	GL_InitMac (void)
     
     gl_version = (const char *) glGetString (GL_VERSION);
     Com_Printf ("GL_VERSION: %s\n", gl_version);
+	
+	gl_extensions = (const char *) glGetString (GL_EXTENSIONS);
+	if (COM_CheckParm("-gl_ext"))
+		Com_Printf ("GL_EXTENSIONS: %s\n", gl_extensions);
     
-    gl_extensions = (const char *) glGetString (GL_EXTENSIONS);
-    Com_Printf ("GL_EXTENSIONS: %s\n", gl_extensions);
-    
+	Cvar_Register (&gl_strings);
+	Cvar_ForceSet (&gl_strings, va("GL_VENDOR: %s\nGL_RENDERER: %s\n"
+								   "GL_VERSION: %s\nGL_EXTENSIONS: %s", gl_vendor, gl_renderer, gl_version, gl_extensions));
+	
     // not required for MacOS X, but nevertheless:
     if (!strncasecmp ((char*) gl_renderer, "Permedia", 8))
         isPermedia = YES;
