@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.24 2006-04-19 16:29:52 disconn3ct Exp $
+	$Id: console.c,v 1.25 2006-04-24 22:51:40 oldmanuk Exp $
 */
 // console.c
 
@@ -606,12 +606,12 @@ void Con_DrawNotify (void) {
 		clearnotify = 0;
 		scr_copytop = 1;
 
-		/*
-		for (x = 0 ; x < con_linewidth ; x++)
-			Draw_Character ( (x+1)<<3, v + bound(0, con_shift.value, 8), text[x]);
-
-		*/
-		strlcpy(buf,text,con_linewidth+1);
+		// copy current line to buffer
+		for(x = 0; x < con_linewidth; x++) {
+			buf[x] = *text;
+			text++;
+		}
+		buf[x] = '\0';
 		Draw_ColoredString( 8, v + bound(0, con_shift.value, 8), buf,0);
 		v += 8;
 	}
@@ -698,11 +698,13 @@ void Con_DrawConsole (int lines) {
 
 		text = con.text + (row % con_totallines)*con_linewidth;
 
-		/*
-		for (x = 0; x < con_linewidth; x++)
-			Draw_Character ((x + 1) << 3, y + bound(0, con_shift.value, 8), text[x]);
-		*/
-		strlcpy(buf,text,con_linewidth+1);
+		// copy current line to buffer
+		for(x = 0; x < con_linewidth; x++) {
+			buf[x] = *text;
+			text++;
+		}
+		buf[x] = '\0';
+
 		Draw_ColoredString( 1 << 3, y + bound(0, con_shift.value, 8), buf,0);
 	}
 
