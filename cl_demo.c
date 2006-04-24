@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.27 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: cl_demo.c,v 1.28 2006-04-24 20:03:04 oldmanuk Exp $
 */
 
 #include "quakedef.h"
@@ -515,7 +515,6 @@ readnext:
 	// read the time from the packet
 	if (cls.mvdplayback) {
 		CL_Demo_Read(&newtime, sizeof(newtime));
-		newtime = LittleFloat(newtime);
 		demotime =  prevtime + newtime * 0.001;
 		if (cls.demotime - nextdemotime > 0.0001 && nextdemotime != demotime) {
 			olddemotime = nextdemotime;
