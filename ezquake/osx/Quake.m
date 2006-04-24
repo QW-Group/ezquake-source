@@ -1641,24 +1641,10 @@ NSLog (@"C!");
 
 #ifdef QUAKE_WORLD
 
-    Com_Printf ("\n€‚\n");
-    Com_Printf ("QuakeWorld for MacOS X -- Version %0.2f\n", MACOSX_VERSION);
-    Com_Printf ("    Ported by: awe^fruitz of dojo\n");
-    Com_Printf (" Visit: http://www.fruitz-of-dojo.de\n");
-    Com_Printf ("\n    tiger style kung fu is strong\n");
-    Com_Printf ("   but our style is more effective!\n");
-    Com_Printf ("€‚\n\n");
     mOldFrameTime = Sys_DoubleTime ();
 
 #else
 
-    Com_Printf ("\n€‚\n");
-    Com_Printf (" Quake for MacOS X -- Version %0.2f\n", MACOSX_VERSION);
-    Com_Printf ("   Ported by: awe^fruitz of dojo\n");
-    Com_Printf ("Visit: http://www.fruitz-of-dojo.de\n");
-    Com_Printf ("\n   tiger style kung fu is strong\n");
-    Com_Printf ("  but our style is more effective!\n");
-    Com_Printf ("€‚\n\n");
     mOldFrameTime = Sys_FloatTime ();
 
 #endif /* QUAKE_WORLD */
