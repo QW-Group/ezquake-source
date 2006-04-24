@@ -21,18 +21,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // vid_common_gl.c -- Common code for vid_wgl.c and vid_glx.c
 
 #include "quakedef.h"
-#ifdef __APPLE__
-#include <Carbon/Carbon.h>
-#endif
+//#ifdef __APPLE__
+//#include "osx/sys_osx.h"
+void *		Sys_GetProcAddress (const char *theName, qbool theSafeMode);
+//#include <Carbon/Carbon.h>
+//#endif
+
 
 void* GL_GetProcAddress (char *ExtName)
 {
 #ifdef _WIN32
 			return (void *) wglGetProcAddress(ExtName);
 #else
-#ifdef __APPLE__
-	// Mac OS X don't have an OpenGL extension fetch function. Isn't that silly?
-
+#ifdef __APPLE__ // Mac OS X don't have an OpenGL extension fetch function. Isn't that silly?
+			return Sys_GetProcAddress (ExtName, false);
+/*
 	static CFBundleRef cl_gBundleRefOpenGL = 0;
 	if (cl_gBundleRefOpenGL == 0)
 	{
@@ -48,6 +51,7 @@ void* GL_GetProcAddress (char *ExtName)
 			ExtName,
 			CFStringGetSystemEncoding(),
 			0));
+*/
 #else
 			return (void *) glXGetProcAddressARB((const GLubyte*) ExtName);
 #endif /* __APPLE__ */
