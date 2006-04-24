@@ -150,3 +150,13 @@ p#top.index a {
 	font-family: "Courier New", Courier, monospace;
 	font-size: 1.33em;
 }
+div#search {
+	float: right;
+	width: 20em;
+}
+div#search input {
+	width: 15em; 
+	float: left;
+}
+div#search button { width: 4em; }
+div#search fieldset { padding: 1em; }

@@ -15,12 +15,18 @@ function GetRenderer($name, &$db)
 /* returns an initialized object which can be accessed for
    page title, heading and content */
 {
+    $searchbit = 0;
+    
     switch ($name)
     {
         case "commands": return new CommandsAllRendData(2, $db); return; break;
         case "command-line": return new OptionsRendData($db); return; break;
         case "main-page": return new MainPageRendData($db); return; break;
         case "index": return new IndexRendData($db); return; break;
+        case "search": 
+            $searchbit = 1; // remember we did a search
+            $name = $_REQUEST["search"]; // treat the text of the search as it is some manual page
+        break;
     }
     
     if (substr($name, 0, VARGROUPSPREFIXLEN) == VARGROUPSPREFIX)
@@ -65,8 +71,17 @@ function GetRenderer($name, &$db)
     if ($mid = $db["options"]->GetId($name))
         return new OptionRendData($mid, $db["options"], 1);
 
-    $url = "http://".$_SERVER["HTTP_HOST"].FilePath($_SERVER["SCRIPT_NAME"])."/";
-    RefreshPage($url);
+    if ($searchbit)
+    {
+        // we didn't find anything usefull, let's use google instead
+        $url = "http://www.google.com/search?q=site:ezquake.sourceforge.net+".urlencode($name);
+        RefreshPage($url);
+    }
+    else // didn't run a search, just an non-legal URL, act like nothing happened
+    {
+        $url = "http://".$_SERVER["HTTP_HOST"].FilePath($_SERVER["SCRIPT_NAME"])."/";
+        RefreshPage($url);
+    }
 }
 
 class BaseRendData // abstract class
@@ -109,8 +124,16 @@ class MainPageRendData extends BaseRendData
         $this->title = "Index";
         $this->lastupdate = $db["manuals"]->GlobalLastUpdate();
         
+        $this->content = '
+        <div id="search"><form method="get" action=".">
+            <fieldset><legend>Search</legend>
+            <input type="text" size="20" name="search" />
+            <button type="submit">Submit</button>
+            </fieldset>
+        </form></div>';
+        
         /* installation */
-        $this->content = "<dl id=\"main-page-list\"><dt>Installation</dt><dd>";
+        $this->content .= "<dl id=\"main-page-list\"><dt>Installation</dt><dd>";
         $mid = $db["manuals"]->GetId("installation");
         $inst_index = new ManualsRendData($mid, $db);
         $this->content .= $inst_index->content;
