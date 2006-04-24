@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cvar.c,v 1.26 2006-04-18 20:59:55 disconn3ct Exp $
+	$Id: cvar.c,v 1.27 2006-04-24 20:08:28 oldmanuk Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -875,6 +875,7 @@ void Cvar_Seta_f (void) {
 
 // QW262 -->
 
+// XXX: this could do with some refactoring
 void Cvar_Set_Calc_f(void)
 {
 	cvar_t	*var, *var2;
@@ -940,7 +941,6 @@ void Cvar_Set_Calc_f(void)
 		return;
 	} else if (!strcmp (a2, "set_substr")) {
 		int		var1len,var2len;
-		char	buf[1024];
 		var2 = Cvar_FindVar (a3);
 		if (!var2) {
 			Com_Printf ("Unknown variable \"%s\"\n", a3);
@@ -1135,7 +1135,7 @@ void ReSearchDone (void)
 	if (wildcard_re_extra[wildcard_level]) (pcre_free)(wildcard_re_extra[wildcard_level]);
 }
 
-char CharToBrown(char ch)
+unsigned char CharToBrown(unsigned char ch)
 {
 	if ( ch > 32 && ch <= 127 )
 		return ch + 128;
@@ -1143,7 +1143,7 @@ char CharToBrown(char ch)
 		return ch;
 }
 
-char CharToWhite(char ch)
+unsigned char CharToWhite(unsigned char ch)
 {
 	if ( ch > 160 )
 		return ch - 128;
