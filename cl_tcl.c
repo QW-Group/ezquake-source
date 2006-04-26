@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.7 2006-04-18 20:59:55 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.8 2006-04-26 10:42:13 disconn3ct Exp $
  */
 
 #ifdef EMBED_TCL
@@ -287,6 +287,11 @@ static void TCL_Eval_f (void)
 		return;
 	}
 
+	if (!strncasecmp (Rulesets_Ruleset(), "smackdown", 9)) {
+		Com_Printf ("%s banned by smackdown ruleset\n", Cmd_Argv(0));
+		return;
+	}
+
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("%s <text> : evaluate text as Tcl script\n", Cmd_Argv(0));
 		return;
@@ -322,6 +327,12 @@ static void TCL_Exec_f (void)
 		Com_Printf ("%s: server not allowed to exec Tcl commands\n", Cmd_Argv(0));
 		return;
 	}
+
+	if (!strncasecmp (Rulesets_Ruleset(), "smackdown", 9)) {
+		Com_Printf ("%s banned by smackdown ruleset\n", Cmd_Argv(0));
+		return;
+	}
+		
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("%s <filename> : execute file as Tcl script\n", Cmd_Argv(0));
@@ -361,6 +372,11 @@ static void TCL_Proc_f (void)
 
 	if (cbuf_current == &cbuf_svc) {
 		Com_Printf ("%s: server not allowed to exec Tcl commands\n", Cmd_Argv(0));
+		return;
+	}
+
+	if (!strncasecmp (Rulesets_Ruleset(), "smackdown", 9)) {
+		Com_Printf ("%s banned by smackdown ruleset\n", Cmd_Argv(0));
 		return;
 	}
 
