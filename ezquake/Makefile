@@ -50,7 +50,7 @@ BUILD_DEBUG_DIR			=debug-$(ARCH)
 BUILD_RELEASE_DIR		=release-$(ARCH)
 
 # compiler flags
-PRJ_CFLAGS			=-DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DUSE_TCL_STUBS
+PRJ_CFLAGS			=-DWITH_ZLIB -DWITH_PNG -DEMBED_TCL
 XMMS_CFLAGS			=-DWITH_XMMS `glib-config --cflags`
 BASE_CFLAGS			=-Wall $(PRJ_CFLAGS) $(ARCH_CFLAGS)
 BASE_RELEASE_CFLAGS		=-ffast-math -fomit-frame-pointer -fexpensive-optimizations
@@ -133,7 +133,7 @@ DO_GL_AS			+= -o $@ -c $<
 
 
 # linker flags
-LDFLAGS				=-lm `glib-config --libs` -lpthread -lexpat `pcre-config --libs` -ltclstub $(CL_DLFLAGS)
+LDFLAGS				=-lm `glib-config --libs` -lpthread -lexpat `pcre-config --libs` -ltcl $(CL_DLFLAGS)
 SVGALDFLAGS			=-lvga
 X11_LDFLAGS			=-L/usr/X11R6/lib -lX11 -lXext -lXxf86dga -lXxf86vm
 ifeq ($(ARCH),mingw32)		# Win32/x86 in MingW environment
@@ -147,7 +147,7 @@ ifeq ($(ARCH),macx86)		# MacOS-X/x86
 endif
 
 # opengl build
-BASE_GL_LDFLAGS			=-L/usr/X11R6/lib -lGL -lm -lX11 -lXext
+BASE_GL_LDFLAGS			=-L/usr/X11R6/lib -lGL -lX11 -lXext
 ARCH_GL_LDFLAGS			=
 ifeq ($(ARCH),x86)		# Linux/x86
 	ARCH_GL_LDFLAGS		=-lXxf86dga -lXxf86vm
