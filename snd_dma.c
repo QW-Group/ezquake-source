@@ -85,13 +85,13 @@ cvar_t s_mixahead = {"s_mixahead", "0.1", CVAR_ARCHIVE};
 cvar_t s_swapstereo = {"s_swapstereo", "0"};
 #ifdef __linux__
 /* cvar_t s_noalsa = {"s_noalsa", "0"};
-disconnect: swinching OSS<-->ALSA is broken, so i disable it.
+disconnect: switching OSS<-->ALSA is broken, so i disable it.
 OSS-->ALSA is fine, but ALSA --> OSS broken.
-if u run ezQ with OSS, then switch it to ALSA it works. If u run with ALSA, "s_noalsa 1;snd_restart" --> ezQ crashes
+if u run ezQ with OSS, then switch it to ALSA it works. If U run with ALSA, "s_noalsa 1;snd_restart" --> ezQ crashes
 */
 cvar_t s_stereo = {"s_stereo", "1", CVAR_ARCHIVE};
 cvar_t s_rate = {"s_rate", "11025", CVAR_ARCHIVE};
-cvar_t s_device = {"s_device", "plug:hw", CVAR_ARCHIVE};
+cvar_t s_device = {"s_device", "default", CVAR_ARCHIVE};
 cvar_t s_bits = {"s_bits", "16", CVAR_ARCHIVE};
 #endif
 
@@ -154,9 +154,19 @@ void S_Startup (void) {
 void S_Restart_f (void) {
 #ifndef __APPLE__
 	Com_Printf("Restarting sound system....\n");
-	SNDDMA_Shutdown ();
+	Cache_Flush();
+	S_StopAllSounds (true);
+
+	S_Shutdown();
 	Com_Printf("sound: Shutdown OK\n");
-	SNDDMA_Init ();
+
+	S_Startup();
+
+	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound ("ambience/water1.wav");
+	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound ("ambience/wind2.wav");
+
+	S_StopAllSounds (true);
+
 	Com_Printf("sound: Init OK.\nSound sampling rate: %i \n", sn.speed);
 #endif
 }
@@ -209,7 +219,7 @@ void S_Init (void) {
 	if (COM_CheckParm("-simsound"))
 		fakedma = true;
 
-	Cmd_AddCommand("snd_restart", S_Restart_f);
+	Cmd_AddCommand("s_restart", S_Restart_f);
 	Cmd_AddCommand("play", S_Play_f);
 	Cmd_AddCommand("playvol", S_PlayVol_f);
 	Cmd_AddCommand("stopsound", S_StopAllSounds_f);
