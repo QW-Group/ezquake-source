@@ -363,8 +363,8 @@ void Host_Frame (double time) {
 }
 
 char *Host_PrintBars(char *s, int len) {
-	static char temp[512];									
-	int i, count;
+	static char temp[512];	
+	unsigned int i, count;
 
 	temp[0] = 0;
 

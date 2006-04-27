@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_slist.c,v 1.7 2006-04-18 20:59:55 disconn3ct Exp $
+	$Id: cl_slist.c,v 1.8 2006-04-27 23:06:05 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -101,7 +101,8 @@ int SList_Length (void) {
 }
 
 void SList_Load (void) {
-	int c, len, argc, count;
+	unsigned int len;
+	int c, argc, count;
 	char line[128], *desc, *addr;
 	FILE *f;
 
