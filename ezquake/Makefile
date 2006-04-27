@@ -52,7 +52,7 @@ BUILD_RELEASE_DIR		=release-$(ARCH)
 # compiler flags
 PRJ_CFLAGS			=-DWITH_ZLIB -DWITH_PNG -DEMBED_TCL
 XMMS_CFLAGS			=-DWITH_XMMS `glib-config --cflags`
-BASE_CFLAGS			=-Wall $(PRJ_CFLAGS) $(ARCH_CFLAGS)
+BASE_CFLAGS			=-Wall -Wsign-compare $(PRJ_CFLAGS) $(ARCH_CFLAGS)
 BASE_RELEASE_CFLAGS		=-ffast-math -fomit-frame-pointer -fexpensive-optimizations
 ifneq ($(CC_BASEVERSION),4) # if we're not auto-vectorizing then we can unroll the loops (mdfour ahoy)
 	BASE_RELEASE_CFLAGS  += -funroll-loops
