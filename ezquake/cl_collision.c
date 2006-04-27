@@ -57,8 +57,7 @@ float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t 
 	if (hitent && trace.fraction < 1)
 		hitent = &cl_visents.list[0];
 
-	if (hitbmodels)
-	{
+	if (hitbmodels) {
 		tracemins[0] = min(start[0], end[0]);
 		tracemaxs[0] = max(start[0], end[0]);
 		tracemins[1] = min(start[1], end[1]);
@@ -67,8 +66,7 @@ float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t 
 		tracemaxs[2] = max(start[2], end[2]);
 
 		// look for embedded bmodels
-		for (n = 0;n < cl_visents.count;n++)
-		{
+		for (n = 0;n < cl_visents.count;n++) {
 			if (cl_visents.list[n].model->type != mod_brush)
 				continue;
 			ent = &cl_visents.list[n];
@@ -79,8 +77,7 @@ float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t 
 
 			Collision_ClipTrace(&trace, ent, ent->model, ent->origin, ent->angles, ent->model->mins, ent->model->maxs, start, vec3_origin, vec3_origin, end);
 
-			if (trace.allsolid || trace.startsolid || trace.fraction < maxfrac)
-			{
+			if (trace.allsolid || trace.startsolid || trace.fraction < maxfrac) {
 				maxfrac = trace.fraction;
 				if (impact)
 					VectorCopy(trace.endpos, impact);
@@ -93,6 +90,6 @@ float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t 
 		}
 	}
 	if (maxfrac < 0 || maxfrac > 1) Com_Printf("fraction out of bounds %f %s:%d\n", maxfrac, __LINE__, __FILE__);
-	return maxfrac;
+		return maxfrac;
 }
 

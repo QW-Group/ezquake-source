@@ -56,7 +56,7 @@ int SNDDMA_GetDMAPos_ALSA (void)
 	offset *= sn.channels;
 	nframes *= sn.channels;
 	sn.samplepos = offset;
-	sn.buffer = areas->addr;
+	sn.buffer = (unsigned char *) areas->addr;
 	return sn.samplepos;
 }
 
