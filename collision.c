@@ -4,8 +4,7 @@
 #include "quakedef.h"
 #include "collision.h"
 
-typedef struct
-{
+typedef struct {
 	// the hull we're tracing through
 	const hull_t *hull;
 
@@ -18,8 +17,7 @@ typedef struct
 
 	// end - start
 	float dist[3];
-}
-RecursiveHullCheckTraceInfo_t;
+} RecursiveHullCheckTraceInfo_t;
 
 // 1/32 epsilon to keep floating point happy
 #define DIST_EPSILON (0.03125)
@@ -45,34 +43,26 @@ static int RecursiveHullCheck (RecursiveHullCheckTraceInfo_t *t, int num, float 
 	// LordHavoc: a goto!  everyone flee in terror... :)
 loc0:
 	// check for empty
-	if (num < 0)
-	{
+	if (num < 0) {
 		t->trace->endcontents = num;
-		if (t->trace->startcontents)
-		{
-			if (num == t->trace->startcontents)
+		if (t->trace->startcontents) {
+			if (num == t->trace->startcontents) {
 				t->trace->allsolid = false;
-			else
-			{
+			} else {
 				// if the first leaf is solid, set startsolid
 				if (t->trace->allsolid)
 					t->trace->startsolid = true;
 				return HULLCHECKSTATE_SOLID;
 			}
 			return HULLCHECKSTATE_EMPTY;
-		}
-		else
-		{
-			if (num != CONTENTS_SOLID)
-			{
+		} else {
+			if (num != CONTENTS_SOLID) {
 				t->trace->allsolid = false;
 				if (num == CONTENTS_EMPTY)
 					t->trace->inopen = true;
 				else
 					t->trace->inwater = true;
-			}
-			else
-			{
+			} else {
 				// if the first leaf is solid, set startsolid
 				if (t->trace->allsolid)
 					t->trace->startsolid = true;
@@ -86,30 +76,22 @@ loc0:
 	node = t->hull->clipnodes + num;
 
 	plane = t->hull->planes + node->planenum;
-	if (plane->type < 3)
-	{
+	if (plane->type < 3) {
 		t1 = p1[plane->type] - plane->dist;
 		t2 = p2[plane->type] - plane->dist;
-	}
-	else
-	{
+	} else {
 		t1 = DotProduct (plane->normal, p1) - plane->dist;
 		t2 = DotProduct (plane->normal, p2) - plane->dist;
 	}
 
-	if (t1 < 0)
-	{
-		if (t2 < 0)
-		{
+	if (t1 < 0) {
+		if (t2 < 0) {
 			num = node->children[1];
 			goto loc0;
 		}
 		side = 1;
-	}
-	else
-	{
-		if (t2 >= 0)
-		{
+	} else {
+		if (t2 >= 0) {
 			num = node->children[0];
 			goto loc0;
 		}
@@ -118,13 +100,10 @@ loc0:
 
 	// the line intersects, find intersection point
 	// LordHavoc: this uses the original trace for maximum accuracy
-	if (plane->type < 3)
-	{
+	if (plane->type < 3) {
 		t1 = t->start[plane->type] - plane->dist;
 		t2 = t->end[plane->type] - plane->dist;
-	}
-	else
-	{
+	} else {
 		t1 = DotProduct (plane->normal, t->start) - plane->dist;
 		t2 = DotProduct (plane->normal, t->end) - plane->dist;
 	}
@@ -145,13 +124,10 @@ loc0:
 		return ret;
 
 	// front is air and back is solid, this is the impact point...
-	if (side)
-	{
+	if (side) {
 		t->trace->plane.dist = -plane->dist;
 		VectorNegate (plane->normal, t->trace->plane.normal);
-	}
-	else
-	{
+	} else {
 		t->trace->plane.dist = plane->dist;
 		VectorCopy (plane->normal, t->trace->plane.normal);
 	}
@@ -177,29 +153,22 @@ static void RecursiveHullCheckPoint (RecursiveHullCheckTraceInfo_t *t, int num)
 
 	// check for empty
 	t->trace->endcontents = num;
-	if (t->trace->startcontents)
-	{
-		if (num == t->trace->startcontents)
+	if (t->trace->startcontents) {
+		if (num == t->trace->startcontents) {
 			t->trace->allsolid = false;
-		else
-		{
+		} else {
 			// if the first leaf is solid, set startsolid
 			if (t->trace->allsolid)
 				t->trace->startsolid = true;
 		}
-	}
-	else
-	{
-		if (num != CONTENTS_SOLID)
-		{
+	} else {
+		if (num != CONTENTS_SOLID) {
 			t->trace->allsolid = false;
 			if (num == CONTENTS_EMPTY)
 				t->trace->inopen = true;
 			else
 				t->trace->inwater = true;
-		}
-		else
-		{
+		} else {
 			// if the first leaf is solid, set startsolid
 			if (t->trace->allsolid)
 				t->trace->startsolid = true;
@@ -213,8 +182,8 @@ static mplane_t box_planes[6];
 
 void Collision_Init (void)
 {
-	int		i;
-	int		side;
+	int i;
+	int side;
 
 	//Set up the planes and clipnodes so that the six floats of a bounding box
 	//can just be stored out and get a proper hull_t structure.
@@ -224,8 +193,7 @@ void Collision_Init (void)
 	box_hull.firstclipnode = 0;
 	box_hull.lastclipnode = 5;
 
-	for (i = 0;i < 6;i++)
-	{
+	for (i = 0;i < 6;i++) {
 		box_clipnodes[i].planenum = i;
 
 		side = i&1;
@@ -300,8 +268,7 @@ void Collision_ClipTrace (ctrace_t *trace, const void *cent, const model_t *cmod
 	rhc.trace->fraction = 1;
 	rhc.trace->allsolid = true;
 
-	if (cmodel && cmodel->type == mod_brush)
-	{
+	if (cmodel && cmodel->type == mod_brush) {
 		// brush model
 
 		// get the clipping hull
@@ -311,8 +278,7 @@ void Collision_ClipTrace (ctrace_t *trace, const void *cent, const model_t *cmod
 		VectorSubtract(end, offset, endd);
 
 		// rotate start and end into the model's frame of reference
-		if (cangles[0] || cangles[1] || cangles[2])
-		{
+		if (cangles[0] || cangles[1] || cangles[2]) {
 			AngleVectorsFLU (cangles, forward, left, up);
 			VectorCopy(startd, tempd);
 			startd[0] = DotProduct (tempd, forward);
@@ -336,11 +302,9 @@ void Collision_ClipTrace (ctrace_t *trace, const void *cent, const model_t *cmod
 		if (rhc.trace->fraction < 0 || rhc.trace->fraction > 1) Com_Printf("fraction out of bounds %f %s:%d\n", rhc.trace->fraction, __LINE__, __FILE__);
 
 		// if we hit, unrotate endpos and normal, and store the entity we hit
-		if (rhc.trace->fraction != 1)
-		{
+		if (rhc.trace->fraction != 1) {
 			// rotate endpos back to world frame of reference
-			if (cangles[0] || cangles[1] || cangles[2])
-			{
+			if (cangles[0] || cangles[1] || cangles[2]) {
 				VectorNegate (cangles, offset);
 				AngleVectorsFLU (offset, forward, left, up);
 
@@ -355,14 +319,11 @@ void Collision_ClipTrace (ctrace_t *trace, const void *cent, const model_t *cmod
 				rhc.trace->plane.normal[2] = DotProduct (tempd, up);
 			}
 			rhc.trace->ent = (void *) cent;
-		}
-		else if (rhc.trace->allsolid || rhc.trace->startsolid)
+		} else if (rhc.trace->allsolid || rhc.trace->startsolid)
 			rhc.trace->ent = (void *) cent;
 		// fix offset
 		VectorAdd (rhc.trace->endpos, offset, rhc.trace->endpos);
-	}
-	else
-	{
+	} else {
 		// bounding box
 
 		rhc.hull = HullForBBoxEntity (corigin, cmins, cmaxs, mins, maxs, offset);
@@ -376,16 +337,15 @@ void Collision_ClipTrace (ctrace_t *trace, const void *cent, const model_t *cmod
 			RecursiveHullCheck (&rhc, rhc.hull->firstclipnode, 0, 1, rhc.start, rhc.end);
 		else
 			RecursiveHullCheckPoint (&rhc, rhc.hull->firstclipnode);
-		if (rhc.trace->fraction < 0 || rhc.trace->fraction > 1) Com_Printf("fraction out of bounds %f %s:%d\n", rhc.trace->fraction, __LINE__, __FILE__);
+		if (rhc.trace->fraction < 0 || rhc.trace->fraction > 1)
+			Com_Printf("fraction out of bounds %f %s:%d\n", rhc.trace->fraction, __LINE__, __FILE__);
 
 		// if we hit, store the entity we hit
-		if (rhc.trace->fraction != 1)
-		{
+		if (rhc.trace->fraction != 1) {
 			// fix offset
 			VectorAdd (rhc.trace->endpos, offset, rhc.trace->endpos);
 			rhc.trace->ent = (void *) cent;
-		}
-		else if (rhc.trace->allsolid || rhc.trace->startsolid)
+		} else if (rhc.trace->allsolid || rhc.trace->startsolid)
 			rhc.trace->ent = (void *) cent;
 	}
 }
