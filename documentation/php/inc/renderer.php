@@ -5,9 +5,6 @@
  * Uses mysql data mining classes from mysql_commands.php
  */
  
- // to-do - all the classes are mad, no need for them
- //  - too much of 'new' constructs
- 
 define (VARGROUPSPREFIX, "vars-");
 define (VARGROUPSPREFIXLEN, 5);
 
@@ -48,8 +45,11 @@ function GetRenderer($name, &$db)
         return new GroupsRendData($mid, 3, $db);
 
     if ($mid = $db["commands"]->GetId($name))
-        return new CommandsRendData($mid, $db["commands"]);
-
+    {
+        $url = "http://".$_SERVER["HTTP_HOST"].FilePath($_SERVER["SCRIPT_NAME"])."/?commands#".IdSafe($name);
+        RefreshPage($url);
+    }
+    
     if ($mid = $db["variables"]->GetId($name)) //         return new VariablesRendData($mid, 4);
     // rendering every each variable on it's own page would be fine (and it's possible)
     // but we don't want to have too much URLs because of offline manual version
@@ -69,7 +69,10 @@ function GetRenderer($name, &$db)
     }
     
     if ($mid = $db["options"]->GetId($name))
-        return new OptionRendData($mid, $db["options"], 1);
+    {
+        $url = "http://".$_SERVER["HTTP_HOST"].FilePath($_SERVER["SCRIPT_NAME"])."/?command-line#".IdSafe($name);
+        RefreshPage($url);
+    }
 
     if ($searchbit)
     {
@@ -123,8 +126,12 @@ class MainPageRendData extends BaseRendData
         $this->heading = "Index";
         $this->title = "Index";
         $this->lastupdate = $db["manuals"]->GlobalLastUpdate();
-        
-        $this->content = '
+        $this->db = $db;
+    }
+    
+    function RenderContent()
+    {
+        echo '
         <div id="search"><form method="get" action=".">
             <fieldset><legend>Search</legend>
             <input type="text" size="20" name="search" />
@@ -133,46 +140,46 @@ class MainPageRendData extends BaseRendData
         </form></div>';
         
         /* installation */
-        $this->content .= "<dl id=\"main-page-list\"><dt>Installation</dt><dd>";
-        $mid = $db["manuals"]->GetId("installation");
-        $inst_index = new ManualsRendData($mid, $db);
-        $this->content .= $inst_index->content;
+        echo "<dl id=\"main-page-list\"><dt>Installation</dt><dd>";
+        $mid = $this->db["manuals"]->GetId("installation");
+        $inst_index = new ManualsRendData($mid, $this->db);
+        echo $inst_index->content;
         
         /* features list */
-        $this->content .= "</dd><dt id=\"features\">Features</dt><dd>";
-        $mid = $db["manuals"]->GetId("features");
-        $features_list = new ManualsRendData($mid, $db);
-        $this->content .= $features_list->content;
+        echo "</dd><dt id=\"features\">Features</dt><dd>";
+        $mid = $this->db["manuals"]->GetId("features");
+        $features_list = new ManualsRendData($mid, $this->db);
+        echo $features_list->content;
 
         /* settings */
-        $this->content .= "</dd><dt>Settings</dt><dd>";
-        $this->content .= "<p><strong><a href=\"?index\">Index</a></strong> - Full list of variables, commands and command-line options</p>";
-        $this->content .= "<p>Note that you can put the name of any variable, command, command-line option or manual page into the URL and you'll get corresponding manual page displayed. E.g. http://ezquake.sourceforge.net/docs/?cl_maxfps</p>";
-        $this->content .= "<dl id=\"settings-list\"><dt>Variables</dt><dd>";
+        echo "</dd><dt>Settings</dt><dd>";
+        echo "<p><strong><a href=\"?index\">Index</a></strong> - Full list of variables, commands and command-line options</p>";
+        echo "<p>Note that you can put the name of any variable, command, command-line option or manual page into the URL and you'll get corresponding manual page displayed. E.g. http://ezquake.sourceforge.net/docs/?cl_maxfps</p>";
+        echo "<dl id=\"settings-list\"><dt>Variables</dt><dd>";
         
         /* variables menu */
-        $this->content .= "<dl>";
-        $grplist = $db["groups"]->GetGroupedList();
-        $mgrplist = $db["mgroups"]->GetIDAssocList();
+        echo "<dl>";
+        $grplist = $this->db["groups"]->GetGroupedList();
+        $mgrplist = $this->db["mgroups"]->GetIDAssocList();
         foreach ($mgrplist as $mgrp_id => $mgrp_data)
         {
-            $this->content .= "<dt><a href=\"?vars-".$mgrp_data["name"]."\">".htmlspecialchars($mgrp_data["title"])."</a></dt><dd>";
+            echo "<dt><a href=\"?vars-".$mgrp_data["name"]."\">".htmlspecialchars($mgrp_data["title"])."</a></dt><dd>";
             $c = 0;
             foreach ($grplist[$mgrp_id] as $grp)
             {
                 if ($c++)
-                    $this->content .= ", ";
+                    echo ", ";
                 
-                $this->content .= "<a href=\"?vars-".$grp["name"]."\">".htmlspecialchars($grp["title"])."</a>";
+                echo "<a href=\"?vars-".$grp["name"]."\">".htmlspecialchars($grp["title"])."</a>";
             }
-            $this->content .= "</dd>";
+            echo "</dd>";
         }
-        $this->content .= "</dl>";
+        echo "</dl>";
         
-        $this->content .= "</dd><dt><a href=\"?commands\">Commands</a></dt>";
-        $this->content .= "<dt><a href=\"?command-line\">Command-Line Options</a></dt>";
-        $this->content .= "<dt><a href=\"?triggers\">Triggers</a></dt>";
-        $this->content .= "</dl></dd></dl>";
+        echo "</dd><dt><a href=\"?commands\">Commands</a></dt>";
+        echo "<dt><a href=\"?command-line\">Command-Line Options</a></dt>";
+        echo "<dt><a href=\"?triggers\">Triggers</a></dt>";
+        echo "</dl></dd></dl>";
     }
 }
 
@@ -244,61 +251,67 @@ class GroupsRendData extends BaseRendData
     }
 }
 
-
 class VariablesRendData extends BaseRendData
 {
     function VariablesRendData($id, $topheading = 4)
     {
-        $db = new VariablesData;
+        $this->db = new VariablesData;
+        $this->id = $id;
+        $this->var = $this->db->GetVar($this->id);
+        $this->title = $this->var["name"];
+        $this->heading = "Variable ".$this->title;
+        $this->topheading = $topheading;
+    }
+    
+    function RenderContent()
+    {
         $db_support = new SupportData;
         $builds = $db_support->GetBuilds();
-        $var = $db->GetVar($id);
+        $topheading = $this->topheading;
+
+        if (strlen($this->var["description"]))
+            echo "\n<h{$topheading}>Description</h{$topheading}><p class=\"description\">".htmlspecialchars($this->var["description"])."</p>";
         
-        $this->title = $var["name"];
-        $this->heading = "Variable ".$this->title;
-        if (strlen($var["description"]))
-            $this->content = "\n<h{$topheading}>Description</h{$topheading}><p class=\"description\">".htmlspecialchars($var["description"])."</p>";
-        
-        $this->content .= "<p class=\"support\">Support: ";
+        echo "<p class=\"support\">Support: ";
         foreach ($builds as $build)
         {   
-            $this->content .= "<span class=\"".$build["abbr"]." ";
-            if (isset($var["support"][$build["id"]]))
+            echo "<span class=\"".$build["abbr"]." ";
+            if (isset($this->var["support"][$build["id"]]))
             {
-                $default = $var["support"][$build["id"]];    // we take last default .. every build can have it's own default but who cares?
-                $this->content .= "supported";
+                $default = $this->var["support"][$build["id"]];    // we take last default .. every build can have it's own default but who cares?
+                echo "supported";
             }
             else
             {
-                $this->content .= "unsupported";
+                echo "unsupported";
             }
-            $this->content .= "\">".$build["title"]."</span> ";
+            echo "\">".$build["title"]."</span> ";
         }
         
-        $this->content .= "</p>\n  <p class=\"default\">Default: <span>".htmlspecialchars($default)."</span></p>";
+        echo "</p>\n  <p class=\"default\">Default: <span>".htmlspecialchars($default)."</span></p>";
         
-        switch ($var["type"])
+        switch ($this->var["type"])
         {
             case "string":
             case "float":
             case "integer":
-                $this->content .= "\n<p>Variable is <strong>".$var["type"]."</strong>.<br />".$var["valdesc"]."</p>";
+                echo "\n<p>Variable is <strong>".$this->var["type"]."</strong>.<br />".$this->var["valdesc"]."</p>";
                 break;
             case "enum":
             case "boolean":
-                $this->content .= "<h{$topheading}>Values</h{$topheading}>";
-                $this->content .= "\n<table class=\"values\"><thead><tr><td>value</td><td>description</td></tr></thead>\n<tbody>";
-                foreach ($var["valdesc"] as $value_name => $value_desc)
+                echo "<h{$topheading}>Values</h{$topheading}>";
+                echo "\n<table class=\"values\"><thead><tr><td>value</td><td>description</td></tr></thead>\n<tbody>";
+                foreach ($this->var["valdesc"] as $value_name => $value_desc)
                 {   
-                    $value_name = $var["type"] == "boolean" ? ($value_name == "true" ? "1" : "0") : $value_name;
-                    $this->content .= "<tr><td>".htmlspecialchars($value_name)."</td><td>".htmlspecialchars($value_desc)."</td></tr>";
+                    $value_name = $this->var["type"] == "boolean" ? ($value_name == "true" ? "1" : "0") : $value_name;
+                    echo "<tr><td>".htmlspecialchars($value_name)."</td><td>".htmlspecialchars($value_desc)."</td></tr>";
                 }
-                $this->content .= "</tbody></table>";
+                echo "</tbody></table>";
                 break;
         }
         
-        if (strlen($var["remarks"]))
-            $this->content .= "\n<p class=\"remarks\">".htmlspecialchars($var["remarks"])."</p>";
+        if (strlen($this->var["remarks"]))
+            echo "\n<p class=\"remarks\">".htmlspecialchars($this->var["remarks"])."</p>";
     }
 }
 
@@ -475,7 +488,7 @@ class IndexRendData extends BaseRendData
         
         $alphabet = "+-abcdefghijklmnopqrstuvwxyz";
         $alphlen = strlen($alphabet);
-        echo "<p id=\"top\" class=\"index\">";
+        echo "<p id=\"index\">";
         for ($i = 0; $i < $alphlen; $i++) {
             echo "<a href=\"#letter-".$alphabet{$i}."\">".$alphabet{$i}."</a>";
             if ($i < $alphlen-1)
@@ -496,11 +509,23 @@ class IndexRendData extends BaseRendData
             }
             echo "\n\t<tr><td class=\"";
             switch ($v["type"]) {
-                case "variable": echo "var\"><span>var"; break;
-                case "command": echo "cmd\"><span>cmd"; break;
-                case "command-line option": default: echo "opt\"><span>opt"; break;
+                case "variable":
+                    echo "var\"><span>var";
+                    $urlprefix = "";
+                break;
+                case "command": 
+                    echo "cmd\"><span>cmd"; 
+                    $urlprefix = "commands#"; 
+                break;
+                default: case "command-line option": 
+                // default shouldn't happen but we put it here so the page doesn't get messed up by this minor error 
+                    echo "opt\"><span>opt";
+                    $urlprefix = "command-line#"; 
+                break;
             } 
-            echo "</span></td><td><a href=\"?".IdSafe($k)."\">$k</a></td><td>".htmlspecialchars(substr($v["desc"], 0, 100)).(strlen($v["desc"])>100 ? "..." : "")."</td></tr>";
+            echo "</span></td><td><a href=\"?";
+            echo $urlprefix.IdSafe($k);
+            echo "\">$k</a></td><td>".htmlspecialchars(substr($v["desc"], 0, 100)).(strlen($v["desc"])>100 ? "..." : "")."</td></tr>";
         }
         
         echo "\n</tbody>\n</table>\n\n";    
