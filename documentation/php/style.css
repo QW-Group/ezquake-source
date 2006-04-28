@@ -1,44 +1,25 @@
 html {
   background-color: #B33000;
   color: #FFF7BF;
-}
-body {
-  background-color: #B33000;
-  color: #FFF7BF;
   font-family: Arial, Helvetica, sans-serif;
-  margin: 1em 1em 1em 4em;
 }
-a {
-  color: #FFDE00;
-}
-a:hover {
-  color: #FF4400;
-}
-dt {
-  font-weight: bold;
-}
+body { margin: 1em 1em 1em 4em; }
+a { color: #FFDE00; }
+a:hover { color: #FF4400; }
+dt { font-weight: bold; }
+
 h1, h2, h3, h4 { margin-left: -1.5em; }
 h1, h2, h3 {
   background-color: #FFE6BF;
   color: #B39B00;
 }
 h1 a, h2 a, h3 a, h4 a, h5 a { color: #B39B00; }
-p#last-update {
-  font-style: normal;
-  background-color: #FFD0BF;
-  color: #B36B00;
-}
-p#last-update a {
-  color: #B33000;
-  text-decoration: none;
-  font-style: italic;
-}
-p#last-update a:hover {
-  color: #B36B00;
-}
+
+p#last-update { border-top: 1px dashed #FFD0BF; }
+
+/* VARIABLES --------------------- */
 h4.cvar span.default {
   background-color: #B39B00;
-/* border: 1px dotted black; */
   padding: 0 1em 0 1em;
   font-family: "Courier New", Courier, monospace;
 }
@@ -47,19 +28,6 @@ h4.cvar span.pv {
   color: #000;
   padding: 0 1em 0 1em;
   font-family: "Courier New", Courier, monospace;
-}
-legend {
-  color: #FFF7BF;
-  font-weight: bold;
-}
-label:hover {
-  color: #FFDE00;
-}
-label:active {
-  text-decoration: underline;
-}
-input:hover {
-  background-color: #ddd;
 }
 h3 span { 
   padding-left: 1em; 
@@ -76,13 +44,8 @@ p.support span {
 	border: 1px;
 	padding: 0.08em 0.13em;
 }
-p.support span.supported {
-	background-color: #080;
-}
-p.support span.unsupported {
-	background-color: #aaa;
-	
-}
+p.support span.supported { background-color: #080; } /* supported: green */
+p.support span.unsupported { background-color: #aaa; } /* unsupported: gray */
 p.default span {
 	background-color: #B39B00;
   padding: 0.08em 0.13em;
@@ -91,22 +54,12 @@ p.default {
 	margin: 0.3em 0;
 	font-size: 0.8em;
 }
-p.range {
-	margin: 0.3em 0;
-	font-size: 0.8em;
-}
-p.range span {
-	background-color: #FFA280;
-  padding: 0.08em 0.13em;
-}
 table.values thead {
 	font-weight: bold;
 	border-collapse: collapse;
 	border-bottom: 1px solid #FFA280;
 }
-table.values td {
-	padding: 0.33em;
-}
+table.values td { padding: 0.33em; }
 table.values {
 	border-top: 1px solid #FFA280;
 	border-bottom: 1px solid #FFA280;
@@ -116,18 +69,25 @@ table.values caption {
   font-weight: bold;
   font-size: 1em;
 }
+/* variabled END ----------------- */
+
+/* changelog */
 dl.changelog dd ul { margin: 0 auto; }
 
+/* command-line option */
 div.option h3 {
     background-color: transparent;
     color: #FFF7BF;
 }
+
+/* commands */
 h2.command code {
     font-weight: bold;
     color: #FFA280;
     font-size: 0.8em;
 }
 
+/* ALPHABET INDEX ----------- */
 p#index {
 	border-bottom: 1px solid #FFA280;
 	border-top: 1px solid #FFA280;
@@ -137,7 +97,9 @@ p#index {
     margin: 1em 0;
 }
 p#index a { text-decoration: none; }
+/* alphabet index END ------ */
 
+/* INDEX ------------------- */
 table#index td.var span, td.cmd span, td.opt span {
     font-size: 0.66em;
     font-family: monospace;
@@ -145,18 +107,40 @@ table#index td.var span, td.cmd span, td.opt span {
 table#index td.cmd span { background-color: red; }
 table#index td.var span { background-color: green; }
 table#index td.opt span { background-color: blue; }
-table#index tr.section { background-color: black; font-size: 3em; }
-p#top.index a {
-	font-family: "Courier New", Courier, monospace;
-	font-size: 1.33em;
+table#index tr.section {
+	background-color: black;
+	font-size: 3em; 
 }
+/* index END -------------- */
+
+/* SEARCH FORM ------------ */
 div#search {
 	float: right;
 	width: 20em;
 }
-div#search input {
-	width: 15em; 
-	float: left;
+div#search input { 
+  width: 15em;
+  float: left;
 }
 div#search button { width: 4em; }
 div#search fieldset { padding: 1em; }
+input:hover { background-color: #ddd; }
+/* search form END ----------------- */
+
+/* TRASH ----------------------------
+legend {
+  color: #FFF7BF;
+  font-weight: bold;
+}
+label:hover { color: #FFDE00; }
+label:active { text-decoration: underline; }
+p.range {
+	margin: 0.3em 0;
+	font-size: 0.8em;
+}
+p.range span {
+	background-color: #FFA280;
+  padding: 0.08em 0.13em;
+}
+
+trash end ----------------------- */
