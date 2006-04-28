@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+    $Id: snd_dma.c,v 1.24 2006-04-28 23:38:29 disconn3ct Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -40,12 +41,12 @@ void S_StopAllSounds_f (void);
 // =======================================================================
 
 channel_t	channels[MAX_CHANNELS];
-int			total_channels;
+int		total_channels;
 
-int			snd_blocked = 0;
+int		snd_blocked = 0;
 qbool	snd_initialized = false;
 
-static qbool		snd_ambient = 1;
+static qbool	snd_ambient = 1;
 
 // pointer should go away
 volatile dma_t *shm = 0;
@@ -84,7 +85,7 @@ cvar_t s_show = {"s_show", "0"};
 cvar_t s_mixahead = {"s_mixahead", "0.1", CVAR_ARCHIVE};
 cvar_t s_swapstereo = {"s_swapstereo", "0"};
 #ifdef __linux__
-/* cvar_t s_noalsa = {"s_noalsa", "0"};
+cvar_t s_noalsa = {"s_noalsa", "0"};/*
 disconnect: switching OSS<-->ALSA is broken, so i disable it.
 OSS-->ALSA is fine, but ALSA --> OSS broken.
 if u run ezQ with OSS, then switch it to ALSA it works. If U run with ALSA, "s_noalsa 1;snd_restart" --> ezQ crashes
@@ -191,7 +192,7 @@ void S_Init (void) {
 	Cvar_Register(&s_mixahead);
 	Cvar_Register(&s_swapstereo);
 #ifdef __linux__
-//	Cvar_Register(&s_noalsa);
+	Cvar_Register(&s_noalsa);
 	Cvar_Register(&s_stereo);
 	Cvar_Register(&s_rate);
 	Cvar_Register(&s_device);
