@@ -1,26 +1,22 @@
 /*
-   Support for the ALSA 1.0.1 sound driver
- 
-   Copyright (C) 1999,2000  contributors of the QuakeForge project
-   Extensively modified for inclusion in ZQuake as alsa_snd_linux.c
- 
-   This program is free software; you can redistribute it and/or
-   modify it under the terms of the GNU General Public License
-   as published by the Free Software Foundation; either version 2
-   of the License, or (at your option) any later version.
- 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- 
-   See the GNU General Public License for more details.
- 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to:
- 
-   Free Software Foundation, Inc.
-   59 Temple Place - Suite 330
-   Boston, MA  02111-1307, USA
+(C) 2005 Contributors of the ZQuake Project
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+    $Id:  Exp $
 */
 
 #include <stdio.h>
@@ -40,8 +36,7 @@ static ret (*alsa_##func) params;
 
 // Global Variables
 extern int paintedtime, soundtime;
-static snd_pcm_uframes_t buffer_size;
-static snd_pcm_t   *pcm;
+static snd_pcm_t *pcm;
 
 
 // Main functions
@@ -98,14 +93,15 @@ void SNDDMA_Submit_ALSA (void)
 
 qbool SNDDMA_Init_ALSA (void)
 {
-	char *pcmname;
-	int err;
+	char *pcmname = NULL;
 	int bps = -1, stereo = -1;
-	unsigned int	rate = 0;
-	snd_pcm_hw_params_t	*hw;
-	snd_pcm_sw_params_t	*sw;
-	snd_pcm_uframes_t   frag_size;
-	static void         *alsa_handle;
+	unsigned int rate = 0;
+	int err;
+	snd_pcm_hw_params_t *hw;
+	snd_pcm_sw_params_t *sw;
+	snd_pcm_uframes_t frag_size;
+	snd_pcm_uframes_t buffer_size;
+	static void *alsa_handle;
 
 	if(! (alsa_handle = dlopen("libasound.so.2", RTLD_GLOBAL | RTLD_NOW)) )
 		return 0;
