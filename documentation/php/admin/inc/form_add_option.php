@@ -26,6 +26,7 @@
 ?>
 <h2>Add new option</h2>
 <p>Warning: If you type name of already existing option, it's properties will be overwritten without asking for confirmation.</p>
+<p>Always use name without the leading dash '-'.</p>
 <?php
     }
 ?>
