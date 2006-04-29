@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.26 2006-04-29 17:32:56 disconn3ct Exp $
+    $Id: snd_dma.c,v 1.27 2006-04-29 19:36:51 disconn3ct Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -51,8 +51,9 @@ int		soundtime;	// sample PAIRS
 int		paintedtime;	// sample PAIRS
 
 // pointer should go away
-volatile dma_t	*shm = 0;
 volatile dma_t	sn;
+volatile dma_t	*shm = &sn;
+
 
 static qbool	sound_started = 0;
 static qbool	snd_ambient = 1;
@@ -94,9 +95,9 @@ cvar_t s_khz = {"s_khz", "11"};
 #ifdef __linux__
 cvar_t s_noalsa = {"s_noalsa", "0"};
 // ALSA only -->
-cvar_t s_stereo = {"s_stereo", "1", CVAR_ARCHIVE};
-cvar_t s_device = {"s_device", "default", CVAR_ARCHIVE};
-cvar_t s_bits = {"s_bits", "16", CVAR_ARCHIVE};
+cvar_t s_stereo = {"s_stereo", "1"};
+cvar_t s_device = {"s_device", "default"};
+cvar_t s_bits = {"s_bits", "16"};
 // <-- ALSA only
 #endif
 
@@ -242,7 +243,7 @@ void S_Shutdown (void)
 	if (shm)
 		sn.gamealive = 0;
 
-	shm = 0;
+	shm = NULL;
 	sound_started = 0;
 
 	SNDDMA_Shutdown();

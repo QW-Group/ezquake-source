@@ -53,9 +53,6 @@ qbool SNDDMA_Init(void)
 	for (i = 0; i < sizeof (sRandomBuf); i++)
 		sRandomBuf[i] = rand();
 	
-	shm = &sn;
-	shm->splitbuffer = false;
-
 	err = SndNewChannel (&gChannel, sampledSynth, initStereo | initNoInterp | initNoDrop, nil);
 	if (err != noErr)
 	{

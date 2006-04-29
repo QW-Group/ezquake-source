@@ -16,13 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_linux.c,v 1.7 2006-04-29 15:59:53 disconn3ct Exp $
+    $Id: snd_linux.c,v 1.8 2006-04-29 19:36:51 disconn3ct Exp $
 */
 
 #include "quakedef.h"
 
 qbool SNDDMA_ALSA;
-int snd_inited; // FIXME: get rid of it
 // Note: The functions here keep track of if the sound system is inited.
 // They perform checks so that the real functions are only called if appropriate.
 
@@ -62,39 +61,29 @@ qbool SNDDMA_Init(void)
 		}
 	}
 
-	snd_inited = retval;
 	return retval;
 }
 
 int SNDDMA_GetDMAPos(void)
 {
-	if (snd_inited) {
-		if (SNDDMA_ALSA)
-			return SNDDMA_GetDMAPos_ALSA();
-		else
-			return SNDDMA_GetDMAPos_OSS();
-	} else
-		return 0;
+	if (SNDDMA_ALSA)
+		return SNDDMA_GetDMAPos_ALSA();
+	else
+		return SNDDMA_GetDMAPos_OSS();
 }
 
 void SNDDMA_Shutdown(void)
 {
-	if (snd_inited) {
-		if (SNDDMA_ALSA)
-			SNDDMA_Shutdown_ALSA();
-		else
-			SNDDMA_Shutdown_OSS();
-
-		snd_inited = 0;
-	}
+	if (SNDDMA_ALSA)
+		SNDDMA_Shutdown_ALSA();
+	else
+		SNDDMA_Shutdown_OSS();
 }
 
 //Send sound to device if buffer isn't really the dma buffer
 void SNDDMA_Submit(void)
 {
-	if (snd_inited) {
-		if (SNDDMA_ALSA)
-			SNDDMA_Submit_ALSA();
+	if (SNDDMA_ALSA)
+		SNDDMA_Submit_ALSA();
 		// OSS doesn't use this so no need to call it.
-	}
 }

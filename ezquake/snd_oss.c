@@ -32,33 +32,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-
-extern int snd_inited; // FIXME: get rid of it
-
-static char snd_dev[64] = "/dev/dsp";
+// Global Variables
 static int audio_fd;
 
+// Main functions
 qbool SNDDMA_Init_OSS(void)
 {
-	const int tryrates[] = {11025, 22051, 44100, 8000}; // FIXME: 8000 --> 48000 ?
-	int rc, fmt, tmp, caps, i;
+	int rc, fmt, tmp, caps;
+	char *snd_dev = NULL;
 	struct audio_buf_info info;
 
-	snd_inited = 0;
+	snd_dev = Cvar_VariableString("s_device");
 
-	// open snd_dev, confirm capability to mmap, and get size of dma buffer
-	if ((i = COM_CheckParm("-snddev")) && i < com_argc - 1)
-		strlcpy(snd_dev, com_argv[i + 1], sizeof(snd_dev));
-
-	audio_fd = open(snd_dev, O_RDWR); // FIXME: O_RDWR | O_NONBLOCK ?
-	if (audio_fd < 0) {
+	if ((audio_fd = open(snd_dev, O_RDWR | O_NONBLOCK)) < 0) {
 		perror(snd_dev);
 		Com_Printf("Could not open %s\n", snd_dev);
 		return 0;
 	}
 
-	rc = ioctl(audio_fd, SNDCTL_DSP_RESET, 0);
-	if (rc < 0) {
+	if ((rc = ioctl(audio_fd, SNDCTL_DSP_RESET, 0)) < 0) {
 		perror(snd_dev);
 		Com_Printf("Could not reset %s\n", snd_dev);
 		close(audio_fd);
@@ -85,67 +77,29 @@ qbool SNDDMA_Init_OSS(void)
 		return 0;
 	}
 
-	shm = &sn; // FIXME
-	shm->splitbuffer = 0;
-
 	// set sample bits & speed
-
-	if ((i = COM_CheckParm("-sndbits")) && i + 1 < com_argc)
-		shm->samplebits = atoi(com_argv[i + 1]);
+	shm->samplebits = (int) s_bits.value;
+	shm->speed = ((int) s_khz.value == 48) ? 48000 : ((int) s_khz.value == 44) ? 44100 : ((int) s_khz.value == 22) ? 22050 : 11025;
+	shm->channels = ((int) s_stereo.value == 0) ? 1 : 2;
 
 	if (shm->samplebits != 16 && shm->samplebits != 8) {
 		ioctl(audio_fd, SNDCTL_DSP_GETFMTS, &fmt);
-		if (fmt & AFMT_S16_LE)
+		if (fmt & AFMT_S16_LE) // disconnect: FIXME: what if bigendian?
 			shm->samplebits = 16;
 		else if (fmt & AFMT_U8)
 			shm->samplebits = 8;
 	}
 
-	if ((i = COM_CheckParm("-sndspeed")) && i + 1 < com_argc) {
-		shm->speed = atoi(com_argv[i + 1]);
-	} else {
-		for (i = 0; i < sizeof(tryrates) / 4; i++)
-			if (!ioctl(audio_fd, SNDCTL_DSP_SPEED, &tryrates[i])) break;
-		shm->speed = tryrates[i];
-	}
 
-	if (COM_CheckParm("-sndmono"))
-		shm->channels = 1;
-	else if (COM_CheckParm("-sndstereo"))
-		shm->channels = 2;
-	else
-		shm->channels = 2;
-
-	shm->samples = info.fragstotal * info.fragsize / (shm->samplebits/8);
-	shm->submission_chunk = 1;
-
-	// memory map the dma buffer
-
-	shm->buffer = (unsigned char *) mmap(NULL, info.fragstotal * info.fragsize, PROT_WRITE, MAP_FILE|MAP_SHARED, audio_fd, 0);
-	if (!shm->buffer) {
+	tmp = (shm->channels == 2);
+	if ((rc = ioctl(audio_fd, SNDCTL_DSP_STEREO, &tmp)) < 0) {
 		perror(snd_dev);
-		Com_Printf ("Could not mmap %s\n", snd_dev);
+		Com_Printf ("Could not set %s to stereo", snd_dev);
 		close(audio_fd);
 		return 0;
 	}
 
-	tmp = 0;
-	if (shm->channels == 2)
-		tmp = 1;
-	rc = ioctl(audio_fd, SNDCTL_DSP_STEREO, &tmp);
-	if (rc < 0) {
-		perror(snd_dev);
-		Com_Printf ("Could not set %s to stereo=%d", snd_dev, shm->channels);
-		close(audio_fd);
-		return 0;
-	}
-	if (tmp)
-		shm->channels = 2;
-	else
-		shm->channels = 1;
-
-	rc = ioctl(audio_fd, SNDCTL_DSP_SPEED, &shm->speed);
-	if (rc < 0) {
+	if ((rc = ioctl(audio_fd, SNDCTL_DSP_SPEED, &shm->speed)) < 0) {
 		perror(snd_dev);
 		Com_Printf("Could not set %s speed to %d", snd_dev, shm->speed);
 		close(audio_fd);
@@ -177,8 +131,19 @@ qbool SNDDMA_Init_OSS(void)
 		return 0;
 	}
 
-	// toggle the trigger & start her up
+	shm->samples = info.fragstotal * info.fragsize / (shm->samplebits/8);
+	shm->submission_chunk = 1;
 
+	// memory map the dma buffer
+	shm->buffer = (unsigned char *) mmap(NULL, info.fragstotal * info.fragsize, PROT_WRITE, MAP_FILE|MAP_SHARED, audio_fd, 0);
+	if (!shm->buffer || shm->buffer == (unsigned char *)-1) {
+		perror(snd_dev);
+		Com_Printf ("Could not mmap %s\n", snd_dev);
+		close(audio_fd);
+		return 0;
+	}
+
+	// toggle the trigger & start her up
 	tmp = 0;
 	rc  = ioctl(audio_fd, SNDCTL_DSP_SETTRIGGER, &tmp);
 	if (rc < 0) {
@@ -198,7 +163,6 @@ qbool SNDDMA_Init_OSS(void)
 
 	shm->samplepos = 0;
 
-	snd_inited = 1;
 	return 1;
 
 }
@@ -206,14 +170,17 @@ qbool SNDDMA_Init_OSS(void)
 int SNDDMA_GetDMAPos_OSS(void)
 {
 	struct count_info count;
+	char *snd_dev = NULL;
 
-	if (!snd_inited) return 0;
+	if (!shm)
+		return 0;
+
+	snd_dev = Cvar_VariableString("s_device");
 
 	if (ioctl(audio_fd, SNDCTL_DSP_GETOPTR, &count) == -1) {
 		perror(snd_dev);
 		Com_Printf("Uh, sound dead.\n");
 		close(audio_fd);
-		snd_inited = 0;
 		return 0;
 	}
 	//	shm->samplepos = (count.bytes / (shm->samplebits / 8)) & (shm->samples-1);
@@ -226,10 +193,19 @@ int SNDDMA_GetDMAPos_OSS(void)
 
 void SNDDMA_Shutdown_OSS(void)
 {
-	if (snd_inited) {
-		if (sn.buffer) // close it properly, so we can go and restart it later.
-			munmap(sn.buffer, sn.samples * (sn.samplebits/8));
-		if (audio_fd)
-			close(audio_fd);
-	}
+	int tmp = 0;
+
+	// unmap the memory
+	if (sn.buffer)
+		munmap(sn.buffer, sn.samples * (sn.samplebits/8));
+
+	// stop the sound
+	ioctl(audio_fd, SNDCTL_DSP_SETTRIGGER, &tmp);
+	ioctl(audio_fd, SNDCTL_DSP_RESET, 0);
+
+	// close the device
+	if (audio_fd)
+		close(audio_fd);
+
+	audio_fd = -1;
 }
