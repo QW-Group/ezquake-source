@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.27 2006-04-11 23:10:59 disconn3ct Exp $
+	$Id: mvd_utils.c,v 1.28 2006-04-29 18:18:58 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -236,7 +236,7 @@ int last_track;
 // mvd_info cvars
 cvar_t			mvd_info		= {"mvd_info", "0"};
 cvar_t			mvd_info_show_header	= {"mvd_info_show_header", "0"};
-cvar_t			mvd_info_setup		= {"mvd_info_setup", "%6n %3f %10l %4a %4h %3w"};
+cvar_t			mvd_info_setup		= {"mvd_info_setup", "%6n %3f %10l %4a %4h %5W"};
 cvar_t			mvd_info_x		= {"mvd_info_x", "0"};
 cvar_t			mvd_info_y		= {"mvd_info_y", "0"};
 
