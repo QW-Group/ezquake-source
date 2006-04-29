@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.25 2006-04-29 15:59:53 disconn3ct Exp $
+    $Id: snd_dma.c,v 1.26 2006-04-29 17:32:56 disconn3ct Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -735,6 +735,9 @@ static void S_Update_ (void)
 {
 	unsigned int endtime;
 	int samps;
+#ifdef _WIN32
+	DWORD dwStatus;
+#endif
 
 	if (!sound_started || (snd_blocked > 0))
 		return;
@@ -755,8 +758,6 @@ static void S_Update_ (void)
 
 #ifdef _WIN32
 	// if the buffer was lost or stopped, restore it and/or restart it
-	DWORD dwStatus;
-
 	if (pDSBuf) {
 		if (pDSBuf->lpVtbl->GetStatus (pDSBuf, &dwStatus) != DS_OK)
 			Com_Printf ("Couldn't get sound buffer status\n");
