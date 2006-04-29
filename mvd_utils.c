@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.28 2006-04-29 18:18:58 johnnycz Exp $
+	$Id: mvd_utils.c,v 1.29 2006-04-29 18:32:11 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -746,7 +746,7 @@ void MVD_AutoTrack_f(void) {
 			multitrack_val = mvd_multitrack_1_values.string;
 			id = MVD_FindBestPlayer_f();
 			if ( id != multitrack_id_1){
-				snprintf(arg, sizeof(arg), "track1 %i \n",id);
+				snprintf(arg, sizeof(arg), "track1 #%i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_1 = id;
 			}
@@ -756,7 +756,7 @@ void MVD_AutoTrack_f(void) {
 			multitrack_val = mvd_multitrack_2_values.string;
 			id = MVD_FindBestPlayer_f();
 			if ( id != multitrack_id_2){
-				snprintf(arg, sizeof(arg), "track2 %i \n",id);
+				snprintf(arg, sizeof(arg), "track2 #%i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_2 = id;
 			}
@@ -766,7 +766,7 @@ void MVD_AutoTrack_f(void) {
 			multitrack_val = mvd_multitrack_3_values.string;
 			id = MVD_FindBestPlayer_f();
 			if ( id != multitrack_id_3){
-				snprintf(arg, sizeof(arg), "track3 %i \n",id);
+				snprintf(arg, sizeof(arg), "track3 #%i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_3 = id;
 			}
@@ -776,7 +776,7 @@ void MVD_AutoTrack_f(void) {
 	 		multitrack_val = mvd_multitrack_4_values.string;
 			id = MVD_FindBestPlayer_f();
 			if ( id != multitrack_id_4){
-				snprintf(arg, sizeof(arg), "track4 %i \n",id);
+				snprintf(arg, sizeof(arg), "track4 #%i \n",id);
 				Cbuf_AddText(arg);
 				multitrack_id_4 = id;
 			}
@@ -786,7 +786,7 @@ void MVD_AutoTrack_f(void) {
 	
 		id = MVD_FindBestPlayer_f();
 		if ( id != last_track){
-			snprintf(arg, sizeof(arg), "track %i \n",id);
+			snprintf(arg, sizeof(arg), "track #%i \n",id);
 			Cbuf_AddText(arg);
 			last_track = id;
 		}
