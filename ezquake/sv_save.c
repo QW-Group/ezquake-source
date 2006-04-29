@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_save.c,v 1.7 2006-03-20 13:51:28 vvd0 Exp $
+	$Id: sv_save.c,v 1.8 2006-04-29 20:19:08 disconn3ct Exp $
 */
 
 #ifndef SERVERONLY
@@ -130,7 +130,8 @@ void SV_LoadGame_f (void) {
 	FILE *f;
 	float time, tfloat, spawn_parms[NUM_SPAWN_PARMS];
 	edict_t *ent;
-	int entnum, version, i, r;
+	int entnum, version, r;
+	unsigned int i;
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("Usage: %s <savename> : load a game\n", Cmd_Argv(0));

@@ -66,10 +66,10 @@ int XSD_IsSpace(char c)
 }
 
 // strip spaces multiple spaces from in-between words
-char *XSD_StripSpaces(char *str)
+char *XSD_StripSpaces (char *str)
 {
     char *buf, *ret;
-    int p=0, q=0;
+    unsigned int p = 0, q = 0;
 
     if (str == NULL)
         return str;
@@ -102,7 +102,7 @@ char *XSD_StripSpaces(char *str)
 // check if we are somewhere inside given element
 int XSD_IsIn(char *path, char *subPath)
 {
-    int sublen = strlen(subPath);
+    size_t sublen = strlen(subPath);
 
     // if path is shorter than subpath
     if (strlen(path) < sublen)
