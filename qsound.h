@@ -46,7 +46,6 @@ typedef struct sfxcache_s {
 typedef struct dma_s {
 	qbool		gamealive;
 	qbool		soundalive;
-	qbool		splitbuffer;
 	int		channels;
 	int		samples;		// mono samples in buffer
 	int		submission_chunk;	// don't mix less than this #
@@ -134,6 +133,8 @@ extern volatile dma_t	sn;
 
 extern cvar_t		s_loadas8bit;
 extern cvar_t		s_khz;
+extern cvar_t		s_bits;
+extern cvar_t		s_stereo;
 extern cvar_t		s_volume;
 extern cvar_t		s_swapstereo;
 extern cvar_t		bgmvolume;

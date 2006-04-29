@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: snd_win.c,v 1.7 2006-04-29 15:59:53 disconn3ct Exp $
+    $Id: snd_win.c,v 1.8 2006-04-29 19:36:51 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -174,8 +174,6 @@ static sndinitstat SNDDMA_InitDirect (void)
 	int reps, temp, devicenum;
 
 	memset ((void *)&sn, 0, sizeof (sn));
-
-	shm = &sn;
 
 	shm->channels = 2;
 	shm->samplebits = 16;
@@ -347,7 +345,6 @@ static sndinitstat SNDDMA_InitDirect (void)
 	pDSBuf->lpVtbl->Play(pDSBuf, 0, 0, DSBPLAY_LOOPING);
 
 	shm->soundalive = true;
-	shm->splitbuffer = false;
 	shm->samples = gSndBufSize/(shm->samplebits/8);
 	shm->samplepos = 0;
 	shm->submission_chunk = 1;
@@ -370,8 +367,6 @@ static qbool SNDDMA_InitWav (void)
 
 	snd_sent = 0;
 	snd_completed = 0;
-
-	shm = &sn;
 
 	shm->channels = 2;
 	shm->samplebits = 16;
@@ -463,7 +458,6 @@ static qbool SNDDMA_InitWav (void)
 	}
 
 	shm->soundalive = true;
-	shm->splitbuffer = false;
 	shm->samples = gSndBufSize/(shm->samplebits/8);
 	shm->samplepos = 0;
 	shm->submission_chunk = 1;
