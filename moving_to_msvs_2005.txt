@@ -1,0 +1,21 @@
+Things I had to do when migrating from MS VS 2003 project file to MS VS 2005 project file:
+
+added '/D "_CRT_SECURE_NO_DEPRECATE"' to compiler switches
+added #ifndef around some macro definitions that caused 'already defined' precompiler errors
+added #ifndef and fixed newlines around some #define in image.c (newlines were broken and it messed with the rest of the code in that file)
+removed asm (.s) files from project file
+replaced unlink() with _unlink() and getcwd() with _getcwd
+removed libcmt ignored default libraries, added MSVCRT, MSVCRT is now the only ignored default library
+added dir "...\Microsoft DirectX SDK (April 2006)\Lib\x86" to linker -> general -> additional library directories
+added dir "...\Microsoft DirectX SDK (April 2006)\Include" to c/c++ -> general -> additional include directoriesdirectories
+removed functions calls leading to asm (.s) files (in sys_win.c):
+Snd_WriteLinearBlastStereo16(), Snd_WriteLinearBlastStereo16_SwapStereo(), SND_PaintChannelFrom8(), SND_PaintChannelFrom16(), 
+
+now there are ONLY libpng.lib warnings of this type: "locally defined symbol * imported[ in function *]"
+gldebug comiles for me with 0 errors and 26 warnings
+
+TODO: apply these changes to all build types. in the time of writing this, it's done only in GLDebug
+ToDo: add directx sdx paths to global variables and remove them from project file
+
+safe to commit: vx_vertexlights.c, common.c, cl_demo.c
+
