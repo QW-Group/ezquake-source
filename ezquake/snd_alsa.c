@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id:  Exp $
+    $Id: snd_alsa.c,v 1.24 2006/04/28 23:38:29 disconn3ct Exp $
 */
 
 #include <stdio.h>
@@ -35,7 +35,6 @@ static ret (*alsa_##func) params;
 #define snd_pcm_sw_params_sizeof alsa_snd_pcm_sw_params_sizeof
 
 // Global Variables
-extern int paintedtime, soundtime;
 static snd_pcm_t *pcm;
 
 
@@ -103,7 +102,7 @@ qbool SNDDMA_Init_ALSA (void)
 	snd_pcm_uframes_t buffer_size;
 	static void *alsa_handle;
 
-	if(! (alsa_handle = dlopen("libasound.so.2", RTLD_GLOBAL | RTLD_NOW)) )
+	if(!(alsa_handle = dlopen("libasound.so.2", RTLD_GLOBAL | RTLD_NOW)))
 		return 0;
 
 #define ALSA_FUNC(ret, func, params) \
@@ -132,13 +131,7 @@ qbool SNDDMA_Init_ALSA (void)
 		}
 	}
 
-	if(Cvar_VariableValue("s_rate")) {
-		rate = Cvar_VariableValue("s_rate");
-		if(rate != 48000 && rate != 44100 && rate != 22050 && rate != 11025) {
-			Sys_Printf("Error: invalid sample rate: %d\n", rate);
-			return 0;
-		}
-	}
+	rate = (s_khz.value == 48) ? 48000 : (s_khz.value == 44) ? 44100 : (s_khz.value == 22) ? 22050 : 11025;
 
 	stereo = Cvar_VariableValue("s_stereo");
 
@@ -333,26 +326,3 @@ error:
 	alsa_snd_pcm_close (pcm);
 	return 0;
 }
-
-
-
-/*
- 
-    These functions are not currently needed by ZQuake,
-    but could be of use in the future...
- 
-    Remember, they assume that sound is already inited.
- 
-static void SNDDMA_BlockSound_ALSA (void)
-{
-    if(++snd_blocked == 1)
-        alsa_snd_pcm_pause (pcm, 1);
-}
- 
-static void SNDDMA_UnblockSound_ALSA (void)
-{
-    if(!snd_blocked)
-        return;
-    if(!--snd_blocked)
-        alsa_snd_pcm_pause (pcm, 0);
-}*/

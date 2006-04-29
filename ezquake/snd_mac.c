@@ -37,24 +37,6 @@ static unsigned char dma[64*1024];
 SndChannelPtr  			gChannel;            // pointer to the sound channel
 SndDoubleBufferHeader 	gHeader;             // the double buffer header
 static char sRandomBuf[SoundBufferSize];
-// disconnect: WTF?! it's already defined in qsound.h, but i got errors
-typedef struct
-{
-	qbool		gamealive;
-	qbool		soundalive;
-	qbool		splitbuffer;
-	int			channels;
-	int			samples;			// mono samples in buffer
-	int			submission_chunk;		// don't mix less than this #
-	int			samplepos;			// in mono samples
-	int			samplebits;
-	int			speed;
-	unsigned char	*buffer;
-} dma_t;
-
-extern volatile dma_t 	*shm;
-extern volatile dma_t 	sn;
-extern int paintedtime;
 
 qbool SNDDMA_Init(void)
 {

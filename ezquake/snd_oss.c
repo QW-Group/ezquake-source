@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id:  Exp $
+    $Id: snd_oss.c,v 1.24 2006/04/28 23:38:29 disconn3ct Exp $
 */
 
 #include <unistd.h>
@@ -232,9 +232,4 @@ void SNDDMA_Shutdown_OSS(void)
 		if (audio_fd)
 			close(audio_fd);
 	}
-}
-
-//Send sound to device if buffer isn't really the dma buffer
-void SNDDMA_Submit_OSS(void)
-{
 }
