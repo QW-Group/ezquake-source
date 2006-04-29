@@ -23,7 +23,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: version.c,v 1.5 2006-04-06 23:23:19 disconn3ct Exp $
+	$Id: version.c,v 1.6 2006-04-29 19:28:09 disconn3ct Exp $
 */
 
 #include "common.h"
@@ -83,16 +83,9 @@ VersionString
 */
 char *VersionString (void)
 {
-	static char str[32];
-	char st[256];
+	char str[32];
 
-	st[0] = 0;
-
-	if (COM_CheckParm("-norjscripts")) {
-	strcpy (st, " norjscripts");
-	}
-
-	snprintf (str, sizeof(str), "%i%s", build_number(), st);
+	snprintf (str, sizeof(str), "%i", build_number());
 
 	return str;
 }
