@@ -855,7 +855,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         {
             strcpy(size, "<-->");
             if (filenum == fl->current_entry)
-                strcpy(ssize, "subdir");
+                strncpy(ssize, "subdir", sizeof(ssize));
         }
         else
         {
