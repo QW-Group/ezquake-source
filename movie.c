@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: movie.c,v 1.11 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: movie.c,v 1.12 2006-04-29 15:59:52 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -39,7 +39,7 @@ void SCR_Movieshot (char *);	//joe: capturing to avi
 //joe: capturing audio
 #ifdef _WIN32
 extern short *snd_out;
-extern int snd_linear_count, soundtime;
+extern int snd_linear_count;
 
 // Variables for buffering audio
 short capture_audio_samples[44100];	// big enough buffer for 1fps at 44100Hz
