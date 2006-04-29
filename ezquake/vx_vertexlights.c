@@ -19,8 +19,12 @@ byte anorm_yaw[162];
 byte vlighttable[256][256];
 
 #ifdef _WIN32
+#ifndef fabsf
 #define fabsf(x) (float)fabs((double)x)
+#endif
+#ifndef fmodf
 #define fmodf(x, y) (float)fmod((double)x, (double)y)
+#endif
 #endif
 
 float VLight_GetLightValue(int index, float apitch, float ayaw)
