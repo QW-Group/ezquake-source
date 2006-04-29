@@ -64,6 +64,11 @@ LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam);
 qbool OnChange_sys_disableWinKeys(cvar_t *var, char *string);
 cvar_t	sys_disableWinKeys = {"sys_disableWinKeys", "0", 0, OnChange_sys_disableWinKeys};
 
+#if !id386
+void Sys_HighFPPrecision(void) {}
+void Sys_LowFPPrecision(void) {}
+#endif
+
 qbool OnChange_sys_disableWinKeys(cvar_t *var, char *string) {
 	if (Q_atof(string)) {
 		if (!WinKeyHook_isActive) {
