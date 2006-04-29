@@ -165,22 +165,19 @@ killing_streak_t	tp_streak[] =
 
 #define NUMSTREAK (sizeof(tp_streak) / sizeof(tp_streak[0]))
 
-killing_streak_t *VX_GetStreak(int frags)	
+killing_streak_t *VX_GetStreak (int frags)	
 {
-	killing_streak_t	*streak;
-	int i;
-	streak = tp_streak;
+	unsigned int i;
+	killing_streak_t *streak = tp_streak;
 
-	for (i=0, streak=tp_streak; i<NUMSTREAK ; i++, streak++)
-	{
+	for (i = 0, streak = tp_streak; i < NUMSTREAK; i++, streak++)
 		if (frags >= streak->frags)
-		{
 			return streak;
-		}
-	}
+
 	return NULL;
 }
-void VX_TrackerStreak(int player, int count)
+
+void VX_TrackerStreak (int player, int count)
 {
 	char outstring[500];
 	killing_streak_t *streak = VX_GetStreak(count);

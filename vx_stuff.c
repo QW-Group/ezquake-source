@@ -150,19 +150,14 @@ checkmodel_t tp_checkmodels[]=
 
 #define NUMCHECKMODELS (sizeof(tp_checkmodels) / sizeof(tp_checkmodels[0]))
 
-checkmodel_t *TP_GetModels(char *s)	
+checkmodel_t *TP_GetModels (char *s)	
 {
-	checkmodel_t	*model;
-	int i;
-	char *f;
+	unsigned int i;
+	char *f = TP_ConvertToWhiteText(s);
+	checkmodel_t *model = tp_checkmodels;
 
-	model = tp_checkmodels;
-
-	f=TP_ConvertToWhiteText(s);
-	for (i=0, model=tp_checkmodels ; i<NUMCHECKMODELS ; i++, model++)
-	{
-		if (strstr(f, model->number))
-		{
+	for (i = 0, model = tp_checkmodels; i < NUMCHECKMODELS; i++, model++) {
+		if (strstr(f, model->number)) {
 			return model;
 		}
 	}

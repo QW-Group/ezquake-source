@@ -200,7 +200,7 @@ void NET_SendLoopPacket (netsrc_t sock, int length, void *data, netadr_t to) {
 	i = loop->send & (MAX_LOOPBACK - 1);
 	loop->send++;
 
-	if (length > sizeof(loop->msgs[i].data))
+	if (length > (int) sizeof(loop->msgs[i].data))
 		Sys_Error ("NET_SendLoopPacket: length > MAX_UDP_PACKET");
 
 	memcpy (loop->msgs[i].data, data, length);

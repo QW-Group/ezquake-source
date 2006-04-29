@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_main.c,v 1.18 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: sv_main.c,v 1.19 2006-04-29 20:19:08 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -662,8 +662,8 @@ cvar_t	filterban = {"filterban", "1"};
 
 qbool StringToFilter (char *s, ipfilter_t *f) {
 	char num[128];
-	int i, j;
-	byte b[4], m[4];
+	unsigned int i, j;
+	unsigned char b[4], m[4];
 	
 	for (i=0 ; i<4 ; i++) {
 		b[i] = 0;
