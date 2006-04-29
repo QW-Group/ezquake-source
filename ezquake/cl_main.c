@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.69 2006-04-08 16:28:16 tonik Exp $
+	$Id: cl_main.c,v 1.70 2006-04-29 19:28:09 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -892,9 +892,8 @@ void CL_InitLocal (void) {
 
 	if (COM_CheckParm("-norjscripts"))
 	{
-	Cvar_SetValue(&allow_scripts, 0);
-	Cvar_SetFlags(&allow_scripts, Cvar_GetFlags(&allow_scripts) | CVAR_ROM);
-        strcat(st, " norjscripts");
+		Cvar_SetValue(&allow_scripts, 0);
+		Cvar_SetFlags(&allow_scripts, Cvar_GetFlags(&allow_scripts) | CVAR_ROM);
 	}
 
  	Info_SetValueForStarKey (cls.userinfo, "*client", st, MAX_INFO_STRING);
