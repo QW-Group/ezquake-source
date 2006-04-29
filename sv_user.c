@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.18 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: sv_user.c,v 1.19 2006-04-29 20:06:56 disconn3ct Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -255,7 +255,8 @@ void Cmd_Modellist_f (void) {
 }
 
 void Cmd_PreSpawn_f (void) {
-	unsigned buf, check;
+	unsigned int check;
+	int buf;
 
 	if (sv_client->state != cs_connected) {
 		Com_Printf ("prespawn not valid -- already spawned\n");

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.19 2006-04-21 20:42:04 disconn3ct Exp $
+	$Id: gl_draw.c,v 1.20 2006-04-29 20:06:56 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1093,8 +1093,8 @@ void Draw_TransPic (int x, int y, mpic_t *pic) {
 
 //Only used for the player color selection menu
 void Draw_TransPicTranslate (int x, int y, mpic_t *pic, byte *translation) {
-	int v, u, c, p;
-	unsigned trans[64 * 64], *dest;
+	int v, u, c;
+	unsigned int p, trans[64 * 64], *dest;
 	byte *src;
 
 	GL_Bind (translate_texture);
