@@ -85,14 +85,6 @@ Section "ezQuake client"
   SetOutPath $INSTDIR\ezquake\manual
   File /r "ezquake\manual\*.*"
 
-  CreateDirectory $INSTDIR\ezquake\textures
-  CreateDirectory $INSTDIR\ezquake\textures\wad
-  SetOutPath $INSTDIR\ezquake\textures\wad
-  File /r "ezquake\textures\wad\*.png"
-  CreateDirectory $INSTDIR\ezquake\textures\charsets
-  SetOutPath $INSTDIR\ezquake\textures\charsets
-  File /r "ezquake\textures\charsets\*.png"
-
   CreateDirectory $INSTDIR\ezquake\help
   CreateDirectory $INSTDIR\ezquake\help\manual
   CreateDirectory $INSTDIR\ezquake\help\xsd
@@ -141,6 +133,16 @@ Section "ezQuake client"
   WriteUninstaller "ezuninstall.exe"
 
 SectionEnd
+
+Section "Modern HUD and Console font"
+  CreateDirectory $INSTDIR\ezquake\textures
+  CreateDirectory $INSTDIR\ezquake\textures\wad
+  SetOutPath $INSTDIR\ezquake\textures\wad
+  File /r "ezquake\textures\wad\*.png"
+  CreateDirectory $INSTDIR\ezquake\textures\charsets
+  SetOutPath $INSTDIR\ezquake\textures\charsets
+  File /r "ezquake\textures\charsets\*.png"
+SectionEnd  
 
 Section "Single Player and Multiplayer progs"
   CreateDirectory $INSTDIR\qw
