@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.8 2006-04-26 10:42:13 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.9 2006-04-29 17:16:30 johnnycz Exp $
  */
 
 #ifdef EMBED_TCL
@@ -253,7 +253,7 @@ static int TCL_ClockProc (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj
 
 			if (rc != TCL_OK) return (rc);
 			result = Tcl_GetObjResult (interp);
-			if (TCL_OK != Tcl_GetLongFromObj (NULL, result, &clock))
+			if (TCL_OK != Tcl_GetLongFromObj (NULL, result, (long *) &clock))
 				return (rc);
 
 			clock -= clock % 60; // round away seconds
