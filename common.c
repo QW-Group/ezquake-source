@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: common.c,v 1.21 2006-04-29 11:38:51 johnnycz Exp $
+	$Id: common.c,v 1.22 2006-04-29 13:02:20 disconn3ct Exp $
 */
 
 #ifdef _WIN32
@@ -1394,7 +1394,7 @@ void FS_InitFilesystem (void) {
 	if ((i = COM_CheckParm ("-basedir")) && i < com_argc - 1)
 		strlcpy (com_basedir, com_argv[i + 1], sizeof(com_basedir));
 	else
-		_getcwd(com_basedir, sizeof(com_basedir) - 1);
+		Sys_getcwd(com_basedir, sizeof(com_basedir) - 1); // FIXME strlcpy (com_basedir, sizeof(com_basedir, "."); ?
 
 	for (i = 0; i < strlen(com_basedir); i++)
 		if (com_basedir[i] == '\\')
