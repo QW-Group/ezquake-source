@@ -23,7 +23,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: version.c,v 1.6 2006-04-29 19:28:09 disconn3ct Exp $
+	$Id: version.c,v 1.7 2006-04-30 12:56:44 johnnycz Exp $
 */
 
 #include "common.h"
@@ -83,7 +83,7 @@ VersionString
 */
 char *VersionString (void)
 {
-	char str[32];
+	static char str[32];
 
 	snprintf (str, sizeof(str), "%i", build_number());
 
