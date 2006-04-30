@@ -242,7 +242,8 @@ void Mod_LoadTextures (lump_t *l) {
 	miptex_t *mt;
 	texture_t *tx, *tx2, *anims[10], *altanims[10];
 	dmiptexlump_t *m;
-    extern cvar_t r_max_size_1;
+    extern cvar_t r_max_size_1, r_drawflat, r_wallcolor, r_floorcolor;
+	float my = 0;
 
 	if (!l->filelen) {
 		loadmodel->textures = NULL;
@@ -282,8 +283,22 @@ void Mod_LoadTextures (lump_t *l) {
 
 			for (j = 0; j < MIPLEVELS; j++)
 				tx->offsets[j] = sizeof(texture_t);
-
-
+// hetman /r_drawflat for software builds {
+		} else if (loadmodel -> isworldmodel && r_drawflat.value && !ISTURBTEX(mt->name)) {
+			loadmodel->textures[i] = tx = (texture_t *) Hunk_AllocName (sizeof(texture_t) + 16 * 16, loadname);
+			memcpy (tx->name, mt->name, sizeof(tx->name));
+            tx->width = tx->height = 16;
+			if ((int) my++ % 2 == 0) {
+				tx->colour = (int) r_floorcolor.value & 0xFF;
+				memset (tx + 1, (int) r_floorcolor.value & 0xFF, 16 * 16);
+			}
+			else {
+				tx->colour = (int) r_wallcolor.value & 0xFF; 
+				memset (tx + 1, (int) r_wallcolor.value & 0xFF, 16 * 16);
+			}
+            for (j = 0; j < MIPLEVELS; j++)
+                tx->offsets[j] = sizeof(texture_t);			
+// } hetman
 		} else if (loadmodel->isworldmodel && r_max_size_1.value && !ISTURBTEX(mt->name)) {
 			loadmodel->textures[i] = tx = (texture_t *) Hunk_AllocName (sizeof(texture_t) + 16 * 16, loadname);
 			memcpy (tx->name, mt->name, sizeof(tx->name));
@@ -319,6 +334,9 @@ void Mod_LoadTextures (lump_t *l) {
 
 			loadmodel->textures[i] = tx = (texture_t *) Hunk_AllocName (sizeof(texture_t) + pixels, loadname);
 			memcpy (tx->name, mt->name, sizeof(tx->name));
+// hetman /r_drawflat for software builds {
+			tx->colour = 300;
+// } hetman
 			tx->width = mt->width;
 			tx->height = mt->height;
 
@@ -635,6 +653,12 @@ void Mod_LoadFaces (lump_t *l) {
 		out->numedges = LittleShort(in->numedges);		
 		out->flags = 0;
 
+// hetman /r_drawflat for software builds {
+		if (! loadmodel->isworldmodel) {
+			out->flags |= SURF_FORBRUSH;	
+		}
+// } hetman
+
 		planenum = LittleShort(in->planenum);
 		side = LittleShort(in->side);
 		if (side)
@@ -941,6 +965,8 @@ float RadiusFromBounds (vec3_t mins, vec3_t maxs) {
 	return VectorLength (corner);
 }
 
+extern void D_SeekTextures (void);
+
 void Mod_LoadBrushModel (model_t *mod, void *buffer) {
 	int i, j;
 	dheader_t *header;
@@ -991,11 +1017,12 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer) {
 		Mod_LoadVertexes (&header->lumps[LUMP_VERTEXES]);
 		Mod_LoadEdges (&header->lumps[LUMP_EDGES]);
 		Mod_LoadSurfedges (&header->lumps[LUMP_SURFEDGES]);
-		Mod_LoadTextures (&header->lumps[LUMP_TEXTURES]);
 		Mod_LoadLighting (&header->lumps[LUMP_LIGHTING]);
 	}
+
 	Mod_LoadPlanes (&header->lumps[LUMP_PLANES]);
 	if (!dedicated) {
+		Mod_LoadTextures (&header->lumps[LUMP_TEXTURES]);
 		Mod_LoadTexinfo (&header->lumps[LUMP_TEXINFO]);
 		Mod_LoadFaces (&header->lumps[LUMP_FACES]);
 		Mod_LoadMarksurfaces (&header->lumps[LUMP_MARKSURFACES]);

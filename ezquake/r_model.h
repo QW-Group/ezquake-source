@@ -78,6 +78,9 @@ typedef struct mplane_s {
 typedef struct texture_s {
 	char		name[16];
 	unsigned	width, height;
+// hetman /r_drawflat for software builds {
+	int         colour;
+// } hetman
 	int			anim_total;				// total tenths in sequence ( 0 = no)
 	int			anim_min, anim_max;		// time for this frame min <=time< max
 	struct texture_s *anim_next;		// in the animation sequence
@@ -92,6 +95,9 @@ typedef struct texture_s {
 #define SURF_DRAWTURB		0x10
 #define SURF_DRAWTILED		0x20
 #define SURF_DRAWBACKGROUND	0x40
+// hetman /r_drawflat for software builds {
+#define SURF_FORBRUSH       0x80
+// } hetman
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct {

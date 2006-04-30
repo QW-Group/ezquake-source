@@ -30,6 +30,12 @@ int			vstartscan;
 
 vec3_t		transformed_modelorg;
 
+// hetman /r_drawflat for software builds {
+texture_t *texture_floor, *texture_wall;
+qbool found_floor = false;
+qbool found_wall = false;
+// } hetman
+
 // FIXME: should go away
 extern void		R_RotateBmodel (void);
 extern void		R_TransformFrustum (void);
@@ -120,6 +126,13 @@ void D_CalcGradients (msurface_t *pface) {
 }
 
 void D_DrawSurfaces (void) {
+// hetman /r_drawflat for software builds {
+	extern cvar_t r_drawflat, r_wallcolor, r_floorcolor;
+	float my;
+	surf_t *draws;
+	msurface_t *drawpface; 
+	texture_t* temp_tex;
+// } hetman
 	surf_t *s;
 	msurface_t *pface;
 	surfcache_t *pcurrentcache;
@@ -139,6 +152,8 @@ void D_DrawSurfaces (void) {
 		d_zistepu = s->d_zistepu;
 		d_zistepv = s->d_zistepv;
 		d_ziorigin = s->d_ziorigin;
+
+		pface = s->data;
 
 		if (s->flags & SURF_DRAWSKY) {
 			extern cvar_t r_fastsky;
@@ -224,6 +239,64 @@ void D_DrawSurfaces (void) {
 				VectorCopy (base_modelorg, modelorg);
 				R_TransformFrustum ();
 			}
+// hetman /r_drawflat for software builds {
+		} else if (r_drawflat.value && ! (s->flags & SURF_FORBRUSH)) {
+			found_floor = found_wall = false;
+			for (draws = &surfaces[1]; draws<surface_p; draws++) {
+				if (found_floor && found_wall) {
+					break;
+				}
+				if ( ! draws->spans
+					|| draws->flags & SURF_DRAWSKY
+					|| draws->flags & SURF_DRAWBACKGROUND
+					|| draws->flags & SURF_DRAWTURB
+					|| draws->flags & SURF_FORBRUSH
+					)
+					continue; 
+				drawpface = draws->data;
+				if (drawpface->texinfo->texture->colour == ((int) r_floorcolor.value & 0xFF)) {
+					texture_floor = drawpface->texinfo->texture;
+					found_floor = true;
+				}
+				else if (drawpface->texinfo->texture->colour == ((int) r_wallcolor.value & 0xFF)) {
+					texture_wall = drawpface->texinfo->texture;
+					found_wall = true;
+				}
+			}
+			if (s->insubmodel) {
+				currententity = s->entity;
+				VectorSubtract (r_origin, currententity->origin, local_modelorg);
+				TransformVector (local_modelorg, transformed_modelorg);
+				R_RotateBmodel ();
+			}
+			pface = s->data;
+			my = pface->plane->normal[2];
+			miplevel = D_MipLevelForScale (s->nearzi * scale_for_mip * pface->texinfo->mipadjust);
+			temp_tex = pface->texinfo->texture;
+			if (my < -0.5 || my > 0.5) {
+				pface->texinfo->texture = texture_floor;
+				pcurrentcache = D_CacheSurface (pface, miplevel);
+			}
+			else {
+				pface->texinfo->texture = texture_wall;
+				pcurrentcache = D_CacheSurface (pface, miplevel);
+			}
+			pface->texinfo->texture = temp_tex;
+			cacheblock = (pixel_t *)pcurrentcache->data;
+			cachewidth = pcurrentcache->width;
+			D_CalcGradients (pface);
+			(*d_drawspans) (s->spans);
+			D_DrawZSpans (s->spans);
+			if (s->insubmodel) {
+				currententity = &r_worldentity;
+				VectorCopy (world_transformed_modelorg, transformed_modelorg);
+				VectorCopy (base_vpn, vpn);
+				VectorCopy (base_vup, vup);
+				VectorCopy (base_vright, vright);
+				VectorCopy (base_modelorg, modelorg);
+				R_TransformFrustum ();
+			}
+// } hetman
 		} else {
 			if (s->insubmodel) {
 				// FIXME: we don't want to do all this for every polygon!

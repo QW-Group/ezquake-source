@@ -28,6 +28,14 @@ cvar_t	d_subdiv16 = {"d_subdiv16", "1"};
 cvar_t	d_mipcap = {"d_mipcap", "0"};
 cvar_t	d_mipscale = {"d_mipscale", "1"};
 
+qbool OnChange_r_drawflat (cvar_t *, char *);
+
+// hetman /r_drawflat for software builds {
+cvar_t	r_drawflat   = {"r_drawflat", "0", 0, OnChange_r_drawflat};
+cvar_t	r_wallcolor  = {"r_wallcolor", "60"};
+cvar_t	r_floorcolor = {"r_floorcolor", "25"};
+// } hetman
+
 surfcache_t		*d_initial_rover;
 qbool		d_roverwrapped;
 int				d_minmip;
@@ -39,12 +47,26 @@ extern int		d_aflatcolor;
 
 void (*d_drawspans) (espan_t *pspan);
 
+// hetman /r_drawflat for software builds {
+qbool OnChange_r_drawflat (cvar_t *var, char *val) {
+	if (cls.state != ca_disconnected) {
+		Com_Printf("You must be disconnected before toggling Simple Textures.\n");
+		return true;
+	}
+	return false;
+}
+// } hetman
+
 void D_Init (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
 	Cvar_Register (&d_subdiv16);
 	Cvar_Register (&d_mipcap);
 	Cvar_Register (&d_mipscale);
-
+// hetman /r_drawflat for software builds {
+	Cvar_Register (&r_drawflat);
+	Cvar_Register (&r_floorcolor);
+	Cvar_Register (&r_wallcolor);
+// } hetman
 	Cvar_ResetCurrentGroup();
 
 	r_aliasuvscale = 1.0;
