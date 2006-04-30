@@ -44,7 +44,6 @@ typedef struct sfxcache_s {
 } sfxcache_t;
 
 typedef struct dma_s {
-	qbool		gamealive;
 	qbool		soundalive;
 	int		channels;
 	int		samples;		// mono samples in buffer
@@ -121,7 +120,7 @@ extern channel_t	channels[MAX_CHANNELS];
 // MAX_DYNAMIC_CHANNELS to MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS - 1 = water, etc
 // MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS to total_channels = static sounds
 
-extern int		total_channels;
+extern unsigned int	total_channels;
 
 extern qbool		snd_initialized;
 extern int		snd_blocked;
