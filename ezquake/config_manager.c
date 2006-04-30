@@ -17,7 +17,7 @@ You	should have	received a copy	of the GNU General Public License
 along with this	program; if	not, write to the Free Software
 Foundation,	Inc., 59 Temple	Place -	Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: config_manager.c,v 1.21 2006-04-18 20:59:55 disconn3ct Exp $
+	$Id: config_manager.c,v 1.22 2006-04-30 14:18:54 johnnycz Exp $
 
 */
 
@@ -447,9 +447,7 @@ void DumpMisc(FILE *f) {
 // } END shaman RFE 1032143
 
 // START johnnycz RFE 1157227 {
-#ifdef GLQUAKE
 	fprintf(f, "hud_recalculate\n");
-#endif
 // } END johnnycz RFE 1157227
 
 	if (cl.teamfortress) {
