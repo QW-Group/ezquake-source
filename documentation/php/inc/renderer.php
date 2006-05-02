@@ -511,7 +511,7 @@ class IndexRendData extends BaseRendData
             switch ($v["type"]) {
                 case "variable":
                     echo "var\"><span>var";
-                    $urlprefix = "";
+                    $urlprefix = "vars-".IdSafe($v["group"])."#";
                 break;
                 case "command": 
                     echo "cmd\"><span>cmd"; 

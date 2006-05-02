@@ -1078,13 +1078,22 @@ class IndexData
     function IndexData()
     {
         $this->tableindex = INDEXTABLE; 
+        $this->groups = VARGROUPSTABLE;
     }
     
     function FetchList(&$buffer)
     {
-        $sql = "SELECT name, itype, desc1, desc2, desc3 FROM {$this->tableindex} ORDER BY name, itype ASC";
+        $sql = "SELECT name, itype, desc1, desc2, desc3, igroup FROM {$this->tableindex} ORDER BY name, itype ASC";
         if (!($r = my_mysql_query($sql)))
             return False;
+            
+        $sql = "SELECT id, name FROM {$this->groups}";
+        if (!$r2 = my_mysql_query($sql))
+            return False;
+        
+        $vgroups = array();
+        while ($d = mysql_fetch_assoc($r2))
+            $vgroups[$d["id"]] = $d["name"];
         
         while ($d = mysql_fetch_assoc($r))
         {
@@ -1107,6 +1116,7 @@ class IndexData
                     $desc = $d["desc3"];
             }
             $new["desc"] = $desc;
+            $new["group"] = $vgroups[$d["igroup"]]; 
             $buffer[$d["name"]] = $new; 
         }
         
@@ -1119,8 +1129,8 @@ class IndexData
         if (!my_mysql_query($sql))
             return False;
     
-        $sql  = "INSERT INTO {$this->tableindex} (name, itype, desc1, desc2) ";
-        $sql .= "SELECT name, \"variable\", description, remarks FROM ".VARIABLESTABLEPREFIX;
+        $sql  = "INSERT INTO {$this->tableindex} (name, itype, desc1, desc2, igroup) ";
+        $sql .= "SELECT name, \"variable\", description, remarks, id_group FROM ".VARIABLESTABLEPREFIX;
         if (!my_mysql_query($sql))
             return False;
         
