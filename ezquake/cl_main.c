@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.70 2006-04-29 19:28:09 disconn3ct Exp $
+	$Id: cl_main.c,v 1.71 2006-05-02 19:54:06 oldmanuk Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -897,6 +897,10 @@ void CL_InitLocal (void) {
 	}
 
  	Info_SetValueForStarKey (cls.userinfo, "*client", st, MAX_INFO_STRING);
+
+#ifdef VWEP_TEST
+	Info_SetValueForStarKey (cls.userinfo, "*vwtest", "1", MAX_INFO_STRING);
+#endif
 
 	Cmd_AddLegacyCommand ("demotimescale", "cl_demospeed");
 
