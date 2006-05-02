@@ -245,5 +245,6 @@ CREATE TABLE settings_index
   desc1 char(255) NOT NULL DEFAULT '',
   desc2 char(255) NOT NULL DEFAULT '',
   desc3 char(255) NOT NULL DEFAULT '',
+  igroup SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
   PRIMARY KEY(name, itype)
 );
