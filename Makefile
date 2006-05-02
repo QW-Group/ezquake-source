@@ -189,6 +189,7 @@ glx: $(GLX_TARGET)
 
 $(GLX_TARGET): $(GLX_DIR) $(GLX_C_OBJS) $(GLX_S_OBJS)
 	$(BUILD)
+	$(STRIP) $(GLX_TARGET)
 
 $(GLX_C_OBJS): $(GLX_DIR)/%.o: %.c
 	$(C_BUILD)
@@ -266,6 +267,7 @@ x11: $(X11_TARGET)
 
 $(X11_TARGET): $(X11_DIR) $(X11_C_OBJS) $(X11_S_OBJS)
 	$(BUILD)
+	$(STRIP) $(X11_TARGET)
 
 $(X11_C_OBJS): $(X11_DIR)/%.o: %.c quakedef.h
 	$(C_BUILD)
@@ -343,6 +345,7 @@ svga: $(SVGA_TARGET)
 
 $(SVGA_TARGET): $(SVGA_DIR) $(SVGA_C_OBJS) $(SVGA_S_OBJS)
 	$(BUILD)
+	$(STRIP) $(SVGA_TARGET)
 
 $(SVGA_C_OBJS): $(SVGA_DIR)/%.o: %.c quakedef.h
 	$(C_BUILD)
@@ -410,6 +413,7 @@ mac: $(MAC_TARGET)
 
 $(MAC_TARGET): $(MAC_DIR) $(MAC_C_OBJS)
 	$(BUILD)
+	$(STRIP) $(MAC_TARGET)
 
 $(MAC_C_OBJS): $(MAC_DIR)/%.o: %.c quakedef.h
 	$(C_BUILD)
