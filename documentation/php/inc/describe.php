@@ -1,6 +1,7 @@
 <?php
 
 require_once("../inc/mysql_commands.php");  // mysql data interface classes
+require_once("../inc/common.php");
 
 function GetXMLCmd($cmd)
 /**
@@ -93,8 +94,8 @@ function GetXMLVar($var)
 function GetXML($file, $id, &$db)
 {
     switch ($file) {
-        case "variable": return GetXMLVar($id, $db); break;
-        case "command": return GetXMLCmd($id, $db); break;
+        case "variable": return GetXMLVar($db->GetVar($id)); break;
+        case "command": return GetXMLCmd($db->GetCmd($id)); break;
     }
 }
 
