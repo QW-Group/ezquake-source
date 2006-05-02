@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.29 2006-04-29 11:38:51 johnnycz Exp $
+	$Id: cl_demo.c,v 1.30 2006-05-02 19:54:06 oldmanuk Exp $
 */
 
 #include "quakedef.h"
@@ -312,6 +312,27 @@ static void CL_WriteStartupData (void) {
 		CL_WriteStartupDemoMessage (&buf, seq++);
 		SZ_Clear (&buf); 
 	}
+
+#ifdef VWEP_TEST
+// vwep modellist
+	if ((cl.z_ext & Z_EXT_VWEP) && cl.vw_model_name[0][0]) {
+		// send VWep precaches
+		// pray we don't overflow
+		for (i = 0; i < MAX_VWEP_MODELS; i++) {
+			s = cl.vw_model_name[i];
+			if (!*s)
+				continue;
+			MSG_WriteByte (&buf, svc_serverinfo);
+			MSG_WriteString (&buf, "#vw");
+			MSG_WriteString (&buf, va("%i %s", i, TrimModelName(s)));
+		}
+		// send end-of-list messsage
+		MSG_WriteByte (&buf, svc_serverinfo);
+		MSG_WriteString (&buf, "#vw");
+		MSG_WriteString (&buf, "");
+	}
+	// don't bother flushing, the vwep list is not that large (I hope)
+#endif
 
 	// modellist
 	MSG_WriteByte (&buf, svc_modellist);
@@ -772,6 +793,29 @@ static char *CL_DemoDirectory(void) {
 	strlcpy(dir, demo_dir.string[0] ? va("%s/%s", com_basedir, demo_dir.string) : cls.gamedir, sizeof(dir));
 	return dir;
 }
+
+#ifdef VWEP_TEST
+// FIXME: same as in sv_user.c. Move to common.c?
+static char *TrimModelName (char *full)
+{
+	static char shortn[MAX_QPATH];
+	int len;
+
+	if (!strncmp(full, "progs/", 6) && !strchr(full + 6, '/'))
+		strlcpy (shortn, full + 6, sizeof(shortn));		// strip progs/
+	else
+		strlcpy (shortn, full, sizeof(shortn));
+
+	len = strlen(shortn);
+	if (len > 4 && !strcmp(shortn + len - 4, ".mdl")
+		&& strchr(shortn, '.') == shortn + len - 4)
+	{	// strip .mdl
+		shortn[len - 4] = '\0';
+	}
+
+	return shortn;
+}
+#endif // VWEP_TEST
 
 void CL_Record_f (void) {
 	char nameext[MAX_OSPATH * 2], name[MAX_OSPATH * 2];

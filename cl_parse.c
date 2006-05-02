@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.46 2006-04-19 16:09:18 disconn3ct Exp $
+	$Id: cl_parse.c,v 1.47 2006-05-02 19:54:06 oldmanuk Exp $
 */
 
 #include "quakedef.h"
@@ -418,6 +418,92 @@ qbool CL_CheckOrDownloadFile (char *filename) {
 	return false;
 }
 
+void CL_Prespawn (void)
+{
+	cl.worldmodel = cl.model_precache[1];
+	if (!cl.worldmodel)
+		Host_Error ("Model_NextDownload: NULL worldmodel");
+
+	R_NewMap ();
+	TP_NewMap();
+	MT_NewMap();
+	Stats_NewMap();
+	Hunk_Check();		// make sure nothing is hurt
+
+#if 0
+//TEI: loading entitys from map, at clientside,
+// will be usefull to locate more eyecandy and cameras
+	if (cl.worldmodel->entities)
+	{	
+		CL_PR_LoadProgs();
+		CL_ED_LoadFromFile (cl.worldmodel->entities);
+	}
+#endif 
+
+	// done with modellist, request first of static signon messages
+	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+	MSG_WriteString (&cls.netchan.message, va("prespawn %i 0 %i", cl.servercount, cl.worldmodel->checksum2));
+
+}
+
+/*
+=================
+VWepModel_NextDownload
+=================
+*/
+#ifdef VWEP_TEST
+void VWepModel_NextDownload (void)
+{
+	int		i;
+
+	if (!cl.z_ext & Z_EXT_VWEP || !cl.vw_model_name[0][0]) {
+		// no vwep support, go straight to prespawn
+		CL_Prespawn ();
+		return;
+	}
+
+	if (cls.downloadnumber == 0) {
+		if (!com_serveractive || developer.value)
+			Com_Printf ("Checking vwep models...\n");
+		//cls.downloadnumber = 0;
+	}
+
+	cls.downloadtype = dl_vwep_model;
+	for ( ; cls.downloadnumber < MAX_VWEP_MODELS; cls.downloadnumber++)
+	{
+		if (!cl.vw_model_name[cls.downloadnumber][0] ||
+			cl.vw_model_name[cls.downloadnumber][0] == '*')
+			continue;
+		if (!CL_CheckOrDownloadFile(cl.vw_model_name[cls.downloadnumber]))
+			return;		// started a download
+	}
+
+	for (i = 0; i < MAX_VWEP_MODELS; i++)
+	{
+		if (!cl.vw_model_name[i][0])
+			continue;
+
+		if (strcmp(cl.vw_model_name[i], "*"))
+			cl.vw_model_precache[i] = Mod_ForName (cl.vw_model_name[i], false);
+
+		if (!cl.vw_model_precache[i]) {
+			// never mind
+			// Com_Printf ("Warning: model %s could not be found\n", cl.vw_model_name[i]);
+		}
+	}
+
+	if (!strcmp(cl.vw_model_name[0], "*") || cl.vw_model_precache[0])
+		cl.vwep_enabled = true;
+	else {
+		// if the vwep player model is required but not present,
+		// don't enable vwep support
+	}
+
+	// all done
+	CL_Prespawn ();
+}
+#endif
+
 void Model_NextDownload (void) {
 	char mapname[MAX_QPATH];
 	int	i;
@@ -455,28 +541,14 @@ void Model_NextDownload (void) {
 		}
 	}
 	// all done
-	cl.worldmodel = cl.model_precache[1];
-	if (!cl.worldmodel)
-		Host_Error ("Model_NextDownload: NULL worldmodel");
-	R_NewMap ();
-	TP_NewMap();
-	MT_NewMap();
-	Stats_NewMap();
-	Hunk_Check();		// make sure nothing is hurt
-
-#if 0
-//TEI: loading entitys from map, at clientside,
-// will be usefull to locate more eyecandy and cameras
-	if (cl.worldmodel->entities)
-	{	
-		CL_PR_LoadProgs();
-		CL_ED_LoadFromFile (cl.worldmodel->entities);
-	}
-#endif 
-
-	// done with modellist, request first of static signon messages
-	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-	MSG_WriteString (&cls.netchan.message, va("prespawn %i 0 %i", cl.servercount, cl.worldmodel->checksum2));
+#ifdef VWEP_TEST
+	// done with normal models, request vwep models if necessary
+	cls.downloadtype = dl_vwep_model;
+	cls.downloadnumber = 0;
+	VWepModel_NextDownload ();
+#else
+	CL_Prespawn();
+#endif
 }
 
 void Sound_NextDownload (void) {
@@ -520,6 +592,11 @@ void CL_RequestNextDownload (void) {
 	case dl_model:
 		Model_NextDownload ();
 		break;
+#ifdef VWEP_TEST
+	case dl_vwep_model:
+		VWepModel_NextDownload ();
+		break;
+#endif
 	case dl_sound:
 		Sound_NextDownload ();
 		break;
@@ -1439,6 +1516,11 @@ void CL_ProcessServerInfo (void) {
 	// Get the server's ZQuake extension bits
 	cl.z_ext = atoi(Info_ValueForKey(cl.serverinfo, "*z_ext"));
 
+#ifdef VWEP_TEST
+	if (atoi(Info_ValueForKey(cl.serverinfo, "*vwtest")))
+		cl.z_ext |= Z_EXT_VWEP;
+#endif
+
 	// Initialize cl.maxpitch & cl.minpitch
 	p = (cl.z_ext & Z_EXT_PITCHLIMITS) ? Info_ValueForKey (cl.serverinfo, "maxpitch") : "";
 	cl.maxpitch = *p ? Q_atof(p) : 80.0f;
@@ -1471,11 +1553,92 @@ void CL_ProcessServerInfo (void) {
 	CL_UpdateCaption();
 }
 
+/*
+==============
+CL_ParseVWepPrecache
+
+A typical vwep model list will look like this:
+"0 player_w.mdl"	// player model to use
+"1"					// no weapon at all
+"2 w_shot.mdl"
+"3 w_shot2.mdl"
+...
+""					// list is terminated with an empty key
+==============
+*/
+#ifdef VWEP_TEST
+void CL_ParseVWepPrecache (char *str)
+{
+	int num;
+	char *p;
+
+	if (cls.state == ca_active) {
+		// could do a Host_Error as well
+		Com_Printf ("CL_ParseVWepPrecache: ca_active, ignoring\n");
+		return;
+	}
+
+	if (!*str) {
+		Com_DPrintf ("VWEP END\n");
+		return;
+	}
+
+	num = atoi(str);
+
+	if ( !isdigit((int)(unsigned char)str[0]) )
+		return;		// not a vwep model message
+
+	if ((unsigned)num >= MAX_MODELS)
+		Host_Error("CL_ParseVWepModel: num >= MAX_MODELS");
+
+	if ((unsigned)num >= MAX_VWEP_MODELS)
+		return;		// fail silently to allow for expansion in future
+
+	p = strchr (str, ' ');
+	if (p && p[1]) {
+		p++;	// skip the space
+
+		if (!strcmp(p, "*")) {
+			// empty model
+			strcpy (cl.vw_model_name[num], "*");
+		}
+		else {
+			if (strstr(p, "..") || p[0] == '/' || p[0] == '\\')
+				Host_Error("CL_ParseVWepModel: illegal model name '%s'", p);
+
+			if (strstr(p, "/"))
+				// a full path was specified
+				strlcpy (cl.vw_model_name[num], p, sizeof(cl.vw_model_name[0]));
+			else {
+				// use default path
+				strcpy (cl.vw_model_name[num], "progs/");	// FIXME, "progs/vwep/"	?
+				strlcat (cl.vw_model_name[num], p, sizeof(cl.vw_model_name[0]));
+			}
+
+			// use default extension if not specified
+			if (!strstr(p, "."))
+				strlcat (cl.vw_model_name[num], ".mdl", sizeof(cl.vw_model_name[0]));
+		}
+	}
+	else
+		cl.vw_model_name[num][0] = '\0';
+
+	Com_DPrintf ("VWEP %i: '%s'\n", num, cl.vw_model_name[num]);
+}
+#endif
+
 void CL_ParseServerInfoChange (void) {
 	char key[MAX_INFO_STRING], value[MAX_INFO_STRING];
 
 	strlcpy (key, MSG_ReadString(), sizeof(key));
 	strlcpy (value, MSG_ReadString(), sizeof(value));
+
+#ifdef VWEP_TEST
+	if ( (cl.z_ext & Z_EXT_VWEP) && !strcmp(key, "#vw") ) {
+		CL_ParseVWepPrecache (value);
+		return;
+	}
+#endif
 
 	Com_DPrintf ("SERVERINFO: %s=%s\n", key, value);
 
