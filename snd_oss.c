@@ -78,20 +78,20 @@ qbool SNDDMA_Init_OSS(void)
 	}
 
 	// set sample bits & speed
-	shm->samplebits = (int) s_bits.value;
-	shm->speed = ((int) s_khz.value == 48) ? 48000 : ((int) s_khz.value == 44) ? 44100 : ((int) s_khz.value == 22) ? 22050 : 11025;
-	shm->channels = ((int) s_stereo.value == 0) ? 1 : 2;
+	shm->format.width  = (int) (s_bits.value / 8);
+	shm->format.speed = ((int) s_khz.value == 48) ? 48000 : ((int) s_khz.value == 44) ? 44100 : ((int) s_khz.value == 22) ? 22050 : 11025;
+	shm->format.channels = ((int) s_stereo.value == 0) ? 1 : 2;
 
-	if (shm->samplebits != 16 && shm->samplebits != 8) {
+	if (shm->format.width != 2 && shm->format.width != 1) {
 		ioctl(audio_fd, SNDCTL_DSP_GETFMTS, &fmt);
 		if (fmt & AFMT_S16_LE) // disconnect: FIXME: what if bigendian?
-			shm->samplebits = 16;
+			shm->format.width = 2;
 		else if (fmt & AFMT_U8)
-			shm->samplebits = 8;
+			shm->format.width = 1;
 	}
 
 
-	tmp = (shm->channels == 2);
+	tmp = (shm->format.channels == 2);
 	if ((rc = ioctl(audio_fd, SNDCTL_DSP_STEREO, &tmp)) < 0) {
 		perror(snd_dev);
 		Com_Printf ("Could not set %s to stereo", snd_dev);
@@ -99,14 +99,14 @@ qbool SNDDMA_Init_OSS(void)
 		return 0;
 	}
 
-	if ((rc = ioctl(audio_fd, SNDCTL_DSP_SPEED, &shm->speed)) < 0) {
+	if ((rc = ioctl(audio_fd, SNDCTL_DSP_SPEED, &shm->format.speed)) < 0) {
 		perror(snd_dev);
-		Com_Printf("Could not set %s speed to %d", snd_dev, shm->speed);
+		Com_Printf("Could not set %s speed to %d", snd_dev, shm->format.speed);
 		close(audio_fd);
 		return 0;
 	}
 
-	if (shm->samplebits == 16) {
+	if (shm->format.width == 2) {
 		rc = AFMT_S16_LE;
 		rc = ioctl(audio_fd, SNDCTL_DSP_SETFMT, &rc);
 		if (rc < 0) {
@@ -115,7 +115,7 @@ qbool SNDDMA_Init_OSS(void)
 			close(audio_fd);
 			return 0;
 		}
-	} else if (shm->samplebits == 8) {
+	} else if (shm->format.width == 1) {
 		rc = AFMT_U8;
 		rc = ioctl(audio_fd, SNDCTL_DSP_SETFMT, &rc);
 		if (rc < 0) {
@@ -126,16 +126,17 @@ qbool SNDDMA_Init_OSS(void)
 		}
 	} else {
 		perror(snd_dev);
-		Com_Printf("%d-bit sound not supported.", shm->samplebits);
+		Com_Printf("%d-bit sound not supported.", shm->format.width * 8);
 		close(audio_fd);
 		return 0;
 	}
 
-	shm->samples = info.fragstotal * info.fragsize / (shm->samplebits/8);
-	shm->submission_chunk = 1;
+	shm->sampleframes = info.fragstotal * info.fragsize / shm->format.width / shm->format.channels;
+	shm->samples = shm->sampleframes * shm->format.channels;
 
 	// memory map the dma buffer
-	shm->buffer = (unsigned char *) mmap(NULL, info.fragstotal * info.fragsize, PROT_WRITE, MAP_FILE|MAP_SHARED, audio_fd, 0);
+	shm->bufferlength = info.fragstotal * info.fragsize;
+	shm->buffer = (unsigned char *) mmap(NULL, shm->bufferlength, PROT_WRITE, MAP_FILE|MAP_SHARED, audio_fd, 0);
 	if (!shm->buffer || shm->buffer == (unsigned char *)-1) {
 		perror(snd_dev);
 		Com_Printf ("Could not mmap %s\n", snd_dev);
@@ -183,9 +184,8 @@ int SNDDMA_GetDMAPos_OSS(void)
 		close(audio_fd);
 		return 0;
 	}
-	//	shm->samplepos = (count.bytes / (shm->samplebits / 8)) & (shm->samples-1);
-	//	fprintf(stderr, "%d    \r", count.ptr);
-	shm->samplepos = count.ptr / (shm->samplebits / 8);
+
+	shm->samplepos = count.ptr / shm->format.width;
 
 	return shm->samplepos;
 
@@ -196,16 +196,17 @@ void SNDDMA_Shutdown_OSS(void)
 	int tmp = 0;
 
 	// unmap the memory
-	if (sn.buffer)
-		munmap(sn.buffer, sn.samples * (sn.samplebits/8));
+	if (shm->buffer)
+		munmap(shm->buffer, shm->bufferlength);
 
-	// stop the sound
-	ioctl(audio_fd, SNDCTL_DSP_SETTRIGGER, &tmp);
-	ioctl(audio_fd, SNDCTL_DSP_RESET, 0);
+	if (audio_fd) {
+		// stop the sound
+		ioctl(audio_fd, SNDCTL_DSP_SETTRIGGER, &tmp);
+		ioctl(audio_fd, SNDCTL_DSP_RESET, 0);
 
-	// close the device
-	if (audio_fd)
+		// close the device
 		close(audio_fd);
+	}
 
 	audio_fd = -1;
 }

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: movie.c,v 1.12 2006-04-29 15:59:52 disconn3ct Exp $
+	$Id: movie.c,v 1.13 2006-05-04 19:46:44 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -286,10 +286,10 @@ void Movie_TransferStereo16(void) {
 		return;
 
 	// Copy last audio chunk written into our temporary buffer
-	memcpy (capture_audio_samples + (captured_audio_samples << 1), snd_out, snd_linear_count * shm->channels);
+	memcpy (capture_audio_samples + (captured_audio_samples << 1), snd_out, snd_linear_count * shm->format.channels);
 	captured_audio_samples += (snd_linear_count >> 1);
 
-	if (captured_audio_samples >= (int)(0.5 + cls.frametime * shm->speed)) {
+	if (captured_audio_samples >= (int)(0.5 + cls.frametime * shm->format.speed)) {
 		// We have enough audio samples to match one frame of video
 		Capture_WriteAudio (captured_audio_samples, (byte *)capture_audio_samples);
 		captured_audio_samples = 0;
@@ -306,7 +306,7 @@ qbool Movie_GetSoundtime(void) {
 	if (cl_multiview.value)
 		views = cl_multiview.value;
 
-	soundtime += (int)(0.5 + cls.frametime * shm->speed * views * (1.0 / cl_demospeed.value)); //joe: fix for slowmo/fast forward
+	soundtime += (int)(0.5 + cls.frametime * shm->format.speed * views * (1.0 / cl_demospeed.value)); //joe: fix for slowmo/fast forward
 	return true;
 }
 #endif

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mem.c,v 1.5 2006-04-29 15:59:53 disconn3ct Exp $
+    $Id: snd_mem.c,v 1.6 2006-05-04 19:46:31 disconn3ct Exp $
 */
 // snd_mem.c -- sound caching
 
@@ -32,14 +32,14 @@ static void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, unsigned char *dat
 	if (!(sc = (sfxcache_t *) Cache_Check (&sfx->cache)))
 		return;
 
-	stepscale = (float) inrate / sn.speed; // this is usually 0.5, 1, or 2
+	stepscale = (float) inrate / shm->format.speed; // this is usually 0.5, 1, or 2
 
-	outcount = sc->length / stepscale;
+	outcount = (int) ((double) sc->length * (double) shm->format.speed / (double) inrate);
 	sc->length = outcount;
 	if (sc->loopstart != -1)
 		sc->loopstart = sc->loopstart / stepscale;
 
-	sc->speed = sn.speed;
+	sc->speed = shm->format.speed;
 	sc->width = (s_loadas8bit.value) ? 1 : inwidth;
 	sc->stereo = 0;
 
@@ -52,7 +52,7 @@ static void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, unsigned char *dat
 	} else {
 		// general case
 		samplefrac = 0;
-		fracstep = stepscale * 256;
+		fracstep = (int) (stepscale * 256);
 		for (i = 0 ;i < outcount ;i++) {
 			srcsample = samplefrac >> 8;
 			samplefrac += fracstep;
@@ -84,21 +84,21 @@ static int iff_chunk_len;
 
 static short GetLittleShort(void)
 {
-	short val = 0;
-	val = *data_p;
-	val = val + (*(data_p+1)<<8);
+	short val;
+
+	val = BuffLittleShort (data_p);
 	data_p += 2;
+
 	return val;
 }
 
 static int GetLittleLong(void)
 {
 	int val = 0;
-	val = *data_p;
-	val = val + (*(data_p+1)<<8);
-	val = val + (*(data_p+2)<<16);
-	val = val + (*(data_p+3)<<24);
+
+	val = BuffLittleLong (data_p);
 	data_p += 4;
+
 	return val;
 }
 
@@ -184,7 +184,7 @@ static wavinfo_t GetWavinfo (char *name, unsigned char *wav, int wavlength)
 			// this is not a proper parse, but it works with cooledit...
 			if (!strncmp ((const char *)(data_p + 28), "mark", 4)) {
 				data_p += 24;
-				i = GetLittleLong ();	// samples in loop
+				i = GetLittleLong (); // samples in loop
 				info.samples = info.loopstart + i;
 			}
 		}
@@ -199,7 +199,7 @@ static wavinfo_t GetWavinfo (char *name, unsigned char *wav, int wavlength)
 	}
 
 	data_p += 4;
-	samples = GetLittleLong () / info.width;
+	samples = GetLittleLong () / info.width / info.channels;
 
 	if (info.samples) {
 		if (samples < info.samples)
@@ -219,7 +219,6 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	unsigned char stackbuf[1*1024]; // avoid dirtying the cache heap
 	char namebuffer[256];
 	unsigned char *data;
-	float stepscale;
 	sfxcache_t *sc;
 	wavinfo_t info;
 	int len;
@@ -245,12 +244,10 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 		return NULL;
 	}
 
-	stepscale = (float) info.rate / sn.speed;
-	len = info.samples / stepscale;
-
+	len = (int) ((double) info.samples * (double) shm->format.speed / (double) info.rate);
 	len = len * info.width * info.channels;
 
-	if (!(sc = (sfxcache_t *) Cache_Alloc ( &s->cache, len + sizeof(sfxcache_t), s->name)))
+	if (!(sc = (sfxcache_t *) Cache_Alloc (&s->cache, len + sizeof(sfxcache_t), s->name)))
 		return NULL;
 
 	sc->length = info.samples;

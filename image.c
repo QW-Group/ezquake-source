@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: image.c,v 1.21 2006-04-29 17:34:19 johnnycz Exp $
+	$Id: image.c,v 1.22 2006-05-04 19:46:31 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1088,10 +1088,6 @@ static void TGA_upsample32(byte *dest, byte *src) {
 
 
 #define TGA_ERROR(msg)	{if (msg) {Com_DPrintf((msg), COM_SkipPath(filename));} Q_free(fileBuffer); return NULL;}
-
-static unsigned short BuffLittleShort(const byte *buffer) {
-	return (buffer[1] << 8) | buffer[0];
-}
 
 byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight) {
 	TGAHeader_t header;

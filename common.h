@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: common.h,v 1.17 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: common.h,v 1.18 2006-05-04 19:46:31 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -228,6 +228,11 @@ float	FloatSwap (float f);
 #define LittleLong(x) (x)
 #define LittleFloat(x) (x)
 #endif
+
+unsigned int BuffBigLong (const unsigned char *buffer);
+unsigned short BuffBigShort (const unsigned char *buffer);
+unsigned int BuffLittleLong (const unsigned char *buffer);
+unsigned short BuffLittleShort (const unsigned char *buffer);
 
 //============================================================================
 

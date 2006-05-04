@@ -1,22 +1,22 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
- 
+
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
 of the License, or (at your option) any later version.
- 
+
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
- 
+
 See the GNU General Public License for more details.
- 
+
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- 
-    $Id: snd_win.c,v 1.8 2006-04-29 19:36:51 disconn3ct Exp $
+
+    $Id: snd_win.c,v 1.9 2006-05-04 19:46:31 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -36,8 +36,8 @@ typedef enum {SIS_SUCCESS, SIS_FAILURE, SIS_NOTAVAIL} sndinitstat;
 static qbool	wavonly;
 static qbool	dsound_init;
 static qbool	wav_init;
-static qbool	snd_firsttime = true, snd_isdirect, snd_iswave;
 static qbool	primary_format_set;
+static qbool	snd_firsttime = true, snd_isdirect, snd_iswave;
 
 static int	sample16;
 static int	snd_sent, snd_completed;
@@ -173,17 +173,17 @@ static sndinitstat SNDDMA_InitDirect (void)
 	HRESULT hresult;
 	int reps, temp, devicenum;
 
-	memset ((void *)&sn, 0, sizeof (sn));
+	memset((void *)shm, 0, sizeof(*shm));
 
-	shm->channels = 2;
-	shm->samplebits = 16;
-	shm->speed = (s_khz.value == 44) ? 44100 : (s_khz.value == 22) ? 22050 : 11025;
+	shm->format.channels = 2;
+	shm->format.width = 2;
+	shm->format.speed = (s_khz.value == 44) ? 44100 : (s_khz.value == 22) ? 22050 : 11025;
 
 	memset (&format, 0, sizeof(format));
 	format.wFormatTag = WAVE_FORMAT_PCM;
-	format.nChannels = shm->channels;
-	format.wBitsPerSample = shm->samplebits;
-	format.nSamplesPerSec = shm->speed;
+	format.nChannels = shm->format.channels;
+	format.wBitsPerSample = shm->format.width * 8;
+	format.nSamplesPerSec = shm->format.speed;
 	format.nBlockAlign = format.nChannels * format.wBitsPerSample / 8;
 	format.cbSize = 0;
 	format.nAvgBytesPerSec = format.nSamplesPerSec * format.nBlockAlign;
@@ -275,9 +275,9 @@ static sndinitstat SNDDMA_InitDirect (void)
 			return SIS_FAILURE;
 		}
 
-		shm->channels = format.nChannels;
-		shm->samplebits = format.wBitsPerSample;
-		shm->speed = format.nSamplesPerSec;
+		shm->format.channels = format.nChannels;
+		shm->format.width = format.wBitsPerSample / 8;
+		shm->format.speed = format.nSamplesPerSec;
 
 		if (DS_OK != pDSBuf->lpVtbl->GetCaps (pDSBuf, &dsbcaps)) {
 			Com_Printf ("DS:GetCaps failed\n");
@@ -310,7 +310,7 @@ static sndinitstat SNDDMA_InitDirect (void)
 		Com_Printf ("   %d channel(s)\n"
 			"   %d bits/sample\n"
 			"   %d bytes/sec\n",
-			shm->channels, shm->samplebits, shm->speed);*/
+		shm->format.channels, shm->format.width * , shm->format.speed);*/
 
 	gSndBufSize = dsbcaps.dwBufferBytes;
 
@@ -344,12 +344,11 @@ static sndinitstat SNDDMA_InitDirect (void)
 	pDSBuf->lpVtbl->GetCurrentPosition(pDSBuf, &mmstarttime.u.sample, &dwWrite);
 	pDSBuf->lpVtbl->Play(pDSBuf, 0, 0, DSBPLAY_LOOPING);
 
-	shm->soundalive = true;
-	shm->samples = gSndBufSize/(shm->samplebits/8);
+	shm->samples = gSndBufSize/shm->format.width;
+	shm->sampleframes = shm->samples / shm->format.channels;
 	shm->samplepos = 0;
-	shm->submission_chunk = 1;
 	shm->buffer = (unsigned char *) lpData;
-	sample16 = (shm->samplebits/8) - 1;
+	sample16 = shm->format.width - 1;
 
 	dsound_init = true;
 
@@ -368,15 +367,16 @@ static qbool SNDDMA_InitWav (void)
 	snd_sent = 0;
 	snd_completed = 0;
 
-	shm->channels = 2;
-	shm->samplebits = 16;
-	shm->speed = (s_khz.value == 44) ? 44100 : (s_khz.value == 22) ? 22050 : 11025;
+	memset((void *)shm, 0, sizeof(*shm));
+	shm->format.channels = 2;
+	shm->format.width = 2;
+	shm->format.speed = (s_khz.value == 44) ? 44100 : (s_khz.value == 22) ? 22050 : 11025;
 
 	memset (&format, 0, sizeof(format));
 	format.wFormatTag = WAVE_FORMAT_PCM;
-	format.nChannels = shm->channels;
-	format.wBitsPerSample = shm->samplebits;
-	format.nSamplesPerSec = shm->speed;
+	format.nChannels = shm->format.channels;
+	format.wBitsPerSample = shm->format.width * 8;
+	format.nSamplesPerSec = shm->format.speed;
 	format.nBlockAlign = format.nChannels * format.wBitsPerSample / 8;
 	format.cbSize = 0;
 	format.nAvgBytesPerSec = format.nSamplesPerSec * format.nBlockAlign;
@@ -457,12 +457,10 @@ static qbool SNDDMA_InitWav (void)
 		}
 	}
 
-	shm->soundalive = true;
-	shm->samples = gSndBufSize/(shm->samplebits/8);
+	shm->samples = gSndBufSize / shm->format.width;
+	shm->sampleframes = shm->samples / shm->format.channels;
 	shm->samplepos = 0;
-	shm->submission_chunk = 1;
 	shm->buffer = (unsigned char *) lpData;
-	sample16 = (shm->samplebits/8) - 1;
 
 	wav_init = true;
 
@@ -539,13 +537,11 @@ int SNDDMA_GetDMAPos(void)
 		s = mmtime.u.sample - mmstarttime.u.sample;
 	} else if (wav_init) {
 		s = snd_sent * WAV_BUFFER_SIZE;
+	} else {
+		return 0;
 	}
 
-	s >>= sample16;
-
-	s &= (shm->samples-1);
-
-	return s;
+	return (s >> (shm->format.width - 1)) & (shm->samples - 1);
 }
 
 //Send sound to device if buffer isn't really the dma buffer
