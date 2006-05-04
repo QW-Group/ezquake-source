@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: common.c,v 1.22 2006-04-29 13:02:20 disconn3ct Exp $
+	$Id: common.c,v 1.23 2006-05-04 19:46:31 disconn3ct Exp $
 */
 
 #ifdef _WIN32
@@ -454,6 +454,28 @@ float FloatSwap (float f) {
 	dat2.b[2] = dat1.b[1];
 	dat2.b[3] = dat1.b[0];
 	return dat2.f;
+}
+
+// Extract integers from buffers
+
+unsigned int BuffBigLong (const unsigned char *buffer)
+{
+	return (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
+}
+
+unsigned short BuffBigShort (const unsigned char *buffer)
+{
+	return (buffer[0] << 8) | buffer[1];
+}
+
+unsigned int BuffLittleLong (const unsigned char *buffer)
+{
+	return (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
+}
+
+unsigned short BuffLittleShort (const unsigned char *buffer)
+{
+	return (buffer[1] << 8) | buffer[0];
 }
 
 //===========================================================================

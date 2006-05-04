@@ -72,13 +72,13 @@ qbool SNDDMA_Init(void)
 		return false;
 	}
 
-	sn.channels = gHeader.dbhNumChannels;
-	sn.samplebits = gHeader.dbhSampleSize;
-	sn.samples = sizeof(dma) / (sn.samplebits/8); // mono samples in buffer
-	sn.submission_chunk = SoundBufferSize;        // don't mix less than this #
-	sn.samplepos = 0;                             // in mono samples
-	sn.speed = gFrequency;
-	sn.buffer = dma;
+	shm->format.channels = gHeader.dbhNumChannels;
+	shm->format.width = gHeader.dbhSampleSize / 8;
+	shm->format.speed = gFrequency;
+	shm->samples = sizeof(dma) / (shm->format.width);
+	shm->sampleframes = shm->samples / shm->format.channels;
+	shm->samplepos = 0;
+	shm->buffer = dma;
 
 	for (i = 0; i < 2; i++)
 	{
@@ -96,7 +96,7 @@ qbool SNDDMA_Init(void)
 //		// start with some horrible noise so we can guage whats going on.
 //		memcpy(gHeader.dbhBufferPtr[i]->dbSoundData,sRandomBuf,SoundBufferSize);
 
-		gHeader.dbhBufferPtr[i]->dbNumFrames   = SoundBufferSize/(sn.samplebits/8)/sn.channels;
+		gHeader.dbhBufferPtr[i]->dbNumFrames   = SoundBufferSize/(shm->format.width)/shm->format.channels;
 		gHeader.dbhBufferPtr[i]->dbFlags       = dbBufferReady;
 		gHeader.dbhBufferPtr[i]->dbUserInfo[0] = 0;
 //		gHeader.dbhBufferPtr[i]->dbUserInfo[1] = SetCurrentA5 ();
@@ -110,8 +110,6 @@ qbool SNDDMA_Init(void)
 		Com_Printf("Failed to start sound. OS error %d\n",err);
 		return false;
 	}
-
-	sn.soundalive = true;
 
 	return true;
 }
@@ -149,14 +147,14 @@ void SNDDMA_Submit(void)
 int sDMAOffset;
 int SNDDMA_GetDMAPos(void)
 {
-	return sDMAOffset/(sn.samplebits/8);
+	return sDMAOffset/(shm->format.width);
 }
 
 static pascal void snd_completion(SndChannelPtr channel, SndDoubleBufferPtr buffer)
 {
-	int sampleOffset = sDMAOffset/(sn.samplebits/8);
-	int maxSamples = SoundBufferSize/(sn.samplebits/8);
-	int dmaSamples = sizeof(dma)/(sn.samplebits/8);
+	int sampleOffset = sDMAOffset/(shm->format.width);
+	int maxSamples = SoundBufferSize/(shm->format.width);
+	int dmaSamples = sizeof(dma)/(shm->format.width);
 	if (paintedtime  - sampleOffset > maxSamples ||
 		sampleOffset - paintedtime  < dmaSamples-maxSamples)
 	{
@@ -170,6 +168,6 @@ static pascal void snd_completion(SndChannelPtr channel, SndDoubleBufferPtr buff
 //		memcpy(buffer->dbSoundData,sRandomBuf,SoundBufferSize); // nasty sound
 
 	// ready to go!
-	buffer->dbNumFrames = SoundBufferSize / (sn.samplebits / 8) / sn.channels;
+	buffer->dbNumFrames = SoundBufferSize / (shm->format.width) / shm->format.channels;
 	buffer->dbFlags |= dbBufferReady;
 }

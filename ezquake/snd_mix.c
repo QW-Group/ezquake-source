@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mix.c,v 1.5 2006-04-29 15:59:53 disconn3ct Exp $
+    $Id: snd_mix.c,v 1.6 2006-05-04 19:46:31 disconn3ct Exp $
 */
 // snd_mix.c -- portable code to mix sounds for snd_dma.c
 
@@ -104,15 +104,15 @@ static void S_TransferStereo16 (int endtime)
 		}
 	} else
 #endif
-		pbuf = (DWORD *)sn.buffer;
+		pbuf = (DWORD *)shm->buffer;
 
 	while (lpaintedtime < endtime) {
 		// handle recirculating buffer issues
-		lpos = lpaintedtime & ((sn.samples>>1) - 1);
+		lpos = lpaintedtime & ((shm->samples>>1) - 1);
 
 		snd_out = (short *) pbuf + (lpos << 1);
 
-		snd_linear_count = (sn.samples>>1) - lpos;
+		snd_linear_count = (shm->samples>>1) - lpos;
 		if (lpaintedtime + snd_linear_count > endtime)
 			snd_linear_count = endtime - lpaintedtime;
 
@@ -149,16 +149,16 @@ static void S_TransferPaintBuffer(int endtime)
 	HRESULT hresult;
 #endif
 
-	if (sn.samplebits == 16 && sn.channels == 2) {
+	if (shm->format.width == 2 && shm->format.channels == 2) {
 		S_TransferStereo16 (endtime);
 		return;
 	}
 
 	p = (int *) paintbuffer;
-	count = (endtime - paintedtime) * shm->channels;
+	count = (endtime - paintedtime) * shm->format.channels;
 	out_mask = shm->samples - 1;
-	out_idx = paintedtime * shm->channels & out_mask;
-	step = 3 - shm->channels;
+	out_idx = paintedtime * shm->format.channels & out_mask;
+	step = 3 - shm->format.channels;
 	snd_vol = s_volume.value * 256;
 
 #ifdef _WIN32
@@ -182,7 +182,7 @@ static void S_TransferPaintBuffer(int endtime)
 #endif
 		pbuf = (DWORD *)shm->buffer;
 
-	if (shm->samplebits == 16) {
+	if (shm->format.width == 2) {
 		short *out = (short *) pbuf;
 		while (count--) {
 			val = (*p * snd_vol) >> 8;
@@ -194,7 +194,7 @@ static void S_TransferPaintBuffer(int endtime)
 			out[out_idx] = val;
 			out_idx = (out_idx + 1) & out_mask;
 		}
-	} else if (shm->samplebits == 8) {
+	} else if (shm->format.width == 1) {
 		unsigned char *out = (unsigned char *) pbuf;
 		while (count--) {
 			val = (*p * snd_vol) >> 8;

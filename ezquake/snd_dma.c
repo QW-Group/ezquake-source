@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.28 2006-04-30 14:39:08 disconn3ct Exp $
+    $Id: snd_dma.c,v 1.29 2006-05-04 19:46:31 disconn3ct Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -106,14 +106,14 @@ static void S_SoundInfo_f (void)
 		return;
 	}
 
-	Com_Printf ("%5d stereo\n", sn.channels - 1);
-	Com_Printf ("%5d samples\n", sn.samples);
-	Com_Printf ("%5d samplepos\n", sn.samplepos);
-	Com_Printf ("%5d samplebits\n", sn.samplebits);
-	Com_Printf ("%5d submission_chunk\n", sn.submission_chunk);
-	Com_Printf ("%5d speed\n", sn.speed);
-	Com_Printf ("0x%x dma buffer\n", sn.buffer); // %p
-	Com_Printf ("%5d total_channels\n", total_channels);
+	Com_Printf("%5d speakers\n", shm->format.channels);
+	Com_Printf("%5d frames\n", shm->sampleframes);
+	Com_Printf("%5d samples\n", shm->samples);
+	Com_Printf("%5d samplepos\n", shm->samplepos);
+	Com_Printf("%5d samplebits\n", shm->format.width * 8);
+	Com_Printf("%5d speed\n", shm->format.speed);
+	Com_Printf("%p dma buffer\n", shm->buffer);
+	Com_Printf("%5u total_channels\n", total_channels);
 }
 
 static void S_Startup (void)
@@ -355,7 +355,7 @@ static void SND_Spatialize (channel_t *ch)
 	dist = VectorNormalize(source_vec) * ch->dist_mult;
 	dot = DotProduct(listener_right, source_vec);
 
-	if (sn.channels == 1) {
+	if (shm->format.channels == 1) {
 		rscale = 1.0;
 		lscale = 1.0;
 	} else {
@@ -383,12 +383,10 @@ void S_StartSound (int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float 
 {
 	channel_t *target_chan, *check;
 	sfxcache_t *sc;
-	int vol, ch_idx, skip;
+	int ch_idx, skip;
 
 	if (!shm || !sfx || s_nosound.value)
 		return;
-
-	vol = fvol * 255;
 
 	// pick a channel to play on
 	target_chan = SND_PickChannel(entnum, entchannel);
@@ -399,7 +397,7 @@ void S_StartSound (int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float 
 	memset (target_chan, 0, sizeof(*target_chan));
 	VectorCopy(origin, target_chan->origin);
 	target_chan->dist_mult = attenuation / sound_nominal_clip_dist;
-	target_chan->master_vol = vol;
+	target_chan->master_vol = (int) (fvol * 255);
 	target_chan->entnum = entnum;
 	target_chan->entchannel = entchannel;
 	SND_Spatialize(target_chan);
@@ -425,7 +423,7 @@ void S_StartSound (int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float 
 		if (check == target_chan)
 			continue;
 		if (check->sfx == sfx && !check->pos) {
-			skip = rand () % (int)(0.1 * sn.speed);
+			skip = rand () % (int)(0.1 * shm->format.speed);
 			if (skip >= target_chan->end)
 				skip = target_chan->end - 1;
 			target_chan->pos += skip;
@@ -483,13 +481,13 @@ void S_ClearBuffer (void)
 	int clear;
 
 #ifdef _WIN32
-	if (!shm || (!sn.buffer && !pDSBuf))
+	if (!shm || (!shm->buffer && !pDSBuf))
 #else
-	if (!shm || !sn.buffer)
+	if (!shm || !shm->buffer)
 #endif
 		return;
 
-	clear = (sn.samplebits == 8) ? 0x80 : 0;
+	clear = (shm->format.width == 2) ? 0x80 : 0;
 
 #ifdef _WIN32
 	if (pDSBuf) {
@@ -513,14 +511,14 @@ void S_ClearBuffer (void)
 				return;
 		}
 
-		memset(pData, clear, sn.samples * sn.samplebits/8);
+		memset(pData, clear, shm->bufferlength);
 
 		pDSBuf->lpVtbl->Unlock(pDSBuf, pData, dwSize, NULL, 0);
 
 	} else
 #endif
 	{
-		memset(sn.buffer, clear, sn.samples * sn.samplebits/8);
+		memset(shm->buffer, clear, shm->bufferlength);
 	}
 }
 
@@ -551,7 +549,7 @@ void S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation)
 
 	ss->sfx = sfx;
 	VectorCopy (origin, ss->origin);
-	ss->master_vol = vol;
+	ss->master_vol = (int) vol;
 	ss->dist_mult = (attenuation/64) / sound_nominal_clip_dist;
 	ss->end = paintedtime + sc->length;
 
@@ -563,7 +561,7 @@ void S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation)
 static void S_UpdateAmbientSounds (void)
 {
 	mleaf_t *l;
-	float vol;
+	int vol;
 	int ambient_channel;
 	channel_t *chan;
 
@@ -582,17 +580,17 @@ static void S_UpdateAmbientSounds (void)
 		chan = &channels[ambient_channel];
 		chan->sfx = ambient_sfx[ambient_channel];
 
-		vol = s_ambientlevel.value * l->ambient_sound_level[ambient_channel];
+		vol = (int) (s_ambientlevel.value * l->ambient_sound_level[ambient_channel]);
 		if (vol < 8)
 			vol = 0;
 
 		// don't adjust volume too fast
 		if (chan->master_vol < vol) {
-			chan->master_vol += cls.frametime * s_ambientfade.value;
+			chan->master_vol += (int) (cls.frametime * s_ambientfade.value);
 			if (chan->master_vol > vol)
 				chan->master_vol = vol;
 		} else if (chan->master_vol > vol) {
-			chan->master_vol -= cls.frametime * s_ambientfade.value;
+			chan->master_vol -= (int) (cls.frametime * s_ambientfade.value);
 			if (chan->master_vol < vol)
 				chan->master_vol = vol;
 		}
@@ -604,7 +602,7 @@ static void S_UpdateAmbientSounds (void)
 //Called once each time through the main loop
 void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 {
-	int i, j, total;
+	unsigned int i, j, total;
 	channel_t *ch, *combine;
 
 	if (!snd_initialized || (snd_blocked > 0) || !shm)
@@ -689,7 +687,7 @@ static void GetSoundtime (void)
 		return;
 #endif
 
-	fullsamples = sn.samples / sn.channels;
+	fullsamples = shm->sampleframes;
 
 	// it is possible to miscount buffers if it has wrapped twice between calls to S_Update.  Oh well.
 	samplepos = SNDDMA_GetDMAPos();
@@ -707,7 +705,7 @@ static void GetSoundtime (void)
 
 	oldsamplepos = samplepos;
 
-	soundtime = buffers*fullsamples + samplepos/sn.channels;
+	soundtime = buffers * fullsamples + samplepos / shm->format.channels;
 }
 
 void S_ExtraUpdate (void)
@@ -732,7 +730,6 @@ void S_ExtraUpdate (void)
 static void S_Update_ (void)
 {
 	unsigned int endtime;
-	int samps;
 #ifdef _WIN32
 	DWORD dwStatus;
 #endif
@@ -750,9 +747,8 @@ static void S_Update_ (void)
 	}
 
 	// mix ahead of current position
-	endtime = soundtime + (unsigned int)(s_mixahead.value * sn.speed);
-	samps = sn.samples >> (sn.channels - 1);
-	endtime = min(endtime, (unsigned int)(soundtime + samps));
+	endtime = soundtime + (unsigned int) (s_mixahead.value * shm->format.speed);
+	endtime = min(endtime, (unsigned int)(soundtime + shm->sampleframes));
 
 #ifdef _WIN32
 	// if the buffer was lost or stopped, restore it and/or restart it

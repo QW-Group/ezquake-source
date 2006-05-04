@@ -283,9 +283,9 @@ qbool Capture_Open (char *filename)
 	// initialize audio data
 	memset (&m_wave_format, 0, sizeof(m_wave_format));
 	m_wave_format.wFormatTag = WAVE_FORMAT_PCM;
-	m_wave_format.nChannels = 2;		// always stereo in Quake sound engine
-	m_wave_format.nSamplesPerSec = shm->speed;
-	m_wave_format.wBitsPerSample = 16;	// always 16bit in Quake sound engine
+	m_wave_format.nChannels = 2; // always stereo in Quake sound engine
+	m_wave_format.nSamplesPerSec = shm->format.speed;
+	m_wave_format.wBitsPerSample = 16; // always 16bit in Quake sound engine
 	m_wave_format.nBlockAlign = m_wave_format.wBitsPerSample/8 * m_wave_format.nChannels;
 	m_wave_format.nAvgBytesPerSec = m_wave_format.nSamplesPerSec * m_wave_format.nBlockAlign;
 
@@ -319,7 +319,7 @@ qbool Capture_Open (char *filename)
 		memset (&mp3_format, 0, sizeof(mp3_format));
 		mp3_format.wfx.wFormatTag = WAVE_FORMAT_MPEGLAYER3;
 		mp3_format.wfx.nChannels = 2;
-		mp3_format.wfx.nSamplesPerSec = shm->speed;
+		mp3_format.wfx.nSamplesPerSec = shm->format.speed;
 		mp3_format.wfx.wBitsPerSample = 0;
 		mp3_format.wfx.nBlockAlign = 1;
 		mp3_format.wfx.nAvgBytesPerSec = movie_mp3_kbps.value * 125;

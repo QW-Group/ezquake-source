@@ -43,15 +43,18 @@ int SNDDMA_GetDMAPos_ALSA (void)
 {
 	const snd_pcm_channel_area_t *areas;
 	snd_pcm_uframes_t offset;
-	snd_pcm_uframes_t nframes = sn.samples/sn.channels;
+	snd_pcm_uframes_t nframes = shm->sampleframes;
+
+	if (!shm)
+		return 0;
 
 	alsa_snd_pcm_avail_update (pcm);
 	alsa_snd_pcm_mmap_begin (pcm, &areas, &offset, &nframes);
-	offset *= sn.channels;
-	nframes *= sn.channels;
-	sn.samplepos = offset;
-	sn.buffer = (unsigned char *) areas->addr;
-	return sn.samplepos;
+	offset *= shm->format.channels;
+	nframes *= shm->format.channels;
+	shm->samplepos = offset;
+	shm->buffer = (unsigned char *)areas->addr;
+	return shm->samplepos;
 }
 
 void SNDDMA_Shutdown_ALSA (void)
@@ -70,7 +73,7 @@ void SNDDMA_Submit_ALSA (void)
 	if (snd_blocked)
 		return;
 
-	nframes = count / sn.channels;
+	nframes = count / shm->format.channels;
 
 	alsa_snd_pcm_avail_update (pcm);
 	alsa_snd_pcm_mmap_begin (pcm, &areas, &offset, &nframes);
@@ -96,6 +99,10 @@ qbool SNDDMA_Init_ALSA (void)
 	int bps = -1, stereo = -1;
 	unsigned int rate = 0;
 	int err;
+
+	int width = 2;
+	int channels;
+
 	snd_pcm_hw_params_t *hw;
 	snd_pcm_sw_params_t *sw;
 	snd_pcm_uframes_t frag_size;
@@ -125,7 +132,9 @@ qbool SNDDMA_Init_ALSA (void)
 
 	if(Cvar_VariableValue("s_bits")) {
 		bps = Cvar_VariableValue("s_bits");
-		if(bps != 16 && bps != 8) {
+		if (bps == 16 || bps == 8) {
+			width = bps / 8;
+		} else {
 			Sys_Printf("Error: invalid sample bits: %d\n", bps);
 			return 0;
 		}
@@ -289,37 +298,23 @@ qbool SNDDMA_Init_ALSA (void)
 		goto error;
 	}
 
-	sn.channels = stereo + 1;
-
-	// don't mix less than this in mono samples:
-	err = alsa_snd_pcm_hw_params_get_period_size (hw, (snd_pcm_uframes_t *)&sn.submission_chunk, 0);
-	if(0 > err) {
-		Sys_Printf("ALSA: unable to get period size. %s\n", alsa_snd_strerror(err));
-		goto error;
-	}
-
-	// Tell the Quake sound system what's going on...
-	sn.samplepos = 0;
-	sn.samplebits = bps;
-
 	err = alsa_snd_pcm_hw_params_get_buffer_size (hw, &buffer_size);
 	if(0 > err) {
 		Sys_Printf("ALSA: unable to get buffer size. %s\n", alsa_snd_strerror(err));
 		goto error;
 	}
 
-	sn.samples = buffer_size * sn.channels;
-	sn.speed = rate;
-	SNDDMA_GetDMAPos();
-
-	// Inform user...
-	Sys_Printf("%5d stereo\n", sn.channels - 1);
-	Sys_Printf("%5d samples\n", sn.samples);
-	Sys_Printf("%5d samplepos\n", sn.samplepos);
-	Sys_Printf("%5d samplebits\n", sn.samplebits);
-	Sys_Printf("%5d submission_chunk\n", sn.submission_chunk);
-	Sys_Printf("%5d speed\n", sn.speed);
-	Sys_Printf("0x%lx dma buffer\n", (long)sn.buffer);
+	// Tell the Quake sound system what's going on...
+	channels = stereo ? 2 : 1; // FIXME
+	
+	memset((void *) shm, 0, sizeof(*shm));
+	shm->format.channels = channels;
+	shm->format.width = width;
+	shm->format.speed = rate;
+	shm->samplepos = 0;
+	shm->sampleframes = buffer_size;
+	shm->samples = shm->sampleframes * shm->format.channels;
+	SNDDMA_GetDMAPos(); // sets shm->buffer
 
 	return 1;
 error:
