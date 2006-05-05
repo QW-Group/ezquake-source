@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.28 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: hud_common.c,v 1.29 2006-05-05 21:49:39 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -2285,6 +2285,7 @@ char *Get_MP3_HUD_style(float style, char *st)
 // Draws MP3 Title.
 void SCR_HUD_DrawMP3_Title(hud_t *hud)
 {
+#if defined(_WIN32) || defined(__XMMS__)
 	int x=0, y=0/*, n=1*/;
     int width = 64;
 	int height = 8;
@@ -2354,11 +2355,13 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 	{
 		SCR_DrawWordWrapString(x, y, 8, width, height, (int)wordwrap->value, (int)scroll->value, (float)scroll_delay->value, title);
 	}
+#endif
 }
 
 // Draws MP3 Time as a HUD-element.
 void SCR_HUD_DrawMP3_Time(hud_t *hud)
 {
+#if defined(_WIN32) || defined(__XMMS__)
 	int x=0, y=0, width=0, height=0;
 	int elapsed = 0;
 	int remain = 0;
@@ -2428,6 +2431,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 		}
 	}
 
+
 	// Don't allow showing the timer during ruleset smackdown,
 	// can be used for timing powerups.
 	if(!strncasecmp(Rulesets_Ruleset(), "smackdown", 9))
@@ -2442,6 +2446,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 	{
 		Draw_String(x, y, time_string);
 	}
+#endif
 }
 
 // ----------------
