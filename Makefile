@@ -5,7 +5,7 @@
 
 
 # compilation tool and detection of targets/achitecture
-_E			= @
+_E			=
 CC			=gcc
 CC_BASEVERSION		=$(shell $(CC) -dumpversion | sed -e 's/\..*//g')
 MACHINE			=$(shell $(CC) -dumpmachine)
@@ -93,7 +93,7 @@ else
 	BASE_RELEASE_CFLAGS +=-falign-loops=2 -falign-jumps=2 -falign-functions=2
 endif
 
-BASE_DEBUG_CFLAGS               =-g3 -D_DEBUG
+BASE_DEBUG_CFLAGS               =-ggdb -D_DEBUG
 
 ifeq ($(ARCH),x86)              # Linux/x86
 	BASE_CFLAGS             +=-Did386 $(XMMS_CFLAGS)
@@ -120,7 +120,7 @@ ifeq ($(ARCH),x86)              # Linux/x86
 	ARCH_GLCFLAGS           =-I/usr/include -DWITH_VMODE -DWITH_DGA -DWITH_EVDEV
 endif
 ifeq ($(ARCH),mingw32)          # Win32/x86 in MingW environment
-	ARCH_GLCFLAGS           =-mwindows -I/opt/xmingw/include/ -I./pcre/ -I./libexpat/
+	ARCH_GLCFLAGS           =-mwindows -I/opt/xmingw/include/
 endif
 ifeq ($(ARCH),ppc)              # MacOS-X/ppc
 	ARCH_GLCFLAGS           =-I/opt/local/include/ -I/Developer/Headers/FlatCarbon -I/sw/include -FOpenGL -FAGL
@@ -132,7 +132,9 @@ endif
 GLCFLAGS=$(ARCH_GLCFLAGS) $(BASE_GLCFLAGS)
 
 CFLAGS += $(RELEASE_CFLAGS)
-LDFLAGS := -lm -ldl -lpthread -ltcl -lexpat `glib-config --libs` `pcre-config --libs`
+LDFLAGS := -lm -ldl -lpthread
+
+COMMON_OBJS := libs/libz.a libs/libpng.a libs/libpcre.a libs/libexpat.a libs/libtcl8.4.a libs/libglib.a libs/libjpeg.a
 
 #######
 # GLX #
@@ -179,10 +181,10 @@ GLX_S_OBJS := $(addprefix $(GLX_DIR)/, $(addsuffix .o, $(GLX_S_FILES)))
 
 GLX_CFLAGS := $(CFLAGS) $(GLCFLAGS) -DGLQUAKE -DWITH_JPEG -I/usr/X11R6/include
 
-GLX_LDFLAGS := $(LDFLAGS) -lGL -L/usr/X11R6/lib -lX11 -lXext -lXxf86dga -lXxf86vm
+GLX_LDFLAGS := $(LDFLAGS) -lGL -L/usr/X11R6/lib -lX11 -lXext # -lXxf86dga -lXxf86vm
 
 glx: _DIR := $(GLX_DIR)
-glx: _OBJS := $(GLX_C_OBJS) $(GLX_S_OBJS)
+glx: _OBJS := $(GLX_C_OBJS) $(GLX_S_OBJS) $(COMMON_OBJS) /usr/lib/libXxf86vm.a /usr/lib/libXxf86dga.a
 glx: _LDFLAGS := $(GLX_LDFLAGS)
 glx: _CFLAGS := $(GLX_CFLAGS)
 glx: $(GLX_TARGET)
@@ -260,7 +262,7 @@ X11_CFLAGS := $(CFLAGS) -D_Soft_X11
 X11_LDFLAGS := $(LDFLAGS) -L/usr/X11R6/lib -lX11 -lXext 
 
 x11: _DIR := $(X11_DIR)
-x11: _OBJS := $(X11_C_OBJS) $(X11_S_OBJS)
+x11: _OBJS := $(X11_C_OBJS) $(X11_S_OBJS) $(COMMON_OBJS)
 x11: _LDFLAGS := $(X11_LDFLAGS)
 x11: _CFLAGS := $(X11_CFLAGS)
 x11: $(X11_TARGET)
@@ -338,7 +340,7 @@ SVGA_CFLAGS := $(CFLAGS) -D_Soft_SVGA
 SVGA_LDFLAGS := $(LDFLAGS) -lvga
 
 svga: _DIR := $(SVGA_DIR)
-svga: _OBJS := $(SVGA_C_OBJS) $(SVGA_S_OBJS)
+svga: _OBJS := $(SVGA_C_OBJS) $(SVGA_S_OBJS) $(COMMON_OBJS)
 svga: _LDFLAGS := $(SVGA_LDFLAGS)
 svga: _CFLAGS := $(SVGA_CFLAGS)
 svga: $(SVGA_TARGET)
@@ -411,7 +413,7 @@ mac: _LDFLAGS := $(MAC_LDFLAGS)
 mac: _CFLAGS := $(MAC_CFLAGS)
 mac: $(MAC_TARGET)
 
-$(MAC_TARGET): $(MAC_DIR) $(MAC_C_OBJS)
+$(MAC_TARGET): $(MAC_DIR) $(MAC_C_OBJS) # FIXME
 	$(BUILD)
 	$(STRIP) $(MAC_TARGET)
 
