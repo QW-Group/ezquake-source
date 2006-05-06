@@ -60,7 +60,7 @@ OSStatus	SNDDMA_AudioIOProc (AudioDeviceID inDevice,
                                     void *inClientData)
 {
     UInt16	i;
-    short	*myDMA = ((short *) gSndBuffer) + gSndBufferPosition / (sn.samplebits >> 3);
+    short	*myDMA = ((short *) gSndBuffer) + gSndBufferPosition / (shm->format.width);
     float	*myOutBuffer = (float *) outOutputData->mBuffers[0].mData;
 
     // convert the buffer to float, required by CoreAudio:
@@ -71,7 +71,7 @@ OSStatus	SNDDMA_AudioIOProc (AudioDeviceID inDevice,
     }
     
     // increase the bufferposition:
-    gSndBufferPosition += gSndBufferByteCount * (sn.samplebits >> 3);
+    gSndBufferPosition += gSndBufferByteCount * (shm->format.width);
     if (gSndBufferPosition >= sizeof (gSndBuffer))
     {
         gSndBufferPosition = 0;
@@ -201,7 +201,8 @@ qbool SNDDMA_Init (void)
     
     // setup Quake sound variables:
     //shm = (void *) Hunk_AllocName (sizeof (*shm), "shm");
-	
+
+	/*
     sn.splitbuffer = 0;
     sn.samplebits = 16;
     sn.speed = myBasicDescription.mSampleRate;
@@ -212,14 +213,24 @@ qbool SNDDMA_Init (void)
     sn.gamealive = true;
     sn.submission_chunk = gSndBufferByteCount;
     sn.buffer = gSndBuffer;	
+	*/
+	
+	shm->format.channels = myBasicDescription.mChannelsPerFrame;
+	shm->format.width = 16 / 8;
+	shm->format.speed = myBasicDescription.mSampleRate;
+	shm->samples = sizeof(gSndBuffer) / (shm->format.width);
+	shm->sampleframes = shm->samples / shm->format.channels;
+	shm->samplepos = 0;
+	shm->buffer = gSndBuffer;
+	
 	
     gSndBufferPosition = 0;
     
     // output a description of the sound format:
     if (!COM_CheckParm ("-nosound"))
     {
-        Com_Printf ("Sound Channels: %d\n", sn.channels);
-        Com_Printf ("Sound sample bits: %d\n", sn.samplebits);
+        Com_Printf ("Sound Channels: %d\n", shm->format.channels);
+        Com_Printf ("Sound sample bits: %d\n", 16);
     }
     
     return (1);
@@ -252,7 +263,7 @@ int	SNDDMA_GetDMAPos (void)
     {
         return (0);
     }
-    return (gSndBufferPosition / (sn.samplebits >> 3));
+    return (gSndBufferPosition / (shm->format.width));
 }
 
 //_________________________________________________________________________________________________________________________eOF
