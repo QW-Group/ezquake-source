@@ -37,7 +37,9 @@
 #pragma mark =Variables=
 
 cvar_t				aux_look = {"auxlook","1", true};
-cvar_t				m_filter = {"m_filter","1"};
+cvar_t				m_filter = {"m_filter", "1"};
+// compatibility with old Quake -- setting to 0 disables KP_* codes
+cvar_t				cl_keypad = {"cl_keypad","0"};
 BOOL				gInMouseEnabled;
 UInt8				gInSpecialKey[] = {
 										K_UPARROW,    K_DOWNARROW,   K_LEFTARROW,    K_RIGHTARROW,
@@ -374,6 +376,7 @@ void 	IN_Init (void)
 {
     // register variables:
     Cvar_Register (&m_filter);
+	Cvar_Register (&cl_keypad);
     Cvar_Register (&aux_look);
     
     // register console commands:
