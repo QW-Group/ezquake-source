@@ -1,13 +1,14 @@
 //_________________________________________________________________________________________________________________________nFO
-// "snd_osx.m" - MacOS X Sound driver.
+//"snd_osx.m" - MacOS X Sound driver.
 //
-// Written by:	Axel 'awe' Wefers			[mailto:awe@fruitz-of-dojo.de].
-//				©2001-2006 Fruitz Of Dojo 	[http://www.fruitz-of-dojo.de].
+// Written by:	Axel 'awe' Wefers
+// [mailto:awe@fruitz-of-dojo.de].  ©2001-2006 Fruitz Of Dojo
+// [http://www.fruitz-of-dojo.de].
 //
 // Quakeª is copyrighted by id software		[http://www.idsoftware.com].
 //
-// Version History:
-// v1.0.9: Added function for reserving the buffersize [required to be called before any QuickTime media is loaded].
+// Version History: v1.0.9: Added function for reserving the buffersize
+// [required to be called before any QuickTime media is loaded].
 // v1.0.0: Initial release.
 //____________________________________________________________________________________________________________________iNCLUDES
 
@@ -24,6 +25,7 @@
 #pragma mark =Defines=
 
 #define OUTPUT_BUFFER_SIZE	(2 * 1024)
+#define SAMPLE_SIZE 16
 
 #pragma mark -
 
@@ -55,7 +57,7 @@ OSStatus	SNDDMA_AudioIOProc (AudioDeviceID inDevice,
                                     const AudioTimeStamp *inNow,
                                     const AudioBufferList *inInputData,
                                     const AudioTimeStamp *inInputTime,
-                                    AudioBufferList *outOutputData, 
+                                    AudioBufferList *outOutputData,
                                     const AudioTimeStamp *inOutputTime,
                                     void *inClientData)
 {
@@ -69,14 +71,14 @@ OSStatus	SNDDMA_AudioIOProc (AudioDeviceID inDevice,
         *myOutBuffer++ = (*myDMA) * (1.0f / 32768.0f);
         *myDMA++ = 0x0000;
     }
-    
+
     // increase the bufferposition:
     gSndBufferPosition += gSndBufferByteCount * (shm->format.width);
     if (gSndBufferPosition >= sizeof (gSndBuffer))
     {
         gSndBufferPosition = 0;
     }
-    
+
     // return 0 = no error:
     return (0);
 }
@@ -88,13 +90,13 @@ BOOL	SNDDMA_ReserveBufferSize (void)
     OSStatus		myError;
     AudioDeviceID	myAudioDevice;
     UInt32			myPropertySize;
-    
+
     // this function has to be called before any QuickTime movie data is loaded, so that the QuickTime handler
     // knows about our custom buffersize!
     myPropertySize = sizeof (AudioDeviceID);
     myError = AudioHardwareGetProperty (kAudioHardwarePropertyDefaultOutputDevice,
                                         &myPropertySize,&myAudioDevice);
-    
+
     if (!myError && myAudioDevice != kAudioDeviceUnknown)
     {
         UInt32		myBufferByteCount = OUTPUT_BUFFER_SIZE * sizeof (float);
@@ -104,13 +106,13 @@ BOOL	SNDDMA_ReserveBufferSize (void)
         // set the buffersize for the audio device:
         myError = AudioDeviceSetProperty (myAudioDevice, NULL, 0, NO, kAudioDevicePropertyBufferSize,
                                           myPropertySize, &myBufferByteCount);
-        
+
         if (!myError)
         {
             return (YES);
         }
     }
-    
+
     return (NO);
 }
 
@@ -123,21 +125,21 @@ qbool SNDDMA_Init (void)
 
     Com_Printf ("Initializing CoreAudio...\n");
     myPropertySize = sizeof (gSndDeviceID);
-    
+
     // find a suitable audio device:
     if (AudioHardwareGetProperty (kAudioHardwarePropertyDefaultOutputDevice, &myPropertySize, &gSndDeviceID))
     {
         Com_Printf ("Audio init fails: Can\t get audio device.\n");
         return (0);
     }
-    
+
     // is the device valid?
     if (gSndDeviceID == kAudioDeviceUnknown)
     {
         Com_Printf ("Audio init fails: Unsupported audio device.\n");
         return (0);
     }
-    
+
     // get the buffersize of the audio device [must previously be set via "SNDDMA_ReserveBufferSize ()"]:
     myPropertySize = sizeof (gSndBufferByteCount);
     if (AudioDeviceGetProperty (gSndDeviceID, 0, NO, kAudioDevicePropertyBufferSize,
@@ -146,7 +148,7 @@ qbool SNDDMA_Init (void)
         Com_Printf ("Audio init fails: Can't get audiobuffer.\n");
         return (0);
     }
-    
+
     //check the buffersize:
     gSndBufferByteCount /= sizeof (float);
     if (gSndBufferByteCount != OUTPUT_BUFFER_SIZE)
@@ -159,7 +161,7 @@ qbool SNDDMA_Init (void)
         Com_Printf ("Audio init: Bad audiobuffer size!\n");
         return (0);
     }
-    
+
     // get the audiostream format:
     myPropertySize = sizeof (myBasicDescription);
     if (AudioDeviceGetProperty (gSndDeviceID, 0, NO, kAudioDevicePropertyStreamFormat,
@@ -168,14 +170,14 @@ qbool SNDDMA_Init (void)
         Com_Printf ("Audio init fails.\n");
         return (0);
     }
-    
+
     // is the format LinearPCM?
     if (myBasicDescription.mFormatID != kAudioFormatLinearPCM)
     {
         Com_Printf ("Default Audio Device doesn't support Linear PCM!\n");
         return(0);
     }
-    
+
     // is sound ouput suppressed?
     if (!COM_CheckParm ("-nosound"))
     {
@@ -185,7 +187,7 @@ qbool SNDDMA_Init (void)
             Com_Printf ("Audio init fails: Can\'t install IOProc.\n");
             return (0);
         }
-        
+
         // start the sound FX:
         if (AudioDeviceStart (gSndDeviceID, SNDDMA_AudioIOProc))
         {
@@ -198,41 +200,26 @@ qbool SNDDMA_Init (void)
     {
         gSndIOProcIsInstalled = NO;
     }
-    
-    // setup Quake sound variables:
-    //shm = (void *) Hunk_AllocName (sizeof (*shm), "shm");
 
-	/*
-    sn.splitbuffer = 0;
-    sn.samplebits = 16;
-    sn.speed = myBasicDescription.mSampleRate;
-    sn.channels = myBasicDescription.mChannelsPerFrame;
-    sn.samples = sizeof (gSndBuffer) / (sn.samplebits >> 3);
-    sn.samplepos = 0;
-    sn.soundalive = true;
-    sn.gamealive = true;
-    sn.submission_chunk = gSndBufferByteCount;
-    sn.buffer = gSndBuffer;	
-	*/
-	
+    // setup Quake sound variables:
 	shm->format.channels = myBasicDescription.mChannelsPerFrame;
-	shm->format.width = 16 / 8;
+	shm->format.width = SAMPLE_SIZE / 8;
 	shm->format.speed = myBasicDescription.mSampleRate;
 	shm->samples = sizeof(gSndBuffer) / (shm->format.width);
 	shm->sampleframes = shm->samples / shm->format.channels;
 	shm->samplepos = 0;
 	shm->buffer = gSndBuffer;
-	
-	
+
     gSndBufferPosition = 0;
-    
+
     // output a description of the sound format:
     if (!COM_CheckParm ("-nosound"))
     {
         Com_Printf ("Sound Channels: %d\n", shm->format.channels);
-        Com_Printf ("Sound sample bits: %d\n", 16);
+        Com_Printf ("Sound sample bits: %d\n", SAMPLE_SIZE);
+        Com_Printf ("Sound sample rate: %d\n", shm->format.speed);
     }
-    
+
     return (1);
 }
 
