@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.29 2006-05-05 21:49:39 disconn3ct Exp $
+	$Id: hud_common.c,v 1.30 2006-05-06 21:25:43 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -1584,8 +1584,12 @@ static int ComparePlayers(sort_players_info_t *p1, sort_players_info_t *p2, qboo
         if (byTeams)
             d = p1->team->frags - p2->team->frags;
 
-        if (!d)
-            d = i1->frags - i2->frags;
+		if (!d) {
+			if (byTeams)
+				d = strcmp(p1->team->name, p2->team->name);
+			else
+				d =	i1->frags - i2->frags;
+		}
 
         if (!d)
             d = strcmp(i1->name, i2->name);
