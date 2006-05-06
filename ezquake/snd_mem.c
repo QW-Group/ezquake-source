@@ -16,14 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mem.c,v 1.7 2006-05-06 12:08:14 disconn3ct Exp $
+    $Id: snd_mem.c,v 1.8 2006-05-06 12:58:52 disconn3ct Exp $
 */
 // snd_mem.c -- sound caching
 
 #include "quakedef.h"
 
 
-static void ResampleSfx (sfx_t *sfx, unsigned char *in_data, unsigned int inrate, unsigned int inwidth)
+static void ResampleSfx (sfx_t *sfx, unsigned char *in_data, size_t in_length, const snd_format_t* in_format, unsigned char *out_data)
 {
 	int sample, samplefrac, fracstep, srcsample;
 	unsigned int outcount, i;
@@ -33,18 +33,18 @@ static void ResampleSfx (sfx_t *sfx, unsigned char *in_data, unsigned int inrate
 	if (!(sc = (sfxcache_t *) Cache_Check (&sfx->cache)))
 		return;
 
-	stepscale = (float) inrate / shm->format.speed; // this is usually 0.5, 1, or 2
+	stepscale = (float) in_format->speed / shm->format.speed; // this is usually 0.5, 1, or 2
 
-	outcount = (int) ((double) sc->total_length * (double) shm->format.speed / (double) inrate);
+	outcount = (int) ((double) sc->total_length * (double) shm->format.speed / (double) in_format->speed);
 	sc->total_length = outcount;
 
 	sc->format.speed = shm->format.speed;
-	sc->format.width = (s_loadas8bit.value) ? 1 : inwidth;
+	sc->format.width = (s_loadas8bit.value) ? 1 : in_format->width;
 	sc->format.channels = 1;
 
 	// resample / decimate to the current source rate
 
-	if (stepscale == 1 && inwidth == 1 && sc->format.width == 1) {
+	if (stepscale == 1 && in_format->width == 1 && sc->format.width == 1) {
 		// fast special case
 		for (i = 0; i < outcount; i++)
 			((signed char *)sc->data)[i] = in_data[i] - 128;
@@ -56,11 +56,11 @@ static void ResampleSfx (sfx_t *sfx, unsigned char *in_data, unsigned int inrate
 			srcsample = samplefrac >> 8;
 			samplefrac += fracstep;
 
-			if (inwidth == 2)
+			if (in_format->width == 2)
 				sample = LittleShort(((short *)in_data)[srcsample]);
 			else
 				sample = (int)((unsigned char)(in_data[srcsample]) - 128) << 8;
-	
+
 			if (sc->format.width == 2)
 				((short *)sc->data)[i] = sample;
 			else
@@ -260,7 +260,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	else
 		sc->loopstart = (int)((double)info.loopstart * (double)shm->format.speed / (double)sc->format.speed);
 
-	ResampleSfx (s, data + info.dataofs, sc->format.speed, sc->format.width);
+	ResampleSfx (s, data + info.dataofs, info.samples, &sc->format, sc->data);
 
 	return sc;
 }
