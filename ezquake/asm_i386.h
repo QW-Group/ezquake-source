@@ -63,35 +63,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	nd_numfaces		36
 #define nd_size			40
 
-// sfxcache_t structure
-// !!! if this is changed, it much be changed in qsound.h too !!!
-#define sfxc_length		0
-#define sfxc_loopstart	4
-#define sfxc_speed		8
-#define sfxc_width		12
-#define sfxc_stereo		16
-#define sfxc_data		20
-
-// channel_t structure
-// !!! if this is changed, it much be changed in qsound.h too !!!
-#define ch_sfx			0
-#define ch_leftvol		4
-#define ch_rightvol		8
-#define ch_end			12
-#define ch_pos			16
-#define ch_looping		20
-#define ch_entnum		24
-#define ch_entchannel	28
-#define ch_origin		32
-#define ch_dist_mult	44
-#define ch_master_vol	48
-#define ch_size			52
-
-// portable_samplepair_t structure
-// !!! if this is changed, it much be changed in qsound.h too !!!
-#define psp_left		0
-#define psp_right		4
-#define psp_size		8
-
 #endif
 

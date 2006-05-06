@@ -22,13 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __QSOUND_H__
 #define __QSOUND_H__
 
-typedef struct sfxbuffer_s
-{
-	unsigned int	length;
-	unsigned int	offset;
-	unsigned char	data[4];	// variable sized
-} sfxbuffer_t;
-
 typedef struct snd_format_s
 {
 	unsigned int	speed;
@@ -36,25 +29,16 @@ typedef struct snd_format_s
 	unsigned int	channels;
 } snd_format_t;
 
-// !!! if this is changed, it much be changed in asm_i386.h too !!!
-typedef struct portable_samplepair_s {
-	int left;
-	int right;
-} portable_samplepair_t;
-
 typedef struct sfx_s {
 	char  name[MAX_QPATH];
 	cache_user_t cache;
 } sfx_t;
 
-// !!! if this is changed, it much be changed in asm_i386.h too !!!
 typedef struct sfxcache_s {
-	int 	length;
-	int 	loopstart;
-	int 	speed;
-	int 	width;
-	int 	stereo;
-	byte	data[1];
+	snd_format_t	format;
+	unsigned int 	total_length;
+	int 		loopstart;
+	unsigned char	data[1];
 } sfxcache_t;
 
 typedef struct dma_s {
@@ -66,7 +50,6 @@ typedef struct dma_s {
 	int		bufferlength;		// used only by certain drivers
 } dma_t;
 
-// !!! if this is changed, it much be changed in asm_i386.h too !!!
 typedef struct channel_s {
 	sfx_t		*sfx;			// sfx number
 	int		leftvol;		// 0-255 volume

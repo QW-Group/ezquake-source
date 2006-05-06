@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.29 2006-05-04 19:46:31 disconn3ct Exp $
+    $Id: snd_dma.c,v 1.30 2006-05-06 12:08:14 disconn3ct Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -414,7 +414,7 @@ void S_StartSound (int entnum, int entchannel, sfx_t *sfx, vec3_t origin, float 
 
 	target_chan->sfx = sfx;
 	target_chan->pos = 0.0;
-	target_chan->end = paintedtime + sc->length;
+	target_chan->end = paintedtime + (int) sc->total_length;
 
 	// if an identical sound has also been started this frame, offset the pos
 	// a bit to keep it from just making the first one louder
@@ -551,7 +551,7 @@ void S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation)
 	VectorCopy (origin, ss->origin);
 	ss->master_vol = (int) vol;
 	ss->dist_mult = (attenuation/64) / sound_nominal_clip_dist;
-	ss->end = paintedtime + sc->length;
+	ss->end = paintedtime + (int) sc->total_length;
 
 	SND_Spatialize (ss);
 }
@@ -816,7 +816,8 @@ static void S_PlayVol_f (void)
 
 static void S_SoundList_f (void)
 {
-	int i, size, total = 0;
+	int i, total = 0;
+	unsigned int size;
 	sfx_t *sfx;
 	sfxcache_t *sc;
 
@@ -824,13 +825,13 @@ static void S_SoundList_f (void)
 		sc = (sfxcache_t *) Cache_Check (&sfx->cache);
 		if (!sc)
 			continue;
-		size = sc->length * sc->width * (sc->stereo + 1);
+		size = sc->total_length * sc->format.width * (sc->format.channels);
 		total += size;
 		if (sc->loopstart >= 0)
 			Com_Printf ("L");
 		else
 			Com_Printf (" ");
-		Com_Printf ("(%2db) %6i : %s\n",sc->width*8,  size, sfx->name);
+		Com_Printf ("(%2db) %6i : %s\n",sc->format.width*8,  size, sfx->name);
 	}
 	Com_Printf ("Total resident: %i\n", total);
 }

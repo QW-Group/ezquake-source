@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mix.c,v 1.6 2006-05-04 19:46:31 disconn3ct Exp $
+    $Id: snd_mix.c,v 1.7 2006-05-06 12:08:14 disconn3ct Exp $
 */
 // snd_mix.c -- portable code to mix sounds for snd_dma.c
 
@@ -28,12 +28,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #define PAINTBUFFER_SIZE 512
-// for !id386 it can be static -->
-portable_samplepair_t paintbuffer[PAINTBUFFER_SIZE];
-int snd_scaletable[32][256];
-int snd_vol, *snd_p;
-short *snd_out;
-// <-- for !id386 it can be static
+typedef struct portable_samplepair_s {
+	int left;
+	int right;
+} portable_samplepair_t;
+static portable_samplepair_t paintbuffer[PAINTBUFFER_SIZE];
+static int snd_scaletable[32][256];
+static int snd_vol, *snd_p;
+static short *snd_out;
+
 
 int snd_linear_count;
 
@@ -41,7 +44,6 @@ int snd_linear_count;
 extern char *DSoundError (int error);
 #endif
 
-#if !id386
 static void Snd_WriteLinearBlastStereo16 (void)
 {
 	int val, i;
@@ -65,10 +67,6 @@ static void Snd_WriteLinearBlastStereo16_SwapStereo (void)
 		snd_out[i+1] = bound (-32768, val, 32767);
 	}
 }
-#else
-void Snd_WriteLinearBlastStereo16 (void);
-void Snd_WriteLinearBlastStereo16_SwapStereo (void);
-#endif // !id386
 
 static void S_TransferStereo16 (int endtime)
 {
@@ -233,7 +231,6 @@ CHANNEL MIXING
 ===============================================================================
 */
 
-#if !id386
 static void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 {
 	int data, i;
@@ -257,9 +254,6 @@ static void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 
 	ch->pos += count;
 }
-#else
-void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count);
-#endif // !id386
 
 static void SND_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int count)
 {
@@ -292,7 +286,8 @@ void SND_InitScaletable (void)
 
 void S_PaintChannels (int endtime)
 {
-	int ltime, count, end, i;
+	int ltime, count, end;
+	unsigned int i;
 	sfxcache_t *sc;
 	channel_t *ch;
 
@@ -322,7 +317,7 @@ void S_PaintChannels (int endtime)
 				count = (ch->end < end) ? (ch->end - ltime) : (end - ltime);
 
 				if (count > 0) {
-					if (sc->width == 1)
+					if (sc->format.width == 1)
 						SND_PaintChannelFrom8(ch, sc, count);
 					else
 						SND_PaintChannelFrom16(ch, sc, count);
@@ -333,8 +328,8 @@ void S_PaintChannels (int endtime)
 				// if at end of loop, restart
 				if (ltime >= ch->end) {
 					if (sc->loopstart >= 0) {
-						ch->pos = sc->loopstart;
-						ch->end = ltime + sc->length - ch->pos;
+						ch->pos = bound(0, sc->loopstart, (int) sc->total_length - 1);
+						ch->end = ltime + (int) sc->total_length - ch->pos;
 					} else { // channel just stopped
 						ch->sfx = NULL;
 						break;
