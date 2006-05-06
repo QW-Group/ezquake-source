@@ -16,16 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mem.c,v 1.6 2006-05-04 19:46:31 disconn3ct Exp $
+    $Id: snd_mem.c,v 1.7 2006-05-06 12:08:14 disconn3ct Exp $
 */
 // snd_mem.c -- sound caching
 
 #include "quakedef.h"
 
 
-static void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, unsigned char *data)
+static void ResampleSfx (sfx_t *sfx, unsigned char *in_data, unsigned int inrate, unsigned int inwidth)
 {
-	int sample, samplefrac, fracstep, outcount, srcsample, i;
+	int sample, samplefrac, fracstep, srcsample;
+	unsigned int outcount, i;
 	float stepscale;
 	sfxcache_t *sc;
 
@@ -34,21 +35,19 @@ static void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, unsigned char *dat
 
 	stepscale = (float) inrate / shm->format.speed; // this is usually 0.5, 1, or 2
 
-	outcount = (int) ((double) sc->length * (double) shm->format.speed / (double) inrate);
-	sc->length = outcount;
-	if (sc->loopstart != -1)
-		sc->loopstart = sc->loopstart / stepscale;
+	outcount = (int) ((double) sc->total_length * (double) shm->format.speed / (double) inrate);
+	sc->total_length = outcount;
 
-	sc->speed = shm->format.speed;
-	sc->width = (s_loadas8bit.value) ? 1 : inwidth;
-	sc->stereo = 0;
+	sc->format.speed = shm->format.speed;
+	sc->format.width = (s_loadas8bit.value) ? 1 : inwidth;
+	sc->format.channels = 1;
 
 	// resample / decimate to the current source rate
 
-	if (stepscale == 1 && inwidth == 1 && sc->width == 1) {
+	if (stepscale == 1 && inwidth == 1 && sc->format.width == 1) {
 		// fast special case
 		for (i = 0; i < outcount; i++)
-			((signed char *)sc->data)[i] = (int) ((unsigned char)(data[i]) - 128);
+			((signed char *)sc->data)[i] = in_data[i] - 128;
 	} else {
 		// general case
 		samplefrac = 0;
@@ -58,11 +57,11 @@ static void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, unsigned char *dat
 			samplefrac += fracstep;
 
 			if (inwidth == 2)
-				sample = LittleShort(((short *)data)[srcsample]);
+				sample = LittleShort(((short *)in_data)[srcsample]);
 			else
-				sample = (int)((unsigned char)(data[srcsample]) - 128) << 8;
+				sample = (int)((unsigned char)(in_data[srcsample]) - 128) << 8;
 	
-			if (sc->width == 2)
+			if (sc->format.width == 2)
 				((short *)sc->data)[i] = sample;
 			else
 				((signed char *)sc->data)[i] = sample >> 8;
@@ -239,8 +238,10 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	FMod_CheckModel(namebuffer, data, com_filesize);
 
 	info = GetWavinfo (s->name, data, com_filesize);
-	if (info.channels != 1) {
-		Com_Printf ("%s is a stereo sample\n",s->name);
+
+	// Stereo sounds are allowed (intended for music)
+	if (info.channels < 1 || info.channels > 2) {
+		Com_Printf("%s has an unsupported number of channels (%i)\n",s->name, info.channels);
 		return NULL;
 	}
 
@@ -250,13 +251,16 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	if (!(sc = (sfxcache_t *) Cache_Alloc (&s->cache, len + sizeof(sfxcache_t), s->name)))
 		return NULL;
 
-	sc->length = info.samples;
-	sc->loopstart = info.loopstart;
-	sc->speed = info.rate;
-	sc->width = info.width;
-	sc->stereo = info.channels;
+	sc->total_length = (unsigned int) info.samples;
+	sc->format.speed = info.rate;
+	sc->format.width = info.width;
+	sc->format.channels = info.channels;
+	if (info.loopstart < 0)
+		sc->loopstart = -1;
+	else
+		sc->loopstart = (int)((double)info.loopstart * (double)shm->format.speed / (double)sc->format.speed);
 
-	ResampleSfx (s, sc->speed, sc->width, data + info.dataofs);
+	ResampleSfx (s, data + info.dataofs, sc->format.speed, sc->format.width);
 
 	return sc;
 }

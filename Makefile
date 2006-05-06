@@ -174,7 +174,7 @@ GLX_C_FILES := \
 	xsd_command	xsd_document	xsd_variable		zone
 
 GLX_S_FILES := \
-	cl_math		math		snd_mixa		sys_x86
+	cl_math		math		sys_x86
 
 GLX_C_OBJS := $(addprefix $(GLX_DIR)/, $(addsuffix .o, $(GLX_C_FILES)))
 GLX_S_OBJS := $(addprefix $(GLX_DIR)/, $(addsuffix .o, $(GLX_S_FILES)))
@@ -251,8 +251,7 @@ X11_S_FILES := \
 	cl_math		d_draw		d_draw16	d_parta \
 	d_polysa	d_scana		d_spr8		d_varsa \
 	math		r_aclipa	r_aliasa	r_drawa \
-	r_edgea		r_varsa		snd_mixa	surf8 \
-	sys_x86
+	r_edgea		r_varsa		surf8		sys_x86
 
 X11_C_OBJS := $(addprefix $(X11_DIR)/, $(addsuffix .o, $(X11_C_FILES)))
 X11_S_OBJS := $(addprefix $(X11_DIR)/, $(addsuffix .o, $(X11_S_FILES)))
@@ -329,8 +328,8 @@ SVGA_S_FILES := \
 	cl_math		d_draw		d_draw16	d_parta \
 	d_polysa	d_scana		d_spr8		d_varsa \
 	math		r_aclipa	r_aliasa	r_drawa \
-	r_edgea		r_varsa		snd_mixa	surf8 \
-	sys_x86		d_copy
+	r_edgea		r_varsa		surf8		sys_x86	\
+	d_copy
 
 SVGA_C_OBJS := $(addprefix $(SVGA_DIR)/, $(addsuffix .o, $(SVGA_C_FILES)))
 SVGA_S_OBJS := $(addprefix $(SVGA_DIR)/, $(addsuffix .o, $(SVGA_S_FILES)))
