@@ -1,3 +1,5 @@
+//    $Id: Ctrl.h,v 1.3 2006-05-13 07:31:57 disconn3ct Exp $
+
 #ifndef __CTRL_H__
 #define __CTRL_H__
 
