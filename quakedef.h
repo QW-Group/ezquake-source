@@ -20,13 +20,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // quakedef.h -- primary header for client
 
 
-//define	PARANOID			// speed sapping error checking
+//define	PARANOID // speed sapping error checking
 
 #ifndef  __QUAKEDEF_H_
-
-#define	 __QUAKEDEF_H_
+#define  __QUAKEDEF_H_
 
 #define XML_STATIC
+
+#ifdef WITH_PNG
+#define WITH_PNG_STATIC
+#endif
+
+#ifdef GLQUAKE
+#ifdef WITH_JPEG
+#define WITH_JPEG_STATIC
+#endif
+#endif
 
 #include "common.h"
 
