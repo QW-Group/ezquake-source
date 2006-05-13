@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cvar.c,v 1.27 2006-04-24 20:08:28 oldmanuk Exp $
+    $Id: cvar.c,v 1.28 2006-05-13 07:43:18 disconn3ct Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -35,11 +35,21 @@ cvar_t *cvar_vars;
 cvar_t	cvar_viewdefault = {"cvar_viewdefault", "1"};
 cvar_t	cvar_viewhelp = {"cvar_viewhelp", "1"};
 
-cvar_t *Cvar_FindVar (const char *var_name) {
-	cvar_t *var;
-	int key;
 
-	key = Com_HashKey (var_name);
+// Use this to walk through all vars
+cvar_t *Cvar_Next (cvar_t *var)
+{
+	if (var)
+		return var->next;
+	else
+		return cvar_vars;
+}
+
+cvar_t *Cvar_FindVar (const char *var_name)
+{
+	cvar_t *var;
+	int key = Com_HashKey (var_name);
+
 	for (var = cvar_hash[key]; var; var = var->hash_next) {
 		if (!strcasecmp (var_name, var->name)) {
 			return var;
@@ -49,29 +59,29 @@ cvar_t *Cvar_FindVar (const char *var_name) {
 	return NULL;
 }
 
-
-
-void Cvar_ResetVar (cvar_t *var) {
+void Cvar_ResetVar (cvar_t *var)
+{
 	if (var && strcmp(var->string, var->defaultvalue))
 		Cvar_Set(var, var->defaultvalue);
 }
 
-void Cvar_Reset (qbool use_regex) {
-	cvar_t	*var;
-	char	*name;
-	int		i;
-	qbool	re_search = false;
+void Cvar_Reset (qbool use_regex)
+{
+	qbool re_search = false;
+	cvar_t *var;
+	char *name;
+	int i;
 
 
 	if (Cmd_Argc() < 2) {
-		Com_Printf("cvar_reset <cvar> [<cvar2>..]\n: reset variable to it default value");
+		Com_Printf("%s <cvar> [<cvar2>..]: reset variable to it default value\n", Cmd_Argv(0));
 		return;
 	}
 
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-		if (use_regex && (re_search = IsRegexp(name))) 
+		if (use_regex && (re_search = IsRegexp(name)))
 			if(!ReSearchInit(name))
 				continue;
 
@@ -92,18 +102,21 @@ void Cvar_Reset (qbool use_regex) {
 	}
 }
 
-void Cvar_Reset_f (void) {
+void Cvar_Reset_f (void)
+{
 	Cvar_Reset(false);
 }
 
-void Cvar_Reset_re_f (void) {
+void Cvar_Reset_re_f (void)
+{
 	Cvar_Reset(true);
 }
 
-void Cvar_SetDefault(cvar_t *var, float value) {
-	char	val[128];
+void Cvar_SetDefault(cvar_t *var, float value)
+{
+	char val[128];
 	int i;
-	
+
 	snprintf (val, sizeof(val), "%f", value);
 	for (i = strlen(val) - 1; i > 0 && val[i] == '0'; i--)
 		val[i] = 0;
@@ -114,33 +127,30 @@ void Cvar_SetDefault(cvar_t *var, float value) {
 	Cvar_Set(var, val);
 }
 
+float Cvar_VariableValue (char *var_name)
+{
+	cvar_t *var = Cvar_FindVar (var_name);
 
-
-float Cvar_VariableValue (char *var_name) {
-	cvar_t *var;
-	
-	var = Cvar_FindVar (var_name);
 	if (!var)
 		return 0;
 	return Q_atof (var->string);
 }
 
-char *Cvar_VariableString (char *var_name) {
-	cvar_t *var;
-	
-	var = Cvar_FindVar (var_name);
+char *Cvar_VariableString (char *var_name)
+{
+	cvar_t *var = Cvar_FindVar (var_name);
+
 	if (!var)
 		return "";
 	return var->string;
 }
 
-char *Cvar_CompleteVariable (char *partial) {
+char *Cvar_CompleteVariable (char *partial)
+{
 	cvar_t *cvar;
 	int len;
 
-	len = strlen(partial);
-
-	if (!len)
+	if (!(len = strlen(partial)))
 		return NULL;
 
 	// check exact match
@@ -156,7 +166,8 @@ char *Cvar_CompleteVariable (char *partial) {
 	return NULL;
 }
 
-int Cvar_CompleteCountPossible (char *partial) {
+int Cvar_CompleteCountPossible (char *partial)
+{
 	cvar_t *cvar;
 	int len, c = 0;
 
@@ -170,26 +181,32 @@ int Cvar_CompleteCountPossible (char *partial) {
 
 	return c;
 }
-void Cvar_RulesetSet(cvar_t *var, char *val, int m) {
-	float rulesetval_f;
-	rulesetval_f=Q_atoi(val);
-	if (m==0) {
-		var->minrulesetvalue=rulesetval_f;
-	} else if (m==1) {
-		var->maxrulesetvalue=rulesetval_f;
-	} else if (m==2) {
-		var->minrulesetvalue=rulesetval_f;
-		var->maxrulesetvalue=rulesetval_f;
-	} else {
-	return;
+void Cvar_RulesetSet(cvar_t *var, char *val, int m)
+{
+	float rulesetval_f = Q_atof (val);
+
+	switch (m) {
+		case 0:
+			var->minrulesetvalue=rulesetval_f;
+			break;
+		case 1:
+			var->maxrulesetvalue=rulesetval_f;
+			break;
+		case 2:
+			var->minrulesetvalue=rulesetval_f;
+			var->maxrulesetvalue=rulesetval_f;
+			break;
+		default:
+			return;
 	}
 }
 
-void Cvar_Set (cvar_t *var, char *value) {
+void Cvar_Set (cvar_t *var, char *value)
+{
 #ifndef SERVERONLY
-	extern cvar_t cl_warncmd;	
+	extern cvar_t cl_warncmd;
 #endif
-	static qbool	changing = false;
+	static qbool changing = false;
 	float test ;
 
 	if (!var)
@@ -203,7 +220,7 @@ void Cvar_Set (cvar_t *var, char *value) {
 
 	if (var->flags & CVAR_RULESET_MIN) {
 		test  = Q_atof (value);
-		if (test < var->minrulesetvalue) {	
+		if (test < var->minrulesetvalue) {
 			if (con_initialized)
 				Com_Printf ("min \"%s\" is limited to %0.2f\n", var->name,var->minrulesetvalue);
 			return;
@@ -212,7 +229,7 @@ void Cvar_Set (cvar_t *var, char *value) {
 
 	if (var->flags & CVAR_RULESET_MAX) {
 		test  = Q_atof (value);
-		if (test > var->maxrulesetvalue) {	
+		if (test > var->maxrulesetvalue) {
 			if (con_initialized)
 				Com_Printf ("max \"%s\" is limited to %0.2f\n", var->name,var->maxrulesetvalue);
 			return;
@@ -237,7 +254,7 @@ void Cvar_Set (cvar_t *var, char *value) {
 	}
 
 	if (var->string)
-		Z_Free (var->string);	// free the old value string
+		Z_Free (var->string); // free the old value string
 
 	var->string = CopyString (value);
 	var->value = Q_atof (var->string);
@@ -255,16 +272,14 @@ void Cvar_Set (cvar_t *var, char *value) {
 	if (!cl.spectator && cls.state != ca_disconnected) {
 
 		if (!strcmp(var->name, "r_fullbrightSkins")) {
-			float fbskins;		
-			fbskins = bound(0, var->value, cl.fbskins);	
+			float fbskins;
+			fbskins = bound(0, var->value, cl.fbskins);
 			if (fbskins > 0) {
-				Cbuf_AddText (va("say all skins %d%% fullbright\n", (int) (fbskins * 100)));	
+				Cbuf_AddText (va("say all skins %d%% fullbright\n", (int) (fbskins * 100)));
+			} else {
+				Cbuf_AddText (va("say not using fullbright skins\n"));
 			}
-			else {
-				Cbuf_AddText (va("say not using fullbright skins\n"));	
-			}
-		}
-		else if (!strcmp(var->name, "allow_scripts")) {
+		} else if (!strcmp(var->name, "allow_scripts")) {
 			if (allow_scripts.value < 1)
 				Cbuf_AddText("say not using scripts\n");
 			else if (allow_scripts.value < 2)
@@ -275,7 +290,8 @@ void Cvar_Set (cvar_t *var, char *value) {
 	}
 }
 
-void Cvar_ForceSet (cvar_t *var, char *value) {
+void Cvar_ForceSet (cvar_t *var, char *value)
+{
 	int saved_flags;
 
 	if (!var)
@@ -287,7 +303,8 @@ void Cvar_ForceSet (cvar_t *var, char *value) {
 	var->flags = saved_flags;
 }
 
-void Cvar_SetValue (cvar_t *var, float value) {
+void Cvar_SetValue (cvar_t *var, float value)
+{
 	char val[128];
 	int	i;
 
@@ -301,22 +318,25 @@ void Cvar_SetValue (cvar_t *var, float value) {
 	Cvar_Set (var, val);
 }
 
-int Cvar_GetFlags (cvar_t *var) {
+int Cvar_GetFlags (cvar_t *var)
+{
 	return var->flags;
 }
 
-void Cvar_SetFlags (cvar_t *var, int flags) {
+void Cvar_SetFlags (cvar_t *var, int flags)
+{
 	var->flags = flags;
 }
 
 static cvar_group_t *current = NULL;
-cvar_group_t	*cvar_groups = NULL;
+cvar_group_t *cvar_groups = NULL;
 
 #define CVAR_GROUPS_DEFINE_VARIABLES
 #include "cvar_groups.h"
 #undef CVAR_GROUPS_DEFINE_VARIABLES
 
-static cvar_group_t *Cvar_AddGroup(char *name) {
+static cvar_group_t *Cvar_AddGroup(char *name)
+{
 	static qbool initialised = false;
 	cvar_group_t *newgroup;
 	char **s;
@@ -341,7 +361,8 @@ static cvar_group_t *Cvar_AddGroup(char *name) {
 	return newgroup;
 }
 
-void Cvar_SetCurrentGroup(char *name) {
+void Cvar_SetCurrentGroup(char *name)
+{
 	cvar_group_t *group;
 
 	for (group = cvar_groups; group; group = group->next) {
@@ -353,11 +374,13 @@ void Cvar_SetCurrentGroup(char *name) {
 	current = Cvar_AddGroup(name);
 }
 
-void Cvar_ResetCurrentGroup(void) {
+void Cvar_ResetCurrentGroup(void)
+{
 	current = NULL;
 }
 
-static void Cvar_AddCvarToGroup(cvar_t *var) {
+static void Cvar_AddCvarToGroup(cvar_t *var)
+{
 	if ((var->group = current)) {
 		var->next_in_group = current->head;
 		current->head = var;
@@ -367,16 +390,14 @@ static void Cvar_AddCvarToGroup(cvar_t *var) {
 	}
 }
 
-
-
-
 /*
 Adds a freestanding variable to the variable list.
 
 If the variable already exists, the value will not be set
 The flags will be or'ed in if the variable exists.
 */
-void Cvar_Register (cvar_t *var) {
+void Cvar_Register (cvar_t *var)
+{
 	char string[512];
 	int key;
 	cvar_t *old;
@@ -389,12 +410,12 @@ void Cvar_Register (cvar_t *var) {
 	}
 
 	// check for overlap with a command
-	if (Cmd_Exists (var->name))	{
+	if (Cmd_Exists (var->name)) {
 		Com_Printf ("Cvar_Register: %s is a command\n", var->name);
 		return;
 	}
 
-	var->defaultvalue = CopyString (var->string);	
+	var->defaultvalue = CopyString (var->string);
 	if (old) {
 		var->flags |= old->flags & ~CVAR_USER_CREATED;
 		strlcpy (string, old->string, sizeof(string));
@@ -420,7 +441,7 @@ void Cvar_Register (cvar_t *var) {
 	TCL_RegisterVariable (var);
 #endif
 
-	Cvar_AddCvarToGroup(var);	
+	Cvar_AddCvarToGroup(var);
 
 #ifndef CLIENTONLY
 	if (var->flags & CVAR_SERVERINFO)
@@ -433,7 +454,8 @@ void Cvar_Register (cvar_t *var) {
 #endif
 }
 
-qbool Cvar_Command (void) {
+qbool Cvar_Command (void)
+{
 	cvar_t *v;
 	char *spaces;
 
@@ -456,7 +478,7 @@ qbool Cvar_Command (void) {
 		}
 	} else {
 		// hexum - do not allow crafty people to avoid use of "set" with user created variables under ruleset smackdown
-		
+
 		if (!strcasecmp(Rulesets_Ruleset(), "smackdown") && (v->flags & CVAR_USER_CREATED)) {
 			Com_Printf ("Ruleset smackdown requires use of \"set\" with user created variables\n");
 			return true;
@@ -469,7 +491,8 @@ qbool Cvar_Command (void) {
 }
 
 //Writes lines containing "set variable value" for all variables with the archive flag set to true.
-void Cvar_WriteVariables (FILE *f) {
+void Cvar_WriteVariables (FILE *f)
+{
 	cvar_t *var;
 
 	// write builtin cvars in a QW compatible way
@@ -483,22 +506,23 @@ void Cvar_WriteVariables (FILE *f) {
 			fprintf (f, "seta %s \"%s\"\n", var->name, var->string);
 }
 
-void Cvar_Toggle (qbool use_regex) {
-	cvar_t	*var;
-	char	*name;
-	int		i;
-	qbool	re_search = false;
+void Cvar_Toggle (qbool use_regex)
+{
+	qbool re_search = false;
+	cvar_t *var;
+	char *name;
+	int i;
 
 
 	if (Cmd_Argc() < 2) {
-		Com_Printf("toggle <cvar> [<cvar>..]: toggle a cvar on/off\n");
+		Com_Printf("%s <cvar> [<cvar>..]: toggle a cvar on/off\n", Cmd_Argv(0));
 		return;
 	}
 
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-		if (use_regex && (re_search = IsRegexp(name))) 
+		if (use_regex && (re_search = IsRegexp(name)))
 			if(!ReSearchInit(name))
 				continue;
 
@@ -522,23 +546,28 @@ void Cvar_Toggle (qbool use_regex) {
 	}
 }
 
-void Cvar_Toggle_f (void) {
+void Cvar_Toggle_f (void)
+{
 	Cvar_Toggle(false);
 }
-void Cvar_Toggle_re_f (void) {
+void Cvar_Toggle_re_f (void)
+{
 	Cvar_Toggle(true);
 }
 
-int Cvar_CvarCompare (const void *p1, const void *p2) {
-    return strcmp((*((cvar_t **) p1))->name, (*((cvar_t **) p2))->name);
+int Cvar_CvarCompare (const void *p1, const void *p2)
+{
+	return strcmp((*((cvar_t **) p1))->name, (*((cvar_t **) p2))->name);
 }
 
-void Cvar_CvarList_f (void) {
+void Cvar_CvarList (qbool use_regex)
+{
 	cvar_t *var;
-	int i, c, m = 0;
-	static int count;
+	unsigned int i, c = 0, m = 0;
+	static unsigned int count;
 	static qbool sorted = false;
 	static cvar_t *sorted_cvars[2048]; // disconnect@28.06.2005: it was 512 before
+	char *pattern;
 
 #define MAX_SORTED_CVARS (sizeof(sorted_cvars) / sizeof(sorted_cvars[0]))
 
@@ -552,30 +581,49 @@ void Cvar_CvarList_f (void) {
 	if (count == MAX_SORTED_CVARS)
 		assert(!"count == MAX_SORTED_CVARS");
 
-	c = Cmd_Argc();
-	if (c>1)
+	pattern = (Cmd_Argc() > 1) ? Cmd_Argv(1) : NULL;
+
+	if (use_regex && ((c = Cmd_Argc()) > 1))
 		if (!ReSearchInit(Cmd_Argv(1)))
 			return;
 
 	Com_Printf ("List of cvars:\n");
 	for (i = 0; i < count; i++) {
 		var = sorted_cvars[i];
-		if (c==1 || ReSearchMatch(var->name)) {
-			Com_Printf ("%c%c%c %s\n",
-				var->flags & (CVAR_ARCHIVE|CVAR_USER_ARCHIVE) ? '*' : ' ',
-				var->flags & CVAR_USERINFO ? 'u' : ' ',
-				var->flags & CVAR_SERVERINFO ? 's' : ' ',
-				var->name);
-			m++;
+		if (use_regex) {
+			if (!(c==1 || ReSearchMatch(var->name)))
+				continue;
+		} else {
+			if (pattern && !Q_glob_match(pattern, var->name))
+				continue;
 		}
-	}
 
-	if (c>1)
+			Com_Printf ("%c%c%c %s\n",
+						var->flags & (CVAR_ARCHIVE|CVAR_USER_ARCHIVE) ? '*' : ' ',
+						var->flags & CVAR_USERINFO ? 'u' : ' ',
+						var->flags & CVAR_SERVERINFO ? 's' : ' ',
+						var->name);
+			m++;
+	}
+	
+	if (use_regex && (c > 1))
 		ReSearchDone();
-	Com_Printf ("------------\n%i/%i variables\n", m, count);
+
+	Com_Printf ("------------\n%i/%i %svariables\n", m, count, (pattern) ? "matching " : "");
 }
 
-cvar_t *Cvar_Create (char *name, char *string, int cvarflags) {
+void Cvar_CvarList_f (void)
+{
+	Cvar_CvarList (false);
+}
+
+void Cvar_CvarList_re_f (void)
+{
+	Cvar_CvarList (true);
+}
+
+cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
+{
 	cvar_t *v;
 	int key;
 
@@ -592,7 +640,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags) {
 
 	v->name = CopyString (name);
 	v->string = CopyString (string);
-	v->defaultvalue = CopyString (string);	
+	v->defaultvalue = CopyString (string);
 	v->flags = cvarflags;
 	v->value = Q_atof (v->string);
 #ifdef EMBED_TCL
@@ -603,13 +651,11 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags) {
 }
 
 //returns true if the cvar was found (and deleted)
-qbool Cvar_Delete (const char *name) {
-	cvar_t *var, *prev;
-	int key;
+qbool Cvar_Delete (const char *name)
+{
+	cvar_t *var, *prev = NULL;
+	int key = Com_HashKey (name);
 
-	key = Com_HashKey (name);
-
-	prev = NULL;
 	for (var = cvar_hash[key]; var; var = var->hash_next) {
 		if (!strcasecmp(var->name, name)) {
 			// unlink from hash
@@ -653,7 +699,8 @@ qbool Cvar_Delete (const char *name) {
 
 static qbool cvar_seta = false;
 
-void Cvar_Set_f (void) {
+void Cvar_Set_f (void)
+{
 	cvar_t *var;
 	char *var_name;
 
@@ -695,8 +742,7 @@ void Cvar_Set_ex_f (void)
 	var = Cvar_FindVar (var_name);
 
 
-	if ( !var )
-	{
+	if ( !var ) {
 		if (Cmd_Exists(var_name)) {
 			Com_Printf ("\"%s\" is a command\n", var_name);
 			return;
@@ -704,10 +750,10 @@ void Cvar_Set_ex_f (void)
 		var = Cvar_Create(var_name, "", CVAR_USER_CREATED);
 	}
 
-	Cmd_ExpandString( Cmd_Argv(2), text_exp); 
-        st = TP_ParseMacroString( text_exp );
+	Cmd_ExpandString( Cmd_Argv(2), text_exp);
+	st = TP_ParseMacroString( text_exp );
 	st = TP_ParseFunChars(st, false);
-	
+
 	Cvar_Set (var, st );
 
 	if (cvar_seta)
@@ -731,8 +777,7 @@ void Cvar_Set_Alias_Str_f (void)
 	var = Cvar_FindVar (var_name);
 	v = Cmd_AliasString( alias_name );
 
-	if ( !var)
-	{
+	if ( !var) {
 		if (Cmd_Exists(var_name)) {
 			Com_Printf ("\"%s\" is a command\n", var_name);
 			return;
@@ -747,14 +792,14 @@ void Cvar_Set_Alias_Str_f (void)
 		Com_Printf ("Unknown alias \"%s\"\n", alias_name);
 		return;
 	} else {
-/*		s = str; 
-		while (*v) {
-			if (*v == '\"') // " should be escaped
-				*s++ = '\\';
-			*s++ = *v++;
-		}
-		*s = '\0'; 
-		Cvar_Set (var, str);*/
+		/*		s = str;
+				while (*v) {
+					if (*v == '\"') // " should be escaped
+						*s++ = '\\';
+					*s++ = *v++;
+				}
+				*s = '\0'; 
+				Cvar_Set (var, str);*/
 		Cvar_Set (var, v);
 	}
 	if (cvar_seta)
@@ -780,8 +825,7 @@ void Cvar_Set_Bind_Str_f (void)
 	var = Cvar_FindVar (var_name);
 	keynum = Key_StringToKeynum( key_name );
 
-	if ( !var)
-	{
+	if ( !var) {
 		if (Cmd_Exists(var_name)) {
 			Com_Printf ("\"%s\" is a command\n", var_name);
 			return;
@@ -796,15 +840,15 @@ void Cvar_Set_Bind_Str_f (void)
 		Com_Printf ("Unknown key \"%s\"\n", key_name);
 		return;
 	} else {
-		if (keybindings[keynum]){
-/*		s = str; v = keybindings[keynum];
-			while (*v) {
-				if (*v == '\"') // " should be escaped
-					*s++ = '\\';
-				*s++ = *v++;
-			}
-			*s = '\0'; 
-			Cvar_Set (var, str);*/
+		if (keybindings[keynum]) {
+			/*		s = str; v = keybindings[keynum];
+						while (*v) {
+							if (*v == '\"') // " should be escaped
+								*s++ = '\\';
+							*s++ = *v++;
+						}
+						*s = '\0'; 
+						Cvar_Set (var, str);*/
 			Cvar_Set (var, keybindings[keynum]);
 		} else
 			Cvar_Set (var, "");
@@ -812,12 +856,13 @@ void Cvar_Set_Bind_Str_f (void)
 }
 
 // disconnect -->
-void Cvar_UnSet (qbool use_regex) {
-	cvar_t		*var;
-	char		*name;
+void Cvar_UnSet (qbool use_regex)
+{
+	cvar_t	*var;
+	char	*name;
 	int		i;
 	qbool	re_search = false;
-	
+
 
 	if (Cmd_Argc() < 2) {
 		Com_Printf ("unset <cvar> [<cvar2>..]: erase user-created variable\n");
@@ -827,7 +872,7 @@ void Cvar_UnSet (qbool use_regex) {
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-		if (use_regex && (re_search = IsRegexp(name))) 
+		if (use_regex && (re_search = IsRegexp(name)))
 			if(!ReSearchInit(name))
 				continue;
 
@@ -858,20 +903,25 @@ void Cvar_UnSet (qbool use_regex) {
 	}
 }
 
-void Cvar_UnSet_f(void) {
+void Cvar_UnSet_f(void)
+{
 	Cvar_UnSet(false);
 }
 
-void Cvar_UnSet_re_f(void) {
+void Cvar_UnSet_re_f(void)
+{
 	Cvar_UnSet(true);
 }
 // <-- disconnect
 
-void Cvar_Seta_f (void) {
+/*
+void Cvar_Seta_f (void)
+{
 	cvar_seta = true;
 	Cvar_Set_f ();
 	cvar_seta = false;
 }
+*/
 
 // QW262 -->
 
@@ -891,7 +941,7 @@ void Cvar_Set_Calc_f(void)
 
 	var_name = Cmd_Argv (1);
 	var = Cvar_FindVar (var_name);
-	
+
 	if (!var)
 		var = Cvar_Create (var_name, Cmd_Argv(2), CVAR_USER_CREATED);
 
@@ -949,15 +999,15 @@ void Cvar_Set_Calc_f(void)
 		var1len = strlen(var->string);
 		var2len = strlen(var2->string);
 		pos = atoi(Cmd_Argv(4));
-		
+
 		strcpy(buf,var->string);
-		if (pos + var2len > var1len){ // need to expand
+		if (pos + var2len > var1len) { // need to expand
 			int i;
 			for (i = var1len; i < pos+var2len; i++)
 				buf[i] = ' ';
 			buf[pos+var2len] = 0;
 		}
-		
+
 		strncpy(buf+pos, var2->string, var2len);
 		Cvar_Set(var, buf);
 		return;
@@ -998,17 +1048,17 @@ void Cvar_Set_Calc_f(void)
 	else if (!strcmp(op, "/")) {
 		if (num2 != 0)
 			result = num1 / num2;
-		else 
+		else
 			division_by_zero = 1;
 	} else if (!strcmp(op, "%")) {
 		if ((int)num2 != 0)
 			result = (int)num1 % (int)num2;
-		else 
+		else
 			division_by_zero = 1;
 	} else if (!strcmp(op, "div")) {
 		if ((int)num2 != 0)
 			result = (int)num1 / (int)num2;
-		else 
+		else
 			division_by_zero = 1;
 	} else if (!strcmp(op, "and")) {
 		result = (int)num1 & (int)num2;
@@ -1016,12 +1066,12 @@ void Cvar_Set_Calc_f(void)
 		result = (int)num1 | (int)num2;
 	} else if (!strcmp(op, "xor")) {
 		result = (int)num1 ^ (int)num2;
-	}else {
+	} else {
 		Com_Printf("set_calc: unknown operator: %s\nvalid operators are: + - * / div %% and or xor\n", op);
 		// Com_Printf("set_calc: unknown command: %s\nvalid commands are: strlen int substr set_substr pos\n", a2);
 		return;
 	}
-	
+
 	if (division_by_zero) {
 		Com_Printf("set_calc: can't divide by zero\n");
 		result = 999;
@@ -1033,7 +1083,8 @@ void Cvar_Set_Calc_f(void)
 // <-- QW262
 
 
-void Cvar_Inc_f (void) {
+void Cvar_Inc_f (void)
+{
 	int c;
 	cvar_t *var;
 	float delta;
@@ -1054,8 +1105,10 @@ void Cvar_Inc_f (void) {
 	Cvar_SetValue (var, var->value + delta);
 }
 
-void Cvar_Init (void) {
+void Cvar_Init (void)
+{
 	Cmd_AddCommand ("cvarlist", Cvar_CvarList_f);
+	Cmd_AddCommand ("cvarlist_re", Cvar_CvarList_re_f);
 	Cmd_AddCommand ("set", Cvar_Set_f);
 	Cmd_AddCommand ("set_ex", Cvar_Set_ex_f);
 	Cmd_AddCommand ("set_alias_str", Cvar_Set_Alias_Str_f);
@@ -1071,8 +1124,8 @@ void Cvar_Init (void) {
 	Cmd_AddCommand ("set_calc", Cvar_Set_Calc_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
-	Cvar_Register (&cvar_viewdefault);		
-	Cvar_Register (&cvar_viewhelp);		
+	Cvar_Register (&cvar_viewdefault);
+	Cvar_Register (&cvar_viewhelp);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -1081,8 +1134,8 @@ void Cvar_Init (void) {
 // QW262 -->
 // regexp match support for group operations in scripts
 int			wildcard_level = 0;
-pcre			*wildcard_re[4];
-pcre_extra		*wildcard_re_extra[4];
+pcre		*wildcard_re[4];
+pcre_extra	*wildcard_re_extra[4];
 
 qbool IsRegexp(char *str)
 {
@@ -1123,8 +1176,8 @@ qbool ReSearchMatch (char *str)
 	int result;
 	int offsets[99];
 
-	result = pcre_exec(wildcard_re[wildcard_level-1], 
-		wildcard_re_extra[wildcard_level-1], str, strlen(str), 0, 0, offsets, 99);
+	result = pcre_exec(wildcard_re[wildcard_level-1],
+	                   wildcard_re_extra[wildcard_level-1], str, strlen(str), 0, 0, offsets, 99);
 	return (result>0) ? true : false;
 }
 

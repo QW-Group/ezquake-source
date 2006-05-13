@@ -1,22 +1,22 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
- 
+
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
 of the License, or (at your option) any later version.
- 
+
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
- 
+
 See the GNU General Public License for more details.
- 
+
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cmd.c,v 1.37 2006-04-18 20:59:55 disconn3ct Exp $
+    $Id: cmd.c,v 1.38 2006-05-13 07:43:18 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1336,6 +1336,7 @@ char *formatted_comms_commands[] = {
 float	impulse_time = -9999;
 int		impulse_counter;
 
+#ifndef SERVERONLY
 qbool AllowedImpulse(int imp)
 {
 
@@ -1380,6 +1381,8 @@ qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
 	}
 	return *s != NULL;
 }
+#endif /* SERVERONLY */
+
 //A complete command line has been parsed, so try to execute it
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 {
@@ -1581,6 +1584,7 @@ void Cmd_ExecuteString (char *text)
 	Cmd_ExecuteStringEx (NULL, text);
 }
 
+#ifndef SERVERONLY
 static qbool is_numeric (char *c)
 {
 	return ( isdigit((int)(unsigned char)*c) ||
@@ -1722,6 +1726,8 @@ void Cmd_If_Exists_f(void)
 		return;
 }
 
+#endif /* SERVERONLY */
+
 //Returns the position (1 to argc - 1) in the command's argument list where the given parameter apears, or 0 if not present
 int Cmd_CheckParm (char *parm)
 {
@@ -1756,8 +1762,10 @@ void Cmd_Init (void)
 	Cmd_AddCommand ("unalias_re", Cmd_UnAlias_re_f);
 	Cmd_AddCommand ("wait", Cmd_Wait_f);
 	Cmd_AddCommand ("cmdlist", Cmd_CmdList_f);
+#ifndef SERVERONLY
 	Cmd_AddCommand ("if", Cmd_If_f);
 	Cmd_AddCommand ("if_exists", Cmd_If_Exists_f);
+#endif
 
 	Cmd_AddCommand ("macrolist", Cmd_MacroList_f);
 	qsort(msgtrigger_commands,
