@@ -120,7 +120,7 @@ static void RenderDocument(CPageViewer_t *viewer, int width)
 
     if (!XSD_RenderDocument(&viewer->page->rendered, doc, width))
         goto error;
-    
+
     return;
 
 error:
@@ -310,7 +310,7 @@ void CPageViewer_Draw(CPageViewer_t *viewer, int x, int y, int w, int h)
                     buf[i] ^= 128;
             }
         }
-        
+
         UI_Print(sx, sy + line*8, buf, false);
     }
     viewer->page->last_height = sh;
