@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: common.c,v 1.23 2006-05-04 19:46:31 disconn3ct Exp $
+    $Id: common.c,v 1.24 2006-05-13 07:43:18 disconn3ct Exp $
 */
 
 #ifdef _WIN32
@@ -269,6 +269,70 @@ char *Q_ftos (float value)
 		str[i] = 0;
 
 	return str;
+}
+
+static qbool Q_glob_match_after_star (const char *pattern, const char *text)
+{
+	char c, c1;
+	const char *p = pattern, *t = text;
+
+	while ((c = *p++) == '?' || c == '*') {
+		if (c == '?' && *t++ == '\0')
+			return false;
+	}
+
+	if (c == '\0')
+		return true;
+
+	for (c1 = ((c == '\\') ? *p : c); ; ) {
+		if (tolower(*t) == c1 && Q_glob_match (p - 1, t))
+			return true;
+		if (*t++ == '\0')
+			return false;
+	}
+}
+
+/*
+==============
+Q_glob_match
+
+Match a pattern against a string.
+Based on Vic's Q_WildCmp, which is based on Linux glob_match.
+Works like glob_match, except that sets ([]) are not supported.
+
+A match means the entire string TEXT is used up in matching.
+
+In the pattern string, `*' matches any sequence of characters,
+`?' matches any character. Any other character in the pattern
+must be matched exactly.
+
+To suppress the special syntactic significance of any of `*?\'
+and match the character exactly, precede it with a `\'.
+==============
+*/
+qbool Q_glob_match (const char *pattern, const char *text)
+{
+	char c;
+
+	while ((c = *pattern++) != '\0') {
+		switch (c) {
+			case '?':
+				if (*text++ == '\0')
+					return false;
+				break;
+			case '\\':
+				if (tolower(*pattern++) != tolower(*text++))
+					return false;
+				break;
+			case '*':
+				return Q_glob_match_after_star(pattern, text);
+			default:
+				if (tolower(c) != tolower(*text++))
+					return false;
+		}
+	}
+
+	return (*text == '\0');
 }
 
 int Com_HashKey (const char *name) { 
@@ -1324,6 +1388,7 @@ void FS_AddGameDirectory (char *dir) {
 #endif
 }
 
+#ifndef SERVERONLY
 void FS_AddUserDirectory ( char *dir ) {
 	int i;
 	searchpath_t *search;
@@ -1361,11 +1426,12 @@ void FS_AddUserDirectory ( char *dir ) {
 		if(!FS_AddPak(pakfile))
 			break;
 	}
-#ifndef SERVERONLY
-// other paks
+
+	// other paks
 	FS_AddUserPaks (com_userdir);
-#endif
 }
+#endif /* SERVERONLY */
+
 
 //Sets the gamedir and path to a different directory.
 void FS_SetGamedir (char *dir) {
@@ -1445,8 +1511,10 @@ void FS_InitFilesystem (void) {
 	if (i && i < com_argc - 1)
 		FS_SetGamedir (com_argv[i + 1]);
 	else
-	{ 
-		if( UserdirSet ) 
+	{
+#ifndef SERVERONLY
+		if( UserdirSet )
+#endif
 			FS_SetGamedir("qw");
 	}
 }
@@ -1788,15 +1856,19 @@ void Com_Printf (char *fmt, ...) {
 	// also echo to debugging console
 	Sys_Printf ("%s", msg);
 
+#ifndef SERVERONLY
 // Triggers with mask 64
 	if (!(Print_flags[Print_current] & PR_TR_SKIP))
 		CL_SearchForReTriggers (msg, RE_PRINT_INTERNAL);
+#endif
 
 	// write it to the scrollable buffer
 //	Con_Print (va("ezQuake: %s", msg));
 	Con_Print (msg);
 
+#ifndef SERVERONLY
 	Print_flags[Print_current] = 0;
+#endif
 }
 
 //A Com_Printf that only shows up if the "developer" cvar is set

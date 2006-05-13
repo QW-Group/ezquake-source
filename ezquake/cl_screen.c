@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_screen.c,v 1.49 2006-04-29 20:19:07 disconn3ct Exp $
+	$Id: cl_screen.c,v 1.50 2006-05-13 07:43:18 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1456,7 +1456,8 @@ qbool Hud_TranslateCoords (hud_element_t *elem, int *x, int *y)
 void SCR_DrawHud (void)
 {
 	hud_element_t*	elem;
-	unsigned int		x,y,l;
+	int				x,y;
+	unsigned int	l;
 	char			buf[256];
 	char			*st = NULL;
 	Hud_Func		func;
@@ -1584,7 +1585,8 @@ void SCR_DrawHud (void)
 
 qbool Hud_CheckBounds (hud_element_t *elem, int x, int y)
 {
-	unsigned int hud_x, hud_y, con_x, con_y;
+	unsigned int con_x, con_y;
+	int hud_x, hud_y;
 
 	con_x = VID_ConsoleX (x);
 	con_y = VID_ConsoleY (y);

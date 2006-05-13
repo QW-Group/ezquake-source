@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: common.h,v 1.18 2006-05-04 19:46:31 disconn3ct Exp $
+    $Id: common.h,v 1.19 2006-05-13 07:43:18 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -268,6 +268,8 @@ void *Q_calloc (size_t n, size_t size);
 char *Q_strdup (const char *src);
 // might be turned into a function that makes sure all Q_*alloc calls are matched with Q_free
 #define Q_free(ptr) free(ptr)
+
+qbool Q_glob_match (const char *pattern, const char *text);
 
 int Com_HashKey (const char *name);
 

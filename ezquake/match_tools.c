@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: match_tools.c,v 1.21 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: match_tools.c,v 1.22 2006-05-13 07:43:18 disconn3ct Exp $
 */
 
 
@@ -54,11 +54,12 @@ cvar_t match_name_spec = {"match_name_spec", "(SPEC)"};
 int loc_loaded = 0;
 
 static char *MT_CleanString(char *string, qbool allow_spaces_and_slashes) {
-	byte *in, *out, c, d, *disallowed;
-	static byte buf[MAX_STATIC_STRING], badchars[] = {' ', '\\', '/', '?', '*', ':', '<', '>', '"', '|'};
-	extern char readableChars[];
+	byte *in, *out, c, d;
+	static byte buf[MAX_STATIC_STRING];
+	const char badchars[] = {' ', '\\', '/', '?', '*', ':', '<', '>', '"', '|'};
+	const char *disallowed = allow_spaces_and_slashes ? badchars + 3 : badchars;
 
-	disallowed = allow_spaces_and_slashes ? badchars + 3 : badchars;
+	extern char readableChars[];
 
 	#define CLEANCHAR(c) \
 		((readableChars[(byte) c] < ' ' || strchr(disallowed, readableChars[(byte) c])) ? '_' : readableChars[(byte) c])

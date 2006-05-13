@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.9 2006-04-29 17:16:30 johnnycz Exp $
+ *  $Id: cl_tcl.c,v 1.10 2006-05-13 07:43:18 disconn3ct Exp $
  */
 
 #ifdef EMBED_TCL
@@ -85,7 +85,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 	if (info.isNativeObjectProc) {
 		rc = info.objProc (info.objClientData, interp, objc, objv);
 	} else {
-		char* argv[5];
+		const char* argv[5];
 
 		argv[0] = "proc";
 		argv[1] = Tcl_GetString (objv[1]); // name
@@ -145,7 +145,7 @@ static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *cons
 	Tcl_Obj *args;
 	Tcl_DString str_byte;
 	char *str_utf, *line, *argv;
-	size_t str_utf_len;
+	int str_utf_len;
 	int i;
 	cmd_function_t *cmd;
 
