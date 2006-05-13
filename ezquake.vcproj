@@ -48,7 +48,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib libs/libpng.lib libs/libjpeg.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib"
+				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib libs/libpng.lib libs/libjpeg.lib libs/libpcre.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib"
 				ShowProgress="0"
 				OutputFile="../ezquake-gl-debug.exe"
 				Version=""
@@ -130,7 +130,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib libs/libpng.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib dsound.lib"
+				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib libs/libpng.lib libs/libpcre.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib dsound.lib"
 				OutputFile="../ezquake.exe"
 				Version=""
 				LinkIncremental="1"
@@ -213,7 +213,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386 "
-				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib libs/libpng.lib libs/libjpeg.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib"
+				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib libs/libpng.lib libs/libjpeg.lib libs/libpcre.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib"
 				OutputFile="../ezquake-gl.exe"
 				Version=""
 				LinkIncremental="1"
@@ -292,7 +292,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib libs/libpng.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib dsound.lib"
+				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib libs/libpng.lib libs/libpcre.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib dsound.lib"
 				OutputFile="../ezquake-debug.exe"
 				Version=""
 				LinkIncremental="2"
@@ -1440,23 +1440,13 @@
 					RelativePath="xsd_variable.c">
 				</File>
 			</Filter>
-			<Filter
-				Name="pcre"
-				Filter="">
-				<File
-					RelativePath=".\pcre\chartables.c">
-				</File>
-				<File
-					RelativePath="pcre\pcre.c">
-				</File>
-				<File
-					RelativePath="pcre\study.c">
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;fi;fd">
+			<File
+				RelativePath=".\libs\pcre.h">
+			</File>
 			<File
 				RelativePath="resource.h">
 			</File>
@@ -2211,53 +2201,6 @@ del $(OUTDIR)\$(InputName).spp
 					<Tool
 						Name="VCCustomBuildTool"
 						CommandLine="cl /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
-gas2masm &lt; $(OUTDIR)\$(InputName).spp &gt;$(OUTDIR)\$(InputName).asm
-ml /nologo /c /Cp /coff /Fo$(OUTDIR)\$(InputName).obj /Zm /Zi $(OUTDIR)\$(InputName).asm
-del $(OUTDIR)\$(InputName).spp
-"
-						Outputs="$(OUTDIR)\$(InputName).obj"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="cl /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
-gas2masm &lt; $(OUTDIR)\$(InputName).spp &gt;$(OUTDIR)\$(InputName).asm
-ml /nologo /c /Cp /coff /Fo$(OUTDIR)\$(InputName).obj /Zm /Zi $(OUTDIR)\$(InputName).asm
-del $(OUTDIR)\$(InputName).spp
-"
-						Outputs="$(OUTDIR)\$(InputName).obj"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\snd_mixa.s">
-				<FileConfiguration
-					Name="GLDebug|Win32">
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="cl /D &quot;GLQUAKE&quot; /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
-gas2masm &lt; $(OUTDIR)\$(InputName).spp &gt;$(OUTDIR)\$(InputName).asm
-ml /nologo /c /Cp /coff /Fo$(OUTDIR)\$(InputName).obj /Zm /Zi $(OUTDIR)\$(InputName).asm
-del $(OUTDIR)\$(InputName).spp
-"
-						Outputs="$(OUTDIR)\$(InputName).obj"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="cl /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
-gas2masm &lt; $(OUTDIR)\$(InputName).spp &gt;$(OUTDIR)\$(InputName).asm
-ml /nologo /c /Cp /coff /Fo$(OUTDIR)\$(InputName).obj /Zm /Zi $(OUTDIR)\$(InputName).asm
-del $(OUTDIR)\$(InputName).spp
-"
-						Outputs="$(OUTDIR)\$(InputName).obj"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32">
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="cl /D &quot;GLQUAKE&quot; /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
 gas2masm &lt; $(OUTDIR)\$(InputName).spp &gt;$(OUTDIR)\$(InputName).asm
 ml /nologo /c /Cp /coff /Fo$(OUTDIR)\$(InputName).obj /Zm /Zi $(OUTDIR)\$(InputName).asm
 del $(OUTDIR)\$(InputName).spp
