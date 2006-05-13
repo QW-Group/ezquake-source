@@ -5,7 +5,7 @@
 
 
 # compilation tool and detection of targets/achitecture
-_E			=
+_E			=@
 CC			=gcc
 CC_BASEVERSION		=$(shell $(CC) -dumpversion | sed -e 's/\..*//g')
 MACHINE			=$(shell $(CC) -dumpmachine)
@@ -134,47 +134,13 @@ GLCFLAGS=$(ARCH_GLCFLAGS) $(BASE_GLCFLAGS)
 CFLAGS += $(RELEASE_CFLAGS)
 LDFLAGS := -lm -ldl -lpthread
 
-COMMON_OBJS := libs/libz.a libs/libpng.a libs/libpcre.a libs/libexpat.a libs/libtcl8.4.a libs/libglib.a libs/libjpeg.a
+COMMON_OBJS := libs/libpng.a libs/zlib.a libs/libpcre.a libs/libexpat.a libs/libtcl8.4.a libs/libglib.a libs/libjpeg.a
+
+include Makefile.list
 
 #######
 # GLX #
 #######
-
-GLX_C_FILES := \
-	Ctrl		Ctrl_EditBox	Ctrl_PageViewer		Ctrl_Tab \
-	vid_glx		vid_common_gl	EX_FileList		EX_FunNames \
-	EX_browser	EX_browser_net	EX_browser_ping		EX_browser_sources \
-	EX_misc		auth		cd_linux		cl_cam \
-	cl_cmd		cl_collision	cl_demo			cl_ents \
-	cl_input	cl_main		cl_parse		cl_pred \
-	cl_screen	cl_slist	cl_tcl			cl_tent \
-	cl_view		cmd		collision		com_msg \
-	common		common_draw	config_manager		console \
-	crc		cvar		document_rendering	fchecks \
-	fmod		fragstats	gl_draw			gl_md3 \
-	gl_mesh		gl_model	gl_ngraph		gl_refrag \
-	gl_rlight	gl_rmain	gl_rmisc		gl_rpart \
-	gl_rsurf	gl_texture	gl_warp			help \
-	help_browser	help_files	host			hud \
-	hud_common	ignore		image			keymap_x11 \
-	keys		localtime_linux	logging			match_tools \
-	mathlib		mdfour		menu			modules \
-	movie		mp3_player	mvd_utils		net_chan \
-	net_udp		parser		pmove			pmovetst \
-	pr_cmds		pr_edict	pr_exec			qtv \
-	r_part		rulesets	sbar			sha1 \
-	skin		snd_alsa	snd_dma			snd_linux\
-	snd_mem		snd_mix		snd_oss			sv_ccmds \
-	sv_ents		sv_init		sv_main			sv_master \
-	sv_move		sv_nchan	sv_phys			sv_save	\
-	sv_send		sv_user		sv_world		sys_linux \
-	teamplay	utils		version			vx_camera \
-	vx_coronas	vx_motiontrail	vx_stuff		vx_tracker \
-	vx_vertexlights	wad		xml_test		xsd \
-	xsd_command	xsd_document	xsd_variable		zone
-
-GLX_S_FILES := \
-	cl_math		math		sys_x86
 
 GLX_C_OBJS := $(addprefix $(GLX_DIR)/, $(addsuffix .o, $(GLX_C_FILES)))
 GLX_S_OBJS := $(addprefix $(GLX_DIR)/, $(addsuffix .o, $(GLX_S_FILES)))
@@ -212,47 +178,6 @@ glxclobber: glxclean
 # X11 #
 #######
 
-X11_C_FILES := \
-	Ctrl		Ctrl_EditBox	Ctrl_PageViewer		Ctrl_Tab \
-	vid_x11 	EX_FileList	EX_FunNames		EX_browser \
-	EX_browser_net	EX_browser_ping	EX_browser_sources	EX_misc \
-	auth		cd_linux	cl_cam			cl_cmd \
-	cl_demo		cl_ents		cl_input		cl_main \
-	cl_parse	cl_pred		cl_screen		cl_slist \
-	cl_tcl		cl_tent		cl_view			cmd \
-	com_msg		common		common_draw		config_manager \
-	console		crc		cvar			d_edge \
-	d_fill		d_init		d_modech		d_polyse \
-	d_scan		d_sky		d_sprite		d_surf \
-	d_vars		d_zpoint	document_rendering	fchecks \
-	fmod		fragstats	help			help_browser \
-	help_files	host		hud			hud_common \
-	ignore		image		keymap_x11		keys \
-	localtime_linux	logging		match_tools		\
-	mathlib		mdfour		menu			modules	\
-	movie		mp3_player	mvd_utils		net_chan \
-	net_udp		parser		pmove			pmovetst \
-	pr_cmds		pr_edict	pr_exec			qtv \
-	r_aclip		r_alias		r_bsp			r_draw \
-	r_edge		r_efrag		r_light			r_main \
-	r_misc		r_model		r_part			r_rast \
-	r_sky		r_sprite	r_surf			r_vars \
-	rulesets	sbar		sha1			skin \
-	snd_alsa	snd_dma		snd_linux		snd_mem \
-	snd_mix		snd_oss		sv_ccmds		sv_ents \
-	sv_init		sv_main		sv_master		sv_move \
-	sv_nchan	sv_phys		sv_save			sv_send \
-	sv_user		sv_world	sys_linux		teamplay \
-	utils		version		wad			xml_test \
-	xsd		xsd_command	xsd_document		xsd_variable \
-	zone
-
-X11_S_FILES := \
-	cl_math		d_draw		d_draw16	d_parta \
-	d_polysa	d_scana		d_spr8		d_varsa \
-	math		r_aclipa	r_aliasa	r_drawa \
-	r_edgea		r_varsa		surf8		sys_x86
-
 X11_C_OBJS := $(addprefix $(X11_DIR)/, $(addsuffix .o, $(X11_C_FILES)))
 X11_S_OBJS := $(addprefix $(X11_DIR)/, $(addsuffix .o, $(X11_S_FILES)))
 
@@ -288,48 +213,6 @@ x11clobber: x11clean
 ########
 # SVGA #
 ########
-
-SVGA_C_FILES := \
-	Ctrl		Ctrl_EditBox	Ctrl_PageViewer		Ctrl_Tab \
-	vid_svgalib	EX_FileList	EX_FunNames		EX_browser \
-	EX_browser_net	EX_browser_ping	EX_browser_sources	EX_misc \
-	auth		cd_linux	cl_cam			cl_cmd \
-	cl_demo		cl_ents		cl_input		cl_main \
-	cl_parse	cl_pred		cl_screen		cl_slist \
-	cl_tcl		cl_tent		cl_view			cmd \
-	com_msg		common		common_draw		config_manager \
-	console		crc		cvar			d_edge \
-	d_fill		d_init		d_modech		d_polyse \
-	d_scan		d_sky		d_sprite		d_surf \
-	d_vars		d_zpoint	document_rendering	fchecks \
-	fmod		fragstats	help			help_browser \
-	help_files	host		hud			hud_common \
-	ignore		image		keymap_x11		keys \
-	localtime_linux	logging		match_tools		\
-	mathlib		mdfour		menu			modules \
-	movie		mp3_player	mvd_utils		net_chan \
-	net_udp		parser		pmove			pmovetst \
-	pr_cmds		pr_edict	pr_exec			qtv \
-	r_aclip		r_alias		r_bsp			r_draw \
-	r_edge		r_efrag		r_light			r_main \
-	r_misc		r_model		r_part			r_rast \
-	r_sky		r_sprite	r_surf			r_vars \
-	rulesets	sbar		sha1			skin \
-	snd_alsa	snd_dma		snd_linux		snd_mem \
-	snd_mix		snd_oss		sv_ccmds		sv_ents \
-	sv_init		sv_main		sv_master		sv_move \
-	sv_nchan	sv_phys		sv_save			sv_send \
-	sv_user		sv_world	sys_linux		teamplay \
-	utils		version		wad			xml_test \
-	xsd		xsd_command	xsd_document		xsd_variable \
-	zone
-
-SVGA_S_FILES := \
-	cl_math		d_draw		d_draw16	d_parta \
-	d_polysa	d_scana		d_spr8		d_varsa \
-	math		r_aclipa	r_aliasa	r_drawa \
-	r_edgea		r_varsa		surf8		sys_x86	\
-	d_copy
 
 SVGA_C_OBJS := $(addprefix $(SVGA_DIR)/, $(addsuffix .o, $(SVGA_C_FILES)))
 SVGA_S_OBJS := $(addprefix $(SVGA_DIR)/, $(addsuffix .o, $(SVGA_S_FILES)))
@@ -367,39 +250,6 @@ svgaclobber: svgaclean
 # MAC #
 #######
 
-MAC_C_FILES := \
-	CarbonSndPlayDB		Ctrl			Ctrl_EditBox		Ctrl_PageViewer \
-	Ctrl_Tab		EX_FileList		EX_FunNames		EX_browser \
-	EX_browser_net		EX_browser_ping		EX_browser_sources	EX_misc \
-	auth			cd_null			cl_cam			cl_cmd \
-	cl_collision		cl_demo			cl_ents			cl_input \
-	cl_main			cl_parse		cl_pred			cl_screen \
-	cl_slist		cl_tcl			cl_tent			cl_view \
-	cmd			collision		com_msg			common \
-	common_draw		config_manager		console			crc \
-	cvar			document_rendering	fchecks			fmod \
-	fragstats		gl_draw			gl_md3			gl_mesh \
-	gl_model		gl_ngraph		gl_refrag		gl_rlight \
-	gl_rmain		gl_rmisc		gl_rpart		gl_rsurf \
-	gl_texture		gl_warp			help			help_browser \
-	help_files		host			hud			hud_common \
-	ignore			image			in_mac			keys \
-	localtime_linux		logging			mac_prefs		match_tools \
-	mathlib			mdfour			menu			modules \
-	movie			mp3_player		mvd_utils		net_chan \
-	net_udp			parser			pmove			pmovetst \
-	pr_cmds			pr_edict		pr_exec			qtv \
-	r_part			rulesets		sbar			sha1 \
-	skin			snd_dma			snd_mac			snd_mem \
-	snd_mix			sv_ccmds		sv_ents			sv_init \
-	sv_main			sv_master		sv_move			sv_nchan \
-	sv_phys			sv_save			sv_send			sv_user \
-	sv_world		sys_mac			teamplay		utils \
-	version			vid_common_gl		vid_mac			vx_camera \
-	vx_coronas		vx_motiontrail		vx_stuff		vx_tracker \
-	vx_vertexlights		wad			xml_test		xsd \
-	xsd_command		xsd_document		xsd_variable		zone
-
 MAC_C_OBJS := $(addprefix $(MAC_DIR)/, $(addsuffix .o, $(MAC_C_FILES)))
 
 MAC_CFLAGS := $(CFLAGS)
@@ -412,7 +262,7 @@ mac: _LDFLAGS := $(MAC_LDFLAGS)
 mac: _CFLAGS := $(MAC_CFLAGS)
 mac: $(MAC_TARGET)
 
-$(MAC_TARGET): $(MAC_DIR) $(MAC_C_OBJS) # FIXME
+$(MAC_TARGET): $(MAC_DIR) $(MAC_C_OBJS) $(MAC_S_OBJS)
 	$(BUILD)
 	$(STRIP) $(MAC_TARGET)
 
@@ -427,8 +277,6 @@ macclean:
 
 macclobber: _FILES := $(MAC_TARGET)
 macclobber: macclean
-
-
 
 #################
 clean: glxclean x11clean svgaclean macclean

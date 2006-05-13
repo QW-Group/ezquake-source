@@ -1,0 +1,206 @@
+CLIENT_C_FILES := \
+	Ctrl \
+	Ctrl_EditBox \
+	Ctrl_PageViewer \
+	Ctrl_Tab \
+	EX_FileList \
+	EX_FunNames \
+	EX_browser \
+	EX_browser_net \
+	EX_browser_ping \
+	EX_browser_sources \
+	EX_misc \
+	auth \
+	cl_cam \
+	cl_cmd \
+	cl_demo \
+	cl_ents \
+	cl_input \
+	cl_main \
+	cl_parse \
+	cl_pred \
+	cl_screen \
+	cl_slist \
+	cl_tcl \
+	cl_tent \
+	cl_view \
+	common_draw \
+	console \
+	config_manager \
+	document_rendering \
+	fchecks \
+	fmod \
+	fragstats \
+	help \
+	help_browser \
+	help_files \
+	hud \
+	hud_common \
+	ignore \
+	image \
+	keys \
+	logging \
+	match_tools \
+	menu \
+	modules \
+	movie \
+	mp3_player \
+	mvd_utils \
+	parser \
+	qtv \
+	r_part \
+	rulesets \
+	sbar \
+	sha1 \
+	skin \
+	snd_dma \
+	snd_mem \
+	snd_mix \
+	teamplay \
+	utils \
+	wad \
+	xsd \
+	xsd_command \
+	xsd_document \
+	xsd_variable 
+
+SERVER_C_FILES := \
+	pmove \
+	pmovetst \
+	pr_cmds \
+	pr_edict \
+	pr_exec \
+	sv_ccmds \
+	sv_ents \
+	sv_init \
+	sv_main \
+	sv_master \
+	sv_move \
+	sv_nchan \
+	sv_phys \
+	sv_save \
+	sv_send \
+	sv_user \
+	sv_world
+
+COMMON_C_FILES := \
+	cmd \
+	com_msg \
+	common \
+	crc \
+	cvar \
+	host \
+	mathlib \
+	mdfour \
+	net_chan \
+	net_udp \
+	version \
+	zone
+
+GL_C_FILES := \
+	cl_collision \
+	collision \
+	gl_draw \
+	gl_md3 \
+	gl_mesh \
+	gl_model \
+	gl_ngraph \
+	gl_refrag \
+	gl_rlight \
+	gl_rmain \
+	gl_rmisc \
+	gl_rpart \
+	gl_rsurf \
+	gl_texture \
+	gl_warp \
+	vx_camera \
+	vx_coronas \
+	vx_motiontrail \
+	vx_stuff \
+	vx_tracker \
+	vx_vertexlights \
+	vid_common_gl 
+
+SW_C_FILES := \
+	d_edge \
+	d_fill \
+	d_init \
+	d_modech \
+	d_polyse \
+	d_scan \
+	d_sky \
+	d_sprite \
+	d_surf \
+	d_vars \
+	d_zpoint \
+	r_aclip \
+	r_alias \
+	r_bsp \
+	r_draw \
+	r_edge \
+	r_efrag \
+	r_light \
+	r_main \
+	r_misc \
+	r_model \
+	r_rast \
+	r_sky \
+	r_sprite \
+	r_surf \
+	r_vars \
+
+LINUX_C_FILES := \
+	cd_linux \
+	keymap_x11 \
+	localtime_linux \
+	snd_alsa \
+	snd_linux \
+	snd_oss \
+	sys_linux
+
+GLX_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(GL_C_FILES) $(LINUX_C_FILES) \
+	vid_glx
+
+X11_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(SW_C_FILES) $(LINUX_C_FILES) \
+	vid_x11
+
+SVGA_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(SW_C_FILES) $(LINUX_C_FILES) \
+	vid_svgalib
+
+MAC_C_FILES := $(COMMON_C_FILES) $(GL_C_FILES) \
+	CarbonSndPlayDB \
+	cd_null \
+	in_mac \
+	localtime_linux \
+	mac_prefs \
+	snd_mac \
+	sys_mac \
+	vid_mac
+
+COMMON_S_FILES := \
+	cl_math \
+	math \
+	sys_x86
+
+SW_S_FILES := \
+	d_copy \
+	d_draw \
+	d_draw16 \
+	d_parta \
+	d_polysa \
+	d_scana \
+	d_spr8 \
+	d_varsa \
+	r_aclipa \
+	r_aliasa \
+	r_drawa \
+	r_edgea \
+	r_varsa \
+	surf8
+
+GL_S_FILES :=
+
+GLX_S_FILES := $(COMMON_S_FILES) $(GL_S_FILES)
+X11_S_FILES := $(COMMON_S_FILES) $(SW_S_FILES)
+SVGA_S_FILES := $(COMMON_S_FILES) $(SW_S_FILES)
+MAC_S_FILES :=
