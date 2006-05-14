@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.20 2006-05-14 10:50:17 disconn3ct Exp $
+    $Id: common.h,v 1.21 2006-05-14 12:23:17 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -338,7 +338,6 @@ void FS_LoadCacheFile (char *path, struct cache_user_s *cu);
 qbool COM_WriteFile (char *filename, void *data, int len);
 void COM_CreatePath (char *path);
 int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode);
-int Q_strlen (char *str);
 
 void COM_CheckRegistered (void);
 

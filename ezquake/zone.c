@@ -113,7 +113,6 @@ void Z_Free (void *ptr) {
 void *Z_Malloc (int size) {
 	void *buf;
 
-	//	Z_CheckHeap ();	// DEBUG
 	buf = Z_TagMalloc (size, 1);
 	if (!buf)
 		Sys_Error ("Z_Malloc: failed on allocation of %i bytes",size);
@@ -172,15 +171,6 @@ void *Z_TagMalloc (int size, int tag) {
 	return (void *) ((byte *)base + sizeof(memblock_t));
 }
 
-char *Z_StrDup(const char *str)
-{
-	void *newstr;
-
-	newstr = Z_Malloc(strlen(str)+1);
-	strcpy(newstr, str);
-	return newstr;
-}
-
 void Z_Print (memzone_t *zone) {
 	memblock_t	*block;
 
@@ -197,21 +187,6 @@ void Z_Print (memzone_t *zone) {
 			Com_Printf ("ERROR: next block doesn't have proper back link\n");
 		if (!block->tag && !block->next->tag)
 			Com_Printf ("ERROR: two consecutive free blocks\n");
-	}
-}
-
-void Z_CheckHeap (void) {
-	memblock_t *block;
-	
-	for (block = mainzone->blocklist.next; ; block = block->next) {
-		if (block->next == &mainzone->blocklist)
-			break;			// all blocks have been hit	
-		if ( (byte *)block + block->size != (byte *)block->next)
-			Sys_Error ("Z_CheckHeap: block size does not touch the next block");
-		if ( block->next->prev != block)
-			Sys_Error ("Z_CheckHeap: next block doesn't have proper back link");
-		if (!block->tag && !block->next->tag)
-			Sys_Error ("Z_CheckHeap: two consecutive free blocks");
 	}
 }
 
