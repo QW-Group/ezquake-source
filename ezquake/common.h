@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.19 2006-05-13 07:43:18 disconn3ct Exp $
+    $Id: common.h,v 1.20 2006-05-14 10:50:17 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -250,13 +250,6 @@ size_t strlcat (char *dst, char *src, size_t siz);
 char  *strnstr (char *s, char *find, size_t slen);
 #endif
 // Added by VVD }
-
-// QW262 -->
-// same as standard functions but
-// return pointer to the end of dest string
-char* Q_strcpy(char* dest, const char* src);
-char* Q_strcat(char* dest, const char* src);
-// <-- QW262
 
 int Q_atoi (const char *str);
 float Q_atof (const char *str);

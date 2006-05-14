@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.38 2006-05-13 07:43:18 disconn3ct Exp $
+    $Id: cmd.c,v 1.39 2006-05-14 10:50:16 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -383,17 +383,17 @@ void Cmd_Echo_f (void)
 	Com_Printf ("%s\n",Cmd_Args());
 #else
 	int	i;
-	char	*str;
-	char	args[MAX_MACRO_STRING];
-	char	buf[MAX_MACRO_STRING];
+	char *str;
+	char args[MAX_MACRO_STRING];
+	char buf[MAX_MACRO_STRING];
 
+	memset (args, 0, MAX_MACRO_STRING);
 
-	args[0]='\0';
+	snprintf (args, MAX_MACRO_STRING, "%s", Cmd_Argv(1));
 
-	str = Q_strcat(args, Cmd_Argv(1));
-	for (i=2 ; i<Cmd_Argc() ; i++) {
-		str = Q_strcat(str, " ");
-		str = Q_strcat(str, Cmd_Argv(i));
+	for (i = 2; i < Cmd_Argc(); i++) {
+		strlcat (args, " ", MAX_MACRO_STRING);
+		strlcat (args, Cmd_Argv(i), MAX_MACRO_STRING);
 	}
 
 	//	str = TP_ParseMacroString(args);
@@ -401,7 +401,8 @@ void Cmd_Echo_f (void)
 	str = TP_ParseMacroString(args);
 	str = TP_ParseFunChars(str, false);
 
-	strcpy(buf,str);
+	strlcpy (buf, str, MAX_MACRO_STRING);
+
 	CL_SearchForReTriggers (buf, RE_PRINT_ECHO); 	// BorisU
 	Print_flags[Print_current] |= PR_TR_SKIP;
 	Com_Printf ("%s\n", buf);

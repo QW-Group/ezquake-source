@@ -1,5 +1,5 @@
 /*
-	Copyright (C) 2000-2003       Anton Gavrilov, A Nourai
+Copyright (C) 2000-2003       Anton Gavrilov, A Nourai
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -16,8 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: teamplay.c,v 1.33 2006-04-18 20:59:56 disconn3ct Exp $
-
+    $Id: teamplay.c,v 1.34 2006-05-14 10:50:17 disconn3ct Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -169,7 +168,7 @@ typedef struct tvars_s {
 
 tvars_t vars;
 
-char lastip[32];
+static char lastip[32]; // FIXME: remove it
 
 // re-triggers stuff
 cvar_t	re_sub[10]	= {	{"re_trigger_match_0", "", CVAR_ROM},
@@ -1786,7 +1785,7 @@ void TP_ResetAllTriggers(void) {
 
 	while (msg_triggers) {
 		temp = msg_triggers->next;
-		Z_Free(msg_triggers);
+		Q_free(msg_triggers);
 		msg_triggers = temp;
 	}
 }
@@ -1856,7 +1855,7 @@ void TP_MsgTrigger_f (void) {
 
 		if (!(trig = TP_FindTrigger (name))) {
 			// allocate new trigger
-			trig = (msg_trigger_t *) Z_Malloc (sizeof(msg_trigger_t));
+			trig = (msg_trigger_t *) Q_malloc (sizeof(msg_trigger_t));
 			trig->next = msg_triggers;
 			msg_triggers = trig;
 			strcpy (trig->name, name);
@@ -1951,9 +1950,9 @@ pcre_trigger_t *CL_FindReTrigger (char *name) {
 static void DeleteReTrigger(pcre_trigger_t *t) {
 	if (t->regexp) (pcre_free)(t->regexp);
 	if (t->regexp_extra) (pcre_free)(t->regexp_extra);
-	if (t->regexpstr) Z_Free(t->regexpstr);
-	Z_Free(t->name);
-	Z_Free(t);
+	if (t->regexpstr) Q_free(t->regexpstr);
+	Q_free(t->name);
+	Q_free(t);
 }
 
 static void RemoveReTrigger(pcre_trigger_t *t) {
@@ -2034,10 +2033,10 @@ void CL_RE_Trigger_f (void) {
 		if (!trig) {
 			// allocate new trigger
 			newtrigger = true;
-			trig = (pcre_trigger_t *) Z_Malloc (sizeof(pcre_trigger_t));
+			trig = (pcre_trigger_t *) Q_malloc (sizeof(pcre_trigger_t));
 			trig->next = re_triggers;
 			re_triggers = trig;
-			trig->name = Z_StrDup (name);
+			trig->name = Q_strdup (name);
 			trig->flags = RE_PRINT_ALL | RE_ENABLED; // catch all printed messages by default
 		}
 
@@ -2052,9 +2051,9 @@ void CL_RE_Trigger_f (void) {
 					(pcre_free)(trig->regexp);
 					if (trig->regexp_extra)
 						(pcre_free)(trig->regexp_extra);
-					Z_Free(trig->regexpstr);
+					Q_free(trig->regexpstr);
 				}
-				trig->regexpstr = Z_StrDup (regexpstr);
+				trig->regexpstr = Q_strdup (regexpstr);
 				trig->regexp = re;
 				trig->regexp_extra = re_extra;
 				return;
@@ -2343,7 +2342,7 @@ void AddInternalTrigger(char* regexpstr, unsigned mask, internal_trigger_func fu
 	const char		*error;
 	int			error_offset;
 
-	trig = (pcre_internal_trigger_t *) Z_Malloc (sizeof(pcre_internal_trigger_t));
+	trig = (pcre_internal_trigger_t *) Q_malloc (sizeof(pcre_internal_trigger_t));
 	trig->next = internal_triggers;
 	internal_triggers = trig;
 
@@ -2359,20 +2358,18 @@ void INTRIG_Disable (char *s) {
 }
 
 void INTRIG_Lastip_port (char *s) {
-	/* There are no check for overflow, because subpatterns of this regexp is maximum 21 chars. */
+	/* subpatterns of this regexp is maximum 21 chars */
+	/* strlen (<3>.<3>.<3>.<3>:< 5 >) = 21 */
 
 	// reset current lastip value
-	lastip[0]='\0';
+	memset (lastip, 0, sizeof (lastip));
 
-	Q_strcat(lastip, re_subi[1].string);
-	Q_strcat(lastip, ".");
-	Q_strcat(lastip, re_subi[2].string);
-	Q_strcat(lastip, ".");
-	Q_strcat(lastip, re_subi[3].string);
-	Q_strcat(lastip, ".");
-	Q_strcat(lastip, re_subi[4].string);
-	Q_strcat(lastip, ":");
-	Q_strcat(lastip, re_subi[5].string);
+	memcpy (lastip, va ("%s.%s.%s.%s:%s",
+		re_subi[1].string,
+		re_subi[2].string,
+		re_subi[3].string,
+		re_subi[4].string,
+		re_subi[5].string), sizeof (lastip));
 }
 
 void InitInternalTriggers(void)
@@ -2385,15 +2382,8 @@ void InitInternalTriggers(void)
 	AddInternalTrigger("([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\:(\\d{5})", 8, INTRIG_Lastip_port);
 }
 
-typedef void *(*pcre_malloc_type)(size_t);
-
 void TP_InitReTriggers() {
 	unsigned i;
-
-	// Using zone for PCRE library memory allocation
-	//
-	pcre_malloc = (pcre_malloc_type) Z_Malloc;
-	pcre_free = Z_Free;
 
 	for(i=0;i<10;i++)
 		Cvar_Register (re_sub+i);
