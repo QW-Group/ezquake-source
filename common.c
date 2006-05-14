@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.24 2006-05-13 07:43:18 disconn3ct Exp $
+    $Id: common.c,v 1.25 2006-05-14 10:50:16 disconn3ct Exp $
 */
 
 #ifdef _WIN32
@@ -58,13 +58,12 @@ char com_gamedirfile[MAX_QPATH];
 
 int Q_strlen (char *str)
 {
-    int     count;
-    
-    count = 0;
-    while (str[count])
-        count++;
+	int count = 0;
 
-    return count;
+	while (str[count])
+		count++;
+
+	return count;
 }
 
 /*
@@ -126,33 +125,6 @@ void InsertLinkAfter (link_t *l, link_t *after) {
 					LIBRARY REPLACEMENT FUNCTIONS
 ============================================================================
 */
-
-// same as strcpy but
-// returns pointer to the end of dest string
-char* Q_strcpy(char* dest, const char* src)
-{
-	while (*src) {
-		*dest++ = *src++;
-	}
-	*dest = 0;
-
-	return dest;
-}
-
-// same as strcat but
-// returns pointer to the end of dest string
-char* Q_strcat(char* dest, const char* src)
-{
-	while (*dest)
-		dest++;
-	
-	while (*src) {
-		*dest++ = *src++;
-	}
-	*dest = 0;
-
-	return dest;
-}
 
 int Q_atoi (const char *str) {
 	int val, sign, c;
