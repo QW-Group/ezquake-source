@@ -23,8 +23,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="libs;libexpat;pcre"
-				PreprocessorDefinitions="_DEBUG;id386;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_JPEG_STATIC;WITH_PNG;WITH_PNG_STATIC;WITH_ZLIB;EMBED_TCL"
+				AdditionalIncludeDirectories="libs"
+				PreprocessorDefinitions="_DEBUG;id386;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_PNG;WITH_ZLIB;EMBED_TCL"
 				StringPooling="FALSE"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="FALSE"
@@ -107,8 +107,8 @@
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
 				OptimizeForWindowsApplication="TRUE"
-				AdditionalIncludeDirectories="libs;libexpat;pcre"
-				PreprocessorDefinitions="NDEBUG;id386;WITH_ZLIB;WITH_PNG;WITH_PNG_STATIC;WITH_KEYMAP;EMBED_TCL"
+				AdditionalIncludeDirectories="libs"
+				PreprocessorDefinitions="NDEBUG;id386;WITH_ZLIB;WITH_PNG;WITH_KEYMAP;EMBED_TCL"
 				StringPooling="TRUE"
 				ExceptionHandling="FALSE"
 				RuntimeLibrary="4"
@@ -190,8 +190,8 @@
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
 				OptimizeForWindowsApplication="TRUE"
-				AdditionalIncludeDirectories="libs;libexpat;pcre"
-				PreprocessorDefinitions="NDEBUG;id386;WITH_KEYMAP;WITH_PNG;WITH_PNG_STATIC;WITH_JPEG;WITH_JPEG_STATIC;GLQUAKE;WITH_ZLIB;EMBED_TCL"
+				AdditionalIncludeDirectories="libs"
+				PreprocessorDefinitions="NDEBUG;id386;WITH_KEYMAP;WITH_PNG;WITH_JPEG;GLQUAKE;WITH_ZLIB;EMBED_TCL"
 				StringPooling="TRUE"
 				ExceptionHandling="FALSE"
 				RuntimeLibrary="4"
@@ -269,8 +269,8 @@
 				GlobalOptimizations="FALSE"
 				FavorSizeOrSpeed="0"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="libs;libexpat;pcre"
-				PreprocessorDefinitions="_DEBUG;id386;WITH_ZLIB;WITH_PNG;WITH_PNG_STATIC;WITH_KEYMAP;EMBED_TCL"
+				AdditionalIncludeDirectories="libs"
+				PreprocessorDefinitions="_DEBUG;id386;WITH_ZLIB;WITH_PNG;WITH_KEYMAP;EMBED_TCL"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="FALSE"
 				RuntimeLibrary="4"
@@ -1423,9 +1423,6 @@
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="xml_test.c">
 				</File>
 				<File
 					RelativePath="xsd.c">
