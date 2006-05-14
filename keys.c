@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.c,v 1.33 2006-04-18 20:59:56 disconn3ct Exp $
+    $Id: keys.c,v 1.34 2006-05-14 12:23:17 disconn3ct Exp $
 
 */
 
@@ -66,13 +66,13 @@ int count_alias = 0;
 
 keydest_t	key_dest;
 
-char		*keybindings[UNKNOWN + 256];
+char	*keybindings[UNKNOWN + 256];
 qbool	consolekeys[UNKNOWN + 256];	// if true, can't be rebound while in console
 qbool	menubound[UNKNOWN + 256];		// if true, can't be rebound while in menu
 #ifndef WITH_KEYMAP
-int			keyshift[UNKNOWN + 256];		// key to map to if shift held down in console
+int		keyshift[UNKNOWN + 256];		// key to map to if shift held down in console
 #endif // WITH_KEYMAP
-int			key_repeats[UNKNOWN + 256];	// if > 1, it is autorepeating
+int		key_repeats[UNKNOWN + 256];	// if > 1, it is autorepeating
 qbool	keydown[UNKNOWN + 256];
 qbool	keyactive[UNKNOWN + 256];	
 
@@ -99,7 +99,7 @@ keyname_t keynames[] = {
 	{"CAPSLOCK",K_CAPSLOCK},
 	{"PRINTSCR", K_PRINTSCR},
 	{"SCRLCK", K_SCRLCK},
-	{"SCROLLOCK", K_SCRLCK},	// FIXME
+	{"SCROLLOCK", K_SCRLCK}, // FIXME
 
 #ifdef __APPLE__
 	{"COMMAND", K_CMD},
@@ -318,7 +318,7 @@ qbool CheckForCommand (void) {
 
 void PaddedPrint (char *s) {	
 	extern int con_linewidth;
-	int	nextcolx = 0;
+	int nextcolx = 0;
 
 	if (con.x)
 		nextcolx = (int)((con.x + COLUMNWIDTH)/COLUMNWIDTH)*COLUMNWIDTH;
@@ -1458,14 +1458,9 @@ void Key_SetBinding (int keynum, char *binding) {
 	}
 #endif
 
-	// free old bindings
-	if (keybindings[keynum]) {
-		Z_Free (keybindings[keynum]);
-		keybindings[keynum] = NULL;
-	}
-
-	// allocate memory for new binding
-	keybindings[keynum] = CopyString (binding);	
+	// free (and hence Q_free) is safe to call with a NULL argument
+	Q_free (keybindings[keynum]);
+	keybindings[keynum] = Q_strdup(binding);
 }
 
 void Key_Unbind (int keynum) {
@@ -1473,16 +1468,14 @@ void Key_Unbind (int keynum) {
 		return;
 
 	if (keynum == K_CTRL || keynum == K_ALT || keynum == K_SHIFT || keynum == K_WIN) {
-		
 		Key_Unbind(keynum + 1);
 		Key_Unbind(keynum + 2);
 		return;
 	}
 
-	if (keybindings[keynum]) {
-		Z_Free (keybindings[keynum]);
-		keybindings[keynum] = NULL;
-	}
+	// free (and hence Q_free) is safe to call with a NULL argument
+	Q_free (keybindings[keynum]);
+	keybindings[keynum] = NULL;
 }
 
 void Key_Unbind_f (void) {

@@ -1,24 +1,22 @@
 /*
+Copyright (C) 2001-2002 A Nourai
 
-Copyright (C) 2001-2002		  A	Nourai
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
 
-This program is	free software; you can redistribute	it and/or
-modify it under	the	terms of the GNU General Public	License
-as published by	the	Free Software Foundation; either version 2
-of the License,	or (at your	option)	any	later version.
+This program is distributed in the hope that it will be useful,
+but	WITHOUT ANY WARRANTY; without even the implied warranty	of
+MERCHANTABILITY or FITNESS FOR A PARTICULARPURPOSE.
 
-This program is	distributed	in the hope	that it	will be	useful,
-but	WITHOUT	ANY	WARRANTY; without even the implied warranty	of
-MERCHANTABILITY	or FITNESS FOR A PARTICULAR	PURPOSE.  
+See the included (GNU.txt) GNU General Public License for more details.
 
-See	the	included (GNU.txt) GNU General Public License for more details.
+You	should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-You	should have	received a copy	of the GNU General Public License
-along with this	program; if	not, write to the Free Software
-Foundation,	Inc., 59 Temple	Place -	Suite 330, Boston, MA  02111-1307, USA.
-
-	$Id: config_manager.c,v 1.22 2006-04-30 14:18:54 johnnycz Exp $
-
+    $Id: config_manager.c,v 1.23 2006-05-14 12:23:17 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -81,13 +79,14 @@ cvar_t	cfg_backup			=	{"cfg_backup", "0"};
 /************************************ DUMP FUNCTIONS ************************************/
 
 #define BIND_ALIGN_COL 20
-void DumpBindings (FILE *f) {
+void DumpBindings (FILE *f)
+{
 	int i, leftright;
 	char *spaces, *string;
 	qbool printed = false;
 
 	for (i = 0; i < (sizeof(keybindings) / sizeof(*keybindings)); i++) {
-		
+
 		leftright = Key_IsLeftRightSameBind(i) ? 1 : 0;
 		if (keybindings[i] || leftright) {
 			printed = true;
@@ -112,7 +111,8 @@ void DumpBindings (FILE *f) {
 
 #define CONFIG_MAX_COL 60
 #define MAX_DUMPED_CVARS 1024
-static void DumpVariables(FILE	*f)	{
+static void DumpVariables(FILE	*f)
+{
 	cvar_t *var, *sorted_vars[MAX_DUMPED_CVARS];
 	cvar_group_t *group;
 	char *spaces;
@@ -123,9 +123,9 @@ static void DumpVariables(FILE	*f)	{
 
 	for (col_size = 0,  var = cvar_vars; var; var = var->next) {
 		if ( !(
-			(var->flags & (CVAR_USER_CREATED | CVAR_ROM | CVAR_INIT)) ||
-			(var->group && (!strcmp(CVAR_GROUP_NO_GROUP, var->group->name) || !strcmp(CVAR_GROUP_SERVERINFO, var->group->name)) )
-		)) {
+		            (var->flags & (CVAR_USER_CREATED | CVAR_ROM | CVAR_INIT)) ||
+		            (var->group && (!strcmp(CVAR_GROUP_NO_GROUP, var->group->name) || !strcmp(CVAR_GROUP_SERVERINFO, var->group->name)) )
+		        )) {
 			col_size = max(col_size, strlen(var->name));
 		}
 	}
@@ -144,21 +144,21 @@ static void DumpVariables(FILE	*f)	{
 	for (group = cvar_groups; group; group = group->next)  {
 
 		if (
-			!strcmp(CVAR_GROUP_NO_GROUP, group->name) || 
-			!strcmp(CVAR_GROUP_SERVERINFO, group->name) ||
-			(!cfg_save_userinfo.value && !strcmp(CVAR_GROUP_USERINFO, group->name))
+		    !strcmp(CVAR_GROUP_NO_GROUP, group->name) ||
+		    !strcmp(CVAR_GROUP_SERVERINFO, group->name) ||
+		    (!cfg_save_userinfo.value && !strcmp(CVAR_GROUP_USERINFO, group->name))
 		)
 			continue;
 
 		skip_userinfo = ((cfg_save_userinfo.value == 1) && !strcmp(CVAR_GROUP_USERINFO, group->name)) ? true : false;
 
-	
+
 		for (count = 0, var = group->head; var && count < MAX_DUMPED_CVARS; var = var->next_in_group) {
 			if (skip_userinfo && (
-				!strcmp(var->name, "team") || !strcmp(var->name, "skin") || 
-				!strcmp(var->name, "spectator") ||!strcmp(var->name, "name") ||
-				!strcmp(var->name, "topcolor") || !strcmp(var->name, "bottomcolor")
-			))
+			            !strcmp(var->name, "team") || !strcmp(var->name, "skin") ||
+			            !strcmp(var->name, "spectator") ||!strcmp(var->name, "name") ||
+			            !strcmp(var->name, "topcolor") || !strcmp(var->name, "bottomcolor")
+			        ))
 				continue;
 			if (!(var->flags & (CVAR_USER_CREATED |	CVAR_ROM | CVAR_INIT))) {
 				if (cfg_save_unchanged.value || strcmp(var->string, var->defaultvalue)) {
@@ -169,19 +169,19 @@ static void DumpVariables(FILE	*f)	{
 		if (!count)
 			continue;
 
-	
+
 		if (
-			strcmp(group->name, CVAR_GROUP_ITEM_NAMES) && 
-			strcmp(group->name, CVAR_GROUP_ITEM_NEED) && 
-			strcmp(group->name, CVAR_GROUP_USERINFO) && 
-			strcmp(group->name, CVAR_GROUP_SKIN)
+		    strcmp(group->name, CVAR_GROUP_ITEM_NAMES) &&
+		    strcmp(group->name, CVAR_GROUP_ITEM_NEED) &&
+		    strcmp(group->name, CVAR_GROUP_USERINFO) &&
+		    strcmp(group->name, CVAR_GROUP_SKIN)
 		)
 			qsort(sorted_vars, count, sizeof (cvar_t *), Cvar_CvarCompare);
 
-	
+
 		fprintf(f, "//%s\n", group->name);
 
-	
+
 		for (i = 0; i < count; i++) {
 			var = sorted_vars[i];
 			if (cfg_save_unchanged.value || strcmp(var->string, var->defaultvalue)) {
@@ -189,10 +189,10 @@ static void DumpVariables(FILE	*f)	{
 				fprintf(f, "%s%s\"%s\"\n", var->name, spaces, var->string);
 			}
 		}
-	
+
 		fprintf(f, "\n");
-	}		
-	
+	}
+
 
 
 	for (count = 0, var = cvar_vars; var && count < MAX_DUMPED_CVARS; var = var->next) {
@@ -203,19 +203,19 @@ static void DumpVariables(FILE	*f)	{
 		}
 	}
 	if (count) {
-	
+
 		qsort(sorted_vars, count, sizeof (cvar_t *), Cvar_CvarCompare);
 
-	
+
 		fprintf(f, "//Unsorted Variables\n");
 
-	
+
 		for (i = 0; i < count; i++) {
 			var = sorted_vars[i];
 			spaces = CreateSpaces(col_size - strlen(var->name));
 			fprintf(f, "%s%s\"%s\"\n", var->name, spaces, var->string);
 		}
-	
+
 		fprintf(f, "\n");
 	}
 
@@ -248,7 +248,8 @@ static void DumpVariables(FILE	*f)	{
 }
 
 #define MAX_ALIGN_COL 60
-static void DumpAliases(FILE *f) {
+static void DumpAliases(FILE *f)
+{
 	int maxlen, i, j, count, lonely_count, minus_index, minus_count;
 	char *spaces;
 	cmd_alias_t	*b, *a, *sorted_aliases[1024], *lonely_pluses[512];
@@ -298,7 +299,7 @@ static void DumpAliases(FILE *f) {
 			b = sorted_aliases[j];
 
 			if (!strcasecmp(b->name + 1, a->name + 1)) {
-			
+
 				spaces = CreateSpaces(maxlen + 3 - strlen(a->name));
 				fprintf	(f, "alias %s%s\"%s\"\n", a->name, spaces, a->value);
 				spaces = CreateSpaces(maxlen + 3 - strlen(b->name));
@@ -307,7 +308,7 @@ static void DumpAliases(FILE *f) {
 				break;
 			}
 		}
-	
+
 		if (!partner)
 			lonely_pluses[lonely_count++] = a;
 	}
@@ -315,7 +316,7 @@ static void DumpAliases(FILE *f) {
 
 	for (i = 0; i < lonely_count; i++) {
 		a = lonely_pluses[i];
-			
+
 		spaces = CreateSpaces(maxlen + 3 - strlen(a->name));
 		fprintf	(f, "alias %s%s\"%s\"\n", a->name, spaces, a->value);
 		printed = true;
@@ -329,13 +330,13 @@ static void DumpAliases(FILE *f) {
 			b = sorted_aliases[j];
 
 			if (!strcasecmp(b->name + 1, a->name + 1)) {
-			
+
 				partner = true;
 				break;
 			}
 		}
 		if (!partner) {
-		
+
 			spaces = CreateSpaces(maxlen + 3 - strlen(a->name));
 			fprintf	(f, "alias %s%s\"%s\"\n", a->name, spaces, a->value);
 			printed = true;
@@ -354,14 +355,16 @@ static void DumpAliases(FILE *f) {
 	}
 }
 
-static void DumpPlusCommand(FILE *f, kbutton_t	*b,	const char *name) {
+static void DumpPlusCommand(FILE *f, kbutton_t	*b,	const char *name)
+{
 	if (b->state & 1 && b->down[0] < 0)
 		fprintf(f, "+%s\n",	name);
 	else
 		fprintf(f, "-%s\n",	name);
 }
 
-static void DumpPlusCommands(FILE *f) {
+static void DumpPlusCommands(FILE *f)
+{
 	DumpPlusCommand(f, &in_up, "moveup");
 	DumpPlusCommand(f, &in_down, "movedown");
 	DumpPlusCommand(f, &in_left, "left");
@@ -384,7 +387,8 @@ static void DumpPlusCommands(FILE *f) {
 	fprintf(f, sb_showteamscores ? "+showteamscores\n" : "-showteamscores\n");
 }
 
-static void DumpColorForcing(FILE *f, char *name, int topcolor, int bottomcolor) {
+static void DumpColorForcing(FILE *f, char *name, int topcolor, int bottomcolor)
+{
 	char *spaces;
 
 	spaces = CreateSpaces(13 - strlen(name));
@@ -399,7 +403,8 @@ static void DumpColorForcing(FILE *f, char *name, int topcolor, int bottomcolor)
 	}
 }
 
-static void DumpTeamplay(FILE *f) {
+static void DumpTeamplay(FILE *f)
+{
 
 	if (allskins[0])
 		fprintf(f, "allskins \"%s\"\n", allskins);
@@ -419,7 +424,8 @@ static void DumpTeamplay(FILE *f) {
 }
 
 #ifdef GLQUAKE
-void DumpFogSettings(FILE *f) {
+void DumpFogSettings(FILE *f)
+{
 	extern cvar_t gl_fogenable, gl_fogred, gl_foggreen, gl_fogblue;
 	if (gl_fogenable.value != 0) {
 		fprintf(f, "fog %s %s %s\n", gl_fogred.string, gl_foggreen.string, gl_fogblue.string);
@@ -427,50 +433,53 @@ void DumpFogSettings(FILE *f) {
 }
 #endif //GLQUAKE
 
-void DumpMisc(FILE *f) {
+void DumpMisc(FILE *f)
+{
 
 	DumpMapGroups(f);
 	fprintf(f, "\n");
 
-// START shaman RFE 1020608
+	// START shaman RFE 1020608
 #ifdef GLQUAKE
 	DumpSkyGroups(f);
 	fprintf(f, "\n");
 #endif
-// END shaman RFE 1020608
+	// END shaman RFE 1020608
 
-// START shaman RFE 1032143 {
+	// START shaman RFE 1032143 {
 #ifdef GLQUAKE
 	DumpFogSettings(f);
 	fprintf(f, "\n");
 #endif
-// } END shaman RFE 1032143
+	// } END shaman RFE 1032143
 
-// START johnnycz RFE 1157227 {
+	// START johnnycz RFE 1157227 {
 	fprintf(f, "hud_recalculate\n");
-// } END johnnycz RFE 1157227
+	// } END johnnycz RFE 1157227
 
 	if (cl.teamfortress) {
-		if (!strcasecmp(Info_ValueForKey (cls.userinfo, "ec"), "on") || 
-			!strcasecmp(Info_ValueForKey (cls.userinfo, "exec_class"), "on")
-		) {
+		if (!strcasecmp(Info_ValueForKey (cls.userinfo, "ec"), "on") ||
+		        !strcasecmp(Info_ValueForKey (cls.userinfo, "exec_class"), "on")
+		   ) {
 			fprintf(f, "setinfo ec on\n");
 		}
-		if (!strcasecmp(Info_ValueForKey (cls.userinfo, "em"), "on") || 
-			!strcasecmp(Info_ValueForKey (cls.userinfo, "exec_map"), "on")
-		) {
+		if (!strcasecmp(Info_ValueForKey (cls.userinfo, "em"), "on") ||
+		        !strcasecmp(Info_ValueForKey (cls.userinfo, "exec_map"), "on")
+		   ) {
 			fprintf(f, "setinfo em on\n");
 		}
 	}
 }
 
-void DumpCmdLine(FILE *f) {
+void DumpCmdLine(FILE *f)
+{
 	fprintf(f, "// %s\n", cl_cmdline.string);
 }
 
 /************************************ RESET FUNCTIONS ************************************/
 
-static void ResetVariables(int cvar_flags, qbool userinfo) {
+static void ResetVariables(int cvar_flags, qbool userinfo)
+{
 	cvar_t *var;
 	qbool check_userinfos = false;
 
@@ -483,21 +492,22 @@ static void ResetVariables(int cvar_flags, qbool userinfo) {
 
 	for (var = cvar_vars; var; var = var->next) {
 		if (!(
-			(var->flags & (cvar_flags | CVAR_ROM | CVAR_INIT | CVAR_USER_CREATED)) ||
-			(var->group && !strcmp(var->group->name, CVAR_GROUP_NO_GROUP))
-		)) {
+		            (var->flags & (cvar_flags | CVAR_ROM | CVAR_INIT | CVAR_USER_CREATED)) ||
+		            (var->group && !strcmp(var->group->name, CVAR_GROUP_NO_GROUP))
+		        )) {
 			if (check_userinfos && (
-				!strcmp(var->name, "team") || !strcmp(var->name, "skin") || 
-				!strcmp(var->name, "spectator") ||!strcmp(var->name, "name") ||
-				!strcmp(var->name, "topcolor") || !strcmp(var->name, "bottomcolor")
-			))
-				continue;	
+			            !strcmp(var->name, "team") || !strcmp(var->name, "skin") ||
+			            !strcmp(var->name, "spectator") ||!strcmp(var->name, "name") ||
+			            !strcmp(var->name, "topcolor") || !strcmp(var->name, "bottomcolor")
+			        ))
+				continue;
 			Cvar_ResetVar(var);
 		}
 	}
 }
 
-static void DeleteUserAliases(void)	{
+static void DeleteUserAliases(void)
+{
 	cmd_alias_t	*a;
 
 	for	(a = cmd_alias;	a; a = a->next)	{
@@ -506,7 +516,8 @@ static void DeleteUserAliases(void)	{
 	}
 }
 
-static void DeleteUserVariables(void) {
+static void DeleteUserVariables(void)
+{
 	cvar_t *var;
 
 	for (var = cvar_vars; var; var = var->next) {
@@ -516,7 +527,8 @@ static void DeleteUserVariables(void) {
 
 }
 
-static void ResetPlusCommands(void) {
+static void ResetPlusCommands(void)
+{
 	Cbuf_AddText("-moveup;-movedown\n");
 	Cbuf_AddText("-left;-right\n");
 	Cbuf_AddText("-forward;-back\n");
@@ -534,7 +546,8 @@ static void ResetPlusCommands(void) {
 	Cbuf_AddText("-showteamscores\n");
 }
 
-static void ResetTeamplayCommands(void) {
+static void ResetTeamplayCommands(void)
+{
 	allskins[0]	= 0;
 	Cbuf_AddText("enemycolor off\nteamcolor	off\n");
 	Cbuf_AddText("filter clear\n");
@@ -542,13 +555,14 @@ static void ResetTeamplayCommands(void) {
 	Cbuf_AddText("tp_took default\ntp_pickup default\ntp_point default\n");
 }
 
-static void ResetMiscCommands(void) {
+static void ResetMiscCommands(void)
+{
 	Cbuf_AddText("mapgroup clear\n");
-// START shaman RFE 1020608
+	// START shaman RFE 1020608
 #ifdef GLQUAKE
 	Cbuf_AddText("skygroup clear\n");
 #endif
-// END shaman RFE 1020608
+	// END shaman RFE 1020608
 
 	Info_RemoveKey(cls.userinfo, "ec");
 	Info_RemoveKey(cls.userinfo, "exec_class");
@@ -560,7 +574,8 @@ static void ResetMiscCommands(void) {
 
 #define CONFIG_WIDTH 100
 
-static void Config_PrintBorder(FILE *f) {
+static void Config_PrintBorder(FILE *f)
+{
 	char buf[CONFIG_WIDTH + 1] = {0};
 
 	if (!buf[0]) {
@@ -570,7 +585,8 @@ static void Config_PrintBorder(FILE *f) {
 	fprintf(f, "%s\n", buf);
 }
 
-static void Config_PrintLine(FILE *f, char *title, int width) {
+static void Config_PrintLine(FILE *f, char *title, int width)
+{
 	char buf[CONFIG_WIDTH + 1] = {0};
 	int title_len, i;
 
@@ -587,7 +603,8 @@ static void Config_PrintLine(FILE *f, char *title, int width) {
 	fprintf(f, "%s\n", buf);
 }
 
-static void Config_PrintHeading(FILE *f, char *title) {
+static void Config_PrintHeading(FILE *f, char *title)
+{
 	Config_PrintBorder(f);
 	Config_PrintLine(f, "", 2);
 	Config_PrintLine(f, title, 2);
@@ -596,7 +613,8 @@ static void Config_PrintHeading(FILE *f, char *title) {
 	fprintf(f, "\n\n");
 }
 
-static void Config_PrintPreamble(FILE *f) {
+static void Config_PrintPreamble(FILE *f)
+{
 	Config_PrintBorder(f);
 	Config_PrintBorder(f);
 	Config_PrintLine(f, "", 3);
@@ -611,16 +629,17 @@ static void Config_PrintPreamble(FILE *f) {
 
 /************************************ MAIN FUCTIONS	************************************/
 
-static void ResetConfigs(qbool resetall)	{
+static void ResetConfigs(qbool resetall)
+{
 	FILE *f;
 
 	ResetVariables(CVAR_SERVERINFO, !resetall);
 
-	DeleteUserAliases();					
+	DeleteUserAliases();
 
-	DeleteUserVariables();					
+	DeleteUserVariables();
 
-	Cbuf_AddText("unbindall\n");			
+	Cbuf_AddText("unbindall\n");
 
 	ResetPlusCommands();
 
@@ -638,7 +657,8 @@ static void ResetConfigs(qbool resetall)	{
 	Cbuf_AddText ("cl_warncmd 1\n");
 }
 
-void DumpConfig(char *name)	{
+void DumpConfig(char *name)
+{
 	FILE	*f;
 	char	*outfile, *newlines = "\n";
 
@@ -683,11 +703,11 @@ void DumpConfig(char *name)	{
 		fprintf(f, newlines);
 
 
-	#ifdef GLQUAKE
+#ifdef GLQUAKE
 		Config_PrintHeading(f, "M I S C E L L A N E O U S   C O M M A N D S");
 		DumpMisc(f);
 		fprintf(f, newlines);
-	#endif
+#endif
 
 		Config_PrintHeading(f, "P L U S   C O M M A N D S");
 		DumpPlusCommands(f);
@@ -702,8 +722,9 @@ void DumpConfig(char *name)	{
 	fclose(f);
 }
 
-void DumpHUD(char *name) {
-// Dumps all variables from CFG_GROUP_HUD into a file
+void DumpHUD(char *name)
+{
+	// Dumps all variables from CFG_GROUP_HUD into a file
 	extern cvar_t scr_newHud;
 
 	FILE *f;
@@ -730,10 +751,10 @@ void DumpHUD(char *name) {
 			max_width = max(max_width, strlen(var->name));
 			sorted[i++] = var;
 		}
-		
+
 	max_width++;
 	qsort(sorted, i, sizeof(cvar_t *), Cvar_CvarCompare);
-	
+
 	spaces = CreateSpaces(max_width - strlen(scr_newHud.name));
 	fprintf(f, "%s%s\"1\"\n", scr_newHud.name, spaces);
 
@@ -748,7 +769,8 @@ void DumpHUD(char *name) {
 }
 /************************************ API ************************************/
 
-void SaveConfig_f(void)	{
+void SaveConfig_f(void)
+{
 	char *filename, *filename_ext, *backupname_ext;
 	FILE *f;
 
@@ -765,7 +787,7 @@ void SaveConfig_f(void)	{
 		filename_ext = va("%s/ezquake/configs/%s", com_basedir, filename);
 		if ((f = fopen(filename_ext, "r"))) {
 			fclose(f);
-			backupname_ext = (char *) Z_Malloc(strlen(filename_ext) + 4);
+			backupname_ext = (char *) Q_malloc(strlen(filename_ext) + 4);
 			strcpy(backupname_ext, filename_ext);
 			strcat(backupname_ext, ".bak");
 			if ((f = fopen(backupname_ext, "r"))) {
@@ -773,7 +795,7 @@ void SaveConfig_f(void)	{
 				remove(backupname_ext);
 			}
 			rename(filename_ext, backupname_ext);
-			Z_Free(backupname_ext);
+			Q_free(backupname_ext);
 		}
 	}
 
@@ -781,7 +803,8 @@ void SaveConfig_f(void)	{
 	Com_Printf("Saving configuration to %s\n", filename);
 }
 
-void ResetConfigs_f(void) {
+void ResetConfigs_f(void)
+{
 	if (Cmd_Argc() != 1) {
 		Com_Printf("Usage: %s \n",	Cmd_Argv(0));
 		return;
@@ -790,7 +813,8 @@ void ResetConfigs_f(void) {
 	ResetConfigs(true);
 }
 
-void LoadConfig_f(void)	{
+void LoadConfig_f(void)
+{
 	FILE *f;
 	char *filename;
 
@@ -815,20 +839,21 @@ void LoadConfig_f(void)	{
 
 	Cbuf_AddText ("cl_warncmd 0\n");
 	Cbuf_AddText(va("exec configs/%s\n", filename));
-	
-	/* johnnycz: 
+
+	/* johnnycz:
 	  This should be called with TP_ExecTrigger("f_cfgload"); but definition
 	  of f_cfgload alias is stored in config which is waiting to be executed
 	  in command queue so nothing would happen. We have to add f_cfgload as
 	  a standard command to the queue. Since warnings are off this is OK but
 	  regarding to other f_triggers non-standard.
 	*/
-	Cbuf_AddText ("f_cfgload\n");	
-	
+	Cbuf_AddText ("f_cfgload\n");
+
 	Cbuf_AddText ("cl_warncmd 1\n");
 }
 
-void DumpHUD_f(void) {
+void DumpHUD_f(void)
+{
 	char *filename;
 
 	if (Cmd_Argc() != 2) {
@@ -841,7 +866,8 @@ void DumpHUD_f(void) {
 	Com_Printf("HUD variables exported.\n");
 }
 
-void ConfigManager_Init(void) {
+void ConfigManager_Init(void)
+{
 	Cmd_AddCommand("cfg_save", SaveConfig_f);
 	Cmd_AddCommand("cfg_load", LoadConfig_f);
 	Cmd_AddCommand("cfg_reset",	ResetConfigs_f);

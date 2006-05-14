@@ -862,11 +862,11 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
     var = (cvar_t *)Q_malloc(sizeof(cvar_t));
     memset(var, 0, sizeof(cvar_t));
     // set name
-    var->name = CopyString(buf);
+	var->name = Q_strdup(buf);
 
     // default
 //    Cvar_SetDefault(var, value);    // sets value and default value
-    var->string = CopyString(value);
+	var->string = Q_strdup(value);
 
 //  var->group = CVAR_HUD;
 //  var->hidden = true;
@@ -901,10 +901,10 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
     hud->draw_order = draw_order;
     hud->draw_func = draw_func;
 
-    hud->name = (char *) Z_Malloc(strlen(name)+1);
+    hud->name = (char *) Q_malloc(strlen(name)+1);
     strcpy(hud->name, name);
 
-    hud->description = (char *) Z_Malloc(strlen(description)+1);
+    hud->description = (char *) Q_malloc(strlen(description)+1);
     strcpy(hud->description, description);
 
     hud->flags = flags;

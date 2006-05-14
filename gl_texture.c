@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_texture.c,v 1.15 2006-04-18 20:59:55 disconn3ct Exp $
+	$Id: gl_texture.c,v 1.16 2006-05-14 12:23:17 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -310,7 +310,7 @@ void GL_Upload8 (byte *data, int width, int height, int mode) {
 
 int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mode, int bpp) {
 	int	i, scaled_width, scaled_height, crc = 0;
-	gltexture_t	*glt;
+	gltexture_t *glt;
 
 	ScaleDimensions(width, height, &scaled_width, &scaled_height, mode);
 
@@ -353,11 +353,11 @@ setup_gltexture:
 	glt->crc = crc;
 	glt->bpp = bpp;
 	if (glt->pathname) {
-		Z_Free(glt->pathname);
+		Q_free(glt->pathname);
 		glt->pathname = NULL;
 	}
 	if (bpp == 4 && com_netpath[0])	
-		glt->pathname = CopyString(com_netpath);
+		glt->pathname = Q_strdup(com_netpath);
 
 	GL_Bind(glt->texnum);
 

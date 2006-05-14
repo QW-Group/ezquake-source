@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.25 2006-05-14 10:50:16 disconn3ct Exp $
+    $Id: common.c,v 1.26 2006-05-14 12:23:17 disconn3ct Exp $
 */
 
 #ifdef _WIN32
@@ -55,16 +55,6 @@ void FS_InitFilesystem (void);
 void COM_Path_f (void);
 
 char com_gamedirfile[MAX_QPATH];
-
-int Q_strlen (char *str)
-{
-	int count = 0;
-
-	while (str[count])
-		count++;
-
-	return count;
-}
 
 /*
 All of Quake's data access is through a hierarchic file system, but the contents of the file system can be transparently merged from several sources.
@@ -428,7 +418,7 @@ void *Q_malloc (size_t size)
 {
 	void *p = malloc(size);
 	if (!p)
-		Sys_Error ("Not enough memory free; check disk space");
+		Sys_Error ("Q_malloc: Not enough memory free; check disk space\n");
 
 	memset(p, 0, size);
 
@@ -439,7 +429,7 @@ void *Q_calloc (size_t n, size_t size) {
 	void *p;
 
 	if (!(p = calloc(n, size)))
-		Sys_Error ("Not enough memory free; check disk space");
+		Sys_Error ("Q_calloc: Not enough memory free; check disk space\n");
 	return p;
 }
 
@@ -447,7 +437,7 @@ char *Q_strdup (const char *src)
 {
 	char *p = strdup(src);
 	if (!p)
-		Sys_Error ("Not enough memory free; check disk space");
+		Sys_Error ("Q_strdup: Not enough memory free; check disk space\n");
 	return p;
 }
 
@@ -947,7 +937,7 @@ int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
             }
         }
         if (search == NULL)
-            Sys_Error("COM_FCreateFile: out of Quake filesystem");
+            Sys_Error("COM_FCreateFile: out of Quake filesystem\n");
     }
 
     if (mode == NULL)
@@ -964,7 +954,7 @@ int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
         return 0;
     }
 
-    Sys_Printf ("FCreateFile: %s", filename);
+    Sys_Printf ("FCreateFile: %s\n", filename);
 
     return 1;
 }
@@ -1021,7 +1011,7 @@ void COM_CopyFile (char *netpath, char *cachepath) {
 	COM_CreatePath (cachepath);	// create directories up to the cache file
 	out = fopen(cachepath, "wb");
 	if (!out)
-		Sys_Error ("Error opening %s", cachepath);
+		Sys_Error ("Error opening %s\n", cachepath);
 
 	while (remaining) {
 		if (remaining < sizeof(buf))
@@ -1090,7 +1080,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 						Sys_Printf ("PackFile: %s : %s\n", pak->filename, filename);
 					// open a new file on the pakfile
 					if (!(*file = fopen (pak->filename, "rb")))
-						Sys_Error ("Couldn't reopen %s", pak->filename);	
+						Sys_Error ("Couldn't reopen %s\n", pak->filename);	
 					fseek (*file, pak->files[i].filepos, SEEK_SET);
 					com_filesize = pak->files[i].filelen;
 					com_filefrompak = true;
@@ -1146,8 +1136,6 @@ byte *FS_LoadFile (char *path, int usehunk) {
 		buf = (byte *) Hunk_AllocName (len + 1, base);
 	} else if (usehunk == 2) {
 		buf = (byte *) Hunk_TempAlloc (len + 1);
-	} else if (usehunk == 0) {
-		buf = (byte *) Z_Malloc (len + 1);
 	} else if (usehunk == 3) {
 		buf = (byte *) Cache_Alloc (loadcache, len + 1, base);
 	} else if (usehunk == 4) {
@@ -1156,11 +1144,11 @@ byte *FS_LoadFile (char *path, int usehunk) {
 		else
 			buf = loadbuf;
 	} else {
-		Sys_Error ("FS_LoadFile: bad usehunk");
+		Sys_Error ("FS_LoadFile: bad usehunk\n");
 	}
 
 	if (!buf)
-		Sys_Error ("FS_LoadFile: not enough space for %s", path);
+		Sys_Error ("FS_LoadFile: not enough space for %s\n", path);
 		
 	((byte *)buf)[len] = 0;
 #ifndef SERVERONLY
@@ -1218,7 +1206,7 @@ pack_t *FS_LoadPackFile (char *packfile) {
 
 	fread (&header, 1, sizeof(header), packhandle);
 	if (header.id[0] != 'P' || header.id[1] != 'A' || header.id[2] != 'C' || header.id[3] != 'K')
-		Sys_Error ("%s is not a packfile", packfile);
+		Sys_Error ("%s is not a packfile\n", packfile);
 	header.dirofs = LittleLong (header.dirofs);
 	header.dirlen = LittleLong (header.dirlen);
 
