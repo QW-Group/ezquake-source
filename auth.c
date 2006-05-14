@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: auth.c,v 1.10 2006-04-13 00:27:28 disconn3ct Exp $
+	$Id: auth.c,v 1.11 2006-05-14 09:22:23 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -39,7 +39,7 @@ void Auth_Init(void);
 
 
 char *Auth_Generate_Crc(void) {
-	static char hash[31], *failsafe = "";
+	static char hash[30], *failsafe = "";
 	signed_buffer_t *p;
 
 	if (!Modules_SecurityLoaded())
@@ -55,7 +55,7 @@ char *Auth_Generate_Crc(void) {
 	return hash;
 }
 
-static qbool verify_response(int index, unsigned char *hash) {
+static qbool verify_response(int index, char *hash) {
 	int *n;
 	signed_buffer_t *p;
 	qbool retval, failsafe = false;
@@ -76,7 +76,7 @@ static qbool verify_response(int index, unsigned char *hash) {
 static int Auth_CheckString (char *id, char *s, int flags, int offset, int *out_slot, char *out_data, int out_size) {
 	int len, slot;
 	char name[32], *index;
-	unsigned char hash[31];
+	char hash[30];
 
 	if (!Modules_SecurityLoaded())
 		return AUTH_NOTHING;
@@ -98,7 +98,7 @@ static int Auth_CheckString (char *id, char *s, int flags, int offset, int *out_
 	if (!(index = strstr(s + offset, "  crc: ")) || strlen(index) != 30 + 1 + 7 || index[30 + 7] != '\n')
 		return AUTH_BADFORMAT;
 
-	snprintf (hash, sizeof(hash), "%s", index + 7);
+	memcpy (hash, va ("%s", index + 7), sizeof (hash));
 	if (out_data)
 		strlcpy(out_data, s + offset + strlen(id), bound(1, index - (s + offset + strlen(id)) + 1, out_size));
 
