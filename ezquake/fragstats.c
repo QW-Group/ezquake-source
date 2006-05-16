@@ -1,5 +1,4 @@
 /*
-
 Copyright (C) 2003       A Nourai
 
 This program is free software; you can redistribute it and/or
@@ -17,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fragstats.c,v 1.9 2006-04-18 20:59:55 disconn3ct Exp $
+    $Id: fragstats.c,v 1.10 2006-05-16 00:13:55 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -133,7 +132,7 @@ static void Build_FragMsg_Indices(void) {
 static void InitFragDefs(void) {
 	int i;
 
-	#define CHECK_AND_FREE(x)	{if (x) Z_Free(x);}
+	#define CHECK_AND_FREE(x) {if (x) Q_free(x);}
 
 	CHECK_AND_FREE(fragdefs.gamedir);
 	CHECK_AND_FREE(fragdefs.title);
@@ -155,7 +154,7 @@ static void InitFragDefs(void) {
 	memset(&fragdefs, 0, sizeof(fragdefs));
 	memset(wclasses, 0, sizeof(wclasses));
 
-	wclasses[0].name = CopyString("Unknown");
+	wclasses[0].name = Q_strdup("Unknown");
 	num_wclasses = 1;	
 
 	#undef CHECK_AND_FREE
@@ -228,7 +227,7 @@ static void LoadFragFile(char *filename, qbool quiet) {
 				if (!strcasecmp(Cmd_Argv(2), "ANY"))
 					fragdefs.gamedir = NULL;
 				else
-					fragdefs.gamedir = CopyString(Cmd_Argv(2));
+					fragdefs.gamedir = Q_strdup(Cmd_Argv(2));
 			} else {
 				_check_version_defined;
 				Com_Printf("Fragfile warning (line %d): unexpected token \"%s\"\n", line, Cmd_Argv(1));
@@ -239,15 +238,15 @@ static void LoadFragFile(char *filename, qbool quiet) {
 			_check_version_defined;
 			_checkargs(3);
 			if (!strcasecmp(Cmd_Argv(1), "TITLE")) {
-				fragdefs.title = CopyString(Cmd_Argv(2));
+				fragdefs.title = Q_strdup(Cmd_Argv(2));
 			} else if (!strcasecmp(Cmd_Argv(1), "AUTHOR")) {
-				fragdefs.author = CopyString(Cmd_Argv(2));
+				fragdefs.author = Q_strdup(Cmd_Argv(2));
 			} else if (!strcasecmp(Cmd_Argv(1), "DESCRIPTION")) {
-				fragdefs.description = CopyString(Cmd_Argv(2));
+				fragdefs.description = Q_strdup(Cmd_Argv(2));
 			} else if (!strcasecmp(Cmd_Argv(1), "EMAIL")) {
-				fragdefs.email = CopyString(Cmd_Argv(2));
+				fragdefs.email = Q_strdup(Cmd_Argv(2));
 			} else if (!strcasecmp(Cmd_Argv(1), "WEBPAGE")) {
-				fragdefs.webpage = CopyString(Cmd_Argv(2));
+				fragdefs.webpage = Q_strdup(Cmd_Argv(2));
 			} else {
 				Com_Printf("Fragfile warning (line %d): unexpected token \"%s\"\n", line, Cmd_Argv(1));
 				goto nextline;
@@ -272,11 +271,11 @@ static void LoadFragFile(char *filename, qbool quiet) {
 					Com_Printf("Fragfile warning (line %d): only %d WEAPON_CLASS's may be #DEFINE'd\n", line, MAX_WEAPON_CLASSES);
 					goto nextline;
 				}
-				wclasses[num_wclasses].keyword = CopyString(token);
+				wclasses[num_wclasses].keyword = Q_strdup(token);
 				//VULT DISPLAY KILLS - Modified oh so slighly so it looks neater on the tracker
-				wclasses[num_wclasses].name = CopyString(Cmd_Argv(3));
+				wclasses[num_wclasses].name = Q_strdup(Cmd_Argv(3));
 				if (c == 5)
-					wclasses[num_wclasses].name = CopyString(Cmd_Argv(4));
+					wclasses[num_wclasses].name = Q_strdup(Cmd_Argv(4));
 				num_wclasses++;
 			} else if (	!strcasecmp(Cmd_Argv(1), "OBITUARY") || !strcasecmp(Cmd_Argv(1), "OBIT")) {
 			
@@ -340,8 +339,8 @@ static void LoadFragFile(char *filename, qbool quiet) {
 				}
 
 				fragdefs.msgdata[fragdefs.num_fragmsgs].type = msgtype;
-				fragdefs.msgdata[fragdefs.num_fragmsgs].msg1 = CopyString(Cmd_Argv(4));
-				fragdefs.msgdata[fragdefs.num_fragmsgs].msg2 = (c == 6) ? CopyString(Cmd_Argv(5)) : NULL;
+				fragdefs.msgdata[fragdefs.num_fragmsgs].msg1 = Q_strdup (Cmd_Argv(4));
+				fragdefs.msgdata[fragdefs.num_fragmsgs].msg2 = (c == 6) ? Q_strdup(Cmd_Argv(5)) : NULL;
 				fragdefs.num_fragmsgs++;
 			} else if (!strcasecmp(Cmd_Argv(1), "FLAG_ALERT") || !strcasecmp(Cmd_Argv(1), "FLAG_MSG")) {
 			
@@ -381,7 +380,7 @@ static void LoadFragFile(char *filename, qbool quiet) {
 					goto nextline;
 				}
 				fragdefs.msgdata[fragdefs.num_fragmsgs].type = msgtype;
-				fragdefs.msgdata[fragdefs.num_fragmsgs].msg1 = CopyString(Cmd_Argv(3));
+				fragdefs.msgdata[fragdefs.num_fragmsgs].msg1 = Q_strdup(Cmd_Argv(3));
 				fragdefs.msgdata[fragdefs.num_fragmsgs].msg2 = NULL;
 				fragdefs.num_fragmsgs++;
 

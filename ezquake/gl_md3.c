@@ -195,7 +195,7 @@ int Mod_ReadFlagsFromMD1(char *name, int md3version)
 	return pinmodel->flags;
 }
 
-byte *FS_LoadFile (char *path, int usehunk);	//for zone mem allocation
+byte *FS_LoadFile (char *path, int usehunk); //for mem allocation
 
 void Mod_LoadAlias3Model (model_t *mod, void *buffer)
 {
@@ -318,7 +318,7 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer)
 				COM_StripExtension(sinf->name, sinf->name);
 				strcat(sinf->name, "_default.skin");
 
-				sfile=sfilestart=(char *)FS_LoadFile(sinf->name, 0);
+				sfile=sfilestart=(char *)FS_LoadFile(sinf->name, 1);
 
 				strcpy(sinf->name, mod->name);	//backup
 				COM_StripExtension(sinf->name, sinf->name);
@@ -341,7 +341,7 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer)
 						}
 						sfile = nl+1;
 					}
-					Z_Free(sfilestart);
+					// ?_Free(sfilestart);
 				}
 				
 			}
