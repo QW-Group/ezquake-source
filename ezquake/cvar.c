@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.28 2006-05-13 07:43:18 disconn3ct Exp $
+    $Id: cvar.c,v 1.29 2006-05-16 01:34:46 disconn3ct Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -122,8 +122,8 @@ void Cvar_SetDefault(cvar_t *var, float value)
 		val[i] = 0;
 	if (val[i] == '.')
 		val[i] = 0;
-	Z_Free (var->defaultvalue);
-	var->defaultvalue = CopyString(val);
+	Q_free (var->defaultvalue);
+	var->defaultvalue = Q_strdup (val);
 	Cvar_Set(var, val);
 }
 
@@ -253,10 +253,9 @@ void Cvar_Set (cvar_t *var, char *value)
 		changing = false;
 	}
 
-	if (var->string)
-		Z_Free (var->string); // free the old value string
+	Q_free (var->string); // free the old value string
 
-	var->string = CopyString (value);
+	var->string = Q_strdup (value);
 	var->value = Q_atof (var->string);
 
 #ifndef CLIENTONLY
@@ -415,18 +414,18 @@ void Cvar_Register (cvar_t *var)
 		return;
 	}
 
-	var->defaultvalue = CopyString (var->string);
+	var->defaultvalue = Q_strdup (var->string);
 	if (old) {
 		var->flags |= old->flags & ~CVAR_USER_CREATED;
 		strlcpy (string, old->string, sizeof(string));
 		Cvar_Delete (old->name);
 		if (!(var->flags & CVAR_ROM))
-			var->string = CopyString (string);
+			var->string = Q_strdup (string);
 		else
-			var->string = CopyString (var->string);
+			var->string = Q_strdup (var->string);
 	} else {
-		// allocate the string on zone because future sets will Z_Free it
-		var->string = CopyString (var->string);
+		// allocate the string on zone because future sets will Q_free it
+		var->string = Q_strdup (var->string);
 	}
 	var->value = Q_atof (var->string);
 
@@ -629,7 +628,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 
 	if ((v = Cvar_FindVar(name)))
 		return v;
-	v = (cvar_t *) Z_Malloc(sizeof(cvar_t));
+	v = (cvar_t *) Q_malloc(sizeof(cvar_t));
 	// Cvar doesn't exist, so we create it
 	v->next = cvar_vars;
 	cvar_vars = v;
@@ -638,9 +637,9 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 	v->hash_next = cvar_hash[key];
 	cvar_hash[key] = v;
 
-	v->name = CopyString (name);
-	v->string = CopyString (string);
-	v->defaultvalue = CopyString (string);
+	v->name = Q_strdup (name);
+	v->string = Q_strdup (string);
+	v->defaultvalue = Q_strdup (string);
 	v->flags = cvarflags;
 	v->value = Q_atof (v->string);
 #ifdef EMBED_TCL
@@ -683,10 +682,10 @@ qbool Cvar_Delete (const char *name)
 			TCL_UnregisterVariable (name);
 #endif
 			// free
-			Z_Free (var->defaultvalue);
-			Z_Free (var->string);
-			Z_Free (var->name);
-			Z_Free (var);
+			Q_free (var->defaultvalue);
+			Q_free (var->string);
+			Q_free (var->name);
+			Q_free (var);
 			return true;
 		}
 		prev = var;

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.39 2006-05-14 10:50:16 disconn3ct Exp $
+    $Id: cmd.c,v 1.40 2006-05-16 01:34:46 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -296,7 +296,7 @@ void Cmd_StuffCmds_f (void)
 	if (!len)
 		return;
 
-	text = (char *) Z_Malloc (len + 1);
+	text = (char *) Q_malloc (len + 1);
 	for (k = 1; k < com_argc; k++) {
 		strcat (text, com_argv[k]);
 		if (k != com_argc - 1)
@@ -304,7 +304,7 @@ void Cmd_StuffCmds_f (void)
 	}
 
 	// pull out the commands
-	token = (char *) Z_Malloc (len + 1);
+	token = (char *) Q_malloc (len + 1);
 
 	s = text;
 	while (*s) {
@@ -324,8 +324,8 @@ void Cmd_StuffCmds_f (void)
 		}
 	}
 
-	Z_Free (text);
-	Z_Free (token);
+	Q_free (text);
+	Q_free (token);
 }
 
 void Cmd_Exec_f (void)
@@ -586,9 +586,9 @@ void Cmd_EditAlias_f (void)
 
 	a = Cmd_FindAlias(Cmd_Argv(1));
 	if ( a == NULL ) {
-		s = CopyString("");
+		s = CopyString ("");
 	} else {
-		s = CopyString(a->value);
+		s = CopyString (a->value);
 	}
 
 	snprintf(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
@@ -810,8 +810,7 @@ typedef struct legacycmd_s
 {
 	char *oldname, *newname;
 	struct legacycmd_s *next;
-}
-legacycmd_t;
+} legacycmd_t;
 
 static legacycmd_t *legacycmds = NULL;
 
@@ -822,8 +821,8 @@ void Cmd_AddLegacyCommand (char *oldname, char *newname)
 	cmd->next = legacycmds;
 	legacycmds = cmd;
 
-	cmd->oldname = CopyString(oldname);
-	cmd->newname = CopyString(newname);
+	cmd->oldname = oldname;
+	cmd->newname = newname;
 }
 
 qbool Cmd_IsLegacyCommand (char *oldname)
