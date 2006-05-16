@@ -34,9 +34,6 @@ endif
 ifeq ($(ARCH),ppc)	# MacOS-X/ppc
 	DEST_ARCH	=ppc
 	ARCH_CFLAGS	=-arch ppc -faltivec -maltivec -mcpu=7450 -mtune=7450 -mpowerpc -mpowerpc-gfxopt
-	ifeq ($(CC_BASEVERSION),4) # auto vectorize if we're using gcc4.0+
-	    ARCH_CFLAGS += -ftree-vectorize
-	endif
 endif
 
 
@@ -81,19 +78,15 @@ $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR):
 # compiler flags
 PRJ_CFLAGS =-DWITH_ZLIB -DWITH_PNG -DEMBED_TCL
 XMMS_CFLAGS =-DWITH_XMMS `glib-config --cflags`
-BASE_CFLAGS =-Wall -Wsign-compare $(PRJ_CFLAGS) $(ARCH_CFLAGS)
-BASE_RELEASE_CFLAGS =-ffast-math -O2 -fomit-frame-pointer -fexpensive-optimizations -funsigned-char -fno-strict-aliasing -pipe
-ifneq ($(CC_BASEVERSION),4) # if we're not auto-vectorizing then we can unroll the loops (mdfour ahoy)
-	BASE_RELEASE_CFLAGS  +=-funroll-loops
+BASE_CFLAGS =-Wall -Wsign-compare $(PRJ_CFLAGS) $(ARCH_CFLAGS) -funsigned-char
+BASE_RELEASE_CFLAGS = -pipe -O2 -fno-strict-aliasing -ffast-math -fomit-frame-pointer -fexpensive-optimizations
+ifeq ($(CC_BASEVERSION),4) # auto vectorize if we're using gcc4.0+
+	BASE_RELEASE_CFLAGS +=-ftree-vectorize
+else # if we're not auto-vectorizing then we can unroll the loops (mdfour ahoy)
+	BASE_RELEASE_CFLAGS +=-funroll-loops
 endif
 
-ifeq ($(ARCH),ppc)
-	BASE_RELEASE_CFLAGS +=-falign-loops=16 -falign-jumps=16 -falign-functions=16
-else
-	BASE_RELEASE_CFLAGS +=-falign-loops=2 -falign-jumps=2 -falign-functions=2
-endif
-
-BASE_DEBUG_CFLAGS               =-ggdb -D_DEBUG
+BASE_DEBUG_CFLAGS               =-ggdb
 
 ifeq ($(ARCH),x86)              # Linux/x86
 	BASE_CFLAGS             +=-Did386 $(XMMS_CFLAGS)
@@ -113,7 +106,7 @@ ifeq ($(ARCH),powerpc)          # Linux/PPC
 endif
 
 RELEASE_CFLAGS                  =$(BASE_CFLAGS) $(BASE_RELEASE_CFLAGS) -DNDEBUG
-DEBUG_CFLAGS                    =$(BASE_CFLAGS) $(BASE_DEBUG_CFLAGS)
+DEBUG_CFLAGS                    =$(BASE_CFLAGS) $(BASE_DEBUG_CFLAGS) -D_DEBUG
 
 # opengl builds
 ifeq ($(ARCH),x86)              # Linux/x86
