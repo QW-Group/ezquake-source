@@ -16,11 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.2 2006-05-16 11:51:48 disconn3ct Exp $
+    $Id: net.c,v 1.3 2006-05-16 12:59:20 disconn3ct Exp $
 */
 
 #include "quakedef.h"
+#ifdef _WIN32
 #include "winquake.h"
+#endif
 
 netadr_t	net_local_adr;
 
@@ -229,6 +231,7 @@ qbool NET_GetPacket (netsrc_t sock) {
 	}
 
 	net_message.cursize = ret;
+	SockadrToNetadr (&from, &net_from);
 	if (ret == sizeof(net_message_buffer)) {
 		Com_Printf ("Oversize packet from %s\n", NET_AdrToString (net_from));
 		return false;
