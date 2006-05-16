@@ -16,7 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+    $Id: zone.h,v 1.8 2006-05-16 03:10:11 disconn3ct Exp $
 */
+#ifndef __ZONE_H__
+#define __ZONE_H__
+
 /*
  memory allocation
 
@@ -34,10 +38,6 @@ Hunk allocations are guaranteed to be 16 byte aligned.
 The video buffers are allocated high to avoid leaving a hole underneath
 server allocations when changing to a higher video mode.
 
-
-Z_??? Zone memory functions used for small, dynamic allocations like text
-strings from command input.  There is only about 48K for it, allocated at
-the very bottom of the hunk.
 
 Cache_??? Cache memory is for objects that can be dynamically loaded and
 can usefully stay persistent between levels.  The size of the cache
@@ -75,8 +75,6 @@ client and server low hunk allocations
 
 startup hunk allocations
 
-Zone block
-
 ----- Bottom of Memory -----
 
 
@@ -84,10 +82,6 @@ Zone block
 */
 
 void Memory_Init (void *buf, int size);
-
-void Z_Free (void *ptr);
-void *Z_Malloc (int size); // returns 0 filled memory
-void *Z_TagMalloc (int size, int tag);
 
 void *Hunk_Alloc (int size); // returns 0 filled memory
 void *Hunk_AllocName (int size, char *name);
@@ -118,10 +112,10 @@ void *Cache_Check (cache_user_t *c);
 void Cache_Free (cache_user_t *c);
 
 void *Cache_Alloc (cache_user_t *c, int size, char *name);
-// Returns NULL if all purgable data was tossed and there still
+// Returns NULL if all purgeable data was tossed and there still
 // wasn't enough room.
 
 void Cache_Report (void);
 
-
+#endif /* __ZONE_H__ */
 

@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.23 2006-05-14 12:23:17 disconn3ct Exp $
+    $Id: config_manager.c,v 1.24 2006-05-16 03:10:11 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -508,9 +508,11 @@ static void ResetVariables(int cvar_flags, qbool userinfo)
 
 static void DeleteUserAliases(void)
 {
-	cmd_alias_t	*a;
+	cmd_alias_t *a, *next;
 
-	for	(a = cmd_alias;	a; a = a->next)	{
+	for (a = cmd_alias; a; a = next) {
+		next = a->next;
+
 		if (!(a->flags & (ALIAS_SERVER|ALIAS_TEMP)))
 			Cmd_DeleteAlias(a->name);
 	}
@@ -518,9 +520,11 @@ static void DeleteUserAliases(void)
 
 static void DeleteUserVariables(void)
 {
-	cvar_t *var;
+	cvar_t *var, next;
 
-	for (var = cvar_vars; var; var = var->next) {
+	for (var = cvar_vars; var; var = next) {
+		next = var->next;
+
 		if (var->flags & CVAR_USER_CREATED)
 			Cvar_Delete(var->name);
 	}

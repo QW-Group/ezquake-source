@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.40 2006-05-16 01:34:46 disconn3ct Exp $
+    $Id: cmd.c,v 1.41 2006-05-16 03:10:11 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -586,15 +586,15 @@ void Cmd_EditAlias_f (void)
 
 	a = Cmd_FindAlias(Cmd_Argv(1));
 	if ( a == NULL ) {
-		s = CopyString ("");
+		s = Q_strdup ("");
 	} else {
-		s = CopyString (a->value);
+		s = Q_strdup(a->value);
 	}
 
 	snprintf(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
 	Key_ClearTyping();
 	memcpy (key_lines[edit_line]+1, final_string, strlen(final_string));
-	Z_Free(s);
+	Q_free(s);
 }
 
 
@@ -624,13 +624,13 @@ void Cmd_Alias_f (void)
 	// if the alias already exists, reuse it
 	for (a = cmd_alias_hash[key]; a; a = a->hash_next) {
 		if (!strcasecmp(a->name, s)) {
-			Z_Free (a->value);
+			Q_free (a->value);
 			break;
 		}
 	}
 
 	if (!a)	{
-		a = (cmd_alias_t *) Z_Malloc (sizeof(cmd_alias_t));
+		a = (cmd_alias_t *) Q_malloc (sizeof(cmd_alias_t));
 		a->next = cmd_alias;
 		cmd_alias = a;
 		a->hash_next = cmd_alias_hash[key];
@@ -660,12 +660,12 @@ void Cmd_Alias_f (void)
 #endif
 
 	// copy the rest of the command line
-	a->value = CopyString (Cmd_MakeArgs(2));
+	a->value = Q_strdup (Cmd_MakeArgs(2));
 }
 
 qbool Cmd_DeleteAlias (char *name)
 {
-	cmd_alias_t	*a, *prev;
+	cmd_alias_t *a, *prev;
 	int key;
 
 	key = Com_HashKey (name);
@@ -696,22 +696,22 @@ qbool Cmd_DeleteAlias (char *name)
 				cmd_alias = a->next;
 
 			// free
-			Z_Free (a->value);
-			Z_Free (a);
+			Q_free (a->value);
+			Q_free (a);
 			return true;
 		}
 		prev = a;
 	}
 
 	assert(!"Cmd_DeleteAlias: alias list broken");
-	return false;	// shut up compiler
+	return false; // shut up compiler
 }
 
 void Cmd_UnAlias (qbool use_regex)
 {
 	int 		i;
 	char		*name;
-	cmd_alias_t	*a;
+	cmd_alias_t	*a, next;
 	qbool		re_search = false;
 
 	if (Cmd_Argc() < 2) {
@@ -732,7 +732,9 @@ void Cmd_UnAlias (qbool use_regex)
 		}
 
 		if (use_regex && re_search) {
-			for (a = cmd_alias ; a ; a=a->next) {
+			for (a = cmd_alias; a; a = next) {
+				next = a->next;
+
 				if (ReSearchMatch(a->name))
 					Cmd_DeleteAlias(a->name);
 			}
@@ -765,8 +767,8 @@ void Cmd_UnAliasAll_f (void)
 
 	for (a = cmd_alias; a ; a = next) {
 		next = a->next;
-		Z_Free (a->value);
-		Z_Free (a);
+		Q_free (a->value);
+		Q_free (a);
 	}
 	cmd_alias = NULL;
 
@@ -780,12 +782,13 @@ void Cmd_UnAliasAll_f (void)
 
 void DeleteServerAliases(void)
 {
-	extern cmd_alias_t *cmd_alias;
-	cmd_alias_t	*a;
+	cmd_alias_t *a, *next;
 
-	for (a = cmd_alias; a; a = a->next) {
+	for (a = cmd_alias; a; a = next) {
+		next = a->next;
+
 		if (a->flags & ALIAS_SERVER)
-			Cmd_DeleteAlias(a->name);
+			Cmd_DeleteAlias (a->name);
 	}
 }
 
