@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.26 2006-05-14 12:23:17 disconn3ct Exp $
+    $Id: common.c,v 1.27 2006-05-16 03:09:03 disconn3ct Exp $
 */
 
 #ifdef _WIN32
@@ -786,8 +786,6 @@ void COM_Init (void) {
 	Cmd_AddCommand ("path", COM_Path_f);
 }
 
-void COM_Shutdown (void) {}
-
 //does a varargs printf into a temp buffer, so I don't need to have varargs versions of all text functions.
 char *va (char *format, ...) {
 	va_list argptr;
@@ -803,14 +801,6 @@ char *va (char *format, ...) {
 	va_end (argptr);
 
 	return string[idx];
-}
-
-char *CopyString (const char *in) {
-	char *out;
-
-	out = (char *) Z_Malloc (strlen(in) + 1);
-	strcpy (out, in);
-	return out;
 }
 
 /*
