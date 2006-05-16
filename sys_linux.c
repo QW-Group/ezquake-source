@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_linux.c,v 1.13 2006-03-20 13:51:28 vvd0 Exp $
+	$Id: sys_linux.c,v 1.14 2006-05-16 10:54:11 disconn3ct Exp $
 */
 #include <unistd.h>
 #include <signal.h>
@@ -237,6 +237,27 @@ void Sys_HighFPPrecision (void) {}
 
 void Sys_LowFPPrecision (void) {}
 #endif
+
+//Sleeps msec or until the server socket is ready
+void NET_Sleep (int msec) {
+	struct timeval timeout;
+	fd_set fdset;
+	extern int ip_sockets[];
+	
+	if (dedicated) {
+		if (ip_sockets[NS_SERVER] == -1)
+			return; // we're not a server, just run full speed
+
+		FD_ZERO (&fdset);
+		if (do_stdin)
+			FD_SET (0, &fdset); // stdin is processed too
+		FD_SET (ip_sockets[NS_SERVER], &fdset); // network socket
+		timeout.tv_sec = msec/1000;
+		timeout.tv_usec = (msec%1000)*1000;
+		select (ip_sockets[NS_SERVER]+1, &fdset, NULL, NULL, &timeout);
+		stdin_ready = FD_ISSET (0, &fdset);
+	}
+}
 
 int main (int argc, char **argv) {
 	double time, oldtime, newtime;

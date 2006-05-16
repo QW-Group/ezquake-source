@@ -553,8 +553,25 @@ void SleepUntilInput (int time) {
 	MsgWaitForMultipleObjects (1, &tevent, FALSE, time, QS_ALLINPUT);
 }
 
-HINSTANCE	global_hInstance;
+//Sleeps msec or until the server socket is ready
+void NET_Sleep (int msec) {
+	struct timeval timeout;
+	fd_set fdset;
+	int i;
 
+	FD_ZERO (&fdset);
+	i = 0;
+	if (ip_sockets[NS_SERVER] != -1) {
+		FD_SET (ip_sockets[NS_SERVER], &fdset); // network socket
+		i = ip_sockets[NS_SERVER];
+	}
+
+	timeout.tv_sec = msec/1000;
+	timeout.tv_usec = (msec%1000)*1000;
+	select (i+1, &fdset, NULL, NULL, &timeout);
+}
+
+HINSTANCE	global_hInstance;
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	int memsize;
 	double time, oldtime, newtime;
