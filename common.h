@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.21 2006-05-14 12:23:17 disconn3ct Exp $
+    $Id: common.h,v 1.22 2006-05-16 03:08:45 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -284,7 +284,6 @@ int COM_CheckParm (char *parm);
 void COM_AddParm (char *parm);
 
 void COM_Init (void);
-void COM_Shutdown (void);
 
 char *COM_SkipPath (char *pathname);
 void COM_StripExtension (char *in, char *out);
@@ -298,10 +297,8 @@ void COM_StoreOriginalCmdline(int argc, char **argv);
 
 extern char * SYSINFO_GetString(void);
 
-char	*va(char *format, ...);
+char *va(char *format, ...);
 // does a varargs printf into a temp buffer
-
-char *CopyString(const char *s);
 
 //============================================================================
 

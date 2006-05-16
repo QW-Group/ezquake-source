@@ -307,7 +307,6 @@ void Host_Error (char *error, ...) {
 
 	if (dedicated) {
 		NET_Shutdown ();
-		COM_Shutdown ();
 		Sys_Error ("%s", string);
 	}
 
@@ -492,7 +491,6 @@ void Host_Shutdown (void) {
 #ifndef SERVERONLY
 	Con_Shutdown();
 #endif
-	COM_Shutdown ();
 #ifdef EMBED_TCL
 	TCL_Shutdown ();
 #endif
