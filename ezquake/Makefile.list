@@ -92,8 +92,8 @@ COMMON_C_FILES := \
 	host \
 	mathlib \
 	mdfour \
+	net \
 	net_chan \
-	net_udp \
 	q_shared \
 	version \
 	zone

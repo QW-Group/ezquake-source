@@ -16,18 +16,53 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+    $Id: net.h,v 1.5 2006-05-16 10:54:11 disconn3ct Exp $
 */
 // net.h -- quake's interface to the networking layer
-#ifndef _NET_H_
-#define _NET_H_
 
-#ifndef _WIN32
+#ifndef __NET_H__
+#define __NET_H__
+
+#ifdef _WIN32
+#define EWOULDBLOCK	WSAEWOULDBLOCK
+#define EMSGSIZE	WSAEMSGSIZE
+#define ECONNRESET	WSAECONNRESET
+#define ECONNABORTED	WSAECONNABORTED
+#define ECONNREFUSED	WSAECONNREFUSED
+#define EADDRNOTAVAIL	WSAEADDRNOTAVAIL
+#define EAFNOSUPPORT	WSAEAFNOSUPPORT
+
+#define qerrno	WSAGetLastError()
+#else //_WIN32
+#define qerrno	errno
+
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
-#endif
+#include <netdb.h>
+#include <sys/ioctl.h>
+#include <sys/uio.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+#ifdef sun
+#include <sys/filio.h>
+#endif //sun
+
+#ifdef NeXT
+#include <libc.h>
+#endif //NeXT
+
+#define closesocket	close
+#define ioctlsocket	ioctl
+#endif //_WIN32
+
+
+#include <errno.h>
 
 #define PORT_ANY -1
 
-typedef enum {NA_LOOPBACK, NA_BROADCAST, NA_IP, NA_IPX, NA_BROADCAST_IPX} netadrtype_t;
+typedef enum {NA_LOOPBACK, NA_BROADCAST, NA_IP} netadrtype_t;
 
 typedef enum {NS_CLIENT, NS_SERVER} netsrc_t;
 
@@ -35,7 +70,6 @@ typedef struct {
 	netadrtype_t	type;
 
 	byte	ip[4];
-	byte	ipx[10];
 
 	unsigned short	port;
 } netadr_t;
@@ -72,45 +106,45 @@ typedef struct {
 
 	netsrc_t	sock;
 
-	int		dropped;			// between last packet and previous
+	int			dropped;			// between last packet and previous
 
-	float		last_received;			// for timeouts
+	float		last_received;		// for timeouts
 
 	// the statistics are cleared at each client begin, because
 	// the server connecting process gives a bogus picture of the data
-	float		frame_latency;			// rolling average
+	float		frame_latency;		// rolling average
 	float		frame_rate;
 
-	int		drop_count;			// dropped packets, cleared each level
-	int		good_count;			// cleared each level
+	int			drop_count;			// dropped packets, cleared each level
+	int			good_count;			// cleared each level
 
 	netadr_t	remote_address;
-	int		qport;
+	int			qport;
 
 	// bandwidth estimator
 	double		cleartime;			// if curtime > nc->cleartime, free to go
 	double		rate;				// seconds / byte
 
 	// sequencing variables
-	int		incoming_sequence;
-	int		incoming_acknowledged;
-	int		incoming_reliable_acknowledged;	// single bit
+	int			incoming_sequence;
+	int			incoming_acknowledged;
+	int			incoming_reliable_acknowledged; // single bit
 
-	int		incoming_reliable_sequence;	// single bit, maintained local
+	int			incoming_reliable_sequence; // single bit, maintained local
 
-	int		outgoing_sequence;
-	int		reliable_sequence;		// single bit
-	int		last_reliable_sequence;		// sequence number of last send
+	int			outgoing_sequence;
+	int			reliable_sequence;	// single bit
+	int			last_reliable_sequence; // sequence number of last send
 
 	// reliable staging and holding areas
 	sizebuf_t	message;			// writing buffer to send to server
 	byte		message_buf[MAX_MSGLEN];
 
-	int		reliable_length;
-	byte		reliable_buf[MAX_MSGLEN];	// unacked reliable message
+	int			reliable_length;
+	byte		reliable_buf[MAX_MSGLEN]; // unacked reliable message
 
 	// time and size data to calculate bandwidth
-	int		outgoing_size[MAX_LATENT];
+	int			outgoing_size[MAX_LATENT];
 	double		outgoing_time[MAX_LATENT];
 } netchan_t;
 
@@ -128,9 +162,4 @@ int  UDP_OpenSocket (int port);
 void NetadrToSockadr (netadr_t *a, struct sockaddr_in *s);
 void SockadrToNetadr (struct sockaddr_in *s, netadr_t *a);
 
-#ifndef _WIN32
-#define closesocket(a) close(a)
-#endif
-
-#endif /* _NET_H_ */
-
+#endif /* __NET_H__ */
