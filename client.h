@@ -167,7 +167,8 @@ typedef struct {
 
 // clientState_t should hold all pieces of the client state
 
-#define	MAX_DLIGHTS		64
+#define	MAX_DLIGHTS			64
+#define	MAX_STYLESTRING		64
 
 typedef enum {lt_default, lt_muzzleflash, lt_explosion, lt_rocket,
 lt_red, lt_blue, lt_redblue, lt_green, lt_white, NUM_DLIGHTTYPES } dlighttype_t;
@@ -189,12 +190,10 @@ typedef struct {
 	char	map[MAX_STYLESTRING];
 } lightstyle_t;
 
-
-
-#define	MAX_EFRAGS		512
-
-#define	MAX_DEMOS		8
-#define	MAX_DEMONAME	16
+#define	MAX_EFRAGS			512
+#define	MAX_STATIC_ENTITIES	128		// torches, etc
+#define	MAX_DEMOS			8
+#define	MAX_DEMONAME		16
 
 typedef enum {
 ca_disconnected, 	// full screen console with no connection
@@ -475,9 +474,6 @@ extern	cvar_t	cl_fakeshaft;
 extern cvar_t r_rockettrail;
 extern cvar_t r_grenadetrail;
 extern cvar_t r_powerupglow;
-
-#define	MAX_STATIC_ENTITIES	128			// torches, etc
-#define	CL_MAX_EDICTS		768			// FIXME: ouch! ouch! ouch!
 
 // FIXME, allocate dynamically
 extern	centity_t		cl_entities[CL_MAX_EDICTS];

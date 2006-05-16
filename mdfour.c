@@ -1,30 +1,25 @@
 /*
-	mdfour.c
+An implementation of MD4 designed for use in the samba SMB
+authentication protocol
 
-	An implementation of MD4 designed for use in the samba SMB
-	authentication protocol
+Copyright (C) 1997-1998  Andrew Tridgell
 
-	Copyright (C) 1997-1998  Andrew Tridgell
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
 
-	This program is free software; you can redistribute it and/or
-	modify it under the terms of the GNU General Public License
-	as published by the Free Software Foundation; either version 2
-	of the License, or (at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
 
-	See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	You should have received a copy of the GNU General Public License
-	along with this program; if not, write to:
-
-		Free Software Foundation, Inc.
-		59 Temple Place - Suite 330
-		Boston, MA  02111-1307, USA
-
-	$Id: mdfour.c,v 1.2 2005-07-05 20:01:11 disconn3ct Exp $
+    $Id: mdfour.c,v 1.3 2006-05-16 09:38:12 disconn3ct Exp $
 */
 
 #include <string.h>		/* XoXus: needed for memset call */
@@ -195,30 +190,5 @@ void mdfour(unsigned char *out, unsigned char *in, int n)
 	mdfour_begin(&md);
 	mdfour_update(&md, in, n);
 	mdfour_result(&md, out);
-}
-
-///////////////////////////////////////////////////////////////
-//	MD4-based checksum utility functions
-//
-//	Copyright (C) 2000       Jeff Teunissen <d2deek@pmail.net>
-//
-//	Author: Jeff Teunissen	<d2deek@pmail.net>
-//	Date: 01 Jan 2000
-
-unsigned Com_BlockChecksum (void *buffer, int length)
-{
-	int				digest[4];
-	unsigned 		val;
-
-	mdfour ( (unsigned char *) digest, (unsigned char *) buffer, length );
-
-	val = digest[0] ^ digest[1] ^ digest[2] ^ digest[3];
-
-	return val;
-}
-
-void Com_BlockFullChecksum (void *buffer, int len, unsigned char *outbuf)
-{
-	mdfour ( outbuf, (unsigned char *) buffer, len );
 }
 

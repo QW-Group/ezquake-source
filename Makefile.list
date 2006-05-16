@@ -94,6 +94,7 @@ COMMON_C_FILES := \
 	mdfour \
 	net_chan \
 	net_udp \
+	q_shared \
 	version \
 	zone
 
