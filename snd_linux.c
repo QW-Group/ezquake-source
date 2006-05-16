@@ -16,12 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_linux.c,v 1.9 2006-04-30 14:39:08 disconn3ct Exp $
+    $Id: snd_linux.c,v 1.10 2006-05-16 09:40:16 disconn3ct Exp $
 */
 
 #include "quakedef.h"
 
-static qbool SNDDMA_ALSA;
+static qbool SNDDMA_ALSA = true;
 // Note: The functions here keep track of if the sound system is inited.
 // They perform checks so that the real functions are only called if appropriate.
 
