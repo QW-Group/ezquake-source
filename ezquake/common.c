@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.29 2006-05-16 10:05:28 disconn3ct Exp $
+    $Id: common.c,v 1.30 2006-05-16 10:06:19 disconn3ct Exp $
 */
 
 #ifdef _WIN32
@@ -602,12 +602,12 @@ int FS_FOpenFile (char *filename, FILE **file) {
 					com_filesearchpath = search->filename;
 
 					file_from_pak = true;
-					snprintf (fs_netpath, sizeof(com_netpath), "%s#%i", pak->filename, i);
+					snprintf (fs_netpath, sizeof(fs_netpath), "%s#%i", pak->filename, i);
 					return fs_filesize;
 				}
 			}
 		} else {
-			snprintf (fs_netpath, sizeof(com_netpath), "%s/%s", search->filename, filename);
+			snprintf (fs_netpath, sizeof(fs_netpath), "%s/%s", search->filename, filename);
 
 			if (!(*file = fopen (fs_netpath, "rb")))
 				continue;

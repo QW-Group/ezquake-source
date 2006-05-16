@@ -230,9 +230,9 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer)
 	pheader = (md3model_t *) Hunk_Alloc(sizeof(md3model_t) +(numsurfs*numskins)*sizeof(surfinf_t));
 
 	pheader->surfinf = sizeof(md3model_t);
-	mem = (md3Header_t *) Hunk_Alloc(com_filesize);
+	mem = (md3Header_t *) Hunk_Alloc(fs_filesize);
 	pheader->md3model = (char *)mem - (char *)pheader;
-	memcpy(mem, buffer, com_filesize);	//casually load the entire thing. As you do.
+	memcpy(mem, buffer, fs_filesize);	//casually load the entire thing. As you do.
 
 	ll(mem->ident);
 	ll(mem->version);

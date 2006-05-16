@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: image.c,v 1.22 2006-05-04 19:46:31 disconn3ct Exp $
+	$Id: image.c,v 1.23 2006-05-16 10:05:28 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1096,11 +1096,11 @@ byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight) 
 
 	if (!fin && FS_FOpenFile (filename, &fin) == -1)
 		return NULL;
-	fileBuffer = (byte *) Q_malloc(com_filesize);
-	fread(fileBuffer, 1, com_filesize, fin);
+	fileBuffer = (byte *) Q_malloc(fs_filesize);
+	fread(fileBuffer, 1, fs_filesize, fin);
 	fclose(fin);
 
-	if (com_filesize < 19)
+	if (fs_filesize < 19)
 		TGA_ERROR(NULL);
 
 	header.idLength = fileBuffer[0];
@@ -1127,7 +1127,7 @@ byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight) 
 	compressed = (header.imageType & 0x08);
 
 	in = fileBuffer + 18 + header.idLength;
-	enddata = fileBuffer + com_filesize;
+	enddata = fileBuffer + fs_filesize;
 
 	// error check the image type's pixel size
 	if (header.imageType == TGA_RGB || header.imageType == TGA_RGB_RLE) {
@@ -1595,8 +1595,8 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 	if (!fin && FS_FOpenFile (filename, &fin) == -1)
 		return NULL;
 
-	pcxbuf = (byte *) Q_malloc(com_filesize);
-	if (fread (pcxbuf, 1, com_filesize, fin) != com_filesize) {
+	pcxbuf = (byte *) Q_malloc(fs_filesize);
+	if (fread (pcxbuf, 1, fs_filesize, fin) != fs_filesize) {
 		Com_DPrintf ("Image_LoadPCX: fread() failed on %s\n", COM_SkipPath(filename));
 		fclose(fin);
 		Q_free(pcxbuf);
@@ -1641,7 +1641,7 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 
 	for (y = 0; y < height; y++, out += width) {
 		for (x = 0; x < width; ) {
-			if (pix - (byte *) pcx > com_filesize) {
+			if (pix - (byte *) pcx > fs_filesize) {
 				Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
 				Q_free(pcxbuf);
 				Q_free(data);
@@ -1652,7 +1652,7 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 
 			if ((dataByte & 0xC0) == 0xC0) {
 				runLength = dataByte & 0x3F;
-				if (pix - (byte *) pcx > com_filesize) {
+				if (pix - (byte *) pcx > fs_filesize) {
 					Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
 					Q_free(pcxbuf);
 					Q_free(data);
@@ -1676,7 +1676,7 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 		}
 	}
 
-	if (pix - (byte *) pcx > com_filesize) {
+	if (pix - (byte *) pcx > fs_filesize) {
 		Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
 		Q_free(pcxbuf);
 		Q_free(data);

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.14 2006-03-20 13:51:26 vvd0 Exp $
+	$Id: gl_model.c,v 1.15 2006-05-16 10:05:28 disconn3ct Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -207,7 +207,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 	// allocate a new model
 	COM_FileBase (mod->name, loadname);
 	loadmodel = mod;
-	FMod_CheckModel(mod->name, buf, com_filesize);
+	FMod_CheckModel(mod->name, buf, fs_filesize);
 
 	// call the apropriate loader
 	mod->needload = false;
@@ -394,7 +394,7 @@ void Mod_LoadTextures (lump_t *l) {
 
 			if (loadmodel->bspversion == HL_BSPVERSION) {
 				if ((data = WAD3_LoadTexture(mt))) {
-					com_netpath[0] = 0;		
+					fs_netpath[0] = 0;
 					alpha_flag = ISALPHATEX(tx->name) ? TEX_ALPHA : 0;
 					tx->gl_texturenum = GL_LoadTexturePixels (data, tx->name, tx->width, tx->height, texmode | alpha_flag);
 					Q_free(data);
@@ -562,9 +562,9 @@ void Mod_LoadLighting (lump_t *l) {
 	mark = Hunk_LowMark();
 	data = LoadColoredLighting(loadmodel->name, &litfilename);
 	if (data) {
-		if (com_filesize < 8 || strncmp((char *)data, "QLIT", 4)) {
+		if (fs_filesize < 8 || strncmp((char *)data, "QLIT", 4)) {
 			Com_Printf("Corrupt .lit file (%s)...ignoring\n", COM_SkipPath(litfilename));
-		} else if (l->filelen * 3 + 8 != com_filesize) {
+		} else if (l->filelen * 3 + 8 != fs_filesize) {
 			Com_Printf("Warning: .lit file (%s) has incorrect size\n", COM_SkipPath(litfilename));
 		} else if ((lit_ver = LittleLong(((int *)data)[1])) != 1) {
 			Com_Printf("Unknown .lit file version (v%d)\n", lit_ver);
@@ -1571,7 +1571,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer) {
 		unsigned short crc;
 		char st[40];
 
-		crc = CRC_Block (buffer, com_filesize);	
+		crc = CRC_Block (buffer, fs_filesize);	
 		sprintf(st, "%d", (int) crc);
 		Info_SetValueForKey (cls.userinfo, mod->modhint == MOD_PLAYER ? pmodel_name : emodel_name, st, MAX_INFO_STRING);
 
