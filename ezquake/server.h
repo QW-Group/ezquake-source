@@ -29,8 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	MAX_SIGNON_BUFFERS	8
 
 
-#define	SV_MAX_EDICTS			1024			// FIXME: ouch! ouch! ouch!
-
 typedef struct {
 	int		original;	// what entity is currently using this translation slot
 	double	lastused;	// last time this slot was used

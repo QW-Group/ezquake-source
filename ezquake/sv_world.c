@@ -150,6 +150,32 @@ ENTITY AREA CHECKING
 ===============================================================================
 */
 
+// ClearLink is used for new headnodes
+static void ClearLink (link_t *l) {
+	l->prev = l->next = l;
+}
+
+static void RemoveLink (link_t *l) {
+	l->next->prev = l->prev;
+	l->prev->next = l->next;
+}
+
+static void InsertLinkBefore (link_t *l, link_t *before) {
+	l->next = before;
+	l->prev = before->prev;
+	l->prev->next = l;
+	l->next->prev = l;
+}
+
+static void InsertLinkAfter (link_t *l, link_t *after) {
+	l->next = after->next;
+	l->prev = after;
+	l->prev->next = l;
+	l->next->prev = l;
+}
+
+//============================================================================
+
 areanode_t	sv_areanodes[AREA_NODES];
 int			sv_numareanodes;
 

@@ -30,8 +30,19 @@ typedef union eval_s {
 	int				edict;
 } eval_t;	
 
-#define	MAX_ENT_LEAFS	16
 
+typedef struct link_s {
+	struct link_s	*prev, *next;
+} link_t;
+
+// (type *)STRUCT_FROM_LINK(link_t *link, type, member)
+// ent = STRUCT_FROM_LINK(link,entity_t,order)
+// FIXME: remove this mess!
+#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (size_t)&(((t *)0)->m)))
+#define	EDICT_FROM_AREA(l) STRUCT_FROM_LINK(l,edict_t,area)
+
+
+#define	MAX_ENT_LEAFS	16
 typedef struct edict_s {
 	qbool	free;
 	link_t		area;				// linked to a division node or leaf
@@ -47,8 +58,6 @@ typedef struct edict_s {
 	entvars_t	v;					// C exported fields from progs
 // other fields from progs come immediately after
 } edict_t;
-
-#define	EDICT_FROM_AREA(l) STRUCT_FROM_LINK(l,edict_t,area)
 
 //============================================================================
 
