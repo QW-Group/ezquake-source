@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.28 2006-05-16 09:38:12 disconn3ct Exp $
+    $Id: common.c,v 1.29 2006-05-16 10:05:28 disconn3ct Exp $
 */
 
 #ifdef _WIN32
@@ -356,16 +356,15 @@ char *va (char *format, ...)
 =============================================================================
 */
 
-int		com_filesize;
-char	com_netpath[MAX_OSPATH];
+int		fs_filesize;
+char	fs_netpath[MAX_OSPATH];
 
 // in memory
 typedef struct
 {
 	char	name[MAX_QPATH];
 	int		filepos, filelen;
-}
-packfile_t;
+} packfile_t;
 
 typedef struct pack_s
 {
@@ -373,24 +372,21 @@ typedef struct pack_s
 	FILE	*handle;
 	int		numfiles;
 	packfile_t	*files;
-}
-pack_t;
+} pack_t;
 
 // on disk
 typedef struct
 {
 	char	name[56];
 	int		filepos, filelen;
-}
-dpackfile_t;
+} dpackfile_t;
 
 typedef struct
 {
 	char	id[4];
 	int		dirofs;
 	int		dirlen;
-}
-dpackheader_t;
+} dpackheader_t;
 
 #define	MAX_FILES_IN_PACK	2048
 
@@ -408,10 +404,9 @@ int	userdir_type;
 typedef struct searchpath_s
 {
 	char	filename[MAX_OSPATH];
-	pack_t	*pack;		// only one of filename / pack will be used
+	pack_t	*pack; // only one of filename / pack will be used
 	struct searchpath_s *next;
-}
-searchpath_t;
+} searchpath_t;
 
 searchpath_t	*com_searchpaths;
 searchpath_t	*com_base_searchpaths;	// without gamedirs
@@ -547,46 +542,19 @@ void COM_CreatePath(char *path)
 	}
 }
 
-//Copies a file over from the net to the local cache, creating any directories
-//needed.  This is for the convenience of developers using ISDN from home.
-void COM_CopyFile (char *netpath, char *cachepath) {
-	FILE *in, *out;
-	int remaining, count;
-	char buf[4096];
-
-	remaining = COM_FileOpenRead (netpath, &in);
-	COM_CreatePath (cachepath);	// create directories up to the cache file
-	out = fopen(cachepath, "wb");
-	if (!out)
-		Sys_Error ("Error opening %s\n", cachepath);
-
-	while (remaining) {
-		if (remaining < sizeof(buf))
-			count = remaining;
-		else
-			count = sizeof(buf);
-		fread (buf, 1, count, in);
-		fwrite (buf, 1, count, out);
-		remaining -= count;
-	}
-
-	fclose (in);
-	fclose (out);
-}
-
 int FS_FOpenPathFile (char *filename, FILE **file) {
 
 	*file = NULL;
-	com_filesize = -1;
-	com_netpath[0] = 0;
+	fs_filesize = -1;
+	fs_netpath[0] = 0;
 
 	if ((*file = fopen (filename, "rb"))) {
 
 		if (developer.value)
-			Sys_Printf ("FindFile: %s\n", com_netpath);
+			Sys_Printf ("FindFile: %s\n", fs_netpath);
 
-		com_filesize = COM_FileLength (*file);
-		return com_filesize;
+		fs_filesize = COM_FileLength (*file);
+		return fs_filesize;
 
 	}
 
@@ -597,7 +565,7 @@ int FS_FOpenPathFile (char *filename, FILE **file) {
 }
 
 //Finds the file in the search path.
-//Sets com_filesize, com_netpath and one of handle or file
+//Sets fs_filesize, fs_netpath and one of handle or file
 qbool	file_from_pak;		// global indicating file came from a packfile
 qbool	file_from_gamedir;	// global indicating file came from a gamedir (and gamedir wasn't id1/qw)
 
@@ -609,8 +577,8 @@ int FS_FOpenFile (char *filename, FILE **file) {
 	*file = NULL;
 	file_from_pak = false;
 	file_from_gamedir = true;
-	com_filesize = -1;
-	com_netpath[0] = 0;
+	fs_filesize = -1;
+	fs_netpath[0] = 0;
 
 	// search through the path, one element at a time
 	for (search = com_searchpaths; search; search = search->next) {
@@ -629,26 +597,26 @@ int FS_FOpenFile (char *filename, FILE **file) {
 					if (!(*file = fopen (pak->filename, "rb")))
 						Sys_Error ("Couldn't reopen %s\n", pak->filename);
 					fseek (*file, pak->files[i].filepos, SEEK_SET);
-					com_filesize = pak->files[i].filelen;
+					fs_filesize = pak->files[i].filelen;
 					com_filefrompak = true;
 					com_filesearchpath = search->filename;
 
 					file_from_pak = true;
-					snprintf (com_netpath, sizeof(com_netpath), "%s#%i", pak->filename, i);
-					return com_filesize;
+					snprintf (fs_netpath, sizeof(com_netpath), "%s#%i", pak->filename, i);
+					return fs_filesize;
 				}
 			}
 		} else {
-			snprintf (com_netpath, sizeof(com_netpath), "%s/%s", search->filename, filename);
+			snprintf (fs_netpath, sizeof(com_netpath), "%s/%s", search->filename, filename);
 
-			if (!(*file = fopen (com_netpath, "rb")))
+			if (!(*file = fopen (fs_netpath, "rb")))
 				continue;
 
 			if (developer.value)
-				Sys_Printf ("FindFile: %s\n", com_netpath);
+				Sys_Printf ("FindFile: %s\n", fs_netpath);
 
-			com_filesize = COM_FileLength (*file);
-			return com_filesize;
+			fs_filesize = COM_FileLength (*file);
+			return fs_filesize;
 		}
 	}
 
@@ -672,7 +640,7 @@ byte *FS_LoadFile (char *path, int usehunk) {
 	buf = NULL;	// quiet compiler warning
 
 	// look for it in the filesystem or pack files
-	len = com_filesize = FS_FOpenFile (path, &h);
+	len = fs_filesize = FS_FOpenFile (path, &h);
 	if (!h)
 		return NULL;
 
