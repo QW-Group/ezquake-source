@@ -643,10 +643,10 @@
 					Name="Network"
 					Filter="">
 					<File
-						RelativePath=".\net_chan.c">
+						RelativePath=".\net.c">
 					</File>
 					<File
-						RelativePath=".\net_wins.c">
+						RelativePath=".\net_chan.c">
 					</File>
 				</Filter>
 			</Filter>

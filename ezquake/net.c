@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.1 2006-05-16 10:54:46 disconn3ct Exp $
+    $Id: net.c,v 1.2 2006-05-16 11:51:48 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -267,7 +267,7 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to) {
 			return;
 #endif
 #endif
-		Sys_Printf ("NET_SendPacket: %s\n", strerror(errno));
+		Sys_Printf ("NET_SendPacket: sendto: (%i): %s\n", qerrno, strerror(qerrno));
 	}
 }
 
@@ -276,14 +276,14 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to) {
 int UDP_OpenSocket (int port) {
 	int newsocket;
 	struct sockaddr_in address;
-	qbool _true = true;
+	unsigned long _true = true;
 	int i;
 
-	if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-		Sys_Error ("UDP_OpenSocket: socket:", strerror(errno));
+	if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
+		Sys_Error ("UDP_OpenSocket: socket: (%i): %s\n", qerrno, strerror(qerrno));
 
-	if (ioctl (newsocket, FIONBIO, (char *)&_true) == -1)
-		Sys_Error ("UDP_OpenSocket: ioctl FIONBIO:", strerror(errno));
+	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1)
+		Sys_Error ("UDP_OpenSocket: ioctl FIONBIO: (%i): %s\n", qerrno, strerror(qerrno));
 
 	address.sin_family = AF_INET;
 
@@ -357,7 +357,7 @@ void NET_ServerConfig (qbool enable) {
 
 #ifdef _WIN32
 		if (dedicated)
-			SetConsoleTitle (va("zqds: %i", port));
+			SetConsoleTitle (va("ezqds: %i", port));
 #endif
 
 	} else {

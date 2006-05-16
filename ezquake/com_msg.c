@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,15 +16,24 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+    $Id: com_msg.c,v 1.5 2006-05-16 11:51:48 disconn3ct Exp $
 */
 
 #include "quakedef.h"
 
-/********************************** WRITING **********************************/
+/*
+==============================================================================
+                          MESSAGE IO FUNCTIONS
+==============================================================================
+Handles byte ordering and avoids alignment errors
+*/
 
-void MSG_WriteChar (sizebuf_t *sb, int c) {
+
+// writing functions
+void MSG_WriteChar (sizebuf_t *sb, int c)
+{
 	byte *buf;
-	
+
 #ifdef PARANOID
 	if (c < -128 || c > 127)
 		Sys_Error ("MSG_WriteChar: range error");
@@ -34,7 +43,8 @@ void MSG_WriteChar (sizebuf_t *sb, int c) {
 	buf[0] = c;
 }
 
-void MSG_WriteByte (sizebuf_t *sb, int c) {
+void MSG_WriteByte (sizebuf_t *sb, int c)
+{
 	byte *buf;
 
 #ifdef PARANOID
@@ -46,7 +56,8 @@ void MSG_WriteByte (sizebuf_t *sb, int c) {
 	buf[0] = c;
 }
 
-void MSG_WriteShort (sizebuf_t *sb, int c) {
+void MSG_WriteShort (sizebuf_t *sb, int c)
+{
 	byte *buf;
 
 #ifdef PARANOID
@@ -59,7 +70,8 @@ void MSG_WriteShort (sizebuf_t *sb, int c) {
 	buf[1] = c >> 8;
 }
 
-void MSG_WriteLong (sizebuf_t *sb, int c) {
+void MSG_WriteLong (sizebuf_t *sb, int c)
+{
 	byte *buf;
 
 	buf = SZ_GetSpace (sb, 4);
@@ -69,43 +81,50 @@ void MSG_WriteLong (sizebuf_t *sb, int c) {
 	buf[3] = c >> 24;
 }
 
-void MSG_WriteFloat (sizebuf_t *sb, float f) {
+void MSG_WriteFloat (sizebuf_t *sb, float f)
+{
 	union {
 		float	f;
 		int	l;
-	} dat;	
+	} dat;
 
 	dat.f = f;
 	dat.l = LittleLong (dat.l);
-	
+
 	SZ_Write (sb, &dat.l, 4);
 }
 
-void MSG_WriteString (sizebuf_t *sb, char *s) {
+void MSG_WriteString (sizebuf_t *sb, char *s)
+{
 	if (!s)
 		SZ_Write (sb, "", 1);
 	else
 		SZ_Write (sb, s, strlen(s)+1);
 }
 
-void MSG_WriteUnterminatedString (sizebuf_t *sb, char *s) {
+void MSG_WriteUnterminatedString (sizebuf_t *sb, char *s)
+{
 	if (s)
 		SZ_Write (sb, s, strlen(s));
 }
 
-void MSG_WriteCoord (sizebuf_t *sb, float f) {
+void MSG_WriteCoord (sizebuf_t *sb, float f)
+{
 	MSG_WriteShort (sb, (int)(f * 8));
 }
 
-void MSG_WriteAngle (sizebuf_t *sb, float f) {
+void MSG_WriteAngle (sizebuf_t *sb, float f)
+{
 	MSG_WriteByte (sb, Q_rint(f * 256.0 / 360.0) & 255);
 }
 
-void MSG_WriteAngle16 (sizebuf_t *sb, float f) {
+void MSG_WriteAngle16 (sizebuf_t *sb, float f)
+{
 	MSG_WriteShort (sb, Q_rint(f * 65536.0 / 360.0) & 65535);
 }
 
-void MSG_WriteDeltaUsercmd (sizebuf_t *buf, usercmd_t *from, usercmd_t *cmd) {
+void MSG_WriteDeltaUsercmd (sizebuf_t *buf, usercmd_t *from, usercmd_t *cmd)
+{
 	int bits;
 
 	// send the movement message
@@ -127,7 +146,7 @@ void MSG_WriteDeltaUsercmd (sizebuf_t *buf, usercmd_t *from, usercmd_t *cmd) {
 	if (cmd->impulse != from->impulse)
 		bits |= CM_IMPULSE;
 
-    MSG_WriteByte (buf, bits);
+	MSG_WriteByte (buf, bits);
 
 	if (bits & CM_ANGLE1)
 		MSG_WriteAngle16 (buf, cmd->angles[0]);
@@ -135,29 +154,30 @@ void MSG_WriteDeltaUsercmd (sizebuf_t *buf, usercmd_t *from, usercmd_t *cmd) {
 		MSG_WriteAngle16 (buf, cmd->angles[1]);
 	if (bits & CM_ANGLE3)
 		MSG_WriteAngle16 (buf, cmd->angles[2]);
-	
+
 	if (bits & CM_FORWARD)
 		MSG_WriteShort (buf, cmd->forwardmove);
 	if (bits & CM_SIDE)
-	  	MSG_WriteShort (buf, cmd->sidemove);
+		MSG_WriteShort (buf, cmd->sidemove);
 	if (bits & CM_UP)
 		MSG_WriteShort (buf, cmd->upmove);
 
- 	if (bits & CM_BUTTONS)
-	  	MSG_WriteByte (buf, cmd->buttons);
- 	if (bits & CM_IMPULSE)
-	    MSG_WriteByte (buf, cmd->impulse);
+	if (bits & CM_BUTTONS)
+		MSG_WriteByte (buf, cmd->buttons);
+	if (bits & CM_IMPULSE)
+		MSG_WriteByte (buf, cmd->impulse);
 	MSG_WriteByte (buf, cmd->msec);
 }
 
 //Writes part of a packetentities message.
 //Can delta from either a baseline or a previous packet_entity
-void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qbool force) {
+void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qbool force)
+{
 	int bits, i;
 	float miss;
 
-	assert (to->number > 0); 
-	assert (to->number < 512); 
+	assert (to->number > 0);
+	assert (to->number < 512);
 
 	// send an update
 	bits = 0;
@@ -170,25 +190,25 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 
 	if ( to->angles[0] != from->angles[0] )
 		bits |= U_ANGLE1;
-		
+
 	if ( to->angles[1] != from->angles[1] )
 		bits |= U_ANGLE2;
-		
+
 	if ( to->angles[2] != from->angles[2] )
 		bits |= U_ANGLE3;
-		
+
 	if ( to->colormap != from->colormap )
 		bits |= U_COLORMAP;
-		
+
 	if ( to->skinnum != from->skinnum )
 		bits |= U_SKIN;
-		
+
 	if ( to->frame != from->frame )
 		bits |= U_FRAME;
-	
+
 	if ( to->effects != from->effects )
 		bits |= U_EFFECTS;
-	
+
 	if ( to->modelindex != from->modelindex )
 		bits |= U_MODEL;
 
@@ -201,7 +221,7 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 	// write the message
 
 	if (!bits && !force)
-		return;		// nothing to send!
+		return; // nothing to send!
 
 	i = to->number | (bits & ~511);
 	assert (!(i & U_REMOVE));
@@ -220,7 +240,7 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 	if (bits & U_EFFECTS)
 		MSG_WriteByte (msg, to->effects);
 	if (bits & U_ORIGIN1)
-		MSG_WriteCoord (msg, to->origin[0]);		
+		MSG_WriteCoord (msg, to->origin[0]);
 	if (bits & U_ANGLE1)
 		MSG_WriteAngle(msg, to->angles[0]);
 	if (bits & U_ORIGIN2)
@@ -234,8 +254,10 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 }
 
 //Writes a delta update of a packet_entities_t to the message.
-void MSG_EmitPacketEntities (packet_entities_t *from, int delta_sequence, packet_entities_t *to, sizebuf_t *msg,
- entity_state_t *(*GetBaseline)(int number)) {
+void MSG_EmitPacketEntities (packet_entities_t *from,
+		int delta_sequence, packet_entities_t *to, sizebuf_t *msg,
+		entity_state_t *(*GetBaseline)(int number))
+{
 	int oldindex, newindex, oldnum, newnum, oldmax;
 
 	// this is the frame that we are going to delta update from
@@ -245,7 +267,7 @@ void MSG_EmitPacketEntities (packet_entities_t *from, int delta_sequence, packet
 		MSG_WriteByte (msg, svc_deltapacketentities);
 		MSG_WriteByte (msg, delta_sequence);
 	} else {
-		oldmax = 0;	// no delta update
+		oldmax = 0; // no delta update
 		from = NULL;
 
 		MSG_WriteByte (msg, svc_packetentities);
@@ -280,25 +302,28 @@ void MSG_EmitPacketEntities (packet_entities_t *from, int delta_sequence, packet
 		}
 	}
 
-	MSG_WriteShort (msg, 0);	// end of packetentities
+	MSG_WriteShort (msg, 0); // end of packetentities
 }
 
 /********************************** READING **********************************/
 
-int			msg_readcount;
-qbool	msg_badread;
+int msg_readcount;
+qbool msg_badread;
 
-void MSG_BeginReading (void) {
+void MSG_BeginReading (void)
+{
 	msg_readcount = 0;
 	msg_badread = false;
 }
 
-int MSG_GetReadCount(void) {
+int MSG_GetReadCount(void)
+{
 	return msg_readcount;
 }
 
 // returns -1 and sets msg_badread if no more characters are available
-int MSG_ReadChar (void) {
+int MSG_ReadChar (void)
+{
 	int	c;
 
 	if (msg_readcount + 1 > net_message.cursize) {
@@ -308,11 +333,12 @@ int MSG_ReadChar (void) {
 
 	c = (signed char)net_message.data[msg_readcount];
 	msg_readcount++;
-	
+
 	return c;
 }
 
-int MSG_ReadByte (void) {
+int MSG_ReadByte (void)
+{
 	int	c;
 
 	if (msg_readcount + 1 > net_message.cursize) {
@@ -326,7 +352,8 @@ int MSG_ReadByte (void) {
 	return c;
 }
 
-int MSG_ReadShort (void) {
+int MSG_ReadShort (void)
+{
 	int	c;
 
 	if (msg_readcount + 2 > net_message.cursize) {
@@ -335,14 +362,15 @@ int MSG_ReadShort (void) {
 	}
 
 	c = (short)(net_message.data[msg_readcount]
-	+ (net_message.data[msg_readcount + 1] << 8));
+		+ (net_message.data[msg_readcount + 1] << 8));
 
 	msg_readcount += 2;
 
 	return c;
 }
 
-int MSG_ReadLong (void) {
+int MSG_ReadLong (void)
+{
 	int	c;
 
 	if (msg_readcount + 4 > net_message.cursize) {
@@ -360,7 +388,8 @@ int MSG_ReadLong (void) {
 	return c;
 }
 
-float MSG_ReadFloat (void) {
+float MSG_ReadFloat (void)
+{
 	union {
 		byte b[4];
 		float f;
@@ -375,20 +404,25 @@ float MSG_ReadFloat (void) {
 
 	dat.l = LittleLong (dat.l);
 
-	return dat.f;	
+	return dat.f;
 }
 
-char *MSG_ReadString (void) {
-	static char	string[2048];
-	int l,c;
+char *MSG_ReadString (void)
+{
+	static char string[2048];
+	unsigned int l;
+	int c;
 
 	l = 0;
 	do {
 		c = MSG_ReadByte ();
-		if (c == 255)			// skip these to avoid security problems
-			continue;			// with old clients and servers
-		if (c == -1 || c == 0)		// msg_badread or end of string
+
+		if (c == 255) // skip these to avoid security problems
+			continue; // with old clients and servers
+
+		if (c == -1 || c == 0) // msg_badread or end of string
 			break;
+
 		string[l] = c;
 		l++;
 	} while (l < sizeof(string)-1);
@@ -398,9 +432,11 @@ char *MSG_ReadString (void) {
 	return string;
 }
 
-char *MSG_ReadStringLine (void) {
+char *MSG_ReadStringLine (void)
+{
 	static char	string[2048];
-	int l, c;
+	unsigned int l;
+	int c;
 
 	l = 0;
 	do {
@@ -418,21 +454,25 @@ char *MSG_ReadStringLine (void) {
 	return string;
 }
 
-float MSG_ReadCoord (void) {
+float MSG_ReadCoord (void)
+{
 	return MSG_ReadShort() * (1.0 / 8);
 }
 
-float MSG_ReadAngle (void) {
+float MSG_ReadAngle (void)
+{
 	return MSG_ReadChar() * (360.0 / 256);
 }
 
-float MSG_ReadAngle16 (void) {
+float MSG_ReadAngle16 (void)
+{
 	return MSG_ReadShort() * (360.0 / 65536);
 }
 
-#define	CM_MSEC	(1 << 7)		// same as CM_ANGLE2
+#define CM_MSEC	(1 << 7) // same as CM_ANGLE2
 
-void MSG_ReadDeltaUsercmd (usercmd_t *from, usercmd_t *move, int protoversion) {
+void MSG_ReadDeltaUsercmd (usercmd_t *from, usercmd_t *move, int protoversion)
+{
 	int bits;
 
 	memcpy (move, from, sizeof(*move));
@@ -443,7 +483,7 @@ void MSG_ReadDeltaUsercmd (usercmd_t *from, usercmd_t *move, int protoversion) {
 		// read current angles
 		if (bits & CM_ANGLE1)
 			move->angles[0] = MSG_ReadAngle16 ();
-		move->angles[1] = MSG_ReadAngle16 ();		// always sent
+		move->angles[1] = MSG_ReadAngle16 (); // always sent
 		if (bits & CM_ANGLE3)
 			move->angles[2] = MSG_ReadAngle16 ();
 
@@ -484,6 +524,6 @@ void MSG_ReadDeltaUsercmd (usercmd_t *from, usercmd_t *move, int protoversion) {
 		if (bits & CM_MSEC)
 			move->msec = MSG_ReadByte ();
 	} else {
-		move->msec = MSG_ReadByte ();		// always sent
+		move->msec = MSG_ReadByte (); // always sent
 	}
 }

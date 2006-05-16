@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-   $Id: q_shared.h,v 1.1 2006-05-16 10:55:07 disconn3ct Exp $
+    $Id: q_shared.h,v 1.2 2006-05-16 11:51:48 disconn3ct Exp $
 */
 // q_shared.h -- functions shared by all subsystems
 

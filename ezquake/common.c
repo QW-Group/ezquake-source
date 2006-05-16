@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.30 2006-05-16 10:06:19 disconn3ct Exp $
+    $Id: common.c,v 1.31 2006-05-16 11:51:48 disconn3ct Exp $
 */
 
 #ifdef _WIN32
@@ -30,6 +30,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #else
 #include "quakedef.h"
 #endif
+
+#include "mdfour.h"
 
 void Draw_BeginDisc ();
 void Draw_EndDisc ();
@@ -954,7 +956,7 @@ void FS_InitFilesystem (void) {
 	else
 		Sys_getcwd(com_basedir, sizeof(com_basedir) - 1); // FIXME strlcpy (com_basedir, sizeof(com_basedir, "."); ?
 
-	for (i = 0; i < strlen(com_basedir); i++)
+	for (i = 0; i < (int) strlen(com_basedir); i++)
 		if (com_basedir[i] == '\\')
 			com_basedir[i] = '/';
 
@@ -1134,7 +1136,7 @@ void Info_SetValueForStarKey (char *s, char *key, char *value, int maxsize) {
 	if (*(v = Info_ValueForKey(s, key))) {
 		// key exists, make sure we have enough room for new value, if we don't,
 		// don't change it!
-		if (strlen(value) - strlen(v) + strlen(s) >= maxsize) {
+		if ((int) (strlen(value) - strlen(v) + strlen(s)) >= maxsize) {
 			Com_Printf ("Info string length exceeded\n");
 			return;
 		}
@@ -1145,7 +1147,7 @@ void Info_SetValueForStarKey (char *s, char *key, char *value, int maxsize) {
 
 	sprintf (new, "\\%s\\%s", key, value);
 
-	if ((strlen(new) + strlen(s)) >= maxsize) {
+	if ((int) (strlen(new) + strlen(s)) >= maxsize) {
 		Com_Printf ("Info string length exceeded\n");
 		return;
 	}

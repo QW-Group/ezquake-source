@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.h,v 1.5 2006-05-16 10:54:11 disconn3ct Exp $
+    $Id: net.h,v 1.6 2006-05-16 11:51:48 disconn3ct Exp $
 */
 // net.h -- quake's interface to the networking layer
 
@@ -59,6 +59,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #include <errno.h>
+
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET	-1
+#endif
 
 #define PORT_ANY -1
 

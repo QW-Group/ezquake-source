@@ -558,6 +558,7 @@ void NET_Sleep (int msec) {
 	struct timeval timeout;
 	fd_set fdset;
 	int i;
+	extern int ip_sockets[];
 
 	FD_ZERO (&fdset);
 	i = 0;
