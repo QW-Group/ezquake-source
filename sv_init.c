@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_init.c,v 1.8 2006-03-20 13:51:28 vvd0 Exp $
+	$Id: sv_init.c,v 1.9 2006-05-16 10:05:28 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -202,7 +202,7 @@ unsigned SV_CheckModel(char *mdl) {
 	buf = (byte *) FS_LoadStackFile (mdl, stackbuf, sizeof(stackbuf));
 	if (!buf)
 		Host_Error ("SV_CheckModel: could not load %s\n", mdl);
-	crc = CRC_Block(buf, com_filesize);
+	crc = CRC_Block(buf, fs_filesize);
 
 	return crc;
 }
@@ -227,7 +227,7 @@ void SV_LoadEntFile (void) {
 
 	Com_DPrintf ("Loaded entfile %s\n", name);
 
-	sprintf (crc, "%i", CRC_Block ((byte *)data, com_filesize));
+	sprintf (crc, "%i", CRC_Block ((byte *)data, fs_filesize));
 	Info_SetValueForStarKey (svs.info, "*entfile", crc, MAX_SERVERINFO_STRING);
 }
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mem.c,v 1.8 2006-05-06 12:58:52 disconn3ct Exp $
+    $Id: snd_mem.c,v 1.9 2006-05-16 10:05:28 disconn3ct Exp $
 */
 // snd_mem.c -- sound caching
 
@@ -235,9 +235,9 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 		return NULL;
 	}
 
-	FMod_CheckModel(namebuffer, data, com_filesize);
+	FMod_CheckModel(namebuffer, data, fs_filesize);
 
-	info = GetWavinfo (s->name, data, com_filesize);
+	info = GetWavinfo (s->name, data, fs_filesize);
 
 	// Stereo sounds are allowed (intended for music)
 	if (info.channels < 1 || info.channels > 2) {

@@ -191,7 +191,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 
 	loadmodel = mod;
 
-	FMod_CheckModel(mod->name, buf, com_filesize);
+	FMod_CheckModel(mod->name, buf, fs_filesize);
 
 	// fill it in
 
@@ -1250,7 +1250,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer) {
 		unsigned short crc;
 		char st[40];
 
-		crc = CRC_Block (buffer, com_filesize);
+		crc = CRC_Block (buffer, fs_filesize);
 	
 		sprintf(st, "%d", (int) crc);
 		Info_SetValueForKey (cls.userinfo, mod->modhint == MOD_PLAYER ? pmodel_name : emodel_name, st, MAX_INFO_STRING);

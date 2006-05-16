@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_edict.c,v 1.14 2006-03-20 21:13:20 tonik Exp $
+	$Id: pr_edict.c,v 1.15 2006-05-16 10:05:28 disconn3ct Exp $
 */
 // sv_edict.c -- entity dictionary
 
@@ -888,10 +888,10 @@ progs_loaded:
 	if (!progs)
 		Host_Error ("PR_LoadProgs: couldn't load qwprogs.dat");
 
-	Com_DPrintf ("Programs occupy %iK.\n", com_filesize / 1024);
+	Com_DPrintf ("Programs occupy %iK.\n", fs_filesize / 1024);
 
 	// add prog crc to the serverinfo
-	sprintf (num, "%i", CRC_Block ((byte *)progs, com_filesize));
+	sprintf (num, "%i", CRC_Block ((byte *)progs, fs_filesize));
 	Info_SetValueForStarKey (svs.info, "*progs", num, MAX_SERVERINFO_STRING);
 
 	// byte swap the header

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.23 2006-05-16 09:38:12 disconn3ct Exp $
+    $Id: common.h,v 1.24 2006-05-16 10:05:28 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -158,10 +158,10 @@ char *va(char *format, ...);
 
 //============================================================================
 
-extern int com_filesize;
+extern int fs_filesize;
 extern qbool com_filefrompak;
 extern char *com_filesearchpath;
-extern char	com_netpath[MAX_OSPATH];
+extern char	fs_netpath[MAX_OSPATH];
 struct cache_user_s;
 
 extern char	com_gamedir[MAX_OSPATH];
