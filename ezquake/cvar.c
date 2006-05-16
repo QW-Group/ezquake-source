@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.29 2006-05-16 01:34:46 disconn3ct Exp $
+    $Id: cvar.c,v 1.30 2006-05-16 03:10:11 disconn3ct Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -857,7 +857,7 @@ void Cvar_Set_Bind_Str_f (void)
 // disconnect -->
 void Cvar_UnSet (qbool use_regex)
 {
-	cvar_t	*var;
+	cvar_t	*var, next;
 	char	*name;
 	int		i;
 	qbool	re_search = false;
@@ -876,7 +876,9 @@ void Cvar_UnSet (qbool use_regex)
 				continue;
 
 		if (use_regex && re_search) {
-			for (var = cvar_vars ; var ; var=var->next) {
+			for (var = cvar_vars ; var ; var = next) {
+				next = var->next;
+
 				if (ReSearchMatch(var->name)) {
 					if (var->flags & CVAR_USER_CREATED) {
 						Cvar_Delete(var->name);

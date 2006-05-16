@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.10 2006-05-13 07:43:18 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.11 2006-05-16 03:10:11 disconn3ct Exp $
  */
 
 #ifdef EMBED_TCL
@@ -110,7 +110,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 	// if the alias already exists, reuse it
 	for (a = cmd_alias_hash[h] ; a ; a=a->hash_next) {
 		if (!strcasecmp(s, a->name)) {
-			Z_Free (a->value);
+			Q_free (a->value);
 			a->flags = 0;
 			break;
 		}
@@ -118,7 +118,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 
 	// New alias
 	if (!a) {
-		a = (cmd_alias_t *) Z_Malloc (sizeof(cmd_alias_t));
+		a = (cmd_alias_t *) Q_malloc (sizeof(cmd_alias_t));
 		a->next = cmd_alias;
 		cmd_alias = a;
 		a->hash_next = cmd_alias_hash[h];
@@ -132,7 +132,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 	if (strlen (Tcl_GetString (objv[2])))
 		a->flags |= ALIAS_HAS_PARAMETERS;
 
-	a->value = (char *) Z_Malloc (sizeof (Tcl_CmdInfo));
+	a->value = (char *) Q_malloc (sizeof (Tcl_CmdInfo));
 	memcpy (a->value, &info, sizeof (Tcl_CmdInfo));
 
 	Tcl_SetResult (interp, NULL, TCL_STATIC);
