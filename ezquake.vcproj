@@ -706,6 +706,9 @@
 					RelativePath=".\pmovetst.c">
 				</File>
 				<File
+					RelativePath=".\q_shared.c">
+				</File>
+				<File
 					RelativePath=".\sbar.c">
 				</File>
 				<File
@@ -1499,6 +1502,9 @@
 					RelativePath=".\png.h">
 				</File>
 				<File
+					RelativePath=".\q_shared.h">
+				</File>
+				<File
 					RelativePath=".\sbar.h">
 				</File>
 				<File
@@ -1531,6 +1537,16 @@
 				<File
 					RelativePath=".\zone.h">
 				</File>
+				<Filter
+					Name="Net_h"
+					Filter="">
+					<File
+						RelativePath=".\net.h">
+					</File>
+					<File
+						RelativePath=".\protocol.h">
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Addons_h"
@@ -1799,16 +1815,6 @@
 				</File>
 				<File
 					RelativePath=".\render.h">
-				</File>
-			</Filter>
-			<Filter
-				Name="Net_h"
-				Filter="">
-				<File
-					RelativePath=".\net.h">
-				</File>
-				<File
-					RelativePath=".\protocol.h">
 				</File>
 			</Filter>
 		</Filter>
