@@ -23,6 +23,7 @@
         <li><a href="?action=editmanuals">List &amp; Edit</a></li>
     </ul></li>
     <li><a href="?action=history">History</a></li>
+    <li><a href="?action=searchqueries">Most searched</a></li>
     <li><a href="?action=markuphelp">Markup Help</a></li>
 </ul>
 </div>

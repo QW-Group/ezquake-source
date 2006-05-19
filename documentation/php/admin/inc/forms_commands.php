@@ -579,7 +579,7 @@ class SupportForms
 }
 
 class IndexForms
-{
+{   // admins can only update index
     var $data;
     function IndexForms() {
         $this->data = new IndexData;
@@ -590,6 +590,28 @@ class IndexForms
             echo "<p>Index updated.</p>";
         else
             echo "<p>Update failed.</p><p><code>".mysql_error()."</code></p>";
+    }
+}
+
+class SearchHitsForms
+{   // admins can only view top queries
+    
+    var $data;
+    function SearchHitsForms() {
+        $this->data = new SearchHits;
+    }
+    
+    function PrintTopQueries($count = 30)
+    {
+        $data = $this->data->GetTopHits($count);
+        echo "\n<table>";
+        echo "<caption>Top&nbsp;{$count}&nbsp;searched&nbsp;queries</caption>\n";
+        echo "<thead><tr><td>query</td><td>hits</td></tr></thead>\n<tbody>";
+        foreach ($data as $d)
+        {  
+            echo "\n  <tr><td>{$d[0]}</td><td>{$d[1]}</td></tr>";
+        }
+        echo "\n</tbody>\n</table>\n";
     }
 }
 

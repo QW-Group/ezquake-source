@@ -61,6 +61,7 @@
         $supForms = new SupportForms;
         $optForms = new OptionsForms;
         $indForms = new IndexForms;
+        $schForms = new SearchHitsForms;
         
         echo '<div class="menus">';
         if ($session->access > 1)
@@ -206,6 +207,8 @@
                 break;
             // list users
             case "listusers": $session->ListUsers(); break;
+            // view top search queries
+            case "searchqueries": $schForms->PrintTopQueries(); break;
         }   // end of normal user access
         
         echo '</div>';

@@ -14,6 +14,7 @@ define (VARGROUPSTABLE, 'variables_groups');
 define (VARSUPPORTTABLE, 'variables_support');
 define (OPTIONSTABLEPREFIX, 'options');
 define (INDEXTABLE, 'settings_index');
+define (SEARCHHITSTABLE, 'search_hits');
 
 class DocsData
 // abstract, common functions and structures for variables, commands, command-line options and manuals
@@ -1072,6 +1073,7 @@ class SupportData
 }
 
 class IndexData
+// operations on settings index
 {
     var $tableindex;
     
@@ -1145,6 +1147,52 @@ class IndexData
             return False;
         
         return True;
+    }
+}
+
+class SearchHits
+// operations on search queries database - increasing query count, get top X search queries
+{
+    var $table;
+    
+    function SearchHits() {
+        $this->table = SEARCHHITSTABLE;
+    }
+    
+    function Hit($string)
+    {   
+        $string = addslashes(substr($string, 0, 255)); // physical string length limit is even lower
+        $sql = "SELECT hits FROM {$this->table} WHERE query = '{$string}' LIMIT 1";
+        if (!$d = mysql_query($sql))
+            return false;
+        if (!$d = mysql_fetch_row($d))
+            $sql = "INSERT INTO {$this->table} (query) VALUES ('{$string}')";
+        else
+            $sql = "UPDATE {$this->table} SET hits = hits + 1 WHERE query = '{$string}' LIMIT 1";
+
+        return mysql_query($sql);
+    }
+    
+    function GetTopHits($count = 10)
+    {
+        $count = (int) $count;
+        if ($count < 1 || $count > 1000)
+            $count = 10;
+            
+        $sql = "SELECT query, hits FROM {$this->table} ORDER BY hits DESC LIMIT {$count}";
+        if (!$d = mysql_query($sql))
+            return false;
+
+        $retbuf = array();
+        while ($data = mysql_fetch_assoc($d))
+        {
+            $new = array();
+            $new[0] = $data["query"];
+            $new[1] = $data["hits"];
+            $retbuf[] = $new;
+        }
+        
+        return $retbuf;
     }
 }
 

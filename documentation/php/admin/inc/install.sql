@@ -110,7 +110,6 @@ INSERT INTO builds (abbr, shortname, title) VALUES ('SVGA', 'Lin:SVGA', 'Linux: 
 INSERT INTO builds (abbr, shortname, title) VALUES ('MAC', 'Mac-OSX', 'Mac OS X');
 
 
-
 CREATE TABLE variables_mgroups
 (
   id SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -236,8 +235,6 @@ CREATE TABLE options_history
   PRIMARY KEY(id)
 );
 
-DROP TABLE manuals;
-
 CREATE TABLE settings_index
 (
   name CHAR(64) NOT NULL,
@@ -247,4 +244,10 @@ CREATE TABLE settings_index
   desc3 char(255) NOT NULL DEFAULT '',
   igroup SMALLINT UNSIGNED NOT NULL DEFAULT 0,  
   PRIMARY KEY(name, itype)
+);
+
+CREATE TABLE search_hits
+(
+  query VARCHAR(32) NOT NULL PRIMARY KEY,
+  hits INT UNSIGNED NOT NULL DEFAULT 1
 );

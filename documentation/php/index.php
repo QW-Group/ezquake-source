@@ -14,6 +14,7 @@
     $db["commands"] = new CommandsData;
     $db["options"] = new OptionsData;
     $db["index"] = new IndexData;
+    $db["search"] = new SearchHits;
 
     $sekce = each($_GET);
 	$sekce = $sekce['key'];
