@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.1 2006-05-16 10:55:07 disconn3ct Exp $
+    $Id: q_shared.c,v 1.2 2006-05-19 23:06:29 johnnycz Exp $
 */
 // q_shared.c -- functions shared by all subsystems
 
@@ -457,7 +457,7 @@ void *Q_calloc (size_t n, size_t size) {
 
 char *Q_strdup (const char *src)
 {
-	char *p = strdup(src);
+	char *p = _strdup(src);
 	if (!p)
 		Sys_Error ("Q_strdup: Not enough memory free; check disk space\n");
 	return p;
