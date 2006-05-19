@@ -48,7 +48,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_DEPRECATE&quot;"
 				Optimization="0"
-				AdditionalIncludeDirectories="libs;libexpat;pcre;$(DXSDK_DIR)\Include"
+				AdditionalIncludeDirectories="libs;libexpat;$(DXSDK_DIR)\Include"
 				PreprocessorDefinitions="_DEBUG;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_JPEG_STATIC;WITH_PNG;WITH_PNG_STATIC;WITH_ZLIB;EMBED_TCL"
 				StringPooling="false"
 				BasicRuntimeChecks="3"
@@ -84,14 +84,14 @@
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="true"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libexpat.lib tcl84.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib zlib.lib"
+				AdditionalDependencies="libexpat.lib tcl84.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib zlib.lib libpcre.lib"
 				ShowProgress="0"
 				OutputFile="../ezquake-gl-debug.exe"
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\libs;$(DXSDK_DIR)\Lib\x86"
-				IgnoreDefaultLibraryNames="libc.lib;MSVCRT;libcmt;"
+				IgnoreDefaultLibraryNames="MSVCRT;LIBC;LIBCMT;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug-gl/ezquake-gl.pdb"
 				SubSystem="2"
@@ -275,7 +275,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="libs;libexpat;pcre;$(DXSDK_DIR)\Include"
+				AdditionalIncludeDirectories="libs;libexpat;$(DXSDK_DIR)\Include"
 				PreprocessorDefinitions="NDEBUG;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_JPEG_STATIC;WITH_PNG;WITH_PNG_STATIC;WITH_ZLIB;EMBED_TCL"
 				StringPooling="true"
 				ExceptionHandling="0"
@@ -308,14 +308,14 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386 "
-				AdditionalDependencies="libexpat.lib tcl84.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib zlib.lib"
+				AdditionalDependencies="libexpat.lib tcl84.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib zlib.lib libpcre.lib"
 				OutputFile="../ezquake-gl.exe"
 				Version=""
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\libs;$(DXSDK_DIR)\Lib\x86"
 				IgnoreAllDefaultLibraries="false"
-				IgnoreDefaultLibraryNames="MSVCRT.lib;LIBC.lib"
+				IgnoreDefaultLibraryNames="MSVCRT;LIBC;"
 				ProgramDatabaseFile=".\Release-gl/ezquake-gl.pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -462,6 +462,18 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90"
 			>
+			<File
+				RelativePath=".\net.c"
+				>
+			</File>
+			<File
+				RelativePath=".\net_chan.c"
+				>
+			</File>
+			<File
+				RelativePath=".\q_shared.c"
+				>
+			</File>
 			<File
 				RelativePath=".\winquake.rc"
 				>
@@ -862,14 +874,6 @@
 				<Filter
 					Name="Network"
 					>
-					<File
-						RelativePath=".\net_chan.c"
-						>
-					</File>
-					<File
-						RelativePath=".\net_wins.c"
-						>
-					</File>
 				</Filter>
 			</Filter>
 			<Filter
@@ -1899,10 +1903,6 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="xml_test.c"
-					>
-				</File>
-				<File
 					RelativePath="xsd.c"
 					>
 				</File>
@@ -1919,27 +1919,15 @@
 					>
 				</File>
 			</Filter>
-			<Filter
-				Name="pcre"
-				>
-				<File
-					RelativePath=".\pcre\chartables.c"
-					>
-				</File>
-				<File
-					RelativePath="pcre\pcre.c"
-					>
-				</File>
-				<File
-					RelativePath="pcre\study.c"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;fi;fd"
 			>
+			<File
+				RelativePath=".\q_shared.h"
+				>
+			</File>
 			<File
 				RelativePath="resource.h"
 				>
@@ -1958,10 +1946,6 @@
 				</File>
 				<File
 					RelativePath=".\anorms.h"
-					>
-				</File>
-				<File
-					RelativePath=".\bothdefs.h"
 					>
 				</File>
 				<File
@@ -2006,10 +1990,6 @@
 				</File>
 				<File
 					RelativePath=".\modelgen.h"
-					>
-				</File>
-				<File
-					RelativePath=".\png.h"
 					>
 				</File>
 				<File
@@ -2063,10 +2043,6 @@
 				>
 				<File
 					RelativePath=".\auth.h"
-					>
-				</File>
-				<File
-					RelativePath="auth_allowip.h"
 					>
 				</File>
 				<File
@@ -2371,10 +2347,6 @@
 				>
 				<File
 					RelativePath=".\cdaudio.h"
-					>
-				</File>
-				<File
-					RelativePath=".\sound.h"
 					>
 				</File>
 			</Filter>
