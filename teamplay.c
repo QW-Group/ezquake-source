@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.34 2006-05-14 10:50:17 disconn3ct Exp $
+    $Id: teamplay.c,v 1.35 2006-05-20 23:38:45 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -38,6 +38,7 @@ cvar_t	tp_msgtriggers = {"tp_msgtriggers", "1"};
 cvar_t	tp_forceTriggers = {"tp_forceTriggers", "0"};
 cvar_t	cl_nofake = {"cl_nofake", "2"};
 cvar_t	tp_loadlocs = {"tp_loadlocs", "1"};
+cvar_t  tp_pointpriorities = {"tp_pointpriorities", "0"};
 
 
 cvar_t	cl_teamskin = {"teamskin", "", 0, OnChangeSkinForcing};
@@ -2586,6 +2587,7 @@ char *pknames[] = {"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
 int pkflags = default_pkflags;
 int tookflags = default_tookflags;
 int pointflags = default_pointflags;
+byte pointpriorities[NUM_ITEMFLAGS];
 
 static void DumpFlagCommand(FILE *f, char *name, int flags, int default_flags) {
 	int i, all_flags = (1 << NUM_ITEMFLAGS) - 1;
@@ -2705,8 +2707,13 @@ static void FlagCommand (int *flags, int defaultflags) {
 
 		if (removeflag)
 			*flags &= ~flag;
-		else
+		else {
 			*flags |= flag;
+			for (j = 1; j < NUM_ITEMFLAGS; j++) {
+				if (flag & (1 << (j-1))) 
+					pointpriorities[j] = i;
+			}
+		}
 	}
 }
 
@@ -3137,7 +3144,7 @@ static float TP_RankPoint(item_vis_t *visitem) {
 	miss = VectorLength (v3);
 	if (miss > 300)
 		return -1;
-	if (miss > visitem->dist * 1.7)
+	if (miss > visitem->dist * 1.05)
 		return -1;		// over 60 degrees off
 
 	return (visitem->dist < 3000.0 / 8.0) ? miss * (visitem->dist * 8.0 * 0.0002f + 0.3f) : miss;
@@ -3146,7 +3153,8 @@ static float TP_RankPoint(item_vis_t *visitem) {
 void TP_FindPoint (void) {
 	packet_entities_t *pak;
 	entity_state_t *ent;
-	int	i, j, pointflags_dmm;
+	int	i, j, tempflags;
+	unsigned int pointflags_dmm;
 	float best = -1, rank;
 	entity_state_t *bestent = NULL;
 	vec3_t ang;
@@ -3183,9 +3191,9 @@ void TP_FindPoint (void) {
 		// special check for armors
 		if (item->itemflag == (it_ra|it_ya|it_ga)) {
 			switch (ent->skinnum) {
-				case 0: if (!(pointflags_dmm & it_ga)) continue;
-				case 1: if (!(pointflags_dmm & it_ya)) continue;
-				default: if (!(pointflags_dmm & it_ra)) continue;
+				case 0: if (!(pointflags_dmm & it_ga)) continue; break;
+				case 1: if (!(pointflags_dmm & it_ya)) continue; break;
+				case 2: if (!(pointflags_dmm & it_ra)) continue; break;
 			}
 		}
 
@@ -3196,6 +3204,17 @@ void TP_FindPoint (void) {
 
 		if ((rank = TP_RankPoint(&visitem)) < 0)
 			continue;
+
+		if (tp_pointpriorities.value && rank != -1) {
+			tempflags = item->itemflag;
+			for (j = 1; j < NUM_ITEMFLAGS; j++)
+				if (!(tempflags & 1))
+					tempflags >>= 1;
+				else
+					break;
+
+			rank = pointpriorities[j];
+		}
 
 		// check if we can actually see the object
 		if ((rank < best || best < 0) && TP_IsItemVisible(&visitem)) {
@@ -3577,6 +3596,7 @@ void TP_Init (void) {
 	Cvar_Register (&tp_msgtriggers);
 	Cvar_Register (&tp_forceTriggers);
 	Cvar_Register (&tp_loadlocs);
+	Cvar_Register (&tp_pointpriorities);
 	Cvar_Register (&tp_soundtrigger);
 	Cvar_Register (&tp_weapon_order);		
 
