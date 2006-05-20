@@ -609,7 +609,7 @@ class SearchHitsForms
         echo "<thead><tr><td>query</td><td>hits</td></tr></thead>\n<tbody>";
         foreach ($data as $d)
         {  
-            echo "\n  <tr><td>{$d[0]}</td><td>{$d[1]}</td></tr>";
+            echo "\n  <tr><td><a href=\"../?search={$d[0]}&amp;omitstats=1\">{$d[0]}</a></td><td>{$d[1]}</td></tr>";
         }
         echo "\n</tbody>\n</table>\n";
     }

@@ -199,7 +199,6 @@ CREATE TABLE commands_support
   PRIMARY KEY(id)
 );
 
----
 CREATE TABLE manuals_history
 (
   id INT UNSIGNED AUTO_INCREMENT NOT NULL,

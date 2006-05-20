@@ -23,7 +23,8 @@ function GetRenderer($name, &$db)
         case "search": 
             $searchbit = 1; // remember we did a search
             $name = $_REQUEST["search"]; // treat the text of the search as it is some manual page
-            $db["search"]->Hit($name); // register hit for this search query text 
+            if (!$_REQUEST["omitstats"]) // flag is added when admin wants to check what search results some text gives
+                $db["search"]->Hit($name); // register hit for this search query text 
         break;
     }
     
