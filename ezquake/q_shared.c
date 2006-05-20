@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.2 2006-05-19 23:06:29 johnnycz Exp $
+    $Id: q_shared.c,v 1.3 2006-05-20 16:50:40 disconn3ct Exp $
 */
 // q_shared.c -- functions shared by all subsystems
 
@@ -457,7 +457,16 @@ void *Q_calloc (size_t n, size_t size) {
 
 char *Q_strdup (const char *src)
 {
+/* disconnect -->
+What the FUCK IS _strdup?!
+M$ made their ownr (r) implementation (tm) of strdup (c), but the behavior a bit different to original strdup?
+yes. it's M$ way - break standarts and back-compitability :E
+	<-- disconnect */
+#ifdef _WIN32
 	char *p = _strdup(src);
+#else
+	char *p = strdup(src);
+#endif
 	if (!p)
 		Sys_Error ("Q_strdup: Not enough memory free; check disk space\n");
 	return p;
