@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.25 2006-05-16 03:33:17 disconn3ct Exp $
+    $Id: config_manager.c,v 1.26 2006-05-21 00:01:24 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -791,7 +791,7 @@ void SaveConfig_f(void)
 		filename_ext = va("%s/ezquake/configs/%s", com_basedir, filename);
 		if ((f = fopen(filename_ext, "r"))) {
 			fclose(f);
-			backupname_ext = (char *) Q_malloc(strlen(filename_ext) + 4);
+			backupname_ext = (char *) Q_malloc(strlen(filename_ext) + 5);
 			strcpy(backupname_ext, filename_ext);
 			strcat(backupname_ext, ".bak");
 			if ((f = fopen(backupname_ext, "r"))) {
