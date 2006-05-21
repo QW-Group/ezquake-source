@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.35 2006-05-20 23:38:45 johnnycz Exp $
+    $Id: teamplay.c,v 1.36 2006-05-21 14:36:11 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -3144,10 +3144,14 @@ static float TP_RankPoint(item_vis_t *visitem) {
 	miss = VectorLength (v3);
 	if (miss > 300)
 		return -1;
-	if (miss > visitem->dist * 1.05)
+	if (miss > visitem->dist * (tp_pointpriorities.value ? 0.55 : 1.7)) // for prioritized point
 		return -1;		// over 60 degrees off
 
-	return (visitem->dist < 3000.0 / 8.0) ? miss * (visitem->dist * 8.0 * 0.0002f + 0.3f) : miss;
+	if (tp_pointpriorities.value)
+		return 1;
+	if (visitem->dist < 3000.0 / 8.0)
+		return miss * (visitem->dist * 8.0 * 0.0002f + 0.3f);
+	else return miss;
 }
 
 void TP_FindPoint (void) {
