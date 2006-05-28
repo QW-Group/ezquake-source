@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.31 2006-05-19 23:06:57 johnnycz Exp $
+	$Id: hud_common.c,v 1.32 2006-05-28 01:26:41 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -13,6 +13,8 @@
 #ifndef STAT_MINUS
 #define STAT_MINUS		10
 #endif
+
+#define ROUND(f)   ((f>=0)?(int)(f + .5):(int)(f - .5))
 
 #ifdef GLQUAKE
 void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
@@ -1538,7 +1540,8 @@ typedef struct sort_teams_info_s
     int  max_ping;
     int  nplayers;
     int  top, bottom;   // leader colours
-    int order;          // should not be here...
+    int  order;         // should not be here...
+	int  rlcount;		// Number of RL's present in the team. (Cokeman 2006-05-27)
 }
 sort_teams_info_t;
 
@@ -1611,16 +1614,19 @@ static void Sort_Scoreboard(qbool teamsort)
     n_spectators = 0;
     isteamplay = isTeamplay();
 
-    // sort teams
+    // Set team properties.
     for (i=0; i < MAX_CLIENTS; i++)
     {
         if (cl.players[i].name[0] && !cl.players[i].spectator)
         {
             // find players team
             for (team=0; team < n_teams; team++)
+			{
                 if (!strcmp(cl.players[i].team, sort_info_teams[team].name)
                     &&  sort_info_teams[team].name[0])
                     break;
+			}
+
             if (team == n_teams)   // not found
             {
                 team = n_teams++;
@@ -1632,6 +1638,7 @@ static void Sort_Scoreboard(qbool teamsort)
 				sort_info_teams[team].top = Sbar_TopColor(&cl.players[i]);
 				sort_info_teams[team].bottom = Sbar_BottomColor(&cl.players[i]);
                 sort_info_teams[team].name = cl.players[i].team;
+				sort_info_teams[team].rlcount = 0; // Cokeman (2006-05-27)
                 sorted_teams[team] = &sort_info_teams[team];
             }
             sort_info_teams[team].nplayers++;
@@ -1639,6 +1646,12 @@ static void Sort_Scoreboard(qbool teamsort)
             sort_info_teams[team].avg_ping += cl.players[i].ping;
             sort_info_teams[team].min_ping = min(sort_info_teams[team].min_ping, cl.players[i].ping);
             sort_info_teams[team].max_ping = max(sort_info_teams[team].max_ping, cl.players[i].ping);
+
+			// Cokeman (2006-05-27)
+			if(cl.players[i].stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
+			{
+				sort_info_teams[team].rlcount++;
+			}
 
             // set player data
             sort_info_players[n_players+n_spectators].playernum = i;
@@ -1714,6 +1727,292 @@ void Frags_DrawColors(int x, int y, int width, int height, int top_color, int bo
     }
 }
 
+#define	FRAGS_HEALTHBAR_WIDTH			5
+
+#define FRAGS_HEALTHBAR_NORMAL_COLOR	75
+#define FRAGS_HEALTHBAR_MEGA_COLOR		251
+#define	FRAGS_HEALTHBAR_TWO_MEGA_COLOR	238
+#define	FRAGS_HEALTHBAR_UNNATURAL_COLOR	144
+
+void Frags_DrawHealthBar(int original_health, int x, int y, int height, int width)
+{
+	float health_height = 0.0;
+	int health;
+
+	// Get the health.
+	health = original_health;
+	health = min(100, health);
+
+	// Draw a health bar.
+	health_height = ROUND((height / 100.0) * health);
+	health_height = (health_height > 0.0 && health_height < 1.0) ? 1 : health_height;
+	health_height = (health_height < 0.0) ? 0.0 : health_height;
+	Draw_Fill(x, y + height - (int)health_height, 3, (int)health_height, FRAGS_HEALTHBAR_NORMAL_COLOR);
+
+	// Get the health again to check if health is more than 100.
+	health = original_health;
+	if(health > 100 && health <= 200)
+	{
+		health_height = (int)ROUND((height / 100.0) * (health - 100));
+		Draw_Fill(x, y + height - health_height, width, health_height, FRAGS_HEALTHBAR_MEGA_COLOR);
+	}
+	else if(health > 200 && health <= 250)
+	{
+		health_height = (int)ROUND((height / 100.0) * (health - 200));
+		Draw_Fill(x, y, width, height, FRAGS_HEALTHBAR_MEGA_COLOR);
+		Draw_Fill(x, y + height - health_height, width, health_height, FRAGS_HEALTHBAR_TWO_MEGA_COLOR);
+	}
+	else if(health > 250)
+	{
+		// This will never happen during a normal game.
+		Draw_Fill(x, y, width, health_height, FRAGS_HEALTHBAR_UNNATURAL_COLOR);
+	}
+}
+
+#define	TEAMFRAGS_EXTRA_SPEC_NONE	0
+#define TEAMFRAGS_EXTRA_SPEC_BEFORE	1
+#define	TEAMFRAGS_EXTRA_SPEC_ONTOP	2
+#define TEAMFRAGS_EXTRA_SPEC_NOICON 3
+#define TEAMFRAGS_EXTRA_SPEC_RLTEXT 4
+
+int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, int style)
+{
+	extern mpic_t *sb_weapons[7][8]; // sbar.c
+	mpic_t rl_picture = *sb_weapons[0][5];
+
+	// Only allow this for spectators.
+	if (!(cls.demoplayback || cl.spectator)
+		|| style > TEAMFRAGS_EXTRA_SPEC_RLTEXT
+		|| style <= TEAMFRAGS_EXTRA_SPEC_NONE)
+	{
+		return px;
+	}
+	
+	if(sorted_teams[num]->rlcount > 0)
+	{
+		int y_pos = py;
+
+		if((style == TEAMFRAGS_EXTRA_SPEC_BEFORE || style == TEAMFRAGS_EXTRA_SPEC_NOICON)
+			&& style != TEAMFRAGS_EXTRA_SPEC_RLTEXT)
+		{
+			y_pos = ROUND(py + (height / 2.0) - 4);
+			Draw_ColoredString(px, y_pos, va("%d", sorted_teams[num]->rlcount), 0);
+			px += 8 + 1;
+		}
+
+		if(style != TEAMFRAGS_EXTRA_SPEC_NOICON && style != TEAMFRAGS_EXTRA_SPEC_RLTEXT)
+		{
+			y_pos = ROUND(py + (height / 2.0) - (rl_picture.height / 2.0));
+			
+			Draw_SSubPic (px, y_pos, &rl_picture, 0, 0, rl_picture.width, rl_picture.height, 1);
+			px += rl_picture.width + 1; 
+		}
+
+		if(style == TEAMFRAGS_EXTRA_SPEC_ONTOP && style != TEAMFRAGS_EXTRA_SPEC_RLTEXT)
+		{
+			y_pos = ROUND(py + (height / 2.0) - 4);
+			Draw_ColoredString(px - 14, y_pos, va("%d", sorted_teams[num]->rlcount), 0);
+		}
+
+		if(style == TEAMFRAGS_EXTRA_SPEC_RLTEXT)
+		{
+			y_pos = ROUND(py + (height / 2.0) - 4);
+			Draw_ColoredString(px, y_pos, va("&ce00RL&cfff%d", sorted_teams[num]->rlcount), 0);
+			px += 8*3 + 1;
+		}
+	}
+	else
+	{
+		if(style == TEAMFRAGS_EXTRA_SPEC_BEFORE)
+		{
+			// Draw the rl count before the rl icon.
+			px += rl_picture.width + 8 + 1 + 1;
+		}
+		else if(style == TEAMFRAGS_EXTRA_SPEC_ONTOP)
+		{
+			// Draw the rl count on top of the RL instead of infront.
+			px += rl_picture.width + 1;
+		}
+		else if(style == TEAMFRAGS_EXTRA_SPEC_NOICON)
+		{
+			// Only draw the rl count.
+			px += 8 + 1;
+		}
+		else if(style == TEAMFRAGS_EXTRA_SPEC_RLTEXT)
+		{
+			px += 8*3 + 1;
+		}
+	}
+
+	return px;
+}
+
+#define FRAGS_EXTRA_SPEC_ALL			1
+#define FRAGS_EXTRA_SPEC_NO_RL			2
+#define FRAGS_EXTRA_SPEC_NO_ARMOR		3
+#define FRAGS_EXTRA_SPEC_NO_HEALTH		4
+#define	FRAGS_EXTRA_SPEC_NO_POWERUPS	5
+#define FRAGS_EXTRA_SPEC_ONLY_POWERUPS	6
+#define FRAGS_EXTRA_SPEC_ONLY_HEALTH	7
+#define FRAGS_EXTRA_SPEC_ONLY_ARMOR		8
+#define FRAGS_EXTRA_SPEC_ONLY_RL		9
+
+int Frags_DrawExtraSpecInfo(player_info_t *info, 
+							 int px, int py, 
+							 int cell_width, int cell_height, 
+							 int space_x, int space_y, int style, int flip)
+{
+	// Styles:
+	// 0 = Show nothing
+	// 1 = Show all
+	// 2 = Don't show RL's
+	// 3 = Don't show armors
+	// 4 = Don't show health
+	// 5 = Don't show powerups
+	// 6 = Only show powerups
+	// 7 = Only show health
+	// 8 = Only show armors
+	// 9 = Only show RL's
+
+	extern mpic_t *sb_weapons[7][8]; // sbar.c ... Used for displaying the RL.
+	mpic_t rl_picture;				 // Picture of RL.
+
+	float armor_height = 0.0;
+	int armor = 0;
+	int armor_bg_color = 0;
+	float armor_bg_power = 0;
+
+	int spec_extra_health_w = 5;
+
+	int health_spacing = 1;
+
+	rl_picture = *sb_weapons[0][5];
+
+	// Only allow this for spectators.
+	if (!(cls.demoplayback || cl.spectator))
+	{
+		return px;
+	}
+
+	// Draw health bar.
+	if(flip 
+		&& style != FRAGS_EXTRA_SPEC_NO_HEALTH 
+		&& style != FRAGS_EXTRA_SPEC_ONLY_ARMOR 
+		&& style != FRAGS_EXTRA_SPEC_ONLY_RL
+		&& style != FRAGS_EXTRA_SPEC_ONLY_POWERUPS)
+	{
+		Frags_DrawHealthBar(info->stats[STAT_HEALTH], px, py, cell_height, 3);
+		px += 3 + health_spacing;
+	}
+	armor = info->stats[STAT_ARMOR];
+	
+	// If the player has any armor, draw it in the appropriate color.
+	if(info->stats[STAT_ITEMS] & IT_ARMOR1)
+	{
+		armor_bg_power = 100;
+		armor_bg_color = 178; // Green armor.
+	}
+	else if(info->stats[STAT_ITEMS] & IT_ARMOR2)
+	{
+		armor_bg_power = 150;
+		armor_bg_color = 111; // Yellow armor.
+	}
+	else if(info->stats[STAT_ITEMS] & IT_ARMOR3)
+	{
+		armor_bg_power = 200;
+		armor_bg_color = 79; // Red armor.
+	}
+
+	// Only draw the armor if the current player has one and if the style allows it.
+	if(armor_bg_power 
+		&& armor_bg_color 
+		&& style != FRAGS_EXTRA_SPEC_NO_ARMOR 
+		&& style != FRAGS_EXTRA_SPEC_ONLY_HEALTH 
+		&& style != FRAGS_EXTRA_SPEC_ONLY_RL
+		&& style != FRAGS_EXTRA_SPEC_ONLY_POWERUPS)
+	{
+		armor_height = ROUND((cell_height / armor_bg_power) * armor);
+		Draw_AlphaFill(px,												// x
+						py + cell_height - (int)armor_height,			// y (draw from bottom up)
+						rl_picture.width,								// width
+						(int)armor_height,								// height
+						armor_bg_color,									// color
+						0.3);											// alpha						
+	}
+
+	// Draw the rl if the current player has it and the style allows it.
+	if(info->stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER 
+		&& style != FRAGS_EXTRA_SPEC_NO_RL
+		&& style != FRAGS_EXTRA_SPEC_ONLY_HEALTH
+		&& style != FRAGS_EXTRA_SPEC_ONLY_ARMOR
+		&& style != FRAGS_EXTRA_SPEC_ONLY_POWERUPS)
+	{
+		Draw_SSubPic (px, py + ROUND((cell_height/2.0)) - 8, &rl_picture, 0, 0, rl_picture.width, rl_picture.height, 1);
+		//Draw_SSubPic (px, py + ROUND((cell_height/2.0)) - 8, sb_weapons[0][5], 0, 0, spec_extra_weapon_w, 16, 1);
+		// TODO : allow "RL" text here instead of a picture.
+	}
+
+	// Only draw powerups is the current player has it and the style allows it.
+	if(style != FRAGS_EXTRA_SPEC_NO_POWERUPS
+		&& style != FRAGS_EXTRA_SPEC_ONLY_HEALTH
+		&& style != FRAGS_EXTRA_SPEC_ONLY_ARMOR
+		&& style != FRAGS_EXTRA_SPEC_ONLY_RL)
+	{
+		
+		//float powerups_x = px + (spec_extra_weapon_w / 2.0);
+		float powerups_x = px + (rl_picture.width / 2.0);
+
+		if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY 
+			&& info->stats[STAT_ITEMS] & IT_INVISIBILITY
+			&& info->stats[STAT_ITEMS] & IT_QUAD)
+		{
+			Draw_ColoredString(ROUND(powerups_x - 10), py, "&c0ffQ&cf00P&cff0R", 0);
+		}
+		else if(info->stats[STAT_ITEMS] & IT_QUAD 
+			&& info->stats[STAT_ITEMS] & IT_INVULNERABILITY)
+		{
+			Draw_ColoredString(ROUND(powerups_x - 8), py, "&c0ffQ&cf00P", 0);
+		}
+		else if(info->stats[STAT_ITEMS] & IT_QUAD 
+			&& info->stats[STAT_ITEMS] & IT_INVISIBILITY)
+		{
+			Draw_ColoredString(ROUND(powerups_x - 8), py, "&c0ffQ&cff0R", 0);
+		}
+		else if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY 
+			&& info->stats[STAT_ITEMS] & IT_INVISIBILITY)
+		{
+			Draw_ColoredString(ROUND(powerups_x - 8), py, "&cf00P&cff0R", 0);
+		}
+		else if(info->stats[STAT_ITEMS] & IT_QUAD)
+		{
+			Draw_ColoredString(ROUND(powerups_x - 4), py, "&c0ffQ", 0);
+		}
+		else if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY)
+		{
+			Draw_ColoredString(ROUND(powerups_x - 4), py, "&cf00P", 0);
+		}
+		else if(info->stats[STAT_ITEMS] & IT_INVISIBILITY)
+		{
+			Draw_ColoredString(ROUND(powerups_x - 4), py, "&cff0R", 0);
+		}
+	}
+
+	px += rl_picture.width + health_spacing;
+
+	// Draw health bar.
+	if(!flip 
+		&& style != FRAGS_EXTRA_SPEC_NO_HEALTH 
+		&& style != FRAGS_EXTRA_SPEC_ONLY_ARMOR 
+		&& style != FRAGS_EXTRA_SPEC_ONLY_RL
+		&& style != FRAGS_EXTRA_SPEC_ONLY_POWERUPS)
+	{
+		Frags_DrawHealthBar(info->stats[STAT_HEALTH], px, py, cell_height, 3);
+		px += 3 + health_spacing;
+	}
+
+	return px;
+}
+
 void Frags_DrawBackground(int px, int py, int cell_width, int cell_height,
 						  int space_x, int space_y, int max_name_length, int max_team_length,
 						  int bg_color, int shownames, int showteams, int drawBrackets, int style)
@@ -1738,7 +2037,6 @@ void Frags_DrawBackground(int px, int py, int cell_width, int cell_height,
 
 	if(style == 7 || style == 8)
 		bg_color = 0x4f;
-
 #ifdef GLQUAKE
 	Draw_AlphaFill(px-1, py-space_y/2, bg_width, cell_height+space_y, bg_color, bg_alpha); 
 #else
@@ -1768,6 +2066,9 @@ int Frags_DrawText(int px, int py,
 	char _team[MAX_SCOREBOARDNAME + 1];
 	int team_length = 0;
 	int name_length = 0;
+	int y_pos;
+
+	y_pos = ROUND(py + (cell_height / 2.0) - 4);
 
 	// Draw team
 	if(showteams && cl.teamplay)
@@ -1781,17 +2082,17 @@ int Frags_DrawText(int px, int py,
 		if(pad && flip)
 		{
 			px += (max_team_length - team_length)*8;
-			Draw_String(px, py, _team);
+			Draw_String(px, y_pos, _team);
 			px += team_length*8;
 		}
 		else if(pad)
 		{
-			Draw_String(px, py, _team);
+			Draw_String(px, y_pos, _team);
 			px += max_team_length*8;
 		}
 		else
 		{
-			Draw_String(px, py, _team);
+			Draw_String(px, y_pos, _team);
 			px += team_length*8;
 		}
 
@@ -1808,17 +2109,17 @@ int Frags_DrawText(int px, int py,
 		if(flip && pad)
 		{	
 			px += (max_name_length - name_length)*8; 
-			Draw_String(px, py, _name);
+			Draw_String(px, y_pos, _name);
 			px += name_length*8;
 		}
 		else if(pad)
 		{
-			Draw_String(px, py, _name);
+			Draw_String(px, y_pos, _name);
 			px += max_name_length*8;
 		}
 		else
 		{
-			Draw_String(px, py, _name);
+			Draw_String(px, y_pos, _name);
 			px += name_length*8;
 		}
 
@@ -1848,12 +2149,17 @@ void SCR_HUD_DrawFrags(hud_t *hud)
         *hud_frags_vertical,
         *hud_frags_strip,
         *hud_frags_teamsort,
-		*hud_frags_shownames,
+		*hud_frags_shownames,		
 		*hud_frags_teams,
 		*hud_frags_padtext,
-		*hud_frags_showself,
+		//*hud_frags_showself,
+		*hud_frags_extra_spec,
 		*hud_frags_fliptext,
 		*hud_frags_style;
+
+	extern mpic_t *sb_weapons[7][8]; // sbar.c ... Used for displaying the RL.
+	mpic_t rl_picture;				 // Picture of RL.
+	rl_picture = *sb_weapons[0][5];
 
     if (hud_frags_cell_width == NULL)    // first time
     {
@@ -1869,7 +2175,8 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		hud_frags_shownames		= HUD_FindVar(hud, "shownames");
 		hud_frags_teams			= HUD_FindVar(hud, "showteams");
 		hud_frags_padtext		= HUD_FindVar(hud, "padtext");
-		hud_frags_showself		= HUD_FindVar(hud, "showself_always"); 
+		//hud_frags_showself		= HUD_FindVar(hud, "showself_always"); 
+		hud_frags_extra_spec	= HUD_FindVar(hud, "extra_spec_info");
 		hud_frags_fliptext		= HUD_FindVar(hud, "fliptext");
 		hud_frags_style			= HUD_FindVar(hud, "style");
     }
@@ -1940,17 +2247,23 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 			width += a_cols*max_team_length*8 + (a_cols+1)*space_x;
 	}
 
+	// Make room for the extra spectator stuff.
+	if(hud_frags_extra_spec->value && (cls.demoplayback || cl.spectator) )
+	{
+		width += a_cols*(rl_picture.width + FRAGS_HEALTHBAR_WIDTH);
+	}
+
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
     {
-        int i;
+        int i = 0;
         int px = 0;
         int py = 0;
         int num = 0;
-		int drawBrackets;
+		int drawBrackets = 0;
 		int limit = min(n_players, a_rows*a_cols);
 
 		// Always show my current frags (don't just show the leaders).
-		if(hud_frags_showself->value)
+		/*if(hud_frags_showself->value)
 		{
 			// Find my position in the scoreboard.
 			for(i=0; i < n_players; i++)
@@ -1968,11 +2281,12 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 				num = 0; // If I'm not "outside" the shown frags, start drawing from the top.
 			else
 				num = abs(a_rows*a_cols - (i+1)); // Always include me in the shown frags.
-		}
+		}*/
+
 		num = 0;  // FIXME! johnnycz; (see fixme below)
         for (i = 0; i < limit; i++)
         {
-            player_info_t *info = &cl.players[sorted_players[num]->playernum]; // FIXME! johnnycz; causes crashed on some demos
+            player_info_t *info = &cl.players[sorted_players[num]->playernum]; // FIXME! johnnycz; causes crashed on some demos			
 
             if (hud_frags_vertical->value)
             {
@@ -2000,12 +2314,29 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 
 			drawBrackets = 0;
 
-			if (cls.demoplayback || cl.spectator) {
-				if (spec_track == sorted_players[num]->playernum)
-					drawBrackets = 1;
-			} else {
+			// Bug fix. Before the wrong player would be higlighted
+			// during qwd-playback, since you ARE the player that you're
+			// being spectated.
+			if(cls.demoplayback && !cl.spectator && !cls.mvdplayback)
+			{
 				if (sorted_players[num]->playernum == cl.playernum)
+				{
 					drawBrackets = 1;
+				}
+			}
+			else if (cls.demoplayback || cl.spectator) 
+			{
+				if (spec_track == sorted_players[num]->playernum)
+				{
+					drawBrackets = 1;
+				}
+			}
+			else 
+			{
+				if (sorted_players[num]->playernum == cl.playernum)
+				{
+					drawBrackets = 1;
+				}
 			}
 
 			if(hud_frags_shownames->value || hud_frags_teams->value)
@@ -2036,13 +2367,41 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 						0, hud_frags_teams->value, 
 						info->name, info->team);
 
-					Frags_DrawColors(_px, py, cell_width, cell_height, Sbar_TopColor(info), Sbar_BottomColor(info), info->frags, drawBrackets, hud_frags_style->value);
+					Frags_DrawColors(_px, py, cell_width, cell_height, 
+						Sbar_TopColor(info), Sbar_BottomColor(info), 
+						info->frags, 
+						drawBrackets, 
+						hud_frags_style->value);
 
 					_px += cell_width + space_x;
+
+					// Show extra information about all the players if spectating:
+					// - What armor they have.
+					// - How much health.
+					// - If they have RL or not.
+					if(hud_frags_extra_spec->value)
+					{
+						_px = Frags_DrawExtraSpecInfo(info, _px, py, cell_width, cell_height, 
+								 space_x, space_y, 
+								 hud_frags_extra_spec->value, 
+								 hud_frags_fliptext->value);
+					}
 				}
 				else
 				{
-					Frags_DrawColors(_px, py, cell_width, cell_height, Sbar_TopColor(info), Sbar_BottomColor(info), info->frags, drawBrackets, hud_frags_style->value);
+					if(hud_frags_extra_spec->value)
+					{
+						_px = Frags_DrawExtraSpecInfo(info, _px, py, cell_width, cell_height, 
+								 space_x, space_y, 
+								 hud_frags_extra_spec->value, 
+								 hud_frags_fliptext->value);
+					}
+
+					Frags_DrawColors(_px, py, cell_width, cell_height, 
+						Sbar_TopColor(info), Sbar_BottomColor(info), 
+						info->frags, 
+						drawBrackets, 
+						hud_frags_style->value);
 
 					_px += cell_width + space_x;
 
@@ -2058,7 +2417,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 						space_x, space_y, max_name_length, max_team_length, 
 						hud_frags_fliptext->value, hud_frags_padtext->value, 
 						hud_frags_shownames->value, 0, 
-						info->name, info->team);					
+						info->name, info->team);
 				}
 
 				if(hud_frags_vertical->value)
@@ -2068,7 +2427,11 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 			}
 			else
 			{
-				Frags_DrawColors(px, py, cell_width, cell_height, Sbar_TopColor(info), Sbar_BottomColor(info), info->frags, drawBrackets, hud_frags_style->value);
+				Frags_DrawColors(px, py, cell_width, cell_height, 
+					Sbar_TopColor(info), Sbar_BottomColor(info), 
+					info->frags, 
+					drawBrackets, 
+					hud_frags_style->value);
 
 				if (hud_frags_vertical->value)
 					py += cell_height + space_y;
@@ -2100,7 +2463,12 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 		*hud_teamfrags_shownames,
 		*hud_teamfrags_fliptext,
 		*hud_teamfrags_padtext,
-		*hud_teamfrags_style;
+		*hud_teamfrags_style,
+		*hud_teamfrags_extra_spec,
+		*hud_teamfrags_only_when_tp;
+
+	extern mpic_t *sb_weapons[7][8]; // sbar.c
+	mpic_t rl_picture = *sb_weapons[0][5];
 
     if (hud_teamfrags_cell_width == 0)    // first time
     {
@@ -2116,7 +2484,15 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 		hud_teamfrags_fliptext		= HUD_FindVar(hud, "fliptext");
 		hud_teamfrags_padtext		= HUD_FindVar(hud, "padtext");
 		hud_teamfrags_style			= HUD_FindVar(hud, "style");
+		hud_teamfrags_extra_spec	= HUD_FindVar(hud, "extra_spec_info");
+		hud_teamfrags_only_when_tp	= HUD_FindVar(hud, "only_show_when_tp");
     }
+
+	// Don't draw the frags if we're note in teamplay.
+	if(hud_teamfrags_only_when_tp->value && !cl.teamplay)
+	{
+		return;
+	}
 
     rows = hud_teamfrags_rows->value;
     clamp(rows, 1, MAX_CLIENTS);
@@ -2156,20 +2532,50 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
     height = a_rows*cell_height + (a_rows+1)*space_y;
 
 	// Get the longest team name for padding.
-	if(hud_teamfrags_shownames->value)
+	if(hud_teamfrags_shownames->value || hud_teamfrags_extra_spec->value)
 	{
+		int rlcount_width = 0;
+
 		int cur_length = 0;
 		int n;
+
 		for(n=0; n < n_teams; n++)
 		{
-			cur_length = strlen(sorted_teams[n]->name);
+			if(hud_teamfrags_shownames->value)
+			{
+				cur_length = strlen(sorted_teams[n]->name);
 
-			// Team name
-			if(cur_length >= max_team_length)
-				max_team_length = cur_length + 1;
+				// Team name
+				if(cur_length >= max_team_length)
+					max_team_length = cur_length + 1;
+			}
+
+			if(hud_teamfrags_extra_spec->value && (cls.demoplayback || cl.spectator))
+			{
+				if(hud_teamfrags_extra_spec->value == TEAMFRAGS_EXTRA_SPEC_BEFORE)
+				{
+					// Draw the rl count before the rl icon.
+					rlcount_width = rl_picture.width + 8 + 1 + 1;
+				}
+				else if(hud_teamfrags_extra_spec->value == TEAMFRAGS_EXTRA_SPEC_ONTOP)
+				{
+					// Draw the rl count on top of the RL instead of infront.
+					rlcount_width = rl_picture.width + 1;
+				}
+				else if(hud_teamfrags_extra_spec->value == TEAMFRAGS_EXTRA_SPEC_NOICON)
+				{
+					// Only draw the rl count.
+					rlcount_width = 8 + 1;
+				}
+				else if(hud_teamfrags_extra_spec->value == TEAMFRAGS_EXTRA_SPEC_RLTEXT)
+				{
+					rlcount_width = 8*3 + 1;
+				}
+			
+			}
 		}
 
-		width += a_cols*max_team_length*8 + (a_cols+1)*space_x;
+		width += a_cols*max_team_length*8 + (a_cols+1)*space_x + a_cols*rlcount_width;
 	}
 
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
@@ -2201,12 +2607,30 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 
 			drawBrackets = 0;
 
-			if (cls.demoplayback || cl.spectator) {
-				if (!strcmp(cl.players[spec_track].team, sorted_teams[num]->name))
-					drawBrackets = 1;
-			} else {
+			
+			// Bug fix. Before the wrong player would be higlighted
+			// during qwd-playback, since you ARE the player that you're
+			// being spectated.		
+			if(cls.demoplayback && !cl.spectator && !cls.mvdplayback)
+			{
 				if (!strcmp(sorted_teams[num]->name, cl.players[cl.playernum].team))
+				{
 					drawBrackets = 1;
+				}
+			}
+			else if (cls.demoplayback || cl.spectator) 
+			{
+				if (!strcmp(cl.players[spec_track].team, sorted_teams[num]->name))
+				{
+					drawBrackets = 1;
+				}
+			} 
+			else 
+			{
+				if (!strcmp(sorted_teams[num]->name, cl.players[cl.playernum].team))
+				{
+					drawBrackets = 1;
+				}
 			}
 
 			if(hud_teamfrags_shownames->value)
@@ -2233,9 +2657,21 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 					Frags_DrawColors(_px, py, cell_width, cell_height, sorted_teams[num]->top, sorted_teams[num]->bottom, sorted_teams[num]->frags, drawBrackets, hud_teamfrags_style->value);
 
 					_px += cell_width + space_x;
+
+					// Draw the rl if the current player has it and the style allows it.
+					if(hud_teamfrags_extra_spec->value)
+					{
+						_px = TeamFrags_DrawExtraSpecInfo(num, _px, py, cell_width, cell_height, hud_teamfrags_extra_spec->value);
+					}
 				}
 				else
 				{
+					// Draw the rl if the current player has it and the style allows it.
+					if(hud_teamfrags_extra_spec->value)
+					{
+						_px = TeamFrags_DrawExtraSpecInfo(num, _px, py, cell_width, cell_height, hud_teamfrags_extra_spec->value);
+					}
+
 					Frags_DrawColors(_px, py, cell_width, cell_height, sorted_teams[num]->top, sorted_teams[num]->bottom, sorted_teams[num]->frags, drawBrackets, hud_teamfrags_style->value);
 
 					_px += cell_width + space_x;
@@ -2885,7 +3321,8 @@ void CommonDraw_Init(void)
 		"shownames", "0",
 		"showteams", "0",
 		"padtext", "1",
-		"showself_always", "1",
+		//"showself_always", "1", // Doesn't work anyway.
+		"extra_spec_info", "1",
 		"fliptext", "0",
 		"style", "0",
         NULL);
@@ -2905,6 +3342,8 @@ void CommonDraw_Init(void)
 		"padtext", "1",
 		"fliptext", "1",
 		"style", "0",
+		"extra_spec_info", "1",
+		"only_show_when_tp", "0",
 		NULL);
 
 	HUD_Register("mp3_title", NULL, "Shows current mp3 playing.",
