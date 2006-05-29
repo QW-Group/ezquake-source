@@ -10,7 +10,10 @@ CC			=gcc
 CC_BASEVERSION		=$(shell $(CC) -dumpversion | sed -e 's/\..*//g')
 MACHINE			=$(shell $(CC) -dumpmachine)
 ARCH			=$(shell echo $(MACHINE) | sed -e 's/.*mingw32.*/mingw32/g' -e 's/\-.*//g' -e 's/i.86/x86/g')
-STRIP			=strip --strip-unneeded --remove-section=.comment
+#Tonik: OS X make doesn't support the long options
+#make them per-architecture if you really want them
+#STRIP			=strip --strip-unneeded --remove-section=.comment
+STRIP			=strip
 
 # Mac OSX Tiger : powerpc -> ppc
 ifeq ($(MACHINE),powerpc-apple-darwin8) # MacOS-10.4/ppc
@@ -39,7 +42,23 @@ endif
 
 ################
 
-default_target: glx
+ifeq ($(ARCH),x86)              # Linux/x86
+	DEFAULT_TARGET = glx
+endif
+ifeq ($(ARCH),powerpc)          # Linux/PPC
+	DEFAULT_TARGET = glx
+endif
+ifeq ($(ARCH),mingw32)          # Win32/x86 in MingW environment
+	DEFAULT_TARGET = glx	#FIXME
+endif
+ifeq ($(ARCH),ppc)              # MacOS-X/ppc
+	DEFAULT_TARGET = mac
+endif
+ifeq ($(ARCH),macx86)           # MacOS-X/x86
+	DEFAULT_TARGET = mac
+endif
+
+default_target: $(DEFAULT_TARGET)
 
 all: glx x11 svga
 
@@ -245,9 +264,9 @@ svgaclobber: svgaclean
 
 MAC_C_OBJS := $(addprefix $(MAC_DIR)/, $(addsuffix .o, $(MAC_C_FILES)))
 
-MAC_CFLAGS := $(CFLAGS)
+MAC_CFLAGS := $(CFLAGS) $(GLCFLAGS) -DGLQUAKE -DWITH_JPEG
 
-MAC_LDFLAGS := $(LDFLAGS)
+MAC_LDFLAGS := $(LDFLAGS) -L/sw/lib -lexpat -lpcre -ltcl -ljpeg -lpng -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
 
 mac: _DIR := $(MAC_DIR)
 mac: _OBJS := $(MAC_C_OBJS)
