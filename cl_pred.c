@@ -27,6 +27,11 @@ cvar_t	cl_pushlatency = {"pushlatency", "0"};
 
 extern cvar_t cl_independentPhysics;
 
+#ifdef JSS_CAM
+static vec3_t saved_angles;
+qbool clpred_newpos = false;
+#endif
+
 void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) {
 	// split up very long moves
 	if (u->msec > 50) {
@@ -51,6 +56,15 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	pmove.pm_type = from->pm_type;
 	pmove.onground = from->onground;
 	pmove.cmd = *u;
+
+#ifdef JSS_CAM
+	if (Cvar_VariableValue("cam_lockdir")) {
+		VectorCopy (saved_angles, pmove.cmd.angles);
+		VectorCopy (saved_angles, pmove.angles);
+	}
+	else
+		VectorCopy (pmove.cmd.angles, saved_angles);
+#endif
 
 	movevars.entgravity = cl.entgravity;
 	movevars.maxspeed = cl.maxspeed;
@@ -290,11 +304,22 @@ void CL_PredictMove (void) {
 	// this is the last valid frame received from the server
 	to = &cl.frames[cl.validsequence & UPDATE_MASK];
 
+
+#ifdef JSS_CAM
+	if (clpred_newpos && cls.demoplayback && cl.spectator)
+		VectorCopy (cl.simorg, to->playerstate[cl.playernum].origin);
+	clpred_newpos = false;
+#endif
+
 	// FIXME...
 	if (cls.demoplayback && cl.spectator && cl.viewplayernum != cl.playernum) {
 		VectorCopy (to->playerstate[cl.viewplayernum].velocity, cl.simvel);
-		VectorCopy (to->playerstate[cl.viewplayernum].origin, cl.simorg);
-		VectorCopy (to->playerstate[cl.viewplayernum].viewangles, cl.simangles);
+#ifdef JSS_CAM
+		if (!(Cvar_VariableValue ("cam_thirdperson") && Cvar_VariableValue("cam_lockpos")) && !clpred_newpos)
+			VectorCopy (to->playerstate[cl.viewplayernum].origin, cl.simorg);
+		if (!Cvar_VariableValue ("cam_thirdperson"))
+			VectorCopy (to->playerstate[cl.viewplayernum].viewangles, cl.simangles);
+#endif
 		CL_CategorizePosition ();
 	}
 	else
@@ -361,6 +386,47 @@ if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.val
 if (!cls.demoplayback && cl_independentPhysics.value != 0)
 	CL_LerpMove (lerp_time, f);
     CL_CalcCrouch ();
+
+#ifdef JSS_CAM
+	if (Cvar_VariableValue ("cam_thirdperson") && Cvar_VariableValue("cam_lockpos")
+		&& cl.viewplayernum != cl.playernum) {
+		vec3_t v;
+		player_state_t *pstate;
+		int i;
+
+		i = cl.viewplayernum;
+
+		pstate = &cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i];
+		VectorSubtract (pstate->origin, cl.simorg, v);
+		vectoangles (v, cl.simangles);
+		cl.simangles[PITCH] = -cl.simangles[PITCH];
+	}
+	else
+	if (Cvar_VariableValue ("cam_thirdperson") && cl.viewplayernum != cl.playernum) {
+		int i;
+		player_state_t *pstate;
+		vec3_t fw, rt, up;
+
+/*
+		for (i = 0; i < MAX_CLIENTS; i++)
+		{
+			if (!cl.players[i].name || cl.players[i].spectator)
+				continue;
+			goto foundsomeone;
+		}
+		return;
+foundsomeone:
+*/
+		i = cl.viewplayernum;
+
+		pstate = &cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i];
+
+		AngleVectors (cl.simangles, fw, rt, up);
+		VectorMA (pstate->origin, -Cvar_VariableValue("cam_dist"), fw, cl.simorg);
+
+	}
+#endif	// JSS_CAM
+	
 }
 
 void CL_InitPrediction (void) {
@@ -371,4 +437,11 @@ void CL_InitPrediction (void) {
 // } shaman RFE 1036160
 
 	Cvar_ResetCurrentGroup();
+
+#ifdef JSS_CAM	
+	Cmd_ExecuteString ("set cam_lockdir 0");
+	Cmd_ExecuteString ("set cam_lockpos 0");
+	Cmd_ExecuteString ("set cam_thirdperson 0");
+	Cmd_ExecuteString ("set cam_dist 100");
+#endif
 } 
