@@ -1,5 +1,5 @@
 /*
-	$Id: sys_mac.c,v 1.14 2006-03-29 20:38:29 oldmanuk Exp $
+	$Id: sys_mac.c,v 1.15 2006-05-29 08:10:45 tonik Exp $
 */
 // sys_mac.c -- Macintosh system driver
 
@@ -1423,3 +1423,43 @@ void Sys_CopyToClipboard(char *text) {
 }
 
 // <-- disconnect
+
+//Sleeps msec or until the server socket is ready
+void NET_Sleep (int msec) {
+	struct timeval timeout;
+	fd_set fdset;
+	extern int ip_sockets[];
+	
+	if (dedicated) {
+		if (ip_sockets[NS_SERVER] == -1)
+			return; // we're not a server, just run full speed
+
+		FD_ZERO (&fdset);
+		if (do_stdin)
+			FD_SET (0, &fdset); // stdin is processed too
+		FD_SET (ip_sockets[NS_SERVER], &fdset); // network socket
+		timeout.tv_sec = msec/1000;
+		timeout.tv_usec = (msec%1000)*1000;
+		select (ip_sockets[NS_SERVER]+1, &fdset, NULL, NULL, &timeout);
+		stdin_ready = FD_ISSET (0, &fdset);
+	}
+}
+
+void *Sys_GetProcAddress (const char *ExtName)
+{
+	static CFBundleRef cl_gBundleRefOpenGL = 0;
+	if (cl_gBundleRefOpenGL == 0)
+	{
+		cl_gBundleRefOpenGL = CFBundleGetBundleWithIdentifier(CFSTR("com.apple.opengl"));
+		if (cl_gBundleRefOpenGL == 0)
+			Sys_Error("Unable to find com.apple.opengl bundle");
+	}
+
+	return CFBundleGetFunctionPointerForName(
+		cl_gBundleRefOpenGL,
+		CFStringCreateWithCStringNoCopy(
+			0,
+			ExtName,
+			CFStringGetSystemEncoding(),
+			0));
+}
