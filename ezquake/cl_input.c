@@ -33,6 +33,11 @@ extern cvar_t cl_independentPhysics;
 extern qbool physframe;
 extern double physframetime;
 
+#ifdef JSS_CAM
+cvar_t cam_zoomspeed = {"cam_zoomspeed", "300"};
+cvar_t cam_zoomaccel = {"cam_zoomaccel", "2000"};
+#endif
+
 /*
 ===============================================================================
 KEY BUTTONS
@@ -401,6 +406,40 @@ void CL_BaseMove (usercmd_t *cmd) {
 		cmd->sidemove *= cl_movespeedkey.value;
 		cmd->upmove *= cl_movespeedkey.value;
 	}	
+	
+#ifdef JSS_CAM
+{
+	static float zoomspeed = 0;
+
+	if ((cls.demoplayback || cl.spectator) && Cvar_VariableValue("cam_thirdperson") && !Cvar_VariableValue("cam_lockpos"))
+	{
+		zoomspeed -= CL_KeyState(&in_forward) * cls.trueframetime * cam_zoomaccel.value;
+		zoomspeed += CL_KeyState(&in_back) * cls.trueframetime * cam_zoomaccel.value;
+		if (!CL_KeyState(&in_forward) && !CL_KeyState(&in_back)) {
+			if (zoomspeed > 0) {
+				zoomspeed -= cls.trueframetime * cam_zoomaccel.value;
+				if (zoomspeed < 0)
+					zoomspeed = 0;
+			}
+			else if (zoomspeed < 0) {
+				zoomspeed += cls.trueframetime * cam_zoomaccel.value;
+				if (zoomspeed > 0)
+					zoomspeed = 0;
+			}
+		}
+		zoomspeed = bound (-cam_zoomspeed.value, zoomspeed, cam_zoomspeed.value);
+
+		if (zoomspeed) {
+			float dist = Cvar_VariableValue("cam_dist");
+
+			dist += cls.trueframetime * zoomspeed;
+			if (dist < 0)
+				dist = 0;
+			Cvar_SetValue (Cvar_FindVar("cam_dist"),  dist);
+		}
+	}
+}
+#endif
 }
 
 int MakeChar (int i) {
@@ -697,6 +736,11 @@ void CL_InitInput (void) {
 	Cvar_Register (&cl_c2spps);
 
 	Cvar_ResetCurrentGroup();
+	
+#ifdef JSS_CAM
+	Cvar_Register (&cam_zoomspeed);
+	Cvar_Register (&cam_zoomaccel);
+#endif
 }
 
 void CL_ClearStates (void) {}

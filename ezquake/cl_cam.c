@@ -97,6 +97,9 @@ qbool Cam_DrawViewModel(void) {
 // returns true if we should draw this player, we don't if we are chase camming
 qbool Cam_DrawPlayer(int playernum) {
 	if (cl.spectator && autocam && locked && cl_chasecam.value && 
+#ifdef JSS_CAM
+		!Cvar_VariableValue("cam_thirdperson") &&
+#endif
 		spec_track == playernum)
 		return false;
 	return true;
@@ -371,6 +374,9 @@ void Cam_Track(usercmd_t *cmd) {
 	if (cl_chasecam.value) {
 		cmd->forwardmove = cmd->sidemove = cmd->upmove = 0;
 
+#ifdef JSS_CAM
+	if (!Cvar_VariableValue ("cam_thirdperson"))
+#endif
 		VectorCopy(player->viewangles, cl.viewangles);
 		VectorCopy(player->origin, desired_position);
 		if (memcmp(&desired_position, &self->origin, sizeof(desired_position)) != 0) {
@@ -539,6 +545,112 @@ void Cam_TryLock (void) {
 }
 
 
+#ifdef JSS_CAM
+static char *myftos (float f)
+{
+#define MAX_VAL 128
+	static char buf[4][MAX_VAL];
+	static char idx = 0;
+	char *val;
+	int	i;
+
+	if (!cls.demoplayback && !cl.spectator)
+		return "?";
+
+	val = buf[(idx++) & 3];
+
+	snprintf (val, MAX_VAL, "%f", f);
+
+	// strip trailing zeroes
+	for (i = strlen(val) - 1; i > 0 && val[i] == '0'; i--)
+		val[i] = 0;
+	if (val[i] == '.')
+		val[i] = 0;
+		
+	return val;
+}
+
+static void Cam_Pos_f (void)
+{
+	extern qbool clpred_newpos;
+
+	if (Cmd_Argc() == 1)
+	{
+		Com_Printf ("\"%s %s %s\"\n", myftos(cl.simorg[0]), myftos(cl.simorg[1]), myftos(cl.simorg[2]));
+		return;
+	}
+
+	if (Cmd_Argc() == 2) {
+		// cam_pos "x y z"  -->  cam_pos x y z
+		Cmd_TokenizeString (va("cam_pos %s", Cmd_Argv(1)));
+	}
+
+	if (Cmd_Argc() != 4) {
+		Com_Printf("usage:\n"
+			"cam_pos - show current coordinates\n"
+			"cam pos x y z - set new coordinates\n");
+		return;
+	}
+
+	if (!cls.demoplayback && !cl.spectator)
+		return;
+		
+	cl.simorg[0] = Q_atof(Cmd_Argv(1));
+	cl.simorg[1] = Q_atof(Cmd_Argv(2));
+	cl.simorg[2] = Q_atof(Cmd_Argv(3));
+	clpred_newpos = true;
+	
+	VectorCopy (cl.simorg, cl.frames[cl.validsequence & UPDATE_MASK].playerstate[cl.playernum].origin);
+	
+	if (cls.state >= ca_active && !cls.demoplayback) {
+		MSG_WriteByte (&cls.netchan.message, clc_tmove);
+		MSG_WriteCoord (&cls.netchan.message, cl.simorg[0]);
+		MSG_WriteCoord (&cls.netchan.message, cl.simorg[1]);
+		MSG_WriteCoord (&cls.netchan.message, cl.simorg[2]);
+	}
+}
+
+static void Cam_Angles_f (void)
+{
+	if (Cmd_Argc() == 1)
+	{
+		Com_Printf ("\"%s %s %s\"\n", myftos(cl.viewangles[0]), myftos(cl.viewangles[1]), myftos(cl.viewangles[2]));
+		return;
+	}
+
+	if (Cmd_Argc() == 2) {
+		// cam_angles "pitch yaw roll"  -->  cam_pos pitch yaw roll
+		Cmd_TokenizeString (va("cam_angles %s", Cmd_Argv(1)));
+	}
+
+	if (Cmd_Argc() != 4 && Cmd_Argc() != 3) {
+		Com_Printf("usage:\n"
+			"cam_pos - show current angles\n"
+			"cam pos pitch yaw [roll] - set new angles\n");
+		return;
+	}
+	
+	if (!cls.demoplayback && !cl.spectator)
+		return;
+		
+	cl.simangles[0] = Q_atof(Cmd_Argv(1));
+	cl.simangles[1] = Q_atof(Cmd_Argv(2));
+	cl.simangles[2] = Q_atof(Cmd_Argv(3));
+	VectorCopy (cl.simangles, cl.viewangles);
+}
+
+static char *Macro_Cam_Pos_X (void) { return myftos(cl.simorg[0]); }
+static char *Macro_Cam_Pos_Y (void) { return myftos(cl.simorg[1]); }
+static char *Macro_Cam_Pos_Z (void) { return myftos(cl.simorg[2]); }
+static char *Macro_Cam_Pos (void) {	return va("\"%s %s %s\"", myftos(cl.simorg[0]), myftos(cl.simorg[1]), myftos(cl.simorg[2])); }
+
+static char *Macro_Cam_Angles_Pitch (void) { return myftos(cl.viewangles[0]); }
+static char *Macro_Cam_Angles_Yaw (void) { return myftos(cl.viewangles[1]); }
+static char *Macro_Cam_Angles_Roll (void) { return myftos(cl.viewangles[2]); }
+static char *Macro_Cam_Angles (void) { return va("\"%s %s %s\"", myftos(cl.viewangles[0]), myftos(cl.viewangles[1]), myftos(cl.viewangles[2])); }
+#endif // JSS_CAM
+
+
 void CL_InitCam(void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SPECTATOR);
 // cl_hightrack {
@@ -554,6 +666,19 @@ void CL_InitCam(void) {
 	Cmd_AddCommand ("track3", CL_TrackMV3_f);	
 	Cmd_AddCommand ("track4", CL_TrackMV4_f);
 	Cmd_AddCommand ("trackteam", CL_TrackTeam_f);	
+ 
+ #ifdef JSS_CAM
+	Cmd_AddCommand ("cam_pos", Cam_Pos_f);
+	Cmd_AddCommand ("cam_angles", Cam_Angles_f);
+	Cmd_AddMacro ("cam_pos_x", Macro_Cam_Pos_X);
+	Cmd_AddMacro ("cam_pos_y", Macro_Cam_Pos_Y);
+	Cmd_AddMacro ("cam_pos_z", Macro_Cam_Pos_Z);
+	Cmd_AddMacro ("cam_pos", Macro_Cam_Pos);
+ 	Cmd_AddMacro ("cam_angles_pitch", Macro_Cam_Angles_Pitch);
+ 	Cmd_AddMacro ("cam_angles_yaw", Macro_Cam_Angles_Yaw);
+ 	Cmd_AddMacro ("cam_angles_roll", Macro_Cam_Angles_Roll);
+ 	Cmd_AddMacro ("cam_angles", Macro_Cam_Angles);
+ #endif
  
 	nTrack1 = -1;
 	nTrack2 = -1;
