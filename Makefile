@@ -95,7 +95,7 @@ $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR):
 	$(MKDIR)
 
 # compiler flags
-PRJ_CFLAGS =-DWITH_ZLIB -DWITH_PNG -DEMBED_TCL
+PRJ_CFLAGS =-DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM
 XMMS_CFLAGS =-DWITH_XMMS `glib-config --cflags`
 BASE_CFLAGS =-Wall -Wsign-compare $(PRJ_CFLAGS) $(ARCH_CFLAGS) -funsigned-char
 BASE_RELEASE_CFLAGS = -pipe -O2 -fno-strict-aliasing -ffast-math -fomit-frame-pointer -fexpensive-optimizations
