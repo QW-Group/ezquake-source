@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.14 2006-04-08 16:28:16 tonik Exp $
+	$Id: cl_tent.c,v 1.15 2006-05-30 00:39:55 johnnycz Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -592,7 +592,7 @@ void CL_UpdateBeams (void) {
 			//The infamous d-light glow has been replaced with a simple corona so it doesn't light up the room anymore
 			if (amf_coronas.value && amf_lightning.value && !cl.paused)
 			{
-				if (b->entity == cl.viewplayernum + 1 && !amf_camera_chase.value)
+				if (b->entity == cl.viewplayernum + 1 && !((cls.demoplayback || cl.spectator) && amf_camera_chase.value))
 					NewCorona (C_SMALLLIGHTNING, org);
 				else
 					NewCorona (C_LIGHTNING, org);
@@ -601,7 +601,7 @@ void CL_UpdateBeams (void) {
 			VectorAdd (org, dist, org);
 #ifdef GLQUAKE
 			//VULT LIGHTNING SPARKS
-			if (amf_lightning_sparks.value && !sparks && !cl.paused)
+			if (amf_lightning_sparks.value && (cls.demoplayback || cl.spectator) && !sparks && !cl.paused)
 			{
 				trace_t	trace;
 				trace = PM_TraceLine (org, b->end);

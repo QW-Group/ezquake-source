@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.36 2006-05-29 23:55:12 johnnycz Exp $
+	$Id: rulesets.c,v 1.37 2006-05-30 00:39:55 johnnycz Exp $
 
 */
 
@@ -121,7 +121,7 @@ static void Rulesets_Smackdown(void) {
 	extern cvar_t r_aliasstats;
 #endif
 #ifdef GLQUAKE
-	extern cvar_t amf_camera_death, amf_camera_chase, amf_part_gunshot_type, amf_part_traillen, amf_part_trailtime, amf_part_trailwidth, amf_part_traildetail, amf_part_trailtype, amf_part_sparks, amf_part_spikes, amf_part_gunshot, amf_waterripple, amf_lightning, amf_lightning_size, amf_lightning_size, amf_lightning_sparks;
+	extern cvar_t amf_part_gunshot_type, amf_part_traillen, amf_part_trailtime, amf_part_trailwidth, amf_part_traildetail, amf_part_trailtype, amf_part_sparks, amf_part_spikes, amf_part_gunshot, amf_lightning, amf_lightning_size, amf_lightning_size;
 	extern qbool qmb_initialized;
 #endif
 	int i;
@@ -130,12 +130,8 @@ static void Rulesets_Smackdown(void) {
 
 	locked_cvar_t disabled_cvars[] = {
 #ifdef GLQUAKE
-		{&amf_camera_chase, "0"},
-		{&amf_camera_death, "0"},
 		{&amf_part_sparks, "0"},
-		{&amf_waterripple, "0"},
 		{&amf_lightning, "0"},
-		{&amf_lightning_sparks, "0"},
 #endif
 		{&cl_hud, "0"},
 		{&cl_rollalpha, "20"},
@@ -200,7 +196,7 @@ block all other ways to made textures flat(simple)
 */
 	extern cvar_t cl_c2spps, r_fullbrightSkins;
 #ifdef GLQUAKE
-	extern cvar_t amf_camera_chase, amf_waterripple, amf_detpacklights;
+	extern cvar_t amf_detpacklights;
 	extern cvar_t gl_picmip, gl_max_size, r_drawflat;
 	extern cvar_t vid_hwgammacontrol;
 #endif
@@ -210,8 +206,6 @@ block all other ways to made textures flat(simple)
 	locked_cvar_t disabled_cvars[] = {
 #ifdef GLQUAKE
 		{&r_drawflat, "0"},
-		{&amf_camera_chase, "0"},
-		{&amf_waterripple, "0"},
 		{&amf_detpacklights, "0"},
 		{&vid_hwgammacontrol, "1"}, 
 #endif
