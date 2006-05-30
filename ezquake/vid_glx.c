@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/vt.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
@@ -34,16 +33,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
 
+#ifdef WITH_VMODE
+#include <X11/extensions/xf86vmode.h>
+#endif
+
 #ifdef WITH_DGA
 #include <X11/extensions/xf86dga.h>
 #endif
 
-
-
-
-#ifdef WITH_VMODE
-#include <X11/extensions/xf86vmode.h>
-#endif
 #ifdef WITH_KEYMAP
 #include "keymap.h"
 extern void IN_Keycode_Print_f( XKeyEvent *ev, qbool ext, qbool down, int key );
@@ -68,7 +65,8 @@ static Display *vid_dpy = NULL;
 static Window vid_window;
 static GLXContext ctx = NULL;
 
-static float old_windowed_mouse = 0, mouse_x, mouse_y, old_mouse_x, old_mouse_y;
+static float mouse_x, mouse_y, old_mouse_x, old_mouse_y;
+static qbool input_grabbed = false;
 
 #define WARP_WIDTH		320
 #define WARP_HEIGHT		200
@@ -76,7 +74,7 @@ static float old_windowed_mouse = 0, mouse_x, mouse_y, old_mouse_x, old_mouse_y;
 #define KEY_MASK (KeyPressMask | KeyReleaseMask)
 #define MOUSE_MASK (ButtonPressMask | ButtonReleaseMask | PointerMotionMask)
 
-#define X_MASK (KEY_MASK | MOUSE_MASK | VisibilityChangeMask | StructureNotifyMask | FocusChangeMask)
+#define X_MASK (KEY_MASK | MOUSE_MASK | VisibilityChangeMask | StructureNotifyMask)
 
 unsigned short *currentgammaramp = NULL;
 static unsigned short systemgammaramp[3][256];
@@ -116,14 +114,23 @@ static int vid_minimized = 0;
 
 cvar_t	vid_ref = {"vid_ref", "gl", CVAR_ROM};
 cvar_t	vid_mode = {"vid_mode", "0"};
-qbool OnChange_windowed_mouse(cvar_t *, char *);
+
+cvar_t	_windowed_mouse = {"_windowed_mouse",
 #ifdef NDEBUG
-cvar_t	_windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE, OnChange_windowed_mouse};
-cvar_t  auto_grabmouse = {"auto_grabmouse", "1"};
+	"1"
 #else
-cvar_t	_windowed_mouse = {"_windowed_mouse", "0", CVAR_ARCHIVE, OnChange_windowed_mouse};
-cvar_t  auto_grabmouse = {"auto_grabmouse", "0"};
+	"0"
 #endif
+, CVAR_ARCHIVE};
+
+cvar_t  auto_grabmouse = {"auto_grabmouse",
+#ifdef NDEBUG
+	 "1"
+#else
+	"0"
+#endif
+};
+
 cvar_t	m_filter = {"m_filter", "0"};
 cvar_t	cl_keypad = {"cl_keypad", "1"};
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
@@ -137,7 +144,7 @@ extern int glXWaitVideoSyncSGI (int, int, unsigned int *);
 cvar_t	vid_vsync = {"vid_vsync", "0"};
 
 void GL_Init_GLX(void);
-void VID_Minimize_f(void);
+//void VID_Minimize_f(void);
 
 void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height) {}
 
@@ -149,22 +156,28 @@ void VID_UnlockBuffer() {}
 
 void VID_LockBuffer() {}
 
-void VID_SetCaption (char *text) {}
+void VID_SetCaption (char *text)
+{
+	if (!vid_dpy)
+		return;
+	XStoreName (vid_dpy, vid_window, text);
+}
 
 /************************************* KEY MAPPINGS *************************************/
 
-int XLateKey(XKeyEvent *ev) {
+static int XLateKey(XKeyEvent *ev) {
 	int key, kp;
-	char buf[64];
+	//char buf[64];
 	KeySym keysym;
 
 	key = 0;
 	kp = (int) cl_keypad.value;
 
-	XLookupString(ev, buf, sizeof buf, &keysym, 0);
+	keysym = XLookupKeysym (ev, 0);
+	//XLookupString(ev, buf, sizeof (buf), &keysym, 0);
 
 	switch(keysym) {
-		case XK_Scroll_Lock:		key = K_SCRLCK; break;
+		case XK_Scroll_Lock:	key = K_SCRLCK; break;
 
 		case XK_Caps_Lock:		key = K_CAPSLOCK; break;
 
@@ -173,7 +186,7 @@ int XLateKey(XKeyEvent *ev) {
 		case XK_KP_Page_Up:		key = kp ? KP_PGUP : K_PGUP; break;
 		case XK_Page_Up:		key = K_PGUP; break;
 
-		case XK_KP_Page_Down:		key = kp ? KP_PGDN : K_PGDN; break;
+		case XK_KP_Page_Down:	key = kp ? KP_PGDN : K_PGDN; break;
 		case XK_Page_Down:		key = K_PGDN; break;
 
 		case XK_KP_Home:		key = kp ? KP_HOME : K_HOME; break;
@@ -194,7 +207,7 @@ int XLateKey(XKeyEvent *ev) {
 
 		case XK_KP_Up:			key = kp ? KP_UPARROW : K_UPARROW; break;
 
-		case XK_Up:			key = K_UPARROW; break;
+		case XK_Up:				key = K_UPARROW; break;
 
 		case XK_Escape:			key = K_ESCAPE; break;
 
@@ -204,23 +217,23 @@ int XLateKey(XKeyEvent *ev) {
 
 		case XK_Tab:			key = K_TAB; break;
 
-		case XK_F1:			key = K_F1; break;
+		case XK_F1:				key = K_F1; break;
 
-		case XK_F2:			key = K_F2; break;
+		case XK_F2:				key = K_F2; break;
 
-		case XK_F3:			key = K_F3; break;
+		case XK_F3:				key = K_F3; break;
 
-		case XK_F4:			key = K_F4; break;
+		case XK_F4:				key = K_F4; break;
 
-		case XK_F5:			key = K_F5; break;
+		case XK_F5:				key = K_F5; break;
 
-		case XK_F6:			key = K_F6; break;
+		case XK_F6:				key = K_F6; break;
 
-		case XK_F7:			key = K_F7; break;
+		case XK_F7:				key = K_F7; break;
 
-		case XK_F8:			key = K_F8; break;
+		case XK_F8:				key = K_F8; break;
 
-		case XK_F9:			key = K_F9; break;
+		case XK_F9:				key = K_F9; break;
 
 		case XK_F10:			key = K_F10; break;
 
@@ -235,7 +248,7 @@ int XLateKey(XKeyEvent *ev) {
 
 		case XK_Pause:			key = K_PAUSE; break;
 
-		case XK_Shift_L:		key = K_LSHIFT; break;								
+		case XK_Shift_L:		key = K_LSHIFT; break;
 		case XK_Shift_R:		key = K_RSHIFT; break;
 
 		case XK_Execute: 
@@ -243,7 +256,7 @@ int XLateKey(XKeyEvent *ev) {
 		case XK_Control_R:		key = K_RCTRL; break;
 
 		case XK_Alt_L:	
-		case XK_Meta_L:			key = K_LALT; break;								
+		case XK_Meta_L:			key = K_LALT; break;
 		case XK_Alt_R:	
 		case XK_Meta_R:			key = K_RALT; break;
 
@@ -256,28 +269,56 @@ int XLateKey(XKeyEvent *ev) {
 		case XK_KP_Insert:		key = kp ? KP_INS : K_INS; break;
 		case XK_Insert:			key = K_INS; break;
 
-		case XK_KP_Multiply:		key = kp ? KP_STAR : '*'; break;
+		case XK_KP_Multiply:	key = kp ? KP_STAR : '*'; break;
 
 		case XK_KP_Add:			key = kp ? KP_PLUS : '+'; break;
 
-		case XK_KP_Subtract:		key = kp ? KP_MINUS : '-'; break;
+		case XK_KP_Subtract:	key = kp ? KP_MINUS : '-'; break;
 
 		case XK_KP_Divide:		key = kp ? KP_SLASH : '/'; break;
 
 
 		default:
-			key = *(unsigned char*)buf;
-			if (key >= 'A' && key <= 'Z')
-				key = key - 'A' + 'a';
+			if (keysym >= 32 && keysym <= 126) {
+				key = tolower(keysym);
+			}
 			break;
 	}
 	return key;
 }
 
+// hide the mouse cursor when in window
+static Cursor CreateNullCursor(Display *display, Window root) {
+	Pixmap cursormask;
+	XGCValues xgc;
+	GC gc;
+	XColor dummycolour;
+	Cursor cursor;
+
+	cursormask = XCreatePixmap(display, root, 1, 1, 1);
+	xgc.function = GXclear;
+	gc =  XCreateGC(display, cursormask, GCFunction, &xgc);
+	XFillRectangle(display, cursormask, gc, 0, 0, 1, 1);
+	dummycolour.pixel = 0;
+	dummycolour.red = 0;
+	dummycolour.flags = 04;
+	cursor = XCreatePixmapCursor(display, cursormask, cursormask,
+								 &dummycolour,&dummycolour, 0,0);
+	XFreePixmap(display,cursormask);
+	XFreeGC(display,gc);
+	return cursor;
+}
+
 static void install_grabs(void) {
+	int MajorVersion, MinorVersion;
 #ifdef WITH_DGA
 	int DGAflags = 0;
 #endif
+
+	input_grabbed = true;
+
+    // don't show mouse cursor icon
+    XDefineCursor(vid_dpy, vid_window, CreateNullCursor(vid_dpy, vid_window));
 
 	XGrabPointer(vid_dpy, vid_window,
 		True,
@@ -293,12 +334,15 @@ static void install_grabs(void) {
 	if (!COM_CheckParm("-nokdga"))
 		DGAflags |= XF86DGADirectKeyb;
 
-	if (!COM_CheckParm("-nodga") && DGAflags) {
+	if (!COM_CheckParm("-nodga") && DGAflags && XF86DGAQueryVersion(vid_dpy, &MajorVersion, &MinorVersion)) {
+		// let us hope XF86DGADirectMouse will work
 		XF86DGADirectVideo(vid_dpy, DefaultScreen(vid_dpy), DGAflags);
 		if (DGAflags & XF86DGADirectMouse)
 			dgamouse = 1;
 		if (DGAflags & XF86DGADirectKeyb)
 			dgakeyb = 1;
+
+		XWarpPointer(vid_dpy, None, vid_window, 0, 0, 0, 0, 0, 0); // oldman: this should be here really
 	} 
 	else
 #endif
@@ -315,6 +359,8 @@ static void install_grabs(void) {
 }
 
 static void uninstall_grabs(void) {
+	input_grabbed = false;
+
 #ifdef WITH_DGA
 	if (dgamouse || dgakeyb) {
 		XF86DGADirectVideo(vid_dpy, DefaultScreen(vid_dpy), 0);
@@ -324,19 +370,15 @@ static void uninstall_grabs(void) {
 
 	XUngrabPointer(vid_dpy, CurrentTime);
 	XUngrabKeyboard(vid_dpy, CurrentTime);
-}
 
-qbool OnChange_windowed_mouse(cvar_t *var, char *value) {
-	if (vidmode_active && !Q_atof(value)) {
-		Com_Printf("Cannot turn %s off when using fullscreen mode\n", var->name);
-		return true;
-	}
-	return false;
+	// show cursor again
+	XUndefineCursor(vid_dpy, vid_window);
 }
 
 static void GetEvent(void) {
+	int key;
 	XEvent event;
-	int    key;
+	qbool grab_input;
 
 	if (!vid_dpy)
 		return;
@@ -362,7 +404,7 @@ static void GetEvent(void) {
 		break;
 
 	case MotionNotify:
-		if (_windowed_mouse.value) {
+		if (input_grabbed) {
 	#ifdef WITH_EVDEV
 			if (evdev_mouse) break;
 	#endif
@@ -405,44 +447,20 @@ static void GetEvent(void) {
                         Key_Event(K_MOUSE5, event.type == ButtonPress); break;
 		}
 		break;
-
-	case MapNotify:
-		if (event.xmap.window == vid_window && auto_grabmouse.value) install_grabs();
-		if (!vidmode_active && !_windowed_mouse.value && auto_grabmouse.value) Cvar_Set(&_windowed_mouse, "1");
-		if (!vid_minimized) break;
-		vid_minimized = 0;
-		if (!vid_hwgammacontrol.value && vid_gammaworks)
-			Cvar_Set(&vid_hwgammacontrol, "1");
-#ifdef WITH_VMODE
-		if (vidmode_active) {
-			XDestroyWindow(vid_dpy, minimized_window);
-			XMapWindow(vid_dpy, vid_window);
-			if (new_vidmode)
-				XF86VidModeSwitchToMode(vid_dpy, scrnum, &newvmode);
-			else
-				XF86VidModeSwitchToMode(vid_dpy, scrnum, vidmodes[best_fit]);
-			XF86VidModeSetViewPort(vid_dpy, scrnum, 0, 0);
-		}
-#endif
-		break;
-
-	case UnmapNotify:
-		if (event.xunmap.window != vid_window) break;
-		Key_ClearStates();
-		if (vid_hwgammacontrol.value && vid_gammaworks)
-			Cvar_Set(&vid_hwgammacontrol, "0");
-		uninstall_grabs();
-		vid_minimized = 1;
-		break;
 	}
 
-	if (old_windowed_mouse != _windowed_mouse.value) {
-		old_windowed_mouse = _windowed_mouse.value;
+#ifdef WITH_VMODE
+    grab_input = _windowed_mouse.value != 0 || vidmode_active;
+#else
+    grab_input = _windowed_mouse.value != 0;
+#endif
 
-		if (!_windowed_mouse.value)
-			uninstall_grabs();
-		else
-			install_grabs();
+	if (grab_input && !input_grabbed) {
+		/* grab the pointer */
+		install_grabs();
+	} else if (!grab_input && input_grabbed) {
+		/* ungrab the pointer */
+		uninstall_grabs();
 	}
 }
 
@@ -507,7 +525,8 @@ void GL_Init_GLX(void) {
 
 void VID_ShiftPalette(unsigned char *p) {}
 
-void InitHWGamma (void) {
+void InitHWGamma (void)
+{
 	int xf86vm_gammaramp_size;
 
 	if (COM_CheckParm("-nohwgamma") && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) // FIXME
@@ -578,7 +597,10 @@ void GL_EndRendering (void) {
 			RestoreHWGamma ();
 	}
 
-	if (vid_minimized) { usleep(10*1000); return; }
+	if (vid_minimized) {
+		 usleep(10*1000);
+		 return;
+	}
 
 	WaitForVSync();
 
@@ -587,7 +609,7 @@ void GL_EndRendering (void) {
 }
 
 /************************************* VID MINIMIZE *************************************/
-
+/*
 void VID_Minimize_f(void) {
 #ifdef WITH_VMODE
 	if (vidmode_active) {
@@ -625,6 +647,7 @@ void VID_Minimize_f(void) {
 #endif
 	XIconifyWindow(vid_dpy, vid_window, scrnum);
 }
+*/
 
 /************************************* VID SHUTDOWN *************************************/
 
@@ -660,28 +683,8 @@ void VID_Shutdown(void) {
 
 /************************************* VID INIT *************************************/
 
-static Cursor CreateNullCursor(Display *display, Window root) {
-	Pixmap cursormask;
-	XGCValues xgc;
-	GC gc;
-	XColor dummycolour;
-	Cursor cursor;
-
-	cursormask = XCreatePixmap(display, root, 1, 1, 1);
-	xgc.function = GXclear;
-	gc =  XCreateGC(display, cursormask, GCFunction, &xgc);
-	XFillRectangle(display, cursormask, gc, 0, 0, 1, 1);
-	dummycolour.pixel = 0;
-	dummycolour.red = 0;
-	dummycolour.flags = 04;
-	cursor = XCreatePixmapCursor(display, cursormask, cursormask,
-		&dummycolour,&dummycolour, 0,0);
-	XFreePixmap(display,cursormask);
-	XFreeGC(display,gc);
-	return cursor;
-}
-
 void VID_Init(unsigned char *palette) {
+	int i;
 	int attrib[] = {
 		GLX_RGBA,
 		GLX_RED_SIZE, 1,
@@ -691,14 +694,15 @@ void VID_Init(unsigned char *palette) {
 		GLX_DEPTH_SIZE, 1,
 		None
 	};
-	int i, width = 640, height = 480;
+	int width = 640, height = 480;
 	XSetWindowAttributes attr;
 	unsigned long mask;
 	Window root;
 	XVisualInfo *visinfo;
 #ifdef WITH_VMODE
-	qbool fullscreen = false;
-	int MajorVersion, MinorVersion, actualWidth, actualHeight;
+	qbool fullscreen = true;
+	int MajorVersion, MinorVersion;
+	int actualWidth, actualHeight;
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
@@ -715,22 +719,13 @@ void VID_Init(unsigned char *palette) {
 	IN_StartupKeymap();
 #endif // WITH_KEYMAP
 
-	Cmd_AddCommand("vid_minimize", VID_Minimize_f);
+//	Cmd_AddCommand("vid_minimize", VID_Minimize_f);
 	Cvar_Register(&auto_grabmouse);
 
-	vid.colormap = host_colormap;
+	vid.colormap = host_colormap; // FIXME
 
-	if (!(vid_dpy = XOpenDisplay(NULL)))
-		Sys_Error("Error couldn't open the X display");
-
-	scrnum = DefaultScreen(vid_dpy);
-	
-	if (!(visinfo = glXChooseVisual(vid_dpy, scrnum, attrib)))
-		Sys_Error("Error couldn't get an RGB, Double-buffered, Depth visual");
-
-	scrnum = DefaultScreen(vid_dpy);
-	root = RootWindow(vid_dpy, scrnum);
-
+    // interpret command-line params
+    // fullscreen cmdline check
 #ifdef WITH_VMODE
 	if (!COM_CheckParm("-window") && !COM_CheckParm("-startwindowed"))
 		fullscreen = true;
@@ -766,6 +761,12 @@ void VID_Init(unsigned char *palette) {
 	if (vid.conheight < 200)
 		vid.conheight = 200;
 
+	if (!(vid_dpy = XOpenDisplay(NULL)))
+		Sys_Error("Error couldn't open the X display");
+
+	scrnum = DefaultScreen(vid_dpy);
+	root = RootWindow(vid_dpy, scrnum);
+	
 #ifdef WITH_VMODE
 	MajorVersion = MinorVersion = 0;
 	if (!XF86VidModeQueryVersion(vid_dpy, &MajorVersion, &MinorVersion)) {
@@ -776,6 +777,10 @@ void VID_Init(unsigned char *palette) {
 	}
 #endif
 
+	if (!(visinfo = glXChooseVisual(vid_dpy, scrnum, attrib)))
+		Sys_Error("Error couldn't get an RGB, Double-buffered, Depth visual");
+
+	// setup fullscreen size to fit display
 #ifdef WITH_VMODE
 	if (vidmode_ext) {
 		int best_dist, dist, x, y;
@@ -854,6 +859,7 @@ void VID_Init(unsigned char *palette) {
 	attr.event_mask = X_MASK;
 	mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
 
+	// if fullscreen disable window manager decoration
 #ifdef WITH_VMODE
 	// fullscreen
 	if (vidmode_active) {
@@ -865,8 +871,6 @@ void VID_Init(unsigned char *palette) {
 #endif
 
 	vid_window = XCreateWindow(vid_dpy, root, 0, 0, width, height,0, visinfo->depth, InputOutput, visinfo->visual, mask, &attr);
-
-	XDefineCursor(vid_dpy, vid_window, CreateNullCursor(vid_dpy, vid_window));
 
 	XStoreName(vid_dpy, vid_window, "ezQuake 0.31");
 	XSetIconName(vid_dpy, vid_window, "ezQuake 0.31");
@@ -918,7 +922,7 @@ void VID_Init(unsigned char *palette) {
 	if (fullscreen)
 		vid_windowedmouse = false;
 
-	vid.recalc_refdef = 1;				// force a surface cache flush
+	vid.recalc_refdef = 1; // force a surface cache flush
 
 #ifdef WITH_EVDEV
 	if ((i = COM_CheckParm("-mevdev")) && i + 1 < com_argc)
