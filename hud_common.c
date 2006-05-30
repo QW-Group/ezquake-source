@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.32 2006-05-28 01:26:41 johnnycz Exp $
+	$Id: hud_common.c,v 1.33 2006-05-30 19:13:34 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -1932,12 +1932,21 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 		&& style != FRAGS_EXTRA_SPEC_ONLY_POWERUPS)
 	{
 		armor_height = ROUND((cell_height / armor_bg_power) * armor);
-		Draw_AlphaFill(px,												// x
-						py + cell_height - (int)armor_height,			// y (draw from bottom up)
-						rl_picture.width,								// width
-						(int)armor_height,								// height
-						armor_bg_color,									// color
-						0.3);											// alpha						
+#ifdef GLQUAKE
+		Draw_AlphaFill
+#else
+		Draw_Fill
+#endif
+						(px												// x
+						,py + cell_height - (int)armor_height			// y (draw from bottom up)
+						,rl_picture.width								// width
+						,(int)armor_height								// height
+						,armor_bg_color									// color
+#ifdef GLQUAKE
+						,0.3);											// alpha
+#else
+						);												// no alpha @ software
+#endif
 	}
 
 	// Draw the rl if the current player has it and the style allows it.
