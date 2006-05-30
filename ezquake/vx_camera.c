@@ -38,15 +38,15 @@ void CameraRandomPoint(vec3_t org)
 void CameraUpdate (qbool dead)
 {
 	vec3_t dest, destangles;
-	if (amf_camera_chase.value == 1)
+	if ((cls.demoplayback || cl.spectator) && amf_camera_chase.value == 1)
 		cameratype = C_CHASECAM;
-	else if (amf_camera_chase.value == 2)
+	else if ((cls.demoplayback || cl.spectator) && amf_camera_chase.value == 2)
 	{
 		if (cameratype == C_NORMAL)
 			CameraRandomPoint(cl.simorg);
 		cameratype = C_EXTERNAL;
 	}
-	else if (dead && amf_camera_death.value)
+	else if (dead && (cls.demoplayback || cl.spectator) && amf_camera_death.value)
 	{
 		if (cameratype == C_NORMAL)
 			CameraRandomPoint(cl.simorg);

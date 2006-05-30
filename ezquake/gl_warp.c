@@ -198,7 +198,7 @@ void EmitFlatWaterPoly (msurface_t *fa) {
 	int i;
 	vec3_t nv;
 
-	if (!amf_waterripple.value || strstr(fa->texinfo->texture->name, "tele")) {
+	if (!amf_waterripple.value || !(cls.demoplayback || cl.spectator) || strstr(fa->texinfo->texture->name, "tele")) {
 		EmitFlatPoly (fa);
 		return;
 	}
@@ -298,7 +298,7 @@ void EmitWaterPolys (msurface_t *fa) {
 				//I got this one from the QMB engine though
 				VectorCopy(v, nv);
 				//Over 20 this setting gets pretty cheaty
-				if (amf_waterripple.value && !strstr (fa->texinfo->texture->name, "tele"))
+				if (amf_waterripple.value && (cls.demoplayback || cl.spectator) && !strstr (fa->texinfo->texture->name, "tele"))
 					nv[2] = v[2] + (bound(0, amf_waterripple.value, 20)) *sin(v[0]*0.02+r_refdef2.time)*sin(v[1]*0.02+r_refdef2.time)*sin(v[2]*0.02+r_refdef2.time);
 
 				glTexCoord2f (s, t);
