@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.38 2006-05-30 00:44:12 johnnycz Exp $
+	$Id: rulesets.c,v 1.39 2006-05-30 11:57:29 johnnycz Exp $
 
 */
 
@@ -121,21 +121,20 @@ static void Rulesets_Smackdown(void) {
 	extern cvar_t r_aliasstats;
 #endif
 #ifdef GLQUAKE
-	extern cvar_t amf_part_gunshot_type, amf_part_traillen, amf_part_trailtime, amf_part_trailwidth, amf_part_traildetail, amf_part_trailtype, amf_part_sparks, amf_part_spikes, amf_part_gunshot, amf_lightning, amf_lightning_size;
+	extern cvar_t amf_part_gunshot_type, amf_part_traillen, amf_part_trailtime, amf_part_trailwidth, amf_part_traildetail, amf_part_trailtype, amf_part_spikes, amf_part_gunshot, amf_lightning;
 	extern qbool qmb_initialized;
 #endif
 	int i;
 
-#define NOQMB_SKIP_LOCKED 6
+#define NOQMB_SKIP_LOCKED 1
 
 	locked_cvar_t disabled_cvars[] = {
 #ifdef GLQUAKE
-		{&amf_part_sparks, "0"},
-		{&amf_lightning, "0"},
+		{&amf_lightning, "0"},		// some people think you can shaft better with this, needs new discussion after fakeshaft has been enabled
 #endif
-		{&cl_hud, "0"},
-		{&cl_rollalpha, "20"},
-		{&r_shiftbeam, "0"},
+		{&cl_hud, "0"},				// allows you place any text on the screen & filter incoming messages (hud strings)
+		{&cl_rollalpha, "20"},		// allows you to not dodge while seeing enemies dodging
+		{&r_shiftbeam, "0"},		// perphaps some people would think this allows you to aim better (maybe should be added for demo playback and spectating only)
 #ifndef GLQUAKE
 		{&r_aliasstats, "0"}
 #endif
@@ -143,6 +142,8 @@ static void Rulesets_Smackdown(void) {
 	
 #ifdef GLQUAKE
 		limited_cvar_max_t limited_max_cvars[] = {
+		// some of these would allow you to create really bogus eyecandy effects
+		// and therefore make noticing where enemy was shooting easier
 		{&amf_part_gunshot_type, "1"},
 		{&amf_part_traillen, "1"},
 		{&amf_part_trailtime, "1"},
@@ -151,11 +152,10 @@ static void Rulesets_Smackdown(void) {
 		{&amf_part_trailtype, "1"},
 		{&amf_part_spikes, "1"},
 		{&amf_part_gunshot, "1"},
-		{&amf_lightning_size, "1"},
 		};
 
 	if (!qmb_initialized)
-		i = NOQMB_SKIP_LOCKED + 1;
+		i = NOQMB_SKIP_LOCKED;
 	else
 #endif
 		i = 0;
@@ -179,13 +179,13 @@ static void Rulesets_Smackdown(void) {
 
 	if (cl_independentPhysics.value)
 	{
-		Cvar_Set(&cl_c2spps, "0");
+		Cvar_Set(&cl_c2spps, "0");	// people were complaining that player move is jerky with this. however this has not much to do with independent physics, but people are too paranoid about it
 		Cvar_SetFlags(&cl_c2spps, Cvar_GetFlags(&cl_c2spps) | CVAR_ROM);
 	}
 
 	rulesetDef.maxfps = 77;
 	rulesetDef.restrictTriggers = true;
-	rulesetDef.restrictPacket = true;
+	rulesetDef.restrictPacket = true;	// packet command could have been exploited for external timers
 	rulesetDef.ruleset = rs_smackdown;
 }
 static void Rulesets_MTFL(void) {
