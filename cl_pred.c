@@ -28,6 +28,10 @@ cvar_t	cl_pushlatency = {"pushlatency", "0"};
 extern cvar_t cl_independentPhysics;
 
 #ifdef JSS_CAM
+cvar_t cam_thirdperson = {"cam_thirdperson", "0"};
+cvar_t cam_dist = {"cam_dist", "100"};
+cvar_t cam_lockdir = {"cam_lockdir", "0"};
+cvar_t cam_lockpos = {"cam_lockpos", "0"};
 static vec3_t saved_angles;
 qbool clpred_newpos = false;
 #endif
@@ -58,7 +62,7 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	pmove.cmd = *u;
 
 #ifdef JSS_CAM
-	if (Cvar_VariableValue("cam_lockdir")) {
+	if (cam_lockdir.value) {
 		VectorCopy (saved_angles, pmove.cmd.angles);
 		VectorCopy (saved_angles, pmove.angles);
 	}
@@ -315,9 +319,9 @@ void CL_PredictMove (void) {
 	if (cls.demoplayback && cl.spectator && cl.viewplayernum != cl.playernum) {
 		VectorCopy (to->playerstate[cl.viewplayernum].velocity, cl.simvel);
 #ifdef JSS_CAM
-		if (!(Cvar_VariableValue ("cam_thirdperson") && Cvar_VariableValue("cam_lockpos")) && !clpred_newpos)
+		if (!(cam_thirdperson.value && cam_lockpos.value) && !clpred_newpos)
 			VectorCopy (to->playerstate[cl.viewplayernum].origin, cl.simorg);
-		if (!Cvar_VariableValue ("cam_thirdperson"))
+		if (!cam_thirdperson.value))
 			VectorCopy (to->playerstate[cl.viewplayernum].viewangles, cl.simangles);
 #endif
 		CL_CategorizePosition ();
@@ -388,7 +392,7 @@ if (!cls.demoplayback && cl_independentPhysics.value != 0)
     CL_CalcCrouch ();
 
 #ifdef JSS_CAM
-	if (Cvar_VariableValue ("cam_thirdperson") && Cvar_VariableValue("cam_lockpos")
+	if (cam_thirdperson.value && cam_lockpos.value)
 		&& cl.viewplayernum != cl.playernum) {
 		vec3_t v;
 		player_state_t *pstate;
@@ -402,7 +406,7 @@ if (!cls.demoplayback && cl_independentPhysics.value != 0)
 		cl.simangles[PITCH] = -cl.simangles[PITCH];
 	}
 	else
-	if (Cvar_VariableValue ("cam_thirdperson") && cl.viewplayernum != cl.playernum) {
+	if (cam_thirdperson.value && cl.viewplayernum != cl.playernum) {
 		int i;
 		player_state_t *pstate;
 		vec3_t fw, rt, up;
@@ -422,7 +426,7 @@ foundsomeone:
 		pstate = &cl.frames[cl.parsecount & UPDATE_MASK].playerstate[i];
 
 		AngleVectors (cl.simangles, fw, rt, up);
-		VectorMA (pstate->origin, -Cvar_VariableValue("cam_dist"), fw, cl.simorg);
+		VectorMA (pstate->origin, -cam_dist.value, fw, cl.simorg);
 
 	}
 #endif	// JSS_CAM
@@ -439,9 +443,9 @@ void CL_InitPrediction (void) {
 	Cvar_ResetCurrentGroup();
 
 #ifdef JSS_CAM	
-	Cmd_ExecuteString ("set cam_lockdir 0");
-	Cmd_ExecuteString ("set cam_lockpos 0");
-	Cmd_ExecuteString ("set cam_thirdperson 0");
-	Cmd_ExecuteString ("set cam_dist 100");
+	Cvar_Register (&cam_thirdperson);
+	Cvar_Register (&cam_dist);
+	Cvar_Register (&cam_lockdir);
+	Cvar_Register (&cam_lockpos);
 #endif
 } 
