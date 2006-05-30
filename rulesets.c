@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.37 2006-05-30 00:39:55 johnnycz Exp $
+	$Id: rulesets.c,v 1.38 2006-05-30 00:44:12 johnnycz Exp $
 
 */
 
@@ -121,7 +121,7 @@ static void Rulesets_Smackdown(void) {
 	extern cvar_t r_aliasstats;
 #endif
 #ifdef GLQUAKE
-	extern cvar_t amf_part_gunshot_type, amf_part_traillen, amf_part_trailtime, amf_part_trailwidth, amf_part_traildetail, amf_part_trailtype, amf_part_sparks, amf_part_spikes, amf_part_gunshot, amf_lightning, amf_lightning_size, amf_lightning_size;
+	extern cvar_t amf_part_gunshot_type, amf_part_traillen, amf_part_trailtime, amf_part_trailwidth, amf_part_traildetail, amf_part_trailtype, amf_part_sparks, amf_part_spikes, amf_part_gunshot, amf_lightning, amf_lightning_size;
 	extern qbool qmb_initialized;
 #endif
 	int i;
