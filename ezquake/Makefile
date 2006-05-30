@@ -44,18 +44,23 @@ endif
 
 ifeq ($(ARCH),x86)              # Linux/x86
 	DEFAULT_TARGET = glx
+	LIB_PREFIX = linux
 endif
 ifeq ($(ARCH),powerpc)          # Linux/PPC
 	DEFAULT_TARGET = glx
+	LIB_PREFIX = FIXME	#FIXME
 endif
 ifeq ($(ARCH),mingw32)          # Win32/x86 in MingW environment
 	DEFAULT_TARGET = glx	#FIXME
+	LIB_PREFIX = win32
 endif
 ifeq ($(ARCH),ppc)              # MacOS-X/ppc
 	DEFAULT_TARGET = mac
+	LIB_PREFIX = mac
 endif
 ifeq ($(ARCH),macx86)           # MacOS-X/x86
 	DEFAULT_TARGET = mac
+	LIB_PREIFX = FIXME	#FIXME
 endif
 
 default_target: $(DEFAULT_TARGET)
@@ -97,7 +102,7 @@ $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR):
 # compiler flags
 PRJ_CFLAGS =-DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM
 XMMS_CFLAGS =-DWITH_XMMS `glib-config --cflags`
-BASE_CFLAGS =-Wall -Wsign-compare $(PRJ_CFLAGS) $(ARCH_CFLAGS) -funsigned-char
+BASE_CFLAGS =-Wall $(PRJ_CFLAGS) $(ARCH_CFLAGS) -funsigned-char
 BASE_RELEASE_CFLAGS = -pipe -O2 -fno-strict-aliasing -ffast-math -fomit-frame-pointer -fexpensive-optimizations
 ifeq ($(CC_BASEVERSION),4) # auto vectorize if we're using gcc4.0+
 	BASE_RELEASE_CFLAGS +=-ftree-vectorize
@@ -146,7 +151,7 @@ GLCFLAGS=$(ARCH_GLCFLAGS) $(BASE_GLCFLAGS)
 CFLAGS += $(RELEASE_CFLAGS)
 LDFLAGS := -lm -ldl -lpthread
 
-COMMON_OBJS := libs/libpng.a libs/zlib.a libs/libpcre.a libs/libexpat.a libs/libtcl8.4.a libs/libglib.a libs/libjpeg.a
+COMMON_OBJS := libs/$(LIB_PREFIX)/libpng.a libs/$(LIB_PREFIX)/zlib.a libs/$(LIB_PREFIX)/libpcre.a libs/$(LIB_PREFIX)/libexpat.a libs/$(LIB_PREFIX)/libtcl8.4.a libs/$(LIB_PREFIX)/libjpeg.a
 
 include Makefile.list
 
@@ -162,7 +167,7 @@ GLX_CFLAGS := $(CFLAGS) $(GLCFLAGS) -DGLQUAKE -DWITH_JPEG -I/usr/X11R6/include
 GLX_LDFLAGS := $(LDFLAGS) -lGL -L/usr/X11R6/lib -lX11 -lXext # -lXxf86dga -lXxf86vm
 
 glx: _DIR := $(GLX_DIR)
-glx: _OBJS := $(GLX_C_OBJS) $(GLX_S_OBJS) $(COMMON_OBJS) /usr/lib/libXxf86vm.a /usr/lib/libXxf86dga.a
+glx: _OBJS := $(GLX_C_OBJS) $(GLX_S_OBJS) $(COMMON_OBJS) libs/$(LIB_PREFIX)/libglib.a /usr/lib/libXxf86vm.a /usr/lib/libXxf86dga.a
 glx: _LDFLAGS := $(GLX_LDFLAGS)
 glx: _CFLAGS := $(GLX_CFLAGS)
 glx: $(GLX_TARGET)
@@ -198,7 +203,7 @@ X11_CFLAGS := $(CFLAGS) -D_Soft_X11
 X11_LDFLAGS := $(LDFLAGS) -L/usr/X11R6/lib -lX11 -lXext 
 
 x11: _DIR := $(X11_DIR)
-x11: _OBJS := $(X11_C_OBJS) $(X11_S_OBJS) $(COMMON_OBJS)
+x11: _OBJS := $(X11_C_OBJS) $(X11_S_OBJS) $(COMMON_OBJS) libs/$(LIB_PREFIX)/libglib.a
 x11: _LDFLAGS := $(X11_LDFLAGS)
 x11: _CFLAGS := $(X11_CFLAGS)
 x11: $(X11_TARGET)
@@ -234,7 +239,7 @@ SVGA_CFLAGS := $(CFLAGS) -D_Soft_SVGA
 SVGA_LDFLAGS := $(LDFLAGS) -lvga
 
 svga: _DIR := $(SVGA_DIR)
-svga: _OBJS := $(SVGA_C_OBJS) $(SVGA_S_OBJS) $(COMMON_OBJS)
+svga: _OBJS := $(SVGA_C_OBJS) $(SVGA_S_OBJS) $(COMMON_OBJS) libs/$(LIB_PREFIX)/libglib.a #FIXME xmms control for 'console' binary?
 svga: _LDFLAGS := $(SVGA_LDFLAGS)
 svga: _CFLAGS := $(SVGA_CFLAGS)
 svga: $(SVGA_TARGET)
@@ -266,10 +271,10 @@ MAC_C_OBJS := $(addprefix $(MAC_DIR)/, $(addsuffix .o, $(MAC_C_FILES)))
 
 MAC_CFLAGS := $(CFLAGS) $(GLCFLAGS) -DGLQUAKE -DWITH_JPEG
 
-MAC_LDFLAGS := $(LDFLAGS) -L/sw/lib -lexpat -lpcre -ltcl -ljpeg -lpng -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
+MAC_LDFLAGS := $(LDFLAGS) -L/sw/lib -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
 
 mac: _DIR := $(MAC_DIR)
-mac: _OBJS := $(MAC_C_OBJS)
+mac: _OBJS := $(MAC_C_OBJS) $(COMMON_OBJS)
 mac: _LDFLAGS := $(MAC_LDFLAGS)
 mac: _CFLAGS := $(MAC_CFLAGS)
 mac: $(MAC_TARGET)
