@@ -321,7 +321,7 @@ void CL_PredictMove (void) {
 #ifdef JSS_CAM
 		if (!(cam_thirdperson.value && cam_lockpos.value) && !clpred_newpos)
 			VectorCopy (to->playerstate[cl.viewplayernum].origin, cl.simorg);
-		if (!cam_thirdperson.value))
+		if (!cam_thirdperson.value)
 			VectorCopy (to->playerstate[cl.viewplayernum].viewangles, cl.simangles);
 #endif
 		CL_CategorizePosition ();
@@ -392,8 +392,7 @@ if (!cls.demoplayback && cl_independentPhysics.value != 0)
     CL_CalcCrouch ();
 
 #ifdef JSS_CAM
-	if (cam_thirdperson.value && cam_lockpos.value)
-		&& cl.viewplayernum != cl.playernum) {
+	if (cam_thirdperson.value && cam_lockpos.value && cl.viewplayernum != cl.playernum) {
 		vec3_t v;
 		player_state_t *pstate;
 		int i;
