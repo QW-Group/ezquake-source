@@ -103,7 +103,7 @@ $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR):
 PRJ_CFLAGS =-DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM
 XMMS_CFLAGS =-DWITH_XMMS `glib-config --cflags`
 BASE_CFLAGS =-Wall $(PRJ_CFLAGS) $(ARCH_CFLAGS) -funsigned-char
-BASE_RELEASE_CFLAGS = -pipe -O2 -fno-strict-aliasing -ffast-math -fomit-frame-pointer -fexpensive-optimizations
+BASE_RELEASE_CFLAGS =-pipe -O2 -fno-strict-aliasing -ffast-math -fomit-frame-pointer -fexpensive-optimizations
 ifeq ($(CC_BASEVERSION),4) # auto vectorize if we're using gcc4.0+
 	BASE_RELEASE_CFLAGS +=-ftree-vectorize
 else # if we're not auto-vectorizing then we can unroll the loops (mdfour ahoy)
@@ -151,7 +151,7 @@ GLCFLAGS=$(ARCH_GLCFLAGS) $(BASE_GLCFLAGS)
 CFLAGS += $(RELEASE_CFLAGS)
 LDFLAGS := -lm -ldl -lpthread
 
-COMMON_OBJS := libs/$(LIB_PREFIX)/libpng.a libs/$(LIB_PREFIX)/zlib.a libs/$(LIB_PREFIX)/libpcre.a libs/$(LIB_PREFIX)/libexpat.a libs/$(LIB_PREFIX)/libtcl8.4.a libs/$(LIB_PREFIX)/libjpeg.a
+COMMON_OBJS := libs/$(LIB_PREFIX)/libpng.a libs/$(LIB_PREFIX)/libz.a libs/$(LIB_PREFIX)/libpcre.a libs/$(LIB_PREFIX)/libexpat.a libs/$(LIB_PREFIX)/libtcl8.4.a libs/$(LIB_PREFIX)/libjpeg.a
 
 include Makefile.list
 
