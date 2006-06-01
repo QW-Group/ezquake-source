@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.45 2006-04-14 08:58:54 oldmanuk Exp $
+	$Id: menu.c,v 1.46 2006-06-01 12:29:36 johnnycz Exp $
 
 */
 
@@ -702,14 +702,14 @@ char *bindnames[][2] =
 	{"+moveright",      "move right"},
 	{"impulse 12",      "previous weapon"},
 	{"impulse 10",      "next weapon"},
-	{"impulse 1",       "axe"},
-	{"impulse 2",       "shotgun"},
-	{"impulse 3",       "super shotgun"},
-	{"impulse 4",       "nailgun"},
-	{"impulse 5",       "super nailgun"},
-	{"impulse 6",       "grenade launcher"},
-	{"impulse 7",       "rocket launcher"},
-	{"impulse 8",       "thunderbolt"},
+	{"weapon 1",       "axe"},
+	{"weapon 2",       "shotgun"},
+	{"weapon 3",       "super shotgun"},
+	{"weapon 4",       "nailgun"},
+	{"weapon 5",       "super nailgun"},
+	{"weapon 6",       "grenade launcher"},
+	{"weapon 7",       "rocket launcher"},
+	{"weapon 8",       "thunderbolt"},
 };
 
 #define    NUMCOMMANDS    (sizeof(bindnames)/sizeof(bindnames[0]))
