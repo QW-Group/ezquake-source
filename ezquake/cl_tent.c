@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.15 2006-05-30 00:39:55 johnnycz Exp $
+	$Id: cl_tent.c,v 1.16 2006-06-01 16:50:18 johnnycz Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -188,7 +188,7 @@ void CL_ParseTEnt (void) {
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
 #ifdef GLQUAKE
-		if (amf_part_sparks.value)
+		if (amf_part_sparks.value && !Rulesets_RestrictParticles())
 		{
 			col[0] = 0; col[1] = 124; col[2] = 0;
 			SparkGen (pos, col, 20, 90, 1);
@@ -204,7 +204,7 @@ void CL_ParseTEnt (void) {
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
 #ifdef GLQUAKE
-		if (amf_part_sparks.value)
+		if (amf_part_sparks.value && !Rulesets_RestrictParticles())
 		{
 			col[0] = 255; col[1] = 77; col[2] = 0;
 			SparkGen (pos, col, 20, 150, 1);
@@ -220,7 +220,7 @@ void CL_ParseTEnt (void) {
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
 #ifdef GLQUAKE
-		if (amf_part_spikes.value)
+		if (amf_part_spikes.value && !Rulesets_RestrictParticles())
 			VXNailhit (pos, 10*amf_part_spikes.value);
 		else
 #endif
@@ -243,7 +243,7 @@ void CL_ParseTEnt (void) {
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
 #ifdef GLQUAKE
-		if (amf_part_spikes.value)
+		if (amf_part_spikes.value && !Rulesets_RestrictParticles())
 			VXNailhit (pos, 20*amf_part_spikes.value);
 		else
 #endif
@@ -423,7 +423,7 @@ void CL_ParseTEnt (void) {
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
 #ifdef GLQUAKE
-		if (amf_part_gunshot.value)
+		if (amf_part_gunshot.value && !Rulesets_RestrictParticles())
 			VXGunshot (pos, 5*cnt*amf_part_gunshot.value);
 		else
 #endif
@@ -558,7 +558,7 @@ void CL_UpdateBeams (void) {
 		for ( ; d > 0; d -= 30) 
 		{
 #ifdef GLQUAKE
-			if (!amf_lightning.value)
+			if (!amf_lightning.value || Rulesets_RestrictParticles())
 			{
 #endif
 				VectorCopy (org, ent.origin);

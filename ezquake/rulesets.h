@@ -28,4 +28,5 @@ qbool Rulesets_AllowTimerefresh(void);
 float Rulesets_MaxFPS(void);
 qbool Rulesets_RestrictTriggers(void);
 qbool Rulesets_RestrictPacket(void);
+qbool Rulesets_RestrictParticles(void);
 qbool Rulesets_AllowNoShadows(void);
