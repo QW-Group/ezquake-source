@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cvar_t	cl_nodelta = {"cl_nodelta","0"};
 cvar_t	cl_c2spps = {"cl_c2spps","0"};
 cvar_t	cl_c2sImpulseBackup = {"cl_c2sImpulseBackup","3"};
+cvar_t  cl_weaponhide = {"cl_weaponhide", "0"};
+cvar_t  cl_weaponpreselect = {"cl_weaponpreselect", "0"};
 
 cvar_t	cl_smartjump = {"cl_smartjump", "1"};
 
@@ -64,6 +66,10 @@ kbutton_t	in_strafe, in_speed, in_use, in_jump, in_attack;
 kbutton_t	in_up, in_down;
 
 int			in_impulse;
+#define MAXWEAPONS 10
+int weapon_order[MAXWEAPONS];
+
+int IN_BestWeapon (void);
 
 void KeyDown (kbutton_t *b) {
 	int k;
@@ -158,8 +164,19 @@ void IN_SpeedUp(void) {KeyUp(&in_speed);}
 void IN_StrafeDown(void) {KeyDown(&in_strafe);}
 void IN_StrafeUp(void) {KeyUp(&in_strafe);}
 
-void IN_AttackDown(void) {KeyDown(&in_attack);}
-void IN_AttackUp(void) {KeyUp(&in_attack);}
+void IN_AttackDown(void) {
+	int best;
+	if (cl_weaponpreselect.value && (best = IN_BestWeapon()))
+			in_impulse = best;
+	
+	KeyDown(&in_attack);
+}
+
+void IN_AttackUp(void) {
+	if (cl_weaponhide.value)
+		in_impulse = cl_weaponhide.value;
+	KeyUp(&in_attack);
+}
 
 void IN_UseDown (void) {KeyDown(&in_use);}
 void IN_UseUp (void) {KeyUp(&in_use);}
@@ -185,24 +202,23 @@ void IN_JumpUp(void) {
 	KeyUp(&in_jump);
 }
 
+// called within 'impulse' or 'weapon' commands, remembers it's first 10 (MAXWEAPONS) arguments
+void IN_RememberWpOrder (void) {
+	int i, c;
+	c = Cmd_Argc() - 1;
 
+	for (i = 0; i < MAXWEAPONS; i++) 
+		weapon_order[i] = (i < c) ? Q_atoi(Cmd_Argv(i+1)) : 0;
+}
 
-//Tonik void IN_Impulse (void) {in_impulse=Q_atoi(Cmd_Argv(1));}
-
-// Tonik -->
-void IN_Impulse (void) {
-	int best, i, imp, items;
-
-	in_impulse = Q_atoi(Cmd_Argv(1));
-
-	if (Cmd_Argc() <= 2)
-		return;
+// picks the best available (carried & having some ammunition) weapon according to users current preference
+int IN_BestWeapon (void) {
+	int i, imp, items, best = 0;
 
 	items = cl.stats[STAT_ITEMS];
-	best = 0;
 
-	for (i = Cmd_Argc() - 1; i > 0; i--) {
-		imp = Q_atoi(Cmd_Argv(i));
+	for (i = MAXWEAPONS - 1; i >= 0; i--) {
+		imp = weapon_order[i];
 		if (imp < 1 || imp > 8)
 			continue;
 
@@ -240,11 +256,38 @@ void IN_Impulse (void) {
 					best = 8;
 		}
 	}
-	
-	if (best)
+
+	return best;
+}
+
+void IN_Impulse (void) {
+	int best;
+
+	in_impulse = Q_atoi(Cmd_Argv(1));
+
+	if (Cmd_Argc() <= 2)
+		return;
+
+	// if more than one argument, select immediately the best weapon
+	IN_RememberWpOrder();
+	if (best = IN_BestWeapon())
 		in_impulse = best;
 }
-// <-- Tonik
+
+// this is the same command as impulse but cl_weaponpreselect can be used in here, while for impulses cannot be used
+void IN_Weapon(void) {
+	int c, best;
+	if ((c = Cmd_Argc() - 1) < 1) {
+		Com_Printf("Usage: %s w1 [w2 [w3..]]\nWill pre-select best available weapon from given sequence.\n", Cmd_Argv(0));
+		return;
+	}
+
+	// read user input
+	IN_RememberWpOrder();
+	// but not necessarily select the best weapon right now
+	if (!cl_weaponpreselect.value && (best = IN_BestWeapon()))
+		in_impulse = best;
+}
 
 /*
 Returns 0.25 if a key was pressed and released during the frame,
@@ -695,6 +738,7 @@ void CL_InitInput (void) {
 	Cmd_AddCommand ("+jump", IN_JumpDown);
 	Cmd_AddCommand ("-jump", IN_JumpUp);
 	Cmd_AddCommand ("impulse", IN_Impulse);
+	Cmd_AddCommand ("weapon", IN_Weapon);
 	Cmd_AddCommand ("+klook", IN_KLookDown);
 	Cmd_AddCommand ("-klook", IN_KLookUp);
 	Cmd_AddCommand ("+mlook", IN_MLookDown);
@@ -706,7 +750,8 @@ void CL_InitInput (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
 
 	Cvar_Register (&cl_smartjump);
-
+	Cvar_Register (&cl_weaponhide);
+	Cvar_Register (&cl_weaponpreselect);
 
 	Cvar_Register (&cl_upspeed);
 	Cvar_Register (&cl_forwardspeed);
