@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.39 2006-05-30 11:57:29 johnnycz Exp $
+	$Id: rulesets.c,v 1.40 2006-06-01 16:50:18 johnnycz Exp $
 
 */
 
@@ -46,6 +46,7 @@ typedef struct rulesetDef_s {
 	qbool restrictTriggers;
 	qbool restrictPacket;
 	qbool restrictRJScripts;
+	qbool restrictParticles;
 } rulesetDef_t;
 
 static rulesetDef_t rulesetDef = {rs_default, 72, false, false, false};
@@ -101,6 +102,10 @@ qbool Rulesets_RestrictPacket(void) {
 	return !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictPacket;
 }
 
+qbool Rulesets_RestrictParticles(void) {
+	return !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictParticles && !r_refdef2.allow_cheats;
+}
+
 char *Rulesets_Ruleset(void) {
 	switch(rulesetDef.ruleset) {
 		case rs_smackdown:
@@ -120,18 +125,9 @@ static void Rulesets_Smackdown(void) {
 #ifndef GLQUAKE
 	extern cvar_t r_aliasstats;
 #endif
-#ifdef GLQUAKE
-	extern cvar_t amf_part_gunshot_type, amf_part_traillen, amf_part_trailtime, amf_part_trailwidth, amf_part_traildetail, amf_part_trailtype, amf_part_spikes, amf_part_gunshot, amf_lightning;
-	extern qbool qmb_initialized;
-#endif
 	int i;
 
-#define NOQMB_SKIP_LOCKED 1
-
 	locked_cvar_t disabled_cvars[] = {
-#ifdef GLQUAKE
-		{&amf_lightning, "0"},		// some people think you can shaft better with this, needs new discussion after fakeshaft has been enabled
-#endif
 		{&cl_hud, "0"},				// allows you place any text on the screen & filter incoming messages (hud strings)
 		{&cl_rollalpha, "20"},		// allows you to not dodge while seeing enemies dodging
 		{&r_shiftbeam, "0"},		// perphaps some people would think this allows you to aim better (maybe should be added for demo playback and spectating only)
@@ -140,42 +136,11 @@ static void Rulesets_Smackdown(void) {
 #endif
 	};
 	
-#ifdef GLQUAKE
-		limited_cvar_max_t limited_max_cvars[] = {
-		// some of these would allow you to create really bogus eyecandy effects
-		// and therefore make noticing where enemy was shooting easier
-		{&amf_part_gunshot_type, "1"},
-		{&amf_part_traillen, "1"},
-		{&amf_part_trailtime, "1"},
-		{&amf_part_trailwidth, "1"},
-		{&amf_part_traildetail, "1"},
-		{&amf_part_trailtype, "1"},
-		{&amf_part_spikes, "1"},
-		{&amf_part_gunshot, "1"},
-		};
-
-	if (!qmb_initialized)
-		i = NOQMB_SKIP_LOCKED;
-	else
-#endif
-		i = 0;
-
-	for (; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
+	for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
 		Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value, 2);
 		Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
 		Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
 	}
-
-#ifdef GLQUAKE
-	// there are no limited variables when not using GL or when not using -no24bit cmd-line option
-	if (qmb_initialized)
-	{
-		for (i = 0; i < (sizeof(limited_max_cvars) / sizeof(limited_max_cvars[0])); i++) {
-		Cvar_RulesetSet(limited_max_cvars[i].var, limited_max_cvars[i].maxrulesetvalue, 1);
-		Cvar_SetFlags(limited_max_cvars[i].var, Cvar_GetFlags(limited_max_cvars[i].var) | CVAR_RULESET_MAX);
-		}
-	}
-#endif
 
 	if (cl_independentPhysics.value)
 	{
@@ -186,8 +151,10 @@ static void Rulesets_Smackdown(void) {
 	rulesetDef.maxfps = 77;
 	rulesetDef.restrictTriggers = true;
 	rulesetDef.restrictPacket = true;	// packet command could have been exploited for external timers
+	rulesetDef.restrictParticles = true;
 	rulesetDef.ruleset = rs_smackdown;
 }
+
 static void Rulesets_MTFL(void) {
 /* TODO:
 f_flashout trigger
