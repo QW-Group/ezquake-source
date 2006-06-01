@@ -213,7 +213,9 @@ void IN_RememberWpOrder (void) {
 
 // picks the best available (carried & having some ammunition) weapon according to users current preference
 int IN_BestWeapon (void) {
-	int i, imp, items, best = 0;
+	int i, imp, items;
+	// we select at least 'some' weapon to get 'no ammo.' or 'no weapon.' message again
+	int best = weapon_order[0];
 
 	items = cl.stats[STAT_ITEMS];
 
