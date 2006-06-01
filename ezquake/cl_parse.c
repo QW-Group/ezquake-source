@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.47 2006-05-02 19:54:06 oldmanuk Exp $
+	$Id: cl_parse.c,v 1.48 2006-06-01 18:59:11 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1652,56 +1652,35 @@ void CL_ParseServerInfoChange (void) {
 static void FlushString (char *s, int level, qbool team, int offset) {
 	extern cvar_t con_highlight, con_highlight_mark, name;
 	char white_s[4096];
+	char *mark, *text;
+	char *f = strstr(s, name.string);
 
 	strlcpy(white_s, s, 4096);
 
 	CL_SearchForReTriggers (s /*+ offset*/, 1<<level); // re_triggers
 
-	if (level == PRINT_CHAT)
-	{
-		if ((strstr(s, name.string)) && (con_highlight.value != 0) && (strlen(strstr(s,name.string)) != strlen(s)) )
-		{
-			switch ((int)(con_highlight.value))
-			{
-			case 1:
-				Com_Printf ("%s", white_s);
-				break;
-			case 2:
-				Com_Printf ("%s%s", con_highlight_mark.string, TP_ParseWhiteText(s, team, offset));
-				break;
-			case 3:
-				Com_Printf ("%s%s", con_highlight_mark.string, white_s);
-				break;
-			default:
-				break;
-			}
+	// highlighting on && nickname found && it's not our own text (nickname not close to the beginning)
+	if (con_highlight.value && f && ((f - s) > 1)) {
+		switch ((int)(con_highlight.value)) {
+		case 1:
+			mark = ""; text = white_s;
+			break;
+		case 2:
+			mark = con_highlight_mark.string;
+			text = (level == PRINT_CHAT) ? TP_ParseWhiteText(s, team, offset) : s;
+			break;
+		default:
+		case 3:
+			mark = con_highlight_mark.string;
+			text = white_s;
+			break;
 		}
-		else 
-			Com_Printf ("%s", TP_ParseWhiteText(s, team, offset));
-	}		
-	else
-	{
-		if ((strstr(s, name.string)) && (con_highlight.value != 0)  && ( strlen(strstr(s,name.string)) != strlen(s)) )
-        {
-			switch ((int)con_highlight.value)
-			{
-			case 1:
-				Com_Printf ("%s", white_s);
-				break;
-			case 2:
-				Com_Printf ("%s%s", con_highlight_mark.string, s);
-				break;
-			case 3:
-				Com_Printf ("%s%s", con_highlight_mark.string, white_s);
-				break;
-			default:
-				break;
-		}
+	} else { 
+		mark = ""; 
+		text = (level == PRINT_CHAT) ? TP_ParseWhiteText(s, team, offset) : s;
 	}
-	else
-		Com_Printf ("%s", s);
-
-	}
+	
+	Com_Printf("%s%s", mark, text);
 
 	if (level >= 4)
 		return;
