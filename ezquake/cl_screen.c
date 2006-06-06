@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.51 2006-05-14 12:23:17 disconn3ct Exp $
+    $Id: cl_screen.c,v 1.52 2006-06-06 20:53:05 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -840,18 +840,104 @@ void SCR_SetupAutoID (void) {
 	}
 }
 
-void SCR_DrawAutoID (void) {
+#define ROUND(f)   ((f>=0)?(int)(f + .5):(int)(f - .5))
+
+#define AUTOID_HEALTHBAR_BG_COLOR			78
+#define AUTOID_HEALTHBAR_NORMAL_COLOR		74
+#define AUTOID_HEALTHBAR_MEGA_COLOR			251
+#define AUTOID_HEALTHBAR_TWO_MEGA_COLOR		108
+#define AUTOID_HEALTHBAR_UNNATURAL_COLOR	144
+
+#define AUTOID_ARMORBAR_GREEN_ARMOR			83
+#define AUTOID_ARMORBAR_YELLOW_ARMOR		111
+#define AUTOID_ARMORBAR_RED_ARMOR			248
+
+void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
+{
+	int health;
+	int name_length;
+	int health_length;
+	int armor;
+	int armor_length;
+	int armor_color;
+	
+	// Draw health above the name.
+	name_length = strlen(autoid_p->player->name) * 4;
+	health = autoid_p->player->stats[STAT_HEALTH];
+	health = min(100, health);
+	health_length = ROUND((name_length/100.0) * health);
+
+	Draw_AlphaFill(x - name_length, y - 16, name_length*2, 4, AUTOID_HEALTHBAR_BG_COLOR, 0.4);
+	Draw_AlphaFill(x - name_length, y - 16, health_length*2, 4, AUTOID_HEALTHBAR_NORMAL_COLOR, 1.0);
+
+	health = autoid_p->player->stats[STAT_HEALTH];
+
+	if(health > 100 && health <= 200)
+	{
+		health_length = ROUND((name_length/100.0) * (health - 100));
+		Draw_AlphaFill(x - name_length, y - 16, health_length*2, 4, AUTOID_HEALTHBAR_MEGA_COLOR, 1.0);
+	}
+	else if(health > 200 && health <= 250)
+	{
+		health_length = ROUND((name_length/100.0) * (health - 200));
+		Draw_AlphaFill(x - name_length, y - 16, name_length*2, 4, AUTOID_HEALTHBAR_MEGA_COLOR, 1.0);
+		Draw_AlphaFill(x - name_length, y - 16, health_length*2, 4, AUTOID_HEALTHBAR_TWO_MEGA_COLOR, 1.0);
+	}
+	else if(health > 250)
+	{
+		// This will never happen during a normal game.
+		Draw_AlphaFill(x - name_length, y - 16, name_length*2, 4, AUTOID_HEALTHBAR_UNNATURAL_COLOR, 1.0);
+	}
+
+	// Draw armor.
+	armor = autoid_p->player->stats[STAT_ARMOR];
+	armor = min(100, armor);
+	armor_length = ROUND((name_length/100.0) * armor);
+	
+	armor_color = 0;
+
+	if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR1)
+	{
+		armor_color = AUTOID_ARMORBAR_GREEN_ARMOR; // Green armor.
+	}
+	else if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR2)
+	{
+		armor_color = AUTOID_ARMORBAR_YELLOW_ARMOR; // Yellow armor.
+	}
+	else if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR3)
+	{
+		armor_color = AUTOID_ARMORBAR_RED_ARMOR; // Red armor.
+	}
+	
+	// Only draw the amor-level if the player has one.
+	if(armor_color > 0)
+	{
+		Draw_AlphaFill(x - name_length, y - 21, name_length*2, 4, armor_color, 0.2);
+		Draw_AlphaFill(x - name_length, y - 21, armor_length*2, 4, armor_color, 1.0);
+	}
+}
+
+void SCR_DrawAutoID (void) 
+{
 	int i, x, y;
 
 	if (!scr_autoid.value || (!cls.demoplayback && !cl.spectator))
 		return;
 
-	for (i = 0; i < autoid_count; i++) {
+	for (i = 0; i < autoid_count; i++) 
+	{
 		x =  autoids[i].x * vid.width / glwidth;
 		y =  (glheight - autoids[i].y) * vid.height / glheight;
 		Draw_String(x - strlen(autoids[i].player->name) * 4, y - 8, autoids[i].player->name);
+		
+		// We only have health/armor info for all players when in demo playback.
+		if(cls.demoplayback && scr_autoid.value > 1)
+		{
+			SCR_DrawAutoIDStatus(&autoids[i], x, y);
+		}
 	}
 }
+
 
 #endif
 
