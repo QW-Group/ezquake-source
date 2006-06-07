@@ -161,6 +161,7 @@ void Rebuild_Servers_List(void);
 void Toggle_Source(source_data *);
 void Mark_Source(source_data *s);
 void Unmark_Source(source_data *s);
+void MarkDefaultSources(void);
 void WriteSourcesConfiguration(FILE *f);
 void Rebuild_All_Players(void);
 void Sort_All_Players(void);

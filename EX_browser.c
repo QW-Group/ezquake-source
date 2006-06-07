@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.12 2006-03-29 20:38:28 oldmanuk Exp $
+	$Id: EX_browser.c,v 1.13 2006-06-07 23:03:12 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -85,8 +85,8 @@ cvar_t  sb_hidedead      = {"sb_hidedead",         "1"};
 cvar_t  sb_sourcevalidity  = {"sb_sourcevalidity", "30"};
 cvar_t  sb_showcounters    = {"sb_showcounters",    "1"};
 cvar_t  sb_mastercache     = {"sb_mastercache",     "1"};
-cvar_t  sb_starttab        = {"sb_starttab",     "2"};
-cvar_t  sb_autoupdate      = {"sb_autoupdate",     "0"};
+cvar_t  sb_starttab        = {"sb_starttab",     "1"};
+cvar_t  sb_autoupdate      = {"sb_autoupdate",     "1"};
 
 // servers table
 server_data *servers[MAX_SERVERS];
@@ -1564,6 +1564,14 @@ void SB_SourceMark(void)
         }
 }
 
+void MarkDefaultSources(void) {
+	int i;
+    for (i=0; i < sourcesn; i++)
+        if (!strcmp(sources[i]->name, "id limbo") || !strcmp(sources[i]->name, "Global"))
+            sources[i]->checked = 1;
+}
+
+
 void WriteSourcesConfiguration(FILE *f)
 {
     int i;
@@ -1635,6 +1643,7 @@ void Browser_Init(void)
 
     // read sources from SOURCES_PATH
     Reload_Sources();
+	MarkDefaultSources();
 
     Cmd_AddCommand("sb_sourceunmarkall", SB_SourceUnmarkAll);
     Cmd_AddCommand("sb_sourcemark", SB_SourceMark);
