@@ -1,5 +1,5 @@
 /*
-	$Id: parser.c,v 1.5 2006-03-29 20:38:29 oldmanuk Exp $
+	$Id: parser.c,v 1.6 2006-06-07 18:03:27 oldmanuk Exp $
 */
 
 //#include <stdio.h>
@@ -30,7 +30,7 @@ int Remove_Spaces (char *src){
 	#endif
 	if (strlen(src)>SRCLIMIT)
 		return -1;
-	
+
 	strcpy(msg,src);
 	while (msg[i] != '\0' && i < strlen(src)){
 		if (msg[i] != ' '){
@@ -103,14 +103,14 @@ int Check_For_Double_Tokens (char *src){
 	int found = 1;
 	char char_tok[]="+-*";
 	int amount = 2;
-	
+
 	if(strlen(src)>SRCLIMIT)
 		return -1;
-	
+
 	#ifdef MALLOC
 	msg=malloc(strlen(src));
 	#endif
-	
+
 	while(found){
 	i=0;j=0;found=0;
 		while(src[i]!='\0' && i<strlen(src)){
@@ -187,7 +187,7 @@ int Check_For_Double_Tokens (char *src){
 		printf("Test?\n");
 		src[j--]='\0';
 	}
-		
+
 	j=0;i=0;
 	if (src[0] == '*' || src[0] == '+'){
 		i++;
@@ -200,7 +200,7 @@ int Check_For_Double_Tokens (char *src){
 	free(msg);
 	#endif
 	return 1;
-			
+
 }
 
 
@@ -247,9 +247,9 @@ int Solve_Brackets (char *src){
 	#ifdef MALLOC
 	msg=malloc(strlen(src));
 	#endif
-	
+
 	strcpy(msg,src);
-	
+
 	status=Check_Brackets(src);
 	if (status==-1){
 		#ifdef MALLOC
@@ -271,10 +271,10 @@ int Solve_Brackets (char *src){
 		#endif
 		bracket[y++] = src[i++];
 	}
-	
+
 	bracket_stop = i;
 	bracket[y]='\0';
-	
+
 	if(bracket_start){
 		#ifdef MALLOC
 		part1=malloc(bracket_start-1);
@@ -282,18 +282,18 @@ int Solve_Brackets (char *src){
 		strncpy(part1,msg,bracket_start-1);
 		part1[bracket_start-1]='\0';
 	}
-	
-	
+
+
 	if(strlen(msg) != bracket_stop+1){
 		#ifdef MALLOC
 		part2=malloc(strlen(msg+bracket_stop+1));
 		#endif
 		strcpy(part2,msg+bracket_stop+1);
 	}
-	
+
 	Check_For_Double_Tokens(bracket);
 	Solve_String(bracket);
-	
+
 	if(!bracket_start && strlen(msg) != bracket_stop+1)
 		sprintf(src,"%s%s",bracket,part2);
 	else if(bracket_start && strlen(msg) == bracket_stop+1)
@@ -333,12 +333,12 @@ int Calc_String (char *src,char tok){
 	int i=0;
 	char char_tok[] 	= "*-+";
 	char num_tok[]		= "1234567890";
-	
-	
+
+
 	// check if src is bigger than msg
 	if(strlen(src)>SRCLIMIT)
 		return -1;
-		
+
 	// Check if src is only 1 number
 	if((src[0]=='+' || src[0]=='-'))
 		i=1;
@@ -350,20 +350,20 @@ int Calc_String (char *src,char tok){
 	#endif
 	// Checks done copy src
 	strcpy(msg,src);
-	
+
 	// Get the position of tok
 	while (msg[i++] != '\0'){
 		if (msg[i] == tok)
 			break;
 	}
-	
+
 	if (msg[i-1] == '\0'){
 		return 1;
 	}
 	// safe token position
 	token_position=i;
-		
-	i++;	
+
+	i++;
 	// if token is * the second inf could be -
 	if(tok == '*' && msg[i]=='-')
 		i++;
@@ -372,9 +372,9 @@ int Calc_String (char *src,char tok){
 		if (!strspn(msg+i,num_tok))
 			break;
 	}
-		
+
 	i--;
-	
+
 	count_stop=i;
 	//copy var b
 	#ifdef MALLOC
@@ -384,32 +384,32 @@ int Calc_String (char *src,char tok){
 	b[count_stop-token_position]='\0';
 	// get var a
 	i=token_position;
-	
+
 	i--;
-	
+
 	while (strspn(msg+i,"1234567890") && i>=0)
 		i--;
-	
-	
-	
+
+
+
 	if(msg[i-1] == '-')
 			i--;
 	if (i<0)
 		i=0;
-	
+
 	count_start = i;
 	#ifdef MALLOC
 	a=malloc(token_position-count_start);
 	#endif
 	strncpy(a,msg+count_start,token_position-count_start);
 	a[token_position]='\0';
-	
+
 	inta=atoi(a);
 	intb=atoi(b);
-	
+
 	val=Calc_AB(tok,inta,intb);
-	
-	
+
+
 	if(count_start>0){
 		#ifdef MALLOC
 		part1=malloc(count_start);
@@ -422,7 +422,7 @@ int Calc_String (char *src,char tok){
 		#endif
 		part1[0]='\0';
 	}
-	
+
 	if(count_stop<strlen(msg)-1){
 		#ifdef MALLOC
 		part2=malloc(strlen(msg+count_stop+1));
@@ -435,10 +435,10 @@ int Calc_String (char *src,char tok){
 		#endif
 		part2[0]='\0';
 	}
-	
+
 #ifdef DEBUG
 	printf("source: %s | val: %i\npart1: %s | part2: %s\nvar1: %s | var2: %s\n",src,val,part1,part2,a,b);
-#endif	
+#endif
 
 	if (strlen(part1)==0 && strlen(part2)==0){
 		sprintf(src,"%i",val);
@@ -486,11 +486,11 @@ int Calc_String (char *src,char tok){
 	 1: for no error
 	-1: error in Check_For_Double_Tokens
 	-2: error in Calc_String
-	
+
 */
 int Solve_String (char *src){
 	int status =0 ;
-	
+
 	while(!status){
 		status = Check_For_Double_Tokens(src);
 		if (status==-1)
@@ -542,7 +542,7 @@ int Solve_String (char *src){
 			return 1;
 	}
 		status =0 ;
-	return -1;	
+	return -1;
 }
 
 
