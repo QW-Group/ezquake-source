@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.29 2006-04-29 18:32:11 disconn3ct Exp $
+	$Id: mvd_utils.c,v 1.30 2006-06-07 14:32:17 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1523,10 +1523,6 @@ void MVD_Status_Xml (void){
 	}
 	mvd_s_e(f);
 	fclose(f);
-
-
-
-
 }
 
 void MVD_Testor_f (void) {
@@ -1579,7 +1575,9 @@ void MVD_Utils_Init (void) {
 	
 	Cmd_AddCommand ("mvd_runs",MVD_List_Runs_f);
 	Cmd_AddCommand ("mvd_xml",MVD_Status_Xml);
+#ifdef DEBUG
 	Cmd_AddCommand ("mvd_test",MVD_Testor_f);
+#endif
 
 	Cvar_ResetCurrentGroup();
 }
