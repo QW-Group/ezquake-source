@@ -1,5 +1,5 @@
 /*
-	$Id: parser.c,v 1.11 2006-06-07 20:41:53 oldmanuk Exp $
+	$Id: parser.c,v 1.12 2006-06-07 20:44:43 oldmanuk Exp $
 */
 
 #include "common.h"
@@ -378,7 +378,7 @@ int Calc_String (char *src,char tok) {
 	 2: error in Calc_String
 
 */
-int Solve_String_Loop(char *src, char *op) {
+int Solve_String_Loop(char *src, char op) {
 	int status = 0;
 
 	if(Check_For_Double_Tokens(src) > 0)
@@ -432,7 +432,7 @@ returns:
 // oldman: did someone's five year old child code this method originally? its
 // horrible :)
 int eval_string_int (char *src) {
-	int status, status2;
+	int status;
 
 	if(Remove_Spaces(src) > 0)
 		return 1;
