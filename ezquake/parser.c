@@ -1,5 +1,5 @@
 /*
-	$Id: parser.c,v 1.7 2006-06-07 18:07:49 oldmanuk Exp $
+	$Id: parser.c,v 1.8 2006-06-07 18:26:38 oldmanuk Exp $
 */
 
 #include "common.h"
@@ -124,24 +124,16 @@ int Check_For_Double_Tokens (char *src){
 					}
 					break;
 				case '+':
-					switch(src[i+1]){
+					msg[j++]=src[i++];
+					switch(src[i]){
 						case '*':
-							msg[j++]='*';
-							i+=amount;
-							found=1;
-						break;
 						case '+':
-							msg[j++]='+';
-							i+=amount;
-							found=1;
-						break;
 						case '-':
-							msg[j++]='-';
 							i+=amount;
 							found=1;
-						break;
+							break;
 						default:
-							msg[j++]=src[i++];
+							break;
 					}
 					break;
 				case '-':
@@ -174,8 +166,11 @@ int Check_For_Double_Tokens (char *src){
 	src[j]='\0';
 	}
 	j-=1;
+
 	while(src[j]=='*' || src[j]=='+' || src[j]=='-'){
+#ifdef DEBUG
 		printf("Test?\n");
+#endif
 		src[j--]='\0';
 	}
 
@@ -184,8 +179,8 @@ int Check_For_Double_Tokens (char *src){
 		i++;
 		while(src[i]!='\0' && i<strlen(src))
 			msg[j++]=src[i++];
-	strcpy(src,msg);
-	src[j]='\0';
+		strcpy(src,msg);
+		src[j]='\0';
 	}
 #ifdef MALLOC
 	free(msg);
