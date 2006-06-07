@@ -1,5 +1,5 @@
 /*
-	$Id: parser.c,v 1.9 2006-06-07 20:13:07 oldmanuk Exp $
+	$Id: parser.c,v 1.10 2006-06-07 20:15:13 oldmanuk Exp $
 */
 
 #include "common.h"
@@ -8,19 +8,14 @@
 #define SRCLIMIT 1024
 
 //#define DEBUG
-//#define MALLOC
 
 // returns 0 on no error
 // returns 1 on error
 int Remove_Spaces (char *src){
 	int j = 0;
 	int i = 0;
-#ifdef MALLOC
-	char *msg;
-	msg = malloc(strlen(src));
-#else
 	char msg[1024];
-#endif
+
 	if (strlen(src)>SRCLIMIT)
 		return 1;
 
@@ -33,9 +28,6 @@ int Remove_Spaces (char *src){
 		}
 	}
 	src[j]='\0';
-#ifdef MALLOC
-	free(msg);
-#endif
 
 	return 0;
 }
@@ -86,11 +78,7 @@ int Check_Brackets (char *src){
 	 1: error while copying the src string
 */
 int Check_For_Double_Tokens (char *src){
-#ifdef MALLOC
-	char *msg;
-#else
 	char msg[1024];
-#endif
 	int i=0;
 	int j=0;
 //	int gotone;
@@ -100,10 +88,6 @@ int Check_For_Double_Tokens (char *src){
 
 	if(strlen(src)>SRCLIMIT)
 		return 1;
-
-#ifdef MALLOC
-	msg=malloc(strlen(src));
-#endif
 
 	while(found){
 	i=0;j=0;found=0;
@@ -185,11 +169,8 @@ int Check_For_Double_Tokens (char *src){
 		strcpy(src,msg);
 		src[j]='\0';
 	}
-#ifdef MALLOC
-	free(msg);
-#endif
-	return 0;
 
+	return 0;
 }
 
 // works LOL :>
@@ -218,11 +199,7 @@ int Calc_AB (char type,int a, int b){
 	 2: error in Check_Brackets
 */
 int Solve_Brackets (char *src){
-#ifdef MALLOC
-	char *msg, *part1, *part2, *bracket;
-#else
 	char msg[1024],part1[1024],part2[1024],bracket[1024];
-#endif
 	int bracket_start,bracket_stop,status;
 	int i = 0;
 	int y = 0;
@@ -230,16 +207,10 @@ int Solve_Brackets (char *src){
 
 	if (strlen(src)>SRCLIMIT)
 		return 1;
-#ifdef MALLOC
-	msg=malloc(strlen(src));
-#endif
 
 	strcpy(msg,src);
 
 	if (Check_Brackets(src) == -1) {
-#ifdef MALLOC
-		free(msg);
-#endif
 		return 2;
 	}
 
@@ -248,14 +219,8 @@ int Solve_Brackets (char *src){
 		}
 	}
 	bracket_start=i;
-#ifdef MALLOC
-	bracket=malloc(1);
-#endif
 
 	while(src[i] !=')'){
-#ifdef MALLOC
-		realloc(bracket,sizeof(bracket)+1);
-#endif
 		bracket[y++] = src[i++];
 	}
 
@@ -263,17 +228,11 @@ int Solve_Brackets (char *src){
 	bracket[y]='\0';
 
 	if(bracket_start) {
-#ifdef MALLOC
-		part1=malloc(bracket_start-1);
-#endif
 		strncpy(part1,msg,bracket_start-1);
 		part1[bracket_start-1]='\0';
 	}
 
 	if(strlen(msg) != bracket_stop+1){
-#ifdef MALLOC
-		part2=malloc(strlen(msg+bracket_stop+1));
-#endif
 		strcpy(part2,msg+bracket_stop+1);
 	}
 
@@ -286,16 +245,7 @@ int Solve_Brackets (char *src){
 		sprintf(src,"%s%s",part1,bracket);
 	else
 		sprintf(src,"%s%s%s",part1,bracket,part2);
-#ifdef MALLOC
-	free(msg);
-	free(bracket);
-	if(bracket_start){
-		free(part1);
-	}
-	if(strlen(msg) != bracket_stop+1){
-		free(part2);
-	}
-#endif
+
 	return 0;
 }
 
@@ -308,11 +258,7 @@ returns
      1: an error while copying the src string
 */
 int Calc_String (char *src,char tok){
-#ifdef MALLOC
-	char *msg, *part1, *part2, *a, *b;
-#else
 	char msg[1024],part1[1024],part2[1024],a[10],b[10];
-#endif
 	int token_position,count_start,count_stop,inta,intb,val;
 	int i=0;
 	char char_tok[] 	= "*-+";
@@ -328,9 +274,6 @@ int Calc_String (char *src,char tok){
 	if(strcspn(src+1,char_tok)+i==strlen(src)){
 		return 2;
 	}
-#ifdef MALLOC
-	msg=malloc(strlen(src));
-#endif
 	// Checks done copy src
 	strcpy(msg,src);
 
@@ -360,9 +303,6 @@ int Calc_String (char *src,char tok){
 
 	count_stop=i;
 	//copy var b
-#ifdef MALLOC
-	b=malloc(count_stop-token_position);
-#endif
 	strncpy(b,msg+token_position+1,count_stop-token_position);
 	b[count_stop-token_position]='\0';
 	// get var a
@@ -381,9 +321,6 @@ int Calc_String (char *src,char tok){
 		i=0;
 
 	count_start = i;
-#ifdef MALLOC
-	a=malloc(token_position-count_start);
-#endif
 	strncpy(a,msg+count_start,token_position-count_start);
 	a[token_position]='\0';
 
@@ -394,28 +331,16 @@ int Calc_String (char *src,char tok){
 
 
 	if(count_start>0){
-#ifdef MALLOC
-		part1=malloc(count_start);
-#endif
 		strncpy(part1,msg,count_start);
 		part1[count_start]='\0';
 	}else{
-#ifdef MALLOC
-		part1=malloc(1);
-#endif
 		part1[0]='\0';
 	}
 
 	if(count_stop<strlen(msg)-1){
-#ifdef MALLOC
-		part2=malloc(strlen(msg+count_stop+1));
-#endif
 		strcpy(part2,msg+count_stop+1);
 		part2[strlen(msg)-count_stop]='\0';
 	}else{
-#ifdef MALLOC
-		part2=malloc(1);
-#endif
 		part2[0]='\0';
 	}
 
@@ -425,39 +350,21 @@ int Calc_String (char *src,char tok){
 
 	if (strlen(part1)==0 && strlen(part2)==0){
 		sprintf(src,"%i",val);
-#ifdef MALLOC
-		free(msg);free(part1);free(part2);free(a);free(b);
-#endif
 		return 2;
 	}else if (strlen(part1) && strlen(part2)==0 && val<0){
 		sprintf(src,"%s%i",part1,val);
-#ifdef MALLOC
-		free(msg);free(part1);free(part2);free(a);free(b);
-#endif
 		return 0;
 	}else if (strlen(part1) && strlen(part2)==0 && val>=0){
 		sprintf(src,"%s+%i",part1,val);
-#ifdef MALLOC
-		free(msg);free(part1);free(part2);free(a);free(b);
-#endif
 		return 0;
 	}else if (strlen(part1) && strlen(part2) && val<0){
 		sprintf(src,"%s%i%s",part1,val,part2);
-#ifdef MALLOC
-		free(msg);free(part1);free(part2);free(a);free(b);
-#endif
 		return 0;
 	}else if (strlen(part1) && strlen(part2) && val>=0){
 		sprintf(src,"%s+%i%s",part1,val,part2);
-#ifdef MALLOC
-		free(msg);free(part1);free(part2);free(a);free(b);
-#endif
 		return 0;
 	}else if (strlen(part1)==0 && strlen(part2) ){
 		sprintf(src,"%i%s",val,part2);
-#ifdef MALLOC
-		free(msg);free(part1);free(part2);free(a);free(b);
-#endif
 		return 0;
 	}
 	return -1;
