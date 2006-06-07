@@ -1,5 +1,5 @@
 /*
-	$Id: parser.c,v 1.10 2006-06-07 20:15:13 oldmanuk Exp $
+	$Id: parser.c,v 1.11 2006-06-07 20:41:53 oldmanuk Exp $
 */
 
 #include "common.h"
@@ -11,7 +11,7 @@
 
 // returns 0 on no error
 // returns 1 on error
-int Remove_Spaces (char *src){
+int Remove_Spaces (char *src) {
 	int j = 0;
 	int i = 0;
 	char msg[1024];
@@ -21,7 +21,7 @@ int Remove_Spaces (char *src){
 
 	strcpy(msg, src);
 	while (msg[i] != '\0' && i < strlen(src)) {
-		if (msg[i] == ' '){
+		if (msg[i] == ' ') {
 			i++;
 		} else {
 			src[j++] = msg[i++];
@@ -39,7 +39,7 @@ int Remove_Spaces (char *src){
 	 0: no error
 	 1: found an invalid char in src
 */
-int Check_Tokens (char *src){
+int Check_Tokens (char *src) {
 	if (strspn(src,"1234567890-+*()") != strlen(src))
 		return 1;
 
@@ -51,13 +51,13 @@ int Check_Tokens (char *src){
 	 x: amount of () brackets
 	-1: non matching amounts of ('s and )'s
 */
-int Check_Brackets (char *src){
+int Check_Brackets (char *src) {
 	int count_open,count_close;
 	int i;
 
 	count_open = 0;
 	count_close = 0;
-	for(i=0;i<strlen(src);i++){
+	for(i=0;i<strlen(src);i++) {
 		if (src[i] == '(')
 			count_open++;
 		if (src[i] == ')')
@@ -77,11 +77,10 @@ int Check_Brackets (char *src){
 	 0: no errors
 	 1: error while copying the src string
 */
-int Check_For_Double_Tokens (char *src){
+int Check_For_Double_Tokens (char *src) {
 	char msg[1024];
 	int i=0;
 	int j=0;
-//	int gotone;
 	int found = 1;
 	char char_tok[]="+-*";
 	int amount = 2;
@@ -89,13 +88,13 @@ int Check_For_Double_Tokens (char *src){
 	if(strlen(src)>SRCLIMIT)
 		return 1;
 
-	while(found){
-	i=0;j=0;found=0;
-		while(src[i]!='\0' && i<strlen(src)){
-			if(strspn(src+i,char_tok)){
-				switch (src[i]){
+	while(found) {
+		i=0;j=0;found=0;
+		while(src[i]!='\0' && i<strlen(src)) {
+			if(strspn(src+i,char_tok)) {
+				switch (src[i]) {
 				case '*':
-					switch(src[i+1]){
+					switch(src[i+1]) {
 						case '*':
 							msg[j++]='*';
 							i+=amount;
@@ -112,7 +111,7 @@ int Check_For_Double_Tokens (char *src){
 					break;
 				case '+':
 					msg[j++]=src[i++];
-					switch(src[i]){
+					switch(src[i]) {
 						case '*':
 						case '+':
 						case '-':
@@ -124,7 +123,7 @@ int Check_For_Double_Tokens (char *src){
 					}
 					break;
 				case '-':
-					switch(src[i+1]){
+					switch(src[i+1]) {
 						case '*':
 							msg[j++]='*';
 							i+=amount;
@@ -145,7 +144,7 @@ int Check_For_Double_Tokens (char *src){
 					}
 					break;
 				}
-			}else{
+			} else {
 				msg[j++]=src[i++];
 			}
 		}
@@ -154,7 +153,7 @@ int Check_For_Double_Tokens (char *src){
 	}
 	j-=1;
 
-	while(src[j]=='*' || src[j]=='+' || src[j]=='-'){
+	while(src[j]=='*' || src[j]=='+' || src[j]=='-') {
 #ifdef DEBUG
 		printf("Test?\n");
 #endif
@@ -162,7 +161,7 @@ int Check_For_Double_Tokens (char *src){
 	}
 
 	j=0;i=0;
-	if (src[0] == '*' || src[0] == '+'){
+	if (src[0] == '*' || src[0] == '+') {
 		i++;
 		while(src[i]!='\0' && i<strlen(src))
 			msg[j++]=src[i++];
@@ -174,8 +173,8 @@ int Check_For_Double_Tokens (char *src){
 }
 
 // works LOL :>
-int Calc_AB (char type,int a, int b){
-	switch (type){
+int Calc_AB (char type,int a, int b) {
+	switch (type) {
 		case '*' :
 			return (a*b);
 		case '+' :
@@ -198,7 +197,7 @@ int Calc_AB (char type,int a, int b){
 	 1: error while copying the src string
 	 2: error in Check_Brackets
 */
-int Solve_Brackets (char *src){
+int Solve_Brackets (char *src) {
 	char msg[1024],part1[1024],part2[1024],bracket[1024];
 	int bracket_start,bracket_stop,status;
 	int i = 0;
@@ -220,7 +219,7 @@ int Solve_Brackets (char *src){
 	}
 	bracket_start=i;
 
-	while(src[i] !=')'){
+	while(src[i] !=')') {
 		bracket[y++] = src[i++];
 	}
 
@@ -232,7 +231,7 @@ int Solve_Brackets (char *src){
 		part1[bracket_start-1]='\0';
 	}
 
-	if(strlen(msg) != bracket_stop+1){
+	if(strlen(msg) != bracket_stop+1) {
 		strcpy(part2,msg+bracket_stop+1);
 	}
 
@@ -257,7 +256,9 @@ returns
 	 0: if everything is solved in the sting
      1: an error while copying the src string
 */
-int Calc_String (char *src,char tok){
+// FIXME: need to check the returns against the old ones as i fucked
+// something up here clearly
+int Calc_String (char *src,char tok) {
 	char msg[1024],part1[1024],part2[1024],a[10],b[10];
 	int token_position,count_start,count_stop,inta,intb,val;
 	int i=0;
@@ -271,19 +272,19 @@ int Calc_String (char *src,char tok){
 	// Check if src is only 1 number
 	if((src[0]=='+' || src[0]=='-'))
 		i=1;
-	if(strcspn(src+1,char_tok)+i==strlen(src)){
+	if(strcspn(src+1,char_tok)+i==strlen(src)) {
 		return 2;
 	}
 	// Checks done copy src
 	strcpy(msg,src);
 
 	// Get the position of tok
-	while (msg[i++] != '\0'){
+	while (msg[i++] != '\0') {
 		if (msg[i] == tok)
 			break;
 	}
 
-	if (msg[i-1] == '\0'){
+	if (msg[i-1] == '\0') {
 		return 1;
 	}
 	// safe token position
@@ -294,7 +295,7 @@ int Calc_String (char *src,char tok){
 	if(tok == '*' && msg[i]=='-')
 		i++;
 	//then read the rest of the number
-	while (msg[i++] != '\0'){
+	while (msg[i++] != '\0') {
 		if (!strspn(msg+i,num_tok))
 			break;
 	}
@@ -313,10 +314,9 @@ int Calc_String (char *src,char tok){
 	while (strspn(msg+i,"1234567890") && i>=0)
 		i--;
 
-
-
 	if(msg[i-1] == '-')
-			i--;
+		i--;
+
 	if (i<0)
 		i=0;
 
@@ -329,18 +329,17 @@ int Calc_String (char *src,char tok){
 
 	val=Calc_AB(tok,inta,intb);
 
-
-	if(count_start>0){
+	if(count_start>0) {
 		strncpy(part1,msg,count_start);
 		part1[count_start]='\0';
-	}else{
+	} else {
 		part1[0]='\0';
 	}
 
-	if(count_stop<strlen(msg)-1){
+	if(count_stop<strlen(msg)-1) {
 		strcpy(part2,msg+count_stop+1);
 		part2[strlen(msg)-count_stop]='\0';
-	}else{
+	} else {
 		part2[0]='\0';
 	}
 
@@ -348,22 +347,23 @@ int Calc_String (char *src,char tok){
 	printf("source: %s | val: %i\npart1: %s | part2: %s\nvar1: %s | var2: %s\n",src,val,part1,part2,a,b);
 #endif
 
-	if (strlen(part1)==0 && strlen(part2)==0){
+	// FIXME: extract these strlen into variables so they are only done once
+	if (strlen(part1)==0 && strlen(part2)==0) {
 		sprintf(src,"%i",val);
 		return 2;
-	}else if (strlen(part1) && strlen(part2)==0 && val<0){
+	} else if (strlen(part1) && strlen(part2)==0 && val<0) {
 		sprintf(src,"%s%i",part1,val);
 		return 0;
-	}else if (strlen(part1) && strlen(part2)==0 && val>=0){
+	} else if (strlen(part1) && strlen(part2)==0 && val>=0) {
 		sprintf(src,"%s+%i",part1,val);
 		return 0;
-	}else if (strlen(part1) && strlen(part2) && val<0){
+	} else if (strlen(part1) && strlen(part2) && val<0) {
 		sprintf(src,"%s%i%s",part1,val,part2);
 		return 0;
-	}else if (strlen(part1) && strlen(part2) && val>=0){
+	} else if (strlen(part1) && strlen(part2) && val>=0) {
 		sprintf(src,"%s+%i%s",part1,val,part2);
 		return 0;
-	}else if (strlen(part1)==0 && strlen(part2) ){
+	} else if (strlen(part1)==0 && strlen(part2) ) {
 		sprintf(src,"%i%s",val,part2);
 		return 0;
 	}
@@ -378,60 +378,42 @@ int Calc_String (char *src,char tok){
 	 2: error in Calc_String
 
 */
+int Solve_String_Loop(char *src, char *op) {
+	int status = 0;
+
+	if(Check_For_Double_Tokens(src) > 0)
+		return 1;
+
+	status = Calc_String(src,'*');
+
+#ifdef DEBUG
+	printf("%c LOOP\n", op);
+	printf("%s\n",src);
+#endif
+
+	return status;
+}
+
 int Solve_String (char *src) {
 	int status = 0;
 
-	while(!status){
-		status = Check_For_Double_Tokens(src);
-		if (status > 0)
-			return 1;
-#ifdef DEBUG
-		printf("* LOOP\n");
-#endif
-		status = Calc_String(src,'*');
-#ifdef DEBUG
-		printf("%s\n",src);
-#endif
-		if (status > 0)
-			return 2;
-		if (status == 0)
-			return 0;
-	}
-	status = 0;
-	while(!status){
-		status = Check_For_Double_Tokens(src);
-		if (status > 0)
-			return 1;
-#ifdef DEBUG
-		printf("- LOOP\n");
-#endif
-		status = Calc_String(src,'-');
-#ifdef DEBUG
-		printf("%s\n",src);
-#endif
-		if (status > 0)
-			return 2;
-		if (status == 0)
-			return 0;
-	}
-	status = 0;
-	while(!status){
-		status = Check_For_Double_Tokens(src);
-		if (status > 0)
-			return 1;
-#ifdef DEBUG
-		printf("+ LOOP\n");
-#endif
-		status = Calc_String(src,'+');
-#ifdef DEBUG
-		printf("%s\n",src);
-#endif
-		if (status > 0)
-			return 2;
-		if (status == 0)
-			return 0;
-	}
-		status = 0;
+	status = Solve_String_Loop(src, '*');
+	if (status > 0)
+		return 2;
+	if (status == 0)
+		return 0;
+
+	status = Solve_String_Loop(src, '-');
+	if (status > 0)
+		return 2;
+	if (status == 0)
+		return 0;
+
+	status = Solve_String_Loop(src, '+');
+	if (status > 0)
+		return 2;
+	if (status == 0)
+		return 0;
 
 	return 1;
 }
@@ -449,7 +431,7 @@ returns:
 */
 // oldman: did someone's five year old child code this method originally? its
 // horrible :)
-int eval_string_int (char *src){
+int eval_string_int (char *src) {
 	int status, status2;
 
 	if(Remove_Spaces(src) > 0)
