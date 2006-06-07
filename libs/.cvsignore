@@ -5,3 +5,5 @@ mgllt.lib
 libz.lib
 libtcl8.4.lib
 libexpat.lib
+tcl84.lib
+zlib.lib
