@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.26 2006-05-21 00:01:24 johnnycz Exp $
+    $Id: config_manager.c,v 1.27 2006-06-07 23:03:12 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -48,6 +48,7 @@ int Cvar_CvarCompare (const void *p1, const void *p2);
 int Cmd_AliasCompare (const void *p1, const void *p2);
 
 extern void WriteSourcesConfiguration(FILE *f);
+void MarkDefaultSources(void);
 
 extern cvar_group_t *cvar_groups;
 extern cmd_alias_t *cmd_alias;
@@ -433,6 +434,12 @@ void DumpFogSettings(FILE *f)
 }
 #endif //GLQUAKE
 
+void DumpFloodProtSettings(FILE *f)
+{
+	extern int fp_messages, fp_persecond, fp_secondsdead;
+	fprintf(f, "floodprot %d %d %d\n", fp_messages, fp_persecond, fp_secondsdead);
+}
+
 void DumpMisc(FILE *f)
 {
 
@@ -453,8 +460,11 @@ void DumpMisc(FILE *f)
 #endif
 	// } END shaman RFE 1032143
 
+	DumpFloodProtSettings(f);
+	fprintf(f, "\n");
+
 	// START johnnycz RFE 1157227 {
-	fprintf(f, "hud_recalculate\n");
+	fprintf(f, "hud_recalculate\n\n");
 	// } END johnnycz RFE 1157227
 
 	if (cl.teamfortress) {
@@ -567,6 +577,7 @@ static void ResetMiscCommands(void)
 	Cbuf_AddText("skygroup clear\n");
 #endif
 	// END shaman RFE 1020608
+	MarkDefaultSources();
 
 	Info_RemoveKey(cls.userinfo, "ec");
 	Info_RemoveKey(cls.userinfo, "exec_class");
@@ -706,12 +717,9 @@ void DumpConfig(char *name)
 		DumpTeamplay(f);
 		fprintf(f, newlines);
 
-
-#ifdef GLQUAKE
 		Config_PrintHeading(f, "M I S C E L L A N E O U S   C O M M A N D S");
 		DumpMisc(f);
 		fprintf(f, newlines);
-#endif
 
 		Config_PrintHeading(f, "P L U S   C O M M A N D S");
 		DumpPlusCommands(f);
