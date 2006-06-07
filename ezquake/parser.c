@@ -1,9 +1,6 @@
 /*
-	$Id: parser.c,v 1.6 2006-06-07 18:03:27 oldmanuk Exp $
+	$Id: parser.c,v 1.7 2006-06-07 18:07:49 oldmanuk Exp $
 */
-
-//#include <stdio.h>
-//#include <stdlib.h>
 
 #include "common.h"
 #include "parser.h"
@@ -12,22 +9,18 @@
 
 //#define DEBUG
 //#define MALLOC
-#define NOMALLOC
 
 // returns -1 on error
 // returns 1 on no error
 int Remove_Spaces (char *src){
-	#ifdef MALLOC
-	char *msg;
-	#endif
-	#ifdef NOMALLOC
-	char msg[1024];
-	#endif
 	int j = 0;
 	int i = 0;
-	#ifdef MALLOC
+#ifdef MALLOC
+	char *msg;
 	msg=malloc(strlen(src));
-	#endif
+#else
+	char msg[1024];
+#endif
 	if (strlen(src)>SRCLIMIT)
 		return -1;
 
@@ -40,11 +33,10 @@ int Remove_Spaces (char *src){
 
 	}
 	src[j]='\0';
-	#ifdef MALLOC
+#ifdef MALLOC
 	free(msg);
-	#endif
+#endif
 	return 1;
-
 }
 
 
@@ -91,12 +83,11 @@ int Check_Brackets (char *src){
 	-1: error while copying the src string
 */
 int Check_For_Double_Tokens (char *src){
-	#ifdef MALLOC
+#ifdef MALLOC
 	char *msg;
-	#endif
-	#ifdef NOMALLOC
+#else
 	char msg[1024];
-	#endif
+#endif
 	int i=0;
 	int j=0;
 //	int gotone;
@@ -107,9 +98,9 @@ int Check_For_Double_Tokens (char *src){
 	if(strlen(src)>SRCLIMIT)
 		return -1;
 
-	#ifdef MALLOC
+#ifdef MALLOC
 	msg=malloc(strlen(src));
-	#endif
+#endif
 
 	while(found){
 	i=0;j=0;found=0;
@@ -196,9 +187,9 @@ int Check_For_Double_Tokens (char *src){
 	strcpy(src,msg);
 	src[j]='\0';
 	}
-	#ifdef MALLOC
+#ifdef MALLOC
 	free(msg);
-	#endif
+#endif
 	return 1;
 
 }
@@ -231,12 +222,11 @@ int Calc_AB (char type,int a, int b){
 	-2: error in Check_Brackets
 */
 int Solve_Brackets (char *src){
-	#ifdef MALLOC
+#ifdef MALLOC
 	char *msg, *part1, *part2, *bracket;
-	#endif
-	#ifdef NOMALLOC
+#else
 	char msg[1024],part1[1024],part2[1024],bracket[1024];
-	#endif
+#endif
 	int bracket_start,bracket_stop,status;
 	int i = 0;
 	int y = 0;
@@ -244,17 +234,17 @@ int Solve_Brackets (char *src){
 
 	if (strlen(src)>SRCLIMIT)
 		return -1;
-	#ifdef MALLOC
+#ifdef MALLOC
 	msg=malloc(strlen(src));
-	#endif
+#endif
 
 	strcpy(msg,src);
 
 	status=Check_Brackets(src);
 	if (status==-1){
-		#ifdef MALLOC
+#ifdef MALLOC
 		free(msg);
-		#endif
+#endif
 		return -2;
 		}
 	for (z=0;z<status;z++){
@@ -262,13 +252,13 @@ int Solve_Brackets (char *src){
 		}
 	}
 	bracket_start=i;
-	#ifdef MALLOC
+#ifdef MALLOC
 	bracket=malloc(1);
-	#endif
+#endif
 	while(src[i] !=')'){
-		#ifdef MALLOC
+#ifdef MALLOC
 		realloc(bracket,sizeof(bracket)+1);
-		#endif
+#endif
 		bracket[y++] = src[i++];
 	}
 
@@ -276,18 +266,18 @@ int Solve_Brackets (char *src){
 	bracket[y]='\0';
 
 	if(bracket_start){
-		#ifdef MALLOC
+#ifdef MALLOC
 		part1=malloc(bracket_start-1);
-		#endif
+#endif
 		strncpy(part1,msg,bracket_start-1);
 		part1[bracket_start-1]='\0';
 	}
 
 
 	if(strlen(msg) != bracket_stop+1){
-		#ifdef MALLOC
+#ifdef MALLOC
 		part2=malloc(strlen(msg+bracket_stop+1));
-		#endif
+#endif
 		strcpy(part2,msg+bracket_stop+1);
 	}
 
@@ -300,7 +290,7 @@ int Solve_Brackets (char *src){
 		sprintf(src,"%s%s",part1,bracket);
 	else
 		sprintf(src,"%s%s%s",part1,bracket,part2);
-	#ifdef MALLOC
+#ifdef MALLOC
 	free(msg);
 	free(bracket);
 	if(bracket_start){
@@ -309,7 +299,7 @@ int Solve_Brackets (char *src){
 	if(strlen(msg) != bracket_stop+1){
 		free(part2);
 	}
-	#endif
+#endif
 	return 1;
 
 }
@@ -323,12 +313,11 @@ returns
    -1: an error while copinyg the src string
 */
 int Calc_String (char *src,char tok){
-	#ifdef MALLOC
+#ifdef MALLOC
 	char *msg, *part1, *part2, *a, *b;
-	#endif
-	#ifdef NOMALLOC
+#else
 	char msg[1024],part1[1024],part2[1024],a[10],b[10];
-	#endif
+#endif
 	int token_position,count_start,count_stop,inta,intb,val;
 	int i=0;
 	char char_tok[] 	= "*-+";
@@ -345,9 +334,9 @@ int Calc_String (char *src,char tok){
 	if(strcspn(src+1,char_tok)+i==strlen(src)){
 		return 2;
 	}
-	#ifdef MALLOC
+#ifdef MALLOC
 	msg=malloc(strlen(src));
-	#endif
+#endif
 	// Checks done copy src
 	strcpy(msg,src);
 
@@ -377,9 +366,9 @@ int Calc_String (char *src,char tok){
 
 	count_stop=i;
 	//copy var b
-	#ifdef MALLOC
+#ifdef MALLOC
 	b=malloc(count_stop-token_position);
-	#endif
+#endif
 	strncpy(b,msg+token_position+1,count_stop-token_position);
 	b[count_stop-token_position]='\0';
 	// get var a
@@ -398,9 +387,9 @@ int Calc_String (char *src,char tok){
 		i=0;
 
 	count_start = i;
-	#ifdef MALLOC
+#ifdef MALLOC
 	a=malloc(token_position-count_start);
-	#endif
+#endif
 	strncpy(a,msg+count_start,token_position-count_start);
 	a[token_position]='\0';
 
@@ -411,28 +400,28 @@ int Calc_String (char *src,char tok){
 
 
 	if(count_start>0){
-		#ifdef MALLOC
+#ifdef MALLOC
 		part1=malloc(count_start);
-		#endif
+#endif
 		strncpy(part1,msg,count_start);
 		part1[count_start]='\0';
 	}else{
-		#ifdef MALLOC
+#ifdef MALLOC
 		part1=malloc(1);
-		#endif
+#endif
 		part1[0]='\0';
 	}
 
 	if(count_stop<strlen(msg)-1){
-		#ifdef MALLOC
+#ifdef MALLOC
 		part2=malloc(strlen(msg+count_stop+1));
-		#endif
+#endif
 		strcpy(part2,msg+count_stop+1);
 		part2[strlen(msg)-count_stop]='\0';
 	}else{
-		#ifdef MALLOC
+#ifdef MALLOC
 		part2=malloc(1);
-		#endif
+#endif
 		part2[0]='\0';
 	}
 
@@ -442,39 +431,39 @@ int Calc_String (char *src,char tok){
 
 	if (strlen(part1)==0 && strlen(part2)==0){
 		sprintf(src,"%i",val);
-		#ifdef MALLOC
+#ifdef MALLOC
 		free(msg);free(part1);free(part2);free(a);free(b);
-		#endif
+#endif
 		return 2;
 	}else if (strlen(part1) && strlen(part2)==0 && val<0){
 		sprintf(src,"%s%i",part1,val);
-		#ifdef MALLOC
+#ifdef MALLOC
 		free(msg);free(part1);free(part2);free(a);free(b);
-		#endif
+#endif
 		return 0;
 	}else if (strlen(part1) && strlen(part2)==0 && val>=0){
 		sprintf(src,"%s+%i",part1,val);
-		#ifdef MALLOC
+#ifdef MALLOC
 		free(msg);free(part1);free(part2);free(a);free(b);
-		#endif
+#endif
 		return 0;
 	}else if (strlen(part1) && strlen(part2) && val<0){
 		sprintf(src,"%s%i%s",part1,val,part2);
-		#ifdef MALLOC
+#ifdef MALLOC
 		free(msg);free(part1);free(part2);free(a);free(b);
-		#endif
+#endif
 		return 0;
 	}else if (strlen(part1) && strlen(part2) && val>=0){
 		sprintf(src,"%s+%i%s",part1,val,part2);
-		#ifdef MALLOC
+#ifdef MALLOC
 		free(msg);free(part1);free(part2);free(a);free(b);
-		#endif
+#endif
 		return 0;
 	}else if (strlen(part1)==0 && strlen(part2) ){
 		sprintf(src,"%i%s",val,part2);
-		#ifdef MALLOC
+#ifdef MALLOC
 		free(msg);free(part1);free(part2);free(a);free(b);
-		#endif
+#endif
 		return 0;
 	}
 	return -1;
@@ -495,13 +484,13 @@ int Solve_String (char *src){
 		status = Check_For_Double_Tokens(src);
 		if (status==-1)
 			return -1;
-		#ifdef DEBUG
+#ifdef DEBUG
 		printf("* LOOP\n");
-		#endif
+#endif
 		status = Calc_String(src,'*');
-		#ifdef DEBUG
+#ifdef DEBUG
 		printf("%s\n",src);
-		#endif
+#endif
 		if (status==-1)
 			return -2;
 		if (status==2)
@@ -512,13 +501,13 @@ int Solve_String (char *src){
 		status = Check_For_Double_Tokens(src);
 		if (status==-1)
 			return -1;
-		#ifdef DEBUG
+#ifdef DEBUG
 		printf("- LOOP\n");
-		#endif
+#endif
 		status = Calc_String(src,'-');
-		#ifdef DEBUG
+#ifdef DEBUG
 		printf("%s\n",src);
-		#endif
+#endif
 		if (status==-1)
 			return -2;
 		if (status==2)
@@ -529,13 +518,13 @@ int Solve_String (char *src){
 		status = Check_For_Double_Tokens(src);
 		if (status==-1)
 			return -1;
-		#ifdef DEBUG
+#ifdef DEBUG
 		printf("+ LOOP\n");
-		#endif
+#endif
 		status = Calc_String(src,'+');
-		#ifdef DEBUG
+#ifdef DEBUG
 		printf("%s\n",src);
-		#endif
+#endif
 		if (status==-1)
 			return -2;
 		if (status==2)
