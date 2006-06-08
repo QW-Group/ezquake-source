@@ -1,5 +1,5 @@
 /*
-	$Id: parser.c,v 1.12 2006-06-07 20:44:43 oldmanuk Exp $
+	$Id: parser.c,v 1.13 2006-06-08 15:10:40 johnnycz Exp $
 */
 
 #include "common.h"
@@ -209,7 +209,7 @@ int Solve_Brackets (char *src) {
 
 	strcpy(msg,src);
 
-	if (Check_Brackets(src) == -1) {
+	if ((status = Check_Brackets(src)) == -1) {
 		return 2;
 	}
 
