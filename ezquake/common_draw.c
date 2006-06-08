@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.8 2006-03-29 20:38:28 oldmanuk Exp $
+	$Id: common_draw.c,v 1.9 2006-06-08 15:33:30 johnnycz Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -7,6 +7,7 @@
 #include "quakedef.h"
 #include "EX_misc.h"
 #include "localtime.h"
+#include "common_draw.h"
 
 #if 0
 void Draw_CenterString (int y, char *str)
@@ -577,19 +578,19 @@ void SCR_NetStats(int x, int y, float period)
     y+=8;
 }
 
-char* SCR_GetTime(SYSTEMTIME* tm)
+char* SCR_GetTime(SYSTEMTIME *tm)
 {
 	static char buf[32];
 	sprintf(buf, "%2d:%02d:%02d", tm->wHour, tm->wMinute, tm->wSecond);
 	return buf;
 }
 
-char* SCR_GetGameTime(int inverse)
+char* SCR_GetGameTime(int t)
 {
-	static char str[80];
+	static char str[9];
 	float timelimit;
 
-	timelimit = inverse ? 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) : 0;
+	timelimit = (t == TIMETYPE_GAMECLOCKINV) ? 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) : 0;
 
 	if (cl.countdown || cl.standby)
 		strlcpy (str, SecondsToMinutesString(timelimit), sizeof(str));
@@ -599,28 +600,36 @@ char* SCR_GetGameTime(int inverse)
 	return str;
 }
 
+char* SCR_GetDemoTime()
+{
+	static char str[9]; // '01:02:03\0'
+	strlcpy (str, SecondsToMinutesString((int) (cls.demotime - demostarttime)), sizeof(str));
+	return str;
+}
+
 // ------------------
 // draw BIG clock
 // style:
 //  0 - normal
 //  1 - red
-void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, int gametime)
+void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, int timetype)
 {
     extern  mpic_t  *sb_nums[2][11];
     extern  mpic_t  *sb_colon/*, *sb_slash*/;
-
+	SYSTEMTIME tm; 
     char *t;
-    SYSTEMTIME tm;
+	
+	GetLocalTime(&tm); // needed here for colon blinking
 
-    GetLocalTime(&tm);
-
-	switch (gametime) {
-		case 0:
-			t = SCR_GetTime(&tm); break;
-		case 1:
-			t = SCR_GetGameTime(0); break;
+	switch (timetype) {
+		case TIMETYPE_GAMECLOCK:
+		case TIMETYPE_GAMECLOCKINV:
+			t = SCR_GetGameTime(timetype); break;
+		case TIMETYPE_DEMOCLOCK:
+			t = SCR_GetDemoTime(); break;
+		case TIMETYPE_CLOCK:
 		default:
-			t = SCR_GetGameTime(1); break;
+			t = SCR_GetTime(&tm); break;
 	}
 
     if (style > 1)  style = 1;
@@ -653,20 +662,22 @@ void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, int gamet
 //  1 - small red
 //  2 - small yellow/white
 //  3 - small yellow/red
-void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, int gametime)
+void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, int timetype)
 {
     char *t;
-    SYSTEMTIME tm;
+	SYSTEMTIME tm;
+	
+	GetLocalTime(&tm); // needed here for colon blinking
 
-    GetLocalTime(&tm);
-
-	switch (gametime) {
-		case 0: 
-			t = SCR_GetTime(&tm); break;
-		case 1:
-			t = SCR_GetGameTime(0); break;
+	switch (timetype) {
+		case TIMETYPE_GAMECLOCK:
+		case TIMETYPE_GAMECLOCKINV:
+			t = SCR_GetGameTime(timetype); break;
+		case TIMETYPE_DEMOCLOCK:
+			t = SCR_GetDemoTime(); break;
+		case TIMETYPE_CLOCK:
 		default:
-			t = SCR_GetGameTime(1); break;
+			t = SCR_GetTime(&tm); break;
 	}
 
     if (style > 3)  style = 3;

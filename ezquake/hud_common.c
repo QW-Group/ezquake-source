@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.33 2006-05-30 19:13:34 disconn3ct Exp $
+	$Id: hud_common.c,v 1.34 2006-06-08 15:33:30 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -390,9 +390,9 @@ void SCR_HUD_DrawClock(hud_t *hud)
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
     {
         if (hud_clock_big->value)
-            SCR_DrawBigClock(x, y, hud_clock_style->value, hud_clock_blink->value, hud_clock_scale->value, 0);
+            SCR_DrawBigClock(x, y, hud_clock_style->value, hud_clock_blink->value, hud_clock_scale->value, TIMETYPE_CLOCK);
         else
-            SCR_DrawSmallClock(x, y, hud_clock_style->value, hud_clock_blink->value, hud_clock_scale->value, 0);
+            SCR_DrawSmallClock(x, y, hud_clock_style->value, hud_clock_blink->value, hud_clock_scale->value, TIMETYPE_CLOCK);
     }
 }
 
@@ -404,6 +404,7 @@ void SCR_HUD_DrawGameClock(hud_t *hud)
 {
     int width, height;
     int x, y;
+	int timetype;
 
     static cvar_t
         *hud_gameclock_big = NULL,
@@ -432,15 +433,60 @@ void SCR_HUD_DrawGameClock(hud_t *hud)
         height = 8*hud_gameclock_scale->value;
     }
 
+	timetype = (hud_gameclock_countdown->value) ? TIMETYPE_GAMECLOCKINV : TIMETYPE_GAMECLOCK;
+
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
     {
         if (hud_gameclock_big->value)
-            SCR_DrawBigClock(x, y, hud_gameclock_style->value, hud_gameclock_blink->value, hud_gameclock_scale->value, hud_gameclock_countdown->value + 1);
+            SCR_DrawBigClock(x, y, hud_gameclock_style->value, hud_gameclock_blink->value, hud_gameclock_scale->value, timetype);
         else
-            SCR_DrawSmallClock(x, y, hud_gameclock_style->value, hud_gameclock_blink->value, hud_gameclock_scale->value, hud_gameclock_countdown->value + 1);
+            SCR_DrawSmallClock(x, y, hud_gameclock_style->value, hud_gameclock_blink->value, hud_gameclock_scale->value, timetype);
     }
 }
 
+//---------------------
+//
+// draw HUD democlock
+//
+void SCR_HUD_DrawDemoClock(hud_t *hud)
+{
+    int width, height;
+    int x, y;
+    static cvar_t
+        *hud_democlock_big = NULL,
+        *hud_democlock_style,
+        *hud_democlock_blink,
+		*hud_democlock_scale;
+
+	if (!cls.demoplayback) return;
+
+    if (hud_democlock_big == NULL)    // first time
+    {
+        hud_democlock_big   = HUD_FindVar(hud, "big");
+        hud_democlock_style = HUD_FindVar(hud, "style");
+        hud_democlock_blink = HUD_FindVar(hud, "blink");
+		hud_democlock_scale = HUD_FindVar(hud, "scale");
+    }
+
+    if (hud_democlock_big->value)
+    {
+        width = (24+24+16+24+24)*hud_democlock_scale->value;
+        height = 24*hud_democlock_scale->value;
+    }
+    else
+    {
+        width = (5*8)*hud_democlock_scale->value;
+        height = 8*hud_democlock_scale->value;
+    }
+
+    if (HUD_PrepareDraw(hud, width, height, &x, &y))
+    {
+        if (hud_democlock_big->value)
+            SCR_DrawBigClock(x, y, hud_democlock_style->value, hud_democlock_blink->value, hud_democlock_scale->value, TIMETYPE_DEMOCLOCK);
+        else
+            SCR_DrawSmallClock(x, y, hud_democlock_style->value, hud_democlock_blink->value, hud_democlock_scale->value, TIMETYPE_DEMOCLOCK);
+    }
+}
 
 //---------------------
 //
@@ -2934,7 +2980,7 @@ void CommonDraw_Init(void)
         NULL);
 
     // init gameclock
-	HUD_Register("gameclock", NULL, "Shows current local time (hh:mm:ss).",
+	HUD_Register("gameclock", NULL, "Shows current game time (hh:mm:ss).",
         HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawGameClock,
         "0", "top", "right", "console", "0", "0", "0",
         "big",      "1",
@@ -2942,6 +2988,16 @@ void CommonDraw_Init(void)
 		"scale",    "1",
         "blink",    "1",
 		"countdown","0",
+        NULL);
+
+    // init democlock
+	HUD_Register("democlock", NULL, "Shows current demo time (hh:mm:ss).",
+        HUD_PLUSMINUS, ca_disconnected, 7, SCR_HUD_DrawDemoClock,
+        "0", "top", "right", "console", "0", "8", "0",
+        "big",      "0",
+        "style",    "0",
+		"scale",    "1",
+        "blink",    "0",
         NULL);
 
     // init ping
