@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.48 2006-06-01 18:59:11 johnnycz Exp $
+	$Id: cl_parse.c,v 1.49 2006-06-09 16:46:45 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -428,6 +428,9 @@ void CL_Prespawn (void)
 	TP_NewMap();
 	MT_NewMap();
 	Stats_NewMap();
+#ifdef GLQUAKE
+	HUD_NewMap();		// Cokeman 2006-05-28 HUD mvdradar
+#endif
 	Hunk_Check();		// make sure nothing is hurt
 
 #if 0
