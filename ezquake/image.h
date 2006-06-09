@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _IMAGE_H
 
 #define _IMAGE_H
+#include "png.h"
 
 #if defined(WITH_PNG) && !defined(WITH_ZLIB)
 #error WITH_PNG requires WITH_ZLIB
@@ -32,6 +33,15 @@ void Image_Resample (void *indata, int inwidth, int inheight,
 					 void *outdata, int outwidth, int outheight, int bpp, int quality);
 void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp);
 
+typedef struct
+{
+	byte *data;
+	png_textp textchunks;
+	size_t text_count;
+} png_data;
+
+png_textp Image_LoadPNG_Comments(FILE *fin, char *filename, int *text_count);
+png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matchheight);
 byte *Image_LoadPNG (FILE *, char *, int, int);
 byte *Image_LoadTGA (FILE *, char *, int, int);
 byte *Image_LoadPCX (FILE *, char *, int, int);

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: image.c,v 1.23 2006-05-16 10:05:28 disconn3ct Exp $
+	$Id: image.c,v 1.24 2006-06-09 16:46:45 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -812,37 +812,138 @@ static void PNG_IO_user_flush_data(png_structp png_ptr) {
 	fflush(f);
 }
 
-
-byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight) {
-	byte header[8], **rowpointers, *data;
+png_textp Image_LoadPNGComments(FILE *fin, char *filename, int *n_textcount)
+{
+	byte header[8];
 	png_structp png_ptr;
 	png_infop pnginfo;
-	int y, width, height, bitdepth, colortype, interlace, compression, filter, bytesperpixel;
-	unsigned long rowbytes;
+	png_infop pnginfo_end;
+	png_textp png_text_ptr_start;
+	png_textp png_text_ptr_end;
+	png_textp png_text_ptr_return;
+	int n_textcount_start = 0;
+	int n_textcount_end = 0;
+
+	*n_textcount = -1;
 
 	if (!fin && FS_FOpenFile (filename, &fin) == -1)
+	{
 		return NULL;
+	}
 
 	fread(header, 1, 8, fin);
 
-	if (png_sig_cmp(header, 0, 8)) {
+	if (png_sig_cmp(header, 0, 8)) 
+	{
 		Com_DPrintf ("Invalid PNG image %s\n", COM_SkipPath(filename));
 		fclose(fin);
 		return NULL;
 	}
 
-	if (!(png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) {
+	if (!(png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) 
+	{
 		fclose(fin);
 		return NULL;
 	}
 
-	if (!(pnginfo = png_create_info_struct(png_ptr))) {
+	if (!(pnginfo = png_create_info_struct(png_ptr))) 
+	{
 		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
 		fclose(fin);
 		return NULL;
 	}
 
-	if (setjmp(png_ptr->jmpbuf)) {
+	if (setjmp(png_ptr->jmpbuf)) 
+	{
+		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+		fclose(fin);
+		return NULL;
+	}
+
+	// Read chunks before the image data.
+	png_set_read_fn(png_ptr, fin, PNG_IO_user_read_data);
+	png_set_sig_bytes(png_ptr, 8);
+	png_read_info(png_ptr, pnginfo);
+
+	*n_textcount = 0;
+
+	// Try to get the text chunks.
+	if(!png_get_text(png_ptr, pnginfo, &png_text_ptr_start, &n_textcount_start))
+	{
+		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+		fclose(fin);
+		return NULL;
+	}
+
+	// Read the chunks after the image data.
+	png_read_end(png_ptr, pnginfo_end);
+
+	// Try to get the text chunks.
+	if(!png_get_text(png_ptr, pnginfo, &png_text_ptr_end, &n_textcount_end))
+	{
+		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+		fclose(fin);
+		return NULL;
+	}
+
+	// Get total number of chunks.
+	*n_textcount = n_textcount_start + n_textcount_end;
+
+	// Make sure we have something left to return after freeing
+	//if(png_text_ptr != NULL)
+	{
+		//png_text_ptr_return = (png_textp)Q_malloc(sizeof(png_text) * (*n_textcount));
+		//memcpy(png_text_ptr_return, png_text_ptr, sizeof(png_text) * (*n_textcount));
+	}
+
+	// Free memory and close the file.
+	png_destroy_read_struct(&png_ptr, &pnginfo, &pnginfo_end);
+	fclose(fin);
+
+	return png_text_ptr_return;
+}
+
+png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matchheight)
+{
+	byte header[8], **rowpointers, *data;
+	png_structp png_ptr;
+	png_infop pnginfo;
+	png_textp textchunks;				// Actual text chunks that will be returned.
+	png_textp png_text_ptr;				// Text chunks are read into this (will be scrapped by libpng).
+	png_data *png_return_val;			// Return struct containing data + text chunks.
+	int n_textcount = 0;				// Number of text chunks.
+	int y, width, height, bitdepth, colortype, interlace, compression, filter, bytesperpixel;
+	unsigned long rowbytes;
+
+	if (!fin && FS_FOpenFile (filename, &fin) == -1)
+	{
+		return NULL;
+	}
+
+	fread(header, 1, 8, fin);
+
+	if (png_sig_cmp(header, 0, 8)) 
+	{
+		Com_DPrintf ("Invalid PNG image %s\n", COM_SkipPath(filename));
+		fclose(fin);
+		return NULL;
+	}
+
+	if (!(png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) 
+	{
+		fclose(fin);
+		return NULL;
+	}
+
+	if (!(pnginfo = png_create_info_struct(png_ptr))) 
+	{
+		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+		fclose(fin);
+		return NULL;
+	}
+
+	if (setjmp(png_ptr->jmpbuf)) 
+	{
 		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
 		fclose(fin);
 		return NULL;
@@ -854,48 +955,67 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight)
 	png_get_IHDR(png_ptr, pnginfo, (png_uint_32 *) &width, (png_uint_32 *) &height, &bitdepth,
 		&colortype, &interlace, &compression, &filter);
 
-	if (width > IMAGE_MAX_DIMENSIONS || height > IMAGE_MAX_DIMENSIONS) {
+	// Get the text chunks found before the image data.
+	n_textcount = 0;
+	png_get_text(png_ptr, pnginfo, &png_text_ptr, &n_textcount);
+
+	if (width > IMAGE_MAX_DIMENSIONS || height > IMAGE_MAX_DIMENSIONS) 
+	{
 		Com_DPrintf ("PNG image %s exceeds maximum supported dimensions\n", COM_SkipPath(filename));
 		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
 		fclose(fin);
 		return NULL;
 	}
 
-	if ((matchwidth && width != matchwidth) || (matchheight && height != matchheight)) {
+	if ((matchwidth && width != matchwidth) || (matchheight && height != matchheight)) 
+	{
 		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
 		fclose(fin);
 		return NULL;
 	}
 
-	if (colortype == PNG_COLOR_TYPE_PALETTE) {
+	if (colortype == PNG_COLOR_TYPE_PALETTE) 
+	{
 		png_set_palette_to_rgb(png_ptr);
 		png_set_filler(png_ptr, 255, PNG_FILLER_AFTER);		
 	}
 
 	if (colortype == PNG_COLOR_TYPE_GRAY && bitdepth < 8) 
+	{
 		png_set_gray_1_2_4_to_8(png_ptr);
+	}
 	
 	if (png_get_valid(png_ptr, pnginfo, PNG_INFO_tRNS))	
+	{
 		png_set_tRNS_to_alpha(png_ptr);
+	}
 
 	if (colortype == PNG_COLOR_TYPE_GRAY || colortype == PNG_COLOR_TYPE_GRAY_ALPHA)
+	{
 		png_set_gray_to_rgb(png_ptr);
+	}
 
-	if (colortype != PNG_COLOR_TYPE_RGBA)				
+	if (colortype != PNG_COLOR_TYPE_RGBA)
+	{
 		png_set_filler(png_ptr, 255, PNG_FILLER_AFTER);
+	}
 
 	if (bitdepth < 8)
+	{
 		png_set_expand (png_ptr);
+	}
 	else if (bitdepth == 16)
+	{
 		png_set_strip_16(png_ptr);
-
+	}
 
 	png_read_update_info(png_ptr, pnginfo);
 	rowbytes = png_get_rowbytes(png_ptr, pnginfo);
 	bytesperpixel = png_get_channels(png_ptr, pnginfo);
 	bitdepth = png_get_bit_depth(png_ptr, pnginfo);
 
-	if (bitdepth != 8 || bytesperpixel != 4) {
+	if (bitdepth != 8 || bytesperpixel != 4) 
+	{
 		Com_DPrintf ("Unsupported PNG image %s: Bad color depth and/or bpp\n", COM_SkipPath(filename));
 		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
 		fclose(fin);
@@ -906,16 +1026,97 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight)
 	rowpointers = (byte **) Q_malloc(height * sizeof(*rowpointers));
 
 	for (y = 0; y < height; y++)
+	{
 		rowpointers[y] = data + y * rowbytes;
+	}
 
 	png_read_image(png_ptr, rowpointers);
-	png_read_end(png_ptr, NULL);
+	png_read_end(png_ptr, pnginfo);
+	
+	// Read text chunks after the image data also.
+	png_get_text(png_ptr, pnginfo, &png_text_ptr, &n_textcount);
+
+	// Return the text chunks if we found any.
+	if(n_textcount > 0)
+	{
+		int i;
+		int len;
+		textchunks = (png_textp)Q_malloc(sizeof(png_text) * n_textcount);
+
+		if(textchunks != NULL)
+		{
+			for(i = 0; i < n_textcount; i++)
+			{
+				len = strlen(png_text_ptr[i].key);
+
+				textchunks[i].key = (char *)Q_malloc(sizeof(char) * len + 1);
+				textchunks[i].text = (char *)Q_malloc(sizeof(char) * png_text_ptr[i].text_length + 1);
+
+				strncpy(textchunks[i].key, png_text_ptr[i].key, len);
+				strncpy(textchunks[i].text, png_text_ptr[i].text, png_text_ptr[i].text_length);
+				
+				textchunks[i].text_length = png_text_ptr[i].text_length;
+				textchunks[i].compression = png_text_ptr[i].compression;
+			}
+		}
+		else
+		{
+			textchunks = NULL;
+		}
+	}
+	else
+	{
+		textchunks = NULL;
+	}
 
 	png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
 	Q_free(rowpointers);
 	fclose(fin);
 	image_width = width;
 	image_height = height;
+
+	// Gather up the return data.
+	png_return_val = (png_data *)Q_malloc(sizeof(png_data));	
+	png_return_val->data = data;
+	png_return_val->textchunks = textchunks;
+	png_return_val->text_count = n_textcount;
+
+	return png_return_val;
+}
+
+png_textp Image_LoadPNG_Comments(FILE *fin, char *filename, int *text_count)
+{
+	//png_textp *textchunks;
+	png_textp textchunks;
+	png_data *pdata;
+	pdata = Image_LoadPNG_All(fin, filename, 0, 0);
+
+	// Not using the image data so free it.
+	Q_free(pdata->data);
+	
+	// Return text chunks + count.
+	*text_count = pdata->text_count;
+	textchunks = pdata->textchunks;
+
+	Q_free(pdata);
+
+	return textchunks;
+}
+
+byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight) 
+{
+	byte *data;
+	png_data *pdata;
+	
+	// Load the actual image.
+	pdata = Image_LoadPNG_All(fin, filename, matchwidth, matchheight);
+	data = pdata->data;
+
+	// Not used.
+	Q_free(pdata->textchunks);
+
+	Q_free(pdata);
+	
 	return data;
 }
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.20 2006-04-29 20:06:56 disconn3ct Exp $
+	$Id: gl_draw.c,v 1.21 2006-06-09 16:46:45 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1189,6 +1189,133 @@ void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha) {
 void Draw_Fill (int x, int y, int w, int h, int c) {
 	Draw_AlphaFill(x, y, w, h, c, 1);
 }
+
+// HUD -> Cokeman
+// 
+
+void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, int c, float alpha) 
+{
+	alpha = bound(0, alpha, 1);
+
+	if (!alpha)
+	{
+		return;
+	}
+
+	glDisable (GL_TEXTURE_2D);
+	if (alpha < 1) 
+	{
+		glEnable (GL_BLEND);
+		glDisable(GL_ALPHA_TEST);
+		glColor4f (host_basepal[c * 3] / 255.0,  host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2] / 255.0, alpha);
+	} 
+	else 
+	{
+		glColor3f (host_basepal[c * 3] / 255.0, host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2]  /255.0);
+	}
+
+	if(thickness > 0.0)
+	{
+		glLineWidth(thickness);
+	}
+
+	glBegin (GL_LINES);
+	glVertex2f (x_start, y_start);	
+	glVertex2f (x_end, y_end);
+	glEnd ();
+
+	glEnable (GL_TEXTURE_2D);
+	if (alpha < 1) 
+	{
+		glEnable(GL_ALPHA_TEST);
+		glDisable (GL_BLEND);
+	}
+	glColor3ubv (color_white);
+}
+
+void Draw_Line (int x_start, int y_start, int x_end, int y_end, float thickness, int c) 
+{
+	Draw_AlphaLine(x_start, y_start, x_end, y_end, thickness, c, 1);
+}
+
+#define CIRCLE_LINE_COUNT	40
+
+void Draw_AlphaCircle (int x, int y, float radius, float thickness, qbool fill, int c, float alpha)
+{
+	double angle;
+	int i;
+
+	alpha = bound(0, alpha, 1);
+
+	if (!alpha)
+	{
+		return;
+	}
+
+	glDisable (GL_TEXTURE_2D);
+	if (alpha < 1) 
+	{
+		glEnable (GL_BLEND);
+		glDisable(GL_ALPHA_TEST);
+		glColor4f (host_basepal[c * 3] / 255.0,  host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2] / 255.0, alpha);
+	} 
+	else 
+	{
+		glColor3f (host_basepal[c * 3] / 255.0, host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2]  /255.0);
+	}
+
+	if(thickness > 0.0)
+	{
+		glLineWidth(thickness);
+	}
+
+	if(fill)
+	{
+		glBegin(GL_POLYGON);
+	}
+	else
+	{
+		glBegin (GL_LINE_LOOP);
+	}
+
+	for(i = 0; i < CIRCLE_LINE_COUNT; i++)
+	{
+      angle = i*2*M_PI / CIRCLE_LINE_COUNT;
+      glVertex2f (x + radius*cos(angle), y + radius*sin(angle));
+    }
+
+	glEnd ();
+
+	glEnable (GL_TEXTURE_2D);
+	if (alpha < 1) 
+	{
+		glEnable (GL_ALPHA_TEST);
+		glDisable (GL_BLEND);
+	}
+	glColor3ubv (color_white);
+}
+
+void Draw_AlphaCircleOutline (int x, int y, float radius, float thickness, int color, float alpha)
+{
+	Draw_AlphaCircle (x, y, radius, thickness, false, color, alpha);
+}
+
+void Draw_AlphaCircleFill (int x, int y, float radius, int color, float alpha)
+{
+	Draw_AlphaCircle (x, y, radius, 1.0, true, color, alpha);
+}
+
+void Draw_CircleOutline (int x, int y, float radius, float thickness, int color)
+{
+	Draw_AlphaCircleOutline(x, y, radius, thickness, color, 1);
+}
+
+void Draw_CircleFill (int x, int y, float radius, int color)
+{
+	Draw_AlphaCircleFill (x, y, radius, color, 1);
+}
+
+
 
 // HUD -> hexum
 // kazik -->

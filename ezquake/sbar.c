@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.25 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: sbar.c,v 1.26 2006-06-09 16:46:45 cokeman1982 Exp $
 */
 // sbar.c -- status bar code
 
@@ -399,7 +399,7 @@ int scoreboardteams;
 static __inline int Sbar_PlayerNum(void) {
 	int mynum;
 
-	if (!cl.spectator || (mynum = Cam_TrackNum()) == -1)
+		if (!cl.spectator || (mynum = Cam_TrackNum()) == -1)
 		mynum = cl.playernum;
 
 	return mynum;

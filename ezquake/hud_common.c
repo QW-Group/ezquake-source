@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.34 2006-06-08 15:33:30 johnnycz Exp $
+	$Id: hud_common.c,v 1.35 2006-06-09 16:46:45 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -10,6 +10,9 @@
 #include "common_draw.h"
 #include "EX_misc.h"
 #include "mp3_player.h"
+#include "png.h"
+#include "image.h"
+
 #ifndef STAT_MINUS
 #define STAT_MINUS		10
 #endif
@@ -213,7 +216,7 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 	static cvar_t
 		*hud_tracking_format;
 	hud_tracking_format    = HUD_FindVar(hud, "format");
-	
+
 	strlcpy(st, hud_tracking_format->string, sizeof(st));
 	Replace_In_String(st, sizeof(st), '%', 2, "n", cl.players[spec_track].name, "t", cl.teamplay ? cl.players[spec_track].team : "");
 
@@ -763,7 +766,7 @@ void SCR_HUD_DrawPowerup(hud_t *hud, int num, float scale, int style)
             }
             Draw_SCharacter(x, y, c, scale);
         }
-        break;  
+        break;
     default:    // classic - pics
         width = height = scale * 16;
         if (!HUD_PrepareDraw(hud, width, height, &x, &y))
@@ -1084,17 +1087,17 @@ void SCR_HUD_DrawFace(hud_t *hud)
         Draw_SPic (x, y, sb_face_invis_invuln, scale);
         return;
     }
-    if (HUD_Stats(STAT_ITEMS) & IT_QUAD) 
+    if (HUD_Stats(STAT_ITEMS) & IT_QUAD)
     {
         Draw_SPic (x, y, sb_face_quad, scale);
         return;
     }
-    if (HUD_Stats(STAT_ITEMS) & IT_INVISIBILITY) 
+    if (HUD_Stats(STAT_ITEMS) & IT_INVISIBILITY)
     {
         Draw_SPic (x, y, sb_face_invis, scale);
         return;
     }
-    if (HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY) 
+    if (HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY)
     {
         Draw_SPic (x, y, sb_face_invuln, scale);
         return;
@@ -1104,7 +1107,7 @@ void SCR_HUD_DrawFace(hud_t *hud)
         f = 4;
     else
         f = max(0, HUD_Stats(STAT_HEALTH)) / 20;
-    
+
     if (cl.time <= cl.faceanimtime)
         anim = 1;
     else
@@ -1632,7 +1635,7 @@ static int ComparePlayers(sort_players_info_t *p1, sort_players_info_t *p2, qboo
 
 		if (byTeams)
             d = p1->team->frags - p2->team->frags;
-		
+
 		if (!d && byTeams)
 			d = strcmp(p1->team->name, p2->team->name);
 
@@ -1751,7 +1754,7 @@ void Frags_DrawColors(int x, int y, int width, int height, int top_color, int bo
     Draw_String(x-2+(width-8*strlen(buf)-2)/2, posy, buf);
 
 	if(drawBrackets)
-    {	
+    {
         int d = width >= 32 ? 0 : 1;
 		switch(style)
 		{
@@ -1762,7 +1765,7 @@ void Frags_DrawColors(int x, int y, int width, int height, int top_color, int bo
 				Draw_Fill(x, y-1, width, 1, 0x4f);
 				Draw_Fill(x, y-1, 1, height+2, 0x4f);
 				Draw_Fill(x+width-1, y-1, 1, height+2, 0x4f);
-				Draw_Fill(x, y+height, width, 1, 0x4f);	
+				Draw_Fill(x, y+height, width, 1, 0x4f);
 				break;
 			case 0 :
 			default :
@@ -1829,14 +1832,20 @@ int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, 
 	// Only allow this for spectators.
 	if (!(cls.demoplayback || cl.spectator)
 		|| style > TEAMFRAGS_EXTRA_SPEC_RLTEXT
-		|| style <= TEAMFRAGS_EXTRA_SPEC_NONE)
+		|| style <= TEAMFRAGS_EXTRA_SPEC_NONE
+		|| !style)
 	{
 		return px;
 	}
-	
+
+	// Check if the team has any RL's.
 	if(sorted_teams[num]->rlcount > 0)
 	{
 		int y_pos = py;
+
+		//
+		// Draw the RL + count depending on style.
+		//
 
 		if((style == TEAMFRAGS_EXTRA_SPEC_BEFORE || style == TEAMFRAGS_EXTRA_SPEC_NOICON)
 			&& style != TEAMFRAGS_EXTRA_SPEC_RLTEXT)
@@ -1849,9 +1858,9 @@ int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, 
 		if(style != TEAMFRAGS_EXTRA_SPEC_NOICON && style != TEAMFRAGS_EXTRA_SPEC_RLTEXT)
 		{
 			y_pos = ROUND(py + (height / 2.0) - (rl_picture.height / 2.0));
-			
+
 			Draw_SSubPic (px, y_pos, &rl_picture, 0, 0, rl_picture.width, rl_picture.height, 1);
-			px += rl_picture.width + 1; 
+			px += rl_picture.width + 1;
 		}
 
 		if(style == TEAMFRAGS_EXTRA_SPEC_ONTOP && style != TEAMFRAGS_EXTRA_SPEC_RLTEXT)
@@ -1869,6 +1878,7 @@ int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, 
 	}
 	else
 	{
+		// If the team has no RL's just pad with nothing.
 		if(style == TEAMFRAGS_EXTRA_SPEC_BEFORE)
 		{
 			// Draw the rl count before the rl icon.
@@ -1893,65 +1903,88 @@ int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, 
 	return px;
 }
 
-#define FRAGS_EXTRA_SPEC_ALL			1
-#define FRAGS_EXTRA_SPEC_NO_RL			2
-#define FRAGS_EXTRA_SPEC_NO_ARMOR		3
-#define FRAGS_EXTRA_SPEC_NO_HEALTH		4
-#define	FRAGS_EXTRA_SPEC_NO_POWERUPS	5
-#define FRAGS_EXTRA_SPEC_ONLY_POWERUPS	6
-#define FRAGS_EXTRA_SPEC_ONLY_HEALTH	7
-#define FRAGS_EXTRA_SPEC_ONLY_ARMOR		8
-#define FRAGS_EXTRA_SPEC_ONLY_RL		9
+#define FRAGS_EXTRA_DONT_SHOW				0
+#define FRAGS_EXTRA_SPEC_ALL				1
+#define FRAGS_EXTRA_SPEC_ALL_2				2
+#define FRAGS_EXTRA_SPEC_NO_RL				3
+#define FRAGS_EXTRA_SPEC_NO_ARMOR			4
+#define FRAGS_EXTRA_SPEC_NO_ARMOR_2			5
+#define FRAGS_EXTRA_SPEC_NO_HEALTH			6
+#define FRAGS_EXTRA_SPEC_NO_HEALTH_2		7
+#define	FRAGS_EXTRA_SPEC_NO_POWERUPS		8
+#define	FRAGS_EXTRA_SPEC_NO_POWERUPS_2		9
+#define FRAGS_EXTRA_SPEC_ONLY_POWERUPS		10
+#define FRAGS_EXTRA_SPEC_ONLY_HEALTH		11
+#define FRAGS_EXTRA_SPEC_ONLY_ARMOR			12
+#define FRAGS_EXTRA_SPEC_ONLY_RL			13
+#define FRAGS_EXTRA_SPEC_ONLY_RL_2			14
 
-int Frags_DrawExtraSpecInfo(player_info_t *info, 
-							 int px, int py, 
-							 int cell_width, int cell_height, 
+int Frags_DrawExtraSpecInfo(player_info_t *info,
+							 int px, int py,
+							 int cell_width, int cell_height,
 							 int space_x, int space_y, int style, int flip)
 {
 	// Styles:
-	// 0 = Show nothing
-	// 1 = Show all
-	// 2 = Don't show RL's
-	// 3 = Don't show armors
-	// 4 = Don't show health
-	// 5 = Don't show powerups
-	// 6 = Only show powerups
-	// 7 = Only show health
-	// 8 = Only show armors
-	// 9 = Only show RL's
+	// * means that the RL pic isn't show, just the text "RL".
+	//
+	// 0  = Show nothing
+	// 1  = Show all
+	// 2  = Show all *
+	// 3  = Don't show RL's
+	// 4  = Don't show armors
+	// 5  = Don't show armors *
+	// 6  = Don't show health
+	// 7  = Don't show health *
+	// 8  = Don't show powerups
+	// 9  = Don't show powerups *
+	// 10 = Only show powerups
+	// 11 = Only show health
+	// 12 = Only show armors
+	// 13 = Only show RL's
+	// 14 = Only show RL's *
 
 	extern mpic_t *sb_weapons[7][8]; // sbar.c ... Used for displaying the RL.
 	mpic_t rl_picture;				 // Picture of RL.
 
 	float armor_height = 0.0;
+	float armor_width = 0.0;
 	int armor = 0;
 	int armor_bg_color = 0;
 	float armor_bg_power = 0;
-
 	int spec_extra_health_w = 5;
-
 	int health_spacing = 1;
-
-	rl_picture = *sb_weapons[0][5];
+	int weapon_width = 24;
+	qbool show_rl_pic = true;
 
 	// Only allow this for spectators.
-	if (!(cls.demoplayback || cl.spectator))
+	if (!(cls.demoplayback || cl.spectator) || style == FRAGS_EXTRA_DONT_SHOW)
 	{
 		return px;
 	}
 
+	show_rl_pic = !(style == FRAGS_EXTRA_SPEC_ALL_2
+		|| style == FRAGS_EXTRA_SPEC_NO_ARMOR_2
+		|| style == FRAGS_EXTRA_SPEC_NO_HEALTH_2
+		|| style == FRAGS_EXTRA_SPEC_NO_POWERUPS_2
+		|| style == FRAGS_EXTRA_SPEC_ONLY_RL_2);
+
+	rl_picture = *sb_weapons[0][5];
+
+	weapon_width = show_rl_pic ? rl_picture.width : 24;
+
 	// Draw health bar.
-	if(flip 
-		&& style != FRAGS_EXTRA_SPEC_NO_HEALTH 
-		&& style != FRAGS_EXTRA_SPEC_ONLY_ARMOR 
+	if(flip
+		&& style != FRAGS_EXTRA_SPEC_NO_HEALTH
+		&& style != FRAGS_EXTRA_SPEC_ONLY_ARMOR
 		&& style != FRAGS_EXTRA_SPEC_ONLY_RL
 		&& style != FRAGS_EXTRA_SPEC_ONLY_POWERUPS)
 	{
 		Frags_DrawHealthBar(info->stats[STAT_HEALTH], px, py, cell_height, 3);
 		px += 3 + health_spacing;
 	}
+
 	armor = info->stats[STAT_ARMOR];
-	
+
 	// If the player has any armor, draw it in the appropriate color.
 	if(info->stats[STAT_ITEMS] & IT_ARMOR1)
 	{
@@ -1970,41 +2003,58 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 	}
 
 	// Only draw the armor if the current player has one and if the style allows it.
-	if(armor_bg_power 
-		&& armor_bg_color 
-		&& style != FRAGS_EXTRA_SPEC_NO_ARMOR 
-		&& style != FRAGS_EXTRA_SPEC_ONLY_HEALTH 
+	if(armor_bg_power
+		&& armor_bg_color
+		&& style != FRAGS_EXTRA_SPEC_NO_ARMOR
+		&& style != FRAGS_EXTRA_SPEC_ONLY_HEALTH
 		&& style != FRAGS_EXTRA_SPEC_ONLY_RL
 		&& style != FRAGS_EXTRA_SPEC_ONLY_POWERUPS)
 	{
 		armor_height = ROUND((cell_height / armor_bg_power) * armor);
+
 #ifdef GLQUAKE
-		Draw_AlphaFill
+		Draw_AlphaFill(px,												// x
+						py + cell_height - (int)armor_height,			// y (draw from bottom up)
+						weapon_width,									// width
+						(int)armor_height,								// height
+						armor_bg_color,									// color
+						0.3);											// alpha
 #else
-		Draw_Fill
+		Draw_Fill(px,
+				py + cell_height - (int)armor_height,
+				weapon_width,
+				(int)armor_height,
+				armor_bg_color);
 #endif
-						(px												// x
-						,py + cell_height - (int)armor_height			// y (draw from bottom up)
-						,rl_picture.width								// width
-						,(int)armor_height								// height
-						,armor_bg_color									// color
-#ifdef GLQUAKE
-						,0.3);											// alpha
-#else
-						);												// no alpha @ software
-#endif
+
+		// Draws the armor bar vertically instead.
+		/*armor_width = ROUND((rl_picture.width  / armor_bg_power) * armor);
+		Draw_AlphaFill(px + rl_picture.width - (int)armor_width,		// x (Draw from right to left)
+						py,												// y
+						(int)armor_width,								// width
+						(int)cell_height,								// height
+						armor_bg_color,									// color
+						0.3);											// alpha
+		*/
 	}
 
 	// Draw the rl if the current player has it and the style allows it.
-	if(info->stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER 
+	if(info->stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER
 		&& style != FRAGS_EXTRA_SPEC_NO_RL
 		&& style != FRAGS_EXTRA_SPEC_ONLY_HEALTH
 		&& style != FRAGS_EXTRA_SPEC_ONLY_ARMOR
 		&& style != FRAGS_EXTRA_SPEC_ONLY_POWERUPS)
 	{
-		Draw_SSubPic (px, py + ROUND((cell_height/2.0)) - 8, &rl_picture, 0, 0, rl_picture.width, rl_picture.height, 1);
-		//Draw_SSubPic (px, py + ROUND((cell_height/2.0)) - 8, sb_weapons[0][5], 0, 0, spec_extra_weapon_w, 16, 1);
-		// TODO : allow "RL" text here instead of a picture.
+		if(show_rl_pic)
+		{
+			// Draw the rl-pic.
+			Draw_SSubPic (px, py + ROUND((cell_height/2.0)) - (rl_picture.height/2.0), &rl_picture, 0, 0, rl_picture.width, rl_picture.height, 1);
+		}
+		else
+		{
+			// just print "RL" instead.
+			Draw_String(px + 12 - 8, py + ROUND((cell_height/2.0)) - 4, "RL");
+		}
 	}
 
 	// Only draw powerups is the current player has it and the style allows it.
@@ -2013,27 +2063,27 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 		&& style != FRAGS_EXTRA_SPEC_ONLY_ARMOR
 		&& style != FRAGS_EXTRA_SPEC_ONLY_RL)
 	{
-		
-		//float powerups_x = px + (spec_extra_weapon_w / 2.0);
-		float powerups_x = px + (rl_picture.width / 2.0);
 
-		if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY 
+		//float powerups_x = px + (spec_extra_weapon_w / 2.0);
+		float powerups_x = px + (weapon_width / 2.0);
+
+		if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY
 			&& info->stats[STAT_ITEMS] & IT_INVISIBILITY
 			&& info->stats[STAT_ITEMS] & IT_QUAD)
 		{
 			Draw_ColoredString(ROUND(powerups_x - 10), py, "&c0ffQ&cf00P&cff0R", 0);
 		}
-		else if(info->stats[STAT_ITEMS] & IT_QUAD 
+		else if(info->stats[STAT_ITEMS] & IT_QUAD
 			&& info->stats[STAT_ITEMS] & IT_INVULNERABILITY)
 		{
 			Draw_ColoredString(ROUND(powerups_x - 8), py, "&c0ffQ&cf00P", 0);
 		}
-		else if(info->stats[STAT_ITEMS] & IT_QUAD 
+		else if(info->stats[STAT_ITEMS] & IT_QUAD
 			&& info->stats[STAT_ITEMS] & IT_INVISIBILITY)
 		{
 			Draw_ColoredString(ROUND(powerups_x - 8), py, "&c0ffQ&cff0R", 0);
 		}
-		else if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY 
+		else if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY
 			&& info->stats[STAT_ITEMS] & IT_INVISIBILITY)
 		{
 			Draw_ColoredString(ROUND(powerups_x - 8), py, "&cf00P&cff0R", 0);
@@ -2052,12 +2102,12 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 		}
 	}
 
-	px += rl_picture.width + health_spacing;
+	px += weapon_width + health_spacing;
 
 	// Draw health bar.
-	if(!flip 
-		&& style != FRAGS_EXTRA_SPEC_NO_HEALTH 
-		&& style != FRAGS_EXTRA_SPEC_ONLY_ARMOR 
+	if(!flip
+		&& style != FRAGS_EXTRA_SPEC_NO_HEALTH
+		&& style != FRAGS_EXTRA_SPEC_ONLY_ARMOR
 		&& style != FRAGS_EXTRA_SPEC_ONLY_RL
 		&& style != FRAGS_EXTRA_SPEC_ONLY_POWERUPS)
 	{
@@ -2077,8 +2127,8 @@ void Frags_DrawBackground(int px, int py, int cell_width, int cell_height,
 	float bg_alpha = 0.3;
 
 	if(style == 4
-		|| style == 6 
-		|| style == 8) 
+		|| style == 6
+		|| style == 8)
 		bg_alpha = 0;
 
 	if(shownames)
@@ -2093,15 +2143,15 @@ void Frags_DrawBackground(int px, int py, int cell_width, int cell_height,
 	if(style == 7 || style == 8)
 		bg_color = 0x4f;
 #ifdef GLQUAKE
-	Draw_AlphaFill(px-1, py-space_y/2, bg_width, cell_height+space_y, bg_color, bg_alpha); 
+	Draw_AlphaFill(px-1, py-space_y/2, bg_width, cell_height+space_y, bg_color, bg_alpha);
 #else
-	Draw_Fill(px-1, py-space_y/2, bg_width, cell_height+space_y, bg_color); 
+	Draw_Fill(px-1, py-space_y/2, bg_width, cell_height+space_y, bg_color);
 #endif
 
-	if(drawBrackets && (style == 5 || style == 6)) 
+	if(drawBrackets && (style == 5 || style == 6))
 	{
 		Draw_Fill(px-1, py-1-space_y/2, bg_width, 1, 0x4f);
-		
+
 		Draw_Fill(px-1, py-space_y/2, 1, cell_height+space_y, 0x4f);
 		Draw_Fill(px+bg_width-1, py-1-space_y/2, 1, cell_height+1+space_y, 0x4f);
 
@@ -2112,7 +2162,7 @@ void Frags_DrawBackground(int px, int py, int cell_width, int cell_height,
 int Frags_DrawText(int px, int py,
 					int cell_width, int cell_height,
 					int space_x, int space_y,
-					int max_name_length, int max_team_length, 
+					int max_name_length, int max_team_length,
 					int flip, int pad,
 					int shownames, int showteams,
 					char* name, char* team)
@@ -2154,7 +2204,7 @@ int Frags_DrawText(int px, int py,
 		if(flip)
 			px += space_x;
 	}
-	
+
 	if(shownames)
 	{
 		// Draw name
@@ -2162,8 +2212,8 @@ int Frags_DrawText(int px, int py,
 		name_length = strlen(_name);
 
 		if(flip && pad)
-		{	
-			px += (max_name_length - name_length)*8; 
+		{
+			px += (max_name_length - name_length)*8;
 			Draw_String(px, y_pos, _name);
 			px += name_length*8;
 		}
@@ -2180,7 +2230,7 @@ int Frags_DrawText(int px, int py,
 
 		px += space_x;
 	}
-	
+
 	return px;
 }
 
@@ -2204,7 +2254,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
         *hud_frags_vertical,
         *hud_frags_strip,
         *hud_frags_teamsort,
-		*hud_frags_shownames,		
+		*hud_frags_shownames,
 		*hud_frags_teams,
 		*hud_frags_padtext,
 		//*hud_frags_showself,
@@ -2230,7 +2280,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		hud_frags_shownames		= HUD_FindVar(hud, "shownames");
 		hud_frags_teams			= HUD_FindVar(hud, "showteams");
 		hud_frags_padtext		= HUD_FindVar(hud, "padtext");
-		//hud_frags_showself		= HUD_FindVar(hud, "showself_always"); 
+		//hud_frags_showself		= HUD_FindVar(hud, "showself_always");
 		hud_frags_extra_spec	= HUD_FindVar(hud, "extra_spec_info");
 		hud_frags_fliptext		= HUD_FindVar(hud, "fliptext");
 		hud_frags_style			= HUD_FindVar(hud, "style");
@@ -2297,7 +2347,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		// We need a wider box to draw in if we show the names.
 		if(hud_frags_shownames->value)
 			width += a_cols*max_name_length*8 + (a_cols+1)*space_x;
-		
+
 		if(cl.teamplay && hud_frags_teams->value)
 			width += a_cols*max_team_length*8 + (a_cols+1)*space_x;
 	}
@@ -2323,11 +2373,11 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 			// Find my position in the scoreboard.
 			for(i=0; i < n_players; i++)
 			{
-				if (cls.demoplayback || cl.spectator) 
+				if (cls.demoplayback || cl.spectator)
 				{
 					if (spec_track == sorted_players[i]->playernum)
 						break;
-				} 
+				}
 				else if(sorted_players[i]->playernum == cl.playernum)
 					break;
 			}
@@ -2341,7 +2391,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		num = 0;  // FIXME! johnnycz; (see fixme below)
         for (i = 0; i < limit; i++)
         {
-            player_info_t *info = &cl.players[sorted_players[num]->playernum]; // FIXME! johnnycz; causes crashed on some demos			
+            player_info_t *info = &cl.players[sorted_players[num]->playernum]; // FIXME! johnnycz; causes crashed on some demos
 
             if (hud_frags_vertical->value)
             {
@@ -2355,7 +2405,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 						px = x + space_x + (i/a_rows) * (cell_width+space_x + (max_team_length)*8);
 					else
 						px = x + space_x + (i/a_rows) * (cell_width+space_x);
-                    py = y + space_y;					
+                    py = y + space_y;
                 }
             }
             else
@@ -2379,14 +2429,14 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 					drawBrackets = 1;
 				}
 			}
-			else if (cls.demoplayback || cl.spectator) 
+			else if (cls.demoplayback || cl.spectator)
 			{
 				if (spec_track == sorted_players[num]->playernum)
 				{
 					drawBrackets = 1;
 				}
 			}
-			else 
+			else
 			{
 				if (sorted_players[num]->playernum == cl.playernum)
 				{
@@ -2394,13 +2444,13 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 				}
 			}
 
-			if(hud_frags_shownames->value || hud_frags_teams->value)
+			if(hud_frags_shownames->value || hud_frags_teams->value || hud_frags_extra_spec->value)
 			{
 				int _px = px;
 
 				if(hud_frags_style->value >= 4 && hud_frags_style->value <= 8)
 				{
-					Frags_DrawBackground(px, py, cell_width, cell_height, space_x, space_y, 
+					Frags_DrawBackground(px, py, cell_width, cell_height, space_x, space_y,
 						max_name_length, max_team_length, Sbar_BottomColor(info),
 						hud_frags_shownames->value, hud_frags_teams->value, drawBrackets,
 						hud_frags_style->value);
@@ -2408,24 +2458,29 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 
 				if(hud_frags_fliptext->value)
 				{
+					//
+					// Flip the text
+					// NAME | TEAM | FRAGS | EXTRA_SPEC_INFO
+					//
+
 					// Draw name.
-					_px = Frags_DrawText(_px, py, cell_width, cell_height, 
-						space_x, space_y, max_name_length, max_team_length, 
-						hud_frags_fliptext->value, hud_frags_padtext->value, 
-						hud_frags_shownames->value, 0, 
+					_px = Frags_DrawText(_px, py, cell_width, cell_height,
+						space_x, space_y, max_name_length, max_team_length,
+						hud_frags_fliptext->value, hud_frags_padtext->value,
+						hud_frags_shownames->value, 0,
 						info->name, info->team);
 
 					// Draw team.
-					_px = Frags_DrawText(_px, py, cell_width, cell_height, 
-						space_x, space_y, max_name_length, max_team_length, 
-						hud_frags_fliptext->value, hud_frags_padtext->value, 
-						0, hud_frags_teams->value, 
+					_px = Frags_DrawText(_px, py, cell_width, cell_height,
+						space_x, space_y, max_name_length, max_team_length,
+						hud_frags_fliptext->value, hud_frags_padtext->value,
+						0, hud_frags_teams->value,
 						info->name, info->team);
 
-					Frags_DrawColors(_px, py, cell_width, cell_height, 
-						Sbar_TopColor(info), Sbar_BottomColor(info), 
-						info->frags, 
-						drawBrackets, 
+					Frags_DrawColors(_px, py, cell_width, cell_height,
+						Sbar_TopColor(info), Sbar_BottomColor(info),
+						info->frags,
+						drawBrackets,
 						hud_frags_style->value);
 
 					_px += cell_width + space_x;
@@ -2434,44 +2489,44 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 					// - What armor they have.
 					// - How much health.
 					// - If they have RL or not.
-					if(hud_frags_extra_spec->value)
-					{
-						_px = Frags_DrawExtraSpecInfo(info, _px, py, cell_width, cell_height, 
-								 space_x, space_y, 
-								 hud_frags_extra_spec->value, 
-								 hud_frags_fliptext->value);
-					}
+					_px = Frags_DrawExtraSpecInfo(info, _px, py, cell_width, cell_height,
+							 space_x, space_y,
+							 hud_frags_extra_spec->value,
+							 hud_frags_fliptext->value);
+
 				}
 				else
 				{
-					if(hud_frags_extra_spec->value)
-					{
-						_px = Frags_DrawExtraSpecInfo(info, _px, py, cell_width, cell_height, 
-								 space_x, space_y, 
-								 hud_frags_extra_spec->value, 
-								 hud_frags_fliptext->value);
-					}
+					//
+					// Don't flip the text
+					// EXTRA_SPEC_INFO | FRAGS | TEAM | NAME
+					//
 
-					Frags_DrawColors(_px, py, cell_width, cell_height, 
-						Sbar_TopColor(info), Sbar_BottomColor(info), 
-						info->frags, 
-						drawBrackets, 
+					_px = Frags_DrawExtraSpecInfo(info, _px, py, cell_width, cell_height,
+							 space_x, space_y,
+							 hud_frags_extra_spec->value,
+							 hud_frags_fliptext->value);
+
+					Frags_DrawColors(_px, py, cell_width, cell_height,
+						Sbar_TopColor(info), Sbar_BottomColor(info),
+						info->frags,
+						drawBrackets,
 						hud_frags_style->value);
 
 					_px += cell_width + space_x;
 
 					// Draw team.
-					_px = Frags_DrawText(_px, py, cell_width, cell_height, 
-						space_x, space_y, max_name_length, max_team_length, 
-						hud_frags_fliptext->value, hud_frags_padtext->value, 
-						0, hud_frags_teams->value, 
+					_px = Frags_DrawText(_px, py, cell_width, cell_height,
+						space_x, space_y, max_name_length, max_team_length,
+						hud_frags_fliptext->value, hud_frags_padtext->value,
+						0, hud_frags_teams->value,
 						info->name, info->team);
 
 					// Draw name.
-					_px = Frags_DrawText(_px, py, cell_width, cell_height, 
-						space_x, space_y, max_name_length, max_team_length, 
-						hud_frags_fliptext->value, hud_frags_padtext->value, 
-						hud_frags_shownames->value, 0, 
+					_px = Frags_DrawText(_px, py, cell_width, cell_height,
+						space_x, space_y, max_name_length, max_team_length,
+						hud_frags_fliptext->value, hud_frags_padtext->value,
+						hud_frags_shownames->value, 0,
 						info->name, info->team);
 				}
 
@@ -2482,17 +2537,17 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 			}
 			else
 			{
-				Frags_DrawColors(px, py, cell_width, cell_height, 
-					Sbar_TopColor(info), Sbar_BottomColor(info), 
-					info->frags, 
-					drawBrackets, 
+				Frags_DrawColors(px, py, cell_width, cell_height,
+					Sbar_TopColor(info), Sbar_BottomColor(info),
+					info->frags,
+					drawBrackets,
 					hud_frags_style->value);
 
 				if (hud_frags_vertical->value)
 					py += cell_height + space_y;
 				else
 					px += cell_width + space_x;
-			}			
+			}
             num ++;
         }
     }
@@ -2626,7 +2681,6 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 				{
 					rlcount_width = 8*3 + 1;
 				}
-			
 			}
 		}
 
@@ -2662,10 +2716,10 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 
 			drawBrackets = 0;
 
-			
+
 			// Bug fix. Before the wrong player would be higlighted
 			// during qwd-playback, since you ARE the player that you're
-			// being spectated.		
+			// being spectated.
 			if(cls.demoplayback && !cl.spectator && !cls.mvdplayback)
 			{
 				if (!strcmp(sorted_teams[num]->name, cl.players[cl.playernum].team))
@@ -2673,14 +2727,14 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 					drawBrackets = 1;
 				}
 			}
-			else if (cls.demoplayback || cl.spectator) 
+			else if (cls.demoplayback || cl.spectator)
 			{
 				if (!strcmp(cl.players[spec_track].team, sorted_teams[num]->name))
 				{
 					drawBrackets = 1;
 				}
-			} 
-			else 
+			}
+			else
 			{
 				if (!strcmp(sorted_teams[num]->name, cl.players[cl.playernum].team))
 				{
@@ -2688,13 +2742,13 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 				}
 			}
 
-			if(hud_teamfrags_shownames->value)
+			if(hud_teamfrags_shownames->value || hud_teamfrags_extra_spec->value)
 			{
 				int _px = px;
 
 				if(hud_teamfrags_style->value >= 4 && hud_teamfrags_style->value <= 8)
 				{
-					Frags_DrawBackground(px, py, cell_width, cell_height, space_x, space_y, 
+					Frags_DrawBackground(px, py, cell_width, cell_height, space_x, space_y,
 						0, max_team_length, sorted_teams[num]->bottom,
 						0, hud_teamfrags_shownames->value, drawBrackets,
 						hud_teamfrags_style->value);
@@ -2703,10 +2757,10 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 				if(hud_teamfrags_fliptext->value)
 				{
 					// Draw team.
-					_px = Frags_DrawText(_px, py, cell_width, cell_height, 
-						space_x, space_y, 0, max_team_length, 
-						hud_teamfrags_fliptext->value, hud_teamfrags_padtext->value, 
-						0, hud_teamfrags_shownames->value, 
+					_px = Frags_DrawText(_px, py, cell_width, cell_height,
+						space_x, space_y, 0, max_team_length,
+						hud_teamfrags_fliptext->value, hud_teamfrags_padtext->value,
+						0, hud_teamfrags_shownames->value,
 						"", sorted_teams[num]->name);
 
 					Frags_DrawColors(_px, py, cell_width, cell_height, sorted_teams[num]->top, sorted_teams[num]->bottom, sorted_teams[num]->frags, drawBrackets, hud_teamfrags_style->value);
@@ -2714,28 +2768,23 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 					_px += cell_width + space_x;
 
 					// Draw the rl if the current player has it and the style allows it.
-					if(hud_teamfrags_extra_spec->value)
-					{
-						_px = TeamFrags_DrawExtraSpecInfo(num, _px, py, cell_width, cell_height, hud_teamfrags_extra_spec->value);
-					}
+					_px = TeamFrags_DrawExtraSpecInfo(num, _px, py, cell_width, cell_height, hud_teamfrags_extra_spec->value);
+
 				}
 				else
 				{
 					// Draw the rl if the current player has it and the style allows it.
-					if(hud_teamfrags_extra_spec->value)
-					{
-						_px = TeamFrags_DrawExtraSpecInfo(num, _px, py, cell_width, cell_height, hud_teamfrags_extra_spec->value);
-					}
+					_px = TeamFrags_DrawExtraSpecInfo(num, _px, py, cell_width, cell_height, hud_teamfrags_extra_spec->value);
 
 					Frags_DrawColors(_px, py, cell_width, cell_height, sorted_teams[num]->top, sorted_teams[num]->bottom, sorted_teams[num]->frags, drawBrackets, hud_teamfrags_style->value);
 
 					_px += cell_width + space_x;
 
 					// Draw team.
-					_px = Frags_DrawText(_px, py, cell_width, cell_height, 
-						space_x, space_y, 0, max_team_length, 
-						hud_teamfrags_fliptext->value, hud_teamfrags_padtext->value, 
-						0, hud_teamfrags_shownames->value, 
+					_px = Frags_DrawText(_px, py, cell_width, cell_height,
+						space_x, space_y, 0, max_team_length,
+						hud_teamfrags_fliptext->value, hud_teamfrags_padtext->value,
+						0, hud_teamfrags_shownames->value,
 						"", sorted_teams[num]->name);
 				}
 
@@ -2814,12 +2863,12 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 
 	width = (int)width_var->value;
 	height = (int)height_var->value;
-	
+
 	if(width < 0) width = 0;
 	if(width > vid.width) width = vid.width;
 	if(height < 0) height = 0;
 	if(height > vid.width) height = vid.height;
-	
+
 	status = MP3_GetStatus();
 
 	switch(status)
@@ -2844,7 +2893,7 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 	{
 		sprintf(title, "Error retrieving current song.");
 	}
-	
+
 	if (HUD_PrepareDraw(hud, width , height, &x, &y))
 	{
 		SCR_DrawWordWrapString(x, y, 8, width, height, (int)wordwrap->value, (int)scroll->value, (float)scroll_delay->value, title);
@@ -2865,7 +2914,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 
 
 	static cvar_t *style = NULL, *on_scoreboard;
-	
+
 	if(style == NULL)
 	{
 		style			= HUD_FindVar(hud, "style");
@@ -2881,7 +2930,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 		hud->flags -= HUD_ON_SCORES;
 	}
 
-	if(!MP3_GetOutputtime(&elapsed, &total) || elapsed < 0 || total < 0) 
+	if(!MP3_GetOutputtime(&elapsed, &total) || elapsed < 0 || total < 0)
 	{
 		sprintf(time_string, "\x10-:-\x11");
 	}
@@ -2906,7 +2955,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 				strlcpy(elapsed_string, SecondsToMinutesString(remain), sizeof(elapsed_string));
 				sprintf(time_string, va("%s/%s", elapsed_string, SecondsToMinutesString(total)));
 				break;
-			case 5 :				
+			case 5 :
 				strlcpy(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
 				sprintf(time_string, va("-%s/%s", elapsed_string, SecondsToMinutesString(total)));
 				break;
@@ -2932,7 +2981,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 	{
 		sprintf(time_string, va("\x10%s\x11", "Not allowed"));
 	}
-	
+
 	width = strlen(time_string)*8;
 	height = 8;
 
@@ -2942,6 +2991,496 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 	}
 #endif
 }
+
+#ifdef GLQUAKE
+
+// Map picture to draw for the mapoverview hud control.
+static mpic_t *radar_pic = NULL;
+static qbool radar_pic_found = false;
+
+// The conversion formula used for converting from quake coordinates to pixel coordinates
+// when drawing on the map overview.
+static float map_x_slope;
+static float map_x_intercept;
+static float map_y_slope;
+static float map_y_intercept;
+static qbool conversion_formula_found = false;
+
+// Used for drawing the height of the player.
+static float map_height_diff = 0.0;
+
+//
+// Is run when a new map is loaded.
+//
+void HUD_NewMap()
+{
+	FILE *f;
+	int n_textcount = 0;
+	png_textp txt;
+	int i = 0;
+	char radar_filename[] = "radars/%s.png";
+	txt = NULL;
+
+	// Reset the pointer so that we know if the load failed.
+	if(radar_pic != NULL)
+	{
+		Q_free(radar_pic);
+	}
+	radar_pic = NULL;
+	radar_pic_found = false;
+	conversion_formula_found = false;
+
+	// Don't show during normal games.
+	if(!(cls.demoplayback || cl.spectator))
+	{
+		return;
+	}
+
+	if (FS_FOpenFile (va(radar_filename, mapname.string), &f) != -1)
+	{
+		mpic_t *temp;
+
+		temp = NULL;
+
+		// Load the map picture.
+		// BUG: When PAUSE is pressed or the menu is loaded (basically whenever a new image is loaded
+		// the radar_pic will be overwritten with the newly loaded picture because a pointer still
+		// points at the radar picture in GL_LoadPicImage since it was loaded.
+		// (Fixed with what's below?)
+		temp = GL_LoadPicImage(va(radar_filename, mapname.string), mapname.string, 0, 0, TEX_ALPHA);
+
+		// Make a copy of the returned structure, otherwise it will be overwritten
+		// the next time an image is loaded.
+		if(temp != NULL)
+		{
+			radar_pic = (mpic_t *)Q_malloc(sizeof(mpic_t));
+			//memcpy(&radar_pic->texnum, &temp->texnum, sizeof(mpic_t) - 8);
+			radar_pic->texnum	= temp->texnum;
+			radar_pic->height	= temp->height;
+			radar_pic->sh		= temp->sh;
+			radar_pic->sl		= temp->sl;
+			radar_pic->th		= temp->th;
+			radar_pic->tl		= temp->tl;
+			radar_pic->width	= temp->width;
+		}
+
+		// Check if we found something
+		if(radar_pic != NULL && radar_pic->height && radar_pic->width)
+		{
+			radar_pic_found = true;
+		}
+		else
+		{
+			Q_free(radar_pic);
+			radar_pic = NULL;
+			radar_pic_found = false;
+			return;
+		}
+
+		// Calculate the height of the map.
+		map_height_diff = abs(cl.worldmodel->maxs[2] - cl.worldmodel->mins[2]);
+
+		// Get the comments from the PNG.
+		txt = Image_LoadPNG_Comments(f, va(radar_filename, mapname.string), &n_textcount);
+
+		// TODO: If failed, try to read conversion formula from a .qcf file instead.
+		// "quake conversion formula" :D Looking something like this:
+		// X_SLOPE 0.184
+		// X_INTERCEPT 95
+		// Y_SLOPE 0.184
+		// Y_INTERCEPT 55
+
+		// Check if we found any comments.
+		if(txt != NULL)
+		{
+			int found_count = 0;
+
+			// Find the conversion formula in the comments found in the PNG.
+			for(i = 0; i < n_textcount; i++)
+			{
+				if(!strcmp(txt[i].key, "QWLMConversionSlopeX"))
+				{
+					map_x_slope = atof(txt[i].text);
+					found_count++;
+				}
+				else if(!strcmp(txt[i].key, "QWLMConversionInterceptX"))
+				{
+					map_x_intercept = atof(txt[i].text);
+					found_count++;
+				}
+				else if(!strcmp(txt[i].key, "QWLMConversionSlopeY"))
+				{
+					map_y_slope = atof(txt[i].text);
+					found_count++;
+				}
+				else if(!strcmp(txt[i].key, "QWLMConversionInterceptY"))
+				{
+					map_y_intercept = atof(txt[i].text);
+					found_count++;
+				}
+
+				conversion_formula_found = (found_count == 4);
+			}
+
+			// Free the text chunks.
+			Q_free(txt);
+		}
+		else
+		{
+			conversion_formula_found = false;
+		}
+	}
+}
+
+//
+// Draws a map of the current level and plots player movements on it.
+//
+void SCR_HUD_DrawMVDRadar(hud_t *hud)
+{
+	int width, height, x, y;
+	float width_limit, height_limit;
+	int num, i;
+	float scale;
+	float x_scale;
+	float y_scale;
+
+    static cvar_t
+        *hud_radar_picture = NULL,
+		*hud_radar_x_slope,
+		*hud_radar_x_intercept,
+		*hud_radar_y_slope,
+		*hud_radar_y_intercept,
+		*hud_radar_opacity,
+		*hud_radar_style,
+		*hud_radar_scale,
+		*hud_radar_width,
+		*hud_radar_height,
+		*hud_radar_autosize,
+		*hud_radar_show_spectators,
+		*hud_radar_player_style,
+		*hud_radar_show_powerups,
+		*hud_radar_show_names,
+		*hud_radar_player_size,
+		*hud_radar_show_height,
+		*hud_radar_show_entities;
+
+    if (hud_radar_picture == NULL)    // first time
+    {
+		hud_radar_x_slope			= HUD_FindVar(hud, "x_slope");
+		hud_radar_x_intercept		= HUD_FindVar(hud, "x_intercept");
+		hud_radar_y_slope			= HUD_FindVar(hud, "y_slope");
+		hud_radar_y_intercept		= HUD_FindVar(hud, "y_intercept");
+		hud_radar_opacity			= HUD_FindVar(hud, "opacity");
+		hud_radar_style				= HUD_FindVar(hud, "style");
+		hud_radar_scale				= HUD_FindVar(hud, "scale");
+		hud_radar_width				= HUD_FindVar(hud, "width");
+		hud_radar_height			= HUD_FindVar(hud, "height");
+		hud_radar_autosize			= HUD_FindVar(hud, "autosize");
+		hud_radar_show_spectators	= HUD_FindVar(hud, "show_spectators");
+		hud_radar_player_style		= HUD_FindVar(hud, "player_style");
+		hud_radar_show_powerups		= HUD_FindVar(hud, "show_powerups");
+		hud_radar_show_names		= HUD_FindVar(hud, "show_names");
+		hud_radar_player_size		= HUD_FindVar(hud, "player_size");
+		hud_radar_show_height		= HUD_FindVar(hud, "show_height");
+		hud_radar_show_entities		= HUD_FindVar(hud, "show_entities");
+    }
+
+	// Don't show anything if it's a normal player.
+	if(!(cls.demoplayback || cl.spectator))
+	{
+		return;
+	}
+
+	// Save the width and height of the HUD. We're using these because
+	// if autosize is on these will be altered and we don't want to change
+	// the settings that the user set, if we try, and the user turns off
+	// autosize again the size of the HUD will remain "autosized" until the user
+	// resets it by hand again.
+	width_limit = hud_radar_width->value;
+	height_limit = hud_radar_height->value;
+
+	// This map doesn't have a map pic.
+	if((radar_pic == NULL || !radar_pic_found) && HUD_PrepareDraw(hud, ROUND(width_limit) , ROUND(height_limit), &x, &y))
+	{
+		Draw_String(x, y, "No radar picture found!");
+		return;
+	}
+
+	// Make sure we can translate the coordinates.
+	if(!conversion_formula_found && HUD_PrepareDraw(hud, ROUND(width_limit) , ROUND(height_limit), &x, &y))
+	{
+		Draw_String(x, y, "No conversion formula found!");
+		return;
+	}
+
+	x = 0;
+	y = 0;
+
+	scale = 1;
+
+	if(hud_radar_autosize->value)
+	{
+		//
+		// Autosize the hud element based on the size of the radar picture.
+		//
+
+		width = width_limit = radar_pic->width;
+		height = height_limit = radar_pic->height;
+	}
+	else
+	{
+		//
+		// Size the picture so that it fits inside the hud element.
+		//
+
+		// Set the scaling based on the picture dimensions.
+		x_scale = (width_limit / radar_pic->width);
+		y_scale = (height_limit / radar_pic->height);
+
+		scale = (x_scale < y_scale) ? x_scale : y_scale;
+
+		width = radar_pic->width * scale;
+		height = radar_pic->height * scale;
+	}
+
+	num = 0;
+
+	if (HUD_PrepareDraw(hud, ROUND(width_limit) , ROUND(height_limit), &x, &y))
+	{
+		// Entities (weapons and such). cl_main.c
+		extern visentlist_t cl_visents;
+
+		player_state_t *state;
+		player_info_t *info;
+		static int lastframecount = -1;
+
+		// Place the map picture in the center of the HUD element.
+		x += ROUND((width_limit / 2.0) - (width / 2.0));
+		x = max(0, x);
+		x = min(x + width, x);
+
+		y += ROUND((height_limit / 2.0) - (height / 2.0));
+		y = max(0, y);
+		y = min(y + height, y);
+
+		// Draw the radar background.
+		Draw_SAlphaPic (x, y, radar_pic, hud_radar_opacity->value, scale);
+
+		if (cls.framecount == lastframecount)
+		{
+			return;
+		}
+
+		lastframecount = cls.framecount;
+
+		if (!cl.oldparsecount || !cl.parsecount || cls.state < ca_active)
+		{
+			return;
+		}
+
+		// Draw entities such as powerups, weapons and backpacks.
+		if(hud_radar_show_entities->value)
+		{
+			for (i = 0; i < cl_visents.count; i++)
+			{
+				int entity_q_x = 0;
+				int entity_q_y = 0;
+				int entity_p_x = 0;
+				int entity_p_y = 0;
+
+				// Get quake coordinates (times 8 to get them in the same format as .locs).
+				entity_q_x = cl_visents.list[i].origin[0]*8;
+				entity_q_y = cl_visents.list[i].origin[1]*8;
+
+				// Convert from quake coordiantes -> pixel coordinates.
+				entity_p_x = ROUND((map_x_slope*entity_q_x + map_x_intercept) * scale);
+				entity_p_y = ROUND((map_y_slope*entity_q_y + map_y_intercept) * scale);
+
+				// Draw backpacks.
+				if(cl_visents.list[i].model->modhint == MOD_BACKPACK
+					&& hud_radar_show_entities->value >= 3)
+				{
+					Draw_AlphaCircleFill (x + entity_p_x, y + entity_p_y, 3.0, 114, 1.0);
+					Draw_AlphaCircleOutline (x + entity_p_x, y + entity_p_y, 3.0, 1.0, 0, 1.0);
+				}
+				else if(!strcmp(cl_visents.list[i].model->name, "progs/invulner.mdl"))
+				{
+					// Pentagram.
+					Draw_ColoredString(x + entity_p_x, y + entity_p_y, "&cf00P", 0);
+				}
+				else if(!strcmp(cl_visents.list[i].model->name, "progs/quaddama.mdl"))
+				{
+					// Quad.
+					Draw_ColoredString(x + entity_p_x, y + entity_p_y, "&c0ffQ", 0);
+				}
+				else if(!strcmp(cl_visents.list[i].model->name, "progs/invisibl.mdl"))
+				{
+					// Ring.
+					Draw_ColoredString(x + entity_p_x, y + entity_p_y, "&cff0R", 0);
+				}
+				/*
+				TODO : Check for armors (use skin to see what armor it is).
+				else if(!strcmp(cl_visents.list[i].model->name, "progs/armor.mdl") && !strcmp(cl_visents.list[i].model->texinfo->texture->name, ""))
+				{
+					Draw_AlphaCircleFill (x + entity_p_x, y + entity_p_y, 3.0, 251, 1.0);
+					Draw_AlphaCircleOutline (x + entity_p_x, y + entity_p_y, 3.0, 1.0, 0, 1.0);
+				}*/
+			}
+		}
+
+		// Get player state so we can know where he is (or on rare occassions, she).
+		state = cl.frames[cl.oldparsecount & UPDATE_MASK].playerstate;
+
+		// Get the info for the player.
+		info = cl.players;
+
+		// Draw all the players.
+		for (i = 0; i < MAX_CLIENTS; i++, info++, state++)
+		{
+			// Players quake coordinates
+			// (these are multiplied by 8, since the conversion formula was
+			// calculated using the coordinates in a .loc-file, which are in
+			// the format quake-coordainte*8).
+			int player_q_x = 0;
+			int player_q_y = 0;
+
+			// The height of the player.
+			float player_z = 1.0;
+			float player_z_relative = 1.0;
+
+			// Players pixel coordinates.
+			int player_p_x = 0;
+			int player_p_y = 0;
+
+			// Used for drawing the the direction the
+			// player is looking at.
+			float player_angle = 0;
+			int x_line_start = 0;
+			int y_line_start = 0;
+			int x_line_end = 0;
+			int y_line_end = 0;
+
+			// Color and opacity of the player.
+			int player_color = 0;
+			float player_alpha = 1.0;
+
+			// Make sure we're not drawing any ghosts.
+			if(!info->name[0])
+			{
+				continue;
+			}
+
+			// Don't show spectators if they're not allowed.
+			if(!hud_radar_show_spectators->value && info->spectator)
+			{
+				continue;
+			}
+
+			if (state->messagenum == cl.oldparsecount)// && !info->spectator)
+			{
+				int last_health = 100;
+
+				// Get the quake coordinates. Multiply by 8 since
+				// the conversion formula has been calculated using
+				// a .loc-file which is in that format.
+				player_q_x = state->origin[0]*8;
+				player_q_y = state->origin[1]*8;
+
+				player_angle = state->viewangles[1];
+
+				// Convert from quake coordiantes -> pixel coordinates.
+				player_p_x = ROUND((map_x_slope*player_q_x + map_x_intercept) * scale);
+				player_p_y = ROUND((map_y_slope*player_q_y + map_y_intercept) * scale);
+
+				player_color = Sbar_BottomColor(info);
+
+				// Calculate the height of the player.
+				if(hud_radar_show_height->value)
+				{
+					player_z = state->origin[2];
+					player_z += (player_z >= 0) ? fabs(cl.worldmodel->mins[2]) : fabs(cl.worldmodel->maxs[2]);
+					player_z_relative = min(fabs(player_z / map_height_diff), 1.0);
+					player_z_relative = max(player_z_relative, 0.2);
+				}
+
+				// Turn dead people red.
+				if(info->stats[STAT_HEALTH] <= 0)
+				{
+					player_color = 79;
+				}
+
+				// Draw a ring around players with powerups if it's enabled.
+				if(hud_radar_show_powerups->value)
+				{
+					if(info->stats[STAT_ITEMS] & IT_INVISIBILITY)
+					{
+						Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, hud_radar_player_size->value*2*player_z_relative, 161, 0.2);
+					}
+
+					if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY)
+					{
+						Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, hud_radar_player_size->value*2*player_z_relative, 79, 0.5);
+					}
+
+					if(info->stats[STAT_ITEMS] & IT_QUAD)
+					{
+						Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, hud_radar_player_size->value*2*player_z_relative, 244, 0.2);
+					}
+				}
+
+				// Draw a line showing what direction the player is looking
+				// this will only work on demos, since the information is
+				// available in demos only.
+				if(hud_radar_player_style->value == 0)
+				{
+					float relative_x = 0;
+					float relative_y = 0;
+
+					x_line_start = x + player_p_x;
+					y_line_start = y + player_p_y;
+
+					// Translate the angle into radians.
+					player_angle = (player_angle*M_PI)/180;
+
+					relative_x = cos(player_angle);
+					relative_y = sin(player_angle);
+
+					// Draw a slightly larger line behind the colored one
+					// so that it get's an outline.
+					x_line_end = x_line_start + (hud_radar_player_size->value*2*player_z_relative+1)*relative_x;
+					y_line_end = y_line_start - (hud_radar_player_size->value*2*player_z_relative+1)*relative_y;
+
+					Draw_AlphaLine (x_line_start, y_line_start, x_line_end, y_line_end, 4.0, 0, player_alpha);
+
+					// Draw the colored line.
+					x_line_end = x_line_start + (hud_radar_player_size->value*2*player_z_relative)*relative_x;
+					y_line_end = y_line_start - (hud_radar_player_size->value*2*player_z_relative)*relative_y;
+
+					Draw_AlphaLine (x_line_start, y_line_start, x_line_end, y_line_end, 2.0, player_color, player_alpha);
+				}
+
+				// Draw the player on the map.
+				Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, hud_radar_player_size->value*player_z_relative, player_color, player_alpha);
+				Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, hud_radar_player_size->value*player_z_relative, 1.0, 0, player_alpha);
+
+				// Draw the players name.
+				if(hud_radar_show_names->value)
+				{
+					Draw_String (x + player_p_x, y + player_p_y, va("%s", info->name));
+				}
+
+				// Show if a person lost an RL-pack.
+				if(info->stats[STAT_HEALTH] <= 0 && info->stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER)
+				{
+					Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, hud_radar_player_size->value*player_z_relative*2, 1.0, 254, player_alpha);
+					Draw_ColoredString (x + player_p_x, y + player_p_y, va("&cf00PACK!"), 1);
+				}
+			}
+		}
+	}
+}
+
+#endif
 
 // ----------------
 // Init
@@ -3011,7 +3550,7 @@ void CommonDraw_Init(void)
         "show_dev",     "0",
         "blink",        "1",
         NULL);
-	HUD_Register("tracking", NULL, "Shows the name of tracked player.", 
+	HUD_Register("tracking", NULL, "Shows the name of tracked player.",
 		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawTracking,
 		"0", "top", "left", "bottom", "0", "0", "0",
 		"format", "Tracking %t %n, [JUMP] for next",
@@ -3391,7 +3930,7 @@ void CommonDraw_Init(void)
 		"fliptext", "0",
 		"style", "0",
         NULL);
-        
+
     HUD_Register("teamfrags", NULL, "Show list of team frags in short form.",
         0, ca_active, 0, SCR_HUD_DrawTeamFrags,
         "0", "screen", "left", "top", "0", "0", "0",
@@ -3430,7 +3969,27 @@ void CommonDraw_Init(void)
 		"on_scoreboard", "0",
         NULL);
 
-        
+#ifdef GLQUAKE
+
+	HUD_Register("radar", NULL, "Plots the players on a picture of the map. (Only when watching MVD's or QTV).",
+        HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawMVDRadar,
+        "0", "top", "left", "bottom", "0", "0", "0",
+		"style",	"0",
+		"scale", "1",
+		"opacity", "0.5",
+		"width", "200",
+		"height", "200",
+		"autosize", "0",
+		"show_spectators", "0",
+		"player_style", "0",
+		"show_powerups", "1",
+		"show_names", "0",
+		"player_size", "3.0",
+		"show_height", "1",
+		"show_entities", "2",
+        NULL);
+#endif
+
 /* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
 #ifdef GLQUAKE
 #ifdef _DEBUG

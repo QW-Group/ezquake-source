@@ -74,3 +74,12 @@ void Draw_SAlphaPic (int x, int y, mpic_t *, float alpha, float scale);
 void Draw_SSubPic(int x, int y, mpic_t *, int srcx, int srcy, int width, int height, float scale);
 void Draw_STransPic (int x, int y, mpic_t *, float scale);
 void Draw_SFill (int x, int y, int w, int h, int c, float scale);
+
+// HUD -> Cokeman
+void Draw_AlphaCircle (int x, int y, float radius, float thickness, qbool fill, int c, float alpha);
+void Draw_AlphaCircleOutline (int x, int y, float radius, float thickness, int color, float alpha);
+void Draw_AlphaCircleFill (int x, int y, float radius, int color, float alpha);
+void Draw_CircleOutline (int x, int y, float radius, float thickness, int color);
+void Draw_CircleFill (int x, int y, float radius, int color);
+void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, int c, float alpha);
+void Draw_Line (int x_start, int y_start, int x_end, int y_end, float thickness, int c);
