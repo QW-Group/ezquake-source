@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.14 2006-05-26 16:27:41 vvd0 Exp $
+	$Id: vid_wgl.c,v 1.15 2006-06-09 16:54:34 vvd0 Exp $
 
 */
 
@@ -708,9 +708,6 @@ void AppActivate(BOOL fActive, BOOL minimize) {
 	}
 
 	if (fActive) {
-		if (vid_canalttab && !Minimized && currentgammaramp)
-			VID_SetDeviceGammaRamp (currentgammaramp);
-
 		if (modestate == MS_FULLDIB) {
 			IN_ActivateMouse ();
 			IN_HideMouse ();
@@ -733,6 +730,9 @@ void AppActivate(BOOL fActive, BOOL minimize) {
 			IN_ActivateMouse ();
 			IN_HideMouse ();
 		}
+
+		if (vid_canalttab && !Minimized && currentgammaramp)
+			VID_SetDeviceGammaRamp (currentgammaramp);
 	} else {
 		allow_flash = true;
 		RestoreHWGamma ();
