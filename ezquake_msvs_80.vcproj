@@ -155,7 +155,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/D &quot;_CRT_SECURE_NO_DEPRECATE&quot;&#x0D;&#x0A;"
 				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
@@ -163,7 +162,7 @@
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="libs;libexpat;pcre;$(DXSDK_DIR)\Include"
-				PreprocessorDefinitions="NDEBUG;WITH_PNG;WITH_PNG_STATIC;WITH_ZLIB;EMBED_TCL;JSS_CAM"
+				PreprocessorDefinitions="NDEBUG;WITH_PNG;WITH_PNG_STATIC;WITH_ZLIB;EMBED_TCL;JSS_CAM;_CRT_SECURE_NO_DEPRECATE"
 				StringPooling="true"
 				ExceptionHandling="0"
 				RuntimeLibrary="0"
@@ -195,12 +194,13 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib tcl84.lib zlib.lib dinput.lib dsound.lib"
+				AdditionalDependencies="libexpat.lib tcl84.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib zlib.lib dinput.lib dsound.lib libpcre.lib"
 				OutputFile="../ezquake.exe"
 				Version=""
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\libs;$(DXSDK_DIR)\Lib\x86"
+				GenerateManifest="false"
 				IgnoreDefaultLibraryNames="libc.lib;MSVCRT"
 				ProgramDatabaseFile=".\Release/ezquake.pdb"
 				SubSystem="2"
@@ -2397,6 +2397,86 @@
 			>
 			<File
 				RelativePath="ezquake.ico"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Asm Files"
+			>
+			<File
+				RelativePath=".\cl_math.s"
+				>
+			</File>
+			<File
+				RelativePath=".\d_copy.s"
+				>
+			</File>
+			<File
+				RelativePath=".\d_draw.s"
+				>
+			</File>
+			<File
+				RelativePath=".\d_draw16.s"
+				>
+			</File>
+			<File
+				RelativePath=".\d_parta.s"
+				>
+			</File>
+			<File
+				RelativePath=".\d_polysa.s"
+				>
+			</File>
+			<File
+				RelativePath=".\d_scana.s"
+				>
+			</File>
+			<File
+				RelativePath=".\d_spr8.s"
+				>
+			</File>
+			<File
+				RelativePath=".\d_varsa.s"
+				>
+			</File>
+			<File
+				RelativePath=".\math.s"
+				>
+			</File>
+			<File
+				RelativePath=".\r_aclipa.s"
+				>
+			</File>
+			<File
+				RelativePath=".\r_aliasa.s"
+				>
+			</File>
+			<File
+				RelativePath=".\r_drawa.s"
+				>
+			</File>
+			<File
+				RelativePath=".\r_edgea.s"
+				>
+			</File>
+			<File
+				RelativePath=".\surf16.s"
+				>
+			</File>
+			<File
+				RelativePath=".\surf8.s"
+				>
+			</File>
+			<File
+				RelativePath=".\sv_math.s"
+				>
+			</File>
+			<File
+				RelativePath=".\sys_x86.s"
+				>
+			</File>
+			<File
+				RelativePath=".\worlda.s"
 				>
 			</File>
 		</Filter>
