@@ -110,6 +110,7 @@
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
+			BuildLogFile="BuildLog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -136,10 +137,10 @@
 				PreprocessorDefinitions="WIN32;_CONSOLE;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
-				PrecompiledHeaderFile=".\Debug/gas2masm_msvs_70.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="gas2masm_msvs_70.pch"
+				AssemblerListingLocation=""
+				ObjectFile=""
+				ProgramDataBaseFileName=""
 				WarningLevel="4"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="0"
