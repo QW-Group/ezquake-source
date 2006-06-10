@@ -167,12 +167,14 @@ static void InsertLinkBefore (link_t *l, link_t *before) {
 	l->next->prev = l;
 }
 
+/*
 static void InsertLinkAfter (link_t *l, link_t *after) {
 	l->next = after->next;
 	l->prev = after;
 	l->prev->next = l;
 	l->next->prev = l;
 }
+*/
 
 //============================================================================
 

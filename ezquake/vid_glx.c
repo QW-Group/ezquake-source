@@ -105,7 +105,7 @@ static int num_vidmodes;
 static qbool vidmode_active = false;
 static double X_vrefresh_rate = 0;
 static int best_fit = 0;
-static Window minimized_window;
+//static Window minimized_window;
 XF86VidModeModeInfo newvmode;
 static int new_vidmode = 0;
 #endif

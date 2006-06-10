@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.35 2006-06-09 16:46:45 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.36 2006-06-10 11:03:59 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -1947,11 +1947,11 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 	mpic_t rl_picture;				 // Picture of RL.
 
 	float armor_height = 0.0;
-	float armor_width = 0.0;
+//	float armor_width = 0.0;
 	int armor = 0;
 	int armor_bg_color = 0;
 	float armor_bg_power = 0;
-	int spec_extra_health_w = 5;
+//	int spec_extra_health_w = 5;
 	int health_spacing = 1;
 	int weapon_width = 24;
 	qbool show_rl_pic = true;
@@ -3378,7 +3378,7 @@ void SCR_HUD_DrawMVDRadar(hud_t *hud)
 
 			if (state->messagenum == cl.oldparsecount)// && !info->spectator)
 			{
-				int last_health = 100;
+//				int last_health = 100;
 
 				// Get the quake coordinates. Multiply by 8 since
 				// the conversion formula has been calculated using
