@@ -272,7 +272,7 @@ void IN_Impulse (void) {
 
 	// if more than one argument, select immediately the best weapon
 	IN_RememberWpOrder();
-	if (best = IN_BestWeapon())
+	if ((best = IN_BestWeapon()))
 		in_impulse = best;
 }
 
