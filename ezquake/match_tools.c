@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: match_tools.c,v 1.23 2006-06-11 15:48:59 johnnycz Exp $
+	$Id: match_tools.c,v 1.24 2006-06-11 20:20:35 johnnycz Exp $
 */
 
 
@@ -594,7 +594,6 @@ cvar_t match_auto_logconsole = {"match_auto_logconsole", "0"};
 cvar_t match_auto_sshot = {"match_auto_sshot", "0"};
 cvar_t match_auto_minlength = {"match_auto_minlength", "30"};
 cvar_t match_auto_spectating = {"match_auto_spectating", "0"};
-
 
 typedef struct mt_matchtstate_s {
 	qbool standby;
