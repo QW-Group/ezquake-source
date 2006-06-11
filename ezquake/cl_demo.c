@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.31 2006-06-11 15:47:53 johnnycz Exp $
+	$Id: cl_demo.c,v 1.32 2006-06-11 20:22:12 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -59,8 +59,6 @@ static float playback_recordtime;
 
 
 #define DEMORECORDTIME	((float) (cls.demoplayback ? playback_recordtime : cls.realtime))
-
-
 #define DEMOCACHE_MINSIZE	(2 * 1024 * 1024)
 #define DEMOCACHE_FLUSHSIZE	(1024 * 1024)
 
