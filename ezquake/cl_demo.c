@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.30 2006-05-02 19:54:06 oldmanuk Exp $
+	$Id: cl_demo.c,v 1.31 2006-06-11 15:47:53 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1189,7 +1189,7 @@ void CL_CheckQizmoCompletion (void) {
 		CL_Demo_GetCompressedName(newname);
 		qwz_packing = false;
 
-		if ((tempfile = fopen(newname, "rw")) && (COM_FileLength(tempfile) > 0) && fclose(tempfile) != EOF)
+		if ((tempfile = fopen(newname, "rb")) && (COM_FileLength(tempfile) > 0) && fclose(tempfile) != EOF)
 		{
 			Com_Printf("Demo saved to %s\n", newname + strlen(com_basedir));
 			CL_Demo_RemoveQWD();
