@@ -199,17 +199,6 @@ CREATE TABLE commands_support
   PRIMARY KEY(id)
 );
 
-CREATE TABLE manuals_history
-(
-  id INT UNSIGNED AUTO_INCREMENT NOT NULL,
-  id_manual SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-  id_user SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-  action ENUM("created", "updated", "changed", "renamed", "deleted"),
-  id_renamedto SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-  time TIMESTAMP(14),
-  PRIMARY KEY(id)
-);
-
 CREATE TABLE options
 (
     id MEDIUMINT UNSIGNED AUTO_INCREMENT NOT NULL,
