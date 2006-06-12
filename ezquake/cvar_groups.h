@@ -70,6 +70,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_GROUP_HUD						"MQWCL HUD" // HUD -> hexum
 
 #define CVAR_GROUP_MVD						"MultiView Demos"
+#define CVAR_GROUP_HELP_BROWSER				"Help Browser"
 
 #else		// CVAR_GROUPS_DEFINE_VARIABLES
 
@@ -118,6 +119,8 @@ char *cvar_groups_list[] = {
 	CVAR_GROUP_COMMUNICATION,
 	CVAR_GROUP_USERINFO,
 	CVAR_GROUP_HUD,		// HUD -> hexum
+	CVAR_GROUP_MVD,
+	CVAR_GROUP_HELP_BROWSER,
 	NULL
 };
 

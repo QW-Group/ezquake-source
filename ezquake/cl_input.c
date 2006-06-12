@@ -785,8 +785,10 @@ void CL_InitInput (void) {
 	Cvar_ResetCurrentGroup();
 	
 #ifdef JSS_CAM
+	Cvar_SetCurrentGroup(CVAR_GROUP_SPECTATOR);
 	Cvar_Register (&cam_zoomspeed);
 	Cvar_Register (&cam_zoomaccel);
+	Cvar_ResetCurrentGroup();
 #endif
 }
 

@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.36 2006-06-10 11:03:59 disconn3ct Exp $
+	$Id: hud_common.c,v 1.37 2006-06-12 20:34:25 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -3492,8 +3492,10 @@ void CommonDraw_Init(void)
     int i;
 
     // variables
-    Cvar_Register (&hud_planmode);
+    Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
+	Cvar_Register (&hud_planmode);
     Cvar_Register (&hud_tp_need);
+    Cvar_ResetCurrentGroup();
 
     // init HUD STAT table
     for (i=0; i < MAX_CL_STATS; i++)
