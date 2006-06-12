@@ -47,7 +47,8 @@
   <?=$cthdr?>
   <meta name="keywords" content="<?=META_KEYWORDS?>" />
   <meta name="description" content="<?=META_DESCRIPTION?>" />
-  <meta name="author" content="http://sourceforge.net/users/johnnycz/" />
+  <meta name="author" content="<?=META_AUTHOR?>" />
+  <meta name="generator" content="http://ezquake.sourceforge.net/docs/about" />
   <title><?=PROJECTNAME?> Manual: <?php echo(htmlspecialchars($renderer->title)); ?></title>
   <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
@@ -58,6 +59,6 @@
 <?php $renderer->RenderContent(); ?>
 
 
-<p id="last-update">Last update: <?=date("d.m.Y H:i T",$renderer->lastupdate)?>, made by <a href="http://sourceforge.net/users/johnnycz/">JohnNy_cz</a></p>
+<p id="last-update">Last update: <?=date("d.m.Y H:i T",$renderer->lastupdate)?>, made by <?=AUTHOR_INFO?> | <a href="http://ezquake.sourceforge.net/docs/about">ezQDocs</a></p>
 </body>
 </html>
