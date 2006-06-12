@@ -202,11 +202,11 @@ class MainPageRendData extends BaseRendData
             if (SHOW_TRIGGERS)
                 echo "<dt><a href=\"?triggers\">Triggers</a></dt>\n";
                 
-            echo "</dl>"; // end of settings types list
-            echo "</dd>"; // end of settings part
+            echo "</dl>\n"; // end of settings types list
+            echo "</dd>\n"; // end of settings part
         }
         
-        echo "\n</dl>";
+        echo "</dl>\n";
     }
 }
 
