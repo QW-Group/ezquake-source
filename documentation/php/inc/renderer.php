@@ -6,6 +6,7 @@
  */
  
 define (VARGROUPSPREFIX, "vars-");
+define (VARSUNASSIGNED, "vars-unassigned");
 define (VARGROUPSPREFIXLEN, 5);
 
 function GetRenderer($name, &$db)
@@ -32,8 +33,12 @@ function GetRenderer($name, &$db)
     {   
         if ($mid = $db["mgroups"]->GetId(substr($name, VARGROUPSPREFIXLEN)))
             return new MGroupsRendData($mid, 2, $db);
-
-        if ($mid = $db["groups"]->GetId(substr($name, VARGROUPSPREFIXLEN)))
+        
+        if ($name == VARSUNASSIGNED)
+        {
+            return new GroupsRendData(0, 2, $db);
+        }
+        else if ($mid = $db["groups"]->GetId(substr($name, VARGROUPSPREFIXLEN)))
             return new GroupsRendData($mid, 2, $db);
     }
 
@@ -190,6 +195,7 @@ class MainPageRendData extends BaseRendData
                     }
                     echo "</dd>\n";
                 }
+                echo "  <dt><a href=\"?".VARSUNASSIGNED."\">Unassigned</a></dt>\n";
                 echo "</dl></dd>\n";
             }
             
@@ -255,10 +261,14 @@ class GroupsRendData extends BaseRendData
         $topheading = (int) $topheading;
         if ($topheading < 1) $topheading = 1;
         if ($topheading > 6) $topheading = 6;
-        $this->id = $id;
+        $this->id = (int) $id;
         $this->topheading = $topheading;
         $this->db = $db;
-        $this->title = $this->db["groups"]->GetTitle($id)." Variables";
+        if ($this->id)
+            $this->title = $this->db["groups"]->GetTitle($id)." Variables";
+        else
+            $this->title = "Unassigned Variables";
+            
         $this->heading = $this->title;        
     }
     
