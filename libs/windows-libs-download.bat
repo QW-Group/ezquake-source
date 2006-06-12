@@ -1,0 +1,1 @@
+wget -c --input-file=windows-libs-list.txt
