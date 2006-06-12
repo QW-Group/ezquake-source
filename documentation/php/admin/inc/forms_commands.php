@@ -488,7 +488,7 @@ class GroupsForms
     function MultiAssign()
     {   
         $s = 0; $f = 0;
-        foreach ($_REQUEST["group_assignment"] as $group_id => $mgroup_id)
+        foreach ($_POST["group_assignment"] as $group_id => $mgroup_id)
             if (!$this->gdata->Assign($group_id, $mgroup_id))
                 $f++;
             else
@@ -498,7 +498,7 @@ class GroupsForms
             echo "No variables groups reassigned.";
         
         if ($f > 0)
-            echo "Reassigning groups failed.";
+            echo "Reassigning groups failed. Variables reassigned: {$s}.";
             
         if ($f == 0 && $s > 0)
             echo "All {$s} variable groups have been reassigned.";
