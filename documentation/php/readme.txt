@@ -12,3 +12,4 @@ Installation instructions:
 4) Perform
 INSERT INTO users (login, name, password, access) VALUES ('admin', 'admin', MD5('yourpasswordhere'), 2)
 to create an admin account
+5) edit settings.php
