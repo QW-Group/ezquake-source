@@ -4,6 +4,7 @@
  * ezQuake Docs administration tool main script
  */
 
+    require_once("../settings.php");            // text constants, documentation system settings
     require_once("../inc/mysql_access.php");    // create mysql connection resource
     require_once("../inc/common.php");          // text and html processing functions
     require_once("../inc/common-xmlparse.php"); // xml-parsing functions

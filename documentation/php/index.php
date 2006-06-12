@@ -4,6 +4,7 @@
 	require_once("inc/mysql_commands.php");
 	require_once("inc/common.php");
 	require_once("inc/renderer.php");
+	require_once("settings.php");
 
     $db = array();
     $db["manuals"] = new ManualsData;
@@ -44,14 +45,14 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
   <?=$cthdr?>
-  <meta name="keywords" content="ezQuake, manual, guide, tutorial, how-to, howto, setting, quake, quakeworld, client, help, readme, install" />
-  <meta name="description" content="The Complete guide to using QuakeWorld &trade; client ezQuake" />
+  <meta name="keywords" content="<?=META_KEYWORDS?>" />
+  <meta name="description" content="<?=META_DESCRIPTION?>" />
   <meta name="author" content="http://sourceforge.net/users/johnnycz/" />
-  <title>ezQuake Manual: <?php echo(htmlspecialchars($renderer->title)); ?></title>
+  <title><?=PROJECTNAME?> Manual: <?php echo(htmlspecialchars($renderer->title)); ?></title>
   <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
-<h1><a href="./">ezQuake Manual</a>: <?php echo(htmlspecialchars($renderer->heading)); ?></h1>
+<h1><a href="./"><?=PROJECTNAME?> Manual</a>: <?php echo(htmlspecialchars($renderer->heading)); ?></h1>
 
 
 <?php $renderer->RenderContent(); ?>

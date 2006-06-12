@@ -79,7 +79,7 @@ function GetRenderer($name, &$db)
     if ($searchbit)
     {
         // we didn't find anything usefull, let's use google instead
-        $url = "http://www.google.com/search?q=site:ezquake.sourceforge.net+".urlencode($name);
+        $url = "http://www.google.com/search?q=site:".urlencode(BASEURL)."+".urlencode($name);
         RefreshPage($url);
     }
     else // didn't run a search, just an non-legal URL, act like nothing happened
@@ -156,7 +156,7 @@ class MainPageRendData extends BaseRendData
         /* settings */
         echo "</dd><dt>Settings</dt><dd>";
         echo "<p><strong><a href=\"?index\">Index</a></strong> - Full list of variables, commands and command-line options</p>";
-        echo "<p>Note that you can put the name of any variable, command, command-line option or manual page into the URL and you'll get corresponding manual page displayed. E.g. http://ezquake.sourceforge.net/docs/?cl_maxfps</p>";
+        echo "<p>Note that you can put the name of any variable, command, command-line option or manual page into the URL and you'll get corresponding manual page displayed. E.g. ".BASEURL."?cl_maxfps</p>";
         echo "<dl id=\"settings-list\"><dt>Variables</dt><dd>";
         
         /* variables menu */
