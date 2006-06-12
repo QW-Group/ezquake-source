@@ -20,8 +20,14 @@ define ("SHOW_FEATURES", true);
 
 // show settings part on the main page? (false will also hide all following parts!)
 define ("SHOW_SETTINGS", true);
+// show link to the index
+define ("SHOW_INDEX", true);
+// show the description how to compose url to any manual page
+define ("SHOW_URL_DESCRIPTION", true);
 // show variables list on the main page?
 define ("SHOW_VARIABLES", true);
+// show link to unassigned variables 
+define ("SHOW_UNASSIGNED_VARS", true);
 // show commands link on the main page?
 define ("SHOW_COMMANDS", true);
 // show command-line options link on the main page?

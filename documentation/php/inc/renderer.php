@@ -172,8 +172,12 @@ class MainPageRendData extends BaseRendData
         if (SHOW_SETTINGS)
         {
             echo "\n<dt>Settings</dt><dd>";
-            echo "<p><strong><a href=\"?index\">Index</a></strong> - Full list of variables, commands and command-line options</p>";
-            echo "<p>Note that you can put the name of any variable, command, command-line option or manual page into the URL and you'll get corresponding manual page displayed. E.g. ".BASEURL."?cl_maxfps</p>";
+            if (SHOW_INDEX)
+                echo "<p><strong><a href=\"?index\">Index</a></strong> - Full list of variables, commands and command-line options</p>";
+            
+            if (SHOW_URL_DESCRIPTION)            
+                echo "<p>Note that you can put the name of any variable, command, command-line option or manual page into the URL and you'll get corresponding manual page displayed. E.g. ".BASEURL."?cl_maxfps</p>";
+                
             echo "<dl id=\"settings-list\">";
             
             if (SHOW_VARIABLES)
@@ -195,7 +199,9 @@ class MainPageRendData extends BaseRendData
                     }
                     echo "</dd>\n";
                 }
-                echo "  <dt><a href=\"?".VARSUNASSIGNED."\">Unassigned</a></dt>\n";
+                if (SHOW_UNASSIGNED_VARS)
+                    echo "  <dt><a href=\"?".VARSUNASSIGNED."\">Unassigned</a></dt>\n";
+                    
                 echo "</dl></dd>\n";
             }
             
