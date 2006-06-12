@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.12 2005-10-17 16:28:04 vvd0 Exp $
+	$Id: gl_local.h,v 1.13 2006-06-12 21:56:59 moodles Exp $
 
 */
 // gl_local.h -- private refresh defs
@@ -129,7 +129,7 @@ extern	int	skytexturenum;		// index in cl.loadmodel, not gl texture object
 extern	int underwatertexture, detailtexture;
 
 // Tomaz - Fog Begin
-extern  cvar_t  gl_fogenable; extern  cvar_t  gl_fogstart;extern  cvar_t  gl_fogend; extern  cvar_t  gl_fogred; extern  cvar_t  gl_fogblue; extern  cvar_t  gl_foggreen; extern  cvar_t  gl_fogsky; 
+extern  cvar_t  gl_fogenable; extern  cvar_t  gl_fogstart;extern  cvar_t  gl_fogend; extern  cvar_t  gl_fogred; extern  cvar_t  gl_fogblue; extern  cvar_t  gl_foggreen; extern  cvar_t  gl_fogsky;
 // Tomaz - Fog End
 
 extern	cvar_t	r_drawentities;
@@ -154,10 +154,10 @@ extern	cvar_t	r_wallcolor;
 extern	cvar_t	r_floorcolor;
 
 extern	cvar_t	r_skyname;
-extern  cvar_t  gl_caustics;		
-extern  cvar_t  gl_detail;			
-extern  cvar_t  gl_waterfog;		
-extern  cvar_t  gl_waterfog_density; 
+extern  cvar_t  gl_caustics;
+extern  cvar_t  gl_detail;
+extern  cvar_t  gl_waterfog;
+extern  cvar_t  gl_waterfog_density;
 
 extern	cvar_t	gl_subdivide_size;
 extern	cvar_t	gl_clear;
@@ -250,9 +250,16 @@ void R_MQW_NetGraph(int outgoing_sequence, int incoming_sequence, int *packet_la
                 int posx, int posy, int width, int height, int revx, int revy);
 
 // gl_rmisc.c
-void R_InitOtherTextures(void);		
+void R_InitOtherTextures(void);
 
 //vid_common_gl.c
+
+//anisotropic filtering
+#ifndef GL_EXT_texture_filter_anisotropic
+#define GL_EXT_texture_filter_anisotropic 1
+#define GL_TEXTURE_MAX_ANISOTROPY_EXT				0x84FE
+#define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT			0x84FF
+#endif
 
 //multitexturing
 #define	GL_TEXTURE0_ARB 			0x84C0
