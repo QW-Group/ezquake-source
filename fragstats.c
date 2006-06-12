@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: fragstats.c,v 1.10 2006-05-16 00:13:55 disconn3ct Exp $
+    $Id: fragstats.c,v 1.11 2006-06-12 20:34:25 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -833,9 +833,10 @@ qbool Stats_IsFlagsParsed(void) {
 
 void Stats_Init(void) {
 	InitFragDefs();
-
+	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register(&cl_parsefrags);
 	Cvar_Register(&cl_loadFragfiles);
+	Cvar_ResetCurrentGroup();
 	Cmd_AddCommand("loadFragfile", Load_FragFile_f);
 }
 

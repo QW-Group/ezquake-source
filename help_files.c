@@ -16,6 +16,7 @@ cvar_t  help_files_interline  = {"help_files_interline",  "0"};
 
 void Help_Files_Init(void)
 {
+	Cvar_SetCurrentGroup(CVAR_GROUP_HELP_BROWSER);
     Cvar_Register(&help_files_showsize);
     Cvar_Register(&help_files_showdate);
     Cvar_Register(&help_files_showtime);
@@ -23,6 +24,7 @@ void Help_Files_Init(void)
     Cvar_Register(&help_files_showstatus);
     Cvar_Register(&help_files_stripnames);
     Cvar_Register(&help_files_interline);
+	Cvar_ResetCurrentGroup();
 
     FL_Init(&help_filelist,
         &help_files_sortmode,

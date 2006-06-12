@@ -227,8 +227,11 @@ void FChecks_CheckRequest(char *s) {
 }
 
 void FChecks_Init(void) {
+	Cvar_SetCurrentGroup(CVAR_GROUP_CHAT);
 	Cvar_Register (&allow_f_system);
 	Cvar_Register (&allow_f_cmdline);
+	Cvar_ResetCurrentGroup();
+
 	FMod_Init();
 	Cmd_AddCommand ("f_server", FChecks_FServerResponse);
 }
