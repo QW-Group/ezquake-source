@@ -141,20 +141,30 @@ class MainPageRendData extends BaseRendData
             </fieldset>
         </form></div>';
         
+        echo "<dl id=\"main-page-list\">";
+        
         /* installation */
-        echo "<dl id=\"main-page-list\"><dt>Installation</dt><dd>";
-        $mid = $this->db["manuals"]->GetId("installation");
-        $inst_index = new ManualsRendData($mid, $this->db);
-        echo $inst_index->content;
+        if (SHOW_INSTALLATION)
+        {
+            echo "<dt>Installation</dt><dd>";
+            $mid = $this->db["manuals"]->GetId("installation");
+            $inst_index = new ManualsRendData($mid, $this->db);
+            echo $inst_index->content;
+            echo "</dd>";
+        }
         
         /* features list */
-        echo "</dd><dt id=\"features\">Features</dt><dd>";
-        $mid = $this->db["manuals"]->GetId("features");
-        $features_list = new ManualsRendData($mid, $this->db);
-        echo $features_list->content;
+        if (SHOW_FEATURES)
+        {
+            echo "<dt id=\"features\">Features</dt><dd>";
+            $mid = $this->db["manuals"]->GetId("features");
+            $features_list = new ManualsRendData($mid, $this->db);
+            echo $features_list->content;
+            echo "</dd>";
+        }
 
         /* settings */
-        echo "</dd><dt>Settings</dt><dd>";
+        echo "<dt>Settings</dt><dd>";
         echo "<p><strong><a href=\"?index\">Index</a></strong> - Full list of variables, commands and command-line options</p>";
         echo "<p>Note that you can put the name of any variable, command, command-line option or manual page into the URL and you'll get corresponding manual page displayed. E.g. ".BASEURL."?cl_maxfps</p>";
         echo "<dl id=\"settings-list\"><dt>Variables</dt><dd>";
@@ -176,11 +186,17 @@ class MainPageRendData extends BaseRendData
             }
             echo "</dd>";
         }
-        echo "</dl>";
+        echo "</dl></dd>";
         
-        echo "</dd><dt><a href=\"?commands\">Commands</a></dt>";
-        echo "<dt><a href=\"?command-line\">Command-Line Options</a></dt>";
-        echo "<dt><a href=\"?triggers\">Triggers</a></dt>";
+        if (SHOW_COMMANDS)
+            echo "<dt><a href=\"?commands\">Commands</a></dt>";
+        
+        if (SHOW_OPTIONS)
+            echo "<dt><a href=\"?command-line\">Command-Line Options</a></dt>";
+            
+        if (SHOW_TRIGGERS)
+            echo "<dt><a href=\"?triggers\">Triggers</a></dt>";
+            
         echo "</dl></dd></dl>";
     }
 }

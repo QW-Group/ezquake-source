@@ -11,4 +11,17 @@ define ("META_DESCRIPTION", "The Complete guide to using QuakeWorld &trade; clie
 // there's no real use for this nowadays, feel free to leave it empty 
 define ("META_KEYWORDS", "ezQuake, manual, guide, tutorial, how-to, howto, setting, quake, quakeworld, client, help, readme, install");
 
+// show installation part on the main page? (requires 'installation' manual page in db!)
+define ("SHOW_INSTALLATION", true);
+// show features part on the main page? (requires 'features' manual page in db!)
+define ("SHOW_FEATURES", true);
+
+// show commands link on the main page?
+define ("SHOW_COMMANDS", true);
+// show command-line options link on the main page?
+define ("SHOW_OPTIONS", true);
+// show triggers link on the main page?
+define ("SHOW_TRIGGERS", true);
+
+
 ?>
