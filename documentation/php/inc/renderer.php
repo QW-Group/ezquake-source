@@ -133,71 +133,80 @@ class MainPageRendData extends BaseRendData
     
     function RenderContent()
     {
-        echo '
-        <div id="search"><form method="get" action=".">
-            <fieldset><legend>Search</legend>
-            <input type="text" size="20" name="search" />
-            <button type="submit">Submit</button>
-            </fieldset>
-        </form></div>';
+        if (SHOW_SEARCH)
+        {
+            echo '
+            <div id="search"><form method="get" action=".">
+                <fieldset><legend>Search</legend>
+                <input type="text" size="20" name="search" />
+                <button type="submit">Submit</button>
+                </fieldset>
+            </form></div>';
+        }
         
-        echo "<dl id=\"main-page-list\">";
+        echo "\n\n<dl id=\"main-page-list\">";
         
-        /* installation */
         if (SHOW_INSTALLATION)
         {
             echo "<dt>Installation</dt><dd>";
             $mid = $this->db["manuals"]->GetId("installation");
             $inst_index = new ManualsRendData($mid, $this->db);
             echo $inst_index->content;
-            echo "</dd>";
+            echo "</dd>\n";
         }
         
-        /* features list */
         if (SHOW_FEATURES)
         {
             echo "<dt id=\"features\">Features</dt><dd>";
             $mid = $this->db["manuals"]->GetId("features");
             $features_list = new ManualsRendData($mid, $this->db);
             echo $features_list->content;
-            echo "</dd>";
+            echo "</dd>\n";
         }
 
-        /* settings */
-        echo "<dt>Settings</dt><dd>";
-        echo "<p><strong><a href=\"?index\">Index</a></strong> - Full list of variables, commands and command-line options</p>";
-        echo "<p>Note that you can put the name of any variable, command, command-line option or manual page into the URL and you'll get corresponding manual page displayed. E.g. ".BASEURL."?cl_maxfps</p>";
-        echo "<dl id=\"settings-list\"><dt>Variables</dt><dd>";
-        
-        /* variables menu */
-        echo "<dl>";
-        $grplist = $this->db["groups"]->GetGroupedList();
-        $mgrplist = $this->db["mgroups"]->GetIDAssocList();
-        foreach ($mgrplist as $mgrp_id => $mgrp_data)
+        if (SHOW_SETTINGS)
         {
-            echo "<dt><a href=\"?vars-".$mgrp_data["name"]."\">".htmlspecialchars($mgrp_data["title"])."</a></dt><dd>";
-            $c = 0;
-            foreach ($grplist[$mgrp_id] as $grp)
+            echo "\n<dt>Settings</dt><dd>";
+            echo "<p><strong><a href=\"?index\">Index</a></strong> - Full list of variables, commands and command-line options</p>";
+            echo "<p>Note that you can put the name of any variable, command, command-line option or manual page into the URL and you'll get corresponding manual page displayed. E.g. ".BASEURL."?cl_maxfps</p>";
+            echo "<dl id=\"settings-list\">";
+            
+            if (SHOW_VARIABLES)
             {
-                if ($c++)
-                    echo ", ";
-                
-                echo "<a href=\"?vars-".$grp["name"]."\">".htmlspecialchars($grp["title"])."</a>";
+                echo "<dt>Variables</dt><dd><dl>";
+                $grplist = $this->db["groups"]->GetGroupedList();
+                $mgrplist = $this->db["mgroups"]->GetIDAssocList();
+                foreach ($mgrplist as $mgrp_id => $mgrp_data)
+                {
+                    echo "  <dt><a href=\"?vars-".$mgrp_data["name"]."\">".htmlspecialchars($mgrp_data["title"])."</a></dt>\n";
+                    echo "  <dd>";
+                    $c = 0;
+                    foreach ($grplist[$mgrp_id] as $grp)
+                    {
+                        if ($c++)
+                            echo ", ";
+                        
+                        echo "<a href=\"?vars-".$grp["name"]."\">".htmlspecialchars($grp["title"])."</a>";
+                    }
+                    echo "</dd>\n";
+                }
+                echo "</dl></dd>\n";
             }
-            echo "</dd>";
+            
+            if (SHOW_COMMANDS)
+                echo "<dt><a href=\"?commands\">Commands</a></dt>\n";
+            
+            if (SHOW_OPTIONS)
+                echo "<dt><a href=\"?command-line\">Command-Line Options</a></dt>\n";
+                
+            if (SHOW_TRIGGERS)
+                echo "<dt><a href=\"?triggers\">Triggers</a></dt>\n";
+                
+            echo "</dl>"; // end of settings types list
+            echo "</dd>"; // end of settings part
         }
-        echo "</dl></dd>";
         
-        if (SHOW_COMMANDS)
-            echo "<dt><a href=\"?commands\">Commands</a></dt>";
-        
-        if (SHOW_OPTIONS)
-            echo "<dt><a href=\"?command-line\">Command-Line Options</a></dt>";
-            
-        if (SHOW_TRIGGERS)
-            echo "<dt><a href=\"?triggers\">Triggers</a></dt>";
-            
-        echo "</dl></dd></dl>";
+        echo "\n</dl>";
     }
 }
 
