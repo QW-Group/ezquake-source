@@ -449,11 +449,12 @@ class OptionRendData extends BaseRendData
         $this->lastupdate = $db->LastUpdate($id);
         
         $this->content .= "<div class=\"description\">".htmlspecialchars($opt["description"])."</div>";
-        if (strlen($opt["args"]))
+        if (strlen($opt["args"])) {
             if ($sideargs)
             	$this->content .= "<p>Arguments: <code>".htmlspecialchars($opt["args"])."</code></p>";
             else
                 $this->title .= " <code>".htmlspecialchars($opt["args"])."</code>";
+        }
             
         if (strlen($opt["argsdesc"]))
             $this->content .= "<div><h3>Arguments</h3>".htmlspecialchars($opt["argsdesc"])."</div>";
