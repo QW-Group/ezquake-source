@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -43,6 +43,8 @@ const char *gl_vendor;
 const char *gl_renderer;
 const char *gl_version;
 const char *gl_extensions;
+
+int anisotropy_ext = 0;
 
 qbool gl_mtexable = false;
 int gl_textureunits = 1;
@@ -79,7 +81,7 @@ qbool CheckExtension (const char *extension) {
 	if (!gl_extensions && !(gl_extensions = (const char*) glGetString (GL_EXTENSIONS)))
 		return false;
 
-	
+
 	if (!extension || *extension == 0 || strchr (extension, ' '))
 		return false;
 
@@ -122,12 +124,24 @@ void GL_CheckExtensions (void) {
 	CheckMultiTextureExtensions ();
 
 	gl_combine = CheckExtension("GL_ARB_texture_env_combine");
-		gl_add_ext = CheckExtension("GL_ARB_texture_env_add");
+	gl_add_ext = CheckExtension("GL_ARB_texture_env_add");
+
+
+	if (CheckExtension("GL_EXT_texture_filter_anisotropic")) {
+		int gl_anisotropy_factor_max;
+
+		anisotropy_ext = 1;
+
+		glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_anisotropy_factor_max);
+
+		Com_Printf("Anisotropic Filtering Extension Found (%d max)\n",gl_anisotropy_factor_max);
+	}
+
 
 	if (CheckExtension("GL_ARB_texture_compression")) {
 		Com_Printf("Texture compression extensions found\n");
 		Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
-		Cvar_Register (&gl_ext_texture_compression);	
+		Cvar_Register (&gl_ext_texture_compression);
 		Cvar_ResetCurrentGroup();
 	}
 }
@@ -138,7 +152,7 @@ qbool OnChange_gl_ext_texture_compression(cvar_t *var, char *string) {
 	if (!newval == !var->value)
 		return false;
 
-	
+
 	gl_alpha_format = newval ? GL_COMPRESSED_RGBA_ARB : GL_RGBA;
 	gl_solid_format = newval ? GL_COMPRESSED_RGB_ARB : GL_RGB;
 
@@ -254,4 +268,4 @@ void VID_SetPalette (unsigned char *palette) {
 		*table++ = LittleLong ((255 << 24) + (r << 0) + (g << 8) + (b << 16));
 	}
 	d_8to24table2[255] = 0;	// 255 is transparent
-} 
+}

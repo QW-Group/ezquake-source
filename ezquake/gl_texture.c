@@ -9,7 +9,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the included (GNU.txt) GNU General Public License for more details.
 
@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_texture.c,v 1.17 2006-05-16 10:05:28 disconn3ct Exp $
+	$Id: gl_texture.c,v 1.18 2006-06-12 21:56:59 moodles Exp $
 */
 
 #include "quakedef.h"
@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 qbool OnChange_gl_max_size (cvar_t *var, char *string);
 qbool OnChange_gl_texturemode (cvar_t *var, char *string);
 qbool OnChange_gl_miptexLevel (cvar_t *var, char *string);
+qbool OnChange_gl_anisotropy (cvar_t *var, char *string);
 
 
 static qbool no24bit, forceTextureReload;
@@ -37,7 +38,9 @@ extern float vid_gamma;
 
 
 int texture_extension_number = 1;
-int	gl_max_size_default;		
+int	gl_max_size_default;
+int anisotropy_tap = 1;
+extern int anisotropy_ext;
 int	gl_lightmap_format = 3, gl_solid_format = 3, gl_alpha_format = 4;
 
 cvar_t	gl_max_size			= {"gl_max_size", "2048", 0, OnChange_gl_max_size};
@@ -45,6 +48,7 @@ cvar_t	gl_picmip			= {"gl_picmip", "0"};
 cvar_t	gl_miptexLevel		= {"gl_miptexLevel", "0", 0, OnChange_gl_miptexLevel};
 cvar_t	gl_lerpimages		= {"gl_lerpimages", "1"};
 cvar_t	gl_texturemode		= {"gl_texturemode", "GL_LINEAR_MIPMAP_NEAREST", 0, OnChange_gl_texturemode};
+cvar_t	gl_anisotropy		= {"gl_anisotropy","1", 0, OnChange_gl_anisotropy};
 
 cvar_t	gl_scaleModelTextures		= {"gl_scaleModelTextures", "0"};
 cvar_t	gl_scaleTurbTextures		= {"gl_scaleTurbTextures", "1"};
@@ -136,6 +140,27 @@ qbool OnChange_gl_texturemode (cvar_t *var, char *string) {
 	return false;
 }
 
+qbool OnChange_gl_anisotropy (cvar_t *var, char *string) {
+	int i;
+	gltexture_t *glt;
+
+	int newvalue = Q_atoi(string);
+
+	if (newvalue == 0) { newvalue = 1; } //0 is bad, 1 is off, 2 and higher are valid modes
+	
+	anisotropy_tap = newvalue;
+
+	for (i = 0, glt = gltextures; i < numgltextures; i++, glt++)
+	{
+		if (glt->texmode & TEX_MIPMAP)
+		{
+			GL_Bind (glt->texnum);
+			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,newvalue);
+		}
+	}
+	return false;
+}
+
 qbool OnChange_gl_miptexLevel (cvar_t *var, char *string) {
 	float newval = Q_atof(string);
 
@@ -146,7 +171,7 @@ qbool OnChange_gl_miptexLevel (cvar_t *var, char *string) {
 	return false;
 }
 
-int currenttexture = -1;			
+int currenttexture = -1;
 
 void GL_Bind (int texnum) {
 	if (currenttexture == texnum)
@@ -157,12 +182,12 @@ void GL_Bind (int texnum) {
 }
 
 static GLenum oldtarget = GL_TEXTURE0_ARB;
-static int cnttextures[4] = {-1, -1, -1, -1};   
+static int cnttextures[4] = {-1, -1, -1, -1};
 static qbool mtexenabled = false;
 
 
 void GL_SelectTexture (GLenum target) {
-	if (target == oldtarget) 
+	if (target == oldtarget)
 		return;
 
 	qglActiveTexture (target);
@@ -210,7 +235,7 @@ static void ScaleDimensions(int width, int height, int *scaled_width, int *scale
 	if (scale) {
 		picmip = (int) bound(0, gl_picmip.value, 16);
 		*scaled_width >>= picmip;
-		*scaled_height >>= picmip;		
+		*scaled_height >>= picmip;
 	}
 
 	maxsize = scale ? gl_max_size.value : gl_max_size_default;
@@ -260,6 +285,9 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 	}
 
+	if (anisotropy_ext == 1)
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,anisotropy_tap);
+
 	Q_free(newdata);
 }
 
@@ -280,12 +308,12 @@ void GL_Upload8 (byte *data, int width, int height, int mode) {
 			p = data[i];
 			if (p < 224)
 #ifdef __BIG_ENDIAN__
-				trans[i] = table[p] & 0xFFFFFF00;	
+				trans[i] = table[p] & 0xFFFFFF00;
 #else
-				trans[i] = table[p] & 0x00FFFFFF;	
+				trans[i] = table[p] & 0x00FFFFFF;
 #endif
 			else
-				trans[i] = table[p];			
+				trans[i] = table[p];
 		}
 	} else if (mode & TEX_ALPHA) {
 
@@ -314,7 +342,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 
 	ScaleDimensions(width, height, &scaled_width, &scaled_height, mode);
 
-	Com_DPrintf("���: %s\n", identifier);
+	Com_DPrintf("???: %s\n", identifier);
 	if (identifier[0]) {
 		crc = CRC_Block (data, width * height * bpp);
 		for (i = 0, glt = gltextures; i < numgltextures; i++, glt++) {
@@ -326,7 +354,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 					(mode & ~(TEX_COMPLAIN|TEX_NOSCALE)) == (glt->texmode & ~(TEX_COMPLAIN|TEX_NOSCALE))
 				) {
 					GL_Bind(gltextures[i].texnum);
-					return gltextures[i].texnum;	
+					return gltextures[i].texnum;
 				} else {
 					goto setup_gltexture;
 				}
@@ -474,19 +502,19 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
            	if (FS_FOpenFile (name, &f) != -1) {
            		CHECK_TEXTURE_ALREADY_LOADED;
            		if( !strcasecmp(link + len - 3, "tga") )
-           		
+
            		        data = Image_LoadTGA (f, name, matchwidth, matchheight);
 #ifdef WITH_PNG
            		if( !strcasecmp(link + len - 3, "png") )
            		{
            		        data = Image_LoadPNG (f, name, matchwidth, matchheight);
            		}
-#endif	        
+#endif
            		if (data)
            			return data;
            	}
 	}
-	
+
 
 
 	snprintf (name, sizeof(name), "%s.tga", basename);
@@ -660,6 +688,7 @@ void GL_Texture_Init(void) {
 	Cvar_Register(&gl_picmip);
 	Cvar_Register(&gl_lerpimages);
 	Cvar_Register(&gl_texturemode);
+	Cvar_Register(&gl_anisotropy);
 	Cvar_Register(&gl_scaleModelTextures);
 	Cvar_Register(&gl_scaleTurbTextures);
 	Cvar_Register(&gl_miptexLevel);
