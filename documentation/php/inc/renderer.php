@@ -312,8 +312,16 @@ class VariablesRendData extends BaseRendData
         $builds = $db_support->GetBuilds();
         $topheading = $this->topheading;
 
+        if ($this->var["active"])
+            echo "<div>";
+        else
+        {
+            echo "<div class=\"inactive\">";
+            echo "<p class=\"reason\">This variable has been ".$this->var["lastchange"]."</p>";
+        }
+        
         if (strlen($this->var["description"]))
-            echo "\n<h{$topheading}>Description</h{$topheading}><p class=\"description\">".htmlspecialchars($this->var["description"])."</p>";
+            echo "<h{$topheading}>Description</h{$topheading}><p class=\"description\">".htmlspecialchars($this->var["description"])."</p>";
         
         echo "<p class=\"support\">Support: ";
         foreach ($builds as $build)
@@ -355,6 +363,8 @@ class VariablesRendData extends BaseRendData
         
         if (strlen($this->var["remarks"]))
             echo "\n<p class=\"remarks\">".htmlspecialchars($this->var["remarks"])."</p>";
+        
+        echo "</div>";
     }
 }
 

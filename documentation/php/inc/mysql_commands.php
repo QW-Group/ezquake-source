@@ -221,6 +221,13 @@ class DocsData
         return $ret;
     }
     
+    function LastAction($id)
+    {
+        $id = (int) $id;
+        $r = my_mysql_query("SELECT * FROM {$this->tblPrefix}_history WHERE {$this->foreignkey} = {$id} ORDER BY time DESC LIMIT 1");
+        return ($r ? mysql_fetch_assoc($r) : False);
+    }
+    
     function LastUpdate($id)
     {
         $id = (int) $id;
@@ -593,6 +600,25 @@ class VariablesData extends DocsData
                 
                 $ret["valdesc"] = mysql_num_rows($r) ? mysql_result($r, 0) : "";
                 break;
+        }
+        
+        $ret["active"] = (int) $ret["active"];
+        if (!$ret["active"]) {
+            if (!($la = $this->LastAction($id)))
+                $ret["lastchange"] = "removed";
+            else
+            {
+                switch ($la["action"]) {
+                case "renamed":
+                    $rento = ($this->GetContent($la["id_renamedto"]));
+                    $rento = $rento["name"]; // zzz
+                    $ret["lastchange"] = "renamed to {$rento}";
+                    break;
+                default:
+                    $ret["lastchange"] = $la["action"];
+                    break;
+                }
+            }
         }
         
         if (!$r = my_mysql_query("SELECT id_build, default_value FROM ".VARSUPPORTTABLE." WHERE id_variable = {$id}"))

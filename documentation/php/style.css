@@ -125,6 +125,7 @@ div#search input {
 div#search button { width: 4em; }
 div#search fieldset { padding: 1em; }
 input:hover { background-color: #ddd; }
+.inactive p.reason {	background-color: #888; }
 /* search form END ----------------- */
 
 /* TRASH ----------------------------
