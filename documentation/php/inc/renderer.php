@@ -434,7 +434,8 @@ class CommandsAllRendData extends BaseRendData
             $cmd->RenderContent();
             echo "\n</div>\n"; // end of div.command
         }
-        echo "\n</div>"; // end of div#index-x
+        if (count($cmds))
+            echo "\n</div>"; // end of div#index-x
     }
 }
 
@@ -507,7 +508,8 @@ class OptionsRendData extends BaseRendData
             $opt->RenderContent();
             echo "\n</div>\n"; // end of div.command
         }
-        echo "\n</div>"; // end of div#index-x
+        if (count($options))
+            echo "\n</div>"; // end of div#index-x
     }
 }
 
