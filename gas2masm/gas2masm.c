@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: gas2masm.c,v 1.2 2006-06-13 13:03:33 vvd0 Exp $
 */
 //
 // gas to MASM source code converter
@@ -33,7 +34,7 @@ typedef enum {NOT_WHITESPACE, WHITESPACE, TOKEN_AVAILABLE, LINE_DONE, FILE_DONE,
 typedef enum {NOSEG, DATASEG, TEXTSEG} segtype;
 
 int		tokennum;
-int		inline, outline;
+int		linein, lineout;
 
 char	*token;
 char	tokens[MAX_TOKENS][MAX_TOKEN_LENGTH+1];
@@ -113,11 +114,7 @@ void emitanoperand (int tnum, char *type, int notdata)
 	// register
 		for (i=0 ; i<numregs ; i++)
 		{
-#ifdef WIN32
-			if (!_strcmpi (pt, reglist[i].text))
-#else
 			if (!strcmpi (pt, reglist[i].text))
-#endif
 			{
 				printf ("%s", reglist[i].emit);
 				return;
@@ -247,11 +244,7 @@ void emitanoperand (int tnum, char *type, int notdata)
 
 					for (i=0 ; i<numregs ; i++)
 					{
-#ifdef WIN32
-						if (!_strnicmp (pt, reglist[i].text,
-#else
 						if (!strnicmp (pt, reglist[i].text,
-#endif
 							reglist[i].len))
 						{
 							strcpy (&temp[index], reglist[i].emit);
@@ -404,32 +397,44 @@ void emitonecalldata (void)
 
 void emitonejumpdata (void)
 {
+	/*jmp  *Ljmptab(,%eax,4)
+	  jmp dword ptr[Ljmptab(,%eax,4)]
+	  jmp dword ptr[Ljmptab+eax*4]
+	*/
 	int	i, isaddr, len;
 
-	if (tokens[1][0] == '*')
-	{
-		printf (" dword ptr[%s]", &tokens[1][1]);
-	}
-	else
-	{
-		isaddr = 0;
-		len = strlen(tokens[1]);
+	isaddr = 0;
+	len = strlen(tokens[1]);
 
-		for (i=0 ; i<len ; i++)
-		{
-			if (tokens[1][i] == '(')
-			{
+	if (tokens[1][0] == '*') {
+
+		for (i=0 ; i<len ; i++) {
+			if (tokens[1][i] == '(') {
+				isaddr = 1;
+				break;
+			}
+		}
+		memmove(&tokens[1][0],&tokens[1][1],strlen(tokens[1]));
+		if ( !isaddr ) {
+			//printf (" dword ptr [%s]", &tokens[1][1]);
+			printf (" dword ptr [");
+			emitanoperand (1, "", 1);
+			printf ("]");
+		} else {
+			emitanoperand (1, " dword ptr", 1);
+		}
+	} else {
+
+		for (i=0 ; i<len ; i++) {
+			if (tokens[1][i] == '(') {
 				isaddr = 1;
 				break;
 			}
 		}
 
-		if (!isaddr)
-		{
+		if (!isaddr) {
 			printf (" %s", tokens[1]);
-		}
-		else
-		{
+		} else {
 			emitanoperand (1, " dword ptr", 1);
 		}
 	}
@@ -438,7 +443,6 @@ void emitonejumpdata (void)
 
 void emitexterndef (void)
 {
-
 	printf (" %s:dword", tokens[1]);
 }
 
@@ -555,11 +559,7 @@ void emit_1_or_2_operandsl_vartext (char *str0, char *str1)
 	}
 	else if (tokennum == 3)
 	{
-#ifdef WIN32
-		if (!_strcmpi (tokens[2], "%st(0)"))
-#else
 		if (!strcmpi (tokens[2], "%st(0)"))
-#endif
 			printf (" %s ", str0);
 		else
 			printf (" %s ", str1);
@@ -670,6 +670,7 @@ parsefield	parsedata[] = {
 	{"addl",   " add", 3, emittwooperandsl},
 	{"andb",   " and", 3, emittwooperandsb},
 	{"andl",   " and", 3, emittwooperandsl},
+	{"bswap",  " bswap", 2, emitoneoperandl},
 	{"call",   " call", 2, emitonecalldata},
 	{"cmpb",   " cmp", 3, emittwooperandsb},
 	{"cmpl",   " cmp", 3, emittwooperandsl},
@@ -685,8 +686,8 @@ parsefield	parsedata[] = {
 	{"fcoms",  " fcom", 2, emitoneoperandl},
 	{"fcomp",  " fcomp", 2, emitoneoperandl},
 	{"fcomps", " fcomp", 2, emitoneoperandl},
-	{"fdiv",   "", -2, special_fdivl}, 
-	{"fdivp",  "", -2, special_fdivpl}, 
+	{"fdiv",   "", -2, special_fdivl},
+	{"fdivp",  "", -2, special_fdivpl},
 	{"fdivr",  "", -2, special_fdivrl},
 	{"fdivrp", "", -2, special_fdivrpl},
 	{"fdivrs", "", -2, special_fdivrl},
@@ -746,6 +747,9 @@ parsefield	parsedata[] = {
 	{"movb",   " mov", 3, emittwooperandsb},
 	{"movl",   " mov", 3, emittwooperandsl},
 	{"movw",   " mov", 3, emittwooperandsw},
+	{"movzwl", " movzx", 3, emittwooperandsw},
+	{"movzbw", " movzx", 3, emittwooperandsb},
+	{"movzbl", " movzx", 3, emittwooperandsb},
 	{"negl",   " neg", 2, emitoneoperandl},
 	{"orb",    " or", 3, emittwooperandsb},
 	{"orl",    " or", 3, emittwooperandsl},
@@ -756,10 +760,13 @@ parsefield	parsedata[] = {
 	{"sarl",   " sar", 3, emittwooperandsl},
 	{"sbbl",   " sbb", 3, emittwooperandsl},
 	{"shll",   " shl", 3, emittwooperandsl},
-	{"shrl",   " shr", 3, emittwooperandsl},	
+	{"shrl",   " shr", 3, emittwooperandsl},
 	{"subl",   " sub", 3, emittwooperandsl},
 	{"testb",  " test", 3, emittwooperandsb},
 	{"testl",  " test", 3, emittwooperandsl},
+	{"xchgb",  " xchg", 3, emittwooperandsb},
+	{"xchgw",  " xchg", 3, emittwooperandsw},
+	{"xchgl",  " xchg", 3, emittwooperandsl},
 	{"xorb",   " xor", 3, emittwooperandsb},
 	{"xorl",   " xor", 3, emittwooperandsl},
 };
@@ -770,18 +777,18 @@ int	numparse = sizeof (parsedata) / sizeof (parsedata[0]);
 
 void errorexit (void)
 {
-	fprintf (stderr, "In line: %d, out line: %d\n", inline, outline);
+	fprintf (stderr, "In line: %d, out line: %d\n", linein, lineout);
 	exit (1);
 }
 
 
-tokenstat whitespace (char c)
+tokenstat whitespace (int c)
 {
 	if (c == '\n')
 		return LINE_DONE;
 
 	if ((c <= ' ') ||
-		(c > 127) ||
+		//(c > 127) ||
 		(c == ','))
 	{
 		return WHITESPACE;
@@ -793,13 +800,13 @@ tokenstat whitespace (char c)
 
 int gettoken (void)
 {
-	char		c;
+	int		c;
 	int			count, parencount;
 	tokenstat	stat;
 
 	do
 	{
-		if ((c = getchar()) == EOF)
+		if ((c = getchar ()) == EOF)
 			return FILE_DONE;
 
 		if ((stat = whitespace (c)) == LINE_DONE)
@@ -832,7 +839,7 @@ int gettoken (void)
 
 		} while (c != ')');
 	}
-	
+
 	for ( ;; )
 	{
 		if ((c = getchar ()) == EOF)
@@ -937,11 +944,7 @@ tokenstat parseline (void)
 
 				for (i=0 ; i<numparse; i++)
 				{
-#ifdef WIN32
-					if (!_strcmpi (tokens[0], parsedata[i].text))
-#else
 					if (!strcmpi (tokens[0], parsedata[i].text))
-#endif
 					{
 						if (((parsedata[i].numtokens > 0) &&
 							 (parsedata[i].numtokens != tokennum)) ||
@@ -984,7 +987,7 @@ tokenstat parseline (void)
 				else
 					printf ("\n");
 
-				outline++;
+				lineout++;
 			}
 			return PARSED_OKAY;
 
@@ -1034,20 +1037,22 @@ tokenstat parseline (void)
 	}
 }
 
-
-void main (void)
+int main ()
 {
 	tokenstat	stat;
 
-	printf (" .386P\n"
+	printf ("; Generated by $Id: gas2masm.c,v 1.2 2006-06-13 13:03:33 vvd0 Exp $\n"
+			"; Copyright (C) 1996-1997 Id Software, Inc.\n"
+			"; Copyright (C) 2006 MVDSV Team - http://mvdsv.sourceforge.net\n\n"
+			" .486P\n"
             " .model FLAT\n");
-	inline = 1;
-	outline = 3;
+	linein = 1;
+	lineout = 3;
 
 	for ( ;; )
 	{
 		stat = parseline ();
-		inline++;
+		linein++;
 
 		switch (stat)
 		{
@@ -1058,14 +1063,14 @@ void main (void)
 				printf ("_DATA ENDS\n");
 
 			printf (" END\n");
-			exit (0);
-		
+			return 0;
+
 		case PARSED_OKAY:
 			break;
 
 		default:
 			fprintf (stderr, "Error: unknown tokenstat %d\n", stat);
-			exit (0);
+			return 1;
 		}
 	}
 }
