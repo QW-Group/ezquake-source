@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: modules.h,v 1.6 2006-03-20 13:51:27 vvd0 Exp $
+	$Id: modules.h,v 1.7 2006-06-13 13:13:02 vvd0 Exp $
 */
 
 #ifndef _MODULES_H
@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "security.h"
 
-#if defined __linux || defined(__APPLE__)
+#ifndef _WIN32
 #include <dlfcn.h>
 #endif
 

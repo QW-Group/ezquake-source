@@ -23,7 +23,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: math.s,v 1.2 2005-07-05 20:01:11 disconn3ct Exp $
+	$Id: math.s,v 1.3 2006-06-13 13:13:02 vvd0 Exp $
 */
 
 #include "asm_i386.h"
@@ -353,5 +353,28 @@ LSetSides:
 
 Lerror:
 	call	C(BOPS_Error)
+
+
+
+#define	val	4
+
+.globl C(ShortSwap)
+C(ShortSwap):
+
+	movzwl	val(%esp),%eax
+	xchgb	%al,%ah
+	ret
+
+
+.globl C(LongSwap)
+C(LongSwap):
+
+.globl C(FloatSwap)
+C(FloatSwap):
+
+	movl	val(%esp),%eax
+	bswap	%eax
+	ret
+
 
 #endif	// id386
