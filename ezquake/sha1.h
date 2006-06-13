@@ -11,7 +11,7 @@ Test Vectors (from FIPS PUB 180-1)
 A million repetitions of "a"
   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
 
-	$Id: sha1.h,v 1.6 2005-07-11 14:20:48 vvd0 Exp $
+	$Id: sha1.h,v 1.7 2006-06-13 13:13:02 vvd0 Exp $
 */
 
 /* #define LITTLE_ENDIAN * This should be #define'd if true. */
@@ -34,13 +34,17 @@ void SHA1Final(unsigned char digest[DIGEST_SIZE], SHA1_CTX* context);
 
 /* blk0() and blk() perform the initial expand. */
 /* I got the idea of expanding during the round function from SSLeay */
-/* Changed LITTLE_ENDIAN to __BIG_ENDIAN__ define checking (unification of defines) */
-#ifdef __BIG_ENDIAN__
+/*
+#ifdef __BIG_ENDIAN__Q__
 #define blk0(i) block->l[i]
 #else
-#define blk0(i) (block->l[i] = (rol(block->l[i],24)&0xFF00FF00) \
-    |(rol(block->l[i],8)&0x00FF00FF))
+#define blk0(i) (block->l[i] =	(rol(block->l[i], 24) & 0xFF00FF00) | \
+							    (rol(block->l[i],  8) & 0x00FF00FF))
 #endif
+*/
+
+#define blk0(i) (block->l[i] = BigLong(block->l[i]))
+
 #define blk(i) (block->l[i&15] = rol(block->l[(i+13)&15]^block->l[(i+8)&15] \
     ^block->l[(i+2)&15]^block->l[i&15],1))
 

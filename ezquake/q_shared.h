@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.2 2006-05-16 11:51:48 disconn3ct Exp $
+    $Id: q_shared.h,v 1.3 2006-06-13 13:13:02 vvd0 Exp $
 */
 // q_shared.h -- functions shared by all subsystems
 
@@ -108,21 +108,34 @@ void SZ_Print (sizebuf_t *buf, char *data);	// strcats onto the sizebuf
 short	ShortSwap (short l);
 int		LongSwap (int l);
 float	FloatSwap (float f);
+int		LongSwapPDP2Big (int l);
+int		LongSwapPDP2Lit (int l);
+float	FloatSwapPDP2Big (float f);
+float	FloatSwapPDP2Lit (float f);
 
-#ifdef __BIG_ENDIAN__
-#define BigShort(x) (x)
-#define BigLong(x) (x)
-#define BigFloat(x) (x)
-#define LittleShort(x) ShortSwap (x)
-#define LittleLong(x) LongSwap(x)
-#define LittleFloat(x) FloatSwap(x)
+#ifdef __BIG_ENDIAN__Q__
+#define BigShort(x)		(x)
+#define BigLong(x)		(x)
+#define BigFloat(x)		(x)
+#define LittleShort(x)	ShortSwap(x)
+#define LittleLong(x)	LongSwap(x)
+#define LittleFloat(x)	FloatSwap(x)
+#elif defined(__LITTLE_ENDIAN__Q__)
+#define BigShort(x)		ShortSwap(x)
+#define BigLong(x)		LongSwap(x)
+#define BigFloat(x)		FloatSwap(x)
+#define LittleShort(x)	(x)
+#define LittleLong(x)	(x)
+#define LittleFloat(x)	(x)
+#elif defined(__PDP_ENDIAN__Q__)
+#define BigShort(x)		ShortSwap(x)
+#define BigLong(x)		LongSwapPDP2Big(x)
+#define BigFloat(x)		FloatSwapPDP2Big(x)
+#define LittleShort(x)	(x)
+#define LittleLong(x)	LongSwapPDP2Lit(x)
+#define LittleFloat(x)	FloatSwapPDP2Lit(x)
 #else
-#define BigShort(x) ShortSwap (x)
-#define BigLong(x) LongSwap(x)
-#define BigFloat(x) FloatSwap(x)
-#define LittleShort(x) (x)
-#define LittleLong(x) (x)
-#define LittleFloat(x) (x)
+#error Unknown byte order type!
 #endif
 
 unsigned int BuffBigLong (const unsigned char *buffer);

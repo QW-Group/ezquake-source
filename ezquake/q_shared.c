@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.3 2006-05-20 16:50:40 disconn3ct Exp $
+    $Id: q_shared.c,v 1.4 2006-06-13 13:13:02 vvd0 Exp $
 */
 // q_shared.c -- functions shared by all subsystems
 
@@ -322,7 +322,7 @@ int Com_HashKey (const char *name) {
 ============================================================================
 */
 
-short ShortSwap (short l) {
+/*short ShortSwap (short l) {
 	byte b1, b2;
 
 	b1 = l & 255;
@@ -353,6 +353,107 @@ float FloatSwap (float f) {
 	dat2.b[1] = dat1.b[2];
 	dat2.b[2] = dat1.b[1];
 	dat2.b[3] = dat1.b[0];
+	return dat2.f;
+}*/
+
+#ifndef id386
+short ShortSwap (short s)
+{
+	union
+	{
+		short	s;
+		byte	b[2];
+	} dat1, dat2;
+	dat1.s = s;
+	dat2.b[0] = dat1.b[1];
+	dat2.b[1] = dat1.b[0];
+	return dat2.s;
+}
+
+int LongSwap (int l)
+{
+	union
+	{
+		int		l;
+		byte	b[4];
+	} dat1, dat2;
+	dat1.l = l;
+	dat2.b[0] = dat1.b[3];
+	dat2.b[1] = dat1.b[2];
+	dat2.b[2] = dat1.b[1];
+	dat2.b[3] = dat1.b[0];
+	return dat2.l;
+}
+
+float FloatSwap (float f)
+{
+	union
+	{
+		float	f;
+		byte	b[4];
+	} dat1, dat2;
+	dat1.f = f;
+	dat2.b[0] = dat1.b[3];
+	dat2.b[1] = dat1.b[2];
+	dat2.b[2] = dat1.b[1];
+	dat2.b[3] = dat1.b[0];
+	return dat2.f;
+}
+#endif
+
+int LongSwapPDP2Big (int l)
+{
+	union
+	{
+		int		l;
+		byte	b[4];
+	} dat1, dat2;
+	dat1.l = l;
+	dat2.b[0] = dat1.b[1];
+	dat2.b[1] = dat1.b[0];
+	dat2.b[2] = dat1.b[3];
+	dat2.b[3] = dat1.b[2];
+	return dat2.l;
+}
+
+int LongSwapPDP2Lit (int l)
+{
+	union
+	{
+		int		l;
+		short	s[2];
+	} dat1, dat2;
+	dat1.l = l;
+	dat2.s[0] = dat1.s[1];
+	dat2.s[1] = dat1.s[0];
+	return dat2.l;
+}
+
+float FloatSwapPDP2Big (float f)
+{
+	union
+	{
+		float	f;
+		byte	b[4];
+	} dat1, dat2;
+	dat1.f = f;
+	dat2.b[0] = dat1.b[1];
+	dat2.b[1] = dat1.b[0];
+	dat2.b[2] = dat1.b[3];
+	dat2.b[3] = dat1.b[2];
+	return dat2.f;
+}
+
+float FloatSwapPDP2Lit (float f)
+{
+	union
+	{
+		float	f;
+		short	s[2];
+	} dat1, dat2;
+	dat1.f = f;
+	dat2.s[0] = dat1.s[1];
+	dat2.s[1] = dat1.s[0];
 	return dat2.f;
 }
 

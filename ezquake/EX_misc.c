@@ -1,3 +1,7 @@
+/*
+	$Id: EX_misc.c,v 1.10 2006-06-13 13:13:02 vvd0 Exp $
+*/
+
 #include "quakedef.h"
 
 #ifdef _WIN32
@@ -8,7 +12,7 @@
 #include "EX_misc.h"
 #include "EX_FunNames.h"
 
-#if defined __linux || defined(__APPLE__)
+#ifndef _WIN32 
 #define CLIPBOARDSIZE 1024
 static char clipboard[CLIPBOARDSIZE] = "\0";    // for clipboard implementation
 #endif

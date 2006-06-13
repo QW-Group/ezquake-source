@@ -16,12 +16,23 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: host.c,v 1.20 2006-06-13 13:13:02 vvd0 Exp $
+
 */
 
 // this should be the only file that includes both server.h and client.h
 
 #ifdef _WIN32
 #include <windows.h>
+#endif
+
+#ifdef __FreeBSD__
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#ifdef __i386__
+#include <sys/time.h>
+#include <machine/cpufunc.h>
+#endif
 #endif
 
 #include "quakedef.h"
@@ -44,19 +55,18 @@ static jmp_buf 	host_abort;
 
 extern void COM_StoreOriginalCmdline(int argc, char **argv);
 
-#ifdef _WIN32
-int     SYSINFO_memory = 0;
-int     SYSINFO_MHz = 0;
-char *  SYSINFO_processor_description = NULL;
-char *  SYSINFO_3D_description        = NULL;
-
 char f_system_string[1024] = ""; 
 
 char * SYSINFO_GetString(void)
 {
     return f_system_string;
 }
+int     SYSINFO_memory = 0;
+int     SYSINFO_MHz = 0;
+char *  SYSINFO_processor_description = NULL;
+char *  SYSINFO_3D_description        = NULL;
 
+#ifdef _WIN32
 void SYSINFO_Init(void)
 {
     MEMORYSTATUS    memstat;
@@ -113,41 +123,25 @@ void SYSINFO_Init(void)
     }
 #endif
 
-    f_system_string[0] = 0;
+	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
-    strcat(f_system_string, va("%d", (int)(SYSINFO_memory / 1024.0 / 1024.0 + 0.5)));
-    strcat(f_system_string, "MB");
+	if (SYSINFO_processor_description)
+	{
+		strlcat(f_system_string, ", ", sizeof(f_system_string));
+		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
+	}
+	if (SYSINFO_MHz)
+	{
+		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
+	}
+	if (SYSINFO_3D_description)
+	{
+		strlcat(f_system_string, ", ", sizeof(f_system_string));
+		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
+	}
 
-    if (SYSINFO_processor_description)
-    {
-        strcat(f_system_string, ", ");
-        strcat(f_system_string, SYSINFO_processor_description);
-    }
-    if (SYSINFO_MHz)
-    {
-        strcat(f_system_string, " ");
-        strcat(f_system_string, va("%d", SYSINFO_MHz));
-        strcat(f_system_string, "MHz");
-    }
-    if (SYSINFO_3D_description)
-    {
-        strcat(f_system_string, ", ");
-        strcat(f_system_string, SYSINFO_3D_description);
-    }
 }
 #elif defined(__linux__)
-int     SYSINFO_memory = 0;
-int     SYSINFO_MHz = 0;
-char *  SYSINFO_processor_description = NULL;
-char *  SYSINFO_3D_description        = NULL;
-
-char f_system_string[1024] = ""; 
-
-char * SYSINFO_GetString(void)
-{
-    return f_system_string;
-}
-
 void SYSINFO_Init(void) {
 // disconnect: which way is best(MEM/CPU-MHZ/CPU-MODEL)?
 	f_system_string[0] = 0;
@@ -185,8 +179,7 @@ void SYSINFO_Init(void) {
 			match = strchr( buffer, ':' );
 			match++;
 			while (isspace(*match)) match++;
-			strncpy(cpu_model, match, 254 );
-			cpu_model[strlen(cpu_model) - 1] = '\0';
+			strlcpy(cpu_model, match, sizeof(cpu_model));
 			SYSINFO_processor_description= Q_strdup (cpu_model);
 		}
 	}
@@ -197,80 +190,123 @@ void SYSINFO_Init(void) {
 		extern const char *gl_renderer;
 
 		if (gl_renderer  &&  gl_renderer[0])
-		SYSINFO_3D_description = Q_strdup(gl_renderer);
+			SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 #endif
 
-	f_system_string[0] = 0;
-
-	strcat(f_system_string, va("%d", (int)(SYSINFO_memory)));
-	strcat(f_system_string, "MB");
+	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory));
 
 	if (SYSINFO_processor_description)
 	{
-		strcat(f_system_string, ", ");
-		strcat(f_system_string, SYSINFO_processor_description);
+		strlcat(f_system_string, ", ", sizeof(f_system_string));
+		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 	if (SYSINFO_MHz)
 	{
-		strcat(f_system_string, " ");
-		strcat(f_system_string, va("%d", SYSINFO_MHz));
-		strcat(f_system_string, "MHz");
+		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
 	if (SYSINFO_3D_description)
 	{
-		strcat(f_system_string, ", ");
-		strcat(f_system_string, SYSINFO_3D_description);
+		strlcat(f_system_string, ", ", sizeof(f_system_string));
+		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
 }
 #elif defined(__APPLE__)
-int     SYSINFO_memory = 0;
-int     SYSINFO_MHz = 0;
-char *  SYSINFO_processor_description = NULL;
-char *  SYSINFO_3D_description        = NULL;
-
-char f_system_string[1024] = ""; 
-
-char * SYSINFO_GetString(void)
-{
-    return f_system_string;
-}
-
 void SYSINFO_Init(void) {
 // TODO: disconnect --> f_system for MacOSX (man sysctl)
+// VVD: Look at code for FreeBSD: 30 lines down. :-)
 #ifdef GLQUAKE
 	{
 		extern const char *gl_renderer;
 
 		if (gl_renderer  &&  gl_renderer[0])
-		SYSINFO_3D_description = Q_strdup(gl_renderer);
+			SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 #endif
 
-	f_system_string[0] = 0;
-
-	strcat(f_system_string, va("%d", (int)(SYSINFO_memory)));
-	strcat(f_system_string, "MB");
+	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
 	if (SYSINFO_processor_description)
 	{
-		strcat(f_system_string, ", ");
-		strcat(f_system_string, SYSINFO_processor_description);
+		strlcat(f_system_string, ", ", sizeof(f_system_string));
+		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
 	if (SYSINFO_MHz)
 	{
-		strcat(f_system_string, " ");
-		strcat(f_system_string, va("%d", SYSINFO_MHz));
-		strcat(f_system_string, "MHz");
+		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
 	if (SYSINFO_3D_description)
 	{
-		strcat(f_system_string, ", ");
-		strcat(f_system_string, SYSINFO_3D_description);
+		strlcat(f_system_string, ", ", sizeof(f_system_string));
+		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
 }
-#else
-void SYSINFO_Init(void) {}
+#elif defined(__FreeBSD__)
+void SYSINFO_Init(void) {
+	char cpu_model[256];
+
+	int mib[2], val;
+	size_t len;
+
+#ifdef __i386__
+	unsigned long long old_tsc, tsc_freq;
+	struct timeval tp, tp_old;
+#endif
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_PHYSMEM;
+	len = sizeof(val);
+	sysctl(mib, sizeof(mib) / sizeof(mib[0]), &val, &len, NULL, 0);
+
+	SYSINFO_memory = val;
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_MODEL;
+	len = sizeof(cpu_model);
+	sysctl(mib, sizeof(mib) / sizeof(mib[0]), cpu_model, &len, NULL, 0);
+	cpu_model[sizeof(cpu_model) - 1] = '\0';
+
+	SYSINFO_processor_description = cpu_model;
+
+#ifdef __i386__
+	gettimeofday(&old_tp, NULL);
+	old_tsc = rdtsc();
+	do
+	{
+		gettimeofday(&tp, NULL);
+	} while ((tp.tv_sec - old_tp.tv_sec) * 1000000. + tp.tv_usec - old_tp.tv_usec < 1000000.);
+	tsc_freq = rdtsc();
+	SYSINFO_MHz = (int)((tsc_freq - old_tsc) /
+				(tp.tv_sec - old_tp.tv_sec + (tp.tv_usec - old_tp.tv_usec) / 1000000.) /
+				1000000. + .5);
+#endif
+
+#ifdef GLQUAKE
+	{
+		extern const char *gl_renderer;
+
+		if (gl_renderer  &&  gl_renderer[0])
+			SYSINFO_3D_description = Q_strdup(gl_renderer);
+	}
+#endif
+
+	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
+
+	if (SYSINFO_processor_description)
+	{
+		strlcat(f_system_string, ", ", sizeof(f_system_string));
+		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
+	}
+	if (SYSINFO_MHz)
+	{
+		strlcat(f_system_string, va(" (%dMHz)", SYSINFO_MHz), sizeof(f_system_string));
+	}
+	if (SYSINFO_3D_description)
+	{
+		strlcat(f_system_string, ", ", sizeof(f_system_string));
+		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
+	}
+}
 #endif
 
 void Host_Abort (void) {

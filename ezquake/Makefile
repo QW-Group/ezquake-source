@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-
+#	$Id: Makefile,v 1.51 2006-06-13 13:13:02 vvd0 Exp $
 
 # compilation tool and detection of targets/achitecture
 _E			=@
@@ -113,20 +113,20 @@ endif
 BASE_DEBUG_CFLAGS               =-ggdb
 
 ifeq ($(ARCH),x86)              # Linux/x86
-	BASE_CFLAGS             +=-Did386 $(XMMS_CFLAGS)
+	BASE_CFLAGS             +=-D__LITTLE_ENDIAN__Q__ -Did386 $(XMMS_CFLAGS)
 endif
 ifeq ($(ARCH),mingw32)          # Win32/x86 in MingW environment
 	# use define for special assembly routines:
-	BASE_CFLAGS             +=-Did386 -DMINGW32
+	BASE_CFLAGS             +=-D__LITTLE_ENDIAN__Q__ -Did386 -DMINGW32
 endif
 ifeq ($(ARCH),ppc)              # MacOS-X/ppc
-	BASE_CFLAGS             +=-D__BIG_ENDIAN__ -Ddarwin
+	BASE_CFLAGS             +=-D__BIG_ENDIAN__Q__ -Ddarwin
 endif
 ifeq ($(ARCH),macx86)           # MacOS-X/x86
-	BASE_CFLAGS             +=-Ddarwin
+	BASE_CFLAGS             +=-D__LITTLE_ENDIAN__Q__ -Did386 -Ddarwin
 endif
 ifeq ($(ARCH),powerpc)          # Linux/PPC
-	BASE_CFLAGS             +=-D__BIG_ENDIAN__
+	BASE_CFLAGS             +=-D__BIG_ENDIAN__Q__
 endif
 
 RELEASE_CFLAGS                  =$(BASE_CFLAGS) $(BASE_RELEASE_CFLAGS) -DNDEBUG
