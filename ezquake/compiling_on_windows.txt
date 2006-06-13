@@ -1,0 +1,19 @@
+Compiling ezQuake sources on Windows:
+
+requirements:
+Sources are compilable in following version of Microsoft Visual Studio:
+6, 7, 7.1, 8 (2005 .NET)
+
+instructions:
+1) grab source from ezquake CVS:
+ - cvs -d:pserver:anonymous@ezquake.cvs.sourceforge.net:/cvsroot/ezquake
+ - checkout module ezquake:
+ - cvs -z3 -d:pserver:anonymous@ezquake.cvs.sourceforge.net:/cvsroot/ezquake co -P ezquake
+2) get directx SDK and place it where compiler can see it
+ - http://www.microsoft.com/downloads/details.aspx?FamilyId=7AB978B5-5F1A-4F6A-88EB-FC646138BECA&displaylang=en
+ - project file looks in DXSDK_PATH (Environment variable), you can set this in your System -> Advanced -> Environment Variables settings
+3) download all required libraries
+ - go to libs/ dir and launch windows-libs-download.bat
+ - perhaps you will have to rename libtcl8.4.lib to tcl84.lib and libz.lib to zlib.lib
+4) open ezquake.sln for Microsoft Visual Studio 7.1 or ezquake_msvs_80.sln for MS VS 8.0 (2005 .NET)
+5) select ReleaseGL configuration and press "Build"
