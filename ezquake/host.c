@@ -1,23 +1,23 @@
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
-
+ 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
 of the License, or (at your option) any later version.
-
+ 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-
+ 
 See the GNU General Public License for more details.
-
+ 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-	$Id: host.c,v 1.21 2006-06-13 13:17:59 vvd0 Exp $
-
+ 
+	$Id: host.c,v 1.22 2006-06-15 22:48:14 disconn3ct Exp $
+ 
 */
 
 // this should be the only file that includes both server.h and client.h
@@ -55,11 +55,11 @@ static jmp_buf 	host_abort;
 
 extern void COM_StoreOriginalCmdline(int argc, char **argv);
 
-char f_system_string[1024] = ""; 
+char f_system_string[1024] = "";
 
 char * SYSINFO_GetString(void)
 {
-    return f_system_string;
+	return f_system_string;
 }
 int     SYSINFO_memory = 0;
 int     SYSINFO_MHz = 0;
@@ -69,87 +69,85 @@ char *  SYSINFO_3D_description        = NULL;
 #ifdef _WIN32
 void SYSINFO_Init(void)
 {
-    MEMORYSTATUS    memstat;
-    LONG            ret;
-    HKEY            hKey;
+	MEMORYSTATUS    memstat;
+	LONG            ret;
+	HKEY            hKey;
 
-    GlobalMemoryStatus(&memstat);
-    SYSINFO_memory = memstat.dwTotalPhys;
+	GlobalMemoryStatus(&memstat);
+	SYSINFO_memory = memstat.dwTotalPhys;
 
-    ret = RegOpenKey(
-        HKEY_LOCAL_MACHINE,
-        "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
-        &hKey);
+	ret = RegOpenKey(
+	          HKEY_LOCAL_MACHINE,
+	          "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
+	          &hKey);
 
-    if (ret == ERROR_SUCCESS)
-    {
-        DWORD type;
-        byte  data[1024];
-        DWORD datasize;
+	if (ret == ERROR_SUCCESS) {
+		DWORD type;
+		byte  data[1024];
+		DWORD datasize;
 
-        datasize = 1024;
-        ret = RegQueryValueEx(
-            hKey,
-            "~MHz",
-            NULL,
-            &type,
-            data,
-            &datasize);
-    
-        if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_DWORD)
-            SYSINFO_MHz = *((DWORD *)data);
+		datasize = 1024;
+		ret = RegQueryValueEx(
+		          hKey,
+		          "~MHz",
+		          NULL,
+		          &type,
+		          data,
+		          &datasize);
 
-        datasize = 1024;
-        ret = RegQueryValueEx(
-            hKey,
-            "ProcessorNameString",
-            NULL,
-            &type,
-            data,
-            &datasize);
-    
-        if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_SZ)
-            SYSINFO_processor_description = Q_strdup((char *) data);
+		if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_DWORD)
+			SYSINFO_MHz = *((DWORD *)data);
 
-        RegCloseKey(hKey);
-    }
+		datasize = 1024;
+		ret = RegQueryValueEx(
+		          hKey,
+		          "ProcessorNameString",
+		          NULL,
+		          &type,
+		          data,
+		          &datasize);
+
+		if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_SZ)
+			SYSINFO_processor_description = Q_strdup((char *) data);
+
+		RegCloseKey(hKey);
+	}
 
 #ifdef GLQUAKE
-    {
-        extern const char *gl_renderer;
+	{
+		extern const char *gl_renderer;
 
-        if (gl_renderer  &&  gl_renderer[0])
-            SYSINFO_3D_description = Q_strdup(gl_renderer);
-    }
+		if (gl_renderer  &&  gl_renderer[0])
+			SYSINFO_3D_description = Q_strdup(gl_renderer);
+	}
 #endif
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
-	if (SYSINFO_processor_description)
-	{
+	if (SYSINFO_processor_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
-	if (SYSINFO_MHz)
-	{
+	if (SYSINFO_MHz) {
 		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
-	if (SYSINFO_3D_description)
-	{
+	if (SYSINFO_3D_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
 
 }
 #elif defined(__linux__)
-void SYSINFO_Init(void) {
-// disconnect: which way is best(MEM/CPU-MHZ/CPU-MODEL)?
+void SYSINFO_Init(void)
+{
+	// disconnect: which way is best(MEM/CPU-MHZ/CPU-MODEL)?
 	f_system_string[0] = 0;
 	char buffer[1024];
 	char cpu_model[255];
 	char *match;
 	FILE *f;
-// MEM
+
+	// MEM
 	f = fopen("/proc/meminfo", "r");
 	if (f) {
 		fscanf (f, "%*s %u %*s\n", &SYSINFO_memory);
@@ -158,7 +156,8 @@ void SYSINFO_Init(void) {
 	} else {
 		Com_Printf ("could not open /proc/meminfo!\n");
 	}
-//CPU-MHZ
+
+	//CPU-MHZ
 	f = fopen("/proc/cpuinfo", "r");
 	if (f) {
 		fread (buffer, 1, sizeof(buffer) - 1, f);
@@ -169,21 +168,25 @@ void SYSINFO_Init(void) {
 	} else {
 		Com_Printf ("could not open /proc/cpuinfo!\n");
 	}
-//CPU-MODEL
-	if (( f = fopen("/proc/cpuinfo", "r")) == NULL ) {
-		Com_Printf("could not open /proc/cpuinfo!\n");
-        }
-        while(!feof(f)) {
-		fgets(buffer, 1023, f);
-		if (! strncmp( buffer, "model name", 10) ) {
-			match = strchr( buffer, ':' );
-			match++;
-			while (isspace(*match)) match++;
-			strlcpy(cpu_model, match, sizeof(cpu_model));
-			SYSINFO_processor_description= Q_strdup (cpu_model);
+
+	//CPU-MODEL
+	f = fopen("/proc/cpuinfo", "r");
+	if (f) {
+		while (!feof(f)) {
+			fgets (buffer, sizeof(buffer), f); // disconnect: sizeof(buffer) - 1 ?
+			if (!strncmp( buffer, "model name", 10)) {
+				match = strchr( buffer, ':' );
+				match++;
+				while (isspace(*match)) match++;
+				memcpy(cpu_model, match, sizeof(cpu_model));
+				cpu_model[strlen(cpu_model) - 1] = '\0';
+				SYSINFO_processor_description= Q_strdup (cpu_model);
+			}
 		}
+		fclose(f);	
+	} else {
+		Com_Printf("could not open /proc/cpuinfo!\n");
 	}
-        fclose(f);
 
 #ifdef GLQUAKE
 	{
@@ -196,25 +199,23 @@ void SYSINFO_Init(void) {
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory));
 
-	if (SYSINFO_processor_description)
-	{
+	if (SYSINFO_processor_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
-	if (SYSINFO_MHz)
-	{
+	if (SYSINFO_MHz) {
 		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
-	if (SYSINFO_3D_description)
-	{
+	if (SYSINFO_3D_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
 }
 #elif defined(__APPLE__)
-void SYSINFO_Init(void) {
-// TODO: disconnect --> f_system for MacOSX (man sysctl)
-// VVD: Look at code for FreeBSD: 30 lines down. :-)
+void SYSINFO_Init(void)
+{
+	// TODO: disconnect --> f_system for MacOSX (man sysctl)
+	// VVD: Look at code for FreeBSD: 30 lines down. :-)
 #ifdef GLQUAKE
 	{
 		extern const char *gl_renderer;
@@ -226,23 +227,21 @@ void SYSINFO_Init(void) {
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
-	if (SYSINFO_processor_description)
-	{
+	if (SYSINFO_processor_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
-	if (SYSINFO_MHz)
-	{
+	if (SYSINFO_MHz) {
 		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
-	if (SYSINFO_3D_description)
-	{
+	if (SYSINFO_3D_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
 }
 #elif defined(__FreeBSD__)
-void SYSINFO_Init(void) {
+void SYSINFO_Init(void)
+{
 	char cpu_model[256];
 
 	int mib[2], val;
@@ -271,14 +270,13 @@ void SYSINFO_Init(void) {
 #ifdef __i386__
 	gettimeofday(&old_tp, NULL);
 	old_tsc = rdtsc();
-	do
-	{
+	do {
 		gettimeofday(&tp, NULL);
 	} while ((tp.tv_sec - old_tp.tv_sec) * 1000000. + tp.tv_usec - old_tp.tv_usec < 1000000.);
 	tsc_freq = rdtsc();
 	SYSINFO_MHz = (int)((tsc_freq - old_tsc) /
-				(tp.tv_sec - old_tp.tv_sec + (tp.tv_usec - old_tp.tv_usec) / 1000000.) /
-				1000000. + .5);
+						(tp.tv_sec - old_tp.tv_sec + (tp.tv_usec - old_tp.tv_usec) / 1000000.) /
+						1000000. + .5);
 #endif
 
 #ifdef GLQUAKE
@@ -292,32 +290,32 @@ void SYSINFO_Init(void) {
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
-	if (SYSINFO_processor_description)
-	{
+	if (SYSINFO_processor_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
-	if (SYSINFO_MHz)
-	{
+	if (SYSINFO_MHz) {
 		strlcat(f_system_string, va(" (%dMHz)", SYSINFO_MHz), sizeof(f_system_string));
 	}
-	if (SYSINFO_3D_description)
-	{
+	if (SYSINFO_3D_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
 	}
 }
 #else
-void SYSINFO_Init(void) {
+void SYSINFO_Init(void)
+{
 	strlcpy(f_system_string, "Unknown system.", sizeof(f_system_string));
 }
 #endif
 
-void Host_Abort (void) {
+void Host_Abort (void)
+{
 	longjmp (host_abort, 1);
 }
 
-void Host_EndGame (void) {
+void Host_EndGame (void)
+{
 	SV_Shutdown ("Server was killed");
 	CL_Disconnect ();
 	// clear disconnect messages from loopback
@@ -325,7 +323,8 @@ void Host_EndGame (void) {
 }
 
 //This shuts down both the client and server
-void Host_Error (char *error, ...) {
+void Host_Error (char *error, ...)
+{
 	va_list argptr;
 	char string[1024];
 	static qbool inerror = false;
@@ -359,7 +358,8 @@ void Host_Error (char *error, ...) {
 }
 
 //memsize is the recommended amount of memory to use for hunk
-void Host_InitMemory (int memsize) {
+void Host_InitMemory (int memsize)
+{
 	int t;
 
 	if (COM_CheckParm ("-minmemory"))
@@ -381,7 +381,8 @@ void Host_InitMemory (int memsize) {
 
 //Free hunk memory up to host_hunklevel
 //Can only be called when changing levels!
-void Host_ClearMemory (void) {
+void Host_ClearMemory (void)
+{
 	D_FlushCaches ();
 	Mod_ClearAll ();
 
@@ -389,7 +390,8 @@ void Host_ClearMemory (void) {
 	Hunk_FreeToLowMark (host_hunklevel);
 }
 
-void Host_Frame (double time) {
+void Host_Frame (double time)
+{
 	if (setjmp (host_abort))
 		return;			// something bad happened, or the server disconnected
 
@@ -401,8 +403,9 @@ void Host_Frame (double time) {
 		CL_Frame (time);	// will also call SV_Frame
 }
 
-char *Host_PrintBars(char *s, int len) {
-	static char temp[512];	
+char *Host_PrintBars(char *s, int len)
+{
+	static char temp[512];
 	unsigned int i, count;
 
 	temp[0] = 0;
@@ -425,7 +428,8 @@ char *Host_PrintBars(char *s, int len) {
 	return temp;
 }
 
-void Host_Init (int argc, char **argv, int default_memsize) {
+void Host_Init (int argc, char **argv, int default_memsize)
+{
 	FILE *f;
 
 	COM_InitArgv (argc, argv);
@@ -515,7 +519,8 @@ void Host_Init (int argc, char **argv, int default_memsize) {
 
 //FIXME: this is a callback from Sys_Quit and Sys_Error.  It would be better
 //to run quit through here before the final handoff to the sys code.
-void Host_Shutdown (void) {
+void Host_Shutdown (void)
+{
 	static qbool isdown = false;
 
 	if (isdown) {
@@ -536,7 +541,8 @@ void Host_Shutdown (void) {
 #endif
 }
 
-void Host_Quit (void) {
+void Host_Quit (void)
+{
 	TP_ExecTrigger ("f_exit");
 	Cbuf_Execute();
 	Host_Shutdown ();
