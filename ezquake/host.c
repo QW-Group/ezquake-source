@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.22 2006-06-15 22:48:14 disconn3ct Exp $
+	$Id: host.c,v 1.23 2006-06-16 17:17:59 vvd0 Exp $
  
 */
 
@@ -254,6 +254,8 @@ void SYSINFO_Init(void)
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_PHYSMEM;
+// VVD: We can use HW_REALMEM (hw.realmem) for RELENG_5/6/7 for getting exact result,
+// but RELENG_4 have only HW_PHYSMEM (hw.physmem).
 	len = sizeof(val);
 	sysctl(mib, sizeof(mib) / sizeof(mib[0]), &val, &len, NULL, 0);
 
@@ -277,6 +279,8 @@ void SYSINFO_Init(void)
 	SYSINFO_MHz = (int)((tsc_freq - old_tsc) /
 						(tp.tv_sec - old_tp.tv_sec + (tp.tv_usec - old_tp.tv_usec) / 1000000.) /
 						1000000. + .5);
+// VVD: We can use sysctl hw.clockrate, but it don't work on i486 - always 0
+// (don't know about Pentium 1/2/3 - work on Pentium 4) and RELENG_4 have no this sysctl.
 #endif
 
 #ifdef GLQUAKE
