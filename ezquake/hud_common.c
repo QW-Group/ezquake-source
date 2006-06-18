@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.38 2006-06-12 21:51:23 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.39 2006-06-18 00:01:40 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -12,6 +12,7 @@
 #include "mp3_player.h"
 #include "png.h"
 #include "image.h"
+#include "stats_grid.h"
 
 #ifndef STAT_MINUS
 #define STAT_MINUS		10
@@ -26,6 +27,8 @@ void Draw_Fill (int x, int y, int w, int h, int c);
 #endif
 
 hud_t *hud_netgraph;
+
+
 
 // ----------------
 // HUD planning
@@ -3146,6 +3149,497 @@ void HUD_NewMap()
 #define HUD_RADAR_SHOW_ALL_WEAPONS		5
 #define HUD_RADAR_SHOW_MORE				6
 
+void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, int pic_width, int pic_height)
+{
+	int row, col;	
+	int visited_team1 = 0, visited_team2 = 0;
+
+	if(grid == NULL)
+	{
+		return;
+	}
+	
+	// Go through all the cells and draw them based on their weight.
+	for(row = 0; row < grid->row_count; row++)
+	{
+		for(col = 0; col < grid->col_count; col++)
+		{
+			float weight = 0.0;
+			int color = 0;
+
+			float tl_x, tl_y;
+			int p_cell_length;
+
+			// Calculate the pixel coordinates of the top left corner of the current cell.
+			// (This is times 8 because the conversion formula was calculated from a .loc-file)
+			tl_x = map_x_slope*(8*grid->cells[row][col].tl_x) + map_x_intercept;
+			tl_y = map_y_slope*(8*grid->cells[row][col].tl_y) + map_y_intercept;
+
+			// Calculate the cell length in pixel length.
+			p_cell_length = ROUND(map_x_slope*(8*grid->cell_length));
+
+			// Don't draw the stats stuff outside the picture.
+			if(tl_x + p_cell_length > pic_width || tl_y + p_cell_length > pic_height || x + tl_x < x || y + tl_y < y)
+			{
+				continue;
+			}
+
+			// TODO : This is only a test so that I can see my wonderful grid. :D
+			/*
+			Draw_AlphaFill(x + tl_x, y + tl_y, p_cell_length, 1, 0, 1);
+			Draw_AlphaFill(x + tl_x, y + tl_y + p_cell_length, p_cell_length, 1, 0, 1);
+			Draw_AlphaFill(x + tl_x, y + tl_y, 1, p_cell_length, 0, 1);
+			Draw_AlphaFill(x + tl_x + p_cell_length, y + tl_y + p_cell_length, 1, p_cell_length, 0, 1);
+			*/
+			
+			// No point in drawing if we have no weight.
+			if(grid->cells[row][col].team1_weight.weight + grid->cells[row][col].team2_weight.weight <= 0)
+			{
+				continue;
+			}
+
+			// Get the team with the highest weight for this cell.
+			if(grid->cells[row][col].team1_weight.weight > grid->cells[row][col].team2_weight.weight)
+			{
+				weight = grid->cells[row][col].team1_weight.weight;
+				color = grid->team1_color;
+			}
+			else
+			{
+				weight = grid->cells[row][col].team2_weight.weight;
+				color = grid->team2_color;
+			}
+
+			// Draw the cell in the color of the team with the
+			// biggest weight for this cell.
+			Draw_AlphaFill(
+				ROUND(x + tl_x),	// X.
+				ROUND(y + tl_y),	// Y.
+				p_cell_length,		// Width.
+				p_cell_length,		// Height.
+				color,				// Color.
+				weight);			// Alpha.
+		}
+	}
+
+	if(grid->team1 && grid->team2)
+	{
+		float team1_width = 0;
+		float team2_width = 0;
+		
+		if(grid->team1_hold + grid->team2_hold > 0)
+		{
+			// Calculate the percentage for the two teams for the "team strength bar".
+			team1_width = ((float)grid->team1_hold) / (grid->team1_hold + grid->team2_hold);
+			team2_width = ((float)grid->team2_hold) / (grid->team1_hold + grid->team2_hold);
+
+			team1_width = fabs(max(0, team1_width));
+			team2_width = fabs(max(0, team2_width));
+		}
+		else
+		{
+			team1_width = 0.5;
+			team2_width = 0.5;
+		}
+
+		// Draw the color bar based on the team.
+		Draw_AlphaFill(x, y, pic_width * team1_width, 8, grid->team1_color, 0.8);
+		Draw_AlphaFill(x + (pic_width * team1_width), y, pic_width * team2_width, 8, grid->team2_color, 0.8);
+
+		// Show the percentages in numbers also.
+		Draw_String(x + (pic_width * team1_width)/2 - 8, y, va("%2.0f%%", 100 * team1_width));
+		Draw_String(x + (pic_width * team1_width) + (pic_width * team2_width)/2 - 8, y, va("%2.0f%%", 100 * team2_width));
+	}
+}
+
+void Radar_DrawEntities(int x, int y, float scale, float show_entities, float show_projectiles, float player_size)
+{
+	int i;
+
+	// Entities (weapons and such). cl_main.c
+	extern visentlist_t cl_visents;
+
+	for (i = 0; i < cl_visents.count; i++)
+	{
+		int entity_q_x = 0;
+		int entity_q_y = 0;
+		int entity_p_x = 0;
+		int entity_p_y = 0;
+
+		// Get quake coordinates (times 8 to get them in the same format as .locs).
+		entity_q_x = cl_visents.list[i].origin[0]*8;
+		entity_q_y = cl_visents.list[i].origin[1]*8;
+
+		// Convert from quake coordiantes -> pixel coordinates.
+		entity_p_x = x + ROUND((map_x_slope*entity_q_x + map_x_intercept) * scale);
+		entity_p_y = y + ROUND((map_y_slope*entity_q_y + map_y_intercept) * scale);
+
+		if(show_entities >= HUD_RADAR_SHOW_POWERUPS)
+		{
+			//
+			// Powerups.
+			//
+
+			if(!strcmp(cl_visents.list[i].model->name, "progs/invulner.mdl"))
+			{
+				// Pentagram.
+				Draw_ColoredString(entity_p_x, entity_p_y, "&cf00P", 0);
+			}
+			else if(!strcmp(cl_visents.list[i].model->name, "progs/quaddama.mdl"))					
+			{	
+				// Quad.
+				Draw_ColoredString(entity_p_x, entity_p_y, "&c0ffQ", 0);
+			}
+			else if(!strcmp(cl_visents.list[i].model->name, "progs/invisibl.mdl"))
+			{
+				// Ring.
+				Draw_ColoredString(entity_p_x, entity_p_y, "&cff0R", 0);
+			}
+			else if(!strcmp(cl_visents.list[i].model->name, "progs/suit.mdl"))
+			{
+				// Suit.
+				Draw_ColoredString(entity_p_x, entity_p_y, "&c0f0S", 0);
+			}					
+		}
+
+		if(show_entities >= HUD_RADAR_SHOW_RL_LG_BACKPACKS)
+		{
+			//
+			// Show RL, LG and backpacks.
+			//
+
+			if(!strcmp(cl_visents.list[i].model->name, "progs/g_rock2.mdl"))
+			{
+				// RL.
+				Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "RL");
+			}		
+			else if(!strcmp(cl_visents.list[i].model->name, "progs/g_light.mdl"))
+			{
+				// LG.
+				Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "LG");
+			}
+			else if(cl_visents.list[i].model->modhint == MOD_BACKPACK)
+			{
+				// Back packs.
+				float back_pack_size = 0;
+
+				back_pack_size = max(player_size * 0.5, 3.0);
+
+				Draw_AlphaCircleFill (entity_p_x, entity_p_y, back_pack_size, 114, 1);
+				Draw_AlphaCircleOutline (entity_p_x, entity_p_y, back_pack_size, 1.0, 0, 1);
+			}					
+		}
+
+		if(!strcmp(cl_visents.list[i].model->name, "progs/armor.mdl")
+			&& show_entities >= HUD_RADAR_SHOW_ARMORS)
+		{
+			//
+			// Show armors.
+			//
+
+			if(cl_visents.list[i].skinnum == HUD_RADAR_GA)
+			{
+				// GA.
+				Draw_AlphaCircleFill (entity_p_x, entity_p_y, 3.0, 178, 1.0);
+			}
+			else if(cl_visents.list[i].skinnum == HUD_RADAR_YA)
+			{
+				// YA.
+				Draw_AlphaCircleFill (entity_p_x, entity_p_y, 3.0, 192, 1.0);
+			}
+			else if(cl_visents.list[i].skinnum == HUD_RADAR_RA)
+			{
+				// RA.
+				Draw_AlphaCircleFill (entity_p_x, entity_p_y, 3.0, 251, 1.0);
+			}
+			
+			Draw_AlphaCircleOutline (entity_p_x, entity_p_y, 3.0, 1.0, 0, 1.0);
+		}
+
+		if(show_entities >= HUD_RADAR_SHOW_MEGAHEALTHS
+			&& !strcmp(cl_visents.list[i].model->name, "maps/b_bh100.bsp"))
+		{
+			//
+			// Show megahealth.
+			//
+
+			Draw_AlphaFill (entity_p_x - 2, entity_p_y, 6, 2, 79, 1);
+			Draw_AlphaFill (entity_p_x, entity_p_y - 2, 2, 6, 79, 1);
+		}
+
+		if(show_entities >= HUD_RADAR_SHOW_ALL_WEAPONS)
+		{
+			//
+			// Show all other weapons.
+			//
+
+			if(!strcmp(cl_visents.list[i].model->name, "progs/g_shot.mdl"))
+			{
+				// SSG.
+				Draw_String(entity_p_x - (3*8)/2, entity_p_y - 4, "SSG");
+			}
+			else if(!strcmp(cl_visents.list[i].model->name, "progs/g_nail.mdl"))
+			{
+				// NG.
+				Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "NG");
+			}
+			else if(!strcmp(cl_visents.list[i].model->name, "progs/g_nail2.mdl"))
+			{
+				// SNG.
+				Draw_String(entity_p_x - (3*8)/2, entity_p_y - 4, "SNG");
+			}
+			else if(!strcmp(cl_visents.list[i].model->name, "progs/g_rock.mdl"))
+			{
+				// GL.
+				Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "GL");
+			}					
+		}
+
+		if(show_entities >= HUD_RADAR_SHOW_MORE
+			&&(!strcmp(cl_visents.list[i].model->name, "progs/gib1.mdl")
+			|| !strcmp(cl_visents.list[i].model->name, "progs/gib2.mdl")
+			|| !strcmp(cl_visents.list[i].model->name, "progs/gib3.mdl")))
+		{
+			//
+			// Gibs.
+			//
+
+			Draw_AlphaCircleFill(entity_p_x, entity_p_y, 2.0, 251, 1);					
+		}
+
+		// TODO: Show ammo / health.
+		
+		if(show_projectiles)
+		{
+			//
+			// Show projectiles (rockets, grenades, nails, shaft).
+			//
+
+			if(!strcmp(cl_visents.list[i].model->name, "progs/s_spike.mdl")
+				|| !strcmp(cl_visents.list[i].model->name, "progs/spike.mdl"))
+			{
+				//
+				// Spikes from SNG and NG.
+				//
+
+				Draw_AlphaFill(entity_p_x, entity_p_y, 1, 1, 254, 1);
+			}					
+			else if(!strcmp(cl_visents.list[i].model->name, "progs/missile.mdl")
+				|| !strcmp(cl_visents.list[i].model->name, "progs/grenade.mdl"))
+			{
+				//
+				// Rockets and grenades.
+				//
+
+				float entity_angle = 0;
+				int x_line_end = 0;
+				int y_line_end = 0;
+
+				// Get the entity angle in radians.
+				entity_angle = (cl_visents.list[i].angles[1]*M_PI)/180;
+
+				x_line_end = entity_p_x + 5 * cos(entity_angle);
+				y_line_end = entity_p_y - 5 * sin(entity_angle);
+
+				// Draw the rocket/grenade showing it's angle also.
+				Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);				
+			}
+			else if(!strcmp(cl_visents.list[i].model->name, "progs/bolt.mdl")
+				|| !strcmp(cl_visents.list[i].model->name, "progs/bolt2.mdl")
+				|| !strcmp(cl_visents.list[i].model->name, "progs/bolt3.mdl"))
+			{
+				//
+				// Shaft beam.
+				//
+
+				float entity_angle = 0;
+				float shaft_length = 0;
+				float x_line_end = 0;
+				float y_line_end = 0;
+
+				// Get the length and angle of the shaft.
+				shaft_length = cl_visents.list[i].model->maxs[1];
+				entity_angle = (cl_visents.list[i].angles[1]*M_PI)/180;
+
+				// Calculate where the shaft beam's ending point.
+				x_line_end = entity_p_x + shaft_length * cos(entity_angle);
+				y_line_end = entity_p_y - shaft_length * sin(entity_angle);
+
+				// Draw the shaft beam.
+				Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);
+			}
+		}
+	}
+}
+
+void Radar_DrawPlayers(int x, int y, int width, int height, float scale, 
+					   float show_height, float show_powerups, 
+					   float player_size, float show_names, 
+					   float player_style)
+{
+	int i;
+	player_state_t *state;
+	player_info_t *info;
+
+	// Get player state so we can know where he is (or on rare occassions, she).
+	state = cl.frames[cl.oldparsecount & UPDATE_MASK].playerstate;
+
+	// Get the info for the player.
+	info = cl.players;
+
+	//
+	// Draw the players.
+	//
+	for (i = 0; i < MAX_CLIENTS; i++, info++, state++)
+	{
+		// Players quake coordinates
+		// (these are multiplied by 8, since the conversion formula was
+		// calculated using the coordinates in a .loc-file, which are in
+		// the format quake-coordainte*8).
+		int player_q_x = 0;
+		int player_q_y = 0;
+
+		// The height of the player.
+		float player_z = 1.0;
+		float player_z_relative = 1.0;
+
+		// Players pixel coordinates.
+		int player_p_x = 0;
+		int player_p_y = 0;
+
+		// Used for drawing the the direction the
+		// player is looking at.
+		float player_angle = 0;
+		int x_line_start = 0;
+		int y_line_start = 0;
+		int x_line_end = 0;
+		int y_line_end = 0;
+
+		// Color and opacity of the player.
+		int player_color = 0;
+		float player_alpha = 1.0;
+
+		// Make sure we're not drawing any ghosts.
+		if(!info->name[0])
+		{
+			continue;
+		}
+
+		if (state->messagenum == cl.oldparsecount)
+		{
+			// Get the quake coordinates. Multiply by 8 since
+			// the conversion formula has been calculated using
+			// a .loc-file which is in that format.
+			player_q_x = state->origin[0]*8;
+			player_q_y = state->origin[1]*8;
+
+			// Get the players view angle.
+			player_angle = state->viewangles[1];
+			// TODO: Get the "current" viewangle for the player being spectated when not watching demos here also.
+
+			// Convert from quake coordiantes -> pixel coordinates.
+			player_p_x = ROUND((map_x_slope*player_q_x + map_x_intercept) * scale);
+			player_p_y = ROUND((map_y_slope*player_q_y + map_y_intercept) * scale);
+
+			player_color = Sbar_BottomColor(info);
+
+			// Calculate the height of the player.
+			if(show_height)
+			{
+				player_z = state->origin[2];
+				player_z += (player_z >= 0) ? fabs(cl.worldmodel->mins[2]) : fabs(cl.worldmodel->maxs[2]);
+				player_z_relative = min(fabs(player_z / map_height_diff), 1.0);
+				player_z_relative = max(player_z_relative, 0.2);
+			}
+
+			// Turn dead people red.
+			if(info->stats[STAT_HEALTH] <= 0)
+			{
+				player_color = 79;
+			}
+
+			// Draw a ring around players with powerups if it's enabled.
+			if(show_powerups)
+			{
+				if(info->stats[STAT_ITEMS] & IT_INVISIBILITY)
+				{
+					Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, player_size*2*player_z_relative, 161, 0.2);
+				}
+
+				if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY)
+				{
+					Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, player_size*2*player_z_relative, 79, 0.5);
+				}
+
+				if(info->stats[STAT_ITEMS] & IT_QUAD)
+				{
+					Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, player_size*2*player_z_relative, 244, 0.2);
+				}
+			}
+
+			// Draw a line showing what direction the player is looking in.
+			if(player_style == 0)
+			{
+				float relative_x = 0;
+				float relative_y = 0;
+
+				x_line_start = x + player_p_x;
+				y_line_start = y + player_p_y;
+
+				// Translate the angle into radians.
+				player_angle = (player_angle*M_PI)/180;
+
+				relative_x = cos(player_angle);
+				relative_y = sin(player_angle);
+
+				// Draw a slightly larger line behind the colored one
+				// so that it get's an outline.
+				x_line_end = x_line_start + (player_size*2*player_z_relative+1)*relative_x;
+				y_line_end = y_line_start - (player_size*2*player_z_relative+1)*relative_y;
+				Draw_AlphaLine (x_line_start, y_line_start, x_line_end, y_line_end, 4.0, 0, player_alpha);
+
+				// Draw the colored line.
+				x_line_end = x_line_start + (player_size*2*player_z_relative)*relative_x;
+				y_line_end = y_line_start - (player_size*2*player_z_relative)*relative_y;
+				Draw_AlphaLine (x_line_start, y_line_start, x_line_end, y_line_end, 2.0, player_color, player_alpha);
+			}
+
+			// Draw the player on the map.
+			Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, player_size*player_z_relative, player_color, player_alpha);
+			Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, player_size*player_z_relative, 1.0, 0, player_alpha);
+
+			// Draw the players name.
+			if(show_names)
+			{
+				int name_x = 0;
+				int name_y = 0;
+
+				name_x = x + player_p_x;
+				name_y = y + player_p_y;
+
+				// Make sure we're not too far right.
+				while(name_x + 8 * strlen(info->name) > x + width)
+				{
+					name_x--;
+				}
+
+				// Make sure we're not outside the radar to the left.
+				name_x = max(name_x, x);
+
+				// Draw the name.
+				Draw_String (name_x, name_y, info->name);
+			}
+
+			// Show if a person lost an RL-pack.
+			if(info->stats[STAT_HEALTH] <= 0 && info->stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER)
+			{
+				Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, player_size*player_z_relative*2, 1.0, 254, player_alpha);
+				Draw_ColoredString (x + player_p_x, y + player_p_y, va("&cf00PACK!"), 1);
+			}
+		}
+	}		
+}
+
 //
 // Draws a map of the current level and plots player movements on it.
 //
@@ -3153,7 +3647,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 {
 	int width, height, x, y;
 	float width_limit, height_limit;
-	int num, i;
+	int num;
 	float scale;
 	float x_scale;
 	float y_scale;
@@ -3172,7 +3666,8 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		*hud_radar_player_size,
 		*hud_radar_show_height,
 		*hud_radar_show_entities,
-		*hud_radar_show_projectiles;
+		*hud_radar_show_projectiles,
+		*hud_radar_show_teamhold;
 
     if (hud_radar_picture == NULL)    // first time
     {
@@ -3189,6 +3684,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		hud_radar_show_height		= HUD_FindVar(hud, "show_height");
 		hud_radar_show_entities		= HUD_FindVar(hud, "show_entities");
 		hud_radar_show_projectiles	= HUD_FindVar(hud, "show_projectiles");
+		hud_radar_show_teamhold		= HUD_FindVar(hud, "show_team_hold");
     }
 
 	// Don't show anything if it's a normal player.
@@ -3253,12 +3749,12 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 
 	if (HUD_PrepareDraw(hud, ROUND(width_limit) , ROUND(height_limit), &x, &y))
 	{
-		// Entities (weapons and such). cl_main.c
-		extern visentlist_t cl_visents;
-
-		player_state_t *state;
-		player_info_t *info;
 		static int lastframecount = -1;
+		static int last_width = -1;
+		static int last_height = -1;
+
+		last_width = width;
+		last_height = height;
 
 		// Place the map picture in the center of the HUD element.
 		x += ROUND((width_limit / 2.0) - (width / 2.0));
@@ -3284,360 +3780,28 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 			return;
 		}
 
+		// Draw team stats.
+		if(hud_radar_show_teamhold->value)
+		{
+			Radar_DrawGrid(stats_grid, x, y, width, height);
+		}
+
 		// Draw entities such as powerups, weapons and backpacks.
 		if(hud_radar_show_entities->value || hud_radar_show_projectiles->value)
 		{
-			for (i = 0; i < cl_visents.count; i++)
-			{
-				int entity_q_x = 0;
-				int entity_q_y = 0;
-				int entity_p_x = 0;
-				int entity_p_y = 0;
-
-				// Get quake coordinates (times 8 to get them in the same format as .locs).
-				entity_q_x = cl_visents.list[i].origin[0]*8;
-				entity_q_y = cl_visents.list[i].origin[1]*8;
-
-				// Convert from quake coordiantes -> pixel coordinates.
-				entity_p_x = x + ROUND((map_x_slope*entity_q_x + map_x_intercept) * scale);
-				entity_p_y = y + ROUND((map_y_slope*entity_q_y + map_y_intercept) * scale);
-
-				if(hud_radar_show_entities->value >= HUD_RADAR_SHOW_POWERUPS)
-				{
-					//
-					// Powerups.
-					//
-
-					if(!strcmp(cl_visents.list[i].model->name, "progs/invulner.mdl"))
-					{
-						// Pentagram.
-						Draw_ColoredString(entity_p_x, entity_p_y, "&cf00P", 0);
-					}
-					else if(!strcmp(cl_visents.list[i].model->name, "progs/quaddama.mdl"))					
-					{	
-						// Quad.
-						Draw_ColoredString(entity_p_x, entity_p_y, "&c0ffQ", 0);
-					}
-					else if(!strcmp(cl_visents.list[i].model->name, "progs/invisibl.mdl"))
-					{
-						// Ring.
-						Draw_ColoredString(entity_p_x, entity_p_y, "&cff0R", 0);
-					}
-					else if(!strcmp(cl_visents.list[i].model->name, "progs/suit.mdl"))
-					{
-						// Suit.
-						Draw_ColoredString(entity_p_x, entity_p_y, "&c0f0R", 0);
-					}					
-				}
-
-				if(hud_radar_show_entities->value >= HUD_RADAR_SHOW_RL_LG_BACKPACKS)
-				{
-					//
-					// Show RL, LG and backpacks.
-					//
-
-					if(!strcmp(cl_visents.list[i].model->name, "progs/g_rock2.mdl"))
-					{
-						// RL.
-						Draw_String(entity_p_x, entity_p_y, "RL");
-					}		
-					else if(!strcmp(cl_visents.list[i].model->name, "progs/g_light.mdl"))
-					{
-						// LG.
-						Draw_String(entity_p_x, entity_p_y, "LG");
-					}
-					else if(cl_visents.list[i].model->modhint == MOD_BACKPACK)
-					{
-						// Back packs.
-						Draw_AlphaCircleFill (entity_p_x, entity_p_y, 3.0, 114, 1);
-						Draw_AlphaCircleOutline (entity_p_x, entity_p_y, 3.0, 1.0, 0, 1);
-					}					
-				}
-
-				if(!strcmp(cl_visents.list[i].model->name, "progs/armor.mdl")
-					&& hud_radar_show_entities->value >= HUD_RADAR_SHOW_ARMORS)
-				{
-					//
-					// Show armors.
-					//
-
-					if(cl_visents.list[i].skinnum == HUD_RADAR_GA)
-					{
-						// GA.
-						Draw_AlphaCircleFill (entity_p_x, entity_p_y, 3.0, 178, 1.0);
-					}
-					else if(cl_visents.list[i].skinnum == HUD_RADAR_YA)
-					{
-						// YA.
-						Draw_AlphaCircleFill (entity_p_x, entity_p_y, 3.0, 192, 1.0);
-					}
-					else if(cl_visents.list[i].skinnum == HUD_RADAR_RA)
-					{
-						// RA.
-						Draw_AlphaCircleFill (entity_p_x, entity_p_y, 3.0, 251, 1.0);
-					}
-					
-					Draw_AlphaCircleOutline (entity_p_x, entity_p_y, 3.0, 1.0, 0, 1.0);
-				}
-
-				if(hud_radar_show_entities->value >= HUD_RADAR_SHOW_MEGAHEALTHS
-					&& !strcmp(cl_visents.list[i].model->name, "maps/b_bh100.bsp"))
-				{
-					//
-					// Show megahealth.
-					//
-
-					Draw_AlphaFill (entity_p_x - 2, entity_p_y, 6, 2, 79, 1);
-					Draw_AlphaFill (entity_p_x, entity_p_y - 2, 2, 6, 79, 1);
-				}
-
-				if(hud_radar_show_entities->value >= HUD_RADAR_SHOW_ALL_WEAPONS)
-				{
-					//
-					// Show all other weapons.
-					//
-
-					if(!strcmp(cl_visents.list[i].model->name, "progs/g_shot.mdl"))
-					{
-						// SSG.
-						Draw_String(entity_p_x, entity_p_y, "SSG");
-					}
-					else if(!strcmp(cl_visents.list[i].model->name, "progs/g_nail.mdl"))
-					{
-						// NG.
-						Draw_String(entity_p_x, entity_p_y, "NG");
-					}
-					else if(!strcmp(cl_visents.list[i].model->name, "progs/g_nail2.mdl"))
-					{
-						// SNG.
-						Draw_String(entity_p_x, entity_p_y, "SNG");
-					}
-					else if(!strcmp(cl_visents.list[i].model->name, "progs/g_rock.mdl"))
-					{
-						// GL.
-						Draw_String(entity_p_x, entity_p_y, "GL");
-					}					
-				}
-
-				if(hud_radar_show_entities->value >= HUD_RADAR_SHOW_MORE
-					&&(!strcmp(cl_visents.list[i].model->name, "progs/gib1.mdl")
-					|| !strcmp(cl_visents.list[i].model->name, "progs/gib2.mdl")
-					|| !strcmp(cl_visents.list[i].model->name, "progs/gib3.mdl")))
-				{
-					//
-					// Gibs.
-					//
-
-					Draw_AlphaCircleFill(entity_p_x, entity_p_y, 2.0, 251, 1);					
-				}
-
-				// TODO: Show ammo / health.
-				
-				if(hud_radar_show_projectiles->value)
-				{
-					//
-					// Show projectiles (rockets, grenades, nails, shaft).
-					//
-
-					if(!strcmp(cl_visents.list[i].model->name, "progs/s_spike.mdl")
-						|| !strcmp(cl_visents.list[i].model->name, "progs/spike.mdl"))
-					{
-						//
-						// Spikes from SNG and NG.
-						//
-
-						Draw_AlphaFill(entity_p_x, entity_p_y, 1, 1, 254, 1);
-					}					
-					else if(!strcmp(cl_visents.list[i].model->name, "progs/missile.mdl")
-						|| !strcmp(cl_visents.list[i].model->name, "progs/grenade.mdl"))
-					{
-						//
-						// Rockets and grenades.
-						//
-
-						float entity_angle = 0;
-						int x_line_end = 0;
-						int y_line_end = 0;
-
-						// Get the entity angle in radians.
-						entity_angle = (cl_visents.list[i].angles[1]*M_PI)/180;
-
-						x_line_end = entity_p_x + 5 * cos(entity_angle);
-						y_line_end = entity_p_y - 5 * sin(entity_angle);
-
-						// Draw the rocket/grenade showing it's angle also.
-						Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);				
-					}
-					else if(!strcmp(cl_visents.list[i].model->name, "progs/bolt.mdl")
-						|| !strcmp(cl_visents.list[i].model->name, "progs/bolt2.mdl")
-						|| !strcmp(cl_visents.list[i].model->name, "progs/bolt3.mdl"))
-					{
-						//
-						// Shaft beam.
-						//
-
-						float entity_angle = 0;
-						float shaft_length = 0;
-						float x_line_end = 0;
-						float y_line_end = 0;
-
-						// Get the length and angle of the shaft.
-						shaft_length = cl_visents.list[i].model->maxs[1];
-						entity_angle = (cl_visents.list[i].angles[1]*M_PI)/180;
-
-						// Calculate where the shaft beam ends.
-						x_line_end = entity_p_x + shaft_length * cos(entity_angle);
-						y_line_end = entity_p_y - shaft_length * sin(entity_angle);
-
-						// Draw the shaft beam.
-						Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);
-					}
-				}				
-			}
+			Radar_DrawEntities(x, y, scale, 
+				hud_radar_show_entities->value, 
+				hud_radar_show_projectiles->value,
+				hud_radar_player_size->value);
 		}
 
-		// Get player state so we can know where he is (or on rare occassions, she).
-		state = cl.frames[cl.oldparsecount & UPDATE_MASK].playerstate;
-
-		// Get the info for the player.
-		info = cl.players;
-
-		//
 		// Draw the players.
-		//
-		for (i = 0; i < MAX_CLIENTS; i++, info++, state++)
-		{
-			// Players quake coordinates
-			// (these are multiplied by 8, since the conversion formula was
-			// calculated using the coordinates in a .loc-file, which are in
-			// the format quake-coordainte*8).
-			int player_q_x = 0;
-			int player_q_y = 0;
-
-			// The height of the player.
-			float player_z = 1.0;
-			float player_z_relative = 1.0;
-
-			// Players pixel coordinates.
-			int player_p_x = 0;
-			int player_p_y = 0;
-
-			// Used for drawing the the direction the
-			// player is looking at.
-			float player_angle = 0;
-			int x_line_start = 0;
-			int y_line_start = 0;
-			int x_line_end = 0;
-			int y_line_end = 0;
-
-			// Color and opacity of the player.
-			int player_color = 0;
-			float player_alpha = 1.0;
-
-			// Make sure we're not drawing any ghosts.
-			if(!info->name[0])
-			{
-				continue;
-			}
-
-			if (state->messagenum == cl.oldparsecount)
-			{
-				// Get the quake coordinates. Multiply by 8 since
-				// the conversion formula has been calculated using
-				// a .loc-file which is in that format.
-				player_q_x = state->origin[0]*8;
-				player_q_y = state->origin[1]*8;
-
-				// Get the players view angle.
-				player_angle = state->viewangles[1];
-
-				// Convert from quake coordiantes -> pixel coordinates.
-				player_p_x = ROUND((map_x_slope*player_q_x + map_x_intercept) * scale);
-				player_p_y = ROUND((map_y_slope*player_q_y + map_y_intercept) * scale);
-
-				player_color = Sbar_BottomColor(info);
-
-				// Calculate the height of the player.
-				if(hud_radar_show_height->value)
-				{
-					player_z = state->origin[2];
-					player_z += (player_z >= 0) ? fabs(cl.worldmodel->mins[2]) : fabs(cl.worldmodel->maxs[2]);
-					player_z_relative = min(fabs(player_z / map_height_diff), 1.0);
-					player_z_relative = max(player_z_relative, 0.2);
-				}
-
-				// Turn dead people red.
-				if(info->stats[STAT_HEALTH] <= 0)
-				{
-					player_color = 79;
-				}
-
-				// Draw a ring around players with powerups if it's enabled.
-				if(hud_radar_show_powerups->value)
-				{
-					if(info->stats[STAT_ITEMS] & IT_INVISIBILITY)
-					{
-						Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, hud_radar_player_size->value*2*player_z_relative, 161, 0.2);
-					}
-
-					if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY)
-					{
-						Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, hud_radar_player_size->value*2*player_z_relative, 79, 0.5);
-					}
-
-					if(info->stats[STAT_ITEMS] & IT_QUAD)
-					{
-						Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, hud_radar_player_size->value*2*player_z_relative, 244, 0.2);
-					}
-				}
-
-				// Draw a line showing what direction the player is looking in
-				// this will only work on demos, since the angle information for all players is
-				// available in demos only.
-				if(hud_radar_player_style->value == 0)
-				{
-					float relative_x = 0;
-					float relative_y = 0;
-
-					x_line_start = x + player_p_x;
-					y_line_start = y + player_p_y;
-
-					// Translate the angle into radians.
-					player_angle = (player_angle*M_PI)/180;
-
-					relative_x = cos(player_angle);
-					relative_y = sin(player_angle);
-
-					// Draw a slightly larger line behind the colored one
-					// so that it get's an outline.
-					x_line_end = x_line_start + (hud_radar_player_size->value*2*player_z_relative+1)*relative_x;
-					y_line_end = y_line_start - (hud_radar_player_size->value*2*player_z_relative+1)*relative_y;
-					Draw_AlphaLine (x_line_start, y_line_start, x_line_end, y_line_end, 4.0, 0, player_alpha);
-
-					// Draw the colored line.
-					x_line_end = x_line_start + (hud_radar_player_size->value*2*player_z_relative)*relative_x;
-					y_line_end = y_line_start - (hud_radar_player_size->value*2*player_z_relative)*relative_y;
-					Draw_AlphaLine (x_line_start, y_line_start, x_line_end, y_line_end, 2.0, player_color, player_alpha);
-				}
-
-				// Draw the player on the map.
-				Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, hud_radar_player_size->value*player_z_relative, player_color, player_alpha);
-				Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, hud_radar_player_size->value*player_z_relative, 1.0, 0, player_alpha);
-
-				// Draw the players name.
-				if(hud_radar_show_names->value)
-				{
-					Draw_String (x + player_p_x, y + player_p_y, va("%s", info->name));
-				}
-
-				// Show if a person lost an RL-pack.
-				if(info->stats[STAT_HEALTH] <= 0 && info->stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER)
-				{
-					Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, hud_radar_player_size->value*player_z_relative*2, 1.0, 254, player_alpha);
-					Draw_ColoredString (x + player_p_x, y + player_p_y, va("&cf00PACK!"), 1);
-				}
-			}
-		}
+		Radar_DrawPlayers(x, y, width, height, scale, 
+			hud_radar_show_height->value,
+			hud_radar_show_powerups->value,
+			hud_radar_player_size->value,
+			hud_radar_show_names->value,
+			hud_radar_player_style->value);
 	}
 }
 
@@ -4150,6 +4314,7 @@ void CommonDraw_Init(void)
 		"show_height", "1",
 		"show_entities", "7",
 		"show_projectiles", "1",
+		"show_team_hold", "1",
         NULL);
 #endif
 
