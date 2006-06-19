@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.39 2006-06-18 00:01:40 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.40 2006-06-19 19:03:12 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -3135,6 +3135,156 @@ void HUD_NewMap()
 	}
 }
 
+void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
+{
+	int x, y;
+	int height = 8;
+	int width = 0;
+	float team1_percent = 0;
+	float team2_percent = 0;
+
+	static cvar_t
+        *hud_teamholdbar_style = NULL,
+		*hud_teamholdbar_opacity,
+		*hud_teamholdbar_width,
+		*hud_teamholdbar_height,
+		*hud_teamholdbar_vertical,
+		*hud_teamholdbar_show_text,
+		*hud_teamholdbar_only_show_when_tp;
+
+    if (hud_teamholdbar_style == NULL)    // first time
+    {
+		hud_teamholdbar_style				= HUD_FindVar(hud, "style");
+		hud_teamholdbar_opacity				= HUD_FindVar(hud, "opacity");
+		hud_teamholdbar_width				= HUD_FindVar(hud, "width");
+		hud_teamholdbar_height				= HUD_FindVar(hud, "height");
+		hud_teamholdbar_vertical			= HUD_FindVar(hud, "vertical");
+		hud_teamholdbar_show_text			= HUD_FindVar(hud, "show_text");
+		hud_teamholdbar_only_show_when_tp	= HUD_FindVar(hud, "only_show_when_tp");
+    }
+
+	// Don't show when not in teamplay.
+	if(!cl.teamplay && hud_teamholdbar_only_show_when_tp->value)
+	{
+		return;
+	}
+
+	height = max(1, hud_teamholdbar_height->value);
+	width = max(0, hud_teamholdbar_width->value);
+	
+	if (HUD_PrepareDraw(hud, width , height, &x, &y))
+	{
+		// We need something to work with.
+		if(stats_grid != NULL)
+		{	
+			int _x, _y;
+			int _width, _height;
+
+			// Check if we have any hold values to calculate from.
+			if(stats_grid->team1_hold + stats_grid->team2_hold > 0)
+			{
+				// Calculate the percentage for the two teams for the "team strength bar".
+				team1_percent = ((float)stats_grid->team1_hold) / (stats_grid->team1_hold + stats_grid->team2_hold);
+				team2_percent = ((float)stats_grid->team2_hold) / (stats_grid->team1_hold + stats_grid->team2_hold);
+
+				team1_percent = fabs(max(0, team1_percent));
+				team2_percent = fabs(max(0, team2_percent));
+			}
+			else
+			{
+				Draw_AlphaFill(x, y, hud_teamholdbar_width->value, height, 0, hud_teamholdbar_opacity->value*0.5);
+				return;
+			}
+
+			// Draw the color bar based on the team.
+			if(hud_teamholdbar_vertical->value)
+			{
+				//
+				// Draw vertical.
+				//
+
+				// Team 1.
+				_x = x;
+				_y = y;
+				_width = width;
+				_height = height * team1_percent;				
+#ifdef GLQUAKE
+				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->team1_color, hud_teamholdbar_opacity->value);
+#else
+				Draw_Fill(_x, _y, _width, _height, stats_grid->team1_color);
+#endif
+				// Team 2.
+				_x = x;
+				_y = y + (height * team1_percent);				
+				_width = width;
+				_height = height * team2_percent;
+#ifdef GLQUAKE
+				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->team2_color, hud_teamholdbar_opacity->value);
+#else
+				Draw_Fill(_x, _y, _width, _height, stats_grid->team2_color);
+#endif
+				// Show the percentages in numbers also.
+				if(hud_teamholdbar_show_text->value)
+				{
+					// Team 1.
+					_x = x + (width / 2) - 12;
+					_y = y + (height * team1_percent)/2 - 4;
+					Draw_String(_x, _y, va("%2.0f%%", 100 * team1_percent));
+
+					// Team 2.					
+					_x = x + (width / 2) - 12;
+					_y = y + (height * team1_percent) + (height * team2_percent)/2 - 4;
+					Draw_String(_x, _y, va("%2.0f%%", 100 * team2_percent));
+				}
+			}
+			else
+			{
+				//
+				// Draw horizontal.
+				//
+
+				// Team 1.
+				_x = x;
+				_y = y;
+				_width = width * team1_percent;
+				_height = height;
+#ifdef GLQUAKE
+				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->team1_color, hud_teamholdbar_opacity->value);
+#else
+				Draw_Fill(_x, _y, _width, _height, stats_grid->team1_color);
+#endif
+				// Team 2.
+				_x = x + (width * team1_percent);
+				_y = y;
+				_width = width * team2_percent;
+				_height = height;
+#ifdef GLQUAKE
+				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->team2_color, hud_teamholdbar_opacity->value);
+#else
+				Draw_Fill(_x, _y, _width, _height, stats_grid->team2_color);
+#endif
+				// Show the percentages in numbers also.
+				if(hud_teamholdbar_show_text->value)
+				{
+					// Team 1.
+					_x = x + (width * team1_percent)/2 - 8;
+					_y = y + (height / 2) - 4;
+					Draw_String(_x, _y, va("%2.0f%%", 100 * team1_percent));
+
+					// Team 2.
+					_x = x + (width * team1_percent) + (width * team2_percent)/2 - 8;
+					_y = y + (height / 2) - 4;
+					Draw_String(_x, _y, va("%2.0f%%", 100 * team2_percent));
+				}
+			}			
+		}
+		else
+		{
+			Draw_AlphaFill(x, y, hud_teamholdbar_width->value, height, 0, hud_teamholdbar_opacity->value*0.5);
+		}
+	}
+}
+
 // The skinnum property in the entity_s structure is used
 // for determening what type of armor to draw on the radar.
 #define HUD_RADAR_GA					0
@@ -3220,35 +3370,6 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, int pic_width, int 
 				color,				// Color.
 				weight);			// Alpha.
 		}
-	}
-
-	if(grid->team1 && grid->team2)
-	{
-		float team1_width = 0;
-		float team2_width = 0;
-		
-		if(grid->team1_hold + grid->team2_hold > 0)
-		{
-			// Calculate the percentage for the two teams for the "team strength bar".
-			team1_width = ((float)grid->team1_hold) / (grid->team1_hold + grid->team2_hold);
-			team2_width = ((float)grid->team2_hold) / (grid->team1_hold + grid->team2_hold);
-
-			team1_width = fabs(max(0, team1_width));
-			team2_width = fabs(max(0, team2_width));
-		}
-		else
-		{
-			team1_width = 0.5;
-			team2_width = 0.5;
-		}
-
-		// Draw the color bar based on the team.
-		Draw_AlphaFill(x, y, pic_width * team1_width, 8, grid->team1_color, 0.8);
-		Draw_AlphaFill(x + (pic_width * team1_width), y, pic_width * team2_width, 8, grid->team2_color, 0.8);
-
-		// Show the percentages in numbers also.
-		Draw_String(x + (pic_width * team1_width)/2 - 8, y, va("%2.0f%%", 100 * team1_width));
-		Draw_String(x + (pic_width * team1_width) + (pic_width * team2_width)/2 - 8, y, va("%2.0f%%", 100 * team2_width));
 	}
 }
 
@@ -3475,7 +3596,7 @@ void Radar_DrawEntities(int x, int y, float scale, float show_entities, float sh
 void Radar_DrawPlayers(int x, int y, int width, int height, float scale, 
 					   float show_height, float show_powerups, 
 					   float player_size, float show_names, 
-					   float player_style)
+					   float fade_players)
 {
 	int i;
 	player_state_t *state;
@@ -3552,9 +3673,20 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 				player_z_relative = max(player_z_relative, 0.2);
 			}
 
+			if(fade_players)
+			{
+				int armor_strength = 0;
+				armor_strength = (info->stats[STAT_ITEMS] & IT_ARMOR1) ? 100 : 
+					((info->stats[STAT_ITEMS] & IT_ARMOR2) ? 150 : 
+					((info->stats[STAT_ITEMS] & IT_ARMOR3) ? 200 : 0));
+
+				player_alpha = ((info->stats[STAT_HEALTH] + (info->stats[STAT_ARMOR]*armor_strength)) / 100.0) + 0.2;
+			}
+
 			// Turn dead people red.
 			if(info->stats[STAT_HEALTH] <= 0)
 			{
+				player_alpha = 1.0;
 				player_color = 79;
 			}
 
@@ -3577,9 +3709,9 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 				}
 			}
 
+
 			// Draw a line showing what direction the player is looking in.
-			if(player_style == 0)
-			{
+			{				
 				float relative_x = 0;
 				float relative_y = 0;
 
@@ -3596,17 +3728,17 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 				// so that it get's an outline.
 				x_line_end = x_line_start + (player_size*2*player_z_relative+1)*relative_x;
 				y_line_end = y_line_start - (player_size*2*player_z_relative+1)*relative_y;
-				Draw_AlphaLine (x_line_start, y_line_start, x_line_end, y_line_end, 4.0, 0, player_alpha);
+				Draw_AlphaLine (x_line_start, y_line_start, x_line_end, y_line_end, 4.0, 0, 1.0);
 
 				// Draw the colored line.
 				x_line_end = x_line_start + (player_size*2*player_z_relative)*relative_x;
 				y_line_end = y_line_start - (player_size*2*player_z_relative)*relative_y;
 				Draw_AlphaLine (x_line_start, y_line_start, x_line_end, y_line_end, 2.0, player_color, player_alpha);
-			}
 
-			// Draw the player on the map.
-			Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, player_size*player_z_relative, player_color, player_alpha);
-			Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, player_size*player_z_relative, 1.0, 0, player_alpha);
+				// Draw the player on the map.
+				Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, player_size*player_z_relative, player_color, player_alpha);
+				Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, player_size*player_z_relative, 1.0, 0, 1.0);
+			}
 
 			// Draw the players name.
 			if(show_names)
@@ -3653,14 +3785,11 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 	float y_scale;
 
     static cvar_t
-        *hud_radar_picture = NULL,
-		*hud_radar_opacity,
-		*hud_radar_style,
-		*hud_radar_scale,
+		*hud_radar_opacity = NULL,
 		*hud_radar_width,
 		*hud_radar_height,
 		*hud_radar_autosize,
-		*hud_radar_player_style,
+		*hud_radar_fade_players,
 		*hud_radar_show_powerups,
 		*hud_radar_show_names,
 		*hud_radar_player_size,
@@ -3669,15 +3798,13 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		*hud_radar_show_projectiles,
 		*hud_radar_show_teamhold;
 
-    if (hud_radar_picture == NULL)    // first time
+    if (hud_radar_opacity == NULL)    // first time
     {
 		hud_radar_opacity			= HUD_FindVar(hud, "opacity");
-		hud_radar_style				= HUD_FindVar(hud, "style");
-		hud_radar_scale				= HUD_FindVar(hud, "scale");
 		hud_radar_width				= HUD_FindVar(hud, "width");
 		hud_radar_height			= HUD_FindVar(hud, "height");
 		hud_radar_autosize			= HUD_FindVar(hud, "autosize");
-		hud_radar_player_style		= HUD_FindVar(hud, "player_style");
+		hud_radar_fade_players		= HUD_FindVar(hud, "fade_players");
 		hud_radar_show_powerups		= HUD_FindVar(hud, "show_powerups");
 		hud_radar_show_names		= HUD_FindVar(hud, "show_names");
 		hud_radar_player_size		= HUD_FindVar(hud, "player_size");
@@ -3801,7 +3928,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 			hud_radar_show_powerups->value,
 			hud_radar_player_size->value,
 			hud_radar_show_names->value,
-			hud_radar_player_style->value);
+			hud_radar_fade_players->value);
 	}
 }
 
@@ -4301,22 +4428,31 @@ void CommonDraw_Init(void)
 	HUD_Register("radar", NULL, "Plots the players on a picture of the map. (Only when watching MVD's or QTV).",
         HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawRadar,
         "0", "top", "left", "bottom", "0", "0", "0",
-		"style",	"0",
-		"scale", "1",
 		"opacity", "0.5",
 		"width", "200",
 		"height", "200",
 		"autosize", "0",
-		"player_style", "0",
 		"show_powerups", "1",
 		"show_names", "0",
-		"player_size", "3.0",
+		"player_size", "10",
 		"show_height", "1",
 		"show_entities", "7",
 		"show_projectiles", "1",
 		"show_team_hold", "1",
+		"fade_players", "1",
         NULL);
 #endif
+
+	HUD_Register("teamholdbar", NULL, "Shows how much of the level (in percent) that is currently being held by either team.",
+        HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldBar,
+        "0", "top", "left", "bottom", "0", "0", "0",
+		"opacity", "0.8",
+		"width", "200",
+		"height", "8",
+		"vertical", "0",
+		"show_text", "1",
+		"only_show_when_tp", "0",
+        NULL);
 
 /* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
 #ifdef GLQUAKE
