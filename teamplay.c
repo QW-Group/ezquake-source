@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.36 2006-05-21 14:36:11 johnnycz Exp $
+    $Id: teamplay.c,v 1.37 2006-06-20 17:02:01 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -2729,6 +2729,14 @@ void TP_Point_f (void) {
 	FlagCommand (&pointflags, default_pointflags);
 }
 
+#define SHORTNICK_LEN 3
+void TP_Report_f (void) {
+	char shortnick[SHORTNICK_LEN+1];
+	strncpy(shortnick, TP_PlayerName(), SHORTNICK_LEN); // someone please make a guide which *str*cpy* functions we should use and where, thanks :)
+	shortnick[SHORTNICK_LEN] = 0;
+	Cbuf_AddText(va("say_team $\\%s %%p %%A%%a/%%h $[%%l$] %%b", shortnick));
+}
+
 typedef struct {
 	int		itemflag;
 	cvar_t	*cvar;
@@ -3679,4 +3687,5 @@ void TP_Init (void) {
 	Cmd_AddCommand ("tp_took", TP_Took_f);
 	Cmd_AddCommand ("tp_pickup", TP_Pickup_f);
 	Cmd_AddCommand ("tp_point", TP_Point_f);
+	Cmd_AddCommand ("tp_report", TP_Report_f);
 }
