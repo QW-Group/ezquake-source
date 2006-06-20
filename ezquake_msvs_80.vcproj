@@ -475,6 +475,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\stats_grid.c"
+				>
+			</File>
+			<File
 				RelativePath=".\winquake.rc"
 				>
 			</File>
@@ -1930,6 +1934,10 @@
 			</File>
 			<File
 				RelativePath="resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\stats_grid.h"
 				>
 			</File>
 			<Filter
