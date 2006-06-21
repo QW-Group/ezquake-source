@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.40 2006-06-19 19:03:12 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.41 2006-06-21 22:28:52 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -27,8 +27,6 @@ void Draw_Fill (int x, int y, int w, int h, int c);
 #endif
 
 hud_t *hud_netgraph;
-
-
 
 // ----------------
 // HUD planning
@@ -2598,7 +2596,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 		hud_teamfrags_padtext		= HUD_FindVar(hud, "padtext");
 		hud_teamfrags_style			= HUD_FindVar(hud, "style");
 		hud_teamfrags_extra_spec	= HUD_FindVar(hud, "extra_spec_info");
-		hud_teamfrags_only_when_tp	= HUD_FindVar(hud, "only_show_when_tp");
+		hud_teamfrags_only_when_tp	= HUD_FindVar(hud, "onlytp");
     }
 
 	// Don't draw the frags if we're note in teamplay.
@@ -3150,7 +3148,7 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 		*hud_teamholdbar_height,
 		*hud_teamholdbar_vertical,
 		*hud_teamholdbar_show_text,
-		*hud_teamholdbar_only_show_when_tp;
+		*hud_teamholdbar_onlytp;
 
     if (hud_teamholdbar_style == NULL)    // first time
     {
@@ -3160,11 +3158,11 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 		hud_teamholdbar_height				= HUD_FindVar(hud, "height");
 		hud_teamholdbar_vertical			= HUD_FindVar(hud, "vertical");
 		hud_teamholdbar_show_text			= HUD_FindVar(hud, "show_text");
-		hud_teamholdbar_only_show_when_tp	= HUD_FindVar(hud, "only_show_when_tp");
+		hud_teamholdbar_onlytp			= HUD_FindVar(hud, "onlytp");
     }
 
 	// Don't show when not in teamplay.
-	if(!cl.teamplay && hud_teamholdbar_only_show_when_tp->value)
+	if(!cl.teamplay && hud_teamholdbar_onlytp->value)
 	{
 		return;
 	}
@@ -3181,11 +3179,11 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 			int _width, _height;
 
 			// Check if we have any hold values to calculate from.
-			if(stats_grid->team1_hold + stats_grid->team2_hold > 0)
+			if(stats_grid->teams[STATS_TEAM1].hold_count + stats_grid->teams[STATS_TEAM2].hold_count > 0)
 			{
 				// Calculate the percentage for the two teams for the "team strength bar".
-				team1_percent = ((float)stats_grid->team1_hold) / (stats_grid->team1_hold + stats_grid->team2_hold);
-				team2_percent = ((float)stats_grid->team2_hold) / (stats_grid->team1_hold + stats_grid->team2_hold);
+				team1_percent = ((float)stats_grid->teams[STATS_TEAM1].hold_count) / (stats_grid->teams[STATS_TEAM1].hold_count + stats_grid->teams[STATS_TEAM2].hold_count);
+				team2_percent = ((float)stats_grid->teams[STATS_TEAM2].hold_count) / (stats_grid->teams[STATS_TEAM1].hold_count + stats_grid->teams[STATS_TEAM2].hold_count);
 
 				team1_percent = fabs(max(0, team1_percent));
 				team2_percent = fabs(max(0, team2_percent));
@@ -3207,22 +3205,26 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 				_x = x;
 				_y = y;
 				_width = width;
-				_height = height * team1_percent;				
-#ifdef GLQUAKE
-				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->team1_color, hud_teamholdbar_opacity->value);
-#else
-				Draw_Fill(_x, _y, _width, _height, stats_grid->team1_color);
-#endif
+				_height = height * team1_percent;	
+
+				#ifdef GLQUAKE
+				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM1].color, hud_teamholdbar_opacity->value);
+				#else
+				Draw_Fill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM1].color);
+				#endif
+
 				// Team 2.
 				_x = x;
 				_y = y + (height * team1_percent);				
 				_width = width;
 				_height = height * team2_percent;
-#ifdef GLQUAKE
-				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->team2_color, hud_teamholdbar_opacity->value);
-#else
-				Draw_Fill(_x, _y, _width, _height, stats_grid->team2_color);
-#endif
+
+				#ifdef GLQUAKE
+				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM2].color, hud_teamholdbar_opacity->value);
+				#else
+				Draw_Fill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM2].color);
+				#endif
+
 				// Show the percentages in numbers also.
 				if(hud_teamholdbar_show_text->value)
 				{
@@ -3248,21 +3250,25 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 				_y = y;
 				_width = width * team1_percent;
 				_height = height;
-#ifdef GLQUAKE
-				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->team1_color, hud_teamholdbar_opacity->value);
-#else
-				Draw_Fill(_x, _y, _width, _height, stats_grid->team1_color);
-#endif
+
+				#ifdef GLQUAKE
+				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM1].color, hud_teamholdbar_opacity->value);
+				#else
+				Draw_Fill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM1].color);
+				#endif
+
 				// Team 2.
 				_x = x + (width * team1_percent);
 				_y = y;
 				_width = width * team2_percent;
 				_height = height;
-#ifdef GLQUAKE
-				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->team2_color, hud_teamholdbar_opacity->value);
-#else
-				Draw_Fill(_x, _y, _width, _height, stats_grid->team2_color);
-#endif
+
+				#ifdef GLQUAKE
+				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM2].color, hud_teamholdbar_opacity->value);
+				#else
+				Draw_Fill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM2].color);
+				#endif
+
 				// Show the percentages in numbers also.
 				if(hud_teamholdbar_show_text->value)
 				{
@@ -3280,31 +3286,32 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 		}
 		else
 		{
+			// If there's no stats grid available we don't know what to show, so just show a black frame.
+			#ifdef GLQUAKE
 			Draw_AlphaFill(x, y, hud_teamholdbar_width->value, height, 0, hud_teamholdbar_opacity->value*0.5);
+			#else
+			Draw_Fill(x, y, hud_teamholdbar_width->value, height, 0);
+			#endif
 		}
 	}
 }
 
-// The skinnum property in the entity_s structure is used
-// for determening what type of armor to draw on the radar.
-#define HUD_RADAR_GA					0
-#define HUD_RADAR_YA					1
-#define HUD_RADAR_RA					2
+// What stats to draw.
+#define HUD_RADAR_STATS_NONE				0
+#define HUD_RADAR_STATS_BOTH_TEAMS_HOLD		1
+#define HUD_RADAR_STATS_TEAM1_HOLD			2
+#define HUD_RADAR_STATS_TEAM2_HOLD			3
+#define HUD_RADAR_STATS_BOTH_TEAMS_DEATHS	4
+#define HUD_RADAR_STATS_TEAM1_DEATHS		5
+#define HUD_RADAR_STATS_TEAM2_DEATHS		6
 
-// Defines the level "verbosity" when drawing entities.
-#define HUD_RADAR_SHOW_POWERUPS			1
-#define HUD_RADAR_SHOW_RL_LG_BACKPACKS	2
-#define HUD_RADAR_SHOW_ARMORS			3
-#define HUD_RADAR_SHOW_MEGAHEALTHS		4
-#define HUD_RADAR_SHOW_ALL_WEAPONS		5
-#define HUD_RADAR_SHOW_MORE				6
-
-void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, int pic_width, int pic_height)
+void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, int pic_width, int pic_height, int style)
 {
 	int row, col;	
 	int visited_team1 = 0, visited_team2 = 0;
 
-	if(grid == NULL)
+	// Don't try to draw anything if we got no data.
+	if(grid == NULL || style == HUD_RADAR_STATS_NONE)
 	{
 		return;
 	}
@@ -3341,27 +3348,57 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, int pic_width, int 
 			Draw_AlphaFill(x + tl_x, y + tl_y, 1, p_cell_length, 0, 1);
 			Draw_AlphaFill(x + tl_x + p_cell_length, y + tl_y + p_cell_length, 1, p_cell_length, 0, 1);
 			*/
-			
-			// No point in drawing if we have no weight.
-			if(grid->cells[row][col].team1_weight.weight + grid->cells[row][col].team2_weight.weight <= 0)
-			{
-				continue;
-			}
 
-			// Get the team with the highest weight for this cell.
-			if(grid->cells[row][col].team1_weight.weight > grid->cells[row][col].team2_weight.weight)
+			//
+			// Death stats.
+			//
+			if(grid->cells[row][col].teams[STATS_TEAM1].death_weight + grid->cells[row][col].teams[STATS_TEAM2].death_weight > 0)
 			{
-				weight = grid->cells[row][col].team1_weight.weight;
-				color = grid->team1_color;
+				weight = 0;
+
+				if(style == HUD_RADAR_STATS_BOTH_TEAMS_DEATHS || style == HUD_RADAR_STATS_TEAM1_DEATHS)
+				{
+					weight = grid->cells[row][col].teams[STATS_TEAM1].death_weight;
+				}
+
+				if(style == HUD_RADAR_STATS_BOTH_TEAMS_DEATHS || style == HUD_RADAR_STATS_TEAM2_DEATHS)
+				{
+					weight += grid->cells[row][col].teams[STATS_TEAM2].death_weight;
+				}
+
+				color = 79;
 			}
-			else
+			
+			//
+			// Team stats.
+			//
 			{
-				weight = grid->cells[row][col].team2_weight.weight;
-				color = grid->team2_color;
+				// No point in drawing if we have no weight.
+				if(grid->cells[row][col].teams[STATS_TEAM1].weight + grid->cells[row][col].teams[STATS_TEAM2].weight <= 0 
+					&& (style == HUD_RADAR_STATS_BOTH_TEAMS_HOLD 
+					||	style == HUD_RADAR_STATS_TEAM1_HOLD
+					||	style == HUD_RADAR_STATS_TEAM2_HOLD))
+				{
+					continue;
+				}
+
+				// Get the team with the highest weight for this cell.
+				if(grid->cells[row][col].teams[STATS_TEAM1].weight > grid->cells[row][col].teams[STATS_TEAM2].weight
+					&& (style == HUD_RADAR_STATS_BOTH_TEAMS_HOLD
+					||	style == HUD_RADAR_STATS_TEAM1_HOLD))
+				{
+					weight = grid->cells[row][col].teams[STATS_TEAM1].weight;
+					color = stats_grid->teams[STATS_TEAM1].color;
+				}
+				else if(style == HUD_RADAR_STATS_BOTH_TEAMS_HOLD ||	style == HUD_RADAR_STATS_TEAM2_HOLD)
+				{
+					weight = grid->cells[row][col].teams[STATS_TEAM2].weight;
+					color = stats_grid->teams[STATS_TEAM2].color;
+				}
 			}
 
 			// Draw the cell in the color of the team with the
-			// biggest weight for this cell.
+			// biggest weight for this cell. Or draw deaths.
 			Draw_AlphaFill(
 				ROUND(x + tl_x),	// X.
 				ROUND(y + tl_y),	// Y.
@@ -3373,7 +3410,29 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, int pic_width, int 
 	}
 }
 
-void Radar_DrawEntities(int x, int y, float scale, float show_entities, float show_projectiles, float player_size)
+
+// The skinnum property in the entity_s structure is used
+// for determening what type of armor to draw on the radar.
+#define HUD_RADAR_GA					0
+#define HUD_RADAR_YA					1
+#define HUD_RADAR_RA					2
+
+// Defines the level "verbosity" when drawing entities.
+#define HUD_RADAR_SHOW_POWERUPS			1
+#define HUD_RADAR_SHOW_RL_LG_BACKPACKS	2
+#define HUD_RADAR_SHOW_ARMORS			3
+#define HUD_RADAR_SHOW_MEGAHEALTHS		4
+#define HUD_RADAR_SHOW_ALL_WEAPONS		5
+#define HUD_RADAR_SHOW_MORE				6
+
+// Defines which ammo types to show.
+#define	HUD_RADAR_SHOW_AMMO_NONE		0
+#define HUD_RADAR_SHOW_AMMO_ROCKETS		1
+#define HUD_RADAR_SHOW_AMMO_CELLS		2
+#define HUD_RADAR_SHOW_AMMO_NAILS		3
+#define HUD_RADAR_SHOW_AMMO_SHELLS		4
+
+void Radar_DrawEntities(int x, int y, float scale, int show_entities, int show_projectiles, float player_size, int show_ammo, int show_health)
 {
 	int i;
 
@@ -3484,6 +3543,14 @@ void Radar_DrawEntities(int x, int y, float scale, float show_entities, float sh
 			// Show megahealth.
 			//
 
+			// Draw a red border around the cross.
+			Draw_AlphaOutline (entity_p_x - 3, entity_p_y - 3, 8, 8, 79, 1, 0.8);
+
+			// Draw a black outline cross.
+			Draw_AlphaFill (entity_p_x - 3, entity_p_y - 1, 8, 4, 0, 1);
+			Draw_AlphaFill (entity_p_x - 1, entity_p_y - 3, 4, 8, 0, 1);
+
+			// Draw a 2 pixel cross.
 			Draw_AlphaFill (entity_p_x - 2, entity_p_y, 6, 2, 79, 1);
 			Draw_AlphaFill (entity_p_x, entity_p_y - 2, 2, 6, 79, 1);
 		}
@@ -3528,7 +3595,105 @@ void Radar_DrawEntities(int x, int y, float scale, float show_entities, float sh
 			Draw_AlphaCircleFill(entity_p_x, entity_p_y, 2.0, 251, 1);					
 		}
 
-		// TODO: Show ammo / health.
+		if(show_health
+			&&(!strcmp(cl_visents.list[i].model->name, "maps/b_bh25.bsp")
+			|| !strcmp(cl_visents.list[i].model->name, "maps/b_bh10.bsp")))
+		{
+			//
+			// Health.
+			//
+
+			// Draw a black outline cross.
+			Draw_AlphaFill (entity_p_x - 3, entity_p_y - 1, 7, 3, 0, 1);
+			Draw_AlphaFill (entity_p_x - 1, entity_p_y - 3, 3, 7, 0, 1);
+			
+			// Draw a cross.
+			Draw_AlphaFill (entity_p_x - 2, entity_p_y, 5, 1, 79, 1);
+			Draw_AlphaFill (entity_p_x, entity_p_y - 2, 1, 5, 79, 1);
+		}
+		
+		if(show_ammo)
+		{
+			//
+			// Ammo.
+			//
+			if(show_ammo >= HUD_RADAR_SHOW_AMMO_ROCKETS 
+				&&(!strcmp(cl_visents.list[i].model->name, "maps/b_rock0.bsp")
+				|| !strcmp(cl_visents.list[i].model->name, "maps/b_rock1.bsp")))
+			{
+				//
+				// Rockets.
+				//
+
+				// Draw a black outline.
+				Draw_AlphaFill (entity_p_x - 1, entity_p_y - 6, 3, 5, 0, 1);
+				Draw_AlphaFill (entity_p_x - 2, entity_p_y - 1, 5, 5, 0, 1);
+
+				// The brown rocket.
+				Draw_AlphaFill (entity_p_x, entity_p_y - 5, 1, 5, 120, 1);
+				Draw_AlphaFill (entity_p_x - 1, entity_p_y, 1, 3, 120, 1);
+				Draw_AlphaFill (entity_p_x + 1, entity_p_y, 1, 3, 120, 1);
+			}
+
+			if(show_ammo >= HUD_RADAR_SHOW_AMMO_CELLS
+				&&(!strcmp(cl_visents.list[i].model->name, "maps/b_batt0.bsp")
+				|| !strcmp(cl_visents.list[i].model->name, "maps/b_batt1.bsp")))
+			{
+				//
+				// Cells.
+				//
+
+				// Draw a black outline.
+				Draw_AlphaLine(entity_p_x - 3, entity_p_y, entity_p_x + 4, entity_p_y - 5, 3, 0, 1);
+				Draw_AlphaLine(entity_p_x - 3, entity_p_y, entity_p_x + 3 , entity_p_y, 3, 0, 1);
+				Draw_AlphaLine(entity_p_x + 3, entity_p_y, entity_p_x - 3, entity_p_y + 4, 3, 0, 1);
+
+				// Draw a yellow lightning!
+				Draw_AlphaLine(entity_p_x - 2, entity_p_y, entity_p_x + 3, entity_p_y - 4, 1, 111, 1);
+				Draw_AlphaLine(entity_p_x - 2, entity_p_y, entity_p_x + 2 , entity_p_y, 1, 111, 1);
+				Draw_AlphaLine(entity_p_x + 2, entity_p_y, entity_p_x - 2, entity_p_y + 3, 1, 111, 1);
+			}
+
+			if(show_ammo >= HUD_RADAR_SHOW_AMMO_NAILS
+				&&(!strcmp(cl_visents.list[i].model->name, "maps/b_nail0.bsp")
+				|| !strcmp(cl_visents.list[i].model->name, "maps/b_nail1.bsp")))
+			{
+				//
+				// Nails.
+				//
+
+				// Draw a black outline.
+				Draw_AlphaFill (entity_p_x - 3, entity_p_y - 3, 7, 3, 0, 1);
+				Draw_AlphaFill (entity_p_x - 2, entity_p_y - 2, 5, 3, 0, 0.5);
+				Draw_AlphaFill (entity_p_x - 1, entity_p_y, 3, 3, 0, 1);
+				Draw_AlphaFill (entity_p_x - 1, entity_p_y + 3, 1, 1, 0, 0.5);
+				Draw_AlphaFill (entity_p_x + 1, entity_p_y + 3, 1, 1, 0, 0.5);
+				Draw_AlphaFill (entity_p_x, entity_p_y + 4, 1, 1, 0, 1);
+
+				Draw_AlphaFill (entity_p_x - 2, entity_p_y - 2, 5, 1, 6, 1);
+				Draw_AlphaFill (entity_p_x - 1, entity_p_y - 1, 3, 1, 6, 0.5);
+				Draw_AlphaFill (entity_p_x, entity_p_y, 1, 4, 6, 1);
+			}
+
+			if(show_ammo >= HUD_RADAR_SHOW_AMMO_SHELLS
+				&&(!strcmp(cl_visents.list[i].model->name, "maps/b_shell0.bsp")
+				|| !strcmp(cl_visents.list[i].model->name, "maps/b_shell1.bsp")))
+			{
+				//
+				// Shells.
+				//
+
+				// Draw a black outline.
+				Draw_AlphaFill (entity_p_x - 2, entity_p_y - 3, 5, 9, 0, 1);
+
+				// Draw 2 shotgun shells.
+				Draw_AlphaFill (entity_p_x - 1, entity_p_y - 2, 1, 4, 73, 1);
+				Draw_AlphaFill (entity_p_x - 1, entity_p_y - 2 + 5, 1, 2, 104, 1);
+
+				Draw_AlphaFill (entity_p_x + 1, entity_p_y - 2, 1, 4, 73, 1);
+				Draw_AlphaFill (entity_p_x + 1, entity_p_y - 2 + 5, 1, 2, 104, 1);
+			} 
+		}
 		
 		if(show_projectiles)
 		{
@@ -3796,7 +3961,9 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		*hud_radar_show_height,
 		*hud_radar_show_entities,
 		*hud_radar_show_projectiles,
-		*hud_radar_show_teamhold;
+		*hud_radar_show_stats,
+		*hud_radar_show_ammo,
+		*hud_radar_show_health;
 
     if (hud_radar_opacity == NULL)    // first time
     {
@@ -3811,7 +3978,9 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		hud_radar_show_height		= HUD_FindVar(hud, "show_height");
 		hud_radar_show_entities		= HUD_FindVar(hud, "show_entities");
 		hud_radar_show_projectiles	= HUD_FindVar(hud, "show_projectiles");
-		hud_radar_show_teamhold		= HUD_FindVar(hud, "show_team_hold");
+		hud_radar_show_stats		= HUD_FindVar(hud, "show_stats");
+		hud_radar_show_ammo			= HUD_FindVar(hud, "show_ammo");
+		hud_radar_show_health		= HUD_FindVar(hud, "show_health");
     }
 
 	// Don't show anything if it's a normal player.
@@ -3908,9 +4077,9 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		}
 
 		// Draw team stats.
-		if(hud_radar_show_teamhold->value)
+		if(hud_radar_show_stats->value)
 		{
-			Radar_DrawGrid(stats_grid, x, y, width, height);
+			Radar_DrawGrid(stats_grid, x, y, width, height, hud_radar_show_stats->value);
 		}
 
 		// Draw entities such as powerups, weapons and backpacks.
@@ -3919,7 +4088,9 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 			Radar_DrawEntities(x, y, scale, 
 				hud_radar_show_entities->value, 
 				hud_radar_show_projectiles->value,
-				hud_radar_player_size->value);
+				hud_radar_player_size->value,
+				hud_radar_show_ammo->value,
+				hud_radar_show_health->value);
 		}
 
 		// Draw the players.
@@ -4401,7 +4572,7 @@ void CommonDraw_Init(void)
 		"fliptext", "1",
 		"style", "0",
 		"extra_spec_info", "1",
-		"only_show_when_tp", "0",
+		"onlytp", "0",
 		NULL);
 
 	HUD_Register("mp3_title", NULL, "Shows current mp3 playing.",
@@ -4437,8 +4608,10 @@ void CommonDraw_Init(void)
 		"player_size", "10",
 		"show_height", "1",
 		"show_entities", "7",
+		"show_ammo", "0",
+		"show_health", "0",
 		"show_projectiles", "1",
-		"show_team_hold", "1",
+		"show_stats", "1",
 		"fade_players", "1",
         NULL);
 #endif
@@ -4451,7 +4624,7 @@ void CommonDraw_Init(void)
 		"height", "8",
 		"vertical", "0",
 		"show_text", "1",
-		"only_show_when_tp", "0",
+		"onlytp", "0",
         NULL);
 
 /* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
