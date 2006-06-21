@@ -83,3 +83,5 @@ void Draw_CircleOutline (int x, int y, float radius, float thickness, int color)
 void Draw_CircleFill (int x, int y, float radius, int color);
 void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, int c, float alpha);
 void Draw_Line (int x_start, int y_start, int x_end, int y_end, float thickness, int c);
+void Draw_AlphaOutline (int x, int y, int w, int h, int c, float thickness, float alpha);
+void Draw_Outline (int x, int y, int w, int h, int c, float thickness);

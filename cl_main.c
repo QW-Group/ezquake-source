@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.73 2006-06-18 00:01:40 cokeman1982 Exp $
+	$Id: cl_main.c,v 1.74 2006-06-21 22:28:52 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1258,9 +1258,11 @@ void CL_Frame (double time) {
 			TP_UpdateSkins();
 
 
-			if (cls.mvdplayback){
+			if (cls.mvdplayback)
+			{
 				MVD_Interpolate();
 				MVD_Mainhook_f();
+				StatsGrid_Gather();
 			}
 
 			// process stuffed commands

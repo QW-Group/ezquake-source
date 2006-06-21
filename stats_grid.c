@@ -61,7 +61,7 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 	(*grid)->col_count = ROUND(grid_width / cell_length);
 
 	// Allocate the rows.
-	(*grid)->cells = (radar_cell_t **)Q_calloc((*grid)->row_count, sizeof(radar_cell_t));
+	(*grid)->cells = (stats_cell_t **)Q_calloc((*grid)->row_count, sizeof(stats_cell_t));
 	
 	// If we failed allocating the rows, cleanup and return.
 	if((*grid)->cells == NULL)
@@ -75,7 +75,7 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 	for(row = 0; row < (*grid)->row_count; row++)
 	{
 		// Allocate memory for the current rows columns.
-		(*grid)->cells[row] = (radar_cell_t *)Q_calloc((*grid)->col_count, sizeof(radar_cell_t));
+		(*grid)->cells[row] = (stats_cell_t *)Q_calloc((*grid)->col_count, sizeof(stats_cell_t));
 
 		// If something went wrong cleanup and return.
 		if((*grid)->cells[row] == NULL)
@@ -93,11 +93,13 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 		// Set initial values for all the cells.
 		for(col = 0; col < (*grid)->col_count; col++)
 		{
-			(*grid)->cells[row][col].team1_weight.weight = 0.0;
-			(*grid)->cells[row][col].team1_weight.change_time = 0.0;
+			(*grid)->cells[row][col].teams[STATS_TEAM1].weight = 0.0;
+			(*grid)->cells[row][col].teams[STATS_TEAM1].change_time = 0.0;
+			(*grid)->cells[row][col].teams[STATS_TEAM1].death_weight = 0.0;
 
-			(*grid)->cells[row][col].team2_weight.weight = 0.0;
-			(*grid)->cells[row][col].team2_weight.change_time = 0.0;
+			(*grid)->cells[row][col].teams[STATS_TEAM2].weight = 0.0;
+			(*grid)->cells[row][col].teams[STATS_TEAM2].change_time = 0.0;
+			(*grid)->cells[row][col].teams[STATS_TEAM2].death_weight = 0.0;			
 
 			// Save the quake coordinates of the cells upper left corner.
 			(*grid)->cells[row][col].tl_x = cl.worldmodel->mins[0] + (col * cell_length);
@@ -113,13 +115,14 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 	(*grid)->height				= grid_height;
 
 	// We will wait with setting these until the match has started.
-	(*grid)->team1[0]			= 0;
-	(*grid)->team2[0]			= 0;
-	(*grid)->team1_color		= 0;
-	(*grid)->team2_color		= 0;
-	(*grid)->team1_hold			= 0;
-	(*grid)->team2_hold			= 0;
-	(*grid)->hold_threshold		= hold_threshold;
+	
+	(*grid)->teams[STATS_TEAM1].color			= 0;
+	(*grid)->teams[STATS_TEAM2].color			= 0;
+	(*grid)->teams[STATS_TEAM1].hold_count		= 0;
+	(*grid)->teams[STATS_TEAM2].hold_count		= 0;
+	(*grid)->teams[STATS_TEAM1].color			= 0;
+	(*grid)->teams[STATS_TEAM2].color			= 0;
+	(*grid)->hold_threshold						= hold_threshold;
 }
 
 void StatsGrid_InitTeamNames(stats_weight_grid_t *grid)
@@ -127,8 +130,8 @@ void StatsGrid_InitTeamNames(stats_weight_grid_t *grid)
 	int i;
 
 	// Get the first players team and set that as team1.
-	strcpy(grid->team1, cl.players[0].team);
-	grid->team1_color = Sbar_BottomColor(&cl.players[0]);
+	strcpy(grid->teams[STATS_TEAM1].name, cl.players[0].team);
+	grid->teams[STATS_TEAM1].color = Sbar_BottomColor(&cl.players[0]);
 
 	// Go through the rest of the players until another team is found, that must be team2.
 	for (i = 0; i < MAX_CLIENTS; i++) 
@@ -141,10 +144,10 @@ void StatsGrid_InitTeamNames(stats_weight_grid_t *grid)
 
 		// If this players team isn't the same as the first players team
 		// set this players team as team 2.
-		if(strcmp(grid->team1, cl.players[i].team))
+		if(strcmp(grid->teams[STATS_TEAM1].name, cl.players[i].team))
 		{
-			strcpy(grid->team2, cl.players[i].team);
-			grid->team2_color = Sbar_BottomColor(&cl.players[i]);
+			strcpy(grid->teams[STATS_TEAM2].name, cl.players[i].team);
+			grid->teams[STATS_TEAM2].color = Sbar_BottomColor(&cl.players[i]);
 			break;
 		}
 	}
@@ -202,30 +205,30 @@ void StatsGrid_DecreaseTeamWeights(stats_weight_grid_t *grid, int row, int col, 
 	}
 
 	// No point in doing anything if the weights are all zero.
-	if(grid->cells[row][col].team1_weight.weight + grid->cells[row][col].team2_weight.weight <= 0)
+	if(grid->cells[row][col].teams[STATS_TEAM1].weight + grid->cells[row][col].teams[STATS_TEAM2].weight <= 0)
 	{
 		return;
 	}
 
 	// Increase the amount of cells that is being "hold" by the teams.
-	if(grid->cells[row][col].team1_weight.weight > grid->cells[row][col].team2_weight.weight)
+	if(grid->cells[row][col].teams[STATS_TEAM1].weight > grid->cells[row][col].teams[STATS_TEAM2].weight)
 	{
-		if(grid->cells[row][col].team1_weight.weight > hold_threshold)
+		if(grid->cells[row][col].teams[STATS_TEAM1].weight > hold_threshold)
 		{
-			grid->team1_hold++;
+			grid->teams[STATS_TEAM1].hold_count++;
 		}
 	}
 	else
 	{
-		if(grid->cells[row][col].team2_weight.weight > hold_threshold)
+		if(grid->cells[row][col].teams[STATS_TEAM2].weight > hold_threshold)
 		{
-			grid->team2_hold++;
+			grid->teams[STATS_TEAM2].hold_count++;
 		}
 	}
 
 	// Decrease the weights for both teams.
-	StatsGrid_DecreaseWeight(&grid->cells[row][col].team1_weight, grid);
-	StatsGrid_DecreaseWeight(&grid->cells[row][col].team2_weight, grid);
+	StatsGrid_DecreaseWeight(&grid->cells[row][col].teams[STATS_TEAM1], grid);
+	StatsGrid_DecreaseWeight(&grid->cells[row][col].teams[STATS_TEAM2], grid);
 }
 
 void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid, 
@@ -234,26 +237,40 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 {
 	float weight = 0.0;
 	int row, col;
+	int team_id = 0;
+
+	int row_top;
+	int row_bottom;
+	int col_left;
+	int col_right;
+
 	cell_weight_t *weight_t = NULL;
+
+	// HACK: This is so that I can keep death status of the players
+	// and since all I have to differentiate them is the userid, 
+	// I have to have enough room to fit the players. Most of this
+	// space is unused. Too lazy to do something more fancy atm :S
+	static int isdead[200]; 
 
 	// Don't calculate any weights before a match has started.
 	// Don't allow setting the weight at the exact time the countdown
 	// or standby ends (cl.gametime == 0), that will result in a weight
 	// being set in the position that the player was the milisecond before.
-	if(cl.countdown || cl.standby || cl.gametime <= 0
-		|| grid == NULL || grid->cells == NULL			// Make sure we have something to work with.
+	if(cl.countdown				|| cl.standby			|| cl.gametime <= 0
+		|| grid == NULL			|| grid->cells == NULL
 		|| grid->col_count <= 0 || grid->row_count <= 0
-		|| player_info == NULL || player_state == NULL )
+		|| player_info == NULL	|| player_state == NULL )
 	{
 		return;
 	}
 
 	// Set the team names.
-	if(!grid->team1[0] || !grid->team2[0])
+	if(!grid->teams[STATS_TEAM1].name[0] || !grid->teams[STATS_TEAM2].name[0])
 	{
 		StatsGrid_InitTeamNames(grid);
 	}
 
+	// TODO: Make this properly (this is just a quick hack atm). Use autotrack values? (Not until jogi cleans up his damn code :D)
 	if(player_info->stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
 	{
 		weight += 0.5;
@@ -294,32 +311,20 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 		weight += (player_info->stats[STAT_ARMOR] * (100.0/500.0)) / 1000.0;
 	}
 
+	//
+	// Get the grid cell that the player is located in based on it's quake coordinates.
+	//
 	row = fabs(cl.worldmodel->mins[1] - player_state->origin[1]) / grid->cell_length;
 	col = fabs(cl.worldmodel->mins[0] - player_state->origin[0]) / grid->cell_length;
 
+	// Make sure we're not out of bounds.
 	row = min(row, grid->row_count - 1);
 	col = min(col, grid->col_count - 1);
 
-	if(!strcmp(player_info->team, grid->team1))
+	//
+	// Get the neighbours
+	//
 	{
-		weight_t = &grid->cells[row][col].team1_weight;
-	}
-	else
-	{
-		weight_t = &grid->cells[row][col].team2_weight;
-	}
-
-	if(weight >= weight_t->weight)
-	{
-		int row_top;
-		int row_bottom;
-
-		int col_left;
-		int col_right;
-
-		float neighbour_weight_close;
-		float neighbour_weight_far;
-
 		// The row above (make sure it's >= 0).
 		row_top = row - 1;
 		row_top = max(0, row_top);
@@ -335,87 +340,102 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 		// Column to the right.
 		col_right = col + 1;
 		col_right = min(grid->col_count - 1, col_right);
+	}
+
+	// Get the team.
+	team_id = !strcmp(player_info->team, grid->teams[STATS_TEAM1].name) ? STATS_TEAM1 : STATS_TEAM2;
+
+	// Get the weight.
+	weight_t = &grid->cells[row][col].teams[team_id];
+
+	// Raise the death weight for this cell if the player is dead.
+	if(player_info->stats[STAT_HEALTH] > 0 && isdead[player_info->userid])
+	{
+		isdead[player_info->userid] = false;
+	}
+	
+	if(player_info->stats[STAT_HEALTH] <= 0 && !isdead[player_info->userid])		
+	{ 
+		#define DEATH_WEIGHT	0.2
+		#define DEATH_WEIGHT_CLOSE	DEATH_WEIGHT * 0.8
+		#define DEATH_WEIGHT_FAR	DEATH_WEIGHT * 0.5
+
+		isdead[player_info->userid] = true;
+		grid->cells[row][col].teams[team_id].death_weight += DEATH_WEIGHT;
+
+		// Top.
+		grid->cells[row_top][col].teams[team_id].death_weight += DEATH_WEIGHT_CLOSE;
+
+		// Top Right.
+		grid->cells[row_top][col_right].teams[team_id].death_weight = DEATH_WEIGHT_FAR;
+
+		// Right.
+		grid->cells[row][col_right].teams[team_id].death_weight = DEATH_WEIGHT_CLOSE;
+
+		// Bottom Right.
+		grid->cells[row_bottom][col_right].teams[team_id].death_weight = DEATH_WEIGHT_FAR;
+
+		// Bottom.
+		grid->cells[row_bottom][col].teams[team_id].death_weight = DEATH_WEIGHT_CLOSE;
+
+		// Bottom Left.
+		grid->cells[row_bottom][col_left].teams[team_id].death_weight = DEATH_WEIGHT_FAR;
+
+		// Left.
+		grid->cells[row][col_left].teams[team_id].death_weight = DEATH_WEIGHT_CLOSE;
+
+		// Top Left.
+		grid->cells[row_top][col_left].teams[team_id].death_weight = DEATH_WEIGHT_FAR;
+	}
+
+	// Only change the weight if the new weight is greater than the current one.
+	if(weight >= grid->cells[row][col].teams[team_id].weight)
+	{
+		float neighbour_weight_close;
+		float neighbour_weight_far;
 
 		// Fade the weights for the neighbours. The edge corners
 		// are at 50% opacity, and the ones at top/bottom, left/right at 80%.
 		neighbour_weight_close	= weight * 0.8;
 		neighbour_weight_far	= weight * 0.5;
 
-		if(!strcmp(player_info->team, grid->team1))
+		// Set the weight for the current cell + surrounding cells.
 		{
 			// The current cell.
-			grid->cells[row][col].team1_weight.weight = weight;
-			grid->cells[row][col].team1_weight.change_time = cls.demotime;
+			grid->cells[row][col].teams[team_id].weight = weight;
+			grid->cells[row][col].teams[team_id].change_time = cls.demotime;
 
 			// Top.
-			grid->cells[row_top][col].team1_weight.weight = max(grid->cells[row_top][col].team1_weight.weight, neighbour_weight_close);
-			grid->cells[row_top][col].team1_weight.change_time = cls.demotime;
+			grid->cells[row_top][col].teams[team_id].weight = max(grid->cells[row_top][col].teams[team_id].weight, neighbour_weight_close);
+			grid->cells[row_top][col].teams[team_id].change_time = cls.demotime;
 
 			// Top right.
-			grid->cells[row_top][col_right].team1_weight.weight = max(grid->cells[row_top][col_right].team1_weight.weight, neighbour_weight_far);
-			grid->cells[row_top][col_right].team1_weight.change_time = cls.demotime;
+			grid->cells[row_top][col_right].teams[team_id].weight = max(grid->cells[row_top][col_right].teams[team_id].weight, neighbour_weight_far);
+			grid->cells[row_top][col_right].teams[team_id].change_time = cls.demotime;
 
 			// Right.
-			grid->cells[row][col_right].team1_weight.weight = max(grid->cells[row][col_right].team1_weight.weight, neighbour_weight_close);
-			grid->cells[row][col_right].team1_weight.change_time = cls.demotime;
+			grid->cells[row][col_right].teams[team_id].weight = max(grid->cells[row][col_right].teams[team_id].weight, neighbour_weight_close);
+			grid->cells[row][col_right].teams[team_id].change_time = cls.demotime;
 
 			// Bottom right.
-			grid->cells[row_bottom][col_right].team1_weight.weight = max(grid->cells[row_bottom][col_right].team1_weight.weight, neighbour_weight_far);
-			grid->cells[row_bottom][col_right].team1_weight.change_time = cls.demotime;
+			grid->cells[row_bottom][col_right].teams[team_id].weight = max(grid->cells[row_bottom][col_right].teams[team_id].weight, neighbour_weight_far);
+			grid->cells[row_bottom][col_right].teams[team_id].change_time = cls.demotime;
 
 			// Bottom.
-			grid->cells[row_bottom][col].team1_weight.weight = max(grid->cells[row_bottom][col].team1_weight.weight, neighbour_weight_close);
-			grid->cells[row_bottom][col].team1_weight.change_time = cls.demotime;
+			grid->cells[row_bottom][col].teams[team_id].weight = max(grid->cells[row_bottom][col].teams[team_id].weight, neighbour_weight_close);
+			grid->cells[row_bottom][col].teams[team_id].change_time = cls.demotime;
 
 			// Bottom left.
-			grid->cells[row_bottom][col_left].team1_weight.weight = max(grid->cells[row_bottom][col_left].team1_weight.weight, neighbour_weight_far);
-			grid->cells[row_bottom][col_left].team1_weight.change_time = cls.demotime;
+			grid->cells[row_bottom][col_left].teams[team_id].weight = max(grid->cells[row_bottom][col_left].teams[team_id].weight, neighbour_weight_far);
+			grid->cells[row_bottom][col_left].teams[team_id].change_time = cls.demotime;
 
 			// Left.
-			grid->cells[row][col_left].team1_weight.weight = max(grid->cells[row][col_left].team1_weight.weight, neighbour_weight_close);
-			grid->cells[row][col_left].team1_weight.change_time = cls.demotime;
+			grid->cells[row][col_left].teams[team_id].weight = max(grid->cells[row][col_left].teams[team_id].weight, neighbour_weight_close);
+			grid->cells[row][col_left].teams[team_id].change_time = cls.demotime;
 
 			// Top left.
-			grid->cells[row_top][col_left].team1_weight.weight = max(grid->cells[row_top][col_left].team1_weight.weight, neighbour_weight_far);
-			grid->cells[row_top][col_left].team1_weight.change_time = cls.demotime;
-		}
-		else
-		{
-			// The current cell.
-			grid->cells[row][col].team2_weight.weight = weight;
-			grid->cells[row][col].team2_weight.change_time = cls.demotime;
-
-			// Top.
-			grid->cells[row_top][col].team2_weight.weight = max(grid->cells[row_top][col].team2_weight.weight, neighbour_weight_close);
-			grid->cells[row_top][col].team2_weight.change_time = cls.demotime;
-
-			// Top right.
-			grid->cells[row_top][col_right].team2_weight.weight = max(grid->cells[row_top][col_right].team2_weight.weight, neighbour_weight_far);
-			grid->cells[row_top][col_right].team2_weight.change_time = cls.demotime;
-
-			// Right.
-			grid->cells[row][col_right].team2_weight.weight = max(grid->cells[row][col_right].team2_weight.weight, neighbour_weight_close);
-			grid->cells[row][col_right].team2_weight.change_time = cls.demotime;
-
-			// Bottom right.
-			grid->cells[row_bottom][col_right].team2_weight.weight = max(grid->cells[row_bottom][col_right].team2_weight.weight, neighbour_weight_far);
-			grid->cells[row_bottom][col_right].team2_weight.change_time = cls.demotime;
-
-			// Bottom.
-			grid->cells[row_bottom][col].team2_weight.weight = max(grid->cells[row_bottom][col].team2_weight.weight, neighbour_weight_close);
-			grid->cells[row_bottom][col].team2_weight.change_time = cls.demotime;
-
-			// Bottom left.
-			grid->cells[row_bottom][col_left].team2_weight.weight = max(grid->cells[row_bottom][col_left].team2_weight.weight, neighbour_weight_far);
-			grid->cells[row_bottom][col_left].team2_weight.change_time = cls.demotime;
-
-			// Left.
-			grid->cells[row][col_left].team2_weight.weight = max(grid->cells[row][col_left].team2_weight.weight, neighbour_weight_close);
-			grid->cells[row][col_left].team2_weight.change_time = cls.demotime;
-
-			// Top left.
-			grid->cells[row_top][col_left].team2_weight.weight = max(grid->cells[row_top][col_left].team2_weight.weight, neighbour_weight_far);
-			grid->cells[row_top][col_left].team2_weight.change_time = cls.demotime;
+			grid->cells[row_top][col_left].teams[team_id].weight = max(grid->cells[row_top][col_left].teams[team_id].weight, neighbour_weight_far);
+			grid->cells[row_top][col_left].teams[team_id].change_time = cls.demotime;
 		}
 	}
 }
@@ -425,7 +445,7 @@ void StatsGrid_Gather()
 	int i;
 	int row, col;
 	static int lastframecount = -1;
-	player_state_t *state;
+	player_state_t *state, *last_state;
 	player_info_t *info;
 
 	// Initiate the grid if it hasn't already been initiated.
@@ -477,8 +497,8 @@ void StatsGrid_Gather()
 
 	// Reset the amount of cells that each team "holds" since
 	// they will be recalculated when the weights are decreased.
-	stats_grid->team1_hold = 0;
-	stats_grid->team2_hold = 0;
+	stats_grid->teams[STATS_TEAM1].hold_count = 0;
+	stats_grid->teams[STATS_TEAM2].hold_count = 0;
 
 	// Go through all the cells and decrease their weights.
 	for(row = 0; row < stats_grid->row_count; row++)

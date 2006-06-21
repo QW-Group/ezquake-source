@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.21 2006-06-09 16:46:45 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.22 2006-06-21 22:28:52 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1156,38 +1156,68 @@ void Draw_TileClear (int x, int y, int w, int h) {
 	glEnd ();
 }
 
-void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha) {
+void Draw_AlphaRectangle (int x, int y, int w, int h, int c, float thickness, qbool fill, float alpha) 
+{
 	alpha = bound(0, alpha, 1);
 
 	if (!alpha)
+	{
 		return;
+	}
 
 	glDisable (GL_TEXTURE_2D);
-	if (alpha < 1) {
+	if (alpha < 1) 
+	{
 		glEnable (GL_BLEND);
 		glDisable(GL_ALPHA_TEST);
 		glColor4f (host_basepal[c * 3] / 255.0,  host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2] / 255.0, alpha);
-	} else {
-		glColor3f (host_basepal[c * 3] / 255.0, host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2]  /255.0);
+	} 
+	else 
+	{
+		glColor3f (host_basepal[c * 3] / 255.0, host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2]  / 255.0);
 	}
 
-	glBegin (GL_QUADS);
-	glVertex2f (x, y);
-	glVertex2f (x + w, y);
-	glVertex2f (x + w, y + h);
-	glVertex2f (x, y + h);
-	glEnd ();
+	thickness = max(0, thickness);
+
+	if(fill)
+	{
+		glRectf(x, y, x + w, y + h);
+	}
+	else
+	{
+		glRectf(x, y, x + w	, y + thickness);		
+		glRectf(x, y + thickness, x + thickness, y + h - thickness);
+		glRectf(x + w - thickness, y + thickness, x + w, y + h - thickness);		
+		glRectf(x, y + h, x + w, y + h - thickness);
+	}
 
 	glEnable (GL_TEXTURE_2D);
-	if (alpha < 1) {
-		glEnable(GL_ALPHA_TEST);
+	if (alpha < 1) 
+	{
+		glEnable (GL_ALPHA_TEST);
 		glDisable (GL_BLEND);
 	}
 	glColor3ubv (color_white);
 }
 
-void Draw_Fill (int x, int y, int w, int h, int c) {
+void Draw_AlphaFill(int x, int y, int w, int h, int c, float alpha)
+{
+	Draw_AlphaRectangle(x, y, w, h, c, 1, true, alpha);
+}
+
+void Draw_Fill (int x, int y, int w, int h, int c) 
+{
 	Draw_AlphaFill(x, y, w, h, c, 1);
+}
+
+void Draw_AlphaOutline (int x, int y, int w, int h, int c, float thickness, float alpha)
+{
+	Draw_AlphaRectangle (x, y, w, h, c, thickness, false, alpha);
+}
+
+void Draw_Outline (int x, int y, int w, int h, int c, float thickness)
+{
+	Draw_AlphaRectangle (x, y, w, h, c, thickness, false, 1);
 }
 
 // HUD -> Cokeman
