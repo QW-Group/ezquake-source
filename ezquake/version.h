@@ -1,23 +1,66 @@
+/*
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: version.h,v 1.4 2006-06-23 17:33:48 vvd0 Exp $
+*/
 // version.h
 
-#define	QW_VERSION		2.40
+#ifndef __VERSION_H__
+#define __VERSION_H__
 
-#ifdef _WIN32
-#define QW_PLATFORM	"Win32"
+#define	QW_VERSION			2.40
+
+#if defined(_WIN32)
+#define QW_PLATFORM			"Win32"
+
+#elif defined(__FreeBSD__)
+#define QW_PLATFORM			"FreeBSD"
+
+#elif defined(__OpenBSD__)
+#define QW_PLATFORM			"OpenBSD"
+
+#elif defined(__NetBSD__)
+#define QW_PLATFORM			"NetBSD"
+
+#elif defined(__DragonFly__)
+#define QW_PLATFORM			"DragonFly"
+
+#elif defined(__linux__)
+#define QW_PLATFORM			"Linux"
+
+#elif defined(__sun__)
+#define QW_PLATFORM			"SunOS"
+
+#elif defined(__APPLE__)
+#define QW_PLATFORM			"MacOSX"
+
+#else
+#define QW_PLATFORM			"Unknown"
 #endif
-#ifdef __APPLE__
-#define QW_PLATFORM "MacOSX"
-#endif
-#ifndef QW_PLATFORM
-#define QW_PLATFORM	"Linux"
-#endif
+
 
 #ifdef GLQUAKE
-#define QW_RENDERER	"GL"
+#define QW_RENDERER			"GL"
 #else
-#define QW_RENDERER "Soft"
+#define QW_RENDERER			"Soft"
 #endif
 
 int build_number (void);
 void CL_Version_f (void);
 char *VersionString (void);
+
+#endif /* !__VERSION_H__ */
