@@ -81,7 +81,7 @@
 				GlobalOptimizations="TRUE"
 				FavorSizeOrSpeed="2"
 				OptimizeForWindowsApplication="TRUE"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;strcmpi=_stricmp;strnicmp=_strnicmp"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				StringPooling="TRUE"
 				ExceptionHandling="FALSE"
 				RuntimeLibrary="4"
