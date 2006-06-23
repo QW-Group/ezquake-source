@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.15 2006-06-09 16:54:34 vvd0 Exp $
+	$Id: vid_wgl.c,v 1.16 2006-06-23 17:35:30 vvd0 Exp $
 
 */
 
@@ -129,6 +129,7 @@ cvar_t		_windowed_mouse = {"_windowed_mouse","1",CVAR_ARCHIVE};
 cvar_t		vid_displayfrequency = {"vid_displayfrequency", "0", CVAR_INIT};
 cvar_t		vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
 cvar_t      vid_flashonactivity = {"vid_flashonactivity", "1", CVAR_ARCHIVE};
+cvar_t		vid_forcerestoregamma = {"vid_forcerestoregamma", "0"};
 qbool allow_flash = false;
 
 typedef BOOL (APIENTRY *SWAPINTERVALFUNCPTR)(int);
@@ -730,8 +731,8 @@ void AppActivate(BOOL fActive, BOOL minimize) {
 			IN_ActivateMouse ();
 			IN_HideMouse ();
 		}
-
-		if (vid_canalttab && !Minimized && currentgammaramp)
+		// VVD: din't restore gamma after ALT+TAB on some ATI video cards
+		if (((vid_canalttab && !Minimized) || vid_forcerestoregamma.value) && currentgammaramp)
 			VID_SetDeviceGammaRamp (currentgammaramp);
 	} else {
 		allow_flash = true;
@@ -1156,6 +1157,7 @@ void VID_Init (unsigned char *palette) {
 	Cvar_Register (&vid_hwgammacontrol);
 	Cvar_Register (&vid_displayfrequency);
 	Cvar_Register (&vid_flashonactivity);
+    Cvar_Register (&vid_forcerestoregamma);
 
 	Cvar_ResetCurrentGroup();
 
