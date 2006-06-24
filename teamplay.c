@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.37 2006-06-20 17:02:01 johnnycz Exp $
+    $Id: teamplay.c,v 1.38 2006-06-24 20:03:13 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -216,6 +216,7 @@ f_trigger_t f_triggers[] = {
 	{"f_exit", false, false},
 	{"f_demostart", false, false},
 	{"f_demoend", false, false},
+	{"f_captureframe", false, false}, 
 
 	{"f_weaponchange", false, false},
 
