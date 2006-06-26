@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.41 2006-06-21 22:28:52 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.42 2006-06-26 21:57:28 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -3055,7 +3055,6 @@ void HUD_NewMap()
 		if(temp != NULL)
 		{
 			radar_pic = (mpic_t *)Q_malloc(sizeof(mpic_t));
-			//memcpy(&radar_pic->texnum, &temp->texnum, sizeof(mpic_t) - 8);
 			radar_pic->texnum	= temp->texnum;
 			radar_pic->height	= temp->height;
 			radar_pic->sh		= temp->sh;
@@ -3133,6 +3132,184 @@ void HUD_NewMap()
 	}
 }
 
+void TeamHold_DrawPercentageBar(int x, int y, int width, int height, 
+								float team1_percent, float team2_percent, 
+								int team1_color, int team2_color,
+								int show_text, int vertical,
+								int vertical_text, float opacity)
+{
+	int _x, _y;
+	int _width, _height;
+
+	if(vertical)
+	{
+		//
+		// Draw vertical.
+		//
+
+		// Team 1.
+		_x = x;
+		_y = y;
+		_width = max(0, width);
+		_height = ROUND(height * team1_percent);
+		_height = max(0, height);
+
+		#ifdef GLQUAKE
+		Draw_AlphaFill(_x, _y, _width, _height, team1_color, opacity);
+		#else
+		Draw_Fill(_x, _y, _width, _height, team1_color);
+		#endif
+
+		// Team 2.
+		_x = x;
+		_y = ROUND(y + (height * team1_percent));
+		_width = max(0, width);
+		_height = ROUND(height * team2_percent);
+		_height = max(0, _height);
+
+		#ifdef GLQUAKE
+		Draw_AlphaFill(_x, _y, _width, _height, team2_color, opacity);
+		#else
+		Draw_Fill(_x, _y, _width, _height, team2_color);
+		#endif
+
+		// Show the percentages in numbers also.
+		if(show_text)
+		{
+			// TODO: Move this to a separate function (since it's prett much copy and paste for both teams).
+			// Team 1.
+			if(team1_percent > 0.05)
+			{
+				if(vertical_text)
+				{
+					int percent = 0;
+					int percent10 = 0;
+					int percent100 = 0;			
+			
+					_x = x + (width / 2) - 4;
+					_y = ROUND(y + (height * team1_percent)/2 - 12);
+
+					percent = ROUND(100 * team1_percent);
+
+					if(percent100 = percent / 100)
+					{
+						Draw_String(_x, _y, va("%d", percent100));
+						_y += 8;
+					}
+
+					if(percent10 = percent / 10)
+					{
+						Draw_String(_x, _y, va("%d", percent10));
+						_y += 8;
+					}
+
+					Draw_String(_x, _y, va("%d", percent % 10));
+					_y += 8;
+
+					Draw_String(_x, _y, "%");
+				}
+				else
+				{
+					_x = x + (width / 2) - 12;
+					_y = ROUND(y + (height * team1_percent)/2 - 4);					
+					Draw_String(_x, _y, va("%2.0f%%", 100 * team1_percent));
+				}
+			}
+
+			// Team 2.			
+			if(team2_percent > 0.05)
+			{
+				if(vertical_text)
+				{
+					int percent = 0;
+					int percent10 = 0;
+					int percent100 = 0;			
+
+					_x = x + (width / 2) - 4;
+					_y = ROUND(y + (height * team1_percent) + (height * team2_percent)/2 - 12);
+
+					percent = ROUND(100 * team2_percent);
+
+					if(percent100 = percent / 100)
+					{
+						Draw_String(_x, _y, va("%d", percent100));
+						_y += 8;
+					}
+
+					if(percent10 = percent / 10)
+					{
+						Draw_String(_x, _y, va("%d", percent10));
+						_y += 8;
+					}
+
+					Draw_String(_x, _y, va("%d", percent % 10));
+					_y += 8;
+
+					Draw_String(_x, _y, "%");
+				}
+				else
+				{
+					_x = x + (width / 2) - 12;
+					_y = ROUND(y + (height * team1_percent) + (height * team2_percent)/2 - 4);
+					Draw_String(_x, _y, va("%2.0f%%", 100 * team2_percent));
+				}
+			}
+		}
+	}
+	else
+	{
+		//
+		// Draw horizontal.
+		//
+
+		// Team 1.
+		_x = x;
+		_y = y;
+		_width = ROUND(width * team1_percent);
+		_width = max(0, _width);
+		_height = max(0, height);
+
+		#ifdef GLQUAKE
+		Draw_AlphaFill(_x, _y, _width, _height, team1_color, opacity);
+		#else
+		Draw_Fill(_x, _y, _width, _height, team1_color);
+		#endif
+
+		// Team 2.
+		_x = ROUND(x + (width * team1_percent));
+		_y = y;
+		_width = ROUND(width * team2_percent);
+		_width = max(0, _width);
+		_height = max(0, height);
+
+		#ifdef GLQUAKE
+		Draw_AlphaFill(_x, _y, _width, _height, team2_color, opacity);
+		#else
+		Draw_Fill(_x, _y, _width, _height, team2_color);
+		#endif
+
+		// Show the percentages in numbers also.
+		if(show_text)
+		{
+			// Team 1.
+			if(team1_percent > 0.05)
+			{
+				_x = ROUND(x + (width * team1_percent)/2 - 8);
+				_y = y + (height / 2) - 4;
+				Draw_String(_x, _y, va("%2.0f%%", 100 * team1_percent));
+			}
+
+			// Team 2.
+			if(team2_percent > 0.05)
+			{
+				_x = ROUND(x + (width * team1_percent) + (width * team2_percent)/2 - 8);
+				_y = y + (height / 2) - 4;
+				Draw_String(_x, _y, va("%2.0f%%", 100 * team2_percent));
+			}
+		}
+	}			
+}
+
 void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 {
 	int x, y;
@@ -3148,7 +3325,8 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 		*hud_teamholdbar_height,
 		*hud_teamholdbar_vertical,
 		*hud_teamholdbar_show_text,
-		*hud_teamholdbar_onlytp;
+		*hud_teamholdbar_onlytp,
+		*hud_teamholdbar_vertical_text;
 
     if (hud_teamholdbar_style == NULL)    // first time
     {
@@ -3158,7 +3336,8 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 		hud_teamholdbar_height				= HUD_FindVar(hud, "height");
 		hud_teamholdbar_vertical			= HUD_FindVar(hud, "vertical");
 		hud_teamholdbar_show_text			= HUD_FindVar(hud, "show_text");
-		hud_teamholdbar_onlytp			= HUD_FindVar(hud, "onlytp");
+		hud_teamholdbar_onlytp				= HUD_FindVar(hud, "onlytp");
+		hud_teamholdbar_vertical_text		= HUD_FindVar(hud, "vertical_text");
     }
 
 	// Don't show when not in teamplay.
@@ -3175,9 +3354,6 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 		// We need something to work with.
 		if(stats_grid != NULL)
 		{	
-			int _x, _y;
-			int _width, _height;
-
 			// Check if we have any hold values to calculate from.
 			if(stats_grid->teams[STATS_TEAM1].hold_count + stats_grid->teams[STATS_TEAM2].hold_count > 0)
 			{
@@ -3194,95 +3370,15 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 				return;
 			}
 
-			// Draw the color bar based on the team.
-			if(hud_teamholdbar_vertical->value)
-			{
-				//
-				// Draw vertical.
-				//
-
-				// Team 1.
-				_x = x;
-				_y = y;
-				_width = width;
-				_height = height * team1_percent;	
-
-				#ifdef GLQUAKE
-				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM1].color, hud_teamholdbar_opacity->value);
-				#else
-				Draw_Fill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM1].color);
-				#endif
-
-				// Team 2.
-				_x = x;
-				_y = y + (height * team1_percent);				
-				_width = width;
-				_height = height * team2_percent;
-
-				#ifdef GLQUAKE
-				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM2].color, hud_teamholdbar_opacity->value);
-				#else
-				Draw_Fill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM2].color);
-				#endif
-
-				// Show the percentages in numbers also.
-				if(hud_teamholdbar_show_text->value)
-				{
-					// Team 1.
-					_x = x + (width / 2) - 12;
-					_y = y + (height * team1_percent)/2 - 4;
-					Draw_String(_x, _y, va("%2.0f%%", 100 * team1_percent));
-
-					// Team 2.					
-					_x = x + (width / 2) - 12;
-					_y = y + (height * team1_percent) + (height * team2_percent)/2 - 4;
-					Draw_String(_x, _y, va("%2.0f%%", 100 * team2_percent));
-				}
-			}
-			else
-			{
-				//
-				// Draw horizontal.
-				//
-
-				// Team 1.
-				_x = x;
-				_y = y;
-				_width = width * team1_percent;
-				_height = height;
-
-				#ifdef GLQUAKE
-				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM1].color, hud_teamholdbar_opacity->value);
-				#else
-				Draw_Fill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM1].color);
-				#endif
-
-				// Team 2.
-				_x = x + (width * team1_percent);
-				_y = y;
-				_width = width * team2_percent;
-				_height = height;
-
-				#ifdef GLQUAKE
-				Draw_AlphaFill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM2].color, hud_teamholdbar_opacity->value);
-				#else
-				Draw_Fill(_x, _y, _width, _height, stats_grid->teams[STATS_TEAM2].color);
-				#endif
-
-				// Show the percentages in numbers also.
-				if(hud_teamholdbar_show_text->value)
-				{
-					// Team 1.
-					_x = x + (width * team1_percent)/2 - 8;
-					_y = y + (height / 2) - 4;
-					Draw_String(_x, _y, va("%2.0f%%", 100 * team1_percent));
-
-					// Team 2.
-					_x = x + (width * team1_percent) + (width * team2_percent)/2 - 8;
-					_y = y + (height / 2) - 4;
-					Draw_String(_x, _y, va("%2.0f%%", 100 * team2_percent));
-				}
-			}			
+			// Draw the percentage bar.
+			TeamHold_DrawPercentageBar(x, y, width, height, 
+				team1_percent, team2_percent, 
+				stats_grid->teams[STATS_TEAM1].color, 
+				stats_grid->teams[STATS_TEAM2].color, 
+				hud_teamholdbar_show_text->value, 
+				hud_teamholdbar_vertical->value,
+				hud_teamholdbar_vertical_text->value,
+				hud_teamholdbar_opacity->value);	
 		}
 		else
 		{
@@ -3296,6 +3392,185 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 	}
 }
 
+qbool TeamHold_GetItemShowStatus(const char *item, const char *matchstring)
+{
+	int offsets[1];
+	pcre *re;
+	const char *error;
+	int erroffset;
+	int match = 0;
+
+	re = pcre_compile(
+			item,				// The pattern.
+			PCRE_CASELESS,		// Case insensitive.
+			&error,				// Error message.
+			&erroffset,			// Error offset.
+			NULL);				// use default character tables.
+
+	if(error)
+	{
+		return false;
+	}
+
+	if(match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, 1) >= 0)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+#define HUD_TEAMHOLDINFO_STYLE_TEAM_NAMES		1
+#define HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS		2
+
+void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
+{
+	int i;
+	int x, y;
+	int width, height;
+
+	static cvar_t
+        *hud_teamholdinfo_style = NULL,
+		*hud_teamholdinfo_opacity,
+		*hud_teamholdinfo_width,
+		*hud_teamholdinfo_height,
+		*hud_teamholdinfo_onlytp,
+		*hud_teamholdinfo_itemfilter;
+
+    if (hud_teamholdinfo_style == NULL)    // first time
+    {
+		hud_teamholdinfo_style				= HUD_FindVar(hud, "style");
+		hud_teamholdinfo_opacity			= HUD_FindVar(hud, "opacity");
+		hud_teamholdinfo_width				= HUD_FindVar(hud, "width");
+		hud_teamholdinfo_height				= HUD_FindVar(hud, "height");
+		hud_teamholdinfo_onlytp				= HUD_FindVar(hud, "onlytp");
+		hud_teamholdinfo_itemfilter			= HUD_FindVar(hud, "itemfilter");
+    }
+
+	// Don't show when not in teamplay.
+	if(!cl.teamplay && hud_teamholdinfo_onlytp->value)
+	{
+		return;
+	}
+
+	// We don't have anything to show.
+	if(stats_important_ents == NULL || stats_grid == NULL)
+	{
+		return;
+	}
+
+	// Get the height based on how many items we have, or what the user has set it to.
+	height = abs(ROUND(max(stats_important_ents->count*8, hud_teamholdinfo_height->value)));
+	width = max(0, hud_teamholdinfo_width->value);
+	
+	if (HUD_PrepareDraw(hud, width , height, &x, &y))
+	{
+		qbool show_pent		= false;
+		qbool show_quad		= false;
+		qbool show_ring		= false;
+		qbool show_suit		= false;
+		qbool show_rl		= false;
+		qbool show_lg		= false;
+		qbool show_gl		= false;
+		qbool show_sng		= false;
+		qbool show_mh		= false;
+		qbool show_ra		= false;
+		qbool show_ya		= false;
+		qbool show_ga		= false;
+
+		// Parse the item filter.
+		show_rl		= TeamHold_GetItemShowStatus("RL",		hud_teamholdinfo_itemfilter->string);
+		show_quad	= TeamHold_GetItemShowStatus("QUAD",	hud_teamholdinfo_itemfilter->string);
+		show_ring	= TeamHold_GetItemShowStatus("RING",	hud_teamholdinfo_itemfilter->string);
+		show_pent	= TeamHold_GetItemShowStatus("PENT",	hud_teamholdinfo_itemfilter->string);
+		show_suit	= TeamHold_GetItemShowStatus("SUIT",	hud_teamholdinfo_itemfilter->string);
+		show_lg		= TeamHold_GetItemShowStatus("LG",		hud_teamholdinfo_itemfilter->string);
+		show_gl		= TeamHold_GetItemShowStatus("GL",		hud_teamholdinfo_itemfilter->string);
+		show_sng	= TeamHold_GetItemShowStatus("SNG",		hud_teamholdinfo_itemfilter->string);
+		show_mh		= TeamHold_GetItemShowStatus("MH",		hud_teamholdinfo_itemfilter->string);
+		show_ra		= TeamHold_GetItemShowStatus("RA",		hud_teamholdinfo_itemfilter->string);
+		show_ya		= TeamHold_GetItemShowStatus("YA",		hud_teamholdinfo_itemfilter->string);
+		show_ga		= TeamHold_GetItemShowStatus("GA",		hud_teamholdinfo_itemfilter->string);
+
+		// Go through all the items and print the stats for them.
+		for(i = 0; i < stats_important_ents->count; i++)
+		{
+			float team1_percent;
+			float team2_percent;
+			int team1_hold_count = 0;
+			int team2_hold_count = 0;
+			int names_width = 0;
+
+			// If the item isn't of the specified type, then skip it.
+			if(!(	(show_rl	&& !strncmp(stats_important_ents->list[i].name, "RL", 2))
+				||	(show_quad	&& !strncmp(stats_important_ents->list[i].name, "QUAD", 4))
+				||	(show_ring	&& !strncmp(stats_important_ents->list[i].name, "RING", 4))
+				||	(show_pent	&& !strncmp(stats_important_ents->list[i].name, "PENT", 4))
+				||	(show_suit	&& !strncmp(stats_important_ents->list[i].name, "SUIT", 4))
+				||	(show_lg	&& !strncmp(stats_important_ents->list[i].name, "LG", 2))
+				||	(show_gl	&& !strncmp(stats_important_ents->list[i].name, "GL", 2))
+				||	(show_sng	&& !strncmp(stats_important_ents->list[i].name, "SNG", 3))
+				||	(show_mh	&& !strncmp(stats_important_ents->list[i].name, "MH", 2))
+				||	(show_ra	&& !strncmp(stats_important_ents->list[i].name, "RA", 2))
+				||	(show_ya	&& !strncmp(stats_important_ents->list[i].name, "YA", 2))
+				||	(show_ga	&& !strncmp(stats_important_ents->list[i].name, "GA", 2))
+				))
+			{
+				continue;
+			}
+
+			// Calculate the width of the longest item name so we can use it for padding.
+			names_width = 8 * (stats_important_ents->longest_name + 1);
+
+			// Calculate the percentages of this item that the two teams holds.
+			team1_hold_count = stats_important_ents->list[i].teams_hold_count[STATS_TEAM1];
+			team2_hold_count = stats_important_ents->list[i].teams_hold_count[STATS_TEAM2];
+
+			team1_percent = ((float)team1_hold_count) / (team1_hold_count + team2_hold_count);
+			team2_percent = ((float)team2_hold_count) / (team1_hold_count + team2_hold_count);
+
+			team1_percent = fabs(max(0, team1_percent));
+			team2_percent = fabs(max(0, team2_percent));
+
+			// Write the name of the item.
+			Draw_ColoredString(x, y, va("&cff0%s:", stats_important_ents->list[i].name), 0);
+			
+			if(hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_TEAM_NAMES)
+			{
+				//
+				// Prints the team name that holds the item.
+				//
+				if(team1_percent > team2_percent)
+				{
+					Draw_ColoredString(x + names_width, y, stats_important_ents->teams[STATS_TEAM1].name, 0);
+				}
+				else if(team1_percent < team2_percent)
+				{
+					Draw_ColoredString(x + names_width, y, stats_important_ents->teams[STATS_TEAM2].name, 0);
+				}
+			}
+			else if(hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS)
+			{
+				//
+				// Show a percenteage bar for the item.
+				//
+				TeamHold_DrawPercentageBar(x + names_width, y, 
+					ROUND(hud_teamholdinfo_width->value - names_width), 8, 
+					team1_percent, team2_percent, 
+					stats_important_ents->teams[STATS_TEAM1].color, 
+					stats_important_ents->teams[STATS_TEAM2].color, 
+					0, // Don't show percentage values, get's too cluttered.
+					false,
+					false,
+					hud_teamholdinfo_opacity->value);			
+			}
+
+			// Next line.
+			y += 8;			
+		}
+	}
+}
+
 // What stats to draw.
 #define HUD_RADAR_STATS_NONE				0
 #define HUD_RADAR_STATS_BOTH_TEAMS_HOLD		1
@@ -3305,7 +3580,7 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 #define HUD_RADAR_STATS_TEAM1_DEATHS		5
 #define HUD_RADAR_STATS_TEAM2_DEATHS		6
 
-void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, int pic_width, int pic_height, int style)
+void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pic_width, int pic_height, int style)
 {
 	int row, col;	
 	int visited_team1 = 0, visited_team2 = 0;
@@ -3329,11 +3604,11 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, int pic_width, int 
 
 			// Calculate the pixel coordinates of the top left corner of the current cell.
 			// (This is times 8 because the conversion formula was calculated from a .loc-file)
-			tl_x = map_x_slope*(8*grid->cells[row][col].tl_x) + map_x_intercept;
-			tl_y = map_y_slope*(8*grid->cells[row][col].tl_y) + map_y_intercept;
+			tl_x = (map_x_slope*(8*grid->cells[row][col].tl_x) + map_x_intercept) * scale;
+			tl_y = (map_y_slope*(8*grid->cells[row][col].tl_y) + map_y_intercept) * scale;
 
 			// Calculate the cell length in pixel length.
-			p_cell_length = ROUND(map_x_slope*(8*grid->cell_length));
+			p_cell_length = ROUND(map_x_slope*(8*grid->cell_length) * scale);
 
 			// Don't draw the stats stuff outside the picture.
 			if(tl_x + p_cell_length > pic_width || tl_y + p_cell_length > pic_height || x + tl_x < x || y + tl_y < y)
@@ -3432,13 +3707,17 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, int pic_width, int 
 #define HUD_RADAR_SHOW_AMMO_NAILS		3
 #define HUD_RADAR_SHOW_AMMO_SHELLS		4
 
-void Radar_DrawEntities(int x, int y, float scale, int show_entities, int show_projectiles, float player_size, int show_ammo, int show_health)
+void Radar_DrawEntities(int x, int y, float scale, 
+						int show_entities, int show_projectiles, 
+						float player_size, int show_ammo, 
+						int show_health, int show_hold_areas)
 {
 	int i;
 
 	// Entities (weapons and such). cl_main.c
 	extern visentlist_t cl_visents;
 
+	// Go through all the entities and draw the ones we're supposed to.
 	for (i = 0; i < cl_visents.count; i++)
 	{
 		int entity_q_x = 0;
@@ -3454,6 +3733,7 @@ void Radar_DrawEntities(int x, int y, float scale, int show_entities, int show_p
 		entity_p_x = x + ROUND((map_x_slope*entity_q_x + map_x_intercept) * scale);
 		entity_p_y = y + ROUND((map_y_slope*entity_q_y + map_y_intercept) * scale);
 
+		// TODO: Replace all model name comparison below with MOD_HINT's instead for less comparisons (create new ones in Mod_LoadAliasModel() in r_model.c and gl_model.c/.h for the ones that don't have one already).
 		if(show_entities >= HUD_RADAR_SHOW_POWERUPS)
 		{
 			//
@@ -3503,7 +3783,7 @@ void Radar_DrawEntities(int x, int y, float scale, int show_entities, int show_p
 				// Back packs.
 				float back_pack_size = 0;
 
-				back_pack_size = max(player_size * 0.5, 3.0);
+				back_pack_size = max(player_size * 0.5, 0.05);
 
 				Draw_AlphaCircleFill (entity_p_x, entity_p_y, back_pack_size, 114, 1);
 				Draw_AlphaCircleOutline (entity_p_x, entity_p_y, back_pack_size, 1.0, 0, 1);
@@ -3724,8 +4004,8 @@ void Radar_DrawEntities(int x, int y, float scale, int show_entities, int show_p
 				// Get the entity angle in radians.
 				entity_angle = (cl_visents.list[i].angles[1]*M_PI)/180;
 
-				x_line_end = entity_p_x + 5 * cos(entity_angle);
-				y_line_end = entity_p_y - 5 * sin(entity_angle);
+				x_line_end = entity_p_x + 5 * cos(entity_angle) * scale;
+				y_line_end = entity_p_y - 5 * sin(entity_angle) * scale;
 
 				// Draw the rocket/grenade showing it's angle also.
 				Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);				
@@ -3754,6 +4034,26 @@ void Radar_DrawEntities(int x, int y, float scale, int show_entities, int show_p
 				// Draw the shaft beam.
 				Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);
 			}
+		}
+	}
+
+	// Draw a circle around "hold areas", the grid cells within this circle
+	// are the ones that are counted for that particular hold area. The team
+	// that has the most percentage of these cells is considered to hold that area.
+	if(show_hold_areas && stats_important_ents != NULL && stats_important_ents->list != NULL)
+	{
+		int entity_p_x = 0;
+		int entity_p_y = 0;
+
+		for(i = 0; i < stats_important_ents->count; i++)
+		{
+			entity_p_x = x + ROUND((map_x_slope*8*stats_important_ents->list[i].origin[0] + map_x_intercept) * scale);
+			entity_p_y = y + ROUND((map_y_slope*8*stats_important_ents->list[i].origin[1] + map_y_intercept) * scale);
+
+			Draw_ColoredString(entity_p_x  - (8 * strlen(stats_important_ents->list[i].name)) / 2.0, entity_p_y - 4, 
+				va("&c55f%s", stats_important_ents->list[i].name), 0);
+
+			Draw_AlphaCircleOutline(entity_p_x , entity_p_y, map_x_slope * 8 * stats_important_ents->hold_radius * scale, 1.0, 15, 0.2);
 		}
 	}
 }
@@ -3838,6 +4138,7 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 				player_z_relative = max(player_z_relative, 0.2);
 			}
 
+			// Make the players fade out as they get less armor/health.
 			if(fade_players)
 			{
 				int armor_strength = 0;
@@ -3845,6 +4146,7 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 					((info->stats[STAT_ITEMS] & IT_ARMOR2) ? 150 : 
 					((info->stats[STAT_ITEMS] & IT_ARMOR3) ? 200 : 0));
 
+				// Don't let the players get completly transparent so add 0.2 to the final value.
 				player_alpha = ((info->stats[STAT_HEALTH] + (info->stats[STAT_ARMOR]*armor_strength)) / 100.0) + 0.2;
 			}
 
@@ -3873,7 +4175,6 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 					Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, player_size*2*player_z_relative, 244, 0.2);
 				}
 			}
-
 
 			// Draw a line showing what direction the player is looking in.
 			{				
@@ -3963,7 +4264,8 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		*hud_radar_show_projectiles,
 		*hud_radar_show_stats,
 		*hud_radar_show_ammo,
-		*hud_radar_show_health;
+		*hud_radar_show_health,
+		*hud_radar_show_hold;
 
     if (hud_radar_opacity == NULL)    // first time
     {
@@ -3981,6 +4283,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		hud_radar_show_stats		= HUD_FindVar(hud, "show_stats");
 		hud_radar_show_ammo			= HUD_FindVar(hud, "show_ammo");
 		hud_radar_show_health		= HUD_FindVar(hud, "show_health");
+		hud_radar_show_hold			= HUD_FindVar(hud, "show_hold");
     }
 
 	// Don't show anything if it's a normal player.
@@ -4046,11 +4349,6 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 	if (HUD_PrepareDraw(hud, ROUND(width_limit) , ROUND(height_limit), &x, &y))
 	{
 		static int lastframecount = -1;
-		static int last_width = -1;
-		static int last_height = -1;
-
-		last_width = width;
-		last_height = height;
 
 		// Place the map picture in the center of the HUD element.
 		x += ROUND((width_limit / 2.0) - (width / 2.0));
@@ -4079,7 +4377,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		// Draw team stats.
 		if(hud_radar_show_stats->value)
 		{
-			Radar_DrawGrid(stats_grid, x, y, width, height, hud_radar_show_stats->value);
+			Radar_DrawGrid(stats_grid, x, y, scale, width, height, hud_radar_show_stats->value);
 		}
 
 		// Draw entities such as powerups, weapons and backpacks.
@@ -4090,7 +4388,8 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 				hud_radar_show_projectiles->value,
 				hud_radar_player_size->value,
 				hud_radar_show_ammo->value,
-				hud_radar_show_health->value);
+				hud_radar_show_health->value,
+				hud_radar_show_hold->value);
 		}
 
 		// Draw the players.
@@ -4613,6 +4912,7 @@ void CommonDraw_Init(void)
 		"show_projectiles", "1",
 		"show_stats", "1",
 		"fade_players", "1",
+		"show_hold", "0",
         NULL);
 #endif
 
@@ -4622,9 +4922,21 @@ void CommonDraw_Init(void)
 		"opacity", "0.8",
 		"width", "200",
 		"height", "8",
-		"vertical", "0",
+		"vertical", "0",		
+		"vertical_text", "0",
 		"show_text", "1",
 		"onlytp", "0",
+        NULL);
+
+	HUD_Register("teamholdinfo", NULL, "Shows which important items in the level that are being held by the teams.",
+        HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldInfo,
+        "0", "top", "left", "bottom", "0", "0", "0",
+		"opacity", "0.8",
+		"width", "200",
+		"height", "8",
+		"onlytp", "0",
+		"style", "1",
+		"itemfilter", "pent rl quad",
         NULL);
 
 /* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)

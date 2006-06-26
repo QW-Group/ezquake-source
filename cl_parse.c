@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.50 2006-06-18 00:01:40 cokeman1982 Exp $
+	$Id: cl_parse.c,v 1.51 2006-06-26 21:57:28 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -431,6 +431,7 @@ void CL_Prespawn (void)
 
 	// Reset the status grid.
 	StatsGrid_Remove(&stats_grid);
+	StatsGrid_ResetHoldItems();
 #ifdef GLQUAKE
 	HUD_NewMap();		// Cokeman 2006-05-28 HUD mvdradar
 #endif

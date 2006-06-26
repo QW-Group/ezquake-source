@@ -2,6 +2,7 @@
 #include "stats_grid.h"
 
 stats_weight_grid_t *stats_grid = NULL;
+stats_entities_t *stats_important_ents = NULL;
 
 void StatsGrid_Remove(stats_weight_grid_t **grid)
 {
@@ -106,7 +107,7 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 			(*grid)->cells[row][col].tl_y = cl.worldmodel->mins[1] + (row * cell_length);
 		}
 	}
-
+	
 	// If everything went well set the rest of the stuff.
 	(*grid)->falloff_interval	= falloff_interval;
 	(*grid)->falloff_value		= falloff_value;
@@ -125,13 +126,176 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 	(*grid)->hold_threshold						= hold_threshold;
 }
 
+#define STATS_MAX_IMPORTANT_ENTS	16
+
+void StatsGrid_SetHoldItemName(char *dst_name, const char *src_name, int count)
+{
+	// If there are more than one of this item already then name it "ITEM#"
+	// RL, RL2, RL3 and so on.
+	if(count > 1)
+	{
+		strcpy(dst_name, va("%s%d", src_name, count));
+	}
+	else
+	{
+		strcpy(dst_name, src_name);
+	}
+}
+
+void StatsGrid_InitHoldItems()
+{
+	int i;
+	int ents_count = 0;
+
+	// Used to keep count of how many of the different
+	// types of items that exist on the map, so that they
+	// can be named "RL" "RL2" and so on.
+	int pent_count	= 0;
+	int quad_count	= 0;
+	int ring_count	= 0;
+	int suit_count	= 0;
+	int rl_count	= 0;
+	int gl_count	= 0;
+	int lg_count	= 0;
+	int sng_count	= 0;
+	int mega_count	= 0;
+	int ra_count	= 0;
+	int ya_count	= 0;
+	int ga_count	= 0;
+
+	// Buffer.
+	stats_entity_t temp_ents[STATS_MAX_IMPORTANT_ENTS];
+
+	// Entities (weapons and such). cl_main.c
+	extern visentlist_t cl_visents;
+
+	// Don't create the list before we have any entities to work with.
+	if(cl_visents.count <= 0)
+	{
+		return;
+	}
+
+	stats_important_ents = (stats_entities_t *)Q_malloc(sizeof(stats_entities_t));
+
+	// Something bad happened.
+	if(stats_important_ents == NULL)
+	{
+		return;
+	}
+
+	// Go through the entities and check for the important ones
+	// and save their name and location.
+	for (i = 0; i < cl_visents.count; i++)
+	{
+		if(!strcmp(cl_visents.list[i].model->name, "progs/invulner.mdl"))
+		{
+			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "PENT", ++pent_count);
+		}
+		else if(!strcmp(cl_visents.list[i].model->name, "progs/quaddama.mdl"))
+		{
+			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "QUAD", ++quad_count);
+		}
+		else if(!strcmp(cl_visents.list[i].model->name, "progs/invisibl.mdl"))
+		{
+			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "RING", ++ring_count);
+		}
+		else if(!strcmp(cl_visents.list[i].model->name, "progs/suit.mdl"))
+		{
+			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "SUIT", ++suit_count);
+		}
+		else if(!strcmp(cl_visents.list[i].model->name, "progs/g_rock2.mdl"))
+		{
+			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "RL", ++rl_count);
+		}		
+		else if(!strcmp(cl_visents.list[i].model->name, "progs/g_light.mdl"))
+		{
+			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "LG", ++lg_count);
+		}
+		else if(!strcmp(cl_visents.list[i].model->name, "progs/g_rock.mdl"))
+		{			
+			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "GL", ++gl_count);
+		}
+		else if(!strcmp(cl_visents.list[i].model->name, "progs/g_nail2.mdl"))
+		{		
+			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "SNG", ++sng_count);
+		}
+		else if(!strcmp(cl_visents.list[i].model->name, "maps/b_bh100.bsp"))
+		{
+			// Megahealth.
+			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "MH", ++mega_count);
+		}
+		else if(!strcmp(cl_visents.list[i].model->name, "progs/armor.mdl"))
+		{
+			if(cl_visents.list[i].skinnum == 0)
+			{
+				StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "GA", ++ga_count);
+			}
+			else if(cl_visents.list[i].skinnum == 1)
+			{
+				StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "YA", ++ya_count);
+			}
+			else if(cl_visents.list[i].skinnum == 2)
+			{
+				StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "RA", ++ra_count);
+			}
+			else
+			{
+				continue;
+			}
+		}
+		else
+		{
+			// The entity wasn't one we wanted.
+			continue;
+		}
+
+		// Copy the position of the entity into the buffer.
+		VectorCopy(cl_visents.list[i].origin, temp_ents[ents_count].origin);
+
+		// Reset the team values.
+		temp_ents[ents_count].teams_hold_count[STATS_TEAM1] = 0;
+		temp_ents[ents_count].teams_hold_count[STATS_TEAM2] = 0;
+
+		ents_count++;
+	}
+
+	// Set the count of found entities and allocate memory for the
+	// final list of items.
+	stats_important_ents->count = ents_count;
+	stats_important_ents->list = Q_calloc(ents_count, sizeof(stats_entity_t));
+
+	// Something bad happened, cleanup.
+	if(stats_important_ents->list == NULL)
+	{
+		Q_free(stats_important_ents);
+		stats_important_ents = NULL;
+		stats_important_ents->count = 0;
+		return;
+	}
+
+	// Copy the entities from the buffer to the final list.
+	for(i = 0; i < ents_count; i++)
+	{
+		memcpy(&stats_important_ents->list[i], &temp_ents[i], sizeof(stats_entity_t));
+	}
+
+	// Set the radius around the items that decides if it's being
+	// held by a team or not.
+	stats_important_ents->hold_radius = 264.0;
+
+	// Get the entity with the longest name to use for padding
+	// (so we don't have to calculate this more than once).
+	stats_important_ents->longest_name = 0;
+	for(i = 0; i < stats_important_ents->count; i++)
+	{
+		int current = strlen(stats_important_ents->list[i].name);
+		stats_important_ents->longest_name = (current > stats_important_ents->longest_name) ? current : stats_important_ents->longest_name;
+	}
+}
+
 void StatsGrid_InitTeamNames(stats_weight_grid_t *grid)
 {
 	int i;
-
-	// Get the first players team and set that as team1.
-	strcpy(grid->teams[STATS_TEAM1].name, cl.players[0].team);
-	grid->teams[STATS_TEAM1].color = Sbar_BottomColor(&cl.players[0]);
 
 	// Go through the rest of the players until another team is found, that must be team2.
 	for (i = 0; i < MAX_CLIENTS; i++) 
@@ -140,6 +304,13 @@ void StatsGrid_InitTeamNames(stats_weight_grid_t *grid)
 		if(!cl.players[i].name[0] || cl.players[i].spectator)
 		{
 			continue;
+		}
+
+		// Get the first player's team and set that as team1.
+		if(!grid->teams[STATS_TEAM1].name[0])
+		{
+			strcpy(grid->teams[STATS_TEAM1].name, cl.players[i].team);
+			grid->teams[STATS_TEAM1].color = Sbar_BottomColor(&cl.players[i]);
 		}
 
 		// If this players team isn't the same as the first players team
@@ -196,6 +367,72 @@ void StatsGrid_DecreaseWeight(cell_weight_t *weight, stats_weight_grid_t *grid)
 	}
 }
 
+void StatsGrid_ResetHoldItems()
+{
+	// Nothing to reset.
+	if(stats_important_ents == NULL)
+	{
+		return;
+	}
+
+	// Free any entities in the list.
+	if(stats_important_ents->list != NULL)
+	{
+		Q_free(stats_important_ents->list);
+		stats_important_ents->list = NULL;
+	}
+
+	// Reset.
+	Q_free(stats_important_ents);
+	stats_important_ents = NULL;
+}
+
+void StatsGrid_ResetHoldItemCounts()
+{
+	int i = 0;
+
+	if(stats_important_ents == NULL)
+	{
+		return;
+	}
+
+	for(i = 0; i < stats_important_ents->count; i++)
+	{
+		stats_important_ents->list[i].teams_hold_count[STATS_TEAM1] = 0;
+		stats_important_ents->list[i].teams_hold_count[STATS_TEAM2] = 0;
+	}
+}
+
+void StatsGrid_CalculateHoldItem(stats_weight_grid_t *grid, int row, int col, float hold_threshold, int team_id)
+{
+	int i = 0;
+
+	if(stats_important_ents == NULL || stats_important_ents->list == NULL)
+	{
+		return;
+	}
+
+	for(i = 0; i < stats_important_ents->count; i++)
+	{
+		// Check if the cell is within the "hold radius" for this item
+		// if it is, increase the hold count for this team for this item.
+		// The team with the most "owned" cells within this radius around
+		// the item is considered to hold it.
+		if(fabs(grid->cells[row][col].tl_x - stats_important_ents->list[i].origin[0]) <= stats_important_ents->hold_radius
+			&& fabs(grid->cells[row][col].tl_y - stats_important_ents->list[i].origin[1]) <= stats_important_ents->hold_radius)
+		{
+			stats_important_ents->list[i].teams_hold_count[team_id]++;
+			
+			// If this is the first time, set the name of the team in the entity struct.
+			if(!stats_important_ents->teams[team_id].name[0])
+			{
+				strcpy(stats_important_ents->teams[team_id].name, grid->teams[team_id].name);
+				stats_important_ents->teams[team_id].color = grid->teams[team_id].color;
+			}
+		}
+	}
+}
+
 void StatsGrid_DecreaseTeamWeights(stats_weight_grid_t *grid, int row, int col, float hold_threshold)
 {
 	// Don't try to do something stupid.
@@ -216,6 +453,7 @@ void StatsGrid_DecreaseTeamWeights(stats_weight_grid_t *grid, int row, int col, 
 		if(grid->cells[row][col].teams[STATS_TEAM1].weight > hold_threshold)
 		{
 			grid->teams[STATS_TEAM1].hold_count++;
+			StatsGrid_CalculateHoldItem(grid, row, col, hold_threshold, STATS_TEAM1);
 		}
 	}
 	else
@@ -223,6 +461,7 @@ void StatsGrid_DecreaseTeamWeights(stats_weight_grid_t *grid, int row, int col, 
 		if(grid->cells[row][col].teams[STATS_TEAM2].weight > hold_threshold)
 		{
 			grid->teams[STATS_TEAM2].hold_count++;
+			StatsGrid_CalculateHoldItem(grid, row, col, hold_threshold, STATS_TEAM2);
 		}
 	}
 
@@ -255,8 +494,9 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 	// Don't calculate any weights before a match has started.
 	// Don't allow setting the weight at the exact time the countdown
 	// or standby ends (cl.gametime == 0), that will result in a weight
-	// being set in the position that the player was the milisecond before.
-	if(cl.countdown				|| cl.standby			|| cl.gametime <= 0
+	// being set in the position that the player was the milisecond before 
+	// he spawned, so wait one second before starting to set any weights.
+	if(cl.countdown				|| cl.standby			|| cl.gametime <= 1
 		|| grid == NULL			|| grid->cells == NULL
 		|| grid->col_count <= 0 || grid->row_count <= 0
 		|| player_info == NULL	|| player_state == NULL )
@@ -356,7 +596,7 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 	
 	if(player_info->stats[STAT_HEALTH] <= 0 && !isdead[player_info->userid])		
 	{ 
-		#define DEATH_WEIGHT	0.2
+		#define DEATH_WEIGHT		0.2
 		#define DEATH_WEIGHT_CLOSE	DEATH_WEIGHT * 0.8
 		#define DEATH_WEIGHT_FAR	DEATH_WEIGHT * 0.5
 
@@ -399,7 +639,7 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 		neighbour_weight_close	= weight * 0.8;
 		neighbour_weight_far	= weight * 0.5;
 
-		// Set the weight for the current cell + surrounding cells.
+		// Set the team weight for the current cell + surrounding cells.
 		{
 			// The current cell.
 			grid->cells[row][col].teams[team_id].weight = weight;
@@ -445,7 +685,7 @@ void StatsGrid_Gather()
 	int i;
 	int row, col;
 	static int lastframecount = -1;
-	player_state_t *state, *last_state;
+	player_state_t *state;
 	player_info_t *info;
 
 	// Initiate the grid if it hasn't already been initiated.
@@ -453,16 +693,25 @@ void StatsGrid_Gather()
 	if(stats_grid == NULL)
 	{
 		// TODO: Create cvars that let us set these values.
-		StatsGrid_Init(&stats_grid, 5.0, 0.2, 50, 
+		StatsGrid_Init(&stats_grid, // The grid to initiate.
+			5.0,					// The time in miliseconds between fall offs.
+			0.2,					// At each fall off period, how much should be substracted from the weight?
+			50,						// The length in quad coordinates of a cells side length.
 			fabs(cl.worldmodel->maxs[0] - cl.worldmodel->mins[0]), // Width of the map in quake coordinates.
 			fabs(cl.worldmodel->maxs[1] - cl.worldmodel->mins[1]), // Height (if we're talking 2D where Y = height).
-			0.0);
+			0.0);					// The threshold before a team is considered to "hold" a cell.
 		
 		// We failed initializing the grid, so don't do anything.
 		if(stats_grid == NULL)
 		{
 			return;
 		}
+	}
+
+	// If it's the first time for this level initiate.
+	if(stats_important_ents == NULL)
+	{
+		StatsGrid_InitHoldItems();
 	}
 
 	// Only gather once per frame.
@@ -485,6 +734,7 @@ void StatsGrid_Gather()
 
 	for(i = 0; i < MAX_CLIENTS; i++, info++, state++)
 	{
+		// Skip spectators.
 		if(!cl.players[i].name[0] || cl.players[i].spectator)
 		{
 			continue;
@@ -499,6 +749,7 @@ void StatsGrid_Gather()
 	// they will be recalculated when the weights are decreased.
 	stats_grid->teams[STATS_TEAM1].hold_count = 0;
 	stats_grid->teams[STATS_TEAM2].hold_count = 0;
+	StatsGrid_ResetHoldItemCounts();
 
 	// Go through all the cells and decrease their weights.
 	for(row = 0; row < stats_grid->row_count; row++)
