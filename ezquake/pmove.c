@@ -231,7 +231,7 @@ int PM_StepSlideMove (qbool in_air) {
 
 	// move up a stair height
 	VectorCopy (pmove.origin, dest);
-	dest[2] += STEPSIZE;
+	dest[2] += stepsize;
 	trace = PM_PlayerTrace (pmove.origin, dest);
 	if (!trace.startsolid && !trace.allsolid)
 		VectorCopy (trace.endpos, pmove.origin);
