@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.42 2006-06-26 21:57:28 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.43 2006-06-27 19:03:15 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -3132,6 +3132,20 @@ void HUD_NewMap()
 	}
 }
 
+// Team hold filters.
+static qbool teamhold_show_pent		= false;
+static qbool teamhold_show_quad		= false;
+static qbool teamhold_show_ring		= false;
+static qbool teamhold_show_suit		= false;
+static qbool teamhold_show_rl		= false;
+static qbool teamhold_show_lg		= false;
+static qbool teamhold_show_gl		= false;
+static qbool teamhold_show_sng		= false;
+static qbool teamhold_show_mh		= false;
+static qbool teamhold_show_ra		= false;
+static qbool teamhold_show_ya		= false;
+static qbool teamhold_show_ga		= false;
+
 void TeamHold_DrawPercentageBar(int x, int y, int width, int height, 
 								float team1_percent, float team2_percent, 
 								int team1_color, int team2_color,
@@ -3392,7 +3406,7 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 	}
 }
 
-qbool TeamHold_GetItemShowStatus(const char *item, const char *matchstring)
+qbool HUD_RegExpMatch(const char *regexp, const char *matchstring)
 {
 	int offsets[1];
 	pcre *re;
@@ -3401,7 +3415,7 @@ qbool TeamHold_GetItemShowStatus(const char *item, const char *matchstring)
 	int match = 0;
 
 	re = pcre_compile(
-			item,				// The pattern.
+			regexp,				// The pattern.
 			PCRE_CASELESS,		// Case insensitive.
 			&error,				// Error message.
 			&erroffset,			// Error offset.
@@ -3416,6 +3430,25 @@ qbool TeamHold_GetItemShowStatus(const char *item, const char *matchstring)
 	{
 		return true;
 	}
+
+	return false;
+}
+
+qbool TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s)
+{
+	// Parse the item filter.
+	teamhold_show_rl		= HUD_RegExpMatch("RL",		s);
+	teamhold_show_quad		= HUD_RegExpMatch("QUAD",	s);
+	teamhold_show_ring		= HUD_RegExpMatch("RING",	s);
+	teamhold_show_pent		= HUD_RegExpMatch("PENT",	s);
+	teamhold_show_suit		= HUD_RegExpMatch("SUIT",	s);
+	teamhold_show_lg		= HUD_RegExpMatch("LG",		s);
+	teamhold_show_gl		= HUD_RegExpMatch("GL",		s);
+	teamhold_show_sng		= HUD_RegExpMatch("SNG",	s);
+	teamhold_show_mh		= HUD_RegExpMatch("MH",		s);
+	teamhold_show_ra		= HUD_RegExpMatch("RA",		s);
+	teamhold_show_ya		= HUD_RegExpMatch("YA",		s);
+	teamhold_show_ga		= HUD_RegExpMatch("GA",		s);
 
 	return false;
 }
@@ -3445,6 +3478,12 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 		hud_teamholdinfo_height				= HUD_FindVar(hud, "height");
 		hud_teamholdinfo_onlytp				= HUD_FindVar(hud, "onlytp");
 		hud_teamholdinfo_itemfilter			= HUD_FindVar(hud, "itemfilter");
+
+		// Unecessary to parse the item filter string on each frame.
+		hud_teamholdinfo_itemfilter->OnChange = TeamHold_OnChangeItemFilterInfo;
+
+		// Parse the item filter the first time.
+		TeamHold_OnChangeItemFilterInfo(hud_teamholdinfo_itemfilter, hud_teamholdinfo_itemfilter->string);
     }
 
 	// Don't show when not in teamplay.
@@ -3465,33 +3504,6 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 	
 	if (HUD_PrepareDraw(hud, width , height, &x, &y))
 	{
-		qbool show_pent		= false;
-		qbool show_quad		= false;
-		qbool show_ring		= false;
-		qbool show_suit		= false;
-		qbool show_rl		= false;
-		qbool show_lg		= false;
-		qbool show_gl		= false;
-		qbool show_sng		= false;
-		qbool show_mh		= false;
-		qbool show_ra		= false;
-		qbool show_ya		= false;
-		qbool show_ga		= false;
-
-		// Parse the item filter.
-		show_rl		= TeamHold_GetItemShowStatus("RL",		hud_teamholdinfo_itemfilter->string);
-		show_quad	= TeamHold_GetItemShowStatus("QUAD",	hud_teamholdinfo_itemfilter->string);
-		show_ring	= TeamHold_GetItemShowStatus("RING",	hud_teamholdinfo_itemfilter->string);
-		show_pent	= TeamHold_GetItemShowStatus("PENT",	hud_teamholdinfo_itemfilter->string);
-		show_suit	= TeamHold_GetItemShowStatus("SUIT",	hud_teamholdinfo_itemfilter->string);
-		show_lg		= TeamHold_GetItemShowStatus("LG",		hud_teamholdinfo_itemfilter->string);
-		show_gl		= TeamHold_GetItemShowStatus("GL",		hud_teamholdinfo_itemfilter->string);
-		show_sng	= TeamHold_GetItemShowStatus("SNG",		hud_teamholdinfo_itemfilter->string);
-		show_mh		= TeamHold_GetItemShowStatus("MH",		hud_teamholdinfo_itemfilter->string);
-		show_ra		= TeamHold_GetItemShowStatus("RA",		hud_teamholdinfo_itemfilter->string);
-		show_ya		= TeamHold_GetItemShowStatus("YA",		hud_teamholdinfo_itemfilter->string);
-		show_ga		= TeamHold_GetItemShowStatus("GA",		hud_teamholdinfo_itemfilter->string);
-
 		// Go through all the items and print the stats for them.
 		for(i = 0; i < stats_important_ents->count; i++)
 		{
@@ -3502,18 +3514,18 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			int names_width = 0;
 
 			// If the item isn't of the specified type, then skip it.
-			if(!(	(show_rl	&& !strncmp(stats_important_ents->list[i].name, "RL", 2))
-				||	(show_quad	&& !strncmp(stats_important_ents->list[i].name, "QUAD", 4))
-				||	(show_ring	&& !strncmp(stats_important_ents->list[i].name, "RING", 4))
-				||	(show_pent	&& !strncmp(stats_important_ents->list[i].name, "PENT", 4))
-				||	(show_suit	&& !strncmp(stats_important_ents->list[i].name, "SUIT", 4))
-				||	(show_lg	&& !strncmp(stats_important_ents->list[i].name, "LG", 2))
-				||	(show_gl	&& !strncmp(stats_important_ents->list[i].name, "GL", 2))
-				||	(show_sng	&& !strncmp(stats_important_ents->list[i].name, "SNG", 3))
-				||	(show_mh	&& !strncmp(stats_important_ents->list[i].name, "MH", 2))
-				||	(show_ra	&& !strncmp(stats_important_ents->list[i].name, "RA", 2))
-				||	(show_ya	&& !strncmp(stats_important_ents->list[i].name, "YA", 2))
-				||	(show_ga	&& !strncmp(stats_important_ents->list[i].name, "GA", 2))
+			if(!(	(teamhold_show_rl	&& !strncmp(stats_important_ents->list[i].name, "RL", 2))
+				||	(teamhold_show_quad	&& !strncmp(stats_important_ents->list[i].name, "QUAD", 4))
+				||	(teamhold_show_ring	&& !strncmp(stats_important_ents->list[i].name, "RING", 4))
+				||	(teamhold_show_pent	&& !strncmp(stats_important_ents->list[i].name, "PENT", 4))
+				||	(teamhold_show_suit	&& !strncmp(stats_important_ents->list[i].name, "SUIT", 4))
+				||	(teamhold_show_lg	&& !strncmp(stats_important_ents->list[i].name, "LG", 2))
+				||	(teamhold_show_gl	&& !strncmp(stats_important_ents->list[i].name, "GL", 2))
+				||	(teamhold_show_sng	&& !strncmp(stats_important_ents->list[i].name, "SNG", 3))
+				||	(teamhold_show_mh	&& !strncmp(stats_important_ents->list[i].name, "MH", 2))
+				||	(teamhold_show_ra	&& !strncmp(stats_important_ents->list[i].name, "RA", 2))
+				||	(teamhold_show_ya	&& !strncmp(stats_important_ents->list[i].name, "YA", 2))
+				||	(teamhold_show_ga	&& !strncmp(stats_important_ents->list[i].name, "GA", 2))
 				))
 			{
 				continue;
@@ -3685,32 +3697,91 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pi
 	}
 }
 
-
 // The skinnum property in the entity_s structure is used
 // for determening what type of armor to draw on the radar.
 #define HUD_RADAR_GA					0
 #define HUD_RADAR_YA					1
 #define HUD_RADAR_RA					2
 
-// Defines the level "verbosity" when drawing entities.
-#define HUD_RADAR_SHOW_POWERUPS			1
-#define HUD_RADAR_SHOW_RL_LG_BACKPACKS	2
-#define HUD_RADAR_SHOW_ARMORS			3
-#define HUD_RADAR_SHOW_MEGAHEALTHS		4
-#define HUD_RADAR_SHOW_ALL_WEAPONS		5
-#define HUD_RADAR_SHOW_MORE				6
+// Radar filters.
+#define RADAR_SHOW_WEAPONS (radar_show_ssg || radar_show_ng || radar_show_sng || radar_show_gl || radar_show_rl || radar_show_lg)
+static qbool radar_show_ssg			= false;
+static qbool radar_show_ng			= false;
+static qbool radar_show_sng			= false;
+static qbool radar_show_gl			= false;
+static qbool radar_show_rl			= false;
+static qbool radar_show_lg			= false;
 
-// Defines which ammo types to show.
-#define	HUD_RADAR_SHOW_AMMO_NONE		0
-#define HUD_RADAR_SHOW_AMMO_ROCKETS		1
-#define HUD_RADAR_SHOW_AMMO_CELLS		2
-#define HUD_RADAR_SHOW_AMMO_NAILS		3
-#define HUD_RADAR_SHOW_AMMO_SHELLS		4
+#define RADAR_SHOW_ITEMS (radar_show_backpacks || radar_show_health || radar_show_ra || radar_show_ya || radar_show_ga || radar_show_rockets || radar_show_nails || radar_show_cells || radar_show_shells || radar_show_quad || radar_show_pent || radar_show_ring || radar_show_suit)
+static qbool radar_show_backpacks	= false;
+static qbool radar_show_health		= false;
+static qbool radar_show_ra			= false;
+static qbool radar_show_ya			= false;
+static qbool radar_show_ga			= false;
+static qbool radar_show_rockets		= false;
+static qbool radar_show_nails		= false;
+static qbool radar_show_cells		= false;
+static qbool radar_show_shells		= false;
+static qbool radar_show_quad		= false;
+static qbool radar_show_pent		= false;
+static qbool radar_show_ring		= false;
+static qbool radar_show_suit		= false;
+static qbool radar_show_mega		= false;
 
-void Radar_DrawEntities(int x, int y, float scale, 
-						int show_entities, int show_projectiles, 
-						float player_size, int show_ammo, 
-						int show_health, int show_hold_areas)
+#define RADAR_SHOW_OTHER (radar_show_gibs || radar_show_explosions || radar_show_nails_p || radar_show_rockets_p || radar_show_shaft_p)
+static qbool radar_show_nails_p		= false;
+static qbool radar_show_rockets_p	= false;
+static qbool radar_show_shaft_p		= false;
+static qbool radar_show_gibs		= false;
+static qbool radar_show_explosions	= false;
+
+qbool Radar_OnChangeWeaponFilter(cvar_t *var, char *newval)
+{
+	// Parse the weapon filter.
+	radar_show_ssg		= HUD_RegExpMatch("SSG|SUPERSHOTGUN",		newval);
+	radar_show_ng		= HUD_RegExpMatch("NG|NAILGUN",				newval);
+	radar_show_sng		= HUD_RegExpMatch("SNG|SUPERNAILGUN",		newval);
+	radar_show_rl		= HUD_RegExpMatch("RL|ROCKETLAUNCHER",		newval);
+	radar_show_gl		= HUD_RegExpMatch("GL|GRENADELAUNCHER",		newval);
+	radar_show_lg		= HUD_RegExpMatch("LG|SHAFT|LIGHTNING",		newval);
+
+	return false;
+}
+
+qbool Radar_OnChangeItemFilter(cvar_t *var, char *newval)
+{
+	// Parse the item filter.
+	radar_show_backpacks		= HUD_RegExpMatch("BP|BACKPACK",			newval);
+	radar_show_health			= HUD_RegExpMatch("HP|HEALTH",				newval);
+	radar_show_ra				= HUD_RegExpMatch("RA|REDARMOR|ARMOR",		newval);
+	radar_show_ya				= HUD_RegExpMatch("YA|YELLOWARMOR|ARMOR",	newval);
+	radar_show_ga				= HUD_RegExpMatch("GA|GREENARMOR|ARMOR",	newval);
+	radar_show_rockets			= HUD_RegExpMatch("ROCKETS|ROCKS",			newval);
+	radar_show_nails			= HUD_RegExpMatch("NAILS|SPIKES",			newval);
+	radar_show_cells			= HUD_RegExpMatch("CELLS|BATTERY",			newval);
+	radar_show_shells			= HUD_RegExpMatch("SHELLS",					newval);
+	radar_show_quad				= HUD_RegExpMatch("QUAD",					newval);
+	radar_show_pent				= HUD_RegExpMatch("PENT|PENTAGRAM|666",		newval);
+	radar_show_ring				= HUD_RegExpMatch("RING|INVISIBLE|EYES",	newval);
+	radar_show_suit				= HUD_RegExpMatch("SUIT",					newval);
+	radar_show_mega				= HUD_RegExpMatch("MH|MEGA|MEGAHEALTH|100+",newval);
+
+	return false;
+}
+
+qbool Radar_OnChangeOtherFilter(cvar_t *var, char *newval)
+{
+	// Parse the "other" filter.
+	radar_show_nails_p			= HUD_RegExpMatch("NAILS|PROJECTILES",		newval);
+	radar_show_rockets_p		= HUD_RegExpMatch("ROCKETS|PROJECTILES",	newval);
+	radar_show_shaft_p			= HUD_RegExpMatch("SHAFT|PROJECTILES",		newval);
+	radar_show_gibs				= HUD_RegExpMatch("GIBS",					newval);
+	radar_show_explosions		= HUD_RegExpMatch("EXPLOSIONS",				newval);
+
+	return false;
+}
+
+void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_hold_areas)
 {
 	int i;
 
@@ -3734,80 +3805,73 @@ void Radar_DrawEntities(int x, int y, float scale,
 		entity_p_y = y + ROUND((map_y_slope*entity_q_y + map_y_intercept) * scale);
 
 		// TODO: Replace all model name comparison below with MOD_HINT's instead for less comparisons (create new ones in Mod_LoadAliasModel() in r_model.c and gl_model.c/.h for the ones that don't have one already).
-		if(show_entities >= HUD_RADAR_SHOW_POWERUPS)
+
+		//
+		// Powerups.
+		//
+
+		if(radar_show_pent && !strcmp(cl_visents.list[i].model->name, "progs/invulner.mdl"))
 		{
-			//
-			// Powerups.
-			//
-
-			if(!strcmp(cl_visents.list[i].model->name, "progs/invulner.mdl"))
-			{
-				// Pentagram.
-				Draw_ColoredString(entity_p_x, entity_p_y, "&cf00P", 0);
-			}
-			else if(!strcmp(cl_visents.list[i].model->name, "progs/quaddama.mdl"))					
-			{	
-				// Quad.
-				Draw_ColoredString(entity_p_x, entity_p_y, "&c0ffQ", 0);
-			}
-			else if(!strcmp(cl_visents.list[i].model->name, "progs/invisibl.mdl"))
-			{
-				// Ring.
-				Draw_ColoredString(entity_p_x, entity_p_y, "&cff0R", 0);
-			}
-			else if(!strcmp(cl_visents.list[i].model->name, "progs/suit.mdl"))
-			{
-				// Suit.
-				Draw_ColoredString(entity_p_x, entity_p_y, "&c0f0S", 0);
-			}					
+			// Pentagram.
+			Draw_ColoredString(entity_p_x, entity_p_y, "&cf00P", 0);
 		}
-
-		if(show_entities >= HUD_RADAR_SHOW_RL_LG_BACKPACKS)
+		else if(radar_show_quad && !strcmp(cl_visents.list[i].model->name, "progs/quaddama.mdl"))					
+		{	
+			// Quad.
+			Draw_ColoredString(entity_p_x, entity_p_y, "&c0ffQ", 0);
+		}
+		else if(radar_show_ring && !strcmp(cl_visents.list[i].model->name, "progs/invisibl.mdl"))
 		{
-			//
-			// Show RL, LG and backpacks.
-			//
-
-			if(!strcmp(cl_visents.list[i].model->name, "progs/g_rock2.mdl"))
-			{
-				// RL.
-				Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "RL");
-			}		
-			else if(!strcmp(cl_visents.list[i].model->name, "progs/g_light.mdl"))
-			{
-				// LG.
-				Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "LG");
-			}
-			else if(cl_visents.list[i].model->modhint == MOD_BACKPACK)
-			{
-				// Back packs.
-				float back_pack_size = 0;
-
-				back_pack_size = max(player_size * 0.5, 0.05);
-
-				Draw_AlphaCircleFill (entity_p_x, entity_p_y, back_pack_size, 114, 1);
-				Draw_AlphaCircleOutline (entity_p_x, entity_p_y, back_pack_size, 1.0, 0, 1);
-			}					
+			// Ring.
+			Draw_ColoredString(entity_p_x, entity_p_y, "&cff0R", 0);
 		}
+		else if(radar_show_suit && !strcmp(cl_visents.list[i].model->name, "progs/suit.mdl"))
+		{
+			// Suit.
+			Draw_ColoredString(entity_p_x, entity_p_y, "&c0f0S", 0);
+		}					
 
-		if(!strcmp(cl_visents.list[i].model->name, "progs/armor.mdl")
-			&& show_entities >= HUD_RADAR_SHOW_ARMORS)
+		//
+		// Show RL, LG and backpacks.
+		//
+		if(radar_show_rl && !strcmp(cl_visents.list[i].model->name, "progs/g_rock2.mdl"))
+		{
+			// RL.
+			Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "RL");
+		}		
+		else if(radar_show_lg && !strcmp(cl_visents.list[i].model->name, "progs/g_light.mdl"))
+		{
+			// LG.
+			Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "LG");
+		}
+		else if(radar_show_backpacks && cl_visents.list[i].model->modhint == MOD_BACKPACK)
+		{
+			// Back packs.
+			float back_pack_size = 0;
+
+			back_pack_size = max(player_size * 0.5, 0.05);
+
+			Draw_AlphaCircleFill (entity_p_x, entity_p_y, back_pack_size, 114, 1);
+			Draw_AlphaCircleOutline (entity_p_x, entity_p_y, back_pack_size, 1.0, 0, 1);
+		}					
+
+		if(!strcmp(cl_visents.list[i].model->name, "progs/armor.mdl"))
 		{
 			//
 			// Show armors.
 			//
 
-			if(cl_visents.list[i].skinnum == HUD_RADAR_GA)
+			if(radar_show_ga && cl_visents.list[i].skinnum == HUD_RADAR_GA)
 			{
 				// GA.
 				Draw_AlphaCircleFill (entity_p_x, entity_p_y, 3.0, 178, 1.0);
 			}
-			else if(cl_visents.list[i].skinnum == HUD_RADAR_YA)
+			else if(radar_show_ya && cl_visents.list[i].skinnum == HUD_RADAR_YA)
 			{
 				// YA.
 				Draw_AlphaCircleFill (entity_p_x, entity_p_y, 3.0, 192, 1.0);
 			}
-			else if(cl_visents.list[i].skinnum == HUD_RADAR_RA)
+			else if(radar_show_ra && cl_visents.list[i].skinnum == HUD_RADAR_RA)
 			{
 				// RA.
 				Draw_AlphaCircleFill (entity_p_x, entity_p_y, 3.0, 251, 1.0);
@@ -3816,8 +3880,7 @@ void Radar_DrawEntities(int x, int y, float scale,
 			Draw_AlphaCircleOutline (entity_p_x, entity_p_y, 3.0, 1.0, 0, 1.0);
 		}
 
-		if(show_entities >= HUD_RADAR_SHOW_MEGAHEALTHS
-			&& !strcmp(cl_visents.list[i].model->name, "maps/b_bh100.bsp"))
+		if(radar_show_mega && !strcmp(cl_visents.list[i].model->name, "maps/b_bh100.bsp"))
 		{
 			//
 			// Show megahealth.
@@ -3835,35 +3898,28 @@ void Radar_DrawEntities(int x, int y, float scale,
 			Draw_AlphaFill (entity_p_x, entity_p_y - 2, 2, 6, 79, 1);
 		}
 
-		if(show_entities >= HUD_RADAR_SHOW_ALL_WEAPONS)
+		if(radar_show_ssg && !strcmp(cl_visents.list[i].model->name, "progs/g_shot.mdl"))
 		{
-			//
-			// Show all other weapons.
-			//
-
-			if(!strcmp(cl_visents.list[i].model->name, "progs/g_shot.mdl"))
-			{
-				// SSG.
-				Draw_String(entity_p_x - (3*8)/2, entity_p_y - 4, "SSG");
-			}
-			else if(!strcmp(cl_visents.list[i].model->name, "progs/g_nail.mdl"))
-			{
-				// NG.
-				Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "NG");
-			}
-			else if(!strcmp(cl_visents.list[i].model->name, "progs/g_nail2.mdl"))
-			{
-				// SNG.
-				Draw_String(entity_p_x - (3*8)/2, entity_p_y - 4, "SNG");
-			}
-			else if(!strcmp(cl_visents.list[i].model->name, "progs/g_rock.mdl"))
-			{
-				// GL.
-				Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "GL");
-			}					
+			// SSG.
+			Draw_String(entity_p_x - (3*8)/2, entity_p_y - 4, "SSG");
 		}
+		else if(radar_show_ng && !strcmp(cl_visents.list[i].model->name, "progs/g_nail.mdl"))
+		{
+			// NG.
+			Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "NG");
+		}
+		else if(radar_show_sng && !strcmp(cl_visents.list[i].model->name, "progs/g_nail2.mdl"))
+		{
+			// SNG.
+			Draw_String(entity_p_x - (3*8)/2, entity_p_y - 4, "SNG");
+		}
+		else if(radar_show_gl && !strcmp(cl_visents.list[i].model->name, "progs/g_rock.mdl"))
+		{
+			// GL.
+			Draw_String(entity_p_x - (2*8)/2, entity_p_y - 4, "GL");
+		}					
 
-		if(show_entities >= HUD_RADAR_SHOW_MORE
+		if(radar_show_gibs 
 			&&(!strcmp(cl_visents.list[i].model->name, "progs/gib1.mdl")
 			|| !strcmp(cl_visents.list[i].model->name, "progs/gib2.mdl")
 			|| !strcmp(cl_visents.list[i].model->name, "progs/gib3.mdl")))
@@ -3875,7 +3931,7 @@ void Radar_DrawEntities(int x, int y, float scale,
 			Draw_AlphaCircleFill(entity_p_x, entity_p_y, 2.0, 251, 1);					
 		}
 
-		if(show_health
+		if(radar_show_health 
 			&&(!strcmp(cl_visents.list[i].model->name, "maps/b_bh25.bsp")
 			|| !strcmp(cl_visents.list[i].model->name, "maps/b_bh10.bsp")))
 		{
@@ -3891,149 +3947,146 @@ void Radar_DrawEntities(int x, int y, float scale,
 			Draw_AlphaFill (entity_p_x - 2, entity_p_y, 5, 1, 79, 1);
 			Draw_AlphaFill (entity_p_x, entity_p_y - 2, 1, 5, 79, 1);
 		}
-		
-		if(show_ammo)
+
+		//
+		// Ammo.
+		//
+		if(radar_show_rockets
+			&&(!strcmp(cl_visents.list[i].model->name, "maps/b_rock0.bsp")
+			|| !strcmp(cl_visents.list[i].model->name, "maps/b_rock1.bsp")))
 		{
 			//
-			// Ammo.
+			// Rockets.
 			//
-			if(show_ammo >= HUD_RADAR_SHOW_AMMO_ROCKETS 
-				&&(!strcmp(cl_visents.list[i].model->name, "maps/b_rock0.bsp")
-				|| !strcmp(cl_visents.list[i].model->name, "maps/b_rock1.bsp")))
-			{
-				//
-				// Rockets.
-				//
 
-				// Draw a black outline.
-				Draw_AlphaFill (entity_p_x - 1, entity_p_y - 6, 3, 5, 0, 1);
-				Draw_AlphaFill (entity_p_x - 2, entity_p_y - 1, 5, 5, 0, 1);
+			// Draw a black outline.
+			Draw_AlphaFill (entity_p_x - 1, entity_p_y - 6, 3, 5, 0, 1);
+			Draw_AlphaFill (entity_p_x - 2, entity_p_y - 1, 5, 5, 0, 1);
 
-				// The brown rocket.
-				Draw_AlphaFill (entity_p_x, entity_p_y - 5, 1, 5, 120, 1);
-				Draw_AlphaFill (entity_p_x - 1, entity_p_y, 1, 3, 120, 1);
-				Draw_AlphaFill (entity_p_x + 1, entity_p_y, 1, 3, 120, 1);
-			}
-
-			if(show_ammo >= HUD_RADAR_SHOW_AMMO_CELLS
-				&&(!strcmp(cl_visents.list[i].model->name, "maps/b_batt0.bsp")
-				|| !strcmp(cl_visents.list[i].model->name, "maps/b_batt1.bsp")))
-			{
-				//
-				// Cells.
-				//
-
-				// Draw a black outline.
-				Draw_AlphaLine(entity_p_x - 3, entity_p_y, entity_p_x + 4, entity_p_y - 5, 3, 0, 1);
-				Draw_AlphaLine(entity_p_x - 3, entity_p_y, entity_p_x + 3 , entity_p_y, 3, 0, 1);
-				Draw_AlphaLine(entity_p_x + 3, entity_p_y, entity_p_x - 3, entity_p_y + 4, 3, 0, 1);
-
-				// Draw a yellow lightning!
-				Draw_AlphaLine(entity_p_x - 2, entity_p_y, entity_p_x + 3, entity_p_y - 4, 1, 111, 1);
-				Draw_AlphaLine(entity_p_x - 2, entity_p_y, entity_p_x + 2 , entity_p_y, 1, 111, 1);
-				Draw_AlphaLine(entity_p_x + 2, entity_p_y, entity_p_x - 2, entity_p_y + 3, 1, 111, 1);
-			}
-
-			if(show_ammo >= HUD_RADAR_SHOW_AMMO_NAILS
-				&&(!strcmp(cl_visents.list[i].model->name, "maps/b_nail0.bsp")
-				|| !strcmp(cl_visents.list[i].model->name, "maps/b_nail1.bsp")))
-			{
-				//
-				// Nails.
-				//
-
-				// Draw a black outline.
-				Draw_AlphaFill (entity_p_x - 3, entity_p_y - 3, 7, 3, 0, 1);
-				Draw_AlphaFill (entity_p_x - 2, entity_p_y - 2, 5, 3, 0, 0.5);
-				Draw_AlphaFill (entity_p_x - 1, entity_p_y, 3, 3, 0, 1);
-				Draw_AlphaFill (entity_p_x - 1, entity_p_y + 3, 1, 1, 0, 0.5);
-				Draw_AlphaFill (entity_p_x + 1, entity_p_y + 3, 1, 1, 0, 0.5);
-				Draw_AlphaFill (entity_p_x, entity_p_y + 4, 1, 1, 0, 1);
-
-				Draw_AlphaFill (entity_p_x - 2, entity_p_y - 2, 5, 1, 6, 1);
-				Draw_AlphaFill (entity_p_x - 1, entity_p_y - 1, 3, 1, 6, 0.5);
-				Draw_AlphaFill (entity_p_x, entity_p_y, 1, 4, 6, 1);
-			}
-
-			if(show_ammo >= HUD_RADAR_SHOW_AMMO_SHELLS
-				&&(!strcmp(cl_visents.list[i].model->name, "maps/b_shell0.bsp")
-				|| !strcmp(cl_visents.list[i].model->name, "maps/b_shell1.bsp")))
-			{
-				//
-				// Shells.
-				//
-
-				// Draw a black outline.
-				Draw_AlphaFill (entity_p_x - 2, entity_p_y - 3, 5, 9, 0, 1);
-
-				// Draw 2 shotgun shells.
-				Draw_AlphaFill (entity_p_x - 1, entity_p_y - 2, 1, 4, 73, 1);
-				Draw_AlphaFill (entity_p_x - 1, entity_p_y - 2 + 5, 1, 2, 104, 1);
-
-				Draw_AlphaFill (entity_p_x + 1, entity_p_y - 2, 1, 4, 73, 1);
-				Draw_AlphaFill (entity_p_x + 1, entity_p_y - 2 + 5, 1, 2, 104, 1);
-			} 
+			// The brown rocket.
+			Draw_AlphaFill (entity_p_x, entity_p_y - 5, 1, 5, 120, 1);
+			Draw_AlphaFill (entity_p_x - 1, entity_p_y, 1, 3, 120, 1);
+			Draw_AlphaFill (entity_p_x + 1, entity_p_y, 1, 3, 120, 1);
 		}
-		
-		if(show_projectiles)
+
+		if(radar_show_cells 
+			&&(!strcmp(cl_visents.list[i].model->name, "maps/b_batt0.bsp")
+			|| !strcmp(cl_visents.list[i].model->name, "maps/b_batt1.bsp")))
 		{
 			//
-			// Show projectiles (rockets, grenades, nails, shaft).
+			// Cells.
 			//
 
-			if(!strcmp(cl_visents.list[i].model->name, "progs/s_spike.mdl")
-				|| !strcmp(cl_visents.list[i].model->name, "progs/spike.mdl"))
-			{
-				//
-				// Spikes from SNG and NG.
-				//
+			// Draw a black outline.
+			Draw_AlphaLine(entity_p_x - 3, entity_p_y, entity_p_x + 4, entity_p_y - 5, 3, 0, 1);
+			Draw_AlphaLine(entity_p_x - 3, entity_p_y, entity_p_x + 3 , entity_p_y, 3, 0, 1);
+			Draw_AlphaLine(entity_p_x + 3, entity_p_y, entity_p_x - 3, entity_p_y + 4, 3, 0, 1);
 
-				Draw_AlphaFill(entity_p_x, entity_p_y, 1, 1, 254, 1);
-			}					
-			else if(!strcmp(cl_visents.list[i].model->name, "progs/missile.mdl")
-				|| !strcmp(cl_visents.list[i].model->name, "progs/grenade.mdl"))
-			{
-				//
-				// Rockets and grenades.
-				//
+			// Draw a yellow lightning!
+			Draw_AlphaLine(entity_p_x - 2, entity_p_y, entity_p_x + 3, entity_p_y - 4, 1, 111, 1);
+			Draw_AlphaLine(entity_p_x - 2, entity_p_y, entity_p_x + 2 , entity_p_y, 1, 111, 1);
+			Draw_AlphaLine(entity_p_x + 2, entity_p_y, entity_p_x - 2, entity_p_y + 3, 1, 111, 1);
+		}
 
-				float entity_angle = 0;
-				int x_line_end = 0;
-				int y_line_end = 0;
+		if(radar_show_nails
+			&&(!strcmp(cl_visents.list[i].model->name, "maps/b_nail0.bsp")
+			|| !strcmp(cl_visents.list[i].model->name, "maps/b_nail1.bsp")))
+		{
+			//
+			// Nails.
+			//
 
-				// Get the entity angle in radians.
-				entity_angle = (cl_visents.list[i].angles[1]*M_PI)/180;
+			// Draw a black outline.
+			Draw_AlphaFill (entity_p_x - 3, entity_p_y - 3, 7, 3, 0, 1);
+			Draw_AlphaFill (entity_p_x - 2, entity_p_y - 2, 5, 3, 0, 0.5);
+			Draw_AlphaFill (entity_p_x - 1, entity_p_y, 3, 3, 0, 1);
+			Draw_AlphaFill (entity_p_x - 1, entity_p_y + 3, 1, 1, 0, 0.5);
+			Draw_AlphaFill (entity_p_x + 1, entity_p_y + 3, 1, 1, 0, 0.5);
+			Draw_AlphaFill (entity_p_x, entity_p_y + 4, 1, 1, 0, 1);
 
-				x_line_end = entity_p_x + 5 * cos(entity_angle) * scale;
-				y_line_end = entity_p_y - 5 * sin(entity_angle) * scale;
+			Draw_AlphaFill (entity_p_x - 2, entity_p_y - 2, 5, 1, 6, 1);
+			Draw_AlphaFill (entity_p_x - 1, entity_p_y - 1, 3, 1, 6, 0.5);
+			Draw_AlphaFill (entity_p_x, entity_p_y, 1, 4, 6, 1);
+		}
 
-				// Draw the rocket/grenade showing it's angle also.
-				Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);				
-			}
-			else if(!strcmp(cl_visents.list[i].model->name, "progs/bolt.mdl")
-				|| !strcmp(cl_visents.list[i].model->name, "progs/bolt2.mdl")
-				|| !strcmp(cl_visents.list[i].model->name, "progs/bolt3.mdl"))
-			{
-				//
-				// Shaft beam.
-				//
+		if(radar_show_shells 
+			&&(!strcmp(cl_visents.list[i].model->name, "maps/b_shell0.bsp")
+			|| !strcmp(cl_visents.list[i].model->name, "maps/b_shell1.bsp")))
+		{
+			//
+			// Shells.
+			//
 
-				float entity_angle = 0;
-				float shaft_length = 0;
-				float x_line_end = 0;
-				float y_line_end = 0;
+			// Draw a black outline.
+			Draw_AlphaFill (entity_p_x - 2, entity_p_y - 3, 5, 9, 0, 1);
 
-				// Get the length and angle of the shaft.
-				shaft_length = cl_visents.list[i].model->maxs[1];
-				entity_angle = (cl_visents.list[i].angles[1]*M_PI)/180;
+			// Draw 2 shotgun shells.
+			Draw_AlphaFill (entity_p_x - 1, entity_p_y - 2, 1, 4, 73, 1);
+			Draw_AlphaFill (entity_p_x - 1, entity_p_y - 2 + 5, 1, 2, 104, 1);
 
-				// Calculate where the shaft beam's ending point.
-				x_line_end = entity_p_x + shaft_length * cos(entity_angle);
-				y_line_end = entity_p_y - shaft_length * sin(entity_angle);
+			Draw_AlphaFill (entity_p_x + 1, entity_p_y - 2, 1, 4, 73, 1);
+			Draw_AlphaFill (entity_p_x + 1, entity_p_y - 2 + 5, 1, 2, 104, 1);
+		} 
 
-				// Draw the shaft beam.
-				Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);
-			}
+		//
+		// Show projectiles (rockets, grenades, nails, shaft).
+		//
+
+		if(radar_show_nails_p 
+			&& (!strcmp(cl_visents.list[i].model->name, "progs/s_spike.mdl")
+			|| !strcmp(cl_visents.list[i].model->name, "progs/spike.mdl")))
+		{
+			//
+			// Spikes from SNG and NG.
+			//
+
+			Draw_AlphaFill(entity_p_x, entity_p_y, 1, 1, 254, 1);
+		}					
+		else if(radar_show_rockets_p 
+			&& (!strcmp(cl_visents.list[i].model->name, "progs/missile.mdl")
+			|| !strcmp(cl_visents.list[i].model->name, "progs/grenade.mdl")))
+		{
+			//
+			// Rockets and grenades.
+			//
+
+			float entity_angle = 0;
+			int x_line_end = 0;
+			int y_line_end = 0;
+
+			// Get the entity angle in radians.
+			entity_angle = (cl_visents.list[i].angles[1]*M_PI)/180;
+
+			x_line_end = entity_p_x + 5 * cos(entity_angle) * scale;
+			y_line_end = entity_p_y - 5 * sin(entity_angle) * scale;
+
+			// Draw the rocket/grenade showing it's angle also.
+			Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);				
+		}
+		else if(radar_show_shaft_p 
+			&& (!strcmp(cl_visents.list[i].model->name, "progs/bolt.mdl")
+			|| !strcmp(cl_visents.list[i].model->name, "progs/bolt2.mdl")
+			|| !strcmp(cl_visents.list[i].model->name, "progs/bolt3.mdl")))
+		{
+			//
+			// Shaft beam.
+			//
+
+			float entity_angle = 0;
+			float shaft_length = 0;
+			float x_line_end = 0;
+			float y_line_end = 0;
+
+			// Get the length and angle of the shaft.
+			shaft_length = cl_visents.list[i].model->maxs[1];
+			entity_angle = (cl_visents.list[i].angles[1]*M_PI)/180;
+
+			// Calculate where the shaft beam's ending point.
+			x_line_end = entity_p_x + shaft_length * cos(entity_angle);
+			y_line_end = entity_p_y - shaft_length * sin(entity_angle);
+
+			// Draw the shaft beam.
+			Draw_AlphaLine (entity_p_x, entity_p_y, x_line_end, y_line_end, 1.0, 254, 1);
 		}
 	}
 
@@ -4260,12 +4313,11 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		*hud_radar_show_names,
 		*hud_radar_player_size,
 		*hud_radar_show_height,
-		*hud_radar_show_entities,
-		*hud_radar_show_projectiles,
 		*hud_radar_show_stats,
-		*hud_radar_show_ammo,
-		*hud_radar_show_health,
-		*hud_radar_show_hold;
+		*hud_radar_show_hold,
+		*hud_radar_weaponfilter,
+		*hud_radar_itemfilter,
+		*hud_radar_otherfilter;
 
     if (hud_radar_opacity == NULL)    // first time
     {
@@ -4278,12 +4330,27 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		hud_radar_show_names		= HUD_FindVar(hud, "show_names");
 		hud_radar_player_size		= HUD_FindVar(hud, "player_size");
 		hud_radar_show_height		= HUD_FindVar(hud, "show_height");
-		hud_radar_show_entities		= HUD_FindVar(hud, "show_entities");
-		hud_radar_show_projectiles	= HUD_FindVar(hud, "show_projectiles");
 		hud_radar_show_stats		= HUD_FindVar(hud, "show_stats");
-		hud_radar_show_ammo			= HUD_FindVar(hud, "show_ammo");
-		hud_radar_show_health		= HUD_FindVar(hud, "show_health");
 		hud_radar_show_hold			= HUD_FindVar(hud, "show_hold");
+		hud_radar_weaponfilter		= HUD_FindVar(hud, "weaponfilter");
+		hud_radar_itemfilter		= HUD_FindVar(hud, "itemfilter");
+		hud_radar_otherfilter		= HUD_FindVar(hud, "otherfilter");
+
+		//
+		// Only parse the the filters when they change, not on each frame.
+		//
+
+		// Weapon filter.
+		hud_radar_weaponfilter->OnChange = Radar_OnChangeWeaponFilter;
+		Radar_OnChangeWeaponFilter(hud_radar_weaponfilter, hud_radar_weaponfilter->string);
+
+		// Item filter.
+		hud_radar_itemfilter->OnChange = Radar_OnChangeItemFilter;
+		Radar_OnChangeItemFilter(hud_radar_itemfilter, hud_radar_itemfilter->string);
+
+		// Other filter.
+		hud_radar_otherfilter->OnChange = Radar_OnChangeOtherFilter;
+		Radar_OnChangeOtherFilter(hud_radar_otherfilter, hud_radar_otherfilter->string);
     }
 
 	// Don't show anything if it's a normal player.
@@ -4381,14 +4448,10 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		}
 
 		// Draw entities such as powerups, weapons and backpacks.
-		if(hud_radar_show_entities->value || hud_radar_show_projectiles->value)
+		if(RADAR_SHOW_WEAPONS || RADAR_SHOW_ITEMS || RADAR_SHOW_OTHER)
 		{
 			Radar_DrawEntities(x, y, scale, 
-				hud_radar_show_entities->value, 
-				hud_radar_show_projectiles->value,
 				hud_radar_player_size->value,
-				hud_radar_show_ammo->value,
-				hud_radar_show_health->value,
 				hud_radar_show_hold->value);
 		}
 
@@ -4906,13 +4969,12 @@ void CommonDraw_Init(void)
 		"show_names", "0",
 		"player_size", "10",
 		"show_height", "1",
-		"show_entities", "7",
-		"show_ammo", "0",
-		"show_health", "0",
-		"show_projectiles", "1",
 		"show_stats", "1",
 		"fade_players", "1",
 		"show_hold", "0",
+		"weaponfilter", "ssg ng sng gl rl lg",
+		"itemfilter", "quad pent suit ring health armor shells cells rockets nails mega",
+		"otherfilter", "projectiles gibs explosions",
         NULL);
 #endif
 
@@ -4936,7 +4998,7 @@ void CommonDraw_Init(void)
 		"height", "8",
 		"onlytp", "0",
 		"style", "1",
-		"itemfilter", "pent rl quad",
+		"itemfilter", "quad ra ya ga mega pent rl quad",
         NULL);
 
 /* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
