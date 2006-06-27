@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.43 2006-06-27 19:03:15 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.44 2006-06-27 21:06:22 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -3453,8 +3453,8 @@ qbool TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s)
 	return false;
 }
 
-#define HUD_TEAMHOLDINFO_STYLE_TEAM_NAMES		1
-#define HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS		2
+#define HUD_TEAMHOLDINFO_STYLE_TEAM_NAMES		0
+#define HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS		1
 
 void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 {
@@ -3751,20 +3751,20 @@ qbool Radar_OnChangeWeaponFilter(cvar_t *var, char *newval)
 qbool Radar_OnChangeItemFilter(cvar_t *var, char *newval)
 {
 	// Parse the item filter.
-	radar_show_backpacks		= HUD_RegExpMatch("BP|BACKPACK",			newval);
-	radar_show_health			= HUD_RegExpMatch("HP|HEALTH",				newval);
-	radar_show_ra				= HUD_RegExpMatch("RA|REDARMOR|ARMOR",		newval);
-	radar_show_ya				= HUD_RegExpMatch("YA|YELLOWARMOR|ARMOR",	newval);
-	radar_show_ga				= HUD_RegExpMatch("GA|GREENARMOR|ARMOR",	newval);
-	radar_show_rockets			= HUD_RegExpMatch("ROCKETS|ROCKS",			newval);
-	radar_show_nails			= HUD_RegExpMatch("NAILS|SPIKES",			newval);
-	radar_show_cells			= HUD_RegExpMatch("CELLS|BATTERY",			newval);
-	radar_show_shells			= HUD_RegExpMatch("SHELLS",					newval);
-	radar_show_quad				= HUD_RegExpMatch("QUAD",					newval);
-	radar_show_pent				= HUD_RegExpMatch("PENT|PENTAGRAM|666",		newval);
-	radar_show_ring				= HUD_RegExpMatch("RING|INVISIBLE|EYES",	newval);
-	radar_show_suit				= HUD_RegExpMatch("SUIT",					newval);
-	radar_show_mega				= HUD_RegExpMatch("MH|MEGA|MEGAHEALTH|100+",newval);
+	radar_show_backpacks		= HUD_RegExpMatch("BP|BACKPACK",					newval);
+	radar_show_health			= HUD_RegExpMatch("HP|HEALTH",						newval);
+	radar_show_ra				= HUD_RegExpMatch("RA|REDARMOR|ARMOR",				newval);
+	radar_show_ya				= HUD_RegExpMatch("YA|YELLOWARMOR|ARMOR",			newval);
+	radar_show_ga				= HUD_RegExpMatch("GA|GREENARMOR|ARMOR",			newval);
+	radar_show_rockets			= HUD_RegExpMatch("ROCKETS|ROCKS",					newval);
+	radar_show_nails			= HUD_RegExpMatch("NAILS|SPIKES",					newval);
+	radar_show_cells			= HUD_RegExpMatch("CELLS|BATTERY",					newval);
+	radar_show_shells			= HUD_RegExpMatch("SHELLS",							newval);
+	radar_show_quad				= HUD_RegExpMatch("QUAD|POWERUPS",					newval);
+	radar_show_pent				= HUD_RegExpMatch("PENT|PENTAGRAM|666|POWERUPS",	newval);
+	radar_show_ring				= HUD_RegExpMatch("RING|INVISIBLE|EYES|POWERUPS",	newval);
+	radar_show_suit				= HUD_RegExpMatch("SUIT",							newval);
+	radar_show_mega				= HUD_RegExpMatch("MH|MEGA|MEGAHEALTH|100+",		newval);
 
 	return false;
 }
@@ -4973,7 +4973,7 @@ void CommonDraw_Init(void)
 		"fade_players", "1",
 		"show_hold", "0",
 		"weaponfilter", "ssg ng sng gl rl lg",
-		"itemfilter", "quad pent suit ring health armor shells cells rockets nails mega",
+		"itemfilter", "backpack quad pent suit ring health armor shells cells rockets nails mega",
 		"otherfilter", "projectiles gibs explosions",
         NULL);
 #endif
