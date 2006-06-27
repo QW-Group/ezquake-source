@@ -240,7 +240,7 @@ int PM_StepSlideMove (qbool in_air) {
 
 	// press down the stepheight
 	VectorCopy (pmove.origin, dest);
-	dest[2] -= STEPSIZE;
+	dest[2] -= stepsize;
 	trace = PM_PlayerTrace (pmove.origin, dest);
 	if (trace.fraction != 1 && trace.plane.normal[2] < MIN_STEP_NORMAL)
 		goto usedown;
