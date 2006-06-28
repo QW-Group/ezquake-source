@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.44 2006-06-27 21:06:22 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.45 2006-06-28 21:56:53 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -3728,22 +3728,24 @@ static qbool radar_show_ring		= false;
 static qbool radar_show_suit		= false;
 static qbool radar_show_mega		= false;
 
-#define RADAR_SHOW_OTHER (radar_show_gibs || radar_show_explosions || radar_show_nails_p || radar_show_rockets_p || radar_show_shaft_p)
+#define RADAR_SHOW_OTHER (radar_show_gibs || radar_show_explosions || radar_show_nails_p || radar_show_rockets_p || radar_show_shaft_p || radar_show_teleport || radar_show_shotgun)
 static qbool radar_show_nails_p		= false;
 static qbool radar_show_rockets_p	= false;
 static qbool radar_show_shaft_p		= false;
 static qbool radar_show_gibs		= false;
 static qbool radar_show_explosions	= false;
+static qbool radar_show_teleport	= false;
+static qbool radar_show_shotgun		= false;
 
 qbool Radar_OnChangeWeaponFilter(cvar_t *var, char *newval)
 {
 	// Parse the weapon filter.
-	radar_show_ssg		= HUD_RegExpMatch("SSG|SUPERSHOTGUN",		newval);
-	radar_show_ng		= HUD_RegExpMatch("NG|NAILGUN",				newval);
-	radar_show_sng		= HUD_RegExpMatch("SNG|SUPERNAILGUN",		newval);
-	radar_show_rl		= HUD_RegExpMatch("RL|ROCKETLAUNCHER",		newval);
-	radar_show_gl		= HUD_RegExpMatch("GL|GRENADELAUNCHER",		newval);
-	radar_show_lg		= HUD_RegExpMatch("LG|SHAFT|LIGHTNING",		newval);
+	radar_show_ssg		= HUD_RegExpMatch("SSG|SUPERSHOTGUN|ALL",		newval);
+	radar_show_ng		= HUD_RegExpMatch("NG|NAILGUN|ALL",				newval);
+	radar_show_sng		= HUD_RegExpMatch("SNG|SUPERNAILGUN|ALL",		newval);
+	radar_show_rl		= HUD_RegExpMatch("RL|ROCKETLAUNCHER|ALL",		newval);
+	radar_show_gl		= HUD_RegExpMatch("GL|GRENADELAUNCHER|ALL",		newval);
+	radar_show_lg		= HUD_RegExpMatch("LG|SHAFT|LIGHTNING|ALL",		newval);
 
 	return false;
 }
@@ -3751,20 +3753,20 @@ qbool Radar_OnChangeWeaponFilter(cvar_t *var, char *newval)
 qbool Radar_OnChangeItemFilter(cvar_t *var, char *newval)
 {
 	// Parse the item filter.
-	radar_show_backpacks		= HUD_RegExpMatch("BP|BACKPACK",					newval);
-	radar_show_health			= HUD_RegExpMatch("HP|HEALTH",						newval);
-	radar_show_ra				= HUD_RegExpMatch("RA|REDARMOR|ARMOR",				newval);
-	radar_show_ya				= HUD_RegExpMatch("YA|YELLOWARMOR|ARMOR",			newval);
-	radar_show_ga				= HUD_RegExpMatch("GA|GREENARMOR|ARMOR",			newval);
-	radar_show_rockets			= HUD_RegExpMatch("ROCKETS|ROCKS",					newval);
-	radar_show_nails			= HUD_RegExpMatch("NAILS|SPIKES",					newval);
-	radar_show_cells			= HUD_RegExpMatch("CELLS|BATTERY",					newval);
-	radar_show_shells			= HUD_RegExpMatch("SHELLS",							newval);
-	radar_show_quad				= HUD_RegExpMatch("QUAD|POWERUPS",					newval);
-	radar_show_pent				= HUD_RegExpMatch("PENT|PENTAGRAM|666|POWERUPS",	newval);
-	radar_show_ring				= HUD_RegExpMatch("RING|INVISIBLE|EYES|POWERUPS",	newval);
-	radar_show_suit				= HUD_RegExpMatch("SUIT",							newval);
-	radar_show_mega				= HUD_RegExpMatch("MH|MEGA|MEGAHEALTH|100+",		newval);
+	radar_show_backpacks		= HUD_RegExpMatch("BP|BACKPACK|ALL",					newval);
+	radar_show_health			= HUD_RegExpMatch("HP|HEALTH|ALL",						newval);
+	radar_show_ra				= HUD_RegExpMatch("RA|REDARMOR|ARMOR|ALL",				newval);
+	radar_show_ya				= HUD_RegExpMatch("YA|YELLOWARMOR|ARMOR|ALL",			newval);
+	radar_show_ga				= HUD_RegExpMatch("GA|GREENARMOR|ARMOR|ALL",			newval);
+	radar_show_rockets			= HUD_RegExpMatch("ROCKETS|ROCKS|AMMO|ALL",				newval);
+	radar_show_nails			= HUD_RegExpMatch("NAILS|SPIKES|AMMO|ALL",				newval);
+	radar_show_cells			= HUD_RegExpMatch("CELLS|BATTERY|AMMO|ALL",				newval);
+	radar_show_shells			= HUD_RegExpMatch("SHELLS|AMMO|ALL",					newval);
+	radar_show_quad				= HUD_RegExpMatch("QUAD|POWERUPS|ALL",					newval);
+	radar_show_pent				= HUD_RegExpMatch("PENT|PENTAGRAM|666|POWERUPS|ALL",	newval);
+	radar_show_ring				= HUD_RegExpMatch("RING|INVISIBLE|EYES|POWERUPS|ALL",	newval);
+	radar_show_suit				= HUD_RegExpMatch("SUIT|POWERUPS|ALL",					newval);
+	radar_show_mega				= HUD_RegExpMatch("MH|MEGA|MEGAHEALTH|100+|ALL",		newval);
 
 	return false;
 }
@@ -3772,11 +3774,13 @@ qbool Radar_OnChangeItemFilter(cvar_t *var, char *newval)
 qbool Radar_OnChangeOtherFilter(cvar_t *var, char *newval)
 {
 	// Parse the "other" filter.
-	radar_show_nails_p			= HUD_RegExpMatch("NAILS|PROJECTILES",		newval);
-	radar_show_rockets_p		= HUD_RegExpMatch("ROCKETS|PROJECTILES",	newval);
-	radar_show_shaft_p			= HUD_RegExpMatch("SHAFT|PROJECTILES",		newval);
-	radar_show_gibs				= HUD_RegExpMatch("GIBS",					newval);
-	radar_show_explosions		= HUD_RegExpMatch("EXPLOSIONS",				newval);
+	radar_show_nails_p			= HUD_RegExpMatch("NAILS|PROJECTILES|ALL",		newval);
+	radar_show_rockets_p		= HUD_RegExpMatch("ROCKETS|PROJECTILES|ALL",	newval);
+	radar_show_shaft_p			= HUD_RegExpMatch("SHAFT|PROJECTILES|ALL",		newval);
+	radar_show_gibs				= HUD_RegExpMatch("GIBS|ALL",					newval);
+	radar_show_explosions		= HUD_RegExpMatch("EXPLOSIONS|ALL",				newval);
+	radar_show_teleport			= HUD_RegExpMatch("TELE|ALL",					newval);
+	radar_show_shotgun			= HUD_RegExpMatch("SHOTGUN|SG|BUCK|ALL",		newval);
 
 	return false;
 }
@@ -4109,6 +4113,76 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			Draw_AlphaCircleOutline(entity_p_x , entity_p_y, map_x_slope * 8 * stats_important_ents->hold_radius * scale, 1.0, 15, 0.2);
 		}
 	}
+
+	//
+	// Draw temp entities (explosions, blood, teleport effects).
+	//
+	for(i = 0; i < MAX_TEMP_ENTITIES; i++)
+	{
+		float time_diff = 0.0;
+
+		int entity_q_x = 0;
+		int entity_q_y = 0;
+		int entity_p_x = 0;
+		int entity_p_y = 0;
+
+		// Get the time since the entity spawned.
+		time_diff = cls.demotime - temp_entities.list[i].time;
+
+		// Don't show temp entities for long.
+		if(time_diff < 0.25)
+		{
+			float radius = 0.0;
+			radius = (time_diff < 0.125) ? (time_diff * 32.0) : (time_diff * 32.0) - time_diff;
+			radius *= scale;
+
+			// Get quake coordinates (times 8 to get them in the same format as .locs).
+			entity_q_x = temp_entities.list[i].pos[0]*8;
+			entity_q_y = temp_entities.list[i].pos[1]*8;
+
+			entity_p_x = x + ROUND((map_x_slope*entity_q_x + map_x_intercept) * scale);
+			entity_p_y = y + ROUND((map_y_slope*entity_q_y + map_y_intercept) * scale);
+
+			if(radar_show_explosions
+				&& (temp_entities.list[i].type == TE_EXPLOSION 
+				|| temp_entities.list[i].type == TE_TAREXPLOSION))
+			{
+				//
+				// Explosions.
+				//
+
+				Draw_AlphaCircleFill (entity_p_x, entity_p_y, radius, 235, 0.8);
+			}
+			else if(radar_show_teleport && temp_entities.list[i].type == TE_TELEPORT)
+			{
+				//
+				// Teleport effect.
+				//
+
+				radius *= 1.5;
+				Draw_AlphaCircleFill (entity_p_x, entity_p_y, radius, 244, 0.8);
+			}
+			else if(radar_show_shotgun && temp_entities.list[i].type == TE_GUNSHOT)
+			{
+				//
+				// Shotgun fire.
+				//
+
+				#define SHOTGUN_SPREAD 10
+				int spread_x = 0;
+				int spread_y = 0;
+				int n = 0;
+
+				for(n = 0; n < 10; n++)
+				{
+					spread_x = (int)(rand() / (((double)RAND_MAX + 1) / SHOTGUN_SPREAD));
+					spread_y = (int)(rand() / (((double)RAND_MAX + 1) / SHOTGUN_SPREAD));
+					
+					Draw_AlphaFill (entity_p_x + spread_x - (SHOTGUN_SPREAD/2), entity_p_y + spread_y - (SHOTGUN_SPREAD/2), 1, 1, 8, 0.9);
+				}
+			}
+		}
+	}
 }
 
 void Radar_DrawPlayers(int x, int y, int width, int height, float scale, 
@@ -4298,7 +4372,6 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 {
 	int width, height, x, y;
 	float width_limit, height_limit;
-	int num;
 	float scale;
 	float x_scale;
 	float y_scale;
@@ -4411,10 +4484,9 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		height = radar_pic->height * scale;
 	}
 
-	num = 0;
-
 	if (HUD_PrepareDraw(hud, ROUND(width_limit) , ROUND(height_limit), &x, &y))
 	{
+		float player_size = 1.0;
 		static int lastframecount = -1;
 
 		// Place the map picture in the center of the HUD element.
@@ -4441,6 +4513,8 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 			return;
 		}
 
+		player_size = hud_radar_player_size->value * scale;
+
 		// Draw team stats.
 		if(hud_radar_show_stats->value)
 		{
@@ -4451,7 +4525,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		if(RADAR_SHOW_WEAPONS || RADAR_SHOW_ITEMS || RADAR_SHOW_OTHER)
 		{
 			Radar_DrawEntities(x, y, scale, 
-				hud_radar_player_size->value,
+				player_size,
 				hud_radar_show_hold->value);
 		}
 
@@ -4459,7 +4533,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		Radar_DrawPlayers(x, y, width, height, scale, 
 			hud_radar_show_height->value,
 			hud_radar_show_powerups->value,
-			hud_radar_player_size->value,
+			player_size,
 			hud_radar_show_names->value,
 			hud_radar_fade_players->value);
 	}
@@ -4974,7 +5048,7 @@ void CommonDraw_Init(void)
 		"show_hold", "0",
 		"weaponfilter", "ssg ng sng gl rl lg",
 		"itemfilter", "backpack quad pent suit ring health armor shells cells rockets nails mega",
-		"otherfilter", "projectiles gibs explosions",
+		"otherfilter", "projectiles gibs explosions shotgun",
         NULL);
 #endif
 
