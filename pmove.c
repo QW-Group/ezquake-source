@@ -206,10 +206,7 @@ int PM_StepSlideMove (qbool in_air) {
 		if (!(blocked & BLOCKED_STEP))
 			return blocked;
 
-		//FIXME: "pmove.velocity < 0" ???? :)
-		// Of course I meant pmove.velocity[2], but I'm afraid I don't understand
-		// the code's purpose any more, so let it stay just this way for now :)  -- Tonik
-		org = (pmove.velocity < 0) ? pmove.origin : original;	// cryptic, eh?
+		org = (originalvel[2] < 0) ? pmove.origin : original;
 		VectorCopy (org, dest);
 		dest[2] -= STEPSIZE;
 		trace = PM_PlayerTrace (org, dest);
@@ -235,6 +232,9 @@ int PM_StepSlideMove (qbool in_air) {
 	trace = PM_PlayerTrace (pmove.origin, dest);
 	if (!trace.startsolid && !trace.allsolid)
 		VectorCopy (trace.endpos, pmove.origin);
+
+	if (in_air && originalvel[2] < 0)
+		pmove.velocity[2] = 0;
 
 	PM_SlideMove ();
 
