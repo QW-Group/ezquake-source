@@ -20,8 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-//#define NEW_JUMPFIX	// new (Jan 2006) fix for the "jump bug"
-
 movevars_t	movevars;
 playermove_t	pmove;
 
@@ -563,13 +561,6 @@ void PM_CategorizePosition (void) {
 			// snap to ground so that we can't jump higher than we're supposed to
 			if (!trace.startsolid && !trace.allsolid)
 				VectorCopy (trace.endpos, pmove.origin);
-#ifdef NEW_JUMPFIX
-			// check for jump bug
-			if (DotProduct(pmove.velocity, groundplane.normal) < 0) {
-				// pmove.velocity is pointing into the ground, clip it
-				PM_ClipVelocity (pmove.velocity, groundplane.normal, pmove.velocity, 1);
-			}
-#endif
 		}
 	}
 }
@@ -615,7 +606,6 @@ void PM_CheckJump (void) {
 		return; // don't pogo stick
 #endif
 
-#ifndef NEW_JUMPFIX
 	if (!movevars.pground) {
 		// check for jump bug
 		// groundplane normal was set in the call to PM_CategorizePosition
@@ -624,7 +614,6 @@ void PM_CheckJump (void) {
 			PM_ClipVelocity (pmove.velocity, groundplane.normal, pmove.velocity, 1);
 		}
 	}
-#endif
 
 	pmove.onground = false;
 	pmove.velocity[2] += 270;
@@ -828,7 +817,6 @@ void PM_PlayerMove (void)
 	// set onground, watertype, and waterlevel for final spot
 	PM_CategorizePosition ();
 
-#ifndef NEW_JUMPFIX
 	if (!movevars.pground) {
 		// this is to make sure landing sound is not played twice
 		// and falling damage is calculated correctly
@@ -836,5 +824,4 @@ void PM_PlayerMove (void)
 				  && DotProduct(pmove.velocity, groundplane.normal) < -0.1)
 			PM_ClipVelocity (pmove.velocity, groundplane.normal, pmove.velocity, 1);
 	}
-#endif
 }
