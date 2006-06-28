@@ -340,3 +340,23 @@ typedef struct usercmd_s {
 #define	dem_single		4
 #define dem_stats		5
 #define dem_all			6
+
+//
+// Used for saving a temporary list of temp entities.
+// 
+
+#define	MAX_TEMP_ENTITIES 32
+typedef struct temp_entity_s
+{
+	vec3_t	pos;	// Position of temp entity.
+	float	time;	// Time of temp entity.
+	int		type;	// Type of temp entity.
+} temp_entity_t;
+
+typedef struct temp_entity_list_s
+{
+	temp_entity_t	list[MAX_TEMP_ENTITIES];
+	int				count;
+} temp_entity_list_t;
+
+temp_entity_list_t	temp_entities;

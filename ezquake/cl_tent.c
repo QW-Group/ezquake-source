@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.16 2006-06-01 16:50:18 johnnycz Exp $
+	$Id: cl_tent.c,v 1.17 2006-06-28 21:56:53 cokeman1982 Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -180,7 +180,7 @@ void CL_ParseTEnt (void) {
 #ifdef GLQUAKE
 	byte col[2];
 #endif
-
+	pos[0] = pos[1] = pos[2] = 0;
 	type = MSG_ReadByte ();
 	switch (type) {
 	case TE_WIZSPIKE:		// spike hitting wall
@@ -453,6 +453,12 @@ void CL_ParseTEnt (void) {
 	default:
 		Host_Error("CL_ParseTEnt: bad type");
 	}
+
+	// Save the temp entities.
+	VectorCopy(pos, temp_entities.list[temp_entities.count].pos);
+	temp_entities.list[temp_entities.count].time = cls.demoplayback ? cls.demotime : cls.realtime; // FIXME: Use realtime here?
+	temp_entities.list[temp_entities.count].type = type;
+	temp_entities.count = (temp_entities.count + 1 >= MAX_TEMP_ENTITIES) ? 0 : temp_entities.count + 1;
 }
 
 void vectoangles(vec3_t vec, vec3_t ang);
