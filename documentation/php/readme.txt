@@ -13,3 +13,8 @@ Installation instructions:
 INSERT INTO users (login, name, password, access) VALUES ('admin', 'admin', MD5('yourpasswordhere'), 2)
 to create an admin account
 5) edit settings.php
+
+Note:
+Regular users have access level 1
+Administrators have access level 2
+Administrators can add/remove/change password of users and release .zip archives with XML exported docs
