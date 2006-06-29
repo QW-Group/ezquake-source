@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.45 2006-06-28 21:56:53 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.46 2006-06-29 21:04:57 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -3146,6 +3146,34 @@ static qbool teamhold_show_ra		= false;
 static qbool teamhold_show_ya		= false;
 static qbool teamhold_show_ga		= false;
 
+void TeamHold_DrawBars(int x, int y, int width, int height,
+						float team1_percent, float team2_percent,
+						int team1_color, int team2_color,
+						float opacity)
+{
+	int team1_width = 0;
+	int team2_width = 0;
+	int bar_height = 0;
+
+	bar_height = ROUND(height/2.0);
+	team1_width = width * team1_percent;
+	team2_width = width * team2_percent;
+
+	#ifdef GLQUAKE
+	Draw_AlphaFill(x, y, team1_width, bar_height, team1_color, opacity);
+	#else
+	Draw_Fill(x, y, team1_width, bar_height, team1_color);
+	#endif
+
+	y += bar_height;
+
+	#ifdef GLQUAKE
+	Draw_AlphaFill(x, y, team2_width, bar_height, team2_color, opacity);
+	#else
+	Draw_Fill(x, y, team2_width, bar_height, team2_color);
+	#endif
+}
+
 void TeamHold_DrawPercentageBar(int x, int y, int width, int height, 
 								float team1_percent, float team2_percent, 
 								int team1_color, int team2_color,
@@ -3455,6 +3483,7 @@ qbool TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s)
 
 #define HUD_TEAMHOLDINFO_STYLE_TEAM_NAMES		0
 #define HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS		1
+#define HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS2	2
 
 void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 {
@@ -3575,6 +3604,15 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 					false,
 					false,
 					hud_teamholdinfo_opacity->value);			
+			}
+			else if(hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS2)
+			{
+				TeamHold_DrawBars(x + names_width, y, 
+					ROUND(hud_teamholdinfo_width->value - names_width), 8,
+					team1_percent, team2_percent,
+					stats_important_ents->teams[STATS_TEAM1].color, 
+					stats_important_ents->teams[STATS_TEAM2].color, 
+					hud_teamholdinfo_opacity->value);		
 			}
 
 			// Next line.
@@ -3741,7 +3779,7 @@ qbool Radar_OnChangeWeaponFilter(cvar_t *var, char *newval)
 {
 	// Parse the weapon filter.
 	radar_show_ssg		= HUD_RegExpMatch("SSG|SUPERSHOTGUN|ALL",		newval);
-	radar_show_ng		= HUD_RegExpMatch("NG|NAILGUN|ALL",				newval);
+	radar_show_ng		= HUD_RegExpMatch("([^S]|^)NG|NAILGUN|ALL",		newval); // Yes very ugly, but we don't want to match SNG.
 	radar_show_sng		= HUD_RegExpMatch("SNG|SUPERNAILGUN|ALL",		newval);
 	radar_show_rl		= HUD_RegExpMatch("RL|ROCKETLAUNCHER|ALL",		newval);
 	radar_show_gl		= HUD_RegExpMatch("GL|GRENADELAUNCHER|ALL",		newval);
@@ -3766,7 +3804,7 @@ qbool Radar_OnChangeItemFilter(cvar_t *var, char *newval)
 	radar_show_pent				= HUD_RegExpMatch("PENT|PENTAGRAM|666|POWERUPS|ALL",	newval);
 	radar_show_ring				= HUD_RegExpMatch("RING|INVISIBLE|EYES|POWERUPS|ALL",	newval);
 	radar_show_suit				= HUD_RegExpMatch("SUIT|POWERUPS|ALL",					newval);
-	radar_show_mega				= HUD_RegExpMatch("MH|MEGA|MEGAHEALTH|100+|ALL",		newval);
+	radar_show_mega				= HUD_RegExpMatch("MH|MEGA|MEGAHEALTH|100\\+|ALL",		newval);
 
 	return false;
 }
@@ -4059,7 +4097,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			int y_line_end = 0;
 
 			// Get the entity angle in radians.
-			entity_angle = (cl_visents.list[i].angles[1]*M_PI)/180;
+			entity_angle = DEG2RAD(cl_visents.list[i].angles[1]);
 
 			x_line_end = entity_p_x + 5 * cos(entity_angle) * scale;
 			y_line_end = entity_p_y - 5 * sin(entity_angle) * scale;
@@ -4312,7 +4350,7 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 				y_line_start = y + player_p_y;
 
 				// Translate the angle into radians.
-				player_angle = (player_angle*M_PI)/180;
+				player_angle = DEG2RAD(player_angle);
 
 				relative_x = cos(player_angle);
 				relative_y = sin(player_angle);
@@ -4390,6 +4428,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		*hud_radar_show_hold,
 		*hud_radar_weaponfilter,
 		*hud_radar_itemfilter,
+		*hud_radar_onlytp,
 		*hud_radar_otherfilter;
 
     if (hud_radar_opacity == NULL)    // first time
@@ -4408,6 +4447,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		hud_radar_weaponfilter		= HUD_FindVar(hud, "weaponfilter");
 		hud_radar_itemfilter		= HUD_FindVar(hud, "itemfilter");
 		hud_radar_otherfilter		= HUD_FindVar(hud, "otherfilter");
+		hud_radar_onlytp			= HUD_FindVar(hud, "onlytp");
 
 		//
 		// Only parse the the filters when they change, not on each frame.
@@ -4428,6 +4468,12 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 
 	// Don't show anything if it's a normal player.
 	if(!(cls.demoplayback || cl.spectator))
+	{
+		return;
+	}
+
+	// Don't show when not in teamplay.
+	if(!cl.teamplay && hud_radar_onlytp->value)
 	{
 		return;
 	}
@@ -4513,6 +4559,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 			return;
 		}
 
+		// Scale the player size after the size of the radar.
 		player_size = hud_radar_player_size->value * scale;
 
 		// Draw team stats.
@@ -5049,6 +5096,7 @@ void CommonDraw_Init(void)
 		"weaponfilter", "ssg ng sng gl rl lg",
 		"itemfilter", "backpack quad pent suit ring health armor shells cells rockets nails mega",
 		"otherfilter", "projectiles gibs explosions shotgun",
+		"onlytp", "0",
         NULL);
 #endif
 

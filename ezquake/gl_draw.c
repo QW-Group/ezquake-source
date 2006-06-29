@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.22 2006-06-21 22:28:52 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.23 2006-06-29 21:04:57 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1308,6 +1308,7 @@ void Draw_AlphaCircle (int x, int y, float radius, float thickness, qbool fill, 
 		glBegin (GL_LINE_LOOP);
 	}
 
+	// TODO: Use lookup table for sin/cos.
 	for(i = 0; i < CIRCLE_LINE_COUNT; i++)
 	{
       angle = i*2*M_PI / CIRCLE_LINE_COUNT;
