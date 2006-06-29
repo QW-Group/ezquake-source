@@ -51,9 +51,13 @@ div.menu a:hover {
 	background-color: #fdd;
 	color: #800; 
 }
-div.menu ul.mainmenu { margin: 0.6em 0 0.6em 0.6em; }
+div.menu ul.mainmenu {
+	margin: 0.5em 0 0.5em 1em;
+	padding-left: 0;
+}
 div.menu ul.submenu {
 	margin: 0 0 0 1em;
+	padding-left: 0;
 }
 div.menu ul li {
   list-style: none;
