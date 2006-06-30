@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: movie.c,v 1.14 2006-06-24 20:03:13 johnnycz Exp $
+	$Id: movie.c,v 1.15 2006-06-30 20:39:25 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -231,7 +231,8 @@ double Movie_StartFrame(void) {
 	if (cl_multiview.value)
 		views = cl_multiview.value;
 
-	Cbuf_AddTextEx (&cbuf_main, "f_captureframe\n");
+	if (Cmd_FindAlias("f_captureframe"))
+		Cbuf_AddTextEx (&cbuf_main, "f_captureframe\n");
 
 	time = movie_fps.value > 0 ? 1.0 / movie_fps.value : 1 / 30.0;
 	return bound(1.0 / 1000, time / views, 1.0);
