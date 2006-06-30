@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.46 2006-06-29 21:04:57 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.47 2006-06-30 20:36:36 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -3131,6 +3131,7 @@ void HUD_NewMap()
 		}
 	}
 }
+#endif
 
 // Team hold filters.
 static qbool teamhold_show_pent		= false;
@@ -3408,7 +3409,11 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 			}
 			else
 			{
+				#ifdef GLQUAKE
 				Draw_AlphaFill(x, y, hud_teamholdbar_width->value, height, 0, hud_teamholdbar_opacity->value*0.5);
+				#else
+				Draw_Fill(x, y, hud_teamholdbar_width->value, height, 0);
+				#endif
 				return;
 			}
 
@@ -3620,6 +3625,8 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 		}
 	}
 }
+
+#ifdef GLQUAKE
 
 // What stats to draw.
 #define HUD_RADAR_STATS_NONE				0
