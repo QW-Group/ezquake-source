@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.47 2006-06-30 20:36:36 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.48 2006-07-01 17:13:12 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -2576,7 +2576,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 		*hud_teamfrags_padtext,
 		*hud_teamfrags_style,
 		*hud_teamfrags_extra_spec,
-		*hud_teamfrags_only_when_tp;
+		*hud_teamfrags_onlytp;
 
 	extern mpic_t *sb_weapons[7][8]; // sbar.c
 	mpic_t rl_picture = *sb_weapons[0][5];
@@ -2596,11 +2596,11 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 		hud_teamfrags_padtext		= HUD_FindVar(hud, "padtext");
 		hud_teamfrags_style			= HUD_FindVar(hud, "style");
 		hud_teamfrags_extra_spec	= HUD_FindVar(hud, "extra_spec_info");
-		hud_teamfrags_only_when_tp	= HUD_FindVar(hud, "onlytp");
+		hud_teamfrags_onlytp	= HUD_FindVar(hud, "onlytp");
     }
 
 	// Don't draw the frags if we're note in teamplay.
-	if(hud_teamfrags_only_when_tp->value && !cl.teamplay)
+	if(hud_teamfrags_onlytp->value && !cl.teamplay)
 	{
 		return;
 	}
@@ -3133,6 +3133,28 @@ void HUD_NewMap()
 }
 #endif
 
+#define HUD_SHOW_ONLY_IN_TEAMPLAY		1
+#define HUD_SHOW_ONLY_IN_DEMOPLAYBACK	2
+
+qbool HUD_ShowInDemoplayback(int val)
+{
+	if(!cl.teamplay && val == HUD_SHOW_ONLY_IN_TEAMPLAY)
+	{
+		return false;
+	}
+	else if(!cls.demoplayback && val == HUD_SHOW_ONLY_IN_DEMOPLAYBACK)
+	{
+		return false;
+	}
+	else if(!cl.teamplay && !cls.demoplayback 
+		&& val == HUD_SHOW_ONLY_IN_TEAMPLAY + HUD_SHOW_ONLY_IN_DEMOPLAYBACK)
+	{
+		return false;
+	}
+
+	return true;
+}
+
 // Team hold filters.
 static qbool teamhold_show_pent		= false;
 static qbool teamhold_show_quad		= false;
@@ -3159,6 +3181,9 @@ void TeamHold_DrawBars(int x, int y, int width, int height,
 	bar_height = ROUND(height/2.0);
 	team1_width = width * team1_percent;
 	team2_width = width * team2_percent;
+	
+	team1_width = clamp(team1_width, 0, width);
+	team2_width = clamp(team1_width, 0, width);
 
 	#ifdef GLQUAKE
 	Draw_AlphaFill(x, y, team1_width, bar_height, team1_color, opacity);
@@ -3383,8 +3408,8 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 		hud_teamholdbar_vertical_text		= HUD_FindVar(hud, "vertical_text");
     }
 
-	// Don't show when not in teamplay.
-	if(!cl.teamplay && hud_teamholdbar_onlytp->value)
+	// Don't show when not in teamplay/demoplayback.
+	if(!HUD_ShowInDemoplayback(hud_teamholdbar_onlytp->value))
 	{
 		return;
 	}
@@ -3520,8 +3545,8 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 		TeamHold_OnChangeItemFilterInfo(hud_teamholdinfo_itemfilter, hud_teamholdinfo_itemfilter->string);
     }
 
-	// Don't show when not in teamplay.
-	if(!cl.teamplay && hud_teamholdinfo_onlytp->value)
+	// Don't show when not in teamplay/demoplayback.
+	if(!HUD_ShowInDemoplayback(hud_teamholdinfo_onlytp->value))
 	{
 		return;
 	}
@@ -3533,11 +3558,15 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 	}
 
 	// Get the height based on how many items we have, or what the user has set it to.
-	height = abs(ROUND(max(stats_important_ents->count*8, hud_teamholdinfo_height->value)));
+	height = max(0, hud_teamholdinfo_height->value);
 	width = max(0, hud_teamholdinfo_width->value);
 	
 	if (HUD_PrepareDraw(hud, width , height, &x, &y))
 	{
+		int _y = 0;
+
+		_y = y;
+
 		// Go through all the items and print the stats for them.
 		for(i = 0; i < stats_important_ents->count; i++)
 		{
@@ -3545,7 +3574,13 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			float team2_percent;
 			int team1_hold_count = 0;
 			int team2_hold_count = 0;
-			int names_width = 0;
+			int names_width = 0;			
+
+			// Don't draw outside the specified height.
+			if((_y - y) + 8 > height)
+			{
+				break;
+			}
 
 			// If the item isn't of the specified type, then skip it.
 			if(!(	(teamhold_show_rl	&& !strncmp(stats_important_ents->list[i].name, "RL", 2))
@@ -3579,7 +3614,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			team2_percent = fabs(max(0, team2_percent));
 
 			// Write the name of the item.
-			Draw_ColoredString(x, y, va("&cff0%s:", stats_important_ents->list[i].name), 0);
+			Draw_ColoredString(x, _y, va("&cff0%s:", stats_important_ents->list[i].name), 0);
 			
 			if(hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_TEAM_NAMES)
 			{
@@ -3588,11 +3623,11 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 				//
 				if(team1_percent > team2_percent)
 				{
-					Draw_ColoredString(x + names_width, y, stats_important_ents->teams[STATS_TEAM1].name, 0);
+					Draw_ColoredString(x + names_width, _y, stats_important_ents->teams[STATS_TEAM1].name, 0);
 				}
 				else if(team1_percent < team2_percent)
 				{
-					Draw_ColoredString(x + names_width, y, stats_important_ents->teams[STATS_TEAM2].name, 0);
+					Draw_ColoredString(x + names_width, _y, stats_important_ents->teams[STATS_TEAM2].name, 0);
 				}
 			}
 			else if(hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS)
@@ -3600,7 +3635,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 				//
 				// Show a percenteage bar for the item.
 				//
-				TeamHold_DrawPercentageBar(x + names_width, y, 
+				TeamHold_DrawPercentageBar(x + names_width, _y, 
 					ROUND(hud_teamholdinfo_width->value - names_width), 8, 
 					team1_percent, team2_percent, 
 					stats_important_ents->teams[STATS_TEAM1].color, 
@@ -3612,7 +3647,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			}
 			else if(hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS2)
 			{
-				TeamHold_DrawBars(x + names_width, y, 
+				TeamHold_DrawBars(x + names_width, _y, 
 					ROUND(hud_teamholdinfo_width->value - names_width), 8,
 					team1_percent, team2_percent,
 					stats_important_ents->teams[STATS_TEAM1].color, 
@@ -3621,7 +3656,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			}
 
 			// Next line.
-			y += 8;			
+			_y += 8;			
 		}
 	}
 }
@@ -4479,8 +4514,8 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		return;
 	}
 
-	// Don't show when not in teamplay.
-	if(!cl.teamplay && hud_radar_onlytp->value)
+	// Don't show when not in teamplay/demoplayback.
+	if(!HUD_ShowInDemoplayback(hud_radar_onlytp->value))
 	{
 		return;
 	}
