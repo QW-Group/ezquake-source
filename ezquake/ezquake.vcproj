@@ -24,7 +24,7 @@
 				Optimization="0"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="libs"
-				PreprocessorDefinitions="_DEBUG;id386;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_PNG;WITH_ZLIB;EMBED_TCL;__LITTLE_ENDIAN__Q__"
+				PreprocessorDefinitions="_DEBUG;id386;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_PNG;WITH_ZLIB;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__"
 				StringPooling="FALSE"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="FALSE"
@@ -108,7 +108,7 @@
 				OptimizeForProcessor="2"
 				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="libs"
-				PreprocessorDefinitions="NDEBUG;id386;WITH_ZLIB;WITH_PNG;WITH_KEYMAP;EMBED_TCL;__LITTLE_ENDIAN__Q__"
+				PreprocessorDefinitions="NDEBUG;id386;WITH_ZLIB;WITH_PNG;WITH_KEYMAP;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__"
 				StringPooling="TRUE"
 				ExceptionHandling="FALSE"
 				RuntimeLibrary="4"
@@ -191,7 +191,7 @@
 				OptimizeForProcessor="2"
 				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="libs"
-				PreprocessorDefinitions="NDEBUG;id386;WITH_KEYMAP;WITH_PNG;WITH_JPEG;GLQUAKE;WITH_ZLIB;EMBED_TCL;__LITTLE_ENDIAN__Q__"
+				PreprocessorDefinitions="NDEBUG;id386;WITH_KEYMAP;WITH_PNG;WITH_JPEG;GLQUAKE;WITH_ZLIB;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__"
 				StringPooling="TRUE"
 				ExceptionHandling="FALSE"
 				RuntimeLibrary="4"
@@ -270,7 +270,7 @@
 				FavorSizeOrSpeed="0"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="libs"
-				PreprocessorDefinitions="_DEBUG;id386;WITH_ZLIB;WITH_PNG;WITH_KEYMAP;EMBED_TCL;__LITTLE_ENDIAN__Q__"
+				PreprocessorDefinitions="_DEBUG;id386;WITH_ZLIB;WITH_PNG;WITH_KEYMAP;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="FALSE"
 				RuntimeLibrary="4"
@@ -1335,6 +1335,9 @@
 					RelativePath="rulesets.c">
 				</File>
 				<File
+					RelativePath="stats_grid.c">
+				</File>
+				<File
 					RelativePath="utils.c">
 				</File>
 				<File
@@ -1649,6 +1652,9 @@
 				</File>
 				<File
 					RelativePath="security.h">
+				</File>
+				<File
+					RelativePath="stats_grid.h">
 				</File>
 				<File
 					RelativePath="utils.h">
