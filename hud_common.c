@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.48 2006-07-01 17:13:12 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.49 2006-07-04 21:30:20 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -515,7 +515,18 @@ void SCR_HUD_DrawNetStats(hud_t *hud)
         SCR_NetStats(x, y, hud_net_period->value);
 }
 
-#define SPEED_WIDTH 160
+#define SPEED_GREEN				"52"
+#define SPEED_BROWN_RED			"100"
+#define SPEED_DARK_RED			"72"
+#define SPEED_BLUE				"216"
+#define SPEED_RED				"229"
+
+#define	SPEED_STOPPED			SPEED_GREEN
+#define	SPEED_NORMAL			SPEED_BROWN_RED
+#define	SPEED_FAST				SPEED_DARK_RED
+#define	SPEED_FASTEST			SPEED_BLUE
+#define	SPEED_INSANE			SPEED_RED
+
 //---------------------
 //
 // speed-o-meter
@@ -525,18 +536,55 @@ void SCR_HUD_DrawSpeed(hud_t *hud)
     int width, height;
     int x, y;
 
-    static cvar_t *hud_speed_xyz = NULL;
+    static cvar_t *hud_speed_xyz = NULL,
+		*hud_speed_width,
+        *hud_speed_height,
+		*hud_speed_tick_spacing,
+		*hud_speed_opacity,
+		*hud_speed_color_stopped,
+		*hud_speed_color_normal,
+		*hud_speed_color_fast,
+		*hud_speed_color_fastest,
+		*hud_speed_color_insane,
+		*hud_speed_vertical,
+		*hud_speed_vertical_text,
+		*hud_speed_text_align;
 
     if (hud_speed_xyz == NULL)    // first time
     {
-        hud_speed_xyz = HUD_FindVar(hud, "xyz");
+        hud_speed_xyz			= HUD_FindVar(hud, "xyz");
+		hud_speed_width			= HUD_FindVar(hud, "width");
+		hud_speed_height		= HUD_FindVar(hud, "height");
+		hud_speed_tick_spacing	= HUD_FindVar(hud, "tick_spacing");
+		hud_speed_opacity		= HUD_FindVar(hud, "opacity");
+		hud_speed_color_stopped	= HUD_FindVar(hud, "color_stopped");
+		hud_speed_color_normal	= HUD_FindVar(hud, "color_normal");
+		hud_speed_color_fast	= HUD_FindVar(hud, "color_fast");
+		hud_speed_color_fastest	= HUD_FindVar(hud, "color_fastest");
+		hud_speed_color_insane	= HUD_FindVar(hud, "color_insane");
+		hud_speed_vertical		= HUD_FindVar(hud, "vertical");
+		hud_speed_vertical_text	= HUD_FindVar(hud, "vertical_text");
+		hud_speed_text_align	= HUD_FindVar(hud, "text_align");
     }
 
-    width = SPEED_WIDTH;
-    height = 15;
+	width = max(0, hud_speed_width->value);
+	height = max(0, hud_speed_height->value);
 
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
-        SCR_DrawSpeed2(x, y+3, hud_speed_xyz->value);
+	{
+		SCR_DrawSpeed2(x, y, width, height, 
+			hud_speed_xyz->value, 
+			hud_speed_tick_spacing->value, 
+			hud_speed_opacity->value,
+			hud_speed_vertical->value,
+			hud_speed_vertical_text->value,
+			hud_speed_text_align->value,
+			hud_speed_color_stopped->value,
+			hud_speed_color_normal->value,
+			hud_speed_color_fast->value,
+			hud_speed_color_fastest->value,
+			hud_speed_color_insane->value);
+	}
 }
 
 
@@ -4717,7 +4765,19 @@ void CommonDraw_Init(void)
         HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed,
         "0", "top", "center", "bottom", "0", "-5", "0",
         "xyz",  "0",
-        NULL);
+		"width", "160",
+		"height", "15",
+		"opacity", "1.0",
+		"tick_spacing", "0.2",
+		"color_stopped", SPEED_STOPPED,
+		"color_normal", SPEED_NORMAL,
+		"color_fast", SPEED_FAST,
+		"color_fastest", SPEED_FASTEST,
+		"color_insane", SPEED_INSANE,
+		"vertical", "0",
+		"vertical_text", "1",
+		"text_align", "1",
+		NULL);
 
     // init guns
     HUD_Register("gun", NULL, "Part of your inventory - current weapon.",

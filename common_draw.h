@@ -15,7 +15,24 @@ void CommonDraw_Init(void);
 void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, int gametime);
 void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, int gametime);
 void SCR_NetStats(int x, int y, float period);
-void SCR_DrawSpeed2 (int x, int y, int type);
-void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, int wordwrap, int scroll, double scroll_delay, char *txt);
+void SCR_DrawSpeed2 (int x, int y, int width, int height, 
+					 int type, 
+					 float tick_spacing, 
+					 float opacity,
+					 int vertical,
+					 int vertical_text,
+					 int text_align,
+					 int color_stopped,
+					 int color_normal,
+					 int color_fast,
+					 int color_fastest,
+					 int color_insane);
+void SCR_DrawWordWrapString(int x, int y, 
+							int y_spacing, 
+							int width, int height, 
+							int wordwrap, 
+							int scroll, 
+							double scroll_delay, 
+							char *txt);
 
 #endif  // __COMMON_GRAPH__H__
