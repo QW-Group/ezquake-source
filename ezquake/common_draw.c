@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.9 2006-06-08 15:33:30 johnnycz Exp $
+	$Id: common_draw.c,v 1.10 2006-07-04 21:30:20 cokeman1982 Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -707,72 +707,289 @@ void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, int tim
     }
 }
 
-// show player speed
-#define SPEED_WIDTH 160
-
-void Draw_Speed_Line_1(int x, int y, int h)
+void SCR_DrawFill(int x, int y, int w, int h, int c, float opacity)
 {
-    Draw_Fill(x, y, 1, h, 10);
+	#ifdef GLQUAKE
+	Draw_AlphaFill(x, y, w, h, c, opacity);
+	#else
+	Draw_Fill(x, y, w, h, c);
+	#endif
 }
 
-void Draw_Speed_Line_2(int x, int y, int w)
-{
-    Draw_Fill(x, y, w, 1, 10);
-}
+#define SPEED_TAG_LENGTH		2
+#define SPEED_OUTLINE_SPACING	SPEED_TAG_LENGTH
+#define SPEED_FILL_SPACING		SPEED_OUTLINE_SPACING + 1
+#define SPEED_WHITE				10
 
-void SCR_DrawSpeed2 (int x, int y, int type)
+#define	SPEED_TEXT_ALIGN_NONE	0
+#define SPEED_TEXT_ALIGN_CLOSE	1
+#define SPEED_TEXT_ALIGN_CENTER	2
+#define SPEED_TEXT_ALIGN_FAR	3
+
+void SCR_DrawSpeed2 (int x, int y, int width, int height, 
+					 int type, 
+					 float tick_spacing, 
+					 float opacity,
+					 int vertical,
+					 int vertical_text,
+					 int text_align,
+					 int color_stopped,
+					 int color_normal,
+					 int color_fast,
+					 int color_fastest,
+					 int color_insane)
 {
-    char buf[29];
-    int s;
-    int c1, c2;
+	int color_offset;
+	int color1, color2;
     int player_speed;
     vec_t *velocity;
 
     if (scr_con_current == vid.height)
+	{
         return;     // console is full screen
+	}
 
-    // calculate speed
-    if (cl.players[cl.playernum].spectator  &&  Cam_TrackNum() >= 0)
+    // Get the velocity.
+    if (cl.players[cl.playernum].spectator && Cam_TrackNum() >= 0)
     {
-        velocity = cl.frames[cls.netchan.incoming_sequence&UPDATE_MASK].playerstate[Cam_TrackNum()].velocity;
+        velocity = cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].playerstate[Cam_TrackNum()].velocity;
     }
     else
     {
         velocity = cl.simvel;
     }
 
+	// Calculate the speed 
     if (!type)
+	{
+		// Based on XY.
         player_speed = sqrt(velocity[0]*velocity[0]
                           + velocity[1]*velocity[1]);
+	}
     else
+	{
+		// Based on XYZ.
         player_speed = sqrt(velocity[0]*velocity[0]
                           + velocity[1]*velocity[1]
                           + velocity[2]*velocity[2]);
+	}
 
-    s = SPEED_WIDTH * (player_speed % 500) / 500;
+	// Calculate the color offset for the "background color".
+	if(vertical)
+	{
+		color_offset = height * (player_speed % 500) / 500;
+	}
+	else
+	{
+		color_offset = width * (player_speed % 500) / 500;
+	}
 
+	// Set the color based on the speed.
     switch (player_speed / 500)
     {
-    case 0:  c1 =  52; c2 = 100; break;
-    case 1:  c1 = 100; c2 =  72; break;
-    case 2:  c1 =  72; c2 = 216; break;
-    default: c1 = 216; c2 = 229; break;
+		case 0:  
+			color1 = color_stopped; 
+			color2 = color_normal; 
+			break;
+		case 1:  
+			color1 = color_normal; 
+			color2 = color_fast; 
+			break;
+		case 2:  
+			color1 = color_fast; 
+			color2 = color_fastest; 
+			break;
+		default: 
+			color1 = color_fastest; 
+			color2 = color_insane; 
+			break;
     }
 
-    Draw_Speed_Line_1(x+ (int)(0.2 * SPEED_WIDTH), y-2, 13);
-    Draw_Speed_Line_1(x+ (int)(0.4 * SPEED_WIDTH), y-2, 13);
-    Draw_Speed_Line_1(x+ (int)(0.6 * SPEED_WIDTH), y-2, 13);
-    Draw_Speed_Line_1(x+ (int)(0.8 * SPEED_WIDTH), y-2, 13);
+	// Draw tag marks.
+	if(tick_spacing > 0.0)
+	{
+		float f;
 
-    Draw_Speed_Line_2(x, y-1, SPEED_WIDTH);
-    Draw_Speed_Line_2(x, y+9, SPEED_WIDTH);
+		for(f = tick_spacing; f < 1.0; f += tick_spacing)
+		{
+			if(vertical)
+			{
+				// Left.
+				SCR_DrawFill(x,				// x
+					y + (int)(f * height),	// y
+					SPEED_TAG_LENGTH,		// Width
+					1,						// Height
+					SPEED_WHITE,			// Color
+					opacity);				// Opacity
+				
+				// Right.
+				SCR_DrawFill(x + width - SPEED_TAG_LENGTH + 1,
+					y + (int)(f * height), 					 
+					SPEED_TAG_LENGTH,
+					1,
+					SPEED_WHITE, 
+					opacity);
+			}
+			else
+			{
+				// Above.
+				SCR_DrawFill(x + (int)(f * width), 
+					y,
+					1, 
+					SPEED_TAG_LENGTH, 
+					SPEED_WHITE, 
+					opacity);
+				
+				// Below.
+				SCR_DrawFill(x + (int)(f * width), 
+					y + height - SPEED_TAG_LENGTH + 1,
+					1, 
+					SPEED_TAG_LENGTH, 
+					SPEED_WHITE, 
+					opacity);
+			}
+		}
+	}
 
-    Draw_Fill (x+s, y, SPEED_WIDTH-s, 9, c1);
-    Draw_Fill (x, y, s, 9, c2);
-    
-    sprintf(buf, "%4d", player_speed);
+	//
+	// Draw outline.
+	//
+	{
+		if(vertical)
+		{
+			// Left.
+			SCR_DrawFill(x + SPEED_OUTLINE_SPACING, 
+				y,
+				1, 
+				height, 
+				SPEED_WHITE, 
+				opacity);
 
-    Draw_String(x, y, buf);
+			// Right.
+			SCR_DrawFill(x + width - SPEED_OUTLINE_SPACING, 
+				y, 
+				1, 
+				height, 
+				SPEED_WHITE, 
+				opacity);
+		}
+		else
+		{
+			// Above.
+			SCR_DrawFill(x, 
+				y + SPEED_OUTLINE_SPACING,
+				width, 
+				1, 
+				SPEED_WHITE, 
+				opacity);
+
+			// Below.
+			SCR_DrawFill(x, 
+				y + height - SPEED_OUTLINE_SPACING, 
+				width, 
+				1, 
+				SPEED_WHITE, 
+				opacity);
+		}
+	}
+
+	//
+	// Draw fill.
+	// 
+	{
+		if(vertical)
+		{
+			// Draw the right color (slower).
+			SCR_DrawFill (x + SPEED_FILL_SPACING, 
+				y,				 
+				width - (2 * SPEED_FILL_SPACING), 
+				height - color_offset,
+				color1,
+				opacity);
+			
+			// Draw the left color (faster).
+			SCR_DrawFill (x + SPEED_FILL_SPACING,
+				y + height - color_offset,				
+				width - (2 * SPEED_FILL_SPACING), 
+				color_offset, 
+				color2,
+				opacity);
+		}
+		else
+		{
+			// Draw the right color (slower).
+			SCR_DrawFill (x + color_offset, 
+				y + SPEED_FILL_SPACING, 
+				width - color_offset, 
+				height - (2 * SPEED_FILL_SPACING), 
+				color1,
+				opacity);
+			
+			// Draw the left color (faster).
+			SCR_DrawFill (x, 
+				y + SPEED_FILL_SPACING, 
+				color_offset, 
+				height - (2 * SPEED_FILL_SPACING), 
+				color2,
+				opacity);
+		}
+	}
+
+	// Draw the speed text.
+	if(vertical && vertical_text)
+	{
+		int i = 1;
+		int len = 0;
+
+		// Align the text accordingly.
+		switch(text_align)
+		{
+			case SPEED_TEXT_ALIGN_NONE:		return;
+			case SPEED_TEXT_ALIGN_FAR:		y = y + height - 4*8; break;
+			case SPEED_TEXT_ALIGN_CENTER:	y = ROUND(y + height/2.0 - 16); break;
+			case SPEED_TEXT_ALIGN_CLOSE:	
+			default: break;
+		}
+
+		len = strlen(va("%d", player_speed));
+
+		// 10^len
+		while(len > 0)
+		{
+			i *= 10;
+			len--;
+		}
+
+		// Write one number per row.
+		for(; i > 1; i /= 10)
+		{
+			int next;
+			next = (i/10);
+
+			// Really make sure we don't try division by zero :)
+			if(next <= 0)
+			{
+				break;
+			}
+
+			Draw_String(ROUND(x + width/2.0 - 4), y, va("%1d", (player_speed % i) / next));
+			y += 8;
+		}
+	}
+	else
+	{
+		// Align the text accordingly.
+		switch(text_align)
+		{
+			case SPEED_TEXT_ALIGN_NONE:		return;
+			case SPEED_TEXT_ALIGN_FAR:		x = x + width - 4*8; break;
+			case SPEED_TEXT_ALIGN_CENTER:	x = ROUND(x + width/2.0 - 16); break;
+			case SPEED_TEXT_ALIGN_CLOSE:	
+			default: break;
+		}
+
+		Draw_String(x, ROUND(y + height/2.0 - 4), va("%4d", player_speed));
+	}
 }
 // ================================================================
 // Draws a word wrapped scrolling string inside the given bounds. 
