@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.38 2006-06-24 20:03:13 johnnycz Exp $
+    $Id: teamplay.c,v 1.39 2006-07-05 22:27:13 cokeman1982 Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -1502,17 +1502,12 @@ void TP_EnemyColor_f(void) {
 }
 
 /********************************* .LOC FILES *********************************/
- 
-
-typedef struct locdata_s {
-	vec3_t coord;
-	char *name;
-	struct locdata_s *next;
-} locdata_t;
 
 static locdata_t	*locdata = NULL;
+static int			loc_count = 0;
 
-static void TP_ClearLocs(void) {
+static void TP_ClearLocs(void) 
+{
 	locdata_t *node, *temp;
 
 	for (node = locdata; node; node = temp) {
@@ -1522,6 +1517,17 @@ static void TP_ClearLocs(void) {
 	}
 
 	locdata = NULL;
+	loc_count = 0;
+}
+
+void TP_ClearLocs_f (void)
+{
+	if (Cmd_Argc() > 0) 
+	{
+		Com_Printf ("clearlocs : Clears all locs in memory.\n");
+		return;
+	}
+	TP_ClearLocs ();
 }
 
 static void TP_AddLocNode(vec3_t coord, char *name) {
@@ -1541,6 +1547,7 @@ static void TP_AddLocNode(vec3_t coord, char *name) {
 		;
 
 	node->next = newnode;
+	loc_count++;
 }
 
 #define SKIPBLANKS(ptr) while (*ptr == ' ' || *ptr == '\t' || *ptr == '\r') ptr++
@@ -1548,7 +1555,7 @@ static void TP_AddLocNode(vec3_t coord, char *name) {
 
 qbool TP_LoadLocFile (char *path, qbool quiet) {
 	char *buf, *p, locname[MAX_OSPATH] = {0}, location[MAX_LOC_NAME];
-	int i, n, sign, line, nameindex, mark, overflow, loc_numentries;
+	int i, n, sign, line, nameindex, mark, overflow;
 	vec3_t coord;
 
 	if (!*path)
@@ -1570,7 +1577,6 @@ qbool TP_LoadLocFile (char *path, qbool quiet) {
 	}
 
 	TP_ClearLocs();
-	loc_numentries = 0;
 
 	// Parse the whole file now
 	p = buf;
@@ -1633,7 +1639,6 @@ _next:
 			case '\0':
 				location[nameindex] = 0;
 				TP_AddLocNode(coord, location);
-				loc_numentries++;
 				if (*p == '\n')
 					p++;
 				goto _endofline;
@@ -1654,10 +1659,14 @@ _endoffile:
 
 	Hunk_FreeToLowMark (mark);
 
-	if (loc_numentries) {
+	//if (loc_numentries) {
+	if(loc_count)
+	{
 		if (!quiet)
-			Com_Printf ("Loaded locfile \"%s\" (%i loc points)\n", COM_SkipPath(locname), loc_numentries);
-	} else {
+			Com_Printf ("Loaded locfile \"%s\" (%i loc points)\n", COM_SkipPath(locname), loc_count); // loc_numentries);
+	} 
+	else 
+	{
 		TP_ClearLocs();
 		if (!quiet)
 			Com_Printf("Locfile \"%s\" was empty\n", COM_SkipPath(locname));
@@ -1672,6 +1681,201 @@ void TP_LoadLocFile_f (void) {
 		return;
 	}
 	TP_LoadLocFile (Cmd_Argv(1), false);
+}
+
+qbool TP_SaveLocFile(char *path, qbool quiet)
+{
+	FILE		*locfile;
+	locdata_t	*node;
+	char		*buf;
+	char		locname[MAX_OSPATH];
+	extern char com_gamedirfile[MAX_QPATH];
+
+	// Make sure we have a path to work with.
+	if (!*path)
+	{
+		return false;
+	}
+
+	// Check if the filename is too long.
+	if(strlen(path) > MAX_LOC_NAME)
+	{
+		Com_Printf(va("TP_SaveLocFile: Filename too long. Max allowed is %d characters\n", MAX_LOC_NAME));
+		return false;
+	}
+
+	// Get the default path for loc-files and make sure the path
+	// won't be too long.
+	strcpy (locname, va("%s/%s/", com_gamedirfile, "locs"));
+	if (strlen(path) + strlen(locname) + 2 + 4 > MAX_OSPATH) 
+	{
+		Com_Printf ("TP_SaveLocFile: path name > MAX_OSPATH\n");
+		return false;
+	}
+
+	// Add an extension if it doesn't exist already.
+	strncat (locname, path, sizeof(locname) - strlen(locname) - 1);
+	COM_DefaultExtension(locname, ".loc");
+
+	// Allocate a buffer to hold the file contents.
+	buf = (char *)Q_calloc(loc_count * (MAX_LOC_NAME + 24), sizeof(char));
+
+	if(!buf)
+	{
+		Com_Printf("TP_SaveLocFile: Could not initialize buffer.\n");
+		return false;
+	}
+
+	// Write all the nodes to the buffer.
+	for (node = locdata; node; node = node->next) 
+	{
+		char row[2*MAX_LOC_NAME];
+
+		sprintf(row, "%4d %4d %4d %s\n", ROUND(8*node->coord[0]), ROUND(8*node->coord[1]), ROUND(8*node->coord[2]), node->name);
+		strcat(buf, row);
+	}
+	
+	// Try writing the buffer containing the locs to file.
+	if(!COM_WriteFile(locname, buf, strlen(buf)))
+	{
+		if(!quiet)
+		{
+			Com_Printf(va("TP_SaveLocFile: Could not open %s for writing\n", locname));
+		}
+		
+		// Make sure we free our buffer.
+		Q_free(buf);
+
+		return false;
+	}
+
+	// Make sure we free our buffer.
+	Q_free(buf);
+
+	return true;
+}
+
+void TP_SaveLocFile_f (void) 
+{
+	if (Cmd_Argc() != 2) 
+	{
+		Com_Printf ("saveloc <filename> : save a loc file\n");
+		return;
+	}
+	TP_SaveLocFile (Cmd_Argv(1), false);
+}
+
+void TP_AddLoc(const char *locname)
+{
+	// We need to be up and running.
+	if(cls.state != ca_active)
+	{
+		return;
+	}
+
+	if (cl.players[cl.playernum].spectator && Cam_TrackNum() >= 0)
+    {
+		TP_AddLocNode(cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].playerstate[Cam_TrackNum()].origin, locname);
+    }
+	else
+	{
+		TP_AddLocNode(cl.simorg, locname);
+	}
+}
+
+void TP_AddLoc_f (void) 
+{
+	if (Cmd_Argc() != 2) 
+	{
+		Com_Printf ("addloc <name of location> : add a location\n");
+		return;
+	}
+	TP_AddLoc (Cmd_Argv(1));
+}
+
+void TP_RemoveClosestLoc (vec3_t location)
+{
+	float dist, mindist;
+	vec3_t vec;
+	locdata_t *node, *best, *previous;
+
+	previous = best = NULL;
+	mindist = 0;
+
+	// Find the closest loc.
+	for (node = locdata; node; node = node->next) 
+	{
+		VectorSubtract(location, node->coord, vec);
+		dist = vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2];
+
+		if (!best || dist < mindist) 
+		{
+			best = node;
+			mindist = dist;
+			continue;
+		}
+
+		previous = node;
+	}
+
+	// If the node we're trying to delete has a 
+	// next node attached to it, copy the data from
+	// that node into the node we're deleting, and then
+	// delete the next node instead.
+	if(best->next)
+	{
+		locdata_t *temp;
+
+		// Copy the data from the next node into the one we're deleting.
+		memcpy(best->coord, best->next->coord, sizeof(vec3_t));
+		
+		Q_free(best->name);
+		best->name = (char *)Q_calloc(strlen(best->next->name) + 1, sizeof(char));
+		strcpy(best->name, best->next->name);
+
+		temp = best->next->next;
+		best->next = temp;
+
+		// Free the next node.
+		Q_free(best->next->coord);
+		Q_free(best->next);
+		best->next = NULL;
+	}
+	else
+	{
+		// Free the current node.
+		Q_free(best->name);
+		Q_free(best);
+		best = NULL;
+
+		// Make sure the previous node doesn't point to garbage.
+		if(previous != NULL)
+		{
+			previous->next = NULL;
+		}
+	}
+
+	loc_count--;
+}
+
+void TP_RemoveLoc_f (void)
+{
+	if (Cmd_Argc() == 1) 
+	{
+		if (cl.players[cl.playernum].spectator && Cam_TrackNum() >= 0)
+		{
+			TP_RemoveClosestLoc (cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].playerstate[Cam_TrackNum()].origin);
+		}
+		else
+		{
+			TP_RemoveClosestLoc (cl.simorg);
+		}
+	}
+	else
+	{
+		Com_Printf ("removloc : remove the closest location\n");
+		return;
+	}
 }
 
 typedef struct locmacro_s {
@@ -3681,6 +3885,10 @@ void TP_Init (void) {
 	Cvar_ResetCurrentGroup();
 
 	Cmd_AddCommand ("loadloc", TP_LoadLocFile_f);
+	Cmd_AddCommand ("saveloc", TP_SaveLocFile_f);
+	Cmd_AddCommand ("addloc", TP_AddLoc_f);
+	Cmd_AddCommand ("removeloc", TP_RemoveLoc_f);
+	Cmd_AddCommand ("clearlocs", TP_ClearLocs);
 	Cmd_AddCommand ("filter", TP_MsgFilter_f);
 	Cmd_AddCommand ("msg_trigger", TP_MsgTrigger_f);
 	Cmd_AddCommand ("teamcolor", TP_TeamColor_f);
