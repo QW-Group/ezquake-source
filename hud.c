@@ -7,7 +7,6 @@
 #include "common_draw.h"
 
 #define sbar_last_width 320  // yeah yeah I know, *garbage* -> leave it be :>
-hud_t *hud_fps;
 
 #define  num_align_strings_x  5
 char *align_strings_x[] = {
@@ -564,16 +563,8 @@ void HUD_Init(void)
     Cmd_AddCommand ("togglehud", HUD_Toggle_f);
     Cmd_AddCommand ("align", HUD_Align_f);
     Cmd_AddCommand ("hud_recalculate", HUD_Recalculate_f);
-// hexum -> HUD_Register is now done here
-    hud_fps = HUD_Register("fps", /*"show_fps"*/ NULL, // hexum -> don't support aliases for now
-        "Shows your current framerate in frames per second (fps). "
-        "Can also show minimum framerate, that occured in last measure period.",
-        HUD_PLUSMINUS | HUD_ON_SCORES, ca_active, 9, SCR_HUD_DrawFPS,
-        "0", "top", "right", "bottom", "0", "0", "0",
-        "show_min", "0",
-        "title",    "1",
-		"decimals", "1",
-        NULL);
+
+	// Register the hud items.
     CommonDraw_Init();
 }
 

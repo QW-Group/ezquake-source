@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.49 2006-07-04 21:30:20 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.50 2006-07-06 20:36:46 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -2644,7 +2644,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 		hud_teamfrags_padtext		= HUD_FindVar(hud, "padtext");
 		hud_teamfrags_style			= HUD_FindVar(hud, "style");
 		hud_teamfrags_extra_spec	= HUD_FindVar(hud, "extra_spec_info");
-		hud_teamfrags_onlytp	= HUD_FindVar(hud, "onlytp");
+		hud_teamfrags_onlytp		= HUD_FindVar(hud, "onlytp");
     }
 
 	// Don't draw the frags if we're note in teamplay.
@@ -4705,6 +4705,17 @@ void CommonDraw_Init(void)
     hud_stats[STAT_CELLS]   = 100;
     hud_stats[STAT_ACTIVEWEAPON] = 32;
     hud_stats[STAT_ITEMS] = 0xffffffff - IT_ARMOR2 - IT_ARMOR1;
+
+	// fps
+	HUD_Register("fps", /*"show_fps"*/ NULL, // hexum -> don't support aliases for now
+        "Shows your current framerate in frames per second (fps). "
+        "Can also show minimum framerate, that occured in last measure period.",
+        HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFPS,
+        "0", "top", "right", "bottom", "0", "0", "0",
+        "show_min", "0",
+        "title",    "1",
+		"decimals", "1",
+        NULL);
 
     // init clock
 	HUD_Register("clock", NULL, "Shows current local time (hh:mm:ss).",
