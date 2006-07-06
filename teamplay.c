@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.39 2006-07-05 22:27:13 cokeman1982 Exp $
+    $Id: teamplay.c,v 1.40 2006-07-06 20:05:19 cokeman1982 Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -1522,12 +1522,18 @@ static void TP_ClearLocs(void)
 
 void TP_ClearLocs_f (void)
 {
-	if (Cmd_Argc() > 0) 
+	int num_locs = 0;
+
+	if (Cmd_Argc() > 1) 
 	{
 		Com_Printf ("clearlocs : Clears all locs in memory.\n");
 		return;
 	}
+
+	num_locs = loc_count;
 	TP_ClearLocs ();
+
+	Com_Printf (va("Cleared %d locs.\n", num_locs));
 }
 
 static void TP_AddLocNode(vec3_t coord, char *name) {
@@ -1540,6 +1546,7 @@ static void TP_AddLocNode(vec3_t coord, char *name) {
 
 	if (!locdata) {
 		locdata = newnode;
+		loc_count++;
 		return;
 	}
 
@@ -1767,6 +1774,8 @@ void TP_SaveLocFile_f (void)
 
 void TP_AddLoc(const char *locname)
 {
+	vec3_t location;
+
 	// We need to be up and running.
 	if(cls.state != ca_active)
 	{
@@ -1775,12 +1784,16 @@ void TP_AddLoc(const char *locname)
 
 	if (cl.players[cl.playernum].spectator && Cam_TrackNum() >= 0)
     {
-		TP_AddLocNode(cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].playerstate[Cam_TrackNum()].origin, locname);
+		VectorCopy(cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].playerstate[Cam_TrackNum()].origin, location);
     }
 	else
 	{
-		TP_AddLocNode(cl.simorg, locname);
+		VectorCopy(cl.simorg, location);
 	}
+
+	TP_AddLocNode(location, locname);
+
+	Com_Printf (va("Added location \"%s\" at (%4.0f, %4.0f, %4.0f)\n", locname, location[0], location[1], location[2]));
 }
 
 void TP_AddLoc_f (void) 
@@ -1797,26 +1810,33 @@ void TP_RemoveClosestLoc (vec3_t location)
 {
 	float dist, mindist;
 	vec3_t vec;
-	locdata_t *node, *best, *previous;
+	locdata_t *node, *best, *previous, *best_previous;
 
-	previous = best = NULL;
+	best_previous = previous = best = NULL;
 	mindist = 0;
 
 	// Find the closest loc.
-	for (node = locdata; node; node = node->next) 
+	node = locdata;
+	while (node)
 	{
+		// Get the distance to the loc.
 		VectorSubtract(location, node->coord, vec);
 		dist = vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2];
 
+		// Check if it's closer than the previously best.
 		if (!best || dist < mindist) 
 		{
+			best_previous = previous;
 			best = node;
 			mindist = dist;
-			continue;
 		}
 
+		// Advance and save the previous node.
 		previous = node;
-	}
+		node = node->next;		
+	}	
+
+	Com_Printf(va("Removed location \"%s\" at (%4.0f, %4.0f, %4.0f)\n", best->name, best->coord[0], best->coord[1], best->coord[2]));
 
 	// If the node we're trying to delete has a 
 	// next node attached to it, copy the data from
@@ -1827,19 +1847,22 @@ void TP_RemoveClosestLoc (vec3_t location)
 		locdata_t *temp;
 
 		// Copy the data from the next node into the one we're deleting.
-		memcpy(best->coord, best->next->coord, sizeof(vec3_t));
-		
+		//memcpy(best->coord, best->next->coord, sizeof(vec3_t));
+		VectorCopy(best->next->coord, best->coord);
+
 		Q_free(best->name);
 		best->name = (char *)Q_calloc(strlen(best->next->name) + 1, sizeof(char));
 		strcpy(best->name, best->next->name);
 
+		// Save the pointer to the next node.
 		temp = best->next->next;
-		best->next = temp;
 
-		// Free the next node.
-		Q_free(best->next->coord);
+		// Free the current next node.
+		Q_free(best->next->name);
 		Q_free(best->next);
-		best->next = NULL;
+
+		// Set the pointer to the next node.
+		best->next = temp;
 	}
 	else
 	{
@@ -1849,13 +1872,24 @@ void TP_RemoveClosestLoc (vec3_t location)
 		best = NULL;
 
 		// Make sure the previous node doesn't point to garbage.
-		if(previous != NULL)
+		if(best_previous != NULL)
 		{
-			previous->next = NULL;
+			best_previous->next = NULL;
 		}
 	}
 
+	// Decrease the loc count.
 	loc_count--;
+
+	// If this was the last loc, remove the entire node list.
+	if(loc_count <= 0)
+	{
+		/*
+		Q_free (locdata->name);
+		Q_free (locdata);
+		*/
+		locdata = NULL;
+	}
 }
 
 void TP_RemoveLoc_f (void)
@@ -3888,7 +3922,7 @@ void TP_Init (void) {
 	Cmd_AddCommand ("saveloc", TP_SaveLocFile_f);
 	Cmd_AddCommand ("addloc", TP_AddLoc_f);
 	Cmd_AddCommand ("removeloc", TP_RemoveLoc_f);
-	Cmd_AddCommand ("clearlocs", TP_ClearLocs);
+	Cmd_AddCommand ("clearlocs", TP_ClearLocs_f);
 	Cmd_AddCommand ("filter", TP_MsgFilter_f);
 	Cmd_AddCommand ("msg_trigger", TP_MsgTrigger_f);
 	Cmd_AddCommand ("teamcolor", TP_TeamColor_f);
