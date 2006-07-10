@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.50 2006-07-06 20:36:46 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.51 2006-07-10 18:41:14 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -26,6 +26,235 @@ void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
 void Draw_Fill (int x, int y, int w, int h, int c);
 #endif
 
+/*
+typedef struct plot_values_s
+{
+	int		*values;		// The values to be plotted.
+	int		count;			// The number of values.
+	int		max;			// Max value.
+	int		min;			// Min value.
+	char	*name;			// The name of the values.
+	int		color;			// The color to plot the values in.
+	float	thickness;		// How thick the plot line should be.
+	qbool	fill;			// If the area below the plot line should be filled or not.
+	float	frequency;		// How often the plot data is updated.
+} plot_values_t;
+
+#define MAX_PLOTS			6
+#define PLOT_TIMEFRAME_ALL	-1
+
+typedef struct plots_s
+{
+	plot_values_t	plots[MAX_PLOTS];		// The plot data.
+	int				count;					// Plot count.
+	float			timeframe;				// How much of the plots should be shown? "Last 10 seconds", "all"...
+} plots_t;
+
+plots_t	*hud_plots = NULL;
+
+void HUD_FreePlot (plot_values_t *plot)
+{
+	if (plot == NULL)
+	{
+		return;
+	}
+
+	if (plot->name != NULL)
+	{
+		Q_free (plot->name);
+	}
+
+	if(plot->values != NULL)
+	{
+		Q_free (plot->values);
+	}
+
+	Q_free (plot);
+	plot = NULL;
+}
+
+void HUD_ClearPlots (plots_t *plots)
+{
+	int i;
+
+	if (plots == NULL)
+	{
+		return;
+	}
+
+	for (i = 0; i < plots->count; i++)
+	{
+		HUD_FreePlot (plots->plots[i]);
+	}
+
+	Q_free (plots);
+	plots = NULL;
+}
+
+void HUD_InitPlotValueArray (plot_values_t *plot)
+{
+	
+}
+
+#define HUD_PLOT_DEFAULT_COLOR			15
+#define HUD_PLOT_DEFAULT_THICKNESS		1
+#define HUD_PLOT_DEFAULT_FILL			false
+#define HUD_PLOT_DEFAULT_FREQUENCY		1.0
+
+void HUD_AddPlot (plots_t *plots, char *name, int color, int thickness, qbool fill, float frequency)
+{
+	int plot_index = 0;
+
+	if (plots == NULL)
+	{
+		return;
+	}
+
+	if (plots >= MAX_PLOTS)
+	{
+		Sys_Error (va("HUD_AddPlot : Plot overflow, exceeded MAX_PLOTS (%d)\n", MAX_PLOTS));
+	}
+
+	frequency = (frequency <= 0) ? HUD_PLOT_DEFAULT_FREQUENCY : frequency;
+	thickness = (thickness <= 0) ? HUD_PLOT_DEFAULT_THICKNESS : thickness;
+	color = (color > 255 || color < 0) ? HUD_PLOT_DEFAULT_COLOR : color;
+ 
+	plot_index = plots->count;
+
+	plots->plots[plot_index] = (plot_values_t *)Q_malloc (sizeof(plot_values_t));
+	plots->count++;
+
+	plots->plots[plot_index].color = color;
+	plots->plots[plot_index.thickness = thickness;
+	
+	plots->plots[plot_index].name = Q_calloc (strlen(name) + 1, sizeof(char));
+	strcpy (plots->plots[plot_index].name, name);
+
+	plots->plots[plot_index].frequency = frequency;
+
+	// TODO: Initialize value array.
+}
+
+void HUD_InitPlots()
+{
+	if(hud_plots != NULL)
+	{
+		HUD_ClearPlots (hud_plots);
+	}
+
+	plots
+}
+
+void HUD_DrawPlot (int x, int y, int width, int height, plot_values_t *plot, float timeframe, float opacity)
+{
+	int plot_start = 0;
+	float point_space_x = 0;
+	float point_space_y = 0;
+	float alpha = 0.0;
+	int i = 0;
+
+	// Make sure we have something to work with.
+	if (plot == NULL || plot->count <= 0)
+	{
+		return;
+	}
+
+	if(timeframe == PLOT_TIMEFRAME_ALL)
+	{
+		plot_start = 0;
+	}
+	else
+	{
+		// "Show the latest 10 seconds of data".
+		// plot->frequency = 2 seconds
+		// plot->count = 40
+		// timeframe = 10 seconds
+		//
+		// There is 2 seconds between each value, so to get the index where to
+		// start plotting from you need to do the following:
+		// ----------------------------------------------------
+		// (number of values) * (time between values are gathered) = (seconds of gathered data)
+		// plot->count * plot->frequency
+		// 40 * 2 = 80
+		//
+		// (Seconds of gathered data) - (how long back in time to plot) = (the time to start plotting from)
+		// 80 - 10 = 70
+		//
+		// To get the index of the value at that time:
+		// ----------------------------------------------------
+		// (The time to start plotting from) / (time between values are gathered) = (index to start plotting from)
+		// 70 / 2 = 35
+		// 
+		plot_start = ROUND(((plot->count * plot->frequency) - timeframe) / plot->frequency);
+	}
+
+	opacity = bound(0, opacity, 1);
+
+	if (!opacity)
+	{
+		return;
+	}
+
+	// Initialize some GL stuff.
+	glDisable (GL_TEXTURE_2D);
+	if (opacity < 1) 
+	{
+		glEnable (GL_BLEND);
+		glDisable(GL_ALPHA_TEST);
+		glColor4f (host_basepal[c * 3] / 255.0,  host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2] / 255.0, alpha);
+	} 
+	else 
+	{
+		glColor3f (host_basepal[c * 3] / 255.0, host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2]  /255.0);
+	}
+
+	if(thickness > 0.0)
+	{
+		glLineWidth(thickness);
+	}
+
+	if(fill)
+	{
+		glBegin(GL_POLYGON);
+
+		// We're "filling" the area below the curve, so create
+		// a vertex in the bottom left corner of the plot, and also below
+		// the bottom right corner.
+		glVertex2f (x, y + height);
+	}
+	else
+	{
+		glBegin (GL_LINE_STRIP);
+	}
+
+	// Calculate the space between points.
+	point_space_x = (plot->count - plotstart) / (float)width;
+	point_space_y = plot->max / (float)height;
+
+	// Draw the actual plot values.
+	for (i = plotstart; i < plot->count; i++)
+	{
+		glVertex2f (x + (i - plotstart)*point_space, y + height - plot->values[i] * point_space_y);
+	}
+
+	// Draw the last vertex in the bottom right corner when filling.
+	if(fill)
+	{
+		glVertex2f (x + width, y + height);
+	}
+
+	glEnd ();
+
+	// Reset some GL stuff after drawing.
+	glEnable (GL_TEXTURE_2D);
+	if (alpha < 1) 
+	{
+		glEnable (GL_ALPHA_TEST);
+		glDisable (GL_BLEND);
+	}
+	glColor3ubv (color_white);
+}
+*/
 hud_t *hud_netgraph;
 
 // ----------------
@@ -572,7 +801,7 @@ void SCR_HUD_DrawSpeed(hud_t *hud)
 
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
 	{
-		SCR_DrawSpeed2(x, y, width, height, 
+		SCR_DrawHUDSpeed(x, y, width, height, 
 			hud_speed_xyz->value, 
 			hud_speed_tick_spacing->value, 
 			hud_speed_opacity->value,
@@ -587,6 +816,261 @@ void SCR_HUD_DrawSpeed(hud_t *hud)
 	}
 }
 
+#define	HUD_SPEED2_ORIENTATION_UP		0
+#define	HUD_SPEED2_ORIENTATION_DOWN		1
+#define	HUD_SPEED2_ORIENTATION_RIGHT	2
+#define	HUD_SPEED2_ORIENTATION_LEFT		3
+
+void SCR_HUD_DrawSpeed2(hud_t *hud)
+{
+	int width, height;
+    int x, y;	
+
+    static cvar_t *hud_speed2_xyz = NULL,
+		*hud_speed2_opacity,
+		*hud_speed2_color_stopped,
+		*hud_speed2_color_normal,
+		*hud_speed2_color_fast,
+		*hud_speed2_color_fastest,
+		*hud_speed2_color_insane,
+		*hud_speed2_radius,
+		*hud_speed2_wrapspeed,
+		*hud_speed2_orientation;
+
+    if (hud_speed2_xyz == NULL)    // first time
+    {
+        hud_speed2_xyz				= HUD_FindVar(hud, "xyz");
+		hud_speed2_opacity			= HUD_FindVar(hud, "opacity");
+		hud_speed2_color_stopped	= HUD_FindVar(hud, "color_stopped");
+		hud_speed2_color_normal		= HUD_FindVar(hud, "color_normal");
+		hud_speed2_color_fast		= HUD_FindVar(hud, "color_fast");
+		hud_speed2_color_fastest	= HUD_FindVar(hud, "color_fastest");
+		hud_speed2_color_insane		= HUD_FindVar(hud, "color_insane");
+		hud_speed2_radius			= HUD_FindVar(hud, "radius");
+		hud_speed2_wrapspeed		= HUD_FindVar(hud, "wrapspeed");
+		hud_speed2_orientation		= HUD_FindVar(hud, "orientation");
+    }
+
+	// Calculate the height and width based on the radius.
+	switch((int)hud_speed2_orientation->value)
+	{
+		case HUD_SPEED2_ORIENTATION_LEFT :
+		case HUD_SPEED2_ORIENTATION_RIGHT :
+			height = max(0, 2*hud_speed2_radius->value);
+			width = max(0, (hud_speed2_radius->value));					
+			break;
+		case HUD_SPEED2_ORIENTATION_DOWN :
+		case HUD_SPEED2_ORIENTATION_UP :
+		default :
+			// Include the height of the speed text in the height.
+			height = max(0, (hud_speed2_radius->value));
+			width = max(0, 2*hud_speed2_radius->value);			
+			break;
+	}
+
+    if (HUD_PrepareDraw(hud, width, height, &x, &y))
+	{
+		int player_speed;
+		int arc_length;
+		int color1, color2;
+		int text_x = x;
+		int text_y = y;
+		vec_t *velocity;
+		
+		// Start and end points for the needle
+		int needle_start_x = 0;
+		int needle_start_y = 0;
+		int needle_end_x = 0;
+		int needle_end_y = 0;
+
+		// The length of the arc between the zero point
+		// and where the needle is pointing at.
+		int needle_offset = 0;
+
+		// The angle between the zero point and the position 
+		// that the needle is drawn on.
+		float needle_angle = 0.0;
+
+		// The angle where to start drawing the half circle and where to end.
+		// This depends on the orientation of the circle (left, right, up, down).
+		float circle_startangle = 0.0;
+		float circle_endangle = 0.0;
+
+		// Get the velocity.
+		if (cl.players[cl.playernum].spectator && Cam_TrackNum() >= 0)
+		{
+			velocity = cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].playerstate[Cam_TrackNum()].velocity;
+		}
+		else
+		{
+			velocity = cl.simvel;
+		}
+
+		// Calculate the speed 
+		if (!hud_speed2_xyz->value)
+		{
+			// Based on XY.
+			player_speed = sqrt(velocity[0]*velocity[0]
+							  + velocity[1]*velocity[1]);
+		}
+		else
+		{
+			// Based on XYZ.
+			player_speed = sqrt(velocity[0]*velocity[0]
+							  + velocity[1]*velocity[1]
+							  + velocity[2]*velocity[2]);
+		}
+
+		// Set the color based on the wrap speed.
+		switch ((int)(player_speed / hud_speed2_wrapspeed->value))
+		{
+			case 0:  
+				color1 = hud_speed2_color_stopped->value; 
+				color2 = hud_speed2_color_normal->value; 
+				break;
+			case 1:  
+				color1 = hud_speed2_color_normal->value; 
+				color2 = hud_speed2_color_fast->value; 
+				break;
+			case 2:  
+				color1 = hud_speed2_color_fast->value; 
+				color2 = hud_speed2_color_fastest->value; 
+				break;
+			default: 
+				color1 = hud_speed2_color_fastest->value; 
+				color2 = hud_speed2_color_insane->value; 
+				break;
+		}
+
+		// Set some properties how to draw the half circle, needle and text
+		// based on the orientation of the hud item.
+		switch((int)hud_speed2_orientation->value)
+		{
+			case HUD_SPEED2_ORIENTATION_LEFT :
+			{
+				x += width;
+				y += height / 2;
+				circle_startangle = M_PI / 2.0;
+				circle_endangle	= (3*M_PI) / 2.0;
+
+				text_x = x - 32;
+				text_y = y - 4;
+				break;
+			}		
+			case HUD_SPEED2_ORIENTATION_RIGHT :
+			{
+				y += height / 2;
+				circle_startangle = (3*M_PI) / 2.0;
+				circle_endangle = (5*M_PI) / 2.0;
+				needle_end_y = y + hud_speed2_radius->value * sin (needle_angle);
+
+				text_x = x;
+				text_y = y - 4;
+				break;
+			}	
+			case HUD_SPEED2_ORIENTATION_DOWN :
+			{
+				x += width / 2;
+				circle_startangle = M_PI;
+				circle_endangle = 2*M_PI;
+				needle_end_y = y + hud_speed2_radius->value * sin (needle_angle);
+
+				text_x = x - 16;
+				text_y = y;
+				break;
+			}						
+			case HUD_SPEED2_ORIENTATION_UP :
+			default :
+			{
+				x += width / 2;
+				y += height;
+				circle_startangle = 0;
+				circle_endangle = M_PI;
+				needle_end_y = y - hud_speed2_radius->value * sin (needle_angle);
+
+				text_x = x - 16;
+				text_y = y - 8;
+				break;
+			}
+		}
+
+		//
+		// Calculate the offsets and angles.
+		//
+		{
+			// Calculate the arc length of the half circle background.
+			arc_length = fabs((circle_endangle - circle_startangle) * hud_speed2_radius->value);
+
+			// Calculate the angle where the speed needle should point.
+			needle_offset = arc_length * (player_speed % ROUND(hud_speed2_wrapspeed->value)) / ROUND(hud_speed2_wrapspeed->value);
+			needle_angle = needle_offset / hud_speed2_radius->value;
+
+			// Draw from the center of the half circle. 
+			needle_start_x = x;
+			needle_start_y = y;
+		}
+
+		// Set the needle end point depending on the orientation of the hud item.
+		
+		switch((int)hud_speed2_orientation->value)
+		{
+			case HUD_SPEED2_ORIENTATION_LEFT :
+			{
+				needle_end_x = x - hud_speed2_radius->value * sin (needle_angle);
+				needle_end_y = y + hud_speed2_radius->value * cos (needle_angle);
+				break;
+			}
+			case HUD_SPEED2_ORIENTATION_RIGHT :
+			{
+				needle_end_x = x + hud_speed2_radius->value * sin (needle_angle);
+				needle_end_y = y - hud_speed2_radius->value * cos (needle_angle);
+				break;
+			}
+			case HUD_SPEED2_ORIENTATION_DOWN :
+			{
+				needle_end_x = x + hud_speed2_radius->value * cos (needle_angle);
+				needle_end_y = y + hud_speed2_radius->value * sin (needle_angle);
+				break;
+			}
+			case HUD_SPEED2_ORIENTATION_UP :
+			default :
+			{
+				needle_end_x = x - hud_speed2_radius->value * cos (needle_angle);
+				needle_end_y = y - hud_speed2_radius->value * sin (needle_angle);
+				break;
+			}
+		}
+
+		// Draw the speed-o-meter background.
+		Draw_AlphaPieSlice (x, y,				// Position
+			hud_speed2_radius->value,			// Radius
+			circle_startangle,					// Start angle
+			circle_endangle - needle_angle,		// End angle
+			1,									// Thickness
+			true,								// Fill
+			color1,								// Color
+			hud_speed2_opacity->value);			// Opacity
+
+		// Draw a pie slice that shows the "color" of the speed. 
+		Draw_AlphaPieSlice (x, y,				// Position
+			hud_speed2_radius->value,			// Radius 
+			circle_endangle - needle_angle,		// Start angle
+			circle_endangle,					// End angle
+			1,									// Thickness
+			true,								// Fill
+			color2,								// Color
+			hud_speed2_opacity->value);			// Opacity
+		
+		// Draw the "needle attachment" circle.
+		Draw_AlphaCircle (x, y, 2.0, 1, true, 15, hud_speed2_opacity->value);
+
+		// Draw the speed needle.
+		Draw_AlphaLine (needle_start_x, needle_start_y, needle_end_x, needle_end_y, 1, 15, hud_speed2_opacity->value);
+
+		// Draw the speed.
+		Draw_String (text_x, text_y, va("%d", player_speed));		
+	}
+}
 
 // =======================================================
 //
@@ -4771,7 +5255,7 @@ void CommonDraw_Init(void)
         "period",  "1",
         NULL);
 
-    // init net
+    // init speed
     HUD_Register("speed", NULL, "Shows your current running speed. It is measured over XY or XYZ axis depending on \'xyz\' property.",
         HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed,
         "0", "top", "center", "bottom", "0", "-5", "0",
@@ -4788,6 +5272,22 @@ void CommonDraw_Init(void)
 		"vertical", "0",
 		"vertical_text", "1",
 		"text_align", "1",
+		NULL);
+
+	// Init speed2 (half circle thingie).
+	HUD_Register("speed2", NULL, "Shows your current running speed. It is measured over XY or XYZ axis depending on \'xyz\' property.",
+        HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed2,
+        "0", "top", "center", "bottom", "0", "-5", "0",
+        "xyz",  "0",
+		"opacity", "1.0",
+		"color_stopped", SPEED_STOPPED,
+		"color_normal", SPEED_NORMAL,
+		"color_fast", SPEED_FAST,
+		"color_fastest", SPEED_FASTEST,
+		"color_insane", SPEED_INSANE,
+		"radius", "50.0",
+		"wrapspeed", "500",
+		"orientation", "0",
 		NULL);
 
     // init guns

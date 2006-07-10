@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.10 2006-07-04 21:30:20 cokeman1982 Exp $
+	$Id: common_draw.c,v 1.11 2006-07-10 18:41:14 cokeman1982 Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -726,7 +726,7 @@ void SCR_DrawFill(int x, int y, int w, int h, int c, float opacity)
 #define SPEED_TEXT_ALIGN_CENTER	2
 #define SPEED_TEXT_ALIGN_FAR	3
 
-void SCR_DrawSpeed2 (int x, int y, int width, int height, 
+void SCR_DrawHUDSpeed (int x, int y, int width, int height, 
 					 int type, 
 					 float tick_spacing, 
 					 float opacity,

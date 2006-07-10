@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.23 2006-06-29 21:04:57 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.24 2006-07-10 18:41:14 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1270,10 +1270,12 @@ void Draw_Line (int x_start, int y_start, int x_end, int y_end, float thickness,
 
 #define CIRCLE_LINE_COUNT	40
 
-void Draw_AlphaCircle (int x, int y, float radius, float thickness, qbool fill, int c, float alpha)
+void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, int c, float alpha)
 {
 	double angle;
 	int i;
+	int start;
+	int end;
 
 	alpha = bound(0, alpha, 1);
 
@@ -1301,19 +1303,49 @@ void Draw_AlphaCircle (int x, int y, float radius, float thickness, qbool fill, 
 
 	if(fill)
 	{
-		glBegin(GL_POLYGON);
+		glBegin(GL_TRIANGLE_STRIP);
 	}
 	else
 	{
 		glBegin (GL_LINE_LOOP);
 	}
 
-	// TODO: Use lookup table for sin/cos.
-	for(i = 0; i < CIRCLE_LINE_COUNT; i++)
+	// Get the vertex index where to start and stop drawing.
+	start	= ROUND((startangle * CIRCLE_LINE_COUNT) / (2*M_PI));
+	end		= ROUND((endangle   * CIRCLE_LINE_COUNT) / (2*M_PI));
+
+	// If the end is less than the start, increase the index so that
+	// we start on a "new" circle.
+	if(end < start)
+	{
+		start = start + CIRCLE_LINE_COUNT;
+	}
+
+	// Create a vertex at the exact position specified by the start angle.
+	glVertex2f (x + radius*cos(startangle), y - radius*sin(startangle));
+
+	// TODO: Use lookup table for sin/cos?
+	for(i = start; i < end; i++)
 	{
       angle = i*2*M_PI / CIRCLE_LINE_COUNT;
-      glVertex2f (x + radius*cos(angle), y + radius*sin(angle));
+      glVertex2f (x + radius*cos(angle), y - radius*sin(angle));
+	  
+	  // When filling we're drawing triangles so we need to
+	  // create a vertex in the middle of the vertex to fill
+	  // the entire pie slice/circle.
+	  if(fill)
+	  {
+		glVertex2f (x, y);
+	  }
     }
+
+	glVertex2f (x + radius*cos(endangle), y - radius*sin(endangle));
+
+	// Create a vertex for the middle point if we're not drawing a complete circle.
+	if(endangle - startangle < 2*M_PI)
+	{
+		glVertex2f (x, y);
+	}
 
 	glEnd ();
 
@@ -1324,6 +1356,11 @@ void Draw_AlphaCircle (int x, int y, float radius, float thickness, qbool fill, 
 		glDisable (GL_BLEND);
 	}
 	glColor3ubv (color_white);
+}
+
+void Draw_AlphaCircle (int x, int y, float radius, float thickness, qbool fill, int c, float alpha)
+{
+	Draw_AlphaPieSlice (x, y, radius, 0, 2*M_PI, thickness, fill, c, alpha);
 }
 
 void Draw_AlphaCircleOutline (int x, int y, float radius, float thickness, int color, float alpha)
