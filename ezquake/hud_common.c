@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.51 2006-07-10 18:41:14 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.52 2006-07-10 18:46:35 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -816,6 +816,8 @@ void SCR_HUD_DrawSpeed(hud_t *hud)
 	}
 }
 
+#ifdef GLQUAKE
+
 #define	HUD_SPEED2_ORIENTATION_UP		0
 #define	HUD_SPEED2_ORIENTATION_DOWN		1
 #define	HUD_SPEED2_ORIENTATION_RIGHT	2
@@ -1071,6 +1073,8 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 		Draw_String (text_x, text_y, va("%d", player_speed));		
 	}
 }
+
+#endif
 
 // =======================================================
 //
@@ -5274,6 +5278,7 @@ void CommonDraw_Init(void)
 		"text_align", "1",
 		NULL);
 
+#ifdef GLQUAKE
 	// Init speed2 (half circle thingie).
 	HUD_Register("speed2", NULL, "Shows your current running speed. It is measured over XY or XYZ axis depending on \'xyz\' property.",
         HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed2,
@@ -5289,6 +5294,7 @@ void CommonDraw_Init(void)
 		"wrapspeed", "500",
 		"orientation", "0",
 		NULL);
+#endif
 
     // init guns
     HUD_Register("gun", NULL, "Part of your inventory - current weapon.",
