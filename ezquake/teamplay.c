@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.40 2006-07-06 20:05:19 cokeman1982 Exp $
+    $Id: teamplay.c,v 1.41 2006-07-10 18:41:14 cokeman1982 Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -1847,7 +1847,6 @@ void TP_RemoveClosestLoc (vec3_t location)
 		locdata_t *temp;
 
 		// Copy the data from the next node into the one we're deleting.
-		//memcpy(best->coord, best->next->coord, sizeof(vec3_t));
 		VectorCopy(best->next->coord, best->coord);
 
 		Q_free(best->name);
@@ -1884,10 +1883,6 @@ void TP_RemoveClosestLoc (vec3_t location)
 	// If this was the last loc, remove the entire node list.
 	if(loc_count <= 0)
 	{
-		/*
-		Q_free (locdata->name);
-		Q_free (locdata);
-		*/
 		locdata = NULL;
 	}
 }
@@ -1907,7 +1902,7 @@ void TP_RemoveLoc_f (void)
 	}
 	else
 	{
-		Com_Printf ("removloc : remove the closest location\n");
+		Com_Printf ("removeloc : remove the closest location\n");
 		return;
 	}
 }
