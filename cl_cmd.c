@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.29 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: cl_cmd.c,v 1.30 2006-07-16 23:23:51 tonik Exp $
 */
 
 #include <time.h>
@@ -141,9 +141,10 @@ void CL_ForwardToServer_f (void) {
 
 //Handles both say and say_team
 void CL_Say_f (void) {
-	char *s;
+	char *s, msg[1024];
 	int tmp;
 	qbool qizmo = false;
+	extern cvar_t cl_fakename;
 
 	if (Cmd_Argc() < 2)
 		return;
@@ -184,6 +185,16 @@ void CL_Say_f (void) {
 
 	s = TP_ParseMacroString (Cmd_Args());
 	s = TP_ParseFunChars (s, true);
+
+	if (!strcasecmp(Cmd_Argv(0), "say_team") && !cl.spectator && cl_fakename.string[0] && !strchr(s, '\x0d') /* explicit $\ in message overrides cl_fakename */)
+	{
+		char tmp[1024], tmp2[1024];
+		strlcpy (tmp, cl_fakename.string, sizeof(tmp)); // TP_ParseFunChars wants a string < 1024 chars (fix it?)
+		strlcpy (tmp2, s, sizeof(tmp));	// save the message text, because TP_ParseFunChars will overwrite the temp memory
+		snprintf (msg, sizeof(msg), "\x0d%s: %s", TP_ParseFunChars(tmp, true), tmp2);
+		s = msg;
+	}
+
 	if (*s && *s < 32) {
 		SZ_Print (&cls.netchan.message, "\"");
 		SZ_Print (&cls.netchan.message, s);
