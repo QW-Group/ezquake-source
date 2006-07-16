@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.74 2006-06-21 22:28:52 cokeman1982 Exp $
+	$Id: cl_main.c,v 1.75 2006-07-16 23:23:51 tonik Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -82,6 +82,7 @@ cvar_t	cl_demoPingInterval = {"cl_demoPingInterval", "5"};
 cvar_t  demo_getpings      = {"demo_getpings",    "1"};
 cvar_t	cl_chatsound = {"cl_chatsound", "1"};
 cvar_t	cl_confirmquit = {"cl_confirmquit", "0"}; // , CVAR_INIT
+cvar_t	cl_fakename = {"cl_fakename", ""};
 cvar_t	qizmo_dir = {"qizmo_dir", "qizmo"};
 cvar_t	qwdtools_dir = {"qwdtools_dir", "qwdtools"};
 
@@ -791,6 +792,7 @@ void CL_InitLocal (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_CHAT);
 	Cvar_Register (&cl_parseWhiteText);
 	Cvar_Register (&cl_chatsound);
+	Cvar_Register (&cl_fakename);
 
 	Cvar_Register (&cl_floodprot);
 	Cvar_Register (&cl_fp_messages);
