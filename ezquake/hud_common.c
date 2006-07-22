@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.52 2006-07-10 18:46:35 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.53 2006-07-22 18:10:39 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -3719,7 +3719,7 @@ void TeamHold_DrawBars(int x, int y, int width, int height,
 	team2_width = width * team2_percent;
 	
 	team1_width = clamp(team1_width, 0, width);
-	team2_width = clamp(team1_width, 0, width);
+	team2_width = clamp(team1_width, 0, width); // disconnect: team1_width?
 
 	#ifdef GLQUAKE
 	Draw_AlphaFill(x, y, team1_width, bar_height, team1_color, opacity);
@@ -3795,13 +3795,13 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 
 					percent = ROUND(100 * team1_percent);
 
-					if(percent100 = percent / 100)
+					if((percent100 = percent / 100))
 					{
 						Draw_String(_x, _y, va("%d", percent100));
 						_y += 8;
 					}
 
-					if(percent10 = percent / 10)
+					if((percent10 = percent / 10))
 					{
 						Draw_String(_x, _y, va("%d", percent10));
 						_y += 8;
@@ -3834,13 +3834,13 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 
 					percent = ROUND(100 * team2_percent);
 
-					if(percent100 = percent / 100)
+					if((percent100 = percent / 100))
 					{
 						Draw_String(_x, _y, va("%d", percent100));
 						_y += 8;
 					}
 
-					if(percent10 = percent / 10)
+					if((percent10 = percent / 10))
 					{
 						Draw_String(_x, _y, va("%d", percent10));
 						_y += 8;
@@ -4020,7 +4020,7 @@ qbool HUD_RegExpMatch(const char *regexp, const char *matchstring)
 		return false;
 	}
 
-	if(match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, 1) >= 0)
+	if((match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, 1)) >= 0)
 	{
 		return true;
 	}
@@ -4211,7 +4211,6 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pic_width, int pic_height, int style)
 {
 	int row, col;	
-	int visited_team1 = 0, visited_team2 = 0;
 
 	// Don't try to draw anything if we got no data.
 	if(grid == NULL || style == HUD_RADAR_STATS_NONE)
