@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.52 2006-06-06 20:53:05 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.53 2006-07-22 18:10:39 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -469,7 +469,7 @@ void SCR_DrawNet (void) {
 void SCR_DrawFPS (void) {
 	int x, y;
 	char str[80];
-	extern double	lastfps;
+	extern double lastfps;
 
 	if (!show_fps.value || scr_newHud.value == 1) // HUD -> hexum - newHud has its own fps
 		return;
