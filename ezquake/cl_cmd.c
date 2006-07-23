@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.30 2006-07-16 23:23:51 tonik Exp $
+	$Id: cl_cmd.c,v 1.31 2006-07-23 18:49:37 disconn3ct Exp $
 */
 
 #include <time.h>
@@ -265,7 +265,17 @@ void CL_Packet_f(void) {
 	}
 	*out = 0;
 
-	NET_SendPacket(NS_CLIENT, out - send, send, adr);
+#ifdef TCPCONNECT
+	{
+		int tcpsock; //extra code to stop the packet command from sending to the server via tcp
+		tcpsock = cls.sockettcp;
+		cls.sockettcp = -1;
+		NET_SendPacket (NS_CLIENT, out-send, send, adr);
+		cls.sockettcp = tcpsock;
+	}
+#else
+	NET_SendPacket (NS_CLIENT, out-send, send, adr);
+#endif
 }
 
 

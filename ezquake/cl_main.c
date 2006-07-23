@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.75 2006-07-16 23:23:51 tonik Exp $
+	$Id: cl_main.c,v 1.76 2006-07-23 18:49:39 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -320,8 +320,74 @@ void CL_Connect_f (void) {
 	}
 }
 
+void CL_TCPConnect_f (void)
+{
+	char buffer[6];
+	int newsocket;
+	int len;
+	int _true = true;
+
+	float giveuptime;
+
+	char *server;
+
+	if (Cmd_Argc() != 2) {
+		Com_Printf ("Usage: %s <server>\n", Cmd_Argv(0));
+		return;
+	}
+
+	server = Cmd_Argv (1);
+
+	Host_EndGame (); // CL_Disconnect_f();
+
+	strlcpy(cls.servername, Cmd_Argv (1), sizeof(cls.servername));
+
+	NET_StringToAdr(cls.servername, &cls.sockettcpdest);
+
+	if (cls.sockettcp != INVALID_SOCKET)
+		closesocket (cls.sockettcp);
+
+	cls.sockettcp = INVALID_SOCKET;
+	cls.tcpinlen = 0;
+
+	newsocket = TCP_OpenStream(cls.sockettcpdest);
+	if (newsocket == INVALID_SOCKET)
+	{
+		//failed
+		Com_Printf("Failed to connect, server is either down, firewalled, or on a different port\n");
+		return;
+	}
 
 
+	Com_Printf("Waiting for confirmation of server (10 secs)\n");
+
+	giveuptime = Sys_DoubleTime() + 10;
+
+	while(giveuptime > Sys_DoubleTime())
+	{
+		len = recv(newsocket, buffer, sizeof(buffer), 0);
+		if (!strncmp(buffer, "qizmo\n", 6))
+		{
+			cls.sockettcp = newsocket;
+			break;
+		}
+		SCR_UpdateScreen();
+	}
+
+	if (cls.sockettcp == INVALID_SOCKET)
+	{
+		Com_Printf("Timeout - wrong server type\n");
+		closesocket(newsocket);
+		return;
+	}
+
+	Com_Printf("Confirmed\n");
+
+	send(cls.sockettcp, buffer, sizeof(buffer), 0);
+	setsockopt(cls.sockettcp, IPPROTO_TCP, TCP_NODELAY, (char *)&_true, sizeof(_true));
+
+	CL_BeginServerConnect();
+}
 
 qbool CL_ConnectedToProxy(void) {
 	cmd_alias_t *alias = NULL;
@@ -545,7 +611,15 @@ void CL_Disconnect (void) {
 	DeleteServerAliases();
 	CL_UpdateCaption();
 
-	cls.qport++;	//a hack I picked up from qizmo
+#ifdef TCPCONNECT
+	if (cls.sockettcp != INVALID_SOCKET)
+{
+	closesocket(cls.sockettcp);
+	cls.sockettcp = INVALID_SOCKET;
+}
+#endif
+
+	cls.qport++; //a hack I picked up from qizmo
 }
 
 void CL_Disconnect_f (void) {
@@ -910,6 +984,9 @@ void CL_InitLocal (void) {
 
 	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand ("connect", CL_Connect_f);
+#ifdef TCPCONNECT
+	Cmd_AddCommand ("tcpconnect", CL_TCPConnect_f);
+#endif
 
 	Cmd_AddCommand ("join", CL_Join_f);
 	Cmd_AddCommand ("observe", CL_Observe_f);

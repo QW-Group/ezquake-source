@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.h,v 1.7 2006-07-22 18:01:32 disconn3ct Exp $
+    $Id: net.h,v 1.8 2006-07-23 18:49:39 disconn3ct Exp $
 */
 // net.h -- quake's interface to the networking layer
 
@@ -66,26 +66,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define PORT_ANY -1
 
-typedef enum {NA_LOOPBACK, NA_BROADCAST, NA_IP} netadrtype_t;
+typedef enum {NA_LOOPBACK, NA_IP} netadrtype_t;
 
 typedef enum {NS_CLIENT, NS_SERVER} netsrc_t;
 
 typedef struct {
-	netadrtype_t	type;
-
-	byte	ip[4];
-
-	unsigned short	port;
+	netadrtype_t type;
+	byte ip[4];
+	unsigned short port;
 } netadr_t;
 
 extern	netadr_t	net_local_adr;
 extern	netadr_t	net_from;		// address of who sent the packet
 extern	sizebuf_t	net_message;
 
+int TCP_OpenStream (netadr_t remoteaddr); //makes things easier
+
 void	NET_Init (void);
 void	NET_Shutdown (void);
-void	NET_ClientConfig (qbool enable);	// open/close client socket
-void	NET_ServerConfig (qbool enable);	// open/close server socket
+void	NET_ClientConfig (qbool enable); // open/close client socket
+void	NET_ServerConfig (qbool enable); // open/close server socket
 
 qbool	NET_GetPacket (netsrc_t sock);
 void	NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
