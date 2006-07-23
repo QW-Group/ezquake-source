@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.3 2006-05-16 12:59:20 disconn3ct Exp $
+    $Id: net.c,v 1.4 2006-07-23 18:49:39 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -200,65 +200,160 @@ void NET_ClearLoopback (void) {
 	loopbacks[1].send = loopbacks[1].get = 0;
 }
 
-qbool NET_GetPacket (netsrc_t sock) {
-	int ret, net_socket;
+qbool NET_GetPacket (netsrc_t netsrc) {
+	int ret, socket, err;
 	struct sockaddr_in from;
-	socklen_t fromlen = sizeof(from);
+	socklen_t fromlen;
 
-	if (NET_GetLoopPacket (sock))
+	if (NET_GetLoopPacket (netsrc))
 		return true;
 
-	net_socket = ip_sockets[sock];
-	if (net_socket == -1)
-		return false;
-
-	ret = recvfrom (net_socket, (char *)net_message_buffer, sizeof(net_message_buffer), 0, (struct sockaddr *)&from, &fromlen);
-	if (ret == -1) {
-		if (qerrno == EWOULDBLOCK)
+	if (cls.sockettcp == INVALID_SOCKET) { // FIXME
+		socket = ip_sockets[netsrc];
+	
+		if (socket == INVALID_SOCKET)
 			return false;
-
-		if (qerrno == EMSGSIZE) {
-			Com_Printf ("Warning:  Oversize packet from %s\n", NET_AdrToString (net_from));
+	
+		fromlen = sizeof(from);
+		ret = recvfrom (socket, (char *)net_message_buffer, sizeof(net_message_buffer), 0, (struct sockaddr *)&from, &fromlen);
+	
+		if (ret == -1) {
+			err = qerrno;
+	
+			if (err == EWOULDBLOCK)
+				return false;
+	
+			if (err == EMSGSIZE) {
+				SockadrToNetadr (&from, &net_from);
+				Com_Printf ("Warning:  Oversize packet from %s\n", NET_AdrToString (net_from));
+				return false;
+			}
+	
+			if (err == 10054) {
+				Com_Printf ("NET_GetPacket: Error 10054 from %s\n", NET_AdrToString (net_from));
+				return false;
+			}
+	
+			if (err == ECONNABORTED || err == ECONNRESET) {
+				Com_Printf ("Connection lost or aborted\n");
+				return false;
+			}
+	
+			Com_Printf ("NET_GetPacket: recvfrom: (%i): %s\n", err, strerror(err));
 			return false;
 		}
-
-		if (qerrno == 10054) {
-			Com_DPrintf ("NET_GetPacket: Error 10054 from %s\n", NET_AdrToString (net_from));
+	
+		SockadrToNetadr (&from, &net_from);
+	
+		net_message.cursize = ret;
+		if (ret == sizeof(net_message_buffer)) {
+			Com_Printf ("Oversize packet from %s\n", NET_AdrToString (net_from));
 			return false;
 		}
-
-		Sys_Error ("NET_GetPacket: recvfrom: (%i): %s\n", qerrno, strerror(qerrno));
+	
+		return ret;
 	}
-
-	net_message.cursize = ret;
-	SockadrToNetadr (&from, &net_from);
-	if (ret == sizeof(net_message_buffer)) {
-		Com_Printf ("Oversize packet from %s\n", NET_AdrToString (net_from));
-		return false;
+	
+#ifdef TCPCONNECT
+#ifndef SERVERONLY
+	if (netsrc == NS_CLIENT)
+	{
+		if (cls.sockettcp != INVALID_SOCKET)
+		{//client receiving only via tcp
+	
+			ret = recv(cls.sockettcp, cls.tcpinbuffer+cls.tcpinlen, sizeof(cls.tcpinbuffer)-cls.tcpinlen, 0);
+			if (ret == -1)
+			{
+				err = qerrno;
+	
+				if (err == EWOULDBLOCK)
+					ret = 0;
+				else
+				{
+					if (err == ECONNABORTED || err == ECONNRESET)
+					{
+						closesocket(cls.sockettcp);
+						cls.sockettcp = INVALID_SOCKET;
+						Com_Printf ("Connection lost or aborted\n"); //server died/connection lost.
+						return false;
+					}
+	
+	
+					closesocket(cls.sockettcp);
+					cls.sockettcp = INVALID_SOCKET;
+					Com_Printf ("NET_GetPacket: Error (%i): %s\n", err, strerror(err));
+					return false;
+				}
+			}
+			cls.tcpinlen += ret;
+	
+			if (cls.tcpinlen < 2)
+				return false;
+	
+			net_message.cursize = BigShort(*(short*)cls.tcpinbuffer);
+			if (net_message.cursize >= sizeof(net_message_buffer) )
+			{
+				closesocket(cls.sockettcp);
+				cls.sockettcp = INVALID_SOCKET;
+				Com_Printf ("Warning:  Oversize packet from %s\n", NET_AdrToString (net_from));
+				return false;
+			}
+			if (net_message.cursize+2 > cls.tcpinlen)
+			{	//not enough buffered to read a packet out of it.
+				return false;
+			}
+	
+			memcpy(net_message_buffer, cls.tcpinbuffer+2, net_message.cursize);
+			memmove(cls.tcpinbuffer, cls.tcpinbuffer+net_message.cursize+2, cls.tcpinlen - (net_message.cursize+2));
+			cls.tcpinlen -= net_message.cursize+2;
+	
+			net_from = cls.sockettcpdest;
+	
+			return true;
+		}
 	}
+#endif
+#endif
 
-	return ret;
+	return false;
 }
 
 //=============================================================================
 
-void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to) {
+void NET_SendPacket (netsrc_t netsrc, int length, void *data, netadr_t to)
+{
+	struct sockaddr_in addr;
+	int socket;
 	int ret;
-	struct sockaddr_in	addr;
-	int net_socket;
+	int size;
 
 	if (to.type == NA_LOOPBACK) {
-		NET_SendLoopPacket (sock, length, data, to);
+		NET_SendLoopPacket (netsrc, length, data, to);
 		return;
 	}
 
-	net_socket = ip_sockets[sock];
-	if (net_socket == -1)
+#ifdef TCPCONNECT
+	if (cls.sockettcp != -1)
+	{
+		if (NET_CompareAdr(to, cls.sockettcpdest))
+		{	//this goes to the server so send it via tcp
+			unsigned short slen = BigShort((unsigned short)length);
+			send(cls.sockettcp, (char*)&slen, sizeof(slen), 0);
+			send(cls.sockettcp, data, length, 0);
+	
+			return;
+		}
+	}
+#endif
+	socket = ip_sockets[netsrc];
+
+	if (socket == -1)
 		return;
 
 	NetadrToSockadr (&to, &addr);
+	size = sizeof(struct sockaddr_in);
 
-	ret = sendto (net_socket, data, length, 0, (struct sockaddr *)&addr, sizeof(addr) );
+	ret = sendto (socket, data, length, 0, (struct sockaddr *)&addr, size);
 	if (ret == -1) {
 		if (qerrno == EWOULDBLOCK)
 			return;
@@ -275,6 +370,34 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to) {
 }
 
 //=============================================================================
+
+int TCP_OpenStream (netadr_t remoteaddr)
+{
+	unsigned long _true = true;
+	int newsocket;
+	int temp;
+	struct sockaddr_in qs;
+
+	NetadrToSockadr(&remoteaddr, &qs);
+	temp = sizeof(struct sockaddr_in);
+
+	if ((newsocket = socket (((struct sockaddr_in*)&qs)->sin_family, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET)
+		return INVALID_SOCKET;
+
+	if (connect(newsocket, (struct sockaddr *)&qs, temp) == INVALID_SOCKET)
+	{
+		closesocket(newsocket);
+		return INVALID_SOCKET;
+	}
+
+	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1)
+		Sys_Error ("UDP_OpenSocket: ioctl FIONBIO: %s", strerror(qerrno));
+
+
+	return newsocket;
+}
+
+
 
 int UDP_OpenSocket (int port) {
 	int newsocket;
@@ -387,6 +510,10 @@ void NET_Init (void) {
 
 #ifdef _WIN32
 	Com_Printf ("Winsock initialized\n");
+#endif
+
+#ifdef TCPCONNECT
+	cls.sockettcp = INVALID_SOCKET;
 #endif
 }
 

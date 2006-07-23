@@ -228,6 +228,13 @@ typedef struct {
 	char		servername[MAX_OSPATH];	// name of server from original connect
 	netadr_t	server_adr;
 
+#ifdef TCPCONNECT
+	int			sockettcp;
+	netadr_t	sockettcpdest;
+	byte		tcpinbuffer[1500];
+	int 		tcpinlen;
+#endif
+
 	// private userinfo for sending to masterless servers
 	char		userinfo[MAX_INFO_STRING];
 
