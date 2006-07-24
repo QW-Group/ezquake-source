@@ -22,13 +22,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 
 #ifdef _WIN32
-#define __i386__	1
+#define __i386__ 1
 #endif
 
-#ifdef	__i386__
-#define id386	1
+#ifdef __i386__
+#define id386 1
 #else
-#define id386	0
+#define id386 0
 #endif
 
 #ifndef SERVERONLY
@@ -36,7 +36,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // !!! must be kept the same as in d_iface.h !!!
 #define TRANSPARENT_COLOR	255
 
-#ifndef NeXT
 #ifndef GLQUAKE
 	.extern C(d_zistepu)
 	.extern C(d_pzbuffer)
@@ -262,12 +261,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	.extern fp_64kx64k
 	.extern pz
 	.extern spr8entryvec_table
-#endif
-
-	.extern C(vright)
-	.extern C(vup)
-	.extern C(vpn)
-
 #endif
 
 #endif	// SERVERONLY
