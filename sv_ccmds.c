@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_ccmds.c,v 1.7 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: sv_ccmds.c,v 1.8 2006-07-24 20:04:52 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -198,7 +198,12 @@ void SV_Status_f (void) {
 	avg = 1000 * svs.stats.latched_active / STATFRAMES;
 	pak = (float) svs.stats.latched_packets / STATFRAMES;
 
-	Com_Printf ("net address      : %s\n",NET_AdrToString (net_local_adr));
+	if (svs.socketip != INVALID_SOCKET && net_local_sv_ipadr.type != NA_LOOPBACK)
+		Com_Printf ("ip address       : %s\n",NET_AdrToString (net_local_sv_ipadr));
+#ifdef TCPCONNECT
+	if (svs.sockettcp != INVALID_SOCKET && net_local_sv_tcpipadr.type != NA_LOOPBACK)
+		Com_Printf ("tcp address      : %s\n",NET_AdrToString (net_local_sv_tcpipadr));
+#endif
 	Com_Printf ("cpu utilization  : %3i%%\n",(int)cpu);
 	Com_Printf ("avg response time: %i ms\n",(int)avg);
 	Com_Printf ("packets/frame    : %5.2f (%d)\n", pak, num_prstr);

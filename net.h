@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.h,v 1.9 2006-07-24 18:56:03 disconn3ct Exp $
+    $Id: net.h,v 1.10 2006-07-24 20:04:52 disconn3ct Exp $
 */
 // net.h -- quake's interface to the networking layer
 
@@ -85,7 +85,6 @@ struct sockaddr_qstorage
 extern	netadr_t	net_local_sv_ipadr;
 extern	netadr_t	net_local_sv_tcpipadr;
 extern	netadr_t	net_local_cl_ipadr;
-extern	netadr_t	net_local_adr;
 extern	netadr_t	net_from;		// address of who sent the packet
 extern	sizebuf_t	net_message;
 #define	MAX_UDP_PACKET		(MAX_MSGLEN*2)	// one more than msg + header
