@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_linux.c,v 1.14 2006-05-16 10:54:11 disconn3ct Exp $
+	$Id: sys_linux.c,v 1.15 2006-07-24 18:56:03 disconn3ct Exp $
 */
 #include <unistd.h>
 #include <signal.h>
@@ -201,17 +201,17 @@ char *Sys_ConsoleInput (void) {
 		return NULL;
 
 	if (!stdin_ready || !do_stdin)
-		return NULL;		// the select didn't say it was ready
+		return NULL; // the select didn't say it was ready
 	stdin_ready = false;
 
 	len = read (0, text, sizeof(text));
-	if (len == 0) {	// end of file		
+	if (len == 0) { // end of file
 		do_stdin = 0;
 		return NULL;
 	}
 	if (len < 1)
 		return NULL;
-	text[len - 1] = 0;	// rip off the /n and terminate
+	text[len - 1] = 0; // rip off the /n and terminate
 	
 	return text;
 }
@@ -237,27 +237,6 @@ void Sys_HighFPPrecision (void) {}
 
 void Sys_LowFPPrecision (void) {}
 #endif
-
-//Sleeps msec or until the server socket is ready
-void NET_Sleep (int msec) {
-	struct timeval timeout;
-	fd_set fdset;
-	extern int ip_sockets[];
-	
-	if (dedicated) {
-		if (ip_sockets[NS_SERVER] == -1)
-			return; // we're not a server, just run full speed
-
-		FD_ZERO (&fdset);
-		if (do_stdin)
-			FD_SET (0, &fdset); // stdin is processed too
-		FD_SET (ip_sockets[NS_SERVER], &fdset); // network socket
-		timeout.tv_sec = msec/1000;
-		timeout.tv_usec = (msec%1000)*1000;
-		select (ip_sockets[NS_SERVER]+1, &fdset, NULL, NULL, &timeout);
-		stdin_ready = FD_ISSET (0, &fdset);
-	}
-}
 
 int main (int argc, char **argv) {
 	double time, oldtime, newtime;
@@ -323,8 +302,14 @@ int main (int argc, char **argv) {
 
 	oldtime = Sys_DoubleTime ();
 	while (1) {
-		if (dedicated)
-			NET_Sleep (10);
+		if (dedicated) {
+			if (do_stdin) {
+				stdin_ready = NET_Sleep (10, true);
+			} else {
+				NET_Sleep (10, false);
+				stdin_ready = false;
+			}
+		}
 
 		// find time spent rendering last frame
 		newtime = Sys_DoubleTime ();

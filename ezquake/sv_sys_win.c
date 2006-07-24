@@ -249,7 +249,7 @@ int main (int argc, char **argv)
 			Sleep (sleep_msec);
 		}
 
-		NET_Sleep (1);
+		NET_Sleep (1, false);
 
 	// find time passed since last cycle
 		newtime = Sys_DoubleTime ();

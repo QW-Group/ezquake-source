@@ -224,9 +224,11 @@ typedef struct {
 
 	// network stuff
 	netchan_t	netchan;
-	int			qport;
 	char		servername[MAX_OSPATH];	// name of server from original connect
+	int			qport;
 	netadr_t	server_adr;
+
+	int socketip;
 
 #ifdef TCPCONNECT
 	int			sockettcp;

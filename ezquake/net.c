@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.4 2006-07-23 18:49:39 disconn3ct Exp $
+    $Id: net.c,v 1.5 2006-07-24 18:56:03 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -51,21 +51,25 @@ int			ip_sockets[2] = { -1, -1 };
 
 //=============================================================================
 
-void NetadrToSockadr (netadr_t *a, struct sockaddr_in *s) {
-	memset (s, 0, sizeof(*s));
-	s->sin_family = AF_INET;
+void NetadrToSockadr (netadr_t *a, struct sockaddr_qstorage *s)
+{
+	memset (s, 0, sizeof(struct sockaddr_in));
+	((struct sockaddr_in*)s)->sin_family = AF_INET;
 
-	*(int *)&s->sin_addr = *(int *)&a->ip;
-	s->sin_port = a->port;
+	*(int *)&((struct sockaddr_in*)s)->sin_addr = *(int *)&a->ip;
+	((struct sockaddr_in*)s)->sin_port = a->port;
 }
 
-void SockadrToNetadr (struct sockaddr_in *s, netadr_t *a) {
+void SockadrToNetadr (struct sockaddr_qstorage *s, netadr_t *a)
+{
 	a->type = NA_IP;
-	*(int *)&a->ip = *(int *)&s->sin_addr;
-	a->port = s->sin_port;
+	*(int *)&a->ip = ((struct sockaddr_in *)s)->sin_addr.s_addr;
+	a->port = ((struct sockaddr_in *)s)->sin_port;
+	return;
 }
 
-qbool NET_CompareBaseAdr (netadr_t a, netadr_t b) {
+qbool NET_CompareBaseAdr (netadr_t a, netadr_t b)
+{
 	if (a.type == NA_LOOPBACK && b.type == NA_LOOPBACK)
 		return true;
 	if (a.ip[0] == b.ip[0] && a.ip[1] == b.ip[1] && a.ip[2] == b.ip[2] && a.ip[3] == b.ip[3])
@@ -73,7 +77,8 @@ qbool NET_CompareBaseAdr (netadr_t a, netadr_t b) {
 	return false;
 }
 
-qbool NET_CompareAdr (netadr_t a, netadr_t b) {
+qbool NET_CompareAdr (netadr_t a, netadr_t b)
+{
 	if (a.type == NA_LOOPBACK && b.type == NA_LOOPBACK)
 		return true;
 	if (a.ip[0] == b.ip[0] && a.ip[1] == b.ip[1] && a.ip[2] == b.ip[2] && a.ip[3] == b.ip[3] && a.port == b.port)
@@ -81,14 +86,16 @@ qbool NET_CompareAdr (netadr_t a, netadr_t b) {
 	return false;
 }
 
-qbool NET_IsLocalAddress (netadr_t a) {
+qbool NET_IsLocalAddress (netadr_t a)
+{
 	if ((*(unsigned *)a.ip == *(unsigned *)net_local_adr.ip || *(unsigned *)a.ip == htonl(INADDR_LOOPBACK)) )
 		return true;
 	
 	return false;
 }
 
-char *NET_AdrToString (netadr_t a) {
+char *NET_AdrToString (netadr_t a)
+{
 	static char s[64];
 
 	if (a.type == NA_LOOPBACK)
@@ -98,7 +105,8 @@ char *NET_AdrToString (netadr_t a) {
 	return s;
 }
 
-char *NET_BaseAdrToString (netadr_t a) {
+char *NET_BaseAdrToString (netadr_t a)
+{
 	static char s[64];
 	
 	sprintf (s, "%i.%i.%i.%i", a.ip[0], a.ip[1], a.ip[2], a.ip[3]);
@@ -111,10 +119,53 @@ idnewt:28000
 192.246.40.70
 192.246.40.70:28000
 */
-qbool NET_StringToAdr (char *s, netadr_t *a) {
+qbool NET_StringToSockaddr (char *s, struct sockaddr_qstorage *sadr)
+{
 	struct hostent	*h;
-	struct sockaddr_in sadr;
-	char *colon, copy[128];
+	char	*colon;
+	char	copy[128];
+
+	if (!(*s))
+		return false;
+
+	memset (sadr, 0, sizeof(*sadr));
+
+	((struct sockaddr_in *)sadr)->sin_family = AF_INET;
+
+	((struct sockaddr_in *)sadr)->sin_port = 0;
+
+	if (strlen(s) >= sizeof(copy) - 1)
+		return false;
+
+	strcpy (copy, s);
+	// strip off a trailing :port if present
+	for (colon = copy ; *colon ; colon++)
+	{
+		if (*colon == ':') {
+			*colon = 0;
+			((struct sockaddr_in *)sadr)->sin_port = htons((short)atoi(colon+1));
+		}
+	}
+
+	if (copy[0] >= '0' && copy[0] <= '9')
+	{
+		//this is the wrong way to test. a server name may start with a number.
+		*(int *)&((struct sockaddr_in *)sadr)->sin_addr = inet_addr(copy);
+	} else
+	{
+		if (!(h = gethostbyname(copy)))
+			return false;
+		if (h->h_addrtype != AF_INET)
+			return false;
+		*(int *)&((struct sockaddr_in *)sadr)->sin_addr = *(int *)h->h_addr_list[0];
+	}
+
+	return true;
+}
+
+qbool NET_StringToAdr (char *s, netadr_t *a)
+{
+	struct sockaddr_qstorage sadr;
 
 	if (!strcmp(s, "local")) {
 		memset(a, 0, sizeof(*a));
@@ -122,27 +173,8 @@ qbool NET_StringToAdr (char *s, netadr_t *a) {
 		return true;
 	}
 
-	memset (&sadr, 0, sizeof(sadr));
-	sadr.sin_family = AF_INET;
-
-	sadr.sin_port = 0;
-
-	strcpy (copy, s);
-	// strip off a trailing :port if present
-	for (colon = copy; *colon; colon++) {
-		if (*colon == ':') {
-			*colon = 0;
-			sadr.sin_port = htons((short)atoi(colon+1));
-		}
-	}
-	
-	if (copy[0] >= '0' && copy[0] <= '9') {
-		*(int *)&sadr.sin_addr = inet_addr(copy);
-	} else {
-		if ((h = gethostbyname(copy)) == 0)
-			return 0;
-		*(int *)&sadr.sin_addr = *(int *)h->h_addr_list[0];
-	}
+	if (!NET_StringToSockaddr (s, &sadr))
+		return false;
 
 	SockadrToNetadr (&sadr, a);
 
@@ -155,7 +187,8 @@ LOOPBACK BUFFERS FOR LOCAL PLAYER
 =============================================================================
 */
 
-qbool NET_GetLoopPacket (netsrc_t sock) {
+qbool NET_GetLoopPacket (netsrc_t sock)
+{
 	int i;
 	loopback_t *loop;
 
@@ -177,7 +210,8 @@ qbool NET_GetLoopPacket (netsrc_t sock) {
 	return true;
 }
 
-void NET_SendLoopPacket (netsrc_t sock, int length, void *data, netadr_t to) {
+void NET_SendLoopPacket (netsrc_t sock, int length, void *data, netadr_t to)
+{
 	int i;
 	loopback_t *loop;
 
@@ -195,14 +229,16 @@ void NET_SendLoopPacket (netsrc_t sock, int length, void *data, netadr_t to) {
 
 //=============================================================================
 
-void NET_ClearLoopback (void) {
+void NET_ClearLoopback (void)
+{
 	loopbacks[0].send = loopbacks[0].get = 0;
 	loopbacks[1].send = loopbacks[1].get = 0;
 }
 
-qbool NET_GetPacket (netsrc_t netsrc) {
+qbool NET_GetPacket (netsrc_t netsrc)
+{
 	int ret, socket, err;
-	struct sockaddr_in from;
+	struct sockaddr_qstorage from;
 	socklen_t fromlen;
 
 	if (NET_GetLoopPacket (netsrc))
@@ -322,7 +358,7 @@ qbool NET_GetPacket (netsrc_t netsrc) {
 
 void NET_SendPacket (netsrc_t netsrc, int length, void *data, netadr_t to)
 {
-	struct sockaddr_in addr;
+	struct sockaddr_qstorage addr;
 	int socket;
 	int ret;
 	int size;
@@ -376,7 +412,7 @@ int TCP_OpenStream (netadr_t remoteaddr)
 	unsigned long _true = true;
 	int newsocket;
 	int temp;
-	struct sockaddr_in qs;
+	struct sockaddr_qstorage qs;
 
 	NetadrToSockadr(&remoteaddr, &qs);
 	temp = sizeof(struct sockaddr_in);
@@ -399,17 +435,23 @@ int TCP_OpenStream (netadr_t remoteaddr)
 
 
 
-int UDP_OpenSocket (int port) {
+int UDP_OpenSocket (int port)
+{
 	int newsocket;
 	struct sockaddr_in address;
 	unsigned long _true = true;
 	int i;
 
-	if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
-		Sys_Error ("UDP_OpenSocket: socket: (%i): %s\n", qerrno, strerror(qerrno));
+	if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET) {
+		Com_Printf ("UDP_OpenSocket: socket: (%i): %s\n", qerrno, strerror(qerrno));
+		return INVALID_SOCKET;
+	}
 
-	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1)
-		Sys_Error ("UDP_OpenSocket: ioctl FIONBIO: (%i): %s\n", qerrno, strerror(qerrno));
+	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1) {
+		Com_Printf ("UDP_OpenSocket: ioctl FIONBIO: (%i): %s\n", qerrno, strerror(qerrno));
+		closesocket(newsocket);
+		return INVALID_SOCKET;
+	}
 
 	address.sin_family = AF_INET;
 
@@ -426,10 +468,45 @@ int UDP_OpenSocket (int port) {
 	else
 		address.sin_port = htons((short)port);
 
-	if (bind (newsocket, (void *)&address, sizeof(address)) == -1)
-		return -1;
+	if (bind (newsocket, (void *)&address, sizeof(address)) == -1) {
+		Com_Printf("Cannot bind udp socket\n");
+		closesocket(newsocket);
+		return INVALID_SOCKET;
+	}
 
 	return newsocket;
+}
+
+void UDP_CloseSocket (int socket)
+{
+	closesocket(socket);
+}
+
+qbool NET_Sleep (int msec, qbool stdinissocket)
+{
+	struct timeval timeout;
+	fd_set fdset;
+	int i;
+
+	FD_ZERO (&fdset);
+
+	if (stdinissocket)
+		FD_SET (0, &fdset); // stdin is processed too (tends to be socket 0)
+
+	i = 0;
+	if (svs.socketip != INVALID_SOCKET) {
+		FD_SET(svs.socketip, &fdset); // network socket
+		i = svs.socketip;
+	}
+
+	timeout.tv_sec = msec/1000;
+	timeout.tv_usec = (msec%1000)*1000;
+	select(i+1, &fdset, NULL, NULL, &timeout);
+
+	if (stdinissocket)
+		FD_ISSET (0, &fdset);
+
+	return true;
 }
 
 void NET_ClientConfig (qbool enable) {
@@ -494,7 +571,8 @@ void NET_ServerConfig (qbool enable) {
 	}
 }
 
-void NET_Init (void) {
+void NET_Init (void)
+{
 #ifdef _WIN32
 	WORD wVersionRequested;
 	int r;
@@ -517,7 +595,8 @@ void NET_Init (void) {
 #endif
 }
 
-void NET_Shutdown (void) {
+void NET_Shutdown (void)
+{
 	NET_ClientConfig (false);
 	NET_ServerConfig (false);
 #ifdef _WIN32

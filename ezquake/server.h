@@ -241,12 +241,32 @@ typedef struct {
 	int			time;
 } challenge_t;
 
+#ifdef TCPCONNECT
+typedef struct svtcpstream_s {
+	int socketnum;
+	int inlen;
+	qbool waitingforprotocolconfirmation;
+	char inbuffer[1500];
+	float timeouttime;
+	netadr_t remoteaddr;
+	struct svtcpstream_s *next;
+} svtcpstream_t;
+#endif
+
 typedef struct {
 	double		realtime;			// increased by SV_Frame, never reset
 
 	int			spawncount;			// number of servers spawned since start,
 									// used to check late spawns
 	int			lastuserid;			// userid of last spawned client
+
+	int socketip;
+
+#ifdef TCPCONNECT
+	int sockettcp;
+	svtcpstream_t *tcpstreams;
+#endif
+
 	client_t	clients[MAX_CLIENTS];
 	int			serverflags;		// episode completion information
 	
