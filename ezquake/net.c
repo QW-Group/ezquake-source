@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.5 2006-07-24 18:56:03 disconn3ct Exp $
+    $Id: net.c,v 1.6 2006-07-24 20:04:52 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -24,13 +24,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #endif
 
-netadr_t	net_local_adr;
+netadr_t	net_local_cl_ipadr;
+netadr_t	net_local_sv_ipadr;
+netadr_t	net_local_sv_tcpipadr;
 
 netadr_t	net_from;
 sizebuf_t	net_message;
 byte		net_message_buffer[MSG_BUF_SIZE];
 
-#define	MAX_LOOPBACK	4	// must be a power of two
+#define MAX_LOOPBACK 4 // must be a power of two
 
 typedef struct {
 	byte	data[MAX_UDP_PACKET];
@@ -83,14 +85,6 @@ qbool NET_CompareAdr (netadr_t a, netadr_t b)
 		return true;
 	if (a.ip[0] == b.ip[0] && a.ip[1] == b.ip[1] && a.ip[2] == b.ip[2] && a.ip[3] == b.ip[3] && a.port == b.port)
 		return true;
-	return false;
-}
-
-qbool NET_IsLocalAddress (netadr_t a)
-{
-	if ((*(unsigned *)a.ip == *(unsigned *)net_local_adr.ip || *(unsigned *)a.ip == htonl(INADDR_LOOPBACK)) )
-		return true;
-	
 	return false;
 }
 
@@ -187,7 +181,7 @@ LOOPBACK BUFFERS FOR LOCAL PLAYER
 =============================================================================
 */
 
-qbool NET_GetLoopPacket (netsrc_t sock)
+qbool NET_GetLoopPacket (netsrc_t sock, netadr_t *from, sizebuf_t *message)
 {
 	int i;
 	loopback_t *loop;
@@ -197,16 +191,19 @@ qbool NET_GetLoopPacket (netsrc_t sock)
 	if (loop->send - loop->get > MAX_LOOPBACK)
 		loop->get = loop->send - MAX_LOOPBACK;
 
-	if ((int)(loop->send - loop->get) <= 0)
+	if (loop->get >= loop->send)
 		return false;
 
 	i = loop->get & (MAX_LOOPBACK-1);
 	loop->get++;
 
-	memcpy (net_message.data, loop->msgs[i].data, loop->msgs[i].datalen);
-	net_message.cursize = loop->msgs[i].datalen;
-	memset (&net_from, 0, sizeof(net_from));
-	net_from.type = NA_LOOPBACK;
+	if (message->maxsize < loop->msgs[i].datalen)
+		Sys_Error("NET_SendLoopPacket: Loopback buffer was too big");
+
+	memcpy (message->data, loop->msgs[i].data, loop->msgs[i].datalen);
+	message->cursize = loop->msgs[i].datalen;
+	memset (from, 0, sizeof(*from));
+	from->type = NA_LOOPBACK;
 	return true;
 }
 
@@ -241,7 +238,7 @@ qbool NET_GetPacket (netsrc_t netsrc)
 	struct sockaddr_qstorage from;
 	socklen_t fromlen;
 
-	if (NET_GetLoopPacket (netsrc))
+	if (NET_GetLoopPacket(netsrc, &net_from, &net_message))
 		return true;
 
 	if (cls.sockettcp == INVALID_SOCKET) { // FIXME
@@ -381,7 +378,7 @@ void NET_SendPacket (netsrc_t netsrc, int length, void *data, netadr_t to)
 		}
 	}
 #endif
-	socket = ip_sockets[netsrc];
+ socket = ip_sockets[netsrc];
 
 	if (socket == -1)
 		return;
