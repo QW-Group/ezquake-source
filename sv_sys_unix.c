@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_sys_unix.c,v 1.8 2006-07-24 15:13:28 disconn3ct Exp $
+	$Id: sv_sys_unix.c,v 1.9 2006-07-24 18:56:03 disconn3ct Exp $
 
 */
 #include <sys/types.h>
@@ -153,22 +153,21 @@ it to the host command processor
 */
 char *Sys_ConsoleInput (void)
 {
-	static char	text[256];
-	int		len;
+	static char text[256];
+	int len;
 
 	if (!stdin_ready || !do_stdin)
-		return NULL;		// the select didn't say it was ready
+		return NULL; // the select didn't say it was ready
 	stdin_ready = false;
 
 	len = read (0, text, sizeof(text));
-	if (len == 0) {
-		// end of file
+	if (len == 0) { // end of file
 		do_stdin = 0;
 		return NULL;
 	}
 	if (len < 1)
 		return NULL;
-	text[len-1] = 0;	// rip off the /n and terminate
+	text[len - 1] = 0; // rip off the /n and terminate
 	
 	return text;
 }
@@ -205,8 +204,13 @@ int main (int argc, char *argv[])
 	oldtime = Sys_DoubleTime () - 0.1;
 	while (1)
 	{
-	// select on the net socket and stdin
-		NET_Sleep (10);
+		// select on the net socket and stdin
+		if (do_stdin) {
+			stdin_ready = NET_Sleep (10, true);
+		} else {
+			NET_Sleep (10, false);
+			stdin_ready = false;
+		}
 
 	// find time passed since last cycle
 		newtime = Sys_DoubleTime ();

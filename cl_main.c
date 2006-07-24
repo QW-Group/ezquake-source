@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.76 2006-07-23 18:49:39 disconn3ct Exp $
+	$Id: cl_main.c,v 1.77 2006-07-24 18:56:03 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -320,6 +320,7 @@ void CL_Connect_f (void) {
 	}
 }
 
+#ifdef TCPCONNECT
 void CL_TCPConnect_f (void)
 {
 	char buffer[6];
@@ -388,6 +389,7 @@ void CL_TCPConnect_f (void)
 
 	CL_BeginServerConnect();
 }
+#endif
 
 qbool CL_ConnectedToProxy(void) {
 	cmd_alias_t *alias = NULL;
@@ -613,10 +615,10 @@ void CL_Disconnect (void) {
 
 #ifdef TCPCONNECT
 	if (cls.sockettcp != INVALID_SOCKET)
-{
-	closesocket(cls.sockettcp);
-	cls.sockettcp = INVALID_SOCKET;
-}
+	{
+		closesocket(cls.sockettcp);
+		cls.sockettcp = INVALID_SOCKET;
+	}
 #endif
 
 	cls.qport++; //a hack I picked up from qizmo

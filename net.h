@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.h,v 1.8 2006-07-23 18:49:39 disconn3ct Exp $
+    $Id: net.h,v 1.9 2006-07-24 18:56:03 disconn3ct Exp $
 */
 // net.h -- quake's interface to the networking layer
 
@@ -32,33 +32,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define EADDRNOTAVAIL	WSAEADDRNOTAVAIL
 #define EAFNOSUPPORT	WSAEAFNOSUPPORT
 
-#define qerrno	WSAGetLastError()
+#define qerrno WSAGetLastError()
 #else //_WIN32
-#define qerrno	errno
+#define qerrno errno
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <arpa/inet.h>
+#include <errno.h>
+
 #include <unistd.h>
 
-#ifdef sun
-#include <sys/filio.h>
-#endif //sun
-
-#ifdef NeXT
-#include <libc.h>
-#endif //NeXT
-
-#define closesocket	close
-#define ioctlsocket	ioctl
+#define closesocket close
+#define ioctlsocket ioctl
 #endif //_WIN32
-
-
-#include <errno.h>
 
 #ifndef INVALID_SOCKET
 #define INVALID_SOCKET -1
@@ -66,35 +58,57 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define PORT_ANY -1
 
-typedef enum {NA_LOOPBACK, NA_IP} netadrtype_t;
+typedef enum {NA_INVALID, NA_LOOPBACK, NA_IP} netadrtype_t;
 
 typedef enum {NS_CLIENT, NS_SERVER} netsrc_t;
 
 typedef struct {
 	netadrtype_t type;
+
 	byte ip[4];
+
 	unsigned short port;
 } netadr_t;
 
+struct sockaddr_qstorage
+{
+	short dontusesa_family;
+	unsigned char dontusesa_pad[6];
+#if defined(_MSC_VER) || defined(MINGW)
+	__int64 sa_align;
+#else
+	int sa_align[2];
+#endif
+	unsigned char sa_pad2[112];
+};
+
+extern	netadr_t	net_local_sv_ipadr;
+extern	netadr_t	net_local_sv_tcpipadr;
+extern	netadr_t	net_local_cl_ipadr;
 extern	netadr_t	net_local_adr;
 extern	netadr_t	net_from;		// address of who sent the packet
 extern	sizebuf_t	net_message;
+#define	MAX_UDP_PACKET		(MAX_MSGLEN*2)	// one more than msg + header
+extern	byte		net_message_buffer[MSG_BUF_SIZE];
+
+extern	cvar_t	hostname;
 
 int TCP_OpenStream (netadr_t remoteaddr); //makes things easier
 
 void	NET_Init (void);
+void	NET_InitClient (void);
+void	NET_InitServer (void);
+void	NET_CloseServer (void);
+void	UDP_CloseSocket (int socket);
 void	NET_Shutdown (void);
-void	NET_ClientConfig (qbool enable); // open/close client socket
-void	NET_ServerConfig (qbool enable); // open/close server socket
-
 qbool	NET_GetPacket (netsrc_t sock);
 void	NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
+
 void	NET_ClearLoopback (void);
-void	NET_Sleep (int msec);
+qbool	NET_Sleep (int msec, qbool stdinissocket);
 
 qbool	NET_CompareAdr (netadr_t a, netadr_t b);
 qbool	NET_CompareBaseAdr (netadr_t a, netadr_t b);
-qbool	NET_IsLocalAddress (netadr_t a);
 char	*NET_AdrToString (netadr_t a);
 char	*NET_BaseAdrToString (netadr_t a);
 qbool	NET_StringToAdr (char *s, netadr_t *a);
@@ -163,7 +177,7 @@ qbool Netchan_CanPacket (netchan_t *chan);
 qbool Netchan_CanReliable (netchan_t *chan);
 
 int  UDP_OpenSocket (int port);
-void NetadrToSockadr (netadr_t *a, struct sockaddr_in *s);
-void SockadrToNetadr (struct sockaddr_in *s, netadr_t *a);
+void NetadrToSockadr (netadr_t *a, struct sockaddr_qstorage *s);
+void SockadrToNetadr (struct sockaddr_qstorage *s, netadr_t *a);
 
 #endif /* __NET_H__ */

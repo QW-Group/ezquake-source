@@ -553,25 +553,6 @@ void SleepUntilInput (int time) {
 	MsgWaitForMultipleObjects (1, &tevent, FALSE, time, QS_ALLINPUT);
 }
 
-//Sleeps msec or until the server socket is ready
-void NET_Sleep (int msec) {
-	struct timeval timeout;
-	fd_set fdset;
-	int i;
-	extern int ip_sockets[];
-
-	FD_ZERO (&fdset);
-	i = 0;
-	if (ip_sockets[NS_SERVER] != -1) {
-		FD_SET (ip_sockets[NS_SERVER], &fdset); // network socket
-		i = ip_sockets[NS_SERVER];
-	}
-
-	timeout.tv_sec = msec/1000;
-	timeout.tv_usec = (msec%1000)*1000;
-	select (i+1, &fdset, NULL, NULL, &timeout);
-}
-
 HINSTANCE	global_hInstance;
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	int memsize;
@@ -638,7 +619,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
     /* main window message loop */
 	while (1) {
 		if (dedicated) {
-			NET_Sleep(1);
+			NET_Sleep(1, false);
 		} else if (sys_inactivesleep.value) {
 			// yield the CPU for a little while when paused, minimized, or not the focus
 			if ((cl.paused && (!ActiveApp && !DDActive)) || Minimized || block_drawing) {

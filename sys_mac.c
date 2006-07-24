@@ -1,5 +1,5 @@
 /*
-	$Id: sys_mac.c,v 1.15 2006-05-29 08:10:45 tonik Exp $
+	$Id: sys_mac.c,v 1.16 2006-07-24 18:56:03 disconn3ct Exp $
 */
 // sys_mac.c -- Macintosh system driver
 
@@ -329,17 +329,17 @@ char *Sys_ConsoleInput (void) {
 		return NULL;
 
 	if (!stdin_ready || !do_stdin)
-		return NULL;		// the select didn't say it was ready
+		return NULL; // the select didn't say it was ready
 	stdin_ready = false;
 
 	len = read (0, text, sizeof(text));
-	if (len == 0) {	// end of file		
+	if (len == 0) { // end of file
 		do_stdin = 0;
 		return NULL;
 	}
 	if (len < 1)
 		return NULL;
-	text[len - 1] = 0;	// rip off the /n and terminate
+	text[len - 1] = 0; // rip off the /n and terminate
 	
 	return text;
 }
@@ -985,7 +985,7 @@ static void Initialize (void)
 	//	To make the Random sequences truly random, we need to make the seed start
 	//	at a different number.  An easy way to do this is to put the current time
 	//	and date into the seed.  Since it is always incrementing the starting seed
-	//	will always be different.  DonÕt for each call of Random, or the sequence
+	//	will always be different.  Donï¿½ for each call of Random, or the sequence
 	//	will no longer be random.  Only needed once, here in the init.
 	//
 	randSeed = GetQDGlobalsRandomSeed ();
@@ -1246,8 +1246,14 @@ int main (int argc, char *argv[])
 	}
 
 	while (1) {
-		if (dedicated)
-			NET_Sleep (10);
+		if (dedicated) {
+			if (do_stdin) {
+				stdin_ready = NET_Sleep (10, true);
+			} else {
+				NET_Sleep (10, false);
+				stdin_ready = false;
+			}
+		}
 
 		now = Sys_DoubleTime ();
 		HandleEvents ();
@@ -1423,27 +1429,6 @@ void Sys_CopyToClipboard(char *text) {
 }
 
 // <-- disconnect
-
-//Sleeps msec or until the server socket is ready
-void NET_Sleep (int msec) {
-	struct timeval timeout;
-	fd_set fdset;
-	extern int ip_sockets[];
-	
-	if (dedicated) {
-		if (ip_sockets[NS_SERVER] == -1)
-			return; // we're not a server, just run full speed
-
-		FD_ZERO (&fdset);
-		if (do_stdin)
-			FD_SET (0, &fdset); // stdin is processed too
-		FD_SET (ip_sockets[NS_SERVER], &fdset); // network socket
-		timeout.tv_sec = msec/1000;
-		timeout.tv_usec = (msec%1000)*1000;
-		select (ip_sockets[NS_SERVER]+1, &fdset, NULL, NULL, &timeout);
-		stdin_ready = FD_ISSET (0, &fdset);
-	}
-}
 
 void *Sys_GetProcAddress (const char *ExtName)
 {

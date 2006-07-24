@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.3 2006-06-13 13:13:02 vvd0 Exp $
+    $Id: q_shared.h,v 1.4 2006-07-24 18:56:03 disconn3ct Exp $
 */
 // q_shared.h -- functions shared by all subsystems
 
@@ -181,7 +181,6 @@ char *Q_strdup (const char *src);
 
 #define	MAX_MSGLEN			1450		// max length of a reliable message
 #define	MAX_DATAGRAM		1450		// max length of unreliable message
-#define	MAX_UDP_PACKET		(MAX_MSGLEN*2)	// one more than msg + header
 #define	MSG_BUF_SIZE		8192		// max length of msg buf; MVD demo need it
 #define	FILE_TRANSFER_BUF_SIZE	MAX_MSGLEN - 100
 
