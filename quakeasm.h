@@ -263,4 +263,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	.extern spr8entryvec_table
 #endif
 
+	.extern C(vright)
+	.extern C(vup)
+	.extern C(vpn)
+
 #endif	// SERVERONLY
