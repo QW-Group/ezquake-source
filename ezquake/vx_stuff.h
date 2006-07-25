@@ -45,7 +45,6 @@ int	explosionflashtexture5;
 int	explosionflashtexture6;
 int	explosionflashtexture7;
 
-void vectoangles(vec3_t vec, vec3_t ang);
 float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t normal, int contents, int hitbmodels, entity_t *hitent);
 void WeatherEffect(void);
 int QW_strncmp (char *s1, char *s2);

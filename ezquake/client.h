@@ -668,6 +668,7 @@ void CL_PredictMove (void);
 void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u);
 
 // cl_cam.c
+void vectoangles(vec3_t vec, vec3_t ang);
 #define CAM_NONE	0
 #define CAM_TRACK	1
 
