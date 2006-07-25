@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_main.c,v 1.20 2006-07-24 20:04:52 disconn3ct Exp $
+	$Id: sv_main.c,v 1.21 2006-07-25 15:51:45 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -118,7 +118,6 @@ void SV_Shutdown (char *finalmsg) {
 	SV_FinalMessage (finalmsg);
 
 	Master_Shutdown ();
-	NET_ServerConfig (false);
 
 	if (sv_fraglogfile) {
 		fclose (sv_fraglogfile);
@@ -1221,9 +1220,6 @@ void SV_ExtractFromUserinfo (client_t *cl) {
 void SV_Init (void) {
 	PR_Init ();
 	SV_InitLocal ();
-
-	if (dedicated)
-		NET_ServerConfig (true);
 
 	svs.last_heartbeat = -99999; // send immediately
 }

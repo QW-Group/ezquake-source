@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_init.c,v 1.9 2006-05-16 10:05:28 disconn3ct Exp $
+	$Id: sv_init.c,v 1.10 2006-07-25 15:51:45 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -240,6 +240,8 @@ void SV_SpawnServer (char *server, qbool devmap) {
 	extern cvar_t sv_cheats;
 
 	Com_DPrintf ("SpawnServer: %s\n",server);
+
+	NET_InitServer();
 
 	SV_SaveSpawnparms ();
 

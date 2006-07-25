@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.6 2006-07-24 20:04:52 disconn3ct Exp $
+    $Id: net.c,v 1.7 2006-07-25 15:51:44 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -30,6 +30,7 @@ netadr_t	net_local_sv_tcpipadr;
 
 netadr_t	net_from;
 sizebuf_t	net_message;
+
 byte		net_message_buffer[MSG_BUF_SIZE];
 
 #define MAX_LOOPBACK 4 // must be a power of two
@@ -45,11 +46,10 @@ typedef struct {
 } loopback_t;
 
 #ifdef _WIN32
-WSADATA		winsockdata;
+WSADATA winsockdata;
 #endif
 
 loopback_t	loopbacks[2];
-int			ip_sockets[2] = { -1, -1 };
 
 //=============================================================================
 
@@ -234,84 +234,99 @@ void NET_ClearLoopback (void)
 
 qbool NET_GetPacket (netsrc_t netsrc)
 {
-	int ret, socket, err;
+	int ret, socket, err, i;
 	struct sockaddr_qstorage from;
 	socklen_t fromlen;
 
 	if (NET_GetLoopPacket(netsrc, &net_from, &net_message))
 		return true;
 
-	if (cls.sockettcp == INVALID_SOCKET) { // FIXME
-		socket = ip_sockets[netsrc];
-	
+	for (i = 0; i < 1; i++) {
+		if (netsrc == NS_SERVER) {
+	#ifdef CLIENTONLY
+			Sys_Error("NET_GetPacket: Bad netsrc");
+			socket = 0;
+	#else
+			if (i == 0)
+				socket = svs.socketip;
+			else
+				socket = INVALID_SOCKET;
+	#endif
+		} else {
+	#ifdef SERVERONLY
+			Sys_Error("NET_GetPacket: Bad netsrc");
+			socket = 0;
+	#else
+			if (i == 0)
+				socket = cls.socketip;
+			else
+				socket = INVALID_SOCKET;
+	#endif
+		}
+
+		// socket = (netsrc == NS_SERVER) ? svs.socketip : cls.socketip;
+
 		if (socket == INVALID_SOCKET)
-			return false;
-	
+			continue;
+
 		fromlen = sizeof(from);
 		ret = recvfrom (socket, (char *)net_message_buffer, sizeof(net_message_buffer), 0, (struct sockaddr *)&from, &fromlen);
-	
+
 		if (ret == -1) {
 			err = qerrno;
-	
+
 			if (err == EWOULDBLOCK)
-				return false;
-	
+				continue;
+
 			if (err == EMSGSIZE) {
 				SockadrToNetadr (&from, &net_from);
 				Com_Printf ("Warning:  Oversize packet from %s\n", NET_AdrToString (net_from));
-				return false;
+				continue;
 			}
-	
+
 			if (err == 10054) {
 				Com_Printf ("NET_GetPacket: Error 10054 from %s\n", NET_AdrToString (net_from));
-				return false;
+				continue;
 			}
-	
+
 			if (err == ECONNABORTED || err == ECONNRESET) {
 				Com_Printf ("Connection lost or aborted\n");
-				return false;
+				continue;
 			}
-	
+
 			Com_Printf ("NET_GetPacket: recvfrom: (%i): %s\n", err, strerror(err));
-			return false;
+			continue;
 		}
-	
+
 		SockadrToNetadr (&from, &net_from);
-	
+
 		net_message.cursize = ret;
 		if (ret == sizeof(net_message_buffer)) {
 			Com_Printf ("Oversize packet from %s\n", NET_AdrToString (net_from));
 			return false;
 		}
-	
+
 		return ret;
 	}
-	
-#ifdef TCPCONNECT
+
+// TCPCONNECT -->
 #ifndef SERVERONLY
-	if (netsrc == NS_CLIENT)
-	{
-		if (cls.sockettcp != INVALID_SOCKET)
-		{//client receiving only via tcp
-	
+	if (netsrc == NS_CLIENT) {
+		if (cls.sockettcp != INVALID_SOCKET) { //client receiving only via tcp
 			ret = recv(cls.sockettcp, cls.tcpinbuffer+cls.tcpinlen, sizeof(cls.tcpinbuffer)-cls.tcpinlen, 0);
-			if (ret == -1)
-			{
+			if (ret == -1) {
 				err = qerrno;
 	
-				if (err == EWOULDBLOCK)
+				if (err == EWOULDBLOCK) {
 					ret = 0;
-				else
-				{
-					if (err == ECONNABORTED || err == ECONNRESET)
-					{
+				} else {
+					if (err == ECONNABORTED || err == ECONNRESET) {
 						closesocket(cls.sockettcp);
 						cls.sockettcp = INVALID_SOCKET;
 						Com_Printf ("Connection lost or aborted\n"); //server died/connection lost.
 						return false;
 					}
-	
-	
+
 					closesocket(cls.sockettcp);
 					cls.sockettcp = INVALID_SOCKET;
 					Com_Printf ("NET_GetPacket: Error (%i): %s\n", err, strerror(err));
@@ -319,35 +334,141 @@ qbool NET_GetPacket (netsrc_t netsrc)
 				}
 			}
 			cls.tcpinlen += ret;
-	
+
 			if (cls.tcpinlen < 2)
 				return false;
-	
+
 			net_message.cursize = BigShort(*(short*)cls.tcpinbuffer);
-			if (net_message.cursize >= sizeof(net_message_buffer) )
-			{
+			if (net_message.cursize >= sizeof(net_message_buffer) ) {
 				closesocket(cls.sockettcp);
 				cls.sockettcp = INVALID_SOCKET;
 				Com_Printf ("Warning:  Oversize packet from %s\n", NET_AdrToString (net_from));
 				return false;
 			}
-			if (net_message.cursize+2 > cls.tcpinlen)
-			{	//not enough buffered to read a packet out of it.
+
+			if (net_message.cursize+2 > cls.tcpinlen) {
+				//not enough buffered to read a packet out of it.
 				return false;
 			}
-	
+
 			memcpy(net_message_buffer, cls.tcpinbuffer+2, net_message.cursize);
 			memmove(cls.tcpinbuffer, cls.tcpinbuffer+net_message.cursize+2, cls.tcpinlen - (net_message.cursize+2));
 			cls.tcpinlen -= net_message.cursize+2;
-	
+
 			net_from = cls.sockettcpdest;
-	
+
 			return true;
 		}
 	}
 #endif
-#endif
+#ifndef CLIENTONLY
+	if (netsrc == NS_SERVER) {
+		float timeval = Sys_DoubleTime();
+		svtcpstream_t *st;
+		st = svs.tcpstreams;
 
+		while (svs.tcpstreams && svs.tcpstreams->socketnum == INVALID_SOCKET) {
+			st = svs.tcpstreams;
+			svs.tcpstreams = svs.tcpstreams->next;
+			Q_free(st);
+		}
+
+		for (st = svs.tcpstreams; st; st = st->next) {
+			//client receiving only via tcp
+			while (st->next && st->next->socketnum == INVALID_SOCKET) {
+				svtcpstream_t *temp;
+				temp = st->next;
+				st->next = st->next->next;
+				Q_free(temp);
+			}
+
+			//due to the above checks about invalid sockets, the socket is always open for st below.
+
+			if (st->timeouttime < timeval)
+				goto closesvstream;
+	
+			ret = recv(st->socketnum, st->inbuffer+st->inlen, sizeof(st->inbuffer)-st->inlen, 0);
+			if (ret == 0) {
+				goto closesvstream;
+			} else if (ret == -1) {
+				err = qerrno;
+
+				if (err == EWOULDBLOCK) {
+					ret = 0;
+				} else {
+					if (err == ECONNABORTED || err == ECONNRESET) {
+						Com_Printf ("Connection lost or aborted\n"); //server died/connection lost.
+					} else {
+						Com_Printf ("NET_GetPacket: Error (%i): %s\n", err, strerror(err));
+					}
+	
+closesvstream:
+				closesocket(st->socketnum);
+				st->socketnum = INVALID_SOCKET;
+				continue;
+				}
+			}
+			st->inlen += ret;
+	
+			if (st->waitingforprotocolconfirmation) {
+				if (st->inlen < 6)
+					continue;
+
+				if (strncmp(st->inbuffer, "qizmo\n", 6)) {
+					Com_Printf ("Unknown TCP client\n");
+					goto closesvstream;
+				}
+
+				memmove(st->inbuffer, st->inbuffer+6, st->inlen - (6));
+				st->inlen -= 6;
+				st->waitingforprotocolconfirmation = false;
+			}
+
+			if (st->inlen < 2)
+				continue;
+
+			net_message.cursize = BigShort(*(short*)st->inbuffer);
+			if (net_message.cursize >= sizeof(net_message_buffer)) {
+				Com_Printf ("Warning:  Oversize packet from %s\n", NET_AdrToString (net_from));
+				goto closesvstream;
+			}
+
+			if (net_message.cursize+2 > st->inlen) {
+				//not enough buffered to read a packet out of it.
+				continue;
+			}
+
+			memcpy(net_message_buffer, st->inbuffer+2, net_message.cursize);
+			memmove(st->inbuffer, st->inbuffer+net_message.cursize+2, st->inlen - (net_message.cursize+2));
+			st->inlen -= net_message.cursize+2;
+
+			net_from = st->remoteaddr;
+
+			return true;
+		}
+
+		if (svs.sockettcp != INVALID_SOCKET) {
+			int newsock;
+			newsock = accept(svs.sockettcp, (struct sockaddr*)&from, &fromlen);
+			if (newsock != INVALID_SOCKET) {
+				int _true = true;
+				setsockopt(newsock, IPPROTO_TCP, TCP_NODELAY, (char *)&_true, sizeof(_true));
+
+				st = Q_malloc(sizeof(svtcpstream_t));
+				st->waitingforprotocolconfirmation = true;
+				st->next = svs.tcpstreams;
+				svs.tcpstreams = st;
+				st->socketnum = newsock;
+				st->inlen = 0;
+				SockadrToNetadr(&from, &st->remoteaddr);
+				send(newsock, "qizmo\n", 6, 0);
+
+				st->timeouttime = timeval + 30;
+			}
+		}
+	}
+#endif
+// <--TCPCONNECT
 	return false;
 }
 
@@ -357,30 +478,70 @@ void NET_SendPacket (netsrc_t netsrc, int length, void *data, netadr_t to)
 {
 	struct sockaddr_qstorage addr;
 	int socket;
-	int ret;
 	int size;
+	int ret;
 
 	if (to.type == NA_LOOPBACK) {
 		NET_SendLoopPacket (netsrc, length, data, to);
 		return;
 	}
 
-#ifdef TCPCONNECT
-	if (cls.sockettcp != -1)
-	{
-		if (NET_CompareAdr(to, cls.sockettcpdest))
-		{	//this goes to the server so send it via tcp
-			unsigned short slen = BigShort((unsigned short)length);
-			send(cls.sockettcp, (char*)&slen, sizeof(slen), 0);
-			send(cls.sockettcp, data, length, 0);
-	
-			return;
-		}
-	}
-#endif
- socket = ip_sockets[netsrc];
+	if (netsrc == NS_SERVER) {
+#ifdef CLIENTONLY
+		Sys_Error("NET_SendPacket: Bad netsrc");
+		socket = 0;
+#else
 
-	if (socket == -1)
+// TCPCONNECT -->
+		svtcpstream_t *st;
+		for (st = svs.tcpstreams; st; st = st->next)
+		{
+			if (st->socketnum == INVALID_SOCKET)
+				continue;
+
+			if (NET_CompareAdr(to, st->remoteaddr))
+			{
+				unsigned short slen = BigShort((unsigned short)length);
+				send(st->socketnum, (char*)&slen, sizeof(slen), 0);
+				send(st->socketnum, data, length, 0);
+
+				st->timeouttime = Sys_DoubleTime() + 20;
+
+				return;
+			}
+		}
+// <--TCPCONNECT
+
+		socket = svs.socketip;
+#endif
+	} else {
+#ifdef SERVERONLY
+		Sys_Error("NET_SendPacket: Bad netsrc");
+		socket = 0;
+#else
+
+// TCPCONNECT -->
+		if (cls.sockettcp != INVALID_SOCKET)
+		{
+			if (NET_CompareAdr(to, cls.sockettcpdest))
+			{
+				//this goes to the server so send it via tcp
+				unsigned short slen = BigShort((unsigned short)length);
+				send(cls.sockettcp, (char*)&slen, sizeof(slen), 0);
+				send(cls.sockettcp, data, length, 0);
+		
+				return;
+			}
+		}
+// <--TCPCONNECT
+
+		socket = cls.socketip;
+#endif
+	}
+
+	// socket = (netsrc == NS_SERVER) ? svs.socketip : cls.socketip;
+
+	if (socket == INVALID_SOCKET)
 		return;
 
 	NetadrToSockadr (&to, &addr);
@@ -392,13 +553,11 @@ void NET_SendPacket (netsrc_t netsrc, int length, void *data, netadr_t to)
 			return;
 		if (qerrno == ECONNREFUSED)
 			return;
-#ifdef _WIN32
 #ifndef SERVERONLY
-		if (qerrno == WSAEADDRNOTAVAIL)
+		if (qerrno == EADDRNOTAVAIL)
 			return;
 #endif
-#endif
-		Sys_Printf ("NET_SendPacket: sendto: (%i): %s\n", qerrno, strerror(qerrno));
+		Sys_Printf ("NET_SendPacket: sendto: (%i): %s %i\n", qerrno, strerror(qerrno), socket);
 	}
 }
 
@@ -424,8 +583,56 @@ int TCP_OpenStream (netadr_t remoteaddr)
 	}
 
 	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1)
-		Sys_Error ("UDP_OpenSocket: ioctl FIONBIO: %s", strerror(qerrno));
+		Sys_Error ("TCP_OpenStream: ioctl FIONBIO: %s", strerror(qerrno));
 
+
+	return newsocket;
+}
+
+int TCP_OpenListenSocket (int port)
+{
+	int newsocket;
+	struct sockaddr_in address;
+	unsigned long _true = true;
+	int i;
+
+	if ((newsocket = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
+		Com_Printf ("TCP_OpenListenSocket: socket: (%i): %s\n", qerrno, strerror(qerrno));
+		return INVALID_SOCKET;
+	}
+
+	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1) {
+		Com_Printf ("TCP_OpenListenSocket: ioctl FIONBIO: (%i): %s\n", qerrno, strerror(qerrno));
+		closesocket(newsocket);
+		return INVALID_SOCKET;
+	}
+
+	address.sin_family = AF_INET;
+
+	// check for interface binding option
+	if ((i = COM_CheckParm("-ip")) != 0 && i < com_argc) {
+		address.sin_addr.s_addr = inet_addr(com_argv[i+1]);
+		Com_Printf ("Binding to IP Interface Address of %s\n", inet_ntoa(address.sin_addr));
+	} else {
+		address.sin_addr.s_addr = INADDR_ANY;
+	}
+	
+	if (port == PORT_ANY)
+		address.sin_port = 0;
+	else
+		address.sin_port = htons((short)port);
+
+	if (bind (newsocket, (void *)&address, sizeof(address)) == -1) {
+		Com_Printf("Cannot bind tcp socket\n");
+		closesocket(newsocket);
+		return INVALID_SOCKET;
+	}
+
+	if (listen(newsocket, 1) == INVALID_SOCKET) {
+		Com_Printf("Cannot listen on tcp socket\n");
+		closesocket(newsocket);
+		return INVALID_SOCKET;
+	}
 
 	return newsocket;
 }
@@ -506,66 +713,36 @@ qbool NET_Sleep (int msec, qbool stdinissocket)
 	return true;
 }
 
-void NET_ClientConfig (qbool enable) {
-	int port;
+void NET_GetLocalAddress (int socket, netadr_t *out)
+{
+	char buff[512];
+	struct sockaddr_qstorage address;
+	size_t namelen;
+	netadr_t adr = {0};
+	qbool notvalid = false;
 
-	if (enable) {
-		if (ip_sockets[NS_CLIENT] == -1) {
-			if ((port = COM_CheckParm("-clientport")) && port + 1 < com_argc) {
-				ip_sockets[NS_CLIENT] = UDP_OpenSocket (Q_atoi(com_argv[port + 1]));
-			} else {
-				ip_sockets[NS_CLIENT] = UDP_OpenSocket (PORT_CLIENT); // try the default port first
-				if (ip_sockets[NS_CLIENT] == -1)
-					ip_sockets[NS_CLIENT] = UDP_OpenSocket (PORT_ANY); // any dynamic port
-			}
-			if (ip_sockets[NS_CLIENT] == -1)
-				Sys_Error ("Couldn't allocate client socket");
-		}
-	} else {
-		if (ip_sockets[NS_CLIENT] != -1) {
-			closesocket (ip_sockets[NS_CLIENT]);
-			ip_sockets[NS_CLIENT] = -1;
-		}
+	strcpy(buff, "localhost");
+	gethostname(buff, sizeof(buff));
+	buff[sizeof(buff) - 1] = 0;
+
+	if (!NET_StringToAdr (buff, &adr))	//urm
+		NET_StringToAdr ("127.0.0.1", &adr);
+
+	namelen = sizeof(address);
+	if (getsockname (socket, (struct sockaddr *)&address, (socklen_t *)&namelen) == -1) {
+		notvalid = true;
+		NET_StringToSockaddr("0.0.0.0", (struct sockaddr_qstorage *)&address);
+		//		Sys_Error ("NET_Init: getsockname:", strerror(qerrno));
 	}
-}
 
-void NET_ServerConfig (qbool enable) {
-	int i, port;
+	SockadrToNetadr(&address, out);
+	if (!*(int*)out->ip)	//socket was set to auto
+		*(int *)out->ip = *(int *)adr.ip;	//change it to what the machine says it is, rather than the socket.
 
-	if (enable) {
-		if (ip_sockets[NS_SERVER] != -1)
-			return;
-
-		port = 0;
-		i = COM_CheckParm ("-port");
-		if (i && i < com_argc)
-			port = atoi(com_argv[i+1]);
-		if (!port)
-			port = PORT_SERVER;
-
-		ip_sockets[NS_SERVER] = UDP_OpenSocket (port);
-		if (ip_sockets[NS_SERVER] == -1) {
-#ifdef SERVERONLY
-			Sys_Error ("Couldn't allocate server socket");
-#else
-			if (dedicated)
-				Sys_Error ("Couldn't allocate server socket");
-			else
-				Com_Printf ("WARNING: Couldn't allocate server socket.\n");
-#endif
-		}
-
-#ifdef _WIN32
-		if (dedicated)
-			SetConsoleTitle (va("ezqds: %i", port));
-#endif
-
-	} else {
-		if (ip_sockets[NS_SERVER] != -1) {
-			closesocket (ip_sockets[NS_SERVER]);
-			ip_sockets[NS_SERVER] = -1;
-		}
-	}
+	if (notvalid)
+		Com_Printf("Couldn't detect local ip\n");
+	else
+		Com_Printf("IP address %s\n", NET_AdrToString (*out));
 }
 
 void NET_Init (void)
@@ -580,22 +757,139 @@ void NET_Init (void)
 		Sys_Error ("Winsock initialization failed.");
 #endif
 
-	// init the message buffer
-	SZ_Init (&net_message, net_message_buffer, sizeof(net_message_buffer));
+	Com_DPrintf("UDP Initialized\n");
 
-#ifdef _WIN32
-	Com_Printf ("Winsock initialized\n");
+#ifndef SERVERONLY
+	cls.socketip = INVALID_SOCKET;
+// TCPCONNECT -->
+	cls.sockettcp = INVALID_SOCKET;
+// <--TCPCONNECT
 #endif
 
-#ifdef TCPCONNECT
-	cls.sockettcp = INVALID_SOCKET;
+#ifndef CLIENTONLY
+	svs.socketip = INVALID_SOCKET;
+// TCPCONNECT -->
+	svs.sockettcp = INVALID_SOCKET;
+// <--TCPCONNECT
 #endif
 }
 
+#ifndef SERVERONLY
+void NET_InitClient(void)
+{
+	int port = PORT_CLIENT;
+	int p;
+
+	if (dedicated)
+		return;
+
+	p = COM_CheckParm ("-clientport");
+	if (p && p < com_argc) {
+		port = atoi(com_argv[p+1]);
+	}
+
+	if (cls.socketip == INVALID_SOCKET)
+		cls.socketip = UDP_OpenSocket (port);
+
+	if (cls.socketip == INVALID_SOCKET)
+		cls.socketip = UDP_OpenSocket (PORT_ANY); // any dynamic port
+
+	if (cls.socketip == INVALID_SOCKET)
+		Sys_Error ("Couldn't allocate client socket");
+
+	// init the message buffer
+	SZ_Init (&net_message, net_message_buffer, sizeof(net_message_buffer));
+
+	// determine my name & address
+	NET_GetLocalAddress (cls.socketip, &net_local_cl_ipadr);
+
+	Com_Printf ("Client port Initialized\n");
+}
+#endif
+
+#ifndef CLIENTONLY
+void NET_CloseServer (void)
+{
+	if (svs.socketip != INVALID_SOCKET) {
+		UDP_CloseSocket(svs.socketip);
+		svs.socketip = INVALID_SOCKET;
+	}
+
+// TCPCONNECT -->
+	if (svs.sockettcp != INVALID_SOCKET) {
+	closesocket(svs.sockettcp);
+	svs.sockettcp = INVALID_SOCKET;
+	}
+// <--TCPCONNECT
+
+	net_local_sv_ipadr.type = NA_LOOPBACK;
+}
+
+void NET_InitServer (void)
+{
+	int tcpport = 0;
+	int port = PORT_SERVER;
+	int p;
+
+	p = COM_CheckParm ("-port");
+	if (p && p < com_argc) {
+		port = atoi(com_argv[p+1]);
+	}
+
+	if (svs.socketip == INVALID_SOCKET) {
+		svs.socketip = UDP_OpenSocket (port);
+		if (svs.socketip != INVALID_SOCKET)
+			NET_GetLocalAddress (svs.socketip, &net_local_sv_ipadr);
+	}
+
+// TCPCONNECT -->
+	p = COM_CheckParm ("-tcpport");
+	if (p && p < com_argc) {
+		tcpport = atoi(com_argv[p+1]);
+	}
+
+	if (svs.sockettcp == INVALID_SOCKET && tcpport) {
+		svs.sockettcp = TCP_OpenListenSocket (tcpport);
+		if (svs.sockettcp != INVALID_SOCKET)
+			NET_GetLocalAddress (svs.sockettcp, &net_local_sv_tcpipadr);
+		else
+			Com_Printf("Failed to open TCP port %i\n", tcpport);
+	}
+// <-- TCPCONNECT
+
+	if (svs.socketip == INVALID_SOCKET) {
+#ifdef SERVERONLY
+		Sys_Error ("Couldn't allocate server socket\n");
+#else
+		if (dedicated)
+			Sys_Error ("Couldn't allocate server socket\n");
+		else
+			Com_Printf ("WARNING: Couldn't allocate server socket\n");
+#endif
+	}
+
+#ifdef _WIN32
+	if (dedicated)
+		SetConsoleTitle (va("ezqds: %i", port));
+#endif
+
+	// init the message buffer
+	SZ_Init (&net_message, net_message_buffer, sizeof(net_message_buffer));
+}
+#endif
+
 void NET_Shutdown (void)
 {
-	NET_ClientConfig (false);
-	NET_ServerConfig (false);
+#ifndef CLIENTONLY
+	NET_CloseServer();
+#endif
+#ifndef SERVERONLY
+	if (cls.socketip != INVALID_SOCKET) {
+		UDP_CloseSocket(cls.socketip);
+		cls.socketip = INVALID_SOCKET;
+	}
+#endif
+
 #ifdef _WIN32
 	WSACleanup ();
 #endif
