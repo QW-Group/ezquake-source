@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.7 2006-07-25 15:51:44 disconn3ct Exp $
+    $Id: net.c,v 1.8 2006-07-25 18:45:48 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -686,7 +686,11 @@ void UDP_CloseSocket (int socket)
 	closesocket(socket);
 }
 
-qbool NET_Sleep (int msec, qbool stdinissocket)
+#ifndef _WIN32
+extern qbool stdin_ready;
+extern int do_stdin;
+#endif
+qbool NET_Sleep (int msec)
 {
 	struct timeval timeout;
 	fd_set fdset;
@@ -694,8 +698,10 @@ qbool NET_Sleep (int msec, qbool stdinissocket)
 
 	FD_ZERO (&fdset);
 
-	if (stdinissocket)
+#ifndef _WIN32
+	if (do_stdin)
 		FD_SET (0, &fdset); // stdin is processed too (tends to be socket 0)
+#endif
 
 	i = 0;
 	if (svs.socketip != INVALID_SOCKET) {
@@ -707,8 +713,9 @@ qbool NET_Sleep (int msec, qbool stdinissocket)
 	timeout.tv_usec = (msec%1000)*1000;
 	select(i+1, &fdset, NULL, NULL, &timeout);
 
-	if (stdinissocket)
-		FD_ISSET (0, &fdset);
+#ifndef _WIN32
+	stdin_ready = FD_ISSET (0, &fdset);
+#endif
 
 	return true;
 }

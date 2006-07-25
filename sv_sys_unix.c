@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_sys_unix.c,v 1.9 2006-07-24 18:56:03 disconn3ct Exp $
+	$Id: sv_sys_unix.c,v 1.10 2006-07-25 18:45:48 disconn3ct Exp $
 
 */
 #include <sys/types.h>
@@ -34,7 +34,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cvar_t	sys_nostdout = {"sys_nostdout","0"};
 cvar_t	sys_extrasleep = {"sys_extrasleep","0"};
 
-qbool	stdin_ready;
+qbool stdin_ready;
+int do_stdin = 1;
 
 /*
 ===============================================================================
@@ -141,8 +142,6 @@ void Sys_Quit (void)
 	exit (0);		// appkit isn't running
 }
 
-int do_stdin = 1;
-
 /*
 ================
 Sys_ConsoleInput
@@ -205,21 +204,16 @@ int main (int argc, char *argv[])
 	while (1)
 	{
 		// select on the net socket and stdin
-		if (do_stdin) {
-			stdin_ready = NET_Sleep (10, true);
-		} else {
-			NET_Sleep (10, false);
-			stdin_ready = false;
-		}
+		NET_Sleep (10);
 
-	// find time passed since last cycle
+		// find time passed since last cycle
 		newtime = Sys_DoubleTime ();
 		time = newtime - oldtime;
 		oldtime = newtime;
 		
 		Host_Frame (time);		
 		
-	// extrasleep is just a way to generate a fucked up connection on purpose
+		// extrasleep is just a way to generate a fucked up connection on purpose
 		if (sys_extrasleep.value)
 			usleep (sys_extrasleep.value);
 	}	

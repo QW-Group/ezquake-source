@@ -1,5 +1,5 @@
 /*
-	$Id: sys_mac.c,v 1.16 2006-07-24 18:56:03 disconn3ct Exp $
+	$Id: sys_mac.c,v 1.17 2006-07-25 18:45:48 disconn3ct Exp $
 */
 // sys_mac.c -- Macintosh system driver
 
@@ -1246,14 +1246,8 @@ int main (int argc, char *argv[])
 	}
 
 	while (1) {
-		if (dedicated) {
-			if (do_stdin) {
-				stdin_ready = NET_Sleep (10, true);
-			} else {
-				NET_Sleep (10, false);
-				stdin_ready = false;
-			}
-		}
+		if (dedicated)
+			NET_Sleep (10);
 
 		now = Sys_DoubleTime ();
 		HandleEvents ();

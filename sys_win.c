@@ -619,7 +619,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
     /* main window message loop */
 	while (1) {
 		if (dedicated) {
-			NET_Sleep(1, false);
+			NET_Sleep(1);
 		} else if (sys_inactivesleep.value) {
 			// yield the CPU for a little while when paused, minimized, or not the focus
 			if ((cl.paused && (!ActiveApp && !DDActive)) || Minimized || block_drawing) {
