@@ -236,7 +236,7 @@ int server_during_update = 0;
 void GetServerInfo(server_data *serv)
 {
     int newsocket;
-    struct sockaddr_in server;
+	struct sockaddr_qstorage server;
     int ret;
     char senddata[] = {255, 255, 255, 255, 's','t','a','t','u','s',' ','7','\n'};
     char answer[5000];
@@ -295,7 +295,7 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
     double interval, lastsenttime;
 
     int newsocket;
-    struct sockaddr_in dest;
+	struct sockaddr_qstorage dest;
     int ret, i;
     char senddata[] = {255, 255, 255, 255, 's','t','a','t','u','s',' ','7','\n'};
     fd_set fd;
@@ -389,7 +389,7 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
         FD_SET(newsocket, &fd);
         if (select(newsocket+1, &fd, NULL, NULL, &timeout))
         {
-            struct sockaddr_in hostaddr;
+			struct sockaddr_qstorage hostaddr;
             netadr_t from;
             int i;
             char answer[5000];

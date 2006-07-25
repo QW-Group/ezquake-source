@@ -164,7 +164,7 @@ void Update_Source(source_data *s)
         char request[] = {'c', '\n', '\0'};
 
         int newsocket;
-        struct sockaddr_in server;
+		struct sockaddr_qstorage server;
         int ret, i;
         unsigned char answer[10000];
         fd_set fd;
@@ -267,7 +267,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
     char request[] = {'c', '\n', '\0'};
 
     int newsocket;
-    struct sockaddr_in server;
+	struct sockaddr_qstorage server;
     int ret, i, sourcenum;
     unsigned char answer[10000];
     fd_set fd;
@@ -321,7 +321,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
 
         while (trynum < sb_masterretries.value)
         {
-            struct sockaddr_in hostaddr;
+			struct sockaddr_qstorage hostaddr;
             netadr_t from;
 
             trynum++;
