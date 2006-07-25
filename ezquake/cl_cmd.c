@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.32 2006-07-25 15:51:44 disconn3ct Exp $
+	$Id: cl_cmd.c,v 1.33 2006-07-25 17:46:18 disconn3ct Exp $
 */
 
 #include <time.h>
@@ -223,6 +223,9 @@ void CL_Pause_f (void) {
 //packet <destination> <contents>
 //Contents allows \n escape character
 void CL_Packet_f(void) {
+// TCPCONNECT -->
+	int tcpsock;
+// <--TCPCONNECT
 	netadr_t adr;
 	char send[2048], *in, *out;
 
@@ -266,7 +269,7 @@ void CL_Packet_f(void) {
 	*out = 0;
 
 // TCPCONNECT -->
-	int tcpsock; //extra code to stop the packet command from sending to the server via tcp
+	//extra code to stop the packet command from sending to the server via tcp
 	tcpsock = cls.sockettcp;
 	cls.sockettcp = -1;
 	NET_SendPacket (NS_CLIENT, out-send, send, adr);
