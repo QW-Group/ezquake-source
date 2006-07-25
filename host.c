@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.23 2006-06-16 17:17:59 vvd0 Exp $
+	$Id: host.c,v 1.24 2006-07-25 15:51:44 disconn3ct Exp $
  
 */
 
@@ -349,7 +349,6 @@ void Host_Error (char *error, ...)
 	CL_Disconnect ();
 
 	if (dedicated) {
-		NET_Shutdown ();
 		Sys_Error ("%s", string);
 	}
 
@@ -459,6 +458,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	Con_Init ();
 	NET_Init ();
+	NET_InitClient ();
 	Netchan_Init ();
 	QLib_Init();
 	Sys_Init ();

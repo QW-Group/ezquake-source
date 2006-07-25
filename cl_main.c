@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.78 2006-07-24 20:04:52 disconn3ct Exp $
+	$Id: cl_main.c,v 1.79 2006-07-25 15:51:44 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -320,7 +320,7 @@ void CL_Connect_f (void) {
 	}
 }
 
-#ifdef TCPCONNECT
+// TCPCONNECT -->
 void CL_TCPConnect_f (void)
 {
 	char buffer[6];
@@ -389,7 +389,7 @@ void CL_TCPConnect_f (void)
 
 	CL_BeginServerConnect();
 }
-#endif
+// <--TCPCONNECT
 
 qbool CL_ConnectedToProxy(void) {
 	cmd_alias_t *alias = NULL;
@@ -613,13 +613,13 @@ void CL_Disconnect (void) {
 	DeleteServerAliases();
 	CL_UpdateCaption();
 
-#ifdef TCPCONNECT
+// TCPCONNECT -->
 	if (cls.sockettcp != INVALID_SOCKET)
 	{
 		closesocket(cls.sockettcp);
 		cls.sockettcp = INVALID_SOCKET;
 	}
-#endif
+// <--TCPCONNECT
 
 	cls.qport++; //a hack I picked up from qizmo
 }
@@ -989,9 +989,9 @@ void CL_InitLocal (void) {
 
 	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand ("connect", CL_Connect_f);
-#ifdef TCPCONNECT
+// TCPCONNECT -->
 	Cmd_AddCommand ("tcpconnect", CL_TCPConnect_f);
-#endif
+// <--TCPCONNECT
 
 	Cmd_AddCommand ("join", CL_Join_f);
 	Cmd_AddCommand ("observe", CL_Observe_f);
@@ -1076,8 +1076,6 @@ void CL_Init (void) {
 	Hud_262Init();
 	Sbar_Init ();
 	M_Init ();
-
-	NET_ClientConfig (true);
 
 	SList_Init ();
 	SList_Load ();

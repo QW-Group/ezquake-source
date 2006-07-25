@@ -241,7 +241,7 @@ typedef struct {
 	int			time;
 } challenge_t;
 
-#ifdef TCPCONNECT
+// TCPCONNECT -->
 typedef struct svtcpstream_s {
 	int socketnum;
 	int inlen;
@@ -251,7 +251,7 @@ typedef struct svtcpstream_s {
 	netadr_t remoteaddr;
 	struct svtcpstream_s *next;
 } svtcpstream_t;
-#endif
+// <-- TCPCONNECT
 
 typedef struct {
 	double		realtime;			// increased by SV_Frame, never reset
@@ -262,10 +262,10 @@ typedef struct {
 
 	int socketip;
 
-#ifdef TCPCONNECT
+// TCPCONNECT -->
 	int sockettcp;
 	svtcpstream_t *tcpstreams;
-#endif
+// <-- TCPCONNECT
 
 	client_t	clients[MAX_CLIENTS];
 	int			serverflags;		// episode completion information
