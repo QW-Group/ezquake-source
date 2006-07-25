@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.h,v 1.10 2006-07-24 20:04:52 disconn3ct Exp $
+    $Id: net.h,v 1.11 2006-07-25 18:45:48 disconn3ct Exp $
 */
 // net.h -- quake's interface to the networking layer
 
@@ -70,8 +70,7 @@ typedef struct {
 	unsigned short port;
 } netadr_t;
 
-struct sockaddr_qstorage
-{
+struct sockaddr_qstorage {
 	short dontusesa_family;
 	unsigned char dontusesa_pad[6];
 #if defined(_MSC_VER) || defined(MINGW)
@@ -85,9 +84,11 @@ struct sockaddr_qstorage
 extern	netadr_t	net_local_sv_ipadr;
 extern	netadr_t	net_local_sv_tcpipadr;
 extern	netadr_t	net_local_cl_ipadr;
-extern	netadr_t	net_from;		// address of who sent the packet
+
+extern	netadr_t	net_from; // address of who sent the packet
 extern	sizebuf_t	net_message;
-#define	MAX_UDP_PACKET		(MAX_MSGLEN*2)	// one more than msg + header
+
+#define MAX_UDP_PACKET (MAX_MSGLEN*2) // one more than msg + header
 extern	byte		net_message_buffer[MSG_BUF_SIZE];
 
 extern	cvar_t	hostname;
@@ -104,7 +105,7 @@ qbool	NET_GetPacket (netsrc_t sock);
 void	NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
 
 void	NET_ClearLoopback (void);
-qbool	NET_Sleep (int msec, qbool stdinissocket);
+qbool	NET_Sleep (int msec);
 
 qbool	NET_CompareAdr (netadr_t a, netadr_t b);
 qbool	NET_CompareBaseAdr (netadr_t a, netadr_t b);
@@ -114,12 +115,12 @@ qbool	NET_StringToAdr (char *s, netadr_t *a);
 
 //============================================================================
 
-#define	OLD_AVG		0.99		// total = oldtotal*OLD_AVG + new*(1-OLD_AVG)
+#define OLD_AVG 0.99 // total = oldtotal*OLD_AVG + new*(1-OLD_AVG)
 
-#define	MAX_LATENT	32
+#define MAX_LATENT 32
 
 typedef struct {
-	qbool	fatal_error;
+	qbool		fatal_error;
 
 	netsrc_t	sock;
 

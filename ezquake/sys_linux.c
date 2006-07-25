@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_linux.c,v 1.15 2006-07-24 18:56:03 disconn3ct Exp $
+	$Id: sys_linux.c,v 1.16 2006-07-25 18:45:48 disconn3ct Exp $
 */
 #include <unistd.h>
 #include <signal.h>
@@ -302,14 +302,8 @@ int main (int argc, char **argv) {
 
 	oldtime = Sys_DoubleTime ();
 	while (1) {
-		if (dedicated) {
-			if (do_stdin) {
-				stdin_ready = NET_Sleep (10, true);
-			} else {
-				NET_Sleep (10, false);
-				stdin_ready = false;
-			}
-		}
+		if (dedicated)
+			NET_Sleep (10);
 
 		// find time spent rendering last frame
 		newtime = Sys_DoubleTime ();
