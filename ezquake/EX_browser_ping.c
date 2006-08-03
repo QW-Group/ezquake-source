@@ -51,7 +51,14 @@ void SB_RootInit(void)
         return;
     }
 */
-    sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+	if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP)) == INVALID_SOCKET) {
+		Com_Printf ("SB_RootInit: socket: (%i): %s\n", qerrno, strerror(qerrno));
+	}
+
+// 	if ((fcntl (sock, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
+// 		Com_Printf ("SB_RootInit: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
+// 		closesocket(sock);
+// 	}
 
 	if (sock < 0 || COM_CheckParm("-nosockraw")) {
 		useNewPing = true;
@@ -59,10 +66,18 @@ void SB_RootInit(void)
 	}
 
     arg = 1;
-    ioctlsocket(sock, FIONBIO, &arg);  // make asynchronous
+	if (ioctlsocket (sock, FIONBIO, &arg) == -1) { // make asynchronous
+		Com_Printf ("SB_RootInit: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
+		//closesocket(newsocket);
+	}
 
     arg = 1;
-    setsockopt(sock, SOL_SOCKET, SO_DONTLINGER, (char*)&arg, sizeof(int));
+	if (setsockopt(sock, SOL_SOCKET, SO_DONTLINGER, (char*)&arg, sizeof(int)) == -1) {
+		Com_Printf ("SB_RootInit: setsockopt: (%i): %s\n", qerrno, strerror(qerrno));
+	}
+	/*
+	SO_DONTLINGER - razreshaet zakritie bez ojidaniya pri nalichii ne otoslanoi informacii
+	*/
 
 } 
 
@@ -674,8 +689,17 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 	}
 
 	ping_sock = UDP_OpenSocket(PORT_ANY);
+
+	if ((fcntl (ping_sock, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
+		Com_Printf ("TCP_OpenStream: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
+		//closesocket(ping_sock);
+	}
+
 	arg = 1;
-	ioctlsocket(ping_sock, FIONBIO, &arg); // make asynchronous
+	if (ioctlsocket (ping_sock, FIONBIO, &arg) == -1) { // make asynchronous
+		Com_Printf ("PingHosts: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
+		//closesocket(newsocket);
+	}
 	Sys_CreateThread(PingRecvProc, NULL);
 
 	interval = 1000.0 / sb_pingspersec.value;

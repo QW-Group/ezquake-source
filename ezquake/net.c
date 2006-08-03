@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.8 2006-07-25 18:45:48 disconn3ct Exp $
+    $Id: net.c,v 1.9 2006-08-03 19:55:46 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -449,10 +449,31 @@ closesvstream:
 
 		if (svs.sockettcp != INVALID_SOCKET) {
 			int newsock;
-			newsock = accept(svs.sockettcp, (struct sockaddr*)&from, &fromlen);
+			if ((newsock = accept(svs.sockettcp, (struct sockaddr*)&from, &fromlen)) == INVALID_SOCKET) {
+				// FIXME it is Com_DPrintf because accept reutrns '-1' very often... (always?)
+				Com_DPrintf ("NET_GetPacket: accept: (%i): %s\n", qerrno, strerror(qerrno));
+			}
+
 			if (newsock != INVALID_SOCKET) {
-				int _true = true;
-				setsockopt(newsock, IPPROTO_TCP, TCP_NODELAY, (char *)&_true, sizeof(_true));
+				int _true;
+
+				if ((fcntl (newsock, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
+					Com_Printf ("NET_GetPacket: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
+					//closesocket(newsock);
+				}
+				
+				_true = true;
+				if (ioctlsocket (newsock, FIONBIO, &_true) == -1) { // make asynchronous
+					Com_Printf ("NET_GetPacket: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
+					//closesocket(newsock);
+				}
+
+				_true = true;
+
+						
+				if (setsockopt(newsock, IPPROTO_TCP, TCP_NODELAY, (char *)&_true, sizeof(_true)) == -1) {
+					Com_Printf ("NET_GetPacket: setsockopt: (%i): %s\n", qerrno, strerror(qerrno));
+				}
 
 				st = Q_malloc(sizeof(svtcpstream_t));
 				st->waitingforprotocolconfirmation = true;
@@ -573,18 +594,28 @@ int TCP_OpenStream (netadr_t remoteaddr)
 	NetadrToSockadr(&remoteaddr, &qs);
 	temp = sizeof(struct sockaddr_in);
 
-	if ((newsocket = socket (((struct sockaddr_in*)&qs)->sin_family, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET)
+	if ((newsocket = socket (((struct sockaddr_in*)&qs)->sin_family, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
+		Com_Printf ("TCP_OpenStream: socket: (%i): %s\n", qerrno, strerror(qerrno));
 		return INVALID_SOCKET;
+	}
 
-	if (connect(newsocket, (struct sockaddr *)&qs, temp) == INVALID_SOCKET)
-	{
+	if (connect (newsocket, (struct sockaddr *)&qs, temp) == INVALID_SOCKET) {
+		Com_Printf ("TCP_OpenStream: connect: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
 
-	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1)
-		Sys_Error ("TCP_OpenStream: ioctl FIONBIO: %s", strerror(qerrno));
+	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
+		Com_Printf ("TCP_OpenStream: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
+		closesocket(newsocket);
+		return INVALID_SOCKET;
+	}
 
+	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1) { // make asynchronous
+		Com_Printf ("TCP_OpenStream: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
+		closesocket(newsocket);
+		return INVALID_SOCKET;
+	}
 
 	return newsocket;
 }
@@ -601,8 +632,14 @@ int TCP_OpenListenSocket (int port)
 		return INVALID_SOCKET;
 	}
 
-	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1) {
-		Com_Printf ("TCP_OpenListenSocket: ioctl FIONBIO: (%i): %s\n", qerrno, strerror(qerrno));
+	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
+		Com_Printf ("TCP_OpenListenSocket: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
+		closesocket(newsocket);
+		return INVALID_SOCKET;
+	}
+
+	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1) { // make asynchronous
+		Com_Printf ("TCP_OpenListenSocket: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
@@ -623,13 +660,13 @@ int TCP_OpenListenSocket (int port)
 		address.sin_port = htons((short)port);
 
 	if (bind (newsocket, (void *)&address, sizeof(address)) == -1) {
-		Com_Printf("Cannot bind tcp socket\n");
+		Com_Printf ("TCP_OpenListenSocket: bind: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
 
-	if (listen(newsocket, 1) == INVALID_SOCKET) {
-		Com_Printf("Cannot listen on tcp socket\n");
+	if (listen (newsocket, 1) == INVALID_SOCKET) {
+		Com_Printf ("TCP_OpenListenSocket: listen: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
@@ -651,8 +688,14 @@ int UDP_OpenSocket (int port)
 		return INVALID_SOCKET;
 	}
 
-	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1) {
-		Com_Printf ("UDP_OpenSocket: ioctl FIONBIO: (%i): %s\n", qerrno, strerror(qerrno));
+	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
+		Com_Printf ("UDP_OpenSocket: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
+		closesocket(newsocket);
+		return INVALID_SOCKET;
+	}
+
+	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1) { // make asynchronous
+		Com_Printf ("UDP_OpenSocket: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
@@ -673,17 +716,12 @@ int UDP_OpenSocket (int port)
 		address.sin_port = htons((short)port);
 
 	if (bind (newsocket, (void *)&address, sizeof(address)) == -1) {
-		Com_Printf("Cannot bind udp socket\n");
+		Com_Printf ("UDP_OpenSocket: bind: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
 
 	return newsocket;
-}
-
-void UDP_CloseSocket (int socket)
-{
-	closesocket(socket);
 }
 
 #ifndef _WIN32
@@ -818,7 +856,7 @@ void NET_InitClient(void)
 void NET_CloseServer (void)
 {
 	if (svs.socketip != INVALID_SOCKET) {
-		UDP_CloseSocket(svs.socketip);
+		closesocket(svs.socketip);
 		svs.socketip = INVALID_SOCKET;
 	}
 
@@ -892,7 +930,7 @@ void NET_Shutdown (void)
 #endif
 #ifndef SERVERONLY
 	if (cls.socketip != INVALID_SOCKET) {
-		UDP_CloseSocket(cls.socketip);
+	closesocket(cls.socketip);
 		cls.socketip = INVALID_SOCKET;
 	}
 #endif
