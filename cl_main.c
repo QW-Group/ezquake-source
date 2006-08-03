@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.79 2006-07-25 15:51:44 disconn3ct Exp $
+	$Id: cl_main.c,v 1.80 2006-08-03 19:55:46 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -346,7 +346,7 @@ void CL_TCPConnect_f (void)
 	NET_StringToAdr(cls.servername, &cls.sockettcpdest);
 
 	if (cls.sockettcp != INVALID_SOCKET)
-		closesocket (cls.sockettcp);
+		closesocket(cls.sockettcp);
 
 	cls.sockettcp = INVALID_SOCKET;
 	cls.tcpinlen = 0;
@@ -385,7 +385,9 @@ void CL_TCPConnect_f (void)
 	Com_Printf("Confirmed\n");
 
 	send(cls.sockettcp, buffer, sizeof(buffer), 0);
-	setsockopt(cls.sockettcp, IPPROTO_TCP, TCP_NODELAY, (char *)&_true, sizeof(_true));
+	if (setsockopt(cls.sockettcp, IPPROTO_TCP, TCP_NODELAY, (char *)&_true, sizeof(_true)) == -1) {
+		Com_Printf ("CL_TCPConnect_f: setsockopt: (%i): %s\n", qerrno, strerror(qerrno));
+	}
 
 	CL_BeginServerConnect();
 }

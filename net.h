@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.h,v 1.11 2006-07-25 18:45:48 disconn3ct Exp $
+    $Id: net.h,v 1.12 2006-08-03 19:55:47 disconn3ct Exp $
 */
 // net.h -- quake's interface to the networking layer
 
@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define qerrno errno
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -47,6 +48,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <errno.h>
 
 #include <unistd.h>
+#include <fcntl.h>
 
 #define closesocket close
 #define ioctlsocket ioctl
@@ -99,7 +101,6 @@ void	NET_Init (void);
 void	NET_InitClient (void);
 void	NET_InitServer (void);
 void	NET_CloseServer (void);
-void	UDP_CloseSocket (int socket);
 void	NET_Shutdown (void);
 qbool	NET_GetPacket (netsrc_t sock);
 void	NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
