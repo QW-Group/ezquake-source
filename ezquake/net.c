@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.9 2006-08-03 19:55:46 disconn3ct Exp $
+    $Id: net.c,v 1.10 2006-08-08 00:02:10 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -457,10 +457,12 @@ closesvstream:
 			if (newsock != INVALID_SOCKET) {
 				int _true;
 
+#ifndef _WIN32
 				if ((fcntl (newsock, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
 					Com_Printf ("NET_GetPacket: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
 					//closesocket(newsock);
 				}
+#endif
 				
 				_true = true;
 				if (ioctlsocket (newsock, FIONBIO, &_true) == -1) { // make asynchronous
@@ -605,11 +607,13 @@ int TCP_OpenStream (netadr_t remoteaddr)
 		return INVALID_SOCKET;
 	}
 
+#ifndef _WIN32
 	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
 		Com_Printf ("TCP_OpenStream: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
+#endif
 
 	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1) { // make asynchronous
 		Com_Printf ("TCP_OpenStream: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
@@ -632,11 +636,13 @@ int TCP_OpenListenSocket (int port)
 		return INVALID_SOCKET;
 	}
 
+#ifndef _WIN32
 	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
 		Com_Printf ("TCP_OpenListenSocket: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
+#endif
 
 	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1) { // make asynchronous
 		Com_Printf ("TCP_OpenListenSocket: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
@@ -688,11 +694,13 @@ int UDP_OpenSocket (int port)
 		return INVALID_SOCKET;
 	}
 
+#ifndef _WIN32
 	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
 		Com_Printf ("UDP_OpenSocket: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
+#endif
 
 	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1) { // make asynchronous
 		Com_Printf ("UDP_OpenSocket: ioctl: (%i): %s\n", qerrno, strerror(qerrno));

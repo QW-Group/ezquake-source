@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.80 2006-08-03 19:55:46 disconn3ct Exp $
+	$Id: cl_main.c,v 1.81 2006-08-08 00:02:10 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -192,6 +192,15 @@ char *CL_Macro_Demoplayback(void) {
 
 	s = cls.mvdplayback ? "mvdplayback" : cls.demoplayback ? "qwdplayback" : "0";
 	strlcpy(macrobuf, s, sizeof(macrobuf));
+	return macrobuf;
+}
+
+char *CL_Macro_Demotime(void)
+{
+	char *s;
+	static char macrobuf[16];
+
+	snprintf(macrobuf, sizeof(macrobuf), "%d", cls.demotime);
 	return macrobuf;
 }
 
@@ -1008,6 +1017,7 @@ void CL_InitLocal (void) {
 
 	Cmd_AddMacro("connectiontype", CL_Macro_ConnectionType);
 	Cmd_AddMacro("demoplayback", CL_Macro_Demoplayback);
+	Cmd_AddMacro("demotime", CL_Macro_Demotime);
 	Cmd_AddMacro("matchstatus", CL_Macro_Serverstatus);
 	Cmd_AddMacro("serverip", CL_Macro_ServerIp);
 
