@@ -690,10 +690,12 @@ int PingHosts(server_data *servs[], int servsn, int count, int time_out)
 
 	ping_sock = UDP_OpenSocket(PORT_ANY);
 
+#ifndef _WIN32
 	if ((fcntl (ping_sock, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
 		Com_Printf ("TCP_OpenStream: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
 		//closesocket(ping_sock);
 	}
+#endif
 
 	arg = 1;
 	if (ioctlsocket (ping_sock, FIONBIO, &arg) == -1) { // make asynchronous

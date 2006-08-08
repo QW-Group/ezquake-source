@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.31 2006-05-16 11:51:48 disconn3ct Exp $
+    $Id: common.c,v 1.32 2006-08-08 00:02:10 johnnycz Exp $
 */
 
 #ifdef _WIN32
@@ -462,7 +462,7 @@ void COM_Path_f (void)
 int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 {
 	searchpath_t *search;
-	char fullpath[MAX_QPATH];
+	char fullpath[MAX_OSPATH];
 
 	if (path == NULL)
 		path = com_gamedir;
@@ -487,7 +487,7 @@ int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 		mode = "wb";
 
 	// try to create
-	sprintf(fullpath, "%s/%s/%s", com_basedir, path, filename);
+	snprintf(fullpath, sizeof(fullpath), "%s/%s/%s", com_basedir, path, filename);
 	COM_CreatePath(fullpath);
 	*file = fopen(fullpath, mode);
 
