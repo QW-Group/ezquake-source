@@ -3,7 +3,7 @@ master "id dm" 192.246.40.37:27006
 master "id ctf" 192.246.40.37:27002
 master "id tf" 192.246.40.37:27003
 master "id misc" 192.246.40.37:27004
-master "Poland" 150.254.66.120:27000
+master "Poland" 217.153.59.106:27000
 master "Ocrana" 62.112.145.134:27000
 master "Qizmos" 194.177.125.71:27000
 file "Global" global.txt
