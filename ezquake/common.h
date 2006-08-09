@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.24 2006-05-16 10:05:28 disconn3ct Exp $
+    $Id: common.h,v 1.25 2006-08-09 21:43:00 tonik Exp $
 */
 // common.h  -- general definitions
 
@@ -118,6 +118,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	GAME_COOP			0
 #define	GAME_DEATHMATCH		1
 
+#define	MAX_INFO_KEY	64
 #define	MAX_INFO_STRING	384
 #define	MAX_SERVERINFO_STRING	512
 #define	MAX_LOCALINFO_STRING	32768

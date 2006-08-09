@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.32 2006-08-08 00:02:10 johnnycz Exp $
+    $Id: common.c,v 1.33 2006-08-09 21:43:00 tonik Exp $
 */
 
 #ifdef _WIN32
@@ -1127,8 +1127,8 @@ void Info_SetValueForStarKey (char *s, char *key, char *value, int maxsize) {
 		return;
 	}
 
-	if (strlen(key) > 63 || strlen(value) > 63) {
-		Com_Printf ("Keys and values must be < 64 characters.\n");
+	if (strlen(key) >= MAX_INFO_KEY || strlen(value) >= MAX_INFO_KEY) {
+		Com_Printf ("Keys and values must be < %i characters.\n", MAX_INFO_KEY);
 		return;
 	}
 
