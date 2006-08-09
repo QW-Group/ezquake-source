@@ -17,13 +17,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.13 2006-04-06 23:23:19 disconn3ct Exp $
+	$Id: utils.c,v 1.14 2006-08-09 23:00:03 tonik Exp $
 */
 
 #include "quakedef.h"
 
 int TP_CategorizeMessage (char *s, int *offset);
-char *COM_FileExtension (char *in);
 
 /************************************** General Utils **************************************/
 

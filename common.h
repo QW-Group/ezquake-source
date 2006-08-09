@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.25 2006-08-09 21:43:00 tonik Exp $
+    $Id: common.h,v 1.26 2006-08-09 23:00:03 tonik Exp $
 */
 // common.h  -- general definitions
 
@@ -143,6 +143,7 @@ void COM_AddParm (char *parm);
 void COM_Init (void);
 
 char *COM_SkipPath (char *pathname);
+char *COM_FileExtension (char *in);
 void COM_StripExtension (char *in, char *out);
 void COM_FileBase (char *in, char *out);
 void COM_DefaultExtension (char *path, char *extension);
