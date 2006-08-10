@@ -1886,13 +1886,17 @@ void CL_EmitEntities (void) {
 	if (cls.state != ca_active)
 		return;
 
-	if (!cl.validsequence)
+	if (!cl.validsequence && !cls.nqdemoplayback)
 		return;
 
 	CL_ClearScene ();
-	CL_LinkPlayers ();
-	CL_LinkPacketEntities ();
-	CL_LinkProjectiles ();
+	if (cls.nqdemoplayback)
+		NQD_LinkEntities ();
+	else {
+		CL_LinkPlayers ();
+		CL_LinkPacketEntities ();
+		CL_LinkProjectiles ();
+	}
 	CL_UpdateTEnts ();
 
 }

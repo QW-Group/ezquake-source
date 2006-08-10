@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.51 2006-06-26 21:57:28 cokeman1982 Exp $
+	$Id: cl_parse.c,v 1.52 2006-08-10 00:19:54 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -109,6 +109,8 @@ char *svc_strings[] = {
 	"NEW PROTOCOL",
 	"NEW PROTOCOL"
 };
+
+const int num_svc_strings = sizeof(svc_strings)/sizeof(svc_strings[0]);
 
 int	oldparsecountmod;
 int	parsecountmod;
@@ -418,12 +420,29 @@ qbool CL_CheckOrDownloadFile (char *filename) {
 	return false;
 }
 
+void CL_FindModelNumbers (void) {
+	int i, j;
+	
+	for (i = 0; i < cl_num_modelindices; i++)
+		cl_modelindices[i] = -1;
+
+	for (i = 0; i < MAX_MODELS; i++) {
+		for (j = 0; j < cl_num_modelindices; j++) {
+			if (!strcmp(cl_modelnames[j], cl.model_name[i])) {
+				cl_modelindices[j] = i;
+				break;
+			}
+		}
+	}
+}
+
 void CL_Prespawn (void)
 {
 	cl.worldmodel = cl.model_precache[1];
 	if (!cl.worldmodel)
 		Host_Error ("Model_NextDownload: NULL worldmodel");
 
+	CL_FindModelNumbers ();
 	R_NewMap ();
 	TP_NewMap();
 	MT_NewMap();
@@ -582,8 +601,6 @@ void Sound_NextDownload (void) {
 
 	// done with sounds, request models now
 	memset (cl.model_precache, 0, sizeof(cl.model_precache));
-	for (i = 0; i < cl_num_modelindices; i++)
-		cl_modelindices[i] = -1;
 
 	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 	MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, 0));
@@ -1131,7 +1148,7 @@ void CL_ParseSoundlist (void) {
 }
 
 void CL_ParseModellist (void) {
-	int	i, nummodels, n;
+	int	nummodels, n;
 	char *str;
 
 	// precache models and note certain default indexes
@@ -1146,13 +1163,6 @@ void CL_ParseModellist (void) {
 
 		if (str[0] == '/') str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
 		strlcpy (cl.model_name[nummodels], str, sizeof(cl.model_name[nummodels]));
-
-		for (i = 0; i < cl_num_modelindices; i++) {
-			if (!strcmp(cl_modelnames[i], cl.model_name[nummodels])) {
-				cl_modelindices[i] = nummodels;
-				break;
-			}
-		}
 	}
 
 	if ((n = MSG_ReadByte())) {
@@ -2324,7 +2334,7 @@ void CL_ParseServerMessage (void) {
 
 		if (cmd == svc_qizmovoice)
 			SHOWNET("svc_qizmovoice")
-		else if (cmd < sizeof(svc_strings) / sizeof(svc_strings[0]))
+		else if (cmd < num_svc_strings)
 			SHOWNET(svc_strings[cmd]);
 
      	//Update msg no:
@@ -2354,7 +2364,7 @@ void CL_ParseServerMessage (void) {
 			}
 			break;
 
-		case svc_time:
+		case nq_svc_time:
 			MSG_ReadFloat ();
 			break;
 
