@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.46 2006-06-01 12:29:36 johnnycz Exp $
+	$Id: menu.c,v 1.47 2006-08-10 01:03:08 tonik Exp $
 
 */
 
@@ -2494,7 +2494,8 @@ static void Demo_ReadDirectory(void) {
 			if (i < 5 ||
 				(
 				 strcasecmp(fd.cFileName + i - 4, ".qwd") &&
-				 strcasecmp(fd.cFileName +i - 4, ".qwz") &&
+				 strcasecmp(fd.cFileName + i - 4, ".qwz") &&
+				 strcasecmp(fd.cFileName + i - 4, ".dem") &&
 				 strcasecmp(fd.cFileName + i - 4, ".mvd")
 				)
 			   )
