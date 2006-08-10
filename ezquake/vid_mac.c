@@ -1308,12 +1308,12 @@ void VID_GetVideoModesForActiveDisplays (void)
 
 /*
 =================
-VID_DescribeModes_f
+VID_ModeList_f
 
 Spits out all available modes for the current, or requested screen
 =================
 */
-void VID_DescribeModes_f (void)
+void VID_ModeList_f (void)
 {
 	int screen, count, i;
 
@@ -1655,7 +1655,7 @@ void VID_Init (unsigned char *palette)
 	Cvar_Register (&gl_texturebits);
 	
 	Cmd_AddCommand ("gl_describerenderer", GL_DescribeRenderer_f);
-	Cmd_AddCommand ("vid_describemodes", VID_DescribeModes_f);
+	Cmd_AddCommand ("vid_modelist", VID_ModeList_f);
 	Cmd_AddCommand ("vid_describecurrentmode", VID_DescribeCurrentMode_f);
 	Cmd_AddCommand ("vid_restart", VID_Restart_f);
 	
