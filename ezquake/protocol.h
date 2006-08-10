@@ -333,6 +333,7 @@ typedef struct usercmd_s {
 #define BUTTON_ATTACK	(1 << 0)
 #define BUTTON_JUMP		(1 << 1)
 #define BUTTON_USE		(1 << 2)
+#define BUTTON_ATTACK2	(1 << 3)
 
 
 #define dem_cmd			0
