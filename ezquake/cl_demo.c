@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.32 2006-06-11 20:22:12 johnnycz Exp $
+	$Id: cl_demo.c,v 1.33 2006-08-10 00:19:54 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -25,10 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 float olddemotime, nextdemotime;		
-
-static float		td_lastframe;		// to meter out one message a frame
-static int			td_startframe;		// cls.framecount at start
-static float		td_starttime;		// realtime at second frame of timedemo
 
 //QIZMO
 #ifdef _WIN32
@@ -493,7 +489,7 @@ static void CL_WriteStartupData (void) {
 //								DEMO READING
 //=============================================================================
 
-static FILE *playbackfile = NULL;
+FILE *playbackfile = NULL;
 
 
 static int CL_Demo_Read(void *buf, int size) {
@@ -552,16 +548,16 @@ readnext:
 
 	// decide if it is time to grab the next message		
 	if (cls.timedemo) {
-		if (td_lastframe < 0) {
-			td_lastframe = demotime;
-		} else if (demotime > td_lastframe) {
-			td_lastframe = demotime;
+		if (cls.td_lastframe < 0) {
+			cls.td_lastframe = demotime;
+		} else if (demotime > cls.td_lastframe) {
+			cls.td_lastframe = demotime;
 			fseek(playbackfile, ftell(playbackfile) - SIZEOF_DEMOTIME, SEEK_SET);	// rewind back to time
 			return false;		// already read this frame's message
 		}
-		if (!td_starttime && cls.state == ca_active) {
-			td_starttime = Sys_DoubleTime();
-			td_startframe = cls.framecount;
+		if (!cls.td_starttime && cls.state == ca_active) {
+			cls.td_starttime = Sys_DoubleTime();
+			cls.td_startframe = cls.framecount;
 		}
 		cls.demotime = demotime; // warp
 	} else if (!(cl.paused & PAUSED_SERVER) && cls.state == ca_active) {	// always grab until fully connected
@@ -1339,7 +1335,7 @@ void CL_StopPlayback (void) {
 		fclose (playbackfile);
 
 	playbackfile = NULL;
-	cls.mvdplayback = cls.demoplayback = false;		
+	cls.mvdplayback = cls.demoplayback = cls.nqdemoplayback = false;
 	cl.paused &= ~PAUSED_DEMO;
 
 #ifdef _WIN32
@@ -1353,8 +1349,8 @@ void CL_StopPlayback (void) {
 
 		cls.timedemo = false;
 
-		frames = cls.framecount - td_startframe - 1;
-		time = Sys_DoubleTime() - td_starttime;
+		frames = cls.framecount - cls.td_startframe - 1;
+		time = Sys_DoubleTime() - cls.td_starttime;
 		if (time <= 0)
 			time = 1;
 		Com_Printf ("%i frames %5.1f seconds %5.1f fps\n", frames, time, frames / time);
@@ -1415,6 +1411,10 @@ void CL_Play_f (void) {
 #endif
 	cls.demoplayback = true;
 	cls.mvdplayback = !strcasecmp(name + strlen(name) - 3, "mvd") ? true : false;	
+	cls.nqdemoplayback = !strcasecmp(COM_FileExtension(name), "dem");
+	if (cls.nqdemoplayback)
+		NQD_StartPlayback ();
+
 	cls.state = ca_demostart;
 	Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, 0);
 	cls.demotime = 0;
@@ -1441,12 +1441,12 @@ void CL_TimeDemo_f (void) {
 	if (cls.state != ca_demostart)
 		return;
 
-	// td_starttime will be grabbed at the second frame of the demo, so all the loading time doesn't get counted
+	// cls.td_starttime will be grabbed at the second frame of the demo, so all the loading time doesn't get counted
 
 	cls.timedemo = true;
-	td_starttime = 0;
-	td_startframe = cls.framecount;
-	td_lastframe = -1;		// get a new message this frame
+	cls.td_starttime = 0;
+	cls.td_startframe = cls.framecount;
+	cls.td_lastframe = -1;		// get a new message this frame
 }
 
 //=============================================================================

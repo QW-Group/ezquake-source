@@ -265,7 +265,11 @@ typedef struct {
 	// demo recording info must be here, because record is started before entering a map (and clearing clientState_t)
 	qbool	demorecording;
 	qbool	demoplayback;
+	qbool	nqdemoplayback;
 	qbool	timedemo;
+	float	td_lastframe;       // to meter out one message a frame
+	int		td_startframe;      // cls.framecount at start
+	float	td_starttime;       // realtime at second frame of timedemo
 
 	byte		demomessage_data[MAX_MSGLEN * 2];
 	sizebuf_t	demomessage;

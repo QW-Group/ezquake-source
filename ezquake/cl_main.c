@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.81 2006-08-08 00:02:10 johnnycz Exp $
+	$Id: cl_main.c,v 1.82 2006-08-10 00:19:54 tonik Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -799,6 +799,11 @@ qbool CL_GetMessage (void) {
 }
 
 void CL_ReadPackets (void) {
+
+	if (cls.nqdemoplayback) {
+		NQD_ReadPackets ();
+		return;
+	}
 
 	while (CL_GetMessage()) {
 		// remote command packet
