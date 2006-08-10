@@ -99,7 +99,7 @@ typedef struct {
 
 // eye position, enitity list, etc - filled in before calling R_RenderView (TODO: port from ZQuake)
 typedef struct {
-	float			time;
+	double			time;
 	qbool			allow_cheats;
 	qbool			allow_fbskins;
 //	int				viewplayernum;  // don't draw own glow when gl_flashblend 1
