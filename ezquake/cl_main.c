@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.82 2006-08-10 00:19:54 tonik Exp $
+	$Id: cl_main.c,v 1.83 2006-08-10 01:00:39 tonik Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -59,8 +59,8 @@ cvar_t	cl_maxfps	= {"cl_maxfps", "0", CVAR_ARCHIVE};
 cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
 cvar_t	cl_independentPhysics = {"cl_independentPhysics", "0", CVAR_INIT};	//#fps
 
-cvar_t	cl_predictPlayers = {"cl_predictPlayers", "1"};
-cvar_t	cl_solidPlayers = {"cl_solidPlayers", "1"};
+cvar_t	cl_predict_players = {"cl_predict_players", "1"};
+cvar_t	cl_solid_players = {"cl_solid_players", "1"};
 
 cvar_t  show_fps2 = {"draw_fps","0"};
 
@@ -964,8 +964,8 @@ void CL_InitLocal (void) {
 	Cvar_Register (&b_switch);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
-	Cvar_Register (&cl_predictPlayers);
-	Cvar_Register (&cl_solidPlayers);
+	Cvar_Register (&cl_predict_players);
+	Cvar_Register (&cl_solid_players);
 	Cvar_Register (&cl_oldPL);
 	Cvar_Register (&cl_timeout);
 	Cvar_Register (&cl_useproxy);

@@ -26,7 +26,7 @@ void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info)
 
 #define ISDEAD(i) ( (i) >= 41 && (i) <= 102 )
 
-extern cvar_t cl_predictPlayers, cl_solidPlayers, cl_rocket2grenade;
+extern cvar_t cl_predict_players, cl_solid_players, cl_rocket2grenade;
 extern cvar_t cl_model_bobbing;		
 extern cvar_t cl_nolerp, cl_lerp_monsters;
 
@@ -1656,7 +1656,7 @@ void CL_LinkPlayers (void) {
 
 		// only predict half the move to minimize overruns
 		msec = 500 * (playertime - state->state_time);
-		if (msec <= 0 || !cl_predictPlayers.value || cls.mvdplayback) {		
+		if (msec <= 0 || !cl_predict_players.value || cls.mvdplayback) {		
 			VectorCopy (state->origin, ent.origin);
 		} else {
 			// predict players movement
@@ -1824,7 +1824,7 @@ void CL_SetUpPlayerPrediction(qbool dopred) {
 		} else {
 			// only predict half the move to minimize overruns
 			msec = 500 * (playertime - state->state_time);
-			if (msec <= 0 || !cl_predictPlayers.value || !dopred || cls.mvdplayback) { 
+			if (msec <= 0 || !cl_predict_players.value || !dopred || cls.mvdplayback) { 
 				VectorCopy (state->origin, pplayer->origin);
 			} else {
 				// predict players movement
@@ -1848,7 +1848,7 @@ void CL_SetSolidPlayers (int playernum) {
 	physent_t *pent;
 	extern vec3_t player_mins, player_maxs;
 
-	if (!cl_solidPlayers.value)
+	if (!cl_solid_players.value)
 		return;
 
 	pent = pmove.physents + pmove.numphysent;
