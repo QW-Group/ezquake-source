@@ -13,7 +13,6 @@ void R_PreMapLoad (char *);
 extern cvar_t cl_rocket2grenade;
 #define R_ModelFlags(model) model->flags
 #define V_AddDlight(a,b,c,d,e)
-#define V_AddEntity(a) CL_AddEntity(a)
 
 void CL_FindModelNumbers (void);
 void TP_NewMap (void);
@@ -563,6 +562,7 @@ static void NQD_ParseUpdate (int bits)
 	centity_t	*ent;
 	entity_state_t	*state;
 	int			num;
+	int prev_frame;
 
 	if (nq_signon == NQ_SIGNONS - 1)
 	{	// first update is the final signon stage
@@ -593,21 +593,12 @@ static void NQD_ParseUpdate (int bits)
 //##	ent->previous = ent->current;
 	VectorCopy (ent->current.origin, ent->old_origin);	//##
 	VectorCopy (ent->current.angles, ent->old_angles);	//##
+	prev_frame = ent->current.frame;
 	ent->current = ent->baseline;
 	state = &ent->current;
 	state->number = num;
 
-#if 0//##
-	if (ent->lastframe != cl_entframecount-1)
-		forcelink = true;	// no previous frame to lerp from
-	else
-		forcelink = false;
-
-	ent->prevframe = ent->lastframe;
-	ent->lastframe = cl_entframecount;
-#endif
-//##:
-	if (ent->oldsequence != cl_oldentframecount)
+	if (ent->sequence != cl_entframecount - 1)
 		forcelink = true;	// no previous frame to lerp from
 	else
 		forcelink = false;
@@ -693,13 +684,17 @@ static void NQD_ParseUpdate (int bits)
 	if ( bits & NQ_U_NOLERP )
 		forcelink = true;
 
+	if (state->frame != prev_frame) {
+		ent->frametime = cl.time;
+		ent->oldframe = prev_frame;
+	}
+	
 	if ( forcelink )
 	{	// didn't have an update last message
-//##		VectorCopy (state->origin, ent->previous.origin);
 		VectorCopy (state->origin, ent->old_origin);
-//##		MSG_UnpackOrigin (state->origin, ent->lerp_origin);
 		VectorCopy (state->origin, ent->lerp_origin);
 		VectorCopy (state->angles, ent->old_angles);
+//we get U_NOLERP for monsters, but we want to lerp them	ent->frametime = -1;
 		//ent->forcelink = true;
 	}
 }
@@ -812,12 +807,10 @@ void NQD_LinkEntities (void)
 		cent = &cl_entities[num];
 		state = &cent->current;
 
-//##		if (cent->lastframe != cl_entframecount)
 		if (cent->sequence != cl_entframecount)
 			continue;		// not present in this frame
 
-//##		MSG_UnpackOrigin (state->s_origin, cur_origin);
-		VectorCopy (state->origin, cur_origin);	//##
+		VectorCopy (state->origin, cur_origin);
 
 		if (state->effects & EF_BRIGHTFIELD)
 			CL_EntityParticles (cur_origin);
@@ -828,8 +821,7 @@ void NQD_LinkEntities (void)
 			dlight_t	*dl;
 
 			dl = CL_AllocDlight (-num);
-//##			MSG_UnpackAngles (state->s_angles, angles);
-			VectorCopy (state->angles, angles);	//##
+			VectorCopy (state->angles, angles);
 			AngleVectors (angles, forward, NULL, NULL);
 			VectorMA (cur_origin, 18, forward, dl->origin);
 			dl->origin[2] += 16;
@@ -874,20 +866,11 @@ void NQD_LinkEntities (void)
 			ent.angles[2] = 0;
 		}
 		else
-		{
-			vec3_t	old, cur;
-
-//##			MSG_UnpackAngles (cent->current.s_angles, old);
-//##			MSG_UnpackAngles (cent->previous.s_angles, cur);
-			VectorCopy (cent->current.angles, old);
-			VectorCopy (cent->old_angles, cur);
-			LerpAngles (old, cur, f, ent.angles);
-		}
+			LerpAngles (cent->old_angles, cent->current.angles, f, ent.angles);
 
 		// calculate origin
 		for (i = 0; i < 3; i++)
 		{
-//##			if (abs(cent->current.origin[i] - cent->previous.origin[i]) > 128) {
 			if (abs(cent->current.origin[i] - cent->old_origin[i]) > 128) {
 				// teleport or something, don't lerp
 				VectorCopy (cur_origin, ent.origin);
@@ -895,8 +878,6 @@ void NQD_LinkEntities (void)
 					nq_player_teleported = true;
 				break;
 			}
-//##			ent.origin[i] = cent->previous.origin[i] + 
-//##				f * (cur_origin[i] - cent->previous.origin[i]);
 			ent.origin[i] = cent->old_origin[i] + 
 				f * (cur_origin[i] - cent->old_origin[i]);
 		}
@@ -928,7 +909,15 @@ void NQD_LinkEntities (void)
 		
 		// set frame
 		ent.frame = state->frame;
-
+		if (cent->frametime >= 0 && cent->frametime <= cl.time) {
+			ent.oldframe = cent->oldframe;
+			ent.framelerp = (cl.time - cent->frametime) * 10;
+if (ent.oldframe != ent.frame) Com_DPrintf ("framelerp %f\n", ent.framelerp); 
+		} else {
+			ent.oldframe = ent.frame;
+			ent.framelerp = -1;
+		}
+		
 		// add automatic particle trails
 		if ((modelflags & ~EF_ROTATE))
 		{
@@ -977,9 +966,8 @@ void NQD_LinkEntities (void)
 		}
 
 		VectorCopy (ent.origin, cent->lerp_origin);
-//##		cent->lastframe = cl_entframecount;
 		cent->sequence = cl_entframecount;
-		V_AddEntity (&ent);
+		CL_AddEntity (&ent);
 	}
 
 	if (nq_viewentity == 0)
@@ -1278,7 +1266,6 @@ void NQD_StartPlayback ()
 	nq_signon = 0;
 	nq_mtime[0] = 0;
 	nq_maxclients = 0;
-//##:
 	cl_oldentframecount = -1;
 	cl_entframecount = 0;
 }

@@ -81,7 +81,7 @@ cvar_t	v_bonusflash = {"cl_bonusflash", "1"}; // 0
 float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 
 frame_t			*view_frame;
-player_state_t	*view_message;
+player_state_t	view_message;
 
 qbool Change_v_idle (cvar_t *var, char *value) {
 	// Don't allow cheating in TF
@@ -870,7 +870,7 @@ void V_AddViewWeapon (float bob) {
 	TP_ParseWeaponModel(cl.model_precache[cl.stats[STAT_WEAPON]]);
 
 	if (!cl_drawgun.value || (cl_drawgun.value == 2 && scr_fov.value > 90)
-		|| ((view_message->flags & (PF_GIB|PF_DEAD)))	
+		|| ((view_message.flags & (PF_GIB|PF_DEAD)))	
 		|| cl.stats[STAT_ITEMS] & IT_INVISIBILITY || cl.stats[STAT_HEALTH] <= 0 || !Cam_DrawViewModel())
 	{
 		cent->current.modelindex = 0;	//no model
@@ -899,14 +899,14 @@ void V_AddViewWeapon (float bob) {
 	if (cent->current.modelindex != cl.stats[STAT_WEAPON]) {
 		cl.viewent.frametime = -1;
 	} else {
-		if (cent->current.frame != view_message->weaponframe) {
+		if (cent->current.frame != view_message.weaponframe) {
 			cent->frametime = cl.time;
 			cent->oldframe = cent->current.frame;
 		}
 	}
 
 	cent->current.modelindex = cl.stats[STAT_WEAPON];
-	cent->current.frame = view_message->weaponframe;
+	cent->current.frame = view_message.weaponframe;
 }
 
 void V_CalcIntermissionRefdef (void) {
@@ -948,9 +948,9 @@ void V_CalcRefdef (void) {
 	r_refdef.vieworg[2] += 1.0/16;
 
 	// add view height
-	if (view_message->flags & PF_GIB) {
+	if (view_message.flags & PF_GIB) {
 		r_refdef.vieworg[2] += 8;	// gib view height
-	} else if (view_message->flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0)) {	
+	} else if (view_message.flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0)) {	
 		r_refdef.vieworg[2] -= 16;	// corpse view height
 	} else {
 		r_refdef.vieworg[2] += cl.viewheight;	// normal view height
@@ -977,12 +977,12 @@ void V_CalcRefdef (void) {
 		r_refdef.viewangles[PITCH] += cl.punchangle * 0.5;
 	}
 	
-	if (view_message->flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0))
+	if (view_message.flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0))
 		r_refdef.viewangles[ROLL] = 80;	// dead view angle
 
 #ifdef GLQUAKE
 	//VULT CAMERAS
-	CameraUpdate(view_message->flags & PF_DEAD);
+	CameraUpdate(view_message.flags & PF_DEAD);
 #endif
 	V_AddViewWeapon (height_adjustment);
 	
@@ -1021,7 +1021,8 @@ void V_RenderView (void) {
 	}
 
 	view_frame = &cl.frames[cl.validsequence & UPDATE_MASK];
-	view_message = &view_frame->playerstate[cl.viewplayernum];
+	if (!cls.nqdemoplayback)
+		view_message = view_frame->playerstate[cl.viewplayernum];
 
 	DropPunchAngle ();
 	if (cl.intermission) // intermission / finale rendering		

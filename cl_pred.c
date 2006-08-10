@@ -297,6 +297,9 @@ void CL_PredictMove (void) {
 		return;
 	}
 
+	if (cls.nqdemoplayback)
+		return;
+
 	if (!cl.validsequence)
 		return;
 

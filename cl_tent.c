@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.17 2006-06-28 21:56:53 cokeman1982 Exp $
+	$Id: cl_tent.c,v 1.18 2006-08-10 11:10:53 tonik Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -48,7 +48,7 @@ typedef struct explosion_s {
 explosion_t	cl_explosions[MAX_EXPLOSIONS];
 explosion_t cl_explosions_headnode, *cl_free_explosions;
 
-model_t	*cl_explo_mod, *cl_bolt1_mod, *cl_bolt2_mod, *cl_bolt3_mod; 
+static model_t	*cl_explo_mod, *cl_bolt1_mod, *cl_bolt2_mod, *cl_bolt3_mod, *cl_beam_mod;
 
 sfx_t	*cl_sfx_wizhit, *cl_sfx_knighthit, *cl_sfx_tink1, *cl_sfx_ric1, *cl_sfx_ric2, *cl_sfx_ric3, *cl_sfx_r_exp3;
 
@@ -73,7 +73,7 @@ void CL_InitTEnts (void) {
 void CL_ClearTEnts (void) {
 	int i;
 
-	cl_explo_mod = cl_bolt1_mod = cl_bolt2_mod = cl_bolt3_mod = NULL;
+	cl_explo_mod = cl_bolt1_mod = cl_bolt2_mod = cl_bolt3_mod = cl_beam_mod = NULL;
 
 	memset (&cl_beams, 0, sizeof(cl_beams));
 	memset (&cl_explosions, 0, sizeof(cl_explosions));
@@ -119,10 +119,11 @@ void CL_FreeExplosion (explosion_t *ex) {
 	cl_free_explosions = ex;
 }
 
-void CL_ParseBeam (model_t *m) {
+static void CL_ParseBeam (int type) {
 	int ent, i;
 	vec3_t start, end;
 	beam_t *b;
+	struct model_s *m;
 
 	ent = MSG_ReadShort ();
 
@@ -134,6 +135,29 @@ void CL_ParseBeam (model_t *m) {
 	end[1] = MSG_ReadCoord ();
 	end[2] = MSG_ReadCoord ();
 
+	switch (type) {
+		case 1:
+			if (!cl_bolt1_mod)
+				cl_bolt1_mod = Mod_ForName ("progs/bolt.mdl", true);
+			m = cl_bolt1_mod;
+			break;
+		case 2:
+			if (!cl_bolt2_mod)
+				cl_bolt2_mod = Mod_ForName ("progs/bolt2.mdl", true);
+			m = cl_bolt2_mod;
+			break;
+		case 3:
+			if (!cl_bolt3_mod)
+				cl_bolt3_mod = Mod_ForName ("progs/bolt3.mdl", true);
+			m = cl_bolt3_mod;
+			break;
+		case 4: default:
+			if (!cl_beam_mod)
+				cl_beam_mod = Mod_ForName ("progs/beam.mdl", true);
+			m = cl_beam_mod;
+			break;
+	}
+	
 	if (ent == cl.viewplayernum + 1)
 		VectorCopy (end, playerbeam_end);	// for cl_fakeshaft
 
@@ -375,21 +399,15 @@ void CL_ParseTEnt (void) {
 		break;
 
 	case TE_LIGHTNING1:			// lightning bolts
-		if (!cl_bolt1_mod)
-			cl_bolt1_mod = Mod_ForName("progs/bolt.mdl", true);
-		CL_ParseBeam (cl_bolt1_mod);
+		CL_ParseBeam (1);
 		break;
 
 	case TE_LIGHTNING2:			// lightning bolts
-		if (!cl_bolt2_mod)
-			cl_bolt2_mod = Mod_ForName("progs/bolt2.mdl", true);
-		CL_ParseBeam (cl_bolt2_mod);
+		CL_ParseBeam (2);
 		break;
 
 	case TE_LIGHTNING3:			// lightning bolts
-		if (!cl_bolt3_mod)
-			cl_bolt3_mod = Mod_ForName("progs/bolt3.mdl", true);
-		CL_ParseBeam (cl_bolt3_mod);
+		CL_ParseBeam (3);
 		break;
 
 	case TE_LAVASPLASH:	
@@ -418,7 +436,10 @@ void CL_ParseTEnt (void) {
 		break;
 
 	case TE_GUNSHOT:			// bullet hitting wall
-		cnt = MSG_ReadByte ();
+		if (cls.nqdemoplayback)
+			cnt = 1;
+		else
+			cnt = MSG_ReadByte ();
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
@@ -431,6 +452,23 @@ void CL_ParseTEnt (void) {
 		break;
 
 	case TE_BLOOD:				// bullets hitting body
+		if (cls.nqdemoplayback) {
+			// NQ_TE_EXPLOSION2
+			int colorStart, colorLength;
+			pos[0] = MSG_ReadCoord ();
+			pos[1] = MSG_ReadCoord ();
+			pos[2] = MSG_ReadCoord ();
+			colorStart = MSG_ReadByte ();
+			colorLength = MSG_ReadByte ();
+//##			CL_ParticleExplosion2 (pos, colorStart, colorLength);
+			dl = CL_AllocDlight (0);
+			VectorCopy (pos, dl->origin);
+			dl->radius = 350;
+			dl->die = cl.time + 0.5;
+			dl->decay = 300;
+			S_StartSound (-1, 0, cl_sfx_r_exp3, pos, 1, 1);
+			break;
+		}
 		cnt = MSG_ReadByte ();
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
@@ -444,6 +482,11 @@ void CL_ParseTEnt (void) {
 		break;
 
 	case TE_LIGHTNINGBLOOD:		// lightning hitting body
+		if (cls.nqdemoplayback) {
+			// NQ_TE_BEAM - grappling hook beam
+			CL_ParseBeam (4);
+			break;
+		}
 		pos[0] = MSG_ReadCoord ();
 		pos[1] = MSG_ReadCoord ();
 		pos[2] = MSG_ReadCoord ();
