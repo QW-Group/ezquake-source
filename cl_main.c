@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.83 2006-08-10 01:00:39 tonik Exp $
+	$Id: cl_main.c,v 1.84 2006-08-13 13:09:59 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -197,10 +197,9 @@ char *CL_Macro_Demoplayback(void) {
 
 char *CL_Macro_Demotime(void)
 {
-	char *s;
 	static char macrobuf[16];
 
-	snprintf(macrobuf, sizeof(macrobuf), "%d", cls.demotime);
+	snprintf(macrobuf, sizeof(macrobuf), "%d", (int) cls.demotime);
 	return macrobuf;
 }
 
