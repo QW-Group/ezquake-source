@@ -523,7 +523,7 @@ CL_ParseParticleEffect
 Back from NetQuake
 ===============
 */
-void CL_ParseParticleEffect (void)
+static void CL_ParseParticleEffect (void)
 {
 	vec3_t		org, dir;
 	int			i, count, color;
@@ -1247,7 +1247,7 @@ void NQD_ReadPackets (void)
 }
 
 
-void NQD_StartPlayback ()
+void NQD_StartPlayback (void)
 {
 	int		c;
 	qbool	neg = false;
