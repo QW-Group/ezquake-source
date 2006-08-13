@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.4 2006-06-13 13:13:02 vvd0 Exp $
+    $Id: q_shared.c,v 1.5 2006-08-13 17:02:23 disconn3ct Exp $
 */
 // q_shared.c -- functions shared by all subsystems
 
@@ -76,6 +76,13 @@ float Q_atof (const char *str)
 {
 	double val;
 	int sign, c, decimal, total;
+
+	//R00k - qbism// 1999-12-27 ATOF problems with leading spaces fix by Maddes
+	while ((*str) && (*str<=' '))
+	{
+		str++;
+	}
+	//R00k - qbism// 1999-12-27 ATOF problems with leading spaces fix by Maddes
 
 	if (*str == '-') {
 		sign = -1;
