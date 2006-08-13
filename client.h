@@ -513,6 +513,11 @@ void CL_MakeActive(void);
 
 extern char emodel_name[], pmodel_name[];
 
+// cl_nqdemo.c
+void NQD_StartPlayback (void);
+void NQD_LinkEntities (void);
+void NQD_ReadPackets (void);
+
 // cl_demo.c
 qbool CL_GetDemoMessage (void);
 void CL_WriteDemoCmd (usercmd_t *pcmd);
