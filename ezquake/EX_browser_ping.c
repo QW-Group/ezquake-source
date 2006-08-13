@@ -52,18 +52,27 @@ void SB_RootInit(void)
     }
 */
 	if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP)) == INVALID_SOCKET) {
+		/*
+		disconnect: always error 1 @ my ~x86 gentoo
+		but it's OK if i run ezQ as root.
+		What if i run ezQ as limited user on windows?
+		BTW, NewPing (aka no SOCK_RAW ping) is unstable on linux and very inaccurate :E
+		*/
 		Com_Printf ("SB_RootInit: socket: (%i): %s\n", qerrno, strerror(qerrno));
 	}
 
-// 	if ((fcntl (sock, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
-// 		Com_Printf ("SB_RootInit: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
-// 		closesocket(sock);
-// 	}
 
 	if (sock < 0 || COM_CheckParm("-nosockraw")) {
 		useNewPing = true;
 		return;
 	}
+
+#ifndef _WIN32
+	if ((fcntl (sock, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
+		Com_Printf ("SB_RootInit: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
+		closesocket(sock);
+	}
+#endif
 
     arg = 1;
 	if (ioctlsocket (sock, FIONBIO, &arg) == -1) { // make asynchronous
@@ -73,7 +82,8 @@ void SB_RootInit(void)
 
     arg = 1;
 	if (setsockopt(sock, SOL_SOCKET, SO_DONTLINGER, (char*)&arg, sizeof(int)) == -1) {
-		Com_Printf ("SB_RootInit: setsockopt: (%i): %s\n", qerrno, strerror(qerrno));
+		// disconnect: always error 10042 @ WinXP inside VMware 
+		Com_DPrintf ("SB_RootInit: setsockopt: (%i): %s\n", qerrno, strerror(qerrno));
 	}
 	/*
 	SO_DONTLINGER - razreshaet zakritie bez ojidaniya pri nalichii ne otoslanoi informacii
