@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.53 2006-07-22 18:10:39 disconn3ct Exp $
+    $Id: cl_screen.c,v 1.54 2006-08-13 17:02:23 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -308,8 +308,10 @@ qbool OnDefaultFovChange (cvar_t *var, char *value)
 static float CalcFov (float fov_x, float width, float height) {
 	float x;
 
-	if (fov_x < 1 || fov_x > 179)
-		Sys_Error ("CalcFov: Bad fov (%f)", fov_x);
+	if (fov_x < 1 || fov_x > 179) {
+		Com_Printf ("CalcFov: Bad fov (%f)", fov_x);
+		Cvar_Set (&scr_fov, "90");
+	}
 
 	x = width / tan(fov_x / 360 * M_PI);
 	return atan (height / x) * 360 / M_PI;
