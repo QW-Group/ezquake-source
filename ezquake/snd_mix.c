@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mix.c,v 1.9 2006-05-14 10:09:44 disconn3ct Exp $
+    $Id: snd_mix.c,v 1.10 2006-08-14 15:31:53 vvd0 Exp $
+
 */
 // snd_mix.c -- portable code to mix sounds for snd_dma.c
 
@@ -32,9 +33,9 @@ typedef struct portable_samplepair_s {
 	int left;
 	int right;
 } portable_samplepair_t;
-static portable_samplepair_t paintbuffer[PAINTBUFFER_SIZE];
-static int snd_scaletable[32][256];
-static int snd_vol, *snd_p;
+portable_samplepair_t paintbuffer[PAINTBUFFER_SIZE];
+int snd_scaletable[32][256];
+int snd_vol, *snd_p;
 short *snd_out;
 
 
@@ -44,6 +45,9 @@ int snd_linear_count;
 extern char *DSoundError (int error);
 #endif
 
+void Snd_WriteLinearBlastStereo16 (void);
+
+#ifndef id386
 static void Snd_WriteLinearBlastStereo16 (void)
 {
 	int val, i;
@@ -55,6 +59,7 @@ static void Snd_WriteLinearBlastStereo16 (void)
 		snd_out[i+1] = bound (-32768, val, 32767);
 	}
 }
+#endif
 
 static void Snd_WriteLinearBlastStereo16_SwapStereo (void)
 {
@@ -231,6 +236,8 @@ CHANNEL MIXING
 ===============================================================================
 */
 
+void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int endtime);
+#ifndef id386
 static void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 {
 	int data, i;
@@ -254,6 +261,7 @@ static void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 
 	ch->pos += count;
 }
+#endif
 
 static void SND_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int count)
 {

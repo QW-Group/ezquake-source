@@ -183,7 +183,9 @@ MAC_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(GL_C_FILE
 COMMON_S_FILES := \
 	cl_math \
 	math \
-	sys_x86
+	snd_mixa \
+	sys_x86 \
+	worlda
 
 SW_S_FILES := \
 	d_copy \

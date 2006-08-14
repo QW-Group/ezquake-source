@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: sys_win.c,v 1.23 2006-08-14 15:31:53 vvd0 Exp $
+
 */
 // sys_win.c
 
@@ -64,7 +66,7 @@ LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam);
 qbool OnChange_sys_disableWinKeys(cvar_t *var, char *string);
 cvar_t	sys_disableWinKeys = {"sys_disableWinKeys", "0", 0, OnChange_sys_disableWinKeys};
 
-#if !id386
+#ifndef id386
 void Sys_HighFPPrecision(void) {}
 void Sys_LowFPPrecision(void) {}
 #endif
@@ -431,10 +433,8 @@ void Sys_Init_ (void) {
 			"qwcl");	//Semaphore name
 	}
 
-#if id386
 	MaskExceptions ();
 	Sys_SetFPCW ();
-#endif
 
 	Sys_InitDoubleTime ();
 

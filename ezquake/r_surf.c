@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: r_surf.c,v 1.7 2006-08-14 15:31:53 vvd0 Exp $
+
 */
 // r_surf.c: surface-related refresh code
 
@@ -325,7 +327,7 @@ qbool R_DrawSurface (void) {
 
 //=============================================================================
 
-#if	!id386
+#ifndef id386
 
 void R_DrawSurfaceBlock8_mip0 (void) {
 	int v, i, b, lightstep, lighttemp, light;

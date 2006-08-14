@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_linux.c,v 1.16 2006-07-25 18:45:48 disconn3ct Exp $
+	$Id: sys_linux.c,v 1.17 2006-08-14 15:31:53 vvd0 Exp $
+
 */
 #include <unistd.h>
 #include <signal.h>
@@ -232,7 +233,7 @@ int set_realtime(void)
     return 1;
 }
 
-#if !id386
+#ifndef id386
 void Sys_HighFPPrecision (void) {}
 
 void Sys_LowFPPrecision (void) {}
@@ -293,7 +294,7 @@ int main (int argc, char **argv) {
 		    Com_Printf("RTC Timer Enabled.\n");
 		}
 		    
-		#if id386
+		#ifdef id386
 			Sys_SetFPCW();
 		#endif
 	}

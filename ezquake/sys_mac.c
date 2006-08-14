@@ -1,5 +1,7 @@
 /*
-	$Id: sys_mac.c,v 1.17 2006-07-25 18:45:48 disconn3ct Exp $
+
+	$Id: sys_mac.c,v 1.18 2006-08-14 15:31:53 vvd0 Exp $
+
 */
 // sys_mac.c -- Macintosh system driver
 
@@ -302,9 +304,11 @@ double Sys_DoubleTime (void)
 	return now.big / 1000000.0;
 }
 
+#ifndef id386
 void Sys_HighFPPrecision (void){}
 
 void Sys_LowFPPrecision (void){}
+#endif
 
 void Sys_DebugLog(char *file, char *fmt, ...)
 {

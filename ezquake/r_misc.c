@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_misc.c,v 1.10 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: r_misc.c,v 1.11 2006-08-14 15:31:53 vvd0 Exp $
+
 */
 
 #include "quakedef.h"
@@ -448,7 +449,7 @@ void R_TransformFrustum (void) {
 }
 
 
-#if !id386
+#ifndef id386
 
 void TransformVector (vec3_t in, vec3_t out) {
 	out[0] = DotProduct(in, vright);

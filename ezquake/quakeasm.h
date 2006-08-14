@@ -16,19 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: quakeasm.h,v 1.5 2006-08-14 15:31:50 vvd0 Exp $
+
 */
 //
 // quakeasm.h: general asm header file
 //
 
 #ifdef _WIN32
-#define __i386__ 1
+#define __i386__
 #endif
 
 #ifdef __i386__
-#define id386 1
-#else
-#define id386 0
+#define id386
 #endif
 
 #ifndef SERVERONLY

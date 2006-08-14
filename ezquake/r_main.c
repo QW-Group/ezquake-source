@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: r_main.c,v 1.13 2006-08-14 15:31:53 vvd0 Exp $
+
 */
 
 #include "quakedef.h"
@@ -274,7 +276,7 @@ void R_Init (void) {
 	R_InitParticles ();
 
 // TODO: collect 386-specific code in one place
-#if	id386
+#ifdef id386
 	Sys_MakeCodeWriteable ((long) R_EdgeCodeStart, (long) R_EdgeCodeEnd - (long) R_EdgeCodeStart);
 #endif	// id386
 
@@ -313,7 +315,7 @@ void R_NewMap (void) {
 		// surface 0 doesn't really exist; it's just a dummy because index 0
 		// is used to indicate no edge attached to surface
 		surfaces--;
-#if id386
+#ifdef id386
 		R_SurfacePatch ();
 #endif
 	} else {
@@ -579,7 +581,7 @@ void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect) {
 	r_resfudge = r_aliastransadj.value * res_scale;
 
 // TODO: collect 386-specific code in one place
-#if id386
+#ifdef id386
 	Sys_MakeCodeWriteable ((long)R_Surf8Start,
 		(long)R_Surf8End - (long)R_Surf8Start);
 	colormap = vid.colormap;
@@ -856,7 +858,7 @@ void R_EdgeDrawing (void) {
 		// surface 0 doesn't really exist; it's just a dummy because index 0
 		// is used to indicate no edge attached to surface
 		surfaces--;
-#if id386
+#ifdef id386
 		R_SurfacePatch ();
 #endif
 	}

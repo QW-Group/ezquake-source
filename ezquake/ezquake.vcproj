@@ -1202,7 +1202,7 @@
 					RelativePath="cl_main.c">
 				</File>
 				<File
-					RelativePath=".\cl_nqdemo.c">
+					RelativePath="cl_nqdemo.c">
 				</File>
 				<File
 					RelativePath="cl_parse.c">
@@ -2232,6 +2232,54 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="snd_mixa.s">
+				<FileConfiguration
+					Name="GLDebug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="cl /D &quot;GLQUAKE&quot; /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
+gas2masm &lt; $(OUTDIR)\$(InputName).spp &gt;$(OUTDIR)\$(InputName).asm
+ml /nologo /c /Cp /coff /Fo$(OUTDIR)\$(InputName).obj /Zm /Zi $(OUTDIR)\$(InputName).asm
+del $(OUTDIR)\$(InputName).spp
+"
+						Outputs="$(OUTDIR)\$(InputName).obj"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="cl /D &quot;GLQUAKE&quot; /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
+gas2masm &lt; $(OUTDIR)\$(InputName).spp &gt;$(OUTDIR)\$(InputName).asm
+ml /nologo /c /Cp /coff /Fo$(OUTDIR)\$(InputName).obj /Zm /Zi $(OUTDIR)\$(InputName).asm
+del $(OUTDIR)\$(InputName).spp
+"
+						Outputs="$(OUTDIR)\$(InputName).obj"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="cl /D &quot;GLQUAKE&quot; /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
+gas2masm &lt; $(OUTDIR)\$(InputName).spp &gt;$(OUTDIR)\$(InputName).asm
+ml /nologo /c /Cp /coff /Fo$(OUTDIR)\$(InputName).obj /Zm /Zi $(OUTDIR)\$(InputName).asm
+del $(OUTDIR)\$(InputName).spp
+"
+						AdditionalDependencies=""
+						Outputs="$(OUTDIR)\$(InputName).obj"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="cl /D &quot;GLQUAKE&quot; /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
+gas2masm &lt; $(OUTDIR)\$(InputName).spp &gt;$(OUTDIR)\$(InputName).asm
+ml /nologo /c /Cp /coff /Fo$(OUTDIR)\$(InputName).obj /Zm /Zi $(OUTDIR)\$(InputName).asm
+del $(OUTDIR)\$(InputName).spp
+"
+						Outputs="$(OUTDIR)\$(InputName).obj"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="surf8.s">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -2306,8 +2354,7 @@ del $(OUTDIR)\$(InputName).spp
 			<File
 				RelativePath="worlda.s">
 				<FileConfiguration
-					Name="GLDebug|Win32"
-					ExcludedFromBuild="TRUE">
+					Name="GLDebug|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
 						CommandLine="cl /D &quot;GLQUAKE&quot; /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
@@ -2318,8 +2365,7 @@ del $(OUTDIR)\$(InputName).spp
 						Outputs="$(OUTDIR)\$(InputName).obj"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="TRUE">
+					Name="Release|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
 						CommandLine="cl /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
@@ -2330,8 +2376,7 @@ del $(OUTDIR)\$(InputName).spp
 						Outputs="$(OUTDIR)\$(InputName).obj"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="TRUE">
+					Name="GLRelease|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
 						CommandLine="cl /D &quot;GLQUAKE&quot; /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
@@ -2342,8 +2387,7 @@ del $(OUTDIR)\$(InputName).spp
 						Outputs="$(OUTDIR)\$(InputName).obj"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
+					Name="Debug|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
 						CommandLine="cl /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)

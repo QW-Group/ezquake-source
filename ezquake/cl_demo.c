@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.33 2006-08-10 00:19:54 tonik Exp $
+	$Id: cl_demo.c,v 1.34 2006-08-14 15:31:49 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -1407,7 +1407,7 @@ void CL_Play_f (void) {
 
 	Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
 #ifdef _WIN32
-}
+	}
 #endif
 	cls.demoplayback = true;
 	cls.mvdplayback = !strcasecmp(name + strlen(name) - 3, "mvd") ? true : false;	

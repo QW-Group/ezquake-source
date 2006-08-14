@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: r_alias.c,v 1.6 2006-08-14 15:31:53 vvd0 Exp $
+
 */
 
 #include "quakedef.h"
@@ -398,6 +400,7 @@ void R_AliasTransformFinalVert (finalvert_t *fv, auxvert_t *av, trivertx_t *pver
 	fv->v[4] = temp;
 }
 
+#ifndef id386
 void R_AliasTransformAndProjectFinalVerts (finalvert_t *fv, stvert_t *pstverts) {
 	int i, temp;
 	float lightcos, zi;
@@ -440,6 +443,7 @@ void R_AliasTransformAndProjectFinalVerts (finalvert_t *fv, stvert_t *pstverts) 
 		fv->v[4] = temp;
 	}
 }
+#endif
 
 void R_AliasProjectFinalVert (finalvert_t *fv, auxvert_t *av) {
 	float zi;
@@ -667,7 +671,7 @@ void R_AliasDrawModel (entity_t *ent) {
 	}
 	else
 	{
-#if id386
+#ifdef id386
 		D_Aff8Patch (ent->colormap);
 #endif
 	}

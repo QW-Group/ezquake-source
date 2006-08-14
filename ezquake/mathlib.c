@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: mathlib.c,v 1.3 2006-08-14 15:31:49 vvd0 Exp $
+
 */
 
 #include "common.h"
@@ -95,7 +97,7 @@ void BOPS_Error (void) {
 	Sys_Error ("BoxOnPlaneSide:  Bad signbits");
 }
 
-#if !id386
+#ifndef id386
 //Returns 1, 2, or 1 + 2
 int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct mplane_s *p) {
 	//the following optimisation is performed by BOX_ON_PLANE_SIDE macro
@@ -319,7 +321,7 @@ int GreatestCommonDivisor (int i1, int i2) {
 	}
 }
 
-#if !id386
+#ifndef id386
 
 //Inverts an 8.24 value to a 16.16 value
 fixed16_t Invert24To16(fixed16_t val) {

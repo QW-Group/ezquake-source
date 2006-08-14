@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: r_edge.c,v 1.5 2006-08-14 15:31:53 vvd0 Exp $
+
 */
 // r_edge.c
 
@@ -100,7 +102,7 @@ void R_BeginEdgeFrame (void)
 }
 
 
-#if	!id386
+#ifndef id386
 
 /*
 ==============
@@ -146,7 +148,7 @@ addedge:
 #endif	// !id386
 	
 
-#if	!id386
+#ifndef id386
 
 /*
 ==============
@@ -166,7 +168,7 @@ void R_RemoveEdges (edge_t *pedge)
 #endif	// !id386
 
 
-#if	!id386
+#ifndef id386
 
 /*
 ==============
@@ -392,7 +394,7 @@ void R_TrailingEdge (surf_t *surf, edge_t *edge)
 }
 
 
-#if	!id386
+#ifndef id386
 
 /*
 ==============
@@ -702,5 +704,3 @@ void R_ScanEdges (void)
 // draw whatever's left in the span list
 	D_DrawSurfaces ();
 }
-
-

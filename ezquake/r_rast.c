@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: r_rast.c,v 1.5 2006-08-14 15:31:53 vvd0 Exp $
+
 */
 
 #include "quakedef.h"
@@ -63,7 +65,7 @@ int				r_ceilv1;
 qbool	r_lastvertvalid;
 
 
-#if	!id386
+#ifndef id386
 
 /*
 ================
