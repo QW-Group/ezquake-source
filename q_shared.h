@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.4 2006-07-24 18:56:03 disconn3ct Exp $
+    $Id: q_shared.h,v 1.5 2006-08-14 15:31:50 vvd0 Exp $
+
 */
 // q_shared.h -- functions shared by all subsystems
 
@@ -70,7 +71,7 @@ typedef enum {false, true} qbool;
 
 //============================================================================
 
-#if id386
+#ifdef id386
 #define UNALIGNED_OK		1		// set to 0 if unaligned accesses are not supported
 #else
 #define UNALIGNED_OK		0
@@ -138,10 +139,14 @@ float	FloatSwapPDP2Lit (float f);
 #error Unknown byte order type!
 #endif
 
+/*
 unsigned int BuffBigLong (const unsigned char *buffer);
 unsigned short BuffBigShort (const unsigned char *buffer);
 unsigned int BuffLittleLong (const unsigned char *buffer);
 unsigned short BuffLittleShort (const unsigned char *buffer);
+*/
+#define	BuffLittleLong(buffer)	LittleLong(*(int*)buffer)
+#define	BuffLittleShort(buffer)	LittleShort(*(int*)buffer)
 
 //============================================================================
 

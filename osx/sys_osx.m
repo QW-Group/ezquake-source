@@ -38,6 +38,7 @@
 //	       FIX: The "id1" folder had to be lower case. Can now be upper or lower case.
 // v1.0:   Initial release.
 //____________________________________________________________________________________________________________________iNCLUDES
+//	$Id: sys_osx.m,v 1.2 2006-08-14 15:31:56 vvd0 Exp $
 
 #pragma mark =Includes=
 
@@ -578,7 +579,7 @@ char *	Sys_ConsoleInput (void)
 
 //_______________________________________________________________________________________________________Sys_HighFPPrecision()
 
-#if !id386
+#ifndef id386
 
 void	Sys_HighFPPrecision (void)
 {

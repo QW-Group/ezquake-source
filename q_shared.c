@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.5 2006-08-13 17:02:23 disconn3ct Exp $
+    $Id: q_shared.c,v 1.6 2006-08-14 15:31:49 vvd0 Exp $
+
 */
 // q_shared.c -- functions shared by all subsystems
 
@@ -31,6 +32,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 int Q_atoi (const char *str)
 {
 	int val, sign, c;
+
+	if (!str) return 0;
+
+	for (; *str && *str <= ' '; str++);
 
 	if (*str == '-') {
 		sign = -1;
@@ -77,13 +82,17 @@ float Q_atof (const char *str)
 	double val;
 	int sign, c, decimal, total;
 
+	if (!str) return 0;
+
+	for (; *str && *str <= ' '; str++); // VVD: from MVDSV :-)
+/*
 	//R00k - qbism// 1999-12-27 ATOF problems with leading spaces fix by Maddes
 	while ((*str) && (*str<=' '))
 	{
 		str++;
 	}
 	//R00k - qbism// 1999-12-27 ATOF problems with leading spaces fix by Maddes
-
+*/
 	if (*str == '-') {
 		sign = -1;
 		str++;
@@ -408,6 +417,7 @@ float FloatSwap (float f)
 }
 #endif
 
+#ifdef __PDP_ENDIAN__Q__
 int LongSwapPDP2Big (int l)
 {
 	union
@@ -463,9 +473,10 @@ float FloatSwapPDP2Lit (float f)
 	dat2.s[1] = dat1.s[0];
 	return dat2.f;
 }
+#endif
 
 // Extract integers from buffers
-
+/*
 unsigned int BuffBigLong (const unsigned char *buffer)
 {
 	return (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
@@ -485,6 +496,7 @@ unsigned short BuffLittleShort (const unsigned char *buffer)
 {
 	return (buffer[1] << 8) | buffer[0];
 }
+*/
 
 //===========================================================================
 

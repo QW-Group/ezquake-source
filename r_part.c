@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_part.c,v 1.7 2006-03-20 13:51:28 vvd0 Exp $
+	$Id: r_part.c,v 1.8 2006-08-14 15:31:53 vvd0 Exp $
+
 */
 
 #include "quakedef.h"
@@ -58,7 +59,7 @@ static int			r_numparticles;
 vec3_t				r_pright, r_pup, r_ppn;
 
 #ifndef GLQUAKE 
-#if	!id386
+#ifndef id386
 
 void D_DrawParticle (particle_t *pparticle) {
 	vec3_t local, transformed;

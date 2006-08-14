@@ -16,12 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: r_vars.c,v 1.3 2006-08-14 15:31:53 vvd0 Exp $
+
 */
 // r_vars.c: global refresh variables
 
 #include	"quakedef.h"
 
-#if	!id386
+#ifndef id386
 
 // all global and static refresh variables are collected in a contiguous block
 // to avoid cache conflicts.

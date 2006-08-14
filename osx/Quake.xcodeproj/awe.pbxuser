@@ -6528,7 +6528,7 @@
 	D2B98C4709C79B1900727E3D /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = D2B98BCC09C7982F00727E3D /* surf16.s */;
-		name = "#if id386";
+		name = "#ifdef id386";
 		rLen = 10;
 		rLoc = 895;
 		rType = 0;
@@ -6568,7 +6568,7 @@
 	D2B98C5009C79B1900727E3D /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = D2B98BCC09C7982F00727E3D /* surf16.s */;
-		name = "#if id386";
+		name = "#ifdef id386";
 		rLen = 10;
 		rLoc = 895;
 		rType = 0;

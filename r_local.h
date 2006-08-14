@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: r_local.h,v 1.5 2006-08-14 15:31:53 vvd0 Exp $
+
 */
 // r_local.h -- private refresh defs
 
@@ -124,7 +126,7 @@ void R_SetSkyFrame (void);
 void R_DrawSurfaceBlock8 (void);
 texture_t *R_TextureAnimation (texture_t *base);
 
-#if	id386
+#ifdef id386
 
 void R_DrawSurfaceBlock8_mip0 (void);
 void R_DrawSurfaceBlock8_mip1 (void);
@@ -199,7 +201,7 @@ extern auxvert_t		*pauxverts;
 
 //=========================================================
 
-#if id386
+#ifdef id386
 void R_SurfacePatch (void);
 #endif
 

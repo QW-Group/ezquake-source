@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: sv_world.c,v 1.9 2006-08-14 15:31:53 vvd0 Exp $
+
 */
 // sv_world.c -- world query functions
 
@@ -416,7 +418,7 @@ void SV_LinkEdict (edict_t *ent, qbool touch_triggers) {
 POINT TESTING IN HULLS
 ===============================================================================
 */
-
+#ifndef id386
 int SV_HullPointContents (hull_t *hull, int num, vec3_t p) {
 	float d;
 	dclipnode_t *node;
@@ -435,6 +437,7 @@ int SV_HullPointContents (hull_t *hull, int num, vec3_t p) {
 
 	return num;
 }
+#endif	// !id386
 
 int SV_PointContents (vec3_t p) {
 	return SV_HullPointContents (&sv.worldmodel->hulls[0], 0, p);
