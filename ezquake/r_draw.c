@@ -237,6 +237,7 @@ void Draw_Pixel(int x, int y, byte color) {
 
 #define		NUMCROSSHAIRS 6
 static qbool crosshairdata[NUMCROSSHAIRS][64] = {
+	{
 	false, false, false, true,  false, false, false, false,
 	false, false, false, false, false, false, false, false,
 	false, false, false, true,  false, false, false, false,
@@ -245,7 +246,8 @@ static qbool crosshairdata[NUMCROSSHAIRS][64] = {
 	false, false, false, false, false, false, false, false,
 	false, false, false, true,  false, false, false, false,
 	false, false, false, false, false, false, false, false,
-
+	},
+	{
 	false, false, false, false, false, false, false, false,
 	false, false, false, false, false, false, false, false,
 	false, false, false, true,  false, false, false, false,
@@ -254,7 +256,8 @@ static qbool crosshairdata[NUMCROSSHAIRS][64] = {
 	false, false, false, false, false, false, false, false,
 	false, false, false, false, false, false, false, false,
 	false, false, false, false, false, false, false, false,
-
+	},
+	{
 	false, false, false, false, false, false, false, false,
 	false, false, false, false, false, false, false, false,
 	false, false, false, false, false, false, false, false,
@@ -263,7 +266,8 @@ static qbool crosshairdata[NUMCROSSHAIRS][64] = {
 	false, false, false, false, false, false, false, false,
 	false, false, false, false, false, false, false, false,
 	false, false, false, false, false, false, false, false,
-
+	},
+	{
 	true,  false, false, false, false, false, false, true,
 	false, true,  false, false, false, false, true, false,
 	false, false, true,  false, false, true,  false, false,
@@ -272,7 +276,8 @@ static qbool crosshairdata[NUMCROSSHAIRS][64] = {
 	false, false, true,  false, false, true,  false, false,
 	false, true,  false, false, false, false, true,  false,
 	true,  false, false, false, false, false, false, true,
-
+	},
+	{
 	false, false, true,  true,  true,  false, false, false, 
 	false, true,  false, true,  false, true,  false, false, 
 	true,  true,  false, true,  false, true,  true,  false, 
@@ -281,7 +286,8 @@ static qbool crosshairdata[NUMCROSSHAIRS][64] = {
 	false, true,  false, false, false, true,  false, false, 
 	false, false, true,  true,  true,  false, false, false, 
 	false, false, false, false, false, false, false, false,
-	
+	},
+	{
 	false, false, true,  true,  true,  false, false, false, 
 	false, false, false, false, false, false, false, false, 
 	true,  false, false, false, false, false, true,  false, 
@@ -290,6 +296,7 @@ static qbool crosshairdata[NUMCROSSHAIRS][64] = {
 	false, false, false, false, false, false, false, false, 
 	false, false, true,  true,  true,  false, false, false, 
 	false, false, false, false, false, false, false, false
+	}
 };
 
 static qbool customcrosshairdata[64];
@@ -713,7 +720,6 @@ void Draw_ConsoleBackground (int lines) {
 	int x, y, v, f, fstep;
 	byte *src, *dest;
 	mpic_t *conback;
-	char ver[100];
 	static char saveback[320 * 8];
 
 	if (!scr_conalpha.value && !SCR_NEED_CONSOLE_BACKGROUND)
@@ -723,18 +729,8 @@ void Draw_ConsoleBackground (int lines) {
 
 	// hack the version number directly into the pic
 
-	if (cls.download) {
-		strcpy (ver, "");
-		dest = conback->data + 320 + 320 * 186 - 11 - 8 * strlen(ver);
-	} else {
-		sprintf (ver, "");
-		dest = conback->data + 320 - (strlen(ver) * 8 + 11) + 320 * 186;
-	}
-
 	memcpy (saveback, conback->data + 320 * 186, 320 * 8);
-	for (x = 0; x < strlen(ver); x++)
-		Draw_CharToConback (ver[x] | 128, dest + (x << 3));
-	
+
 	// draw the pic
 	dest = vid.buffer;
 

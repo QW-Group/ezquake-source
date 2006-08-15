@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: quakeasm.h,v 1.5 2006-08-14 15:31:50 vvd0 Exp $
+	$Id: quakeasm.h,v 1.6 2006-08-15 19:54:55 disconn3ct Exp $
 
 */
 //
@@ -28,7 +28,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifdef __i386__
+#ifndef id386
 #define id386
+#endif
 #endif
 
 #ifndef SERVERONLY
