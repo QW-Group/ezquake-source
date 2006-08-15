@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_main.c,v 1.21 2006-07-25 15:51:45 disconn3ct Exp $
+	$Id: sv_main.c,v 1.22 2006-08-15 12:06:45 oldmanuk Exp $
 */
 
 #include "qwsvdef.h"
@@ -529,9 +529,10 @@ void SVC_DirectConnect (void) {
 	// parse some info from the info strings
 	SV_ExtractFromUserinfo (newcl);
 
-	// JACK: Init the floodprot stuff.
-	for (i = 0; i < 10; i++)
-		newcl->whensaid[i] = 0.0;
+	// Init the floodprot stuff.
+	// FIXME: seems to break local server currently?
+	//for (i = 0; i < 10; i++)
+	//	newcl->whensaid[i] = 0.0;
 	newcl->whensaidhead = 0;
 	newcl->lockedtill = 0;
 
