@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: image.c,v 1.24 2006-06-09 16:46:45 cokeman1982 Exp $
+	$Id: image.c,v 1.25 2006-08-15 12:08:26 oldmanuk Exp $
 */
 
 #include "quakedef.h"
@@ -40,7 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifdef __APPLE__
-#include <Carbon/Carbon.h>
+//#include <Carbon/Carbon.h>
 #endif
 
 #define	IMAGE_MAX_DIMENSIONS	4096
