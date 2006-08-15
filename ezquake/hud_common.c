@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.53 2006-07-22 18:10:39 disconn3ct Exp $
+	$Id: hud_common.c,v 1.54 2006-08-15 18:26:53 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -3719,7 +3719,7 @@ void TeamHold_DrawBars(int x, int y, int width, int height,
 	team2_width = width * team2_percent;
 	
 	team1_width = clamp(team1_width, 0, width);
-	team2_width = clamp(team1_width, 0, width); // disconnect: team1_width?
+	team2_width = clamp(team2_width, 0, width);
 
 	#ifdef GLQUAKE
 	Draw_AlphaFill(x, y, team1_width, bar_height, team1_color, opacity);
