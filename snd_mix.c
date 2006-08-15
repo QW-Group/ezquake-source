@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mix.c,v 1.10 2006-08-14 15:31:53 vvd0 Exp $
+    $Id: snd_mix.c,v 1.11 2006-08-15 11:33:10 oldmanuk Exp $
 
 */
 // snd_mix.c -- portable code to mix sounds for snd_dma.c
@@ -45,8 +45,7 @@ int snd_linear_count;
 extern char *DSoundError (int error);
 #endif
 
-void Snd_WriteLinearBlastStereo16 (void);
-
+static void Snd_WriteLinearBlastStereo16 (void);
 #ifndef id386
 static void Snd_WriteLinearBlastStereo16 (void)
 {
@@ -236,7 +235,7 @@ CHANNEL MIXING
 ===============================================================================
 */
 
-void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int endtime);
+static void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int endtime);
 #ifndef id386
 static void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 {
