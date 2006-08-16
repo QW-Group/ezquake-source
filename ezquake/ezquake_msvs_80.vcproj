@@ -433,7 +433,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libs/libexpat.lib libs/tcl84.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib tcl84.lib zlib.lib dinput.lib dsound.lib"
+				AdditionalDependencies="libexpat.lib tcl84.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib zlib.lib dinput.lib dsound.lib libpcre.lib"
 				OutputFile="../ezquake-debug.exe"
 				Version=""
 				LinkIncremental="2"
