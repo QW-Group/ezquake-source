@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_math.s,v 1.3 2006-08-14 15:31:53 vvd0 Exp $
+	$Id: sv_math.s,v 1.4 2006-08-16 10:23:54 vvd0 Exp $
 
 */
 //
@@ -35,6 +35,8 @@ Ljmptab:	.long	Lcase0, Lcase1, Lcase2, Lcase3
 			.long	Lcase4, Lcase5, Lcase6, Lcase7
 
 	.text
+
+	.extern C(BOPS_Error)
 
 
 #define EMINS	4+4
