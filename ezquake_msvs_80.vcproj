@@ -55,7 +55,7 @@
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_DEPRECATE&quot;"
 				Optimization="0"
 				AdditionalIncludeDirectories="libs;libexpat;$(DXSDK_DIR)\Include"
-				PreprocessorDefinitions="_DEBUG;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_JPEG_STATIC;WITH_PNG;WITH_PNG_STATIC;WITH_ZLIB;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__"
+				PreprocessorDefinitions="_DEBUG;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_JPEG_STATIC;WITH_PNG;WITH_PNG_STATIC;WITH_ZLIB;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__;id386"
 				StringPooling="false"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="false"
@@ -2686,16 +2686,56 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\r_varsa.s"
+				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\snd_mixa.s"
+				>
+			</File>
+			<File
 				RelativePath="surf16.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="surf8.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="sv_math.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="sys_x86.s"
