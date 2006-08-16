@@ -17,3 +17,27 @@ instructions:
  - perhaps you will have to rename libtcl8.4.lib to tcl84.lib and libz.lib to zlib.lib
 4) open ezquake.sln for Microsoft Visual Studio 7.1 or ezquake_msvs_80.sln for MS VS 8.0 (2005 .NET)
 5) select ReleaseGL configuration and press "Build"
+
+
+Microsoft Visual Studio 8 and .s (asm) files
+---
+ - Requirements:
+   There are no special requirements, we include everything in CVS, you just need cl.exe
+   which is a part of MS VS 8 package
+ - We use Custom Build Tool to compile asm .s files in MS VS 8.
+ - Visual Studio reads all instructions from qasm.rules
+ - That file is included in the project file (ezquake_msvs_80.vcproj)
+ - Instructions are named 'qasm' and are applied on *.s files
+ - Visual Studio 8 doesn't have ml.exe (known as masm32) so we have ml.exe in masm32 dir (binary in CVS)
+ - We include gas2masm in ezquake solution
+   Note: gas2masm.exe is not being re-compiled on every solution build but only when modified
+ - gas2masm.exe is stored in gas2masm dir, has same name for both Release and Debug build
+   Note: It's kind of 'conflict' but it doesn't matter.
+   Note: gas2masm.exe is ignored and not included in CVS!
+ - How custom build works:
+   1) cl (optimizer), input is .s file, output is .spp (optimized) file
+   2) gas2masm, input is .spp file, output is .asm file
+   3) ml, input .asm file, output is .obj file
+   4) intermediate .spp and .asm files are deleted
+   5) .obj file is then used by the linker
+ - Current state: masm32 (ml.exe) gives error for me: Debug-gl\sv_math.asm(445) : error A2006:  : _BOPS_Error
