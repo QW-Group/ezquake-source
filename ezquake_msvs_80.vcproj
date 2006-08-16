@@ -171,7 +171,7 @@
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="libs;libexpat;pcre;$(DXSDK_DIR)\Include"
-				PreprocessorDefinitions="NDEBUG;WITH_PNG;WITH_PNG_STATIC;WITH_ZLIB;EMBED_TCL;JSS_CAM;_CRT_SECURE_NO_DEPRECATE;__LITTLE_ENDIAN__Q__"
+				PreprocessorDefinitions="NDEBUG;WITH_PNG;WITH_PNG_STATIC;WITH_ZLIB;EMBED_TCL;JSS_CAM;_CRT_SECURE_NO_DEPRECATE;__LITTLE_ENDIAN__Q__;id386"
 				StringPooling="true"
 				ExceptionHandling="0"
 				RuntimeLibrary="0"
@@ -288,7 +288,7 @@
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="libs;libexpat;$(DXSDK_DIR)\Include"
-				PreprocessorDefinitions="NDEBUG;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_JPEG_STATIC;WITH_PNG;WITH_PNG_STATIC;WITH_ZLIB;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__"
+				PreprocessorDefinitions="NDEBUG;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_JPEG_STATIC;WITH_PNG;WITH_PNG_STATIC;WITH_ZLIB;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__;id386"
 				StringPooling="true"
 				ExceptionHandling="0"
 				RuntimeLibrary="0"
@@ -401,7 +401,7 @@
 				Optimization="0"
 				FavorSizeOrSpeed="0"
 				AdditionalIncludeDirectories="libs;libexpat;pcre;$(DXSDK_DIR)\Include"
-				PreprocessorDefinitions="_DEBUG;WITH_PNG;WITH_PNG_STATIC;WITH_ZLIB;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__"
+				PreprocessorDefinitions="_DEBUG;WITH_PNG;WITH_PNG_STATIC;WITH_ZLIB;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__;id386"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="false"
 				RuntimeLibrary="0"
@@ -2442,26 +2442,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\d_copy.s"
-				>
-				<FileConfiguration
-					Name="GLDebug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="qasm"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="d_draw.s"
 				>
 				<FileConfiguration
@@ -2696,6 +2676,14 @@
 						Name="qasm"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\snd_mixa.s"
@@ -2706,6 +2694,14 @@
 				>
 				<FileConfiguration
 					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2724,12 +2720,8 @@
 						Name="qasm"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="sv_math.s"
-				>
 				<FileConfiguration
-					Name="GLDebug|Win32"
+					Name="GLRelease|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
