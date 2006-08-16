@@ -12,11 +12,14 @@
 		/>
 	</Platforms>
 	<ToolFiles>
+		<ToolFile
+			RelativePath="..\qasm.rules"
+		/>
 	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="Debug"
+			OutputDirectory=".\"
 			IntermediateDirectory="Debug"
 			ConfigurationType="1"
 			UseOfMFC="0"
@@ -27,6 +30,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="qasm"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -42,7 +48,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
 				PrecompiledHeaderFile="Debug/gas2masm_msvs_80.pch"
@@ -66,7 +72,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="Debug/gas2masm_msvs_80.exe"
+				OutputFile="gas2masm.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
@@ -103,7 +109,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="Release"
+			OutputDirectory=".\"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			UseOfMFC="0"
@@ -115,6 +121,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="qasm"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -156,7 +165,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../gas2masm.exe"
+				OutputFile="gas2masm.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateManifest="false"
