@@ -12,6 +12,9 @@
 		/>
 	</Platforms>
 	<ToolFiles>
+		<ToolFile
+			RelativePath=".\qasm.rules"
+		/>
 	</ToolFiles>
 	<Configurations>
 		<Configuration
@@ -29,6 +32,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="qasm"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -138,6 +144,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="qasm"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -253,6 +262,9 @@
 				Name="VCCustomBuildTool"
 			/>
 			<Tool
+				Name="qasm"
+			/>
+			<Tool
 				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
@@ -365,6 +377,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="qasm"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -2418,38 +2433,173 @@
 			<File
 				RelativePath="cl_math.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="d_copy.s"
+				RelativePath=".\d_copy.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="d_draw.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="d_draw16.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="d_parta.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="d_polysa.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="d_scana.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="d_spr8.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="d_varsa.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="math.s"
@@ -2458,18 +2608,82 @@
 			<File
 				RelativePath="r_aclipa.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="r_aliasa.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="r_drawa.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="r_edgea.s"
 				>
+				<FileConfiguration
+					Name="GLDebug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="surf16.s"
