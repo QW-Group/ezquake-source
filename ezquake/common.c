@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.33 2006-08-09 21:43:00 tonik Exp $
+    $Id: common.c,v 1.34 2006-08-17 17:45:59 disconn3ct Exp $
 */
 
 #ifdef _WIN32
@@ -43,7 +43,6 @@ usercmd_t nullcmd; // guaranteed to be zero
 static char	*largv[MAX_NUM_ARGVS + 1];
 
 cvar_t	developer = {"developer", "0"};
-cvar_t	registered = {"registered", "0"};
 cvar_t	mapname = {"mapname", "", CVAR_ROM};
 
 qbool com_serveractive = false;
@@ -256,18 +255,6 @@ char *COM_Parse (char *data)
 	return data;
 }
 
-void COM_CheckRegistered (void)
-{
-	FILE *h;
-
-	FS_FOpenFile ("gfx/pop.lmp", &h);
-
-	if (h) {
-		Cvar_Set (&registered, "1");
-		fclose (h);
-	}
-}
-
 //Adds the given string at the end of the current argument list
 void COM_AddParm (char *parm)
 {
@@ -326,7 +313,6 @@ void COM_Init (void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_NO_GROUP);
 	Cvar_Register (&developer);
-	Cvar_Register (&registered);
 	Cvar_Register (&mapname);
 
 	Cvar_ResetCurrentGroup();

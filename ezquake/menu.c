@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.47 2006-08-10 01:03:08 tonik Exp $
+	$Id: menu.c,v 1.48 2006-08-17 17:45:59 disconn3ct Exp $
 
 */
 
@@ -3376,7 +3376,6 @@ void M_GameOptions_Draw (void) {
 
 void M_NetStart_Change (int dir) {
 	int count;
-	extern cvar_t    registered;
 
 	switch (gameoptions_cursor) {
 		case 1:
@@ -3427,10 +3426,7 @@ void M_NetStart_Change (int dir) {
 
 		case 7:
 			startepisode += dir;
-			if (registered.value)
-				count = 7;
-			else
-				count = 2;
+			count = 7;
 
 			if (startepisode < 0)
 				startepisode = count - 1;

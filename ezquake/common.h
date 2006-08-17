@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.26 2006-08-09 23:00:03 tonik Exp $
+    $Id: common.h,v 1.27 2006-08-17 17:45:59 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -194,7 +194,6 @@ qbool COM_WriteFile (char *filename, void *data, int len);
 void COM_CreatePath (char *path);
 int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode);
 
-void COM_CheckRegistered (void);
 
 char *Info_ValueForKey (char *s, char *key);
 void Info_RemoveKey (char *s, char *key);
@@ -274,7 +273,6 @@ extern qbool	dedicated;
 #endif
 
 extern cvar_t	developer;
-extern cvar_t	registered;
 extern cvar_t	mapname;
 
 extern qbool	com_serveractive; // true if sv.state != ss_dead
