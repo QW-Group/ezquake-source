@@ -41,3 +41,15 @@ Microsoft Visual Studio 8 and .s (asm) files
    4) intermediate .spp and .asm files are deleted
    5) .obj file is then used by the linker
  - Current state: masm32 (ml.exe) gives error for me: Debug-gl\sv_math.asm(445) : error A2006:  : _BOPS_Error
+
+
+Developer notes
+---
+detailed changelog:
+"C:\Program Files\TortoiseCVS\cvs" -d:ext:johnnycz@ezquake.cvs.sourceforge.net:/cvsroot/ezquake log -d "2006-06-01<" -b -N > log.log < empty.txt
+- this will dump all the changes from cvs logs from 2006-06-01 to now on into log.log
+- requires CVS_RSH environmental variable set to putty's plink.exe path (control panel -> system -> ...)
+- this log should be uploaded into /test/changelogs/ dir on the shell (web)
+- in http://ezquake.sf.net/test/changelogs/ there is an php file which parses such changelogs into an overall
+  detailed changelog page and extract usefull info from all those logs
+- naming convention for .log files is "Until_yyyy-mm-dd.log", yyyy = year, mm = month, dd = day
