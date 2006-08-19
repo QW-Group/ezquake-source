@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.6 2006-08-14 15:31:49 vvd0 Exp $
+    $Id: q_shared.c,v 1.7 2006-08-19 14:55:57 johnnycz Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -476,7 +476,6 @@ float FloatSwapPDP2Lit (float f)
 #endif
 
 // Extract integers from buffers
-/*
 unsigned int BuffBigLong (const unsigned char *buffer)
 {
 	return (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
@@ -496,7 +495,6 @@ unsigned short BuffLittleShort (const unsigned char *buffer)
 {
 	return (buffer[1] << 8) | buffer[0];
 }
-*/
 
 //===========================================================================
 
