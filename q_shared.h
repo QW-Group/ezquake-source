@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.5 2006-08-14 15:31:50 vvd0 Exp $
+    $Id: q_shared.h,v 1.6 2006-08-19 14:55:57 johnnycz Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -139,14 +139,14 @@ float	FloatSwapPDP2Lit (float f);
 #error Unknown byte order type!
 #endif
 
-/*
 unsigned int BuffBigLong (const unsigned char *buffer);
 unsigned short BuffBigShort (const unsigned char *buffer);
 unsigned int BuffLittleLong (const unsigned char *buffer);
 unsigned short BuffLittleShort (const unsigned char *buffer);
-*/
+/* johnnycz: VVD's change broke e.g. TGA loading (crosshairimage, tom)
 #define	BuffLittleLong(buffer)	LittleLong(*(int*)buffer)
 #define	BuffLittleShort(buffer)	LittleShort(*(int*)buffer)
+*/
 
 //============================================================================
 
