@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.54 2006-08-13 17:02:23 disconn3ct Exp $
+    $Id: cl_screen.c,v 1.55 2006-08-19 16:50:31 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -940,6 +940,191 @@ void SCR_DrawAutoID (void)
 	}
 }
 
+
+#endif
+
+/**************************************** chat icon *****************************/
+
+#ifdef GLQUAKE
+
+// qqshka: code is a mixture of autoid and particle engine
+
+typedef byte col_t[4];
+
+typedef struct ci_player_s {
+	vec3_t		org;
+	col_t		color;
+	float		rotangle;
+	float		size;
+	byte		texindex;	
+
+	player_info_t *player;
+
+} ci_player_t;
+
+static ci_player_t ci_clients[MAX_CLIENTS];
+static int ci_count;
+
+typedef enum {
+	citex_chat,
+	num_citextures,
+} ci_tex_t;
+
+#define	MAX_CITEX_COMPONENTS		8
+typedef struct ci_texture_s {
+	int			texnum;
+	int			components;
+	float		coords[MAX_CITEX_COMPONENTS][4];
+} ci_texture_t;
+
+static ci_texture_t ci_textures[num_citextures];
+
+qbool ci_initialized = false;
+
+#define FONT_SIZE (256.0)
+
+#define ADD_CICON_TEXTURE(_ptex, _texnum, _texindex, _components, _s1, _t1, _s2, _t2)	\
+do {																					\
+	ci_textures[_ptex].texnum = _texnum;												\
+	ci_textures[_ptex].components = _components;										\
+	ci_textures[_ptex].coords[_texindex][0] = (_s1 + 1) / FONT_SIZE;					\
+	ci_textures[_ptex].coords[_texindex][1] = (_t1 + 1) / FONT_SIZE;					\
+	ci_textures[_ptex].coords[_texindex][2] = (_s2 - 1) / FONT_SIZE;					\
+	ci_textures[_ptex].coords[_texindex][3] = (_t2 - 1) / FONT_SIZE;					\
+} while(0);
+
+void CI_Init (void) {
+	int ci_font;
+
+	ci_initialized = false;
+
+	if (!(ci_font = GL_LoadTextureImage ("textures/chaticons", "ci:chaticons", FONT_SIZE, FONT_SIZE, TEX_ALPHA | TEX_COMPLAIN))) 
+		return;		
+
+	ADD_CICON_TEXTURE(citex_chat, ci_font, 0, 1, 0, 0, 64, 64);
+
+	ci_initialized = true;
+}
+
+void SCR_SetupCI (void) {
+	int j, tracknum = -1;
+	player_state_t *state;
+	player_info_t *info;
+	ci_player_t *id;
+
+	ci_count = 0;
+
+// no cvar currently
+//	if (!scr_????.value)
+//		return;
+
+	if (cls.state != ca_active || !cl.validsequence)
+		return;
+
+	if (cl.spectator)
+		tracknum = Cam_TrackNum();
+
+	state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate;
+	info = cl.players;
+
+	for (j = 0; j < MAX_CLIENTS; j++, info++, state++) {
+		if (state->messagenum != cl.parsecount || j == cl.playernum || j == tracknum || info->spectator)
+			continue;
+
+		if (!*Info_ValueForKey (info->userinfo, "chat"))
+			continue; // user not chatting, so ignore
+
+		id = &ci_clients[ci_count];
+		id->player = info;
+		id->org[0] = state->origin[0];
+		id->org[1] = state->origin[1];
+		id->org[2] = state->origin[2] + 33; // move baloon up a bit
+		id->size = 8; // scale baloon
+		id->rotangle = 5 * sin(2*r_refdef2.time); // may be set to 0, if u dislike rolling
+		id->color[0] = 255; // r
+		id->color[1] = 255; // g
+		id->color[2] = 255; // b
+		id->color[3] = 230; // alpha, probably we need cvar for this
+		ci_count++;
+	}
+}
+
+#define DRAW_CI_BILLBOARD(_ptex, _p, _coord)			\
+	glPushMatrix();											\
+	glTranslatef(_p->org[0], _p->org[1], _p->org[2]);		\
+	glScalef(_p->size, _p->size, _p->size);					\
+	if (_p->rotangle)										\
+		glRotatef(_p->rotangle, vpn[0], vpn[1], vpn[2]);	\
+															\
+	glColor4ubv(_p->color);									\
+															\
+	glBegin(GL_QUADS);										\
+	glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][3]); glVertex3fv(_coord[0]);	\
+	glTexCoord2f(_ptex->coords[_p->texindex][0], _ptex->coords[_p->texindex][1]); glVertex3fv(_coord[1]);	\
+	glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][1]); glVertex3fv(_coord[2]);	\
+	glTexCoord2f(_ptex->coords[_p->texindex][2], _ptex->coords[_p->texindex][3]); glVertex3fv(_coord[3]);	\
+	glEnd();			\
+						\
+	glPopMatrix();
+
+void DrawCI (void) {
+	int	i, texture = 0;
+	vec3_t billboard[4];
+	ci_player_t *p;
+	ci_texture_t *citex;
+
+	if (!ci_initialized)
+		return;
+
+// no cvar currently
+//	if (!scr_?????.value)
+//		return;
+
+	citex = &ci_textures[citex_chat];
+
+	if (gl_fogenable.value)
+	{
+		glDisable(GL_FOG);
+	}
+
+	VectorAdd(vup, vright, billboard[2]);
+	VectorSubtract(vright, vup, billboard[3]);
+	VectorNegate(billboard[2], billboard[0]);
+	VectorNegate(billboard[3], billboard[1]);
+
+	glDepthMask(GL_FALSE);
+	glEnable(GL_BLEND);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glShadeModel(GL_SMOOTH);
+
+// FIXME: i'm not sure which blend mode here better
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glEnable(GL_TEXTURE_2D);
+	//VULT PARTICLES - I gather this speeds it up, but I haven't really checked
+	if (texture != citex->texnum)
+	{
+		GL_Bind(citex->texnum);
+		texture = citex->texnum;
+	}
+
+	for (i = 0; i < ci_count; i++) 
+	{
+		p = &ci_clients[i];
+		DRAW_CI_BILLBOARD(citex, p, billboard);
+	}
+
+	glEnable(GL_TEXTURE_2D);
+	glDepthMask(GL_TRUE);
+	glDisable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	if (gl_fogenable.value)
+	{
+		glEnable(GL_FOG);
+	}
+}
 
 #endif
 
@@ -1917,7 +2102,9 @@ void SCR_UpdateScreen (void) {
 
 	V_RenderView ();
 
-	SCR_SetupAutoID ();	
+	SCR_SetupAutoID ();
+
+	SCR_SetupCI ();
 
 	GL_Set2D ();
 
