@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.84 2006-08-13 13:09:59 disconn3ct Exp $
+	$Id: cl_main.c,v 1.85 2006-08-19 16:50:31 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1375,6 +1375,8 @@ void CL_Frame (double time) {
 		}
 
 	}
+
+	CL_UserinfoChanged ("chat", key_dest == key_game ? "" : "1");
 
 	if (cls.state >= ca_onserver) {	// !!! Tonik
 		Cam_SetViewPlayer();

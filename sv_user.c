@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.20 2006-07-15 21:34:29 tonik Exp $
+	$Id: sv_user.c,v 1.21 2006-08-19 16:50:31 johnnycz Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -1673,6 +1673,14 @@ void SV_ExecuteClientMessage (client_t *cl) {
 
 			if ( cl->state != cs_spawned )
 				break;
+
+			s = Info_ValueForKey(cl->userinfo, "chat");
+			if ( s[0] ) {
+				newcmd.forwardmove = newcmd.sidemove = newcmd.upmove = 0;
+				newcmd.buttons = 0;
+// somemods uses impulses for commands, so let them use
+//				newcmd.impulse = 0;
+			}
 
 			// if the checksum fails, ignore the rest of the packet
 			calculatedChecksum = COM_BlockSequenceCRCByte(

@@ -1312,6 +1312,7 @@ void R_SetupGL (void) {
 	glEnable(GL_DEPTH_TEST);
 }
 
+void CI_Init (void);
 
 void R_Init (void) {
 	Cmd_AddCommand ("loadsky", R_LoadSky_f);
@@ -1444,6 +1445,7 @@ void R_Init (void) {
 	R_InitTextures ();
 	R_InitBubble ();
 	R_InitParticles ();
+	CI_Init ();
 
 	//VULT STUFF
 	if (qmb_initialized)
@@ -1555,6 +1557,7 @@ void R_Clear (void) {
 	glDepthRange (gldepthmin, gldepthmax);
 }
 
+void DrawCI (void);
 
 void R_RenderView (void) {
 	double time1 = 0, time2;
@@ -1578,6 +1581,9 @@ void R_RenderView (void) {
 	R_RenderScene ();
 	R_RenderDlights ();
 	R_DrawParticles ();
+
+	DrawCI ();
+
 	//VULT: CORONAS
 	//Even if coronas gets turned off, let active ones fade out
 	if (amf_coronas.value || CoronaCount)
