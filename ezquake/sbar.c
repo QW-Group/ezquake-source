@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.26 2006-06-09 16:46:45 cokeman1982 Exp $
+	$Id: sbar.c,v 1.27 2006-08-20 14:02:44 johnnycz Exp $
 */
 // sbar.c -- status bar code
 
@@ -356,7 +356,8 @@ void Sbar_DrawNum (int x, int y, int num, int digits, int color) {
 	}
 }
 
-static int	Sbar_ColorForMap (int m) {
+// this used to be static function
+int	Sbar_ColorForMap (int m) {
 	m = bound(0, m, 13);
 
 	return 16 * m + 8;
