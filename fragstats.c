@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: fragstats.c,v 1.11 2006-06-12 20:34:25 johnnycz Exp $
+    $Id: fragstats.c,v 1.12 2006-08-20 14:02:44 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -457,7 +457,7 @@ typedef struct fragstats_s {
 static fragstats_t fragstats[MAX_CLIENTS];
 static qbool flag_dropped, flag_touched, flag_captured;
 
-static void Stats_ParsePrintLine(char *s) {
+static void Stats_ParsePrintLine(char *s, cfrags_format *cff) {
 	int start_search, end_Search, i, j, k, p1len, msg1len, msg2len, p2len, killer, victim;
 	fragmsg_t *fragmsg;
 	char *start, *name1, *name2, *t;
@@ -471,7 +471,7 @@ static void Stats_ParsePrintLine(char *s) {
 		name1 = Info_ValueForKey(player1->userinfo, "name");
 		p1len = min(strlen(name1), 31);
 		if (!strncmp(start, name1, p1len)) {
-		
+			cff->p1pos = 0; cff->p1len = p1len; cff->p1col = player1->topcolor;
 			for (t = start + p1len; *t && isspace(*t & 127); t++)
 				;
 			k = tolower(*t & 127);
@@ -507,7 +507,9 @@ static void Stats_ParsePrintLine(char *s) {
 							name2 = Info_ValueForKey(player2->userinfo, "name");
 							p2len = min(strlen(name2), 31);
 							if (!strncmp(start, name2, p2len)) {
-							
+								cff->p2pos = start - s;
+								cff->p2len = p2len;
+								cff->p2col = player2->topcolor;
 								if (fragmsg->msg2) {
 								
 									if (!*(start = s + p1len + msg1len + p2len))
@@ -730,7 +732,7 @@ foundmatch:
 	}
 }
 
-void Stats_ParsePrint(char *s, int level) {
+void Stats_ParsePrint(char *s, int level, cfrags_format *cff) {
 	char *start, *end, save;
 
 	if (!Stats_IsActive())
@@ -748,10 +750,10 @@ void Stats_ParsePrint(char *s, int level) {
 			end++;
 			save = *end;
 			*end = 0;
-			Stats_ParsePrintLine(start);
+			Stats_ParsePrintLine(start, cff);
 			*end = save;
 		} else {
-			Stats_ParsePrintLine(start);
+			Stats_ParsePrintLine(start, cff);
 			break;
 		}
 

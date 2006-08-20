@@ -39,6 +39,16 @@ typedef struct
 
 extern	console_t	con;
 
+// colored frag messages offsets, used to add team/enemy colors to frag messages
+typedef struct cfrags_format_s {
+	int p1pos;	// position
+	int p1len;	// length, if zero - no coloring
+	int p1col;	// color
+	int p2pos;
+	int p2len;
+	int p2col;
+} cfrags_format;
+
 extern  qbool    con_addtimestamp;
 
 extern	int			con_ormask;

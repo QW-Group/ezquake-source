@@ -42,3 +42,6 @@ int Sbar_TopColor(player_info_t *player);
 int Sbar_BottomColor(player_info_t *player);
 
 void Sbar_DrawNum (int x, int y, int num, int digits, int color);
+
+// covert quake pallete color number to rgb color
+int Sbar_ColorForMap (int m);

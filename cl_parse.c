@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.52 2006-08-10 00:19:54 tonik Exp $
+	$Id: cl_parse.c,v 1.53 2006-08-20 14:02:42 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "config_manager.h"
 #include "EX_misc.h"
 #include "localtime.h"
+#include "sbar.h"
 
 
 void R_TranslatePlayerSkin (int playernum);
@@ -1665,12 +1666,78 @@ void CL_ParseServerInfoChange (void) {
 	CL_UpdateCaption();
 }
 
+char *CL_Color2ConColor(int color)
+// converts quake color 4 to "&cf00", 13 to "&c00f", 12 to "&cff0" and so on
+// those are marks used to make colored text in console
+{
+	static char buf[6] = "&c000";
+	const char hexc[] = "0123456789abcdefffffffffffffffff"; 
+	// for some reason my palette doesn't give higher number then 127, those Fs are there for palettes that give higher than that
+	int x = Sbar_ColorForMap(color);
+	buf[2] = hexc[host_basepal[x * 3 + 0] / 8];
+	buf[3] = hexc[host_basepal[x * 3 + 1] / 8];
+	buf[4] = hexc[host_basepal[x * 3 + 2] / 8];
+	return buf;
+}
+
+char* CL_ColorizeFragMessage(char *source, cfrags_format *cff)
+/* will add colors to nicks in "ParadokS rides JohnNy_cz's rocket"
+   source - source frag message, dest - destination buffer, destlen - length of buffer
+   cff - see the cfrags_format definition */
+{
+	char col1[6], col2[6];
+	static char dest[2048] = "";
+	int destlen = sizeof(dest);
+
+	*dest = 0; // new string
+
+	strncpy(col1, CL_Color2ConColor(cff->p1col), sizeof(col1));
+	strncpy(col2, CL_Color2ConColor(cff->p2col), sizeof(col2));
+
+	// before 1st nick
+	strncat(dest, source, min(destlen, cff->p1pos));
+	destlen -= cff->p1pos;
+	// color1
+	strncat(dest, col1, min(destlen, sizeof(col1)));
+	destlen -= sizeof(col1);
+	// 1st nick
+	strncat(dest, source + cff->p1pos, min(destlen, cff->p1len));
+	destlen -= cff->p1len;
+	// color off
+	strncat(dest, "&cfff", min(destlen, 6));
+	destlen -= 6;
+
+	if (cff->p2len)
+	{
+		// middle part
+		strncat(dest, source + cff->p1pos + cff->p1len, min(destlen, cff->p2pos - cff->p1len - cff->p1pos));
+		destlen -= cff->p2pos - cff->p1len - cff->p1pos;
+		// color2
+		strncat(dest, col2, min(destlen, sizeof(col2)));
+		destlen -= sizeof(col2);
+		// 2nd nick
+		strncat(dest, source + cff->p2pos, min(destlen, cff->p2len));
+		destlen -= cff->p2len;
+		// color off
+		strncat(dest, "&cfff", min(destlen, 6));
+		destlen -= 6;
+		// the rest
+		strncat(dest, source + cff->p2pos + cff->p2len, destlen);
+	} else {
+		// the rest
+		strncat(dest, source + cff->p1pos + cff->p1len, destlen);
+	}
+	
+	return dest;
+}
+
 //for CL_ParsePrint
 static void FlushString (char *s, int level, qbool team, int offset) {
-	extern cvar_t con_highlight, con_highlight_mark, name;
+	extern cvar_t con_highlight, con_highlight_mark, name, scr_coloredText;
 	char white_s[4096];
 	char *mark, *text;
 	char *f = strstr(s, name.string);
+	cfrags_format cff = {0, 0, 0, 0, 0, 0};
 
 	strlcpy(white_s, s, 4096);
 
@@ -1697,6 +1764,14 @@ static void FlushString (char *s, int level, qbool team, int offset) {
 		text = (level == PRINT_CHAT) ? TP_ParseWhiteText(s, team, offset) : s;
 	}
 	
+	Stats_ParsePrint(s, level, &cff);
+
+	// Colorize player names here
+#ifdef GLQUAKE
+	if (scr_coloredText.value > 1 && cff.p1len)
+		text = CL_ColorizeFragMessage(text, &cff);
+#endif
+
 	Com_Printf("%s%s", mark, text);
 
 	if (level >= 4)
@@ -1706,7 +1781,6 @@ static void FlushString (char *s, int level, qbool team, int offset) {
 		level = 4;
 
 	TP_SearchForMsgTriggers (s + offset, level);
-	Stats_ParsePrint(s, level);
 }
 
 
