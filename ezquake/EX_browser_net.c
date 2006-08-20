@@ -20,12 +20,6 @@
 
 extern qbool useNewPing;
 
-static int	Sbar_ColorForMap (int m) {
-	m = bound(0, m, 13);
-
-	return 16 * m + 8;
-}
-
 int ReadInt (char *playerinfo, int *i)
 {
     int s = 0, d = 0;
