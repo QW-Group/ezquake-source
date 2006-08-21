@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.7 2006-08-21 03:53:48 qqshka Exp $
+    $Id: q_shared.h,v 1.8 2006-08-21 13:03:47 vvd0 Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -145,7 +145,7 @@ unsigned int BuffLittleLong (const unsigned char *buffer);
 unsigned short BuffLittleShort (const unsigned char *buffer);
 /* johnnycz: VVD's change broke e.g. TGA loading (crosshairimage, tom)
 #define	BuffLittleLong(buffer)	LittleLong(*(int*)buffer)
-#define	BuffLittleShort(buffer)	LittleShort(*(int*)buffer)
+#define	BuffLittleShort(buffer)	LittleShort(*(short*)buffer)
 */
 
 //============================================================================
