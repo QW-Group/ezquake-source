@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.6 2006-08-19 14:55:57 johnnycz Exp $
+    $Id: q_shared.h,v 1.7 2006-08-21 03:53:48 qqshka Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -181,6 +181,11 @@ void *Q_calloc (size_t n, size_t size);
 char *Q_strdup (const char *src);
 // might be turned into a function that makes sure all Q_*alloc calls are matched with Q_free
 #define Q_free(ptr) free(ptr)
+//============================================================================
+// chat icons flags 
+// used now by client code only, but may be used in future by server code too, so put here
+#define CIF_CHAT  (1<<0) /* set this flag if user in console, mm1, mm2 etc but not in game */
+#define CIF_AFK   (1<<1) /* set this flag if app lose focus, ie alt+tab */
 
 //============================================================================
 

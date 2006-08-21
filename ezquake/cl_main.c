@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.85 2006-08-19 16:50:31 johnnycz Exp $
+	$Id: cl_main.c,v 1.86 2006-08-21 03:53:48 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1376,7 +1376,26 @@ void CL_Frame (double time) {
 
 	}
 
-	CL_UserinfoChanged ("chat", key_dest == key_game ? "" : "1");
+	{ // chat icons
+		char char_flags[64] = {0};
+		int cif_flags = 0;
+
+		if (key_dest != key_game) // add chat flag if in console, menus, mm1, mm2 etc...
+			cif_flags |= CIF_CHAT;
+
+#ifdef _WIN32
+		// add AFK flag if app minimized, or not the focus
+		// FIXME: i dunno how to check the same for *nix
+		// TODO: may be add afk flag on idle? if no user input in 45 seconds for example?
+		if (!ActiveApp || Minimized)
+			cif_flags |= CIF_AFK;
+#endif
+
+		if (cif_flags)
+			snprintf(char_flags, sizeof(char_flags), "%d", cif_flags);
+
+		CL_UserinfoChanged ("chat", char_flags);
+	}
 
 	if (cls.state >= ca_onserver) {	// !!! Tonik
 		Cam_SetViewPlayer();
