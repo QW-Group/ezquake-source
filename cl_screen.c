@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.55 2006-08-19 16:50:31 johnnycz Exp $
+    $Id: cl_screen.c,v 1.56 2006-08-21 03:53:48 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -105,9 +105,12 @@ cvar_t	cl_hud = {"cl_hud", "1"};
 
 #ifdef GLQUAKE
 cvar_t	gl_triplebuffer = {"gl_triplebuffer", "1", CVAR_ARCHIVE};
+cvar_t  r_chaticons_alpha = {"r_chaticons_alpha", "0.8"};
 #endif
 
+#ifdef GLQUAKE
 cvar_t	scr_autoid		= {"scr_autoid", "0"};
+#endif
 cvar_t	scr_coloredText = {"scr_coloredText", "1"};
 
 // START shaman RFE 1022309
@@ -956,7 +959,8 @@ typedef struct ci_player_s {
 	col_t		color;
 	float		rotangle;
 	float		size;
-	byte		texindex;	
+	byte		texindex;
+	int			flags;
 
 	player_info_t *player;
 
@@ -967,6 +971,8 @@ static int ci_count;
 
 typedef enum {
 	citex_chat,
+	citex_afk,
+	citex_chat_afk,
 	num_citextures,
 } ci_tex_t;
 
@@ -1001,9 +1007,31 @@ void CI_Init (void) {
 	if (!(ci_font = GL_LoadTextureImage ("textures/chaticons", "ci:chaticons", FONT_SIZE, FONT_SIZE, TEX_ALPHA | TEX_COMPLAIN))) 
 		return;		
 
-	ADD_CICON_TEXTURE(citex_chat, ci_font, 0, 1, 0, 0, 64, 64);
+	ADD_CICON_TEXTURE(citex_chat,     ci_font, 0, 1,  0, 0,  64, 64); // get chat part from font
+	ADD_CICON_TEXTURE(citex_afk,      ci_font, 0, 1, 64, 0, 128, 64); // get afk part
+	ADD_CICON_TEXTURE(citex_chat_afk, ci_font, 0, 1,  0, 0, 128, 64); // get chat+afk part
 
 	ci_initialized = true;
+}
+
+int CmpCI_Order(const void *p1, const void *p2)
+{
+	const ci_player_t	*a1 = (ci_player_t *) p1;
+	const ci_player_t	*a2 = (ci_player_t *) p2;
+	int l1, l2;
+	vec3_t v;
+
+	VectorSubtract (r_refdef.vieworg, a1->org, v);
+	l1 = VectorLength (v);
+	VectorSubtract (r_refdef.vieworg, a2->org, v);
+	l2 = VectorLength (v);
+
+	if (l1 > l2)
+		return -1;
+	if (l1 < l2)
+		return  1;
+
+	return 0;
 }
 
 void SCR_SetupCI (void) {
@@ -1011,12 +1039,12 @@ void SCR_SetupCI (void) {
 	player_state_t *state;
 	player_info_t *info;
 	ci_player_t *id;
+	char *s;
 
 	ci_count = 0;
 
-// no cvar currently
-//	if (!scr_????.value)
-//		return;
+	if (!bound(0, r_chaticons_alpha.value, 1))
+		return;
 
 	if (cls.state != ca_active || !cl.validsequence)
 		return;
@@ -1031,10 +1059,11 @@ void SCR_SetupCI (void) {
 		if (state->messagenum != cl.parsecount || j == cl.playernum || j == tracknum || info->spectator)
 			continue;
 
-		if (!*Info_ValueForKey (info->userinfo, "chat"))
+		if (!*(s = Info_ValueForKey (info->userinfo, "chat")))
 			continue; // user not chatting, so ignore
 
 		id = &ci_clients[ci_count];
+		id->texindex = 0;
 		id->player = info;
 		id->org[0] = state->origin[0];
 		id->org[1] = state->origin[1];
@@ -1044,9 +1073,15 @@ void SCR_SetupCI (void) {
 		id->color[0] = 255; // r
 		id->color[1] = 255; // g
 		id->color[2] = 255; // b
-		id->color[3] = 230; // alpha, probably we need cvar for this
+		id->color[3] = 255 * bound(0, r_chaticons_alpha.value, 1); // alpha
+		id->flags = Q_atoi(s) & (CIF_CHAT | CIF_AFK); // get known flags
+		id->flags = (id->flags ? id->flags : CIF_CHAT); // use chat as default if we got some unknown "chat" value
+
 		ci_count++;
 	}
+
+	if (ci_count) // sort icons so we draw most far to you first
+		qsort((void *)ci_clients, ci_count, sizeof(ci_clients[0]), CmpCI_Order);
 }
 
 #define DRAW_CI_BILLBOARD(_ptex, _p, _coord)			\
@@ -1067,20 +1102,28 @@ void SCR_SetupCI (void) {
 						\
 	glPopMatrix();
 
+// probably may be made as macros, but i hate macros cos macroses is unsafe
+static void CI_Bind(ci_texture_t *citex, int *texture)
+{
+	//VULT PARTICLES - I gather this speeds it up, but I haven't really checked
+	if (*texture != citex->texnum)
+	{
+		GL_Bind(citex->texnum);
+		*texture = citex->texnum;
+	}
+}
+
 void DrawCI (void) {
-	int	i, texture = 0;
-	vec3_t billboard[4];
+	int	i, texture = 0, flags;
+	vec3_t billboard[4], billboard2[4], vright_tmp;
 	ci_player_t *p;
 	ci_texture_t *citex;
 
 	if (!ci_initialized)
 		return;
 
-// no cvar currently
-//	if (!scr_?????.value)
-//		return;
-
-	citex = &ci_textures[citex_chat];
+	if (!bound(0, r_chaticons_alpha.value, 1) || ci_count < 1)
+		return;
 
 	if (gl_fogenable.value)
 	{
@@ -1092,6 +1135,12 @@ void DrawCI (void) {
 	VectorNegate(billboard[2], billboard[0]);
 	VectorNegate(billboard[3], billboard[1]);
 
+	VectorScale(vright, 2, vright_tmp);
+	VectorAdd(vup, vright_tmp, billboard2[2]);
+	VectorSubtract(vright_tmp, vup, billboard2[3]);
+	VectorNegate(billboard2[2], billboard2[0]);
+	VectorNegate(billboard2[3], billboard2[1]);
+
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -1101,17 +1150,28 @@ void DrawCI (void) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glEnable(GL_TEXTURE_2D);
-	//VULT PARTICLES - I gather this speeds it up, but I haven't really checked
-	if (texture != citex->texnum)
-	{
-		GL_Bind(citex->texnum);
-		texture = citex->texnum;
-	}
 
 	for (i = 0; i < ci_count; i++) 
 	{
 		p = &ci_clients[i];
-		DRAW_CI_BILLBOARD(citex, p, billboard);
+		flags = p->flags;
+
+		if (flags & CIF_CHAT && flags & CIF_AFK)
+		{
+			flags = flags & ~(CIF_CHAT|CIF_AFK); // so they will be not showed below again
+			CI_Bind(citex = &ci_textures[citex_chat_afk], &texture);
+			DRAW_CI_BILLBOARD(citex, p, billboard2);
+		}
+		if (flags & CIF_CHAT)
+		{
+			CI_Bind(citex = &ci_textures[citex_chat], &texture);
+			DRAW_CI_BILLBOARD(citex, p, billboard);
+		}
+		if (flags & CIF_AFK)
+		{
+			CI_Bind(citex = &ci_textures[citex_afk], &texture);
+			DRAW_CI_BILLBOARD(citex, p, billboard);
+		}
 	}
 
 	glEnable(GL_TEXTURE_2D);
@@ -2765,6 +2825,9 @@ void SCR_Init (void) {
 #ifdef GLQUAKE
 	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
 	Cvar_Register (&gl_triplebuffer);
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
+	Cvar_Register (&r_chaticons_alpha);
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
@@ -2794,7 +2857,9 @@ void SCR_Init (void) {
 	Cvar_Register (&show_fps_x);
 	Cvar_Register (&show_fps_y);
 
+#ifdef GLQUAKE
 	Cvar_Register (&scr_autoid);
+#endif
 	Cvar_Register (&scr_coloredText);
 
 // QW262 -->
