@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.8 2006-08-21 13:03:47 vvd0 Exp $
+    $Id: q_shared.h,v 1.9 2006-08-24 20:03:23 cokeman1982 Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -178,6 +178,7 @@ int Com_HashKey (const char *name);
 // memory management
 void *Q_malloc (size_t size);
 void *Q_calloc (size_t n, size_t size);
+void *Q_realloc (void *p, size_t newsize);
 char *Q_strdup (const char *src);
 // might be turned into a function that makes sure all Q_*alloc calls are matched with Q_free
 #define Q_free(ptr) free(ptr)
