@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.53 2006-08-20 14:02:42 johnnycz Exp $
+	$Id: cl_parse.c,v 1.54 2006-08-24 20:10:34 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1365,11 +1365,19 @@ void CL_NewTranslation (int slot) {
 	player->topcolor = player->real_topcolor;
 	player->bottomcolor = player->real_bottomcolor;
 
-
-	if (cl.spectator && (tracknum = Cam_TrackNum()) != -1)
+	// TODO: There is a bug here somewhere that makes some players get the incorrect color during multiview.
+	/*if (cls.mvdplayback && cl_multiview.value)
+	{
+		skinforcing_team = player->team;
+	}
+	else*/ if (cl.spectator && (tracknum = Cam_TrackNum()) != -1)
+	{
 		skinforcing_team =  cl.players[tracknum].team;
+	}
 	else if (!cl.spectator)
+	{
 		skinforcing_team = cl.players[cl.playernum].team;
+	}
 
 
 	if (!cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_COLOR)) {
