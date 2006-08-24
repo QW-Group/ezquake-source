@@ -996,6 +996,73 @@ void R_DrawViewModel (void) {
 
 
 	gun.frame = cent->current.frame;
+	if (cent->frametime >= 0 && cent->frametime <= cl.time) {
+		gun.oldframe = cent->oldframe;
+		gun.framelerp = (cl.time - cent->frametime) * 10;
+	} else {
+		gun.oldframe = gun.frame;
+		gun.framelerp = -1;
+	}
+
+
+	// hack the depth range to prevent view model from poking into walls
+	glDepthRange (gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
+	//R_DrawAliasModel (currententity);
+	switch(currententity->model->type)
+	{
+	case mod_alias:
+		R_DrawAliasModel (currententity);
+		break;
+	case mod_alias3:
+		R_DrawAlias3Model (currententity);
+		break;
+	default:
+		Com_Printf("Not drawing view model of type %i\n", currententity->model->type);
+		break;
+	} 
+	glDepthRange (gldepthmin, gldepthmax);
+/*	
+	//
+	// THIS CODE FUCKS UP WEAPON ANIMATIONS!
+	// (Toniks refdef2, static rendering port from zQuake)
+	//
+	centity_t *cent;
+	static entity_t gun;
+
+	//VULT CAMERA - Don't draw gun in external camera
+	if (cameratype != C_NORMAL)
+		return;
+
+	if (!r_drawentities.value || !cl.viewent.current.modelindex)
+		return;
+
+	memset(&gun, 0, sizeof(gun));
+	cent = &cl.viewent;
+	currententity = &gun;
+
+	if (!(gun.model = cl.model_precache[cent->current.modelindex]))
+		Host_Error ("R_DrawViewModel: bad modelindex");
+
+	VectorCopy(cent->current.origin, gun.origin);
+	VectorCopy(cent->current.angles, gun.angles);
+	gun.colormap = vid.colormap;
+	gun.flags = RF_WEAPONMODEL | RF_NOSHADOW;
+	if (r_lerpmuzzlehack.value) {
+		if (cent->current.modelindex != cl_modelindices[mi_vaxe] &&
+			cent->current.modelindex != cl_modelindices[mi_vbio] &&
+			cent->current.modelindex != cl_modelindices[mi_vgrap] &&
+			cent->current.modelindex != cl_modelindices[mi_vknife] &&
+			cent->current.modelindex != cl_modelindices[mi_vknife2] &&
+			cent->current.modelindex != cl_modelindices[mi_vmedi] &&
+			cent->current.modelindex != cl_modelindices[mi_vspan])
+		{
+			gun.flags |= RF_LIMITLERP;			
+			r_lerpdistance =  135;
+		}
+	}
+
+
+	gun.frame = cent->current.frame;
 	if (cent->frametime >= 0 && cent->frametime <= r_refdef2.time) {
 		gun.oldframe = cent->oldframe;
 		gun.framelerp = (r_refdef2.time - cent->frametime) * 10;
@@ -1021,6 +1088,7 @@ void R_DrawViewModel (void) {
 		break;
 	} 
 	glDepthRange (gldepthmin, gldepthmax);
+*/
 }
 
 
