@@ -207,8 +207,9 @@ void R_DrawCoronas(void)
 //NewCorona
 void NewCorona (coronatype_t type, vec3_t origin)
 {
-	corona_t	*c;
-	int		i;
+	corona_t *c;
+	int i;
+	qbool corona_found = false;
 
 	c = r_corona;
 	for (i=0 ; i<MAX_CORONAS ; i++, c++)
@@ -216,12 +217,16 @@ void NewCorona (coronatype_t type, vec3_t origin)
 		if (c->type == C_FREE)
 		{
 			memset (c, 0, sizeof(*c));
+			corona_found = true;
 			break;
 		}
 	}
 	
-
-	//VULT FIXME: It's possible to get here without finding a free corona
+	if(!corona_found)
+	{
+		Com_Printf("No free coronas\n");
+		return;		
+	}
 
 	c->sighted = false;
 	VectorCopy (origin, c->origin);
