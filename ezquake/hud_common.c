@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.54 2006-08-15 18:26:53 disconn3ct Exp $
+	$Id: hud_common.c,v 1.55 2006-08-24 20:28:42 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -26,235 +26,6 @@ void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
 void Draw_Fill (int x, int y, int w, int h, int c);
 #endif
 
-/*
-typedef struct plot_values_s
-{
-	int		*values;		// The values to be plotted.
-	int		count;			// The number of values.
-	int		max;			// Max value.
-	int		min;			// Min value.
-	char	*name;			// The name of the values.
-	int		color;			// The color to plot the values in.
-	float	thickness;		// How thick the plot line should be.
-	qbool	fill;			// If the area below the plot line should be filled or not.
-	float	frequency;		// How often the plot data is updated.
-} plot_values_t;
-
-#define MAX_PLOTS			6
-#define PLOT_TIMEFRAME_ALL	-1
-
-typedef struct plots_s
-{
-	plot_values_t	plots[MAX_PLOTS];		// The plot data.
-	int				count;					// Plot count.
-	float			timeframe;				// How much of the plots should be shown? "Last 10 seconds", "all"...
-} plots_t;
-
-plots_t	*hud_plots = NULL;
-
-void HUD_FreePlot (plot_values_t *plot)
-{
-	if (plot == NULL)
-	{
-		return;
-	}
-
-	if (plot->name != NULL)
-	{
-		Q_free (plot->name);
-	}
-
-	if(plot->values != NULL)
-	{
-		Q_free (plot->values);
-	}
-
-	Q_free (plot);
-	plot = NULL;
-}
-
-void HUD_ClearPlots (plots_t *plots)
-{
-	int i;
-
-	if (plots == NULL)
-	{
-		return;
-	}
-
-	for (i = 0; i < plots->count; i++)
-	{
-		HUD_FreePlot (plots->plots[i]);
-	}
-
-	Q_free (plots);
-	plots = NULL;
-}
-
-void HUD_InitPlotValueArray (plot_values_t *plot)
-{
-	
-}
-
-#define HUD_PLOT_DEFAULT_COLOR			15
-#define HUD_PLOT_DEFAULT_THICKNESS		1
-#define HUD_PLOT_DEFAULT_FILL			false
-#define HUD_PLOT_DEFAULT_FREQUENCY		1.0
-
-void HUD_AddPlot (plots_t *plots, char *name, int color, int thickness, qbool fill, float frequency)
-{
-	int plot_index = 0;
-
-	if (plots == NULL)
-	{
-		return;
-	}
-
-	if (plots >= MAX_PLOTS)
-	{
-		Sys_Error (va("HUD_AddPlot : Plot overflow, exceeded MAX_PLOTS (%d)\n", MAX_PLOTS));
-	}
-
-	frequency = (frequency <= 0) ? HUD_PLOT_DEFAULT_FREQUENCY : frequency;
-	thickness = (thickness <= 0) ? HUD_PLOT_DEFAULT_THICKNESS : thickness;
-	color = (color > 255 || color < 0) ? HUD_PLOT_DEFAULT_COLOR : color;
- 
-	plot_index = plots->count;
-
-	plots->plots[plot_index] = (plot_values_t *)Q_malloc (sizeof(plot_values_t));
-	plots->count++;
-
-	plots->plots[plot_index].color = color;
-	plots->plots[plot_index.thickness = thickness;
-	
-	plots->plots[plot_index].name = Q_calloc (strlen(name) + 1, sizeof(char));
-	strcpy (plots->plots[plot_index].name, name);
-
-	plots->plots[plot_index].frequency = frequency;
-
-	// TODO: Initialize value array.
-}
-
-void HUD_InitPlots()
-{
-	if(hud_plots != NULL)
-	{
-		HUD_ClearPlots (hud_plots);
-	}
-
-	plots
-}
-
-void HUD_DrawPlot (int x, int y, int width, int height, plot_values_t *plot, float timeframe, float opacity)
-{
-	int plot_start = 0;
-	float point_space_x = 0;
-	float point_space_y = 0;
-	float alpha = 0.0;
-	int i = 0;
-
-	// Make sure we have something to work with.
-	if (plot == NULL || plot->count <= 0)
-	{
-		return;
-	}
-
-	if(timeframe == PLOT_TIMEFRAME_ALL)
-	{
-		plot_start = 0;
-	}
-	else
-	{
-		// "Show the latest 10 seconds of data".
-		// plot->frequency = 2 seconds
-		// plot->count = 40
-		// timeframe = 10 seconds
-		//
-		// There is 2 seconds between each value, so to get the index where to
-		// start plotting from you need to do the following:
-		// ----------------------------------------------------
-		// (number of values) * (time between values are gathered) = (seconds of gathered data)
-		// plot->count * plot->frequency
-		// 40 * 2 = 80
-		//
-		// (Seconds of gathered data) - (how long back in time to plot) = (the time to start plotting from)
-		// 80 - 10 = 70
-		//
-		// To get the index of the value at that time:
-		// ----------------------------------------------------
-		// (The time to start plotting from) / (time between values are gathered) = (index to start plotting from)
-		// 70 / 2 = 35
-		// 
-		plot_start = ROUND(((plot->count * plot->frequency) - timeframe) / plot->frequency);
-	}
-
-	opacity = bound(0, opacity, 1);
-
-	if (!opacity)
-	{
-		return;
-	}
-
-	// Initialize some GL stuff.
-	glDisable (GL_TEXTURE_2D);
-	if (opacity < 1) 
-	{
-		glEnable (GL_BLEND);
-		glDisable(GL_ALPHA_TEST);
-		glColor4f (host_basepal[c * 3] / 255.0,  host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2] / 255.0, alpha);
-	} 
-	else 
-	{
-		glColor3f (host_basepal[c * 3] / 255.0, host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2]  /255.0);
-	}
-
-	if(thickness > 0.0)
-	{
-		glLineWidth(thickness);
-	}
-
-	if(fill)
-	{
-		glBegin(GL_POLYGON);
-
-		// We're "filling" the area below the curve, so create
-		// a vertex in the bottom left corner of the plot, and also below
-		// the bottom right corner.
-		glVertex2f (x, y + height);
-	}
-	else
-	{
-		glBegin (GL_LINE_STRIP);
-	}
-
-	// Calculate the space between points.
-	point_space_x = (plot->count - plotstart) / (float)width;
-	point_space_y = plot->max / (float)height;
-
-	// Draw the actual plot values.
-	for (i = plotstart; i < plot->count; i++)
-	{
-		glVertex2f (x + (i - plotstart)*point_space, y + height - plot->values[i] * point_space_y);
-	}
-
-	// Draw the last vertex in the bottom right corner when filling.
-	if(fill)
-	{
-		glVertex2f (x + width, y + height);
-	}
-
-	glEnd ();
-
-	// Reset some GL stuff after drawing.
-	glEnable (GL_TEXTURE_2D);
-	if (alpha < 1) 
-	{
-		glEnable (GL_ALPHA_TEST);
-		glDisable (GL_BLEND);
-	}
-	glColor3ubv (color_white);
-}
-*/
 hud_t *hud_netgraph;
 
 // ----------------
@@ -1945,7 +1716,7 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, char *picture, int til
     {
         mpic_t *pic;
         Hunk_Check();
-        pic = Draw_CachePic(va("gfx/%s", picture)/*, false*/);
+        pic = Draw_CachePicSafe(va("gfx/%s", picture), false);
         Hunk_Check();
 
 /*        if (alpha < 1)
@@ -1984,10 +1755,17 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, char *picture, int til
                 pw = min(width, pic->width);
                 ph = min(height, pic->height);
 
+				//Draw_SAlphaPic (x + (width-pw)/2, y + (height-ph)/2, pic, alpha, 1); // scale);
+
                 if (pw >= pic->width  &&  ph >= pic->height)
-                    Draw_TransPic(x + (width-pw)/2, y + (height-ph)/2, pic);
+				{
+
+					Draw_TransPic(x + (width-pw)/2, y + (height-ph)/2, pic);
+				}
                 else
-                    Draw_TransSubPic(x + (width-pw)/2, y + (height-ph)/2, pic, 0, 0, pw, ph);
+				{
+					Draw_TransSubPic(x + (width-pw)/2, y + (height-ph)/2, pic, 0, 0, pw, ph);
+				}
             }
         }
 
@@ -2961,24 +2739,23 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 			// being spectated.
 			if(cls.demoplayback && !cl.spectator && !cls.mvdplayback)
 			{
-				if (sorted_players[num]->playernum == cl.playernum)
-				{
-					drawBrackets = 1;
-				}
+				drawBrackets = (sorted_players[num]->playernum == cl.playernum);
 			}
 			else if (cls.demoplayback || cl.spectator)
 			{
-				if (spec_track == sorted_players[num]->playernum)
-				{
-					drawBrackets = 1;
-				}
+				drawBrackets = (spec_track == sorted_players[num]->playernum && Cam_TrackNum() >= 0);
 			}
 			else
 			{
-				if (sorted_players[num]->playernum == cl.playernum)
-				{
-					drawBrackets = 1;
-				}
+				drawBrackets = (sorted_players[num]->playernum == cl.playernum);
+			}
+
+			if (cl_multiview.value && cls.demoplayback)
+			{				
+				// Does not work for some reason I can't grasp :/
+				//drawBrackets = (sorted_players[num]->playernum == nPlayernum);
+
+				drawBrackets = 0;
 			}
 
 			if(hud_frags_shownames->value || hud_frags_teams->value || hud_frags_extra_spec->value)
@@ -3194,30 +2971,33 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 
 				// Team name
 				if(cur_length >= max_team_length)
+				{
 					max_team_length = cur_length + 1;
+				}
 			}
+		}
 
-			if(hud_teamfrags_extra_spec->value && (cls.demoplayback || cl.spectator))
+		// Calculate the length of the extra spec info.
+		if(hud_teamfrags_extra_spec->value && (cls.demoplayback || cl.spectator))
+		{
+			if(hud_teamfrags_extra_spec->value == TEAMFRAGS_EXTRA_SPEC_BEFORE)
 			{
-				if(hud_teamfrags_extra_spec->value == TEAMFRAGS_EXTRA_SPEC_BEFORE)
-				{
-					// Draw the rl count before the rl icon.
-					rlcount_width = rl_picture.width + 8 + 1 + 1;
-				}
-				else if(hud_teamfrags_extra_spec->value == TEAMFRAGS_EXTRA_SPEC_ONTOP)
-				{
-					// Draw the rl count on top of the RL instead of infront.
-					rlcount_width = rl_picture.width + 1;
-				}
-				else if(hud_teamfrags_extra_spec->value == TEAMFRAGS_EXTRA_SPEC_NOICON)
-				{
-					// Only draw the rl count.
-					rlcount_width = 8 + 1;
-				}
-				else if(hud_teamfrags_extra_spec->value == TEAMFRAGS_EXTRA_SPEC_RLTEXT)
-				{
-					rlcount_width = 8*3 + 1;
-				}
+				// Draw the rl count before the rl icon.
+				rlcount_width = rl_picture.width + 8 + 1 + 1;
+			}
+			else if(hud_teamfrags_extra_spec->value == TEAMFRAGS_EXTRA_SPEC_ONTOP)
+			{
+				// Draw the rl count on top of the RL instead of infront.
+				rlcount_width = rl_picture.width + 1;
+			}
+			else if(hud_teamfrags_extra_spec->value == TEAMFRAGS_EXTRA_SPEC_NOICON)
+			{
+				// Only draw the rl count.
+				rlcount_width = 8 + 1;
+			}
+			else if(hud_teamfrags_extra_spec->value == TEAMFRAGS_EXTRA_SPEC_RLTEXT)
+			{
+				rlcount_width = 8*3 + 1;
 			}
 		}
 
@@ -3253,12 +3033,12 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 
 			drawBrackets = 0;
 
-
 			// Bug fix. Before the wrong player would be higlighted
 			// during qwd-playback, since you ARE the player that you're
 			// being spectated.
 			if(cls.demoplayback && !cl.spectator && !cls.mvdplayback)
 			{
+				// QWD Playback.
 				if (!strcmp(sorted_teams[num]->name, cl.players[cl.playernum].team))
 				{
 					drawBrackets = 1;
@@ -3266,23 +3046,34 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 			}
 			else if (cls.demoplayback || cl.spectator)
 			{
-				if (!strcmp(cl.players[spec_track].team, sorted_teams[num]->name))
+				// MVD playback / spectating.
+				if (!strcmp(cl.players[spec_track].team, sorted_teams[num]->name) && Cam_TrackNum() >= 0)
 				{
 					drawBrackets = 1;
 				}
 			}
 			else
 			{
+				// Normal player.
 				if (!strcmp(sorted_teams[num]->name, cl.players[cl.playernum].team))
 				{
 					drawBrackets = 1;
 				}
 			}
 
+			if (cl_multiview.value)
+			{
+				// TODO: Check if "track team" is set, if it is then draw brackets around that team.
+				//cl.players[nPlayernum]
+
+				drawBrackets = 0;
+			}
+
 			if(hud_teamfrags_shownames->value || hud_teamfrags_extra_spec->value)
 			{
 				int _px = px;
 
+				// Draw a background if the style tells us to.
 				if(hud_teamfrags_style->value >= 4 && hud_teamfrags_style->value <= 8)
 				{
 					Frags_DrawBackground(px, py, cell_width, cell_height, space_x, space_y,
@@ -3291,6 +3082,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 						hud_teamfrags_style->value);
 				}
 
+				// Draw the text on the left or right side of the score?
 				if(hud_teamfrags_fliptext->value)
 				{
 					// Draw team.
@@ -3326,18 +3118,26 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 				}
 
 				if(hud_teamfrags_vertical->value)
+				{
 					py += cell_height + space_y;
+				}
 				else
+				{
 					px = _px + space_x;
+				}
 			}
 			else
 			{
 				Frags_DrawColors(px, py, cell_width, cell_height, sorted_teams[num]->top, sorted_teams[num]->bottom, sorted_teams[num]->frags, drawBrackets, hud_teamfrags_style->value);
 
 				if (hud_teamfrags_vertical->value)
+				{
 					py += cell_height + space_y;
+				}
 				else
+				{
 					px += cell_width + space_x;
+				}
 			}
             num ++;
         }
@@ -4217,7 +4017,7 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pi
 	{
 		return;
 	}
-	
+
 	// Go through all the cells and draw them based on their weight.
 	for(row = 0; row < grid->row_count; row++)
 	{
@@ -4226,30 +4026,25 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pi
 			float weight = 0.0;
 			int color = 0;
 
-			float tl_x, tl_y;
-			int p_cell_length;
-
+			float tl_x, tl_y;				// The pixel coordinate of the top left corner of a grid cell.
+			int p_cell_length;				// The pixel length of a cell.
+			
 			// Calculate the pixel coordinates of the top left corner of the current cell.
 			// (This is times 8 because the conversion formula was calculated from a .loc-file)
-			tl_x = (map_x_slope*(8*grid->cells[row][col].tl_x) + map_x_intercept) * scale;
-			tl_y = (map_y_slope*(8*grid->cells[row][col].tl_y) + map_y_intercept) * scale;
+			tl_x = (map_x_slope * (8 * grid->cells[row][col].tl_x) + map_x_intercept) * scale;
+			tl_y = (map_y_slope * (8 * grid->cells[row][col].tl_y) + map_y_intercept) * scale;
 
 			// Calculate the cell length in pixel length.
 			p_cell_length = ROUND(map_x_slope*(8*grid->cell_length) * scale);
-
+			
 			// Don't draw the stats stuff outside the picture.
 			if(tl_x + p_cell_length > pic_width || tl_y + p_cell_length > pic_height || x + tl_x < x || y + tl_y < y)
 			{
 				continue;
 			}
 
-			// TODO : This is only a test so that I can see my wonderful grid. :D
-			/*
-			Draw_AlphaFill(x + tl_x, y + tl_y, p_cell_length, 1, 0, 1);
-			Draw_AlphaFill(x + tl_x, y + tl_y + p_cell_length, p_cell_length, 1, 0, 1);
-			Draw_AlphaFill(x + tl_x, y + tl_y, 1, p_cell_length, 0, 1);
-			Draw_AlphaFill(x + tl_x + p_cell_length, y + tl_y + p_cell_length, 1, p_cell_length, 0, 1);
-			*/
+			// This is only a test so that I can see my wonderful grid. :D
+			//Draw_AlphaOutline(x + tl_x, y + tl_y, p_cell_width, p_cell_height, 0, 1, 1);
 
 			//
 			// Death stats.
