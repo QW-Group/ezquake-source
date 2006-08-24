@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.24 2006-07-10 18:41:14 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.25 2006-08-24 20:12:49 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -326,42 +326,69 @@ mpic_t *Draw_CacheWadPic (char *name) {
 	return pic;
 }
 
-mpic_t *Draw_CachePic (char *path) {
+mpic_t *Draw_CachePicSafe (char *path, qbool crash) 
+{
 	cachepic_t *pic;
 	int i;
 	qpic_t *dat;
 	mpic_t *pic_24bit;
 
 	for (pic = cachepics, i = 0; i < numcachepics; pic++, i++)
+	{
 		if (!strcmp (path, pic->name))
+		{
 			return &pic->pic;
+		}
+	}
 
 	if (numcachepics == MAX_CACHED_PICS)
-		Sys_Error ("numcachepics == MAX_CACHED_PICS");
+	{
+		if(crash)
+		{
+			Sys_Error ("numcachepics == MAX_CACHED_PICS");
+		}
+		return NULL;
+	}
 	numcachepics++;
 	strlcpy (pic->name, path, sizeof(pic->name));
 
 	// load the pic from disk
 	if (!(dat = (qpic_t *)FS_LoadTempFile (path)))
-		Sys_Error ("Draw_CachePic: failed to load %s", path);
+	{
+		if(crash)
+		{
+			Sys_Error ("Draw_CachePic: failed to load %s", path);
+		}
+		return NULL;
+	}
 	SwapPic (dat);
 
 	// HACK HACK HACK --- we need to keep the bytes for
 	// the translatable player picture just for the menu
 	// configuration dialog
 	if (!strcmp (path, "gfx/menuplyr.lmp"))
+	{
 		memcpy (menuplyr_pixels, dat->data, dat->width*dat->height);
+	}
 
 	pic->pic.width = dat->width;
 	pic->pic.height = dat->height;
-
 	
 	if ((pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
+	{
 		memcpy(&pic->pic.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
+	}
 	else
+	{
 		GL_LoadPicTexture (path, &pic->pic, dat->data);
+	}
 
 	return &pic->pic;
+}
+
+mpic_t *Draw_CachePic (char *path)
+{
+	return Draw_CachePicSafe (path, true);
 }
 
 void Draw_InitConback (void) {
