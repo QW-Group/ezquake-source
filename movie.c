@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: movie.c,v 1.15 2006-06-30 20:39:25 johnnycz Exp $
+	$Id: movie.c,v 1.16 2006-08-24 20:30:39 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -84,6 +84,8 @@ qbool Movie_IsCapturing(void) {
 
 static void Movie_Start(double _time) {
 
+	extern cvar_t scr_sshot_format;
+
 #ifndef _WIN32
 	time_t t;
 	t = time(NULL);
@@ -106,7 +108,10 @@ static void Movie_Start(double _time) {
 	else
 #endif
 #ifdef GLQUAKE
-		strcpy(image_ext, "tga");
+		// TODO : Make sure the screenshot format isn't empty.
+		// DEFAULT_SSHOT_FORMAT		
+		strcpy(image_ext, scr_sshot_format.string);
+		//strcpy(image_ext, "tga");
 #else
 		strcpy(image_ext, "pcx");
 #endif
