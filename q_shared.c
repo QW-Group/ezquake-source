@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.7 2006-08-19 14:55:57 johnnycz Exp $
+    $Id: q_shared.c,v 1.8 2006-08-24 20:03:23 cokeman1982 Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -570,6 +570,16 @@ void *Q_calloc (size_t n, size_t size) {
 
 	if (!(p = calloc(n, size)))
 		Sys_Error ("Q_calloc: Not enough memory free; check disk space\n");
+	return p;
+}
+
+void *Q_realloc (void *p, size_t newsize)
+{
+	if(!(p = realloc(p, newsize)))
+	{
+		Sys_Error ("Q_realloc: Not enough memory free; check disk space\n");
+	}
+	
 	return p;
 }
 
