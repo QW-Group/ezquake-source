@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.55 2006-08-24 20:28:42 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.56 2006-08-25 03:13:47 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -1698,199 +1698,407 @@ void SCR_HUD_DrawAmmo4(hud_t *hud)
     SCR_HUD_DrawAmmo(hud, 4, scale->value, style->value, digits->value, align->string);
 }
 
-// groups
-void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, char *picture, int tile, float alpha)
-{
-    int x, y;
+// ============================================================================0
+// Groups
+// ============================================================================0
 
-    clamp(width, 1, 99999);
+mpic_t hud_pic_group1 = {-1, -1, -1, -1, -1, -1, -1};
+mpic_t hud_pic_group2 = {-1, -1, -1, -1, -1, -1, -1};
+mpic_t hud_pic_group3 = {-1, -1, -1, -1, -1, -1, -1};
+mpic_t hud_pic_group4 = {-1, -1, -1, -1, -1, -1, -1};
+mpic_t hud_pic_group5 = {-1, -1, -1, -1, -1, -1, -1};
+mpic_t hud_pic_group6 = {-1, -1, -1, -1, -1, -1, -1};
+mpic_t hud_pic_group7 = {-1, -1, -1, -1, -1, -1, -1};
+mpic_t hud_pic_group8 = {-1, -1, -1, -1, -1, -1, -1};
+mpic_t hud_pic_group9 = {-1, -1, -1, -1, -1, -1, -1};
+
+void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_scalemode, float pic_alpha)
+{
+	#define HUD_GROUP_SCALEMODE_TILE		1
+	#define HUD_GROUP_SCALEMODE_STRETCH		2
+	#define HUD_GROUP_SCALEMODE_GROW		3
+	#define HUD_GROUP_SCALEMODE_CENTER		4
+
+	int x, y;
+	
+	clamp(width, 1, 99999);
     clamp(height, 1, 99999);
 
-    if (!HUD_PrepareDraw(hud, width, height, &x, &y))
+	// Grow the group if necessary.
+	if (pic_scalemode == HUD_GROUP_SCALEMODE_GROW 
+		&& pic != NULL && pic->height > 0)
+	{
+		width = max(pic->width, width);
+		height = max(pic->height, height);
+	}
+
+	if (!HUD_PrepareDraw(hud, width, height, &x, &y))
+	{
         return;
+	}
 
-    // additional drawing here will come..
-
-    // add picture
-    if (picture[0])
+    // Draw the picture if it's set.
+	if (pic != NULL && pic->height > 0)
     {
-        mpic_t *pic;
-        Hunk_Check();
-        pic = Draw_CachePicSafe(va("gfx/%s", picture), false);
-        Hunk_Check();
+        int pw, ph;
 
-/*        if (alpha < 1)
-            Draw_SetColor4f(1,1,1,alpha);*/
-
-        if (pic != NULL)
+		if (pic_scalemode == HUD_GROUP_SCALEMODE_TILE)
         {
-            int pw, ph;
-
-            if (tile)
+            // Tile
+            int cx = 0, cy = 0;
+            while (cy < height)
             {
-                // tiled
-                int cx = 0, cy = 0;
-                while (cy < height)
+                while (cx < width)
                 {
-                    while (cx < width)
-                    {
-                        pw = min(pic->width, width-cx);
-                        ph = min(pic->height, height-cy);
+                    pw = min(pic->width, width - cx);
+                    ph = min(pic->height, height - cy);
 
-                        if (pw >= pic->width  &&  ph >= pic->height)
-                            Draw_TransPic(x+cx , y+cy, pic);
-                        else
-                            Draw_TransSubPic(x+cx, y+cy, pic, 0, 0, pw, ph);
+                    if (pw >= pic->width  &&  ph >= pic->height)
+					{
+                        Draw_AlphaPic (x + cx , y + cy, pic, pic_alpha);
+					}
+                    else
+					{
+                        Draw_AlphaSubPic (x + cx, y + cy, pic, 0, 0, pw, ph, pic_alpha);
+					}
 
-                        cx += pic->width;
-                    }
-
-                    cx = 0;
-                    cy += pic->height;
+                    cx += pic->width;
                 }
-            }
-            else
-            {
-                // centered
-                pw = min(width, pic->width);
-                ph = min(height, pic->height);
 
-				//Draw_SAlphaPic (x + (width-pw)/2, y + (height-ph)/2, pic, alpha, 1); // scale);
-
-                if (pw >= pic->width  &&  ph >= pic->height)
-				{
-
-					Draw_TransPic(x + (width-pw)/2, y + (height-ph)/2, pic);
-				}
-                else
-				{
-					Draw_TransSubPic(x + (width-pw)/2, y + (height-ph)/2, pic, 0, 0, pw, ph);
-				}
+                cx = 0;
+                cy += pic->height;
             }
         }
-
-/*        if (alpha < 1)
-            Draw_RestoreColor();*/
+		else if (pic_scalemode == HUD_GROUP_SCALEMODE_STRETCH)
+		{
+			float scale_x = max(1.0, ((float)width / pic->width));
+			float scale_y = max(1.0, ((float)height / pic->height));
+			Draw_SAlphaSubPic2 (x, y, pic, 0, 0, pic->width, pic->height, scale_x, scale_y, pic_alpha);
+		}
+		else if (pic_scalemode == HUD_GROUP_SCALEMODE_CENTER)
+		{
+			Draw_AlphaSubPic (x + (width - pic->width) / 2, y + (height - pic->height) / 2, 
+				pic, 0, 0, min(width, pic->width), min(height, pic->height), pic_alpha);
+		}
+		else
+        {
+			// Normal. Draw in the top left corner.
+			Draw_AlphaSubPic (x, y, pic, 0, 0, min(width, pic->width), min(height, pic->height), pic_alpha);
+        }
     }
-
-    return;
 }
+
+qbool SCR_HUD_LoadGroupPic(mpic_t *hud_pic, char *newpic)
+{
+	mpic_t *temp_pic;
+
+	// If we have no pic name.
+	if(!newpic)
+	{
+		hud_pic->height = -1;
+		return false;
+	}
+
+	// Try loading the pic.
+	if (!(temp_pic = GL_LoadPicImage(va("gfx/%s", newpic), newpic, 0, 0, TEX_ALPHA)))
+	{
+		hud_pic->height = -1;
+		Com_Printf("Couldn't load picture %s for hud group.\n", newpic);
+		return false;
+	}
+
+	// Save the pic.
+	(*hud_pic) = *temp_pic;
+	return false;
+}
+
+qbool SCR_HUD_OnChangePic_Group1(cvar_t *var, char *newpic)
+{
+	return SCR_HUD_LoadGroupPic(&hud_pic_group1, newpic);
+}
+
+qbool SCR_HUD_OnChangePic_Group2(cvar_t *var, char *newpic)
+{
+	return SCR_HUD_LoadGroupPic(&hud_pic_group2, newpic);
+}
+
+qbool SCR_HUD_OnChangePic_Group3(cvar_t *var, char *newpic)
+{
+	return SCR_HUD_LoadGroupPic(&hud_pic_group3, newpic);
+}
+
+qbool SCR_HUD_OnChangePic_Group4(cvar_t *var, char *newpic)
+{
+	return SCR_HUD_LoadGroupPic(&hud_pic_group4, newpic);
+}
+
+qbool SCR_HUD_OnChangePic_Group5(cvar_t *var, char *newpic)
+{
+	return SCR_HUD_LoadGroupPic(&hud_pic_group5, newpic);
+}
+
+qbool SCR_HUD_OnChangePic_Group6(cvar_t *var, char *newpic)
+{
+	return SCR_HUD_LoadGroupPic(&hud_pic_group6, newpic);
+}
+
+qbool SCR_HUD_OnChangePic_Group7(cvar_t *var, char *newpic)
+{
+	return SCR_HUD_LoadGroupPic(&hud_pic_group7, newpic);
+}
+
+qbool SCR_HUD_OnChangePic_Group8(cvar_t *var, char *newpic)
+{
+	return SCR_HUD_LoadGroupPic(&hud_pic_group8, newpic);
+}
+
+qbool SCR_HUD_OnChangePic_Group9(cvar_t *var, char *newpic)
+{
+	return SCR_HUD_LoadGroupPic(&hud_pic_group9, newpic);
+}
+
 void SCR_HUD_Group1(hud_t *hud)
 {
-    static cvar_t *width = NULL, *height, *picture, *tile, *alpha;
+    static cvar_t *width = NULL, 
+		*height, 
+		*picture,
+		*pic_alpha,
+		*pic_scalemode, 
+		*alpha;
+
     if (width == NULL)  // first time called
     {
-        width  = HUD_FindVar(hud, "width");
-        height = HUD_FindVar(hud, "height");
-        picture = HUD_FindVar(hud, "picture");
-        tile = HUD_FindVar(hud, "tile");
-        alpha = HUD_FindVar(hud, "alpha");
+        width				= HUD_FindVar(hud, "width");
+        height				= HUD_FindVar(hud, "height");
+        picture				= HUD_FindVar(hud, "picture");
+		pic_alpha			= HUD_FindVar(hud, "pic_alpha");
+        pic_scalemode		= HUD_FindVar(hud, "pic_scalemode");
+
+		picture->OnChange	= SCR_HUD_OnChangePic_Group1;
     }
-    SCR_HUD_DrawGroup(hud, width->value, height->value, picture->string, tile->value, alpha->value);
+
+	SCR_HUD_DrawGroup(hud, 
+		width->value, 
+		height->value, 
+		&hud_pic_group1, 
+		pic_scalemode->value, 
+		pic_alpha->value);
 }
 void SCR_HUD_Group2(hud_t *hud)
 {
-    static cvar_t *width = NULL, *height, *picture, *tile, *alpha;
+    static cvar_t *width = NULL, 
+		*height, 
+		*picture,
+		*pic_alpha,
+		*pic_scalemode, 
+		*alpha;
+
     if (width == NULL)  // first time called
     {
-        width  = HUD_FindVar(hud, "width");
-        height = HUD_FindVar(hud, "height");
-        picture = HUD_FindVar(hud, "picture");
-        tile = HUD_FindVar(hud, "tile");
-        alpha = HUD_FindVar(hud, "alpha");
+        width			= HUD_FindVar(hud, "width");
+        height			= HUD_FindVar(hud, "height");
+        picture			= HUD_FindVar(hud, "picture");
+		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
+        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+
+		picture->OnChange	= SCR_HUD_OnChangePic_Group2;
     }
-    SCR_HUD_DrawGroup(hud, width->value, height->value, picture->string, tile->value, alpha->value);
+
+	SCR_HUD_DrawGroup(hud, 
+		width->value, 
+		height->value, 
+		&hud_pic_group2, 
+		pic_scalemode->value, 
+		pic_alpha->value);
 }
 void SCR_HUD_Group3(hud_t *hud)
 {
-    static cvar_t *width = NULL, *height, *picture, *tile, *alpha;
+    static cvar_t *width = NULL, 
+		*height, 
+		*picture,
+		*pic_alpha,
+		*pic_scalemode, 
+		*alpha;
+
     if (width == NULL)  // first time called
     {
-        width  = HUD_FindVar(hud, "width");
-        height = HUD_FindVar(hud, "height");
-        picture = HUD_FindVar(hud, "picture");
-        tile = HUD_FindVar(hud, "tile");
-        alpha = HUD_FindVar(hud, "alpha");
+        width			= HUD_FindVar(hud, "width");
+        height			= HUD_FindVar(hud, "height");
+        picture			= HUD_FindVar(hud, "picture");
+		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
+        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+
+		picture->OnChange	= SCR_HUD_OnChangePic_Group3;
     }
-    SCR_HUD_DrawGroup(hud, width->value, height->value, picture->string, tile->value, alpha->value);
+
+	SCR_HUD_DrawGroup(hud, 
+		width->value, 
+		height->value, 
+		&hud_pic_group3, 
+		pic_scalemode->value, 
+		pic_alpha->value);
 }
 void SCR_HUD_Group4(hud_t *hud)
 {
-    static cvar_t *width = NULL, *height, *picture, *tile, *alpha;
+    static cvar_t *width = NULL, 
+		*height, 
+		*picture,
+		*pic_alpha,
+		*pic_scalemode, 
+		*alpha;
+
     if (width == NULL)  // first time called
     {
-        width  = HUD_FindVar(hud, "width");
-        height = HUD_FindVar(hud, "height");
-        picture = HUD_FindVar(hud, "picture");
-        tile = HUD_FindVar(hud, "tile");
-        alpha = HUD_FindVar(hud, "alpha");
+        width			= HUD_FindVar(hud, "width");
+        height			= HUD_FindVar(hud, "height");
+        picture			= HUD_FindVar(hud, "picture");
+		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
+        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+
+		picture->OnChange	= SCR_HUD_OnChangePic_Group4;
     }
-    SCR_HUD_DrawGroup(hud, width->value, height->value, picture->string, tile->value, alpha->value);
+
+	SCR_HUD_DrawGroup(hud, 
+		width->value, 
+		height->value, 
+		&hud_pic_group4, 
+		pic_scalemode->value, 
+		pic_alpha->value);
 }
 void SCR_HUD_Group5(hud_t *hud)
 {
-    static cvar_t *width = NULL, *height, *picture, *tile, *alpha;
+    static cvar_t *width = NULL, 
+		*height, 
+		*picture,
+		*pic_alpha,
+		*pic_scalemode, 
+		*alpha;
+
     if (width == NULL)  // first time called
     {
-        width  = HUD_FindVar(hud, "width");
-        height = HUD_FindVar(hud, "height");
-        picture = HUD_FindVar(hud, "picture");
-        tile = HUD_FindVar(hud, "tile");
-        alpha = HUD_FindVar(hud, "alpha");
+        width			= HUD_FindVar(hud, "width");
+        height			= HUD_FindVar(hud, "height");
+        picture			= HUD_FindVar(hud, "picture");
+		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
+        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+
+		picture->OnChange	= SCR_HUD_OnChangePic_Group5;
     }
-    SCR_HUD_DrawGroup(hud, width->value, height->value, picture->string, tile->value, alpha->value);
+
+	SCR_HUD_DrawGroup(hud, 
+		width->value, 
+		height->value, 
+		&hud_pic_group5, 
+		pic_scalemode->value, 
+		pic_alpha->value);
 }
 void SCR_HUD_Group6(hud_t *hud)
 {
-    static cvar_t *width = NULL, *height, *picture, *tile, *alpha;
+    static cvar_t *width = NULL, 
+		*height, 
+		*picture,
+		*pic_alpha,
+		*pic_scalemode, 
+		*alpha;
+
     if (width == NULL)  // first time called
     {
-        width  = HUD_FindVar(hud, "width");
-        height = HUD_FindVar(hud, "height");
-        picture = HUD_FindVar(hud, "picture");
-        tile = HUD_FindVar(hud, "tile");
-        alpha = HUD_FindVar(hud, "alpha");
+        width			= HUD_FindVar(hud, "width");
+        height			= HUD_FindVar(hud, "height");
+        picture			= HUD_FindVar(hud, "picture");
+		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
+        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+
+		picture->OnChange	= SCR_HUD_OnChangePic_Group6;
     }
-    SCR_HUD_DrawGroup(hud, width->value, height->value, picture->string, tile->value, alpha->value);
+
+	SCR_HUD_DrawGroup(hud, 
+		width->value, 
+		height->value, 
+		&hud_pic_group6, 
+		pic_scalemode->value, 
+		pic_alpha->value);
 }
 void SCR_HUD_Group7(hud_t *hud)
 {
-    static cvar_t *width = NULL, *height, *picture, *tile, *alpha;
+    static cvar_t *width = NULL, 
+		*height, 
+		*picture,
+		*pic_alpha,
+		*pic_scalemode, 
+		*alpha;
+
     if (width == NULL)  // first time called
     {
-        width  = HUD_FindVar(hud, "width");
-        height = HUD_FindVar(hud, "height");
-        picture = HUD_FindVar(hud, "picture");
-        tile = HUD_FindVar(hud, "tile");
-        alpha = HUD_FindVar(hud, "alpha");
+        width			= HUD_FindVar(hud, "width");
+        height			= HUD_FindVar(hud, "height");
+        picture			= HUD_FindVar(hud, "picture");
+		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
+        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+
+		picture->OnChange	= SCR_HUD_OnChangePic_Group7;
     }
-    SCR_HUD_DrawGroup(hud, width->value, height->value, picture->string, tile->value, alpha->value);
+
+	SCR_HUD_DrawGroup(hud, 
+		width->value, 
+		height->value, 
+		&hud_pic_group7, 
+		pic_scalemode->value, 
+		pic_alpha->value);
 }
 void SCR_HUD_Group8(hud_t *hud)
 {
-    static cvar_t *width = NULL, *height, *picture, *tile, *alpha;
+    static cvar_t *width = NULL, 
+		*height, 
+		*picture,
+		*pic_alpha,
+		*pic_scalemode, 
+		*alpha;
+
     if (width == NULL)  // first time called
     {
-        width  = HUD_FindVar(hud, "width");
-        height = HUD_FindVar(hud, "height");
-        picture = HUD_FindVar(hud, "picture");
-        tile = HUD_FindVar(hud, "tile");
-        alpha = HUD_FindVar(hud, "alpha");
+        width			= HUD_FindVar(hud, "width");
+        height			= HUD_FindVar(hud, "height");
+        picture			= HUD_FindVar(hud, "picture");
+		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
+        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+
+		picture->OnChange	= SCR_HUD_OnChangePic_Group8;
     }
-    SCR_HUD_DrawGroup(hud, width->value, height->value, picture->string, tile->value, alpha->value);
+
+	SCR_HUD_DrawGroup(hud, 
+		width->value, 
+		height->value, 
+		&hud_pic_group8, 
+		pic_scalemode->value, 
+		pic_alpha->value);
 }
 void SCR_HUD_Group9(hud_t *hud)
 {
-    static cvar_t *width = NULL, *height, *picture, *tile, *alpha;
+    static cvar_t *width = NULL, 
+		*height, 
+		*picture,
+		*pic_alpha,
+		*pic_scalemode, 
+		*alpha;
+
     if (width == NULL)  // first time called
     {
-        width  = HUD_FindVar(hud, "width");
-        height = HUD_FindVar(hud, "height");
-        picture = HUD_FindVar(hud, "picture");
-        tile = HUD_FindVar(hud, "tile");
-        alpha = HUD_FindVar(hud, "alpha");
+        width			= HUD_FindVar(hud, "width");
+        height			= HUD_FindVar(hud, "height");
+        picture			= HUD_FindVar(hud, "picture");
+		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
+        pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
+
+		picture->OnChange	= SCR_HUD_OnChangePic_Group9;
     }
-    SCR_HUD_DrawGroup(hud, width->value, height->value, picture->string, tile->value, alpha->value);
+
+	SCR_HUD_DrawGroup(hud, 
+		width->value, 
+		height->value, 
+		&hud_pic_group9, 
+		pic_scalemode->value, 
+		pic_alpha->value);
 }
 
 // player sorting
@@ -3367,30 +3575,18 @@ void HUD_NewMap()
 	radar_pic_found = false;
 	conversion_formula_found = false;
 
-	// Don't show during normal games.
-	/*if(!(cls.demoplayback || cl.spectator))
-	{
-		return;
-	}*/
-
 	if (FS_FOpenFile (va(radar_filename, mapname.string), &f) != -1)
 	{
-		mpic_t *temp;
-
-		temp = NULL;
+		mpic_t *temp = NULL;
 
 		// Load the map picture.
-		// BUG: When PAUSE is pressed or the menu is loaded (basically whenever a new image is loaded
-		// the radar_pic will be overwritten with the newly loaded picture because a pointer still
-		// points at the radar picture in GL_LoadPicImage since it was loaded.
-		// (Fixed with what's below?)
 		temp = GL_LoadPicImage(va(radar_filename, mapname.string), mapname.string, 0, 0, TEX_ALPHA);
 
 		// Make a copy of the returned structure, otherwise it will be overwritten
 		// the next time an image is loaded.
 		if(temp != NULL)
 		{
-			radar_pic = (mpic_t *)Q_malloc(sizeof(mpic_t));
+			radar_pic			= (mpic_t *)Q_malloc(sizeof(mpic_t));
 			radar_pic->texnum	= temp->texnum;
 			radar_pic->height	= temp->height;
 			radar_pic->sh		= temp->sh;
@@ -5347,8 +5543,8 @@ void CommonDraw_Init(void)
         "width", "64",
         "height", "64",
         "picture", "",
-        "tile", "0",
-        "alpha", "1",
+        "pic_alpha", "1.0",
+        "pic_scalemode", "0",
         NULL);
     HUD_Register("group2", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group2,
@@ -5357,8 +5553,8 @@ void CommonDraw_Init(void)
         "width", "64",
         "height", "64",
         "picture", "",
-        "tile", "0",
-        "alpha", "1",
+        "pic_alpha", "1.0",
+        "pic_scalemode", "0",
         NULL);
     HUD_Register("group3", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group3,
@@ -5367,8 +5563,8 @@ void CommonDraw_Init(void)
         "width", "64",
         "height", "64",
         "picture", "",
-        "tile", "0",
-        "alpha", "1",
+        "pic_alpha", "1.0",
+        "pic_scalemode", "0",
         NULL);
     HUD_Register("group4", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group4,
@@ -5377,8 +5573,8 @@ void CommonDraw_Init(void)
         "width", "64",
         "height", "64",
         "picture", "",
-        "tile", "0",
-        "alpha", "1",
+        "pic_alpha", "1.0",
+        "pic_scalemode", "0",
         NULL);
     HUD_Register("group5", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group5,
@@ -5387,8 +5583,8 @@ void CommonDraw_Init(void)
         "width", "64",
         "height", "64",
         "picture", "",
-        "tile", "0",
-        "alpha", "1",
+		"pic_alpha", "1.0",
+        "pic_scalemode", "0",
         NULL);
     HUD_Register("group6", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group6,
@@ -5397,8 +5593,8 @@ void CommonDraw_Init(void)
         "width", "64",
         "height", "64",
         "picture", "",
-        "tile", "0",
-        "alpha", "1",
+		"pic_alpha", "1.0",
+        "pic_scalemode", "0",
         NULL);
     HUD_Register("group7", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group7,
@@ -5407,8 +5603,8 @@ void CommonDraw_Init(void)
         "width", "64",
         "height", "64",
         "picture", "",
-        "tile", "0",
-        "alpha", "1",
+		"pic_alpha", "1.0",
+        "pic_scalemode", "0",
         NULL);
     HUD_Register("group8", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group8,
@@ -5417,8 +5613,8 @@ void CommonDraw_Init(void)
         "width", "64",
         "height", "64",
         "picture", "",
-        "tile", "0",
-        "alpha", "1",
+		"pic_alpha", "1.0",
+        "pic_scalemode", "0",
         NULL);
     HUD_Register("group9", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group9,
@@ -5427,8 +5623,8 @@ void CommonDraw_Init(void)
         "width", "64",
         "height", "64",
         "picture", "",
-        "tile", "0",
-        "alpha", "1",
+		"pic_alpha", "1.0",
+        "pic_scalemode", "0",
         NULL);
 
     HUD_Register("frags", NULL, "Show list of player frags in short form.",

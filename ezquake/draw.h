@@ -88,3 +88,7 @@ void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thick
 void Draw_Line (int x_start, int y_start, int x_end, int y_end, float thickness, int c);
 void Draw_AlphaOutline (int x, int y, int w, int h, int c, float thickness, float alpha);
 void Draw_Outline (int x, int y, int w, int h, int c, float thickness);
+void Draw_AlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float alpha);
+void Draw_SAlphaSubPic (int x, int y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale, float alpha);
+void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale_x, float scale_y, float alpha);
+void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
