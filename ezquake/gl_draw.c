@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.26 2006-08-25 03:13:47 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.27 2006-08-25 21:32:18 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1375,8 +1375,10 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width
 	}
 	
 	// Don't tile
+	/*
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	*/
 	
     GL_Bind (gl->texnum);	
     glBegin (GL_QUADS);
