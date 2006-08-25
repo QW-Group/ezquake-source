@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.56 2006-08-25 03:13:47 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.57 2006-08-25 23:43:00 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -1744,7 +1744,7 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
 
 		if (pic_scalemode == HUD_GROUP_SCALEMODE_TILE)
         {
-            // Tile
+            // Tile.
             int cx = 0, cy = 0;
             while (cy < height)
             {
@@ -4939,6 +4939,12 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 				Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, player_size*player_z_relative, 1.0, 0, 1.0);
 			}
 
+			// Draw a circle around the tracked player.
+			if (info->userid == cl.players[Cam_TrackNum()].userid)
+			{
+				Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, player_size * player_z_relative * 2.0, 1.0, 251, 1.0);
+			}
+
 			// Draw the players name.
 			if(show_names)
 			{
@@ -4958,7 +4964,15 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 				name_x = max(name_x, x);
 
 				// Draw the name.
-				Draw_String (name_x, name_y, info->name);
+				if (info->userid == cl.players[Cam_TrackNum()].userid)
+				{
+					// Draw the tracked players name in red.
+					Draw_ColoredString (name_x, name_y, va("&cf00%s", info->name), 0);
+				}
+				else
+				{					
+					Draw_String (name_x, name_y, info->name);
+				}
 			}
 
 			// Show if a person lost an RL-pack.
