@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.86 2006-08-21 03:53:48 qqshka Exp $
+	$Id: cl_main.c,v 1.87 2006-08-26 21:13:01 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -196,10 +196,10 @@ char *CL_Macro_Demoplayback(void) {
 }
 
 char *CL_Macro_Demotime(void)
-{
+{   // intended for scripted & timed camera movement
 	static char macrobuf[16];
 
-	snprintf(macrobuf, sizeof(macrobuf), "%d", (int) cls.demotime);
+	snprintf(macrobuf, sizeof(macrobuf), "%f", (float) cls.demotime);
 	return macrobuf;
 }
 
