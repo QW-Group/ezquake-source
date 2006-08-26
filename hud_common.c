@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.58 2006-08-26 22:03:05 disconn3ct Exp $
+	$Id: hud_common.c,v 1.59 2006-08-26 22:05:18 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -1755,11 +1755,15 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
 
                     if (pw >= pic->width  &&  ph >= pic->height)
 					{
+#ifdef _GLQUAKE
                         Draw_AlphaPic (x + cx , y + cy, pic, pic_alpha);
+#endif
 					}
                     else
 					{
+#ifdef _GLQUAKE
                         Draw_AlphaSubPic (x + cx, y + cy, pic, 0, 0, pw, ph, pic_alpha);
+#endif
 					}
 
                     cx += pic->width;
@@ -1773,17 +1777,23 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
 		{
 			float scale_x = max(1.0, ((float)width / pic->width));
 			float scale_y = max(1.0, ((float)height / pic->height));
+#ifdef _GLQUAKE
 			Draw_SAlphaSubPic2 (x, y, pic, 0, 0, pic->width, pic->height, scale_x, scale_y, pic_alpha);
+#endif
 		}
 		else if (pic_scalemode == HUD_GROUP_SCALEMODE_CENTER)
 		{
+#ifdef _GLQUAKE
 			Draw_AlphaSubPic (x + (width - pic->width) / 2, y + (height - pic->height) / 2, 
 				pic, 0, 0, min(width, pic->width), min(height, pic->height), pic_alpha);
+#endif
 		}
 		else
         {
+#ifdef _GLQUAKE
 			// Normal. Draw in the top left corner.
 			Draw_AlphaSubPic (x, y, pic, 0, 0, min(width, pic->width), min(height, pic->height), pic_alpha);
+#endif
         }
     }
 }
