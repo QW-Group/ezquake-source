@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.54 2006-08-24 20:10:34 cokeman1982 Exp $
+	$Id: cl_parse.c,v 1.55 2006-08-26 18:31:49 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1741,7 +1741,10 @@ char* CL_ColorizeFragMessage(char *source, cfrags_format *cff)
 
 //for CL_ParsePrint
 static void FlushString (char *s, int level, qbool team, int offset) {
-	extern cvar_t con_highlight, con_highlight_mark, name, scr_coloredText;
+	extern cvar_t con_highlight, con_highlight_mark, name;
+#ifdef GLQUAKE
+	extern cvar_t scr_coloredText;
+#endif
 	char white_s[4096];
 	char *mark, *text;
 	char *f = strstr(s, name.string);
