@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.57 2006-08-25 23:43:00 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.58 2006-08-26 22:03:05 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -1790,6 +1790,7 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
 
 qbool SCR_HUD_LoadGroupPic(mpic_t *hud_pic, char *newpic)
 {
+#ifdef _GLQUAKE
 	mpic_t *temp_pic;
 
 	// If we have no pic name.
@@ -1809,6 +1810,7 @@ qbool SCR_HUD_LoadGroupPic(mpic_t *hud_pic, char *newpic)
 
 	// Save the pic.
 	(*hud_pic) = *temp_pic;
+#endif
 	return false;
 }
 
