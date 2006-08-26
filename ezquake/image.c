@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: image.c,v 1.25 2006-08-15 12:08:26 oldmanuk Exp $
+	$Id: image.c,v 1.26 2006-08-26 17:20:42 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -812,6 +812,7 @@ static void PNG_IO_user_flush_data(png_structp png_ptr) {
 	fflush(f);
 }
 
+#if 0
 png_textp Image_LoadPNGComments(FILE *fin, char *filename, int *n_textcount)
 {
 	byte header[8];
@@ -902,6 +903,7 @@ png_textp Image_LoadPNGComments(FILE *fin, char *filename, int *n_textcount)
 
 	return png_text_ptr_return;
 }
+#endif
 
 png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matchheight)
 {
