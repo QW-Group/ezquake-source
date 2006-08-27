@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: image.c,v 1.27 2006-08-27 16:59:13 cokeman1982 Exp $
+	$Id: image.c,v 1.28 2006-08-27 17:23:50 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -810,97 +810,6 @@ static void PNG_IO_user_write_data(png_structp png_ptr, png_bytep data, png_size
 static void PNG_IO_user_flush_data(png_structp png_ptr) {
 	FILE *f = (FILE *) png_get_io_ptr(png_ptr);
 	fflush(f);
-}
-
-png_textp Image_LoadPNGComments(FILE *fin, char *filename, int *n_textcount)
-{
-	byte header[8];
-	png_structp png_ptr;
-	png_infop pnginfo;
-	png_infop pnginfo_end;
-	png_textp png_text_ptr_start;
-	png_textp png_text_ptr_end;
-	png_textp png_text_ptr_return;
-	int n_textcount_start = 0;
-	int n_textcount_end = 0;
-
-	*n_textcount = -1;
-
-	if (!fin && FS_FOpenFile (filename, &fin) == -1)
-	{
-		return NULL;
-	}
-
-	fread(header, 1, 8, fin);
-
-	if (png_sig_cmp(header, 0, 8)) 
-	{
-		Com_DPrintf ("Invalid PNG image %s\n", COM_SkipPath(filename));
-		fclose(fin);
-		return NULL;
-	}
-
-	if (!(png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) 
-	{
-		fclose(fin);
-		return NULL;
-	}
-
-	if (!(pnginfo = png_create_info_struct(png_ptr))) 
-	{
-		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
-		fclose(fin);
-		return NULL;
-	}
-
-	if (setjmp(png_ptr->jmpbuf)) 
-	{
-		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
-		fclose(fin);
-		return NULL;
-	}
-
-	// Read chunks before the image data.
-	png_set_read_fn(png_ptr, fin, PNG_IO_user_read_data);
-	png_set_sig_bytes(png_ptr, 8);
-	png_read_info(png_ptr, pnginfo);
-
-	*n_textcount = 0;
-
-	// Try to get the text chunks.
-	if(!png_get_text(png_ptr, pnginfo, &png_text_ptr_start, &n_textcount_start))
-	{
-		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
-		fclose(fin);
-		return NULL;
-	}
-
-	// Read the chunks after the image data.
-	png_read_end(png_ptr, pnginfo_end);
-
-	// Try to get the text chunks.
-	if(!png_get_text(png_ptr, pnginfo, &png_text_ptr_end, &n_textcount_end))
-	{
-		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
-		fclose(fin);
-		return NULL;
-	}
-
-	// Get total number of chunks.
-	*n_textcount = n_textcount_start + n_textcount_end;
-
-	// Make sure we have something left to return after freeing
-	//if(png_text_ptr != NULL)
-	{
-		//png_text_ptr_return = (png_textp)Q_malloc(sizeof(png_text) * (*n_textcount));
-		//memcpy(png_text_ptr_return, png_text_ptr, sizeof(png_text) * (*n_textcount));
-	}
-
-	// Free memory and close the file.
-	png_destroy_read_struct(&png_ptr, &pnginfo, &pnginfo_end);
-	fclose(fin);
-
-	return png_text_ptr_return;
 }
 
 png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matchheight)
