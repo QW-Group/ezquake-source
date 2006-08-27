@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: movie.c,v 1.16 2006-08-24 20:30:39 cokeman1982 Exp $
+	$Id: movie.c,v 1.17 2006-08-27 13:18:26 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -83,9 +83,9 @@ qbool Movie_IsCapturing(void) {
 }
 
 static void Movie_Start(double _time) {
-
+#ifdef GLQUAKE
 	extern cvar_t scr_sshot_format;
-
+#endif
 #ifndef _WIN32
 	time_t t;
 	t = time(NULL);
@@ -95,7 +95,7 @@ static void Movie_Start(double _time) {
 #endif
 	movie_is_capturing = true;
 #ifdef _WIN32
-	movie_is_avi = !!avifile;	//joe: capturing to avi
+	movie_is_avi = !!avifile; //joe: capturing to avi
 #endif
 	movie_len = _time;
 	movie_start_time = cls.realtime;
@@ -120,7 +120,7 @@ static void Movie_Start(double _time) {
 void Movie_Stop (void) {
 	movie_is_capturing = false;
 #ifdef _WIN32
-	if (movie_is_avi) {	//joe: capturing to avi
+	if (movie_is_avi) { //joe: capturing to avi
 		Capture_Close ();
 		fclose (avifile);
 		avifile = NULL;
