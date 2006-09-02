@@ -147,7 +147,7 @@ void StatsGrid_InitHoldItems()
 	int i;
 	int ents_count = 0;
 
-	// Used to keep count of how many of the different
+	// This is used to keep count of how many of the different
 	// types of items that exist on the map, so that they
 	// can be named "RL" "RL2" and so on.
 	int pent_count	= 0;
@@ -347,15 +347,15 @@ void StatsGrid_ValidateTeamColors()
 		&& stats_grid->teams[STATS_TEAM1].color != player_color)
 	{
 		int old_team1_color = stats_grid->teams[STATS_TEAM1].color;
-		stats_grid->teams[STATS_TEAM1].color = player_color;
-		stats_grid->teams[STATS_TEAM2].color = old_team1_color;
+		stats_grid->teams[STATS_TEAM1].color = stats_important_ents->teams[STATS_TEAM1].color = player_color;
+		stats_grid->teams[STATS_TEAM2].color = stats_important_ents->teams[STATS_TEAM2].color = old_team1_color;
 	}
 	else if (!strncmp(stats_grid->teams[STATS_TEAM2].name, player_info->team, sizeof(stats_grid->teams[STATS_TEAM2].name))
 		&& stats_grid->teams[STATS_TEAM2].color != player_color)
 	{
 		int old_team2_color = stats_grid->teams[STATS_TEAM2].color;
-		stats_grid->teams[STATS_TEAM2].color = player_color;
-		stats_grid->teams[STATS_TEAM1].color = old_team2_color;
+		stats_grid->teams[STATS_TEAM2].color = stats_important_ents->teams[STATS_TEAM2].color = player_color;
+		stats_grid->teams[STATS_TEAM1].color = stats_important_ents->teams[STATS_TEAM1].color = old_team2_color;
 	}
 }
 
