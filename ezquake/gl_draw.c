@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.29 2006-09-02 01:51:58 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.30 2006-09-02 18:26:21 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -805,7 +805,6 @@ void Draw_ColoredString (int x, int y, char *text, int red) {
 	if (scr_coloredText.value)
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 }
-
 
 void Draw_Crosshair (void) {
 	float x = 0.0, y = 0.0, ofs1, ofs2, sh, th, sl, tl;

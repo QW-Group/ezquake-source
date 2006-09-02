@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.61 2006-09-02 01:51:58 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.62 2006-09-02 18:26:21 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -4029,6 +4029,44 @@ qbool HUD_RegExpMatch(const char *regexp, const char *matchstring)
 	return false;
 }
 
+#define HUD_REGEXP_OFFSET_COUNT	20
+
+qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, char **resultstring, int *resultlength, int group)
+{
+	int offsets[HUD_REGEXP_OFFSET_COUNT];
+	pcre *re;
+	const char *error;
+	int erroffset;
+	int match = 0;
+
+	re = pcre_compile(
+			regexp,				// The pattern.
+			PCRE_CASELESS,		// Case insensitive.
+			&error,				// Error message.
+			&erroffset,			// Error offset.
+			NULL);				// use default character tables.
+
+	if(error)
+	{
+		return false;
+	}
+
+	if((match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0)
+	{
+		int substring_length = 0;
+		substring_length = pcre_get_substring (matchstring, offsets, match, group, resultstring);
+		
+		if (resultlength != NULL)
+		{
+			(*resultlength) = substring_length;
+		}
+
+		return (substring_length != PCRE_ERROR_NOSUBSTRING && substring_length != PCRE_ERROR_NOMEMORY);
+	}
+
+	return false;
+}
+
 qbool TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s)
 {
 	// Parse the item filter.
@@ -4396,54 +4434,129 @@ qbool Radar_OnChangeOtherFilter(cvar_t *var, char *newval)
 	return false;
 }
 
-qbool radar_highlight_color_valid = false;
+#define HUD_RADAR_HIGHLIGHT_RED						"255 0 0"
+#define HUD_RADAR_HIGHLIGHT_GREEN					"0 255 0"
+#define HUD_RADAR_HIGHLIGHT_BLUE					"0 0 255"
+#define HUD_RADAR_HIGHLIGHT_BLACK					"0 0 0"
+#define HUD_RADAR_HIGHLIGHT_WHITE					"255 255 255"
+#define HUD_RADAR_HIGHLIGHT_YELLOW					"255 255 0"
+#define HUD_RADAR_HIGHLIGHT_PINK					"255 0 255"
+#define HUD_RADAR_HIGHLIGHT_REGEX					"^(\\d{1,3})\\s+(\\d{1,3})\\s+(\\d{1,3})(\\s+(\\d\\.\\d+))?$"
+#define HUD_RADAR_HIGHLIGHT_DEFAULT_TRANSPARENCY	0.3
+
+float hud_radar_highlight_color[4] = {1.0, 1.0, 0.0, HUD_RADAR_HIGHLIGHT_DEFAULT_TRANSPARENCY};
 
 qbool Radar_OnChangeHighlightColor(cvar_t *var, char *newval)
 {
-	radar_highlight_color_valid = false;
+	qbool radar_highlight_color_valid = false;
 
+	// Parse the new color value. It can either be a clear text color name
+	// or it can be in the format "R G B A" or "R G B".
 	if(HUD_RegExpMatch("red", newval))
 	{
-		strncpy(var->string, "f00", 4 * sizeof(char));
+		strncpy(var->string, HUD_RADAR_HIGHLIGHT_RED, (strlen(HUD_RADAR_HIGHLIGHT_RED) + 1) * sizeof(char));
 		radar_highlight_color_valid = true;
 	}
 	else if(HUD_RegExpMatch("green", newval))
 	{
-		strncpy(var->string, "0f0", 4 * sizeof(char));
+		strncpy(var->string, HUD_RADAR_HIGHLIGHT_GREEN, (strlen(HUD_RADAR_HIGHLIGHT_GREEN) + 1) * sizeof(char));
 		radar_highlight_color_valid = true;
 	}
 	else if(HUD_RegExpMatch("blue", newval))
 	{
-		strncpy(var->string, "00f", 4 * sizeof(char));
+		strncpy(var->string, HUD_RADAR_HIGHLIGHT_BLUE, (strlen(HUD_RADAR_HIGHLIGHT_BLUE) + 1) * sizeof(char));
 		radar_highlight_color_valid = true;
 	}
 	else if(HUD_RegExpMatch("black", newval))
 	{
-		strncpy(var->string, "000", 4 * sizeof(char));
+		strncpy(var->string, HUD_RADAR_HIGHLIGHT_BLACK, (strlen(HUD_RADAR_HIGHLIGHT_BLACK) + 1) * sizeof(char));
 		radar_highlight_color_valid = true;
 	}
 	else if(HUD_RegExpMatch("yellow", newval))
 	{
-		strncpy(var->string, "ff0", 4 * sizeof(char));
+		strncpy(var->string, HUD_RADAR_HIGHLIGHT_YELLOW, (strlen(HUD_RADAR_HIGHLIGHT_YELLOW) + 1) * sizeof(char));
 		radar_highlight_color_valid = true;
 	}
 	else if(HUD_RegExpMatch("pink", newval))
 	{
-		strncpy(var->string, "f0f", 4 * sizeof(char));
+		strncpy(var->string, HUD_RADAR_HIGHLIGHT_PINK, (strlen(HUD_RADAR_HIGHLIGHT_PINK) + 1) * sizeof(char));
 		radar_highlight_color_valid = true;
 	}
 	else if(HUD_RegExpMatch("white", newval))
 	{
-		strncpy(var->string, "fff", 4 * sizeof(char));
+		strncpy(var->string, HUD_RADAR_HIGHLIGHT_WHITE, (strlen(HUD_RADAR_HIGHLIGHT_WHITE) + 1) * sizeof(char));
 		radar_highlight_color_valid = true;
 	}
 	else
 	{
-		radar_highlight_color_valid = HUD_RegExpMatch("^([a-f0-9]{3})$", newval);
-		return false;
+		// Match colors in "R G B A"-format
+		radar_highlight_color_valid = HUD_RegExpMatch(HUD_RADAR_HIGHLIGHT_REGEX, newval);
+		strncpy(var->string, newval, (strlen(newval) + 1) * sizeof(char));
 	}
 
-	return radar_highlight_color_valid;
+	// Get the RGB values.
+	if (radar_highlight_color_valid)
+	{		
+		char *r_result = NULL, *g_result = NULL, *b_result = NULL, *a_result = NULL;
+		
+		// R.
+		if (HUD_RegExpGetGroup (HUD_RADAR_HIGHLIGHT_REGEX, var->string, &r_result, NULL, 1))
+		{
+			hud_radar_highlight_color[0] = min(Q_atoi(r_result), 255) / 255.0;
+		}
+
+		// G.
+		if (HUD_RegExpGetGroup (HUD_RADAR_HIGHLIGHT_REGEX, var->string, &g_result, NULL, 2))
+		{
+			hud_radar_highlight_color[1] = min(Q_atoi(g_result), 255) / 255.0;
+		}
+
+		// B.
+		if (HUD_RegExpGetGroup (HUD_RADAR_HIGHLIGHT_REGEX, var->string, &b_result, NULL, 3))
+		{
+			hud_radar_highlight_color[2] = min(Q_atoi(b_result), 255) / 255.0;
+		}
+
+		// Alpha.
+		if (HUD_RegExpGetGroup (HUD_RADAR_HIGHLIGHT_REGEX, var->string, &a_result, NULL, 5)) 
+		{
+			hud_radar_highlight_color[3] = min(Q_atof(a_result), 1.0);
+		}
+		else
+		{
+			// If no opacity was specified use the default.
+			hud_radar_highlight_color[3] = HUD_RADAR_HIGHLIGHT_DEFAULT_TRANSPARENCY;
+		}
+
+		// Free any allocated memory.
+		if(r_result != NULL)
+		{
+			Q_free(r_result);
+		}
+
+		if(g_result != NULL)
+		{
+			Q_free(g_result);
+		}
+
+		if(b_result != NULL)
+		{
+			Q_free(b_result);
+		}
+	}
+	else
+	{
+		// Default to yellow.
+		hud_radar_highlight_color[0] = 1.0;
+		hud_radar_highlight_color[1] = 1.0;
+		hud_radar_highlight_color[2] = 0.0;
+		hud_radar_highlight_color[3] = HUD_RADAR_HIGHLIGHT_DEFAULT_TRANSPARENCY;
+
+		strncpy(var->string, HUD_RADAR_HIGHLIGHT_YELLOW, (strlen(HUD_RADAR_HIGHLIGHT_YELLOW) + 1) * sizeof(char));
+		radar_highlight_color_valid = true;
+	}
+
+	return true;
 }
 
 void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_hold_areas)
@@ -4966,91 +5079,87 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 			}
 
 			#define HUD_RADAR_HIGHLIGHT_NONE			0
-			#define HUD_RADAR_HIGHLIGHT_OUTLINE			1
-			#define HUD_RADAR_HIGHLIGHT_FIXED_OUTLINE	2
-			#define HUD_RADAR_HIGHLIGHT_CIRCLE			3
-			#define HUD_RADAR_HIGHLIGHT_FIXED_CIRCLE	4
-			#define HUD_RADAR_HIGHLIGHT_ARROW_BOTTOM	5
-			#define HUD_RADAR_HIGHLIGHT_ARROW_CENTER	6
-			#define HUD_RADAR_HIGHLIGHT_ARROW_TOP		7 
-			#define HUD_RADAR_HIGHLIGHT_CROSS_CORNERS	8
+			#define HUD_RADAR_HIGHLIGHT_TEXT_ONLY		1
+			#define HUD_RADAR_HIGHLIGHT_OUTLINE			2
+			#define HUD_RADAR_HIGHLIGHT_FIXED_OUTLINE	3
+			#define HUD_RADAR_HIGHLIGHT_CIRCLE			4
+			#define HUD_RADAR_HIGHLIGHT_FIXED_CIRCLE	5
+			#define HUD_RADAR_HIGHLIGHT_ARROW_BOTTOM	6
+			#define HUD_RADAR_HIGHLIGHT_ARROW_CENTER	7
+			#define HUD_RADAR_HIGHLIGHT_ARROW_TOP		8 
+			#define HUD_RADAR_HIGHLIGHT_CROSS_CORNERS	9
 
 			// Draw a circle around the tracked player.
 			if (highlight != HUD_RADAR_HIGHLIGHT_NONE && info->userid == cl.players[Cam_TrackNum()].userid)
 			{
 				extern int HexToInt(char c);
-				float r, g, b;
+				float r, g, b, highlight_alpha;
 
 				// Get the highlight color.
-				if (radar_highlight_color_valid && strlen(highlight_color) == 3)
-				{
-					r = HexToInt(highlight_color[0]) / 16.0;
-					g = HexToInt(highlight_color[1]) / 16.0;
-					b = HexToInt(highlight_color[2]) / 16.0;
-				}
-				else
-				{
-					// Default to yellow.
-					r = 1;
-					g = 1;
-					b = 0;
-				}
-
+				r = hud_radar_highlight_color[0];
+				g = hud_radar_highlight_color[1];
+				b = hud_radar_highlight_color[2];
+				highlight_alpha = hud_radar_highlight_color[3];
+				
 				// Draw the highlight.
 				switch ((int)highlight)
 				{
 					case HUD_RADAR_HIGHLIGHT_CROSS_CORNERS :
 					{
 						// Top left
-						Draw_AlphaLineRGB (x, y, x + player_p_x, y + player_p_y, 2, r, g, b, 0.2);
+						Draw_AlphaLineRGB (x, y, x + player_p_x, y + player_p_y, 2, r, g, b, highlight_alpha);
 
 						// Top right.
-						Draw_AlphaLineRGB (x + width, y, x + player_p_x, y + player_p_y, 2, r, g, b, 0.2);
+						Draw_AlphaLineRGB (x + width, y, x + player_p_x, y + player_p_y, 2, r, g, b, highlight_alpha);
 
 						// Bottom left.
-						Draw_AlphaLineRGB (x, y + height, x + player_p_x, y + player_p_y, 2, r, g, b, 0.2);
+						Draw_AlphaLineRGB (x, y + height, x + player_p_x, y + player_p_y, 2, r, g, b, highlight_alpha);
 
 						// Bottom right.
-						Draw_AlphaLineRGB (x + width, y + height, x + player_p_x, y + player_p_y, 2, r, g, b, 0.2);
+						Draw_AlphaLineRGB (x + width, y + height, x + player_p_x, y + player_p_y, 2, r, g, b, highlight_alpha);
 						break;
 					}
 					case HUD_RADAR_HIGHLIGHT_ARROW_TOP :
 					{
 						// Top center.
-						Draw_AlphaLineRGB (x + width / 2, y, x + player_p_x, y + player_p_y, 2, r, g, b, 0.3);
+						Draw_AlphaLineRGB (x + width / 2, y, x + player_p_x, y + player_p_y, 2, r, g, b, highlight_alpha);
 						break;
 					}
 					case HUD_RADAR_HIGHLIGHT_ARROW_CENTER :
 					{
 						// Center.
-						Draw_AlphaLineRGB (x + width / 2, y + height / 2, x + player_p_x, y + player_p_y, 2, r, g, b, 0.3);
+						Draw_AlphaLineRGB (x + width / 2, y + height / 2, x + player_p_x, y + player_p_y, 2, r, g, b, highlight_alpha);
 						break;
 					}
 					case HUD_RADAR_HIGHLIGHT_ARROW_BOTTOM :
 					{
 						// Bottom center.
-						Draw_AlphaLineRGB (x + width / 2, y + height, x + player_p_x, y + player_p_y, 2, r, g, b, 0.3);
+						Draw_AlphaLineRGB (x + width / 2, y + height, x + player_p_x, y + player_p_y, 2, r, g, b, highlight_alpha);
 						break;
 					}
 					case HUD_RADAR_HIGHLIGHT_FIXED_CIRCLE :
 					{
-						Draw_AlphaCircleRGB (x + player_p_x, y + player_p_y, player_size * 1.5, 1.0, true, r, g, b, 0.3);
+						Draw_AlphaCircleRGB (x + player_p_x, y + player_p_y, player_size * 1.5, 1.0, true, r, g, b, highlight_alpha);
 						break;
 					}
 					case HUD_RADAR_HIGHLIGHT_CIRCLE :
 					{
-						Draw_AlphaCircleRGB (x + player_p_x, y + player_p_y, player_size * player_z_relative * 2.0, 1.0, true, r, g, b, 0.3);
+						Draw_AlphaCircleRGB (x + player_p_x, y + player_p_y, player_size * player_z_relative * 2.0, 1.0, true, r, g, b, highlight_alpha);
 						break;
 					}					
 					case HUD_RADAR_HIGHLIGHT_FIXED_OUTLINE :
 					{
-						Draw_AlphaCircleOutlineRGB (x + player_p_x, y + player_p_y, player_size * 1.5, 1.0, r, g, b, 1.0);
+						Draw_AlphaCircleOutlineRGB (x + player_p_x, y + player_p_y, player_size * 1.5, 1.0, r, g, b, highlight_alpha);
 						break;
 					}
 					case HUD_RADAR_HIGHLIGHT_OUTLINE :
-					default :
 					{
-						Draw_AlphaCircleOutlineRGB (x + player_p_x, y + player_p_y, player_size * player_z_relative * 2.0, 1.0, r, g, b, 1.0);
+						Draw_AlphaCircleOutlineRGB (x + player_p_x, y + player_p_y, player_size * player_z_relative * 2.0, 1.0, r, g, b, highlight_alpha);
+						break;
+					}
+					case HUD_RADAR_HIGHLIGHT_TEXT_ONLY :
+					default :
+					{						
 						break;
 					}
 				}
@@ -5105,10 +5214,15 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 				name_x = max(name_x, x);
 
 				// Draw the name.
-				if (highlight && info->userid == cl.players[Cam_TrackNum()].userid && radar_highlight_color_valid)
+				if (highlight >= HUD_RADAR_HIGHLIGHT_TEXT_ONLY 
+					&& info->userid == cl.players[Cam_TrackNum()].userid)
 				{
 					// Draw the tracked players name in the user specified color.
-					Draw_ColoredString (name_x, name_y, va("&c%s%s", highlight_color, info->name), 0);
+					Draw_ColoredString (name_x, name_y, 
+						va("&c%x%x%x%s", 
+						(unsigned int)(hud_radar_highlight_color[0] * 15), 
+						(unsigned int)(hud_radar_highlight_color[1] * 15), 
+						(unsigned int)(hud_radar_highlight_color[2] * 15), info->name), 0);
 				}
 				else
 				{
