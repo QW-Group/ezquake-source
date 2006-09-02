@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.28 2006-08-25 23:43:00 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.29 2006-09-02 01:51:58 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -735,7 +735,8 @@ void Draw_Alt_String (int x, int y, char *str) {
 }
 
 
-static int HexToInt(char c) {
+int HexToInt(char c) 
+{
 	if (isdigit(c))
 		return c - '0';
 	else if (c >= 'a' && c <= 'f')
@@ -1053,7 +1054,7 @@ void Draw_TileClear (int x, int y, int w, int h) {
 	glEnd ();
 }
 
-void Draw_AlphaRectangle (int x, int y, int w, int h, int c, float thickness, qbool fill, float alpha) 
+void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float r, float g, float b, float thickness, qbool fill, float alpha) 
 {
 	alpha = bound(0, alpha, 1);
 
@@ -1067,11 +1068,11 @@ void Draw_AlphaRectangle (int x, int y, int w, int h, int c, float thickness, qb
 	{
 		glEnable (GL_BLEND);
 		glDisable(GL_ALPHA_TEST);
-		glColor4f (host_basepal[c * 3] / 255.0,  host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2] / 255.0, alpha);
+		glColor4f (r, g, b, alpha);
 	} 
 	else 
 	{
-		glColor3f (host_basepal[c * 3] / 255.0, host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2]  / 255.0);
+		glColor3f (r, g, b);
 	}
 
 	thickness = max(0, thickness);
@@ -1097,9 +1098,28 @@ void Draw_AlphaRectangle (int x, int y, int w, int h, int c, float thickness, qb
 	glColor3ubv (color_white);
 }
 
-void Draw_AlphaFill(int x, int y, int w, int h, int c, float alpha)
+void Draw_AlphaRectangle (int x, int y, int w, int h, int c, float thickness, qbool fill, float alpha)
+{
+	Draw_AlphaRectangleRGB (x, y, w, h, 
+		host_basepal[c * 3] / 255.0,
+		host_basepal[c * 3 + 1] / 255.0,
+		host_basepal[c * 3 + 2] / 255.0,
+		thickness, fill, alpha);
+}
+
+void Draw_AlphaFillRGB (int x, int y, int w, int h, float r, float g, float b, float alpha)
+{
+	Draw_AlphaRectangleRGB (x, y, w, h, r, g, b, 1, true, alpha);
+}
+
+void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha)
 {
 	Draw_AlphaRectangle(x, y, w, h, c, 1, true, alpha);
+}
+
+void Draw_FillRGB (int x, int y, int w, int h, float r, float g, int b)
+{
+	Draw_AlphaFillRGB (x, y, w, h, r, g, b, 1);
 }
 
 void Draw_Fill (int x, int y, int w, int h, int c) 
@@ -1107,9 +1127,19 @@ void Draw_Fill (int x, int y, int w, int h, int c)
 	Draw_AlphaFill(x, y, w, h, c, 1);
 }
 
+void Draw_AlphaOutlineRGB (int x, int y, int w, int h, float r, float g, float b, float thickness, float alpha)
+{
+	Draw_AlphaRectangleRGB (x, y, w, h, r, g, b, thickness, false, alpha);
+}
+
 void Draw_AlphaOutline (int x, int y, int w, int h, int c, float thickness, float alpha)
 {
 	Draw_AlphaRectangle (x, y, w, h, c, thickness, false, alpha);
+}
+
+void Draw_OutlineRGB (int x, int y, int w, int h, float r, float g, float b, float thickness)
+{
+	Draw_AlphaRectangleRGB (x, y, w, h, r, g, b, thickness, false, 1);
 }
 
 void Draw_Outline (int x, int y, int w, int h, int c, float thickness)
@@ -1120,7 +1150,7 @@ void Draw_Outline (int x, int y, int w, int h, int c, float thickness)
 // HUD -> Cokeman
 // 
 
-void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, int c, float alpha) 
+void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, float r, float g, float b, float alpha) 
 {
 	alpha = bound(0, alpha, 1);
 
@@ -1134,11 +1164,11 @@ void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thick
 	{
 		glEnable (GL_BLEND);
 		glDisable(GL_ALPHA_TEST);
-		glColor4f (host_basepal[c * 3] / 255.0,  host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2] / 255.0, alpha);
+		glColor4f (r, g, b, alpha);
 	} 
 	else 
 	{
-		glColor3f (host_basepal[c * 3] / 255.0, host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2]  /255.0);
+		glColor3f (r, g, b);
 	}
 
 	if(thickness > 0.0)
@@ -1160,14 +1190,18 @@ void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thick
 	glColor3ubv (color_white);
 }
 
-void Draw_Line (int x_start, int y_start, int x_end, int y_end, float thickness, int c) 
+void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, int c, float alpha) 
 {
-	Draw_AlphaLine(x_start, y_start, x_end, y_end, thickness, c, 1);
+	Draw_AlphaLineRGB (x_start, y_start, x_end, y_end, thickness,
+		host_basepal[c * 3] / 255.0,
+		host_basepal[c * 3 + 1] / 255.0,
+		host_basepal[c * 3 + 2] / 255.0,
+		alpha);
 }
 
 #define CIRCLE_LINE_COUNT	40
 
-void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, int c, float alpha)
+void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, float r, float g, float b, float alpha)
 {
 	double angle;
 	int i;
@@ -1186,11 +1220,11 @@ void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float end
 	{
 		glEnable (GL_BLEND);
 		glDisable(GL_ALPHA_TEST);
-		glColor4f (host_basepal[c * 3] / 255.0,  host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2] / 255.0, alpha);
+		glColor4f (r, g, b, alpha);
 	} 
 	else 
 	{
-		glColor3f (host_basepal[c * 3] / 255.0, host_basepal[c * 3 + 1] / 255.0, host_basepal[c * 3 + 2]  /255.0);
+		glColor3f (r, g, b);
 	}
 
 	if(thickness > 0.0)
@@ -1255,9 +1289,28 @@ void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float end
 	glColor3ubv (color_white);
 }
 
+void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, int c, float alpha)
+{
+	Draw_AlphaPieSliceRGB (x, y, radius, startangle, endangle, thickness, fill, 
+		host_basepal[c * 3] / 255.0, 
+		host_basepal[c * 3 + 1] / 255.0, 
+		host_basepal[c * 3 + 2] / 255.0, 
+		alpha);
+}
+
+void Draw_AlphaCircleRGB (int x, int y, float radius, float thickness, qbool fill, float r, float g, float b, float alpha)
+{
+	Draw_AlphaPieSliceRGB (x, y, radius, 0, 2*M_PI, thickness, fill, r,	g, b, alpha);
+}
+
 void Draw_AlphaCircle (int x, int y, float radius, float thickness, qbool fill, int c, float alpha)
 {
 	Draw_AlphaPieSlice (x, y, radius, 0, 2*M_PI, thickness, fill, c, alpha);
+}
+
+void Draw_AlphaCircleOutlineRGB (int x, int y, float radius, float thickness, float r, float g, float b, float alpha)
+{
+	Draw_AlphaCircleRGB (x, y, radius, thickness, false, r, g, b, alpha);
 }
 
 void Draw_AlphaCircleOutline (int x, int y, float radius, float thickness, int color, float alpha)
@@ -1265,22 +1318,15 @@ void Draw_AlphaCircleOutline (int x, int y, float radius, float thickness, int c
 	Draw_AlphaCircle (x, y, radius, thickness, false, color, alpha);
 }
 
+void Draw_AlphaCircleFillRGB (int x, int y, float radius, float r, float g, float b, float alpha)
+{
+	Draw_AlphaCircleRGB (x, y, radius, 1.0, true, r, g, b, alpha);
+}
+
 void Draw_AlphaCircleFill (int x, int y, float radius, int color, float alpha)
 {
 	Draw_AlphaCircle (x, y, radius, 1.0, true, color, alpha);
 }
-
-void Draw_CircleOutline (int x, int y, float radius, float thickness, int color)
-{
-	Draw_AlphaCircleOutline(x, y, radius, thickness, color, 1);
-}
-
-void Draw_CircleFill (int x, int y, float radius, int color)
-{
-	Draw_AlphaCircleFill (x, y, radius, color, 1);
-}
-
-
 
 // HUD -> hexum
 // kazik -->

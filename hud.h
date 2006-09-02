@@ -20,7 +20,7 @@
 
 #define  HUD_INVENTORY          (HUD_NO_GROW)   // aply for sbar elements
 
-#define  HUD_MAX_PARAMS  16
+#define  HUD_MAX_PARAMS  20
 
 typedef struct hud_s
 {

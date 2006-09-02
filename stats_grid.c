@@ -324,6 +324,41 @@ void StatsGrid_InitTeamNames(stats_weight_grid_t *grid)
 	}
 }
 
+void StatsGrid_ValidateTeamColors()
+{
+	// This is needed to handle when a user switches the player being tracked
+	// and has "teamcolor" and "enemycolor" set. When you switch to a player
+	// that has another team than the one you tracked at match start, the team
+	// colors saved on the stats grid will not match the team color of the actual
+	// players on the level. 
+
+	int player_color;
+
+	// Get the tracked player.
+	player_info_t *player_info = &cl.players[Cam_TrackNum()];
+	
+	// Get the team color of the tracked player.
+	player_color = Sbar_BottomColor(player_info);
+
+	// If the player being tracked is a member of team 1 for instance but has a
+	// team color that doesn't match the one saved for team 1 in the 
+	// stats grid, then swap the team colors in the stats grid.
+	if (!strncmp(stats_grid->teams[STATS_TEAM1].name, player_info->team, sizeof(stats_grid->teams[STATS_TEAM1].name))
+		&& stats_grid->teams[STATS_TEAM1].color != player_color)
+	{
+		int old_team1_color = stats_grid->teams[STATS_TEAM1].color;
+		stats_grid->teams[STATS_TEAM1].color = player_color;
+		stats_grid->teams[STATS_TEAM2].color = old_team1_color;
+	}
+	else if (!strncmp(stats_grid->teams[STATS_TEAM2].name, player_info->team, sizeof(stats_grid->teams[STATS_TEAM2].name))
+		&& stats_grid->teams[STATS_TEAM2].color != player_color)
+	{
+		int old_team2_color = stats_grid->teams[STATS_TEAM2].color;
+		stats_grid->teams[STATS_TEAM2].color = player_color;
+		stats_grid->teams[STATS_TEAM1].color = old_team2_color;
+	}
+}
+
 void StatsGrid_Change(stats_weight_grid_t *grid,
 							float falloff_interval,
 							float falloff_value,
@@ -725,6 +760,9 @@ void StatsGrid_Gather()
 	{
 		return;
 	}
+
+	// Make sure the team colors are correct.
+	StatsGrid_ValidateTeamColors();
 
 	// Get player state so we can know where he is (or on rare occassions, she).
 	state = cl.frames[cl.oldparsecount & UPDATE_MASK].playerstate;

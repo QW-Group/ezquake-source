@@ -77,17 +77,26 @@ void Draw_STransPic (int x, int y, mpic_t *, float scale);
 void Draw_SFill (int x, int y, int w, int h, int c, float scale);
 
 // HUD -> Cokeman
+void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, float r, float g, float b, float alpha);
 void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, int c, float alpha);
 void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
+void Draw_AlphaCircleRGB (int x, int y, float radius, float thickness, qbool fill, float r, float g, float b, float alpha);
 void Draw_AlphaCircle (int x, int y, float radius, float thickness, qbool fill, int c, float alpha);
+void Draw_AlphaCircleOutlineRGB (int x, int y, float radius, float thickness, float r, float g, float b, float alpha);
 void Draw_AlphaCircleOutline (int x, int y, float radius, float thickness, int color, float alpha);
+void Draw_AlphaCircleFillRGB (int x, int y, float radius, float r, float g, float b, float alpha);
 void Draw_AlphaCircleFill (int x, int y, float radius, int color, float alpha);
-void Draw_CircleOutline (int x, int y, float radius, float thickness, int color);
-void Draw_CircleFill (int x, int y, float radius, int color);
+void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, float r, float g, float b, float alpha);
 void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, int c, float alpha);
-void Draw_Line (int x_start, int y_start, int x_end, int y_end, float thickness, int c);
+void Draw_AlphaOutlineRGB (int x, int y, int w, int h, float r, float g, float b, float thickness, float alpha);
 void Draw_AlphaOutline (int x, int y, int w, int h, int c, float thickness, float alpha);
+void Draw_OutlineRGB (int x, int y, int w, int h, float r, float g, float b, float thickness);
 void Draw_Outline (int x, int y, int w, int h, int c, float thickness);
+
+void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float r, float g, float b, float thickness, qbool fill, float alpha);
+void Draw_AlphaFillRGB (int x, int y, int w, int h, float r, float g, float b, float alpha);
+void Draw_FillRGB (int x, int y, int w, int h, float r, float g, float b);
+
 void Draw_AlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float alpha);
 void Draw_SAlphaSubPic (int x, int y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale, float alpha);
 void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale_x, float scale_y, float alpha);
