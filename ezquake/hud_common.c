@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.60 2006-08-27 17:05:49 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.61 2006-09-02 01:51:58 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -1702,15 +1702,15 @@ void SCR_HUD_DrawAmmo4(hud_t *hud)
 // Groups
 // ============================================================================0
 
-mpic_t hud_pic_group1 = {-1, -1, -1, -1, -1, -1, -1};
-mpic_t hud_pic_group2 = {-1, -1, -1, -1, -1, -1, -1};
-mpic_t hud_pic_group3 = {-1, -1, -1, -1, -1, -1, -1};
-mpic_t hud_pic_group4 = {-1, -1, -1, -1, -1, -1, -1};
-mpic_t hud_pic_group5 = {-1, -1, -1, -1, -1, -1, -1};
-mpic_t hud_pic_group6 = {-1, -1, -1, -1, -1, -1, -1};
-mpic_t hud_pic_group7 = {-1, -1, -1, -1, -1, -1, -1};
-mpic_t hud_pic_group8 = {-1, -1, -1, -1, -1, -1, -1};
-mpic_t hud_pic_group9 = {-1, -1, -1, -1, -1, -1, -1};
+mpic_t hud_pic_group1;
+mpic_t hud_pic_group2;
+mpic_t hud_pic_group3;
+mpic_t hud_pic_group4;
+mpic_t hud_pic_group5;
+mpic_t hud_pic_group6;
+mpic_t hud_pic_group7;
+mpic_t hud_pic_group8;
+mpic_t hud_pic_group9;
 
 void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_scalemode, float pic_alpha)
 {
@@ -4396,6 +4396,56 @@ qbool Radar_OnChangeOtherFilter(cvar_t *var, char *newval)
 	return false;
 }
 
+qbool radar_highlight_color_valid = false;
+
+qbool Radar_OnChangeHighlightColor(cvar_t *var, char *newval)
+{
+	radar_highlight_color_valid = false;
+
+	if(HUD_RegExpMatch("red", newval))
+	{
+		strncpy(var->string, "f00", 4 * sizeof(char));
+		radar_highlight_color_valid = true;
+	}
+	else if(HUD_RegExpMatch("green", newval))
+	{
+		strncpy(var->string, "0f0", 4 * sizeof(char));
+		radar_highlight_color_valid = true;
+	}
+	else if(HUD_RegExpMatch("blue", newval))
+	{
+		strncpy(var->string, "00f", 4 * sizeof(char));
+		radar_highlight_color_valid = true;
+	}
+	else if(HUD_RegExpMatch("black", newval))
+	{
+		strncpy(var->string, "000", 4 * sizeof(char));
+		radar_highlight_color_valid = true;
+	}
+	else if(HUD_RegExpMatch("yellow", newval))
+	{
+		strncpy(var->string, "ff0", 4 * sizeof(char));
+		radar_highlight_color_valid = true;
+	}
+	else if(HUD_RegExpMatch("pink", newval))
+	{
+		strncpy(var->string, "f0f", 4 * sizeof(char));
+		radar_highlight_color_valid = true;
+	}
+	else if(HUD_RegExpMatch("white", newval))
+	{
+		strncpy(var->string, "fff", 4 * sizeof(char));
+		radar_highlight_color_valid = true;
+	}
+	else
+	{
+		radar_highlight_color_valid = HUD_RegExpMatch("^([a-f0-9]{3})$", newval);
+		return false;
+	}
+
+	return radar_highlight_color_valid;
+}
+
 void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_hold_areas)
 {
 	int i;
@@ -4799,7 +4849,8 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 void Radar_DrawPlayers(int x, int y, int width, int height, float scale, 
 					   float show_height, float show_powerups, 
 					   float player_size, float show_names, 
-					   float fade_players)
+					   float fade_players, float highlight,
+					   char *highlight_color)
 {
 	int i;
 	player_state_t *state;
@@ -4885,7 +4936,7 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 					((info->stats[STAT_ITEMS] & IT_ARMOR3) ? 200 : 0));
 
 				// Don't let the players get completly transparent so add 0.2 to the final value.
-				player_alpha = ((info->stats[STAT_HEALTH] + (info->stats[STAT_ARMOR]*armor_strength)) / 100.0) + 0.2;
+				player_alpha = ((info->stats[STAT_HEALTH] + (info->stats[STAT_ARMOR] * armor_strength)) / 100.0) + 0.2;
 			}
 
 			// Turn dead people red.
@@ -4914,7 +4965,98 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 				}
 			}
 
-			// Draw a line showing what direction the player is looking in.
+			#define HUD_RADAR_HIGHLIGHT_NONE			0
+			#define HUD_RADAR_HIGHLIGHT_OUTLINE			1
+			#define HUD_RADAR_HIGHLIGHT_FIXED_OUTLINE	2
+			#define HUD_RADAR_HIGHLIGHT_CIRCLE			3
+			#define HUD_RADAR_HIGHLIGHT_FIXED_CIRCLE	4
+			#define HUD_RADAR_HIGHLIGHT_ARROW_BOTTOM	5
+			#define HUD_RADAR_HIGHLIGHT_ARROW_CENTER	6
+			#define HUD_RADAR_HIGHLIGHT_ARROW_TOP		7 
+			#define HUD_RADAR_HIGHLIGHT_CROSS_CORNERS	8
+
+			// Draw a circle around the tracked player.
+			if (highlight != HUD_RADAR_HIGHLIGHT_NONE && info->userid == cl.players[Cam_TrackNum()].userid)
+			{
+				extern int HexToInt(char c);
+				float r, g, b;
+
+				// Get the highlight color.
+				if (radar_highlight_color_valid && strlen(highlight_color) == 3)
+				{
+					r = HexToInt(highlight_color[0]) / 16.0;
+					g = HexToInt(highlight_color[1]) / 16.0;
+					b = HexToInt(highlight_color[2]) / 16.0;
+				}
+				else
+				{
+					// Default to yellow.
+					r = 1;
+					g = 1;
+					b = 0;
+				}
+
+				// Draw the highlight.
+				switch ((int)highlight)
+				{
+					case HUD_RADAR_HIGHLIGHT_CROSS_CORNERS :
+					{
+						// Top left
+						Draw_AlphaLineRGB (x, y, x + player_p_x, y + player_p_y, 2, r, g, b, 0.2);
+
+						// Top right.
+						Draw_AlphaLineRGB (x + width, y, x + player_p_x, y + player_p_y, 2, r, g, b, 0.2);
+
+						// Bottom left.
+						Draw_AlphaLineRGB (x, y + height, x + player_p_x, y + player_p_y, 2, r, g, b, 0.2);
+
+						// Bottom right.
+						Draw_AlphaLineRGB (x + width, y + height, x + player_p_x, y + player_p_y, 2, r, g, b, 0.2);
+						break;
+					}
+					case HUD_RADAR_HIGHLIGHT_ARROW_TOP :
+					{
+						// Top center.
+						Draw_AlphaLineRGB (x + width / 2, y, x + player_p_x, y + player_p_y, 2, r, g, b, 0.3);
+						break;
+					}
+					case HUD_RADAR_HIGHLIGHT_ARROW_CENTER :
+					{
+						// Center.
+						Draw_AlphaLineRGB (x + width / 2, y + height / 2, x + player_p_x, y + player_p_y, 2, r, g, b, 0.3);
+						break;
+					}
+					case HUD_RADAR_HIGHLIGHT_ARROW_BOTTOM :
+					{
+						// Bottom center.
+						Draw_AlphaLineRGB (x + width / 2, y + height, x + player_p_x, y + player_p_y, 2, r, g, b, 0.3);
+						break;
+					}
+					case HUD_RADAR_HIGHLIGHT_FIXED_CIRCLE :
+					{
+						Draw_AlphaCircleRGB (x + player_p_x, y + player_p_y, player_size * 1.5, 1.0, true, r, g, b, 0.3);
+						break;
+					}
+					case HUD_RADAR_HIGHLIGHT_CIRCLE :
+					{
+						Draw_AlphaCircleRGB (x + player_p_x, y + player_p_y, player_size * player_z_relative * 2.0, 1.0, true, r, g, b, 0.3);
+						break;
+					}					
+					case HUD_RADAR_HIGHLIGHT_FIXED_OUTLINE :
+					{
+						Draw_AlphaCircleOutlineRGB (x + player_p_x, y + player_p_y, player_size * 1.5, 1.0, r, g, b, 1.0);
+						break;
+					}
+					case HUD_RADAR_HIGHLIGHT_OUTLINE :
+					default :
+					{
+						Draw_AlphaCircleOutlineRGB (x + player_p_x, y + player_p_y, player_size * player_z_relative * 2.0, 1.0, r, g, b, 1.0);
+						break;
+					}
+				}
+			}
+
+			// Draw the actual player and a line showing what direction the player is looking in.
 			{				
 				float relative_x = 0;
 				float relative_y = 0;
@@ -4940,14 +5082,8 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 				Draw_AlphaLine (x_line_start, y_line_start, x_line_end, y_line_end, 2.0, player_color, player_alpha);
 
 				// Draw the player on the map.
-				Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, player_size*player_z_relative, player_color, player_alpha);
-				Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, player_size*player_z_relative, 1.0, 0, 1.0);
-			}
-
-			// Draw a circle around the tracked player.
-			if (info->userid == cl.players[Cam_TrackNum()].userid)
-			{
-				Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, player_size * player_z_relative * 2.0, 1.0, 251, 1.0);
+				Draw_AlphaCircleFill (x + player_p_x, y + player_p_y, player_size * player_z_relative, player_color, player_alpha);
+				Draw_AlphaCircleOutline (x + player_p_x, y + player_p_y, player_size * player_z_relative, 1.0, 0, 1.0);
 			}
 
 			// Draw the players name.
@@ -4969,13 +5105,14 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 				name_x = max(name_x, x);
 
 				// Draw the name.
-				if (info->userid == cl.players[Cam_TrackNum()].userid)
+				if (highlight && info->userid == cl.players[Cam_TrackNum()].userid && radar_highlight_color_valid)
 				{
-					// Draw the tracked players name in red.
-					Draw_ColoredString (name_x, name_y, va("&cf00%s", info->name), 0);
+					// Draw the tracked players name in the user specified color.
+					Draw_ColoredString (name_x, name_y, va("&c%s%s", highlight_color, info->name), 0);
 				}
 				else
-				{					
+				{
+					// Draw other players in normal character color.
 					Draw_String (name_x, name_y, info->name);
 				}
 			}
@@ -5009,6 +5146,8 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		*hud_radar_fade_players,
 		*hud_radar_show_powerups,
 		*hud_radar_show_names,
+		*hud_radar_highlight,
+		*hud_radar_highlight_color,
 		*hud_radar_player_size,
 		*hud_radar_show_height,
 		*hud_radar_show_stats,
@@ -5035,6 +5174,8 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		hud_radar_itemfilter		= HUD_FindVar(hud, "itemfilter");
 		hud_radar_otherfilter		= HUD_FindVar(hud, "otherfilter");
 		hud_radar_onlytp			= HUD_FindVar(hud, "onlytp");
+		hud_radar_highlight			= HUD_FindVar(hud, "highlight");
+		hud_radar_highlight_color	= HUD_FindVar(hud, "highlight_color");
 
 		//
 		// Only parse the the filters when they change, not on each frame.
@@ -5042,15 +5183,19 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 
 		// Weapon filter.
 		hud_radar_weaponfilter->OnChange = Radar_OnChangeWeaponFilter;
-		Radar_OnChangeWeaponFilter(hud_radar_weaponfilter, hud_radar_weaponfilter->string);
+		Radar_OnChangeWeaponFilter (hud_radar_weaponfilter, hud_radar_weaponfilter->string);
 
 		// Item filter.
 		hud_radar_itemfilter->OnChange = Radar_OnChangeItemFilter;
-		Radar_OnChangeItemFilter(hud_radar_itemfilter, hud_radar_itemfilter->string);
+		Radar_OnChangeItemFilter (hud_radar_itemfilter, hud_radar_itemfilter->string);
 
 		// Other filter.
 		hud_radar_otherfilter->OnChange = Radar_OnChangeOtherFilter;
-		Radar_OnChangeOtherFilter(hud_radar_otherfilter, hud_radar_otherfilter->string);
+		Radar_OnChangeOtherFilter (hud_radar_otherfilter, hud_radar_otherfilter->string);
+
+		// Highlight color.
+		hud_radar_highlight_color->OnChange = Radar_OnChangeHighlightColor;
+		Radar_OnChangeHighlightColor (hud_radar_highlight_color, hud_radar_highlight_color->string);
     }
 
 	// Don't show anything if it's a normal player.
@@ -5169,7 +5314,9 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 			hud_radar_show_powerups->value,
 			player_size,
 			hud_radar_show_names->value,
-			hud_radar_fade_players->value);
+			hud_radar_fade_players->value,
+			hud_radar_highlight->value,
+			hud_radar_highlight_color->string);
 	}
 }
 
@@ -5716,6 +5863,8 @@ void CommonDraw_Init(void)
 		"autosize", "0",
 		"show_powerups", "1",
 		"show_names", "0",
+		"highlight_color", "yellow",
+		"highlight", "0",
 		"player_size", "10",
 		"show_height", "1",
 		"show_stats", "1",

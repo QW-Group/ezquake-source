@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.43 2006-08-24 20:05:03 cokeman1982 Exp $
+    $Id: teamplay.c,v 1.44 2006-09-02 01:51:58 cokeman1982 Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -1469,7 +1469,7 @@ void TP_ColorForcing (int *topcolor, int *bottomcolor) {
 		return;
 	}
 
-	if (!strcasecmp(Cmd_Argv(1), "off")) {
+	if (!strcasecmp(Cmd_Argv(1), "off") || !strcasecmp(Cmd_Argv(1), "")) {
 		*topcolor = -1;
 		TP_RefreshSkins();
 		return;
