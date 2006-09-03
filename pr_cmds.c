@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_cmds.c,v 1.15 2006-05-14 12:23:17 disconn3ct Exp $
+	$Id: pr_cmds.c,v 1.16 2006-09-03 18:02:01 tonik Exp $
 */
 
 #include "qwsvdef.h"
@@ -1616,6 +1616,7 @@ static char *ENGINE_EXTENSIONS[] = {
 	"ZQ_MOVETYPE_NOCLIP",
 	"ZQ_MOVETYPE_FLY",
 	"ZQ_MOVETYPE_NONE",
+	"ZQ_ITEMS2",
 	"DP_CON_SET",
 	NULL,
 };
