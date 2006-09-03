@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.30 2006-09-02 18:26:21 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.31 2006-09-03 08:51:47 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1116,7 +1116,7 @@ void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha)
 	Draw_AlphaRectangle(x, y, w, h, c, 1, true, alpha);
 }
 
-void Draw_FillRGB (int x, int y, int w, int h, float r, float g, int b)
+void Draw_FillRGB (int x, int y, int w, int h, float r, float g, float b)
 {
 	Draw_AlphaFillRGB (x, y, w, h, r, g, b, 1);
 }
