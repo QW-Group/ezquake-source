@@ -90,7 +90,7 @@
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="true"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libexpat.lib tcl84.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib zlib.lib libpcre.lib"
+				AdditionalDependencies="libexpat.lib libtcl8.4.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib"
 				ShowProgress="0"
 				OutputFile="../ezquake-gl-debug.exe"
 				Version=""
@@ -203,7 +203,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libexpat.lib tcl84.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib zlib.lib dinput.lib dsound.lib libpcre.lib"
+				AdditionalDependencies="libexpat.lib libtcl8.4.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib"
 				OutputFile="../ezquake.exe"
 				Version=""
 				LinkIncremental="1"
@@ -320,7 +320,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386 "
-				AdditionalDependencies="libexpat.lib tcl84.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib zlib.lib libpcre.lib"
+				AdditionalDependencies="libexpat.lib libtcl8.4.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib"
 				OutputFile="../ezquake-gl.exe"
 				Version=""
 				LinkIncremental="1"
@@ -433,7 +433,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libexpat.lib tcl84.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib zlib.lib dinput.lib dsound.lib libpcre.lib"
+				AdditionalDependencies="libexpat.lib libtcl8.4.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib"
 				OutputFile="../ezquake-debug.exe"
 				Version=""
 				LinkIncremental="2"
