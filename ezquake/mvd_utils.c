@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.30 2006-06-07 14:32:17 johnnycz Exp $
+	$Id: mvd_utils.c,v 1.31 2006-09-05 21:37:18 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -257,7 +257,7 @@ cvar_t mvd_autotrack_2on2_values = {"mvd_autotrack_2on2_values", "1 2 3 2 3 5 8 
 cvar_t mvd_autotrack_4on4  = {"mvd_autotrack_4on4", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_4on4_values = {"mvd_autotrack_4on4_values", "1 2 4 2 4 6 10 10 1 2 3 500 900 1000"}; 
 cvar_t mvd_autotrack_custom = {"mvd_autotrack_custom", "%a * %A + 50 * %W + %p + %f"};
-cvar_t mvd_autotrack_custom_values = {"mvd_autotrack_custom_values", "1 2 3 2 3 6 6 1 2 3 500 900 1000"}; 
+cvar_t mvd_autotrack_custom_values = {"mvd_autotrack_custom_values", "1 2 3 2 3 5 6 6 1 2 3 500 900 1000"}; 
 
 cvar_t mvd_multitrack_1 = {"mvd_multitrack_1", "%f"};
 cvar_t mvd_multitrack_1_values = {"mvd_multitrack_1_values", "1 2 3 2 3 5 8 8 1 2 3 0 0 0"};
