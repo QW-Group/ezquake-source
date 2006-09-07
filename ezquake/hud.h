@@ -6,21 +6,31 @@
 #define __hud_h__
 
 // flags
-#define  HUD_NO_DRAW            (1 <<  0)  // don't draw this automatically
-#define  HUD_NO_SHOW            (1 <<  1)  // doesn't support show/hide
-#define  HUD_NO_POS_X           (1 <<  2)  // doesn't support x positioning
-#define  HUD_NO_POS_Y           (1 <<  3)  // doesn't support y positioning
-#define  HUD_NO_FRAME           (1 <<  4)  // don't add frame
-#define  HUD_ON_DIALOG          (1 <<  5)  // draw on dialog too
-#define  HUD_ON_INTERMISSION    (1 <<  6)  // draw on intermission too
-#define  HUD_ON_FINALE          (1 <<  7)  // draw on finale too
-#define  HUD_ON_SCORES          (1 <<  8)  // draw on +showscores too
-#define  HUD_NO_GROW            (1 <<  9)  // no frame grow
-#define  HUD_PLUSMINUS          (1 << 10)  // auto add +/- commands
+#define HUD_NO_DRAW            (1 <<  0)  // don't draw this automatically
+#define HUD_NO_SHOW            (1 <<  1)  // doesn't support show/hide
+#define HUD_NO_POS_X           (1 <<  2)  // doesn't support x positioning
+#define HUD_NO_POS_Y           (1 <<  3)  // doesn't support y positioning
+#define HUD_NO_FRAME           (1 <<  4)  // don't add frame
+#define HUD_ON_DIALOG          (1 <<  5)  // draw on dialog too
+#define HUD_ON_INTERMISSION    (1 <<  6)  // draw on intermission too
+#define HUD_ON_FINALE          (1 <<  7)  // draw on finale too
+#define HUD_ON_SCORES          (1 <<  8)  // draw on +showscores too
+#define HUD_NO_GROW            (1 <<  9)  // no frame grow
+#define HUD_PLUSMINUS          (1 << 10)  // auto add +/- commands
 
-#define  HUD_INVENTORY          (HUD_NO_GROW)   // aply for sbar elements
+#define HUD_INVENTORY          (HUD_NO_GROW)   // aply for sbar elements
 
-#define  HUD_MAX_PARAMS  20
+#define HUD_MAX_PARAMS  24
+
+#define	HUD_REGEXP_OFFSET_COUNT	20
+#define HUD_COLOR_RED					"255 0 0"
+#define HUD_COLOR_GREEN					"0 255 0"
+#define HUD_COLOR_BLUE					"0 0 255"
+#define HUD_COLOR_BLACK					"0 0 0"
+#define HUD_COLOR_WHITE					"255 255 255"
+#define HUD_COLOR_YELLOW				"255 255 0"
+#define HUD_COLOR_PINK					"255 0 255"
+#define HUD_COLOR_REGEX					"^(\\d{1,3})\\s+(\\d{1,3})\\s+(\\d{1,3})(\\s+(\\d\\.\\d+))?$"
 
 typedef struct hud_s
 {
@@ -34,6 +44,7 @@ typedef struct hud_s
 
     cvar_t *show;             // show cvar
     cvar_t *frame;            // frame cvar
+	cvar_t *frame_color;	  // frame color cvar
 
     // placement
     cvar_t *place;            // place string, parsed to:
@@ -109,5 +120,10 @@ qbool HUD_PrepareDrawByName(
 
 // last phase of initialization
 void HUD_InitFinish(void);
+
+qbool HUD_RegExpMatch(const char *regexp, const char *matchstring);
+qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, char **resultstring, int *resultlength, int group);
+char *HUD_ColorNameToRGB(char *color_name);
+void HUD_RGBValuesFromString(char *string, float *r, float *g, float *b, float *alpha);
 
 #endif // __hud_h__
