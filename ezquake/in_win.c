@@ -293,10 +293,29 @@ DWORD WINAPI IN_SMouseProc(void	* lpParameter) {
 	}
 }
 
+int IN_GetMouseRate(void) {
+// returns frequency of mouse input in Hz
+	static last_wseq_printed;
+	double t;
+
+	if (m_history_x_wseq > last_wseq_printed) {
+		last_wseq_printed =	m_history_x_wseq;
+		t = m_history_x[(m_history_x_rseq - 1) & M_HIST_MASK].time -
+			m_history_x[(m_history_x_rseq - 2) & M_HIST_MASK].time;
+
+		if (t >	0.0001) {
+			Print_flags[Print_current] |= PR_TR_SKIP;
+			return 1/t;
+		}
+	}
+	return 0;
+}
+
 void IN_SMouseRead(int *mx,	int	*my) {
 	static acc_x, acc_y;
 	int	x =	0, y = 0;
 	double t1, t2, maxtime,	mintime;
+	int mouserate;
 
 	// acquire device
 	IDirectInputDevice_Acquire(g_pMouse);
@@ -314,20 +333,8 @@ void IN_SMouseRead(int *mx,	int	*my) {
 	acc_x =	acc_y =	0;
 
 	// show	rate if	requested
-	if (m_showrate.value) {
-		static	last_wseq_printed;
-
-		if (m_history_x_wseq > last_wseq_printed) {
-			double t = m_history_x[(m_history_x_rseq - 1) &	M_HIST_MASK].time -
-					   m_history_x[(m_history_x_rseq - 2) &	M_HIST_MASK].time;
-
-			if (t >	0.001)
-				Print_flags[Print_current] |= PR_TR_SKIP;
-				Com_Printf("mouse rate: %3d\n",	(int)(1	/ t));
-
-			last_wseq_printed =	m_history_x_wseq;
-		}
-	}
+	if (m_showrate.value && (mouserate = IN_GetMouseRate()))
+		Com_Printf("mouse rate: %4d\n", mouserate);
 
 	// smoothing goes here
 	mintime	= maxtime =	1.0	/ max(m_rate.value,	10);
@@ -416,8 +423,11 @@ void IN_SMouseInit(void) {
 
 	use_m_smooth = true;
 }
+#else
+int IN_GetMouseRate(void) {
+	return -1;
+}
 #endif
-
 
 typedef void (*MW_DllFunc1)(void);
 typedef int (*MW_DllFunc2)(HWND);

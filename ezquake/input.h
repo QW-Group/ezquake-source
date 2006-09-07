@@ -32,6 +32,10 @@ void IN_Move (usercmd_t *cmd);
 void IN_ModeChanged (void);
 // called whenever screen dimensions change
 
+#if DIRECTINPUT_VERSION >= 0x700
+int IN_GetMouseRate(void);
+#endif
+
 //
 // cl_input.c
 //
