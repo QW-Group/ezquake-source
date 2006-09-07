@@ -641,7 +641,7 @@ typedef enum cl_modelindex_s {
 	mi_vaxe, mi_vbio, mi_vgrap, mi_vknife, mi_vknife2, mi_vmedi, mi_vspan,
 	mi_flame,	//joe: for changing flame/flame0 models
 	mi_monster1,mi_m2,mi_m3,mi_m4,mi_m5,mi_m6,mi_m7,mi_m8,mi_m9,mi_m10,mi_m11,mi_m12,
-	mi_monster13,
+	mi_m13, mi_m14, mi_m15, mi_m16, mi_m17,
 	cl_num_modelindices,
 } cl_modelindex_t;		
 
