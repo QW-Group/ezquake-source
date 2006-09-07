@@ -53,3 +53,7 @@ detailed changelog:
 - in http://ezquake.sf.net/test/changelogs/ there is an php file which parses such changelogs into an overall
   detailed changelog page and extract usefull info from all those logs
 - naming convention for .log files is "Until_yyyy-mm-dd.log", yyyy = year, mm = month, dd = day
+
+debugger detected:
+- error warning that MS VS gives you when you try to run debug build in your quake dir
+- solution: move ezquake-security.dll out of your quake dir
