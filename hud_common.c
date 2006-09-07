@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.63 2006-09-07 14:12:45 johnnycz Exp $
+	$Id: hud_common.c,v 1.64 2006-09-07 19:56:04 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -4043,72 +4043,6 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 	}
 }
 
-qbool HUD_RegExpMatch(const char *regexp, const char *matchstring)
-{
-	int offsets[1];
-	pcre *re;
-	const char *error;
-	int erroffset;
-	int match = 0;
-
-	re = pcre_compile(
-			regexp,				// The pattern.
-			PCRE_CASELESS,		// Case insensitive.
-			&error,				// Error message.
-			&erroffset,			// Error offset.
-			NULL);				// use default character tables.
-
-	if(error)
-	{
-		return false;
-	}
-
-	if((match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, 1)) >= 0)
-	{
-		return true;
-	}
-
-	return false;
-}
-
-#define HUD_REGEXP_OFFSET_COUNT	20
-
-qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, char **resultstring, int *resultlength, int group)
-{
-	int offsets[HUD_REGEXP_OFFSET_COUNT];
-	pcre *re;
-	const char *error;
-	int erroffset;
-	int match = 0;
-
-	re = pcre_compile(
-			regexp,				// The pattern.
-			PCRE_CASELESS,		// Case insensitive.
-			&error,				// Error message.
-			&erroffset,			// Error offset.
-			NULL);				// use default character tables.
-
-	if(error)
-	{
-		return false;
-	}
-
-	if((match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0)
-	{
-		int substring_length = 0;
-		substring_length = pcre_get_substring (matchstring, offsets, match, group, resultstring);
-		
-		if (resultlength != NULL)
-		{
-			(*resultlength) = substring_length;
-		}
-
-		return (substring_length != PCRE_ERROR_NOSUBSTRING && substring_length != PCRE_ERROR_NOMEMORY);
-	}
-
-	return false;
-}
-
 qbool TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s)
 {
 	// Parse the item filter.
@@ -4476,114 +4410,46 @@ qbool Radar_OnChangeOtherFilter(cvar_t *var, char *newval)
 	return false;
 }
 
-#define HUD_RADAR_HIGHLIGHT_RED						"255 0 0"
-#define HUD_RADAR_HIGHLIGHT_GREEN					"0 255 0"
-#define HUD_RADAR_HIGHLIGHT_BLUE					"0 0 255"
-#define HUD_RADAR_HIGHLIGHT_BLACK					"0 0 0"
-#define HUD_RADAR_HIGHLIGHT_WHITE					"255 255 255"
-#define HUD_RADAR_HIGHLIGHT_YELLOW					"255 255 0"
-#define HUD_RADAR_HIGHLIGHT_PINK					"255 0 255"
-#define HUD_RADAR_HIGHLIGHT_REGEX					"^(\\d{1,3})\\s+(\\d{1,3})\\s+(\\d{1,3})(\\s+(\\d\\.\\d+))?$"
-#define HUD_RADAR_HIGHLIGHT_DEFAULT_TRANSPARENCY	0.3
 
-float hud_radar_highlight_color[4] = {1.0, 1.0, 0.0, HUD_RADAR_HIGHLIGHT_DEFAULT_TRANSPARENCY};
+#define HUD_COLOR_DEFAULT_TRANSPARENCY	0.3
+
+float hud_radar_highlight_color[4] = {1.0, 1.0, 0.0, HUD_COLOR_DEFAULT_TRANSPARENCY};
 
 qbool Radar_OnChangeHighlightColor(cvar_t *var, char *newval)
 {
+	char *new_color;
 	qbool radar_highlight_color_valid = false;
 
-	// Parse the new color value. It can either be a clear text color name
-	// or it can be in the format "R G B A" or "R G B".
-	if(HUD_RegExpMatch("red", newval))
-	{
-		strncpy(var->string, HUD_RADAR_HIGHLIGHT_RED, (strlen(HUD_RADAR_HIGHLIGHT_RED) + 1) * sizeof(char));
-		radar_highlight_color_valid = true;
-	}
-	else if(HUD_RegExpMatch("green", newval))
-	{
-		strncpy(var->string, HUD_RADAR_HIGHLIGHT_GREEN, (strlen(HUD_RADAR_HIGHLIGHT_GREEN) + 1) * sizeof(char));
-		radar_highlight_color_valid = true;
-	}
-	else if(HUD_RegExpMatch("blue", newval))
-	{
-		strncpy(var->string, HUD_RADAR_HIGHLIGHT_BLUE, (strlen(HUD_RADAR_HIGHLIGHT_BLUE) + 1) * sizeof(char));
-		radar_highlight_color_valid = true;
-	}
-	else if(HUD_RegExpMatch("black", newval))
-	{
-		strncpy(var->string, HUD_RADAR_HIGHLIGHT_BLACK, (strlen(HUD_RADAR_HIGHLIGHT_BLACK) + 1) * sizeof(char));
-		radar_highlight_color_valid = true;
-	}
-	else if(HUD_RegExpMatch("yellow", newval))
-	{
-		strncpy(var->string, HUD_RADAR_HIGHLIGHT_YELLOW, (strlen(HUD_RADAR_HIGHLIGHT_YELLOW) + 1) * sizeof(char));
-		radar_highlight_color_valid = true;
-	}
-	else if(HUD_RegExpMatch("pink", newval))
-	{
-		strncpy(var->string, HUD_RADAR_HIGHLIGHT_PINK, (strlen(HUD_RADAR_HIGHLIGHT_PINK) + 1) * sizeof(char));
-		radar_highlight_color_valid = true;
-	}
-	else if(HUD_RegExpMatch("white", newval))
-	{
-		strncpy(var->string, HUD_RADAR_HIGHLIGHT_WHITE, (strlen(HUD_RADAR_HIGHLIGHT_WHITE) + 1) * sizeof(char));
-		radar_highlight_color_valid = true;
-	}
-	else
-	{
-		// Match colors in "R G B A"-format
-		radar_highlight_color_valid = HUD_RegExpMatch(HUD_RADAR_HIGHLIGHT_REGEX, newval);
-		strncpy(var->string, newval, (strlen(newval) + 1) * sizeof(char));
-	}
+	new_color = HUD_ColorNameToRGB(newval); 
+
+	// Make sure the values have been entered properly.
+	radar_highlight_color_valid = HUD_RegExpMatch(HUD_COLOR_REGEX, new_color);
 
 	// Get the RGB values.
 	if (radar_highlight_color_valid)
-	{		
-		char *r_result = NULL, *g_result = NULL, *b_result = NULL, *a_result = NULL;
-		
-		// R.
-		if (HUD_RegExpGetGroup (HUD_RADAR_HIGHLIGHT_REGEX, var->string, &r_result, NULL, 1))
-		{
-			hud_radar_highlight_color[0] = min(Q_atoi(r_result), 255) / 255.0;
-		}
+	{
+		float colors[4];
 
-		// G.
-		if (HUD_RegExpGetGroup (HUD_RADAR_HIGHLIGHT_REGEX, var->string, &g_result, NULL, 2))
-		{
-			hud_radar_highlight_color[1] = min(Q_atoi(g_result), 255) / 255.0;
-		}
+		strncpy(var->string, new_color, (strlen(new_color) + 1) * sizeof(char));
 
-		// B.
-		if (HUD_RegExpGetGroup (HUD_RADAR_HIGHLIGHT_REGEX, var->string, &b_result, NULL, 3))
+		HUD_RGBValuesFromString (var->string, 
+			&colors[0], 
+			&colors[1], 
+			&colors[2], 
+			&colors[3]);
+
+		// RGB.
+		if(colors[0] >= 0 && colors[1] >= 0 && colors[2] >= 0)
 		{
-			hud_radar_highlight_color[2] = min(Q_atoi(b_result), 255) / 255.0;
+			hud_radar_highlight_color[0] = colors[0];
+			hud_radar_highlight_color[1] = colors[1];
+			hud_radar_highlight_color[2] = colors[2];
 		}
 
 		// Alpha.
-		if (HUD_RegExpGetGroup (HUD_RADAR_HIGHLIGHT_REGEX, var->string, &a_result, NULL, 5)) 
+		if(colors[3] >= 0)
 		{
-			hud_radar_highlight_color[3] = min(Q_atof(a_result), 1.0);
-		}
-		else
-		{
-			// If no opacity was specified use the default.
-			hud_radar_highlight_color[3] = HUD_RADAR_HIGHLIGHT_DEFAULT_TRANSPARENCY;
-		}
-
-		// Free any allocated memory.
-		if(r_result != NULL)
-		{
-			Q_free(r_result);
-		}
-
-		if(g_result != NULL)
-		{
-			Q_free(g_result);
-		}
-
-		if(b_result != NULL)
-		{
-			Q_free(b_result);
+			hud_radar_highlight_color[3] = colors[3];
 		}
 	}
 	else
@@ -4592,9 +4458,9 @@ qbool Radar_OnChangeHighlightColor(cvar_t *var, char *newval)
 		hud_radar_highlight_color[0] = 1.0;
 		hud_radar_highlight_color[1] = 1.0;
 		hud_radar_highlight_color[2] = 0.0;
-		hud_radar_highlight_color[3] = HUD_RADAR_HIGHLIGHT_DEFAULT_TRANSPARENCY;
+		hud_radar_highlight_color[3] = HUD_COLOR_DEFAULT_TRANSPARENCY;
 
-		strncpy(var->string, HUD_RADAR_HIGHLIGHT_YELLOW, (strlen(HUD_RADAR_HIGHLIGHT_YELLOW) + 1) * sizeof(char));
+		strncpy(var->string, HUD_COLOR_YELLOW, (strlen(HUD_COLOR_YELLOW) + 1) * sizeof(char));
 		radar_highlight_color_valid = true;
 	}
 
@@ -5511,7 +5377,7 @@ void CommonDraw_Init(void)
         "Shows your current framerate in frames per second (fps). "
         "Can also show minimum framerate, that occured in last measure period.",
         HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFPS,
-        "0", "top", "right", "bottom", "0", "0", "0",
+        "0", "top", "right", "bottom", "0", "0", "0", "0 0 0",
         "show_min", "0",
         "title",    "1",
 		"decimals", "1",
@@ -5519,14 +5385,14 @@ void CommonDraw_Init(void)
 
 	HUD_Register("mouserate", NULL, "Show your current mouse input rate", HUD_PLUSMINUS, ca_active, 9,
 		SCR_HUD_DrawMouserate,
-		"0", "screen", "left", "bottom", "0", "0", "0",
+		"0", "screen", "left", "bottom", "0", "0", "0", "0 0 0",
 		"title", "1",
 		NULL);
 
     // init clock
 	HUD_Register("clock", NULL, "Shows current local time (hh:mm:ss).",
         HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawClock,
-        "0", "top", "right", "console", "0", "0", "0",
+        "0", "top", "right", "console", "0", "0", "0", "0 0 0",
         "big",      "1",
         "style",    "0",
 		"scale",    "1",
@@ -5536,7 +5402,7 @@ void CommonDraw_Init(void)
     // init gameclock
 	HUD_Register("gameclock", NULL, "Shows current game time (hh:mm:ss).",
         HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawGameClock,
-        "0", "top", "right", "console", "0", "0", "0",
+        "0", "top", "right", "console", "0", "0", "0", "0 0 0",
         "big",      "1",
         "style",    "0",
 		"scale",    "1",
@@ -5547,7 +5413,7 @@ void CommonDraw_Init(void)
     // init democlock
 	HUD_Register("democlock", NULL, "Shows current demo time (hh:mm:ss).",
         HUD_PLUSMINUS, ca_disconnected, 7, SCR_HUD_DrawDemoClock,
-        "0", "top", "right", "console", "0", "8", "0",
+        "0", "top", "right", "console", "0", "8", "0", "0 0 0",
         "big",      "0",
         "style",    "0",
 		"scale",    "1",
@@ -5557,7 +5423,7 @@ void CommonDraw_Init(void)
     // init ping
     HUD_Register("ping", NULL, "Shows most important net conditions, like ping and pl. Shown only when you are connected to a server.",
         HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawPing,
-        "0", "top", "left", "bottom", "0", "0", "0",
+        "0", "top", "left", "bottom", "0", "0", "0", "0 0 0",
         "period",       "1",
         "show_pl",      "1",
         "show_min",     "0",
@@ -5567,20 +5433,20 @@ void CommonDraw_Init(void)
         NULL);
 	HUD_Register("tracking", NULL, "Shows the name of tracked player.",
 		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawTracking,
-		"0", "top", "left", "bottom", "0", "0", "0",
+		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0",
 		"format", "Tracking %t %n, [JUMP] for next",
 		NULL);
     // init net
     HUD_Register("net", NULL, "Shows network statistics, like latency, packet loss, average packet sizes and bandwidth. Shown only when you are connected to a server.",
         HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawNetStats,
-        "0", "top", "left", "center", "0", "0", "0.2",
+        "0", "top", "left", "center", "0", "0", "0.2", "0 0 0",
         "period",  "1",
         NULL);
 
     // init speed
     HUD_Register("speed", NULL, "Shows your current running speed. It is measured over XY or XYZ axis depending on \'xyz\' property.",
         HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed,
-        "0", "top", "center", "bottom", "0", "-5", "0",
+        "0", "top", "center", "bottom", "0", "-5", "0", "0 0 0",
         "xyz",  "0",
 		"width", "160",
 		"height", "15",
@@ -5600,7 +5466,7 @@ void CommonDraw_Init(void)
 	// Init speed2 (half circle thingie).
 	HUD_Register("speed2", NULL, "Shows your current running speed. It is measured over XY or XYZ axis depending on \'xyz\' property.",
         HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawSpeed2,
-        "0", "top", "center", "bottom", "0", "-5", "0",
+        "0", "top", "center", "bottom", "0", "0", "0", "0 0 0",
         "xyz",  "0",
 		"opacity", "1.0",
 		"color_stopped", SPEED_STOPPED,
@@ -5617,50 +5483,50 @@ void CommonDraw_Init(void)
     // init guns
     HUD_Register("gun", NULL, "Part of your inventory - current weapon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGunCurrent,
-        "0", "top", "center", "bottom", "0", "0", "0",
+        "0", "top", "center", "bottom", "0", "0", "0", "0 0 0",
         "wide",  "0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("gun2", NULL, "Part of your inventory - shotgun.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun2,
-        "0", "top", "left", "bottom", "0", "0", "0",
+        "0", "top", "left", "bottom", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("gun3", NULL, "Part of your inventory - super shotgun.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun3,
-        "0", "gun2", "after", "center", "0", "0", "0",
+        "0", "gun2", "after", "center", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("gun4", NULL, "Part of your inventory - nailgun.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun4,
-        "0", "gun3", "after", "center", "0", "0", "0",
+        "0", "gun3", "after", "center", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("gun5", NULL, "Part of your inventory - super nailgun.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun5,
-        "0", "gun4", "after", "center", "0", "0", "0",
+        "0", "gun4", "after", "center", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("gun6", NULL, "Part of your inventory - grenade launcher.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun6,
-        "0", "gun5", "after", "center", "0", "0", "0",
+        "0", "gun5", "after", "center", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("gun7", NULL, "Part of your inventory - rocket launcher.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun7,
-        "0", "gun6", "after", "center", "0", "0", "0",
+        "0", "gun6", "after", "center", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("gun8", NULL, "Part of your inventory - thunderbolt.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun8,
-        "0", "gun7", "after", "center", "0", "0", "0",
+        "0", "gun7", "after", "center", "0", "0", "0", "0 0 0",
         "wide",  "0",
         "style", "0",
         "scale", "1",
@@ -5669,37 +5535,37 @@ void CommonDraw_Init(void)
     // init powerzz
     HUD_Register("key1", NULL, "Part of your inventory - silver key.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawKey1,
-        "0", "top", "top", "left", "0", "64", "0",
+        "0", "top", "top", "left", "0", "64", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("key2", NULL, "Part of your inventory - gold key.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawKey2,
-        "0", "key1", "left", "after", "0", "0", "0",
+        "0", "key1", "left", "after", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("ring", NULL, "Part of your inventory - invisibility.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawRing,
-        "0", "key2", "left", "after", "0", "0", "0",
+        "0", "key2", "left", "after", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("pent", NULL, "Part of your inventory - invulnerability.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawPent,
-        "0", "ring", "left", "after", "0", "0", "0",
+        "0", "ring", "left", "after", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("suit", NULL, "Part of your inventory - biosuit.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawSuit,
-        "0", "pent", "left", "after", "0", "0", "0",
+        "0", "pent", "left", "after", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("quad", NULL, "Part of your inventory - quad damage.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawQuad,
-        "0", "suit", "left", "after", "0", "0", "0",
+        "0", "suit", "left", "after", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
@@ -5707,25 +5573,25 @@ void CommonDraw_Init(void)
     // sigilzz
     HUD_Register("sigil1", NULL, "Part of your inventory - sigil 1.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawSigil1,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("sigil2", NULL, "Part of your inventory - sigil 2.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawSigil2,
-        "0", "sigil1", "after", "top", "0", "0", "0",
+        "0", "sigil1", "after", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("sigil3", NULL, "Part of your inventory - sigil 3.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawSigil3,
-        "0", "sigil2", "after", "top", "0", "0", "0",
+        "0", "sigil2", "after", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("sigil4", NULL, "Part of your inventory - sigil 4.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawSigil4,
-        "0", "sigil3", "after", "top", "0", "0", "0",
+        "0", "sigil3", "after", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
@@ -5733,7 +5599,7 @@ void CommonDraw_Init(void)
 	// health
     HUD_Register("health", NULL, "Part of your status - health level.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawHealth,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "style",  "0",
         "scale",  "1",
         "align",  "right",
@@ -5743,7 +5609,7 @@ void CommonDraw_Init(void)
     // armor
     HUD_Register("armor", NULL, "Part of your inventory - armor level.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmor,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "style",  "0",
         "scale",  "1",
         "align",  "right",
@@ -5754,7 +5620,7 @@ void CommonDraw_Init(void)
 	// healthdamage
     HUD_Register("healthdamage", NULL, "Shows amount of damage done to your health.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawHealthDamage,
-        "0", "health", "left", "before", "0", "0", "0",
+        "0", "health", "left", "before", "0", "0", "0", "0 0 0",
         "style",  "0",
         "scale",  "1",
         "align",  "right",
@@ -5765,7 +5631,7 @@ void CommonDraw_Init(void)
     // armordamage
     HUD_Register("armordamage", NULL, "Shows amount of damage done to your armour.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmorDamage,
-        "0", "armor", "left", "before", "0", "0", "0",
+        "0", "armor", "left", "before", "0", "0", "0", "0 0 0",
         "style",  "0",
         "scale",  "1",
         "align",  "right",
@@ -5777,7 +5643,7 @@ void CommonDraw_Init(void)
     // ammo/s
     HUD_Register("ammo", NULL, "Part of your inventory - ammo for active weapon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoCurrent,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         "align", "right",
@@ -5785,7 +5651,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("ammo1", NULL, "Part of your inventory - ammo - shells.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo1,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         "align", "right",
@@ -5793,7 +5659,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("ammo2", NULL, "Part of your inventory - ammo - nails.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo2,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         "align", "right",
@@ -5801,7 +5667,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("ammo3", NULL, "Part of your inventory - ammo - rockets.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo3,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         "align", "right",
@@ -5809,7 +5675,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("ammo4", NULL, "Part of your inventory - ammo - cells.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo4,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         "align", "right",
@@ -5819,31 +5685,31 @@ void CommonDraw_Init(void)
     // ammo icon/s
     HUD_Register("iammo", NULL, "Part of your inventory - ammo icon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoIconCurrent,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("iammo1", NULL, "Part of your inventory - ammo icon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoIcon1,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "style", "2",
         "scale", "1",
         NULL);
     HUD_Register("iammo2", NULL, "Part of your inventory - ammo icon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoIcon2,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "style", "2",
         "scale", "1",
         NULL);
     HUD_Register("iammo3", NULL, "Part of your inventory - ammo icon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoIcon3,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "style", "2",
         "scale", "1",
         NULL);
     HUD_Register("iammo4", NULL, "Part of your inventory - ammo icon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoIcon4,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "style", "2",
         "scale", "1",
         NULL);
@@ -5851,7 +5717,7 @@ void CommonDraw_Init(void)
     // armor icon
     HUD_Register("iarmor", NULL, "Part of your inventory - armor icon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmorIcon,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
@@ -5859,14 +5725,14 @@ void CommonDraw_Init(void)
     // player face
     HUD_Register("face", NULL, "Your bloody face.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawFace,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "scale", "1",
         NULL);
 
     // groups
     HUD_Register("group1", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group1,
-        "0", "screen", "left", "top", "0", "0", ".5",
+        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
         "name", "group1",
         "width", "64",
         "height", "64",
@@ -5876,7 +5742,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group2", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group2,
-        "0", "screen", "left", "top", "0", "0", ".5",
+        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
         "name", "group2",
         "width", "64",
         "height", "64",
@@ -5886,7 +5752,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group3", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group3,
-        "0", "screen", "left", "top", "0", "0", ".5",
+        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
         "name", "group3",
         "width", "64",
         "height", "64",
@@ -5896,7 +5762,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group4", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group4,
-        "0", "screen", "left", "top", "0", "0", ".5",
+        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
         "name", "group4",
         "width", "64",
         "height", "64",
@@ -5906,7 +5772,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group5", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group5,
-        "0", "screen", "left", "top", "0", "0", ".5",
+        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
         "name", "group5",
         "width", "64",
         "height", "64",
@@ -5916,7 +5782,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group6", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group6,
-        "0", "screen", "left", "top", "0", "0", ".5",
+        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
         "name", "group6",
         "width", "64",
         "height", "64",
@@ -5926,7 +5792,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group7", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group7,
-        "0", "screen", "left", "top", "0", "0", ".5",
+        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
         "name", "group7",
         "width", "64",
         "height", "64",
@@ -5936,7 +5802,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group8", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group8,
-        "0", "screen", "left", "top", "0", "0", ".5",
+        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
         "name", "group8",
         "width", "64",
         "height", "64",
@@ -5946,7 +5812,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group9", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group9,
-        "0", "screen", "left", "top", "0", "0", ".5",
+        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
         "name", "group9",
         "width", "64",
         "height", "64",
@@ -5957,7 +5823,7 @@ void CommonDraw_Init(void)
 
     HUD_Register("frags", NULL, "Show list of player frags in short form.",
         0, ca_active, 0, SCR_HUD_DrawFrags,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "cell_width", "32",
         "cell_height", "8",
         "rows", "1",
@@ -5978,7 +5844,7 @@ void CommonDraw_Init(void)
 
     HUD_Register("teamfrags", NULL, "Show list of team frags in short form.",
         0, ca_active, 0, SCR_HUD_DrawTeamFrags,
-        "0", "screen", "left", "top", "0", "0", "0",
+        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
         "cell_width", "32",
         "cell_height", "8",
         "rows", "1",
@@ -5997,7 +5863,7 @@ void CommonDraw_Init(void)
 
 	HUD_Register("mp3_title", NULL, "Shows current mp3 playing.",
         HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Title,
-        "0", "top", "right", "bottom", "0", "0", "0",
+        "0", "top", "right", "bottom", "0", "0", "0", "0 0 0",
 		"style",	"2",
 		"width",	"512",
 		"height",	"8",
@@ -6009,7 +5875,7 @@ void CommonDraw_Init(void)
 
 	HUD_Register("mp3_time", NULL, "Shows the time of the current mp3 playing.",
         HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Time,
-        "0", "top", "left", "bottom", "0", "0", "0",
+        "0", "top", "left", "bottom", "0", "0", "0", "0 0 0",
 		"style",	"0",
 		"on_scoreboard", "0",
         NULL);
@@ -6018,7 +5884,7 @@ void CommonDraw_Init(void)
 
 	HUD_Register("radar", NULL, "Plots the players on a picture of the map. (Only when watching MVD's or QTV).",
         HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawRadar,
-        "0", "top", "left", "bottom", "0", "0", "0",
+        "0", "top", "left", "bottom", "0", "0", "0", "0 0 0",
 		"opacity", "0.5",
 		"width", "200",
 		"height", "200",
@@ -6041,7 +5907,7 @@ void CommonDraw_Init(void)
 
 	HUD_Register("teamholdbar", NULL, "Shows how much of the level (in percent) that is currently being held by either team.",
         HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldBar,
-        "0", "top", "left", "bottom", "0", "0", "0",
+        "0", "top", "left", "bottom", "0", "0", "0", "0 0 0",
 		"opacity", "0.8",
 		"width", "200",
 		"height", "8",
@@ -6053,7 +5919,7 @@ void CommonDraw_Init(void)
 
 	HUD_Register("teamholdinfo", NULL, "Shows which important items in the level that are being held by the teams.",
         HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldInfo,
-        "0", "top", "left", "bottom", "0", "0", "0",
+        "0", "top", "left", "bottom", "0", "0", "0", "0 0 0",
 		"opacity", "0.8",
 		"width", "200",
 		"height", "8",

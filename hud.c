@@ -43,6 +43,193 @@ char *snap_strings[] = {
 // hud elements list
 hud_t *hud_huds = NULL;
 
+qbool HUD_RegExpMatch(const char *regexp, const char *matchstring)
+{
+	int offsets[1];
+	pcre *re;
+	const char *error;
+	int erroffset;
+	int match = 0;
+
+	re = pcre_compile(
+			regexp,				// The pattern.
+			PCRE_CASELESS,		// Case insensitive.
+			&error,				// Error message.
+			&erroffset,			// Error offset.
+			NULL);				// use default character tables.
+
+	if(error)
+	{
+		return false;
+	}
+
+	if((match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, 1)) >= 0)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, char **resultstring, int *resultlength, int group)
+{
+	int offsets[HUD_REGEXP_OFFSET_COUNT];
+	pcre *re;
+	const char *error;
+	int erroffset;
+	int match = 0;
+
+	re = pcre_compile(
+			regexp,				// The pattern.
+			PCRE_CASELESS,		// Case insensitive.
+			&error,				// Error message.
+			&erroffset,			// Error offset.
+			NULL);				// use default character tables.
+
+	if(error)
+	{
+		return false;
+	}
+
+	if((match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0)
+	{
+		int substring_length = 0;
+		substring_length = pcre_get_substring (matchstring, offsets, match, group, resultstring);
+		
+		if (resultlength != NULL)
+		{
+			(*resultlength) = substring_length;
+		}
+
+		return (substring_length != PCRE_ERROR_NOSUBSTRING && substring_length != PCRE_ERROR_NOMEMORY);
+	}
+
+	return false;
+}
+
+char *HUD_ColorNameToRGB(char *color_name)
+{
+	if(!strncmp("red", color_name, 3))
+	{
+		return HUD_COLOR_RED;
+	}
+	else if(!strncmp("green", color_name, 5))
+	{
+		return HUD_COLOR_GREEN;
+	}
+	else if(!strncmp("blue", color_name, 4))
+	{
+		return HUD_COLOR_BLUE;
+	}
+	else if(!strncmp("black", color_name, 5))
+	{
+		return HUD_COLOR_BLACK;
+	}
+	else if(!strncmp("yellow", color_name, 6))
+	{
+		return HUD_COLOR_YELLOW;
+	}
+	else if(!strncmp("pink", color_name, 4))
+	{
+		return HUD_COLOR_PINK;
+	}
+	else if(!strncmp("white", color_name, 5))
+	{
+		return HUD_COLOR_WHITE;
+	}
+
+	return color_name;
+}
+
+void HUD_RGBValuesFromString(char *string, float *r, float *g, float *b, float *alpha)
+{
+	int offsets[HUD_REGEXP_OFFSET_COUNT];
+	pcre *re;
+	const char *error;
+	char *resultstring = NULL;
+	int erroffset;
+	int match = 0;
+
+	re = pcre_compile(
+			HUD_COLOR_REGEX,	// The pattern.
+			PCRE_CASELESS,		// Case insensitive.
+			&error,				// Error message.
+			&erroffset,			// Error offset.
+			NULL);				// use default character tables.
+
+	if(error)
+	{
+		return;
+	}
+
+	if((match = pcre_exec(re, NULL, string, strlen(string), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0)
+	{
+		// R.
+		if(pcre_get_substring (string, offsets, match, 1, &resultstring) > 0)
+		{
+			(*r) = min(Q_atoi(resultstring), 255) / 255.0;
+		}
+		else
+		{
+			(*r) = -1;
+		}
+		
+		if(resultstring != NULL)
+		{
+			Q_free(resultstring);
+			resultstring = NULL;
+		}
+
+		// G.
+		if(pcre_get_substring (string, offsets, match, 2, &resultstring) > 0)
+		{
+			(*g) = min(Q_atoi(resultstring), 255) / 255.0;
+		}
+		else
+		{
+			(*g) = -1;
+		}
+
+		if(resultstring != NULL)
+		{
+			Q_free(resultstring);
+			resultstring = NULL;
+		}
+		
+		// B.
+		if(pcre_get_substring (string, offsets, match, 3, &resultstring) > 0)
+		{
+			(*b) = min(Q_atoi(resultstring), 255) / 255.0;
+		}
+		else
+		{
+			(*b) = -1;
+		}
+
+		if(resultstring != NULL)
+		{
+			Q_free(resultstring);
+			resultstring = NULL;
+		}
+
+		// Alpha.
+		if(pcre_get_substring (string, offsets, match, 5, &resultstring) > 0)
+		{
+			(*alpha) = max(Q_atof(resultstring), 0);
+		}
+		else
+		{
+			(*alpha) = -1;
+		}		
+
+		if(resultstring != NULL)
+		{
+			Q_free(resultstring);
+			resultstring = NULL;
+		}
+	}
+}
+
 // hud plus func - show element
 void HUD_Plus_f(void)
 {
@@ -148,6 +335,8 @@ void HUD_Func_f(void)
             hud->show->value ? "shown" : "hidden");
     if (hud->frame != NULL)
         Com_Printf("Frame:          %s\n\n", hud->frame->string);
+	if (hud->frame_color != NULL)
+        Com_Printf("Frame color:          %s\n\n", hud->frame_color->string);
 
     // placement
     Com_Printf("Placement:        %s\n", hud->place->string);
@@ -610,6 +799,42 @@ void HUD_CalcFrameExtents(hud_t *hud, int width, int height,
         *fl = *fr = *ft = *fb = 0;
     }
 }
+float hud_frame_color[3] = {0, 0, 0};
+qbool HUD_OnChangeFrameColor(cvar_t *var, char *newval)
+{
+	char *new_color = HUD_ColorNameToRGB(newval); 
+
+	// Get the RGB values.
+	if (HUD_RegExpMatch(HUD_COLOR_REGEX, new_color))
+	{
+		float colors[4];
+
+		strncpy(var->string, new_color, (strlen(new_color) + 1) * sizeof(char));
+
+		HUD_RGBValuesFromString (var->string, 
+			&colors[0], 
+			&colors[1], 
+			&colors[2], 
+			&colors[3]);
+
+		// RGB.
+		if(colors[0] >= 0 && colors[1] >= 0 && colors[2] >= 0)
+		{
+			hud_frame_color[0] = colors[0];
+			hud_frame_color[1] = colors[1];
+			hud_frame_color[2] = colors[2];
+		}
+
+		return true;
+	}
+	else
+	{
+		hud_frame_color[0] = 0;
+		hud_frame_color[1] = 0;
+		hud_frame_color[2] = 0;
+		return false;
+	}
+}
 
 // draw frame for HUD element
 void HUD_DrawFrame(hud_t *hud, int x, int y, int width, int height)
@@ -619,8 +844,21 @@ void HUD_DrawFrame(hud_t *hud, int x, int y, int width, int height)
 
     if (hud->frame->value > 0  &&  hud->frame->value <= 1)
     {
+		float colors[4] = {0.0, 0.0, 0.0, 0.0};
+		char *new_color = HUD_ColorNameToRGB(hud->frame_color->string); 
+
+		// Get the RGB values.
+		if (HUD_RegExpMatch(HUD_COLOR_REGEX, new_color))
+		{
+			HUD_RGBValuesFromString (new_color, 
+				&colors[0], 
+				&colors[1], 
+				&colors[2], 
+				&colors[3]);
+		}
+
         Draw_FadeBox(x, y, width, height,
-            0, 0, 0, hud->frame->value);
+            colors[0], colors[1], colors[2], hud->frame->value);
         return;
     }
     else
@@ -874,7 +1112,7 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
                      int flags, cactive_t min_state, int draw_order,
                      hud_func_type draw_func,
                      char *show, char *place, char *align_x, char *align_y,
-                     char *pos_x, char *pos_y, char *frame,
+                     char *pos_x, char *pos_y, char *frame, char *frame_color,
                      char *params, ...)
 {
     // FIXME: should use zmalloc instaed?
@@ -958,6 +1196,10 @@ hexum -> *FIXME* Don't support aliases for now, only used for show_fps and r_net
     {
         hud->frame = HUD_CreateVar(name, "frame", frame);
         hud->params[hud->num_params++] = hud->frame;
+
+		hud->frame_color = HUD_CreateVar(name, "frame_color", frame_color);
+		hud->frame_color->OnChange = HUD_OnChangeFrameColor;
+        hud->params[hud->num_params++] = hud->frame_color;
     }
     else
         hud->flags |= HUD_NO_FRAME;

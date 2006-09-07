@@ -1490,7 +1490,7 @@ void R_Init (void) {
 
     hud_netgraph = HUD_Register("netgraph", /*"r_netgraph"*/ NULL, "Shows your network conditions in graph-form. With netgraph you can monitor your latency (ping), packet loss and network errors.",
         HUD_PLUSMINUS | HUD_ON_SCORES, ca_onserver, 0, SCR_HUD_Netgraph,
-        "0", "top", "left", "bottom", "0", "0", "0",
+        "0", "top", "left", "bottom", "0", "0", "0", "0 0 0", 
         "swap_x",       "0",
         "swap_y",       "0",
         "inframes",     "0",
