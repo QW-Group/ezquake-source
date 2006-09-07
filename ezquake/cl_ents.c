@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.19 2006-08-14 15:31:49 vvd0 Exp $
+	$Id: cl_ents.c,v 1.20 2006-09-07 19:34:29 tonik Exp $
 
 */
 
@@ -77,6 +77,7 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_vknife2] = "progs/v_knife2.mdl";
 	cl_modelnames[mi_vmedi] = "progs/v_medi.mdl";
 	cl_modelnames[mi_vspan] = "progs/v_span.mdl";
+	// monsters
 	cl_modelnames[mi_monster1] = "progs/soldier.mdl";
 	cl_modelnames[mi_m2] = "progs/dog.mdl";
 	cl_modelnames[mi_m3] = "progs/demon.mdl";
@@ -89,7 +90,12 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_m10] = "progs/fish.mdl";
 	cl_modelnames[mi_m11] = "progs/hknight.mdl";
 	cl_modelnames[mi_m12] = "progs/shalrath.mdl";
-	cl_modelnames[mi_monster13] = "progs/tarbaby";
+	cl_modelnames[mi_m13] = "progs/tarbaby";
+	// hipnotic monsters
+	cl_modelnames[mi_m14] = "progs/armabody.mdl";
+	cl_modelnames[mi_m15] = "progs/armalegs.mdl";
+	cl_modelnames[mi_m16] = "progs/grem.mdl";
+	cl_modelnames[mi_m17] = "progs/scor.mdl";
 
 	// FIXME, delay until map load time?
 	cl_flame0_model = Mod_ForName ("progs/flame0.mdl", false);
@@ -133,7 +139,7 @@ static qbool is_monster (int modelindex)
 	int i;
 	if (!cl_lerp_monsters.value)
 		return false;
-	for (i = 1; i < 13; i++)
+	for (i = 1; i < 17; i++)
 		if (modelindex == cl_modelindices[mi_monster1 + i - 1])
 			return true;
 	return false;
