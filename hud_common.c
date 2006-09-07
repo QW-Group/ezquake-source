@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.62 2006-09-02 18:26:21 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.63 2006-09-07 14:12:45 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -202,6 +202,48 @@ void SCR_HUD_DrawFPS(hud_t *hud)
 
     if (hud_fps_title->value)
         strcat(st, " fps");
+
+    width = 8*strlen(st);
+    height = 8;
+
+    if (HUD_PrepareDraw(hud, strlen(st)*8, 8, &x, &y))
+        Draw_String(x, y, st);
+}
+
+#ifdef WIN32
+int IN_GetMouseRate(void);
+#endif
+
+void SCR_HUD_DrawMouserate(hud_t *hud)
+{
+    int x, y, width, height;
+	static int lastresult = 0;
+	int newresult;
+    char st[80];
+
+    static cvar_t *hud_mouserate_title = NULL;
+
+    if (hud_mouserate_title == NULL)   // first time called
+    {
+        hud_mouserate_title    = HUD_FindVar(hud, "title");
+    }
+
+#ifdef WIN32
+	newresult = IN_GetMouseRate();
+#else
+	newresult = -1;
+#endif
+
+	if (newresult > 0) {
+		snprintf(st, sizeof(st), "%4d", newresult);
+		lastresult = newresult;
+	} else if (!newresult)
+		snprintf(st, sizeof(st), "%4d", lastresult);
+	else
+		snprintf(st, sizeof(st), "n/a");
+
+    if (hud_mouserate_title->value)
+        strcat(st, " Hz");
 
     width = 8*strlen(st);
     height = 8;
@@ -5474,6 +5516,12 @@ void CommonDraw_Init(void)
         "title",    "1",
 		"decimals", "1",
         NULL);
+
+	HUD_Register("mouserate", NULL, "Show your current mouse input rate", HUD_PLUSMINUS, ca_active, 9,
+		SCR_HUD_DrawMouserate,
+		"0", "screen", "left", "bottom", "0", "0", "0",
+		"title", "1",
+		NULL);
 
     // init clock
 	HUD_Register("clock", NULL, "Shows current local time (hh:mm:ss).",
