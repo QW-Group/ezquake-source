@@ -45,7 +45,7 @@ Microsoft Visual Studio 8 and .s (asm) files
    4) intermediate .spp and .asm files are deleted
    5) .obj file is then used by the linker
  - Current state: masm32 (ml.exe) gives error for me: Debug-gl\sv_math.asm(445) : error A2006:  : _BOPS_Error
-
+VVD: ??? All work for me: http://ezquake.cvs.sourceforge.net/ezquake/ezquake/sv_math.s?r1=1.3&r2=1.4
 
 Developer notes
 ---
