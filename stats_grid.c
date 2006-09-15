@@ -727,6 +727,9 @@ void StatsGrid_Gather()
 	// The grid is reset on all level changes.
 	if(stats_grid == NULL)
 	{
+		if (!cl.worldmodel)
+			return;
+
 		// TODO: Create cvars that let us set these values.
 		StatsGrid_Init(&stats_grid, // The grid to initiate.
 			5.0,					// The time in miliseconds between fall offs.
