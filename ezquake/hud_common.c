@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.64 2006-09-07 19:56:04 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.65 2006-09-15 18:14:43 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -1766,6 +1766,10 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
 	clamp(width, 1, 99999);
     clamp(height, 1, 99999);
 
+	// Set it to this, because 1.0 will make the colors
+	// completly saturated, and no semi-transparency will show.
+	pic_alpha = (pic_alpha) >= 1.0 ? 0.99 : pic_alpha;
+
 	// Grow the group if necessary.
 	if (pic_scalemode == HUD_GROUP_SCALEMODE_GROW 
 		&& pic != NULL && pic->height > 0)
@@ -1814,15 +1818,34 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
         }
 		else if (pic_scalemode == HUD_GROUP_SCALEMODE_STRETCH)
 		{
-			float scale_x = max(1.0, ((float)width / pic->width));
-			float scale_y = max(1.0, ((float)height / pic->height));
+			// Stretch or shrink the picture to fit.
+			float scale_x = (float)width / pic->width;
+			float scale_y = (float)height / pic->height;
 
 			Draw_SAlphaSubPic2 (x, y, pic, 0, 0, pic->width, pic->height, scale_x, scale_y, pic_alpha);
 		}
 		else if (pic_scalemode == HUD_GROUP_SCALEMODE_CENTER)
 		{
-			Draw_AlphaSubPic (x + (width - pic->width) / 2, y + (height - pic->height) / 2, 
-				pic, 0, 0, min(width, pic->width), min(height, pic->height), pic_alpha);
+			// Center the picture in the group.
+			int pic_x = x + (width - pic->width) / 2;
+			int pic_y = y + (height - pic->height) / 2;
+
+			int src_x = 0;
+			int src_y = 0;
+
+			if(x > pic_x)
+			{
+				src_x = x - pic_x;
+				pic_x = x;
+			}
+
+			if(y > pic_y)
+			{
+				src_y = y - pic_y;
+				pic_y = y;
+			}
+
+			Draw_AlphaSubPic (pic_x, pic_y,	pic, src_x, src_y, min(width, pic->width), min(height, pic->height), pic_alpha);
 		}
 		else
         {
@@ -1833,7 +1856,7 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
 	#endif
 }
 
-qbool SCR_HUD_LoadGroupPic(mpic_t *hud_pic, char *newpic)
+qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
 {
 #ifdef GLQUAKE
 	mpic_t *temp_pic;
@@ -1855,53 +1878,55 @@ qbool SCR_HUD_LoadGroupPic(mpic_t *hud_pic, char *newpic)
 
 	// Save the pic.
 	(*hud_pic) = *temp_pic;
+
+	strncpy(var->string, newpic, (strlen(newpic) + 1) * sizeof(char));
 #endif
-	return false;
+	return true;
 }
 
 qbool SCR_HUD_OnChangePic_Group1(cvar_t *var, char *newpic)
 {
-	return SCR_HUD_LoadGroupPic(&hud_pic_group1, newpic);
+	return SCR_HUD_LoadGroupPic(var, &hud_pic_group1, newpic);
 }
 
 qbool SCR_HUD_OnChangePic_Group2(cvar_t *var, char *newpic)
 {
-	return SCR_HUD_LoadGroupPic(&hud_pic_group2, newpic);
+	return SCR_HUD_LoadGroupPic(var, &hud_pic_group2, newpic);
 }
 
 qbool SCR_HUD_OnChangePic_Group3(cvar_t *var, char *newpic)
 {
-	return SCR_HUD_LoadGroupPic(&hud_pic_group3, newpic);
+	return SCR_HUD_LoadGroupPic(var, &hud_pic_group3, newpic);
 }
 
 qbool SCR_HUD_OnChangePic_Group4(cvar_t *var, char *newpic)
 {
-	return SCR_HUD_LoadGroupPic(&hud_pic_group4, newpic);
+	return SCR_HUD_LoadGroupPic(var, &hud_pic_group4, newpic);
 }
 
 qbool SCR_HUD_OnChangePic_Group5(cvar_t *var, char *newpic)
 {
-	return SCR_HUD_LoadGroupPic(&hud_pic_group5, newpic);
+	return SCR_HUD_LoadGroupPic(var, &hud_pic_group5, newpic);
 }
 
 qbool SCR_HUD_OnChangePic_Group6(cvar_t *var, char *newpic)
 {
-	return SCR_HUD_LoadGroupPic(&hud_pic_group6, newpic);
+	return SCR_HUD_LoadGroupPic(var, &hud_pic_group6, newpic);
 }
 
 qbool SCR_HUD_OnChangePic_Group7(cvar_t *var, char *newpic)
 {
-	return SCR_HUD_LoadGroupPic(&hud_pic_group7, newpic);
+	return SCR_HUD_LoadGroupPic(var, &hud_pic_group7, newpic);
 }
 
 qbool SCR_HUD_OnChangePic_Group8(cvar_t *var, char *newpic)
 {
-	return SCR_HUD_LoadGroupPic(&hud_pic_group8, newpic);
+	return SCR_HUD_LoadGroupPic(var, &hud_pic_group8, newpic);
 }
 
 qbool SCR_HUD_OnChangePic_Group9(cvar_t *var, char *newpic)
 {
-	return SCR_HUD_LoadGroupPic(&hud_pic_group9, newpic);
+	return SCR_HUD_LoadGroupPic(var, &hud_pic_group9, newpic);
 }
 
 void SCR_HUD_Group1(hud_t *hud)
