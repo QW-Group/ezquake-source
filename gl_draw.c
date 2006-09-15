@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.31 2006-09-03 08:51:47 disconn3ct Exp $
+	$Id: gl_draw.c,v 1.32 2006-09-15 18:14:30 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1439,6 +1439,8 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width
     glVertex2f (x, y + scale_y * height);
 
 	glEnd ();
+
+	glColor4f (1, 1, 1, 1);
 }
 
 void Draw_SAlphaSubPic (int x, int y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale, float alpha)
