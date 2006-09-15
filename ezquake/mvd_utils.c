@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.31 2006-09-05 21:37:18 johnnycz Exp $
+	$Id: mvd_utils.c,v 1.32 2006-09-15 22:37:37 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -316,15 +316,16 @@ void MVD_Init_Info_f (void) {
 		mvd_new_info[z++].p_info = &cl.players[i];	
 	}
 
-	strcpy(mvd_cg_info.mapname,TP_MapName());
+	strncpy(mvd_cg_info.mapname, TP_MapName(), sizeof(mvd_cg_info.mapname));
 	mvd_cg_info.timelimit=cl.timelimit;
 
-	
-	strcpy(mvd_cg_info.team1,mvd_new_info[0].p_info->team);
-	for (i = 0; i < z; i++) {
-		if(strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team1)){
-			strcpy(mvd_cg_info.team2,mvd_new_info[i].p_info->team	);
-			break;
+	if (mvd_new_info->p_info) {
+		strncpy(mvd_cg_info.team1, mvd_new_info[0].p_info->team, sizeof(mvd_cg_info.team1));
+		for (i = 0; i < z; i++) {
+			if (strcmp(mvd_new_info[i].p_info->team, mvd_cg_info.team1)) {
+				strncpy(mvd_cg_info.team2, mvd_new_info[i].p_info->team, sizeof(mvd_cg_info.team2));
+				break;
+			}
 		}
 	}
 	
