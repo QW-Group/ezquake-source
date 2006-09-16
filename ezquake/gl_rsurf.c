@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-
 #define	BLOCK_WIDTH		128
 #define	BLOCK_HEIGHT	128
 
@@ -732,11 +731,13 @@ static void R_ClearTextureChains(model_t *clmodel) {
 void DrawTextureChains (model_t *model) {
 
 	extern cvar_t gl_lumaTextures;
-
+	extern model_color_t model_color_variable[MODEL_COLOR_COUNT];
+	
 	int waterline, i, k, GL_LIGHTMAP_TEXTURE = 0, GL_FB_TEXTURE = 0;
 	msurface_t *s;
 	texture_t *t;
 	float *v;
+	byte *col,color[3];
 
 	qbool render_lightmaps = false;
 	qbool drawLumasGlowing, doMtex1, doMtex2;
@@ -763,16 +764,51 @@ void DrawTextureChains (model_t *model) {
 	}
 
 	GL_DisableMultitexture();
-
 	if (gl_fogenable.value)
+	{
 		glEnable(GL_FOG);
+	}
 
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	// Color the world model if mode_color has been set.
+	if (model->isworldmodel)
+	{
+		if(model_color_variable[MODEL_COLOR_WORLD].enable->value > 0 && model_color_variable[MODEL_COLOR_WORLD].enable->value < 5 )
+		{
+			if(model_color_variable[MODEL_COLOR_WORLD].enable->value == MODEL_COLOR_MODE_MODULATE)
+			{
+				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			}
+			else if(model_color_variable[MODEL_COLOR_WORLD].enable->value == MODEL_COLOR_MODE_BLEND)
+			{
+				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
+			}
+			else if(model_color_variable[MODEL_COLOR_WORLD].enable->value == MODEL_COLOR_MODE_DECAL)
+			{
+				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+			}
+			else if(model_color_variable[MODEL_COLOR_WORLD].enable->value == MODEL_COLOR_MODE_ADD)
+			{
+				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
+			}
+			else if(model_color_variable[MODEL_COLOR_WORLD].enable->value == MODEL_COLOR_MODE_REPLACE)
+			{
+				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+			}
+
+			col = StringToRGB(model_color_variable[MODEL_COLOR_WORLD].color->string);
+			memcpy(color, col, 3);
+			glColor3ubv(color);
+		}
+	}
+	else
+	{
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	}
 
 	for (i = 0; i < model->numtextures; i++) {
 		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1]))
 			continue;	
-
+	
 		t = R_TextureAnimation (model->textures[i]);
 		//bind the world texture
 		GL_SelectTexture(GL_TEXTURE0_ARB);
@@ -780,7 +816,6 @@ void DrawTextureChains (model_t *model) {
 
 		draw_fbs = t->isLumaTexture || gl_fb_bmodels.value;
 		draw_mtex_fbs = draw_fbs && can_mtex_fbs;
-
 		if (gl_mtexable) {
 			// START shaman FIX 1025184
 			if (t->isLumaTexture && !drawLumasGlowing && gl_lumaTextures.value) {
@@ -955,8 +990,10 @@ void R_DrawFlat (model_t *model) {
 	if (gl_fogenable.value)
 		glEnable(GL_FOG);
 	// } END shaman BUG /fog not working with /r_drawflat
-
+	if (r_drawflat.value == 1)
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
+	if (r_drawflat.value == 2)
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	GL_SelectTexture(GL_TEXTURE0_ARB);
 	
 	for (i = 0; i < model->numtextures; i++) {

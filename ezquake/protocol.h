@@ -363,3 +363,27 @@ typedef struct temp_entity_list_s
 } temp_entity_list_t;
 
 temp_entity_list_t	temp_entities;
+
+
+
+#define MODEL_COLOR_WORLD			0
+#define MODEL_COLOR_ENEMY			1
+#define MODEL_COLOR_TEAM			2
+
+#define MODEL_COLOR_MODE_NORMAL		0
+#define MODEL_COLOR_MODE_MODULATE	1
+#define MODEL_COLOR_MODE_BLEND		2
+#define MODEL_COLOR_MODE_DECAL		3
+#define MODEL_COLOR_MODE_ADD		4
+#define MODEL_COLOR_MODE_REPLACE	5
+
+#define MODEL_COLOR_COUNT			37
+
+typedef struct model_color_s 
+{
+	cvar_t	*enable;
+	cvar_t	*color;
+	char	*name;
+	char	*model;
+} model_color_t;
+
