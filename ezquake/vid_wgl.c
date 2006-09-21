@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.16 2006-06-23 17:35:30 vvd0 Exp $
+	$Id: vid_wgl.c,v 1.17 2006-09-21 23:19:59 johnnycz Exp $
 
 */
 
@@ -1298,6 +1298,9 @@ void VID_Init (unsigned char *palette) {
 
 	Check_Gamma(palette);
 	VID_SetPalette (palette);
+
+	if ((i = COM_CheckParm("-freq")) && i + 1 < com_argc)
+		Cvar_Set(&vid_displayfrequency, com_argv[i + 1]);
 
 	VID_SetMode (vid_default, palette);
 
