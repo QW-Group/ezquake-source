@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.65 2006-09-15 18:14:43 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.66 2006-09-21 22:14:09 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -219,17 +219,25 @@ void SCR_HUD_DrawMouserate(hud_t *hud)
     int x, y, width, height;
 	static int lastresult = 0;
 	int newresult;
-    char st[80];
+    char st[80];	// string buffer
+	double t;		// current time
+	static double lastframetime;	// last refresh
 
-    static cvar_t *hud_mouserate_title = NULL;
+    static cvar_t *hud_mouserate_interval, *hud_mouserate_title = NULL;
 
     if (hud_mouserate_title == NULL)   // first time called
     {
         hud_mouserate_title    = HUD_FindVar(hud, "title");
+		hud_mouserate_interval = HUD_FindVar(hud, "interval");
     }
 
 #ifdef WIN32
-	newresult = IN_GetMouseRate();
+	t = Sys_DoubleTime();
+	if ((t - lastframetime) >= hud_mouserate_interval->value) {
+		newresult = IN_GetMouseRate();
+		lastframetime = t;
+	} else
+		newresult = 0;
 #else
 	newresult = -1;
 #endif
@@ -5412,6 +5420,7 @@ void CommonDraw_Init(void)
 		SCR_HUD_DrawMouserate,
 		"0", "screen", "left", "bottom", "0", "0", "0", "0 0 0",
 		"title", "1",
+		"interval", "1",
 		NULL);
 
     // init clock
