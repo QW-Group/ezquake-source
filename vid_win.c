@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.13 2006-03-20 13:51:29 vvd0 Exp $
+	$Id: vid_win.c,v 1.14 2006-09-21 23:19:59 johnnycz Exp $
 
 */
 
@@ -1675,6 +1675,10 @@ void VID_Init (unsigned char *palette) {
 		startwindowed = 1;
 		vid_default = windowed_default;
 	}
+
+	if ((i = COM_CheckParm("-freq")) && i + 1 < com_argc)
+		Cvar_Set(&vid_displayfrequency, com_argv[i + 1]);
+
 
 	// sound initialization has to go here, preceded by a windowed mode set,
 	// so there's a window for DirectSound to work with but we're not yet
