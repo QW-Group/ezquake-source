@@ -1193,6 +1193,46 @@ void R_DrawAliasModel (entity_t *ent) {
 		}
 	}
 
+// Underwater caustics on alias models of QRACK -->
+	#define ISUNDERWATER(x) ((x) == CONTENTS_WATER || (x) == CONTENTS_SLIME || (x) == CONTENTS_LAVA)
+	#define TruePointContents(p) PM_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
+	#define GL_RGB_SCALE 0x8573
+
+	if ((gl_caustics.value) && (underwatertexture && gl_mtexable && ISUNDERWATER(TruePointContents(ent->origin))))
+	{
+		GL_EnableMultitexture ();
+		glBindTexture (GL_TEXTURE_2D, underwatertexture);
+
+		glMatrixMode (GL_TEXTURE);
+		glLoadIdentity ();
+		glScalef (0.5, 0.5, 1);
+		glRotatef (cls.realtime * 10, 1, 0, 0);
+		glRotatef (cls.realtime * 10, 0, 1, 0);
+		glMatrixMode (GL_MODELVIEW);
+
+		GL_Bind (underwatertexture);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);        
+		glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+		glEnable (GL_BLEND);
+
+		R_SetupAliasFrame (oldframe, frame, paliashdr, true);
+
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glDisable(GL_BLEND);            
+
+		GL_SelectTexture(GL_TEXTURE1_ARB);
+		glTexEnvi (GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+		glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		glDisable (GL_TEXTURE_2D);
+
+		glMatrixMode (GL_TEXTURE);
+		glLoadIdentity ();
+		glMatrixMode (GL_MODELVIEW);
+
+		GL_DisableMultitexture ();
+	}
+// <-- Underwater caustics on alias models of QRACK
+
 	glShadeModel (GL_FLAT);
 	if (gl_affinemodels.value)
 		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
