@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.11 2006-05-16 03:10:11 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.12 2006-09-22 00:35:19 johnnycz Exp $
  */
 
 #ifdef EMBED_TCL
@@ -443,6 +443,7 @@ static char* TCL_TraceVariable (ClientData data, Tcl_Interp* interp,
 {
 	cvar_t *var;
 	char *value;
+	int len;
 
 	if (name1[0] == ':' && name1[1] == ':')
 		name1 += 2; // skip root namespace specification
@@ -450,9 +451,9 @@ static char* TCL_TraceVariable (ClientData data, Tcl_Interp* interp,
 	var = Cvar_FindVar (name1);
 
 	if (flags & TCL_TRACE_READS) {
-		if (var) {
+		value = var ? var->string : Cmd_MacroString(name1, &len);
+		if (value) {
 			Tcl_DString str_utf;
-			value = var->string;
 			Tcl_ExternalToUtfDString (qw_enc, value, strlen (value), &str_utf);
 			Tcl_SetVar2 (interp, name1, name2, Tcl_DStringValue (&str_utf), TCL_GLOBAL_ONLY);
 			Tcl_DStringFree (&str_utf);
@@ -502,6 +503,15 @@ void TCL_RegisterVariable (cvar_t *variable)
 	result = Tcl_TraceVar (interp, variable->name,
 	                       TCL_TRACE_READS|TCL_TRACE_WRITES|TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
 	                       TCL_TraceVariable, NULL);
+}
+
+void TCL_RegisterMacro (macro_command_t *macro)
+{
+	if (!interp)
+		return;
+
+	Tcl_SetVar (interp, macro->name, macro->func(), TCL_GLOBAL_ONLY);
+	Tcl_TraceVar (interp, macro->name, TCL_TRACE_READS|TCL_GLOBAL_ONLY, TCL_TraceVariable, NULL);
 }
 
 void TCL_UnregisterVariable (const char *name)
