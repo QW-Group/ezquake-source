@@ -656,21 +656,21 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 								// If we're drawing an enemy.
 								col = StringToRGB(model_color_variable[MODEL_COLOR_ENEMY].color->string);
 								memcpy(color, col, 3);
-								glColor4f((float)color[0], (float)color[1], (float)color[2], r_modelalpha);
+								glColor4f(color[0] / 255.0, color[1] /255.0, color[2] / 255.0, r_modelalpha);
 							}
 							else
 							{
 								// Drawing a teammate.
 								col = StringToRGB(model_color_variable[MODEL_COLOR_TEAM].color->string);
 								memcpy(color, col, 3);
-								glColor4f((float)color[0], (float)color[1], (float)color[2], r_modelalpha);
+								glColor4f(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0, r_modelalpha);
 							}
 						}
 				
 						// Get the color from the color string and set the color.
 						col = StringToRGB(model_color_variable[c].color->string);
 						memcpy(color, col, 3);
-						glColor4f((float)color[0], (float)color[1], (float)color[2], r_modelalpha);
+						glColor4f(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0, r_modelalpha);
 						break;
 					}
 					else
