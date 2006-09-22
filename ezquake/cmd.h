@@ -170,8 +170,17 @@ void Cmd_WriteAliases (FILE *f);
 
 void DeleteServerAliases(void);
 
+typedef struct
+{
+	char name[32];
+	char *(*func) (void);
+	qbool teamplay;
+}
+macro_command_t;
+
 void Cmd_AddMacro(char *s, char *(*f)(void)); 
 void Cmd_AddMacroEx(char *s, char *(*f)(void), qbool teamplay);
+char *Cmd_MacroString (char *s, int *macro_length);
 
 qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command );
 qbool Cmd_IsCommandAllowedInMessageTrigger( const char *command );

@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: embed_tcl.h,v 1.1 2005-11-24 11:48:27 disconn3ct Exp $
+ *  $Id: embed_tcl.h,v 1.2 2006-09-22 00:35:20 johnnycz Exp $
  */
 
 #ifndef EMBED_TCL_H
@@ -39,6 +39,8 @@ qbool TCL_InterpLoaded (void);
 
 void TCL_RegisterVariable (cvar_t *variable);
 void TCL_UnregisterVariable (const char *name);
+
+void TCL_RegisterMacro (macro_command_t *macro);
 
 void TCL_ExecuteAlias (cmd_alias_t *alias);
 int TCL_MessageHook (const char *msg, unsigned trigger_type);

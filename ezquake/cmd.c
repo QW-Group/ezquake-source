@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.42 2006-05-16 03:33:17 disconn3ct Exp $
+    $Id: cmd.c,v 1.43 2006-09-22 00:35:19 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1132,14 +1132,6 @@ void Cmd_CmdList_f (void)
 
 #define MAX_MACROS 64
 
-typedef struct
-{
-	char name[32];
-	char *(*func) (void);
-	qbool teamplay;
-}
-macro_command_t;
-
 static macro_command_t macro_commands[MAX_MACROS];
 static int macro_count = 0;
 
@@ -1150,6 +1142,9 @@ void Cmd_AddMacroEx(char *s, char *(*f)(void), qbool teamplay)
 	strlcpy(macro_commands[macro_count].name, s, sizeof(macro_commands[macro_count].name));
 	macro_commands[macro_count].func = f;
 	macro_commands[macro_count].teamplay = teamplay;
+#ifdef EMBED_TCL
+	TCL_RegisterMacro (macro_commands + macro_count);
+#endif
 	macro_count++;
 }
 
