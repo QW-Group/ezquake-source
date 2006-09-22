@@ -637,8 +637,8 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 					//Com_Printf("rgb light : %f %f %f\n", lc[0], lc[1], lc[2]);
 					glColor4f(lc[0],lc[1],lc[2], r_modelalpha);
 			}
-			else
-			{
+			else if (!RuleSets_DisallowExternalTexture(currententity->model))
+			{	// ruleset allows to colorize this model
 				byte *col, color[3];
 				int c;
 				
@@ -673,11 +673,13 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 						glColor4f(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0, r_modelalpha);
 						break;
 					}
-					else
-					{
-						glColor4f (l, l, l, r_modelalpha);
-					}
 				}
+				
+				if (c == MODEL_COLOR_COUNT) // we didn't find anything
+					glColor4f (l, l, l, r_modelalpha);
+
+			} else {	// ruleset restricted coloring of this model
+				glColor4f(l, l, l, r_modelalpha);
 			}
 
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
