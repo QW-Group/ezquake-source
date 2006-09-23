@@ -47,7 +47,7 @@ qbool HUD_RegExpMatch(const char *regexp, const char *matchstring)
 {
 	int offsets[1];
 	pcre *re;
-	const char *error;
+	const char *error = NULL;
 	int erroffset;
 	int match = 0;
 
@@ -60,14 +60,23 @@ qbool HUD_RegExpMatch(const char *regexp, const char *matchstring)
 
 	if(error)
 	{
+		Q_free(error);
+		error = NULL;
+
+		Q_free(re);
+		re = NULL;
 		return false;
 	}
 
 	if((match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, 1)) >= 0)
 	{
+		Q_free(re);
+		re = NULL;
 		return true;
 	}
 
+	Q_free(re);
+	re = NULL;
 	return false;
 }
 
@@ -88,6 +97,11 @@ qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, char **res
 
 	if(error)
 	{
+		Q_free(error);
+		error = NULL;
+
+		Q_free(re);
+		re = NULL;
 		return false;
 	}
 
@@ -101,9 +115,14 @@ qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, char **res
 			(*resultlength) = substring_length;
 		}
 
+		Q_free(re);
+		re = NULL;
+
 		return (substring_length != PCRE_ERROR_NOSUBSTRING && substring_length != PCRE_ERROR_NOMEMORY);
 	}
 
+	Q_free(re);
+	re = NULL;
 	return false;
 }
 
@@ -159,6 +178,11 @@ void HUD_RGBValuesFromString(char *string, float *r, float *g, float *b, float *
 
 	if(error)
 	{
+		Q_free(error);
+		error = NULL;
+
+		Q_free(re);
+		re = NULL;
 		return;
 	}
 
@@ -228,6 +252,9 @@ void HUD_RGBValuesFromString(char *string, float *r, float *g, float *b, float *
 			resultstring = NULL;
 		}
 	}
+
+	Q_free(re);
+	re = NULL;
 }
 
 // hud plus func - show element
