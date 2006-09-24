@@ -158,266 +158,12 @@ cvar_t  gl_foggreen			= {"gl_foggreen", "0.5"};
 cvar_t  gl_fogblue			= {"gl_fogblue", "0.4"};
 cvar_t  gl_fogsky			= {"gl_fogsky", "1"}; 
 
-cvar_t	model_color_backpack		= {"model_color_backpack", "255 255 255"};
-cvar_t	model_color_enemy			= {"model_color_enemy", "255 255 255"};
-cvar_t	model_color_team			= {"model_color_team", "255 255 255"};
-cvar_t	model_color_world			= {"model_color_world", "255 255 255"};
-cvar_t	model_color_missile			= {"model_color_missile", "255 255 255"};
-cvar_t	model_color_quad			= {"model_color_quad", "255 255 255"};
-cvar_t	model_color_armor			= {"model_color_armor", "255 255 255"};
-cvar_t	model_color_pent			= {"model_color_pent", "255 255 255"};
-cvar_t	model_color_gren			= {"model_color_gren", "255 255 255"};
-cvar_t	model_color_spike			= {"model_color_spike", "255 255 255"};
-cvar_t	model_color_v_shot			= {"model_color_v_shot", "255 255 255"};
-cvar_t	model_color_bolt			= {"model_color_bolt", "255 255 255"};
-cvar_t	model_color_bolt2			= {"model_color_bolt2", "255 255 255"};
-cvar_t	model_color_bolt3			= {"model_color_bolt3", "255 255 255"};
-cvar_t	model_color_s_spike			= {"model_color_s_spike", "255 255 255"};
-cvar_t	model_color_ring			= {"model_color_ring", "255 255 255"};
-cvar_t	model_color_suit			= {"model_color_suit", "255 255 255"};
-cvar_t	model_color_rl				= {"model_color_rl", "255 255 255"};
-cvar_t	model_color_lg				= {"model_color_lg", "255 255 255"};
-cvar_t	model_color_mega			= {"model_color_mega", "255 255 255"};
-cvar_t	model_color_ssg				= {"model_color_ssg", "255 255 255"};
-cvar_t	model_color_ng				= {"model_color_ng", "255 255 255"};
-cvar_t	model_color_sng				= {"model_color_sng", "255 255 255"};
-cvar_t	model_color_gl				= {"model_color_gl", "255 255 255"};
-cvar_t	model_color_gib1			= {"model_color_gib1", "255 255 255"};
-cvar_t	model_color_gib2			= {"model_color_gib2", "255 255 255"};
-cvar_t	model_color_gib3			= {"model_color_gib3", "255 255 255"};
-cvar_t	model_color_health25		= {"model_color_health25", "255 255 255"};
-cvar_t	model_color_health10		= {"model_color_health10", "255 255 255"};
-cvar_t	model_color_rocks			= {"model_color_rocks", "255 255 255"};
-cvar_t	model_color_rocks1			= {"model_color_rocks1", "255 255 255"};
-cvar_t	model_color_cells			= {"model_color_cells", "255 255 255"};
-cvar_t	model_color_cells1			= {"model_color_cells1", "255 255 255"};
-cvar_t	model_color_nails			= {"model_color_nails", "255 255 255"};
-cvar_t	model_color_nails1			= {"model_color_nails1", "255 255 255"};
-cvar_t	model_color_shells			= {"model_color_shells", "255 255 255"};
-cvar_t	model_color_shells1			= {"model_color_shells1", "255 255 255"};
-
-cvar_t	model_color_backpack_enable			= {"model_color_backpack_enable", "0"};
-cvar_t	model_color_enemy_enable			= {"model_color_enemy_enable", "0"};
-cvar_t	model_color_team_enable				= {"model_color_team_enable", "0"};
-cvar_t	model_color_world_enable			= {"model_color_world_enable", "0"};
-cvar_t	model_color_missile_enable			= {"model_color_missile_enable", "0"};
-cvar_t	model_color_quad_enable				= {"model_color_quad_enable", "0"};
-cvar_t	model_color_armor_enable			= {"model_color_armor_enable", "0"};
-cvar_t	model_color_pent_enable				= {"model_color_pent_enable", "0"};
-cvar_t	model_color_gren_enable				= {"model_color_gren_enable", "0"};
-cvar_t	model_color_spike_enable			= {"model_color_spike_enable", "0"};
-cvar_t	model_color_v_shot_enable			= {"model_color_v_shot_enable", "0"};
-cvar_t	model_color_bolt_enable				= {"model_color_bolt_enable", "0"};
-cvar_t	model_color_bolt2_enable			= {"model_color_bolt2_enable", "0"};
-cvar_t	model_color_bolt3_enable			= {"model_color_bolt3_enable", "0"};
-cvar_t	model_color_s_spike_enable			= {"model_color_s_spike_enable", "0"};
-cvar_t	model_color_ring_enable				= {"model_color_ring_enable", "0"};
-cvar_t	model_color_suit_enable				= {"model_color_suit_enable", "0"};
-cvar_t	model_color_rl_enable				= {"model_color_rl_enable", "0"};
-cvar_t	model_color_lg_enable				= {"model_color_lg_enable", "0"};
-cvar_t	model_color_mega_enable				= {"model_color_mega_enable", "0"};
-cvar_t	model_color_ssg_enable				= {"model_color_ssg_enable", "0"};
-cvar_t	model_color_ng_enable				= {"model_color_ng_enable", "0"};
-cvar_t	model_color_sng_enable				= {"model_color_sng_enable", "0"};
-cvar_t	model_color_gl_enable				= {"model_color_gl_enable", "0"};
-cvar_t	model_color_gib1_enable				= {"model_color_gib1_enable", "0"};
-cvar_t	model_color_gib2_enable				= {"model_color_gib2_enable", "0"};
-cvar_t	model_color_gib3_enable				= {"model_color_gib3_enable", "0"};
-cvar_t	model_color_health25_enable			= {"model_color_health25_enable", "0"};
-cvar_t	model_color_health10_enable			= {"model_color_health10_enable", "0"};
-cvar_t	model_color_rocks_enable			= {"model_color_rocks_enable", "0"};
-cvar_t	model_color_rocks1_enable			= {"model_color_rocks1_enable", "0"};
-cvar_t	model_color_cells_enable			= {"model_color_cells_enable", "0"};
-cvar_t	model_color_cells1_enable			= {"model_color_cells1_enable", "0"};
-cvar_t	model_color_nails_enable			= {"model_color_nails_enable", "0"};
-cvar_t	model_color_nails1_enable			= {"model_color_nails1_enable", "0"};
-cvar_t	model_color_shells_enable			= {"model_color_shells_enable", "0"};
-cvar_t	model_color_shells1_enable			= {"model_color_shells1_enable", "0"};
-
-cvar_t	colored_model_randomc				= {"colored_model_randomc", "0"};
-
 int		lightmode = 2;
-
-model_color_t model_color_variable[MODEL_COLOR_COUNT] = {
-	{&model_color_world_enable,		&model_color_world,		"world",	""},
-	{&model_color_enemy_enable,		&model_color_enemy,		"enemy",	"progs/player.mdl"},
-	{&model_color_team_enable,		&model_color_team,		"team",		"progs/player.mdl"},
-	{&model_color_backpack_enable,	&model_color_backpack,	"backpack",	"progs/backpack.mdl"},
-	{&model_color_missile_enable,	&model_color_missile,	"missle",	"progs/missile.mdl"},
-	{&model_color_quad_enable,		&model_color_quad,		"quad",		"progs/quaddama.mdl"},
-	{&model_color_armor_enable,		&model_color_armor,		"armor",	"progs/armor.mdl"},
-	{&model_color_pent_enable,		&model_color_pent,		"pent",		"progs/invulner.mdl"},
-	{&model_color_gren_enable,		&model_color_gren,		"grenade",	"progs/grenade.mdl"},
-	{&model_color_s_spike_enable,	&model_color_s_spike,	"s_spike",	"progs/s_spike.mdl"},
-	{&model_color_spike_enable,		&model_color_spike,		"spike",	"progs/spike.mdl"},
-	{&model_color_v_shot_enable,	&model_color_v_shot,	"v_shot",	"progs/v_shot.mdl"},
-	{&model_color_bolt_enable,		&model_color_bolt,		"bolt",		"progs/bolt.mdl"},
-	{&model_color_bolt2_enable,		&model_color_bolt2,		"bolt2",	"progs/bolt2.mdl"},
-	{&model_color_bolt3_enable,		&model_color_bolt3,		"bolt3",	"progs/bolt3.mdl"},
-	{&model_color_ring_enable,		&model_color_ring,		"ring",		"progs/invisibl.mdl"},
-	{&model_color_suit_enable,		&model_color_suit,		"suit",		"progs/suit.mdl"},
-	{&model_color_rl_enable,		&model_color_rl,		"rl",		"progs/g_rock2.mdl"},
-	{&model_color_lg_enable,		&model_color_lg,		"lg",		"progs/g_light.mdl"},
-	{&model_color_mega_enable,		&model_color_mega,		"mega",		"maps/b_bh100.bsp"},
-	{&model_color_ssg_enable,		&model_color_ssg,		"ssg",		"progs/g_shot.mdl"},
-	{&model_color_ng_enable,		&model_color_ng,		"ng",		"progs/g_nail.mdl"},
-	{&model_color_sng_enable,		&model_color_sng,		"sng",		"progs/g_nail2.mdl"},
-	{&model_color_gl_enable,		&model_color_gl,		"gl",		"progs/g_rock.mdl"},
-	{&model_color_gib1_enable,		&model_color_gib1,		"gib1",		"progs/gib1.mdl"},
-	{&model_color_gib2_enable,		&model_color_gib2,		"gib2",		"progs/gib2.mdl"},
-	{&model_color_gib3_enable,		&model_color_gib3,		"gib3",		"progs/gib3.mdl"},
-	{&model_color_health25_enable,	&model_color_health25,	"health25",	"maps/b_bh25.bsp"},
-	{&model_color_health10_enable,	&model_color_health10,	"health10", "maps/b_bh10.bsp"},
-	{&model_color_rocks_enable,		&model_color_rocks,		"rocks",	"maps/b_rock0.bsp"},
-	{&model_color_rocks1_enable,	&model_color_rocks1,	"rocks1",	"maps/b_rock1.bsp"},
-	{&model_color_cells_enable,		&model_color_cells,		"cells",	"maps/b_batt0.bsp"},
-	{&model_color_cells1_enable,	&model_color_cells1,	"cells1",	"maps/b_batt1.bsp"},
-	{&model_color_nails_enable,		&model_color_nails,		"nails",	"maps/b_nail0.bsp"},
-	{&model_color_nails1_enable,	&model_color_nails1,	"nails1",	"maps/b_nail1.bsp"},
-	{&model_color_shells_enable,	&model_color_shells,	"shells",	"maps/b_shell0.bsp"},
-	{&model_color_shells1_enable,	&model_color_shells1,	"shells1",	"maps/b_shell1.bsp"}
-};
 
 //static int deathframes[] = { 49, 60, 69, 77, 84, 93, 102, 0 };
 
 void R_MarkLeaves (void);
 void R_InitBubble (void);
-
-char *Model_Color_GetTextureModeName(int texturemode)
-{
-	int n;
-	char *text;
-
-	if (texturemode == MODEL_COLOR_MODE_MODULATE)
-	{
-		n = strlen ("Modulate");
-		text = Q_calloc(n + 1, sizeof(char));
-		strcpy(text, "Modulate");
-	}
-	else if (texturemode == MODEL_COLOR_MODE_BLEND)
-	{
-		n = strlen ("Blend");
-		text = Q_calloc(n + 1, sizeof(char));
-		strcpy(text, "Blend");
-	}
-	else if (texturemode == MODEL_COLOR_MODE_DECAL)
-	{
-		n = strlen ("Decal");
-		text = Q_calloc(n + 1, sizeof(char));
-		strcpy(text, "Decal");
-	}
-	else if (texturemode == MODEL_COLOR_MODE_ADD)
-	{
-		n = strlen ("Add");
-		text = Q_calloc(n + 1, sizeof(char));
-		strcpy(text, "Add");
-	}
-	else if (texturemode == MODEL_COLOR_MODE_REPLACE)
-	{
-		n = strlen ("Replace");
-		text = Q_calloc(n + 1, sizeof(char));
-		strcpy(text, "Replace");
-	}
-	else
-	{
-		n = strlen ("Color off");
-		text = Q_calloc(n + 1, sizeof(char));
-		strcpy(text, "Color off");
-	}
-
-	return text;
-}
-
-void Model_Color_Print(model_color_t model_color_var)
-{
-	char *texture_mode = NULL;
-	byte *col = StringToRGB(model_color_var.color->string);
-	texture_mode = Model_Color_GetTextureModeName(model_color_var.enable->value);
-
-	// Emphasise the specified model.
-	Com_Printf("%10s - %3d %3d %3d - (%d) %s\n", 
-		model_color_var.name, 
-		(int)col[0],
-		(int)col[1],
-		(int)col[2],
-		(int)model_color_var.enable->value, texture_mode);
-
-	Q_free(texture_mode);
-}
-
-#define MODEL_COLOR_LINE	"----------------------------------------\n"
-
-void R_Model_Color_f(void)
-{
-	int x;
-
-	if (Cmd_Argc() == 2)
-	{
-		// Example: model_color world
-
-		// Header.
-		Com_Printf("%10s - %3s %3s %3s - Texture mode\n", "Name", "R", "G", "B");
-		Com_Printf(MODEL_COLOR_LINE);
-
-		// Print the current color for the current model.
-		for (x = 0; x < MODEL_COLOR_COUNT; x++)
-		{
-			if (!strcmp(Cmd_Argv(1), model_color_variable[x].name))
-			{
-				Model_Color_Print(model_color_variable[x]);
-			}
-		}
-		Com_Printf(MODEL_COLOR_LINE);
-	}
-	else if (Cmd_Argc() == 3) 
-	{
-		// Example: model_color world 2
-
-		// Find the model and set it's enable mode.
-		for (x = 0; x < MODEL_COLOR_COUNT; x++)
-		{
-			if (!strcmp(Cmd_Argv(1), model_color_variable[x].name))
-			{
-				Cvar_Set(model_color_variable[x].enable, Cmd_Argv(2));
-			}
-		}
-	}
-	else if (Cmd_Argc() == 5 || Cmd_Argc() == 6) 
-	{
-		// Example: model_color world 255 0 0
-
-		for (x = 0; x < MODEL_COLOR_COUNT; x++)
-		{
-			if (!strcmp(Cmd_Argv(1), model_color_variable[x].name))
-			{
-				Cvar_Set(model_color_variable[x].color, va("%s %s %s", Cmd_Argv(2), Cmd_Argv(3), Cmd_Argv(4)));
-				
-				// Set the texture mode if it's available.
-				if (Cmd_Argc() == 6)
-				{
-					Cvar_Set(model_color_variable[x].enable, Cmd_Argv(5));
-				}
-			}
-		}
-	}
-	else
-	{
-		// Header.
-		Com_Printf("%10s - %3s %3s %3s - Texture mode\n", "Name", "R", "G", "B");
-		Com_Printf(MODEL_COLOR_LINE);
-		// Print the current colors for all the models.
-		for (x = 0; x < MODEL_COLOR_COUNT; x++)
-		{
-			Model_Color_Print(model_color_variable[x]);
-		}
-
-		// Show a usage message.
-		Com_Printf(MODEL_COLOR_LINE);
-		Com_Printf("Usage:\nTo set color: %s modelname R G B\nTo set enable mode: %s modelname [texturemode]\n", Cmd_Argv(0), Cmd_Argv(0));
-		Com_Printf("Where texturemode is between 0-5.\n");
-	}
-}
-
 
 //Returns true if the box is completely outside the frustom
 qbool R_CullBox (vec3_t mins, vec3_t maxs) {
@@ -637,50 +383,8 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 					//Com_Printf("rgb light : %f %f %f\n", lc[0], lc[1], lc[2]);
 					glColor4f(lc[0],lc[1],lc[2], r_modelalpha);
 			}
-			else if (!RuleSets_DisallowExternalTexture(currententity->model))
-			{	// ruleset allows to colorize this model
-				byte *col, color[3];
-				int c;
-				
-				// Loop through all color models (excluding the world which has index 0).
-				for (c = 1; c < MODEL_COLOR_COUNT; c++)
-				{
-					// Only change color for models that have it enabled.
-					if(!strcmp(currententity->model->name, model_color_variable[c].model) && model_color_variable[c].enable->value)
-					{
-						// We have to threat player.mdl as a special case.
-						if (c == MODEL_COLOR_ENEMY || c == MODEL_COLOR_TEAM)
-						{
-							if (strcmp(cl.players[cl.playernum].team, currententity->scoreboard->team))
-							{
-								// If we're drawing an enemy.
-								col = StringToRGB(model_color_variable[MODEL_COLOR_ENEMY].color->string);
-								memcpy(color, col, 3);
-								glColor4f(color[0] / 255.0, color[1] /255.0, color[2] / 255.0, r_modelalpha);
-							}
-							else
-							{
-								// Drawing a teammate.
-								col = StringToRGB(model_color_variable[MODEL_COLOR_TEAM].color->string);
-								memcpy(color, col, 3);
-								glColor4f(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0, r_modelalpha);
-							}
-						}
-				
-						// Get the color from the color string and set the color.
-						col = StringToRGB(model_color_variable[c].color->string);
-						memcpy(color, col, 3);
-						glColor4f(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0, r_modelalpha);
-						break;
-					}
-				}
-				
-				if (c == MODEL_COLOR_COUNT) // we didn't find anything
-					glColor4f (l, l, l, r_modelalpha);
-
-			} else {	// ruleset restricted coloring of this model
+			else 
 				glColor4f(l, l, l, r_modelalpha);
-			}
 
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 			glVertex3fv(interpolated_verts);
@@ -1131,57 +835,11 @@ void R_DrawAliasModel (entity_t *ent) {
 	} 
 	else 
 	{
-		byte *col, color[3]; 
-		int c;
-		qbool model_color_found = false;
-
 		GL_DisableMultitexture();
-
-		// Skip the world model (index 0).
-		for (c = 1; c < MODEL_COLOR_COUNT && !model_color_found; c++)
-		{
-			if (   model_color_variable[c].enable->value > MODEL_COLOR_MODE_NORMAL 
-				&& model_color_variable[c].enable->value <= MODEL_COLOR_MODE_REPLACE 
-				&& !strcmp(clmodel->name, model_color_variable[c].model))
-			{
-				// Set the texture mode.
-				if(model_color_variable[c].enable->value == MODEL_COLOR_MODE_MODULATE)
-				{
-					glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-				}
-				else if(model_color_variable[c].enable->value == MODEL_COLOR_MODE_BLEND)
-				{
-					glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
-				}
-				else if(model_color_variable[c].enable->value == MODEL_COLOR_MODE_DECAL)
-				{
-					glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-				}
-				else if(model_color_variable[c].enable->value == MODEL_COLOR_MODE_ADD)
-				{
-					glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-				}
-				else if(model_color_variable[c].enable->value == MODEL_COLOR_MODE_REPLACE)
-				{
-					glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-				}
-
-				// Flag that we have found at least one model.
-				model_color_found = true;
-
-				col = StringToRGB(model_color_variable[c].color->string);
-				memcpy(color, col, 3);
-				glColor3ubv(color);
-			}
-		}
-
-		// Reset the texture mode.
-		if (!model_color_found)
-		{
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		}
-		
 		GL_Bind (texture);
+		
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
 		R_SetupAliasFrame (oldframe, frame, paliashdr, false);
 
 		if (fb_texture) {
@@ -1388,73 +1046,6 @@ void R_DrawViewModel (void) {
 
 
 	gun.frame = cent->current.frame;
-	if (cent->frametime >= 0 && cent->frametime <= cl.time) {
-		gun.oldframe = cent->oldframe;
-		gun.framelerp = (cl.time - cent->frametime) * 10;
-	} else {
-		gun.oldframe = gun.frame;
-		gun.framelerp = -1;
-	}
-
-
-	// hack the depth range to prevent view model from poking into walls
-	glDepthRange (gldepthmin, gldepthmin + 0.3 * (gldepthmax - gldepthmin));
-	//R_DrawAliasModel (currententity);
-	switch(currententity->model->type)
-	{
-	case mod_alias:
-		R_DrawAliasModel (currententity);
-		break;
-	case mod_alias3:
-		R_DrawAlias3Model (currententity);
-		break;
-	default:
-		Com_Printf("Not drawing view model of type %i\n", currententity->model->type);
-		break;
-	} 
-	glDepthRange (gldepthmin, gldepthmax);
-/*	
-	//
-	// THIS CODE FUCKS UP WEAPON ANIMATIONS!
-	// (Toniks refdef2, static rendering port from zQuake)
-	//
-	centity_t *cent;
-	static entity_t gun;
-
-	//VULT CAMERA - Don't draw gun in external camera
-	if (cameratype != C_NORMAL)
-		return;
-
-	if (!r_drawentities.value || !cl.viewent.current.modelindex)
-		return;
-
-	memset(&gun, 0, sizeof(gun));
-	cent = &cl.viewent;
-	currententity = &gun;
-
-	if (!(gun.model = cl.model_precache[cent->current.modelindex]))
-		Host_Error ("R_DrawViewModel: bad modelindex");
-
-	VectorCopy(cent->current.origin, gun.origin);
-	VectorCopy(cent->current.angles, gun.angles);
-	gun.colormap = vid.colormap;
-	gun.flags = RF_WEAPONMODEL | RF_NOSHADOW;
-	if (r_lerpmuzzlehack.value) {
-		if (cent->current.modelindex != cl_modelindices[mi_vaxe] &&
-			cent->current.modelindex != cl_modelindices[mi_vbio] &&
-			cent->current.modelindex != cl_modelindices[mi_vgrap] &&
-			cent->current.modelindex != cl_modelindices[mi_vknife] &&
-			cent->current.modelindex != cl_modelindices[mi_vknife2] &&
-			cent->current.modelindex != cl_modelindices[mi_vmedi] &&
-			cent->current.modelindex != cl_modelindices[mi_vspan])
-		{
-			gun.flags |= RF_LIMITLERP;			
-			r_lerpdistance =  135;
-		}
-	}
-
-
-	gun.frame = cent->current.frame;
 	if (cent->frametime >= 0 && cent->frametime <= r_refdef2.time) {
 		gun.oldframe = cent->oldframe;
 		gun.framelerp = (r_refdef2.time - cent->frametime) * 10;
@@ -1480,7 +1071,6 @@ void R_DrawViewModel (void) {
 		break;
 	} 
 	glDepthRange (gldepthmin, gldepthmax);
-*/
 }
 
 
@@ -1781,8 +1371,6 @@ void R_Init (void) {
 	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);
 #endif
 
-	Cmd_AddCommand ("model_color", R_Model_Color_f);
-
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 	Cvar_Register (&gl_solidparticles);
 	Cvar_Register (&gl_part_explosions);
@@ -1855,83 +1443,6 @@ void R_Init (void) {
 	Cvar_Register (&r_drawflat);
 	Cvar_Register (&r_wallcolor);
 	Cvar_Register (&r_floorcolor);
-
-	Cvar_Register (&model_color_backpack);
-	Cvar_Register (&model_color_backpack_enable);
-	Cvar_Register (&model_color_enemy);
-	Cvar_Register (&model_color_enemy_enable);
-	Cvar_Register (&model_color_team);
-	Cvar_Register (&model_color_team_enable);
-	Cvar_Register (&model_color_world);
-	Cvar_Register (&model_color_world_enable);
-	Cvar_Register (&model_color_missile);
-	Cvar_Register (&model_color_missile_enable);
-	Cvar_Register (&model_color_armor);
-	Cvar_Register (&model_color_armor_enable);
-	Cvar_Register (&model_color_quad);
-	Cvar_Register (&model_color_quad_enable);
-	Cvar_Register (&model_color_pent);
-	Cvar_Register (&model_color_pent_enable);
-	Cvar_Register (&model_color_gren);
-	Cvar_Register (&model_color_gren_enable);
-	Cvar_Register (&model_color_spike);
-	Cvar_Register (&model_color_spike_enable);
-	Cvar_Register (&model_color_v_shot);
-	Cvar_Register (&model_color_v_shot_enable);
-	Cvar_Register (&model_color_bolt);
-	Cvar_Register (&model_color_bolt_enable);
-	Cvar_Register (&model_color_bolt2);
-	Cvar_Register (&model_color_bolt2_enable);
-	Cvar_Register (&model_color_bolt3);
-	Cvar_Register (&model_color_bolt3_enable);
-	Cvar_Register (&model_color_s_spike);
-	Cvar_Register (&model_color_s_spike_enable);
-	Cvar_Register (&model_color_ring);
-	Cvar_Register (&model_color_suit);	
-	Cvar_Register (&model_color_rl);		
-	Cvar_Register (&model_color_lg);		
-	Cvar_Register (&model_color_mega);	
-	Cvar_Register (&model_color_ssg);		
-	Cvar_Register (&model_color_ng);		
-	Cvar_Register (&model_color_sng);		
-	Cvar_Register (&model_color_gl);		
-	Cvar_Register (&model_color_gib1);	
-	Cvar_Register (&model_color_gib2);	
-	Cvar_Register (&model_color_gib3);	
-	Cvar_Register (&model_color_health25);	
-	Cvar_Register (&model_color_health10);	
-	Cvar_Register (&model_color_rocks);	
-	Cvar_Register (&model_color_rocks1);	
-	Cvar_Register (&model_color_cells);	
-	Cvar_Register (&model_color_cells1);	
-	Cvar_Register (&model_color_nails);	
-	Cvar_Register (&model_color_nails1);	
-	Cvar_Register (&model_color_shells);	
-	Cvar_Register (&model_color_shells1);
-	Cvar_Register (&model_color_ring_enable);
-	Cvar_Register (&model_color_suit_enable);	
-	Cvar_Register (&model_color_rl_enable);		
-	Cvar_Register (&model_color_lg_enable);		
-	Cvar_Register (&model_color_mega_enable);	
-	Cvar_Register (&model_color_ssg_enable);		
-	Cvar_Register (&model_color_ng_enable);		
-	Cvar_Register (&model_color_sng_enable);		
-	Cvar_Register (&model_color_gl_enable);		
-	Cvar_Register (&model_color_gib1_enable);	
-	Cvar_Register (&model_color_gib2_enable);	
-	Cvar_Register (&model_color_gib3_enable);	
-	Cvar_Register (&model_color_health25_enable);	
-	Cvar_Register (&model_color_health10_enable);	
-	Cvar_Register (&model_color_rocks_enable);	
-	Cvar_Register (&model_color_rocks1_enable);	
-	Cvar_Register (&model_color_cells_enable);	
-	Cvar_Register (&model_color_cells1_enable);	
-	Cvar_Register (&model_color_nails_enable);	
-	Cvar_Register (&model_color_nails1_enable);	
-	Cvar_Register (&model_color_shells_enable);	
-	Cvar_Register (&model_color_shells1_enable);	
-
-	Cvar_Register (&colored_model_randomc);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
 	Cvar_Register (&r_farclip);
