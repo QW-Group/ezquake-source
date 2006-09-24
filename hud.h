@@ -45,6 +45,7 @@ typedef struct hud_s
     cvar_t *show;             // show cvar
     cvar_t *frame;            // frame cvar
 	cvar_t *frame_color;	  // frame color cvar
+	float frame_color_cache[4]; // cache for parsed frame color
 
     // placement
     cvar_t *place;            // place string, parsed to:
