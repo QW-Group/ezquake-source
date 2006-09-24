@@ -47,7 +47,7 @@ qbool HUD_RegExpMatch(const char *regexp, const char *matchstring)
 {
 	int offsets[1];
 	pcre *re;
-	const char *error = NULL;
+	char *error = NULL;
 	int erroffset;
 	int match = 0;
 
@@ -84,7 +84,7 @@ qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, char **res
 {
 	int offsets[HUD_REGEXP_OFFSET_COUNT];
 	pcre *re;
-	const char *error;
+	char *error;
 	int erroffset;
 	int match = 0;
 
@@ -164,7 +164,7 @@ void HUD_RGBValuesFromString(char *string, float *r, float *g, float *b, float *
 {
 	int offsets[HUD_REGEXP_OFFSET_COUNT];
 	pcre *re;
-	const char *error;
+	char *error;
 	char *resultstring = NULL;
 	int erroffset;
 	int match = 0;

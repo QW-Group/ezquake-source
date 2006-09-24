@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.43 2006-09-22 00:35:19 johnnycz Exp $
+    $Id: cmd.c,v 1.44 2006-09-24 23:12:50 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1153,7 +1153,7 @@ void Cmd_AddMacro(char *s, char *(*f)(void))
 	Cmd_AddMacroEx(s, f, false);
 }
 
-char *Cmd_MacroString (char *s, int *macro_length)
+char *Cmd_MacroString (const char *s, int *macro_length)
 {
 	int i;
 	macro_command_t	*macro;
