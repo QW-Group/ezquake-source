@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.66 2006-09-21 22:14:09 johnnycz Exp $
+	$Id: hud_common.c,v 1.67 2006-09-24 16:37:34 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -3458,11 +3458,13 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
     int width = 64;
 	int height = 8;
 	//int width_as_text = 0;
-	int title_length = 0;
+	static int title_length = 0;
 	//int row_break = 0;
 	//int i=0;
 	int status = 0;
-	char title[MP3_MAXSONGTITLE];
+	static char title[MP3_MAXSONGTITLE];
+	double t;		// current time
+	static double lastframetime;	// last refresh
 
 	static cvar_t *style = NULL, *width_var, *height_var, *scroll, *scroll_delay, *on_scoreboard, *wordwrap;
 
@@ -3494,29 +3496,34 @@ void SCR_HUD_DrawMP3_Title(hud_t *hud)
 	if(height < 0) height = 0;
 	if(height > vid.width) height = vid.height;
 
-	status = MP3_GetStatus();
+	t = Sys_DoubleTime();
 
-	switch(status)
-	{
-		case MP3_PLAYING :
-			title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Playing"), MP3_Macro_MP3Info());
-			break;
-		case MP3_PAUSED :
-			title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Paused"), MP3_Macro_MP3Info());
-			break;
-		case MP3_STOPPED :
-			title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Stopped"), MP3_Macro_MP3Info());
-			break;
-		case MP3_NOTRUNNING	:
-		default :
-			status = MP3_NOTRUNNING;
-			title_length = sprintf(title, "%s is not running.", MP3_PLAYERNAME_ALLCAPS);
-			break;
-	}
+	if ((t - lastframetime) >= 2) { // 2 sec refresh rate
+		lastframetime = t;
+		status = MP3_GetStatus();
 
-	if(title_length < 0)
-	{
-		sprintf(title, "Error retrieving current song.");
+		switch(status)
+		{
+			case MP3_PLAYING :
+				title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Playing"), MP3_Macro_MP3Info());
+				break;
+			case MP3_PAUSED :
+				title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Paused"), MP3_Macro_MP3Info());
+				break;
+			case MP3_STOPPED :
+				title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Stopped"), MP3_Macro_MP3Info());
+				break;
+			case MP3_NOTRUNNING	:
+			default :
+				status = MP3_NOTRUNNING;
+				title_length = sprintf(title, "%s is not running.", MP3_PLAYERNAME_ALLCAPS);
+				break;
+		}
+
+		if(title_length < 0)
+		{
+			sprintf(title, "Error retrieving current song.");
+		}
 	}
 
 	if (HUD_PrepareDraw(hud, width , height, &x, &y))
@@ -5405,12 +5412,23 @@ void CommonDraw_Init(void)
     hud_stats[STAT_ACTIVEWEAPON] = 32;
     hud_stats[STAT_ITEMS] = 0xffffffff - IT_ARMOR2 - IT_ARMOR1;
 
+    // init gameclock
+	HUD_Register("gameclock", NULL, "Shows current game time (hh:mm:ss).",
+        HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawGameClock,
+        "1", "top", "right", "console", "0", "0", "0", "0 0 0",
+        "big",      "1",
+        "style",    "0",
+		"scale",    "1",
+        "blink",    "1",
+		"countdown","0",
+        NULL);
+
 	// fps
 	HUD_Register("fps", /*"show_fps"*/ NULL, // hexum -> don't support aliases for now
         "Shows your current framerate in frames per second (fps). "
         "Can also show minimum framerate, that occured in last measure period.",
         HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFPS,
-        "0", "top", "right", "bottom", "0", "0", "0", "0 0 0",
+        "1", "gameclock", "center", "after", "0", "0", "0", "0 0 0",
         "show_min", "0",
         "title",    "1",
 		"decimals", "1",
@@ -5433,21 +5451,10 @@ void CommonDraw_Init(void)
         "blink",    "1",
         NULL);
 
-    // init gameclock
-	HUD_Register("gameclock", NULL, "Shows current game time (hh:mm:ss).",
-        HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawGameClock,
-        "0", "top", "right", "console", "0", "0", "0", "0 0 0",
-        "big",      "1",
-        "style",    "0",
-		"scale",    "1",
-        "blink",    "1",
-		"countdown","0",
-        NULL);
-
     // init democlock
 	HUD_Register("democlock", NULL, "Shows current demo time (hh:mm:ss).",
         HUD_PLUSMINUS, ca_disconnected, 7, SCR_HUD_DrawDemoClock,
-        "0", "top", "right", "console", "0", "8", "0", "0 0 0",
+        "1", "top", "right", "console", "0", "8", "0", "0 0 0",
         "big",      "0",
         "style",    "0",
 		"scale",    "1",
@@ -5457,7 +5464,7 @@ void CommonDraw_Init(void)
     // init ping
     HUD_Register("ping", NULL, "Shows most important net conditions, like ping and pl. Shown only when you are connected to a server.",
         HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawPing,
-        "0", "top", "left", "bottom", "0", "0", "0", "0 0 0",
+        "0", "screen", "left", "bottom", "0", "0", "0", "0 0 0",
         "period",       "1",
         "show_pl",      "1",
         "show_min",     "0",
@@ -5467,7 +5474,7 @@ void CommonDraw_Init(void)
         NULL);
 	HUD_Register("tracking", NULL, "Shows the name of tracked player.",
 		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawTracking,
-		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0",
+		"1", "face", "center", "before", "0", "0", "0", "0 0 0",
 		"format", "Tracking %t %n, [JUMP] for next",
 		NULL);
     // init net
@@ -5517,50 +5524,50 @@ void CommonDraw_Init(void)
     // init guns
     HUD_Register("gun", NULL, "Part of your inventory - current weapon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGunCurrent,
-        "0", "top", "center", "bottom", "0", "0", "0", "0 0 0",
+        "0", "ibar", "center", "bottom", "0", "0", "0", "0 0 0",
         "wide",  "0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("gun2", NULL, "Part of your inventory - shotgun.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun2,
-        "0", "top", "left", "bottom", "0", "0", "0", "0 0 0",
+        "1", "ibar", "left", "bottom", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("gun3", NULL, "Part of your inventory - super shotgun.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun3,
-        "0", "gun2", "after", "center", "0", "0", "0", "0 0 0",
+        "1", "gun2", "after", "center", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("gun4", NULL, "Part of your inventory - nailgun.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun4,
-        "0", "gun3", "after", "center", "0", "0", "0", "0 0 0",
+        "1", "gun3", "after", "center", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("gun5", NULL, "Part of your inventory - super nailgun.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun5,
-        "0", "gun4", "after", "center", "0", "0", "0", "0 0 0",
+        "1", "gun4", "after", "center", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("gun6", NULL, "Part of your inventory - grenade launcher.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun6,
-        "0", "gun5", "after", "center", "0", "0", "0", "0 0 0",
+        "1", "gun5", "after", "center", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("gun7", NULL, "Part of your inventory - rocket launcher.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun7,
-        "0", "gun6", "after", "center", "0", "0", "0", "0 0 0",
+        "1", "gun6", "after", "center", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("gun8", NULL, "Part of your inventory - thunderbolt.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun8,
-        "0", "gun7", "after", "center", "0", "0", "0", "0 0 0",
+        "1", "gun7", "after", "center", "0", "0", "0", "0 0 0",
         "wide",  "0",
         "style", "0",
         "scale", "1",
@@ -5569,37 +5576,37 @@ void CommonDraw_Init(void)
     // init powerzz
     HUD_Register("key1", NULL, "Part of your inventory - silver key.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawKey1,
-        "0", "top", "top", "left", "0", "64", "0", "0 0 0",
+        "1", "ibar", "top", "left", "0", "64", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("key2", NULL, "Part of your inventory - gold key.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawKey2,
-        "0", "key1", "left", "after", "0", "0", "0", "0 0 0",
+        "1", "key1", "left", "after", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("ring", NULL, "Part of your inventory - invisibility.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawRing,
-        "0", "key2", "left", "after", "0", "0", "0", "0 0 0",
+        "1", "key2", "left", "after", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("pent", NULL, "Part of your inventory - invulnerability.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawPent,
-        "0", "ring", "left", "after", "0", "0", "0", "0 0 0",
+        "1", "ring", "left", "after", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("suit", NULL, "Part of your inventory - biosuit.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawSuit,
-        "0", "pent", "left", "after", "0", "0", "0", "0 0 0",
+        "1", "pent", "left", "after", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("quad", NULL, "Part of your inventory - quad damage.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawQuad,
-        "0", "suit", "left", "after", "0", "0", "0", "0 0 0",
+        "1", "suit", "left", "after", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
@@ -5607,7 +5614,7 @@ void CommonDraw_Init(void)
     // sigilzz
     HUD_Register("sigil1", NULL, "Part of your inventory - sigil 1.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawSigil1,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "0", "ibar", "left", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
@@ -5633,7 +5640,7 @@ void CommonDraw_Init(void)
 	// health
     HUD_Register("health", NULL, "Part of your status - health level.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawHealth,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "1", "screen", "center", "bottom", "0", "0", "0", "0 0 0",
         "style",  "0",
         "scale",  "1",
         "align",  "right",
@@ -5643,7 +5650,7 @@ void CommonDraw_Init(void)
     // armor
     HUD_Register("armor", NULL, "Part of your inventory - armor level.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmor,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "1", "face", "before", "center", "-32", "0", "0", "0 0 0",
         "style",  "0",
         "scale",  "1",
         "align",  "right",
@@ -5677,7 +5684,7 @@ void CommonDraw_Init(void)
     // ammo/s
     HUD_Register("ammo", NULL, "Part of your inventory - ammo for active weapon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoCurrent,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "1", "health", "after", "center", "32", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         "align", "right",
@@ -5685,7 +5692,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("ammo1", NULL, "Part of your inventory - ammo - shells.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo1,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "0", "ibar", "left", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         "align", "right",
@@ -5693,7 +5700,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("ammo2", NULL, "Part of your inventory - ammo - nails.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo2,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "0", "ammo1", "after", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         "align", "right",
@@ -5701,7 +5708,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("ammo3", NULL, "Part of your inventory - ammo - rockets.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo3,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "0", "ammo2", "after", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         "align", "right",
@@ -5709,7 +5716,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("ammo4", NULL, "Part of your inventory - ammo - cells.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo4,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "0", "ammo3", "after", "top", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         "align", "right",
@@ -5719,31 +5726,31 @@ void CommonDraw_Init(void)
     // ammo icon/s
     HUD_Register("iammo", NULL, "Part of your inventory - ammo icon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoIconCurrent,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "1", "ammo", "before", "center", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
     HUD_Register("iammo1", NULL, "Part of your inventory - ammo icon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoIcon1,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "0", "ibar", "left", "top", "0", "0", "0", "0 0 0",
         "style", "2",
         "scale", "1",
         NULL);
     HUD_Register("iammo2", NULL, "Part of your inventory - ammo icon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoIcon2,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "0", "iammo1", "after", "top", "0", "0", "0", "0 0 0",
         "style", "2",
         "scale", "1",
         NULL);
     HUD_Register("iammo3", NULL, "Part of your inventory - ammo icon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoIcon3,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "0", "iammo2", "after", "top", "0", "0", "0", "0 0 0",
         "style", "2",
         "scale", "1",
         NULL);
     HUD_Register("iammo4", NULL, "Part of your inventory - ammo icon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoIcon4,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "0", "iammo3", "after", "top", "0", "0", "0", "0 0 0",
         "style", "2",
         "scale", "1",
         NULL);
@@ -5751,7 +5758,7 @@ void CommonDraw_Init(void)
     // armor icon
     HUD_Register("iarmor", NULL, "Part of your inventory - armor icon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmorIcon,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "1", "armor", "before", "center", "0", "0", "0", "0 0 0",
         "style", "0",
         "scale", "1",
         NULL);
@@ -5759,14 +5766,14 @@ void CommonDraw_Init(void)
     // player face
     HUD_Register("face", NULL, "Your bloody face.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawFace,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "1", "screen", "center", "bottom", "0", "0", "0", "0 0 0",
         "scale", "1",
         NULL);
 
     // groups
     HUD_Register("group1", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group1,
-        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
+        "1", "screen", "center", "bottom", "0", "0", ".5", "0 0 0",
         "name", "group1",
         "width", "64",
         "height", "64",
@@ -5857,7 +5864,7 @@ void CommonDraw_Init(void)
 
     HUD_Register("frags", NULL, "Show list of player frags in short form.",
         0, ca_active, 0, SCR_HUD_DrawFrags,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "0", "top", "right", "bottom", "0", "0", "0", "0 0 0",
         "cell_width", "32",
         "cell_height", "8",
         "rows", "1",
@@ -5878,7 +5885,7 @@ void CommonDraw_Init(void)
 
     HUD_Register("teamfrags", NULL, "Show list of team frags in short form.",
         0, ca_active, 0, SCR_HUD_DrawTeamFrags,
-        "0", "screen", "left", "top", "0", "0", "0", "0 0 0",
+        "1", "ibar", "center", "before", "0", "0", "0", "0 0 0",
         "cell_width", "32",
         "cell_height", "8",
         "rows", "1",
