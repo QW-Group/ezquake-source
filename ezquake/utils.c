@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.14 2006-08-09 23:00:03 tonik Exp $
+	$Id: utils.c,v 1.15 2006-09-24 16:17:58 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -63,26 +63,41 @@ char *SecondsToHourString(int print_time) {
 	return time;
 }
 
-#ifdef GLQUAKE
+/* StringToRGB - input: string with color number(s), three types 
+   1) Quake color = one arg, e.g. "12" for yellow
+   2) RGB color = three args, e.g. "255 255 0" for yellow
+   output: pointer to array of 4 byte values
+*/
 byte *StringToRGB(char *s) {
 	byte *col;
 	static byte rgb[4];
 
 	Cmd_TokenizeString(s);
-	if (Cmd_Argc() == 3) {
-		rgb[0] = (byte) Q_atoi(Cmd_Argv(0));
-		rgb[1] = (byte) Q_atoi(Cmd_Argv(1));
-		rgb[2] = (byte) Q_atoi(Cmd_Argv(2));
-	} else {
-		col = (byte *) &d_8to24table[(byte) Q_atoi(s)];
-		rgb[0] = col[0];
-		rgb[1] = col[1];
-		rgb[2] = col[2];
+	switch (Cmd_Argc()) {
+/*		case 4:
+			rgb[0] = (byte) Q_atoi(Cmd_Argv(0));
+			rgb[1] = (byte) Q_atoi(Cmd_Argv(1));
+			rgb[2] = (byte) Q_atoi(Cmd_Argv(2));
+			rgb[3] = (byte) Q_atoi(Cmd_Argv(3));
+			break; */
+		case 3:
+			rgb[0] = (byte) Q_atoi(Cmd_Argv(0));
+			rgb[1] = (byte) Q_atoi(Cmd_Argv(1));
+			rgb[2] = (byte) Q_atoi(Cmd_Argv(2));
+			rgb[3] = 255;
+			break;
+		case 0:
+		default:
+			col = (byte *) &d_8to24table[(byte) Q_atoi(s)];
+			rgb[0] = col[0];
+			rgb[1] = col[1];
+			rgb[2] = col[2];
+			rgb[3] = 255;
+			break;
 	}
-	rgb[3] = 255;
+	
 	return rgb;
 }
-#endif
 
 /************************************** File Utils **************************************/
 

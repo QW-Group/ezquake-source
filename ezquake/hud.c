@@ -826,41 +826,27 @@ void HUD_CalcFrameExtents(hud_t *hud, int width, int height,
         *fl = *fr = *ft = *fb = 0;
     }
 }
-float hud_frame_color[3] = {0, 0, 0};
+
 qbool HUD_OnChangeFrameColor(cvar_t *var, char *newval)
 {
-	char *new_color = HUD_ColorNameToRGB(newval); 
+	char *new_color = HUD_ColorNameToRGB(newval); // converts "red" into "255 0 0", etc. or returns input as it was
+	char buf[256];
+	int hudname_len;
+	hud_t* hud_elem;
+	byte* b_colors;
 
-	// Get the RGB values.
-	if (HUD_RegExpMatch(HUD_COLOR_REGEX, new_color))
-	{
-		float colors[4];
+	hudname_len = min(sizeof(buf), strlen(var->name)-strlen("_frame_color")-strlen("hud_"));
+	strncpy(buf, var->name + 4, hudname_len);
+	buf[hudname_len] = 0;
+	hud_elem = HUD_Find(buf);
 
-		strncpy(var->string, new_color, (strlen(new_color) + 1) * sizeof(char));
+	b_colors = StringToRGB(new_color);
 
-		HUD_RGBValuesFromString (var->string, 
-			&colors[0], 
-			&colors[1], 
-			&colors[2], 
-			&colors[3]);
+	hud_elem->frame_color_cache[0] = b_colors[0] / 255.0;
+	hud_elem->frame_color_cache[1] = b_colors[1] / 255.0;
+	hud_elem->frame_color_cache[2] = b_colors[2] / 255.0;
 
-		// RGB.
-		if(colors[0] >= 0 && colors[1] >= 0 && colors[2] >= 0)
-		{
-			hud_frame_color[0] = colors[0];
-			hud_frame_color[1] = colors[1];
-			hud_frame_color[2] = colors[2];
-		}
-
-		return true;
-	}
-	else
-	{
-		hud_frame_color[0] = 0;
-		hud_frame_color[1] = 0;
-		hud_frame_color[2] = 0;
-		return false;
-	}
+	return true;
 }
 
 // draw frame for HUD element
@@ -871,21 +857,8 @@ void HUD_DrawFrame(hud_t *hud, int x, int y, int width, int height)
 
     if (hud->frame->value > 0  &&  hud->frame->value <= 1)
     {
-		float colors[4] = {0.0, 0.0, 0.0, 0.0};
-		char *new_color = HUD_ColorNameToRGB(hud->frame_color->string); 
-
-		// Get the RGB values.
-		if (HUD_RegExpMatch(HUD_COLOR_REGEX, new_color))
-		{
-			HUD_RGBValuesFromString (new_color, 
-				&colors[0], 
-				&colors[1], 
-				&colors[2], 
-				&colors[3]);
-		}
-
         Draw_FadeBox(x, y, width, height,
-            colors[0], colors[1], colors[2], hud->frame->value);
+			hud->frame_color_cache[0], hud->frame_color_cache[1], hud->frame_color_cache[2], hud->frame->value);
         return;
     }
     else
