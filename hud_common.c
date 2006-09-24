@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.67 2006-09-24 16:37:34 johnnycz Exp $
+	$Id: hud_common.c,v 1.68 2006-09-24 17:13:48 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -3541,9 +3541,10 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 	int elapsed = 0;
 	int remain = 0;
 	int total = 0;
-	char time_string[MP3_MAXSONGTITLE];
-	char elapsed_string[MP3_MAXSONGTITLE];
-
+	static char time_string[MP3_MAXSONGTITLE];
+	static char elapsed_string[MP3_MAXSONGTITLE];
+	double t;		// current time
+	static double lastframetime;	// last refresh
 
 	static cvar_t *style = NULL, *on_scoreboard;
 
@@ -3562,50 +3563,55 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 		hud->flags -= HUD_ON_SCORES;
 	}
 
-	if(!MP3_GetOutputtime(&elapsed, &total) || elapsed < 0 || total < 0)
-	{
-		sprintf(time_string, "\x10-:-\x11");
-	}
-	else
-	{
-		switch((int)style->value)
-		{
-			case 1 :
-				remain = total - elapsed;
-				strlcpy(elapsed_string, SecondsToMinutesString(remain), sizeof(elapsed_string));
-				sprintf(time_string, va("\x10-%s/%s\x11", elapsed_string, SecondsToMinutesString(total)));
-				break;
-			case 2 :
-				remain = total - elapsed;
-				sprintf(time_string, va("\x10-%s\x11", SecondsToMinutesString(remain)));
-				break;
-			case 3 :
-				sprintf(time_string, va("\x10%s\x11", SecondsToMinutesString(elapsed)));
-				break;
-			case 4 :
-				remain = total - elapsed;
-				strlcpy(elapsed_string, SecondsToMinutesString(remain), sizeof(elapsed_string));
-				sprintf(time_string, va("%s/%s", elapsed_string, SecondsToMinutesString(total)));
-				break;
-			case 5 :
-				strlcpy(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
-				sprintf(time_string, va("-%s/%s", elapsed_string, SecondsToMinutesString(total)));
-				break;
-			case 6 :
-				remain = total - elapsed;
-				sprintf(time_string, va("-%s", SecondsToMinutesString(remain)));
-				break;
-			case 7 :
-				sprintf(time_string, va("%s", SecondsToMinutesString(elapsed)));
-				break;
-			case 0 :
-			default :
-				strlcpy(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
-				sprintf(time_string, va("\x10%s/%s\x11", elapsed_string, SecondsToMinutesString(total)));
-				break;
-		}
-	}
+	t = Sys_DoubleTime();
+	if ((t - lastframetime) >= 2) { // 2 sec refresh rate
+		lastframetime = t;
 
+		if(!MP3_GetOutputtime(&elapsed, &total) || elapsed < 0 || total < 0)
+		{
+			sprintf(time_string, "\x10-:-\x11");
+		}
+		else
+		{
+			switch((int)style->value)
+			{
+				case 1 :
+					remain = total - elapsed;
+					strlcpy(elapsed_string, SecondsToMinutesString(remain), sizeof(elapsed_string));
+					sprintf(time_string, va("\x10-%s/%s\x11", elapsed_string, SecondsToMinutesString(total)));
+					break;
+				case 2 :
+					remain = total - elapsed;
+					sprintf(time_string, va("\x10-%s\x11", SecondsToMinutesString(remain)));
+					break;
+				case 3 :
+					sprintf(time_string, va("\x10%s\x11", SecondsToMinutesString(elapsed)));
+					break;
+				case 4 :
+					remain = total - elapsed;
+					strlcpy(elapsed_string, SecondsToMinutesString(remain), sizeof(elapsed_string));
+					sprintf(time_string, va("%s/%s", elapsed_string, SecondsToMinutesString(total)));
+					break;
+				case 5 :
+					strlcpy(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
+					sprintf(time_string, va("-%s/%s", elapsed_string, SecondsToMinutesString(total)));
+					break;
+				case 6 :
+					remain = total - elapsed;
+					sprintf(time_string, va("-%s", SecondsToMinutesString(remain)));
+					break;
+				case 7 :
+					sprintf(time_string, va("%s", SecondsToMinutesString(elapsed)));
+					break;
+				case 0 :
+				default :
+					strlcpy(elapsed_string, SecondsToMinutesString(elapsed), sizeof(elapsed_string));
+					sprintf(time_string, va("\x10%s/%s\x11", elapsed_string, SecondsToMinutesString(total)));
+					break;
+			}
+		}
+	
+	}
 
 	// Don't allow showing the timer during ruleset smackdown,
 	// can be used for timing powerups.
