@@ -35,8 +35,6 @@ static msurface_t *warpface;
 
 qbool r_skyboxloaded;
 
-#define TruePointContents(p) PM_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
-
 void BoundPoly (int numverts, float *verts, vec3_t mins, vec3_t maxs) {
 	int i, j;
 	float *v;

@@ -74,6 +74,9 @@ qbool drawfullbrights = false, drawlumas = false;
 glpoly_t *caustics_polys = NULL;
 glpoly_t *detail_polys = NULL;
 
+extern int brushmodel; //Qrack  
+extern cvar_t gl_textureless; //Qrack
+
 void DrawGLPoly (glpoly_t *p);
 void R_DrawFlat (model_t *model);
 
@@ -728,8 +731,8 @@ static void R_ClearTextureChains(model_t *clmodel) {
 	CHAIN_RESET(alphachain);
 }
 
-void DrawTextureChains (model_t *model) {
-
+void DrawTextureChains (model_t *model, int contents)
+{
 	extern cvar_t gl_lumaTextures;
 	
 	int waterline, i, k, GL_LIGHTMAP_TEXTURE = 0, GL_FB_TEXTURE = 0;
@@ -855,19 +858,32 @@ void DrawTextureChains (model_t *model) {
 					R_RenderDynamicLightmaps (s);
 				}
 
-				glBegin(GL_POLYGON);
-				v = s->polys->verts[0];
-				for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
+                glBegin (GL_POLYGON);
+                v = s->polys->verts[0];
+				for (k = 0 ; k < s->polys->numverts ; k++, v += VERTEXSIZE) {
 					if (doMtex1) {
-						qglMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
+						if((gl_textureless.value) && !brushmodel) { //Qrack
+							qglMultiTexCoord2f (GL_TEXTURE0_ARB, 0, 0);
+                            
+							if (mtex_lightmaps)
+								qglMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
 
-						if (mtex_lightmaps)
-							qglMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
+							if (mtex_fbs)
+								qglMultiTexCoord2f (GL_TEXTURE2_ARB, 0, 0);
+						} else {
+							qglMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
 
-						if (mtex_fbs)
-							qglMultiTexCoord2f (GL_FB_TEXTURE, v[3], v[4]);
+							if (mtex_lightmaps)
+								qglMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
+
+							if (mtex_fbs)
+								qglMultiTexCoord2f (GL_FB_TEXTURE, v[3], v[4]);
+							}
 					} else {
-						glTexCoord2f (v[3], v[4]);
+                            if((gl_textureless.value) && !brushmodel) //Qrack
+								glTexCoord2f (0, 0);
+							else
+                                glTexCoord2f (v[3], v[4]);
 					}
 					glVertex3fv (v);
 				}
@@ -877,6 +893,12 @@ void DrawTextureChains (model_t *model) {
 					s->polys->caustics_chain = caustics_polys;
 					caustics_polys = s->polys;
 				}
+
+				if ((brushmodel && gl_caustics.value && underwatertexture && ISUNDERWATER(contents))) { //Qrack
+					s->polys->caustics_chain = caustics_polys;
+					caustics_polys = s->polys;                    
+				}
+
 				if (!waterline && draw_details) {
 					s->polys->detail_chain = detail_polys;
 					detail_polys = s->polys;
@@ -1113,12 +1135,11 @@ void R_DrawBrushModel (entity_t *e) {
 
 	// START shaman FIX for no simple textures on world brush models {
 	//draw the textures chains for the model
-	if (r_drawflat.value != 0 && clmodel->isworldmodel) {
+	if (r_drawflat.value != 0 && clmodel->isworldmodel)
 		R_DrawFlat(clmodel);
-	}
-	else {
-		DrawTextureChains(clmodel);
-	}
+	else
+		DrawTextureChains (clmodel,(TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
+
 	// } END shaman FIX for no simple textures on world brush models
 
 	R_DrawSkyChain();
@@ -1246,7 +1267,7 @@ void R_DrawWorld (void) {
 	if (r_drawflat.value)
 		R_DrawFlat (cl.worldmodel);
 	else
-		DrawTextureChains (cl.worldmodel);
+		DrawTextureChains (cl.worldmodel, 0);
 
 	//draw the world alpha textures
 	R_DrawAlphaChain ();
