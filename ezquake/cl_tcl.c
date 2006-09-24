@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.12 2006-09-22 00:35:19 johnnycz Exp $
+ *  $Id: cl_tcl.c,v 1.13 2006-09-24 23:49:45 disconn3ct Exp $
  */
 
 #ifdef EMBED_TCL
@@ -451,7 +451,7 @@ static char* TCL_TraceVariable (ClientData data, Tcl_Interp* interp,
 	var = Cvar_FindVar (name1);
 
 	if (flags & TCL_TRACE_READS) {
-		value = var ? var->string : Cmd_MacroString(name1, &len);
+		value = var ? var->string : Cmd_MacroString((char *) name1, &len);
 		if (value) {
 			Tcl_DString str_utf;
 			Tcl_ExternalToUtfDString (qw_enc, value, strlen (value), &str_utf);

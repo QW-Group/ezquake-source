@@ -58,7 +58,7 @@ void SB_RootInit(void)
 		What if i run ezQ as limited user on windows?
 		BTW, NewPing (aka no SOCK_RAW ping) is unstable on linux and very inaccurate :E
 		*/
-		Com_Printf ("SB_RootInit: socket: (%i): %s\n", qerrno, strerror(qerrno));
+		Com_DPrintf ("SB_RootInit: socket: (%i): %s\n", qerrno, strerror(qerrno));
 	}
 
 
