@@ -731,13 +731,11 @@ static void R_ClearTextureChains(model_t *clmodel) {
 void DrawTextureChains (model_t *model) {
 
 	extern cvar_t gl_lumaTextures;
-	extern model_color_t model_color_variable[MODEL_COLOR_COUNT];
 	
 	int waterline, i, k, GL_LIGHTMAP_TEXTURE = 0, GL_FB_TEXTURE = 0;
 	msurface_t *s;
 	texture_t *t;
 	float *v;
-	byte *col,color[3];
 
 	qbool render_lightmaps = false;
 	qbool drawLumasGlowing, doMtex1, doMtex2;
@@ -768,42 +766,8 @@ void DrawTextureChains (model_t *model) {
 	{
 		glEnable(GL_FOG);
 	}
-
-	// Color the world model if mode_color has been set.
-	if (model->isworldmodel)
-	{
-		if(model_color_variable[MODEL_COLOR_WORLD].enable->value > 0 && model_color_variable[MODEL_COLOR_WORLD].enable->value < 5 )
-		{
-			if(model_color_variable[MODEL_COLOR_WORLD].enable->value == MODEL_COLOR_MODE_MODULATE)
-			{
-				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			}
-			else if(model_color_variable[MODEL_COLOR_WORLD].enable->value == MODEL_COLOR_MODE_BLEND)
-			{
-				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
-			}
-			else if(model_color_variable[MODEL_COLOR_WORLD].enable->value == MODEL_COLOR_MODE_DECAL)
-			{
-				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-			}
-			else if(model_color_variable[MODEL_COLOR_WORLD].enable->value == MODEL_COLOR_MODE_ADD)
-			{
-				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-			}
-			else if(model_color_variable[MODEL_COLOR_WORLD].enable->value == MODEL_COLOR_MODE_REPLACE)
-			{
-				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-			}
-
-			col = StringToRGB(model_color_variable[MODEL_COLOR_WORLD].color->string);
-			memcpy(color, col, 3);
-			glColor3ubv(color);
-		}
-	}
-	else
-	{
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	}
+	
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 	for (i = 0; i < model->numtextures; i++) {
 		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1]))
@@ -990,10 +954,9 @@ void R_DrawFlat (model_t *model) {
 	if (gl_fogenable.value)
 		glEnable(GL_FOG);
 	// } END shaman BUG /fog not working with /r_drawflat
-	if (r_drawflat.value == 1)
+	
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
-	if (r_drawflat.value == 2)
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	
 	GL_SelectTexture(GL_TEXTURE0_ARB);
 	
 	for (i = 0; i < model->numtextures; i++) {
