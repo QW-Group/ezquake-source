@@ -173,10 +173,6 @@ cvar_t gl_clipparticles = {"gl_clipparticles", "1"};
 cvar_t gl_bounceparticles = {"gl_bounceparticles", "1"};
 // END shaman :: balancing variables
 
-#define TruePointContents(p) PM_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
-
-#define ISUNDERWATER(x) ((x) == CONTENTS_WATER || (x) == CONTENTS_SLIME || (x) == CONTENTS_LAVA)
-
 static qbool TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal) {
 	trace_t trace;
 

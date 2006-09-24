@@ -64,6 +64,7 @@ mleaf_t		*r_viewleaf2, *r_oldviewleaf2;	// for watervis hack
 texture_t	*r_notexture_mip;
 
 int			d_lightstylevalue[256];	// 8.8 fraction of base light value
+int			brushmodel = 0;
 
 cvar_t cl_multiview = {"cl_multiview", "0" };
 cvar_t cl_mvdisplayhud = {"cl_mvdisplayhud", "1"};
@@ -100,6 +101,7 @@ qbool OnChange_r_drawflat(cvar_t *v, char *skyname);
 cvar_t	r_drawflat   = {"r_drawflat", "0", 0, OnChange_r_drawflat};
 cvar_t	r_wallcolor  = {"r_wallcolor", "255 255 255", 0, OnChange_r_drawflat};
 cvar_t	r_floorcolor = {"r_floorcolor", "50 100 150", 0, OnChange_r_drawflat};
+cvar_t	gl_textureless = {"gl_textureless", "0"}; //Qrack
 
 cvar_t	r_farclip			= {"r_farclip", "4096"};
 qbool OnChange_r_skyname(cvar_t *v, char *s);
@@ -854,8 +856,6 @@ void R_DrawAliasModel (entity_t *ent) {
 	}
 
 // Underwater caustics on alias models of QRACK -->
-	#define ISUNDERWATER(x) ((x) == CONTENTS_WATER || (x) == CONTENTS_SLIME || (x) == CONTENTS_LAVA)
-	#define TruePointContents(p) PM_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
 	#define GL_RGB_SCALE 0x8573
 
 	if ((gl_caustics.value) && (underwatertexture && gl_mtexable && ISUNDERWATER(TruePointContents(ent->origin))))
@@ -996,7 +996,9 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 				R_DrawAlias3Model (currententity);
 				break;
 			case mod_brush:
+				brushmodel = 1;
 				R_DrawBrushModel (currententity);
+				brushmodel = 0;
 				break;
 			case mod_sprite:
 				R_DrawSpriteModel (currententity);
@@ -1443,6 +1445,7 @@ void R_Init (void) {
 	Cvar_Register (&r_drawflat);
 	Cvar_Register (&r_wallcolor);
 	Cvar_Register (&r_floorcolor);
+	Cvar_Register (&gl_textureless); //Qrack
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
 	Cvar_Register (&r_farclip);
