@@ -395,15 +395,10 @@ void V_TF_FlashStuff (void)
 		last_own_flash_time = cls.realtime;
 	}
 
-/*	if (last_other_flash_time > last_own_flash_time)
-		blocktime = 20.0;
-	else
-		blocktime = 10.0;*/
-	
 	blocktime = (last_other_flash_time > last_own_flash_time) ? 20.0 : 10.0;
 
 	// turn gamma and contrast back if
-	if ((!(cls.realtime - last_flash_time < blocktime)) || // flashed for last 10 seconds or 
+	if ((!(cls.realtime - max (last_own_flash_time, last_other_flash_time) < blocktime)) || // flashed for last 10 seconds or 
 	(cshift_empty.percent == 0 && (cbuf_current = &cbuf_svc))) { // death while flashed
 		if (flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
 			V_TF_FlashSettings (false);
