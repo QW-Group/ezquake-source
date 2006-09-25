@@ -460,7 +460,7 @@ static void MW_Set_Hook (void) {
 		return;
 	}
 	MW_Hook_enabled = true;
-	Com_Printf("MouseWare hook initialized\n");
+	Com_Printf_State (PRINT_OK, "MouseWare hook initialized\n");
 }
 
 static void MW_Remove_Hook (void) {
@@ -616,7 +616,7 @@ qbool IN_InitDInput (void) {
 		hInstDI = LoadLibrary("dinput.dll");
 		
 		if (hInstDI == NULL) {
-			Com_Printf ("Couldn't load dinput.dll\n");
+			Com_Printf_State(PRINT_FAIL, "Couldn't load dinput.dll\n");
 			return false;
 		}
 	}
@@ -624,7 +624,7 @@ qbool IN_InitDInput (void) {
 	if (!pDirectInputCreateEx) {
 		pDirectInputCreateEx = (void *)GetProcAddress(hInstDI,"DirectInputCreateEx");
 		if (!pDirectInputCreateEx) {
-			Com_Printf ("Couldn't get DI proc addr\n");
+			Com_Printf_State(PRINT_FAIL, "Couldn't get DI proc addr\n");
 			return false;
 		}
 	}
@@ -639,7 +639,7 @@ qbool IN_InitDInput (void) {
 	hr = IDirectInput7_CreateDeviceEx(g_pdi, &GUID_SysMouse, &IID_IDirectInputDevice7, (LPVOID *) &g_pMouse, NULL);
 
 	if (FAILED(hr)) {
-		Com_Printf ("Couldn't open DI mouse device\n");
+		Com_Printf_State(PRINT_FAIL, "Couldn't open DI mouse device\n");
 		return false;
 	}
 
@@ -647,7 +647,7 @@ qbool IN_InitDInput (void) {
 	hr = IDirectInputDevice7_SetDataFormat(g_pMouse, &qdf);
 
 	if (FAILED(hr)) {
-		Com_Printf ("Couldn't set DI mouse format\n");
+		Com_Printf_State(PRINT_FAIL, "Couldn't set DI mouse format\n");
 		return false;
 	}
 
@@ -655,7 +655,7 @@ qbool IN_InitDInput (void) {
 	hr = IDirectInputDevice7_SetCooperativeLevel(g_pMouse, mainwindow, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
 
 	if (FAILED(hr)) {
-		Com_Printf ("Couldn't set DI coop level\n");
+		Com_Printf_State(PRINT_FAIL, "Couldn't set DI coop level\n");
 		return false;
 	}
 
@@ -664,7 +664,7 @@ qbool IN_InitDInput (void) {
 	hr = IDirectInputDevice7_SetProperty(g_pMouse, DIPROP_BUFFERSIZE, &dipdw.diph);
 
 	if (FAILED(hr)) {
-		Com_Printf ("Couldn't set DI buffersize\n");
+		Com_Printf_State(PRINT_FAIL, "Couldn't set DI buffersize\n");
 		return false;
 	}
 
@@ -689,12 +689,12 @@ void IN_StartupMouse (void) {
 		dinput = IN_InitDInput ();
 
 		if (dinput) {
-			Com_Printf ("DirectInput initialized\n");
+			Com_Printf_State (PRINT_OK, "DirectInput initialized\n");
 			mouse_buttons = 8;
 			if (use_m_smooth)				
-				Com_Printf("Mouse smoothing initialized\n");
+				Com_Printf_State (PRINT_OK, "Mouse smoothing initialized\n");
 		} else {
-			Com_Printf ("DirectInput not initialized\n");
+			Com_Printf_State (PRINT_FAIL, "DirectInput not initialized\n");
 		}
 #else
 		Com_Printf ("DirectInput not supported in this build\n");

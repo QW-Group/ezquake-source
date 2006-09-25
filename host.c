@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.25 2006-08-17 17:45:59 disconn3ct Exp $
+	$Id: host.c,v 1.26 2006-09-25 09:10:43 johnnycz Exp $
  
 */
 
@@ -471,7 +471,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 #ifdef EMBED_TCL
 	if (!TCL_InterpLoaded())
-		Com_Printf ("Could not load "TCL_LIB_NAME", embedded Tcl disabled\n");
+		Com_Printf_State (PRINT_FAIL, "Could not load "TCL_LIB_NAME", embedded Tcl disabled\n");
 #endif
 
 	Hunk_AllocName (0, "-HOST_HUNKLEVEL-");
@@ -479,8 +479,8 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	host_initialized = true;
 
-	Com_Printf ("Exe: "__TIME__" "__DATE__"\n");
-	Com_Printf ("Hunk allocation: %4.1f MB.\n", (float) host_memsize / (1024 * 1024));
+	Com_Printf_State (PRINT_INFO, "Exe: "__TIME__" "__DATE__"\n");
+	Com_Printf_State (PRINT_INFO, "Hunk allocation: %4.1f MB.\n", (float) host_memsize / (1024 * 1024));
 
 	Com_Printf ("\nezQuake %s\n\n", VersionString());
 	if (dedicated) {

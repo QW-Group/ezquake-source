@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.34 2006-08-17 17:45:59 disconn3ct Exp $
+    $Id: common.c,v 1.35 2006-09-25 09:10:43 johnnycz Exp $
 */
 
 #ifdef _WIN32
@@ -1366,6 +1366,37 @@ void Com_DPrintf (char *fmt, ...) {
 	va_end (argptr);
 
 	Com_Printf ("%s", msg);
+}
+
+void Com_Printf_State(int state, char *fmt, ...) {
+/* Com_Printf equivalent with importance level as a first parm for each msg,
+   it should be one of PRINT_OK, PRINT_INFO, PRINT_FAIL defines
+   PRINT_OK won't be displayed unless we're in developer mode
+*/
+	va_list argptr;
+	char* prefix;
+	char msg[MAXPRINTMSG];
+
+	switch (state) {
+		case PRINT_FAIL:
+			prefix = "\x02" "\x10" "fail" "\x11 ";
+			break;
+		case PRINT_OK:
+			prefix = " " " ok " "  ";
+			break;
+		default:
+		case PRINT_INFO:
+			prefix = "\x9c\x9c\x9c\x9c\x9c\x9c ";
+			break;
+	}
+
+	if (state != PRINT_OK || developer.value) { // print ok msgs only in developer mode
+		strncpy(msg, prefix, sizeof(msg));
+		va_start (argptr, fmt);
+		vsnprintf (msg + strlen(msg), sizeof(msg), fmt, argptr);
+		va_end(argptr);
+		Com_Printf ("%s", msg);
+	}
 }
 
 int isspace2(int c) {

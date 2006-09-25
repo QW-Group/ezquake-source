@@ -98,11 +98,11 @@ void Capture_InitAVI (void)
 
 	if (!movie_avi_loaded)
 	{
-		Com_Printf ("\x02" "Avi capturing module not initialized\n");
+		Com_Printf_State (PRINT_FAIL, "Avi capturing module not initialized\n");
 		goto fail;
 	}
 
-	Com_Printf ("Avi capturing module initialized\n");
+	Com_Printf_State (PRINT_OK, "Avi capturing module initialized\n");
 	return;
 
 fail:
@@ -142,11 +142,11 @@ void Capture_InitACM (void)
 
 	if (!movie_acm_loaded)
 	{
-		Com_Printf ("\x02" "ACM module not initialized\n");
+		Com_Printf_State (PRINT_FAIL, "ACM module not initialized\n");
 		goto fail;
 	}
 
-	Com_Printf ("ACM module initialized\n");
+	Com_Printf_State (PRINT_OK, "ACM module initialized\n");
 	return;
 
 fail:

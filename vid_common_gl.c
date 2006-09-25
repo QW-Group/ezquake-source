@@ -101,7 +101,7 @@ void CheckMultiTextureExtensions (void) {
 		qglActiveTexture = GL_GetProcAddress("glActiveTextureARB");
 		if (!qglMultiTexCoord2f || !qglActiveTexture)
 			return;
-		Com_Printf ("Multitexture extensions found\n");
+		Com_Printf_State(PRINT_OK, "Multitexture extensions found\n");
 		gl_mtexable = true;
 	}
 
@@ -117,7 +117,7 @@ void CheckMultiTextureExtensions (void) {
 	if (!gl_mtexable)
 		gl_textureunits = 1;
 	else
-		Com_Printf("Enabled %i texture units on hardware\n", gl_textureunits);
+		Com_Printf_State(PRINT_INFO, "Enabled %i texture units on hardware\n", gl_textureunits);
 }
 
 void GL_CheckExtensions (void) {
@@ -134,12 +134,12 @@ void GL_CheckExtensions (void) {
 
 		glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_anisotropy_factor_max);
 
-		Com_Printf("Anisotropic Filtering Extension Found (%d max)\n",gl_anisotropy_factor_max);
+		Com_Printf_State(PRINT_OK, "Anisotropic Filtering Extension Found (%d max)\n",gl_anisotropy_factor_max);
 	}
 
 
 	if (CheckExtension("GL_ARB_texture_compression")) {
-		Com_Printf("Texture compression extensions found\n");
+		Com_Printf_State(PRINT_OK, "Texture compression extensions found\n");
 		Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
 		Cvar_Register (&gl_ext_texture_compression);
 		Cvar_ResetCurrentGroup();
@@ -163,14 +163,14 @@ qbool OnChange_gl_ext_texture_compression(cvar_t *var, char *string) {
 
 void GL_Init (void) {
 	gl_vendor = (const char*) glGetString (GL_VENDOR);
-	Com_Printf ("GL_VENDOR: %s\n", gl_vendor);
+	Com_Printf_State(PRINT_INFO, "GL_VENDOR: %s\n", gl_vendor);
 	gl_renderer = (const char*) glGetString (GL_RENDERER);
-	Com_Printf ("GL_RENDERER: %s\n", gl_renderer);
+	Com_Printf_State(PRINT_INFO, "GL_RENDERER: %s\n", gl_renderer);
 	gl_version = (const char*) glGetString (GL_VERSION);
-	Com_Printf ("GL_VERSION: %s\n", gl_version);
+	Com_Printf_State(PRINT_INFO, "GL_VERSION: %s\n", gl_version);
 	gl_extensions = (const char*) glGetString (GL_EXTENSIONS);
 	if (COM_CheckParm("-gl_ext"))
-		Com_Printf ("GL_EXTENSIONS: %s\n", gl_extensions);
+		Com_Printf_State(PRINT_INFO, "GL_EXTENSIONS: %s\n", gl_extensions);
 
 	Cvar_Register (&gl_strings);
 	Cvar_ForceSet (&gl_strings, va("GL_VENDOR: %s\nGL_RENDERER: %s\n"

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.34 2006-08-14 15:31:49 vvd0 Exp $
+	$Id: cl_demo.c,v 1.35 2006-09-25 09:10:43 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1535,11 +1535,11 @@ void CL_Demo_Init (void) {
 		democache_size = Q_atoi(com_argv[parm + 1]) * 1024;
 		democache_size = max(democache_size, DEMOCACHE_MINSIZE);
 		if ((democache_buffer = malloc(democache_size))) {
-			Com_Printf("Democache initialized (%.1f MB)\n", (float) (democache_size) / (1024 * 1024));
+			Com_Printf_State (PRINT_OK, "Democache initialized (%.1f MB)\n", (float) (democache_size) / (1024 * 1024));
 			SZ_Init(&democache, democache_buffer, democache_size);
 			democache_available = true;
 		} else {
-			Com_Printf("\x02" "Democache allocation failed\n");
+			Com_Printf_State (PRINT_FAIL, "Democache allocation failed\n");
 		}
 	}
 

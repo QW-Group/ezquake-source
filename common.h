@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.27 2006-08-17 17:45:59 disconn3ct Exp $
+    $Id: common.h,v 1.28 2006-09-25 09:10:43 johnnycz Exp $
 */
 // common.h  -- general definitions
 
@@ -212,6 +212,10 @@ void Com_BeginRedirect (void (*RedirectedPrint) (char *));
 void Com_EndRedirect (void);
 void Com_Printf (char *fmt, ...);
 void Com_DPrintf (char *fmt, ...);
+#define PRINT_OK	1
+#define PRINT_INFO	2
+#define PRINT_FAIL	4
+void Com_Printf_State(int state, char *fmt, ...);
 
 // QW262 -->
 extern unsigned	Print_flags[16];

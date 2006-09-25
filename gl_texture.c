@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_texture.c,v 1.18 2006-06-12 21:56:59 moodles Exp $
+	$Id: gl_texture.c,v 1.19 2006-09-25 09:10:43 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -535,7 +535,7 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 
 	if (mode & TEX_COMPLAIN) {
 		if (!no24bit)
-			Com_Printf ("Couldn't load %s image\n", COM_SkipPath(filename));
+			Com_Printf_State(PRINT_FAIL, "Couldn't load %s image\n", COM_SkipPath(filename));
 	}
 
 	return NULL;

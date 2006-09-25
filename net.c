@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.11 2006-09-25 00:07:47 disconn3ct Exp $
+    $Id: net.c,v 1.12 2006-09-25 09:10:43 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -788,9 +788,9 @@ void NET_GetLocalAddress (int socket, netadr_t *out)
 		*(int *)out->ip = *(int *)adr.ip;	//change it to what the machine says it is, rather than the socket.
 
 	if (notvalid)
-		Com_Printf("Couldn't detect local ip\n");
+		Com_Printf_State (PRINT_FAIL, "Couldn't detect local ip\n");
 	else
-		Com_Printf("IP address %s\n", NET_AdrToString (*out));
+		Com_Printf_State (PRINT_OK, "IP address %s\n", NET_AdrToString (*out));
 }
 
 void NET_Init (void)
@@ -851,7 +851,7 @@ void NET_InitClient(void)
 	// determine my name & address
 	NET_GetLocalAddress (cls.socketip, &net_local_cl_ipadr);
 
-	Com_Printf ("Client port Initialized\n");
+	Com_Printf_State (PRINT_OK, "Client port Initialized\n");
 }
 #endif
 
