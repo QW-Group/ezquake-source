@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.10 2006-08-08 00:02:10 johnnycz Exp $
+    $Id: net.c,v 1.11 2006-09-25 00:07:47 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -281,11 +281,6 @@ qbool NET_GetPacket (netsrc_t netsrc)
 			if (err == EMSGSIZE) {
 				SockadrToNetadr (&from, &net_from);
 				Com_Printf ("Warning:  Oversize packet from %s\n", NET_AdrToString (net_from));
-				continue;
-			}
-
-			if (err == 10054) {
-				Com_Printf ("NET_GetPacket: Error 10054 from %s\n", NET_AdrToString (net_from));
 				continue;
 			}
 
