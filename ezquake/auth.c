@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: auth.c,v 1.11 2006-05-14 09:22:23 disconn3ct Exp $
+	$Id: auth.c,v 1.12 2006-09-25 09:10:43 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -167,7 +167,7 @@ static void Auth_Verify_Clients_f(void) {
 	extern void PaddedPrint (char *s);
 
 	if (!Modules_SecurityLoaded()) {
-		Com_Printf("Security module not initialized\n");
+		Com_Printf_State (PRINT_FAIL, "Security module not initialized\n");
 		return;
 	}
 

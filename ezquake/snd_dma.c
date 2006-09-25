@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.30 2006-05-06 12:08:14 disconn3ct Exp $
+    $Id: snd_dma.c,v 1.31 2006-09-25 09:10:43 johnnycz Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -166,7 +166,7 @@ static void S_Restart_f (void)
 void S_Init (void)
 {
 	if (snd_initialized) { //whoops
-		Com_Printf("Sound is already initialized\n");
+		Com_Printf_State (PRINT_INFO, "Sound is already initialized\n");
 		return;
 	}
 

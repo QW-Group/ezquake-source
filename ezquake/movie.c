@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: movie.c,v 1.17 2006-08-27 13:18:26 disconn3ct Exp $
+	$Id: movie.c,v 1.18 2006-09-25 09:10:43 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -174,7 +174,7 @@ void Movie_Demo_Capture_f(void) {
 		char aviname[MAX_OSPATH];
 
 		if (!movie_avi_loaded) {
-			Com_Printf("Error: Avi capturing not initialized\n");
+			Com_Printf_State (PRINT_FAIL, "Avi capturing not initialized\n");
 			return;
 		}
 		strlcpy (aviname, Cmd_Argv(3), sizeof(aviname));

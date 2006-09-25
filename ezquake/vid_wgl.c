@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.17 2006-09-21 23:19:59 johnnycz Exp $
+	$Id: vid_wgl.c,v 1.18 2006-09-25 09:10:43 johnnycz Exp $
 
 */
 
@@ -151,7 +151,7 @@ RECT	window_rect;
 void GL_WGL_CheckExtensions(void) {
     if (!COM_CheckParm("-noswapctrl") && CheckExtension("WGL_EXT_swap_control")) {
 		if ((wglSwapIntervalEXT = (void *) wglGetProcAddress("wglSwapIntervalEXT"))) {
-            Com_Printf("Vsync control extensions found\n");
+            Com_Printf_State(PRINT_OK, "Vsync control extensions found\n");
 			Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
 			Cvar_Register (&vid_vsync);
 			Cvar_ResetCurrentGroup();
@@ -446,7 +446,7 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 	//fix the leftover Alt from any Alt-Tab or the like that switched us away
 	ClearAllStates ();
 
-	Com_Printf ("Video mode %s initialized\n", VID_GetModeDescription (vid_modenum));
+	Com_Printf_State (PRINT_OK, "Video mode %s initialized\n", VID_GetModeDescription (vid_modenum));
 
 	//VID_SetPalette (palette);
 

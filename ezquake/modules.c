@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: modules.c,v 1.8 2006-03-20 13:51:27 vvd0 Exp $
+	$Id: modules.c,v 1.9 2006-09-25 09:10:43 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -71,7 +71,7 @@ void Modules_Init(void) {
 
 #ifdef _WIN32
 	if (!(hSecurity = LoadLibrary("ezquake-security.dll"))) {
-		Com_Printf("\x02" "Security module not found\n");
+		Com_Printf_State(PRINT_FAIL, "Security module not found\n");
 		goto fail;
 	}
 #else
@@ -97,7 +97,7 @@ void Modules_Init(void) {
 						Security_Shutdown;
 
 	if (!security_loaded) {
-		Com_Printf("\x02" "Security module not initialized\n");
+		Com_Printf_State(PRINT_FAIL, "Security module not initialized\n");
 		goto fail;
 	}
 
@@ -130,11 +130,11 @@ void Modules_Init(void) {
 			case SECURITY_INIT_NOPROC:
 				Com_Printf("\x02" "Proc filesystem not found\n"); break;
 		}
-		Com_Printf("\x02" "Security module not initialized\n");
+		Com_Printf_State(PRINT_FAIL, "Security module not initialized\n");
 		goto fail;
 	}
 
-	Com_Printf("Security module initialized\n");
+	Com_Printf_State(PRINT_OK, "Security module initialized\n");
 	return;
 
 fail:

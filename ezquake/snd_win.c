@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_win.c,v 1.9 2006-05-04 19:46:31 disconn3ct Exp $
+    $Id: snd_win.c,v 1.10 2006-09-25 09:10:43 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -193,41 +193,41 @@ static sndinitstat SNDDMA_InitDirect (void)
 		devicenum = Q_atoi(com_argv[temp + 1]);
 		currentenum = 0;
 		if ((hresult = DirectSoundEnumerate(DS_EnumDevices, &devicenum)) != DS_OK) {
-			Com_Printf ("Couldn't open preferred sound device. Falling back to primary sound device.\n");
+			Com_Printf_State (PRINT_INFO, "Couldn't open preferred sound device. Falling back to primary sound device.\n");
 			dsdevice = NULL;
 		}
 	}
 
 	hresult = DirectSoundCreate(dsdevice, &pDS, NULL);
 	if (hresult != DS_OK && dsdevice) {
-		Com_Printf ("Couldn't open preferred sound device. Falling back to primary sound device.\n");
+		Com_Printf_State (PRINT_INFO, "Couldn't open preferred sound device. Falling back to primary sound device.\n");
 		dsdevice = NULL;
 		hresult = DirectSoundCreate(dsdevice, &pDS, NULL);
 	}
 
 	if (hresult != DS_OK) {
 		if (hresult == DSERR_ALLOCATED) {
-			Com_Printf ("DirectSoundCreate failed, hardware already in use\n");
+			Com_Printf_State (PRINT_FAIL, "DirectSoundCreate failed, hardware already in use\n");
 			return SIS_NOTAVAIL;
 		}
 
-		Com_Printf ("DirectSound create failed\n");
+		Com_Printf_State (PRINT_FAIL, "DirectSound create failed\n");
 		return SIS_FAILURE;
 	}
 
 	dscaps.dwSize = sizeof(dscaps);
 
 	if (DS_OK != pDS->lpVtbl->GetCaps (pDS, &dscaps))
-		Com_Printf ("Couldn't get DS caps\n");
+		Com_Printf_State (PRINT_FAIL, "Couldn't get DS caps\n");
 
 	if (dscaps.dwFlags & DSCAPS_EMULDRIVER) {
-		Com_Printf ("No DirectSound driver installed\n");
+		Com_Printf_State (PRINT_FAIL, "No DirectSound driver installed\n");
 		FreeSound ();
 		return SIS_FAILURE;
 	}
 
 	if (DS_OK != pDS->lpVtbl->SetCooperativeLevel (pDS, mainwindow, DSSCL_EXCLUSIVE)) {
-		Com_Printf ("Set coop level failed\n");
+		Com_Printf_State (PRINT_FAIL, "Set coop level failed\n");
 		FreeSound ();
 		return SIS_FAILURE;
 	}
@@ -270,7 +270,7 @@ static sndinitstat SNDDMA_InitDirect (void)
 		dsbcaps.dwSize = sizeof(dsbcaps);
 
 		if (DS_OK != pDS->lpVtbl->CreateSoundBuffer(pDS, &dsbuf, &pDSBuf, NULL)) {
-			Com_Printf ("DS:CreateSoundBuffer Failed");
+			Com_Printf_State (PRINT_FAIL, "DS:CreateSoundBuffer Failed");
 			FreeSound ();
 			return SIS_FAILURE;
 		}
@@ -280,7 +280,7 @@ static sndinitstat SNDDMA_InitDirect (void)
 		shm->format.speed = format.nSamplesPerSec;
 
 		if (DS_OK != pDSBuf->lpVtbl->GetCaps (pDSBuf, &dsbcaps)) {
-			Com_Printf ("DS:GetCaps failed\n");
+			Com_Printf_State (PRINT_FAIL, "DS:GetCaps failed\n");
 			FreeSound ();
 			return SIS_FAILURE;
 		}
@@ -289,13 +289,13 @@ static sndinitstat SNDDMA_InitDirect (void)
 //			Com_Printf ("Using secondary sound buffer\n");
 	} else {
 		if (DS_OK != pDS->lpVtbl->SetCooperativeLevel (pDS, mainwindow, DSSCL_WRITEPRIMARY)) {
-			Com_Printf ("Set coop level failed\n");
+			Com_Printf_State (PRINT_FAIL, "Set coop level failed\n");
 			FreeSound ();
 			return SIS_FAILURE;
 		}
 
 		if (DS_OK != pDSPBuf->lpVtbl->GetCaps (pDSPBuf, &dsbcaps)) {
-			Com_Printf ("DS:GetCaps failed\n");
+			Com_Printf_State (PRINT_FAIL, "DS:GetCaps failed\n");
 			return SIS_FAILURE;
 		}
 
@@ -319,13 +319,13 @@ static sndinitstat SNDDMA_InitDirect (void)
 
 	while ((hresult = pDSBuf->lpVtbl->Lock(pDSBuf, 0, gSndBufSize, &lpData, &dwSize, NULL, NULL, 0)) != DS_OK) {
 		if (hresult != DSERR_BUFFERLOST) {
-			Com_Printf ("SNDDMA_InitDirect: DS::Lock Sound Buffer Failed\n");
+			Com_Printf_State (PRINT_FAIL, "SNDDMA_InitDirect: DS::Lock Sound Buffer Failed\n");
 			FreeSound ();
 			return SIS_FAILURE;
 		}
 
 		if (++reps > 10000) {
-			Com_Printf ("SNDDMA_InitDirect: DS: couldn't restore buffer\n");
+			Com_Printf_State (PRINT_FAIL, "SNDDMA_InitDirect: DS: couldn't restore buffer\n");
 			FreeSound ();
 			return SIS_FAILURE;
 		}
@@ -489,10 +489,10 @@ qbool SNDDMA_Init(void)
 				snd_isdirect = true;
 
 				if (snd_firsttime)
-					Com_Printf ("DirectSound initialized\n");
+					Com_Printf_State (PRINT_OK, "DirectSound initialized\n");
 			} else {
 				snd_isdirect = false;
-				Com_Printf ("DirectSound failed to init\n");
+				Com_Printf_State (PRINT_FAIL, "DirectSound failed to init\n");
 			}
 		}
 	}
@@ -504,9 +504,9 @@ qbool SNDDMA_Init(void)
 
 			if (snd_iswave) {
 				if (snd_firsttime)
-					Com_Printf ("Wave sound initialized\n");
+					Com_Printf_State (PRINT_OK, "Wave sound initialized\n");
 			} else {
-				Com_Printf ("Wave sound failed to init\n");
+				Com_Printf_State (PRINT_FAIL, "Wave sound failed to init\n");
 			}
 		}
 	}
@@ -515,7 +515,7 @@ qbool SNDDMA_Init(void)
 
 	if (!dsound_init && !wav_init) {
 		if (snd_firsttime)
-			Com_Printf ("No sound device initialized\n");
+			Com_Printf_State (PRINT_INFO, "No sound device initialized\n");
 
 		return false;
 	}

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.14 2006-09-21 23:19:59 johnnycz Exp $
+	$Id: vid_win.c,v 1.15 2006-09-25 09:10:43 johnnycz Exp $
 
 */
 
@@ -1405,7 +1405,7 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 	ClearAllStates ();
 
 	if (!msg_suppress_1)
-		Com_Printf ("Video mode %s initialized\n", VID_GetModeDescription (vid_modenum));
+		Com_Printf_State (PRINT_OK, "Video mode %s initialized\n", VID_GetModeDescription (vid_modenum));
 
 	VID_SetPalette (palette);
 

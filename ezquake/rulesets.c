@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.40 2006-06-01 16:50:18 johnnycz Exp $
+	$Id: rulesets.c,v 1.41 2006-09-25 09:10:43 johnnycz Exp $
 
 */
 
@@ -221,14 +221,14 @@ void Rulesets_Init(void) {
 	if ((temp = COM_CheckParm("-ruleset")) && temp + 1 < com_argc) {
 		if (!strcasecmp(com_argv[temp + 1], "smackdown")) {
 			Rulesets_Smackdown();
-			Com_Printf("Ruleset Smackdown initialized\n");
+			Com_Printf_State (PRINT_OK, "Ruleset Smackdown initialized\n");
 			return;
 		} else if (!strcasecmp(com_argv[temp + 1], "mtfl")) {
 			Rulesets_MTFL();
-			Com_Printf("Ruleset MTFL initialized\n");
+			Com_Printf_State (PRINT_OK, "Ruleset MTFL initialized\n");
 			return;
 		} else if (strcasecmp(com_argv[temp + 1], "default")){
-			Com_Printf("Unknown ruleset \"%s\"\n", com_argv[temp + 1]);
+			Com_Printf_State (PRINT_INFO, "Unknown ruleset \"%s\"\n", com_argv[temp + 1]);
 		}
 	}
 	Rulesets_Default();

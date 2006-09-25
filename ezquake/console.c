@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.26 2006-05-14 12:23:17 disconn3ct Exp $
+	$Id: console.c,v 1.27 2006-09-25 09:10:43 johnnycz Exp $
 */
 // console.c
 
@@ -375,7 +375,7 @@ void Con_Init (void) {
 	Con_CreateReadableChars();
 
 	con_initialized = true;
-	Com_Printf ("Console initialized\n");
+	Com_Printf_State (PRINT_OK, "Console initialized\n");
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	// register our commands and cvars
