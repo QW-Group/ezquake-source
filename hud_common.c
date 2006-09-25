@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.68 2006-09-24 17:13:48 johnnycz Exp $
+	$Id: hud_common.c,v 1.69 2006-09-25 00:26:58 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -5478,12 +5478,8 @@ void CommonDraw_Init(void)
         "show_dev",     "0",
         "blink",        "1",
         NULL);
-	HUD_Register("tracking", NULL, "Shows the name of tracked player.",
-		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawTracking,
-		"1", "face", "center", "before", "0", "0", "0", "0 0 0",
-		"format", "Tracking %t %n, [JUMP] for next",
-		NULL);
-    // init net
+
+	// init net
     HUD_Register("net", NULL, "Shows network statistics, like latency, packet loss, average packet sizes and bandwidth. Shown only when you are connected to a server.",
         HUD_PLUSMINUS, ca_active, 7, SCR_HUD_DrawNetStats,
         "0", "top", "left", "center", "0", "0", "0.2", "0 0 0",
@@ -5653,40 +5649,6 @@ void CommonDraw_Init(void)
         "digits", "3",
         NULL);
 
-    // armor
-    HUD_Register("armor", NULL, "Part of your inventory - armor level.",
-        HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmor,
-        "1", "face", "before", "center", "-32", "0", "0", "0 0 0",
-        "style",  "0",
-        "scale",  "1",
-        "align",  "right",
-        "digits", "3",
-        NULL);
-
-#ifdef GLQUAKE
-	// healthdamage
-    HUD_Register("healthdamage", NULL, "Shows amount of damage done to your health.",
-        HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawHealthDamage,
-        "0", "health", "left", "before", "0", "0", "0", "0 0 0",
-        "style",  "0",
-        "scale",  "1",
-        "align",  "right",
-        "digits", "3",
-		"duration", "0.8",
-        NULL);
-
-    // armordamage
-    HUD_Register("armordamage", NULL, "Shows amount of damage done to your armour.",
-        HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmorDamage,
-        "0", "armor", "left", "before", "0", "0", "0", "0 0 0",
-        "style",  "0",
-        "scale",  "1",
-        "align",  "right",
-        "digits", "3",
-		"duration", "0.8",
-        NULL);
-#endif
-
     // ammo/s
     HUD_Register("ammo", NULL, "Part of your inventory - ammo for active weapon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoCurrent,
@@ -5761,7 +5723,24 @@ void CommonDraw_Init(void)
         "scale", "1",
         NULL);
 
-    // armor icon
+    // player face (health indicator)
+    HUD_Register("face", NULL, "Your bloody face.",
+        HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawFace,
+        "1", "screen", "center", "bottom", "0", "0", "0", "0 0 0",
+        "scale", "1",
+        NULL);
+
+    // armor count
+    HUD_Register("armor", NULL, "Part of your inventory - armor level.",
+        HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmor,
+        "1", "face", "before", "center", "-32", "0", "0", "0 0 0",
+        "style",  "0",
+        "scale",  "1",
+        "align",  "right",
+        "digits", "3",
+        NULL);
+
+	// armor icon
     HUD_Register("iarmor", NULL, "Part of your inventory - armor icon.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmorIcon,
         "1", "armor", "before", "center", "0", "0", "0", "0 0 0",
@@ -5769,12 +5748,12 @@ void CommonDraw_Init(void)
         "scale", "1",
         NULL);
 
-    // player face
-    HUD_Register("face", NULL, "Your bloody face.",
-        HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawFace,
-        "1", "screen", "center", "bottom", "0", "0", "0", "0 0 0",
-        "scale", "1",
-        NULL);
+	// Tracking JohnNy_cz (Contains name of the player who's player we're watching at the moment)
+	HUD_Register("tracking", NULL, "Shows the name of tracked player.",
+		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawTracking,
+		"1", "face", "center", "before", "0", "0", "0", "0 0 0",
+		"format", "Tracking %t %n, [JUMP] for next",
+		NULL);
 
     // groups
     HUD_Register("group1", NULL, "Group element.",
@@ -5867,6 +5846,30 @@ void CommonDraw_Init(void)
 		"pic_alpha", "1.0",
         "pic_scalemode", "0",
         NULL);
+
+#ifdef GLQUAKE
+	// healthdamage
+    HUD_Register("healthdamage", NULL, "Shows amount of damage done to your health.",
+        HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawHealthDamage,
+        "0", "health", "left", "before", "0", "0", "0", "0 0 0",
+        "style",  "0",
+        "scale",  "1",
+        "align",  "right",
+        "digits", "3",
+		"duration", "0.8",
+        NULL);
+
+    // armordamage
+    HUD_Register("armordamage", NULL, "Shows amount of damage done to your armour.",
+        HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmorDamage,
+        "0", "armor", "left", "before", "0", "0", "0", "0 0 0",
+        "style",  "0",
+        "scale",  "1",
+        "align",  "right",
+        "digits", "3",
+		"duration", "0.8",
+        NULL);
+#endif
 
     HUD_Register("frags", NULL, "Show list of player frags in short form.",
         0, ca_active, 0, SCR_HUD_DrawFrags,
