@@ -368,7 +368,7 @@ void CL_Rotate_f (void) {
 		Com_Printf("Usage: %s <degrees>\n", Cmd_Argv(0));
 		return;
 	}
-	if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2 || RuleSets_DisallowRJScripts())
+	if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2)
 		return;
 	cl.viewangles[YAW] += atof(Cmd_Argv(1));
 	cl.viewangles[YAW] = anglemod(cl.viewangles[YAW]);
@@ -388,7 +388,7 @@ void CL_AdjustAngles (void) {
 	
 	if (!(in_strafe.state & 1)) {
 		speed = basespeed * cl_yawspeed.value;
-		if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2 || RuleSets_DisallowRJScripts())
+		if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2)
 			speed = bound(-900, speed, 900);
 		speed *= frametime;
 		cl.viewangles[YAW] -= speed * CL_KeyState(&in_right);
@@ -398,7 +398,7 @@ void CL_AdjustAngles (void) {
 
 	
 	speed = basespeed * cl_pitchspeed.value;
-	if ((cl.fpd & FPD_LIMIT_PITCH) || allow_scripts.value == 0 || RuleSets_DisallowRJScripts())
+	if ((cl.fpd & FPD_LIMIT_PITCH) || allow_scripts.value == 0)
 		speed = bound(-700, speed, 700);
 	speed *= frametime;
 	if (in_klook.state & 1)	{
