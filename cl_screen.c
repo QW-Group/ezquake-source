@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.56 2006-08-21 03:53:48 qqshka Exp $
+    $Id: cl_screen.c,v 1.57 2006-09-26 22:16:52 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -198,7 +198,7 @@ void SCR_DrawCenterString (void) {
 	scr_erase_center = 0;
 	start = scr_centerstring;
 
-	y = (scr_center_lines <= 4) ? vid.height * 0.35 : 48 + scr_centershift.value*8;
+	y = ((scr_center_lines <= 4) ? vid.height * 0.35 : 48) + scr_centershift.value*8;
 
 	while (1) {
 		// scan the width of the line
