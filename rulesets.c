@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.43 2006-09-25 23:46:03 disconn3ct Exp $
+	$Id: rulesets.c,v 1.44 2006-09-26 15:01:18 disconn3ct Exp $
 
 */
 
@@ -45,15 +45,10 @@ typedef struct rulesetDef_s {
 	float maxfps;
 	qbool restrictTriggers;
 	qbool restrictPacket;
-	qbool restrictRJScripts;
 	qbool restrictParticles;
 } rulesetDef_t;
 
-static rulesetDef_t rulesetDef = {rs_default, 72, false, false, false};
-
-qbool RuleSets_DisallowRJScripts(void) {
-	return rulesetDef.restrictRJScripts;
-}
+static rulesetDef_t rulesetDef = {rs_default, 72.0, false, false, false};
 
 qbool RuleSets_DisallowExternalTexture(model_t *mod) {
 	switch (mod->modhint) {
@@ -152,7 +147,6 @@ static void Rulesets_Smackdown(void) {
 	rulesetDef.restrictTriggers = true;
 	rulesetDef.restrictPacket = true;	// packet command could have been exploited for external timers
 	rulesetDef.restrictParticles = true;
-	rulesetDef.restrictRJScripts = false;
 	rulesetDef.ruleset = rs_smackdown;
 }
 
@@ -212,7 +206,6 @@ block all other ways to made textures flat(simple)
 #endif
 
 	rulesetDef.ruleset = rs_mtfl;
-	rulesetDef.restrictRJScripts = false;
 }
 
 static void Rulesets_Default(void) {
