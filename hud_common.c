@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.69 2006-09-25 00:26:58 johnnycz Exp $
+	$Id: hud_common.c,v 1.70 2006-09-29 17:03:09 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -4855,7 +4855,14 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		int entity_p_y = 0;
 
 		// Get the time since the entity spawned.
-		time_diff = cls.demotime - temp_entities.list[i].time;
+		if(cls.demoplayback)
+		{
+			time_diff = cls.demotime - temp_entities.list[i].time;
+		}
+		else
+		{
+			time_diff = cls.realtime - temp_entities.list[i].time;
+		}
 
 		// Don't show temp entities for long.
 		if(time_diff < 0.25)
@@ -4863,6 +4870,7 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			float radius = 0.0;
 			radius = (time_diff < 0.125) ? (time_diff * 32.0) : (time_diff * 32.0) - time_diff;
 			radius *= scale;
+			radius = min(max(radius, 0), 200);
 
 			// Get quake coordinates (times 8 to get them in the same format as .locs).
 			entity_q_x = temp_entities.list[i].pos[0]*8;
