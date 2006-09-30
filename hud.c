@@ -80,7 +80,7 @@ qbool HUD_RegExpMatch(const char *regexp, const char *matchstring)
 	return false;
 }
 
-qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, char **resultstring, int *resultlength, int group)
+qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, const char **resultstring, int *resultlength, int group)
 {
 	int offsets[HUD_REGEXP_OFFSET_COUNT];
 	pcre *re;
