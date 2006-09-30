@@ -123,7 +123,7 @@ qbool HUD_PrepareDrawByName(
 void HUD_InitFinish(void);
 
 qbool HUD_RegExpMatch(const char *regexp, const char *matchstring);
-qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, char **resultstring, int *resultlength, int group);
+qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, const char **resultstring, int *resultlength, int group);
 char *HUD_ColorNameToRGB(char *color_name);
 void HUD_RGBValuesFromString(char *string, float *r, float *g, float *b, float *alpha);
 

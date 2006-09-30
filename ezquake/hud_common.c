@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.70 2006-09-29 17:03:09 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.71 2006-09-30 12:04:07 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -216,16 +216,18 @@ int IN_GetMouseRate(void);
 
 void SCR_HUD_DrawMouserate(hud_t *hud)
 {
-    int x, y, width, height;
+	int x, y, width, height;
 	static int lastresult = 0;
 	int newresult;
-    char st[80];	// string buffer
+	char st[80];	// string buffer
+#ifdef WIN32
 	double t;		// current time
 	static double lastframetime;	// last refresh
+#endif
 
     static cvar_t *hud_mouserate_interval, *hud_mouserate_title = NULL;
 
-    if (hud_mouserate_title == NULL)   // first time called
+    if (hud_mouserate_title == NULL) // first time called
     {
         hud_mouserate_title    = HUD_FindVar(hud, "title");
 		hud_mouserate_interval = HUD_FindVar(hud, "interval");
@@ -1943,8 +1945,7 @@ void SCR_HUD_Group1(hud_t *hud)
 		*height, 
 		*picture,
 		*pic_alpha,
-		*pic_scalemode, 
-		*alpha;
+		*pic_scalemode;
 
     if (width == NULL)  // first time called
     {
@@ -1970,8 +1971,7 @@ void SCR_HUD_Group2(hud_t *hud)
 		*height, 
 		*picture,
 		*pic_alpha,
-		*pic_scalemode, 
-		*alpha;
+		*pic_scalemode;
 
     if (width == NULL)  // first time called
     {
@@ -1997,8 +1997,7 @@ void SCR_HUD_Group3(hud_t *hud)
 		*height, 
 		*picture,
 		*pic_alpha,
-		*pic_scalemode, 
-		*alpha;
+		*pic_scalemode;
 
     if (width == NULL)  // first time called
     {
@@ -2024,8 +2023,7 @@ void SCR_HUD_Group4(hud_t *hud)
 		*height, 
 		*picture,
 		*pic_alpha,
-		*pic_scalemode, 
-		*alpha;
+		*pic_scalemode;
 
     if (width == NULL)  // first time called
     {
@@ -2051,8 +2049,7 @@ void SCR_HUD_Group5(hud_t *hud)
 		*height, 
 		*picture,
 		*pic_alpha,
-		*pic_scalemode, 
-		*alpha;
+		*pic_scalemode;
 
     if (width == NULL)  // first time called
     {
@@ -2078,8 +2075,7 @@ void SCR_HUD_Group6(hud_t *hud)
 		*height, 
 		*picture,
 		*pic_alpha,
-		*pic_scalemode, 
-		*alpha;
+		*pic_scalemode;
 
     if (width == NULL)  // first time called
     {
@@ -2105,8 +2101,7 @@ void SCR_HUD_Group7(hud_t *hud)
 		*height, 
 		*picture,
 		*pic_alpha,
-		*pic_scalemode, 
-		*alpha;
+		*pic_scalemode;
 
     if (width == NULL)  // first time called
     {
@@ -2132,8 +2127,7 @@ void SCR_HUD_Group8(hud_t *hud)
 		*height, 
 		*picture,
 		*pic_alpha,
-		*pic_scalemode, 
-		*alpha;
+		*pic_scalemode;
 
     if (width == NULL)  // first time called
     {
@@ -2159,8 +2153,7 @@ void SCR_HUD_Group9(hud_t *hud)
 		*height, 
 		*picture,
 		*pic_alpha,
-		*pic_scalemode, 
-		*alpha;
+		*pic_scalemode;
 
     if (width == NULL)  // first time called
     {
@@ -3804,11 +3797,11 @@ void TeamHold_DrawBars(int x, int y, int width, int height,
 	int bar_height = 0;
 
 	bar_height = ROUND(height/2.0);
-	team1_width = width * team1_percent;
-	team2_width = width * team2_percent;
+	team1_width = (int) (width * team1_percent);
+	team2_width = (int) (width * team2_percent);
 	
-	team1_width = clamp(team1_width, 0, width);
-	team2_width = clamp(team2_width, 0, width);
+	clamp(team1_width, 0, width);
+	clamp(team2_width, 0, width);
 
 	#ifdef GLQUAKE
 	Draw_AlphaFill(x, y, team1_width, bar_height, team1_color, opacity);
