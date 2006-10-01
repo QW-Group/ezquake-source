@@ -54,22 +54,6 @@ int ReadString (char *playerinfo, char *str)
     return s;
 }
 
-/*
-int ReadString (char *playerinfo, char *str)
-{
-    int s = 0, d = 0;
-    while (playerinfo[s] != '\"')
-        s++;
-    s++;
-    while (playerinfo[s] != '\"'  &&  s < 99)
-        str[d++] = playerinfo[s++];
-
-    str[d] = 0;
-    s++;
-    return s;
-}
-*/
-
 char *ValueForKey(server_data *s, char *k)
 {
     int i;
