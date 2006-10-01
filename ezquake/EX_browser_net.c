@@ -20,6 +20,8 @@
 
 extern qbool useNewPing;
 
+static const char senddata[] = {255, 255, 255, 255, 's','t','a','t','u','s',' ','2','3','\n'};
+
 int ReadInt (char *playerinfo, int *i)
 {
     int s = 0, d = 0;
@@ -34,6 +36,25 @@ int ReadInt (char *playerinfo, int *i)
     return s;
 }
 
+
+int ReadString (char *playerinfo, char *str)
+{
+    int s = 0, d = 0;
+    while (playerinfo[s] == ' ')
+        s++;
+	if (playerinfo[s] == '\"') {
+    	s++;
+    	while (playerinfo[s] != '\"'  &&  playerinfo[s] != '\n'  &&   s < 99)
+        	str[d++] = playerinfo[s++];
+		if (playerinfo[s] == '\"')
+    		s++;
+	}
+
+    str[d] = 0;
+    return s;
+}
+
+/*
 int ReadString (char *playerinfo, char *str)
 {
     int s = 0, d = 0;
@@ -47,6 +68,7 @@ int ReadString (char *playerinfo, char *str)
     s++;
     return s;
 }
+*/
 
 char *ValueForKey(server_data *s, char *k)
 {
@@ -113,10 +135,10 @@ void Parse_Serverinfo(server_data *s, char *info)
 
     // read players
      
-    for (i = s->spectatorsn = s->playersn = 0; pinfo &&  strchr(pinfo, '\n'); i++)
+    for (i = s->spectatorsn = s->playersn = 0; pinfo  &&  strchr(pinfo, '\n'); i++)
     {
         int id, frags, time, ping;
-        char name[100], skin[100];
+        char name[100], skin[100], team[100];
         int top, bottom;
         int pos;
 
@@ -132,10 +154,11 @@ void Parse_Serverinfo(server_data *s, char *info)
         pos += ReadString(pinfo+pos, skin);
         pos += ReadInt(pinfo+pos, &top);
         pos += ReadInt(pinfo+pos, &bottom);
+		pos += ReadString(pinfo+pos, team);
         if (ping > 0)
             s->playersn++;
         else
-	{
+        {
             s->spectatorsn++;
             ping = -ping;
             //name[strlen(name)-3]=0; // strip (s) ? off for now
@@ -156,6 +179,9 @@ void Parse_Serverinfo(server_data *s, char *info)
 
         strncpy(s->players[i]->skin, skin, 20);
         s->players[i]->skin[20] = 0;
+
+        strncpy(s->players[i]->team, team, 20);
+        s->players[i]->team[20] = 0;
 
         pinfo = strchr(pinfo, '\n') + 1;
     }
@@ -232,7 +258,6 @@ void GetServerInfo(server_data *serv)
     int newsocket;
 	struct sockaddr_qstorage server;
     int ret;
-    char senddata[] = {255, 255, 255, 255, 's','t','a','t','u','s',' ','7','\n'};
     char answer[5000];
     fd_set fd;
     struct timeval tv;
@@ -291,7 +316,6 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
     int newsocket;
 	struct sockaddr_qstorage dest;
     int ret, i;
-    char senddata[] = {255, 255, 255, 255, 's','t','a','t','u','s',' ','7','\n'};
     fd_set fd;
     struct timeval timeout;
 

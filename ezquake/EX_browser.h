@@ -76,6 +76,7 @@ typedef struct playerinfo_s
     int ping;
     char name[21];
     char skin[21];
+    char team[21];
     int top;
     int bottom;
 } playerinfo;

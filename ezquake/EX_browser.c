@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.13 2006-06-07 23:03:12 johnnycz Exp $
+	$Id: EX_browser.c,v 1.14 2006-10-01 11:57:39 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1191,7 +1191,7 @@ void Serverinfo_Players_Draw(int x, int y, int w, int h)
     if (serverinfo_players_pos < 0)
         serverinfo_players_pos = 0;
 
-    UI_Print(x, y, "png tm frgs name", true);
+    UI_Print(x, y, "png tm frgs team name", true);
     for (i=0; i < listsize; i++)
     {
         char buf[100];
@@ -1199,10 +1199,11 @@ void Serverinfo_Players_Draw(int x, int y, int w, int h)
 
         if (serverinfo_players_pos + i >= s->playersn + s->spectatorsn)
             break;
-        sprintf(buf, "%3d %2d %3d  %s",
+        sprintf(buf, "%3d %2d %4d %4.4s %s",
             max(min(s->players[serverinfo_players_pos+i]->ping, 999), 0),
             max(min(s->players[serverinfo_players_pos+i]->time, 99), 0),
             max(min(s->players[serverinfo_players_pos+i]->frags, 999), -99),
+			s->players[serverinfo_players_pos+i]->team,
             s->players[serverinfo_players_pos+i]->name);
 
         buf[w/8] = 0;
