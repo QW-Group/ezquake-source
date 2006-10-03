@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.35 2006-09-25 09:10:43 johnnycz Exp $
+	$Id: cl_demo.c,v 1.36 2006-10-03 22:56:13 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1515,6 +1515,7 @@ void CL_Demo_Jump_f (void) {
         text = strchr(text, ':') + 1;
     }
     seconds += atoi(text);
+	cl.gametime += seconds;
 
 	newdemotime = relative ? cls.demotime + relative * seconds : demostarttime + seconds;
 
