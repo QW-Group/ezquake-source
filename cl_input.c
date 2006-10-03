@@ -67,7 +67,7 @@ kbutton_t	in_up, in_down;
 
 int			in_impulse;
 #define MAXWEAPONS 10
-int weapon_order[MAXWEAPONS];
+int weapon_order[MAXWEAPONS] = {2, 1};
 
 int IN_BestWeapon (void);
 
@@ -340,16 +340,16 @@ float CL_KeyState (kbutton_t *key) {
 
 //==========================================================================
 
-cvar_t	cl_upspeed = {"cl_upspeed","200"};
-cvar_t	cl_forwardspeed = {"cl_forwardspeed","400",CVAR_ARCHIVE};
-cvar_t	cl_backspeed = {"cl_backspeed","400",CVAR_ARCHIVE};
-cvar_t	cl_sidespeed = {"cl_sidespeed","400",CVAR_ARCHIVE};
+cvar_t	cl_upspeed = {"cl_upspeed","200", CVAR_ARCHIVE};
+cvar_t	cl_forwardspeed = {"cl_forwardspeed","400", CVAR_ARCHIVE};
+cvar_t	cl_backspeed = {"cl_backspeed","400", CVAR_ARCHIVE};
+cvar_t	cl_sidespeed = {"cl_sidespeed","400", CVAR_ARCHIVE};
 
-cvar_t	cl_movespeedkey = {"cl_movespeedkey","2.0",CVAR_ARCHIVE};
-cvar_t	cl_anglespeedkey = {"cl_anglespeedkey","1.5"};
+cvar_t	cl_movespeedkey = {"cl_movespeedkey","2.0", CVAR_ARCHIVE};
+cvar_t	cl_anglespeedkey = {"cl_anglespeedkey","1.5", CVAR_ARCHIVE};
 
-cvar_t	cl_yawspeed = {"cl_yawspeed","140"};
-cvar_t	cl_pitchspeed = {"cl_pitchspeed","150"};
+cvar_t	cl_yawspeed = {"cl_yawspeed","140", CVAR_ARCHIVE};
+cvar_t	cl_pitchspeed = {"cl_pitchspeed","150", CVAR_ARCHIVE};
 
 cvar_t	lookspring = {"lookspring","0",CVAR_ARCHIVE};
 cvar_t	lookstrafe = {"lookstrafe","0",CVAR_ARCHIVE};
@@ -357,10 +357,10 @@ cvar_t	sensitivity = {"sensitivity","12",CVAR_ARCHIVE};
 cvar_t	freelook = {"freelook","1",CVAR_ARCHIVE};
 
 cvar_t	m_pitch = {"m_pitch","0.022", CVAR_ARCHIVE};
-cvar_t	m_yaw = {"m_yaw","0.022"};
+cvar_t	m_yaw = {"m_yaw","0.022", CVAR_ARCHIVE};
 cvar_t	m_forward = {"m_forward","1"};
 cvar_t	m_side = {"m_side","0.8"};
-cvar_t	m_accel = {"m_accel", "0"};
+cvar_t	m_accel = {"m_accel", "0", CVAR_ARCHIVE};
 
 
 void CL_Rotate_f (void) {
