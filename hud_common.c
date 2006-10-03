@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.71 2006-09-30 12:04:07 disconn3ct Exp $
+	$Id: hud_common.c,v 1.72 2006-10-03 22:59:49 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -35,6 +35,9 @@ hud_t *hud_netgraph;
 cvar_t hud_planmode = {"hud_planmode",   "0"};
 int hud_stats[MAX_CL_STATS];
 
+extern cvar_t cl_weaponpreselect;
+extern int IN_BestWeapon(void);
+
 int HUD_Stats(int stat_num)
 {
     if (hud_planmode.value)
@@ -49,6 +52,9 @@ int HUD_Stats(int stat_num)
 
 cvar_t hud_tp_need = {"hud_tp_need",   "0"};
 
+// when show pre-selected weapon/ammo? 1) player uses this system 2) not dead 3) when playing
+#define ShowPreselectedWeap()  (cl_weaponpreselect.value && cl.stats[STAT_HEALTH] > 0 && !cls.demoplayback && !cl.spectator)
+
 /* tp need levels
 int TP_IsHealthLow(void);
 int TP_IsArmorLow(void);
@@ -56,20 +62,28 @@ int TP_IsAmmoLow(int weapon); */
 extern cvar_t tp_need_health, tp_need_ra, tp_need_ya, tp_need_ga,
 		tp_weapon_order, tp_need_weapon, tp_need_shells,
 		tp_need_nails, tp_need_rockets, tp_need_cells;
-int State_AmmoForWeapon(int weapon)
-{
-    switch (weapon)
-    {
-        case 2:
-        case 3: return cl.stats[STAT_SHELLS];
-        case 4:
-        case 5: return cl.stats[STAT_NAILS];
-        case 6:
-        case 7: return cl.stats[STAT_ROCKETS];
-        case 8: return cl.stats[STAT_CELLS];
-        default: return 0;
-    }
+
+int State_AmmoNumForWeapon(int weapon)
+{	// returns ammo number (shells = 1, nails = 2, rox = 3, cells = 4) for given weapon
+	switch (weapon) {
+		case 2: case 3: return 1;
+		case 4: case 5: return 2;
+		case 6: case 7: return 3;
+		case 8: return 4;
+		default: return 0;
+	}
 }
+
+int State_AmmoForWeapon(int weapon)
+{	// returns ammo amount for given weapon
+	int ammon = State_AmmoNumForWeapon(weapon);
+
+	if (ammon)
+		return cl.stats[STAT_SHELLS + ammon - 1];
+	else
+		return 0;
+}
+
 int TP_IsHealthLow(void)
 {
     return cl.stats[STAT_HEALTH] <= tp_need_health.value;
@@ -1074,6 +1088,7 @@ void SCR_HUD_DrawGunCurrent (hud_t *hud)
 {
     int gun;
     static cvar_t *scale = NULL, *style, *wide;
+
     if (scale == NULL)  // first time called
     {
         scale = HUD_FindVar(hud, "scale");
@@ -1081,17 +1096,25 @@ void SCR_HUD_DrawGunCurrent (hud_t *hud)
         wide  = HUD_FindVar(hud, "wide");
     }
 
-    switch (HUD_Stats(STAT_ACTIVEWEAPON))
-    {
-    case IT_SHOTGUN << 0:   gun = 2; break;
-    case IT_SHOTGUN << 1:   gun = 3; break;
-    case IT_SHOTGUN << 2:   gun = 4; break;
-    case IT_SHOTGUN << 3:   gun = 5; break;
-    case IT_SHOTGUN << 4:   gun = 6; break;
-    case IT_SHOTGUN << 5:   gun = 7; break;
-    case IT_SHOTGUN << 6:   gun = 8; break;
-    default: return;
-    }
+	if (ShowPreselectedWeap()) {
+	// using weapon pre-selection so show info for current best pre-selected weapon
+		gun = IN_BestWeapon();
+	} else {
+	// not using weapon pre-selection or player is dead so show current selected weapon
+		switch (HUD_Stats(STAT_ACTIVEWEAPON))
+		{
+			case IT_SHOTGUN << 0:   gun = 2; break;
+			case IT_SHOTGUN << 1:   gun = 3; break;
+			case IT_SHOTGUN << 2:   gun = 4; break;
+			case IT_SHOTGUN << 3:   gun = 5; break;
+			case IT_SHOTGUN << 4:   gun = 6; break;
+			case IT_SHOTGUN << 5:   gun = 7; break;
+			case IT_SHOTGUN << 6:   gun = 8; break;
+			default: return;
+		}
+	}
+
+
     SCR_HUD_DrawGunByNum (hud, gun, scale->value, style->value, wide->value);
 }
 
@@ -1298,21 +1321,31 @@ void SCR_HUD_DrawAmmoIconCurrent (hud_t *hud)
 {
     int num;
     static cvar_t *scale = NULL, *style;
+
     if (scale == NULL)  // first time called
     {
         scale = HUD_FindVar(hud, "scale");
         style = HUD_FindVar(hud, "style");
     }
-    if (HUD_Stats(STAT_ITEMS) & IT_SHELLS)
-        num = 1;
-    else if (HUD_Stats(STAT_ITEMS) & IT_NAILS)
-        num = 2;
-    else if (HUD_Stats(STAT_ITEMS) & IT_ROCKETS)
-        num = 3;
-    else if (HUD_Stats(STAT_ITEMS) & IT_CELLS)
-        num = 4;
-    else
-        return;
+
+	if (ShowPreselectedWeap()) {
+	// using weapon pre-selection so show info for current best pre-selected weapon ammo
+		if (!(num = State_AmmoNumForWeapon(IN_BestWeapon())))
+			return;
+	} else {
+	// not using weapon pre-selection or player is dead so show current selected ammo
+		if (HUD_Stats(STAT_ITEMS) & IT_SHELLS)
+			num = 1;
+		else if (HUD_Stats(STAT_ITEMS) & IT_NAILS)
+			num = 2;
+		else if (HUD_Stats(STAT_ITEMS) & IT_ROCKETS)
+			num = 3;
+		else if (HUD_Stats(STAT_ITEMS) & IT_CELLS)
+			num = 4;
+		else
+			return;
+	}
+
     SCR_HUD_DrawAmmoIcon(hud, num, scale->value, style->value);
 }
 void SCR_HUD_DrawAmmoIcon1 (hud_t *hud)
@@ -1649,17 +1682,25 @@ void SCR_HUD_DrawAmmo(hud_t *hud, int num,
     qbool low;
 
     if (num < 1  ||  num > 4)
-    {
-        if (HUD_Stats(STAT_ITEMS) & IT_SHELLS)
-            num = 1;
-        else if (HUD_Stats(STAT_ITEMS) & IT_NAILS)
-            num = 2;
-        else if (HUD_Stats(STAT_ITEMS) & IT_ROCKETS)
-            num = 3;
-        else if (HUD_Stats(STAT_ITEMS) & IT_CELLS)
-            num = 4;
-        else
-            return;
+    {	// draw 'current' ammo, which one is it?
+		
+		if (ShowPreselectedWeap()) {
+		// using weapon pre-selection so show info for current best pre-selected weapon ammo
+			if (!(num = State_AmmoNumForWeapon(IN_BestWeapon())))
+				return;
+		} else {
+		// not using weapon pre-selection or player is dead so show current selected ammo
+			if (HUD_Stats(STAT_ITEMS) & IT_SHELLS)
+				num = 1;
+			else if (HUD_Stats(STAT_ITEMS) & IT_NAILS)
+				num = 2;
+			else if (HUD_Stats(STAT_ITEMS) & IT_ROCKETS)
+				num = 3;
+			else if (HUD_Stats(STAT_ITEMS) & IT_CELLS)
+				num = 4;
+			else
+				return;
+		}
     }
     low = HUD_AmmoLowByWeapon(num * 2);
     value = HUD_Stats(STAT_SHELLS + num - 1);
