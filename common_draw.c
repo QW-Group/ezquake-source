@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.11 2006-07-10 18:41:14 cokeman1982 Exp $
+	$Id: common_draw.c,v 1.12 2006-10-03 22:57:50 johnnycz Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -590,7 +590,7 @@ char* SCR_GetGameTime(int t)
 	static char str[9];
 	float timelimit;
 
-	timelimit = (t == TIMETYPE_GAMECLOCKINV) ? 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) : 0;
+	timelimit = (t == TIMETYPE_GAMECLOCKINV) ? 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) + 1: 0;
 
 	if (cl.countdown || cl.standby)
 		strlcpy (str, SecondsToMinutesString(timelimit), sizeof(str));

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.55 2006-08-26 18:31:49 disconn3ct Exp $
+	$Id: cl_parse.c,v 1.56 2006-10-03 22:57:10 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1531,8 +1531,10 @@ void CL_ProcessServerInfo (void) {
 	standby = !strcasecmp(p, "standby");
 	countdown = !strcasecmp(p, "countdown");
 
-	if ((cl.standby || cl.countdown) && !(standby || countdown))
+	if ((cl.standby || cl.countdown) && !(standby || countdown)) {
 		cl.gametime = 0;
+		cl.gamestarttime = Sys_DoubleTime();
+	}
 
 	cl.standby = standby;
 	cl.countdown = countdown;
@@ -1667,6 +1669,17 @@ void CL_ParseServerInfoChange (void) {
 #endif
 
 	Com_DPrintf ("SERVERINFO: %s=%s\n", key, value);
+	if (!cl.standby && !cl.countdown && !strncmp(key, "status", 6)) {
+		int timeleft = atoi(value) * 60;
+		if (timeleft) {
+			if (cls.demoplayback) {
+				cl.gametime = (cl.timelimit * 60) - timeleft; // this one causes demo_jump de-sync. however it must be here to maintain overtime
+			} else {
+				cl.gamestarttime = Sys_DoubleTime() - (cl.timelimit * 60) + timeleft - cl.gamepausetime;
+				Com_DPrintf("Clock sync, match started %i seconds ago\n", (cl.timelimit*60) + atoi(value)*60);
+			}
+		}
+	}
 
 	Info_SetValueForKey (cl.serverinfo, key, value, MAX_SERVERINFO_STRING);
 
@@ -1871,7 +1884,7 @@ void CL_ParsePrint (void) {
 
 	level = MSG_ReadByte ();
 	s = MSG_ReadString ();
-	
+
 	if (level == PRINT_CHAT) {
 	
 		if (TP_SuppressMessage(s))

@@ -354,7 +354,10 @@ typedef struct {
 
 	double		servertime;
 	qbool	servertime_works;	// Does the server actually send STAT_TIME/svc_time?
-	double		gametime;
+	double		gametime;		// match duration
+	double		gamestarttime;	// this gets saved on match start
+	double		gamepausetime;	// this gets increased during the pause
+
 
 	vec3_t		simorg;
 	vec3_t		simvel;
