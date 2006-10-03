@@ -340,6 +340,9 @@ void StatsGrid_ValidateTeamColors()
 	// Get the team color of the tracked player.
 	player_color = Sbar_BottomColor(player_info);
 
+	if (!stats_important_ents)
+		return;		// fix - johnnycz (Cokeman: check this)
+
 	// If the player being tracked is a member of team 1 for instance but has a
 	// team color that doesn't match the one saved for team 1 in the 
 	// stats grid, then swap the team colors in the stats grid.
