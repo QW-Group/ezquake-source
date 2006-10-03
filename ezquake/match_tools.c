@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: match_tools.c,v 1.24 2006-06-11 20:20:35 johnnycz Exp $
+	$Id: match_tools.c,v 1.25 2006-10-03 23:00:27 johnnycz Exp $
 */
 
 
@@ -657,6 +657,7 @@ static void MT_StartMatch(void) {
 	cl.standby=false;
 	cl.countdown = false;
 	cl.gametime = 0;
+	cl.gamestarttime = Sys_DoubleTime();
 
 	if (cls.state < ca_active) {
 		matchstate.matchtype = mt_empty;
@@ -675,6 +676,8 @@ static void MT_StartMatch(void) {
 
 static void MT_ClearClientState(void) {
 	memset(&matchstate, 0, sizeof(matchstate));
+	cl.gamestarttime = Sys_DoubleTime();
+	cl.gamepausetime = 0;
 }
 
 void MT_Frame(void) {

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.57 2006-09-26 22:16:52 qqshka Exp $
+    $Id: cl_screen.c,v 1.58 2006-10-03 22:56:47 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -576,7 +576,7 @@ void SCR_DrawGameClock (void) {
 		return;
 
 	if (scr_gameclock.value == 2 || scr_gameclock.value == 4) 
-		timelimit = 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit"));
+		timelimit = 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) + 1;
 	else
 		timelimit = 0;
 
