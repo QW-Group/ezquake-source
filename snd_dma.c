@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.31 2006-09-25 09:10:43 johnnycz Exp $
+    $Id: snd_dma.c,v 1.32 2006-10-03 23:01:05 johnnycz Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -81,15 +81,15 @@ cvar_t bgmvolume = {"bgmvolume", "1", CVAR_ARCHIVE};
 cvar_t s_volume = {"volume", "0.7", CVAR_ARCHIVE};
 cvar_t s_nosound = {"s_nosound", "0"};
 cvar_t s_precache = {"s_precache", "1"};
-cvar_t s_loadas8bit = {"s_loadas8bit", "0"};
-cvar_t s_ambientlevel = {"s_ambientlevel", "0.3"};
-cvar_t s_ambientfade = {"s_ambientfade", "100"};
+cvar_t s_loadas8bit = {"s_loadas8bit", "0", CVAR_ARCHIVE};
+cvar_t s_ambientlevel = {"s_ambientlevel", "0.3", CVAR_ARCHIVE};
+cvar_t s_ambientfade = {"s_ambientfade", "100", CVAR_ARCHIVE};
 cvar_t s_noextraupdate = {"s_noextraupdate", "0"};
 cvar_t s_show = {"s_show", "0"};
 cvar_t s_mixahead = {"s_mixahead", "0.1", CVAR_ARCHIVE};
 cvar_t s_swapstereo = {"s_swapstereo", "0", CVAR_ARCHIVE};
 
-cvar_t s_khz = {"s_khz", "11"};
+cvar_t s_khz = {"s_khz", "11", CVAR_ARCHIVE};
 #ifdef __linux__
 cvar_t s_noalsa = {"s_noalsa", "0"};
 // ALSA only -->
