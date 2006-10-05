@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.14 2006-10-01 11:57:39 qqshka Exp $
+	$Id: EX_browser.c,v 1.15 2006-10-05 21:17:59 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1199,7 +1199,7 @@ void Serverinfo_Players_Draw(int x, int y, int w, int h)
 
         if (serverinfo_players_pos + i >= s->playersn + s->spectatorsn)
             break;
-        sprintf(buf, "%3d %2d %4d %4.4s %s",
+        sprintf(buf, "%3d %2d %3d  %4.4s %s",
             max(min(s->players[serverinfo_players_pos+i]->ping, 999), 0),
             max(min(s->players[serverinfo_players_pos+i]->time, 99), 0),
             max(min(s->players[serverinfo_players_pos+i]->frags, 999), -99),
