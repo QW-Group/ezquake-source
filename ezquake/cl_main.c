@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.89 2006-10-03 22:56:22 johnnycz Exp $
+	$Id: cl_main.c,v 1.90 2006-10-05 21:42:58 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1403,7 +1403,7 @@ void CL_Frame (double time) {
 			cif_flags |= CIF_AFK;
 #endif
 
-		if (cif_flags)
+		if (cif_flags && cls.state >= ca_connected) // put key in userinfo only then we are connected, remove key if we not connected yet
 			snprintf(char_flags, sizeof(char_flags), "%d", cif_flags);
 
 		CL_UserinfoChanged ("chat", char_flags);
