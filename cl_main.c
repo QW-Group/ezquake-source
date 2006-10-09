@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.90 2006-10-05 21:42:58 qqshka Exp $
+	$Id: cl_main.c,v 1.91 2006-10-09 23:42:25 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -200,6 +200,14 @@ char *CL_Macro_Demotime(void)
 	static char macrobuf[16];
 
 	snprintf(macrobuf, sizeof(macrobuf), "%f", (float) cls.demotime);
+	return macrobuf;
+}
+
+char *CL_Macro_Rand(void)
+{	// returns a number in range <0..1)
+	static char macrobuf[16];
+
+	snprintf(macrobuf, sizeof(macrobuf), "%f", (double) rand() / RAND_MAX);
 	return macrobuf;
 }
 
@@ -1025,6 +1033,7 @@ void CL_InitLocal (void) {
 	Cmd_AddMacro("connectiontype", CL_Macro_ConnectionType);
 	Cmd_AddMacro("demoplayback", CL_Macro_Demoplayback);
 	Cmd_AddMacro("demotime", CL_Macro_Demotime);
+	Cmd_AddMacro("rand", CL_Macro_Rand);
 	Cmd_AddMacro("matchstatus", CL_Macro_Serverstatus);
 	Cmd_AddMacro("serverip", CL_Macro_ServerIp);
 
