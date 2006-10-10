@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.8 2006-08-24 20:03:23 cokeman1982 Exp $
+    $Id: q_shared.c,v 1.9 2006-10-10 15:51:40 qqshka Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -41,6 +41,9 @@ int Q_atoi (const char *str)
 		sign = -1;
 		str++;
 	} else {
+		if (*str == '+')
+			str++;
+
 		sign = 1;
 	}
 
@@ -97,6 +100,9 @@ float Q_atof (const char *str)
 		sign = -1;
 		str++;
 	} else {
+		if (*str == '+')
+			str++;
+
 		sign = 1;
 	}
 
