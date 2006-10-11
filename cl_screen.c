@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.58 2006-10-03 22:56:47 johnnycz Exp $
+    $Id: cl_screen.c,v 1.59 2006-10-11 17:05:44 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1788,22 +1788,22 @@ qbool Hud_TranslateCoords (hud_element_t *elem, int *x, int *y)
 
 void SCR_DrawHud (void)
 {
-	hud_element_t*	elem;
-	int				x,y;
-	unsigned int	l;
-	char			buf[256];
-	char			*st = NULL;
-	Hud_Func		func;
-	double			tblink = 0;
-	mpic_t			*img = NULL;
+	hud_element_t* elem;
+	int x,y;
+	unsigned int l;
+	char buf[256];
+	char *st = NULL;
+	Hud_Func func;
+	double tblink = 0.0;
+	mpic_t *img = NULL;
 
-	if (hud_list && cl_hud.value && !cls.demoplayback && !cl.spectator) {
-
+	if (hud_list && cl_hud.value && !((cls.demoplayback || cl.spectator) && cl_restrictions.value)) {
 		for (elem = hud_list; elem; elem=elem->next) {
-			if (!(elem->flags & HUD_ENABLED)) continue; // do not draw disabled elements
+			if (!(elem->flags & HUD_ENABLED))
+				continue; // do not draw disabled elements
 
 			elem->scr_height = 8;
-		
+
 			if (elem->flags & HUD_CVAR) {
 				st = ((cvar_t*)elem->contents)->string;
 				strlcpy (buf, st, sizeof(buf));
@@ -1822,8 +1822,9 @@ void SCR_DrawHud (void)
 				img = (mpic_t*)elem->contents;
 				l = img->width/8;
 				elem->scr_height = img->height;*/
-			} else
+			} else {
 				continue;
+			}
 
 			if (elem->width && !(elem->flags & (HUD_FUNC|HUD_IMAGE))){
 				if (elem->width < l) {
@@ -1836,6 +1837,7 @@ void SCR_DrawHud (void)
 					st[l] = '\0';
 				}
 			}
+
 			elem->scr_width = l*8;
 
 			if (!Hud_TranslateCoords (elem, &x, &y))
@@ -1849,10 +1851,10 @@ void SCR_DrawHud (void)
 				{
 #ifdef GLQUAKE
 					if (elem->alpha < 1)
-						Draw_AlphaFill(x, y, elem->scr_width, elem->scr_height, (unsigned char)elem->coords[3], elem->alpha);
+						Draw_AlphaFill(x, y, elem->scr_width, elem->scr_height, (unsigned char) elem->coords[3], elem->alpha);
 					else
 #endif
-						Draw_Fill(x, y, elem->scr_width, elem->scr_height, (unsigned char)elem->coords[3]);
+						Draw_Fill(x, y, elem->scr_width, elem->scr_height, (unsigned char) elem->coords[3]);
 				}
 			if (!(elem->flags & HUD_BLINK_F) || tblink < 0.5)
 			{
@@ -1861,24 +1863,28 @@ void SCR_DrawHud (void)
 #ifdef GLQUAKE
 					extern int char_texture;
 					int std_charset = char_texture;
+
 					if (elem->charset)
 						char_texture = elem->charset;
-					if (elem->alpha < 1)
+
+					if (elem->alpha < 1) {
 						Draw_AlphaString (x, y, st, elem->alpha);
-					else
+					} else {
 #endif
 						Draw_String (x, y, st);
+					}
 #ifdef GLQUAKE
 					char_texture = std_charset;
 #endif
-				}
-				else
+				} else {
 #ifdef GLQUAKE
-					if (elem->alpha < 1)
+					if (elem->alpha < 1) {
 						Draw_AlphaPic (x, y, img, elem->alpha);
-					else
+					} else {
 #endif
 						Draw_Pic (x, y, img);
+					}
+				}
 			}
 		}
 	}

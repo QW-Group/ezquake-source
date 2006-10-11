@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.91 2006-10-09 23:42:25 johnnycz Exp $
+	$Id: cl_main.c,v 1.92 2006-10-11 17:05:44 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -85,6 +85,8 @@ cvar_t	cl_confirmquit = {"cl_confirmquit", "0"}; // , CVAR_INIT
 cvar_t	cl_fakename = {"cl_fakename", ""};
 cvar_t	qizmo_dir = {"qizmo_dir", "qizmo"};
 cvar_t	qwdtools_dir = {"qwdtools_dir", "qwdtools"};
+
+cvar_t	cl_restrictions = {"cl_restrictions", "0"}; // 1 is FuhQuake and QW262 defaults
 
 cvar_t cl_floodprot			= {"cl_floodprot", "0"};		
 cvar_t cl_fp_messages		= {"cl_fp_messages", "4"};		
@@ -630,6 +632,7 @@ void CL_Disconnect (void) {
 	CL_StopUpload();
 	DeleteServerAliases();
 	CL_UpdateCaption();
+	CL_RE_Trigger_ResetLasttime();
 
 // TCPCONNECT -->
 	if (cls.sockettcp != INVALID_SOCKET)
@@ -895,6 +898,8 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_parseWhiteText);
 	Cvar_Register (&cl_chatsound);
 	Cvar_Register (&cl_fakename);
+
+	Cvar_Register (&cl_restrictions);
 
 	Cvar_Register (&cl_floodprot);
 	Cvar_Register (&cl_fp_messages);
