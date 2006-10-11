@@ -477,6 +477,8 @@ extern cvar_t r_flagcolor;
 extern cvar_t r_lightflicker;
 extern cvar_t r_telesplash; // disconnect
 
+extern cvar_t cl_restrictions;
+
 // ZQuake cvars
 extern cvar_t	cl_warncmd;
 extern	cvar_t	cl_shownet;

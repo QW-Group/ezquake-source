@@ -92,7 +92,6 @@ qbool TP_IsItemVisible(item_vis_t *visitem);
 
 
 // re-triggers
-void TP_InitReTriggers();
 qbool CL_SearchForReTriggers (char *s, unsigned trigger_type);
 // if true, string should not be displayed
 pcre_trigger_t *CL_FindReTrigger (char *name);

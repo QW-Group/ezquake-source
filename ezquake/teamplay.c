@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.44 2006-09-02 01:51:58 cokeman1982 Exp $
+    $Id: teamplay.c,v 1.45 2006-10-11 17:05:44 disconn3ct Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "ignore.h"
 
 
-qbool OnChangeSkinForcing(cvar_t *var, char *string);	
+qbool OnChangeSkinForcing(cvar_t *var, char *string);
 
 cvar_t	cl_parseSay = {"cl_parseSay", "1"};
 cvar_t	cl_parseFunChars = {"cl_parseFunChars", "1"};
@@ -95,9 +95,9 @@ cvar_t	tp_name_pented = {"tp_name_pented", "pented"};
 cvar_t	tp_name_nothing = {"tp_name_nothing", "nothing"};
 cvar_t	tp_name_someplace = {"tp_name_someplace", "someplace"};
 cvar_t	tp_name_at = {"tp_name_at", "at"};
-cvar_t	tp_name_none = {"tp_name_none", ""};				
-cvar_t	tp_name_separator = {"tp_name_separator", "/"};		
-cvar_t	tp_weapon_order = {"tp_weapon_order", "78654321"};	
+cvar_t	tp_name_none = {"tp_name_none", ""};
+cvar_t	tp_name_separator = {"tp_name_separator", "/"};
+cvar_t	tp_weapon_order = {"tp_weapon_order", "78654321"};
 
 cvar_t	tp_name_status_green = {"tp_name_status_green", "$G"};
 cvar_t	tp_name_status_yellow = {"tp_name_status_yellow", "$Y"};
@@ -117,12 +117,12 @@ cvar_t	tp_need_shells = {"tp_need_shells", "10"};
 
 static qbool suppress;
 
-char *skinforcing_team = "";	
+char *skinforcing_team = "";
 
 void TP_FindModelNumbers (void);
 void TP_FindPoint (void);
 char *TP_LocationName (vec3_t location);
-static void CountNearbyPlayers(qbool dead);	
+static void CountNearbyPlayers(qbool dead);
 char *Macro_LastTookOrPointed (void);
 char *Macro_LastTookOrPointed2 (void);
 
@@ -132,15 +132,16 @@ char *Macro_LastTookOrPointed2 (void);
 #define	POINT_TYPE_ENEMY		4
 
 #define	TP_TOOK_EXPIRE_TIME		15
-#define	TP_POINT_EXPIRE_TIME		TP_TOOK_EXPIRE_TIME
+#define	TP_POINT_EXPIRE_TIME	TP_TOOK_EXPIRE_TIME
 
 // this structure is cleared after entering a new map
-typedef struct tvars_s {
-	int	health;
-	int	items;
-	int	olditems;
-	int	activeweapon;
-	int	stat_framecounts[MAX_CL_STATS];
+typedef struct tvars_s
+{
+	int		health;
+	int		items;
+	int		olditems;
+	int		activeweapon;
+	int		stat_framecounts[MAX_CL_STATS];
 	double	deathtrigger_time;
 	float	f_skins_reply_time;
 	float	f_version_reply_time;
@@ -148,23 +149,23 @@ typedef struct tvars_s {
 	char	tookname[32];
 	char	tookloc[MAX_LOC_NAME];
 	double	tooktime;
-	double	pointtime;					// cls.realtime for which pointitem & pointloc are valid
+	double	pointtime; // cls.realtime for which pointitem & pointloc are valid
 	char	pointname[32];
 	char	pointloc[MAX_LOC_NAME];
-	int	pointtype;
+	int		pointtype;
 	char	nearestitemloc[MAX_LOC_NAME];
 	char	lastreportedloc[MAX_LOC_NAME];
-	double	lastdrop_time;				
-	char	lastdroploc[MAX_LOC_NAME];	
-	char	lasttrigger_match[256];	
+	double	lastdrop_time;
+	char	lastdroploc[MAX_LOC_NAME];
+	char	lasttrigger_match[256];
 
 	int	numenemies;
 	int	numfriendlies;
 	int	last_numenemies;
 	int	last_numfriendlies;
 
-    	int enemy_powerups;
-    	double enemy_powerups_time;
+	int enemy_powerups;
+	double enemy_powerups_time;
 } tvars_t;
 
 tvars_t vars;
@@ -172,85 +173,84 @@ tvars_t vars;
 static char lastip[32]; // FIXME: remove it
 
 // re-triggers stuff
-cvar_t	re_sub[10]	= {	{"re_trigger_match_0", "", CVAR_ROM},
-						{"re_trigger_match_1", "", CVAR_ROM},
-						{"re_trigger_match_2", "", CVAR_ROM},
-						{"re_trigger_match_3", "", CVAR_ROM},
-						{"re_trigger_match_4", "", CVAR_ROM},
-						{"re_trigger_match_5", "", CVAR_ROM},
-						{"re_trigger_match_6", "", CVAR_ROM},
-						{"re_trigger_match_7", "", CVAR_ROM},
-						{"re_trigger_match_8", "", CVAR_ROM},
-						{"re_trigger_match_9", "", CVAR_ROM}
- };
+cvar_t re_sub[10] = {{"re_trigger_match_0", "", CVAR_ROM},
+                    {"re_trigger_match_1", "", CVAR_ROM},
+                    {"re_trigger_match_2", "", CVAR_ROM},
+                    {"re_trigger_match_3", "", CVAR_ROM},
+                    {"re_trigger_match_4", "", CVAR_ROM},
+                    {"re_trigger_match_5", "", CVAR_ROM},
+                    {"re_trigger_match_6", "", CVAR_ROM},
+                    {"re_trigger_match_7", "", CVAR_ROM},
+                    {"re_trigger_match_8", "", CVAR_ROM},
+                    {"re_trigger_match_9", "", CVAR_ROM}};
 
-cvar_t	re_subi[10]	= {	{"internal0"},
-						{"internal1"},
-						{"internal2"},
-						{"internal3"},
-						{"internal4"},
-						{"internal5"},
-						{"internal6"},
-						{"internal7"},
-						{"internal8"},
-						{"internal9"}
- };
+cvar_t re_subi[10] = {{"internal0"},
+                     {"internal1"},
+                     {"internal2"},
+                     {"internal3"},
+                     {"internal4"},
+                     {"internal5"},
+                     {"internal6"},
+                     {"internal7"},
+                     {"internal8"},
+                     {"internal9"}};
 
-static pcre_trigger_t		*re_triggers;
-static pcre_internal_trigger_t	*internal_triggers;
+static pcre_trigger_t *re_triggers;
+static pcre_internal_trigger_t *internal_triggers;
 /********************************** TRIGGERS **********************************/
 
-typedef struct f_trigger_s {
+typedef struct f_trigger_s
+{
 	char *name;
 	qbool restricted;
 	qbool teamplay;
 } f_trigger_t;
 
 f_trigger_t f_triggers[] = {
-	{"f_newmap", false, false},
-	{"f_spawn", false, false},
-	{"f_mapend", false, false},
-	{"f_reloadstart", false, false},
-	{"f_reloadend", false, false},
-	{"f_cfgload", false, false},
-	{"f_exit", false, false},
-	{"f_demostart", false, false},
-	{"f_demoend", false, false},
-	{"f_captureframe", false, false}, 
+                               {"f_newmap", false, false},
+                               {"f_spawn", false, false},
+                               {"f_mapend", false, false},
+                               {"f_reloadstart", false, false},
+                               {"f_reloadend", false, false},
+                               {"f_cfgload", false, false},
+                               {"f_exit", false, false},
+                               {"f_demostart", false, false},
+                               {"f_demoend", false, false},
+                               {"f_captureframe", false, false},
 
-	{"f_weaponchange", false, false},
+                               {"f_weaponchange", false, false},
 
-	{"f_took", true, true},
-	{"f_respawn", true, true},
-	{"f_death", true, true},
-	{"f_flagdeath", true, true},
+                               {"f_took", true, true},
+                               {"f_respawn", true, true},
+                               {"f_death", true, true},
+                               {"f_flagdeath", true, true},
 
-	{"f_conc", true, true},
-	{"f_flash", true, true},
-	{"f_bonusflash", true, true},
-};
+                               {"f_conc", true, true},
+                               {"f_flash", true, true},
+                               {"f_bonusflash", true, true},
+                           };
 
 #define num_f_triggers	(sizeof(f_triggers) / sizeof(f_triggers[0]))
 
-void TP_ExecTrigger (char *trigger) {
-	int i, j, numteammates;
+void TP_ExecTrigger (char *trigger)
+{
+	int i, j, numteammates = 0;
 	cmd_alias_t *alias;
 
-	if (!tp_triggers.value || cls.demoplayback || cl.spectator)
+	if (!tp_triggers.value || ((cls.demoplayback || cl.spectator) && cl_restrictions.value))
 		return;
 
 	for (i = 0; i < num_f_triggers; i++) {
-		if (!strcmp(f_triggers[i].name, trigger))
+		if (!strcmp (f_triggers[i].name, trigger))
 			break;
 	}
 	if (i == num_f_triggers)
-		Sys_Error("Unknown f_trigger \"%s\"", trigger);
+		Sys_Error ("Unknown f_trigger \"%s\"", trigger);
 
 	if (f_triggers[i].teamplay && !tp_forceTriggers.value) {
 		if (!cl.teamplay)
 			return;
 
-		numteammates = 0;
 		for (j = 0; j < MAX_CLIENTS; j++) {
 			if (cl.players[j].name[0] && !cl.players[j].spectator && j != cl.playernum) {
 				if (!strcmp(cl.players[j].team, cl.players[cl.playernum].team))
@@ -274,155 +274,173 @@ void TP_ExecTrigger (char *trigger) {
 #define MAX_MACRO_VALUE	256
 static char	macro_buf[MAX_MACRO_VALUE] = "";
 
-char *Macro_Lastip_f (void) {
+char *Macro_Lastip_f (void)
+{
 	snprintf (macro_buf, sizeof(macro_buf), "%s", lastip);
 	return macro_buf;
 }
 
-char *Macro_Quote_f (void) {
+char *Macro_Quote_f (void)
+{
 	return "\"";
 }
 
-char *Macro_Latency (void) {
+char *Macro_Latency (void)
+{
 	snprintf(macro_buf, sizeof(macro_buf), "%i", Q_rint(cls.latency * 1000));
 	return macro_buf;
 }
 
-char *Macro_Health (void) {
+char *Macro_Health (void)
+{
 	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_HEALTH]);
 	return macro_buf;
 }
 
-char *Macro_Armor (void) {
+char *Macro_Armor (void)
+{
 	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ARMOR]);
 	return macro_buf;
 }
 
-char *Macro_Shells (void) {
+char *Macro_Shells (void)
+{
 	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_SHELLS]);
 	return macro_buf;
 }
 
-char *Macro_Nails (void) {
+char *Macro_Nails (void)
+{
 	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_NAILS]);
 	return macro_buf;
 }
 
-char *Macro_Rockets (void) {
+char *Macro_Rockets (void)
+{
 	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ROCKETS]);
 	return macro_buf;
 }
 
-char *Macro_Cells (void) {
+char *Macro_Cells (void)
+{
 	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_CELLS]);
 	return macro_buf;
 }
 
-char *Macro_Ammo (void) {
+char *Macro_Ammo (void)
+{
 	snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_AMMO]);
 	return macro_buf;
 }
 
-char *Weapon_NumToString(int num) {
+char *Weapon_NumToString(int num)
+{
 	switch (num) {
-	case IT_AXE: return tp_name_axe.string;
-	case IT_SHOTGUN: return tp_name_sg.string;
-	case IT_SUPER_SHOTGUN: return tp_name_ssg.string;
-	case IT_NAILGUN: return tp_name_ng.string;
-	case IT_SUPER_NAILGUN: return tp_name_sng.string;
-	case IT_GRENADE_LAUNCHER: return tp_name_gl.string;
-	case IT_ROCKET_LAUNCHER: return tp_name_rl.string;
-	case IT_LIGHTNING: return tp_name_lg.string;
-	default: return tp_name_none.string;		
+			case IT_AXE: return tp_name_axe.string;
+			case IT_SHOTGUN: return tp_name_sg.string;
+			case IT_SUPER_SHOTGUN: return tp_name_ssg.string;
+			case IT_NAILGUN: return tp_name_ng.string;
+			case IT_SUPER_NAILGUN: return tp_name_sng.string;
+			case IT_GRENADE_LAUNCHER: return tp_name_gl.string;
+			case IT_ROCKET_LAUNCHER: return tp_name_rl.string;
+			case IT_LIGHTNING: return tp_name_lg.string;
+			default: return tp_name_none.string;
 	}
 }
 
-char *Macro_Weapon (void) {
+char *Macro_Weapon (void)
+{
 	return Weapon_NumToString(cl.stats[STAT_ACTIVEWEAPON]);
 }
 
-char *Macro_WeaponAndAmmo (void) {
+char *Macro_WeaponAndAmmo (void)
+{
 	char buf[MAX_MACRO_VALUE];
 	snprintf (buf, sizeof(buf), "%s:%s", Macro_Weapon(), Macro_Ammo());
 	strlcpy (macro_buf, buf, sizeof(macro_buf));
 	return macro_buf;
 }
 
-char *Macro_WeaponNum (void) {
+char *Macro_WeaponNum (void)
+{
 	switch (cl.stats[STAT_ACTIVEWEAPON]) {
 
-	case IT_AXE: return "1";
-	case IT_SHOTGUN: return "2";
-	case IT_SUPER_SHOTGUN: return "3";
-	case IT_NAILGUN: return "4";
-	case IT_SUPER_NAILGUN: return "5";
-	case IT_GRENADE_LAUNCHER: return "6";
-	case IT_ROCKET_LAUNCHER: return "7";
-	case IT_LIGHTNING: return "8";
-	default:
-		return "0";
+			case IT_AXE: return "1";
+			case IT_SHOTGUN: return "2";
+			case IT_SUPER_SHOTGUN: return "3";
+			case IT_NAILGUN: return "4";
+			case IT_SUPER_NAILGUN: return "5";
+			case IT_GRENADE_LAUNCHER: return "6";
+			case IT_ROCKET_LAUNCHER: return "7";
+			case IT_LIGHTNING: return "8";
+			default:
+			return "0";
 	}
 }
 
-static int BestWeapon (void) {
+static int BestWeapon (void)
+{
 	int i;
-	char *t[] = {tp_weapon_order.string, "78654321", NULL}, **s;	
+	char *t[] = {tp_weapon_order.string, "78654321", NULL}, **s;
 
 	for (s = t; *s; s++) {
 		for (i = 0 ; i < strlen(*s) ; i++) {
 			switch ((*s)[i]) {
-				case '1': if (cl.stats[STAT_ITEMS] & IT_AXE) return IT_AXE; break;
-				case '2': if (cl.stats[STAT_ITEMS] & IT_SHOTGUN) return IT_SHOTGUN; break;
-				case '3': if (cl.stats[STAT_ITEMS] & IT_SUPER_SHOTGUN) return IT_SUPER_SHOTGUN; break;
-				case '4': if (cl.stats[STAT_ITEMS] & IT_NAILGUN) return IT_NAILGUN; break;
-				case '5': if (cl.stats[STAT_ITEMS] & IT_SUPER_NAILGUN) return IT_SUPER_NAILGUN; break;
-				case '6': if (cl.stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER) return IT_GRENADE_LAUNCHER; break;
-				case '7': if (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) return IT_ROCKET_LAUNCHER; break;
-				case '8': if (cl.stats[STAT_ITEMS] & IT_LIGHTNING) return IT_LIGHTNING; break;
+					case '1': if (cl.stats[STAT_ITEMS] & IT_AXE) return IT_AXE; break;
+					case '2': if (cl.stats[STAT_ITEMS] & IT_SHOTGUN) return IT_SHOTGUN; break;
+					case '3': if (cl.stats[STAT_ITEMS] & IT_SUPER_SHOTGUN) return IT_SUPER_SHOTGUN; break;
+					case '4': if (cl.stats[STAT_ITEMS] & IT_NAILGUN) return IT_NAILGUN; break;
+					case '5': if (cl.stats[STAT_ITEMS] & IT_SUPER_NAILGUN) return IT_SUPER_NAILGUN; break;
+					case '6': if (cl.stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER) return IT_GRENADE_LAUNCHER; break;
+					case '7': if (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) return IT_ROCKET_LAUNCHER; break;
+					case '8': if (cl.stats[STAT_ITEMS] & IT_LIGHTNING) return IT_LIGHTNING; break;
 			}
 		}
 	}
 	return 0;
 }
 
-char *Macro_BestWeapon (void) {
+char *Macro_BestWeapon (void)
+{
 	switch (BestWeapon()) {
-	case IT_AXE: return tp_name_axe.string;
-	case IT_SHOTGUN: return tp_name_sg.string;
-	case IT_SUPER_SHOTGUN: return tp_name_ssg.string;
-	case IT_NAILGUN: return tp_name_ng.string;
-	case IT_SUPER_NAILGUN: return tp_name_sng.string;
-	case IT_GRENADE_LAUNCHER: return tp_name_gl.string;
-	case IT_ROCKET_LAUNCHER: return tp_name_rl.string;
-	case IT_LIGHTNING: return tp_name_lg.string;
-	default: return tp_name_none.string;	
+			case IT_AXE: return tp_name_axe.string;
+			case IT_SHOTGUN: return tp_name_sg.string;
+			case IT_SUPER_SHOTGUN: return tp_name_ssg.string;
+			case IT_NAILGUN: return tp_name_ng.string;
+			case IT_SUPER_NAILGUN: return tp_name_sng.string;
+			case IT_GRENADE_LAUNCHER: return tp_name_gl.string;
+			case IT_ROCKET_LAUNCHER: return tp_name_rl.string;
+			case IT_LIGHTNING: return tp_name_lg.string;
+			default: return tp_name_none.string;
 	}
 }
 
-char *Macro_BestAmmo (void) {
+char *Macro_BestAmmo (void)
+{
 	switch (BestWeapon()) {
-	case IT_SHOTGUN: case IT_SUPER_SHOTGUN:
-		snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_SHELLS]);
-		return macro_buf;
+			case IT_SHOTGUN: case IT_SUPER_SHOTGUN:
+			snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_SHELLS]);
+			return macro_buf;
 
-	case IT_NAILGUN: case IT_SUPER_NAILGUN:
-		snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_NAILS]);
-		return macro_buf;
+			case IT_NAILGUN: case IT_SUPER_NAILGUN:
+			snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_NAILS]);
+			return macro_buf;
 
-	case IT_GRENADE_LAUNCHER: case IT_ROCKET_LAUNCHER:
-		snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ROCKETS]);
-		return macro_buf;
+			case IT_GRENADE_LAUNCHER: case IT_ROCKET_LAUNCHER:
+			snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_ROCKETS]);
+			return macro_buf;
 
-	case IT_LIGHTNING:
-		snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_CELLS]);
-		return macro_buf;
+			case IT_LIGHTNING:
+			snprintf(macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_CELLS]);
+			return macro_buf;
 
-	default: return "0";
+			default: return "0";
 	}
 }
 
 // needed for %b parsing
-char *Macro_BestWeaponAndAmmo (void) {
+char *Macro_BestWeaponAndAmmo (void)
+{
 	char buf[MAX_MACRO_VALUE];
 
 	snprintf (buf, sizeof(buf), "%s:%s", Macro_BestWeapon(), Macro_BestAmmo());
@@ -430,7 +448,8 @@ char *Macro_BestWeaponAndAmmo (void) {
 	return macro_buf;
 }
 
-char *Macro_ArmorType (void) {
+char *Macro_ArmorType (void)
+{
 	if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
 		return tp_name_armortype_ga.string;
 	else if (cl.stats[STAT_ITEMS] & IT_ARMOR2)
@@ -441,7 +460,8 @@ char *Macro_ArmorType (void) {
 		return tp_name_none.string;
 }
 
-char *Macro_Powerups (void) {
+char *Macro_Powerups (void)
+{
 	int effects;
 
 	macro_buf[0] = 0;
@@ -462,43 +482,48 @@ char *Macro_Powerups (void) {
 	}
 
 	effects = cl.frames[cl.parsecount & UPDATE_MASK].playerstate[cl.playernum].effects;
-	if ( (effects & (EF_FLAG1|EF_FLAG2)) /* CTF */ ||		
-		(cl.teamfortress && cl.stats[STAT_ITEMS] & (IT_KEY1|IT_KEY2)) /* TF */ ) {
+	if ( (effects & (EF_FLAG1|EF_FLAG2)) /* CTF */ ||
+	        (cl.teamfortress && cl.stats[STAT_ITEMS] & (IT_KEY1|IT_KEY2)) /* TF */ ) {
 		if (macro_buf[0])
 			strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
 		strlcat(macro_buf, tp_name_flag.string, sizeof(macro_buf));
 	}
 
-	if (!macro_buf[0])			
+	if (!macro_buf[0])
 		strlcpy(macro_buf, tp_name_none.string, sizeof(macro_buf));
 
 	return macro_buf;
 }
 
-char *Macro_Location (void) {
+char *Macro_Location (void)
+{
 	strlcpy(vars.lastreportedloc, TP_LocationName (cl.simorg), sizeof(vars.lastreportedloc));
 	return vars.lastreportedloc;
 }
 
-char *Macro_LastDeath (void) {
+char *Macro_LastDeath (void)
+{
 	return vars.deathtrigger_time ? vars.lastdeathloc : tp_name_someplace.string;
 }
 
-char *Macro_Last_Location (void) {
+char *Macro_Last_Location (void)
+{
 	if (vars.deathtrigger_time && cls.realtime - vars.deathtrigger_time <= 5)
 		strlcpy(vars.lastreportedloc, vars.lastdeathloc, sizeof(vars.lastreportedloc));
-	else		
+	else
 		strlcpy(vars.lastreportedloc, TP_LocationName (cl.simorg), sizeof(vars.lastreportedloc));
 	return vars.lastreportedloc;
 }
 
-char *Macro_LastReportedLoc(void) {
+char *Macro_LastReportedLoc(void)
+{
 	if (!vars.lastreportedloc[0])
 		return tp_name_someplace.string;
 	return vars.lastreportedloc;
 }
 
-char *Macro_Time (void) {
+char *Macro_Time (void)
+{
 	time_t t;
 	struct tm *ptm;
 
@@ -509,7 +534,8 @@ char *Macro_Time (void) {
 	return macro_buf;
 }
 
-char *Macro_Date (void) {
+char *Macro_Date (void)
+{
 	time_t t;
 	struct tm *ptm;
 
@@ -521,7 +547,8 @@ char *Macro_Date (void) {
 }
 
 // returns the last item picked up
-char *Macro_Took (void) {
+char *Macro_Took (void)
+{
 	if (!vars.tooktime || cls.realtime > vars.tooktime + TP_TOOK_EXPIRE_TIME)
 		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 	else
@@ -530,7 +557,8 @@ char *Macro_Took (void) {
 }
 
 // returns location of the last item picked up
-char *Macro_TookLoc (void) {
+char *Macro_TookLoc (void)
+{
 	if (!vars.tooktime || cls.realtime > vars.tooktime + TP_TOOK_EXPIRE_TIME)
 		strlcpy (macro_buf, tp_name_someplace.string, sizeof(macro_buf));
 	else
@@ -539,7 +567,8 @@ char *Macro_TookLoc (void) {
 }
 
 // %i macro - last item picked up in "name at location" style
-char *Macro_TookAtLoc (void) {
+char *Macro_TookAtLoc (void)
+{
 	if (!vars.tooktime || cls.realtime > vars.tooktime + TP_TOOK_EXPIRE_TIME)
 		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 	else {
@@ -550,7 +579,8 @@ char *Macro_TookAtLoc (void) {
 
 // pointing calculations are CPU expensive, so the results are cached
 // in vars.pointname & vars.pointloc
-char *Macro_PointName (void) {
+char *Macro_PointName (void)
+{
 	if (flashed) // there should be more smart way to do it
 		return tp_name_nothing.string;
 
@@ -558,7 +588,8 @@ char *Macro_PointName (void) {
 	return vars.pointname;
 }
 
-char *Macro_PointLocation (void) {
+char *Macro_PointLocation (void)
+{
 	if (flashed) // there should be more smart way to do it
 		return tp_name_nothing.string;
 
@@ -566,15 +597,17 @@ char *Macro_PointLocation (void) {
 	return vars.pointloc[0] ? vars.pointloc : Macro_Location();
 }
 
-char *Macro_LastPointAtLoc (void) {
+char *Macro_LastPointAtLoc (void)
+{
 	if (!vars.pointtime || cls.realtime - vars.pointtime > TP_POINT_EXPIRE_TIME)
 		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 	else
-		snprintf (macro_buf, sizeof(macro_buf), "%s %s %s", vars.pointname, tp_name_at.string, vars.pointloc[0] ? vars.pointloc : Macro_Location());		
+		snprintf (macro_buf, sizeof(macro_buf), "%s %s %s", vars.pointname, tp_name_at.string, vars.pointloc[0] ? vars.pointloc : Macro_Location());
 	return macro_buf;
 }
 
-char *Macro_PointNameAtLocation(void) {
+char *Macro_PointNameAtLocation (void)
+{
 	if (flashed) // there should be more smart way to do it
 		return tp_name_nothing.string;
 
@@ -582,7 +615,8 @@ char *Macro_PointNameAtLocation(void) {
 	return Macro_LastPointAtLoc();
 }
 
-char *Macro_Weapons (void) {	
+char *Macro_Weapons (void)
+{
 	macro_buf[0] = 0;
 
 	if (cl.stats[STAT_ITEMS] & IT_LIGHTNING)
@@ -624,13 +658,14 @@ char *Macro_Weapons (void) {
 		strlcat(macro_buf, tp_name_axe.string, sizeof(macro_buf));
 	}
 
-	if (!macro_buf[0])	
+	if (!macro_buf[0])
 		strlcpy(macro_buf, tp_name_none.string, sizeof(macro_buf));
 
 	return macro_buf;
 }
 
-static char *Skin_To_TFSkin (char *myskin) {
+static char *Skin_To_TFSkin (char *myskin)
+{
 	if (!cl.teamfortress || cl.spectator || strncasecmp(myskin, "tf_", 3)) {
 		strlcpy(macro_buf, myskin, sizeof(macro_buf));
 	} else {
@@ -648,22 +683,26 @@ static char *Skin_To_TFSkin (char *myskin) {
 	return macro_buf;
 }
 
-char *Macro_TF_Skin (void) {
+char *Macro_TF_Skin (void)
+{
 	return Skin_To_TFSkin(Info_ValueForKey(cl.players[cl.playernum].userinfo, "skin"));
 }
 
-char *Macro_LastDrop (void)	{			
+char *Macro_LastDrop (void)
+{
 	if (vars.lastdrop_time)
 		return vars.lastdroploc;
 	else
 		return tp_name_someplace.string;
 }
 
-char *Macro_LastTrigger_Match(void) {	
+char *Macro_LastTrigger_Match(void)
+{
 	return vars.lasttrigger_match;
 }
 
-char *Macro_LastDropTime (void)	{		
+char *Macro_LastDropTime (void)
+{
 	if (vars.lastdrop_time)
 		snprintf (macro_buf, 32, "%d", (int) (cls.realtime - vars.lastdrop_time));
 	else
@@ -671,18 +710,20 @@ char *Macro_LastDropTime (void)	{
 	return macro_buf;
 }
 
-char *Macro_Need (void) {
+char *Macro_Need (void)
+{
 	int i, weapon;
 	char *needammo = NULL;
 
 	macro_buf[0] = 0;
 
 	// check armor
-	if (   ((cl.stats[STAT_ITEMS] & IT_ARMOR1) && cl.stats[STAT_ARMOR] < tp_need_ga.value)
+	if (((cl.stats[STAT_ITEMS] & IT_ARMOR1) && cl.stats[STAT_ARMOR] < tp_need_ga.value)
 		|| ((cl.stats[STAT_ITEMS] & IT_ARMOR2) && cl.stats[STAT_ARMOR] < tp_need_ya.value)
 		|| ((cl.stats[STAT_ITEMS] & IT_ARMOR3) && cl.stats[STAT_ARMOR] < tp_need_ra.value)
 		|| (!(cl.stats[STAT_ITEMS] & (IT_ARMOR1|IT_ARMOR2|IT_ARMOR3))
-			&& (tp_need_ga.value || tp_need_ya.value || tp_need_ra.value)))
+		&& (tp_need_ga.value || tp_need_ya.value || tp_need_ra.value))
+	   )
 		strlcpy (macro_buf, tp_name_armor.string, sizeof(macro_buf));
 
 	// check health
@@ -692,7 +733,7 @@ char *Macro_Need (void) {
 		strlcat (macro_buf, tp_name_health.string, sizeof(macro_buf));
 	}
 
-	if (cl.teamfortress) {					
+	if (cl.teamfortress) {
 		if (cl.stats[STAT_ROCKETS] < tp_need_rockets.value)	{
 			if (macro_buf[0])
 				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
@@ -719,13 +760,13 @@ char *Macro_Need (void) {
 	weapon = 0;
 	for (i = strlen(tp_need_weapon.string) - 1 ; i >= 0 ; i--) {
 		switch (tp_need_weapon.string[i]) {
-			case '2': if (cl.stats[STAT_ITEMS] & IT_SHOTGUN) weapon = 2; break;
-			case '3': if (cl.stats[STAT_ITEMS] & IT_SUPER_SHOTGUN) weapon = 3; break;
-			case '4': if (cl.stats[STAT_ITEMS] & IT_NAILGUN) weapon = 4; break;
-			case '5': if (cl.stats[STAT_ITEMS] & IT_SUPER_NAILGUN) weapon = 5; break;
-			case '6': if (cl.stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER) weapon = 6; break;
-			case '7': if (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) weapon = 7; break;
-			case '8': if (cl.stats[STAT_ITEMS] & IT_LIGHTNING) weapon = 8; break;
+				case '2': if (cl.stats[STAT_ITEMS] & IT_SHOTGUN) weapon = 2; break;
+				case '3': if (cl.stats[STAT_ITEMS] & IT_SUPER_SHOTGUN) weapon = 3; break;
+				case '4': if (cl.stats[STAT_ITEMS] & IT_NAILGUN) weapon = 4; break;
+				case '5': if (cl.stats[STAT_ITEMS] & IT_SUPER_NAILGUN) weapon = 5; break;
+				case '6': if (cl.stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER) weapon = 6; break;
+				case '7': if (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) weapon = 7; break;
+				case '8': if (cl.stats[STAT_ITEMS] & IT_LIGHTNING) weapon = 8; break;
 		}
 		if (weapon)
 			break;
@@ -743,18 +784,18 @@ char *Macro_Need (void) {
 		}
 
 		switch (weapon) {
-			case 2: case 3: if (cl.stats[STAT_SHELLS] < tp_need_shells.value) 
-								needammo = tp_name_shells.string;
-							break;
-			case 4: case 5: if (cl.stats[STAT_NAILS] < tp_need_nails.value) 
-								needammo = tp_name_nails.string;
-							break;
-			case 6: case 7: if (cl.stats[STAT_ROCKETS] < tp_need_rockets.value) 
-								needammo = tp_name_rockets .string;
-							break;
-			case 8: if (cl.stats[STAT_CELLS] < tp_need_cells.value) 
-								needammo = tp_name_cells.string;
-							break;
+				case 2: case 3: if (cl.stats[STAT_SHELLS] < tp_need_shells.value)
+					needammo = tp_name_shells.string;
+				break;
+				case 4: case 5: if (cl.stats[STAT_NAILS] < tp_need_nails.value)
+					needammo = tp_name_nails.string;
+				break;
+				case 6: case 7: if (cl.stats[STAT_ROCKETS] < tp_need_rockets.value)
+					needammo = tp_name_rockets .string;
+				break;
+				case 8: if (cl.stats[STAT_CELLS] < tp_need_cells.value)
+					needammo = tp_name_cells.string;
+				break;
 		}
 
 		if (needammo) {
@@ -771,7 +812,8 @@ done:
 	return macro_buf;
 }
 
-char *Macro_Point_LED(void) {
+char *Macro_Point_LED(void)
+{
 	TP_FindPoint();
 
 	if (vars.pointtype == POINT_TYPE_ENEMY)
@@ -780,7 +822,7 @@ char *Macro_Point_LED(void) {
 		return tp_name_status_green.string;
 	else if (vars.pointtype == POINT_TYPE_POWERUP)
 		return tp_name_status_yellow.string;
-	else	// POINT_TYPE_ITEM
+	else // POINT_TYPE_ITEM
 		return tp_name_status_blue.string;
 
 	return macro_buf;
@@ -788,7 +830,8 @@ char *Macro_Point_LED(void) {
 
 
 
-char *Macro_MyStatus_LED(void) {
+char *Macro_MyStatus_LED(void)
+{
 	int count;
 	float save_need_rl;
 	char *s, *save_separator;
@@ -808,19 +851,20 @@ char *Macro_MyStatus_LED(void) {
 		for (count = 1; *s; s++)
 			if (*s == separator[0])
 				count++;
-	}	
+	}
 
 	if (count == 0)
 		snprintf(macro_buf, sizeof(macro_buf), "%s", tp_name_status_green.string);
 	else if (count <= 1)
 		snprintf(macro_buf, sizeof(macro_buf), "%s", tp_name_status_yellow.string);
 	else
-		snprintf(macro_buf, sizeof(macro_buf), "%s", tp_name_status_red.string);	
+		snprintf(macro_buf, sizeof(macro_buf), "%s", tp_name_status_red.string);
 
 	return macro_buf;
 }
 
-char *Macro_EnemyStatus_LED(void) {
+char *Macro_EnemyStatus_LED(void)
+{
 	CountNearbyPlayers(false);
 	if (vars.numenemies == 0)
 		snprintf(macro_buf, sizeof(macro_buf), "\xffl%s\xff", tp_name_status_green.string);
@@ -838,7 +882,8 @@ char *Macro_EnemyStatus_LED(void) {
 #define TP_QUAD 2
 #define TP_RING 4
 
-char *Macro_LastSeenPowerup(void) {
+char *Macro_LastSeenPowerup(void)
+{
 	if (!vars.enemy_powerups_time || cls.realtime - vars.enemy_powerups_time > 5) {
 		strlcpy(macro_buf, tp_name_quad.string, sizeof(macro_buf));
 	} else {
@@ -846,12 +891,12 @@ char *Macro_LastSeenPowerup(void) {
 		if (vars.enemy_powerups & TP_QUAD)
 			strlcat(macro_buf, tp_name_quad.string, sizeof(macro_buf));
 		if (vars.enemy_powerups & TP_PENT) {
-			if (macro_buf[0])  
+			if (macro_buf[0])
 				strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat(macro_buf, tp_name_pent.string, sizeof(macro_buf));
 		}
 		if (vars.enemy_powerups & TP_RING) {
-			if (macro_buf[0])  
+			if (macro_buf[0])
 				strlcat(macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat(macro_buf, tp_name_ring.string, sizeof(macro_buf));
 		}
@@ -860,7 +905,8 @@ char *Macro_LastSeenPowerup(void) {
 }
 
 
-qbool TP_SuppressMessage(char *buf) {
+qbool TP_SuppressMessage(char *buf)
+{
 	int len;
 	char *s;
 
@@ -875,10 +921,11 @@ qbool TP_SuppressMessage(char *buf) {
 		return (!cls.demoplayback && !cl.spectator && *s - 'A' == cl.playernum);
 	}
 
-	return false; 
+	return false;
 }
 
-void TP_PrintHiddenMessage(char *buf, int nodisplay) {
+void TP_PrintHiddenMessage(char *buf, int nodisplay)
+{
 	qbool team, hide = false;
 	char dest[4096], msg[4096], *s, *d, c, *name;
 	int length, offset, flags;
@@ -900,7 +947,7 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay) {
 	while ((c = *s++) && (c != '\x7f')) {
 		if (c == '\xff') {
 			if ((hide = !hide)) {
-				*d++ = (*s == 'z') ? 'x' : 139;	
+				*d++ = (*s == 'z') ? 'x' : 139;
 				s++;
 				memmove(s - 2, s, strlen(s) + 1);
 				s -= 2;
@@ -918,7 +965,7 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay) {
 		return;
 
 	name = Info_ValueForKey (cl.players[cl.playernum].userinfo, "name");
-	if (strlen(name) >= 32)	
+	if (strlen(name) >= 32)
 		name[31] = 0;
 
 	if (team)
@@ -939,17 +986,18 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay) {
 		for (s = msg; *s; s++)
 			if (*s == 0x0D || (*s == 0x0A && s[1]))
 				*s = ' ';
-		}
+	}
 
 	if (nodisplay == 0) {
 		Com_Printf(TP_ParseWhiteText (msg, team, offset));
 	}
-	
+
 }
 
 #define ISDEAD(i) ( (i) >= 41 && (i) <= 102 )
 
-static void CountNearbyPlayers(qbool dead) {
+static void CountNearbyPlayers(qbool dead)
+{
 	int i;
 	player_state_t *state;
 	player_info_t *info;
@@ -969,7 +1017,7 @@ static void CountNearbyPlayers(qbool dead) {
 
 	state = cl.frames[cl.oldparsecount & UPDATE_MASK].playerstate;
 	info = cl.players;
-	for (i = 0; i < MAX_CLIENTS; i++, info++, state++) {			
+	for (i = 0; i < MAX_CLIENTS; i++, info++, state++) {
 		if (i != cl.playernum && state->messagenum == cl.oldparsecount && !info->spectator && !ISDEAD(state->frame)) {
 			if (cl.teamplay && !strcmp(info->team, TP_PlayerTeam()))
 				vars.numfriendlies++;
@@ -980,7 +1028,8 @@ static void CountNearbyPlayers(qbool dead) {
 }
 
 
-char *Macro_CountNearbyEnemyPlayers (void) {
+char *Macro_CountNearbyEnemyPlayers (void)
+{
 	if(!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
 		return "banned by MTFL ruleset"; // there should be more smart way to do it
 
@@ -991,7 +1040,8 @@ char *Macro_CountNearbyEnemyPlayers (void) {
 }
 
 
-char *Macro_Count_Last_NearbyEnemyPlayers (void) {
+char *Macro_Count_Last_NearbyEnemyPlayers (void)
+{
 	if(!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
 		return "banned by MTFL ruleset"; // there should be more smart way to do it
 
@@ -1006,7 +1056,8 @@ char *Macro_Count_Last_NearbyEnemyPlayers (void) {
 }
 
 
-char *Macro_CountNearbyFriendlyPlayers (void) {
+char *Macro_CountNearbyFriendlyPlayers (void)
+{
 	if(!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
 		return "banned by MTFL ruleset"; // there should be more smart way to do it
 
@@ -1017,7 +1068,8 @@ char *Macro_CountNearbyFriendlyPlayers (void) {
 }
 
 
-char *Macro_Count_Last_NearbyFriendlyPlayers (void) {
+char *Macro_Count_Last_NearbyFriendlyPlayers (void)
+{
 	if(!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))
 		return "banned by MTFL ruleset"; // there should be more smart way to do it
 
@@ -1033,7 +1085,8 @@ char *Macro_Count_Last_NearbyFriendlyPlayers (void) {
 
 // Note: longer macro names like "armortype" must be defined
 // _before_ the shorter ones like "armor" to be parsed properly
-void TP_AddMacros(void) {
+void TP_AddMacros(void)
+{
 	qbool teamplay = Rulesets_RestrictTriggers();
 
 	Cmd_AddMacro("lastip", Macro_Lastip_f);
@@ -1052,7 +1105,7 @@ void TP_AddMacros(void) {
 	Cmd_AddMacroEx("cells", Macro_Cells, teamplay);
 
 	Cmd_AddMacro("weaponnum", Macro_WeaponNum);
-	Cmd_AddMacroEx("weapons", Macro_Weapons, teamplay);			
+	Cmd_AddMacroEx("weapons", Macro_Weapons, teamplay);
 	Cmd_AddMacro("weapon", Macro_Weapon);
 
 	Cmd_AddMacroEx("ammo", Macro_Ammo, teamplay);
@@ -1079,9 +1132,9 @@ void TP_AddMacros(void) {
 	Cmd_AddMacroEx("droploc", Macro_LastDrop, teamplay);
 	Cmd_AddMacroEx("droptime", Macro_LastDropTime, teamplay);
 
-	Cmd_AddMacro("tf_skin", Macro_TF_Skin);			
+	Cmd_AddMacro("tf_skin", Macro_TF_Skin);
 
-	Cmd_AddMacro("triggermatch", Macro_LastTrigger_Match);		
+	Cmd_AddMacro("triggermatch", Macro_LastTrigger_Match);
 
 
 	Cmd_AddMacroEx("ledpoint", Macro_Point_LED, teamplay);
@@ -1091,8 +1144,9 @@ void TP_AddMacros(void) {
 
 /********************** MACRO/FUNCHAR/WHITE TEXT PARSING **********************/
 
-char *TP_ParseWhiteText(char *s, qbool team, int offset) {
-	static char	buf[4096];	
+char *TP_ParseWhiteText(char *s, qbool team, int offset)
+{
+	static char	buf[4096];
 	char *out, *p, *p1;
 	extern cvar_t	cl_parseWhiteText;
 	qbool	parsewhite;
@@ -1121,14 +1175,15 @@ char *TP_ParseWhiteText(char *s, qbool team, int offset) {
 }
 
 //Parses %a-like expressions
-char *TP_ParseMacroString (char *s) {
+char *TP_ParseMacroString (char *s)
+{
 	static char	buf[MAX_MACRO_STRING];
 	int i = 0;
-    int pN, pn;
+	int pN, pn;
 	char *macro_string;
 
 	int r = 0;
-			
+
 	player_state_t *state;
 	player_info_t *info;
 	static int lastframecount = -1;
@@ -1145,38 +1200,38 @@ char *TP_ParseMacroString (char *s) {
 			static char mbuf[MAX_MACRO_VALUE];
 
 			switch (s[2]) {
-			case 'a':
-				macro_string = Macro_ArmorType();
-				if (!strcmp(macro_string, tp_name_none.string))
-					macro_string = "a";
-				if (cl.stats[STAT_ARMOR] < 30)
-					snprintf (mbuf, sizeof(mbuf), "\x10%s:%i\x11", macro_string, cl.stats[STAT_ARMOR]);
-				else
-					snprintf (mbuf, sizeof(mbuf), "%s:%i", macro_string, cl.stats[STAT_ARMOR]);
-				macro_string = mbuf;
-				break;
+					case 'a':
+					macro_string = Macro_ArmorType();
+					if (!strcmp(macro_string, tp_name_none.string))
+						macro_string = "a";
+					if (cl.stats[STAT_ARMOR] < 30)
+						snprintf (mbuf, sizeof(mbuf), "\x10%s:%i\x11", macro_string, cl.stats[STAT_ARMOR]);
+					else
+						snprintf (mbuf, sizeof(mbuf), "%s:%i", macro_string, cl.stats[STAT_ARMOR]);
+					macro_string = mbuf;
+					break;
 
-			case 'h':
-				if (cl.stats[STAT_HEALTH] >= 50)
-					snprintf (macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_HEALTH]);
-				else
-					snprintf (macro_buf, sizeof(macro_buf), "\x10%i\x11", cl.stats[STAT_HEALTH]);
-				macro_string = macro_buf;
-				break;
+					case 'h':
+					if (cl.stats[STAT_HEALTH] >= 50)
+						snprintf (macro_buf, sizeof(macro_buf), "%i", cl.stats[STAT_HEALTH]);
+					else
+						snprintf (macro_buf, sizeof(macro_buf), "\x10%i\x11", cl.stats[STAT_HEALTH]);
+					macro_string = macro_buf;
+					break;
 
-			case 'p':
-			case 'P':
-				macro_string = Macro_Powerups();
-				if (strcmp(macro_string, tp_name_none.string))
-					snprintf (mbuf, sizeof(mbuf), "\x10%s\x11", macro_string);
-				else
-					mbuf[0] = 0;
-				macro_string = mbuf;
-				break;
+					case 'p':
+					case 'P':
+					macro_string = Macro_Powerups();
+					if (strcmp(macro_string, tp_name_none.string))
+						snprintf (mbuf, sizeof(mbuf), "\x10%s\x11", macro_string);
+					else
+						mbuf[0] = 0;
+					macro_string = mbuf;
+					break;
 
-			default:
-				buf[i++] = *s++;
-				continue;
+					default:
+					buf[i++] = *s++;
+					continue;
 			}
 			if (i + strlen(macro_string) >= MAX_MACRO_STRING - 1)
 				Sys_Error("TP_ParseMacroString: macro string length > MAX_MACRO_STRING)");
@@ -1189,42 +1244,42 @@ char *TP_ParseMacroString (char *s) {
 		// check %a, etc
 		if (*s == '%') {
 			switch (s[1]) {
-				//case '\x7f': macro_string = ""; break;// skip cause we use this to hide mesgs
-                //case '\xff': macro_string = ""; break;
-                case 'n':   pn = 1; macro_string = ""; break;
-                case 'N':   pN = 1; macro_string = ""; break;
-				case 'a':	macro_string = Macro_Armor(); break;
-				case 'A':	macro_string = Macro_ArmorType(); break;
-				case 'b':	macro_string = Macro_BestWeaponAndAmmo(); break;
-				case 'c':	macro_string = Macro_Cells(); break;
-				case 'd':	macro_string = Macro_LastDeath(); break;
-				case 'h':	macro_string = Macro_Health(); break;
-				case 'i':	macro_string = Macro_TookAtLoc(); break;
-				case 'j':	macro_string = Macro_LastPointAtLoc(); break;
-				case 'k':	macro_string = Macro_LastTookOrPointed(); break;
-				case 'l':	macro_string = Macro_Location(); break;
-				case 'L':	macro_string = Macro_Last_Location(); break;
-				case 'm':	macro_string = Macro_LastTookOrPointed(); break;
-		
-				case 'o':	macro_string = Macro_CountNearbyFriendlyPlayers(); break;
-				case 'e':	macro_string = Macro_CountNearbyEnemyPlayers(); break;
-				case 'O':	macro_string = Macro_Count_Last_NearbyFriendlyPlayers(); break;
-				case 'E':	macro_string = Macro_Count_Last_NearbyEnemyPlayers(); break;
-		
-				case 'P': 
-				case 'p':	macro_string = Macro_Powerups(); break;
-				case 'q':	macro_string = Macro_LastSeenPowerup(); break;	
-				case 'r':	macro_string = Macro_LastReportedLoc(); break;
-				case 's':	macro_string = Macro_EnemyStatus_LED(); break;	
-				case 'S':	macro_string = Macro_TF_Skin(); break;			
-				case 't':	macro_string = Macro_PointNameAtLocation(); break;
-				case 'u':	macro_string = Macro_Need(); break;
-				case 'w':	macro_string = Macro_WeaponAndAmmo(); break;
-				case 'x':	macro_string = Macro_PointName(); break;
-				case 'X':	macro_string = Macro_Took(); break;
-				case 'y':	macro_string = Macro_PointLocation(); break;
-				case 'Y':	macro_string = Macro_TookLoc(); break;
-				default:
+					//case '\x7f': macro_string = ""; break;// skip cause we use this to hide mesgs
+					//case '\xff': macro_string = ""; break;
+					case 'n':   pn = 1; macro_string = ""; break;
+					case 'N':   pN = 1; macro_string = ""; break;
+					case 'a':	macro_string = Macro_Armor(); break;
+					case 'A':	macro_string = Macro_ArmorType(); break;
+					case 'b':	macro_string = Macro_BestWeaponAndAmmo(); break;
+					case 'c':	macro_string = Macro_Cells(); break;
+					case 'd':	macro_string = Macro_LastDeath(); break;
+					case 'h':	macro_string = Macro_Health(); break;
+					case 'i':	macro_string = Macro_TookAtLoc(); break;
+					case 'j':	macro_string = Macro_LastPointAtLoc(); break;
+					case 'k':	macro_string = Macro_LastTookOrPointed(); break;
+					case 'l':	macro_string = Macro_Location(); break;
+					case 'L':	macro_string = Macro_Last_Location(); break;
+					case 'm':	macro_string = Macro_LastTookOrPointed(); break;
+
+					case 'o':	macro_string = Macro_CountNearbyFriendlyPlayers(); break;
+					case 'e':	macro_string = Macro_CountNearbyEnemyPlayers(); break;
+					case 'O':	macro_string = Macro_Count_Last_NearbyFriendlyPlayers(); break;
+					case 'E':	macro_string = Macro_Count_Last_NearbyEnemyPlayers(); break;
+
+					case 'P':
+					case 'p':	macro_string = Macro_Powerups(); break;
+					case 'q':	macro_string = Macro_LastSeenPowerup(); break;
+					case 'r':	macro_string = Macro_LastReportedLoc(); break;
+					case 's':	macro_string = Macro_EnemyStatus_LED(); break;
+					case 'S':	macro_string = Macro_TF_Skin(); break;
+					case 't':	macro_string = Macro_PointNameAtLocation(); break;
+					case 'u':	macro_string = Macro_Need(); break;
+					case 'w':	macro_string = Macro_WeaponAndAmmo(); break;
+					case 'x':	macro_string = Macro_PointName(); break;
+					case 'X':	macro_string = Macro_Took(); break;
+					case 'y':	macro_string = Macro_PointLocation(); break;
+					case 'Y':	macro_string = Macro_TookLoc(); break;
+					default:
 					buf[i++] = *s++;
 					continue;
 			}
@@ -1239,38 +1294,38 @@ char *TP_ParseMacroString (char *s) {
 	}
 	buf[i] = 0;
 
-		i = strlen(buf);
+	i = strlen(buf);
 
-		if (pN) {
+	if (pN) {
+		buf[i++] = 0x7f;
+		buf[i++] = '!';
+		buf[i++] = 'A' + cl.playernum;
+	}
+	if (pn) {
+
+		if (!pN)
 			buf[i++] = 0x7f;
-			buf[i++] = '!';
-   			buf[i++] = 'A' + cl.playernum;
-		}
-		if (pn) {
-			
-			if (!pN)
-				buf[i++] = 0x7f;
 
-			if (cls.framecount != lastframecount) {
-			
-				lastframecount = cls.framecount;
- 			
-				if (!(!cl.oldparsecount || !cl.parsecount || cls.state < ca_active)) {
+		if (cls.framecount != lastframecount) {
 
-					state = cl.frames[cl.oldparsecount & UPDATE_MASK].playerstate;
-					info = cl.players; 
-				
-					for (r = 0; r < MAX_CLIENTS; r++, info++, state++) {			
-						if (r != cl.playernum && state->messagenum == cl.oldparsecount && !info->spectator && !ISDEAD(state->frame)) {
-							if (cl.teamplay && !strcmp(info->team, TP_PlayerTeam()))
-								buf[i++] = 'A' + r;
-						}
-					} 
+			lastframecount = cls.framecount;
 
+			if (!(!cl.oldparsecount || !cl.parsecount || cls.state < ca_active)) {
+
+				state = cl.frames[cl.oldparsecount & UPDATE_MASK].playerstate;
+				info = cl.players;
+
+				for (r = 0; r < MAX_CLIENTS; r++, info++, state++) {
+					if (r != cl.playernum && state->messagenum == cl.oldparsecount && !info->spectator && !ISDEAD(state->frame)) {
+						if (cl.teamplay && !strcmp(info->team, TP_PlayerTeam()))
+							buf[i++] = 'A' + r;
+					}
 				}
 
 			}
+
 		}
+	}
 
 	if (suppress) {
 		qbool quotes = false;
@@ -1290,20 +1345,21 @@ char *TP_ParseMacroString (char *s) {
 				buf[i++] = 0x7f;
 			}
 			buf[i++] = '!';
-    		buf[i++] = 'A' + cl.playernum;
+			buf[i++] = 'A' + cl.playernum;
 		}
 
 		if (quotes)
 			buf[i++] = '\"';
 		buf[i] = 0;
 	}
-	
+
 
 	return buf;
 }
 
 //Doesn't check for overflows, so strlen(s) should be < MAX_MACRO_STRING
-char *TP_ParseFunChars (char *s, qbool chat) {
+char *TP_ParseFunChars (char *s, qbool chat)
+{
 	static char	 buf[MAX_MACRO_STRING];
 	char		*out = buf;
 	int			 c;
@@ -1336,28 +1392,28 @@ char *TP_ParseFunChars (char *s, qbool chat) {
 		if (*s == '$' && s[1]) {
 			c = 0;
 			switch (s[1]) {
-				case '\\': c = 0x0D; break;
-				case ':': c = 0x0A; break;
-				case '[': c = 0x10; break;
-				case ']': c = 0x11; break;
-				case 'G': c = 0x86; break;
-				case 'R': c = 0x87; break;
-				case 'Y': c = 0x88; break;
-				case 'B': c = 0x89; break;
-				case '(': c = 0x80; break;
-				case '=': c = 0x81; break;
-				case ')': c = 0x82; break;
-				case 'a': c = 0x83; break;
-				case '<': c = 0x1d; break;
-				case '-': c = 0x1e; break;
-				case '>': c = 0x1f; break;
-				case ',': c = 0x1c; break;
-				case '.': c = 0x9c; break;
-				case 'b': c = 0x8b; break;
-				case 'c':
-				case 'd': c = 0x8d; break;
-				case '$': c = '$'; break;
-				case '^': c = '^'; break;
+					case '\\': c = 0x0D; break;
+					case ':': c = 0x0A; break;
+					case '[': c = 0x10; break;
+					case ']': c = 0x11; break;
+					case 'G': c = 0x86; break;
+					case 'R': c = 0x87; break;
+					case 'Y': c = 0x88; break;
+					case 'B': c = 0x89; break;
+					case '(': c = 0x80; break;
+					case '=': c = 0x81; break;
+					case ')': c = 0x82; break;
+					case 'a': c = 0x83; break;
+					case '<': c = 0x1d; break;
+					case '-': c = 0x1e; break;
+					case '>': c = 0x1f; break;
+					case ',': c = 0x1c; break;
+					case '.': c = 0x9c; break;
+					case 'b': c = 0x8b; break;
+					case 'c':
+					case 'd': c = 0x8d; break;
+					case '$': c = '$'; break;
+					case '^': c = '^'; break;
 			}
 			if ( isdigit((int)(unsigned char)s[1]) )
 				c = s[1] - (int)'0' + 0x12;
@@ -1372,7 +1428,7 @@ char *TP_ParseFunChars (char *s, qbool chat) {
 			s += 2;
 			continue;
 		}
-skip:			
+	skip:
 		*out++ = *s++;
 	}
 	*out = 0;
@@ -1387,7 +1443,8 @@ skip:
 char *Skin_FindName (player_info_t *sc);
 
 static qbool need_skin_refresh;
-void TP_UpdateSkins(void) {
+void TP_UpdateSkins(void)
+{
 	int slot;
 
 	if (!need_skin_refresh)
@@ -1403,13 +1460,14 @@ void TP_UpdateSkins(void) {
 	}
 }
 
-qbool TP_NeedRefreshSkins(void) {
+qbool TP_NeedRefreshSkins(void)
+{
 	if (cl.teamfortress)
 		return false;
 
 	if ((cl_enemyskin.string[0] || cl_teamskin.string[0] || cl_enemypentskin.string[0] || cl_teampentskin.string[0] ||
-	 cl_enemyquadskin.string[0] || cl_teamquadskin.string[0] || cl_enemybothskin.string[0] || cl_teambothskin.string[0])
-	 && !(cl.fpd & FPD_NO_FORCE_SKIN))
+	        cl_enemyquadskin.string[0] || cl_teamquadskin.string[0] || cl_enemybothskin.string[0] || cl_teambothskin.string[0])
+	        && !(cl.fpd & FPD_NO_FORCE_SKIN))
 		return true;
 
 	if ((cl_teamtopcolor >= 0 || cl_enemytopcolor >= 0) && !(cl.fpd & FPD_NO_FORCE_COLOR))
@@ -1418,24 +1476,27 @@ qbool TP_NeedRefreshSkins(void) {
 	return false;
 }
 
-void TP_RefreshSkin(int slot) {
+void TP_RefreshSkin(int slot)
+{
 	if (cls.state < ca_connected || slot < 0 || slot >= MAX_CLIENTS || !cl.players[slot].name[0] || cl.players[slot].spectator)
 		return;
 
-	
-	
+
+
 	cl.players[slot].skin_refresh = true;
 	need_skin_refresh = true;
 }
 
-void TP_RefreshSkins(void) {
+void TP_RefreshSkins(void)
+{
 	int i;
 
 	for (i = 0; i < MAX_CLIENTS; i++)
 		TP_RefreshSkin(i);
 }
 
-qbool OnChangeSkinForcing(cvar_t *var, char *string) {
+qbool OnChangeSkinForcing(cvar_t *var, char *string)
+{
 	extern cvar_t noskins;
 
 	if (cl.teamfortress || (cl.fpd & FPD_NO_FORCE_SKIN))
@@ -1448,7 +1509,7 @@ qbool OnChangeSkinForcing(cvar_t *var, char *string) {
 		oldskins = noskins.value;
 		noskins.value = 2;
 		con_suppress = true;
-		Skin_Skins_f();		
+		Skin_Skins_f();
 		con_suppress = false;
 		noskins.value = oldskins;
 		return true;
@@ -1458,7 +1519,8 @@ qbool OnChangeSkinForcing(cvar_t *var, char *string) {
 
 int cl_teamtopcolor = -1, cl_teambottomcolor, cl_enemytopcolor = -1, cl_enemybottomcolor;
 
-void TP_ColorForcing (int *topcolor, int *bottomcolor) {
+void TP_ColorForcing (int *topcolor, int *bottomcolor)
+{
 	int	top, bottom;
 
 	if (Cmd_Argc() == 1) {
@@ -1493,20 +1555,22 @@ void TP_ColorForcing (int *topcolor, int *bottomcolor) {
 	TP_RefreshSkins();
 }
 
-void TP_TeamColor_f(void) {
+void TP_TeamColor_f(void)
+{
 	TP_ColorForcing(&cl_teamtopcolor, &cl_teambottomcolor);
 }
 
-void TP_EnemyColor_f(void) {
+void TP_EnemyColor_f(void)
+{
 	TP_ColorForcing(&cl_enemytopcolor, &cl_enemybottomcolor);
 }
 
 /********************************* .LOC FILES *********************************/
 
-static locdata_t	*locdata = NULL;
-static int			loc_count = 0;
+static locdata_t *locdata = NULL;
+static int loc_count = 0;
 
-static void TP_ClearLocs(void) 
+static void TP_ClearLocs(void)
 {
 	locdata_t *node, *temp;
 
@@ -1524,8 +1588,7 @@ void TP_ClearLocs_f (void)
 {
 	int num_locs = 0;
 
-	if (Cmd_Argc() > 1) 
-	{
+	if (Cmd_Argc() > 1) {
 		Com_Printf ("clearlocs : Clears all locs in memory.\n");
 		return;
 	}
@@ -1536,7 +1599,8 @@ void TP_ClearLocs_f (void)
 	Com_Printf (va("Cleared %d locs.\n", num_locs));
 }
 
-static void TP_AddLocNode(vec3_t coord, char *name) {
+static void TP_AddLocNode(vec3_t coord, char *name)
+{
 	locdata_t *newnode, *node;
 
 	newnode = (locdata_t *) Q_malloc(sizeof(locdata_t));
@@ -1560,7 +1624,8 @@ static void TP_AddLocNode(vec3_t coord, char *name) {
 #define SKIPBLANKS(ptr) while (*ptr == ' ' || *ptr == '\t' || *ptr == '\r') ptr++
 #define SKIPTOEOL(ptr) {while (*ptr != '\n' && *ptr != 0) ptr++; if (*ptr == '\n') ptr++;}
 
-qbool TP_LoadLocFile (char *path, qbool quiet) {
+qbool TP_LoadLocFile (char *path, qbool quiet)
+{
 	char *buf, *p, locname[MAX_OSPATH] = {0}, location[MAX_LOC_NAME];
 	int i, n, sign, line, nameindex, mark, overflow;
 	vec3_t coord;
@@ -1608,27 +1673,27 @@ qbool TP_LoadLocFile (char *path, qbool quiet) {
 			sign = 1;
 			while (1) {
 				switch (*p++) {
-				case ' ': case '\t':
-					goto _next;
-				case '-':
-					if (n) {
-						Com_Printf ("Locfile error (line %d): unexpected '-'\n", line);
+						case ' ': case '\t':
+						goto _next;
+						case '-':
+						if (n) {
+							Com_Printf ("Locfile error (line %d): unexpected '-'\n", line);
+							SKIPTOEOL(p);
+							goto _endofline;
+						}
+						sign = -1;
+						break;
+						case '0': case '1': case '2': case '3': case '4':
+						case '5': case '6': case '7': case '8': case '9':
+						n = n * 10 + (p[-1] - '0');
+						break;
+						default:	// including eol or eof
+						Com_Printf ("Locfile error (line %d): couldn't parse coords\n", line);
 						SKIPTOEOL(p);
 						goto _endofline;
-					}
-					sign = -1;
-					break;
-				case '0': case '1': case '2': case '3': case '4':
-				case '5': case '6': case '7': case '8': case '9':
-					n = n * 10 + (p[-1] - '0');
-					break;
-				default:	// including eol or eof
-					Com_Printf ("Locfile error (line %d): couldn't parse coords\n", line);
-					SKIPTOEOL(p);
-					goto _endofline;
 				}
 			}
-_next:
+		_next:
 			n *= sign;
 			coord[i] = n / 8.0;
 
@@ -1639,27 +1704,27 @@ _next:
 		overflow = nameindex = 0;
 		while (1) {
 			switch (*p)	{
-			case '\r':
-				p++;
-				break;
-			case '\n':
-			case '\0':
-				location[nameindex] = 0;
-				TP_AddLocNode(coord, location);
-				if (*p == '\n')
+					case '\r':
 					p++;
-				goto _endofline;
-			default:
-				if (nameindex < MAX_LOC_NAME - 1) {
-					location[nameindex++] = *p;
-				} else if (!overflow) {
-					overflow = 1;
-					Com_Printf ("Locfile warning (line %d): truncating loc name to %d chars\n", line, MAX_LOC_NAME - 1);
-				}
-				p++;
+					break;
+					case '\n':
+					case '\0':
+					location[nameindex] = 0;
+					TP_AddLocNode(coord, location);
+					if (*p == '\n')
+						p++;
+					goto _endofline;
+					default:
+					if (nameindex < MAX_LOC_NAME - 1) {
+						location[nameindex++] = *p;
+					} else if (!overflow) {
+						overflow = 1;
+						Com_Printf ("Locfile warning (line %d): truncating loc name to %d chars\n", line, MAX_LOC_NAME - 1);
+					}
+					p++;
 			}
 		}
-_endofline:
+	_endofline:
 		line++;
 	}
 _endoffile:
@@ -1667,13 +1732,10 @@ _endoffile:
 	Hunk_FreeToLowMark (mark);
 
 	//if (loc_numentries) {
-	if(loc_count)
-	{
+	if(loc_count) {
 		if (!quiet)
 			Com_Printf ("Loaded locfile \"%s\" (%i loc points)\n", COM_SkipPath(locname), loc_count); // loc_numentries);
-	} 
-	else 
-	{
+	} else {
 		TP_ClearLocs();
 		if (!quiet)
 			Com_Printf("Locfile \"%s\" was empty\n", COM_SkipPath(locname));
@@ -1682,7 +1744,8 @@ _endoffile:
 	return true;
 }
 
-void TP_LoadLocFile_f (void) {
+void TP_LoadLocFile_f (void)
+{
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("loadloc <filename> : load a loc file\n");
 		return;
@@ -1698,14 +1761,12 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 	extern char com_gamedirfile[MAX_QPATH];
 
 	// Make sure we have a path to work with.
-	if (!*path)
-	{
+	if (!*path) {
 		return false;
 	}
 
 	// Check if the filename is too long.
-	if(strlen(path) > MAX_LOC_NAME)
-	{
+	if(strlen(path) > MAX_LOC_NAME) {
 		Com_Printf(va("TP_SaveLocFile: Filename too long. Max allowed is %d characters\n", MAX_LOC_NAME));
 		return false;
 	}
@@ -1713,8 +1774,7 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 	// Get the default path for loc-files and make sure the path
 	// won't be too long.
 	strcpy (locname, va("%s/%s/", com_gamedirfile, "locs"));
-	if (strlen(path) + strlen(locname) + 2 + 4 > MAX_OSPATH) 
-	{
+	if (strlen(path) + strlen(locname) + 2 + 4 > MAX_OSPATH) {
 		Com_Printf ("TP_SaveLocFile: path name > MAX_OSPATH\n");
 		return false;
 	}
@@ -1726,29 +1786,25 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 	// Allocate a buffer to hold the file contents.
 	buf = (char *)Q_calloc(loc_count * (MAX_LOC_NAME + 24), sizeof(char));
 
-	if(!buf)
-	{
+	if(!buf) {
 		Com_Printf("TP_SaveLocFile: Could not initialize buffer.\n");
 		return false;
 	}
 
 	// Write all the nodes to the buffer.
-	for (node = locdata; node; node = node->next) 
-	{
+	for (node = locdata; node; node = node->next) {
 		char row[2*MAX_LOC_NAME];
 
 		sprintf(row, "%4d %4d %4d %s\n", ROUND(8*node->coord[0]), ROUND(8*node->coord[1]), ROUND(8*node->coord[2]), node->name);
 		strcat(buf, row);
 	}
-	
+
 	// Try writing the buffer containing the locs to file.
-	if(!COM_WriteFile(locname, buf, strlen(buf)))
-	{
-		if(!quiet)
-		{
+	if(!COM_WriteFile(locname, buf, strlen(buf))) {
+		if(!quiet) {
 			Com_Printf(va("TP_SaveLocFile: Could not open %s for writing\n", locname));
 		}
-		
+
 		// Make sure we free our buffer.
 		Q_free(buf);
 
@@ -1761,10 +1817,9 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 	return true;
 }
 
-void TP_SaveLocFile_f (void) 
+void TP_SaveLocFile_f (void)
 {
-	if (Cmd_Argc() != 2) 
-	{
+	if (Cmd_Argc() != 2) {
 		Com_Printf ("saveloc <filename> : save a loc file\n");
 		return;
 	}
@@ -1776,18 +1831,14 @@ void TP_AddLoc(char *locname)
 	vec3_t location;
 
 	// We need to be up and running.
-	if(cls.state != ca_active)
-	{
+	if(cls.state != ca_active) {
 		Com_Printf ("Need to be active to add a location.\n");
 		return;
 	}
 
-	if (cl.players[cl.playernum].spectator && Cam_TrackNum() >= 0)
-    {
+	if (cl.players[cl.playernum].spectator && Cam_TrackNum() >= 0) {
 		VectorCopy(cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].playerstate[Cam_TrackNum()].origin, location);
-    }
-	else
-	{
+	} else {
 		VectorCopy(cl.simorg, location);
 	}
 
@@ -1796,10 +1847,9 @@ void TP_AddLoc(char *locname)
 	Com_Printf (va("Added location \"%s\" at (%4.0f, %4.0f, %4.0f)\n", locname, location[0], location[1], location[2]));
 }
 
-void TP_AddLoc_f (void) 
+void TP_AddLoc_f (void)
 {
-	if (Cmd_Argc() != 2) 
-	{
+	if (Cmd_Argc() != 2) {
 		Com_Printf ("addloc <name of location> : add a location\n");
 		return;
 	}
@@ -1817,15 +1867,13 @@ void TP_RemoveClosestLoc (vec3_t location)
 
 	// Find the closest loc.
 	node = locdata;
-	while (node)
-	{
+	while (node) {
 		// Get the distance to the loc.
 		VectorSubtract(location, node->coord, vec);
 		dist = vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2];
 
 		// Check if it's closer than the previously best.
-		if (!best || dist < mindist) 
-		{
+		if (!best || dist < mindist) {
 			best_previous = previous;
 			best = node;
 			mindist = dist;
@@ -1833,17 +1881,16 @@ void TP_RemoveClosestLoc (vec3_t location)
 
 		// Advance and save the previous node.
 		previous = node;
-		node = node->next;		
-	}	
+		node = node->next;
+	}
 
 	Com_Printf(va("Removed location \"%s\" at (%4.0f, %4.0f, %4.0f)\n", best->name, best->coord[0], best->coord[1], best->coord[2]));
 
-	// If the node we're trying to delete has a 
+	// If the node we're trying to delete has a
 	// next node attached to it, copy the data from
 	// that node into the node we're deleting, and then
 	// delete the next node instead.
-	if(best->next)
-	{
+	if(best->next) {
 		locdata_t *temp;
 
 		// Copy the data from the next node into the one we're deleting.
@@ -1862,17 +1909,14 @@ void TP_RemoveClosestLoc (vec3_t location)
 
 		// Set the pointer to the next node.
 		best->next = temp;
-	}
-	else
-	{
+	} else {
 		// Free the current node.
 		Q_free(best->name);
 		Q_free(best);
 		best = NULL;
 
 		// Make sure the previous node doesn't point to garbage.
-		if(best_previous != NULL)
-		{
+		if(best_previous != NULL) {
 			best_previous->next = NULL;
 		}
 	}
@@ -1881,60 +1925,55 @@ void TP_RemoveClosestLoc (vec3_t location)
 	loc_count--;
 
 	// If this was the last loc, remove the entire node list.
-	if(loc_count <= 0)
-	{
+	if(loc_count <= 0) {
 		locdata = NULL;
 	}
 }
 
 void TP_RemoveLoc_f (void)
 {
-	if (Cmd_Argc() == 1) 
-	{
-		if (cl.players[cl.playernum].spectator && Cam_TrackNum() >= 0)
-		{
+	if (Cmd_Argc() == 1) {
+		if (cl.players[cl.playernum].spectator && Cam_TrackNum() >= 0) {
 			TP_RemoveClosestLoc (cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].playerstate[Cam_TrackNum()].origin);
-		}
-		else
-		{
+		} else {
 			TP_RemoveClosestLoc (cl.simorg);
 		}
-	}
-	else
-	{
+	} else {
 		Com_Printf ("removeloc : remove the closest location\n");
 		return;
 	}
 }
 
-typedef struct locmacro_s {
+typedef struct locmacro_s
+{
 	char *macro;
 	char *val;
 } locmacro_t;
 
 static locmacro_t locmacros[] = {
-	{"ssg", "ssg"},
-	{"ng", "ng"},
-	{"sng", "sng"},
-	{"gl", "gl"},
-	{"rl", "rl"},
-	{"lg", "lg"},
-	{"separator", "-"},
-	{"ga", "ga"},
-	{"ya", "ya"},
-	{"ra", "ra"},
-	{"quad", "quad"},
-	{"pent", "pent"},
-	{"ring", "ring"},
-	{"suit", "suit"},
-// START shaman RFE 1031828 {
-	{"mh", "mega"},
-// } END shaman RFE 1031828
-};
+                                    {"ssg", "ssg"},
+                                    {"ng", "ng"},
+                                    {"sng", "sng"},
+                                    {"gl", "gl"},
+                                    {"rl", "rl"},
+                                    {"lg", "lg"},
+                                    {"separator", "-"},
+                                    {"ga", "ga"},
+                                    {"ya", "ya"},
+                                    {"ra", "ra"},
+                                    {"quad", "quad"},
+                                    {"pent", "pent"},
+                                    {"ring", "ring"},
+                                    {"suit", "suit"},
+                                    // START shaman RFE 1031828 {
+                                    {"mh", "mega"},
+                                    // } END shaman RFE 1031828
+                                };
 
 #define NUM_LOCMACROS	(sizeof(locmacros) / sizeof(locmacros[0]))
 
-char *TP_LocationName(vec3_t location) {
+char *TP_LocationName(vec3_t location)
+{
 	char *in, *out, *value;
 	int i;
 	float dist, mindist;
@@ -2001,12 +2040,13 @@ done_locmacros:
 	Cmd_ExpandString(newbuf, buf);
 	recursive = false;
 
-	return buf; 
+	return buf;
 }
 
 /****************************** MESSAGE TRIGGERS ******************************/
 
-typedef struct msg_trigger_s {
+typedef struct msg_trigger_s
+{
 	char	name[32];
 	char	string[64];
 	int		level;
@@ -2015,7 +2055,8 @@ typedef struct msg_trigger_s {
 
 static msg_trigger_t *msg_triggers;
 
-void TP_ResetAllTriggers(void) {
+void TP_ResetAllTriggers (void)
+{
 	msg_trigger_t *temp;
 
 	while (msg_triggers) {
@@ -2025,7 +2066,8 @@ void TP_ResetAllTriggers(void) {
 	}
 }
 
-void TP_DumpTriggers(FILE *f) {
+void TP_DumpTriggers (FILE *f)
+{
 	msg_trigger_t *t;
 
 	for (t = msg_triggers; t; t = t->next) {
@@ -2036,7 +2078,8 @@ void TP_DumpTriggers(FILE *f) {
 	}
 }
 
-msg_trigger_t *TP_FindTrigger (char *name) {
+msg_trigger_t *TP_FindTrigger (char *name)
+{
 	msg_trigger_t *t;
 
 	for (t = msg_triggers; t; t = t->next)
@@ -2046,7 +2089,8 @@ msg_trigger_t *TP_FindTrigger (char *name) {
 	return NULL;
 }
 
-void TP_MsgTrigger_f (void) {
+void TP_MsgTrigger_f (void)
+{
 	int c;
 	char *name;
 	msg_trigger_t *trig;
@@ -2062,8 +2106,8 @@ void TP_MsgTrigger_f (void) {
 		if (!msg_triggers)
 			Com_Printf ("no triggers defined\n");
 		else
-		for (trig=msg_triggers; trig; trig=trig->next)
-			Com_Printf ("%s : \"%s\"\n", trig->name, trig->string);
+			for (trig=msg_triggers; trig; trig=trig->next)
+				Com_Printf ("%s : \"%s\"\n", trig->name, trig->string);
 		return;
 	}
 
@@ -2110,44 +2154,53 @@ void TP_MsgTrigger_f (void) {
 	}
 }
 
-static qbool TP_IsFlagMessage(char *message) {
-	if	(	strstr(message, " has your key!") ||
-			strstr(message, " has taken your Key") ||
-			strstr(message, " has your flag") ||
-			strstr(message, " took your flag!") ||
-			strstr(message, " �� �� flag!") ||
-			strstr(message, " ���� ��") || strstr(message, " �������") ||
-			strstr(message, " took the blue flag") || strstr(message, " took the red flag") ||
-			strstr(message, " Has the Red Flag") || strstr(message, " Has the Blue Flag")
-		)
+static qbool TP_IsFlagMessage(char *message)
+{
+	if (strstr(message, " has your key!") ||
+	        strstr(message, " has taken your Key") ||
+	        strstr(message, " has your flag") ||
+	        strstr(message, " took your flag!") ||
+	        strstr(message, " �� �� flag!") ||
+	        strstr(message, " ���� ��") || strstr(message, " �������") ||
+	        strstr(message, " took the blue flag") || strstr(message, " took the red flag") ||
+	        strstr(message, " Has the Red Flag") || strstr(message, " Has the Blue Flag")
+	   )
 		return true;
 
 	return false;
 }
 
-void TP_SearchForMsgTriggers (char *s, int level) {
+void TP_SearchForMsgTriggers (char *s, int level)
+{
 	msg_trigger_t	*t;
 	char *string;
 
-	if (cls.demoplayback)
+	// message triggers disabled
+	if (!tp_msgtriggers.value)
 		return;
-	if (!tp_msgtriggers.value || Rulesets_RestrictTriggers())
+
+	// triggers banned by ruleset
+	if (Rulesets_RestrictTriggers () && !cls.demoplayback && !cl.spectator)
+		return;
+
+	// we are in spec/demo mode, so play triggers if user want it
+	if ((cls.demoplayback || cl.spectator) && cl_restrictions.value)
 		return;
 
 	for (t = msg_triggers; t; t = t->next) {
 		if ((t->level == level || (t->level == 3 && level == 4)) && t->string[0] && strstr(s, t->string)) {
-			if	(	level == PRINT_CHAT && (
-					strstr (s, "f_version") || 
-					strstr (s, "f_server") || strstr (s, "f_scripts") || strstr (s, "f_cmdline") ||
-					strstr (s, "f_system") || strstr (s, "f_speed") || strstr (s, "f_modified"))
-				)
-				continue; 	// don't let llamas fake proxy replies
+			if (level == PRINT_CHAT && (
+			            strstr (s, "f_version") || strstr (s, "f_skins") ||
+			            strstr (s, "f_server") || strstr (s, "f_scripts") || strstr (s, "f_cmdline") ||
+			            strstr (s, "f_system") || strstr (s, "f_speed") || strstr (s, "f_modified"))
+			   )
+				continue; // don't let llamas fake proxy replies
 
-			if (cl.teamfortress && level == PRINT_HIGH && TP_IsFlagMessage(s)) 
+			if (cl.teamfortress && level == PRINT_HIGH && TP_IsFlagMessage(s))
 				continue;
 
 			if ((string = Cmd_AliasString (t->name))) {
-				strlcpy(vars.lasttrigger_match, s, sizeof(vars.lasttrigger_match));	
+				strlcpy(vars.lasttrigger_match, s, sizeof(vars.lasttrigger_match));
 				Cbuf_AddTextEx (&cbuf_safe, va("%s\n", string));
 			} else {
 				Com_Printf ("trigger \"%s\" has no matching alias\n", t->name);
@@ -2158,31 +2211,35 @@ void TP_SearchForMsgTriggers (char *s, int level) {
 
 /**************************** REGEXP TRIGGERS *********************************/
 
-typedef void ReTrigger_func(pcre_trigger_t *);
+typedef void ReTrigger_func (pcre_trigger_t *);
 
-void Trig_ReSearch_do(ReTrigger_func f) {
-	pcre_trigger_t *trig;	
-	
-	for(trig=re_triggers; trig; trig = trig->next) {
-		if (ReSearchMatch(trig->name))
-			f(trig);
+static void Trig_ReSearch_do (ReTrigger_func f)
+{
+	pcre_trigger_t *trig;
+
+	for( trig = re_triggers; trig; trig = trig->next) {
+		if (ReSearchMatch (trig->name))
+			f (trig);
 	}
 }
 
 static pcre_trigger_t *prev;
-pcre_trigger_t *CL_FindReTrigger (char *name) {
+pcre_trigger_t *CL_FindReTrigger (char *name)
+{
 	pcre_trigger_t *t;
-	
+
 	prev=NULL;
 	for (t=re_triggers; t; t=t->next) {
 		if (!strcmp(t->name, name))
 			return t;
+
 		prev = t;
 	}
-		return NULL;
+	return NULL;
 }
 
-static void DeleteReTrigger(pcre_trigger_t *t) {
+static void DeleteReTrigger (pcre_trigger_t *t)
+{
 	if (t->regexp) (pcre_free)(t->regexp);
 	if (t->regexp_extra) (pcre_free)(t->regexp_extra);
 	if (t->regexpstr) Q_free(t->regexpstr);
@@ -2190,27 +2247,29 @@ static void DeleteReTrigger(pcre_trigger_t *t) {
 	Q_free(t);
 }
 
-static void RemoveReTrigger(pcre_trigger_t *t) {
-// remove from list
+static void RemoveReTrigger (pcre_trigger_t *t)
+{
+	// remove from list
 	if (prev)
 		prev->next = t->next;
 	else
 		re_triggers = t->next;
-// free memory
+	// free memory
 	DeleteReTrigger(t);
 }
 
-void CL_RE_Trigger_f (void) {
-	int			c,i,m;
-	char			*name;
-	char			*regexpstr;
-	pcre_trigger_t	*trig;
-	pcre			*re;
-	pcre_extra		*re_extra;
-	const char		*error;
-	int			error_offset;
-	qbool		newtrigger=false;
-	qbool		re_search = false;
+static void CL_RE_Trigger_f (void)
+{
+	int c,i,m;
+	char *name;
+	char *regexpstr;
+	pcre_trigger_t *trig;
+	pcre *re;
+	pcre_extra *re_extra;
+	const char *error;
+	int error_offset;
+	qbool newtrigger=false;
+	qbool re_search = false;
 
 	c = Cmd_Argc();
 	if (c > 3) {
@@ -2223,17 +2282,21 @@ void CL_RE_Trigger_f (void) {
 	}
 
 	if (c == 1 || re_search) {
-		if (!re_triggers)
+		if (!re_triggers) {
 			Com_Printf ("no regexp_triggers defined\n");
-		else {
+		} else {
 			if (re_search && !ReSearchInit(Cmd_Argv(1)))
 				return;
+
 			Com_Printf ("List of re_triggers:\n");
-			for (trig=re_triggers, i=m=0; trig; trig=trig->next, i++)
+
+			for (trig=re_triggers, i=m=0; trig; trig=trig->next, i++) {
 				if (!re_search || ReSearchMatch(trig->name)) {
 					Com_Printf ("%s : \"%s\" : %d\n", trig->name, trig->regexpstr, trig->counter);
 					m++;
 				}
+			}
+
 			Com_Printf ("------------\n%i/%i re_triggers\n", m, i);
 			if (re_search)
 				ReSearchDone();
@@ -2245,21 +2308,20 @@ void CL_RE_Trigger_f (void) {
 	trig = CL_FindReTrigger (name);
 
 	if (c == 2) {
-		
 		if (trig) {
 			Com_Printf ("%s: \"%s\"\n", trig->name, trig->regexpstr);
 			Com_Printf ("  options: mask=%d interval=%g%s%s%s%s%s\n", trig->flags & 0xFF,
-				trig->min_interval,
-				trig->flags & RE_FINAL ? " final" : "",
-				trig->flags & RE_REMOVESTR ? " remove" : "",
-				trig->flags & RE_NOLOG ? " nolog" : "",
-				trig->flags & RE_ENABLED ? "" : " disabled",
-				trig->flags & RE_NOACTION ? " noaction" : ""
-				 );
+			            trig->min_interval,
+			            trig->flags & RE_FINAL ? " final" : "",
+			            trig->flags & RE_REMOVESTR ? " remove" : "",
+			            trig->flags & RE_NOLOG ? " nolog" : "",
+			            trig->flags & RE_ENABLED ? "" : " disabled",
+			            trig->flags & RE_NOACTION ? " noaction" : ""
+			           );
 			Com_Printf ("  matched %d times\n", trig->counter);
-		}
-		else
+		} else {
 			Com_Printf ("re_trigger \"%s\" not found\n", name);
+		}
 		return;
 	}
 
@@ -2276,12 +2338,12 @@ void CL_RE_Trigger_f (void) {
 		}
 
 		error = NULL;
-		if( (re = pcre_compile(regexpstr, 0, &error, &error_offset, NULL)) ) {
+		if ((re = pcre_compile(regexpstr, 0, &error, &error_offset, NULL))) {
 			error = NULL;
 			re_extra = pcre_study(re, 0, &error);
-			if (error)
+			if (error) {
 				Com_Printf ("Regexp study error: %s\n", &error);
-			else {
+			} else {
 				if (!newtrigger) {
 					(pcre_free)(trig->regexp);
 					if (trig->regexp_extra)
@@ -2296,24 +2358,24 @@ void CL_RE_Trigger_f (void) {
 		} else {
 			Com_Printf ("Invalid regexp: %s\n", error);
 		}
-		
 		prev = NULL;
 		RemoveReTrigger(trig);
 	}
 }
 
-void CL_RE_Trigger_Options_f (void) {
-	int		c,i;
-	char*	name;
-	pcre_trigger_t	*trig;
+static void CL_RE_Trigger_Options_f (void)
+{
+	int c,i;
+	char* name;
+	pcre_trigger_t *trig;
 
-	c = Cmd_Argc();
+	c = Cmd_Argc ();
 	if (c < 3) {
 		Com_Printf ("re_trigger_options <trigger name> <option1> <option2>\n");
 		return;
 	}
 
-	name = Cmd_Argv(1);
+	name = Cmd_Argv (1);
 	trig = CL_FindReTrigger (name);
 
 	if (!trig) {
@@ -2322,57 +2384,56 @@ void CL_RE_Trigger_Options_f (void) {
 	}
 
 	for(i=2; i<c; i++) {
-		if ( !strcmp(Cmd_Argv(i), "final") )
+		if (!strcmp(Cmd_Argv(i), "final")) {
 			trig->flags |= RE_FINAL;
-		else if ( !strcmp(Cmd_Argv(i), "remove") )
+		} else if (!strcmp(Cmd_Argv(i), "remove")) {
 			trig->flags |= RE_REMOVESTR;
-		else if ( !strcmp(Cmd_Argv(i), "notfinal") )
+		} else if (!strcmp(Cmd_Argv(i), "notfinal")) {
 			trig->flags &= ~RE_FINAL;
-		else if ( !strcmp(Cmd_Argv(i), "noremove") )
+		} else if (!strcmp(Cmd_Argv(i), "noremove")) {
 			trig->flags &= ~RE_REMOVESTR;
-		else if ( !strcmp(Cmd_Argv(i), "mask") ) {
+		} else if (!strcmp(Cmd_Argv(i), "mask")) {
 			trig->flags &= ~0xFF;
 			trig->flags |= 0xFF & atoi(Cmd_Argv(i+1));
 			i++;
-			}
-		else if ( !strcmp(Cmd_Argv(i), "interval") ) {
+		} else if (!strcmp(Cmd_Argv(i), "interval") ) {
 			trig->min_interval = atof(Cmd_Argv(i+1));
 			i++;
-			}
-		else if ( !strcmp(Cmd_Argv(i), "enable") ) 
+		} else if (!strcmp(Cmd_Argv(i), "enable")) {
 			trig->flags |= RE_ENABLED;
-		else if ( !strcmp(Cmd_Argv(i), "disable") ) 
+		} else if (!strcmp(Cmd_Argv(i), "disable")) {
 			trig->flags &= ~RE_ENABLED;
-		else if ( !strcmp(Cmd_Argv(i), "noaction") ) 
+		} else if (!strcmp(Cmd_Argv(i), "noaction")) {
 			trig->flags |= RE_NOACTION;
-		else if ( !strcmp(Cmd_Argv(i), "action") ) 
+		} else if (!strcmp(Cmd_Argv(i), "action")) {
 			trig->flags &= ~RE_NOACTION;
-		else if ( !strcmp(Cmd_Argv(i), "nolog") )
+		} else if (!strcmp(Cmd_Argv(i), "nolog")) {
 			trig->flags |= RE_NOLOG;
-		else if ( !strcmp(Cmd_Argv(i), "log") )
+		} else if (!strcmp(Cmd_Argv(i), "log")) {
 			trig->flags &= ~RE_NOLOG;
-
-		else 
+		} else {
 			Com_Printf("re_trigger_options: invalid option.\n"
-			"valid options:\n  final\n  notfinal\n  remove\n"
-			"  noremove\n  mask <trigger_mask>\n  interval <min_interval>)\n"
-			"  enable\n  disable\n  noaction\n  action\n  nolog\n  log\n");
+			           "valid options:\n  final\n  notfinal\n  remove\n"
+			           "  noremove\n  mask <trigger_mask>\n  interval <min_interval>)\n"
+			           "  enable\n  disable\n  noaction\n  action\n  nolog\n  log\n");
+		}
 	}
 }
 
-void CL_RE_Trigger_Delete_f (void) {
-	pcre_trigger_t	*trig, *next_trig;
-	char			*name;
-	int				i;
-	
-	for (i=1; i<Cmd_Argc(); i++) {	
+static void CL_RE_Trigger_Delete_f (void)
+{
+	pcre_trigger_t *trig, *next_trig;
+	char *name;
+	int i;
+
+	for (i = 1; i < Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 		if (IsRegexp(name)) {
 			if(!ReSearchInit(name))
 				return;
 			prev = NULL;
-			for(trig=re_triggers; trig; ) {
-				if (ReSearchMatch(trig->name)) {
+			for (trig = re_triggers; trig; ) {
+				if (ReSearchMatch (trig->name)) {
 					next_trig = trig->next;
 					RemoveReTrigger(trig);
 					trig = next_trig;
@@ -2389,80 +2450,87 @@ void CL_RE_Trigger_Delete_f (void) {
 	}
 }
 
-void Trig_Enable(pcre_trigger_t	*trig) {
+static void Trig_Enable(pcre_trigger_t *trig)
+{
 	trig->flags |= RE_ENABLED;
 }
 
-void CL_RE_Trigger_Enable_f (void) {
-	pcre_trigger_t	*trig;
-	char			*name;
-	int				i;
-	
-	for (i=1; i<Cmd_Argc(); i++) {	
-		name = Cmd_Argv(i);
-		if (IsRegexp(name)) {
-			if(!ReSearchInit(name))
+static void CL_RE_Trigger_Enable_f (void)
+{
+	pcre_trigger_t *trig;
+	char *name;
+	int i;
+
+	for (i = 1; i < Cmd_Argc(); i++) {
+		name = Cmd_Argv (i);
+		if (IsRegexp (name)) {
+			if(!ReSearchInit (name))
 				return;
-			Trig_ReSearch_do(Trig_Enable);
-			ReSearchDone();
+			Trig_ReSearch_do (Trig_Enable);
+			ReSearchDone ();
 		} else {
-			if ((trig = CL_FindReTrigger(name)))
-				Trig_Enable(trig);	
+			if ((trig = CL_FindReTrigger (name)))
+				Trig_Enable (trig);
 		}
 	}
 }
 
-void Trig_Disable(pcre_trigger_t	*trig) {
+static void Trig_Disable (pcre_trigger_t *trig)
+{
 	trig->flags &= ~RE_ENABLED;
 }
 
-void CL_RE_Trigger_Disable_f (void) {
-	pcre_trigger_t	*trig;
-	char			*name;
-	int				i;
-	
-	for (i=1; i<Cmd_Argc(); i++) {	
-		name = Cmd_Argv(i);
-		if (IsRegexp(name)) {
-			if(!ReSearchInit(name))
+static void CL_RE_Trigger_Disable_f (void)
+{
+	pcre_trigger_t *trig;
+	char *name;
+	int i;
+
+	for (i = 1; i < Cmd_Argc (); i++) {
+		name = Cmd_Argv (i);
+		if (IsRegexp (name)) {
+			if(!ReSearchInit (name))
 				return;
-			Trig_ReSearch_do(Trig_Disable);
-			ReSearchDone();
+			Trig_ReSearch_do (Trig_Disable);
+			ReSearchDone ();
 		} else {
-			if ((trig = CL_FindReTrigger(name)))
-				Trig_Disable(trig);	
+			if ((trig = CL_FindReTrigger (name)))
+				Trig_Disable (trig);
 		}
 	}
 }
 
-void CL_RE_Trigger_ResetLasttime (void) {
-	pcre_trigger_t	*trig;
+void CL_RE_Trigger_ResetLasttime (void)
+{
+	pcre_trigger_t *trig;
 
 	for (trig=re_triggers; trig; trig=trig->next)
 		trig->lasttime = 0.0;
 }
 
-void Re_Trigger_Copy_Subpatterns(char *s, int* offsets, int num, cvar_t	*re_sub) {
+void Re_Trigger_Copy_Subpatterns (char *s, int* offsets, int num, cvar_t	*re_sub)
+{
 	int	i;
-	char	tmp;
+	char tmp;
 
-	for (i=0;i<2*num;i+=2) {
-		tmp = s[offsets[i+1]];
-		s[offsets[i+1]] = '\0';
-		Cvar_ForceSet(&re_sub[i/2],s+offsets[i]);
-		s[offsets[i+1]] = tmp;
+	for (i=0; i < 2 * num; i += 2) {
+		tmp = s[offsets[i + 1]];
+		s[offsets[i + 1]] = '\0';
+		Cvar_ForceSet(&re_sub[i / 2],s + offsets[i]);
+		s[offsets[i + 1]] = tmp;
 	}
 }
 
-void CL_RE_Trigger_Match_f (void) {
-	int			c;
-	char			*tr_name;
-	char			*s;
-	pcre_trigger_t		*rt;
-	char			*string;	
+static void CL_RE_Trigger_Match_f (void)
+{
+	int c;
+	char *tr_name;
+	char *s;
+	pcre_trigger_t *rt;
+	char *string;
 	int result;
 	int offsets[99];
-	
+
 	c = Cmd_Argc();
 
 	if (c != 3) {
@@ -2473,97 +2541,109 @@ void CL_RE_Trigger_Match_f (void) {
 	tr_name = Cmd_Argv(1);
 	s = Cmd_Argv(2);
 
-	for (rt=re_triggers; rt; rt=rt->next) 
-		if ( !strcmp(rt->name, tr_name) ) {
-			result = pcre_exec(rt->regexp, rt->regexp_extra, s, strlen(s), 0, 0, offsets, 99);
-			if (result>=0) {
+	for (rt = re_triggers; rt; rt = rt->next)
+		if (!strcmp(rt->name, tr_name)) {
+			result = pcre_exec (rt->regexp, rt->regexp_extra, s, strlen(s), 0, 0, offsets, 99);
+
+			if (result >= 0) {
 				rt->lasttime = cls.realtime;
 				rt->counter++;
-				Re_Trigger_Copy_Subpatterns(s, offsets, min(result,10), re_sub);
+				Re_Trigger_Copy_Subpatterns (s, offsets, min (result,10), re_sub);
+
 				if (!(rt->flags & RE_NOACTION)) {
 					string = Cmd_AliasString (rt->name);
 					if (string) {
 						Cbuf_InsertTextEx(&cbuf_safe,"\nwait\n");
 						Cbuf_InsertTextEx(&cbuf_safe,string);
 						Cbuf_ExecuteEx(&cbuf_safe);
-					} else
+					} else {
 						Com_Printf ("re_trigger \"%s\" has no matching alias\n", rt->name);
+					}
 				}
-				
 			}
 			return;
-		} 
+		}
 	Com_Printf ("re_trigger \"%s\" not found\n", tr_name);
 }
 
 qbool allow_re_triggers;
 
-qbool CL_SearchForReTriggers (char *s, unsigned trigger_type) {
-	pcre_trigger_t			*rt;
-	pcre_internal_trigger_t		*irt;
-	cmd_alias_t			*trig_alias;
-	qbool			removestr = false;
-	int				result;
-	int				offsets[99];
-	int				len;
-	
-	len = strlen(s);
+qbool CL_SearchForReTriggers (char *s, unsigned trigger_type)
+{
+	pcre_trigger_t *rt;
+	pcre_internal_trigger_t *irt;
+	cmd_alias_t *trig_alias;
+	qbool removestr = false;
+	int result;
+	int offsets[99];
+	int len = strlen(s);
 
-// internal triggers
+	// internal triggers - always enabled
 	if (trigger_type < RE_PRINT_ECHO) {
 		allow_re_triggers = true;
-		for (irt=internal_triggers; irt; irt=irt->next) {
-				if (irt->flags & trigger_type) {
-				result = pcre_exec(irt->regexp, irt->regexp_extra, s, len, 0, 0, offsets, 99);
-				if (result>=0) {
-					Re_Trigger_Copy_Subpatterns(s, offsets, min(result,10), re_subi);
-					irt->func(s);
+		for (irt = internal_triggers; irt; irt = irt->next) {
+			if (irt->flags & trigger_type) {
+				result = pcre_exec (irt->regexp, irt->regexp_extra, s, len, 0, 0, offsets, 99);
+				if (result >= 0) {
+					Re_Trigger_Copy_Subpatterns (s, offsets, min(result,10), re_subi);
+					irt->func (s);
 				}
 			}
 		}
-		if (!allow_re_triggers) return false;
+		if (!allow_re_triggers)
+			return false;
 	}
 
-// TODO: allow triggers for demos/specs (it should be ruleset independent)
-	if (
-	(cls.demoplayback) || (cl.spectator) || (!tp_msgtriggers.value)
-		   || (cl.fpd & FPD_NO_SOUNDTRIGGERS) || (cl.fpd & FPD_NO_TIMERS)
-	|| Rulesets_RestrictTriggers ()
-	)
+	// message triggers disabled
+	if (!tp_msgtriggers.value)
 		return false;
 
-// regexp triggers
-	for (rt=re_triggers; rt; rt=rt->next) 
-		if ( (rt->flags & RE_ENABLED) &&				// enabled
-			 (rt->flags & trigger_type) &&				// mask fits
-			 rt->regexp &&						// regexp not empty
-			 (rt->min_interval == 0.0 ||
-			 cls.realtime >= rt->min_interval + rt->lasttime))	// not too fast
-			{
-			result = pcre_exec(rt->regexp, rt->regexp_extra, s, len, 0, 0, offsets, 99);
-			if (result>=0) {
+	// triggers banned by ruleset or FPD and we are a player
+	if (((cl.fpd & FPD_NO_SOUNDTRIGGERS) || (cl.fpd & FPD_NO_TIMERS) ||
+	        Rulesets_RestrictTriggers ()) && !cls.demoplayback && !cl.spectator)
+		return false;
+
+	// we are in spec/demo mode, so play triggers if user want it
+	if ((cls.demoplayback || cl.spectator) && cl_restrictions.value)
+		return false;
+
+	// regexp triggers
+	for (rt = re_triggers; rt; rt = rt->next)
+		if ( (rt->flags & RE_ENABLED) &&	// enabled
+		        (rt->flags & trigger_type) &&	// mask fits
+		        rt->regexp &&					// regexp not empty
+		        (rt->min_interval == 0.0 ||
+		         cls.realtime >= rt->min_interval + rt->lasttime)) // not too fast.
+			// TODO: disable it ^^^ for FPD_NO_TIMERS case.
+			// probably it dont solve re_trigger timers problem
+			// you always trigger on statusbar(TF) or wp_stats (KTPro/KTX) messages and get 0.5~1.5 accuracy for your timer
+		{
+			result = pcre_exec (rt->regexp, rt->regexp_extra, s, len, 0, 0, offsets, 99);
+			if (result >= 0) {
 				rt->lasttime = cls.realtime;
 				rt->counter++;
-				Re_Trigger_Copy_Subpatterns(s, offsets, min(result,10), re_sub);
+				Re_Trigger_Copy_Subpatterns (s, offsets, min(result,10), re_sub);
+
 				if (!(rt->flags & RE_NOACTION)) {
 					trig_alias = Cmd_FindAlias (rt->name);
 					Print_current++;
 					if (trig_alias) {
-						Cbuf_InsertTextEx(&cbuf_safe,"\nwait\n");
-						Cbuf_InsertTextEx(&cbuf_safe,rt->name);
-						Cbuf_ExecuteEx(&cbuf_safe);
+						Cbuf_InsertTextEx (&cbuf_safe,"\nwait\n");
+						Cbuf_InsertTextEx (&cbuf_safe,rt->name);
+						Cbuf_ExecuteEx (&cbuf_safe);
 					} else
 						Com_Printf ("re_trigger \"%s\" has no matching alias\n", rt->name);
 					Print_current--;
 				}
-				if (rt->flags & RE_REMOVESTR) 
+
+				if (rt->flags & RE_REMOVESTR)
 					removestr = true;
-				if (rt->flags & RE_NOLOG) 
+				if (rt->flags & RE_NOLOG)
 					Print_flags[Print_current] |= PR_LOG_SKIP;
-				if (rt->flags & RE_FINAL) 
+				if (rt->flags & RE_FINAL)
 					break;
 			}
-		} 
+		}
 
 	if (removestr)
 		Print_flags[Print_current] |= PR_SKIP;
@@ -2572,27 +2652,30 @@ qbool CL_SearchForReTriggers (char *s, unsigned trigger_type) {
 }
 
 // Internal triggers
-void AddInternalTrigger(char* regexpstr, unsigned mask, internal_trigger_func func) {
-	pcre_internal_trigger_t	*trig;
-	const char		*error;
-	int			error_offset;
+static void AddInternalTrigger (char* regexpstr, unsigned mask, internal_trigger_func func)
+{
+	pcre_internal_trigger_t *trig;
+	const char *error;
+	int error_offset;
 
 	trig = (pcre_internal_trigger_t *) Q_malloc (sizeof(pcre_internal_trigger_t));
 	trig->next = internal_triggers;
 	internal_triggers = trig;
 
-	trig->regexp = pcre_compile(regexpstr, 0, &error, &error_offset, NULL);
-	trig->regexp_extra = pcre_study(trig->regexp, 0, &error);
+	trig->regexp = pcre_compile (regexpstr, 0, &error, &error_offset, NULL);
+	trig->regexp_extra = pcre_study (trig->regexp, 0, &error);
 	trig->func = func;
 	trig->flags = mask;
 }
 
-void INTRIG_Disable (char *s) {
+static void INTRIG_Disable (char *s)
+{
 	allow_re_triggers = false;
 	Print_flags[Print_current] |= PR_LOG_SKIP;
 }
 
-void INTRIG_Lastip_port (char *s) {
+static void INTRIG_Lastip_port (char *s)
+{
 	/* subpatterns of this regexp is maximum 21 chars */
 	/* strlen (<3>.<3>.<3>.<3>:< 5 >) = 21 */
 
@@ -2600,16 +2683,16 @@ void INTRIG_Lastip_port (char *s) {
 	memset (lastip, 0, sizeof (lastip));
 
 	memcpy (lastip, va ("%s.%s.%s.%s:%s",
-		re_subi[1].string,
-		re_subi[2].string,
-		re_subi[3].string,
-		re_subi[4].string,
-		re_subi[5].string), sizeof (lastip));
+	                    re_subi[1].string,
+	                    re_subi[2].string,
+	                    re_subi[3].string,
+	                    re_subi[4].string,
+	                    re_subi[5].string), sizeof (lastip));
 }
 
-void InitInternalTriggers(void)
+static void InitInternalTriggers(void)
 {
-	// dont allow cheating by triggering showloc command 
+	// dont allow cheating by triggering showloc command
 	AddInternalTrigger("^(Location :|Angles   :)", 4, INTRIG_Disable); // showloc command
 	// dont allow cheating by triggering dispenser warning
 	AddInternalTrigger("^Enemies are using your dispenser!$", 16, INTRIG_Disable);
@@ -2617,7 +2700,8 @@ void InitInternalTriggers(void)
 	AddInternalTrigger("([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\:(\\d{5})", 8, INTRIG_Lastip_port);
 }
 
-void TP_InitReTriggers() {
+static void TP_InitReTriggers()
+{
 	unsigned i;
 
 	for(i=0;i<10;i++)
@@ -2634,21 +2718,24 @@ void TP_InitReTriggers() {
 
 /************************* BASIC MATCH INFO FUNCTIONS *************************/
 
-char *TP_PlayerName(void) {
-	static char	myname[MAX_INFO_STRING];
+char *TP_PlayerName (void)
+{
+	static char myname[MAX_INFO_STRING];
 
 	strcpy (myname, Info_ValueForKey(cl.players[cl.playernum].userinfo, "name"));
 	return myname;
 }
 
-char *TP_PlayerTeam(void) {
-	static char	myteam[MAX_INFO_STRING];
+char *TP_PlayerTeam (void)
+{
+	static char myteam[MAX_INFO_STRING];
 
 	strcpy (myteam, cl.players[cl.playernum].team);
 	return myteam;
 }
 
-int	TP_CountPlayers(void) {
+int	TP_CountPlayers (void)
+{
 	int	i, count = 0;
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
@@ -2658,7 +2745,8 @@ int	TP_CountPlayers(void) {
 	return count;
 }
 
-char *TP_MapName(void) {
+char *TP_MapName(void)
+{
 	return mapname.string;
 }
 
@@ -2666,7 +2754,8 @@ char *TP_MapName(void) {
 #ifdef GLQUAKE
 char *MT_GetSkyGroupName(char *mapname, qbool *system);
 
-char *TP_GetSkyGroupName(char *mapname, qbool *system) {
+char *TP_GetSkyGroupName(char *mapname, qbool *system)
+{
 	return MT_GetSkyGroupName(mapname, system);
 }
 #endif
@@ -2674,13 +2763,15 @@ char *TP_GetSkyGroupName(char *mapname, qbool *system) {
 
 char *MT_GetMapGroupName(char *mapname, qbool *system);
 
-char *TP_GetMapGroupName(char *mapname, qbool *system) {
+char *TP_GetMapGroupName(char *mapname, qbool *system)
+{
 	return MT_GetMapGroupName(mapname, system);
 }
 
 /****************************** PUBLIC FUNCTIONS ******************************/
 
-void TP_NewMap (void) {
+void TP_NewMap (void)
+{
 	static char last_map[MAX_QPATH] = {0};
 	char *groupname, *mapname;
 	qbool system;
@@ -2717,12 +2808,13 @@ returns a combination of these values:
 Note that sometimes we can't be sure who really sent the message,  e.g. when there's a 
 player "unnamed" in your team and "(unnamed)" in the enemy team. The result will be 3 (1+2)
 */
-int TP_CategorizeMessage (char *s, int *offset) {
+int TP_CategorizeMessage (char *s, int *offset)
+{
 	int i, msglen, len, flags, tracknum;
 	player_info_t	*player;
 	char *name, *team=NULL;
 
-	
+
 	tracknum = -1;
 	if (cl.spectator && (tracknum = Cam_TrackNum()) != -1)
 		team = cl.players[tracknum].team;
@@ -2738,7 +2830,7 @@ int TP_CategorizeMessage (char *s, int *offset) {
 		if (!player->name[0])
 			continue;
 		name = Info_ValueForKey (player->userinfo, "name");
-		len = bound(0, strlen(name), 31);	
+		len = bound(0, strlen(name), 31);
 		// check messagemode1
 		if (len + 2 <= msglen && s[len] == ':' && s[len + 1] == ' ' && !strncmp(name, s, len))	{
 			if (player->spectator)
@@ -2749,17 +2841,17 @@ int TP_CategorizeMessage (char *s, int *offset) {
 		}
 		// check messagemode2
 		else if (s[0] == '(' && len + 4 <= msglen && !strncmp(s + len + 1, "): ", 3) && !strncmp(name, s + 1, len)
-		 
-		 && (!cl.spectator || tracknum != -1)
-		) {
+
+		         && (!cl.spectator || tracknum != -1)
+		        ) {
 			// no team messages in teamplay 0, except for our own
 			if (i == cl.playernum || ( cl.teamplay && !strcmp(team, player->team)) )
 				flags |= 2;
 			*offset = len + 4;
 		}
 		//check spec mm2
-		else if (cl.spectator && !strncmp(s, "[SPEC] ", 7) && player->spectator && 
-		 len + 9 <= msglen && s[len + 7] == ':' && s[len + 8] == ' ' && !strncmp(name, s + 7, len)) {
+		else if (cl.spectator && !strncmp(s, "[SPEC] ", 7) && player->spectator &&
+		         len + 9 <= msglen && s[len + 7] == ':' && s[len + 8] == ' ' && !strncmp(name, s + 7, len)) {
 			flags |= 8;
 			*offset = len + 9;
 		}
@@ -2771,9 +2863,9 @@ int TP_CategorizeMessage (char *s, int *offset) {
 
 // symbolic names used in tp_took, tp_pickup, tp_point commands
 char *pknames[] = {"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
-"mh", "health", "lg", "rl", "gl", "sng", "ng", "ssg", "pack",
-"cells", "rockets", "nails", "shells", "flag", 
-"teammate", "enemy", "eyes", "sentry", "disp", "runes"};
+                   "mh", "health", "lg", "rl", "gl", "sng", "ng", "ssg", "pack",
+                   "cells", "rockets", "nails", "shells", "flag",
+                   "teammate", "enemy", "eyes", "sentry", "disp", "runes"};
 
 #define it_quad		(1 << 0)
 #define it_pent		(1 << 1)
@@ -2823,7 +2915,8 @@ int tookflags = default_tookflags;
 int pointflags = default_pointflags;
 byte pointpriorities[NUM_ITEMFLAGS];
 
-static void DumpFlagCommand(FILE *f, char *name, int flags, int default_flags) {
+static void DumpFlagCommand(FILE *f, char *name, int flags, int default_flags)
+{
 	int i, all_flags = (1 << NUM_ITEMFLAGS) - 1;
 
 	fprintf(f, "%s ", name);
@@ -2867,13 +2960,15 @@ static void DumpFlagCommand(FILE *f, char *name, int flags, int default_flags) {
 	fprintf(f, "\n");
 }
 
-void DumpFlagCommands(FILE *f) {
+void DumpFlagCommands(FILE *f)
+{
 	DumpFlagCommand(f, "tp_pickup   ", pkflags, default_pkflags);
 	DumpFlagCommand(f, "tp_took     ", tookflags, default_tookflags);
 	DumpFlagCommand(f, "tp_point    ", pointflags, default_pointflags);
 }
 
-static void FlagCommand (int *flags, int defaultflags) {
+static void FlagCommand (int *flags, int defaultflags)
+{
 	int i, j, c, flag;
 	char *p, str[255] = {0};
 	qbool removeflag = false;
@@ -2935,7 +3030,7 @@ static void FlagCommand (int *flags, int defaultflags) {
 				flag = (1<<NUM_ITEMFLAGS)-1;
 		}
 
-		
+
 		if (flags != &pointflags)
 			flag &= ~(it_sentry|it_disp|it_players);
 
@@ -2944,34 +3039,39 @@ static void FlagCommand (int *flags, int defaultflags) {
 		else {
 			*flags |= flag;
 			for (j = 1; j < NUM_ITEMFLAGS; j++) {
-				if (flag & (1 << (j-1))) 
+				if (flag & (1 << (j-1)))
 					pointpriorities[j] = i;
 			}
 		}
 	}
 }
 
-void TP_Took_f (void) {
+void TP_Took_f (void)
+{
 	FlagCommand (&tookflags, default_tookflags);
 }
 
-void TP_Pickup_f (void) {
+void TP_Pickup_f (void)
+{
 	FlagCommand (&pkflags, default_pkflags);
 }
 
-void TP_Point_f (void) {
+void TP_Point_f (void)
+{
 	FlagCommand (&pointflags, default_pointflags);
 }
 
 #define SHORTNICK_LEN 3
-void TP_Report_f (void) {
+void TP_Report_f (void)
+{
 	char shortnick[SHORTNICK_LEN+1];
 	strncpy(shortnick, TP_PlayerName(), SHORTNICK_LEN); // someone please make a guide which *str*cpy* functions we should use and where, thanks :)
 	shortnick[SHORTNICK_LEN] = 0;
 	Cbuf_AddText(va("say_team $\\%s %%p %%A%%a/%%h $[%%l$] %%b", shortnick));
 }
 
-typedef struct {
+typedef struct
+{
 	int		itemflag;
 	cvar_t	*cvar;
 	char	*modelname;
@@ -2981,127 +3081,128 @@ typedef struct {
 } item_t;
 
 item_t	tp_items[] = {
-	{	it_quad,	&tp_name_quad,	"progs/quaddama.mdl",
-		{0, 0, 24},	25,
-	},
-	{	it_pent,	&tp_name_pent,	"progs/invulner.mdl",
-		{0, 0, 22},	25,
-	},
-	{	it_ring,	&tp_name_ring,	"progs/invisibl.mdl",
-		{0, 0, 16},	12,
-	},
-	{	it_suit,	&tp_name_suit,	"progs/suit.mdl",
-		{0, 0, 24}, 20,
-	},
-	{	it_lg,		&tp_name_lg,	"progs/g_light.mdl",
-		{0, 0, 30},	20,
-	},
-	{	it_rl,		&tp_name_rl,	"progs/g_rock2.mdl",
-		{0, 0, 30},	20,
-	},
-	{	it_gl,		&tp_name_gl,	"progs/g_rock.mdl",
-		{0, 0, 30},	20,
-	},
-	{	it_sng,		&tp_name_sng,	"progs/g_nail2.mdl",
-		{0, 0, 30},	20,
-	},
-	{	it_ng,		&tp_name_ng,	"progs/g_nail.mdl",
-		{0, 0, 30},	20,
-	},
-	{	it_ssg,		&tp_name_ssg,	"progs/g_shot.mdl",
-		{0, 0, 30},	20,
-	},
-	{	it_cells,	&tp_name_cells,	"maps/b_batt0.bsp",
-		{16, 16, 24},	18,
-	},
-	{	it_cells,	&tp_name_cells,	"maps/b_batt1.bsp",
-		{16, 16, 24},	18,
-	},
-	{	it_rockets,	&tp_name_rockets,"maps/b_rock0.bsp",
-		{8, 8, 20},	18,
-	},
-	{	it_rockets,	&tp_name_rockets,"maps/b_rock1.bsp",
-		{16, 8, 20},	18,
-	},
-	{	it_nails,	&tp_name_nails,	"maps/b_nail0.bsp",
-		{16, 16, 10},	18,
-	},
-	{	it_nails,	&tp_name_nails,	"maps/b_nail1.bsp",
-		{16, 16, 10},	18,
-	},
-	{	it_shells,	&tp_name_shells,"maps/b_shell0.bsp",
-		{16, 16, 10},	18,
-	},
-	{	it_shells,	&tp_name_shells,"maps/b_shell1.bsp",
-		{16, 16, 10},	18,
-	},
-	{	it_health,	&tp_name_health,"maps/b_bh10.bsp",
-		{16, 16, 8},	18,
-	},
-	{	it_health,	&tp_name_health,"maps/b_bh25.bsp",
-		{16, 16, 8},	18,
-	},
-	{	it_mh,		&tp_name_mh,	"maps/b_bh100.bsp",
-		{16, 16, 14},	20,
-	},
-	{	it_pack,	&tp_name_backpack, "progs/backpack.mdl",
-		{0, 0, 18},	18,
-	},
-	{	it_flag,	&tp_name_flag,	"progs/tf_flag.mdl",
-		{0, 0, 14},	25,
-	},
-	{	it_flag,	&tp_name_flag,	"progs/tf_stan.mdl",
-		{0, 0, 45},	40,
-	},
-	{	it_flag,	&tp_name_flag,	"progs/w_g_key.mdl",
-		{0, 0, 20},	18,
-	},
-	{	it_flag,	&tp_name_flag,	"progs/w_s_key.mdl",
-		{0, 0, 20},	18,
-	},
-	{	it_flag,	&tp_name_flag,	"progs/m_g_key.mdl",
-		{0, 0, 20},	18,
-	},
-	{	it_flag,	&tp_name_flag,	"progs/m_s_key.mdl",
-		{0, 0, 20},	18,
-	},
-	{	it_flag,	&tp_name_flag,	"progs/b_s_key.mdl",
-		{0, 0, 20},	18,
-	},
-	{	it_flag,	&tp_name_flag,	"progs/b_g_key.mdl",
-		{0, 0, 20},	18,
-	},
-	{	it_flag,	&tp_name_flag,	"progs/flag.mdl",
-		{0, 0, 14},	25,
-	},
-	{	it_runes,	&tp_name_rune1,	"progs/end1.mdl",
-		{0, 0, 20},	18,
-	},
-	{	it_runes,	&tp_name_rune2,	"progs/end2.mdl",
-		{0, 0, 20},	18,
-	},
-	{	it_runes,	&tp_name_rune3,	"progs/end3.mdl",
-		{0, 0, 20},	18,
-	},
-	{	it_runes,	&tp_name_rune4,	"progs/end4.mdl",
-		{0, 0, 20},	18,
-	},
-	{	it_ra|it_ya|it_ga, NULL,	"progs/armor.mdl",
-		{0, 0, 24},	22,
-	},
-	{	it_sentry, &tp_name_sentry, "progs/turrgun.mdl",
-		{0, 0, 23},	25,
-	},
-	{	it_disp, &tp_name_disp,	"progs/disp.mdl",
-		{0, 0, 24},	25,
-	}
-};
+                        {	it_quad,	&tp_name_quad,	"progs/quaddama.mdl",
+                          {0, 0, 24},	25,
+                        },
+                        {	it_pent,	&tp_name_pent,	"progs/invulner.mdl",
+                          {0, 0, 22},	25,
+                        },
+                        {	it_ring,	&tp_name_ring,	"progs/invisibl.mdl",
+                          {0, 0, 16},	12,
+                        },
+                        {	it_suit,	&tp_name_suit,	"progs/suit.mdl",
+                          {0, 0, 24}, 20,
+                        },
+                        {	it_lg,		&tp_name_lg,	"progs/g_light.mdl",
+                          {0, 0, 30},	20,
+                        },
+                        {	it_rl,		&tp_name_rl,	"progs/g_rock2.mdl",
+                          {0, 0, 30},	20,
+                        },
+                        {	it_gl,		&tp_name_gl,	"progs/g_rock.mdl",
+                          {0, 0, 30},	20,
+                        },
+                        {	it_sng,		&tp_name_sng,	"progs/g_nail2.mdl",
+                          {0, 0, 30},	20,
+                        },
+                        {	it_ng,		&tp_name_ng,	"progs/g_nail.mdl",
+                          {0, 0, 30},	20,
+                        },
+                        {	it_ssg,		&tp_name_ssg,	"progs/g_shot.mdl",
+                          {0, 0, 30},	20,
+                        },
+                        {	it_cells,	&tp_name_cells,	"maps/b_batt0.bsp",
+                          {16, 16, 24},	18,
+                        },
+                        {	it_cells,	&tp_name_cells,	"maps/b_batt1.bsp",
+                          {16, 16, 24},	18,
+                        },
+                        {	it_rockets,	&tp_name_rockets,"maps/b_rock0.bsp",
+                          {8, 8, 20},	18,
+                        },
+                        {	it_rockets,	&tp_name_rockets,"maps/b_rock1.bsp",
+                          {16, 8, 20},	18,
+                        },
+                        {	it_nails,	&tp_name_nails,	"maps/b_nail0.bsp",
+                          {16, 16, 10},	18,
+                        },
+                        {	it_nails,	&tp_name_nails,	"maps/b_nail1.bsp",
+                          {16, 16, 10},	18,
+                        },
+                        {	it_shells,	&tp_name_shells,"maps/b_shell0.bsp",
+                          {16, 16, 10},	18,
+                        },
+                        {	it_shells,	&tp_name_shells,"maps/b_shell1.bsp",
+                          {16, 16, 10},	18,
+                        },
+                        {	it_health,	&tp_name_health,"maps/b_bh10.bsp",
+                          {16, 16, 8},	18,
+                        },
+                        {	it_health,	&tp_name_health,"maps/b_bh25.bsp",
+                          {16, 16, 8},	18,
+                        },
+                        {	it_mh,		&tp_name_mh,	"maps/b_bh100.bsp",
+                          {16, 16, 14},	20,
+                        },
+                        {	it_pack,	&tp_name_backpack, "progs/backpack.mdl",
+                          {0, 0, 18},	18,
+                        },
+                        {	it_flag,	&tp_name_flag,	"progs/tf_flag.mdl",
+                          {0, 0, 14},	25,
+                        },
+                        {	it_flag,	&tp_name_flag,	"progs/tf_stan.mdl",
+                          {0, 0, 45},	40,
+                        },
+                        {	it_flag,	&tp_name_flag,	"progs/w_g_key.mdl",
+                          {0, 0, 20},	18,
+                        },
+                        {	it_flag,	&tp_name_flag,	"progs/w_s_key.mdl",
+                          {0, 0, 20},	18,
+                        },
+                        {	it_flag,	&tp_name_flag,	"progs/m_g_key.mdl",
+                          {0, 0, 20},	18,
+                        },
+                        {	it_flag,	&tp_name_flag,	"progs/m_s_key.mdl",
+                          {0, 0, 20},	18,
+                        },
+                        {	it_flag,	&tp_name_flag,	"progs/b_s_key.mdl",
+                          {0, 0, 20},	18,
+                        },
+                        {	it_flag,	&tp_name_flag,	"progs/b_g_key.mdl",
+                          {0, 0, 20},	18,
+                        },
+                        {	it_flag,	&tp_name_flag,	"progs/flag.mdl",
+                          {0, 0, 14},	25,
+                        },
+                        {	it_runes,	&tp_name_rune1,	"progs/end1.mdl",
+                          {0, 0, 20},	18,
+                        },
+                        {	it_runes,	&tp_name_rune2,	"progs/end2.mdl",
+                          {0, 0, 20},	18,
+                        },
+                        {	it_runes,	&tp_name_rune3,	"progs/end3.mdl",
+                          {0, 0, 20},	18,
+                        },
+                        {	it_runes,	&tp_name_rune4,	"progs/end4.mdl",
+                          {0, 0, 20},	18,
+                        },
+                        {	it_ra|it_ya|it_ga, NULL,	"progs/armor.mdl",
+                          {0, 0, 24},	22,
+                        },
+                        {	it_sentry, &tp_name_sentry, "progs/turrgun.mdl",
+                          {0, 0, 23},	25,
+                        },
+                        {	it_disp, &tp_name_disp,	"progs/disp.mdl",
+                          {0, 0, 24},	25,
+                        }
+                    };
 
 #define NUMITEMS (sizeof(tp_items) / sizeof(tp_items[0]))
 
 item_t *model2item[MAX_MODELS];
 
-void TP_FindModelNumbers (void) {
+void TP_FindModelNumbers (void)
+{
 	int i, j;
 	char *s;
 	item_t *item;
@@ -3120,7 +3221,8 @@ void TP_FindModelNumbers (void) {
 // on success, result is non-zero
 // on failure, result is zero
 // for armors, returns skinnum+1 on success
-static int FindNearestItem (int flags, item_t **pitem) {
+static int FindNearestItem (int flags, item_t **pitem)
+{
 	frame_t *frame;
 	packet_entities_t *pak;
 	entity_state_t *ent, *bestent = NULL;
@@ -3163,17 +3265,19 @@ static int FindNearestItem (int flags, item_t **pitem) {
 	return bestent ? bestent->modelindex : 0;
 }
 
-char *Macro_LastTookOrPointed (void) {
+char *Macro_LastTookOrPointed (void)
+{
 	if (vars.tooktime && vars.tooktime > vars.pointtime && cls.realtime - vars.tooktime < 5)
 		return Macro_TookAtLoc();
 	else if (vars.pointtime && vars.tooktime <= vars.pointtime && cls.realtime - vars.pointtime < 5)
 		return Macro_LastPointAtLoc();
 
 	snprintf(macro_buf, sizeof(macro_buf), "%s %s %s", tp_name_nothing.string, tp_name_at.string, tp_name_someplace.string);
-    return macro_buf;
+	return macro_buf;
 }
 
-static qbool CheckTrigger (void) {
+static qbool CheckTrigger (void)
+{
 	int	i, count;
 	player_info_t *player;
 	char *myteam;
@@ -3197,12 +3301,13 @@ static qbool CheckTrigger (void) {
 	return count;
 }
 
-static void ExecTookTrigger (char *s, int flag, vec3_t org) {
+static void ExecTookTrigger (char *s, int flag, vec3_t org)
+{
 	int pkflags_dmm, tookflags_dmm;
 
 	pkflags_dmm = pkflags;
 	tookflags_dmm = tookflags;
-	
+
 	if (!cl.teamfortress && cl.deathmatch >= 1 && cl.deathmatch <= 4) {
 		if (cl.deathmatch == 4) {
 			pkflags_dmm &= ~(it_ammo|it_weapons);
@@ -3220,7 +3325,8 @@ static void ExecTookTrigger (char *s, int flag, vec3_t org) {
 		TP_ExecTrigger ("f_took");
 }
 
-void TP_ParsePlayerInfo(player_state_t *oldstate, player_state_t *state, player_info_t *info) {
+void TP_ParsePlayerInfo(player_state_t *oldstate, player_state_t *state, player_info_t *info)
+{
 	if (TP_NeedRefreshSkins()) {
 		if ((state->effects & (EF_BLUE|EF_RED) ) != (oldstate->effects & (EF_BLUE|EF_RED)))
 			TP_RefreshSkin(info - cl.players);
@@ -3231,18 +3337,18 @@ void TP_ParsePlayerInfo(player_state_t *oldstate, player_state_t *state, player_
 
 		eyes = state->modelindex && cl.model_precache[state->modelindex] && cl.model_precache[state->modelindex]->modhint == MOD_EYES;
 
-        if (state->effects & (EF_BLUE | EF_RED) || eyes) {
-            vars.enemy_powerups = 0;
-            vars.enemy_powerups_time = cls.realtime;
+		if (state->effects & (EF_BLUE | EF_RED) || eyes) {
+			vars.enemy_powerups = 0;
+			vars.enemy_powerups_time = cls.realtime;
 
-            if (state->effects & EF_BLUE)
-                vars.enemy_powerups |= TP_QUAD;
-            if (state->effects & EF_RED)
-                vars.enemy_powerups |= TP_PENT;
-            if (eyes)
-                vars.enemy_powerups |= TP_RING;
-        }
-    }
+			if (state->effects & EF_BLUE)
+				vars.enemy_powerups |= TP_QUAD;
+			if (state->effects & EF_RED)
+				vars.enemy_powerups |= TP_PENT;
+			if (eyes)
+				vars.enemy_powerups |= TP_RING;
+		}
+	}
 	if (!cl.spectator && !cl.teamfortress && info - cl.players == cl.playernum) {
 		if ((state->effects & (EF_FLAG1|EF_FLAG2)) && !(oldstate->effects & (EF_FLAG1|EF_FLAG2))) {
 			ExecTookTrigger (tp_name_flag.string, it_flag, cl.frames[cl.validsequence & UPDATE_MASK].playerstate[cl.playernum].origin);
@@ -3253,7 +3359,8 @@ void TP_ParsePlayerInfo(player_state_t *oldstate, player_state_t *state, player_
 	}
 }
 
-void TP_CheckPickupSound (char *s, vec3_t org) {
+void TP_CheckPickupSound (char *s, vec3_t org)
+{
 	item_t *item;
 
 	if (cl.spectator)
@@ -3284,15 +3391,15 @@ more:
 		if (FindNearestItem (it_weapons, &item)) {
 			ExecTookTrigger (item->cvar->string, item->itemflag, org);
 		} else if (vars.stat_framecounts[STAT_ITEMS] == cls.framecount) {
-			if (vars.items & ~vars.olditems & IT_LIGHTNING) 
+			if (vars.items & ~vars.olditems & IT_LIGHTNING)
 				ExecTookTrigger (tp_name_lg.string, it_lg, cl.simorg);
-			else if (vars.items & ~vars.olditems & IT_ROCKET_LAUNCHER) 
+			else if (vars.items & ~vars.olditems & IT_ROCKET_LAUNCHER)
 				ExecTookTrigger (tp_name_rl.string, it_rl, cl.simorg);
-			else if (vars.items & ~vars.olditems & IT_GRENADE_LAUNCHER) 
+			else if (vars.items & ~vars.olditems & IT_GRENADE_LAUNCHER)
 				ExecTookTrigger (tp_name_gl.string, it_gl, cl.simorg);
-			else if (vars.items & ~vars.olditems & IT_SUPER_NAILGUN) 
+			else if (vars.items & ~vars.olditems & IT_SUPER_NAILGUN)
 				ExecTookTrigger (tp_name_sng.string, it_sng, cl.simorg);
-			else if (vars.items & ~vars.olditems & IT_NAILGUN) 
+			else if (vars.items & ~vars.olditems & IT_NAILGUN)
 				ExecTookTrigger (tp_name_ng.string, it_ng, cl.simorg);
 			else if (vars.items & ~vars.olditems & IT_SUPER_SHOTGUN)
 				ExecTookTrigger (tp_name_ssg.string, it_ssg, cl.simorg);
@@ -3324,7 +3431,8 @@ more:
 	}
 }
 
-qbool TP_IsItemVisible(item_vis_t *visitem) {
+qbool TP_IsItemVisible(item_vis_t *visitem)
+{
 	vec3_t end, v;
 	trace_t trace;
 
@@ -3374,7 +3482,8 @@ qbool TP_IsItemVisible(item_vis_t *visitem) {
 	return false;
 }
 
-static float TP_RankPoint(item_vis_t *visitem) {
+static float TP_RankPoint(item_vis_t *visitem)
+{
 	vec3_t v2, v3;
 	float miss;
 
@@ -3396,7 +3505,8 @@ static float TP_RankPoint(item_vis_t *visitem) {
 	else return miss;
 }
 
-void TP_FindPoint (void) {
+void TP_FindPoint (void)
+{
 	packet_entities_t *pak;
 	entity_state_t *ent;
 	int	i, j, tempflags;
@@ -3437,9 +3547,9 @@ void TP_FindPoint (void) {
 		// special check for armors
 		if (item->itemflag == (it_ra|it_ya|it_ga)) {
 			switch (ent->skinnum) {
-				case 0: if (!(pointflags_dmm & it_ga)) continue; break;
-				case 1: if (!(pointflags_dmm & it_ya)) continue; break;
-				case 2: if (!(pointflags_dmm & it_ra)) continue; break;
+					case 0: if (!(pointflags_dmm & it_ga)) continue; break;
+					case 1: if (!(pointflags_dmm & it_ya)) continue; break;
+					case 2: if (!(pointflags_dmm & it_ra)) continue; break;
 			}
 		}
 
@@ -3472,13 +3582,13 @@ void TP_FindPoint (void) {
 
 	state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate;
 	info = cl.players;
-	for (j = 0; j < MAX_CLIENTS; j++, info++, state++) {			
+	for (j = 0; j < MAX_CLIENTS; j++, info++, state++) {
 		if (state->messagenum != cl.parsecount || j == cl.playernum || info->spectator)
 			continue;
 
 		if (
-			( state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame) ) ||
-			( state->modelindex == cl_modelindices[mi_h_player] )
+		    ( state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame) ) ||
+		    ( state->modelindex == cl_modelindices[mi_h_player] )
 		)
 			continue;
 
@@ -3516,7 +3626,7 @@ void TP_FindPoint (void) {
 		char *name, buf[256] = {0};
 
 		eyes = beststate->modelindex && cl.model_precache[beststate->modelindex] &&
-			cl.model_precache[beststate->modelindex]->modhint == MOD_EYES;
+		       cl.model_precache[beststate->modelindex]->modhint == MOD_EYES;
 		if (cl.teamfortress) {
 			teammate = !strcmp(Utils_TF_ColorToTeam(bestinfo->real_bottomcolor), TP_PlayerTeam());
 
@@ -3556,9 +3666,9 @@ void TP_FindPoint (void) {
 		if (!bestitem->cvar) {
 			// armors are special
 			switch (bestent->skinnum) {
-				case 0: p = tp_name_ga.string; break;
-				case 1: p = tp_name_ya.string; break;
-				default: p = tp_name_ra.string;
+					case 0: p = tp_name_ga.string; break;
+					case 1: p = tp_name_ya.string; break;
+					default: p = tp_name_ra.string;
 			}
 		} else {
 			p = bestitem->cvar->string;
@@ -3567,9 +3677,8 @@ void TP_FindPoint (void) {
 		vars.pointtype = (bestitem->itemflag & (it_powerups|it_flag)) ? POINT_TYPE_POWERUP : POINT_TYPE_ITEM;
 		strlcpy (vars.pointname, p, sizeof(vars.pointname));
 		strlcpy (vars.pointloc, TP_LocationName (bestent->origin), sizeof(vars.pointloc));
-	}
-	else {
-nothing:
+	} else {
+	nothing:
 		strlcpy (vars.pointname, tp_name_nothing.string, sizeof(vars.pointname));
 		vars.pointloc[0] = 0;
 		vars.pointtype = POINT_TYPE_ITEM;
@@ -3577,7 +3686,8 @@ nothing:
 	vars.pointtime = cls.realtime;
 }
 
-void TP_ParseWeaponModel(model_t *model) {
+void TP_ParseWeaponModel(model_t *model)
+{
 	static model_t *last_model = NULL;
 
 	if (cl.teamfortress && (!cl.spectator || Cam_TrackNum() != -1)) {
@@ -3589,61 +3699,62 @@ void TP_ParseWeaponModel(model_t *model) {
 	last_model = model;
 }
 
-void TP_StatChanged (int stat, int value) {
+void TP_StatChanged (int stat, int value)
+{
 	int effects;
 
 	effects = cl.frames[cl.parsecount & UPDATE_MASK].playerstate[cl.playernum].effects;
 
 	switch (stat) {
-	case STAT_HEALTH:
-		if (value > 0) {
-			if (vars.health <= 0) {
-				extern cshift_t	cshift_empty;
-				if (cl.teamfortress)
-					memset (&cshift_empty, 0, sizeof(cshift_empty));
-				if (CheckTrigger())
-					TP_ExecTrigger ("f_respawn");
+			case STAT_HEALTH:
+			if (value > 0) {
+				if (vars.health <= 0) {
+					extern cshift_t	cshift_empty;
+					if (cl.teamfortress)
+						memset (&cshift_empty, 0, sizeof(cshift_empty));
+					if (CheckTrigger())
+						TP_ExecTrigger ("f_respawn");
+				}
+				vars.health = value;
+				return;
+			}
+			if (vars.health > 0) {		// We have just died
+				vars.deathtrigger_time = cls.realtime;
+				strcpy (vars.lastdeathloc, Macro_Location());
+
+				CountNearbyPlayers(true);
+				vars.last_numenemies = vars.numenemies;
+				vars.last_numfriendlies = vars.numfriendlies;
+
+				if (CheckTrigger()) {
+					if (cl.teamfortress && (cl.stats[STAT_ITEMS] & (IT_KEY1|IT_KEY2)))
+						TP_ExecTrigger ("f_flagdeath");
+					else if (effects & (EF_FLAG1|EF_FLAG2))
+						TP_ExecTrigger ("f_flagdeath");
+					else
+						TP_ExecTrigger ("f_death");
+				}
 			}
 			vars.health = value;
-			return;
-		}
-		if (vars.health > 0) {		// We have just died
-			vars.deathtrigger_time = cls.realtime;
-			strcpy (vars.lastdeathloc, Macro_Location());
-		
-			CountNearbyPlayers(true);
-			vars.last_numenemies = vars.numenemies;
-			vars.last_numfriendlies = vars.numfriendlies;
-		
-			if (CheckTrigger()) {
-				if (cl.teamfortress && (cl.stats[STAT_ITEMS] & (IT_KEY1|IT_KEY2)))
-					TP_ExecTrigger ("f_flagdeath");
-				else if (effects & (EF_FLAG1|EF_FLAG2))
-					TP_ExecTrigger ("f_flagdeath");
-				else
-					TP_ExecTrigger ("f_death");
+			break;
+			case STAT_ITEMS:
+			if (value & ~vars.items & (IT_KEY1|IT_KEY2)) {
+				if (cl.teamfortress && !cl.spectator)
+					ExecTookTrigger (tp_name_flag.string, it_flag, cl.frames[cl.validsequence & UPDATE_MASK].playerstate[cl.playernum].origin);
 			}
-		}
-		vars.health = value;
-		break;
-	case STAT_ITEMS:
-		if (value & ~vars.items & (IT_KEY1|IT_KEY2)) {
-			if (cl.teamfortress && !cl.spectator)
-				ExecTookTrigger (tp_name_flag.string, it_flag, cl.frames[cl.validsequence & UPDATE_MASK].playerstate[cl.playernum].origin);
-		}
-		if (!cl.spectator && cl.teamfortress && ~value & vars.items & (IT_KEY1|IT_KEY2)) {
-			vars.lastdrop_time = cls.realtime;
-			strcpy (vars.lastdroploc, Macro_Location());
-		}
-		vars.olditems = vars.items;
-		vars.items = value;
-		break;
-	case STAT_ACTIVEWEAPON:
-		if (cl.stats[STAT_ACTIVEWEAPON] != vars.activeweapon) {
-			TP_ExecTrigger ("f_weaponchange");
-			vars.activeweapon = cl.stats[STAT_ACTIVEWEAPON];
-		}
-		break;
+			if (!cl.spectator && cl.teamfortress && ~value & vars.items & (IT_KEY1|IT_KEY2)) {
+				vars.lastdrop_time = cls.realtime;
+				strcpy (vars.lastdroploc, Macro_Location());
+			}
+			vars.olditems = vars.items;
+			vars.items = value;
+			break;
+			case STAT_ACTIVEWEAPON:
+			if (cl.stats[STAT_ACTIVEWEAPON] != vars.activeweapon) {
+				TP_ExecTrigger ("f_weaponchange");
+				vars.activeweapon = cl.stats[STAT_ACTIVEWEAPON];
+			}
+			break;
 	}
 	vars.stat_framecounts[stat] = cls.framecount;
 }
@@ -3652,7 +3763,8 @@ void TP_StatChanged (int stat, int value) {
 
 //Find and execute sound triggers. A sound trigger must be terminated by either a CR or LF.
 //Returns true if a sound was found and played
-qbool TP_CheckSoundTrigger (char *str) {
+qbool TP_CheckSoundTrigger (char *str)
+{
 	int i, j, start, length;
 	char soundname[MAX_OSPATH];
 	FILE *f;
@@ -3670,7 +3782,7 @@ qbool TP_CheckSoundTrigger (char *str) {
 		for (j = i - 1; j >= 0; j--) {
 			// quick check for chars that cannot be used
 			// as sound triggers but might be part of a file name
-	if (isalnum(str[j]))
+			if (isalnum(str[j]))
 				continue;	// file name or chat
 
 			if (strchr(tp_soundtrigger.string, str[j]))	{
@@ -3684,7 +3796,7 @@ qbool TP_CheckSoundTrigger (char *str) {
 				if (length >= MAX_QPATH)
 					break;
 
-    strlcpy (soundname, str + start, length + 1);
+				strlcpy (soundname, str + start, length + 1);
 				if (strstr(soundname, ".."))
 					break;	// no thank you
 
@@ -3724,7 +3836,8 @@ int	num_filters = 0;
 
 //returns false if the message shouldn't be printed.
 //Matching filters are stripped from the message
-qbool TP_FilterMessage (char *s) {
+qbool TP_FilterMessage (char *s)
+{
 	int i, j, len, maxlen;
 
 	if (!num_filters)
@@ -3749,7 +3862,7 @@ qbool TP_FilterMessage (char *s) {
 	for (j = 0; j < num_filters; j++)
 		if (!strcasecmp(s + i + 1, filter_strings[j])) {
 			// strip the filter from message
-			if (i && s[i - 1] == ' ')	{	
+			if (i && s[i - 1] == ' ')	{
 				// there's a space just before the filter, remove it
 				// so that soundtriggers like ^blah #att work
 				s[i - 1] = '\n';
@@ -3765,7 +3878,8 @@ qbool TP_FilterMessage (char *s) {
 	return false;	// this message is not for us, don't print it
 }
 
-void TP_MsgFilter_f (void) {
+void TP_MsgFilter_f (void)
+{
 	int c, i;
 	char *s;
 
@@ -3803,9 +3917,10 @@ void TP_MsgFilter_f (void) {
 	}
 }
 
-void TP_DumpMsgFilters(FILE *f) {
+void TP_DumpMsgFilters(FILE *f)
+{
 	int i;
-	
+
 	fprintf(f, "filter       ");
 	if (!num_filters)
 		fprintf(f, "clear");
@@ -3818,7 +3933,8 @@ void TP_DumpMsgFilters(FILE *f) {
 
 /************************************ INIT ************************************/
 
-void TP_Init (void) {
+void TP_Init (void)
+{
 	TP_InitReTriggers();
 	TP_AddMacros();
 
@@ -3844,11 +3960,11 @@ void TP_Init (void) {
 	Cvar_Register (&tp_loadlocs);
 	Cvar_Register (&tp_pointpriorities);
 	Cvar_Register (&tp_soundtrigger);
-	Cvar_Register (&tp_weapon_order);		
+	Cvar_Register (&tp_weapon_order);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_ITEM_NAMES);
-	Cvar_Register (&tp_name_separator);		
-	Cvar_Register (&tp_name_none);			
+	Cvar_Register (&tp_name_separator);
+	Cvar_Register (&tp_name_none);
 	Cvar_Register (&tp_name_nothing);
 	Cvar_Register (&tp_name_at);
 	Cvar_Register (&tp_name_someplace);
