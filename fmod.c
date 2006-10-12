@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fmod.c,v 1.9 2006-10-12 17:25:41 disconn3ct Exp $
+	$Id: fmod.c,v 1.10 2006-10-12 17:30:08 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -37,7 +37,6 @@ qbool FMod_IsModelModified(char *name, int flags, byte *buf, int len) {
 /*	if (!strcasecmp(cls.gamedirfile, "ctf") && !strcmp(name, "progs/player.mdl"))
 		name = "progs/player.mdl_ctf_"; */
 
-	Com_Printf("FMod_IsModelModified {%s} %i, %x \n", name, flags, Com_BlockChecksum(buf, len));
 	p = Security_IsModelModified(name, flags, buf, len);
 
 	if (!VerifyData(p))
