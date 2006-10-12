@@ -866,8 +866,8 @@ void R_DrawAliasModel (entity_t *ent) {
 		glMatrixMode (GL_TEXTURE);
 		glLoadIdentity ();
 		glScalef (0.5, 0.5, 1);
-		glRotatef (cls.realtime * 10, 1, 0, 0);
-		glRotatef (cls.realtime * 10, 0, 1, 0);
+		glRotatef (r_refdef2.time * 10, 1, 0, 0);
+		glRotatef (r_refdef2.time * 10, 0, 1, 0);
 		glMatrixMode (GL_MODELVIEW);
 
 		GL_Bind (underwatertexture);
