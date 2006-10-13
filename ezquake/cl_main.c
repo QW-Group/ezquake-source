@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.92 2006-10-11 17:05:44 disconn3ct Exp $
+	$Id: cl_main.c,v 1.93 2006-10-13 21:22:02 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -224,6 +224,18 @@ char *CL_Macro_Serverstatus(void) {
 
 char *CL_Macro_ServerIp(void) {
 	return NET_AdrToString(cls.server_adr);
+}
+
+char *CL_Macro_Conwidth(void) {
+	static char macrobuf[16];
+	snprintf(macrobuf, sizeof(macrobuf), "%i", vid.conwidth);
+	return macrobuf;
+}
+
+char *CL_Macro_Conheight(void) {
+	static char macrobuf[16];
+	snprintf(macrobuf, sizeof(macrobuf), "%i", vid.conheight);
+	return macrobuf;
 }
 
 int CL_ClientState (void) {
@@ -1041,6 +1053,8 @@ void CL_InitLocal (void) {
 	Cmd_AddMacro("rand", CL_Macro_Rand);
 	Cmd_AddMacro("matchstatus", CL_Macro_Serverstatus);
 	Cmd_AddMacro("serverip", CL_Macro_ServerIp);
+	Cmd_AddMacro("conwidth", CL_Macro_Conwidth);
+	Cmd_AddMacro("conheight", CL_Macro_Conheight);
 
 	Cmd_AddCommand ("cl_messages", CL_Messages_f);//Tei, cl_messages
 }
