@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.72 2006-10-03 22:59:49 johnnycz Exp $
+	$Id: hud_common.c,v 1.73 2006-10-13 21:57:33 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -32,11 +32,25 @@ hud_t *hud_netgraph;
 // HUD planning
 //
 
+struct {
+	// this is temporary storage place for some of user's settings
+	// hud_* values will be dumped into config file
+	int old_multiview;
+	int old_fov;
+	int old_newhud;
+
+	qbool active;
+} autohud;
+
+qbool OnAutoHudChange(cvar_t *var, char *value);
 cvar_t hud_planmode = {"hud_planmode",   "0"};
+cvar_t mvd_autohud = {"mvd_autohud", "0", 0, OnAutoHudChange};
+
 int hud_stats[MAX_CL_STATS];
 
 extern cvar_t cl_weaponpreselect;
 extern int IN_BestWeapon(void);
+extern void DumpHUD(char *);
 
 int HUD_Stats(int stat_num)
 {
@@ -3684,7 +3698,7 @@ static float map_height_diff = 0.0;
 //
 // Is run when a new map is loaded.
 //
-void HUD_NewMap()
+void HUD_NewRadarMap()
 {
 	FILE *f;
 	int n_textcount = 0;
@@ -3791,6 +3805,70 @@ void HUD_NewMap()
 	}
 }
 #endif
+
+#define TEMPHUD_NAME "_temphud"
+#define TEMPHUD_FULLPATH "configs/"TEMPHUD_NAME".cfg"
+
+// will check if user wants to un/load external MVD HUD automatically
+void HUD_AutoLoad_MVD() {
+	extern cvar_t scr_fov;
+	extern cvar_t scr_newHud;
+	extern void Cmd_Exec_f (void);
+
+	if (mvd_autohud.value && cls.mvdplayback && !autohud.active) {
+		// Turn autohud ON here
+	
+		Com_DPrintf("Loading MVD Hud\n");
+		// store current settings: cl_multiview, scr_newhud, hud_*
+		autohud.old_fov = (int) scr_fov.value;
+		autohud.old_multiview = (int) cl_multiview.value;
+		autohud.old_newhud = (int) scr_newHud.value;
+		DumpHUD(TEMPHUD_NAME".cfg");
+		
+		// load MVD HUD config
+		Cbuf_AddText(va("exec cfg/mvdhud%i.cfg\n", (int) mvd_autohud.value));
+
+		autohud.active = true;
+		return;
+	}
+
+	if ((!cls.mvdplayback || !mvd_autohud.value) && autohud.active) {
+		// either user decided to turn mvd autohud off or mvd playback is over
+		// -> Turn autohud OFF here
+		FILE *tempfile;
+		char *fullname = va("%s/ezquake/"TEMPHUD_FULLPATH, com_basedir);
+
+		Com_DPrintf("Unloading MVD Hud\n");
+		// load stored settings
+		scr_fov.value = autohud.old_fov;
+		cl_multiview.value = autohud.old_multiview;
+		scr_newHud.value = autohud.old_newhud;
+		Cmd_TokenizeString("exec "TEMPHUD_FULLPATH);
+		Cmd_Exec_f();
+
+		// delete temp config with hud_* settings
+		if ((tempfile = fopen(fullname, "rb")) && (fclose(tempfile) != EOF))
+			_unlink(fullname);
+
+		autohud.active = false;
+		return;
+	}
+}
+
+qbool OnAutoHudChange(cvar_t *var, char *value) {
+	Cvar_Set(var, value);
+	HUD_AutoLoad_MVD();
+	return true;
+}
+
+// Is run when a new map is loaded.
+void HUD_NewMap() {
+#ifdef GLQUAKE
+	HUD_NewRadarMap();
+#endif
+
+	HUD_AutoLoad_MVD();
+}
 
 #define HUD_SHOW_ONLY_IN_TEAMPLAY		1
 #define HUD_SHOW_ONLY_IN_DEMOPLAYBACK	2
@@ -5447,6 +5525,10 @@ void CommonDraw_Init(void)
     Cvar_Register (&hud_tp_need);
     Cvar_ResetCurrentGroup();
 
+	Cvar_SetCurrentGroup(CVAR_GROUP_MVD);
+	Cvar_Register (&mvd_autohud);
+	Cvar_ResetCurrentGroup();
+
     // init HUD STAT table
     for (i=0; i < MAX_CL_STATS; i++)
         hud_stats[i] = 0;
@@ -5459,6 +5541,8 @@ void CommonDraw_Init(void)
     hud_stats[STAT_CELLS]   = 100;
     hud_stats[STAT_ACTIVEWEAPON] = 32;
     hud_stats[STAT_ITEMS] = 0xffffffff - IT_ARMOR2 - IT_ARMOR1;
+
+	autohud.active = 0;
 
     // init gameclock
 	HUD_Register("gameclock", NULL, "Shows current game time (hh:mm:ss).",
@@ -5681,10 +5765,17 @@ void CommonDraw_Init(void)
         "scale", "1",
         NULL);
 
+	// player face (health indicator)
+    HUD_Register("face", NULL, "Your bloody face.",
+        HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawFace,
+        "1", "screen", "center", "bottom", "0", "0", "0", "0 0 0",
+        "scale", "1",
+        NULL);
+
 	// health
     HUD_Register("health", NULL, "Part of your status - health level.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawHealth,
-        "1", "screen", "center", "bottom", "0", "0", "0", "0 0 0",
+        "1", "face", "after", "center", "0", "0", "0", "0 0 0",
         "style",  "0",
         "scale",  "1",
         "align",  "right",
@@ -5765,13 +5856,6 @@ void CommonDraw_Init(void)
         "scale", "1",
         NULL);
 
-    // player face (health indicator)
-    HUD_Register("face", NULL, "Your bloody face.",
-        HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawFace,
-        "1", "screen", "center", "bottom", "0", "0", "0", "0 0 0",
-        "scale", "1",
-        NULL);
-
     // armor count
     HUD_Register("armor", NULL, "Part of your inventory - armor level.",
         HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawArmor,
@@ -5800,7 +5884,7 @@ void CommonDraw_Init(void)
     // groups
     HUD_Register("group1", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group1,
-        "1", "screen", "center", "bottom", "0", "0", ".5", "0 0 0",
+        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
         "name", "group1",
         "width", "64",
         "height", "64",
@@ -5810,7 +5894,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group2", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group2,
-        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
+        "0", "screen", "center", "top", "0", "0", ".5", "0 0 0",
         "name", "group2",
         "width", "64",
         "height", "64",
@@ -5820,7 +5904,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group3", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group3,
-        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
+        "0", "screen", "right", "top", "0", "0", ".5", "0 0 0",
         "name", "group3",
         "width", "64",
         "height", "64",
@@ -5830,7 +5914,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group4", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group4,
-        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
+        "0", "screen", "left", "center", "0", "0", ".5", "0 0 0",
         "name", "group4",
         "width", "64",
         "height", "64",
@@ -5840,7 +5924,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group5", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group5,
-        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
+        "0", "screen", "center", "center", "0", "0", ".5", "0 0 0",
         "name", "group5",
         "width", "64",
         "height", "64",
@@ -5850,7 +5934,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group6", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group6,
-        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
+        "0", "screen", "right", "center", "0", "0", ".5", "0 0 0",
         "name", "group6",
         "width", "64",
         "height", "64",
@@ -5860,7 +5944,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group7", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group7,
-        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
+        "0", "screen", "left", "bottom", "0", "0", ".5", "0 0 0",
         "name", "group7",
         "width", "64",
         "height", "64",
@@ -5870,7 +5954,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group8", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group8,
-        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
+        "0", "screen", "center", "bottom", "0", "0", ".5", "0 0 0",
         "name", "group8",
         "width", "64",
         "height", "64",
@@ -5880,7 +5964,7 @@ void CommonDraw_Init(void)
         NULL);
     HUD_Register("group9", NULL, "Group element.",
         HUD_NO_GROW, ca_disconnected, 0, SCR_HUD_Group9,
-        "0", "screen", "left", "top", "0", "0", ".5", "0 0 0",
+        "0", "screen", "right", "bottom", "0", "0", ".5", "0 0 0",
         "name", "group9",
         "width", "64",
         "height", "64",
