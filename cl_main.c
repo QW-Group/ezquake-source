@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.94 2006-10-14 14:22:49 johnnycz Exp $
+	$Id: cl_main.c,v 1.95 2006-10-14 20:26:33 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1604,10 +1604,9 @@ void CL_Multiview(void) {
 	if (!CURRVIEW && cls.state >= ca_connected)
 		TP_RefreshSkins();
 
-	// disable contrast as it blanks all but 1 view for gl
-#ifdef GLQUAKE
-	v_contrast.value = 1;
-#endif
+	// contrast was disabled for OpenGL build with the note "blanks all but 1 view"
+	// but we couldn't reproduce this "bug" again so we removed it
+	// v_contrast.value = 1;
 
 	// stop fakeshaft as it lerps with the other views
 	if (cl_fakeshaft.value < 1 && cl_fakeshaft.value > 0)
