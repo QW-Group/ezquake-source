@@ -284,7 +284,7 @@ qbool Capture_Open (char *filename)
 	memset (&m_wave_format, 0, sizeof(m_wave_format));
 	m_wave_format.wFormatTag = WAVE_FORMAT_PCM;
 	m_wave_format.nChannels = 2; // always stereo in Quake sound engine
-	m_wave_format.nSamplesPerSec = shm->format.speed;
+	m_wave_format.nSamplesPerSec = shm ? shm->format.speed : 0;
 	m_wave_format.wBitsPerSample = 16; // always 16bit in Quake sound engine
 	m_wave_format.nBlockAlign = m_wave_format.wBitsPerSample/8 * m_wave_format.nChannels;
 	m_wave_format.nAvgBytesPerSec = m_wave_format.nSamplesPerSec * m_wave_format.nBlockAlign;
