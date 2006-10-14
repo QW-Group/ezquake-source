@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.h,v 1.4 2006-06-13 13:13:02 vvd0 Exp $
+	$Id: mp3_player.h,v 1.5 2006-10-14 14:22:49 johnnycz Exp $
 
 */
 
@@ -105,6 +105,7 @@ int MP3_ParsePlaylist_EXTM3U(char *, unsigned int, char *entries[], unsigned int
 char *MP3_Menu_SongtTitle(void);
 char *MP3_Macro_MP3Info(void);
 
-extern cvar_t mp3_dir, mp3_scrolltitle, mp3_showtime, mp3_volume, mp3_xmms_session;
+extern cvar_t mp3_dir, mp3_scrolltitle, mp3_showtime, mp3_xmms_session;
 
-extern qbool mp3_volumectrl_active;
+double Media_GetVolume(void);
+void Media_SetVolume(double vol);
