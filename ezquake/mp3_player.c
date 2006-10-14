@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.c,v 1.18 2006-10-14 14:22:49 johnnycz Exp $
+	$Id: mp3_player.c,v 1.19 2006-10-14 22:20:26 johnnycz Exp $
 */
 
 
@@ -806,7 +806,7 @@ void MP3_Init(void) {
 		return;
 
 	Cmd_AddMacro("mp3info", MP3_Macro_MP3Info);
-	Cmd_AddMacro("media_volume", Media_GetVolume_f);
+	Cmd_AddMacro("mp3_volume", Media_GetVolume_f);
 
 	Cmd_AddCommand("mp3_prev", MP3_Prev_f);
 	Cmd_AddCommand("mp3_play", MP3_Play_f);
@@ -822,14 +822,13 @@ void MP3_Init(void) {
 	Cmd_AddCommand("mp3_playtrack", MP3_PlayTrackNum_f);
 	Cmd_AddCommand("mp3_songinfo", MP3_SongInfo_f);
 	Cmd_AddCommand("mp3_loadplaylist", MP3_LoadPlaylist_f);	
-	Cmd_AddCommand("media_volume", Media_SetVolume_f);
+	Cmd_AddCommand("mp3_volume", Media_SetVolume_f);
 	Cmd_AddCommand("mp3_start" MP3_PLAYERNAME_NOCAPS, MP3_Execute_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_MP3);
 	Cvar_Register(&mp3_dir);
 	Cvar_Register(&mp3_scrolltitle);
 	Cvar_Register(&mp3_showtime);
-	Cmd_AddLegacyCommand("mp3_volume", "media_volume");
 #ifdef __XMMS__
 	Cvar_Register(&mp3_xmms_session);
 #endif
@@ -896,8 +895,8 @@ void MP3_Shutdown(void) {
 // command to set (and read) mediaplayer volume
 void Media_SetVolume_f(void) {
 	if (Cmd_Argc() < 2) { // users want to read the volume
-		Com_Printf("Use $media_volume\nCurrent mediaplayer volume:\n");
-		Cbuf_AddText("echo $media_volume\n");
+		Com_Printf("Use $mp3_volume\nCurrent mediaplayer volume:\n");
+		Cbuf_AddText("echo $mp3_volume\n");
 	} else {
 		char *v = Cmd_Argv(1);
 		if (v[0] == '+') {
