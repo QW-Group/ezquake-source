@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.27 2006-06-07 23:03:12 johnnycz Exp $
+    $Id: config_manager.c,v 1.28 2006-10-14 10:14:55 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -111,7 +111,7 @@ void DumpBindings (FILE *f)
 }
 
 #define CONFIG_MAX_COL 60
-#define MAX_DUMPED_CVARS 1024
+#define MAX_DUMPED_CVARS 2048
 static void DumpVariables(FILE	*f)
 {
 	cvar_t *var, *sorted_vars[MAX_DUMPED_CVARS];
