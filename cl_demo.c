@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.36 2006-10-03 22:56:13 johnnycz Exp $
+	$Id: cl_demo.c,v 1.37 2006-10-14 08:37:10 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -879,7 +879,7 @@ void CL_Record_f (void) {
 }
 
 static qbool CL_RecordDemo(char *dir, char *name, qbool autorecord) {
-	char extendedname[MAX_OSPATH * 2], strippedname[MAX_OSPATH * 2], *fullname, *exts[] = {"qwd", "qwz", NULL};
+	char extendedname[MAX_OSPATH * 2], strippedname[MAX_OSPATH * 2], *fullname, *exts[] = {"qwd", "qwz", "mvd", NULL};
 	int num;
 
 	if (cls.state != ca_active) {
@@ -1050,7 +1050,7 @@ qbool CL_AutoRecord_Status(void) {
 void CL_AutoRecord_SaveMatch(void) {
 	int error, num;
 	FILE *f;
-	char *dir, *tempname, savedname[2 * MAX_OSPATH], *fullsavedname, *exts[] = {"qwd", "qwz", NULL};
+	char *dir, *tempname, savedname[2 * MAX_OSPATH], *fullsavedname, *exts[] = {"qwd", "qwz", "mvd", NULL};
 	if (!temp_demo_ready)
 		return;
 
