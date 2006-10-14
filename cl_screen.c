@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.59 2006-10-11 17:05:44 disconn3ct Exp $
+    $Id: cl_screen.c,v 1.60 2006-10-14 10:28:55 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1822,9 +1822,8 @@ void SCR_DrawHud (void)
 				img = (mpic_t*)elem->contents;
 				l = img->width/8;
 				elem->scr_height = img->height;*/
-			} else {
+		} else
 				continue;
-			}
 
 			if (elem->width && !(elem->flags & (HUD_FUNC|HUD_IMAGE))){
 				if (elem->width < l) {
@@ -1837,7 +1836,6 @@ void SCR_DrawHud (void)
 					st[l] = '\0';
 				}
 			}
-
 			elem->scr_width = l*8;
 
 			if (!Hud_TranslateCoords (elem, &x, &y))
@@ -1851,10 +1849,10 @@ void SCR_DrawHud (void)
 				{
 #ifdef GLQUAKE
 					if (elem->alpha < 1)
-						Draw_AlphaFill(x, y, elem->scr_width, elem->scr_height, (unsigned char) elem->coords[3], elem->alpha);
+						Draw_AlphaFill(x, y, elem->scr_width, elem->scr_height, (unsigned char)elem->coords[3], elem->alpha);
 					else
 #endif
-						Draw_Fill(x, y, elem->scr_width, elem->scr_height, (unsigned char) elem->coords[3]);
+						Draw_Fill(x, y, elem->scr_width, elem->scr_height, (unsigned char)elem->coords[3]);
 				}
 			if (!(elem->flags & HUD_BLINK_F) || tblink < 0.5)
 			{
@@ -1863,28 +1861,24 @@ void SCR_DrawHud (void)
 #ifdef GLQUAKE
 					extern int char_texture;
 					int std_charset = char_texture;
-
 					if (elem->charset)
 						char_texture = elem->charset;
-
-					if (elem->alpha < 1) {
+					if (elem->alpha < 1)
 						Draw_AlphaString (x, y, st, elem->alpha);
-					} else {
+					else
 #endif
 						Draw_String (x, y, st);
-					}
 #ifdef GLQUAKE
 					char_texture = std_charset;
 #endif
-				} else {
+				}
+				else
 #ifdef GLQUAKE
-					if (elem->alpha < 1) {
+					if (elem->alpha < 1)
 						Draw_AlphaPic (x, y, img, elem->alpha);
-					} else {
+					else
 #endif
 						Draw_Pic (x, y, img);
-					}
-				}
 			}
 		}
 	}
