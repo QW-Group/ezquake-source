@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.48 2006-08-17 17:45:59 disconn3ct Exp $
+	$Id: menu.c,v 1.49 2006-10-14 14:22:49 johnnycz Exp $
 
 */
 
@@ -1829,10 +1829,7 @@ menu_items:
 
 	M_DrawCharacter (M_MP3_CONTROL_COL - 8, M_MP3_CONTROL_MENUROW + mp3_cursor * 8, 12 + ((int)(curtime * 4) & 1));
 
-	if (mp3_volumectrl_active)
-		M_DrawSlider(M_MP3_CONTROL_COL + 96, M_MP3_CONTROL_MENUROW + 56, bound(0, mp3_volume.value, 1));
-	else
-		M_PrintWhite (M_MP3_CONTROL_COL + 88, M_MP3_CONTROL_MENUROW + 56, "Disabled");;
+	M_DrawSlider(M_MP3_CONTROL_COL + 96, M_MP3_CONTROL_MENUROW + 56, bound(0, Media_GetVolume(), 1));
 
 	MP3_GetToggleState(&last_shuffle, &last_repeat);
 	M_PrintWhite (M_MP3_CONTROL_COL + 88, M_MP3_CONTROL_MENUROW + 64, last_shuffle ? "On" : "Off");
@@ -1909,8 +1906,8 @@ void M_Menu_MP3_Control_Key(int key) {
 		case K_RIGHTARROW:
 			switch(mp3_cursor) {
 				case 7:
-					volume = bound(0, mp3_volume.value, 1);
-					Cvar_SetValue(&mp3_volume, bound(0, volume + 0.02, 1));
+					volume = bound(0, Media_GetVolume(), 1);
+					Media_SetVolume(volume + 0.02);
 					break;
 				default:
 					MP3_FastForward_f();
@@ -1920,8 +1917,8 @@ void M_Menu_MP3_Control_Key(int key) {
 		case K_LEFTARROW:
 			switch(mp3_cursor) {
 				case 7:
-					volume = bound(0, mp3_volume.value, 1);
-					Cvar_SetValue(&mp3_volume, bound(0, volume - 0.02, 1));
+					volume = bound(0, Media_GetVolume(), 1);
+					Media_SetVolume(volume - 0.02);
 					break;
 				default:
 					MP3_Rewind_f();

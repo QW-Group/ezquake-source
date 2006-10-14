@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.c,v 1.17 2006-08-09 23:00:03 tonik Exp $
+	$Id: mp3_player.c,v 1.18 2006-10-14 14:22:49 johnnycz Exp $
 */
 
 
@@ -31,13 +31,8 @@ int COM_FileOpenRead (char *path, FILE **hndl);
 
 cvar_t mp3_scrolltitle = {"mp3_scrolltitle", "1"};
 cvar_t mp3_showtime = {"mp3_showtime", "1"};
-qbool OnChange_mp3_volume(cvar_t *var, char *s);
-cvar_t mp3_volume = {"mp3_volume", "1", 0, OnChange_mp3_volume};
-cvar_t mp3_grabvolume = {"mp3_grabvolume", "2"};	
 
 static char *mp3_notrunning_msg = MP3_PLAYERNAME_LEADINGCAP " is not running";
-
-qbool mp3_volumectrl_active = false;
 
 #endif
 
@@ -221,19 +216,6 @@ int MP3_GetStatus(void) {
 		case 0 : 
 		default : return MP3_STOPPED; break;
 	}
-}
-
-qbool OnChange_mp3_volume(cvar_t *var, char *s) {
-	int vol;
-
-	if (!MP3_IsPlayerRunning())
-		return false;
-	if (!mp3_volumectrl_active)
-		return true;
-	vol = (int) (Q_atof(s) * 255.0 + 0.5);
-	vol = bound (0, vol, 255);
-	SendMessage(mp3_hwnd, WM_WA_IPC, vol, IPC_SETVOLUME);
-	return false;
 }
 
 static void WINAMP_Set_ToggleFn(char *name, int setparam, int getparam) {
@@ -436,19 +418,6 @@ int MP3_GetStatus(void) {
 	if (qxmms_remote_is_playing(XMMS_SESSION))
 		return MP3_PLAYING;	
 	return MP3_STOPPED;
-}
-
-qbool OnChange_mp3_volume(cvar_t *var, char *s) {
-	int vol;
-
-	if (!MP3_IsPlayerRunning())
-		return false;
-	if (!mp3_volumectrl_active)
-		return true;
-	vol = (int) (Q_atof(s) * 100 + 0.5);
-	vol = bound(0, vol, 100);
-	qxmms_remote_set_main_volume(XMMS_SESSION, vol);
-	return false;
 }
 
 static void XMMS_Set_ToggleFn(char *name, void *togglefunc, void *getfunc) {
@@ -825,6 +794,9 @@ int MP3_ParsePlaylist_EXTM3U(char *playlist_buf, unsigned int length, char *entr
 
 #if defined(_WIN32) || defined(__XMMS__)
 
+void Media_SetVolume_f(void);
+char* Media_GetVolume_f(void);
+
 void MP3_Init(void) {
 #ifdef __XMMS__
 	XMMS_LoadLibrary();
@@ -833,9 +805,8 @@ void MP3_Init(void) {
 	if (!MP3_IsActive())
 		return;
 
-	mp3_volumectrl_active = !COM_CheckParm("-nomp3volumectrl");
-
 	Cmd_AddMacro("mp3info", MP3_Macro_MP3Info);
+	Cmd_AddMacro("media_volume", Media_GetVolume_f);
 
 	Cmd_AddCommand("mp3_prev", MP3_Prev_f);
 	Cmd_AddCommand("mp3_play", MP3_Play_f);
@@ -851,14 +822,14 @@ void MP3_Init(void) {
 	Cmd_AddCommand("mp3_playtrack", MP3_PlayTrackNum_f);
 	Cmd_AddCommand("mp3_songinfo", MP3_SongInfo_f);
 	Cmd_AddCommand("mp3_loadplaylist", MP3_LoadPlaylist_f);	
+	Cmd_AddCommand("media_volume", Media_SetVolume_f);
 	Cmd_AddCommand("mp3_start" MP3_PLAYERNAME_NOCAPS, MP3_Execute_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_MP3);
 	Cvar_Register(&mp3_dir);
 	Cvar_Register(&mp3_scrolltitle);
 	Cvar_Register(&mp3_showtime);
-	Cvar_Register(&mp3_volume);
-	Cvar_Register(&mp3_grabvolume);
+	Cmd_AddLegacyCommand("mp3_volume", "media_volume");
 #ifdef __XMMS__
 	Cvar_Register(&mp3_xmms_session);
 #endif
@@ -871,32 +842,46 @@ void MP3_Init(void) {}
 
 #endif
 
-
-#if defined(_WIN32) || defined(__XMMS__)
-
-
-void MP3_Frame(void) {
-	float vol;
-
-	if (!mp3_grabvolume.value)
-		return;
-
-	if (!MP3_IsPlayerRunning())
-		return;
+double Media_GetVolume(void) {
+	static double vol = 0;
 
 #ifdef _WIN32
 	vol = SendMessage(mp3_hwnd, WM_WA_IPC, -666, IPC_SETVOLUME) / 255.0;
 	vol = ((int) (vol * 100)) / 100.0;
 #else
+#ifdef __XMMS__
 	vol = qxmms_remote_get_main_volume(XMMS_SESSION) / 100.0;
 #endif
-	vol = bound(0, vol, 1);
+#endif
 
-	if (vol != mp3_volume.value) {
-		mp3_volume.OnChange = NULL;
-		Cvar_SetValue(&mp3_volume, vol);
-		mp3_volume.OnChange = OnChange_mp3_volume;
-	}
+	return vol;
+}
+
+char* Media_GetVolume_f(void) {
+	static char macrobuf[16];
+	snprintf(macrobuf, sizeof(macrobuf), "%f", Media_GetVolume());
+	return macrobuf;
+}
+
+void Media_SetVolume(double vol) {
+#ifdef _WIN32
+	if (!MP3_IsPlayerRunning())
+		return;
+
+	vol = vol * 255.0 + 0.5;
+	vol = bound (0, vol, 255);
+	SendMessage(mp3_hwnd, WM_WA_IPC, (int) vol, IPC_SETVOLUME);
+#else
+#ifdef __XMMS__
+	if (!MP3_IsPlayerRunning())
+		return;
+
+	vol = vol * 100 + 0.5;
+ 	vol = bound(0, vol, 100);
+	qxmms_remote_set_main_volume(XMMS_SESSION, vol);
+#endif
+#endif
+	return;
 }
 
 void MP3_Shutdown(void) {
@@ -908,13 +893,22 @@ void MP3_Shutdown(void) {
 #endif
 }
 
-#else	
-
-void MP3_Frame(void) {}
-
-void MP3_Shutdown(void) {}
-
-#endif
+// command to set (and read) mediaplayer volume
+void Media_SetVolume_f(void) {
+	if (Cmd_Argc() < 2) { // users want to read the volume
+		Com_Printf("Use $media_volume\nCurrent mediaplayer volume:\n");
+		Cbuf_AddText("echo $media_volume\n");
+	} else {
+		char *v = Cmd_Argv(1);
+		if (v[0] == '+') {
+			Media_SetVolume(Media_GetVolume() + Q_atof(v + 1));
+		} else if (v[0] == '-') {
+			Media_SetVolume(Media_GetVolume() - Q_atof(v + 1));
+		} else {
+			Media_SetVolume(Q_atof(v));
+		}
+	}
+}
 
 #ifdef __APPLE__
 qbool MP3_GetOutputtime (int *elapsed, int *total)  {
