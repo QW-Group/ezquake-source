@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.74 2006-10-14 19:23:04 disconn3ct Exp $
+	$Id: hud_common.c,v 1.75 2006-10-15 14:51:21 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -4387,7 +4387,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 
 void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pic_width, int pic_height, int style)
 {
-	int row, col;	
+	int row, col;
 
 	// Don't try to draw anything if we got no data.
 	if(grid == NULL || style == HUD_RADAR_STATS_NONE)
@@ -4404,18 +4404,23 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pi
 			int color = 0;
 
 			float tl_x, tl_y;				// The pixel coordinate of the top left corner of a grid cell.
-			int p_cell_length;				// The pixel length of a cell.
+			float p_cell_length_x;				// The pixel length of a cell.
+			float p_cell_length_y;
 			
 			// Calculate the pixel coordinates of the top left corner of the current cell.
 			// (This is times 8 because the conversion formula was calculated from a .loc-file)
-			tl_x = (map_x_slope * (8 * grid->cells[row][col].tl_x) + map_x_intercept) * scale;
-			tl_y = (map_y_slope * (8 * grid->cells[row][col].tl_y) + map_y_intercept) * scale;
+			tl_x = (map_x_slope * (8.0 * grid->cells[row][col].tl_x) + map_x_intercept) * scale;
+			tl_y = (map_y_slope * (8.0 * grid->cells[row][col].tl_y) + map_y_intercept) * scale;
 
 			// Calculate the cell length in pixel length.
-			p_cell_length = ROUND(map_x_slope*(8*grid->cell_length) * scale);
+			p_cell_length_x = map_x_slope*(8.0 * grid->cell_length) * scale;
+			p_cell_length_y = map_y_slope*(8.0 * grid->cell_length) * scale;
+			// add rounding errors
+			p_cell_length_x += tl_x - ROUND(tl_x);
+			p_cell_length_y += tl_y - ROUND(tl_y);
 			
 			// Don't draw the stats stuff outside the picture.
-			if(tl_x + p_cell_length > pic_width || tl_y + p_cell_length > pic_height || x + tl_x < x || y + tl_y < y)
+			if(tl_x + p_cell_length_x > pic_width || tl_y + p_cell_length_y > pic_height || x + tl_x < x || y + tl_y < y)
 			{
 				continue;
 			}
@@ -4474,10 +4479,10 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pi
 			// Draw the cell in the color of the team with the
 			// biggest weight for this cell. Or draw deaths.
 			Draw_AlphaFill(
-				ROUND(x + tl_x),	// X.
-				ROUND(y + tl_y),	// Y.
-				p_cell_length,		// Width.
-				p_cell_length,		// Height.
+				x + ROUND(tl_x),	// X.
+				y + ROUND(tl_y),	// Y.
+				ROUND(p_cell_length_x),		// Width.
+				ROUND(p_cell_length_y),		// Height.
 				color,				// Color.
 				weight);			// Alpha.
 		}
