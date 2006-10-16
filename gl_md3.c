@@ -2,67 +2,79 @@
 #include "gl_md3.h"
 #include "vx_vertexlights.h" 
 
+#define	INTERP_MAXDIST		300
+
+#define SHADEDOT_QUANT		64 /* like in gl_rmain.c */
+#define NUMVERTEXNORMALS	162 /* like in gl_rmain.c */
 
 typedef float m3by3_t[3][3];
 
-extern vec3_t	shadevector;
+extern cvar_t	cl_drawgun, r_lerpframes, gl_smoothmodels, gl_affinemodels, gl_fb_models;
+
+extern byte	*shadedots;
+extern byte	r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS];
 extern float	shadelight, ambientlight;
 extern qbool full_light;
+
+extern void R_AliasSetupLighting(entity_t *ent);
+
+
+//extern vec3_t	shadevector;
+
+
+//typedef int int3_t[3];
+//int3_t *R_LightPoint3C (vec3_t p);
+
 
 /*
 To draw, for each surface, run through the triangles, getting tex coords from s+t, 
 */
-typedef int int3_t[3];
-int3_t *R_LightPoint3C (vec3_t p);
 void R_DrawAlias3Model (entity_t *ent)
 {
-//	int3_t *light;
-//	vec3_t col;
-	vec3_t norm;
+	float		l, lerpfrac;
+	int distance = INTERP_MAXDIST / MD3_XYZ_SCALE;
+	vec3_t		interpolated_verts;
 
 	md3model_t *mhead;
 	md3Header_t *pheader;
 	model_t *mod;
-	int surfnum;
+	int surfnum, numtris, i;
 	md3Surface_t *surf;
 
-	int frame1=ent->frame, frame2=ent->oldframe;
-	float frame2ness = 0;//ent->lerptime;
-	md3Frame_t *mFrame1, *mFrame2;
-	md3XyzNormal_t *xyznorm1, *xyznorm2;
+	int frame1 = ent->frame, frame2 = ent->oldframe;
+	md3XyzNormal_t *verts, *v1, *v2;
 
 	surfinf_t *sinf;
 
+	unsigned int	*tris;
+	md3St_t *tc;
 
-	int trinum;
-	md3Triangle_t *tris;
-	md3St_t *st;
-
-	float ang, lat, lng, z;
+//	float ang;
 
 	float r_modelalpha;
-	extern cvar_t cl_drawgun;
-
-	extern void R_AliasSetupLighting(entity_t *ent);
-
-	extern cvar_t gl_smoothmodels, gl_affinemodels, gl_fb_models;
 
 	mod = ent->model;
 
 	GL_DisableMultitexture();
+
 	glPushMatrix ();
+
 	R_RotateForEntity (ent);
-	glEnable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
 
 	r_modelalpha = ((ent->flags & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
 	if (ent->alpha)
 		r_modelalpha = ent->alpha;
 
-	glScalef(1/64.0, 1/64.0, 1/64.0); 
+	if (r_modelalpha < 1)
+		glEnable(GL_BLEND);
+//	glDisable(GL_ALPHA_TEST);
+
+
+	glScalef(MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE); 
 	glColor4f(1, 1, 1, r_modelalpha);
 
 	R_AliasSetupLighting(ent);
+	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 
 	if (gl_fb_models.value == 1) {
 		ambientlight = 999999;
@@ -76,12 +88,13 @@ void R_DrawAlias3Model (entity_t *ent)
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
+/*
 	ang = ent->angles[1]/180*M_PI;
 	shadevector[0] = cos(-ang);
 	shadevector[1] = sin(-ang);
 	shadevector[2] = 1;
 	VectorNormalize (shadevector);
-
+*/
 
 	mhead = (md3model_t *)Mod_Extradata (mod);
 	sinf = (surfinf_t *)((char *)mhead + mhead->surfinf);
@@ -92,70 +105,124 @@ void R_DrawAlias3Model (entity_t *ent)
 	if (frame2 >= pheader->numFrames)
 		frame2 = pheader->numFrames-1;
 
+	if (!r_lerpframes.value || ent->framelerp < 0 || ent->oldframe == ent->frame)
+		lerpfrac = 1.0;
+	else
+		lerpfrac = min (ent->framelerp, 1);
+
 	surf = (md3Surface_t *)((char *)pheader + pheader->ofsSurfaces);
-	mFrame1 = ((md3Frame_t *)((char *)pheader + pheader->ofsFrames)) + frame1;
-	mFrame2 = ((md3Frame_t *)((char *)pheader + pheader->ofsFrames)) + frame2;
+
 	for (surfnum = 0; surfnum < pheader->numSurfaces; surfnum++) //loop through the surfaces.
 	{
-		st = (md3St_t *)((char *)surf + surf->ofsSt);	//skin texture coords.
-		xyznorm1 = (md3XyzNormal_t *)((char *)surf + surf->ofsXyzNormals) + frame1*surf->numVerts;	//vertex info for this frame
-		xyznorm2 = (md3XyzNormal_t *)((char *)surf + surf->ofsXyzNormals) + frame2*surf->numVerts;	//vertex info for this frame
+		int pose1, pose2;
 
-		GL_Bind((sinf+pheader->numSurfaces*pheader->numSkins +surfnum)->texnum);
-		tris = (md3Triangle_t *)((char *)surf + surf->ofsTriangles);
-		
+		pose1 = frame1*surf->numVerts;
+		pose2 = frame2*surf->numVerts;
+
+		tc = (md3St_t *)((char *)surf + surf->ofsSt);	//skin texture coords.
+		verts = (md3XyzNormal_t *)((char *)surf + surf->ofsXyzNormals);
+
+		tris = (unsigned int *)((char *)surf + surf->ofsTriangles);
+		numtris = surf->numTriangles * 3;		
+
+		GL_Bind((sinf+pheader->numSurfaces*pheader->numSkins + surfnum)->texnum);
 
 		glBegin (GL_TRIANGLES);
 
-#define V(i, x) xyznorm1[tris->indexes[i]].xyz[x]*(1-frame2ness) + xyznorm2[tris->indexes[i]].xyz[x]*frame2ness
-		for (trinum=0; trinum < surf->numTriangles; trinum++, tris++)
+		for (i = 0 ; i < numtris ; i++)
 		{
-			//FIXME: mesh these properly.
-			lat = (  xyznorm1[tris->indexes[0]].normal & 255) * (2 * M_PI) / 255;
-			lng = ((  xyznorm1[tris->indexes[0]].normal >> 8) & 255) * (2 * M_PI ) / 255;
-			norm[0] = cos ( lat ) * sin ( lng );
-			norm[1] = sin ( lat ) * sin ( lng );
-			norm[2] = cos ( lng );
+			float	s, t;
+    
+			v1 = verts + *tris + pose1;
+			v2 = verts + *tris + pose2;
 
-			z = DotProduct(norm, shadevector)*ambientlight+shadelight/128;
-			glColor4f(z, z, z, r_modelalpha);
+/*    
+			if (poweruptexture && !surface_transparent)
+			{
+				float	adjustedScrollS, adjustedScrollT, timeScale = cl.time; // some refdef time here
+				float	degs, sinValue, cosValue;
+    
+				degs = -30 * timeScale;
+				sinValue = sin(DEG2RAD(degs));
+				cosValue = cos(DEG2RAD(degs));
+    
+				s = tc[*tris].s * cosValue + tc[*tris].t * -sinValue + (0.5 - 0.5 * cosValue + 0.5 * sinValue);
+				t = tc[*tris].s * sinValue + tc[*tris].t *  cosValue + (0.5 - 0.5 * sinValue - 0.5 * cosValue);
+    
+				s *= 2;
+				t *= 2;
+    
+				adjustedScrollS = 0.1 * timeScale;
+				adjustedScrollT = 0.01 * timeScale;
+    
+				// clamp so coordinates don't continuously get larger, causing problems
+				// with hardware limits
+				adjustedScrollS = adjustedScrollS - floor(adjustedScrollS);
+				adjustedScrollT = adjustedScrollT - floor(adjustedScrollT);
+    
+				s += adjustedScrollS;
+				t += adjustedScrollT;
+			}
 
-			glTexCoord2fv(&st[tris->indexes[0]].s);
-			glVertex3f(V(0,0), V(0,1), V(0,2));
+wtf: where else{ }
 
-			lat = (  xyznorm1[tris->indexes[1]].normal & 255) * (2 * M_PI) / 255;
-			lng = ((  xyznorm1[tris->indexes[1]].normal >> 8) & 255) * (2 * M_PI ) / 255;
-			norm[0] = cos ( lat ) * sin ( lng );
-			norm[1] = sin ( lat ) * sin ( lng );
-			norm[2] = cos ( lng );
+*/
 
-			z = DotProduct(norm, shadevector)*ambientlight+shadelight/128;
-			glColor4f(z, z, z, r_modelalpha);
+			s = tc[*tris].s, t = tc[*tris].t;
 
-			glTexCoord2fv(&st[tris->indexes[1]].s);
-			glVertex3f(V(1,0), V(1,1), V(1,2));
+/*    
+			if (gl_mtexable)
+			{
+				qglMultiTexCoord2f (GL_TEXTURE0_ARB, s, t);
+				qglMultiTexCoord2f (GL_TEXTURE1_ARB, s, t);
+			}
+			else
+*/
+			{
+				glTexCoord2f (s, t);
+			}
+    
+			lerpfrac = VectorL2Compare(v1->xyz, v2->xyz, distance) ? lerpfrac : 1;
 
-			lat = (  xyznorm1[tris->indexes[2]].normal & 255) * (2 * M_PI) / 255;
-			lng = ((  xyznorm1[tris->indexes[2]].normal >> 8) & 255) * (2 * M_PI ) / 255;
-			norm[0] = cos ( lat ) * sin ( lng );
-			norm[1] = sin ( lat ) * sin ( lng );
-			norm[2] = cos ( lng );
-
-			z = DotProduct(norm, shadevector)*ambientlight+shadelight/128;
-			glColor4f(z, z, z, r_modelalpha);
-
-			glTexCoord2fv(&st[tris->indexes[2]].s);
-			glVertex3f(V(2,0), V(2,1), V(2,2));
+/*    
+			if (gl_vertexlights.value && !full_light)
+			{
+				l = R_LerpVertexLight (v1->anorm_pitch, v1->anorm_yaw, v2->anorm_pitch, v2->anorm_yaw, lerpfrac, apitch, ayaw);
+				l = min(l, 1);
+    
+				for (j=0 ; j<3 ; j++)
+					lightvec[j] = lightcolor[j] / 256 + l;
+				glColor4f (lightvec[0], lightvec[1], lightvec[2], ent->transparency);
+			}
+			else
+*/
+			{
+				l = FloatInterpolate (shadedots[v1->normal>>8], lerpfrac, shadedots[v2->normal>>8]);
+				l = (l * shadelight + ambientlight) / 256;
+				l = min(l, 1);
+    
+				glColor4f (l, l, l, r_modelalpha);
+			}
+    
+			VectorInterpolate (v2->xyz, lerpfrac, v1->xyz, interpolated_verts);
+			glVertex3fv (interpolated_verts);
+    
+			tris++;
 		}
+
 		glEnd();
 
-		glDisable (GL_BLEND);
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(1, 1, 1, 1);
 
 		surf = (md3Surface_t *)((char *)surf + surf->ofsEnd);	//NEXT!   Getting cocky!
 	}
+
+	if (r_modelalpha < 1)
+		glDisable (GL_BLEND);
+
+//	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+//	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(1, 1, 1, 1);
+
 	glShadeModel(GL_FLAT);
 	
 	if (gl_affinemodels.value)
@@ -272,6 +339,9 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer)
 		surf = (md3Surface_t *)((char *)mem + mem->ofsSurfaces);
 		for (surfn = 0; surfn < numsurfs; surfn++)
 		{
+			md3Triangle_t	*tris;
+			md3XyzNormal_t	*vert;
+
 			ll(surf->ident);
 
 			ll(surf->flags);
@@ -294,6 +364,25 @@ void Mod_LoadAlias3Model (model_t *mod, void *buffer)
 			{
 				lf(st[i].s);
 				lf(st[i].t);
+			}
+
+			// swap all the triangles
+			tris = (md3Triangle_t *)((char *)surf + surf->ofsTriangles);
+			for (j=0 ; j<surf->numTriangles ; j++)
+			{
+				ll(tris[j].indexes[0]);
+				ll(tris[j].indexes[1]);
+				ll(tris[j].indexes[2]);
+			}
+
+			// swap all the vertices
+			vert = (md3XyzNormal_t *)((char *)surf + surf->ofsXyzNormals);
+			for (j=0 ; j < surf->numVerts * surf->numFrames ; j++)
+			{
+				vert[j].xyz[0] = LittleShort (vert[j].xyz[0]);
+				vert[j].xyz[1] = LittleShort (vert[j].xyz[1]);
+				vert[j].xyz[2] = LittleShort (vert[j].xyz[2]);
+				vert[j].normal = LittleShort (vert[j].normal);
 			}
 
 			sshad = (md3Shader_t *)((char *)surf + surf->ofsShaders);

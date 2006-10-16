@@ -3,6 +3,8 @@
 
 #define MD3_IDENT		(('3'<<24)+('P'<<16)+('D'<<8)+'I')
 
+#define	MD3_XYZ_SCALE	(1.0 / 64)
+
 void Mod_LoadAlias3Model (model_t *mod, void *buffer);
 struct entity_s;	//whoops
 void R_DrawAlias3Model (struct entity_s *ent);
