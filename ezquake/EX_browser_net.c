@@ -121,7 +121,8 @@ void Parse_Serverinfo(server_data *s, char *info)
      
     for (i = s->spectatorsn = s->playersn = 0; pinfo  &&  strchr(pinfo, '\n'); i++)
     {
-        int id, frags, time, ping;
+		qbool spec;
+        int id, frags, time, ping, slen;
         char name[100], skin[100], team[100];
         int top, bottom;
         int pos;
@@ -139,14 +140,22 @@ void Parse_Serverinfo(server_data *s, char *info)
         pos += ReadInt(pinfo+pos, &top);
         pos += ReadInt(pinfo+pos, &bottom);
 		pos += ReadString(pinfo+pos, team);
-        if (ping > 0)
+
+        if (ping > 0) { // seems player if relay on ping
+			spec = false;
             s->playersn++;
-        else
+		}
+        else // spec
         {
+			spec = true;
+			slen = strlen(name);
             s->spectatorsn++;
             ping = -ping;
-            //name[strlen(name)-3]=0; // strip (s) ? off for now
-// yes, but in next version will be \s\<name>, instead <name>(s)
+
+			if (name[0] == '\\' && name[1] == 's' && name[2] == '\\')
+				strlcpy(name, name+3, sizeof(name)); // strip \s\<name>
+			if (slen > 3 && name[slen-3] == '(' && name[slen-2] == 's' && name[slen-1] == ')')
+            	name[slen-3] = 0; // strip <name>(s) for old servers
         }
 
         s->players[i] = (playerinfo *)Q_malloc(sizeof(playerinfo));
@@ -154,18 +163,14 @@ void Parse_Serverinfo(server_data *s, char *info)
         s->players[i]->frags = frags;
         s->players[i]->time = time;
         s->players[i]->ping = ping;
+        s->players[i]->spec = spec;
 
         s->players[i]->top = Sbar_ColorForMap(top);
         s->players[i]->bottom = Sbar_ColorForMap(bottom);
 
-        strncpy(s->players[i]->name, name, 20);
-        s->players[i]->name[20] = 0;
-
-        strncpy(s->players[i]->skin, skin, 20);
-        s->players[i]->skin[20] = 0;
-
-        strncpy(s->players[i]->team, team, 20);
-        s->players[i]->team[20] = 0;
+        strlcpy(s->players[i]->name, name, sizeof(s->players[0]->name));
+        strlcpy(s->players[i]->skin, skin, sizeof(s->players[0]->skin));
+        strlcpy(s->players[i]->team, team, sizeof(s->players[0]->team));
 
         pinfo = strchr(pinfo, '\n') + 1;
     }
