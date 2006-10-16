@@ -79,6 +79,7 @@ typedef struct playerinfo_s
     char team[21];
     int top;
     int bottom;
+	qbool spec; // flag: is spectator or player
 } playerinfo;
 
 typedef struct server_data_s

@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.15 2006-10-05 21:17:59 qqshka Exp $
+	$Id: EX_browser.c,v 1.16 2006-10-16 02:03:51 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1194,15 +1194,21 @@ void Serverinfo_Players_Draw(int x, int y, int w, int h)
     UI_Print(x, y, "png tm frgs team name", true);
     for (i=0; i < listsize; i++)
     {
-        char buf[100];
+        char buf[100], fragsbuf[100];
         int top, bottom;
 
         if (serverinfo_players_pos + i >= s->playersn + s->spectatorsn)
             break;
-        sprintf(buf, "%3d %2d %3d  %4.4s %s",
+
+		if (!s->players[serverinfo_players_pos+i]->spec) {
+			int frags_tmp = max(min(s->players[serverinfo_players_pos+i]->frags, 9999), -99);
+        	snprintf(fragsbuf, sizeof(fragsbuf), "%3d%s", frags_tmp, frags_tmp < 1000 ? " " : ""); // "centering" frags as much as possible
+		}
+
+        snprintf(buf, sizeof(buf), "%3d %2d %4.4s %4.4s %s", // frags column fixed to 4 symbols
             max(min(s->players[serverinfo_players_pos+i]->ping, 999), 0),
             max(min(s->players[serverinfo_players_pos+i]->time, 99), 0),
-            max(min(s->players[serverinfo_players_pos+i]->frags, 999), -99),
+            s->players[serverinfo_players_pos+i]->spec ? "spec" : fragsbuf,
 			s->players[serverinfo_players_pos+i]->team,
             s->players[serverinfo_players_pos+i]->name);
 
