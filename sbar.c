@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.27 2006-08-20 14:02:44 johnnycz Exp $
+	$Id: sbar.c,v 1.28 2006-10-17 00:32:09 qqshka Exp $
 */
 // sbar.c -- status bar code
 
@@ -1072,10 +1072,10 @@ static void Sbar_SoloScoreboard (void) {
 static void Sbar_DeathmatchOverlay (int start) {
 	int stats_basic, stats_team, stats_touches, stats_caps, playerstats[7];
 	int scoreboardsize, colors_thickness, statswidth, stats_xoffset = 0;
-	int i, d, k, top, bottom, x, y, xofs, total, p, skip = 10;
+	int i, d, k, top, bottom, x, y, xofs, total, p, skip = 10, fragsint;
 	int rank_width, leftover, startx, tempx, mynum;
 	char num[12], scorerow[64], team[5], name[MAX_SCOREBOARDNAME];
-	char myminutes[4];
+	char myminutes[4], fragsstr[10];
 	int             draw_fps;
     int             offset;     
     player_info_t *s;
@@ -1283,10 +1283,36 @@ static void Sbar_DeathmatchOverlay (int start) {
 
 			x += 32;
 
-			if (s->spectator) {
-				Draw_ColoredString (x, y, "&cF20s&cF50p&cF80e&c883c&cA85t&c668a&c55At&c33Bo&c22Dr", 0);
+			// draw time
+			total = (cl.intermission ? cl.completed_time : cls.demoplayback ? cls.demotime : cls.realtime) - s->entertime;
+			total = (int) total / 60;
+			total = bound(0, total, 999); // limit to 3 symbols int
+			sprintf (myminutes, "%3i", total);
 
-				x += cl.teamplay ? 128 : 88; // move across to print the name
+			if (draw_fps) {
+				if (s->last_fps > 0 && !s->spectator) {
+					sprintf (myminutes, "%3i", bound(0, s->last_fps, 999)); // limit to 3 symbols int
+					if (s->last_fps < 70) {
+						for (d=0; d < strlen(myminutes); d++)
+							myminutes[d] ^= 128;
+					}
+				}
+				else {
+					sprintf (myminutes, "   ");
+				}
+			}
+
+			if (s->spectator) {
+				snprintf (scorerow, sizeof(scorerow), " %s", myminutes);
+				Draw_String (x, y, scorerow); // draw time
+
+				x += 8*5; // move "spectator" 5 symbols right, so time column is not occupied
+				if (cl.teamplay) // use columns frags and team
+					Draw_ColoredString (x, y, "&cF20s&cF50p&cF80e&c883c&cA85t&c668a&c55At&c33Bo&c22Dr", 0);
+				else // use only frags column
+					Draw_ColoredString (x, y, "&cF20s&cF80p&c668e&c22Dc", 0);
+
+				x += cl.teamplay ? 88 : 48; // move across to print the name
 
 				strlcpy(name, s->name, sizeof(name));
 				if (leftover > 0) {
@@ -1302,23 +1328,6 @@ static void Sbar_DeathmatchOverlay (int start) {
 				continue;
 			}
 
-			// draw time
-			total = (cl.intermission ? cl.completed_time : cls.demoplayback ? cls.demotime : cls.realtime) - s->entertime;
-			sprintf (myminutes, "%3i", (int) total / 60);
-
-			if (draw_fps) {
-				if (s->last_fps > 0) {
-					sprintf (myminutes, "%3i", s->last_fps);
-					if (s->last_fps < 70) {
-						for (d=0; d < strlen(myminutes); d++)
-							myminutes[d] ^= 128;
-					}
-				}
-				else {
-					sprintf (myminutes, "   ");
-				}
-			}
-
 			// print the shirt/pants colour bars
 			Draw_Fill (cl.teamplay ? tempx - 40 : tempx, y + 4 - colors_thickness, 40, colors_thickness, Sbar_ColorForMap (top));
 			Draw_Fill (cl.teamplay ? tempx - 40 : tempx, y + 4, 40, 4, Sbar_ColorForMap (bottom));
@@ -1332,12 +1341,16 @@ static void Sbar_DeathmatchOverlay (int start) {
 				name[sizeof(name) - 1 - truncate] = 0;
 			}
 
+			// frags
+			fragsint = bound(-999, s->frags, 9999); // limit to 4 symbols int
+			snprintf (fragsstr, sizeof(fragsstr), "%s%3i", (fragsint < 1000 && fragsint > -100) ? " " : "", fragsint);
+
 			// team
 			if (cl.teamplay) {
 				strlcpy  (team, s->team, sizeof(team));
-				snprintf (scorerow, sizeof(scorerow), " %s  %3i  %-4s %s", myminutes, s->frags, team, name);
+				snprintf (scorerow, sizeof(scorerow), " %s %4.4s  %-4s %s", myminutes, fragsstr, team, name);
 			} else {
-				snprintf (scorerow, sizeof(scorerow), " %s  %3i  %s", myminutes, s->frags, name);
+				snprintf (scorerow, sizeof(scorerow), " %s %4.4s  %s", myminutes, fragsstr, name);
 			}
 			Draw_String (x, y, scorerow);
 
@@ -1365,7 +1378,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 
 			if (!cls.mvdplayback || !cl_multiview.value) {
 				if (k == mynum) {
-					Draw_Character (x + 40, y, 16);
+					Draw_Character (x + 40 - ((fragsint < 1000 && fragsint > -100) ? 0 : 8), y, 16);
 					Draw_Character (x + 40 + 32, y, 17);
 				}
 			}
