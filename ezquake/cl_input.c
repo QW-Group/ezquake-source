@@ -288,9 +288,24 @@ void IN_Weapon(void) {
 
 	// read user input
 	IN_RememberWpOrder();
-	// but not necessarily select the best weapon right now
-	if (!cl_weaponpreselect.value && (best = IN_BestWeapon()))
-		in_impulse = best;
+
+	best = IN_BestWeapon();
+	// cl_weaponpreselect behaviour:
+	// 0: select best weapon right now
+	// 1: always only pre-select; switch to it on +attack
+	// 2: user is holding +attack -> select, otherwise just pre-select
+	switch ((int) cl_weaponpreselect.value) {
+		case 2:
+			if ((in_attack.state & 3) && best) // user is holding +attack and there is some weapon available
+				in_impulse = best;
+			break;
+		case 1: break;	// don't select weapon immediately
+		default: case 0:	// no pre-selection
+			if (best)
+				in_impulse = best;
+			
+			break;
+	}
 }
 
 /*
