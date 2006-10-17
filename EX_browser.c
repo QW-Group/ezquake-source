@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.16 2006-10-16 02:03:51 qqshka Exp $
+	$Id: EX_browser.c,v 1.17 2006-10-17 00:14:49 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1194,14 +1194,14 @@ void Serverinfo_Players_Draw(int x, int y, int w, int h)
     UI_Print(x, y, "png tm frgs team name", true);
     for (i=0; i < listsize; i++)
     {
-        char buf[100], fragsbuf[100];
+        char buf[100], fragsbuf[100] = {0};
         int top, bottom;
 
         if (serverinfo_players_pos + i >= s->playersn + s->spectatorsn)
             break;
 
 		if (!s->players[serverinfo_players_pos+i]->spec) {
-			int frags_tmp = max(min(s->players[serverinfo_players_pos+i]->frags, 9999), -99);
+			int frags_tmp = bound(-99, s->players[serverinfo_players_pos+i]->frags, 9999);
         	snprintf(fragsbuf, sizeof(fragsbuf), "%3d%s", frags_tmp, frags_tmp < 1000 ? " " : ""); // "centering" frags as much as possible
 		}
 
@@ -1214,11 +1214,13 @@ void Serverinfo_Players_Draw(int x, int y, int w, int h)
 
         buf[w/8] = 0;
 
-        top = s->players[serverinfo_players_pos+i]->top;
-        bottom = s->players[serverinfo_players_pos+i]->bottom;
+		if (!s->players[serverinfo_players_pos+i]->spec) {
+        	top = s->players[serverinfo_players_pos+i]->top;
+        	bottom = s->players[serverinfo_players_pos+i]->bottom;
     
-        Draw_Fill (x+7*8-2, y+i*8+8   +1, 34, 4, top);
-        Draw_Fill (x+7*8-2, y+i*8+8+4 +1, 34, 3, bottom);
+        	Draw_Fill (x+7*8-2, y+i*8+8   +1, 34, 4, top);
+        	Draw_Fill (x+7*8-2, y+i*8+8+4 +1, 34, 3, bottom);
+		}
 
         UI_Print(x, y+i*8+8, buf, false);
     }
