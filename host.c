@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.26 2006-09-25 09:10:43 johnnycz Exp $
+	$Id: host.c,v 1.27 2006-10-17 02:32:06 qqshka Exp $
  
 */
 
@@ -531,6 +531,13 @@ void Host_Shutdown (void)
 		return;
 	}
 	isdown = true;
+
+#ifndef SERVERONLY
+	// on low-end systems quit process may last long time (was about 1 minute for me on old compo),
+	// at the same time may repeats repeats repeats some sounds, trying preventing this
+	S_StopAllSounds (true);
+	S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
+#endif
 
 	SV_Shutdown ("Server quit\n");
 	QLib_Shutdown();
