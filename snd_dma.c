@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.32 2006-10-03 23:01:05 johnnycz Exp $
+    $Id: snd_dma.c,v 1.33 2006-10-19 19:52:41 qqshka Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -665,7 +665,10 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 		ch = channels;
 		for (i = 0; i < total_channels; i++, ch++)
 			if (ch->sfx && (ch->leftvol || ch->rightvol)) {
-				//Com_Printf ("%3i %3i %s\n", ch->leftvol, ch->rightvol, ch->sfx->name);
+#if defined(DEBUG) || defined(_DEBUG)
+				if (s_show.value == 2)
+					Com_Printf ("%3i %3i %s\n", ch->leftvol, ch->rightvol, ch->sfx->name);
+#endif
 				total++;
 			}
 		Print_flags[Print_current] |= PR_TR_SKIP;
