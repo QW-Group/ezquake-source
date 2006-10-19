@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.23 2006-08-14 15:31:53 vvd0 Exp $
+	$Id: sys_win.c,v 1.24 2006-10-19 22:40:36 qqshka Exp $
 
 */
 // sys_win.c
@@ -197,7 +197,10 @@ void Sys_Error (char *error, ...) {
 	vsnprintf (text, sizeof(text), error, argptr);
 	va_end (argptr);
 
-	MessageBox(NULL, text, "Error", 0 /* MB_OK */ );
+	if (dedicated)
+		Sys_Printf("ERROR: %s\n", text);
+	else
+		MessageBox(NULL, text, "Error", 0 /* MB_OK */ );
 
 	if (qwclsemaphore)
 		CloseHandle (qwclsemaphore);
