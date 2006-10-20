@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.18 2006-08-10 11:10:53 tonik Exp $
+	$Id: cl_tent.c,v 1.19 2006-10-20 02:55:18 qqshka Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -506,6 +506,19 @@ void CL_ParseTEnt (void) {
 
 void vectoangles(vec3_t vec, vec3_t ang);
 
+static float f_rnd( float from, float to )
+{
+	float r;
+
+	if ( from >= to )
+		return from;
+
+	r = from + (to - from) * ((float)rand() / RAND_MAX);
+
+	return bound(from, r, to);
+}
+
+
 #define MAX_LIGHTNINGBEAMS 10
 //VULT LIGHTNING
 
@@ -514,7 +527,7 @@ void CL_UpdateBeams (void) {
 	beam_t *b;	
 	vec3_t dist, org;
 	entity_t ent;
-	float d, yaw, pitch, forward, fakeshaft;
+	float d, yaw, pitch, forward, fakeshaft, lg_size = bound(3, amf_lightning_size.value, 30);
 	extern cvar_t v_viewheight;
 
 #ifdef GLQUAKE
@@ -626,11 +639,13 @@ void CL_UpdateBeams (void) {
 					//VULT - Some people might like their lightning beams thicker
 					for (k=0;k<beamstodraw;k++)
 					{
+
 						VectorAdd (org, dist, beamend[k]);
 						for (j=0;j<3;j++)
 						// START shaman RFE 1022310
-						// beamend[k][j]+=(rand()%40)-20;
-						beamend[k][j]+=(rand()%(25+(int)bound(0, amf_lightning_size.value, 25)))-20;
+//						beamend[k][j]+=(rand()%40)-20;
+//						beamend[k][j]+=(rand()%((int)lg_size*2))-(int)lg_size; // can be rendered this way too, seems more or less equal
+						beamend[k][j]+=f_rnd(-lg_size, lg_size);
 						// END shaman RFE 1022310
 						VX_LightningBeam (beamstart[k], beamend[k]);
 						VectorCopy (beamend[k], beamstart[k]);
