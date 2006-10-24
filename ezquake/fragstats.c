@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: fragstats.c,v 1.12 2006-08-20 14:02:44 johnnycz Exp $
+    $Id: fragstats.c,v 1.13 2006-10-24 16:10:28 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -24,7 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cvar_t cl_parsefrags = {"cl_parseFrags", "0"};
 cvar_t cl_loadFragfiles = {"cl_loadFragfiles", "0"};
 
-#define FRAGFILE_VERSION	"1.00"
+#define FUH_FRAGFILE_VERSION_1_00	"1.00" /* for compatibility with fuh */
+#define FRAGFILE_VERSION_1_00		"ezquake-1.00" /* fuh suggest such format */
 
 #define MAX_WEAPON_CLASSES		64
 #define MAX_FRAG_DEFINITIONS	512
@@ -40,6 +41,7 @@ typedef enum msgtype_s {
 	mt_suicide,	
 	mt_frag,	
 	mt_tkill,	
+	mt_tkilled_unk,
 	mt_flagtouch,
 	mt_flagdrop,
 	mt_flagcap} 
@@ -207,7 +209,7 @@ static void LoadFragFile(char *filename, qbool quiet) {
 			goto nextline;
 
 		if (!strcasecmp(Cmd_Argv(0), "#FRAGFILE")) {
-		
+
 			_checkargs(3);
 			if (!strcasecmp(Cmd_Argv(1), "VERSION")) {
 				if (gotversion) {
@@ -215,11 +217,15 @@ static void LoadFragFile(char *filename, qbool quiet) {
 					goto end;
 				}
 				token = Cmd_Argv(2);
-				if (!strcasecmp(token, FRAGFILE_VERSION)) {
+				if (!strcasecmp(token, FUH_FRAGFILE_VERSION_1_00))
+					token = FRAGFILE_VERSION_1_00; // so we compatible with old fuh format, because our format include all fuh features + our
+
+				if (!strcasecmp(token, FRAGFILE_VERSION_1_00) && (token = strchr(token, '-'))) {
+					token++; // find float component of string like this "ezquake-x.yz"
 					fragdefs.version = (int) (100 * Q_atof(token));
 					gotversion = true;
 				} else {
-					Com_Printf("Error: fragfile version (\"%s\") unsupported \n", token);
+					Com_Printf("Error: fragfile version (\"%s\") unsupported \n", Cmd_Argv(2));
 					goto end;
 				}
 			} else if (!strcasecmp(Cmd_Argv(1), "GAMEDIR")) {
@@ -303,6 +309,9 @@ static void LoadFragFile(char *filename, qbool quiet) {
 				} else if (!strcasecmp(Cmd_Argv(2), "X_TEAMKILLED_BY_Y")) {
 					_checkargs2(5, 6);
 					msgtype = mt_tkilled;
+				} else if (!strcasecmp(Cmd_Argv(2), "X_TEAMKILLED_UNKNOWN")) {
+					_checkargs(5);
+					msgtype = mt_tkilled_unk;
 				} else {
 					Com_Printf("Fragfile warning (line %d): unexpected token \"%s\"\n", line, Cmd_Argv(2));
 					goto nextline;
@@ -367,7 +376,7 @@ static void LoadFragFile(char *filename, qbool quiet) {
 				) {
 					msgtype = mt_flagcap;
 				} else {
-					Com_Printf("Fragfile warning (line/ %d): unexpected token \"%s\"\n", line, Cmd_Argv(2));
+					Com_Printf("Fragfile warning (line %d): unexpected token \"%s\"\n", line, Cmd_Argv(2));
 					goto nextline;
 				}
 
@@ -581,6 +590,10 @@ static void Stats_ParsePrintLine(char *s, cfrags_format *cff) {
 		fragstats[victim].totaldeaths++;	
 		break;
 
+	case mt_tkilled_unk:
+		fragstats[i].totaldeaths++;
+		break;
+
 	case mt_tkill:	
 		fragstats[i].totalteamkills++;
 		break;
@@ -689,6 +702,17 @@ foundmatch:
 
 		VX_TrackerStreakEnd(victim, killer, fragstats[victim].streak);
 		fragstats[victim].streak=0;
+#endif
+		break;
+
+	case mt_tkilled_unk:
+		fragstats[i].totaldeaths++;
+#ifdef GLQUAKE
+		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
+			VX_TrackerOddTeamkilled();
+
+		VX_TrackerStreakEndOddTeamkilled(i, fragstats[i].streak);
+		fragstats[i].streak=0;
 #endif
 		break;
 
