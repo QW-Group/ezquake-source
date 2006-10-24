@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.21 2006-08-19 16:50:31 johnnycz Exp $
+	$Id: sv_user.c,v 1.22 2006-10-24 21:48:40 qqshka Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -1676,8 +1676,9 @@ void SV_ExecuteClientMessage (client_t *cl) {
 
 			s = Info_ValueForKey(cl->userinfo, "chat");
 			if ( s[0] ) {
-				newcmd.forwardmove = newcmd.sidemove = newcmd.upmove = 0;
-				newcmd.buttons = 0;
+// allow movement while in console
+//				newcmd.forwardmove = newcmd.sidemove = newcmd.upmove = 0;
+				newcmd.buttons &= BUTTON_JUMP; // only jump button allowed while in console
 // somemods uses impulses for commands, so let them use
 //				newcmd.impulse = 0;
 			}
