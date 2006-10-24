@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.18 2006-09-25 09:10:43 johnnycz Exp $
+	$Id: vid_wgl.c,v 1.19 2006-10-24 13:48:48 vvd0 Exp $
 
 */
 
@@ -1321,7 +1321,7 @@ void VID_Init (unsigned char *palette) {
 	vid_menudrawfn = VID_MenuDraw;
 	vid_menukeyfn = VID_MenuKey;
 
-	strcpy (badmode.modedesc, "Bad mode");
+	strlcpy (badmode.modedesc, "Bad mode", 9);
 	vid_canalttab = true;
 }
 
