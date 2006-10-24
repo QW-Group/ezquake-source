@@ -3,14 +3,14 @@
 //
 
 
-#FRAGFILE   VERSION         1.00		//DONT CHANGE THIS
+#FRAGFILE   VERSION         ezquake-1.00		//DONT CHANGE THIS
 #FRAGFILE   GAMEDIR         ANY
 
-#META       TITLE           "Deathmatch FRAG DEFINITIONS v0.10"
-#META       DESCRIPTION     "frag and flag messages for deathmatch"
-#META       AUTHOR          fuh
-#META       EMAIL           fuh@fuhquake.net
-#META       WEBPAGE         http://www.fuhquake.net
+#META       TITLE           "DM/TDM FRAG DEFINITIONS v0.20"
+#META       DESCRIPTION     "frag messages for DM and TDM, additionaly support KTPRO and KTX mods"
+#META       AUTHOR          "fuh but slightly modified by ezquake team"
+#META       EMAIL           none
+#META       WEBPAGE         http://ezquake.sf.net
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -49,6 +49,9 @@
 //This defines a new weapon referenced by KEYWORD. 'name' is a description of
 //the weapon.  You my optionally specify a short form of the name as well.
 //Ex.   #DEFINE WEAPON_CLASS NAILGUN "nailgun" "ng"
+//Also we can treat WEAPON_CLASS something like damage type, for example
+//various in game traps like spikes, lava balls ans etc defined like this
+//#DEFINE WEAPON_CLASS TRAP "trap"
 //
 //INBUILT WEAPON_CLASS KEYWORDS
 //NULL NOWEAPON NONE (all 3 interchangeable)
@@ -59,23 +62,30 @@
 //#DEFINE <OBITUARY | OBIT> <TYPE> <WEAPON> <msg1> [msg2]
 //This defines a death message.
 //msg1 and msg2 cannot be longer than 255 characters
-//TYPE is one of: (things on the same line are interchangeable keywords)
-//              SELF_DEATH SUICIDE
+//TYPE is one of:
+//              PLAYER_DEATH
+//				PLAYER_SUICIDE
 //              X_FRAGS_Y
 //              X_FRAGGED_BY_Y
 //              X_FRAGS_UNKNOWN
 //              X_TEAMKILLS_Y
 //              X_TEAMKILLED_BY_Y
 //              X_TEAMKILLS_UNKNOWN
+//              X_TEAMKILLED_UNKNOWN // appear in fragfile version "ezquake-1.0"
 //WEAPON is one of the weapon classes defined with #DEFINE WEAPON_CLASS
 //msg1 and msg2 are strings.
 //msg2 is optional but can only be used when type is one of:
 //  X_FRAGS_Y, X_FRAGGED_BY_Y, X_TEAMKILLS_Y, X_TEAMKILLED_BY_Y.
 //
-//#DEFINE OBITUARY SELF_DEATH <weaponclass> <msg> :
+//#DEFINE OBITUARY PLAYER_DEATH <weaponclass> <msg> :
 //this means a string of the form "playername msg *"
-//is interpreted as 'playername' was killed with 'weaponclass'.
-//Ex. #DEFINE OBITUARY SELF_KILL ROCKET_LAUNCHER "becomes bored with life"
+//is interpreted as 'playername' killed by map traps but not by other players with 'weaponclass'.
+//Ex. #DEFINE OBITUARY PLAYER_DEATH TRAP " ate a lavaball"
+//
+//#DEFINE OBITUARY PLAYER_SUICIDE <weaponclass> <msg> :
+//this means a string of the form "playername msg *"
+//is interpreted as 'playername' suicides with 'weaponclass'.
+//Ex. #DEFINE OBITUARY PLAYER_SUICIDE ROCKET_LAUNCHER "becomes bored with life"
 //
 //#DEFINE OBITUARY X_FRAGS_Y <weaponclass> msg1 [msg2]
 //this means a string of the form "player1name msg1 player2name [msg2] *"
@@ -98,6 +108,12 @@
 //this means a string of the form "p1name msg1 *"
 //is interpreted as player 'p1name' teamkills (someone) with 'weaponclass'.
 //Ex. #DEFINE OBITUARY X_TEAMKILLS_UNKNOWN NOWEAPON "checks his glasses"
+//
+//#DEFINE OBITUARY X_TEAMKILLED_UNKNOWN <weaponclass> <msg1>
+//this means a string of the form "p1name msg1 *"
+//is interpreted as player 'p1name' teamkilled by (someone) with 'weaponclass'.
+//Ex. #DEFINE OBITUARY X_TEAMKILLED_UNKNOWN STOMP " was crushed by his teammate"
+//
 ///////////////////////////////////////////////////////////////////////////////
 //#DEFINE <FLAG_ALERT | FLAG_MSG> <TYPE> <msg1>
 //this defines a flag message.
@@ -135,11 +151,15 @@
 #DEFINE WEAPON_CLASS    DISCHARGE           "discharge"         "dschrge"
 #DEFINE WEAPON_CLASS    SQUISH              "squish"
 #DEFINE WEAPON_CLASS    FALL                "fall"
+#DEFINE WEAPON_CLASS    STOMP               "stomp" // ktpro/ktx stomp kills
 
 
 //
 //OBITUARIES
 //
+
+// FIXME: afaik one (and only one?) msg still unsupported: Satan's power deflects qqshka's telefrag
+
 #DEFINE OBITUARY    PLAYER_DEATH     DROWN              " sleeps with the fishes"
 #DEFINE OBITUARY    PLAYER_DEATH     DROWN              " sucks it down"
 #DEFINE OBITUARY    PLAYER_DEATH     DROWN              " gulped a load of slime"
@@ -169,8 +189,10 @@
 #DEFINE OBITUARY    PLAYER_SUICIDE   ROCKET_LAUNCHER    " becomes bored with life"
 #DEFINE OBITUARY    PLAYER_SUICIDE   ROCKET_LAUNCHER    " discovers blast radius"
 
-#DEFINE OBITUARY    PLAYER_SUICIDE   DISCHARGE          " electrocutes himself."
-#DEFINE OBITUARY    PLAYER_SUICIDE   DISCHARGE          " electrocutes herself."
+#DEFINE OBITUARY    PLAYER_SUICIDE   DISCHARGE          " electrocutes himself"
+#DEFINE OBITUARY    PLAYER_SUICIDE   DISCHARGE          " electrocutes herself"
+#DEFINE OBITUARY    PLAYER_SUICIDE   DISCHARGE          " railcutes himself" // rail dis
+#DEFINE OBITUARY    PLAYER_SUICIDE   DISCHARGE          " railcutes herself" // rail dis
 #DEFINE OBITUARY    PLAYER_SUICIDE   DISCHARGE          " discharges into the slime"
 #DEFINE OBITUARY    PLAYER_SUICIDE   DISCHARGE          " discharges into the lava"
 #DEFINE OBITUARY    PLAYER_SUICIDE   DISCHARGE          " discharges into the water"
@@ -182,6 +204,17 @@
 #DEFINE OBITUARY    X_TEAMKILLS_UNKNOWN NOWEAPON        " checks her glasses"
 #DEFINE OBITUARY    X_TEAMKILLS_UNKNOWN NOWEAPON        " gets a frag for the other team"
 #DEFINE OBITUARY    X_TEAMKILLS_UNKNOWN NOWEAPON        " loses another friend"
+
+#DEFINE OBITUARY    X_TEAMKILLED_UNKNOWN STOMP          " was crushed by his teammate" // ktpro stomp tk
+#DEFINE OBITUARY    X_TEAMKILLED_UNKNOWN STOMP          " was crushed by her teammate" // ktpro stomp tk
+#DEFINE OBITUARY    X_TEAMKILLED_UNKNOWN STOMP          " was jumped by his teammate"  // ktx addon for ktpro stomp tk
+#DEFINE OBITUARY    X_TEAMKILLED_UNKNOWN STOMP          " was jumped by her teammate"  // ktx addon for ktpro stomp tk
+
+#DEFINE OBITUARY    X_FRAGGED_BY_Y  STOMP              " softens "   "'s fall" // ktpro stomp kill
+#DEFINE OBITUARY    X_FRAGGED_BY_Y  STOMP              " tried to catch "      // ktpro stomp kill
+#DEFINE OBITUARY    X_FRAGGED_BY_Y  STOMP              " was crushed by "      // ktpro stomp kill
+#DEFINE OBITUARY    X_FRAGGED_BY_Y  STOMP              " was jumped by "       // ktpro stomp kill
+#DEFINE OBITUARY    X_FRAGS_Y       STOMP              " stomps "              // ktpro stomp kill
 
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  AXE                " was ax-murdered by "
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  SHOTGUN            " was lead poisoned by "

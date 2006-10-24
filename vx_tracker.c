@@ -116,6 +116,13 @@ void VX_TrackerTeamkilled(int count, int icount, char *name)
 	VX_TrackerAddText(outstring);
 }
 
+void VX_TrackerOddTeamkilled()
+{
+	char outstring[500];
+	sprintf(outstring, "&c380Teammate &c900killed you&r");
+	VX_TrackerAddText(outstring);
+}
+
 void VX_TrackerOddTeamkill(int count)
 {
 	char outstring[500];
@@ -222,6 +229,22 @@ void VX_TrackerStreakEnd(int player, int killer, int count)
 	}
 	VX_TrackerAddText(outstring);
 }
+
+void VX_TrackerStreakEndOddTeamkilled(int player, int count)
+{
+	char outstring[500];
+	killing_streak_t *streak = VX_GetStreak(count);
+	if (!streak)
+		return;
+
+	if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
+		sprintf(outstring, "&c940Your streak was ended by teammate (%i kills)", count);
+	else
+		sprintf(outstring, "&r%s&c940's streak was ended by teammate (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
+
+	VX_TrackerAddText(outstring);
+}
+
 
 //We need a seperate function, since our messages are in colour... and transparent
 void VXSCR_DrawTrackerString (void)
