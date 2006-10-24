@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.28 2006-09-25 09:10:43 johnnycz Exp $
+    $Id: common.h,v 1.29 2006-10-24 15:50:11 qqshka Exp $
 */
 // common.h  -- general definitions
 
@@ -125,7 +125,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //============================================================================
 
-extern	char	com_token[1024];
+#define MAX_COM_TOKEN	1024
+
+extern	char	com_token[MAX_COM_TOKEN];
 extern	qbool	com_eof;
 
 char *COM_Parse (char *data);

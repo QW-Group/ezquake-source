@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.35 2006-09-25 09:10:43 johnnycz Exp $
+    $Id: common.c,v 1.36 2006-10-24 15:50:11 qqshka Exp $
 */
 
 #ifdef _WIN32
@@ -190,8 +190,6 @@ void COM_ForceExtension (char *path, char *extension)
 }
 
 //============================================================================
-
-#define MAX_COM_TOKEN	1024
 
 char	com_token[MAX_COM_TOKEN];
 int		com_argc;
