@@ -6,7 +6,7 @@
 #FRAGFILE   VERSION         ezquake-1.00		//DONT CHANGE THIS
 #FRAGFILE   GAMEDIR         ANY
 
-#META       TITLE           "DM/TDM FRAG DEFINITIONS v0.20"
+#META       TITLE           "DM/TDM FRAG DEFINITIONS v0.30"
 #META       DESCRIPTION     "frag messages for DM and TDM, additionaly support KTPRO and KTX mods"
 #META       AUTHOR          "fuh but slightly modified by ezquake team"
 #META       EMAIL           none
@@ -176,8 +176,11 @@
 #DEFINE OBITUARY    PLAYER_DEATH     TRAP               " was zapped"
 #DEFINE OBITUARY    PLAYER_DEATH     TRAP               " ate a lavaball"
 
-#DEFINE OBITUARY    PLAYER_DEATH   	 TELEFRAG           " was telefragged by his teammate"
-#DEFINE OBITUARY    PLAYER_DEATH   	 TELEFRAG           " was telefragged by her teammate"
+//#DEFINE OBITUARY    PLAYER_DEATH   	 TELEFRAG           " was telefragged by his teammate"
+//#DEFINE OBITUARY    PLAYER_DEATH   	 TELEFRAG           " was telefragged by her teammate"
+#DEFINE OBITUARY    X_TEAMKILLED_UNKNOWN TELEFRAG       " was telefragged by his teammate"
+#DEFINE OBITUARY    X_TEAMKILLED_UNKNOWN TELEFRAG       " was telefragged by her teammate"
+
 
 #DEFINE OBITUARY    PLAYER_DEATH     NOWEAPON           " died"
 #DEFINE OBITUARY    PLAYER_DEATH     NOWEAPON           " tried to leave"
