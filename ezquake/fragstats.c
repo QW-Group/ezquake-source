@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: fragstats.c,v 1.13 2006-10-24 16:10:28 qqshka Exp $
+    $Id: fragstats.c,v 1.14 2006-10-25 21:50:45 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -628,22 +628,18 @@ foundmatch:
 		fragstats[i].totaldeaths++;
 		fragstats[i].wdeaths[fragmsg->wclass_index]++;
 #ifdef GLQUAKE
-		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
-			VX_TrackerDeath(fragmsg->wclass_index, fragstats[i].wdeaths[fragmsg->wclass_index]);
+		VX_TrackerDeath(i, fragmsg->wclass_index, fragstats[i].wdeaths[fragmsg->wclass_index]);
 		VX_TrackerStreakEnd(i, i, fragstats[i].streak);
 		fragstats[i].streak=0;
 #endif
 		break;
-
-
 
 	case mt_suicide:
 		fragstats[i].totalsuicides++;
 		fragstats[i].totaldeaths++;
 #ifdef GLQUAKE
 		fragstats[i].wsuicides[fragmsg->wclass_index]++;
-		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
-			VX_TrackerSuicide(fragmsg->wclass_index, fragstats[i].wsuicides[fragmsg->wclass_index]);
+		VX_TrackerSuicide(i, fragmsg->wclass_index, fragstats[i].wsuicides[fragmsg->wclass_index]);
 		VX_TrackerStreakEnd(i, i, fragstats[i].streak);
 		fragstats[i].streak=0;
 #endif
@@ -656,16 +652,12 @@ foundmatch:
 		fragstats[killer].kills[victim]++;
 		fragstats[killer].totalfrags++;
 		fragstats[killer].wkills[fragmsg->wclass_index]++;
-#ifdef GLQUAKE
-		if ((cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
-			VX_TrackerFrag(fragmsg->wclass_index, fragstats[killer].wkills[fragmsg->wclass_index], Info_ValueForKey(cl.players[victim].userinfo, "name"));
-#endif
 		fragstats[victim].deaths[killer]++;
 		fragstats[victim].totaldeaths++;
 		fragstats[victim].wdeaths[fragmsg->wclass_index]++;
 #ifdef GLQUAKE
-		if ((cl.playernum == victim || (victim == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
-			VX_TrackerFragged(fragmsg->wclass_index, fragstats[victim].wdeaths[fragmsg->wclass_index], Info_ValueForKey(cl.players[killer].userinfo, "name"));
+		VX_TrackerFragXvsY(victim, killer, fragmsg->wclass_index, 
+				fragstats[victim].wdeaths[fragmsg->wclass_index], fragstats[killer].wkills[fragmsg->wclass_index]);
 		fragstats[killer].streak++;
 		VX_TrackerStreak(killer, fragstats[killer].streak);
 		VX_TrackerStreakEnd(victim, killer, fragstats[victim].streak);
@@ -677,12 +669,12 @@ foundmatch:
 		fragstats[i].totalfrags++;
 		fragstats[i].wkills[fragmsg->wclass_index]++;
 #ifdef GLQUAKE
-		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
-			VX_TrackerOddFrag(fragmsg->wclass_index, fragstats[i].wkills[fragmsg->wclass_index]);
+		VX_TrackerOddFrag(i, fragmsg->wclass_index, fragstats[i].wkills[fragmsg->wclass_index]);
 		fragstats[i].streak++;
 		VX_TrackerStreak(i, fragstats[i].streak);
 #endif
 		break;
+
 	case mt_tkilled:
 	case mt_tkills:	
 		killer = (fragmsg->type == mt_tkilled) ? j : i;
@@ -690,16 +682,13 @@ foundmatch:
 
 		fragstats[killer].teamkills[victim]++;
 		fragstats[killer].totalteamkills++;
-#ifdef GLQUAKE	
-		if ((cl.playernum == killer || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
-			VX_TrackerTeamkill(fragstats[killer].totalteamkills, fragstats[killer].teamkills[victim], Info_ValueForKey(cl.players[victim].userinfo, "name"));
-#endif
+
 		fragstats[victim].teamdeaths[killer]++;
 		fragstats[victim].totaldeaths++;
 #ifdef GLQUAKE
-		if ((cl.playernum == victim || (victim == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
-			VX_TrackerTeamkilled(fragstats[killer].totalteamkills, fragstats[victim].teamdeaths[killer], Info_ValueForKey(cl.players[killer].userinfo, "name"));
-
+		VX_TrackerTK_XvsY(victim, killer, fragmsg->wclass_index, 
+					fragstats[killer].totalteamkills, fragstats[victim].teamdeaths[killer],
+					fragstats[killer].totalteamkills, fragstats[killer].teamkills[victim]);
 		VX_TrackerStreakEnd(victim, killer, fragstats[victim].streak);
 		fragstats[victim].streak=0;
 #endif
@@ -708,9 +697,7 @@ foundmatch:
 	case mt_tkilled_unk:
 		fragstats[i].totaldeaths++;
 #ifdef GLQUAKE
-		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
-			VX_TrackerOddTeamkilled();
-
+		VX_TrackerOddTeamkilled(i, fragmsg->wclass_index);
 		VX_TrackerStreakEndOddTeamkilled(i, fragstats[i].streak);
 		fragstats[i].streak=0;
 #endif
@@ -719,15 +706,15 @@ foundmatch:
 	case mt_tkill:	
 		fragstats[i].totalteamkills++;
 #ifdef GLQUAKE	
-		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_frags.value)
-			VX_TrackerOddTeamkill(fragstats[i].totalteamkills);
+		VX_TrackerOddTeamkill(i, fragmsg->wclass_index, fragstats[i].totalteamkills);
+// not enough data to stop streaks of killed man
 #endif
 		break;
 
 	case mt_flagtouch:
 		fragstats[i].touches++;
 #ifdef GLQUAKE
-		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_flags.value)
+		if (cl.playernum == i || (i == Cam_TrackNum() && cl.spectator))
 			VX_TrackerFlagTouch(fragstats[i].touches);
 #endif
 		flag_touched = true;
@@ -736,7 +723,7 @@ foundmatch:
 	case mt_flagdrop:
 		fragstats[i].fumbles++;
 #ifdef GLQUAKE	
-		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_flags.value)
+		if (cl.playernum == i || (i == Cam_TrackNum() && cl.spectator))
 			VX_TrackerFlagDrop(fragstats[i].fumbles);
 		flag_dropped = true;
 #endif
@@ -745,7 +732,7 @@ foundmatch:
 	case mt_flagcap:
 		fragstats[i].captures++;
 #ifdef GLQUAKE	
-		if ((cl.playernum == i || (i == Cam_TrackNum() && cl.spectator)) && amf_tracker_flags.value)
+		if (cl.playernum == i || (i == Cam_TrackNum() && cl.spectator))
 			VX_TrackerFlagCapture(fragstats[i].captures);
 #endif
 		flag_captured = true;
