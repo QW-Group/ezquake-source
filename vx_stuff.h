@@ -152,19 +152,26 @@ void ParticleFire (vec3_t org) ;
 void VX_TeslaCharge (vec3_t org) ;
 
 
-void VX_TrackerDeath(int weapon, int count);
-void VX_TrackerSuicide(int weapon, int count);
-void VX_TrackerFrag(int weapon, int wcount, char *name);
-void VX_TrackerFragged(int weapon, int wcount, char *name);
-void VX_TrackerOddFrag(int weapon, int wcount);
-void VX_TrackerTeamkill(int count, int icount, char *name);
-void VX_TrackerTeamkilled(int count, int icount, char *name);
-void VX_TrackerOddTeamkilled();
-void VX_TrackerOddTeamkill(int count);
+void VX_TrackerDeath(int player, int weapon, int count);
+void VX_TrackerSuicide(int player, int weapon, int count);
+void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, int killer_wcount);
+void VX_TrackerOddFrag(int player, int weapon, int wcount);
+
+void VX_TrackerTK_XvsY(int player, int killer, int weapon, int p_count, int p_icount, int k_count, int k_icount);
+void VX_TrackerOddTeamkill(int player, int weapon, int count);
+void VX_TrackerOddTeamkilled(int player, int weapon);
+
 void VX_TrackerFlagTouch(int count);
 void VX_TrackerFlagDrop(int count);
 void VX_TrackerFlagCapture(int count);
-void VX_TrackerAddText(char *msg);
+
+typedef enum tracktype_s {
+	tt_death,		// deaths, suicides, frags, teamkills... we may split this, but currently no need
+	tt_streak,		// streak msgs
+	tt_flag,		// flag msgs
+} tracktype_t;
+
+void VX_TrackerAddText(char *msg, tracktype_t tt);
 char *GetWeaponName (int num);
 void VXSCR_DrawTrackerString(void);
 void VX_TrackerThink(void);
