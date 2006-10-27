@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.45 2006-10-11 17:05:44 disconn3ct Exp $
+    $Id: teamplay.c,v 1.46 2006-10-27 15:47:02 disconn3ct Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -3443,7 +3443,7 @@ qbool TP_IsItemVisible(item_vis_t *visitem)
 	VectorNormalizeFast (v);
 	VectorMA (visitem->entorg, visitem->radius, v, end);
 	trace = PM_TraceLine (visitem->vieworg, end);
-	if (trace.fraction == 1)
+	if ((int)trace.fraction == 1)
 		return true;
 
 	VectorMA (visitem->entorg, visitem->radius, visitem->right, end);
@@ -3451,7 +3451,7 @@ qbool TP_IsItemVisible(item_vis_t *visitem)
 	VectorNormalizeFast (v);
 	VectorMA (end, visitem->radius, v, end);
 	trace = PM_TraceLine (visitem->vieworg, end);
-	if (trace.fraction == 1)
+	if ((int)trace.fraction == 1)
 		return true;
 
 	VectorMA(visitem->entorg, -visitem->radius, visitem->right, end);
@@ -3459,7 +3459,7 @@ qbool TP_IsItemVisible(item_vis_t *visitem)
 	VectorNormalizeFast(v);
 	VectorMA(end, visitem->radius, v, end);
 	trace = PM_TraceLine(visitem->vieworg, end);
-	if (trace.fraction == 1)
+	if ((int)trace.fraction == 1)
 		return true;
 
 	VectorMA(visitem->entorg, visitem->radius, visitem->up, end);
@@ -3467,7 +3467,7 @@ qbool TP_IsItemVisible(item_vis_t *visitem)
 	VectorNormalizeFast(v);
 	VectorMA (end, visitem->radius, v, end);
 	trace = PM_TraceLine(visitem->vieworg, end);
-	if (trace.fraction == 1)
+	if ((int)trace.fraction == 1)
 		return true;
 
 	// use half the radius, otherwise it's possible to see through floor in some places
@@ -3476,7 +3476,7 @@ qbool TP_IsItemVisible(item_vis_t *visitem)
 	VectorNormalizeFast(v);
 	VectorMA(end, visitem->radius, v, end);
 	trace = PM_TraceLine(visitem->vieworg, end);
-	if (trace.fraction == 1)
+	if ((int)trace.fraction == 1)
 		return true;
 
 	return false;
