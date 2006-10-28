@@ -16,12 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: fragstats.c,v 1.14 2006-10-25 21:50:45 qqshka Exp $
+    $Id: fragstats.c,v 1.15 2006-10-28 14:54:42 qqshka Exp $
 */
 
 #include "quakedef.h"
 
 cvar_t cl_parsefrags = {"cl_parseFrags", "0"};
+cvar_t cl_showFragsMessages = {"cl_showFragsMessages", "1"};
 cvar_t cl_loadFragfiles = {"cl_loadFragfiles", "0"};
 
 #define FUH_FRAGFILE_VERSION_1_00	"1.00" /* for compatibility with fuh */
@@ -625,6 +626,7 @@ foundmatch:
 
 	switch (fragmsg->type) {
 	case mt_death:
+		cff->isFragMsg = true;
 		fragstats[i].totaldeaths++;
 		fragstats[i].wdeaths[fragmsg->wclass_index]++;
 #ifdef GLQUAKE
@@ -635,6 +637,7 @@ foundmatch:
 		break;
 
 	case mt_suicide:
+		cff->isFragMsg = true;
 		fragstats[i].totalsuicides++;
 		fragstats[i].totaldeaths++;
 #ifdef GLQUAKE
@@ -647,6 +650,7 @@ foundmatch:
 
 	case mt_fragged:
 	case mt_frags:	
+		cff->isFragMsg = true;
 		killer = (fragmsg->type == mt_fragged) ? j : i;
 		victim = (fragmsg->type == mt_fragged) ? i : j;
 		fragstats[killer].kills[victim]++;
@@ -666,6 +670,7 @@ foundmatch:
 		break;
 
 	case mt_frag:
+		cff->isFragMsg = true;
 		fragstats[i].totalfrags++;
 		fragstats[i].wkills[fragmsg->wclass_index]++;
 #ifdef GLQUAKE
@@ -677,6 +682,7 @@ foundmatch:
 
 	case mt_tkilled:
 	case mt_tkills:	
+		cff->isFragMsg = true;
 		killer = (fragmsg->type == mt_tkilled) ? j : i;
 		victim = (fragmsg->type == mt_tkilled) ? i : j;
 
@@ -695,6 +701,7 @@ foundmatch:
 		break;
 
 	case mt_tkilled_unk:
+		cff->isFragMsg = true;
 		fragstats[i].totaldeaths++;
 #ifdef GLQUAKE
 		VX_TrackerOddTeamkilled(i, fragmsg->wclass_index);
@@ -704,6 +711,7 @@ foundmatch:
 		break;
 
 	case mt_tkill:	
+		cff->isFragMsg = true;
 		fragstats[i].totalteamkills++;
 #ifdef GLQUAKE	
 		VX_TrackerOddTeamkill(i, fragmsg->wclass_index, fragstats[i].totalteamkills);
@@ -848,6 +856,7 @@ void Stats_Init(void) {
 	InitFragDefs();
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register(&cl_parsefrags);
+	Cvar_Register(&cl_showFragsMessages);
 	Cvar_Register(&cl_loadFragfiles);
 	Cvar_ResetCurrentGroup();
 	Cmd_AddCommand("loadFragfile", Load_FragFile_f);

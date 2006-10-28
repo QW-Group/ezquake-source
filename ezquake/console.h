@@ -47,6 +47,7 @@ typedef struct cfrags_format_s {
 	int p2pos;
 	int p2len;
 	int p2col;
+	qbool isFragMsg; // true if that was frag msg
 } cfrags_format;
 
 extern  qbool    con_addtimestamp;

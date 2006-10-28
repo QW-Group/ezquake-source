@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.56 2006-10-03 22:57:10 johnnycz Exp $
+	$Id: cl_parse.c,v 1.57 2006-10-28 14:54:42 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1755,13 +1755,14 @@ char* CL_ColorizeFragMessage(char *source, cfrags_format *cff)
 //for CL_ParsePrint
 static void FlushString (char *s, int level, qbool team, int offset) {
 	extern cvar_t con_highlight, con_highlight_mark, name;
+	extern cvar_t cl_showFragsMessages;
 #ifdef GLQUAKE
 	extern cvar_t scr_coloredText;
 #endif
 	char white_s[4096];
 	char *mark, *text;
 	char *f = strstr(s, name.string);
-	cfrags_format cff = {0, 0, 0, 0, 0, 0};
+	cfrags_format cff = {0, 0, 0, 0, 0, 0, false};
 
 	strlcpy(white_s, s, 4096);
 
@@ -1796,7 +1797,8 @@ static void FlushString (char *s, int level, qbool team, int offset) {
 		text = CL_ColorizeFragMessage(text, &cff);
 #endif
 
-	Com_Printf("%s%s", mark, text);
+	if (cl_showFragsMessages.value || !cff.isFragMsg)
+		Com_Printf("%s%s", mark, text);
 
 	if (level >= 4)
 		return;
