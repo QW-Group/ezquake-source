@@ -93,12 +93,40 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 	active_track += 1;
 }
 
+// return true if player enemy comparing to u, handle spectator mode
+qbool VX_TrackerIsEnemy(int player)
+{
+	int selfnum;
+
+	if (!cl.teamplay) // non teamplay mode, so player is enemy if not u 
+		return !(cl.playernum == player || (player == Cam_TrackNum() && cl.spectator));
+
+	// ok, below is teamplay
+
+	if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
+		return false;
+
+	selfnum = (cl.spectator ? Cam_TrackNum() : cl.playernum);
+
+	if (selfnum == -1)
+		return true; // well, seems u r spec, but tracking noone
+
+	return strncmp(cl.players[player].team, cl.players[selfnum].team, sizeof(cl.players[0].team)-1);
+}
+
+#define GOODCOLOR   "&c090" // good news
+#define BADCOLOR    "&c900" // bad news
+#define TKGOODCOLOR "&c990" // team kill, not on ur team
+#define TKBADCOLOR  "&c009" // team kill, on ur team
+
 void VX_TrackerDeath(int player, int weapon, int count)
 {
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
-	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&r%s &c900%s&r (died)", cl.players[player].name, GetWeaponName(weapon));
+	if (amf_tracker_frags.value == 2) {
+		char *c = (VX_TrackerIsEnemy(player) ? GOODCOLOR : BADCOLOR);
+		snprintf(outstring, sizeof(outstring), "&r%s %s%s&r (died)", cl.players[player].name, c, GetWeaponName(weapon));
+	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&c960You died&r\n%s deaths: %i", GetWeaponName(weapon), count);
 
@@ -109,8 +137,10 @@ void VX_TrackerSuicide(int player, int weapon, int count)
 {
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
-	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&r%s &c900%s&r (suicides)", cl.players[player].name, GetWeaponName(weapon));
+	if (amf_tracker_frags.value == 2) {
+		char *c = (VX_TrackerIsEnemy(player) ? GOODCOLOR : BADCOLOR);
+		snprintf(outstring, sizeof(outstring), "&r%s %s%s&r (suicides)", cl.players[player].name, c, GetWeaponName(weapon));
+	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&c960You killed yourself&r\n%s suicides: %i", GetWeaponName(weapon), count);
 
@@ -121,8 +151,10 @@ void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, i
 {
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
-	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&r%s &c900%s&r %s", cl.players[killer].name, GetWeaponName(weapon), cl.players[player].name);
+	if (amf_tracker_frags.value == 2) {
+		char *c = (VX_TrackerIsEnemy(player) ? GOODCOLOR : BADCOLOR);
+		snprintf(outstring, sizeof(outstring), "&r%s %s%s&r %s", cl.players[killer].name, c, GetWeaponName(weapon), cl.players[player].name);
+	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&r%s &c900killed you&r\n%s deaths: %i", cl.players[killer].name, GetWeaponName(weapon), player_wcount);
 	else if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
@@ -135,8 +167,10 @@ void VX_TrackerOddFrag(int player, int weapon, int wcount)
 {
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
-	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&r%s &c900%s&r enemy", cl.players[player].name, GetWeaponName(weapon));
+	if (amf_tracker_frags.value == 2) {
+		char *c = (!VX_TrackerIsEnemy(player) ? GOODCOLOR : BADCOLOR);
+		snprintf(outstring, sizeof(outstring), "&r%s %s%s&r enemy", cl.players[player].name, c, GetWeaponName(weapon));
+	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&c900You killed&r an enemy\n%s kills: %i", GetWeaponName(weapon), wcount);
 
@@ -147,8 +181,10 @@ void VX_TrackerTK_XvsY(int player, int killer, int weapon, int p_count, int p_ic
 {
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
-	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&r%s &c900%s&r %s", cl.players[killer].name, GetWeaponName(weapon), cl.players[player].name);
+	if (amf_tracker_frags.value == 2) {
+		char *c = (VX_TrackerIsEnemy(player) ? TKGOODCOLOR : TKBADCOLOR);
+		snprintf(outstring, sizeof(outstring), "&r%s %s%s&r %s", cl.players[killer].name, c, GetWeaponName(weapon), cl.players[player].name);
+	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&c380Teammate&r %s &c900killed you\nTimes: %i\nTotal Teamkills: %i", cl.players[killer].name, p_icount, p_count);
 	else if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
@@ -161,8 +197,10 @@ void VX_TrackerOddTeamkill(int player, int weapon, int count)
 {
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
-	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&r%s &c900%s&r teammate", cl.players[player].name, GetWeaponName(weapon));
+	if (amf_tracker_frags.value == 2) {
+		char *c = (VX_TrackerIsEnemy(player) ? TKGOODCOLOR : TKBADCOLOR);
+		snprintf(outstring, sizeof(outstring), "&r%s %s%s&r teammate", cl.players[player].name, c, GetWeaponName(weapon));
+	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&c900You killed &c380a teammate&r\nTotal Teamkills: %i", count);
 
@@ -173,8 +211,10 @@ void VX_TrackerOddTeamkilled(int player, int weapon)
 {
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
-	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&rteammate &c900%s&r %s", GetWeaponName(weapon), cl.players[player].name);
+	if (amf_tracker_frags.value == 2) {
+		char *c = (VX_TrackerIsEnemy(player) ? TKGOODCOLOR : TKBADCOLOR);
+		snprintf(outstring, sizeof(outstring), "&rteammate %s%s&r %s", c, GetWeaponName(weapon), cl.players[player].name);
+	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))	
 		snprintf(outstring, sizeof(outstring), "&c380Teammate &c900killed you&r");
 
