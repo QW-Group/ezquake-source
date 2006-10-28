@@ -41,7 +41,7 @@ void R_DrawAlias3Model (entity_t *ent)
 	int surfnum, numtris, i;
 	md3Surface_t *surf;
 
-	int frame1 = ent->frame, frame2 = ent->oldframe;
+	int frame1 = ent->oldframe, frame2 = ent->frame;
 	md3XyzNormal_t *verts, *v1, *v2;
 
 	surfinf_t *sinf;
@@ -204,7 +204,7 @@ wtf: where else{ }
 				glColor4f (l, l, l, r_modelalpha);
 			}
     
-			VectorInterpolate (v2->xyz, lerpfrac, v1->xyz, interpolated_verts);
+			VectorInterpolate (v1->xyz, lerpfrac, v2->xyz, interpolated_verts);
 			glVertex3fv (interpolated_verts);
     
 			tris++;
