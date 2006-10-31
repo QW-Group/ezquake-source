@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.33 2006-07-25 17:46:18 disconn3ct Exp $
+	$Id: cl_cmd.c,v 1.34 2006-10-31 16:09:54 qqshka Exp $
 */
 
 #include <time.h>
@@ -103,7 +103,7 @@ void CL_ForwardToServer_f (void) {
 		{
 			time(&client_time);
 			for (i = 0; i < sizeof(client_time); ++i)
-				snprintf(client_time_str + i * 2, 8 * 2 + 1 - i * 2, "%02X",
+				snprintf(client_time_str + i * 2, sizeof(client_time_str) - i * 2, "%02X",
 					 (unsigned int)((client_time >> (i * 8)) & 0xFF));
 
 			server_string_len = Cmd_Argc() + strlen(Cmd_Argv(1)) + DIGEST_SIZE * 2 + 16;
@@ -380,7 +380,7 @@ void CL_QStat_f (void)
 void CL_Rcon_f (void) {
 
 	char	message[1024], client_time_str[9];
-	int		i;
+	int		i, i_from;
 	netadr_t	to;
 	extern cvar_t	rcon_password, rcon_address, cl_crypt_rcon;
 	time_t		client_time;
@@ -397,26 +397,40 @@ void CL_Rcon_f (void) {
 	{
 		time(&client_time);
 		for (i = 0; i < sizeof(client_time); ++i)
-			snprintf(client_time_str + i * 2, 8 * 2 + 1 - i * 2, "%02X",
+			snprintf(client_time_str + i * 2, sizeof(client_time_str) - i * 2, "%02X",
 				 (unsigned int)((client_time >> (i * 8)) & 0xFF));
 		SHA1_Init();
 		SHA1_Update((unsigned char *)"rcon ");
-		SHA1_Update((unsigned char *)rcon_password.string);
-		SHA1_Update((unsigned char *)client_time_str);
+		if (rcon_password.string[0])
+		{
+			SHA1_Update((unsigned char *)rcon_password.string);
+			SHA1_Update((unsigned char *)client_time_str);
+			i_from = 1;
+		}
+		else // first arg must be pass in such case, so handle this
+		{
+			SHA1_Update((unsigned char *)Cmd_Argv(1));
+			SHA1_Update((unsigned char *)client_time_str);
+			i_from = 2;
+		}
 		SHA1_Update((unsigned char *)" ");
-		for (i = 1; i < Cmd_Argc(); i++)
+		for (i = i_from; i < Cmd_Argc(); i++)
 		{
 			SHA1_Update((unsigned char *)Cmd_Argv(i));
 			SHA1_Update((unsigned char *)" ");
 		}
 		strlcat (message, SHA1_Final(), sizeof(message));
 		strlcat (message, client_time_str, sizeof(message));
+		strlcat (message, " ", sizeof(message));
 	}
-	else
-		if (rcon_password.string[0])
+	else {
+		i_from = 1;
+ 		if (rcon_password.string[0]) {
 			strlcat (message, rcon_password.string, sizeof(message));
-	strlcat (message, " ", sizeof(message));
-	for (i = 1; i < Cmd_Argc(); i++)
+			strlcat (message, " ", sizeof(message));
+		}
+	}
+	for (i = i_from; i < Cmd_Argc(); i++)
 	{
 		strlcat (message, Cmd_Argv(i), sizeof(message));
 		strlcat (message, " ", sizeof(message));
