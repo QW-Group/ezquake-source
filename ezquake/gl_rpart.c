@@ -429,11 +429,13 @@ static void QMB_UpdateParticles(void) {
 	for (i = 0; i < num_particletypes; i++) {
 		pt = &particle_types[i];
 
-		if (pt && ((int) pt->start == 1)) 
+		if (pt && ((int) pt->start == 1)) {
 			/* hack! fixme!
 			 * for some reason in some occasions - MS VS 2005 compiler
-			 * this address doesn't point to 0 as other unitialized do, but to 0x00000001 */
-			pt->start = 0; 
+			 * this address doesn't point to 0 as other unitialized do, but to 0x00000001 */	
+			pt->start = NULL; 
+			Com_DPrintf("ERROR: particle_type[%i].start == 1\n", i);
+		}
 
 		if (pt->start) {
 			for (p = pt->start; p && p->next; ) {
