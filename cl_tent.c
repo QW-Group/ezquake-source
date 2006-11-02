@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.19 2006-10-20 02:55:18 qqshka Exp $
+	$Id: cl_tent.c,v 1.20 2006-11-02 13:08:30 johnnycz Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -527,10 +527,11 @@ void CL_UpdateBeams (void) {
 	beam_t *b;	
 	vec3_t dist, org;
 	entity_t ent;
-	float d, yaw, pitch, forward, fakeshaft, lg_size = bound(3, amf_lightning_size.value, 30);
+	float d, yaw, pitch, forward, fakeshaft;
 	extern cvar_t v_viewheight;
 
 #ifdef GLQUAKE
+	float lg_size = bound(3, amf_lightning_size.value, 30);
 	int beamstodraw, j, k;
 	qbool sparks = false;
 	vec3_t beamstart[MAX_LIGHTNINGBEAMS], beamend[MAX_LIGHTNINGBEAMS];
