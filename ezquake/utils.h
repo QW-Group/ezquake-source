@@ -30,6 +30,7 @@ char *CreateSpaces(int amount);
 char *SecondsToMinutesString(int print_time);
 char *SecondsToHourString(int time);
 byte *StringToRGB(char *s);
+byte *StringToRGBA(char *s);
 
 int Util_Extend_Filename(char *filename, char **ext);
 qbool Util_Is_Valid_Filename(char *s);
