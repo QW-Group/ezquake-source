@@ -62,7 +62,7 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 	(*grid)->col_count = ROUND(grid_width / cell_length);
 
 	// Allocate the rows.
-	(*grid)->cells = (stats_cell_t **)Q_calloc((*grid)->row_count, sizeof(stats_cell_t));
+	(*grid)->cells = (stats_cell_t **)Q_calloc((*grid)->row_count, sizeof(stats_cell_t *));
 	
 	// If we failed allocating the rows, cleanup and return.
 	if((*grid)->cells == NULL)
@@ -276,7 +276,7 @@ void StatsGrid_InitHoldItems()
 	// Copy the entities from the buffer to the final list.
 	for(i = 0; i < ents_count; i++)
 	{
-		memcpy(&stats_important_ents->list[i], &temp_ents[i], sizeof(stats_entity_t));
+		memcpy(stats_important_ents->list + i, temp_ents + i, sizeof(stats_entity_t *));
 	}
 
 	// Set the radius around the items that decides if it's being
@@ -309,7 +309,7 @@ void StatsGrid_InitTeamNames(stats_weight_grid_t *grid)
 		// Get the first player's team and set that as team1.
 		if(!grid->teams[STATS_TEAM1].name[0])
 		{
-			strcpy(grid->teams[STATS_TEAM1].name, cl.players[i].team);
+			strncpy(grid->teams[STATS_TEAM1].name, cl.players[i].team, MAX_INFO_STRING);
 			grid->teams[STATS_TEAM1].color = Sbar_BottomColor(&cl.players[i]);
 		}
 
@@ -317,7 +317,7 @@ void StatsGrid_InitTeamNames(stats_weight_grid_t *grid)
 		// set this players team as team 2.
 		if(strcmp(grid->teams[STATS_TEAM1].name, cl.players[i].team))
 		{
-			strcpy(grid->teams[STATS_TEAM2].name, cl.players[i].team);
+			strncpy(grid->teams[STATS_TEAM2].name, cl.players[i].team, MAX_INFO_STRING);
 			grid->teams[STATS_TEAM2].color = Sbar_BottomColor(&cl.players[i]);
 			break;
 		}
@@ -464,7 +464,7 @@ void StatsGrid_CalculateHoldItem(stats_weight_grid_t *grid, int row, int col, fl
 			// If this is the first time, set the name of the team in the entity struct.
 			if(!stats_important_ents->teams[team_id].name[0])
 			{
-				strcpy(stats_important_ents->teams[team_id].name, grid->teams[team_id].name);
+				strncpy(stats_important_ents->teams[team_id].name, grid->teams[team_id].name, MAX_INFO_STRING);
 				stats_important_ents->teams[team_id].color = grid->teams[team_id].color;
 			}
 		}
