@@ -16,13 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: fragstats.c,v 1.15 2006-10-28 14:54:42 qqshka Exp $
+    $Id: fragstats.c,v 1.16 2006-11-03 15:53:03 johnnycz Exp $
 */
 
 #include "quakedef.h"
 
 cvar_t cl_parsefrags = {"cl_parseFrags", "0"};
-cvar_t cl_showFragsMessages = {"cl_showFragsMessages", "1"};
+cvar_t cl_showFragsMessages = {"con_fragmessages", "1"};
 cvar_t cl_loadFragfiles = {"cl_loadFragfiles", "0"};
 
 #define FUH_FRAGFILE_VERSION_1_00	"1.00" /* for compatibility with fuh */
