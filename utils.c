@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.15 2006-09-24 16:17:58 johnnycz Exp $
+	$Id: utils.c,v 1.16 2006-11-03 01:26:19 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -95,6 +95,20 @@ byte *StringToRGB(char *s) {
 			rgb[3] = 255;
 			break;
 	}
+	
+	return rgb;
+}
+
+byte *StringToRGBA(char *s) {
+	int i;
+	static byte rgb[4];
+
+	rgb[0] = rgb[1] = rgb[2] = rgb[3] = 255;
+
+	Cmd_TokenizeString(s);
+
+	for(i = 0; i < min(Cmd_Argc(), sizeof(rgb)/sizeof(rgb[0])); i++)
+		rgb[i] = (byte) Q_atoi(Cmd_Argv(i));
 	
 	return rgb;
 }

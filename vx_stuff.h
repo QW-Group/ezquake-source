@@ -112,6 +112,10 @@ extern cvar_t amf_part_trailwidth;
 extern cvar_t amf_part_trailtype;
 extern cvar_t amf_tracker_messages;
 extern cvar_t amf_tracker_time;
+extern cvar_t amf_tracker_align_right;
+extern cvar_t amf_tracker_x;
+extern cvar_t amf_tracker_y;
+extern cvar_t amf_tracker_frame_color;
 
 
 void SCR_DrawAMFstats(void);

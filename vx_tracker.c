@@ -347,9 +347,10 @@ void VXSCR_DrawTrackerString (void)
 	int		x, y;
 	int		i, w;
 	float	alpha = 1;
+	byte	*col = StringToRGBA(amf_tracker_frame_color.string);
 	vec3_t	kolorkodes = {1,1,1};
 
-	y = (vid.height*0.2);
+	y = vid.height*0.2 + amf_tracker_y.value;
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glColor4f(kolorkodes[0], kolorkodes[1], kolorkodes[2], alpha);
@@ -386,7 +387,15 @@ void VXSCR_DrawTrackerString (void)
 				l++; // increment count of any chars in string untill end or new line
 			}
 
-			x = (vid.width - w*8) - 8;
+			x = (amf_tracker_align_right.value ? (vid.width - w*8) - 8 : 8);
+			x += amf_tracker_x.value;
+
+			glDisable (GL_TEXTURE_2D);
+			glColor4ub(col[0], col[1], col[2], (byte)(alpha*col[3]));
+			glRectf(x, y, x + w * 8, y + 8);
+			glEnable (GL_TEXTURE_2D);
+
+			glColor4f(kolorkodes[0], kolorkodes[1], kolorkodes[2], alpha);
 
 			for (j = 0 ; j < l ;)
 			{
