@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.24 2006-10-19 22:40:36 qqshka Exp $
+	$Id: sys_win.c,v 1.25 2006-11-05 16:21:19 johnnycz Exp $
 
 */
 // sys_win.c
@@ -69,6 +69,8 @@ cvar_t	sys_disableWinKeys = {"sys_disableWinKeys", "0", 0, OnChange_sys_disableW
 #ifndef id386
 void Sys_HighFPPrecision(void) {}
 void Sys_LowFPPrecision(void) {}
+void Sys_SetFPCW(void) {}
+void MaskExceptions(void) {}
 #endif
 
 qbool OnChange_sys_disableWinKeys(cvar_t *var, char *string) {

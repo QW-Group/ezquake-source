@@ -16,12 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: quakeasm.h,v 1.6 2006-08-15 19:54:55 disconn3ct Exp $
+	$Id: quakeasm.h,v 1.7 2006-11-05 16:21:19 johnnycz Exp $
 
 */
 //
 // quakeasm.h: general asm header file
 //
+
+#ifdef id386
 
 #ifdef _WIN32
 #define __i386__
@@ -270,3 +272,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	.extern C(vpn)
 
 #endif	// SERVERONLY
+
+#endif
