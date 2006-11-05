@@ -16,12 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: quakeasm.h,v 1.7 2006-11-05 16:21:19 johnnycz Exp $
+	$Id: quakeasm.h,v 1.8 2006-11-05 18:11:16 johnnycz Exp $
 
 */
 //
 // quakeasm.h: general asm header file
 //
+
+// ---
+// This is not part of Visual Studio Project.
+// Therefore compiler definitions in the .vcproj file do NOT apply to ASM files.
+// So to completely disable/enable ASM you have to do following steps.
+// 1) remove/add the definition from VS Project file
+// 2) remove/add the extre definition of id386 here:
+#define id386
+// ---
 
 #ifdef id386
 
@@ -273,4 +282,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #endif	// SERVERONLY
 
+#else
+#undef id386
 #endif
