@@ -321,25 +321,25 @@ float CL_KeyState (kbutton_t *key) {
 	impulsedown = key->state & 2;
 	impulseup = key->state & 4;
 	down = key->state & 1;
-	val = 0;
+	val = 0.0;
 	
 	if (impulsedown && !impulseup) {
 		if (down)
-			val = 1;	// pressed and held this frame
+			val = 0.5;	// pressed and held this frame
 		else
-			val = 0;	//	I_Error ();
+			val = 0;	// I_Error ();
 	}
 	if (impulseup && !impulsedown) {
 		if (down)
-			val = 0;	//	I_Error ();
+			val = 0.0;	// I_Error ();
 		else
-			val = 0;	// released this frame
+			val = 0.0;	// released this frame
 	}
 	if (!impulsedown && !impulseup)	{
 		if (down)
 			val = 1.0;	// held the entire frame
 		else
-			val = 0;	// up the entire frame
+			val = 0.0;	// up the entire frame
 	}
 	if (impulsedown && impulseup) {
 		if (down)
