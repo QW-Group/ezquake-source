@@ -827,6 +827,7 @@ void HUD_CalcFrameExtents(hud_t *hud, int width, int height,
     }
 }
 
+#if 0
 qbool HUD_OnChangeFrameColor(cvar_t *var, char *newval)
 {
 	char *new_color = HUD_ColorNameToRGB(newval); // converts "red" into "255 0 0", etc. or returns input as it was
@@ -847,6 +848,45 @@ qbool HUD_OnChangeFrameColor(cvar_t *var, char *newval)
 	hud_elem->frame_color_cache[2] = b_colors[2] / 255.0;
 
 	return true;
+}
+#endif
+
+qbool HUD_OnChangeFrameColor(cvar_t *var, char *newval)
+{
+	char *new_color = HUD_ColorNameToRGB(newval); // converts "red" into "255 0 0", etc. or returns input as it was
+	char buf[256];
+	int hudname_len;
+	hud_t* hud_elem;
+
+	hudname_len = min(sizeof(buf), strlen(var->name)-strlen("_frame_color")-strlen("hud_"));
+	strncpy(buf, var->name + 4, hudname_len);
+	buf[hudname_len] = 0;
+	hud_elem = HUD_Find(buf);
+
+	// Get the RGB values.
+	if (HUD_RegExpMatch(HUD_COLOR_REGEX, new_color))
+	{
+		float colors[4];
+
+		HUD_RGBValuesFromString (new_color, &colors[0], &colors[1], &colors[2], &colors[3]);
+
+		// RGB
+		if(colors[0] >= 0 && colors[1] >= 0 && colors[2] >= 0)
+		{
+			hud_elem->frame_color_cache[0] = colors[0];
+			hud_elem->frame_color_cache[1] = colors[1];
+			hud_elem->frame_color_cache[2] = colors[2];
+		}
+
+		return true;
+	}
+	else
+	{
+		hud_elem->frame_color_cache[0] = 0.0;
+		hud_elem->frame_color_cache[1] = 0.0;
+		hud_elem->frame_color_cache[2] = 0.0;
+		return false;
+	}
 }
 
 // draw frame for HUD element
