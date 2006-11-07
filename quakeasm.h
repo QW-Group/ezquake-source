@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: quakeasm.h,v 1.8 2006-11-05 18:11:16 johnnycz Exp $
+	$Id: quakeasm.h,v 1.9 2006-11-07 13:54:46 disconn3ct Exp $
 
 */
 //
@@ -29,7 +29,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // So to completely disable/enable ASM you have to do following steps.
 // 1) remove/add the definition from VS Project file
 // 2) remove/add the extre definition of id386 here:
+#ifdef _WIN32
 #define id386
+#endif
 // ---
 
 #ifdef id386
