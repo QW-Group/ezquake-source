@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.33 2006-11-07 21:03:06 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.34 2006-11-07 23:32:25 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1480,11 +1480,11 @@ void Draw_SPic (int x, int y, mpic_t *gl, float scale)
 
 void Draw_STransPic (int x, int y, mpic_t *pic, float scale)
 {
-    if (   x < 0 || (unsigned)(x + scale*pic->width) > vid.width 
+    /*if (   x < 0 || (unsigned)(x + scale*pic->width) > vid.width 
 		|| y < 0 || (unsigned)(y + scale*pic->height) > vid.height )
     {
         Sys_Error ("Draw_TransPic: bad coordinates");
-    }
+    }*/
         
     Draw_SPic (x, y, pic, scale);
 }
@@ -1501,9 +1501,12 @@ void Draw_Pic (int x, int y, mpic_t *pic)
 
 void Draw_TransPic (int x, int y, mpic_t *pic) 
 {
+	/*
+	// Why do this? GL Can handle drawing partialy outside the screen.
 	if (   x < 0 || (unsigned) (x + pic->width) > vid.width 
 		|| y < 0 || (unsigned) (y + pic->height) > vid.height )
 		Sys_Error ("Draw_TransPic: bad coordinates");
+	*/
 		
 	Draw_Pic (x, y, pic);
 }

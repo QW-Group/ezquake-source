@@ -42,6 +42,27 @@
 #endif
 #define HUD_COLOR_REGEX					"^(\\d{1,3})\\s+(\\d{1,3})\\s+(\\d{1,3})(\\s+(\\d\\.\\d+))?$"
 
+// Placement
+#define HUD_PLACE_SCREEN		1
+#define HUD_PLACE_TOP			2
+#define HUD_PLACE_VIEW			3
+#define HUD_PLACE_SBAR			4
+#define HUD_PLACE_IBAR			5
+#define HUD_PLACE_HBAR			6
+#define HUD_PLACE_SFREE			7
+#define HUD_PLACE_IFREE			8
+#define HUD_PLACE_HFREE			9
+
+// Alignment
+#define HUD_ALIGN_LEFT			1
+#define HUD_ALIGN_TOP			1
+#define HUD_ALIGN_CENTER		2
+#define HUD_ALIGN_RIGHT			3
+#define HUD_ALIGN_BOTTOM		3
+#define HUD_ALIGN_BEFORE		4
+#define HUD_ALIGN_AFTER			5
+#define HUD_ALIGN_CONSOLE		6
+
 typedef struct hud_s
 {
     char *name;               // element name
