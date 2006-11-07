@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.20 2006-11-02 13:08:30 johnnycz Exp $
+	$Id: cl_tent.c,v 1.21 2006-11-07 13:54:46 disconn3ct Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -506,6 +506,7 @@ void CL_ParseTEnt (void) {
 
 void vectoangles(vec3_t vec, vec3_t ang);
 
+#ifdef GLQUAKE
 static float f_rnd( float from, float to )
 {
 	float r;
@@ -517,6 +518,7 @@ static float f_rnd( float from, float to )
 
 	return bound(from, r, to);
 }
+#endif
 
 
 #define MAX_LIGHTNINGBEAMS 10
