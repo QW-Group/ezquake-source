@@ -840,15 +840,18 @@ void Draw_TileClear (int x, int y, int w, int h) {
 }
 
 //Fills a box of pixels with a single color
-void Draw_Fill (int x, int y, int w, int h, int c) {
+void Draw_Fill (int x, int y, int w, int h, int c) 
+{
 	byte *dest;
 	int u, v;
 
-	if (!(cls.mvdplayback && cl_multiview.value == 2)) { // cough
-	if (x < 0 || x + w > vid.width || y < 0 || y + h > vid.height) {
-		Com_Printf ("Bad Draw_Fill(%d, %d, %d, %d, %c)\n", x, y, w, h, c);
-		return;
-	}
+	if (!(cls.mvdplayback && cl_multiview.value == 2)) 
+	{ 
+		if (x < 0 || x + w > vid.width || y < 0 || y + h > vid.height) 
+		{
+			//Com_Printf ("Bad Draw_Fill(%d, %d, %d, %d, %c)\n", x, y, w, h, c);
+			return;
+		}
 	}
 
 	dest = vid.buffer + y*vid.rowbytes + x;
@@ -867,13 +870,13 @@ Draw_FadeBox
 
 ================
 */
-void Draw_FadeBox (int x, int y, int width, int height,
-                   float r, float g, float b, float a)
+void Draw_FadeBox (int x, int y, int width, int height, byte color, float a)
+//                   float r, float g, float b, float a)
 {
     int         _x, _y;
     byte        *pbuf;
     int         col_index;
-    byte        color;
+    //byte        color;
 
     if (a <= 0)
         return;
@@ -882,6 +885,7 @@ void Draw_FadeBox (int x, int y, int width, int height,
     S_ExtraUpdate ();
     VID_LockBuffer ();
 
+	/*
     // find color
     clamp(r, 0, 1);
     clamp(g, 0, 1);
@@ -890,6 +894,7 @@ void Draw_FadeBox (int x, int y, int width, int height,
                 ((int)(g*63) <<  6) +
                 ((int)(b*63) <<  0);
     color = 0; // color = d_15to8table[col_index];
+	*/
 
     for (_y=y; _y < y + height; _y++)
     {

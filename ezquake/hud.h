@@ -23,6 +23,7 @@
 #define HUD_MAX_PARAMS  24
 
 #define	HUD_REGEXP_OFFSET_COUNT	20
+#ifdef GLQUAKE
 #define HUD_COLOR_RED					"255 0 0"
 #define HUD_COLOR_GREEN					"0 255 0"
 #define HUD_COLOR_BLUE					"0 0 255"
@@ -30,6 +31,15 @@
 #define HUD_COLOR_WHITE					"255 255 255"
 #define HUD_COLOR_YELLOW				"255 255 0"
 #define HUD_COLOR_PINK					"255 0 255"
+#else
+#define HUD_COLOR_RED					"251"
+#define HUD_COLOR_GREEN					"63"
+#define HUD_COLOR_BLUE					"208"
+#define HUD_COLOR_BLACK					"0"
+#define HUD_COLOR_WHITE					"254"
+#define HUD_COLOR_YELLOW				"182"
+#define HUD_COLOR_PINK					"144"
+#endif
 #define HUD_COLOR_REGEX					"^(\\d{1,3})\\s+(\\d{1,3})\\s+(\\d{1,3})(\\s+(\\d\\.\\d+))?$"
 
 typedef struct hud_s
