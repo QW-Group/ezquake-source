@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.32 2006-09-15 18:14:30 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.33 2006-11-07 21:03:06 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1576,6 +1576,8 @@ void Draw_ConsoleBackground (int lines)
 // ================
 // Draw_FadeBox
 // ================
+/*
+// Use Draw_AlphaFillRGB instead
 void Draw_FadeBox (int x, int y, int width, int height,
                    float r, float g, float b, float a)
 {
@@ -1599,7 +1601,7 @@ void Draw_FadeBox (int x, int y, int width, int height,
     glEnable(GL_ALPHA_TEST);
     glDisable (GL_BLEND);
     glEnable (GL_TEXTURE_2D);
-}
+}*/
 // kazik <--
 
 void Draw_FadeScreen (void) {

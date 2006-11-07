@@ -347,7 +347,7 @@ void VXSCR_DrawTrackerString (void)
 	int		x, y;
 	int		i, w;
 	float	alpha = 1;
-	byte	*col = StringToRGBA(amf_tracker_frame_color.string);
+	byte	*col = StringToRGB(amf_tracker_frame_color.string);
 	vec3_t	kolorkodes = {1,1,1};
 
 	y = vid.height*0.2 + amf_tracker_y.value;
