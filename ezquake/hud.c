@@ -43,6 +43,9 @@ char *snap_strings[] = {
 // hud elements list
 hud_t *hud_huds = NULL;
 
+// cvars.
+cvar_t hud_offscreen = {"hud_offscreen", "0"};
+
 qbool HUD_RegExpMatch(const char *regexp, const char *matchstring)
 {
 	int offsets[1];
@@ -458,7 +461,7 @@ int HUD_FindAlignX(hud_t *hud)
     else
     {
         // error
-        hud->align_x_num = 1;   // left
+		hud->align_x_num = HUD_ALIGN_LEFT;   // left
         return 0;
     }
 }
@@ -780,6 +783,11 @@ void HUD_Init(void)
     Cmd_AddCommand ("align", HUD_Align_f);
     Cmd_AddCommand ("hud_recalculate", HUD_Recalculate_f);
 
+	// variables
+    Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
+	Cvar_Register (&hud_offscreen);
+    Cvar_ResetCurrentGroup();
+
 	// Register the hud items.
     CommonDraw_Init();
 }
@@ -925,53 +933,53 @@ qbool HUD_PrepareDraw(
     switch (hud->place_num)
     {
     default:
-    case 1:     // screen
+    case HUD_PLACE_SCREEN:     // screen
         bx = by = 0;
         bw = vid.width;
         bh = vid.height;
         break;
-    case 2:     // top = screen - sbar
+    case HUD_PLACE_TOP:     // top = screen - sbar
         bx = by = 0;
         bw = vid.width;
         bh = vid.height - sb_lines;
         break;
-    case 3:     // view
+    case HUD_PLACE_VIEW:     // view
         bx = scr_vrect.x;
         by = scr_vrect.y;
         bw = scr_vrect.width;
         bh = scr_vrect.height;
         break;
-    case 4:     // sbar
+    case HUD_PLACE_SBAR:     // sbar
         bx = 0;
         by = vid.height - sb_lines;
         bw = sbar_last_width;
         bh = sb_lines;
         break;
-    case 5:     // ibar
+    case HUD_PLACE_IBAR:     // ibar
         bw = sbar_last_width;
         bh = max(sb_lines - SBAR_HEIGHT, 0);
         bx = 0;
         by = vid.height - sb_lines;
         break;
-    case 6:     // hbar
+    case HUD_PLACE_HBAR:     // hbar
         bw = sbar_last_width;
         bh = min(SBAR_HEIGHT, sb_lines);
         bx = 0;
         by = vid.height - bh;
         break;
-    case 7:     // sfree
+    case HUD_PLACE_SFREE:     // sfree
         bx = sbar_last_width;
         by = vid.height - sb_lines;
         bw = vid.width - sbar_last_width;
         bh = sb_lines;
         break;
-    case 8:     // ifree
+    case HUD_PLACE_IFREE:     // ifree
         bw = vid.width - sbar_last_width;
         bh = max(sb_lines - SBAR_HEIGHT, 0);
         bx = sbar_last_width;
         by = vid.height - sb_lines;
         break;
-    case 9:     // hfree
+    case HUD_PLACE_HFREE:     // hfree
         bw = vid.width - sbar_last_width;
         bh = min(SBAR_HEIGHT, sb_lines);
         bx = sbar_last_width;
@@ -1010,22 +1018,22 @@ qbool HUD_PrepareDraw(
 
     switch (hud->align_x_num)
     {
-    default:
-    case 1:     // left
-        x = ax;
-        break;
-    case 2:     // center
-        x = ax + (aw - width) / 2;
-        break;
-    case 3:     // right
-        x = ax + aw - width;
-        break;
-    case 4:     // before
-        x = ax - width;
-        break;
-    case 5:     // after
-        x = ax + aw;
-        break;
+		default:
+		case HUD_ALIGN_LEFT:     // left
+			x = ax;
+			break;
+		case HUD_ALIGN_CENTER:     // center
+			x = ax + (aw - width) / 2;
+			break;
+		case HUD_ALIGN_RIGHT:     // right
+			x = ax + aw - width;
+			break;
+		case HUD_ALIGN_BEFORE:     // before
+			x = ax - width;
+			break;
+		case HUD_ALIGN_AFTER:     // after
+			x = ax + aw;
+			break;
     }
 
     x += hud->pos_x->value;
@@ -1036,25 +1044,25 @@ qbool HUD_PrepareDraw(
 
     switch (hud->align_y_num)
     {
-    default:
-    case 1:     // top
-        y = ay;
-        break;
-    case 2:     // center
-        y = ay + (ah - height) / 2;
-        break;
-    case 3:     // bottom
-        y = ay + ah - height;
-        break;
-    case 4:     // before
-        y = ay - height;
-        break;
-    case 5:     // after
-        y = ay + ah;
-        break;
-    case 6:     // console - below console
-        y = max(ay, scr_con_current);
-        break;
+		default:
+		case HUD_ALIGN_TOP:     // top
+			y = ay;
+			break;
+		case HUD_ALIGN_CENTER:     // center
+			y = ay + (ah - height) / 2;
+			break;
+		case HUD_ALIGN_BOTTOM:     // bottom
+			y = ay + ah - height;
+			break;
+		case HUD_ALIGN_BEFORE:     // before
+			y = ay - height;
+			break;
+		case HUD_ALIGN_AFTER:     // after
+			y = ay + ah;
+			break;
+		case HUD_ALIGN_CONSOLE:     // console - below console
+			y = max(ay, scr_con_current);
+			break;
     }
 
     y += hud->pos_y->value;
@@ -1062,11 +1070,12 @@ qbool HUD_PrepareDraw(
     //
     // find if on-screen
     //
-
-//    if (x < bx  ||  x + width > bx+bw  ||
-//        y < by  ||  y + height > by+bh)
-    if (x < 0  ||  x + width > vid.width  ||
-        y < 0  ||  y + height > vid.height)
+    if (
+		#ifdef GLQUAKE
+		!hud_offscreen.value && // Only allow drawing off screen in GL (A lot more work for software).
+		#endif		
+		(x < 0  ||  x + width > vid.width  ||
+         y < 0  ||  y + height > vid.height))
     {
         return false;
     }
@@ -1094,7 +1103,6 @@ qbool HUD_PrepareDraw(
         return true;
     }
 }
-
 
 cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
 {
