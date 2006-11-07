@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.16 2006-11-03 01:26:19 qqshka Exp $
+	$Id: utils.c,v 1.17 2006-11-07 14:37:22 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -68,6 +68,7 @@ char *SecondsToHourString(int print_time) {
    2) RGB color = three args, e.g. "255 255 0" for yellow
    output: pointer to array of 4 byte values
 */
+#ifdef GLQUAKE
 byte *StringToRGB(char *s) {
 	byte *col;
 	static byte rgb[4];
@@ -112,6 +113,7 @@ byte *StringToRGBA(char *s) {
 	
 	return rgb;
 }
+#endif
 
 /************************************** File Utils **************************************/
 
