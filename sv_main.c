@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_main.c,v 1.22 2006-08-15 12:06:45 oldmanuk Exp $
+	$Id: sv_main.c,v 1.23 2006-11-07 13:14:15 vvd0 Exp $
 */
 
 #include "qwsvdef.h"
@@ -75,6 +75,9 @@ cvar_t	watervis = {"watervis", "0", CVAR_SERVERINFO};
 cvar_t	coop = {"coop", "0", CVAR_SERVERINFO};
 
 cvar_t	skill = {"skill", "1"};
+
+cvar_t	registered = {"registered", "1", CVAR_ROM};
+// We need this cvar, because ktpro didn't allow to go at some placeses of, for example, start map.
 
 FILE	*sv_fraglogfile;
 
@@ -1043,6 +1046,7 @@ void SV_InitLocal (void) {
 	Cvar_Register (&filterban);
 	Cvar_Register (&skill);
 	Cvar_Register (&coop);
+	Cvar_Register (&registered);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SERVERINFO);
 	Cvar_Register (&deathmatch);
