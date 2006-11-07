@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.17 2006-11-07 14:37:22 disconn3ct Exp $
+	$Id: utils.c,v 1.18 2006-11-07 21:11:38 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -64,23 +64,22 @@ char *SecondsToHourString(int print_time) {
 }
 
 /* StringToRGB - input: string with color number(s), three types 
-   1) Quake color = one arg, e.g. "12" for yellow
+   1) Quake color = one arg, e.g. "12" for yellow 
    2) RGB color = three args, e.g. "255 255 0" for yellow
    output: pointer to array of 4 byte values
 */
-#ifdef GLQUAKE
-byte *StringToRGB(char *s) {
+/*byte *StringToRGB(char *s) {
 	byte *col;
 	static byte rgb[4];
 
 	Cmd_TokenizeString(s);
 	switch (Cmd_Argc()) {
-/*		case 4:
+		case 4:
 			rgb[0] = (byte) Q_atoi(Cmd_Argv(0));
 			rgb[1] = (byte) Q_atoi(Cmd_Argv(1));
 			rgb[2] = (byte) Q_atoi(Cmd_Argv(2));
 			rgb[3] = (byte) Q_atoi(Cmd_Argv(3));
-			break; */
+			break; 
 		case 3:
 			rgb[0] = (byte) Q_atoi(Cmd_Argv(0));
 			rgb[1] = (byte) Q_atoi(Cmd_Argv(1));
@@ -89,6 +88,7 @@ byte *StringToRGB(char *s) {
 			break;
 		case 0:
 		default:
+			// Does not work in software (where else would you want to use Quake pallete only)
 			col = (byte *) &d_8to24table[(byte) Q_atoi(s)];
 			rgb[0] = col[0];
 			rgb[1] = col[1];
@@ -98,9 +98,9 @@ byte *StringToRGB(char *s) {
 	}
 	
 	return rgb;
-}
+}*/
 
-byte *StringToRGBA(char *s) {
+byte *StringToRGB(char *s) {
 	int i;
 	static byte rgb[4];
 
@@ -109,11 +109,10 @@ byte *StringToRGBA(char *s) {
 	Cmd_TokenizeString(s);
 
 	for(i = 0; i < min(Cmd_Argc(), sizeof(rgb)/sizeof(rgb[0])); i++)
-		rgb[i] = (byte) Q_atoi(Cmd_Argv(i));
+		rgb[i] = (byte) Q_atof(Cmd_Argv(i));
 	
 	return rgb;
 }
-#endif
 
 /************************************** File Utils **************************************/
 
