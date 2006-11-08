@@ -276,7 +276,7 @@ void StatsGrid_InitHoldItems()
 	// Copy the entities from the buffer to the final list.
 	for(i = 0; i < ents_count; i++)
 	{
-		memcpy(stats_important_ents->list + i, temp_ents + i, sizeof(stats_entity_t *));
+		memcpy(&stats_important_ents->list[i], &temp_ents[i], sizeof(stats_entity_t));
 	}
 
 	// Set the radius around the items that decides if it's being
