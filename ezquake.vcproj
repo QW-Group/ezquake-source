@@ -2351,53 +2351,6 @@ del $(OUTDIR)\$(InputName).spp
 						Outputs="$(OUTDIR)\$(InputName).obj"/>
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath="worlda.s">
-				<FileConfiguration
-					Name="GLDebug|Win32">
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="cl /D &quot;GLQUAKE&quot; /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
-gas2masm &lt; $(OUTDIR)\$(InputName).spp &gt;$(OUTDIR)\$(InputName).asm
-ml /nologo /c /Cp /coff /Fo$(OUTDIR)\$(InputName).obj /Zm /Zi $(OUTDIR)\$(InputName).asm
-del $(OUTDIR)\$(InputName).spp
-"
-						Outputs="$(OUTDIR)\$(InputName).obj"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="cl /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
-gas2masm &lt; $(OUTDIR)\$(InputName).spp &gt;$(OUTDIR)\$(InputName).asm
-ml /nologo /c /Cp /coff /Fo$(OUTDIR)\$(InputName).obj /Zm /Zi $(OUTDIR)\$(InputName).asm
-del $(OUTDIR)\$(InputName).spp
-"
-						Outputs="$(OUTDIR)\$(InputName).obj"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="GLRelease|Win32">
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="cl /D &quot;GLQUAKE&quot; /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
-gas2masm &lt; $(OUTDIR)\$(InputName).spp &gt;$(OUTDIR)\$(InputName).asm
-ml /nologo /c /Cp /coff /Fo$(OUTDIR)\$(InputName).obj /Zm /Zi $(OUTDIR)\$(InputName).asm
-del $(OUTDIR)\$(InputName).spp
-"
-						Outputs="$(OUTDIR)\$(InputName).obj"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCustomBuildTool"
-						CommandLine="cl /nologo /EP &gt; $(OUTDIR)\$(InputName).spp $(InputPath)
-gas2masm &lt; $(OUTDIR)\$(InputName).spp &gt;$(OUTDIR)\$(InputName).asm
-ml /nologo /c /Cp /coff /Fo$(OUTDIR)\$(InputName).obj /Zm /Zi $(OUTDIR)\$(InputName).asm
-del $(OUTDIR)\$(InputName).spp
-"
-						Outputs="$(OUTDIR)\$(InputName).obj"/>
-				</FileConfiguration>
-			</File>
 		</Filter>
 	</Files>
 	<Globals>

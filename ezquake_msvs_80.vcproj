@@ -2733,10 +2733,6 @@
 				RelativePath="sys_x86.s"
 				>
 			</File>
-			<File
-				RelativePath="worlda.s"
-				>
-			</File>
 		</Filter>
 	</Files>
 	<Globals>
