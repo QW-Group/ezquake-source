@@ -1561,12 +1561,18 @@ void R_RenderScene (void) {
 }
 
 int gl_ztrickframe = 0;
+float clearColor[3] = {0, 0, 0};
 
 qbool OnChange_gl_clearColor(cvar_t *v, char *s) {
-	byte *clearColor;
+	byte *color;
 
-	clearColor = StringToRGB(s);
-	glClearColor (clearColor[0] / 255.0, clearColor[1] / 255.0, clearColor[2] / 255.0, 1.0);
+	color = StringToRGB(s);
+
+	clearColor[0] = color[0] / 255.0;
+	clearColor[1] = color[1] / 255.0;
+	clearColor[2] = color[2] / 255.0;
+
+	glClearColor (clearColor[0], clearColor[1], clearColor[2], 1.0);
 
 	return false;
 }
@@ -1582,7 +1588,7 @@ void R_Clear (void) {
 		if (gl_fogenable.value)
 			glClearColor(gl_fogred.value,gl_foggreen.value,gl_fogblue.value,0.5);//Tei custom clear color
 		else
-			glClearColor(0,0,0,1);
+			glClearColor (clearColor[0], clearColor[1], clearColor[2], 1.0);
 	}
 
 	if (gl_ztrick.value) {
