@@ -1120,15 +1120,22 @@ void R_BrightenScreen (void) {
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_DST_COLOR, GL_ONE);
 	glBegin (GL_QUADS);
-	while (f > 1) {
+	while (f > 1) 
+	{
 		if (f >= 2)
+		{
 			glColor3ubv (color_white);
+		}
 		else
+		{
 			glColor3f (f - 1, f - 1, f - 1);
+		}
+		
 		glVertex2f (0, 0);
 		glVertex2f (vid.width, 0);
 		glVertex2f (vid.width, vid.height);
 		glVertex2f (0, vid.height);
+		
 		f *= 0.5;
 	}
 	glEnd ();
@@ -1579,9 +1586,14 @@ qbool OnChange_gl_clearColor(cvar_t *v, char *s) {
 
 void R_Clear (void) {
 	int clearbits = 0;
-
-	if (gl_clear.value || (!vid_hwgamma_enabled && v_contrast.value > 1))
+	
+	// This used to cause a bug with some graphics cards when
+	// in multiview mode. It would clear all but the last
+	// drawn views.
+	if (!cl_multiview.value && (gl_clear.value || (!vid_hwgamma_enabled && v_contrast.value > 1)))
+	{
 		clearbits |= GL_COLOR_BUFFER_BIT;
+	}
 
 	if (gl_clear.value)
 	{
@@ -1591,6 +1603,10 @@ void R_Clear (void) {
 			glClearColor (clearColor[0], clearColor[1], clearColor[2], 1.0);
 	}
 
+	// This variables toggles the use of a trick to prevent the clearning of the 
+	// z-buffer between frames. When this variable is set to "1", the game will not 
+	// clear the z-buffer between frames. This will result in increased performance 
+	// but might cause problems for some display hardware.
 	if (gl_ztrick.value) {
 		if (clearbits)
 			glClear (clearbits);

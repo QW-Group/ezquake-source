@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.60 2006-10-14 10:28:55 johnnycz Exp $
+    $Id: cl_screen.c,v 1.61 2006-11-08 22:42:56 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -2193,7 +2193,23 @@ void SCR_UpdateScreen (void) {
 
 	SCR_DrawElements();
 
-	R_BrightenScreen ();
+	// For multiview:
+	// If we apply the brightness on each update
+	// then the first view that is drawn will be
+	// 4x as bright as the last view for instance.
+	// (using a multiview value of 4 in this example).
+	if(cls.mvdplayback && cl_multiview.value) 
+	{
+		if(CURRVIEW == 1)
+		{
+			R_BrightenScreen ();
+		}
+	}
+	else
+	{
+		// Default, apply brightness at every update.
+		R_BrightenScreen ();
+	}
 
 	V_UpdatePalette ();
 

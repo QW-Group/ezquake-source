@@ -875,7 +875,7 @@ void Draw_FadeBox (int x, int y, int width, int height, byte color, float a)
 {
     int         _x, _y;
     byte        *pbuf;
-    int         col_index;
+    //int         col_index;
     //byte        color;
 
     if (a <= 0)
