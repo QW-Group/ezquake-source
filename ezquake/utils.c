@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.18 2006-11-07 21:11:38 cokeman1982 Exp $
+	$Id: utils.c,v 1.19 2006-11-09 21:37:38 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -108,9 +108,23 @@ byte *StringToRGB(char *s) {
 
 	Cmd_TokenizeString(s);
 
-	for(i = 0; i < min(Cmd_Argc(), sizeof(rgb)/sizeof(rgb[0])); i++)
-		rgb[i] = (byte) Q_atof(Cmd_Argv(i));
-	
+	#ifdef GLQUAKE
+	// Use normal quake pallete if not all arguments where given.
+	if(Cmd_Argc() < 3)
+	{
+		byte *col = (byte *) &d_8to24table[(byte) Q_atof(s)];
+		rgb[0] = col[0];
+		rgb[1] = col[1];
+		rgb[2] = col[2];
+	}
+	else
+	#endif
+	{
+		for(i = 0; i < min(Cmd_Argc(), sizeof(rgb)/sizeof(rgb[0])); i++)
+		{
+			rgb[i] = (byte) Q_atof(Cmd_Argv(i));
+		}
+	}
 	return rgb;
 }
 
