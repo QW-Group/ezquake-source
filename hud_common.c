@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.75 2006-10-15 14:51:21 johnnycz Exp $
+	$Id: hud_common.c,v 1.76 2006-11-10 23:49:27 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -2510,7 +2510,15 @@ int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, 
 		{
 			y_pos = ROUND(py + (height / 2.0) - (rl_picture.height / 2.0));
 
+			#ifdef GLQUAKE
 			Draw_SSubPic (px, y_pos, &rl_picture, 0, 0, rl_picture.width, rl_picture.height, 1);
+			#else
+			// mpic_t is defined differently for software, so we can't use rl_picture here.
+			{
+				extern mpic_t *sb_weapons[7][8]; 			
+				Draw_SSubPic (px, y_pos, sb_weapons[0][5], 0, 0, sb_weapons[0][5]->width, sb_weapons[0][5]->height, 1);
+			}
+			#endif
 			px += rl_picture.width + 1;
 		}
 
@@ -2663,20 +2671,20 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 	{
 		armor_height = ROUND((cell_height / armor_bg_power) * armor);
 
-#ifdef GLQUAKE
+		#ifdef GLQUAKE
 		Draw_AlphaFill(px,												// x
 						py + cell_height - (int)armor_height,			// y (draw from bottom up)
 						weapon_width,									// width
 						(int)armor_height,								// height
 						armor_bg_color,									// color
 						0.3);											// alpha
-#else
+		#else
 		Draw_Fill(px,
 				py + cell_height - (int)armor_height,
 				weapon_width,
 				(int)armor_height,
 				armor_bg_color);
-#endif
+		#endif
 
 		// Draws the armor bar vertically instead.
 		/*armor_width = ROUND((rl_picture.width  / armor_bg_power) * armor);
@@ -2698,8 +2706,28 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 	{
 		if(show_rl_pic)
 		{
+			#ifdef GLQUAKE
 			// Draw the rl-pic.
-			Draw_SSubPic (px, py + ROUND((cell_height/2.0)) - (rl_picture.height/2.0), &rl_picture, 0, 0, rl_picture.width, rl_picture.height, 1);
+			Draw_SSubPic (px, 
+				py + ROUND((cell_height/2.0)) - (rl_picture.height/2.0), 
+				&rl_picture, 
+				0, 
+				0, 
+				rl_picture.width, 
+				rl_picture.height, 
+				1);
+			#else			
+			// mpic_t is defined differently for software, so we can't use rl_picture here.
+			extern mpic_t *sb_weapons[7][8]; 
+			Draw_SSubPic (px, 
+				py + ROUND((cell_height/2.0)) - (sb_weapons[0][5]->height/2.0), 
+				sb_weapons[0][5], 
+				0, 
+				0, 
+				sb_weapons[0][5]->width, 
+				sb_weapons[0][5]->height, 
+				1);
+			#endif
 		}
 		else
 		{
