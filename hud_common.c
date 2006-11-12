@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.76 2006-11-10 23:49:27 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.77 2006-11-12 04:49:54 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -3114,7 +3114,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 				drawBrackets = (sorted_players[num]->playernum == cl.playernum);
 			}
 
-			if (cl_multiview.value && cls.demoplayback)
+			if (cl_multiview.value > 1 && cls.mvdplayback)
 			{				
 				// Does not work for some reason I can't grasp :/
 				//drawBrackets = (sorted_players[num]->playernum == nPlayernum);
