@@ -461,7 +461,8 @@ extern cvar_t cl_showkeycodes;
 #endif // WITH_KEYMAP
 extern cvar_t b_switch;		// added for the sake of menu.c
 extern cvar_t w_switch;		// added for the sake of menu.c
-// oppymv 310804
+
+// Multiview cvars
 extern cvar_t cl_multiview;
 extern cvar_t cl_mvdisplayhud;
 extern cvar_t cl_mvinset; 
@@ -475,7 +476,7 @@ extern cvar_t r_explosionlight;
 extern cvar_t r_explosiontype;
 extern cvar_t r_flagcolor;
 extern cvar_t r_lightflicker;
-extern cvar_t r_telesplash; // disconnect
+extern cvar_t r_telesplash; 
 
 extern cvar_t cl_restrictions;
 
@@ -740,20 +741,45 @@ void CL_CalcPlayerFPS(player_info_t *info, int msec);
 
 dlighttype_t dlightColor(float f, dlighttype_t def, qbool random);
 
-int CURRVIEW;
-int nNumViews;
-float nContrastExit, nCrosshairExit, nfakeshaft;
-int nPolyblendExit, nGlClearExit;
-int nLerpframesExit;
-int nWaterwarp;
-int nContentblend;
-float nQuadshift, nPentshift, nRingshift, nDamageshift, nSuitshift;
-int nBonusflash;
-int bExitmultiview;
-int nPlayernum;
-int nTrack1, nTrack2, nTrack3, nTrack4;
-char currteam[196];
-int mvlatch;
-int nUnlock;
-int nSwapPov;
-int nTrack1duel, nTrack2duel;
+//
+// Multiview vars
+// ===================================================================================
+int		CURRVIEW;					// The current view being drawn in multiview mode.
+int		nNumViews;					// The number of views in multiview mode.
+qbool	bExitmultiview;				// Used when saving effect values on each frame.
+
+int		nPlayernum;
+
+#define	MV_VIEW1 0
+#define	MV_VIEW2 1
+#define	MV_VIEW3 2
+#define	MV_VIEW4 3
+
+int		mv_trackslots[4];			// The different track slots for each view.
+char	currteam[MAX_INFO_STRING];	// The name of the current team being tracked in multiview mode.
+int		mvlatch;
+qbool	nSwapPov;					// When the player presses the JUMP button this is set to true to trigger a tracking swap.
+int		nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
+int		nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the mvinset view.
+
+//
+// Original values saved between frames for effects that are
+// turned off during multiview mode.
+//
+float	nContrastExit;				// v_contrast 
+float	nCrosshairExit;
+float	nfakeshaft;					// cl_fakeshaft
+int		nPolyblendExit;				// gl_polyblend
+float	nGlClearExit;				// gl_clear
+int		nLerpframesExit;
+int		nWaterwarp;					// r_waterwarp
+int		nContentblend;				// v_contentblend
+float	nQuadshift;					// v_quadcshift
+float	nPentshift;					// v_pentcshift
+float	nRingshift;					// v_ringcshift
+float	nDamageshift;				// v_damagecshift
+float	nSuitshift;					// v_suitcshift
+int		nBonusflash;				// v_bonusflash
+
+
+// ===================================================================================
