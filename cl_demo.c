@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.37 2006-10-14 08:37:10 johnnycz Exp $
+	$Id: cl_demo.c,v 1.38 2006-11-12 04:51:13 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1364,6 +1364,7 @@ void CL_StopPlayback (void) {
 }
 
 void CL_Play_f (void) {
+	int i;
 	char name[2 * MAX_OSPATH], **s;
 	static char *ext[] = {".qwd", ".mvd", NULL};
 
@@ -1402,8 +1403,12 @@ void CL_Play_f (void) {
 		return;
 	}
 
-	nTrack1=nTrack2=nTrack3=nTrack4=-1;
-	nTrack1duel=nTrack2duel=0;
+	// Reset multiview track slots.
+	for(i = 0; i < 4; i++)
+	{
+		mv_trackslots[i] = -1;
+	}
+	nTrack1duel = nTrack2duel = 0;
 
 	Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
 #ifdef _WIN32

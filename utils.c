@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.19 2006-11-09 21:37:38 cokeman1982 Exp $
+	$Id: utils.c,v 1.20 2006-11-12 04:51:31 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -246,22 +246,97 @@ int Player_IdtoSlot (int id) {
 	return -1;
 }
 
-int Player_StringtoSlot(char *arg) {
-	int i, slot;
+char *Player_StripNameColor(const char *name)
+{	
+	extern char readableChars[]; // console.c
+	int k = 0;
+	char *stripped = NULL;
+	int i, name_length;
+	name_length = strlen(name);
 
-	for (i = 0; i < MAX_CLIENTS; i++) {
-		if (cl.players[i].name[0] && !strncmp(arg, cl.players[i].name, MAX_SCOREBOARDNAME - 1))
-			return i;
+	stripped = (char *)Q_calloc(name_length + 1, sizeof(char));
+
+	// Strip the color by setting bit 7 = 0 on all letters.
+	for (i = 0; i < name_length; i++)
+	{
+		stripped[i] = readableChars[(unsigned char)name[i]] & 127;
 	}
+
+	stripped[i] = '\0';
+
+	return stripped;
+}
+
+int Player_StringtoSlot(char *arg) 
+{
+	int i, slot, arg_length;
 
 	if (!arg[0])
+	{
 		return PLAYER_NAME_NOMATCH;
-
-	for (i = 0; arg[i]; i++) {
-		if (!isdigit(arg[i]))
-			return PLAYER_NAME_NOMATCH;
 	}
-	return ((slot = Player_IdtoSlot(Q_atoi(arg))) >= 0) ? slot : PLAYER_ID_NOMATCH;
+
+	// Match on partial names by only comparing the
+	// same amount of chars as in the given argument
+	// with all the player names. The first match will be picked.
+	arg_length = strlen(arg);
+
+	// Try finding the player by comparing the argument to all the player names (CASE SENSITIVE)
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (cl.players[i].name[0] && !strncmp(arg, cl.players[i].name, arg_length))
+		{
+			return i;
+		}
+	}
+
+	// Maybe the user didn't use the correct case, so try without CASE SENSITIVITY.
+	// (We loop once more so that if the correct case is given, that match will get precedence).
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (cl.players[i].name[0] && !strncasecmp(arg, cl.players[i].name, arg_length))
+		{
+			return i;
+		}
+	}
+
+	// If the players name is color coded it's hard to type. 
+	// So strip the color codes and see if it's a match.
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		char *stripped = Player_StripNameColor(cl.players[i].name);
+
+		if (cl.players[i].name[0] && !strncasecmp(arg, stripped, arg_length))
+		{
+			if(stripped != NULL)
+			{
+				Q_free(stripped);
+				stripped = NULL;
+			}
+			return i;
+		}
+
+		if(stripped != NULL)
+		{
+			Q_free(stripped);
+			stripped = NULL;
+		}
+	}
+
+	// Check if the argument is a user id instead
+	// Make sure all chars in the given arg are digits in that case.
+	for (i = 0; arg[i]; i++)
+	{
+		if (!isdigit(arg[i]))
+		{
+			return PLAYER_NAME_NOMATCH;
+		}
+	}
+
+	// Get player ID.
+	slot = Player_IdtoSlot(Q_atoi(arg));
+
+	return (slot >= 0) ? slot : PLAYER_ID_NOMATCH;
 }
 
 int Player_NametoSlot(char *name) {
