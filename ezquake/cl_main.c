@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.96 2006-11-08 22:42:42 cokeman1982 Exp $
+	$Id: cl_main.c,v 1.97 2006-11-12 04:52:57 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -589,25 +589,29 @@ void CL_Disconnect (void) {
 		V_TF_ClearGrenadeEffects();
 	cl.teamfortress = false;
 
+	//
+	// Reset values changed by Multiview.
+	//
 	CURRVIEW = 0;
-	scr_viewsize.value =  nViewsizeExit;
-	v_contrast.value = nContrastExit;
-	cl_fakeshaft.value = nfakeshaft;
-#ifdef GLQUAKE
-	gl_polyblend.value = nPolyblendExit;
-	gl_clear.value = nGlClearExit;
-#endif
-	r_lerpframes.value = nLerpframesExit;
-#ifndef GLQUAKE
-	r_waterwarp.value = nWaterwarp;
-	v_contentblend.value = nContentblend;
-	v_quadcshift.value = nQuadshift;
-	v_ringcshift.value = nRingshift;
-	v_pentcshift.value = nPentshift;
-	v_damagecshift.value = nDamageshift;
-	v_suitcshift.value = nSuitshift;
-	v_bonusflash.value = nBonusflash;
-#endif
+	scr_viewsize.value		= nViewsizeExit;
+	v_contrast.value		= nContrastExit;
+	cl_fakeshaft.value		= nfakeshaft;
+
+	#ifdef GLQUAKE
+	gl_polyblend.value		= nPolyblendExit;
+	gl_clear.value			= nGlClearExit;
+	#else
+	r_waterwarp.value		= nWaterwarp;
+	v_contentblend.value	= nContentblend;
+	v_quadcshift.value		= nQuadshift;
+	v_ringcshift.value		= nRingshift;
+	v_pentcshift.value		= nPentshift;
+	v_damagecshift.value	= nDamageshift;
+	v_suitcshift.value		= nSuitshift;
+	v_bonusflash.value		= nBonusflash;
+	#endif
+	
+	r_lerpframes.value		= nLerpframesExit;
 	nTrack1duel = nTrack2duel = 0;
 	bExitmultiview = 0;
 
@@ -1395,7 +1399,7 @@ void CL_Frame (double time) {
 
 			TP_UpdateSkins();
 
-
+			// Gather MVD stats and interpolate.
 			if (cls.mvdplayback)
 			{
 				MVD_Interpolate();
@@ -1437,57 +1441,68 @@ void CL_Frame (double time) {
 		CL_UserinfoChanged ("chat", char_flags);
 	}
 
-	if (cls.state >= ca_onserver) {	// !!! Tonik
+	if (cls.state >= ca_onserver) 
+	{
 		Cam_SetViewPlayer();
 
-		// Set up prediction for other players
-	if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0)
-		CL_SetUpPlayerPrediction(false);
+			// Set up prediction for other players
+		if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0)
+		{
+			CL_SetUpPlayerPrediction(false);
+		}
 
 		// do client side motion prediction
 		CL_PredictMove();
 
-		// Set up prediction for other players
-	if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0)
-		CL_SetUpPlayerPrediction(true);
+			// Set up prediction for other players
+		if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0)
+		{
+			CL_SetUpPlayerPrediction(true);
+		}
 
 		// build a refresh entity list
 		CL_EmitEntities();
 	}
 
-	if (!bExitmultiview) {
-		nContrastExit = v_contrast.value;
-		nViewsizeExit = scr_viewsize.value;
-		nfakeshaft = cl_fakeshaft.value;
-#ifdef GLQUAKE
-		nPolyblendExit = gl_polyblend.value;
-		nGlClearExit = gl_clear.value;
-#endif
-		nLerpframesExit = r_lerpframes.value; // oppymv 310804
-#ifndef GLQUAKE
-		nWaterwarp = r_waterwarp.value; // oppymv 010904
-		nContentblend = v_contentblend.value;
-		nQuadshift = v_quadcshift.value;
-		nRingshift = v_ringcshift.value;
-		nPentshift = v_pentcshift.value;
-		nDamageshift = v_damagecshift.value;
-		nSuitshift = v_suitcshift.value;
-		nBonusflash = v_bonusflash.value;
-#endif
+	//
+	// Multiview is enabled so save some values for effects that
+	// needs to be turned off.
+	//
+	if (!bExitmultiview) 
+	{
+		nContrastExit		= v_contrast.value;
+		nViewsizeExit		= scr_viewsize.value;
+		nfakeshaft			= cl_fakeshaft.value;
+
+		#ifdef GLQUAKE
+		nPolyblendExit		= gl_polyblend.value;
+		nGlClearExit		= gl_clear.value;
+		#else
+		nWaterwarp			= r_waterwarp.value; 
+		nContentblend		= v_contentblend.value;
+		nQuadshift			= v_quadcshift.value;
+		nRingshift			= v_ringcshift.value;
+		nPentshift			= v_pentcshift.value;
+		nDamageshift		= v_damagecshift.value;
+		nSuitshift			= v_suitcshift.value;
+		nBonusflash			= v_bonusflash.value;
+		#endif
+
+		nLerpframesExit		= r_lerpframes.value; 
 		CURRVIEW = 0;
 	}
 
-	if (bExitmultiview && !cl_multiview.value) {
+	if (bExitmultiview && !cl_multiview.value) 
+	{
 		scr_viewsize.value =  nViewsizeExit;
 		v_contrast.value = nContrastExit;
 		cl_fakeshaft.value = nfakeshaft;
-#ifdef GLQUAKE
+		
+		#ifdef GLQUAKE
 		gl_polyblend.value = nPolyblendExit;
 		gl_clear.value = nGlClearExit;
-#endif
-		r_lerpframes.value = nLerpframesExit; // oppymv 310804
-#ifndef GLQUAKE
-		r_waterwarp.value = nWaterwarp; // oppymv 010904
+		#else
+		r_waterwarp.value = nWaterwarp;
 		v_contentblend.value = nContentblend;
 		v_quadcshift.value = nQuadshift;
 		v_ringcshift.value = nRingshift;
@@ -1495,12 +1510,16 @@ void CL_Frame (double time) {
 		v_damagecshift.value = nDamageshift;
 		v_suitcshift.value = nSuitshift;
 		v_bonusflash.value = nBonusflash;
-#endif
+		#endif
+
+		r_lerpframes.value = nLerpframesExit;
 		bExitmultiview = 0;
 	}
 
-	if (cl_multiview.value>0 && cls.mvdplayback)
+	if (cl_multiview.value > 0 && cls.mvdplayback)
+	{
 		CL_Multiview(); 
+	}
 
 	// update video
 	SCR_UpdateScreen();
@@ -1508,28 +1527,54 @@ void CL_Frame (double time) {
 	CL_DecayLights();
 
 	// update audio
-	if (CURRVIEW==2 && cl_multiview.value && cls.mvdplayback) {
-		if (cls.state == ca_active)	{
+	if ((CURRVIEW == 2 && cl_multiview.value && cls.mvdplayback) || (!cls.mvdplayback || cl_multiview.value < 2))
+	{
+		if (cls.state == ca_active)	
+		{
 			S_Update (r_origin, vpn, vright, vup);
 			CL_DecayLights ();
-		} else {
+		} 
+		else 
+		{
 			S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
 		}
+
 		CDAudio_Update();
-	} else if (!cls.mvdplayback || cl_multiview.value < 2) {
-		if (cls.state == ca_active)	{
+	}
+	/*
+	// WTF?!?!?!? 
+	if (CURRVIEW == 2 && cl_multiview.value && cls.mvdplayback) 
+	{
+		if (cls.state == ca_active)	
+		{
 			S_Update (r_origin, vpn, vright, vup);
 			CL_DecayLights ();
-		} else {
+		} 
+		else 
+		{
+			S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
+		}
+
+		CDAudio_Update();
+	} 
+	else if (!cls.mvdplayback || cl_multiview.value < 2) 
+	{
+		if (cls.state == ca_active)	
+		{
+			S_Update (r_origin, vpn, vright, vup);
+			CL_DecayLights ();
+		} 
+		else 
+		{
 			S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
 		}
  
 		CDAudio_Update();
-	}
+	}*/
 
 	MT_Frame();
 
-	if (Movie_IsCapturing())		
+	if (Movie_IsCapturing())
 		Movie_FinishFrame();
 
 	cls.framecount++;
@@ -1558,80 +1603,89 @@ void CL_Shutdown (void) {
 	History_Shutdown();
 } 
 
-int CL_IncrLoop(int cview, float max) {
-
-	if (cview >= max)
-		cview = 1;
-	else
-		cview++;
-
-	return cview;
+int CL_IncrLoop(int cview, int max) 
+{
+	return (cview >= max) ? 1 : ++cview;
 }
 
-int CL_NextPlayer(int plr) {
+int CL_NextPlayer(int plr) 
+{
 	if (plr < -1)
+	{
 		plr = -1;
+	}
+	
 	plr++;
-	while (cl.players[plr].spectator || !strcmp(cl.players[plr].name,"")) {
+	
+	while (cl.players[plr].spectator || !strcmp(cl.players[plr].name, "")) 
+	{
 		plr++;
-		if (plr>=32)
+		if (plr >= MAX_CLIENTS)
+		{
 			plr = 0;
 		}
+	}
 	return plr;
 }
 
-void CL_Multiview(void) {
-	static int playernum;
+void CL_Multiview(void) 
+{
+	static int playernum = 0;
 
-#ifdef GLQUAKE
+	#ifdef GLQUAKE
 	extern cvar_t gl_polyblend;
 	extern cvar_t gl_clear;
-#endif
-	extern cvar_t r_lerpframes;
-#ifndef GLQUAKE
+	#else
 	extern cvar_t r_waterwarp;
 	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
 		v_damagecshift, v_suitcshift, v_bonusflash;
-#endif
+	#endif
+	extern cvar_t r_lerpframes;
 
 	if (!cls.mvdplayback)
+	{
 		return;
+	}
 
 	nNumViews = cl_multiview.value;
 
 	// only refresh skins once, I think this is the best solution for multiview
 	// eg when viewing 4 players in a 2v2
 	if (!CURRVIEW && cls.state >= ca_connected)
+	{
 		TP_RefreshSkins();
+	}
 
 	// contrast was disabled for OpenGL build with the note "blanks all but 1 view"
-	// this was due to gl_ztrick in R_Clear(void) that would clear these.
+	// this was due to gl_ztrick in R_Clear(void) that would clear these. FIXED
 	// v_contrast.value = 1;
 
 	// stop fakeshaft as it lerps with the other views
 	if (cl_fakeshaft.value < 1 && cl_fakeshaft.value > 0)
+	{
 		cl_fakeshaft.value = 0;
+	}
 
 	// allow mvinset 1 to use viewsize value
 	if ((!cl_mvinset.value && cl_multiview.value == 2) || cl_multiview.value != 2)
+	{
 		scr_viewsize.value = 120;
+	}
 	else
+	{
 		scr_viewsize.value = nViewsizeExit;
+	}
 
 	// stop small screens
 	if (cl_mvinset.value && cl_multiview.value == 2 && scr_viewsize.value < 100)
+	{
 		scr_viewsize.value = 100;
+	}
 
-#ifdef GLQUAKE
+	#ifdef GLQUAKE
 	gl_polyblend.value = 0;
 	gl_clear.value = 0;
-#endif
-
-	// stop weapon model lerping as it lerps with the other view
-	r_lerpframes.value = 0; 
-	
-#ifndef GLQUAKE
-
+	#else
 	// disable these because they don't restrict the change to just the new viewport
 	r_waterwarp.value = 0;
 	v_contentblend.value = 0;
@@ -1641,93 +1695,145 @@ void CL_Multiview(void) {
 	v_damagecshift.value = 0;
 	v_suitcshift.value = 0;
 	v_bonusflash.value = 0;
-#endif
+	#endif
+
+	// stop weapon model lerping as it lerps with the other view
+	r_lerpframes.value = 0; 
 
 	nPlayernum = playernum;
+	
+	// Copy the stats for the current player before we go to the next view.
+	memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
 
-	if (cls.mvdplayback) {
-		
-		memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
+	//
+	// Increase the current view being rendered.
+	//
+	CURRVIEW = CL_IncrLoop(CURRVIEW, (int)cl_multiview.value);
+	
+	if (cl_mvinset.value && cl_multiview.value == 2) 
+	{
+		//
+		// Special case for mvinset and tracking 2 people
+		// this is meant for spectating duels primarily.
+		// Lets the user swap which player is shown in the
+		// main view and the mvinset by pressing jump.
+		//
 
-		CURRVIEW = CL_IncrLoop(CURRVIEW,cl_multiview.value);
+		// If both the mvinset and main view is set to show
+		// the same player, pick the first player for the main view
+		// and the next after that for the mvinset.
+		if (nTrack1duel == nTrack2duel) 
+		{
+			nTrack1duel = CL_NextPlayer(-1);
+			nTrack2duel = CL_NextPlayer(nTrack1duel);
+		}		
 
-		if (cl_mvinset.value && cl_multiview.value == 2) {
+		// The user pressed jump so we need to swap the pov.
+		if (nSwapPov) 
+		{
+			nTrack1duel = CL_NextPlayer(nTrack1duel);
+			nTrack2duel = CL_NextPlayer(nTrack2duel);
+			nSwapPov = false;
+		} 
+		else 
+		{
+			// Set the playernum based on if we're drawing the mvinset
+			// or the main view 
+			// (nTrack1duel = main view)
+			// (nTrack2duel = mvinset)
+			playernum = (CURRVIEW == 1) ? nTrack1duel : nTrack2duel;
+		}
+	} 
+	else 
+	{
+		//
+		// Normal multiview.
+		// 
 
-			// where did my comments go ?! they appear to have been
-			// stripped when this was ported.
+		// Start from the first player on each new frame.
+		playernum = ((CURRVIEW == 1) ? 0 : playernum);
 
-			if (nTrack1duel==nTrack2duel) {
-				nTrack1duel=CL_NextPlayer(-1);
-				nTrack2duel=CL_NextPlayer(nTrack1duel);
+		//
+		// The player pressed jump and wants to change what team is spectated.
+		//
+		if (nSwapPov && cl_multiview.value >= 2 && cl.teamplay) 
+		{
+			int j;
+			int team_slot_count = 0;
+			int last_mv_trackslots[4];			
+			qbool teamfound = false;
+
+			// Save the old track values and reset them.
+			for(j = 0; j < 4; j++)
+			{
+				last_mv_trackslots[j] = mv_trackslots[j];
+				mv_trackslots[j] = -1;				
+			}
+
+			// Find the new team.
+			for(j = 0; j < MAX_CLIENTS; j++)
+			{
+				// Find the opposite team from the one we are tracking now.
+				if(!currteam[0] || (strcmp(currteam, cl.players[j].team) && strcmp(cl.players[j].name, "")))
+				{
+					strlcpy(currteam, cl.players[j].team, sizeof(currteam));
+					break;				
+				}
+			}
+
+			// Find the team members.
+			for(j = 0; j < MAX_CLIENTS; j++)
+			{
+				if(!cl.players[j].spectator 
+					&& strcmp(cl.players[j].name, "") 
+					&& !strcmp(currteam, cl.players[j].team))
+				{
+					// Find the player slot to track.
+					mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[j].name);
+					team_slot_count++;
+				}
+
+				// Don't go out of bounds in the mv_trackslots array.
+				if(team_slot_count == 4)
+				{
+					break;
+				}
 			}
 			
-			if (nSwapPov==1) {
-				nTrack1duel = CL_NextPlayer(nTrack1duel);
-				nTrack2duel = CL_NextPlayer(nTrack2duel);
-				nSwapPov=0;
-			} else {
-				if (CURRVIEW == 1) {
-					playernum = nTrack1duel;
-				}
-				else {
-					playernum = nTrack2duel;
-				}
+			// We don't want to show all from one team and then one of the enemies...
+			if(cl_multiview.value < team_slot_count || team_slot_count >= 3)
+			{
+				cl_multiview.value = team_slot_count;
 			}
-		} else {
-		if (CURRVIEW ==	1) {
-			if (nTrack1 < 0 ) {
-				playernum = 0;
-				while (cl.players[playernum].spectator || !strcmp(cl.players[playernum].name,"")) {
-					playernum++;
-					if (playernum>=32)
-						playernum = 0;
-				}
-			} else {
-				playernum=nTrack1;
+			else if(team_slot_count == 2)
+			{
+				// Swap the teams between the top and bottom in a 4 view setup.
+				cl_multiview.value = 4;
+				mv_trackslots[MV_VIEW3] = last_mv_trackslots[MV_VIEW1];
+				mv_trackslots[MV_VIEW4] = last_mv_trackslots[MV_VIEW2];
 			}
-		}
-		else if (CURRVIEW == 2) {
-			if (nTrack2 < 0 ) {
-				playernum++;
-				while (cl.players[playernum].spectator || !strcmp(cl.players[playernum].name,"")) {
-					playernum++;
-					if (playernum>=32)
-						playernum = 0;
-				}
-			} else {
-				playernum=nTrack2;
-			}
-		}
-		else if (CURRVIEW == 3) {
-			if (nTrack3 < 0 ) {
-				playernum++;
-				while (cl.players[playernum].spectator || !strcmp(cl.players[playernum].name,"")) {
-					playernum++;
-					if (playernum>=32)
-						playernum = 0;	
-				}
-			} else {
-				playernum=nTrack3;
-			}
-		}
-		else if (CURRVIEW == 4) {
-			if (nTrack4 < 0 ) {
-				playernum++;
-				while (cl.players[playernum].spectator || !strcmp(cl.players[playernum].name,"")) {
-					playernum++;
-					if (playernum>=32)
-						playernum = 0;
-				}
-			} else {
-				playernum=nTrack4;
-			}
-		}
 
+			nSwapPov = false;
 		}
-		spec_track = playernum;
-	}	
+		else
+		{
+			// Check if the track* values have been set by the user,
+			// otherwise show the first 4 players.			
+			
+			if(CURRVIEW >= 1 && CURRVIEW <= 4)
+			{
+				// If the value of mv_trackslots[i] is negative, it means that view
+				// doesn't have any track value set so we need to find someone to track using CL_NextPlayer().
+				playernum = ((mv_trackslots[CURRVIEW - 1] < 0) ? CL_NextPlayer(playernum) : mv_trackslots[CURRVIEW - 1]);
+			}
+		}
+	}
 
-	bExitmultiview = 1;
+	// Set the current player we're tracking for the next view to be drawn.
+	spec_track = playernum;	
+
+	// Make sure we reset variables we suppressed during multiview drawing.
+	bExitmultiview = true;
 }
 
 void CL_UpdateCaption(void)
