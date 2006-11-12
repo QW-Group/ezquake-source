@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: movie.c,v 1.18 2006-09-25 09:10:43 johnnycz Exp $
+	$Id: movie.c,v 1.19 2006-11-12 04:50:12 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -234,7 +234,9 @@ double Movie_StartFrame(void) {
 	int views = 1;
 
 	if (cl_multiview.value)
+	{
 		views = cl_multiview.value;
+	}
 
 	if (Cmd_FindAlias("f_captureframe"))
 		Cbuf_AddTextEx (&cbuf_main, "f_captureframe\n");
@@ -267,21 +269,35 @@ void Movie_FinishFrame(void) {
 	//SCR_Screenshot(fname);
 	//movie_frame_count++;
 
-	if (cl_multiview.value && cls.mvdplayback) {
+	if (cl_multiview.value && cls.mvdplayback) 
+	{
 		if (CURRVIEW == 1)
+		{
 			SCR_Movieshot(fname);
-	} else
+		}
+	} 
+	else
+	{
 		SCR_Movieshot(fname);
+	}
 #ifdef _WIN32
 	if (!movie_is_avi)
 #endif
 		con_suppress = false;
 
-	if (cl_multiview.value && cls.mvdplayback) {
+	// Only count the frame when all the views have been drawn
+	// in multiview mode. (Instead of counting one for each view that is drawn).
+	if (cl_multiview.value && cls.mvdplayback) 
+	{
 		if (CURRVIEW == 1)
+		{
 			movie_frame_count++;
-	} else
+		}
+	} 
+	else
+	{
 		movie_frame_count++;
+	}
 
 	if (cls.realtime >= movie_start_time + movie_len)
 		Movie_Stop();
@@ -312,7 +328,9 @@ qbool Movie_GetSoundtime(void) {
 		return false;
 
 	if (cl_multiview.value)
+	{
 		views = cl_multiview.value;
+	}
 
 	soundtime += (int)(0.5 + cls.frametime * shm->format.speed * views * (1.0 / cl_demospeed.value)); //joe: fix for slowmo/fast forward
 	return true;
