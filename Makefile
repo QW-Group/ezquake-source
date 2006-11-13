@@ -2,14 +2,14 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.53 2006-11-13 21:28:07 disconn3ct Exp $
+#	$Id: Makefile,v 1.54 2006-11-13 21:48:29 disconn3ct Exp $
 
 # compilation tool and detection of targets/achitecture
-_E = @
+_E = 
 CC = gcc
 CC_BASEVERSION = $(shell $(CC) -dumpversion | sed -e 's/\..*//g')
 
-# TYPE = release or debug
+# TYPE = release debug
 TYPE=release
 STRIP = $(_E)strip
 STRIPFLAGS = --strip-unneeded --remove-section=.comment
@@ -22,7 +22,7 @@ OS = $(shell uname -s)
 # add special architecture based flags
 ifeq ($(ARCH),x86)
 	DEST_ARCH = x86
-	ARCH_CFLAGS = -march=$(shell echo uname -m) -D__LITTLE_ENDIAN__Q__ -Did386
+	ARCH_CFLAGS = -march=$(shell uname -m) -D__LITTLE_ENDIAN__Q__ -Did386
 endif
 ifeq ($(ARCH),ppc)
 	DEST_ARCH = ppc
