@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.46 2006-10-27 15:47:02 disconn3ct Exp $
+    $Id: teamplay.c,v 1.47 2006-11-13 01:54:19 cokeman1982 Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -1442,22 +1442,133 @@ char *TP_ParseFunChars (char *s, qbool chat)
 
 char *Skin_FindName (player_info_t *sc);
 
+void MV_UpdateSkins()
+{
+	//
+	// Multiview
+	//
+	char friendlyteam[MAX_INFO_STRING] = {'\0'};
+	char tracked_team[MAX_INFO_STRING] = {'\0'};
+	char *skinforcing_team = NULL;
+	qbool trackingteam = false;
+	int i;
+
+	if (cls.state < ca_connected)
+	{
+		return;
+	}
+
+	//
+	// Find out if we're tracking a team.
+	//
+	{
+		// Get the team of the first slot.		
+		strlcpy(tracked_team, cl.players[mv_trackslots[0]].team, sizeof(tracked_team));	
+
+		for(i = 0; i < 4; i++)
+		{
+			// Ignore views that aren't tracking anything.
+			if(mv_trackslots[i] < 0)
+			{
+				continue;
+			}			
+			
+			// Check if the team matches.
+			if(!strcmp(cl.players[mv_trackslots[i]].team, tracked_team))
+			{
+				trackingteam = true;
+				continue;
+			}
+
+			// If one of the slots team doesn't match with the others
+			// then we're not tracking a team.
+			trackingteam = false;
+			break;
+		}
+	}
+
+	//
+	// There has been no skin force yet and we're not tracking a team
+	// so we need to set all players colors.
+	//
+	if(!mv_skinsforced && !trackingteam)
+	{
+		// Only set the colors for all the players once, because
+		// we're tracking multiple people... We can't know who's
+		// a team member or an enemy.	
+
+		i = 0;
+
+		// Pick the first team as the "team"-team. (uses teamcolor).
+		while(!friendlyteam[0] && cl.players[i].team[0])
+		{
+			strlcpy(friendlyteam, cl.players[i].team, sizeof(friendlyteam));
+			i++;
+		}
+		
+		skinforcing_team = friendlyteam;
+	}
+	else if(trackingteam)
+	{
+		skinforcing_team = tracked_team;		
+	}
+
+	// Set the colors based on team.
+	if(skinforcing_team != NULL)
+	{
+		for(i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!cl.players[i].spectator && cl.players[i].name[0] && !cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_COLOR)))
+			{
+				if(strcmp(cl.players[i].team, skinforcing_team))
+				{
+					cl.players[i].topcolor = cl_enemytopcolor;
+					cl.players[i].bottomcolor = cl_enemybottomcolor;
+				}
+				else
+				{
+					cl.players[i].topcolor = cl_teamtopcolor;
+					cl.players[i].bottomcolor = cl_teambottomcolor;
+				}
+			}
+
+			R_TranslatePlayerSkin(i);
+		}
+
+		mv_skinsforced = true;
+	}
+}
+
 static qbool need_skin_refresh;
 void TP_UpdateSkins(void)
 {
 	int slot;
 
 	if (!need_skin_refresh)
+	{
 		return;
+	}
 
-	need_skin_refresh = false;
-
-	for (slot = 0; slot < MAX_CLIENTS; slot++) {
-		if (cl.players[slot].skin_refresh) {
-			CL_NewTranslation(slot);
-			cl.players[slot].skin_refresh = false;
+	if(cls.mvdplayback && cl_multiview.value)
+	{
+		// Need to threat multiview completly different
+		// since we are tracking more than one player
+		// at once.
+		MV_UpdateSkins();
+	}
+	else
+	{
+		for (slot = 0; slot < MAX_CLIENTS; slot++) 
+		{
+			if (cl.players[slot].skin_refresh) 
+			{
+				CL_NewTranslation(slot);
+				cl.players[slot].skin_refresh = false;
+			}
 		}
 	}
+
+	need_skin_refresh = false;
 }
 
 qbool TP_NeedRefreshSkins(void)
@@ -1481,7 +1592,15 @@ void TP_RefreshSkin(int slot)
 	if (cls.state < ca_connected || slot < 0 || slot >= MAX_CLIENTS || !cl.players[slot].name[0] || cl.players[slot].spectator)
 		return;
 
-
+	// Multiview
+	// Never allow a skin refresh in multiview, since it
+	// results in players getting the wrong color when
+	// force colors is used (Team/enemycolor).
+	// TODO: Any better solution for this?
+	/*if(cls.mvdplayback && cl_multiview.value)
+	{
+		return;
+	}*/
 
 	cl.players[slot].skin_refresh = true;
 	need_skin_refresh = true;

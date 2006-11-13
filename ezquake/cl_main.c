@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.97 2006-11-12 04:52:57 cokeman1982 Exp $
+	$Id: cl_main.c,v 1.98 2006-11-13 01:52:50 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -613,7 +613,7 @@ void CL_Disconnect (void) {
 	
 	r_lerpframes.value		= nLerpframesExit;
 	nTrack1duel = nTrack2duel = 0;
-	bExitmultiview = 0;
+	bExitmultiview = false;
 
 	// stop sounds (especially looping!)
 	S_StopAllSounds (true);
@@ -1189,18 +1189,26 @@ static double CL_MinFrameTime (void) {
 	if (cls.timedemo || Movie_IsCapturing())
 		return 0;
 
-	if (cls.demoplayback) {
+	if (cls.demoplayback) 
+	{
 		if (!cl_maxfps.value)
 			return 0;
 
-		// oppymv 310804
-		if (cl_multiview.value>0 && cls.mvdplayback)
+		// Multiview.
+		if (cl_multiview.value > 0 && cls.mvdplayback)
+		{
 			fps = max (30.0, cl_maxfps.value * nNumViews);
+		}
 		else
+		{
 			fps = max (30.0, cl_maxfps.value);
+		}
 
-	} else {
-		if (cl_independentPhysics.value == 0) {
+	} 
+	else 
+	{
+		if (cl_independentPhysics.value == 0) 
+		{
 			fpscap = cl.maxfps ? max (30.0, cl.maxfps) : Rulesets_MaxFPS();
 			fps = cl_maxfps.value ? bound (30.0, cl_maxfps.value, fpscap) : com_serveractive ? fpscap : bound (30.0, rate.value / 80.0, fpscap);
 		}
@@ -1513,7 +1521,7 @@ void CL_Frame (double time) {
 		#endif
 
 		r_lerpframes.value = nLerpframesExit;
-		bExitmultiview = 0;
+		bExitmultiview = false;
 	}
 
 	if (cl_multiview.value > 0 && cls.mvdplayback)
@@ -1649,9 +1657,10 @@ void CL_Multiview(void)
 
 	nNumViews = cl_multiview.value;
 
-	// only refresh skins once, I think this is the best solution for multiview
-	// eg when viewing 4 players in a 2v2
-	if (!CURRVIEW && cls.state >= ca_connected)
+	// Only refresh skins once (to start with), I think this is the best solution for multiview
+	// eg when viewing 4 players in a 2v2.
+	// Also refresh them when the player changes what team to track.
+	if ((!CURRVIEW && cls.state >= ca_connected) || nSwapPov)
 	{
 		TP_RefreshSkins();
 	}
@@ -1703,7 +1712,8 @@ void CL_Multiview(void)
 	nPlayernum = playernum;
 	
 	// Copy the stats for the current player before we go to the next view.
-	memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
+	// WHY?!?!
+	//memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
 
 	//
 	// Increase the current view being rendered.
@@ -1773,11 +1783,14 @@ void CL_Multiview(void)
 			// Find the new team.
 			for(j = 0; j < MAX_CLIENTS; j++)
 			{
-				// Find the opposite team from the one we are tracking now.
-				if(!currteam[0] || (strcmp(currteam, cl.players[j].team) && strcmp(cl.players[j].name, "")))
+				if(!cl.players[j].spectator && cl.players[j].name[0])
 				{
-					strlcpy(currteam, cl.players[j].team, sizeof(currteam));
-					break;				
+					// Find the opposite team from the one we are tracking now.
+					if(!currteam[0] || (strcmp(currteam, cl.players[j].team) && strcmp(cl.players[j].name, "")))
+					{
+						strlcpy(currteam, cl.players[j].team, sizeof(currteam));
+						break;
+					}
 				}
 			}
 
@@ -1800,13 +1813,18 @@ void CL_Multiview(void)
 				}
 			}
 			
-			// We don't want to show all from one team and then one of the enemies...
-			if(cl_multiview.value < team_slot_count || team_slot_count >= 3)
+			if(cl_multiview.value == 2 && team_slot_count == 2)
 			{
+				// Switch between 2on2 teams.
+			}
+			else if(cl_multiview.value < team_slot_count || team_slot_count >= 3)
+			{
+				// We don't want to show all from one team and then one of the enemies...
 				cl_multiview.value = team_slot_count;
 			}
 			else if(team_slot_count == 2)
 			{
+				// 2on2... one team on top, on on the bottom
 				// Swap the teams between the top and bottom in a 4 view setup.
 				cl_multiview.value = 4;
 				mv_trackslots[MV_VIEW3] = last_mv_trackslots[MV_VIEW1];

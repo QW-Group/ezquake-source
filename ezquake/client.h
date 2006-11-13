@@ -748,6 +748,11 @@ int		CURRVIEW;					// The current view being drawn in multiview mode.
 int		nNumViews;					// The number of views in multiview mode.
 qbool	bExitmultiview;				// Used when saving effect values on each frame.
 
+qbool	mv_skinsforced;				// When using teamcolor/enemycolor in multiview we can't just assume 
+									// that the "teammates" should all be colored in the same color as the
+									// person we're tracking (or opposite for enemies), because we're tracking
+									// more than one person. Therefore the teamcolor/enemycolor is set only once,
+									// or when the player chooses to track an entire team.
 int		nPlayernum;
 
 #define	MV_VIEW1 0

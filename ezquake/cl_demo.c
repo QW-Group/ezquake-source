@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.38 2006-11-12 04:51:13 cokeman1982 Exp $
+	$Id: cl_demo.c,v 1.39 2006-11-13 01:52:39 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1409,6 +1409,7 @@ void CL_Play_f (void) {
 		mv_trackslots[i] = -1;
 	}
 	nTrack1duel = nTrack2duel = 0;
+	mv_skinsforced = false;
 
 	Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
 #ifdef _WIN32

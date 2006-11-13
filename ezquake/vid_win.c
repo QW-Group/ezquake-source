@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.15 2006-09-25 09:10:43 johnnycz Exp $
+	$Id: vid_win.c,v 1.16 2006-11-13 01:54:43 cokeman1982 Exp $
 
 */
 
@@ -1125,12 +1125,15 @@ qbool VID_SetFullscreenMode (int modenum) {
 		MGL_destroyDC (memdc);
 	mgldc = memdc = NULL;
 
-	// oppymv 010904 - for fullscreen flipping problems
+	// Multiview - for fullscreen flipping problems
 	if (cl_multiview.value && cls.mvdplayback)
+	{
 		mgldc = createDisplayDC (1);
-	else
-	if ((mgldc = createDisplayDC (modelist[modenum].stretched || (int) vid_nopageflip.value)) == NULL)
+	}
+	else if ((mgldc = createDisplayDC (modelist[modenum].stretched || (int) vid_nopageflip.value)) == NULL)
+	{
 		return false;
+	}
 
 	modestate = MS_FULLSCREEN;
 	vid_fulldib_on_focus_mode = 0;
@@ -1883,20 +1886,32 @@ void VID_Update (vrect_t *rects) {
 
 	// We've drawn the frame; copy it to the screen
 
-	//oppymv 010904 FIXME
-	if (cl_multiview.value && cls.mvdplayback) {
+	// Multiview - Only flip the screen after drawing all the views in multiview.
+	if (cl_multiview.value && cls.mvdplayback) 
+	{
 		if (CURRVIEW == 1)
+		{
 			FlipScreen (rects);
-	} else
+		}
+	} 
+	else
+	{
+		// Normal, flip on each frame.
 		FlipScreen (rects);
+	}
 
-	if (vid_testingmode) {
-		if (curtime >= vid_testendtime) {
+	if (vid_testingmode) 
+	{
+		if (curtime >= vid_testendtime) 
+		{
 			VID_SetMode (vid_realmode, vid_curpal);
 			vid_testingmode = 0;
 		}
-	} else {
-		if ((int)vid_mode.value != vid_realmode) {
+	} 
+	else 
+	{
+		if ((int)vid_mode.value != vid_realmode) 
+		{
 			VID_SetMode ((int)vid_mode.value, vid_curpal);
 			Cvar_SetValue (&vid_mode, (float)vid_modenum);
 								// so if mode set fails, we don't keep on
