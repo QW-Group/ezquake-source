@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.47 2006-11-13 01:54:19 cokeman1982 Exp $
+    $Id: teamplay.c,v 1.48 2006-11-13 02:01:37 cokeman1982 Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -125,6 +125,7 @@ char *TP_LocationName (vec3_t location);
 static void CountNearbyPlayers(qbool dead);
 char *Macro_LastTookOrPointed (void);
 char *Macro_LastTookOrPointed2 (void);
+void R_TranslatePlayerSkin (int playernum);
 
 #define	POINT_TYPE_ITEM			1
 #define POINT_TYPE_POWERUP		2
@@ -1518,7 +1519,7 @@ void MV_UpdateSkins()
 	{
 		for(i = 0; i < MAX_CLIENTS; i++)
 		{
-			if(!cl.players[i].spectator && cl.players[i].name[0] && !cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_COLOR)))
+			if(!cl.players[i].spectator && cl.players[i].name[0] && !cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_COLOR))
 			{
 				if(strcmp(cl.players[i].team, skinforcing_team))
 				{
