@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.20 2006-11-12 04:51:31 cokeman1982 Exp $
+	$Id: utils.c,v 1.21 2006-11-13 21:46:59 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -249,7 +249,6 @@ int Player_IdtoSlot (int id) {
 char *Player_StripNameColor(const char *name)
 {	
 	extern char readableChars[]; // console.c
-	int k = 0;
 	char *stripped = NULL;
 	int i, name_length;
 	name_length = strlen(name);
