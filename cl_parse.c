@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.57 2006-10-28 14:54:42 qqshka Exp $
+	$Id: cl_parse.c,v 1.58 2006-11-13 01:53:01 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1284,12 +1284,15 @@ void CL_ParseStartSoundPacket(void) {
 	if (ent > CL_MAX_EDICTS)
 		Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
 
-
-    if (cls.mvdplayback) {
+	// MVD Playback
+    if (cls.mvdplayback) 
+	{
 	    tracknum = Cam_TrackNum();
 
-	    if (cl.spectator && tracknum != -1 && ent == tracknum + 1 && cl_multiview.value<2)
+	    if (cl.spectator && tracknum != -1 && ent == tracknum + 1 && cl_multiview.value < 2)
+		{
 		    ent = cl.playernum + 1;
+		}
     }
 
     S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
@@ -1348,47 +1351,54 @@ void CL_ParseClientdata (void) {
 	}
 }
 
-void CL_NewTranslation (int slot) {
+void CL_NewTranslation (int slot) 
+{
 	player_info_t *player;
 	int tracknum;
 
 	if (cls.state < ca_connected)
+	{
 		return;
+	}
 
 	if (slot >= MAX_CLIENTS)
+	{
 		Sys_Error ("CL_NewTranslation: slot >= MAX_CLIENTS");
+	}
 
 	player = &cl.players[slot];
 	if (!player->name[0] || player->spectator)
+	{
 		return;
+	}
 
-	player->topcolor = player->real_topcolor;
+	player->topcolor	= player->real_topcolor;
 	player->bottomcolor = player->real_bottomcolor;
 
-	// TODO: There is a bug here somewhere that makes some players get the incorrect color during multiview.
-	/*if (cls.mvdplayback && cl_multiview.value)
+	if (cl.spectator && (tracknum = Cam_TrackNum()) != -1)
 	{
-		skinforcing_team = player->team;
-	}
-	else*/ if (cl.spectator && (tracknum = Cam_TrackNum()) != -1)
-	{
-		skinforcing_team =  cl.players[tracknum].team;
+		// Spectating and tracking someone (not free flying).
+		skinforcing_team = cl.players[tracknum].team;
 	}
 	else if (!cl.spectator)
 	{
+		// Normal player.
 		skinforcing_team = cl.players[cl.playernum].team;
 	}
 
-
-	if (!cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_COLOR)) {
+	if (!cl.teamfortress && !(cl.fpd & FPD_NO_FORCE_COLOR)) 
+	{
 		qbool teammate;
 
-		teammate = ( // cl.teamplay && 
-			!strcmp(player->team, skinforcing_team)) ? true : false;
-		if (cl_teamtopcolor >= 0 && teammate) {
+		teammate = !strcmp(player->team, skinforcing_team);
+
+		if (cl_teamtopcolor >= 0 && teammate) 
+		{
 			player->topcolor = cl_teamtopcolor;
 			player->bottomcolor = cl_teambottomcolor;
-		} else if (cl_enemytopcolor >= 0 && slot != cl.playernum && !teammate)	{
+		} 
+		else if (cl_enemytopcolor >= 0 && slot != cl.playernum && !teammate)	
+		{
 			player->topcolor = cl_enemytopcolor;
 			player->bottomcolor = cl_enemybottomcolor;
 		}

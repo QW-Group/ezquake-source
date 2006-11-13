@@ -714,7 +714,8 @@ void CL_InitCam(void)
 	for(i = 0; i < 4; i++)
 	{
 		mv_trackslots[i] = -1;
-	}	
+	}
+	mv_skinsforced = false;
 }
 
 //
@@ -827,7 +828,7 @@ void CL_Track_f(void)
 }
 
 //
-// Returns the player number of the currently spectated player.
+// Returns the player id of the currently tracked player (not free flying).
 //
 int Cam_TrackNum(void) 
 {
@@ -865,7 +866,7 @@ int WhoIsSpectated (void)
 
 void CL_TrackMV1_f() 
 {
-	CL_Track(MV_VIEW1);
+	CL_Track(MV_VIEW1);	
 }
 
 void CL_TrackMV2_f() 

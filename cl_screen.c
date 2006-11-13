@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.62 2006-11-12 04:49:39 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.63 2006-11-13 01:53:17 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -479,10 +479,15 @@ void SCR_DrawFPS (void) {
 	if (!show_fps.value || scr_newHud.value == 1) // HUD -> hexum - newHud has its own fps
 		return;
 
+	// Multiview
 	if (cl_multiview.value && cls.mvdplayback)
+	{
 		snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05)/nNumViews);
+	}
 	else
+	{
 		snprintf(str, sizeof(str), "%3.1f",  lastfps + 0.05);
+	}
 
 	x = ELEMENT_X_COORD(show_fps);
 	y = ELEMENT_Y_COORD(show_fps);
@@ -697,8 +702,12 @@ void SCR_SetUpToDrawConsole (void) {
 	{
 #ifndef GLQUAKE
 		scr_copytop = 1;
-		if (!(cl_multiview.value && cls.mvdplayback)) // oppmv 040904
+
+		// Multiview (software)
+		if (!(cl_multiview.value && cls.mvdplayback))
+		{
 			Draw_TileClear (0, (int) scr_con_current, vid.width, vid.height - (int) scr_con_current);
+		}
 #endif
 		Sbar_Changed ();
 	}
@@ -707,8 +716,11 @@ void SCR_SetUpToDrawConsole (void) {
 #ifndef GLQUAKE
 		scr_copytop = 1;
 
+		// Multiview (software)
 		if (!(cl_multiview.value && cls.mvdplayback))
+		{
 			Draw_TileClear (0, 0, vid.width, con_notifylines);
+		}
 #endif
 	}
 	else
@@ -2061,9 +2073,10 @@ void SCR_DrawElements(void) {
 				SCR_DrawGameClock ();
 				SCR_DrawDemoClock ();
 				SCR_DrawFPS ();
-				// QW262 -->
+				
+				// QW262 
 				SCR_DrawHud ();
-				// <-- QW262
+
 				MVD_Screen ();
 
 #ifdef GLQUAKE
@@ -2074,8 +2087,11 @@ void SCR_DrawElements(void) {
 					VX_TrackerThink();
 #endif
 
+				// Multiview
 				if (cl_multiview.value && cls.mvdplayback)
+				{
 					SCR_DrawStatusMultiview();
+				}
 
 				Sbar_Draw();
 				HUD_Draw();		// HUD -> hexum
@@ -2152,8 +2168,11 @@ void SCR_UpdateScreen (void) {
 	if ((v_contrast.value > 1 && !vid_hwgamma_enabled) || gl_clear.value)
 		Sbar_Changed ();
 
+	// Multiview
 	if (cl_multiview.value && cls.mvdplayback)
+	{
 		SCR_CalcRefdef();
+	}
  
 	// do 3D refresh drawing, and then update the screen
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
@@ -2280,21 +2299,26 @@ void SCR_UpdateScreen (void) {
 	// do 3D refresh drawing, and then update the screen
 	D_EnableBackBufferAccess ();	// of all overlay stuff if drawing directly
 
-	 // oppymv 040904 - dont tile over the first view
+	 // Multiview - dont tile over the first view
 	if (!(cl_multiview.value && cls.mvdplayback) ||
 		(cl_multiview.value && cls.mvdplayback && CURRVIEW == 2))
+	{
 		SCR_TileClear ();
+	}
 
 	SCR_SetUpToDrawConsole ();
 
-
-	if (!(cl_multiview.value && cls.mvdplayback)) // oppymv 010904
+	// Multiview
+	if (!(cl_multiview.value && cls.mvdplayback)) 
+	{
 		SCR_EraseCenterString ();
+	}
 
-
-	// oppymv 010904
-	if (cl_multiview.value && cls.mvdplayback && CURRVIEW==1)
+	// Multiview - Only calculate Refdef once for all the views.
+	if (cl_multiview.value && cls.mvdplayback && CURRVIEW == 1)
+	{
 		SCR_CalcRefdef();
+	}
 
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in for linear writes all the time
 
@@ -2339,6 +2363,7 @@ void SCR_UpdateScreen (void) {
 
 	SCR_CheckAutoScreenshot();
 
+	// Multiview
 	if (cls.mvdplayback && cl_multiview.value)
 		SCR_CheckMVScreenshot();
 }
@@ -2548,28 +2573,45 @@ void SCR_ScreenShot_f (void) {
 	FILE *f;
 
 #ifdef GLQUAKE
-	if (cls.mvdplayback && cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW != 1) {
+	// Multiview
+	if (cls.mvdplayback && cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW != 1) 
+	{
 		scr_mvsshot_countdown = 1;
 		return;
 	}
 #else
 	// sorry braindead atm, this can be cleaned up someday
-	if (cls.mvdplayback && cl_multiview.value && CURRVIEW != 1) {
+	if (cls.mvdplayback && cl_multiview.value && CURRVIEW != 1) 
+	{
 		if (cl_multiview.value == 2)
+		{
 			scr_mvsshot_countdown = 1;
-		else if (cl_multiview.value == 3) {
+		}
+		else if (cl_multiview.value == 3) 
+		{
 			if (CURRVIEW == 2)
+			{
 				scr_mvsshot_countdown = 2;
+			}
 			else if (CURRVIEW == 3)
+			{
 				scr_mvsshot_countdown = 1;
+			}
 		} 
-		else if (cl_multiview.value == 4) {
+		else if (cl_multiview.value == 4) 
+		{
 			if (CURRVIEW == 2)
+			{
 				scr_mvsshot_countdown = 3;
+			}
 			else if (CURRVIEW == 3)
+			{
 				scr_mvsshot_countdown = 2;
+			}
 			else if (CURRVIEW == 4)
+			{
 				scr_mvsshot_countdown = 1;
+			}
 		}
 		return;
 	}

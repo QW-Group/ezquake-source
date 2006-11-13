@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.19 2006-10-24 13:48:48 vvd0 Exp $
+	$Id: vid_wgl.c,v 1.20 2006-11-13 01:54:30 cokeman1982 Exp $
 
 */
 
@@ -605,13 +605,19 @@ void GL_EndRendering (void) {
 			wglSwapIntervalEXT(vid_vsync.value ? 1 : 0);
 		update_vsync = false;
 
-		if (cl_multiview.value && cls.mvdplayback) {
+		// Multiview - Only swap the back buffer to front when all views have been drawn in multiview.
+		if (cl_multiview.value && cls.mvdplayback) 
+		{
 			if (CURRVIEW == 1)
+			{
 				SwapBuffers(maindc);
+			}
 		}
 		else 
+		{
+			// Normal, swap on each frame.
 			SwapBuffers(maindc); 
-
+		}
 	}
 
 	// handle the mouse state when windowed if that's changed

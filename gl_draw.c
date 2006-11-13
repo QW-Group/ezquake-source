@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.34 2006-11-07 23:32:25 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.35 2006-11-13 01:53:38 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -811,78 +811,119 @@ void Draw_Crosshair (void) {
 	byte *col;
 	extern vrect_t scr_vrect;
 
-	// oppymv 010904
+	// Multiview
 	if (cls.mvdplayback && cl_multiview.value == 2 && CURRVIEW == 1 && !cl_mvinsetcrosshair.value)
+	{
 		return;
+	}
 
 	if ((crosshair.value >= 2 && crosshair.value <= NUMCROSSHAIRS + 1) || 
 		((customcrosshair_loaded & CROSSHAIR_TXT) && crosshair.value == 1) ||
-		(customcrosshair_loaded & CROSSHAIR_IMAGE)
-	) {
-		// oppymv 010904
-		if (cl_multiview.value && cls.mvdplayback) {
-			if (cl_multiview.value == 1) {
+		(customcrosshair_loaded & CROSSHAIR_IMAGE)) 
+	{
+		// Multiview
+		if (cl_multiview.value && cls.mvdplayback) 
+		{
+			if (cl_multiview.value == 1) 
+			{
 				x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value; 
 				y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
 			}
-			else if (cl_multiview.value == 2) {
-				if (!cl_mvinset.value) {
-					if (CURRVIEW == 1) {
+			else if (cl_multiview.value == 2) 
+			{
+				if (!cl_mvinset.value) 
+				{
+					if (CURRVIEW == 1) 
+					{
 						x = vid.width / 2; 
 						y = vid.height * 3/4;
-					} else if (CURRVIEW == 2) { // top cv2
+					} 
+					else if (CURRVIEW == 2) 
+					{ 
+						// top cv2
 						x = vid.width / 2; 
 						y = vid.height / 4;
 					}
-				} else { // inset
-					if (CURRVIEW == 2) { // normal
+				} 
+				else 
+				{ 
+					// inset
+					if (CURRVIEW == 2) 
+					{ 
+						// normal
 						x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value; 
 						y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
-					} else if (CURRVIEW == 1) {
+					} 
+					else if (CURRVIEW == 1) 
+					{
 						x = vid.width - (vid.width/3)/2;
 						if (cl_sbar.value)
+						{
 							y = ((vid.height/3)-sb_lines/3)/2;
-						else // no sbar
+						}
+						else
+						{
+							// no sbar
 							y = (vid.height/3)/2;
+						}
 					}
 				}
-			} else if (cl_multiview.value == 3) {
-				if (CURRVIEW == 2) { // top
+			} 
+			else if (cl_multiview.value == 3) 
+			{
+				if (CURRVIEW == 2) 
+				{ 
+					// top
 					x = vid.width / 2;
 					y = vid.height / 4;
-				} else if (CURRVIEW == 3) { // bl
+				} 
+				else if (CURRVIEW == 3) 
+				{ 
+					// bl
 					x = vid.width / 4;
 					y = vid.height/2 + vid.height/4;
 				}
-				else { // br
+				else 
+				{ 
+					// br
 					x = vid.width/2 + vid.width/4;
 					y = vid.height/2 + vid.height/4;
 				}
 
-			} else if (cl_multiview.value >= 4) {
-
-				if (CURRVIEW == 2) { // tl
+			} 
+			else if (cl_multiview.value >= 4) 
+			{
+				if (CURRVIEW == 2) 
+				{ 
+					// tl
 					x = vid.width/4;
 					y = vid.height/4;
 				}
-				else if (CURRVIEW == 3) { // tr
+				else if (CURRVIEW == 3) 
+				{ 
+					// tr
 					x = vid.width/2 + vid.width/4;
 					y = vid.height/4;
 
 				}
-				else if (CURRVIEW == 4) { // bl
+				else if (CURRVIEW == 4) 
+				{ 
+					// bl
 					x = vid.width/4;
 					y = vid.height/2 + vid.height/4;
 
 				}
-				else if (CURRVIEW == 1) { // br
+				else if (CURRVIEW == 1) 
+				{ 
+					// br
 					x = vid.width/2 + vid.width/4;
 					y = vid.height/2 + vid.height/4;
 				}
-
 			}
-
-		} else { // not mv
+		} 
+		else 
+		{ 
+			// not mv
 			x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value; 
 			y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
 		}
@@ -924,19 +965,28 @@ void Draw_Crosshair (void) {
 			sh = th = 1;
 		}
 
-		// for the case of mv==2, mvi==1
-		if (cl_multiview.value == 2 && cls.mvdplayback && cl_mvinset.value) {
-			if (CURRVIEW == 1) {
+		// Multiview for the case of mv == 2 with mvinset
+		if (cl_multiview.value == 2 && cls.mvdplayback && cl_mvinset.value) 
+		{
+			if (CURRVIEW == 1) 
+			{
 				ofs1 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
 				ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
-			} else { // normal
+			} 
+			else 
+			{ 
+				// normal
 				ofs1 *= (vid.width / 320) * bound(0, crosshairsize.value, 20);
 				ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value, 20);
 			}
-		} else if (cl_multiview.value > 1 && cls.mvdplayback) {
+		} 
+		else if (cl_multiview.value > 1 && cls.mvdplayback) 
+		{
 			ofs1 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
 			ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
-		} else {
+		} 
+		else 
+		{
 			ofs1 *= (vid.width / 320) * bound(0, crosshairsize.value, 20);
 			ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value, 20);
 		}
@@ -952,39 +1002,51 @@ void Draw_Crosshair (void) {
 		glVertex2f (x - ofs1, y + ofs2);
 		glEnd ();
 
-
-		if (gl_crosshairalpha.value) {
+		if (gl_crosshairalpha.value) 
+		{
 			glDisable(GL_BLEND);
 			glEnable (GL_ALPHA_TEST);
 		}
 
-
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		glColor3ubv (color_white);
-	} else if (crosshair.value) {
-		// oppymv 010904
+	} 
+	else if (crosshair.value) 
+	{
+		// Multiview
 		if (cls.mvdplayback && cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1)
+		{
 			if (cl_sbar.value)
+			{
 				Draw_Character (vid.width - (vid.width/3)/2-4, ((vid.height/3)-sb_lines/3)/2 - 2, '+');
+			}
 			else
+			{
 				Draw_Character (vid.width - (vid.width/3)/2-4, (vid.height/3)/2 - 2, '+');
-		else if (cls.mvdplayback && cl_multiview.value == 2 && !cl_mvinset.value) {
-				Draw_Character (vid.width / 2 - 4, vid.height * 3/4 - 2, '+');
-				Draw_Character (vid.width / 2 - 4, vid.height / 4 - 2, '+');
+			}
 		}
-		else if (cls.mvdplayback && cl_multiview.value == 3) {
-				Draw_Character (vid.width / 2 - 4, vid.height / 4 - 2, '+');
-				Draw_Character (vid.width / 4 - 4, vid.height/2 + vid.height/4 - 2, '+');
-				Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
+		else if (cls.mvdplayback && cl_multiview.value == 2 && !cl_mvinset.value) 
+		{
+			Draw_Character (vid.width / 2 - 4, vid.height * 3/4 - 2, '+');
+			Draw_Character (vid.width / 2 - 4, vid.height / 4 - 2, '+');
 		}
-		else if (cls.mvdplayback && cl_multiview.value >= 4) {
-				Draw_Character (vid.width/4 - 4, vid.height/4 - 2, '+');
-				Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/4 - 2, '+');
-				Draw_Character (vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
-				Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
-
-		} else
+		else if (cls.mvdplayback && cl_multiview.value == 3) 
+		{
+			Draw_Character (vid.width / 2 - 4, vid.height / 4 - 2, '+');
+			Draw_Character (vid.width / 4 - 4, vid.height/2 + vid.height/4 - 2, '+');
+			Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
+		}
+		else if (cls.mvdplayback && cl_multiview.value >= 4) 
+		{
+			Draw_Character (vid.width/4 - 4, vid.height/4 - 2, '+');
+			Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/4 - 2, '+');
+			Draw_Character (vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
+			Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
+		} 
+		else
+		{
 			Draw_Character (scr_vrect.x + scr_vrect.width / 2 - 4 + cl_crossx.value, scr_vrect.y + scr_vrect.height / 2 - 4 + cl_crossy.value, '+');
+		}
 	}
 }
 

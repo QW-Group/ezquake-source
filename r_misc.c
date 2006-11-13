@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_misc.c,v 1.11 2006-08-14 15:31:53 vvd0 Exp $
+	$Id: r_misc.c,v 1.12 2006-11-13 01:53:55 cokeman1982 Exp $
 
 */
 
@@ -530,25 +530,33 @@ void R_SetupFrame (void) {
 	r_dowarpold = r_dowarp;
 	r_dowarp = r_waterwarp.value && (r_viewleaf->contents <= CONTENTS_WATER);
 
-	if (r_dowarp != r_dowarpold || r_viewchanged || (cl_multiview.value && cls.mvdplayback)) { // oppymv 310804
-		if (r_dowarp) {
-			if (vid.width <= WARP_WIDTH && vid.height <= WARP_HEIGHT) {
+	// Multiview - Warping in water.
+	if (r_dowarp != r_dowarpold || r_viewchanged || (cl_multiview.value && cls.mvdplayback)) 
+	{
+		if (r_dowarp) 
+		{
+			if (vid.width <= WARP_WIDTH && vid.height <= WARP_HEIGHT) 
+			{
 				vrect.x = 0;
 				vrect.y = 0;
 				vrect.width = vid.width;
 				vrect.height = vid.height;
 
 				R_ViewChanged (&vrect, sb_lines, vid.aspect);
-			} else {
+			} 
+			else 
+			{
 				w = vid.width;
 				h = vid.height;
 
-				if (w > WARP_WIDTH) {
+				if (w > WARP_WIDTH) 
+				{
 					h *= (float)WARP_WIDTH / w;
 					w = WARP_WIDTH;
 				}
 
-				if (h > WARP_HEIGHT) {
+				if (h > WARP_HEIGHT) 
+				{
 					h = WARP_HEIGHT;
 					w *= (float)WARP_HEIGHT / h;
 				}
@@ -563,7 +571,9 @@ void R_SetupFrame (void) {
 								vid.aspect * (h / w) *
 								((float) vid.width / (float) vid.height));
 			}
-		} else {
+		} 
+		else 
+		{
 			vrect.x = 0;
 			vrect.y = 0;
 			vrect.width = vid.width;
@@ -575,10 +585,10 @@ void R_SetupFrame (void) {
 		r_viewchanged = false;
 	}
 
-// start off with just the four screen edge clip planes
+	// start off with just the four screen edge clip planes
 	R_TransformFrustum ();
 
-// save base values
+	// save base values
 	VectorCopy (vpn, base_vpn);
 	VectorCopy (vright, base_vright);
 	VectorCopy (vup, base_vup);
@@ -590,7 +600,7 @@ void R_SetupFrame (void) {
 
 	r_cache_thrash = false;
 
-// clear frame counts
+	// clear frame counts
 	c_faceclip = 0;
 	d_spanpixcount = 0;
 	r_polycount = 0;

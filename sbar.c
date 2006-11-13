@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.28 2006-10-17 00:32:09 qqshka Exp $
+	$Id: sbar.c,v 1.29 2006-11-13 01:54:06 cokeman1982 Exp $
 */
 // sbar.c -- status bar code
 
@@ -1582,8 +1582,10 @@ static void Sbar_MiniDeathmatchOverlay (void) {
 		Draw_Character (x + 16, y, num[1]);
 		Draw_Character (x + 24, y, num[2]);
 
-		if (!cls.mvdplayback || !cl_multiview.value) {
-			if (k == mynum) {
+		if (!cls.mvdplayback || !cl_multiview.value) 
+		{
+			if (k == mynum) 
+			{
 				Draw_Character (x, y, 16);
 				Draw_Character (x + 32, y, 17);
 			}
@@ -1733,9 +1735,7 @@ void Sbar_Draw(void) {
 	qbool headsup;
 	char st[512];
 
-	// START shaman RFE 1022309
 	extern cvar_t scr_tracking, scr_spectatorMessage;
-	// END shaman RFE 1022309
 
 	headsup = !(cl_sbar.value || scr_viewsize.value < 100);
 	if (sb_updates >= vid.numpages && !headsup)
@@ -1763,15 +1763,11 @@ void Sbar_Draw(void) {
 	if (sb_lines > 0 && scr_newHud.value != 1) {  // HUD -> hexum
 		if (cl.spectator) {
 			if (autocam != CAM_TRACK) {
-				// START shaman RFE 1022309
 				if (scr_spectatorMessage.value != 0) {
-				// END shaman RFE 1022309
 					Sbar_DrawPic (0, 0, sb_scorebar);
 					Sbar_DrawString (160 - 7 * 8,4, "SPECTATOR MODE");
 					Sbar_DrawString(160 - 14 * 8 + 4, 12, "Press [ATTACK] for AutoCamera");
-				// START shaman RFE 1022309
 				}
-				// END shaman RFE 1022309
 			} else {
 				if (sb_showscores || sb_showteamscores || cl.stats[STAT_HEALTH] <= 0)
 					Sbar_SoloScoreboard ();
@@ -1787,7 +1783,7 @@ void Sbar_Draw(void) {
 
 				strlcpy(st,scr_tracking.string,sizeof(st));
 				
-				Replace_In_String(st,sizeof(st),'%',2,"n",cl.players[spec_track].name,"t",cl.teamplay ? cl.players[spec_track].team : "");
+				Replace_In_String(st, sizeof(st), '%', 2, "n", cl.players[spec_track].name, "t", cl.teamplay ? cl.players[spec_track].team : "");
 		
 				/*
 				if (strlen(scr_tracking.string) > 0)
@@ -1795,14 +1791,17 @@ void Sbar_Draw(void) {
 				else 
 					st[0]='\0';
 				*/
-				// oppymv 300804
-				// fix displaying "tracking .." for both players with inset on
-				if (cl_multiview.value != 2 || !cls.mvdplayback)
-					Sbar_DrawString(0, -8, st);
-				else if (CURRVIEW == 1 && cl_mvinset.value)
-					Sbar_DrawString(0, -8, st);
-				//vm
 
+				// Multiview
+				// Fix displaying "tracking .." for both players with inset on
+				if (cl_multiview.value != 2 || !cls.mvdplayback)
+				{
+					Sbar_DrawString(0, -8, st);
+				}
+				else if (CURRVIEW == 1 && cl_mvinset.value)
+				{
+					Sbar_DrawString(0, -8, st);
+				}
 			}
 		} else if (sb_showscores || sb_showteamscores || cl.stats[STAT_HEALTH] <= 0) {
 			Sbar_SoloScoreboard();

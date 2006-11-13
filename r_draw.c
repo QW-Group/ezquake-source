@@ -339,83 +339,136 @@ void Draw_Crosshair(void) {
 	qbool *data;
 
 	if (!crosshair.value)
+	{
 		return;
+	}
 
-	// oppymv 010904
+	// Multiview - No crosshair needs to be drawn.
 	if (cls.mvdplayback && cl_multiview.value == 2 && CURRVIEW == 1 && !cl_mvinsetcrosshair.value)
+	{
 		return;
+	}
 
-	if (cl_multiview.value && cls.mvdplayback) {
-		if (cl_multiview.value == 1) {
+	// Multiview
+	if (cl_multiview.value && cls.mvdplayback) 
+	{
+		if (cl_multiview.value == 1) 
+		{
 			x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value; 
 			y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
 		}
-		if (cl_multiview.value == 2) {
-			if (!cl_mvinset.value) {
-				if (CURRVIEW == 1) {
+
+		if (cl_multiview.value == 2) 
+		{
+			if (!cl_mvinset.value) 
+			{
+				if (CURRVIEW == 1) 
+				{
 					x = vid.width / 2; 
 					y = vid.height * 3/4;
-				} else if (CURRVIEW == 2) { // top cv2
+				} 
+				else if (CURRVIEW == 2) 
+				{ 
+					// top cv2
 					x = vid.width / 2; 
 					y = vid.height / 4;
 				}
-			} else { // inset
-				if (CURRVIEW == 2) { // normal
+			} 
+			else 
+			{ 
+				// inset
+				if (CURRVIEW == 2) 
+				{ 
+					// normal
 					x = vid.width / 2 + cl_crossx.value; 
 					if (cl_sbar.value)
+					{
 						y = vid.height / 2 + cl_crossy.value - sb_lines / 2;
+					}
 					else
+					{
 						y = vid.height / 2 + cl_crossy.value / 2;
-				} else if (CURRVIEW == 1) {
+					}
+				} 
+				else if (CURRVIEW == 1) 
+				{
 					x = vid.width - (vid.width/3)/2 - 1;
 					if (cl_sbar.value)
+					{
 						y = ((vid.height/3)-sb_lines/3)/2;
+					}
 					else // no sbar
+					{
 						y = ((vid.height/3))/2;
+					}
 				}
 			}
-		} else if (cl_multiview.value == 3) {
-				if (CURRVIEW == 2) { // top
-					x = vid.width / 2;
-					y = vid.height / 4;
-				} else if (CURRVIEW == 3) { // bl
-					x = vid.width / 4;
-					y = vid.height/2 + vid.height/4;
-				}
-				else { // br
-					x = vid.width/2 + vid.width/4;
-					y = vid.height/2 + vid.height/4;
-				}
-
-			} else if (cl_multiview.value >= 4) {
-
-				if (CURRVIEW == 2) { // tl
-					x = vid.width/4;
-					y = vid.height/4;
-				}
-				else if (CURRVIEW == 3) { // tr
-					x = vid.width/2 + vid.width/4;
-					y = vid.height/4;
-
-				}
-				else if (CURRVIEW == 4) { // bl
-					x = vid.width/4;
-					y = vid.height/2 + vid.height/4;
-
-				}
-				else if (CURRVIEW == 1) { // br
-					x = vid.width/2 + vid.width/4;
-					y = vid.height/2 + vid.height/4;
-				}
+		} 
+		else if (cl_multiview.value == 3) 
+		{
+			if (CURRVIEW == 2) 
+			{ 
+				// top
+				x = vid.width / 2;
+				y = vid.height / 4;
+			} 
+			else if (CURRVIEW == 3) 
+			{ 
+				// bl
+				x = vid.width / 4;
+				y = vid.height/2 + vid.height/4;
 			}
-	} else {
-		if (cls.mvdplayback) {
+			else 
+			{ 
+				// br
+				x = vid.width/2 + vid.width/4;
+				y = vid.height/2 + vid.height/4;
+			}
+		} 
+		else if (cl_multiview.value >= 4) 
+		{
+			if (CURRVIEW == 2) 
+			{ 
+				// tl
+				x = vid.width/4;
+				y = vid.height/4;
+			}
+			else if (CURRVIEW == 3) 
+			{ 
+				// tr
+				x = vid.width/2 + vid.width/4;
+				y = vid.height/4;
+			}
+			else if (CURRVIEW == 4) 
+			{ 
+				// bl
+				x = vid.width/4;
+				y = vid.height/2 + vid.height/4;
+			}
+			else if (CURRVIEW == 1) 
+			{ 
+				// br
+				x = vid.width/2 + vid.width/4;
+				y = vid.height/2 + vid.height/4;
+			}
+		}
+	} 
+	else 
+	{
+		if (cls.mvdplayback) 
+		{
 			x = vid.width / 2 + cl_crossx.value;
 			if (cl_sbar.value)
+			{
 				y = vid.height / 2 + cl_crossy.value - sb_lines / 2;
+			}
 			else
+			{
 				y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value / 2;
-		} else {
+			}
+		} 
+		else 
+		{
 			x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value; 
 			y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
 		}
