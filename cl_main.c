@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.98 2006-11-13 01:52:50 cokeman1982 Exp $
+	$Id: cl_main.c,v 1.99 2006-11-13 21:46:59 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1770,8 +1770,7 @@ void CL_Multiview(void)
 		{
 			int j;
 			int team_slot_count = 0;
-			int last_mv_trackslots[4];			
-			qbool teamfound = false;
+			int last_mv_trackslots[4];
 
 			// Save the old track values and reset them.
 			for(j = 0; j < 4; j++)
