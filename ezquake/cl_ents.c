@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.20 2006-09-07 19:34:29 tonik Exp $
+	$Id: cl_ents.c,v 1.21 2006-11-14 21:10:18 cokeman1982 Exp $
 
 */
 
@@ -732,7 +732,7 @@ void CL_LinkPacketEntities (void) {
 						rocketlightsize = 100 * (1 + bound(0, r_rocketlight.value, 1));	
 						CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, rocketlightcolor, 1);
 						//VULT CORONAS
-						if (!cl.paused && amf_coronas.value)
+						if (!ISPAUSED && amf_coronas.value)
 							NewCorona(C_ROCKETLIGHT, ent.origin);
 					}
 				}
@@ -828,7 +828,7 @@ void CL_LinkPacketEntities (void) {
 				//VULT TRACER GLOW
 				rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));	
 				CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.01, lt_green, true);
-				if (!cl.paused && amf_coronas.value)
+				if (!ISPAUSED && amf_coronas.value)
 					NewCorona(C_WIZLIGHT, ent.origin);
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER1_TRAIL);
 			}
@@ -837,7 +837,7 @@ void CL_LinkPacketEntities (void) {
 				//VULT TRACER GLOW
 				rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));	
 				CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.01, lt_default, true);
-				if (!cl.paused && amf_coronas.value)
+				if (!ISPAUSED && amf_coronas.value)
 					NewCorona(C_KNIGHTLIGHT, ent.origin);
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER2_TRAIL);
 			}
@@ -846,7 +846,7 @@ void CL_LinkPacketEntities (void) {
 				//VULT TRACER GLOW
 				rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));	
 				CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.01, lt_blue, true);
-				if (!cl.paused && amf_coronas.value)
+				if (!ISPAUSED && amf_coronas.value)
 					NewCorona(C_VORELIGHT, ent.origin);
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, VOOR_TRAIL);
 			}
@@ -872,7 +872,7 @@ void CL_LinkPacketEntities (void) {
 			{
 				rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));	
 				CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.01, lt_default, true);
-				if (!cl.paused && amf_coronas.value)
+				if (!ISPAUSED && amf_coronas.value)
 					NewCorona(C_KNIGHTLIGHT, ent.origin);
 				VX_LightningTrail(*old_origin, ent.origin);
 				R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TRACER2_TRAIL);
@@ -892,7 +892,7 @@ void CL_LinkPacketEntities (void) {
 
 					//R_ParticleTrail (*old_origin, ent.origin, &cent->trail_origin, TF_TRAIL); //for cutf tossable dets
 					ParticleAlphaTrail (*old_origin, liteorg, &cent->trail_origin, 10, 0.8);
-					if (!cl.paused && amf_coronas.value)
+					if (!ISPAUSED && amf_coronas.value)
 					{
 						if (ent.skinnum > 0)
 							NewCorona(C_REDLIGHT, liteorg);
@@ -902,7 +902,7 @@ void CL_LinkPacketEntities (void) {
 				}
 			}
 			//VULT BUILDING SPARKS
-			if (!cl.paused && amf_buildingsparks.value && (model->modhint == MOD_BUILDINGGIBS && (rand() % 40 < 2)))
+			if (!ISPAUSED && amf_buildingsparks.value && (model->modhint == MOD_BUILDINGGIBS && (rand() % 40 < 2)))
 			{
 					vec3_t liteorg, forward, right, up;
 					byte col[3] = {60,100,240};
@@ -930,7 +930,7 @@ void CL_LinkPacketEntities (void) {
 			//VULT TESLA CHARGE - Tesla or shambler in charging animation
 			if (((model->modhint == MOD_TESLA && ent.frame >= 7 && ent.frame <= 12) || 
 				(model->modhint == MOD_SHAMBLER && ent.frame >= 65 && ent.frame <=68))
-				&& !cl.paused && amf_cutf_tesla_effect.value)
+				&& !ISPAUSED && amf_cutf_tesla_effect.value)
 			{
 				vec3_t liteorg;
 				VectorCopy(ent.origin, liteorg);
@@ -2132,7 +2132,7 @@ void CL_FakeRocketLight(vec3_t org)
 	{
 		rocketlightcolor = dlightColor(r_rocketlightcolor.value, lt_rocket, false);
 		CL_NewDlight (0, org, rocketlightsize, 0.05, rocketlightcolor, 1);
-		if (!cl.paused && amf_coronas.value)
+		if (!ISPAUSED && amf_coronas.value)
 			NewCorona(C_ROCKETLIGHT, org);
 	}
 	else if ((amf_inferno_trail.value == 2) && r_rocketlight.value)

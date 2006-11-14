@@ -1170,7 +1170,7 @@ static void NQD_ParseServerMessage (void)
 			else
 				cl.paused &= ~PAUSED_SERVER;
 
-			if (cl.paused)
+			if (ISPAUSED)
 				CDAudio_Pause ();
 			else
 				CDAudio_Resume ();

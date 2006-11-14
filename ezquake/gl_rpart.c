@@ -671,7 +671,7 @@ void QMB_DrawParticles (void) {
 
 	particle_time = r_refdef2.time;
 
-	if (!cl.paused)
+	if (!ISPAUSED)
 		QMB_UpdateParticles();
 
 	if (gl_fogenable.value)
@@ -916,7 +916,7 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 	if (!qmb_initialized)
 		Sys_Error("QMB particle added without initialization");
 
-	assert(size > 0 && time > 0);
+	//assert(size > 0 && time > 0);
 
 	if (type < 0 || type >= num_particletypes)
 		Sys_Error("AddParticle: Invalid type (%d)", type);
@@ -2289,7 +2289,7 @@ void FireballTrailWave (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col
 	AngleVectors(angle, vec, NULL, NULL);
 	vec[2]*=-1;
 	FireballTrail (start, end, trail_origin, col, size, life);
-	if (!cl.paused)
+	if (!ISPAUSED)
 	{
 		for (i=0;i<3;i++)
 		{
@@ -2316,7 +2316,7 @@ void FuelRodGunTrail (vec3_t start, vec3_t end, vec3_t angle, vec3_t *trail_orig
 	AddParticleTrail (p_trailpart, start, end, 10, 0.5, color);
 	color[0] = 0; color[1] = 22; color[2] = 0;
 	AddParticleTrail (p_trailpart, start, end, 2, 3, color);
-	if (!cl.paused)
+	if (!ISPAUSED)
 	{
 		AngleVectors(angle, vec, NULL, NULL);
 		color[0] = 75; color[1] = 255; color[2] = 75;

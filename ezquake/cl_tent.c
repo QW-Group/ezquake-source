@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.21 2006-11-07 13:54:46 disconn3ct Exp $
+	$Id: cl_tent.c,v 1.22 2006-11-14 21:14:18 cokeman1982 Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -637,7 +637,7 @@ void CL_UpdateBeams (void) {
 			}
 			else
 			{
-				if (!cl.paused)
+				if (!ISPAUSED)
 				{
 					//VULT - Some people might like their lightning beams thicker
 					for (k=0;k<beamstodraw;k++)
@@ -657,7 +657,7 @@ void CL_UpdateBeams (void) {
 			}
 			//VULT LIGHTNING
 			//The infamous d-light glow has been replaced with a simple corona so it doesn't light up the room anymore
-			if (amf_coronas.value && amf_lightning.value && !cl.paused)
+			if (amf_coronas.value && amf_lightning.value && !ISPAUSED)
 			{
 				if (b->entity == cl.viewplayernum + 1 && !((cls.demoplayback || cl.spectator) && amf_camera_chase.value))
 					NewCorona (C_SMALLLIGHTNING, org);
@@ -668,7 +668,7 @@ void CL_UpdateBeams (void) {
 			VectorAdd (org, dist, org);
 #ifdef GLQUAKE
 			//VULT LIGHTNING SPARKS
-			if (amf_lightning_sparks.value && (cls.demoplayback || cl.spectator) && !sparks && !cl.paused)
+			if (amf_lightning_sparks.value && (cls.demoplayback || cl.spectator) && !sparks && !ISPAUSED)
 			{
 				trace_t	trace;
 				trace = PM_TraceLine (org, b->end);

@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // client.h
 
+extern cvar_t cl_demospeed;
+#define ISPAUSED (cl.paused || !cl_demospeed.value)
 #define	MAX_PROJECTILES	32 
 
 typedef struct {
