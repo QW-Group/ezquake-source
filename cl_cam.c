@@ -770,7 +770,7 @@ void CL_Track (int trackview)
 		return;
 	}
 
-	slot = Player_StringtoSlot(arg = Cmd_Argv(1));
+	slot = Player_GetSlot(arg = Cmd_Argv(1));
 
 	//
 	// The specified player wasn't found.

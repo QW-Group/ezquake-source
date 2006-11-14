@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.21 2006-11-13 21:46:59 disconn3ct Exp $
+	$Id: utils.c,v 1.22 2006-11-14 21:05:29 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -216,22 +216,36 @@ static int Player_Compare (const void *p1, const void *p2) {
 	return (player1 - player2);
 }
 
-int Player_NumtoSlot (int num) {
+int Player_NumtoSlot (int num) 
+{
 	int count, i;
 	player_info_t *players[MAX_CLIENTS];
 
+	// Get all the joined players (including spectators).
 	for (count = i = 0; i < MAX_CLIENTS; i++)
+	{
 		if (cl.players[i].name[0])
+		{
 			players[count++] = &cl.players[i];
+		}
+	}
 	
+	// Sort them according to team and if they're a spectator.
 	qsort(players, count, sizeof(player_info_t *), Player_Compare);
 
 	if (num < 1 || num > count)
+	{
 		return PLAYER_NUM_NOMATCH;
+	}
 
+	// Find the ith player.
 	for (i = 0; i < MAX_CLIENTS; i++)
+	{
 		if (&cl.players[i] == players[num-1])
+		{
 			return i;
+		}
+	}
 
 	return PLAYER_NUM_NOMATCH;
 }
@@ -356,22 +370,29 @@ char *Player_MyName (void) {
 	return Info_ValueForKey(cls.demoplayback ? cls.userinfo : cl.players[cl.playernum].userinfo, "name");
 }
 
-int Player_GetSlot(char *arg) {
+int Player_GetSlot(char *arg) 
+{
 	int response, i;
 
-	if ( (response = Player_StringtoSlot(arg)) >= 0  || response == PLAYER_ID_NOMATCH )
+	// Try getting the slot by name or id.
+	if ((response = Player_StringtoSlot(arg)) >= 0 )
+		//|| response == PLAYER_ID_NOMATCH)
+	{
 		return response;
+	}
 
+	// We didn't find any player or ID that matched
+	// so we'll try treating it as the players
+	// sorted position.
 	if (arg[0] != '#')
+	{
 		return response;
-
-	for (i = 1; arg[i]; i++) {
-		if (!isdigit(arg[i]))
-			return PLAYER_NAME_NOMATCH;
 	}
 	
 	if ((response = Player_NumtoSlot(Q_atoi(arg + 1))) >= 0)
+	{
 		return response;
+	}
 
 	return PLAYER_NUM_NOMATCH;
 }
@@ -411,7 +432,7 @@ qbool Util_F_Match(char *_msg, char *f_request) {
 }
 
 
-void Replace_In_String (char *src,int n, char delim, int arg, ...){
+void Replace_In_String (char *src, int n, char delim, int num_args, ...){
 	
 	va_list ap;
 	char msg[1024];
@@ -447,8 +468,8 @@ void Replace_In_String (char *src,int n, char delim, int arg, ...){
 			}
 			
 
-			va_start(ap,arg);
-			for(y=0;y<arg;y++){
+			va_start(ap, num_args);
+			for(y=0; y < num_args; y++){
 				arg1 = va_arg(ap,char *);
 				if( (arg2 = va_arg(ap,char *)) == NULL)
 					break;
