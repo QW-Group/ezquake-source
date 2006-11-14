@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.99 2006-11-13 21:46:59 disconn3ct Exp $
+	$Id: cl_main.c,v 1.100 2006-11-14 21:14:10 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1327,7 +1327,7 @@ void CL_Frame (double time) {
 
 	cls.realtime += cls.frametime;
 
-	if (!cl.paused) {
+	if (!ISPAUSED) {
 		cl.time += cls.frametime;
 		cl.servertime += cls.frametime;
 		cl.stats[STAT_TIME] = (int) (cl.servertime * 1000);

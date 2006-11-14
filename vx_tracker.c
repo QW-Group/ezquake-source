@@ -39,7 +39,7 @@ void VX_TrackerThink()
 
 	VXSCR_DrawTrackerString();
 
-	if (cl.paused)
+	if (ISPAUSED)
 		return;
 
 	active_track = 0; // 0 slots active

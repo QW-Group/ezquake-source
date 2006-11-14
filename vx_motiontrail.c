@@ -48,7 +48,7 @@ void CL_UpdateBlurs (void)
 		ent.frame = blur->frame;
 		ent.alpha = blur->alpha;
 		ent.oldframe = blur->oldframe;
-		if (!cl.paused)
+		if (!ISPAUSED)
 			blur->alpha -= cls.frametime*blur->fade;
 		ent.scoreboard = blur->scoreboard;
 		VectorCopy(blur->angles, ent.angles);
@@ -84,7 +84,7 @@ void CL_CreateBlurs (vec3_t start, vec3_t end, entity_t *ent)
 	float		len, maxlen;
 	motionblur_t	*blur;
 
-	if (cl.paused)
+	if (ISPAUSED)
 		return;
 /*	CL_TraceLine (r_refdef.vieworg, start, impact, normal, 0, true, NULL);
 		if (!VectorCompare(impact, start))//Can't see it, so make it fade out(faster)

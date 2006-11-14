@@ -108,6 +108,7 @@ void R_UpdateCoronas(void)
 //R_DrawCoronas
 void R_DrawCoronas(void)
 {
+	extern cvar_t cl_demospeed; // cl_main.c
 	int i;
 	int texture = 0;
 	vec3_t dist, up, right;
@@ -119,7 +120,7 @@ void R_DrawCoronas(void)
 		glDisable(GL_FOG);
 	}	
 
-	if (!cl.paused)
+	if (!ISPAUSED)
 		R_UpdateCoronas();
 	
 	VectorScale (vup, 1, up);//1.5
@@ -207,12 +208,18 @@ void R_DrawCoronas(void)
 //NewCorona
 void NewCorona (coronatype_t type, vec3_t origin)
 {
-	corona_t *c;
+	corona_t *c = NULL, *c_lowest_die = NULL;
 	int i;
 	qbool corona_found = false;
 
+	if(ISPAUSED)
+	{
+		return;
+	}
+
 	c = r_corona;
-	for (i=0 ; i<MAX_CORONAS ; i++, c++)
+	
+	for (i=0 ; i < MAX_CORONAS ; i++, c++)
 	{
 		if (c->type == C_FREE)
 		{
@@ -221,7 +228,7 @@ void NewCorona (coronatype_t type, vec3_t origin)
 			break;
 		}
 	}
-	
+
 	if(!corona_found)
 	{
 		Com_Printf("No free coronas\n");

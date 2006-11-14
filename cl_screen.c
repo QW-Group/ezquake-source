@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.63 2006-11-13 01:53:17 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.64 2006-11-14 21:11:27 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -624,7 +624,7 @@ void SCR_DrawPause (void) {
 	if (!scr_showpause.value)               // turn off for screenshots
 		return;
 
-	if (!cl.paused)
+	if (!ISPAUSED)
 		return;
 
 #ifndef CLIENTONLY

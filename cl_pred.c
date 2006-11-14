@@ -289,7 +289,7 @@ void CL_PredictMove (void) {
 	if (playertime > cls.realtime)
 		playertime = cls.realtime;
 // } shaman RFE 1036160 
-	if (cl.paused)
+	if (ISPAUSED)
 		return;
 
 	if (cl.intermission) {

@@ -680,11 +680,11 @@ void R_DrawAliasModel (entity_t *ent) {
 /* joe: replaced this with my own stuff - see R_DrawEntitiesOnList()
 	if (amf_part_fire.value && (!strcmp (ent->model->name, "progs/flame.mdl") || !strcmp (ent->model->name, "progs/flame2.mdl") || !strcmp (ent->model->name, "progs/flame3.mdl")))
 	{
-		if (!strcmp (ent->model->name, "progs/flame.mdl") && !cl.paused)
+		if (!strcmp (ent->model->name, "progs/flame.mdl") && !ISPAUSED)
 			ParticleFire(ent->origin);
 		else if (!strcmp (ent->model->name, "progs/flame2.mdl") || !strcmp (ent->model->name, "progs/flame3.mdl"))
 		{
-			if (!cl.paused)
+			if (!ISPAUSED)
 				ParticleFire(ent->origin);
 			return;
 		}
@@ -971,19 +971,19 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 					{
 						if (!strcmp(currententity->model->name, "progs/flame0.mdl"))
 						{
-							if (!cl.paused)
+							if (!ISPAUSED)
 								ParticleFire (currententity->origin);
 						}
 						else if (!strcmp(currententity->model->name, "progs/flame.mdl")
 							&& cl_flame0_model /* do we have progs/flame0.mdl? */)
 						{
-							if (!cl.paused)
+							if (!ISPAUSED)
 								ParticleFire (currententity->origin);
 							currententity->model = cl_flame0_model;
 						}
 						else if (!strcmp(currententity->model->name, "progs/flame2.mdl") || !strcmp(currententity->model->name, "progs/flame3.mdl"))
 						{
-							if (!cl.paused)
+							if (!ISPAUSED)
 								ParticleFire (currententity->origin);
 							continue;
 						}
