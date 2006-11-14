@@ -755,6 +755,8 @@ qbool	mv_skinsforced;				// When using teamcolor/enemycolor in multiview we can'
 									// or when the player chooses to track an entire team.
 int		nPlayernum;
 
+#define MV_VIEWS 4
+
 #define	MV_VIEW1 0
 #define	MV_VIEW2 1
 #define	MV_VIEW3 2
