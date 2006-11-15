@@ -337,7 +337,6 @@ void VX_TrackerStreakEndOddTeamkilled(int player, int count)
 	VX_TrackerAddText(outstring, tt_streak);
 }
 
-
 //We need a seperate function, since our messages are in colour... and transparent
 void VXSCR_DrawTrackerString (void)
 {
@@ -346,16 +345,21 @@ void VXSCR_DrawTrackerString (void)
 	int		j;
 	int		x, y;
 	int		i, w;
-	float	alpha = 1;
+	float	alpha = 1, scale = bound(0.1, amf_tracker_scale.value, 10);
 	byte	*col = StringToRGB(amf_tracker_frame_color.string);
 	vec3_t	kolorkodes = {1,1,1};
 
-	y = vid.height*0.2 + amf_tracker_y.value;
+	y = vid.height*0.2/scale + amf_tracker_y.value;
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glColor4f(kolorkodes[0], kolorkodes[1], kolorkodes[2], alpha);
 	glDisable(GL_ALPHA_TEST);
 	glEnable (GL_BLEND);
+
+	if (scale != 1) {
+		glPushMatrix ();
+		glScalef(scale, scale, 1); 
+	}
 
 	for (i = 0; i < max_active_tracks; i++)
 	{
@@ -387,7 +391,7 @@ void VXSCR_DrawTrackerString (void)
 				l++; // increment count of any chars in string untill end or new line
 			}
 
-			x = (amf_tracker_align_right.value ? (vid.width - w*8) - 8 : 8);
+			x = (amf_tracker_align_right.value ? (vid.width/scale - w*8) - 8 : 8);
 			x += amf_tracker_x.value;
 
 			glDisable (GL_TEXTURE_2D);
@@ -431,6 +435,9 @@ void VXSCR_DrawTrackerString (void)
 				start++; // skip the \n
 		}
 	}
+
+	if (scale != 1)
+		glPopMatrix();
 
 	glEnable(GL_ALPHA_TEST);
 	glDisable (GL_BLEND);
