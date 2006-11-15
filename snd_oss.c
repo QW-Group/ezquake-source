@@ -79,7 +79,7 @@ qbool SNDDMA_Init_OSS(void)
 
 	// set sample bits & speed
 	shm->format.width  = (int) (s_bits.value / 8);
-	shm->format.speed = ((int) s_khz.value == 48) ? 48000 : ((int) s_khz.value == 44) ? 44100 : ((int) s_khz.value == 22) ? 22050 : 11025;
+	shm->format.speed = SND_Rate((int)s_khz.value);
 	shm->format.channels = ((int) s_stereo.value == 0) ? 1 : 2;
 
 	if (shm->format.width != 2 && shm->format.width != 1) {

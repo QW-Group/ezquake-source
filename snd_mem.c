@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mem.c,v 1.9 2006-05-16 10:05:28 disconn3ct Exp $
+    $Id: snd_mem.c,v 1.10 2006-11-15 19:19:11 vvd0 Exp $
 */
 // snd_mem.c -- sound caching
 
@@ -263,4 +263,29 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	ResampleSfx (s, data + info.dataofs, info.samples, &sc->format, sc->data);
 
 	return sc;
+}
+
+int SND_Rate(int rate)
+{
+	switch (rate)
+	{
+		case 48:
+			return 48000;
+		case 44:
+			return 44100;
+		case 32:
+			return 32000;
+		case 24:
+			return 24000;
+		case 22:
+			return 22050;
+		case 16:
+			return 16000;
+		case 12:
+			return 12000;
+		case 8:
+			return 8000;
+		default:
+			return 11025;
+	}
 }

@@ -140,7 +140,7 @@ qbool SNDDMA_Init_ALSA (void)
 		}
 	}
 
-	rate = (s_khz.value == 48) ? 48000 : (s_khz.value == 44) ? 44100 : (s_khz.value == 22) ? 22050 : 11025;
+	rate = SND_Rate((int)s_khz.value);
 
 	stereo = Cvar_VariableValue("s_stereo");
 

@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+    $Id: qsound.h,v 1.7 2006-11-15 19:19:11 vvd0 Exp $
+
 */
 // qsound.h -- client sound i/o functions
 
@@ -101,6 +103,7 @@ sfxcache_t *S_LoadSound (sfx_t *s);
 
 void SND_InitScaletable (void);
 void SNDDMA_Submit(void);
+int SND_Rate(int rate);
 
 // ====================================================================
 // User-setable variables
