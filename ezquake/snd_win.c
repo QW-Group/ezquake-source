@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_win.c,v 1.10 2006-09-25 09:10:43 johnnycz Exp $
+    $Id: snd_win.c,v 1.11 2006-11-15 19:19:11 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -177,7 +177,7 @@ static sndinitstat SNDDMA_InitDirect (void)
 
 	shm->format.channels = 2;
 	shm->format.width = 2;
-	shm->format.speed = (s_khz.value == 44) ? 44100 : (s_khz.value == 22) ? 22050 : 11025;
+	shm->format.speed = SND_Rate((int)s_khz.value);
 
 	memset (&format, 0, sizeof(format));
 	format.wFormatTag = WAVE_FORMAT_PCM;
