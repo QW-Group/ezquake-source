@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.48 2006-11-13 02:01:37 cokeman1982 Exp $
+    $Id: teamplay.c,v 1.49 2006-11-16 21:57:13 cokeman1982 Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -379,9 +379,10 @@ char *Macro_WeaponNum (void)
 	}
 }
 
-static int BestWeapon (void)
+int BestWeapon (void)
 {
-	int i;
+	return BestWeaponFromStatItems (cl.stats[STAT_ITEMS]);
+	/*int i;
 	char *t[] = {tp_weapon_order.string, "78654321", NULL}, **s;
 
 	for (s = t; *s; s++) {
@@ -395,6 +396,28 @@ static int BestWeapon (void)
 					case '6': if (cl.stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER) return IT_GRENADE_LAUNCHER; break;
 					case '7': if (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) return IT_ROCKET_LAUNCHER; break;
 					case '8': if (cl.stats[STAT_ITEMS] & IT_LIGHTNING) return IT_LIGHTNING; break;
+			}
+		}
+	}
+	return 0;*/
+}
+
+int BestWeaponFromStatItems (int stat)
+{
+	int i;
+	char *t[] = {tp_weapon_order.string, "78654321", NULL}, **s;
+
+	for (s = t; *s; s++) {
+		for (i = 0 ; i < strlen(*s) ; i++) {
+			switch ((*s)[i]) {
+					case '1': if (stat & IT_AXE) return IT_AXE; break;
+					case '2': if (stat & IT_SHOTGUN) return IT_SHOTGUN; break;
+					case '3': if (stat & IT_SUPER_SHOTGUN) return IT_SUPER_SHOTGUN; break;
+					case '4': if (stat & IT_NAILGUN) return IT_NAILGUN; break;
+					case '5': if (stat & IT_SUPER_NAILGUN) return IT_SUPER_NAILGUN; break;
+					case '6': if (stat & IT_GRENADE_LAUNCHER) return IT_GRENADE_LAUNCHER; break;
+					case '7': if (stat & IT_ROCKET_LAUNCHER) return IT_ROCKET_LAUNCHER; break;
+					case '8': if (stat & IT_LIGHTNING) return IT_LIGHTNING; break;
 			}
 		}
 	}
@@ -2085,9 +2108,7 @@ static locmacro_t locmacros[] = {
                                     {"pent", "pent"},
                                     {"ring", "ring"},
                                     {"suit", "suit"},
-                                    // START shaman RFE 1031828 {
                                     {"mh", "mega"},
-                                    // } END shaman RFE 1031828
                                 };
 
 #define NUM_LOCMACROS	(sizeof(locmacros) / sizeof(locmacros[0]))
