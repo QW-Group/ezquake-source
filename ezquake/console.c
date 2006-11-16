@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.28 2006-11-16 16:03:46 johnnycz Exp $
+	$Id: console.c,v 1.29 2006-11-16 16:12:55 johnnycz Exp $
 */
 // console.c
 
@@ -69,15 +69,6 @@ cvar_t      con_sound_mm1_volume    = {"s_mm1_volume",    "1"};
 cvar_t      con_sound_mm2_volume    = {"s_mm2_volume",    "1"};
 cvar_t      con_sound_spec_volume   = {"s_spec_volume",   "1"};
 cvar_t      con_sound_other_volume  = {"s_other_volume",  "1"};
-// if you don't like renaming things in this way, let's have some talk with tea - johnnycz
-Cmd_AddLegacyCommand("con_sound_mm1_file", "s_mm1_file");
-Cmd_AddLegacyCommand("con_sound_mm2_file", "s_mm2_file");
-Cmd_AddLegacyCommand("con_sound_spec_file", "s_spec_file");
-Cmd_AddLegacyCommand("con_sound_other_file", "s_other_file");
-Cmd_AddLegacyCommand("con_sound_mm1_volume", "s_mm1_volume");
-Cmd_AddLegacyCommand("con_sound_mm2_volume", "s_mm2_volume");
-Cmd_AddLegacyCommand("con_sound_spec_volume", "s_spec_volume");
-Cmd_AddLegacyCommand("con_sound_other_volume", "s_other_volume");
 
 cvar_t      con_timestamps  = {"con_timestamps", "0"};
 
@@ -407,6 +398,16 @@ void Con_Init (void) {
 	Cvar_Register (&con_sound_mm2_volume); 
 	Cvar_Register (&con_sound_spec_volume); 
 	Cvar_Register (&con_sound_other_volume); 
+	// if you don't like renaming things in this way, let's have some talk with tea - johnnycz
+	Cmd_AddLegacyCommand("con_sound_mm1_file", "s_mm1_file");
+	Cmd_AddLegacyCommand("con_sound_mm2_file", "s_mm2_file");
+	Cmd_AddLegacyCommand("con_sound_spec_file", "s_spec_file");
+	Cmd_AddLegacyCommand("con_sound_other_file", "s_other_file");
+	Cmd_AddLegacyCommand("con_sound_mm1_volume", "s_mm1_volume");
+	Cmd_AddLegacyCommand("con_sound_mm2_volume", "s_mm2_volume");
+	Cmd_AddLegacyCommand("con_sound_spec_volume", "s_spec_volume");
+	Cmd_AddLegacyCommand("con_sound_other_volume", "s_other_volume");
+
 
 	Cvar_Register (&con_timestamps); 
 	Cvar_Register (&con_shift); 
