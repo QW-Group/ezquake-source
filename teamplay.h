@@ -175,3 +175,5 @@ typedef struct locdata_s {
 	char *name;
 	struct locdata_s *next;
 } locdata_t;
+
+int BestWeaponFromStatItems (int stat);
