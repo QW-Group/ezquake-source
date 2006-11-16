@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.100 2006-11-14 21:14:10 cokeman1982 Exp $
+	$Id: cl_main.c,v 1.101 2006-11-16 16:03:46 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -80,7 +80,8 @@ cvar_t	cl_filterdrawviewmodel = {"cl_filterdrawviewmodel", "0"};
 cvar_t	cl_oldPL = {"cl_oldPL", "0"};
 cvar_t	cl_demoPingInterval = {"cl_demoPingInterval", "5"};
 cvar_t  demo_getpings      = {"demo_getpings",    "1"};
-cvar_t	cl_chatsound = {"cl_chatsound", "1"};
+cvar_t	cl_chatsound = {"s_chat_custom", "1"};
+Cmd_AddLegacyCommand ("cl_chatsound", "s_chat_custom");
 cvar_t	cl_confirmquit = {"cl_confirmquit", "0"}; // , CVAR_INIT
 cvar_t	cl_fakename = {"cl_fakename", ""};
 cvar_t	qizmo_dir = {"qizmo_dir", "qizmo"};
