@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.29 2006-11-16 16:12:55 johnnycz Exp $
+	$Id: console.c,v 1.30 2006-11-16 17:47:15 johnnycz Exp $
 */
 // console.c
 
@@ -64,11 +64,11 @@ cvar_t		con_highlight_mark 	= {"con_highlight_mark",""};
 cvar_t      con_sound_mm1_file      = {"s_mm1_file",      "misc/talk.wav"};
 cvar_t      con_sound_mm2_file      = {"s_mm2_file",      "misc/talk.wav"};
 cvar_t      con_sound_spec_file     = {"s_spec_file",     "misc/talk.wav"};
-cvar_t      con_sound_other_file    = {"s_other_file",    "misc/talk.wav"};
+cvar_t      con_sound_other_file    = {"s_otherchat_file",    "misc/talk.wav"};
 cvar_t      con_sound_mm1_volume    = {"s_mm1_volume",    "1"};
 cvar_t      con_sound_mm2_volume    = {"s_mm2_volume",    "1"};
 cvar_t      con_sound_spec_volume   = {"s_spec_volume",   "1"};
-cvar_t      con_sound_other_volume  = {"s_other_volume",  "1"};
+cvar_t      con_sound_other_volume  = {"s_otherchat_volume",  "1"};
 
 cvar_t      con_timestamps  = {"con_timestamps", "0"};
 
@@ -402,11 +402,11 @@ void Con_Init (void) {
 	Cmd_AddLegacyCommand("con_sound_mm1_file", "s_mm1_file");
 	Cmd_AddLegacyCommand("con_sound_mm2_file", "s_mm2_file");
 	Cmd_AddLegacyCommand("con_sound_spec_file", "s_spec_file");
-	Cmd_AddLegacyCommand("con_sound_other_file", "s_other_file");
+	Cmd_AddLegacyCommand("con_sound_other_file", "s_otherchat_file");
 	Cmd_AddLegacyCommand("con_sound_mm1_volume", "s_mm1_volume");
 	Cmd_AddLegacyCommand("con_sound_mm2_volume", "s_mm2_volume");
 	Cmd_AddLegacyCommand("con_sound_spec_volume", "s_spec_volume");
-	Cmd_AddLegacyCommand("con_sound_other_volume", "s_other_volume");
+	Cmd_AddLegacyCommand("con_sound_other_volume", "s_otherchat_volume");
 
 
 	Cvar_Register (&con_timestamps); 
