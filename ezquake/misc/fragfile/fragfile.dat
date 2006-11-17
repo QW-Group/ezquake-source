@@ -136,12 +136,17 @@
 //
 #DEFINE WEAPON_CLASS    AXE                 "axe"
 #DEFINE WEAPON_CLASS    SHOTGUN             "shotgun"           "sg"
+#DEFINE WEAPON_CLASS    Q_SHOTGUN           "q shotgun"         "sg &c009q&r"
 #DEFINE WEAPON_CLASS    SUPER_SHOTGUN       "super shotgun"     "ssg"
+#DEFINE WEAPON_CLASS    Q_SUPER_SHOTGUN     "q super shotgun"   "ssg &c009q&r"
 #DEFINE WEAPON_CLASS    NAILGUN             "nailgun"           "ng"
 #DEFINE WEAPON_CLASS    SUPER_NAILGUN       "super nailgun"     "sng"
+#DEFINE WEAPON_CLASS    Q_SUPER_NAILGUN     "q super nailgun"   "sng &c009q&r"
 #DEFINE WEAPON_CLASS    GRENADE_LAUNCHER    "grenade launcher"  "gl"
 #DEFINE WEAPON_CLASS    ROCKET_LAUNCHER     "rocket launcher"   "rl"
+#DEFINE WEAPON_CLASS    Q_ROCKET_LAUNCHER   "q rocket launcher" "rl &c009q&r"
 #DEFINE WEAPON_CLASS    LIGHTNING_GUN       "lightning gun"     "lg"
+#DEFINE WEAPON_CLASS    Q_LIGHTNING_GUN     "q lightning gun"   "lg &c009q&r"
 
 #DEFINE WEAPON_CLASS    RAIL_GUN            "rail gun"          "rail"		//for dmm8
 
@@ -220,25 +225,25 @@
 #DEFINE OBITUARY    X_FRAGS_Y       STOMP              " stomps "              // ktpro stomp kill
 
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  AXE                " was ax-murdered by "
-#DEFINE OBITUARY    X_FRAGGED_BY_Y  SHOTGUN            " was lead poisoned by "
+#DEFINE OBITUARY    X_FRAGGED_BY_Y  Q_SHOTGUN          " was lead poisoned by "
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  SHOTGUN            " chewed on " "'s boomstick"
-#DEFINE OBITUARY    X_FRAGGED_BY_Y  SUPER_SHOTGUN      " ate 8 loads of "   "'s buckshot"
+#DEFINE OBITUARY    X_FRAGGED_BY_Y  Q_SUPER_SHOTGUN    " ate 8 loads of "   "'s buckshot"
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  SUPER_SHOTGUN      " ate 2 loads of "   "'s buckshot"
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  NAILGUN            " was body pierced by "
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  NAILGUN            " was nailed by "
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  SUPER_NAILGUN      " was perforated by "
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  SUPER_NAILGUN      " was punctured by "
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  SUPER_NAILGUN      " was ventilated by "
-#DEFINE OBITUARY    X_FRAGGED_BY_Y  SUPER_NAILGUN      " was straw-cuttered by "
+#DEFINE OBITUARY    X_FRAGGED_BY_Y  Q_SUPER_NAILGUN    " was straw-cuttered by "
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  GRENADE_LAUNCHER   " eats " "'s pineapple"
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  GRENADE_LAUNCHER   " was gibbed by " "'s grenade"
-#DEFINE OBITUARY    X_FRAGGED_BY_Y  ROCKET_LAUNCHER    " was smeared by "   "'s quad rocket"
-#DEFINE OBITUARY    X_FRAGGED_BY_Y  ROCKET_LAUNCHER    " was brutalized by " "'s quad rocket"
-#DEFINE OBITUARY    X_FRAGS_Y       ROCKET_LAUNCHER    " rips " " a new one"
+#DEFINE OBITUARY    X_FRAGGED_BY_Y  Q_ROCKET_LAUNCHER  " was smeared by "   "'s quad rocket"
+#DEFINE OBITUARY    X_FRAGGED_BY_Y  Q_ROCKET_LAUNCHER  " was brutalized by " "'s quad rocket"
+#DEFINE OBITUARY    X_FRAGS_Y       Q_ROCKET_LAUNCHER  " rips " " a new one"
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  ROCKET_LAUNCHER    " was gibbed by " "'s rocket"
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  ROCKET_LAUNCHER    " rides " "'s rocket"
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  LIGHTNING_GUN      " accepts "  "'s shaft"
-#DEFINE OBITUARY    X_FRAGGED_BY_Y  LIGHTNING_GUN      " gets a natural disaster from "
+#DEFINE OBITUARY    X_FRAGGED_BY_Y  Q_LIGHTNING_GUN    " gets a natural disaster from "
 
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  RAIL_GUN           " was railed by "		//for dmm8
 
