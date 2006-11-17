@@ -918,7 +918,7 @@ qbool HUD_PrepareDraw(
     int ax, ay, aw, ah; // area coordinates & sizes to align
     int bx, by, bw, bh; // accepted area to draw in
 
-    if (cls.state < hud->min_state  ||  !hud->show->value)
+	if (cls.state < hud->min_state || !hud->show->value)
         return false;
 
     HUD_CalcFrameExtents(hud, width, height, &fl, &fr, &ft, &fb);
@@ -1309,8 +1309,16 @@ void HUD_DrawObject(hud_t *hud)     /* recurrent */
             return;
     }
 
-    // draw object itself - updates last_draw_sequence itself
-    hud->draw_func(hud);
+	// TODO: Set GL to draw to a pbuffer here so that the HUD element about to
+	// be drawn is not drawn directly to the back buffer... So that we can
+	// change opacity and stuff like that on the entire element after it
+	// has been drawn (below). 
+	// http://oss.sgi.com/projects/ogl-sample/registry/ARB/vertex_buffer_object.txt
+	// http://developer.nvidia.com/object/using_VBOs.html
+	// http://developer.nvidia.com/object/ogl_rtt.html <-- Render to texture example
+
+	// draw object itself - updates last_draw_sequence itself
+	hud->draw_func(hud);
 
     // last_draw_sequence is update by HUD_PrepareDraw
     // if object was succesfully drawn (wasn't outside area etc..)
@@ -1319,12 +1327,14 @@ void HUD_DrawObject(hud_t *hud)     /* recurrent */
 // draw all active elements
 void HUD_Draw(void)
 {
-extern cvar_t scr_newHud;
+	extern cvar_t scr_newHud;
     hud_t *hud;
 
     if (scr_newHud.value == 0)
-	return;
+		return;
     hud = hud_huds;
+
+	HUD_BeforeDraw();
 
     while (hud)
     {
@@ -1334,6 +1344,8 @@ extern cvar_t scr_newHud;
         // go to next
         hud = hud->next;
     }
+
+	HUD_AfterDraw();
 }
 
 int HUD_OrderFunc(const void * p_h1, const void * p_h2)

@@ -35,4 +35,7 @@ void SCR_DrawWordWrapString(int x, int y,
 							double scroll_delay, 
 							char *txt);
 
+void HUD_BeforeDraw();
+void HUD_AfterDraw();
+
 #endif  // __COMMON_GRAPH__H__

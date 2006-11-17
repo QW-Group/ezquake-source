@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.78 2006-11-14 01:24:27 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.79 2006-11-17 02:57:17 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -2308,7 +2308,6 @@ typedef struct sort_teams_info_s
     int  max_ping;
     int  nplayers;
     int  top, bottom;   // leader colours
-    int  order;         // should not be here...
 	int  rlcount;		// Number of RL's present in the team. (Cokeman 2006-05-27)
 }
 sort_teams_info_t;
@@ -2320,145 +2319,166 @@ typedef struct sort_players_info_s
 }
 sort_players_info_t;
 
-static sort_players_info_t sort_info_players[MAX_CLIENTS];
-static sort_teams_info_t sort_info_teams[MAX_CLIENTS];
-static sort_players_info_t *sorted_players[MAX_CLIENTS];
-static sort_teams_info_t *sorted_teams[MAX_CLIENTS];
-static int n_teams, n_players, n_spectators;
+static sort_players_info_t		sorted_players[MAX_CLIENTS];
+static sort_teams_info_t		sorted_teams[MAX_CLIENTS];
+static int						n_teams;
+static int						n_players;
+static int						n_spectators;
+static qbool					sort_teamsort = false;
 
-static qbool isTeamplay()
+static int HUD_ComparePlayers(const sort_players_info_t *p1, const sort_players_info_t *p2)
 {
-    int teamplay = atoi(Info_ValueForKey(cl.serverinfo, "teamplay"));
-    if (!teamplay)
-        return false;
-    return true;
-}
-
-static int ComparePlayers(sort_players_info_t *p1, sort_players_info_t *p2, qbool byTeams)
-{
-    int d;
+    int r = 0;
     player_info_t *i1 = &cl.players[p1->playernum];
     player_info_t *i2 = &cl.players[p2->playernum];
 
-    if (i1->spectator  &&  !i2->spectator)
-        d = -1;
-    else if (!i1->spectator  &&  i2->spectator)
-        d = 1;
-    else if (i1->spectator  &&  i2->spectator)
+    if (i1->spectator && !i2->spectator)
+	{
+        r = -1;
+	}
+    else if (!i1->spectator && i2->spectator)
+	{
+        r = 1;
+	}
+    else if (i1->spectator && i2->spectator)
     {
-        d = strcmp(i1->name, i2->name);
+        r = strcmp(i1->name, i2->name);
     }
-    else    // both are players
+    else 
     {
-        d = 0;
-
-		if (byTeams)
-            d = p1->team->frags - p2->team->frags;
-
-		if (!d && byTeams)
-			d = strcmp(p1->team->name, p2->team->name);
-
-		if (!d)
-			d =	i1->frags - i2->frags;
-
-        if (!d)
-            d = strcmp(i1->name, i2->name);
+		//
+		// Both are players.
+		//
+		if(sort_teamsort && cl.teamplay)
+		{
+			// Leading team on top, sort players inside of the teams.
+			r = p1->team->frags - p2->team->frags;
+			r = !r ? strcmp(p1->team->name, p2->team->name) : r;
+			
+			// We want the leading team on top.
+			r = -r;
+		}
+		r = !r ? i1->frags - i2->frags : r;
+		r = !r ? strcmp(i1->name, i2->name) : r;
     }
 
-    if (!d)
-        d = p1->playernum - p2->playernum;
+	r = !r ? (p1->playernum - p2->playernum) : r;
 
-    return d;
+	// qsort() sorts ascending by default, we want descending.
+	// So negate the result.
+    return -r;
 }
 
-static void Sort_Scoreboard(qbool teamsort)
+static int HUD_CompareTeams(const sort_teams_info_t *t1, const sort_teams_info_t *t2)
 {
-    int i, j;
-    qbool isteamplay;
+	int r = 0;
+	r = (t1->frags - t2->frags);
+	r = !r ? strcmp(t1->name, t2->name) : r;
+
+	// qsort() sorts ascending by default, we want descending.
+	// So negate the result.
+	return -r;
+}
+
+#define HUD_SCOREBOARD_ALL			0xffffffff
+#define HUD_SCOREBOARD_SORT_TEAMS	(1 << 0)
+#define HUD_SCOREBOARD_SORT_PLAYERS	(1 << 1)
+#define HUD_SCOREBOARD_UPDATE		(1 << 2)
+#define HUD_SCOREBOARD_AVG_PING		(1 << 3)
+
+static void HUD_Sort_Scoreboard(int flags)
+{
+    int i;
     int team;
 
     n_teams = 0;
     n_players = 0;
     n_spectators = 0;
-    isteamplay = isTeamplay();
 
     // Set team properties.
-    for (i=0; i < MAX_CLIENTS; i++)
-    {
-        if (cl.players[i].name[0] && !cl.players[i].spectator)
-        {
-            // find players team
-            for (team=0; team < n_teams; team++)
+	if(flags & HUD_SCOREBOARD_UPDATE)
+	{
+		for (i=0; i < MAX_CLIENTS; i++)
+		{
+			if (cl.players[i].name[0] && !cl.players[i].spectator)
 			{
-                if (!strcmp(cl.players[i].team, sort_info_teams[team].name)
-                    &&  sort_info_teams[team].name[0])
-                    break;
+				// Find players team
+				for (team = 0; team < n_teams; team++)
+				{
+					if (!strcmp(cl.players[i].team, sorted_teams[team].name)
+						&& sorted_teams[team].name[0])
+					{
+						break;
+					}
+				}
+
+				// The team wasn't found in the list of existing teams
+				// so add a new team.
+				if (team == n_teams)
+				{
+					team = n_teams++;
+					sorted_teams[team].avg_ping = 0;
+					sorted_teams[team].max_ping = 0;
+					sorted_teams[team].min_ping = 999;
+					sorted_teams[team].nplayers = 0;
+					sorted_teams[team].frags = 0;
+					sorted_teams[team].top = Sbar_TopColor(&cl.players[i]);
+					sorted_teams[team].bottom = Sbar_BottomColor(&cl.players[i]);
+					sorted_teams[team].name = cl.players[i].team;
+					sorted_teams[team].rlcount = 0; 
+				}
+
+				sorted_teams[team].nplayers++;
+				sorted_teams[team].frags += cl.players[i].frags;
+				sorted_teams[team].avg_ping += cl.players[i].ping;
+				sorted_teams[team].min_ping = min(sorted_teams[team].min_ping, cl.players[i].ping);
+				sorted_teams[team].max_ping = max(sorted_teams[team].max_ping, cl.players[i].ping);
+
+				// The total RL count for the players team.
+				if(cl.players[i].stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
+				{
+					// sort_info_teams[team].rlcount++;
+					sorted_teams[team].rlcount++;
+				}
+
+				// Set player data
+				sorted_players[n_players + n_spectators].playernum = i;
+				sorted_players[n_players + n_spectators].team = &sorted_teams[team];
+
+				// Increase the count.
+				if (cl.players[i].spectator)
+				{
+					n_spectators++;
+				}
+				else
+				{
+					n_players++;
+				}
 			}
+		}
+	}
 
-            if (team == n_teams)   // not found
-            {
-                team = n_teams++;
-                sort_info_teams[team].avg_ping = 0;
-                sort_info_teams[team].max_ping = 0;
-                sort_info_teams[team].min_ping = 999;
-                sort_info_teams[team].nplayers = 0;
-				sort_info_teams[team].frags = 0;
-				sort_info_teams[team].top = Sbar_TopColor(&cl.players[i]);
-				sort_info_teams[team].bottom = Sbar_BottomColor(&cl.players[i]);
-                sort_info_teams[team].name = cl.players[i].team;
-				sort_info_teams[team].rlcount = 0; // Cokeman (2006-05-27)
-                sorted_teams[team] = &sort_info_teams[team];
-            }
-            sort_info_teams[team].nplayers++;
-            sort_info_teams[team].frags += cl.players[i].frags;
-            sort_info_teams[team].avg_ping += cl.players[i].ping;
-            sort_info_teams[team].min_ping = min(sort_info_teams[team].min_ping, cl.players[i].ping);
-            sort_info_teams[team].max_ping = max(sort_info_teams[team].max_ping, cl.players[i].ping);
+    // Calc avg ping
+	if(flags & HUD_SCOREBOARD_AVG_PING)
+	{
+		for (team = 0; team < n_teams; team++)
+		{
+			//sort_info_teams[team].avg_ping /= sort_info_teams[team].nplayers;
+			sorted_teams[team].avg_ping /= sorted_teams[team].nplayers;
+		}
+	}
 
-			// Cokeman (2006-05-27)
-			if(cl.players[i].stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
-			{
-				sort_info_teams[team].rlcount++;
-			}
+	// Sort teams.
+	if(flags & HUD_SCOREBOARD_SORT_TEAMS)
+	{
+		qsort(sorted_teams, n_teams, sizeof(sort_teams_info_t), HUD_CompareTeams);
+	}
 
-            // set player data
-            sort_info_players[n_players+n_spectators].playernum = i;
-            sort_info_players[n_players+n_spectators].team = &sort_info_teams[team];
-            sorted_players[n_players+n_spectators] = &sort_info_players[n_players+n_spectators];
-            if (cl.players[i].spectator)
-                n_spectators++;
-            else
-                n_players++;
-        }
-    }
-
-    // calc avg ping
-    for (team = 0; team < n_teams; team++)
-        sort_info_teams[team].avg_ping /= sort_info_teams[team].nplayers;
-
-    // sort teams
-    for (i=0; i < n_teams - 1; i++)
-        for (j = i + 1; j < n_teams; j++)
-            if (sorted_teams[i]->frags < sorted_teams[j]->frags)
-            {
-                sort_teams_info_t *k = sorted_teams[i];
-                sorted_teams[i] = sorted_teams[j];
-                sorted_teams[j] = k;
-            }
-
-    // order teams - blah
-    for (i=0; i < n_teams; i++)
-        sorted_teams[i]->order = i;
-
-    // sort players
-    for (i=0; i < n_players+n_spectators - 1; i++)
-        for (j = i + 1; j < n_players+n_spectators; j++)
-            if (ComparePlayers(sorted_players[i], sorted_players[j], (isteamplay && teamsort)) < 0)
-            {
-                sort_players_info_t *k = sorted_players[i];
-                sorted_players[i] = sorted_players[j];
-                sorted_players[j] = k;
-            }
+	// Sort players.
+	if(flags & HUD_SCOREBOARD_SORT_PLAYERS)
+	{
+		qsort(sorted_players, n_players + n_spectators, sizeof(sort_players_info_t), HUD_ComparePlayers);
+	}
 }
 
 void Frags_DrawColors(int x, int y, int width, int height, int top_color, int bottom_color, int frags, int drawBrackets, int style)
@@ -2558,7 +2578,7 @@ int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, 
 	}
 
 	// Check if the team has any RL's.
-	if(sorted_teams[num]->rlcount > 0)
+	if(sorted_teams[num].rlcount > 0)
 	{
 		int y_pos = py;
 
@@ -2570,7 +2590,7 @@ int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, 
 			&& style != TEAMFRAGS_EXTRA_SPEC_RLTEXT)
 		{
 			y_pos = ROUND(py + (height / 2.0) - 4);
-			Draw_ColoredString(px, y_pos, va("%d", sorted_teams[num]->rlcount), 0);
+			Draw_ColoredString(px, y_pos, va("%d", sorted_teams[num].rlcount), 0);
 			px += 8 + 1;
 		}
 
@@ -2593,13 +2613,13 @@ int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, 
 		if(style == TEAMFRAGS_EXTRA_SPEC_ONTOP && style != TEAMFRAGS_EXTRA_SPEC_RLTEXT)
 		{
 			y_pos = ROUND(py + (height / 2.0) - 4);
-			Draw_ColoredString(px - 14, y_pos, va("%d", sorted_teams[num]->rlcount), 0);
+			Draw_ColoredString(px - 14, y_pos, va("%d", sorted_teams[num].rlcount), 0);
 		}
 
 		if(style == TEAMFRAGS_EXTRA_SPEC_RLTEXT)
 		{
 			y_pos = ROUND(py + (height / 2.0) - 4);
-			Draw_ColoredString(px, y_pos, va("&ce00RL&cfff%d", sorted_teams[num]->rlcount), 0);
+			Draw_ColoredString(px, y_pos, va("&ce00RL&cfff%d", sorted_teams[num].rlcount), 0);
 			px += 8*3 + 1;
 		}
 	}
@@ -3046,7 +3066,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
     space_y = hud_frags_space_y->value;
     clamp(space_y, 0, 128);
 
-    Sort_Scoreboard(hud_frags_teamsort->value);
+	sort_teamsort = hud_frags_teamsort->value;
 
     if (hud_frags_strip->value)
     {
@@ -3077,7 +3097,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		int n;
 		for(n=0; n < n_players; n++)
 		{
-			player_info_t *info = &cl.players[sorted_players[n]->playernum];
+			player_info_t *info = &cl.players[sorted_players[n].playernum];
 			cur_length = strlen(info->name);
 
 			// Name
@@ -3138,7 +3158,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		num = 0;  // FIXME! johnnycz; (see fixme below)
         for (i = 0; i < limit; i++)
         {
-            player_info_t *info = &cl.players[sorted_players[num]->playernum]; // FIXME! johnnycz; causes crashed on some demos
+            player_info_t *info = &cl.players[sorted_players[num].playernum]; // FIXME! johnnycz; causes crashed on some demos
 
             if (hud_frags_vertical->value)
             {
@@ -3171,15 +3191,15 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 			// being spectated.
 			if(cls.demoplayback && !cl.spectator && !cls.mvdplayback)
 			{
-				drawBrackets = (sorted_players[num]->playernum == cl.playernum);
+				drawBrackets = (sorted_players[num].playernum == cl.playernum);
 			}
 			else if (cls.demoplayback || cl.spectator)
 			{
-				drawBrackets = (spec_track == sorted_players[num]->playernum && Cam_TrackNum() >= 0);
+				drawBrackets = (spec_track == sorted_players[num].playernum && Cam_TrackNum() >= 0);
 			}
 			else
 			{
-				drawBrackets = (sorted_players[num]->playernum == cl.playernum);
+				drawBrackets = (sorted_players[num].playernum == cl.playernum);
 			}
 
 			if (cl_multiview.value > 1 && cls.mvdplayback)
@@ -3363,9 +3383,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
     space_y = hud_teamfrags_space_y->value;
     clamp(space_y, 0, 128);
 
-    Sort_Scoreboard(1);
-
-    if (hud_teamfrags_strip->value)
+	if (hud_teamfrags_strip->value)
     {
         if (hud_teamfrags_vertical->value)
         {
@@ -3399,7 +3417,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 		{
 			if(hud_teamfrags_shownames->value)
 			{
-				cur_length = strlen(sorted_teams[n]->name);
+				cur_length = strlen(sorted_teams[n].name);
 
 				// Team name
 				if(cur_length >= max_team_length)
@@ -3471,7 +3489,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 			if(cls.demoplayback && !cl.spectator && !cls.mvdplayback)
 			{
 				// QWD Playback.
-				if (!strcmp(sorted_teams[num]->name, cl.players[cl.playernum].team))
+				if (!strcmp(sorted_teams[num].name, cl.players[cl.playernum].team))
 				{
 					drawBrackets = 1;
 				}
@@ -3479,7 +3497,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 			else if (cls.demoplayback || cl.spectator)
 			{
 				// MVD playback / spectating.
-				if (!strcmp(cl.players[spec_track].team, sorted_teams[num]->name) && Cam_TrackNum() >= 0)
+				if (!strcmp(cl.players[spec_track].team, sorted_teams[num].name) && Cam_TrackNum() >= 0)
 				{
 					drawBrackets = 1;
 				}
@@ -3487,7 +3505,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 			else
 			{
 				// Normal player.
-				if (!strcmp(sorted_teams[num]->name, cl.players[cl.playernum].team))
+				if (!strcmp(sorted_teams[num].name, cl.players[cl.playernum].team))
 				{
 					drawBrackets = 1;
 				}
@@ -3509,7 +3527,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 				if(hud_teamfrags_style->value >= 4 && hud_teamfrags_style->value <= 8)
 				{
 					Frags_DrawBackground(px, py, cell_width, cell_height, space_x, space_y,
-						0, max_team_length, sorted_teams[num]->bottom,
+						0, max_team_length, sorted_teams[num].bottom,
 						0, hud_teamfrags_shownames->value, drawBrackets,
 						hud_teamfrags_style->value);
 				}
@@ -3522,9 +3540,14 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 						space_x, space_y, 0, max_team_length,
 						hud_teamfrags_fliptext->value, hud_teamfrags_padtext->value,
 						0, hud_teamfrags_shownames->value,
-						"", sorted_teams[num]->name);
+						"", sorted_teams[num].name);
 
-					Frags_DrawColors(_px, py, cell_width, cell_height, sorted_teams[num]->top, sorted_teams[num]->bottom, sorted_teams[num]->frags, drawBrackets, hud_teamfrags_style->value);
+					Frags_DrawColors(_px, py, cell_width, cell_height, 
+						sorted_teams[num].top, 
+						sorted_teams[num].bottom, 
+						sorted_teams[num].frags, 
+						drawBrackets, 
+						hud_teamfrags_style->value);
 
 					_px += cell_width + space_x;
 
@@ -3537,7 +3560,12 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 					// Draw the rl if the current player has it and the style allows it.
 					_px = TeamFrags_DrawExtraSpecInfo(num, _px, py, cell_width, cell_height, hud_teamfrags_extra_spec->value);
 
-					Frags_DrawColors(_px, py, cell_width, cell_height, sorted_teams[num]->top, sorted_teams[num]->bottom, sorted_teams[num]->frags, drawBrackets, hud_teamfrags_style->value);
+					Frags_DrawColors(_px, py, cell_width, cell_height, 
+						sorted_teams[num].top, 
+						sorted_teams[num].bottom, 
+						sorted_teams[num].frags, 
+						drawBrackets, 
+						hud_teamfrags_style->value);
 
 					_px += cell_width + space_x;
 
@@ -3546,7 +3574,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 						space_x, space_y, 0, max_team_length,
 						hud_teamfrags_fliptext->value, hud_teamfrags_padtext->value,
 						0, hud_teamfrags_shownames->value,
-						"", sorted_teams[num]->name);
+						"", sorted_teams[num].name);
 				}
 
 				if(hud_teamfrags_vertical->value)
@@ -3560,7 +3588,12 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 			}
 			else
 			{
-				Frags_DrawColors(px, py, cell_width, cell_height, sorted_teams[num]->top, sorted_teams[num]->bottom, sorted_teams[num]->frags, drawBrackets, hud_teamfrags_style->value);
+				Frags_DrawColors(px, py, cell_width, cell_height, 
+					sorted_teams[num].top, 
+					sorted_teams[num].bottom, 
+					sorted_teams[num].frags, 
+					drawBrackets, 
+					hud_teamfrags_style->value);
 
 				if (hud_teamfrags_vertical->value)
 				{
@@ -5614,6 +5647,24 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 }
 
 #endif
+
+//
+// Run before HUD elements are drawn.
+// Place stuff that is common for HUD elements here.
+// 
+void HUD_BeforeDraw()
+{
+	// Only sort once per draw.
+	HUD_Sort_Scoreboard (HUD_SCOREBOARD_ALL);
+}
+
+//
+// Run after HUD elements are drawn.
+// Place stuff that is common for HUD elements here.
+// 
+void HUD_AfterDraw()
+{
+}
 
 // ----------------
 // Init
