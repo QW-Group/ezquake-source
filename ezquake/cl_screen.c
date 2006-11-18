@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.66 2006-11-16 21:56:47 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.67 2006-11-18 17:09:17 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -958,12 +958,10 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 
 	if(scr_autoid.value >= 4)
 	{
-		// 
 		// Draw the players weapon.
-		//
 		int best_weapon = -1;
 		extern mpic_t *sb_weapons[7][8];
-		mpic_t *weapon_pic;
+		mpic_t *weapon_pic = NULL;
 
 		best_weapon = BestWeaponFromStatItems(autoid_p->player->stats[STAT_ITEMS]);
 
@@ -990,6 +988,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 			case IT_LIGHTNING:
 				weapon_pic = sb_weapons[0][6];
 				break;
+			// disconnect: default case of axe?
 		}
 
 		// Only draw the best weapon if it's the RL when autoid = 4
@@ -1000,11 +999,11 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 			Draw_SSubPic (
 				x - name_length - weapon_pic->width - AUTOID_WEAPON_OFFSET_X, 
 				y - AUTOID_HEALTHBAR_OFFSET_Y - ROUND((weapon_pic->height/2.0)), 
-				weapon_pic, 
-				0, 
-				0, 
-				weapon_pic->width, 
-				weapon_pic->height, 
+				weapon_pic,
+				0,
+				0,
+				weapon_pic->width,
+				weapon_pic->height,
 				1);
 		}
 	}
