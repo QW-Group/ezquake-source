@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.22 2006-11-14 21:05:29 cokeman1982 Exp $
+	$Id: utils.c,v 1.23 2006-11-18 17:09:19 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -372,7 +372,7 @@ char *Player_MyName (void) {
 
 int Player_GetSlot(char *arg) 
 {
-	int response, i;
+	int response;
 
 	// Try getting the slot by name or id.
 	if ((response = Player_StringtoSlot(arg)) >= 0 )

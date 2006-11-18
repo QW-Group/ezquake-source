@@ -208,7 +208,7 @@ void R_DrawCoronas(void)
 //NewCorona
 void NewCorona (coronatype_t type, vec3_t origin)
 {
-	corona_t *c = NULL, *c_lowest_die = NULL;
+	corona_t *c = NULL;
 	int i;
 	qbool corona_found = false;
 
