@@ -28,3 +28,7 @@ void HudCommon_Init(void);
 void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
                      float scale, int style, int digits, char *s_align);
 #endif // __HUD_COMMON__H__
+
+extern qbool autohud_loaded;
+extern cvar_t mvd_autohud;
+void HUD_AutoLoad_MVD();
