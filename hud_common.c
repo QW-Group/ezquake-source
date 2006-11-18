@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.79 2006-11-17 02:57:17 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.80 2006-11-18 21:22:22 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -43,14 +43,16 @@ struct {
 } autohud;
 
 qbool OnAutoHudChange(cvar_t *var, char *value);
+qbool autohud_loaded = false;
 cvar_t hud_planmode = {"hud_planmode",   "0"};
-cvar_t mvd_autohud = {"mvd_autohud", "0", 0, OnAutoHudChange};
+cvar_t mvd_autohud = {"mvd_autohud", "1", 0, OnAutoHudChange};
 
 int hud_stats[MAX_CL_STATS];
 
 extern cvar_t cl_weaponpreselect;
 extern int IN_BestWeapon(void);
 extern void DumpHUD(char *);
+extern char *Macro_MatchType(void);
 
 int HUD_Stats(int stat_num)
 {
@@ -3940,22 +3942,41 @@ void HUD_NewRadarMap()
 
 // will check if user wants to un/load external MVD HUD automatically
 void HUD_AutoLoad_MVD() {
+	char *cfg_suffix = "custom";
 	extern cvar_t scr_fov;
 	extern cvar_t scr_newHud;
 	extern void Cmd_Exec_f (void);
 
-	if (mvd_autohud.value && cls.mvdplayback && !autohud.active) {
+	if (mvd_autohud.value && cls.mvdplayback) {
 		// Turn autohud ON here
 	
 		Com_DPrintf("Loading MVD Hud\n");
 		// store current settings: cl_multiview, scr_newhud, hud_*
-		autohud.old_fov = (int) scr_fov.value;
-		autohud.old_multiview = (int) cl_multiview.value;
-		autohud.old_newhud = (int) scr_newHud.value;
-		DumpHUD(TEMPHUD_NAME".cfg");
-		
+		if (!autohud.active) {
+			autohud.old_fov = (int) scr_fov.value;
+			autohud.old_multiview = (int) cl_multiview.value;
+			autohud.old_newhud = (int) scr_newHud.value;
+			DumpHUD(TEMPHUD_NAME".cfg");
+		}
+
 		// load MVD HUD config
-		Cbuf_AddText(va("exec cfg/mvdhud%i.cfg\n", (int) mvd_autohud.value));
+		switch ((int) mvd_autohud.value) {
+			case 1: // load 1on1 or 4on4 or custom according to $matchtype
+				if (!strncmp(Macro_MatchType(), "duel", 4)) {
+					cfg_suffix = "1on1";
+				} else if (!strncmp(Macro_MatchType(), "4on4", 4)) {
+					cfg_suffix = "4on4";
+				} else {
+					cfg_suffix = "custom";
+				}
+				break;
+			default:
+			case 2:
+				cfg_suffix = "custom";
+				break;
+		}
+
+		Cbuf_AddText(va("exec cfg/mvdhud_%s.cfg\n", cfg_suffix));
 
 		autohud.active = true;
 		return;
@@ -4000,7 +4021,7 @@ void HUD_NewMap() {
 	HUD_NewRadarMap();
 #endif
 
-	HUD_AutoLoad_MVD();
+	autohud_loaded = false;
 }
 
 #define HUD_SHOW_ONLY_IN_TEAMPLAY		1

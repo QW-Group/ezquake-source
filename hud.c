@@ -1330,6 +1330,12 @@ void HUD_Draw(void)
 	extern cvar_t scr_newHud;
     hud_t *hud;
 
+	if (mvd_autohud.value && !autohud_loaded) {
+		HUD_AutoLoad_MVD();
+		Com_DPrintf("Loading AUTOHUD...\n");
+		autohud_loaded = true;
+	}
+
     if (scr_newHud.value == 0)
 		return;
     hud = hud_huds;
