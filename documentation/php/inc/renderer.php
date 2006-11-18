@@ -346,7 +346,7 @@ class VariablesRendData extends BaseRendData
             case "string":
             case "float":
             case "integer":
-                echo "\n<p>Variable is <strong>".$this->var["type"]."</strong>.<br />".$this->var["valdesc"]."</p>";
+                echo "\n<p>Variable is <strong>".$this->var["type"]."</strong>.<br />".htmlspecialchars($this->var["valdesc"])."</p>";
                 break;
             case "enum":
             case "boolean":
