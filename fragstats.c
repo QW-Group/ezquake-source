@@ -16,14 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: fragstats.c,v 1.16 2006-11-03 15:53:03 johnnycz Exp $
+    $Id: fragstats.c,v 1.17 2006-11-18 12:03:35 johnnycz Exp $
 */
 
 #include "quakedef.h"
 
-cvar_t cl_parsefrags = {"cl_parseFrags", "0"};
+cvar_t cl_parsefrags = {"cl_parseFrags", "1"};
 cvar_t cl_showFragsMessages = {"con_fragmessages", "1"};
-cvar_t cl_loadFragfiles = {"cl_loadFragfiles", "0"};
+cvar_t cl_loadFragfiles = {"cl_loadFragfiles", "1"};
 
 #define FUH_FRAGFILE_VERSION_1_00	"1.00" /* for compatibility with fuh */
 #define FRAGFILE_VERSION_1_00		"ezquake-1.00" /* fuh suggest such format */
