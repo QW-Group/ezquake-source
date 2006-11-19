@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="US-ASCII"?>
-<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
-<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-
-<name>r_tracker_frags</name>
-<description>Everytime you make a kill or die, the number of kills/deaths/suicides with that weapon is displayed on the screen.
-</description>
-</variable>

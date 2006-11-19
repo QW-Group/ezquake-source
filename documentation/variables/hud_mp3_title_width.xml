@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
-<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-  <name>hud_mp3_title_width</name>
-  <description>Sets width of mp3_title HUD element.</description>
-  <value>
-    <integer>8 = one char with standard console settings.</integer>
-  </value>
-</variable>

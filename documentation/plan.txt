@@ -1,3 +1,5 @@
+This plan has been fulfilled in Winter 2005.
+
 Currently steps all work is done, except for manual pages stored in XML.
 We still use that pseudo-html (it's html but only a part of the <body> element).
 Converting it to XML to be viewable inside the inbuilt help system still sound cool.

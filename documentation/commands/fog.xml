@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
-<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
-<name>fog</name><description>
-Changes color of fog.</description><syntax>R G B</syntax><remarks>
-Type RGB value (the range is 0-1) e.g. "0.5 0.5 0.5" goes for gray, "0.8 0.2 0.2" for red-like.</remarks></command>

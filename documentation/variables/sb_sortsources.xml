@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
-<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-  <name>sb_sortsources</name>
-  <description>Ordering instructions for server browser sources list are stored in this variable. You can order source server in Server browser by pressing Ctrl+1, Ctrl+2 and Ctrl+3. Sequence of your desired combination will be stored in this variable, newest keys first.</description>
-  <value>
-    <string>E.g.: 3-21 means you've pressed Ctrl+1, Ctrl+2, Ctrl+2 and Ctrl+3 so your sources are now ordered by server count, last update time and source name.</string>
-  </value>
-</variable>

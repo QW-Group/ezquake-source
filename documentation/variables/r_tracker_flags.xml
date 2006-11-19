@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="US-ASCII"?>
-<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
-<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-
-<name>r_tracker_flags</name>
-<description>Everytime you take, capture or drop a flag, the number of times is displayed on the screen.
-</description>
-</variable>

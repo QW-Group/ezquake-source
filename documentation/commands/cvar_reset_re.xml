@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
-<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
-<name>cvar_reset_re</name><description>
-This will reset cvar to default.
- Example:
- cvar_reset ^gl_. - resets all OpenGL settings to default values.</description><syntax></syntax>
-<remarks>This command supports (perl) regexp matching.</remarks></command>

@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="US-ASCII"?>
-<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
-<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-
-<name>r_tracker_streaks</name>
-<description>Everytime a player makes a set number of consecutive kills, it will display a message showing they are on a streak, when the player is killed, it will display the name of the person who ended that streak.
-</description>
-</variable>

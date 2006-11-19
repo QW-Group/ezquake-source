@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="../xsl/command.xsl"?>
-<command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/command.xsd">
-<name>ignore</name><description>
-You can give ignore either a player's name
-(name completion is useful for this)
- or a userid (ignore &lt;name|userid&gt;). ignore without any
-command line
- parameters displays your ignore list.</description><syntax>&lt;name|userid&gt;</syntax><remarks></remarks></command>

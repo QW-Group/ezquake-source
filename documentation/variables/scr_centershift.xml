@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="../xsl/variable.xsl"?>
-<variable xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/variable.xsd">
-  <name>scr_centershift</name>
-  <description>Shifts all centerprints. If you are playing in 1280x1024 and want to watch some demo recorded in 320x200 with +wp_stats (ktpro) or sbar_on (teamfortress) you can shift that text down.</description>
-  <value>
-    <integer>Values from -999 to 999 are possible.</integer>
-  </value>
-</variable>
