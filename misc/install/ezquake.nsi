@@ -109,6 +109,10 @@ Section "!ezQuake client" Main
   File "qw\qwprogs.dat"
   File "qw\spprogs.dat"
 
+  CreateDirectory $INSTDIR\qw\radars
+  SetOutPath $INSTDIR\qw\radars
+  File "qw\radars\*.*"
+
   CreateDirectory $INSTDIR\ezquake
   SetOutPath $INSTDIR\ezquake
   File "ezquake\pak0.pak"
@@ -167,6 +171,8 @@ Section "!ezQuake client" Main
 
   CreateDirectory $INSTDIR\ezquake\textures
   CreateDirectory $INSTDIR\ezquake\textures\charsets
+  SetOutPath $INSTDIR\ezquake\textures
+  File "ezquake\textures\chaticons.png"
   SetOutPath $INSTDIR\ezquake\textures\charsets
   File /r "ezquake\textures\charsets\*.png"
 
