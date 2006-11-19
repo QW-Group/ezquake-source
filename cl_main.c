@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.102 2006-11-16 16:12:55 johnnycz Exp $
+	$Id: cl_main.c,v 1.103 2006-11-19 20:24:02 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1712,9 +1712,10 @@ void CL_Multiview(void)
 
 	nPlayernum = playernum;
 	
-	// Copy the stats for the current player before we go to the next view.
-	// WHY?!?!
-	//memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
+	// Copy the stats for the player we're about to draw in the next
+	// view to the client state, so that the correct stats are drawn
+	// in the multiview mini-HUD.
+	memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
 
 	//
 	// Increase the current view being rendered.
