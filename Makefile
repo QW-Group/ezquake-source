@@ -2,10 +2,10 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.54 2006-11-13 21:48:29 disconn3ct Exp $
+#	$Id: Makefile,v 1.55 2006-11-21 13:29:39 disconn3ct Exp $
 
 # compilation tool and detection of targets/achitecture
-_E = 
+_E = @
 CC = gcc
 CC_BASEVERSION = $(shell $(CC) -dumpversion | sed -e 's/\..*//g')
 
@@ -79,23 +79,17 @@ $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR):
 # compiler flags
 PRJ_CFLAGS = -DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM
 BASE_CFLAGS = -Wall -funsigned-char $(ARCH_CFLAGS) $(PRJ_CFLAGS) $(OS_CFLAGS) -I ./libs
-BASE_RELEASE_CFLAGS = -pipe -O2 -fno-strict-aliasing -ffast-math -fomit-frame-pointer -fexpensive-optimizations -funroll-loops
-ifeq ($(CC_BASEVERSION),4) # auto vectorize if we're using gcc4.0+
-	BASE_RELEASE_CFLAGS +=-ftree-vectorize
-endif
 
-BASE_DEBUG_CFLAGS = -ggdb
-
-RELEASE_CFLAGS = $(BASE_CFLAGS) $(BASE_RELEASE_CFLAGS) -DNDEBUG
-DEBUG_CFLAGS = $(BASE_CFLAGS) $(BASE_DEBUG_CFLAGS) -D_DEBUG
+RELEASE_CFLAGS = -pipe -O2 -fno-strict-aliasing -ffast-math -fomit-frame-pointer -fexpensive-optimizations -funroll-loops
+DEBUG_CFLAGS = -ggdb
 
 # opengl builds
 GLCFLAGS=-DGLQUAKE -DWITH_JPEG $(OS_GL_CFLAGS)
 
 ifeq ($(TYPE),release)
-CFLAGS = $(RELEASE_CFLAGS)
+CFLAGS = $(BASE_CFLAGS) $(RELEASE_CFLAGS) -DNDEBUG
 else
-CFLAGS = $(DEBUG_CFLAGS)
+CFLAGS = $(BASE_CFLAGS) $(DEBUG_CFLAGS) -D_DEBUG
 endif
 
 LDFLAGS = -lm -lpthread
