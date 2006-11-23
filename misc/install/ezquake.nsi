@@ -170,9 +170,9 @@ Section "!ezQuake client" Main
   CreateDirectory $INSTDIR\ezquake\textures
   CreateDirectory $INSTDIR\ezquake\textures\charsets
   SetOutPath $INSTDIR\ezquake\textures
-  File "ezquake\textures\chaticons.png"
+  File "ezquake\textures\*.png"
   SetOutPath $INSTDIR\ezquake\textures\charsets
-  File /r "ezquake\textures\charsets\*.png"
+  File "ezquake\textures\charsets\*.png"
 
   CreateDirectory $INSTDIR\qw
   SetOutPath $INSTDIR\qw
