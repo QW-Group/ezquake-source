@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.80 2006-11-18 21:22:22 johnnycz Exp $
+	$Id: hud_common.c,v 1.81 2006-11-23 21:10:26 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -3990,9 +3990,9 @@ void HUD_AutoLoad_MVD() {
 
 		Com_DPrintf("Unloading MVD Hud\n");
 		// load stored settings
-		scr_fov.value = autohud.old_fov;
-		cl_multiview.value = autohud.old_multiview;
-		scr_newHud.value = autohud.old_newhud;
+		Cvar_Set(&scr_fov, va("%i", autohud.old_fov));
+		Cvar_Set(&cl_multiview, va("%i", autohud.old_multiview));
+		Cvar_Set(&scr_newHud, va("%i", autohud.old_newhud));
 		Cmd_TokenizeString("exec "TEMPHUD_FULLPATH);
 		Cmd_Exec_f();
 
