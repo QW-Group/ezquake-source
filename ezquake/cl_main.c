@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.104 2006-11-23 17:12:28 disconn3ct Exp $
+	$Id: cl_main.c,v 1.105 2006-11-23 17:28:51 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1028,8 +1028,10 @@ void CL_InitLocal (void) {
 	Info_SetValueForStarKey (cls.userinfo, "*vwtest", "1", MAX_INFO_STRING);
 #endif
 
-	if (COM_CheckParm("-noindphys"))
+	if (COM_CheckParm("-noindphys")) {
 		Cvar_SetValue(&cl_independentPhysics, 0);
+		Cvar_SetValue(&cl_nolerp, 1);
+	}
 
 	Cmd_AddLegacyCommand ("demotimescale", "cl_demospeed");
 
