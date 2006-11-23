@@ -805,7 +805,7 @@ void VID_Init(unsigned char *palette) {
 			}
 
 			if (best_fit != -1) {
-				if (( i = COM_CheckParm("-freqq")) && i + 1 < com_argc) { // FIXME: wow... this is horrible
+				if (( i = COM_CheckParm("-freq")) && i + 1 < com_argc) { // FIXME: wow... this is horrible
 					newvmode.hdisplay = vidmodes[best_fit]->hdisplay;
 					newvmode.hsyncstart = vidmodes[best_fit]->hsyncstart;
 					newvmode.hsyncend = vidmodes[best_fit]->hsyncend;

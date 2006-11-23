@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.21 2006-11-23 17:12:28 disconn3ct Exp $
+	$Id: vid_wgl.c,v 1.22 2006-11-23 17:28:51 disconn3ct Exp $
 
 */
 
@@ -126,7 +126,7 @@ cvar_t		_vid_default_mode_win = {"_vid_default_mode_win","3",CVAR_ARCHIVE};
 cvar_t		vid_config_x = {"vid_config_x","800",CVAR_ARCHIVE};
 cvar_t		vid_config_y = {"vid_config_y","600",CVAR_ARCHIVE};
 cvar_t		_windowed_mouse = {"_windowed_mouse","1",CVAR_ARCHIVE};
-cvar_t		vid_displayfrequency = {"vid_displayfrequency", "0", CVAR_INIT};
+cvar_t		vid_displayfrequency = {"vid_displayfrequency", "75", CVAR_INIT};
 cvar_t		vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
 cvar_t      vid_flashonactivity = {"vid_flashonactivity", "1", CVAR_ARCHIVE};
 cvar_t		vid_forcerestoregamma = {"vid_forcerestoregamma", "0"};
@@ -302,13 +302,13 @@ qbool VID_SetFullDIBMode (int modenum) {
 		gdevmode.dmPelsHeight = modelist[modenum].height;
 		gdevmode.dmSize = sizeof (gdevmode);
 
-		if (vid_displayfrequency.value > 0) {
-			gdevmode.dmDisplayFrequency = vid_displayfrequency.value;
+		if (ChangeDisplaySettings (&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) { // failed for 75 hz, okay trying default refresh rate (60hz?) then
+			gdevmode.dmDisplayFrequency = 0.0;
 			gdevmode.dmFields |= DM_DISPLAYFREQUENCY;
 			Com_DPrintf ("Forcing display frequency to %i Hz\n", gdevmode.dmDisplayFrequency);
 		}
 
-		if (ChangeDisplaySettings (&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+		if (ChangeDisplaySettings (&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) //failed for defaylt refresh rate too, bad luck :E
 			Sys_Error ("Couldn't set fullscreen DIB mode");
 	}
 

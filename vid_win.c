@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.16 2006-11-13 01:54:43 cokeman1982 Exp $
+	$Id: vid_win.c,v 1.17 2006-11-23 17:28:51 disconn3ct Exp $
 
 */
 
@@ -92,7 +92,7 @@ cvar_t		block_switch = {"block_switch", "0", CVAR_ARCHIVE};
 cvar_t		vid_window_x = {"vid_window_x", "0", CVAR_ARCHIVE};
 cvar_t		vid_window_y = {"vid_window_y", "0", CVAR_ARCHIVE};
 cvar_t		vid_resetonswitch = {"vid_resetonswitch", "0", CVAR_ARCHIVE};
-cvar_t		vid_displayfrequency = {"vid_displayfrequency", "0"};
+cvar_t		vid_displayfrequency = {"vid_displayfrequency", "75", CVAR_INIT};
 
 typedef struct {
 	int		width;
@@ -1186,8 +1186,7 @@ qbool VID_SetFullDIBMode (int modenum) {
 	gdevmode.dmPelsHeight = modelist[modenum].height << modelist[modenum].stretched;
 	gdevmode.dmSize = sizeof (gdevmode);
 
-	freq = modelist[modenum].frequency > 0 ? modelist[modenum].frequency : 
-		vid_displayfrequency.value > 0 ? vid_displayfrequency.value : 0;
+	freq = modelist[modenum].frequency > 0 ? modelist[modenum].frequency : (int) vid_displayfrequency.value > 0 ? (int) vid_displayfrequency.value : 0;
 	if (freq) {
 		gdevmode.dmDisplayFrequency = modelist[modenum].frequency;
 		gdevmode.dmFields |= DM_DISPLAYFREQUENCY;
