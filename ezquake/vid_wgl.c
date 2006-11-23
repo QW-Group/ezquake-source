@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.22 2006-11-23 17:28:51 disconn3ct Exp $
+	$Id: vid_wgl.c,v 1.23 2006-11-23 19:14:57 disconn3ct Exp $
 
 */
 
@@ -302,7 +302,11 @@ qbool VID_SetFullDIBMode (int modenum) {
 		gdevmode.dmPelsHeight = modelist[modenum].height;
 		gdevmode.dmSize = sizeof (gdevmode);
 
-		if (ChangeDisplaySettings (&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) { // failed for 75 hz, okay trying default refresh rate (60hz?) then
+		// first we will try vid_displayfrequency.value
+		gdevmode.dmDisplayFrequency = vid_displayfrequency.value;
+		gdevmode.dmFields |= DM_DISPLAYFREQUENCY;
+		
+		if (ChangeDisplaySettings (&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) { // okay trying default refresh rate (60hz?) then
 			gdevmode.dmDisplayFrequency = 0.0;
 			gdevmode.dmFields |= DM_DISPLAYFREQUENCY;
 			Com_DPrintf ("Forcing display frequency to %i Hz\n", gdevmode.dmDisplayFrequency);
