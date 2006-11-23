@@ -73,8 +73,6 @@ InstallDirRegKey HKLM "Software\ezQuake" "Install_dir"
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE CheckId1Presence
 !insertmacro MUI_PAGE_DIRECTORY
 
-;todo - add start dir page
-
 !insertmacro MUI_PAGE_INSTFILES
 
 !define MUI_FINISHPAGE_SHOWREADME file://$INSTDIR/ezquake/manual/ezquake.sourceforge.net/docs/indexa0f8.html?setup
@@ -203,12 +201,12 @@ Section /o "Modern HUD Icons" HUDIcons
   File /r "ezquake\textures\wad\*.png"
 SectionEnd
 
-Section /o "Software rendering binary" Software
+Section /o "Software rendering" Software
   SetOutPath $INSTDIR
   File "ezquake.exe"
 SectionEnd
 
-Section /o "Extra Logitech Mice Support" MWHook
+Section /o "MouseWare Hook" MWHook
   SetOutPath $INSTDIR
   File "lib\mw_hook.dll"
 SectionEnd
@@ -218,7 +216,7 @@ Section "Start Menu Shortcuts" StartMenu
   SetOutPath $INSTDIR
   CreateDirectory "$SMPROGRAMS\ezQuake"
   CreateShortCut "$SMPROGRAMS\ezQuake\Uninstall.lnk" "$INSTDIR\ezuninstall.exe" ""
-  CreateShortCut "$SMPROGRAMS\ezQuake\ezQuake.lnk" "$INSTDIR\ezstart.exe" ""
+  CreateShortCut "$SMPROGRAMS\ezQuake\ezQuake.lnk" "$INSTDIR\ezstart.exe" "" "$INSTDIR\ezquake-gl.exe"
   CreateShortCut "$SMPROGRAMS\ezQuake\Manual.lnk" "$INSTDIR\ezquake\manual\index.html" ""
 SectionEnd
 
@@ -256,7 +254,6 @@ Section "Uninstall"
 SectionEnd
 
 Function CheckId1Presence
-	Var /GLOBAL RO
 	${DirState} "$INSTDIR\id1" $R0	
 	StrCmp $R0 -1 0 +2
 		MessageBox MB_OK|MB_ICONEXCLAMATION "The id1 subdirectory was not found. Probably you won't be able to run this client. You have to install this client into the same directory where id1 subdirectory from Quake 1 installation is."
@@ -266,7 +263,7 @@ LangString DESC_Section1 ${LANG_ENGLISH} "Main client data"
 LangString DESC_Section2 ${LANG_ENGLISH} "If you wish to keep your own Server Browser sources list, uncheck this. Note: offline server lists we provide will always get updated with this installer."
 LangString DESC_Section3 ${LANG_ENGLISH} "Modern stylish head up display icons. Will override your custom textures."
 LangString DESC_Section4 ${LANG_ENGLISH} "Will install executable with software rendering support. Install this if your computer's graphics card is really old or is missing OpenGL acceleration."
-LangString DESC_Section5 ${LANG_ENGLISH} "Check in case you want to bind extra mouse buttons when using MouseWare drivers."
+LangString DESC_Section5 ${LANG_ENGLISH} "Check in case you want to bind extra mouse buttons when using Logitech mouse with MouseWare drivers."
 LangString DESC_Section6 ${LANG_ENGLISH} "Start menu shortcuts"
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
