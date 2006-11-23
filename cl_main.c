@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.103 2006-11-19 20:24:02 cokeman1982 Exp $
+	$Id: cl_main.c,v 1.104 2006-11-23 17:12:28 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -57,7 +57,7 @@ cvar_t	cl_sbar		= {"cl_sbar", "0", CVAR_ARCHIVE};
 cvar_t	cl_hudswap	= {"cl_hudswap", "0", CVAR_ARCHIVE};
 cvar_t	cl_maxfps	= {"cl_maxfps", "0", CVAR_ARCHIVE};
 cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
-cvar_t	cl_independentPhysics = {"cl_independentPhysics", "0", CVAR_INIT};	//#fps
+cvar_t	cl_independentPhysics = {"cl_independentPhysics", "1", CVAR_INIT};
 
 cvar_t	cl_predict_players = {"cl_predict_players", "1"};
 cvar_t	cl_solid_players = {"cl_solid_players", "1"};
@@ -97,7 +97,7 @@ cvar_t cl_window_caption	= {"cl_window_caption", "0"};
 
 cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};	
 // START shaman :: balancing variables
-cvar_t cl_nolerp			= {"cl_nolerp", "1"}; // 0
+cvar_t cl_nolerp			= {"cl_nolerp", "0"}; // 0 is good for indep-phys, 1 is good for old-phys
 // END shaman :: balancing variables
 cvar_t cl_lerp_monsters			= {"cl_lerp_monsters", "1"};
 
@@ -1028,8 +1028,8 @@ void CL_InitLocal (void) {
 	Info_SetValueForStarKey (cls.userinfo, "*vwtest", "1", MAX_INFO_STRING);
 #endif
 
-	if (COM_CheckParm("-indphys"))
-		Cvar_SetValue(&cl_independentPhysics, 1);
+	if (COM_CheckParm("-noindphys"))
+		Cvar_SetValue(&cl_independentPhysics, 0);
 
 	Cmd_AddLegacyCommand ("demotimescale", "cl_demospeed");
 
