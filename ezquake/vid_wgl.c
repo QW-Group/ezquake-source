@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.20 2006-11-13 01:54:30 cokeman1982 Exp $
+	$Id: vid_wgl.c,v 1.21 2006-11-23 17:12:28 disconn3ct Exp $
 
 */
 
@@ -136,7 +136,7 @@ typedef BOOL (APIENTRY *SWAPINTERVALFUNCPTR)(int);
 SWAPINTERVALFUNCPTR wglSwapIntervalEXT = NULL;
 qbool OnChange_vid_vsync(cvar_t *var, char *string);
 static qbool update_vsync = false;
-cvar_t	vid_vsync = {"vid_vsync", "", 0, OnChange_vid_vsync};
+cvar_t	vid_vsync = {"vid_vsync", "0", 0, OnChange_vid_vsync};
 
 BOOL (APIENTRY *wglGetDeviceGammaRamp3DFX)(HDC hDC, GLvoid *ramp);
 BOOL (APIENTRY *wglSetDeviceGammaRamp3DFX)(HDC hDC, GLvoid *ramp);
