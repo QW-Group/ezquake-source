@@ -173,8 +173,11 @@ void IN_AttackDown(void) {
 }
 
 void IN_AttackUp(void) {
-	if (cl_weaponhide.value)
-		in_impulse = cl_weaponhide.value;
+	if (cl_weaponhide.value) {
+		// performs "weapon 2 1"
+		// that means: if player has shotgun and shells, select shotgun, otherwise select axe
+		in_impulse = (cl.stats[STAT_ITEMS] & IT_SHOTGUN && cl.stats[STAT_SHELLS] >= 1) ? 2 : 1; 
+	}
 	KeyUp(&in_attack);
 }
 
