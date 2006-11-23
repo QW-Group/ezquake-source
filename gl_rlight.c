@@ -582,19 +582,23 @@ vec3_t lightcolor; // LordHavoc: used by model rendering
 int R_LightPoint (vec3_t p)
 {
 	vec3_t		end;
+	qbool		full_light;
 	
-	if ((r_fullbright.value && r_refdef2.allow_cheats) || !cl.worldmodel->lightdata)
-	{
-		lightcolor[0] = lightcolor[1] = lightcolor[2] = 255;
-		return 255;
-	}
-	
+	full_light = ((r_fullbright.value && r_refdef2.allow_cheats) || !cl.worldmodel->lightdata);
+	if (full_light && !r_shadows.value)
+		goto skip_trace;  // go grab yourself a copy of "'GOTO Considered Harmful' Considered Harmful"
+
 	end[0] = p[0];
 	end[1] = p[1];
 	end[2] = p[2] - 8192;
 
 	lightcolor[0] = lightcolor[1] = lightcolor[2] = 0;
 	RecursiveLightPoint (lightcolor, cl.worldmodel->nodes, p, end);
+	if (full_light) {
+skip_trace:
+		lightcolor[0] = lightcolor[1] = lightcolor[2] = 255;
+		return 255;
+	}
 	return ((lightcolor[0] + lightcolor[1] + lightcolor[2]) * (1.0f / 3.0f));
 }
 // LordHavoc: .lit support end
