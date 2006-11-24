@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.13 2006-09-24 23:49:45 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.14 2006-11-24 14:35:21 disconn3ct Exp $
  */
 
 #ifdef EMBED_TCL
@@ -99,8 +99,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 	if (rc != TCL_OK)
 		return (rc);
 
-	if (!Tcl_GetCommandInfo (interp, name, &info)
-	        || !info.isNativeObjectProc) {
+	if (!Tcl_GetCommandInfo (interp, name, &info) || !info.isNativeObjectProc) {
 		Tcl_SetResult (interp, "alias: unable to get reference to Tcl proc", TCL_STATIC);
 		return (TCL_ERROR);
 	}
@@ -164,8 +163,9 @@ static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *cons
 			Tcl_AppendToObj (args, "\"", 1);
 			Tcl_AppendObjToObj (args, objv[i]);
 			Tcl_AppendToObj (args, "\"", 1);
-		} else
+		} else {
 			Tcl_AppendObjToObj (args, objv[i]);
+		}
 	}
 	str_utf = Tcl_GetStringFromObj (args, &str_utf_len);
 	Tcl_UtfToExternalDString (qw_enc, str_utf, str_utf_len, &str_byte);
@@ -192,10 +192,11 @@ static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *cons
 		}
 	}
 
-	if (cmd->function)
+	if (cmd->function) {
 		cmd->function ();
-	else
+	} else {
 		Cmd_ForwardToServer ();
+	}
 
 	Tcl_DStringFree (&str_byte);
 	Tcl_SetResult (interp, NULL, TCL_STATIC);
@@ -212,6 +213,7 @@ static int TCL_DenyProc (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj 
 	Tcl_SetResult (interp, result, TCL_VOLATILE);
 	return (TCL_ERROR);
 }
+
 
 static int TCL_OpenProc (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *const objv[])
 {
@@ -245,13 +247,14 @@ static int TCL_ClockProc (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj
 	if ((cl.fpd & FPD_NO_TIMERS) && objc > 1) {
 		char* param = Tcl_GetString (objv[1]);
 		if (param[0] == 's' && param[1] == 'e') {
-			Tcl_Obj		*result;
-			int			rc;
-			time_t		clock;
+			Tcl_Obj *result;
+			int rc;
+			time_t clock;
 
 			rc = info->objProc (info->objClientData, interp, objc, objv);
 
-			if (rc != TCL_OK) return (rc);
+			if (rc != TCL_OK) 
+				return (rc);
 			result = Tcl_GetObjResult (interp);
 			if (TCL_OK != Tcl_GetLongFromObj (NULL, result, (long *) &clock))
 				return (rc);
@@ -270,6 +273,7 @@ static int TCL_ClockProc (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj
 	return (info->objProc (info->objClientData, interp, objc, objv));
 }
 
+
 /*
 =============================================================================
  QuakeWorld-to-Tcl commands
@@ -284,11 +288,6 @@ static void TCL_Eval_f (void)
 
 	if (cbuf_current == &cbuf_svc) {
 		Com_Printf ("%s: server not allowed to exec Tcl commands\n", Cmd_Argv(0));
-		return;
-	}
-
-	if (!strncasecmp (Rulesets_Ruleset(), "smackdown", 9)) {
-		Com_Printf ("%s banned by smackdown ruleset\n", Cmd_Argv(0));
 		return;
 	}
 
@@ -328,12 +327,6 @@ static void TCL_Exec_f (void)
 		return;
 	}
 
-	if (!strncasecmp (Rulesets_Ruleset(), "smackdown", 9)) {
-		Com_Printf ("%s banned by smackdown ruleset\n", Cmd_Argv(0));
-		return;
-	}
-		
-
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("%s <filename> : execute file as Tcl script\n", Cmd_Argv(0));
 		return;
@@ -372,11 +365,6 @@ static void TCL_Proc_f (void)
 
 	if (cbuf_current == &cbuf_svc) {
 		Com_Printf ("%s: server not allowed to exec Tcl commands\n", Cmd_Argv(0));
-		return;
-	}
-
-	if (!strncasecmp (Rulesets_Ruleset(), "smackdown", 9)) {
-		Com_Printf ("%s banned by smackdown ruleset\n", Cmd_Argv(0));
 		return;
 	}
 
@@ -516,7 +504,8 @@ void TCL_RegisterMacro (macro_command_t *macro)
 
 void TCL_UnregisterVariable (const char *name)
 {
-	if (!interp) return;
+	if (!interp)
+		return;
 
 	Tcl_UntraceVar (interp, name,
 	                TCL_TRACE_READS|TCL_TRACE_WRITES|TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
@@ -527,10 +516,11 @@ void TCL_UnregisterVariable (const char *name)
 void TCL_ExecuteAlias (cmd_alias_t *alias)
 {
 	Tcl_CmdInfo *info;
-	Tcl_Obj*	objv[11];
-	int			i, argc, rc;
+	Tcl_Obj* objv[11];
+	int i, argc, rc;
 
-	if (!interp) return;
+	if (!interp)
+		return;
 
 	info = (Tcl_CmdInfo*) alias->value;
 
@@ -601,10 +591,8 @@ static int TCL_RawToUtfChars (ClientData client_data, const char *src, int src_l
 	*src_read_ptr = src_read;
 	*dst_wrote_ptr = dst_wrote;
 	*dst_chars_ptr = dst_chars;
-	if (src_len)
-		return (TCL_CONVERT_NOSPACE);
-	else
-		return (TCL_OK);
+
+	return (src_len) ? (TCL_CONVERT_NOSPACE) : (TCL_OK);
 }
 
 static int TCL_UtfToRawChars (ClientData client_data, const char *src, int src_len, int flags,
@@ -631,25 +619,19 @@ static int TCL_UtfToRawChars (ClientData client_data, const char *src, int src_l
 	*dst_wrote_ptr = dst_wrote;
 	*dst_chars_ptr = dst_chars;
 
-	if (src_len) {
-		if (dst_len)
-			return (TCL_CONVERT_MULTIBYTE);
-		else
-			return (TCL_CONVERT_NOSPACE);
-	} else
-		return (TCL_OK);
+	return (src_len) ? ((dst_len) ? (TCL_CONVERT_MULTIBYTE) : (TCL_CONVERT_NOSPACE)) : (TCL_OK);
 }
 
 void TCL_InterpInit (void)
 {
 	const char *version;
 	static Tcl_EncodingType raw_enc = {
-		"raw",			// encodingName
+		"raw",				// encodingName
 		TCL_RawToUtfChars,	// toUtfProc
 		TCL_UtfToRawChars,	// fromUtfProc
-		NULL,			// freeProc
-		NULL,			// clientData
-		1			// nullSize
+		NULL,				// freeProc
+		NULL,				// clientData
+		1					// nullSize
 		};
 
 #ifdef USE_TCL_STUBS
@@ -694,12 +676,46 @@ void TCL_InterpInit (void)
 	Cmd_AddCommand ("tcl_eval", TCL_Eval_f);
 	Cmd_AddCommand ("tcl_proc", TCL_Proc_f);
 
-	TCL_ReplaceProc ("exec", TCL_DenyProc);
-	TCL_ReplaceProc ("load", TCL_DenyProc);
-	TCL_ReplaceProc ("interp", TCL_DenyProc);
-	TCL_ReplaceProc ("exit", TCL_DenyProc);
-	TCL_ReplaceProc ("open", TCL_OpenProc);
-	TCL_ReplaceProc ("clock", TCL_ClockProc);
+	if (strncasecmp (Rulesets_Ruleset(), "smackdown", 9)) {
+		TCL_ReplaceProc ("after", TCL_DenyProc); // if this may changes or invoke error sometimes, this should be disabled 
+		TCL_ReplaceProc ("cd", TCL_DenyProc); // external interconnection (and qw may crash?)
+		TCL_ReplaceProc ("clock", TCL_DenyProc); // disable timers
+		TCL_ReplaceProc ("close", TCL_DenyProc); // disable channels
+		TCL_ReplaceProc ("eof", TCL_DenyProc); // disable channels
+		TCL_ReplaceProc ("exec", TCL_DenyProc); // external interconnection
+		TCL_ReplaceProc ("exit", TCL_DenyProc); // use "cmd quit" (but it is not correct at this moment, crash application)
+		TCL_ReplaceProc ("fblocked", TCL_DenyProc); // disable channels
+		TCL_ReplaceProc ("fconfigure", TCL_DenyProc); // disable channels
+		TCL_ReplaceProc ("fcopy", TCL_DenyProc); // disable channels
+		TCL_ReplaceProc ("file", TCL_DenyProc); // external interconnection
+		TCL_ReplaceProc ("fileevent", TCL_DenyProc); // disable channels
+		TCL_ReplaceProc ("flush", TCL_DenyProc); // disable channels
+		TCL_ReplaceProc ("gets", TCL_DenyProc); // disable channels
+		TCL_ReplaceProc ("glob", TCL_DenyProc); // external interconnection
+		TCL_ReplaceProc ("load", TCL_DenyProc); // disable lib loading with damage code
+		TCL_ReplaceProc ("open", TCL_DenyProc); // disable channels + external interconnection
+		TCL_ReplaceProc ("package", TCL_DenyProc); // see "load"
+		TCL_ReplaceProc ("pid", TCL_DenyProc); // why do you need it?
+		TCL_ReplaceProc ("puts", TCL_DenyProc); // disable channels (remote connections)
+		TCL_ReplaceProc ("read", TCL_DenyProc); // disable channels
+		TCL_ReplaceProc ("seek", TCL_DenyProc); // disable channels
+		TCL_ReplaceProc ("socket", TCL_DenyProc); // disable channels (remote connections)
+		TCL_ReplaceProc ("source", TCL_DenyProc); // external interconnection
+		TCL_ReplaceProc ("tell", TCL_DenyProc); // disable channels
+		TCL_ReplaceProc ("time", TCL_DenyProc); // calculate time of execution
+		TCL_ReplaceProc ("update", TCL_DenyProc); // see "after"
+	
+		TCL_ReplaceProc ("interp", TCL_DenyProc); // ?
+		TCL_ReplaceProc ("pwd", TCL_DenyProc); // if this may changes or invoke error sometimes, this should be disabled
+		TCL_ReplaceProc ("trace", TCL_DenyProc); // ?
+	} else {
+		TCL_ReplaceProc ("exec", TCL_DenyProc);
+		TCL_ReplaceProc ("load", TCL_DenyProc);
+		TCL_ReplaceProc ("interp", TCL_DenyProc);
+		TCL_ReplaceProc ("exit", TCL_DenyProc);
+		TCL_ReplaceProc ("open", TCL_OpenProc);
+		TCL_ReplaceProc ("clock", TCL_ClockProc);
+	}
 }
 
 qbool TCL_InterpLoaded (void)
