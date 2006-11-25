@@ -1,5 +1,5 @@
 /*
-	$Id: EX_misc.c,v 1.10 2006-06-13 13:13:02 vvd0 Exp $
+	$Id: EX_misc.c,v 1.11 2006-11-25 13:41:30 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -12,12 +12,14 @@
 #include "EX_misc.h"
 #include "EX_FunNames.h"
 
-#ifndef _WIN32 
+#ifndef _WIN32
 #define CLIPBOARDSIZE 1024
 static char clipboard[CLIPBOARDSIZE] = "\0";    // for clipboard implementation
 #endif
 
-// make any intermediate directories for given filename path    
+// make any intermediate directories for given filename path
+
+/*
 void MakeIntermediatePath(char *_name)
 {
     char *slash;
@@ -41,6 +43,7 @@ void MakeIntermediatePath(char *_name)
         slash = strchr(slash+1, PATH_SEPARATOR);
     }
 }
+*/
 
 // copies given text to clipboard
 void CopyToClipboard(const char *text)
@@ -138,6 +141,7 @@ int funcmp(const char *s1, const char *s2)
 // assumes sub is lowercase
 //
 
+/*
 int stristr(const char *s, const char *sub)
 {
     int i;
@@ -152,6 +156,7 @@ int stristr(const char *s, const char *sub)
     Q_free(tmp);
     return i;
 }
+*/
 
 //-------------------------------------
 //
@@ -160,6 +165,7 @@ int stristr(const char *s, const char *sub)
 // minus if free track
 //
 
+/*
 int GetViewEntity(void)
 {
     extern cvar_t cl_chasecam;
@@ -174,6 +180,7 @@ int GetViewEntity(void)
     else
         return cl.playernum + 1;
 }
+*/
 
 //-------------------------------------
 //
@@ -273,6 +280,7 @@ int SeparateChat(char *chat, int *out_type, char **out_msg)
 //   XXX  - exact client name
 //
 
+/*
 int GetUserNum(char *t)
 {
     int client = -1;
@@ -303,6 +311,7 @@ int GetUserNum(char *t)
     else
         return -1;
 }
+*/
 
 // ----------------------------------------------
 //
@@ -311,6 +320,7 @@ int GetUserNum(char *t)
 // alse remove characters, which cannot be in a filename
 //
 
+/*
 void myRemoveColors(char *str)
 {
     //char dest[2000];
@@ -355,6 +365,7 @@ void myRemoveColors(char *str)
         strcpy(str, "_");
     // done
 }
+*/
 
 // overwrites, always generates same length or shorter string
 void StripName(char *namebuf)
@@ -407,6 +418,7 @@ void StripName(char *namebuf)
 
 
 // get float value of string, false on error
+/*
 qbool getFloatValue(char *string, float *val)
 {
     // [sign] [digits] [.digits] [ {d | D | e | E }[sign]digits]
@@ -496,8 +508,10 @@ qbool getFloatValue(char *string, float *val)
 
     return true;
 }
+*/
 
 // get integer value of string, false on error
+/*
 qbool getIntegerValue(char *string, int *val)
 {
     // [sign]digits  ||  "0x" hex-digits
@@ -579,3 +593,4 @@ qbool getIntegerValue(char *string, int *val)
 
     return true;
 }
+*/
