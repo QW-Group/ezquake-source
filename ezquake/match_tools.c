@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: match_tools.c,v 1.25 2006-10-03 23:00:27 johnnycz Exp $
+	$Id: match_tools.c,v 1.26 2006-11-25 16:28:13 disconn3ct Exp $
 */
 
 
@@ -61,7 +61,7 @@ static char *MT_CleanString(char *string, qbool allow_spaces_and_slashes) {
 	disallowed = allow_spaces_and_slashes ? badchars + 3 : badchars;
 
 	#define CLEANCHAR(c) \
-		((readableChars[(byte) c] < ' ' || strchr(disallowed, readableChars[(byte) c])) ? '_' : readableChars[(byte) c])
+		((readableChars[(byte) c] < ' ' || strchr((char *)disallowed, readableChars[(byte) c])) ? '_' : readableChars[(byte) c])
 
 	in = (byte *) string;
 	out = buf;

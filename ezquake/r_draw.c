@@ -332,7 +332,7 @@ void customCrosshair_Init(void) {
 }
 
 void Draw_Crosshair(void) {
-	int x, y, crosshair_val, row, col;
+	int x = 0, y = 0, crosshair_val, row, col;
 	extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
 	extern vrect_t scr_vrect;
 	byte c = (byte) crosshaircolor.value;
@@ -368,17 +368,17 @@ void Draw_Crosshair(void) {
 					y = vid.height * 3/4;
 				} 
 				else if (CURRVIEW == 2) 
-				{ 
+				{
 					// top cv2
 					x = vid.width / 2; 
 					y = vid.height / 4;
 				}
-			} 
-			else 
-			{ 
+			}
+			else
+			{
 				// inset
 				if (CURRVIEW == 2) 
-				{ 
+				{
 					// normal
 					x = vid.width / 2 + cl_crossx.value; 
 					if (cl_sbar.value)
@@ -389,7 +389,7 @@ void Draw_Crosshair(void) {
 					{
 						y = vid.height / 2 + cl_crossy.value / 2;
 					}
-				} 
+				}
 				else if (CURRVIEW == 1) 
 				{
 					x = vid.width - (vid.width/3)/2 - 1;
@@ -403,56 +403,56 @@ void Draw_Crosshair(void) {
 					}
 				}
 			}
-		} 
+		}
 		else if (cl_multiview.value == 3) 
 		{
 			if (CURRVIEW == 2) 
-			{ 
+			{
 				// top
 				x = vid.width / 2;
 				y = vid.height / 4;
-			} 
+			}
 			else if (CURRVIEW == 3) 
-			{ 
+			{
 				// bl
 				x = vid.width / 4;
 				y = vid.height/2 + vid.height/4;
 			}
 			else 
-			{ 
-				// br
-				x = vid.width/2 + vid.width/4;
-				y = vid.height/2 + vid.height/4;
-			}
-		} 
-		else if (cl_multiview.value >= 4) 
-		{
-			if (CURRVIEW == 2) 
-			{ 
-				// tl
-				x = vid.width/4;
-				y = vid.height/4;
-			}
-			else if (CURRVIEW == 3) 
-			{ 
-				// tr
-				x = vid.width/2 + vid.width/4;
-				y = vid.height/4;
-			}
-			else if (CURRVIEW == 4) 
-			{ 
-				// bl
-				x = vid.width/4;
-				y = vid.height/2 + vid.height/4;
-			}
-			else if (CURRVIEW == 1) 
-			{ 
+			{
 				// br
 				x = vid.width/2 + vid.width/4;
 				y = vid.height/2 + vid.height/4;
 			}
 		}
-	} 
+		else if (cl_multiview.value >= 4) 
+		{
+			if (CURRVIEW == 2) 
+			{
+				// tl
+				x = vid.width/4;
+				y = vid.height/4;
+			}
+			else if (CURRVIEW == 3) 
+			{
+				// tr
+				x = vid.width/2 + vid.width/4;
+				y = vid.height/4;
+			}
+			else if (CURRVIEW == 4) 
+			{
+				// bl
+				x = vid.width/4;
+				y = vid.height/2 + vid.height/4;
+			}
+			else if (CURRVIEW == 1) 
+			{
+				// br
+				x = vid.width/2 + vid.width/4;
+				y = vid.height/2 + vid.height/4;
+			}
+		}
+	}
 	else 
 	{
 		if (cls.mvdplayback) 
@@ -466,7 +466,7 @@ void Draw_Crosshair(void) {
 			{
 				y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value / 2;
 			}
-		} 
+		}
 		else 
 		{
 			x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value; 

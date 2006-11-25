@@ -81,7 +81,7 @@ cvar_t		vid_mode = {"vid_mode","5"};
 cvar_t		vid_redrawfull = {"vid_redrawfull","0"};
 cvar_t		vid_waitforrefresh = {"vid_waitforrefresh","0",CVAR_ARCHIVE};
 
-char	*framebuffer_ptr;
+unsigned char *framebuffer_ptr;
 
 
 int     mouse_buttons;
@@ -462,7 +462,7 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 	vga_setmode(current_mode);
 	VID_SetPalette(palette);
 
-	VGA_pagebase = vid.direct = framebuffer_ptr = (char *) vga_getgraphmem();
+	VGA_pagebase = vid.direct = framebuffer_ptr = vga_getgraphmem();
 //		if (vga_setlinearaddressing()>0)
 //			framebuffer_ptr = (char *) vga_getgraphmem();
 	if (!framebuffer_ptr)
