@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.44 2006-09-24 23:12:50 johnnycz Exp $
+    $Id: cmd.c,v 1.45 2006-11-25 20:10:36 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1311,11 +1311,12 @@ int Commands_Compare_Func(const void * arg1, const void * arg2)
 char *msgtrigger_commands[] = {
                                   "play", "playvol", "stopsound", "set", "echo", "say", "say_team",
                                   "alias", "unalias", "msg_trigger", "inc", "bind", "unbind", "record",
-                                  "easyrecord", "stop", "if", "wait", "log", "match_forcestart",
+                                  "easyrecord", "stop", "if", "if_exists", "wait", "log", "match_forcestart",
                                   "dns", "addserver", "connect", "join", "observe",
                                   "tcl_proc", "tcl_exec", "tcl_eval", "exec",
                                   "set_ex", "set_alias_str", "set_bind_str","unset", "unset_re" ,
                                   "toggle", "toggle_re", "set_calc", "rcon", "user", "users",
+                                  "unalias", "unalias_re",
                                   "re_trigger", "re_trigger_options", "re_trigger_delete",
                                   "re_trigger_enable","re_trigger_disable", "re_trigger_match",
                                   "hud262_add","hud262_remove","hud262_position","hud262_bg",
