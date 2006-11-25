@@ -1,7 +1,0 @@
-http://ezquake.sourceforge.net/libs/win32/libexpat.lib
-http://ezquake.sourceforge.net/libs/win32/libjpeg.lib
-http://ezquake.sourceforge.net/libs/win32/libpcre.lib
-http://ezquake.sourceforge.net/libs/win32/libpng.lib
-http://ezquake.sourceforge.net/libs/win32/libtcl8.4.lib
-http://ezquake.sourceforge.net/libs/win32/libz.lib
-http://ezquake.sourceforge.net/libs/win32/mgllt.lib
