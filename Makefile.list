@@ -180,6 +180,7 @@ MAC_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(GL_C_FILE
 	sys_mac \
 	vid_mac
 
+ifeq ($(ARCH),x86)
 COMMON_S_FILES := \
 	cl_math \
 	math \
@@ -204,6 +205,7 @@ SW_S_FILES := \
 	surf8
 
 GL_S_FILES :=
+endif
 
 GLX_S_FILES := $(COMMON_S_FILES) $(GL_S_FILES)
 X11_S_FILES := $(COMMON_S_FILES) $(SW_S_FILES)
