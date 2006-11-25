@@ -1,1 +1,1 @@
-wget -c --input-file=windows-libs-list.txt
+wget -r -nd --accept=lib --level=1 http://ezquake.sourceforge.net/libs/windows-x86/
