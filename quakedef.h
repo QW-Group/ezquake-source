@@ -25,8 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef  __QUAKEDEF_H_
 #define  __QUAKEDEF_H_
 
-#define XML_STATIC
-
 #ifdef WITH_PNG
 #ifndef WITH_PNG_STATIC
 #define WITH_PNG_STATIC
@@ -43,8 +41,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "common.h"
 
-#include <expat.h>
-#include <pcre.h>
+#include "expat.h"
+#include "pcre.h"
 #ifdef EMBED_TCL
 #include "embed_tcl.h"
 #endif
