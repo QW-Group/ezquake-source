@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: image.c,v 1.28 2006-08-27 17:23:50 cokeman1982 Exp $
+    $Id: image.c,v 1.29 2006-11-25 17:33:40 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -25,30 +25,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef WITH_PNG
 #include "png.h"
-#ifdef _WIN32
-//#pragma comment(lib, "libs/libpng.lib")
-#endif
+/*#ifdef _WIN32
+#pragma comment(lib, "libs/libpng.lib")
+#endif*/
 #endif
 
 #ifdef WITH_JPEG
 #include "jpeglib.h"
-#include "jerror.h"
-#include <setjmp.h>
-#ifdef _WIN32
-//#pragma comment(lib, "libs/libjpeg.lib")
-#endif
+/*#ifdef _WIN32
+#pragma comment(lib, "libs/libjpeg.lib")
+#endif*/
 #endif
 
-#ifdef __APPLE__
-//#include <Carbon/Carbon.h>
-#endif
+/*#ifdef __APPLE__
+#include <Carbon/Carbon.h>
+#endif*/
 
-#define	IMAGE_MAX_DIMENSIONS	4096
+#define IMAGE_MAX_DIMENSIONS 4096
 
 int image_width, image_height;
 
-cvar_t	image_png_compression_level = {"image_png_compression_level", "1"};
-cvar_t	image_jpeg_quality_level = {"image_jpeg_quality_level", "75"};
+cvar_t image_png_compression_level = {"image_png_compression_level", "1"};
+cvar_t image_jpeg_quality_level = {"image_jpeg_quality_level", "75"};
 
 /***************************** IMAGE RESAMPLING ******************************/
 

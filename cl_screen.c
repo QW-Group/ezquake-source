@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.67 2006-11-18 17:09:17 disconn3ct Exp $
+    $Id: cl_screen.c,v 1.68 2006-11-25 17:35:17 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -2707,6 +2707,10 @@ void SCR_ScreenShot_f (void) {
 		if (!strcasecmp(scr_sshot_format.string, "jpeg") || !strcasecmp(scr_sshot_format.string, "jpg"))
 			strlcpy(ext, "jpg", 4);
 #endif
+		if (!strcasecmp(scr_sshot_format.string, "tga"))
+			strlcpy(ext, "tga", 4);
+		if (!strcasecmp(scr_sshot_format.string, "pcx"))
+			strlcpy(ext, "pcx", 4);
 		if (!ext[0])
 			strlcpy(ext, DEFAULT_SSHOT_FORMAT, sizeof(ext));
 
