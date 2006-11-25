@@ -429,6 +429,7 @@ static void QMB_UpdateParticles(void) {
 	for (i = 0; i < num_particletypes; i++) {
 		pt = &particle_types[i];
 
+#ifdef _WIN32
 		if (pt && ((int) pt->start == 1)) {
 			/* hack! fixme!
 			 * for some reason in some occasions - MS VS 2005 compiler
@@ -436,6 +437,7 @@ static void QMB_UpdateParticles(void) {
 			pt->start = NULL; 
 			Com_DPrintf("ERROR: particle_type[%i].start == 1\n", i);
 		}
+#endif
 
 		if (pt->start) {
 			for (p = pt->start; p && p->next; ) {
