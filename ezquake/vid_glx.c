@@ -684,7 +684,6 @@ void VID_Shutdown(void) {
 /************************************* VID INIT *************************************/
 
 void VID_Init(unsigned char *palette) {
-	int i;
 	int attrib[] = {
 		GLX_RGBA,
 		GLX_RED_SIZE, 1,
@@ -694,15 +693,14 @@ void VID_Init(unsigned char *palette) {
 		GLX_DEPTH_SIZE, 1,
 		None
 	};
-	int width = 640, height = 480;
+	int i, width = 640, height = 480;
 	XSetWindowAttributes attr;
 	unsigned long mask;
 	Window root;
 	XVisualInfo *visinfo;
 #ifdef WITH_VMODE
-	qbool fullscreen = true;
-	int MajorVersion, MinorVersion;
-	int actualWidth, actualHeight;
+	qbool fullscreen = false;
+	int MajorVersion, MinorVersion, actualWidth, actualHeight;
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
@@ -724,7 +722,16 @@ void VID_Init(unsigned char *palette) {
 
 	vid.colormap = host_colormap; // FIXME
 
-    // interpret command-line params
+	if (!(vid_dpy = XOpenDisplay(NULL)))
+		Sys_Error("Error couldn't open the X display");
+
+	scrnum = DefaultScreen(vid_dpy);
+
+	if (!(visinfo = glXChooseVisual(vid_dpy, scrnum, attrib)))
+		Sys_Error("Error couldn't get an RGB, Double-buffered, Depth visual");
+
+	root = RootWindow(vid_dpy, scrnum);
+
     // fullscreen cmdline check
 #ifdef WITH_VMODE
 	if (!COM_CheckParm("-window") && !COM_CheckParm("-startwindowed"))
@@ -760,12 +767,6 @@ void VID_Init(unsigned char *palette) {
 		vid.conheight = Q_atoi(com_argv[i + 1]);
 	if (vid.conheight < 200)
 		vid.conheight = 200;
-
-	if (!(vid_dpy = XOpenDisplay(NULL)))
-		Sys_Error("Error couldn't open the X display");
-
-	scrnum = DefaultScreen(vid_dpy);
-	root = RootWindow(vid_dpy, scrnum);
 	
 #ifdef WITH_VMODE
 	MajorVersion = MinorVersion = 0;
@@ -776,9 +777,6 @@ void VID_Init(unsigned char *palette) {
 		vidmode_ext = true;
 	}
 #endif
-
-	if (!(visinfo = glXChooseVisual(vid_dpy, scrnum, attrib)))
-		Sys_Error("Error couldn't get an RGB, Double-buffered, Depth visual");
 
 	// setup fullscreen size to fit display
 #ifdef WITH_VMODE
