@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.23 2006-11-23 19:14:57 disconn3ct Exp $
+	$Id: vid_wgl.c,v 1.24 2006-11-27 12:13:57 vvd0 Exp $
 
 */
 
@@ -129,7 +129,11 @@ cvar_t		_windowed_mouse = {"_windowed_mouse","1",CVAR_ARCHIVE};
 cvar_t		vid_displayfrequency = {"vid_displayfrequency", "75", CVAR_INIT};
 cvar_t		vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
 cvar_t      vid_flashonactivity = {"vid_flashonactivity", "1", CVAR_ARCHIVE};
+// VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...) 
+// HACK!!! FIXME {
 cvar_t		vid_forcerestoregamma = {"vid_forcerestoregamma", "0"};
+int restore_gamma = 0;
+// }
 qbool allow_flash = false;
 
 typedef BOOL (APIENTRY *SWAPINTERVALFUNCPTR)(int);
@@ -741,9 +745,14 @@ void AppActivate(BOOL fActive, BOOL minimize) {
 			IN_ActivateMouse ();
 			IN_HideMouse ();
 		}
-		// VVD: din't restore gamma after ALT+TAB on some ATI video cards
-		if (((vid_canalttab && !Minimized) || vid_forcerestoregamma.value) && currentgammaramp)
+		if ((vid_canalttab && !Minimized) && currentgammaramp) {
 			VID_SetDeviceGammaRamp (currentgammaramp);
+			// VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...)
+			// HACK!!! FIXME {
+			if (restore_gamma == 0 && (int)vid_forcerestoregamma.value)
+				restore_gamma = 1;
+			// }
+		}
 	} else {
 		allow_flash = true;
 		RestoreHWGamma ();
@@ -778,6 +787,19 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
     LONG lRet = 1;
 	int fActive, fMinimized, temp;
 	extern unsigned int uiWheelMessage;
+
+	// VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...)
+	// HACK!!! FIXME {
+	extern cvar_t v_gamma;
+	static float gamma_old;
+	static time_t time_old;
+	if (restore_gamma == 2) {
+		if (time(NULL) - time_old > 0) {
+			Cvar_SetValue(&v_gamma, gamma_old);
+			restore_gamma = 0;
+		}
+	}
+	// }
 
 	if (uMsg == uiWheelMessage) {
 		uMsg = WM_MOUSEWHEEL;
@@ -892,6 +914,15 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
 			fMinimized = (BOOL) HIWORD(wParam);
 			AppActivate(!(fActive == WA_INACTIVE), fMinimized);
 
+			// VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...)
+			// HACK!!! FIXME {
+			if (restore_gamma == 1) {
+				gamma_old = v_gamma.value;
+				time_old = time(NULL);
+				Cvar_SetValue(&v_gamma, 1.);
+				restore_gamma = 2;
+			}
+			// }
 			// fix the leftover Alt from any Alt-Tab or the like that switched us away
 			ClearAllStates ();
 
