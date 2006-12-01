@@ -29,7 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 char *CreateSpaces(int amount);
 char *SecondsToMinutesString(int print_time);
 char *SecondsToHourString(int time);
-byte *StringToRGB(char *s);
+char *ColorNameToRGBString(const char *color_name);
+byte *StringToRGB(const char *s);
 
 int Util_Extend_Filename(char *filename, char **ext);
 qbool Util_Is_Valid_Filename(char *s);

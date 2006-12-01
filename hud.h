@@ -23,24 +23,6 @@
 #define HUD_MAX_PARAMS  24
 
 #define	HUD_REGEXP_OFFSET_COUNT	20
-#ifdef GLQUAKE
-#define HUD_COLOR_RED					"255 0 0"
-#define HUD_COLOR_GREEN					"0 255 0"
-#define HUD_COLOR_BLUE					"0 0 255"
-#define HUD_COLOR_BLACK					"0 0 0"
-#define HUD_COLOR_WHITE					"255 255 255"
-#define HUD_COLOR_YELLOW				"255 255 0"
-#define HUD_COLOR_PINK					"255 0 255"
-#else
-#define HUD_COLOR_RED					"251"
-#define HUD_COLOR_GREEN					"63"
-#define HUD_COLOR_BLUE					"208"
-#define HUD_COLOR_BLACK					"0"
-#define HUD_COLOR_WHITE					"254"
-#define HUD_COLOR_YELLOW				"182"
-#define HUD_COLOR_PINK					"144"
-#endif
-#define HUD_COLOR_REGEX					"^(\\d{1,3})\\s+(\\d{1,3})\\s+(\\d{1,3})(\\s+(\\d\\.\\d+))?$"
 
 // Placement
 #define HUD_PLACE_SCREEN		1
@@ -155,7 +137,5 @@ void HUD_InitFinish(void);
 
 qbool HUD_RegExpMatch(const char *regexp, const char *matchstring);
 qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, const char **resultstring, int *resultlength, int group);
-char *HUD_ColorNameToRGB(char *color_name);
-void HUD_RGBValuesFromString(char *string, float *r, float *g, float *b, float *alpha);
 
 #endif // __hud_h__

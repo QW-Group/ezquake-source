@@ -1244,13 +1244,18 @@ __inline void MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, G
 		glFrustum( xmin, xmax, ymin, ymax, zNear, zFar);
 }
 
-void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max) {
-
-	if (max == 1) {
+void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max) 
+{
+	//
+	// Setup Multiview-viewports
+	//
+	if (max == 1) 
+	{
 		glViewport (glx + x, gly + y2, w, h);
 		return;
 	}
-	else if (max == 2 && cl_mvinset.value) {
+	else if (max == 2 && cl_mvinset.value) 
+	{
 		if (CURRVIEW == 2)
 			glViewport (glx + x, gly + y2, w, h);
 		else if (CURRVIEW == 1 && !cl_sbar.value)
@@ -1261,7 +1266,8 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max) {
 			Com_Printf("ERROR!\n");
 		return;
 	}
-	else if (max == 2 && !cl_mvinset.value) {
+	else if (max == 2 && !cl_mvinset.value) 
+	{
 		if (CURRVIEW == 2)
 			glViewport (0, h/2, w, h/2);
 		else if (CURRVIEW == 1)
@@ -1271,7 +1277,8 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max) {
 		return;
 
 	}
-	else if (max == 3) {
+	else if (max == 3) 
+	{
 		if (CURRVIEW == 2)
 			glViewport (0, h/2, w, h/2);
 		else if (CURRVIEW == 3)
@@ -1280,7 +1287,8 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max) {
 			glViewport (w/2, 0, w/2, h/2-1);
 		return;
 	}
-	else {
+	else 
+	{
 		if (cl_multiview.value > 4)
 			cl_multiview.value = 4;
 
@@ -1323,11 +1331,16 @@ void R_SetupGL (void) {
 	w = x2 - x;
 	h = y - y2;
 
+	// Multiview
 	if (CURRVIEW && cl_multiview.value && cls.mvdplayback)
-		R_SetViewports(glx,x,gly,y2,w,h,cl_multiview.value);
+	{
+		R_SetViewports(glx, x, gly, y2, w, h, cl_multiview.value);
+	}
 
 	if (!cl_multiview.value || !cls.mvdplayback)
+	{
 		glViewport (glx + x, gly + y2, w, h);
+	}
 
     screenaspect = (float)r_refdef.vrect.width/r_refdef.vrect.height;
 	farclip = max((int) r_farclip.value, 4096);
