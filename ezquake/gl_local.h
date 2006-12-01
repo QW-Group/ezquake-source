@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.14 2006-09-24 19:59:27 disconn3ct Exp $
+	$Id: gl_local.h,v 1.15 2006-12-01 20:37:39 cokeman1982 Exp $
 
 */
 // gl_local.h -- private refresh defs
@@ -33,6 +33,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #else
 #include <GL/gl.h>
 #include <GL/glu.h>
+#ifdef PBUFFER
+	#include <GL/wglext.h>
+	#include <GL/glext.h>
+#endif
 #ifdef __GNUC__
 #include <GL/glext.h>
 #endif
@@ -306,3 +310,17 @@ qbool CheckExtension (const char *extension);
 void Check_Gamma (unsigned char *pal);
 void VID_SetPalette (unsigned char *palette);
 void GL_Init (void);
+
+#ifdef PBUFFER
+// vid_wgl.c
+typedef struct pbuffer_s
+{
+    HPBUFFERARB  hpbuffer;      // Handle to a pbuffer.
+    HDC          hdc;           // Handle to a device context.
+    HGLRC        hglrc;         // Handle to a GL rendering context.
+    int          width;         // Width of the pbuffer
+    int          height;        // Height of the pbuffer
+} pbuffer_s;
+
+pbuffer_s *VID_GetPBuffer();
+#endif

@@ -48,10 +48,10 @@ cvar_t hud_offscreen = {"hud_offscreen", "0"};
 
 qbool HUD_RegExpMatch(const char *regexp, const char *matchstring)
 {
-	int offsets[1];
-	pcre *re;
+	int offsets[HUD_REGEXP_OFFSET_COUNT];
+	pcre *re = NULL;
 	char *error = NULL;
-	int erroffset;
+	int erroffset = 0;
 	int match = 0;
 
 	re = pcre_compile(
@@ -61,34 +61,51 @@ qbool HUD_RegExpMatch(const char *regexp, const char *matchstring)
 			&erroffset,			// Error offset.
 			NULL);				// use default character tables.
 
+	// Check for an error compiling the regexp.
 	if(error)
 	{
 		Q_free(error);
 		error = NULL;
 
-		Q_free(re);
-		re = NULL;
+		if(re)
+		{
+			Q_free(re);
+			re = NULL;
+		}
+
 		return false;
 	}
 
-	if((match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, 1)) >= 0)
+	// Check if we have a match.
+	if(re && (match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0)
 	{
 		Q_free(re);
 		re = NULL;
 		return true;
 	}
 
-	Q_free(re);
-	re = NULL;
+	// Make sure we clean up.
+	if(re)
+	{
+		Q_free(re);
+		re = NULL;
+	}
+
+	if(error)
+	{
+		Q_free(error);
+		error = NULL;
+	}
+
 	return false;
 }
 
 qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, const char **resultstring, int *resultlength, int group)
 {
 	int offsets[HUD_REGEXP_OFFSET_COUNT];
-	pcre *re;
-	char *error;
-	int erroffset;
+	pcre *re = NULL;
+	char *error = NULL;
+	int erroffset = 0;
 	int match = 0;
 
 	re = pcre_compile(
@@ -103,12 +120,15 @@ qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, const char
 		Q_free(error);
 		error = NULL;
 
-		Q_free(re);
-		re = NULL;
+		if(re)
+		{
+			Q_free(re);
+			re = NULL;
+		}
 		return false;
 	}
 
-	if((match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0)
+	if(re && (match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0)
 	{
 		int substring_length = 0;
 		substring_length = pcre_get_substring (matchstring, offsets, match, group, resultstring);
@@ -124,140 +144,19 @@ qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, const char
 		return (substring_length != PCRE_ERROR_NOSUBSTRING && substring_length != PCRE_ERROR_NOMEMORY);
 	}
 
-	Q_free(re);
-	re = NULL;
-	return false;
-}
-
-char *HUD_ColorNameToRGB(char *color_name)
-{
-	if(!strncmp("red", color_name, 3))
+	if(re)
 	{
-		return HUD_COLOR_RED;
+		Q_free(re);
+		re = NULL;
 	}
-	else if(!strncmp("green", color_name, 5))
-	{
-		return HUD_COLOR_GREEN;
-	}
-	else if(!strncmp("blue", color_name, 4))
-	{
-		return HUD_COLOR_BLUE;
-	}
-	else if(!strncmp("black", color_name, 5))
-	{
-		return HUD_COLOR_BLACK;
-	}
-	else if(!strncmp("yellow", color_name, 6))
-	{
-		return HUD_COLOR_YELLOW;
-	}
-	else if(!strncmp("pink", color_name, 4))
-	{
-		return HUD_COLOR_PINK;
-	}
-	else if(!strncmp("white", color_name, 5))
-	{
-		return HUD_COLOR_WHITE;
-	}
-
-	return color_name;
-}
-
-void HUD_RGBValuesFromString(char *string, float *r, float *g, float *b, float *alpha)
-{
-	int offsets[HUD_REGEXP_OFFSET_COUNT];
-	pcre *re;
-	char *error;
-	char *resultstring = NULL;
-	int erroffset;
-	int match = 0;
-
-	re = pcre_compile(
-			HUD_COLOR_REGEX,	// The pattern.
-			PCRE_CASELESS,		// Case insensitive.
-			&error,				// Error message.
-			&erroffset,			// Error offset.
-			NULL);				// use default character tables.
 
 	if(error)
 	{
 		Q_free(error);
 		error = NULL;
-
-		Q_free(re);
-		re = NULL;
-		return;
 	}
 
-	if((match = pcre_exec(re, NULL, string, strlen(string), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0)
-	{
-		// R.
-		if(pcre_get_substring (string, offsets, match, 1, &resultstring) > 0)
-		{
-			(*r) = min(Q_atoi(resultstring), 255) / 255.0;
-		}
-		else
-		{
-			(*r) = -1;
-		}
-		
-		if(resultstring != NULL)
-		{
-			Q_free(resultstring);
-			resultstring = NULL;
-		}
-
-		// G.
-		if(pcre_get_substring (string, offsets, match, 2, &resultstring) > 0)
-		{
-			(*g) = min(Q_atoi(resultstring), 255) / 255.0;
-		}
-		else
-		{
-			(*g) = -1;
-		}
-
-		if(resultstring != NULL)
-		{
-			Q_free(resultstring);
-			resultstring = NULL;
-		}
-		
-		// B.
-		if(pcre_get_substring (string, offsets, match, 3, &resultstring) > 0)
-		{
-			(*b) = min(Q_atoi(resultstring), 255) / 255.0;
-		}
-		else
-		{
-			(*b) = -1;
-		}
-
-		if(resultstring != NULL)
-		{
-			Q_free(resultstring);
-			resultstring = NULL;
-		}
-
-		// Alpha.
-		if(pcre_get_substring (string, offsets, match, 5, &resultstring) > 0)
-		{
-			(*alpha) = max(Q_atof(resultstring), 0);
-		}
-		else
-		{
-			(*alpha) = -1;
-		}		
-
-		if(resultstring != NULL)
-		{
-			Q_free(resultstring);
-			resultstring = NULL;
-		}
-	}
-
-	Q_free(re);
-	re = NULL;
+	return false;
 }
 
 // hud plus func - show element
@@ -837,13 +736,14 @@ void HUD_CalcFrameExtents(hud_t *hud, int width, int height,
 
 qbool HUD_OnChangeFrameColor(cvar_t *var, char *newval)
 {
-	char *new_color = HUD_ColorNameToRGB(newval); // converts "red" into "255 0 0", etc. or returns input as it was
+	// converts "red" into "255 0 0", etc. or returns input as it was
+	char *new_color = ColorNameToRGBString(newval); 
 	char buf[256];
 	int hudname_len;
 	hud_t* hud_elem;
 	byte* b_colors;
 
-	hudname_len = min(sizeof(buf), strlen(var->name)-strlen("_frame_color")-strlen("hud_"));
+	hudname_len = min(sizeof(buf), strlen(var->name) - strlen("_frame_color") - strlen("hud_"));
 	strncpy(buf, var->name + 4, hudname_len);
 	buf[hudname_len] = 0;
 	hud_elem = HUD_Find(buf);
@@ -1278,6 +1178,13 @@ cvar_t *HUD_FindVar(hud_t *hud, char *subvar)
 // draws single HUD element
 void HUD_DrawObject(hud_t *hud)     /* recurrent */
 {
+	#ifdef PBUFFER
+	extern HDC maindc;		// vid_wgl.c
+	extern HGLRC baseRC;	// vid_wgl.c
+	static pbuffer_s *pbuffer = NULL;
+	static int render_texture;
+	#endif
+
     extern qbool /*scr_drawdialog,*/ sb_showscores, sb_showteamscores;
 
     if (hud->last_try_sequence == host_screenupdatecount)
@@ -1317,11 +1224,85 @@ void HUD_DrawObject(hud_t *hud)     /* recurrent */
 	// http://developer.nvidia.com/object/using_VBOs.html
 	// http://developer.nvidia.com/object/ogl_rtt.html <-- Render to texture example
 
+	#ifdef PBUFFER
+	#ifdef GLQUAKE
+	#ifdef _WIN32
+	
+	//
+	// Setup rendering the HUD element to a PBuffer.
+	//
+	{
+		if (!pbuffer)
+		{
+			pbuffer = VID_GetPBuffer();
+		}
+
+		glBindTexture(GL_TEXTURE_2D, render_texture);
+
+		// Release the pbuffer from the render texture object.
+		wglReleaseTexImageARB(pbuffer->hpbuffer, WGL_FRONT_LEFT_ARB);
+
+		// Make the pbuffer's rendering context current.
+		wglMakeCurrent( pbuffer->hdc, pbuffer->hglrc);
+
+		// Clear all pixels.
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	}
+	#endif // _WIN32
+	#endif // GLQUAKE
+	#endif
+
+	//
 	// draw object itself - updates last_draw_sequence itself
+	//
 	hud->draw_func(hud);
 
-    // last_draw_sequence is update by HUD_PrepareDraw
+	// last_draw_sequence is update by HUD_PrepareDraw
     // if object was succesfully drawn (wasn't outside area etc..)
+
+	#ifdef PBUFFER
+	#ifdef GLQUAKE
+	#ifdef _WIN32
+
+	if (!wglMakeCurrent(maindc, baseRC))
+	{
+		Sys_Error ("wglMakeCurrent failed");
+	}
+
+	// Bind the pbuffer to the render texture object
+	wglBindTexImageARB(pbuffer->hpbuffer, WGL_FRONT_LEFT_ARB);
+
+	glBindTexture(GL_TEXTURE_2D, render_texture);
+
+	// Draw the contents of the pbuffer
+	{
+		glDisable (GL_ALPHA_TEST);
+		glEnable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		glCullFace (GL_FRONT);
+		glColor4f (1, 1, 1, 0.5);
+
+		glEnable(GL_TEXTURE_2D);
+		glBegin( GL_QUADS );
+		{
+			glTexCoord2f(0, 0);
+			glVertex2f(-1, -1);
+			glTexCoord2f(0, 1);
+			glVertex2f(-1,  1);
+			glTexCoord2f(1, 1);
+			glVertex2f( 1,  1);
+			glTexCoord2f(1, 0);
+			glVertex2f( 1, -1);
+		}
+		glEnd();
+		glDisable(GL_TEXTURE_2D);
+		glColor4f (1, 1, 1, 1);
+	}
+
+	#endif // _WIN32
+	#endif // GLQUAKE
+	#endif
 }
 
 // draw all active elements

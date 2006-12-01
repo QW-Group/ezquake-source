@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.24 2006-11-27 12:13:57 vvd0 Exp $
+	$Id: vid_wgl.c,v 1.25 2006-12-01 20:38:54 cokeman1982 Exp $
 
 */
 
@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif // WITH_KEYMAP 
 #include "resource.h"
 #include "winquake.h"
+
 
 #define MAX_MODE_LIST	128
 #define WARP_WIDTH		320
@@ -524,6 +525,255 @@ BOOL bSetupPixelFormat(HDC hDC) {
 	return TRUE;
 }
 
+/********************************** PBUFFER ***********************************/
+
+#ifdef PBUFFER
+#define PBUFFER_MAX_ATTRIBS		256
+#define PBUFFER_MAX_PFORMATS	256
+
+/*
+typedef struct pbuffer_s
+{
+    HPBUFFERARB  hpbuffer;      // Handle to a pbuffer.
+    HDC          hdc;           // Handle to a device context.
+    HGLRC        hglrc;         // Handle to a GL rendering context.
+    int          width;         // Width of the pbuffer
+    int          height;        // Height of the pbuffer
+} pbuffer_s;
+*/
+
+/*
+typedef void (APIENTRY *lpMTexFUNC) (GLenum, GLfloat, GLfloat);
+typedef void (APIENTRY *lpSelTexFUNC) (GLenum);
+*/
+
+/*
+typedef void (APIENTRY *lpwglCreatePbufferARBFUNC) (HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList);
+typedef void (APIENTRY *lpReleasePbufferDCARBFUNC) (HPBUFFERARB hPbuffer, HDC hDC);
+*/
+extern PFNWGLCREATEPBUFFERARBPROC qglCreatePBuffer;
+extern PFNWGLRELEASEPBUFFERDCARBPROC qglReleasePBuffer;
+
+
+/*
+HPBUFFERARB wglCreatePbufferARB(HDC hDC,
+				    int iPixelFormat,
+				    int iWidth,
+				    int iHeight,
+				    const int *piAttribList);
+
+    HDC wglGetPbufferDCARB(HPBUFFERARB hPbuffer);
+
+    int wglReleasePbufferDCARB(HPBUFFERARB hPbuffer,
+			       HDC hDC);
+
+    BOOL wglDestroyPbufferARB(HPBUFFERARB hPbuffer);
+
+    BOOL wglQueryPbufferARB(HPBUFFERARB hPbuffer,
+			    int iAttribute,
+			    int *piValue);*/
+
+void *GL_GetProcAddress (const char *ExtName);
+
+void VID_GetPBufferProcAddresses()
+{
+	/*
+	wglReleasePbufferDCARB
+	wglDestroyPbufferARB
+	wglChoosePixelFormatARB
+	wglGetPbufferDCARB 
+	wglCreatePbufferARB
+	wglReleaseTexImageARB
+	*/
+	qglCreatePBuffer = GL_GetProcAddress("wglCreatePbufferARB");
+	qglReleasePBuffer = GL_GetProcAddress("wglReleasePbufferDCARB");
+	GL_GetProcAddress("wglDestroyPbufferARB");
+	GL_GetProcAddress("wglChoosePixelFormatARB");
+	GL_GetProcAddress("wglGetPbufferDCARB");
+	
+	GL_GetProcAddress("wglReleaseTexImageARB");
+}
+
+qbool VID_IsPBufferSupported()
+{
+	static qbool supported = false;
+	static qbool checked = false;
+
+	if(!checked)
+	{
+		supported = 
+			   CheckExtension("GL_ARB_multitexture") 
+			&& CheckExtension("WGL_ARB_pbuffer")
+			&& CheckExtension("WGL_ARB_pixel_format")
+			&& CheckExtension("WGL_ARB_render_texture");
+		checked = true;
+	}
+
+	return supported;
+}
+
+void VID_ShutdownPBuffer(pbuffer_s * pbuffer)
+{
+	if (pbuffer->hpbuffer)
+	{
+		// Check if we are currently rendering in the pbuffer
+        if (wglGetCurrentContext() == pbuffer->hglrc )
+		{
+            wglMakeCurrent(0,0);
+		}
+		
+		// Delete the pbuffer context
+		wglDeleteContext( pbuffer->hglrc );
+        wglReleasePbufferDCARB( pbuffer->hpbuffer, pbuffer->hdc );
+        wglDestroyPbufferARB( pbuffer->hpbuffer );
+        pbuffer->hpbuffer = 0;
+	}
+}
+
+/*
+"GL_ARB_multitexture " \
+"WGL_ARB_pbuffer " \
+"WGL_ARB_pixel_format " \
+"WGL_ARB_render_texture " \
+"GL_SGIS_generate_mipmap "
+*/
+
+void VID_InitPBuffer(pbuffer_s * pbuffer, int width, int height)
+{
+	HDC		hdc;
+	HGLRC	hglrc;
+	int     pformat[PBUFFER_MAX_PFORMATS];
+	unsigned int nformats;    
+	int     iattributes[2 * PBUFFER_MAX_ATTRIBS];
+	float   fattributes[2 * PBUFFER_MAX_ATTRIBS];
+	int     nfattribs = 0;
+	int     niattribs = 0;
+	int     format;
+
+	if (!VID_IsPBufferSupported())
+	{
+		return;
+	}
+
+	memset(pbuffer, 0, sizeof(pbuffer_s));
+
+	hdc = wglGetCurrentDC();
+	hglrc = wglGetCurrentContext();
+
+	//
+	// Query for a suitable pixel format based on the specified mode.
+	//
+	{
+		// Attribute arrays must be "0" terminated - for simplicity, first
+		// just zero-out the array entire, then fill from left to right.
+		memset(iattributes, 0, sizeof(int) * 2 * PBUFFER_MAX_ATTRIBS);
+		memset(fattributes, 0, sizeof(float) * 2 * PBUFFER_MAX_ATTRIBS);
+
+		// Since we are trying to create a pbuffer, the pixel format we
+		// request (and subsequently use) must be "p-buffer capable".
+		iattributes[niattribs  ] = WGL_DRAW_TO_PBUFFER_ARB;
+		iattributes[++niattribs] = GL_TRUE;
+
+		// We are asking for a pbuffer that is meant to be bound
+		// as an RGBA texture - therefore we need a color plane
+		iattributes[++niattribs] = WGL_BIND_TO_TEXTURE_RGBA_ARB;
+		iattributes[++niattribs] = GL_TRUE;
+
+		if ( !wglChoosePixelFormatARB( hdc, iattributes, fattributes, PBUFFER_MAX_PFORMATS, pformat, &nformats ) )
+		{
+			Sys_Error ("pbuffer creation error:  wglChoosePixelFormatARB() failed.\n");
+		}
+
+		if ( nformats <= 0 )
+		{
+			Sys_Error ("pbuffer creation error:  Couldn't find a suitable pixel format.\n");
+		}
+
+		format = pformat[0];
+	}
+
+	//
+	// Set up the pbuffer attributes
+	//
+	{
+		// Reset the array.
+		memset(iattributes, 0, sizeof(int) * 2 * PBUFFER_MAX_ATTRIBS);
+		niattribs = 0;
+		
+		// The render texture format is RGBA
+		iattributes[niattribs] = WGL_TEXTURE_FORMAT_ARB;
+		iattributes[++niattribs] = WGL_TEXTURE_RGBA_ARB;
+
+		// The render texture target is GL_TEXTURE_2D
+		iattributes[++niattribs] = WGL_TEXTURE_TARGET_ARB;
+		iattributes[++niattribs] = WGL_TEXTURE_2D_ARB;
+
+		// Ask to allocate room for the mipmaps
+		//iattributes[++niattribs] = WGL_MIPMAP_TEXTURE_ARB;
+		//iattributes[++niattribs] = TRUE;
+
+		// Ask to allocate the largest pbuffer it can, if it is
+		// unable to allocate for the width and height
+		iattributes[++niattribs] = WGL_PBUFFER_LARGEST_ARB;
+		iattributes[++niattribs] = FALSE;
+	}
+
+	//
+	// Create the p-buffer.
+	//
+	{
+		pbuffer->hpbuffer = wglCreatePbufferARB( hdc, format, width, height, iattributes );
+	    
+		if ( pbuffer->hpbuffer == 0)
+		{
+			Sys_Error ("pbuffer creation error:  wglCreatePbufferARB() failed\n");
+		}
+	}
+
+	//
+	// Get the device context.
+	//
+	{
+		pbuffer->hdc = wglGetPbufferDCARB( pbuffer->hpbuffer );
+		if ( pbuffer->hdc == 0)
+		{
+			Sys_Error ("pbuffer creation error:  wglGetPbufferDCARB() failed\n");
+		}
+	}
+
+	//
+	// Create a gl context for the p-buffer.
+	//
+	{
+		pbuffer->hglrc = wglCreateContext( pbuffer->hdc );
+		if ( pbuffer->hglrc == 0)
+		{
+			 Sys_Error ("pbuffer creation error:  wglCreateContext() failed\n");
+		}
+	}
+
+	//
+	// Determine the actual width and height we were able to create.
+	//
+	{
+		wglQueryPbufferARB( pbuffer->hpbuffer, WGL_PBUFFER_WIDTH_ARB, &pbuffer->width );
+		wglQueryPbufferARB( pbuffer->hpbuffer, WGL_PBUFFER_HEIGHT_ARB, &pbuffer->height );
+	}
+}
+
+static pbuffer_s q_pbuffer = {0, 0, 0, 0, 0};
+
+pbuffer_s *VID_GetPBuffer()
+{
+	if ( !q_pbuffer.hpbuffer )
+	{
+		VID_InitPBuffer(&q_pbuffer, vid.width, vid.height);
+	}
+
+	return &q_pbuffer;
+}
+
+#endif PBUFFER
 
 /********************************** HW GAMMA **********************************/
 
@@ -1328,7 +1578,7 @@ void VID_Init (unsigned char *palette) {
 		vid.conwidth = 320;
 
 	// pick a conheight that matches with correct aspect
-	vid.conheight = vid.conwidth * 3 / 4;
+	vid.conheight = (vid.conwidth * 3) / 4;
 
 	if ((i = COM_CheckParm("-conheight")) && i + 1 < com_argc)
 		vid.conheight = Q_atoi(com_argv[i + 1]);

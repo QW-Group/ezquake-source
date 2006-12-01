@@ -918,7 +918,7 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 	if (!qmb_initialized)
 		Sys_Error("QMB particle added without initialization");
 
-	//assert(size > 0 && time > 0);
+	assert(size > 0 && time > 0);
 
 	if (type < 0 || type >= num_particletypes)
 		Sys_Error("AddParticle: Invalid type (%d)", type);

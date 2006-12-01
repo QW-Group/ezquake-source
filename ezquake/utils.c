@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.23 2006-11-18 17:09:19 disconn3ct Exp $
+	$Id: utils.c,v 1.24 2006-12-01 20:38:38 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -63,44 +63,41 @@ char *SecondsToHourString(int print_time) {
 	return time;
 }
 
-/* StringToRGB - input: string with color number(s), three types 
-   1) Quake color = one arg, e.g. "12" for yellow 
-   2) RGB color = three args, e.g. "255 255 0" for yellow
-   output: pointer to array of 4 byte values
-*/
-/*byte *StringToRGB(char *s) {
-	byte *col;
-	static byte rgb[4];
+#ifdef GLQUAKE
+#define RGB_COLOR_RED					"255 0 0"
+#define RGB_COLOR_GREEN					"0 255 0"
+#define RGB_COLOR_BLUE					"0 0 255"
+#define RGB_COLOR_BLACK					"0 0 0"
+#define RGB_COLOR_WHITE					"255 255 255"
+#define RGB_COLOR_YELLOW				"255 255 0"
+#define RGB_COLOR_PINK					"255 0 255"
+#else
+#define RGB_COLOR_RED					"251"
+#define RGB_COLOR_GREEN					"63"
+#define RGB_COLOR_BLUE					"208"
+#define RGB_COLOR_BLACK					"0"
+#define RGB_COLOR_WHITE					"254"
+#define RGB_COLOR_YELLOW				"182"
+#define RGB_COLOR_PINK					"144"
+#endif
 
-	Cmd_TokenizeString(s);
-	switch (Cmd_Argc()) {
-		case 4:
-			rgb[0] = (byte) Q_atoi(Cmd_Argv(0));
-			rgb[1] = (byte) Q_atoi(Cmd_Argv(1));
-			rgb[2] = (byte) Q_atoi(Cmd_Argv(2));
-			rgb[3] = (byte) Q_atoi(Cmd_Argv(3));
-			break; 
-		case 3:
-			rgb[0] = (byte) Q_atoi(Cmd_Argv(0));
-			rgb[1] = (byte) Q_atoi(Cmd_Argv(1));
-			rgb[2] = (byte) Q_atoi(Cmd_Argv(2));
-			rgb[3] = 255;
-			break;
-		case 0:
-		default:
-			// Does not work in software (where else would you want to use Quake pallete only)
-			col = (byte *) &d_8to24table[(byte) Q_atoi(s)];
-			rgb[0] = col[0];
-			rgb[1] = col[1];
-			rgb[2] = col[2];
-			rgb[3] = 255;
-			break;
-	}
-	
-	return rgb;
-}*/
+#define COLOR_CHECK(_colorname, _colorstring, _rgbstring) \
+	if(!strncmp(_colorstring, _colorname, strlen(_colorstring))) return _rgbstring
 
-byte *StringToRGB(char *s) {
+char *ColorNameToRGBString(const char *color_name)
+{
+	COLOR_CHECK(color_name, "red",		RGB_COLOR_RED);
+	COLOR_CHECK(color_name, "green",	RGB_COLOR_GREEN);
+	COLOR_CHECK(color_name, "blue",		RGB_COLOR_BLUE);
+	COLOR_CHECK(color_name, "black",	RGB_COLOR_BLACK);
+	COLOR_CHECK(color_name, "yellow",	RGB_COLOR_YELLOW);
+	COLOR_CHECK(color_name, "pink",		RGB_COLOR_PINK);
+	COLOR_CHECK(color_name, "white",	RGB_COLOR_WHITE);
+
+	return color_name;
+}
+
+byte *StringToRGB(const char *s) {
 	int i;
 	static byte rgb[4];
 

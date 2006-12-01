@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.82 2006-12-01 15:57:31 johnnycz Exp $
+	$Id: hud_common.c,v 1.83 2006-12-01 20:38:25 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -3812,7 +3812,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 #ifdef GLQUAKE
 
 // Map picture to draw for the mapoverview hud control.
-static mpic_t *radar_pic = NULL;
+mpic_t radar_pic;
 static qbool radar_pic_found = false;
 
 // The conversion formula used for converting from quake coordinates to pixel coordinates
@@ -3831,53 +3831,42 @@ static float map_height_diff = 0.0;
 //
 void HUD_NewRadarMap()
 {
-	FILE *f;
+	FILE *f = NULL;
 	int n_textcount = 0;
 	png_textp txt;
 	int i = 0;
 	char radar_filename[] = "radars/%s.png";
 	txt = NULL;
 
-	// Reset the pointer so that we know if the load failed.
-	if(radar_pic != NULL)
-	{
-		Q_free(radar_pic);
-	}
-	radar_pic = NULL;
+	// Reset the radar pic status.
+	memset (&radar_pic, 0, sizeof(radar_pic));
 	radar_pic_found = false;
 	conversion_formula_found = false;
 
 	if (FS_FOpenFile (va(radar_filename, mapname.string), &f) != -1)
 	{
-		mpic_t *temp = NULL;
 
 		// Load the map picture.
-		temp = GL_LoadPicImage(va(radar_filename, mapname.string), mapname.string, 0, 0, TEX_ALPHA);
-
-		// Make a copy of the returned structure, otherwise it will be overwritten
-		// the next time an image is loaded.
-		if(temp != NULL)
-		{
-			radar_pic			= (mpic_t *)Q_malloc(sizeof(mpic_t));
-			radar_pic->texnum	= temp->texnum;
-			radar_pic->height	= temp->height;
-			radar_pic->sh		= temp->sh;
-			radar_pic->sl		= temp->sl;
-			radar_pic->th		= temp->th;
-			radar_pic->tl		= temp->tl;
-			radar_pic->width	= temp->width;
-		}
+		radar_pic = *GL_LoadPicImage(va(radar_filename, mapname.string), mapname.string, 0, 0, TEX_ALPHA);
 
 		// Check if we found something
-		if(radar_pic != NULL && radar_pic->height && radar_pic->width)
+		if(radar_pic.height && radar_pic.width)
 		{
 			radar_pic_found = true;
 		}
 		else
 		{
-			Q_free(radar_pic);
-			radar_pic = NULL;
+			memset (&radar_pic, 0, sizeof(radar_pic));
 			radar_pic_found = false;
+			conversion_formula_found = false;
+			
+			// Make sure we close the file.
+			if(f != NULL)
+			{
+				fclose(f);
+				f = NULL;
+			}
+
 			return;
 		}
 
@@ -3934,8 +3923,15 @@ void HUD_NewRadarMap()
 			conversion_formula_found = false;
 		}
 	}
+
+	// Make sure we close the file.
+	if(f != NULL)
+	{
+		fclose(f);
+		f = NULL;
+	}
 }
-#endif
+#endif // OPENGL
 
 #define TEMPHUD_NAME "_temphud"
 #define TEMPHUD_FULLPATH "configs/"TEMPHUD_NAME".cfg"
@@ -4540,7 +4536,7 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pi
 	int row, col;
 
 	// Don't try to draw anything if we got no data.
-	if(grid == NULL || style == HUD_RADAR_STATS_NONE)
+	if(grid == NULL || grid->cells == NULL || style == HUD_RADAR_STATS_NONE)
 	{
 		return;
 	}
@@ -4548,15 +4544,23 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pi
 	// Go through all the cells and draw them based on their weight.
 	for(row = 0; row < grid->row_count; row++)
 	{
+		// Just to be safe if something went wrong with the allocation.
+		if(grid->cells[row] == NULL)
+		{
+			continue;
+		}
+
 		for(col = 0; col < grid->col_count; col++)
 		{
 			float weight = 0.0;
 			int color = 0;
 
-			float tl_x, tl_y;				// The pixel coordinate of the top left corner of a grid cell.
-			float p_cell_length_x;				// The pixel length of a cell.
-			float p_cell_length_y;
-			
+			float tl_x, tl_y;			// The pixel coordinate of the top left corner of a grid cell.
+			float p_cell_length_x;		// The pixel length of a cell.
+			float p_cell_length_y;		// The pixel "length" on the Y-axis. We calculate this
+										// seperatly because we'll get errors when converting from
+										// quake coordinates -> pixel coordinates.
+
 			// Calculate the pixel coordinates of the top left corner of the current cell.
 			// (This is times 8 because the conversion formula was calculated from a .loc-file)
 			tl_x = (map_x_slope * (8.0 * grid->cells[row][col].tl_x) + map_x_intercept) * scale;
@@ -4565,7 +4569,8 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pi
 			// Calculate the cell length in pixel length.
 			p_cell_length_x = map_x_slope*(8.0 * grid->cell_length) * scale;
 			p_cell_length_y = map_y_slope*(8.0 * grid->cell_length) * scale;
-			// add rounding errors
+			
+			// Add rounding errors (so that we don't get weird gaps in the grid).
 			p_cell_length_x += tl_x - ROUND(tl_x);
 			p_cell_length_y += tl_y - ROUND(tl_y);
 			
@@ -4629,12 +4634,12 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pi
 			// Draw the cell in the color of the team with the
 			// biggest weight for this cell. Or draw deaths.
 			Draw_AlphaFill(
-				x + ROUND(tl_x),	// X.
-				y + ROUND(tl_y),	// Y.
+				x + ROUND(tl_x),			// X.
+				y + ROUND(tl_y),			// Y.
 				ROUND(p_cell_length_x),		// Width.
 				ROUND(p_cell_length_y),		// Height.
-				color,				// Color.
-				weight);			// Alpha.
+				color,						// Color.
+				weight);					// Alpha.
 		}
 	}
 }
@@ -4734,52 +4739,25 @@ float hud_radar_highlight_color[4] = {1.0, 1.0, 0.0, HUD_COLOR_DEFAULT_TRANSPARE
 
 qbool Radar_OnChangeHighlightColor(cvar_t *var, char *newval)
 {
+	int i = 0;
+	byte *b_colors;
 	char *new_color;
-	qbool radar_highlight_color_valid = false;
 
-	new_color = HUD_ColorNameToRGB(newval); 
+	// Translate a colors name to RGB values.
+	new_color = ColorNameToRGBString(newval); 
 
-	// Make sure the values have been entered properly.
-	radar_highlight_color_valid = HUD_RegExpMatch(HUD_COLOR_REGEX, new_color);
+	// Parse the colors.
+	b_colors = StringToRGB(new_color);
 
-	// Get the RGB values.
-	if (radar_highlight_color_valid)
+	// Save the colors / alpha transparency.
+	for(i = 0; i < 4; i++)
 	{
-		float colors[4];
-
-		Cvar_Set(var, new_color);
-
-		HUD_RGBValuesFromString (var->string, 
-			&colors[0], 
-			&colors[1], 
-			&colors[2], 
-			&colors[3]);
-
-		// RGB.
-		if(colors[0] >= 0 && colors[1] >= 0 && colors[2] >= 0)
-		{
-			hud_radar_highlight_color[0] = colors[0];
-			hud_radar_highlight_color[1] = colors[1];
-			hud_radar_highlight_color[2] = colors[2];
-		}
-
-		// Alpha.
-		if(colors[3] >= 0)
-		{
-			hud_radar_highlight_color[3] = colors[3];
-		}
+		hud_radar_highlight_color[i] = b_colors[i] / 255.0;
 	}
-	else
-	{
-		// Default to yellow.
-		hud_radar_highlight_color[0] = 1.0;
-		hud_radar_highlight_color[1] = 1.0;
-		hud_radar_highlight_color[2] = 0.0;
-		hud_radar_highlight_color[3] = HUD_COLOR_DEFAULT_TRANSPARENCY;
 
-		Cvar_Set(var, HUD_COLOR_YELLOW);
-		radar_highlight_color_valid = true;
-	}
+	// Set the cvar to contain the new color string
+	// (if the user entered "red" it will be "255 0 0").
+	Cvar_Set(var, new_color);
 
 	return true;
 }
@@ -5323,7 +5301,7 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 			#define HUD_RADAR_HIGHLIGHT_CROSS_CORNERS	9
 
 			// Draw a circle around the tracked player.
-			if (highlight != HUD_RADAR_HIGHLIGHT_NONE && info->userid == cl.players[Cam_TrackNum()].userid)
+			if (highlight != HUD_RADAR_HIGHLIGHT_NONE && Cam_TrackNum() >= 0 && info->userid == cl.players[Cam_TrackNum()].userid)
 			{
 				extern int HexToInt(char c);
 				float r, g, b, highlight_alpha;
@@ -5566,16 +5544,22 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 	height_limit = hud_radar_height->value;
 
 	// This map doesn't have a map pic.
-	if((radar_pic == NULL || !radar_pic_found) && HUD_PrepareDraw(hud, ROUND(width_limit) , ROUND(height_limit), &x, &y))
+	if(!radar_pic_found)
 	{
-		Draw_String(x, y, "No radar picture found!");
+		if(HUD_PrepareDraw(hud, ROUND(width_limit), ROUND(height_limit), &x, &y))
+		{
+			Draw_String(x, y, "No radar picture found!");
+		}
 		return;
 	}
 
 	// Make sure we can translate the coordinates.
-	if(!conversion_formula_found && HUD_PrepareDraw(hud, ROUND(width_limit) , ROUND(height_limit), &x, &y))
+	if(!conversion_formula_found)
 	{
-		Draw_String(x, y, "No conversion formula found!");
+		if(HUD_PrepareDraw(hud, ROUND(width_limit), ROUND(height_limit), &x, &y))
+		{
+			Draw_String(x, y, "No conversion formula found!");
+		}
 		return;
 	}
 
@@ -5590,8 +5574,8 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		// Autosize the hud element based on the size of the radar picture.
 		//
 
-		width = width_limit = radar_pic->width;
-		height = height_limit = radar_pic->height;
+		width = width_limit = radar_pic.width;
+		height = height_limit = radar_pic.height;
 	}
 	else
 	{
@@ -5600,16 +5584,16 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		//
 
 		// Set the scaling based on the picture dimensions.
-		x_scale = (width_limit / radar_pic->width);
-		y_scale = (height_limit / radar_pic->height);
+		x_scale = (width_limit / radar_pic.width);
+		y_scale = (height_limit / radar_pic.height);
 
 		scale = (x_scale < y_scale) ? x_scale : y_scale;
 
-		width = radar_pic->width * scale;
-		height = radar_pic->height * scale;
+		width = radar_pic.width * scale;
+		height = radar_pic.height * scale;
 	}
 
-	if (HUD_PrepareDraw(hud, ROUND(width_limit) , ROUND(height_limit), &x, &y))
+	if (HUD_PrepareDraw(hud, ROUND(width_limit), ROUND(height_limit), &x, &y))
 	{
 		float player_size = 1.0;
 		static int lastframecount = -1;
@@ -5624,7 +5608,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		y = min(y + height, y);
 
 		// Draw the radar background.
-		Draw_SAlphaPic (x, y, radar_pic, hud_radar_opacity->value, scale);
+		Draw_SAlphaPic (x, y, &radar_pic, hud_radar_opacity->value, scale);
 
 		// Only draw once per frame.
 		if (cls.framecount == lastframecount)
@@ -5652,7 +5636,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		{
 			Radar_DrawEntities(x, y, scale, 
 				player_size,
-				hud_radar_show_hold->value);
+				hud_radar_show_hold->value);				
 		}
 
 		// Draw the players.
