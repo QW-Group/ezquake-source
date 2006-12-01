@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.81 2006-11-23 21:10:26 johnnycz Exp $
+	$Id: hud_common.c,v 1.82 2006-12-01 15:57:31 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -4747,7 +4747,7 @@ qbool Radar_OnChangeHighlightColor(cvar_t *var, char *newval)
 	{
 		float colors[4];
 
-		strncpy(var->string, new_color, (strlen(new_color) + 1) * sizeof(char));
+		Cvar_Set(var, new_color);
 
 		HUD_RGBValuesFromString (var->string, 
 			&colors[0], 
@@ -4777,7 +4777,7 @@ qbool Radar_OnChangeHighlightColor(cvar_t *var, char *newval)
 		hud_radar_highlight_color[2] = 0.0;
 		hud_radar_highlight_color[3] = HUD_COLOR_DEFAULT_TRANSPARENCY;
 
-		strncpy(var->string, HUD_COLOR_YELLOW, (strlen(HUD_COLOR_YELLOW) + 1) * sizeof(char));
+		Cvar_Set(var, HUD_COLOR_YELLOW);
 		radar_highlight_color_valid = true;
 	}
 
