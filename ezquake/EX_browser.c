@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.17 2006-10-17 00:14:49 qqshka Exp $
+	$Id: EX_browser.c,v 1.18 2006-12-02 07:08:40 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -284,6 +284,7 @@ void Reset_Server(server_data *s)
         free(s->players[i]);
     s->playersn = 0;
     s->spectatorsn = 0;
+	s->support_teams = false;
 
     rebuild_all_players = 1;    // rebuild all-players list
 }
@@ -1128,52 +1129,75 @@ void Serverinfo_Draw ()
 
 void Serverinfo_Players_Draw(int x, int y, int w, int h)
 {
+    server_data *s = show_serverinfo; // shortcut
+	char *tp = (ValueForKey(s, "teamplay") ? ValueForKey(s, "teamplay") : ""); // tp at least "" not NULL
+	qbool support_tp = s->support_teams && strcmp(tp, "0"); // is server support team info per player and teamplay != 0
+
     int i;
     int listsize;
     int match = 0;
     int top1=0, bottom1=0, frags1=0;
     int top2=0, bottom2=0, frags2=0;
+	char *t1 = "", *t2 = "";
     int qizmo = 0;
-
-    server_data *s = show_serverinfo;
 
     if (s == NULL  ||  s->playersn + s->spectatorsn <= 0)
         return;
 
-    if (!strcmp(show_serverinfo->display.gamedir, "qizmo"))
+    if (!strcmp(s->display.gamedir, "qizmo"))
         qizmo = 1;
 
     // check if this is a teamplay (2 teams) match
-    if (!qizmo  &&
-        show_serverinfo->playersn > 3 &&
-        ValueForKey(show_serverinfo, "teamplay") != NULL  &&
-        strcmp(ValueForKey(show_serverinfo, "teamplay"), "0"))
+    if (!qizmo && s->playersn > 2 && strcmp(tp, "0")) // at least 3 players
     {
-        top1 = show_serverinfo->players[0]->top;
-        bottom1 = show_serverinfo->players[0]->bottom;
-        frags1 = show_serverinfo->players[0]->frags;
-        top2 = -1;
-        frags2 = 0;
+        top1 = bottom1 = top2 = bottom2 = -1;
+        frags1 = frags2 = 0;
         match = 1;
-        for (i=1; i < show_serverinfo->playersn + show_serverinfo->spectatorsn; i++)
+
+        for (i = 0; i < s->playersn + s->spectatorsn; i++)
         {
-            if (show_serverinfo->players[i]->top == top1  &&
-              show_serverinfo->players[i]->bottom == bottom1)
-                frags1 += show_serverinfo->players[i]->frags;
-            else if ((show_serverinfo->players[i]->top == top2  &&
-              show_serverinfo->players[i]->bottom == bottom2)  ||
-              top2 == -1)
-            {
-                frags2 += show_serverinfo->players[i]->frags;
-                top2 = show_serverinfo->players[i]->top;
-                bottom2 = show_serverinfo->players[i]->bottom;
-            }
-            else
-            {
-                match = 0;
-                break;
-            }
+			if (s->players[i]->spec)
+				continue; // ignore spec
+
+			if (top1 < 0) // ok, we found member from first team, save colors/team
+			{
+				top1	= s->players[i]->top;
+				bottom1	= s->players[i]->bottom;
+				t1		= s->players[i]->team;
+			}
+
+			// we now can sort teams by two way: colors, and actual teams
+
+            if (    ( support_tp && !strncmp(t1, s->players[i]->team, sizeof(s->players[0]->team) - 1)) // teams matched
+				 || (!support_tp && s->players[i]->top == top1 && s->players[i]->bottom == bottom1) // colors matched
+			   )
+			{
+                frags1 += s->players[i]->frags;
+				continue;
+			}
+
+			if (top2 < 0) // ok, we found member from second team, save colors/team
+			{
+				top2	= s->players[i]->top;
+				bottom2	= s->players[i]->bottom;
+				t2		= s->players[i]->team;
+			}
+
+            if (    ( support_tp && !strncmp(t2, s->players[i]->team, sizeof(s->players[0]->team) - 1)) // teams matched
+				 || (!support_tp && s->players[i]->top == top2 && s->players[i]->bottom == bottom2) // colors matched
+			   )
+			{
+                frags2 += s->players[i]->frags;
+				continue;
+			}
+
+			// found member from third team, we does't support such case
+			match = 0;
+			break;
         }
+
+		if (top1 < 0 || top2 < 0)
+			match = 0; // we does't have two teams
 
         if (match  &&  frags2 > frags1)
         {
@@ -1191,7 +1215,7 @@ void Serverinfo_Players_Draw(int x, int y, int w, int h)
     if (serverinfo_players_pos < 0)
         serverinfo_players_pos = 0;
 
-    UI_Print(x, y, "png tm frgs team name", true);
+    UI_Print(x, y, support_tp ? "png tm frgs team name" : "png tm frgs name", true);
     for (i=0; i < listsize; i++)
     {
         char buf[100], fragsbuf[100] = {0};
@@ -1205,19 +1229,40 @@ void Serverinfo_Players_Draw(int x, int y, int w, int h)
         	snprintf(fragsbuf, sizeof(fragsbuf), "%3d%s", frags_tmp, frags_tmp < 1000 ? " " : ""); // "centering" frags as much as possible
 		}
 
-        snprintf(buf, sizeof(buf), "%3d %2d %4.4s %4.4s %s", // frags column fixed to 4 symbols
-            max(min(s->players[serverinfo_players_pos+i]->ping, 999), 0),
-            max(min(s->players[serverinfo_players_pos+i]->time, 99), 0),
-            s->players[serverinfo_players_pos+i]->spec ? "spec" : fragsbuf,
-			s->players[serverinfo_players_pos+i]->team,
-            s->players[serverinfo_players_pos+i]->name);
+		if (support_tp)
+        	snprintf(buf, sizeof(buf), "%3d %2d %4.4s %4.4s %s", // frags column fixed to 4 symbols
+            	max(min(s->players[serverinfo_players_pos+i]->ping, 999), 0),
+            	max(min(s->players[serverinfo_players_pos+i]->time, 99), 0),
+            	s->players[serverinfo_players_pos+i]->spec ? "spec" : fragsbuf,
+				s->players[serverinfo_players_pos+i]->team,
+            	s->players[serverinfo_players_pos+i]->name);
+		else
+        	snprintf(buf, sizeof(buf), "%3d %2d %4.4s %s", // frags column fixed to 4 symbols
+            	max(min(s->players[serverinfo_players_pos+i]->ping, 999), 0),
+            	max(min(s->players[serverinfo_players_pos+i]->time, 99), 0),
+            	s->players[serverinfo_players_pos+i]->spec ? "spec" : fragsbuf,
+            	s->players[serverinfo_players_pos+i]->name);
 
         buf[w/8] = 0;
 
 		if (!s->players[serverinfo_players_pos+i]->spec) {
-        	top = s->players[serverinfo_players_pos+i]->top;
-        	bottom = s->players[serverinfo_players_pos+i]->bottom;
-    
+        	top		= s->players[serverinfo_players_pos+i]->top;
+        	bottom	= s->players[serverinfo_players_pos+i]->bottom;
+
+			if (support_tp && match) // force players have same colors in same team, in such case
+			{
+				if (!strncmp(t1, s->players[serverinfo_players_pos+i]->team, sizeof(s->players[0]->team) - 1))
+				{
+					top		= top1;
+					bottom	= bottom1;
+				}
+				else if (!strncmp(t2, s->players[serverinfo_players_pos+i]->team, sizeof(s->players[0]->team) - 1))
+				{
+					top		= top2;
+					bottom	= bottom2;
+				}
+			}
+
         	Draw_Fill (x+7*8-2, y+i*8+8   +1, 34, 4, top);
         	Draw_Fill (x+7*8-2, y+i*8+8+4 +1, 34, 3, bottom);
 		}
