@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.50 2006-12-02 11:52:20 johnnycz Exp $
+    $Id: teamplay.c,v 1.51 2006-12-02 15:52:58 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -2331,7 +2331,7 @@ void TP_SearchForMsgTriggers (char *s, int level)
 	for (t = msg_triggers; t; t = t->next) {
 		if ((t->level == level || (t->level == 3 && level == 4)) && t->string[0] && strstr(s, t->string)) {
 			if (level == PRINT_CHAT && (
-			            strstr (s, "f_version") || strstr (s, "f_skins") || strstr(s, "f_fshaft") ||
+			            strstr (s, "f_version") || strstr (s, "f_skins") || strstr(s, "f_fakeshaft") ||
 			            strstr (s, "f_server") || strstr (s, "f_scripts") || strstr (s, "f_cmdline") ||
 			            strstr (s, "f_system") || strstr (s, "f_speed") || strstr (s, "f_modified"))
 			   )
