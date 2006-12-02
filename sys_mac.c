@@ -1,9 +1,11 @@
 /*
 
-	$Id: sys_mac.c,v 1.18 2006-08-14 15:31:53 vvd0 Exp $
+	$Id: sys_mac.c,v 1.19 2006-12-02 18:41:34 disconn3ct Exp $
 
 */
 // sys_mac.c -- Macintosh system driver
+
+#define __OPENTRANSPORTPROVIDERS__
 
 #include "quakedef.h"
 

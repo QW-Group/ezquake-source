@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // in_mac.c -- macintosh mouse support using InputSprocket
+#define __OPENTRANSPORTPROVIDERS__
 
 #include "quakedef.h"
 
