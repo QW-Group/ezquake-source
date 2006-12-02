@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.83 2006-12-01 20:38:25 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.84 2006-12-02 10:33:28 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -2014,7 +2014,7 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
 	// Save the pic.
 	(*hud_pic) = *temp_pic;
 
-	strncpy(var->string, newpic, (strlen(newpic) + 1) * sizeof(char));
+	Cvar_Set(var, newpic);
 #endif
 	return true;
 }
