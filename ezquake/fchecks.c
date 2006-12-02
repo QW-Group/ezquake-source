@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fchecks.c,v 1.10 2006-06-13 13:13:02 vvd0 Exp $
+	$Id: fchecks.c,v 1.11 2006-12-02 11:52:20 johnnycz Exp $
 
 */
 
@@ -28,9 +28,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 
 
-static float f_system_reply_time, f_cmdline_reply_time, f_scripts_reply_time, f_ruleset_reply_time, f_reply_time, f_mod_reply_time, f_version_reply_time, f_skins_reply_time, f_server_reply_time;
+static float f_system_reply_time, f_cmdline_reply_time, f_scripts_reply_time, f_fshaft_reply_time, f_ruleset_reply_time, f_reply_time, f_mod_reply_time, f_version_reply_time, f_skins_reply_time, f_server_reply_time;
 
 extern cvar_t r_fullbrightSkins;
+extern cvar_t cl_fakeshaft;
 extern cvar_t allow_scripts;
 
 cvar_t allow_f_system  = {"allow_f_system",  "1"};
@@ -91,6 +92,27 @@ qbool FChecks_ScriptsRequest (char *s) {
 	return false;
 }
 
+void FChecks_FakeshaftResponse (void)
+{
+	if (cl_fakeshaft.value > 0.999)
+		Cbuf_AddText("say fakeshaft on\n");
+	else if (cl_fakeshaft.value < 0.001)
+		Cbuf_AddText("say fakeshaft off\n");
+	else
+		Cbuf_AddText(va("say fakeshaft %.1f%%", cl_fakeshaft.value * 100.0));
+}
+
+qbool FChecks_FakeshaftRequest (char *s) {
+	if (cl.spectator || (f_fshaft_reply_time && cls.realtime - f_fshaft_reply_time < 20))
+		return false;
+
+	if (Util_F_Match(s, "f_fshaft"))	{
+		FChecks_FakeshaftResponse();
+		f_fshaft_reply_time = cls.realtime;
+		return true;
+	}
+	return false;
+}
 
 qbool FChecks_VersionRequest (char *s) {
 	if (cl.spectator || (f_version_reply_time && cls.realtime - f_version_reply_time < 20))
@@ -222,6 +244,7 @@ void FChecks_CheckRequest(char *s) {
 	fcheck |= FChecks_SystemRequest (s);
 	fcheck |= FChecks_SkinRequest (s);
 	fcheck |= FChecks_ScriptsRequest (s);
+	fcheck |= FChecks_FakeshaftRequest (s);
 	fcheck |= FChecks_CheckFModRequest (s);
 	fcheck |= FChecks_CheckFServerRequest (s);
 	fcheck |= FChecks_CheckFRulesetRequest (s);

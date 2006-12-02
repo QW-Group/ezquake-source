@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.31 2006-05-16 03:33:17 disconn3ct Exp $
+    $Id: cvar.c,v 1.32 2006-12-02 11:52:20 johnnycz Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -27,6 +27,7 @@ extern void CL_UserinfoChanged (char *key, char *value);
 extern void SV_ServerinfoChanged (char *key, char *value);
 
 extern cvar_t r_fullbrightSkins;
+extern cvar_t cl_fakeshaft;
 extern cvar_t allow_scripts;
 
 static cvar_t *cvar_hash[32];
@@ -285,6 +286,13 @@ void Cvar_Set (cvar_t *var, char *value)
 				Cbuf_AddText("say using simple scripts\n");
 			else
 				Cbuf_AddText("say using advanced scripts\n");
+		} else if (!strcmp(var->name, "cl_fakeshaft")) {
+			if (cl_fakeshaft.value > 0.999)
+				Cbuf_AddText("say fakeshaft on\n");
+			else if (cl_fakeshaft.value < 0.001)
+				Cbuf_AddText("say fakeshaft off\n");
+			else
+				Cbuf_AddText(va("say fakeshaft %.1f%%", cl_fakeshaft.value * 100.0));
 		}
 	}
 }
