@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fchecks.c,v 1.11 2006-12-02 11:52:20 johnnycz Exp $
+	$Id: fchecks.c,v 1.12 2006-12-02 15:52:58 johnnycz Exp $
 
 */
 
@@ -106,7 +106,7 @@ qbool FChecks_FakeshaftRequest (char *s) {
 	if (cl.spectator || (f_fshaft_reply_time && cls.realtime - f_fshaft_reply_time < 20))
 		return false;
 
-	if (Util_F_Match(s, "f_fshaft"))	{
+	if (Util_F_Match(s, "f_fakeshaft"))	{
 		FChecks_FakeshaftResponse();
 		f_fshaft_reply_time = cls.realtime;
 		return true;
