@@ -94,6 +94,7 @@ typedef struct server_data_s
     playerinfo *players[MAX_PLAYERS];
     int playersn;
     int spectatorsn;
+	qbool support_teams; // is server support team per player
 } server_data;
 
 

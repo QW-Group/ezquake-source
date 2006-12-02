@@ -81,6 +81,7 @@ void Parse_Serverinfo(server_data *s, char *info)
     char *tmp;
 
     s->passed_filters = 1;
+	s->support_teams = false; // by default server does't support team info per player
 
     if (strncmp(info, "\xFF\xFF\xFF\xFFn", 5))
     {
@@ -140,6 +141,9 @@ void Parse_Serverinfo(server_data *s, char *info)
         pos += ReadInt(pinfo+pos, &top);
         pos += ReadInt(pinfo+pos, &bottom);
 		pos += ReadString(pinfo+pos, team);
+
+		if (team[0])
+			s->support_teams = true; // seems server support team info per player
 
         if (ping > 0) { // seems player if relay on ping
 			spec = false;
