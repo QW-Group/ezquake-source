@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.25 2006-12-01 20:38:54 cokeman1982 Exp $
+	$Id: vid_wgl.c,v 1.26 2006-12-03 12:12:34 qqshka Exp $
 
 */
 
@@ -118,6 +118,8 @@ char *VID_GetModeDescription (int mode);
 void ClearAllStates (void);
 void VID_UpdateWindowStatus (void);
 
+qbool OnChange_vid_displayfrequency(cvar_t *var, char *string);
+
 /*********************************** CVARS ***********************************/
 
 cvar_t		vid_ref = {"vid_ref", "gl", CVAR_ROM};
@@ -127,7 +129,7 @@ cvar_t		_vid_default_mode_win = {"_vid_default_mode_win","3",CVAR_ARCHIVE};
 cvar_t		vid_config_x = {"vid_config_x","800",CVAR_ARCHIVE};
 cvar_t		vid_config_y = {"vid_config_y","600",CVAR_ARCHIVE};
 cvar_t		_windowed_mouse = {"_windowed_mouse","1",CVAR_ARCHIVE};
-cvar_t		vid_displayfrequency = {"vid_displayfrequency", "75", CVAR_INIT};
+cvar_t		vid_displayfrequency = {"vid_displayfrequency", "0", 0, OnChange_vid_displayfrequency};
 cvar_t		vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
 cvar_t      vid_flashonactivity = {"vid_flashonactivity", "1", CVAR_ARCHIVE};
 // VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...) 
@@ -223,6 +225,110 @@ void VID_UpdateWindowStatus (void) {
 
 /******************************** VID_SETMODE ********************************/
 
+int GetBestFreq (int w, int h, int bpp) {
+	int freq = 0;
+	DEVMODE	testMode;
+
+	memset((void*) &testMode, 0, sizeof(testMode));
+	testMode.dmSize = sizeof(testMode);
+
+	testMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
+	testMode.dmPelsWidth  = w; // here we must pass right value if modelist[vid_modenum].halfscreen
+	testMode.dmPelsHeight = h;
+	testMode.dmBitsPerPel = bpp;
+
+	for (freq = 301; freq >= 0; freq--)
+	{
+		testMode.dmDisplayFrequency = freq;
+		if (ChangeDisplaySettings (&testMode, CDS_FULLSCREEN | CDS_TEST ) != DISP_CHANGE_SUCCESSFUL)
+			continue; // mode can't be set
+
+		break; // wow, we found something
+	}
+
+	return max(0, freq);
+}
+
+void VID_ShowFreq_f(void) {
+	int freq, cnt = 0;
+	DEVMODE	testMode;
+
+	if (!vid_initialized || vid_modenum < 0 || vid_modenum >= MAX_MODE_LIST)
+		return;
+
+	memset((void*) &testMode, 0, sizeof(testMode));
+	testMode.dmSize = sizeof(testMode);
+
+	Com_Printf("Possible display frequency:");
+
+	testMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
+	testMode.dmPelsWidth  = modelist[vid_modenum].width << modelist[vid_modenum].halfscreen;
+	testMode.dmPelsHeight = modelist[vid_modenum].height;
+	testMode.dmBitsPerPel = modelist[vid_modenum].bpp;
+
+	for (freq = 1; freq < 301; freq++)
+	{
+		testMode.dmDisplayFrequency = freq;
+		if (ChangeDisplaySettings (&testMode, CDS_FULLSCREEN | CDS_TEST ) != DISP_CHANGE_SUCCESSFUL)
+			continue; // mode can't be set
+
+		Com_Printf(" %d", freq);
+		cnt++;
+	}
+
+	Com_Printf("%s\n", cnt ? "" : " none");
+}
+
+int GetCurrentFreq(void) {
+	DEVMODE	testMode;
+
+	memset((void*) &testMode, 0, sizeof(testMode));
+	testMode.dmSize = sizeof(testMode);
+	return EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &testMode) ? testMode.dmDisplayFrequency : 0;
+}
+
+qbool ChangeFreq(int freq) {
+	DWORD oldFields = gdevmode.dmFields, oldFreq = gdevmode.dmDisplayFrequency; // so we can return old values if we failed
+
+	if (!vid_initialized || !host_initialized)
+		return true; // hm, -freq xxx or +set vid_displayfrequency xxx cmdline params? allow then
+
+	if (!ActiveApp || Minimized || !vid_canalttab || vid_wassuspended) {
+		Com_Printf("Can't switch display frequency while minimized\n");
+		return false;
+	}
+
+	if (modestate != MS_FULLDIB) {
+		Com_Printf("Can't switch display frequency in non full screen mode\n");
+		return false;
+	}
+
+	if (GetCurrentFreq() == freq) {
+		Com_Printf("Display frequency %d alredy set\n", freq);
+		return false;
+	}
+
+	gdevmode.dmDisplayFrequency = freq;
+	gdevmode.dmFields |= DM_DISPLAYFREQUENCY;
+
+	if (   ChangeDisplaySettings (&gdevmode, CDS_FULLSCREEN | CDS_TEST ) != DISP_CHANGE_SUCCESSFUL
+		|| ChangeDisplaySettings (&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL
+	   ) {
+		Com_Printf("Can't switch display frequency to %d\n", freq);
+		gdevmode.dmDisplayFrequency = oldFreq;
+		gdevmode.dmFields = oldFields;
+		return false;
+	}
+
+	Com_Printf("Switching display frequency to %d\n", freq);
+
+	return true;
+}
+
+qbool OnChange_vid_displayfrequency (cvar_t *var, char *string) {
+	return !ChangeFreq(Q_atoi(string));
+}
+
 qbool VID_SetWindowedMode (int modenum) {
 	HDC hdc;
 	int lastmodestate, width, height;
@@ -301,24 +407,28 @@ qbool VID_SetFullDIBMode (int modenum) {
 	RECT rect;
 
 	if (!leavecurrentmode) {
+		char freqstr[10];
 		gdevmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 		gdevmode.dmBitsPerPel = modelist[modenum].bpp;
 		gdevmode.dmPelsWidth = modelist[modenum].width << modelist[modenum].halfscreen;
 		gdevmode.dmPelsHeight = modelist[modenum].height;
 		gdevmode.dmSize = sizeof (gdevmode);
 
-		// first we will try vid_displayfrequency.value
-		gdevmode.dmDisplayFrequency = vid_displayfrequency.value;
+		if (vid_displayfrequency.value) // freq was somehow specified, use it
+			gdevmode.dmDisplayFrequency = vid_displayfrequency.value;
+		else // guess best possible freq
+			gdevmode.dmDisplayFrequency = GetBestFreq (gdevmode.dmPelsWidth, gdevmode.dmPelsHeight, gdevmode.dmBitsPerPel);
 		gdevmode.dmFields |= DM_DISPLAYFREQUENCY;
 		
-		if (ChangeDisplaySettings (&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) { // okay trying default refresh rate (60hz?) then
-			gdevmode.dmDisplayFrequency = 0.0;
-			gdevmode.dmFields |= DM_DISPLAYFREQUENCY;
-			Com_DPrintf ("Forcing display frequency to %i Hz\n", gdevmode.dmDisplayFrequency);
+		if (ChangeDisplaySettings (&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) {
+			gdevmode.dmFields &= ~DM_DISPLAYFREQUENCY; // okay trying default refresh rate (60hz?) then
+			if (ChangeDisplaySettings (&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+				Sys_Error ("Couldn't set fullscreen DIB mode"); // failed for default refresh rate too, bad luck :E
 		}
 
-		if (ChangeDisplaySettings (&gdevmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) //failed for defaylt refresh rate too, bad luck :E
-			Sys_Error ("Couldn't set fullscreen DIB mode");
+		gdevmode.dmDisplayFrequency = GetCurrentFreq();
+		snprintf(freqstr, sizeof(freqstr), "%d", (int)gdevmode.dmDisplayFrequency);
+		Cvar_Set(&vid_displayfrequency, freqstr); // so variable will we set to actual value (some times this fail, but does't cause any damage)
 	}
 
 	lastmodestate = modestate;
@@ -1473,6 +1583,8 @@ void VID_Init (unsigned char *palette) {
 
 		vid_default = MODE_WINDOWED;
 	} else {
+		Cmd_AddCommand ("vid_showfreq", VID_ShowFreq_f);
+
 		if (nummodes == 1)
 			Sys_Error ("No RGB fullscreen modes available");
 
@@ -1565,6 +1677,9 @@ void VID_Init (unsigned char *palette) {
 		}
 	}
 
+	if ((i = COM_CheckParm("-freq")) && i + 1 < com_argc)
+		Cvar_Set(&vid_displayfrequency, com_argv[i + 1]);
+
 	vid_initialized = true;
 
 	if ((i = COM_CheckParm("-conwidth")) && i + 1 < com_argc)
@@ -1589,9 +1704,6 @@ void VID_Init (unsigned char *palette) {
 
 	Check_Gamma(palette);
 	VID_SetPalette (palette);
-
-	if ((i = COM_CheckParm("-freq")) && i + 1 < com_argc)
-		Cvar_Set(&vid_displayfrequency, com_argv[i + 1]);
 
 	VID_SetMode (vid_default, palette);
 
