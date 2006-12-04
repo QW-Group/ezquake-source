@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_main.c,v 1.14 2006-09-07 19:56:04 cokeman1982 Exp $
+	$Id: r_main.c,v 1.15 2006-12-04 21:42:22 cokeman1982 Exp $
 
 */
 
@@ -134,6 +134,7 @@ cvar_t  r_watercolor = {"r_watercolor", "36"};
 // oppymv 310804
 cvar_t cl_multiview = {"cl_multiview", "0" };
 cvar_t cl_mvdisplayhud = {"cl_mvdisplayhud", "1"};
+cvar_t cl_mvhudpos = {"cl_mvhudpos", "1"};
 cvar_t cl_mvinset = {"cl_mvinset", "0"};
 cvar_t cl_mvinsetcrosshair = {"cl_mvinsetcrosshair", "1"};
 cvar_t cl_mvinsethud = {"cl_mvinsethud", "1"};
@@ -240,6 +241,7 @@ void R_Init (void) {
 	// oppymv 310804
 	Cvar_Register(&cl_multiview);
 	Cvar_Register(&cl_mvdisplayhud);
+	Cvar_Register(&cl_mvhudpos);
 	Cvar_Register(&cl_mvinset);
 	Cvar_Register(&cl_mvinsetcrosshair);
 	Cvar_Register(&cl_mvinsethud);

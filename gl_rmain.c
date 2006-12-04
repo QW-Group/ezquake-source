@@ -68,6 +68,7 @@ int			brushmodel = 0;
 
 cvar_t cl_multiview = {"cl_multiview", "0" };
 cvar_t cl_mvdisplayhud = {"cl_mvdisplayhud", "1"};
+cvar_t cl_mvhudpos = {"cl_mvhudpos", "1"};
 cvar_t cl_mvinset = {"cl_mvinset", "0"};
 cvar_t cl_mvinsetcrosshair = {"cl_mvinsetcrosshair", "1"};
 cvar_t cl_mvinsethud = {"cl_mvinsethud", "1"};
@@ -1487,6 +1488,7 @@ void R_Init (void) {
 
 	Cvar_Register(&cl_multiview);
 	Cvar_Register(&cl_mvdisplayhud);
+	Cvar_Register(&cl_mvhudpos);
 	Cvar_Register(&cl_mvinset);
 	Cvar_Register(&cl_mvinsetcrosshair);
 	Cvar_Register(&cl_mvinsethud);
