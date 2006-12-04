@@ -467,6 +467,7 @@ extern cvar_t w_switch;		// added for the sake of menu.c
 // Multiview cvars
 extern cvar_t cl_multiview;
 extern cvar_t cl_mvdisplayhud;
+extern cvar_t cl_mvhudpos;
 extern cvar_t cl_mvinset; 
 extern cvar_t cl_mvinsetcrosshair;
 extern cvar_t cl_mvinsethud;
