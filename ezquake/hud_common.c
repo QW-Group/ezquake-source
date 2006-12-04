@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.84 2006-12-02 10:33:28 johnnycz Exp $
+	$Id: hud_common.c,v 1.85 2006-12-04 00:07:48 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -5226,6 +5226,8 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 
 		if (state->messagenum == cl.oldparsecount)
 		{
+			// TODO: Implement lerping to get smoother drawing.
+
 			// Get the quake coordinates. Multiply by 8 since
 			// the conversion formula has been calculated using
 			// a .loc-file which is in that format.
@@ -5233,8 +5235,7 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 			player_q_y = state->origin[1]*8;
 
 			// Get the players view angle.
-			player_angle = state->viewangles[1];
-			// TODO: Get the "current" viewangle for the player being spectated when not watching demos here also.
+			player_angle = cls.demoplayback ? state->viewangles[1] : cl.simangles[1];
 
 			// Convert from quake coordiantes -> pixel coordinates.
 			player_p_x = ROUND((map_x_slope*player_q_x + map_x_intercept) * scale);
