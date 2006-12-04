@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.68 2006-11-25 17:35:17 disconn3ct Exp $
+    $Id: cl_screen.c,v 1.69 2006-12-04 00:13:32 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -113,12 +113,9 @@ cvar_t	scr_autoid		= {"scr_autoid", "0"};
 #endif
 cvar_t	scr_coloredText = {"scr_coloredText", "1"};
 
-// START shaman RFE 1022309
+// Tracking text.
 cvar_t	scr_tracking			= {"scr_tracking", "Tracking %t %n, [JUMP] for next"};
 cvar_t	scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
-// END shaman RFE 1022309
-
-
 
 
 qbool	scr_initialized;                // ready to draw
@@ -151,7 +148,9 @@ char auto_matchname[2 * MAX_OSPATH];
 
 static void SCR_CheckAutoScreenshot(void);
 static void SCR_CheckMVScreenshot(void);
-void SCR_DrawStatusMultiview(void);
+void SCR_DrawMultiviewBorders(void);
+void SCR_DrawMVStatus(void);
+void SCR_DrawMVStatusStrings(void); 
 void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
 void Draw_AlphaString (int x, int y, char *str, float alpha);
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
@@ -862,7 +861,7 @@ void SCR_SetupAutoID (void) {
 #define AUTOID_HEALTHBAR_NORMAL_COLOR		80/255.0, 0, 0
 #define AUTOID_HEALTHBAR_MEGA_COLOR			255/255.0, 0, 0
 #define AUTOID_HEALTHBAR_TWO_MEGA_COLOR		255/255.0, 100/255.0, 0
-#define AUTOID_HEALTHBAR_UNNATURAL_COLOR	255, 255/255.0, 255/255.0
+#define AUTOID_HEALTHBAR_UNNATURAL_COLOR	255/255.0, 255/255.0, 255/255.0
 
 #define AUTOID_HEALTHBAR_OFFSET_Y			16
 
@@ -2165,7 +2164,23 @@ void SCR_DrawElements(void) {
 				// Multiview
 				if (cl_multiview.value && cls.mvdplayback)
 				{
-					SCR_DrawStatusMultiview();
+					// Draw multiview mini-HUD's.
+					if (cl_mvdisplayhud.value)
+					{
+						if(cl_mvdisplayhud.value >= 2)
+						{
+							// Graphical with icons.
+							SCR_DrawMVStatus();
+						}
+						else
+						{
+							// Only strings.
+							SCR_DrawMVStatusStrings();
+						}
+					}
+
+					// Draw a black border between the views.
+					SCR_DrawMultiviewBorders();
 				}
 
 				Sbar_Draw();
@@ -3029,23 +3044,636 @@ void SCR_Init (void) {
 	scr_initialized = true;
 }
 
-void SCR_DrawStatusMultiview(void) 
+void SCR_DrawMultiviewBorders()
+{
+	//
+	// Draw black borders around the views.
+	//
+	if (cl_multiview.value == 2 && !cl_mvinset.value) 
+	{
+		Draw_Fill(0, vid.height / 2, vid.width - 1, 1, 0); 
+	}
+	else if (cl_multiview.value == 2 && cl_mvinset.value) 
+	{
+		if (vid.width <= 512 && cl_sbar.value) 
+		{
+			Draw_Fill(vid.width / 3 * 2 + 1, vid.height / 3 - sb_lines / 3, vid.width / 3 + 2, 1, 0);
+			Draw_Fill(vid.width / 3 * 2 + 1, 0, 1, vid.height / 3 - sb_lines / 3, 0);
+		} 
+		else if ((vid.width > 512 && cl_sbar.value && !cl_mvinsethud.value) || (vid.width > 512 && cl_sbar.value && !cl_mvdisplayhud.value)) 
+		{
+			Draw_Fill(vid.width / 3 * 2, vid.height / 3 - sb_lines / 3, vid.width / 3, 1, 0);
+			Draw_Fill(vid.width / 3 * 2, 0, 1, vid.height / 3 - sb_lines/3, 0);
+		}
+		else 
+		{
+			// sbar 0 and <= 512 conwidth
+			Draw_Fill(vid.width / 3 * 2 + 1, vid.height / 3, vid.width / 3 + 2, 1, 0);
+			Draw_Fill(vid.width / 3 * 2 + 1, 0, 1, vid.height / 3, 0);
+		}
+	}
+	else if (cl_multiview.value == 3) 
+	{
+		Draw_Fill(vid.width / 2, vid.height / 2, 1, vid.height / 2, 0);
+		Draw_Fill(0, vid.height / 2, vid.width, 1, 0); 
+	}
+	else if (cl_multiview.value == 4) 
+	{
+		Draw_Fill(vid.width / 2, 0, 1, vid.height, 0);
+		Draw_Fill(0, vid.height / 2, vid.width, 1, 0);
+	}
+}
+
+mpic_t * SCR_GetWeaponIconByFlag (int flag)
+{
+	extern mpic_t *sb_weapons[7][8];  // sbar.c Weapon pictures.
+
+	if (flag == IT_LIGHTNING || flag == IT_SUPER_LIGHTNING) 
+	{
+		return sb_weapons[0][6];
+	} 
+	else if (flag == IT_ROCKET_LAUNCHER) 
+	{
+		return sb_weapons[0][5];
+	} 
+	else if (flag == IT_GRENADE_LAUNCHER) 
+	{
+		return sb_weapons[0][4];
+	} 
+	else if (flag == IT_SUPER_NAILGUN) 
+	{
+		return sb_weapons[0][3];
+	} 
+	else if (flag == IT_NAILGUN) 
+	{
+		return sb_weapons[0][2];
+	} 
+	else if (flag == IT_SUPER_SHOTGUN) 
+	{
+		return sb_weapons[0][1];
+	} 
+	else if (flag == IT_SHOTGUN) 
+	{
+		return sb_weapons[0][0];
+	} 
+
+	return NULL;
+}
+
+mpic_t *SCR_GetWeaponIconByWeaponNumber (int num)
+{
+	return SCR_GetWeaponIconByFlag (IT_SHOTGUN << (num - 2));
+}
+
+mpic_t *SCR_GetActiveWeaponIcon()
+{
+	return SCR_GetWeaponIconByFlag (cl.stats[STAT_ACTIVEWEAPON]);
+	
+	/*
+	if (cl.stats[STAT_ACTIVEWEAPON] & IT_LIGHTNING || cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_LIGHTNING) 
+	{
+		return sb_weapons[6][6];
+	} 
+	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_ROCKET_LAUNCHER) 
+	{
+		return sb_weapons[6][5];
+	} 
+	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_GRENADE_LAUNCHER) 
+	{
+		return sb_weapons[6][4];
+	} 
+	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_NAILGUN) 
+	{
+		return sb_weapons[6][3];
+	} 
+	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_NAILGUN) 
+	{
+		return sb_weapons[6][2];
+	} 
+	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_SHOTGUN) 
+	{
+		return sb_weapons[6][1];
+	} 
+	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SHOTGUN) 
+	{
+		return sb_weapons[6][0];
+	} 
+
+	return NULL;*/
+}
+
+typedef struct mv_viewrect_s
+{
+	int x;
+	int y;
+	int width;
+	int height;
+} mv_viewrect_t;
+
+#define MV_HUD_POS_BOTTOM_CENTER	1
+#define MV_HUD_POS_BOTTOM_LEFT		2
+#define MV_HUD_POS_BOTTOM_RIGHT		3
+#define MV_HUD_POS_TOP_CENTER		4
+#define MV_HUD_POS_TOP_LEFT			5
+#define MV_HUD_POS_TOP_RIGHT		6
+#define MV_HUD_POS_GATHERED_CENTER	7
+
+char *Macro_BestAmmo (void); // Teamplay.c
+void Draw_AlphaRectangle (int x, int y, int w, int h, int c, float thickness, qbool fill, float alpha); // gl_draw.c
+
+void SCR_SetMVStatusGatheredPosition (mv_viewrect_t *view, int hud_width, int hud_height, int *x, int *y);
+
+void SCR_SetMVStatusPosition (int position, mv_viewrect_t *view, int hud_width, int hud_height, int *x, int *y)
+{
+	switch (position)
+	{			
+		case MV_HUD_POS_BOTTOM_LEFT :
+		{
+			(*x) = 0;
+			(*y) = max(0, (view->height - hud_height));
+			break;
+		}
+		case MV_HUD_POS_BOTTOM_RIGHT :
+		{
+			(*x) = max(0, (view->width - hud_width));
+			(*y) = max(0, (view->height - hud_height));
+			break;
+		}
+		case MV_HUD_POS_TOP_CENTER :
+		{
+			(*x) = max(0, (view->width - hud_width) / 2);
+			(*y) = 0;
+			break;
+		}
+		case MV_HUD_POS_TOP_LEFT : 
+		{
+			(*x) = 0;
+			(*y) = 0;
+			break;
+		}
+		case MV_HUD_POS_TOP_RIGHT :
+		{
+			(*x) = max(0, view->width - hud_width);
+			(*y) = 0;
+			break;
+		}
+		case MV_HUD_POS_GATHERED_CENTER :
+		{
+			SCR_SetMVStatusGatheredPosition (view, hud_width, hud_height, &(*x), &(*y));
+			break;
+		}
+		case MV_HUD_POS_BOTTOM_CENTER :
+		default:
+		{
+			(*x) = max(0, (view->width - hud_width) / 2);
+			(*y) = max(0, (view->height - hud_height));
+			break;
+		}
+	}
+}
+
+void SCR_SetMVStatusGatheredPosition (mv_viewrect_t *view, int hud_width, int hud_height, int *x, int *y)
+{
+	//
+	// Position the huds towards the center of the screen for the different views
+	// so that all the HUD's are close to each other on the screen.
+	//
+
+	if (cl_multiview.value == 2)
+	{
+		if (!cl_mvinset.value)
+		{
+			if (CURRVIEW == 2)
+			{
+				// Top. (Put the hud at the bottom)
+				SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_CENTER, view, hud_width, hud_height, x, y);
+			}
+			else if (CURRVIEW == 1)
+			{			
+				// Bottom. (Put the hud at the top)				
+				SCR_SetMVStatusPosition (MV_HUD_POS_TOP_CENTER, view, hud_width, hud_height, x, y);
+			}
+		}
+	}
+	else if (cl_multiview.value == 3)
+	{
+		if (CURRVIEW == 2) 
+		{ 
+			// Top. (Put the hud at the bottom)
+			SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_CENTER, view, hud_width, hud_height, x, y);
+		}
+		else if (CURRVIEW == 3) 
+		{ 
+			// Bottom left. (Put the hud at the top right)
+			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_RIGHT, view, hud_width, hud_height, x, y);
+		}
+		else if (CURRVIEW == 1) 
+		{ 
+			// Bottom right. (Put the hud at the top left)
+			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_LEFT, view, hud_width, hud_height, x, y);
+		}
+	}
+	else if (cl_multiview.value == 4)
+	{
+		if (CURRVIEW == 2) 
+		{ 
+			// Top left. (Put the hud at the bottom right)
+			SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_RIGHT, view, hud_width, hud_height, x, y);
+		}
+		else if (CURRVIEW == 3) 
+		{ 
+			// Top right. (Put the hud at the bottom left)
+			SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_LEFT, view, hud_width, hud_height, x, y);
+		}
+		else if (CURRVIEW == 4) 
+		{ 
+			// Bottom left. (Put the hud at the top right)
+			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_RIGHT, view, hud_width, hud_height, x, y);
+		}
+		else if (CURRVIEW == 1) 
+		{ 
+			// Bottom right. (Put the hud at the top left)
+			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_LEFT, view, hud_width, hud_height, x, y);
+		}
+	}
+}
+
+#define MV_HUD_ARMOR_WIDTH		(5*8)
+#define MV_HUD_HEALTH_WIDTH		(5*8)
+#define MV_HUD_CURRAMMO_WIDTH	(5*8)
+
+#define MV_HUD_STYLE_ONLY_NAME	2
+#define MV_HUD_STYLE_ALL		3
+#define MV_HUD_STYLE_ALL_TEXT	4
+#define MV_HUD_STYLE_ALL_FILL	5
+
+void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position)
+{
+	int hud_x = 0;
+	int hud_y = 0;
+	int hud_width = 0;
+	int hud_height = 0;
+
+	mpic_t *current_weapon = NULL;
+
+	if (style == MV_HUD_STYLE_ONLY_NAME)
+	{
+		// Only draw the players name.
+	}
+	else if (style >= MV_HUD_STYLE_ALL)
+	{
+		char *name = cl.players[nPlayernum].name;
+
+		current_weapon = SCR_GetActiveWeaponIcon();
+
+		//
+		// Calculate the total width and height of the hud.
+		//
+		hud_height = max(2 * current_weapon->height, 3*8);
+		hud_width = 
+			8 * (strlen(name)) +				// Name.
+			MV_HUD_ARMOR_WIDTH + 				// Armor + space.
+			MV_HUD_HEALTH_WIDTH + 				// Health.
+			current_weapon->width +				// Current weapon.
+			MV_HUD_CURRAMMO_WIDTH;				// Current weapon ammo count.
+
+		//
+		// Get the position we should draw the hud at.
+		//
+		SCR_SetMVStatusPosition (position, view, hud_width, hud_height, &hud_x, &hud_y);
+
+		/*
+		if (cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1)
+		{
+			Draw_AlphaFill (view->x, 0, abs(view->y - view->height), view->x + view->width, 0, 0.5);
+		}
+		*/
+
+		//
+		// Draw a fill background.
+		//
+		if(style >= MV_HUD_STYLE_ALL_FILL)
+		{
+			Draw_AlphaFill (view->x + hud_x, view->y + hud_y, hud_width, hud_height, 0, 0.5);
+		}
+
+		//
+		// Name.
+		//
+		{
+			Draw_String(view->x + hud_x, view->y + hud_y, name);
+			hud_x += 8*(strlen(name) + 1);
+		}
+
+		//
+		// Armor.
+		//
+		{
+			char armor_color_code[6] = "";
+			int armor_amount_width = 0;
+
+			#ifdef GLQUAKE
+			float armor_color[3] = {0, 0, 0};	// RGB.
+			#endif
+
+			//
+			// Set the armor text color based on what armor the player has.
+			//
+			if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
+			{
+				// Green armor.
+				strlcpy(armor_color_code, "&c0f0", sizeof(armor_color_code));
+				armor_amount_width = ROUND(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 100.0);
+				
+				#ifdef GLQUAKE
+				armor_color[0] = 80 / 255.0;
+				armor_color[1] = 190 / 255.0;
+				armor_color[2] = 80 / 255.0;
+				#endif
+			}
+			else if (cl.stats[STAT_ITEMS] & IT_ARMOR2)
+			{
+				// Yellow armor.
+				strlcpy(armor_color_code, "&cff0", sizeof(armor_color_code));
+				armor_amount_width = ROUND(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 150.0);
+
+				#ifdef GLQUAKE
+				armor_color[0] = 250 / 255.0;
+				armor_color[1] = 230 / 255.0;
+				armor_color[2] = 0;
+				#endif
+			}
+			else if (cl.stats[STAT_ITEMS] & IT_ARMOR3)
+			{
+				// Red armor.
+				strlcpy(armor_color_code, "&cf00", sizeof(armor_color_code));
+				armor_amount_width = ROUND(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 200.0);
+
+				#ifdef GLQUAKE
+				armor_color[0] = 190 / 255.0;
+				armor_color[1] = 50 / 255.0;
+				armor_color[2] = 0;
+				#endif	
+			}
+
+			if (cl.stats[STAT_ARMOR] > 0)
+			{
+				//
+				// Background fill for armor.
+				//
+				#ifdef GLQUAKE
+				Draw_AlphaFillRGB (view->x + hud_x, 
+					view->y + hud_y, 
+					armor_amount_width, 
+					8, 
+					armor_color[0], armor_color[1], armor_color[2], 
+					0.3);
+				#endif
+
+				// Armor value.
+				if (style >= MV_HUD_STYLE_ALL_TEXT)
+				{
+					Draw_ColoredString(view->x + hud_x, view->y + hud_y, va("%s%4d", armor_color_code, cl.stats[STAT_ARMOR]), 0);
+				}
+			}
+
+			hud_x += MV_HUD_ARMOR_WIDTH;
+		}
+
+		//
+		// Health.
+		//
+		{
+			#define MV_HEALTH_OPACITY 0.3
+			int health = cl.stats[STAT_HEALTH];
+
+			#ifdef GLQUAKE
+			int health_amount_width = 0;
+
+			health = min(100, health);
+			health_amount_width = ROUND(abs((MV_HUD_HEALTH_WIDTH * health) / 100.0));
+			Draw_AlphaFillRGB (view->x + hud_x, view->y + hud_y, health_amount_width, 8, AUTOID_HEALTHBAR_NORMAL_COLOR, 2 *  MV_HEALTH_OPACITY);
+
+			health = cl.stats[STAT_HEALTH];
+
+			if (health > 100 && health <= 200)
+			{
+				// Mega health.
+				health_amount_width = ROUND((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 100));
+
+				Draw_AlphaFillRGB (view->x + hud_x, view->y + hud_y, health_amount_width, 8, AUTOID_HEALTHBAR_MEGA_COLOR, MV_HEALTH_OPACITY);
+			}
+			else if (health > 200 && health <= 250)
+			{
+				// Super health.
+				health_amount_width = ROUND((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 200));
+
+				Draw_AlphaFillRGB (view->x + hud_x, view->y + hud_y, MV_HUD_HEALTH_WIDTH, 8, AUTOID_HEALTHBAR_MEGA_COLOR, MV_HEALTH_OPACITY);
+				Draw_AlphaFillRGB (view->x + hud_x, view->y + hud_y, health_amount_width, 8, AUTOID_HEALTHBAR_TWO_MEGA_COLOR, MV_HEALTH_OPACITY);
+			}
+			else if (health > 250)
+			{
+				// Crazy health.
+				Draw_AlphaFillRGB (view->x + hud_x, view->y + hud_y, MV_HUD_HEALTH_WIDTH, 8, AUTOID_HEALTHBAR_UNNATURAL_COLOR, MV_HEALTH_OPACITY);
+				
+			}
+			#endif
+
+			if (style >= MV_HUD_STYLE_ALL_TEXT)
+			{
+				Draw_String(view->x + hud_x, view->y + hud_y, va("%4d", health));
+			}
+
+			hud_x += MV_HUD_HEALTH_WIDTH;
+		}
+
+		//
+		// Current weapon.
+		//
+		if (current_weapon)
+		{
+			Draw_Pic (view->x + hud_x, 
+				view->y + hud_y, // - (current_weapon->height / 2), 
+				current_weapon);
+
+			hud_x += current_weapon->width;
+		}
+
+		//
+		// Ammo for current weapon.
+		//
+		{
+			Draw_ColoredString (view->x + hud_x, view->y + hud_y, va("&c5CE%4d", cl.stats[STAT_AMMO]), 0);
+			hud_x -= hud_width;
+		}
+	}
+}
+
+void SCR_SetMVStatusTwoViewRect (mv_viewrect_t *view)
+{
+	if (CURRVIEW == 2) 
+	{
+		// Top.
+		view->x			= 0;
+		view->y			= 0;
+		view->width		= vid.width;
+		view->height	= vid.height / 2;
+	}
+	else if (CURRVIEW == 1) 
+	{ 
+		// Bottom.
+		view->x			= 0;
+		view->y			= vid.height / 2;
+		view->width		= vid.width;
+		view->height	= vid.height / 2;
+	}
+}
+
+void SCR_SetMVStatusTwoInsetViewRect (mv_viewrect_t *view)
+{
+	if (CURRVIEW == 2) 
+	{ 
+		// Main.
+		view->x			= 0;
+		view->y			= 0;
+		view->width		= vid.width;
+		view->height	= vid.height;
+	}
+	else if (CURRVIEW == 1) 
+	{ 
+		// Top right.
+		view->width		= (vid.width / 3);
+		view->height	= (vid.height / 3);
+		view->x			= (vid.width / 3) * 2;
+		view->y			= 0; 
+	}
+}
+
+void SCR_SetMVStatusThreeViewRect (mv_viewrect_t *view)
+{
+	if (CURRVIEW == 2) 
+	{ 
+		// Top.
+		view->x			= 0;
+		view->y			= 0;
+		view->width		= vid.width;
+		view->height	= vid.height / 2;
+	}
+	else if (CURRVIEW == 3) 
+	{ 
+		// Bottom left.
+		view->x			= 0;
+		view->y			= vid.height / 2;
+		view->width		= vid.width / 2;
+		view->height	 = vid.height / 2;
+	}
+	else if (CURRVIEW == 1) 
+	{ 
+		// Bottom right.
+		view->x			= vid.width / 2;
+		view->y			= vid.height / 2;
+		view->width		= vid.width / 2;
+		view->height	= vid.height / 2;
+	}	
+}
+
+void SCR_SetMVStatusFourViewRect (mv_viewrect_t *view)
+{
+	if (CURRVIEW == 2) 
+	{ 
+		// Top left.
+		view->x			= 0;
+		view->y			= 0;
+		view->width		= vid.width / 2;
+		view->height	= vid.height / 2;
+	}
+	else if (CURRVIEW == 3) 
+	{ 
+		// Top right.
+		view->x			= vid.width / 2;
+		view->y			= 0;
+		view->width		= vid.width / 2;
+		view->height	= vid.height / 2;
+	}
+	else if (CURRVIEW == 4) 
+	{ 
+		// Bottom left.
+		view->x			= 0;
+		view->y			= vid.height / 2;
+		view->width		= vid.width / 2;
+		view->height	= vid.height / 2;
+	}
+	else if (CURRVIEW == 1) 
+	{ 
+		// Bottom right.
+		view->x			= vid.width / 2;
+		view->y			= vid.height / 2;
+		view->width		= vid.width / 2;
+		view->height	= vid.height / 2;
+	}
+}
+
+void SCR_DrawMVStatus(void)
+{
+	mv_viewrect_t view;
+
+	// Only draw mini hud when there are more than 1 views.
+	if (cl_multiview.value <= 1 || !cls.mvdplayback)
+	{
+		return;
+	}
+
+	// Reset the view.
+	memset (&view, -1, sizeof(view));
+
+	//
+	// Get the view rect to draw the hud within based on the current
+	// multiview mode, and what view that is being drawn.
+	// 
+	if (cl_multiview.value == 2)
+	{
+		if (cl_mvinset.value)
+		{
+			SCR_SetMVStatusTwoInsetViewRect (&view);
+		}
+		else
+		{
+			SCR_SetMVStatusTwoViewRect (&view);
+		}
+	}
+	else if (cl_multiview.value == 3)
+	{
+		SCR_SetMVStatusThreeViewRect (&view);
+	}
+	else if (cl_multiview.value == 4)
+	{
+		SCR_SetMVStatusFourViewRect (&view);
+	}
+
+	// Only draw if we the view rect was set properly.
+	if (view.x != -1)
+	{
+		SCR_DrawMVStatusView (&view, (int)cl_mvdisplayhud.value, (int)cl_mvhudpos.value);
+	}
+}
+
+void SCR_DrawMVStatusStrings(void) 
 {	
 	int xb = 0, yb = 0, xc = 0, yc = 0, xd = 0, yd = 0;
 	char strng[80];
 	char weapons[40];
-	char w1,w2;
+	char weapon[3];
 	char sAmmo[3];
 	char pups[4];
 	char armor;
 	char name[16];
-	byte c, c2;
 
 	int i;
 	
 	extern int powerup_cam_active, cam_1, cam_2, cam_3, cam_4;
 	extern cvar_t mvd_pc_view_1, mvd_pc_view_2, mvd_pc_view_3, mvd_pc_view_4;
 	
+	// Only in MVD.
 	if (!cl_multiview.value || !cls.mvdplayback)
 	{
 		return;
@@ -3056,41 +3684,42 @@ void SCR_DrawStatusMultiview(void)
 	//
 	if (cl.stats[STAT_ACTIVEWEAPON] & IT_LIGHTNING || cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_LIGHTNING) 
 	{
-		w1='l'; w2='g';
+		strlcpy(weapon, "lg", sizeof(weapon));
 	} 
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_ROCKET_LAUNCHER) 
 	{
-		w1='r'; w2='l';
+		strlcpy(weapon, "rl", sizeof(weapon));
 	} 
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_GRENADE_LAUNCHER) 
 	{
-		w1='g'; w2='l';
+		strlcpy(weapon, "gl", sizeof(weapon));
 	} 
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_NAILGUN) 
 	{
-		w1='s'; w2='n';
+		strlcpy(weapon, "sn", sizeof(weapon));
 	} 
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_NAILGUN) 
 	{
-		w1='n'; w2='g';
+		strlcpy(weapon, "ng", sizeof(weapon));
 	} 
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_SHOTGUN) 
 	{
-		w1='s'; w2='s';
+		strlcpy(weapon, "ss", sizeof(weapon));
 	} 
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SHOTGUN) 
 	{
-		w1='s'; w2='g';
+		strlcpy(weapon, "sg", sizeof(weapon));
 	} 
 	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_AXE) 
 	{
-		w1='a'; w2='x';
+		strlcpy(weapon, "ax", sizeof(weapon));
 	} 
 	else
 	{
-		w1='?'; w2='?';
+		strlcpy(weapon, "??", sizeof(weapon));
 	}
-	w1 |= 128; w2 |= 128;
+	weapon[0] |= 128;
+	weapon[1] |= 128;
 
 	//
 	// Get current powerups.
@@ -3116,12 +3745,9 @@ void SCR_DrawStatusMultiview(void)
 		pups[2] |= 128;
 	}
 
-	strng[0]='\0';
+	strng[0] = '\0';
 
-	c = (byte) 128;
-	c2 = (byte) 0;
-
-	for (i=0;i<8;i++) 
+	for (i = 0; i < 8; i++) 
 	{
 		weapons[i]=' ';
 		weapons[8] = '\0';
@@ -3188,27 +3814,27 @@ void SCR_DrawStatusMultiview(void)
 		{
 			// mvinset and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			sprintf(strng, "%.5s   %s %c%c:%-3s",name,
+			sprintf(strng, "%.5s   %s %s:%-3s",name,
 										"dead   ",
-										w1,w2,
+										weapon,
 										sAmmo);
 		}
 		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && vid.width <= 512) 
 		{
 			// Resolution width <= 512 and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			sprintf(strng, "%.2s  %s %c%c:%-3s",name,
+			sprintf(strng, "%.2s  %s %s:%-3s",name,
 										"dead   ",
-										w1,w2,
+										weapon,
 										sAmmo);
 		}
 		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) 
 		{
 			// > 512 and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			sprintf(strng, "%s   %s %c%c:%-3s",name,
+			sprintf(strng, "%s   %s %s:%-3s", name,
 										"dead   ",
-										w1,w2,
+										weapon,
 										sAmmo);
 		}
 
@@ -3216,71 +3842,76 @@ void SCR_DrawStatusMultiview(void)
 		{
 			// mvinset
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			sprintf(strng, "%s %.5s  %c%03d %03d %c%c:%-3s",pups,
+			sprintf(strng, "%s %.5s  %c%03d %03d %s:%-3s", pups,
 												name,
 												armor,
 												cl.players[nPlayernum].stats[STAT_ARMOR],
 												cl.players[nPlayernum].stats[STAT_HEALTH],
-												w1,w2,
+												weapon,
 												sAmmo);
 		} 
 		else if (cl_multiview.value && vid.width <= 512) 
 		{
 			// <= 512 and alive
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
-			sprintf(strng, "%s %.2s %c%03d %03d %c%c:%-3s",pups,
+			sprintf(strng, "%s %.2s %c%03d %03d %s:%-3s", pups,
 												name,
 												armor,
 												cl.players[nPlayernum].stats[STAT_ARMOR],
 												cl.players[nPlayernum].stats[STAT_HEALTH],
-												w1,w2,
+												weapon,
 												sAmmo);
 		}		
 		else 
 		{
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]); // > 512 and alive
-			sprintf(strng, "%s %s  %c%03d %03d %c%c:%-3s",pups,
+			sprintf(strng, "%s %s  %c%03d %03d %s:%-3s", pups,
 												name,
 												armor,
 												cl.players[nPlayernum].stats[STAT_ARMOR],
 												cl.players[nPlayernum].stats[STAT_HEALTH],
-												w1,w2,
+												weapon,
 												sAmmo);
 		}
 	}
 
-	// placement
+	//
+	// Powerup cam stuff.
+	//
 	if (CURRVIEW == 1 && mvd_pc_view_1.string && strlen(mvd_pc_view_1.string) && powerup_cam_active && cam_1)
 	{
-		sAmmo[0]='\0';
-		strng[0]='\0';
-		weapons[0]='\0';
+		sAmmo[0] = '\0';
+		strng[0] = '\0';
+		weapons[0] = '\0';
 	}
 	else if (CURRVIEW == 2 && mvd_pc_view_2.string && strlen(mvd_pc_view_2.string) && powerup_cam_active && cam_2)
 	{
-		sAmmo[0]='\0';
-		strng[0]='\0';
-		weapons[0]='\0';
+		sAmmo[0] = '\0';
+		strng[0] = '\0';
+		weapons[0] = '\0';
 	}
 	else if (CURRVIEW == 3 && mvd_pc_view_3.string && strlen(mvd_pc_view_3.string) && powerup_cam_active && cam_3)
 	{
-		sAmmo[0]='\0';
-		strng[0]='\0';
-		weapons[0]='\0';
+		sAmmo[0] = '\0';
+		strng[0] = '\0';
+		weapons[0] = '\0';
 	}
 	else if (CURRVIEW == 4 && mvd_pc_view_4.string && strlen(mvd_pc_view_4.string) && powerup_cam_active && cam_4)
 	{
-		sAmmo[0]='\0';
-		strng[0]='\0';
-		weapons[0]='\0';
+		sAmmo[0] = '\0';
+		strng[0] = '\0';
+		weapons[0] = '\0';
 	}
 		
+	//
+	// Placement.
+	// 
 	if (cl_multiview.value == 1) 
 	{
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
-			xc = vid.width/2;
-			yc = vid.height/2;
+			xc = vid.width / 2;
+			yc = vid.height / 2;
 			xd = vid.width - strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 	}
@@ -3290,21 +3921,21 @@ void SCR_DrawStatusMultiview(void)
 		{
 			if (CURRVIEW == 2) 
 			{
-				// top
+				// Top
 				xb = vid.width - strlen(strng) * 8 - 12;
-				yb = vid.height/2 - sb_lines - 16;
-				xc = vid.width/2;
-				yc = vid.height/4;
+				yb = vid.height / 2 - sb_lines - 16;
+				xc = vid.width / 2;
+				yc = vid.height / 4;
 				xd = vid.width - strlen(weapons) * 8 - 84;
-				yd = vid.height/2 - sb_lines - 8;
+				yd = vid.height / 2 - sb_lines - 8;
 			}
 			else if (CURRVIEW == 1) 
 			{ 
-				// bottom
+				// Bottom
 				xb = vid.width - strlen(strng) * 8 - 12;
 				yb = vid.height - sb_lines - 16;
-				xc = vid.width/2;
-				yc = vid.height/2 + vid.height/4;
+				xc = vid.width / 2;
+				yc = vid.height / 2 + vid.height / 4;
 				xd = vid.width - strlen(weapons) * 8 - 84;
 				yd = vid.height - sb_lines - 8;
 			}
@@ -3313,30 +3944,30 @@ void SCR_DrawStatusMultiview(void)
 		{
 			if (CURRVIEW == 2) 
 			{ 
-				// main
+				// Main
 				xb = vid.width - strlen(strng) * 8 - 12;
-				yb = vid.height/2 - sb_lines - 16;
+				yb = vid.height / 2 - sb_lines - 16;
 				xc = -2;
 				yc = -2;
 				xd = vid.width - strlen(weapons) * 8 - 84;
-				yd = vid.height/2 - sb_lines - 8;
+				yd = vid.height / 2 - sb_lines - 8;
 			}
 			else if (CURRVIEW == 1) 
 			{ 
-				// top right
+				// Top right
 				xb = vid.width - strlen(strng) * 8; // hud
-				yb = vid.height/3 - 16;
+				yb = vid.height / 3 - 16;
 				if (cl_mvinsetcrosshair.value) 
 				{
-					xc = vid.width - (double)(vid.width/3)/2-2;
-					yc = (vid.height/3)/2;
+					xc = vid.width - (double)(vid.width / 3) / 2 - 2;
+					yc = (vid.height / 3) / 2;
 				} 
 				else 
 				{ 
-					xc=yc=-2; 
+					xc = yc = -2; 
 				}
 				xd = vid.width - strlen(weapons) * 8 - 70; // weapons
-				yd = vid.height/3 - 8;
+				yd = vid.height / 3 - 8;
 			}
 		}		
 	}
@@ -3346,19 +3977,19 @@ void SCR_DrawStatusMultiview(void)
 		{ 
 			// top
 			xb = vid.width - strlen(strng) * 8 - 12;
-			yb = vid.height/2 - sb_lines - 16;
-			xc = vid.width/2;
-			yc = vid.height/4;
+			yb = vid.height / 2 - sb_lines - 16;
+			xc = vid.width / 2;
+			yc = vid.height / 4;
 			xd = vid.width - strlen(weapons) * 8 - 84;
-			yd = vid.height/2 - sb_lines - 8;
+			yd = vid.height / 2 - sb_lines - 8;
 		}
 		else if (CURRVIEW == 3) 
 		{ 
 			// Bottom left
-			xb = vid.width - (vid.width/2)- strlen(strng) * 8 - 12;
+			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
-			xc = vid.width/4;
-			yc = vid.height/2 + vid.height/4;
+			xc = vid.width / 4;
+			yc = vid.height / 2 + vid.height/4;
 			xd = vid.width - (vid.width/2)- strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 		}
@@ -3367,8 +3998,8 @@ void SCR_DrawStatusMultiview(void)
 			// Bottom right
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
-			xc = vid.width/2 + vid.width/4;
-			yc = vid.height/2 + vid.height/4;
+			xc = vid.width / 2 + vid.width / 4;
+			yc = vid.height / 2 + vid.height / 4;
 			xd = vid.width - strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 		}
@@ -3378,33 +4009,33 @@ void SCR_DrawStatusMultiview(void)
 		if (CURRVIEW == 2) 
 		{ 
 			// Top left
-			xb = vid.width - (vid.width/2)- strlen(strng) * 8 - 12;
-			yb = vid.height/2 - sb_lines - 16;
-			xc = vid.width/4;
-			yc = vid.height/4;
-			xd = vid.width - (vid.width/2)- strlen(weapons) * 8 - 84;
+			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
+			yb = vid.height / 2 - sb_lines - 16;
+			xc = vid.width / 4;
+			yc = vid.height / 4;
+			xd = vid.width - (vid.width / 2)- strlen(weapons) * 8 - 84;
 			yd = vid.height/2 - sb_lines - 8;
 		}
 		else if (CURRVIEW == 3) 
 		{ 
 			// Top right
 			xb = vid.width - strlen(strng) * 8 - 12;
-			yb = vid.height/2 - sb_lines - 16;
-			xc = vid.width/2 + vid.width/4;
-			yc = vid.height/4;
-			xd = vid.width - strlen(weapons)-25 * 8 - 8;
-			yd = vid.height - sb_lines - (vid.height/1.9);
+			yb = vid.height / 2 - sb_lines - 16;
+			xc = vid.width / 2 + vid.width / 4;
+			yc = vid.height / 4;
+			xd = vid.width - strlen(weapons) - 25 * 8 - 8;
+			yd = vid.height - sb_lines - (vid.height / 1.9);
 			xd = vid.width - strlen(weapons) * 8 - 84;
-			yd = vid.height/2 - sb_lines - 8;
+			yd = vid.height / 2 - sb_lines - 8;
 		}
 		else if (CURRVIEW == 4) 
 		{ 
 			// Bottom left
-			xb = vid.width - (vid.width/2)- strlen(strng) * 8 - 12;
+			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
-			xc = vid.width/4;
-			yc = vid.height/2 + vid.height/4;
-			xd = vid.width - (vid.width/2)- strlen(weapons) * 8 - 84;
+			xc = vid.width / 4;
+			yc = vid.height / 2 + vid.height / 4;
+			xd = vid.width - (vid.width / 2)- strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 		}
 		else if (CURRVIEW == 1) 
@@ -3412,8 +4043,8 @@ void SCR_DrawStatusMultiview(void)
 			// Bottom right
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
-			xc = vid.width/2 + vid.width/4;
-			yc = vid.height/2 + vid.height/4;
+			xc = vid.width / 2 + vid.width / 4;
+			yc = vid.height / 2 + vid.height / 4;
 			xd = vid.width - strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 		}
@@ -3424,30 +4055,30 @@ void SCR_DrawStatusMultiview(void)
 		memcpy(cl.stats, cl.players[nTrack1duel].stats, sizeof(cl.stats));
 	}
 
-	// fill the void
+	// Fill the void
 	if (cl_sbar.value && cl_multiview.value==2 && cl_mvinset.value && cl_mvinsethud.value && cl_mvdisplayhud.value) 
 	{
 		if (vid.width > 512)
 		{
-			Draw_Fill(vid.width/3*2+1,vid.height/3-sb_lines/3+1,vid.width/3+2, sb_lines/3-1,c2);
+			Draw_Fill(vid.width / 3 * 2 + 1, vid.height / 3 - sb_lines / 3 + 1, vid.width / 3 + 2, sb_lines / 3 - 1, 0);
 		}
 		else
 		{
-			Draw_Fill(vid.width/3*2+1,vid.height/3-sb_lines/3+1,vid.width/3+2, sb_lines/6 + 1,c2);
+			Draw_Fill(vid.width / 3 * 2 + 1, vid.height / 3 - sb_lines / 3 + 1, vid.width / 3 + 2, sb_lines / 6 + 1, 0);
 		}
 	}
 
-	// hud info
+	// Hud info
 	if ((cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2)
 		|| (cl_mvdisplayhud.value && cl_multiview.value != 2))
 	{
-		Draw_String(xb,yb,strng);
+		Draw_String(xb, yb, strng);
 	}
 	else if (cl_multiview.value == 2 && cl_mvdisplayhud.value && CURRVIEW == 1 && cl_mvinsethud.value) 
 	{
 		if (vid.width > 512)
 		{
-			Draw_String(xb,yb,strng);
+			Draw_String(xb, yb, strng);
 		}
 		else 
 		{
@@ -3464,64 +4095,29 @@ void SCR_DrawStatusMultiview(void)
 			var |= (var >> 16);
 			var++;
 
-			limit = ceil(7.0/192 * vid.width + 4/3); // linearly limit length of name for 320->512 conwidth to fit in inset
-			strlcpy(namestr,name,limit);
+			limit = ceil(7.0 / 192 * vid.width + 4 / 3); // linearly limit length of name for 320->512 conwidth to fit in inset
+			strlcpy(namestr, name, limit);
 
 			if (cl_sbar.value)
 			{
-				Draw_String(vid.width - strlen(namestr) * 8 - var - 2,yb + 1,namestr);
+				Draw_String(vid.width - strlen(namestr) * 8 - var - 2, yb + 1, namestr);
 			}
 			else
 			{
-				Draw_String(vid.width - strlen(namestr) * 8 - var - 2,yb + 4,namestr);
+				Draw_String(vid.width - strlen(namestr) * 8 - var - 2, yb + 4, namestr);
 			}
 		}
 	}
 
-	// weapons
+	// Weapons
 	if ((cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2)
 		|| (cl_mvdisplayhud.value && cl_multiview.value != 2))
 	{
-		Draw_String(xd,yd,weapons);
+		Draw_String(xd, yd, weapons);
 	}
 	else if (cl_multiview.value == 2 && cl_mvdisplayhud.value && CURRVIEW == 1 && vid.width > 512  && cl_mvinsethud.value)
 	{
-		Draw_String(xd,yd,weapons);
-	}
-
-	// borders
-	if (cl_multiview.value == 2 && !cl_mvinset.value) 
-	{
-		Draw_Fill(0,vid.height/2,vid.width-1,1,c2); 
-	}
-	else if (cl_multiview.value == 2 && cl_mvinset.value) 
-	{
-		if (vid.width <= 512 && cl_sbar.value) 
-		{
-			Draw_Fill(vid.width/3*2+1,vid.height/3-sb_lines/3,vid.width/3+2,1,c2);
-			Draw_Fill(vid.width/3*2+1,0,1,vid.height/3-sb_lines/3,c2);
-		} 
-		else if ((vid.width>512 && cl_sbar.value && !cl_mvinsethud.value) || (vid.width>512 && cl_sbar.value && !cl_mvdisplayhud.value)) 
-		{
-			Draw_Fill(vid.width/3*2,vid.height/3-sb_lines/3,vid.width/3,1,c2);
-			Draw_Fill(vid.width/3*2,0,1,vid.height/3-sb_lines/3,c2);
-		}
-		else 
-		{
-			// sbar 0 and <= 512 conwidth
-			Draw_Fill(vid.width/3*2+1,vid.height/3,vid.width/3+2,1,c2);
-			Draw_Fill(vid.width/3*2+1,0,1,vid.height/3,c2);
-		}
-	}
-	else if (cl_multiview.value == 3) 
-	{
-		Draw_Fill(vid.width/2,vid.height/2,1,vid.height/2,c2);
-		Draw_Fill(0,vid.height/2,vid.width-0,1,c2); 
-	}
-	else if (cl_multiview.value == 4) 
-	{
-		Draw_Fill(vid.width/2,0,1,vid.height,c2);
-		Draw_Fill(0,vid.height/2,vid.width-0,1,c2);
+		Draw_String(xd, yd, weapons);
 	}
 }
 
