@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.85 2006-12-04 00:07:48 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.86 2006-12-05 18:20:53 vvd0 Exp $
 */
 //
 // common HUD elements
@@ -1599,19 +1599,21 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 {
     extern mpic_t *sb_nums[2][11];
 
-    int  i;
-    char buf[8], *t;
+    int  i, t;
+    char buf[sizeof(int) * 3]; // each byte need <= 3 chars
     int  len;
 
     int width, height, x, y;
     int size;
     int align;
+	qbool overflow;
 
-    clamp(num, -9999, 99999);
+	if (num < 0) num = -num;
+    clamp(num, 0, 999999);
 
     scale = max(scale, 0.01);
 
-    clamp(digits, 1, 5);
+    clamp(digits, 1, 6);
 
     align = 2;
     switch (tolower(s_align[0]))
@@ -1625,16 +1627,21 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
         align = 2; break;
     }
 
+	t = 1;
+	for (i = 0; i < digits; i++)
+		t *= 10;
+	overflow = num > t;
+	num %= t;
     sprintf(buf, "%d", num);
     len = strlen(buf);
-    if (len > digits)
-    {
-        t = buf;
-        for (i=0; i < digits; i++)
-            *t++ = '9';
-        *t = 0;
-        len = strlen(buf);
-    }
+	t = digits - len;
+	if (t > 0 && overflow)
+	{
+		sprintf(buf + t, "%d", num);
+		for (i = 0; i < t; i++)
+			buf[i] = '0';
+		len = digits;
+	}
 
     switch (style)
     {

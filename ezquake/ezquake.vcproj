@@ -24,7 +24,7 @@
 				Optimization="0"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="libs"
-				PreprocessorDefinitions="_DEBUG;id386;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_PNG;WITH_ZLIB;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__"
+				PreprocessorDefinitions="_DEBUG;id386;GLQUAKE;WITH_KEYMAP;WITH_JPEG;WITH_PNG;WITH_ZLIB;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__;STATIC_BUILD;XML_STATIC;WITH_JPEG_STATIC;WITH_PNG_STATIC"
 				StringPooling="FALSE"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="FALSE"
@@ -48,7 +48,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libexpat.lib libtcl8.4.lib libpcre.lib libpng.lib libjpeg.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib"
+				AdditionalDependencies="libexpat.lib libtcl8.4.lib libpcre.lib libpng.lib libjpeg.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libz.lib"
 				ShowProgress="0"
 				OutputFile="../ezquake-gl-debug.exe"
 				Version=""
@@ -108,7 +108,7 @@
 				OptimizeForProcessor="2"
 				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="libs"
-				PreprocessorDefinitions="NDEBUG;id386;WITH_ZLIB;WITH_PNG;WITH_KEYMAP;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__"
+				PreprocessorDefinitions="NDEBUG;id386;WITH_ZLIB;WITH_PNG;WITH_KEYMAP;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__;STATIC_BUILD;XML_STATIC;WITH_JPEG_STATIC;WITH_PNG_STATIC"
 				StringPooling="TRUE"
 				ExceptionHandling="FALSE"
 				RuntimeLibrary="4"
@@ -130,7 +130,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libexpat.lib libtcl8.4.lib libpcre.lib libpng.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib dsound.lib"
+				AdditionalDependencies="libexpat.lib libtcl8.4.lib libpcre.lib libpng.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib dsound.lib libz.lib"
 				OutputFile="../ezquake.exe"
 				Version=""
 				LinkIncremental="1"
@@ -191,7 +191,7 @@
 				OptimizeForProcessor="2"
 				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="libs"
-				PreprocessorDefinitions="NDEBUG;id386;WITH_KEYMAP;WITH_PNG;WITH_JPEG;GLQUAKE;WITH_ZLIB;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__"
+				PreprocessorDefinitions="NDEBUG;id386;WITH_KEYMAP;WITH_PNG;WITH_JPEG;GLQUAKE;WITH_ZLIB;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__;STATIC_BUILD;XML_STATIC;WITH_JPEG_STATIC"
 				StringPooling="TRUE"
 				ExceptionHandling="FALSE"
 				RuntimeLibrary="4"
@@ -212,8 +212,8 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386 "
-				AdditionalDependencies="libexpat.lib libtcl8.4.lib libpcre.lib libpng.lib libjpeg.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib"
+				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="libexpat.lib libtcl8.4.lib libpcre.lib libpng.lib libjpeg.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libz.lib"
 				OutputFile="../ezquake-gl.exe"
 				Version=""
 				LinkIncremental="1"
@@ -226,7 +226,8 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				OptimizeForWindows98="1"
-				SetChecksum="TRUE"/>
+				SetChecksum="TRUE"
+				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
@@ -270,7 +271,7 @@
 				FavorSizeOrSpeed="0"
 				OptimizeForProcessor="2"
 				AdditionalIncludeDirectories="libs"
-				PreprocessorDefinitions="_DEBUG;id386;WITH_ZLIB;WITH_PNG;WITH_KEYMAP;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__"
+				PreprocessorDefinitions="_DEBUG;id386;WITH_ZLIB;WITH_PNG;WITH_KEYMAP;EMBED_TCL;JSS_CAM;__LITTLE_ENDIAN__Q__;STATIC_BUILD;XML_STATIC;WITH_JPEG_STATIC;WITH_PNG_STATIC"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="FALSE"
 				RuntimeLibrary="4"
@@ -292,7 +293,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="libexpat.lib libtcl8.4.lib libpcre.lib libpng.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib dsound.lib"
+				AdditionalDependencies="libexpat.lib libtcl8.4.lib libpcre.lib libpng.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib dsound.lib libz.lib"
 				OutputFile="../ezquake-debug.exe"
 				Version=""
 				LinkIncremental="2"

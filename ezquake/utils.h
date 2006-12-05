@@ -16,11 +16,13 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+	$Id: utils.h,v 1.9 2006-12-05 18:20:53 vvd0 Exp $
+
 */
 
-#ifndef __UTILS_H_
-
-#define __UTILS_H_
+#ifndef __UTILS_H__
+#define __UTILS_H__
 
 #define	PLAYER_ID_NOMATCH		-1
 #define	PLAYER_NAME_NOMATCH		-2
@@ -29,8 +31,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 char *CreateSpaces(int amount);
 char *SecondsToMinutesString(int print_time);
 char *SecondsToHourString(int time);
-char *ColorNameToRGBString(const char *color_name);
-byte *StringToRGB(const char *s);
+char *ColorNameToRGBString(char *color_name);
+byte *StringToRGB(char *s);
 
 int Util_Extend_Filename(char *filename, char **ext);
 qbool Util_Is_Valid_Filename(char *s);
@@ -52,4 +54,4 @@ int Utils_TF_TeamToColor(char *);
 
 void Replace_In_String (char *src,int n, char delim, int arg, ...);
 
-#endif
+#endif /* !__UTILS_H__ */

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.24 2006-12-01 20:38:38 cokeman1982 Exp $
+	$Id: utils.c,v 1.25 2006-12-05 18:20:53 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -84,7 +84,7 @@ char *SecondsToHourString(int print_time) {
 #define COLOR_CHECK(_colorname, _colorstring, _rgbstring) \
 	if(!strncmp(_colorstring, _colorname, strlen(_colorstring))) return _rgbstring
 
-char *ColorNameToRGBString(const char *color_name)
+char *ColorNameToRGBString(char *color_name)
 {
 	COLOR_CHECK(color_name, "red",		RGB_COLOR_RED);
 	COLOR_CHECK(color_name, "green",	RGB_COLOR_GREEN);
@@ -97,7 +97,7 @@ char *ColorNameToRGBString(const char *color_name)
 	return color_name;
 }
 
-byte *StringToRGB(const char *s) {
+byte *StringToRGB(char *s) {
 	int i;
 	static byte rgb[4];
 
@@ -568,3 +568,11 @@ int Utils_TF_TeamToColor(char *team) {
 		return 11;
 	return 0;
 }
+
+#if (_MSC_VER < 1400)
+extern _ftol2(double f);
+long _ftol2_sse(double f)
+{
+	return _ftol2(f);
+}
+#endif
