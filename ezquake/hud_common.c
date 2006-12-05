@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.86 2006-12-05 18:20:53 vvd0 Exp $
+	$Id: hud_common.c,v 1.87 2006-12-05 22:45:37 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -3839,6 +3839,7 @@ static float map_height_diff = 0.0;
 void HUD_NewRadarMap()
 {
 	FILE *f = NULL;
+	FILE *f2 = NULL;
 	int n_textcount = 0;
 	png_textp txt;
 	int i = 0;
@@ -3850,7 +3851,7 @@ void HUD_NewRadarMap()
 	radar_pic_found = false;
 	conversion_formula_found = false;
 
-	if (FS_FOpenFile (va(radar_filename, mapname.string), &f) != -1)
+	if (FS_FOpenFile (va(radar_filename, mapname.string), &f2) != -1)
 	{
 
 		// Load the map picture.
@@ -3868,10 +3869,10 @@ void HUD_NewRadarMap()
 			conversion_formula_found = false;
 			
 			// Make sure we close the file.
-			if(f != NULL)
+			if(f2 != NULL)
 			{
-				fclose(f);
-				f = NULL;
+				fclose(f2);
+				f2 = NULL;
 			}
 
 			return;
@@ -3932,10 +3933,10 @@ void HUD_NewRadarMap()
 	}
 
 	// Make sure we close the file.
-	if(f != NULL)
+	if(f2 != NULL)
 	{
-		fclose(f);
-		f = NULL;
+		fclose(f2);
+		f2 = NULL;
 	}
 }
 #endif // OPENGL
