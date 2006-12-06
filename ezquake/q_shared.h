@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.10 2006-08-25 19:16:15 vvd0 Exp $
+    $Id: q_shared.h,v 1.11 2006-12-06 01:01:04 cokeman1982 Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -182,7 +182,7 @@ void *Q_calloc (size_t n, size_t size);
 void *Q_realloc (void *p, size_t newsize);
 char *Q_strdup (const char *src);
 // might be turned into a function that makes sure all Q_*alloc calls are matched with Q_free
-#define Q_free(ptr) free(ptr)
+#define Q_free(ptr) if(ptr) { free(ptr); ptr = NULL; }
 //============================================================================
 // chat icons flags 
 // used now by client code only, but may be used in future by server code too, so put here
