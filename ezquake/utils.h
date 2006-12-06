@@ -9,7 +9,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the included (GNU.txt) GNU General Public License for more details.
 
@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.h,v 1.9 2006-12-05 18:20:53 vvd0 Exp $
+	$Id: utils.h,v 1.10 2006-12-06 00:55:04 cokeman1982 Exp $
 
 */
 
@@ -53,5 +53,8 @@ char *Utils_TF_ColorToTeam(int);
 int Utils_TF_TeamToColor(char *);
 
 void Replace_In_String (char *src,int n, char delim, int arg, ...);
+
+qbool Utils_RegExpMatch(char *regexp, char *matchstring);
+qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, char **resultstring, int *resultlength, int group);
 
 #endif /* !__UTILS_H__ */

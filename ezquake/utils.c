@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.25 2006-12-05 18:20:53 vvd0 Exp $
+	$Id: utils.c,v 1.26 2006-12-06 00:54:54 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -567,6 +567,126 @@ int Utils_TF_TeamToColor(char *team) {
 	if (!strcasecmp(team, Utils_TF_ColorToTeam(11)))
 		return 11;
 	return 0;
+}
+
+qbool Utils_RegExpMatch(char *regexp, char *matchstring)
+{
+	int offsets[HUD_REGEXP_OFFSET_COUNT];
+	pcre *re = NULL;
+	char *error = NULL;
+	int erroffset = 0;
+	int match = 0;
+
+	re = pcre_compile(
+			regexp,				// The pattern.
+			PCRE_CASELESS,		// Case insensitive.
+			&error,				// Error message.
+			&erroffset,			// Error offset.
+			NULL);				// use default character tables.
+
+	// Check for an error compiling the regexp.
+	if(error)
+	{
+		Q_free(error);
+		error = NULL;
+
+		if(re)
+		{
+			Q_free(re);
+			re = NULL;
+		}
+
+		return false;
+	}
+
+	// Check if we have a match.
+	if(re && (match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0)
+	{
+		if(re)
+		{
+			Q_free(re);
+			re = NULL;
+		}
+
+		return true;
+	}
+
+	// Make sure we clean up.
+	if(re)
+	{
+		Q_free(re);
+		re = NULL;
+	}
+
+	if(error)
+	{
+		Q_free(error);
+		error = NULL;
+	}
+
+	return false;
+}
+
+qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, char **resultstring, int *resultlength, int group)
+{
+	int offsets[HUD_REGEXP_OFFSET_COUNT];
+	pcre *re = NULL;
+	char *error = NULL;
+	int erroffset = 0;
+	int match = 0;
+
+	re = pcre_compile(
+			regexp,				// The pattern.
+			PCRE_CASELESS,		// Case insensitive.
+			&error,				// Error message.
+			&erroffset,			// Error offset.
+			NULL);				// use default character tables.
+
+	if(error)
+	{
+		Q_free(error);
+		error = NULL;
+
+		if(re)
+		{
+			Q_free(re);
+			re = NULL;
+		}
+		return false;
+	}
+
+	if(re && (match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0)
+	{
+		int substring_length = 0;
+		substring_length = pcre_get_substring (matchstring, offsets, match, group, resultstring);
+		
+		if (resultlength != NULL)
+		{
+			(*resultlength) = substring_length;
+		}
+
+		if(re)
+		{
+			Q_free(re);
+			re = NULL;
+		}
+
+		return (substring_length != PCRE_ERROR_NOSUBSTRING && substring_length != PCRE_ERROR_NOMEMORY);
+	}
+
+	if(re)
+	{
+		Q_free(re);
+		re = NULL;
+	}
+
+	if(error)
+	{
+		Q_free(error);
+		error = NULL;
+	}
+
+	return false;
 }
 
 #if (_MSC_VER < 1400)
