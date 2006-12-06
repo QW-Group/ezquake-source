@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.91 2006-12-06 21:12:51 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.92 2006-12-06 23:44:15 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -4745,7 +4745,8 @@ qbool Radar_OnChangeHighlightColor(cvar_t *var, char *newval)
 
 	// Set the cvar to contain the new color string
 	// (if the user entered "red" it will be "255 0 0").
-	Cvar_Set(var, new_color);
+	// FIXME! johnnycz: following line makes my client exit when entering any map so i commented it out
+	// Cvar_Set(var, new_color);
 
 	return true;
 }
