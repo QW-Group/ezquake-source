@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.105 2006-11-23 17:28:51 disconn3ct Exp $
+	$Id: cl_main.c,v 1.106 2006-12-06 21:16:44 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1299,21 +1299,22 @@ void CL_Frame (double time) {
 		cls.frametime = min(0.2, cls.trueframetime);
 
 	//#fps:
-	if (cl_independentPhysics.value != 0) {
+	if (cl_independentPhysics.value != 0) 
+	{
 		double minphysframetime = MinPhysFrameTime();
 
 		extraphysframetime += cls.frametime;
 		if (extraphysframetime < minphysframetime)
 			physframe = false;
-		else {
+		else 
+		{
 			physframe = true;
 
-		if (extraphysframetime > minphysframetime*2)// FIXME: this is for the case when
-			physframetime = extraphysframetime;	// actual fps is too low
-		else									// Dunno how to do it right
-
-		physframetime = minphysframetime;
-		extraphysframetime -= physframetime;
+			if (extraphysframetime > minphysframetime*2)// FIXME: this is for the case when
+				physframetime = extraphysframetime;		// actual fps is too low
+			else										// Dunno how to do it right
+				physframetime = minphysframetime;
+			extraphysframetime -= physframetime;
 		}	
 	}
 
@@ -1338,19 +1339,19 @@ void CL_Frame (double time) {
 			cl.gametime += cls.frametime;
 		else
 			cl.gametime = Sys_DoubleTime() - cl.gamestarttime - cl.gamepausetime;
-	} else {
+	} 
+	else 
+	{
 		// we hope here, that pause doesn't take long so we don't get too much de-synced
 		// if pause takes too much, we can get into usual clock sync-problems as we did before
 		cl.gamepausetime += cls.frametime; 
-	}
-		
+	}		
 									
 	r_refdef2.time = cl.time;
 
 	// get new key events
-
-	if (cl_independentPhysics.value == 0) {
-
+	if (cl_independentPhysics.value == 0) 
+	{
 		Sys_SendKeyEvents();
 
 		// allow mice or other external controllers to add commands
@@ -1363,13 +1364,10 @@ void CL_Frame (double time) {
 		if (com_serveractive)
 			SV_Frame(cls.frametime);
 
-
-
 		// fetch results from server
 		CL_ReadPackets();
 
 		TP_UpdateSkins();
-
 
 		if (cls.mvdplayback)
 		{
@@ -1377,13 +1375,12 @@ void CL_Frame (double time) {
 			MVD_Mainhook_f();
 			StatsGrid_Gather();
 		}
+
 		// process stuffed commands
 		Cbuf_ExecuteEx(&cbuf_svc);
 
 		CL_SendToServer();
-
 	}
-
 	else {
 
 		//#fps
@@ -1428,7 +1425,6 @@ void CL_Frame (double time) {
 			usercmd_t dummy;
 			IN_Move (&dummy);
 		}
-
 	}
 
 	{ // chat icons
