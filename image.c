@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.29 2006-11-25 17:33:40 disconn3ct Exp $
+    $Id: image.c,v 1.30 2006-12-06 21:11:39 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -810,157 +810,228 @@ static void PNG_IO_user_flush_data(png_structp png_ptr) {
 	fflush(f);
 }
 
-png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matchheight)
+#define PNG_HEADER_LENGTH	8
+#define PNG_LOAD_TEXT		1
+#define PNG_LOAD_DATA		2
+
+static qbool PNG_HasHeader (FILE *fin)
 {
-	byte header[8], **rowpointers, *data;
-	png_structp png_ptr;
-	png_infop pnginfo;
-	png_textp textchunks;				// Actual text chunks that will be returned.
-	png_textp png_text_ptr;				// Text chunks are read into this (will be scrapped by libpng).
-	png_data *png_return_val;			// Return struct containing data + text chunks.
+	byte header[8];
+
+	fread(header, 1, PNG_HEADER_LENGTH, fin);
+
+	if (png_sig_cmp(header, 0, PNG_HEADER_LENGTH)) 
+	{
+		fclose(fin);
+		fin = NULL;
+		return false;
+	}
+
+	return true;
+}
+
+png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matchheight, int loadflag)
+{
+	byte **rowpointers = NULL;
+	byte *data = NULL;
+	png_structp png_ptr = NULL;
+	png_infop pnginfo = NULL;			
+	png_textp textchunks = NULL;		// Actual text chunks that will be returned.
+	png_textp png_text_ptr = NULL;		// Text chunks are read into this (will be scrapped by libpng).
+	png_data *png_return_val = NULL;	// Return struct containing data + text chunks.
 	int n_textcount = 0;				// Number of text chunks.
 	int y, width, height, bitdepth, colortype, interlace, compression, filter, bytesperpixel;
 	unsigned long rowbytes;
 
+	// Check if we were given a non-null file pointer
+	// if so then use it, otherwise try to open the specified filename.
 	if (!fin && FS_FOpenFile (filename, &fin) == -1)
 	{
 		return NULL;
 	}
 
-	fread(header, 1, 8, fin);
-
-	if (png_sig_cmp(header, 0, 8)) 
+	// Check if the loaded file contains a PNG header.
+	if (!PNG_HasHeader (fin))
 	{
 		Com_DPrintf ("Invalid PNG image %s\n", COM_SkipPath(filename));
-		fclose(fin);
-		return NULL;
+		return;
 	}
 
+	// Try creating a PNG structure for reading the file.
 	if (!(png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) 
 	{
 		fclose(fin);
+		fin = NULL;
 		return NULL;
 	}
 
+	// Create a structure for reading the characteristics of the image.
 	if (!(pnginfo = png_create_info_struct(png_ptr))) 
 	{
 		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
 		fclose(fin);
+		fin = NULL;
 		return NULL;
 	}
 
+	// Set the return adress that PNGLib should return to if
+	// an error occurs during reading.
 	if (setjmp(png_ptr->jmpbuf)) 
 	{
 		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
 		fclose(fin);
+		fin = NULL;
 		return NULL;
 	}
 
+	// Set the read function that should be used.
     png_set_read_fn(png_ptr, fin, PNG_IO_user_read_data);
-	png_set_sig_bytes(png_ptr, 8);
+
+	// Tell PNG-lib that we have already handled the first <num_bytes> magic bytes.
+	// Handling more than 8 bytes from the beginning of the file is an error.
+	png_set_sig_bytes(png_ptr, PNG_HEADER_LENGTH);
+
+	// Read all the file information until the actual image data.
 	png_read_info(png_ptr, pnginfo);
-	png_get_IHDR(png_ptr, pnginfo, (png_uint_32 *) &width, (png_uint_32 *) &height, &bitdepth,
-		&colortype, &interlace, &compression, &filter);
 
-	// Get the text chunks found before the image data.
-	n_textcount = 0;
-	png_get_text(png_ptr, pnginfo, &png_text_ptr, &n_textcount);
-
-	if (width > IMAGE_MAX_DIMENSIONS || height > IMAGE_MAX_DIMENSIONS) 
+	// Get the IHDR info and set transformations based on it's contents
+	// suc as pallete type / bit depth.
+	//
+	// The IHDR chunk contains the width, height, bpp, colortype, 
+	// filter method and compression type used.
+	// This must be the first chunk in the file.
 	{
-		Com_DPrintf ("PNG image %s exceeds maximum supported dimensions\n", COM_SkipPath(filename));
-		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
-		fclose(fin);
-		return NULL;
-	}
+		png_get_IHDR(png_ptr, pnginfo, (png_uint_32 *) &width, (png_uint_32 *) &height, &bitdepth,
+			&colortype, &interlace, &compression, &filter);
 
-	if ((matchwidth && width != matchwidth) || (matchheight && height != matchheight)) 
-	{
-		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
-		fclose(fin);
-		return NULL;
-	}
-
-	if (colortype == PNG_COLOR_TYPE_PALETTE) 
-	{
-		png_set_palette_to_rgb(png_ptr);
-		png_set_filler(png_ptr, 255, PNG_FILLER_AFTER);		
-	}
-
-	if (colortype == PNG_COLOR_TYPE_GRAY && bitdepth < 8) 
-	{
-		png_set_gray_1_2_4_to_8(png_ptr);
-	}
-	
-	if (png_get_valid(png_ptr, pnginfo, PNG_INFO_tRNS))	
-	{
-		png_set_tRNS_to_alpha(png_ptr);
-	}
-
-	if (colortype == PNG_COLOR_TYPE_GRAY || colortype == PNG_COLOR_TYPE_GRAY_ALPHA)
-	{
-		png_set_gray_to_rgb(png_ptr);
-	}
-
-	if (colortype != PNG_COLOR_TYPE_RGBA)
-	{
-		png_set_filler(png_ptr, 255, PNG_FILLER_AFTER);
-	}
-
-	if (bitdepth < 8)
-	{
-		png_set_expand (png_ptr);
-	}
-	else if (bitdepth == 16)
-	{
-		png_set_strip_16(png_ptr);
-	}
-
-	png_read_update_info(png_ptr, pnginfo);
-	rowbytes = png_get_rowbytes(png_ptr, pnginfo);
-	bytesperpixel = png_get_channels(png_ptr, pnginfo);
-	bitdepth = png_get_bit_depth(png_ptr, pnginfo);
-
-	if (bitdepth != 8 || bytesperpixel != 4) 
-	{
-		Com_DPrintf ("Unsupported PNG image %s: Bad color depth and/or bpp\n", COM_SkipPath(filename));
-		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
-		fclose(fin);
-		return NULL;
-	}
-
-	data = (byte *) Q_malloc(height * rowbytes );
-	rowpointers = (byte **) Q_malloc(height * sizeof(*rowpointers));
-
-	for (y = 0; y < height; y++)
-	{
-		rowpointers[y] = data + y * rowbytes;
-	}
-
-	png_read_image(png_ptr, rowpointers);
-	png_read_end(png_ptr, pnginfo);
-	
-	// Read text chunks after the image data also.
-	png_get_text(png_ptr, pnginfo, &png_text_ptr, &n_textcount);
-
-	// Return the text chunks if we found any.
-	if(n_textcount > 0)
-	{
-		int i;
-		int len;
-		textchunks = (png_textp)Q_malloc(sizeof(png_text) * n_textcount);
-
-		if(textchunks != NULL)
+		// Too big?
+		if (width > IMAGE_MAX_DIMENSIONS || height > IMAGE_MAX_DIMENSIONS) 
 		{
+			Com_DPrintf ("PNG image %s exceeds maximum supported dimensions\n", COM_SkipPath(filename));
+			png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+			fclose(fin);
+			fin = NULL;
+			return NULL;
+		}
+
+		// If the caller wanted the image to be a specific size
+		// make sure it is that size, otherwise cleanup and return.
+		if ((matchwidth && width != matchwidth) || (matchheight && height != matchheight)) 
+		{
+			png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+			fclose(fin);
+			fin = NULL;
+			return NULL;
+		}
+
+		if (colortype == PNG_COLOR_TYPE_PALETTE) 
+		{
+			png_set_palette_to_rgb(png_ptr);
+			png_set_filler(png_ptr, 255, PNG_FILLER_AFTER);		
+		}
+
+		if (colortype == PNG_COLOR_TYPE_GRAY && bitdepth < 8) 
+		{
+			png_set_gray_1_2_4_to_8(png_ptr);
+		}
+		
+		if (png_get_valid(png_ptr, pnginfo, PNG_INFO_tRNS))	
+		{
+			png_set_tRNS_to_alpha(png_ptr);
+		}
+
+		if (colortype == PNG_COLOR_TYPE_GRAY || colortype == PNG_COLOR_TYPE_GRAY_ALPHA)
+		{
+			png_set_gray_to_rgb(png_ptr);
+		}
+
+		if (colortype != PNG_COLOR_TYPE_RGBA)
+		{
+			png_set_filler(png_ptr, 255, PNG_FILLER_AFTER);
+		}
+
+		if (bitdepth < 8)
+		{
+			png_set_expand (png_ptr);
+		}
+		else if (bitdepth == 16)
+		{
+			png_set_strip_16(png_ptr);
+		}
+
+		// Update the pnginfo structure with our transformation changes.
+		png_read_update_info(png_ptr, pnginfo);
+	}
+
+	//
+	// Read the text chunks before the image data.
+	//
+	if (loadflag & PNG_LOAD_TEXT)
+	{
+		// Get the text chunks found before the image data.
+		n_textcount = 0;
+		png_get_text(png_ptr, pnginfo, &png_text_ptr, &n_textcount);
+	}
+
+	//
+	// Read the image data.
+	//
+	{
+		// Get the number of bytes a row will use / number of channels / bitdepth.
+		rowbytes = png_get_rowbytes(png_ptr, pnginfo);
+		bytesperpixel = png_get_channels(png_ptr, pnginfo);
+		bitdepth = png_get_bit_depth(png_ptr, pnginfo);
+
+		// We don't support some formats.
+		if (bitdepth != 8 || bytesperpixel != 4) 
+		{
+			Com_DPrintf ("Unsupported PNG image %s: Bad color depth and/or bpp\n", COM_SkipPath(filename));
+			png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+			fclose(fin);
+			fin = NULL;
+			return NULL;
+		}
+
+		// Allocate a byte array for the actual image data.
+		data = (byte *) Q_malloc(height * rowbytes );
+
+		// Even though we just allocated the memory for all the image data
+		// PNG lib wants this in the form of rowpointers.
+		rowpointers = (byte **) Q_malloc(height * sizeof(*rowpointers));
+		for (y = 0; y < height; y++)
+		{
+			rowpointers[y] = data + y * rowbytes;
+		}
+
+		// Read the actual image data.
+		png_read_image(png_ptr, rowpointers);
+		png_read_end(png_ptr, pnginfo);
+	}
+	
+	//
+	// Read the text chunks after the image data.
+	//
+	if (loadflag & PNG_LOAD_TEXT)
+	{
+		// Read text chunks after the image data also.
+		png_get_text(png_ptr, pnginfo, &png_text_ptr, &n_textcount);
+	
+		// Return the text chunks if we found any.
+		if(n_textcount > 0)
+		{
+			int i = 0;
+			int len = 0;
+			textchunks = (png_textp)Q_calloc(n_textcount, sizeof(png_text));
+
 			for(i = 0; i < n_textcount; i++)
 			{
 				len = strlen(png_text_ptr[i].key);
 
-				textchunks[i].key = (char *)Q_malloc(sizeof(char) * len + 1);
-				textchunks[i].text = (char *)Q_malloc(sizeof(char) * png_text_ptr[i].text_length + 1);
+				textchunks[i].key = (char *)Q_calloc(len + 1, sizeof(char));
+				textchunks[i].text = (char *)Q_calloc(png_text_ptr[i].text_length + 1, sizeof(char));
 
-				strncpy(textchunks[i].key, png_text_ptr[i].key, len);
-				strncpy(textchunks[i].text, png_text_ptr[i].text, png_text_ptr[i].text_length);
+				strlcpy (textchunks[i].key, png_text_ptr[i].key, len + 1);
+				strlcpy (textchunks[i].text, png_text_ptr[i].text, png_text_ptr[i].text_length + 1);
 				
 				textchunks[i].text_length = png_text_ptr[i].text_length;
 				textchunks[i].compression = png_text_ptr[i].compression;
@@ -971,16 +1042,22 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 			textchunks = NULL;
 		}
 	}
-	else
-	{
-		textchunks = NULL;
-	}
 
-	png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
-	Q_free(rowpointers);
-	fclose(fin);
+	// Clean up.
+	png_destroy_read_struct (&png_ptr, &pnginfo, NULL);
+	Q_free (rowpointers);
+	fclose (fin);
+	fin = NULL;
+
 	image_width = width;
 	image_height = height;
+
+	// If we don't care about the data.
+	if (!(loadflag & PNG_LOAD_DATA))
+	{
+		Q_free (data);
+		data = NULL;
+	}
 
 	// Gather up the return data.
 	png_return_val = (png_data *)Q_malloc(sizeof(png_data));	
@@ -991,21 +1068,21 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 	return png_return_val;
 }
 
-png_textp Image_LoadPNG_Comments(FILE *fin, char *filename, int *text_count)
+png_textp Image_LoadPNG_Comments (char *filename, int *text_count)
 {
-	//png_textp *textchunks;
-	png_textp textchunks;
-	png_data *pdata;
-	pdata = Image_LoadPNG_All(fin, filename, 0, 0);
+	png_textp textchunks = NULL;
+	png_data *pdata = NULL;
 
-	// Not using the image data so free it.
-	Q_free(pdata->data);
-	
-	// Return text chunks + count.
-	*text_count = pdata->text_count;
-	textchunks = pdata->textchunks;
+	pdata = Image_LoadPNG_All (NULL, filename, NULL, NULL, PNG_LOAD_TEXT);
 
-	Q_free(pdata);
+	if (pdata)
+	{		
+		// Return text chunks + count.
+		(*text_count) = pdata->text_count;
+		textchunks = pdata->textchunks;
+
+		Q_free(pdata);
+	}
 
 	return textchunks;
 }
@@ -1016,13 +1093,14 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight)
 	png_data *pdata;
 	
 	// Load the actual image.
-	pdata = Image_LoadPNG_All(fin, filename, matchwidth, matchheight);
-	data = pdata->data;
-
-	// Not used.
-	Q_free(pdata->textchunks);
-
-	Q_free(pdata);
+	pdata = Image_LoadPNG_All (fin, filename, matchwidth, matchheight, PNG_LOAD_DATA);
+	
+	if (pdata)
+	{
+		// Save the data and free the rest.
+		data = pdata->data;
+		Q_free(pdata);
+	}
 	
 	return data;
 }
