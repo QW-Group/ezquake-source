@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.51 2006-12-02 15:52:58 johnnycz Exp $
+    $Id: teamplay.c,v 1.52 2006-12-06 00:47:10 cokeman1982 Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -382,24 +382,6 @@ char *Macro_WeaponNum (void)
 int BestWeapon (void)
 {
 	return BestWeaponFromStatItems (cl.stats[STAT_ITEMS]);
-	/*int i;
-	char *t[] = {tp_weapon_order.string, "78654321", NULL}, **s;
-
-	for (s = t; *s; s++) {
-		for (i = 0 ; i < strlen(*s) ; i++) {
-			switch ((*s)[i]) {
-					case '1': if (cl.stats[STAT_ITEMS] & IT_AXE) return IT_AXE; break;
-					case '2': if (cl.stats[STAT_ITEMS] & IT_SHOTGUN) return IT_SHOTGUN; break;
-					case '3': if (cl.stats[STAT_ITEMS] & IT_SUPER_SHOTGUN) return IT_SUPER_SHOTGUN; break;
-					case '4': if (cl.stats[STAT_ITEMS] & IT_NAILGUN) return IT_NAILGUN; break;
-					case '5': if (cl.stats[STAT_ITEMS] & IT_SUPER_NAILGUN) return IT_SUPER_NAILGUN; break;
-					case '6': if (cl.stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER) return IT_GRENADE_LAUNCHER; break;
-					case '7': if (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER) return IT_ROCKET_LAUNCHER; break;
-					case '8': if (cl.stats[STAT_ITEMS] & IT_LIGHTNING) return IT_LIGHTNING; break;
-			}
-		}
-	}
-	return 0;*/
 }
 
 int BestWeaponFromStatItems (int stat)
