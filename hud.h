@@ -135,7 +135,4 @@ qbool HUD_PrepareDrawByName(
 // last phase of initialization
 void HUD_InitFinish(void);
 
-qbool HUD_RegExpMatch(const char *regexp, const char *matchstring);
-qbool HUD_RegExpGetGroup(const char *regexp, const char *matchstring, const char **resultstring, int *resultlength, int group);
-
 #endif // __hud_h__
