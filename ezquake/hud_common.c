@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.90 2006-12-06 19:55:28 johnnycz Exp $
+	$Id: hud_common.c,v 1.91 2006-12-06 21:12:51 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -3832,64 +3832,41 @@ static qbool conversion_formula_found = false;
 // Used for drawing the height of the player.
 static float map_height_diff = 0.0;
 
+#define RADAR_BASE_PATH_FORMAT	"radars/%s.png"
+
 //
 // Is run when a new map is loaded.
 //
 void HUD_NewRadarMap()
 {
-	// TODO: Fix loading of PNG/comments.
-	FILE *f = NULL;
-	FILE *f2 = NULL;
-	int n_textcount = 0;
-	png_textp txt;
 	int i = 0;
-	char radar_filename[] = "radars/%s.png";
-	txt = NULL;
+	int len = 0;
+	int n_textcount = 0;
+	mpic_t *radar_pic_p = NULL;
+	png_textp txt = NULL;
+	char *radar_filename = NULL;
 
 	// Reset the radar pic status.
 	memset (&radar_pic, 0, sizeof(radar_pic));
 	radar_pic_found = false;
 	conversion_formula_found = false;
 
-	if (FS_FOpenFile (va(radar_filename, mapname.string), &f2) != -1)
+	// Allocate a string for the path to the radar image.
+	len = strlen (RADAR_BASE_PATH_FORMAT) +  strlen (mapname.string);
+	radar_filename = Q_calloc (len, sizeof(char));
+	snprintf (radar_filename, len, RADAR_BASE_PATH_FORMAT, mapname.string);
+
+	// Load the map picture.
+	if ((radar_pic_p = GL_LoadPicImage (radar_filename, mapname.string, 0, 0, TEX_ALPHA)) != NULL)
 	{
-
-		// Load the map picture.
-		radar_pic = *GL_LoadPicImage(va(radar_filename, mapname.string), mapname.string, 0, 0, TEX_ALPHA);
-
-		// Check if we found something
-		if(radar_pic.height && radar_pic.width)
-		{
-			radar_pic_found = true;
-		}
-		else
-		{
-			memset (&radar_pic, 0, sizeof(radar_pic));
-			radar_pic_found = false;
-			conversion_formula_found = false;
-
-			// Make sure we close the file.
-			if(f2 != NULL)
-			{
-				fclose(f2);
-				f2 = NULL;
-			}
-
-			return;
-		}
+		radar_pic = *radar_pic_p;
+		radar_pic_found = true;
 
 		// Calculate the height of the map.
 		map_height_diff = abs(cl.worldmodel->maxs[2] - cl.worldmodel->mins[2]);
 
 		// Get the comments from the PNG.
-		txt = Image_LoadPNG_Comments(f, va(radar_filename, mapname.string), &n_textcount);
-
-		// TODO: If failed, try to read conversion formula from a .qcf file instead.
-		// "quake conversion formula" :D Looking something like this:
-		// X_SLOPE 0.184
-		// X_INTERCEPT 95
-		// Y_SLOPE 0.184
-		// Y_INTERCEPT 55
+		txt = Image_LoadPNG_Comments(radar_filename, &n_textcount);
 
 		// Check if we found any comments.
 		if(txt != NULL)
@@ -3931,13 +3908,16 @@ void HUD_NewRadarMap()
 			conversion_formula_found = false;
 		}
 	}
-
-	// Make sure we close the file.
-	if(f2 != NULL)
+	else
 	{
-		fclose(f2);
-		f2 = NULL;
+		// No radar pic found.
+		memset (&radar_pic, 0, sizeof(radar_pic));
+		radar_pic_found = false;
+		conversion_formula_found = false;
 	}
+
+	// Free the path string to the radar png.
+	Q_free (radar_filename);
 }
 #endif // OPENGL
 
