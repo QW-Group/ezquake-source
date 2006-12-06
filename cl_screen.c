@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.70 2006-12-06 01:07:29 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.71 2006-12-06 21:13:16 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -3247,12 +3247,12 @@ void SCR_SetMVStatusGatheredPosition (mv_viewrect_t *view, int hud_width, int hu
 		{
 			if (CURRVIEW == 2)
 			{
-				// Top. (Put the hud at the bottom)
+				// Top view. (Put the hud at the bottom)
 				SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_CENTER, view, hud_width, hud_height, x, y);
 			}
 			else if (CURRVIEW == 1)
 			{			
-				// Bottom. (Put the hud at the top)				
+				// Bottom view. (Put the hud at the top)				
 				SCR_SetMVStatusPosition (MV_HUD_POS_TOP_CENTER, view, hud_width, hud_height, x, y);
 			}
 		}
@@ -3261,17 +3261,17 @@ void SCR_SetMVStatusGatheredPosition (mv_viewrect_t *view, int hud_width, int hu
 	{
 		if (CURRVIEW == 2) 
 		{ 
-			// Top. (Put the hud at the bottom)
+			// Top view. (Put the hud at the bottom)
 			SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_CENTER, view, hud_width, hud_height, x, y);
 		}
 		else if (CURRVIEW == 3) 
 		{ 
-			// Bottom left. (Put the hud at the top right)
+			// Bottom left view. (Put the hud at the top right)
 			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_RIGHT, view, hud_width, hud_height, x, y);
 		}
 		else if (CURRVIEW == 1) 
 		{ 
-			// Bottom right. (Put the hud at the top left)
+			// Bottom right view. (Put the hud at the top left)
 			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_LEFT, view, hud_width, hud_height, x, y);
 		}
 	}
@@ -3279,22 +3279,22 @@ void SCR_SetMVStatusGatheredPosition (mv_viewrect_t *view, int hud_width, int hu
 	{
 		if (CURRVIEW == 2) 
 		{ 
-			// Top left. (Put the hud at the bottom right)
+			// Top left view. (Put the hud at the bottom right)
 			SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_RIGHT, view, hud_width, hud_height, x, y);
 		}
 		else if (CURRVIEW == 3) 
 		{ 
-			// Top right. (Put the hud at the bottom left)
+			// Top right view. (Put the hud at the bottom left)
 			SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_LEFT, view, hud_width, hud_height, x, y);
 		}
 		else if (CURRVIEW == 4) 
 		{ 
-			// Bottom left. (Put the hud at the top right)
+			// Bottom left view. (Put the hud at the top right)
 			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_RIGHT, view, hud_width, hud_height, x, y);
 		}
 		else if (CURRVIEW == 1) 
 		{ 
-			// Bottom right. (Put the hud at the top left)
+			// Bottom right view. (Put the hud at the top left)
 			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_LEFT, view, hud_width, hud_height, x, y);
 		}
 	}
@@ -3304,6 +3304,8 @@ void SCR_SetMVStatusGatheredPosition (mv_viewrect_t *view, int hud_width, int hu
 #define MV_HUD_HEALTH_WIDTH		(5*8)
 #define MV_HUD_CURRAMMO_WIDTH	(5*8)
 #define MV_HUD_CURRWEAP_WIDTH	(3*8)
+#define MV_HUD_POWERUPS_WIDTH	(2*8)
+#define MV_HUD_POWERUPS_HEIGHT	(2*8)
 
 #define MV_HUD_STYLE_ONLY_NAME	2
 #define MV_HUD_STYLE_ALL		3
@@ -3442,13 +3444,77 @@ void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 	}
 	#endif
 
-	if (style >= MV_HUD_STYLE_ALL_TEXT)
+	// No powerup.
+	if (style >= MV_HUD_STYLE_ALL_TEXT && !(cl.stats[STAT_ITEMS] & IT_INVULNERABILITY))
 	{
 		Draw_String(x, y, va("%4d", health));
 	}
 
 	SCR_MV_SetBoundValue (width, MV_HUD_HEALTH_WIDTH);
 	SCR_MV_SetBoundValue (height, 8);
+}
+
+void SCR_MV_DrawPowerups (int x, int y)
+{
+	extern mpic_t  *sb_face_invis;
+	extern mpic_t  *sb_face_quad;
+	extern mpic_t  *sb_face_invuln;
+	extern mpic_t  *sb_face_invis_invuln;
+
+	if (   cl.stats[STAT_ITEMS] & IT_INVULNERABILITY 
+		&& cl.stats[STAT_ITEMS] & IT_INVISIBILITY)
+	{
+		// Pentagram + Ring.
+		#ifdef GLQUAKE
+		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invis_invuln->width) / 2,
+			y - sb_face_invis_invuln->height / 2, 
+			sb_face_invis_invuln, 0.4);
+		#else
+		Draw_Pic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invuln->width) / 2,
+			y - sb_face_invuln->height / 2, 
+			sb_face_invis_invuln);
+		#endif
+	}
+	else if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)
+	{		
+		// Pentagram.
+		#ifdef GLQUAKE
+		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invuln->width) / 2,
+			y - sb_face_invuln->height / 2, 
+			sb_face_invuln, 0.4);
+		#else
+		Draw_Pic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invuln->width) / 2,
+			y - sb_face_invuln->height / 2, 
+			sb_face_invuln);
+		#endif
+	}
+	else if (cl.stats[STAT_ITEMS] & IT_INVISIBILITY)
+	{
+		// Ring.
+		#ifdef GLQUAKE
+		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invis->width) / 2,
+			y - sb_face_invis->height / 2, 
+			sb_face_invis, 0.4);
+		#else
+		Draw_Pic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invuln->width) / 2,
+			y - sb_face_invuln->height / 2, 
+			sb_face_invis);
+		#endif
+	}
+
+	if (cl.stats[STAT_ITEMS] & IT_QUAD)
+	{
+		// Ring.
+		#ifdef GLQUAKE
+		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_quad->width) / 2,
+			y - sb_face_quad->height / 2, 
+			sb_face_quad, 0.4);
+		#else
+		Draw_Pic (x + (MV_HUD_HEALTH_WIDTH - sb_face_quad->width) / 2,
+			y - sb_face_quad->height / 2, 
+			sb_face_quad);
+		#endif
+	}
 }
 
 void SCR_MV_DrawCurrentWeapon (int x, int y, int *width, int *height)
@@ -3548,6 +3614,7 @@ void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position, qbool f
 				MV_HUD_HEALTH_WIDTH + 				// Health.
 				MV_HUD_CURRWEAP_WIDTH +				// Current weapon.
 				MV_HUD_CURRAMMO_WIDTH;				// Current weapon ammo count.
+
 		}
 		else
 		{
@@ -3573,7 +3640,11 @@ void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position, qbool f
 			#endif
 		}
 
-		// Draw the elements vertically?
+		// Draw powerups in the middle background of the hud.
+		SCR_MV_DrawPowerups (view->x + hud_x + (hud_width / 2), view->y + hud_y + (hud_height / 2));	
+
+		// Draw the elements vertically? (Add a small gap between the items when
+		// drawing them vertically, otherwise they're too close together).
 		#define MV_FLIP(W,H) if(vertical) { hud_y += (H) + MV_HUD_VERTICAL_GAP; } else { hud_x += (W); }
 
 		if (!flip)
@@ -3591,28 +3662,12 @@ void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position, qbool f
 			MV_FLIP(health_width, health_height);
 
 			// Current weapon.
-			SCR_MV_DrawCurrentWeapon (view ->x + hud_x, view->y + hud_y, &currweap_width, &currweap_height);
+			SCR_MV_DrawCurrentWeapon (view->x + hud_x, view->y + hud_y, &currweap_width, &currweap_height);
 			MV_FLIP(currweap_width, currweap_height);
 
 			// Ammo for current weapon.
 			SCR_MV_DrawCurrentAmmo (view->x + hud_x, view->y + hud_y, &currammo_width, &currammo_height);
 			MV_FLIP(currammo_width, currammo_height);
-
-			if (vertical)
-			{
-				// Start in the next column.
-				hud_x += max (8 * strlen(name), MV_HUD_ARMOR_WIDTH);
-				hud_y -= hud_height;
-			}
-			else
-			{
-				// Start on the next row.
-				hud_x -= hud_width;
-				hud_y += hud_height / 2;
-			}
-
-			// Weapons.
-			SCR_MV_DrawWeapons (view->x + hud_x, view->y + hud_y, NULL, NULL, hud_width, hud_height, vertical);
 		}
 		else
 		{
@@ -3639,23 +3694,23 @@ void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position, qbool f
 			// Name.
 			SCR_MV_DrawName (view->x + hud_x, view->y + hud_y, &name_width, &name_height);
 			MV_FLIP(name_width, name_height);
-
-			if (vertical)
-			{
-				// Start in the next column.
-				hud_x += max (8 * strlen(name), MV_HUD_ARMOR_WIDTH);
-				hud_y -= hud_height;
-			}
-			else
-			{
-				// Start on the next row.
-				hud_x -= hud_width;
-				hud_y += hud_height / 2;
-			}
-
-			// Weapons.
-			SCR_MV_DrawWeapons (view->x + hud_x, view->y + hud_y, NULL, NULL, hud_width, hud_height, vertical);
 		}
+
+		if (vertical)
+		{
+			// Start in the next column.
+			hud_x += max (8 * strlen(name), MV_HUD_ARMOR_WIDTH);
+			hud_y -= hud_height;
+		}
+		else
+		{
+			// Start on the next row.
+			hud_x -= hud_width;
+			hud_y += hud_height / 2;
+		}
+
+		// Weapons.
+		SCR_MV_DrawWeapons (view->x + hud_x, view->y + hud_y, NULL, NULL, hud_width, hud_height, vertical);
 	}
 }
 
