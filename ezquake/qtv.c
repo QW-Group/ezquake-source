@@ -1,7 +1,7 @@
 /*
 	Support for FTE QuakeTV automated startup and connecting
 
-	$Id: qtv.c,v 1.5 2006-06-10 23:38:09 johnnycz Exp $
+	$Id: qtv.c,v 1.6 2006-12-06 22:46:21 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -79,7 +79,7 @@ qbool QTV_RunProcess(int port, char* ip)
 
 	memset (&si, 0, sizeof(si));
 	si.cb = sizeof(si);
-	si.wShowWindow = SW_HIDE;
+	si.wShowWindow = SW_SHOWMINNOACTIVE;
 	si.dwFlags = STARTF_USESHOWWINDOW;
 
 	if (retbuf = CreateProcess(NULL, cmdline, NULL, NULL,

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.39 2006-11-13 01:52:39 cokeman1982 Exp $
+	$Id: cl_demo.c,v 1.40 2006-12-06 22:46:21 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1244,7 +1244,7 @@ static void PlayQWZDemo (void) {
 	// start Qizmo to unpack the demo
 	memset (&si, 0, sizeof(si));
 	si.cb = sizeof(si);
-	si.wShowWindow = SW_HIDE;
+	si.wShowWindow = SW_SHOWMINNOACTIVE;
 	si.dwFlags = STARTF_USESHOWWINDOW;
 
 	strlcpy (cmdline, va("%s/%s/qizmo.exe -q -u -3 -D \"%s\"", com_basedir, qizmo_dir.string, qwz_name), sizeof(cmdline));
@@ -1279,7 +1279,7 @@ int CL_Demo_Compress(char* qwdname)
 
 	memset (&si, 0, sizeof(si));
 	si.cb = sizeof(si);
-	si.wShowWindow = SW_HIDE;
+	si.wShowWindow = SW_SHOWMINNOACTIVE;
 	si.dwFlags = STARTF_USESHOWWINDOW;
 	if (!strcmp(demo_format.string, "qwz")) {
 		execute = "qizmo.exe -q -C";
