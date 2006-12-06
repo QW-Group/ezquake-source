@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.69 2006-12-04 00:13:32 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.70 2006-12-06 01:07:29 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -3122,44 +3122,21 @@ mpic_t * SCR_GetWeaponIconByFlag (int flag)
 
 mpic_t *SCR_GetWeaponIconByWeaponNumber (int num)
 {
-	return SCR_GetWeaponIconByFlag (IT_SHOTGUN << (num - 2));
+	extern mpic_t *sb_weapons[7][8];  // sbar.c Weapon pictures.
+
+	num -= 2;
+
+	if (num >= 0 && num < 8)
+	{
+		return sb_weapons[0][num];
+	}
+
+	return NULL;
 }
 
 mpic_t *SCR_GetActiveWeaponIcon()
 {
 	return SCR_GetWeaponIconByFlag (cl.stats[STAT_ACTIVEWEAPON]);
-	
-	/*
-	if (cl.stats[STAT_ACTIVEWEAPON] & IT_LIGHTNING || cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_LIGHTNING) 
-	{
-		return sb_weapons[6][6];
-	} 
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_ROCKET_LAUNCHER) 
-	{
-		return sb_weapons[6][5];
-	} 
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_GRENADE_LAUNCHER) 
-	{
-		return sb_weapons[6][4];
-	} 
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_NAILGUN) 
-	{
-		return sb_weapons[6][3];
-	} 
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_NAILGUN) 
-	{
-		return sb_weapons[6][2];
-	} 
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_SHOTGUN) 
-	{
-		return sb_weapons[6][1];
-	} 
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SHOTGUN) 
-	{
-		return sb_weapons[6][0];
-	} 
-
-	return NULL;*/
 }
 
 typedef struct mv_viewrect_s
@@ -3170,6 +3147,9 @@ typedef struct mv_viewrect_s
 	int height;
 } mv_viewrect_t;
 
+char *Macro_BestAmmo (void); // Teamplay.c
+void Draw_AlphaRectangle (int x, int y, int w, int h, int c, float thickness, qbool fill, float alpha); // gl_draw.c
+
 #define MV_HUD_POS_BOTTOM_CENTER	1
 #define MV_HUD_POS_BOTTOM_LEFT		2
 #define MV_HUD_POS_BOTTOM_RIGHT		3
@@ -3178,9 +3158,31 @@ typedef struct mv_viewrect_s
 #define MV_HUD_POS_TOP_RIGHT		6
 #define MV_HUD_POS_GATHERED_CENTER	7
 
-char *Macro_BestAmmo (void); // Teamplay.c
-void Draw_AlphaRectangle (int x, int y, int w, int h, int c, float thickness, qbool fill, float alpha); // gl_draw.c
+#define MV_HUDPOS(regexp, input, position, cvar) if(Utils_RegExpMatch(regexp, input)) { mv_hudpos = position; found = true; }
 
+int mv_hudpos = MV_HUD_POS_BOTTOM_CENTER;
+
+qbool SCR_OnChangeMVHudPos(cvar_t *var, char *newval)
+{
+	qbool found = false;
+
+	MV_HUDPOS ("(top\\s*left|tl)",		newval, MV_HUD_POS_TOP_LEFT, var);
+	MV_HUDPOS ("(top\\s*right|tr)",		newval, MV_HUD_POS_TOP_RIGHT, var);
+	MV_HUDPOS ("(top\\s*center|tc)",	newval, MV_HUD_POS_TOP_CENTER, var);
+	MV_HUDPOS ("(bottom\\s*left|bl)",	newval, MV_HUD_POS_BOTTOM_LEFT, var);
+	MV_HUDPOS ("(bottom\\s*right|br)",	newval, MV_HUD_POS_BOTTOM_RIGHT, var);
+	MV_HUDPOS ("(bottom\\s*center|bc)",	newval, MV_HUD_POS_BOTTOM_CENTER, var);
+	MV_HUDPOS ("(gather|g)",			newval, MV_HUD_POS_GATHERED_CENTER, var);
+
+	if (found)
+	{
+		Cvar_Set (var, newval);
+	}
+
+	return found;
+}
+
+// SCR_SetMVStatusPosition calls SCR_SetMVStatusGatheredPosition and vice versa.
 void SCR_SetMVStatusGatheredPosition (mv_viewrect_t *view, int hud_width, int hud_height, int *x, int *y);
 
 void SCR_SetMVStatusPosition (int position, mv_viewrect_t *view, int hud_width, int hud_height, int *x, int *y)
@@ -3229,7 +3231,7 @@ void SCR_SetMVStatusPosition (int position, mv_viewrect_t *view, int hud_width, 
 			(*y) = max(0, (view->height - hud_height));
 			break;
 		}
-	}
+	}	
 }
 
 void SCR_SetMVStatusGatheredPosition (mv_viewrect_t *view, int hud_width, int hud_height, int *x, int *y)
@@ -3301,20 +3303,219 @@ void SCR_SetMVStatusGatheredPosition (mv_viewrect_t *view, int hud_width, int hu
 #define MV_HUD_ARMOR_WIDTH		(5*8)
 #define MV_HUD_HEALTH_WIDTH		(5*8)
 #define MV_HUD_CURRAMMO_WIDTH	(5*8)
+#define MV_HUD_CURRWEAP_WIDTH	(3*8)
 
 #define MV_HUD_STYLE_ONLY_NAME	2
 #define MV_HUD_STYLE_ALL		3
 #define MV_HUD_STYLE_ALL_TEXT	4
 #define MV_HUD_STYLE_ALL_FILL	5
 
-void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position)
+void SCR_MV_SetBoundValue (int *var, int val)
+{
+	if (var != NULL)
+	{
+		(*var) = val;
+	}
+}
+
+void SCR_MV_DrawName (int x, int y, int *width, int *height)
+{
+	char *name = cl.players[nPlayernum].name;
+	SCR_MV_SetBoundValue (width, 8*(strlen(name) + 1));
+	SCR_MV_SetBoundValue (height, 8);
+
+	Draw_String(x, y, name);
+}
+
+void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
+{
+	char armor_color_code[6] = "";
+	int armor_amount_width = 0;
+
+	#ifdef GLQUAKE
+	float armor_color[3] = {0, 0, 0};	// RGB.
+	#endif
+
+	//
+	// Set the armor text color based on what armor the player has.
+	//
+	if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
+	{
+		// Green armor.
+		strlcpy(armor_color_code, "&c0f0", sizeof(armor_color_code));
+		armor_amount_width = ROUND(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 100.0);
+		
+		#ifdef GLQUAKE
+		armor_color[0] = 80 / 255.0;
+		armor_color[1] = 190 / 255.0;
+		armor_color[2] = 80 / 255.0;
+		#endif
+	}
+	else if (cl.stats[STAT_ITEMS] & IT_ARMOR2)
+	{
+		// Yellow armor.
+		strlcpy(armor_color_code, "&cff0", sizeof(armor_color_code));
+		armor_amount_width = ROUND(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 150.0);
+
+		#ifdef GLQUAKE
+		armor_color[0] = 250 / 255.0;
+		armor_color[1] = 230 / 255.0;
+		armor_color[2] = 0;
+		#endif
+	}
+	else if (cl.stats[STAT_ITEMS] & IT_ARMOR3)
+	{
+		// Red armor.
+		strlcpy(armor_color_code, "&cf00", sizeof(armor_color_code));
+		armor_amount_width = ROUND(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 200.0);
+
+		#ifdef GLQUAKE
+		armor_color[0] = 190 / 255.0;
+		armor_color[1] = 50 / 255.0;
+		armor_color[2] = 0;
+		#endif	
+	}
+
+	if (cl.stats[STAT_ARMOR] > 0)
+	{
+		//
+		// Background fill for armor.
+		//
+		#ifdef GLQUAKE
+		Draw_AlphaFillRGB (x, 
+			y, 
+			armor_amount_width, 
+			8, 
+			armor_color[0], armor_color[1], armor_color[2], 
+			0.3);
+		#endif
+
+		// Armor value.
+		if (style >= MV_HUD_STYLE_ALL_TEXT)
+		{
+			Draw_ColoredString(x, y, va("%s%4d", armor_color_code, cl.stats[STAT_ARMOR]), 0);
+		}
+	}
+
+	SCR_MV_SetBoundValue (width, MV_HUD_ARMOR_WIDTH);
+	SCR_MV_SetBoundValue (height, 8);
+}
+
+void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
+{
+	#define MV_HEALTH_OPACITY 0.3
+	int health = cl.stats[STAT_HEALTH];
+
+	#ifdef GLQUAKE
+	int health_amount_width = 0;
+
+	health = min(100, health);
+	health_amount_width = ROUND(abs((MV_HUD_HEALTH_WIDTH * health) / 100.0));
+
+	if (health > 0)
+	{
+		Draw_AlphaFillRGB (x, y, health_amount_width, 8, AUTOID_HEALTHBAR_NORMAL_COLOR, 2 *  MV_HEALTH_OPACITY);
+	}
+
+	health = cl.stats[STAT_HEALTH];
+
+	if (health > 100 && health <= 200)
+	{
+		// Mega health.
+		health_amount_width = ROUND((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 100));
+
+		Draw_AlphaFillRGB (x, y, health_amount_width, 8, AUTOID_HEALTHBAR_MEGA_COLOR, MV_HEALTH_OPACITY);
+	}
+	else if (health > 200 && health <= 250)
+	{
+		// Super health.
+		health_amount_width = ROUND((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 200));
+
+		Draw_AlphaFillRGB (x, y, MV_HUD_HEALTH_WIDTH, 8, AUTOID_HEALTHBAR_MEGA_COLOR, MV_HEALTH_OPACITY);
+		Draw_AlphaFillRGB (x, y, health_amount_width, 8, AUTOID_HEALTHBAR_TWO_MEGA_COLOR, MV_HEALTH_OPACITY);
+	}
+	else if (health > 250)
+	{
+		// Crazy health.
+		Draw_AlphaFillRGB (x, y, MV_HUD_HEALTH_WIDTH, 8, AUTOID_HEALTHBAR_UNNATURAL_COLOR, MV_HEALTH_OPACITY);
+		
+	}
+	#endif
+
+	if (style >= MV_HUD_STYLE_ALL_TEXT)
+	{
+		Draw_String(x, y, va("%4d", health));
+	}
+
+	SCR_MV_SetBoundValue (width, MV_HUD_HEALTH_WIDTH);
+	SCR_MV_SetBoundValue (height, 8);
+}
+
+void SCR_MV_DrawCurrentWeapon (int x, int y, int *width, int *height)
+{
+	mpic_t *current_weapon = NULL;
+	current_weapon = SCR_GetActiveWeaponIcon();
+	
+	if (current_weapon)
+	{
+		Draw_Pic (x, 
+			y - (current_weapon->height / 4), 
+			current_weapon);
+	}
+
+	SCR_MV_SetBoundValue (width, MV_HUD_CURRWEAP_WIDTH);
+	SCR_MV_SetBoundValue (height, 8);
+}
+
+void SCR_MV_DrawCurrentAmmo (int x, int y, int *width, int *height)
+{
+	// Draw the ammo count in blue/greyish color.
+	Draw_ColoredString (x, y, va("&c5CE%4d", cl.stats[STAT_AMMO]), 0);
+	SCR_MV_SetBoundValue (width, MV_HUD_CURRAMMO_WIDTH);
+	SCR_MV_SetBoundValue (height, 8);
+}
+
+void SCR_MV_DrawWeapons (int x, int y, int *width, int *height, int hud_width, int hud_height, qbool vertical)
+{
+	#define WEAPON_COUNT 8
+	mpic_t *weapon_pic = NULL;
+	int weapon = 0;
+	int weapon_flag = 0;
+	int weapon_x = 0;
+	int weapon_y = 0;
+
+	// Draw the weapons the user has.
+	for (weapon = 0; weapon < WEAPON_COUNT; weapon++)
+	{
+		weapon_flag = IT_SHOTGUN << weapon;
+
+		if (cl.stats[STAT_ITEMS] & weapon_flag)
+		{
+			// Get the weapon picture and draw it.
+			weapon_pic = SCR_GetWeaponIconByWeaponNumber (weapon + 2);
+			Draw_Pic (x + weapon_x, y + weapon_y, weapon_pic);
+		}
+
+		// Evenly distribute the weapons.
+		if (!vertical)
+		{
+			weapon_x += ROUND((float)hud_width / WEAPON_COUNT);
+		}
+		else
+		{
+			weapon_y += ROUND((float)hud_height / WEAPON_COUNT);
+		}
+	}
+}
+
+void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position, qbool flip, qbool vertical)
 {
 	int hud_x = 0;
 	int hud_y = 0;
 	int hud_width = 0;
 	int hud_height = 0;
 
-	mpic_t *current_weapon = NULL;
+	char *name = cl.players[nPlayernum].name;
 
 	if (style == MV_HUD_STYLE_ONLY_NAME)
 	{
@@ -3322,189 +3523,138 @@ void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position)
 	}
 	else if (style >= MV_HUD_STYLE_ALL)
 	{
-		char *name = cl.players[nPlayernum].name;
+		#define MV_HUD_VERTICAL_GAP	4
 
-		current_weapon = SCR_GetActiveWeaponIcon();
+		int name_width = 0;
+		int name_height = 0;
+		int armor_width = 0;
+		int armor_height = 0;
+		int health_width = 0;
+		int health_height = 0;
+		int currweap_width = 0;
+		int currweap_height = 0;
+		int currammo_width = 0;
+		int currammo_height = 0;
 
 		//
 		// Calculate the total width and height of the hud.
 		//
-		hud_height = max(2 * current_weapon->height, 3*8);
-		hud_width = 
-			8 * (strlen(name)) +				// Name.
-			MV_HUD_ARMOR_WIDTH + 				// Armor + space.
-			MV_HUD_HEALTH_WIDTH + 				// Health.
-			current_weapon->width +				// Current weapon.
-			MV_HUD_CURRAMMO_WIDTH;				// Current weapon ammo count.
+		if(!vertical)
+		{
+			hud_height = 3*8;
+			hud_width = 
+				8 * (strlen(name)) +				// Name.
+				MV_HUD_ARMOR_WIDTH + 				// Armor + space.
+				MV_HUD_HEALTH_WIDTH + 				// Health.
+				MV_HUD_CURRWEAP_WIDTH +				// Current weapon.
+				MV_HUD_CURRAMMO_WIDTH;				// Current weapon ammo count.
+		}
+		else
+		{
+			// Vertical.
+			hud_height = 5 * (8 + MV_HUD_VERTICAL_GAP);
+			hud_width = max (8 * strlen(name), MV_HUD_ARMOR_WIDTH) + MV_HUD_ARMOR_WIDTH;
+		}
 
 		//
 		// Get the position we should draw the hud at.
 		//
 		SCR_SetMVStatusPosition (position, view, hud_width, hud_height, &hud_x, &hud_y);
 
-		/*
-		if (cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1)
-		{
-			Draw_AlphaFill (view->x, 0, abs(view->y - view->height), view->x + view->width, 0, 0.5);
-		}
-		*/
-
 		//
 		// Draw a fill background.
 		//
 		if(style >= MV_HUD_STYLE_ALL_FILL)
 		{
+			#ifdef GLQUAKE
 			Draw_AlphaFill (view->x + hud_x, view->y + hud_y, hud_width, hud_height, 0, 0.5);
-		}
-
-		//
-		// Name.
-		//
-		{
-			Draw_String(view->x + hud_x, view->y + hud_y, name);
-			hud_x += 8*(strlen(name) + 1);
-		}
-
-		//
-		// Armor.
-		//
-		{
-			char armor_color_code[6] = "";
-			int armor_amount_width = 0;
-
-			#ifdef GLQUAKE
-			float armor_color[3] = {0, 0, 0};	// RGB.
+			#else
+			Draw_FadeBox (view->x + hud_x, view->y + hud_y, hud_width, hud_height, 0, 0.3);
 			#endif
+		}
 
+		// Draw the elements vertically?
+		#define MV_FLIP(W,H) if(vertical) { hud_y += (H) + MV_HUD_VERTICAL_GAP; } else { hud_x += (W); }
+
+		if (!flip)
+		{
+			// Name.
+			SCR_MV_DrawName (view->x + hud_x, view->y + hud_y, &name_width, &name_height);
+			MV_FLIP(name_width, name_height);
+
+			// Armor.
+			SCR_MV_DrawArmor (view->x + hud_x, view->y + hud_y, &armor_width, &armor_height, style);
+			MV_FLIP(armor_width, armor_height);
+
+			// Health.
+			SCR_MV_DrawHealth (view->x + hud_x, view->y + hud_y, &health_width, &health_height, style);
+			MV_FLIP(health_width, health_height);
+
+			// Current weapon.
+			SCR_MV_DrawCurrentWeapon (view ->x + hud_x, view->y + hud_y, &currweap_width, &currweap_height);
+			MV_FLIP(currweap_width, currweap_height);
+
+			// Ammo for current weapon.
+			SCR_MV_DrawCurrentAmmo (view->x + hud_x, view->y + hud_y, &currammo_width, &currammo_height);
+			MV_FLIP(currammo_width, currammo_height);
+
+			if (vertical)
+			{
+				// Start in the next column.
+				hud_x += max (8 * strlen(name), MV_HUD_ARMOR_WIDTH);
+				hud_y -= hud_height;
+			}
+			else
+			{
+				// Start on the next row.
+				hud_x -= hud_width;
+				hud_y += hud_height / 2;
+			}
+
+			// Weapons.
+			SCR_MV_DrawWeapons (view->x + hud_x, view->y + hud_y, NULL, NULL, hud_width, hud_height, vertical);
+		}
+		else
+		{
 			//
-			// Set the armor text color based on what armor the player has.
+			// Flipped horizontally.
 			//
-			if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
-			{
-				// Green armor.
-				strlcpy(armor_color_code, "&c0f0", sizeof(armor_color_code));
-				armor_amount_width = ROUND(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 100.0);
-				
-				#ifdef GLQUAKE
-				armor_color[0] = 80 / 255.0;
-				armor_color[1] = 190 / 255.0;
-				armor_color[2] = 80 / 255.0;
-				#endif
-			}
-			else if (cl.stats[STAT_ITEMS] & IT_ARMOR2)
-			{
-				// Yellow armor.
-				strlcpy(armor_color_code, "&cff0", sizeof(armor_color_code));
-				armor_amount_width = ROUND(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 150.0);
 
-				#ifdef GLQUAKE
-				armor_color[0] = 250 / 255.0;
-				armor_color[1] = 230 / 255.0;
-				armor_color[2] = 0;
-				#endif
-			}
-			else if (cl.stats[STAT_ITEMS] & IT_ARMOR3)
-			{
-				// Red armor.
-				strlcpy(armor_color_code, "&cf00", sizeof(armor_color_code));
-				armor_amount_width = ROUND(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 200.0);
+			// Ammo for current weapon.
+			SCR_MV_DrawCurrentAmmo (view->x + hud_x, view->y + hud_y, &currammo_width, &currammo_height);
+			MV_FLIP(currammo_width, currammo_height);
 
-				#ifdef GLQUAKE
-				armor_color[0] = 190 / 255.0;
-				armor_color[1] = 50 / 255.0;
-				armor_color[2] = 0;
-				#endif	
+			// Current weapon.
+			SCR_MV_DrawCurrentWeapon (view ->x + hud_x, view->y + hud_y, &currweap_width, &currweap_height);
+			MV_FLIP(currweap_width, currweap_height);
+	
+			// Health.
+			SCR_MV_DrawHealth (view->x + hud_x, view->y + hud_y, &health_width, &health_height, style);
+			MV_FLIP(health_width, health_height);
+
+			// Armor.
+			SCR_MV_DrawArmor (view->x + hud_x, view->y + hud_y, &armor_width, &armor_height, style);
+			MV_FLIP(armor_width, armor_height);
+
+			// Name.
+			SCR_MV_DrawName (view->x + hud_x, view->y + hud_y, &name_width, &name_height);
+			MV_FLIP(name_width, name_height);
+
+			if (vertical)
+			{
+				// Start in the next column.
+				hud_x += max (8 * strlen(name), MV_HUD_ARMOR_WIDTH);
+				hud_y -= hud_height;
+			}
+			else
+			{
+				// Start on the next row.
+				hud_x -= hud_width;
+				hud_y += hud_height / 2;
 			}
 
-			if (cl.stats[STAT_ARMOR] > 0)
-			{
-				//
-				// Background fill for armor.
-				//
-				#ifdef GLQUAKE
-				Draw_AlphaFillRGB (view->x + hud_x, 
-					view->y + hud_y, 
-					armor_amount_width, 
-					8, 
-					armor_color[0], armor_color[1], armor_color[2], 
-					0.3);
-				#endif
-
-				// Armor value.
-				if (style >= MV_HUD_STYLE_ALL_TEXT)
-				{
-					Draw_ColoredString(view->x + hud_x, view->y + hud_y, va("%s%4d", armor_color_code, cl.stats[STAT_ARMOR]), 0);
-				}
-			}
-
-			hud_x += MV_HUD_ARMOR_WIDTH;
-		}
-
-		//
-		// Health.
-		//
-		{
-			#define MV_HEALTH_OPACITY 0.3
-			int health = cl.stats[STAT_HEALTH];
-
-			#ifdef GLQUAKE
-			int health_amount_width = 0;
-
-			health = min(100, health);
-			health_amount_width = ROUND(abs((MV_HUD_HEALTH_WIDTH * health) / 100.0));
-			Draw_AlphaFillRGB (view->x + hud_x, view->y + hud_y, health_amount_width, 8, AUTOID_HEALTHBAR_NORMAL_COLOR, 2 *  MV_HEALTH_OPACITY);
-
-			health = cl.stats[STAT_HEALTH];
-
-			if (health > 100 && health <= 200)
-			{
-				// Mega health.
-				health_amount_width = ROUND((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 100));
-
-				Draw_AlphaFillRGB (view->x + hud_x, view->y + hud_y, health_amount_width, 8, AUTOID_HEALTHBAR_MEGA_COLOR, MV_HEALTH_OPACITY);
-			}
-			else if (health > 200 && health <= 250)
-			{
-				// Super health.
-				health_amount_width = ROUND((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 200));
-
-				Draw_AlphaFillRGB (view->x + hud_x, view->y + hud_y, MV_HUD_HEALTH_WIDTH, 8, AUTOID_HEALTHBAR_MEGA_COLOR, MV_HEALTH_OPACITY);
-				Draw_AlphaFillRGB (view->x + hud_x, view->y + hud_y, health_amount_width, 8, AUTOID_HEALTHBAR_TWO_MEGA_COLOR, MV_HEALTH_OPACITY);
-			}
-			else if (health > 250)
-			{
-				// Crazy health.
-				Draw_AlphaFillRGB (view->x + hud_x, view->y + hud_y, MV_HUD_HEALTH_WIDTH, 8, AUTOID_HEALTHBAR_UNNATURAL_COLOR, MV_HEALTH_OPACITY);
-				
-			}
-			#endif
-
-			if (style >= MV_HUD_STYLE_ALL_TEXT)
-			{
-				Draw_String(view->x + hud_x, view->y + hud_y, va("%4d", health));
-			}
-
-			hud_x += MV_HUD_HEALTH_WIDTH;
-		}
-
-		//
-		// Current weapon.
-		//
-		if (current_weapon)
-		{
-			Draw_Pic (view->x + hud_x, 
-				view->y + hud_y, // - (current_weapon->height / 2), 
-				current_weapon);
-
-			hud_x += current_weapon->width;
-		}
-
-		//
-		// Ammo for current weapon.
-		//
-		{
-			Draw_ColoredString (view->x + hud_x, view->y + hud_y, va("&c5CE%4d", cl.stats[STAT_AMMO]), 0);
-			hud_x -= hud_width;
+			// Weapons.
+			SCR_MV_DrawWeapons (view->x + hud_x, view->y + hud_y, NULL, NULL, hud_width, hud_height, vertical);
 		}
 	}
 }
@@ -3653,7 +3803,11 @@ void SCR_DrawMVStatus(void)
 	// Only draw if we the view rect was set properly.
 	if (view.x != -1)
 	{
-		SCR_DrawMVStatusView (&view, (int)cl_mvdisplayhud.value, (int)cl_mvhudpos.value);
+		SCR_DrawMVStatusView (&view, 
+			(int)cl_mvdisplayhud.value, 
+			mv_hudpos, 
+			(qbool)cl_mvhudflip.value, 
+			(qbool)cl_mvhudvertical.value);
 	}
 }
 
