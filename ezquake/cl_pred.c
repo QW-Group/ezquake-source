@@ -155,16 +155,12 @@ void CL_CalcCrouch (void) {
 }
 
 
-extern qbool physframe; //#fps
-
-//#fps
-// for fps-independent physics
+extern qbool physframe; // for fps-independent physics
 
 static void CL_LerpMove (double msgtime, float f)
-{
-	
+{	
 	static int		lastsequence = 0;
-	static vec3_t	lerp_angles[3];
+	static vec3_t	lerp_angles[3]; // FIXME: These are not being used, why? :)
 	static vec3_t	lerp_origin[3];
 	static double	lerp_times[3];
 	static qbool	nolerp[2];
@@ -175,22 +171,25 @@ static void CL_LerpMove (double msgtime, float f)
 	int		from, to;
 	extern cvar_t cl_nolerp;
 
-	if (cl_nolerp.value) {
-lastsequence = ((unsigned)-1) >> 1;	//reset
+	if (cl_nolerp.value) 
+	{
+		lastsequence = ((unsigned)-1) >> 1;	//reset
 		return;
 	}
 
-	if (cls.netchan.outgoing_sequence < lastsequence) {
+	if (cls.netchan.outgoing_sequence < lastsequence) 
+	{
 		// reset
-//Com_Printf ("*********** RESET");
 		lastsequence = -1;
 		lerp_times[0] = -1;
 		demo_latency = 0.01;
 	}
 
-//@@	if (cls.netchan.outgoing_sequence > lastsequence) {
-if (physframe) {	// #fps
+	// Independent physics.
+	if (physframe) 
+	{
 		lastsequence = cls.netchan.outgoing_sequence;
+
 		// move along
 		lerp_times[2] = lerp_times[1];
 		lerp_times[1] = lerp_times[0];
@@ -200,77 +199,93 @@ if (physframe) {	// #fps
 		VectorCopy (lerp_origin[0], lerp_origin[1]);
 		VectorCopy (cl.simorg, lerp_origin[0]);
 
+		// FIXME: These are never used... Should they be?
 		VectorCopy (lerp_angles[1], lerp_angles[2]);
 		VectorCopy (lerp_angles[0], lerp_angles[1]);
 		VectorCopy (cl.simangles, lerp_angles[0]);
 
 		nolerp[1] = nolerp[0];
 		nolerp[0] = false;
+
 		for (i = 0; i < 3; i++)
+		{
 			if (fabs(lerp_origin[0][i] - lerp_origin[1][i]) > 100)
+			{
 				break;
+			}
+		}
+
 		if (i < 3)
-			nolerp[0] = true;	// a teleport or something
+		{
+			// a teleport or something
+			nolerp[0] = true;	
+		}
 	}
 
 	simtime = cls.realtime - demo_latency;
 
-	// adjust latency
-	if (simtime > lerp_times[0]) {
-//		Com_DPrintf ("HIGH clamp\n");
+	// Adjust latency
+	if (simtime > lerp_times[0]) 
+	{
+		// High clamp
 		demo_latency = cls.realtime - lerp_times[0];
 	}
-	else if (simtime < lerp_times[2]) {
-//		Com_DPrintf ("   low clamp\n");
+	else if (simtime < lerp_times[2]) 
+	{
+		// Low clamp
 		demo_latency = cls.realtime - lerp_times[2];
-	} else {
-// extern cvar_t cl_physfps;
-		// drift towards ideal latency
-		float ideal_latency = (lerp_times[0] - lerp_times[2]) * 0.6;
-//		float ideal_latency = 1.0/cl_physfps.value;
+	} 
+	else
+	{
+		// Drift towards ideal latency.
+		float ideal_latency = 0;
 
-ideal_latency = 0;
-
-if (physframe)	//##testing
-{
-		if (demo_latency > ideal_latency)
-			demo_latency = max(demo_latency - cls.frametime * 0.1, ideal_latency);
-		if (demo_latency < ideal_latency)
-			demo_latency = min(demo_latency + cls.frametime * 0.1, ideal_latency);
-}
+		// Independent physics.
+		if (physframe)
+		{
+			if (demo_latency > ideal_latency)
+			{
+				demo_latency = max(demo_latency - cls.frametime * 0.1, ideal_latency);
+			}
+			
+			if (demo_latency < ideal_latency)
+			{
+				demo_latency = min(demo_latency + cls.frametime * 0.1, ideal_latency);
+			}
+		}
 	}
 
 	// decide where to lerp from
-	if (simtime > lerp_times[1]) {
+	if (simtime > lerp_times[1]) 
+	{
 		from = 1;
 		to = 0;
-	} else {
+	} 
+	else 
+	{
 		from = 2;
 		to = 1;
 	}
 
 	if (nolerp[to])
+	{
 		return;
+	}
 
-// shaman RFE 1036160 {
-	if (cl_pushlatency.value != 0) {
+	if (cl_pushlatency.value != 0) 
+	{
         frac = f;
 	}
-	else {
-// } shaman RFE 1036160 
+	else 
+	{
     	frac = (simtime - lerp_times[from]) / (lerp_times[to] - lerp_times[from]);
     	frac = bound (0, frac, 1);
-// shaman RFE 1036160 {
 	}
-// } shaman RFE 1036160 
-
-
-//Com_Printf ("%f\n", frac);
 
 	for (i = 0; i < 3; i++)
+	{
 		cl.simorg[i] = lerp_origin[from][i] + (lerp_origin[to][i] - lerp_origin[from][i]) * frac;
-
-
+	}
 }
 
 double lerp_time;
@@ -390,8 +405,8 @@ if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.val
 // } shaman RFE 1036160
 }
 
-if (!cls.demoplayback && cl_independentPhysics.value != 0)
-	CL_LerpMove (lerp_time, f);
+	if (!cls.demoplayback && cl_independentPhysics.value != 0)
+		CL_LerpMove (lerp_time, f);
     CL_CalcCrouch ();
 
 #ifdef JSS_CAM
