@@ -56,7 +56,6 @@ void Delete_Source(source_data *s)
     free(s);
 }
 
-// TODO: Stop using fscanf, it's unsafe, causes buffer overflows!
 
 // returns true, if there were some problems (like domain-name addresses)
 // which require the source to be dumped to file in corrected form
@@ -69,11 +68,6 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
     //length = COM_FileOpenRead (fname, &f);
     length = FS_FOpenFile(fname, &f);
 
-	if(f == NULL)
-	{
-		return true;
-	}
-
     if (length <= 0)
     {
         //Com_Printf ("Updating %15.15s failed: file not found\n", s->name);
@@ -81,22 +75,18 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
     }
     else
     {
-        while (f != NULL && !feof(f))
+        while (!feof(f))
         {
             char c = 'A';
-			char line[2000] = {'\0'};
+            char line[2000];
             netadr_t addr;
             int ret;
 
             ret = fscanf(f, "%s", line);
-
-			if(ret == EOF || f == NULL || !line[0])
-				return true;
-
-            while (f != NULL && !feof(f) && c != '\n')
+            while (!feof(f)  &&  c != '\n')
                 fscanf(f, "%c", &c);
 
-            if (ret != 1 || f == NULL)
+            if (ret != 1)
                 continue;
 
             if (!strchr(line, ':'))
@@ -104,14 +94,11 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
             if (!NET_StringToAdr(line, &addr))
                 continue;
 
-			if(pserversn != NULL)
-				servers[(*pserversn)++] = Create_Server2(addr);
+            servers[(*pserversn)++] = Create_Server2(addr);
             if (line[0] <= '0'  ||  line[0] >= '9')
                 should_dump = true;
         }
-
-		if(f != NULL)
-			fclose(f);
+        fclose(f);
     }
 
     return should_dump;
