@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.88 2006-12-06 00:58:25 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.89 2006-12-06 16:35:37 vvd0 Exp $
 */
 //
 // common HUD elements
@@ -1630,7 +1630,7 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 	t = 1;
 	for (i = 0; i < digits; i++)
 		t *= 10;
-	overflow = num > t;
+	overflow = num >= t;
 	num %= t;
     sprintf(buf, "%d", num);
     len = strlen(buf);
@@ -1794,13 +1794,12 @@ void SCR_HUD_DrawAmmo(hud_t *hud, int num,
 		}
     }
     low = HUD_AmmoLowByWeapon(num * 2);
-    value = HUD_Stats(STAT_SHELLS + num - 1);
+    value = cl.stats[STAT_AMMO];
 
     if (style < 2)
     {
         // simply draw number
-        SCR_HUD_DrawNum(hud, value, low,
-        scale, style, digits, s_align);
+        SCR_HUD_DrawNum(hud, value, low, scale, style, digits, s_align);
     }
     else
     {
