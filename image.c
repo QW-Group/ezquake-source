@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.30 2006-12-06 21:11:39 cokeman1982 Exp $
+    $Id: image.c,v 1.31 2006-12-06 21:42:25 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -854,7 +854,7 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 	if (!PNG_HasHeader (fin))
 	{
 		Com_DPrintf ("Invalid PNG image %s\n", COM_SkipPath(filename));
-		return;
+		return NULL;
 	}
 
 	// Try creating a PNG structure for reading the file.
@@ -1073,7 +1073,7 @@ png_textp Image_LoadPNG_Comments (char *filename, int *text_count)
 	png_textp textchunks = NULL;
 	png_data *pdata = NULL;
 
-	pdata = Image_LoadPNG_All (NULL, filename, NULL, NULL, PNG_LOAD_TEXT);
+	pdata = Image_LoadPNG_All (NULL, filename, 0, 0, PNG_LOAD_TEXT);
 
 	if (pdata)
 	{		
