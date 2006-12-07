@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.26 2006-12-06 00:54:54 cokeman1982 Exp $
+	$Id: utils.c,v 1.27 2006-12-07 11:53:47 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -689,7 +689,7 @@ qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, char **resultstring,
 	return false;
 }
 
-#if (_MSC_VER < 1400)
+#if (_MSC_VER && (_MSC_VER < 1400))
 extern _ftol2(double f);
 long _ftol2_sse(double f)
 {

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.15 2006-12-01 20:37:39 cokeman1982 Exp $
+	$Id: gl_local.h,v 1.16 2006-12-07 11:53:47 disconn3ct Exp $
 
 */
 // gl_local.h -- private refresh defs
