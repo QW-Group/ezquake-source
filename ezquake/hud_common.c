@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.92 2006-12-06 23:44:15 johnnycz Exp $
+	$Id: hud_common.c,v 1.93 2006-12-07 13:30:45 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -4745,8 +4745,7 @@ qbool Radar_OnChangeHighlightColor(cvar_t *var, char *newval)
 
 	// Set the cvar to contain the new color string
 	// (if the user entered "red" it will be "255 0 0").
-	// FIXME! johnnycz: following line makes my client exit when entering any map so i commented it out
-	// Cvar_Set(var, new_color);
+	Cvar_Set(var, new_color);
 
 	return true;
 }
@@ -5474,6 +5473,8 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 
     if (hud_radar_opacity == NULL)    // first time
     {
+		char checkval[256];
+
 		hud_radar_opacity			= HUD_FindVar(hud, "opacity");
 		hud_radar_width				= HUD_FindVar(hud, "width");
 		hud_radar_height			= HUD_FindVar(hud, "height");
@@ -5498,19 +5499,23 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 
 		// Weapon filter.
 		hud_radar_weaponfilter->OnChange = Radar_OnChangeWeaponFilter;
-		Radar_OnChangeWeaponFilter (hud_radar_weaponfilter, hud_radar_weaponfilter->string);
+		strlcpy(checkval, hud_radar_weaponfilter->string, sizeof(checkval));
+		Cvar_Set(hud_radar_weaponfilter, checkval);
 
 		// Item filter.
 		hud_radar_itemfilter->OnChange = Radar_OnChangeItemFilter;
-		Radar_OnChangeItemFilter (hud_radar_itemfilter, hud_radar_itemfilter->string);
+		strlcpy(checkval, hud_radar_itemfilter->string, sizeof(checkval));
+		Cvar_Set(hud_radar_itemfilter, checkval);
 
 		// Other filter.
 		hud_radar_otherfilter->OnChange = Radar_OnChangeOtherFilter;
-		Radar_OnChangeOtherFilter (hud_radar_otherfilter, hud_radar_otherfilter->string);
+		strlcpy(checkval, hud_radar_otherfilter->string, sizeof(checkval));
+		Cvar_Set(hud_radar_otherfilter, checkval);
 
 		// Highlight color.
 		hud_radar_highlight_color->OnChange = Radar_OnChangeHighlightColor;
-		Radar_OnChangeHighlightColor (hud_radar_highlight_color, hud_radar_highlight_color->string);
+		strlcpy(checkval, hud_radar_highlight_color->string, sizeof(checkval));
+		Cvar_Set(hud_radar_highlight_color, checkval);
     }
 
 	// Don't show anything if it's a normal player.
