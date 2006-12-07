@@ -1,5 +1,5 @@
 /*
-	$Id: cl_screen.h,v 1.3 2006-12-06 01:07:46 cokeman1982 Exp $
+	$Id: cl_screen.h,v 1.4 2006-12-07 11:53:47 disconn3ct Exp $
 */
 
 #define	ELEMENT_X_COORD(var)	((var##_x.value < 0) ? vid.width - strlen(str) * 8 + 8 * var##_x.value: 8 * var##_x.value)
