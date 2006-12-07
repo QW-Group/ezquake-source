@@ -124,7 +124,7 @@ void HUD_Func_f(void)
     {
         char buf[512];
 
-        sprintf(buf, "hud_%s_%s", hud->name, Cmd_Argv(1));
+        snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, Cmd_Argv(1));
         if (Cvar_FindVar(buf) != NULL)
         {
             Cbuf_AddText(buf);
@@ -390,7 +390,7 @@ void HUD_Toggle_f (void)
             return;
         }
 //        Cvar_Toggle(var);
-	Cvar_Set (var, var->value ? "0" : "1");
+		Cvar_Set (var, var->value ? "0" : "1");
         return;
     }
 
