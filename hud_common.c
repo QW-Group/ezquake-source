@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.95 2006-12-07 18:36:04 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.96 2006-12-07 19:26:47 vvd0 Exp $
 */
 //
 // common HUD elements
@@ -1772,7 +1772,7 @@ void SCR_HUD_DrawAmmo(hud_t *hud, int num,
     int value;
     qbool low;
 
-    if (num < 1  ||  num > 4)
+    if (num < 0 || num > 4)
     {	// draw 'current' ammo, which one is it?
 
 		if (ShowPreselectedWeap()) {
@@ -1792,11 +1792,10 @@ void SCR_HUD_DrawAmmo(hud_t *hud, int num,
 			else
 				return;
 		}
-		value = cl.stats[STAT_AMMO];
     }
-	else
-		value = HUD_Stats(STAT_SHELLS + num - 1);
+
     low = HUD_AmmoLowByWeapon(num * 2);
+	value = (num == 0 ? cl.stats[STAT_AMMO] : HUD_Stats(STAT_SHELLS + num - 1));
 
     if (style < 2)
     {
