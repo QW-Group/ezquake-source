@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.99 2006-12-07 21:07:26 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.100 2006-12-07 21:36:59 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -1796,7 +1796,14 @@ void SCR_HUD_DrawAmmo(hud_t *hud, int num,
     }
 
     low = HUD_AmmoLowByWeapon(num * 2);
-	value = (num_old == 0 ? cl.stats[STAT_AMMO] : HUD_Stats(STAT_SHELLS + num - 1));
+	if (num_old == 0 && (!ShowPreselectedWeap() || cl.standby)) {
+		// this check is here to display a feature from KTPRO/KTX where you can see received damage in prewar
+		// also we make sure this applies only to 'ammo' element
+		// weapon preselection must always use HUD_Stats()
+		value = cl.stats[STAT_AMMO];
+	} else {
+		value = HUD_Stats(STAT_SHELLS + num - 1);
+	}
 
     if (style < 2)
     {
