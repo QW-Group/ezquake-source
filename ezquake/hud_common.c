@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.94 2006-12-07 15:40:36 vvd0 Exp $
+	$Id: hud_common.c,v 1.95 2006-12-07 18:36:04 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -1915,7 +1915,7 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
 
 	// Grow the group if necessary.
 	if (pic_scalemode == HUD_GROUP_SCALEMODE_GROW
-		&& pic != NULL && pic->height > 0)
+		&& pic != NULL && pic->height > 0 && pic->width > 0)
 	{
 		width = max(pic->width, width);
 		height = max(pic->height, height);
@@ -4344,18 +4344,18 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 qbool TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s)
 {
 	// Parse the item filter.
-	teamhold_show_rl		= Utils_RegExpMatch("RL",		s);
+	teamhold_show_rl		= Utils_RegExpMatch("RL",	s);
 	teamhold_show_quad		= Utils_RegExpMatch("QUAD",	s);
 	teamhold_show_ring		= Utils_RegExpMatch("RING",	s);
 	teamhold_show_pent		= Utils_RegExpMatch("PENT",	s);
 	teamhold_show_suit		= Utils_RegExpMatch("SUIT",	s);
-	teamhold_show_lg		= Utils_RegExpMatch("LG",		s);
-	teamhold_show_gl		= Utils_RegExpMatch("GL",		s);
+	teamhold_show_lg		= Utils_RegExpMatch("LG",	s);
+	teamhold_show_gl		= Utils_RegExpMatch("GL",	s);
 	teamhold_show_sng		= Utils_RegExpMatch("SNG",	s);
-	teamhold_show_mh		= Utils_RegExpMatch("MH",		s);
-	teamhold_show_ra		= Utils_RegExpMatch("RA",		s);
-	teamhold_show_ya		= Utils_RegExpMatch("YA",		s);
-	teamhold_show_ga		= Utils_RegExpMatch("GA",		s);
+	teamhold_show_mh		= Utils_RegExpMatch("MH",	s);
+	teamhold_show_ra		= Utils_RegExpMatch("RA",	s);
+	teamhold_show_ya		= Utils_RegExpMatch("YA",	s);
+	teamhold_show_ga		= Utils_RegExpMatch("GA",	s);
 
 	return false;
 }
@@ -4380,6 +4380,8 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 
     if (hud_teamholdinfo_style == NULL)    // first time
     {
+		char *val = NULL;
+
 		hud_teamholdinfo_style				= HUD_FindVar(hud, "style");
 		hud_teamholdinfo_opacity			= HUD_FindVar(hud, "opacity");
 		hud_teamholdinfo_width				= HUD_FindVar(hud, "width");
@@ -4390,8 +4392,10 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 		// Unecessary to parse the item filter string on each frame.
 		hud_teamholdinfo_itemfilter->OnChange = TeamHold_OnChangeItemFilterInfo;
 
-		// Parse the item filter the first time.
-		TeamHold_OnChangeItemFilterInfo(hud_teamholdinfo_itemfilter, hud_teamholdinfo_itemfilter->string);
+		// Parse the item filter the first time (trigger the OnChange function above).
+		val = (char *)Q_malloc(sizeof(hud_teamholdinfo_itemfilter->string));
+		Cvar_Set (hud_teamholdinfo_itemfilter, val);
+		Q_free (val);
     }
 
 	// Don't show when not in teamplay/demoplayback.
