@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.93 2006-12-07 13:30:45 johnnycz Exp $
+	$Id: hud_common.c,v 1.94 2006-12-07 15:40:36 vvd0 Exp $
 */
 //
 // common HUD elements
@@ -1792,9 +1792,11 @@ void SCR_HUD_DrawAmmo(hud_t *hud, int num,
 			else
 				return;
 		}
+		value = cl.stats[STAT_AMMO];
     }
+	else
+		value = HUD_Stats(STAT_SHELLS + num - 1);
     low = HUD_AmmoLowByWeapon(num * 2);
-    value = HUD_Stats(STAT_SHELLS + num - 1);
 
     if (style < 2)
     {
