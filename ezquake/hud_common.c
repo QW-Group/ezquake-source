@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.98 2006-12-07 20:53:17 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.99 2006-12-07 21:07:26 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -2022,7 +2022,7 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
 	}
 
 	// Get the path for the pic.
-	snprintf (pic_path, sizeof(HUD_GROUP_PIC_BASEPATH) + sizeof(newpic), HUD_GROUP_PIC_BASEPATH, newpic); 
+	snprintf (pic_path, sizeof(pic_path), HUD_GROUP_PIC_BASEPATH, newpic); 
 
 	// Try loading the pic.
 	if (!(temp_pic = GL_LoadPicImage(pic_path, newpic, 0, 0, TEX_ALPHA)))
@@ -4416,7 +4416,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 		hud_teamholdinfo_itemfilter->OnChange = TeamHold_OnChangeItemFilterInfo;
 
 		// Parse the item filter the first time (trigger the OnChange function above).
-		strlcpy (val, hud_teamholdinfo_itemfilter->string, sizeof(hud_teamholdinfo_itemfilter->string));
+		strlcpy (val, hud_teamholdinfo_itemfilter->string, sizeof(val));
 		Cvar_Set (hud_teamholdinfo_itemfilter, val);
     }
 
