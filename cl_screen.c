@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.71 2006-12-06 21:13:16 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.72 2006-12-07 18:00:22 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -987,13 +987,16 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 			case IT_LIGHTNING:
 				weapon_pic = sb_weapons[0][6];
 				break;
-			// disconnect: default case of axe?
+			default :
+				// No weapon.
+				break;
 		}
 
 		// Only draw the best weapon if it's the RL when autoid = 4
 		// Otherwise draw the current best weapon when autoid = 5
-		if((scr_autoid.value == 4 && best_weapon == IT_ROCKET_LAUNCHER)
-			|| (scr_autoid.value >= 5 && best_weapon > 0))
+		if(weapon_pic != NULL && 
+			((scr_autoid.value == 4 && best_weapon == IT_ROCKET_LAUNCHER)
+			|| (scr_autoid.value >= 5 && best_weapon > 0)))
 		{
 			Draw_SSubPic (
 				x - name_length - weapon_pic->width - AUTOID_WEAPON_OFFSET_X, 
