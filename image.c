@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.31 2006-12-06 21:42:25 cokeman1982 Exp $
+    $Id: image.c,v 1.32 2006-12-07 18:06:34 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -816,7 +816,7 @@ static void PNG_IO_user_flush_data(png_structp png_ptr) {
 
 static qbool PNG_HasHeader (FILE *fin)
 {
-	byte header[8];
+	byte header[PNG_HEADER_LENGTH];
 
 	fread(header, 1, PNG_HEADER_LENGTH, fin);
 
