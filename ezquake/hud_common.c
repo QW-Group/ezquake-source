@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.97 2006-12-07 19:43:40 vvd0 Exp $
+	$Id: hud_common.c,v 1.98 2006-12-07 20:53:17 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -2002,17 +2002,30 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
 qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
 {
 #ifdef GLQUAKE
-	mpic_t *temp_pic;
+	#define HUD_GROUP_PIC_BASEPATH	"gfx/%s"
+
+	mpic_t *temp_pic = NULL;
+	char pic_path[MAX_PATH];
+
+	if (!hud_pic)
+	{
+		// Something is very wrong.
+		Com_Printf ("Couldn't load picture %s for hud group. HUD PIC is null\n", newpic);
+		return false;
+	}
 
 	// If we have no pic name.
-	if(!newpic)
+	if(!newpic || !strcmp (newpic, ""))
 	{
 		hud_pic->height = -1;
 		return false;
 	}
 
+	// Get the path for the pic.
+	snprintf (pic_path, sizeof(HUD_GROUP_PIC_BASEPATH) + sizeof(newpic), HUD_GROUP_PIC_BASEPATH, newpic); 
+
 	// Try loading the pic.
-	if (!(temp_pic = GL_LoadPicImage(va("gfx/%s", newpic), newpic, 0, 0, TEX_ALPHA)))
+	if (!(temp_pic = GL_LoadPicImage(pic_path, newpic, 0, 0, TEX_ALPHA)))
 	{
 		hud_pic->height = -1;
 		Com_Printf("Couldn't load picture %s for hud group.\n", newpic);
@@ -2023,6 +2036,8 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
 	(*hud_pic) = *temp_pic;
 
 	Cvar_Set(var, newpic);
+#else
+	Com_Printf ("HUD background pictures only work in GLQuake.\n");
 #endif
 	return true;
 }
@@ -2098,6 +2113,7 @@ void SCR_HUD_Group1(hud_t *hud)
 		pic_scalemode->value,
 		pic_alpha->value);
 }
+
 void SCR_HUD_Group2(hud_t *hud)
 {
     static cvar_t *width = NULL,
@@ -2114,7 +2130,7 @@ void SCR_HUD_Group2(hud_t *hud)
 		pic_alpha		= HUD_FindVar(hud, "pic_alpha");
         pic_scalemode	= HUD_FindVar(hud, "pic_scalemode");
 
-		picture->OnChange	= SCR_HUD_OnChangePic_Group2;
+		picture->OnChange = SCR_HUD_OnChangePic_Group2;
     }
 
 	SCR_HUD_DrawGroup(hud,
@@ -2124,6 +2140,7 @@ void SCR_HUD_Group2(hud_t *hud)
 		pic_scalemode->value,
 		pic_alpha->value);
 }
+
 void SCR_HUD_Group3(hud_t *hud)
 {
     static cvar_t *width = NULL,
@@ -2150,6 +2167,7 @@ void SCR_HUD_Group3(hud_t *hud)
 		pic_scalemode->value,
 		pic_alpha->value);
 }
+
 void SCR_HUD_Group4(hud_t *hud)
 {
     static cvar_t *width = NULL,
@@ -2176,6 +2194,7 @@ void SCR_HUD_Group4(hud_t *hud)
 		pic_scalemode->value,
 		pic_alpha->value);
 }
+
 void SCR_HUD_Group5(hud_t *hud)
 {
     static cvar_t *width = NULL,
@@ -2202,6 +2221,7 @@ void SCR_HUD_Group5(hud_t *hud)
 		pic_scalemode->value,
 		pic_alpha->value);
 }
+
 void SCR_HUD_Group6(hud_t *hud)
 {
     static cvar_t *width = NULL,
@@ -2228,6 +2248,7 @@ void SCR_HUD_Group6(hud_t *hud)
 		pic_scalemode->value,
 		pic_alpha->value);
 }
+
 void SCR_HUD_Group7(hud_t *hud)
 {
     static cvar_t *width = NULL,
@@ -2254,6 +2275,7 @@ void SCR_HUD_Group7(hud_t *hud)
 		pic_scalemode->value,
 		pic_alpha->value);
 }
+
 void SCR_HUD_Group8(hud_t *hud)
 {
     static cvar_t *width = NULL,
@@ -2280,6 +2302,7 @@ void SCR_HUD_Group8(hud_t *hud)
 		pic_scalemode->value,
 		pic_alpha->value);
 }
+
 void SCR_HUD_Group9(hud_t *hud)
 {
     static cvar_t *width = NULL,
@@ -4380,7 +4403,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 
     if (hud_teamholdinfo_style == NULL)    // first time
     {
-		char *val = NULL;
+		char val[256];
 
 		hud_teamholdinfo_style				= HUD_FindVar(hud, "style");
 		hud_teamholdinfo_opacity			= HUD_FindVar(hud, "opacity");
@@ -4393,9 +4416,8 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 		hud_teamholdinfo_itemfilter->OnChange = TeamHold_OnChangeItemFilterInfo;
 
 		// Parse the item filter the first time (trigger the OnChange function above).
-		val = (char *)Q_malloc(sizeof(hud_teamholdinfo_itemfilter->string));
+		strlcpy (val, hud_teamholdinfo_itemfilter->string, sizeof(hud_teamholdinfo_itemfilter->string));
 		Cvar_Set (hud_teamholdinfo_itemfilter, val);
-		Q_free (val);
     }
 
 	// Don't show when not in teamplay/demoplayback.
