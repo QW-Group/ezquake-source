@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.27 2006-12-03 21:15:20 qqshka Exp $
+	$Id: vid_wgl.c,v 1.28 2006-12-07 19:28:51 vvd0 Exp $
 
 */
 
@@ -1150,12 +1150,10 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
 
 	// VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...)
 	// HACK!!! FIXME {
-	extern cvar_t v_gamma;
-	static float gamma_old;
 	static time_t time_old;
-	if (restore_gamma == 2) {
+	if (restore_gamma == 2 && currentgammaramp) {
 		if (time(NULL) - time_old > 0) {
-			Cvar_SetValue(&v_gamma, gamma_old);
+			VID_SetDeviceGammaRamp (currentgammaramp);
 			restore_gamma = 0;
 		}
 	}
@@ -1277,9 +1275,7 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
 			// VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...)
 			// HACK!!! FIXME {
 			if (restore_gamma == 1) {
-				gamma_old = v_gamma.value;
 				time_old = time(NULL);
-				Cvar_SetValue(&v_gamma, 1.);
 				restore_gamma = 2;
 			}
 			// }
