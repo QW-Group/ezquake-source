@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.27 2006-12-07 11:53:47 disconn3ct Exp $
+	$Id: utils.c,v 1.28 2006-12-07 18:12:43 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -82,7 +82,7 @@ char *SecondsToHourString(int print_time) {
 #endif
 
 #define COLOR_CHECK(_colorname, _colorstring, _rgbstring) \
-	if(!strncmp(_colorstring, _colorname, strlen(_colorstring))) return _rgbstring
+	if(!strncmp(_colorstring, _colorname, sizeof(_colorstring))) return _rgbstring
 
 char *ColorNameToRGBString(char *color_name)
 {
