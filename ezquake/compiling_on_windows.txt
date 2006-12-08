@@ -14,7 +14,7 @@ instructions:
  - project file looks in DXSDK_PATH (Environment variable), you can set this in your System -> Advanced -> Environment Variables settings
 3) download all required libraries, there are two ways to do it:
  A) go to http://ezquake.cvs.sourceforge.net/ezquake/libs/windows-x86/
-    and manually download all *.lib files from there
+    and manually download all *.lib files from there, save them into libs\windows-x86 directory
  B) go to libs/windows-x86 dir and launch download.bat
     this requires you to have wget.exe present in your system. if you don't have it, download it from:
     http://www.christopherlewis.com/WGet/wget-1.10.2b.zip
