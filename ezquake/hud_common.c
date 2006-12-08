@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.100 2006-12-07 21:36:59 johnnycz Exp $
+	$Id: hud_common.c,v 1.101 2006-12-08 08:34:43 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -1627,15 +1627,15 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
         align = 2; break;
     }
 
-	t = 1;
-	for (i = 0; i < digits; i++)
-		t *= 10;
-	overflow = num >= t;
-	num %= t;
-    sprintf(buf, "%d", num);
-    len = strlen(buf);
-	t = digits - len;
-	if (t > 0 && overflow)
+	t = 1;	// let's presume digits = 3
+	for (i = 0; i < digits; i++) t *= 10;	// t = 10^digits
+
+	overflow = num >= t;		// 10900 >= 1000
+	num %= t;					// num = 900
+    sprintf(buf, "%d", num);	// "900"
+    len = strlen(buf);			// 3
+	t = digits - len;			// t = 3-3 = 0
+	if (t > 0 && overflow)		// huh?
 	{
 		sprintf(buf + t, "%d", num);
 		for (i = 0; i < t; i++)
@@ -2036,17 +2036,16 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
 	{
 		hud_pic->height = -1;
 		Com_Printf("Couldn't load picture %s for hud group.\n", newpic);
-		return false;
+		return true;
 	}
 
 	// Save the pic.
 	(*hud_pic) = *temp_pic;
 
-	Cvar_Set(var, newpic);
 #else
 	Com_Printf ("HUD background pictures only work in GLQuake.\n");
 #endif
-	return true;
+	return false;
 }
 
 qbool SCR_HUD_OnChangePic_Group1(cvar_t *var, char *newpic)
@@ -3957,13 +3956,13 @@ void HUD_NewRadarMap()
 #define TEMPHUD_FULLPATH "configs/"TEMPHUD_NAME".cfg"
 
 // will check if user wants to un/load external MVD HUD automatically
-void HUD_AutoLoad_MVD() {
+void HUD_AutoLoad_MVD(int autoload) {
 	char *cfg_suffix = "custom";
 	extern cvar_t scr_fov;
 	extern cvar_t scr_newHud;
 	extern void Cmd_Exec_f (void);
 
-	if (mvd_autohud.value && cls.mvdplayback) {
+	if (autoload && cls.mvdplayback) {
 		// Turn autohud ON here
 
 		Com_DPrintf("Loading MVD Hud\n");
@@ -3976,7 +3975,7 @@ void HUD_AutoLoad_MVD() {
 		}
 
 		// load MVD HUD config
-		switch ((int) mvd_autohud.value) {
+		switch ((int) autoload) {
 			case 1: // load 1on1 or 4on4 or custom according to $matchtype
 				if (!strncmp(Macro_MatchType(), "duel", 4)) {
 					cfg_suffix = "1on1";
@@ -3998,7 +3997,7 @@ void HUD_AutoLoad_MVD() {
 		return;
 	}
 
-	if ((!cls.mvdplayback || !mvd_autohud.value) && autohud.active) {
+	if ((!cls.mvdplayback || !autoload) && autohud.active) {
 		// either user decided to turn mvd autohud off or mvd playback is over
 		// -> Turn autohud OFF here
 		FILE *tempfile;
@@ -4006,9 +4005,9 @@ void HUD_AutoLoad_MVD() {
 
 		Com_DPrintf("Unloading MVD Hud\n");
 		// load stored settings
-		Cvar_Set(&scr_fov, va("%i", autohud.old_fov));
-		Cvar_Set(&cl_multiview, va("%i", autohud.old_multiview));
-		Cvar_Set(&scr_newHud, va("%i", autohud.old_newhud));
+		Cvar_SetValue(&scr_fov, autohud.old_fov);
+		Cvar_SetValue(&cl_multiview, autohud.old_multiview);
+		Cvar_SetValue(&scr_newHud, autohud.old_newhud);
 		Cmd_TokenizeString("exec "TEMPHUD_FULLPATH);
 		Cmd_Exec_f();
 
@@ -4026,9 +4025,8 @@ void HUD_AutoLoad_MVD() {
 }
 
 qbool OnAutoHudChange(cvar_t *var, char *value) {
-	Cvar_Set(var, value);
-	HUD_AutoLoad_MVD();
-	return true;
+	HUD_AutoLoad_MVD(Q_atoi(value));
+	return false;
 }
 
 // Is run when a new map is loaded.
