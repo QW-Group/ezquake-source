@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.40 2006-12-06 22:46:21 johnnycz Exp $
+	$Id: cl_demo.c,v 1.41 2006-12-08 10:51:52 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1294,7 +1294,7 @@ int CL_Demo_Compress(char* qwdname)
 		return 0;
 	}
 
-	strlcpy (cmdline, va("%s/%s/%s %s \"%s\"", com_basedir, path, execute, outputpath, qwdname), sizeof(cmdline));
+	strlcpy (cmdline, va("%s/%s/%s \"%s\" \"%s\"", com_basedir, path, execute, outputpath, qwdname), sizeof(cmdline));
 
 	if (!CreateProcess (NULL, cmdline, NULL, NULL,
 		FALSE, GetPriorityClass(GetCurrentProcess()),
