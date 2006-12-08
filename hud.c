@@ -1199,7 +1199,7 @@ void HUD_Draw(void)
     hud_t *hud;
 
 	if (mvd_autohud.value && !autohud_loaded) {
-		HUD_AutoLoad_MVD();
+		HUD_AutoLoad_MVD((int) mvd_autohud.value);
 		Com_DPrintf("Loading AUTOHUD...\n");
 		autohud_loaded = true;
 	}
