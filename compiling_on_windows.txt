@@ -19,8 +19,11 @@ instructions:
     this requires you to have wget.exe present in your system. if you don't have it, download it from:
     http://www.christopherlewis.com/WGet/wget-1.10.2b.zip
     and place wget.exe either in the same dir as download.bat or in your system dir
-4) open ezquake.sln for Microsoft Visual Studio 7.1 or ezquake_msvs_80.sln for MS VS 8.0 (2005 .NET)
-5) select ReleaseGL configuration and press "Build"
+4) for MS Visual Studio 8 (2005 .NET) you usually need ml.exe, grab it from 
+   http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/ML.EXE
+   and place it into masm32 directory
+5) open ezquake.sln for Microsoft Visual Studio 7.1 or ezquake_msvs_80.sln for MS VS 8.0 (2005 .NET)
+6) select ReleaseGL configuration and press "Build"
 
 troubleshooting:
 - if you get "unresolved external symbol __imp__" linker errors, go to project properties, linker, input, additional dependencies, click "..."
