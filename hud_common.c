@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.101 2006-12-08 08:34:43 johnnycz Exp $
+	$Id: hud_common.c,v 1.102 2006-12-08 18:02:05 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -1630,16 +1630,16 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
 	t = 1;	// let's presume digits = 3
 	for (i = 0; i < digits; i++) t *= 10;	// t = 10^digits
 
-	overflow = num >= t;		// 10900 >= 1000
-	num %= t;					// num = 900
-    sprintf(buf, "%d", num);	// "900"
-    len = strlen(buf);			// 3
-	t = digits - len;			// t = 3-3 = 0
-	if (t > 0 && overflow)		// huh?
+	overflow = num >= t;		// 10090 >= 1000
+	num %= t;					// num = 90
+    sprintf(buf, "%d", num);	// "90"
+    len = strlen(buf);			// 2
+	t = digits - len;			// t = 3-2 = 1
+	if (t > 0 && overflow)		// 1 > 0 && true
 	{
-		sprintf(buf + t, "%d", num);
+		sprintf(buf + t, "%d", num);	// " 90"
 		for (i = 0; i < t; i++)
-			buf[i] = '0';
+			buf[i] = '0';				// "090"
 		len = digits;
 	}
 
