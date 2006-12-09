@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.102 2006-12-08 18:02:05 johnnycz Exp $
+	$Id: hud_common.c,v 1.103 2006-12-09 13:47:47 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -2012,7 +2012,7 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
 	#define HUD_GROUP_PIC_BASEPATH	"gfx/%s"
 
 	mpic_t *temp_pic = NULL;
-	char pic_path[MAX_PATH];
+	char pic_path[_MAX_PATH];
 
 	if (!hud_pic)
 	{
