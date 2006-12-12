@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.106 2006-12-06 21:16:44 cokeman1982 Exp $
+	$Id: cl_main.c,v 1.107 2006-12-12 18:56:28 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1548,36 +1548,6 @@ void CL_Frame (double time) {
 
 		CDAudio_Update();
 	}
-	/*
-	// WTF?!?!?!? 
-	if (CURRVIEW == 2 && cl_multiview.value && cls.mvdplayback) 
-	{
-		if (cls.state == ca_active)	
-		{
-			S_Update (r_origin, vpn, vright, vup);
-			CL_DecayLights ();
-		} 
-		else 
-		{
-			S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
-		}
-
-		CDAudio_Update();
-	} 
-	else if (!cls.mvdplayback || cl_multiview.value < 2) 
-	{
-		if (cls.state == ca_active)	
-		{
-			S_Update (r_origin, vpn, vright, vup);
-			CL_DecayLights ();
-		} 
-		else 
-		{
-			S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
-		}
- 
-		CDAudio_Update();
-	}*/
 
 	MT_Frame();
 
