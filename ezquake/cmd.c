@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.45 2006-11-25 20:10:36 disconn3ct Exp $
+    $Id: cmd.c,v 1.46 2006-12-12 14:20:34 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1143,7 +1143,8 @@ void Cmd_AddMacroEx(char *s, char *(*f)(void), qbool teamplay)
 	macro_commands[macro_count].func = f;
 	macro_commands[macro_count].teamplay = teamplay;
 #ifdef EMBED_TCL
-	TCL_RegisterMacro (macro_commands + macro_count);
+	if (!teamplay)	// don't allow teamplay protected macros since there's no protection for this in TCL yet
+		TCL_RegisterMacro (macro_commands + macro_count);
 #endif
 	macro_count++;
 }
