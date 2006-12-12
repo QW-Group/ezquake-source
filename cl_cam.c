@@ -105,6 +105,11 @@ qbool Cam_DrawPlayer(int playernum) {
 
 void Cam_Unlock(void) 
 {
+	if (Cmd_FindAlias("f_freeflyspectate"))
+	{
+		Cbuf_AddTextEx (&cbuf_main, "f_freeflyspectate\n");
+	}
+
 	if (!autocam)
 	{
 		return;
@@ -130,6 +135,11 @@ void Cam_Unlock(void)
 void Cam_Lock(int playernum) 
 {
 	char st[40];
+
+	if (Cmd_FindAlias("f_trackspectate"))
+	{
+		Cbuf_AddTextEx (&cbuf_main, "f_trackspectate\n");
+	}
 
 	if (cl_multiview.value && cls.mvdplayback)
 		return; 
