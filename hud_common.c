@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.103 2006-12-09 13:47:47 johnnycz Exp $
+	$Id: hud_common.c,v 1.104 2006-12-13 21:41:58 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -3846,6 +3846,7 @@ void SCR_HUD_DrawMP3_Time(hud_t *hud)
 #endif
 }
 
+#ifdef WITH_PNG
 #ifdef GLQUAKE
 
 // Map picture to draw for the mapoverview hud control.
@@ -3951,6 +3952,7 @@ void HUD_NewRadarMap()
 	Q_free (radar_filename);
 }
 #endif // OPENGL
+#endif // WITH_PNG
 
 #define TEMPHUD_NAME "_temphud"
 #define TEMPHUD_FULLPATH "configs/"TEMPHUD_NAME".cfg"
@@ -3966,12 +3968,38 @@ void HUD_AutoLoad_MVD(int autoload) {
 		// Turn autohud ON here
 
 		Com_DPrintf("Loading MVD Hud\n");
-		// store current settings: cl_multiview, scr_newhud, hud_*
-		if (!autohud.active) {
+		// Store current settings.
+		if (!autohud.active) 
+		{
+			extern cvar_t cfg_save_cmdline, cfg_save_cvars, cfg_save_cmds, cfg_save_aliases, cfg_save_binds;
+
+			// Save old cfg_save values so that we don't screw the users
+			// settings when saving the temp config.
+			int old_cmdline = cfg_save_cmdline.value;
+			int old_cvars	= cfg_save_cvars.value;
+			int old_cmds	= cfg_save_cmds.value;
+			int old_aliases = cfg_save_aliases.value;
+			int old_binds	= cfg_save_binds.value;
+
 			autohud.old_fov = (int) scr_fov.value;
 			autohud.old_multiview = (int) cl_multiview.value;
 			autohud.old_newhud = (int) scr_newHud.value;
-			DumpHUD(TEMPHUD_NAME".cfg");
+
+			// Make sure everything current settings are saved.
+			Cvar_SetValue(&cfg_save_cmdline,	1);
+			Cvar_SetValue(&cfg_save_cvars,		1);
+			Cvar_SetValue(&cfg_save_cmds,		1);
+			Cvar_SetValue(&cfg_save_aliases,	1);
+			Cvar_SetValue(&cfg_save_binds,		1);
+
+			// Save a temporary config.
+			DumpConfig(TEMPHUD_NAME".cfg"); 
+
+			Cvar_SetValue(&cfg_save_cmdline,	old_cmdline);
+			Cvar_SetValue(&cfg_save_cvars,		old_cvars);
+			Cvar_SetValue(&cfg_save_cmds,		old_cmds);
+			Cvar_SetValue(&cfg_save_aliases,	old_aliases);
+			Cvar_SetValue(&cfg_save_binds,		old_binds);
 		}
 
 		// load MVD HUD config
@@ -4008,7 +4036,8 @@ void HUD_AutoLoad_MVD(int autoload) {
 		Cvar_SetValue(&scr_fov, autohud.old_fov);
 		Cvar_SetValue(&cl_multiview, autohud.old_multiview);
 		Cvar_SetValue(&scr_newHud, autohud.old_newhud);
-		Cmd_TokenizeString("exec "TEMPHUD_FULLPATH);
+		//Cmd_TokenizeString("exec "TEMPHUD_FULLPATH);
+		Cmd_TokenizeString("cfg_load "TEMPHUD_FULLPATH);
 		Cmd_Exec_f();
 
 		// delete temp config with hud_* settings
@@ -4031,8 +4060,10 @@ qbool OnAutoHudChange(cvar_t *var, char *value) {
 
 // Is run when a new map is loaded.
 void HUD_NewMap() {
+#ifdef WITH_PNG
 #ifdef GLQUAKE
 	HUD_NewRadarMap();
+#endif
 #endif
 
 	autohud_loaded = false;
@@ -4541,6 +4572,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 	}
 }
 
+#ifdef WITH_PNG
 #ifdef GLQUAKE
 
 // What stats to draw.
@@ -5679,7 +5711,8 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 	}
 }
 
-#endif
+#endif // GLQUAKE
+#endif // WITH_PNG
 
 //
 // Run before HUD elements are drawn.
@@ -6245,6 +6278,7 @@ void CommonDraw_Init(void)
 		"on_scoreboard", "0",
         NULL);
 
+#ifdef WITH_PNG
 #ifdef GLQUAKE
 
 	HUD_Register("radar", NULL, "Plots the players on a picture of the map. (Only when watching MVD's or QTV).",
@@ -6268,7 +6302,8 @@ void CommonDraw_Init(void)
 		"otherfilter", "projectiles gibs explosions shotgun",
 		"onlytp", "0",
         NULL);
-#endif
+#endif // GLQUAKE
+#endif // WITH_PNG
 
 	HUD_Register("teamholdbar", NULL, "Shows how much of the level (in percent) that is currently being held by either team.",
         HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldBar,
