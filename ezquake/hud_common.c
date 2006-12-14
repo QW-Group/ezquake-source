@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.105 2006-12-14 13:03:16 disconn3ct Exp $
+	$Id: hud_common.c,v 1.106 2006-12-14 18:29:53 vvd0 Exp $
 */
 //
 // common HUD elements
@@ -46,6 +46,7 @@ qbool OnAutoHudChange(cvar_t *var, char *value);
 qbool autohud_loaded = false;
 cvar_t hud_planmode = {"hud_planmode",   "0"};
 cvar_t mvd_autohud = {"mvd_autohud", "1", 0, OnAutoHudChange};
+cvar_t hud_digits_trim = {"hud_digits_trim", "1"};
 
 int hud_stats[MAX_CL_STATS];
 
@@ -1627,20 +1628,42 @@ void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low,
         align = 2; break;
     }
 
-	t = 1;	// let's presume digits = 3
-	for (i = 0; i < digits; i++) t *= 10;	// t = 10^digits
-
-	overflow = num >= t;		// 10090 >= 1000
-	num %= t;					// num = 90
-    sprintf(buf, "%d", num);	// "90"
-    len = strlen(buf);			// 2
-	t = digits - len;			// t = 3-2 = 1
-	if (t > 0 && overflow)		// 1 > 0 && true
+	switch ((int)hud_digits_trim.value)
 	{
-		sprintf(buf + t, "%d", num);	// " 90"
-		for (i = 0; i < t; i++)
-			buf[i] = '0';				// "090"
-		len = digits;
+	case 0:
+		sprintf(buf, "%d", num);
+		len = strlen(buf);
+		if (len > digits)
+		{
+			char *p = buf;
+			for (i = 0; i < digits; i++)
+				*p++ = '9';
+			*p = 0;
+			len = digits;
+		}
+		break;
+    default:
+	case 1:
+		t = 1;	// let's presume digits = 3
+		for (i = 0; i < digits; i++) t *= 10;	// t = 10^digits
+
+		overflow = num >= t;		// 10090 >= 1000
+		num %= t;					// num = 90
+	    sprintf(buf, "%d", num);	// "90"
+    	len = strlen(buf);			// 2
+		t = digits - len;			// t = 3-2 = 1
+		if (t > 0 && overflow)		// 1 > 0 && true
+		{
+			sprintf(buf + t, "%d", num);	// " 90"
+			for (i = 0; i < t; i++)
+				buf[i] = '0';				// "090"
+			len = digits;
+		}
+		break;
+	case 2:
+	    sprintf(buf, "%d", num);
+		buf[digits] = '\0';
+    	len = strlen(buf);
 	}
 
     switch (style)
@@ -5746,6 +5769,7 @@ void CommonDraw_Init(void)
     Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
 	Cvar_Register (&hud_planmode);
     Cvar_Register (&hud_tp_need);
+    Cvar_Register (&hud_digits_trim);
     Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_MVD);
