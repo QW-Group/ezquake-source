@@ -16,14 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: skin.c,v 1.6 2006-03-20 13:51:28 vvd0 Exp $
+	$Id: skin.c,v 1.7 2006-12-14 23:22:29 qqshka Exp $
 */
 
 #include "quakedef.h"
 
+qbool OnChangeSkinForcing(cvar_t *var, char *string);
 
 cvar_t	baseskin = {"baseskin", "base"};
 cvar_t	noskins = {"noskins", "0"};
+
+cvar_t	cl_skin_as_name = {"cl_skin_as_name", "0", 0, OnChangeSkinForcing};
 
 char	allskins[MAX_OSPATH];
 
@@ -32,15 +35,52 @@ skin_t	skins[MAX_CACHED_SKINS];
 
 int		numskins;
 
+
+// get player skin as player name or player id
+char *Skin_AsNameOrId (player_info_t *sc) {
+	static char name[MAX_OSPATH];
+
+	if (!cls.demoplayback && !cl.spectator)
+		return NULL; // allow in demos or for specs
+
+	if (!cl_skin_as_name.value)
+		return NULL;
+
+	if (cl_skin_as_name.value == 1) { // get skin as player name
+		char *s = sc->name;
+		int i;
+
+		for (i = 0; *s && i < sizeof(name) - 1; s++) {
+			name[i] = s[0] & 127; // strip high bit
+
+			if ((unsigned char)name[i] < 32 
+				|| name[i] == '?' || name[i] == '*' || name[i] == ':' || name[i] == '<' || name[i] == '>' || name[i] == '"'
+			   )
+				name[i] = '_'; // u can't use skin with such chars, so replace with some safe char
+
+			i++;
+		}
+		name[i] = 0;
+		return name;
+	}
+
+	// get skin as id
+	snprintf(name, sizeof(name), "%d", sc->userid);
+	return name;
+}
+
 char *Skin_FindName (player_info_t *sc) {
 	int tracknum;
-	char *s;
 	static char name[MAX_OSPATH];
 
 	if (allskins[0]) {
 		strlcpy(name, allskins, sizeof(name));
 	} else {
-		s = Info_ValueForKey(sc->userinfo, "skin");
+		char *s = Skin_AsNameOrId(sc);
+
+		if (!s || !s[0])
+			s = Info_ValueForKey(sc->userinfo, "skin");
+
 		if (s && s[0])
 			strlcpy(name, s, sizeof(name));
 		else
@@ -227,4 +267,26 @@ void Skin_AllSkins_f (void) {
 	}
 	strlcpy (allskins, Cmd_Argv(1), sizeof(allskins));
 	Skin_Skins_f();
+}
+
+//Just show skins which ezquake assign to each player, that depends on alot of variables and different conditions,
+//so may be useful for checking settings
+void Skin_ShowSkins_f (void) {
+	int i, count, maxlen;
+
+	maxlen = sizeof("name") - 1;
+
+	for (i = 0; i < MAX_CLIENTS; i++)
+		if (cl.players[i].name[0] && !cl.players[i].spectator)
+			maxlen = bound(maxlen, strlen(cl.players[i].name), 17); // get len of longest name, but no more than 17
+
+	for (i = count = 0; i < MAX_CLIENTS; i++)
+		if (cl.players[i].name[0] && !cl.players[i].spectator) {
+			if (!count)
+				Com_Printf("\x02%-*.*s %s\n", maxlen, maxlen, "name", "skin");
+
+			Com_Printf("%-*.*s %s\n", maxlen, maxlen, cl.players[i].name, Skin_FindName(&cl.players[i]));
+
+			count++;
+		}
 }
