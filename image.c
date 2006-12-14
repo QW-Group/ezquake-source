@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.32 2006-12-07 18:06:34 cokeman1982 Exp $
+    $Id: image.c,v 1.33 2006-12-14 13:04:06 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1087,9 +1087,10 @@ png_textp Image_LoadPNG_Comments (char *filename, int *text_count)
 	return textchunks;
 }
 
+// look at the line 564. WTF?!
 byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight) 
 {
-	byte *data;
+	byte *data = NULL;
 	png_data *pdata;
 	
 	// Load the actual image.
