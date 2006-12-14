@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.59 2006-11-14 21:11:08 cokeman1982 Exp $
+	$Id: cl_parse.c,v 1.60 2006-12-14 23:22:29 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1408,6 +1408,7 @@ void CL_NewTranslation (int slot)
 }
 
 void CL_ProcessUserInfo (int slot, player_info_t *player, char *key) {
+	extern cvar_t cl_skin_as_name;
 	qbool update_skin;
 	int mynum;
 
@@ -1431,8 +1432,8 @@ void CL_ProcessUserInfo (int slot, player_info_t *player, char *key) {
 		mynum = cl.playernum;
 
 	update_skin = !key ||	(!player->spectator && ( !strcmp(key, "skin") || !strcmp(key, "topcolor") || 
-													 !strcmp(key, "bottomcolor") || !strcmp(key, "team")
-													)
+													 !strcmp(key, "bottomcolor") || !strcmp(key, "team") ||
+													 (!strcmp(key, "name") && cl_skin_as_name.value) )
 							);
 
 	if (slot == mynum && TP_NeedRefreshSkins() && strcmp(player->team, player->_team))

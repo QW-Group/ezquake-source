@@ -717,6 +717,7 @@ byte	*Skin_Cache (skin_t *skin);
 void	Skin_Skins_f (void);
 void	Skin_AllSkins_f (void);
 void	Skin_NextDownload (void);
+void	Skin_ShowSkins_f (void);
 
 // match_tools.c
 void MT_Init(void);

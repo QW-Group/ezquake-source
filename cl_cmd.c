@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.34 2006-10-31 16:09:54 qqshka Exp $
+	$Id: cl_cmd.c,v 1.35 2006-12-14 23:22:29 qqshka Exp $
 */
 
 #include <time.h>
@@ -746,6 +746,7 @@ void CL_InitCommands (void) {
 	Cmd_AddCommand ("serverinfo", CL_Serverinfo_f);
 	Cmd_AddCommand ("skins", Skin_Skins_f);
 	Cmd_AddCommand ("allskins", Skin_AllSkins_f);
+	Cmd_AddCommand ("showskins", Skin_ShowSkins_f);
 	Cmd_AddCommand ("user", CL_User_f);
 	Cmd_AddCommand ("users", CL_Users_f);
 	Cmd_AddCommand ("version", CL_Version_f);

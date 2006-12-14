@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.107 2006-12-12 18:56:28 cokeman1982 Exp $
+	$Id: cl_main.c,v 1.108 2006-12-14 23:22:29 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -906,7 +906,7 @@ void CL_Fog_f (void) {
 #endif
 
 void CL_InitLocal (void) {
-	extern cvar_t baseskin, noskins;
+	extern cvar_t baseskin, noskins, cl_skin_as_name;
 	char st[256]; 
 	extern void CL_Messages_f(void);//Tei, cl_messages
 
@@ -968,6 +968,7 @@ void CL_InitLocal (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SKIN);
 	Cvar_Register (&noskins);
 	Cvar_Register (&baseskin);
+	Cvar_Register (&cl_skin_as_name);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
 	Cvar_Register (&cl_demospeed);
