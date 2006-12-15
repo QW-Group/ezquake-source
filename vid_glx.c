@@ -138,8 +138,11 @@ cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
 
 const char *glx_extensions=NULL;
 
-extern int glXGetVideoSyncSGI (unsigned int *);
-extern int glXWaitVideoSyncSGI (int, int, unsigned int *);
+PFNGLXGETVIDEOSYNCSGIPROC _glXGetVideoSyncSGI;
+PFNGLXWAITVIDEOSYNCSGIPROC _glXWaitVideoSyncSGI;
+
+// extern int glXGetVideoSyncSGI (unsigned int *);
+// extern int glXWaitVideoSyncSGI (int, int, unsigned int *);
 
 cvar_t	vid_vsync = {"vid_vsync", "0"};
 
@@ -519,6 +522,9 @@ void GL_Init_GLX(void) {
 		Com_Printf("GLX_EXTENSIONS: %s\n", glx_extensions);
 
 	CheckVsyncControlExtensions();
+
+	_glXGetVideoSyncSGI = (PFNGLXGETVIDEOSYNCSGIPROC) GL_GetProcAddress("glXGetVideoSyncSGI");
+	_glXWaitVideoSyncSGI = (PFNGLXWAITVIDEOSYNCSGIPROC) GL_GetProcAddress("glXWaitVideoSyncSGI");
 }
 
 /************************************* HW GAMMA *************************************/
@@ -567,10 +573,10 @@ void WaitForVSync (void) { // thanks to str-
 		double sanity_time = Sys_DoubleTime() + 0.05;
 		unsigned int count, latest;
 
-		glXGetVideoSyncSGI(&count);
+		_glXGetVideoSyncSGI(&count);
 
 		while(Sys_DoubleTime() < sanity_time) {
-			glXGetVideoSyncSGI(&latest);
+			_glXGetVideoSyncSGI(&latest);
 
 			if(latest != count) {
 				break;
