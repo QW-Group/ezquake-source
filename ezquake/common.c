@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.36 2006-10-24 15:50:11 qqshka Exp $
+    $Id: common.c,v 1.37 2006-12-15 01:27:11 johnnycz Exp $
+
 */
 
 #ifdef _WIN32
@@ -931,14 +932,23 @@ void FS_SetGamedir (char *dir) {
 }
 
 void FS_InitFilesystem (void) {
+ 	char	*home;
+ 	char	homepath[MAX_OSPATH];
 	int i;
+
+ 	home = getenv("HOME");
 
 	// -basedir <path>
 	// Overrides the system supplied base directory (under id1)
-	if ((i = COM_CheckParm ("-basedir")) && i < com_argc - 1)
+	if ((i = COM_CheckParm ("-basedir")) && i < com_argc - 1) {
 		strlcpy (com_basedir, com_argv[i + 1], sizeof(com_basedir));
-	else
+	} else {
+#ifdef __FreeBSD__
+		strlcpy(com_basedir, DATADIR, sizeof(com_basedir) - 1);
+#else
 		Sys_getcwd(com_basedir, sizeof(com_basedir) - 1); // FIXME strlcpy (com_basedir, sizeof(com_basedir, "."); ?
+#endif
+	}
 
 	for (i = 0; i < (int) strlen(com_basedir); i++)
 		if (com_basedir[i] == '\\')
@@ -950,8 +960,16 @@ void FS_InitFilesystem (void) {
 
 	// start up with id1 by default
 	FS_AddGameDirectory ( va("%s/id1", com_basedir) );
-	FS_AddGameDirectory ( va("%s/ezquake", com_basedir) );
+ 	if (home != NULL)
+ 		FS_AddGameDirectory(va("%s/.ezquake/id1", home));
+
 	FS_AddGameDirectory ( va("%s/qw", com_basedir) );
+ 	if (home != NULL)
+ 		FS_AddGameDirectory(va("%s/.ezquake/qw", home));
+
+	FS_AddGameDirectory ( va("%s/ezquake", com_basedir) );
+ 	if (home != NULL)
+ 		FS_AddGameDirectory(va("%s/.ezquake/ezquake", home));
 
 	// any set gamedirs will be freed up to here
 	com_base_searchpaths = com_searchpaths;
@@ -971,6 +989,13 @@ void FS_InitFilesystem (void) {
 		if( UserdirSet )
 #endif
 			FS_SetGamedir("qw");
+	}
+
+	if (home != NULL) {
+		snprintf(homepath, sizeof(homepath), "%s/.ezquake/%s", home, com_gamedirfile);
+		COM_CreatePath(homepath);
+		Sys_mkdir(homepath);
+		FS_AddGameDirectory(homepath);
 	}
 }
 

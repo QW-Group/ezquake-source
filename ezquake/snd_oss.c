@@ -27,7 +27,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/mman.h>
 #include <sys/shm.h>
 #include <sys/wait.h>
+#ifdef __linux__
 #include <linux/soundcard.h>
+#else
+#include <sys/soundcard.h>
+#endif
 #include <stdio.h>
 
 #include "quakedef.h"
@@ -70,16 +74,9 @@ qbool SNDDMA_Init_OSS(void)
 		return 0;
 	}
 
-	if (ioctl(audio_fd, SNDCTL_DSP_GETOSPACE, &info) == -1) {
-		perror("GETOSPACE");
-		Com_Printf("Um, can't do GETOSPACE?\n");
-		close(audio_fd);
-		return 0;
-	}
-
 	// set sample bits & speed
 	shm->format.width  = (int) (s_bits.value / 8);
-	shm->format.speed = SND_Rate((int)s_khz.value);
+	shm->format.speed = ((int) s_khz.value == 48) ? 48000 : ((int) s_khz.value == 44) ? 44100 : ((int) s_khz.value == 22) ? 22050 : 11025;
 	shm->format.channels = ((int) s_stereo.value == 0) ? 1 : 2;
 
 	if (shm->format.width != 2 && shm->format.width != 1) {
@@ -127,19 +124,26 @@ qbool SNDDMA_Init_OSS(void)
 	} else {
 		perror(snd_dev);
 		Com_Printf("%d-bit sound not supported.", shm->format.width * 8);
-		close(audio_fd);
-		return 0;
-	}
-
-	shm->sampleframes = info.fragstotal * info.fragsize / shm->format.width / shm->format.channels;
-	shm->samples = shm->sampleframes * shm->format.channels;
-
-	// memory map the dma buffer
+ 		close(audio_fd);
+ 		return 0;
+ 	}
+ 
+     if (ioctl(audio_fd, SNDCTL_DSP_GETOSPACE, &info) == -1) {   
+         perror("GETOSPACE");
+ 		Com_Printf ("Um, can't do GETOSPACE?\n");
+ 		close(audio_fd);
+ 		return 0;
+     }
+ 
+ 	shm->samples = info.fragstotal * info.fragsize / (shm->samplebits/8);
+ 	shm->submission_chunk = 1;
+ 
+ 	// memory map the dma buffer
 	shm->bufferlength = info.fragstotal * info.fragsize;
-	shm->buffer = (unsigned char *) mmap(NULL, shm->bufferlength, PROT_WRITE, MAP_FILE|MAP_SHARED, audio_fd, 0);
-	if (!shm->buffer || shm->buffer == (unsigned char *)-1) {
-		perror(snd_dev);
-		Com_Printf ("Could not mmap %s\n", snd_dev);
+ 	shm->buffer = (byte *) mmap(NULL, info.fragstotal * info.fragsize, PROT_WRITE, MAP_FILE|MAP_SHARED, audio_fd, 0);
+ 	if (!shm->buffer) {
+ 		perror(snd_dev);
+ 		Com_Printf ("Could not mmap %s\n", snd_dev);
 		close(audio_fd);
 		return 0;
 	}

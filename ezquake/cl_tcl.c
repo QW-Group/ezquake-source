@@ -17,12 +17,15 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.15 2006-11-25 16:31:46 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.16 2006-12-15 01:27:11 johnnycz Exp $
  */
 
 #ifdef EMBED_TCL
 #include "tcl.h"
 #include <time.h>
+#ifdef __FreeBSD__
+#include <dlfcn.h>
+#endif
 #include "quakedef.h"
 
 extern cmd_function_t *impulse_cmd;
