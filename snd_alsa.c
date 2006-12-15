@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
     $Id: snd_alsa.c,v 1.24 2006/04/28 23:38:29 disconn3ct Exp $
 */
+#ifdef __linux__
 
 #include <stdio.h>
 #include <dlfcn.h>
@@ -321,3 +322,5 @@ error:
 	alsa_snd_pcm_close (pcm);
 	return 0;
 }
+
+#endif /* __linux__ */
