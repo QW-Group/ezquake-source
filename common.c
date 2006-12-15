@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.38 2006-12-15 15:25:19 disconn3ct Exp $
+    $Id: common.c,v 1.39 2006-12-15 18:46:18 disconn3ct Exp $
 
 */
 
@@ -943,11 +943,11 @@ void FS_InitFilesystem (void) {
 	if ((i = COM_CheckParm ("-basedir")) && i < com_argc - 1) {
 		strlcpy (com_basedir, com_argv[i + 1], sizeof(com_basedir));
 	} else {
-#ifdef __FreeBSD__
-		strlcpy(com_basedir, DATADIR, sizeof(com_basedir) - 1);
-#else
+//#ifdef __FreeBSD__
+//		strlcpy(com_basedir, DATADIR, sizeof(com_basedir) - 1);
+//#else
 		Sys_getcwd(com_basedir, sizeof(com_basedir) - 1); // FIXME strlcpy (com_basedir, ".", sizeof(com_basedir)); ?
-#endif
+//#endif
 	}
 
 	for (i = 0; i < (int) strlen(com_basedir); i++)
