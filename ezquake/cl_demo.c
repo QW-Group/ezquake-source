@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.41 2006-12-08 10:51:52 johnnycz Exp $
+	$Id: cl_demo.c,v 1.42 2006-12-15 12:23:27 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -685,7 +685,9 @@ readit:
 //=============================================================================
 
 static char demoname[2 * MAX_OSPATH];
+static char fulldemoname[_MAX_PATH];
 static qbool autorecording = false;
+static qbool easyrecording = false;
 
 void CL_AutoRecord_StopMatch(void);
 void CL_AutoRecord_CancelMatch(void);
@@ -775,6 +777,10 @@ void CL_Stop_f (void) {
 	}
 	if (autorecording) {
 		CL_AutoRecord_StopMatch();
+	} else if (easyrecording) {
+		CL_StopRecording();
+		CL_Demo_Compress(fulldemoname);
+		easyrecording = false;
 	} else {
 		CL_StopRecording();
 		Com_Printf ("Completed demo\n");
@@ -935,6 +941,7 @@ static qbool CL_RecordDemo(char *dir, char *name, qbool autorecord) {
 	if (!autorecord) {
 		Com_Printf ("Recording to %s\n", extendedname);
 		strlcpy(demoname, extendedname, sizeof(demoname));	
+		strlcpy(fulldemoname, fullname, sizeof(fulldemoname));
 	}
 
 	return true;
@@ -959,7 +966,7 @@ void CL_EasyRecord_f (void) {
 			return;
 	}
 
-	CL_RecordDemo(CL_DemoDirectory(), name, false);
+	easyrecording = CL_RecordDemo(CL_DemoDirectory(), name, false);
 }
 
 //=============================================================================
