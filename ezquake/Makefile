@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.56 2006-11-25 18:28:35 disconn3ct Exp $
+#	$Id: Makefile,v 1.57 2006-12-15 22:31:38 disconn3ct Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -15,7 +15,7 @@ STRIP = $(_E)strip
 STRIPFLAGS = --strip-unneeded --remove-section=.comment
 
 # ARCH = x86 ppc
-# OS = linux darwin
+# OS = linux darwin freebsd
 ARCH = $(shell uname -m | sed -e 's/i.86/x86/g' -e 's/Power Macintosh/ppc/g')
 OS = $(shell uname -s | tr A-Z a-z)
 
@@ -38,6 +38,10 @@ endif
 ifeq ($(OS),darwin)
 	DEFAULT_TARGET = mac
 	OS_GL_CFLAGS = -I/opt/local/include/ -I/Developer/Headers/FlatCarbon -I/sw/include -FOpenGL -FAGL
+endif
+ifeq ($(OS),freebsd)
+	DEFAULT_TARGET = glx
+	OS_GL_CFLAGS = -DWITH_DGA -DWITH_VMODE
 endif
 
 LIB_PREFIX=$(OS)-$(ARCH)
