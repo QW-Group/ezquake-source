@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.27 2006-10-17 02:32:06 qqshka Exp $
+	$Id: host.c,v 1.28 2006-12-15 18:46:18 disconn3ct Exp $
  
 */
 
@@ -249,7 +249,7 @@ void SYSINFO_Init(void)
 
 #ifdef __i386__
 	unsigned long long old_tsc, tsc_freq;
-	struct timeval tp, tp_old;
+	struct timeval tp, old_tp;
 #endif
 
 	mib[0] = CTL_HW;
