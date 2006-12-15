@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.c,v 1.20 2006-12-15 01:27:11 johnnycz Exp $
+	$Id: mp3_player.c,v 1.21 2006-12-15 14:49:58 disconn3ct Exp $
 */
 
 #ifdef __FreeBSD__
@@ -57,7 +57,7 @@ cvar_t mp3_dir = {"mp3_winamp_dir", "c:/program files/winamp"};
 #include <signal.h>
 #include <unistd.h> // fork, execv, usleep
 
-cvar_t mp3_dir = {"mp3_xmms_dir", "%%X11BASE%%/bin"};
+cvar_t mp3_dir = {"mp3_xmms_dir", "%%X11BASE%%/bin"}; // disconnect: todo: check if %%X11BASE%% is OK for Linux
 cvar_t mp3_xmms_session = {"mp3_xmms_session", "0"};
 
 #endif
