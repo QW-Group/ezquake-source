@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_linux.c,v 1.18 2006-12-15 01:27:11 johnnycz Exp $
+	$Id: sys_linux.c,v 1.19 2006-12-15 14:52:17 disconn3ct Exp $
 
 */
 #include <unistd.h>
@@ -36,6 +36,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <ctype.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
+#ifndef __FreeBSD__
+#include <linux/rtc.h>
+#endif
 #include <sys/ioctl.h>
 #include <sys/poll.h>
 #include <sched.h>
@@ -256,7 +259,7 @@ int main (int argc, char **argv) {
 		if (COM_CheckParm("-nostdout"))
 			sys_nostdout.value = 1;
 
-#if 0
+#ifndef __FreeBSD__
 		/* also check for -rtctimer before Host_Init is called */
 		if (COM_CheckParm("-rtctimer")) {
 		    int retval;
@@ -294,7 +297,6 @@ int main (int argc, char **argv) {
 		    Com_Printf("RTC Timer Enabled.\n");
 		}
 #endif
-		    
 		#ifdef id386
 			Sys_SetFPCW();
 		#endif
