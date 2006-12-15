@@ -6,9 +6,8 @@
 ;  ezquake-gl.exe (GLRelease)
 ;  ezquake.exe (Release)
 ;  ezstart.exe (CVS/ezstart/)
-;  mw_hook.dll (who uses this nowaday? :-/ )
 ;  gnu.txt (GNU GENERAL PUBLIC LICENSE, Version 2, June 1991)
-;  readme.txt (CVS/ezquake/misc/install/readme.txt)
+;  mw_hook.dll (who uses this nowaday? :-/ )
 ;  qw/ (dir)
 ;    qwprogs.dat (use the one delivered with ZQuake)
 ;    spprogs.dat (use the one delivered with ZQuake)
@@ -17,10 +16,20 @@
 ;    pak0.pak (eyecandy, particles)
 ;    cfg/ (dir, see CVS/ezquake/misc/cfg/)
 ;    help/ (dir, see CVS/documentation)
+;      commands/ (extract archive from docs system here)
+;      manual/ (cvs/documentation/manual)
+;      variables/ (extract archive from docs system here)
+;      xsd/ (cvs/documentation/xsd)
+;      xsl/ (cvs/documentation/xsl)
+;      index.xml (cvs/documentation/index.xml)
 ;    keymaps/ (dir, see CVS/ezquake/misc/keymaps/)
 ;    manual/ (dir, offline version of http://ezQuake.SF.net/docs/)
 ;    sb/ (dir, see CVS/ezquake/misc/sb)
-;    textures/ (not stored anywhere online yet, just use it from previous install)
+;    textures/ (cvs/media/game/ - something from here is part of pak0.pak)
+;      wad/ (dir, cvs/media/game/wad)
+;      charsets/ (dir, cvs/media/charsets)
+;      chaticons.png (cvs/media/textures/chaticons.png - because my pak explorer doesn't allow me to put it in pak0.pak because of long name)
+;      particlefont.png (cvs/media/textures/particlefont.png - same reason as above)
 ;  inst_gfx/ (dir)
 ;    top.bmp (cuky)
 ;    left.bmp (cuky)
@@ -106,10 +115,6 @@ Section "!ezQuake client" Main
   SetOutPath $INSTDIR\qw
   File "qw\qwprogs.dat"
   File "qw\spprogs.dat"
-
-  CreateDirectory $INSTDIR\qw\radars
-  SetOutPath $INSTDIR\qw\radars
-  File "qw\radars\*.*"
 
   CreateDirectory $INSTDIR\ezquake
   SetOutPath $INSTDIR\ezquake
@@ -208,7 +213,7 @@ SectionEnd
 
 Section /o "MouseWare Hook" MWHook
   SetOutPath $INSTDIR
-  File "lib\mw_hook.dll"
+  File "mw_hook.dll"
 SectionEnd
 
 ; Optional section (can be disabled by the user)
