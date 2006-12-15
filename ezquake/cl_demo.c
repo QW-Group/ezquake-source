@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.42 2006-12-15 12:23:27 johnnycz Exp $
+	$Id: cl_demo.c,v 1.43 2006-12-15 15:24:43 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -777,10 +777,12 @@ void CL_Stop_f (void) {
 	}
 	if (autorecording) {
 		CL_AutoRecord_StopMatch();
+#ifdef _WIN32
 	} else if (easyrecording) {
 		CL_StopRecording();
 		CL_Demo_Compress(fulldemoname);
 		easyrecording = false;
+#endif
 	} else {
 		CL_StopRecording();
 		Com_Printf ("Completed demo\n");
