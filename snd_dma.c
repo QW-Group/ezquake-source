@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.33 2006-10-19 19:52:41 qqshka Exp $
+    $Id: snd_dma.c,v 1.34 2006-12-15 22:32:09 disconn3ct Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -90,13 +90,14 @@ cvar_t s_mixahead = {"s_mixahead", "0.1", CVAR_ARCHIVE};
 cvar_t s_swapstereo = {"s_swapstereo", "0", CVAR_ARCHIVE};
 
 cvar_t s_khz = {"s_khz", "11", CVAR_ARCHIVE};
-#ifdef __linux__
-cvar_t s_noalsa = {"s_noalsa", "0"};
-// ALSA only -->
+#if (defined(__linux__) || defined(__FreeBSD__))
 cvar_t s_stereo = {"s_stereo", "1"};
 cvar_t s_device = {"s_device", "default"};
 cvar_t s_bits = {"s_bits", "16"};
-// <-- ALSA only
+#endif
+
+#ifdef __linux__
+cvar_t s_noalsa = {"s_noalsa", "0"};
 #endif
 
 static void S_SoundInfo_f (void)
@@ -185,11 +186,13 @@ void S_Init (void)
 	Cvar_Register(&s_show);
 	Cvar_Register(&s_mixahead);
 	Cvar_Register(&s_swapstereo);
-#ifdef __linux__
-	Cvar_Register(&s_noalsa);
+#if (defined(__linux__) || defined(__FreeBSD__))
 	Cvar_Register(&s_stereo);
 	Cvar_Register(&s_device);
 	Cvar_Register(&s_bits);
+#endif
+#ifdef __linux__
+	Cvar_Register(&s_noalsa);
 #endif
 
 	Cvar_ResetCurrentGroup();
