@@ -57,7 +57,7 @@
 Name "ezQuake"
 
 ; The file to write
-OutFile "ezInstall.exe"
+OutFile "ezquake_win32_xxxx.exe"
 
 ; The default installation directory
 InstallDir "C:\Quake\"
@@ -111,11 +111,6 @@ Section "!ezQuake client" Main
   File "ezquake-gl.exe"
   File "ezstart.exe"
 
-  CreateDirectory $INSTDIR\qw
-  SetOutPath $INSTDIR\qw
-  File "qw\qwprogs.dat"
-  File "qw\spprogs.dat"
-
   CreateDirectory $INSTDIR\ezquake
   SetOutPath $INSTDIR\ezquake
   File "ezquake\pak0.pak"
@@ -123,10 +118,6 @@ Section "!ezQuake client" Main
   CreateDirectory $INSTDIR\ezquake\cfg
   SetOutPath $INSTDIR\ezquake\cfg
   File "ezquake\cfg\*.cfg"
-
-  CreateDirectory $INSTDIR\ezquake\manual
-  SetOutPath $INSTDIR\ezquake\manual
-  File /r "ezquake\manual\*.*"
 
   CreateDirectory $INSTDIR\ezquake\help
   CreateDirectory $INSTDIR\ezquake\help\manual
@@ -200,6 +191,19 @@ Section "Server Browser Index" SBIndex
   File /r "ezquake\sb\sources.txt"
 SectionEnd
 
+Section "QuakeWorld Progs" Progs
+  CreateDirectory $INSTDIR\qw
+  SetOutPath $INSTDIR\qw
+  File "qw\qwprogs.dat"
+  File "qw\spprogs.dat"
+SectionEnd
+
+Section "Manual" Manual
+  CreateDirectory $INSTDIR\ezquake\manual
+  SetOutPath $INSTDIR\ezquake\manual
+  File /r "ezquake\manual\*.*"
+SectionEnd
+
 Section /o "Modern HUD Icons" HUDIcons
   CreateDirectory $INSTDIR\ezquake\textures\wad
   SetOutPath $INSTDIR\ezquake\textures\wad
@@ -266,10 +270,12 @@ FunctionEnd
 
 LangString DESC_Section1 ${LANG_ENGLISH} "Main client data"
 LangString DESC_Section2 ${LANG_ENGLISH} "If you wish to keep your own Server Browser sources list, uncheck this. Note: offline server lists we provide will always get updated with this installer."
-LangString DESC_Section3 ${LANG_ENGLISH} "Modern stylish head up display icons. Will override your custom textures."
+LangString DESC_Section3 ${LANG_ENGLISH} "Modern stylish head up display icons."
 LangString DESC_Section4 ${LANG_ENGLISH} "Will install executable with software rendering support. Install this if your computer's graphics card is really old or is missing OpenGL acceleration."
 LangString DESC_Section5 ${LANG_ENGLISH} "Check in case you want to bind extra mouse buttons when using Logitech mouse with MouseWare drivers."
 LangString DESC_Section6 ${LANG_ENGLISH} "Start menu shortcuts"
+LangString DSC_SCT_MAN ${LANG_ENGLISH} "Offline version of the documentation."
+LangString DSC_SCT_PGS ${LANG_ENGLISH} "You need this to run a server or a Singleplayer game."
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${Main} $(DESC_Section1)
@@ -278,4 +284,6 @@ LangString DESC_Section6 ${LANG_ENGLISH} "Start menu shortcuts"
   !insertmacro MUI_DESCRIPTION_TEXT ${Software} $(DESC_Section4)
   !insertmacro MUI_DESCRIPTION_TEXT ${MWHook} $(DESC_Section5)
   !insertmacro MUI_DESCRIPTION_TEXT ${StartMenu} $(DESC_Section6)
+  !insertmacro MUI_DESCRIPTION_TEXT ${Manual} $(DSC_SCT_MAN)
+  !insertmacro MUI_DESCRIPTION_TEXT ${Progs} $(DSC_SCT_PGS)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
