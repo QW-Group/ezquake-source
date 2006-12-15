@@ -17,10 +17,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mp3_player.c,v 1.19 2006-10-14 22:20:26 johnnycz Exp $
+	$Id: mp3_player.c,v 1.20 2006-12-15 01:27:11 johnnycz Exp $
 */
 
-
+#ifdef __FreeBSD__
+#include <dlfcn.h>
+#endif
 #include "quakedef.h"
 #include "mp3_player.h"
 
@@ -52,9 +54,10 @@ cvar_t mp3_dir = {"mp3_winamp_dir", "c:/program files/winamp"};
 
 #include <sys/wait.h>
 #include <sys/types.h> // fork, execv, usleep
+#include <signal.h>
 #include <unistd.h> // fork, execv, usleep
 
-cvar_t mp3_dir = {"mp3_xmms_dir", "/usr/local/bin"};
+cvar_t mp3_dir = {"mp3_xmms_dir", "%%X11BASE%%/bin"};
 cvar_t mp3_xmms_session = {"mp3_xmms_session", "0"};
 
 #endif
@@ -128,7 +131,7 @@ static void XMMS_FreeLibrary(void) {
 }
 
 static void XMMS_LoadLibrary(void) {
-	if (!(libxmms_handle = dlopen("libxmms.so.1", RTLD_NOW)) && !(libxmms_handle = dlopen("libxmms.so", RTLD_NOW)))
+	if (!(libxmms_handle = dlopen("libxmms.so", RTLD_NOW)))
 		return;
 
 	if (!QLib_ProcessProcdef(libxmms_handle, xmmsProcs, NUM_XMMSPROCS)) {

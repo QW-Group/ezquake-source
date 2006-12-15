@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.28 2006-10-14 10:14:55 johnnycz Exp $
+    $Id: config_manager.c,v 1.29 2006-12-15 01:27:11 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -66,7 +66,7 @@ extern char		allskins[128];
 cvar_t	cfg_save_unchanged	=	{"cfg_save_unchanged", "0"};
 cvar_t	cfg_save_userinfo	=	{"cfg_save_userinfo", "2"};
 cvar_t	cfg_legacy_exec		=	{"cfg_legacy_exec", "1"};
-cvar_t	cfg_legacy_write	=	{"cfg_legacy_write", "0"};
+cvar_t	cfg_legacy_write	=	{"cfg_legacy_write", "1"};
 
 cvar_t	cfg_save_cvars		=	{"cfg_save_cvars", "1"};
 cvar_t	cfg_save_aliases	=	{"cfg_save_aliases", "1"};

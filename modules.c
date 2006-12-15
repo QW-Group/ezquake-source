@@ -17,9 +17,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: modules.c,v 1.9 2006-09-25 09:10:43 johnnycz Exp $
+	$Id: modules.c,v 1.10 2006-12-15 01:27:11 johnnycz Exp $
 */
 
+#ifdef __FreeBSD__
+#include <dlfcn.h>
+#endif
 #include "quakedef.h"
 
 
