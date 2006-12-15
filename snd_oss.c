@@ -76,7 +76,7 @@ qbool SNDDMA_Init_OSS(void)
 
 	// set sample bits & speed
 	shm->format.width  = (int) (s_bits.value / 8);
-	shm->format.speed = ((int) s_khz.value == 48) ? 48000 : ((int) s_khz.value == 44) ? 44100 : ((int) s_khz.value == 22) ? 22050 : 11025;
+	shm->format.speed = SND_Rate((int)s_khz.value);
 	shm->format.channels = ((int) s_stereo.value == 0) ? 1 : 2;
 
 	if (shm->format.width != 2 && shm->format.width != 1) {
@@ -127,23 +127,23 @@ qbool SNDDMA_Init_OSS(void)
  		close(audio_fd);
  		return 0;
  	}
- 
-     if (ioctl(audio_fd, SNDCTL_DSP_GETOSPACE, &info) == -1) {   
-         perror("GETOSPACE");
- 		Com_Printf ("Um, can't do GETOSPACE?\n");
- 		close(audio_fd);
- 		return 0;
+
+	if (ioctl(audio_fd, SNDCTL_DSP_GETOSPACE, &info) == -1) {
+		perror("GETOSPACE");
+		Com_Printf ("Um, can't do GETOSPACE?\n");
+		close(audio_fd);
+		return 0;
      }
- 
- 	shm->samples = info.fragstotal * info.fragsize / (shm->samplebits/8);
- 	shm->submission_chunk = 1;
- 
- 	// memory map the dma buffer
+
+	shm->sampleframes = info.fragstotal * info.fragsize / shm->format.width / shm->format.channels;
+	shm->samples = shm->sampleframes * shm->format.channels;
+
+	// memory map the dma buffer
 	shm->bufferlength = info.fragstotal * info.fragsize;
- 	shm->buffer = (byte *) mmap(NULL, info.fragstotal * info.fragsize, PROT_WRITE, MAP_FILE|MAP_SHARED, audio_fd, 0);
- 	if (!shm->buffer) {
- 		perror(snd_dev);
- 		Com_Printf ("Could not mmap %s\n", snd_dev);
+	shm->buffer = (unsigned char *) mmap(NULL, shm->bufferlength, PROT_WRITE, MAP_FILE|MAP_SHARED, audio_fd, 0);
+	if (!shm->buffer || shm->buffer == (unsigned char *)-1) {
+		perror(snd_dev);
+		Com_Printf ("Could not mmap %s\n", snd_dev);
 		close(audio_fd);
 		return 0;
 	}
@@ -157,6 +157,7 @@ qbool SNDDMA_Init_OSS(void)
 		close(audio_fd);
 		return 0;
 	}
+
 	tmp = PCM_ENABLE_OUTPUT;
 	rc = ioctl(audio_fd, SNDCTL_DSP_SETTRIGGER, &tmp);
 	if (rc < 0) {
