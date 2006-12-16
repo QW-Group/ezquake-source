@@ -136,6 +136,11 @@ static HINSTANCE hInstDI;
 
 static qbool	dinput;
 
+// Some drivers send DIMOFS_Z, some send WM_MOUSEWHEEL, and some send both.
+// To get the mouse wheel to work in any case but avoid duplicate events,
+// we will only use one event source, wherever we receive the first event.
+mwheelmsg_t		in_mwheeltype = MWHEEL_UNKNOWN;
+
 typedef struct MYDATA {
 	LONG  lX;                   // X axis goes here
 	LONG  lY;                   // Y axis goes here
@@ -184,7 +189,7 @@ void Joy_AdvancedUpdate_f (void);
 void IN_JoyMove (usercmd_t *cmd);
 
 
-cvar_t	m_forcewheel	= {"m_forcewheel", "1"};
+//cvar_t	m_forcewheel	= {"m_forcewheel", "1"};
 cvar_t	m_rate			= {"m_rate",	"125"};
 cvar_t	m_showrate		= {"m_showrate", "0"};
 
@@ -230,6 +235,7 @@ int		 wheel_dn_count	= 0;
 DWORD WINAPI IN_SMouseProc(void	* lpParameter) {
 	// read	mouse events and generate history tables
 	DWORD ret;
+	int value;
 
 	while (1) {
 		if ((ret = WaitForSingleObject(m_event,	INFINITE)) == WAIT_OBJECT_0) {
@@ -278,15 +284,28 @@ DWORD WINAPI IN_SMouseProc(void	* lpParameter) {
 
 				
 					case DIMOFS_Z:
+/*
 						if (m_forcewheel.value) {
-							/*f (od.dwData &	0x80)*/
 							if (od.dwData & (1<<((sizeof(od.dwData)<<3)-1)))
 								wheel_dn_count++;
 							else
 								wheel_up_count++;
 						}
+*/
+						if (in_mwheeltype != MWHEEL_WINDOWMSG)
+						{
+							in_mwheeltype = MWHEEL_DINPUT;
+							value = od.dwData;
+
+							if (value > 0)
+								wheel_up_count++;
+							else if (value < 0)
+								wheel_dn_count++;
+							else
+								; // value == 0
+						}
 						break;
-				
+
 				}
 			}
 		}
@@ -377,8 +396,8 @@ void IN_SMouseRead(int *mx,	int	*my) {
 	*my	= y;
 
 	// serve wheel
-	bound(0, wheel_dn_count, 10);
-	bound(0, wheel_up_count, 10);
+//	bound(0, wheel_dn_count, 10);
+//	bound(0, wheel_up_count, 10);
 
 	while (wheel_dn_count >	0) {
 		Key_Event(K_MWHEELDOWN,	true);
@@ -684,6 +703,8 @@ void IN_StartupMouse (void) {
 
 	mouseinitialized = true;
 
+	in_mwheeltype = MWHEEL_UNKNOWN;
+
 	if (COM_CheckParm ("-dinput")) {
 #if DIRECTINPUT_VERSION	>= 0x0700
 		dinput = IN_InitDInput ();
@@ -735,7 +756,7 @@ void IN_Init (void) {
 	// mouse variables
 	Cvar_Register (&m_filter);
 
-	Cvar_Register (&m_forcewheel);
+//	Cvar_Register (&m_forcewheel);
 
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
@@ -798,7 +819,7 @@ void IN_MouseMove (usercmd_t *cmd) {
 	int mx, my;
 	float filterfrac;
 #if DIRECTINPUT_VERSION	>= 0x0700
-	int i;
+	int i, value;
 	DIDEVICEOBJECTDATA od;
 	DWORD dwElements;
 	HRESULT hr;
@@ -842,14 +863,30 @@ void IN_MouseMove (usercmd_t *cmd) {
 
 					
 					case DIMOFS_Z:
+/*
 						if (m_forcewheel.value) {
-							/*if (od.dwData & 0x80) {*/
 							if (od.dwData & (1<<((sizeof(od.dwData)<<3)-1))) {
 								Key_Event (K_MWHEELDOWN, true);
 								Key_Event (K_MWHEELDOWN, false);
 							} else {
 								Key_Event (K_MWHEELUP, true);
 								Key_Event (K_MWHEELUP, false);
+							}
+						}
+*/
+						if (in_mwheeltype != MWHEEL_WINDOWMSG)
+						{
+							in_mwheeltype = MWHEEL_DINPUT;
+							value = od.dwData;
+
+							if (value > 0) {
+								Key_Event(K_MWHEELUP, true);
+								Key_Event(K_MWHEELUP, false);
+							} else if (value < 0) {
+								Key_Event(K_MWHEELDOWN, true);
+								Key_Event(K_MWHEELDOWN, false);
+							} else {
+								; // value == 0
 							}
 						}
 						break;
