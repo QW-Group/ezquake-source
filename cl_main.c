@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.109 2006-12-16 13:50:51 johnnycz Exp $
+	$Id: cl_main.c,v 1.110 2006-12-16 18:54:47 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -224,20 +224,6 @@ char *CL_Macro_Serverstatus(void) {
 
 char *CL_Macro_ServerIp(void) {
 	return NET_AdrToString(cls.server_adr);
-}
-
-char *CL_Macro_Ping(void) {
-	static char macrobuf[4];
-	net_stat_result_t result;
-
-    CL_CalcNetStatistics(
-            1,             // period of time
-            network_stats,      // samples table
-            NETWORK_STATS_SIZE, // number of samples in table
-            &result);           // results
-
-	snprintf(macrobuf, sizeof(macrobuf), "%3d", bound(0, (int) result.ping_avg, 999));
-	return macrobuf;
 }
 
 char *CL_Macro_Conwidth(void) {
@@ -1075,7 +1061,6 @@ void CL_InitLocal (void) {
 	Cmd_AddMacro("rand", CL_Macro_Rand);
 	Cmd_AddMacro("matchstatus", CL_Macro_Serverstatus);
 	Cmd_AddMacro("serverip", CL_Macro_ServerIp);
-	Cmd_AddMacro("ping", CL_Macro_Ping);
 	Cmd_AddMacro("conwidth", CL_Macro_Conwidth);
 	Cmd_AddMacro("conheight", CL_Macro_Conheight);
 
