@@ -88,6 +88,9 @@ void IN_RestoreOriginalMouseState (void);
 void IN_SetQuakeMouseState (void);
 void IN_MouseEvent (int mstate);
 
+typedef enum { MWHEEL_UNKNOWN, MWHEEL_DINPUT, MWHEEL_WINDOWMSG } mwheelmsg_t;
+extern mwheelmsg_t	in_mwheeltype;
+
 extern int		window_center_x, window_center_y;
 extern RECT		window_rect;
 

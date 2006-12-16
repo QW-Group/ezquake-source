@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.17 2006-11-23 17:28:51 disconn3ct Exp $
+	$Id: vid_win.c,v 1.18 2006-12-16 03:07:08 qqshka Exp $
 
 */
 
@@ -2365,12 +2365,20 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		// JACK: This is the mouse wheel with the Intellimouse
 		// Its delta is either positive or neg, and we generate the proper Event.
 		case WM_MOUSEWHEEL: 
-			if ((short) HIWORD(wParam) > 0) {
-				Key_Event(K_MWHEELUP, true);
-				Key_Event(K_MWHEELUP, false);
-			} else {
-				Key_Event(K_MWHEELDOWN, true);
-				Key_Event(K_MWHEELDOWN, false);
+			if (in_mwheeltype != MWHEEL_DINPUT)
+			{
+				in_mwheeltype = MWHEEL_WINDOWMSG;
+
+				if ((short) HIWORD(wParam) > 0) {
+					Key_Event(K_MWHEELUP, true);
+					Key_Event(K_MWHEELUP, false);
+				} else {
+					Key_Event(K_MWHEELDOWN, true);
+					Key_Event(K_MWHEELDOWN, false);
+				}
+
+				// when an application processes the WM_MOUSEWHEEL message, it must return zero
+				lRet = 0;
 			}
 			break;
 
