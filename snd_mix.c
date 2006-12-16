@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mix.c,v 1.13 2006-11-13 21:46:59 disconn3ct Exp $
+    $Id: snd_mix.c,v 1.14 2006-12-16 16:21:18 disconn3ct Exp $
 
 */
 // snd_mix.c -- portable code to mix sounds for snd_dma.c
@@ -290,7 +290,7 @@ void SND_InitScaletable (void)
 
 	for (i = 0 ; i < 32; i++)
 		for (j = 0; j < 256; j++)
-			snd_scaletable[i][j] = ((signed char) j) * i * 8;
+			snd_scaletable[i][j] = ((j < 128) ? j : j - 0xff) * i * 8; // snd_scaletable[i][j] = ((signed char) j) * i * 8;
 }
 
 void S_PaintChannels (int endtime)
