@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.54 2006-12-14 23:22:29 qqshka Exp $
+    $Id: teamplay.c,v 1.55 2006-12-16 18:54:47 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -1101,6 +1101,7 @@ void TP_AddMacros(void)
 	Cmd_AddMacro("lastip", Macro_Lastip_f);
 	Cmd_AddMacro("qt", Macro_Quote_f);
 	Cmd_AddMacro("latency", Macro_Latency);
+	Cmd_AddMacro("ping", Macro_Latency);
 	Cmd_AddMacro("time", Macro_Time);
 	Cmd_AddMacro("date", Macro_Date);
 
