@@ -741,13 +741,22 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
     return false;
 }
 
+// this is used only in FL_Draw below, EX_browser.c has Add_Column2
+static void Add_Column(char *line, int *pos, char *t, int w)
+{
+    if ((*pos) - w - 1  <=  1)
+        return;
+    (*pos) -= w;
+    memcpy(line+(*pos), t, min(w, strlen(t)));
+    (*pos)--;
+    line[*pos] = ' ';
+}
 
 //
 // FileList drawing func
 //
 void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 {
-	extern void Add_Column(char *line, int *pos, char *t, int w);
     int i;
     int listsize, pos, interline, inter_up, inter_dn, rowh;
     char line[1024];
@@ -831,11 +840,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
     for (i = 0; i < listsize; i++)
     {
         filedesc_t *entry;
-//        SYSTEMTIME datetime;
         DWORD dwsize;
-//        char namebuf[_MAX_FNAME];
-//        char extbuf[_MAX_EXT];
-//        char name[200];
 		char size[COL_SIZE+1], date[COL_DATE+1], time[COL_TIME+1];
         int filenum = fl->display_entry + i;
 
@@ -855,7 +860,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         {
             strcpy(size, "<-->");
             if (filenum == fl->current_entry)
-                strlcpy(ssize, "subdir", sizeof(ssize));
+                strlcpy(ssize, "dir", sizeof(ssize));
         }
         else
         {
@@ -866,13 +871,13 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
                 dwsize = min(dwsize, 999);
                 sprintf(size, "%3dm", dwsize);
                 if (filenum == fl->current_entry)
-                    sprintf(ssize, "%d mb", dwsize);
+                    snprintf(ssize, sizeof(ssize), "%d mb", dwsize);
             }
             else
             {
                 sprintf(size, "%4d", dwsize);
                 if (filenum == fl->current_entry)
-                    sprintf(ssize, "%d kb", dwsize);
+                    snprintf(ssize, sizeof(ssize), "%d kb", dwsize);
             }
         }
 
@@ -899,7 +904,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         {
             strcpy(sname, entry->display);
             strcpy(stime, time);
-            sprintf(sdate, "%4d-%02d-%02d", entry->time.wYear,
+            sprintf(sdate, "%02d-%02d-%02d", entry->time.wYear % 100,
                 entry->time.wMonth, entry->time.wDay);
         }
     }
@@ -916,8 +921,8 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         UI_Print_Center(x, y+h-2*rowh-inter_up, w, sname, false);
 
         if (fl->search_valid)
-        {
-            strcpy(line, "��� ��");   // seach for:
+        {	// some weird but nice-looking string in Quake font perhaps
+            strcpy(line, "\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd");   // seach for:
             if (fl->search_error)
             {
                 strcat(line, "not found");

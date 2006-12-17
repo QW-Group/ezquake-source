@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.18 2006-12-02 07:08:40 qqshka Exp $
+	$Id: EX_browser.c,v 1.19 2006-12-17 12:27:13 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -661,16 +661,6 @@ void Browser_Draw (int x, int y, int w, int h)
         SB_Confirmation_Draw();
 }
 
-
-void Add_Column(char *line, int *pos, char *t, int w)
-{
-    if ((*pos) - w - 1  <=  1)
-        return;
-    (*pos) -= w;
-    memcpy(line+(*pos), t, min(w, strlen(t)));
-    (*pos)--;
-    line[*pos] = ' ';
-}
 
 void Add_Column2(int x, int y, int *pos, char *t, int w, int red)
 {
