@@ -13,23 +13,21 @@
 ;    spprogs.dat (use the one delivered with ZQuake)
 ;    fragfile.dat (CVS/ezquake/misc/fragfile/fragfile.dat)
 ;  ezquake/ (dir)
-;    pak0.pak (eyecandy, particles)
+;    pak0.pak (pak)
+;      / (from cvs/media/ except for cvs/media/textures/wad)
+;      /help/variables/ (from documentation system)
+;      /help/commands/ (from documentation system)
+;    pak1.pak (pak)
+;      /textures/wad (from cvs/media/textures/wad)
 ;    cfg/ (dir, see CVS/ezquake/misc/cfg/)
 ;    help/ (dir, see CVS/documentation)
-;      commands/ (extract archive from docs system here)
 ;      manual/ (cvs/documentation/manual)
-;      variables/ (extract archive from docs system here)
 ;      xsd/ (cvs/documentation/xsd)
 ;      xsl/ (cvs/documentation/xsl)
 ;      index.xml (cvs/documentation/index.xml)
 ;    keymaps/ (dir, see CVS/ezquake/misc/keymaps/)
 ;    manual/ (dir, offline version of http://ezQuake.SF.net/docs/)
 ;    sb/ (dir, see CVS/ezquake/misc/sb)
-;    textures/ (cvs/media/game/ - something from here is part of pak0.pak)
-;      wad/ (dir, cvs/media/game/wad)
-;      charsets/ (dir, cvs/media/charsets)
-;      chaticons.png (cvs/media/textures/chaticons.png - because my pak explorer doesn't allow me to put it in pak0.pak because of long name)
-;      particlefont.png (cvs/media/textures/particlefont.png - same reason as above)
 ;  inst_gfx/ (dir)
 ;    top.bmp (cuky)
 ;    left.bmp (cuky)
@@ -130,20 +128,6 @@ Section "!ezQuake client" Main
   SetOutPath $INSTDIR\ezquake\help\xsl
   File "ezquake\help\xsl\*.*"
 
-  CreateDirectory $INSTDIR\ezquake\help
-  CreateDirectory $INSTDIR\ezquake\help\variables
-  CreateDirectory $INSTDIR\ezquake\help\commands
-  CreateDirectory $INSTDIR\ezquake\help\xsd
-  CreateDirectory $INSTDIR\ezquake\help\xsl
-  SetOutPath $INSTDIR\ezquake\help\variables
-  File "ezquake\help\variables\*.*"
-  SetOutPath $INSTDIR\ezquake\help\commands
-  File "ezquake\help\commands\*.*"
-  SetOutPath $INSTDIR\ezquake\help\xsd
-  File "ezquake\help\xsd\*.*"
-  SetOutPath $INSTDIR\ezquake\help\xsl
-  File "ezquake\help\xsl\*.*"
-
   CreateDirectory $INSTDIR\ezquake\keymaps
   SetOutPath $INSTDIR\ezquake\keymaps
   File "ezquake\keymaps\*.*"
@@ -163,13 +147,6 @@ Section "!ezQuake client" Main
   File "ezquake\sb\sources.txt"
   SetOverwrite on
 
-  CreateDirectory $INSTDIR\ezquake\textures
-  CreateDirectory $INSTDIR\ezquake\textures\charsets
-  SetOutPath $INSTDIR\ezquake\textures
-  File "ezquake\textures\*.png"
-  SetOutPath $INSTDIR\ezquake\textures\charsets
-  File "ezquake\textures\charsets\*.png"
-
   CreateDirectory $INSTDIR\qw
   SetOutPath $INSTDIR\qw
   File "qw\fragfile.dat"
@@ -188,7 +165,7 @@ SectionEnd
 
 Section "Server Browser Index" SBIndex
   SetOutPath $INSTDIR\ezquake\sb
-  File /r "ezquake\sb\sources.txt"
+  File "ezquake\sb\sources.txt"
 SectionEnd
 
 Section "QuakeWorld Progs" Progs
@@ -205,9 +182,8 @@ Section "Manual" Manual
 SectionEnd
 
 Section /o "Modern HUD Icons" HUDIcons
-  CreateDirectory $INSTDIR\ezquake\textures\wad
-  SetOutPath $INSTDIR\ezquake\textures\wad
-  File /r "ezquake\textures\wad\*.png"
+  SetOutPath $INSTDIR\ezquake
+  File "ezquake\pak1.pak"
 SectionEnd
 
 Section /o "Software rendering" Software
@@ -250,6 +226,7 @@ Section "Uninstall"
   RMDir /r "$INSTDIR\ezquake\manual"
   RMDir /r "$INSTDIR\ezquake\sb"
   Delete "$INSTDIR\ezquake\pak0.pak"
+  Delete "$INSTDIR\ezquake\pak1.pak"
 
   ; Remove shortcuts, if any
   Delete "$SMPROGRAMS\ezQuake\*.*"
