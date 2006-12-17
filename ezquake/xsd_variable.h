@@ -52,7 +52,7 @@ xml_variable_t;
 void XSD_Variable_Free(xml_t *);
 
 // read variable content from file, return NULL if error
-xml_t * XSD_Variable_LoadFromHandle(FILE *f);
+xml_t * XSD_Variable_LoadFromHandle(FILE *f, int len);
 
 // read variable content from file, return NULL if error
 xml_variable_t * XSD_Variable_Load(char *filename);
