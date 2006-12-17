@@ -172,11 +172,12 @@ static void OnCharacterData(void *userData, const XML_Char *s, int len)
 }
 
 // read variable content from file, return 0 if error
-xml_t * XSD_Variable_LoadFromHandle(FILE *f)
+xml_t * XSD_Variable_LoadFromHandle(FILE *f, int filelen)
 {
     xml_variable_t *document;
     XML_Parser parser = NULL;
     int len;
+	int pos = 0;
     char buf[XML_READ_BUFSIZE];
     xml_parser_stack_t parser_stack;
 
@@ -197,10 +198,12 @@ xml_t * XSD_Variable_LoadFromHandle(FILE *f)
     parser_stack.document = (xml_t *) document;
     XML_SetUserData(parser, &parser_stack);
 
-    while ((len = fread(buf, 1, XML_READ_BUFSIZE, f)) > 0)
+    while ((len = fread(buf, 1, min(XML_READ_BUFSIZE, filelen-pos), f)) > 0)
     {
         if (XML_Parse(parser, buf, len, 0) != XML_STATUS_OK)
             goto error;
+
+		pos += len;
     }
     if (XML_Parse(parser, NULL, 0, 1) != XML_STATUS_OK)
         goto error;
@@ -223,11 +226,12 @@ xml_variable_t * XSD_Variable_Load(char *filename)
 {
     FILE *f = NULL;
     xml_variable_t *document;
+	int len;
 
-    if (FS_FOpenFile(filename, &f) < 0)
+    if ((len = FS_FOpenFile(filename, &f)) < 0)
         return NULL;
 
-    document = (xml_variable_t *) XSD_Variable_LoadFromHandle(f);
+    document = (xml_variable_t *) XSD_Variable_LoadFromHandle(f, len);
     fclose(f);
     return document;
 }

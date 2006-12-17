@@ -287,7 +287,7 @@ xml_document_t * XSD_Document_New(void);
 void XSD_Document_Free(xml_t *);
 
 // read document content from file, return NULL if error
-xml_t * XSD_Document_LoadFromHandle(FILE *f);
+xml_t * XSD_Document_LoadFromHandle(FILE *f, int len);
 
 // read document content from file, return NULL if error
 xml_document_t * XSD_Document_Load(char *filename);

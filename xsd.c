@@ -1,6 +1,6 @@
 #include "quakedef.h"
 
-typedef xml_t * (*XSD_DocumentLoadType)(FILE *f);
+typedef xml_t * (*XSD_DocumentLoadType)(FILE *f, int len);
 typedef void (*XSD_DocumentFreeType)(xml_t *);
 typedef xml_document_t * (*XSD_DocumentConvertType)(xml_t *);
 
@@ -164,14 +164,15 @@ xml_t * XSD_LoadDocument(char *filename)
     FILE *f = NULL;
     XML_Parser parser = NULL;
     int len;
+	int filelen;
     char buf[XML_READ_BUFSIZE];
     char document_type[1024];
 	
 	extern int FS_FOpenPathFile (char *filename, FILE **file);
 
     // try to open the file
-	if (FS_FOpenFile(filename, &f) < 0) {
-		if (FS_FOpenPathFile(filename, &f) < 0) {
+	if ((filelen = FS_FOpenFile(filename, &f)) < 0) {
+		if ((filelen = FS_FOpenPathFile(filename, &f)) < 0) {
 	        return NULL;
 		}
 	}
@@ -214,7 +215,7 @@ xml_t * XSD_LoadDocument(char *filename)
     {
         if (!strcmp(xsd_mappings[i].document_type, document_type))
         {
-            ret = xsd_mappings[i].load_function(f);
+            ret = xsd_mappings[i].load_function(f, filelen);
             break;
         }
         i++;
