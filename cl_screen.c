@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.72 2006-12-07 18:00:22 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.73 2006-12-17 13:43:44 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -2325,7 +2325,8 @@ void SCR_UpdateScreen (void) {
 
 	V_UpdatePalette ();
 
-	SCR_CheckAutoScreenshot();
+	if (scr_autosshot_countdown)
+		SCR_CheckAutoScreenshot();
 
 	if (cls.mvdplayback && cl_multiview.value && cl_mvinset.value)
 	{
@@ -2454,7 +2455,8 @@ void SCR_UpdateScreen (void) {
 		VID_Update (&vrect);
 	}
 
-	SCR_CheckAutoScreenshot();
+	if (scr_autosshot_countdown)
+		SCR_CheckAutoScreenshot();
 
 	// Multiview
 	if (cls.mvdplayback && cl_multiview.value)
@@ -2892,7 +2894,11 @@ static void SCR_CheckAutoScreenshot(void) {
 	for (filename = auto_matchname; *filename == '/' || *filename == '\\'; filename++)
 		;
 
-	sshot_dir = scr_sshot_dir.string[0] ? scr_sshot_dir.string : cls.gamedirfile;
+	sshot_dir = scr_sshot_dir.string;
+	while (*sshot_dir && (*sshot_dir == '/')) sshot_dir++; // will skip all '/' chars at the beginning
+	if (!(*sshot_dir))
+		sshot_dir = cls.gamedirfile;
+
 	ext = SShot_ExtForFormat(SShot_FormatForName(filename));
 
 	fullsavedname = va("%s/%s", sshot_dir, auto_matchname);
