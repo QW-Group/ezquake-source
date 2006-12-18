@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.30 2006-12-16 21:24:08 disconn3ct Exp $
+	$Id: vid_wgl.c,v 1.31 2006-12-18 11:06:18 qqshka Exp $
 
 */
 
@@ -129,7 +129,7 @@ cvar_t		_vid_default_mode_win = {"_vid_default_mode_win","3",CVAR_ARCHIVE};
 cvar_t		vid_config_x = {"vid_config_x","800",CVAR_ARCHIVE};
 cvar_t		vid_config_y = {"vid_config_y","600",CVAR_ARCHIVE};
 cvar_t		_windowed_mouse = {"_windowed_mouse","1",CVAR_ARCHIVE};
-cvar_t		vid_displayfrequency = {"vid_displayfrequency", "75", 0, OnChange_vid_displayfrequency};
+cvar_t		vid_displayfrequency = {"vid_displayfrequency", "75", CVAR_NO_RESET, OnChange_vid_displayfrequency};
 cvar_t		vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
 cvar_t      vid_flashonactivity = {"vid_flashonactivity", "1", CVAR_ARCHIVE};
 // VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...) 
