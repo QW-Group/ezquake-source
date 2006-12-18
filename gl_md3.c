@@ -219,7 +219,7 @@ wtf: where else{ }
 	if (r_modelalpha < 1)
 		glDisable (GL_BLEND);
 
-//	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 //	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glColor4f(1, 1, 1, 1);
 

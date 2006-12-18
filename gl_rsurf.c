@@ -694,6 +694,7 @@ void R_DrawAlphaChain (void) {
 
 	glDisable(GL_ALPHA_TEST);
 	GL_DisableMultitexture();
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 }
 
 #define CHAIN_RESET(chain)			\

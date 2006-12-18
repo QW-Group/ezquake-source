@@ -1170,7 +1170,7 @@ void HUD_DrawObject(hud_t *hud)     /* recurrent */
 		glCullFace (GL_FRONT);
 		glColor4f (1, 1, 1, 0.5);
 
-		glEnable(GL_TEXTURE_2D);
+		glEnable(GL_TEXTURE_2D); // explicit definition
 		glBegin( GL_QUADS );
 		{
 			glTexCoord2f(0, 0);
@@ -1183,7 +1183,10 @@ void HUD_DrawObject(hud_t *hud)     /* recurrent */
 			glVertex2f( 1, -1);
 		}
 		glEnd();
-		glDisable(GL_TEXTURE_2D);
+//		glDisable(GL_TEXTURE_2D); // no, u can't disable this, other 2D code relay what this enabled by default
+		glEnable(GL_ALPHA_TEST); // same
+		glDisable (GL_BLEND); // same
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE); // same
 		glColor4f (1, 1, 1, 1);
 	}
 
