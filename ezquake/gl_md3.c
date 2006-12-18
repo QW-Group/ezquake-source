@@ -9,7 +9,7 @@
 
 typedef float m3by3_t[3][3];
 
-extern cvar_t	cl_drawgun, r_lerpframes, gl_smoothmodels, gl_affinemodels, gl_fb_models;
+extern cvar_t	cl_drawgun, r_viewmodelsize, r_lerpframes, gl_smoothmodels, gl_affinemodels, gl_fb_models;
 
 extern byte	*shadedots;
 extern byte	r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS];
@@ -31,7 +31,7 @@ To draw, for each surface, run through the triangles, getting tex coords from s+
 */
 void R_DrawAlias3Model (entity_t *ent)
 {
-	float		l, lerpfrac;
+	float		l, lerpfrac, scale;
 	int distance = INTERP_MAXDIST / MD3_XYZ_SCALE;
 	vec3_t		interpolated_verts;
 
@@ -69,8 +69,9 @@ void R_DrawAlias3Model (entity_t *ent)
 		glEnable(GL_BLEND);
 //	glDisable(GL_ALPHA_TEST);
 
-
-	glScalef(MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE); 
+	scale = (ent->flags & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1;
+	// perform two scalling at once, one scalling for MD3_XYZ_SCALE, other for r_viewmodelsize
+	glScalef(scale * MD3_XYZ_SCALE, MD3_XYZ_SCALE, MD3_XYZ_SCALE);
 	glColor4f(1, 1, 1, r_modelalpha);
 
 	R_AliasSetupLighting(ent);
