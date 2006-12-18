@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.30 2006-12-15 14:49:48 disconn3ct Exp $
+    $Id: config_manager.c,v 1.31 2006-12-18 11:06:18 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -502,7 +502,7 @@ static void ResetVariables(int cvar_flags, qbool userinfo)
 
 	for (var = cvar_vars; var; var = var->next) {
 		if (!(
-		            (var->flags & (cvar_flags | CVAR_ROM | CVAR_INIT | CVAR_USER_CREATED)) ||
+		            (var->flags & (cvar_flags | CVAR_ROM | CVAR_INIT | CVAR_USER_CREATED | CVAR_NO_RESET)) ||
 		            (var->group && !strcmp(var->group->name, CVAR_GROUP_NO_GROUP))
 		        )) {
 			if (check_userinfos && (
