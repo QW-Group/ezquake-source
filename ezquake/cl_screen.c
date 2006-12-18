@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.73 2006-12-17 13:43:44 johnnycz Exp $
+    $Id: cl_screen.c,v 1.74 2006-12-18 06:46:30 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1268,6 +1268,7 @@ void DrawCI (void) {
 	glDisable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glShadeModel(GL_FLAT);
 
 	if (gl_fogenable.value)
 	{

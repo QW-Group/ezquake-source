@@ -164,6 +164,7 @@ void R_RenderDlights (void) {
 	glEnable (GL_TEXTURE_2D);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthMask (GL_TRUE);
+	glShadeModel (GL_FLAT);
 }
 
 //VULT ->

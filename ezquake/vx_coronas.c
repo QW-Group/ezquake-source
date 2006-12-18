@@ -198,6 +198,7 @@ void R_DrawCoronas(void)
 	glDisable (GL_BLEND);
 	glDepthMask (GL_TRUE);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glShadeModel(GL_FLAT);
 	glColor3f (1, 1, 1);
 
 	if (gl_fogenable.value)

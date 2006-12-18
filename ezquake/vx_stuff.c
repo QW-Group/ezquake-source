@@ -275,6 +275,7 @@ void Draw_AMFStatLoss (int stat, hud_t* hud) {
 		}
       	glEnable(GL_ALPHA_TEST);
       	glDisable (GL_BLEND);
+      	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
       	glColor4f(1, 1, 1, 1);
     }
 }

@@ -430,6 +430,7 @@ void R_DrawSkyChain (void) {
 				EmitSkyPolys (fa, true);
 
 			GL_DisableMultitexture();
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		} else {
 			GL_Bind(solidskytexture);
 			speedscale = r_refdef2.time * 8;
