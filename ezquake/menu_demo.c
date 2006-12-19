@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.4 2006-12-19 21:21:09 johnnycz Exp $
+		$Id: menu_demo.c,v 1.5 2006-12-19 23:39:44 johnnycz Exp $
 
 */
 
@@ -624,6 +624,12 @@ void Menu_Demo_Key(int key)
     }
 }
 // </key processing for each page>
+
+// set new initial dir
+void Menu_Demo_NewHome(char *homedir)
+{
+	FL_SetCurrentDir(&demo_filelist, homedir);
+}
 
 void Menu_Demo_Init(void)
 {
