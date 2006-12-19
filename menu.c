@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.50 2006-12-19 19:58:28 johnnycz Exp $
+	$Id: menu.c,v 1.51 2006-12-19 20:30:42 johnnycz Exp $
 
 */
 
@@ -1692,7 +1692,6 @@ void M_MultiPlayer_Key (int key) {
 // entering demos menu
 void M_Menu_Demos_f (void) {
 	M_EnterMenu(m_demos); // switches client state
-	Menu_Demo_Load();  // loads demo directory content etc. (menu_demo module)
 }
 
 // key press in demos menu
