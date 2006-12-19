@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.106 2006-12-14 18:29:53 vvd0 Exp $
+	$Id: hud_common.c,v 1.107 2006-12-19 21:53:37 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -3987,6 +3987,7 @@ void HUD_AutoLoad_MVD(int autoload) {
 	extern cvar_t scr_fov;
 	extern cvar_t scr_newHud;
 	extern void Cmd_Exec_f (void);
+	extern void DumpConfig(char *name);
 
 	if (autoload && cls.mvdplayback) {
 		// Turn autohud ON here
