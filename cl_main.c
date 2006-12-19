@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.110 2006-12-16 18:54:47 johnnycz Exp $
+	$Id: cl_main.c,v 1.111 2006-12-19 21:05:27 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1815,6 +1815,14 @@ void CL_Multiview(void)
 				playernum = ((mv_trackslots[CURRVIEW - 1] < 0) ? CL_NextPlayer(playernum) : mv_trackslots[CURRVIEW - 1]);
 			}
 		}
+	}
+
+	// BUGFIX - Make sure the player we're tracking is still left, might have disconnected since
+	// we picked him for tracking (This would result in being thrown into freefly mode and not being able
+	// to go back into tracking mode when a player disconnected).
+	if (cl.players[playernum].spectator || !strcmp (cl.players[playernum].name, ""))
+	{
+		mv_trackslots[CURRVIEW - 1] = -1;
 	}
 
 	// Set the current player we're tracking for the next view to be drawn.
