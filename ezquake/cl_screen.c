@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.74 2006-12-18 06:46:30 qqshka Exp $
+    $Id: cl_screen.c,v 1.75 2006-12-19 21:06:29 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -835,6 +835,8 @@ void SCR_SetupAutoID (void) {
 			state->modelindex == cl_modelindices[mi_h_player])
 			continue;
 
+		// FIXME: In multiview, this will detect some players being outside of the view even though
+		// he's visible on screen, this only happens in some cases.
 		if (R_CullSphere(state->origin, 0))
 			continue;
 		
@@ -2864,9 +2866,7 @@ static void SCR_CheckMVScreenshot(void)
 	#ifdef GLQUAKE
 	// Make sure all GL commands have been drawn.
 	glFinish();
-	#endif
 
-	#ifdef GLQUAKE
 	// Only concerned with inset for GL.
 	if (cls.mvdplayback && cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1)
 	{
@@ -3596,6 +3596,16 @@ void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position, qbool f
 	if (style == MV_HUD_STYLE_ONLY_NAME)
 	{
 		// Only draw the players name.
+
+		hud_height = 2*8;
+		hud_width = 8 * (strlen(name) + 1);
+
+		//
+		// Get the position we should draw the hud at.
+		//
+		SCR_SetMVStatusPosition (position, view, hud_width, hud_height, &hud_x, &hud_y);
+
+		Draw_String(view->x + hud_x, view->y + hud_y, name);
 	}
 	else if (style >= MV_HUD_STYLE_ALL)
 	{
@@ -3780,7 +3790,7 @@ void SCR_SetMVStatusThreeViewRect (mv_viewrect_t *view)
 		view->x			= 0;
 		view->y			= vid.height / 2;
 		view->width		= vid.width / 2;
-		view->height	 = vid.height / 2;
+		view->height	= vid.height / 2;
 	}
 	else if (CURRVIEW == 1) 
 	{ 
