@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.36 2006-12-18 06:46:31 qqshka Exp $
+	$Id: gl_draw.c,v 1.37 2006-12-19 04:32:21 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -34,6 +34,7 @@ cvar_t	gl_crosshairimage   = {"crosshairimage", "", 0, OnChange_gl_crosshairimag
 
 qbool OnChange_gl_consolefont (cvar_t *, char *);
 cvar_t	gl_consolefont		= {"gl_consolefont", "moondid2", 0, OnChange_gl_consolefont};
+cvar_t	gl_alphafont		= {"gl_alphafont", "0"};
 
 cvar_t	gl_crosshairalpha	= {"crosshairalpha", "1"};
 
@@ -583,7 +584,8 @@ void Draw_Init (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register (&scr_conalpha);
 	Cvar_Register (&gl_smoothfont);
-	Cvar_Register (&gl_consolefont);	
+	Cvar_Register (&gl_consolefont);
+	Cvar_Register (&gl_alphafont);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&scr_menualpha);
@@ -639,6 +641,8 @@ __inline static void Draw_CharPoly(int x, int y, int num) {
 //Draws one 8*8 graphics character with 0 being transparent.
 //It can be clipped to the top of the screen to allow the console to be smoothly scrolled off.
 void Draw_Character (int x, int y, int num) {
+	qbool atest = false;
+	qbool blend = false;
 
 	if (y <= -8)
 		return;			// totally off screen
@@ -648,22 +652,44 @@ void Draw_Character (int x, int y, int num) {
 
 	num &= 255;
 
+	if (gl_alphafont.value)	{
+		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
+			glDisable(GL_ALPHA_TEST);
+		if (!(blend = glIsEnabled(GL_BLEND)))
+			glEnable(GL_BLEND);
+	}
 
 	GL_Bind (char_texture);
 
 	glBegin (GL_QUADS);
 	Draw_CharPoly(x, y, num);
 	glEnd ();
+
+	if (gl_alphafont.value)	{
+		if (atest)
+			glEnable(GL_ALPHA_TEST);
+		if (!blend)
+			glDisable(GL_BLEND);
+	}
 }
 
 void Draw_String (int x, int y, char *str) {
 	int num;
+	qbool atest = false;
+	qbool blend = false;
 
 	if (y <= -8)
 		return;			// totally off screen
 
 	if (!*str)
 		return;
+
+	if (gl_alphafont.value)	{
+		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
+			glDisable(GL_ALPHA_TEST);
+		if (!(blend = glIsEnabled(GL_BLEND)))
+			glEnable(GL_BLEND);
+	}
 
 	GL_Bind (char_texture);
 
@@ -677,11 +703,21 @@ void Draw_String (int x, int y, char *str) {
 	}
 
 	glEnd ();
+
+	if (gl_alphafont.value)	{
+		if (atest)
+			glEnable(GL_ALPHA_TEST);
+		if (!blend)
+			glDisable(GL_BLEND);
+	}
 }
 
 void Draw_AlphaString (int x, int y, char *str, float alpha)
 {
 	int num;
+	qbool atest = false;
+	qbool blend = false;
+	GLfloat value = 0;
 
 	alpha = bound (0, alpha, 1);
 	if (!alpha)
@@ -692,6 +728,16 @@ void Draw_AlphaString (int x, int y, char *str, float alpha)
 	
 	if (!str || !str[0])
 		return;
+
+//	if (gl_alphafont.value)	{ // need this anyway for alpha
+		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
+			glDisable(GL_ALPHA_TEST);
+		if (!(blend = glIsEnabled(GL_BLEND)))
+			glEnable(GL_BLEND);
+//	}
+	glGetTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &value); // save current value
+	if (value != GL_MODULATE)
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	glColor4f (1, 1, 1, alpha);
 
@@ -707,18 +753,36 @@ void Draw_AlphaString (int x, int y, char *str, float alpha)
 	}
 
 	glEnd ();
+
+//	if (gl_alphafont.value)	{ // need this anyway for alpha
+		if (atest)
+			glEnable(GL_ALPHA_TEST);
+		if (!blend)
+			glDisable(GL_BLEND);
+//	}
+	if (value != GL_MODULATE) // restore
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, value);
 	glColor3ubv (color_white);
 }
 
 
 void Draw_Alt_String (int x, int y, char *str) {
 	int num;
+	qbool atest = false;
+	qbool blend = false;
 
 	if (y <= -8)
 		return;			// totally off screen
 
 	if (!*str)
 		return;
+
+	if (gl_alphafont.value)	{
+		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
+			glDisable(GL_ALPHA_TEST);
+		if (!(blend = glIsEnabled(GL_BLEND)))
+			glEnable(GL_BLEND);
+	}
 
 	GL_Bind (char_texture);
 
@@ -732,6 +796,13 @@ void Draw_Alt_String (int x, int y, char *str) {
 	}
 
 	glEnd ();
+
+	if (gl_alphafont.value)	{
+		if (atest)
+			glEnable(GL_ALPHA_TEST);
+		if (!blend)
+			glDisable(GL_BLEND);
+	}
 }
 
 
@@ -750,12 +821,21 @@ int HexToInt(char c)
 void Draw_ColoredString (int x, int y, char *text, int red) {
 	int r, g, b, num;
 	qbool white = true;
+	qbool atest = false;
+	qbool blend = false;
 
 	if (y <= -8)
 		return;			// totally off screen
 
 	if (!*text)
 		return;
+
+	if (gl_alphafont.value)	{
+		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
+			glDisable(GL_ALPHA_TEST);
+		if (!(blend = glIsEnabled(GL_BLEND)))
+			glEnable(GL_BLEND);
+	}
 
 	GL_Bind (char_texture);
 
@@ -798,6 +878,13 @@ void Draw_ColoredString (int x, int y, char *text, int red) {
 	}
 
 	glEnd ();
+
+	if (gl_alphafont.value)	{
+		if (atest)
+			glEnable(GL_ALPHA_TEST);
+		if (!blend)
+			glDisable(GL_BLEND);
+	}
 
 	if (!white)
 		glColor3ubv(color_white);
@@ -1397,8 +1484,10 @@ void Draw_AlphaCircleFill (int x, int y, float radius, int color, float alpha)
 
 void Draw_SCharacter (int x, int y, int num, float scale)
 {
-    int             row, col;
-    float           frow, fcol, size;
+    int row, col;
+    float frow, fcol, size;
+	qbool atest = false;
+	qbool blend = false;
 
     if (num == 32)
         return;     // space
@@ -1415,6 +1504,13 @@ void Draw_SCharacter (int x, int y, int num, float scale)
     fcol = col*0.0625;
     size = 0.0625;
 
+	if (gl_alphafont.value)	{
+		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
+			glDisable(GL_ALPHA_TEST);
+		if (!(blend = glIsEnabled(GL_BLEND)))
+			glEnable(GL_BLEND);
+	}
+
     GL_Bind (char_texture);
 
     glBegin (GL_QUADS);
@@ -1427,6 +1523,13 @@ void Draw_SCharacter (int x, int y, int num, float scale)
     glTexCoord2f (fcol, frow + size);
     glVertex2f (x, y+scale*8*2); // disconnect: hack, hack, hack?
     glEnd ();
+
+	if (gl_alphafont.value)	{
+		if (atest)
+			glEnable(GL_ALPHA_TEST);
+		if (!blend)
+			glDisable(GL_BLEND);
+	}
 }
 
 void Draw_SString (int x, int y, char *str, float scale)
@@ -1740,6 +1843,6 @@ void GL_Set2D (void) {
 	glDisable (GL_CULL_FACE);
 	glDisable (GL_BLEND);
 	glEnable (GL_ALPHA_TEST);
-
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glColor3ubv (color_white);
 }
