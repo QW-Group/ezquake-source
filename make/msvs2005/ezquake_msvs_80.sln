@@ -5,7 +5,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ezquake", "ezquake_msvs_80.
 		{AD648F18-37A4-4776-96B1-65321DBA52B7} = {AD648F18-37A4-4776-96B1-65321DBA52B7}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gas2masm", "gas2masm\gas2masm_msvs_80.vcproj", "{AD648F18-37A4-4776-96B1-65321DBA52B7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gas2masm", "..\..\gas2masm\gas2masm_msvs_80.vcproj", "{AD648F18-37A4-4776-96B1-65321DBA52B7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

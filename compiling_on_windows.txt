@@ -22,7 +22,7 @@ instructions:
 4) for MS Visual Studio 8 (2005 .NET) you usually need ml.exe, grab it from 
    http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/ML.EXE
    and place it into masm32 directory
-5) open ezquake.sln for Microsoft Visual Studio 7.1 or ezquake_msvs_80.sln for MS VS 8.0 (2005 .NET)
+5) open ezquake.sln for Microsoft Visual Studio 7.1 or make\msvs2004\ezquake_msvs_80.sln for MS VS 8.0 (2005 .NET)
 6) select ReleaseGL configuration and press "Build"
 
 troubleshooting:
