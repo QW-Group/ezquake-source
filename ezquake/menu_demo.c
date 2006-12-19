@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.3 2006-12-19 20:40:21 johnnycz Exp $
+		$Id: menu_demo.c,v 1.4 2006-12-19 21:21:09 johnnycz Exp $
 
 */
 
@@ -44,21 +44,12 @@
 
 #define DEMO_PLAYLIST_TAB_MAIN 0
 
-typedef enum direntry_type_s {dt_file = 0, dt_dir, dt_up, dt_msg} direntry_type_t;
-
 typedef enum {
     DEMOPG_BROWSER,				// browse page
 	DEMOPG_PLAYLIST,	// playlist page
 	DEMOPG_ENTRY, // entry page
 	DEMOPG_OPTIONS  // options page
 }	demo_tab_t;
-
-typedef struct direntry_s {
-	direntry_type_t    type;
-	char            *name;
-	int                size;
-	DEMO_TIME        time;
-} direntry_t;
 
 typedef struct demo_playlist_s
 {
