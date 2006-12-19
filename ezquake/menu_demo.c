@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.1 2006-12-19 19:58:28 johnnycz Exp $
+		$Id: menu_demo.c,v 1.2 2006-12-19 20:30:42 johnnycz Exp $
 
 */
 
@@ -43,8 +43,6 @@
 #define DEMO_TAB_MAX 2
 
 #define DEMO_PLAYLIST_TAB_MAIN 0
-#define DEMO_PLAYLIST_TAB_OPTIONS 1
-#define DEMOLIST_NAME_WIDTH    29
 
 
 typedef enum {
@@ -53,9 +51,6 @@ typedef enum {
 	DEMOPG_ENTRY, // entry page
 	DEMOPG_OPTIONS  // options page
 }	demo_tab_t;
-
-typedef enum direntry_type_s {dt_file = 0, dt_dir, dt_up, dt_msg} direntry_type_t;
-typedef enum demosort_type_s {ds_name = 0, ds_size, ds_time} demo_sort_t;
 
 typedef struct direntry_s {
 	direntry_type_t    type;
@@ -104,7 +99,6 @@ demo_playlist_t demo_playlist[256];
 char track_name[16];
 char default_track[16];
 int demo_playlist_started = 0;
-int demo_menu_tab = DEMO_TAB_MAIN;
 
 cvar_t    demo_playlist_loop = {"demo_playlist_loop","0"};
 cvar_t    demo_playlist_track_name = {"demo_playlist_track_name",""};
@@ -118,21 +112,6 @@ static int demo_playlist_section = DEMO_PLAYLIST_TAB_MAIN;
 static int demo_playlist_started_test = 0;
 
 static int demo_options_cursor = 0;
-
-static direntry_t  demolist_data[MAX_DEMO_FILES];
-static direntry_t  *demolist[MAX_DEMO_FILES];
-static int         demolist_count;
-static char        demo_currentdir[_MAX_PATH] = {0};
-static char        demo_prevdemo[MAX_DEMO_NAME] = {0};
-
-static float       last_demo_time = 0;
-
-static int         demo_cursor = 0;
-static int         demo_base = 0;
-static int         demo_section = 0;
-
-static demo_sort_t demo_sorttype = ds_name;
-static qbool       demo_reversesort = false;
 
 char demo_track[16];
 
@@ -224,206 +203,6 @@ void M_Demo_Playlist_Stop_f (void){
 static void Demo_Playlist_Setup_f (void) {
 	strlcpy(demo_track,demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,sizeof(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname));
 	strlcpy(default_track,demo_playlist_track_name.string,16);
-}
-
-#if 0
-void CT_Demo_Options_Setup_f (void) {
-	strlcpy(default_track,demo_playlist_track_name.string,sizeof(demo_playlist_track_name.string ));
-}
-#endif 
-
-static int Demo_SortCompare(const void *p1, const void *p2) {
-	int retval;
-	int sign;
-	direntry_t *d1, *d2;
-
-	d1 = *((direntry_t **) p1);
-	d2 = *((direntry_t **) p2);
-
-	if ((retval = d2->type - d1->type) || d1->type > dt_dir)
-		return retval;
-
-
-	if (d1->type == dt_dir)
-		return strcasecmp(d1->name, d2->name);
-
-
-	sign = demo_reversesort ? -1 : 1;
-
-	switch (demo_sorttype) {
-		case ds_name:
-			return sign * strcasecmp(d1->name, d2->name);
-		case ds_size:
-			return sign * (d1->size - d2->size);
-		case ds_time:
-#ifdef _WIN32
-			return -sign * CompareFileTime(&d1->time, &d2->time);
-#else
-			return -sign * (d1->time - d2->time);
-#endif
-		default:
-			Sys_Error("Demo_SortCompare: unknown demo_sorttype (%d)", demo_sorttype);
-			return 0;
-	}
-}
-
-static void Demo_SortDemo(void) {
-	int i;
-
-	last_demo_time = 0;
-
-	for (i = 0; i < demolist_count; i++)
-		demolist[i] = &demolist_data[i];
-
-	qsort(demolist, demolist_count, sizeof(direntry_t *), Demo_SortCompare);
-}
-
-static void Demo_PositionCursor(void) {
-	int i;
-
-	last_demo_time = 0;
-	demo_base = demo_cursor = 0;
-
-	if (demo_prevdemo[0]) {
-		for (i = 0; i < demolist_count; i++) {
-			if (!strcmp (demolist[i]->name, demo_prevdemo)) {
-				demo_cursor = i;
-				if (demo_cursor >= DEMO_MAXLINES) {
-					demo_base += demo_cursor - (DEMO_MAXLINES - 1);
-					demo_cursor = DEMO_MAXLINES - 1;
-				}
-				break;
-			}
-		}
-	}
-	demo_prevdemo[0] = 0;
-}
-
-
-static void Demo_ReadDirectory(void) {
-	int i, size;
-	direntry_type_t type;
-	DEMO_TIME time;
-	char name[MAX_DEMO_NAME];
-#ifdef _WIN32
-	HANDLE h;
-	WIN32_FIND_DATA fd;
-#else
-	DIR *d;
-	struct dirent *dstruct;
-	struct stat fileinfo;
-#endif
-
-	demolist_count = demo_base = demo_cursor = 0;
-
-	for (i = 0; i < MAX_DEMO_FILES; i++) {
-		if (demolist_data[i].name) {
-			free(demolist_data[i].name);
-			demolist_data[i].name = NULL;
-		}
-	}
-
-	if (demo_currentdir[0]) {
-		demolist_data[0].name = Q_strdup ("..");
-		demolist_data[0].type = dt_up;
-		demolist_count = 1;
-	}
-
-#ifdef _WIN32
-	h = FindFirstFile (va("%s%s/*.*", com_basedir, demo_currentdir), &fd);
-	if (h == INVALID_HANDLE_VALUE) {
-		demolist_data[demolist_count].name = Q_strdup ("Error reading directory");
-		demolist_data[demolist_count].type = dt_msg;
-		demolist_count++;
-		Demo_SortDemo();
-		return;
-	}
-#else
-	if (!(d = opendir(va("%s%s", com_basedir, demo_currentdir)))) {
-		demolist_data[demolist_count].name = Q_strdup ("Error reading directory");
-		demolist_data[demolist_count].type = dt_msg;
-		demolist_count++;
-		Demo_SortDemo();
-		return;
-	}
-	dstruct = readdir (d);
-#endif
-
-	do {
-#ifdef _WIN32
-		if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			if (!strcmp(fd.cFileName, ".") || !strcmp(fd.cFileName, ".."))
-				continue;
-			type = dt_dir;
-			size = 0;
-			memset(&time, 0, sizeof(time));
-		} else {
-			i = strlen(fd.cFileName);
-			if (i < 5 ||
-				(
-				 strcasecmp(fd.cFileName + i - 4, ".qwd") &&
-				 strcasecmp(fd.cFileName + i - 4, ".qwz") &&
-				 strcasecmp(fd.cFileName + i - 4, ".dem") &&
-				 strcasecmp(fd.cFileName + i - 4, ".mvd")
-				)
-			   )
-				continue;
-			type = dt_file;
-			size = fd.nFileSizeLow;
-			time = fd.ftLastWriteTime;
-		}
-
-		strlcpy (name, fd.cFileName, sizeof(name));
-#else
-		stat (va("%s%s/%s", com_basedir, demo_currentdir, dstruct->d_name), &fileinfo);
-
-		if (S_ISDIR(fileinfo.st_mode)) {
-			if (!strcmp(dstruct->d_name, ".") || !strcmp(dstruct->d_name, ".."))
-				continue;
-			type = dt_dir;
-			time = size = 0;
-		} else {
-			i = strlen(dstruct->d_name);
-			if (i < 5 ||
-				(
-				 strcasecmp(dstruct->d_name + i - 4, ".qwd")
-				 && strcasecmp(dstruct->d_name + i - 4, ".mvd")
-				)
-			   )
-				continue;
-			type = dt_file;
-			size = fileinfo.st_size;
-			time = fileinfo.st_mtime;
-		}
-
-		strlcpy (name, dstruct->d_name, sizeof(name));
-#endif
-
-		if (demolist_count == MAX_DEMO_FILES)
-			break;
-
-		demolist_data[demolist_count].name = Q_strdup(name);
-		demolist_data[demolist_count].type = type;
-		demolist_data[demolist_count].size = size;
-		demolist_data[demolist_count].time = time;
-		demolist_count++;
-	}
-#ifdef _WIN32
-	while (FindNextFile(h, &fd));
-	FindClose (h);
-#else
-	while ((dstruct = readdir (d)));
-	closedir (d);
-#endif
-
-	if (!demolist_count) {
-		demolist_data[0].name = Q_strdup("[ no files ]");
-		demolist_data[0].type = dt_msg;
-		demolist_count = 1;
-	}
-
-	Demo_SortDemo();
-	Demo_PositionCursor();
 }
 
 static void Demo_Playlist_Del (int i) {
@@ -854,30 +633,6 @@ void Menu_Demo_Key(int key)
 }
 // </key processing for each page>
 
-void Menu_Demo_Load (void) {
-	static qbool demo_currentdir_init = false;
-	char *s;
-
-	if (!demo_currentdir_init) {
-		demo_currentdir_init = true;
-		if (demo_dir.string[0]) {
-			for (s = demo_dir.string; *s == '/' || *s == '\\'; s++)
-				;
-			if (*s) {
-				strcpy(demo_currentdir, "/");
-				strncat(demo_currentdir, s, sizeof(demo_currentdir) - 1 - 1);
-
-				for (s = demo_currentdir + strlen(demo_currentdir) - 1; *s == '/' || *s == '\\'; s--)
-					*s = 0;
-			}
-		} else {
-			strcpy(demo_currentdir, "/qw");
-		}
-	}
-
-	Demo_ReadDirectory();
-}
-
 void Menu_Demo_Init(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
@@ -912,6 +667,7 @@ void Menu_Demo_Init(void)
     FL_AddFileType(&demo_filelist, 0, ".qwd");
 	FL_AddFileType(&demo_filelist, 1, ".qwz");
 	FL_AddFileType(&demo_filelist, 2, ".mvd");
+	FL_AddFileType(&demo_filelist, 3, ".dem");
 
 	// initialize tab control
     CTab_Init(&demo_tab);
