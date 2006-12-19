@@ -478,26 +478,6 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90"
 			>
 			<File
-				RelativePath=".\menu_demo.c"
-				>
-			</File>
-			<File
-				RelativePath="net.c"
-				>
-			</File>
-			<File
-				RelativePath="net_chan.c"
-				>
-			</File>
-			<File
-				RelativePath="q_shared.c"
-				>
-			</File>
-			<File
-				RelativePath="stats_grid.c"
-				>
-			</File>
-			<File
 				RelativePath="winquake.rc"
 				>
 			</File>
@@ -965,11 +945,23 @@
 					>
 				</File>
 				<File
+					RelativePath="net.c"
+					>
+				</File>
+				<File
+					RelativePath="net_chan.c"
+					>
+				</File>
+				<File
 					RelativePath="pmove.c"
 					>
 				</File>
 				<File
 					RelativePath="pmovetst.c"
+					>
+				</File>
+				<File
+					RelativePath="q_shared.c"
 					>
 				</File>
 				<File
@@ -1774,6 +1766,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\menu_demo.c"
+					>
+				</File>
+				<File
 					RelativePath="modules.c"
 					>
 				</File>
@@ -1803,6 +1799,10 @@
 				</File>
 				<File
 					RelativePath="rulesets.c"
+					>
+				</File>
+				<File
+					RelativePath="stats_grid.c"
 					>
 				</File>
 				<File
@@ -1951,22 +1951,6 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;fi;fd"
 			>
-			<File
-				RelativePath=".\menu_demo.h"
-				>
-			</File>
-			<File
-				RelativePath="q_shared.h"
-				>
-			</File>
-			<File
-				RelativePath="resource.h"
-				>
-			</File>
-			<File
-				RelativePath="stats_grid.h"
-				>
-			</File>
 			<Filter
 				Name="Misc_h"
 				Filter="h;hpp;hxx;hm;inl;fi;fd"
@@ -2169,6 +2153,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\menu_demo.h"
+					>
+				</File>
+				<File
 					RelativePath="modules.h"
 					>
 				</File>
@@ -2202,6 +2190,10 @@
 				</File>
 				<File
 					RelativePath="security.h"
+					>
+				</File>
+				<File
+					RelativePath="stats_grid.h"
 					>
 				</File>
 				<File
@@ -2341,7 +2333,15 @@
 				Name="Main_h"
 				>
 				<File
+					RelativePath="q_shared.h"
+					>
+				</File>
+				<File
 					RelativePath="quakedef.h"
+					>
+				</File>
+				<File
+					RelativePath="resource.h"
 					>
 				</File>
 			</Filter>
