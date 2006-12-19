@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.h,v 1.7 2006-06-13 13:13:02 vvd0 Exp $
+	$Id: menu.h,v 1.8 2006-12-19 19:58:28 johnnycz Exp $
 
 */
 
@@ -30,12 +30,18 @@ void M_ToggleMenu_f (void);
 void M_DrawTextBox (int x, int y, int width, int lines);
 void M_Menu_Quit_f (void);
 void M_Demos_Playlist_stop_f (void);
+void M_PrintWhite (int cx, int cy, char *str);
+void M_Print (int cx, int cy, char *str);
+void M_DrawCharacter (int cx, int line, int num);
+void M_DrawCheckbox (int x, int y, int on);
 
+#define FLASHINGARROW() (12+((int)(curtime*4)&1))
+#define FLASHINGCURSOR() (10+((int)(curtime*4)&1))
 
 enum {
     m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer,
     m_setup, m_options, m_video, m_keys, m_help, m_quit,
-    m_gameoptions, m_slist,/* m_sedit,*/ m_fps, m_demos, m_demos_del
+    m_gameoptions, m_slist,/* m_sedit,*/ m_fps, m_demos, m_demos_del, m_demos2
 #if defined(_WIN32) || ((defined(__linux__) || defined(__FreeBSD__)) && defined(WITH_XMMS))
     , m_mp3_control, m_mp3_playlist
 #endif

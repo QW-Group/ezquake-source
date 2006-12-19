@@ -33,7 +33,8 @@ void Help_Files_Init(void)
         &help_files_showtime,
         &help_files_stripnames,
         &help_files_interline,
-        &help_files_showstatus);
+        &help_files_showstatus,
+		"./ezquake/help/manual");
     FL_AddFileType(&help_filelist, 0, ".xml");
 }
 

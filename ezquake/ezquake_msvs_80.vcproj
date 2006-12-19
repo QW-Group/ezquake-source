@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="ezquake"
 	ProjectGUID="{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}"
 	RootNamespace="ezquake"
@@ -477,6 +477,10 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90"
 			>
+			<File
+				RelativePath=".\menu_demo.c"
+				>
+			</File>
 			<File
 				RelativePath="net.c"
 				>
@@ -1947,6 +1951,10 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;fi;fd"
 			>
+			<File
+				RelativePath=".\menu_demo.h"
+				>
+			</File>
 			<File
 				RelativePath="q_shared.h"
 				>

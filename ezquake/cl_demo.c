@@ -16,13 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.43 2006-12-15 15:24:43 disconn3ct Exp $
+	$Id: cl_demo.c,v 1.44 2006-12-19 19:58:28 johnnycz Exp $
 */
 
 #include "quakedef.h"
 #include "winquake.h"
 #include "movie.h"
-
+#include "menu_demo.h"
 
 float olddemotime, nextdemotime;		
 
@@ -42,8 +42,6 @@ static qbool OnChange_demo_dir(cvar_t *var, char *string);
 cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 
 char Demos_Get_Trackname(void);
-void Demo_playlist_f(void);
-void Demo_playlist_f (void);
 int FindBestNick(char *s,int use);
 
 //=============================================================================
@@ -1206,7 +1204,7 @@ static void PlayQWZDemo (void) {
 	extern cvar_t qizmo_dir;
 	STARTUPINFO si;
 	PROCESS_INFORMATION	pi;
-	char *name, qwz_name[2 * MAX_OSPATH], cmdline[512], *p;
+	char *name, qwz_name[_MAX_PATH], cmdline[512], *p;
 
 	if (hQizmoProcess) {
 		Com_Printf ("Cannot unpack -- Qizmo still running!\n");
@@ -1224,15 +1222,21 @@ static void PlayQWZDemo (void) {
 			strlcpy (qwz_name, va("%s/%s", cls.gamedir, name), sizeof(qwz_name));
 	}
 
-	// Qizmo needs an absolute file name
-	_fullpath (qwz_name, qwz_name, sizeof(qwz_name) - 1);
-	qwz_name[sizeof(qwz_name) - 1] = 0;
+	if (playbackfile = fopen(name, "rb")) {
+		// either we got full system path
+		strlcpy(qwz_name, name, sizeof(qwz_name));
+	} else {
+		// or we have to build it because Qizmo needs an absolute file name
+		_fullpath (qwz_name, qwz_name, sizeof(qwz_name) - 1);
+		qwz_name[sizeof(qwz_name) - 1] = 0;
 
-	// check if the file exists
-	if (!(playbackfile = fopen (qwz_name, "rb"))) {
-		Com_Printf ("Error: Couldn't open %s\n", name);
-		return;
+		// check if the file exists
+		if (!(playbackfile = fopen (qwz_name, "rb"))) {
+			Com_Printf ("Error: Couldn't open %s\n", name);
+			return;
+		}
 	}
+
 	fclose (playbackfile);
 	playbackfile = NULL;
 
@@ -1366,7 +1370,7 @@ void CL_StopPlayback (void) {
 	}
 
 	if (demo_playlist_started){
-	Demo_playlist_f();
+	CL_Demo_playlist_f();
 	mvd_demo_track_run = 0;
 	}
 	TP_ExecTrigger("f_demoend");
@@ -1405,6 +1409,9 @@ void CL_Play_f (void) {
 
 		if (!playbackfile) // hexum -> look in demo dir too
 			playbackfile = fopen (va("%s/%s/%s", com_basedir, demo_dir.string, name), "rb");
+
+		if (!playbackfile) // what about full system path, huh?
+			playbackfile = fopen (name, "rb");
 	}
 
 	if (!playbackfile) {

@@ -122,7 +122,8 @@ void FL_Init(filelist_t *fl,
              cvar_t *        show_time,
              cvar_t *        strip_names,
              cvar_t *        interline,
-             cvar_t *        show_status);
+             cvar_t *        show_status,
+			 char *			 initdir);
 
 
 //

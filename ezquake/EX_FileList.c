@@ -44,10 +44,11 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
              cvar_t *        show_time,
              cvar_t *        strip_names,
              cvar_t *        interline,
-             cvar_t *        show_status)
+             cvar_t *        show_status,
+			 char *initdir)
 {
     Sys_getcwd(fl->current_dir, _MAX_PATH);
-	FL_SetCurrentDir(fl, "./ezquake/help/manual");
+	FL_SetCurrentDir(fl, initdir);
     fl->error = false;
     fl->need_refresh = true;
     fl->num_entries = 0;
