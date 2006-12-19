@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.2 2006-12-19 20:30:42 johnnycz Exp $
+		$Id: menu_demo.c,v 1.3 2006-12-19 20:40:21 johnnycz Exp $
 
 */
 
@@ -44,6 +44,7 @@
 
 #define DEMO_PLAYLIST_TAB_MAIN 0
 
+typedef enum direntry_type_s {dt_file = 0, dt_dir, dt_up, dt_msg} direntry_type_t;
 
 typedef enum {
     DEMOPG_BROWSER,				// browse page
