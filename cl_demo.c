@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.44 2006-12-19 19:58:28 johnnycz Exp $
+	$Id: cl_demo.c,v 1.45 2006-12-19 23:39:44 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -699,6 +699,8 @@ static qbool OnChange_demo_dir(cvar_t *var, char *string) {
 		Com_Printf(Util_Invalid_Filename_Msg(var->name));
 		return true;
 	}
+
+	Menu_Demo_NewHome(string);
 	return false;
 }
 
