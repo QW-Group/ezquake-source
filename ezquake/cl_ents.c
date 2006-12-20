@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.21 2006-11-14 21:10:18 cokeman1982 Exp $
+	$Id: cl_ents.c,v 1.22 2006-12-20 13:25:38 qqshka Exp $
 
 */
 
@@ -531,8 +531,8 @@ void CL_LinkPacketEntities (void) {
 	model_t *model;
 	vec3_t *old_origin;
 	double time;
-	float autorotate, lerp;
-	int i, pnum, rocketlightsize, flicker;
+	float autorotate, lerp, rocketlightsize;
+	int i, pnum, flicker;
 	dlighttype_t rocketlightcolor, dimlightcolor;
 
 	pack = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities;
@@ -724,34 +724,28 @@ void CL_LinkPacketEntities (void) {
 				}
 
 				//VULT - Add rocket lights
-				if ((r_rockettrail.value < 8 || r_rockettrail.value == 12) && model->modhint != MOD_LAVABALL)
+				rocketlightsize = 200.0 * bound(0, r_rocketlight.value, 1);
+				if (rocketlightsize >= 1)
 				{
-					if (r_rocketlight.value) 
+					if ((r_rockettrail.value < 8 || r_rockettrail.value == 12) && model->modhint != MOD_LAVABALL)
 					{
 						rocketlightcolor = dlightColor(r_rocketlightcolor.value, lt_rocket, false);
-						rocketlightsize = 100 * (1 + bound(0, r_rocketlight.value, 1));	
 						CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, rocketlightcolor, 1);
-						//VULT CORONAS
-						if (!ISPAUSED && amf_coronas.value)
+						if (!ISPAUSED && amf_coronas.value) //VULT CORONAS
 							NewCorona(C_ROCKETLIGHT, ent.origin);
 					}
-				}
-				else if (r_rockettrail.value == 9 || r_rockettrail.value == 11)
-				{
-						rocketlightsize = 100 * (1 + bound(0, r_rocketlight.value, 1));	
+					else if (r_rockettrail.value == 9 || r_rockettrail.value == 11)
+					{
 						CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, lt_default, 1);
-				}
-				//PLASMA ROCKETS
-				else if (r_rockettrail.value == 8)
-				{
-						rocketlightsize = 100 * (1 + bound(0, r_rocketlight.value, 1));	
+					}
+					else if (r_rockettrail.value == 8)
+					{ //PLASMA ROCKETS
 						CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, lt_blue, 1);
-				}
-				//FUEL ROD GUN
-				else if (r_rockettrail.value == 10)
-				{
-						rocketlightsize = 100 * (1 + bound(0, r_rocketlight.value, 1));	
+					}
+					else if (r_rockettrail.value == 10)
+					{ //FUEL ROD GUN
 						CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, lt_green, 1);
+					}
 				}
 			}
 			else if (model->flags & EF_GRENADE)
