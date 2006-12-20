@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.75 2006-12-19 21:06:29 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.76 2006-12-20 00:35:55 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -143,7 +143,7 @@ qbool	block_drawing;
 
 
 static int scr_autosshot_countdown = 0;
-static int scr_mvsshot_countdown = 0;
+static qbool scr_mvsshot_in_progress = false;
 char auto_matchname[2 * MAX_OSPATH];
 
 static void SCR_CheckAutoScreenshot(void);
@@ -2331,7 +2331,7 @@ void SCR_UpdateScreen (void) {
 	if (scr_autosshot_countdown)
 		SCR_CheckAutoScreenshot();
 
-	if (cls.mvdplayback && cl_multiview.value && cl_mvinset.value)
+	if (cls.mvdplayback && cl_multiview.value)
 	{
 		SCR_CheckMVScreenshot();
 	}
@@ -2483,10 +2483,10 @@ typedef enum image_format_s {IMAGE_PCX, IMAGE_TGA, IMAGE_JPEG, IMAGE_PNG} image_
 
 static char *SShot_ExtForFormat(int format) {
 	switch (format) {
-	case IMAGE_PCX: return ".pcx";
-	case IMAGE_TGA: return ".tga";
-	case IMAGE_JPEG: return ".jpg";
-	case IMAGE_PNG: return ".png";
+		case IMAGE_PCX:		return ".pcx";
+		case IMAGE_TGA:		return ".tga";
+		case IMAGE_JPEG:	return ".jpg";
+		case IMAGE_PNG:		return ".png";
 	}
 	assert(!"SShot_ExtForFormat: unknown format");
 	return "err";
@@ -2665,89 +2665,105 @@ int SCR_Screenshot(char *name) {
 
 #endif
 
-void SCR_ScreenShot_f (void) {
-	char name[MAX_OSPATH], ext[4], *filename, *sshot_dir;
-	int i, success;
+#define MAX_SCREENSHOT_COUNT	1000
+
+int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
+{
+	int i = 0;
+	char ext[4];
 	FILE *f;
 
-#ifdef GLQUAKE
-	// Multiview
-	if (cls.mvdplayback && cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW != 1) 
-	{
-		scr_mvsshot_countdown = 1;
-		return;
-	}
-#else
-	// sorry braindead atm, this can be cleaned up someday
-	if (cls.mvdplayback && cl_multiview.value && CURRVIEW != 1) 
-	{
-		if (cl_multiview.value == 2)
-		{
-			scr_mvsshot_countdown = 1;
-		}
-		else if (cl_multiview.value == 3) 
-		{
-			if (CURRVIEW == 2)
-			{
-				scr_mvsshot_countdown = 2;
-			}
-			else if (CURRVIEW == 3)
-			{
-				scr_mvsshot_countdown = 1;
-			}
-		} 
-		else if (cl_multiview.value == 4) 
-		{
-			if (CURRVIEW == 2)
-			{
-				scr_mvsshot_countdown = 3;
-			}
-			else if (CURRVIEW == 3)
-			{
-				scr_mvsshot_countdown = 2;
-			}
-			else if (CURRVIEW == 4)
-			{
-				scr_mvsshot_countdown = 1;
-			}
-		}
-		return;
-	}
-#endif
-
 	ext[0] = 0;
-	sshot_dir = scr_sshot_dir.string[0] ? scr_sshot_dir.string : cls.gamedirfile;
 
-	if (Cmd_Argc() == 2) {
-		strlcpy (name, Cmd_Argv(1), sizeof(name));
-	} else if (Cmd_Argc() == 1) {
-		// find a file name to save it to
-#ifdef WITH_PNG
-		if (!strcasecmp(scr_sshot_format.string, "png"))
-			strlcpy(ext, "png", 4);
-#endif
-#ifdef WITH_JPEG
-		if (!strcasecmp(scr_sshot_format.string, "jpeg") || !strcasecmp(scr_sshot_format.string, "jpg"))
-			strlcpy(ext, "jpg", 4);
-#endif
-		if (!strcasecmp(scr_sshot_format.string, "tga"))
-			strlcpy(ext, "tga", 4);
-		if (!strcasecmp(scr_sshot_format.string, "pcx"))
-			strlcpy(ext, "pcx", 4);
-		if (!ext[0])
-			strlcpy(ext, DEFAULT_SSHOT_FORMAT, sizeof(ext));
+	// Find a file name to save it to
+	#ifdef WITH_PNG
+	if (!strcasecmp(scr_sshot_format.string, "png"))
+	{
+		strlcpy(ext, "png", 4);
+	}
+	#endif
 
-		for (i = 0; i < 999; i++) {
-			snprintf(name, sizeof(name), "ezquake%03i.%s", i, ext);
-			if (!(f = fopen (va("%s/%s/%s", com_basedir, sshot_dir, name), "rb")))
-				break;  // file doesn't exist
-			fclose(f);
+	#ifdef WITH_JPEG
+	if (!strcasecmp(scr_sshot_format.string, "jpeg") || !strcasecmp(scr_sshot_format.string, "jpg"))
+	{
+		strlcpy(ext, "jpg", 4);
+	}
+	#endif
+
+	if (!strcasecmp(scr_sshot_format.string, "tga"))
+	{
+		strlcpy(ext, "tga", 4);
+	}
+
+	if (!strcasecmp(scr_sshot_format.string, "pcx"))
+	{
+		strlcpy(ext, "pcx", 4);
+	}
+
+	if (!ext[0])
+	{
+		strlcpy(ext, DEFAULT_SSHOT_FORMAT, sizeof(ext));
+	}
+
+	for (i = 0; i < MAX_SCREENSHOT_COUNT; i++) 
+	{
+		snprintf(name, name_size, "ezquake%03i.%s", i, ext);
+		if (!(f = fopen (va("%s/%s/%s", com_basedir, sshot_dir, name), "rb")))
+		{
+			break;  // file doesn't exist
 		}
-		if (i == 1000) {
-			Com_Printf ("Error: Cannot create more than 1000 screenshots\n");
+		fclose(f);
+	}
+	
+	if (i == MAX_SCREENSHOT_COUNT) 
+	{
+		Com_Printf ("Error: Cannot create more than %d screenshots\n", MAX_SCREENSHOT_COUNT);
+		return -1;
+	}
+
+	return 1;
+}
+
+void SCR_ScreenShot_f (void) 
+{	
+	char name[MAX_OSPATH], ext[4], *filename, *sshot_dir;
+	int success;	
+
+	// Multiview
+	if (cls.mvdplayback && cl_multiview.value)
+	{
+		if (CURRVIEW == 1)
+		{
+			scr_mvsshot_in_progress = false;
+
+			#ifdef GLQUAKE
+			// Make sure all gl calls have been drawn.
+			glFinish();
+			#endif
+		}
+		else
+		{
+			scr_mvsshot_in_progress = true;
+			Com_DPrintf ("Waiting with screenshot because all views haven't been drawn... view = %d\n", CURRVIEW);
 			return;
 		}
-	} else {
+	}	
+	
+	sshot_dir = scr_sshot_dir.string[0] ? scr_sshot_dir.string : cls.gamedirfile;
+
+	if (Cmd_Argc() == 2) 
+	{
+		strlcpy (name, Cmd_Argv(1), sizeof(name));
+	} 
+	else if (Cmd_Argc() == 1) 
+	{
+		if (SCR_GetScreenShotName (name, sizeof(name), sshot_dir) < 0)
+		{
+			return;
+		}
+	} 
+	else 
+	{
 		Com_Printf("Usage: %s [filename]\n", Cmd_Argv(0));
 		return;
 	}
@@ -2756,8 +2772,11 @@ void SCR_ScreenShot_f (void) {
 		;
 
 	success = SCR_Screenshot(va("%s/%s", sshot_dir, filename));
+
 	if (success != SSHOT_FAILED_QUIET)
+	{
 		Com_Printf ("%s %s\n", success == SSHOT_SUCCESS ? "Wrote" : "Couldn't write", name);
+	}
 }
 
 void SCR_RSShot_f (void) { 
@@ -2858,26 +2877,10 @@ void SCR_RSShot_f (void) {
 
 static void SCR_CheckMVScreenshot(void) 
 {
-	if (!scr_mvsshot_countdown || --scr_mvsshot_countdown)
+	if(scr_mvsshot_in_progress && cls.mvdplayback && cl_multiview.value)
 	{
-		return;
+		Cbuf_AddText ("screenshot\n");
 	}
-
-	#ifdef GLQUAKE
-	// Make sure all GL commands have been drawn.
-	glFinish();
-
-	// Only concerned with inset for GL.
-	if (cls.mvdplayback && cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1)
-	{
-		SCR_ScreenShot_f();
-	}
-	#else
-	if (cls.mvdplayback && cl_multiview.value && CURRVIEW == 1)
-	{
-		SCR_ScreenShot_f();
-	}
-	#endif
 }
 
 static void SCR_CheckAutoScreenshot(void) {
