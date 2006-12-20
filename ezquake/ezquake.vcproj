@@ -701,6 +701,9 @@
 					RelativePath="menu.c">
 				</File>
 				<File
+					RelativePath=".\menu_demo.c">
+				</File>
+				<File
 					RelativePath="pmove.c">
 				</File>
 				<File
@@ -1501,6 +1504,9 @@
 				</File>
 				<File
 					RelativePath="mathlib.h">
+				</File>
+				<File
+					RelativePath=".\menu_demo.h">
 				</File>
 				<File
 					RelativePath="modelgen.h">
