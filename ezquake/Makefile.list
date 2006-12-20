@@ -43,6 +43,7 @@ CLIENT_C_FILES := \
 	logging \
 	match_tools \
 	menu \
+	menu_demo \
 	modules \
 	movie \
 	mp3_player \
