@@ -3,9 +3,8 @@
 
 // seems noone uses next variables outside file, so make static
 // {
-static float tracker_time;
-static int active_track;
-static int max_active_tracks;
+static int active_track = 0;
+static int max_active_tracks = 0;
 // }
 
 #define MAX_TRACKERMESSAGES 30
@@ -23,6 +22,9 @@ trackmsg_t trackermsg[MAX_TRACKERMESSAGES];
 void VX_TrackerClear()
 {
 	int i;
+
+	active_track = max_active_tracks = 0; // this block VX_TrackerAddText() untill first VX_TrackerThink() which mean we connected and may start process it right
+
 	for (i = 0; i < MAX_TRACKERMESSAGES; i++)
 	{
 		trackermsg[i].die = -1;
@@ -35,7 +37,6 @@ void VX_TrackerClear()
 void VX_TrackerThink()
 {
 	int i;
-	tracker_time = r_refdef2.time;
 
 	VXSCR_DrawTrackerString();
 
@@ -47,7 +48,7 @@ void VX_TrackerThink()
 
 	for (i = 0; i < max_active_tracks; i++) 
 	{
-		if (trackermsg[i].die < tracker_time) // inactive
+		if (trackermsg[i].die < r_refdef2.time) // inactive
 			continue;
 
 		active_track = i+1; // i+1 slots active
@@ -55,7 +56,7 @@ void VX_TrackerThink()
 		if (!i)
 			continue;
 
-		if (trackermsg[i-1].die < tracker_time && trackermsg[i].die >= tracker_time) // free slot above
+		if (trackermsg[i-1].die < r_refdef2.time && trackermsg[i].die >= r_refdef2.time) // free slot above
 		{
 			trackermsg[i-1].die = trackermsg[i].die;
 			strlcpy(trackermsg[i-1].msg, trackermsg[i].msg, sizeof(trackermsg[0].msg));
@@ -88,7 +89,7 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 	}
 
 	strlcpy(trackermsg[active_track].msg, msg, sizeof(trackermsg[0].msg));
-	trackermsg[active_track].die = tracker_time + max(0, amf_tracker_time.value);
+	trackermsg[active_track].die = r_refdef2.time + max(0, amf_tracker_time.value);
 	trackermsg[active_track].tt = tt;
 	active_track += 1;
 }
@@ -349,6 +350,9 @@ void VXSCR_DrawTrackerString (void)
 	byte	*col = StringToRGB(amf_tracker_frame_color.string);
 	vec3_t	kolorkodes = {1,1,1};
 
+	if (!active_track)
+		return;
+
 	y = vid.height*0.2/scale + amf_tracker_y.value;
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -363,11 +367,11 @@ void VXSCR_DrawTrackerString (void)
 
 	for (i = 0; i < max_active_tracks; i++)
 	{
-		if (trackermsg[i].die < tracker_time)
+		if (trackermsg[i].die < r_refdef2.time)
 			continue;
 
 		start = trackermsg[i].msg;
-		alpha = min(1, (trackermsg[i].die - tracker_time)/2);
+		alpha = min(1, (trackermsg[i].die - r_refdef2.time)/2);
 
 		while (start[0])
 		{
