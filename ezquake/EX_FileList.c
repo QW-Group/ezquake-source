@@ -62,6 +62,7 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
     fl->strip_names = strip_names;
     fl->interline = interline;
     fl->show_status = show_status;
+	fl->search_string[0] = 0;
 
     fl->last_page_size = 0;
 
@@ -576,8 +577,7 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
  qbool FL_Key(filelist_t *fl, int key)
 {
     // check for search
-    if ((key >= ' '  &&  key <= '~')  &&
-        (fl->search_valid  ||  (isAltDown() && !isCtrlDown())))
+    if ((key >= ' ' && key <= '~') && (fl->search_valid || (!isAltDown() && !isCtrlDown() && !isShiftDown())))
     {
         int len;
 
@@ -606,46 +606,45 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
     }
 
     // sorting mode / displaying columns
-    if (key >= '1'  &&  key <= '4'  &&  !isAltDown()  &&  !isShiftDown())
-    {
-        if (isCtrlDown())
-        {
-            switch (key)
-            {
-            case '2':
-                cvar_toggle(fl->show_size); break;
-            case '3':
-                cvar_toggle(fl->show_date); break;
-            case '4':
-                cvar_toggle(fl->show_time); break;
-            default:
-                break;
-            }
-            return true;
-        }
-        else
-        {
-            char buf[128];
+	if (key >= '1' && key <= '4') {
+		if (isCtrlDown && !isAltDown() && !isShiftDown())
+		{
+			switch (key)
+			{
+			case '2':
+				cvar_toggle(fl->show_size); break;
+			case '3':
+				cvar_toggle(fl->show_date); break;
+			case '4':
+				cvar_toggle(fl->show_time); break;
+			default:
+				break;
+			}
+			return true;
+		}
+		else if (!isCtrlDown() && isAltDown() && !isShiftDown())
+		{
+			char buf[128];
 
-            strncpy(buf, fl->sort_mode->string, 32);
-            if (key  ==  buf[0])
-            {
-                // reverse order
-                buf[0] ^= 128;
-            }
-            else
-            {
-                // add new
-                memmove(buf+1, buf, strlen(buf)+1);
-                buf[0] = key;
-            }
-            buf[8] = 0;
-            Cvar_Set(fl->sort_mode, buf);
+			strncpy(buf, fl->sort_mode->string, 32);
+			if (key  ==  buf[0])
+			{
+				// reverse order
+				buf[0] ^= 128;
+			}
+			else
+			{
+				// add new
+				memmove(buf+1, buf, strlen(buf)+1);
+				buf[0] = key;
+			}
+			buf[8] = 0;
+			Cvar_Set(fl->sort_mode, buf);
 
-            fl->need_resort = true;
-            return true;
-        }
-    }
+			fl->need_resort = true;
+			return true;
+		}
+	}
 
     // change drive
 #ifdef _WIN32
@@ -923,7 +922,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 
         if (fl->search_valid)
         {	// some weird but nice-looking string in Quake font perhaps
-            strcpy(line, "\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd");   // seach for:
+			strcpy(line, "search for: ");   // seach for:
             if (fl->search_error)
             {
                 strcat(line, "not found");
