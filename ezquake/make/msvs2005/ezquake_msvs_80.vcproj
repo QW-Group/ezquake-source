@@ -874,10 +874,6 @@
 					RelativePath="..\..\sv_world.c"
 					>
 				</File>
-				<Filter
-					Name="Network"
-					>
-				</Filter>
 			</Filter>
 			<Filter
 				Name="VM"
@@ -942,14 +938,6 @@
 				</File>
 				<File
 					RelativePath="..\..\menu.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\net.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\net_chan.c"
 					>
 				</File>
 				<File
@@ -1943,6 +1931,18 @@
 				</File>
 				<File
 					RelativePath="..\..\xsd_variable.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Network"
+				>
+				<File
+					RelativePath="..\..\net.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\net_chan.c"
 					>
 				</File>
 			</Filter>
