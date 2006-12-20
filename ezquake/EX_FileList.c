@@ -576,6 +576,33 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
 //
  qbool FL_Key(filelist_t *fl, int key)
 {
+	int ce;
+
+	if (fl->delete_mode)
+	{
+		switch(key) {
+			case 'y':
+			case 'Y':
+			case K_ENTER:
+				if (!FL_IsCurrentDir(fl)) {
+					ce = fl->current_entry;		// remember where we were
+					unlink(FL_GetCurrentPath(fl));
+					FL_ReadDir(fl);				// reload dir
+					fl->current_entry = ce - 1; // set previous position
+					FL_CheckPosition(fl);
+				}
+				fl->delete_mode = false;
+				return true;
+			case 'n':
+			case 'N':
+			case K_ESCAPE:
+				fl->delete_mode = false;
+				return true;
+		}
+		
+		return false;
+	}
+
     // check for search
     if ((key >= ' ' && key <= '~') && (fl->search_valid || (!isAltDown() && !isCtrlDown() && !isShiftDown())))
     {
@@ -738,6 +765,14 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
         return true;
     }
 
+	if (key == K_DEL)
+	{
+		if (!FL_IsCurrentDir(fl)) {
+			fl->delete_mode = true;
+		}
+		return true;
+	}
+
     return false;
 }
 
@@ -761,6 +796,14 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
     int listsize, pos, interline, inter_up, inter_dn, rowh;
     char line[1024];
     char sname[200], ssize[COL_SIZE+1], sdate[COL_DATE+1], stime[COL_TIME+1];
+
+	if (fl->delete_mode)
+	{
+		UI_Print_Center(x, y + 8, w, "Are you sure you want to delete this file?", true);
+		UI_Print_Center(x, y + 24, w, FL_GetCurrentDisplay(fl), false);
+		UI_Print_Center(x, y + 40, w, "(Y/N)", true);
+		return;
+	}
 
     w = (w/8)*8;
     //h = (h/8)*8;
