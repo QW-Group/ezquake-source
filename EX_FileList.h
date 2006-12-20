@@ -91,6 +91,7 @@ typedef struct filelist_s
     qbool        search_valid;   // if is in search mode
     qbool        search_dirty;   // if should research
     qbool        search_error;   // not found
+	qbool		 delete_mode;	 // are we deleting a file?
 
     // for cd ..
     char            cdup_name[_MAX_PATH+1];
