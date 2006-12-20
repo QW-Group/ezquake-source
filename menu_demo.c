@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.5 2006-12-19 23:39:44 johnnycz Exp $
+		$Id: menu_demo.c,v 1.6 2006-12-20 00:37:13 johnnycz Exp $
 
 */
 
@@ -306,9 +306,9 @@ void CT_Demo_Playlist_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *
 		for (i = 0; i <= demo_playlist_num - demo_playlist_base && i < DEMO_MAXLINES; i++) {
 			y2 = 32 + i * 8 ;
 			if (demo_playlist_cursor == i)
-				M_PrintWhite (24, y + y2, demo_playlist[demo_playlist_base + i].name);
-			else
 				M_Print (24, y + y2, demo_playlist[demo_playlist_base + i].name);
+			else
+				M_PrintWhite (24, y + y2, demo_playlist[demo_playlist_base + i].name);
 		}
 		M_DrawCharacter (8, y + 32 + demo_playlist_cursor * 8, FLASHINGARROW());
 	}
