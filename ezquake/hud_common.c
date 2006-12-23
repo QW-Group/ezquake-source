@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.107 2006-12-19 21:53:37 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.108 2006-12-23 22:47:25 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -2712,81 +2712,53 @@ int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, 
 	return px;
 }
 
-#define FRAGS_EXTRA_DONT_SHOW				0
-#define FRAGS_EXTRA_SPEC_ALL				1
-#define FRAGS_EXTRA_SPEC_ALL_2				2
-#define FRAGS_EXTRA_SPEC_NO_RL				3
-#define FRAGS_EXTRA_SPEC_NO_ARMOR			4
-#define FRAGS_EXTRA_SPEC_NO_ARMOR_2			5
-#define FRAGS_EXTRA_SPEC_NO_HEALTH			6
-#define FRAGS_EXTRA_SPEC_NO_HEALTH_2		7
-#define	FRAGS_EXTRA_SPEC_NO_POWERUPS		8
-#define	FRAGS_EXTRA_SPEC_NO_POWERUPS_2		9
-#define FRAGS_EXTRA_SPEC_ONLY_POWERUPS		10
-#define FRAGS_EXTRA_SPEC_ONLY_HEALTH		11
-#define FRAGS_EXTRA_SPEC_ONLY_ARMOR			12
-#define FRAGS_EXTRA_SPEC_ONLY_RL			13
-#define FRAGS_EXTRA_SPEC_ONLY_RL_2			14
+static qbool hud_frags_extra_spec_info	= true;
+static qbool hud_frags_show_rl			= true;
+static qbool hud_frags_show_armor		= true;
+static qbool hud_frags_show_health		= true;
+static qbool hud_frags_show_powerup		= true;
+static qbool hud_frags_textonly			= false;
+
+qbool Frags_OnChangeExtraSpecInfo(cvar_t *var, char *s)
+{
+	// Parse the extra spec info.
+	hud_frags_show_rl		= Utils_RegExpMatch("RL|ALL",		s);
+	hud_frags_show_armor	= Utils_RegExpMatch("ARMOR|ALL",	s);
+	hud_frags_show_health	= Utils_RegExpMatch("HEALTH|ALL",	s);
+	hud_frags_show_powerup	= Utils_RegExpMatch("POWERUP|ALL",	s);
+	hud_frags_textonly		= Utils_RegExpMatch("TEXT",			s);
+
+	hud_frags_extra_spec_info = (hud_frags_show_rl || hud_frags_show_armor || hud_frags_show_health || hud_frags_show_powerup);
+
+	return false;
+}
 
 int Frags_DrawExtraSpecInfo(player_info_t *info,
 							 int px, int py,
 							 int cell_width, int cell_height,
-							 int space_x, int space_y, int style, int flip)
+							 int space_x, int space_y, int flip)
 {
-	// Styles:
-	// * means that the RL pic isn't show, just the text "RL".
-	//
-	// 0  = Show nothing
-	// 1  = Show all
-	// 2  = Show all *
-	// 3  = Don't show RL's
-	// 4  = Don't show armors
-	// 5  = Don't show armors *
-	// 6  = Don't show health
-	// 7  = Don't show health *
-	// 8  = Don't show powerups
-	// 9  = Don't show powerups *
-	// 10 = Only show powerups
-	// 11 = Only show health
-	// 12 = Only show armors
-	// 13 = Only show RL's
-	// 14 = Only show RL's *
+	extern mpic_t *sb_weapons[7][8];		// sbar.c ... Used for displaying the RL.
+	mpic_t *rl_picture = sb_weapons[0][5];	// Picture of RL.
 
-	extern mpic_t *sb_weapons[7][8]; // sbar.c ... Used for displaying the RL.
-	mpic_t rl_picture;				 // Picture of RL.
-
-	float armor_height = 0.0;
-//	float armor_width = 0.0;
-	int armor = 0;
-	int armor_bg_color = 0;
-	float armor_bg_power = 0;
-//	int spec_extra_health_w = 5;
-	int health_spacing = 1;
-	int weapon_width = 24;
-	qbool show_rl_pic = true;
+	float	armor_height = 0.0;
+	int		armor = 0;
+	int		armor_bg_color = 0;
+	float	armor_bg_power = 0;
+	int		health_spacing = 1;
+	int		weapon_width = 24;
 
 	// Only allow this for spectators.
-	if (!(cls.demoplayback || cl.spectator) || style == FRAGS_EXTRA_DONT_SHOW)
+	if (!(cls.demoplayback || cl.spectator))
 	{
 		return px;
 	}
 
-	show_rl_pic = !(style == FRAGS_EXTRA_SPEC_ALL_2
-		|| style == FRAGS_EXTRA_SPEC_NO_ARMOR_2
-		|| style == FRAGS_EXTRA_SPEC_NO_HEALTH_2
-		|| style == FRAGS_EXTRA_SPEC_NO_POWERUPS_2
-		|| style == FRAGS_EXTRA_SPEC_ONLY_RL_2);
+	// Set width based on text or picture.
+	weapon_width = hud_frags_textonly ? rl_picture->width : 24;
 
-	rl_picture = *sb_weapons[0][5];
-
-	weapon_width = show_rl_pic ? rl_picture.width : 24;
-
-	// Draw health bar.
-	if(flip
-		&& style != FRAGS_EXTRA_SPEC_NO_HEALTH
-		&& style != FRAGS_EXTRA_SPEC_ONLY_ARMOR
-		&& style != FRAGS_EXTRA_SPEC_ONLY_RL
-		&& style != FRAGS_EXTRA_SPEC_ONLY_POWERUPS)
+	// Draw health bar. (flipped)
+	if(flip && hud_frags_show_health)
 	{
 		Frags_DrawHealthBar(info->stats[STAT_HEALTH], px, py, cell_height, 3);
 		px += 3 + health_spacing;
@@ -2812,12 +2784,7 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 	}
 
 	// Only draw the armor if the current player has one and if the style allows it.
-	if(armor_bg_power
-		&& armor_bg_color
-		&& style != FRAGS_EXTRA_SPEC_NO_ARMOR
-		&& style != FRAGS_EXTRA_SPEC_ONLY_HEALTH
-		&& style != FRAGS_EXTRA_SPEC_ONLY_RL
-		&& style != FRAGS_EXTRA_SPEC_ONLY_POWERUPS)
+	if(armor_bg_power && hud_frags_show_armor)
 	{
 		armor_height = ROUND((cell_height / armor_bg_power) * armor);
 
@@ -2835,62 +2802,37 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 				(int)armor_height,
 				armor_bg_color);
 		#endif
-
-		// Draws the armor bar vertically instead.
-		/*armor_width = ROUND((rl_picture.width  / armor_bg_power) * armor);
-		Draw_AlphaFill(px + rl_picture.width - (int)armor_width,		// x (Draw from right to left)
-						py,												// y
-						(int)armor_width,								// width
-						(int)cell_height,								// height
-						armor_bg_color,									// color
-						0.3);											// alpha
-		*/
 	}
 
 	// Draw the rl if the current player has it and the style allows it.
-	if(info->stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER
-		&& style != FRAGS_EXTRA_SPEC_NO_RL
-		&& style != FRAGS_EXTRA_SPEC_ONLY_HEALTH
-		&& style != FRAGS_EXTRA_SPEC_ONLY_ARMOR
-		&& style != FRAGS_EXTRA_SPEC_ONLY_POWERUPS)
+	if(info->stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER && hud_frags_show_rl)
 	{
-		if(show_rl_pic)
+		if(!hud_frags_textonly)
 		{
 			#ifdef GLQUAKE
 			// Draw the rl-pic.
 			Draw_SSubPic (px,
-				py + ROUND((cell_height/2.0)) - (rl_picture.height/2.0),
-				&rl_picture,
-				0,
-				0,
-				rl_picture.width,
-				rl_picture.height,
-				1);
+				py + ROUND((cell_height/2.0)) - (rl_picture->height/2.0),
+				rl_picture, 0, 0,
+				rl_picture->width,
+				rl_picture->height, 1);
 			#else
-			// mpic_t is defined differently for software, so we can't use rl_picture here.
-			extern mpic_t *sb_weapons[7][8];
 			Draw_SSubPic (px,
-				py + ROUND((cell_height/2.0)) - (sb_weapons[0][5]->height/2.0),
-				sb_weapons[0][5],
-				0,
-				0,
-				sb_weapons[0][5]->width,
-				sb_weapons[0][5]->height,
-				1);
+				py + ROUND((cell_height/2.0)) - (rl_picture->height/2.0),
+				rl_picture, 0, 0,
+				rl_picture->width,
+				rl_picture->height, 1);
 			#endif
 		}
 		else
 		{
-			// just print "RL" instead.
+			// Just print "RL" instead.
 			Draw_String(px + 12 - 8, py + ROUND((cell_height/2.0)) - 4, "RL");
 		}
 	}
 
 	// Only draw powerups is the current player has it and the style allows it.
-	if(style != FRAGS_EXTRA_SPEC_NO_POWERUPS
-		&& style != FRAGS_EXTRA_SPEC_ONLY_HEALTH
-		&& style != FRAGS_EXTRA_SPEC_ONLY_ARMOR
-		&& style != FRAGS_EXTRA_SPEC_ONLY_RL)
+	if(hud_frags_show_powerup)
 	{
 
 		//float powerups_x = px + (spec_extra_weapon_w / 2.0);
@@ -2933,12 +2875,8 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 
 	px += weapon_width + health_spacing;
 
-	// Draw health bar.
-	if(!flip
-		&& style != FRAGS_EXTRA_SPEC_NO_HEALTH
-		&& style != FRAGS_EXTRA_SPEC_ONLY_ARMOR
-		&& style != FRAGS_EXTRA_SPEC_ONLY_RL
-		&& style != FRAGS_EXTRA_SPEC_ONLY_POWERUPS)
+	// Draw health bar. (not flipped)
+	if(!flip && hud_frags_show_health)
 	{
 		Frags_DrawHealthBar(info->stats[STAT_HEALTH], px, py, cell_height, 3);
 		px += 3 + health_spacing;
@@ -3086,17 +3024,19 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		*hud_frags_shownames,
 		*hud_frags_teams,
 		*hud_frags_padtext,
-		//*hud_frags_showself,
+		*hud_frags_showself,
 		*hud_frags_extra_spec,
 		*hud_frags_fliptext,
 		*hud_frags_style;
 
 	extern mpic_t *sb_weapons[7][8]; // sbar.c ... Used for displaying the RL.
-	mpic_t rl_picture;				 // Picture of RL.
-	rl_picture = *sb_weapons[0][5];
+	mpic_t *rl_picture;				 // Picture of RL.
+	rl_picture = sb_weapons[0][5];
 
     if (hud_frags_cell_width == NULL)    // first time
     {
+		char specval[256];
+
         hud_frags_cell_width    = HUD_FindVar(hud, "cell_width");
         hud_frags_cell_height   = HUD_FindVar(hud, "cell_height");
         hud_frags_rows          = HUD_FindVar(hud, "rows");
@@ -3109,37 +3049,57 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		hud_frags_shownames		= HUD_FindVar(hud, "shownames");
 		hud_frags_teams			= HUD_FindVar(hud, "showteams");
 		hud_frags_padtext		= HUD_FindVar(hud, "padtext");
-		//hud_frags_showself		= HUD_FindVar(hud, "showself_always");
+		hud_frags_showself		= HUD_FindVar(hud, "showself_always");
 		hud_frags_extra_spec	= HUD_FindVar(hud, "extra_spec_info");
 		hud_frags_fliptext		= HUD_FindVar(hud, "fliptext");
 		hud_frags_style			= HUD_FindVar(hud, "style");
+
+		// Set the OnChange function for extra spec info.
+		hud_frags_extra_spec->OnChange = Frags_OnChangeExtraSpecInfo;
+		strlcpy(specval, hud_frags_extra_spec->string, sizeof(specval));
+		Cvar_Set(hud_frags_extra_spec, specval);
     }
 
-    rows = hud_frags_rows->value;
-    clamp(rows, 1, MAX_CLIENTS);
-    cols = hud_frags_cols->value;
-    clamp(cols, 1, MAX_CLIENTS);
-    cell_width = hud_frags_cell_width->value;
-    clamp(cell_width, 28, 128);
-    cell_height = hud_frags_cell_height->value;
-    clamp(cell_height, 7, 32);
-    space_x = hud_frags_space_x->value;
-    clamp(space_x, 0, 128);
-    space_y = hud_frags_space_y->value;
-    clamp(space_y, 0, 128);
+	//
+	// Clamp values to be "sane".
+	//
+	{
+		rows = hud_frags_rows->value;
+		clamp(rows, 1, MAX_CLIENTS);
 
-	sort_teamsort = hud_frags_teamsort->value;
+		cols = hud_frags_cols->value;
+		clamp(cols, 1, MAX_CLIENTS);
+
+		// Some users doesn't want to show the actual frags, just
+		// extra_spec_info stuff + names.
+		cell_width = hud_frags_cell_width->value;
+		clamp(cell_width, 0, 128);
+
+		cell_height = hud_frags_cell_height->value;
+		clamp(cell_height, 7, 32);
+
+		space_x = hud_frags_space_x->value;
+		clamp(space_x, 0, 128);
+
+		space_y = hud_frags_space_y->value;
+		clamp(space_y, 0, 128);
+	}
+
+	sort_teamsort = (qbool)hud_frags_teamsort->value;
 
     if (hud_frags_strip->value)
     {
+		// Auto set the number of rows / cols based on the number of players.
+		// (This is kinda fucked up, but I won't mess with it for the sake of backwards compability).
+
         if (hud_frags_vertical->value)
         {
-            a_cols = min((n_players+rows-1) / rows, cols);
+            a_cols = min((n_players + rows - 1) / rows, cols);
             a_rows = min(rows, n_players);
         }
         else
         {
-            a_rows = min((n_players+cols-1) / cols, rows);
+            a_rows = min((n_players + cols - 1) / cols, rows);
             a_cols = min(cols, n_players);
         }
     }
@@ -3149,100 +3109,154 @@ void SCR_HUD_DrawFrags(hud_t *hud)
         a_cols = cols;
     }
 
-    width  = a_cols*cell_width  + (a_cols+1)*space_x;
-    height = a_rows*cell_height + (a_rows+1)*space_y;
+    width  = (a_cols * cell_width)  + ((a_cols + 1) * space_x);
+    height = (a_rows * cell_height) + ((a_rows + 1) * space_y);
 
 	// Get the longest name/team name for padding.
 	if(hud_frags_shownames->value || hud_frags_teams->value)
 	{
 		int cur_length = 0;
 		int n;
-		for(n=0; n < n_players; n++)
+
+		for(n = 0; n < n_players; n++)
 		{
 			player_info_t *info = &cl.players[sorted_players[n].playernum];
 			cur_length = strlen(info->name);
 
-			// Name
+			// Name.
 			if(cur_length >= max_name_length)
+			{
 				max_name_length = cur_length + 1;
+			}
 
 			cur_length = strlen(info->team);
 
-			// Team name
+			// Team name.
 			if(cur_length >= max_team_length)
+			{
 				max_team_length = cur_length + 1;
+			}
 		}
 
 		// We need a wider box to draw in if we show the names.
 		if(hud_frags_shownames->value)
-			width += a_cols*max_name_length*8 + (a_cols+1)*space_x;
+		{
+			width += (a_cols * max_name_length * 8) + ((a_cols + 1) * space_x);
+		}
 
 		if(cl.teamplay && hud_frags_teams->value)
-			width += a_cols*max_team_length*8 + (a_cols+1)*space_x;
+		{
+			width += (a_cols * max_team_length * 8) + ((a_cols + 1) * space_x);
+		}
 	}
 
 	// Make room for the extra spectator stuff.
-	if(hud_frags_extra_spec->value && (cls.demoplayback || cl.spectator) )
+	if(hud_frags_extra_spec_info && (cls.demoplayback || cl.spectator) )
 	{
-		width += a_cols*(rl_picture.width + FRAGS_HEALTHBAR_WIDTH);
+		width += a_cols * (rl_picture->width + FRAGS_HEALTHBAR_WIDTH);
 	}
 
     if (HUD_PrepareDraw(hud, width, height, &x, &y))
     {
         int i = 0;
-        int px = 0;
-        int py = 0;
+        int player_x = 0;
+        int player_y = 0;
         int num = 0;
 		int drawBrackets = 0;
-		int limit = min(n_players, a_rows*a_cols);
+
+		// The number of players that are to be visible.
+		int limit = min(n_players, a_rows * a_cols);
 
 		// Always show my current frags (don't just show the leaders).
-		/*if(hud_frags_showself->value)
+		if(hud_frags_showself->value && !cl_multiview.value)
 		{
+			int player_pos = 0;
+
 			// Find my position in the scoreboard.
-			for(i=0; i < n_players; i++)
+			for(player_pos = 0; i < n_players; player_pos++)
 			{
 				if (cls.demoplayback || cl.spectator)
 				{
-					if (spec_track == sorted_players[i]->playernum)
+					if (spec_track == sorted_players[player_pos].playernum)
+					{
 						break;
+					}
 				}
-				else if(sorted_players[i]->playernum == cl.playernum)
+				else if(sorted_players[player_pos].playernum == cl.playernum)
+				{
 					break;
+				}
 			}
 
-			if(i + 1 <= a_rows*a_cols)
-				num = 0; // If I'm not "outside" the shown frags, start drawing from the top.
+			if(player_pos + 1 <= (a_rows * a_cols))
+			{
+				// If I'm not "outside" the shown frags, start drawing from the top.
+				num = 0; 
+			}
 			else
-				num = abs(a_rows*a_cols - (i+1)); // Always include me in the shown frags.
-		}*/
+			{
+				// Always include me in the shown frags.
+				num = abs((a_rows * a_cols) - (player_pos + 1)); 
+			}
 
-		num = 0;  // FIXME! johnnycz; (see fixme below)
+			// Make sure we're not trying to go outside the player array.
+			num = (num < 0 || num > n_players) ? 0 : num;
+		}
+
+		//num = 0;  // FIXME! johnnycz; (see fixme below)
+
+		//
+		// Loop through all the positions that should be drawn (columns * rows or number of players).
+		//
+		// Start drawing player "num", usually the first player in the array, but if
+		// showself_always is set this might be someone else (since we need to make sure the current
+		// player is always shown).
+		//
         for (i = 0; i < limit; i++)
         {
             player_info_t *info = &cl.players[sorted_players[num].playernum]; // FIXME! johnnycz; causes crashed on some demos
 
+			//
+			// Set the coordinates where to draw the next element.
+			//
             if (hud_frags_vertical->value)
             {
                 if (i % a_rows == 0)
                 {
-					if(hud_frags_shownames->value && hud_frags_teams->value)
-						px = x + space_x + (i/a_rows) * (cell_width+space_x + (max_name_length + max_team_length)*8);
-					else if(hud_frags_shownames->value)
-						px = x + space_x + (i/a_rows) * (cell_width+space_x + (max_name_length)*8);
-					else if(hud_frags_teams->value)
-						px = x + space_x + (i/a_rows) * (cell_width+space_x + (max_team_length)*8);
-					else
-						px = x + space_x + (i/a_rows) * (cell_width+space_x);
-                    py = y + space_y;
+					// We're drawing a new column.
+
+					int element_width = cell_width + space_x;
+
+					// Get the width of all the stuff that is shown, the name, frag cell and so on.
+
+					if(hud_frags_shownames->value)
+					{
+						element_width += (max_name_length) * 8;
+					}
+					
+					if(hud_frags_teams->value)
+					{
+						element_width += (max_team_length) * 8;
+					}
+
+					if(hud_frags_extra_spec_info && (cls.demoplayback || cl.spectator) )
+					{
+						element_width += rl_picture->width;
+					}
+
+					player_x = x + space_x + ((i / a_rows) * element_width);
+
+					// New column.
+                    player_y = y + space_y;
                 }
             }
             else
             {
                 if (i % a_cols == 0)
                 {
-                    px = x + space_x;
-                    py = y + space_y + (i/a_cols) * (cell_height+space_y);
+					// Drawing new row.
+                    player_x = x + space_x;
+                    player_y = y + space_y + (i / a_cols) * (cell_height + space_y);
                 }
             }
 
@@ -3250,7 +3264,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 
 			// Bug fix. Before the wrong player would be higlighted
 			// during qwd-playback, since you ARE the player that you're
-			// being spectated.
+			// being spectated (you're not a spectator).
 			if(cls.demoplayback && !cl.spectator && !cls.mvdplayback)
 			{
 				drawBrackets = (sorted_players[num].playernum == cl.playernum);
@@ -3264,21 +3278,24 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 				drawBrackets = (sorted_players[num].playernum == cl.playernum);
 			}
 
+			// Don't draw any brackets in multiview since we're
+			// tracking several players.
 			if (cl_multiview.value > 1 && cls.mvdplayback)
 			{
-				// Does not work for some reason I can't grasp :/
-				//drawBrackets = (sorted_players[num]->playernum == nPlayernum);
-
+				// TODO: Highlight all players being tracked (See tracking hud-element)
 				drawBrackets = 0;
 			}
 
-			if(hud_frags_shownames->value || hud_frags_teams->value || hud_frags_extra_spec->value)
+			if(hud_frags_shownames->value || hud_frags_teams->value || hud_frags_extra_spec_info)
 			{
-				int _px = px;
+				// Relative x coordinate where we draw the subitems.
+				int rel_player_x = player_x;
 
 				if(hud_frags_style->value >= 4 && hud_frags_style->value <= 8)
 				{
-					Frags_DrawBackground(px, py, cell_width, cell_height, space_x, space_y,
+					// Draw background based on the style.
+
+					Frags_DrawBackground(player_x, player_y, cell_width, cell_height, space_x, space_y,
 						max_name_length, max_team_length, Sbar_BottomColor(info),
 						hud_frags_shownames->value, hud_frags_teams->value, drawBrackets,
 						hud_frags_style->value);
@@ -3292,34 +3309,33 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 					//
 
 					// Draw name.
-					_px = Frags_DrawText(_px, py, cell_width, cell_height,
+					rel_player_x = Frags_DrawText(rel_player_x, player_y, cell_width, cell_height,
 						space_x, space_y, max_name_length, max_team_length,
 						hud_frags_fliptext->value, hud_frags_padtext->value,
 						hud_frags_shownames->value, 0,
 						info->name, info->team);
 
 					// Draw team.
-					_px = Frags_DrawText(_px, py, cell_width, cell_height,
+					rel_player_x = Frags_DrawText(rel_player_x, player_y, cell_width, cell_height,
 						space_x, space_y, max_name_length, max_team_length,
 						hud_frags_fliptext->value, hud_frags_padtext->value,
 						0, hud_frags_teams->value,
 						info->name, info->team);
 
-					Frags_DrawColors(_px, py, cell_width, cell_height,
+					Frags_DrawColors(rel_player_x, player_y, cell_width, cell_height,
 						Sbar_TopColor(info), Sbar_BottomColor(info),
 						info->frags,
 						drawBrackets,
 						hud_frags_style->value);
 
-					_px += cell_width + space_x;
+					rel_player_x += cell_width + space_x;
 
 					// Show extra information about all the players if spectating:
 					// - What armor they have.
 					// - How much health.
 					// - If they have RL or not.
-					_px = Frags_DrawExtraSpecInfo(info, _px, py, cell_width, cell_height,
+					rel_player_x = Frags_DrawExtraSpecInfo(info, rel_player_x, player_y, cell_width, cell_height,
 							 space_x, space_y,
-							 hud_frags_extra_spec->value,
 							 hud_frags_fliptext->value);
 
 				}
@@ -3330,28 +3346,27 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 					// EXTRA_SPEC_INFO | FRAGS | TEAM | NAME
 					//
 
-					_px = Frags_DrawExtraSpecInfo(info, _px, py, cell_width, cell_height,
+					rel_player_x = Frags_DrawExtraSpecInfo(info, rel_player_x, player_y, cell_width, cell_height,
 							 space_x, space_y,
-							 hud_frags_extra_spec->value,
 							 hud_frags_fliptext->value);
 
-					Frags_DrawColors(_px, py, cell_width, cell_height,
+					Frags_DrawColors(rel_player_x, player_y, cell_width, cell_height,
 						Sbar_TopColor(info), Sbar_BottomColor(info),
 						info->frags,
 						drawBrackets,
 						hud_frags_style->value);
 
-					_px += cell_width + space_x;
+					rel_player_x += cell_width + space_x;
 
 					// Draw team.
-					_px = Frags_DrawText(_px, py, cell_width, cell_height,
+					rel_player_x = Frags_DrawText(rel_player_x, player_y, cell_width, cell_height,
 						space_x, space_y, max_name_length, max_team_length,
 						hud_frags_fliptext->value, hud_frags_padtext->value,
 						0, hud_frags_teams->value,
 						info->name, info->team);
 
 					// Draw name.
-					_px = Frags_DrawText(_px, py, cell_width, cell_height,
+					rel_player_x = Frags_DrawText(rel_player_x, player_y, cell_width, cell_height,
 						space_x, space_y, max_name_length, max_team_length,
 						hud_frags_fliptext->value, hud_frags_padtext->value,
 						hud_frags_shownames->value, 0,
@@ -3359,24 +3374,40 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 				}
 
 				if(hud_frags_vertical->value)
-					py += cell_height + space_y;
+				{
+					// Next row.
+					player_y += cell_height + space_y;
+				}
 				else
-					px = _px + space_x;
+				{
+					// Next column.
+					player_x = rel_player_x + space_x;
+				}
 			}
 			else
 			{
-				Frags_DrawColors(px, py, cell_width, cell_height,
+				// Only showing the frags, no names or extra spec info.
+
+				Frags_DrawColors(player_x, player_y, cell_width, cell_height,
 					Sbar_TopColor(info), Sbar_BottomColor(info),
 					info->frags,
 					drawBrackets,
 					hud_frags_style->value);
 
 				if (hud_frags_vertical->value)
-					py += cell_height + space_y;
+				{
+					// Next row.
+					player_y += cell_height + space_y;
+				}
 				else
-					px += cell_width + space_x;
+				{
+					// Next column.
+					player_x += cell_width + space_x;
+				}
 			}
-            num ++;
+
+			// Next player.
+            num++;
         }
     }
 }
@@ -6260,8 +6291,8 @@ void CommonDraw_Init(void)
 		"shownames", "0",
 		"showteams", "0",
 		"padtext", "1",
-		//"showself_always", "1", // Doesn't work anyway.
-		"extra_spec_info", "1",
+		"showself_always", "1",
+		"extra_spec_info", "ALL",
 		"fliptext", "0",
 		"style", "0",
         NULL);
