@@ -532,7 +532,14 @@ void R_AliasSetupLighting(entity_t *ent) {
 						VectorCopy(cl_dlights[lnum].origin, vertexlight);
 					}
 				}
-				VectorCopy(bubblecolor[cl_dlights[lnum].type], dlight_color);
+
+				if (cl_dlights[lnum].type == lt_custom) {
+					VectorCopy(cl_dlights[lnum].color, dlight_color);
+					VectorScale(dlight_color, (1.0/255), dlight_color); // convert color from byte to float
+				}
+				else
+					VectorCopy(bubblecolor[cl_dlights[lnum].type], dlight_color);
+
 				for (i=0;i<3;i++)
 				{
 					lightcolor[i] = lightcolor[i] + (dlight_color[i]*add)*2;

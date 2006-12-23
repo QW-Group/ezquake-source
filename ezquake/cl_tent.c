@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.22 2006-11-14 21:14:18 cokeman1982 Exp $
+	$Id: cl_tent.c,v 1.23 2006-12-23 06:57:27 qqshka Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -369,7 +369,15 @@ void CL_ParseTEnt (void) {
 				dl->type = lt_green;
 			else
 #endif
-				dl->type = dlightColor(r_explosionlightcolor.value, lt_explosion, true);
+			{
+				customlight_t cst_lt = {0};
+				dlightColorEx(r_explosionlightcolor.value, r_explosionlightcolor.string, lt_explosion, true, &cst_lt);
+				dl->type = cst_lt.type;
+#ifdef GLQUAKE
+				if (dl->type == lt_custom)
+					VectorCopy(cst_lt.color, dl->color);
+#endif
+			}
 #ifdef GLQUAKE
 			//VULT CORONAS
 			if (amf_coronas.value && r_explosiontype.value != 7 && r_explosiontype.value != 2 && r_explosiontype.value != 8)
@@ -721,74 +729,3 @@ void CL_UpdateTEnts (void) {
 
 }
 
-#ifdef GLQUAKE
-//VULT PARTICLES - For amf_inferno haxxed fake explosions
-void CL_FakeExplosion (vec3_t pos)
-{
-	dlight_t *dl;
-
-	if (amf_inferno_trail.value == 2) 
-	{
-		if (amf_part_blobexplosion.value)
-			VXBlobExplosion(pos);
-		else
-			R_BlobExplosion (pos);									//blob explosion
-		//VULT CORONAS
-		if (amf_coronas.value)
-			NewCorona (C_BLUEFLASH, pos);
-
-		dl = CL_AllocDlight (0);
-		VectorCopy (pos, dl->origin);
-		dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
-		dl->die = cl.time + 0.5;
-		dl->decay = 300;
-		dl->type = lt_blue;
-	}
-	else if (amf_inferno_trail.value == 3) 
-	{
-		FuelRodExplosion (pos);
-
-		dl = CL_AllocDlight (0);
-		VectorCopy (pos, dl->origin);
-		dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
-		dl->die = cl.time + 0.5;
-		dl->decay = 300;
-		dl->type = lt_green;
-	}
-	else if (amf_inferno_trail.value == 4) 
-	{
-		BurningExplosion(pos);
-
-		dl = CL_AllocDlight (0);
-		VectorCopy (pos, dl->origin);
-		dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
-		dl->die = cl.time + 0.5;
-		dl->decay = 300;
-		dl->type = lt_red;
-	}
-	else
-	{	//sprite and particles
-		if (r_explosiontype.value == 7 && qmb_initialized && gl_part_explosions.value) 
-			QMB_DetpackExplosion (pos); 							//detpack explosion
-		else if (amf_part_explosion.value)
-			VXExplosion(pos);
-		else
-			R_ParticleExplosion (pos);								//normal explosion
-
-		if (r_explosionlight.value) 
-		{
-			dl = CL_AllocDlight (0);
-			VectorCopy (pos, dl->origin);
-			dl->radius = 150 + 200 * bound(0, r_explosionlight.value, 1);
-			dl->die = cl.time + 0.5;
-			dl->decay = 300;
-			dl->type = dlightColor(r_explosionlightcolor.value, lt_explosion, true);
-			//VULT CORONAS
-			if (amf_coronas.value)
-				NewCorona (C_FLASH, pos);
-		}
-
-	}
-	S_StartSound (-1, 0, cl_sfx_r_exp3, pos, 1, 1);
-}
-#endif

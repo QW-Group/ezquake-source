@@ -69,18 +69,20 @@ void R_InitBubble(void) {
 	{ 0.5, 0.05, 0.4 },		// red + blue
 	{ 0.05, 0.45, 0.05 },	// green
 	{ 0.5, 0.5, 0.5},		// white
+	{ 0.5, 0.5, 0.5},		// custom
 };*/
 //VULT LIGHTS - My lighting colours are different, I don't know why, but they've been this way since 0.31 or so
 float bubblecolor[NUM_DLIGHTTYPES][4] = {
-	{ 0.4, 0.2, 0.1 },		// dimlight or brightlight (lt_default)
-	{ 1, 0.4, 0.2 },		// muzzleflash
-	{ 0.8, 0.4, 0.2 },		// explosion
-	{ 0.2, 0.1, 0.05 },		// rocket  fuh : lightbubble
-	{ 0.5, 0.05, 0.05 },	// red
-	{ 0.05, 0.05, 0.3 },	// blue
-	{ 0.5, 0.05, 0.4 },		// red + blue
+	{ 0.4,  0.2,  0.1  },	// dimlight or brightlight (lt_default)
+	{   1,  0.4,  0.2  },	// muzzleflash
+	{ 0.8,  0.4,  0.2  },	// explosion
+	{ 0.2,  0.1,  0.05 },	// rocket  fuh : lightbubble
+	{ 0.5,  0.05, 0.05 },	// red
+	{ 0.05, 0.05, 0.3  },	// blue
+	{ 0.5,  0.05, 0.4  },	// red + blue
 	{ 0.05, 0.45, 0.05 },	// green
-	{ 0.5, 0.5, 0.5},		//white
+	{ 0.5,  0.5,  0.5  },	// white
+	{ 0.5,  0.5,  0.5  },	// custom
 };
 
 void R_RenderDlight (dlight_t *light) {
@@ -104,7 +106,10 @@ void R_RenderDlight (dlight_t *light) {
 	}
 
 	glBegin (GL_TRIANGLE_FAN);
-	glColor3fv (bubblecolor[light->type]);
+	if (light->type == lt_custom)
+		glColor3ubv (light->color);
+	else
+		glColor3fv (bubblecolor[light->type]);
 
 	VectorVectors(v, v_right, v_up);
 

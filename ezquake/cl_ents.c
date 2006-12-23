@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.22 2006-12-20 13:25:38 qqshka Exp $
+	$Id: cl_ents.c,v 1.23 2006-12-23 06:57:27 qqshka Exp $
 
 */
 
@@ -176,24 +176,40 @@ void CL_AddEntity (entity_t *ent) {
 		vislist->list[vislist->count++] = *ent;
 }
 
+// NUM_DLIGHTTYPES - this constant not used here, but help u find dynamic light related code if u change something
+static dlighttype_t dl_colors[] = {lt_red, lt_blue, lt_redblue, lt_green, lt_white};
+static dl_colors_cnt = sizeof(dl_colors) / sizeof(dl_colors[0]);
 
 dlighttype_t dlightColor(float f, dlighttype_t def, qbool random) {
-	dlighttype_t colors[NUM_DLIGHTTYPES - 4] = {lt_red, lt_blue, lt_redblue, lt_green, lt_white};
 
-	if ((int) f == 1)
-		return lt_red;
-	else if ((int) f == 2)
-		return lt_blue;
-	else if ((int) f == 3) 
-		return lt_redblue;
-	else if ((int) f == 4)
-		return lt_green;
-	else if ((int) f == 5)
-		return lt_white;
-	else if (((int) f == NUM_DLIGHTTYPES - 3) && random)
-		return colors[rand() % (NUM_DLIGHTTYPES - 4)];
+	if ((int) f >= 1 && (int) f <= dl_colors_cnt)
+		return dl_colors[(int) f - 1];
+	else if (((int) f == dl_colors_cnt + 1) && random)
+		return dl_colors[rand() % dl_colors_cnt];
 	else
 		return def;
+}
+
+// if we have color in "r g b" format use it overwise use pre defined colors
+customlight_t *dlightColorEx(float f, char *str, dlighttype_t def, qbool random, customlight_t *l) {
+#ifdef GLQUAKE
+	byte *color = StringToRGB(str);
+	int i;
+
+	if (Cmd_Argc() > 1)
+		l->type = lt_custom; // we got at least two params so treat this as custom color
+	else
+		l->type = dlightColor(f, def, random); // this may set lt_custom too
+
+	if (l->type == lt_custom)
+		for (i = 0; i < 3; i++)
+			l->color[i] = min(128, color[i]); // i've seen color set in float form to 0.5 maximum and to 128 in byte form, so keep this tradition even i'm do not understand why they do so
+
+	return l;
+#else
+	l->type = dlightColor(f, def, random);
+	return l;
+#endif	
 }
 
 dlight_t *CL_AllocDlight (int key) {
@@ -229,7 +245,7 @@ dlight_t *CL_AllocDlight (int key) {
 }
 
 
-void CL_NewDlight (int key, vec3_t origin, float radius, float time, int type, int bubble) {
+void CL_NewDlight (int key, vec3_t origin, float radius, float time, dlighttype_t type, int bubble) {
 	dlight_t *dl;
 
 	dl = CL_AllocDlight (key);
@@ -238,6 +254,25 @@ void CL_NewDlight (int key, vec3_t origin, float radius, float time, int type, i
 	dl->die = cl.time + time;
 	dl->type = type;
 	dl->bubble = bubble;		
+}
+
+void CL_NewDlightEx (int key, vec3_t origin, float radius, float time, customlight_t *l, int bubble) {
+// same as CL_NewDlight {
+	dlight_t *dl;
+
+	dl = CL_AllocDlight (key);
+	VectorCopy (origin, dl->origin);
+	dl->radius = radius;
+	dl->die = cl.time + time;
+	dl->type = l->type; // <= only here difference
+	dl->bubble = bubble;
+// }
+
+#ifdef GLQUAKE
+	// and GL addon for custom color
+	if (dl->type == lt_custom)
+		VectorCopy(l->color, dl->color);
+#endif	
 }
 
 void CL_DecayLights (void) {
@@ -533,7 +568,7 @@ void CL_LinkPacketEntities (void) {
 	double time;
 	float autorotate, lerp, rocketlightsize;
 	int i, pnum, flicker;
-	dlighttype_t rocketlightcolor, dimlightcolor;
+	customlight_t cst_lt = {0};
 
 	pack = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities;
 
@@ -561,13 +596,19 @@ void CL_LinkPacketEntities (void) {
 				tmp[2] += 16;
 				CL_NewDlight (state->number, tmp, 400 + flicker, 0.1, lt_default, 0);
 			} else if (state->effects & EF_DIMLIGHT) {
+				qbool flagcolor = false;
+
 				if (cl.teamfortress && (state->modelindex == cl_modelindices[mi_tf_flag] || state->modelindex == cl_modelindices[mi_tf_stan]))
-					dimlightcolor = dlightColor(r_flagcolor.value, lt_default, false);
+					flagcolor = true;
 				else if (state->modelindex == cl_modelindices[mi_flag])
-					dimlightcolor = dlightColor(r_flagcolor.value, lt_default, false);
+					flagcolor = true;
+
+				if (flagcolor) {
+					dlightColorEx(r_flagcolor.value, r_flagcolor.string, lt_default, false, &cst_lt);
+					CL_NewDlightEx(state->number, state->origin, 200 + flicker, 0.1, &cst_lt, 0);
+				}
 				else
-					dimlightcolor = lt_default;
-				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, dimlightcolor, 0);
+					CL_NewDlight(state->number, state->origin, 200 + flicker, 0.1, lt_default, 0);
 			}
 		}
 
@@ -729,8 +770,8 @@ void CL_LinkPacketEntities (void) {
 				{
 					if ((r_rockettrail.value < 8 || r_rockettrail.value == 12) && model->modhint != MOD_LAVABALL)
 					{
-						rocketlightcolor = dlightColor(r_rocketlightcolor.value, lt_rocket, false);
-						CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, rocketlightcolor, 1);
+						dlightColorEx(r_rocketlightcolor.value, r_rocketlightcolor.string, lt_rocket, false, &cst_lt);
+						CL_NewDlightEx(state->number, ent.origin, rocketlightsize, 0.1, &cst_lt, 1);
 						if (!ISPAUSED && amf_coronas.value) //VULT CORONAS
 							NewCorona(C_ROCKETLIGHT, ent.origin);
 					}
@@ -947,8 +988,8 @@ void CL_LinkPacketEntities (void) {
 	model_t *model;
 	vec3_t *old_origin;
 	double time;
-	float autorotate, lerp;
-	int i, pnum, rocketlightsize, flicker;
+	float autorotate, lerp, rocketlightsize;
+	int i, pnum, flicker;
 	dlighttype_t rocketlightcolor, dimlightcolor;
 
 	pack = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities;
@@ -1091,9 +1132,9 @@ void CL_LinkPacketEntities (void) {
 					VectorCopy(ent.origin, cent->trail_origin);		
 				}
 
-				if (r_rocketlight.value) {
+				rocketlightsize = 200.0 * bound(0, r_rocketlight.value, 1);
+				if (rocketlightsize >= 1) {
 					rocketlightcolor = dlightColor(r_rocketlightcolor.value, lt_rocket, false);
-					rocketlightsize = 100 * (1 + bound(0, r_rocketlight.value, 1));	
 					CL_NewDlight (state->number, ent.origin, rocketlightsize, 0.1, rocketlightcolor, 1);
 				}
 			} else if (model->flags & EF_GRENADE) {
@@ -1561,7 +1602,7 @@ void CL_LinkPlayers (void) {
 	entity_t ent;
 	centity_t *cent;
 	frame_t *frame;
-	dlighttype_t dimlightcolor;
+	customlight_t cst_lt = {0};
 
 	playertime = cls.realtime - cls.latency + 0.02;
 	if (playertime > cls.realtime)
@@ -1594,13 +1635,18 @@ void CL_LinkPlayers (void) {
 				tmp[2] += 16;
 				CL_NewDlight (j + 1, tmp, 400 + flicker, 0.1, lt_default, 0);
 			} else if (state->effects & EF_DIMLIGHT) {
+				qbool flagcolor = false;
 				if (cl.teamfortress)	
-					dimlightcolor = dlightColor(r_flagcolor.value, lt_default, false);
+					flagcolor = true;
 				else if (state->effects & (EF_FLAG1|EF_FLAG2))
-					dimlightcolor = dlightColor(r_flagcolor.value, lt_default, false);
+					flagcolor = true;
+
+				if (flagcolor) {
+					dlightColorEx(r_flagcolor.value, r_flagcolor.string, lt_default, false, &cst_lt);
+					CL_NewDlightEx(j + 1, org, 200 + flicker, 0.1, &cst_lt, 0);
+				}
 				else
-					dimlightcolor = lt_default;
-				CL_NewDlight (j + 1, org, 200 + flicker, 0.1, dimlightcolor, 0);
+					CL_NewDlight(j + 1, org, 200 + flicker, 0.1, lt_default, 0);
 			}
 		}
 
@@ -2113,37 +2159,3 @@ void CL_CalcPlayerFPS(player_info_t *info, int msec)
 		info->fps_measure_time += 1.0;
     }
 }
-
-#ifdef GLQUAKE
-//VULT PARTICLES - Hax for amf_inferno fake trails
-void CL_FakeRocketLight(vec3_t org)
-{
-	float rocketlightsize;
-	int rocketlightcolor;
-
-	rocketlightsize = 100 * (1 + bound(0, r_rocketlight.value, 1));	
-	if ((amf_inferno_trail.value == 1 || amf_inferno_trail.value == 5) && r_rocketlight.value)
-	{
-		rocketlightcolor = dlightColor(r_rocketlightcolor.value, lt_rocket, false);
-		CL_NewDlight (0, org, rocketlightsize, 0.05, rocketlightcolor, 1);
-		if (!ISPAUSED && amf_coronas.value)
-			NewCorona(C_ROCKETLIGHT, org);
-	}
-	else if ((amf_inferno_trail.value == 2) && r_rocketlight.value)
-	{
-		rocketlightcolor = lt_blue;
-		CL_NewDlight (0, org, rocketlightsize, 0.05, rocketlightcolor, 1);
-	}
-	else if (amf_inferno_trail.value == 3 && r_rocketlight.value)
-	{
-		rocketlightcolor = lt_green;
-		CL_NewDlight (0, org, rocketlightsize, 0.05, rocketlightcolor, 1);
-	}
-	else if  (amf_inferno_trail.value == 4 && r_rocketlight.value)
-	{
-		rocketlightcolor = lt_default;
-		CL_NewDlight (0, org, rocketlightsize, 0.05, rocketlightcolor, 1);
-	}
-
-}
-#endif

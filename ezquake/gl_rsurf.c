@@ -172,7 +172,7 @@ typedef struct dlightinfo_s {
 	int local[2];
 	int rad;
 	int minlight;	// rad - minlight
-	int type;
+	int lnum; // reference to cl_dlights[]
 } dlightinfo_t;
 
 static dlightinfo_t dlightlist[MAX_DLIGHTS];
@@ -238,22 +238,24 @@ void R_BuildDlightList (msurface_t *surf) {
 			light->rad = irad;
 			light->local[0] = local[0];
 			light->local[1] = local[1];
-			light->type = cl_dlights[lnum].type;
+			light->lnum = lnum;
 			numdlights++;
 		}
 	}
 }
 
+// funny, but this colors differ from bubblecolor[NUM_DLIGHTTYPES][4]
 int dlightcolor[NUM_DLIGHTTYPES][3] = {
-	{ 100, 90, 80 },	// dimlight or brightlight
-	{ 100, 50, 10 },	// muzzleflash
-	{ 100, 50, 10 },	// explosion
-	{ 90, 60, 7 },		// rocket
-	{ 128, 0, 0 },		// red
-	{ 0, 0, 128 },		// blue
-	{ 128, 0, 128 },	// red + blue
-	{ 0, 128, 0 },		// green
-	{ 128, 128, 128},	// white
+	{ 100,  90,  80 },	// dimlight or brightlight
+	{ 100,  50,  10 },	// muzzleflash
+	{ 100,  50,  10 },	// explosion
+	{  90,  60,   7 },	// rocket
+	{ 128,   0,   0 },	// red
+	{   0,   0, 128 },	// blue
+	{ 128,   0, 128 },	// red + blue
+	{   0, 128,   0 },	// green
+	{ 128, 128, 128 },	// white
+	{ 128, 128, 128 },	// custom
 };
 
 
@@ -269,7 +271,10 @@ void R_AddDynamicLights (msurface_t *surf) {
 	for (i = 0, light = dlightlist; i < numdlights; i++, light++) {
 		extern cvar_t gl_colorlights;
 		if (gl_colorlights.value) {
-			VectorCopy(dlightcolor[light->type], color);
+			if (cl_dlights[light->lnum].type == lt_custom)
+				VectorCopy(cl_dlights[light->lnum].color, color);
+			else
+				VectorCopy(dlightcolor[cl_dlights[light->lnum].type], color);
 		} else {
 			VectorSet(color, 128, 128, 128);
 		}

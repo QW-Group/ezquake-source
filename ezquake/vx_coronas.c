@@ -212,6 +212,7 @@ void NewCorona (coronatype_t type, vec3_t origin)
 	corona_t *c = NULL;
 	int i;
 	qbool corona_found = false;
+	customlight_t cst_lt = {0};
 
 	if(ISPAUSED)
 	{
@@ -247,7 +248,13 @@ void NewCorona (coronatype_t type, vec3_t origin)
 			VectorCopy(bubblecolor[lt_blue], c->color);
 		else
 		{
-			VectorCopy(bubblecolor[dlightColor(r_explosionlightcolor.value, lt_explosion, false)], c->color);
+			dlightColorEx(r_explosionlightcolor.value, r_explosionlightcolor.string, lt_explosion, false, &cst_lt);
+			if (cst_lt.type == lt_custom) {
+				VectorCopy(cst_lt.color, c->color);
+				VectorScale(c->color, (1.0/255), c->color); // cast byte to float
+			}
+			else
+				VectorCopy(bubblecolor[cst_lt.type], c->color);
 			VectorMA(c->color, 1.5, c->color, c->color);
 		}
 		c->scale = 600;
@@ -287,7 +294,14 @@ void NewCorona (coronatype_t type, vec3_t origin)
 	}
 	else if (type == C_ROCKETLIGHT)
 	{
-		VectorCopy(bubblecolor[dlightColor(r_rocketlightcolor.value, lt_rocket, false)], c->color);
+		dlightColorEx(r_rocketlightcolor.value, r_rocketlightcolor.string, lt_rocket, false, &cst_lt);
+		if (cst_lt.type == lt_custom)
+		{
+			VectorCopy(cst_lt.color, c->color);
+			VectorScale(c->color, (1.0/255), c->color); // cast byte to float
+		}
+		else
+			VectorCopy(bubblecolor[cst_lt.type], c->color);
 		c->scale = 60;
 		c->die = cl.time + 0.01;
 		c->alpha = 1;
