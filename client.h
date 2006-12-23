@@ -173,19 +173,26 @@ typedef struct {
 #define	MAX_STYLESTRING		64
 
 typedef enum {lt_default, lt_muzzleflash, lt_explosion, lt_rocket,
-lt_red, lt_blue, lt_redblue, lt_green, lt_white, NUM_DLIGHTTYPES } dlighttype_t;
+lt_red, lt_blue, lt_redblue, lt_green, lt_white, lt_custom, NUM_DLIGHTTYPES } dlighttype_t;
 
 typedef struct {
-	int		key;				// so entities can reuse same entry
-	vec3_t	origin;
-	float	radius;
-	float	die;				// stop lighting after this time
-	float	decay;				// drop this each second
-	float	minlight;			// don't add when contributing less
-	int		type;
-	int		bubble;				
-								// non zero means no flashblend bubble
+	int				key;				// so entities can reuse same entry
+	vec3_t			origin;
+	float			radius;
+	float			die;				// stop lighting after this time
+	float			decay;				// drop this each second
+	float			minlight;			// don't add when contributing less
+	int				bubble;				// non zero means no flashblend bubble
+	dlighttype_t	type;
+#ifdef GLQUAKE
+	byte			color[3];			// use such color if type == lt_custom
+#endif
 } dlight_t;
+
+typedef struct customlight_s {
+	dlighttype_t	type;
+	byte			color[3];			// use such color if type == lt_custom
+} customlight_t;
 
 typedef struct {
 	int		length;
@@ -664,8 +671,12 @@ void CL_InitEnts(void);
 void CL_AddEntity (entity_t *ent);
 void CL_ClearScene (void) ;
 
+dlighttype_t dlightColor(float f, dlighttype_t def, qbool random);
+customlight_t *dlightColorEx(float f, char *str, dlighttype_t def, qbool random, customlight_t *l);
+
 dlight_t *CL_AllocDlight (int key);
-void CL_NewDlight (int key, vec3_t origin, float radius, float time, int type, int bubble);
+void CL_NewDlight (int key, vec3_t origin, float radius, float time, dlighttype_t type, int bubble);
+void CL_NewDlightEx (int key, vec3_t origin, float radius, float time, customlight_t *l, int bubble);
 void CL_DecayLights (void);
 
 void CL_SetSolidPlayers (int playernum);
@@ -744,8 +755,6 @@ void Stats_GetFlagStats(int num, int *stats);
 #define RSSHOT_HEIGHT 200
 
 void CL_CalcPlayerFPS(player_info_t *info, int msec);
-
-dlighttype_t dlightColor(float f, dlighttype_t def, qbool random);
 
 //
 // Multiview vars
