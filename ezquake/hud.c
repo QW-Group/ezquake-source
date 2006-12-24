@@ -165,6 +165,9 @@ void HUD_Func_f(void)
     Com_Printf("Offset (x y):     %d %d\n",
         (int)(hud->pos_x->value), (int)(hud->pos_y->value));
 
+	// Ordering
+	Com_Printf("Draw Order (z):   %d\n", (int)hud->order->value);
+
     // additional parameters
     if (hud->num_params > 0)
     {
@@ -177,6 +180,19 @@ void HUD_Func_f(void)
                     hud->params[i]->string);
         }
     }
+}
+
+void HUD_FindMaxMinOrder(int *max, int *min)
+{
+	hud_t *hud = hud_huds;
+
+	while(hud)
+	{
+		(*min) = ((int)hud->order->value < (*min)) ? (int)hud->order->value : (*min);
+		(*max) = ((int)hud->order->value > (*max)) ? (int)hud->order->value : (*max);
+
+		hud = hud->next;
+	}
 }
 
 // find hud placement by string
@@ -389,12 +405,11 @@ void HUD_Toggle_f (void)
             Com_Printf("No such element or variable: %s\n", Cmd_Argv(1));
             return;
         }
-//        Cvar_Toggle(var);
+
 		Cvar_Set (var, var->value ? "0" : "1");
         return;
     }
 
-//    Cvar_Toggle(hud->show);
     Cvar_Set (hud->show, hud->show->value ? "0" : "1");
 }
 
@@ -451,13 +466,13 @@ void HUD_Place_f (void)
         Com_Printf("  ifree  - inventory bar free area\n");
         Com_Printf("  hfree  - health bar free area\n");
         Com_Printf("You can also use any other HUD element as a base alignment. In such case you should specify area as:\n");
-        Com_Printf("  +elem  - if you want to place\n");
+        Com_Printf("  @elem  - if you want to place\n");
         Com_Printf("           it inside elem\n");
-        Com_Printf("  -elem  - if you want to place\n");
+        Com_Printf("   elem  - if you want to place\n");
         Com_Printf("           it outside elem\n");
-        Com_Printf("Exaples:\n");
+        Com_Printf("Examples:\n");
         Com_Printf("  place fps view\n");
-        Com_Printf("  place fps -ping\n");
+        Com_Printf("  place fps @ping\n");
         return;
     }
 
@@ -483,6 +498,72 @@ void HUD_Place_f (void)
         Com_Printf("place: invalid area argument: %s\n", Cmd_Argv(2));
         Cvar_Set(hud->place, temp); // restore old value
     }
+}
+
+void HUD_Order_f (void)
+{
+	int max = 0;
+	int min = 0;
+	char *option = NULL;
+	hud_t *hud = NULL;
+
+	if (Cmd_Argc() < 2 || Cmd_Argc() > 3)
+	{
+		Com_Printf("Usage: order <name> [<option>]\n");
+		Com_Printf("Set HUD element draw order\n");
+		Com_Printf("\nPossible values for option:\n");
+		Com_Printf("  #         - An integer representing the order.\n");
+		Com_Printf("  backward  - Send the element backwards in the order.\n");
+		Com_Printf("  forward   - Send the element forward in the order.\n");
+		Com_Printf("  front     - Bring the element to the front.\n");
+		Com_Printf("  back      - Put the element at the far back.\n");
+		return;
+	}
+
+	hud = HUD_Find (Cmd_Argv(1));
+
+	if (!hud)
+    {
+        Com_Printf("No such element: %s\n", Cmd_Argv(1));
+        return;
+    }
+
+	if (Cmd_Argc() == 2)
+    {
+        Com_Printf("Current order for %s is:\n", Cmd_Argv(1));
+		Com_Printf("  order:  %d\n", (int)hud->order->value);
+        return;
+    }
+
+	option = Cmd_Argv(2);
+
+	HUD_FindMaxMinOrder (&max, &min);
+
+	if (!strncasecmp (option, "backward", 8))
+	{
+		// Send backward one step.
+		Cvar_SetValue(hud->order, (int)hud->order->value - 1);
+	}
+	else if (!strncasecmp (option, "forward", 7))
+	{
+		// Move forward one step.
+		Cvar_SetValue(hud->order, (int)hud->order->value + 1);
+	}
+	else if (!strncasecmp (option, "front", 5))
+	{
+		// Bring to front.
+		Cvar_SetValue(hud->order, max + 1);
+	}
+	else if (!strncasecmp (option, "back", 8))
+	{
+		// Send to far back.
+		Cvar_SetValue(hud->order, min - 1);
+	}
+	else
+	{
+		// Order #
+		Cvar_SetValue (hud->order, atoi(Cmd_Argv(2)));
+	}
 }
 
 // align the specified hud element
@@ -565,6 +646,7 @@ void HUD_Init(void)
     Cmd_AddCommand ("hide", HUD_Hide_f);
     Cmd_AddCommand ("move", HUD_Move_f);
     Cmd_AddCommand ("place", HUD_Place_f);
+	Cmd_AddCommand ("order", HUD_Order_f);
     Cmd_AddCommand ("togglehud", HUD_Toggle_f);
     Cmd_AddCommand ("align", HUD_Align_f);
     Cmd_AddCommand ("hud_recalculate", HUD_Recalculate_f);
@@ -576,6 +658,9 @@ void HUD_Init(void)
 
 	// Register the hud items.
     CommonDraw_Init();
+
+	// Sort the elements.
+	HUD_Sort();
 }
 
 // calculate frame extents
@@ -916,6 +1001,15 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
     return var;
 }
 
+qbool HUD_OnChangeOrder(cvar_t *var, char *val)
+{
+	Cvar_SetValue (var, atoi(val));
+
+	HUD_Sort();
+
+	return true;
+}
+
 // add element to list
 hud_t * HUD_Register(char *name, char *var_alias, char *description,
                      int flags, cactive_t min_state, int draw_order,
@@ -924,8 +1018,6 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
                      char *pos_x, char *pos_y, char *frame, char *frame_color,
                      char *params, ...)
 {
-    // FIXME: should use zmalloc instaed?
-
     int i;
     va_list     argptr;
     hud_t  *hud;
@@ -936,7 +1028,6 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
     hud->next = hud_huds;
     hud_huds = hud;
     hud->min_state = min_state;
-    hud->draw_order = draw_order;
     hud->draw_func = draw_func;
 
     hud->name = (char *) Q_malloc(strlen(name)+1);
@@ -950,6 +1041,13 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
     Cmd_AddCommand(name, HUD_Func_f);
 
     // create standard variables
+
+	// Ordering
+	{
+		char order[18];
+		hud->order = HUD_CreateVar(name, "order", itoa(draw_order, order, 10));
+		hud->order->OnChange = HUD_OnChangeOrder;
+	}
 
     // place
     hud->place = HUD_CreateVar(name, "place", place);
@@ -1230,13 +1328,13 @@ int HUD_OrderFunc(const void * p_h1, const void * p_h2)
     const hud_t *h1 = *((hud_t **)p_h1);
     const hud_t *h2 = *((hud_t **)p_h2);
 
-    return h1->draw_order - h2->draw_order;
+	return (int)h1->order->value - (int)h2->order->value;
 }
 
 // last phase of initialization
-void HUD_InitFinish(void)
+void HUD_Sort(void)
 {
-    // sort elements due to them draw_order
+    // Sort elements based on their draw order
     int i;
     hud_t *huds[MAX_HUD_ELEMENTS];
     int count = 0;
