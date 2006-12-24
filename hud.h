@@ -52,7 +52,8 @@ typedef struct hud_s
 
     void (*draw_func) (struct hud_s *); // drawing func
 
-    int draw_order;           // higher it is, later this element will be drawn
+	cvar_t *order;
+    //int draw_order;           // higher it is, later this element will be drawn
                               // and more probable that will be on top
 
     cvar_t *show;             // show cvar
@@ -133,6 +134,6 @@ qbool HUD_PrepareDrawByName(
 
 
 // last phase of initialization
-void HUD_InitFinish(void);
+void HUD_Sort(void);
 
 #endif // __hud_h__
