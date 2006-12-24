@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.112 2006-12-23 18:23:06 qqshka Exp $
+	$Id: cl_main.c,v 1.113 2006-12-24 00:46:58 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1144,8 +1144,7 @@ void CL_Init (void) {
 	ConfigManager_Init();
 	Stats_Init();
 	MP3_Init();
-	HUD_Init(); // HUD -> hexum
-	HUD_InitFinish(); // HUD -> hexum
+	HUD_Init();
 	SB_RootInit();
 	QTV_Init();
 }
