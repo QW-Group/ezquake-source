@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.76 2006-12-20 00:35:55 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.77 2006-12-24 00:48:11 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -2726,7 +2726,7 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 
 void SCR_ScreenShot_f (void) 
 {	
-	char name[MAX_OSPATH], ext[4], *filename, *sshot_dir;
+	char name[MAX_OSPATH], *filename, *sshot_dir;
 	int success;	
 
 	// Multiview
