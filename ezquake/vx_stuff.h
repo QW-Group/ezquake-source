@@ -100,6 +100,7 @@ extern cvar_t amf_part_gibtrails;
 extern cvar_t amf_lighting_vertex;
 extern cvar_t amf_lighting_colour;
 extern cvar_t amf_part_fire;
+extern cvar_t amf_part_firecolor;
 extern cvar_t amf_tracker_frags;
 extern cvar_t amf_tracker_flags;
 extern cvar_t amf_tracker_streaks;
