@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.6 2006-12-20 00:37:13 johnnycz Exp $
+		$Id: menu_demo.c,v 1.7 2006-12-25 20:11:27 qqshka Exp $
 
 */
 
@@ -415,12 +415,10 @@ int CT_Demo_Browser_Key(int key, CTab_t *tab, CTabPage_t *page)
 				snprintf(demo_playlist[demo_playlist_num].path, sizeof((*demo_playlist).path), "%s", FL_GetCurrentPath(&demo_filelist));
 				demo_playlist_num++;
 			} else if (keydown[K_SHIFT]) {
-				M_LeaveMenu(m_main);
-				M_ToggleMenu_f();
+				M_LeaveMenus();
 				Cbuf_AddText (va("timedemo \"%s\"\n", FL_GetCurrentPath(&demo_filelist)));
 			} else {
-				M_LeaveMenu(m_main);
-				M_ToggleMenu_f();
+				M_LeaveMenus();
 				Cbuf_AddText(va("playdemo \"%s\"\n", FL_GetCurrentPath(&demo_filelist)));
 				processed = true;
 			}
