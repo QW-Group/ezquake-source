@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_cmds.c,v 1.16 2006-09-03 18:02:01 tonik Exp $
+	$Id: pr_cmds.c,v 1.17 2006-12-25 20:50:34 tonik Exp $
 */
 
 #include "qwsvdef.h"
@@ -1559,6 +1559,7 @@ void PF_clientcommand (void) {
 static char **tokens = NULL;
 static int max_tokens, num_tokens = 0;
 
+//float(string s) tokenize = #84
 //float(string s) tokenize = #441
 //takes apart a string into individal words (access them with argv), returns number of tokens
 void PF_tokenize (void) {
@@ -1583,6 +1584,13 @@ void PF_tokenize (void) {
 	G_FLOAT(OFS_RETURN) = num_tokens;
 }
 
+// float() argc = #85;
+void PF_argc (void)
+{
+	G_FLOAT(OFS_RETURN) = num_tokens;
+}
+
+//string(float n) argv = #86
 //string(float n) argv = #442
 //returns a word from the tokenized string (returns nothing for an invalid index)
 void PF_argv (void) {
@@ -1731,9 +1739,9 @@ PF_infokey,			// #80 string(entity e, string key) infokey
 PF_stof,			// #81 float(string s) stof
 PF_multicast,		// #82 void(vector where, float set) multicast
 NULL,
-NULL,
-NULL,
-NULL,
+PF_tokenize,		// #84 float(string s) tokenize
+PF_argc,			// #85 float() argc
+PF_argv,			// #86 string(float n) argv
 NULL,
 NULL,
 NULL,
