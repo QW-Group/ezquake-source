@@ -2680,7 +2680,7 @@ void ParticleFire (vec3_t org)
 	if (ISUNDERWATER(contents)) 
 		AddParticle(p_bubble, org, 1, 2.8, 2.5, NULL, zerodir);
 	else
-		AddParticle(p_flame, org, 1, 7, 0.8, color, zerodir);
+		AddParticle(p_flame, org, 1, 7, 0.8, amf_part_firecolor.string[0] ? StringToRGB(amf_part_firecolor.string) : color, zerodir);
 }
 
 

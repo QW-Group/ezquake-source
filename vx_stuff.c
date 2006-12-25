@@ -77,6 +77,7 @@ cvar_t		amf_part_muzzleflash = {"gl_particle_muzzleflash", "0", CVAR_ARCHIVE};
 cvar_t		amf_part_deatheffect = {"gl_particle_deatheffect", "0", CVAR_ARCHIVE}; // 1
 cvar_t		amf_part_teleport = {"gl_particle_telesplash", "0", CVAR_ARCHIVE};
 cvar_t		amf_part_fire = {"gl_particle_fire", "0", CVAR_ARCHIVE}; // 1
+cvar_t		amf_part_firecolor = {"gl_particle_firecolor", "", CVAR_ARCHIVE}; // 1
 cvar_t		amf_part_sparks = {"gl_particle_sparks", "0", CVAR_ARCHIVE}; // 1
 cvar_t		amf_part_traillen    = {"gl_particle_trail_lenght", "1", CVAR_ARCHIVE};
 cvar_t		amf_part_trailtime   = {"gl_particle_trail_time",   "1", CVAR_ARCHIVE};
@@ -436,6 +437,7 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_part_blood_type);
 	Cvar_Register (&amf_part_muzzleflash);
 	Cvar_Register (&amf_part_fire);
+	Cvar_Register (&amf_part_firecolor);
 	Cvar_Register (&amf_part_deatheffect);
 	Cvar_Register (&amf_part_gunshot);
 	Cvar_Register (&amf_part_gunshot_type);
