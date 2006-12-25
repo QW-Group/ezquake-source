@@ -317,7 +317,7 @@ Returns 0.25 if a key was pressed and released during the frame,
 0 if held then released, and
 1.0 if held for the entire time
 */
-float CL_KeyState (kbutton_t *key) {
+float CL_KeyState (kbutton_t *key, qbool lookbutton) {
 	float val;
 	qbool impulsedown, impulseup, down;
 	
@@ -328,7 +328,7 @@ float CL_KeyState (kbutton_t *key) {
 	
 	if (impulsedown && !impulseup) {
 		if (down)
-			val = 0.5;	// pressed and held this frame
+			val = lookbutton ? 0.5 : 1.0;	// pressed and held this frame
 		else
 			val = 0;	// I_Error ();
 	}
@@ -409,8 +409,8 @@ void CL_AdjustAngles (void) {
 		if ((cl.fpd & FPD_LIMIT_YAW) || allow_scripts.value < 2)
 			speed = bound(-900, speed, 900);
 		speed *= frametime;
-		cl.viewangles[YAW] -= speed * CL_KeyState(&in_right);
-		cl.viewangles[YAW] += speed * CL_KeyState(&in_left);
+		cl.viewangles[YAW] -= speed * CL_KeyState(&in_right, true);
+		cl.viewangles[YAW] += speed * CL_KeyState(&in_left, true);
 		cl.viewangles[YAW] = anglemod(cl.viewangles[YAW]);
 	}
 
@@ -421,13 +421,13 @@ void CL_AdjustAngles (void) {
 	speed *= frametime;
 	if (in_klook.state & 1)	{
 		V_StopPitchDrift ();
-		cl.viewangles[PITCH] -= speed * CL_KeyState(&in_forward);
-		cl.viewangles[PITCH] += speed * CL_KeyState(&in_back);
+		cl.viewangles[PITCH] -= speed * CL_KeyState(&in_forward, true);
+		cl.viewangles[PITCH] += speed * CL_KeyState(&in_back, true);
 	}
 
 	
-	up = CL_KeyState(&in_lookup);
-	down = CL_KeyState(&in_lookdown);
+	up = CL_KeyState(&in_lookup, true);
+	down = CL_KeyState(&in_lookdown, true);
 	cl.viewangles[PITCH] -= speed * up;
 	cl.viewangles[PITCH] += speed * down;
 	if (up || down)
@@ -450,19 +450,19 @@ void CL_BaseMove (usercmd_t *cmd) {
 	
 	VectorCopy (cl.viewangles, cmd->angles);
 	if (in_strafe.state & 1) {
-		cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_right);
-		cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_left);
+		cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_right, false);
+		cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_left, false);
 	}
 
-	cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_moveright);
-	cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_moveleft);
+	cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_moveright, false);
+	cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_moveleft, false);
 
-	cmd->upmove += cl_upspeed.value * CL_KeyState (&in_up);
-	cmd->upmove -= cl_upspeed.value * CL_KeyState (&in_down);
+	cmd->upmove += cl_upspeed.value * CL_KeyState (&in_up, false);
+	cmd->upmove -= cl_upspeed.value * CL_KeyState (&in_down, false);
 
 	if (!(in_klook.state & 1)) {	
-		cmd->forwardmove += cl_forwardspeed.value * CL_KeyState (&in_forward);
-		cmd->forwardmove -= cl_backspeed.value * CL_KeyState (&in_back);
+		cmd->forwardmove += cl_forwardspeed.value * CL_KeyState (&in_forward, false);
+		cmd->forwardmove -= cl_backspeed.value * CL_KeyState (&in_back, false);
 	}	
 
 	// adjust for speed key
@@ -478,9 +478,9 @@ void CL_BaseMove (usercmd_t *cmd) {
 
 	if ((cls.demoplayback || cl.spectator) && Cvar_VariableValue("cam_thirdperson") && !Cvar_VariableValue("cam_lockpos"))
 	{
-		zoomspeed -= CL_KeyState(&in_forward) * cls.trueframetime * cam_zoomaccel.value;
-		zoomspeed += CL_KeyState(&in_back) * cls.trueframetime * cam_zoomaccel.value;
-		if (!CL_KeyState(&in_forward) && !CL_KeyState(&in_back)) {
+		zoomspeed -= CL_KeyState(&in_forward, false) * cls.trueframetime * cam_zoomaccel.value;
+		zoomspeed += CL_KeyState(&in_back, false) * cls.trueframetime * cam_zoomaccel.value;
+		if (!CL_KeyState(&in_forward, false) && !CL_KeyState(&in_back, false)) {
 			if (zoomspeed > 0) {
 				zoomspeed -= cls.trueframetime * cam_zoomaccel.value;
 				if (zoomspeed < 0)
