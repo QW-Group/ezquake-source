@@ -690,6 +690,17 @@ void PM_NudgePosition (void) {
 			}
 		}
 	}
+
+	// some maps spawn the player several units into the ground
+	for (z=1 ; z<=18 ; z++)
+	{
+		pmove.origin[0] = base[0];
+		pmove.origin[1] = base[1];
+		pmove.origin[2] = base[2] + z;
+		if (PM_TestPlayerPosition(pmove.origin))
+			return;
+	}
+
 	VectorCopy (base, pmove.origin);
 }
 
