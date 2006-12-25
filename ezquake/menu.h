@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.h,v 1.8 2006-12-19 19:58:28 johnnycz Exp $
+	$Id: menu.h,v 1.9 2006-12-25 20:11:27 qqshka Exp $
 
 */
 
@@ -27,6 +27,7 @@ void M_Init (void);
 void M_Keydown (int key);
 void M_Draw (void);
 void M_ToggleMenu_f (void);
+void M_LeaveMenus (void);
 void M_DrawTextBox (int x, int y, int width, int lines);
 void M_Menu_Quit_f (void);
 void M_Demos_Playlist_stop_f (void);

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.51 2006-12-19 20:30:42 johnnycz Exp $
+	$Id: menu.c,v 1.52 2006-12-25 20:11:27 qqshka Exp $
 
 */
 
@@ -227,6 +227,16 @@ void M_LeaveMenu (int parent) {
 		m_state = parent;
 		m_entersound = true;
 	}
+}
+
+// dunno how to call this function
+// must leave all menus instead of calling few functions in row
+void M_LeaveMenus (void) {
+//	m_entersound = true; // fixme: which value we must set ???
+
+	m_topmenu = m_none;
+	m_state   = m_none;
+	key_dest  = key_game;
 }
 
 //=============================================================================
