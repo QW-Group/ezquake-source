@@ -137,6 +137,7 @@ extern int pr_xstatement;
 
 extern func_t SpectatorConnect, SpectatorThink, SpectatorDisconnect;
 extern func_t SV_ParseClientCommand;		//KRIMZON_SV_PARSECLIENTCOMMAND
+extern func_t GE_ClientCommand;
 
 extern int	fofs_gravity, fofs_maxspeed, fofs_brokenankle, fofs_items2;
 //extern int	fofs_forwardmove, fofs_sidemove, fofs_upmove;

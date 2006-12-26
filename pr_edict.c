@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_edict.c,v 1.16 2006-09-03 18:02:01 tonik Exp $
+	$Id: pr_edict.c,v 1.17 2006-12-26 17:17:21 tonik Exp $
 */
 // sv_edict.c -- entity dictionary
 
@@ -40,6 +40,7 @@ int fofs_maxspeed, fofs_gravity, fofs_brokenankle, fofs_items2;
 
 func_t SpectatorConnect, SpectatorThink, SpectatorDisconnect;
 func_t SV_ParseClientCommand;		//KRIMZON_SV_PARSECLIENTCOMMAND
+func_t GE_ClientCommand;
 
 ddef_t *ED_FieldAtOfs (int ofs);
 qbool ED_ParseEpair (void *base, ddef_t *key, char *s);
@@ -954,6 +955,7 @@ progs_loaded:
 	SpectatorConnect = ED_FindFunctionOffset ("SpectatorConnect");
 	SpectatorThink = ED_FindFunctionOffset ("SpectatorThink");
 	SpectatorDisconnect = ED_FindFunctionOffset ("SpectatorDisconnect");
+	GE_ClientCommand = ED_FindFunctionOffset ("GE_ClientCommand");
 
 	// find optional QC-exported fields
 	fofs_maxspeed = ED_FindFieldOffset ("maxspeed");
