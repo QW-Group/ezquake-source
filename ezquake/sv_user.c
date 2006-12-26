@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.22 2006-10-24 21:48:40 qqshka Exp $
+	$Id: sv_user.c,v 1.23 2006-12-26 17:17:21 tonik Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -1285,6 +1285,8 @@ ucmd_t ucmds[] = {
 	{NULL, NULL, false}
 };
 
+int PF_tokenize_impl (char *str);
+
 void SV_ExecuteUserCommand (char *s, qbool fromQC) {
 	ucmd_t *u;
 	char *command;
@@ -1304,6 +1306,26 @@ void SV_ExecuteUserCommand (char *s, qbool fromQC) {
 			}
 			break;
 		}
+	}
+
+	// ZQ_CLIENTCOMMAND extension
+	if (GE_ClientCommand) {
+		static char cmd_copy[128], args_copy[1024] /* Ouch! */;
+		char *p;
+		pr_global_struct->time = sv.time;
+		pr_global_struct->self = EDICT_TO_PROG(sv_player);
+		strlcpy (cmd_copy, command, sizeof(cmd_copy));
+		strlcpy (args_copy, Cmd_Args(), sizeof(args_copy));
+		// lowercase command to rule out the possibility of a user executing
+		// a command the mod wants to block (e.g. 'join') by using uppercase
+		for (p = cmd_copy; *p; p++)
+			*p = (char)tolower(*p);
+		((int *)pr_globals)[OFS_PARM0] = PR_SetString (cmd_copy);
+		((int *)pr_globals)[OFS_PARM1] = PR_SetString (args_copy);
+		PF_tokenize_impl (s);
+		PR_ExecuteProgram (GE_ClientCommand);
+		if (G_FLOAT(OFS_RETURN) != 0)
+			return;		// the command was handled by the mod
 	}
 
 	if (!fromQC && SV_ParseClientCommand) {

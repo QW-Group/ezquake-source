@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_cmds.c,v 1.17 2006-12-25 20:50:34 tonik Exp $
+	$Id: pr_cmds.c,v 1.18 2006-12-26 17:17:21 tonik Exp $
 */
 
 #include "qwsvdef.h"
@@ -1562,11 +1562,9 @@ static int max_tokens, num_tokens = 0;
 //float(string s) tokenize = #84
 //float(string s) tokenize = #441
 //takes apart a string into individal words (access them with argv), returns number of tokens
-void PF_tokenize (void) {
+int PF_tokenize_impl (char *str) {
 	int i;
-	char *data, *str;
-
-	str = G_STRING(OFS_PARM0);
+	char *data;
 
 	if (tokens) {
 		for (i = 0; i < num_tokens; i++)
@@ -1581,8 +1579,13 @@ void PF_tokenize (void) {
 	for (data = str; (data = COM_Parse(data)) && num_tokens < max_tokens; num_tokens++)
 		tokens[num_tokens] = Q_strdup(com_token);
 
-	G_FLOAT(OFS_RETURN) = num_tokens;
+	return num_tokens;
 }
+
+void PF_tokenize (void) {
+	G_FLOAT(OFS_RETURN) = PF_tokenize_impl (G_STRING(OFS_PARM0));
+}
+
 
 // float() argc = #85;
 void PF_argc (void)
@@ -1621,6 +1624,7 @@ static char *ENGINE_EXTENSIONS[] = {
 	"DP_SV_WRITEUNTERMINATEDSTRING",
 	//"FRIK_FILE",		//incomplete
 	"KRIMZON_SV_PARSECLIENTCOMMAND",
+	"ZQ_CLIENTCOMMAND",
 	"ZQ_MOVETYPE_NOCLIP",
 	"ZQ_MOVETYPE_FLY",
 	"ZQ_MOVETYPE_NONE",
