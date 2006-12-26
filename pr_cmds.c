@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_cmds.c,v 1.18 2006-12-26 17:17:21 tonik Exp $
+	$Id: pr_cmds.c,v 1.19 2006-12-26 18:07:30 tonik Exp $
 */
 
 #include "qwsvdef.h"
@@ -1610,6 +1610,7 @@ void PF_argv (void) {
 /****************************** EXTENSION SYSTEM ******************************/
 
 static char *ENGINE_EXTENSIONS[] = {
+	"DP_CON_SET",
 	"DP_HALFLIFE_MAP",
 	"DP_HALFLIFE_MAP_CVAR",
 	"DP_QC_COPYENTITY",
@@ -1625,11 +1626,11 @@ static char *ENGINE_EXTENSIONS[] = {
 	//"FRIK_FILE",		//incomplete
 	"KRIMZON_SV_PARSECLIENTCOMMAND",
 	"ZQ_CLIENTCOMMAND",
+	"ZQ_ITEMS2",
 	"ZQ_MOVETYPE_NOCLIP",
 	"ZQ_MOVETYPE_FLY",
 	"ZQ_MOVETYPE_NONE",
-	"ZQ_ITEMS2",
-	"DP_CON_SET",
+	"ZQ_QC_TOKENIZE",
 	NULL,
 };
 
