@@ -67,7 +67,7 @@ char * Sys_getcwd (char *buf, int bufsize);
 
 
 // file IO
-void Sys_mkdir (char *path);
+void Sys_mkdir (const char *path);
 int Sys_remove (char *path);
 
 // memory protection

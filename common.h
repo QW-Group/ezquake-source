@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.29 2006-10-24 15:50:11 qqshka Exp $
+    $Id: common.h,v 1.30 2006-12-27 22:27:04 cokeman1982 Exp $
 */
 // common.h  -- general definitions
 
@@ -33,6 +33,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cmd.h"
 #include "net.h"
 #include "protocol.h"
+
+#ifdef WITH_ZIP
+#include "unzip.h"
+#endif
 
 //============================================================================
 
@@ -193,7 +197,7 @@ byte *FS_LoadHunkFile (char *path);
 void FS_LoadCacheFile (char *path, struct cache_user_s *cu);
 
 qbool COM_WriteFile (char *filename, void *data, int len);
-void COM_CreatePath (char *path);
+void COM_CreatePath (const char *path);
 int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode);
 
 
@@ -313,5 +317,32 @@ void SV_Shutdown (char *finalmsg);
 void SV_Frame (double time);
 
 int isspace2(int c);
+
+#ifdef WITH_ZIP
+qbool COM_ZipIsArchive (const char *zip_path);
+unzFile COM_ZipUnpackOpenFile (const char *zip_path);
+int COM_ZipUnpackCloseFile (unzFile zip_file);
+int COM_ZipUnpack (unzFile zip_file, 
+				   char *destination_path, 
+				   qbool case_sensitive, 
+				   qbool keep_path, 
+				   qbool overwrite, 
+				   const char *password);
+int COM_ZipUnpackOneFile (unzFile zip_file, 
+						  const char *filename_inzip,
+						  const char *destination_path, 
+						  qbool case_sensitive, 
+						  qbool keep_path,
+						  qbool overwrite,
+						  const char *password);
+int COM_ZipUnpackCurrentFile (unzFile zip_file, 
+							  const char *destination_path, 
+							  qbool case_sensitive, 
+							  qbool keep_path, 
+							  qbool overwrite, 
+							  const char *password);
+int COM_ZipGetFirst (unzFile zip_file, sys_dirent *ent);
+int COM_ZipGetNextFile (unzFile zip_file, sys_dirent *ent);
+#endif // WITH_ZIP
 
 #endif /* __COMMON_H__ */
