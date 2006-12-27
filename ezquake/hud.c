@@ -1045,7 +1045,8 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 	// Ordering
 	{
 		char order[18];
-		hud->order = HUD_CreateVar(name, "order", itoa(draw_order, order, 10));
+		snprintf (order, sizeof(order), "%d", draw_order);
+		hud->order = HUD_CreateVar(name, "order", order);
 		hud->order->OnChange = HUD_OnChangeOrder;
 	}
 
