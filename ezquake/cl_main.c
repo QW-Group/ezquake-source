@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.113 2006-12-24 00:46:58 cokeman1982 Exp $
+	$Id: cl_main.c,v 1.114 2006-12-27 02:20:59 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -530,6 +530,7 @@ void CL_DNS_f (void) {
 void CL_ClearState (void) {
 	int i;
 	extern float scr_centertime_off;
+	extern cshift_t	cshift_empty;
 
 	S_StopAllSounds (true);
 
@@ -562,6 +563,11 @@ void CL_ClearState (void) {
 	for (i = 0; i < MAX_EFRAGS - 1; i++)
 		cl.free_efrags[i].entnext = &cl.free_efrags[i + 1];
 	cl.free_efrags[i].entnext = NULL;
+
+	memset (&cshift_empty, 0, sizeof(cshift_empty));	// Tonik
+
+	if (!com_serveractive)
+		Cvar_ForceSet (&mapname, ""); // notice mapname not valid yet
 }
 
 //Sends a disconnect message to the server
@@ -659,6 +665,8 @@ void CL_Disconnect (void) {
 // <--TCPCONNECT
 
 	cls.qport++; //a hack I picked up from qizmo
+
+	Cvar_ForceSet (&mapname, ""); // notice mapname not valid yet
 }
 
 void CL_Disconnect_f (void) {

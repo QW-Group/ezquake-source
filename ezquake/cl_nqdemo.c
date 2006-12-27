@@ -423,6 +423,7 @@ static void NQD_ParseServerData (void)
 //
 // now we try to load everything else until a cache allocation fails
 //
+	COM_StripExtension (COM_SkipPath (cl.model_name[1]), mapname_s);
 	R_PreMapLoad (mapname_s);
 //	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, NULL, &cl.map_checksum2);
 
@@ -445,9 +446,6 @@ static void NQD_ParseServerData (void)
 	cl.worldmodel = cl.model_precache[1];
 	if (!cl.model_precache[1])
 		Host_Error ("NQD_ParseServerData: NULL worldmodel");
-
-	COM_StripExtension (COM_SkipPath (cl.model_name[1]), mapname_s);
-	Cvar_ForceSet (&mapname, mapname_s);
 
 //##	CL_ClearParticles ();
 	CL_FindModelNumbers ();
