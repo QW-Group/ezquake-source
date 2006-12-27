@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.60 2006-12-14 23:22:29 qqshka Exp $
+	$Id: cl_parse.c,v 1.61 2006-12-27 02:20:59 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -532,7 +532,6 @@ void VWepModel_NextDownload (void)
 #endif
 
 void Model_NextDownload (void) {
-	char mapname[MAX_QPATH];
 	int	i;
 
 
@@ -547,12 +546,6 @@ void Model_NextDownload (void) {
 			continue;	// inline brush model
 		if (!CL_CheckOrDownloadFile(cl.model_name[cls.downloadnumber]))
 			return;		// started a download
-	}
-
-	
-	if (!com_serveractive) {
-		COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
-		R_PreMapLoad(mapname);
 	}
 
 	for (i = 1; i < MAX_MODELS; i++) {
@@ -984,13 +977,11 @@ void CL_ParseServerData (void) {
 	FILE *f;
 	qbool cflag = false;
 	int i, protover;
-	extern cshift_t	cshift_empty;
 
 	Com_DPrintf ("Serverdata packet received.\n");
 
 	// wipe the clientState_t struct
 	CL_ClearState ();
-	memset (&cshift_empty, 0, sizeof(cshift_empty));	// Tonik
 
 	// parse protocol version number
 	// allow 2.2 and 2.29 demos to play
@@ -1164,6 +1155,13 @@ void CL_ParseModellist (void) {
 
 		if (str[0] == '/') str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
 		strlcpy (cl.model_name[nummodels], str, sizeof(cl.model_name[nummodels]));
+
+		if (nummodels == 1)
+			if (!com_serveractive) {
+				char mapname[MAX_QPATH];
+				COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
+				R_PreMapLoad(mapname);
+			}
 	}
 
 	if ((n = MSG_ReadByte())) {
