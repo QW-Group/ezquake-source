@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.7 2006-12-25 20:11:27 qqshka Exp $
+		$Id: menu_demo.c,v 1.8 2006-12-27 22:36:09 cokeman1982 Exp $
 
 */
 
@@ -664,6 +664,9 @@ void Menu_Demo_Init(void)
 	FL_AddFileType(&demo_filelist, 1, ".qwz");
 	FL_AddFileType(&demo_filelist, 2, ".mvd");
 	FL_AddFileType(&demo_filelist, 3, ".dem");
+	#ifdef WITH_ZIP
+	FL_AddFileType(&demo_filelist, 4, ".zip");
+	#endif
 
 	// initialize tab control
     CTab_Init(&demo_tab);
