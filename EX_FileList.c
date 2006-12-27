@@ -84,7 +84,7 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
     if (strlen(buf) > _MAX_PATH)    // should never fail in this
         return;
 
-    strcpy(fl->current_dir, buf);
+	strlcpy (fl->current_dir, buf, sizeof(fl->current_dir));
     fl->need_refresh = true;
 }
 
@@ -361,6 +361,12 @@ void FL_SortDir(filelist_t *fl)
 //
 void FL_ReadDir(filelist_t *fl)
 {
+	#ifdef WITH_ZIP
+	unzFile zip_file;
+	qbool is_zip = false;
+	filedesc_t *curr_entry = NULL;
+	#endif
+
     int i;
     sys_dirent ent;
     unsigned long search;
@@ -369,33 +375,88 @@ void FL_ReadDir(filelist_t *fl)
 
     fl->error = true;
     fl->need_refresh = false;
-    fl->num_entries = 0;
-    fl->current_entry = 0;
     fl->display_entry = 0;
 
+	// Save the current directory. (we want to restore this later)
     if (Sys_getcwd(olddir, _MAX_PATH+1) == NULL)
+	{
         return;
-    if (!Sys_chdir(fl->current_dir))
-        return;
+	}
 
+	// Change to the new dir.
+	#ifdef WITH_ZIP
+	curr_entry = FL_GetCurrentEntry(fl);
+	if (fl->current_entry > 0)
+	{
+		if (curr_entry != NULL && curr_entry->name != NULL)
+		{
+			is_zip = COM_ZipIsArchive (curr_entry->name);
+		}
+	}
+
+	// If it's not a zip file and we cannot change to it, abort.
+	if (!is_zip && !Sys_chdir (fl->current_dir))
+	{
+		return;
+	}
+	
+	if (is_zip)
+	{
+		// Open the zip file.
+		zip_file = COM_ZipUnpackOpenFile (curr_entry->name);
+
+		if (zip_file == NULL)
+		{
+			return;
+		}
+
+		// Set the zip file as the current dir.
+		strlcpy (fl->current_dir, curr_entry->name, sizeof(fl->current_dir));
+	}
+	#else 	
+    if (!Sys_chdir(fl->current_dir))
+	{
+		// Set the current dir.
+        return;
+	}
+	#endif // WITH_ZIP
+
+	fl->num_entries = 0;
+	fl->current_entry = 0;
     fl->error = false;
 
-    search = Sys_ReadDirFirst(&ent);
-    if (!search)
-        goto finish;
+	#ifdef WITH_ZIP
+	if (is_zip)
+	{
+		if (!COM_ZipGetFirst (zip_file, &ent))
+		{
+			goto finish;
+		}
+	}
+	else
+	#endif
+	// Get the first entry in the dir.
+	{
+		search = Sys_ReadDirFirst(&ent);
+		if (!search)
+		{
+			goto finish;
+		}
+	}
 
     do
     {
+		// Pointer to the current file entry.
         filedesc_t *f = &fl->entries[fl->num_entries];
         f->type_index = -1;
 
-        if (!strcmp(ent.fname, ".") || !strcmp(ent.fname, ".."))
-            goto skip;  // not interesting
+		// Skip current/above dir and hidden files.
+		if (!strcmp(ent.fname, ".") || !strcmp(ent.fname, "..") || ent.hidden)
+		{
+            goto skip;
+		}
 
-        if (ent.hidden)
-            goto skip;  // not interesting
-
-        // find registered type
+        // Find registered type if it's not a directory.
         if (!ent.directory)
         {
             for (i=0; i < fl->num_filetypes; i++)
@@ -412,54 +473,117 @@ void FL_ReadDir(filelist_t *fl)
             }
         }
 
-        if (!ent.directory  &&  f->type_index < 0)
-            goto skip;  // not interesting
+		// We're not interested in this file type since it wasn't registered.
+        if (!ent.directory && f->type_index < 0)
+		{
+            goto skip; 
+		}
 
-        // process ent
-        f->is_directory = ent.directory;
-        Sys_fullpath(f->name, ent.fname, _MAX_PATH+1);
-        f->size = ent.size;
-        memcpy(&f->time, &ent.time, sizeof(f->time));
+        // We found a file that we're interested in so save the info about it
+		// in the file description structure.
+		{
+			f->is_directory = ent.directory;
 
-        // find friendly name
+			#ifdef WITH_ZIP
+			// If the found file is a zip file, treat it as a directory also.
+			if (COM_ZipIsArchive (ent.fname)) 
+			{
+				f->is_directory = true;	
+				
+			}
+
+			// If the parent to this file is a zip file, include it in the full path.
+			// c:\quake\qw\demos\demo.zip\demo.mvd
+			if (is_zip)
+			{
+				snprintf (f->name, sizeof(f->name), "%s%c%s", curr_entry->name, PATH_SEPARATOR, ent.fname);
+			}
+			else
+			#endif // WITH_ZIP
+			{
+				Sys_fullpath(f->name, ent.fname, _MAX_PATH+1);
+			}
+
+			f->size = ent.size;
+			memcpy(&f->time, &ent.time, sizeof(f->time));
+		}
+
+        // Find friendly name
         FL_StripFileName(fl, f);
 
-        // increase counter
-        fl->num_entries ++;
+        // Increase counter of how many files have been found.
+        fl->num_entries++;
         if (fl->num_entries >= MAX_FILELIST_ENTRIES)
+		{
             break;
+		}
 skip:
-        // get next item
-        temp = Sys_ReadDirNext(search, &ent);
+        // Get next filesystem entry
+		#ifdef WITH_ZIP
+		if (is_zip)
+		{
+			temp = COM_ZipGetNextFile (zip_file, &ent);
+		}
+		else
+		#endif // WITH_ZIP
+		{
+			temp = Sys_ReadDirNext(search, &ent);
+		}
     }
-    while (temp);
+    while (temp > 0);
 
-    Sys_ReadDirClose(search);
+	#ifdef WITH_ZIP
+	if (!is_zip)
+	#endif 
+	{
+		// Close the handle for the directory.
+		Sys_ReadDirClose(search);
+	}
+
     fl->need_resort = true;
 
 finish:
-    Sys_chdir(olddir);
+	#ifdef WITH_ZIP
+	if (is_zip)
+	{
+		// Close the zip file.
+		COM_ZipUnpackCloseFile (zip_file);
+		//Sys_chdir (fl->current_dir);
+		Sys_chdir (olddir);
+	}
+	else
+	#endif
+	{
+		// Change the current dir back to what it was.
+		Sys_chdir (olddir);
+	}
 
-    // resort
+    // Re-sort the file list if needed.
     if (fl->need_resort)
-        FL_SortDir(fl);
+	{
+        FL_SortDir (fl);
+	}
 
     fl->current_entry = 0;  // resort could change that
 
-    // look for what we have to highlight if valid (cdup)
+    // Look for what we have to highlight if valid (cdup)
     if (fl->cdup_find)
     {
-        int uplen = strlen(fl->cdup_name);
+        int uplen = strlen (fl->cdup_name);
         fl->cdup_find = false;
         for (i=0; i < fl->num_entries; i++)
         {
-            int clen = strlen(fl->entries[i].name);
+            int clen = strlen (fl->entries[i].name);
 
             if (uplen > clen)
+			{
                 continue;
+			}
 
             if (strcmp(fl->cdup_name, fl->entries[i].name + clen - uplen))
+			{
                 continue;
+			}
 
             fl->current_entry = i;
             break;
@@ -501,16 +625,69 @@ qbool FL_Search(filelist_t *fl)
 //
 void FL_ChangeDir(filelist_t *fl, char *newdir)
 {
-    char olddir[_MAX_PATH+1];
+	char olddir[_MAX_PATH+1];
 
-    if (Sys_getcwd(olddir, _MAX_PATH+1) == 0)
-        return;
+	#ifdef WITH_ZIP
+	char old_current_dir[_MAX_PATH+1];
+	char zip_parent[_MAX_PATH+1];
+	qbool is_zip = COM_ZipIsArchive (fl->current_dir);
+
+	strlcpy (old_current_dir, fl->current_dir, sizeof(old_current_dir));
+	#endif
+ 
+	// Get the current dir from the OS and save it.
+    if (Sys_getcwd(olddir, _MAX_PATH+1) == NULL)
+	{
+		return;
+	}
+
+	// Change to the current dir that we're in (might be different from the OS's).
+	// If we're changing dirs in a relative fashion ".." for instance we need to 
+	// be in this dir, and not the dir that the OS is in.
+	#ifdef WITH_ZIP
+	if (is_zip) 
+	{
+		// Zip file.
+
+		// A zip file isn't a directory, but we're pretending it is. To be able to move around in
+		// the filesystem we use the parent directory instead.
+		strlcpy (zip_parent, fl->current_dir, 
+			min(sizeof(zip_parent), strlen(fl->current_dir) - strlen (COM_SkipPath(fl->current_dir))));
+
+		// Change to the parent directory of the zip.
+		if (Sys_chdir(zip_parent) == 0)
+		{
+			return;
+		}
+
+		// If we were trying to change the directory to ".." (parenT) we have already done that.
+		if (!strncmp (newdir, "..", 2))
+		{
+			newdir += 2;
+		}
+
+		// Make sure we don't have any slashes left at the start of the destination string.
+		while (*newdir == '/' || *newdir == '\\')
+		{
+			newdir ++;
+		}
+	}
+	else 
+	#endif // WITH_ZIP
     if (Sys_chdir(fl->current_dir) == 0)
+	{
+		// Normal directory.
         return;
+	}	
 
-    Sys_chdir(newdir);
-    Sys_getcwd(fl->current_dir, _MAX_PATH+1);
-    Sys_chdir(olddir);
+	// Change to the new dir requested.
+	Sys_chdir (newdir);
+
+	// Save the current dir we just changed to.
+	Sys_getcwd (fl->current_dir, _MAX_PATH+1);
+
+	// Go back to where the OS wants to be. 
+    Sys_chdir (olddir);
 
     fl->need_refresh = true;
 }
@@ -535,7 +712,7 @@ void FL_ChangeDirUp(filelist_t *fl)
         return;
 
     fl->cdup_find = true;
-    strcpy(fl->cdup_name, t);
+    strlcpy (fl->cdup_name, t, sizeof(fl->cdup_name));
 
     FL_ChangeDir(fl, "..");
 }
