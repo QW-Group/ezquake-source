@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.45 2006-12-19 23:39:44 johnnycz Exp $
+	$Id: cl_demo.c,v 1.46 2006-12-27 22:34:14 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1380,64 +1380,151 @@ void CL_StopPlayback (void) {
 
 void CL_Play_f (void) {
 	int i;
+	qbool is_archive = false;
+	char *real_name;
 	char name[2 * MAX_OSPATH], **s;
-	static char *ext[] = {".qwd", ".mvd", NULL};
+	static char *ext[] = {".qwd", ".mvd", ".dem", NULL};
 
-	if (Cmd_Argc() != 2) {
+	if (Cmd_Argc() != 2) 
+	{
 		Com_Printf ("Usage: %s <demoname>\n", Cmd_Argv(0));
 		return;
 	}
 
-	Host_EndGame();	
+	real_name = Cmd_Argv(1);
+
+	Host_EndGame();
 
 	TP_ExecTrigger("f_demostart");
 
-#ifdef _WIN32
-	strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
-	if (strlen(name) > 4 && !strcasecmp(name + strlen(name) - 4, ".qwz")) {
-		PlayQWZDemo();
-		if (!playbackfile && !qwz_playback)
-			return;	
-	} else {
-#endif
-	for (s = ext; *s && !playbackfile; s++) {
-		strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
-		COM_DefaultExtension (name, *s);
-
-		if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
-			playbackfile = fopen (va("%s/%s", com_basedir, name + 3), "rb");
-		else
-			FS_FOpenFile (name, &playbackfile);
-
-		if (!playbackfile) // hexum -> look in demo dir too
-			playbackfile = fopen (va("%s/%s/%s", com_basedir, demo_dir.string, name), "rb");
-
-		if (!playbackfile) // what about full system path, huh?
-			playbackfile = fopen (name, "rb");
-	}
-
-	if (!playbackfile) {
-		Com_Printf ("Error: Couldn't open %s\n", Cmd_Argv(1));
-		return;
-	}
-
-	// Reset multiview track slots.
-	for(i = 0; i < 4; i++)
+	#ifdef WITH_ZIP
+	//
+	// Check if the demo is in a zip file and if so, try to extract it before playing.
+	//
 	{
-		mv_trackslots[i] = -1;
-	}
-	nTrack1duel = nTrack2duel = 0;
-	mv_skinsforced = false;
+		char **curr_archive_ext;
+		static char *archive_ext[] = {".zip", ".gzip", NULL};
+		char *archive_path = NULL;
+		char *archive_demopath = NULL;
+		int result_length = 0;
+		char regexp[MAX_OSPATH];
 
-	Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
-#ifdef _WIN32
+		for (s = ext; *s && !is_archive; s++)
+		{
+			for (curr_archive_ext = archive_ext; *curr_archive_ext; curr_archive_ext++)
+			{
+				strlcpy (regexp, va("(.*?\\%s)(\\\\|/)(.*?\\%s)", *curr_archive_ext, *s), sizeof(regexp));
+
+				// Get the archive path.
+				if (Utils_RegExpGetGroup (regexp, Cmd_Argv(1), &archive_path, &result_length, 1))
+				{
+					// Get the path of the demo in the zip.
+					if (Utils_RegExpGetGroup (regexp, Cmd_Argv(1), &archive_demopath, &result_length, 3))
+					{
+						is_archive = true;
+						break;
+					}					
+				}
+			}
+		}
+
+		if (is_archive)
+		{
+			char *destination_path = va("%s/%s/%s", com_basedir, demo_dir.string, "_temp");
+			unzFile zip_file = COM_ZipUnpackOpenFile (archive_path);
+			
+			if (COM_ZipUnpackOneFile (zip_file, archive_demopath, destination_path, 
+				false, false, true, NULL) == UNZ_OK)
+			{
+				strlcpy (name, va("%s/%s", destination_path, archive_demopath), sizeof(name));
+				real_name = name;
+			}
+			else
+			{
+				Com_Printf ("Failed to unpack what seemed to be an archive...");
+			}
+		}
+
+		Q_free (archive_demopath);
+		Q_free (archive_path);
 	}
-#endif
-	cls.demoplayback = true;
-	cls.mvdplayback = !strcasecmp(name + strlen(name) - 3, "mvd") ? true : false;	
-	cls.nqdemoplayback = !strcasecmp(COM_FileExtension(name), "dem");
+	#endif // WITH_ZIP
+
+	#ifdef WIN32
+	// Decompress QWZ demos to QWD before playing it (using an external app).
+	strlcpy (name, real_name, sizeof(name) - 4);
+
+	if (strlen(name) > 4 && !strcasecmp(COM_FileExtension(name), "qwz")) 
+	{
+		PlayQWZDemo();
+
+		// We failed to extract the QWZ demo.
+		if (!playbackfile && !qwz_playback)
+		{
+			return;	
+		}
+	} 
+	else 
+	#endif // WIN32
+	{
+		// Find the demo path, trying different extensions if needed.
+		for (s = ext; *s && !playbackfile; s++) 
+		{
+			// Strip the extension from the specified filename and append
+			// the one we're currently checking for.
+			COM_StripExtension (real_name, name);
+			//COM_DefaultExtension (name, *s);
+			strlcpy (name, va("%s%s", name, *s), sizeof(name));
+
+			// Look for the file in the above directory if it has ../ prepended to the filename.
+			if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
+			{
+				playbackfile = fopen (va("%s/%s", com_basedir, name + 3), "rb");
+			}
+			else
+			{
+				FS_FOpenFile (name, &playbackfile);
+			}
+
+			// Look in the demo dir (user specified).
+			if (!playbackfile)
+			{
+				playbackfile = fopen (va("%s/%s/%s", com_basedir, demo_dir.string, name), "rb");
+			}
+
+			// Check the full system path (Run a demo anywhere on the file system).
+			if (!playbackfile)
+			{
+				playbackfile = fopen (name, "rb");
+			}
+		}
+
+		if (!playbackfile) 
+		{
+			Com_Printf ("Error: Couldn't open %s\n", Cmd_Argv(1));
+			return;
+		}
+
+		// Reset multiview track slots.
+		for(i = 0; i < 4; i++)
+		{
+			mv_trackslots[i] = -1;
+		}
+		nTrack1duel = nTrack2duel = 0;
+		mv_skinsforced = false;
+
+		Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
+	}
+
+	cls.demoplayback	= true;
+	cls.mvdplayback		= !strcasecmp(COM_FileExtension(name), "mvd");	
+	cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(name), "dem");
+	
+	// NetQuake demo support.
 	if (cls.nqdemoplayback)
+	{
 		NQD_StartPlayback ();
+	}
 
 	cls.state = ca_demostart;
 	Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, 0);
@@ -1448,10 +1535,12 @@ void CL_Play_f (void) {
 	cls.findtrack = true;
 	cls.lastto = cls.lasttype = 0;
 	CL_ClearPredict();
-
-		
+	
+	// Recording not allowed during mvdplayback.
 	if (cls.mvdplayback && cls.demorecording)
+	{
 		CL_Stop_f();
+	}
 }
 
 void CL_TimeDemo_f (void) {
