@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.26 2006-11-14 21:12:29 cokeman1982 Exp $
+	$Id: sys_win.c,v 1.27 2006-12-27 22:28:23 cokeman1982 Exp $
 
 */
 // sys_win.c
@@ -160,7 +160,7 @@ FILE IO
 ===============================================================================
 */
 
-void Sys_mkdir (char *path) {
+void Sys_mkdir (const char *path) {
 	_mkdir (path);
 }
 
