@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.39 2006-12-15 18:46:18 disconn3ct Exp $
+    $Id: common.c,v 1.40 2006-12-27 22:26:50 cokeman1982 Exp $
 
 */
 
@@ -95,7 +95,7 @@ char *COM_SkipPath (char *pathname)
 
 	last = pathname;
 	while (*pathname) {
-		if (*pathname == '/')
+		if (*pathname == '/' || *pathname == '\\')
 			last = pathname+1;
 		pathname++;
 	}
@@ -189,6 +189,344 @@ void COM_ForceExtension (char *path, char *extension)
 
 	strncat (path, extension, MAX_OSPATH);
 }
+
+#ifdef WITH_ZIP
+
+#define ZIP_WRITEBUFFERSIZE (8192)
+
+qbool COM_ZipIsArchive (const char *zip_path)
+{
+	// TODO: Check for more file types.
+	return (!strcmp (COM_FileExtension (zip_path), "zip"));
+}
+
+unzFile COM_ZipUnpackOpenFile (const char *zip_path)
+{
+	return unzOpen (zip_path);
+}
+
+int COM_ZipUnpackCloseFile (unzFile zip_file)
+{
+	if (zip_file == NULL)
+	{
+		return UNZ_OK;
+	}
+
+	return unzClose (zip_file);
+}
+
+static void COM_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_info *unzip_fileinfo)
+{
+	// Save the name.
+    strlcpy(ent->fname, filename_inzip, sizeof(ent->fname));
+    ent->fname[MAX_PATH_LENGTH-1] = 0;
+
+	// TODO : Zip size is unsigned long, dir entry unsigned int, data loss possible for really large files.
+	ent->size = (unsigned int)unzip_fileinfo->uncompressed_size;
+  
+    // Get the filetime.
+	{
+		#ifdef WIN32
+		FILETIME filetime;
+		FILETIME local_filetime;
+		DosDateTimeToFileTime (unzip_fileinfo->dosDate, 0, &filetime);
+		FileTimeToLocalFileTime (&filetime, &local_filetime);
+		FileTimeToSystemTime(&local_filetime, &ent->time);
+		#else
+		// FIXME: Dunno how to do this in *nix.
+		ent->time = 0;
+		#endif // WIN32
+	}
+
+	// FIXME: There is no directory structure inside of zip files, but the files are named as if there is. 
+	// that is, if the file is in the root it will be named "file" in the zip file info. If it's in a directory
+	// it will be named "dir/file". So we could find out if it's a directory or not by checking the filename here.
+	ent->directory = 0;
+	ent->hidden = 0;
+}
+
+int COM_ZipUnpack (unzFile zip_file, 
+				   char *destination_path, 
+				   qbool case_sensitive, 
+				   qbool keep_path, 
+				   qbool overwrite, 
+				   const char *password)
+{
+	int error = UNZ_OK;
+	unsigned long file_num = 0;
+	unz_global_info global_info;
+	
+	// Get the number of files in the zip archive.
+	error = unzGetGlobalInfo (zip_file, &global_info);
+
+	if (error != UNZ_OK)
+	{
+		return error;
+	}
+
+	for (file_num = 0; file_num < global_info.number_entry; file_num++)
+	{
+		if (COM_ZipUnpackCurrentFile (zip_file, destination_path, case_sensitive, keep_path, overwrite, password) != UNZ_OK)
+		{
+			// We failed to extract a file, so there must be something wrong.
+			break;
+		}
+
+		if ((file_num + 1) < global_info.number_entry)
+		{
+			error = unzGoToNextFile (zip_file);
+
+			if (error != UNZ_OK)
+			{
+				// Either we're at the end or something went wrong.
+				break;
+			}
+		}
+	}
+
+	return error;
+}
+
+int COM_ZipUnpackOneFile (unzFile zip_file, 
+						  const char *filename_inzip,
+						  const char *destination_path, 
+						  qbool case_sensitive, 
+						  qbool keep_path,
+						  qbool overwrite,
+						  const char *password)
+{
+	int	error = UNZ_OK;
+
+	if (filename_inzip == NULL || zip_file == NULL)
+	{
+		return UNZ_ERRNO;
+	}
+
+	// Locate the file.
+	error = unzLocateFile (zip_file, filename_inzip, case_sensitive);
+
+	if (error == UNZ_END_OF_LIST_OF_FILE || error != UNZ_OK)
+	{
+		return error;
+	}
+
+	// Unpack the file.
+	COM_ZipUnpackCurrentFile (zip_file, destination_path, case_sensitive, keep_path, overwrite, password);
+
+	return error;
+}
+
+int COM_ZipUnpackCurrentFile (unzFile zip_file, 
+							  const char *destination_path, 
+							  qbool case_sensitive, 
+							  qbool keep_path, 
+							  qbool overwrite, 
+							  const char *password)
+{
+	int				error = UNZ_OK;
+	void			*buf = NULL;
+	unsigned int	size_buf = ZIP_WRITEBUFFERSIZE;
+	char			filename[MAX_PATH_LENGTH];
+	unz_file_info	file_info;
+
+	// Nothing to extract from.
+	if (zip_file == NULL)
+	{
+		return UNZ_ERRNO;
+	}
+
+	// Get the file info (including the filename).
+	error = unzGetCurrentFileInfo (zip_file, &file_info, filename, sizeof(filename), NULL, 0, NULL, 0);
+
+	if (error != UNZ_OK)
+	{
+		goto finish;
+	}
+
+	// Should the path in the zip file be preserved when extracting or not?
+	if (!keep_path)
+	{
+		// Only keep the filename.
+		strlcpy (filename, COM_SkipPath (filename), sizeof(filename));
+	}
+
+	//
+	// Check if the file already exists and create the path if needed.
+	//
+	{
+		FILE *fexists = NULL;
+
+		// Try opening the file to see if it exists.
+		fexists = fopen(va("%s/%s", destination_path, filename), "rb"); 
+
+		// File exists and we're not allowed to overwrite so abort.
+		if (fexists && !overwrite)
+		{
+			fclose (fexists);
+			error = UNZ_ERRNO;
+			goto finish;
+		}
+
+		// Make sure the file is closed.
+		if (fexists)
+		{
+			fclose (fexists);
+		}
+
+		// Create the destination dir if it doesn't already exist.
+		COM_CreatePath (va("%s/", destination_path));
+
+		// Create the relative path before extracting.
+		if (keep_path)
+		{	
+			COM_CreatePath (va("%s/%s", destination_path, filename));
+		}
+	}
+
+	//
+	// Extract the file.
+	//
+	{
+		#define			EXPECTED_BYTES_READ	1
+		int				bytes_read = 0;		
+		FILE			*fout = NULL;
+
+		//
+		// Open the zip file.
+		//
+		{
+			error = unzOpenCurrentFilePassword (zip_file, password);
+
+			// Failed opening the zip file.
+			if (error != UNZ_OK)
+			{
+				goto finish;
+			}
+		}
+
+		//
+		// Open the destination file for writing.
+		//
+		{
+			fout = fopen (va("%s/%s", destination_path, filename), "wb");
+
+			// Failure.
+			if (fout == NULL)
+			{
+				error = UNZ_ERRNO;
+				goto finish;
+			}
+		}
+
+		//
+		// Write the decompressed file to the destination.
+		//
+		buf = Q_malloc (size_buf);
+		do
+		{
+			// Read the decompressed data from the zip file.
+			bytes_read = unzReadCurrentFile (zip_file, buf, size_buf);
+
+			if (bytes_read > 0)
+			{
+				// Write the decompressed data to the destination file.
+				if (fwrite (buf, bytes_read, EXPECTED_BYTES_READ, fout) != EXPECTED_BYTES_READ)
+				{
+					// We failed to write the specified number of bytes.
+					error = UNZ_ERRNO;
+					fclose (fout);
+					unzCloseCurrentFile (zip_file);
+					goto finish;
+				}
+			}
+		}
+		while (bytes_read > 0);
+
+		//
+		// Close the zip file + destination file.
+		//
+		{
+			if (fout)
+			{
+				fclose (fout);
+			}
+
+			unzCloseCurrentFile (zip_file);
+		}
+
+		// TODO : Change file date for the file.
+	}
+
+finish:	
+	Q_free (buf);
+
+	return error;
+}
+
+// Gets the details about the file and save them in the sys_dirent struct.
+static int COM_ZipGetDetails (unzFile zip_file, sys_dirent *ent)
+{
+	int error = UNZ_OK;
+	char filename_inzip[MAX_PATH_LENGTH];
+	unz_file_info unzip_fileinfo;
+
+	error = unzGetCurrentFileInfo (zip_file, 
+		&unzip_fileinfo,						// File info.
+		filename_inzip, sizeof(filename_inzip), // The files name will be copied to this.
+		NULL, 0, NULL, 0);						// Extras + comment stuff. We don't care about this.
+
+	if (error != UNZ_OK)
+	{
+		return error;
+	}
+
+	// Populate the directory entry object.
+	COM_ZipMakeDirent (ent, filename_inzip, &unzip_fileinfo);
+
+	return error;
+}
+
+int COM_ZipGetFirst (unzFile zip_file, sys_dirent *ent)
+{
+	int error = UNZ_OK;
+
+	// Go to the first file in the zip.
+	if ((error = unzGoToFirstFile (zip_file)) != UNZ_OK)
+	{
+		return error;
+	}
+
+	// Get details.
+	if ((error = COM_ZipGetDetails(zip_file, ent)) != UNZ_OK)
+	{
+		return error;
+	}
+	
+	return 1;
+}
+
+int COM_ZipGetNextFile (unzFile zip_file, sys_dirent *ent)
+{
+	int error = UNZ_OK;
+	
+	// Get the next file.
+	error = unzGoToNextFile (zip_file);
+
+	if (error == UNZ_END_OF_LIST_OF_FILE || error != UNZ_OK)
+	{
+		return error;
+	}
+
+	// Get details.
+	if ((error = COM_ZipGetDetails(zip_file, ent)) != UNZ_OK)
+	{
+		return error;
+	}
+
+	return 1;
+}
+
+#endif // WITH_ZIP
 
 //============================================================================
 
@@ -380,13 +718,11 @@ typedef struct
 char	com_gamedir[MAX_OSPATH];
 char	com_basedir[MAX_OSPATH];
 
-// QW262 -->
 #ifndef SERVERONLY
 char	userdirfile[MAX_OSPATH];
 char	com_userdir[MAX_OSPATH];
 int	userdir_type;
 #endif
-// <-- QW262
 
 typedef struct searchpath_s
 {
@@ -508,7 +844,7 @@ qbool COM_WriteFile (char *filename, void *data, int len)
 //Only used for CopyFile and download
 
 
-void COM_CreatePath(char *path)
+void COM_CreatePath(const char *path)
 {
 	char *s, save;
 
