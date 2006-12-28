@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.32 2006-12-28 16:17:14 qqshka Exp $
+	$Id: vid_wgl.c,v 1.33 2006-12-28 16:35:26 qqshka Exp $
 
 */
 
@@ -81,7 +81,6 @@ static int		windowed_mouse;
 extern qbool	mouseactive;  // from in_win.c
 static HICON	hIcon;
 
-int			DIBWidth, DIBHeight;
 DWORD		WindowStyle, ExWindowStyle;
 
 HWND		mainwindow, dibwindow;
@@ -339,8 +338,8 @@ qbool VID_SetWindowedMode (int modenum) {
 	rect.right  = modelist[modenum].width;
 	rect.bottom = modelist[modenum].height;
 
-	DIBWidth = modelist[modenum].width;
-	DIBHeight = modelist[modenum].height;
+	window_width  = modelist[modenum].width;
+	window_height = modelist[modenum].height;
 
 	WindowStyle = WS_OVERLAPPED | WS_BORDER | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 	ExWindowStyle = 0;
@@ -435,8 +434,8 @@ qbool VID_SetFullDIBMode (int modenum) {
 	rect.right  = modelist[modenum].width;
 	rect.bottom = modelist[modenum].height;
 
-	DIBWidth = modelist[modenum].width;
-	DIBHeight = modelist[modenum].height;
+	window_width  = modelist[modenum].width;
+	window_height = modelist[modenum].height;
 
 	WindowStyle = WS_POPUP;
 	ExWindowStyle = 0;
@@ -525,8 +524,6 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 		Sys_Error ("VID_SetMode: Bad mode type in modelist");
 	}
 
-	window_width = DIBWidth;
-	window_height = DIBHeight;
 	VID_UpdateWindowStatus ();
 
 	CDAudio_Resume ();
