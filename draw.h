@@ -61,7 +61,7 @@ void Draw_FadeScreen (void);
 void Draw_String (int x, int y, char *str);
 void Draw_Alt_String (int x, int y, char *str);
 void Draw_ColoredString (int x, int y, char *str, int red);
-mpic_t *Draw_CachePicSafe (char *path, qbool true);
+mpic_t *Draw_CachePicSafe (char *path, qbool true, qbool only24bit);
 mpic_t *Draw_CachePic (char *path);
 mpic_t *Draw_CacheWadPic (char *name);
 void Draw_Crosshair(void);

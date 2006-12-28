@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.37 2006-12-19 04:32:21 qqshka Exp $
+	$Id: gl_draw.c,v 1.38 2006-12-28 00:12:15 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -26,6 +26,7 @@ extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
 extern cvar_t scr_coloredText, con_shift;
 
 cvar_t	scr_conalpha		= {"scr_conalpha", "0.8"};
+cvar_t	scr_conback			= {"scr_conback", "1"};
 cvar_t	scr_menualpha		= {"scr_menualpha", "0.7"};
 
 
@@ -327,7 +328,7 @@ mpic_t *Draw_CacheWadPic (char *name) {
 	return pic;
 }
 
-mpic_t *Draw_CachePicSafe (char *path, qbool crash) 
+mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit) 
 {
 	cachepic_t *pic;
 	int i;
@@ -350,10 +351,28 @@ mpic_t *Draw_CachePicSafe (char *path, qbool crash)
 		}
 		return NULL;
 	}
-	numcachepics++;
-	strlcpy (pic->name, path, sizeof(pic->name));
 
 	// load the pic from disk
+
+	if (only24bit)  // that not for loading 24 bit versions of ".lmp" files, but for some new images
+	{
+		if ((pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
+		{
+			pic->pic = *pic_24bit;
+
+			numcachepics++;
+			strlcpy (pic->name, path, sizeof(pic->name));
+
+			return &pic->pic;
+		}
+
+		if(crash)
+		{
+			Sys_Error ("Draw_CachePic: failed to load %s", path);
+		}
+		return NULL;
+	}
+
 	if (!(dat = (qpic_t *)FS_LoadTempFile (path)))
 	{
 		if(crash)
@@ -362,6 +381,7 @@ mpic_t *Draw_CachePicSafe (char *path, qbool crash)
 		}
 		return NULL;
 	}
+
 	SwapPic (dat);
 
 	// HACK HACK HACK --- we need to keep the bytes for
@@ -384,12 +404,15 @@ mpic_t *Draw_CachePicSafe (char *path, qbool crash)
 		GL_LoadPicTexture (path, &pic->pic, dat->data);
 	}
 
+	numcachepics++;
+	strlcpy (pic->name, path, sizeof(pic->name));
+
 	return &pic->pic;
 }
 
 mpic_t *Draw_CachePic (char *path)
 {
-	return Draw_CachePicSafe (path, true);
+	return Draw_CachePicSafe (path, true, false);
 }
 
 void Draw_InitConback (void) {
@@ -583,6 +606,7 @@ void Draw_Init (void) {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register (&scr_conalpha);
+	Cvar_Register (&scr_conback);
 	Cvar_Register (&gl_smoothfont);
 	Cvar_Register (&gl_consolefont);
 	Cvar_Register (&gl_alphafont);
@@ -1741,12 +1765,34 @@ void Draw_SFill (int x, int y, int w, int h, int c, float scale)
 
 void Draw_ConsoleBackground (int lines) 
 {
-	if (SCR_NEED_CONSOLE_BACKGROUND) {
-		Draw_Pic(0, lines - vid.height + con_shift.value, &conback);
-	} else {
-		if (scr_conalpha.value)
-			Draw_AlphaPic (0, (lines - vid.height) + (int)con_shift.value, &conback, bound (0, scr_conalpha.value, 1));
+	mpic_t *lvlshot = NULL;
+	float alpha = (SCR_NEED_CONSOLE_BACKGROUND ? 1 : bound(0, scr_conalpha.value, 1));
+
+	if (mapname.string[0] // we have mapname
+		 && (    scr_conback.value == 2 // always per level conback
+			 || (scr_conback.value == 1 && SCR_NEED_CONSOLE_BACKGROUND) // only at load time
+			)
+	   ) {
+		static char last_mapname[MAX_QPATH] = {0};
+		static mpic_t *last_lvlshot = NULL;
+
+		if (strncmp(mapname.string, last_mapname, sizeof(last_mapname))) { // lead to call Draw_CachePicSafe() once per level
+			char name[MAX_QPATH];
+
+			snprintf(name, sizeof(name), "textures/levelshots/%s.xxx", mapname.string);
+			if ((last_lvlshot = Draw_CachePicSafe(name, false, true))) { // resize
+				last_lvlshot->width  = conback.width;
+				last_lvlshot->height = conback.height;
+			}
+
+			strlcpy(last_mapname, mapname.string, sizeof(last_mapname)); // save
+		}
+
+		lvlshot = last_lvlshot;
 	}
+
+	if (alpha)
+		Draw_AlphaPic(0, (lines - vid.height) + (int)con_shift.value, lvlshot ? lvlshot : &conback, alpha);
 }
 
 // ================
