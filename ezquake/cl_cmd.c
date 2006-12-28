@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.36 2006-12-27 02:20:58 qqshka Exp $
+	$Id: cl_cmd.c,v 1.37 2006-12-28 00:12:14 qqshka Exp $
 */
 
 #include <time.h>
@@ -790,16 +790,26 @@ changing, fullserverinfo, nextul, stopul
 //Just sent as a hint to the client that they should drop to full console
 void CL_Changing_f (void) {
 	cl.intermission = 0;
-	// drop to full console
+
+	if (cls.download)  // don't change when downloading
+	{
+		if (cls.state == ca_active) // we was on server
+		{
+			// drop to full console
+			cls.state = ca_connected;	// not active anymore, but not disconnected
+
+			if (!com_serveractive)
+				Cvar_ForceSet (&mapname, ""); // notice mapname not valid yet
+		}
+		return;
+	}
+
+	S_StopAllSounds (true);
+
 	cls.state = ca_connected;	// not active anymore, but not disconnected
 
 	if (!com_serveractive)
 		Cvar_ForceSet (&mapname, ""); // notice mapname not valid yet
-
-	if (cls.download)  // don't change when downloading
-		return;
-
-	S_StopAllSounds (true);
 
 	Com_Printf ("\nChanging map...\n");
 }
