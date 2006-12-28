@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.31 2006-12-18 11:06:18 qqshka Exp $
+	$Id: vid_wgl.c,v 1.32 2006-12-28 16:17:14 qqshka Exp $
 
 */
 
@@ -82,7 +82,6 @@ extern qbool	mouseactive;  // from in_win.c
 static HICON	hIcon;
 
 int			DIBWidth, DIBHeight;
-RECT		WindowRect;
 DWORD		WindowStyle, ExWindowStyle;
 
 HWND		mainwindow, dibwindow;
@@ -336,10 +335,9 @@ qbool VID_SetWindowedMode (int modenum) {
 
 	lastmodestate = modestate;
 
-	WindowRect.top = WindowRect.left = 0;
-
-	WindowRect.right = modelist[modenum].width;
-	WindowRect.bottom = modelist[modenum].height;
+	rect.top = rect.left = 0;
+	rect.right  = modelist[modenum].width;
+	rect.bottom = modelist[modenum].height;
 
 	DIBWidth = modelist[modenum].width;
 	DIBHeight = modelist[modenum].height;
@@ -347,10 +345,9 @@ qbool VID_SetWindowedMode (int modenum) {
 	WindowStyle = WS_OVERLAPPED | WS_BORDER | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 	ExWindowStyle = 0;
 
-	rect = WindowRect;
 	AdjustWindowRectEx(&rect, WindowStyle, FALSE, 0);
 
-	width = rect.right - rect.left;
+	width  = rect.right - rect.left;
 	height = rect.bottom - rect.top;
 
 	// Create the DIB window
@@ -371,7 +368,7 @@ qbool VID_SetWindowedMode (int modenum) {
 		Sys_Error ("Couldn't create DIB window");
 
 	// Center and show the DIB window
-	CenterWindow(dibwindow, WindowRect.right - WindowRect.left, WindowRect.bottom - WindowRect.top, false);
+	CenterWindow(dibwindow, modelist[modenum].width, modelist[modenum].height, false);
 
 	ShowWindow (dibwindow, SW_SHOWDEFAULT);
 	UpdateWindow (dibwindow);
@@ -381,7 +378,7 @@ qbool VID_SetWindowedMode (int modenum) {
 	// Because we have set the background brush for the window to NULL (to avoid flickering when re-sizing the window on the desktop),
 	// we clear the window to black when created, otherwise it will be  empty while Quake starts up.
 	hdc = GetDC(dibwindow);
-	PatBlt(hdc, 0, 0, WindowRect.right,WindowRect.bottom,BLACKNESS);
+	PatBlt(hdc, 0, 0, modelist[modenum].width, modelist[modenum].height, BLACKNESS);
 	ReleaseDC(dibwindow, hdc);
 
 	if (vid.conheight > modelist[modenum].height)
@@ -434,10 +431,9 @@ qbool VID_SetFullDIBMode (int modenum) {
 	lastmodestate = modestate;
 	modestate = MS_FULLDIB;
 
-	WindowRect.top = WindowRect.left = 0;
-
-	WindowRect.right = modelist[modenum].width;
-	WindowRect.bottom = modelist[modenum].height;
+	rect.top = rect.left = 0;
+	rect.right  = modelist[modenum].width;
+	rect.bottom = modelist[modenum].height;
 
 	DIBWidth = modelist[modenum].width;
 	DIBHeight = modelist[modenum].height;
@@ -445,7 +441,6 @@ qbool VID_SetFullDIBMode (int modenum) {
 	WindowStyle = WS_POPUP;
 	ExWindowStyle = 0;
 
-	rect = WindowRect;
 	AdjustWindowRectEx(&rect, WindowStyle, FALSE, 0);
 
 	width = rect.right - rect.left;
@@ -474,7 +469,7 @@ qbool VID_SetFullDIBMode (int modenum) {
 	// Because we have set the background brush for the window to NULL (to avoid flickering when re-sizing the window on the desktop),
 	// we clear the window to black when created, otherwise it will be  empty while Quake starts up.
 	hdc = GetDC(dibwindow);
-	PatBlt(hdc,0,0,WindowRect.right,WindowRect.bottom,BLACKNESS);
+	PatBlt(hdc, 0, 0, modelist[modenum].width, modelist[modenum].height, BLACKNESS);
 	ReleaseDC(dibwindow, hdc);
 
 	if (vid.conheight > modelist[modenum].height)
@@ -498,7 +493,7 @@ qbool VID_SetFullDIBMode (int modenum) {
 }
 
 int VID_SetMode (int modenum, unsigned char *palette) {
-	int original_mode, temp;
+	int temp;
 	qbool stat;
     MSG msg;
 
@@ -510,8 +505,6 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 	scr_disabled_for_loading = true;
 
 	CDAudio_Pause();
-
-	original_mode = (vid_modenum == NO_MODE) ? windowed_default : vid_modenum;
 
 	// Set either the fullscreen or windowed mode
 	if (modelist[modenum].type == MS_WINDOWED) {
@@ -548,7 +541,9 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 	// then grab the foreground again. Who knows if it helps, but it probably doesn't hurt
 	SetForegroundWindow (mainwindow);
 	//	VID_SetPalette (palette);
+
 	vid_modenum = modenum;
+
 	Cvar_SetValue (&vid_mode, (float) vid_modenum);
 
 	while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -950,8 +945,8 @@ static void RestoreHWGamma(void) {
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height) {
 	*x = *y = 0;
-	*width = WindowRect.right - WindowRect.left;
-	*height = WindowRect.bottom - WindowRect.top;
+	*width  = window_width;
+	*height = window_height;
 }
 
 void GL_EndRendering (void) {
