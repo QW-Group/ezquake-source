@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: skin.c,v 1.7 2006-12-14 23:22:29 qqshka Exp $
+	$Id: skin.c,v 1.8 2006-12-29 23:48:35 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -26,7 +26,7 @@ qbool OnChangeSkinForcing(cvar_t *var, char *string);
 cvar_t	baseskin = {"baseskin", "base"};
 cvar_t	noskins = {"noskins", "0"};
 
-cvar_t	cl_skin_as_name = {"cl_skin_as_name", "0", 0, OnChangeSkinForcing};
+cvar_t	cl_name_as_skin = {"cl_name_as_skin", "0", 0, OnChangeSkinForcing};
 
 char	allskins[MAX_OSPATH];
 
@@ -43,10 +43,10 @@ char *Skin_AsNameOrId (player_info_t *sc) {
 	if (!cls.demoplayback && !cl.spectator)
 		return NULL; // allow in demos or for specs
 
-	if (!cl_skin_as_name.value)
+	if (!cl_name_as_skin.value)
 		return NULL;
 
-	if (cl_skin_as_name.value == 1) { // get skin as player name
+	if (cl_name_as_skin.value == 1) { // get skin as player name
 		char *s = sc->name;
 		int i;
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.55 2006-12-16 18:54:47 johnnycz Exp $
+    $Id: teamplay.c,v 1.56 2006-12-29 23:48:35 qqshka Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -1626,12 +1626,12 @@ void TP_RefreshSkins(void)
 
 qbool OnChangeSkinForcing(cvar_t *var, char *string)
 {
-	extern cvar_t noskins, cl_skin_as_name;
+	extern cvar_t noskins, cl_name_as_skin;
 
 	if (cl.teamfortress || (cl.fpd & FPD_NO_FORCE_SKIN))
 		return false;
 
-	if (var == &cl_skin_as_name && (!cls.demoplayback && !cl.spectator))
+	if (var == &cl_name_as_skin && (!cls.demoplayback && !cl.spectator))
 		return false; // allow in demos or for specs
 
 	if (cls.state == ca_active) {
