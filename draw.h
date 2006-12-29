@@ -43,6 +43,10 @@ typedef struct
 
 extern	mpic_t		*draw_disc;	// also used on sbar
 
+#ifdef GLQUAKE
+void Draw_AdjustConback (void);
+#endif
+
 void Draw_Init (void);
 void Draw_Character (int x, int y, int num);
 void Draw_SubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height);

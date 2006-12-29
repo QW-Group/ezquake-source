@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.38 2006-12-28 00:12:15 qqshka Exp $
+	$Id: gl_draw.c,v 1.39 2006-12-29 05:22:26 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -415,6 +415,12 @@ mpic_t *Draw_CachePic (char *path)
 	return Draw_CachePicSafe (path, true, false);
 }
 
+// if conwidth or conheight changes, adjust conback sizes too
+void Draw_AdjustConback (void) {
+	conback.width  = vid.conwidth;
+	conback.height = vid.conheight;
+}
+
 void Draw_InitConback (void) {
 	qpic_t *cb;
 	int start;
@@ -437,8 +443,9 @@ void Draw_InitConback (void) {
 		conback.height = cb->height;
 		GL_LoadPicTexture ("conback", &conback, cb->data);
 	}
-	conback.width = vid.conwidth;
-	conback.height = vid.conheight;
+
+	Draw_AdjustConback();
+
 	// free loaded console
 	Hunk_FreeToLowMark (start);
 }
@@ -513,6 +520,7 @@ void Draw_InitCharset(void) {
 		Sys_Error("Draw_InitCharset: Couldn't load charset");
 }
 
+/*
 void Draw_ReInit (void) {
 	int i;
 	extern void GL_Texture_Free (void);
@@ -598,6 +606,7 @@ void Draw_ReInit (void) {
 	draw_disc = Draw_CacheWadPic ("disc");
 	draw_backtile = Draw_CacheWadPic ("backtile");
 }
+*/
 
 void Draw_Init (void) {
 	int i;
