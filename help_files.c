@@ -12,6 +12,7 @@ cvar_t  help_files_sortmode   = {"help_files_sortmode",   "1"};
 cvar_t  help_files_showstatus = {"help_files_showstatus", "1"};
 cvar_t  help_files_stripnames = {"help_files_stripnames", "1"};
 cvar_t  help_files_interline  = {"help_files_interline",  "0"};
+cvar_t  help_files_scrollnames= {"&help_browser_scrollnames", "0"};
 
 
 void Help_Files_Init(void)
@@ -24,6 +25,7 @@ void Help_Files_Init(void)
     Cvar_Register(&help_files_showstatus);
     Cvar_Register(&help_files_stripnames);
     Cvar_Register(&help_files_interline);
+	Cvar_Register(&help_files_scrollnames);
 	Cvar_ResetCurrentGroup();
 
     FL_Init(&help_filelist,
@@ -34,6 +36,7 @@ void Help_Files_Init(void)
         &help_files_stripnames,
         &help_files_interline,
         &help_files_showstatus,
+		&help_files_scrollnames,
 		"./ezquake/help/manual");
     FL_AddFileType(&help_filelist, 0, ".xml");
 }
