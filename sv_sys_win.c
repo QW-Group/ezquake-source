@@ -35,7 +35,7 @@ qbool WinNT;
 Sys_mkdir
 ================
 */
-void Sys_mkdir (char *path)
+void Sys_mkdir (const char *path)
 {
 	_mkdir(path);
 }

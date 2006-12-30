@@ -1,6 +1,6 @@
 /*
 	Demo Menu module
-	$Id: menu_demo.h,v 1.3 2006-12-19 23:39:44 johnnycz Exp $
+	$Id: menu_demo.h,v 1.4 2006-12-30 11:24:54 disconn3ct Exp $
 */
 
 // <interface for menu.c>
