@@ -45,6 +45,7 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
              cvar_t *        strip_names,
              cvar_t *        interline,
              cvar_t *        show_status,
+			 cvar_t *		 scroll_names,
 			 char *initdir)
 {
     Sys_getcwd(fl->current_dir, _MAX_PATH);
@@ -62,6 +63,7 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
     fl->strip_names = strip_names;
     fl->interline = interline;
     fl->show_status = show_status;
+	fl->scroll_names = scroll_names;
 	fl->search_string[0] = 0;
 
     fl->last_page_size = 0;
@@ -117,7 +119,6 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
     fl->num_filetypes ++;
 }
 
-
 //
 // get current entry
 //
@@ -128,7 +129,6 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
 
     return &fl->entries[fl->current_entry];
 }
-
 
 //
 // get current path
@@ -141,7 +141,6 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
     return fl->entries[fl->current_entry].name;
 }
 
-
 //
 // get current display
 //
@@ -153,11 +152,10 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
     return fl->entries[fl->current_entry].display;
 }
 
-
 //
 // get current entry type
 //
- int FL_GetCurrentEntryType(filelist_t *fl)
+int FL_GetCurrentEntryType(filelist_t *fl)
 {
     if (fl->num_entries <= 0)
         return -1;
@@ -165,11 +163,10 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
     return fl->filetypes[fl->entries[fl->current_entry].type_index].id;
 }
 
-
 //
 // is current entry a dir ?
 //
- qbool FL_IsCurrentDir(filelist_t *fl)
+qbool FL_IsCurrentDir(filelist_t *fl)
 {
     if (fl->num_entries <= 0)
         return true;    // we can handle that
@@ -177,6 +174,18 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
     return fl->entries[fl->current_entry].is_directory;
 }
 
+//
+// Is current entry a zip file?
+//
+qbool FL_IsCurrentZip(filelist_t *fl)
+{
+	if (fl->num_entries <= 0)
+	{
+		return true;
+	}
+
+	return fl->entries[fl->current_entry].is_zip;
+}
 
 void FL_StripFileName(filelist_t *fl, filedesc_t *f)
 {
@@ -238,13 +247,12 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
     t = f->display;
     if (f->is_directory)
         *t++ = '/';
-    for (i=0; i < strlen(namebuf)  &&  (t - f->display) < MAX_FILELIST_DISPLAY; i++)
+    for (i=0; i < strlen(namebuf)  &&  (t - f->display) < MAX_PATH; i++)
         *t++ = namebuf[i];
-    for (i=0; i < strlen(extbuf)  &&  (t - f->display) < MAX_FILELIST_DISPLAY; i++)
+    for (i=0; i < strlen(extbuf)  &&  (t - f->display) < MAX_PATH; i++)
         *t++ = extbuf[i];
     *t = 0;
 }
-
 
 //
 // goto specific file by its name
@@ -269,7 +277,6 @@ void FL_GotoFile(filelist_t *fl, char *name)
     return;
 }
 
-
 //
 // file compare func
 // set FL_CompareFunc_FileList before calling..
@@ -284,15 +291,23 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
     const filedesc_t *d1 = (filedesc_t *)p_d1;
     const filedesc_t *d2 = (filedesc_t *)p_d2;
 
-    // directories always first
+    // Directories always first.
     if (d1->is_directory &&  !d2->is_directory)
         return -1;
     if (d2->is_directory  && !d1->is_directory)
         return 1;
 
-    // directories sorted always by name, ascending
+    // Directories sorted always by name, ascending
     if (d1->is_directory && d2->is_directory)
         return strcasecmp(d1->name, d2->name);
+
+	// Zips after directories.
+	if (d1->is_zip && !d2->is_zip)
+		return -1;
+	if (d2->is_zip && !d1->is_zip)
+		return 1;
+	if (d1->is_zip && d2->is_zip)
+		return strcasecmp(d1->name, d2->name);
 
     while (true)
     {
@@ -331,7 +346,6 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
     }
 }
 
-
 //
 // sort directory
 //
@@ -355,218 +369,45 @@ void FL_SortDir(filelist_t *fl)
     fl->need_resort = false;
 }
 
-
 //
-// read directory
+// Find out if a given directory entry is a registered file type and 
+// if so, returns the index of the file type. Otherwise -1 is returned.
 //
-void FL_ReadDir(filelist_t *fl)
+static int FL_FindRegisteredType(filelist_t *fl, sys_dirent *ent)
 {
-	#ifdef WITH_ZIP
-	unzFile zip_file;
-	qbool is_zip = false;
-	filedesc_t *curr_entry = NULL;
-	#endif
+	int i = 0;
+	int result = -1;
 
-    int i;
-    sys_dirent ent;
-    unsigned long search;
-    int temp;
-    char  olddir[_MAX_PATH+1];
-
-    fl->error = true;
-    fl->need_refresh = false;
-    fl->display_entry = 0;
-
-	// Save the current directory. (we want to restore this later)
-    if (Sys_getcwd(olddir, _MAX_PATH+1) == NULL)
-	{
-        return;
-	}
-
-	// Change to the new dir.
-	#ifdef WITH_ZIP
-	curr_entry = FL_GetCurrentEntry(fl);
-	if (fl->current_entry > 0)
-	{
-		if (curr_entry != NULL && curr_entry->name != NULL)
-		{
-			is_zip = COM_ZipIsArchive (curr_entry->name);
-		}
-	}
-
-	// If it's not a zip file and we cannot change to it, abort.
-	if (!is_zip && !Sys_chdir (fl->current_dir))
-	{
-		return;
-	}
-	
-	if (is_zip)
-	{
-		// Open the zip file.
-		zip_file = COM_ZipUnpackOpenFile (curr_entry->name);
-
-		if (zip_file == NULL)
-		{
-			return;
-		}
-
-		// Set the zip file as the current dir.
-		strlcpy (fl->current_dir, curr_entry->name, sizeof(fl->current_dir));
-	}
-	#else 	
-    if (!Sys_chdir(fl->current_dir))
-	{
-		// Set the current dir.
-        return;
-	}
-	#endif // WITH_ZIP
-
-	fl->num_entries = 0;
-	fl->current_entry = 0;
-    fl->error = false;
-
-	#ifdef WITH_ZIP
-	if (is_zip)
-	{
-		if (!COM_ZipGetFirst (zip_file, &ent))
-		{
-			goto finish;
-		}
-	}
-	else
-	#endif
-	// Get the first entry in the dir.
-	{
-		search = Sys_ReadDirFirst(&ent);
-		if (!search)
-		{
-			goto finish;
-		}
-	}
-
-    do
+	if (!ent->directory)
     {
-		// Pointer to the current file entry.
-        filedesc_t *f = &fl->entries[fl->num_entries];
-        f->type_index = -1;
-
-		// Skip current/above dir and hidden files.
-		if (!strcmp(ent.fname, ".") || !strcmp(ent.fname, "..") || ent.hidden)
-		{
-            goto skip;
-		}
-
-        // Find registered type if it's not a directory.
-        if (!ent.directory)
+        for (i=0; i < fl->num_filetypes; i++)
         {
-            for (i=0; i < fl->num_filetypes; i++)
-            {
-                char ext[_MAX_EXT];
+            char ext[_MAX_EXT];
 
-                _splitpath(ent.fname, NULL, NULL, NULL, ext);
-   
-                if (!strcasecmp(fl->filetypes[i].extension, ext))
-                {
-                    f->type_index = i;
-                    break;
-                }
+            _splitpath(ent->fname, NULL, NULL, NULL, ext);
+
+            if (!strcasecmp(fl->filetypes[i].extension, ext))
+            {
+                result = i;
+                break;
             }
         }
-
-		// We're not interested in this file type since it wasn't registered.
-        if (!ent.directory && f->type_index < 0)
-		{
-            goto skip; 
-		}
-
-        // We found a file that we're interested in so save the info about it
-		// in the file description structure.
-		{
-			f->is_directory = ent.directory;
-
-			#ifdef WITH_ZIP
-			// If the found file is a zip file, treat it as a directory also.
-			if (COM_ZipIsArchive (ent.fname)) 
-			{
-				f->is_directory = true;	
-				
-			}
-
-			// If the parent to this file is a zip file, include it in the full path.
-			// c:\quake\qw\demos\demo.zip\demo.mvd
-			if (is_zip)
-			{
-				snprintf (f->name, sizeof(f->name), "%s%c%s", curr_entry->name, PATH_SEPARATOR, ent.fname);
-			}
-			else
-			#endif // WITH_ZIP
-			{
-				Sys_fullpath(f->name, ent.fname, _MAX_PATH+1);
-			}
-
-			f->size = ent.size;
-			memcpy(&f->time, &ent.time, sizeof(f->time));
-		}
-
-        // Find friendly name
-        FL_StripFileName(fl, f);
-
-        // Increase counter of how many files have been found.
-        fl->num_entries++;
-        if (fl->num_entries >= MAX_FILELIST_ENTRIES)
-		{
-            break;
-		}
-skip:
-        // Get next filesystem entry
-		#ifdef WITH_ZIP
-		if (is_zip)
-		{
-			temp = COM_ZipGetNextFile (zip_file, &ent);
-		}
-		else
-		#endif // WITH_ZIP
-		{
-			temp = Sys_ReadDirNext(search, &ent);
-		}
     }
-    while (temp > 0);
 
-	#ifdef WITH_ZIP
-	if (!is_zip)
-	#endif 
-	{
-		// Close the handle for the directory.
-		Sys_ReadDirClose(search);
-	}
+	return result;
+}
 
-    fl->need_resort = true;
+//
+// Finds which entry to highlight after doing "cd up".
+// 
+static void FL_FindHighlightEntry (filelist_t *fl)
+{
+	int i = 0;
 
-finish:
-	#ifdef WITH_ZIP
-	if (is_zip)
-	{
-		// Close the zip file.
-		COM_ZipUnpackCloseFile (zip_file);
-		//Sys_chdir (fl->current_dir);
-		Sys_chdir (olddir);
-	}
-	else
-	#endif
-	{
-		// Change the current dir back to what it was.
-		Sys_chdir (olddir);
-	}
-
-    // Re-sort the file list if needed.
-    if (fl->need_resort)
-	{
-        FL_SortDir (fl);
-	}
-
-    fl->current_entry = 0;  // resort could change that
-
-    // Look for what we have to highlight if valid (cdup)
+	// Look for what we have to highlight when listing the files in the
+	// parent directory. If we're in c:\quake\qw\some_directory\ and do a cdup ".."
+	// we want to highlight (move the cursor to) "some_directory" in the file list
+	// of c:\quake\qw\ so that it's obvious which directory we just left.
     if (fl->cdup_find)
     {
         int uplen = strlen (fl->cdup_name);
@@ -589,6 +430,231 @@ finish:
             break;
         }
     }
+}
+
+#ifdef WITH_ZIP
+//
+// Read the ZIP file.
+//
+void FL_ReadZip (filelist_t *fl)
+{
+	int temp = 0;
+	unzFile zip_file;
+	sys_dirent ent;
+	
+	fl->error = true;
+    fl->need_refresh = false;
+    fl->display_entry = 0;
+	fl->num_entries = 0;
+	fl->current_entry = 0;
+
+	// Open the zip file.
+	if (fl->current_zip != NULL)
+	{
+		zip_file = COM_ZipUnpackOpenFile (fl->current_zip);
+	}
+	else
+	{
+		return;
+	}
+
+	if (zip_file == NULL)
+	{
+		return;
+	}
+
+	// Get the first file from the zip file.
+	if (!COM_ZipGetFirst (zip_file, &ent))
+	{
+		goto finish;
+	}
+
+	fl->error = false;
+
+	do
+    {
+		// Pointer to the current file entry.
+        filedesc_t *f = &fl->entries[fl->num_entries];
+        f->type_index = -1;
+
+		// Skip current/above dir and hidden files.
+		if (!strcmp(ent.fname, ".") || !strcmp(ent.fname, "..") || ent.hidden)
+		{
+            goto skip;
+		}
+
+        // Find registered type if it's not a directory.
+		f->type_index = FL_FindRegisteredType (fl, &ent);
+
+		// We're not interested in this file type since it wasn't registered.
+		if (!ent.directory && f->type_index < 0)
+		{
+			goto skip; 
+		}
+
+        // We found a file that we're interested in so save the info about it
+		// in the file description structure.
+		f->is_directory = ent.directory;
+
+		// Get the full path for the file.
+		snprintf (f->name, sizeof(f->name), "%s%c%s", fl->current_zip, PATH_SEPARATOR, ent.fname);
+
+		f->size = ent.size;
+		memcpy(&f->time, &ent.time, sizeof(f->time));
+
+        // Find friendly name.
+        FL_StripFileName(fl, f);
+
+        // Increase counter of how many files have been found.
+        fl->num_entries++;
+        if (fl->num_entries >= MAX_FILELIST_ENTRIES)
+		{
+            break;
+		}
+skip:
+        // Get next filesystem entry	
+		//temp = Sys_ReadDirNext(search, &ent);
+		temp = COM_ZipGetNextFile (zip_file, &ent); 
+    }
+    while (temp > 0);
+
+	fl->need_resort = true;
+
+finish:
+	// Close the zip file.
+	COM_ZipUnpackCloseFile (zip_file);
+
+	// Re-sort the file list if needed.
+    if (fl->need_resort)
+	{
+        FL_SortDir (fl);
+	}
+
+	// Resort might have changed this.
+    fl->current_entry = 0;  
+
+	// Find which item to highlight in the list.
+	FL_FindHighlightEntry(fl);
+}
+#endif // WITH_ZIP
+
+//
+// read directory
+//
+void FL_ReadDir(filelist_t *fl)
+{
+    sys_dirent ent;
+    unsigned long search;
+    int temp;
+    char  olddir[_MAX_PATH+1];
+
+    fl->error = true;
+    fl->need_refresh = false;
+    fl->display_entry = 0;
+
+	// Save the current directory. (we want to restore this later)
+    if (Sys_getcwd(olddir, _MAX_PATH+1) == NULL)
+	{
+        return;
+	}
+
+	// Change to the new dir.
+    if (!Sys_chdir(fl->current_dir))
+	{
+		// Set the current dir.
+        return;
+	}
+
+	fl->num_entries = 0;
+	fl->current_entry = 0;
+    fl->error = false;
+
+	// Get the first entry in the dir.
+
+	search = Sys_ReadDirFirst(&ent);
+	if (!search)
+	{
+		goto finish;
+	}
+
+    do
+    {
+		// Pointer to the current file entry.
+        filedesc_t *f = &fl->entries[fl->num_entries];
+        f->type_index = -1;
+
+		// Skip current/above dir and hidden files.
+		if (!strcmp(ent.fname, ".") || !strcmp(ent.fname, "..") || ent.hidden)
+		{
+            goto skip;
+		}
+
+        // Find registered type if it's not a directory.
+		f->type_index = FL_FindRegisteredType (fl, &ent);
+
+		#ifdef WITH_ZIP
+		if (COM_ZipIsArchive (ent.fname))
+		{
+			f->is_zip = true;
+		}
+		#endif
+
+		// We're not interested in this file type since it wasn't registered.
+        if (!ent.directory && f->type_index < 0
+		#ifdef WITH_ZIP
+			&& f->is_zip
+		#endif
+			)
+		{
+			goto skip;
+		}
+
+        // We found a file that we're interested in so save the info about it
+		// in the file description structure.
+		{
+			f->is_directory = ent.directory;
+
+			Sys_fullpath(f->name, ent.fname, _MAX_PATH+1);
+
+			f->size = ent.size;
+			memcpy(&f->time, &ent.time, sizeof(f->time));
+		}
+
+        // Find friendly name.
+        FL_StripFileName(fl, f);
+
+        // Increase counter of how many files have been found.
+        fl->num_entries++;
+        if (fl->num_entries >= MAX_FILELIST_ENTRIES)
+		{
+            break;
+		}
+skip:
+        // Get next filesystem entry
+		temp = Sys_ReadDirNext(search, &ent);
+    }
+    while (temp > 0);
+
+	// Close the handle for the directory.
+	Sys_ReadDirClose(search);
+
+    fl->need_resort = true;
+
+finish:
+	// Change the current dir back to what it was.
+	Sys_chdir (olddir);
+
+    // Re-sort the file list if needed.
+    if (fl->need_resort)
+	{
+        FL_SortDir (fl);
+	}
+
+	// Resort might have changed this.
+    fl->current_entry = 0;  
+
+	// Find which item to highlight in the list.
+	FL_FindHighlightEntry(fl);
 
     return;
 }
@@ -619,6 +685,16 @@ qbool FL_Search(filelist_t *fl)
     return false;
 }
 
+//
+// FL_ChangeZip - enter a zip file
+//
+void FL_ChangeZip(filelist_t *fl, char *newzip)
+{
+	strlcpy (fl->current_zip, newzip, sizeof(fl->current_zip));
+	fl->in_zip = true;
+
+	fl->need_refresh = true;
+}
 
 //
 // FL_ChangeDir - changes directory
@@ -626,14 +702,6 @@ qbool FL_Search(filelist_t *fl)
 void FL_ChangeDir(filelist_t *fl, char *newdir)
 {
 	char olddir[_MAX_PATH+1];
-
-	#ifdef WITH_ZIP
-	char old_current_dir[_MAX_PATH+1];
-	char zip_parent[_MAX_PATH+1];
-	qbool is_zip = COM_ZipIsArchive (fl->current_dir);
-
-	strlcpy (old_current_dir, fl->current_dir, sizeof(old_current_dir));
-	#endif
  
 	// Get the current dir from the OS and save it.
     if (Sys_getcwd(olddir, _MAX_PATH+1) == NULL)
@@ -644,36 +712,6 @@ void FL_ChangeDir(filelist_t *fl, char *newdir)
 	// Change to the current dir that we're in (might be different from the OS's).
 	// If we're changing dirs in a relative fashion ".." for instance we need to 
 	// be in this dir, and not the dir that the OS is in.
-	#ifdef WITH_ZIP
-	if (is_zip) 
-	{
-		// Zip file.
-
-		// A zip file isn't a directory, but we're pretending it is. To be able to move around in
-		// the filesystem we use the parent directory instead.
-		strlcpy (zip_parent, fl->current_dir, 
-			min(sizeof(zip_parent), strlen(fl->current_dir) - strlen (COM_SkipPath(fl->current_dir))));
-
-		// Change to the parent directory of the zip.
-		if (Sys_chdir(zip_parent) == 0)
-		{
-			return;
-		}
-
-		// If we were trying to change the directory to ".." (parenT) we have already done that.
-		if (!strncmp (newdir, "..", 2))
-		{
-			newdir += 2;
-		}
-
-		// Make sure we don't have any slashes left at the start of the destination string.
-		while (*newdir == '/' || *newdir == '\\')
-		{
-			newdir ++;
-		}
-	}
-	else 
-	#endif // WITH_ZIP
     if (Sys_chdir(fl->current_dir) == 0)
 	{
 		// Normal directory.
@@ -690,6 +728,12 @@ void FL_ChangeDir(filelist_t *fl, char *newdir)
     Sys_chdir (olddir);
 
     fl->need_refresh = true;
+
+	#ifdef WITH_ZIP
+	// Since we just changed to a new directory we can't be in a zip file.
+	fl->current_zip[0] = 0;
+	fl->in_zip = false;
+	#endif // WITH_ZIP
 }
 
 
@@ -698,23 +742,49 @@ void FL_ChangeDir(filelist_t *fl, char *newdir)
 //
 void FL_ChangeDirUp(filelist_t *fl)
 {
-    char *t;
+	int current_len = 0;
 
+	// No point doing anything.
     if (strlen(fl->current_dir) < 2)
+	{
         return;
+	}
 
-    t = fl->current_dir + strlen(fl->current_dir) - 2;
+	// Get the name of the directory we're leaving, so that we can highlight it
+	// in the file list of it's parent. (makes it easier keep track of where you are)
+	{
+		current_len = strlen(fl->current_dir);
 
-    while (t > fl->current_dir  &&  *t != PATH_SEPARATOR)
-        t--;
+		fl->cdup_find = true;
+		
+		#ifdef WITH_ZIP
+		if (fl->in_zip)
+		{
+			strlcpy (fl->cdup_name, COM_SkipPath(fl->current_zip), sizeof(fl->cdup_name));
+		}
+		else
+		#endif // WITH_ZIP
+		{
+			strlcpy (fl->cdup_name, COM_SkipPath(fl->current_dir), sizeof(fl->cdup_name));
+		}
 
-    if (*t != PATH_SEPARATOR)
-        return;
+		// fl->cdup_name will be:
+		// the_directory_were_leaving
+		// If the full path was:
+		// c:\quake\qw\the_directory_were_leaving
+	}
 
-    fl->cdup_find = true;
-    strlcpy (fl->cdup_name, t, sizeof(fl->cdup_name));
-
-    FL_ChangeDir(fl, "..");
+	// Change the dir to "c:\quake\qw" (from above example).
+	#ifdef WITH_ZIP
+	if (fl->in_zip)
+	{
+		FL_ChangeDir(fl, fl->current_dir);
+	}
+	else
+	#endif // WITH_ZIP
+	{
+		FL_ChangeDir(fl, "..");
+	}
 }
 
 
@@ -763,7 +833,7 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
 			case K_ENTER:
 				if (!FL_IsCurrentDir(fl)) {
 					ce = fl->current_entry;		// remember where we were
-					unlink(FL_GetCurrentPath(fl));
+					_unlink(FL_GetCurrentPath(fl));
 					FL_ReadDir(fl);				// reload dir
 					fl->current_entry = ce - 1; // set previous position
 					FL_CheckPosition(fl);
@@ -888,6 +958,13 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
             FL_ChangeDir(fl, FL_GetCurrentPath(fl));
             return true;
         }
+		#ifdef WITH_ZIP
+		else if (FL_IsCurrentZip(fl))
+		{
+			FL_ChangeZip(fl, FL_GetCurrentPath(fl));
+			return true;
+		}
+		#endif //WITH_ZIP
         else
         {
 			return false;
@@ -953,13 +1030,27 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
     return false;
 }
 
-// this is used only in FL_Draw below, EX_browser.c has Add_Column2
+//
+// This is used only in FL_Draw below, EX_browser.c has Add_Column2
+//
 static void Add_Column(char *line, int *pos, char *t, int w)
 {
+	// Adds columns starting from the right.
+
+	// If we're too far to the left we can't fit a column
+	// of this width.
     if ((*pos) - w - 1  <=  1)
+	{
         return;
+	}
+
+	// Move the position to the left by the width of the column.
     (*pos) -= w;
-    memcpy(line+(*pos), t, min(w, strlen(t)));
+
+	// Copy the contents into the column.
+    memcpy(line + (*pos), t, min(w, strlen(t)));
+	
+	// Create a space for the next column.
     (*pos)--;
     line[*pos] = ' ';
 }
@@ -982,11 +1073,9 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		return;
 	}
 
-    w = (w/8)*8;
-    //h = (h/8)*8;
     fl->last_page_size = 0;
 
-    // calc interline
+    // Calculate interline (The space between each row)
     interline = fl->interline->value;
     interline = max(interline, 0);
     interline = min(interline, 6);
@@ -996,32 +1085,59 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
     listsize = h / rowh;
 
     // check screen boundaries and mimnimum size
-    if (w < 160  ||  h < 80)
+    if ((w < 160) || (h < 80))
         return;
-    if (x < 0  ||  y < 0  ||  x+w > vid.width  ||  y+h > vid.height)
+    if ((x < 0) || (y < 0) || (x + w > vid.width) || (y + h > vid.height))
         return;
 
     if (fl->need_refresh)
-        FL_ReadDir(fl);
-    if (fl->need_resort)
-        FL_SortDir(fl);
-    if (fl->search_dirty)
-        FL_Search(fl);
+	{
+		#ifdef WITH_ZIP
+		if (fl->in_zip)
+		{
+			FL_ReadZip (fl);
+		}
+		else
+		#endif // WITH_ZIP
+		{
+			FL_ReadDir(fl);
+		}
+	}
 
-    // print current dir
-    if (strlen(fl->current_dir) <= w/8)
-        strcpy(line, fl->current_dir);
-    else
-    {
-        strncpy(line, fl->current_dir, 10);
-        strcpy(line+10, "...");
-        strncpy(line+13, fl->current_dir + strlen(fl->current_dir) - w/8 + 13, w/8);
-    }
+    if (fl->need_resort)
+	{
+        FL_SortDir(fl);
+	}
+
+    if (fl->search_dirty)
+	{
+		FL_Search(fl);
+	}
+
+	// Print the current path.
+	{
+		char *curr_path = NULL;
+
+		#ifdef WITH_ZIP
+		if (fl->in_zip)
+		{
+			curr_path = fl->current_zip;
+		}
+		else
+		#endif // WITH_ZIP
+		{
+			curr_path = fl->current_dir;
+		}
+
+		// Make the path fit on screen "c:\quake\bla\bla\bla" => "c:\quake...la\bla".
+		COM_FitPath (line, sizeof(line), curr_path, w/8);
+	}
+
     line[w/8] = 0;
-    UI_Print(x, y+inter_up, line, true);
+    UI_Print(x, y + inter_up, line, true);
     listsize--;
 
-    // draw column titles
+    // Draw column titles
     pos = w/8;
     memset(line, ' ', pos);
     line[pos] = 0;
@@ -1034,26 +1150,32 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         Add_Column(line, &pos, "  kb", COL_SIZE);
 
     memcpy(line, "name", min(pos, 4));
-    UI_Print_Center(x, y+rowh+inter_dn, w, line, true);
+    UI_Print_Center(x, y + rowh + inter_dn, w, line, true);
     listsize--;
 
+	// Nothing to show.
     if (fl->num_entries <= 0)
     {
-        UI_Print_Center(x, y+2*rowh+inter_dn+4, w, "directory empty", false);
+        UI_Print_Center(x, y + 2 * rowh + inter_dn + 4, w, "directory empty", false);
         return;
     }
+
+	// Something went wrong when processing the directory.
     if (fl->error)
     {
-        UI_Print_Center(x, y+2*rowh+inter_dn+4, w, "error reading directory", false);
+        UI_Print_Center(x, y + 2 * rowh + inter_dn + 4, w, "error reading directory", false);
         return;
     }
 
+	// If we're showing the status bar we have less room for the file list.
     if (fl->show_status->value)
+	{
         listsize -= 3;
+	}
 
-    fl->last_page_size = listsize;  // remember for PGUP/PGDN
+    fl->last_page_size = listsize;  // Remember for PGUP/PGDN
 
-    // check / fix display position now
+    // Check / fix display position now
     FL_CheckPosition(fl);
     FL_CheckDisplayPosition(fl, listsize);
 
@@ -1069,13 +1191,13 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 
         entry = &fl->entries[filenum];
 
-        // extract date & time
-        sprintf(date, "%02d-%02d-%02d", entry->time.wYear % 100,
+        // Extract date & time.
+        snprintf (date, sizeof(date), "%02d-%02d-%02d", entry->time.wYear % 100,
                 entry->time.wMonth, entry->time.wDay);
-        sprintf(time, "%2d:%02d",
+        snprintf (time, sizeof(time), "%2d:%02d",
                 entry->time.wHour, entry->time.wMinute);
 
-        // extract size
+        // Extract size.
         if (entry->is_directory)
         {
             strcpy(size, "<-->");
@@ -1101,7 +1223,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
             }
         }
 
-        // display it
+        // Add the columns to the current row (starting from the right).
         pos = w/8;
         memset(line, ' ', pos);
         if (fl->show_time->value)
@@ -1111,55 +1233,129 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         if (fl->show_size->value)
             Add_Column(line, &pos, size, COL_SIZE);
 
-        memcpy(line, entry->display, min(pos, strlen(entry->display)));
+		//
+		// Copy the display name of the entry into the space that's left on the row.
+		//
+		if ((filenum == fl->current_entry) && (strlen(entry->display) > pos) && fl->scroll_names->value)
+		{
+			// We need to scroll the text since it doesn't fit.
+			#define SCROLL_RIGHT 1
+			#define SCROLL_LEFT 0
 
+			double			t = 0;
+			static double	t_last_scroll = 0;
+			static qbool	wait = false;
+			static int		scroll_position = 0;
+			static int		scroll_direction = SCROLL_RIGHT;
+			static int		last_text_length = 0;
+			int				text_length = strlen(entry->display);
+			float			scroll_delay = 0.1;
+
+			// If the text has changed since last time we scrolled
+			// the scroll data will be invalid so reset it.
+			if (last_text_length != text_length)
+			{
+				scroll_position = 0;
+				scroll_direction = SCROLL_RIGHT;
+				last_text_length = text_length;
+			}
+
+			// Get the current time.
+			t = Sys_DoubleTime();
+
+			// Time to scroll.
+			if (!wait && (t - t_last_scroll) > scroll_delay)
+			{
+				// Save the current time as the last time we scrolled 
+				// and change the scroll position depending on what direction we're scrolling.
+				t_last_scroll = t;
+				scroll_position = (scroll_direction == SCROLL_RIGHT) ? scroll_position + 1 : scroll_position - 1;
+			}
+			
+			// Set the scroll direction.
+			if (text_length - scroll_position == pos)
+			{
+				// We've reached the end, go back.
+				scroll_direction = SCROLL_LEFT;
+				wait = true;
+			}
+			else if (scroll_position == 0)
+			{
+				// At the beginning, start over.
+				scroll_direction = SCROLL_RIGHT;
+				wait = true;
+			}
+
+			if (wait && (t - t_last_scroll) > 1.0)
+			{
+				wait = false;
+			}
+
+			memcpy(line, entry->display + scroll_position, min(pos, text_length + scroll_position));
+		}
+		else
+		{
+			// Fits in the name column, no need to scroll (or the user doesn't want us to scroll :~<)
+			memcpy(line, entry->display, min(pos, strlen(entry->display)));
+		}
+
+		// Draw a cursor character at the end of the name column.
         if (filenum == fl->current_entry)
+		{
             line[pos] = 141;
+		}
 
-        line[w/8] = 0;
-        UI_Print_Center(x, y+rowh*(i+2)+inter_dn, w, line, filenum==fl->current_entry);
+		// Max amount of characters that fits on a line.
+		line[w/8] = 0;
 
-        // remember for status bar
+		// Print the line for the directory entry.
+        UI_Print_Center(x, y + rowh * (i + 2) + inter_dn, w, line, filenum == fl->current_entry);
+
+        // Remember the currently selected file for dispalying in the status bar
         if (filenum == fl->current_entry)
         {
-            strcpy(sname, entry->display);
+			strlcpy (sname, line, min (pos, sizeof(sname)));
             strcpy(stime, time);
-            sprintf(sdate, "%02d-%02d-%02d", entry->time.wYear % 100,
+            snprintf(sdate, sizeof(sdate), "%02d-%02d-%02d", entry->time.wYear % 100,
                 entry->time.wMonth, entry->time.wDay);
         }
     }
 
+	// Show a statusbar displaying the currently selected entry.
     if (fl->show_status->value)
     {
+		// Print a line to part the status bar from the file list.
         memset(line, '\x1E', w/8);
         line[w/8] = 0;
-        line[w/8-1] = '\x1F';
+        line[w/8 - 1] = '\x1F';
         line[0] = '\x1D';
-        UI_Print(x, y+h-3*rowh-inter_up, line, false);
+        UI_Print(x, y + h - 3 * rowh - inter_up, line, false);
 
+		// Print the name.
         sname[w/8] = 0;
-        UI_Print_Center(x, y+h-2*rowh-inter_up, w, sname, false);
+        UI_Print_Center(x, y + h - 2 * rowh-inter_up, w, sname, false);
 
         if (fl->search_valid)
-        {	// some weird but nice-looking string in Quake font perhaps
+        {	
+			// Some weird but nice-looking string in Quake font perhaps
 			strcpy(line, "search for: ");   // seach for:
             if (fl->search_error)
             {
                 strcat(line, "not found");
                 line[w/8] = 0;
-                UI_Print_Center(x, y+h-rowh-inter_up, w, line, false);
+                UI_Print_Center(x, y + h - rowh - inter_up, w, line, false);
             }
             else
             {
                 strcat(line, fl->search_string);
                 line[w/8] = 0;
-                UI_Print_Center(x, y+h-rowh-inter_up, w, line, true);
+                UI_Print_Center(x, y + h - rowh - inter_up, w, line, true);
             }
         }
         else
         {
             sprintf(line, "%s \x8f modified: %s %s", ssize, sdate, stime);
-            UI_Print_Center(x, y+h-rowh-inter_up, w, line, false);
+            UI_Print_Center(x, y + h - rowh - inter_up, w, line, false);
         }
     }
 }

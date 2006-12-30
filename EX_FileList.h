@@ -47,9 +47,14 @@ filetype_t;
 //
 typedef struct filedesc_s
 {
-    qbool        is_directory;
-    char            name[_MAX_PATH+1];
-    char            display[MAX_FILELIST_DISPLAY+1];
+    qbool			is_directory;
+
+	#ifdef WITH_ZIP
+	qbool			is_zip;
+	#endif
+    
+	char            name[_MAX_PATH+1];
+    char            display[MAX_PATH+1];
     unsigned long   size;
     SYSTEMTIME      time;
     int             type_index;
@@ -61,41 +66,44 @@ filedesc_t;
 //
 typedef struct filelist_s
 {
-    char            current_dir[_MAX_PATH+1];
-    qbool        error;          // error reading dir
-    qbool        need_refresh;   // dir is reread in draw func
-    qbool        need_resort;    // dir is sorted in draw func
+    char			current_dir[_MAX_PATH+1];
+	char			current_zip[_MAX_PATH+1];
+	qbool			in_zip;
+    qbool			error;          // error reading dir
+    qbool			need_refresh;   // dir is reread in draw func
+    qbool			need_resort;    // dir is sorted in draw func
 
-    filedesc_t      entries[MAX_FILELIST_ENTRIES];
-    int             num_entries;
-    int             current_entry;
-    int             display_entry;  // first item displayed
+    filedesc_t		entries[MAX_FILELIST_ENTRIES];
+    int				num_entries;
+    int				current_entry;
+    int				display_entry;  // first item displayed
 
-    filetype_t      filetypes[MAX_FILELIST_TYPES];
-    int             num_filetypes;
+    filetype_t		filetypes[MAX_FILELIST_TYPES];
+    int				num_filetypes;
 
     // some vars
-    cvar_t *       sort_mode;
-    cvar_t *       show_size;
-    cvar_t *       show_date;
-    cvar_t *       show_time;
-    cvar_t *       strip_names;
-    cvar_t *       interline;
-    cvar_t *       show_status;
+    cvar_t *		sort_mode;
+    cvar_t *		show_size;
+    cvar_t *		show_date;
+    cvar_t *		show_time;
+    cvar_t *		strip_names;
+    cvar_t *		interline;
+    cvar_t *		show_status;
+	cvar_t *		scroll_names;
 
     // for PGUP/PGDN, filled by drawing func
-    int             last_page_size;
+    int				last_page_size;
 
     // for searching
-    char            search_string[MAX_SEARCH_STRING+1];
-    qbool        search_valid;   // if is in search mode
-    qbool        search_dirty;   // if should research
-    qbool        search_error;   // not found
-	qbool		 delete_mode;	 // are we deleting a file?
+    char			search_string[MAX_SEARCH_STRING+1];
+    qbool			search_valid;   // if is in search mode
+    qbool			search_dirty;   // if should research
+    qbool			search_error;   // not found
+	qbool			delete_mode;	// are we deleting a file?
 
     // for cd ..
     char            cdup_name[_MAX_PATH+1];
-    qbool        cdup_find;
+    qbool			cdup_find;
 }
 filelist_t;
 
@@ -124,6 +132,7 @@ void FL_Init(filelist_t *fl,
              cvar_t *        strip_names,
              cvar_t *        interline,
              cvar_t *        show_status,
+			 cvar_t *		 scroll_names,
 			 char *			 initdir);
 
 
