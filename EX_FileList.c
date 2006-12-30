@@ -811,7 +811,7 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
 
     // sorting mode / displaying columns
 	if (key >= '1' && key <= '4') {
-		if (isCtrlDown && !isAltDown() && !isShiftDown())
+		if (isCtrlDown() && !isAltDown() && !isShiftDown())
 		{
 			switch (key)
 			{

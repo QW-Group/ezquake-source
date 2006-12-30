@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.23 2006-12-23 06:57:27 qqshka Exp $
+	$Id: cl_ents.c,v 1.24 2006-12-30 11:30:48 disconn3ct Exp $
 
 */
 
@@ -178,7 +178,7 @@ void CL_AddEntity (entity_t *ent) {
 
 // NUM_DLIGHTTYPES - this constant not used here, but help u find dynamic light related code if u change something
 static dlighttype_t dl_colors[] = {lt_red, lt_blue, lt_redblue, lt_green, lt_white};
-static dl_colors_cnt = sizeof(dl_colors) / sizeof(dl_colors[0]);
+static int dl_colors_cnt = sizeof(dl_colors) / sizeof(dl_colors[0]);
 
 dlighttype_t dlightColor(float f, dlighttype_t def, qbool random) {
 
