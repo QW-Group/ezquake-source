@@ -2534,7 +2534,7 @@ void CL_FakeExplosion (vec3_t pos)
 			dl->decay = 300;
 			dlightColorEx(r_explosionlightcolor.value, r_explosionlightcolor.string, lt_explosion, true, &cst_lt);
 			dl->type = cst_lt.type;
-			if (dl->type = lt_custom)
+			if (dl->type == lt_custom)
 				VectorCopy(cst_lt.color, dl->color);
 			//VULT CORONAS
 			if (amf_coronas.value)
