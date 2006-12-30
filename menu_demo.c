@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.8 2006-12-27 22:36:09 cokeman1982 Exp $
+		$Id: menu_demo.c,v 1.9 2006-12-30 11:30:14 disconn3ct Exp $
 
 */
 
@@ -100,7 +100,7 @@ static int demo_playlist_current_played = 0;
 static int demo_playlist_cursor = 0;
 static int demo_playlist_num = 0;
 static int demo_playlist_opt_cursor = 0;
-static int demo_playlist_section = DEMO_PLAYLIST_TAB_MAIN;
+//static int demo_playlist_section = DEMO_PLAYLIST_TAB_MAIN;
 static int demo_playlist_started_test = 0;
 
 static int demo_options_cursor = 0;
@@ -275,6 +275,7 @@ static void Demo_Playlist_SelectNext(void)
 	Demo_Playlist_Setup_f();
 }
 
+/*
 static void Demo_FormatSize (char *t) {
 	char *s;
 
@@ -285,6 +286,7 @@ static void Demo_FormatSize (char *t) {
 			*s |= 128;
 	}
 }
+*/
 
 // ============
 // <draw pages>
