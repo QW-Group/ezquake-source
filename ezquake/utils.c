@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.28 2006-12-07 18:12:43 cokeman1982 Exp $
+	$Id: utils.c,v 1.29 2006-12-30 05:45:47 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -98,7 +98,7 @@ char *ColorNameToRGBString(char *color_name)
 }
 
 byte *StringToRGB(char *s) {
-	int i;
+	int i, argc;
 	static byte rgb[4];
 
 	rgb[0] = rgb[1] = rgb[2] = rgb[3] = 255;
@@ -117,12 +117,42 @@ byte *StringToRGB(char *s) {
 	else
 	#endif
 	{
-		for(i = 0; i < min(Cmd_Argc(), sizeof(rgb)/sizeof(rgb[0])); i++)
+		argc = min(Cmd_Argc(), 4);
+		for(i = 0; i < argc; i++)
 		{
 			rgb[i] = (byte) Q_atof(Cmd_Argv(i));
 		}
 	}
 	return rgb;
+}
+
+/*
+	float f[10];
+	int size = sizeof(f)/sizeof(f[0]);
+
+	// this will fill "f" with succesfully parsed floats from first string parammeter
+	// "size" will contain count of parsed floats
+	ParseFloats("1.0 2.0 999 5", f, &size);
+*/
+int ParseFloats(char *s, float *f, int *f_size) {
+	int i, argc;
+
+	if (!s || !f || !f_size)
+		Sys_Error("ParseFloats() wrong params");
+
+	if (f_size[0] <= 0)
+		return (f_size[0] = 0); // array have no size, unusual but no crime
+
+	Cmd_TokenizeString(s);
+	argc = min(Cmd_Argc(), f_size[0]);
+	
+	for(i = 0; i < argc; i++)
+		f[i] = Q_atof(Cmd_Argv(i));
+
+	for( ; i < f_size[0]; i++)
+		f[i] = 0; // zeroing unused elements
+
+	return (f_size[0] = argc);
 }
 
 /************************************** File Utils **************************************/
