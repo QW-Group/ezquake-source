@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.h,v 1.10 2006-12-06 00:55:04 cokeman1982 Exp $
+	$Id: utils.h,v 1.11 2006-12-30 05:45:47 qqshka Exp $
 
 */
 
@@ -33,6 +33,7 @@ char *SecondsToMinutesString(int print_time);
 char *SecondsToHourString(int time);
 char *ColorNameToRGBString(char *color_name);
 byte *StringToRGB(char *s);
+int ParseFloats(char *s, float *f, int *f_size);
 
 int Util_Extend_Filename(char *filename, char **ext);
 qbool Util_Is_Valid_Filename(char *s);

@@ -44,7 +44,8 @@ cvar_t	v_viewheight = {"v_viewheight", "0"};
 
 
 cvar_t	cl_drawgun = {"r_drawviewmodel", "1"};
-cvar_t	r_viewmodelsize = {"r_viewmodelSize", "1"};	
+cvar_t	r_viewmodelsize = {"r_viewmodelSize", "1"};
+cvar_t	r_viewmodeloffset = {"r_viewmodeloffset", ""};
 
 qbool Change_v_idle (cvar_t *var, char *value);
 cvar_t	v_iyaw_cycle = {"v_iyaw_cycle", "2", 0, Change_v_idle};
@@ -865,7 +866,7 @@ void V_CalcViewRoll (void) {
 }
 
 void V_AddViewWeapon (float bob) {
-	vec3_t forward;
+	vec3_t forward, right, up;
 	centity_t *cent;
 	extern cvar_t scr_fov;
 
@@ -885,9 +886,21 @@ void V_AddViewWeapon (float bob) {
 	cent->current.angles[PITCH] = -r_refdef.viewangles[PITCH];
 	cent->current.angles[ROLL] = r_refdef.viewangles[ROLL];
 	//origin
-	AngleVectors (r_refdef.viewangles, forward, NULL, NULL);
+
+	AngleVectors (r_refdef.viewangles, forward, right, up);
 	VectorCopy (r_refdef.vieworg, cent->current.origin);
 	VectorMA (cent->current.origin, bob * 0.4, forward, cent->current.origin);
+
+	if (r_viewmodeloffset.string[0]) {
+		float offset[3];
+		int size = sizeof(offset)/sizeof(offset[0]);
+
+		ParseFloats(r_viewmodeloffset.string, offset, &size);
+		VectorMA (cent->current.origin,  offset[0], right,   cent->current.origin);
+		VectorMA (cent->current.origin, -offset[1], up,      cent->current.origin);
+		VectorMA (cent->current.origin,  offset[2], forward, cent->current.origin);
+	}
+
 	// fudge position around to keep amount of weapon visible roughly equal with different FOV
 	if (scr_viewsize.value == 110)
 		cent->current.origin[2] += 1;
@@ -1082,6 +1095,7 @@ void V_Init (void) {
 
 	Cvar_Register (&cl_drawgun);
 	Cvar_Register (&r_viewmodelsize);
+	Cvar_Register (&r_viewmodeloffset);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIEW);
 	Cvar_Register (&v_kicktime);
