@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.41 2006-12-30 05:24:40 qqshka Exp $
+    $Id: common.c,v 1.42 2006-12-30 21:03:07 cokeman1982 Exp $
 
 */
 
@@ -91,17 +91,89 @@ void COM_StoreOriginalCmdline(int argc, char **argv)
 
 char *COM_SkipPath (char *pathname)
 {
-	char	*last;
+	char *last = NULL;
+	char *p = NULL;
 
 	last = pathname;
-	while (*pathname) {
-		if (*pathname == '/' || *pathname == '\\')
-			last = pathname+1;
-		pathname++;
+	p = pathname;
+
+	while (*p) 
+	{
+		if (*p == '/' || *p == '\\')
+		{
+			last = p + 1;
+		}
+		p++;
 	}
+
 	return last;
 }
 
+//
+
+// Makes a path fit in a specified sized string "c:\quake\bla\bla\bla" => "c:\quake...la\bla"
+//
+char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit)
+{
+	if (!src)
+	{
+		return dest;
+	}
+
+	if (size_to_fit > destination_size)
+	{
+		size_to_fit = destination_size;
+	}
+
+	if (strlen(src) <= size_to_fit)
+	{
+		// Entire path fits in the destination.
+		strlcpy(dest, src, destination_size);
+	}
+	else
+	{
+		#define DOT_SIZE		3
+		#define MIN_LEFT_SIZE	3
+		int right_size = 0;
+		int left_size = 0;
+		int temp = 0;
+		char *right_dir = COM_SkipPath(src);
+		
+		// Get the size of the right-most part of the path (filename/directory).
+		right_size = strlen (right_dir);
+
+		// Try to fit the dir/filename if possible.
+		temp = right_size + DOT_SIZE + MIN_LEFT_SIZE;
+		right_size = (temp > size_to_fit) ? abs(right_size - (temp - size_to_fit)) : right_size;
+
+		// Let the left have the rest.
+		left_size = size_to_fit - right_size - DOT_SIZE;
+
+		// Only let the left have 35% of the total size.
+		left_size = min (left_size, ROUND(0.35 * size_to_fit));
+
+		// Get the final right size.
+		right_size = size_to_fit - left_size - DOT_SIZE - 1;
+
+		// Make sure we don't have negative values, 
+		// because then our safety checks won't work.
+		left_size = max (0, left_size);
+		right_size = max (0, right_size);
+		
+		if (left_size < destination_size)
+		{
+			strlcpy (dest, src, destination_size);
+			strlcpy (dest + left_size, "...", destination_size);
+				
+			if (left_size + DOT_SIZE + right_size < destination_size)
+			{
+				strlcpy (dest + left_size + DOT_SIZE, src + strlen(src) - right_size, right_size + 1);
+			}
+		}
+	}
+
+	return dest;
+}
 
 void COM_StripExtension (char *in, char *out)
 {
@@ -131,10 +203,9 @@ char *COM_FileExtension (char *in)
 	return exten;
 }
 
-//Extract file name without extension, to be used for hunk tags (up to 32 characters, including trailing zero)
-
-
-
+//
+// Extract file name without extension, to be used for hunk tags (up to 32 characters, including trailing zero)
+//
 void COM_FileBase (char *in, char *out)
 {
 	char *start, *end;
@@ -161,7 +232,9 @@ void COM_FileBase (char *in, char *out)
 	}
 }
 
-//If path doesn't have a .EXT, append extension (extension should include the .)
+//
+// If path doesn't have a .EXT, append extension (extension should include the .)
+//
 void COM_DefaultExtension (char *path, char *extension)
 {
 	char *src;
@@ -177,8 +250,8 @@ void COM_DefaultExtension (char *path, char *extension)
 	strncat (path, extension, MAX_OSPATH);
 }
 
-//If path doesn't have an extension or has a different extension, append(!) specified extension
-//Extension should include the .
+// If path doesn't have an extension or has a different extension, append(!) specified extension
+// Extension should include the .
 void COM_ForceExtension (char *path, char *extension)
 {
 	char *src;
@@ -190,13 +263,166 @@ void COM_ForceExtension (char *path, char *extension)
 	strncat (path, extension, MAX_OSPATH);
 }
 
+//
+// Get the path of a temporary directory.
+//
+int COM_GetTempDir(char *buf, int bufsize)
+{
+	int returnval = 0;
+	#ifdef WIN32
+	
+	returnval = GetTempPath (bufsize, buf);
+
+	if (returnval > bufsize || returnval == 0)
+	{
+		return -1;
+	}
+	#else // UNIX
+	// TODO: I'm not a unix person, is this proper?
+	char *tmp = getenv("tmp");
+	
+	returnval = strlen(tmp);
+
+	if (returnval > bufsize || returnval == 0)
+	{
+		return -1;
+	}
+
+	strlcpy (buf, tmp, bufsize); 
+	#endif // WIN32
+
+	return returnval;
+}
+
+//
+// Get a unique temp filename. 
+//
+int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qbool verify_exists)
+{
+	char tmp[MAX_PATH];
+	int retval = 0;
+
+	#ifdef WIN32
+	char *p = NULL;
+	char real_path[MAX_PATH];
+
+	// If no path is specified we need to find it ourself.
+	// (This is done automatically in unix)
+	if (path == NULL)
+	{
+		if (!COM_GetTempDir(real_path, MAX_PATH))
+		{
+			return -1;
+		}
+
+		p = real_path;
+	}
+	else
+	{
+		p = path;
+	}
+
+	retval = GetTempFileName (p, "ezq", !verify_exists, tmp);
+
+	if (!retval)
+	{
+		return -1;
+	}
+
+	strlcpy (filename, tmp, filename_size);
+	#else
+	// TODO: I'm no unix person, is this proper?
+	tmp = tempnam(path, "ezq");
+
+	if (!tmp)
+	{
+		return -1;
+	}
+
+	strlcpy (filename, tmp, filename_size);
+	Q_free (tmp);
+	retval = strlen(filename);
+	#endif
+
+	return retval;
+}
+
 #ifdef WITH_ZIP
 
 #define ZIP_WRITEBUFFERSIZE (8192)
 
-qbool COM_ZipIsArchive (const char *zip_path)
+int COM_ZipUnpackOneFileToTemp (unzFile zip_file, 
+						  const char *filename_inzip,
+						  qbool case_sensitive, 
+						  qbool keep_path,
+						  qbool overwrite,
+						  const char *password,
+						  char *unpack_path,			// The path where the file was unpacked.
+						  int unpack_path_size,			// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.
+						  char *append_extension)		// If any extension should be appended to the unpacked filename.
 {
-	// TODO: Check for more file types.
+	int	error = UNZ_OK;
+
+	// Get a unique temp filename.
+	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, false))
+	{
+		return UNZ_ERRNO;
+	}
+
+	// Append the extension if any.
+	if (append_extension != NULL)
+	{
+		strlcpy (unpack_path, va("%s%c%s", unpack_path, PATH_SEPARATOR, append_extension), unpack_path_size);
+	}
+
+	// Unpack the file
+	error = COM_ZipUnpackOneFile (zip_file, filename_inzip, unpack_path, case_sensitive, keep_path, overwrite, password);
+
+	strlcpy (unpack_path, va("%s%c%s", unpack_path, PATH_SEPARATOR, filename_inzip), unpack_path_size);
+
+	return error;
+}
+
+int COM_ZipBreakupArchivePath (char *archive_extension,			// The extension of the archive type we're looking fore "zip" for example.
+							   char *path,						// The path that should be broken up into parts.
+							   char *archive_path,				// The buffer that should contain the archive path after the breakup.
+							   int archive_path_size,			// The size of the archive path buffer.
+							   char *inzip_path,				// The buffer that should contain the inzip path after the breakup.
+							   int inzip_path_size)				// The size of the inzip path buffer.
+{
+	char *archive_path_found = NULL;
+	char *inzip_path_found = NULL;
+	char regexp[MAX_PATH];
+	int result_length = 0;
+
+	strlcpy (regexp, va("(.*?\\.%s)(\\\\|/)(.*)", archive_extension), sizeof(regexp));
+
+	// Get the archive path.
+	if (Utils_RegExpGetGroup (regexp, path, &archive_path_found, &result_length, 1))
+	{
+		strlcpy (archive_path, archive_path_found, archive_path_size);
+
+		// Get the path of the demo in the zip.
+		if (Utils_RegExpGetGroup (regexp, path, &inzip_path_found, &result_length, 3))
+		{
+			strlcpy (inzip_path, inzip_path_found, inzip_path_size);
+			Q_free (archive_path_found);
+			Q_free (inzip_path_found);
+			return 1;
+		}
+	}
+
+	Q_free (archive_path_found);
+	Q_free (inzip_path_found);
+
+	return -1;
+}
+
+//
+// Does the given path point to a zip file?
+//
+qbool COM_ZipIsArchive (char *zip_path)
+{
 	return (!strcmp (COM_FileExtension (zip_path), "zip"));
 }
 
@@ -215,6 +441,9 @@ int COM_ZipUnpackCloseFile (unzFile zip_file)
 	return unzClose (zip_file);
 }
 
+//
+// Creates a directory entry from a unzip fileinfo struct.
+//
 static void COM_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_info *unzip_fileinfo)
 {
 	// Save the name.
@@ -226,6 +455,7 @@ static void COM_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_i
   
     // Get the filetime.
 	{
+		// FIXME: This gets the wrong date...
 		#ifdef WIN32
 		FILETIME filetime;
 		FILETIME local_filetime;
@@ -287,13 +517,13 @@ int COM_ZipUnpack (unzFile zip_file,
 	return error;
 }
 
-int COM_ZipUnpackOneFile (unzFile zip_file, 
-						  const char *filename_inzip,
-						  const char *destination_path, 
-						  qbool case_sensitive, 
-						  qbool keep_path,
-						  qbool overwrite,
-						  const char *password)
+int COM_ZipUnpackOneFile (unzFile zip_file,				// The zip file opened with COM_ZipUnpackOpenFile(..)
+						  const char *filename_inzip,	// The name of the file to unpack inside the zip.
+						  const char *destination_path, // The destination path where to extract the file to.
+						  qbool case_sensitive,			// Should we look for the filename case sensitivly?
+						  qbool keep_path,				// Should the path inside the zip be preserved when unpacking?
+						  qbool overwrite,				// Overwrite any existing file with the same name when unpacking?
+						  const char *password)			// The password to use when extracting the file.
 {
 	int	error = UNZ_OK;
 
@@ -374,12 +604,12 @@ int COM_ZipUnpackCurrentFile (unzFile zip_file,
 		}
 
 		// Create the destination dir if it doesn't already exist.
-		COM_CreatePath (va("%s/", destination_path));
+		COM_CreatePath (va("%s%c", destination_path, PATH_SEPARATOR));
 
 		// Create the relative path before extracting.
 		if (keep_path)
 		{	
-			COM_CreatePath (va("%s/%s", destination_path, filename));
+			COM_CreatePath (va("%s%c%s", destination_path, PATH_SEPARATOR, filename));
 		}
 	}
 

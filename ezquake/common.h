@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.31 2006-12-30 05:24:41 qqshka Exp $
+    $Id: common.h,v 1.32 2006-12-30 21:03:45 cokeman1982 Exp $
 */
 // common.h  -- general definitions
 
@@ -149,6 +149,7 @@ void COM_AddParm (char *parm);
 void COM_Init (void);
 
 char *COM_SkipPath (char *pathname);
+char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit);
 char *COM_FileExtension (char *in);
 void COM_StripExtension (char *in, char *out);
 void COM_FileBase (char *in, char *out);
@@ -156,6 +157,8 @@ void COM_DefaultExtension (char *path, char *extension);
 void COM_ForceExtension (char *path, char *extension);
 int COM_FileLength (FILE *f);
 int COM_FileOpenRead (char *path, FILE **hndl);
+int COM_GetTempDir(char *buf, int bufsize);
+int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qbool verify_exists);
 
 void COM_StoreOriginalCmdline(int argc, char **argv);
 
@@ -223,7 +226,6 @@ void Com_DPrintf (char *fmt, ...);
 #define PRINT_FAIL	4
 void Com_Printf_State(int state, char *fmt, ...);
 
-// QW262 -->
 extern unsigned	Print_flags[16];
 extern int	Print_current;
 
@@ -231,7 +233,6 @@ extern int	Print_current;
 #define		PR_LOG_SKIP	2
 #define		PR_TR_SKIP	4
 #define		PR_IS_CHAT	8
-// <-- QW262
 
 //============================================================================
 
@@ -319,30 +320,55 @@ void SV_Frame (double time);
 int isspace2(int c);
 
 #ifdef WITH_ZIP
-qbool COM_ZipIsArchive (const char *zip_path);
+qbool COM_ZipIsArchive (char *zip_path);
+
+int COM_ZipBreakupArchivePath (char *archive_extension,			// The extension of the archive type we're looking fore "zip" for example.
+							   char *path,						// The path that should be broken up into parts.
+							   char *archive_path,				// The buffer that should contain the archive path after the breakup.
+							   int archive_path_size,			// The size of the archive path buffer.
+							   char *inzip_path,				// The buffer that should contain the inzip path after the breakup.
+							   int inzip_path_size);			// The size of the inzip path buffer.
+
 unzFile COM_ZipUnpackOpenFile (const char *zip_path);
+
 int COM_ZipUnpackCloseFile (unzFile zip_file);
+
 int COM_ZipUnpack (unzFile zip_file, 
 				   char *destination_path, 
 				   qbool case_sensitive, 
 				   qbool keep_path, 
 				   qbool overwrite, 
 				   const char *password);
-int COM_ZipUnpackOneFile (unzFile zip_file, 
+
+int COM_ZipUnpackOneFile (unzFile zip_file,				// The zip file opened with COM_ZipUnpackOpenFile(..)
+						  const char *filename_inzip,	// The name of the file to unpack inside the zip.
+						  const char *destination_path, // The destination path where to extract the file to.
+						  qbool case_sensitive,			// Should we look for the filename case sensitivly?
+						  qbool keep_path,				// Should the path inside the zip be preserved when unpacking?
+						  qbool overwrite,				// Overwrite any existing file with the same name when unpacking?
+						  const char *password);		// The password to use when extracting the file.
+
+int COM_ZipUnpackOneFileToTemp (unzFile zip_file, 
 						  const char *filename_inzip,
-						  const char *destination_path, 
 						  qbool case_sensitive, 
 						  qbool keep_path,
 						  qbool overwrite,
-						  const char *password);
+						  const char *password,
+						  char *unpack_path,			// The path where the file was unpacked.
+						  int unpack_path_size,			// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.
+						  char *append_extension);		// If any extension should be appended to the unpacked filename.
+
 int COM_ZipUnpackCurrentFile (unzFile zip_file, 
 							  const char *destination_path, 
 							  qbool case_sensitive, 
 							  qbool keep_path, 
 							  qbool overwrite, 
 							  const char *password);
+
 int COM_ZipGetFirst (unzFile zip_file, sys_dirent *ent);
+
 int COM_ZipGetNextFile (unzFile zip_file, sys_dirent *ent);
+
 #endif // WITH_ZIP
 
 #endif /* __COMMON_H__ */
