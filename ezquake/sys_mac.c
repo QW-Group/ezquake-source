@@ -1,6 +1,6 @@
 /*
 
-	$Id: sys_mac.c,v 1.19 2006-12-02 18:41:34 disconn3ct Exp $
+	$Id: sys_mac.c,v 1.20 2006-12-30 11:24:54 disconn3ct Exp $
 
 */
 // sys_mac.c -- Macintosh system driver
@@ -180,7 +180,7 @@ qbool Sys_FileExists (char *path)
 	return true;
 }
 
-void Sys_mkdir (char *path)
+void Sys_mkdir (const char *path)
 {
 	mkdir(path, 0777);
 }
