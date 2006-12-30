@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.34 2006-12-29 05:22:26 qqshka Exp $
+	$Id: vid_wgl.c,v 1.35 2006-12-30 17:52:51 qqshka Exp $
 
 */
 
@@ -556,7 +556,7 @@ qbool VID_SetFullDIBMode (int modenum) {
 int VID_SetMode (int modenum, unsigned char *palette) {
 	int temp;
 	qbool stat;
-    MSG msg;
+//    MSG msg;
 
 //	if ((windowed && modenum) || (!windowed && modenum < 1) || (!windowed && modenum >= nummodes))
 	if (modenum < 0 || modenum >= nummodes)
@@ -612,12 +612,14 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 	Draw_AdjustConback (); // need this even vid_conwidth have callback which leads to call this
 // }
 
+/*
 	while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE)) {
       	TranslateMessage (&msg);
       	DispatchMessage (&msg);
 	}
 
 	Sleep (100);
+*/
 
 	SetWindowPos (mainwindow, HWND_TOP, 0, 0, 0, 0, SWP_DRAWFRAME | SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW | SWP_NOCOPYBITS);
 
