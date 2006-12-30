@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.9 2006-12-30 11:30:14 disconn3ct Exp $
+		$Id: menu_demo.c,v 1.10 2006-12-30 21:06:57 cokeman1982 Exp $
 
 */
 
@@ -81,6 +81,7 @@ cvar_t  demo_browser_sortmode   = {"demo_browser_sortmode",   "1"};
 cvar_t  demo_browser_showstatus = {"demo_browser_showstatus", "1"};
 cvar_t  demo_browser_stripnames = {"demo_browser_stripnames", "1"};
 cvar_t  demo_browser_interline  = {"demo_browser_interline",  "0"};
+cvar_t  demo_browser_scrollnames= {"demo_browser_scrollnames","1"};
 
 // demo menu container
 CTab_t demo_tab;
@@ -641,6 +642,7 @@ void Menu_Demo_Init(void)
     Cvar_Register(&demo_browser_showstatus);
     Cvar_Register(&demo_browser_stripnames);
     Cvar_Register(&demo_browser_interline);
+	Cvar_Register(&demo_browser_scrollnames);
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
@@ -661,6 +663,7 @@ void Menu_Demo_Init(void)
         &demo_browser_stripnames,
         &demo_browser_interline,
         &demo_browser_showstatus,
+		&demo_browser_scrollnames,
 		"./qw");
     FL_AddFileType(&demo_filelist, 0, ".qwd");
 	FL_AddFileType(&demo_filelist, 1, ".qwz");
