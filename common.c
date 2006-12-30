@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.40 2006-12-27 22:26:50 cokeman1982 Exp $
+    $Id: common.c,v 1.41 2006-12-30 05:24:40 qqshka Exp $
 
 */
 
@@ -844,7 +844,7 @@ qbool COM_WriteFile (char *filename, void *data, int len)
 //Only used for CopyFile and download
 
 
-void COM_CreatePath(const char *path)
+void COM_CreatePath(char *path)
 {
 	char *s, save;
 
