@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.47 2006-12-30 11:30:48 disconn3ct Exp $
+	$Id: cl_demo.c,v 1.48 2006-12-30 21:04:44 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1332,7 +1332,51 @@ int CL_Demo_Compress(char* qwdname)
 //							DEMO PLAYBACK
 //=============================================================================
 
-double		demostarttime;		
+double		demostarttime;
+
+#ifdef WITH_ZIP
+static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unpacked_path_size)
+{
+	//
+	// Check if the demo is in a zip file and if so, try to extract it before playing.
+	//
+	int retval = 0;
+	char archive_path[MAX_PATH] = {0};
+	char inzip_path[MAX_PATH] = {0};
+	
+	if (COM_ZipBreakupArchivePath ("zip", play_path, archive_path, MAX_PATH, inzip_path, MAX_PATH) < 0)
+	{
+		return retval;
+	}
+
+	{
+		char temp_path[MAX_PATH];
+
+		// Open the zip file.
+		unzFile zip_file = COM_ZipUnpackOpenFile (archive_path);
+		
+		// Try extracting the zip file.
+		if(COM_ZipUnpackOneFileToTemp (zip_file, inzip_path, false, false, true, NULL, temp_path, MAX_PATH, NULL/*COM_FileExtension (inzip_path)*/) != UNZ_OK)
+		{
+			Com_Printf ("Failed to unpack the demo file \"%s\" to the temp path \"%s\"\n", inzip_path, temp_path);
+			unpacked_path[0] = 0;
+		}
+		else
+		{
+			// Successfully unpacked the demo.
+			retval = 1;
+
+			// Copy the path of the unpacked file to the return string.
+			strlcpy (unpacked_path, temp_path, unpacked_path_size);
+		}
+
+		// Close the zip file.
+		COM_ZipUnpackCloseFile (zip_file);
+	}
+
+	return retval;
+}
+#endif // WITH_ZIP
 
 void CL_StopPlayback (void) {
 
@@ -1378,7 +1422,12 @@ void CL_StopPlayback (void) {
 	TP_ExecTrigger("f_demoend");
 }
 
-void CL_Play_f (void) {
+void CL_Play_f (void) 
+{
+	#ifdef WITH_ZIP
+	char unpacked_path[MAX_OSPATH];
+	#endif // WITH_ZIP
+	
 	int i;
 #ifdef WITH_ZIP
 	qbool is_archive = false;
@@ -1400,55 +1449,11 @@ void CL_Play_f (void) {
 	TP_ExecTrigger("f_demostart");
 
 	#ifdef WITH_ZIP
-	//
-	// Check if the demo is in a zip file and if so, try to extract it before playing.
-	//
 	{
-		char **curr_archive_ext;
-		static char *archive_ext[] = {".zip", ".gzip", NULL};
-		char *archive_path = NULL;
-		char *archive_demopath = NULL;
-		int result_length = 0;
-		char regexp[MAX_OSPATH];
-
-		for (s = ext; *s && !is_archive; s++)
+		if (CL_GetUnpackedDemoPath (Cmd_Argv(1), unpacked_path, MAX_OSPATH))
 		{
-			for (curr_archive_ext = archive_ext; *curr_archive_ext; curr_archive_ext++)
-			{
-				strlcpy (regexp, va("(.*?\\%s)(\\\\|/)(.*?\\%s)", *curr_archive_ext, *s), sizeof(regexp));
-
-				// Get the archive path.
-				if (Utils_RegExpGetGroup (regexp, Cmd_Argv(1), &archive_path, &result_length, 1))
-				{
-					// Get the path of the demo in the zip.
-					if (Utils_RegExpGetGroup (regexp, Cmd_Argv(1), &archive_demopath, &result_length, 3))
-					{
-						is_archive = true;
-						break;
-					}					
-				}
-			}
+			real_name = unpacked_path;
 		}
-
-		if (is_archive)
-		{
-			char *destination_path = va("%s/%s/%s", com_basedir, demo_dir.string, "_temp");
-			unzFile zip_file = COM_ZipUnpackOpenFile (archive_path);
-			
-			if (COM_ZipUnpackOneFile (zip_file, archive_demopath, destination_path, 
-				false, false, true, NULL) == UNZ_OK)
-			{
-				strlcpy (name, va("%s/%s", destination_path, archive_demopath), sizeof(name));
-				real_name = name;
-			}
-			else
-			{
-				Com_Printf ("Failed to unpack what seemed to be an archive...");
-			}
-		}
-
-		Q_free (archive_demopath);
-		Q_free (archive_path);
 	}
 	#endif // WITH_ZIP
 
@@ -1475,7 +1480,6 @@ void CL_Play_f (void) {
 			// Strip the extension from the specified filename and append
 			// the one we're currently checking for.
 			COM_StripExtension (real_name, name);
-			//COM_DefaultExtension (name, *s);
 			strlcpy (name, va("%s%s", name, *s), sizeof(name));
 
 			// Look for the file in the above directory if it has ../ prepended to the filename.
