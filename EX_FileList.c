@@ -303,6 +303,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
     if (d1->is_directory && d2->is_directory)
         return strcasecmp(d1->name, d2->name);
 
+#ifdef WITH_ZIP
 	// Zips after directories.
 	if (d1->is_zip && !d2->is_zip)
 		return -1;
@@ -310,6 +311,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
 		return 1;
 	if (d1->is_zip && d2->is_zip)
 		return strcasecmp(d1->name, d2->name);
+#endif // WITH_ZIP
 
     while (true)
     {
@@ -1232,7 +1234,13 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 
 		// Directories and zip files are colored to emphasis them.
 		// Make sure the columns aren't misaligned because of the color code (5 characters).
-		if (filenum != fl->current_entry && (entry->is_directory || entry->is_zip))
+		if (filenum != fl->current_entry
+			 && (entry->is_directory
+#ifdef WITH_ZIP
+				 || entry->is_zip
+#endif // WITH_ZIP
+				)
+		   )
 		{
 			pos += 5;
 			line[pos] = 0;
@@ -1325,11 +1333,13 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 					// Green.
 					strlcpy (name, va("&c080%s", name), sizeof(name));
 				}
+#ifdef WITH_ZIP
 				else if (entry->is_zip)
 				{
 					// Blueish.
 					strlcpy (name, va("&c0bd%s", name), sizeof(name));
 				}
+#endif // WITH_ZIP
 			}
 
 			memcpy(line, name, min(pos, strlen(name)));			
@@ -1363,9 +1373,9 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
     {
 		// Print a line to part the status bar from the file list.
         memset(line, '\x1E', w/8);
-        line[w/8] = 0;
-        line[w/8 - 1] = '\x1F';
         line[0] = '\x1D';
+        line[w/8 - 1] = '\x1F';
+        line[w/8] = 0;
         UI_Print(x, y + h - 3 * rowh - inter_up, line, false);
 
 		// Print the name.
