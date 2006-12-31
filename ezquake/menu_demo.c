@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.10 2006-12-30 21:06:57 cokeman1982 Exp $
+		$Id: menu_demo.c,v 1.11 2006-12-31 05:15:22 cokeman1982 Exp $
 
 */
 
@@ -669,6 +669,9 @@ void Menu_Demo_Init(void)
 	FL_AddFileType(&demo_filelist, 1, ".qwz");
 	FL_AddFileType(&demo_filelist, 2, ".mvd");
 	FL_AddFileType(&demo_filelist, 3, ".dem");
+	#ifdef WITH_ZLIB
+	FL_AddFileType(&demo_filelist, 4, ".gz");
+	#endif // WITH_ZLIB
 	#ifdef WITH_ZIP
 	FL_AddFileType(&demo_filelist, 4, ".zip");
 	#endif
