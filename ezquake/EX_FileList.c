@@ -1063,7 +1063,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
     int i;
     int listsize, pos, interline, inter_up, inter_dn, rowh;
     char line[1024];
-    char sname[200], ssize[COL_SIZE+1], sdate[COL_DATE+1], stime[COL_TIME+1];
+    char sname[MAX_PATH], ssize[COL_SIZE+1], sdate[COL_DATE+1], stime[COL_TIME+1];
 
 	if (fl->delete_mode)
 	{
@@ -1184,6 +1184,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         filedesc_t *entry;
         DWORD dwsize;
 		char size[COL_SIZE+1], date[COL_DATE+1], time[COL_TIME+1];
+		char name[MAX_PATH];
         int filenum = fl->display_entry + i;
 
         if (filenum >= fl->num_entries)
@@ -1225,7 +1226,18 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 
         // Add the columns to the current row (starting from the right).
         pos = w/8;
+
+		// Directories and zip files are colored to emphasis them.
+		// Make sure the columns aren't misaligned because of the color code (5 characters).
+		if (filenum != fl->current_entry && (entry->is_directory || entry->is_zip))
+		{
+			pos += 5;
+		}
+
+		// Clear the line.
         memset(line, ' ', pos);
+
+		// Add columns.
         if (fl->show_time->value)
             Add_Column(line, &pos, time, COL_TIME);
         if (fl->show_date->value)
@@ -1233,23 +1245,25 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         if (fl->show_size->value)
             Add_Column(line, &pos, size, COL_SIZE);
 
+		strlcpy (name, va("%s", entry->display), sizeof(name));
+
 		//
 		// Copy the display name of the entry into the space that's left on the row.
 		//
-		if ((filenum == fl->current_entry) && (strlen(entry->display) > pos) && fl->scroll_names->value)
+		if ((filenum == fl->current_entry) && (strlen(name) > pos) && fl->scroll_names->value)
 		{
 			// We need to scroll the text since it doesn't fit.
-			#define SCROLL_RIGHT 1
-			#define SCROLL_LEFT 0
+			#define SCROLL_RIGHT	1
+			#define SCROLL_LEFT		0
 
-			double			t = 0;
-			static double	t_last_scroll = 0;
-			static qbool	wait = false;
-			static int		scroll_position = 0;
-			static int		scroll_direction = SCROLL_RIGHT;
-			static int		last_text_length = 0;
-			int				text_length = strlen(entry->display);
-			float			scroll_delay = 0.1;
+			double			t					= 0;
+			static double	t_last_scroll		= 0;
+			static qbool	wait				= false;
+			static int		scroll_position		= 0;
+			static int		scroll_direction	= SCROLL_RIGHT;
+			static int		last_text_length	= 0;
+			int				text_length			= strlen(name);
+			float			scroll_delay		= 0.1;
 
 			// If the text has changed since last time we scrolled
 			// the scroll data will be invalid so reset it.
@@ -1286,17 +1300,34 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 				wait = true;
 			}
 
+			// Wait a second when changing direction.
 			if (wait && (t - t_last_scroll) > 1.0)
 			{
 				wait = false;
 			}
 
-			memcpy(line, entry->display + scroll_position, min(pos, text_length + scroll_position));
+			memcpy(line, name + scroll_position, min(pos, text_length + scroll_position));
 		}
 		else
 		{
 			// Fits in the name column, no need to scroll (or the user doesn't want us to scroll :~<)
-			memcpy(line, entry->display, min(pos, strlen(entry->display)));
+
+			// If it's not the selected directory/zip color it so that it stands out.
+			if (filenum != fl->current_entry)
+			{
+				if (entry->is_directory)
+				{
+					// Green.
+					strlcpy (name, va("&c080%s", name), sizeof(name));
+				}
+				else if (entry->is_zip)
+				{
+					// Blueish.
+					strlcpy (name, va("&c0bd%s", name), sizeof(name));
+				}
+			}
+
+			memcpy(line, name, min(pos, strlen(name)));
 		}
 
 		// Draw a cursor character at the end of the name column.
@@ -1315,8 +1346,8 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         if (filenum == fl->current_entry)
         {
 			strlcpy (sname, line, min (pos, sizeof(sname)));
-            strcpy(stime, time);
-            snprintf(sdate, sizeof(sdate), "%02d-%02d-%02d", entry->time.wYear % 100,
+            strcpy (stime, time);
+            snprintf (sdate, sizeof(sdate), "%02d-%02d-%02d", entry->time.wYear % 100,
                 entry->time.wMonth, entry->time.wDay);
         }
     }
