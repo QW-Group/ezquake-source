@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.32 2006-12-30 21:03:45 cokeman1982 Exp $
+    $Id: common.h,v 1.33 2006-12-31 05:14:34 cokeman1982 Exp $
 */
 // common.h  -- general definitions
 
@@ -159,6 +159,7 @@ int COM_FileLength (FILE *f);
 int COM_FileOpenRead (char *path, FILE **hndl);
 int COM_GetTempDir(char *buf, int bufsize);
 int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qbool verify_exists);
+qbool COM_FileExists (char *path);
 
 void COM_StoreOriginalCmdline(int argc, char **argv);
 
@@ -319,6 +320,29 @@ void SV_Frame (double time);
 
 int isspace2(int c);
 
+#ifdef WITH_ZLIB
+
+int COM_GZipUnpack (char *source_path,		// The path to the compressed source file.
+					char *destination_path, // The destination file path.
+					qbool overwrite);		// Overwrite the destination file if it exists?
+
+int COM_GZipUnpackToTemp (char *source_path,		// The compressed source file.
+						  char *unpack_path,		// A buffer that will contain the path to the unpacked file.
+						  int unpack_path_size,		// The size of the buffer.	
+						  char *append_extension);	// The extension if any that should be appended to the filename.
+
+int COM_ZlibInflate(FILE *source, FILE *dest);
+
+int COM_ZlibUnpack (char *source_path,		// The path to the compressed source file.
+					char *destination_path, // The destination file path.
+					qbool overwrite);		// Overwrite the destination file if it exists?
+
+int COM_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
+						  char *unpack_path,		// A buffer that will contain the path to the unpacked file.
+						  int unpack_path_size,		// The size of the buffer.	
+						  char *append_extension);	// The extension if any that should be appended to the filename.
+#endif // WITH_ZLIB
+
 #ifdef WITH_ZIP
 qbool COM_ZipIsArchive (char *zip_path);
 
@@ -352,7 +376,6 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 						  const char *filename_inzip,
 						  qbool case_sensitive, 
 						  qbool keep_path,
-						  qbool overwrite,
 						  const char *password,
 						  char *unpack_path,			// The path where the file was unpacked.
 						  int unpack_path_size,			// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.

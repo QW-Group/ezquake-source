@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.42 2006-12-30 21:03:07 cokeman1982 Exp $
+    $Id: common.c,v 1.43 2006-12-31 05:14:18 cokeman1982 Exp $
 
 */
 
@@ -347,6 +347,274 @@ int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qb
 	return retval;
 }
 
+qbool COM_FileExists (char *path)
+{
+	FILE *fexists = NULL;
+
+	// Try opening the file to see if it exists.
+	fexists = fopen(path, "rb"); 
+
+	// The file exists.
+	if (fexists)
+	{
+		// Make sure the file is closed.
+		fclose (fexists);
+		return true;
+	}
+
+	return false;
+}
+
+#ifdef WITH_ZLIB
+
+#define CHUNK 16384
+
+//
+// Unpack a .gz file.
+//
+int COM_GZipUnpack (char *source_path,		// The path to the compressed source file.
+					char *destination_path, // The destination file path.
+					qbool overwrite)		// Overwrite the destination file if it exists?
+{
+	FILE *dest		= NULL;
+	int retval		= 0;
+
+	// Check if the destination file exists and 
+	// if we're allowed to overwrite it.
+	if (COM_FileExists (destination_path) && !overwrite)
+	{
+		return 0;
+	}
+	
+	// Create the path for the destination.
+	COM_CreatePath (COM_SkipPath (destination_path));
+
+	// Open destination.
+	dest = fopen (destination_path, "wb");
+
+	// Failed to open the file for writing.
+	if (!dest)
+	{
+		return 0;
+	}
+
+	// Unpack.
+	{
+		unsigned char out[CHUNK];
+		gzFile gzip_file = gzopen (source_path, "rb");
+
+		while ((retval = gzread (gzip_file, out, CHUNK)) > 0)
+		{
+			fwrite (out, 1, retval, dest);
+		}
+		
+		gzclose (gzip_file);
+		fclose (dest);
+	}
+
+	return 1;
+}
+
+//
+// Unpack a .gz file to a temp file.
+// 
+int COM_GZipUnpackToTemp (char *source_path,		// The compressed source file.
+						  char *unpack_path,		// A buffer that will contain the path to the unpacked file.
+						  int unpack_path_size,		// The size of the buffer.	
+						  char *append_extension)	// The extension if any that should be appended to the filename.
+{
+	// Get a unique temp filename.
+	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true))
+	{
+		return 0;
+	}
+
+	// Delete the existing temp file (it is created when the filename is received above).
+	if (_unlink (unpack_path))
+	{
+		return 0;
+	}
+
+	// Append the extension if any.
+	if (append_extension != NULL)
+	{
+		strlcpy (unpack_path, va("%s%s", unpack_path, append_extension), unpack_path_size);
+	}
+
+	// Unpack the file.
+	if (!COM_GZipUnpack (source_path, unpack_path, true))
+	{
+		unpack_path[0] = 0;
+		return 0;
+	}
+
+	return 1;
+}
+
+//
+// Inflates source file into the dest file. (Stolen from a zlib example :D) ... NOT the same as gzip!
+//
+int COM_ZlibInflate(FILE *source, FILE *dest)
+{
+	int ret = 0;
+	unsigned have = 0;
+	z_stream strm;
+	unsigned char in[CHUNK];
+	unsigned char out[CHUNK];
+
+	// Allocate inflate state.
+	strm.zalloc		= Z_NULL;
+	strm.zfree		= Z_NULL;
+	strm.opaque		= Z_NULL;
+	strm.avail_in	= 0;
+	strm.next_in	= Z_NULL;
+	ret				= inflateInit(&strm);
+	
+	if (ret != Z_OK)
+	{
+		return ret;
+	}
+
+	// Decompress until deflate stream ends or end of file.
+	do 
+	{
+		strm.avail_in = fread(in, 1, CHUNK, source);
+		
+		if (ferror(source)) 
+		{
+			(void)inflateEnd(&strm);
+			return Z_ERRNO;
+		}
+
+		if (strm.avail_in == 0)
+		{
+			break;
+		}
+
+		strm.next_in = in;
+
+		// Run inflate() on input until output buffer not full.
+		do 
+		{
+			strm.avail_out = CHUNK;
+			strm.next_out = out;
+			ret = inflate(&strm, Z_NO_FLUSH);
+			
+			// State not clobbered.
+			assert(ret != Z_STREAM_ERROR);  
+
+			switch (ret) 
+			{
+				case Z_NEED_DICT:
+					ret = Z_DATA_ERROR; // Fall through.
+				case Z_DATA_ERROR:
+				case Z_MEM_ERROR:
+					(void)inflateEnd(&strm);
+					return ret;
+			}
+
+			have = CHUNK - strm.avail_out;
+
+			if (fwrite(out, 1, have, dest) != have || ferror(dest)) 
+			{
+				(void)inflateEnd(&strm);
+				return Z_ERRNO;
+			}
+		} while (strm.avail_out == 0);
+
+		// Done when inflate() says it's done
+	} while (ret != Z_STREAM_END);
+
+	// Clean up and return.
+	(void)inflateEnd(&strm);
+
+	return (ret == Z_STREAM_END) ? Z_OK : Z_DATA_ERROR;
+}
+
+//
+// Unpack a zlib file. ... NOT the same as gzip!
+// 
+int COM_ZlibUnpack (char *source_path,		// The path to the compressed source file.
+					char *destination_path, // The destination file path.
+					qbool overwrite)		// Overwrite the destination file if it exists?
+{
+	FILE *source	= NULL;
+	FILE *dest		= NULL;
+	int retval		= 0;
+
+	// Open source.
+	if (FS_FOpenPathFile (source_path, &source) < 0 || !source)
+	{
+		return 0;
+	}
+
+	// Check if the destination file exists and 
+	// if we're allowed to overwrite it.
+	if (COM_FileExists (destination_path) && !overwrite)
+	{
+		fclose (source);
+		return 0;
+	}
+	
+	// Create the path for the destination.
+	COM_CreatePath (COM_SkipPath (destination_path));
+
+	// Open destination.
+	dest = fopen (destination_path, "wb");
+
+	// Failed to open the file for writing.
+	if (!dest)
+	{
+		return 0;
+	}
+
+	// Unpack.
+	retval = COM_ZlibInflate (source, dest);
+
+	fclose (source);
+	fclose (dest);
+	
+	return (retval != Z_OK) ? 0 : 1;
+}
+
+//
+// Unpack a zlib file to a temp file... NOT the same as gzip!
+//
+int COM_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
+						  char *unpack_path,		// A buffer that will contain the path to the unpacked file.
+						  int unpack_path_size,		// The size of the buffer.	
+						  char *append_extension)	// The extension if any that should be appended to the filename.
+{
+	// Get a unique temp filename.
+	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true))
+	{
+		return 0;
+	}
+
+	// Delete the existing temp file (it is created when the filename is received above).
+	if (_unlink (unpack_path))
+	{
+		return 0;
+	}
+
+	// Append the extension if any.
+	if (append_extension != NULL)
+	{
+		strlcpy (unpack_path, va("%s%s", unpack_path, append_extension), unpack_path_size);
+	}
+
+	// Unpack the file.
+	if (!COM_ZlibUnpack (source_path, unpack_path, true))
+	{
+		unpack_path[0] = 0;
+		return 0;
+	}
+
+	return 1;
+}
+
+#endif // WITH_ZLIB
+
 #ifdef WITH_ZIP
 
 #define ZIP_WRITEBUFFERSIZE (8192)
@@ -355,7 +623,6 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 						  const char *filename_inzip,
 						  qbool case_sensitive, 
 						  qbool keep_path,
-						  qbool overwrite,
 						  const char *password,
 						  char *unpack_path,			// The path where the file was unpacked.
 						  int unpack_path_size,			// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.
@@ -364,21 +631,34 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 	int	error = UNZ_OK;
 
 	// Get a unique temp filename.
-	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, false))
+	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true))
 	{
 		return UNZ_ERRNO;
+	}
+
+	// Delete the existing temp file (it is created when the filename is received above).
+	if (_unlink (unpack_path))
+	{
+		return 0;
 	}
 
 	// Append the extension if any.
 	if (append_extension != NULL)
 	{
-		strlcpy (unpack_path, va("%s%c%s", unpack_path, PATH_SEPARATOR, append_extension), unpack_path_size);
+		strlcpy (unpack_path, va("%s%s", unpack_path, append_extension), unpack_path_size);
 	}
 
 	// Unpack the file
-	error = COM_ZipUnpackOneFile (zip_file, filename_inzip, unpack_path, case_sensitive, keep_path, overwrite, password);
+	error = COM_ZipUnpackOneFile (zip_file, filename_inzip, unpack_path, case_sensitive, keep_path, true, password);
 
-	strlcpy (unpack_path, va("%s%c%s", unpack_path, PATH_SEPARATOR, filename_inzip), unpack_path_size);
+	if (error)
+	{
+		strlcpy (unpack_path, va("%s%c%s", unpack_path, PATH_SEPARATOR, filename_inzip), unpack_path_size);
+	}
+	else
+	{
+		unpack_path[0] = 0;
+	}
 
 	return error;
 }
@@ -584,23 +864,11 @@ int COM_ZipUnpackCurrentFile (unzFile zip_file,
 	// Check if the file already exists and create the path if needed.
 	//
 	{
-		FILE *fexists = NULL;
-
-		// Try opening the file to see if it exists.
-		fexists = fopen(va("%s/%s", destination_path, filename), "rb"); 
-
-		// File exists and we're not allowed to overwrite so abort.
-		if (fexists && !overwrite)
+		// Check if the file exists.
+		if (COM_FileExists (va("%s/%s", destination_path, filename)) && !overwrite)
 		{
-			fclose (fexists);
 			error = UNZ_ERRNO;
 			goto finish;
-		}
-
-		// Make sure the file is closed.
-		if (fexists)
-		{
-			fclose (fexists);
 		}
 
 		// Create the destination dir if it doesn't already exist.
