@@ -174,6 +174,7 @@ qbool FL_IsCurrentDir(filelist_t *fl)
     return fl->entries[fl->current_entry].is_directory;
 }
 
+#ifdef WITH_ZIP
 //
 // Is current entry a zip file?
 //
@@ -186,6 +187,7 @@ qbool FL_IsCurrentZip(filelist_t *fl)
 
 	return fl->entries[fl->current_entry].is_zip;
 }
+#endif // WITH_ZIP
 
 void FL_StripFileName(filelist_t *fl, filedesc_t *f)
 {
