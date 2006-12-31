@@ -602,7 +602,8 @@ void FL_ReadDir(filelist_t *fl)
 		// We're not interested in this file type since it wasn't registered.
         if (!ent.directory && f->type_index < 0
 		#ifdef WITH_ZIP
-			&& f->is_zip
+			// Or isn't a zip.
+			&& !f->is_zip
 		#endif
 			)
 		{
@@ -1232,9 +1233,11 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		if (filenum != fl->current_entry && (entry->is_directory || entry->is_zip))
 		{
 			pos += 5;
+			line[pos] = 0;
 		}
 
 		// Clear the line.
+		//memset(line, 0, 1023);
         memset(line, ' ', pos);
 
 		// Add columns.
@@ -1327,7 +1330,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 				}
 			}
 
-			memcpy(line, name, min(pos, strlen(name)));
+			memcpy(line, name, min(pos, strlen(name)));			
 		}
 
 		// Draw a cursor character at the end of the name column.
@@ -1337,6 +1340,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		}
 
 		// Max amount of characters that fits on a line.
+		// FIXME: This cuts off the date for dirs/zips (since they have 5 extra chars of color code).
 		line[w/8] = 0;
 
 		// Print the line for the directory entry.
