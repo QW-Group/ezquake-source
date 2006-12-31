@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.48 2006-12-30 21:04:44 cokeman1982 Exp $
+	$Id: cl_demo.c,v 1.49 2006-12-31 05:14:45 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1341,14 +1341,35 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 	// Check if the demo is in a zip file and if so, try to extract it before playing.
 	//
 	int retval = 0;
-	char archive_path[MAX_PATH] = {0};
-	char inzip_path[MAX_PATH] = {0};
+	char archive_path[MAX_PATH];
+	char inzip_path[MAX_PATH];
+
+	if (!strcmp (COM_FileExtension (play_path), "gz"))
+	{
+		
+		//strlcpy (unpacked_path, play_path, min(unpacked_path_size, strlen(play_path) - 2));
+
+		// Unpack the file.
+		if (!COM_GZipUnpackToTemp (play_path, unpacked_path, unpacked_path_size, ".mvd"))
+		{
+			return 0;
+		}
+
+		// Remove ".gz" from the end of the path.
+		//strlcpy (unpacked_path, play_path, min(unpacked_path_size, strlen(play_path) - 2));
+
+		return 1;
+	}
 	
+	// Check if the path is in the format "c:\quake\bla\demo.zip\some_demo.mvd" and split it up.
 	if (COM_ZipBreakupArchivePath ("zip", play_path, archive_path, MAX_PATH, inzip_path, MAX_PATH) < 0)
 	{
 		return retval;
 	}
 
+	//
+	// Extract the ZIP file.
+	//
 	{
 		char temp_path[MAX_PATH];
 
@@ -1356,7 +1377,7 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 		unzFile zip_file = COM_ZipUnpackOpenFile (archive_path);
 		
 		// Try extracting the zip file.
-		if(COM_ZipUnpackOneFileToTemp (zip_file, inzip_path, false, false, true, NULL, temp_path, MAX_PATH, NULL/*COM_FileExtension (inzip_path)*/) != UNZ_OK)
+		if(COM_ZipUnpackOneFileToTemp (zip_file, inzip_path, false, false, NULL, temp_path, MAX_PATH, NULL/*COM_FileExtension (inzip_path)*/) != UNZ_OK)
 		{
 			Com_Printf ("Failed to unpack the demo file \"%s\" to the temp path \"%s\"\n", inzip_path, temp_path);
 			unpacked_path[0] = 0;
@@ -1378,12 +1399,11 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 }
 #endif // WITH_ZIP
 
-void CL_StopPlayback (void) {
-
+void CL_StopPlayback (void) 
+{
 	extern int demo_playlist_started;
 	extern int mvd_demo_track_run;
 	
-		
 	if (!cls.demoplayback)
 		return;
 
@@ -1397,10 +1417,10 @@ void CL_StopPlayback (void) {
 	cls.mvdplayback = cls.demoplayback = cls.nqdemoplayback = false;
 	cl.paused &= ~PAUSED_DEMO;
 
-#ifdef _WIN32
+	#ifdef WIN32
 	if (qwz_playback)
 		StopQWZPlayback ();
-#endif
+	#endif
 
 	if (cls.timedemo) {	
 		int frames;
@@ -1415,10 +1435,12 @@ void CL_StopPlayback (void) {
 		Com_Printf ("%i frames %5.1f seconds %5.1f fps\n", frames, time, frames / time);
 	}
 
-	if (demo_playlist_started){
-	CL_Demo_playlist_f();
-	mvd_demo_track_run = 0;
+	if (demo_playlist_started)
+	{
+		CL_Demo_playlist_f();
+		mvd_demo_track_run = 0;
 	}
+
 	TP_ExecTrigger("f_demoend");
 }
 
