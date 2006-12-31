@@ -1,4 +1,4 @@
-//    $Id: Ctrl.c,v 1.3 2006-05-13 07:31:57 disconn3ct Exp $
+//    $Id: Ctrl.c,v 1.4 2006-12-31 00:45:00 cokeman1982 Exp $
 
 #include "quakedef.h"
 
@@ -9,16 +9,24 @@ void UI_DrawCharacter (int cx, int line, int num)
 
 void UI_Print (int cx, int cy, char *str, int red)
 {
-	while (*str) {
-		UI_DrawCharacter (cx, cy, (*str) | (red ? 128 : 0));
-		str++;
-		cx += 8;
+	if (red)
+	{
+		while (*str) 
+		{
+			UI_DrawCharacter (cx, cy, (*str) | (red ? 128 : 0));
+			str++;
+			cx += 8;
+		}
+	}
+	else
+	{
+		Draw_ColoredString (cx, cy, str, red);
 	}
 }
 
 void UI_Print_Center (int cx, int cy, int w, char *str, int red)
 {
-	UI_Print(cx+(w-8*strlen(str))/2, cy, str, red);
+	UI_Print(cx + (w - 8 * strlen(str)) / 2, cy, str, red);
 }
 
 void UI_MakeLine(char *buf, int w)
