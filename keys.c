@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.34 2006-05-14 12:23:17 disconn3ct Exp $
+    $Id: keys.c,v 1.35 2007-01-01 16:38:21 tonik Exp $
 
 */
 
@@ -876,8 +876,18 @@ static qbool yellowchars = false;
 #endif // WITH_KEYMAP
 qbool con_redchars    = false;
 
+typedef unsigned int wchar;
+
+char wc2char (wchar wc)
+{
+	if (wc <= 255)
+		return (char)wc;
+	else
+		return '?';
+}
+
 //Interactive line editing and console scrollback
-void Key_Console (int key) {
+void Key_Console (int key, int unichar) {
 	int i, len;
 
 	switch (key) {
@@ -1160,7 +1170,7 @@ nextline:
 		return;
 	}
 
-	if (key < 32 || key > 127)
+	if (!unichar)
 		return;	// non printable
 
 #ifdef WITH_KEYMAP
@@ -1190,26 +1200,26 @@ nextline:
 #else // WITH_KEYMAP
 	if (keydown[K_CTRL]) {
 #endif // WITH_KEYMAP else
-		if (key >= '0' && key <= '9')
-				key = key - '0' + 0x12;	// yellow number
+		if (unichar >= '0' && unichar <= '9')
+				unichar = unichar - '0' + 0x12;	// yellow number
 		else switch (key) {
-			case '[': key = 0x10; break;
-			case ']': key = 0x11; break;
-			case 'g': key = 0x86; break;
-			case 'r': key = 0x87; break;
-			case 'y': key = 0x88; break;
-			case 'b': key = 0x89; break;
-			case '(': key = 0x80; break;
-			case '=': key = 0x81; break;
-			case ')': key = 0x82; break;
-			case 'a': key = 0x83; break;
-			case '<': key = 0x1d; break;
-			case '-': key = 0x1e; break;
-			case '>': key = 0x1f; break;
-			case ',': key = 0x1c; break;
-			case '.': key = 0x9c; break;
-			case 'B': key = 0x8b; break;
-			case 'C': key = 0x8d; break;
+			case '[': unichar = 0x10; break;
+			case ']': unichar = 0x11; break;
+			case 'g': unichar = 0x86; break;
+			case 'r': unichar = 0x87; break;
+			case 'y': unichar = 0x88; break;
+			case 'b': unichar = 0x89; break;
+			case '(': unichar = 0x80; break;
+			case '=': unichar = 0x81; break;
+			case ')': unichar = 0x82; break;
+			case 'a': unichar = 0x83; break;
+			case '<': unichar = 0x1d; break;
+			case '-': unichar = 0x1e; break;
+			case '>': unichar = 0x1f; break;
+			case ',': unichar = 0x1c; break;
+			case '.': unichar = 0x9c; break;
+			case 'B': unichar = 0x8b; break;
+			case 'C': unichar = 0x8d; break;
 		}
 	}
 
@@ -1218,7 +1228,7 @@ nextline:
 #else // WITH_KEYMAP
 	if (keydown[K_ALT])
 #endif // WITH_KEYMAP else
-		key |= 128;		// red char
+		unichar |= 128;		// red char
 
 	i = strlen(key_lines[edit_line]);
 	if (i >= MAXCMDLINE-1)
@@ -1226,7 +1236,7 @@ nextline:
 
 	// This also moves the ending \0
 	memmove (key_lines[edit_line]+key_linepos+1, key_lines[edit_line]+key_linepos, i-key_linepos+1);
-	key_lines[edit_line][key_linepos] = key;
+	key_lines[edit_line][key_linepos] = wc2char(unichar);
 	key_linepos++;
 CompleteCommandNew_Reset ();
 }
@@ -1239,7 +1249,7 @@ qbool chat_server;		// added by jogi
 char		chat_buffer[MAXCMDLINE];
 int			chat_linepos = 0;
 
-void Key_Message (int key) {
+void Key_Message (int key, wchar unichar) {
 	int len;
 
 	switch (key) {
@@ -1309,7 +1319,7 @@ void Key_Message (int key) {
 		return;
 	}
 
-	if (key < 32 || key > 127)
+	if (!unichar)
 		return;	// non printable
 
 	len = strlen(chat_buffer);
@@ -1319,7 +1329,7 @@ void Key_Message (int key) {
 
 	// This also moves the ending \0
 	memmove (chat_buffer+chat_linepos+1, chat_buffer+chat_linepos, len - chat_linepos + 1);
-	chat_buffer[chat_linepos++] = key;
+	chat_buffer[chat_linepos++] = wc2char(unichar);
 }
 
 //============================================================================
@@ -1769,7 +1779,7 @@ void Key_Init (void) {
 }
 
 //Called by the system between frames for both key up and key down events Should NOT be called during an interrupt!
-void Key_EventEx (int key, int basekey, qbool down)
+void Key_EventEx (int key, int unichar, qbool down)
 {
 	char *kb, cmd[1024];
 
@@ -1784,10 +1794,10 @@ void Key_EventEx (int key, int basekey, qbool down)
 	else if (key == K_LWIN || key == K_RWIN)
 		Key_Event (K_WIN, down);
 
-	keydown[basekey] = down;
+	keydown[key] = down;
 
 	if (!down)
-		key_repeats[basekey] = 0;
+		key_repeats[key] = 0;
 
 #ifndef WITH_KEYMAP
 	key_lastpress = key;
@@ -1795,8 +1805,8 @@ void Key_EventEx (int key, int basekey, qbool down)
 
 	// update auto-repeat status
 	if (down) {
-		key_repeats[basekey]++;
-		if (key_repeats[basekey] > 1) {
+		key_repeats[key]++;
+		if (key_repeats[key] > 1) {
 			if ((key != K_BACKSPACE && key != K_DEL
 				&& key != K_LEFTARROW && key != K_RIGHTARROW
 				&& key != K_UPARROW && key != K_DOWNARROW
@@ -1812,10 +1822,10 @@ void Key_EventEx (int key, int basekey, qbool down)
 			return;
 		switch (key_dest) {
 		case key_message:
-			Key_Message (key);
+			Key_Message (key, unichar);
 			break;
 		case key_menu:
-			M_Keydown (key);
+			M_Keydown (key, unichar);
 			break;
 		case key_game:
 			M_ToggleMenu_f ();
@@ -1836,12 +1846,12 @@ void Key_EventEx (int key, int basekey, qbool down)
 	// These will occur even in console mode, to keep the character from continuing an action started before a
 	// console switch.  Button commands include the kenum as a parameter, so multiple downs can be matched with ups
 	if (!down) {
-		kb = keybindings[basekey];
+		kb = keybindings[key];
 		if (kb)
-			if (kb[0] == '+' && keyactive[basekey]) {
-				sprintf (cmd, "-%s %i\n", kb+1, basekey);
+			if (kb[0] == '+' && keyactive[key]) {
+				sprintf (cmd, "-%s %i\n", kb+1, key);
 				Cbuf_AddText (cmd);
-				keyactive[basekey] = false;
+				keyactive[key] = false;
 			}
 #ifndef WITH_KEYMAP
 		if (keyshift[key] != key) {
@@ -1862,12 +1872,12 @@ void Key_EventEx (int key, int basekey, qbool down)
 			((key_dest == key_console || key_dest == key_message) && !consolekeys[key]) || 
 			(key_dest == key_game && (cls.state == ca_active || !consolekeys[key]))
 		) {
-		kb = keybindings[basekey];
+		kb = keybindings[key];
 		if (kb) {
 			if (kb[0] == '+'){	// button commands add keynum as a parm
-				sprintf (cmd, "%s %i\n", kb, basekey);
+				sprintf (cmd, "%s %i\n", kb, key);
 				Cbuf_AddText (cmd);
-				keyactive[basekey] = true;
+				keyactive[key] = true;
 			} else {
 				Cbuf_AddText (kb);
 				Cbuf_AddText ("\n");
@@ -1889,15 +1899,15 @@ Com_Printf("DOWN\n");
 
 	switch (key_dest) {
 	case key_message:
-		Key_Message (key);
+		Key_Message (key, unichar);
 		break;
 	case key_menu:
-		M_Keydown (key);
+		M_Keydown (key, unichar);
 		break;
 
 	case key_game:
 	case key_console:
-		Key_Console (key);
+		Key_Console (key, unichar);
 		break;
 	default:
 		assert(!"Bad key_dest");
@@ -1905,7 +1915,17 @@ Com_Printf("DOWN\n");
 }
 void Key_Event (int key, qbool down)
 {
-	Key_EventEx (key, key, down);
+	wchar unichar;
+
+	assert (key >= 0 && key <= 255);
+
+#ifndef WITH_KEYMAP
+	unichar = keydown[K_SHIFT] ? keyshift[key] : key;
+	if (unichar < 32 || unichar > 127)
+		unichar = 0;
+#endif
+
+	Key_EventEx (key, unichar, down);
 }
 
 void Key_ClearStates (void) {

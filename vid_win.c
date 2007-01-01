@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.18 2006-12-16 03:07:08 qqshka Exp $
+	$Id: vid_win.c,v 1.19 2007-01-01 16:38:21 tonik Exp $
 
 */
 
@@ -2309,7 +2309,7 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		case WM_SYSKEYDOWN:
 			if (!in_mode_set)
 #ifdef WITH_KEYMAP
-				IN_TranslateKeyEvent (lParam, true);
+				IN_TranslateKeyEvent (lParam, wParam, true);
 #else // WITH_KEYMAP
 				Key_Event (IN_MapKey(lParam), true);
 #endif // WITH_KEYMAP else
@@ -2319,7 +2319,7 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		case WM_SYSKEYUP:
 			if (!in_mode_set)
 #ifdef WITH_KEYMAP
-				IN_TranslateKeyEvent (lParam, false);
+				IN_TranslateKeyEvent (lParam, wParam, false);
 #else // WITH_KEYMAP
 				Key_Event (IN_MapKey(lParam), false);
 #endif // WITH_KEYMAP else

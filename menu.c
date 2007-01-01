@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.52 2006-12-25 20:11:27 qqshka Exp $
+	$Id: menu.c,v 1.53 2007-01-01 16:38:21 tonik Exp $
 
 */
 
@@ -95,7 +95,7 @@ void M_Main_Key (int key);
 	void M_MultiPlayer_Key (int key);
 		void M_ServerList_Key (int key);
 			void M_SEdit_Key (int key);
-		void M_Setup_Key (int key);
+		void M_Setup_Key (int key, int unichar);
 		void M_Demo_Key (int key);
 		void M_GameOptions_Key (int key);
 	void M_Options_Key (int key);
@@ -2585,7 +2585,10 @@ void M_Setup_Draw (void) {
 		M_DrawCharacter (168 + 8*strlen(setup_team), setup_cursor_table [setup_cursor], FLASHINGCURSOR());
 }
 
-void M_Setup_Key (int k) {
+typedef unsigned int wchar;
+char wc2char (wchar wc);
+
+void M_Setup_Key (int k, int unichar) {
 	int l;
 
 	switch (k) {
@@ -2667,20 +2670,20 @@ void M_Setup_Key (int k) {
 			break;
 
 		default:
-			if (k < 32 || k > 127)
+			if (!unichar)
 				break;
 			if (setup_cursor == 0) {
 				l = strlen(setup_name);
 				if (l < 15) {
 					setup_name[l+1] = 0;
-					setup_name[l] = k;
+					setup_name[l] = wc2char(unichar);
 				}
 			}
 			if (setup_cursor == 1) {
 				l = strlen(setup_team);
 				if (l < 15) {
 					setup_team[l + 1] = 0;
-					setup_team[l] = k;
+					setup_team[l] = wc2char(unichar);
 				}
 			}
 	}
@@ -2947,7 +2950,7 @@ void M_Draw (void) {
 	VID_LockBuffer ();
 }
 
-void M_Keydown (int key) {
+void M_Keydown (int key, int unichar) {
 	switch (m_state) {
 		case m_none:
 			return;
@@ -2975,7 +2978,7 @@ void M_Keydown (int key) {
 			return;
 
 		case m_setup:
-			M_Setup_Key (key);
+			M_Setup_Key (key, unichar);
 			return;
 
 		case m_options:

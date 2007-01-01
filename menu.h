@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.h,v 1.10 2006-12-30 11:30:14 disconn3ct Exp $
+	$Id: menu.h,v 1.11 2007-01-01 16:38:21 tonik Exp $
 
 */
 
@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // menus
 //
 void M_Init (void);
-void M_Keydown (int key);
+void M_Keydown (int key, int unichar);
 void M_Draw (void);
 void M_ToggleMenu_f (void);
 void M_LeaveMenus (void);

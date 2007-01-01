@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keymap.c,v 1.7 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: keymap.c,v 1.8 2007-01-01 16:38:21 tonik Exp $
 
 */
 // keymap.c -- support for international keyboard layouts
@@ -29,6 +29,7 @@ extern cvar_t cl_keypad;
 
 // name of the keymapping:
 cvar_t	keymap_name = {"keymap_name", "Default"};
+cvar_t	in_builtinkeymap = {"in_builtinkeymap", "0"};
 
 // flag, which shows if a keymapping is active or not:
 static qbool keymap_active = false; 
@@ -161,6 +162,7 @@ void	IN_StartupKeymap (void) {
 
 	// name of the current keymapping (just for informational purposes):
 	Cvar_Register (&keymap_name);
+	Cvar_Register (&in_builtinkeymap);
 } /* END_FUNC IN_StartupKeymap */
 
 
@@ -171,14 +173,14 @@ IN_TranslateKeyEvent
 Map from windows to quake keynums and generate Key_Event
 =======
 */
-void IN_TranslateKeyEvent (int lKeyData, qbool down) {
+void IN_TranslateKeyEvent (int lParam, int wParam, qbool down) {
 	int		extended;
 	int		scancode;
 	int		key      = 0;
 	int		basekey  = 0;
 
-	extended = (lKeyData >> 24) & 0x01;
-	scancode = (lKeyData >> 16) & 0xFF;
+	extended = (lParam >> 24) & 0x01;
+	scancode = (lParam >> 16) & 0xFF;
 	if (scancode <= 127) {
 		if (keymap_active) {
 			key     = keymaps[ 0 ][ scancode + (extended ? 128 : 0) ];
@@ -243,6 +245,13 @@ void IN_TranslateKeyEvent (int lKeyData, qbool down) {
 					default:                                     break;
 				}
 			}
+			if (!in_builtinkeymap.value) {
+				BYTE	state[256];
+				WCHAR	unichar;
+				GetKeyboardState (state);
+				ToUnicode (wParam, lParam >> 16, state, &unichar, 1, 0);
+				key = unichar;
+			}
 		}
 	} // END if (scancode <= 127)
 
@@ -251,7 +260,7 @@ void IN_TranslateKeyEvent (int lKeyData, qbool down) {
 		IN_Keycode_Print_f (scancode, (extended > 0) ? true : false, down, key);
 	}
 
-	Key_EventEx (key, basekey, down);
+	Key_EventEx (basekey, key, down);
 
 	// FIXME
 	// the following is a workaround for the situation where
