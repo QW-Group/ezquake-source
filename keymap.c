@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keymap.c,v 1.8 2007-01-01 16:38:21 tonik Exp $
+	$Id: keymap.c,v 1.9 2007-01-01 17:13:44 tonik Exp $
 
 */
 // keymap.c -- support for international keyboard layouts
@@ -177,19 +177,21 @@ void IN_TranslateKeyEvent (int lParam, int wParam, qbool down) {
 	int		extended;
 	int		scancode;
 	int		key      = 0;
-	int		basekey  = 0;
+	int		unichar  = 0;
 
 	extended = (lParam >> 24) & 0x01;
 	scancode = (lParam >> 16) & 0xFF;
 	if (scancode <= 127) {
 		if (keymap_active) {
 			key     = keymaps[ 0 ][ scancode + (extended ? 128 : 0) ];
-			basekey = key;
+			unichar = key;
 			if ( keydown[K_ALTGR] )
-				key = keymaps[ 2 ][ scancode + (extended ? 128 : 0) ];
+				unichar = keymaps[ 2 ][ scancode + (extended ? 128 : 0) ];
 			else
 			if ( keydown[K_SHIFT] )
-				key = keymaps[ 1 ][ scancode + (extended ? 128 : 0) ];
+				unichar = keymaps[ 1 ][ scancode + (extended ? 128 : 0) ];
+			if (unichar < 32 || unichar > 127)
+				unichar = 0;
 		}
 		else
 		{
@@ -197,32 +199,14 @@ void IN_TranslateKeyEvent (int lParam, int wParam, qbool down) {
 			key     = keymaps_default[0][scancode + (extended ? 128 : 0)];
 			if (key == 0)
 				key = UNKNOWN + scancode + (extended ? 128 : 0);
-			basekey = key;
-			if ( keydown[K_SHIFT] )
-			key = keymaps_default[1][scancode + (extended ? 128 : 0)];
+			unichar = key;
+			if (keydown[K_SHIFT])
+				unichar = keymaps_default[1][scancode + (extended ? 128 : 0)];
+			if (unichar < 32 || unichar > 127)
+				unichar = 0;
 
 			if (cl_keypad.value <= 0) {
 				// compatibility mode without knowledge about keypad-keys:
-				switch (basekey) {
-					case KP_NUMLOCK:     basekey = K_PAUSE;      break;
-					case KP_SLASH:       basekey = '/';          break;
-					case KP_STAR:        basekey = '*';          break;
-					case KP_MINUS:       basekey = '-';          break;
-					case KP_HOME:        basekey = K_HOME;       break;
-					case KP_UPARROW:     basekey = K_UPARROW;    break;
-					case KP_PGUP:        basekey = K_PGUP;       break;
-					case KP_LEFTARROW:   basekey = K_LEFTARROW;  break;
-					case KP_5:           basekey = '5';          break;
-					case KP_RIGHTARROW:  basekey = K_RIGHTARROW; break;
-					case KP_PLUS:        basekey = '+';          break;
-					case KP_END:         basekey = K_END;        break;
-					case KP_DOWNARROW:   basekey = K_DOWNARROW;  break;
-					case KP_PGDN:        basekey = K_PGDN;       break;
-					case KP_INS:         basekey = K_INS;        break;
-					case KP_DEL:         basekey = K_DEL;        break;
-					case KP_ENTER:       basekey = K_ENTER;      break;
-					default:                                     break;
-				}
 				switch (key)
 				{
 					case KP_NUMLOCK:     key = K_PAUSE;          break;
@@ -247,10 +231,10 @@ void IN_TranslateKeyEvent (int lParam, int wParam, qbool down) {
 			}
 			if (!in_builtinkeymap.value) {
 				BYTE	state[256];
-				WCHAR	unichar;
+				WCHAR	uni;
 				GetKeyboardState (state);
-				ToUnicode (wParam, lParam >> 16, state, &unichar, 1, 0);
-				key = unichar;
+				ToUnicode (wParam, lParam >> 16, state, &uni, 1, 0);
+				unichar = uni;
 			}
 		}
 	} // END if (scancode <= 127)
@@ -260,7 +244,7 @@ void IN_TranslateKeyEvent (int lParam, int wParam, qbool down) {
 		IN_Keycode_Print_f (scancode, (extended > 0) ? true : false, down, key);
 	}
 
-	Key_EventEx (basekey, key, down);
+	Key_EventEx (key, unichar, down);
 
 	// FIXME
 	// the following is a workaround for the situation where
