@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.33 2006-12-31 05:14:34 cokeman1982 Exp $
+    $Id: common.h,v 1.34 2007-01-01 21:47:56 cokeman1982 Exp $
 */
 // common.h  -- general definitions
 
@@ -378,8 +378,7 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 						  qbool keep_path,
 						  const char *password,
 						  char *unpack_path,			// The path where the file was unpacked.
-						  int unpack_path_size,			// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.
-						  char *append_extension);		// If any extension should be appended to the unpacked filename.
+						  int unpack_path_size);			// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.
 
 int COM_ZipUnpackCurrentFile (unzFile zip_file, 
 							  const char *destination_path, 

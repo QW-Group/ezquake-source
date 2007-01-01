@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.44 2007-01-01 00:29:09 qqshka Exp $
+    $Id: common.c,v 1.45 2007-01-01 21:47:43 cokeman1982 Exp $
 
 */
 
@@ -626,10 +626,9 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 						  qbool keep_path,
 						  const char *password,
 						  char *unpack_path,			// The path where the file was unpacked.
-						  int unpack_path_size,			// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.
-						  char *append_extension)		// If any extension should be appended to the unpacked filename.
+						  int unpack_path_size)			// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.
 {
-	int	error = UNZ_OK;
+	int	retval = UNZ_OK;
 
 	// Get a unique temp filename.
 	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true))
@@ -640,28 +639,29 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 	// Delete the existing temp file (it is created when the filename is received above).
 	if (_unlink (unpack_path))
 	{
-		return 0;
+		return UNZ_ERRNO;
 	}
 
-	// Append the extension if any.
-	if (append_extension != NULL)
-	{
-		strlcpy (unpack_path, va("%s%s", unpack_path, append_extension), unpack_path_size);
-	}
+	// Make sure we create a directory for the destination path.
+	#ifdef WIN32
+	strlcat (unpack_path, "\\", unpack_path_size);
+	#else
+	strlcat (unpack_path, "/", unpack_path_size);
+	#endif
 
 	// Unpack the file
-	error = COM_ZipUnpackOneFile (zip_file, filename_inzip, unpack_path, case_sensitive, keep_path, true, password);
+	retval = COM_ZipUnpackOneFile (zip_file, filename_inzip, unpack_path, case_sensitive, keep_path, true, password);
 
-	if (error)
+	if (retval == UNZ_OK)
 	{
-		strlcpy (unpack_path, va("%s%c%s", unpack_path, PATH_SEPARATOR, filename_inzip), unpack_path_size);
+		strlcpy (unpack_path, va("%s%s", unpack_path, filename_inzip), unpack_path_size);
 	}
 	else
 	{
 		unpack_path[0] = 0;
 	}
 
-	return error;
+	return retval;
 }
 
 int COM_ZipBreakupArchivePath (char *archive_extension,			// The extension of the archive type we're looking fore "zip" for example.
@@ -806,7 +806,7 @@ int COM_ZipUnpackOneFile (unzFile zip_file,				// The zip file opened with COM_Z
 						  qbool overwrite,				// Overwrite any existing file with the same name when unpacking?
 						  const char *password)			// The password to use when extracting the file.
 {
-	int	error = UNZ_OK;
+	int	retval = UNZ_OK;
 
 	if (filename_inzip == NULL || zip_file == NULL)
 	{
@@ -814,17 +814,17 @@ int COM_ZipUnpackOneFile (unzFile zip_file,				// The zip file opened with COM_Z
 	}
 
 	// Locate the file.
-	error = unzLocateFile (zip_file, filename_inzip, case_sensitive);
+	retval = unzLocateFile (zip_file, filename_inzip, case_sensitive);
 
-	if (error == UNZ_END_OF_LIST_OF_FILE || error != UNZ_OK)
+	if (retval == UNZ_END_OF_LIST_OF_FILE || retval != UNZ_OK)
 	{
-		return error;
+		return retval;
 	}
 
 	// Unpack the file.
 	COM_ZipUnpackCurrentFile (zip_file, destination_path, case_sensitive, keep_path, overwrite, password);
 
-	return error;
+	return retval;
 }
 
 int COM_ZipUnpackCurrentFile (unzFile zip_file, 
@@ -886,9 +886,11 @@ int COM_ZipUnpackCurrentFile (unzFile zip_file,
 	// Extract the file.
 	//
 	{
-		#define			EXPECTED_BYTES_READ	1
-		int				bytes_read = 0;		
-		FILE			*fout = NULL;
+		#define	EXPECTED_BYTES_READ	1
+		int	bytes_read	= 0;		
+		FILE *fout		= NULL;
+		
+		error = UNZ_OK;
 
 		//
 		// Open the zip file.
