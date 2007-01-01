@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.39 2006-12-29 05:22:26 qqshka Exp $
+	$Id: gl_draw.c,v 1.40 2007-01-01 07:16:23 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -921,6 +921,161 @@ void Draw_ColoredString (int x, int y, char *text, int red) {
 
 	if (!white)
 		glColor3ubv(color_white);
+
+	if (scr_coloredText.value)
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+}
+
+const int_white = 0xFFFFFFFF;
+
+int RGBA_2_Int(byte r, byte g, byte b, byte a) {
+	return ((r << 0) | (g << 8) | (b << 16) | (a << 24)) & 0xFFFFFFFF;
+}
+
+byte* Int_2_RGBA(int i, byte rgba[4]) {
+	rgba[0] = (i >> 0  & 0xFF);
+	rgba[1] = (i >> 8  & 0xFF);
+	rgba[2] = (i >> 16 & 0xFF);
+	rgba[3] = (i >> 24 & 0xFF);
+
+	return rgba;
+}
+
+/*
+	Instead of keeping color info in *text we provide color for each symbol in different array
+
+	char rgb[] = "rgb";
+	int i_rgb[3] = {RGBA_2_Int(255,0,0,255), RGBA_2_Int(0,255,0,255), RGBA_2_Int(0,0,255,255)};
+	// this will draw "rgb" non transparent string where r symbol will be red, g will be green and b is blue
+	Draw_ColoredString2 (0, 10, rgb, i_rgba, false)
+
+	If u want use alpha u must use "gl_alphafont 1", "scr_coloredText 1" and "red" param must be false
+*/
+void Draw_ColoredString2 (int x, int y, char *text, int *clr, int red) {
+	byte white4[4] = {255, 255, 255, 255}, rgba[4];
+	int num, i, last;
+	qbool atest = false;
+	qbool blend = false;
+
+	if (y <= -8)
+		return;			// totally off screen
+
+	if (!*text || !clr)
+		return;
+
+	if (gl_alphafont.value)	{
+		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
+			glDisable(GL_ALPHA_TEST);
+		if (!(blend = glIsEnabled(GL_BLEND)))
+			glEnable(GL_BLEND);
+	}
+
+	GL_Bind (char_texture);
+
+	if (scr_coloredText.value)
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	glColor4ubv(white4);
+
+	glBegin (GL_QUADS);
+
+	for (last = int_white, i = 0; text[i]; i++) {
+		if (scr_coloredText.value && clr[i] != last) {
+			// probably here we may made some trick like glColor4ubv((byte*)&last); instead of Int_2_RGBA()
+			glColor4ubv(Int_2_RGBA(last = clr[i], rgba));
+		}
+
+		num = text[i] & 255;
+		if (!scr_coloredText.value && red) // do not convert to red if we use coloredText
+			num |= 128;
+
+		if (num != 32 && num != (32 | 128))
+			Draw_CharPoly(x, y, num);
+
+		x += 8;
+	}
+
+	glEnd ();
+
+	if (gl_alphafont.value)	{
+		if (atest)
+			glEnable(GL_ALPHA_TEST);
+		if (!blend)
+			glDisable(GL_BLEND);
+	}
+
+	glColor4ubv(white4);
+
+	if (scr_coloredText.value)
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+}
+
+
+/*
+	Instead of keeping color info in *text we provide info then particular color starts
+
+	char str[] = "redgreen";
+	clrinfo_t info[2] = { {RGBA_2_Int(255,0,0,255), 0}, {RGBA_2_Int(0,255,0,255), 3} };
+	// this will draw "redgreen" non transparent string where "red" will be red, "green" will be green
+	Draw_ColoredString2 (0, 10, str, info, 2, false)
+
+	If u want use alpha u must use "gl_alphafont 1", "scr_coloredText 1" and "red" param must be false
+*/
+void Draw_ColoredString3 (int x, int y, char *text, clrinfo_t *clr, int clr_cnt, int red) {
+	byte white4[4] = {255, 255, 255, 255}, rgba[4];
+	int num, i, last, j;
+	qbool atest = false;
+	qbool blend = false;
+
+	if (y <= -8)
+		return;			// totally off screen
+
+	if (!*text || !clr)
+		return;
+
+	if (gl_alphafont.value)	{
+		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
+			glDisable(GL_ALPHA_TEST);
+		if (!(blend = glIsEnabled(GL_BLEND)))
+			glEnable(GL_BLEND);
+	}
+
+	GL_Bind (char_texture);
+
+	if (scr_coloredText.value)
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	glColor4ubv(white4);
+
+	glBegin (GL_QUADS);
+
+	for (last = int_white, j = i = 0; text[i]; i++) {
+		if (scr_coloredText.value && j < clr_cnt && i == clr[j].i) {
+			if (clr[j].c != last)
+				glColor4ubv(Int_2_RGBA(last = clr[j].c, rgba));
+			j++;
+		}
+
+		num = text[i] & 255;
+		if (!scr_coloredText.value && red) // do not convert to red if we use coloredText
+			num |= 128;
+
+		if (num != 32 && num != (32 | 128))
+			Draw_CharPoly(x, y, num);
+
+		x += 8;
+	}
+
+	glEnd ();
+
+	if (gl_alphafont.value)	{
+		if (atest)
+			glEnable(GL_ALPHA_TEST);
+		if (!blend)
+			glDisable(GL_BLEND);
+	}
+
+	glColor4ubv(white4);
 
 	if (scr_coloredText.value)
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);

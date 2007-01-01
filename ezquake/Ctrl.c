@@ -1,4 +1,4 @@
-//    $Id: Ctrl.c,v 1.5 2006-12-31 05:15:40 cokeman1982 Exp $
+//    $Id: Ctrl.c,v 1.6 2007-01-01 07:16:23 qqshka Exp $
 
 #include "quakedef.h"
 
@@ -24,6 +24,23 @@ void UI_Print (int cx, int cy, char *str, int red)
 	}
 }
 
+void UI_Print3 (int cx, int cy, char *str, clrinfo_t *clr, int clr_cnt, int red)
+{
+	if (red)
+	{
+		while (*str) 
+		{
+			UI_DrawCharacter (cx, cy, (*str) | (red ? 128 : 0));
+			str++;
+			cx += 8;
+		}
+	}
+	else
+	{
+		Draw_ColoredString3 (cx, cy, str, clr, clr_cnt, red);
+	}
+}
+
 void UI_Print_Center (int cx, int cy, int w, char *str, int red)
 {
 	// UH!!! wtf.... if I do:
@@ -33,6 +50,12 @@ void UI_Print_Center (int cx, int cy, int w, char *str, int red)
 	// function call like below it works fine.
 	int text_length = strlen(str);
 	UI_Print(cx + (w - 8 * text_length) / 2, cy, str, red);
+}
+
+void UI_Print_Center3 (int cx, int cy, int w, char *str, clrinfo_t *clr, int clr_cnt, int red)
+{
+	int text_length = strlen(str);
+	UI_Print3(cx + (w - 8 * text_length) / 2, cy, str, clr, clr_cnt, red);
 }
 
 void UI_MakeLine(char *buf, int w)

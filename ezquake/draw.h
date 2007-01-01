@@ -65,6 +65,21 @@ void Draw_FadeScreen (void);
 void Draw_String (int x, int y, char *str);
 void Draw_Alt_String (int x, int y, char *str);
 void Draw_ColoredString (int x, int y, char *str, int red);
+
+extern const int_white;
+
+int RGBA_2_Int(byte r, byte g, byte b, byte a);
+byte* Int_2_RGBA(int i, byte rgba[4]);
+
+void Draw_ColoredString2 (int x, int y, char *text, int *clr, int red);
+
+typedef struct clrinfo_s {
+	int c; // color
+	int i; // index when this colors starts
+} clrinfo_t;
+
+void Draw_ColoredString3 (int x, int y, char *text, clrinfo_t *clr, int clr_cnt, int red);
+
 mpic_t *Draw_CachePicSafe (char *path, qbool true, qbool only24bit);
 mpic_t *Draw_CachePic (char *path);
 mpic_t *Draw_CacheWadPic (char *name);
