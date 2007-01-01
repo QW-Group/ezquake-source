@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.49 2006-12-31 05:14:45 cokeman1982 Exp $
+	$Id: cl_demo.c,v 1.50 2007-01-01 21:48:38 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1377,7 +1377,7 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 		unzFile zip_file = COM_ZipUnpackOpenFile (archive_path);
 		
 		// Try extracting the zip file.
-		if(COM_ZipUnpackOneFileToTemp (zip_file, inzip_path, false, false, NULL, temp_path, MAX_PATH, NULL/*COM_FileExtension (inzip_path)*/) != UNZ_OK)
+		if(COM_ZipUnpackOneFileToTemp (zip_file, inzip_path, false, false, NULL, temp_path, MAX_PATH/*, NULL/*COM_FileExtension (inzip_path)*/) != UNZ_OK)
 		{
 			Com_Printf ("Failed to unpack the demo file \"%s\" to the temp path \"%s\"\n", inzip_path, temp_path);
 			unpacked_path[0] = 0;
@@ -1451,9 +1451,6 @@ void CL_Play_f (void)
 	#endif // WITH_ZIP
 	
 	int i;
-#ifdef WITH_ZIP
-	qbool is_archive = false;
-#endif
 	char *real_name;
 	char name[2 * MAX_OSPATH], **s;
 	static char *ext[] = {".qwd", ".mvd", ".dem", NULL};
