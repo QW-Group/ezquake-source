@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.50 2007-01-01 21:48:38 cokeman1982 Exp $
+	$Id: cl_demo.c,v 1.51 2007-01-01 22:05:54 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1346,17 +1346,37 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 
 	if (!strcmp (COM_FileExtension (play_path), "gz"))
 	{
-		
-		//strlcpy (unpacked_path, play_path, min(unpacked_path_size, strlen(play_path) - 2));
+		int i = 0;
+		int ext_len = 0;
+		char ext[5];
+
+		// Find the extension with .gz removed.
+		{
+			for (i = strlen(play_path) - 4; i > 0; i--)
+			{
+				if (play_path[i] == '.' || ext_len >= 4)
+				{
+					break;
+				}
+
+				ext_len++;
+			}
+
+			if (ext_len <= 4)
+			{
+				strlcpy (ext, play_path + strlen(play_path) - 4 - ext_len, sizeof(ext));
+			}
+			else
+			{
+				strlcpy (ext, ".mvd", sizeof(ext));
+			}
+		}
 
 		// Unpack the file.
-		if (!COM_GZipUnpackToTemp (play_path, unpacked_path, unpacked_path_size, ".mvd"))
+		if (!COM_GZipUnpackToTemp (play_path, unpacked_path, unpacked_path_size, ext))
 		{
 			return 0;
 		}
-
-		// Remove ".gz" from the end of the path.
-		//strlcpy (unpacked_path, play_path, min(unpacked_path_size, strlen(play_path) - 2));
 
 		return 1;
 	}
@@ -1377,7 +1397,7 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 		unzFile zip_file = COM_ZipUnpackOpenFile (archive_path);
 		
 		// Try extracting the zip file.
-		if(COM_ZipUnpackOneFileToTemp (zip_file, inzip_path, false, false, NULL, temp_path, MAX_PATH/*, NULL/*COM_FileExtension (inzip_path)*/) != UNZ_OK)
+		if(COM_ZipUnpackOneFileToTemp (zip_file, inzip_path, false, false, NULL, temp_path, MAX_PATH) != UNZ_OK)
 		{
 			Com_Printf ("Failed to unpack the demo file \"%s\" to the temp path \"%s\"\n", inzip_path, temp_path);
 			unpacked_path[0] = 0;
