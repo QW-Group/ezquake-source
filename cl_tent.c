@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.23 2006-12-23 06:57:27 qqshka Exp $
+	$Id: cl_tent.c,v 1.24 2007-01-01 13:50:05 tonik Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -639,6 +639,8 @@ void CL_UpdateBeams (void) {
 				ent.angles[0] = pitch;
 				ent.angles[1] = yaw;
 				ent.angles[2] = rand() % 360;
+				if (!Rulesets_RestrictParticles())
+					ent.alpha = r_shaftalpha.value;
 
 				CL_AddEntity (&ent);
 #ifdef GLQUAKE

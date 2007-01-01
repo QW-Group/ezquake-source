@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.115 2006-12-29 23:48:35 qqshka Exp $
+	$Id: cl_main.c,v 1.116 2007-01-01 13:50:05 tonik Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -114,6 +114,7 @@ cvar_t r_grenadetrail			= {"r_grenadeTrail", "1"}; // 3
 cvar_t r_explosiontype			= {"r_explosionType", "1"}; // 7
 // END shaman :: balancing variables
 cvar_t r_telesplash				= {"r_telesplash", "1"}; // disconnect
+cvar_t r_shaftalpha				= {"r_shaftalpha", "1"};
 
 // info mirrors
 cvar_t	password = {"password", "", CVAR_USERINFO};
@@ -972,6 +973,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_fakeshaft);
 	Cmd_AddLegacyCommand ("cl_truelightning", "cl_fakeshaft");
 	Cvar_Register (&r_telesplash);
+	Cvar_Register (&r_shaftalpha);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SKIN);
 	Cvar_Register (&noskins);
