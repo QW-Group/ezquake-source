@@ -489,6 +489,7 @@ extern cvar_t r_explosiontype;
 extern cvar_t r_flagcolor;
 extern cvar_t r_lightflicker;
 extern cvar_t r_telesplash; 
+extern cvar_t r_shaftalpha;
 
 extern cvar_t cl_restrictions;
 
