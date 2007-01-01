@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.45 2007-01-01 21:47:43 cokeman1982 Exp $
+    $Id: common.c,v 1.46 2007-01-01 22:26:49 cokeman1982 Exp $
 
 */
 
@@ -369,6 +369,59 @@ qbool COM_FileExists (char *path)
 #ifdef WITH_ZLIB
 
 #define CHUNK 16384
+
+int COM_GZipPack (char *source_path,
+				  char *destination_path,
+				  qbool overwrite)
+{
+	FILE *source			= NULL;
+	gzFile gzip_destination = NULL;
+	int retval		= 0;
+
+	// Open source file.
+	fopen (source_path, "rb");
+
+	// Failed to open source.
+	if (!source_path)
+	{
+		return -1;
+	}
+
+	// Check if the destination file exists and 
+	// if we're allowed to overwrite it.
+	if (COM_FileExists (destination_path) && !overwrite)
+	{
+		return -1;
+	}
+	
+	// Create the path for the destination.
+	COM_CreatePath (COM_SkipPath (destination_path));
+
+	// Open destination file.
+	gzip_destination = gzopen (destination_path, "wb");
+
+	// Failed to open destination.
+	if (!gzip_destination)
+	{
+		return -1;
+	}
+
+	// Pack.
+	{
+		unsigned char inbuf[CHUNK];
+		int bytes_read = 0;
+
+		while ((bytes_read = fread (inbuf, 1, sizeof(inbuf), source)) > 0)
+		{
+			gzwrite (gzip_destination, inbuf, bytes_read);
+		}
+		
+		fclose (source);
+		gzclose (gzip_destination);
+	}
+
+	return 1;
+}
 
 //
 // Unpack a .gz file.
