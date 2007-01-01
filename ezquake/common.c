@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.43 2006-12-31 05:14:18 cokeman1982 Exp $
+    $Id: common.c,v 1.44 2007-01-01 00:29:09 qqshka Exp $
 
 */
 
@@ -55,6 +55,7 @@ char *com_args_original;
 
 void FS_InitFilesystem (void);
 void COM_Path_f (void);
+int FS_FOpenPathFile (char *filename, FILE **file);
 
 char com_gamedirfile[MAX_QPATH];
 
