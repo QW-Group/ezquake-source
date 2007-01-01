@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.35 2007-01-01 16:38:21 tonik Exp $
+    $Id: keys.c,v 1.36 2007-01-01 16:44:36 tonik Exp $
 
 */
 
@@ -1919,13 +1919,14 @@ void Key_Event (int key, qbool down)
 
 	assert (key >= 0 && key <= 255);
 
-#ifndef WITH_KEYMAP
+#ifdef WITH_KEYMAP
+	Key_EventEx (key, key, down);
+#else
 	unichar = keydown[K_SHIFT] ? keyshift[key] : key;
 	if (unichar < 32 || unichar > 127)
 		unichar = 0;
-#endif
-
 	Key_EventEx (key, unichar, down);
+#endif
 }
 
 void Key_ClearStates (void) {
