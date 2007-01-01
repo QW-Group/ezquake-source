@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.37 2007-01-01 16:47:02 tonik Exp $
+    $Id: keys.c,v 1.38 2007-01-01 19:43:06 tonik Exp $
 
 */
 
@@ -1784,6 +1784,10 @@ void Key_EventEx (int key, int unichar, qbool down)
 	char *kb, cmd[1024];
 
 	//	Com_Printf ("%i : %i\n", key, down); //@@@
+
+	//FIXME
+	if (unichar < 32 || unichar > 127)
+		unichar = 0;
 
 	if (key == K_LALT || key == K_RALT)
 		Key_Event (K_ALT, down);
