@@ -1065,14 +1065,14 @@ static void Add_Column(char *line, int *pos, char *t, int w)
 //
 void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 {
-    int i;
+    int i, int_green = RGBA_2_Int(0, 127, 0, 255), int_blue = RGBA_2_Int(0, 175, 207, 255);
     int listsize, pos, interline, inter_up, inter_dn, rowh;
     char line[1024];
-    char sname[MAX_PATH], ssize[COL_SIZE+1], sdate[COL_DATE+1], stime[COL_TIME+1];
+    char sname[MAX_PATH] = {0}, ssize[COL_SIZE+1] = {0}, sdate[COL_DATE+1] = {0}, stime[COL_TIME+1] = {0};
 
 	if (fl->delete_mode)
 	{
-		UI_Print_Center(x, y + 8, w, "Are you sure you want to delete this file?", true);
+		UI_Print_Center(x, y + 8,  w, "Are you sure you want to delete this file?", true);
 		UI_Print_Center(x, y + 24, w, FL_GetCurrentDisplay(fl), false);
 		UI_Print_Center(x, y + 40, w, "(Y/N)", true);
 		return;
@@ -1090,9 +1090,9 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
     listsize = h / rowh;
 
     // check screen boundaries and mimnimum size
-    if ((w < 160) || (h < 80))
+    if (w < 160 || h < 80)
         return;
-    if ((x < 0) || (y < 0) || (x + w > vid.width) || (y + h > vid.height))
+    if (x < 0 || y < 0 || x + w > vid.width || y + h > vid.height)
         return;
 
     if (fl->need_refresh)
@@ -1155,6 +1155,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         Add_Column(line, &pos, "  kb", COL_SIZE);
 
     memcpy(line, "name", min(pos, 4));
+    line[w/8] = 0;
     UI_Print_Center(x, y + rowh + inter_dn, w, line, true);
     listsize--;
 
@@ -1191,6 +1192,11 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		char size[COL_SIZE+1], date[COL_DATE+1], time[COL_TIME+1];
 		char name[MAX_PATH];
         int filenum = fl->display_entry + i;
+		clrinfo_t clr[2]; // here we use _one_ color, at begining of the string
+		static char	last_name[sizeof(name)]	= {0}; // this is for scroll, can't put it inside scroll code
+
+		clr[0].c = int_white;
+		clr[0].i = 0; // begin of the string
 
         if (filenum >= fl->num_entries)
             break;
@@ -1198,15 +1204,13 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         entry = &fl->entries[filenum];
 
         // Extract date & time.
-        snprintf (date, sizeof(date), "%02d-%02d-%02d", entry->time.wYear % 100,
-                entry->time.wMonth, entry->time.wDay);
-        snprintf (time, sizeof(time), "%2d:%02d",
-                entry->time.wHour, entry->time.wMinute);
+        snprintf(date, sizeof(date), "%02d-%02d-%02d", entry->time.wYear % 100, entry->time.wMonth, entry->time.wDay);
+        snprintf(time, sizeof(time), "%2d:%02d", entry->time.wHour, entry->time.wMinute);
 
         // Extract size.
         if (entry->is_directory)
         {
-            strcpy(size, "<-->");
+            strlcpy(size, "<-->", sizeof(size));
             if (filenum == fl->current_entry)
                 strlcpy(ssize, "dir", sizeof(ssize));
         }
@@ -1217,13 +1221,13 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
             {
                 dwsize /= 1024;
                 dwsize = min(dwsize, 999);
-                sprintf(size, "%3dm", dwsize);
+                snprintf(size, sizeof(size), "%3dm", dwsize);
                 if (filenum == fl->current_entry)
                     snprintf(ssize, sizeof(ssize), "%d mb", dwsize);
             }
             else
             {
-                sprintf(size, "%4d", dwsize);
+                snprintf(size, sizeof(size), "%4d", dwsize);
                 if (filenum == fl->current_entry)
                     snprintf(ssize, sizeof(ssize), "%d kb", dwsize);
             }
@@ -1232,23 +1236,10 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         // Add the columns to the current row (starting from the right).
         pos = w/8;
 
-		// Directories and zip files are colored to emphasis them.
-		// Make sure the columns aren't misaligned because of the color code (5 characters).
-		if (filenum != fl->current_entry
-			 && (entry->is_directory
-#ifdef WITH_ZIP
-				 || entry->is_zip
-#endif // WITH_ZIP
-				)
-		   )
-		{
-			pos += 5;
-			line[pos] = 0;
-		}
-
 		// Clear the line.
 		//memset(line, 0, 1023);
         memset(line, ' ', pos);
+		line[pos] = 0;
 
 		// Add columns.
         if (fl->show_time->value)
@@ -1258,12 +1249,15 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         if (fl->show_size->value)
             Add_Column(line, &pos, size, COL_SIZE);
 
+		clr[1].c = int_white;
+		clr[1].i = pos; // end of name, switch to white
+
 		strlcpy (name, va("%s", entry->display), sizeof(name));
 
 		//
 		// Copy the display name of the entry into the space that's left on the row.
 		//
-		if ((filenum == fl->current_entry) && (strlen(name) > pos) && fl->scroll_names->value)
+		if (filenum == fl->current_entry && fl->scroll_names->value && strlen(name) > pos)
 		{
 			// We need to scroll the text since it doesn't fit.
 			#define SCROLL_RIGHT	1
@@ -1280,11 +1274,15 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 
 			// If the text has changed since last time we scrolled
 			// the scroll data will be invalid so reset it.
-			if (last_text_length != text_length)
+			if (last_text_length != text_length || !last_name[0] || strncmp(name, last_name, sizeof(last_name)))
 			{
+				strlcpy(last_name, name, sizeof(last_name));
 				scroll_position = 0;
 				scroll_direction = SCROLL_RIGHT;
 				last_text_length = text_length;
+				// wait a second before start scroll plz
+				wait = true;
+				t_last_scroll = Sys_DoubleTime();
 			}
 
 			// Get the current time.
@@ -1323,6 +1321,9 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		}
 		else
 		{
+			if (filenum == fl->current_entry)
+				last_name[0] = 0; // this line part of scroll code, next time scroll will be reseted
+
 			// Fits in the name column, no need to scroll (or the user doesn't want us to scroll :~<)
 
 			// If it's not the selected directory/zip color it so that it stands out.
@@ -1331,13 +1332,13 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 				if (entry->is_directory)
 				{
 					// Green.
-					strlcpy (name, va("&c080%s", name), sizeof(name));
+					clr[0].c = int_green;
 				}
 #ifdef WITH_ZIP
 				else if (entry->is_zip)
 				{
 					// Blueish.
-					strlcpy (name, va("&c0bd%s", name), sizeof(name));
+					clr[0].c = int_blue;
 				}
 #endif // WITH_ZIP
 			}
@@ -1356,15 +1357,14 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		line[w/8] = 0;
 
 		// Print the line for the directory entry.
-        UI_Print_Center(x, y + rowh * (i + 2) + inter_dn, w, line, filenum == fl->current_entry);
+        UI_Print_Center3(x, y + rowh * (i + 2) + inter_dn, w, line, clr, 2, filenum == fl->current_entry);
 
         // Remember the currently selected file for dispalying in the status bar
         if (filenum == fl->current_entry)
         {
-			strlcpy (sname, line, min (pos, sizeof(sname)));
-            strcpy (stime, time);
-            snprintf (sdate, sizeof(sdate), "%02d-%02d-%02d", entry->time.wYear % 100,
-                entry->time.wMonth, entry->time.wDay);
+			strlcpy (sname, line, min(pos, sizeof(sname)));
+            strlcpy (stime, time, sizeof(stime));
+            snprintf (sdate, sizeof(sdate), "%02d-%02d-%02d", entry->time.wYear % 100, entry->time.wMonth, entry->time.wDay);
         }
     }
 
@@ -1379,29 +1379,26 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         UI_Print(x, y + h - 3 * rowh - inter_up, line, false);
 
 		// Print the name.
-        sname[w/8] = 0;
-        UI_Print_Center(x, y + h - 2 * rowh-inter_up, w, sname, false);
+        UI_Print_Center(x, y + h - 2 * rowh - inter_up, w, sname, false);
 
         if (fl->search_valid)
         {	
 			// Some weird but nice-looking string in Quake font perhaps
-			strcpy(line, "search for: ");   // seach for:
+			strlcpy(line, "search for: ", sizeof(line));   // seach for:
             if (fl->search_error)
             {
-                strcat(line, "not found");
-                line[w/8] = 0;
+                strlcat(line, "not found", sizeof(line));
                 UI_Print_Center(x, y + h - rowh - inter_up, w, line, false);
             }
             else
             {
-                strcat(line, fl->search_string);
-                line[w/8] = 0;
+                strlcat(line, fl->search_string, sizeof(line));
                 UI_Print_Center(x, y + h - rowh - inter_up, w, line, true);
             }
         }
         else
         {
-            sprintf(line, "%s \x8f modified: %s %s", ssize, sdate, stime);
+            snprintf(line, sizeof(line), "%s \x8f modified: %s %s", ssize, sdate, stime);
             UI_Print_Center(x, y + h - rowh - inter_up, w, line, false);
         }
     }

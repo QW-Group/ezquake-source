@@ -227,6 +227,21 @@ void Draw_ColoredString (int x, int y, char *text, int red) {
 	}
 }
 
+const int_white = 0xFFFFFFFF;
+
+int RGBA_2_Int(byte r, byte g, byte b, byte a) {
+	return 0xFFFFFFFF;
+}
+
+byte* Int_2_RGBA(int i, byte rgba[4]) {
+	memset(rgba, 255, 4);
+	return rgba;
+}
+
+void Draw_ColoredString3 (int x, int y, char *text, clrinfo_t *clr, int clr_cnt, int red) {
+	Draw_ColoredString(x, y, text, red);
+}
+
 void Draw_Pixel(int x, int y, byte color) {
 	byte *dest;
 
