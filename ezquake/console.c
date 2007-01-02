@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.30 2006-11-16 17:47:15 johnnycz Exp $
+	$Id: console.c,v 1.31 2007-01-02 02:28:43 qqshka Exp $
 */
 // console.c
 
@@ -240,9 +240,30 @@ void Con_ToggleConsole_f (void) {
 		Con_ClearNotify ();
 }
 
+void Con_SetColor(int idx_from, int count, int c) {
+	int i;
+
+	if (idx_from < 0 || idx_from >= con.maxsize || count < 0 || idx_from + count > con.maxsize)
+		Sys_Error("Con_SetColor: wrong idx");;
+
+	for (i = idx_from; i < count; i++) {
+		memset(&con.clr[i], 0, sizeof(clrinfo_t)); // zeroing whole struct
+		con.clr[i].c = c;
+		con.clr[i].i = i;
+	}
+}
+
+void Con_SetWhite (void) {
+// no need for memset(), Con_SetColor() do it too
+//	memset (con.clr, 0, con.maxsize * sizeof(clrinfo_t)); // set whole struct array to zero
+
+	Con_SetColor(0, con.maxsize, int_white); // set white color
+}
+
 void Con_Clear_f (void) {
 	con.numlines = 0;
 	memset (con.text, ' ', con.maxsize);
+	Con_SetWhite(); // set default color to white
 	con.display = con.current;
 }
 
@@ -288,7 +309,11 @@ void Con_CheckResize (void) {
 		con_linewidth = width;
 		con_totallines = con.maxsize / con_linewidth;
 		memset (con.text, ' ', con.maxsize);
+		Con_SetWhite();
 	} else {
+		int idx_old, idx_new;
+		clrinfo_t *clr;
+
 		oldwidth = con_linewidth;
 		con_linewidth = width;
 		oldtotallines = con_totallines;
@@ -307,14 +332,23 @@ void Con_CheckResize (void) {
 		memcpy (tempbuf, con.text, con.maxsize);
 		memset (con.text, ' ', con.maxsize);
 
+		clr = Q_malloc(con.maxsize * sizeof(clrinfo_t)); // alloc temporaly
+		memcpy(clr, con.clr, con.maxsize * sizeof(clrinfo_t)); // save color array
+		Con_SetWhite(); // wipe color array entirely
+
 		for (i = 0; i < numlines; i++) {
 			for (j = 0; j < numchars; j++) {
-				con.text[(con_totallines - 1 - i) * con_linewidth + j] =
-					tempbuf[((con.current - i + oldtotallines) % oldtotallines) * oldwidth + j];
+				idx_new = (con_totallines - 1 - i) * con_linewidth + j;
+				idx_old = ((con.current - i + oldtotallines) % oldtotallines) * oldwidth + j;
+				con.text[idx_new] = tempbuf[idx_old];
+
+				con.clr[idx_new]   = clr[idx_old]; // restore color info
+				con.clr[idx_new].i = idx_new; // re-index
 			}
 		}
 
 		Con_ClearNotify ();
+		Q_free(clr); // free
 	}
 
 	con.current = con_totallines - 1;
@@ -344,6 +378,7 @@ static void Con_CreateReadableChars(void) {
 static void Con_InitConsoleBuffer(console_t *conbuffer, int size) {
 	con.maxsize = size;
 	con.text = (char *) Hunk_AllocName(con.maxsize, "console_buffer");
+	con.clr = (clrinfo_t *) Hunk_AllocName(con.maxsize * sizeof(clrinfo_t), "console_clr");
 }
 
 void Con_Init (void) {
@@ -429,6 +464,7 @@ void Con_Shutdown (void) {
 }
 
 void Con_Linefeed (void) {
+	int idx;
 	con.x = 0;
 	con.x = con_margin;    // kazik
 	if (con.display == con.current)
@@ -436,7 +472,9 @@ void Con_Linefeed (void) {
 	con.current++;
 	if (con.numlines < con_totallines)
 		con.numlines++;
-	memset (&con.text[(con.current%con_totallines)*con_linewidth], ' ', con_linewidth);
+	idx = (con.current%con_totallines)*con_linewidth;
+	memset (&con.text[idx], ' ', con_linewidth);
+	Con_SetColor(idx, con_linewidth, int_white);
 
 	// mark time for transparent overlay
 	if (con.current >= 0)
@@ -470,7 +508,7 @@ void Con_SafePrintf (char *fmt, ...)
 
 //Handles cursor positioning, line wrapping, etc
 void Con_Print (char *txt) {
-	int y, c, l, mask;
+	int y, c, l, mask, color = int_white, r, g, b, idx;
 	static int cr;
 
 	if (!(Print_flags[Print_current] & PR_LOG_SKIP)) {
@@ -508,6 +546,25 @@ void Con_Print (char *txt) {
 	}
 
 	while ((c = *txt)) {
+		extern int HexToInt(char c);
+
+		if (*txt == '&') {
+			if (txt[1] == 'c' && txt[2] && txt[3] && txt[4]) {
+				r = HexToInt(txt[2]);
+				g = HexToInt(txt[3]);
+				b = HexToInt(txt[4]);
+				if (r >= 0 && g >= 0 && b >= 0) {
+					color = RGBA_2_Int(255 * r / 16, 255 * g / 16, 255 * b / 16, 255);
+					txt += 5;
+					continue; // we got color, get now normal char
+				}
+            } else if (txt[1] == 'r') {
+				color = int_white;
+				txt += 2;
+				continue; // we got color, get now normal char
+			}
+		}
+
 		// count word length
 		for (l = 0; l < con_linewidth; l++) {
 			char d = txt[l] & 127;
@@ -546,7 +603,11 @@ void Con_Print (char *txt) {
 				if (con.x >= con_linewidth)
 					Con_Linefeed ();
 				y = con.current % con_totallines;
-				con.text[y * con_linewidth+con.x] = c | mask | con_ormask;
+				idx = y * con_linewidth + con.x;
+				con.text[idx] = c | mask | con_ormask;
+				memset(&con.clr[idx], 0, sizeof(clrinfo_t)); // zeroing whole struct
+				con.clr[idx].c = color;
+				con.clr[idx].i = idx; // no, that not stupid :P
 				con.x++;
 				break;
 		}
@@ -590,9 +651,10 @@ static void Con_DrawInput(void) {
 
 //Draws the last few lines of output transparently over the game top
 void Con_DrawNotify (void) {
-	int x, v, skip, maxlines, i;
+	int x, v, skip, maxlines, i, idx;
 	char *text, *s;
 	char buf[1024];
+	clrinfo_t clr[sizeof(buf)];
 	float time;
 
 	maxlines = _con_notifylines.value;
@@ -611,18 +673,20 @@ void Con_DrawNotify (void) {
 		time = cls.realtime - time;
 		if (time > con_notifytime.value)
 			continue;
-		text = con.text + (i % con_totallines)*con_linewidth;
+		idx = (i % con_totallines)*con_linewidth;
+		text = con.text + idx;
 
 		clearnotify = 0;
 		scr_copytop = 1;
 
 		// copy current line to buffer
 		for(x = 0; x < con_linewidth; x++) {
-			buf[x] = *text;
-			text++;
+			buf[x] = text[x];
+			clr[x] = con.clr[idx + x]; // copy whole color struct
+			clr[x].i = x; // set proper index
 		}
 		buf[x] = '\0';
-		Draw_ColoredString( 8, v + bound(0, con_shift.value, 8), buf,0);
+		Draw_ColoredString3(8, v + bound(0, con_shift.value, 8), buf, clr, con_linewidth, 0);
 		v += 8;
 	}
 
@@ -669,9 +733,10 @@ void Con_DrawNotify (void) {
 
 //Draws the console with the solid background
 void Con_DrawConsole (int lines) {
-	int i, j, x, y, n=0, rows, row;
+	int i, j, x, y, n=0, rows, row, idx;
 	char *text, dlbar[1024];
 	char buf[1024];
+	clrinfo_t clr[sizeof(buf)];
 
 	if (lines <= 0)
 		return;
@@ -706,16 +771,18 @@ void Con_DrawConsole (int lines) {
 		if (con.current - row >= con_totallines)
 			break;		// past scrollback wrap point
 
-		text = con.text + (row % con_totallines)*con_linewidth;
+		idx = (row % con_totallines)*con_linewidth;
+		text = con.text + idx;
 
 		// copy current line to buffer
 		for(x = 0; x < con_linewidth; x++) {
-			buf[x] = *text;
-			text++;
+			buf[x] = text[x];
+			clr[x] = con.clr[idx + x]; // copy whole color struct
+			clr[x].i = x; // set proper index
 		}
 		buf[x] = '\0';
 
-		Draw_ColoredString( 1 << 3, y + bound(0, con_shift.value, 8), buf,0);
+		Draw_ColoredString3( 1 << 3, y + bound(0, con_shift.value, 8), buf, clr, con_linewidth, 0);
 	}
 
 	// draw the download bar
