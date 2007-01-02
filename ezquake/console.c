@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.31 2007-01-02 02:28:43 qqshka Exp $
+	$Id: console.c,v 1.32 2007-01-02 15:53:49 qqshka Exp $
 */
 // console.c
 
@@ -509,6 +509,8 @@ void Con_SafePrintf (char *fmt, ...)
 //Handles cursor positioning, line wrapping, etc
 void Con_Print (char *txt) {
 	int y, c, l, mask, color = int_white, r, g, b, idx;
+	char *s;
+	byte d;
 	static int cr;
 
 	if (!(Print_flags[Print_current] & PR_LOG_SKIP)) {
@@ -548,6 +550,7 @@ void Con_Print (char *txt) {
 	while ((c = *txt)) {
 		extern int HexToInt(char c);
 
+		// get color modificator if any
 		if (*txt == '&') {
 			if (txt[1] == 'c' && txt[2] && txt[3] && txt[4]) {
 				r = HexToInt(txt[2]);
@@ -566,13 +569,31 @@ void Con_Print (char *txt) {
 		}
 
 		// count word length
-		for (l = 0; l < con_linewidth; l++) {
-			char d = txt[l] & 127;
-			if ((con_wordwrap.value && (!txt[l] || d == 0x09 || d == 0x0D || d == 0x0A || d == 0x20)) ||
-				(!con_wordwrap.value && txt[l] <= ' ')
-				) {
-					break;
+		for (s = txt, l = 0; s[0] && l < con_linewidth;) {
+			// skip color, not count in word length
+			if (*s == '&') {
+				if (s[1] == 'c' && s[2] && s[3] && s[4]) {
+					r = HexToInt(s[2]);
+					g = HexToInt(s[3]);
+					b = HexToInt(s[4]);
+					if (r >= 0 && g >= 0 && b >= 0) {
+						s += 5;
+						continue; // we got color, get now normal char
+					}
+                } else if (s[1] == 'r') {
+					s += 2;
+					continue; // we got color, get now normal char
 				}
+			}
+		
+			d = ((byte)s[0]) & 127;
+			if (   ( con_wordwrap.value && (!d || d == 0x09 || d == 0x0D || d == 0x0A || d == 0x20))
+				|| (!con_wordwrap.value && d <= 32) // 32 is a space as well as 0x20
+			   )
+				break;
+
+			l++; // increase word length
+			s++; // get next char
 		}
 
 		// word wrap
