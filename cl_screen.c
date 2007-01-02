@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.78 2007-01-02 18:57:51 qqshka Exp $
+    $Id: cl_screen.c,v 1.79 2007-01-02 18:59:20 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -547,7 +547,7 @@ void SCR_DrawSpeed (void) {
 	}
 }
 
-bool OnChange_scr_clock_format (cvar_t *var, char *value) {
+qbool OnChange_scr_clock_format (cvar_t *var, char *value) {
 	if (!host_initialized)
 		return false; // we in progress of initialization, allow
 
