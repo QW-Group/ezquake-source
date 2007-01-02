@@ -35,6 +35,7 @@ typedef struct
 	int		x;				// offset in current line for next print
 	int		display;		// bottom of console displays this line
 	int		numlines;		// number of non-blank text lines, used for backscroling
+	clrinfo_t *clr; // clr[maxsize]
 } console_t;
 
 extern	console_t	con;

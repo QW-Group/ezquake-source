@@ -196,7 +196,7 @@ void Draw_Alt_String (int x, int y, char *str) {
 }
 
 
-static int HexToInt(char c) {
+int HexToInt(char c) {
 	if (isdigit(c))
 		return c - '0';
 	else if (c >= 'a' && c <= 'f')
