@@ -191,8 +191,8 @@ keycode      068 F10
 keycode      069 PAUSE
 keycode ext  069 NUMLOCK
 keycode      070 SCRLCK
-keycode      071 HOME
-keycode ext  071 KP_HOME
+keycode      071 KP_HOME
+keycode ext  071 HOME
 keycode      072 KP_UPARROW
 keycode ext  072 UPARROW
 keycode      073 KP_PGUP
