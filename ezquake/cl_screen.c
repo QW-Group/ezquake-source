@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.77 2006-12-24 00:48:11 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.78 2007-01-02 18:57:51 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -62,6 +62,7 @@ float	oldscreensize, oldfov, oldsbar;
 
 qbool	OnFovChange (cvar_t *var, char *value);
 qbool	OnDefaultFovChange (cvar_t *var, char *value);
+qbool	OnChange_scr_clock_format (cvar_t *var, char *value);
 cvar_t	scr_fov = {"fov", "90", CVAR_ARCHIVE, OnFovChange};	// 10 - 140
 cvar_t	default_fov = {"default_fov", "90", CVAR_ARCHIVE, OnDefaultFovChange};
 cvar_t	scr_viewsize = {"viewsize", "100", CVAR_ARCHIVE};
@@ -77,6 +78,7 @@ qbool	OnChange_scr_allowsnap(cvar_t *, char *);
 cvar_t	scr_allowsnap = {"scr_allowsnap", "1", 0, OnChange_scr_allowsnap};
 
 cvar_t	scr_clock = {"cl_clock", "0"};
+cvar_t	scr_clock_format = {"cl_clock_format", "%H:%M:%S", 0, OnChange_scr_clock_format};
 cvar_t	scr_clock_x = {"cl_clock_x", "0"};
 cvar_t	scr_clock_y = {"cl_clock_y", "-1"};
 
@@ -545,6 +547,18 @@ void SCR_DrawSpeed (void) {
 	}
 }
 
+bool OnChange_scr_clock_format (cvar_t *var, char *value) {
+	if (!host_initialized)
+		return false; // we in progress of initialization, allow
+
+	if (cls.state == ca_active) {
+		Com_Printf("Can't change %s while connected\n", var->name);
+		return true; // prevent stick notes
+	}
+
+	return false;
+}
+
 void SCR_DrawClock (void) {
 	int x, y;
 	time_t t;
@@ -557,7 +571,7 @@ void SCR_DrawClock (void) {
 	if (scr_clock.value == 2) {
 		time (&t);
 		if ((ptm = localtime (&t))) {
-			strftime (str, sizeof(str) - 1, "%H:%M:%S", ptm);
+			strftime (str, sizeof(str) - 1, scr_clock_format.string[0] ? scr_clock_format.string : "%H:%M:%S", ptm);
 		} else {
 			strcpy (str, "#bad date#");
 		}
@@ -3013,6 +3027,7 @@ void SCR_Init (void) {
 
 	Cvar_Register (&scr_clock_x);
 	Cvar_Register (&scr_clock_y);
+	Cvar_Register (&scr_clock_format);
 	Cvar_Register (&scr_clock);
 
 	Cvar_Register (&scr_gameclock_x);
