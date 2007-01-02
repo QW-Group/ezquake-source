@@ -227,7 +227,7 @@ void Draw_ColoredString (int x, int y, char *text, int red) {
 	}
 }
 
-const int_white = 0xFFFFFFFF;
+const int int_white = 0xFFFFFFFF;
 
 int RGBA_2_Int(byte r, byte g, byte b, byte a) {
 	return 0xFFFFFFFF;

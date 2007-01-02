@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.40 2007-01-01 07:16:23 qqshka Exp $
+	$Id: gl_draw.c,v 1.41 2007-01-02 03:54:22 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -926,7 +926,7 @@ void Draw_ColoredString (int x, int y, char *text, int red) {
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 }
 
-const int_white = 0xFFFFFFFF;
+const int int_white = 0xFFFFFFFF;
 
 int RGBA_2_Int(byte r, byte g, byte b, byte a) {
 	return ((r << 0) | (g << 8) | (b << 16) | (a << 24)) & 0xFFFFFFFF;

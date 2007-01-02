@@ -66,7 +66,7 @@ void Draw_String (int x, int y, char *str);
 void Draw_Alt_String (int x, int y, char *str);
 void Draw_ColoredString (int x, int y, char *str, int red);
 
-extern const int_white;
+extern const int int_white;
 
 int RGBA_2_Int(byte r, byte g, byte b, byte a);
 byte* Int_2_RGBA(int i, byte rgba[4]);
