@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.11 2006-12-06 01:01:04 cokeman1982 Exp $
+    $Id: q_shared.h,v 1.12 2007-01-03 19:03:17 disconn3ct Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -36,7 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sys.h"
 
 #ifdef _MSC_VER
-#pragma warning( disable : 4244 4127 4201 4214 4514 4305 4115 4018)
+#pragma warning( disable : 4244 4127 4201 4214 4514 4305 4115 4018 4996)
 #endif
 
 #define QUAKE_GAME // as opposed to utilities

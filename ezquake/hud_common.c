@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.108 2006-12-23 22:47:25 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.109 2007-01-03 19:03:17 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -4098,11 +4098,7 @@ void HUD_AutoLoad_MVD(int autoload) {
 
 		// delete temp config with hud_* settings
 		if ((tempfile = fopen(fullname, "rb")) && (fclose(tempfile) != EOF))
-#ifdef _WIN32
-			_unlink(fullname);
-#else
 			unlink(fullname);
-#endif
 
 		autohud.active = false;
 		return;

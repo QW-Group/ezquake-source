@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.46 2007-01-01 22:26:49 cokeman1982 Exp $
+    $Id: common.c,v 1.47 2007-01-03 19:03:17 disconn3ct Exp $
 
 */
 
@@ -484,7 +484,7 @@ int COM_GZipUnpackToTemp (char *source_path,		// The compressed source file.
 	}
 
 	// Delete the existing temp file (it is created when the filename is received above).
-	if (_unlink (unpack_path))
+	if (unlink (unpack_path))
 	{
 		return 0;
 	}
@@ -646,7 +646,7 @@ int COM_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 	}
 
 	// Delete the existing temp file (it is created when the filename is received above).
-	if (_unlink (unpack_path))
+	if (unlink (unpack_path))
 	{
 		return 0;
 	}
@@ -690,7 +690,7 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 	}
 
 	// Delete the existing temp file (it is created when the filename is received above).
-	if (_unlink (unpack_path))
+	if (unlink (unpack_path))
 	{
 		return UNZ_ERRNO;
 	}

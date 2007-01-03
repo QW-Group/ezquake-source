@@ -13,7 +13,6 @@ Copyright (C) 2001-2002       A Nourai
 
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)
-#define strdup	_strdup
 #else
 #define EXPORT
 #endif
