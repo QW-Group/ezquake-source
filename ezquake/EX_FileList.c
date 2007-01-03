@@ -1065,10 +1065,14 @@ static void Add_Column(char *line, int *pos, char *t, int w)
 //
 void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 {
-    int i, int_green = RGBA_2_Int(0, 127, 0, 255), int_blue = RGBA_2_Int(0, 175, 207, 255);
-    int listsize, pos, interline, inter_up, inter_dn, rowh;
-    char line[1024];
-    char sname[MAX_PATH] = {0}, ssize[COL_SIZE+1] = {0}, sdate[COL_DATE+1] = {0}, stime[COL_TIME+1] = {0};
+	int i;
+	int int_green = RGBA_2_Int(0, 127, 0, 255);
+#ifdef WITH_ZIP
+	int int_blue = RGBA_2_Int(0, 175, 207, 255);
+#endif
+	int listsize, pos, interline, inter_up, inter_dn, rowh;
+	char line[1024];
+	char sname[MAX_PATH] = {0}, ssize[COL_SIZE+1] = {0}, sdate[COL_DATE+1] = {0}, stime[COL_TIME+1] = {0};
 
 	if (fl->delete_mode)
 	{
