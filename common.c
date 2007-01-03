@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.48 2007-01-03 19:06:21 disconn3ct Exp $
+    $Id: common.c,v 1.49 2007-01-03 19:09:58 disconn3ct Exp $
 
 */
 
@@ -331,7 +331,7 @@ int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qb
 
 	strlcpy (filename, tmp, filename_size);
 	#else
-	char tmp = Q_malloc (MAX_PATH);
+	char *tmp = Q_malloc (MAX_PATH);
 
 	// TODO: I'm no unix person, is this proper?
 	tmp = tempnam(path, "ezq");
@@ -377,7 +377,6 @@ int COM_GZipPack (char *source_path,
 {
 	FILE *source			= NULL;
 	gzFile gzip_destination = NULL;
-	int retval		= 0;
 
 	// Open source file.
 	fopen (source_path, "rb");
