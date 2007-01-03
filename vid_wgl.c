@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.36 2007-01-01 16:38:21 tonik Exp $
+	$Id: vid_wgl.c,v 1.37 2007-01-03 22:59:23 qqshka Exp $
 
 */
 
@@ -134,7 +134,7 @@ cvar_t		vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
 cvar_t      vid_flashonactivity = {"vid_flashonactivity", "1", CVAR_ARCHIVE};
 
 cvar_t      vid_conwidth  = {"vid_conwidth",  "640", CVAR_NO_RESET, OnChange_vid_con_xxx};
-cvar_t      vid_conheight = {"vid_conheight", "480", CVAR_NO_RESET, OnChange_vid_con_xxx};
+cvar_t      vid_conheight = {"vid_conheight", "0", CVAR_NO_RESET, OnChange_vid_con_xxx}; // default is 0, so i can sort out is user specify conheight on cmd line or something
 
 cvar_t		_windowed_mouse = {"_windowed_mouse","1",CVAR_ARCHIVE};
 
@@ -1855,7 +1855,8 @@ void VID_Init (unsigned char *palette) {
 	if ((i = COM_CheckParm("-conheight")) && i + 1 < com_argc)
 		Cvar_SetValue(&vid_conheight, (float)Q_atoi(com_argv[i + 1]));
 	else // this is ether +set vid_con... or just default value which we select in cvar initialization
-		Cvar_SetValue(&vid_conheight, vid_conheight.value); // must trigger callback which validate value
+		 // also select vid_conheight with proper aspect ratio if user omit it
+		Cvar_SetValue(&vid_conheight, vid_conheight.value ? vid_conheight.value : vid_conwidth.value * 3 / 4); // must trigger callback which validate value
 
 	vid.colormap = host_colormap;
 
