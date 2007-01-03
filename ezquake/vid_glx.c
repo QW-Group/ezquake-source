@@ -105,7 +105,7 @@ static int num_vidmodes;
 static qbool vidmode_active = false;
 static double X_vrefresh_rate = 0;
 static int best_fit = 0;
-//static Window minimized_window;
+static Window minimized_window;
 XF86VidModeModeInfo newvmode;
 static int new_vidmode = 0;
 #endif
@@ -615,7 +615,7 @@ void GL_EndRendering (void) {
 }
 
 /************************************* VID MINIMIZE *************************************/
-/*
+
 void VID_Minimize_f(void) {
 #ifdef WITH_VMODE
 	if (vidmode_active) {
@@ -653,7 +653,7 @@ void VID_Minimize_f(void) {
 #endif
 	XIconifyWindow(vid_dpy, vid_window, scrnum);
 }
-*/
+
 
 /************************************* VID SHUTDOWN *************************************/
 
@@ -723,7 +723,7 @@ void VID_Init(unsigned char *palette) {
 	IN_StartupKeymap();
 #endif // WITH_KEYMAP
 
-//	Cmd_AddCommand("vid_minimize", VID_Minimize_f);
+	Cmd_AddCommand("vid_minimize", VID_Minimize_f);
 	Cvar_Register(&auto_grabmouse);
 
 	vid.colormap = host_colormap; // FIXME
