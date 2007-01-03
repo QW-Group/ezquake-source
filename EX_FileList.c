@@ -838,7 +838,7 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
 			case K_ENTER:
 				if (!FL_IsCurrentDir(fl)) {
 					ce = fl->current_entry;		// remember where we were
-					_unlink(FL_GetCurrentPath(fl));
+					unlink(FL_GetCurrentPath(fl));
 					FL_ReadDir(fl);				// reload dir
 					fl->current_entry = ce - 1; // set previous position
 					FL_CheckPosition(fl);

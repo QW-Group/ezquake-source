@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.9 2006-10-10 15:51:40 qqshka Exp $
+    $Id: q_shared.c,v 1.10 2007-01-03 19:03:17 disconn3ct Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -563,6 +563,7 @@ void SZ_Print (sizebuf_t *buf, char *data) {
 void *Q_malloc (size_t size)
 {
 	void *p = malloc(size);
+
 	if (!p)
 		Sys_Error ("Q_malloc: Not enough memory free; check disk space\n");
 
@@ -571,36 +572,28 @@ void *Q_malloc (size_t size)
 	return p;
 }
 
-void *Q_calloc (size_t n, size_t size) {
-	void *p;
+void *Q_calloc (size_t n, size_t size)
+{
+	void *p = calloc(n, size);
 
-	if (!(p = calloc(n, size)))
+	if (!p)
 		Sys_Error ("Q_calloc: Not enough memory free; check disk space\n");
+
 	return p;
 }
 
 void *Q_realloc (void *p, size_t newsize)
 {
 	if(!(p = realloc(p, newsize)))
-	{
 		Sys_Error ("Q_realloc: Not enough memory free; check disk space\n");
-	}
-	
+
 	return p;
 }
 
 char *Q_strdup (const char *src)
 {
-/* disconnect -->
-What the FUCK IS _strdup?!
-M$ made their ownr (r) implementation (tm) of strdup (c), but the behavior a bit different to original strdup?
-yes. it's M$ way - break standarts and back-compitability :E
-	<-- disconnect */
-#ifdef _WIN32
-	char *p = _strdup(src);
-#else
 	char *p = strdup(src);
-#endif
+
 	if (!p)
 		Sys_Error ("Q_strdup: Not enough memory free; check disk space\n");
 	return p;

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.51 2007-01-01 22:05:54 cokeman1982 Exp $
+	$Id: cl_demo.c,v 1.52 2007-01-03 19:03:17 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1113,7 +1113,7 @@ void CL_AutoRecord_SaveMatch(void) {
 
 void CL_Demo_RemoveQWD(void)
 {
-	_unlink(tempqwd_name);
+	unlink(tempqwd_name);
 }
 
 void CL_Demo_GetCompressedName(char* cdemo_name)
@@ -1131,7 +1131,7 @@ void CL_Demo_RemoveCompressed(void)
 {
 	char cdemo_name[255];
 	CL_Demo_GetCompressedName(cdemo_name);
-	_unlink(cdemo_name);
+	unlink(cdemo_name);
 }
 
 static void StopQWZPlayback (void) {
