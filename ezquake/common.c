@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.47 2007-01-03 19:03:17 disconn3ct Exp $
+    $Id: common.c,v 1.48 2007-01-03 19:06:21 disconn3ct Exp $
 
 */
 
@@ -300,10 +300,9 @@ int COM_GetTempDir(char *buf, int bufsize)
 //
 int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qbool verify_exists)
 {
-	char tmp[MAX_PATH];
 	int retval = 0;
-
 	#ifdef WIN32
+	char tmp[MAX_PATH];
 	char *p = NULL;
 	char real_path[MAX_PATH];
 
@@ -332,6 +331,8 @@ int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qb
 
 	strlcpy (filename, tmp, filename_size);
 	#else
+	char tmp = Q_malloc (MAX_PATH);
+
 	// TODO: I'm no unix person, is this proper?
 	tmp = tempnam(path, "ezq");
 
