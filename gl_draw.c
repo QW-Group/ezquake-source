@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.41 2007-01-02 03:54:22 qqshka Exp $
+	$Id: gl_draw.c,v 1.42 2007-01-04 10:54:34 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -608,6 +608,8 @@ void Draw_ReInit (void) {
 }
 */
 
+void CP_Init (void);
+
 void Draw_Init (void) {
 	int i;
 
@@ -635,6 +637,7 @@ void Draw_Init (void) {
 	// string into the background before turning it into a texture
 	Draw_InitCharset ();
 	Draw_InitConback ();
+	CP_Init ();
 
 	// save a texture slot for translated picture
 	translate_texture = texture_extension_number++;
