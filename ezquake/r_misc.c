@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_misc.c,v 1.12 2006-11-13 01:53:55 cokeman1982 Exp $
+	$Id: r_misc.c,v 1.13 2007-01-05 18:41:07 disconn3ct Exp $
 
 */
 
@@ -156,7 +156,6 @@ void R_LineGraph (int x, int y, int h) {
 
 //Performance monitoring tool
 #define	MAX_TIMINGS		100
-extern float mouse_x, mouse_y;
 int		graphval;
 void R_TimeGraph (void) {
 	static int timex;
