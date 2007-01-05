@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.29 2006-12-30 05:45:47 qqshka Exp $
+	$Id: utils.c,v 1.30 2007-01-05 09:50:28 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -719,6 +719,8 @@ qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, char **resultstring,
 	return false;
 }
 
+// ***************** VC issues **********************************
+
 #if (_MSC_VER && (_MSC_VER < 1400))
 extern _ftol2(double f);
 long _ftol2_sse(double f)
@@ -726,3 +728,29 @@ long _ftol2_sse(double f)
 	return _ftol2(f);
 }
 #endif
+
+// ***************** random *************************************
+
+float f_rnd( float from, float to )
+{
+	float r;
+
+	if ( from >= to )
+		return from;
+
+	r = from + (to - from) * ((float)rand() / RAND_MAX);
+
+	return bound(from, r, to);
+}
+
+int i_rnd( int from, int to )
+{
+	float r;
+
+	if ( from >= to )
+		return from;
+
+	r = (int)(from + (1.0 + to - from) * ((float)rand() / RAND_MAX));
+
+	return bound(from, r, to);
+}
