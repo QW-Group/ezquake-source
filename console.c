@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.33 2007-01-04 10:54:34 qqshka Exp $
+	$Id: console.c,v 1.34 2007-01-05 09:58:48 qqshka Exp $
 */
 // console.c
 
@@ -50,7 +50,8 @@ int			con_totallines;		// total lines in console scrollback
 float		con_cursorspeed = 4;
 
 #ifdef GLQUAKE
-cvar_t		con_particles_alpha = {"con_particles_alpha", "1"};
+cvar_t		con_particles_alpha  = {"con_particles_alpha",  "1"};
+cvar_t		con_particles_images = {"con_particles_images", "3"};
 #endif
 
 cvar_t		_con_notifylines = {"con_notifylines","4"};
@@ -426,6 +427,7 @@ void Con_Init (void) {
 
 #ifdef GLQUAKE
 	Cvar_Register (&con_particles_alpha);
+	Cvar_Register (&con_particles_images);
 #endif
 
 	// added by jogi start
@@ -890,25 +892,26 @@ void Con_DrawConsole (int lines) {
 }
 
 //************************************************************
+//
+// Below is not a really console related code, just some animation to console in OpenGL version
+//
 
 #ifdef GLQUAKE
 
 #define MAX_CONPART (128)
-
-//typedef byte col_t[4];
 
 typedef struct conpart_s {
 
 	double		die, start;
 
 	vec3_t		org;
-//	col_t		color;
 	float		color[4];
 	float		startalpha;
 	float		rotangle, rotspeed;
 	float		size, growth;
 	float		accel, grav;
 	vec3_t		vel;
+
 	byte		texindex;
 
 } conpart_t;
@@ -918,11 +921,12 @@ static conpart_t conpart[MAX_CONPART];
 
 typedef enum {
 	cptex_drop,
-//	cptex_xxx,
 	num_cptextures,
 } conpart_tex_t;
 
-#define	MAX_CPTEX_COMPONENTS		8
+#define HARD_CODED (16)
+#define	MAX_CPTEX_COMPONENTS 	(HARD_CODED)
+
 typedef struct cp_texture_s {
 	int			texnum;
 	int			components;
@@ -946,15 +950,22 @@ do {																					\
 } while(0);
 
 void CP_Init (void) {
-	int cp_font;
+	int cp_font, i, j;
 
 	cp_initialized = false;
 
 	if (!(cp_font = GL_LoadTextureImage ("textures/conpart", "cp:conpart", FONT_SIZE, FONT_SIZE, TEX_ALPHA | TEX_COMPLAIN))) 
 		return;		
 
-	ADD_CP_TEXTURE(cptex_drop,     cp_font, 0, 1,  0, 0,  64, 64); // get drop part from font
-//	ADD_CP_TEXTURE(cptex_xxx,      cp_font, 0, 1, 64, 0, 128, 64); // get something also
+// 
+// WARNING: !!! HERE WE REALLY ASSUME WHAT FONT_SIZE IS 256x256 !!!
+//
+	if (HARD_CODED != 16)
+		return; // something wrong, this is hard coded
+
+	for (i = 0; i < 4; i++)
+	for (j = 0; j < 4; j++) // 4 * 4 == HARD_CODED
+		ADD_CP_TEXTURE(cptex_drop, cp_font, (j * 4 + i), HARD_CODED, i * 64, j * 64, (i + 1) * 64, (j + 1) * 64);
 
 	cp_initialized = true;
 }
@@ -978,7 +989,8 @@ void AddCP(void) {
 
 	static double last_time = 0;
 
-	if (cp_time - last_time < 0.05)
+//	if (cp_time - last_time < 0.05)
+	if (cp_time - last_time < 0.1)
 		return; // set some sane generate speed
 
 	last_time = cp_time;
@@ -992,6 +1004,9 @@ void AddCP(void) {
 
 	if (i >= MAX_CONPART)
 		return; // no free space
+
+	p->texindex = i_rnd(1, bound(1, con_particles_images.value, HARD_CODED)) - 1;
+	p->texindex = bound(0, p->texindex, HARD_CODED-1);
 
 	p->die = p->start = cp_time;
 	p->die += 7;
@@ -1116,7 +1131,7 @@ void DrawCP (int lines) {
 		if (p->die < cp_time)
 			continue;
 
-		CP_Bind(cptex = &cp_textures[cptex_drop], &texture);
+		CP_Bind(cptex = &cp_textures[cptex_drop], &texture); // select of texture is hardcoded
 		DRAW_CP_BILLBOARD(cptex, p);
 	}
 
