@@ -19,18 +19,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // input.h -- external (non-keyboard) input devices
 
+#ifndef __INPUT_H__
+#define __INPUT_H__
+
 void IN_Init (void);
-
 void IN_Shutdown (void);
-
-void IN_Commands (void);
-// oportunity for devices to stick commands on the script buffer
-
-void IN_Move (usercmd_t *cmd);
-// add additional movement on top of the keyboard move cmd
-
-void IN_ModeChanged (void);
-// called whenever screen dimensions change
+void IN_Commands (void); // oportunity for devices to stick commands on the script buffer
+void IN_Move (usercmd_t *cmd); // add additional movement on top of the keyboard move cmd
 
 #if DIRECTINPUT_VERSION >= 0x700
 int IN_GetMouseRate(void);
@@ -45,9 +40,9 @@ typedef struct
 	int		state;			// low bit is down state
 } kbutton_t;
 
-extern kbutton_t	in_mlook, in_klook;
-extern kbutton_t 	in_strafe;
-extern kbutton_t 	in_speed;
+extern kbutton_t in_mlook, in_klook;
+extern kbutton_t in_strafe;
+extern kbutton_t in_speed;
 
 void CL_InitInput (void);
 void CL_SendCmd (void);
@@ -76,7 +71,9 @@ extern cvar_t	m_yaw;
 extern cvar_t	m_forward;
 extern cvar_t	m_side;
 extern cvar_t	m_accel;
-
+extern cvar_t	m_filter;
 extern cvar_t	_windowed_mouse;
 
 #define mlook_active	(freelook.value || (in_mlook.state&1))
+
+#endif /* __INPUT_H__ */
