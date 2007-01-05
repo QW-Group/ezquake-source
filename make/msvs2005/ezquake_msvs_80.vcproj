@@ -1794,6 +1794,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\textencoding.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\utils.c"
 					>
 				</File>
@@ -2194,6 +2198,10 @@
 				</File>
 				<File
 					RelativePath="..\..\stats_grid.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\textencoding.h"
 					>
 				</File>
 				<File
