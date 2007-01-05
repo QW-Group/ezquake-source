@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.h,v 1.8 2005-11-21 22:32:37 disconn3ct Exp $
+	$Id: keys.h,v 1.9 2007-01-05 23:05:00 tonik Exp $
 
 */
 
@@ -214,7 +214,7 @@ extern int		key_repeats[UNKNOWN + 256];
 extern qbool	keydown[UNKNOWN + 256];
 extern int		key_lastpress;
 
-extern char 	chat_buffer[];
+extern wchar 	chat_buffer[];
 extern int 		chat_linepos;
 extern qbool	chat_team;
 
@@ -222,7 +222,7 @@ void History_Init (void);
 void History_Shutdown (void);
 
 void Key_Event (int key, qbool down);
-void Key_EventEx (int key, int basekey, qbool down);
+void Key_EventEx (int key, wchar unichar, qbool down);
 void Key_Init (void);
 void Key_WriteBindings (FILE *f);
 void Key_SetBinding (int keynum, char *binding);

@@ -131,7 +131,7 @@ qbool TP_FilterMessage (char *s);
 void TP_ParseWeaponModel(model_t *model);
 
 
-char *TP_ParseWhiteText(char *s, qbool team, int offset);
+wchar *TP_ParseWhiteText(wchar *s, qbool team, int offset);
 
 
 

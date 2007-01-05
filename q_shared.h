@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.12 2007-01-03 19:03:17 disconn3ct Exp $
+    $Id: q_shared.h,v 1.13 2007-01-05 23:05:01 tonik Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -42,6 +42,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define QUAKE_GAME // as opposed to utilities
 
 typedef unsigned char byte;
+
+#define wchar unsigned short	// 16-bit Unicode char
 
 #undef true
 #undef false
@@ -169,6 +171,24 @@ size_t strlcat (char *dst, char *src, size_t siz);
 char  *strnstr (char *s, char *find, size_t slen);
 #endif
 // Added by VVD }
+
+wchar char2wc (char c);
+char wc2char (wchar wc);
+wchar *str2wcs (const char *str);
+char *wcs2str (const wchar *ws);
+#ifdef _WIN32
+#define qwcscpy wcscpy
+#define qwcschr wcschr
+#define qwcsrchr wcsrchr
+#define qwcslen wcslen
+#else
+wchar *qwcscpy (wchar *dest, const wchar *src);
+wchar *qwcschr (const wchar *ws, wchar wc);
+wchar *qwcsrchr (const wchar *ws, wchar wc);
+size_t qwcslen (const wchar *s);
+#endif
+size_t qwcslcpy (wchar *dst, const wchar *src, size_t size);
+wchar *Q_wcsdup(const wchar *src);
 
 qbool Q_glob_match (const char *pattern, const char *text);
 

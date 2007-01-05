@@ -417,7 +417,7 @@ typedef struct {
 
 	// sprint buffer
 	int			sprint_level;
-	char		sprint_buf[2048];
+	wchar		sprint_buf[2048];
 
 	// localized movement vars
 	float		entgravity;

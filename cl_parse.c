@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.62 2006-12-29 23:48:35 qqshka Exp $
+	$Id: cl_parse.c,v 1.63 2007-01-05 23:05:00 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "EX_misc.h"
 #include "localtime.h"
 #include "sbar.h"
+#include "textencoding.h"
 
 
 void R_TranslatePlayerSkin (int playernum);
@@ -1710,75 +1711,90 @@ char *CL_Color2ConColor(int color)
 	return buf;
 }
 
-char* CL_ColorizeFragMessage(char *source, cfrags_format *cff)
+wchar *qwcsncat (wchar *dst, wchar *src, size_t len)
+{
+	while (*dst)
+		dst++;
+	while (*src && len) {
+		*dst++ = *src++;
+		len--;
+	}
+	return dst;
+}
+
+wchar* CL_ColorizeFragMessage(wchar *source, cfrags_format *cff)
 /* will add colors to nicks in "ParadokS rides JohnNy_cz's rocket"
    source - source frag message, dest - destination buffer, destlen - length of buffer
    cff - see the cfrags_format definition */
 {
-	char col1[6], col2[6];
-	static char dest[2048] = "";
-	int destlen = sizeof(dest);
+	wchar col1[6+1], col2[6+1];
+	static wchar dest[2048] = {0};
+	int destlen = sizeof(dest)/sizeof(dest[0]);
 
 	*dest = 0; // new string
 
-	strncpy(col1, CL_Color2ConColor(cff->p1col), sizeof(col1));
-	strncpy(col2, CL_Color2ConColor(cff->p2col), sizeof(col2));
+	qwcslcpy(col1, str2wcs(CL_Color2ConColor(cff->p1col)), sizeof(col1)/sizeof(wchar));
+	qwcslcpy(col2, str2wcs(CL_Color2ConColor(cff->p2col)), sizeof(col2)/sizeof(wchar));
 
 	// before 1st nick
-	strncat(dest, source, min(destlen, cff->p1pos));
+	qwcsncat(dest, source, min(destlen, cff->p1pos));
 	destlen -= cff->p1pos;
 	// color1
-	strncat(dest, col1, min(destlen, sizeof(col1)));
+	qwcsncat(dest, col1, min(destlen, sizeof(col1)));
 	destlen -= sizeof(col1);
 	// 1st nick
-	strncat(dest, source + cff->p1pos, min(destlen, cff->p1len));
+	qwcsncat(dest, source + cff->p1pos, min(destlen, cff->p1len));
 	destlen -= cff->p1len;
 	// color off
-	strncat(dest, "&cfff", min(destlen, 6));
+	qwcsncat(dest, str2wcs("&cfff"), min(destlen, 6));
 	destlen -= 6;
 
 	if (cff->p2len)
 	{
 		// middle part
-		strncat(dest, source + cff->p1pos + cff->p1len, min(destlen, cff->p2pos - cff->p1len - cff->p1pos));
+		qwcsncat(dest, source + cff->p1pos + cff->p1len, min(destlen, cff->p2pos - cff->p1len - cff->p1pos));
 		destlen -= cff->p2pos - cff->p1len - cff->p1pos;
 		// color2
-		strncat(dest, col2, min(destlen, sizeof(col2)));
+		qwcsncat(dest, col2, min(destlen, sizeof(col2)));
 		destlen -= sizeof(col2);
 		// 2nd nick
-		strncat(dest, source + cff->p2pos, min(destlen, cff->p2len));
+		qwcsncat(dest, source + cff->p2pos, min(destlen, cff->p2len));
 		destlen -= cff->p2len;
 		// color off
-		strncat(dest, "&cfff", min(destlen, 6));
+		qwcsncat(dest, str2wcs("&cfff"), min(destlen, 6));
 		destlen -= 6;
 		// the rest
-		strncat(dest, source + cff->p2pos + cff->p2len, destlen);
+		qwcsncat(dest, source + cff->p2pos + cff->p2len, destlen);
 	} else {
 		// the rest
-		strncat(dest, source + cff->p1pos + cff->p1len, destlen);
+		qwcsncat(dest, source + cff->p1pos + cff->p1len, destlen);
 	}
 	
 	return dest;
 }
 
 //for CL_ParsePrint
-static void FlushString (char *s, int level, qbool team, int offset) {
+static void FlushString (wchar *s, int level, qbool team, int offset) {
 	extern cvar_t con_highlight, con_highlight_mark, name;
 	extern cvar_t cl_showFragsMessages;
 #ifdef GLQUAKE
 	extern cvar_t scr_coloredText;
 #endif
-	char white_s[4096];
-	char *mark, *text;
-	char *f = strstr(s, name.string);
+	wchar white_s[4096];
+	char *mark;
+	wchar *text;
+	char *f;
 	cfrags_format cff = {0, 0, 0, 0, 0, 0, false};
+	char *s0;
 
-	strlcpy(white_s, s, 4096);
+	qwcslcpy(white_s, s, 4096);
 
-	CL_SearchForReTriggers (s /*+ offset*/, 1<<level); // re_triggers
+	s0 = wcs2str(s);
+	f = strstr(s0, name.string);
+	CL_SearchForReTriggers (s0 /*+ offset*/, 1<<level); // re_triggers
 
 	// highlighting on && nickname found && it's not our own text (nickname not close to the beginning)
-	if (con_highlight.value && f && ((f - s) > 1)) {
+	if (con_highlight.value && f && ((f - s0) > 1)) {
 		switch ((int)(con_highlight.value)) {
 		case 1:
 			mark = ""; text = white_s;
@@ -1793,12 +1809,12 @@ static void FlushString (char *s, int level, qbool team, int offset) {
 			text = white_s;
 			break;
 		}
-	} else { 
+	} else {
 		mark = ""; 
 		text = (level == PRINT_CHAT) ? TP_ParseWhiteText(s, team, offset) : s;
 	}
 	
-	Stats_ParsePrint(s, level, &cff);
+	Stats_ParsePrint(s0, level, &cff);
 
 	// Colorize player names here
 #ifdef GLQUAKE
@@ -1806,8 +1822,10 @@ static void FlushString (char *s, int level, qbool team, int offset) {
 		text = CL_ColorizeFragMessage(text, &cff);
 #endif
 
-	if (cl_showFragsMessages.value || !cff.isFragMsg)
-		Com_Printf("%s%s", mark, text);
+	if (cl_showFragsMessages.value || !cff.isFragMsg) {
+		Com_Printf("%s", mark);
+		Con_PrintW(text);		// FIXME logging
+	}
 
 	if (level >= 4)
 		return;
@@ -1815,7 +1833,7 @@ static void FlushString (char *s, int level, qbool team, int offset) {
 	if (team)
 		level = 4;
 
-	TP_SearchForMsgTriggers (s + offset, level);
+	TP_SearchForMsgTriggers (wcs2str(s + offset), level);
 }
 
 
@@ -1879,7 +1897,8 @@ void MakeChatRed(char *t, int mm2)
 void CL_ParsePrint (void) {
 	qbool suppress_talksound;	
 	qbool cut_message = false;
-	char *s, str[2048], *p, check_flood, dest[2048], *c, *d, *f, e, b; 
+	wchar *s, str[2048], *p, check_flood, dest[2048], *c, *d, *f, e, b; 
+	char *s0;
 	int len, level, flags = 0, offset = 0;
 	extern cvar_t cl_chatsound, msg_filter;
 	extern cvar_t ignore_qizmo_spec;
@@ -1894,11 +1913,12 @@ void CL_ParsePrint (void) {
 	float chat_sound_vol = 0.0;
 
 	level = MSG_ReadByte ();
-	s = MSG_ReadString ();
+	s0 = MSG_ReadString ();
+	s = decode_string (s0);
 
 	if (level == PRINT_CHAT) {
 	
-		if (TP_SuppressMessage(s))
+		if (TP_SuppressMessage(s0))
 			return;
 
 		/*
@@ -1955,30 +1975,31 @@ void CL_ParsePrint (void) {
 		}
 
 		
+		s0 = wcs2str(s);
 
-		flags = TP_CategorizeMessage (s, &offset);
-		FChecks_CheckRequest(s);
-		Auth_CheckResponse (s, flags, offset);						
+		flags = TP_CategorizeMessage (s0, &offset);
+		FChecks_CheckRequest(s0);
+		Auth_CheckResponse (s0, flags, offset);						
 
-		if (Ignore_Message(s, flags, offset))						
+		if (Ignore_Message(s0, flags, offset))						
 			return;
 
-		if ( flags == 0 && ignore_qizmo_spec.value && strlen(s) > 0 && s[0] == '[' && strstr(s, "]: ") ) 
+		if ( flags == 0 && ignore_qizmo_spec.value && strlen(s0) > 0 && s0[0] == '[' && strstr(s0, "]: ") ) 
 			return;
 
-		if (flags == 2 && !TP_FilterMessage(s + offset))
+		if (flags == 2 && !TP_FilterMessage(s0 + offset))
 			return;
 
-		check_flood = Ignore_Check_Flood(s, flags, offset);			
+		check_flood = Ignore_Check_Flood(s0, flags, offset);			
 		if (check_flood == IGNORE_NO_ADD)							
 			return;
 		else if (check_flood == NO_IGNORE_ADD)					
-			Ignore_Flood_Add(s);
+			Ignore_Flood_Add(s0);
 
 		suppress_talksound = false;
 
 		if (flags == 2)
-			suppress_talksound = TP_CheckSoundTrigger (s + offset);
+			suppress_talksound = TP_CheckSoundTrigger (s0 + offset);
 
 		if (!cl_chatsound.value ||		// no sound at all
 			(cl_chatsound.value == 2 && flags != 2))	// only play sound in mm2
@@ -1986,7 +2007,7 @@ void CL_ParsePrint (void) {
 
         chat_sound_file = NULL;
 
-		client = SeparateChat(s, &type, &msg);
+		client = SeparateChat(s0, &type, &msg);
 
         if (client >= 0 && !suppress_talksound)
         {
@@ -2042,11 +2063,11 @@ void CL_ParsePrint (void) {
 		}
 
 #ifdef _WIN32
-	    if (level >= PRINT_HIGH  &&  strlen(s) > 0)
+	    if (level >= PRINT_HIGH && s[0])
 	        VID_NotifyActivity();
 #endif
 
-		if (strlen(s) > 0)  // KT sometimes sends empty strings
+		if (s[0])  // KT sometimes sends empty strings
 		{
 
 			// START shaman BUG 1020636
@@ -2098,15 +2119,16 @@ void CL_ParsePrint (void) {
 		return;
 	}
 
-	strncat (cl.sprint_buf, s, sizeof(cl.sprint_buf) - strlen(cl.sprint_buf) - 1);
-	cl.sprint_buf[sizeof(cl.sprint_buf) - 1] = 0;
+	// emulate qwcslcat (which is not implemented)
+	qwcslcpy (cl.sprint_buf + qwcslen(cl.sprint_buf), s, sizeof(cl.sprint_buf)/sizeof(wchar)
+		- qwcslen(cl.sprint_buf));
 	cl.sprint_level = level;
 
-	if ((p = strrchr(cl.sprint_buf, '\n'))) {
+	if ((p = qwcsrchr(cl.sprint_buf, '\n'))) {
 		len = p - cl.sprint_buf + 1;
-		memcpy(str, cl.sprint_buf, len);
+		memcpy(str, cl.sprint_buf, len * sizeof(wchar));
 		str[len] = '\0';
-		strlcpy (cl.sprint_buf, p + 1, sizeof(cl.sprint_buf));
+		qwcslcpy (cl.sprint_buf, p + 1, sizeof(cl.sprint_buf)/sizeof(wchar));
 		FlushString (str, level, (flags == 2), offset);
 	}
 }
