@@ -179,7 +179,7 @@ void Draw_Character (int x, int y, int num) {
 	}
 }
 
-void Draw_String (int x, int y, char *str) {
+void Draw_String (int x, int y, const char *str) {
 	while (*str) {
 		Draw_Character (x, y, *str);
 		str++;
@@ -187,7 +187,7 @@ void Draw_String (int x, int y, char *str) {
 	}
 }
 
-void Draw_Alt_String (int x, int y, char *str) {
+void Draw_Alt_String (int x, int y, const char *str) {
 	while (*str) {
 		Draw_Character (x, y, (*str) | 0x80);
 		str++;
@@ -207,7 +207,7 @@ int HexToInt(char c) {
 		return -1;
 }
 
-void Draw_ColoredString (int x, int y, char *text, int red) {
+void Draw_ColoredString (int x, int y, const char *text, int red) {
 	int r, g, b;
 
 	for ( ; *text; text++) {
@@ -238,7 +238,7 @@ byte* Int_2_RGBA(int i, byte rgba[4]) {
 	return rgba;
 }
 
-void Draw_ColoredString3 (int x, int y, char *text, clrinfo_t *clr, int clr_cnt, int red) {
+void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red) {
 	Draw_ColoredString(x, y, text, red);
 }
 
