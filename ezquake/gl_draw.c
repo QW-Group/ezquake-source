@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.42 2007-01-04 10:54:34 qqshka Exp $
+	$Id: gl_draw.c,v 1.43 2007-01-05 23:05:00 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -48,7 +48,10 @@ mpic_t			*draw_disc;
 static mpic_t	*draw_backtile;
 
 static int		translate_texture;
-int		char_texture;
+
+#define MAX_CHARSETS 16
+int		char_textures[MAX_CHARSETS];
+int		char_range[MAX_CHARSETS];
 
 static mpic_t	conback;
 
@@ -133,9 +136,9 @@ qbool OnChange_gl_smoothfont (cvar_t *var, char *string) {
 	float newval;
 
 	newval = Q_atof (string); if (!newval == !gl_smoothfont.value ||
-	    !char_texture) return false;
+	    !char_textures[0]) return false;
 
-	GL_Bind(char_texture);
+	GL_Bind(char_textures[0]);
 
 	if (newval)	{
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -465,12 +468,12 @@ static int Draw_LoadCharset(char *name) {
 			src += 128 * 8;
 			dest += 128 * 8 * 2;
 		}
-		char_texture = GL_LoadTexture ("pic:charset", 128, 256, (byte *)buf, TEX_ALPHA, 1);
+		char_textures[0] = GL_LoadTexture ("pic:charset", 128, 256, (byte *)buf, TEX_ALPHA, 1);
 		goto done;
 	}
 
 	if ((texnum = GL_LoadCharsetImage (va("textures/charsets/%s", name), "pic:charset"))) {
-		char_texture = texnum;
+		char_textures[0] = texnum;
 		goto done;
 	}
 
@@ -502,6 +505,58 @@ void Draw_LoadCharset_f (void) {
 	}
 }
 
+static int LoadAlternateCharset (char *name)
+{
+	int i;
+	byte	buf[128*256];
+	byte	*data;
+	byte	*src, *dest;
+	int texnum;
+
+	/* We expect an .lmp to be in QPIC format, but it's ok if it's just raw data */
+	data = FS_LoadTempFile (va("gfx/%s.lmp", name));
+	if (!data)
+		return 0;
+	if (fs_filesize == 128*128)
+		/* raw data */;
+	else if (fs_filesize == 128*128 + 8) {
+		qpic_t *p = (qpic_t *)data;
+		SwapPic (p);
+		if (p->width != 128 || p->height != 128)
+			return 0;
+		data += 8;
+	}
+	else
+		return 0;
+
+	for (i=0 ; i<256*64 ; i++)
+		if (data[i] == 0)
+			data[i] = 255;	// proper transparent color
+
+	// Convert the 128*128 conchars texture to 128*256 leaving
+	// empty space between rows so that chars don't stumble on
+	// each other because of texture smoothing.
+	// This hack costs us 64K of GL texture memory
+	memset (buf, 255, sizeof(buf));
+	src = data;
+	dest = buf;
+	for (i=0 ; i<16 ; i++) {
+		memcpy (dest, src, 128*8);
+		src += 128*8;
+		dest += 128*8*2;
+	}
+
+	texnum = GL_LoadTexture (va("pic:%s", name), 128, 256, buf, TEX_ALPHA, 1);
+	if (!gl_smoothfont.value)
+	{
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+	return texnum;
+}
+
+
+
 void Draw_InitCharset(void) {
 	int i;
 
@@ -513,11 +568,17 @@ void Draw_InitCharset(void) {
 
 	Draw_LoadCharset(gl_consolefont.string);
 
-	if (!char_texture)
+	if (!char_textures[0])
 		Cvar_Set(&gl_consolefont, "original");
 
-	if (!char_texture)	
+	if (!char_textures[0])	
 		Sys_Error("Draw_InitCharset: Couldn't load charset");
+
+	char_textures[1] = LoadAlternateCharset ("conchars-cyr");
+	if (char_textures[1])
+		char_range[1] = 0x0400;
+	else
+		char_range[1] = 0;
 }
 
 /*
@@ -677,14 +738,30 @@ __inline static void Draw_CharPoly(int x, int y, int num) {
 //Draws one 8*8 graphics character with 0 being transparent.
 //It can be clipped to the top of the screen to allow the console to be smoothly scrolled off.
 void Draw_Character (int x, int y, int num) {
+	Draw_CharacterW (x, y, char2wc(num));
+}
+void Draw_CharacterW (int x, int y, wchar num) {
 	qbool atest = false;
 	qbool blend = false;
+	int i, slot;
 
 	if (y <= -8)
 		return;			// totally off screen
 
 	if (num == 32)
 		return;		// space
+
+	slot = 0;
+	if ((num & 0xFF00) != 0)
+	{
+		for (i = 1; i < MAX_CHARSETS; i++)
+			if (char_range[i] == (num & 0xFF00)) {
+				slot = i;
+				break;
+			}
+		if (i == MAX_CHARSETS)
+			num = '?';
+	}
 
 	num &= 255;
 
@@ -695,7 +772,7 @@ void Draw_Character (int x, int y, int num) {
 			glEnable(GL_BLEND);
 	}
 
-	GL_Bind (char_texture);
+	GL_Bind (char_textures[slot]);
 
 	glBegin (GL_QUADS);
 	Draw_CharPoly(x, y, num);
@@ -709,7 +786,7 @@ void Draw_Character (int x, int y, int num) {
 	}
 }
 
-void Draw_String (int x, int y, char *str) {
+void Draw_String (int x, int y, const char *str) {
 	int num;
 	qbool atest = false;
 	qbool blend = false;
@@ -727,7 +804,7 @@ void Draw_String (int x, int y, char *str) {
 			glEnable(GL_BLEND);
 	}
 
-	GL_Bind (char_texture);
+	GL_Bind (char_textures[0]);
 
 	glBegin (GL_QUADS);
 
@@ -748,7 +825,18 @@ void Draw_String (int x, int y, char *str) {
 	}
 }
 
-void Draw_AlphaString (int x, int y, char *str, float alpha)
+void Draw_StringW (int x, int y, const wchar *ws)
+{
+	if (y <= -8)
+		return;			// totally off screen
+	while (*ws)
+	{
+		Draw_CharacterW (x, y, *ws++);
+		x += 8;
+	}
+}
+
+void Draw_AlphaString (int x, int y, const char *str, float alpha)
 {
 	int num;
 	qbool atest = false;
@@ -777,7 +865,7 @@ void Draw_AlphaString (int x, int y, char *str, float alpha)
 
 	glColor4f (1, 1, 1, alpha);
 
-	GL_Bind (char_texture);
+	GL_Bind (char_textures[0]);
 
 	glBegin (GL_QUADS);
 
@@ -802,7 +890,7 @@ void Draw_AlphaString (int x, int y, char *str, float alpha)
 }
 
 
-void Draw_Alt_String (int x, int y, char *str) {
+void Draw_Alt_String (int x, int y, const char *str) {
 	int num;
 	qbool atest = false;
 	qbool blend = false;
@@ -820,7 +908,7 @@ void Draw_Alt_String (int x, int y, char *str) {
 			glEnable(GL_BLEND);
 	}
 
-	GL_Bind (char_texture);
+	GL_Bind (char_textures[0]);
 
 	glBegin (GL_QUADS);
 
@@ -854,7 +942,7 @@ int HexToInt(char c)
 		return -1;
 }
 
-void Draw_ColoredString (int x, int y, char *text, int red) {
+void Draw_ColoredString (int x, int y, const char *text, int red) {
 	int r, g, b, num;
 	qbool white = true;
 	qbool atest = false;
@@ -873,7 +961,7 @@ void Draw_ColoredString (int x, int y, char *text, int red) {
 			glEnable(GL_BLEND);
 	}
 
-	GL_Bind (char_texture);
+	GL_Bind (char_textures[0]);
 
 	if (scr_coloredText.value)
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -954,7 +1042,7 @@ byte* Int_2_RGBA(int i, byte rgba[4]) {
 
 	If u want use alpha u must use "gl_alphafont 1", "scr_coloredText 1" and "red" param must be false
 */
-void Draw_ColoredString2 (int x, int y, char *text, int *clr, int red) {
+void Draw_ColoredString2 (int x, int y, const char *text, int *clr, int red) {
 	byte white4[4] = {255, 255, 255, 255}, rgba[4];
 	int num, i, last;
 	qbool atest = false;
@@ -973,7 +1061,7 @@ void Draw_ColoredString2 (int x, int y, char *text, int *clr, int red) {
 			glEnable(GL_BLEND);
 	}
 
-	GL_Bind (char_texture);
+	GL_Bind (char_textures[0]);
 
 	if (scr_coloredText.value)
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -1024,11 +1112,15 @@ void Draw_ColoredString2 (int x, int y, char *text, int *clr, int red) {
 
 	If u want use alpha u must use "gl_alphafont 1", "scr_coloredText 1" and "red" param must be false
 */
-void Draw_ColoredString3 (int x, int y, char *text, clrinfo_t *clr, int clr_cnt, int red) {
+void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red) {
+	Draw_ColoredString3W (x, y, str2wcs(text), clr, clr_cnt, red);
+}
+void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red) {
 	byte white4[4] = {255, 255, 255, 255}, rgba[4];
 	int num, i, last, j;
 	qbool atest = false;
 	qbool blend = false;
+	int slot, oldslot;
 
 	if (y <= -8)
 		return;			// totally off screen
@@ -1043,10 +1135,11 @@ void Draw_ColoredString3 (int x, int y, char *text, clrinfo_t *clr, int clr_cnt,
 			glEnable(GL_BLEND);
 	}
 
-	GL_Bind (char_texture);
-
 	if (scr_coloredText.value)
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	GL_Bind (char_textures[0]);
+	oldslot = 0;
 
 	glColor4ubv(white4);
 
@@ -1059,13 +1152,35 @@ void Draw_ColoredString3 (int x, int y, char *text, clrinfo_t *clr, int clr_cnt,
 			j++;
 		}
 
-		num = text[i] & 255;
+		num = text[i];
+		if (num == 32)
+			goto _continue;
+
+		slot = 0;
+		if ((num & 0xFF00) != 0)
+		{
+			for (i = 1; i < MAX_CHARSETS; i++)
+				if (char_range[i] == (num & 0xFF00)) {
+					slot = i;
+					break;
+				}
+			if (i == MAX_CHARSETS)
+				num = '?';
+		}
+		if (slot != oldslot) {
+			glEnd ();
+			GL_Bind (char_textures[slot]);
+			glBegin (GL_QUADS);
+			oldslot = slot;
+		}
+
+		num &= 255;
 		if (!scr_coloredText.value && red) // do not convert to red if we use coloredText
 			num |= 128;
 
-		if (num != 32 && num != (32 | 128))
-			Draw_CharPoly(x, y, num);
+		Draw_CharPoly(x, y, num);
 
+_continue:
 		x += 8;
 	}
 
@@ -1476,6 +1591,7 @@ void Draw_AlphaOutline (int x, int y, int w, int h, int c, float thickness, floa
 	Draw_AlphaRectangle (x, y, w, h, c, thickness, false, alpha);
 }
 
+
 void Draw_OutlineRGB (int x, int y, int w, int h, float r, float g, float b, float thickness)
 {
 	Draw_AlphaRectangleRGB (x, y, w, h, r, g, b, thickness, false, 1);
@@ -1702,7 +1818,7 @@ void Draw_SCharacter (int x, int y, int num, float scale)
 			glEnable(GL_BLEND);
 	}
 
-    GL_Bind (char_texture);
+    GL_Bind (char_textures[0]);
 
     glBegin (GL_QUADS);
     glTexCoord2f (fcol, frow);

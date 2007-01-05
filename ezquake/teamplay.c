@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.56 2006-12-29 23:48:35 qqshka Exp $
+    $Id: teamplay.c,v 1.57 2007-01-05 23:05:01 tonik Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -998,7 +998,7 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
 	}
 
 	if (nodisplay == 0) {
-		Com_Printf(TP_ParseWhiteText (msg, team, offset));
+		Com_Printf(wcs2str(TP_ParseWhiteText (str2wcs(msg), team, offset)));
 	}
 
 }
@@ -1154,10 +1154,10 @@ void TP_AddMacros(void)
 
 /********************** MACRO/FUNCHAR/WHITE TEXT PARSING **********************/
 
-char *TP_ParseWhiteText(char *s, qbool team, int offset)
+wchar *TP_ParseWhiteText(wchar *s, qbool team, int offset)
 {
-	static char	buf[4096];
-	char *out, *p, *p1;
+	static wchar	buf[4096];
+	wchar *out, *p, *p1;
 	extern cvar_t	cl_parseWhiteText;
 	qbool	parsewhite;
 
@@ -1168,8 +1168,8 @@ char *TP_ParseWhiteText(char *s, qbool team, int offset)
 
 	for (p = s; *p; p++) {
 		if  (parsewhite && *p == '{' && p-s >= offset) {
-			if ((p1 = strchr (p + 1, '}'))) {
-				memcpy (out, p + 1, p1 - p - 1);
+			if ((p1 = qwcsrchr (p + 1, '}'))) {
+				memcpy (out, p + 1, (p1 - p - 1)*sizeof(wchar));
 				out += p1 - p - 1;
 				p = p1;
 				continue;

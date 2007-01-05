@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define		CON_TEXTSIZE	32768
 typedef struct
 {
-	char	*text;
+	wchar	*text;
 	int		maxsize;
 	int		current;		// line where next message will be printed
 	int		x;				// offset in current line for next print
@@ -65,6 +65,7 @@ void Con_Shutdown (void);
 void Con_DrawConsole (int lines);
 void Con_SafePrintf (char *fmt, ...);
 void Con_Print (char *txt);
+void Con_PrintW (wchar *txt);
 void Con_Clear_f (void);
 void Con_DrawNotify (void);
 void Con_ClearNotify (void);

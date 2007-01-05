@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.10 2007-01-03 19:03:17 disconn3ct Exp $
+    $Id: q_shared.c,v 1.11 2007-01-05 23:05:01 tonik Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -266,6 +266,117 @@ char *strnstr(char *s, char *find, size_t slen)
 }
 #endif
 // Added by VVD }
+
+
+wchar char2wc (char c)
+{
+	return (wchar)(unsigned char)c;
+}
+
+char wc2char (wchar wc)
+{
+	if (wc <= 255)
+		return (char)wc;
+	else
+		return '?';
+}
+
+wchar *str2wcs (const char *s)
+{
+	static wchar buf[65536];	//ouch! ouch!
+	int i;
+
+	for (i = 0; i < 65536 - 1; i++) {
+		if (s[i] == 0)
+			break;
+		buf[i] = (short)(unsigned char)s[i];
+	}
+	buf[i] = 0;
+	return buf;
+}
+
+char *wcs2str (const wchar *ws)
+{
+	static char buf[65536];		//ouch! ouch!
+	int i;
+
+	for (i = 0; i < 65536 - 1; i++) {
+		if (ws[i] == 0)
+			break;
+		buf[i] = ws[i] <= 255 ? (char)ws[i] : '?';
+	}
+	buf[i] = 0;
+	return buf;
+}
+
+#ifndef _WIN32
+size_t qwcslen (const wchar *ws)
+{
+	int i = 0;
+	while (*ws++)
+		i++;
+	return i;
+}
+
+wchar *qwcscpy (wchar *dest, const wchar *src)
+{
+	while (*src)
+		*dest++ = *src++;
+	*dest = 0;
+	return dest;
+}
+#endif
+
+size_t qwcslcpy (wchar *dst, const wchar *src, size_t size)
+{
+	int len = qwcslen (src);
+
+	if (len < size) {
+		// it'll fit
+		memcpy (dst, src, (len + 1) * sizeof(wchar));
+		return len;
+	}
+
+	if (size == 0)
+		return len;
+
+	assert (size >= 0);		// if a negative size was passed, then we're fucked
+
+	memcpy (dst, src, (size - 1) * sizeof(wchar));
+	dst[size - 1] = 0;
+
+	return len;
+}
+wchar *qwcschr (const wchar *ws, wchar wc)
+{
+	while (*ws) {
+		if (*ws == wc)
+			return (wchar *)ws;
+		ws++;
+	}
+	return NULL;
+}
+
+wchar *qwcsrchr (const wchar *ws, wchar wc)
+{
+	wchar *p = NULL;
+	while (*ws) {
+		if (*ws == wc)
+			p = (wchar *)ws;
+		ws++;
+	}
+	return p;
+}
+
+wchar *Q_wcsdup(const wchar *src)
+{
+	wchar *out;
+	size_t size = (qwcslen(src) + 1) * sizeof(wchar);
+	out = Q_malloc (size);
+	memcpy (out, src, size);
+	return out;
+}
+
 
 static qbool Q_glob_match_after_star (const char *pattern, const char *text)
 {

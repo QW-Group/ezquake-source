@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.53 2007-01-01 16:38:21 tonik Exp $
+	$Id: menu.c,v 1.54 2007-01-05 23:05:00 tonik Exp $
 
 */
 
@@ -2584,9 +2584,6 @@ void M_Setup_Draw (void) {
 	if (setup_cursor == 1)
 		M_DrawCharacter (168 + 8*strlen(setup_team), setup_cursor_table [setup_cursor], FLASHINGCURSOR());
 }
-
-typedef unsigned int wchar;
-char wc2char (wchar wc);
 
 void M_Setup_Key (int k, int unichar) {
 	int l;

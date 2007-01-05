@@ -16,11 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.38 2007-01-01 19:43:06 tonik Exp $
+    $Id: keys.c,v 1.39 2007-01-05 23:05:00 tonik Exp $
 
 */
 
 #include "quakedef.h"
+#include "textencoding.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -42,7 +43,7 @@ cvar_t	cl_savehistory = {"cl_savehistory", "1"};
 #define		CMDLINES	(1<<8)
 // } Added by VVD
 #define		MAXCMDLINE	256
-char	key_lines[CMDLINES][MAXCMDLINE];
+wchar	key_lines[CMDLINES][MAXCMDLINE];
 int		key_linepos;
 #ifndef WITH_KEYMAP
 int		key_lastpress;
@@ -302,7 +303,7 @@ CompleteCommandNew_Reset (void)
 qbool CheckForCommand (void) {
 	char command[256], *s;
 
-	strlcpy(command, key_lines[edit_line] + 1, sizeof(command));
+	strlcpy(command, wcs2str(key_lines[edit_line] + 1), sizeof(command));
 	for (s = command; *s > ' '; s++)
 		;
 	*s = 0;
@@ -368,7 +369,8 @@ extern cvar_t *cvar_vars;
 void
 CompleteCommandNew (void)
 {
-	char *cmd, token[MAXCMDLINE], *s, temp[MAXCMDLINE];
+	char *cmd, token[MAXCMDLINE], *s;
+	wchar temp[MAXCMDLINE];
 //	int c, a, v, start, end, i, diff_len, size, test, my_string_length,
 //		my_string_length_count;
 	int c, a, v, start, end, i, diff_len, size, my_string_length;
@@ -402,7 +404,7 @@ CompleteCommandNew (void)
 		end = key_linepos - 1;
 
 		size = min (end - start + 1, sizeof (token) - 1);
-		memcpy (token, &key_lines[edit_line][start], size);
+		memcpy (token, wcs2str(&key_lines[edit_line][start]), size);
 		token[size] = 0;
 
 		s = token;
@@ -521,20 +523,20 @@ CompleteCommandNew (void)
 			return;
 		}
 		diff_len = strlen (cmd) - (end - start + 1);
-		strlcpy (temp, key_lines[edit_line] + end + 1,
-			    sizeof (temp));
-		strlcpy (key_lines[edit_line] + end + 1 + diff_len, temp,
+		qwcslcpy (temp, key_lines[edit_line] + end + 1,
+			    sizeof(temp)/sizeof(temp[0]));
+		qwcslcpy (key_lines[edit_line] + end + 1 + diff_len, temp,
 			    MAXCMDLINE - (end + 1 + diff_len));
 		for (i = 0; start + i < MAXCMDLINE && i < strlen (cmd); i++)
 			key_lines[edit_line][start + i] = cmd[i];
 		key_linepos += diff_len;
 		key_lines[edit_line][min
-				     (key_linepos + strlen (temp),
+				     (key_linepos + qwcslen(temp),
 				      MAXCMDLINE - 1)] = 0;
 		if (start == 1
-		    && key_linepos + strlen (temp) < MAXCMDLINE - 1)
+		    && key_linepos + qwcslen(temp) < MAXCMDLINE - 1)
 		{
-			for (i = key_linepos + strlen (temp); i > 0; i--)
+			for (i = key_linepos + qwcslen(temp); i > 0; i--)
 				key_lines[edit_line][i + 1] =
 					key_lines[edit_line][i];
 			key_lines[edit_line][1] = '/';
@@ -549,13 +551,13 @@ CompleteCommandNew (void)
 		while (!(isspace (key_lines[edit_line][key_linepos]))
 		       && (key_lines[edit_line][key_linepos] != '\0'))
 		{
-			strcpy (key_lines[edit_line] + key_linepos,
+			qwcscpy (key_lines[edit_line] + key_linepos,
 				key_lines[edit_line] + key_linepos + 1);
 		}
 		key_lineposorig = key_linepos;
 		try = 0;
 		last_cmd_length = 0;
-		old_keyline_length = strlen( key_lines[edit_line] );
+		old_keyline_length = qwcslen( key_lines[edit_line] );
 
 
 
@@ -565,7 +567,7 @@ CompleteCommandNew (void)
 	else if ((key_linepos >= 2
 		  || isspace (key_lines[edit_line][key_linepos - 1]))
 		 &&  called_second
-		 && (key_linepos == key_lineposorig) && (old_keyline_length == strlen(key_lines[edit_line])))
+		 && (key_linepos == key_lineposorig) && (old_keyline_length == qwcslen(key_lines[edit_line])))
 	{
 		if (count != try)
 		{
@@ -607,9 +609,9 @@ CompleteCommandNew (void)
 				 key_lines[edit_line] + key_linepos +
 				 last_cmd_length,
 				 (MAXCMDLINE - key_linepos + 1 -
-				  last_cmd_length));
+				  last_cmd_length)*sizeof(wchar));
 			memcpy (key_lines[edit_line] + key_linepos, text,
-				len);
+				len * sizeof(wchar));
 
 			del_removes = 1;
 			last_cmd_length = strlen (text);
@@ -620,7 +622,7 @@ CompleteCommandNew (void)
 		{
 			try = 0;
 		}
-		old_keyline_length = strlen( key_lines[edit_line] );
+		old_keyline_length = qwcslen( key_lines[edit_line] );
 	}
 
 
@@ -643,7 +645,8 @@ CompleteCommandNew (void)
 
 
 void CompleteCommand (void) {
-	char *cmd, token[MAXCMDLINE], *s, temp[MAXCMDLINE];
+	char *cmd, token[MAXCMDLINE], *s;
+	wchar temp[MAXCMDLINE];
 	int c, a, v, start, end, i, diff_len, size;
 
 	if (key_linepos < 2 || isspace(key_lines[edit_line][key_linepos - 1]))	
@@ -658,7 +661,7 @@ void CompleteCommand (void) {
 	end = key_linepos - 1;
 
 	size = min(end - start + 1, sizeof(token) - 1);
-	memcpy(token, &key_lines[edit_line][start], size);
+	memcpy(token, wcs2str(&key_lines[edit_line][start]), size);
 	token[size] = 0;
 
 	s = token;
@@ -734,14 +737,14 @@ void CompleteCommand (void) {
 		return;
 	}
 	diff_len = strlen(cmd) - (end - start + 1);
-	strlcpy(temp, key_lines[edit_line] + end + 1, sizeof(temp));
-	strlcpy(key_lines[edit_line] + end + 1 + diff_len, temp, MAXCMDLINE - (end + 1 + diff_len));
+	qwcslcpy(temp, key_lines[edit_line] + end + 1, sizeof(temp)/sizeof(temp[0]));
+	qwcslcpy(key_lines[edit_line] + end + 1 + diff_len, temp, MAXCMDLINE - (end + 1 + diff_len));
 	for (i = 0; start + i < MAXCMDLINE && i < strlen(cmd); i++)	
 		key_lines[edit_line][start + i] = cmd[i];
 	key_linepos += diff_len;
-	key_lines[edit_line][min(key_linepos + strlen(temp), MAXCMDLINE - 1)] = 0;
-	if (start == 1 && key_linepos + strlen(temp) < MAXCMDLINE - 1) {
-		for (i = key_linepos + strlen(temp); i > 0; i--)
+	key_lines[edit_line][min(key_linepos + qwcslen(temp), MAXCMDLINE - 1)] = 0;
+	if (start == 1 && key_linepos + qwcslen(temp) < MAXCMDLINE - 1) {
+		for (i = key_linepos + qwcslen(temp); i > 0; i--)
 			key_lines[edit_line][i + 1] = key_lines[edit_line][i];
 		key_lines[edit_line][1] = '/';
 		key_linepos++;
@@ -813,41 +816,41 @@ int FindBestNick (char *s,int use) {
 
 
 void CompleteName(void) {
-    char s[MAXCMDLINE], t[MAXCMDLINE], *p, *q;
-    int best, diff, i;
+	wchar s[MAXCMDLINE], t[MAXCMDLINE], *p, *q;
+	int best, diff, i;
 
-    p = q = key_lines[edit_line] + key_linepos;
-    while (--p >= key_lines[edit_line] + 1)
-        if (!(  (*p >= 32 && *p <= 127) && !strchr(disallowed, *p) )) 
-             break;
-    p++;
-    if (q - p <= 0)
-        return;
+	p = q = key_lines[edit_line] + key_linepos;
+	while (--p >= key_lines[edit_line] + 1)
+		if (!(  (*(signed short *)p >= 32) && !strchr(disallowed, wc2char(*p)) ))
+			break;
+	p++;
+	if (q - p <= 0)
+		return;
 
-    strlcpy(s, p, q - p + 1);
+	qwcslcpy (s, p, q - p + 1);
 
-	best = FindBestNick (s,0);
-    if (best >= 0) {
-        strlcpy(t, cl.players[best].name, sizeof(t));
-		
+	best = FindBestNick (wcs2str(s), 0);
+	if (best >= 0) {
+		qwcslcpy(t, str2wcs(cl.players[best].name), sizeof(t)/sizeof(t[0]));
+
 		for (i = 0; t[i]; i++) {
 			if ((127 & t[i]) == ' ') {
 				int k;
 
-				if ((k = strlen(t)) < MAXCMDLINE - 2) {
-					memmove(t + 1, t, k + 1);
+				if ((k = wcslen(t)) < MAXCMDLINE - 2) {
+					memmove(t + 1, t, (k + 1)*sizeof(wchar));
 					t[k + 2] = 0;
 					t[k + 1] = t[0] = '\"';
 				}
 				break;
 			}
 		}
-		diff = strlen(t) - strlen(s);
-	
-		memmove(q + diff, q, strlen(q) + 1);
-		memmove(p, t, strlen(t));
+		diff = qwcslen(t) - qwcslen(s);
+
+		memmove(q + diff, q, (qwcslen(q) + 1)*sizeof(wchar));
+		memmove(p, t, qwcslen(t)*sizeof(wchar));
 		key_linepos += diff;
-		if (!key_lines[edit_line][key_linepos] && key_linepos < MAXCMDLINE - 1) {	
+		if (!key_lines[edit_line][key_linepos] && key_linepos < MAXCMDLINE - 1) {
 			key_lines[edit_line][key_linepos] = ' ';
 			key_lines[edit_line][++key_linepos] = 0;
 		}
@@ -876,16 +879,6 @@ static qbool yellowchars = false;
 #endif // WITH_KEYMAP
 qbool con_redchars    = false;
 
-typedef unsigned int wchar;
-
-char wc2char (wchar wc)
-{
-	if (wc <= 255)
-		return (char)wc;
-	else
-		return '?';
-}
-
 //Interactive line editing and console scrollback
 void Key_Console (int key, int unichar) {
 	int i, len;
@@ -899,7 +892,7 @@ void Key_Console (int key, int unichar) {
 		CompleteCommandNew_Reset ();
 		con_redchars = false;
 		
-			// backslash text are commands
+		// backslash text are commands
 		if (key_lines[edit_line][1] != '/' || key_lines[edit_line][2] != '/')
 		{
 			qbool no_lf = true;
@@ -911,14 +904,14 @@ void Key_Console (int key, int unichar) {
 					Cbuf_AddText ("say_team ");
 				else
 					Cbuf_AddText ("say ");
-				Cbuf_AddText (key_lines[edit_line] + 1);
+				Cbuf_AddText (encode_say(key_lines[edit_line] + 1));
 			}
 			else
 				if (key_lines[edit_line][1] == '\\' || key_lines[edit_line][1] == '/')
-					Cbuf_AddText (key_lines[edit_line] + 2);	// skip the ]/
+					Cbuf_AddText (wcs2str(key_lines[edit_line] + 2));	// skip the ]/
 				else
 					if (cl_chatmode.value != 1 && CheckForCommand())
-						Cbuf_AddText (key_lines[edit_line] + 1);	// valid command
+						Cbuf_AddText (wcs2str(key_lines[edit_line] + 1));	// valid command
 					else
 						if (cls.state >= ca_connected)	// can happen if cl_chatmode is 1
 						{
@@ -926,10 +919,10 @@ void Key_Console (int key, int unichar) {
 							{
 
 								Cbuf_AddText ("say ");
-								Cbuf_AddText (key_lines[edit_line] + 1);
+								Cbuf_AddText (encode_say(key_lines[edit_line] + 1));
 							}
 							else
-								Cbuf_AddText (key_lines[edit_line] + 1);	// skip the ]
+								Cbuf_AddText (wcs2str(key_lines[edit_line] + 1));	// skip the ]
 						}
 						else 
 							no_lf = false;
@@ -937,7 +930,9 @@ void Key_Console (int key, int unichar) {
 			if (no_lf) Cbuf_AddText ("\n");
 		}
 //no_lf:
-			Com_Printf ("%s\n",key_lines[edit_line]);
+//			Com_Printf ("%s\n", wcs2str(key_lines[edit_line]));
+			Con_PrintW (key_lines[edit_line]);	// FIXME logging
+			Con_Print ("\n");
 			edit_line = (edit_line + 1) & (CMDLINES - 1);
 			history_line = edit_line;
 			key_lines[edit_line][0] = ']';
@@ -986,7 +981,7 @@ void Key_Console (int key, int unichar) {
 		// added by jogi stop
 		if (key_linepos > 1)
 		{
-			strcpy (key_lines[edit_line] + key_linepos - 1,
+			qwcscpy (key_lines[edit_line] + key_linepos - 1,
 				key_lines[edit_line] + key_linepos);
 			key_linepos--;
 		}
@@ -1003,7 +998,7 @@ void Key_Console (int key, int unichar) {
 			for (i = 0; i <= last_cmd_length; i++)
 			{
 
-				strcpy (key_lines[edit_line] + key_linepos,
+				qwcscpy (key_lines[edit_line] + key_linepos,
 					key_lines[edit_line] + key_linepos +
 					1);
 			}
@@ -1012,11 +1007,11 @@ void Key_Console (int key, int unichar) {
 			try = 0;
 		}
 		// added by jogi stopp
-		if (key_linepos < strlen (key_lines[edit_line]))
-			strcpy (key_lines[edit_line] + key_linepos,
+		if (key_linepos < qwcslen(key_lines[edit_line]))
+			qwcscpy (key_lines[edit_line] + key_linepos,
 				key_lines[edit_line] + key_linepos + 1);
 		// disable red chars mode if the last character was deleted
-		if (key_linepos == 1 && strlen(key_lines[edit_line]) == 1)
+		if (key_linepos == 1 && qwcslen(key_lines[edit_line]) == 1)
 			con_redchars = false;
 		return;
 
@@ -1024,7 +1019,7 @@ void Key_Console (int key, int unichar) {
 		if (keydown[K_CTRL])
 		{
 			// word right
-			i = strlen (key_lines[edit_line]);
+			i = qwcslen(key_lines[edit_line]);
 			while (key_linepos < i
 			       && key_lines[edit_line][key_linepos] != ' ')
 				key_linepos++;
@@ -1036,7 +1031,7 @@ void Key_Console (int key, int unichar) {
 		// added by jogi start
 			CompleteCommandNew_Reset();
 		// added by jogi stop
-		if (key_linepos < strlen (key_lines[edit_line]))
+		if (key_linepos < qwcslen(key_lines[edit_line]))
 			key_linepos++;
 		return;
 
@@ -1079,8 +1074,8 @@ prevline:
 					&& !key_lines[history_line][1]);
 			if (history_line == edit_line)
 				history_line = (edit_line + 1) & (CMDLINES - 1);
-			strcpy(key_lines[edit_line], key_lines[history_line]);
-			key_linepos = strlen(key_lines[edit_line]);
+			qwcscpy(key_lines[edit_line], key_lines[history_line]);
+			key_linepos = qwcslen(key_lines[edit_line]);
 			return;
 
 		case 'N': case 'n':		// ^N = forward in history
@@ -1105,8 +1100,8 @@ nextline:
 				key_lines[edit_line][1] = 0;
 				key_linepos = 1;
 			} else {
-				strcpy(key_lines[edit_line], key_lines[history_line]);
-				key_linepos = strlen(key_lines[edit_line]);
+				qwcscpy(key_lines[edit_line], key_lines[history_line]);
+				key_linepos = qwcslen(key_lines[edit_line]);
 			}
 			return;
 
@@ -1141,21 +1136,21 @@ nextline:
 			if (keydown[K_CTRL])
 				con.display = con.current;
 			else
-				key_linepos = strlen(key_lines[edit_line]);
+				key_linepos = qwcslen(key_lines[edit_line]);
 			return;
 	}
 	if (((key == 'V' || key == 'v') && keydown[K_CTRL])
 		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT])) {
 		char *clipText;
 	
-		if ((clipText = Sys_GetClipboardData())) {
+		if ((clipText = str2wcs(Sys_GetClipboardData()))) {
 			len = strlen(clipText);
-			if (len + strlen(key_lines[edit_line]) > MAXCMDLINE - 1)
-				len = MAXCMDLINE - 1 - strlen(key_lines[edit_line]);
+			if (len + qwcslen(key_lines[edit_line]) > MAXCMDLINE - 1)
+				len = MAXCMDLINE - 1 - qwcslen(key_lines[edit_line]);
 			if (len > 0) {	// insert the string
 				memmove (key_lines[edit_line] + key_linepos + len,
-					key_lines[edit_line] + key_linepos, strlen(key_lines[edit_line]) - key_linepos + 1);
-				memcpy (key_lines[edit_line] + key_linepos, clipText, len);
+					key_lines[edit_line] + key_linepos, (qwcslen(key_lines[edit_line]) - key_linepos + 1)*sizeof(wchar));
+				memcpy (key_lines[edit_line] + key_linepos, clipText, len*sizeof(wchar));
 				key_linepos += len;
 			}
 		}
@@ -1164,7 +1159,7 @@ nextline:
 
 	if (key == 'u' && keydown[K_CTRL]) {			
 		if (key_linepos > 1) {
-			strcpy(key_lines[edit_line] + 1, key_lines[edit_line] + key_linepos);
+			qwcscpy(key_lines[edit_line] + 1, key_lines[edit_line] + key_linepos);
 			key_linepos = 1;
 		}
 		return;
@@ -1230,13 +1225,13 @@ nextline:
 #endif // WITH_KEYMAP else
 		unichar |= 128;		// red char
 
-	i = strlen(key_lines[edit_line]);
+	i = qwcslen(key_lines[edit_line]);
 	if (i >= MAXCMDLINE-1)
 		return;
 
 	// This also moves the ending \0
-	memmove (key_lines[edit_line]+key_linepos+1, key_lines[edit_line]+key_linepos, i-key_linepos+1);
-	key_lines[edit_line][key_linepos] = wc2char(unichar);
+	memmove (key_lines[edit_line]+key_linepos+1, key_lines[edit_line]+key_linepos, (i-key_linepos+1)*sizeof(wchar));
+	key_lines[edit_line][key_linepos] = unichar;
 	key_linepos++;
 CompleteCommandNew_Reset ();
 }
@@ -1246,7 +1241,7 @@ CompleteCommandNew_Reset ();
 qbool	chat_team;
 qbool chat_observers;	// added by jogi
 qbool chat_server;		// added by jogi
-char		chat_buffer[MAXCMDLINE];
+wchar		chat_buffer[MAXCMDLINE];
 int			chat_linepos = 0;
 
 void Key_Message (int key, wchar unichar) {
@@ -1256,7 +1251,7 @@ void Key_Message (int key, wchar unichar) {
 	case K_ENTER:
 		if (chat_buffer[0]) {
 			Cbuf_AddText (chat_team ? "say_team \"" : "say \"");
-			Cbuf_AddText(chat_buffer);
+			Cbuf_AddText(encode_say(chat_buffer));
 			Cbuf_AddText("\"\n");
 		}
 		key_dest = key_game;
@@ -1275,7 +1270,7 @@ void Key_Message (int key, wchar unichar) {
 		return;
 
 	case K_END:
-		chat_linepos = strlen(chat_buffer);
+		chat_linepos = qwcslen(chat_buffer);
 		return;
 
 	case K_LEFTARROW:
@@ -1284,20 +1279,20 @@ void Key_Message (int key, wchar unichar) {
 		return;
 
 	case K_RIGHTARROW:
-		if (chat_linepos < strlen(chat_buffer))
+		if (chat_linepos < qwcslen(chat_buffer))
 			chat_linepos++;
 		return;
 
 	case K_BACKSPACE:
 		if (chat_linepos > 0) {
-			strcpy(chat_buffer + chat_linepos - 1, chat_buffer + chat_linepos);
+			qwcscpy(chat_buffer + chat_linepos - 1, chat_buffer + chat_linepos);
 			chat_linepos--;
 		}
 		return;
 
 	case K_DEL:
 		if (chat_buffer[chat_linepos])
-			strcpy(chat_buffer + chat_linepos, chat_buffer + chat_linepos + 1);
+			qwcscpy(chat_buffer + chat_linepos, chat_buffer + chat_linepos + 1);
 		return;
 	}
 
@@ -1305,14 +1300,14 @@ void Key_Message (int key, wchar unichar) {
 		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT])) {
 		char *clipText;
 	
-		if ((clipText = Sys_GetClipboardData())) {
+		if ((clipText = str2wcs(Sys_GetClipboardData()))) {
 			len = strlen(clipText);
-			if (len + strlen(chat_buffer) > MAXCMDLINE - 1)
-				len = MAXCMDLINE - 1 - strlen(chat_buffer);
+			if (len + qwcslen(chat_buffer) > MAXCMDLINE - 1)
+				len = MAXCMDLINE - 1 - qwcslen(chat_buffer);
 			if (len > 0) {  // insert the string
 				memmove (chat_buffer + chat_linepos + len,
-					chat_buffer + chat_linepos, strlen(chat_buffer) - chat_linepos + 1);
-				memcpy (chat_buffer + chat_linepos, clipText, len);
+					chat_buffer + chat_linepos, (qwcslen(chat_buffer) - chat_linepos + 1)*sizeof(wchar));
+				memcpy (chat_buffer + chat_linepos, clipText, len * sizeof(wchar));
 				chat_linepos += len;
 			}
 		}
@@ -1322,14 +1317,14 @@ void Key_Message (int key, wchar unichar) {
 	if (!unichar)
 		return;	// non printable
 
-	len = strlen(chat_buffer);
+	len = qwcslen(chat_buffer);
 
-	if (len >= sizeof(chat_buffer) - 1)
+	if (len >= sizeof(chat_buffer)/sizeof(wchar) - 1)
 		return; // all full
 
 	// This also moves the ending \0
-	memmove (chat_buffer+chat_linepos+1, chat_buffer+chat_linepos, len - chat_linepos + 1);
-	chat_buffer[chat_linepos++] = wc2char(unichar);
+	memmove (chat_buffer+chat_linepos+1, chat_buffer+chat_linepos, (len - chat_linepos + 1)*sizeof(wchar));
+	chat_buffer[chat_linepos++] = unichar;
 }
 
 //============================================================================
@@ -1683,7 +1678,7 @@ void History_Shutdown (void)
 
 			do
 			{
-				fprintf(hf, "%s\n", key_lines[i] + 1);
+				fprintf(hf, "%s\n", wcs2str(key_lines[i] + 1));
 				i = (i + 1) & (CMDLINES - 1);
 			} while (i != edit_line && key_lines[i][1]);
 			fclose(hf);
@@ -1779,14 +1774,14 @@ void Key_Init (void) {
 }
 
 //Called by the system between frames for both key up and key down events Should NOT be called during an interrupt!
-void Key_EventEx (int key, int unichar, qbool down)
+void Key_EventEx (int key, wchar unichar, qbool down)
 {
 	char *kb, cmd[1024];
 
 	//	Com_Printf ("%i : %i\n", key, down); //@@@
 
 	//FIXME
-	if (unichar < 32 || unichar > 127)
+	if (unichar < 32 || (unichar > 127 && unichar <= 256))
 		unichar = 0;
 
 	if (key == K_LALT || key == K_RALT)

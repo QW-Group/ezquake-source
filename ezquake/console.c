@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.34 2007-01-05 09:58:48 qqshka Exp $
+	$Id: console.c,v 1.35 2007-01-05 23:05:00 tonik Exp $
 */
 // console.c
 
@@ -87,7 +87,7 @@ int			con_vislines;
 int			con_notifylines;			// scan lines to clear for notify lines
 
 #define		MAXCMDLINE	256
-extern	char	key_lines[32][MAXCMDLINE];
+extern	wchar	key_lines[32][MAXCMDLINE];
 extern	int		edit_line;
 extern	int		key_linepos;
 
@@ -266,10 +266,13 @@ void Con_SetWhite (void) {
 }
 
 void Con_Clear_f (void) {
+	int	i;
+
 	con.numlines = 0;
-	memset (con.text, ' ', con.maxsize);
-	Con_SetWhite(); // set default color to white
+	for (i = 0; i < CON_TEXTSIZE; i++)
+		con.text[i] = ' ';
 	con.display = con.current;
+	Con_SetWhite(); // set default color to white
 }
 
 void Con_ClearNotify (void) {
@@ -302,7 +305,7 @@ void Con_MessageMode2_f (void) {
 //If the line width has changed, reformat the buffer
 void Con_CheckResize (void) {
 	int i, j, width, oldwidth, oldtotallines, numlines, numchars;
-	char *tempbuf;
+	wchar *tempbuf;
 
 	width = (vid.width >> 3) - 2;
 
@@ -313,7 +316,8 @@ void Con_CheckResize (void) {
 		width = 38;
 		con_linewidth = width;
 		con_totallines = con.maxsize / con_linewidth;
-		memset (con.text, ' ', con.maxsize);
+		for (i = 0; i < CON_TEXTSIZE; i++)
+			con.text[i] = ' ';
 		Con_SetWhite();
 	} else {
 		int idx_old, idx_new;
@@ -333,9 +337,10 @@ void Con_CheckResize (void) {
 		if (con_linewidth < numchars)
 			numchars = con_linewidth;
 
-		tempbuf = (char *) Hunk_TempAlloc(con.maxsize);
-		memcpy (tempbuf, con.text, con.maxsize);
-		memset (con.text, ' ', con.maxsize);
+		tempbuf = (wchar *) Hunk_TempAlloc(con.maxsize * sizeof(wchar));
+		memcpy (tempbuf, con.text, con.maxsize * sizeof(wchar));
+		for (i = 0; i < CON_TEXTSIZE; i++)
+			con.text[i] = ' ';
 
 		clr = Q_malloc(con.maxsize * sizeof(clrinfo_t)); // alloc temporaly
 		memcpy(clr, con.clr, con.maxsize * sizeof(clrinfo_t)); // save color array
@@ -382,7 +387,7 @@ static void Con_CreateReadableChars(void) {
 
 static void Con_InitConsoleBuffer(console_t *conbuffer, int size) {
 	con.maxsize = size;
-	con.text = (char *) Hunk_AllocName(con.maxsize, "console_buffer");
+	con.text = (wchar *) Hunk_AllocName(con.maxsize * sizeof(wchar), "console_buffer");
 	con.clr = (clrinfo_t *) Hunk_AllocName(con.maxsize * sizeof(clrinfo_t), "console_clr");
 }
 
@@ -474,7 +479,7 @@ void Con_Shutdown (void) {
 }
 
 void Con_Linefeed (void) {
-	int idx;
+	int idx, i;
 	con.x = 0;
 	con.x = con_margin;    // kazik
 	if (con.display == con.current)
@@ -483,7 +488,8 @@ void Con_Linefeed (void) {
 	if (con.numlines < con_totallines)
 		con.numlines++;
 	idx = (con.current%con_totallines)*con_linewidth;
-	memset (&con.text[idx], ' ', con_linewidth);
+	for (i = 0; i < con_linewidth; i++)
+		con.text[idx + i] = ' ';
 	Con_SetColor(idx, con_linewidth, int_white);
 
 	// mark time for transparent overlay
@@ -517,9 +523,9 @@ void Con_SafePrintf (char *fmt, ...)
 }
 
 //Handles cursor positioning, line wrapping, etc
-void Con_Print (char *txt) {
+void Con_PrintW (wchar *txt) {
 	int y, c, l, mask, color = int_white, r, g, b, idx;
-	char *s;
+	wchar *s;
 	byte d;
 	static int cr;
 
@@ -532,14 +538,14 @@ void Con_Print (char *txt) {
 			if (log_readable.value) {
 				char *s, *tempbuf;
 	
-				tempbuf = (char *) Q_malloc(strlen(txt) + 1);
-				strcpy(tempbuf, txt);
+				tempbuf = (char *) Q_malloc(qwcslen(txt) + 1);
+				strcpy(tempbuf, wcs2str(txt));
 				for (s = tempbuf; *s; s++)
 					*s = readableChars[(unsigned char) *s];
 				Log_Write(tempbuf);
 				Q_free(tempbuf);
 			} else {
-				Log_Write(txt);	
+				Log_Write(wcs2str(txt));	
 			}
 		}
 	}
@@ -645,6 +651,11 @@ void Con_Print (char *txt) {
 	}
 }
 
+void Con_Print (char *txt)
+{
+	Con_PrintW (str2wcs(txt));
+}
+
 
 /*
 ==============================================================================
@@ -654,36 +665,40 @@ DRAWING
 
 //The input line scrolls horizontally if typing goes beyond the right edge
 static void Con_DrawInput(void) {
-	int len;
-	char *text, temp[MAXCMDLINE + 1];	//+ 1 for cursor if strlen(key_lines[edit_line]) == (MAX_CMDLINE - 1)
 	extern qbool con_redchars;
+	int		len, i;
+	wchar	*text;
+	wchar	temp[MAXCMDLINE + 1];       //+ 1 for cursor if stlen(key_lines[edit_line]) == 255
 
 	if (key_dest != key_console && cls.state == ca_active)
-		return;		// don't draw anything (always draw if not active)
+		return;
 
-	strlcpy(temp, key_lines[edit_line], MAXCMDLINE);
-	len = strlen(temp);
+	qwcslcpy (temp, key_lines[edit_line], MAXCMDLINE);
+	len = qwcslen(temp);
+
 	text = temp;
 
-	memset(text + len, ' ', MAXCMDLINE - len);		// fill out remainder with spaces
+	// fill out remainder with spaces
+	for (i = 0; i < MAXCMDLINE - len; i++)
+		(text + len)[i] = ' ';
+	
 	text[MAXCMDLINE] = 0;
 
 	// add the cursor frame
-	if ((int) (curtime * con_cursorspeed) & 1)
+	if ( (int)(curtime*con_cursorspeed) & 1 )
 		text[key_linepos] = con_redchars ? (11 + 128) : 11;
 
 	//	prestep if horizontally scrolling
 	if (key_linepos >= con_linewidth)
 		text += 1 + key_linepos - con_linewidth;
 
-	// draw it
-	Draw_String(8, con_vislines-22 + bound(0, con_shift.value, 8), text);
+	Draw_StringW (8, con_vislines-22 + bound(0, con_shift.value, 8), text);
 }
 
 //Draws the last few lines of output transparently over the game top
 void Con_DrawNotify (void) {
 	int x, v, skip, maxlines, i, idx;
-	char *text, *s;
+	wchar *text, *s;
 	char buf[1024];
 	clrinfo_t clr[sizeof(buf)];
 	float time;
@@ -723,7 +738,7 @@ void Con_DrawNotify (void) {
 
 
 	if (key_dest == key_message) {
-		char temp[MAXCMDLINE + 1];
+		wchar temp[MAXCMDLINE + 1];
 
 		clearnotify = 0;
 		scr_copytop = 1;
@@ -737,11 +752,11 @@ void Con_DrawNotify (void) {
 		}
 
 		// FIXME: clean this up
-		s = strcpy (temp, chat_buffer);
+		s = qwcscpy (temp, chat_buffer);
 
 		// add the cursor frame
 		if ((int) (curtime * con_cursorspeed) & 1) {
-			if (chat_linepos == strlen(s))
+			if (chat_linepos == qwcslen(s))
 				s[chat_linepos+1] = '\0';
 			s[chat_linepos] = 11;
 		}
@@ -769,8 +784,9 @@ void DrawCP (int lines);
 //Draws the console with the solid background
 void Con_DrawConsole (int lines) {
 	int i, j, x, y, n=0, rows, row, idx;
+	wchar *wtext;
 	char *text, dlbar[1024];
-	char buf[1024];
+	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];
 
 	if (lines <= 0)
@@ -811,17 +827,17 @@ void Con_DrawConsole (int lines) {
 			break;		// past scrollback wrap point
 
 		idx = (row % con_totallines)*con_linewidth;
-		text = con.text + idx;
+		wtext = con.text + idx;
 
 		// copy current line to buffer
 		for(x = 0; x < con_linewidth; x++) {
-			buf[x] = text[x];
+			buf[x] = wtext[x];
 			clr[x] = con.clr[idx + x]; // copy whole color struct
 			clr[x].i = x; // set proper index
 		}
 		buf[x] = '\0';
 
-		Draw_ColoredString3( 1 << 3, y + bound(0, con_shift.value, 8), buf, clr, con_linewidth, 0);
+		Draw_ColoredString3W( 1 << 3, y + bound(0, con_shift.value, 8), buf, clr, con_linewidth, 0);
 	}
 
 	// draw the download bar

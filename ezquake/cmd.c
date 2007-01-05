@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.46 2006-12-12 14:20:34 johnnycz Exp $
+    $Id: cmd.c,v 1.47 2007-01-05 23:05:00 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -570,7 +570,7 @@ void Cmd_AliasList_f (void)
 void Cmd_EditAlias_f (void)
 {
 #define		MAXCMDLINE	256
-	extern char	key_lines[32][MAXCMDLINE];
+	extern wchar	key_lines[32][MAXCMDLINE];
 	extern int		edit_line;
 	cmd_alias_t	*a;
 	char *s, final_string[MAXCMDLINE -1];
@@ -593,7 +593,7 @@ void Cmd_EditAlias_f (void)
 
 	snprintf(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
 	Key_ClearTyping();
-	memcpy (key_lines[edit_line]+1, final_string, strlen(final_string));
+	memcpy (key_lines[edit_line]+1, str2wcs(final_string), strlen(final_string)*sizeof(wchar));
 	Q_free(s);
 }
 

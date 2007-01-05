@@ -49,6 +49,7 @@ void Draw_AdjustConback (void);
 
 void Draw_Init (void);
 void Draw_Character (int x, int y, int num);
+void Draw_CharacterW (int x, int y, wchar num);
 void Draw_SubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height);
 void Draw_Pic (int x, int y, mpic_t *pic);
 void Draw_TransPic (int x, int y, mpic_t *pic);
@@ -62,23 +63,25 @@ void Draw_Fill (int x, int y, int w, int h, int c);
 //void Draw_FadeBox (int x, int y, int width, int height, float r, float g, float b, float a); // HUD -> hexum
 void Draw_FadeBox (int x, int y, int width, int height, byte c, float a);
 void Draw_FadeScreen (void);
-void Draw_String (int x, int y, char *str);
-void Draw_Alt_String (int x, int y, char *str);
-void Draw_ColoredString (int x, int y, char *str, int red);
+void Draw_String (int x, int y, const char *str);
+void Draw_StringW (int x, int y, const wchar *ws);
+void Draw_Alt_String (int x, int y, const char *str);
+void Draw_ColoredString (int x, int y, const char *str, int red);
 
 extern const int int_white;
 
 int RGBA_2_Int(byte r, byte g, byte b, byte a);
 byte* Int_2_RGBA(int i, byte rgba[4]);
 
-void Draw_ColoredString2 (int x, int y, char *text, int *clr, int red);
+void Draw_ColoredString2 (int x, int y, const char *text, int *clr, int red);
 
 typedef struct clrinfo_s {
 	int c; // color
 	int i; // index when this colors starts
 } clrinfo_t;
 
-void Draw_ColoredString3 (int x, int y, char *text, clrinfo_t *clr, int clr_cnt, int red);
+void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red);
+void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red);
 
 mpic_t *Draw_CachePicSafe (char *path, qbool true, qbool only24bit);
 mpic_t *Draw_CachePic (char *path);
