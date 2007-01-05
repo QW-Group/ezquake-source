@@ -98,13 +98,6 @@ void Capture_Cursor_f (void)
 	IN_ResumeMouse();
 }
 
-void Force_Centerview_f (void)
-{
-	if (concussioned)
-		return;
-	cl.viewangles[PITCH] = 0; 
-}
-
 
 /*
 =============
@@ -118,11 +111,11 @@ void IN_Init (void)
 {
 	// OSX Mouse events
 	EventTypeSpec appEventList[] = {
-	{kEventClassMouse, kEventMouseDown},
-	{kEventClassMouse, kEventMouseUp},
-	{kEventClassMouse, kEventMouseWheelMoved},
-	{kEventClassMouse, kEventMouseMoved},
-	{kEventClassMouse, kEventMouseDragged}
+		{kEventClassMouse, kEventMouseDown},
+		{kEventClassMouse, kEventMouseUp},
+		{kEventClassMouse, kEventMouseWheelMoved},
+		{kEventClassMouse, kEventMouseMoved},
+		{kEventClassMouse, kEventMouseDragged}
 	};
 	
 	//InstallStandardEventHandler(GetApplicationEventTarget());// Need this?
@@ -143,8 +136,6 @@ void IN_Init (void)
 		Cmd_AddCommand ("_cursor_release", Release_Cursor_f);
 	}
 	
-	Cmd_AddCommand ("force_centerview", Force_Centerview_f);
-
 	Cvar_Register (&m_filter);
 	Cvar_Register (&cl_keypad);
 	

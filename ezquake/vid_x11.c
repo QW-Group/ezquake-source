@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_x11.c,v 1.16 2006-04-06 23:23:19 disconn3ct Exp $
+	$Id: vid_x11.c,v 1.17 2007-01-05 16:24:18 disconn3ct Exp $
 */
 // vid_x11.c -- general x video driver
 
@@ -994,16 +994,10 @@ void D_EndDirectRect (int x, int y, int width, int height) {
 // direct drawing of the "accessing disk" icon isn't supported under Linux
 }
 
-void Force_CenterView_f (void) {
-	if (concussioned) return;
-	cl.viewangles[PITCH] = 0;
-}
-
 void IN_Init (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
 	Cvar_Register(&cl_keypad);
 	Cvar_ResetCurrentGroup();
-	Cmd_AddCommand ("force_centerview", Force_CenterView_f);
 	if ( COM_CheckParm ("-nomouse") )
 		return;
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
