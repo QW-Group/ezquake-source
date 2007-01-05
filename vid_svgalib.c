@@ -623,11 +623,6 @@ void Sys_SendKeyEvents(void) {
 		while (keyboard_update());
 }
 
-void Force_CenterView_f (void) {
-	if (concussioned) return;
-	cl.viewangles[PITCH] = 0;
-}
-
 static void mousehandler(int buttonstate, int dx, int dy, int dz, int drx, int dry, int drz) {
 	int i;
 	static int oldbuttonstate;
@@ -665,7 +660,6 @@ void IN_Init(void) {
 	if (UseMouse) {
 		Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
 		Cvar_ResetCurrentGroup();
-		Cmd_AddCommand ("force_centerview", Force_CenterView_f);
 
 		mouse_buttons = 3;
 

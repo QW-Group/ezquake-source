@@ -142,6 +142,14 @@ float V_CalcBob (void) {
 cvar_t	v_centermove = {"v_centermove", "0.15"};
 cvar_t	v_centerspeed = {"v_centerspeed","500"};
 
+void Force_Centerview_f (void)
+{
+	if (concussioned)
+		return;
+
+	cl.viewangles[PITCH] = 0;
+}
+
 void V_StartPitchDrift (void) {
 	if (cl.laststop == cl.time)
 		return;		// something else is keeping it from drifting
@@ -1065,6 +1073,7 @@ void V_Init (void) {
 	Cmd_AddCommand ("v_cshift", V_cshift_f);	
 	Cmd_AddCommand ("bf", V_BonusFlash_f);
 	Cmd_AddCommand ("centerview", V_StartPitchDrift);
+	Cmd_AddCommand ("force_centerview", Force_Centerview_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIEW);
 	Cvar_Register (&v_centermove);

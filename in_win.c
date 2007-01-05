@@ -516,11 +516,6 @@ void MW_Hook_Message (long buttons) {
 	old_buttons = buttons;
 }
 
-void Force_CenterView_f (void) {
-	if (concussioned) return;
-	cl.viewangles[PITCH] = 0;
-}
-
 void IN_UpdateClipCursor (void) {
 	if (mouseinitialized && mouseactive && !dinput)
 		ClipCursor (&window_rect);
@@ -752,28 +747,22 @@ void IN_StartupMouse (void) {
 }
 
 void IN_Init (void) {
-	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
-	// mouse variables
+	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE); // mouse variables
 	Cvar_Register (&m_filter);
-
 //	Cvar_Register (&m_forcewheel);
 
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
-	// keyboard variables
+	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD); // keyboard variables
 	Cvar_Register (&cl_keypad);
 
 #ifdef WITH_KEYMAP
 	IN_StartupKeymap();
 #endif // WITH_KEYMAP
 
-	// joystick variables
-	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_JOY);
+	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_JOY); // joystick variables
 	Cvar_Register (&in_joystick);
 
 	Cvar_ResetCurrentGroup();
-
-	Cmd_AddCommand ("force_centerview", Force_CenterView_f);
 
 	uiWheelMessage = RegisterWindowMessage ( "MSWHEEL_ROLLMSG" );
 

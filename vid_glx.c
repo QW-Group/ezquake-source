@@ -973,17 +973,8 @@ void Sys_SendKeyEvents(void) {
 
 /************************************* INPUT *************************************/
 
-void Force_CenterView_f (void) {
-	if (concussioned) return;
-	cl.viewangles[PITCH] = 0;
-}
-
-void IN_Init(void) {
-	Cmd_AddCommand ("force_centerview", Force_CenterView_f);
-}
-
-void IN_Shutdown(void) {}
-
+void IN_Init (void) {}
+void IN_Shutdown (void) {}
 void IN_Commands (void) {}
 
 void IN_MouseMove (usercmd_t *cmd) {
