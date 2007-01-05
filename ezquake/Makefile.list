@@ -60,6 +60,7 @@ CLIENT_C_FILES := \
 	snd_mix \
 	stats_grid \
 	teamplay \
+	textencoding \
 	utils \
 	wad \
 	xsd \
