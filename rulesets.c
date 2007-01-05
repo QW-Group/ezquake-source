@@ -17,30 +17,34 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.44 2006-09-26 15:01:18 disconn3ct Exp $
+	$Id: rulesets.c,v 1.45 2007-01-05 11:56:58 disconn3ct Exp $
 
 */
 
 #include "quakedef.h"
 
-typedef struct locked_cvar_s {
+typedef struct locked_cvar_s
+{
 	cvar_t *var;
 	char *value;
 } locked_cvar_t;
 
-typedef struct limited_cvar_max_s {
+typedef struct limited_cvar_max_s
+{
 	cvar_t *var;
 	char *maxrulesetvalue;
 } limited_cvar_max_t;
 
-typedef struct limited_cvar_min_s {
+typedef struct limited_cvar_min_s
+{
 	cvar_t *var;
 	char *minrulesetvalue;
 } limited_cvar_min_t;
 
 typedef enum {rs_default, rs_smackdown, rs_mtfl} ruleset_t;
 
-typedef struct rulesetDef_s {
+typedef struct rulesetDef_s
+{
 	ruleset_t ruleset;
 	float maxfps;
 	qbool restrictTriggers;
@@ -49,16 +53,23 @@ typedef struct rulesetDef_s {
 } rulesetDef_t;
 
 static rulesetDef_t rulesetDef = {rs_default, 72.0, false, false, false};
+qbool OnChange_ruleset (cvar_t *var, char *value);
+cvar_t ruleset = {"ruleset", "default", 0, OnChange_ruleset};
 
-qbool RuleSets_DisallowExternalTexture(model_t *mod) {
+qbool RuleSets_DisallowExternalTexture (model_t *mod)
+{
 	switch (mod->modhint) {
-		case MOD_EYES: return true;
-		case MOD_BACKPACK: return (rulesetDef.ruleset == rs_smackdown);
-		default: return false;
+	case MOD_EYES:
+		return true;
+	case MOD_BACKPACK:
+		return (rulesetDef.ruleset == rs_smackdown);
+	default:
+		return false;
 	}
 }
 
-qbool Rulesets_AllowTimerefresh(void) {
+qbool Rulesets_AllowTimerefresh (void)
+{
 	switch(rulesetDef.ruleset) {
 	case rs_smackdown:
 		// START shaman BUG 1020663
@@ -70,7 +81,8 @@ qbool Rulesets_AllowTimerefresh(void) {
 	}
 }
 
-qbool Rulesets_AllowNoShadows(void) {
+qbool Rulesets_AllowNoShadows (void)
+{
 	switch(rulesetDef.ruleset) {
 	case rs_mtfl:
 		return false;
@@ -81,27 +93,31 @@ qbool Rulesets_AllowNoShadows(void) {
 	}
 }
 
-float Rulesets_MaxFPS(void) {
-
+float Rulesets_MaxFPS (void)
+{
 	if (cl_multiview.value && cls.mvdplayback)
 		return nNumViews*rulesetDef.maxfps;
 
 	return rulesetDef.maxfps;
 }
 
-qbool Rulesets_RestrictTriggers(void) {
+qbool Rulesets_RestrictTriggers (void)
+{
 	return rulesetDef.restrictTriggers;
 }
 
-qbool Rulesets_RestrictPacket(void) {
+qbool Rulesets_RestrictPacket (void)
+{
 	return !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictPacket;
 }
 
-qbool Rulesets_RestrictParticles(void) {
+qbool Rulesets_RestrictParticles (void)
+{
 	return !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictParticles && !r_refdef2.allow_cheats;
 }
 
-char *Rulesets_Ruleset(void) {
+char *Rulesets_Ruleset (void)
+{
 	switch(rulesetDef.ruleset) {
 		case rs_smackdown:
 			return "smackdown";
@@ -112,7 +128,8 @@ char *Rulesets_Ruleset(void) {
 	}
 }
 
-static void Rulesets_Smackdown(void) {
+static void Rulesets_Smackdown (qbool enable)
+{
 	extern cvar_t cl_independentPhysics, cl_c2spps;
 	extern cvar_t cl_hud;
 	extern cvar_t cl_rollalpha;
@@ -131,26 +148,40 @@ static void Rulesets_Smackdown(void) {
 #endif
 	};
 	
-	for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
-		Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value, 2);
-		Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
-		Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
-	}
+	if (enable) {
+		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
+			Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value, 2);
+			Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
+			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
+		}
+	
+		if (cl_independentPhysics.value) {
+			Cvar_Set(&cl_c2spps, "0"); // people were complaining that player move is jerky with this. however this has not much to do with independent physics, but people are too paranoid about it
+			Cvar_SetFlags(&cl_c2spps, Cvar_GetFlags(&cl_c2spps) | CVAR_ROM);
+		}
+	
+		rulesetDef.maxfps = 77;
+		rulesetDef.restrictTriggers = true;
+		rulesetDef.restrictPacket = true; // packet command could have been exploited for external timers
+		rulesetDef.restrictParticles = true;
+		rulesetDef.ruleset = rs_smackdown;
+	} else {
+		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
+			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
+		
+		if (cl_independentPhysics.value)
+			Cvar_SetFlags(&cl_c2spps, Cvar_GetFlags(&cl_c2spps) & ~CVAR_ROM);
 
-	if (cl_independentPhysics.value)
-	{
-		Cvar_Set(&cl_c2spps, "0");	// people were complaining that player move is jerky with this. however this has not much to do with independent physics, but people are too paranoid about it
-		Cvar_SetFlags(&cl_c2spps, Cvar_GetFlags(&cl_c2spps) | CVAR_ROM);
+		rulesetDef.maxfps = 72.0;
+		rulesetDef.restrictTriggers = false;
+		rulesetDef.restrictPacket = false;
+		rulesetDef.restrictParticles = false;
+		rulesetDef.ruleset = rs_default;
 	}
-
-	rulesetDef.maxfps = 77;
-	rulesetDef.restrictTriggers = true;
-	rulesetDef.restrictPacket = true;	// packet command could have been exploited for external timers
-	rulesetDef.restrictParticles = true;
-	rulesetDef.ruleset = rs_smackdown;
 }
 
-static void Rulesets_MTFL(void) {
+static void Rulesets_MTFL (qbool enable)
+{
 /* TODO:
 f_flashout trigger
 block all other ways to made textures flat(simple)
@@ -187,46 +218,88 @@ block all other ways to made textures flat(simple)
 	};
 #endif
 
-	for (; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
-		Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value, 2);
-		Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
-		Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
-	}
+	if (enable) {
+		for (; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
+			Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value, 2);
+			Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
+			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
+		}
 
 #ifdef GLQUAKE
-	for (i = 0; i < (sizeof(limited_max_cvars) / sizeof(limited_max_cvars[0])); i++) {
-		Cvar_RulesetSet(limited_max_cvars[i].var, limited_max_cvars[i].maxrulesetvalue, 1);
-		Cvar_SetFlags(limited_max_cvars[i].var, Cvar_GetFlags(limited_max_cvars[i].var) | CVAR_RULESET_MAX);
-	}
-
-	for (i = 0; i < (sizeof(limited_min_cvars) / sizeof(limited_min_cvars[0])); i++) {
-		Cvar_RulesetSet(limited_min_cvars[i].var, limited_min_cvars[i].minrulesetvalue, 0);
-		Cvar_SetFlags(limited_min_cvars[i].var, Cvar_GetFlags(limited_min_cvars[i].var) | CVAR_RULESET_MIN);
-	}
+		for (i = 0; i < (sizeof(limited_max_cvars) / sizeof(limited_max_cvars[0])); i++) {
+			Cvar_RulesetSet(limited_max_cvars[i].var, limited_max_cvars[i].maxrulesetvalue, 1);
+			Cvar_SetFlags(limited_max_cvars[i].var, Cvar_GetFlags(limited_max_cvars[i].var) | CVAR_RULESET_MAX);
+		}
+	
+		for (i = 0; i < (sizeof(limited_min_cvars) / sizeof(limited_min_cvars[0])); i++) {
+			Cvar_RulesetSet(limited_min_cvars[i].var, limited_min_cvars[i].minrulesetvalue, 0);
+			Cvar_SetFlags(limited_min_cvars[i].var, Cvar_GetFlags(limited_min_cvars[i].var) | CVAR_RULESET_MIN);
+		}
 #endif
 
 	rulesetDef.ruleset = rs_mtfl;
+	} else {
+		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
+			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
+#ifdef GLQUAKE
+		for (i = 0; i < (sizeof(limited_max_cvars) / sizeof(limited_max_cvars[0])); i++)
+			Cvar_SetFlags(limited_max_cvars[i].var, Cvar_GetFlags(limited_max_cvars[i].var) & ~CVAR_RULESET_MAX);
+
+		for (i = 0; i < (sizeof(limited_min_cvars) / sizeof(limited_min_cvars[0])); i++)
+			Cvar_SetFlags(limited_min_cvars[i].var, Cvar_GetFlags(limited_min_cvars[i].var) & ~CVAR_RULESET_MIN);
+#endif
+		rulesetDef.ruleset = rs_default;
+	}
 }
 
-static void Rulesets_Default(void) {
+static void Rulesets_Default (void)
+{
 	rulesetDef.ruleset = rs_default;
 }
 
-void Rulesets_Init(void) {
-	int temp;
-
-	if ((temp = COM_CheckParm("-ruleset")) && temp + 1 < com_argc) {
-		if (!strcasecmp(com_argv[temp + 1], "smackdown")) {
-			Rulesets_Smackdown();
-			Com_Printf_State (PRINT_OK, "Ruleset Smackdown initialized\n");
-			return;
-		} else if (!strcasecmp(com_argv[temp + 1], "mtfl")) {
-			Rulesets_MTFL();
-			Com_Printf_State (PRINT_OK, "Ruleset MTFL initialized\n");
-			return;
-		} else if (strcasecmp(com_argv[temp + 1], "default")){
-			Com_Printf_State (PRINT_INFO, "Unknown ruleset \"%s\"\n", com_argv[temp + 1]);
-		}
+qbool OnChange_ruleset (cvar_t *var, char *value)
+{
+	if (cls.state != ca_disconnected) {
+		Com_Printf("%s can be changed only in disconneced mode\n", var->name);
+		return true;
 	}
+
+	if (strcasecmp(value, "smackdown") && strcasecmp(value, "mtfl") && strcasecmp(value, "default")) {
+		Com_Printf_State (PRINT_INFO, "Unknown ruleset \"%s\"\n", value);
+		return true;
+	}
+
+	// All checks passed  so we can remove old ruleset and set a new one
+	switch(rulesetDef.ruleset) {
+		case rs_smackdown:
+			Rulesets_Smackdown(false);
+		case rs_mtfl:
+			Rulesets_MTFL(false);
+		case rs_default:
+			;
+		default:
+			;
+	}
+
+	if (!strcasecmp(value, "smackdown")) {
+		Rulesets_Smackdown(true);
+		Com_Printf_State (PRINT_OK, "Ruleset Smackdown initialized\n");
+		return false;
+	} else if (!strcasecmp(value, "mtfl")) {
+		Rulesets_MTFL(true);
+		Com_Printf_State (PRINT_OK, "Ruleset MTFL initialized\n");
+		return false;
+	} else if (!strcasecmp(value, "default")) {
+		Rulesets_Default();
+		Com_Printf_State (PRINT_OK, "Ruleset default initialized\n");
+		return false;
+	}
+
+	return true; // this will never happen
+}
+
+void Rulesets_Init (void)
+{
+	Cvar_Register (&ruleset);
 	Rulesets_Default();
 }

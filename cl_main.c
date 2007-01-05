@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.116 2007-01-01 13:50:05 tonik Exp $
+	$Id: cl_main.c,v 1.117 2007-01-05 11:56:58 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1090,7 +1090,8 @@ void CL_Init (void) {
 	W_LoadWadFile ("gfx.wad");
 
 	Modules_Init();
-	FChecks_Init();	
+	FChecks_Init();
+	Rulesets_Init();
 
 	host_basepal = (byte *) FS_LoadHunkFile ("gfx/palette.lmp");
 	if (!host_basepal)
@@ -1136,7 +1137,6 @@ void CL_Init (void) {
 	CL_InitTEnts ();
 	CL_InitPrediction ();
 	CL_InitCam ();
-	Rulesets_Init();
 	TP_Init ();
 	Hud_262Init();
 	Sbar_Init ();
