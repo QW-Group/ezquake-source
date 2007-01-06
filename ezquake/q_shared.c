@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.11 2007-01-05 23:05:01 tonik Exp $
+    $Id: q_shared.c,v 1.12 2007-01-06 11:59:17 johnnycz Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -438,16 +438,18 @@ qbool Q_glob_match (const char *pattern, const char *text)
 	return (*text == '\0');
 }
 
-int Com_HashKey (const char *name) {
-	unsigned int v;
-	unsigned char c;
+unsigned long Com_HashKey (const char *str) {
+	unsigned long hash = 0;
+	int c;
 
-	v = 0;
-	while ( (c = *name++) != 0 )
-		v += c &~ 32;   // make it case insensitive
+	// the (c&~32) makes it case-insensitive
+	// hash function known as sdbm, used in gawk
+	while (c = *str++)
+        hash = (c &~ 32) + (hash << 6) + (hash << 16) - hash;
 
-	return v % 32;
+    return hash;
 }
+
 
 /*
 ============================================================================

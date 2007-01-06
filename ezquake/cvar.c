@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.32 2006-12-02 11:52:20 johnnycz Exp $
+    $Id: cvar.c,v 1.33 2007-01-06 11:59:17 johnnycz Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -30,7 +30,8 @@ extern cvar_t r_fullbrightSkins;
 extern cvar_t cl_fakeshaft;
 extern cvar_t allow_scripts;
 
-static cvar_t *cvar_hash[32];
+#define VAR_HASHPOOL_SIZE 1000
+static cvar_t *cvar_hash[VAR_HASHPOOL_SIZE];
 cvar_t *cvar_vars;
 
 cvar_t	cvar_viewdefault = {"cvar_viewdefault", "1"};
@@ -49,7 +50,7 @@ cvar_t *Cvar_Next (cvar_t *var)
 cvar_t *Cvar_FindVar (const char *var_name)
 {
 	cvar_t *var;
-	int key = Com_HashKey (var_name);
+	int key = Com_HashKey (var_name) % VAR_HASHPOOL_SIZE;
 
 	for (var = cvar_hash[key]; var; var = var->hash_next) {
 		if (!strcasecmp (var_name, var->name)) {
@@ -438,7 +439,7 @@ void Cvar_Register (cvar_t *var)
 	var->value = Q_atof (var->string);
 
 	// link the variable in
-	key = Com_HashKey (var->name);
+	key = Com_HashKey (var->name) % VAR_HASHPOOL_SIZE;
 	var->hash_next = cvar_hash[key];
 	cvar_hash[key] = var;
 	var->next = cvar_vars;
@@ -641,7 +642,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 	v->next = cvar_vars;
 	cvar_vars = v;
 
-	key = Com_HashKey (name);
+	key = Com_HashKey (name) % VAR_HASHPOOL_SIZE;
 	v->hash_next = cvar_hash[key];
 	cvar_hash[key] = v;
 
@@ -661,7 +662,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 qbool Cvar_Delete (const char *name)
 {
 	cvar_t *var, *prev = NULL;
-	int key = Com_HashKey (name);
+	int key = Com_HashKey (name) % VAR_HASHPOOL_SIZE;
 
 	for (var = cvar_hash[key]; var; var = var->hash_next) {
 		if (!strcasecmp(var->name, name)) {
