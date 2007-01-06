@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.33 2007-01-06 11:59:17 johnnycz Exp $
+    $Id: cvar.c,v 1.34 2007-01-06 21:26:06 tonik Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -417,15 +417,15 @@ void Cvar_Register (cvar_t *var)
 		return;
 	}
 
-	// check for overlap with a command
+/*	// check for overlap with a command
 	if (Cmd_Exists (var->name)) {
 		Com_Printf ("Cvar_Register: %s is a command\n", var->name);
 		return;
-	}
+	} */
 
 	var->defaultvalue = Q_strdup (var->string);
 	if (old) {
-		var->flags |= old->flags & ~CVAR_USER_CREATED;
+		var->flags |= old->flags & ~(CVAR_USER_CREATED|CVAR_TEMP);
 		strlcpy (string, old->string, sizeof(string));
 		Cvar_Delete (old->name);
 		if (!(var->flags & CVAR_ROM))
@@ -635,8 +635,11 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 	cvar_t *v;
 	int key;
 
-	if ((v = Cvar_FindVar(name)))
+	if ((v = Cvar_FindVar(name))) {
+		v->flags &= ~CVAR_TEMP;
+		v->flags |= cvarflags;
 		return v;
+	}
 	v = (cvar_t *) Q_malloc(sizeof(cvar_t));
 	// Cvar doesn't exist, so we create it
 	v->next = cvar_vars;
@@ -649,7 +652,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 	v->name = Q_strdup (name);
 	v->string = Q_strdup (string);
 	v->defaultvalue = Q_strdup (string);
-	v->flags = cvarflags;
+	v->flags = cvarflags | CVAR_USER_CREATED;
 	v->value = Q_atof (v->string);
 #ifdef EMBED_TCL
 	TCL_RegisterVariable (v);
@@ -727,7 +730,7 @@ void Cvar_Set_f (void)
 			Com_Printf ("\"%s\" is a command\n", var_name);
 			return;
 		}
-		var = Cvar_Create (var_name, Cmd_Argv(2), CVAR_USER_CREATED);
+		var = Cvar_Create (var_name, Cmd_Argv(2), 0);
 	}
 
 	if (cvar_seta)
@@ -755,7 +758,7 @@ void Cvar_Set_ex_f (void)
 			Com_Printf ("\"%s\" is a command\n", var_name);
 			return;
 		}
-		var = Cvar_Create(var_name, "", CVAR_USER_CREATED);
+		var = Cvar_Create(var_name, "", 0);
 	}
 
 	Cmd_ExpandString( Cmd_Argv(2), text_exp);
@@ -790,7 +793,7 @@ void Cvar_Set_Alias_Str_f (void)
 			Com_Printf ("\"%s\" is a command\n", var_name);
 			return;
 		}
-		var = Cvar_Create(var_name, "", CVAR_USER_CREATED);
+		var = Cvar_Create(var_name, "", 0);
 	}
 
 	if (!var) {
@@ -838,7 +841,7 @@ void Cvar_Set_Bind_Str_f (void)
 			Com_Printf ("\"%s\" is a command\n", var_name);
 			return;
 		}
-		var = Cvar_Create(var_name, "", CVAR_USER_CREATED);
+		var = Cvar_Create(var_name, "", 0);
 	}
 
 	if (!var) {
@@ -953,7 +956,7 @@ void Cvar_Set_Calc_f(void)
 	var = Cvar_FindVar (var_name);
 
 	if (!var)
-		var = Cvar_Create (var_name, Cmd_Argv(2), CVAR_USER_CREATED);
+		var = Cvar_Create (var_name, Cmd_Argv(2), 0);
 
 	a2 = Cmd_Argv(2);
 	a3 = Cmd_Argv(3);
@@ -1113,6 +1116,29 @@ void Cvar_Inc_f (void)
 	delta = (c == 3) ? atof (Cmd_Argv(2)) : 1;
 
 	Cvar_SetValue (var, var->value + delta);
+}
+
+// if an unknown command with parameters was encountered when loading
+// config.cfg, assume it's a cvar set and spawn a temp var
+qbool Cvar_CreateTempVar (void)
+{
+	char *name = Cmd_Argv(0);
+	// FIXME, make sure it's a valid cvar name, return false if not
+//	Cvar_Get (name, Cmd_MakeArgs(1), CVAR_TEMP);
+	Cvar_Create (name, Cmd_MakeArgs(1), CVAR_TEMP);
+	return true;
+}
+
+// if none of the subsystems claimed the cvar from config.cfg, remove it
+void Cvar_CleanUpTempVars (void)
+{
+	cvar_t *var, *next;
+
+	for (var = cvar_vars; var; var = next) {
+		next = var->next;
+		if (var->flags & CVAR_TEMP)
+			Cvar_Delete (var->name);
+	}
 }
 
 void Cvar_Init (void)

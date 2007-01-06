@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.28 2006-12-15 18:46:18 disconn3ct Exp $
+	$Id: host.c,v 1.29 2007-01-06 21:26:06 tonik Exp $
  
 */
 
@@ -449,8 +449,16 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Cmd_Init ();
 	Cvar_Init ();
 	COM_Init ();
+	Key_Init ();
 
 	FS_InitFilesystem ();
+
+	if (!dedicated) {
+		Cbuf_AddText ("exec default.cfg\n");
+		//ExecDefaultConfig ();
+		Cbuf_AddText ("exec config.cfg\n");
+		Cbuf_Execute ();
+	}
 
 	Cbuf_AddEarlyCommands ();
 	Cbuf_Execute ();
@@ -466,6 +474,8 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	SV_Init ();
 	CL_Init ();
+
+	Cvar_CleanUpTempVars ();
 
 	SYSINFO_Init();
 
@@ -506,11 +516,11 @@ void Host_Init (int argc, char **argv, int default_memsize)
 		if (!com_serveractive)
 			Host_Error ("Couldn't spawn a server");
 	} else {
-		Cbuf_AddText ("exec default.cfg\n");
+/*		Cbuf_AddText ("exec default.cfg\n");
 		if (FS_FOpenFile("config.cfg", &f) != -1) {
 			Cbuf_AddText ("exec config.cfg\n");
 			fclose(f);
-		}
+		} */
 		if (FS_FOpenFile("autoexec.cfg", &f) != -1) {
 			Cbuf_AddText ("exec autoexec.cfg\n");
 			fclose(f);

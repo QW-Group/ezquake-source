@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_RULESET_MAX	(1<<7)	// limited by ruleset
 #define CVAR_RULESET_MIN	(1<<8)	// limited by ruleset
 #define CVAR_NO_RESET		(1<<9)	// do not perform reset to default in /cfg_load command, but /cvar_reset will still work
+#define CVAR_TEMP			(1<<10)	// created during config.cfg execution, before subsystems are initialized
 
 typedef struct cvar_s {
 	char	*name;
@@ -117,6 +118,9 @@ void Cvar_ResetVar (cvar_t *var);
 
 void Cvar_SetCurrentGroup(char *name);
 void Cvar_ResetCurrentGroup(void);
+
+qbool Cvar_CreateTempVar (void);	// when parsing config.cfg
+void Cvar_CleanUpTempVars (void);	// clean up afterwards
 
 #ifndef SERVERONLY
 

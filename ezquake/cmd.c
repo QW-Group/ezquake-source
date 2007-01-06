@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.48 2007-01-06 11:59:17 johnnycz Exp $
+    $Id: cmd.c,v 1.49 2007-01-06 21:26:06 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -972,11 +972,11 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 	if (host_initialized)	// because hunk allocation would get stomped
 		assert (!"Cmd_AddCommand after host_initialized");
 
-	// fail if the command is a variable name
+/*	// fail if the command is a variable name
 	if (Cvar_FindVar(cmd_name)) {
 		Com_Printf ("Cmd_AddCommand: %s already defined as a var\n", cmd_name);
 		return;
-	}
+	} */
 
 	key = Com_HashKey (cmd_name) % CMD_HASHPOOL_SIZE;
 
@@ -1567,6 +1567,11 @@ checkaliases:
 	if (Cmd_LegacyCommand())
 		goto done;
 #endif
+
+	if (!host_initialized && Cmd_Argc() > 1) {
+		if (Cvar_CreateTempVar())
+			return;
+	}
 
 #ifndef SERVERONLY
 	if (cbuf_current != &cbuf_svc)
