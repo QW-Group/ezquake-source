@@ -35,7 +35,7 @@ char *encode_say (wchar *in)
 	strlcpy (buf, wcs2str(in), sizeof(buf));
 	return buf;
 encode:
-	strcpy (buf, "=`koi8q:");
+	strcpy (buf, "=`k8:");
 	out = buf + strlen(buf);
 	while (*in && (out - buf < sizeof(buf)/sizeof(buf[0])))
 	{
@@ -97,17 +97,22 @@ wchar *decode_string (const char *s)
 	static wchar buf[2048];	// should be enough for everyone!!!
 
 	// this code sucks
-	if (strstr(s, "=`koi8q:") && strstr(s, "`="))
+	if ((strstr(s, "=`koi8q:") || strstr(s, "=`k8:")) && strstr(s, "`="))
 	{
 		int i;
-		char *p;
+		char *p *p1;
 		wchar *out = buf;
 
-Com_DPrintf ("%s\n", s);
+//Com_DPrintf ("%s\n", s);
 		p = strstr(s, "=`koi8q:");
+		p1 = p + strlen("=`koi8q:");
+		if (!p) {
+			p = strstr(s, "=`k8:");
+			p1 = p + strlen("=`k8:");
+		}
 		for (i = 0; i < p - s; i++)
 			*out++ = char2wc(s[i]);
-		p += strlen("=`koi8q:");
+		p = p1;
 		while (*p && !(*p == '`' && *(p+1) == '='))
 		{
 			*out++ = koi2wc(*p);
