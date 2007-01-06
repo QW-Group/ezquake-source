@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.57 2007-01-05 23:05:01 tonik Exp $
+    $Id: teamplay.c,v 1.58 2007-01-06 19:46:37 tonik Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -1168,7 +1168,7 @@ wchar *TP_ParseWhiteText(wchar *s, qbool team, int offset)
 
 	for (p = s; *p; p++) {
 		if  (parsewhite && *p == '{' && p-s >= offset) {
-			if ((p1 = qwcsrchr (p + 1, '}'))) {
+			if ((p1 = qwcschr (p + 1, '}'))) {
 				memcpy (out, p + 1, (p1 - p - 1)*sizeof(wchar));
 				out += p1 - p - 1;
 				p = p1;
