@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.43 2007-01-05 23:05:00 tonik Exp $
+	$Id: gl_draw.c,v 1.44 2007-01-06 00:03:41 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -1117,7 +1117,7 @@ void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int cl
 }
 void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red) {
 	byte white4[4] = {255, 255, 255, 255}, rgba[4];
-	int num, i, last, j;
+	int num, i, last, j, k;
 	qbool atest = false;
 	qbool blend = false;
 	int slot, oldslot;
@@ -1159,12 +1159,12 @@ void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int 
 		slot = 0;
 		if ((num & 0xFF00) != 0)
 		{
-			for (i = 1; i < MAX_CHARSETS; i++)
-				if (char_range[i] == (num & 0xFF00)) {
-					slot = i;
+			for (k = 1; k < MAX_CHARSETS; k++)
+				if (char_range[k] == (num & 0xFF00)) {
+					slot = k;
 					break;
 				}
-			if (i == MAX_CHARSETS)
+			if (k == MAX_CHARSETS)
 				num = '?';
 		}
 		if (slot != oldslot) {
