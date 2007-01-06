@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.39 2007-01-05 23:05:00 tonik Exp $
+    $Id: keys.c,v 1.40 2007-01-06 00:08:30 tonik Exp $
 
 */
 
@@ -1141,10 +1141,10 @@ nextline:
 	}
 	if (((key == 'V' || key == 'v') && keydown[K_CTRL])
 		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT])) {
-		char *clipText;
+		wchar *clipText;
 	
-		if ((clipText = str2wcs(Sys_GetClipboardData()))) {
-			len = strlen(clipText);
+		if ((clipText = Sys_GetClipboardTextW())) {
+			len = qwcslen(clipText);
 			if (len + qwcslen(key_lines[edit_line]) > MAXCMDLINE - 1)
 				len = MAXCMDLINE - 1 - qwcslen(key_lines[edit_line]);
 			if (len > 0) {	// insert the string
@@ -1298,10 +1298,10 @@ void Key_Message (int key, wchar unichar) {
 
 	if (((key == 'V' || key == 'v') && keydown[K_CTRL])
 		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT])) {
-		char *clipText;
+		wchar *clipText;
 	
-		if ((clipText = str2wcs(Sys_GetClipboardData()))) {
-			len = strlen(clipText);
+		if ((clipText = Sys_GetClipboardTextW())) {
+			len = qwcslen(clipText);
 			if (len + qwcslen(chat_buffer) > MAXCMDLINE - 1)
 				len = MAXCMDLINE - 1 - qwcslen(chat_buffer);
 			if (len > 0) {  // insert the string
