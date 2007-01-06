@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.13 2007-01-05 23:05:01 tonik Exp $
+    $Id: q_shared.h,v 1.14 2007-01-06 00:08:30 tonik Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -32,6 +32,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <ctype.h>
 #include <assert.h>
 
+#define wchar unsigned short	// 16-bit Unicode char
+
 #include "mathlib.h"
 #include "sys.h"
 
@@ -42,8 +44,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define QUAKE_GAME // as opposed to utilities
 
 typedef unsigned char byte;
-
-#define wchar unsigned short	// 16-bit Unicode char
 
 #undef true
 #undef false

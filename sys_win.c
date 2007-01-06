@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.27 2006-12-27 22:28:23 cokeman1982 Exp $
+	$Id: sys_win.c,v 1.28 2007-01-06 00:08:30 tonik Exp $
 
 */
 // sys_win.c
@@ -344,7 +344,7 @@ char *Sys_ConsoleInput (void) {
 						if ((ch == ('V' & 31)) /* ctrl-v */ ||
 							((rec.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED) && (rec.Event.KeyEvent.wVirtualKeyCode == VK_INSERT))) {
 
-								if ((textCopied = Sys_GetClipboardData())) {
+								if ((textCopied = wcs2str(Sys_GetClipboardTextW()))) {
 									i = strlen(textCopied);
 									if (i + len >= sizeof(text))
 										i = sizeof(text) - len - 1;
@@ -459,22 +459,37 @@ void Sys_Init_ (void) {
 
 #define SYS_CLIPBOARD_SIZE		256
 
-char *Sys_GetClipboardData(void) {
+wchar *Sys_GetClipboardTextW(void) {
 	HANDLE th;
-	char *clipText, *s, *t;
-	static char clipboard[SYS_CLIPBOARD_SIZE];
+	wchar *clipText, *s, *t;
+	static wchar clipboard[SYS_CLIPBOARD_SIZE];
 
 	if (!OpenClipboard(NULL))
 		return NULL;
 
-	if (!(th = GetClipboardData(CF_TEXT))) {
-		CloseClipboard();
-		return NULL;
-	}
+	if (WinNT) {
+		if (!(th = GetClipboardData(CF_UNICODETEXT))) {
+			CloseClipboard();
+			return NULL;
+		}
 
-	if (!(clipText = GlobalLock(th))) {
-		CloseClipboard();
-		return NULL;
+		if (!(clipText = GlobalLock(th))) {
+			CloseClipboard();
+			return NULL;
+		}
+	} else {
+		char *txt;
+
+		if (!(th = GetClipboardData(CF_TEXT))) {
+			CloseClipboard();
+			return NULL;
+		}
+
+		if (!(txt = GlobalLock(th))) {
+			CloseClipboard();
+			return NULL;
+		}
+		clipText = str2wcs(txt);
 	}
 
 	s = clipText;

@@ -97,5 +97,5 @@ void Sys_SetFPCW (void);
 
 void Sys_Init (void);
 
-char *Sys_GetClipboardData(void);
+wchar *Sys_GetClipboardTextW(void);
 void Sys_CopyToClipboard(char *);
