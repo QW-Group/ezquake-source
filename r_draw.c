@@ -134,7 +134,7 @@ void Draw_Init (void) {
 
 	Cvar_ResetCurrentGroup();
 
-	draw_chars[0] = W_GetLumpName ("conchars", true);
+	draw_chars[0] = W_GetLumpName ("conchars");
 	draw_chars[1] = LoadAlternateCharset ("conchars-cyr");
 	if (draw_chars[1])
 		char_range[1] = 0x0400;
@@ -159,8 +159,6 @@ void Draw_Character (int x, int y, int num) {
 void Draw_CharacterW (int x, int y, wchar num) {
 	byte *dest, *source;
 	int drawline, row, col, slot;
-
-	num &= 255;
 
 	if (y <= -8)
 		return;			// totally off screen
@@ -287,6 +285,10 @@ byte* Int_2_RGBA(int i, byte rgba[4]) {
 
 void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red) {
 	Draw_ColoredString(x, y, text, red);
+}
+
+void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red) {
+	Draw_ColoredString(x, y, wcs2str(text), red);
 }
 
 void Draw_Pixel(int x, int y, byte color) {
@@ -1166,6 +1168,8 @@ void Draw_SFill (int x, int y, int w, int h, int c, float scale)
 //Draws the little blue disc in the corner of the screen.
 //Call before beginning any disc IO.
 void Draw_BeginDisc (void) {
+	if (!draw_disc)
+		return;		// not initialized yet
 	D_BeginDirectRect (vid.width - 24, 0, draw_disc->data, 24, 24);
 }
 
