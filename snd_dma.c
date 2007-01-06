@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.34 2006-12-15 22:32:09 disconn3ct Exp $
+    $Id: snd_dma.c,v 1.35 2007-01-06 21:21:44 tonik Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -212,7 +212,8 @@ void S_Init (void)
 		return;
 	}
 
-	Cmd_AddCommand("s_restart", S_Restart_f);
+	Cmd_AddCommand("snd_restart", S_Restart_f);
+	Cmd_AddLegacyCommand("s_restart", "snd_restart");	// exclusively for Disconnect
 	Cmd_AddCommand("play", S_Play_f);
 	Cmd_AddCommand("playvol", S_PlayVol_f);
 	Cmd_AddCommand("stopsound", S_StopAllSounds_f);
