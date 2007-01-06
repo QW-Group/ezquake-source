@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.47 2007-01-05 23:05:00 tonik Exp $
+    $Id: cmd.c,v 1.48 2007-01-06 11:59:17 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -414,8 +414,8 @@ void Cmd_Echo_f (void)
 								ALIASES
 =============================================================================
 */
-
-cmd_alias_t *cmd_alias_hash[32];
+#define ALIAS_HASHPOOL_SIZE 200
+cmd_alias_t *cmd_alias_hash[ALIAS_HASHPOOL_SIZE];
 cmd_alias_t	*cmd_alias;
 
 cmd_alias_t *Cmd_FindAlias (char *name)
@@ -423,7 +423,7 @@ cmd_alias_t *Cmd_FindAlias (char *name)
 	int key;
 	cmd_alias_t *alias;
 
-	key = Com_HashKey (name);
+	key = Com_HashKey (name) % ALIAS_HASHPOOL_SIZE;
 	for (alias = cmd_alias_hash[key]; alias; alias = alias->hash_next) {
 		if (!strcasecmp(name, alias->name))
 			return alias;
@@ -436,7 +436,7 @@ char *Cmd_AliasString (char *name)
 	int key;
 	cmd_alias_t *alias;
 
-	key = Com_HashKey (name);
+	key = Com_HashKey (name) % ALIAS_HASHPOOL_SIZE;
 	for (alias = cmd_alias_hash[key]; alias; alias = alias->hash_next) {
 		if (!strcasecmp(name, alias->name))
 #ifdef EMBED_TCL
@@ -619,7 +619,7 @@ void Cmd_Alias_f (void)
 		return;
 	}
 
-	key = Com_HashKey(s);
+	key = Com_HashKey(s) % ALIAS_HASHPOOL_SIZE;
 
 	// if the alias already exists, reuse it
 	for (a = cmd_alias_hash[key]; a; a = a->hash_next) {
@@ -668,7 +668,7 @@ qbool Cmd_DeleteAlias (char *name)
 	cmd_alias_t *a, *prev;
 	int key;
 
-	key = Com_HashKey (name);
+	key = Com_HashKey (name) % ALIAS_HASHPOOL_SIZE;
 
 	prev = NULL;
 	for (a = cmd_alias_hash[key]; a; a = a->hash_next) {
@@ -881,7 +881,8 @@ static	char	*cmd_argv[MAX_ARGS];
 static	char	*cmd_null_string = "";
 static	char	*cmd_args = NULL;
 
-cmd_function_t	*cmd_hash_array[32];
+#define CMD_HASHPOOL_SIZE 400
+cmd_function_t	*cmd_hash_array[CMD_HASHPOOL_SIZE];
 /*static*/ cmd_function_t	*cmd_functions;		// possible commands to execute
 
 int Cmd_Argc (void)
@@ -977,7 +978,7 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 		return;
 	}
 
-	key = Com_HashKey (cmd_name);
+	key = Com_HashKey (cmd_name) % CMD_HASHPOOL_SIZE;
 
 	// fail if the command already exists
 	for (cmd = cmd_hash_array[key]; cmd; cmd=cmd->hash_next) {
@@ -1001,7 +1002,7 @@ qbool Cmd_Exists (char *cmd_name)
 	int	key;
 	cmd_function_t	*cmd;
 
-	key = Com_HashKey (cmd_name);
+	key = Com_HashKey (cmd_name) % CMD_HASHPOOL_SIZE;
 	for (cmd=cmd_hash_array[key]; cmd; cmd = cmd->hash_next) {
 		if (!strcasecmp (cmd_name, cmd->name))
 			return true;
@@ -1014,7 +1015,7 @@ cmd_function_t *Cmd_FindCommand (const char *cmd_name)
 	int	key;
 	cmd_function_t *cmd;
 
-	key = Com_HashKey (cmd_name);
+	key = Com_HashKey (cmd_name) % CMD_HASHPOOL_SIZE;
 	for (cmd = cmd_hash_array[key]; cmd; cmd = cmd->hash_next) {
 		if (!strcasecmp (cmd_name, cmd->name))
 			return cmd;

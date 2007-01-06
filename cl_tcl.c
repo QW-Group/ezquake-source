@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.16 2006-12-15 01:27:11 johnnycz Exp $
+ *  $Id: cl_tcl.c,v 1.17 2007-01-06 11:59:17 johnnycz Exp $
  */
 
 #ifdef EMBED_TCL
@@ -30,7 +30,8 @@
 
 extern cmd_function_t *impulse_cmd;
 extern cmd_alias_t *cmd_alias;
-extern cmd_alias_t *cmd_alias_hash[32];
+#define ALIAS_HASHPOOL_SIZE 200
+extern cmd_alias_t *cmd_alias_hash[ALIAS_HASHPOOL_SIZE];
 
 cvar_t tcl_version = {"tcl_version", "", CVAR_ROM};
 
@@ -106,7 +107,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 		return (TCL_ERROR);
 	}
 
-	h = Com_HashKey (name);
+	h = Com_HashKey (name) % ALIAS_HASHPOOL_SIZE;
 	s = name;
 	// if the alias already exists, reuse it
 	for (a = cmd_alias_hash[h] ; a ; a=a->hash_next) {
