@@ -100,7 +100,7 @@ wchar *decode_string (const char *s)
 	if ((strstr(s, "=`koi8q:") || strstr(s, "=`k8:")) && strstr(s, "`="))
 	{
 		int i;
-		char *p *p1;
+		char *p, *p1;
 		wchar *out = buf;
 
 //Com_DPrintf ("%s\n", s);
