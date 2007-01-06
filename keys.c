@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.40 2007-01-06 00:08:30 tonik Exp $
+    $Id: keys.c,v 1.41 2007-01-06 21:26:06 tonik Exp $
 
 */
 
@@ -1688,6 +1688,9 @@ void History_Shutdown (void)
 
 void Key_Init (void) {
 	int i;
+
+	if (dedicated)
+		return;
 
 	// init ascii characters in console mode
 	for (i = 32; i < 128; i++)
