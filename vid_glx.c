@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_glx.c,v 1.38 2007-01-07 19:51:56 disconn3ct Exp $
+	$Id: vid_glx.c,v 1.39 2007-01-07 21:59:15 disconn3ct Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -54,11 +54,7 @@ extern void IN_Keycode_Print_f( XKeyEvent *ev, qbool ext, qbool down, int key );
 #include <pthread.h>
 #endif
 
-// kazik -->
-int ctrlDown = 0;
-int shiftDown = 0;
-int altDown = 0;
-// kazik <--
+extern int ctrlDown, shiftDown, altDown;
 
 static Display *vid_dpy = NULL;
 static Window vid_window;
@@ -952,20 +948,6 @@ void IN_StartupMouse (void)
 
 void IN_Commands (void) {}
 
-// kazik -->
-int isAltDown(void)
-{
-    return altDown;
-}
-int isCtrlDown(void)
-{
-    return ctrlDown;
-}
-int isShiftDown(void)
-{
-    return shiftDown;
-}
-// kazik <--
 
 #ifdef WITH_EVDEV
 /************************************* EVDEV *************************************/

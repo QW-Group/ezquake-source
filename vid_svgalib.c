@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_svgalib.c,v 1.22 2007-01-07 21:48:47 disconn3ct Exp $
+	$Id: vid_svgalib.c,v 1.23 2007-01-07 21:59:15 disconn3ct Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -37,11 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define stringify(m) { #m, m }
 
-// kazik -->
-static int ctrlDown = 0;
-static int shiftDown = 0;
-static int altDown = 0;
-// kazik <--
+extern int ctrlDown, shiftDown, altDown;
 
 static byte *vid_surfcache;
 static int VID_highhunkmark;
@@ -630,12 +626,6 @@ void IN_StartupMouse (void)
 }
 
 void IN_Commands (void) {}
-
-// kazik -->
-int isAltDown(void) {return altDown;}
-int isCtrlDown(void) {return ctrlDown;}
-int isShiftDown(void) {return shiftDown;}
-// <-- kazik
 
 void VID_LockBuffer (void) {}
 void VID_UnlockBuffer (void) {}
