@@ -1,6 +1,4 @@
 /*
-Copyright (C) 1996-1997 Id Software, Inc.
-
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
@@ -16,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_x11.c,v 1.17 2007-01-05 16:24:18 disconn3ct Exp $
+	$Id: vid_x11.c,v 1.18 2007-01-07 19:17:23 disconn3ct Exp $
 */
 // vid_x11.c -- general x video driver
 
@@ -56,21 +54,17 @@ int altDown = 0;
 // kazik <--
 
 cvar_t		vid_ref = {"vid_ref", "soft", CVAR_ROM};
-cvar_t		_windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE};
-cvar_t		m_filter = {"m_filter", "1", CVAR_ARCHIVE};
-cvar_t		cl_keypad = {"cl_keypad", "1"};
 float		old_windowed_mouse;
 
 // not used
 int			VGA_width, VGA_height, VGA_rowbytes, VGA_bufferrowbytes, VGA_planar;
 byte		*VGA_pagebase;
 
-qbool	mouse_avail;
+qbool		mouseinitialized = false;
 int			mouse_buttons = 3;
 int			mouse_oldbuttonstate;
 int			mouse_buttonstate;
-float		mouse_x, mouse_y;
-float		old_mouse_x, old_mouse_y;
+int			mx, my;
 int			p_mouse_x;
 int			p_mouse_y;
 int			ignorenext;
@@ -418,7 +412,7 @@ void VID_Init (unsigned char *palette) {
 	Cvar_Register (&vid_ref);
 	Cvar_ResetCurrentGroup();
 
-	ignorenext=0;
+	ignorenext = 0;
 	vid.width = 320;
 	vid.height = 200;
 	vid.numpages = 2;
@@ -824,25 +818,24 @@ void GetEvent(void) {
 
 	case MotionNotify:
 		if (_windowed_mouse.value) {
-			mouse_x = (float) ((int)event.xmotion.x - (int) (vid.width / 2));
-			mouse_y = (float) ((int)event.xmotion.y - (int) (vid.height / 2));
+			mx = (event.xmotion.x - (vid.width / 2));
+			my = (event.xmotion.y - (vid.height / 2));
 
 			/* move the mouse to the window center again */
 			XSelectInput(x_disp,x_win,StructureNotifyMask|KeyPressMask
 				|KeyReleaseMask|ExposureMask
 				|ButtonPressMask
 				|ButtonReleaseMask);
-			XWarpPointer(x_disp,None,x_win,0,0,0,0,
-				(vid.width/2),(vid.height/2));
+			XWarpPointer(x_disp,None,x_win,0,0,0,0, (vid.width/2),(vid.height/2));
 			XSelectInput(x_disp,x_win,StructureNotifyMask|KeyPressMask
 				|KeyReleaseMask|ExposureMask
 				|PointerMotionMask|ButtonPressMask
 				|ButtonReleaseMask);
 		} else {
-			mouse_x = (float) (event.xmotion.x-p_mouse_x);
-			mouse_y = (float) (event.xmotion.y-p_mouse_y);
-			p_mouse_x=event.xmotion.x;
-			p_mouse_y=event.xmotion.y;
+			mx = event.xmotion.x - p_mouse_x;
+			my = event.xmotion.y - p_mouse_y;
+			p_mouse_x = event.xmotion.x;
+			p_mouse_y = event.xmotion.y;
 		}
 		break;
 
@@ -885,7 +878,7 @@ void GetEvent(void) {
 			XUngrabPointer(x_disp,CurrentTime);
 		} else {
 			/* grab the pointer */
-			XGrabPointer(x_disp,x_win,True,0,GrabModeAsync, GrabModeAsync, x_win, None, CurrentTime);
+			XGrabPointer(x_disp, x_win, True, 0, GrabModeAsync, GrabModeAsync, x_win, None, CurrentTime);
 		}
 	}
 }
@@ -949,36 +942,11 @@ void VID_Update (vrect_t *rects) {
 
 }
 
-static int dither;
-
-void VID_DitherOn(void) {
-    if (dither == 0) {
-		vid.recalc_refdef = 1;
-        dither = 1;
-    }
-}
-
-void VID_DitherOff(void) {
-    if (dither) {
-		vid.recalc_refdef = 1;
-        dither = 0;
-    }
-}
-
-int Sys_OpenWindow(void) {
-	return 0;
-}
-
-void Sys_EraseWindow(int window) {}
-
-void Sys_DrawCircle(int window, int x, int y, int r) {}
-
-void Sys_DisplayWindow(int window) {}
-
 void Sys_SendKeyEvents(void) {
 	// get events from x server
 	if (x_disp)	{
-		while (XPending(x_disp)) GetEvent();
+		while (XPending(x_disp))
+			GetEvent();
 		while (keyq_head != keyq_tail) {
 			Key_Event(keyq[keyq_tail].key, keyq[keyq_tail].down);
 			keyq_tail = (keyq_tail + 1) & 63;
@@ -994,31 +962,16 @@ void D_EndDirectRect (int x, int y, int width, int height) {
 // direct drawing of the "accessing disk" icon isn't supported under Linux
 }
 
-void IN_Init (void) {
-	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
-	Cvar_Register(&cl_keypad);
-	Cvar_ResetCurrentGroup();
-	if ( COM_CheckParm ("-nomouse") )
-		return;
-	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
-	Cvar_Register (&m_filter);
-	Cvar_Register (&_windowed_mouse);
-	Cvar_ResetCurrentGroup();
-#ifdef WITH_KEYMAP
-	IN_StartupKeymap ();
-#endif // WITH_KEYMAP
-	mouse_x = mouse_y = 0.0;
-	mouse_avail = 1;
-}
-
-void IN_Shutdown (void) {
-	mouse_avail = 0;
+void IN_StartupMouse (void)
+{
+	mouseinitialized = true;
 }
 
 void IN_Commands (void) {
 	int i;
 
-	if (!mouse_avail) return;
+	if (!mouseinitialized)
+		return;
 
 	for (i = 0; i < mouse_buttons; i++) {
 		if ( (mouse_buttonstate & (1 << i)) && !(mouse_oldbuttonstate & (1<<i)) )
@@ -1027,55 +980,8 @@ void IN_Commands (void) {
 		if ( !(mouse_buttonstate & (1 << i)) && (mouse_oldbuttonstate & (1<<i)) )
 			Key_Event (K_MOUSE1 + i, false);
 	}
+
 	mouse_oldbuttonstate = mouse_buttonstate;
-}
-
-void IN_Move (usercmd_t *cmd) {
-    float tx, ty, filterfrac, mousespeed;
-
-	if (!mouse_avail)
-		return;
-
-    tx = mouse_x;
-    ty = mouse_y;
-
-	if (m_filter.value) {
-        filterfrac = bound(0, m_filter.value, 1) / 2.0;
-        mouse_x = (tx * (1 - filterfrac) + old_mouse_x * filterfrac);
-        mouse_y = (ty * (1 - filterfrac) + old_mouse_y * filterfrac);
-	}
-
-	old_mouse_x = tx;
-	old_mouse_y = ty;
-
-	if (m_accel.value) {
-		mousespeed = (sqrt (tx * tx + ty * ty)) / (1000.0f * (float)cls.trueframetime);
-		mouse_x *= (mousespeed * m_accel.value + sensitivity.value);
-		mouse_y *= (mousespeed * m_accel.value + sensitivity.value);
-	} else {
-		mouse_x *= sensitivity.value;
-		mouse_y *= sensitivity.value;
-	}
-
-	if ((in_strafe.state & 1) || (lookstrafe.value && mlook_active))
-		cmd->sidemove += m_side.value * mouse_x;
-	else
-		cl.viewangles[YAW] -= m_yaw.value * mouse_x;
-
-	if (mlook_active)
-		V_StopPitchDrift ();
-
-	if (mlook_active && !(in_strafe.state & 1))
-	{
-		cl.viewangles[PITCH] += m_pitch.value * mouse_y;
-		if (cl.viewangles[PITCH] > cl.maxpitch)
-			cl.viewangles[PITCH] = cl.maxpitch;
-		if (cl.viewangles[PITCH] < cl.minpitch)
-			cl.viewangles[PITCH] = cl.minpitch;
-	} else {
-		cmd->forwardmove -= m_forward.value * mouse_y;
-	}
-	mouse_x = mouse_y = 0.0;
 }
 
 // kazik -->

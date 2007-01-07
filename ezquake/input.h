@@ -1,6 +1,4 @@
 /*
-Copyright (C) 1996-1997 Id Software, Inc.
-
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
@@ -16,6 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: input.h,v 1.6 2007-01-07 19:17:23 disconn3ct Exp $
 */
 // input.h -- external (non-keyboard) input devices
 
@@ -60,6 +59,7 @@ extern cvar_t	cl_movespeedkey;
 extern cvar_t	cl_anglespeedkey;
 extern cvar_t	cl_yawspeed;
 extern cvar_t	cl_pitchspeed;
+extern cvar_t	cl_keypad;
 
 extern cvar_t	freelook;
 extern cvar_t	sensitivity;

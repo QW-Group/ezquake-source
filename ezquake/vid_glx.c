@@ -1,6 +1,4 @@
 /*
-Copyright (C) 1996-1997 Id Software, Inc.
-
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
@@ -8,7 +6,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,6 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: vid_glx.c,v 1.37 2007-01-07 19:17:23 disconn3ct Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -65,7 +64,7 @@ static Display *vid_dpy = NULL;
 static Window vid_window;
 static GLXContext ctx = NULL;
 
-static float mouse_x, mouse_y, old_mouse_x, old_mouse_y;
+int mx, my;
 static qbool input_grabbed = false;
 
 #define WARP_WIDTH		320
@@ -115,14 +114,6 @@ static int vid_minimized = 0;
 cvar_t	vid_ref = {"vid_ref", "gl", CVAR_ROM};
 cvar_t	vid_mode = {"vid_mode", "0"};
 
-cvar_t	_windowed_mouse = {"_windowed_mouse",
-#ifdef NDEBUG
-	"1"
-#else
-	"0"
-#endif
-, CVAR_ARCHIVE};
-
 cvar_t  auto_grabmouse = {"auto_grabmouse",
 #ifdef NDEBUG
 	 "1"
@@ -131,8 +122,6 @@ cvar_t  auto_grabmouse = {"auto_grabmouse",
 #endif
 };
 
-cvar_t	m_filter = {"m_filter", "0"};
-cvar_t	cl_keypad = {"cl_keypad", "1"};
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
 
 
@@ -323,13 +312,7 @@ static void install_grabs(void) {
     // don't show mouse cursor icon
     XDefineCursor(vid_dpy, vid_window, CreateNullCursor(vid_dpy, vid_window));
 
-	XGrabPointer(vid_dpy, vid_window,
-		True,
-		0,
-		GrabModeAsync, GrabModeAsync,
-		vid_window,
-		None,
-		CurrentTime);
+	XGrabPointer(vid_dpy, vid_window, True, 0, GrabModeAsync, GrabModeAsync, vid_window, None, CurrentTime);
 
 #ifdef WITH_DGA
 	if (!COM_CheckParm("-nomdga"))
@@ -413,13 +396,13 @@ static void GetEvent(void) {
 	#endif
 	#ifdef WITH_DGA
 			if (dgamouse) {
-				mouse_x += event.xmotion.x_root;
-				mouse_y += event.xmotion.y_root;
+				mx += event.xmotion.x_root;
+				my += event.xmotion.y_root;
 			} else
 	#endif
 			{
-				mouse_x = ((int) event.xmotion.x - (int) (vid.width / 2));
-				mouse_y = ((int) event.xmotion.y - (int) (vid.height / 2));
+				mx = event.xmotion.x - (vid.width / 2);
+				my = event.xmotion.y - (vid.height / 2);
 				// move the mouse to the window center again
 				XSelectInput(vid_dpy, vid_window, X_MASK & ~PointerMotionMask);
 				XWarpPointer(vid_dpy, None, vid_window, 0, 0, 0, 0, (vid.width / 2), (vid.height / 2));
@@ -713,15 +696,7 @@ void VID_Init(unsigned char *palette) {
 	Cvar_Register(&vid_ref);
 	Cvar_Register(&vid_mode);
 	Cvar_Register(&vid_hwgammacontrol);
-	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
-	Cvar_Register(&_windowed_mouse);
-	Cvar_Register(&m_filter);
-	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
-	Cvar_Register(&cl_keypad);
 	Cvar_ResetCurrentGroup();
-#ifdef WITH_KEYMAP
-	IN_StartupKeymap();
-#endif // WITH_KEYMAP
 
 	Cmd_AddCommand("vid_minimize", VID_Minimize_f);
 	Cvar_Register(&auto_grabmouse);
@@ -973,59 +948,12 @@ void Sys_SendKeyEvents(void) {
 
 /************************************* INPUT *************************************/
 
-void IN_Init (void) {}
-void IN_Shutdown (void) {}
+void IN_StartupMouse (void)
+{
+//	mouseinitialized = true;
+}
+
 void IN_Commands (void) {}
-
-void IN_MouseMove (usercmd_t *cmd) {
-    float tx, ty, filterfrac, mousespeed;
-
-    tx = mouse_x;
-    ty = mouse_y;
-
-	if (m_filter.value) {
-        filterfrac = bound(0, m_filter.value, 1) / 2.0;
-        mouse_x = (tx * (1 - filterfrac) + old_mouse_x * filterfrac);
-        mouse_y = (ty * (1 - filterfrac) + old_mouse_y * filterfrac);
-	}
-
-    old_mouse_x = tx;
-    old_mouse_y = ty;
-
-	if (m_accel.value) {
-		mousespeed = (sqrt (tx * tx + ty * ty)) / (1000.0f * (float)cls.trueframetime);
-		mouse_x *= (mousespeed * m_accel.value + sensitivity.value);
-		mouse_y *= (mousespeed * m_accel.value + sensitivity.value);
-	} else {
-		mouse_x *= sensitivity.value;
-		mouse_y *= sensitivity.value;
-	}
-
-	// add mouse X/Y movement to cmd
-	if ((in_strafe.state & 1) || (lookstrafe.value && mlook_active))
-		cmd->sidemove += m_side.value * mouse_x;
-	else
-		cl.viewangles[YAW] -= m_yaw.value * mouse_x;
-	
-	if (mlook_active)
-		V_StopPitchDrift ();
-		
-	if (mlook_active && !(in_strafe.state & 1))
-	{
-		cl.viewangles[PITCH] += m_pitch.value * mouse_y;
-		if (cl.viewangles[PITCH] > cl.maxpitch)
-			cl.viewangles[PITCH] = cl.maxpitch;
-		if (cl.viewangles[PITCH] < cl.minpitch)
-			cl.viewangles[PITCH] = cl.minpitch;
-	} else {
-		cmd->forwardmove -= m_forward.value * mouse_y;
-	}
-	mouse_x = mouse_y = 0.0;
-}
-
-void IN_Move (usercmd_t *cmd) {
-	IN_MouseMove(cmd);
-}
 
 // kazik -->
 int isAltDown(void)
@@ -1066,11 +994,11 @@ void EvDev_UpdateMouse(void *v) {
 		if (event.type == EV_REL) {
 			switch (event.code) {
 				case REL_X:
-					mouse_x += (signed int)event.value;
+					mx += (signed int) event.value;
 					break;
 
 				case REL_Y:
-					mouse_y += (signed int)event.value;
+					my += (signed int) event.value;
 					break;
 
 				case REL_WHEEL:
