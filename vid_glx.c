@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_glx.c,v 1.37 2007-01-07 19:17:23 disconn3ct Exp $
+	$Id: vid_glx.c,v 1.38 2007-01-07 19:51:56 disconn3ct Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -66,9 +66,6 @@ static GLXContext ctx = NULL;
 
 int mx, my;
 static qbool input_grabbed = false;
-
-#define WARP_WIDTH		320
-#define WARP_HEIGHT		200
 
 #define KEY_MASK (KeyPressMask | KeyReleaseMask)
 #define MOUSE_MASK (ButtonPressMask | ButtonReleaseMask | PointerMotionMask)
