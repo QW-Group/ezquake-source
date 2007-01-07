@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.49 2007-01-03 19:09:58 disconn3ct Exp $
+    $Id: common.c,v 1.50 2007-01-07 19:13:34 disconn3ct Exp $
 
 */
 
@@ -1809,7 +1809,7 @@ void FS_SetGamedir (char *dir) {
 	// flush all data, so it will be forced to reload
 	Cache_Flush ();
 
-	//sprintf (com_gamedir, "%s/%s", com_basedir, dir);
+	sprintf (com_gamedir, "%s/%s", com_basedir, dir);
 
 	if (strcmp(dir, "id1") && strcmp(dir, "qw") && strcmp(dir, "ezquake")) {
 		FS_AddGameDirectory ( va("%s/%s", com_basedir, dir) );
