@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.50 2007-01-07 19:13:34 disconn3ct Exp $
+    $Id: common.c,v 1.51 2007-01-07 20:50:01 qqshka Exp $
 
 */
 
@@ -1273,9 +1273,9 @@ char	com_gamedir[MAX_OSPATH];
 char	com_basedir[MAX_OSPATH];
 
 #ifndef SERVERONLY
-char	userdirfile[MAX_OSPATH];
-char	com_userdir[MAX_OSPATH];
-int	userdir_type;
+char	userdirfile[MAX_OSPATH] = {0};
+char	com_userdir[MAX_OSPATH] = {0};
+int		userdir_type = -1;
 #endif
 
 typedef struct searchpath_s
@@ -1630,15 +1630,20 @@ pack_t *FS_LoadPackFile (char *packfile) {
 COM_SetUserDirectory
 ================
 */
-void COM_SetUserDirectory (char *dir, char* type) {
+void COM_SetUserDirectory (char *dir, char *type) {
+	char tmp[sizeof(com_gamedirfile)];
+
 	if (strstr(dir, "..") || strstr(dir, "/")
 	        || strstr(dir, "\\") || strstr(dir, ":") ) {
 		Com_Printf ("Userdir should be a single filename, not a path\n");
 		return;
 	}
-	strcpy(userdirfile, dir);
+	strlcpy(userdirfile, dir, sizeof(userdirfile));
 	userdir_type = Q_atoi(type);
+
+	strlcpy(tmp, com_gamedirfile, sizeof(tmp)); // save
 	com_gamedirfile[0]='\0'; // force reread
+	FS_SetGamedir(tmp); // restore
 }
 #endif
 
@@ -1864,22 +1869,16 @@ void FS_InitFilesystem (void) {
 	// any set gamedirs will be freed up to here
 	com_base_searchpaths = com_searchpaths;
 
-	i = COM_CheckParm("-userdir");
-	if (i && i < com_argc - 2) {
+#ifndef SERVERONLY
+	if ((i = COM_CheckParm("-userdir")) && i < com_argc - 2)
 		COM_SetUserDirectory(com_argv[i+1], com_argv[i+2]);
-	}
+#endif
 
 	// the user might want to override default game directory
 	if (!(i = COM_CheckParm ("-game")))
 		i = COM_CheckParm ("+gamedir");
 	if (i && i < com_argc - 1)
 		FS_SetGamedir (com_argv[i + 1]);
-	else {
-#ifndef SERVERONLY
-		if( UserdirSet )
-#endif
-			FS_SetGamedir("qw");
-	}
 
 /*
 	if (home != NULL) {
