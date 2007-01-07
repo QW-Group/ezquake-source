@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_x11.c,v 1.19 2007-01-07 21:48:47 disconn3ct Exp $
+	$Id: vid_x11.c,v 1.20 2007-01-07 21:59:15 disconn3ct Exp $
 */
 // vid_x11.c -- general x video driver
 
@@ -45,11 +45,7 @@ typedef unsigned int	PIXEL24;
 extern void IN_Keycode_Print_f( XKeyEvent *ev, qbool ext, qbool down, int key );
 #endif // WITH_KEYMAP
 
-// kazik -->
-static int ctrlDown = 0;
-static int shiftDown = 0;
-static int altDown = 0;
-// kazik <--
+extern int ctrlDown, shiftDown, altDown;
 
 cvar_t vid_ref = {"vid_ref", "soft", CVAR_ROM};
 
@@ -69,7 +65,6 @@ static int mouse_buttonstate;
 static int p_mouse_x;
 static int p_mouse_y;
 static int ignorenext;
-static int bits_per_pixel;
 
 typedef struct {
 	int input;
@@ -976,12 +971,6 @@ void IN_Commands (void)
 
 	mouse_oldbuttonstate = mouse_buttonstate;
 }
-
-// kazik -->
-int isAltDown(void) {return altDown;}
-int isCtrlDown(void) {return ctrlDown;}
-int isShiftDown(void) {return shiftDown;}
-// kazik <--
 
 void VID_LockBuffer (void) {}
 void VID_UnlockBuffer (void) {}

@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_linux.c,v 1.1 2007-01-07 19:17:23 disconn3ct Exp $
+	$Id: in_linux.c,v 1.2 2007-01-07 21:59:15 disconn3ct Exp $
 */
 #include "quakedef.h"
 
@@ -134,3 +134,11 @@ void IN_Shutdown(void)
 	mouseinitialized = false;
 #endif
 }
+
+int ctrlDown = 0;
+int shiftDown = 0;
+int altDown = 0;
+
+int isAltDown(void) {return altDown;}
+int isCtrlDown(void) {return ctrlDown;}
+int isShiftDown(void) {return shiftDown;}
