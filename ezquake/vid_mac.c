@@ -26,9 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <AGL/agl.h>
 #include "mac.h"
 
-#define WARP_WIDTH		320
-#define WARP_HEIGHT		200
-
 #define DEFAULT_WIDTH	800
 #define DEFAULT_HEIGHT	600
 

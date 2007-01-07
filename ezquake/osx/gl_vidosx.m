@@ -2,9 +2,9 @@
 // "gl_vidosx.m" - MacOS X OpenGL Video driver
 //
 // Written by:	Axel 'awe' Wefers			[mailto:awe@fruitz-of-dojo.de].
-//				©2001-2006 Fruitz Of Dojo 	[http://www.fruitz-of-dojo.de].
+//				2001-2006 Fruitz Of Dojo 	[http://www.fruitz-of-dojo.de].
 //
-// Quakeª is copyrighted by id software		[http://www.idsoftware.com].
+// Quake is copyrighted by id software		[http://www.idsoftware.com].
 //
 // Version History:
 // v1.0.9: Moved functions for capturing and fading displays to "vid_shared_osx.m".
@@ -60,8 +60,6 @@
 
 #define VID_HWA_ONLY					// allow only systems with HWA OpenGL.
 
-#define VID_WARP_WIDTH			320
-#define VID_WARP_HEIGHT			200
 #define VID_CONSOLE_MIN_WIDTH	320
 #define VID_CONSOLE_MIN_HEIGHT	200
 #define VID_FIRST_MENU_LINE		40
@@ -715,8 +713,6 @@ void	VID_Init (unsigned char *thePalette)
     vid.colormap = host_colormap;
     // setup basic width/height:
 #if 0
-    vid.maxwarpwidth = VID_WARP_WIDTH;
-    vid.maxwarpheight = VID_WARP_HEIGHT;
     vid.fullbright = 256 - LittleLong (*((SInt *)vid.colormap + 2048));
 #endif
 

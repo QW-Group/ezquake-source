@@ -2,9 +2,9 @@
 // "vid_osx.m" - MacOS X Video driver
 //
 // Written by:	Axel 'awe' Wefers			[mailto:awe@fruitz-of-dojo.de].
-//				©2001-2006 Fruitz Of Dojo 	[http://www.fruitz-of-dojo.de].
+//				2001-2006 Fruitz Of Dojo 	[http://www.fruitz-of-dojo.de].
 //
-// Quakeª is copyrighted by id software		[http://www.idsoftware.com].
+// Quake is copyrighted by id software		[http://www.idsoftware.com].
 //
 // Version History:
 // v1.1.0: Improved performance in windowed mode.
@@ -982,9 +982,7 @@ void	VID_SetBlitter (vid_blitmode_t theBlitMode, BOOL theBufferUpdate)
     VID_GetBuffers ();
     
     // setup vid struct for Quake:
-//    vid.maxwarpwidth = WARP_WIDTH;
     vid.width = vid.conwidth = gVidGraphMode.OffWidth;
-//    vid.maxwarpheight = WARP_HEIGHT;
     vid.height = vid.conheight = gVidGraphMode.OffHeight;
     vid.aspect = ((float) gVidGraphMode.OffHeight / (float) gVidGraphMode.OffWidth) * (320.0f / 240.0f);
     vid.numpages = 1;
@@ -1283,9 +1281,7 @@ int	VID_SetMode (int theMode, unsigned char *thePalette)
     VID_GetBuffers ();
     
     // setup vid struct for Quake:
-//	vid.maxwarpwidth = WARP_WIDTH;
     vid.width = vid.conwidth = gVidGraphMode.OffWidth;
-//  vid.maxwarpheight = WARP_HEIGHT;
     vid.height = vid.conheight = gVidGraphMode.OffHeight;
     vid.aspect = ((float) gVidGraphMode.OffHeight / (float) gVidGraphMode.OffWidth) * (320.0f / 240.0f);
     vid.numpages = 1;
