@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.23 2006-12-26 17:17:21 tonik Exp $
+	$Id: sv_user.c,v 1.24 2007-01-07 20:35:24 tonik Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -1325,7 +1325,7 @@ void SV_ExecuteUserCommand (char *s, qbool fromQC) {
 		PF_tokenize_impl (s);
 		PR_ExecuteProgram (GE_ClientCommand);
 		if (G_FLOAT(OFS_RETURN) != 0)
-			return;		// the command was handled by the mod
+			goto out;	// the command was handled by the mod
 	}
 
 	if (!fromQC && SV_ParseClientCommand) {
@@ -1334,7 +1334,7 @@ void SV_ExecuteUserCommand (char *s, qbool fromQC) {
 		G_INT(OFS_PARM0) = PR_SetString(s);
 		pr_global_struct->self = EDICT_TO_PROG(sv_client->edict);
 		PR_ExecuteProgram ((func_t) SV_ParseClientCommand);
-		return;
+		goto out;
 	}
 
 	if (u->name)
