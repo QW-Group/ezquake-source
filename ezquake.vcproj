@@ -600,6 +600,9 @@
 				<File
 					RelativePath="keys.c">
 				</File>
+				<File
+					RelativePath=".\textencoding.c">
+				</File>
 			</Filter>
 			<Filter
 				Name="Server"
@@ -1534,6 +1537,9 @@
 				</File>
 				<File
 					RelativePath="teamplay.h">
+				</File>
+				<File
+					RelativePath=".\textencoding.h">
 				</File>
 				<File
 					RelativePath="version.h">
