@@ -1,6 +1,4 @@
 /*
-Copyright (C) 1996-1997 Id Software, Inc.
-
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
@@ -16,6 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: vid_svgalib.c,v 1.21 2007-01-07 19:17:23 disconn3ct Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -70,9 +69,7 @@ static byte vid_current_palette[768];
 int num_mice = sizeof (mice) / sizeof(mice[0]);
 
 int		svgalib_inited=0;
-int		UseMouse = 1;
-int		UseDisplay = 1;
-int		UseKeyboard = 1;
+qbool	mouseinitialized = false;
 
 int		mouserate = MOUSE_DEFAULTSAMPLERATE;
 
@@ -84,14 +81,8 @@ cvar_t		vid_waitforrefresh = {"vid_waitforrefresh","0",CVAR_ARCHIVE};
 unsigned char *framebuffer_ptr;
 
 
-int     mouse_buttons;
 float   mouse_x, mouse_y;
-float	old_mouse_x, old_mouse_y;
 int		mx, my;
-
-cvar_t _windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE};	//dummy for menu.c
-cvar_t	m_filter = {"m_filter","0"};
-cvar_t cl_keypad = {"cl_keypad", "1"};
 
 static byte     backingbuf[48*24];
 
@@ -294,15 +285,6 @@ int get_mode(char *name, int width, int height, int depth) {
 
 }
 
-int matchmouse(int mouse, char *name) {
-	int i;
-
-	for (i = 0; i < num_mice; i++)
-		if (!strcmp(mice[i].name, name))
-			return i;
-	return mouse;
-}
-
 static byte scantokey_kp[128] = {
 //  0       1        2       3       4       5       6       7
 //  8       9        A       B       C       D       E       F
@@ -365,15 +347,10 @@ void VID_Shutdown(void) {
 	if (!svgalib_inited)
 		return;
 
-//	printf("shutdown graphics called\n");
-	if (UseKeyboard)
-		keyboard_close();
-	if (UseDisplay)
-		vga_setmode(TEXT);
-//	printf("shutdown graphics finished\n");
+	keyboard_close();
+	vga_setmode(TEXT);
 
 	svgalib_inited = 0;
-
 }
 
 void VID_ShiftPalette(unsigned char *p) {
@@ -395,7 +372,7 @@ void VID_SetPalette(byte *palette) {
         for (i=256*3 ; i ; i--)
             *(tp++) = *(palette++) >> 2;
 
-        if (UseDisplay && vga_oktowrite())
+        if (vga_oktowrite())
             vga_setpalvec(0, 256, tmppal);
 
     }
@@ -485,58 +462,48 @@ void VID_Init(unsigned char *palette) {
 
 	//	Cmd_AddCommand ("gamma", VID_Gamma_f);
 
-	if (UseDisplay)	{
-		vga_init();
+	vga_init();
 
-		VID_InitModes();
+	VID_InitModes();
 
-		Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
-		Cvar_Register (&vid_ref);
-		Cvar_Register (&vid_mode);
-		Cvar_Register (&vid_redrawfull);
-		Cvar_Register (&vid_waitforrefresh);
-		Cvar_ResetCurrentGroup();
+	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
+	Cvar_Register (&vid_ref);
+	Cvar_Register (&vid_mode);
+	Cvar_Register (&vid_redrawfull);
+	Cvar_Register (&vid_waitforrefresh);
+	Cvar_ResetCurrentGroup();
 
-		Cmd_AddCommand("vid_modelist", VID_ModeList_f);
-		Cmd_AddCommand("vid_debug", VID_Debug_f);
+	Cmd_AddCommand("vid_modelist", VID_ModeList_f);
+	Cmd_AddCommand("vid_debug", VID_Debug_f);
 
-		// interpret command-line params
+	// interpret command-line params
 
-		w = h = d = 0;
-		if (getenv("GSVGAMODE"))
-			current_mode = get_mode(getenv("GSVGAMODE"), w, h, d);
-		else if (COM_CheckParm("-mode"))
-			current_mode = get_mode(com_argv[COM_CheckParm("-mode")+1], w, h, d);
-		else if (COM_CheckParm("-w") || COM_CheckParm("-h") || COM_CheckParm("-d")) {
-			if (COM_CheckParm("-w"))
-				w = Q_atoi(com_argv[COM_CheckParm("-w")+1]);
-			if (COM_CheckParm("-h"))
-				h = Q_atoi(com_argv[COM_CheckParm("-h")+1]);
-			if (COM_CheckParm("-d"))
-				d = Q_atoi(com_argv[COM_CheckParm("-d")+1]);
-			current_mode = get_mode(0, w, h, d);
-		} else {
-			current_mode = G320x200x256;
-		}
-
-		// set vid parameters
-		VID_SetMode(current_mode, palette);
-
-		VID_SetPalette(palette);
-
-		// we do want to run in the background when switched away
-		vga_runinbackground(1);
+	w = h = d = 0;
+	if (COM_CheckParm("-mode"))
+		current_mode = get_mode(com_argv[COM_CheckParm("-mode")+1], w, h, d);
+	else if (COM_CheckParm("-w") || COM_CheckParm("-h") || COM_CheckParm("-d")) {
+		if (COM_CheckParm("-w"))
+			w = Q_atoi(com_argv[COM_CheckParm("-w")+1]);
+		if (COM_CheckParm("-h"))
+			h = Q_atoi(com_argv[COM_CheckParm("-h")+1]);
+		if (COM_CheckParm("-d"))
+			d = Q_atoi(com_argv[COM_CheckParm("-d")+1]);
+		current_mode = get_mode(0, w, h, d);
+	} else {
+		current_mode = G320x200x256;
 	}
 
-	if (COM_CheckParm("-nokbd"))
-		UseKeyboard = 0;
+	// set vid parameters
+	VID_SetMode(current_mode, palette);
 
-	if (UseKeyboard) {
-		if (keyboard_init())
-			Sys_Error("keyboard_init() failed");
-		keyboard_seteventhandler(keyhandler);
-	}
+	VID_SetPalette(palette);
 
+	// we do want to run in the background when switched away
+	vga_runinbackground(1);
+
+	if (keyboard_init())
+		Sys_Error("keyboard_init() failed");
+	keyboard_seteventhandler(keyhandler);
 }
 
 void VID_Update(vrect_t *rects) {
@@ -599,31 +566,15 @@ void VID_Update(vrect_t *rects) {
 		VID_SetMode ((int)vid_mode.value, vid_current_palette);
 }
 
-static int dither;
-
-void VID_DitherOn(void) {
-    if (dither == 0) {
-//		R_ViewChanged (&vrect, sb_lines, vid.aspect);
-        dither = 1;
-    }
-}
-
-void VID_DitherOff(void) {
-    if (dither) {
-//		R_ViewChanged (&vrect, sb_lines, vid.aspect);
-        dither = 0;
-    }
-}
-
 void Sys_SendKeyEvents(void) {
 	if (!svgalib_inited)
 		return;
 
-	if (UseKeyboard)
-		while (keyboard_update());
+	while (keyboard_update());
 }
 
-static void mousehandler(int buttonstate, int dx, int dy, int dz, int drx, int dry, int drz) {
+static void mousehandler (int buttonstate, int dx, int dy, int dz, int drx, int dry, int drz)
+{
 	int i;
 	static int oldbuttonstate;
 	static int svga_buttonflags[] = {MOUSE_LEFTBUTTON, MOUSE_RIGHTBUTTON, MOUSE_MIDDLEBUTTON};
@@ -649,115 +600,27 @@ static void mousehandler(int buttonstate, int dx, int dy, int dz, int drx, int d
 	oldbuttonstate = buttonstate;
 }
 
-void IN_Init(void) {
-	int mtype, mouserate;
-	char *mousedev;
+void IN_StartupMouse (void)
+{
+	int mouserate = 1200;
+	char *mousedev = "/dev/mouse";
+	int mtype = vga_getmousetype();
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
-	Cvar_Register (&m_filter);
-	Cvar_ResetCurrentGroup();
+	if (COM_CheckParm("-mdev"))
+		mousedev = com_argv[COM_CheckParm("-mdev") + 1];
 
-	if (UseMouse) {
-		Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
-		Cvar_ResetCurrentGroup();
+	if (COM_CheckParm("-mrate"))
+		mouserate = atoi(com_argv[COM_CheckParm("-mrate") + 1]);
 
-		mouse_buttons = 3;
-
-		mtype = vga_getmousetype();
-
-		mousedev = "/dev/mouse";
-		if (getenv("MOUSEDEV")) mousedev = getenv("MOUSEDEV");
-		if (COM_CheckParm("-mdev"))
-			mousedev = com_argv[COM_CheckParm("-mdev")+1];
-
-		mouserate = 1200;
-		if (getenv("MOUSERATE")) mouserate = atoi(getenv("MOUSERATE"));
-		if (COM_CheckParm("-mrate"))
-			mouserate = atoi(com_argv[COM_CheckParm("-mrate")+1]);
-
-//		printf("Mouse: dev=%s,type=%s,speed=%d\n",
-//			mousedev, mice[mtype].name, mouserate);
-		if (mouse_init(mousedev, mtype, mouserate))	{
-			Com_Printf ("No mouse found\n");
-			UseMouse = 0;
-		} else {
-			mouse_seteventhandler(mousehandler);
-		}
+	if (mouse_init (mousedev, mtype, mouserate)) {
+		Com_Printf ("No mouse found\n");
+	} else {
+		mouseinitialized = true;
+		mouse_seteventhandler (mousehandler);
 	}
-	if (UseKeyboard)	{
-		Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
-		Cvar_Register (&cl_keypad);
-		Cvar_ResetCurrentGroup();
-#ifdef WITH_KEYMAP
-		IN_StartupKeymap();
-#endif // WITH_KEYMAP
-	}
-}
-
-void IN_Shutdown(void) {
-	if (UseMouse)
-		mouse_close();
 }
 
 void IN_Commands (void) {}
-
-void IN_MouseMove (usercmd_t *cmd) {
-	float filterfrac;
-
-	if (!UseMouse)
-		return;
-
-	// poll mouse values
-	while (mouse_update())
-		;
-
-	if (m_filter.value) {
-        filterfrac = bound(0, m_filter.value, 1) / 2.0;
-        mouse_x = (mx * (1 - filterfrac) + old_mouse_x * filterfrac);
-        mouse_y = (my * (1 - filterfrac) + old_mouse_y * filterfrac);
-	} else {
-		mouse_x = mx;
-		mouse_y = my;
-	}
-
-	old_mouse_x = mx;
-	old_mouse_y = my;
-	mx = my = 0; // clear for next update
-
-	if (m_accel.value) {
-		float mousespeed = (sqrt (mx * mx + my * my)) / (1000.0f * (float)cls.trueframetime);
-		mouse_x *= (mousespeed * m_accel.value + sensitivity.value);
-		mouse_y *= (mousespeed * m_accel.value + sensitivity.value);
-	} else {
-		mouse_x *= sensitivity.value;
-		mouse_y *= sensitivity.value;
-	}
-
-	// add mouse X/Y movement to cmd
-	if (
-		(in_strafe.state & 1) || (lookstrafe.value && mlook_active))
-		cmd->sidemove += m_side.value * mouse_x;
-	else
-		cl.viewangles[YAW] -= m_yaw.value * mouse_x;
-
-	if (mlook_active)
-		V_StopPitchDrift ();
-
-	if (mlook_active && !(in_strafe.state & 1))
-	{
-		cl.viewangles[PITCH] += m_pitch.value * mouse_y;
-		if (cl.viewangles[PITCH] > cl.maxpitch)
-			cl.viewangles[PITCH] = cl.maxpitch;
-		if (cl.viewangles[PITCH] < cl.minpitch)
-			cl.viewangles[PITCH] = cl.minpitch;
-	} else {
-		cmd->forwardmove -= m_forward.value * mouse_y;
-	}
-}
-
-void IN_Move (usercmd_t *cmd) {
-	IN_MouseMove(cmd);
-}
 
 char *VID_ModeInfo (int modenum) {
 	static char	*badmodestr = "Bad mode number";

@@ -1,6 +1,4 @@
 /*
-Copyright (C) 1996-1997 Id Software, Inc.
-
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
@@ -16,6 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: in_win.c,v 1.21 2007-01-07 19:17:23 disconn3ct Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -55,12 +54,11 @@ cvar_t	cl_keypad = {"cl_keypad", "1"};
 int			mouse_buttons;
 int			mouse_oldbuttonstate;
 POINT		current_pos;
-double		mouse_x, mouse_y;
-int			old_mouse_x, old_mouse_y, mx_accum, my_accum;
+int			mx_accum, my_accum;
 
 static qbool	restore_spi;
 static int originalmouseparms[3], newmouseparms[3] = {0, 0, 0};
-qbool mouseinitialized;
+qbool mouseinitialized = false;
 static qbool	mouseparmsvalid, mouseactivatetoggle;
 static qbool	mouseshowtoggle = 1;
 static qbool	dinput_acquired;
@@ -189,7 +187,6 @@ void Joy_AdvancedUpdate_f (void);
 void IN_JoyMove (usercmd_t *cmd);
 
 
-//cvar_t	m_forcewheel	= {"m_forcewheel", "1"};
 cvar_t	m_rate			= {"m_rate",	"125"};
 cvar_t	m_showrate		= {"m_showrate", "0"};
 
@@ -232,19 +229,19 @@ int		 wheel_dn_count	= 0;
 		INPUT_CASE_DIMOFS_BUTTON(7);		\
 
 #if DIRECTINPUT_VERSION >= 0x700
-DWORD WINAPI IN_SMouseProc(void	* lpParameter) {
-	// read	mouse events and generate history tables
+DWORD WINAPI IN_SMouseProc (void* lpParameter) {
+	// read mouse events and generate history tables
 	DWORD ret;
 	int value;
 
 	while (1) {
 		if ((ret = WaitForSingleObject(m_event,	INFINITE)) == WAIT_OBJECT_0) {
-			int	mx = 0,	my = 0;
+			int mx = 0, my = 0;
 			DIDEVICEOBJECTDATA	od;
-			HRESULT	 hr;
+			HRESULT hr;
 			double time;
 
-			if (!ActiveApp || Minimized	|| !mouseactive	|| !dinput_acquired) {
+			if (!ActiveApp || Minimized || !mouseactive || !dinput_acquired) {
 				Sleep(50);
 				continue;
 			}
@@ -284,14 +281,6 @@ DWORD WINAPI IN_SMouseProc(void	* lpParameter) {
 
 				
 					case DIMOFS_Z:
-/*
-						if (m_forcewheel.value) {
-							if (od.dwData & (1<<((sizeof(od.dwData)<<3)-1)))
-								wheel_dn_count++;
-							else
-								wheel_up_count++;
-						}
-*/
 						if (in_mwheeltype != MWHEEL_WINDOWMSG)
 						{
 							in_mwheeltype = MWHEEL_DINPUT;
@@ -330,10 +319,10 @@ int IN_GetMouseRate(void) {
 	return 0;
 }
 
-void IN_SMouseRead(int *mx,	int	*my) {
+void IN_SMouseRead (int *mx, int *my) {
 	static acc_x, acc_y;
-	int	x =	0, y = 0;
-	double t1, t2, maxtime,	mintime;
+	int	x = 0, y = 0;
+	double t1, t2, maxtime, mintime;
 	int mouserate;
 
 	// acquire device
@@ -341,59 +330,59 @@ void IN_SMouseRead(int *mx,	int	*my) {
 	dinput_acquired	= true;
 
 	// gather data from	last read seq to now
-	for	( ;	m_history_x_rseq < m_history_x_wseq; m_history_x_rseq++)
+	for ( ; m_history_x_rseq < m_history_x_wseq; m_history_x_rseq++)
 		x += m_history_x[m_history_x_rseq&M_HIST_MASK].data;
-	for	( ;	m_history_y_rseq < m_history_y_wseq; m_history_y_rseq++)
+	for ( ; m_history_y_rseq < m_history_y_wseq; m_history_y_rseq++)
 		y += m_history_y[m_history_y_rseq&M_HIST_MASK].data;
 
 	x -= acc_x;
 	y -= acc_y;
 
-	acc_x =	acc_y =	0;
+	acc_x = acc_y = 0;
 
-	// show	rate if	requested
+	// show rate if requested
 	if (m_showrate.value && (mouserate = IN_GetMouseRate()))
 		Com_Printf("mouse rate: %4d\n", mouserate);
 
 	// smoothing goes here
-	mintime	= maxtime =	1.0	/ max(m_rate.value,	10);
-	maxtime	*= 1.2;
-	mintime	*= 0.7;
+	mintime = maxtime =	1.0	/ max(m_rate.value,	10);
+	maxtime *= 1.2;
+	mintime *= 0.7;
 
 	// X axis
-	t1 = m_history_x[(m_history_x_rseq - 2)	& M_HIST_MASK].time;
-	t2 = m_history_x[(m_history_x_rseq - 1)	& M_HIST_MASK].time;
+	t1 = m_history_x[(m_history_x_rseq - 2) & M_HIST_MASK].time;
+	t2 = m_history_x[(m_history_x_rseq - 1) & M_HIST_MASK].time;
 
-	if (t2 - t1	> mintime  &&  t2 -	t1 < maxtime) {
-		double vel = m_history_x[(m_history_x_rseq - 1)	& M_HIST_MASK].data	 /	(t2	- t1);
+	if (t2 - t1 > mintime  &&  t2 - t1 < maxtime) {
+		double vel = m_history_x[(m_history_x_rseq - 1) & M_HIST_MASK].data / (t2 - t1);
 
 		t1 = t2;
 		t2 = Sys_DoubleTime();
 
-		if	(t2	- t1 < maxtime)
-			acc_x =	vel	* (t2 -	t1);
+		if (t2 - t1 < maxtime)
+			acc_x = vel * (t2 - t1);
 	}
 
 	// Y axis
-	t1 = m_history_y[(m_history_y_rseq - 2)	& M_HIST_MASK].time;
-	t2 = m_history_y[(m_history_y_rseq - 1)	& M_HIST_MASK].time;
+	t1 = m_history_y[(m_history_y_rseq - 2) & M_HIST_MASK].time;
+	t2 = m_history_y[(m_history_y_rseq - 1) & M_HIST_MASK].time;
 
-	if (t2 - t1	> mintime  &&  t2 -	t1 < maxtime) {
-		double vel = m_history_y[(m_history_y_rseq-1) &	M_HIST_MASK].data  /  (t2 -	t1);
+	if (t2 - t1	> mintime  &&  t2 - t1 < maxtime) {
+		double vel = m_history_y[(m_history_y_rseq-1) & M_HIST_MASK].data / (t2 - t1);
 
 		t1 = t2;
 		t2 = Sys_DoubleTime();
 
-		if	(t2	- t1 < maxtime)
-			acc_y =	vel	* (t2 -	t1);
+		if	(t2 - t1 < maxtime)
+			acc_y = vel * (t2 - t1);
 	}
 
 	x += acc_x;
 	y += acc_y;
 
 	// return data
-	*mx	= x;
-	*my	= y;
+	*mx = x;
+	*my = y;
 
 	// serve wheel
 //	bound(0, wheel_dn_count, 10);
@@ -693,8 +682,8 @@ qbool IN_InitDInput (void) {
 }
 
 void IN_StartupMouse (void) {
-	if ( COM_CheckParm ("-nomouse") ) 
-		return; 
+	if (COM_CheckParm ("-nomouse"))
+		return;
 
 	mouseinitialized = true;
 
@@ -747,24 +736,22 @@ void IN_StartupMouse (void) {
 }
 
 void IN_Init (void) {
-	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE); // mouse variables
+	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_MOUSE); // mouse variables
 	Cvar_Register (&m_filter);
-//	Cvar_Register (&m_forcewheel);
 
-
-	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD); // keyboard variables
+	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_KEYBOARD); // keyboard variables
 	Cvar_Register (&cl_keypad);
 
 #ifdef WITH_KEYMAP
 	IN_StartupKeymap();
 #endif // WITH_KEYMAP
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_JOY); // joystick variables
+	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_JOY); // joystick variables
 	Cvar_Register (&in_joystick);
 
-	Cvar_ResetCurrentGroup();
+	Cvar_ResetCurrentGroup ();
 
-	uiWheelMessage = RegisterWindowMessage ( "MSWHEEL_ROLLMSG" );
+	uiWheelMessage = RegisterWindowMessage ("MSWHEEL_ROLLMSG");
 
 	IN_StartupMouse ();
 	IN_StartupJoystick ();
@@ -805,22 +792,24 @@ void IN_MouseEvent (int mstate) {
 }
 
 void IN_MouseMove (usercmd_t *cmd) {
+	static int old_mouse_x = 0, old_mouse_y = 0;
 	int mx, my;
-	float filterfrac;
 #if DIRECTINPUT_VERSION	>= 0x0700
 	int i, value;
 	DIDEVICEOBJECTDATA od;
 	DWORD dwElements;
 	HRESULT hr;
 #endif
+	float mouse_x, mouse_y;
 
 	if (!mouseactive)
 		return;
+
 #if DIRECTINPUT_VERSION	>= 0x0700
-	if (dinput)	{
+	if (dinput) {
 		mx = my = 0;
 
-		if (use_m_smooth) {	
+		if (use_m_smooth) {
 			IN_SMouseRead(&mx, &my);
 		} else {
 			while (1) {
@@ -852,17 +841,6 @@ void IN_MouseMove (usercmd_t *cmd) {
 
 					
 					case DIMOFS_Z:
-/*
-						if (m_forcewheel.value) {
-							if (od.dwData & (1<<((sizeof(od.dwData)<<3)-1))) {
-								Key_Event (K_MWHEELDOWN, true);
-								Key_Event (K_MWHEELDOWN, false);
-							} else {
-								Key_Event (K_MWHEELUP, true);
-								Key_Event (K_MWHEELUP, false);
-							}
-						}
-*/
 						if (in_mwheeltype != MWHEEL_WINDOWMSG)
 						{
 							in_mwheeltype = MWHEEL_DINPUT;
@@ -902,7 +880,7 @@ void IN_MouseMove (usercmd_t *cmd) {
 	}
 
 	if (m_filter.value) {
-        filterfrac = bound(0, m_filter.value, 1) / 2.0;
+        float filterfrac = bound(0, m_filter.value, 1) / 2.0;
         mouse_x = (mx * (1 - filterfrac) + old_mouse_x * filterfrac);
         mouse_y = (my * (1 - filterfrac) + old_mouse_y * filterfrac);
 	} else {

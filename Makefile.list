@@ -156,6 +156,7 @@ SW_C_FILES := \
 
 LINUX_C_FILES := \
 	cd_linux \
+	in_linux \
 	keymap_x11 \
 	localtime_linux \
 	snd_alsa \

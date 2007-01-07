@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_linux.c,v 1.20 2006-12-30 11:24:54 disconn3ct Exp $
+	$Id: sys_linux.c,v 1.21 2007-01-07 19:17:23 disconn3ct Exp $
 
 */
 #include <unistd.h>
@@ -468,6 +468,10 @@ char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
 
 #define SYS_CLIPBOARD_SIZE		256
 static char clipboard_buffer[SYS_CLIPBOARD_SIZE] = {0};
+
+wchar *Sys_GetClipboardTextW(void) {
+	return NULL;
+}
 
 char *Sys_GetClipboardData(void) {
 	return clipboard_buffer;
