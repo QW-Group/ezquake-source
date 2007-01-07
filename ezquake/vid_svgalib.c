@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_svgalib.c,v 1.21 2007-01-07 19:17:23 disconn3ct Exp $
+	$Id: vid_svgalib.c,v 1.22 2007-01-07 21:48:47 disconn3ct Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -27,8 +27,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "vga.h"
 #include "vgakeyboard.h"
 #include "vgamouse.h"
+
 #include "quakedef.h"
 #include "d_local.h"
+
 #ifdef WITH_KEYMAP
 #include "keymap.h"
 #endif // WITH_KEYMAP
@@ -36,21 +38,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define stringify(m) { #m, m }
 
 // kazik -->
-int ctrlDown = 0;
-int shiftDown = 0;
-int altDown = 0;
+static int ctrlDown = 0;
+static int shiftDown = 0;
+static int altDown = 0;
 // kazik <--
 
-unsigned short d_8to16table[256];
+static byte *vid_surfcache;
+static int VID_highhunkmark;
 
-static byte		*vid_surfcache;
-static int		VID_highhunkmark;
-
-int num_modes;
-vga_modeinfo *modes;
-int current_mode;
-
-int num_shades=32;
+static int num_modes;
+static vga_modeinfo *modes;
+static int current_mode = 0;
 
 struct {
 	char *name;
@@ -65,36 +63,32 @@ struct {
 };
 
 static byte vid_current_palette[768];
+static unsigned char *framebuffer_ptr;
+static byte backingbuf[48*24];
+static int svgalib_inited = 0;
 
-int num_mice = sizeof (mice) / sizeof(mice[0]);
+int VGA_width, VGA_height, VGA_rowbytes, VGA_bufferrowbytes, VGA_planar;
+byte *VGA_pagebase;
 
-int		svgalib_inited=0;
-qbool	mouseinitialized = false;
+cvar_t vid_ref = {"vid_ref", "soft", CVAR_ROM};
+cvar_t vid_mode = {"vid_mode","5"};
+cvar_t vid_redrawfull = {"vid_redrawfull","0"};
+cvar_t vid_vsync = {"vid_vsync","0",CVAR_ARCHIVE};
 
-int		mouserate = MOUSE_DEFAULTSAMPLERATE;
+int mx, my;
+qbool mouseinitialized = false;
 
-cvar_t		vid_ref = {"vid_ref", "soft", CVAR_ROM};
-cvar_t		vid_mode = {"vid_mode","5"};
-cvar_t		vid_redrawfull = {"vid_redrawfull","0"};
-cvar_t		vid_waitforrefresh = {"vid_waitforrefresh","0",CVAR_ARCHIVE};
-
-unsigned char *framebuffer_ptr;
-
-
-float   mouse_x, mouse_y;
-int		mx, my;
-
-static byte     backingbuf[48*24];
-
-int		VGA_width, VGA_height, VGA_rowbytes, VGA_bufferrowbytes, VGA_planar;
-byte	*VGA_pagebase;
 
 void VGA_UpdatePlanarScreen (void *srcbuffer);
 
-void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height) {
+
+void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height)
+{
 	int i, j, k, plane, reps, repshift, offset, vidpage, off;
 
-	if (!svgalib_inited || !vid.direct || !vga_oktowrite()) return;
+
+	if (!svgalib_inited || !vid.direct || !vga_oktowrite())
+		return;
 
 	if (vid.aspect > 1.5) {
 		reps = 2;
@@ -107,7 +101,7 @@ void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height) {
 	vidpage = 0;
 	vga_setpage(0);
 
-	if (VGA_planar)	{
+	if (VGA_planar) {
 		for (plane=0 ; plane<4 ; plane++) {
 		// select the correct plane for reading and writing
 			outb(0x02, 0x3C4);
@@ -140,8 +134,10 @@ void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height) {
 	}
 }
 
-void D_EndDirectRect (int x, int y, int width, int height) {
+void D_EndDirectRect (int x, int y, int width, int height)
+{
 	int i, j, k, plane, reps, repshift, offset, vidpage, off;
+
 
 	if (!svgalib_inited || !vid.direct || !vga_oktowrite()) return;
 
@@ -156,7 +152,7 @@ void D_EndDirectRect (int x, int y, int width, int height) {
 	vidpage = 0;
 	vga_setpage(0);
 
-	if (VGA_planar) 	{
+	if (VGA_planar) {
 		for (plane = 0; plane < 4; plane++) {
 			// select the correct plane for writing
 			outb(2, 0x3C4);
@@ -164,15 +160,13 @@ void D_EndDirectRect (int x, int y, int width, int height) {
 			outb(4, 0x3CE);
 			outb(plane, 0x3CF);
 
-			for (i = 0; i < (height << repshift); i += reps) {
-				for (k = 0; k < reps; k++) {
+			for (i = 0; i < (height << repshift); i += reps)
+				for (k = 0; k < reps; k++)
 					for (j = 0; j < (width >> 2); j++)
 						vid.direct[(y + i + k) * VGA_rowbytes + (x >> 2) + j] =backingbuf[(i + k) * 24 + (j << 2) + plane];
-				}
-			}
 		}
 	} else {
-		for (i = 0; i < (height << repshift); i += reps) {
+		for (i = 0; i < (height << repshift); i += reps)
 			for (j = 0; j < reps; j++) {
 				offset = x + ((y << repshift) + i + j) * vid.rowbytes;
 				off = offset % 0x10000;
@@ -182,14 +176,16 @@ void D_EndDirectRect (int x, int y, int width, int height) {
 				}
 				memcpy (vid.direct + off, &backingbuf[(i + j) * 24], width);
 			}
-		}
 	}
 }
 
-void VID_Gamma_f (void) {
+/*
+static void VID_Gamma_f (void)
+{
+	int i;
 	float gamma, f, inf;
 	unsigned char palette[768];
-	int i;
+
 
 	if (Cmd_Argc() == 2) {
 		gamma = Q_atof (Cmd_Argv(1));
@@ -201,16 +197,20 @@ void VID_Gamma_f (void) {
 		}
 
 		VID_SetPalette (palette);
-		vid.recalc_refdef = 1;				// force a surface cache flush
+		vid.recalc_refdef = 1; // force a surface cache flush
 	}
 }
+*/
 
-void VID_ModeList_f (void) {
+static void VID_ModeList_f (void)
+{
 	int i;
+
 
 	for (i = 0; i < num_modes; i++) {
 		if (modes[i].width) {
 			Com_Printf ("%d: %d x %d - ", i, modes[i].width,modes[i].height);
+
 			if (modes[i].bytesperpixel == 0)
 				Com_Printf ("ModeX\n");
 			else
@@ -219,23 +219,20 @@ void VID_ModeList_f (void) {
 	}
 }
 
-int VID_NumModes (void) {
-	int i, i1 = 0;
-
-	for (i = 0; i < num_modes;i++)
-		i1 += (modes[i].width ? 1 : 0);
-	return i1;
-}
-
-void VID_Debug_f (void) {
+/*
+static void VID_Debug_f (void)
+{
 	Com_Printf ("mode: %d\n",current_mode);
 	Com_Printf ("height x width: %d x %d\n",vid.height,vid.width);
 	Com_Printf ("bpp: %d\n",modes[current_mode].bytesperpixel*8);
 	Com_Printf ("vid.aspect: %f\n",vid.aspect);
 }
+*/
 
-void VID_InitModes(void) {
+static void VID_InitModes (void)
+{
 	int i;
+
 
 	// get complete information on all modes
 	num_modes = vga_lastmodenumber()+1;
@@ -248,33 +245,35 @@ void VID_InitModes(void) {
 	}
 
 	// filter for modes i don't support
-	for (i = 0; i < num_modes ; i++) {
+	for (i = 0; i < num_modes ; i++)
 		if ((modes[i].bytesperpixel != 1 && modes[i].colors != 256) || modes[i].width > MAXWIDTH || modes[i].height > MAXHEIGHT)
 			modes[i].width = 0;
-	}
 
 	vid_windowedmouse = false;
-
 }
 
-int get_mode(char *name, int width, int height, int depth) {
+static int get_mode (char *name, int width, int height, int depth)
+{
 	int i, ok, match;
+
 
 	match = (!!width) + (!!height) * 2 + (!!depth) * 4;
 
 	if (name) {
 		i = vga_getmodenumber(name);
+
 		if (!modes[i].width) {
 			Sys_Printf("Mode [%s] not supported\n", name);
 			i = G320x200x256;
 		}
 	} else {
 		for (i = 0 ; i<num_modes ; i++)
-			if (modes[i].width)	{
+			if (modes[i].width) {
 				ok = (modes[i].width == width) + (modes[i].height == height) * 2 + (modes[i].bytesperpixel == depth / 8) * 4;
 				if ((ok & match) == ok)
 					break;
 			}
+
 		if (i == num_modes) {
 			Sys_Printf("Mode %dx%d (%d bits) not supported\n", width, height, depth);
 			i = G320x200x256;
@@ -327,7 +326,8 @@ static byte scantokey[128] = {
 	0,      0,      0,      0,      0,      K_LWIN, K_RWIN, K_MENU			// 7
 };
 
-void keyhandler(int scancode, int state) {
+static void keyhandler (int scancode, int state)
+{
 	byte *scan = cl_keypad.value ? scantokey_kp : scantokey;
 	int sc = scancode & 0x7f;
 
@@ -336,14 +336,17 @@ void keyhandler(int scancode, int state) {
 	// kazik -->
 	if (sc == SCANCODE_LEFTCONTROL || sc == SCANCODE_RIGHTCONTROL)
 		ctrlDown = (state == KEY_EVENTPRESS);
+
 	if (sc == SCANCODE_LEFTSHIFT || sc == SCANCODE_RIGHTSHIFT)
 		shiftDown = (state == KEY_EVENTPRESS);
+
 	if (sc == SCANCODE_LEFTALT || sc == SCANCODE_RIGHTALT)
 		altDown = (state == KEY_EVENTPRESS);
 	// kazik <--
 }
 
-void VID_Shutdown(void) {
+void VID_Shutdown (void)
+{
 	if (!svgalib_inited)
 		return;
 
@@ -353,45 +356,47 @@ void VID_Shutdown(void) {
 	svgalib_inited = 0;
 }
 
-void VID_ShiftPalette(unsigned char *p) {
-	VID_SetPalette(p);
-}
+void VID_SetPalette (byte *palette)
+{
+	static int tmppal[256 * 3];
+	int i, *tp;
 
-void VID_SetPalette(byte *palette) {
-    static int tmppal[256 * 3];
-    int *tp, i;
 
-    if (!svgalib_inited)
-        return;
+	if (!svgalib_inited)
+		return;
 
-    memcpy(vid_current_palette, palette, sizeof(vid_current_palette));
+	memcpy(vid_current_palette, palette, sizeof(vid_current_palette));
 
-    if (vga_getcolors() == 256) {
+	if (vga_getcolors() == 256) {
+		tp = tmppal;
 
-        tp = tmppal;
-        for (i=256*3 ; i ; i--)
-            *(tp++) = *(palette++) >> 2;
+		for (i=256*3 ; i ; i--)
+			*(tp++) = *(palette++) >> 2;
 
-        if (vga_oktowrite())
-            vga_setpalvec(0, 256, tmppal);
-
+		if (vga_oktowrite())
+			vga_setpalvec(0, 256, tmppal);
     }
 }
 
-int VID_SetMode (int modenum, unsigned char *palette) {
+void VID_ShiftPalette (unsigned char *p)
+{
+	VID_SetPalette(p);
+}
+
+int VID_SetMode (int modenum, unsigned char *palette)
+{
 	int bsize, zsize, tsize;
+
 
 	if ((modenum >= num_modes) || (modenum < 0) || !modes[modenum].width) {
 		Cvar_SetValue (&vid_mode, (float)current_mode);
-
 		Com_Printf ("No such video mode: %d\n",modenum);
-
 		return 0;
 	}
 
 	Cvar_SetValue (&vid_mode, (float)modenum);
 
-	current_mode=modenum;
+	current_mode = modenum;
 
 	vid.width = modes[current_mode].width;
 	vid.height = modes[current_mode].height;
@@ -401,6 +406,7 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 	VGA_planar = modes[current_mode].bytesperpixel == 0;
 	VGA_rowbytes = modes[current_mode].linewidth;
 	vid.rowbytes = modes[current_mode].linewidth;
+
 	if (VGA_planar) {
 		VGA_bufferrowbytes = modes[current_mode].linewidth * 4;
 		vid.rowbytes = modes[current_mode].linewidth*4;
@@ -435,7 +441,6 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 	D_InitCaches (vid_surfcache, tsize);
 
 	// get goin'
-
 	vga_setmode(current_mode);
 	VID_SetPalette(palette);
 
@@ -449,18 +454,18 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 
 	svgalib_inited=1;
 
-	vid.recalc_refdef = 1;				// force a surface cache flush
+	vid.recalc_refdef = 1; // force a surface cache flush
 
 	return 0;
 }
 
-void VID_Init(unsigned char *palette) {
-	int w, h, d;
+void VID_Init (unsigned char *palette)
+{
+	int w = 0, h = 0;
+
 
 	if (svgalib_inited)
 		return;
-
-	//	Cmd_AddCommand ("gamma", VID_Gamma_f);
 
 	vga_init();
 
@@ -470,28 +475,29 @@ void VID_Init(unsigned char *palette) {
 	Cvar_Register (&vid_ref);
 	Cvar_Register (&vid_mode);
 	Cvar_Register (&vid_redrawfull);
-	Cvar_Register (&vid_waitforrefresh);
+	Cvar_Register (&vid_vsync);
 	Cvar_ResetCurrentGroup();
 
 	Cmd_AddCommand("vid_modelist", VID_ModeList_f);
-	Cmd_AddCommand("vid_debug", VID_Debug_f);
+//	Cmd_AddCommand("vid_debug", VID_Debug_f);
+//	Cmd_AddCommand ("gamma", VID_Gamma_f);
 
 	// interpret command-line params
 
-	w = h = d = 0;
 	if (COM_CheckParm("-mode"))
-		current_mode = get_mode(com_argv[COM_CheckParm("-mode")+1], w, h, d);
-	else if (COM_CheckParm("-w") || COM_CheckParm("-h") || COM_CheckParm("-d")) {
-		if (COM_CheckParm("-w"))
-			w = Q_atoi(com_argv[COM_CheckParm("-w")+1]);
-		if (COM_CheckParm("-h"))
-			h = Q_atoi(com_argv[COM_CheckParm("-h")+1]);
-		if (COM_CheckParm("-d"))
-			d = Q_atoi(com_argv[COM_CheckParm("-d")+1]);
-		current_mode = get_mode(0, w, h, d);
-	} else {
+		current_mode = get_mode(com_argv[COM_CheckParm("-mode") + 1], w, h, 8);
+
+	if (COM_CheckParm("-width"))
+		w = Q_atoi(com_argv[COM_CheckParm("-width") + 1]);
+
+	if (COM_CheckParm("-height"))
+		h = Q_atoi(com_argv[COM_CheckParm("-height") + 1]);
+
+	if (w || h)
+		current_mode = get_mode(0, w, h, 8);
+
+	if (!current_mode)
 		current_mode = G320x200x256;
-	}
 
 	// set vid parameters
 	VID_SetMode(current_mode, palette);
@@ -503,23 +509,24 @@ void VID_Init(unsigned char *palette) {
 
 	if (keyboard_init())
 		Sys_Error("keyboard_init() failed");
+
 	keyboard_seteventhandler(keyhandler);
 }
 
-void VID_Update(vrect_t *rects) {
+void VID_Update (vrect_t *rects)
+{
 	if (!svgalib_inited)
 		return;
 
 	if (!vga_oktowrite())
 		return; // can't update screen if it's not active
 
-	if (vid_waitforrefresh.value)
+	if ((int) vid_vsync.value)
 		vga_waitretrace();
 
-	if (VGA_planar)
+	if (VGA_planar) {
 		VGA_UpdatePlanarScreen (vid.buffer);
-
-	else if (vid_redrawfull.value) {
+	} else if (vid_redrawfull.value) {
 		int total = vid.rowbytes * vid.height;
 		int offset;
 
@@ -535,38 +542,40 @@ void VID_Update(vrect_t *rects) {
 		vga_setpage(0);
 
 		// oppymv 010904
-	if (!cls.mvdplayback || !cl_multiview.value || (cl_multiview.value>0 && CURRVIEW == 1)) {
-		while (rects) {
-			ycount = rects->height;
-			offset = rects->y * vid.rowbytes + rects->x;
-			while (ycount--) {
-				register int i = offset % 0x10000;
+		if (!cls.mvdplayback || !cl_multiview.value || (cl_multiview.value>0 && CURRVIEW == 1)) {
+			while (rects) {
+				ycount = rects->height;
+				offset = rects->y * vid.rowbytes + rects->x;
+				while (ycount--) {
+					register int i = offset % 0x10000;
+	
+					if (offset / 0x10000 != vidpage) {
+						vidpage=offset / 0x10000;
+						vga_setpage(vidpage);
+					}
 
-				if (offset / 0x10000 != vidpage) {
-					vidpage=offset / 0x10000;
-					vga_setpage(vidpage);
+					if (rects->width + i > 0x10000) {
+						memcpy(framebuffer_ptr + i, vid.buffer + offset, 0x10000 - i);
+						vga_setpage(++vidpage);
+						memcpy(framebuffer_ptr,	vid.buffer + offset + 0x10000 - i, 	rects->width - 0x10000 + i);
+					} else {
+						memcpy(framebuffer_ptr + i, vid.buffer + offset, rects->width);
+					}
+
+					offset += vid.rowbytes;
 				}
-				if (rects->width + i > 0x10000) {
-					memcpy(framebuffer_ptr + i,
-							vid.buffer + offset,
-							0x10000 - i);
-					vga_setpage(++vidpage);
-					memcpy(framebuffer_ptr,	vid.buffer + offset + 0x10000 - i, 	rects->width - 0x10000 + i);
-				} else {
-					memcpy(framebuffer_ptr + i, vid.buffer + offset, rects->width);
-				}
-				offset += vid.rowbytes;
+
+				rects = rects->pnext;
 			}
-			rects = rects->pnext;
 		}
 	}
-}
 
 	if (vid_mode.value != current_mode)
 		VID_SetMode ((int)vid_mode.value, vid_current_palette);
 }
 
-void Sys_SendKeyEvents(void) {
+void Sys_SendKeyEvents(void)
+{
 	if (!svgalib_inited)
 		return;
 
@@ -616,49 +625,20 @@ void IN_StartupMouse (void)
 		Com_Printf ("No mouse found\n");
 	} else {
 		mouseinitialized = true;
-		mouse_seteventhandler (mousehandler);
+		mouse_seteventhandler ((void *) mousehandler);
 	}
 }
 
 void IN_Commands (void) {}
 
-char *VID_ModeInfo (int modenum) {
-	static char	*badmodestr = "Bad mode number";
-	static char modestr[40];
-
-	if (modenum == 0) {
-		sprintf (modestr, "%d x %d, %d bpp",
-				 vid.width, vid.height, modes[current_mode].bytesperpixel*8);
-		return (modestr);
-	} else {
-		return (badmodestr);
-	}
-}
-
 // kazik -->
-int isAltDown(void)
-{
-//    return keyboard_keypressed(SCANCODE_LEFTALT)  ||
-//           keyboard_keypressed(SCANCODE_RIGHTALT);
-    return altDown;
-}
-int isCtrlDown(void)
-{
-//    return keyboard_keypressed(SCANCODE_LEFTCONTROL)  ||
-//           keyboard_keypressed(SCANCODE_RIGHTCONTROL);
-    return ctrlDown;
-}
-int isShiftDown(void)
-{
-//    return keyboard_keypressed(SCANCODE_LEFTSHIFT)  ||
-//           keyboard_keypressed(SCANCODE_RIGHTSHIFT);
-    return shiftDown;
-}
+int isAltDown(void) {return altDown;}
+int isCtrlDown(void) {return ctrlDown;}
+int isShiftDown(void) {return shiftDown;}
+// <-- kazik
 
 void VID_LockBuffer (void) {}
-
 void VID_UnlockBuffer (void) {}
-
 void VID_SetCaption (char *text) {}
 
 // QW262 -->
