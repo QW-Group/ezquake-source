@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_svgalib.c,v 1.23 2007-01-07 21:59:15 disconn3ct Exp $
+	$Id: vid_svgalib.c,v 1.24 2007-01-08 01:35:49 disconn3ct Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -626,9 +626,6 @@ void IN_StartupMouse (void)
 }
 
 void IN_Commands (void) {}
-
-void VID_LockBuffer (void) {}
-void VID_UnlockBuffer (void) {}
 void VID_SetCaption (char *text) {}
 
 // QW262 -->
