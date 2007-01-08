@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.35 2007-01-05 23:05:00 tonik Exp $
+	$Id: console.c,v 1.36 2007-01-08 20:41:29 tonik Exp $
 */
 // console.c
 
@@ -699,7 +699,7 @@ static void Con_DrawInput(void) {
 void Con_DrawNotify (void) {
 	int x, v, skip, maxlines, i, idx;
 	wchar *text, *s;
-	char buf[1024];
+	wchar buf[1024];
 	clrinfo_t clr[sizeof(buf)];
 	float time;
 
@@ -732,7 +732,7 @@ void Con_DrawNotify (void) {
 			clr[x].i = x; // set proper index
 		}
 		buf[x] = '\0';
-		Draw_ColoredString3(8, v + bound(0, con_shift.value, 8), buf, clr, con_linewidth, 0);
+		Draw_ColoredString3W (8, v + bound(0, con_shift.value, 8), buf, clr, con_linewidth, 0);
 		v += 8;
 	}
 
@@ -767,7 +767,7 @@ void Con_DrawNotify (void) {
 
 		x = 0;
 		while (s[x] && x+skip < (vid.width>>3)) {
-			Draw_Character ( (x+skip)<<3, v + bound(0, con_shift.value, 8), s[x]);
+			Draw_CharacterW ( (x+skip)<<3, v + bound(0, con_shift.value, 8), s[x]);
 			x++;
 		}
 		v += 8;
