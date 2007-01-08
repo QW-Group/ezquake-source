@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.44 2007-01-06 00:03:41 tonik Exp $
+	$Id: gl_draw.c,v 1.45 2007-01-08 20:32:39 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -717,6 +717,20 @@ void Draw_Init (void) {
 	// get the other pics we need
 	draw_disc = Draw_CacheWadPic ("disc");
 	draw_backtile = Draw_CacheWadPic ("backtile");
+}
+
+qbool R_CharAvailable (wchar num)
+{
+	int i;
+
+	if (num == (num & 0xff))
+		return true;
+
+	for (i = 1; i < MAX_CHARSETS; i++)
+		if (char_range[i] == (num & 0xFF00))
+			return true;
+
+	return false;
 }
 
 __inline static void Draw_CharPoly(int x, int y, int num) {
