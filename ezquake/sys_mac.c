@@ -1,6 +1,6 @@
 /*
 
-	$Id: sys_mac.c,v 1.20 2006-12-30 11:24:54 disconn3ct Exp $
+	$Id: sys_mac.c,v 1.21 2007-01-08 01:22:56 disconn3ct Exp $
 
 */
 // sys_mac.c -- Macintosh system driver
@@ -1235,7 +1235,7 @@ int main (int argc, char *argv[])
 			} while (argv[argc]);
 		}
 
-		if (COM_CheckParm ("-window"))
+		if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed"))
 			forcewindowed = true;
 		
 		// Set up the system state based on what the preferences say
