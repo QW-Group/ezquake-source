@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.54 2007-01-05 23:05:00 tonik Exp $
+	$Id: menu.c,v 1.55 2007-01-08 00:57:47 disconn3ct Exp $
 
 */
 
@@ -2816,9 +2816,13 @@ void M_Draw (void) {
 
 		if (SCR_NEED_CONSOLE_BACKGROUND) {
 			Draw_ConsoleBackground (scr_con_current);
+#if (!defined _GLQUAKE && defined _WIN32)
 			VID_UnlockBuffer ();
+#endif
 			S_ExtraUpdate ();
+#if (!defined _GLQUAKE && defined _WIN32)
 			VID_LockBuffer ();
+#endif
 		} else {
 			Draw_FadeScreen ();
 		}
@@ -2941,10 +2945,13 @@ void M_Draw (void) {
 		S_LocalSound ("misc/menu2.wav");
 		m_entersound = false;
 	}
-
+#if (!defined _GLQUAKE && defined _WIN32)
 	VID_UnlockBuffer ();
+#endif
 	S_ExtraUpdate ();
+#if (!defined _GLQUAKE && defined _WIN32)
 	VID_LockBuffer ();
+#endif
 }
 
 void M_Keydown (int key, int unichar) {

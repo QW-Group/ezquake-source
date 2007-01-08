@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.38 2007-01-07 19:51:56 disconn3ct Exp $
+	$Id: vid_wgl.c,v 1.39 2007-01-08 00:58:38 disconn3ct Exp $
 
 */
 
@@ -185,15 +185,6 @@ qbool OnChange_vid_vsync(cvar_t *var, char *string) {
 void GL_Init_Win(void) {
 	GL_WGL_CheckExtensions();
 }
-
-/**************************** DDRAW COMPATABILITY ****************************/
-void VID_LockBuffer (void) {}
-
-void VID_UnlockBuffer (void) {}
-
-void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height) {}
-
-void D_EndDirectRect (int x, int y, int width, int height) {}
 
 /******************************** WINDOW STUFF ********************************/
 
