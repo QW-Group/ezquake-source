@@ -150,6 +150,20 @@ void Draw_Init (void) {
 	customCrosshair_Init();
 }
 
+qbool R_CharAvailable (wchar num)
+{
+	int i;
+
+	if (num == (num & 0xff))
+		return true;
+
+	for (i = 1; i < MAX_CHARSETS; i++)
+		if (char_range[i] == (num & 0xFF00))
+			return true;
+
+	return false;
+}
+
 //Draws one 8*8 graphics character with 0 being transparent.
 //It can be clipped to the top of the screen to allow the console to be smoothly scrolled off.
 void Draw_Character (int x, int y, int num) {

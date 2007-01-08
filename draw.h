@@ -124,3 +124,5 @@ void Draw_AlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width,
 void Draw_SAlphaSubPic (int x, int y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale, float alpha);
 void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale_x, float scale_y, float alpha);
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
+
+qbool R_CharAvailable (wchar num);

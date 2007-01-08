@@ -2,6 +2,8 @@
 #include "common.h"		// Com_DPrintf
 #include "textencoding.h"
 
+extern qbool R_CharAvailable (wchar c);
+
 /* KOI8-R encodes Russian capital hard sign as 0xFF, but we can't use it
 because it breaks older clients (qwcl).  We use 0xaf ('/'+ 0x80) instead. */
 static char *wc2koi_table =
@@ -124,8 +126,92 @@ wchar *decode_string (const char *s)
 				*out++ = *p++;
 		}
 		*out++ = 0;
-		return buf;
+		return maybe_transliterate(buf);
 	}
 	return str2wcs(s);
 }
 
+
+char cyr_trans_table[] = {"ABVGDEZZIJKLMNOPRSTUFHCCSS'Y'EYY"};
+wchar *transliterate_char (wchar c)
+{
+	static wchar s[2] = {0};
+
+	if (c == 0x401)
+		return str2wcs("YO");
+	if (c == 0x404)
+		return str2wcs("E");
+	if (c == 0x406)
+		return str2wcs("I");
+	if (c == 0x407)
+		return str2wcs("J");
+	if (c == 0x40e)
+		return str2wcs("U");
+	if (c == 0x416)
+		return str2wcs("ZH");
+	if (c == 0x427)
+		return str2wcs("CH");
+	if (c == 0x428)
+		return str2wcs("SH");
+	if (c == 0x429)
+		return str2wcs("SH");
+	if (c == 0x42e)
+		return str2wcs("YU");
+	if (c == 0x42f)
+		return str2wcs("YA");
+	if (c == 0x451)
+		return str2wcs("yo");
+	if (c == 0x454)
+		return str2wcs("e");
+	if (c == 0x456)
+		return str2wcs("i");
+	if (c == 0x457)
+		return str2wcs("j");
+	if (c == 0x45e)
+		return str2wcs("u");
+	if (c == 0x436)
+		return str2wcs("zh");
+	if (c == 0x447)
+		return str2wcs("ch");
+	if (c == 0x448)
+		return str2wcs("sh");
+	if (c == 0x449)
+		return str2wcs("sh");
+	if (c == 0x44e)
+		return str2wcs("yu");
+	if (c == 0x44f)
+		return str2wcs("ya");
+	if (c >= 0x0410 && c < 0x0430)
+		s[0] = cyr_trans_table[c - 0x410];
+	else if (c >= 0x0430 && c < 0x0450)
+		s[0] = tolower(cyr_trans_table[c - 0x430]);
+	else
+		s[0] = '?';
+	return s;
+}
+
+// Make sure the renderer can display all Unicode chars in the string,
+// otherwise try to replace them with Latin equivalents
+wchar *maybe_transliterate (wchar *src)
+{
+	wchar *dst, *trans;
+	static wchar buf[2048];
+#define buflen (sizeof(buf)/sizeof(buf[0]))
+	int len;
+
+	dst = buf;
+	while (*src && dst < buf+buflen-1) {
+		if (R_CharAvailable(*src))
+			*dst++ = *src;
+		else {
+			trans = transliterate_char (*src);
+			len = min(qwcslen(trans), buf+buflen-1 - dst);
+			memcpy (dst, trans, len*sizeof(wchar));
+			dst += len;
+		}
+		src++;
+	}
+	*dst = 0;
+
+	return buf;
+}
