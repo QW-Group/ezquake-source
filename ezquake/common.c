@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.51 2007-01-07 20:50:01 qqshka Exp $
+    $Id: common.c,v 1.52 2007-01-08 02:06:57 qqshka Exp $
 
 */
 
@@ -1712,16 +1712,13 @@ void FS_AddUserPaks (char *dir) {
 // <-- QW262
 
 //Sets com_gamedir, adds the directory to the head of the path, then loads and adds pak1.pak pak2.pak ...
-void FS_AddGameDirectory (char *dir) {
+void FS_AddGameDirectory (char *path_to_dir, char *dir) {
 	int i;
 	searchpath_t *search;
-	char pakfile[MAX_OSPATH], *p;
+	char pakfile[MAX_OSPATH];
 
-	if ((p = strrchr(dir, '/')) != NULL)
-		strcpy(com_gamedirfile, ++p);
-	else
-		strcpy(com_gamedirfile, p);
-	strcpy (com_gamedir, dir);
+	strlcpy(com_gamedirfile, dir, sizeof(com_gamedirfile));
+	snprintf(com_gamedir, sizeof(com_gamedir), "%s/%s", path_to_dir, dir);
 
 	// add the directory to the search path
 	search = (searchpath_t *) Q_malloc (sizeof(searchpath_t));
@@ -1732,13 +1729,13 @@ void FS_AddGameDirectory (char *dir) {
 
 	// add any pak files in the format pak0.pak pak1.pak, ...
 	for (i = 0; ; i++) {
-		snprintf (pakfile, sizeof(pakfile), "%s/pak%i.pak", dir, i);
+		snprintf (pakfile, sizeof(pakfile), "%s/pak%i.pak", com_gamedir, i);
 		if(!FS_AddPak(pakfile))
 			break;
 	}
 #ifndef SERVERONLY
 	// other paks
-	FS_AddUserPaks (dir);
+	FS_AddUserPaks (com_gamedir);
 #endif
 }
 
@@ -1817,7 +1814,7 @@ void FS_SetGamedir (char *dir) {
 	sprintf (com_gamedir, "%s/%s", com_basedir, dir);
 
 	if (strcmp(dir, "id1") && strcmp(dir, "qw") && strcmp(dir, "ezquake")) {
-		FS_AddGameDirectory ( va("%s/%s", com_basedir, dir) );
+		FS_AddGameDirectory(com_basedir, dir);
 	}
 	// QW262 -->
 #ifndef SERVERONLY
@@ -1854,15 +1851,15 @@ void FS_InitFilesystem (void) {
 		com_basedir[i] = 0;
 
 	// start up with id1 by default
-	FS_AddGameDirectory ( va("%s/id1", com_basedir) );
+	FS_AddGameDirectory(com_basedir, "id1");
 //	if (home != NULL)
 //		FS_AddGameDirectory(va("%s/.ezquake/id1", home));
 
-	FS_AddGameDirectory ( va("%s/ezquake", com_basedir) );
+	FS_AddGameDirectory(com_basedir, "ezquake");
 //	if (home != NULL)
 //		FS_AddGameDirectory(va("%s/.ezquake/ezquake", home));
 
-	FS_AddGameDirectory ( va("%s/qw", com_basedir) );
+	FS_AddGameDirectory(com_basedir, "qw");
 //	if (home != NULL)
 //		FS_AddGameDirectory(va("%s/.ezquake/qw", home));
 
