@@ -1695,8 +1695,6 @@ void VID_Init (unsigned char *palette)
 	vid_menukeyfn = NULL;
 }
 
-void VID_LockBuffer (void) {}
-void VID_UnlockBuffer (void) {}
 // TODO: implement this
 void VID_SetCaption (char *text) {}
 
