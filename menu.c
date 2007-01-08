@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.55 2007-01-08 00:57:47 disconn3ct Exp $
+	$Id: menu.c,v 1.56 2007-01-08 01:24:24 disconn3ct Exp $
 
 */
 
@@ -2816,11 +2816,11 @@ void M_Draw (void) {
 
 		if (SCR_NEED_CONSOLE_BACKGROUND) {
 			Draw_ConsoleBackground (scr_con_current);
-#if (!defined _GLQUAKE && defined _WIN32)
+#if (!defined GLQUAKE && defined _WIN32)
 			VID_UnlockBuffer ();
 #endif
 			S_ExtraUpdate ();
-#if (!defined _GLQUAKE && defined _WIN32)
+#if (!defined GLQUAKE && defined _WIN32)
 			VID_LockBuffer ();
 #endif
 		} else {
@@ -2945,11 +2945,11 @@ void M_Draw (void) {
 		S_LocalSound ("misc/menu2.wav");
 		m_entersound = false;
 	}
-#if (!defined _GLQUAKE && defined _WIN32)
+#if (!defined GLQUAKE && defined _WIN32)
 	VID_UnlockBuffer ();
 #endif
 	S_ExtraUpdate ();
-#if (!defined _GLQUAKE && defined _WIN32)
+#if (!defined GLQUAKE && defined _WIN32)
 	VID_LockBuffer ();
 #endif
 }
