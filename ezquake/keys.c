@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.42 2007-01-09 20:09:52 johnnycz Exp $
+    $Id: keys.c,v 1.43 2007-01-09 21:54:34 johnnycz Exp $
 
 */
 
@@ -65,7 +65,7 @@ int count_cvar = 0;
 int count_alias = 0;
 // added by jogi stop
 
-keydest_t	key_dest, key_dest_beforemm;
+keydest_t	key_dest, key_dest_beforemm, key_dest_beforecon;
 
 char	*keybindings[UNKNOWN + 256];
 qbool	consolekeys[UNKNOWN + 256];	// if true, can't be rebound while in console

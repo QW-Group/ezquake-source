@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.81 2007-01-09 20:09:52 johnnycz Exp $
+    $Id: cl_screen.c,v 1.82 2007-01-09 21:54:33 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -763,7 +763,7 @@ void SCR_DrawConsole (void) {
 		Con_DrawConsole (scr_con_current);
 		clearconsole = 0;
 	} else {
-		if (key_dest == key_game || key_dest == key_message)
+		if (key_dest == key_game || key_dest == key_message || (key_dest == key_menu && m_state == m_proxy))
 			Con_DrawNotify ();      // only draw notify in game
 	}
 }
