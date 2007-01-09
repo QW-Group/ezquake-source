@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.52 2007-01-03 19:03:17 disconn3ct Exp $
+	$Id: cl_demo.c,v 1.53 2007-01-09 01:14:51 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -490,7 +490,7 @@ static void CL_WriteStartupData (void) {
 FILE *playbackfile = NULL;
 
 
-static int CL_Demo_Read(void *buf, int size) {
+int CL_Demo_Read(void *buf, int size) {
 	if (fread(buf, size, 1, playbackfile) != 1)
 		Host_Error("Unexpected end of demo");
 	return 1;
