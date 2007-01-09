@@ -1758,6 +1758,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\menu_proxy.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\modules.c"
 					>
 				</File>
@@ -2158,6 +2162,10 @@
 				</File>
 				<File
 					RelativePath="..\..\menu_demo.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\menu_proxy.h"
 					>
 				</File>
 				<File

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.h,v 1.11 2007-01-01 16:38:21 tonik Exp $
+	$Id: menu.h,v 1.12 2007-01-09 20:09:52 johnnycz Exp $
 
 */
 
@@ -28,6 +28,7 @@ void M_Keydown (int key, int unichar);
 void M_Draw (void);
 void M_ToggleMenu_f (void);
 void M_LeaveMenus (void);
+void M_EnterProxyMenu (void);
 void M_DrawTextBox (int x, int y, int width, int lines);
 void M_Menu_Quit_f (void);
 void M_Demos_Playlist_stop_f (void);
@@ -40,7 +41,7 @@ void M_DrawCheckbox (int x, int y, int on);
 #define FLASHINGCURSOR() (10+((int)(curtime*4)&1))
 
 enum {
-    m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer,
+    m_none, m_main, m_proxy, m_singleplayer, m_load, m_save, m_multiplayer,
     m_setup, m_options, m_video, m_keys, m_help, m_quit,
     m_gameoptions, m_slist,/* m_sedit,*/ m_fps, m_demos/*, m_demos_del, m_demos2*/
 #if defined(_WIN32) || ((defined(__linux__) || defined(__FreeBSD__)) && defined(WITH_XMMS))

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.h,v 1.9 2007-01-05 23:05:00 tonik Exp $
+	$Id: keys.h,v 1.10 2007-01-09 20:09:52 johnnycz Exp $
 
 */
 
@@ -208,7 +208,7 @@ typedef enum {
 
 typedef enum {key_game, key_console, key_message, key_menu} keydest_t;
 
-extern keydest_t	key_dest;
+extern keydest_t	key_dest, key_dest_beforemm;
 extern char 	*keybindings[UNKNOWN + 256];
 extern int		key_repeats[UNKNOWN + 256];
 extern qbool	keydown[UNKNOWN + 256];

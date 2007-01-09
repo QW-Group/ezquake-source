@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.118 2007-01-06 21:26:06 tonik Exp $
+	$Id: cl_main.c,v 1.119 2007-01-09 20:09:52 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -426,16 +426,32 @@ void CL_TCPConnect_f (void)
 
 qbool CL_ConnectedToProxy(void) {
 	cmd_alias_t *alias = NULL;
-	char **s, *qizmo_aliases[] = {	"ezcomp", "ezcomp2", "ezcomp3", 
+	qbool found = true;
+	char **s;
+	char *qizmo_aliases[] = {	"ezcomp", "ezcomp2", "ezcomp3", 
 									"f_sens", "f_fps", "f_tj", "f_ta", NULL};
+	char *fteqtv_aliases[] = { "+proxleft", "+proxright", NULL }; // who would need more?
 
 	if (cls.state < ca_active)
 		return false;
+	
 	for (s = qizmo_aliases; *s; s++) {
-		if (!(alias = Cmd_FindAlias(*s)) || !(alias->flags & ALIAS_SERVER))
-			return false;
+		if (!(alias = Cmd_FindAlias(*s)) || !(alias->flags & ALIAS_SERVER)) {
+			found = false; break;
+		}
 	}
-	return true;
+	
+	if (found)
+		return true;
+
+	found = true;
+	for (s = fteqtv_aliases; *s; s++) {
+		if (!(alias = Cmd_FindAlias(*s)) || !(alias->flags & ALIAS_SERVER)) {
+			found = false; break;
+		}
+	}
+
+	return found;
 }
 
 void CL_Join_f (void) {
