@@ -4,7 +4,7 @@
 #include "cdaudio.h"
 
 #define MAX_BIG_MSGLEN 8000
-extern FILE *playbackfile;
+int CL_Demo_Read(void *buf, int size);
 #define SCR_EndLoadingPlaque()
 int cl_oldentframecount;
 int cl_entframecount;
@@ -88,7 +88,7 @@ static qbool	standard_quake = true;
 
 static qbool CL_GetNQDemoMessage (void)
 {
-	int r, i;
+	int i;
 	float f;
 
 	// decide if it is time to grab the next message		
@@ -113,9 +113,9 @@ static qbool CL_GetNQDemoMessage (void)
 
 
 	// get the next message
-	fread (&net_message.cursize, 4, 1, playbackfile);
+	CL_Demo_Read(&net_message.cursize, 4);
 	for (i=0 ; i<3 ; i++) {
-		r = fread (&f, 4, 1, playbackfile);
+		CL_Demo_Read(&f, 4);
 		nq_mviewangles_temp[i] = LittleFloat (f);
 	}
 
@@ -123,11 +123,7 @@ static qbool CL_GetNQDemoMessage (void)
 	if (net_message.cursize > MAX_BIG_MSGLEN)
 		Host_Error ("Demo message > MAX_BIG_MSGLEN");
 
-	r = fread (net_message.data, net_message.cursize, 1, playbackfile);
-	if (r != 1) {
-		Host_Error ("Unexpected end of demo");
-	}
-
+	CL_Demo_Read(net_message.data, net_message.cursize);
 	return true;
 }
 
@@ -1247,11 +1243,13 @@ void NQD_ReadPackets (void)
 
 void NQD_StartPlayback (void)
 {
-	int		c;
+	byte	c;
 	qbool	neg = false;
 
 	// parse forced cd track
-	while ((c = getc(playbackfile)) != '\n') {
+	for (c = 0; c != '\n'; ) {
+		CL_Demo_Read(&c, 1);
+
 		if (c == '-')
 			neg = true;
 		else
