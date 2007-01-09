@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.41 2007-01-06 21:26:06 tonik Exp $
+    $Id: keys.c,v 1.42 2007-01-09 20:09:52 johnnycz Exp $
 
 */
 
@@ -65,7 +65,7 @@ int count_cvar = 0;
 int count_alias = 0;
 // added by jogi stop
 
-keydest_t	key_dest;
+keydest_t	key_dest, key_dest_beforemm;
 
 char	*keybindings[UNKNOWN + 256];
 qbool	consolekeys[UNKNOWN + 256];	// if true, can't be rebound while in console
@@ -1254,13 +1254,13 @@ void Key_Message (int key, wchar unichar) {
 			Cbuf_AddText(encode_say(chat_buffer));
 			Cbuf_AddText("\"\n");
 		}
-		key_dest = key_game;
+		key_dest = key_dest_beforemm;
 		chat_linepos = 0;
 		chat_buffer[0] = 0;
 		return;
 
 	case K_ESCAPE:
-		key_dest = key_game;
+		key_dest = key_dest_beforemm;
 		chat_buffer[0] = 0;
 		chat_linepos = 0;
 		return;

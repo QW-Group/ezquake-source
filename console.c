@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.36 2007-01-08 20:41:29 tonik Exp $
+	$Id: console.c,v 1.37 2007-01-09 20:09:52 johnnycz Exp $
 */
 // console.c
 
@@ -287,6 +287,7 @@ void Con_MessageMode_f (void) {
 		return;
 
 	chat_team = false;
+	key_dest_beforemm = key_dest; // where to return after we finish typing
 	key_dest = key_message;
 	chat_buffer[0] = 0;
 	chat_linepos = 0;
@@ -297,6 +298,7 @@ void Con_MessageMode2_f (void) {
 		return;
 
 	chat_team = true;
+	key_dest_beforemm = key_dest; // where to return after we finish typing
 	key_dest = key_message;
 	chat_buffer[0] = 0;
 	chat_linepos = 0;

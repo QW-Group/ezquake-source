@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.63 2007-01-05 23:05:00 tonik Exp $
+	$Id: cl_parse.c,v 1.64 2007-01-09 20:09:52 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -438,6 +438,13 @@ void CL_FindModelNumbers (void) {
 	}
 }
 
+void CL_ProxyEnter (void) {
+	if (!strcmp(cl.levelname, "Qizmo menu") ||	// qizmo detection
+		strstr(cl.serverinfo, "*QTV")) {		// fteqtv detection
+		M_EnterProxyMenu();
+	}
+}
+
 void CL_Prespawn (void)
 {
 	cl.worldmodel = cl.model_precache[1];
@@ -449,6 +456,7 @@ void CL_Prespawn (void)
 	TP_NewMap();
 	MT_NewMap();
 	Stats_NewMap();
+	CL_ProxyEnter();
 
 	// Reset the status grid.
 	StatsGrid_Remove(&stats_grid);

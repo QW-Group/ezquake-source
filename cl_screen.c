@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.80 2007-01-05 23:05:00 tonik Exp $
+    $Id: cl_screen.c,v 1.81 2007-01-09 20:09:52 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -199,7 +199,11 @@ void SCR_DrawCenterString (void) {
 	scr_erase_center = 0;
 	start = scr_centerstring;
 
-	y = ((scr_center_lines <= 4) ? vid.height * 0.35 : 48) + scr_centershift.value*8;
+	y = ((scr_center_lines <= 4) ? vid.height * 0.35 : 48);
+
+	// shift all centerprint but not proxy menu - more user-friendly way
+	if (m_state != m_proxy) 
+		y += scr_centershift.value*8; 
 
 	while (1) {
 		// scan the width of the line
@@ -235,7 +239,9 @@ void SCR_CheckDrawCenterString (void) {
 
 	if (scr_centertime_off <= 0 && !cl.intermission)
 		return;
-	if (key_dest != key_game)
+
+	// condition says: "Draw center string only when in game or in proxy menu, otherwise leave."
+	if (key_dest != key_game && ((key_dest != key_menu) || (m_state != m_proxy)))
 		return;
 
 	SCR_DrawCenterString ();

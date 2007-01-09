@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.56 2007-01-08 01:24:24 disconn3ct Exp $
+	$Id: menu.c,v 1.57 2007-01-09 20:09:52 johnnycz Exp $
 
 */
 
@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mp3_player.h"
 #include "EX_browser.h"
 #include "menu_demo.h"
+#include "menu_proxy.h"
 
 #ifndef _WIN32
 #include <dirent.h>
@@ -68,6 +69,7 @@ void M_Menu_Main_f (void);
 		void M_Menu_Keys_f (void);
 		void M_Menu_Fps_f (void);
 		void M_Menu_Video_f (void);
+		void M_Menu_Proxy_f (void);
 	void M_Menu_MP3_Control_f (void);
 	void M_Menu_Quit_f (void);
 
@@ -81,6 +83,7 @@ void M_Main_Draw (void);
 		void M_Setup_Draw (void);
 		void M_Demo_Draw (void);
 		void M_GameOptions_Draw (void);
+		void M_Proxy_Draw (void);
 	void M_Options_Draw (void);
 		void M_Keys_Draw (void);
 		void M_Fps_Draw (void);
@@ -98,6 +101,7 @@ void M_Main_Key (int key);
 		void M_Setup_Key (int key, int unichar);
 		void M_Demo_Key (int key);
 		void M_GameOptions_Key (int key);
+		void M_Proxy_Key (int key);
 	void M_Options_Key (int key);
 		void M_Keys_Key (int key);
 		void M_Fps_Key (int key);
@@ -206,10 +210,12 @@ void M_ToggleMenu_f (void) {
 void M_EnterMenu (int state) {
 	if (key_dest != key_menu) {
 		m_topmenu = state;
-		Con_ClearNotify ();
-		// hide the console
-		scr_conlines = 0;
-		scr_con_current = 0;
+		if (state != m_proxy) {
+			Con_ClearNotify ();
+			// hide the console
+			scr_conlines = 0;
+			scr_con_current = 0;
+		}
 	} else {
 		m_topmenu = m_none;
 	}
@@ -217,6 +223,10 @@ void M_EnterMenu (int state) {
 	key_dest = key_menu;
 	m_state = state;
 	m_entersound = true;
+}
+
+void M_EnterProxyMenu () {
+	M_EnterMenu(m_proxy);
 }
 
 void M_LeaveMenu (int parent) {
@@ -237,6 +247,20 @@ void M_LeaveMenus (void) {
 	m_topmenu = m_none;
 	m_state   = m_none;
 	key_dest  = key_game;
+}
+
+void M_ToggleProxyMenu_f (void) {
+	// this is what user has bound to a key - that means 
+	// when in proxy menu -> turn it off; and vice versa
+	m_entersound = true;
+
+	if ((key_dest == key_menu) && (m_state == m_proxy)) {
+		M_LeaveMenus();
+		Menu_Proxy_Toggle();
+	} else {
+		M_EnterMenu (m_proxy);
+		Menu_Proxy_Toggle();
+	}
 }
 
 //=============================================================================
@@ -1178,6 +1202,31 @@ void M_Video_Draw (void) {
 void M_Video_Key (int key) {
 	(*vid_menukeyfn) (key);
 }
+
+//=============================================================================
+/* PROXY MENU */
+
+// key press in demos menu
+void M_Proxy_Draw(void){
+	Menu_Proxy_Draw(); // menu_proxy module
+}
+
+// demos menu draw request
+void M_Proxy_Key (int key) {
+	int togglekeys[2];
+
+	// the menu_proxy module doesn't know which key user has bound to toggleproxymenu action
+	M_FindKeysForCommand("toggleproxymenu", togglekeys);
+
+	if ((key == togglekeys[0]) || (key == togglekeys[1])) {
+		Menu_Proxy_Toggle(); 
+		M_LeaveMenus();
+		return;
+	}
+
+	Menu_Proxy_Key(key); // menu_proxy module
+}
+
 
 //=============================================================================
 /* HELP MENU */
@@ -2783,6 +2832,7 @@ void M_Init (void) {
 
 
 	Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
+	Cmd_AddCommand ("toggleproxymenu", M_ToggleProxyMenu_f);
 
 	Cmd_AddCommand ("menu_main", M_Menu_Main_f);
 #ifndef CLIENTONLY
@@ -2808,7 +2858,7 @@ void M_Init (void) {
 }
 
 void M_Draw (void) {
-	if (m_state == m_none || key_dest != key_menu)
+	if (m_state == m_none || key_dest != key_menu || m_state == m_proxy)
 		return;
 
 	if (!m_recursiveDraw) {
@@ -2894,6 +2944,10 @@ void M_Draw (void) {
 
 		case m_video:
 			M_Video_Draw ();
+			break;
+
+		case m_proxy:
+			M_Proxy_Draw ();
 			break;
 
 		case m_help:
@@ -2999,6 +3053,10 @@ void M_Keydown (int key, int unichar) {
 
 		case m_video:
 			M_Video_Key (key);
+			return;
+
+		case m_proxy:
+			M_Proxy_Key (key);
 			return;
 
 		case m_help:
