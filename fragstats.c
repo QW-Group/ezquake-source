@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the included (GNU.txt) GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: fragstats.c,v 1.17 2006-11-18 12:03:35 johnnycz Exp $
+    $Id: fragstats.c,v 1.18 2007-01-09 12:33:50 oldmanuk Exp $
 */
 
 #include "quakedef.h"
@@ -30,22 +30,22 @@ cvar_t cl_loadFragfiles = {"cl_loadFragfiles", "1"};
 
 #define MAX_WEAPON_CLASSES		64
 #define MAX_FRAG_DEFINITIONS	512
-#define MAX_FRAGMSG_LENGTH		256	
+#define MAX_FRAGMSG_LENGTH		256
 
 typedef enum msgtype_s {
-	mt_fragged,	
-	mt_frags,	
-	mt_tkills,	
-	mt_tkilled,	
+	mt_fragged,
+	mt_frags,
+	mt_tkills,
+	mt_tkilled,
 
-	mt_death,	
-	mt_suicide,	
-	mt_frag,	
-	mt_tkill,	
+	mt_death,
+	mt_suicide,
+	mt_frag,
+	mt_tkill,
 	mt_tkilled_unk,
 	mt_flagtouch,
 	mt_flagdrop,
-	mt_flagcap} 
+	mt_flagcap}
 msgtype_t;
 
 typedef struct wclass_s {
@@ -62,17 +62,17 @@ typedef struct fragmsg_s {
 } fragmsg_t;
 
 typedef struct fragdef_s {
-	qbool	active;		
-	qbool	flagalerts;	
+	qbool	active;
+	qbool	flagalerts;
 
-	int			version;	
-	char		*gamedir;	
+	int			version;
+	char		*gamedir;
 
-	char		*title;		
+	char		*title;
 	char		*description;
-	char		*author;	
-	char		*email;		
-	char		*webpage;	
+	char		*author;
+	char		*email;
+	char		*webpage;
 
 	fragmsg_t	*fragmsgs[MAX_FRAG_DEFINITIONS];
 	fragmsg_t	msgdata[MAX_FRAG_DEFINITIONS];
@@ -86,7 +86,7 @@ static int num_wclasses;
 static int fragmsg1_indexes[26];
 
 
-#define MYISLOWER(c)	(c >= 'a' && c <= 'z')	
+#define MYISLOWER(c)	(c >= 'a' && c <= 'z')
 int Compare_FragMsg (const void *p1, const void *p2) {
 	unsigned char a, b;
 	char *s, *s1, *s2;
@@ -104,7 +104,7 @@ int Compare_FragMsg (const void *p1, const void *p2) {
 
 	if (MYISLOWER(a) && MYISLOWER(b)) {
 		return (a != b) ? a - b : -1 * strcasecmp(s1, s2);
-	} else {	
+	} else {
 		return MYISLOWER(a) ? 1 : MYISLOWER(b) ? -1 : a != b ? a - b : -1 * strcasecmp(s1, s2);
 	}
 }
@@ -158,7 +158,7 @@ static void InitFragDefs(void) {
 	memset(wclasses, 0, sizeof(wclasses));
 
 	wclasses[0].name = Q_strdup("Unknown");
-	num_wclasses = 1;	
+	num_wclasses = 1;
 
 	#undef CHECK_AND_FREE
 }
@@ -238,10 +238,10 @@ static void LoadFragFile(char *filename, qbool quiet) {
 			} else {
 				_check_version_defined;
 				Com_Printf("Fragfile warning (line %d): unexpected token \"%s\"\n", line, Cmd_Argv(1));
-				goto nextline;	
+				goto nextline;
 			}
 		} else if (!strcasecmp(Cmd_Argv(0), "#META")) {
-		
+
 			_check_version_defined;
 			_checkargs(3);
 			if (!strcasecmp(Cmd_Argv(1), "TITLE")) {
@@ -261,7 +261,7 @@ static void LoadFragFile(char *filename, qbool quiet) {
 		} else if (!strcasecmp(Cmd_Argv(0), "#DEFINE")) {
 			_check_version_defined;
 			if (!strcasecmp(Cmd_Argv(1), "WEAPON_CLASS") || !strcasecmp(Cmd_Argv(1), "WC")) {
-			
+
 				_checkargs2(4, 5);
 				token = Cmd_Argv(2);
 				if (!strcasecmp(token, "NOWEAPON") || !strcasecmp(token, "NONE") || !strcasecmp(token, "NULL")) {
@@ -285,7 +285,7 @@ static void LoadFragFile(char *filename, qbool quiet) {
 					wclasses[num_wclasses].name = Q_strdup(Cmd_Argv(4));
 				num_wclasses++;
 			} else if (	!strcasecmp(Cmd_Argv(1), "OBITUARY") || !strcasecmp(Cmd_Argv(1), "OBIT")) {
-			
+
 				if (!strcasecmp(Cmd_Argv(2), "PLAYER_DEATH")) {
 					_checkargs(5);
 					msgtype = mt_death;
@@ -353,7 +353,7 @@ static void LoadFragFile(char *filename, qbool quiet) {
 				fragdefs.msgdata[fragdefs.num_fragmsgs].msg2 = (c == 6) ? Q_strdup(Cmd_Argv(5)) : NULL;
 				fragdefs.num_fragmsgs++;
 			} else if (!strcasecmp(Cmd_Argv(1), "FLAG_ALERT") || !strcasecmp(Cmd_Argv(1), "FLAG_MSG")) {
-			
+
 				_checkargs(4);
 				if
 				(
@@ -411,7 +411,7 @@ nextline:
 	}
 
 	if (fragdefs.num_fragmsgs) {
-	
+
 		for (i = 0; i < fragdefs.num_fragmsgs; i++)
 			fragdefs.fragmsgs[i] = &fragdefs.msgdata[i];
 		qsort(fragdefs.fragmsgs, fragdefs.num_fragmsgs, sizeof(fragmsg_t *), Compare_FragMsg);
@@ -427,7 +427,7 @@ nextline:
 		goto end;
 	}
 
-end:	
+end:
 	Hunk_FreeToLowMark(lowmark);
 }
 
@@ -496,19 +496,19 @@ static void Stats_ParsePrintLine(char *s, cfrags_format *cff) {
 				continue;
 			if (end_Search == -1)
 				end_Search = fragdefs.num_fragmsgs;
-		
+
 
 			for (j = start_search; j < end_Search; j++) {
 				start = s + p1len;
 				fragmsg = fragdefs.fragmsgs[j];
 				msg1len = strlen(fragmsg->msg1);
 				if (!strncmp(start, fragmsg->msg1, msg1len)) {
-				
+
 					if (
-							fragmsg->type == mt_fragged || fragmsg->type == mt_frags || 
+							fragmsg->type == mt_fragged || fragmsg->type == mt_frags ||
 							fragmsg->type == mt_tkills || fragmsg->type == mt_tkilled
 					) {
-					
+
 						for (k = 0; k < MAX_CLIENTS; k++) {
 							start = s + p1len + msg1len;
 							player2 = &cl.players[k];
@@ -521,7 +521,7 @@ static void Stats_ParsePrintLine(char *s, cfrags_format *cff) {
 								cff->p2len = p2len;
 								cff->p2col = player2->topcolor;
 								if (fragmsg->msg2) {
-								
+
 									if (!*(start = s + p1len + msg1len + p2len))
 										continue;
 
@@ -530,19 +530,19 @@ static void Stats_ParsePrintLine(char *s, cfrags_format *cff) {
 										goto foundmatch;
 								} else {
 									goto foundmatch;
-								}							
+								}
 							}
 						}
 					} else {
 						goto foundmatch;
 					}
-				
+
 				}
 			}
 		}
 	}
 
-	return;	
+	return;
 //VULT DISPLAY DEATHS
 /*foundmatch:
 	i = player1 - cl.players;
@@ -561,7 +561,7 @@ static void Stats_ParsePrintLine(char *s, cfrags_format *cff) {
 		break;
 
 	case mt_fragged:
-	case mt_frags:	
+	case mt_frags:
 		killer = (fragmsg->type == mt_fragged) ? j : i;
 		victim = (fragmsg->type == mt_fragged) ? i : j;
 
@@ -580,7 +580,7 @@ static void Stats_ParsePrintLine(char *s, cfrags_format *cff) {
 		break;
 
 	case mt_tkilled:
-	case mt_tkills:	
+	case mt_tkills:
 		killer = (fragmsg->type == mt_tkilled) ? j : i;
 		victim = (fragmsg->type == mt_tkilled) ? i : j;
 
@@ -588,14 +588,14 @@ static void Stats_ParsePrintLine(char *s, cfrags_format *cff) {
 		fragstats[killer].totalteamkills++;
 
 		fragstats[victim].teamdeaths[killer]++;
-		fragstats[victim].totaldeaths++;	
+		fragstats[victim].totaldeaths++;
 		break;
 
 	case mt_tkilled_unk:
 		fragstats[i].totaldeaths++;
 		break;
 
-	case mt_tkill:	
+	case mt_tkill:
 		fragstats[i].totalteamkills++;
 		break;
 
@@ -649,7 +649,7 @@ foundmatch:
 		break;
 
 	case mt_fragged:
-	case mt_frags:	
+	case mt_frags:
 		cff->isFragMsg = true;
 		killer = (fragmsg->type == mt_fragged) ? j : i;
 		victim = (fragmsg->type == mt_fragged) ? i : j;
@@ -660,7 +660,7 @@ foundmatch:
 		fragstats[victim].totaldeaths++;
 		fragstats[victim].wdeaths[fragmsg->wclass_index]++;
 #ifdef GLQUAKE
-		VX_TrackerFragXvsY(victim, killer, fragmsg->wclass_index, 
+		VX_TrackerFragXvsY(victim, killer, fragmsg->wclass_index,
 				fragstats[victim].wdeaths[fragmsg->wclass_index], fragstats[killer].wkills[fragmsg->wclass_index]);
 		fragstats[killer].streak++;
 		VX_TrackerStreak(killer, fragstats[killer].streak);
@@ -681,7 +681,7 @@ foundmatch:
 		break;
 
 	case mt_tkilled:
-	case mt_tkills:	
+	case mt_tkills:
 		cff->isFragMsg = true;
 		killer = (fragmsg->type == mt_tkilled) ? j : i;
 		victim = (fragmsg->type == mt_tkilled) ? i : j;
@@ -692,7 +692,7 @@ foundmatch:
 		fragstats[victim].teamdeaths[killer]++;
 		fragstats[victim].totaldeaths++;
 #ifdef GLQUAKE
-		VX_TrackerTK_XvsY(victim, killer, fragmsg->wclass_index, 
+		VX_TrackerTK_XvsY(victim, killer, fragmsg->wclass_index,
 					fragstats[killer].totalteamkills, fragstats[victim].teamdeaths[killer],
 					fragstats[killer].totalteamkills, fragstats[killer].teamkills[victim]);
 		VX_TrackerStreakEnd(victim, killer, fragstats[victim].streak);
@@ -710,10 +710,10 @@ foundmatch:
 #endif
 		break;
 
-	case mt_tkill:	
+	case mt_tkill:
 		cff->isFragMsg = true;
 		fragstats[i].totalteamkills++;
-#ifdef GLQUAKE	
+#ifdef GLQUAKE
 		VX_TrackerOddTeamkill(i, fragmsg->wclass_index, fragstats[i].totalteamkills);
 // not enough data to stop streaks of killed man
 #endif
@@ -730,7 +730,7 @@ foundmatch:
 
 	case mt_flagdrop:
 		fragstats[i].fumbles++;
-#ifdef GLQUAKE	
+#ifdef GLQUAKE
 		if (cl.playernum == i || (i == Cam_TrackNum() && cl.spectator))
 			VX_TrackerFlagDrop(fragstats[i].fumbles);
 		flag_dropped = true;
@@ -739,7 +739,7 @@ foundmatch:
 
 	case mt_flagcap:
 		fragstats[i].captures++;
-#ifdef GLQUAKE	
+#ifdef GLQUAKE
 		if (cl.playernum == i || (i == Cam_TrackNum() && cl.spectator))
 			VX_TrackerFlagCapture(fragstats[i].captures);
 #endif
@@ -867,3 +867,4 @@ char *GetWeaponName (int num)
 {
 	return wclasses[num].name;
 }
+
