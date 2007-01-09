@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.57 2007-01-09 20:09:52 johnnycz Exp $
+	$Id: menu.c,v 1.58 2007-01-09 21:54:35 johnnycz Exp $
 
 */
 
@@ -1217,10 +1217,16 @@ void M_Proxy_Key (int key) {
 
 	// the menu_proxy module doesn't know which key user has bound to toggleproxymenu action
 	M_FindKeysForCommand("toggleproxymenu", togglekeys);
-
 	if ((key == togglekeys[0]) || (key == togglekeys[1])) {
 		Menu_Proxy_Toggle(); 
 		M_LeaveMenus();
+		return;
+	}
+
+	// ppl are used to access console even when in qizmo menu
+	M_FindKeysForCommand("toggleconsole", togglekeys);
+	if ((key == togglekeys[0]) || (key == togglekeys[1])) {
+		Con_ToggleConsole_f();
 		return;
 	}
 

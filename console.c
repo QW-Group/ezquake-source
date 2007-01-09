@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.37 2007-01-09 20:09:52 johnnycz Exp $
+	$Id: console.c,v 1.38 2007-01-09 21:54:33 johnnycz Exp $
 */
 // console.c
 
@@ -236,8 +236,9 @@ void Con_ToggleConsole_f (void) {
 
 	if (key_dest == key_console) {
 		if (!SCR_NEED_CONSOLE_BACKGROUND)
-			key_dest = key_game;
+			key_dest = key_dest_beforecon;
 	} else {
+		key_dest_beforecon = key_dest;
 		key_dest = key_console;
 	}
 
