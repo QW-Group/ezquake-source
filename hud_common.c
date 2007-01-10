@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.109 2007-01-03 19:03:17 disconn3ct Exp $
+	$Id: hud_common.c,v 1.110 2007-01-10 13:37:31 oldmanuk Exp $
 */
 //
 // common HUD elements
@@ -2533,13 +2533,13 @@ static void HUD_Sort_Scoreboard(int flags)
 	// Sort teams.
 	if(flags & HUD_SCOREBOARD_SORT_TEAMS)
 	{
-		qsort(sorted_teams, n_teams, sizeof(sort_teams_info_t), HUD_CompareTeams);
+		qsort(sorted_teams, n_teams, sizeof(sort_teams_info_t), (__compar_fn_t) HUD_CompareTeams);
 	}
 
 	// Sort players.
 	if(flags & HUD_SCOREBOARD_SORT_PLAYERS)
 	{
-		qsort(sorted_players, n_players + n_spectators, sizeof(sort_players_info_t), HUD_ComparePlayers);
+		qsort(sorted_players, n_players + n_spectators, sizeof(sort_players_info_t), (__compar_fn_t) HUD_ComparePlayers);
 	}
 }
 

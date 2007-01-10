@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.12 2007-01-06 11:59:17 johnnycz Exp $
+    $Id: q_shared.c,v 1.13 2007-01-10 13:37:31 oldmanuk Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -444,7 +444,7 @@ unsigned long Com_HashKey (const char *str) {
 
 	// the (c&~32) makes it case-insensitive
 	// hash function known as sdbm, used in gawk
-	while (c = *str++)
+	while ((c = *str++))
         hash = (c &~ 32) + (hash << 6) + (hash << 16) - hash;
 
     return hash;
