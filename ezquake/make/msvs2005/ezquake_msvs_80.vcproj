@@ -921,6 +921,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\fs.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\host.c"
 					>
 				</File>
