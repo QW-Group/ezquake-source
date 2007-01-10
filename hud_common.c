@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.110 2007-01-10 13:37:31 oldmanuk Exp $
+	$Id: hud_common.c,v 1.111 2007-01-10 19:55:56 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -2388,8 +2388,11 @@ static int						n_players;
 static int						n_spectators;
 static qbool					sort_teamsort = false;
 
-static int HUD_ComparePlayers(const sort_players_info_t *p1, const sort_players_info_t *p2)
+static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 {
+	const sort_players_info_t *p1 = vp1;
+	const sort_players_info_t *p2 = vp2;
+
     int r = 0;
     player_info_t *i1 = &cl.players[p1->playernum];
     player_info_t *i2 = &cl.players[p2->playernum];
@@ -2431,9 +2434,12 @@ static int HUD_ComparePlayers(const sort_players_info_t *p1, const sort_players_
     return -r;
 }
 
-static int HUD_CompareTeams(const sort_teams_info_t *t1, const sort_teams_info_t *t2)
+static int HUD_CompareTeams(const void *vt1, const void *vt2)
 {
 	int r = 0;
+	const sort_teams_info_t *t1 = vt1;
+	const sort_teams_info_t *t2 = vt2;
+
 	r = (t1->frags - t2->frags);
 	r = !r ? strcmp(t1->name, t2->name) : r;
 
@@ -2533,13 +2539,13 @@ static void HUD_Sort_Scoreboard(int flags)
 	// Sort teams.
 	if(flags & HUD_SCOREBOARD_SORT_TEAMS)
 	{
-		qsort(sorted_teams, n_teams, sizeof(sort_teams_info_t), (__compar_fn_t) HUD_CompareTeams);
+		qsort(sorted_teams, n_teams, sizeof(sort_teams_info_t), HUD_CompareTeams);
 	}
 
 	// Sort players.
 	if(flags & HUD_SCOREBOARD_SORT_PLAYERS)
 	{
-		qsort(sorted_players, n_players + n_spectators, sizeof(sort_players_info_t), (__compar_fn_t) HUD_ComparePlayers);
+		qsort(sorted_players, n_players + n_spectators, sizeof(sort_players_info_t), HUD_ComparePlayers);
 	}
 }
 
