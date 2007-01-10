@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.64 2007-01-09 20:09:52 johnnycz Exp $
+	$Id: cl_parse.c,v 1.65 2007-01-10 09:30:46 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -442,6 +442,8 @@ void CL_ProxyEnter (void) {
 	if (!strcmp(cl.levelname, "Qizmo menu") ||	// qizmo detection
 		strstr(cl.serverinfo, "*QTV")) {		// fteqtv detection
 		M_EnterProxyMenu();
+	} else if (key_dest == key_menu && m_state == m_proxy) {
+		M_LeaveMenus();
 	}
 }
 
