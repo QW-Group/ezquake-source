@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.119 2007-01-09 20:09:52 johnnycz Exp $
+	$Id: cl_main.c,v 1.120 2007-01-10 12:35:38 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1280,6 +1280,8 @@ void CL_CalcFPS(void)
 	if (lastfps > 10.0 && lastfps < cls.min_fps) cls.min_fps = lastfps;
 }
 
+void CL_QTVPoll (void);
+
 //#fps:
 qbool physframe;
 double physframetime;
@@ -1588,6 +1590,8 @@ void CL_Frame (double time) {
 	fps_count++;
 
 	CL_CalcFPS(); // HUD -> hexum
+
+	CL_QTVPoll();
 }
 
 //============================================================================

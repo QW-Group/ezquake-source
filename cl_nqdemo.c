@@ -90,6 +90,10 @@ static qbool CL_GetNQDemoMessage (void)
 {
 	int i;
 	float f;
+	extern qbool pb_ensure(void);
+
+	if(!pb_ensure())
+		return false;
 
 	// decide if it is time to grab the next message		
 	if (cls.state == ca_active				// always grab until fully connected
@@ -1245,6 +1249,10 @@ void NQD_StartPlayback (void)
 {
 	byte	c;
 	qbool	neg = false;
+
+	extern qbool pb_ensure(void);
+
+	pb_ensure(); // FIXME: zzzz, is it possible to put "track parsing" somewhere in CL_GetNQDemoMessage() ????
 
 	// parse forced cd track
 	for (c = 0; c != '\n'; ) {

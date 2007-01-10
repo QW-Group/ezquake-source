@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.28 2007-01-06 00:08:30 tonik Exp $
+	$Id: sys_win.c,v 1.29 2007-01-10 12:35:38 qqshka Exp $
 
 */
 // sys_win.c
@@ -579,6 +579,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	double time, oldtime, newtime;
 	MEMORYSTATUS lpBuffer;
 	int bIsEnabled = 0;
+	char *qtvfile = NULL;
 
 	global_hInstance = hInstance;
 
@@ -592,6 +593,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 #if !defined(CLIENTONLY)
 	dedicated = COM_CheckParm ("-dedicated");
 #endif
+
+	if (COM_Argc() >= 2) {
+		qtvfile = COM_Argv(1);
+		if (qtvfile[0] == '-' || qtvfile[0] == '+') // yea, i am not check .qtv file extension
+			qtvfile = NULL;
+	}
 
 	if (dedicated) {
 		if (!AllocConsole())
@@ -635,6 +642,18 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	Host_Init (argc, argv, memsize);
 
 	oldtime = Sys_DoubleTime ();
+
+	if (qtvfile) {
+		char tmp[1024];
+		Com_DPrintf("QTVFILE: %s\n", qtvfile);
+
+		if (qtvfile[0] == '"') // seems file has open and closing " alredy
+			snprintf(tmp, sizeof(tmp), "qtvplay \"#%s\n", qtvfile+1);
+		else
+			snprintf(tmp, sizeof(tmp), "qtvplay \"#%s\"\n", qtvfile);
+
+		Cbuf_AddText(tmp);
+	}
 
     /* main window message loop */
 	while (1) {
