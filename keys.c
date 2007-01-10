@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.43 2007-01-09 21:54:34 johnnycz Exp $
+    $Id: keys.c,v 1.44 2007-01-10 13:35:59 oldmanuk Exp $
 
 */
 
@@ -837,7 +837,7 @@ void CompleteName(void) {
 			if ((127 & t[i]) == ' ') {
 				int k;
 
-				if ((k = wcslen(t)) < MAXCMDLINE - 2) {
+				if ((k = qwcslen(t)) < MAXCMDLINE - 2) {
 					memmove(t + 1, t, (k + 1)*sizeof(wchar));
 					t[k + 2] = 0;
 					t[k + 1] = t[0] = '\"';
