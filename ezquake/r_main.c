@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_main.c,v 1.16 2006-12-06 01:00:30 cokeman1982 Exp $
+	$Id: r_main.c,v 1.17 2007-01-10 13:37:31 oldmanuk Exp $
 
 */
 
@@ -642,6 +642,9 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 			break;
 		case mod_alias:
 			R_AliasDrawModel (currententity);
+			break;
+		case mod_brush:
+			/* ignore */
 			break;
 		}
 	}

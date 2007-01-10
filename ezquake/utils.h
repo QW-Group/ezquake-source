@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.h,v 1.12 2007-01-05 09:50:28 qqshka Exp $
+	$Id: utils.h,v 1.13 2007-01-10 13:37:31 oldmanuk Exp $
 
 */
 
@@ -56,7 +56,7 @@ int Utils_TF_TeamToColor(char *);
 void Replace_In_String (char *src,int n, char delim, int arg, ...);
 
 qbool Utils_RegExpMatch(char *regexp, char *matchstring);
-qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, char **resultstring, int *resultlength, int group);
+qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **resultstring, int *resultlength, int group);
 
 float f_rnd( float from, float to );
 int i_rnd( int from, int to );

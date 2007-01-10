@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.30 2007-01-05 09:50:28 qqshka Exp $
+	$Id: utils.c,v 1.31 2007-01-10 13:37:31 oldmanuk Exp $
 */
 
 #include "quakedef.h"
@@ -603,14 +603,14 @@ qbool Utils_RegExpMatch(char *regexp, char *matchstring)
 {
 	int offsets[HUD_REGEXP_OFFSET_COUNT];
 	pcre *re = NULL;
-	char *error = NULL;
+	const char **error = NULL;
 	int erroffset = 0;
 	int match = 0;
 
 	re = pcre_compile(
 			regexp,				// The pattern.
 			PCRE_CASELESS,		// Case insensitive.
-			&error,				// Error message.
+			error,				// Error message.
 			&erroffset,			// Error offset.
 			NULL);				// use default character tables.
 
@@ -657,18 +657,18 @@ qbool Utils_RegExpMatch(char *regexp, char *matchstring)
 	return false;
 }
 
-qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, char **resultstring, int *resultlength, int group)
+qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **resultstring, int *resultlength, int group)
 {
 	int offsets[HUD_REGEXP_OFFSET_COUNT];
 	pcre *re = NULL;
-	char *error = NULL;
+	const char **error = NULL;
 	int erroffset = 0;
 	int match = 0;
 
 	re = pcre_compile(
 			regexp,				// The pattern.
 			PCRE_CASELESS,		// Case insensitive.
-			&error,				// Error message.
+			error,				// Error message.
 			&erroffset,			// Error offset.
 			NULL);				// use default character tables.
 

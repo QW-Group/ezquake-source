@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.38 2007-01-09 21:54:33 johnnycz Exp $
+	$Id: console.c,v 1.39 2007-01-10 13:37:31 oldmanuk Exp $
 */
 // console.c
 
@@ -534,7 +534,7 @@ void Con_PrintW (wchar *txt) {
 
 	if (!(Print_flags[Print_current] & PR_LOG_SKIP)) {
 		if (qconsole_log) {
-			fprintf(qconsole_log, "%s", txt);
+			fprintf(qconsole_log, "%s", (char*)txt);
 			fflush(qconsole_log);
 		}
 		if (Log_IsLogging()) {
