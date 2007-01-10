@@ -16,13 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.53 2007-01-09 01:14:51 qqshka Exp $
+	$Id: cl_demo.c,v 1.54 2007-01-10 12:35:38 qqshka Exp $
 */
 
 #include "quakedef.h"
 #include "winquake.h"
 #include "movie.h"
 #include "menu_demo.h"
+#include "qtv.h"
 
 float olddemotime, nextdemotime;		
 
@@ -487,11 +488,112 @@ static void CL_WriteStartupData (void) {
 //								DEMO READING
 //=============================================================================
 
-FILE *playbackfile = NULL;
+int CL_Demo_Peek(void *buf, int size);
 
+vfsfile_t *playbackfile = NULL;
+
+char pb_buf[1024*10];
+char pb_tmp_buf[sizeof(pb_buf)];
+int pb_s = 0, pb_cnt = 0;
+qbool pb_eof = false;
+
+void CL_Demo_PB_Init(void *buf, int buflen) {
+	if (buflen < 0 || buflen > (int)sizeof(pb_buf))
+		Sys_Error("CL_Demo_PB_Init: buflen < 0"); // ffs
+
+	memcpy(pb_buf, buf, buflen);
+	pb_s = 0;
+	pb_cnt = buflen;
+	pb_eof = false;
+}
+
+int pb_raw_read(void *buf, int size) {
+	vfserrno_t err;
+	int r = VFS_READ(playbackfile, buf, size, &err);
+
+	if (size > 0 && !r && err == VFSERR_EOF) // size > 0 mean detect EOF only if we actually trying read some data
+		pb_eof = true;
+
+	return r;
+}
+
+qbool pb_ensure(void) {
+	int need, got = 0;
+
+	if (cl_shownet.value == 3)
+		Com_Printf(" %d", pb_cnt);
+
+	if (cls.mvdplayback && pb_cnt > 0 ) { // try decrease pb_buf[]
+		pb_raw_read(NULL, 0); // at the same time increase internal TCP buffer
+		if (pb_cnt > 2000) // seems theoretical size of one MVD packet is 1400, so 2000 must be safe to parse something
+			return true;
+
+		CL_Demo_Peek(pb_tmp_buf, pb_cnt);
+		if (ConsistantMVDData(pb_tmp_buf, pb_cnt))
+			return true;
+	}
+
+	need = sizeof(pb_buf); // we need full buffer
+	need -= pb_cnt; // alredy have something
+	need = min(need, (int)sizeof(pb_buf) -pb_s - pb_cnt);
+	need = max(0, need);
+	if (need)
+		pb_cnt += (got = pb_raw_read(pb_buf + pb_s + pb_cnt, need));
+
+	if (got == need) {
+		int tmp = (pb_s + pb_cnt) % (int)sizeof(pb_buf);
+		need = sizeof(pb_buf);
+		need -= pb_cnt;
+		pb_cnt += pb_raw_read(pb_buf + tmp, need);
+	}
+
+	if (pb_cnt == (int)sizeof(pb_buf) || pb_eof)
+		return true; // return true if we have full buffer or get EOF
+
+	if (cls.mvdplayback && pb_cnt) { // not enough data in buffer, check do we have at least one message in buffer
+		CL_Demo_Peek(pb_tmp_buf, pb_cnt);
+
+		return !!ConsistantMVDData(pb_tmp_buf, pb_cnt);
+	}
+
+	return false;
+}
+
+int pb_read(void *buf, int size, qbool peek) {
+	int need, have = 0;
+
+	if (size < 0)
+		Sys_Error("pb_read: size < 0"); // ffs
+
+	need = min(pb_cnt, size);
+	need -= have;
+	need = min(need, (int)sizeof(pb_buf) - pb_s);
+	memcpy((byte*)buf + have, (byte*)pb_buf + pb_s, need);
+	have += need;
+
+	need = min(pb_cnt, size);
+	need -= have;
+	need = min(need, pb_s);
+	memcpy((byte*)buf + have, pb_buf, need);
+	have += need;
+
+	if (!peek) {
+		pb_s += have;
+		pb_s = pb_s % (int)sizeof(pb_buf);
+		pb_cnt -= have;
+	}
+
+	return have;
+}
+
+int CL_Demo_Peek(void *buf, int size) {
+	if (pb_read(buf, size, true) != size)
+		Host_Error("Unexpected end of demo");
+	return 1;
+}
 
 int CL_Demo_Read(void *buf, int size) {
-	if (fread(buf, size, 1, playbackfile) != 1)
+	if (pb_read(buf, size, false) != size)
 		Host_Error("Unexpected end of demo");
 	return 1;
 }
@@ -525,9 +627,12 @@ qbool CL_GetDemoMessage (void) {
 	}
 
 readnext:
+	if (!pb_ensure())
+		return false;
+
 	// read the time from the packet
 	if (cls.mvdplayback) {
-		CL_Demo_Read(&newtime, sizeof(newtime));
+		CL_Demo_Peek(&newtime, SIZEOF_DEMOTIME); // peek inside, but no read
 		demotime =  prevtime + newtime * 0.001;
 		if (cls.demotime - nextdemotime > 0.0001 && nextdemotime != demotime) {
 			olddemotime = nextdemotime;
@@ -538,7 +643,7 @@ readnext:
 			nextdemotime = demotime;
 		}
 	} else {
-		CL_Demo_Read(&demotime, sizeof(demotime));
+		CL_Demo_Peek(&demotime, SIZEOF_DEMOTIME); // peek inside, but no read
 		demotime = LittleFloat(demotime);
 	}
 
@@ -550,7 +655,7 @@ readnext:
 			cls.td_lastframe = demotime;
 		} else if (demotime > cls.td_lastframe) {
 			cls.td_lastframe = demotime;
-			fseek(playbackfile, ftell(playbackfile) - SIZEOF_DEMOTIME, SEEK_SET);	// rewind back to time
+//			fseek(playbackfile, ftell(playbackfile) - SIZEOF_DEMOTIME, SEEK_SET);	// rewind back to time
 			return false;		// already read this frame's message
 		}
 		if (!cls.td_starttime && cls.state == ca_active) {
@@ -561,19 +666,28 @@ readnext:
 	} else if (!(cl.paused & PAUSED_SERVER) && cls.state == ca_active) {	// always grab until fully connected
 		if (cls.mvdplayback) {
 			if (nextdemotime < demotime) {
-				fseek(playbackfile, ftell(playbackfile) - SIZEOF_DEMOTIME, SEEK_SET);	// rewind back to time
+//				fseek(playbackfile, ftell(playbackfile) - SIZEOF_DEMOTIME, SEEK_SET);	// rewind back to time
 				return false;		// don't need another message yet
 			}
 		} else {
 			if (cls.demotime < demotime) {
 				if (cls.demotime + 1.0 < demotime)
 					cls.demotime = demotime - 1.0;	// too far back
-				fseek(playbackfile, ftell(playbackfile) - SIZEOF_DEMOTIME, SEEK_SET);	// rewind back to time
+//				fseek(playbackfile, ftell(playbackfile) - SIZEOF_DEMOTIME, SEEK_SET);	// rewind back to time
 				return false;		// don't need another message yet
 			}
 		}
 	} else {
 		cls.demotime = demotime; // we're warping
+	}
+
+	// actually read the time from the packet, so we does't need fseek
+	if (cls.mvdplayback) {
+		byte dummy_newtime;
+		CL_Demo_Read(&dummy_newtime, SIZEOF_DEMOTIME);
+	} else {
+		float dummy_demotime;
+		CL_Demo_Read(&dummy_demotime, SIZEOF_DEMOTIME);
 	}
 
 	if (cls.mvdplayback)
@@ -1178,7 +1292,7 @@ void CL_CheckQizmoCompletion (void) {
 	if (qwz_unpacking) {
 		qwz_unpacking = false;
 
-		if (!(playbackfile = fopen (tempqwd_name, "rb"))) {
+		if (!(playbackfile = FS_OpenVFS (tempqwd_name, "rb", FS_NONE_OS))) {
 			Com_Printf ("Error: Couldn't open %s\n", tempqwd_name);
 			qwz_playback = false;
 			cls.demoplayback = cls.timedemo = false;
@@ -1224,7 +1338,7 @@ static void PlayQWZDemo (void) {
 			strlcpy (qwz_name, va("%s/%s", cls.gamedir, name), sizeof(qwz_name));
 	}
 
-	if (playbackfile = fopen(name, "rb")) {
+	if (playbackfile = FS_OpenVFS(name, "rb", FS_NONE_OS)) {
 		// either we got full system path
 		strlcpy(qwz_name, name, sizeof(qwz_name));
 	} else {
@@ -1233,13 +1347,13 @@ static void PlayQWZDemo (void) {
 		qwz_name[sizeof(qwz_name) - 1] = 0;
 
 		// check if the file exists
-		if (!(playbackfile = fopen (qwz_name, "rb"))) {
+		if (!(playbackfile = FS_OpenVFS (qwz_name, "rb", FS_NONE_OS))) {
 			Com_Printf ("Error: Couldn't open %s\n", name);
 			return;
 		}
 	}
 
-	fclose (playbackfile);
+	VFS_CLOSE (playbackfile);
 	playbackfile = NULL;
 
 	strlcpy (tempqwd_name, qwz_name, sizeof(tempqwd_name) - 4);
@@ -1251,7 +1365,7 @@ static void PlayQWZDemo (void) {
 		p = tempqwd_name + strlen(tempqwd_name);
 	strcpy (p, ".qwd");
 
-	if ((playbackfile = fopen (tempqwd_name, "rb")))	// if .qwd already exists, ust play it
+	if ((playbackfile = FS_OpenVFS(tempqwd_name, "rb", FS_NONE_OS)))	// if .qwd already exists, ust play it
 		return;
 
 	Com_Printf ("Unpacking %s...\n", COM_SkipPath(name));
@@ -1431,7 +1545,7 @@ void CL_StopPlayback (void)
 		Movie_Stop();
 
 	if (playbackfile)
-		fclose (playbackfile);
+		VFS_CLOSE (playbackfile);
 
 	playbackfile = NULL;
 	cls.mvdplayback = cls.demoplayback = cls.nqdemoplayback = false;
@@ -1524,23 +1638,24 @@ void CL_Play_f (void)
 			// Look for the file in the above directory if it has ../ prepended to the filename.
 			if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
 			{
-				playbackfile = fopen (va("%s/%s", com_basedir, name + 3), "rb");
+				playbackfile = FS_OpenVFS (va("%s/%s", com_basedir, name + 3), "rb", FS_NONE_OS);
 			}
 			else
 			{
-				FS_FOpenFile (name, &playbackfile);
+// FIXME: no paks support yet
+//				FS_FOpenFile (name, &playbackfile);
 			}
 
 			// Look in the demo dir (user specified).
 			if (!playbackfile)
 			{
-				playbackfile = fopen (va("%s/%s/%s", com_basedir, demo_dir.string, name), "rb");
+				playbackfile = FS_OpenVFS (va("%s/%s/%s", com_basedir, demo_dir.string, name), "rb", FS_NONE_OS);
 			}
 
 			// Check the full system path (Run a demo anywhere on the file system).
 			if (!playbackfile)
 			{
-				playbackfile = fopen (name, "rb");
+				playbackfile = FS_OpenVFS (name, "rb", FS_NONE_OS);
 			}
 		}
 
@@ -1564,7 +1679,9 @@ void CL_Play_f (void)
 	cls.demoplayback	= true;
 	cls.mvdplayback		= !strcasecmp(COM_FileExtension(name), "mvd");	
 	cls.nqdemoplayback	= !strcasecmp(COM_FileExtension(name), "dem");
-	
+
+	CL_Demo_PB_Init(NULL, 0); // init some buffers
+
 	// NetQuake demo support.
 	if (cls.nqdemoplayback)
 	{
@@ -1606,6 +1723,350 @@ void CL_TimeDemo_f (void) {
 	cls.td_startframe = cls.framecount;
 	cls.td_lastframe = -1;		// get a new message this frame
 }
+
+void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen);
+
+char qtvrequestbuffer[4096] = {0};
+int qtvrequestsize = 0;
+vfsfile_t *qtvrequest = NULL;
+
+void QTV_CloseRequest(qbool warn) {
+	if (qtvrequest) {
+		if (warn)
+			Com_Printf("Closing qtv request file\n");
+
+		VFS_CLOSE(qtvrequest);
+		qtvrequest = NULL;
+	}
+
+	qtvrequestsize = 0;
+}
+
+void CL_QTVPoll (void)
+{
+	vfserrno_t err;
+	char *s, *e, *colon;
+	int len, need;
+	qbool streamavailable = false;
+	qbool saidheader = false;
+
+	if (!qtvrequest)
+		return;
+
+	need = sizeof(qtvrequestbuffer);
+	need -= 1; // for null terminator
+	need -= qtvrequestsize; // probably alredy have something
+	need = max(0, need);
+	len = VFS_READ(qtvrequest, qtvrequestbuffer + qtvrequestsize, need, &err);
+
+	if (!len && err == VFSERR_EOF) {
+		QTV_CloseRequest(true); // EOF, end of polling
+		return;
+	}
+
+	qtvrequestsize += len;
+	qtvrequestbuffer[qtvrequestsize] = '\0';
+	if (!qtvrequestsize)
+		return;
+
+	//make sure it's a compleate chunk.
+	for (s = qtvrequestbuffer; *s; s++)
+	{
+		if (s[0] == '\n' && s[1] == '\n')
+			break;
+	}
+
+	if (!*s) // we does't find "\n\n"
+		return;
+
+	s = qtvrequestbuffer;
+	for (e = s; *e; )
+	{
+		if (*e == '\n')
+		{
+			*e = '\0';
+			colon = strchr(s, ':');
+			if (colon)
+			{
+				*colon++ = '\0';
+				if (!strcmp(s, "PERROR"))
+				{	//printable error
+					Com_Printf("QTV Error:\n%s\n", colon);
+				}
+				else if (!strcmp(s, "PRINT"))
+				{	//printable error
+					Com_Printf("QTV:\n%s\n", colon);
+				}
+				else if (!strcmp(s, "TERROR"))
+				{	//printable error
+					Com_Printf("QTV Error:\n%s\n", colon);
+				}
+				else if (!strcmp(s, "ADEMO"))
+				{	//printable error
+					Com_Printf("Demo%s is available\n", colon);
+				}
+				else if (!strcmp(s, "ASOURCE"))
+				{	//printable source
+					if (!saidheader)
+					{
+						saidheader=true;
+						Com_Printf("Available Sources:\n");
+					}
+					Com_Printf("%s\n", colon);
+				}
+				else if (!strcmp(s, "BEGIN"))
+					streamavailable = true;
+			}
+			else
+			{
+				if (!strcmp(s, "BEGIN"))
+					streamavailable = true;
+			}
+			//from e to s, we have a line	
+			s = e+1;
+		}
+		e++;
+	}
+
+	if (streamavailable)
+	{
+		int cnt = qtvrequestsize - (e-qtvrequestbuffer);
+
+		if (cnt >= 0) {
+			CL_QTVPlay(qtvrequest, e, cnt);
+			qtvrequest = NULL;
+			return;
+		}
+		Com_Printf("Error while parsing qtv request\n");
+	}
+
+	QTV_CloseRequest(true);
+}
+
+void CL_QTVList_f (void)
+{
+	char *connrequest;
+	vfsfile_t *newf;
+
+	if (Cmd_Argc() < 2)
+	{
+		Com_Printf("Usage: qtvlist hostname[:port]\n");
+		return;
+	}
+
+	if (!(newf = FS_OpenTCP(Cmd_Argv(1))))
+	{
+		Com_Printf("Couldn't connect to proxy\n");
+		return;
+	}
+
+	connrequest =	"QTV\n"
+					"VERSION: 1\n";
+	VFS_WRITE(newf, connrequest, strlen(connrequest));
+	connrequest =	"SOURCELIST\n";
+	VFS_WRITE(newf, connrequest, strlen(connrequest));
+	connrequest =	"\n";
+	VFS_WRITE(newf, connrequest, strlen(connrequest));
+
+	QTV_CloseRequest(true);
+	qtvrequest = newf;
+}
+
+void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
+{
+	int i;
+
+	Host_EndGame();
+
+	if (playbackfile)
+		VFS_CLOSE(playbackfile); // just in case
+	playbackfile = newf;
+
+	// Reset multiview track slots.
+	for(i = 0; i < 4; i++)
+	{
+		mv_trackslots[i] = -1;
+	}
+	nTrack1duel = nTrack2duel = 0;
+	mv_skinsforced = false;
+
+//	Com_Printf ("Playing demo from %s\n", COM_SkipPath(name));
+
+	cls.demoplayback	= true;
+	cls.mvdplayback		= true;	
+	cls.nqdemoplayback	= false;
+
+	CL_Demo_PB_Init(buf, buflen); // init some buffers
+
+	// NetQuake demo support.
+	if (cls.nqdemoplayback)
+	{
+		NQD_StartPlayback (); // may be some day qtv will stream NQ demos too...
+	}
+
+	cls.state = ca_demostart;
+	Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, 0);
+	cls.demotime = 0;
+	demostarttime = -1.0;		
+
+	olddemotime = nextdemotime = 0;	
+	cls.findtrack = true;
+	cls.lastto = cls.lasttype = 0;
+	CL_ClearPredict();
+	
+	// Recording not allowed during mvdplayback.
+	if (cls.mvdplayback && cls.demorecording)
+	{
+		CL_Stop_f();
+	}
+
+	TP_ExecTrigger ("f_demostart");
+
+	Com_Printf("Attempt to stream data\n");
+}
+
+char *strchrrev(char *str, char chr)
+{
+	char *firstchar = str;
+	for (str = str + strlen(str)-1; str>=firstchar; str--)
+		if (*str == chr)
+			return str;
+
+	return NULL;
+}
+
+void CL_QTVPlay_f (void)
+{
+	qbool raw=0;
+	char *connrequest;
+	vfsfile_t *newf;
+	char *host;
+
+//	Com_Printf("QTVPLAY %s\n", Cmd_Argv(1));
+
+	if (Cmd_Argc() < 2)
+	{
+		Com_Printf("Usage: qtvplay [stream@]hostname[:port] [password]\n");
+		return;
+	}
+
+	connrequest = Cmd_Argv(1);
+
+	if (*connrequest == '#') // this is parsing a .qtv file
+	{
+		char buffer[1024];
+		char *s;
+		FILE *f;
+		f = fopen(connrequest+1, "rt");
+		if (!f) {
+			Com_Printf("qtvplay: can't open file %s\n", connrequest+1);
+			return;
+		}
+
+		while (!feof(f))
+		{
+			fgets(buffer, sizeof(buffer)-1, f);
+			if (!strncmp(buffer, "Stream=", 7) || !strncmp(buffer, "Stream:", 7))
+			{
+				for (s = buffer + strlen(buffer)-1; s >= buffer; s--)
+				{
+					if (*s == '\r' || *s == '\n')
+						*s = 0;
+					else
+						break;
+				}
+				s = buffer+8;
+				while(*s && *s <= ' ')
+					s++;
+				Cbuf_AddText(va("qtvplay \"%s\"\n", s));
+				break;
+			}
+			if (!strncmp(buffer, "Join=", 7) || !strncmp(buffer, "Join:", 7))
+			{
+				for (s = buffer + strlen(buffer)-1; s >= buffer; s--)
+				{
+					if (*s == '\r' || *s == '\n')
+						*s = 0;
+					else
+						break;
+				}
+				s = buffer+8;
+				while(*s && *s <= ' ')
+					s++;
+				Cbuf_AddText(va("join \"%s\"\n", s));
+				break;
+			}
+			if (!strncmp(buffer, "Observe=", 7) || !strncmp(buffer, "Observe:", 7))
+			{
+				for (s = buffer + strlen(buffer)-1; s >= buffer; s--)
+				{
+					if (*s == '\r' || *s == '\n')
+						*s = 0;
+					else
+						break;
+				}
+				s = buffer+8;
+				while(*s && *s <= ' ')
+					s++;
+				Cbuf_AddText(va("observe \"%s\"\n", s));
+				break;
+			}
+		}
+		fclose(f);
+		return;
+	}
+
+	host = connrequest;
+
+	connrequest = strchrrev(connrequest, '@');
+	if (connrequest)
+		host = connrequest+1;
+	newf = FS_OpenTCP(host);
+
+	if (!newf)
+	{
+		Com_Printf("Couldn't connect to proxy\n");
+		return;
+	}
+
+	host = Cmd_Argv(1);
+	if (connrequest)
+		*connrequest = '\0';
+	else
+		host = NULL;
+
+	connrequest =	"QTV\n"
+					"VERSION: 1\n";
+	VFS_WRITE(newf, connrequest, strlen(connrequest));
+	if (raw)
+	{
+		connrequest =	"RAW: 1\n";
+		VFS_WRITE(newf, connrequest, strlen(connrequest));
+	}
+	if (host)
+	{
+		connrequest =	"SOURCE: ";
+		VFS_WRITE(newf, connrequest, strlen(connrequest));
+		connrequest =	host;
+		VFS_WRITE(newf, connrequest, strlen(connrequest));
+		connrequest =	"\n";
+	}
+
+	VFS_WRITE(newf, connrequest, strlen(connrequest));
+	connrequest =	"\n";
+	VFS_WRITE(newf, connrequest, strlen(connrequest));
+
+	if (raw)
+	{
+		CL_QTVPlay(newf, NULL, 0);
+	}
+	else
+	{
+		QTV_CloseRequest(false);
+		qtvrequest = newf;
+	}
+}
+
 
 //=============================================================================
 //								DEMO TOOLS
@@ -1710,6 +2171,9 @@ void CL_Demo_Init (void) {
 
 	Cmd_AddCommand("demo_setspeed", CL_Demo_SetSpeed_f);
 	Cmd_AddCommand("demo_jump", CL_Demo_Jump_f);
+
+	Cmd_AddCommand ("qtvplay", CL_QTVPlay_f);
+	Cmd_AddCommand ("qtvlist", CL_QTVList_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
 #ifdef _WIN32

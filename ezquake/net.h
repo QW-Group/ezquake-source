@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.h,v 1.12 2006-08-03 19:55:47 disconn3ct Exp $
+    $Id: net.h,v 1.13 2007-01-10 12:35:38 qqshka Exp $
 */
 // net.h -- quake's interface to the networking layer
 
@@ -180,5 +180,8 @@ qbool Netchan_CanReliable (netchan_t *chan);
 int  UDP_OpenSocket (int port);
 void NetadrToSockadr (netadr_t *a, struct sockaddr_qstorage *s);
 void SockadrToNetadr (struct sockaddr_qstorage *s, netadr_t *a);
+
+typedef struct vfsfile_s vfsfile_t;
+vfsfile_t *FS_OpenTCP(char *name);
 
 #endif /* __NET_H__ */

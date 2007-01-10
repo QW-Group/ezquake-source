@@ -689,6 +689,9 @@
 					RelativePath="cvar.c">
 				</File>
 				<File
+					RelativePath=".\fs.c">
+				</File>
+				<File
 					RelativePath="host.c">
 				</File>
 				<File
@@ -705,6 +708,9 @@
 				</File>
 				<File
 					RelativePath=".\menu_demo.c">
+				</File>
+				<File
+					RelativePath=".\menu_proxy.c">
 				</File>
 				<File
 					RelativePath="pmove.c">
