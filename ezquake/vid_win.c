@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.19 2007-01-01 16:38:21 tonik Exp $
+	$Id: vid_win.c,v 1.20 2007-01-11 15:32:29 johnnycz Exp $
 
 */
 
@@ -1269,6 +1269,7 @@ qbool VID_SetFullDIBMode (int modenum) {
 }
 
 void VID_RestoreOldMode (int original_mode) {
+	int VID_SetMode (int modenum, unsigned char *palette);
 	static qbool	inerror = false;
 
 	if (inerror)
