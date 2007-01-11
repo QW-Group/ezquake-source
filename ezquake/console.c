@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.39 2007-01-10 13:37:31 oldmanuk Exp $
+	$Id: console.c,v 1.40 2007-01-11 18:30:31 qqshka Exp $
 */
 // console.c
 
@@ -534,15 +534,14 @@ void Con_PrintW (wchar *txt) {
 
 	if (!(Print_flags[Print_current] & PR_LOG_SKIP)) {
 		if (qconsole_log) {
-			fprintf(qconsole_log, "%s", (char*)txt);
+			char *tempbuf = wcs2str_malloc(txt);
+			fprintf(qconsole_log, "%s", tempbuf);
 			fflush(qconsole_log);
+			Q_free(tempbuf);
 		}
 		if (Log_IsLogging()) {
 			if (log_readable.value) {
-				char *s, *tempbuf;
-	
-				tempbuf = (char *) Q_malloc(qwcslen(txt) + 1);
-				strcpy(tempbuf, wcs2str(txt));
+				char *s, *tempbuf = wcs2str_malloc(txt);
 				for (s = tempbuf; *s; s++)
 					*s = readableChars[(unsigned char) *s];
 				Log_Write(tempbuf);

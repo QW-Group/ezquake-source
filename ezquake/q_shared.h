@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.15 2007-01-06 11:59:18 johnnycz Exp $
+    $Id: q_shared.h,v 1.16 2007-01-11 18:30:31 qqshka Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -176,6 +176,9 @@ wchar char2wc (char c);
 char wc2char (wchar wc);
 wchar *str2wcs (const char *str);
 char *wcs2str (const wchar *ws);
+
+char *wcs2str_malloc (const wchar *ws); // you must freed returned string after it no longer need!!!
+
 #ifdef _WIN32
 #define qwcscpy wcscpy
 #define qwcschr wcschr

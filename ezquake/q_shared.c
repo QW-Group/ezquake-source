@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.13 2007-01-10 13:37:31 oldmanuk Exp $
+    $Id: q_shared.c,v 1.14 2007-01-11 18:30:31 qqshka Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -301,6 +301,21 @@ char *wcs2str (const wchar *ws)
 	int i;
 
 	for (i = 0; i < 65536 - 1; i++) {
+		if (ws[i] == 0)
+			break;
+		buf[i] = ws[i] <= 255 ? (char)ws[i] : '?';
+	}
+	buf[i] = 0;
+	return buf;
+}
+
+// PLZ free returned string after it no longer need!!!
+char *wcs2str_malloc (const wchar *ws)
+{
+	int i, len = qwcslen(ws);
+	char *buf = (char *) Q_malloc(len + 1);
+
+	for (i = 0; i < len; i++) {
 		if (ws[i] == 0)
 			break;
 		buf[i] = ws[i] <= 255 ? (char)ws[i] : '?';
