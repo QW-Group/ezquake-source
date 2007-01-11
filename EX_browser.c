@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.19 2006-12-17 12:27:13 johnnycz Exp $
+	$Id: EX_browser.c,v 1.20 2007-01-11 15:12:35 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -823,6 +823,7 @@ void Servers_Draw (int x, int y, int w, int h)
 {
     char line[1000];
     int i, pos, listsize;
+	int printed = 0;
 
     if (rebuild_servers_list)
         Rebuild_Servers_List();
@@ -951,12 +952,18 @@ void Servers_Draw (int x, int y, int w, int h)
             UI_Print(x, y+8*(i+1), line, servnum==Servers_pos);
         }
 
+
         //
         // status line
         //
         if (sb_status.value  &&  serversn_passed > 0)
             Draw_Server_Statusbar(x, y, w, h, servers[Servers_pos], Servers_pos, serversn_passed);
-    }
+	} else if (!adding_server) {
+		UI_Print_Center(x, y+8, w, "No servers filtered", false);
+		UI_Print_Center(x, y+24, w, "Press [space] to refresh the list", true);
+		UI_Print_Center(x, y+40, w, "Mark some sources on the next tab", false);
+		UI_Print_Center(x, y+48, w, "or press [Insert] to add a server", false);
+	}
 
     // adding server
     if (adding_server)
