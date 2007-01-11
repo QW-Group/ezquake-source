@@ -710,6 +710,9 @@
 					RelativePath=".\menu_demo.c">
 				</File>
 				<File
+					RelativePath=".\menu_options.c">
+				</File>
+				<File
 					RelativePath=".\menu_proxy.c">
 				</File>
 				<File
@@ -1516,6 +1519,9 @@
 				</File>
 				<File
 					RelativePath=".\menu_demo.h">
+				</File>
+				<File
+					RelativePath=".\menu_options.h">
 				</File>
 				<File
 					RelativePath="modelgen.h">
