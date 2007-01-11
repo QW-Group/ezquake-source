@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.40 2007-01-11 18:30:31 qqshka Exp $
+	$Id: console.c,v 1.41 2007-01-11 19:38:06 qqshka Exp $
 */
 // console.c
 
@@ -94,7 +94,7 @@ extern	int		key_linepos;
 qbool	con_initialized = false;
 qbool	con_suppress = false;
 
-FILE		*qconsole_log;
+FILE		*qconsole_log = NULL;
 
 
 char *months[12] = {
@@ -399,7 +399,7 @@ void Con_Init (void) {
 
 
 	//Tei: moved there, because on windows can't capture the output for debug purposes
-	if (COM_CheckParm("-condebug"))
+	if (!qconsole_log && COM_CheckParm("-condebug"))
 		qconsole_log = fopen(va("%s/qw/qconsole.log",com_basedir), "a");
 	
 	if (dedicated)
