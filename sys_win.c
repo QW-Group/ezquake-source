@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.29 2007-01-10 12:35:38 qqshka Exp $
+	$Id: sys_win.c,v 1.30 2007-01-11 19:38:06 qqshka Exp $
 
 */
 // sys_win.c
@@ -575,7 +575,7 @@ void SleepUntilInput (int time) {
 
 HINSTANCE	global_hInstance;
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-	int memsize;
+	int memsize, i;
 	double time, oldtime, newtime;
 	MEMORYSTATUS lpBuffer;
 	int bIsEnabled = 0;
@@ -589,6 +589,14 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	// we need to check some parms before Host_Init is called
 	COM_InitArgv (argc, argv);
+
+	// let me use -condebug C:\condebug.log before Quake FS init, so I get ALL messages before quake fully init
+	if ((i = COM_CheckParm("-condebug")) && i < COM_Argc() - 1) {
+		extern FILE *qconsole_log;
+		char *s = COM_Argv(i + 1);
+		if (*s != '-' && *s != '+')
+			qconsole_log = fopen(s, "a");
+	}
 
 #if !defined(CLIENTONLY)
 	dedicated = COM_CheckParm ("-dedicated");
