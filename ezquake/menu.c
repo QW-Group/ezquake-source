@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.59 2007-01-11 15:27:09 johnnycz Exp $
+	$Id: menu.c,v 1.60 2007-01-11 15:33:12 johnnycz Exp $
 
 */
 
@@ -56,14 +56,9 @@ void M_Menu_Main_f (void);
 	void M_Menu_MultiPlayer_f (void);
 		void M_Menu_ServerList_f (void);
 			void M_Menu_SEdit_f (void);
-//		void M_Menu_Setup_f (void);
 		void M_Menu_Demos_f (void);
 		void M_Menu_GameOptions_f (void);
 	void M_Menu_Options_f (void);
-/*		void M_Menu_Keys_f (void);
-		void M_Menu_Fps_f (void);
-		void M_Menu_Video_f (void);
-		void M_Menu_Proxy_f (void); */
 	void M_Menu_MP3_Control_f (void);
 	void M_Menu_Quit_f (void);
 
