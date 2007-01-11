@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.31 2007-01-10 13:37:31 oldmanuk Exp $
+	$Id: utils.c,v 1.32 2007-01-11 10:41:06 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -603,27 +603,23 @@ qbool Utils_RegExpMatch(char *regexp, char *matchstring)
 {
 	int offsets[HUD_REGEXP_OFFSET_COUNT];
 	pcre *re = NULL;
-	const char **error = NULL;
+	const char *error;
 	int erroffset = 0;
 	int match = 0;
 
 	re = pcre_compile(
 			regexp,				// The pattern.
 			PCRE_CASELESS,		// Case insensitive.
-			error,				// Error message.
+			&error,				// Error message.
 			&erroffset,			// Error offset.
 			NULL);				// use default character tables.
 
 	// Check for an error compiling the regexp.
 	if(error)
 	{
-		Q_free(error);
-		error = NULL;
-
 		if(re)
 		{
 			Q_free(re);
-			re = NULL;
 		}
 
 		return false;
@@ -635,7 +631,6 @@ qbool Utils_RegExpMatch(char *regexp, char *matchstring)
 		if(re)
 		{
 			Q_free(re);
-			re = NULL;
 		}
 
 		return true;
@@ -645,13 +640,6 @@ qbool Utils_RegExpMatch(char *regexp, char *matchstring)
 	if(re)
 	{
 		Q_free(re);
-		re = NULL;
-	}
-
-	if(error)
-	{
-		Q_free(error);
-		error = NULL;
 	}
 
 	return false;
@@ -661,27 +649,24 @@ qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **results
 {
 	int offsets[HUD_REGEXP_OFFSET_COUNT];
 	pcre *re = NULL;
-	const char **error = NULL;
+	const char *error;
 	int erroffset = 0;
 	int match = 0;
 
 	re = pcre_compile(
 			regexp,				// The pattern.
 			PCRE_CASELESS,		// Case insensitive.
-			error,				// Error message.
+			&error,				// Error message.
 			&erroffset,			// Error offset.
 			NULL);				// use default character tables.
 
 	if(error)
 	{
-		Q_free(error);
-		error = NULL;
-
 		if(re)
 		{
 			Q_free(re);
-			re = NULL;
 		}
+
 		return false;
 	}
 
@@ -698,7 +683,6 @@ qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **results
 		if(re)
 		{
 			Q_free(re);
-			re = NULL;
 		}
 
 		return (substring_length != PCRE_ERROR_NOSUBSTRING && substring_length != PCRE_ERROR_NOMEMORY);
@@ -707,13 +691,6 @@ qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **results
 	if(re)
 	{
 		Q_free(re);
-		re = NULL;
-	}
-
-	if(error)
-	{
-		Q_free(error);
-		error = NULL;
 	}
 
 	return false;
