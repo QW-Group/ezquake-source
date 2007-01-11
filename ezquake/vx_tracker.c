@@ -300,7 +300,7 @@ void VX_TrackerStreakEnd(int player, int killer, int count)
 	if (!streak)
 		return;
 
-	if (player == killer)
+	if (player == killer) // streak ends due to suicide
 	{
 		if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 			snprintf(outstring, sizeof(outstring), "&c940You were looking good until you killed yourself (%i kills)", count);
@@ -311,10 +311,10 @@ void VX_TrackerStreakEnd(int player, int killer, int count)
 		else
 			snprintf(outstring, sizeof(outstring), "&r%s&c940 was looking good until he killed himself (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
 	}
-	else
+	else // non suicide
 	{
 		if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
-			snprintf(outstring, sizeof(outstring), "&c940Your streak was ended by &r%s&c940 (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
+			snprintf(outstring, sizeof(outstring), "&c940Your streak was ended by &r%s&c940 (%i kills)", Info_ValueForKey(cl.players[killer].userinfo, "name"), count);
 		else if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
 			snprintf(outstring, sizeof(outstring), "&r%s&c940's streak was ended by you (%i kills)", Info_ValueForKey(cl.players[player].userinfo, "name"), count);
 		else
