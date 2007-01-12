@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.36 2007-01-10 12:35:38 qqshka Exp $
+    $Id: common.h,v 1.37 2007-01-12 23:22:07 qqshka Exp $
 */
 // common.h  -- general definitions
 
@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // include frequently used headers
 
 #include "q_shared.h"
+#include "fs.h"
 #include "zone.h"
 #include "cvar.h"
 #include "cmd.h"
@@ -396,43 +397,5 @@ int COM_ZipGetFirst (unzFile zip_file, sys_dirent *ent);
 int COM_ZipGetNextFile (unzFile zip_file, sys_dirent *ent);
 
 #endif // WITH_ZIP
-
-// ====================================================================
-// VFS
-
-typedef enum {
-	VFSERR_NONE,
-	VFSERR_EOF,
-	VFSERR_ERR
-} vfserrno_t;
-
-typedef struct vfsfile_s {
-	int (*ReadBytes) (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err);
-	int (*WriteBytes) (struct vfsfile_s *file, void *buffer, int bytestowrite);
-	qbool (*Seek) (struct vfsfile_s *file, unsigned long pos);	//returns false for error
-	unsigned long (*Tell) (struct vfsfile_s *file);
-	unsigned long (*GetLen) (struct vfsfile_s *file);	//could give some lag
-	void (*Close) (struct vfsfile_s *file);
-	void (*Flush) (struct vfsfile_s *file);
-	qbool seekingisabadplan;
-} vfsfile_t;
-
-typedef enum {
-	FS_NONE_OS,
-	FS_GAME_OS,
-	FS_GAME
-} relativeto_t;
-
-vfsfile_t *FS_OpenTemp(void);
-vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto);
-
-void VFS_CLOSE (struct vfsfile_s *vf);
-unsigned long VFS_TELL (struct vfsfile_s *vf);
-unsigned long VFS_GETLEN (struct vfsfile_s *vf);
-qbool VFS_SEEK (struct vfsfile_s *vf, unsigned long pos);
-int VFS_READ (struct vfsfile_s *vf, void *buffer, int bytestoread, vfserrno_t *err);
-int VFS_WRITE (struct vfsfile_s *vf, void *buffer, int bytestowrite);
-void VFS_FLUSH (struct vfsfile_s *vf);
-char *VFS_GETS(vfsfile_t *vf, char *buffer, int buflen); // return null terminated string
 
 #endif /* __COMMON_H__ */

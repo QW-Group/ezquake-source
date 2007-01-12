@@ -1,8 +1,10 @@
 /*
-    $Id: fs.c,v 1.1 2007-01-10 12:38:13 qqshka Exp $
+    $Id: fs.c,v 1.2 2007-01-12 23:21:48 qqshka Exp $
 */
 
 #include "quakedef.h"
+
+// fs related things
 
 //======================================================================================================
 // VFS
@@ -48,7 +50,7 @@ void VFS_FLUSH (struct vfsfile_s *vf) {
 }
 
 // return null terminated string
-char *VFS_GETS(vfsfile_t *vf, char *buffer, int buflen)
+char *VFS_GETS(struct vfsfile_s *vf, char *buffer, int buflen)
 {
 	char in;
 	char *out = buffer;
@@ -207,6 +209,9 @@ vfsfile_t *VFSOS_Open(char *osname, char *mode)
 	return (vfsfile_t*)file;
 }
 
+//STDIO files (OS)
+//******************************************************************************************************
+
 //
 // some general function to open VFS file
 //
@@ -244,3 +249,175 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 	return VFSOS_Open(fullname, mode);
 }
 
+
+//******************************************************************************************************
+//TCP file
+
+typedef struct tcpfile_s {
+	vfsfile_t funcs; // <= must be at top/begining of struct
+
+	int sock;
+
+	char readbuffer[65536];
+	int readbuffered;
+
+} tcpfile_t;
+
+void VFSTCP_Error(tcpfile_t *f)
+{
+	if (f->sock != INVALID_SOCKET)
+	{
+		closesocket(f->sock);
+		f->sock = INVALID_SOCKET;
+	}
+}
+
+int VFSTCP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err)
+{
+	tcpfile_t *tf = (tcpfile_t*)file;
+
+	if (tf->sock != INVALID_SOCKET)
+	{
+		int len;
+
+		if (sizeof(tf->readbuffer) == tf->readbuffered)
+			len = -2; // full buffer
+		else
+			len = recv(tf->sock, tf->readbuffer + tf->readbuffered, sizeof(tf->readbuffer) - tf->readbuffered, 0);
+
+		if (len == -2) {
+			; // full buffer
+		}
+		else if (len == -1)
+		{
+			int e = qerrno;
+	
+			if (e == EWOULDBLOCK) {
+				; // no data yet, nothing to do
+			} else {
+
+				if (e == ECONNABORTED || e == ECONNRESET)
+					Com_Printf ("VFSTCP: Connection lost or aborted\n"); //server died/connection lost.
+				else
+					Com_Printf ("VFSTCP: Error (%i): %s\n", e, strerror(e));
+
+				VFSTCP_Error(tf);
+			}
+		}
+		else if (len == 0) {
+			Com_Printf ("VFSTCP: EOF on socket\n");
+			VFSTCP_Error(tf);
+		}
+		else
+			tf->readbuffered += len;
+	}
+
+	if (bytestoread <= tf->readbuffered)
+	{ // we have all required bytes
+		if (bytestoread > 0) {
+			memcpy(buffer, tf->readbuffer, bytestoread);
+			tf->readbuffered -= bytestoread;
+			memmove(tf->readbuffer, tf->readbuffer+bytestoread, tf->readbuffered);
+		}
+		else if (bytestoread < 0)
+			Sys_Error("VFSTCP_ReadBytes: bytestoread < 0"); // ffs
+
+		if (err)
+			*err = VFSERR_NONE; // we got required bytes somehow, so no error
+
+		return bytestoread;
+	}
+	else
+	{ // lack of data, but probably have at least something in buffer
+		if (tf->readbuffered > 0) {
+			bytestoread = tf->readbuffered;
+			memcpy(buffer, tf->readbuffer, tf->readbuffered);
+			tf->readbuffered = 0;
+		}
+		else
+			bytestoread = 0;
+
+		if (err) // if socket is not closed we still have chance to get data, so no error
+			*err = ((bytestoread || tf->sock != INVALID_SOCKET) ? VFSERR_NONE : VFSERR_EOF);
+
+		return bytestoread;
+	}
+}
+
+int VFSTCP_WriteBytes (struct vfsfile_s *file, void *buffer, int bytestowrite)
+{
+	tcpfile_t *tf = (tcpfile_t*)file;
+	int len;
+
+	if (tf->sock == INVALID_SOCKET)
+		return 0;
+
+	len = send(tf->sock, buffer, bytestowrite, 0);
+	if (len == -1 || len == 0)
+	{
+		Com_Printf("VFSTCP: failed to write %d bytes, closing link\n", bytestowrite);
+		VFSTCP_Error(tf);
+		return 0;
+	}
+	return len;
+}
+
+qbool VFSTCP_Seek (struct vfsfile_s *file, unsigned long pos)
+{
+	Com_Printf("VFSTCP: seek is illegal, closing link\n");
+	VFSTCP_Error((tcpfile_t*)file);
+	return false;
+}
+
+unsigned long VFSTCP_Tell (struct vfsfile_s *file)
+{
+	Com_Printf("VFSTCP: tell is illegal, closing link\n");
+	VFSTCP_Error((tcpfile_t*)file);
+	return 0;
+}
+
+unsigned long VFSTCP_GetLen (struct vfsfile_s *file)
+{
+	Com_Printf("VFSTCP: GetLen non functional\n");
+	return 0;
+}
+
+void VFSTCP_Close (struct vfsfile_s *file)
+{
+	VFSTCP_Error((tcpfile_t*)file);
+	Q_free(file);
+}
+
+vfsfile_t *FS_OpenTCP(char *name)
+{
+	tcpfile_t *newf;
+	int sock;
+	netadr_t adr = {0};
+	if (NET_StringToAdr(name, &adr))
+	{
+		sock = TCP_OpenStream(adr);
+		if (sock == INVALID_SOCKET)
+			return NULL;
+
+		newf = Q_malloc(sizeof(*newf));
+		newf->sock = sock;
+		newf->funcs.Close = VFSTCP_Close;
+		newf->funcs.Flush = NULL;
+		newf->funcs.GetLen = VFSTCP_GetLen;
+		newf->funcs.ReadBytes = VFSTCP_ReadBytes;
+		newf->funcs.Seek = VFSTCP_Seek;
+		newf->funcs.Tell = VFSTCP_Tell;
+		newf->funcs.WriteBytes = VFSTCP_WriteBytes;
+		newf->funcs.seekingisabadplan = true;
+
+		return &newf->funcs;
+	}
+	else
+		return NULL;
+}
+
+//TCP file
+//******************************************************************************************************
+
+// VFS
+//======================================================================================================
