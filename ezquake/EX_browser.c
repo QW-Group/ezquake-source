@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.20 2007-01-11 15:12:35 johnnycz Exp $
+	$Id: EX_browser.c,v 1.21 2007-01-12 09:57:06 oldmanuk Exp $
 */
 
 #include "quakedef.h"
@@ -409,7 +409,7 @@ int Sources_Compare_Func(const void * p_s1, const void * p_s2)
             sort_string++;
             continue;
         }
-        
+
         switch (*sort_string++)
         {
             case '1':
@@ -566,8 +566,8 @@ void Browser_Draw (int x, int y, int w, int h)
     char buf[500];
 
 	if (Browser_pos == pos_none) switch((int) sb_starttab.value) {
-		case 1: 
-			Browser_pos = pos_servers; 
+		case 1:
+			Browser_pos = pos_servers;
 			if(sb_autoupdate.value) GetServerPingsAndInfos();
 			break;
 		case 2: Browser_pos = pos_sources; break;
@@ -823,11 +823,10 @@ void Servers_Draw (int x, int y, int w, int h)
 {
     char line[1000];
     int i, pos, listsize;
-	int printed = 0;
 
     if (rebuild_servers_list)
         Rebuild_Servers_List();
-    
+
     if (searchtype != search_server  ||  searchtime + SEARCH_TIME < cls.realtime)
         searchtype = search_none;
 
@@ -1443,7 +1442,7 @@ void Sources_Draw (int x, int y, int w, int h)
     {
         char type[10], time[10];
         source_data *s = sources[Sources_disp + i];
- 
+
         int sourcenum = Sources_disp + i;
         if (sourcenum >= sourcesn)
             break;
@@ -1534,7 +1533,7 @@ void Players_Draw (int x, int y, int w, int h)
 
     if (rebuild_servers_list)
         Rebuild_Servers_List();
-    
+
     if (rebuild_all_players  &&  show_serverinfo == NULL)
         Rebuild_All_Players();
 
@@ -1568,13 +1567,13 @@ void Players_Draw (int x, int y, int w, int h)
     for (i = 0; i < listsize; i++)
     {
         player_host *s = all_players[Players_disp + i];
- 
+
         int num = Players_disp + i;
         if (num >= all_players_n)
             break;
 
         sprintf(line, "%-15.15s%c%-*.*s %3s",
-                s->name, num==Players_pos ? 141 : ' ', 
+                s->name, num==Players_pos ? 141 : ' ',
                 hw, hw, s->serv->display.name, s->serv->display.ping);
 
         UI_Print_Center(x, y+8*(i+1), w, line, num == Players_pos);
@@ -1752,7 +1751,7 @@ void Add_Source_Key(int key)
                 sourcesn++;
 
                 Sources_pos = sourcesn-1;
-                
+
                 // and also add to file
                 //f = fopen(SOURCES_PATH, "at");
                 //if (f == NULL)
@@ -2018,7 +2017,7 @@ void Servers_Key(int key)
             case K_ENTER:
                 Serverinfo_Start(servers[Servers_pos]); break;
             case K_SPACE:
-                GetServerPingsAndInfos(); 
+                GetServerPingsAndInfos();
                 break;
             case '1':
             case '2':
@@ -2373,7 +2372,7 @@ void Sources_Key(int key)
 
     if (sourcesn <= 0)
         return;
-    
+
     switch (key)
     {
         case K_INS:
@@ -2409,7 +2408,7 @@ void Sources_Key(int key)
             Toggle_Source(sources[Sources_pos]); break;
         case K_SPACE:
             source_full_update = (isThisCtrlDown());
-            Update_Multiple_Sources(sources, sourcesn); 
+            Update_Multiple_Sources(sources, sourcesn);
             break;
         case '=':
         case '+':   // select all sources
@@ -2483,7 +2482,7 @@ void Players_Key(int key)
 
     if (all_players_n <= 0  &&  key != K_SPACE)
         return;
-    
+
     if ((isThisAltDown()  ||  searchtype == search_player)  &&
         key >= ' '  &&  key <= '}')  // search
     {
@@ -2600,7 +2599,7 @@ void Players_Key(int key)
 void Options_Key(int key)
 {
     int d;
-    
+
     switch (key)
     {
         case K_UPARROW:
@@ -2729,7 +2728,7 @@ int Servers_Compare_Func(const void * p_s1, const void * p_s2)
             sort_string++;
             continue;
         }
-        
+
         switch (*sort_string++)
         {
             case '1':
@@ -2827,7 +2826,7 @@ int All_Players_Compare_Func(const void * p_p1, const void * p_p2)
             sort_string++;
             continue;
         }
-        
+
         switch (*sort_string++)
         {
             case '1':
