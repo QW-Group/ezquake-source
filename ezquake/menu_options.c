@@ -15,7 +15,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.1 2007-01-11 15:27:09 johnnycz Exp $
+		$Id: menu_options.c,v 1.2 2007-01-12 09:54:07 oldmanuk Exp $
 
 */
 
@@ -578,10 +578,10 @@ extern cvar_t r_fastsky;
 extern cvar_t r_drawflame;
 extern cvar_t gl_part_inferno;
 
-static void M_Menu_Fps_f (void) {
+// static void M_Menu_Fps_f (void) {
 	// todo: add legacy command for this
 	// M_EnterMenu (m_fps);
-}
+// }
 
 #define ALIGN_FPS_OPTIONS    208
 
@@ -862,7 +862,7 @@ static void Opt_Player_Load (void) {
 byte identityTable[256];
 byte translationTable[256];
 
-static void M_BuildTranslationTable(int top, int bottom) {
+void M_BuildTranslationTable(int top, int bottom) {
 	int        j;
 	byte    *dest, *source;
 

@@ -44,6 +44,8 @@ CLIENT_C_FILES := \
 	match_tools \
 	menu \
 	menu_demo \
+	menu_options \
+	menu_proxy \
 	modules \
 	movie \
 	mp3_player \
@@ -93,6 +95,7 @@ COMMON_C_FILES := \
 	common \
 	crc \
 	cvar \
+	fs \
 	host \
 	mathlib \
 	mdfour \
