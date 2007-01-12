@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.3 2007-01-12 12:45:58 johnnycz Exp $
+		$Id: menu_options.c,v 1.4 2007-01-12 15:35:37 johnnycz Exp $
 
 */
 
@@ -137,28 +137,28 @@ void GFXPresetToggle(qbool back) {
 void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
 setting settgeneral_tab[] = {
-	{ stt_action, "Go To Console", NULL, 0, 0, 0, Con_ToggleConsole_f },
-	{ stt_separator, "Video" },
-	{ stt_num, "Screen Size", &scr_viewsize, 30, 120, 10 },
-	{ stt_num, "Gamma", &v_gamma, 0.1, 2.0, 0.1 },
-	{ stt_num, "Contrast", &v_contrast, 1, 5, 0.1 },
-	{ stt_num, "Field of View", &scr_fov, 40, 140, 2 },
-	{ stt_enum, "GFX Preset", &cl_deadbodyfilter, 0, 0, 0, GFXPresetRead, GFXPresetToggle },
-	{ stt_bool, "Fullbright skins", &r_fullbrightSkins },
-	{ stt_separator, "Sound" },
-	{ stt_num, "Sound Volume", &s_volume, 0, 1, 0.05 },
-	{ stt_bool, "Static Sounds", &cl_staticsounds },
-	{ stt_separator, "Controls" },
-	{ stt_num, "Mouse Speed", &sensitivity, 1, 15, 0.25 },
-	{ stt_enum, "Invert Mouse", &m_pitch, 0, 0, 0, InvertMouseRead, InvertMouseToggle },
-	{ stt_enum, "Gun Autoswitch", &w_switch, 0, 0, 0, AutoSWRead, AutoSWToggle },
-	{ stt_enum, "Always Run", &cl_forwardspeed, 0, 0, 0, AlwaysRunRead, AlwaysRunToggle },
-	{ stt_bool, "Mouse Look", &freelook },
-	{ stt_separator, "Head Up Display" },
-	{ stt_bool, "New HUD", &scr_newHud },
-	{ stt_bool, "Old Status Bar", &cl_sbar },
-	{ stt_bool, "Old HUD Left", &cl_hudswap },
-	{ stt_action, "Default Config", NULL, 0, 0, 0, DefaultConfig }
+	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f),
+	ADDSET_SEPARATOR("Video"),
+	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
+	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
+	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
+	ADDSET_NUMBER	("Field of View", scr_fov, 40, 140, 2),
+	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle),
+	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
+	ADDSET_SEPARATOR("Sound"),
+	ADDSET_NUMBER	("Sound Volume", s_volume, 0, 1, 0.05),
+	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
+	ADDSET_SEPARATOR("Controls"),
+	ADDSET_NUMBER	("Mouse Speed", sensitivity, 1, 15, 0.25),
+	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle),
+	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle),
+	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle),
+	ADDSET_BOOL		("Mouse Look", freelook),
+	ADDSET_SEPARATOR("Head Up Display"),
+	ADDSET_BOOL		("New HUD", scr_newHud),
+	ADDSET_BOOL		("Old Status Bar", cl_sbar),
+	ADDSET_BOOL		("Old HUD Left", cl_hudswap),
+	ADDSET_ACTION	("Default Config", DefaultConfig)
 };
 
 settings_tab settgeneral;
@@ -427,25 +427,25 @@ void LoadHQPreset(void) {
 }
 
 setting settfps_tab[] = {
-	{ stt_separator, "Presets" },
-	{ stt_action, "Load Fast Preset", NULL, 0, 0, 0, LoadFastPreset },
-	{ stt_action, "Load HQ preset", NULL, 0, 0, 0, LoadHQPreset },
-	{ stt_separator, "Graphics settings" },
-	{ stt_named, "Explosion Type", &r_explosiontype, 0, sizeof(explosiontype_enum)/sizeof(char*)-1, 1, explosiontype_enum },
-	{ stt_named, "Muzzleflashes", &cl_muzzleflash, 0, sizeof(muzzleflashes_enum)/sizeof(char*)-1, 1, muzzleflashes_enum },
-	{ stt_bool, "Gib Filter", &cl_gibfilter },
-	{ stt_named, "Dead Body Filter", &cl_deadbodyfilter, 0, sizeof(deadbodyfilter_enum)/sizeof(char*)-1, 1, deadbodyfilter_enum },
-	{ stt_named, "Rocket Model", &cl_rocket2grenade, 0, sizeof(rocketmodel_enum)/sizeof(char*)-1, 1, rocketmodel_enum },
-	{ stt_named, "Rocket Trail", &r_rockettrail, 0, sizeof(rockettrail_enum)/sizeof(char*)-1, 1, rockettrail_enum },
-	{ stt_bool, "Rocket Light", &r_rocketlight },
-	{ stt_bool, "Damage Flash", &v_damagecshift },
-	{ stt_bool, "Pickup Flashes", &v_bonusflash },
-	{ stt_named, "Powerup Glow", &r_powerupglow, 0, sizeof(powerupglow_enum)/sizeof(char*)-1, 1, powerupglow_enum },
-	{ stt_bool, "Fast Sky", &r_fastsky },
+	ADDSET_SEPARATOR("Presets"),
+	ADDSET_ACTION	("Load Fast Preset", LoadFastPreset),
+	ADDSET_ACTION	("Load HQ preset", LoadHQPreset),
+	ADDSET_SEPARATOR("Graphics settings"),
+	ADDSET_NAMED	("Explosion Type", r_explosiontype, explosiontype_enum),
+	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
+	ADDSET_BOOL		("Gib Filter", cl_gibfilter),
+	ADDSET_NAMED	("Dead Body Filter", cl_deadbodyfilter, deadbodyfilter_enum),
+	ADDSET_NAMED	("Rocket Model", cl_rocket2grenade, rocketmodel_enum),
+	ADDSET_NAMED	("Rocket Trail", r_rockettrail, rockettrail_enum),
+	ADDSET_BOOL		("Rocket Light", r_rocketlight),
+	ADDSET_BOOL		("Damage Flash", v_damagecshift),
+	ADDSET_BOOL		("Pickup Flashes", v_bonusflash),
+	ADDSET_NAMED	("Powerup Glow", r_powerupglow, powerupglow_enum),
+	ADDSET_BOOL		("Fast Sky", r_fastsky),
 #ifdef GLQUAKE
-	{ stt_bool, "Fast Lights", &gl_flashblend },
-	{ stt_bool, "Dynamic Ligts", &r_dynamic },
-	{ stt_bool, "Particle Shaft", &amf_lightning }
+	ADDSET_BOOL		("Fast Lights", gl_flashblend),
+	ADDSET_BOOL		("Dynamic Ligts", r_dynamic),
+	ADDSET_BOOL		("Particle Shaft", amf_lightning)
 #endif
 };
 
