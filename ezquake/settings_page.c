@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.2 2007-01-12 15:35:37 johnnycz Exp $
+		$Id: settings_page.c,v 1.3 2007-01-12 16:26:06 johnnycz Exp $
 
 */
 
@@ -16,10 +16,13 @@
 
 static float SliderPos(float min, float max, float val) { return (val-min)/(max-min); }
 
-static int Setting_PrintLabel(int x, int y, int w, const char *l, qbool red)
+static int Setting_PrintLabel(int x, int y, int w, const char *l, qbool active)
 {
-	UI_Print(x + (COL1WIDTH - min(strlen(l), COL1WIDTH))*LETW, y, l, (int) red);
-	return LETW*(x + COL1WIDTH + 1);
+	UI_Print(x + (COL1WIDTH - min(strlen(l), COL1WIDTH))*LETW, y, l, (int) active);
+	x += COL1WIDTH * LETW;
+	if (active)
+		UI_DrawCharacter(x, y, FLASHINGARROW());
+	return x + LETW*2;
 }
 
 static void Setting_DrawNum(int x, int y, int w, setting* setting, qbool active)

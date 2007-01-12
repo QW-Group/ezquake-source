@@ -13,22 +13,20 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.4 2007-01-12 15:35:37 johnnycz Exp $
+		$Id: menu_options.c,v 1.5 2007-01-12 16:26:06 johnnycz Exp $
 
 */
 
 #include "quakedef.h"
-#include "winquake.h"
 #include "settings.h"
 #include "settings_page.h"
 
 typedef enum {
 	OPTPG_SETTINGS,
 	OPTPG_FPS,
+	OPTPG_PLAYER,
 	OPTPG_BINDS,
 	OPTPG_VIDEO,
-	OPTPG_PLAYER,
-	OPTPG_SETTINGS2
 }	options_tab_t;
 
 CTab_t options_tab;
@@ -137,11 +135,10 @@ void GFXPresetToggle(qbool back) {
 void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
 setting settgeneral_tab[] = {
-	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f),
 	ADDSET_SEPARATOR("Video"),
-	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
+	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
 	ADDSET_NUMBER	("Field of View", scr_fov, 40, 140, 2),
 	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle),
 	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
@@ -150,6 +147,7 @@ setting settgeneral_tab[] = {
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
 	ADDSET_SEPARATOR("Controls"),
 	ADDSET_NUMBER	("Mouse Speed", sensitivity, 1, 15, 0.25),
+	ADDSET_NUMBER	("M. Acceleration", m_accel, 0, 1, 0.1),
 	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle),
 	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle),
 	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle),
@@ -158,6 +156,8 @@ setting settgeneral_tab[] = {
 	ADDSET_BOOL		("New HUD", scr_newHud),
 	ADDSET_BOOL		("Old Status Bar", cl_sbar),
 	ADDSET_BOOL		("Old HUD Left", cl_hudswap),
+	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f),
 	ADDSET_ACTION	("Default Config", DefaultConfig)
 };
 
@@ -739,10 +739,10 @@ void Menu_Options_Init(void) {
 	settfps.set_count = sizeof(settfps_tab) / sizeof(setting);
 
 	CTab_Init(&options_tab);
-	CTab_AddPage(&options_tab, "settings", OPTPG_SETTINGS, NULL, CT_Opt_Settings_Draw, CT_Opt_Settings_Key);
-	CTab_AddPage(&options_tab, "gfx", OPTPG_FPS, NULL, CT_Opt_FPS_Draw, CT_Opt_FPS_Key);
-	CTab_AddPage(&options_tab, "binds", OPTPG_BINDS, NULL, CT_Opt_Binds_Draw, CT_Opt_Binds_Key);
-	CTab_AddPage(&options_tab, "video", OPTPG_VIDEO, NULL, CT_Opt_Video_Draw, CT_Opt_Video_Key);
+	CTab_AddPage(&options_tab, "main", OPTPG_SETTINGS, NULL, CT_Opt_Settings_Draw, CT_Opt_Settings_Key);
+	CTab_AddPage(&options_tab, "graphics", OPTPG_FPS, NULL, CT_Opt_FPS_Draw, CT_Opt_FPS_Key);
 	CTab_AddPage(&options_tab, "player", OPTPG_PLAYER, NULL, CT_Opt_Player_Draw, CT_Opt_Player_Key);
+	CTab_AddPage(&options_tab, "controls", OPTPG_BINDS, NULL, CT_Opt_Binds_Draw, CT_Opt_Binds_Key);
+	CTab_AddPage(&options_tab, "video", OPTPG_VIDEO, NULL, CT_Opt_Video_Draw, CT_Opt_Video_Key);
 	CTab_SetCurrentId(&options_tab, OPTPG_SETTINGS);
 }
