@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.52 2007-01-08 02:06:57 qqshka Exp $
+    $Id: common.c,v 1.53 2007-01-12 00:18:26 qqshka Exp $
 
 */
 
@@ -1834,10 +1834,29 @@ void FS_InitFilesystem (void) {
 	// Overrides the system supplied base directory (under id1)
 	if ((i = COM_CheckParm ("-basedir")) && i < com_argc - 1) {
 		strlcpy (com_basedir, com_argv[i + 1], sizeof(com_basedir));
-	} else {
+	}
+#ifdef _WIN32
+	else if (!COM_CheckParm("-useworkdir")) { // so, com_basedir directory will be is where ezquake*.exe located
+		char *e;
+
+		if(!GetModuleFileName(NULL, com_basedir, sizeof(com_basedir)-1))
+			Sys_Error("GetModuleFileName failed");
+
+		for (e = com_basedir+strlen(com_basedir)-1; e >= com_basedir; e--)
+		{
+			if (*e == '/' || *e == '\\')
+			{
+				*e = 0;
+				break;
+			}
+		}
+	}
+#endif
+ 	else { // made com_basedir equa to cwd
 //#ifdef __FreeBSD__
 //		strlcpy(com_basedir, DATADIR, sizeof(com_basedir) - 1);
 //#else
+
 		Sys_getcwd(com_basedir, sizeof(com_basedir) - 1); // FIXME strlcpy (com_basedir, ".", sizeof(com_basedir)); ?
 //#endif
 	}
