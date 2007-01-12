@@ -1,6 +1,6 @@
 /*
 	Settings page module
-	$Id: settings_page.h,v 1.2 2007-01-12 15:35:37 johnnycz Exp $
+	$Id: settings_page.h,v 1.3 2007-01-12 17:09:14 johnnycz Exp $
 */
 
 /** Guide to create settings page:
@@ -13,8 +13,13 @@
 	3) place calls of following two functions to appropriate places
  */
 
+#define Settings_Page_Init(settings, set_page) Settings_Init(&set_page, settings, sizeof(settings) / sizeof(setting))
+
+// initializes the main structure
+void Settings_Init(settings_page *tab, setting *arr, size_t size); 
+
 // draw request handler
-void Settings_Draw(int x, int y, int w, int h, settings_tab* tab);
+void Settings_Draw(int x, int y, int w, int h, settings_page* page);
 
 // key press handler
-qbool Settings_Key(settings_tab* tab, int key);
+qbool Settings_Key(settings_page* page, int key);

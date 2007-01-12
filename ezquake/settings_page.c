@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.3 2007-01-12 16:26:06 johnnycz Exp $
+		$Id: settings_page.c,v 1.4 2007-01-12 17:09:14 johnnycz Exp $
 
 */
 
@@ -102,12 +102,12 @@ static void Setting_Decrease(setting* set) {
 	}
 }
 
-static void CheckCursor(settings_tab *tab, qbool up)
+static void CheckCursor(settings_page *tab, qbool up)
 {
 	while (tab->set_marked < 0) tab->set_marked += tab->set_count;
 	tab->set_marked = tab->set_marked % tab->set_count;
 
-	if (tab->set_tab[tab->set_marked].type == stt_separator) {
+	if (tab->settings[tab->set_marked].type == stt_separator) {
 		if (up) {
 			if (tab->set_marked == 0)
 				tab->set_marked = tab->set_count - 1;
@@ -118,13 +118,13 @@ static void CheckCursor(settings_tab *tab, qbool up)
 	}
 }
 
-qbool Settings_Key(settings_tab* tab, int key)
+qbool Settings_Key(settings_page* tab, int key)
 {
 	qbool up = false;
 	setting_type type;
 	CheckCursor(tab, up);
 
-	type = tab->set_tab[tab->set_marked].type;
+	type = tab->settings[tab->set_marked].type;
 
 	switch (key) { 
 	case K_DOWNARROW: tab->set_marked++; break;
@@ -135,17 +135,17 @@ qbool Settings_Key(settings_tab* tab, int key)
 	case K_HOME: tab->set_marked = 0; break;
 	case K_RIGHTARROW:
 		if (type != stt_action) {
-			Setting_Increase(tab->set_tab + tab->set_marked);
+			Setting_Increase(tab->settings + tab->set_marked);
 			return true;
 		} else return false;
 
 	case K_ENTER:
-		Setting_Increase(tab->set_tab + tab->set_marked);
+		Setting_Increase(tab->settings + tab->set_marked);
 		return true;
 
 	case K_LEFTARROW: 
 		if (type != stt_action) {
-			Setting_Decrease(tab->set_tab + tab->set_marked);
+			Setting_Decrease(tab->settings + tab->set_marked);
 			return true;
 		} else return false;
 	default: return false; break;
@@ -155,7 +155,7 @@ qbool Settings_Key(settings_tab* tab, int key)
 	return true;
 }
 
-void Settings_Draw(int x, int y, int w, int h, settings_tab* tab)
+void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 {
 	int i;
 	setting *set;
@@ -166,7 +166,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_tab* tab)
 	for (i = 0; i < tab->set_count; i++)
 	{
 		active = i == tab->set_marked;
-		set = tab->set_tab + i;
+		set = tab->settings + i;
 		switch (set->type) {
 			case stt_bool: Setting_DrawBool(x, y, w, set, active); break;
 			case stt_custom: Setting_DrawBoolAdv(x, y, w, set, active); break;
@@ -177,4 +177,11 @@ void Settings_Draw(int x, int y, int w, int h, settings_tab* tab)
 		}
 		y += LETW;
 	}
+}
+
+void Settings_Init(settings_page *tab, setting *arr, size_t size)
+{
+	tab->set_count = size;
+	tab->set_marked = 0;
+	tab->settings = arr;
 }

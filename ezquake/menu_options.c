@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.5 2007-01-12 16:26:06 johnnycz Exp $
+		$Id: menu_options.c,v 1.6 2007-01-12 17:09:14 johnnycz Exp $
 
 */
 
@@ -134,7 +134,7 @@ void GFXPresetToggle(qbool back) {
 
 void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
-setting settgeneral_tab[] = {
+setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Video"),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
@@ -161,7 +161,7 @@ setting settgeneral_tab[] = {
 	ADDSET_ACTION	("Default Config", DefaultConfig)
 };
 
-settings_tab settgeneral;
+settings_page settgeneral;
 
 void CT_Opt_Settings_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
 	Settings_Draw(x, y, w, h, &settgeneral);
@@ -426,7 +426,7 @@ void LoadHQPreset(void) {
 #endif
 }
 
-setting settfps_tab[] = {
+setting settfps_arr[] = {
 	ADDSET_SEPARATOR("Presets"),
 	ADDSET_ACTION	("Load Fast Preset", LoadFastPreset),
 	ADDSET_ACTION	("Load HQ preset", LoadHQPreset),
@@ -449,7 +449,7 @@ setting settfps_tab[] = {
 #endif
 };
 
-settings_tab settfps;
+settings_page settfps;
 
 void CT_Opt_FPS_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 {
@@ -730,13 +730,8 @@ void Menu_Options_Draw(void) {
 }
 
 void Menu_Options_Init(void) {
-	settgeneral.set_tab = settgeneral_tab;
-	settgeneral.set_marked = 0;
-	settgeneral.set_count = sizeof(settgeneral_tab) / sizeof(setting);
-
-	settfps.set_tab = settfps_tab;
-	settfps.set_marked = 0;
-	settfps.set_count = sizeof(settfps_tab) / sizeof(setting);
+	Settings_Page_Init(settgeneral_arr, settgeneral);
+	Settings_Page_Init(settfps_arr, settfps);
 
 	CTab_Init(&options_tab);
 	CTab_AddPage(&options_tab, "main", OPTPG_SETTINGS, NULL, CT_Opt_Settings_Draw, CT_Opt_Settings_Key);

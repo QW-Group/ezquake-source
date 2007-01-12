@@ -62,7 +62,7 @@ typedef struct {
 } setting;
 
 typedef struct {
-	setting* set_tab;	// array of settings
+	setting* settings;	// array of settings
 	int set_count;		// amount of elements in set_tab
 	int set_marked;		// currently selected element in set_tab
-} settings_tab;
+} settings_page;
