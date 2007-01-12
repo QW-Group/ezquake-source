@@ -1398,6 +1398,26 @@ void	GL_InitMac (void)
     // check if FSAA is available:
     GL_CheckSwitchFSAAOnTheFly ();
 
+	CGLError err = 0;
+	CGLContextObj ctx = CGLGetCurrentContext();
+	        
+	// from 10.4.8 headers...
+#ifndef kCGLCEMPEngine
+#define kCGLCEMPEngine 313
+#endif
+
+	// Enable multi-threading OpenGL
+	err =  CGLEnable(ctx, kCGLCEMPEngine);
+	        
+	if (err == kCGLNoError )
+	{
+		Com_Printf("Enabled multi-threaded OpenGL\n");
+	} 
+	else 
+	{
+		Com_Printf("Failed to enable multi-threaded OpenGL\n");
+	}
+
     // setup OpenGL:    
     glClearColor (1,0,0,0);
     glEnable (GL_TEXTURE_2D);
