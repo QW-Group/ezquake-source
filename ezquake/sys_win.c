@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.30 2007-01-11 19:38:06 qqshka Exp $
+	$Id: sys_win.c,v 1.31 2007-01-12 00:22:44 qqshka Exp $
 
 */
 // sys_win.c
@@ -544,24 +544,45 @@ void Sys_CopyToClipboard(char *text) {
 
 int		argc;
 char	*argv[MAX_NUM_ARGVS];
-static char	*empty_string = "";
+static char exename[1024] = {0};
 
 void ParseCommandLine (char *lpCmdLine) {
 	argc = 1;
-	argv[0] = empty_string;
+	argv[0] = exename;
 
-	while (*lpCmdLine && (argc < MAX_NUM_ARGVS)) {
+	if(!GetModuleFileName(NULL, exename, sizeof(exename)-1)) // here we get loong string, with full path
+		exename[0] = 0; // oh, something bad
+	else
+		strlcpy(exename, COM_SkipPath(exename), sizeof(exename));
+
+	while (*lpCmdLine && (argc < MAX_NUM_ARGVS))
+	{
 		while (*lpCmdLine && ((*lpCmdLine <= 32) || (*lpCmdLine > 126)))
 			lpCmdLine++;
 
-		if (*lpCmdLine) {
-			argv[argc] = lpCmdLine;
-			argc++;
-
-			while (*lpCmdLine && ((*lpCmdLine > 32) && (*lpCmdLine <= 126)))
+		if (*lpCmdLine)
+		{
+			if (*lpCmdLine == '\"')
+			{
 				lpCmdLine++;
 
-			if (*lpCmdLine) {
+				argv[argc] = lpCmdLine;
+				argc++;
+
+				while (*lpCmdLine && *lpCmdLine != '\"') // this include chars less that 32 and greate than 126... is that evil?
+					lpCmdLine++;
+			}
+			else
+			{
+				argv[argc] = lpCmdLine;
+				argc++;
+
+				while (*lpCmdLine && ((*lpCmdLine > 32) && (*lpCmdLine <= 126)))
+					lpCmdLine++;
+			}
+
+			if (*lpCmdLine)
+			{
 				*lpCmdLine = 0;
 				lpCmdLine++;
 			}
@@ -579,7 +600,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	double time, oldtime, newtime;
 	MEMORYSTATUS lpBuffer;
 	int bIsEnabled = 0;
-	char *qtvfile = NULL;
 
 	global_hInstance = hInstance;
 
@@ -601,12 +621,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 #if !defined(CLIENTONLY)
 	dedicated = COM_CheckParm ("-dedicated");
 #endif
-
-	if (COM_Argc() >= 2) {
-		qtvfile = COM_Argv(1);
-		if (qtvfile[0] == '-' || qtvfile[0] == '+') // yea, i am not check .qtv file extension
-			qtvfile = NULL;
-	}
 
 	if (dedicated) {
 		if (!AllocConsole())
@@ -651,17 +665,17 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	oldtime = Sys_DoubleTime ();
 
-	if (qtvfile) {
-		char tmp[1024];
-		Com_DPrintf("QTVFILE: %s\n", qtvfile);
+// { probably that code may be located in Host_Init() at end of function, so this will work for both, linux and windows
+	if (COM_Argc() >= 2) { // check .qtv files
+		char *qtvfile = COM_Argv(1), tmp[1024];
 
-		if (qtvfile[0] == '"') // seems file has open and closing " alredy
-			snprintf(tmp, sizeof(tmp), "qtvplay \"#%s\n", qtvfile+1);
-		else
+		if (qtvfile[0] && qtvfile[0] != '-' && qtvfile[0] != '+' && !strncmp(COM_FileExtension(qtvfile), "qtv", 4)) {
 			snprintf(tmp, sizeof(tmp), "qtvplay \"#%s\"\n", qtvfile);
 
-		Cbuf_AddText(tmp);
+			Cbuf_AddText(tmp);
+		}
 	}
+// }
 
     /* main window message loop */
 	while (1) {
