@@ -1354,6 +1354,9 @@
 					RelativePath="rulesets.c">
 				</File>
 				<File
+					RelativePath=".\settings_page.c">
+				</File>
+				<File
 					RelativePath="stats_grid.c">
 				</File>
 				<File
@@ -1504,6 +1507,9 @@
 				</File>
 				<File
 					RelativePath="embed_tcl.h">
+				</File>
+				<File
+					RelativePath=".\fs.h">
 				</File>
 				<File
 					RelativePath="image.h">
@@ -1680,6 +1686,9 @@
 				</File>
 				<File
 					RelativePath="security.h">
+				</File>
+				<File
+					RelativePath=".\settings_page.h">
 				</File>
 				<File
 					RelativePath="stats_grid.h">
