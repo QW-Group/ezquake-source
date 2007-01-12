@@ -1,13 +1,15 @@
-//    $Id: Ctrl.c,v 1.6 2007-01-01 07:16:23 qqshka Exp $
+//    $Id: Ctrl.c,v 1.7 2007-01-12 12:45:58 johnnycz Exp $
 
 #include "quakedef.h"
+
+#define SLIDER_RANGE 12
 
 void UI_DrawCharacter (int cx, int line, int num)
 {
 	Draw_Character ( cx, line, num);
 }
 
-void UI_Print (int cx, int cy, char *str, int red)
+void UI_Print (int cx, int cy, const char *str, int red)
 {
 	if (red)
 	{
@@ -23,6 +25,19 @@ void UI_Print (int cx, int cy, char *str, int red)
 		Draw_ColoredString (cx, cy, str, red);
 	}
 }
+
+int UI_DrawSlider (int x, int y, float range) {
+	int    i;
+
+	range = bound(0, range, 1);
+	UI_DrawCharacter (x-8, y, 128);
+	for (i=0 ; i<SLIDER_RANGE ; i++)
+		UI_DrawCharacter (x + i*8, y, 129);
+	UI_DrawCharacter (x+i*8, y, 130);
+	UI_DrawCharacter (x + (SLIDER_RANGE-1)*8 * range, y, 131);
+	return x+(i+1)*8;
+}
+
 
 void UI_Print3 (int cx, int cy, char *str, clrinfo_t *clr, int clr_cnt, int red)
 {

@@ -98,6 +98,7 @@
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC;LIBCMT;"
+				ModuleDefinitionFile=""
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="Debug-gl/ezquake-gl.pdb"
 				SubSystem="2"
@@ -211,6 +212,7 @@
 				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib"
 				GenerateManifest="false"
 				IgnoreDefaultLibraryNames="libc.lib;MSVCRT"
+				ModuleDefinitionFile="settings_general.def"
 				ProgramDatabaseFile="Release/ezquake.pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -328,6 +330,7 @@
 				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib"
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBC;"
+				ModuleDefinitionFile="settings_general.def"
 				ProgramDatabaseFile="Release-gl/ezquake-gl.pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -440,6 +443,7 @@
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\libs\windows-x86;$(DXSDK_DIR)\Lib\x86;$(DXSDK_DIR)\Lib"
 				IgnoreDefaultLibraryNames="libc.lib;MSVCRT"
+				ModuleDefinitionFile="settings_general.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="Debug/ezquake.pdb"
 				SubSystem="2"
@@ -1802,6 +1806,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\settings_page.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\stats_grid.c"
 					>
 				</File>
@@ -2214,6 +2222,14 @@
 				</File>
 				<File
 					RelativePath="..\..\security.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\settings.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\settings_page.h"
 					>
 				</File>
 				<File
