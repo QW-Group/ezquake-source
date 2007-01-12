@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.14 2007-01-11 18:30:31 qqshka Exp $
+    $Id: q_shared.c,v 1.15 2007-01-12 11:35:56 oldmanuk Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -551,7 +551,7 @@ float FloatSwap (float f)
 }
 #endif
 
-#ifdef __PDP_ENDIAN__Q__
+#ifdef __PDP_ENDIAN__
 int LongSwapPDP2Big (int l)
 {
 	union
