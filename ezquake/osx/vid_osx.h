@@ -70,8 +70,8 @@ extern void	M_Menu_Options_f (void);
 extern void	M_Print (int, int, char *);
 extern void	M_PrintWhite (int, int, char *);
 extern void	M_DrawCharacter (int, int, int);
-extern void	M_DrawTransPic (int, int, qpic_t *);
-extern void	M_DrawPic (int, int, qpic_t *);
+extern void	M_DrawTransPic (int, int, mpic_t *);
+extern void	M_DrawPic (int, int, mpic_t *);
 
 #if defined (GLQUAKE)
 

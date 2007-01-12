@@ -38,7 +38,7 @@
 //	       FIX: The "id1" folder had to be lower case. Can now be upper or lower case.
 // v1.0:   Initial release.
 //____________________________________________________________________________________________________________________iNCLUDES
-//	$Id: sys_osx.m,v 1.2 2006-08-14 15:31:56 vvd0 Exp $
+//	$Id: sys_osx.m,v 1.3 2007-01-12 11:37:51 oldmanuk Exp $
 
 #pragma mark =Includes=
 
@@ -324,16 +324,16 @@ int	Sys_FileTime (char *thePath)
 
 //_________________________________________________________________________________________________________________Sys_mkdir()
 
-void	Sys_mkdir (char *thePath)
+void	Sys_mkdir (const char *path)
 {
-    if (mkdir (thePath, 0777) != -1)
+    if (mkdir (path, 0777) != -1)
     {
         return;
     }
     
     if (errno != EEXIST)
     {
-        Sys_Error ("\"mkdir %s\" failed, reason: \"%s\".", thePath, strerror(errno));
+        Sys_Error ("\"mkdir %s\" failed, reason: \"%s\".", path, strerror(errno));
     }
 }
 
@@ -663,6 +663,10 @@ void *	Sys_GetProcAddress (const char *theName, Boolean theSafeMode)
 }
 
 //______________________________________________________________________________________________________Sys_GetClipboardData()
+
+wchar *	Sys_GetClipboardTextW(void) {
+	return NULL;
+}
 
 char *	Sys_GetClipboardData (void)
 {
