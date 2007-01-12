@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.57 2006-12-15 22:31:38 disconn3ct Exp $
+#	$Id: Makefile,v 1.58 2007-01-12 11:35:56 oldmanuk Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -21,13 +21,13 @@ OS = $(shell uname -s | tr A-Z a-z)
 
 # add special architecture based flags
 ifeq ($(ARCH),x86_64)
-	ARCH_CFLAGS = -march=k8 -D__LITTLE_ENDIAN__Q__
+	ARCH_CFLAGS = -march=k8 -D__LITTLE_ENDIAN__
 endif
 ifeq ($(ARCH),x86)
-	ARCH_CFLAGS = -march=i686 -D__LITTLE_ENDIAN__Q__ -Did386
+	ARCH_CFLAGS = -march=i686 -D__LITTLE_ENDIAN__ -Did386
 endif
 ifeq ($(ARCH),ppc)
-	ARCH_CFLAGS = -arch ppc -faltivec -maltivec -mcpu=7450 -mtune=7450 -mpowerpc -mpowerpc-gfxopt -D__BIG_ENDIAN__Q__
+	ARCH_CFLAGS = -arch ppc -faltivec -maltivec -mcpu=7450 -mtune=7450 -mpowerpc -mpowerpc-gfxopt -D__BIG_ENDIAN__
 endif
 
 # TODO: LIB_PREFIX must be $(OS)-$(ARCH)
