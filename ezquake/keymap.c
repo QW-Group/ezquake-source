@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keymap.c,v 1.9 2007-01-01 17:13:44 tonik Exp $
+	$Id: keymap.c,v 1.10 2007-01-12 11:37:03 oldmanuk Exp $
 
 */
 // keymap.c -- support for international keyboard layouts
@@ -229,6 +229,7 @@ void IN_TranslateKeyEvent (int lParam, int wParam, qbool down) {
 					default:                                     break;
 				}
 			}
+#ifdef _WIN32 // XXX: oldman: I presume this in WIN32 code
 			if (!in_builtinkeymap.value) {
 				BYTE	state[256];
 				WCHAR	uni;
@@ -236,6 +237,7 @@ void IN_TranslateKeyEvent (int lParam, int wParam, qbool down) {
 				ToUnicode (wParam, lParam >> 16, state, &uni, 1, 0);
 				unichar = uni;
 			}
+#endif
 		}
 	} // END if (scancode <= 127)
 
