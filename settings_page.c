@@ -4,16 +4,12 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.1 2007-01-12 12:45:58 johnnycz Exp $
+		$Id: settings_page.c,v 1.2 2007-01-12 15:35:37 johnnycz Exp $
 
 */
 
 #include "quakedef.h"
 #include "settings.h"
-
-typedef const char* (*boolsett_readfnc) (void);
-typedef void (*enum_togglefnc) (qbool);
-typedef void (*action_fnc) (void);
 
 #define LETW 8
 #define COL1WIDTH 16
@@ -45,7 +41,7 @@ static void Setting_DrawBoolAdv(int x, int y, int w, setting* setting, qbool act
 {
 	const char* val;
 	x = Setting_PrintLabel(x,y,w, setting->label, active);
-	val = setting->readfnc ? ((boolsett_readfnc) setting->readfnc)() : "off";
+	val = setting->readfnc ? setting->readfnc() : "off";
 	UI_Print(x, y, val, active);
 }
 
@@ -64,7 +60,7 @@ static void Setting_DrawAction(int x, int y, int w, setting* set, qbool active)
 static void Setting_DrawNamed(int x, int y, int w, setting* set, qbool active)
 {
 	x = Setting_PrintLabel(x, y, w, set->label, active);
-	UI_Print(x, y, ((const char** )set->readfnc)[(int) bound(set->min, set->cvar->value, set->max)], active);
+	UI_Print(x, y, set->named_ints[(int) bound(set->min, set->cvar->value, set->max)], active);
 }
 
 
@@ -73,12 +69,16 @@ static void Setting_Increase(setting* set) {
 
 	switch (set->type) {
 		case stt_bool: Cvar_Set (set->cvar, set->cvar->value ? "0" : "1"); break;
-		case stt_enum: if (set->togglefnc) ((enum_togglefnc) set->togglefnc)(false); break;
-		case stt_num: case stt_named:
+		case stt_custom: if (set->togglefnc) set->togglefnc(false); break;
+		case stt_num:
+		case stt_named:
 			newval = set->cvar->value + set->step;
-			if (set->max >= newval) Cvar_SetValue(set->cvar, newval);
+			if (set->max >= newval)
+				Cvar_SetValue(set->cvar, newval);
+			else 
+				Cvar_SetValue(set->cvar, set->min);
 			break;
-		case stt_action: if (set->readfnc) ((action_fnc) set->readfnc)(); break;
+		case stt_action: if (set->readfnc) set->actionfnc(); break;
 	}
 }
 
@@ -87,10 +87,14 @@ static void Setting_Decrease(setting* set) {
 
 	switch (set->type) {
 		case stt_bool: Cvar_Set (set->cvar, set->cvar->value ? "0" : "1"); break;
-		case stt_enum: if (set->togglefnc) ((enum_togglefnc) set->togglefnc)(true); break;
-		case stt_num: case stt_named:
+		case stt_custom: if (set->togglefnc) set->togglefnc(true); break;
+		case stt_num:
+		case stt_named:
 			newval = set->cvar->value - set->step;
-			if (set->min <= newval) Cvar_SetValue(set->cvar, newval);
+			if (set->min <= newval)
+				Cvar_SetValue(set->cvar, newval);
+			else
+				Cvar_SetValue(set->cvar, set->max);
 			break;
 	}
 }
@@ -162,7 +166,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_tab* tab)
 		set = tab->set_tab + i;
 		switch (set->type) {
 			case stt_bool: Setting_DrawBool(x, y, w, set, active); break;
-			case stt_enum: Setting_DrawBoolAdv(x, y, w, set, active); break;
+			case stt_custom: Setting_DrawBoolAdv(x, y, w, set, active); break;
 			case stt_num: Setting_DrawNum(x, y, w, set, active); break;
 			case stt_separator: Setting_DrawSeparator(x, y, w, set); break;
 			case stt_action: Setting_DrawAction(x, y, w, set, active); break;
