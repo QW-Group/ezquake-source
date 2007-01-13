@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.9 2007-01-13 11:13:16 johnnycz Exp $
+		$Id: menu_options.c,v 1.10 2007-01-13 13:45:19 johnnycz Exp $
 
 */
 
@@ -23,10 +23,10 @@
 
 typedef enum {
 	OPTPG_SETTINGS,
+	OPTPG_PLAYER,
 	OPTPG_FPS,
 	OPTPG_HUD,
 	OPTPG_MULTIVIEW,
-	OPTPG_PLAYER,
 	OPTPG_BINDS,
 	OPTPG_VIDEO,
 }	options_tab_t;
@@ -158,11 +158,50 @@ void SshotformatToggle(qbool back) {
 extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_weaponhide, con_funchars_mode, con_notifytime, scr_consize, ignore_opponents, _con_notifylines,
 	ignore_qizmo_spec, ignore_spec, msg_filter, sys_highpriority, crosshair, crosshairsize, cl_smartjump, scr_coloredText,
 	cl_rollangle, cl_rollspeed, v_gunkick, v_kickpitch, v_kickroll, v_kicktime, v_viewheight, match_auto_sshot, match_auto_record, match_auto_logconsole,
-	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, scr_clock, scr_gameclock, show_fps;
+	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, scr_clock, scr_gameclock, show_fps, rate, cl_c2sImpulseBackup,
+	name, team, skin, topcolor, bottomcolor, /*cl_teamtopcolor, cl_teambottomcolor, */ cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
+	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_format, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename;
 ;
 #ifdef GLQUAKE
 extern cvar_t scr_autoid, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights;
 #endif
+
+const char* BandwidthRead(void) {
+	if (rate.value < 4000) return "Modem (33k)";
+	else if (rate.value < 6000) return "Modem (56k)";
+	else if (rate.value < 8000) return "ISDN (112k)";
+	else if (rate.value < 15000) return "Cable (128k)";
+	else return "ADSL (> 256k)";
+}
+void BandwidthToggle(qbool back) {
+	if (rate.value < 4000) Cvar_SetValue(&rate, 5670);
+	else if (rate.value < 6000) Cvar_SetValue(&rate, 7168);
+	else if (rate.value < 8000) Cvar_SetValue(&rate, 14336);
+	else if (rate.value < 15000) Cvar_SetValue(&rate, 30000);
+	else Cvar_SetValue(&rate, 3800);
+}
+const char* ConQualityRead(void) {
+	int q = (int) cl_c2sImpulseBackup.value;
+	if (!q) return "Perfect";
+	else if (q < 3) return "Low packetloss";
+	else if (q < 5) return "Medium packetloss";
+	else return "High packetloss";
+}
+void ConQualityToggle(qbool back) {
+	int q = (int) cl_c2sImpulseBackup.value;
+	if (!q) Cvar_SetValue(&cl_c2sImpulseBackup, 2);
+	else if (q < 3) Cvar_SetValue(&cl_c2sImpulseBackup, 4);
+	else if (q < 5) Cvar_SetValue(&cl_c2sImpulseBackup, 6);
+	else Cvar_SetValue(&cl_c2sImpulseBackup, 0);
+}
+const char* DemoformatRead(void) {
+	return demo_format.string;
+}
+void DemoformatToggle(qbool back) {
+	if (!strcmp(demo_format.string, "qwd")) Cvar_Set(&demo_format, "qwz");
+	else if (!strcmp(demo_format.string, "qwz")) Cvar_Set(&demo_format, "mvd");
+	else if (!strcmp(demo_format.string, "mvd")) Cvar_Set(&demo_format, "qwd");
+}
 
 void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
@@ -190,13 +229,16 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Mouse Look", freelook),
 	ADDSET_BOOL		("Smart Jump", cl_smartjump),
 	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
+	ADDSET_SEPARATOR("Connection"),
+	ADDSET_CUSTOM	("Bandwidth Limit", BandwidthRead, BandwidthToggle),
+	ADDSET_CUSTOM	("Quality", ConQualityRead, ConQualityToggle),
 #ifdef GLQUAKE
 	ADDSET_SEPARATOR("Tracker Messages"),
 	ADDSET_BOOL		("Flags", amf_tracker_flags),
 	ADDSET_BOOL		("Frags", amf_tracker_frags),
 	ADDSET_NUMBER	("Messages", amf_tracker_messages, 0, 10, 1),
 	ADDSET_BOOL		("Streaks", amf_tracker_streaks),
-	ADDSET_BOOL		("Time", amf_tracker_time),
+	ADDSET_NUMBER	("Time", amf_tracker_time, 0.5, 6, 0.5),
 	ADDSET_NUMBER	("Scale", amf_tracker_scale, 0.1, 2, 0.1),
 	ADDSET_BOOL		("Align Right", amf_tracker_align_right),
 #endif
@@ -222,10 +264,13 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
 	ADDSET_NAMED	("Auto Record", match_auto_record, autorecord_enum),
 	ADDSET_NAMED	("Auto Log", match_auto_logconsole, autorecord_enum),
-	ADDSET_CUSTOM	("Sshot Format", SshotformatRead, SshotformatToggle)
+	ADDSET_CUSTOM	("Sshot Format", SshotformatRead, SshotformatToggle),
+	ADDSET_SEPARATOR("Demos"),
+	ADDSET_STRING	("Directory", demo_dir),
+	ADDSET_CUSTOM	("Format", DemoformatRead, DemoformatToggle),
+	ADDSET_STRING	("Qizmo Dir", qizmo_dir),
+	ADDSET_STRING	("QWDTools Dir", qwdtools_dir),
 };
-
-// todo on string: demo_format, demo_dir, qizmo_dir, qwdtools_dir
 
 settings_page settgeneral;
 
@@ -299,6 +344,39 @@ int CT_Opt_HUD_Key (int k, CTab_t *tab, CTabPage_t *page) {
 	return Settings_Key(&setthud, k);
 }
 
+settings_page settplayer;
+// todo: [team/enemy][top/bottom]color should always been variables in my opinion, however i'm bored to death to recode them at the moment
+setting settplayer_arr[] = {
+	ADDSET_SEPARATOR("Own Settings"),
+	ADDSET_STRING	("Name", name),
+	ADDSET_STRING	("Teamchat Prefix", cl_fakename),
+	ADDSET_STRING	("Team", team),
+	ADDSET_STRING	("Skin", skin),
+	ADDSET_COLOR	("Shirt Color", topcolor),
+	ADDSET_COLOR	("Pants Color", bottomcolor),
+	ADDSET_SEPARATOR("Teammates"),
+	//ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
+	//ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
+	ADDSET_STRING   ("Skin", cl_teamskin),
+	ADDSET_STRING	("Quad Skin", cl_teamquadskin),
+	ADDSET_STRING	("Pent Skin", cl_teampentskin),
+	ADDSET_STRING	("Quad+Pent Skin", cl_teambothskin),
+	ADDSET_SEPARATOR("Enemies"),
+	//ADDSET_COLOR	("Shirt Color", cl_enemytopcolor),
+	//ADDSET_COLOR	("Pants Color", cl_enemybottomcolor),
+	ADDSET_STRING   ("Skin", cl_enemyskin),
+	ADDSET_STRING	("Quad Skin", cl_enemyquadskin),
+	ADDSET_STRING	("Pent Skin", cl_enemypentskin),
+	ADDSET_STRING	("Quad+Pent Skin", cl_enemybothskin),
+};
+
+void CT_Opt_Player_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
+	Settings_Draw(x, y, w, h, &settplayer);
+}
+
+int CT_Opt_Player_Key (int k, CTab_t *tab, CTabPage_t *page) {
+	return Settings_Key(&settplayer, k);
+}
 
 //=============================================================================
 // <BINDS>
@@ -705,222 +783,7 @@ int CT_Opt_Video_Key (int key, CTab_t *tab, CTabPage_t *page) {
 	return key == K_LEFTARROW || key == K_RIGHTARROW || key == K_DOWNARROW || key == K_UPARROW || key == K_ENTER;
 }
 
-//=============================================================================
-/* PLAYER MENU */
-
-int        setup_cursor = 0;
-int        setup_cursor_table[] = {40, 56, 80, 104, 140};
-
-char    setup_name[16];
-char    setup_team[16];
-int        setup_oldtop;
-int        setup_oldbottom;
-int        setup_top;
-int        setup_bottom;
-
-extern cvar_t    name, team;
-extern cvar_t    topcolor, bottomcolor;
-
-#define    NUM_SETUP_CMDS    5
-
-static void Opt_Player_Load (void) {
-	strlcpy (setup_name, name.string, sizeof(setup_name));
-	strlcpy (setup_team, team.string, sizeof(setup_team));
-	setup_top = setup_oldtop = (int)topcolor.value;
-	setup_bottom = setup_oldbottom = (int)bottomcolor.value;
-}
-
-byte identityTable[256];
-byte translationTable[256];
-
-void M_BuildTranslationTable(int top, int bottom) {
-	int        j;
-	byte    *dest, *source;
-
-	for (j = 0; j < 256; j++)
-		identityTable[j] = j;
-	dest = translationTable;
-	source = identityTable;
-	memcpy (dest, source, 256);
-
-	if (top < 128)    // the artists made some backwards ranges.  sigh.
-		memcpy (dest + TOP_RANGE, source + top, 16);
-	else
-		for (j = 0; j < 16; j++)
-			dest[TOP_RANGE + j] = source[top + 15 - j];
-
-	if (bottom < 128)
-		memcpy (dest + BOTTOM_RANGE, source + bottom, 16);
-	else
-		for (j = 0; j < 16; j++)
-			dest[BOTTOM_RANGE + j] = source[bottom + 15 - j];
-}
-
-static void M_DrawTransPicTranslate (int x, int y, mpic_t *pic) {
-	Draw_TransPicTranslate (x + ((menuwidth - 320) >> 1), y + m_yofs, pic, translationTable);
-}
-
-void CT_Opt_Player_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
-	mpic_t    *p;
-
-	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
-	p = Draw_CachePic ("gfx/p_multi.lmp");
-	M_DrawPic (64, 4, p);
-
-	M_Print (64, 40, "Your name");
-	M_DrawTextBox (160, 32, 16, 1);
-	M_PrintWhite (168, 40, setup_name);
-
-	M_Print (64, 56, "Your team");
-	M_DrawTextBox (160, 48, 16, 1);
-	M_PrintWhite (168, 56, setup_team);
-
-	M_Print (64, 80, "Shirt color");
-	M_Print (64, 104, "Pants color");
-
-	M_DrawTextBox (64, 140-8, 14, 1);
-	M_Print (72, 140, "Accept Changes");
-
-	p = Draw_CachePic ("gfx/bigbox.lmp");
-	M_DrawTransPic (160, 64, p);
-	p = Draw_CachePic ("gfx/menuplyr.lmp");
-	M_BuildTranslationTable(setup_top*16, setup_bottom*16);
-	//M_DrawTransPicTranslate (172, 72, p);
-	M_DrawTransPicTranslate (0, 0, p);
-
-	M_DrawCharacter (56, setup_cursor_table [setup_cursor], FLASHINGARROW());
-
-	if (setup_cursor == 0)
-		M_DrawCharacter (168 + 8*strlen(setup_name), setup_cursor_table [setup_cursor], FLASHINGCURSOR());
-
-	if (setup_cursor == 1)
-		M_DrawCharacter (168 + 8*strlen(setup_team), setup_cursor_table [setup_cursor], FLASHINGCURSOR());
-}
-
-int CT_Opt_Player_Key (int k, CTab_t *tab, CTabPage_t *page) {
-	int l;
-	int unichar = options_unichar;
-	int capped = false;
-
-	switch (k) {
-		case K_UPARROW:
-			S_LocalSound ("misc/menu1.wav");
-			setup_cursor--;
-			if (setup_cursor < 0)
-				setup_cursor = NUM_SETUP_CMDS-1;
-			capped = true;
-			break;
-
-		case K_DOWNARROW:
-			S_LocalSound ("misc/menu1.wav");
-			setup_cursor++;
-			if (setup_cursor >= NUM_SETUP_CMDS)
-				setup_cursor = 0;
-			capped = true;
-			break;
-
-		case K_HOME:
-			S_LocalSound ("misc/menu1.wav");
-			setup_cursor = 0;
-			capped = true;
-			break;
-
-		case K_END:
-			S_LocalSound ("misc/menu1.wav");
-			setup_cursor = NUM_SETUP_CMDS-1;
-			capped = true;
-			break;
-
-		case K_LEFTARROW:
-			if (setup_cursor < 2)
-				return false;
-			S_LocalSound ("misc/menu3.wav");
-			if (setup_cursor == 2)
-				setup_top = setup_top - 1;
-			if (setup_cursor == 3)
-				setup_bottom = setup_bottom - 1;
-			capped = true;
-			break;
-
-		case K_RIGHTARROW:
-			if (setup_cursor < 2)
-				return false;
-			//forward:
-			S_LocalSound ("misc/menu3.wav");
-			if (setup_cursor == 2)
-				setup_top = setup_top + 1;
-			if (setup_cursor == 3)
-				setup_bottom = setup_bottom + 1;
-			capped = true;
-			break;
-
-		case K_ENTER:
-			//        if (setup_cursor == 0 || setup_cursor == 1)
-			//            return;
-
-			//        if (setup_cursor == 2 || setup_cursor == 3)
-			//            goto forward;
-
-			// setup_cursor == 4 (OK)
-			Cvar_Set (&name, setup_name);
-			Cvar_Set (&team, setup_team);
-			Cvar_Set (&topcolor, va("%i", setup_top));
-			Cvar_Set (&bottomcolor, va("%i", setup_bottom));
-			m_entersound = true;
-			M_Menu_Main_f ();
-			capped = true;
-			break;
-
-		case K_BACKSPACE:
-			if (setup_cursor == 0) {
-				if (strlen(setup_name))
-					setup_name[strlen(setup_name)-1] = 0;
-			} else if (setup_cursor == 1) {
-				if (strlen(setup_team))
-					setup_team[strlen(setup_team)-1] = 0;
-			} else {
-				return false;
-			}
-			capped = true;
-			break;
-
-		default:
-			if (!unichar)
-				break;
-			switch (setup_cursor) {
-			case 0:
-				l = strlen(setup_name);
-				if (l < 15) {
-					setup_name[l+1] = 0;
-					setup_name[l] = wc2char(unichar);
-				}
-				capped = true;
-				break;
-
-			case 1:
-				l = strlen(setup_team);
-				if (l < 15) {
-					setup_team[l + 1] = 0;
-					setup_team[l] = wc2char(unichar);
-				}
-				capped = true;
-				break;
-
-			default: capped = false;
-			}
-	}
-
-	if (setup_top > 13)
-		setup_top = 0;
-	if (setup_top < 0)
-		setup_top = 13;
-	if (setup_bottom > 13)
-		setup_bottom = 0;
-	if (setup_bottom < 0)
-		setup_bottom = 13;
-
-	return capped;
-}
+// </VIDEO>
 
 void Menu_Options_Key(int key, int unichar) {
     int handled = CTab_Key(&options_tab, key);
@@ -932,9 +795,16 @@ void Menu_Options_Key(int key, int unichar) {
 
 void Menu_Options_Draw(void) {
 	int x, y, w, h;
-	static int previousPage = 0;
-	if (previousPage != options_tab.activePage && options_tab.activePage == OPTPG_PLAYER)
-		Opt_Player_Load();
+	static int previousPage = -1;
+	if (previousPage != options_tab.activePage) {
+		switch (options_tab.activePage) {
+		case OPTPG_SETTINGS: Settings_OnShow(&settgeneral); break;
+		case OPTPG_PLAYER: Settings_OnShow(&settplayer); break;
+		case OPTPG_FPS: Settings_OnShow(&settfps); break;
+		case OPTPG_HUD: Settings_OnShow(&setthud); break;
+		case OPTPG_MULTIVIEW: Settings_OnShow(&settmultiview); break;
+		}
+	}
 
 	previousPage = options_tab.activePage;
 
@@ -958,17 +828,18 @@ void Menu_Options_Draw(void) {
 }
 
 void Menu_Options_Init(void) {
-	Settings_Page_Init(settgeneral_arr, settgeneral);
-	Settings_Page_Init(settfps_arr, settfps);
-	Settings_Page_Init(settmultiview_arr, settmultiview);
-	Settings_Page_Init(setthud_arr, setthud);
+	Settings_Page_Init(settgeneral, settgeneral_arr);
+	Settings_Page_Init(settfps, settfps_arr);
+	Settings_Page_Init(settmultiview, settmultiview_arr);
+	Settings_Page_Init(setthud, setthud_arr);
+	Settings_Page_Init(settplayer, settplayer_arr);
 
 	CTab_Init(&options_tab);
 	CTab_AddPage(&options_tab, "main", OPTPG_SETTINGS, NULL, CT_Opt_Settings_Draw, CT_Opt_Settings_Key);
+	CTab_AddPage(&options_tab, "player", OPTPG_PLAYER, NULL, CT_Opt_Player_Draw, CT_Opt_Player_Key);
 	CTab_AddPage(&options_tab, "graphics", OPTPG_FPS, NULL, CT_Opt_FPS_Draw, CT_Opt_FPS_Key);
 	CTab_AddPage(&options_tab, "hud", OPTPG_HUD, NULL, CT_Opt_HUD_Draw, CT_Opt_HUD_Key);
 	CTab_AddPage(&options_tab, "multiview", OPTPG_MULTIVIEW, NULL, CT_Opt_Multiview_Draw, CT_Opt_Multiview_Key);
-	CTab_AddPage(&options_tab, "player", OPTPG_PLAYER, NULL, CT_Opt_Player_Draw, CT_Opt_Player_Key);
 	CTab_AddPage(&options_tab, "controls", OPTPG_BINDS, NULL, CT_Opt_Binds_Draw, CT_Opt_Binds_Key);
 	CTab_AddPage(&options_tab, "video", OPTPG_VIDEO, NULL, CT_Opt_Video_Draw, CT_Opt_Video_Key);
 	CTab_SetCurrentId(&options_tab, OPTPG_SETTINGS);

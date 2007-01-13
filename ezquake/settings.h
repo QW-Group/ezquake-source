@@ -18,11 +18,16 @@
 // bool: will display on/off option
 #define ADDSET_BOOL(label, var) { stt_bool, label, &var, 0, 0, 0, NULL, NULL, NULL, NULL }
 
-// latebool: use for cvars that don't exist on compile time
+// latebool: use for cvars that don't exist on compile time - be carefull when using this, may lead to crashes!
 #define ADDSET_BOOLLATE(label, var) { stt_bool, label, NULL, 0, 0, 0, NULL, NULL, NULL, NULL, #var }
+
+// string: will show an edit box allowing you to edit teh value
+#define ADDSET_STRING(label, var) { stt_string, label, &var, 0, 0, 0, NULL, NULL, NULL, NULL }
 
 // named: give it array of strings, will assign values 0, 1, ... to the variable
 #define ADDSET_NAMED(label, var, strs) { stt_named, label, &var, 0, sizeof(strs)/sizeof(char*)-1, 1, NULL, NULL, NULL, strs }
+
+#define ADDSET_COLOR(label, var) { stt_playercolor, label, &var, 0, 0, 0, NULL, NULL, NULL, NULL }
 
 // custom: completely customizable setting, define your own reading and writing function
 // see below for function types
@@ -48,7 +53,9 @@ typedef enum  {
 	stt_bool,		// simple boolean setting, needs cvar
 	stt_custom,		// fully customizable setting, needs readfnc and togglefnc
 	stt_named,		// named integer 0..max, max is number of elements in array of strings assigned to readfnc
-	stt_action		// function is assigned to this, pointer must be stored in togglefnc
+	stt_action,		// function is assigned to this, pointer must be stored in togglefnc
+	stt_string,		// string - fully editable by the user, needs only cvar
+	stt_playercolor // todo - named enum 0..13
 } setting_type;
 
 typedef struct {
@@ -71,5 +78,4 @@ typedef struct {
 	int count;			// amount of elements in set_tab
 	int marked;			// currently selected element in set_tab
 	int viewpoint;		// where rendering start (internal)
-	char stringbuf[1024];
 } settings_page;

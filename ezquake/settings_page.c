@@ -4,15 +4,22 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.6 2007-01-13 11:13:17 johnnycz Exp $
+		$Id: settings_page.c,v 1.7 2007-01-13 13:45:19 johnnycz Exp $
 
 */
 
 #include "quakedef.h"
 #include "settings.h"
+#include "Ctrl_EditBox.h"
+
+CEditBox editbox;
 
 #define LETW 8
 #define LINEHEIGHT 8
+#define EDITBOXWIDTH 16
+#define EDITBOXMAXLENGTH 64
+
+const char* colors[] = { "White", "Brown", "Lavender", "Khaki", "Red", "Lt Brown", "Peach", "Lt Peach", "Purple", "Dk Purple", "Tan", "Green", "Yellow", "Blue" };
 
 static float SliderPos(float min, float max, float val) { return (val-min)/(max-min); }
 
@@ -78,6 +85,16 @@ static void Setting_DrawNamed(int x, int y, int w, setting* set, qbool active)
 	UI_Print(x, y, set->named_ints[(int) bound(set->min, set->cvar->value, set->max)], active);
 }
 
+static void Setting_DrawString(int x, int y, int w, setting* setting, qbool active)
+{
+	x = Setting_PrintLabel(x,y,w, setting->label, active);
+	if (active) {
+		CEditBox_Draw(&editbox, x, y, true);
+	} else {
+		UI_Print(x, y, setting->cvar->string, false);
+	}
+}
+
 static void Setting_Increase(setting* set) {
 	float newval;
 
@@ -140,11 +157,28 @@ static void CheckCursor(settings_page *tab, qbool up)
 	}
 }
 
+static void StringEntryLeave(setting* set) {
+	Cvar_Set(set->cvar, editbox.text);
+}
+
+static void StringEntryEnter(setting* set) {
+	CEditBox_Init(&editbox, EDITBOXWIDTH, EDITBOXMAXLENGTH);
+	strncpy(editbox.text, set->cvar->string, EDITBOXMAXLENGTH);
+}
+
+static void EditBoxCheck(settings_page* tab, int oldm, int newm)
+{
+	if (tab->settings[oldm].type == stt_string && oldm != newm)
+		StringEntryLeave(tab->settings + oldm);
+	if (tab->settings[newm].type == stt_string && oldm != newm)
+		StringEntryEnter(tab->settings + newm);
+}
+
 qbool Settings_Key(settings_page* tab, int key)
 {
 	qbool up = false;
 	setting_type type;
-	CheckCursor(tab, up);
+	int oldm = tab->marked;
 
 	type = tab->settings[tab->marked].type;
 
@@ -156,24 +190,37 @@ qbool Settings_Key(settings_page* tab, int key)
 	case K_END: tab->marked = tab->count - 1; up = true; break;
 	case K_HOME: tab->marked = 0; break;
 	case K_RIGHTARROW:
-		if (type != stt_action) {
-			Setting_Increase(tab->settings + tab->marked);
-			return true;
-		} else return false;
+		switch (type) {
+		case stt_action: return false;
+		case stt_string: CEditBox_Key(&editbox, key); return true;
+		default: Setting_Increase(tab->settings + tab->marked);	return true;
+		}
 
 	case K_ENTER:
-		Setting_Increase(tab->settings + tab->marked);
+		switch (type) {
+		case stt_string: StringEntryLeave(tab->settings + tab->marked);
+		default: Setting_Increase(tab->settings + tab->marked);
+		}
 		return true;
 
 	case K_LEFTARROW: 
-		if (type != stt_action) {
-			Setting_Decrease(tab->settings + tab->marked);
+		switch (type) {
+		case stt_action: return false;
+		case stt_string: CEditBox_Key(&editbox, key); return true;
+		default: Setting_Decrease(tab->settings + tab->marked);	return true;
+		}
+
+	default: 
+		if (type == stt_string && key != K_TAB && key != K_ESCAPE) {
+			CEditBox_Key(&editbox, key);
 			return true;
-		} else return false;
-	default: return false; break;
+		} else {
+			return false;
+		}
 	}
 
 	CheckCursor(tab, up);
+	EditBoxCheck(tab, oldm, tab->marked);
 	return true;
 }
 
@@ -187,8 +234,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 	if (!tab->count) return;
 
 	nexttop = tab->settings[0].top;
-
-	CheckCursor(tab, false);
+	
 	CheckViewpoint(tab, h);
 
 	for (i = tab->viewpoint; i < tab->count && tab->settings[i].top + STHeight(tab->settings[i].type) <= h + tab->settings[tab->viewpoint].top; i++)
@@ -203,11 +249,19 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 			case stt_separator: Setting_DrawSeparator(x, y, w, set); break;
 			case stt_action: Setting_DrawAction(x, y, w, set, active); break;
 			case stt_named: Setting_DrawNamed(x, y, w, set, active); break;
+			case stt_string: Setting_DrawString(x, y, w, set, active); break;
 		}
 		y += STHeight(tab->settings[i].type);
 		if (i < tab->count)
 			nexttop = tab->settings[i+1].top;
 	}
+}
+
+void Settings_OnShow(settings_page *page)
+{
+	int oldm = page->marked;
+	CheckCursor(page, false);
+	EditBoxCheck(page, oldm, page->marked);
 }
 
 void Settings_Init(settings_page *page, setting *arr, size_t size)
@@ -228,6 +282,13 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 			arr[i].varname = NULL;
 			if (!arr[i].cvar)
 				Cbuf_AddText(va("Warning: variable %s not found\n", arr[i].varname));
+		}
+		if (arr[i].type == stt_playercolor) {
+			arr[i].type = stt_named;
+			arr[i].named_ints = colors;
+			arr[i].min = 0;
+			arr[i].step = 1;
+			arr[i].max = sizeof(colors) / sizeof(char*) - 1;
 		}
 	}
 }
