@@ -5,15 +5,15 @@
 
 filelist_t help_filelist;
 
-cvar_t  help_files_showsize   = {"help_files_showsize",   "1"};
-cvar_t  help_files_showdate   = {"help_files_showdate",   "1"};
-cvar_t  help_files_showtime   = {"help_files_showtime",   "0"};
-cvar_t  help_files_sortmode   = {"help_files_sortmode",   "1"};
-cvar_t  help_files_showstatus = {"help_files_showstatus", "1"};
-cvar_t  help_files_stripnames = {"help_files_stripnames", "1"};
-cvar_t  help_files_interline  = {"help_files_interline",  "0"};
-cvar_t  help_files_scrollnames= {"&help_browser_scrollnames", "0"};
-
+cvar_t  help_files_showsize		= {"help_files_showsize",		"1"};
+cvar_t  help_files_showdate		= {"help_files_showdate",		"1"};
+cvar_t  help_files_showtime		= {"help_files_showtime",		"0"};
+cvar_t  help_files_sortmode		= {"help_files_sortmode",		"1"};
+cvar_t  help_files_showstatus	= {"help_files_showstatus",		"1"};
+cvar_t  help_files_stripnames	= {"help_files_stripnames",		"1"};
+cvar_t  help_files_interline	= {"help_files_interline",		"0"};
+cvar_t  help_files_scrollnames	= {"&help_files_scrollnames",	"0"};
+cvar_t  help_files_dircolor		= {"&help_files_dircolor",		"255 255 255 255"};
 
 void Help_Files_Init(void)
 {
@@ -37,6 +37,8 @@ void Help_Files_Init(void)
         &help_files_interline,
         &help_files_showstatus,
 		&help_files_scrollnames,
+		&help_files_dircolor,
+		NULL, // No ZIP color needed for help files.
 		"./ezquake/help/manual");
     FL_AddFileType(&help_filelist, 0, ".xml");
 }

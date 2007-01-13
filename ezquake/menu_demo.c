@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.11 2006-12-31 05:15:22 cokeman1982 Exp $
+		$Id: menu_demo.c,v 1.12 2007-01-13 20:40:54 cokeman1982 Exp $
 
 */
 
@@ -74,14 +74,18 @@ extern cvar_t scr_scaleMenu;
 filelist_t demo_filelist;
 
 // demo browser cvars
-cvar_t  demo_browser_showsize   = {"demo_browser_showsize",   "1"};
-cvar_t  demo_browser_showdate   = {"demo_browser_showdate",   "1"};
-cvar_t  demo_browser_showtime   = {"demo_browser_showtime",   "0"};
-cvar_t  demo_browser_sortmode   = {"demo_browser_sortmode",   "1"};
-cvar_t  demo_browser_showstatus = {"demo_browser_showstatus", "1"};
-cvar_t  demo_browser_stripnames = {"demo_browser_stripnames", "1"};
-cvar_t  demo_browser_interline  = {"demo_browser_interline",  "0"};
-cvar_t  demo_browser_scrollnames= {"demo_browser_scrollnames","1"};
+cvar_t  demo_browser_showsize   = {"demo_browser_showsize",		"1"};
+cvar_t  demo_browser_showdate   = {"demo_browser_showdate",		"1"};
+cvar_t  demo_browser_showtime   = {"demo_browser_showtime",		"0"};
+cvar_t  demo_browser_sortmode   = {"demo_browser_sortmode",		"1"};
+cvar_t  demo_browser_showstatus = {"demo_browser_showstatus",	"1"};
+cvar_t  demo_browser_stripnames = {"demo_browser_stripnames",	"1"};
+cvar_t  demo_browser_interline  = {"demo_browser_interline",	"0"};
+cvar_t  demo_browser_scrollnames= {"demo_browser_scrollnames",	"1"};
+cvar_t	demo_browser_dircolor	= {"demo_browser_dircolor",		"0 127 0 255"};
+#ifdef WITH_ZIP
+cvar_t	demo_browser_zipcolor	= {"demo_browser_dircolor",		"0 175 207 255"};
+#endif 
 
 // demo menu container
 CTab_t demo_tab;
@@ -643,6 +647,8 @@ void Menu_Demo_Init(void)
     Cvar_Register(&demo_browser_stripnames);
     Cvar_Register(&demo_browser_interline);
 	Cvar_Register(&demo_browser_scrollnames);
+	Cvar_Register(&demo_browser_dircolor);
+	Cvar_Register(&demo_browser_zipcolor);
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
@@ -664,6 +670,8 @@ void Menu_Demo_Init(void)
         &demo_browser_interline,
         &demo_browser_showstatus,
 		&demo_browser_scrollnames,
+		&demo_browser_dircolor,
+		&demo_browser_zipcolor,
 		"./qw");
     FL_AddFileType(&demo_filelist, 0, ".qwd");
 	FL_AddFileType(&demo_filelist, 1, ".qwz");
