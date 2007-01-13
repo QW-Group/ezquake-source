@@ -18,6 +18,9 @@
 // bool: will display on/off option
 #define ADDSET_BOOL(label, var) { stt_bool, label, &var, 0, 0, 0, NULL, NULL, NULL, NULL }
 
+// latebool: use for cvars that don't exist on compile time
+#define ADDSET_BOOLLATE(label, var) { stt_bool, label, NULL, 0, 0, 0, NULL, NULL, NULL, NULL, #var }
+
 // named: give it array of strings, will assign values 0, 1, ... to the variable
 #define ADDSET_NAMED(label, var, strs) { stt_named, label, &var, 0, sizeof(strs)/sizeof(char*)-1, 1, NULL, NULL, NULL, strs }
 
@@ -59,6 +62,7 @@ typedef struct {
 	enum_togglefnc togglefnc;	// toggle function pointer; required for enum
 	action_fnc actionfnc;		// action function pointer; required for stt_action
 	const char** named_ints;	// array of strings; required for sett_named
+	const char*	varname;		// name of a non-static cvar_t
 	int top;					// for internal rendering purposes
 } setting;
 
@@ -67,4 +71,5 @@ typedef struct {
 	int count;			// amount of elements in set_tab
 	int marked;			// currently selected element in set_tab
 	int viewpoint;		// where rendering start (internal)
+	char stringbuf[1024];
 } settings_page;
