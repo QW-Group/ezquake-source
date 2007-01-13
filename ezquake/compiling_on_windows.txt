@@ -1,37 +1,42 @@
-Compiling ezQuake sources on Windows:
+Compiling ezQuake sources on Windows: (updated Jan 12, 2007)
+---------------------------------------------------------------------------------------------------------
 
-requirements:
-Sources are compilable in following version of Microsoft Visual Studio:
-6, 7, 7.1, 8 (2005 .NET)
+*** Sources are compilable with Microsoft Visual Studio: 6, 7, 7.1, 8 (2005 .NET) ***
 
-instructions:
-1) grab source from ezquake CVS:
+
+
+Instructions:
+--------------------
+1) Grab source from ezquake CVS:
  - cvs -d:pserver:anonymous@ezquake.cvs.sourceforge.net:/cvsroot/ezquake
  - checkout module ezquake:
  - cvs -z3 -d:pserver:anonymous@ezquake.cvs.sourceforge.net:/cvsroot/ezquake co -P ezquake
-2) get directx SDK and place it where compiler can see it
+
+2) Get directx SDK and place it where compiler can see it
  - http://www.microsoft.com/downloads/details.aspx?FamilyId=7AB978B5-5F1A-4F6A-88EB-FC646138BECA&displaylang=en
  - project file looks in DXSDK_PATH (Environment variable), you can set this in your System -> Advanced -> Environment Variables settings
-3) download all required libraries, there are two ways to do it:
+
+3) Download all required libraries, there are two ways to do it:
  A) go to http://ezquake.cvs.sourceforge.net/ezquake/libs/windows-x86/
     and manually download all *.lib files from there, save them into libs\windows-x86 directory
- B) go to libs/windows-x86 dir and launch download.bat
-    this requires you to have wget.exe present in your system. if you don't have it, download it from:
+ B) Go to libs/windows-x86 dir and launch download.bat
+    *** This requires you to have wget.exe present in your system. if you don't have it, download it from: ***
     http://www.christopherlewis.com/WGet/wget-1.10.2b.zip
     and place wget.exe either in the same dir as download.bat or in your system dir
-4) for MS Visual Studio 8 (2005 .NET) you usually need ml.exe, grab it from 
+
+4) For MS Visual Studio 8 (2005 .NET) you usually need ml.exe, grab it from 
    http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/ML.EXE
    and place it into masm32 directory
-5) open ezquake.sln for Microsoft Visual Studio 7.1 or make\msvs2004\ezquake_msvs_80.sln for MS VS 8.0 (2005 .NET)
-6) select ReleaseGL configuration and press "Build"
 
-troubleshooting:
-- if you get "unresolved external symbol __imp__" linker errors, go to project properties, linker, input, additional dependencies, click "..."
-  and check if Inherited values contain 12 libs. You may happen to have only one lib in there. In such case add these libs to the upper window:
-  kernel32.lib, user32.lib, gdi32.lib, winspool.lib, comdlg32.lib, advapi32.lib, shell32.lib, ole32.lib, oleaut32.lib, uuid.lib, odbc32.lib, odbccp32.lib
+5) Open ezquake.sln for Microsoft Visual Studio 7.1. For MSVS2005 open ezquake_msvs_80.sln located in ezquake/make/msvs2005
 
-Microsoft Visual Studio 8 and .s (asm) files
----
+6) Select ReleaseGL configuration and press "Build"
+
+
+
+
+Microsoft Visual Studio 8 and .s (asm) files:
+---------------------------------------------------------------------
  - Requirements:
    There are no special requirements, we include everything in CVS, you just need cl.exe
    which is a part of MS VS 8 package
@@ -52,9 +57,23 @@ Microsoft Visual Studio 8 and .s (asm) files
    4) intermediate .spp and .asm files are deleted
    5) .obj file is then used by the linker
 
-Developer notes
----
-detailed changelog:
+
+
+
+Troubleshooting:
+---------------------------
+- If you get "unresolved external symbol __imp__" linker errors, go to project properties, linker, input, additional dependencies, click "..."
+  and check if Inherited values contain 12 libs. You may happen to have only one lib in there. In such case add these libs to the upper window:
+  kernel32.lib, user32.lib, gdi32.lib, winspool.lib, comdlg32.lib, advapi32.lib, shell32.lib, ole32.lib, oleaut32.lib, uuid.lib, odbc32.lib, odbccp32.lib
+
+- If you get "gas2masm - up-to-date" when trying to build gas2masm for the first time in MSVS2005, then try building gas2masm in debug mode.
+
+
+
+
+Developer notes:
+---------------------------
+Detailed changelog:
 "C:\Program Files\TortoiseCVS\cvs" -d:ext:johnnycz@ezquake.cvs.sourceforge.net:/cvsroot/ezquake log -d "2006-06-01<" -b -N > log.log < empty.txt
 - this will dump all the changes from cvs logs from 2006-06-01 to now on into log.log
 - requires CVS_RSH environmental variable set to putty's plink.exe path (control panel -> system -> ...)
@@ -63,6 +82,5 @@ detailed changelog:
   detailed changelog page and extract usefull info from all those logs
 - naming convention for .log files is "Until_yyyy-mm-dd.log", yyyy = year, mm = month, dd = day
 
-debugger detected:
-- error warning that MS VS gives you when you try to run debug build in your quake dir
-- solution: move ezquake-security.dll out of your quake dir
+Debugger detected:
+- Error warning that MS VS gives you when you try to run debug build in your quake dir. Solution: move ezquake-security.dll out of your quake dir
