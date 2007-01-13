@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.8 2007-01-13 04:05:48 qqshka Exp $
+		$Id: menu_options.c,v 1.9 2007-01-13 11:13:16 johnnycz Exp $
 
 */
 
@@ -24,6 +24,8 @@
 typedef enum {
 	OPTPG_SETTINGS,
 	OPTPG_FPS,
+	OPTPG_HUD,
+	OPTPG_MULTIVIEW,
 	OPTPG_PLAYER,
 	OPTPG_BINDS,
 	OPTPG_VIDEO,
@@ -142,6 +144,7 @@ const char* allowscripts_enum[] = { "off", "simple", "all" };
 const char* scrautoid_enum[] = { "off", "nick", "health+armor", "health+armor+type", "all (rl)", "all (best gun)" };
 const char* coloredtext_enum[] = { "off", "simple", "frag messages" };
 const char* autorecord_enum[] = { "off", "don't save", "auto save" };
+const char* hud_enum[] = { "old", "new", "combined" };
 
 const char* SshotformatRead(void) {
 	return scr_sshot_format.string;
@@ -155,7 +158,7 @@ void SshotformatToggle(qbool back) {
 extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_weaponhide, con_funchars_mode, con_notifytime, scr_consize, ignore_opponents, _con_notifylines,
 	ignore_qizmo_spec, ignore_spec, msg_filter, sys_highpriority, crosshair, crosshairsize, cl_smartjump, scr_coloredText,
 	cl_rollangle, cl_rollspeed, v_gunkick, v_kickpitch, v_kickroll, v_kicktime, v_viewheight, match_auto_sshot, match_auto_record, match_auto_logconsole,
-	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset;
+	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, scr_clock, scr_gameclock, show_fps;
 ;
 #ifdef GLQUAKE
 extern cvar_t scr_autoid, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights;
@@ -175,8 +178,6 @@ setting settgeneral_arr[] = {
 	ADDSET_NUMBER	("Process Priority", sys_highpriority, -1, 1, 1),
 	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle),
 	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
-	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
-	ADDSET_NUMBER	("Crosshair size", crosshairsize, 0.2, 3, 0.2),
 	ADDSET_SEPARATOR("Sound"),
 	ADDSET_NUMBER	("Sound Volume", s_volume, 0, 1, 0.05),
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
@@ -189,26 +190,6 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Mouse Look", freelook),
 	ADDSET_BOOL		("Smart Jump", cl_smartjump),
 	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
-	ADDSET_SEPARATOR("Head Up Display"),
-	ADDSET_BOOL		("New HUD", scr_newHud),
-#ifdef GLQUAKE
-	ADDSET_NAMED	("Overhead Info", scr_autoid, scrautoid_enum),
-#endif
-	ADDSET_BOOL		("Old Status Bar", cl_sbar),
-	ADDSET_BOOL		("Old HUD Left", cl_hudswap),
-	ADDSET_SEPARATOR("Multiview"),
-	ADDSET_NUMBER	("Multiview", cl_multiview, 0, 4, 1),
-	ADDSET_BOOL		("Display HUD", cl_mvdisplayhud),
-	ADDSET_BOOL		("HUD Flip", cl_mvhudflip),
-	ADDSET_BOOL		("HUD Vertical", cl_mvhudvertical),
-	ADDSET_BOOL		("Inset View", cl_mvinset),
-	ADDSET_BOOL		("Inset HUD", cl_mvinsethud),
-	ADDSET_BOOL		("Inset Cross", cl_mvinsetcrosshair),
-	ADDSET_SEPARATOR("Multiview Demos"),
-	ADDSET_NAMED	("Autohud", mvd_autohud, mvdautohud_enum),
-	ADDSET_NAMED	("Autotrack", mvd_autotrack, mvdautotrack_enum),
-	ADDSET_BOOL		("Moreinfo", mvd_moreinfo), 
-	ADDSET_BOOL     ("Status", mvd_status),
 #ifdef GLQUAKE
 	ADDSET_SEPARATOR("Tracker Messages"),
 	ADDSET_BOOL		("Flags", amf_tracker_flags),
@@ -237,14 +218,6 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
 	ADDSET_BOOL		("Ignore Spectators", ignore_spec),
 	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
-	ADDSET_SEPARATOR("Point of View"),
-	ADDSET_NUMBER	("Rollangle", cl_rollangle, 0, 30, 2),
-	ADDSET_NUMBER	("Rollspeed", cl_rollspeed, 0, 30, 2),
-	ADDSET_BOOL		("Gun Kick", v_gunkick),
-	ADDSET_NUMBER	("Kick Pitch", v_kickpitch, 0, 10, 0.5),
-	ADDSET_NUMBER	("Kick Roll", v_kickroll, 0, 10, 0.5),
-	ADDSET_NUMBER	("Kick Time", v_kicktime, 0, 10, 0.5),
-	ADDSET_NUMBER	("View Height", v_viewheight, -7, 7, 0.5),
 	ADDSET_SEPARATOR("Match Tools"),
 	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
 	ADDSET_NAMED	("Auto Record", match_auto_record, autorecord_enum),
@@ -266,6 +239,65 @@ int CT_Opt_Settings_Key (int k, CTab_t *tab, CTabPage_t *page) {
 
 // </SETTINGS>
 //=============================================================================
+
+
+settings_page settmultiview;
+setting settmultiview_arr[] = {
+	ADDSET_SEPARATOR("Multiview"),
+	ADDSET_NUMBER	("Multiview", cl_multiview, 0, 4, 1),
+	ADDSET_BOOL		("Display HUD", cl_mvdisplayhud),
+	ADDSET_BOOL		("HUD Flip", cl_mvhudflip),
+	ADDSET_BOOL		("HUD Vertical", cl_mvhudvertical),
+	ADDSET_BOOL		("Inset View", cl_mvinset),
+	ADDSET_BOOL		("Inset HUD", cl_mvinsethud),
+	ADDSET_BOOL		("Inset Cross", cl_mvinsetcrosshair),
+	ADDSET_SEPARATOR("Multiview Demos"),
+	ADDSET_NAMED	("Autohud", mvd_autohud, mvdautohud_enum),
+	ADDSET_NAMED	("Autotrack", mvd_autotrack, mvdautotrack_enum),
+	ADDSET_BOOL		("Moreinfo", mvd_moreinfo), 
+	ADDSET_BOOL     ("Status", mvd_status),
+};
+
+void CT_Opt_Multiview_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
+	Settings_Draw(x, y, w, h, &settmultiview);
+}
+
+int CT_Opt_Multiview_Key (int k, CTab_t *tab, CTabPage_t *page) {
+	return Settings_Key(&settmultiview, k);
+}
+
+settings_page setthud;
+setting setthud_arr[] = {
+	ADDSET_SEPARATOR("Head Up Display"),
+	ADDSET_NAMED	("HUD Type", scr_newHud, hud_enum),
+	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
+	ADDSET_NUMBER	("Crosshair size", crosshairsize, 0.2, 3, 0.2),
+#ifdef GLQUAKE
+	ADDSET_NAMED	("Overhead Info", scr_autoid, scrautoid_enum),
+#endif
+	ADDSET_SEPARATOR("New HUD"),
+	ADDSET_BOOLLATE	("Gameclock", hud_gameclock_show),
+	ADDSET_BOOLLATE ("Big Gameclock", hud_gameclock_big),
+	ADDSET_BOOLLATE ("Teamholdbar", hud_teamholdbar_show),
+	ADDSET_BOOLLATE ("Teamholdinfo", hud_teamholdinfo_show),
+	ADDSET_BOOLLATE ("FPS", hud_fps_show),
+	ADDSET_BOOLLATE ("Clock", hud_clock_show),
+	ADDSET_BOOLLATE ("Radar", hud_radar_show),
+	ADDSET_SEPARATOR("Old HUD"),
+	ADDSET_BOOL		("Old Status Bar", cl_sbar),
+	ADDSET_BOOL		("Old HUD Left", cl_hudswap),
+	ADDSET_BOOL		("Show FPS", show_fps),
+	ADDSET_BOOL		("Show Clock", scr_clock),
+	ADDSET_BOOL		("Show Gameclock", scr_gameclock),
+};
+
+void CT_Opt_HUD_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
+	Settings_Draw(x, y, w, h, &setthud);
+}
+
+int CT_Opt_HUD_Key (int k, CTab_t *tab, CTabPage_t *page) {
+	return Settings_Key(&setthud, k);
+}
 
 
 //=============================================================================
@@ -624,16 +656,23 @@ setting settfps_arr[] = {
 #endif
 	ADDSET_BOOL		("View Weapon", cl_drawgun),
 	ADDSET_NUMBER	("Size", r_viewmodelsize, 0.1, 1, 0.05),
-	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 0),
+	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 1),
 #ifdef GLQUAKE
 	ADDSET_SEPARATOR("Textures"),
 	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
 	ADDSET_BOOL		("Luma", gl_lumaTextures),
 	ADDSET_CUSTOM	("Detail", TexturesdetailRead, TexturesdetailToggle),
-	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 10, 0.5),
+	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
 	ADDSET_BOOL		("No Textures", gl_textureless),
 	ADDSET_CUSTOM	("Quality Mode", TexturesqualityRead, TexturesqualityToggle),
-
+	ADDSET_SEPARATOR("Point of View"),
+	ADDSET_NUMBER	("Rollangle", cl_rollangle, 0, 30, 2),
+	ADDSET_NUMBER	("Rollspeed", cl_rollspeed, 0, 30, 2),
+	ADDSET_BOOL		("Gun Kick", v_gunkick),
+	ADDSET_NUMBER	("Kick Pitch", v_kickpitch, 0, 10, 0.5),
+	ADDSET_NUMBER	("Kick Roll", v_kickroll, 0, 10, 0.5),
+	ADDSET_NUMBER	("Kick Time", v_kicktime, 0, 10, 0.5),
+	ADDSET_NUMBER	("View Height", v_viewheight, -7, 7, 0.5),
 #endif
 };
 
@@ -746,7 +785,8 @@ void CT_Opt_Player_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pa
 	M_DrawTransPic (160, 64, p);
 	p = Draw_CachePic ("gfx/menuplyr.lmp");
 	M_BuildTranslationTable(setup_top*16, setup_bottom*16);
-	M_DrawTransPicTranslate (172, 72, p);
+	//M_DrawTransPicTranslate (172, 72, p);
+	M_DrawTransPicTranslate (0, 0, p);
 
 	M_DrawCharacter (56, setup_cursor_table [setup_cursor], FLASHINGARROW());
 
@@ -920,10 +960,14 @@ void Menu_Options_Draw(void) {
 void Menu_Options_Init(void) {
 	Settings_Page_Init(settgeneral_arr, settgeneral);
 	Settings_Page_Init(settfps_arr, settfps);
+	Settings_Page_Init(settmultiview_arr, settmultiview);
+	Settings_Page_Init(setthud_arr, setthud);
 
 	CTab_Init(&options_tab);
 	CTab_AddPage(&options_tab, "main", OPTPG_SETTINGS, NULL, CT_Opt_Settings_Draw, CT_Opt_Settings_Key);
 	CTab_AddPage(&options_tab, "graphics", OPTPG_FPS, NULL, CT_Opt_FPS_Draw, CT_Opt_FPS_Key);
+	CTab_AddPage(&options_tab, "hud", OPTPG_HUD, NULL, CT_Opt_HUD_Draw, CT_Opt_HUD_Key);
+	CTab_AddPage(&options_tab, "multiview", OPTPG_MULTIVIEW, NULL, CT_Opt_Multiview_Draw, CT_Opt_Multiview_Key);
 	CTab_AddPage(&options_tab, "player", OPTPG_PLAYER, NULL, CT_Opt_Player_Draw, CT_Opt_Player_Key);
 	CTab_AddPage(&options_tab, "controls", OPTPG_BINDS, NULL, CT_Opt_Binds_Draw, CT_Opt_Binds_Key);
 	CTab_AddPage(&options_tab, "video", OPTPG_VIDEO, NULL, CT_Opt_Video_Draw, CT_Opt_Video_Key);

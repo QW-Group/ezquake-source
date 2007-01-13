@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.5 2007-01-13 03:16:22 johnnycz Exp $
+		$Id: settings_page.c,v 1.6 2007-01-13 11:13:17 johnnycz Exp $
 
 */
 
@@ -13,21 +13,21 @@
 
 #define LETW 8
 #define LINEHEIGHT 8
-#define COL1WIDTH 16
 
 static float SliderPos(float min, float max, float val) { return (val-min)/(max-min); }
 
 static int STHeight(setting_type st) {
 	switch (st) {
-	case stt_separator: return LINEHEIGHT*3;
+	case stt_separator: return LINEHEIGHT*2;
 	default: return LINEHEIGHT;
 	}
 }
 
 static int Setting_PrintLabel(int x, int y, int w, const char *l, qbool active)
 {
-	UI_Print(x + (COL1WIDTH - min(strlen(l), COL1WIDTH))*LETW, y, l, (int) active);
-	x += COL1WIDTH * LETW;
+	int startpos = x + w/2 - min(strlen(l), w/2)*LETW;
+	UI_Print(startpos, y, l, (int) active);
+	x = w/2 + x;
 	if (active)
 		UI_DrawCharacter(x, y, FLASHINGARROW());
 	return x + LETW*2;
@@ -38,7 +38,11 @@ static void Setting_DrawNum(int x, int y, int w, setting* setting, qbool active)
 	char buf[16];
 	x = Setting_PrintLabel(x,y,w, setting->label, active);
 	x = UI_DrawSlider (x, y, SliderPos(setting->min, setting->max, setting->cvar->value));
-	snprintf(buf, sizeof(buf), "%1.1f", setting->cvar->value);
+	if (setting->step > 0.99)
+		snprintf(buf, sizeof(buf), "%3d", (int) setting->cvar->value);
+	else
+		snprintf(buf, sizeof(buf), "%3.1f", setting->cvar->value);
+
 	UI_Print(x + LETW, y, buf, active);
 }
 
@@ -60,7 +64,7 @@ static void Setting_DrawSeparator(int x, int y, int w, setting* set)
 {
 	char buf[32];	
 	snprintf(buf, sizeof(buf), "\x1d %s \x1f", set->label);
-	UI_Print_Center(x, y+LINEHEIGHT, w, buf, true);
+	UI_Print_Center(x, y+LINEHEIGHT/2, w, buf, true);
 }
 
 static void Setting_DrawAction(int x, int y, int w, setting* set, qbool active)
@@ -193,7 +197,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 		set = tab->settings + i;
 
 		switch (set->type) {
-			case stt_bool: Setting_DrawBool(x, y, w, set, active); break;
+			case stt_bool: if (set->cvar) Setting_DrawBool(x, y, w, set, active); break;
 			case stt_custom: Setting_DrawBoolAdv(x, y, w, set, active); break;
 			case stt_num: Setting_DrawNum(x, y, w, set, active); break;
 			case stt_separator: Setting_DrawSeparator(x, y, w, set); break;
@@ -219,5 +223,11 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 	for (i = 0; i < size; i++) {
 		arr[i].top = curtop;
 		curtop += STHeight(arr[i].type);
+		if (arr[i].varname && !arr[i].cvar && arr[i].type == stt_bool) {
+			arr[i].cvar = Cvar_FindVar(arr[i].varname);
+			arr[i].varname = NULL;
+			if (!arr[i].cvar)
+				Cbuf_AddText(va("Warning: variable %s not found\n", arr[i].varname));
+		}
 	}
 }
