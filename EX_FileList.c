@@ -35,7 +35,18 @@ extern void cvar_toggle (cvar_t *var);
 extern void _splitpath (const char *path, char *drive, char *dir, char *file, char *ext);
 
 //
-// create list
+// When changing RGBA color-value for the text in the file list (dirs/zips).
+//
+static qbool FL_OnChangeTextColor (cvar_t *var, char *newval)
+{
+	byte *color = StringToRGB(newval);
+	var->value = RGBA_2_Int(color[0], color[1], color[2], color[3]);
+	
+	return true;
+}
+
+//
+// Create list
 //
  void FL_Init(filelist_t *fl,
              cvar_t *        sort_mode,
@@ -46,8 +57,12 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
              cvar_t *        interline,
              cvar_t *        show_status,
 			 cvar_t *		 scroll_names,
-			 char *initdir)
+			 cvar_t *		 dir_color,
+			 cvar_t *		 zip_color,
+			 char *			 initdir)
 {
+	char tempval[256];
+
     Sys_getcwd(fl->current_dir, _MAX_PATH);
 	FL_SetCurrentDir(fl, initdir);
     fl->error = false;
@@ -63,47 +78,65 @@ extern void _splitpath (const char *path, char *drive, char *dir, char *file, ch
     fl->strip_names = strip_names;
     fl->interline = interline;
     fl->show_status = show_status;
-	fl->scroll_names = scroll_names;
+	fl->scroll_names = scroll_names;	
 	fl->search_string[0] = 0;
+
+	fl->dir_color = dir_color;
+	if (fl->dir_color)
+	{
+		fl->dir_color->OnChange = FL_OnChangeTextColor;
+		strlcpy (tempval, fl->dir_color->string, sizeof (tempval));
+		Cvar_Set (fl->dir_color, tempval);
+	}
 
     fl->last_page_size = 0;
 
     fl->search_valid = false;
     fl->cdup_find = false;
+
+	#ifdef WITH_ZIP
+	fl->zip_color = zip_color;
+	if (fl->zip_color)
+	{
+		fl->zip_color->OnChange = FL_OnChangeTextColor;
+		strlcpy (tempval, fl->zip_color->string, sizeof (tempval));
+		Cvar_Set (fl->zip_color, tempval);
+	}
+
+	fl->current_zip[0] = 0;
+	fl->in_zip = false;
+	#endif // WITH_ZIP
 }
 
-
 //
-// set directory
+// Set directory
 //
- void FL_SetCurrentDir(filelist_t *fl, char *dir)
+void FL_SetCurrentDir(filelist_t *fl, char *dir)
 {
     char buf[_MAX_PATH+1];
 
     if (Sys_fullpath(buf, dir, _MAX_PATH+1) == NULL)
         return;
 
-    if (strlen(buf) > _MAX_PATH)    // should never fail in this
+    if (strlen(buf) > _MAX_PATH)    // Should never fail in this
         return;
 
 	strlcpy (fl->current_dir, buf, sizeof(fl->current_dir));
     fl->need_refresh = true;
 }
 
-
 //
-// get current directory
+// Get current directory
 //
- char *FL_GetCurrentDir(filelist_t *fl)
+char *FL_GetCurrentDir(filelist_t *fl)
 {
     return fl->current_dir;
 }
 
-
 //
 // add new file type (.qwd, .qwz, .mp3)
 //
- void FL_AddFileType(filelist_t *fl, int id, char *ext)
+void FL_AddFileType(filelist_t *fl, int id, char *ext)
 {
     int num = fl->num_filetypes;
 
@@ -196,9 +229,16 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
     char extbuf[_MAX_EXT];
     char *t;
 
-    _splitpath(f->name, NULL, NULL, namebuf, extbuf);
+	snprintf (extbuf, sizeof(extbuf), ".%s", COM_FileExtension (f->name));
 
-    if (fl->strip_names->value  &&  !f->is_directory)
+	if (strlen (extbuf) == 1)
+	{
+		extbuf[0] = '\0';
+	}
+
+	strlcpy (namebuf, COM_SkipPath (f->name), sizeof (namebuf));
+
+    if (fl->strip_names->value && !f->is_directory)
     {
         char *s;
 
@@ -388,7 +428,7 @@ static int FL_FindRegisteredType(filelist_t *fl, sys_dirent *ent)
         {
             char ext[_MAX_EXT];
 
-            _splitpath(ent->fname, NULL, NULL, NULL, ext);
+			snprintf (ext, sizeof(ext), ".%s", COM_FileExtension (ent->fname));
 
             if (!strcasecmp(fl->filetypes[i].extension, ext))
             {
@@ -585,10 +625,11 @@ void FL_ReadDir(filelist_t *fl)
     {
 		// Pointer to the current file entry.
         filedesc_t *f = &fl->entries[fl->num_entries];
-        f->type_index = -1;
+		memset (f, 0, sizeof(filedesc_t));
+        f->type_index = -1;		
 
 		// Skip current/above dir and hidden files.
-		if (!strcmp(ent.fname, ".") || !strcmp(ent.fname, "..") || ent.hidden)
+		if (!strcmp(ent.fname, ".") || ent.hidden)
 		{
             goto skip;
 		}
@@ -619,7 +660,16 @@ void FL_ReadDir(filelist_t *fl)
 		{
 			f->is_directory = ent.directory;
 
-			Sys_fullpath(f->name, ent.fname, _MAX_PATH+1);
+			if (!strcmp(ent.fname, ".."))
+			{
+				// Don't get the full path for the ".." (parent) dir, that's just confusing.
+				strlcpy (f->name, ent.fname, sizeof (f->name));
+			}
+			else
+			{
+				// Get full path for normal files/dirs.
+				Sys_fullpath(f->name, ent.fname, _MAX_PATH+1);
+			}
 
 			f->size = ent.size;
 			memcpy(&f->time, &ent.time, sizeof(f->time));
@@ -635,6 +685,8 @@ void FL_ReadDir(filelist_t *fl)
             break;
 		}
 skip:
+		memset (&ent, 0, sizeof(ent));
+
         // Get next filesystem entry
 		temp = Sys_ReadDirNext(search, &ent);
     }
@@ -792,7 +844,6 @@ void FL_ChangeDirUp(filelist_t *fl)
 	}
 }
 
-
 //
 // check current position
 //
@@ -803,7 +854,6 @@ void FL_CheckPosition(filelist_t *fl)
     if (fl->current_entry >= fl->num_entries)
         fl->current_entry = fl->num_entries - 1;
 }
-
 
 //
 // check display position
@@ -820,7 +870,6 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
     if (fl->current_entry < fl->display_entry)
         fl->display_entry = fl->current_entry;
 }
-
 
 //
 // keys handling
@@ -1066,10 +1115,6 @@ static void Add_Column(char *line, int *pos, char *t, int w)
 void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 {
 	int i;
-	int int_green = RGBA_2_Int(0, 127, 0, 255);
-#ifdef WITH_ZIP
-	int int_blue = RGBA_2_Int(0, 175, 207, 255);
-#endif
 	int listsize, pos, interline, inter_up, inter_dn, rowh;
 	char line[1024];
 	char sname[MAX_PATH] = {0}, ssize[COL_SIZE+1] = {0}, sdate[COL_DATE+1] = {0}, stime[COL_TIME+1] = {0};
@@ -1093,7 +1138,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
     rowh = 8 + inter_up + inter_dn;
     listsize = h / rowh;
 
-    // check screen boundaries and mimnimum size
+    // Check screen boundaries and mimnimum size
     if (w < 160 || h < 80)
         return;
     if (x < 0 || y < 0 || x + w > vid.width || y + h > vid.height)
@@ -1146,7 +1191,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
     UI_Print(x, y + inter_up, line, true);
     listsize--;
 
-    // Draw column titles
+    // Draw column titles.
     pos = w/8;
     memset(line, ' ', pos);
     line[pos] = 0;
@@ -1241,7 +1286,6 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         pos = w/8;
 
 		// Clear the line.
-		//memset(line, 0, 1023);
         memset(line, ' ', pos);
 		line[pos] = 0;
 
@@ -1253,10 +1297,14 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         if (fl->show_size->value)
             Add_Column(line, &pos, size, COL_SIZE);
 
+		// End of name, switch to white.
 		clr[1].c = int_white;
-		clr[1].i = pos; // end of name, switch to white
+		clr[1].i = pos; 
 
-		strlcpy (name, va("%s", entry->display), sizeof(name));
+		// Set the name. 
+		// (Add a space infront so that the cursor for the currently 
+		// selected file can fit infront)
+		snprintf (name, sizeof(name) - 1, " %s", entry->display);
 
 		//
 		// Copy the display name of the entry into the space that's left on the row.
@@ -1284,7 +1332,8 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 				scroll_position = 0;
 				scroll_direction = SCROLL_RIGHT;
 				last_text_length = text_length;
-				// wait a second before start scroll plz
+
+				// Wait a second before start scroll plz.
 				wait = true;
 				t_last_scroll = Sys_DoubleTime();
 			}
@@ -1325,39 +1374,43 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		}
 		else
 		{
-			if (filenum == fl->current_entry)
-				last_name[0] = 0; // this line part of scroll code, next time scroll will be reseted
-
+			//
 			// Fits in the name column, no need to scroll (or the user doesn't want us to scroll :~<)
+			//
+
+			// Did we just select a new entry? In that case reset the scrolling.
+			if (filenum == fl->current_entry)
+			{
+				last_name[0] = 0; 
+			}
 
 			// If it's not the selected directory/zip color it so that it stands out.
 			if (filenum != fl->current_entry)
 			{
 				if (entry->is_directory)
 				{
-					// Green.
-					clr[0].c = int_green;
+					// Set directory color.
+					clr[0].c = (fl->dir_color == NULL) ? int_white : (int)fl->dir_color->value;
 				}
-#ifdef WITH_ZIP
+				#ifdef WITH_ZIP
 				else if (entry->is_zip)
 				{
-					// Blueish.
-					clr[0].c = int_blue;
+					// Set zip color.
+					clr[0].c = (fl->zip_color == NULL) ? int_white : (int)fl->zip_color->value;
 				}
-#endif // WITH_ZIP
+				#endif // WITH_ZIP
 			}
 
 			memcpy(line, name, min(pos, strlen(name)));			
 		}
 
-		// Draw a cursor character at the end of the name column.
+		// Draw a cursor character at the start of the line.
         if (filenum == fl->current_entry)
 		{
-            line[pos] = 141;
+            line[0] = 141;
 		}
 
 		// Max amount of characters that fits on a line.
-		// FIXME: This cuts off the date for dirs/zips (since they have 5 extra chars of color code).
 		line[w/8] = 0;
 
 		// Print the line for the directory entry.
