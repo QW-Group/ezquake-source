@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.7 2007-01-13 03:16:22 johnnycz Exp $
+		$Id: menu_options.c,v 1.8 2007-01-13 04:05:48 qqshka Exp $
 
 */
 
@@ -446,7 +446,7 @@ extern cvar_t r_fastsky;
 extern cvar_t r_drawflame;
 #ifdef GLQUAKE
 extern cvar_t gl_part_inferno;
-extern cvar_t amf_lightning
+extern cvar_t amf_lightning;
 #endif
 extern cvar_t r_drawflat;
 
