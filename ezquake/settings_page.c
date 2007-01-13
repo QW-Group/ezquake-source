@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.8 2007-01-13 16:48:38 johnnycz Exp $
+		$Id: settings_page.c,v 1.9 2007-01-13 19:19:34 johnnycz Exp $
 
 */
 
@@ -19,13 +19,11 @@ CEditBox editbox;
 #define EDITBOXWIDTH 16
 #define EDITBOXMAXLENGTH 64
 
-const char* colors[] = { "White", "Brown", "Lavender", "Khaki", "Red", "Lt Brown", "Peach", "Lt Peach", "Purple", "Dk Purple", "Tan", "Green", "Yellow", "Blue" };
-
 static float SliderPos(float min, float max, float val) { return (val-min)/(max-min); }
 
 static int STHeight(setting_type st) {
 	switch (st) {
-	case stt_separator: return LINEHEIGHT*2;
+	case stt_separator: return LINEHEIGHT*3;
 	default: return LINEHEIGHT;
 	}
 }
@@ -71,7 +69,7 @@ static void Setting_DrawSeparator(int x, int y, int w, setting* set)
 {
 	char buf[32];	
 	snprintf(buf, sizeof(buf), "\x1d %s \x1f", set->label);
-	UI_Print_Center(x, y+LINEHEIGHT/2, w, buf, true);
+	UI_Print_Center(x, y+LINEHEIGHT+LINEHEIGHT/2, w, buf, true);
 }
 
 static void Setting_DrawAction(int x, int y, int w, setting* set, qbool active)
@@ -95,6 +93,15 @@ static void Setting_DrawString(int x, int y, int w, setting* setting, qbool acti
 	}
 }
 
+static void Setting_DrawColor(int x, int y, int w, setting* set, qbool active)
+{
+	x = Setting_PrintLabel(x, y, w, set->label, active);
+	if (set->cvar->value >= 0)
+		Draw_Fill(x, y, LETW*3, LINEHEIGHT - 1, Sbar_ColorForMap(set->cvar->value));
+	else
+		UI_Print(x, y, "off", active);
+}
+
 static void Setting_Increase(setting* set) {
 	float newval;
 
@@ -103,6 +110,7 @@ static void Setting_Increase(setting* set) {
 		case stt_custom: if (set->togglefnc) set->togglefnc(false); break;
 		case stt_num:
 		case stt_named:
+		case stt_playercolor:
 			newval = set->cvar->value + set->step;
 			if (set->max >= newval)
 				Cvar_SetValue(set->cvar, newval);
@@ -121,6 +129,7 @@ static void Setting_Decrease(setting* set) {
 		case stt_custom: if (set->togglefnc) set->togglefnc(true); break;
 		case stt_num:
 		case stt_named:
+		case stt_playercolor:
 			newval = set->cvar->value - set->step;
 			if (set->min <= newval)
 				Cvar_SetValue(set->cvar, newval);
@@ -250,6 +259,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 			case stt_action: Setting_DrawAction(x, y, w, set, active); break;
 			case stt_named: Setting_DrawNamed(x, y, w, set, active); break;
 			case stt_string: Setting_DrawString(x, y, w, set, active); break;
+			case stt_playercolor: Setting_DrawColor(x, y, w, set, active); break;
 		}
 		y += STHeight(tab->settings[i].type);
 		if (i < tab->count)
@@ -283,13 +293,6 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 			arr[i].varname = NULL;
 			if (!arr[i].cvar)
 				Cbuf_AddText(va("Warning: variable %s not found\n", arr[i].varname));
-		}
-		if (arr[i].type == stt_playercolor) {
-			arr[i].type = stt_named;
-			arr[i].named_ints = colors;
-			arr[i].min = 0;
-			arr[i].step = 1;
-			arr[i].max = sizeof(colors) / sizeof(char*) - 1;
 		}
 	}
 }

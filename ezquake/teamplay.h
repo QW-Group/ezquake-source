@@ -114,7 +114,8 @@ char *TP_MapName(void);
 int	TP_CountPlayers(void);
 
 // teamcolor & enemycolor
-extern int cl_teamtopcolor, cl_teambottomcolor, cl_enemytopcolor, cl_enemybottomcolor;
+// extern int cl_teamtopcolor, cl_teambottomcolor, cl_enemytopcolor, cl_enemybottomcolor;
+extern cvar_t cl_teamtopcolor, cl_teambottomcolor, cl_enemytopcolor, cl_enemybottomcolor;
 
 // START shaman RFE 1020608
 #ifdef GLQUAKE

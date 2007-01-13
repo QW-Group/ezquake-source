@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.12 2007-01-13 16:48:38 johnnycz Exp $
+		$Id: menu_options.c,v 1.13 2007-01-13 19:19:34 johnnycz Exp $
 
 */
 
@@ -159,7 +159,7 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	ignore_qizmo_spec, ignore_spec, msg_filter, sys_highpriority, crosshair, crosshairsize, cl_smartjump, scr_coloredText,
 	cl_rollangle, cl_rollspeed, v_gunkick, v_kickpitch, v_kickroll, v_kicktime, v_viewheight, match_auto_sshot, match_auto_record, match_auto_logconsole,
 	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, scr_clock, scr_gameclock, show_fps, rate, cl_c2sImpulseBackup,
-	name, team, skin, topcolor, bottomcolor, /*cl_teamtopcolor, cl_teambottomcolor, */ cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
+	name, team, skin, topcolor, bottomcolor, cl_teamtopcolor, cl_teambottomcolor, cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
 	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_format, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename;
 ;
 #ifdef GLQUAKE
@@ -347,7 +347,6 @@ int CT_Opt_HUD_Key (int k, CTab_t *tab, CTabPage_t *page) {
 }
 
 settings_page settplayer;
-// todo: [team/enemy][top/bottom]color should always been variables in my opinion, however i'm bored to death to recode them at the moment
 setting settplayer_arr[] = {
 	ADDSET_SEPARATOR("Own Settings"),
 	ADDSET_STRING	("Name", name),
@@ -357,15 +356,15 @@ setting settplayer_arr[] = {
 	ADDSET_COLOR	("Shirt Color", topcolor),
 	ADDSET_COLOR	("Pants Color", bottomcolor),
 	ADDSET_SEPARATOR("Teammates"),
-	//ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
-	//ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
+	ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
+	ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
 	ADDSET_STRING   ("Skin", cl_teamskin),
 	ADDSET_STRING	("Quad Skin", cl_teamquadskin),
 	ADDSET_STRING	("Pent Skin", cl_teampentskin),
 	ADDSET_STRING	("Quad+Pent Skin", cl_teambothskin),
 	ADDSET_SEPARATOR("Enemies"),
-	//ADDSET_COLOR	("Shirt Color", cl_enemytopcolor),
-	//ADDSET_COLOR	("Pants Color", cl_enemybottomcolor),
+	ADDSET_COLOR	("Shirt Color", cl_enemytopcolor),
+	ADDSET_COLOR	("Pants Color", cl_enemybottomcolor),
 	ADDSET_STRING   ("Skin", cl_enemyskin),
 	ADDSET_STRING	("Quad Skin", cl_enemyquadskin),
 	ADDSET_STRING	("Pent Skin", cl_enemypentskin),
@@ -429,7 +428,7 @@ static void M_UnbindCommand (char *command) {
 #define KEYSCOL1 22*8
 
 void CT_Opt_Binds_Draw (int x2, int y2, int w, int h, CTab_t *tab, CTabPage_t *page) {
-	int x, y, i, l, keys[2];
+	int x, y, i, keys[2];
 	char *name;
 
 	if (bind_grab)

@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.31 2006-12-18 11:06:18 qqshka Exp $
+    $Id: config_manager.c,v 1.32 2007-01-13 19:19:34 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -60,7 +60,7 @@ extern kbutton_t	in_strafe, in_speed, in_use, in_jump, in_attack, in_up,	in_down
 
 extern qbool		sb_showscores, sb_showteamscores;
 
-extern int		cl_teamtopcolor, cl_teambottomcolor, cl_enemytopcolor, cl_enemybottomcolor;
+extern cvar_t		cl_teamtopcolor, cl_teambottomcolor, cl_enemytopcolor, cl_enemybottomcolor;
 extern char		allskins[128];
 
 cvar_t	cfg_save_unchanged	=	{"cfg_save_unchanged", "0"};
@@ -410,8 +410,8 @@ static void DumpTeamplay(FILE *f)
 	if (allskins[0])
 		fprintf(f, "allskins \"%s\"\n", allskins);
 
-	DumpColorForcing(f, "teamcolor", cl_teamtopcolor, cl_teambottomcolor);
-	DumpColorForcing(f, "enemycolor", cl_enemytopcolor, cl_enemybottomcolor);
+/*	DumpColorForcing(f, "teamcolor", cl_teamtopcolor, cl_teambottomcolor);
+	DumpColorForcing(f, "enemycolor", cl_enemytopcolor, cl_enemybottomcolor); */
 
 	fprintf(f, "\n");
 
