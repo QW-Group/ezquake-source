@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.4 2007-01-12 17:09:14 johnnycz Exp $
+		$Id: settings_page.c,v 1.5 2007-01-13 03:16:22 johnnycz Exp $
 
 */
 
@@ -12,9 +12,17 @@
 #include "settings.h"
 
 #define LETW 8
+#define LINEHEIGHT 8
 #define COL1WIDTH 16
 
 static float SliderPos(float min, float max, float val) { return (val-min)/(max-min); }
+
+static int STHeight(setting_type st) {
+	switch (st) {
+	case stt_separator: return LINEHEIGHT*3;
+	default: return LINEHEIGHT;
+	}
+}
 
 static int Setting_PrintLabel(int x, int y, int w, const char *l, qbool active)
 {
@@ -52,7 +60,7 @@ static void Setting_DrawSeparator(int x, int y, int w, setting* set)
 {
 	char buf[32];	
 	snprintf(buf, sizeof(buf), "\x1d %s \x1f", set->label);
-	UI_Print(x, y, buf, true);
+	UI_Print_Center(x, y+LINEHEIGHT, w, buf, true);
 }
 
 static void Setting_DrawAction(int x, int y, int w, setting* set, qbool active)
@@ -66,7 +74,6 @@ static void Setting_DrawNamed(int x, int y, int w, setting* set, qbool active)
 	UI_Print(x, y, set->named_ints[(int) bound(set->min, set->cvar->value, set->max)], active);
 }
 
-
 static void Setting_Increase(setting* set) {
 	float newval;
 
@@ -78,10 +85,10 @@ static void Setting_Increase(setting* set) {
 			newval = set->cvar->value + set->step;
 			if (set->max >= newval)
 				Cvar_SetValue(set->cvar, newval);
-			else 
+			else if (set->type == stt_named)
 				Cvar_SetValue(set->cvar, set->min);
 			break;
-		case stt_action: if (set->readfnc) set->actionfnc(); break;
+		case stt_action: if (set->actionfnc) set->actionfnc(); break;
 	}
 }
 
@@ -96,24 +103,35 @@ static void Setting_Decrease(setting* set) {
 			newval = set->cvar->value - set->step;
 			if (set->min <= newval)
 				Cvar_SetValue(set->cvar, newval);
-			else
+			else if (set->type == stt_named)
 				Cvar_SetValue(set->cvar, set->max);
 			break;
 	}
 }
 
+static void CheckViewpoint(settings_page *tab, int h)
+{
+	if (tab->viewpoint > tab->marked) { 
+	// marked entry is above us
+		tab->viewpoint = tab->marked;
+	} else while(STHeight(tab->settings[tab->marked].type) + tab->settings[tab->marked].top > tab->settings[tab->viewpoint].top + h) {
+		// marked entry is below
+		tab->viewpoint++;
+	}
+}
+
 static void CheckCursor(settings_page *tab, qbool up)
 {
-	while (tab->set_marked < 0) tab->set_marked += tab->set_count;
-	tab->set_marked = tab->set_marked % tab->set_count;
+	while (tab->marked < 0) tab->marked += tab->count;
+	tab->marked = tab->marked % tab->count;
 
-	if (tab->settings[tab->set_marked].type == stt_separator) {
+	if (tab->settings[tab->marked].type == stt_separator) {
 		if (up) {
-			if (tab->set_marked == 0)
-				tab->set_marked = tab->set_count - 1;
+			if (tab->marked == 0)
+				tab->marked = tab->count - 1;
 			else
-				tab->set_marked--;
-		} else tab->set_marked++;
+				tab->marked--;
+		} else tab->marked++;
 		CheckCursor(tab, up);
 	}
 }
@@ -124,28 +142,28 @@ qbool Settings_Key(settings_page* tab, int key)
 	setting_type type;
 	CheckCursor(tab, up);
 
-	type = tab->settings[tab->set_marked].type;
+	type = tab->settings[tab->marked].type;
 
 	switch (key) { 
-	case K_DOWNARROW: tab->set_marked++; break;
-	case K_UPARROW: tab->set_marked--; up = true; break;
-	case K_PGDN: tab->set_marked += 5; break;
-	case K_PGUP: tab->set_marked -= 5; up = true; break;
-	case K_END: tab->set_marked = tab->set_count - 1; up = true; break;
-	case K_HOME: tab->set_marked = 0; break;
+	case K_DOWNARROW: tab->marked++; break;
+	case K_UPARROW: tab->marked--; up = true; break;
+	case K_PGDN: tab->marked += 5; break;
+	case K_PGUP: tab->marked -= 5; up = true; break;
+	case K_END: tab->marked = tab->count - 1; up = true; break;
+	case K_HOME: tab->marked = 0; break;
 	case K_RIGHTARROW:
 		if (type != stt_action) {
-			Setting_Increase(tab->settings + tab->set_marked);
+			Setting_Increase(tab->settings + tab->marked);
 			return true;
 		} else return false;
 
 	case K_ENTER:
-		Setting_Increase(tab->settings + tab->set_marked);
+		Setting_Increase(tab->settings + tab->marked);
 		return true;
 
 	case K_LEFTARROW: 
 		if (type != stt_action) {
-			Setting_Decrease(tab->settings + tab->set_marked);
+			Setting_Decrease(tab->settings + tab->marked);
 			return true;
 		} else return false;
 	default: return false; break;
@@ -158,15 +176,22 @@ qbool Settings_Key(settings_page* tab, int key)
 void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 {
 	int i;
+	int nexttop;
 	setting *set;
 	qbool active;
 
-	CheckCursor(tab, false);
+	if (!tab->count) return;
 
-	for (i = 0; i < tab->set_count; i++)
+	nexttop = tab->settings[0].top;
+
+	CheckCursor(tab, false);
+	CheckViewpoint(tab, h);
+
+	for (i = tab->viewpoint; i < tab->count && tab->settings[i].top + STHeight(tab->settings[i].type) <= h + tab->settings[tab->viewpoint].top; i++)
 	{
-		active = i == tab->set_marked;
+		active = i == tab->marked;
 		set = tab->settings + i;
+
 		switch (set->type) {
 			case stt_bool: Setting_DrawBool(x, y, w, set, active); break;
 			case stt_custom: Setting_DrawBoolAdv(x, y, w, set, active); break;
@@ -175,13 +200,24 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 			case stt_action: Setting_DrawAction(x, y, w, set, active); break;
 			case stt_named: Setting_DrawNamed(x, y, w, set, active); break;
 		}
-		y += LETW;
+		y += STHeight(tab->settings[i].type);
+		if (i < tab->count)
+			nexttop = tab->settings[i+1].top;
 	}
 }
 
-void Settings_Init(settings_page *tab, setting *arr, size_t size)
+void Settings_Init(settings_page *page, setting *arr, size_t size)
 {
-	tab->set_count = size;
-	tab->set_marked = 0;
-	tab->settings = arr;
+	int i;
+	int curtop = 0;
+
+	page->count = size;
+	page->marked = 0;
+	page->settings = arr;
+	page->viewpoint = 0;
+
+	for (i = 0; i < size; i++) {
+		arr[i].top = curtop;
+		curtop += STHeight(arr[i].type);
+	}
 }

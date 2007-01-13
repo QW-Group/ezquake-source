@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.6 2007-01-12 17:09:14 johnnycz Exp $
+		$Id: menu_options.c,v 1.7 2007-01-13 03:16:22 johnnycz Exp $
 
 */
 
@@ -55,6 +55,7 @@ enum {mode_fastest, mode_default, mode_undef} fps_mode = mode_default;
 #endif
 
 extern cvar_t scr_fov, scr_newHud, cl_staticsounds, r_fullbrightSkins, cl_deadbodyfilter, cl_muzzleflash;
+extern cvar_t scr_sshot_format;
 void ResetConfigs_f(void);
 
 static qbool AlwaysRun(void) { return cl_forwardspeed.value > 200; }
@@ -132,16 +133,50 @@ void GFXPresetToggle(qbool back) {
 	}
 }
 
+const char* mvdautohud_enum[] = { "off", "simple", "customizable" };
+const char* mvdautotrack_enum[] = { "off", "auto", "custom", "multitrack" };
+const char* funcharsmode_enum[] = { "ctrl+key", "ctrl+y" };
+const char* ignoreopponents_enum[] = { "off", "always", "on match" };
+const char* msgfilter_enum[] = { "off", "say+spec", "team", "say+team+spec" };
+const char* allowscripts_enum[] = { "off", "simple", "all" };
+const char* scrautoid_enum[] = { "off", "nick", "health+armor", "health+armor+type", "all (rl)", "all (best gun)" };
+const char* coloredtext_enum[] = { "off", "simple", "frag messages" };
+const char* autorecord_enum[] = { "off", "don't save", "auto save" };
+
+const char* SshotformatRead(void) {
+	return scr_sshot_format.string;
+}
+void SshotformatToggle(qbool back) {
+	if (!strcmp(scr_sshot_format.string, "jpg")) Cvar_Set(&scr_sshot_format, "png");
+	else if (!strcmp(scr_sshot_format.string, "png")) Cvar_Set(&scr_sshot_format, "tga");
+	else if (!strcmp(scr_sshot_format.string, "tga")) Cvar_Set(&scr_sshot_format, "jpg");
+}
+
+extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_weaponhide, con_funchars_mode, con_notifytime, scr_consize, ignore_opponents, _con_notifylines,
+	ignore_qizmo_spec, ignore_spec, msg_filter, sys_highpriority, crosshair, crosshairsize, cl_smartjump, scr_coloredText,
+	cl_rollangle, cl_rollspeed, v_gunkick, v_kickpitch, v_kickroll, v_kicktime, v_viewheight, match_auto_sshot, match_auto_record, match_auto_logconsole,
+	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset;
+;
+#ifdef GLQUAKE
+extern cvar_t scr_autoid, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights;
+#endif
+
 void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
 setting settgeneral_arr[] = {
+	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f),
+	ADDSET_ACTION	("Default Config", DefaultConfig),
 	ADDSET_SEPARATOR("Video"),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
 	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
 	ADDSET_NUMBER	("Field of View", scr_fov, 40, 140, 2),
+	ADDSET_NUMBER	("Process Priority", sys_highpriority, -1, 1, 1),
 	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle),
 	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
+	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
+	ADDSET_NUMBER	("Crosshair size", crosshairsize, 0.2, 3, 0.2),
 	ADDSET_SEPARATOR("Sound"),
 	ADDSET_NUMBER	("Sound Volume", s_volume, 0, 1, 0.05),
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
@@ -152,14 +187,72 @@ setting settgeneral_arr[] = {
 	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle),
 	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle),
 	ADDSET_BOOL		("Mouse Look", freelook),
+	ADDSET_BOOL		("Smart Jump", cl_smartjump),
+	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
 	ADDSET_SEPARATOR("Head Up Display"),
 	ADDSET_BOOL		("New HUD", scr_newHud),
+#ifdef GLQUAKE
+	ADDSET_NAMED	("Overhead Info", scr_autoid, scrautoid_enum),
+#endif
 	ADDSET_BOOL		("Old Status Bar", cl_sbar),
 	ADDSET_BOOL		("Old HUD Left", cl_hudswap),
-	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f),
-	ADDSET_ACTION	("Default Config", DefaultConfig)
+	ADDSET_SEPARATOR("Multiview"),
+	ADDSET_NUMBER	("Multiview", cl_multiview, 0, 4, 1),
+	ADDSET_BOOL		("Display HUD", cl_mvdisplayhud),
+	ADDSET_BOOL		("HUD Flip", cl_mvhudflip),
+	ADDSET_BOOL		("HUD Vertical", cl_mvhudvertical),
+	ADDSET_BOOL		("Inset View", cl_mvinset),
+	ADDSET_BOOL		("Inset HUD", cl_mvinsethud),
+	ADDSET_BOOL		("Inset Cross", cl_mvinsetcrosshair),
+	ADDSET_SEPARATOR("Multiview Demos"),
+	ADDSET_NAMED	("Autohud", mvd_autohud, mvdautohud_enum),
+	ADDSET_NAMED	("Autotrack", mvd_autotrack, mvdautotrack_enum),
+	ADDSET_BOOL		("Moreinfo", mvd_moreinfo), 
+	ADDSET_BOOL     ("Status", mvd_status),
+#ifdef GLQUAKE
+	ADDSET_SEPARATOR("Tracker Messages"),
+	ADDSET_BOOL		("Flags", amf_tracker_flags),
+	ADDSET_BOOL		("Frags", amf_tracker_frags),
+	ADDSET_NUMBER	("Messages", amf_tracker_messages, 0, 10, 1),
+	ADDSET_BOOL		("Streaks", amf_tracker_streaks),
+	ADDSET_BOOL		("Time", amf_tracker_time),
+	ADDSET_NUMBER	("Scale", amf_tracker_scale, 0.1, 2, 0.1),
+	ADDSET_BOOL		("Align Right", amf_tracker_align_right),
+#endif
+	ADDSET_SEPARATOR("Weapons handling"),
+	ADDSET_BOOL		("Preselect", cl_weaponpreselect),
+	ADDSET_BOOL		("Auto hide", cl_weaponhide),
+	ADDSET_SEPARATOR("Console"),
+	ADDSET_NAMED	("Colored Text", scr_coloredText, coloredtext_enum),
+	ADDSET_NAMED	("Fun Chars More", con_funchars_mode, funcharsmode_enum),
+	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
+	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
+	ADDSET_BOOL		("Timestamps", con_timestamps),
+#ifdef GLQUAKE
+	ADDSET_BOOL		("Font Smoothing", gl_smoothfont),
+#endif
+	ADDSET_NUMBER	("Console height", scr_consize, 0.1, 1.0, 0.05),
+	ADDSET_SEPARATOR("Chat settings"),
+	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
+	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
+	ADDSET_BOOL		("Ignore Spectators", ignore_spec),
+	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
+	ADDSET_SEPARATOR("Point of View"),
+	ADDSET_NUMBER	("Rollangle", cl_rollangle, 0, 30, 2),
+	ADDSET_NUMBER	("Rollspeed", cl_rollspeed, 0, 30, 2),
+	ADDSET_BOOL		("Gun Kick", v_gunkick),
+	ADDSET_NUMBER	("Kick Pitch", v_kickpitch, 0, 10, 0.5),
+	ADDSET_NUMBER	("Kick Roll", v_kickroll, 0, 10, 0.5),
+	ADDSET_NUMBER	("Kick Time", v_kicktime, 0, 10, 0.5),
+	ADDSET_NUMBER	("View Height", v_viewheight, -7, 7, 0.5),
+	ADDSET_SEPARATOR("Match Tools"),
+	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
+	ADDSET_NAMED	("Auto Record", match_auto_record, autorecord_enum),
+	ADDSET_NAMED	("Auto Log", match_auto_logconsole, autorecord_enum),
+	ADDSET_CUSTOM	("Sshot Format", SshotformatRead, SshotformatToggle)
 };
+
+// todo on string: demo_format, demo_dir, qizmo_dir, qwdtools_dir
 
 settings_page settgeneral;
 
@@ -351,8 +444,11 @@ extern cvar_t cl_rocket2grenade;
 extern cvar_t v_damagecshift;
 extern cvar_t r_fastsky;
 extern cvar_t r_drawflame;
+#ifdef GLQUAKE
 extern cvar_t gl_part_inferno;
-extern cvar_t amf_lightning;
+extern cvar_t amf_lightning
+#endif
+extern cvar_t r_drawflat;
 
 const char* explosiontype_enum[] =
 { "fire + sparks", "fire only", "teleport", "blood", "big blood", "dbl gunshot", "blob effect", "big explosion", "plasma" };
@@ -426,26 +522,118 @@ void LoadHQPreset(void) {
 #endif
 }
 
+const char* grenadetrail_enum[] = { "off", "normal", "grenade", "alt", "blood", "big blood", "tracer1", "tracer2", "plasma", "lavaball", "fuel rod", "plasma rocket" };
+
+extern cvar_t cl_maxfps;
+const char* FpslimitRead(void) {
+	switch ((int) cl_maxfps.value) {
+	case 0: return "no limit";
+	case 72: return "72 (old std)";
+	case 77: return "77 (standard)";
+	default: return "custom";
+	}
+}
+void FpslimitToggle(qbool back) {
+	if (back) {
+		switch ((int) cl_maxfps.value) {
+		case 0: Cvar_SetValue(&cl_maxfps, 77); return;
+		case 72: Cvar_SetValue(&cl_maxfps, 0); return;
+		case 77: Cvar_SetValue(&cl_maxfps, 72); return;
+		}
+	} else {
+		switch ((int) cl_maxfps.value) {
+		case 0: Cvar_SetValue(&cl_maxfps, 72); return;
+		case 72: Cvar_SetValue(&cl_maxfps, 77); return;
+		case 77: Cvar_SetValue(&cl_maxfps, 0); return;
+		}
+	}
+}
+
+#ifdef GLQUAKE
+const char* TexturesdetailRead(void) { // 1, 8, 256, 2048
+	if (gl_max_size.value < 8) return "low";
+	else if (gl_max_size.value < 200) return "medium";
+	else if (gl_max_size.value < 1025) return "high";
+	else return "max";
+}
+void TexturesdetailToggle(qbool back) {
+	if (gl_max_size.value < 8) Cvar_SetValue(&gl_max_size, 8);
+	else if (gl_max_size.value < 200) Cvar_SetValue(&gl_max_size, 256);
+	else if (gl_max_size.value < 1025) Cvar_SetValue(&gl_max_size, 2048);
+	else Cvar_SetValue(&gl_max_size, 1);
+}
+extern cvar_t gl_texturemode;
+static int Texturesquality(void) {
+	if (!strcmp(gl_texturemode.string, "GL_NEAREST")) return 0;
+	else if (!strcmp(gl_texturemode.string, "GL_NEAREST_MIPMAP_NEAREST")) return 1;
+	else if (!strcmp(gl_texturemode.string, "GL_LINEAR")) return 2;
+	else if (!strcmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_NEAREST")) return 3;
+	else return 4;
+}
+const char* TexturesqualityRead(void) {
+	switch (Texturesquality()) {
+	case 0: return "very low"; case 1: return "low"; case 2: return "medium"; case 3: return "high"; default: return "very high";
+	}
+}
+void TexturesqualityToggle(qbool back) {
+	switch (Texturesquality()) {
+	case 0: Cvar_Set(&gl_texturemode, "GL_NEAREST_MIPMAP_NEAREST"); return;
+	case 1: Cvar_Set(&gl_texturemode, "GL_LINEAR"); return;
+	case 2: Cvar_Set(&gl_texturemode, "GL_LINEAR_MIPMAP_NEAREST"); return;
+	case 3: Cvar_Set(&gl_texturemode, "GL_LINEAR_MIPMAP_LINEAR"); return;
+	default: Cvar_Set(&gl_texturemode, "GL_NEAREST"); return;
+	}
+}
+#endif
+
 setting settfps_arr[] = {
 	ADDSET_SEPARATOR("Presets"),
 	ADDSET_ACTION	("Load Fast Preset", LoadFastPreset),
 	ADDSET_ACTION	("Load HQ preset", LoadHQPreset),
-	ADDSET_SEPARATOR("Graphics settings"),
-	ADDSET_NAMED	("Explosion Type", r_explosiontype, explosiontype_enum),
+	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle),
 	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
+	ADDSET_BOOL		("Damage Flash", v_damagecshift),
+	ADDSET_BOOL		("Pickup Flashes", v_bonusflash),
+	ADDSET_SEPARATOR("Environment"),
+	ADDSET_BOOL		("Simple Sky", r_fastsky),
+	ADDSET_BOOL		("Simple walls", r_drawflat),
+	ADDSET_BOOL		("Simple turbs", r_fastturb), 
+	ADDSET_BOOL		("Draw flame", r_drawflame),
 	ADDSET_BOOL		("Gib Filter", cl_gibfilter),
 	ADDSET_NAMED	("Dead Body Filter", cl_deadbodyfilter, deadbodyfilter_enum),
+	ADDSET_SEPARATOR("Projectiles"),
+	ADDSET_NAMED	("Explosion Type", r_explosiontype, explosiontype_enum),
 	ADDSET_NAMED	("Rocket Model", cl_rocket2grenade, rocketmodel_enum),
 	ADDSET_NAMED	("Rocket Trail", r_rockettrail, rockettrail_enum),
 	ADDSET_BOOL		("Rocket Light", r_rocketlight),
-	ADDSET_BOOL		("Damage Flash", v_damagecshift),
-	ADDSET_BOOL		("Pickup Flashes", v_bonusflash),
-	ADDSET_NAMED	("Powerup Glow", r_powerupglow, powerupglow_enum),
-	ADDSET_BOOL		("Fast Sky", r_fastsky),
+	ADDSET_NAMED	("Grenade Trail", r_grenadetrail, grenadetrail_enum),
+	ADDSET_NUMBER	("Fakeshaft", cl_fakeshaft, 0, 1, 0.05),
 #ifdef GLQUAKE
+	ADDSET_BOOL		("Hide Nails", amf_hidenails),
+	ADDSET_BOOL		("Hide Rockets", amf_hiderockets),
+#endif
+	ADDSET_SEPARATOR("Lighting"),
+	ADDSET_NAMED	("Powerup Glow", r_powerupglow, powerupglow_enum),
+#ifdef GLQUAKE
+	ADDSET_BOOL		("Colored Lights", gl_colorlights),
 	ADDSET_BOOL		("Fast Lights", gl_flashblend),
 	ADDSET_BOOL		("Dynamic Ligts", r_dynamic),
-	ADDSET_BOOL		("Particle Shaft", amf_lightning)
+	ADDSET_NUMBER	("Light mode", gl_lightmode, 0, 2, 1),
+	ADDSET_BOOL		("Particle Shaft", amf_lightning),
+#endif
+	ADDSET_BOOL		("View Weapon", cl_drawgun),
+	ADDSET_NUMBER	("Size", r_viewmodelsize, 0.1, 1, 0.05),
+	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 0),
+#ifdef GLQUAKE
+	ADDSET_SEPARATOR("Textures"),
+	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
+	ADDSET_BOOL		("Luma", gl_lumaTextures),
+	ADDSET_CUSTOM	("Detail", TexturesdetailRead, TexturesdetailToggle),
+	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 10, 0.5),
+	ADDSET_BOOL		("No Textures", gl_textureless),
+	ADDSET_CUSTOM	("Quality Mode", TexturesqualityRead, TexturesqualityToggle),
+
 #endif
 };
 
