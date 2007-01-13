@@ -59,10 +59,12 @@ typedef struct {
 	enum_togglefnc togglefnc;	// toggle function pointer; required for enum
 	action_fnc actionfnc;		// action function pointer; required for stt_action
 	const char** named_ints;	// array of strings; required for sett_named
+	int top;					// for internal rendering purposes
 } setting;
 
 typedef struct {
 	setting* settings;	// array of settings
-	int set_count;		// amount of elements in set_tab
-	int set_marked;		// currently selected element in set_tab
+	int count;			// amount of elements in set_tab
+	int marked;			// currently selected element in set_tab
+	int viewpoint;		// where rendering start (internal)
 } settings_page;
