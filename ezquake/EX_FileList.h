@@ -48,7 +48,7 @@ filetype_t;
 typedef struct filedesc_s
 {
     qbool			is_directory;
-
+	
 	#ifdef WITH_ZIP
 	qbool			is_zip;
 	#endif
@@ -90,6 +90,12 @@ typedef struct filelist_s
     cvar_t *		interline;
     cvar_t *		show_status;
 	cvar_t *		scroll_names;
+	cvar_t *		dir_color;
+	int				dir_color_rgba;
+	#ifdef WITH_ZIP
+	cvar_t *		zip_color;
+	int				zip_color_rgba;
+	#endif
 
     // for PGUP/PGDN, filled by drawing func
     int				last_page_size;
@@ -124,7 +130,7 @@ qbool FL_Key(filelist_t *, int key);
 //
 // create file list
 //
-void FL_Init(filelist_t *fl,
+ void FL_Init(filelist_t *fl,
              cvar_t *        sort_mode,
              cvar_t *        show_size,
              cvar_t *        show_date,
@@ -133,8 +139,9 @@ void FL_Init(filelist_t *fl,
              cvar_t *        interline,
              cvar_t *        show_status,
 			 cvar_t *		 scroll_names,
+			 cvar_t *		 dir_color,
+			 cvar_t *		 zip_color,
 			 char *			 initdir);
-
 
 //
 // add new file type (.qwd, .qwz, .mp3)
@@ -182,6 +189,5 @@ int FL_GetCurrentEntryType(filelist_t *);
 // is current entry a dir ?
 //
 qbool FL_IsCurrentDir(filelist_t *);
-
 
 #endif // __EX_FILELIST_H__
