@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.7 2007-01-13 13:45:19 johnnycz Exp $
+		$Id: settings_page.c,v 1.8 2007-01-13 16:48:38 johnnycz Exp $
 
 */
 
@@ -15,7 +15,7 @@
 CEditBox editbox;
 
 #define LETW 8
-#define LINEHEIGHT 8
+#define LINEHEIGHT 9
 #define EDITBOXWIDTH 16
 #define EDITBOXMAXLENGTH 64
 
@@ -261,7 +261,8 @@ void Settings_OnShow(settings_page *page)
 {
 	int oldm = page->marked;
 	CheckCursor(page, false);
-	EditBoxCheck(page, oldm, page->marked);
+	if (page->settings[page->marked].type == stt_string)
+		StringEntryEnter(page->settings + page->marked);
 }
 
 void Settings_Init(settings_page *page, setting *arr, size_t size)

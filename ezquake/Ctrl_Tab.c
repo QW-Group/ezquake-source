@@ -172,8 +172,6 @@ int CTab_Key(CTab_t *tab, int key)
     // then try our handlers
     if (!handled)
     {
-        if (!isCtrlDown()  &&  !isCtrlDown()  &&  !isShiftDown())
-        {
             switch (key)
             {
 			case K_PGUP:
@@ -183,16 +181,19 @@ int CTab_Key(CTab_t *tab, int key)
                 break;
 
 			case K_PGDN:
-			case K_TAB:
             case K_RIGHTARROW:
                 tab->activePage++;
                 handled = true;
                 break;
+
+			case K_TAB:
+				if (isShiftDown()) tab->activePage--; else tab->activePage++;
+				handled = true;
+				break;
             }
 
             if (handled)
                 tab->activePage = (tab->activePage + tab->nPages) % tab->nPages;
-        }
     }
 
     // return handled status
