@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.66 2007-01-13 04:06:15 qqshka Exp $
+	$Id: cl_parse.c,v 1.67 2007-01-13 19:19:34 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1401,15 +1401,15 @@ void CL_NewTranslation (int slot)
 
 		teammate = !strcmp(player->team, skinforcing_team);
 
-		if (cl_teamtopcolor >= 0 && teammate) 
+		if (cl_teamtopcolor.value >= 0 && teammate) 
 		{
-			player->topcolor = cl_teamtopcolor;
-			player->bottomcolor = cl_teambottomcolor;
+			player->topcolor = cl_teamtopcolor.value;
+			player->bottomcolor = cl_teambottomcolor.value;
 		} 
-		else if (cl_enemytopcolor >= 0 && slot != cl.playernum && !teammate)	
+		else if (cl_enemytopcolor.value >= 0 && slot != cl.playernum && !teammate)	
 		{
-			player->topcolor = cl_enemytopcolor;
-			player->bottomcolor = cl_enemybottomcolor;
+			player->topcolor = cl_enemytopcolor.value;
+			player->bottomcolor = cl_enemybottomcolor.value;
 		}
 	}
 

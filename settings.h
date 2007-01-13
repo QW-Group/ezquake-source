@@ -28,7 +28,7 @@
 #define ADDSET_NAMED(label, var, strs) { stt_named, label, &var, 0, sizeof(strs)/sizeof(char*)-1, 1, NULL, NULL, NULL, strs }
 
 // color
-#define ADDSET_COLOR(label, var) { stt_playercolor, label, &var, 0, 0, 0, NULL, NULL, NULL, NULL }
+#define ADDSET_COLOR(label, var) { stt_playercolor, label, &var, -1, 13, 1, NULL, NULL, NULL, NULL }
 
 // bind - not implemented (was too scared about all those ifdefs)
 #define ADDSET_BIND(label, cmd) { stt_bind, label, NULL, 0, 0, 0, NULL, NULL, NULL, NULL, cmd }
@@ -60,7 +60,7 @@ typedef enum  {
 	stt_action,		// function is assigned to this, pointer must be stored in togglefnc
 	stt_string,		// string - fully editable by the user, needs only cvar
 	stt_playercolor,// todo - named enum 0..13
-	stt_bind		// keybinding, requires varname (usually command name will be stored there though)
+	stt_bind		// keybinding, not implemented
 } setting_type;
 
 typedef struct {

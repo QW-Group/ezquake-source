@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.58 2007-01-06 19:46:37 tonik Exp $
+    $Id: teamplay.c,v 1.59 2007-01-13 19:19:34 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 qbool OnChangeSkinForcing(cvar_t *var, char *string);
+qbool OnChangeColorForcing(cvar_t *var, char *string);
 
 cvar_t	cl_parseSay = {"cl_parseSay", "1"};
 cvar_t	cl_parseFunChars = {"cl_parseFunChars", "1"};
@@ -40,7 +41,10 @@ cvar_t	cl_nofake = {"cl_nofake", "2"};
 cvar_t	tp_loadlocs = {"tp_loadlocs", "1"};
 cvar_t  tp_pointpriorities = {"tp_pointpriorities", "0"};
 
-
+cvar_t  cl_teamtopcolor = {"teamtopcolor", "0", 0, OnChangeColorForcing};
+cvar_t  cl_teambottomcolor = {"teambottomcolor", "0", 0, OnChangeColorForcing};
+cvar_t  cl_enemytopcolor = {"enemytopcolor", "0", 0, OnChangeColorForcing};
+cvar_t	cl_enemybottomcolor = {"enemybottomcolor", "0", 0, OnChangeColorForcing};
 cvar_t	cl_teamskin = {"teamskin", "", 0, OnChangeSkinForcing};
 cvar_t	cl_enemyskin = {"enemyskin", "", 0, OnChangeSkinForcing};
 cvar_t	cl_teamquadskin = {"teamquadskin", "", 0, OnChangeSkinForcing};
@@ -1532,13 +1536,13 @@ void MV_UpdateSkins()
 			{
 				if(strcmp(cl.players[i].team, skinforcing_team))
 				{
-					cl.players[i].topcolor = cl_enemytopcolor;
-					cl.players[i].bottomcolor = cl_enemybottomcolor;
+					cl.players[i].topcolor = cl_enemytopcolor.value;
+					cl.players[i].bottomcolor = cl_enemybottomcolor.value;
 				}
 				else
 				{
-					cl.players[i].topcolor = cl_teamtopcolor;
-					cl.players[i].bottomcolor = cl_teambottomcolor;
+					cl.players[i].topcolor = cl_teamtopcolor.value;
+					cl.players[i].bottomcolor = cl_teambottomcolor.value;
 				}
 			}
 
@@ -1591,7 +1595,7 @@ qbool TP_NeedRefreshSkins(void)
 	        && !(cl.fpd & FPD_NO_FORCE_SKIN))
 		return true;
 
-	if ((cl_teamtopcolor >= 0 || cl_enemytopcolor >= 0) && !(cl.fpd & FPD_NO_FORCE_COLOR))
+	if ((cl_teamtopcolor.value >= 0 || cl_enemytopcolor.value >= 0) && !(cl.fpd & FPD_NO_FORCE_COLOR))
 		return true;
 
 	return false;
@@ -1624,6 +1628,12 @@ void TP_RefreshSkins(void)
 		TP_RefreshSkin(i);
 }
 
+qbool OnChangeColorForcing(cvar_t *var, char *string)
+{
+	TP_RefreshSkins();
+	return false;
+}
+
 qbool OnChangeSkinForcing(cvar_t *var, char *string)
 {
 	extern cvar_t noskins, cl_name_as_skin;
@@ -1649,22 +1659,20 @@ qbool OnChangeSkinForcing(cvar_t *var, char *string)
 	return false;
 }
 
-int cl_teamtopcolor = -1, cl_teambottomcolor, cl_enemytopcolor = -1, cl_enemybottomcolor;
-
-void TP_ColorForcing (int *topcolor, int *bottomcolor)
+void TP_ColorForcing (cvar_t *topcolor, cvar_t *bottomcolor)
 {
 	int	top, bottom;
 
 	if (Cmd_Argc() == 1) {
-		if (*topcolor < 0)
+		if (topcolor->value < 0)
 			Com_Printf ("\"%s\" is \"off\"\n", Cmd_Argv(0));
 		else
-			Com_Printf ("\"%s\" is \"%i %i\"\n", Cmd_Argv(0), *topcolor, *bottomcolor);
+			Com_Printf ("\"%s\" is \"%i %i\"\n", Cmd_Argv(0), (int) topcolor->value, (int) bottomcolor->value);
 		return;
 	}
 
 	if (!strcasecmp(Cmd_Argv(1), "off") || !strcasecmp(Cmd_Argv(1), "")) {
-		*topcolor = -1;
+		topcolor->value = -1;
 		TP_RefreshSkins();
 		return;
 	}
@@ -1681,8 +1689,8 @@ void TP_ColorForcing (int *topcolor, int *bottomcolor)
 	bottom &= 15;
 	bottom = min(13, bottom);
 
-	*topcolor = top;
-	*bottomcolor = bottom;
+	Cvar_SetValue(topcolor, top);
+	Cvar_SetValue(bottomcolor, bottom);
 
 	TP_RefreshSkins();
 }
@@ -4074,6 +4082,10 @@ void TP_Init (void)
 	Cvar_Register (&cl_nofake);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SKIN);
+	Cvar_Register (&cl_teamtopcolor);
+	Cvar_Register (&cl_teambottomcolor);
+	Cvar_Register (&cl_enemytopcolor);
+	Cvar_Register (&cl_enemybottomcolor);
 	Cvar_Register (&cl_enemybothskin);
 	Cvar_Register (&cl_teambothskin);
 	Cvar_Register (&cl_enemypentskin);
