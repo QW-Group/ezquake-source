@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.65 2007-01-10 09:30:46 johnnycz Exp $
+	$Id: cl_parse.c,v 1.66 2007-01-13 04:06:15 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1926,6 +1926,9 @@ void CL_ParsePrint (void) {
 	s0 = MSG_ReadString ();
 	s = decode_string (s0);
 
+	qwcslcpy(str, s, sizeof(str)/sizeof(str[0]));
+	s = str; // so no memmory overwrite, because decode_string() uses static buffers
+
 	if (level == PRINT_CHAT) {
 	
 		if (TP_SuppressMessage(s0))
@@ -2130,8 +2133,8 @@ void CL_ParsePrint (void) {
 	}
 
 	// emulate qwcslcat (which is not implemented)
-	qwcslcpy (cl.sprint_buf + qwcslen(cl.sprint_buf), s, sizeof(cl.sprint_buf)/sizeof(wchar)
-		- qwcslen(cl.sprint_buf));
+	qwcslcpy (cl.sprint_buf + qwcslen(cl.sprint_buf), s, sizeof(cl.sprint_buf)/sizeof(wchar) - qwcslen(cl.sprint_buf));
+	s = NULL; // s point to str[] which we will use later, so u will not mess
 	cl.sprint_level = level;
 
 	if ((p = qwcsrchr(cl.sprint_buf, '\n'))) {
