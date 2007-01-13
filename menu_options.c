@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.11 2007-01-13 13:54:15 johnnycz Exp $
+		$Id: menu_options.c,v 1.12 2007-01-13 16:48:38 johnnycz Exp $
 
 */
 
@@ -426,33 +426,29 @@ static void M_UnbindCommand (char *command) {
 	}
 }
 
+#define KEYSCOL1 22*8
 
 void CT_Opt_Binds_Draw (int x2, int y2, int w, int h, CTab_t *tab, CTabPage_t *page) {
 	int x, y, i, l, keys[2];
 	char *name;
-	mpic_t *p;
-
-	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
-	p = Draw_CachePic ("gfx/ttl_cstm.lmp");
-	M_DrawPic (64, 4, p);
 
 	if (bind_grab)
-		M_Print (64, 32, "Press a key or button for this action");
+		UI_Print_Center (x2, y2, w, "Press a key or button for this action", false);
 	else
-		M_Print (64, 32, "Enter to change, del to clear");
+		UI_Print_Center (x2, y2, w, "Enter to change, del to clear", true);
 
+	y2 += 16;
 	// search for known bindings
 	for (i = 0; i < NUMCOMMANDS; i++) {
-		y = 48 + 8*i;
+		x = x2 + KEYSCOL1 + 3*8;
+		y = y2 + 8*i;
 
-		M_Print (64, y, bindnames[i][1]);
-
-		l = strlen (bindnames[i][0]);
+		UI_Print (x2 + KEYSCOL1 - min(strlen(bindnames[i][1]), 20) * 8, y, bindnames[i][1], false);
 
 		M_FindKeysForCommand (bindnames[i][0], keys);
 
 		if (keys[0] == -1) {
-			M_Print (192, y, "???");
+			UI_Print (x, y, "???", false);
 		} else {
 #ifdef WITH_KEYMAP
 			char    str[256];
@@ -460,23 +456,23 @@ void CT_Opt_Binds_Draw (int x2, int y2, int w, int h, CTab_t *tab, CTabPage_t *p
 #else // WITH_KEYMAP
 			name = Key_KeynumToString (keys[0]);
 #endif // WITH_KEYMAP else
-			M_Print (192, y, name);
-			x = strlen(name) * 8;
+			UI_Print (x, y, name, false);
+			x += strlen(name)*8;
 			if (keys[1] != -1) {
-				M_Print (192 + x + 8, y, "or");
+				UI_Print (x + 8, y, "or", false);
 #ifdef WITH_KEYMAP
-				M_Print (192 + x + 32, y, Key_KeynumToString (keys[1], str));
+				UI_Print (x + 4*8, y, Key_KeynumToString (keys[1], str), false);
 #else // WITH_KEYMAP
-				M_Print (192 + x + 32, y, Key_KeynumToString (keys[1]));
+				UI_Print (x + 4*8, y, Key_KeynumToString (keys[1]), false);
 #endif // WITH_KEYMAP else
 			}
 		}
 	}
 
 	if (bind_grab)
-		M_DrawCharacter (170, 48 + keys_cursor*8, '=');
+		UI_DrawCharacter (x2 + KEYSCOL1 + 8, y2 + keys_cursor*8, '=');
 	else
-		M_DrawCharacter (170, 48 + keys_cursor*8, FLASHINGARROW());
+		UI_DrawCharacter (x2 + KEYSCOL1 + 8, y2 + keys_cursor*8, FLASHINGARROW());
 }
 
 
