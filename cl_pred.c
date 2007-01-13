@@ -21,9 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 cvar_t	cl_nopred	= {"cl_nopred", "0"};
-// shaman RFE 1036160 {
 cvar_t	cl_pushlatency = {"pushlatency", "0"};
-// } shaman RFE 1036160
 
 extern cvar_t cl_independentPhysics;
 
@@ -272,15 +270,8 @@ static void CL_LerpMove (double msgtime, float f)
 		return;
 	}
 
-	if (cl_pushlatency.value != 0) 
-	{
-        frac = f;
-	}
-	else 
-	{
     	frac = (simtime - lerp_times[from]) / (lerp_times[to] - lerp_times[from]);
     	frac = bound (0, frac, 1);
-	}
 
 	for (i = 0; i < 3; i++)
 	{
@@ -297,10 +288,8 @@ void CL_PredictMove (void) {
 // shaman RFE 1036160 {
 	double playertime;
     float f = 0;
-	if (cl_pushlatency.value > 0)
-		Cvar_Set (&cl_pushlatency, "0");
 
-	playertime = cls.realtime - cls.latency - cl_pushlatency.value * 0.001;
+	playertime = cls.realtime - cls.latency;
 	if (playertime > cls.realtime)
 		playertime = cls.realtime;
 // } shaman RFE 1036160 
@@ -366,8 +355,6 @@ if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.val
 		CL_PredictUsercmd (&from->playerstate[cl.playernum], &to->playerstate[cl.playernum], &to->cmd);
 		cl.onground = pmove.onground;
 		cl.waterlevel = pmove.waterlevel;
-		if (cl_pushlatency.value != 0 && to->senttime >= playertime)
-			break; 
 	}
 
 	pmove.numphysent = oldphysent;
@@ -380,15 +367,6 @@ if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.val
 	if (physframe && cl_independentPhysics.value != 0)
 		lerp_time = cls.realtime;
 */
-
-	if (cl_pushlatency.value != 0) {
-		if (to->senttime == from->senttime) {
-			f = 0;
-		} else {
-			f = (playertime - from->senttime) / (to->senttime - from->senttime);
-			f = bound(0, f, 1);
-		}
-	}
 
 //	for (i = 0; i < 3; i++) {
 //		if ( fabs(from->playerstate[cl.playernum].origin[i] - to->playerstate[cl.playernum].origin[i]) > 128) {
@@ -453,9 +431,7 @@ foundsomeone:
 void CL_InitPrediction (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register(&cl_nopred);
-// shaman RFE 1036160 {
-    Cvar_Register(&cl_pushlatency); 
-// } shaman RFE 1036160
+	Cvar_Register(&cl_pushlatency); 
 
 	Cvar_ResetCurrentGroup();
 
