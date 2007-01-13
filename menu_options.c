@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.10 2007-01-13 13:45:19 johnnycz Exp $
+		$Id: menu_options.c,v 1.11 2007-01-13 13:54:15 johnnycz Exp $
 
 */
 
@@ -327,7 +327,9 @@ setting setthud_arr[] = {
 	ADDSET_BOOLLATE ("Teamholdinfo", hud_teamholdinfo_show),
 	ADDSET_BOOLLATE ("FPS", hud_fps_show),
 	ADDSET_BOOLLATE ("Clock", hud_clock_show),
+#ifdef GLQUAKE
 	ADDSET_BOOLLATE ("Radar", hud_radar_show),
+#endif
 	ADDSET_SEPARATOR("Old HUD"),
 	ADDSET_BOOL		("Old Status Bar", cl_sbar),
 	ADDSET_BOOL		("Old HUD Left", cl_hudswap),
