@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.41 2007-01-11 19:38:06 qqshka Exp $
+	$Id: console.c,v 1.42 2007-01-13 00:41:34 qqshka Exp $
 */
 // console.c
 
@@ -527,9 +527,8 @@ void Con_SafePrintf (char *fmt, ...)
 
 //Handles cursor positioning, line wrapping, etc
 void Con_PrintW (wchar *txt) {
-	int y, c, l, mask, color = int_white, r, g, b, idx;
+	int y, c, l, d, mask, color = int_white, r, g, b, idx;
 	wchar *s;
-	byte d;
 	static int cr;
 
 	if (!(Print_flags[Print_current] & PR_LOG_SKIP)) {
@@ -604,7 +603,7 @@ void Con_PrintW (wchar *txt) {
 				}
 			}
 		
-			d = ((byte)s[0]) & 127;
+			d = (s[0] & ~128);
 			if (   ( con_wordwrap.value && (!d || d == 0x09 || d == 0x0D || d == 0x0A || d == 0x20))
 				|| (!con_wordwrap.value && d <= 32) // 32 is a space as well as 0x20
 			   )
