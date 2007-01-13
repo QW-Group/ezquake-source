@@ -2016,6 +2016,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\fs.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\image.h"
 					>
 				</File>
