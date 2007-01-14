@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.14 2007-01-14 10:26:22 johnnycz Exp $
+		$Id: menu_options.c,v 1.15 2007-01-14 14:44:36 johnnycz Exp $
 
 */
 
@@ -160,9 +160,12 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	cl_rollangle, cl_rollspeed, v_gunkick, v_kickpitch, v_kickroll, v_kicktime, v_viewheight, match_auto_sshot, match_auto_record, match_auto_logconsole,
 	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, scr_clock, scr_gameclock, show_fps, rate, cl_c2sImpulseBackup,
 	name, team, skin, topcolor, bottomcolor, cl_teamtopcolor, cl_teambottomcolor, cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
-	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_format, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename,
+	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename,
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume
 ;
+#ifdef _WIN32
+extern cvar_t demo_format;
+#endif
 #ifdef GLQUAKE
 extern cvar_t scr_autoid, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights;
 #endif
@@ -195,6 +198,7 @@ void ConQualityToggle(qbool back) {
 	else if (q < 5) Cvar_SetValue(&cl_c2sImpulseBackup, 6);
 	else Cvar_SetValue(&cl_c2sImpulseBackup, 0);
 }
+#ifdef _WIN32
 const char* DemoformatRead(void) {
 	return demo_format.string;
 }
@@ -203,6 +207,7 @@ void DemoformatToggle(qbool back) {
 	else if (!strcmp(demo_format.string, "qwz")) Cvar_Set(&demo_format, "mvd");
 	else if (!strcmp(demo_format.string, "mvd")) Cvar_Set(&demo_format, "qwd");
 }
+#endif
 
 void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
@@ -253,7 +258,9 @@ setting settgeneral_arr[] = {
 	ADDSET_CUSTOM	("Sshot Format", SshotformatRead, SshotformatToggle),
 	ADDSET_SEPARATOR("Demos"),
 	ADDSET_STRING	("Directory", demo_dir),
+#ifdef _WIN32
 	ADDSET_CUSTOM	("Format", DemoformatRead, DemoformatToggle),
+#endif
 	ADDSET_STRING	("Qizmo Dir", qizmo_dir),
 	ADDSET_STRING	("QWDTools Dir", qwdtools_dir),
 };
