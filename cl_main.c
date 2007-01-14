@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.121 2007-01-13 11:13:16 johnnycz Exp $
+	$Id: cl_main.c,v 1.122 2007-01-14 23:19:11 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -133,6 +133,9 @@ cvar_t	b_switch = {"b_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
 // START shaman RFE 1022306
 cvar_t  msg_filter = {"msg_filter", "0"};
 // END shaman RFE 1022306
+
+qbool OnChange_cl_onload(cvar_t*, char*);
+cvar_t cl_onload = {"cl_onload", "menu", CVAR_ARCHIVE, OnChange_cl_onload};
 
 clientPersistent_t	cls;
 clientState_t		cl;
@@ -915,6 +918,14 @@ void CL_SendToServer (void) {
 
 void CL_InitCommands (void);
 
+qbool OnChange_cl_onload(cvar_t* cvar, char* c) {
+	if (strcmp(c, "menu") && strcmp(c, "browser") && strcmp(c, "console")) {
+		Com_Printf("Possible values are: menu, browser, console\n");
+		return true;
+	}
+	return false;
+}
+
 #ifdef GLQUAKE
 void CL_Fog_f (void) {
 
@@ -957,6 +968,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&show_fps2);
 	Cvar_Register (&cl_confirmquit);
 	Cvar_Register (&cl_window_caption);
+	Cvar_Register (&cl_onload);
 	
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register (&cl_sbar);
@@ -1172,6 +1184,11 @@ void CL_Init (void) {
 	MP3_Init();
 	SB_RootInit();
 	QTV_Init();
+
+	if (!strcmp(cl_onload.string, "menu"))
+		Cbuf_AddText("togglemenu\n");
+	else if (!strcmp(cl_onload.string, "browser"))
+		Cbuf_AddText("menu_slist\n");
 }
 
 //============================================================================
