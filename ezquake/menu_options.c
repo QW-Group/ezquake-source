@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.15 2007-01-14 14:44:36 johnnycz Exp $
+		$Id: menu_options.c,v 1.16 2007-01-14 19:48:04 johnnycz Exp $
 
 */
 
@@ -161,7 +161,7 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, scr_clock, scr_gameclock, show_fps, rate, cl_c2sImpulseBackup,
 	name, team, skin, topcolor, bottomcolor, cl_teamtopcolor, cl_teambottomcolor, cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
 	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename,
-	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume
+	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz
 ;
 #ifdef _WIN32
 extern cvar_t demo_format;
@@ -208,6 +208,18 @@ void DemoformatToggle(qbool back) {
 	else if (!strcmp(demo_format.string, "mvd")) Cvar_Set(&demo_format, "qwd");
 }
 #endif
+const char* SoundqualityRead(void) {
+	static char buf[7];
+	snprintf(buf, sizeof(buf), "%.2s kHz", s_khz.string);
+	return buf;
+}
+void SoundqualityToggle(qbool back) {
+	switch ((int) s_khz.value) {
+	case 11: Cvar_SetValue(&s_khz, 22); break;
+	case 22: Cvar_SetValue(&s_khz, 44); break;
+	default: Cvar_SetValue(&s_khz, 11); break;
+	}
+}
 
 void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
@@ -226,11 +238,14 @@ setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Sound"),
 	ADDSET_NUMBER	("Sound Volume", s_volume, 0, 1, 0.05),
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
+	ADDSET_CUSTOM	("Quality", SoundqualityRead, SoundqualityToggle),
 	ADDSET_SEPARATOR("Controls"),
 	ADDSET_NUMBER	("Mouse Speed", sensitivity, 1, 15, 0.25),
 	ADDSET_NUMBER	("M. Acceleration", m_accel, 0, 1, 0.1),
 	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle),
 	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle),
+	ADDSET_BOOL		("Gun Preselect", cl_weaponpreselect),
+	ADDSET_BOOL		("Gun Auto hide", cl_weaponhide),
 	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle),
 	ADDSET_BOOL		("Mouse Look", freelook),
 	ADDSET_BOOL		("Smart Jump", cl_smartjump),
@@ -238,9 +253,6 @@ setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Connection"),
 	ADDSET_CUSTOM	("Bandwidth Limit", BandwidthRead, BandwidthToggle),
 	ADDSET_CUSTOM	("Quality", ConQualityRead, ConQualityToggle),
-	ADDSET_SEPARATOR("Weapons handling"),
-	ADDSET_BOOL		("Preselect", cl_weaponpreselect),
-	ADDSET_BOOL		("Auto hide", cl_weaponhide),
 	ADDSET_SEPARATOR("Chat settings"),
 	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
 	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
