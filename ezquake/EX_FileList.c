@@ -227,18 +227,28 @@ qbool FL_IsCurrentZip(filelist_t *fl)
 void FL_StripFileName(filelist_t *fl, filedesc_t *f)
 {
     int i;
-    char namebuf[_MAX_FNAME];
-    char extbuf[_MAX_EXT];
+    char namebuf[_MAX_FNAME] = {0};
+    char extbuf[_MAX_EXT] = {0};
     char *t;
 
-	snprintf (extbuf, sizeof(extbuf), ".%s", COM_FileExtension (f->name));
-
-	if (strlen (extbuf) == 1)
-	{
-		extbuf[0] = '\0';
-	}
-
+	// common for dir/file, get name without path but with ext
 	strlcpy (namebuf, COM_SkipPath (f->name), sizeof (namebuf));
+
+	// file specific
+	if (!f->is_directory)
+	{
+		// get ext
+		snprintf (extbuf, sizeof(extbuf), ".%s", COM_FileExtension (namebuf));
+
+		// skip single dot ???
+		if (strlen (extbuf) == 1)
+		{
+			extbuf[0] = '\0';
+		}
+
+		// remove ext from name
+		COM_StripExtension(namebuf, namebuf);
+	}
 
     if (fl->strip_names->value && !f->is_directory)
     {
