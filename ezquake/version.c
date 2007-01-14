@@ -23,7 +23,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: version.c,v 1.9 2007-01-14 10:25:34 johnnycz Exp $
+	$Id: version.c,v 1.10 2007-01-14 10:52:11 johnnycz Exp $
 */
 
 #include "common.h"
@@ -74,7 +74,7 @@ CL_Version_f
 */
 void CL_Version_f (void)
 {
-	Com_Printf ("ezQuake version %s\n", VersionString());	
+	Com_Printf ("ezQuake %s\n", VersionString());	
 	Com_Printf ("Exe: "__TIME__" "__DATE__"\n");
 }
 
