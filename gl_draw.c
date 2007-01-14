@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.45 2007-01-08 20:32:39 tonik Exp $
+	$Id: gl_draw.c,v 1.46 2007-01-14 14:27:16 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -134,18 +134,22 @@ static byte crosshairdata[NUMCROSSHAIRS][64] = {
 
 qbool OnChange_gl_smoothfont (cvar_t *var, char *string) {
 	float newval;
+	int i;
 
 	newval = Q_atof (string); if (!newval == !gl_smoothfont.value ||
 	    !char_textures[0]) return false;
 
-	GL_Bind(char_textures[0]);
-
-	if (newval)	{
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	} else {
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	for (i = 0; i < MAX_CHARSETS; i++) {
+		if (!char_textures[i])
+			break;
+		GL_Bind(char_textures[i]);
+		if (newval)	{
+			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		} else {
+			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		}
 	}
 	return false;
 }
