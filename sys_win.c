@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.33 2007-01-13 18:04:10 qqshka Exp $
+	$Id: sys_win.c,v 1.34 2007-01-14 22:02:48 qqshka Exp $
 
 */
 // sys_win.c
@@ -675,6 +675,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 			if (!strncasecmp(ext, "qtv", sizeof("qtv")))
 				snprintf(tmp, sizeof(tmp), "qtvplay \"#%s\"\n", infile);
 			else if (   !strncasecmp(ext, "mvd", sizeof("mvd"))
+					 || !strncasecmp(ext, "qwd", sizeof("qwd"))
 					 || !strncasecmp(ext, "dem", sizeof("dem"))
 					 || !strncasecmp(ext, "qwz", sizeof("qwz"))
 					)
