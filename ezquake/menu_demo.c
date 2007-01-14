@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.13 2007-01-14 03:20:46 qqshka Exp $
+		$Id: menu_demo.c,v 1.14 2007-01-14 19:46:01 johnnycz Exp $
 
 */
 
@@ -305,11 +305,13 @@ void CT_Demo_Browser_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *p
 void CT_Demo_Playlist_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 {
 	int i, y2;
-	y = y - 48;
 
-	if(demo_playlist_num == 0)
-		M_PrintWhite(96, y + 96, "Playlist is empty");
-	else{
+	if(demo_playlist_num == 0) {
+		UI_Print_Center(x, y + 16, w, "Playlist is empty", false);
+		UI_Print_Center(x, y + 32, w, "Use [Ctrl]+[Enter] in the demo browser", true);
+		UI_Print_Center(x, y + 40, w, "to add demo to the playlist", true); 
+	} else {
+		y = y - 48;
 		for (i = 0; i <= demo_playlist_num - demo_playlist_base && i < DEMO_MAXLINES; i++) {
 			y2 = 32 + i * 8 ;
 			if (demo_playlist_cursor == i)
