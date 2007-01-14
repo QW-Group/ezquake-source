@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.35 2007-01-06 21:21:44 tonik Exp $
+    $Id: snd_dma.c,v 1.36 2007-01-14 19:47:06 johnnycz Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "movie.h" //joe: capturing audio
 #endif
 
+static qbool OnChange_s_khz (cvar_t *var, char *string);
 static void S_Play_f (void);
 static void S_PlayVol_f (void);
 static void S_SoundList_f (void);
@@ -89,7 +90,7 @@ cvar_t s_show = {"s_show", "0"};
 cvar_t s_mixahead = {"s_mixahead", "0.1", CVAR_ARCHIVE};
 cvar_t s_swapstereo = {"s_swapstereo", "0", CVAR_ARCHIVE};
 
-cvar_t s_khz = {"s_khz", "11", CVAR_ARCHIVE};
+cvar_t s_khz = {"s_khz", "11", CVAR_ARCHIVE, OnChange_s_khz};
 #if (defined(__linux__) || defined(__FreeBSD__))
 cvar_t s_stereo = {"s_stereo", "1"};
 cvar_t s_device = {"s_device", "default"};
@@ -99,6 +100,7 @@ cvar_t s_bits = {"s_bits", "16"};
 #ifdef __linux__
 cvar_t s_noalsa = {"s_noalsa", "0"};
 #endif
+
 
 static void S_SoundInfo_f (void)
 {
@@ -162,6 +164,11 @@ static void S_Restart_f (void)
 
 	if (developer.value)
 		S_SoundInfo_f();
+}
+
+static qbool OnChange_s_khz (cvar_t *var, char *string) {
+	Cbuf_AddText("snd_restart\n");
+	return false;
 }
 
 void S_Init (void)
