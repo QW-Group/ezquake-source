@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.13 2007-01-13 19:19:34 johnnycz Exp $
+		$Id: menu_options.c,v 1.14 2007-01-14 10:26:22 johnnycz Exp $
 
 */
 
@@ -160,7 +160,8 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	cl_rollangle, cl_rollspeed, v_gunkick, v_kickpitch, v_kickroll, v_kicktime, v_viewheight, match_auto_sshot, match_auto_record, match_auto_logconsole,
 	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, scr_clock, scr_gameclock, show_fps, rate, cl_c2sImpulseBackup,
 	name, team, skin, topcolor, bottomcolor, cl_teamtopcolor, cl_teambottomcolor, cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
-	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_format, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename;
+	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_format, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename,
+	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume
 ;
 #ifdef GLQUAKE
 extern cvar_t scr_autoid, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights;
@@ -232,34 +233,19 @@ setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Connection"),
 	ADDSET_CUSTOM	("Bandwidth Limit", BandwidthRead, BandwidthToggle),
 	ADDSET_CUSTOM	("Quality", ConQualityRead, ConQualityToggle),
-#ifdef GLQUAKE
-	ADDSET_SEPARATOR("Tracker Messages"),
-	ADDSET_BOOL		("Flags", amf_tracker_flags),
-	ADDSET_BOOL		("Frags", amf_tracker_frags),
-	ADDSET_NUMBER	("Messages", amf_tracker_messages, 0, 10, 1),
-	ADDSET_BOOL		("Streaks", amf_tracker_streaks),
-	ADDSET_NUMBER	("Time", amf_tracker_time, 0.5, 6, 0.5),
-	ADDSET_NUMBER	("Scale", amf_tracker_scale, 0.1, 2, 0.1),
-	ADDSET_BOOL		("Align Right", amf_tracker_align_right),
-#endif
 	ADDSET_SEPARATOR("Weapons handling"),
 	ADDSET_BOOL		("Preselect", cl_weaponpreselect),
 	ADDSET_BOOL		("Auto hide", cl_weaponhide),
-	ADDSET_SEPARATOR("Console"),
-	ADDSET_NAMED	("Colored Text", scr_coloredText, coloredtext_enum),
-	ADDSET_NAMED	("Fun Chars More", con_funchars_mode, funcharsmode_enum),
-	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
-	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
-	ADDSET_BOOL		("Timestamps", con_timestamps),
-#ifdef GLQUAKE
-	ADDSET_BOOL		("Font Smoothing", gl_smoothfont),
-#endif
-	ADDSET_NUMBER	("Console height", scr_consize, 0.1, 1.0, 0.05),
 	ADDSET_SEPARATOR("Chat settings"),
 	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
 	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
 	ADDSET_BOOL		("Ignore Spectators", ignore_spec),
 	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
+	ADDSET_BOOL		("Own Volume Levels", cl_chatsound),
+	ADDSET_NUMBER	("General", con_sound_mm1_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Team Chat", con_sound_mm2_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Spectators", con_sound_spec_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Others", con_sound_other_volume, 0, 1, 0.1),
 	ADDSET_SEPARATOR("Match Tools"),
 	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
 	ADDSET_NAMED	("Auto Record", match_auto_record, autorecord_enum),
@@ -336,6 +322,28 @@ setting setthud_arr[] = {
 	ADDSET_BOOL		("Show FPS", show_fps),
 	ADDSET_BOOL		("Show Clock", scr_clock),
 	ADDSET_BOOL		("Show Gameclock", scr_gameclock),
+#ifdef GLQUAKE
+	ADDSET_SEPARATOR("Tracker Messages"),
+	ADDSET_BOOL		("Flags", amf_tracker_flags),
+	ADDSET_BOOL		("Frags", amf_tracker_frags),
+	ADDSET_NUMBER	("Messages", amf_tracker_messages, 0, 10, 1),
+	ADDSET_BOOL		("Streaks", amf_tracker_streaks),
+	ADDSET_NUMBER	("Time", amf_tracker_time, 0.5, 6, 0.5),
+	ADDSET_NUMBER	("Scale", amf_tracker_scale, 0.1, 2, 0.1),
+	ADDSET_BOOL		("Align Right", amf_tracker_align_right),
+	ADDSET_SEPARATOR("Console"),
+	ADDSET_NAMED	("Colored Text", scr_coloredText, coloredtext_enum),
+	ADDSET_NAMED	("Fun Chars More", con_funchars_mode, funcharsmode_enum),
+	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
+	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
+	ADDSET_BOOL		("Timestamps", con_timestamps),
+#ifdef GLQUAKE
+	ADDSET_BOOL		("Font Smoothing", gl_smoothfont),
+#endif
+	ADDSET_NUMBER	("Console height", scr_consize, 0.1, 1.0, 0.05),
+
+#endif
+
 };
 
 void CT_Opt_HUD_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
