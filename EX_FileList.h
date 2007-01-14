@@ -140,7 +140,9 @@ qbool FL_Key(filelist_t *, int key);
              cvar_t *        show_status,
 			 cvar_t *		 scroll_names,
 			 cvar_t *		 dir_color,
+#ifdef WITH_ZIP
 			 cvar_t *		 zip_color,
+#endif
 			 char *			 initdir);
 
 //
