@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fchecks.c,v 1.12 2006-12-02 15:52:58 johnnycz Exp $
+	$Id: fchecks.c,v 1.13 2007-01-14 10:52:11 johnnycz Exp $
 
 */
 
@@ -41,9 +41,9 @@ extern char * SYSINFO_GetString(void);
 
 void FChecks_VersionResponse(void) {
 	if (Modules_SecurityLoaded())
-		Cbuf_AddText (va("say ezQuake version %s " QW_PLATFORM ":" QW_RENDERER "  crc: %s\n", VersionString(), Auth_Generate_Crc()));
+		Cbuf_AddText (va("say ezQuake %s " QW_PLATFORM ":" QW_RENDERER "  crc: %s\n", VersionString(), Auth_Generate_Crc()));
 	else
-		Cbuf_AddText (va("say ezQuake version %s " QW_PLATFORM ":" QW_RENDERER "\n", VersionString()));
+		Cbuf_AddText (va("say ezQuake %s " QW_PLATFORM ":" QW_RENDERER "\n", VersionString()));
 }
 
 void FChecks_FServerResponse (void) {
