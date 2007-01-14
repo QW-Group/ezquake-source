@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.59 2007-01-13 19:19:34 johnnycz Exp $
+    $Id: teamplay.c,v 1.60 2007-01-14 10:25:15 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -41,10 +41,10 @@ cvar_t	cl_nofake = {"cl_nofake", "2"};
 cvar_t	tp_loadlocs = {"tp_loadlocs", "1"};
 cvar_t  tp_pointpriorities = {"tp_pointpriorities", "0"};
 
-cvar_t  cl_teamtopcolor = {"teamtopcolor", "0", 0, OnChangeColorForcing};
-cvar_t  cl_teambottomcolor = {"teambottomcolor", "0", 0, OnChangeColorForcing};
-cvar_t  cl_enemytopcolor = {"enemytopcolor", "0", 0, OnChangeColorForcing};
-cvar_t	cl_enemybottomcolor = {"enemybottomcolor", "0", 0, OnChangeColorForcing};
+cvar_t  cl_teamtopcolor = {"teamtopcolor", "-1", 0, OnChangeColorForcing};
+cvar_t  cl_teambottomcolor = {"teambottomcolor", "-1", 0, OnChangeColorForcing};
+cvar_t  cl_enemytopcolor = {"enemytopcolor", "-1", 0, OnChangeColorForcing};
+cvar_t	cl_enemybottomcolor = {"enemybottomcolor", "-1", 0, OnChangeColorForcing};
 cvar_t	cl_teamskin = {"teamskin", "", 0, OnChangeSkinForcing};
 cvar_t	cl_enemyskin = {"enemyskin", "", 0, OnChangeSkinForcing};
 cvar_t	cl_teamquadskin = {"teamquadskin", "", 0, OnChangeSkinForcing};
