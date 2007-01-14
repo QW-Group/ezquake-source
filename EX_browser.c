@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.21 2007-01-12 09:57:06 oldmanuk Exp $
+	$Id: EX_browser.c,v 1.22 2007-01-14 23:16:36 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1313,7 +1313,7 @@ int IsInSource(source_data *source, server_data *serv)
 {
     int i;
     for (i=0; i < source->serversn; i++)
-        if (!memcmp(&source->servers[i]->address, &serv->address, 6))
+		if (!memcmp(&source->servers[i]->address, &serv->address, sizeof(netadr_t)))
             return i+1;
     return false;
 }
