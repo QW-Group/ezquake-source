@@ -58,7 +58,9 @@ static qbool FL_OnChangeTextColor (cvar_t *var, char *newval)
              cvar_t *        show_status,
 			 cvar_t *		 scroll_names,
 			 cvar_t *		 dir_color,
+#ifdef WITH_ZIP
 			 cvar_t *		 zip_color,
+#endif
 			 char *			 initdir)
 {
 	char tempval[256];

@@ -38,7 +38,9 @@ void Help_Files_Init(void)
         &help_files_showstatus,
 		&help_files_scrollnames,
 		&help_files_dircolor,
+#ifdef WITH_ZIP
 		NULL, // No ZIP color needed for help files.
+#endif
 		"./ezquake/help/manual");
     FL_AddFileType(&help_filelist, 0, ".xml");
 }

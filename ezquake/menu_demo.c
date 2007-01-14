@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.12 2007-01-13 20:40:54 cokeman1982 Exp $
+		$Id: menu_demo.c,v 1.13 2007-01-14 03:20:46 qqshka Exp $
 
 */
 
@@ -648,7 +648,9 @@ void Menu_Demo_Init(void)
     Cvar_Register(&demo_browser_interline);
 	Cvar_Register(&demo_browser_scrollnames);
 	Cvar_Register(&demo_browser_dircolor);
+#ifdef WITH_ZIP
 	Cvar_Register(&demo_browser_zipcolor);
+#endif
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
@@ -671,7 +673,9 @@ void Menu_Demo_Init(void)
         &demo_browser_showstatus,
 		&demo_browser_scrollnames,
 		&demo_browser_dircolor,
+#ifdef WITH_ZIP
 		&demo_browser_zipcolor,
+#endif
 		"./qw");
     FL_AddFileType(&demo_filelist, 0, ".qwd");
 	FL_AddFileType(&demo_filelist, 1, ".qwz");
