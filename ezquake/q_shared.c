@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.15 2007-01-12 11:35:56 oldmanuk Exp $
+    $Id: q_shared.c,v 1.16 2007-01-15 22:18:03 tonik Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -358,6 +358,31 @@ size_t qwcslcpy (wchar *dst, const wchar *src, size_t size)
 	assert (size >= 0);		// if a negative size was passed, then we're fucked
 
 	memcpy (dst, src, (size - 1) * sizeof(wchar));
+	dst[size - 1] = 0;
+
+	return len;
+}
+size_t qwcslcat (wchar *dst, const wchar *src, size_t size)
+{
+	int dstlen = qwcslen(dst);
+	int srclen = qwcslen(src);
+	int len = dstlen + srclen;
+
+	if (len < size) {
+		// it'll fit
+		memcpy (dst + dstlen, src, (srclen + 1)*sizeof(wchar));
+		return len;
+	}
+
+	if (dstlen >= size - 1)
+		return srclen + size;
+
+	if (size == 0)
+		return srclen;
+
+	assert (size >= 0);		// if a negative size was passed, then we're fucked
+
+	memcpy (dst + dstlen, src, (size - 1 - dstlen)*sizeof(wchar));
 	dst[size - 1] = 0;
 
 	return len;

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.17 2007-01-12 11:35:56 oldmanuk Exp $
+    $Id: q_shared.h,v 1.18 2007-01-15 22:18:03 tonik Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -191,6 +191,7 @@ wchar *qwcsrchr (const wchar *ws, wchar wc);
 size_t qwcslen (const wchar *s);
 #endif
 size_t qwcslcpy (wchar *dst, const wchar *src, size_t size);
+size_t qwcslcat (wchar *dst, const wchar *src, size_t size);
 wchar *Q_wcsdup(const wchar *src);
 
 qbool Q_glob_match (const char *pattern, const char *text);
