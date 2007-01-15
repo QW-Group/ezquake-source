@@ -90,11 +90,11 @@ typedef struct filelist_s
     cvar_t *		interline;
     cvar_t *		show_status;
 	cvar_t *		scroll_names;
+	cvar_t *		file_color;
+	cvar_t *		selected_color;
 	cvar_t *		dir_color;
-	int				dir_color_rgba;
 	#ifdef WITH_ZIP
 	cvar_t *		zip_color;
-	int				zip_color_rgba;
 	#endif
 
     // for PGUP/PGDN, filled by drawing func
@@ -130,18 +130,20 @@ qbool FL_Key(filelist_t *, int key);
 //
 // create file list
 //
- void FL_Init(filelist_t *fl,
-             cvar_t *        sort_mode,
-             cvar_t *        show_size,
-             cvar_t *        show_date,
-             cvar_t *        show_time,
-             cvar_t *        strip_names,
-             cvar_t *        interline,
-             cvar_t *        show_status,
-			 cvar_t *		 scroll_names,
-			 cvar_t *		 dir_color,
+void FL_Init(filelist_t	*	fl,
+             cvar_t *       sort_mode,
+             cvar_t *       show_size,
+             cvar_t *       show_date,
+             cvar_t *       show_time,
+             cvar_t *       strip_names,
+             cvar_t *       interline,
+             cvar_t *       show_status,
+			 cvar_t *		scroll_names,
+			 cvar_t *		demo_color,
+			 cvar_t *		selected_color,
+			 cvar_t *		dir_color,
 #ifdef WITH_ZIP
-			 cvar_t *		 zip_color,
+			 cvar_t *		zip_color,
 #endif
 			 char *			 initdir);
 

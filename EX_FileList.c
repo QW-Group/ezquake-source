@@ -34,6 +34,9 @@ extern int isAltDown(void);
 extern void cvar_toggle (cvar_t *var);
 extern void _splitpath (const char *path, char *drive, char *dir, char *file, char *ext);
 
+#define FL_SEARCH_TIMEOUT	2.0
+static double last_search_enter_time = 0.0;
+
 //
 // When changing RGBA color-value for the text in the file list (dirs/zips).
 //
@@ -45,21 +48,32 @@ static qbool FL_OnChangeTextColor (cvar_t *var, char *newval)
 	return true;
 }
 
+#define FL_REGISTERCOLOR(fl, colorvar, tempval) \
+	fl->##colorvar = colorvar; \
+	if (fl->##colorvar) \
+	{ \
+		fl->##colorvar->OnChange = FL_OnChangeTextColor; \
+		strlcpy (tempval, fl->##colorvar->string, sizeof (tempval)); \
+		Cvar_Set (fl->##colorvar, tempval); \
+	} \
+
 //
 // Create list
 //
- void FL_Init(filelist_t *fl,
-             cvar_t *        sort_mode,
-             cvar_t *        show_size,
-             cvar_t *        show_date,
-             cvar_t *        show_time,
-             cvar_t *        strip_names,
-             cvar_t *        interline,
-             cvar_t *        show_status,
-			 cvar_t *		 scroll_names,
-			 cvar_t *		 dir_color,
+void FL_Init(filelist_t	*	fl,
+             cvar_t *       sort_mode,
+             cvar_t *       show_size,
+             cvar_t *       show_date,
+             cvar_t *       show_time,
+             cvar_t *       strip_names,
+             cvar_t *       interline,
+             cvar_t *       show_status,
+			 cvar_t *		scroll_names,
+			 cvar_t *		file_color,
+			 cvar_t *		selected_color,
+			 cvar_t *		dir_color,
 #ifdef WITH_ZIP
-			 cvar_t *		 zip_color,
+			 cvar_t *		zip_color,
 #endif
 			 char *			 initdir)
 {
@@ -82,28 +96,17 @@ static qbool FL_OnChangeTextColor (cvar_t *var, char *newval)
     fl->show_status = show_status;
 	fl->scroll_names = scroll_names;
 	fl->search_string[0] = 0;
-
-	fl->dir_color = dir_color;
-	if (fl->dir_color)
-	{
-		fl->dir_color->OnChange = FL_OnChangeTextColor;
-		strlcpy (tempval, fl->dir_color->string, sizeof (tempval));
-		Cvar_Set (fl->dir_color, tempval);
-	}
-
     fl->last_page_size = 0;
 
     fl->search_valid = false;
     fl->cdup_find = false;
 
+	FL_REGISTERCOLOR(fl, file_color, tempval);
+	FL_REGISTERCOLOR(fl, selected_color, tempval);
+	FL_REGISTERCOLOR(fl, dir_color, tempval);
+
 	#ifdef WITH_ZIP
-	fl->zip_color = zip_color;
-	if (fl->zip_color)
-	{
-		fl->zip_color->OnChange = FL_OnChangeTextColor;
-		strlcpy (tempval, fl->zip_color->string, sizeof (tempval));
-		Cvar_Set (fl->zip_color, tempval);
-	}
+	FL_REGISTERCOLOR(fl, zip_color, tempval);
 
 	fl->current_zip[0] = 0;
 	fl->in_zip = false;
@@ -231,24 +234,31 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
     char extbuf[_MAX_EXT] = {0};
     char *t;
 
-	// common for dir/file, get name without path but with ext
+	// Don't try to strip this.
+	if (!strcmp(f->name, ".."))
+	{
+		strlcpy (f->display, "/..", sizeof(f->display));
+		return;
+	}
+
+	// Common for dir/file, get name without path but with ext
 	strlcpy (namebuf, COM_SkipPath (f->name), sizeof (namebuf));
 
-	// file specific
+	// File specific.
 	if (!f->is_directory)
 	{
-		// get ext
+		// Get extension.
 		snprintf (extbuf, sizeof(extbuf), ".%s", COM_FileExtension (namebuf));
 
-		// skip single dot ???
+		// If the extension is only a . it means we have no extension.
 		if (strlen (extbuf) == 1)
 		{
 			extbuf[0] = '\0';
 		}
-
-		// remove ext from name
-		COM_StripExtension(namebuf, namebuf);
 	}
+
+	// Remove extension from the name.
+	COM_StripExtension (COM_SkipPath (f->name), namebuf);
 
     if (fl->strip_names->value && !f->is_directory)
     {
@@ -258,19 +268,19 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
             if (namebuf[i] == '_')
                 namebuf[i] = ' ';
 
-        // remove spaces from the beginning
+        // Remove spaces from the beginning
         s = namebuf;
         while (*s == ' ')
             s++;
         memmove(namebuf, s, strlen(s) + 1);
 
-        // remove spaces from the end
+        // Remove spaces from the end
         s = namebuf + strlen(namebuf);
         while (s > namebuf  &&  *(s-1) == ' ')
             s--;
         *s = 0;
 
-        // remove few spaces in a row
+        // Remove few spaces in a row
         s = namebuf;
         while (s < namebuf + strlen(namebuf))
         {
@@ -290,7 +300,7 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
             strcpy(namebuf, "_");
     }
 
-    // replace all non-standard characters with '_'
+    // Replace all non-standard characters with '_'
     for (i=0; i < strlen(namebuf); i++)
     {
         if (namebuf[i] < ' '  ||  namebuf[i] > '~')
@@ -299,8 +309,11 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
 
     f->display[0] = 0;
     t = f->display;
+	// Add a slash before a dir.
     if (f->is_directory)
         *t++ = '/';
+
+	// Add the name and extension to the final buffer.
     for (i=0; i < strlen(namebuf)  &&  (t - f->display) < MAX_PATH; i++)
         *t++ = namebuf[i];
     for (i=0; i < strlen(extbuf)  &&  (t - f->display) < MAX_PATH; i++)
@@ -309,7 +322,7 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
 }
 
 //
-// goto specific file by its name
+// Goto specific file by its name
 //
 void FL_GotoFile(filelist_t *fl, char *name)
 {
@@ -730,28 +743,64 @@ finish:
 
 
 //
-// search by name for next item
+// Search by name for next item.
 //
 qbool FL_Search(filelist_t *fl)
 {
-    int i;
-    char tmp[512];
+	int start = fl->current_entry;
+	int stop = fl->num_entries;
+	int i = 0;
+	char *s = NULL;
+	char tmp[512];
 
-    fl->search_dirty = false;
+	fl->search_dirty = false;
 
-    for (i=fl->current_entry; i < fl->num_entries; i++)
-    {
-        strncpy(tmp, fl->entries[i].display, 512);
-        tmp[511] = 0;
-        FunToSort(tmp);
-        if (strstr(tmp, fl->search_string))
-        {
-            fl->current_entry = i;
-            return true;
-        }
-    }
-    fl->search_error = true;
-    return false;
+search :
+
+	// First search at the beginning of the string (like when you type in a window in explorer).
+	for (i = start; i < stop; i++)
+	{
+		strlcpy (tmp, fl->entries[i].display, sizeof (tmp));
+		s = tmp;
+
+		// Get rid of slashes for dirs.
+		while (s && (*s) == '/')
+		{
+			s++;
+		}
+
+		if (!strncasecmp (s, fl->search_string, strlen (fl->search_string)))
+		{
+			fl->current_entry = i;
+			return true;
+		}
+	}
+
+	// Nothing found, so search in any part of the string.
+	for (i = start; i < stop; i++)
+	{
+		strlcpy (tmp, fl->entries[i].display, sizeof (tmp));
+		FunToSort (tmp);
+
+		if (strstr(tmp, fl->search_string))
+		{
+			fl->current_entry = i;
+			return true;
+		}
+	}
+
+	// Try to search from the start if we didn't find it below the
+	// current position of the cursor.
+	if (start > 0)
+	{
+		start = 0;
+		stop = fl->current_entry; // No idea searching anything below this again (we just did that).
+		goto search;
+	}
+
+	// We couldn't find anything.
+	fl->search_error = true;
+	return false;
 }
 
 //
@@ -916,14 +965,14 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
 		return false;
 	}
 
-    // check for search
+    // Check for search
     if ((key >= ' ' && key <= '~') && (fl->search_valid || (!isAltDown() && !isCtrlDown() && !isShiftDown())))
     {
         int len;
 
         if (!fl->search_valid)
         {
-            // start searching
+            // Start searching
             fl->search_valid = true;
             fl->search_error = false;
             fl->search_string[0] = 0;
@@ -931,11 +980,16 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
 
         len = strlen(fl->search_string);
 
-        if (len < MAX_SEARCH_STRING  &&  !fl->search_error)
+        if (len < MAX_SEARCH_STRING && !fl->search_error)
         {
             fl->search_string[len] = key;
             fl->search_string[len+1] = 0;
-            fl->search_dirty = true;
+			fl->search_dirty = true;
+
+			// Save the last time the user entered a char in the
+			// search term, so that we know when to timeout the search prompt.
+			// (See beginning of FL_Draw)
+			last_search_enter_time = Sys_DoubleTime();
         }
 
         return true;    // handled
@@ -1130,6 +1184,14 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 	int listsize, pos, interline, inter_up, inter_dn, rowh;
 	char line[1024];
 	char sname[MAX_PATH] = {0}, ssize[COL_SIZE+1] = {0}, sdate[COL_DATE+1] = {0}, stime[COL_TIME+1] = {0};
+
+	// Check if it's time for us to reset the search.
+	// (FL_SEARCH_TIMEOUT seconds after the user entered the last char in the search term)
+	if (Sys_DoubleTime() - last_search_enter_time >= FL_SEARCH_TIMEOUT)
+	{
+		fl->search_valid = false;
+		fl->search_string[0] = 0;
+	}
 
 	if (fl->delete_mode)
 	{
@@ -1411,6 +1473,10 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 					clr[0].c = (fl->zip_color == NULL) ? int_white : (int)fl->zip_color->value;
 				}
 				#endif // WITH_ZIP
+				else
+				{
+					clr[0].c = (fl->file_color == NULL) ? int_white : (int)fl->file_color->value;
+				}
 			}
 
 			memcpy(line, name, min(pos, strlen(name)));
@@ -1425,13 +1491,20 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		// Max amount of characters that fits on a line.
 		line[w/8] = 0;
 
+		// Color the selected entry.
+		if (filenum == fl->current_entry)
+		{
+			clr[0].c = (fl->selected_color == NULL) ? int_white : (int)fl->selected_color->value;
+			clr[0].i = 1; // Don't color the cursor (index 0).
+		}
+
 		// Print the line for the directory entry.
-        UI_Print_Center3(x, y + rowh * (i + 2) + inter_dn, w, line, clr, 2, filenum == fl->current_entry);
+        UI_Print_Center3(x, y + rowh * (i + 2) + inter_dn, w, line, clr, 2, 0);
 
         // Remember the currently selected file for dispalying in the status bar
         if (filenum == fl->current_entry)
         {
-			strlcpy (sname, line, min(pos, sizeof(sname)));
+			strlcpy (sname, line + 1, min(pos, sizeof(sname)));
             strlcpy (stime, time, sizeof(stime));
             snprintf (sdate, sizeof(sdate), "%02d-%02d-%02d", entry->time.wYear % 100, entry->time.wMonth, entry->time.wDay);
         }
