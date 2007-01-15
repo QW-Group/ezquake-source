@@ -113,7 +113,7 @@ static qbool FL_OnChangeTextColor (cvar_t *var, char *newval)
 //
 // Set directory
 //
-void FL_SetCurrentDir(filelist_t *fl, char *dir)
+void FL_SetCurrentDir(filelist_t *fl, const char *dir)
 {
     char buf[_MAX_PATH+1];
 
@@ -249,8 +249,6 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
 		// remove ext from name
 		COM_StripExtension(namebuf, namebuf);
 	}
-
-	COM_StripExtension (COM_SkipPath (f->name), namebuf);
 
     if (fl->strip_names->value && !f->is_directory)
     {
