@@ -1,5 +1,5 @@
 /*
-    $Id: fs.c,v 1.3 2007-01-15 05:32:32 qqshka Exp $
+    $Id: fs.c,v 1.4 2007-01-15 21:58:29 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -329,7 +329,7 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 {
 	vfsfile_t *vf;
 	FILE *file;
-	char fullname[MAX_OSPATH];
+	char fullname[MAX_PATH];
 
 	switch (relativeto)
 	{
