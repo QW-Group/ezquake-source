@@ -1,5 +1,5 @@
 /*
-    $Id: fs.h,v 1.1 2007-01-13 00:00:42 qqshka Exp $
+    $Id: fs.h,v 1.2 2007-01-15 05:32:32 qqshka Exp $
 */
 
 #ifndef __FS_H__
@@ -10,8 +10,7 @@
 
 typedef enum {
 	VFSERR_NONE,
-	VFSERR_EOF,
-	VFSERR_ERR
+	VFSERR_EOF
 } vfserrno_t;
 
 typedef struct vfsfile_s {
@@ -26,9 +25,9 @@ typedef struct vfsfile_s {
 } vfsfile_t;
 
 typedef enum {
-	FS_NONE_OS,
-	FS_GAME_OS,
-	FS_GAME
+	FS_NONE_OS, // file name used as is, opened with OS functions (no paks)
+	FS_GAME_OS, // file used as com_basedir/filename, opened with OS functions (no paks)
+	FS_ANY      // file searched on quake file system even in paks, u may use only "rb" mode for file since u can't write to pak
 } relativeto_t;
 
 // mostly analogs for stdio functions

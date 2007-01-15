@@ -1,5 +1,5 @@
 /*
-    $Id: fs.c,v 1.2 2007-01-12 23:21:48 qqshka Exp $
+    $Id: fs.c,v 1.3 2007-01-15 05:32:32 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -99,6 +99,9 @@ int VFSOS_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfse
 	int r;
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 
+	if (bytestoread < 0)
+		Sys_Error("VFSOS_ReadBytes: bytestoread < 0"); // ffs
+
 	r = fread(buffer, 1, bytestoread, intfile->handle);
 
 	if (err) // if bytestoread <= 0 it will be treated as non error even we read zero bytes
@@ -171,27 +174,34 @@ vfsfile_t *FS_OpenTemp(void)
 	return (vfsfile_t*)file;
 }
 
-vfsfile_t *VFSOS_Open(char *osname, char *mode)
+// if f == NULL then use fopen(name, ...);
+vfsfile_t *VFSOS_Open(char *name, FILE *f, char *mode)
 {
-	FILE *f;
 	vfsosfile_t *file;
-	qbool read  = !!strchr(mode, 'r');
-	qbool write = !!strchr(mode, 'w');
-	qbool text  = !!strchr(mode, 't');
-	char newmode[10];
-	int modec = 0;
 
-	if (read)
-		newmode[modec++] = 'r';
-	if (write)
-		newmode[modec++] = 'w';
-	if (text)
-		newmode[modec++] = 't';
-	else
-		newmode[modec++] = 'b';
-	newmode[modec++] = '\0';
+	if (!strchr(mode, 'r') && !strchr(mode, 'w'))
+		return NULL; // hm, no read and no write mode?
 
-	f = fopen(osname, newmode);
+	if (!f) {
+		qbool read  = !!strchr(mode, 'r');
+		qbool write = !!strchr(mode, 'w');
+		qbool text  = !!strchr(mode, 't');
+		char newmode[10];
+		int modec = 0;
+
+		if (read)
+			newmode[modec++] = 'r';
+		if (write)
+			newmode[modec++] = 'w';
+		if (text)
+			newmode[modec++] = 't';
+		else
+			newmode[modec++] = 'b';
+		newmode[modec++] = '\0';
+    
+		f = fopen(name, newmode);
+	}
+
 	if (!f)
 		return NULL;
 
@@ -211,42 +221,157 @@ vfsfile_t *VFSOS_Open(char *osname, char *mode)
 
 //STDIO files (OS)
 //******************************************************************************************************
+// PAK files
+
+typedef struct {
+	vfsfile_t funcs; // <= must be at top/begining of struct
+
+	FILE *handle;
+	unsigned long startpos;
+	unsigned long length;
+	unsigned long currentpos;
+} vfspack_t;
+
+int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfserrno_t *err)
+{
+	vfspack_t *vfsp = (vfspack_t*)vfs;
+	unsigned long have = vfsp->length - (vfsp->currentpos - vfsp->startpos);
+	unsigned long r;
+
+	if (bytestoread < 0)
+		Sys_Error("VFSPAK_ReadBytes: bytestoread < 0"); // ffs
+
+	have = min((unsigned long)bytestoread, have); // mixing sign and unsign types is STUPID and dangerous
+
+// all must work without this, if not then somewhere bug
+//	if (ftell(vfsp->handle) != vfsp->currentpos)
+//		fseek(vfsp->handle, vfsp->currentpos);
+
+	r = fread(buffer, 1, have, vfsp->handle);
+	vfsp->currentpos += r;
+
+	if (err) // if bytestoread <= 0 it will be treated as non error even we read zero bytes
+		*err = ((r || bytestoread <= 0) ? VFSERR_NONE : VFSERR_EOF);
+
+	return r;
+}
+
+int VFSPAK_WriteBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread)
+{	//not supported.
+	Sys_Error("Cannot write to pak files");
+	return 0;
+}
+
+qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos)
+{
+	vfspack_t *vfsp = (vfspack_t*)vfs;
+
+	if (pos < 0 || pos > vfsp->length)
+		return false;
+
+	vfsp->currentpos = pos + vfsp->startpos;
+	return fseek(vfsp->handle, vfsp->currentpos, SEEK_SET) == 0;
+}
+
+unsigned long VFSPAK_Tell (struct vfsfile_s *vfs)
+{
+	vfspack_t *vfsp = (vfspack_t*)vfs;
+	return vfsp->currentpos - vfsp->startpos;
+}
+
+unsigned long VFSPAK_GetLen (struct vfsfile_s *vfs)
+{
+	vfspack_t *vfsp = (vfspack_t*)vfs;
+	return vfsp->length;
+}
+
+void VFSPAK_Close(vfsfile_t *vfs)
+{
+	vfspack_t *vfsp = (vfspack_t*)vfs;
+
+	fclose(vfsp->handle);
+	Q_free(vfsp);	//free ourselves.
+}
+
+vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode)
+{
+	vfspack_t *vfs;
+
+	if (strcmp(mode, "rb") || !handle || fsize < 0 || fpos < 0)
+		return NULL; // support only "rb" mode
+
+	vfs = Q_malloc(sizeof(vfspack_t));
+
+	vfs->handle = handle;
+
+	vfs->startpos   = fpos;
+	vfs->length     = fsize;
+	vfs->currentpos = vfs->startpos;
+
+	vfs->funcs.Close	  = VFSPAK_Close;
+	vfs->funcs.GetLen	  = VFSPAK_GetLen;
+	vfs->funcs.ReadBytes  = VFSPAK_ReadBytes;
+	vfs->funcs.Seek		  = VFSPAK_Seek;
+	vfs->funcs.Tell		  = VFSPAK_Tell;
+	vfs->funcs.WriteBytes = VFSPAK_WriteBytes;	//not supported
+
+	return (vfsfile_t *)vfs;
+}
+
+// PAK files
+//******************************************************************************************************
 
 //
-// some general function to open VFS file
+// some general function to open VFS file, except VFSTCP
 //
 
 vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 {
+	vfsfile_t *vf;
+	FILE *file;
 	char fullname[MAX_OSPATH];
 
 	switch (relativeto)
 	{
-	case FS_NONE_OS:	//OS access only, no paks
-		snprintf(fullname, sizeof(fullname), "%s", filename); // pass filename as is
+	case FS_NONE_OS:	//OS access only, no paks, open file as is
+		snprintf(fullname, sizeof(fullname), "%s", filename);
 
-		return VFSOS_Open(fullname, mode);
+		return VFSOS_Open(fullname, NULL, mode);
 
-	case FS_GAME_OS:	//OS access only, no paks
+	case FS_GAME_OS:	//OS access only, no paks, open file in gamedir
 		snprintf(fullname, sizeof(fullname), "%s/%s", com_gamedir, filename);
 
-		return VFSOS_Open(fullname, mode);
+		return VFSOS_Open(fullname, NULL, mode);
 
-	case FS_GAME: // any source
-		snprintf(fullname, sizeof(fullname), "%s/%s", com_gamedir, filename);
+	case FS_ANY: // any source on quake fs: paks, gamedir etc..
+		if (strcmp(mode, "rb"))
+			return NULL; // "rb" mode required
 
-		break;
+		snprintf(fullname, sizeof(fullname), "%s", filename);
+
+		FS_FOpenFile(filename, &file); // search file in paks gamedir etc..
+
+		if (file) { // we open stdio FILE, probably that point in pak file as well
+
+			if (file_from_pak) // yea, that a pak
+				vf = FSPAK_OpenVFS(file, fs_filesize, fs_filepos, mode);
+			else // no, just ordinar file
+				vf = VFSOS_Open(fullname, file, mode);
+
+			if (!vf) // hm, we in troubles, do not forget close stdio FILE
+				fclose(file);
+
+			return vf;
+		}
+
+		return NULL;
 
 	default:
 		Sys_Error("FS_OpenVFS: Bad relative path (%i)", relativeto);
 		break;
 	}
 
-	// FIXME: support paks
-	
-	// check mode then open paks, write mode is incorrect for paks
-	
-	return VFSOS_Open(fullname, mode);
+	return NULL;
 }
 
 
@@ -275,6 +400,9 @@ void VFSTCP_Error(tcpfile_t *f)
 int VFSTCP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err)
 {
 	tcpfile_t *tf = (tcpfile_t*)file;
+
+	if (bytestoread < 0)
+		Sys_Error("VFSTCP_ReadBytes: bytestoread < 0"); // ffs
 
 	if (tf->sock != INVALID_SOCKET)
 	{
@@ -319,8 +447,6 @@ int VFSTCP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfs
 			tf->readbuffered -= bytestoread;
 			memmove(tf->readbuffer, tf->readbuffer+bytestoread, tf->readbuffered);
 		}
-		else if (bytestoread < 0)
-			Sys_Error("VFSTCP_ReadBytes: bytestoread < 0"); // ffs
 
 		if (err)
 			*err = VFSERR_NONE; // we got required bytes somehow, so no error
@@ -335,7 +461,7 @@ int VFSTCP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfs
 			tf->readbuffered = 0;
 		}
 		else
-			bytestoread = 0;
+			bytestoread = 0; // this help guess EOF
 
 		if (err) // if socket is not closed we still have chance to get data, so no error
 			*err = ((bytestoread || tf->sock != INVALID_SOCKET) ? VFSERR_NONE : VFSERR_EOF);
