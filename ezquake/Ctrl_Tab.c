@@ -184,6 +184,20 @@ int CTab_Key(CTab_t *tab, int key)
                 handled = true;
                 break;
 
+			case K_LEFTARROW:
+				if (isCtrlDown() || isShiftDown()) {
+					tab->activePage--;
+					handled = true;
+				}
+				break;
+
+			case K_RIGHTARROW:
+				if (isCtrlDown() || isShiftDown()) {
+					tab->activePage++;
+					handled = true;
+				}
+				break;
+
 			case K_TAB:
 				if (isShiftDown()) tab->activePage--; else tab->activePage++;
 				handled = true;
