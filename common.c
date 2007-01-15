@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.53 2007-01-12 00:18:26 qqshka Exp $
+    $Id: common.c,v 1.54 2007-01-15 00:08:42 cokeman1982 Exp $
 
 */
 
@@ -111,7 +111,6 @@ char *COM_SkipPath (char *pathname)
 }
 
 //
-
 // Makes a path fit in a specified sized string "c:\quake\bla\bla\bla" => "c:\quake...la\bla"
 //
 char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit)
@@ -849,6 +848,45 @@ int COM_ZipUnpack (unzFile zip_file,
 	}
 
 	return error;
+}
+
+COM_ZipUnpackToTemp (unzFile zip_file, 
+				   qbool case_sensitive, 
+				   qbool keep_path, 
+				   const char *password,
+				   char *unpack_path,			// The path where the file was unpacked.
+				   int unpack_path_size)		// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.)
+{
+	int	retval = UNZ_OK;
+
+	// Get a unique temp filename.
+	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true))
+	{
+		return UNZ_ERRNO;
+	}
+
+	// Delete the existing temp file (it is created when the filename is received above).
+	if (unlink (unpack_path))
+	{
+		return UNZ_ERRNO;
+	}
+
+	// Make sure we create a directory for the destination path since we're unpacking an entire zip.
+	#ifdef WIN32
+	strlcat (unpack_path, "\\", unpack_path_size);
+	#else
+	strlcat (unpack_path, "/", unpack_path_size);
+	#endif
+
+	// Unpack the file.
+	retval = COM_ZipUnpack (zip_file, unpack_path, case_sensitive, keep_path, true, password);
+
+	if (retval != UNZ_OK)
+	{
+		unpack_path[0] = 0;
+	}
+
+	return retval;
 }
 
 int COM_ZipUnpackOneFile (unzFile zip_file,				// The zip file opened with COM_ZipUnpackOpenFile(..)
