@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.18 2007-01-15 22:18:03 tonik Exp $
+    $Id: q_shared.h,v 1.19 2007-01-15 22:48:38 tonik Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -166,9 +166,9 @@ int vsnprintf(char *buffer, size_t count, const char *format, va_list argptr);
 #endif
 
 #if defined(__linux__) || defined(_WIN32)
-size_t strlcpy (char *dst, char *src, size_t siz);
-size_t strlcat (char *dst, char *src, size_t siz);
-char  *strnstr (char *s, char *find, size_t slen);
+size_t strlcpy (char *dst, const char *src, size_t siz);
+size_t strlcat (char *dst, const char *src, size_t siz);
+char  *strnstr (const char *s, const char *find, size_t slen);
 #endif
 // Added by VVD }
 
