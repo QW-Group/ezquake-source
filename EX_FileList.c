@@ -48,14 +48,19 @@ static qbool FL_OnChangeTextColor (cvar_t *var, char *newval)
 	return true;
 }
 
-#define FL_REGISTERCOLOR(fl, colorvar, tempval) \
-	fl->##colorvar = colorvar; \
-	if (fl->##colorvar) \
-	{ \
-		fl->##colorvar->OnChange = FL_OnChangeTextColor; \
-		strlcpy (tempval, fl->##colorvar->string, sizeof (tempval)); \
-		Cvar_Set (fl->##colorvar, tempval); \
-	} \
+static void FL_RegisterColor (cvar_t *destvar, cvar_t *srcvar)
+{
+	destvar = srcvar;
+
+	if (destvar)
+	{
+		char tempval[256];
+
+		destvar->OnChange = FL_OnChangeTextColor;
+		strlcpy (tempval, destvar->string, sizeof(tempval));
+		Cvar_Set (destvar, tempval);
+	}
+}
 
 //
 // Create list
@@ -101,12 +106,12 @@ void FL_Init(filelist_t	*	fl,
     fl->search_valid = false;
     fl->cdup_find = false;
 
-	FL_REGISTERCOLOR(fl, file_color, tempval);
-	FL_REGISTERCOLOR(fl, selected_color, tempval);
-	FL_REGISTERCOLOR(fl, dir_color, tempval);
+	FL_RegisterColor (fl->file_color, file_color);
+	FL_RegisterColor (fl->selected_color, selected_color);
+	FL_RegisterColor (fl->dir_color, dir_color);
 
 	#ifdef WITH_ZIP
-	FL_REGISTERCOLOR(fl, zip_color, tempval);
+	FL_RegisterColor (fl->zip_color, zip_color);
 
 	fl->current_zip[0] = 0;
 	fl->in_zip = false;
