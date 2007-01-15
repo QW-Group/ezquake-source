@@ -355,10 +355,12 @@ qbool CPageViewer_Key(CPageViewer_t *viewer, int key)
         switch (key)
         {
         case K_UPARROW:
+		case K_MWHEELUP:
             viewer->page->current_line--;
             ret = true;
             break;
         case K_DOWNARROW:
+		case K_MWHEELDOWN:
             viewer->page->current_line++;
             ret = true;
             break;

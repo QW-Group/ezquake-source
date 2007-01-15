@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.20 2007-01-11 15:32:29 johnnycz Exp $
+	$Id: vid_win.c,v 1.21 2007-01-15 00:19:16 cokeman1982 Exp $
 
 */
 
@@ -2639,6 +2639,7 @@ void VID_MenuKey (int key) {
 		break;
 
 	case K_UPARROW:
+	case K_MWHEELUP:
 		S_LocalSound ("misc/menu1.wav");
 		vid_line -= VID_ROW_SIZE;
 
@@ -2651,6 +2652,7 @@ void VID_MenuKey (int key) {
 		break;
 
 	case K_DOWNARROW:
+	case K_MWHEELDOWN:
 		S_LocalSound ("misc/menu1.wav");
 		vid_line += VID_ROW_SIZE;
 

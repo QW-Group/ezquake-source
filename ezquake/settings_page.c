@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.9 2007-01-13 19:19:34 johnnycz Exp $
+		$Id: settings_page.c,v 1.10 2007-01-15 00:20:49 cokeman1982 Exp $
 
 */
 
@@ -192,8 +192,12 @@ qbool Settings_Key(settings_page* tab, int key)
 	type = tab->settings[tab->marked].type;
 
 	switch (key) { 
-	case K_DOWNARROW: tab->marked++; break;
-	case K_UPARROW: tab->marked--; up = true; break;
+	case K_DOWNARROW:
+	case K_MWHEELDOWN:
+		tab->marked++; break;
+	case K_UPARROW: 
+	case K_MWHEELUP:
+		tab->marked--; up = true; break;
 	case K_PGDN: tab->marked += 5; break;
 	case K_PGUP: tab->marked -= 5; up = true; break;
 	case K_END: tab->marked = tab->count - 1; up = true; break;

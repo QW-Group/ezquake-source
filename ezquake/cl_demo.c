@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.54 2007-01-10 12:35:38 qqshka Exp $
+	$Id: cl_demo.c,v 1.55 2007-01-15 00:18:29 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -819,7 +819,8 @@ static qbool OnChange_demo_dir(cvar_t *var, char *string) {
 }
 
 #ifdef _WIN32
-static qbool OnChange_demo_format(cvar_t *var, char *string) {
+static qbool OnChange_demo_format(cvar_t *var, char *string) 
+{
 	char* allowed_formats[5] = { "qwd", "qwz", "mvd", "mvd.gz", "qwd.gz" };
 	int i;
 
@@ -1400,8 +1401,8 @@ int CL_Demo_Compress(char* qwdname)
 	char cmdline[1024];
 	char* execute, *path, outputpath[255];
 
-
-	if (hQizmoProcess) {
+	if (hQizmoProcess) 
+	{
 		Com_Printf ("Cannot compress -- Qizmo still running!\n");
 		return 0;
 	}
@@ -1410,15 +1411,21 @@ int CL_Demo_Compress(char* qwdname)
 	si.cb = sizeof(si);
 	si.wShowWindow = SW_SHOWMINNOACTIVE;
 	si.dwFlags = STARTF_USESHOWWINDOW;
-	if (!strcmp(demo_format.string, "qwz")) {
+
+	if (!strcmp(demo_format.string, "qwz")) 
+	{
 		execute = "qizmo.exe -q -C";
 		path = qizmo_dir.string;
 		outputpath[0] = 0;
-	} else if (!strcmp(demo_format.string, "mvd")) {
+	} 
+	else if (!strcmp(demo_format.string, "mvd")) 
+	{
 		execute = "qwdtools.exe -c -o * -od";
 		path = qwdtools_dir.string;
 		strlcpy(outputpath, qwdname, COM_SkipPath(qwdname) - qwdname);
-	} else {
+	} 
+	else 
+	{
 		Com_Printf("%s demo format not yet supported.\n", demo_format.string);
 		return 0;
 	}
@@ -1482,6 +1489,7 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 			}
 			else
 			{
+				// Default to MVD.
 				strlcpy (ext, ".mvd", sizeof(ext));
 			}
 		}

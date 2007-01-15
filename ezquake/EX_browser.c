@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.22 2007-01-14 23:16:36 johnnycz Exp $
+	$Id: EX_browser.c,v 1.23 2007-01-15 00:20:27 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1710,8 +1710,10 @@ void Add_Source_Key(int key)
         if (isThisCtrlDown())
             newsource_pos = 4; break;
     case K_UPARROW:
+	case K_MWHEELUP:
         newsource_pos--; break;
     case K_DOWNARROW:
+	case K_MWHEELDOWN:
         newsource_pos++; break;
     case K_ENTER:
     case '+':
@@ -1810,8 +1812,10 @@ void Add_Server_Key(int key)
         if (isThisCtrlDown())
             newserver_pos = 4; break;
     case K_UPARROW:
+	case K_MWHEELUP:
         newserver_pos--; break;
     case K_DOWNARROW:
+	case K_MWHEELDOWN:
         newserver_pos++; break;
     case K_ENTER:
     case '+':
@@ -2003,8 +2007,10 @@ void Servers_Key(int key)
                 GetServerInfo(servers[Servers_pos]);
                 break;
             case K_UPARROW:
+			case K_MWHEELUP:
                 Servers_pos--; break;
             case K_DOWNARROW:
+			case K_MWHEELDOWN:
                 Servers_pos++; break;
             case K_HOME:
                 Servers_pos = 0; break;
@@ -2195,8 +2201,10 @@ void Serverinfo_Players_Key(int key)
     switch (key)
     {
         case K_UPARROW:
+		case K_MWHEELUP:
             serverinfo_players_pos--; break;
         case K_DOWNARROW:
+		case K_MWHEELDOWN:
             serverinfo_players_pos++; break;
         case K_HOME:
             serverinfo_players_pos = 0; break;
@@ -2212,8 +2220,10 @@ void Serverinfo_Rules_Key(int key)
     switch (key)
     {
         case K_UPARROW:
+		case K_MWHEELUP:
             serverinfo_rules_pos--; break;
         case K_DOWNARROW:
+		case K_MWHEELDOWN:
             serverinfo_rules_pos++; break;
         case K_HOME:
             serverinfo_rules_pos = 0; break;
@@ -2229,8 +2239,10 @@ void Serverinfo_Sources_Key(int key)
     switch (key)
     {
         case K_UPARROW:
+		case K_MWHEELUP:
             serverinfo_sources_pos--; break;
         case K_DOWNARROW:
+		case K_MWHEELDOWN:
             serverinfo_sources_pos++; break;
         case K_HOME:
             serverinfo_sources_pos = 0; break;
@@ -2391,8 +2403,10 @@ void Sources_Key(int key)
         case 'u':
             Update_Source(sources[Sources_pos]); break;
         case K_UPARROW:
+		case K_MWHEELUP:
             Sources_pos--; break;
         case K_DOWNARROW:
+		case K_MWHEELDOWN:
             Sources_pos++; break;
         case K_HOME:
             Sources_pos = 0; break;
@@ -2535,8 +2549,10 @@ void Players_Key(int key)
                 Browser_pos = pos_servers;
                 break;
             case K_UPARROW:
+			case K_MWHEELUP:
                 Players_pos--; break;
             case K_DOWNARROW:
+			case K_MWHEELDOWN:
                 Players_pos++; break;
             case K_HOME:
                 Players_pos = 0; break;
@@ -2603,8 +2619,10 @@ void Options_Key(int key)
     switch (key)
     {
         case K_UPARROW:
+		case K_MWHEELUP:
             Options_pos--; break;
         case K_DOWNARROW:
+		case K_MWHEELDOWN:
             Options_pos++; break;
         case K_HOME:
             Options_pos = 0; break;
