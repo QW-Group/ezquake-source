@@ -41,7 +41,7 @@ static qbool FL_OnChangeTextColor (cvar_t *var, char *newval)
 {
 	byte *color = StringToRGB(newval);
 	var->value = RGBA_2_Int(color[0], color[1], color[2], color[3]);
-	
+
 	return true;
 }
 
@@ -80,7 +80,7 @@ static qbool FL_OnChangeTextColor (cvar_t *var, char *newval)
     fl->strip_names = strip_names;
     fl->interline = interline;
     fl->show_status = show_status;
-	fl->scroll_names = scroll_names;	
+	fl->scroll_names = scroll_names;
 	fl->search_string[0] = 0;
 
 	fl->dir_color = dir_color;
@@ -250,6 +250,8 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
 		COM_StripExtension(namebuf, namebuf);
 	}
 
+	COM_StripExtension (COM_SkipPath (f->name), namebuf);
+
     if (fl->strip_names->value && !f->is_directory)
     {
         char *s;
@@ -375,7 +377,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
             reverse = 1;
             c -= 128;
         }
-        
+
         switch (c)
         {
             case '1':   // name
@@ -426,7 +428,7 @@ void FL_SortDir(filelist_t *fl)
 }
 
 //
-// Find out if a given directory entry is a registered file type and 
+// Find out if a given directory entry is a registered file type and
 // if so, returns the index of the file type. Otherwise -1 is returned.
 //
 static int FL_FindRegisteredType(filelist_t *fl, sys_dirent *ent)
@@ -455,7 +457,7 @@ static int FL_FindRegisteredType(filelist_t *fl, sys_dirent *ent)
 
 //
 // Finds which entry to highlight after doing "cd up".
-// 
+//
 static void FL_FindHighlightEntry (filelist_t *fl)
 {
 	int i = 0;
@@ -497,7 +499,7 @@ void FL_ReadZip (filelist_t *fl)
 	int temp = 0;
 	unzFile zip_file;
 	sys_dirent ent;
-	
+
 	fl->error = true;
     fl->need_refresh = false;
     fl->display_entry = 0;
@@ -545,7 +547,7 @@ void FL_ReadZip (filelist_t *fl)
 		// We're not interested in this file type since it wasn't registered.
 		if (!ent.directory && f->type_index < 0)
 		{
-			goto skip; 
+			goto skip;
 		}
 
         // We found a file that we're interested in so save the info about it
@@ -568,9 +570,9 @@ void FL_ReadZip (filelist_t *fl)
             break;
 		}
 skip:
-        // Get next filesystem entry	
+        // Get next filesystem entry
 		//temp = Sys_ReadDirNext(search, &ent);
-		temp = COM_ZipGetNextFile (zip_file, &ent); 
+		temp = COM_ZipGetNextFile (zip_file, &ent);
     }
     while (temp > 0);
 
@@ -587,7 +589,7 @@ finish:
 	}
 
 	// Resort might have changed this.
-    fl->current_entry = 0;  
+    fl->current_entry = 0;
 
 	// Find which item to highlight in the list.
 	FL_FindHighlightEntry(fl);
@@ -638,7 +640,7 @@ void FL_ReadDir(filelist_t *fl)
 		// Pointer to the current file entry.
         filedesc_t *f = &fl->entries[fl->num_entries];
 		memset (f, 0, sizeof(filedesc_t));
-        f->type_index = -1;		
+        f->type_index = -1;
 
 		// Skip current/above dir and hidden files.
 		if (!strcmp(ent.fname, ".") || ent.hidden)
@@ -720,7 +722,7 @@ finish:
 	}
 
 	// Resort might have changed this.
-    fl->current_entry = 0;  
+    fl->current_entry = 0;
 
 	// Find which item to highlight in the list.
 	FL_FindHighlightEntry(fl);
@@ -771,7 +773,7 @@ void FL_ChangeZip(filelist_t *fl, char *newzip)
 void FL_ChangeDir(filelist_t *fl, char *newdir)
 {
 	char olddir[_MAX_PATH+1];
- 
+
 	// Get the current dir from the OS and save it.
     if (Sys_getcwd(olddir, _MAX_PATH+1) == NULL)
 	{
@@ -779,13 +781,13 @@ void FL_ChangeDir(filelist_t *fl, char *newdir)
 	}
 
 	// Change to the current dir that we're in (might be different from the OS's).
-	// If we're changing dirs in a relative fashion ".." for instance we need to 
+	// If we're changing dirs in a relative fashion ".." for instance we need to
 	// be in this dir, and not the dir that the OS is in.
     if (Sys_chdir(fl->current_dir) == 0)
 	{
 		// Normal directory.
         return;
-	}	
+	}
 
 	// Change to the new dir requested.
 	Sys_chdir (newdir);
@@ -793,7 +795,7 @@ void FL_ChangeDir(filelist_t *fl, char *newdir)
 	// Save the current dir we just changed to.
 	Sys_getcwd (fl->current_dir, _MAX_PATH+1);
 
-	// Go back to where the OS wants to be. 
+	// Go back to where the OS wants to be.
     Sys_chdir (olddir);
 
     fl->need_refresh = true;
@@ -825,7 +827,7 @@ void FL_ChangeDirUp(filelist_t *fl)
 		current_len = strlen(fl->current_dir);
 
 		fl->cdup_find = true;
-		
+
 		#ifdef WITH_ZIP
 		if (fl->in_zip)
 		{
@@ -912,7 +914,7 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
 				fl->delete_mode = false;
 				return true;
 		}
-		
+
 		return false;
 	}
 
@@ -1043,14 +1045,14 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
         return true;
     }
 
-    if (key == K_UPARROW)
+    if (key == K_UPARROW || key == K_MWHEELUP)
     {
         fl->current_entry--;
         FL_CheckPosition(fl);
         return true;
     }
 
-    if (key == K_DOWNARROW)
+    if (key == K_DOWNARROW || key == K_MWHEELDOWN)
     {
         fl->current_entry++;
         FL_CheckPosition(fl);
@@ -1115,7 +1117,7 @@ static void Add_Column(char *line, int *pos, char *t, int w)
 
 	// Copy the contents into the column.
     memcpy(line + (*pos), t, min(w, strlen(t)));
-	
+
 	// Create a space for the next column.
     (*pos)--;
     line[*pos] = ' ';
@@ -1311,10 +1313,10 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 
 		// End of name, switch to white.
 		clr[1].c = int_white;
-		clr[1].i = pos; 
+		clr[1].i = pos;
 
-		// Set the name. 
-		// (Add a space infront so that the cursor for the currently 
+		// Set the name.
+		// (Add a space infront so that the cursor for the currently
 		// selected file can fit infront)
 		snprintf (name, sizeof(name) - 1, " %s", entry->display);
 
@@ -1356,12 +1358,12 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 			// Time to scroll.
 			if (!wait && (t - t_last_scroll) > scroll_delay)
 			{
-				// Save the current time as the last time we scrolled 
+				// Save the current time as the last time we scrolled
 				// and change the scroll position depending on what direction we're scrolling.
 				t_last_scroll = t;
 				scroll_position = (scroll_direction == SCROLL_RIGHT) ? scroll_position + 1 : scroll_position - 1;
 			}
-			
+
 			// Set the scroll direction.
 			if (text_length - scroll_position == pos)
 			{
@@ -1393,7 +1395,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 			// Did we just select a new entry? In that case reset the scrolling.
 			if (filenum == fl->current_entry)
 			{
-				last_name[0] = 0; 
+				last_name[0] = 0;
 			}
 
 			// If it's not the selected directory/zip color it so that it stands out.
@@ -1413,7 +1415,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 				#endif // WITH_ZIP
 			}
 
-			memcpy(line, name, min(pos, strlen(name)));			
+			memcpy(line, name, min(pos, strlen(name)));
 		}
 
 		// Draw a cursor character at the start of the line.
@@ -1451,7 +1453,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         UI_Print_Center(x, y + h - 2 * rowh - inter_up, w, sname, false);
 
         if (fl->search_valid)
-        {	
+        {
 			// Some weird but nice-looking string in Quake font perhaps
 			strlcpy(line, "search for: ", sizeof(line));   // seach for:
             if (fl->search_error)
