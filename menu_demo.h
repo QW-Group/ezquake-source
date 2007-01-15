@@ -1,6 +1,6 @@
 /*
 	Demo Menu module
-	$Id: menu_demo.h,v 1.4 2006-12-30 11:24:54 disconn3ct Exp $
+	$Id: menu_demo.h,v 1.5 2007-01-15 21:14:33 cokeman1982 Exp $
 */
 
 // <interface for menu.c>
@@ -19,5 +19,5 @@ void Menu_Demo_NewHome(const char *);
 
 
 // <interface for cl_demo.c>
-void CL_Demo_playlist_f (void);
+void CL_Demo_Playlist_f (void);
 // </interface>
