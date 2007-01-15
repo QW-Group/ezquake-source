@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.14 2007-01-14 19:46:01 johnnycz Exp $
+		$Id: menu_demo.c,v 1.15 2007-01-15 00:12:36 cokeman1982 Exp $
 
 */
 
@@ -32,8 +32,10 @@
 #define MAX_DEMO_FILES    2048
 #define DEMO_MAXLINES    17
 
-#define DEMO_PLAYLIST_OPTIONS_MAX 5
-#define DEMO_PLAYLIST_MAX 100
+#define DEMO_PLAYLIST_NAME_MAX		16
+#define DEMO_PLAYLIST_OPTIONS_MAX	5
+#define	DEMO_PLAYLIST_MAX			256
+#define DEMO_PLAYLIST_TAB_MAIN		0
 
 #define DEMO_OPTIONS_MAX 2
 
@@ -42,20 +44,19 @@
 #define DEMO_TAB_OPTIONS 2
 #define DEMO_TAB_MAX 2
 
-#define DEMO_PLAYLIST_TAB_MAIN 0
-
-typedef enum {
-    DEMOPG_BROWSER,				// browse page
-	DEMOPG_PLAYLIST,	// playlist page
-	DEMOPG_ENTRY, // entry page
-	DEMOPG_OPTIONS  // options page
+typedef enum
+{
+    DEMOPG_BROWSER,		// Browse page
+	DEMOPG_PLAYLIST,	// Playlist page
+	DEMOPG_ENTRY,		// Entry page
+	DEMOPG_OPTIONS		// Options page
 }	demo_tab_t;
 
 typedef struct demo_playlist_s
 {
 	char name[_MAX_PATH];
 	char path[_MAX_PATH];
-	char trackname[16];
+	char trackname[DEMO_PLAYLIST_NAME_MAX];
 } demo_playlist_t;
 
 extern cvar_t demo_dir;
@@ -70,10 +71,10 @@ extern int        menuheight;
 
 extern cvar_t scr_scaleMenu;
 
-// demo browser container
+// Demo browser container
 filelist_t demo_filelist;
 
-// demo browser cvars
+// Demo browser cvars
 cvar_t  demo_browser_showsize   = {"demo_browser_showsize",		"1"};
 cvar_t  demo_browser_showdate   = {"demo_browser_showdate",		"1"};
 cvar_t  demo_browser_showtime   = {"demo_browser_showtime",		"0"};
@@ -85,17 +86,17 @@ cvar_t  demo_browser_scrollnames= {"demo_browser_scrollnames",	"1"};
 cvar_t	demo_browser_dircolor	= {"demo_browser_dircolor",		"0 127 0 255"};
 #ifdef WITH_ZIP
 cvar_t	demo_browser_zipcolor	= {"demo_browser_dircolor",		"0 175 207 255"};
-#endif 
+#endif
 
-// demo menu container
+// Demo menu container
 CTab_t demo_tab;
 
-// playlist structures
-demo_playlist_t demo_playlist[256];
+// Playlist structures
+demo_playlist_t demo_playlist[DEMO_PLAYLIST_MAX];
 
-char track_name[16];
-char default_track[16];
-int demo_playlist_started = 0;
+char track_name[DEMO_PLAYLIST_NAME_MAX];
+char default_track[DEMO_PLAYLIST_NAME_MAX];
+qbool demo_playlist_started = false;
 
 cvar_t    demo_playlist_loop = {"demo_playlist_loop","0"};
 cvar_t    demo_playlist_track_name = {"demo_playlist_track_name",""};
@@ -105,178 +106,220 @@ static int demo_playlist_current_played = 0;
 static int demo_playlist_cursor = 0;
 static int demo_playlist_num = 0;
 static int demo_playlist_opt_cursor = 0;
-//static int demo_playlist_section = DEMO_PLAYLIST_TAB_MAIN;
 static int demo_playlist_started_test = 0;
 
 static int demo_options_cursor = 0;
 
-char demo_track[16];
-
+char demo_track[DEMO_PLAYLIST_NAME_MAX];
 
 // Demo Playlist Functions
 
-void M_Demo_Playlist_stop_f (void){
-	if (!demo_playlist_started_test){
-		demo_playlist_started = 0;
+void M_Demo_Playlist_stop_f (void)
+{
+	if (!demo_playlist_started_test)
+	{
+		demo_playlist_started = false;
 		demo_playlist_started_test = 0;
 	}
 }
 
-static void Demo_playlist_start (int i){
-	//    int test;
+static void Demo_playlist_start (int i)
+{
 	key_dest = key_game;
 	m_state = m_none;
 	demo_playlist_current_played = i;
 	demo_playlist_started_test = 0 ;
-	if (cls.demoplayback)
-		CL_Disconnect_f();
-	demo_playlist_started_test = 0 ;
-	demo_playlist_started=1;
-	strlcpy(track_name,demo_playlist[demo_playlist_current_played].trackname,sizeof(demo_playlist[demo_playlist_current_played].trackname));
-	Cbuf_AddText (va("playdemo \"%s\"\n", demo_playlist[demo_playlist_current_played].path));
 
+	if (cls.demoplayback)
+	{
+		CL_Disconnect_f();
+	}
+
+	demo_playlist_started_test = 0 ;
+	demo_playlist_started = true;
+	strlcpy(track_name, demo_playlist[demo_playlist_current_played].trackname, sizeof(track_name));
+	Cbuf_AddText (va("playdemo \"%s\"\n", demo_playlist[demo_playlist_current_played].path));
 }
 
-void CL_Demo_playlist_f (void) {
+void CL_Demo_playlist_f (void)
+{
 	demo_playlist_current_played++;
-	strlcpy(track_name,demo_playlist[demo_playlist_current_played].trackname,sizeof(demo_playlist[demo_playlist_current_played].trackname));
 
-	if (demo_playlist_current_played == demo_playlist_num  && demo_playlist_loop.value ){
+	strlcpy (track_name, demo_playlist[demo_playlist_current_played].trackname, sizeof(track_name));
+
+	if (demo_playlist_current_played == demo_playlist_num  && demo_playlist_loop.value )
+	{
 		demo_playlist_current_played = 0;
 		Cbuf_AddText (va("playdemo \"%s\"\n", demo_playlist[demo_playlist_current_played].path));
-	} else if (demo_playlist_current_played == demo_playlist_num ){
+	}
+	else if (demo_playlist_current_played == demo_playlist_num )
+	{
 		Com_Printf("End of demo playlist.\n");
-		demo_playlist_started = demo_playlist_current_played = 0;
-	} else{
+		demo_playlist_started = false;
+		demo_playlist_current_played = 0;
+	}
+	else
+	{
 		Cbuf_AddText (va("playdemo \"%s\"\n", demo_playlist[demo_playlist_current_played].path));
 	}
 }
 
-void M_Demo_Playlist_Next_f (void){
+void M_Demo_Playlist_Next_f (void)
+{
 	int tmp;
 
-	if (demo_playlist_started == 0)
+	if (!demo_playlist_started)
+	{
 		return;
-	tmp = demo_playlist_current_played + 1 ;
-	if (tmp>demo_playlist_num-1)
-		tmp = 0 ;
-
-	Demo_playlist_start(tmp);
-}
-
-void M_Demo_Playlist_Prev_f (void){
-	int tmp;
-	if (demo_playlist_started == 0)
-		return;
-	tmp = demo_playlist_current_played - 1 ;
-	if (tmp<0)
-		tmp = demo_playlist_num - 1 ;
-
-	Com_Printf("Prev %i\n",tmp);
-	Demo_playlist_start(tmp);
-}
-
-void M_Demo_Playlist_Clear_f (void){
-
-	int i;
-
-	if (demo_playlist_num == 0)
-		return;
-
-	for (i=0; i<=demo_playlist_num;i++){
-		demo_playlist[i].name[0]='\0';
-		demo_playlist[i].path[0]='\0';
-		demo_playlist[i].trackname[0]='\0';
 	}
-	demo_playlist_num = demo_playlist_started = 0;
 
+	tmp = demo_playlist_current_played + 1 ;
+
+	if (tmp > demo_playlist_num - 1)
+	{
+		tmp = 0 ;
+	}
+
+	Demo_playlist_start(tmp);
 }
 
-void M_Demo_Playlist_Stop_f (void){
+void M_Demo_Playlist_Prev_f (void)
+{
+	int tmp;
+	if (!demo_playlist_started)
+	{
+		return;
+	}
+
+	tmp = demo_playlist_current_played - 1 ;
+
+	if (tmp < 0)
+	{
+		tmp = demo_playlist_num - 1 ;
+	}
+
+	Com_Printf("Prev %i\n", tmp);
+	Demo_playlist_start(tmp);
+}
+
+void M_Demo_Playlist_Clear_f (void)
+{
+	if (demo_playlist_num == 0)
+	{
+		return;
+	}
+
+	memset (&demo_playlist, 0, sizeof(demo_playlist_t) * demo_playlist_num);
+
+	demo_playlist_num = 0;
+	demo_playlist_started = false;
+}
+
+void M_Demo_Playlist_Stop_f (void)
+{
 	M_Demo_Playlist_stop_f();
 	Cbuf_AddText("disconnect\n");
 }
 
-static void Demo_Playlist_Setup_f (void) {
-	strlcpy(demo_track,demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,sizeof(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname));
-	strlcpy(default_track,demo_playlist_track_name.string,16);
+static void Demo_Playlist_Setup_f (void)
+{
+	strlcpy (demo_track, demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname, sizeof(demo_track));
+	strlcpy (default_track, demo_playlist_track_name.string, min(16, sizeof(default_track)));
 }
 
-static void Demo_Playlist_Del (int i) {
+//
+// Delete the current entry from the playlist.
+//
+static void Demo_Playlist_Del (int i)
+{
 	int y;
-	demo_playlist[i].name[0] = '\0';
-	demo_playlist[i].path[0] = '\0';
-	demo_playlist[i].trackname[0] = '\0';
 
-	for (y=i ; y<=256 && demo_playlist[y+1].name[0]!='\0'; y++ ){
-		strlcpy(demo_playlist[y].name,demo_playlist[y+1].name,sizeof(demo_playlist[y+1].name)) ;
-		strlcpy(demo_playlist[y].path,demo_playlist[y+1].path,sizeof(demo_playlist[y+1].path)) ;
-		strlcpy(demo_playlist[y].trackname,demo_playlist[y+1].trackname,sizeof(demo_playlist[y+1].trackname)) ;
-		demo_playlist[y+1].name[0] = '\0';
-		demo_playlist[y+1].path[0] = '\0';
-		demo_playlist[y+1].trackname[0] = '\0';
+	// Remove the playlist item.
+	memset (&demo_playlist[i], 0, sizeof(demo_playlist[i]));
+
+	for (y = i; y <= 256 && demo_playlist[y+1].name[0] != '\0'; y++ )
+	{
+		memmove (&demo_playlist[y], &demo_playlist[y+1], sizeof(demo_playlist[y]));
+		memset (&demo_playlist[y+1], 0, sizeof(demo_playlist[y+1]));
 	}
+
 	demo_playlist_num--;
-	if (demo_playlist_num < 0 )
-		demo_playlist_num = 0;
+	demo_playlist_num = max(0, demo_playlist_num);
+
 	demo_playlist_cursor--;
-	if (demo_playlist_cursor < 0 )
-		demo_playlist_cursor = 0;
+	demo_playlist_cursor = max(0, demo_playlist_cursor);
 }
 
-static void Demo_Playlist_Move_Up (int i) {
-	demo_playlist_t tmp;
-	strlcpy(tmp.name,demo_playlist[i-1].name,sizeof(demo_playlist[i-1].name));
-	strlcpy(tmp.path,demo_playlist[i-1].path,sizeof(demo_playlist[i-1].path));
-	strlcpy(tmp.trackname,demo_playlist[i-1].trackname,sizeof(demo_playlist[i-1].trackname));
-	strlcpy(demo_playlist[i-1].name,demo_playlist[i].name,sizeof(demo_playlist[i-1].name));
-	strlcpy(demo_playlist[i-1].path,demo_playlist[i].path,sizeof(demo_playlist[i-1].path));
-	strlcpy(demo_playlist[i-1].trackname,demo_playlist[i].trackname,sizeof(demo_playlist[i-1].trackname));
-	strlcpy(demo_playlist[i].name,tmp.name,sizeof(tmp.name));
-	strlcpy(demo_playlist[i].path,tmp.path,sizeof(tmp.path));
-	strlcpy(demo_playlist[i].trackname,tmp.trackname,sizeof(tmp.trackname));
-}
-
-static void Demo_Playlist_Move_Down (int i) {
+//
+// Move the selected entry up a step in the playlist.
+//
+static void Demo_Playlist_Move_Up (int i)
+{
 	demo_playlist_t tmp;
 
-	if(i+1 == demo_playlist_num )
+	if (i == 0)
+	{
 		return;
+	}
 
-	strlcpy(tmp.name,demo_playlist[i+1].name,sizeof(demo_playlist[i+1].name));
-	strlcpy(tmp.path,demo_playlist[i+1].path,sizeof(demo_playlist[i+1].path));
-	strlcpy(tmp.trackname,demo_playlist[i+1].trackname,sizeof(demo_playlist[i+1].trackname));
-	strlcpy(demo_playlist[i+1].name,demo_playlist[i].name,sizeof(demo_playlist[i+1].name));
-	strlcpy(demo_playlist[i+1].path,demo_playlist[i].path,sizeof(demo_playlist[i+1].path));
-	strlcpy(demo_playlist[i+1].trackname,demo_playlist[i].trackname,sizeof(demo_playlist[i+1].trackname));
-	strlcpy(demo_playlist[i].name,tmp.name,sizeof(tmp.name));
-	strlcpy(demo_playlist[i].path,tmp.path,sizeof(tmp.path));
-	strlcpy(demo_playlist[i].trackname,tmp.trackname,sizeof(tmp.trackname));
+	memcpy (&tmp, &demo_playlist[i-1], sizeof(tmp));
+	memcpy (&demo_playlist[i-1], &demo_playlist[i], sizeof(demo_playlist[i-1]));
+	memcpy (&demo_playlist[i], &tmp, sizeof(demo_playlist[i]));
 }
 
+//
+// Move the selected entry down a step in the playlist.
+//
+static void Demo_Playlist_Move_Down (int i)
+{
+	demo_playlist_t tmp;
+
+	if(i + 1 == demo_playlist_num)
+	{
+		return;
+	}
+
+	memcpy (&tmp, &demo_playlist[i+1], sizeof(tmp));
+	memcpy (&demo_playlist[i+1], &demo_playlist[i], sizeof(demo_playlist[i+1]));
+	memcpy (&demo_playlist[i], &tmp, sizeof(demo_playlist[i]));
+}
+
+//
+// Select the previous entry in the playlist.
+//
 static void Demo_Playlist_SelectPrev(void)
 {
 	demo_playlist_cursor -= DEMO_MAXLINES - 1;
-	if (demo_playlist_cursor < 0) {
+	if (demo_playlist_cursor < 0)
+	{
 		demo_playlist_base += demo_playlist_cursor;
-		if (demo_playlist_base < 0)
-			demo_playlist_base = 0;
+		demo_playlist_base = max (0, demo_playlist_base);
 		demo_playlist_cursor = 0;
 	}
+
 	Demo_Playlist_Setup_f();
 }
 
 static void Demo_Playlist_SelectNext(void)
 {
 	demo_playlist_cursor += DEMO_MAXLINES - 1;
+
 	if (demo_playlist_base + demo_playlist_cursor >= demo_playlist_num)
+	{
 		demo_playlist_cursor = demo_playlist_num - demo_playlist_base - 1;
-	if (demo_playlist_cursor >= DEMO_MAXLINES) {
+	}
+
+	if (demo_playlist_cursor >= DEMO_MAXLINES)
+	{
 		demo_playlist_base += demo_playlist_cursor - (DEMO_MAXLINES - 1);
 		demo_playlist_cursor = DEMO_MAXLINES - 1;
+
 		if (demo_playlist_base + demo_playlist_cursor >= demo_playlist_num)
+		{
 			demo_playlist_base = demo_playlist_num - demo_playlist_cursor - 1;
+		}
 	}
+
 	Demo_Playlist_Setup_f();
 }
 
@@ -306,19 +349,25 @@ void CT_Demo_Playlist_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *
 {
 	int i, y2;
 
-	if(demo_playlist_num == 0) {
+	if(demo_playlist_num == 0)
+	{
 		UI_Print_Center(x, y + 16, w, "Playlist is empty", false);
-		UI_Print_Center(x, y + 32, w, "Use [Ctrl]+[Enter] in the demo browser", true);
-		UI_Print_Center(x, y + 40, w, "to add demo to the playlist", true); 
-	} else {
+		UI_Print_Center(x, y + 32, w, "Use [Insert] or [Ctrl]+[Enter] in the demo browser", true);
+		UI_Print_Center(x, y + 40, w, "to add demo to the playlist", true);
+	}
+	else
+	{
 		y = y - 48;
-		for (i = 0; i <= demo_playlist_num - demo_playlist_base && i < DEMO_MAXLINES; i++) {
+		for (i = 0; i <= demo_playlist_num - demo_playlist_base && i < DEMO_MAXLINES; i++)
+		{
 			y2 = 32 + i * 8 ;
+
 			if (demo_playlist_cursor == i)
 				M_Print (24, y + y2, demo_playlist[demo_playlist_base + i].name);
 			else
 				M_PrintWhite (24, y + y2, demo_playlist[demo_playlist_base + i].name);
 		}
+
 		M_DrawCharacter (8, y + 32 + demo_playlist_cursor * 8, FLASHINGARROW());
 	}
 }
@@ -328,34 +377,44 @@ void CT_Demo_Entry_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pag
 	int z;
 	y = y - 32;
 
-	if (demo_playlist_started && cls.demoplayback){
+	if (demo_playlist_started && cls.demoplayback)
+	{
 		M_Print (24, y + 32, "Currently playing:");
 		M_PrintWhite (24, y + 40, demo_playlist[demo_playlist_current_played].name);
-	} else{
+	}
+	else
+	{
 		M_Print (24, y + 32, "Not playing anything");
 	}
-	M_Print    (24, y + 56, "Next     demo");
-	M_Print    (24, y + 64, "Previous demo");
+
+	M_Print (24, y + 56, "Next     demo");
+	M_Print (24, y + 64, "Previous demo");
 	M_Print (24, y + 72, "Stop  playlist");
 	M_Print (24, y + 80, "Clear playlist");
 
-	if (demo_playlist_num > 0) {
+	if (demo_playlist_num > 0)
+	{
 		M_Print (24, y + 96, "Currently selected:");
 		M_Print (24, y + 104, demo_playlist[demo_playlist_cursor].name);
-	} else {
+	}
+	else
+	{
 		M_Print (24, y + 96, "No demo in playlist");
 	}
 
-	if (strcasecmp(demo_playlist[demo_playlist_cursor].name + strlen(demo_playlist[demo_playlist_cursor].name) - 4, ".mvd")){
+	if (strcasecmp(demo_playlist[demo_playlist_cursor].name + strlen(demo_playlist[demo_playlist_cursor].name) - 4, ".mvd"))
+	{
 		M_Print (24, y + 120, "Tracking only available with mvds");
-	} else{
+	}
+	else
+	{
 		M_Print (24, y + 120, "Track");
 		M_DrawTextBox (160, y + 112, 16, 1);
 		M_PrintWhite (168, y + 120, demo_track);
 		if (demo_playlist_opt_cursor == 4 && demo_playlist_num > 0)
 			M_DrawCharacter (168 + 8*strlen(demo_track), 120 + y, FLASHINGCURSOR());
 	}
-	
+
 	z = demo_playlist_opt_cursor + (demo_playlist_opt_cursor >= 4 ? 4 : 0);
 	z = y + 56 + z * 8;
 	M_DrawCharacter (8, z, FLASHINGARROW());
@@ -385,7 +444,8 @@ void Menu_Demo_Draw (void)
 
 #ifdef GLQUAKE
 	// do not scale this menu
-	if (scr_scaleMenu.value) {
+	if (scr_scaleMenu.value)
+	{
 		menuwidth = vid.width;
 		menuheight = vid.height;
 		glMatrixMode(GL_PROJECTION);
@@ -404,6 +464,63 @@ void Menu_Demo_Draw (void)
 // </draw pages>
 // =============
 
+void Demo_AddDemoToPlaylist (char *display_name, char *path)
+{
+	snprintf (demo_playlist[demo_playlist_num].name, sizeof((*demo_playlist).name), "%s", display_name);
+	snprintf (demo_playlist[demo_playlist_num].path, sizeof((*demo_playlist).path), "%s", path);
+	demo_playlist_num++;
+}
+
+void Demo_AddDirToPlaylist (const char *dir_path)
+{
+	extern void FL_ReadDir(filelist_t *fl);
+	int i;
+	filelist_t dir_filelist;
+
+	if (!dir_path)
+	{
+		return;
+	}
+
+	// Bit of a hack, but we need values for cvars and what not for the FL_ functions to work
+	// so borrow them from demo_filelist.
+	memcpy (&dir_filelist, &demo_filelist, sizeof(dir_filelist));
+
+	FL_SetCurrentDir (&dir_filelist, dir_path);
+	FL_ReadDir (&dir_filelist);
+
+	// Find the demos and add them to the playlist.
+	for (i = 0; i < dir_filelist.num_entries; i++)
+	{
+		filedesc_t *f = &dir_filelist.entries[i];
+
+		// Don't bother with zips and directories.
+		if (f->is_directory || f->is_zip)
+		{
+			// TODO: Make this recursive for dirs?
+			continue;
+		}
+
+		Demo_AddDemoToPlaylist (f->display, f->name);
+	}
+}
+
+void Demo_AddZipToPlaylist (const char *zip_path)
+{
+	char temp_path[MAX_PATH] = {0};
+
+	// Unpack the files to a temp path.
+	unzFile zip_file = COM_ZipUnpackOpenFile (zip_path);
+	COM_ZipUnpackToTemp (zip_file, false, false, NULL, temp_path, sizeof(temp_path));
+	COM_ZipUnpackCloseFile (zip_file);
+
+	if (temp_path)
+	{
+		Demo_AddDirToPlaylist (temp_path);
+	}
+}
+
+
 // ==============================
 // <key processing for each page>
 
@@ -411,22 +528,50 @@ int CT_Demo_Browser_Key(int key, CTab_t *tab, CTabPage_t *page)
 {
 	extern void M_ToggleMenu_f (void);
 	extern void M_LeaveMenu (int);
-    qbool processed;
+    qbool processed = false;
 
+	// Special case for adding zips/dirs to playlist.
+	if (key == K_INS || (key == K_ENTER && keydown[K_CTRL]))
+	{
+		if (COM_ZipIsArchive (FL_GetCurrentPath(&demo_filelist)))
+		{
+			// Zip.
+			Demo_AddZipToPlaylist (FL_GetCurrentPath(&demo_filelist));
+			return true;
+		}
+		else if (FL_IsCurrentDir (&demo_filelist))
+		{
+			// Dir.
+			Demo_AddDirToPlaylist (FL_GetCurrentPath(&demo_filelist));
+			return true;
+		}
+	}
+
+	// See if the main filebrowser functions wants to
+	// do something first, like enter a dir/zip.
     processed = FL_Key(&demo_filelist, key);
 
     if (!processed)
     {
-        if (key == K_ENTER)
+		if (key == K_INS)
+		{
+			// Add the selected demo to the playlist.
+			Demo_AddDemoToPlaylist (FL_GetCurrentDisplay (&demo_filelist), FL_GetCurrentPath (&demo_filelist));
+		}
+        else if (key == K_ENTER)
         {
-			if (keydown[K_CTRL]) {
-				snprintf(demo_playlist[demo_playlist_num].name, sizeof((*demo_playlist).name), "%s", FL_GetCurrentDisplay(&demo_filelist));
-				snprintf(demo_playlist[demo_playlist_num].path, sizeof((*demo_playlist).path), "%s", FL_GetCurrentPath(&demo_filelist));
-				demo_playlist_num++;
-			} else if (keydown[K_SHIFT]) {
+			if (keydown[K_CTRL])
+			{
+				// Add the selected demo to the playlist.
+				Demo_AddDemoToPlaylist (FL_GetCurrentDisplay (&demo_filelist), FL_GetCurrentPath (&demo_filelist));
+			}
+			else if (keydown[K_SHIFT])
+			{
 				M_LeaveMenus();
 				Cbuf_AddText (va("timedemo \"%s\"\n", FL_GetCurrentPath(&demo_filelist)));
-			} else {
+			}
+			else
+			{
 				M_LeaveMenus();
 				Cbuf_AddText(va("playdemo \"%s\"\n", FL_GetCurrentPath(&demo_filelist)));
 				processed = true;
@@ -439,66 +584,86 @@ int CT_Demo_Browser_Key(int key, CTab_t *tab, CTabPage_t *page)
 
 int CT_Demo_Playlist_Key(int key, CTab_t *tab, CTabPage_t *page)
 {
-	switch (key) {
-	case K_UPARROW:
-		if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base > 0)
-			Demo_Playlist_Move_Up(demo_playlist_cursor + demo_playlist_base);
+	switch (key)
+	{
+		case K_UPARROW:
+		case K_MWHEELUP:
+		{
+			if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base > 0)
+				Demo_Playlist_Move_Up(demo_playlist_cursor + demo_playlist_base);
 
-		if (demo_playlist_cursor > 0) {
-			demo_playlist_cursor--;
-		} else if (demo_playlist_base > 0) {
-			demo_playlist_base--;
+			if (demo_playlist_cursor > 0)
+			{
+				demo_playlist_cursor--;
+			}
+			else if (demo_playlist_base > 0)
+			{
+				demo_playlist_base--;
+			}
+
+			Demo_Playlist_Setup_f();
+			break;
 		}
-		Demo_Playlist_Setup_f();
-		break;
+		case K_DOWNARROW:
+		case K_MWHEELDOWN:
+		{
+			if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base < demo_playlist_num)
+				Demo_Playlist_Move_Down(demo_playlist_cursor + demo_playlist_base);
 
-	case K_DOWNARROW:
-		if (keydown[K_CTRL] && demo_playlist_cursor + demo_playlist_base < demo_playlist_num)
-			Demo_Playlist_Move_Down(demo_playlist_cursor + demo_playlist_base);
-
-		if (demo_playlist_cursor + demo_playlist_base < demo_playlist_num - 1) {
-			if (demo_playlist_cursor < DEMO_MAXLINES - 1)
-				demo_playlist_cursor++;
-			else
-				demo_playlist_base++;
+			if (demo_playlist_cursor + demo_playlist_base < demo_playlist_num - 1)
+			{
+				if (demo_playlist_cursor < DEMO_MAXLINES - 1)
+					demo_playlist_cursor++;
+				else
+					demo_playlist_base++;
+			}
+			Demo_Playlist_Setup_f();
+			break;
 		}
-		Demo_Playlist_Setup_f();
-		break;
-
-	case K_HOME:
-		demo_playlist_cursor = 0;
-		demo_playlist_base = 0;
-		Demo_Playlist_Setup_f();
-		break;
-
-	case K_END:
-		if (demo_playlist_num > DEMO_PLAYLIST_OPTIONS_MAX) {
-			demo_playlist_cursor = DEMO_PLAYLIST_OPTIONS_MAX - 1;
-			demo_playlist_base = demo_playlist_num - demo_playlist_cursor - 1;
-		} else {
+		case K_HOME:
+		{
+			demo_playlist_cursor = 0;
 			demo_playlist_base = 0;
-			demo_playlist_cursor = demo_playlist_num - 1;
+			Demo_Playlist_Setup_f();
+			break;
 		}
-		Demo_Playlist_Setup_f();
-		break;
-
-	case K_PGUP:
-		Demo_Playlist_SelectPrev();
-		break;
-	
-	case K_PGDN:
-		Demo_Playlist_SelectNext();
-		break;
-
-	case K_ENTER:
-		Demo_playlist_start(demo_playlist_cursor + demo_playlist_base);
-		break;
-
-	case K_DEL:
-		Demo_Playlist_Del(demo_playlist_cursor + demo_playlist_base);
-		break;
-
-	default: return false;
+		case K_END:
+		{
+			if (demo_playlist_num > DEMO_PLAYLIST_OPTIONS_MAX)
+			{
+				demo_playlist_cursor = DEMO_PLAYLIST_OPTIONS_MAX - 1;
+				demo_playlist_base = demo_playlist_num - demo_playlist_cursor - 1;
+			}
+			else
+			{
+				demo_playlist_base = 0;
+				demo_playlist_cursor = demo_playlist_num - 1;
+			}
+			Demo_Playlist_Setup_f();
+			break;
+		}
+		case K_PGUP:
+		{
+			Demo_Playlist_SelectPrev();
+			break;
+		}
+		case K_PGDN:
+		{
+			Demo_Playlist_SelectNext();
+			break;
+		}
+		case K_ENTER:
+		{
+			Demo_playlist_start(demo_playlist_cursor + demo_playlist_base);
+			break;
+		}
+		case K_DEL:
+		{
+			Demo_Playlist_Del(demo_playlist_cursor + demo_playlist_base);
+			break;
+		}
+		default:
+			return false;
 	}
 
 	return true;
@@ -508,60 +673,76 @@ int CT_Demo_Entry_Key(int key, CTab_t *tab, CTabPage_t *page)
 {
 	int l;
 
-	switch (key) {
-	case K_LEFTARROW: return false;
-	case K_RIGHTARROW: return false;
-	case K_UPARROW:
-		demo_playlist_opt_cursor = demo_playlist_opt_cursor ? demo_playlist_opt_cursor - 1 : DEMO_PLAYLIST_OPTIONS_MAX - 1;
-		break;
-
-	case K_DOWNARROW:
-		demo_playlist_opt_cursor++;
-		demo_playlist_opt_cursor = demo_playlist_opt_cursor % DEMO_PLAYLIST_OPTIONS_MAX;
-		break;
-
-	case K_PGUP:
-		Demo_Playlist_SelectPrev();
-		break;
-
-	case K_PGDN:
-		Demo_Playlist_SelectNext();
-		break;
-
-	case K_ENTER:
-		if (demo_playlist_opt_cursor == 0)
-			M_Demo_Playlist_Next_f();
-		else if (demo_playlist_opt_cursor == 1)
-			M_Demo_Playlist_Prev_f();
-		else if (demo_playlist_opt_cursor == 2)
-			M_Demo_Playlist_Stop_f();
-		else if (demo_playlist_opt_cursor == 3)
-			M_Demo_Playlist_Clear_f();
-		
-		break;
-
-	case K_BACKSPACE:
-		if (demo_playlist_opt_cursor == 4) {
-			if (strlen(demo_track))
-				demo_track[strlen(demo_track)-1] = 0;
-			strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_playlist->trackname));
+	switch (key)
+	{
+		case K_LEFTARROW: return false;
+		case K_RIGHTARROW: return false;
+		case K_UPARROW:
+		case K_MWHEELUP:
+		{
+			demo_playlist_opt_cursor = demo_playlist_opt_cursor ? demo_playlist_opt_cursor - 1 : DEMO_PLAYLIST_OPTIONS_MAX - 1;
+			break;
 		}
-		break;
-
-
-	default:
-		if (key < 32 || key > 127)
-			return false;
-
-		if (demo_playlist_opt_cursor == 4) {
-			l = strlen(demo_track);
-			if (l < 15) {
-				demo_track[l+1] = 0;
-				demo_track[l] = key;
+		case K_DOWNARROW:
+		case K_MWHEELDOWN:
+		{
+			demo_playlist_opt_cursor++;
+			demo_playlist_opt_cursor = demo_playlist_opt_cursor % DEMO_PLAYLIST_OPTIONS_MAX;
+			break;
+		}
+		case K_PGUP:
+		{
+			Demo_Playlist_SelectPrev();
+			break;
+		}
+		case K_PGDN:
+		{
+			Demo_Playlist_SelectNext();
+			break;
+		}
+		case K_ENTER:
+		{
+			if (demo_playlist_opt_cursor == 0)
+				M_Demo_Playlist_Next_f();
+			else if (demo_playlist_opt_cursor == 1)
+				M_Demo_Playlist_Prev_f();
+			else if (demo_playlist_opt_cursor == 2)
+				M_Demo_Playlist_Stop_f();
+			else if (demo_playlist_opt_cursor == 3)
+				M_Demo_Playlist_Clear_f();
+			break;
+		}
+		case K_BACKSPACE:
+		{
+			if (demo_playlist_opt_cursor == 4)
+			{
+				if (strlen(demo_track))
+					demo_track[strlen(demo_track)-1] = 0;
 				strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_playlist->trackname));
 			}
-			return true;
-		} else return false;
+			break;
+		}
+		default:
+		{
+			if (key < 32 || key > 127)
+				return false;
+
+			if (demo_playlist_opt_cursor == 4)
+			{
+				l = strlen(demo_track);
+				if (l < 15)
+				{
+					demo_track[l+1] = 0;
+					demo_track[l] = key;
+					strlcpy(demo_playlist[demo_playlist_cursor + demo_playlist_base].trackname,demo_track,sizeof(demo_playlist->trackname));
+				}
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
 	}
 
 	return true;
@@ -571,45 +752,61 @@ int CT_Demo_Options_Key(int key, CTab_t *tab, CTabPage_t *page)
 {
 	int l;
 
-	switch (key) {
-	case K_LEFTARROW: return false;
-	case K_RIGHTARROW: return false;
-	case K_UPARROW:
-		demo_options_cursor = demo_options_cursor ? demo_options_cursor - 1 : DEMO_OPTIONS_MAX - 1;
-		Demo_Playlist_Setup_f();
-		break;
-
-	case K_DOWNARROW:
-		demo_options_cursor = (demo_options_cursor + 1) % DEMO_OPTIONS_MAX;
-		Demo_Playlist_Setup_f();
-		break;
-
-	case K_ENTER:
-		Cvar_SetValue (&demo_playlist_loop, !demo_playlist_loop.value);
-		break;
-
-	case K_BACKSPACE:
-		if (demo_options_cursor == 1) {
-			if (strlen(default_track))
-				default_track[strlen(default_track)-1] = 0;
-			Cvar_Set(&demo_playlist_track_name, default_track);
+	switch (key)
+	{
+		case K_LEFTARROW: return false;
+		case K_RIGHTARROW: return false;
+		case K_UPARROW:
+		case K_MWHEELUP:
+		{
+			demo_options_cursor = demo_options_cursor ? demo_options_cursor - 1 : DEMO_OPTIONS_MAX - 1;
+			Demo_Playlist_Setup_f();
+			break;
 		}
-		break;
-
-	default: 
-		if (key < 32 || key > 127)
-			return false;
-		
-		if (demo_options_cursor == 1) {
-			l = strlen(default_track);
-
-			if (l < sizeof(default_track)-1) {
-				default_track[l+1] = 0;
-				default_track[l] = key;
+		case K_DOWNARROW:
+		case K_MWHEELDOWN:
+		{
+			demo_options_cursor = (demo_options_cursor + 1) % DEMO_OPTIONS_MAX;
+			Demo_Playlist_Setup_f();
+			break;
+		}
+		case K_ENTER:
+		{
+			Cvar_SetValue (&demo_playlist_loop, !demo_playlist_loop.value);
+			break;
+		}
+		case K_BACKSPACE:
+		{
+			if (demo_options_cursor == 1)
+			{
+				if (strlen(default_track))
+					default_track[strlen(default_track)-1] = 0;
 				Cvar_Set(&demo_playlist_track_name, default_track);
 			}
-			return true;
-		} else return false;
+			break;
+		}
+		default:
+		{
+			if (key < 32 || key > 127)
+				return false;
+
+			if (demo_options_cursor == 1)
+			{
+				l = strlen(default_track);
+
+				if (l < sizeof(default_track)-1)
+				{
+					default_track[l+1] = 0;
+					default_track[l] = key;
+					Cvar_Set(&demo_playlist_track_name, default_track);
+				}
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
 	}
 
 	return true;
