@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.60 2007-01-11 15:33:12 johnnycz Exp $
+	$Id: menu.c,v 1.61 2007-01-15 00:18:39 cokeman1982 Exp $
 
 */
 
@@ -298,12 +298,14 @@ void M_Main_Key (int key) {
 		break;
 
 	case K_UPARROW:
+	case K_MWHEELUP:
 		S_LocalSound ("misc/menu1.wav");
 		if (--m_main_cursor < 0)
 			m_main_cursor = MAIN_ITEMS - 1;
 		break;
 
 	case K_DOWNARROW:
+	case K_MWHEELDOWN:
 		S_LocalSound ("misc/menu1.wav");
 		if (++m_main_cursor >= MAIN_ITEMS)
 			m_main_cursor = 0;
@@ -592,12 +594,14 @@ void M_SinglePlayer_Key (int key) {
 			break;
 
 		case K_DOWNARROW:
+		case K_MWHEELDOWN:
 			S_LocalSound ("misc/menu1.wav");
 			if (++m_singleplayer_cursor >= SINGLEPLAYER_ITEMS)
 				m_singleplayer_cursor = 0;
 			break;
 
 		case K_UPARROW:
+		case K_MWHEELUP:
 			S_LocalSound ("misc/menu1.wav");
 			if (--m_singleplayer_cursor < 0)
 				m_singleplayer_cursor = SINGLEPLAYER_ITEMS - 1;
@@ -780,6 +784,7 @@ void M_Load_Key (int key) {
 			return;
 
 		case K_UPARROW:
+		case K_MWHEELUP:
 		case K_LEFTARROW:
 			S_LocalSound ("misc/menu1.wav");
 			load_cursor--;
@@ -788,6 +793,7 @@ void M_Load_Key (int key) {
 			break;
 
 		case K_DOWNARROW:
+		case K_MWHEELDOWN:
 		case K_RIGHTARROW:
 			S_LocalSound ("misc/menu1.wav");
 			load_cursor++;
@@ -812,6 +818,7 @@ void M_Save_Key (int key) {
 			return;
 
 		case K_UPARROW:
+		case K_MWHEELUP:
 		case K_LEFTARROW:
 			S_LocalSound ("misc/menu1.wav");
 			load_cursor--;
@@ -820,6 +827,7 @@ void M_Save_Key (int key) {
 			break;
 
 		case K_DOWNARROW:
+		case K_MWHEELDOWN:
 		case K_RIGHTARROW:
 			S_LocalSound ("misc/menu1.wav");
 			load_cursor++;
@@ -870,12 +878,14 @@ void M_MultiPlayer_Key (int key) {
 			break;
 
 		case K_DOWNARROW:
+		case K_MWHEELDOWN:
 			S_LocalSound ("misc/menu1.wav");
 			if (++m_multiplayer_cursor >= MULTIPLAYER_ITEMS)
 				m_multiplayer_cursor = 0;
 			break;
 
 		case K_UPARROW:
+		case K_MWHEELUP:
 			S_LocalSound ("misc/menu1.wav");
 			if (--m_multiplayer_cursor < 0)
 				m_multiplayer_cursor = MULTIPLAYER_ITEMS - 1;
@@ -1098,12 +1108,14 @@ void M_Menu_MP3_Control_Key(int key) {
 			mp3_cursor = M_MP3_CONTROL_NUMENTRIES - 1;
 			break;
 		case K_DOWNARROW:
+		case K_MWHEELDOWN:
 			if (mp3_cursor < M_MP3_CONTROL_NUMENTRIES - 1)
 				mp3_cursor++;
 			if (mp3_cursor == M_MP3_CONTROL_NUMENTRIES - 2)
 				mp3_cursor++;
 			break;
 		case K_UPARROW:
+		case K_MWHEELUP:
 			if (mp3_cursor > 0)
 				mp3_cursor--;
 			if (mp3_cursor == M_MP3_CONTROL_NUMENTRIES - 2)
@@ -1324,6 +1336,7 @@ void M_Menu_MP3_Playlist_Key (int k) {
 			break;
 
 		case K_UPARROW:
+		case K_MWHEELUP:
 			if (playlist_cursor > 0)
 				playlist_cursor--;
 			else if (playlist_base > 0)
@@ -1331,6 +1344,7 @@ void M_Menu_MP3_Playlist_Key (int k) {
 			break;
 
 		case K_DOWNARROW:
+		case K_MWHEELDOWN:
 			if (playlist_cursor + playlist_base < playlist_size - 1) {
 				if (playlist_cursor < PLAYLIST_MAXLINES - 1)
 					playlist_cursor++;
@@ -1661,6 +1675,7 @@ void M_GameOptions_Key (int key) {
 			break;
 
 		case K_UPARROW:
+		case K_MWHEELUP:
 			S_LocalSound ("misc/menu1.wav");
 			gameoptions_cursor--;
 			if (!_deathmatch && gameoptions_cursor == 4)
@@ -1670,6 +1685,7 @@ void M_GameOptions_Key (int key) {
 			break;
 
 		case K_DOWNARROW:
+		case K_MWHEELDOWN:
 			S_LocalSound ("misc/menu1.wav");
 			gameoptions_cursor++;
 			if (!_deathmatch && gameoptions_cursor == 4)

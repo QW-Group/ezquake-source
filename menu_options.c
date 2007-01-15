@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.16 2007-01-14 19:48:04 johnnycz Exp $
+		$Id: menu_options.c,v 1.17 2007-01-15 00:20:40 cokeman1982 Exp $
 
 */
 
@@ -524,6 +524,7 @@ int CT_Opt_Binds_Key (int k, CTab_t *tab, CTabPage_t *page) {
 
 	switch (k) {
 		case K_UPARROW:
+		case K_MWHEELUP:
 			S_LocalSound ("misc/menu1.wav");
 			keys_cursor--;
 			if (keys_cursor < 0)
@@ -531,6 +532,7 @@ int CT_Opt_Binds_Key (int k, CTab_t *tab, CTabPage_t *page) {
 			break;
 
 		case K_DOWNARROW:
+		case K_MWHEELDOWN:
 			S_LocalSound ("misc/menu1.wav");
 			keys_cursor++;
 			if (keys_cursor >= NUMCOMMANDS)
