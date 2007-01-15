@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.16 2007-01-15 06:05:46 qqshka Exp $
+		$Id: menu_demo.c,v 1.17 2007-01-15 21:15:08 cokeman1982 Exp $
 
 */
 
@@ -75,17 +75,20 @@ extern cvar_t scr_scaleMenu;
 filelist_t demo_filelist;
 
 // Demo browser cvars
-cvar_t  demo_browser_showsize   = {"demo_browser_showsize",		"1"};
-cvar_t  demo_browser_showdate   = {"demo_browser_showdate",		"1"};
-cvar_t  demo_browser_showtime   = {"demo_browser_showtime",		"0"};
-cvar_t  demo_browser_sortmode   = {"demo_browser_sortmode",		"1"};
-cvar_t  demo_browser_showstatus = {"demo_browser_showstatus",	"1"};
-cvar_t  demo_browser_stripnames = {"demo_browser_stripnames",	"1"};
-cvar_t  demo_browser_interline  = {"demo_browser_interline",	"0"};
-cvar_t  demo_browser_scrollnames= {"demo_browser_scrollnames",	"1"};
-cvar_t	demo_browser_dircolor	= {"demo_browser_dircolor",		"0 127 0 255"};
+cvar_t  demo_browser_showsize		= {"demo_browser_showsize",		"1"};
+cvar_t  demo_browser_showdate		= {"demo_browser_showdate",		"1"};
+cvar_t  demo_browser_showtime		= {"demo_browser_showtime",		"0"};
+cvar_t  demo_browser_sortmode		= {"demo_browser_sortmode",		"1"};
+cvar_t  demo_browser_showstatus		= {"demo_browser_showstatus",	"1"};
+cvar_t  demo_browser_stripnames		= {"demo_browser_stripnames",	"1"};
+cvar_t  demo_browser_interline		= {"demo_browser_interline",	"0"};
+cvar_t  demo_browser_scrollnames	= {"demo_browser_scrollnames",	"1"};
+
+cvar_t	demo_browser_democolor		= {"demo_browser_democolor",	"255 255 255 255"};	// White.
+cvar_t	demo_browser_selectedcolor	= {"demo_browser_selectedcolor","0 150 235 255"};	// Light blue.
+cvar_t	demo_browser_dircolor		= {"demo_browser_dircolor",		"170 80 0 255"};	// Redish.
 #ifdef WITH_ZIP
-cvar_t	demo_browser_zipcolor	= {"demo_browser_dircolor",		"0 175 207 255"};
+cvar_t	demo_browser_zipcolor		= {"demo_browser_dircolor",		"255 170 0 255"};	// Orange.
 #endif
 
 // Demo menu container
@@ -123,7 +126,7 @@ void M_Demo_Playlist_stop_f (void)
 	}
 }
 
-static void Demo_playlist_start (int i)
+static void Demo_Playlist_Start (int i)
 {
 	key_dest = key_game;
 	m_state = m_none;
@@ -141,7 +144,7 @@ static void Demo_playlist_start (int i)
 	Cbuf_AddText (va("playdemo \"%s\"\n", demo_playlist[demo_playlist_current_played].path));
 }
 
-void CL_Demo_playlist_f (void)
+void CL_Demo_Playlist_f (void)
 {
 	demo_playlist_current_played++;
 
@@ -180,7 +183,7 @@ void M_Demo_Playlist_Next_f (void)
 		tmp = 0 ;
 	}
 
-	Demo_playlist_start(tmp);
+	Demo_Playlist_Start(tmp);
 }
 
 void M_Demo_Playlist_Prev_f (void)
@@ -199,7 +202,7 @@ void M_Demo_Playlist_Prev_f (void)
 	}
 
 	Com_Printf("Prev %i\n", tmp);
-	Demo_playlist_start(tmp);
+	Demo_Playlist_Start(tmp);
 }
 
 void M_Demo_Playlist_Clear_f (void)
@@ -466,12 +469,18 @@ void Menu_Demo_Draw (void)
 
 void Demo_AddDemoToPlaylist (char *display_name, char *path)
 {
+	if (demo_playlist_num >= DEMO_PLAYLIST_MAX)
+	{
+		Com_Printf ("Playlist is full, cannot add \"%s\" to it. Max allowed demos in playlist is %d\n", display_name, DEMO_PLAYLIST_MAX);
+		return;
+	}
+
 	snprintf (demo_playlist[demo_playlist_num].name, sizeof((*demo_playlist).name), "%s", display_name);
 	snprintf (demo_playlist[demo_playlist_num].path, sizeof((*demo_playlist).path), "%s", path);
 	demo_playlist_num++;
 }
 
-void Demo_AddDirToPlaylist (const char *dir_path)
+void Demo_AddDirToPlaylist (char *dir_path)
 {
 	extern void FL_ReadDir(filelist_t *fl);
 	int i;
@@ -661,7 +670,7 @@ int CT_Demo_Playlist_Key(int key, CTab_t *tab, CTabPage_t *page)
 		}
 		case K_ENTER:
 		{
-			Demo_playlist_start(demo_playlist_cursor + demo_playlist_base);
+			Demo_Playlist_Start(demo_playlist_cursor + demo_playlist_base);
 			break;
 		}
 		case K_DEL:
@@ -853,6 +862,8 @@ void Menu_Demo_Init(void)
     Cvar_Register(&demo_browser_stripnames);
     Cvar_Register(&demo_browser_interline);
 	Cvar_Register(&demo_browser_scrollnames);
+	Cvar_Register(&demo_browser_selectedcolor);
+	Cvar_Register(&demo_browser_democolor);
 	Cvar_Register(&demo_browser_dircolor);
 #ifdef WITH_ZIP
 	Cvar_Register(&demo_browser_zipcolor);
@@ -878,6 +889,8 @@ void Menu_Demo_Init(void)
         &demo_browser_interline,
         &demo_browser_showstatus,
 		&demo_browser_scrollnames,
+		&demo_browser_democolor,
+		&demo_browser_selectedcolor,
 		&demo_browser_dircolor,
 #ifdef WITH_ZIP
 		&demo_browser_zipcolor,

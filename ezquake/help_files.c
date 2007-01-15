@@ -13,6 +13,8 @@ cvar_t  help_files_showstatus	= {"help_files_showstatus",		"1"};
 cvar_t  help_files_stripnames	= {"help_files_stripnames",		"1"};
 cvar_t  help_files_interline	= {"help_files_interline",		"0"};
 cvar_t  help_files_scrollnames	= {"&help_files_scrollnames",	"0"};
+cvar_t	help_files_selectedcolor= {"&help_files_selectedcolor",	"255 255 255 255"};
+cvar_t  help_files_filecolor	= {"&help_files_filecolor",		"255 255 255 255"};
 cvar_t  help_files_dircolor		= {"&help_files_dircolor",		"255 255 255 255"};
 
 void Help_Files_Init(void)
@@ -26,6 +28,9 @@ void Help_Files_Init(void)
     Cvar_Register(&help_files_stripnames);
     Cvar_Register(&help_files_interline);
 	Cvar_Register(&help_files_scrollnames);
+	Cvar_Register(&help_files_filecolor);
+	Cvar_Register(&help_files_selectedcolor);
+	Cvar_Register(&help_files_dircolor);
 	Cvar_ResetCurrentGroup();
 
     FL_Init(&help_filelist,
@@ -37,6 +42,8 @@ void Help_Files_Init(void)
         &help_files_interline,
         &help_files_showstatus,
 		&help_files_scrollnames,
+		&help_files_filecolor,
+		&help_files_selectedcolor,
 		&help_files_dircolor,
 #ifdef WITH_ZIP
 		NULL, // No ZIP color needed for help files.
