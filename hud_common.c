@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.111 2007-01-10 19:55:56 johnnycz Exp $
+	$Id: hud_common.c,v 1.112 2007-01-15 21:17:45 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -45,7 +45,7 @@ struct {
 qbool OnAutoHudChange(cvar_t *var, char *value);
 qbool autohud_loaded = false;
 cvar_t hud_planmode = {"hud_planmode",   "0"};
-cvar_t mvd_autohud = {"mvd_autohud", "1", 0, OnAutoHudChange};
+cvar_t mvd_autohud = {"mvd_autohud", "0", 0, OnAutoHudChange};
 cvar_t hud_digits_trim = {"hud_digits_trim", "1"};
 
 int hud_stats[MAX_CL_STATS];
@@ -3174,6 +3174,8 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		int limit = min(n_players, a_rows * a_cols);
 
 		// Always show my current frags (don't just show the leaders).
+		// TODO: When all players aren't being shown in the frags, draw
+		// a small arrow that indicates that there are more frags to be seen.
 		if(hud_frags_showself->value && !cl_multiview.value)
 		{
 			int player_pos = 0;
