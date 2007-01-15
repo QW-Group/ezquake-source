@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.15 2007-01-15 00:12:36 cokeman1982 Exp $
+		$Id: menu_demo.c,v 1.16 2007-01-15 06:05:46 qqshka Exp $
 
 */
 
@@ -495,7 +495,11 @@ void Demo_AddDirToPlaylist (const char *dir_path)
 		filedesc_t *f = &dir_filelist.entries[i];
 
 		// Don't bother with zips and directories.
-		if (f->is_directory || f->is_zip)
+		if (f->is_directory
+#ifdef WITH_ZIP
+			|| f->is_zip
+#endif
+			)
 		{
 			// TODO: Make this recursive for dirs?
 			continue;
@@ -504,7 +508,7 @@ void Demo_AddDirToPlaylist (const char *dir_path)
 		Demo_AddDemoToPlaylist (f->display, f->name);
 	}
 }
-
+#ifdef WITH_ZIP
 void Demo_AddZipToPlaylist (const char *zip_path)
 {
 	char temp_path[MAX_PATH] = {0};
@@ -519,7 +523,7 @@ void Demo_AddZipToPlaylist (const char *zip_path)
 		Demo_AddDirToPlaylist (temp_path);
 	}
 }
-
+#endif
 
 // ==============================
 // <key processing for each page>
@@ -533,13 +537,16 @@ int CT_Demo_Browser_Key(int key, CTab_t *tab, CTabPage_t *page)
 	// Special case for adding zips/dirs to playlist.
 	if (key == K_INS || (key == K_ENTER && keydown[K_CTRL]))
 	{
+#ifdef WITH_ZIP
 		if (COM_ZipIsArchive (FL_GetCurrentPath(&demo_filelist)))
 		{
 			// Zip.
 			Demo_AddZipToPlaylist (FL_GetCurrentPath(&demo_filelist));
 			return true;
 		}
-		else if (FL_IsCurrentDir (&demo_filelist))
+		else
+#endif
+		if (FL_IsCurrentDir (&demo_filelist))
 		{
 			// Dir.
 			Demo_AddDirToPlaylist (FL_GetCurrentPath(&demo_filelist));

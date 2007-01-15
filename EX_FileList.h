@@ -154,7 +154,7 @@ void FL_AddFileType(filelist_t *, int id, char *ext);
 //
 // set current directory (and drive)
 //
-void FL_SetCurrentDir(filelist_t *, char *dir);
+void FL_SetCurrentDir(filelist_t *, const char *dir);
 
 
 //
