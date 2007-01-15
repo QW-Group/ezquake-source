@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.37 2007-01-12 23:22:07 qqshka Exp $
+    $Id: common.h,v 1.38 2007-01-15 00:08:52 cokeman1982 Exp $
 */
 // common.h  -- general definitions
 
@@ -368,6 +368,13 @@ int COM_ZipUnpack (unzFile zip_file,
 				   qbool keep_path, 
 				   qbool overwrite, 
 				   const char *password);
+
+COM_ZipUnpackToTemp (unzFile zip_file, 
+				   qbool case_sensitive, 
+				   qbool keep_path, 
+				   const char *password,
+				   char *unpack_path,					// The path where the file was unpacked.
+				   int unpack_path_size);				// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.)
 
 int COM_ZipUnpackOneFile (unzFile zip_file,				// The zip file opened with COM_ZipUnpackOpenFile(..)
 						  const char *filename_inzip,	// The name of the file to unpack inside the zip.
