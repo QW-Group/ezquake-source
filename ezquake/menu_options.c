@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.17 2007-01-15 00:20:40 cokeman1982 Exp $
+		$Id: menu_options.c,v 1.18 2007-01-15 11:53:22 johnnycz Exp $
 
 */
 
@@ -44,6 +44,7 @@ extern int        menuheight;
 #endif
 
 extern qbool    m_entersound; // todo - put into menu.h
+void M_Menu_Help_f (void);	// todo - put into menu.h
 extern cvar_t scr_scaleMenu;
 
 
@@ -225,6 +226,7 @@ void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
 setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f),
 	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f),
 	ADDSET_ACTION	("Default Config", DefaultConfig),
 	ADDSET_SEPARATOR("Video"),
