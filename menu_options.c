@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.18 2007-01-15 11:53:22 johnnycz Exp $
+		$Id: menu_options.c,v 1.19 2007-01-15 19:52:57 disconn3ct Exp $
 
 */
 
@@ -157,7 +157,7 @@ void SshotformatToggle(qbool back) {
 }
 
 extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_weaponhide, con_funchars_mode, con_notifytime, scr_consize, ignore_opponents, _con_notifylines,
-	ignore_qizmo_spec, ignore_spec, msg_filter, sys_highpriority, crosshair, crosshairsize, cl_smartjump, scr_coloredText,
+	ignore_qizmo_spec, ignore_spec, msg_filter, crosshair, crosshairsize, cl_smartjump, scr_coloredText,
 	cl_rollangle, cl_rollspeed, v_gunkick, v_kickpitch, v_kickroll, v_kicktime, v_viewheight, match_auto_sshot, match_auto_record, match_auto_logconsole,
 	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, scr_clock, scr_gameclock, show_fps, rate, cl_c2sImpulseBackup,
 	name, team, skin, topcolor, bottomcolor, cl_teamtopcolor, cl_teambottomcolor, cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
@@ -165,7 +165,7 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz
 ;
 #ifdef _WIN32
-extern cvar_t demo_format;
+extern cvar_t demo_format, sys_highpriority;
 #endif
 #ifdef GLQUAKE
 extern cvar_t scr_autoid, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights;
@@ -234,7 +234,9 @@ setting settgeneral_arr[] = {
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
 	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
 	ADDSET_NUMBER	("Field of View", scr_fov, 40, 140, 2),
+#ifdef _WIN32
 	ADDSET_NUMBER	("Process Priority", sys_highpriority, -1, 1, 1),
+#endif
 	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle),
 	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
 	ADDSET_SEPARATOR("Sound"),
