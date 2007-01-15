@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.55 2007-01-15 00:18:29 cokeman1982 Exp $
+	$Id: cl_demo.c,v 1.56 2007-01-15 05:33:43 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1650,8 +1650,7 @@ void CL_Play_f (void)
 			}
 			else
 			{
-// FIXME: no paks support yet
-//				FS_FOpenFile (name, &playbackfile);
+				playbackfile = FS_OpenVFS (name, "rb", FS_ANY); // search demo on quake file system, even in paks
 			}
 
 			// Look in the demo dir (user specified).
