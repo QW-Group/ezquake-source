@@ -55,6 +55,7 @@ CLIENT_C_FILES := \
 	r_part \
 	rulesets \
 	sbar \
+	settings_page \
 	sha1 \
 	skin \
 	snd_dma \
