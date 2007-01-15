@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.56 2007-01-15 05:33:43 qqshka Exp $
+	$Id: cl_demo.c,v 1.57 2007-01-15 21:21:06 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1579,7 +1579,7 @@ void CL_StopPlayback (void)
 
 	if (demo_playlist_started)
 	{
-		CL_Demo_playlist_f();
+		CL_Demo_Playlist_f();
 		mvd_demo_track_run = 0;
 	}
 
