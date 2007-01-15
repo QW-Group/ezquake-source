@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.54 2007-01-15 00:08:42 cokeman1982 Exp $
+    $Id: common.c,v 1.55 2007-01-15 05:32:32 qqshka Exp $
 
 */
 
@@ -1273,7 +1273,7 @@ char *va (char *format, ...)
 =============================================================================
 */
 
-int		fs_filesize;
+int		fs_filesize, fs_filepos;
 char	fs_netpath[MAX_OSPATH];
 
 // in memory
@@ -1461,6 +1461,7 @@ int FS_FOpenPathFile (char *filename, FILE **file) {
 
 	*file = NULL;
 	fs_filesize = -1;
+	fs_filepos = 0;
 	fs_netpath[0] = 0;
 
 	if ((*file = fopen (filename, "rb"))) {
@@ -1481,6 +1482,7 @@ int FS_FOpenPathFile (char *filename, FILE **file) {
 
 //Finds the file in the search path.
 //Sets fs_filesize, fs_netpath and one of handle or file
+//Sets fs_filepos to 0 for non paks, and to beging of file in pak file
 qbool	file_from_pak;		// global indicating file came from a packfile
 qbool	file_from_gamedir;	// global indicating file came from a gamedir (and gamedir wasn't id1/qw)
 
@@ -1493,6 +1495,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 	file_from_pak = false;
 	file_from_gamedir = true;
 	fs_filesize = -1;
+	fs_filepos = 0;
 	fs_netpath[0] = 0;
 
 	// search through the path, one element at a time
@@ -1512,6 +1515,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 					if (!(*file = fopen (pak->filename, "rb")))
 						Sys_Error ("Couldn't reopen %s\n", pak->filename);
 					fseek (*file, pak->files[i].filepos, SEEK_SET);
+					fs_filepos = pak->files[i].filepos;
 					fs_filesize = pak->files[i].filelen;
 					com_filefrompak = true;
 					com_filesearchpath = search->filename;
@@ -1530,6 +1534,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 			if (developer.value)
 				Sys_Printf ("FindFile: %s\n", fs_netpath);
 
+			fs_filepos = 0;
 			fs_filesize = COM_FileLength (*file);
 			return fs_filesize;
 		}

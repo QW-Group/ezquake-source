@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.38 2007-01-15 00:08:52 cokeman1982 Exp $
+    $Id: common.h,v 1.39 2007-01-15 05:32:32 qqshka Exp $
 */
 // common.h  -- general definitions
 
@@ -171,7 +171,7 @@ char *va(char *format, ...);
 
 //============================================================================
 
-extern int fs_filesize;
+extern int fs_filesize, fs_filepos;
 extern qbool com_filefrompak;
 extern char *com_filesearchpath;
 extern char	fs_netpath[MAX_OSPATH];
