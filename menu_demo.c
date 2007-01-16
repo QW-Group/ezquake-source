@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.17 2007-01-15 21:15:08 cokeman1982 Exp $
+		$Id: menu_demo.c,v 1.18 2007-01-16 01:54:09 qqshka Exp $
 
 */
 
@@ -54,8 +54,8 @@ typedef enum
 
 typedef struct demo_playlist_s
 {
-	char name[_MAX_PATH];
-	char path[_MAX_PATH];
+	char name[MAX_PATH];
+	char path[MAX_PATH];
 	char trackname[DEMO_PLAYLIST_NAME_MAX];
 } demo_playlist_t;
 

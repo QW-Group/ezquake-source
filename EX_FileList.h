@@ -53,7 +53,7 @@ typedef struct filedesc_s
 	qbool			is_zip;
 	#endif
     
-	char            name[_MAX_PATH+1];
+	char            name[MAX_PATH+1];
     char            display[MAX_PATH+1];
     unsigned long   size;
     SYSTEMTIME      time;
@@ -66,8 +66,8 @@ filedesc_t;
 //
 typedef struct filelist_s
 {
-    char			current_dir[_MAX_PATH+1];
-	char			current_zip[_MAX_PATH+1];
+    char			current_dir[MAX_PATH+1];
+	char			current_zip[MAX_PATH+1];
 	qbool			in_zip;
     qbool			error;          // error reading dir
     qbool			need_refresh;   // dir is reread in draw func
@@ -108,7 +108,7 @@ typedef struct filelist_s
 	qbool			delete_mode;	// are we deleting a file?
 
     // for cd ..
-    char            cdup_name[_MAX_PATH+1];
+    char            cdup_name[MAX_PATH+1];
     qbool			cdup_find;
 }
 filelist_t;

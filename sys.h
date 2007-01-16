@@ -36,10 +36,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #else
 #define DWORD unsigned int
 #define WINAPI
-#define _MAX_PATH 1024
-	#ifndef MAX_PATH
-		#define MAX_PATH (_MAX_PATH)
-	#endif
+#ifndef MAX_PATH
+	#define MAX_PATH (1024)
+#endif
 #define _MAX_FNAME 1024
 #define _MAX_EXT 64
 #define _MAX_DIR 1024

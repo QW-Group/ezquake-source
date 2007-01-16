@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.57 2007-01-15 21:21:06 cokeman1982 Exp $
+	$Id: cl_demo.c,v 1.58 2007-01-16 01:54:09 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -797,7 +797,7 @@ readit:
 //=============================================================================
 
 static char demoname[2 * MAX_OSPATH];
-static char fulldemoname[_MAX_PATH];
+static char fulldemoname[MAX_PATH];
 static qbool autorecording = false;
 static qbool easyrecording = false;
 
@@ -1321,7 +1321,7 @@ static void PlayQWZDemo (void) {
 	extern cvar_t qizmo_dir;
 	STARTUPINFO si;
 	PROCESS_INFORMATION	pi;
-	char *name, qwz_name[_MAX_PATH], cmdline[512], *p;
+	char *name, qwz_name[MAX_PATH], cmdline[512], *p;
 
 	if (hQizmoProcess) {
 		Com_Printf ("Cannot unpack -- Qizmo still running!\n");
