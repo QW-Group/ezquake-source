@@ -1,4 +1,4 @@
-//    $Id: Ctrl.c,v 1.7 2007-01-12 12:45:58 johnnycz Exp $
+//    $Id: Ctrl.c,v 1.8 2007-01-16 23:24:13 johnnycz Exp $
 
 #include "quakedef.h"
 
@@ -87,4 +87,13 @@ void UI_MakeLine2(char *buf, int w)
 	memset(buf+1, '\x81', w-2);
 	buf[w-1] = '\x82';
 	buf[w] = 0;
+}
+
+void UI_DrawGrayBox(int x, int y, int w, int h)
+{	// ridiculous function, eh?
+#ifdef GLQUAKE
+					Draw_AlphaFillRGB(x, y, w, 8, 0, 0, 0, 0.5);
+#else
+					Draw_FadeBox(x, y, w, 8, 0, 1);
+#endif
 }
