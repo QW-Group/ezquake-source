@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.23 2007-01-15 00:20:27 cokeman1982 Exp $
+	$Id: EX_browser.c,v 1.24 2007-01-16 23:25:00 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -15,6 +15,8 @@
 #include "Ctrl_EditBox.h"
 #include "EX_misc.h"
 #include "EX_FunNames.h"
+#include "settings.h"
+#include "settings_page.h"
 
 
 int source_unique = 0;
@@ -87,6 +89,12 @@ cvar_t  sb_showcounters    = {"sb_showcounters",    "1"};
 cvar_t  sb_mastercache     = {"sb_mastercache",     "1"};
 cvar_t  sb_starttab        = {"sb_starttab",     "1"};
 cvar_t  sb_autoupdate      = {"sb_autoupdate",     "1"};
+
+settings_page sbsettings;
+setting sbsettings_arr[] = {
+	ADDSET_SEPARATOR("Filters"),
+	ADDSET_BOOL		("Show Ping", sb_showping)
+};
 
 // servers table
 server_data *servers[MAX_SERVERS];
@@ -898,6 +906,11 @@ void Servers_Draw (int x, int y, int w, int h)
             if (servnum >= serversn_passed)
                 break;
 
+			if (servnum==Servers_pos) {
+				UI_DrawGrayBox(x, y+8*(i+1), w, 8);
+				UI_DrawCharacter(x + 8*pos, y+8*(i+1), FLASHINGARROW());
+			}
+
             // Display server
             pos = w/8;
             memset(line, ' ', 1000);
@@ -944,8 +957,6 @@ void Servers_Draw (int x, int y, int w, int h)
             line[w/8] = 0;
             UI_Print_Center(x, y+8*(i+1), w, line, servnum==Servers_pos);
 */
-            if (servnum==Servers_pos)
-                UI_Print(x + 8*pos, y+8*(i+1), "\x8d", false);
             strncpy(line, name, pos);
             line[pos] = 0;
             UI_Print(x, y+8*(i+1), line, servnum==Servers_pos);
@@ -971,86 +982,7 @@ void Servers_Draw (int x, int y, int w, int h)
 
 void Options_Draw(int x, int y, int w, int h)
 {
-    char buf[200];
-
-    // filters
-    UI_Print_Center(x+8, y +  4, w/2, "Filters:", true);
-
-    UI_Print_Center(x+8, y + 16, w/2, "hide empty", (int)sb_hideempty.value);
-    UI_Print_Center(x+8, y + 24, w/2, "hide not empty", (int)sb_hidenotempty.value);
-    UI_Print_Center(x+8, y + 32, w/2, "hide full", (int)sb_hidefull.value);
-    UI_Print_Center(x+8, y + 40, w/2, "hide dead", (int)sb_hidedead.value);
-
-    if (Options_pos < 4)
-        UI_DrawCharacter(x+8 + w/4 - (int)((8.5)*8), y + 16 + Options_pos*8, 141);
-
-    // knyft
-    UI_Print_Center(x+8, y+56, w/2, "show counters", (int)sb_showcounters.value);
-    if (Options_pos == 4)
-        UI_DrawCharacter(x+8 + w/4 - (int)((8.5)*8), y + 56, 141);
-
-
-    // coluns
-    UI_Print_Center(x+w/2, y +  4, w/2, "Columns:", true);
-
-    UI_Print_Center(x+w/2, y + 16, w/2, "address", (int)sb_showaddress.value);
-    UI_Print_Center(x+w/2, y + 24, w/2, "ping", (int)sb_showping.value);
-    UI_Print_Center(x+w/2, y + 32, w/2, "gamedir", (int)sb_showgamedir.value);
-    UI_Print_Center(x+w/2, y + 40, w/2, "map", (int)sb_showmap.value);
-    UI_Print_Center(x+w/2, y + 48, w/2, "players", (int)sb_showplayers.value);
-    UI_Print_Center(x+w/2, y + 56, w/2, "fraglimit", (int)sb_showfraglimit.value);
-    UI_Print_Center(x+w/2, y + 64, w/2, "timelimit", (int)sb_showtimelimit.value);
-
-    if (Options_pos >= 5  &&  Options_pos <= 11)
-        UI_DrawCharacter(x + 3*w/4 - 6*8, y + 16 + (Options_pos-5)*8, 141);
-
-    UI_Print_Center(x, y + 80, w, "Network Options:", true);
-
-    UI_Print(x + w/2 - 100, y +  92, "ping timeout         ", false);
-    UI_Print(x + w/2 - 100, y + 100, "number of pings      ", false);
-    UI_Print(x + w/2 - 100, y + 108, "pings per sec        ", false);
-
-    UI_Print(x + w/2 - 100, y + 120, "serverinfo timeout   ", false);
-    UI_Print(x + w/2 - 100, y + 128, "serverinfo retries   ", false);
-    UI_Print(x + w/2 - 100, y + 136, "serverinfos per sec  ", false);
-
-    UI_Print(x + w/2 - 100, y + 148, "master server timeout", false);
-    UI_Print(x + w/2 - 100, y + 156, "master server retries", false);
-
-    UI_Print(x + w/2 - 100, y + 168, "use proxy server     ", false);
-
-    sprintf(buf, "%d", (int)(sb_pingtimeout.value));
-    UI_Print(x + w/2 - 100 + 23*8, y +  92,  buf, false);
-    sprintf(buf, "%d", (int)(sb_pings.value));
-    UI_Print(x + w/2 - 100 + 23*8, y + 100,  buf, false);
-    sprintf(buf, "%d", (int)(sb_pingspersec.value));
-    UI_Print(x + w/2 - 100 + 23*8, y + 108,  buf, false);
-
-    if (Options_pos >= 12  &&  Options_pos <= 14)
-        UI_DrawCharacter(x + w/2 - 104 + 22*8, y + 92 + (Options_pos - 12)*8, 141);
-
-    sprintf(buf, "%d", (int)(sb_infotimeout.value));
-    UI_Print(x + w/2 - 100 + 23*8, y + 120,  buf, false);
-    sprintf(buf, "%d", (int)(sb_inforetries.value));
-    UI_Print(x + w/2 - 100 + 23*8, y + 128,  buf, false);
-    sprintf(buf, "%d", (int)(sb_infospersec.value));
-    UI_Print(x + w/2 - 100 + 23*8, y + 136,  buf, false);
-
-    if (Options_pos >= 15  &&  Options_pos <= 17)
-        UI_DrawCharacter(x + w/2 - 104 + 22*8, y + 120 + (Options_pos - 15)*8, 141);
-
-    sprintf(buf, "%d", (int)(sb_mastertimeout.value));
-    UI_Print(x + w/2 - 100 + 23*8, y + 148,  buf, false);
-    sprintf(buf, "%d", (int)(sb_masterretries.value));
-    UI_Print(x + w/2 - 100 + 23*8, y + 156,  buf, false);
-
-    if (Options_pos >= 18  &&  Options_pos <= 19)
-        UI_DrawCharacter(x + w/2 - 104 + 22*8, y + 148 + (Options_pos - 18)*8, 141);
-
-    UI_Print(x + w/2 - 100 + 23*8, y + 168, cl_useproxy.value ? "on" : "off", false);
-
-    if (Options_pos == 20)
-        UI_DrawCharacter(x + w/2 - 104 + 22*8, y + 168, 141);
+	Settings_Draw(x, y, w, h, &sbsettings);
 }
 
 void Serverinfo_Draw ()
@@ -1687,6 +1619,8 @@ void Browser_Init(void)
     Cvar_Register(&sb_starttab);
 	Cvar_Register(&sb_autoupdate);
 	Cvar_ResetCurrentGroup();
+
+	Settings_Page_Init(sbsettings, sbsettings_arr);
 
 //    Cmd_AddCommand("menu_serverbrowser", M_ServerBrowser_f);
     Cmd_AddCommand("addserver", AddServer_f);
@@ -2614,102 +2548,7 @@ void Players_Key(int key)
 
 void Options_Key(int key)
 {
-    int d;
-
-    switch (key)
-    {
-        case K_UPARROW:
-		case K_MWHEELUP:
-            Options_pos--; break;
-        case K_DOWNARROW:
-		case K_MWHEELDOWN:
-            Options_pos++; break;
-        case K_HOME:
-            Options_pos = 0; break;
-        case K_END:
-            Options_pos = 20; break;
-        case K_PGUP:
-            if (Options_pos >= 12)
-                Options_pos = 5;
-            else if (Options_pos >= 5)
-                Options_pos = 0;
-            break;
-        case K_PGDN:
-            if (Options_pos < 5)
-                Options_pos = 5;
-            else if (Options_pos < 12)
-                Options_pos = 12;
-            break;
-        case K_ENTER:
-            switch (Options_pos)
-            {
-            case 0: // filter empty
-                cvar_toggle(&sb_hideempty); break;
-            case 1: // filter not empty
-                cvar_toggle(&sb_hidenotempty); break;
-            case 2: // filter full
-                cvar_toggle(&sb_hidefull); break;
-            case 3: // filter dead
-                cvar_toggle(&sb_hidedead); break;
-            case 4: // show counters
-                cvar_toggle(&sb_showcounters); break;
-            case 5: // show address
-                cvar_toggle(&sb_showaddress); break;
-            case 6: // show ping
-                cvar_toggle(&sb_showping); break;
-            case 7: // show gamedir
-                cvar_toggle(&sb_showgamedir); break;
-            case 8: // show map
-                cvar_toggle(&sb_showmap); break;
-            case 9: // show address
-                cvar_toggle(&sb_showplayers); break;
-            case 10: // show address
-                cvar_toggle(&sb_showfraglimit); break;
-            case 11: // show address
-                cvar_toggle(&sb_showtimelimit); break;
-            case 20: // use proxy
-				if (cl_useproxy.value == 1) {
-                    Cvar_SetValue(&cl_useproxy, 0); break;
-				}
-				else {
-					Cvar_SetValue(&cl_useproxy, 1); break;
-				}
-            }
-            if (Options_pos >= 0  &&  Options_pos <= 3)
-                resort_servers = 1;
-            break;
-        case '-':
-        case '+':
-        case '=':
-            d = (key == '-' ? -1 : 1);
-            switch (Options_pos)
-            {
-            case 12: // ping timeout
-                Cvar2_Set(&sb_pingtimeout, min(max((int)(sb_pingtimeout.value) +50*d, 50), 5000)); break;
-            case 13: // number of pings
-                Cvar2_Set(&sb_pings, min(max((int)(sb_pings.value) +1*d, 1), 20)); break;
-            case 14: // pings per sec
-                Cvar2_Set(&sb_pingspersec, min(max((int)(sb_pingspersec.value) +10*d, 10), 1000)); break;
-
-            case 15: // info timeout
-                Cvar2_Set(&sb_infotimeout, min(max((int)(sb_infotimeout.value) +50*d, 50), 5000)); break;
-            case 16: // info retries
-                Cvar2_Set(&sb_inforetries, min(max((int)(sb_inforetries.value) +1*d, 1), 20)); break;
-            case 17: // infos per sec
-                Cvar2_Set(&sb_infospersec, min(max((int)(sb_infospersec.value) +10*d, 10), 1000)); break;
-
-            case 18: // master timeout
-                Cvar2_Set(&sb_mastertimeout, min(max((int)(sb_mastertimeout.value) +50*d, 50), 5000)); break;
-            case 19: // master retries
-                Cvar2_Set(&sb_masterretries, min(max((int)(sb_masterretries.value) +1*d, 1), 20)); break;
-            }
-            break;
-        default:
-            ;
-    }
-
-    Options_pos = max(Options_pos, 0);
-    Options_pos = min(Options_pos, 20);
+	Settings_Key(&sbsettings, key);
 }
 
 
