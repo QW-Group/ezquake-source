@@ -1,4 +1,4 @@
-//    $Id: Ctrl.h,v 1.5 2007-01-12 12:45:58 johnnycz Exp $
+//    $Id: Ctrl.h,v 1.6 2007-01-16 23:24:13 johnnycz Exp $
 
 #ifndef __CTRL_H__
 #define __CTRL_H__
@@ -13,5 +13,6 @@ void UI_Print_Center3 (int cx, int cy, int w, char *str, clrinfo_t *clr, int clr
 void UI_DrawTextBox (int x, int y, int width, int lines);
 void UI_MakeLine(char *buf, int w);
 void UI_MakeLine2(char *buf, int w);
+void UI_DrawGrayBox(int x, int y, int w, int h);
 
 #endif // __CTRL_H__
