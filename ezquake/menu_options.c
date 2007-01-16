@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.19 2007-01-15 19:52:57 disconn3ct Exp $
+		$Id: menu_options.c,v 1.20 2007-01-16 15:13:49 johnnycz Exp $
 
 */
 
@@ -162,7 +162,8 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, scr_clock, scr_gameclock, show_fps, rate, cl_c2sImpulseBackup,
 	name, team, skin, topcolor, bottomcolor, cl_teamtopcolor, cl_teambottomcolor, cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
 	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename,
-	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz
+	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz,
+	ruleset
 ;
 #ifdef _WIN32
 extern cvar_t demo_format, sys_highpriority;
@@ -221,6 +222,14 @@ void SoundqualityToggle(qbool back) {
 	default: Cvar_SetValue(&s_khz, 11); break;
 	}
 }
+const char* RulesetRead(void) {
+	return ruleset.string;
+}
+void RulesetToggle(qbool back) {
+	if (!strcmp(ruleset.string, "default")) Cvar_Set(&ruleset, "smackdown");
+	else if (!strcmp(ruleset.string, "smackdown")) Cvar_Set(&ruleset, "mtfl");
+	else if (!strcmp(ruleset.string, "mtfl")) Cvar_Set(&ruleset, "default");
+}
 
 void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
@@ -229,14 +238,14 @@ setting settgeneral_arr[] = {
 	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f),
 	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f),
 	ADDSET_ACTION	("Default Config", DefaultConfig),
+#ifdef _WIN32
+	ADDSET_NUMBER	("Process Priority", sys_highpriority, -1, 1, 1),
+#endif
 	ADDSET_SEPARATOR("Video"),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
 	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
 	ADDSET_NUMBER	("Field of View", scr_fov, 40, 140, 2),
-#ifdef _WIN32
-	ADDSET_NUMBER	("Process Priority", sys_highpriority, -1, 1, 1),
-#endif
 	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle),
 	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
 	ADDSET_SEPARATOR("Sound"),
@@ -386,6 +395,7 @@ setting settplayer_arr[] = {
 	ADDSET_STRING	("Skin", skin),
 	ADDSET_COLOR	("Shirt Color", topcolor),
 	ADDSET_COLOR	("Pants Color", bottomcolor),
+	ADDSET_CUSTOM	("Ruleset", RulesetRead, RulesetToggle),
 	ADDSET_SEPARATOR("Teammates"),
 	ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
 	ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
