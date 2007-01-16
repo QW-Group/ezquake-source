@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.10 2007-01-15 00:20:49 cokeman1982 Exp $
+		$Id: settings_page.c,v 1.11 2007-01-16 21:46:54 johnnycz Exp $
 
 */
 
@@ -33,8 +33,7 @@ static int Setting_PrintLabel(int x, int y, int w, const char *l, qbool active)
 	int startpos = x + w/2 - min(strlen(l), w/2)*LETW;
 	UI_Print(startpos, y, l, (int) active);
 	x = w/2 + x;
-	if (active)
-		UI_DrawCharacter(x, y, FLASHINGARROW());
+	// if (active) UI_DrawCharacter(x, y, FLASHINGARROW());
 	return x + LETW*2;
 }
 
@@ -209,7 +208,7 @@ qbool Settings_Key(settings_page* tab, int key)
 		default: Setting_Increase(tab->settings + tab->marked);	return true;
 		}
 
-	case K_ENTER:
+	case K_ENTER: case K_MOUSE1:
 		switch (type) {
 		case stt_string: StringEntryLeave(tab->settings + tab->marked);
 		default: Setting_Increase(tab->settings + tab->marked);
@@ -254,7 +253,13 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 	{
 		active = i == tab->marked;
 		set = tab->settings + i;
-
+		if (active && set->type != stt_separator) {
+#ifdef GLQUAKE
+			Draw_AlphaFillRGB(x, y, w, STHeight(tab->settings[i].type), 0, 0, 0, 0.5);
+#else
+			Draw_FadeBox(x, y, w, STHeight(tab->settings[i].type), 0, 1);
+#endif
+		}
 		switch (set->type) {
 			case stt_bool: if (set->cvar) Setting_DrawBool(x, y, w, set, active); break;
 			case stt_custom: Setting_DrawBoolAdv(x, y, w, set, active); break;
