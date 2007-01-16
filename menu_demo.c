@@ -16,11 +16,13 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.18 2007-01-16 01:54:09 qqshka Exp $
+		$Id: menu_demo.c,v 1.19 2007-01-16 23:25:52 johnnycz Exp $
 
 */
 
 #include "quakedef.h"
+#include "settings.h"
+#include "settings_page.h"
 
 #ifdef _WIN32
 #define    DEMO_TIME    FILETIME
@@ -103,6 +105,14 @@ qbool demo_playlist_started = false;
 
 cvar_t    demo_playlist_loop = {"demo_playlist_loop","0"};
 cvar_t    demo_playlist_track_name = {"demo_playlist_track_name",""};
+
+// demo playlist options
+settings_page demoplsett;
+setting demoplsett_arr[] = {
+	ADDSET_SEPARATOR("playlist options"),
+	ADDSET_BOOL("looping", demo_playlist_loop),
+	ADDSET_STRING("default track", demo_playlist_track_name)
+};
 
 static int demo_playlist_base = 0;
 static int demo_playlist_current_played = 0;
@@ -355,8 +365,9 @@ void CT_Demo_Playlist_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *
 	if(demo_playlist_num == 0)
 	{
 		UI_Print_Center(x, y + 16, w, "Playlist is empty", false);
-		UI_Print_Center(x, y + 32, w, "Use [Insert] or [Ctrl]+[Enter] in the demo browser", true);
-		UI_Print_Center(x, y + 40, w, "to add demo to the playlist", true);
+		UI_Print_Center(x, y + 32, w, "Use [Insert] or [Ctrl]+[Enter]", true);
+		UI_Print_Center(x, y + 40, w, "in the demo browser to add a demo", true);
+		// UI_Print_Center(x, y + 40, w, "to add demo to the playlist", true);
 	}
 	else
 	{
@@ -425,17 +436,7 @@ void CT_Demo_Entry_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pag
 
 void CT_Demo_Options_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 {
-	M_Print (16, y,  "Loop playlist");
-	M_DrawCheckbox (220, y, demo_playlist_loop.value > 0);
-
-	M_Print (16, 16+y, "Default track");
-	M_DrawTextBox (160, 8+y, 16, 1);
-	M_PrintWhite (168, 16+y, default_track);
-
-	if (demo_options_cursor == 1)
-		M_DrawCharacter (168 + 8*strlen(default_track), y + 16, FLASHINGCURSOR());
-
-	M_DrawCharacter (8, y + demo_options_cursor * 16, FLASHINGARROW());
+	Settings_Draw(x, y, w, h, &demoplsett); 
 }
 
 // in the end leads calls one of the four functions above
@@ -766,66 +767,7 @@ int CT_Demo_Entry_Key(int key, CTab_t *tab, CTabPage_t *page)
 
 int CT_Demo_Options_Key(int key, CTab_t *tab, CTabPage_t *page)
 {
-	int l;
-
-	switch (key)
-	{
-		case K_LEFTARROW: return false;
-		case K_RIGHTARROW: return false;
-		case K_UPARROW:
-		case K_MWHEELUP:
-		{
-			demo_options_cursor = demo_options_cursor ? demo_options_cursor - 1 : DEMO_OPTIONS_MAX - 1;
-			Demo_Playlist_Setup_f();
-			break;
-		}
-		case K_DOWNARROW:
-		case K_MWHEELDOWN:
-		{
-			demo_options_cursor = (demo_options_cursor + 1) % DEMO_OPTIONS_MAX;
-			Demo_Playlist_Setup_f();
-			break;
-		}
-		case K_ENTER:
-		{
-			Cvar_SetValue (&demo_playlist_loop, !demo_playlist_loop.value);
-			break;
-		}
-		case K_BACKSPACE:
-		{
-			if (demo_options_cursor == 1)
-			{
-				if (strlen(default_track))
-					default_track[strlen(default_track)-1] = 0;
-				Cvar_Set(&demo_playlist_track_name, default_track);
-			}
-			break;
-		}
-		default:
-		{
-			if (key < 32 || key > 127)
-				return false;
-
-			if (demo_options_cursor == 1)
-			{
-				l = strlen(default_track);
-
-				if (l < sizeof(default_track)-1)
-				{
-					default_track[l+1] = 0;
-					default_track[l] = key;
-					Cvar_Set(&demo_playlist_track_name, default_track);
-				}
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-	}
-
-	return true;
+	return Settings_Key(&demoplsett, key);
 }
 
 // will lead to call of one of the 4 functions above
@@ -906,6 +848,8 @@ void Menu_Demo_Init(void)
 	#ifdef WITH_ZIP
 	FL_AddFileType(&demo_filelist, 4, ".zip");
 	#endif
+
+	Settings_Page_Init(demoplsett, demoplsett_arr);
 
 	// initialize tab control
     CTab_Init(&demo_tab);
