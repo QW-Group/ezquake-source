@@ -175,11 +175,13 @@ int CTab_Key(CTab_t *tab, int key)
             switch (key)
             {
 			case K_PGUP:
+			case K_MOUSE4:
                 tab->activePage--;
                 handled = true;
                 break;
 
 			case K_PGDN:
+			case K_MOUSE5:
                 tab->activePage++;
                 handled = true;
                 break;

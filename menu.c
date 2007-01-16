@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.61 2007-01-15 00:18:39 cokeman1982 Exp $
+	$Id: menu.c,v 1.62 2007-01-16 21:46:54 johnnycz Exp $
 
 */
 
@@ -293,6 +293,7 @@ void M_Main_Key (int key) {
 	extern cvar_t cl_confirmquit;
 	switch (key) {
 	case K_ESCAPE:
+	case K_MOUSE2:
 		key_dest = key_game;
 		m_state = m_none;
 		break;
@@ -324,6 +325,7 @@ void M_Main_Key (int key) {
 		break;
 
 	case K_ENTER:
+	case K_MOUSE1:
 		m_entersound = true;
 
 		switch (m_main_cursor) {

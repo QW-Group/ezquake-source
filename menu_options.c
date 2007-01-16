@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.22 2007-01-16 21:26:00 himan Exp $
+		$Id: menu_options.c,v 1.23 2007-01-16 21:46:54 johnnycz Exp $
 
 */
 
@@ -839,7 +839,7 @@ void Menu_Options_Key(int key, int unichar) {
     int handled = CTab_Key(&options_tab, key);
 	options_unichar = unichar;
 
-    if (!handled && (key == K_ESCAPE))
+	if (!handled && (key == K_ESCAPE || key == K_MOUSE2))
 		M_Menu_Main_f();
 }
 
