@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.12 2007-01-16 22:01:46 johnnycz Exp $
+		$Id: settings_page.c,v 1.13 2007-01-16 22:10:51 johnnycz Exp $
 
 */
 
@@ -153,21 +153,17 @@ static void CheckViewpoint(settings_page *tab, int h)
 
 static void CheckCursor(settings_page *tab, qbool up)
 {
-	qbool changed = false;
 	while (tab->marked < 0) { 
 		tab->marked = 0;
 		up = false;
-		CheckCursor(tab, up);
 	}
 	if (tab->marked >= tab->count) {
 		tab->marked = tab->count - 1;
 		up = true;
-		CheckCursor(tab, up);
 	}
-
 	if (tab->settings[tab->marked].type == stt_separator) {
 		tab->marked += up ? -1 : +1;
-		CheckCursor(tab, up); // this may actually make the stack overflow if the menu contains only stt_separator entries
+		CheckCursor(tab, up);
 	}
 }
 
@@ -294,6 +290,7 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 {
 	int i;
 	int curtop = 0;
+	qbool onlyseparators = true;
 
 	page->count = size;
 	page->marked = 0;
@@ -303,11 +300,17 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 	for (i = 0; i < size; i++) {
 		arr[i].top = curtop;
 		curtop += STHeight(arr[i].type);
+		if (arr[i].type != stt_separator) onlyseparators = false;
 		if (arr[i].varname && !arr[i].cvar && arr[i].type == stt_bool) {
 			arr[i].cvar = Cvar_FindVar(arr[i].varname);
 			arr[i].varname = NULL;
 			if (!arr[i].cvar)
 				Cbuf_AddText(va("Warning: variable %s not found\n", arr[i].varname));
 		}
+	}
+
+	if (onlyseparators) {
+		Cbuf_AddText("Warning (Settings_Init): menu %s contained only separators\n");
+		page->count = 0;
 	}
 }
