@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.20 2007-01-16 15:13:49 johnnycz Exp $
+		$Id: menu_options.c,v 1.21 2007-01-16 15:31:40 johnnycz Exp $
 
 */
 
@@ -772,7 +772,12 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("Light mode", gl_lightmode, 0, 2, 1),
 	ADDSET_BOOL		("Particle Shaft", amf_lightning),
 #endif
-	ADDSET_BOOL		("View Weapon", cl_drawgun),
+	ADDSET_SEPARATOR("Weapon Model"),
+#ifdef GLQUAKE
+	ADDSET_NUMBER	("Opacity", cl_drawgun, 0, 1, 0.05),
+#else
+	ADDSET_BOOL		("Show", cl_drawgun),
+#endif
 	ADDSET_NUMBER	("Size", r_viewmodelsize, 0.1, 1, 0.05),
 	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 1),
 #ifdef GLQUAKE
@@ -790,7 +795,7 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("Kick Pitch", v_kickpitch, 0, 10, 0.5),
 	ADDSET_NUMBER	("Kick Roll", v_kickroll, 0, 10, 0.5),
 	ADDSET_NUMBER	("Kick Time", v_kicktime, 0, 10, 0.5),
-	ADDSET_NUMBER	("View Height", v_viewheight, -7, 7, 0.5),
+	ADDSET_NUMBER	("View Height", v_viewheight, -7, 6, 0.5),
 #endif
 };
 
