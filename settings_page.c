@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.11 2007-01-16 21:46:54 johnnycz Exp $
+		$Id: settings_page.c,v 1.12 2007-01-16 22:01:46 johnnycz Exp $
 
 */
 
@@ -140,6 +140,8 @@ static void Setting_Decrease(setting* set) {
 
 static void CheckViewpoint(settings_page *tab, int h)
 {
+	if (tab->marked == 1 && tab->settings[0].type == stt_separator) tab->viewpoint = 0;
+
 	if (tab->viewpoint > tab->marked) { 
 	// marked entry is above us
 		tab->viewpoint = tab->marked;
@@ -151,17 +153,21 @@ static void CheckViewpoint(settings_page *tab, int h)
 
 static void CheckCursor(settings_page *tab, qbool up)
 {
-	while (tab->marked < 0) tab->marked += tab->count;
-	tab->marked = tab->marked % tab->count;
+	qbool changed = false;
+	while (tab->marked < 0) { 
+		tab->marked = 0;
+		up = false;
+		CheckCursor(tab, up);
+	}
+	if (tab->marked >= tab->count) {
+		tab->marked = tab->count - 1;
+		up = true;
+		CheckCursor(tab, up);
+	}
 
 	if (tab->settings[tab->marked].type == stt_separator) {
-		if (up) {
-			if (tab->marked == 0)
-				tab->marked = tab->count - 1;
-			else
-				tab->marked--;
-		} else tab->marked++;
-		CheckCursor(tab, up);
+		tab->marked += up ? -1 : +1;
+		CheckCursor(tab, up); // this may actually make the stack overflow if the menu contains only stt_separator entries
 	}
 }
 
