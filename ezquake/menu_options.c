@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.21 2007-01-16 15:31:40 johnnycz Exp $
+		$Id: menu_options.c,v 1.22 2007-01-16 21:26:00 himan Exp $
 
 */
 
@@ -231,6 +231,8 @@ void RulesetToggle(qbool back) {
 	else if (!strcmp(ruleset.string, "mtfl")) Cvar_Set(&ruleset, "default");
 }
 
+// START contents of Menu-> Options-> Main tab
+
 void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
 setting settgeneral_arr[] = {
@@ -253,14 +255,14 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
 	ADDSET_CUSTOM	("Quality", SoundqualityRead, SoundqualityToggle),
 	ADDSET_SEPARATOR("Controls"),
+	ADDSET_BOOL		("Mouse Look", freelook),
 	ADDSET_NUMBER	("Mouse Speed", sensitivity, 1, 15, 0.25),
-	ADDSET_NUMBER	("M. Acceleration", m_accel, 0, 1, 0.1),
+	ADDSET_NUMBER	("Mouse Accel.", m_accel, 0, 1, 0.1),
 	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle),
 	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle),
 	ADDSET_BOOL		("Gun Preselect", cl_weaponpreselect),
 	ADDSET_BOOL		("Gun Auto hide", cl_weaponhide),
 	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle),
-	ADDSET_BOOL		("Mouse Look", freelook),
 	ADDSET_BOOL		("Smart Jump", cl_smartjump),
 	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
 	ADDSET_SEPARATOR("Connection"),
@@ -271,11 +273,11 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
 	ADDSET_BOOL		("Ignore Spectators", ignore_spec),
 	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
-	ADDSET_BOOL		("Own Volume Levels", cl_chatsound),
-	ADDSET_NUMBER	("General", con_sound_mm1_volume, 0, 1, 0.1),
-	ADDSET_NUMBER	("Team Chat", con_sound_mm2_volume, 0, 1, 0.1),
-	ADDSET_NUMBER	("Spectators", con_sound_spec_volume, 0, 1, 0.1),
-	ADDSET_NUMBER	("Others", con_sound_other_volume, 0, 1, 0.1),
+	ADDSET_BOOL		("Self Volume Levels", cl_chatsound),
+	ADDSET_NUMBER	("General Volume", con_sound_mm1_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Team Chat Volume", con_sound_mm2_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Spectator Volume", con_sound_spec_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Other Volume", con_sound_other_volume, 0, 1, 0.1),
 	ADDSET_SEPARATOR("Match Tools"),
 	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
 	ADDSET_NAMED	("Auto Record", match_auto_record, autorecord_enum),
@@ -736,6 +738,8 @@ void TexturesqualityToggle(qbool back) {
 }
 #endif
 
+// START contents of Menu -> Options -> Graphics tab
+
 setting settfps_arr[] = {
 	ADDSET_SEPARATOR("Presets"),
 	ADDSET_ACTION	("Load Fast Preset", LoadFastPreset),
@@ -746,6 +750,7 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Damage Flash", v_damagecshift),
 	ADDSET_BOOL		("Pickup Flashes", v_bonusflash),
 	ADDSET_SEPARATOR("Environment"),
+	ADDSET_NUMBER	("Draw Distance", r_farclip, 4096, 8192, 4096),
 	ADDSET_BOOL		("Simple Sky", r_fastsky),
 	ADDSET_BOOL		("Simple walls", r_drawflat),
 	ADDSET_BOOL		("Simple turbs", r_fastturb), 
