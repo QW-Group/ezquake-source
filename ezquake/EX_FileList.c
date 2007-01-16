@@ -82,9 +82,7 @@ void FL_Init(filelist_t	*	fl,
 #endif
 			 char *			 initdir)
 {
-	char tempval[256];
-
-    Sys_getcwd(fl->current_dir, _MAX_PATH);
+    Sys_getcwd(fl->current_dir, MAX_PATH);
 	FL_SetCurrentDir(fl, initdir);
     fl->error = false;
     fl->need_refresh = true;
@@ -123,12 +121,12 @@ void FL_Init(filelist_t	*	fl,
 //
 void FL_SetCurrentDir(filelist_t *fl, const char *dir)
 {
-    char buf[_MAX_PATH+1];
+    char buf[MAX_PATH+1];
 
-    if (Sys_fullpath(buf, dir, _MAX_PATH+1) == NULL)
+    if (Sys_fullpath(buf, dir, MAX_PATH+1) == NULL)
         return;
 
-    if (strlen(buf) > _MAX_PATH)    // Should never fail in this
+    if (strlen(buf) > MAX_PATH)    // Should never fail in this
         return;
 
 	strlcpy (fl->current_dir, buf, sizeof(fl->current_dir));
@@ -425,7 +423,7 @@ int FL_CompareFunc(const void * p_d1, const void * p_d2)
 //
 void FL_SortDir(filelist_t *fl)
 {
-    char name[_MAX_PATH+1] = "";
+    char name[MAX_PATH+1] = "";
 
     if (fl->num_entries <= 0  ||
         fl->sort_mode->string == NULL  ||
@@ -620,14 +618,14 @@ void FL_ReadDir(filelist_t *fl)
     sys_dirent ent;
     unsigned long search;
     int temp;
-    char  olddir[_MAX_PATH+1];
+    char  olddir[MAX_PATH+1];
 
     fl->error = true;
     fl->need_refresh = false;
     fl->display_entry = 0;
 
 	// Save the current directory. (we want to restore this later)
-    if (Sys_getcwd(olddir, _MAX_PATH+1) == NULL)
+    if (Sys_getcwd(olddir, MAX_PATH+1) == NULL)
 	{
         return;
 	}
@@ -698,7 +696,7 @@ void FL_ReadDir(filelist_t *fl)
 			else
 			{
 				// Get full path for normal files/dirs.
-				Sys_fullpath(f->name, ent.fname, _MAX_PATH+1);
+				Sys_fullpath(f->name, ent.fname, MAX_PATH+1);
 			}
 
 			f->size = ent.size;
@@ -824,10 +822,10 @@ void FL_ChangeZip(filelist_t *fl, char *newzip)
 //
 void FL_ChangeDir(filelist_t *fl, char *newdir)
 {
-	char olddir[_MAX_PATH+1];
+	char olddir[MAX_PATH+1];
 
 	// Get the current dir from the OS and save it.
-    if (Sys_getcwd(olddir, _MAX_PATH+1) == NULL)
+    if (Sys_getcwd(olddir, MAX_PATH+1) == NULL)
 	{
 		return;
 	}
@@ -845,7 +843,7 @@ void FL_ChangeDir(filelist_t *fl, char *newdir)
 	Sys_chdir (newdir);
 
 	// Save the current dir we just changed to.
-	Sys_getcwd (fl->current_dir, _MAX_PATH+1);
+	Sys_getcwd (fl->current_dir, MAX_PATH+1);
 
 	// Go back to where the OS wants to be.
     Sys_chdir (olddir);
@@ -1050,13 +1048,13 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
     if (isAltDown()  &&  isCtrlDown()  &&
         tolower(key) >= 'a'  &&  tolower(key) <= 'z')
     {
-        char newdir[_MAX_PATH+1];
-        char olddir[_MAX_PATH+1];
+        char newdir[MAX_PATH+1];
+        char olddir[MAX_PATH+1];
 
         sprintf(newdir, "%c:\\", tolower(key));
 
         // validate
-        if (Sys_getcwd(olddir, _MAX_PATH+1) == 0)
+        if (Sys_getcwd(olddir, MAX_PATH+1) == 0)
             return true;
         if (Sys_chdir(newdir) == 0)
             return true;
