@@ -258,10 +258,10 @@ void FL_StripFileName(filelist_t *fl, filedesc_t *f)
 		{
 			extbuf[0] = '\0';
 		}
-	}
 
-	// Remove extension from the name.
-	COM_StripExtension (COM_SkipPath (f->name), namebuf);
+		// Remove extension from the name.
+		COM_StripExtension(namebuf, namebuf); 
+	}
 
     if (fl->strip_names->value && !f->is_directory)
     {
