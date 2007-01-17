@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.13 2007-01-16 22:10:51 johnnycz Exp $
+		$Id: settings_page.c,v 1.14 2007-01-17 16:53:47 johnnycz Exp $
 
 */
 
@@ -300,7 +300,10 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 	for (i = 0; i < size; i++) {
 		arr[i].top = curtop;
 		curtop += STHeight(arr[i].type);
-		if (arr[i].type != stt_separator) onlyseparators = false;
+		if (onlyseparators && arr[i].type != stt_separator) {
+			onlyseparators = false;
+			page->marked = i;
+		}
 		if (arr[i].varname && !arr[i].cvar && arr[i].type == stt_bool) {
 			arr[i].cvar = Cvar_FindVar(arr[i].varname);
 			arr[i].varname = NULL;
