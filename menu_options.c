@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.23 2007-01-16 21:46:54 johnnycz Exp $
+		$Id: menu_options.c,v 1.24 2007-01-18 00:20:43 disconn3ct Exp $
 
 */
 
@@ -750,7 +750,9 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Damage Flash", v_damagecshift),
 	ADDSET_BOOL		("Pickup Flashes", v_bonusflash),
 	ADDSET_SEPARATOR("Environment"),
+#ifdef GLQUAKE
 	ADDSET_NUMBER	("Draw Distance", r_farclip, 4096, 8192, 4096),
+#endif
 	ADDSET_BOOL		("Simple Sky", r_fastsky),
 	ADDSET_BOOL		("Simple walls", r_drawflat),
 	ADDSET_BOOL		("Simple turbs", r_fastturb), 
