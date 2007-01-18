@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.14 2007-01-17 16:53:47 johnnycz Exp $
+		$Id: settings_page.c,v 1.15 2007-01-18 14:42:18 qqshka Exp $
 
 */
 
@@ -256,11 +256,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 		active = i == tab->marked;
 		set = tab->settings + i;
 		if (active && set->type != stt_separator) {
-#ifdef GLQUAKE
-			Draw_AlphaFillRGB(x, y, w, STHeight(tab->settings[i].type), 0, 0, 0, 0.5);
-#else
-			Draw_FadeBox(x, y, w, STHeight(tab->settings[i].type), 0, 1);
-#endif
+			UI_DrawGrayBox(x, y, w, STHeight(tab->settings[i].type));
 		}
 		switch (set->type) {
 			case stt_bool: if (set->cvar) Setting_DrawBool(x, y, w, set, active); break;
