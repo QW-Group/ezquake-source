@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.62 2007-01-16 21:46:54 johnnycz Exp $
+	$Id: menu.c,v 1.63 2007-01-18 14:42:18 qqshka Exp $
 
 */
 
@@ -1833,12 +1833,19 @@ void M_Quit_Draw (void) {
 /* Menu Subsystem */
 
 void M_Init (void) {
+	extern cvar_t menu_marked_bgcolor;
+#ifdef GLQUAKE
+	extern cvar_t menu_marked_fade;
+#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&scr_centerMenu);
 #ifdef GLQUAKE
 	Cvar_Register (&scr_scaleMenu);
+	Cvar_Register (&menu_marked_fade);
 #endif
+
+	Cvar_Register (&menu_marked_bgcolor);
 
 	Cvar_ResetCurrentGroup();
 	Browser_Init();

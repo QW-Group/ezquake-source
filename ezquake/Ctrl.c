@@ -1,6 +1,14 @@
-//    $Id: Ctrl.c,v 1.8 2007-01-16 23:24:13 johnnycz Exp $
+//    $Id: Ctrl.c,v 1.9 2007-01-18 14:42:18 qqshka Exp $
 
 #include "quakedef.h"
+
+#ifdef GLQUAKE
+cvar_t     menu_marked_bgcolor = {"menu_marked_bgcolor", "0 0 0 128"};
+cvar_t     menu_marked_fade = {"menu_marked_fade", "4"};
+#else
+cvar_t     menu_marked_bgcolor = {"menu_marked_bgcolor", "0"};
+#endif
+
 
 #define SLIDER_RANGE 12
 
@@ -91,9 +99,20 @@ void UI_MakeLine2(char *buf, int w)
 
 void UI_DrawGrayBox(int x, int y, int w, int h)
 {	// ridiculous function, eh?
+	byte *c = StringToRGB(menu_marked_bgcolor.string);
 #ifdef GLQUAKE
-					Draw_AlphaFillRGB(x, y, w, 8, 0, 0, 0, 0.5);
+	float fade = 1;
+
+	if (menu_marked_fade.value) {
+		fade = 0.5 * (1.0 + sin(menu_marked_fade.value * Sys_DoubleTime())); // this give us sinusoid from 0 to 1
+		fade = 0.5 + (1.0 - 0.5) * fade ; // this give us sinusoid from 0.5 to 1, so no zero alpha
+		fade = bound(0, fade, 1); // guarantee sanity if we mess somewhere
+	}
+#endif
+
+#ifdef GLQUAKE
+					Draw_AlphaFillRGB(x, y, w, h, fade*c[0]/255, fade*c[1]/255, fade*c[2]/255, (float)c[3]/255);
 #else
-					Draw_FadeBox(x, y, w, 8, 0, 1);
+					Draw_FadeBox(x, y, w, h, c[0], 1);
 #endif
 }
