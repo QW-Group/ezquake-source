@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.49 2007-01-06 21:26:06 tonik Exp $
+    $Id: cmd.c,v 1.50 2007-01-19 23:53:40 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -414,7 +414,7 @@ void Cmd_Echo_f (void)
 								ALIASES
 =============================================================================
 */
-#define ALIAS_HASHPOOL_SIZE 200
+#define ALIAS_HASHPOOL_SIZE 256
 cmd_alias_t *cmd_alias_hash[ALIAS_HASHPOOL_SIZE];
 cmd_alias_t	*cmd_alias;
 
@@ -881,7 +881,7 @@ static	char	*cmd_argv[MAX_ARGS];
 static	char	*cmd_null_string = "";
 static	char	*cmd_args = NULL;
 
-#define CMD_HASHPOOL_SIZE 400
+#define CMD_HASHPOOL_SIZE 512
 cmd_function_t	*cmd_hash_array[CMD_HASHPOOL_SIZE];
 /*static*/ cmd_function_t	*cmd_functions;		// possible commands to execute
 
