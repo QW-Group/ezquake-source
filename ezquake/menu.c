@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.63 2007-01-18 14:42:18 qqshka Exp $
+	$Id: menu.c,v 1.64 2007-01-19 23:15:37 johnnycz Exp $
 
 */
 
@@ -45,7 +45,8 @@ void (*vid_menukeyfn)(int key);
 void CL_Disconnect_f(void);
 
 extern void Browser_Init(void);
-extern void Browser_Draw(int, int, int, int);
+extern void Browser_Draw(void);
+extern void Browser_Key(int);
 extern cvar_t con_shift;
 extern cvar_t sb_maxwidth, sb_maxheight;
 
@@ -1770,33 +1771,13 @@ void M_GameOptions_Key (int key) {
 
 void M_Menu_ServerList_f (void) {
 	M_EnterMenu (m_slist);
-	//    m_multip_state = 0;
 }
 
 void M_ServerList_Draw (void) {
-	int x, y, w, h;
-
-#ifdef GLQUAKE
-	// disconnect: unscale serverbrowser menu
-	if (scr_scaleMenu.value) {
-		menuwidth = vid.width;
-		menuheight = vid.height;
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity ();
-		glOrtho  (0, menuwidth, menuheight, 0, -99999, 99999);
-	}
-#endif
-
-	w = min(max(sb_maxwidth.value, 320), vid.width)   - 8;
-	h = min(max(sb_maxheight.value, 200), vid.height) - 8;
-	x = (vid.width - w) / 2;
-	y = (vid.height - h) / 2;
-
-	Browser_Draw (x, y + con_shift.value, w, h - con_shift.value);
+	Browser_Draw();
 }
 
 void M_ServerList_Key (key) {
-	extern void Browser_Key(int key);
 	Browser_Key(key);
 }
 

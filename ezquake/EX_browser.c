@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.25 2007-01-19 21:24:13 himan Exp $
+	$Id: EX_browser.c,v 1.26 2007-01-19 23:15:37 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -21,6 +21,23 @@
 
 int source_unique = 0;
 
+typedef enum
+{
+    SBPG_SERVERS,	// Servers page
+	SBPG_SOURCES,	// Sources page
+	SBPG_PLAYERS,	// Players page
+	SBPG_OPTIONS	// Options page
+}	sb_tab_t;
+CTab_t sb_tab;
+
+extern cvar_t     scr_scaleMenu;
+#ifdef GLQUAKE
+extern int        menuwidth;
+extern int        menuheight;
+#else
+#define menuwidth vid.width
+#define menuheight vid.height
+#endif
 
 extern cvar_t cl_useproxy;
 extern int connected2proxy;
@@ -60,15 +77,15 @@ cvar_t  sb_showfraglimit = {"sb_showfraglimit",    "0"};
 cvar_t  sb_showtimelimit = {"sb_showtimelimit",    "0"};
 
 cvar_t  sb_pingtimeout   = {"sb_pingtimeout",   "1000"};
-cvar_t  sb_infotimeout   = {"sb_infotimeout",   "1000"}; // ??? WHAT DOES THIS MEAN ??? not in menu
+cvar_t  sb_infotimeout   = {"sb_infotimeout",   "1000"};
 cvar_t  sb_pingspersec   = {"sb_pingspersec",    "150"}; // Pings per second
 cvar_t  sb_pings         = {"sb_pings",            "3"}; // Number of times to ping a server
-cvar_t  sb_inforetries   = {"sb_inforetries",      "3"}; // ??? WHAT DOES THIS MEAN ??? not in menu
-cvar_t  sb_infospersec   = {"sb_infospersec",    "100"}; // ??? WHAT DOES THIS MEAN ??? not in menu
+cvar_t  sb_inforetries   = {"sb_inforetries",      "3"};
+cvar_t  sb_infospersec   = {"sb_infospersec",    "100"};
 cvar_t  sb_mastertimeout = {"sb_mastertimeout", "1000"};
 cvar_t  sb_masterretries = {"sb_masterretries",    "3"};
 
-cvar_t  sb_liveupdate    = {"sb_liveupdate",       "2"}; // ??? WHAT DOES THIS MEAN ??? not in menu
+cvar_t  sb_liveupdate    = {"sb_liveupdate",       "2"};
 
 cvar_t  sb_sortservers   = {"sb_sortservers",     "32"}; // not in new menu
 cvar_t  sb_sortplayers   = {"sb_sortplayers",     "92"}; // not in new menu
@@ -76,7 +93,7 @@ cvar_t  sb_sortsources   = {"sb_sortsources",      "3"}; // not in new menu
 
 cvar_t  sb_maxwidth      = {"sb_maxwidth",       "512"}; // Max width of menu. Can we limit this to the player's resolution?
 cvar_t  sb_maxheight     = {"sb_maxheight",      "480"}; // Max height of menu. Can we limit this to the player's resolution?
-cvar_t  sb_autohide      = {"sb_autohide",         "1"}; // ??? WHAT DOES THIS DO ??? not in menu
+cvar_t  sb_autohide      = {"sb_autohide",         "1"};
 
 
 // filters
@@ -85,13 +102,18 @@ cvar_t  sb_hidenotempty  = {"sb_hidenotempty",     "0"};
 cvar_t  sb_hidefull      = {"sb_hidefull",         "0"};
 cvar_t  sb_hidedead      = {"sb_hidedead",         "1"};
 
-cvar_t  sb_sourcevalidity  = {"sb_sourcevalidity", "30"}; // ??? WHAT DOES THIS MEAN ??? not in menu
-cvar_t  sb_mastercache     = {"sb_mastercache",     "1"}; // ??? WHAT DOES THIS MEAN ??? not in menu
-cvar_t  sb_starttab        = {"sb_starttab",     "1"}; // ??? WHAT DOES THIS MEAN ??? not in menu
-cvar_t  sb_autoupdate      = {"sb_autoupdate",     "1"}; // ??? WHAT DOES THIS MEAN ??? not in menu
+cvar_t  sb_sourcevalidity  = {"sb_sourcevalidity", "30"};
+cvar_t  sb_mastercache     = {"sb_mastercache",     "1"};
+cvar_t  sb_autoupdate      = {"sb_autoupdate",     "1"};
 
 settings_page sbsettings;
 setting sbsettings_arr[] = {
+	ADDSET_SEPARATOR("Server Filters"), // todo: add resort_servers = 1 in onshow
+	ADDSET_BOOL		("Hide Empty", sb_hideempty),
+	ADDSET_BOOL		("Hide Full", sb_hidefull),
+	ADDSET_BOOL		("Hide Not Empty", sb_hidenotempty),
+	ADDSET_BOOL		("Hide Dead", sb_hidedead),
+
 	ADDSET_SEPARATOR("Display Columns"),
 	ADDSET_BOOL		("Show Ping", sb_showping),
 	ADDSET_BOOL		("Show Map", sb_showmap),
@@ -100,12 +122,6 @@ setting sbsettings_arr[] = {
 	ADDSET_BOOL		("Show Timelimit", sb_showtimelimit),
 	ADDSET_BOOL		("Show Fraglimit", sb_showfraglimit),
 	ADDSET_BOOL		("Show Server Address", sb_showaddress),
-
-	ADDSET_SEPARATOR("Server Filters"),
-	ADDSET_BOOL		("Hide Empty", sb_hideempty),
-	ADDSET_BOOL		("Hide Full", sb_hidefull),
-	ADDSET_BOOL		("Hide Not Empty", sb_hidenotempty),
-	ADDSET_BOOL		("Hide Dead", sb_hidedead),
 	ADDSET_BOOL		("Server Status", sb_status),
 
 	ADDSET_SEPARATOR("Display"),
@@ -113,10 +129,12 @@ setting sbsettings_arr[] = {
 	ADDSET_NUMBER		("Max Height", sb_maxheight, 480, 1200, 12),
 
 	ADDSET_SEPARATOR("Network Filters"),
-	ADDSET_NUMBER		("Ping Timeout", sb_pingtimeout, 50, 1000, 50),
-	ADDSET_NUMBER		("Pings Per Server", sb_pings, 1, 5, 1),
-	ADDSET_NUMBER		("Pings Per Second", sb_pingspersec, 10, 300, 10),
-	
+	ADDSET_NUMBER	("Ping Timeout", sb_pingtimeout, 50, 1000, 50),
+	ADDSET_NUMBER	("Pings Per Server", sb_pings, 1, 5, 1),
+	ADDSET_NUMBER	("Pings Per Second", sb_pingspersec, 10, 300, 10),
+	ADDSET_NUMBER	("Info Timeout", sb_infotimeout, 50, 1000, 50),
+	ADDSET_NUMBER	("Info Retries", sb_inforetries, 0, 4, 1),
+	ADDSET_NUMBER	("Infos Per Second", sb_infospersec, 10, 1000, 10)
 };
 
 // servers table
@@ -374,7 +392,6 @@ void SB_Confirmation_Key(int key)
 
 /* Menu drawing */
 
-enum {pos_servers, pos_sources, pos_players, pos_options, pos_none} Browser_pos;
     int Servers_pos;
     int Sources_pos;
     int Players_pos;
@@ -387,21 +404,21 @@ int Servers_disp;   // server# at the top of the list
 int Sources_disp;   // source# at the top of the list
 int Players_disp;   // player# at the top of the list
 
-void Browser_Draw (int x, int y, int w, int h);
+/*void Browser_Draw (void);
     void Servers_Draw (int x, int y, int w, int h);
     void Sources_Draw (int x, int y, int w, int h);
     void Players_Draw (int x, int y, int w, int h);
-    void Options_Draw (int x, int y, int w, int h);
+    void Options_Draw (int x, int y, int w, int h);*/
     void Serverinfo_Draw ();
         void Serverinfo_Players_Draw(int x, int y, int w, int h);
         void Serverinfo_Rules_Draw(int x, int y, int w, int h);
         void Serverinfo_Sources_Draw(int x, int y, int w, int h);
 
-void Browser_Key(int key);
+/*void Browser_Key(int key);
     void Servers_Key(int key);
     void Sources_Key(int key);
     void Players_Key(int key);
-    void Options_Key(int key);
+    void Options_Key(int key); */
     void Serverinfo_Key (int key);
         void Serverinfo_Players_Key(int key);
         void Serverinfo_Rules_Key(int key);
@@ -563,7 +580,7 @@ qbool AddUnboundServer(char *addr)
     key_dest = key_menu;
     m_state = m_slist;
     Mark_Source(sources[0]);
-    Browser_pos = pos_servers;
+	CTab_SetCurrentId(&sb_tab, SBPG_SERVERS);
     GetServerPing(s);
     GetServerInfo(s);
     Serverinfo_Start(s);
@@ -592,107 +609,6 @@ void AddServer_f(void)
 // drawing routines
 //
 
-void Browser_Draw (int x, int y, int w, int h)
-{
-    char buf[500];
-
-	if (Browser_pos == pos_none) switch((int) sb_starttab.value) {
-		case 1:
-			Browser_pos = pos_servers;
-			if(sb_autoupdate.value) GetServerPingsAndInfos();
-			break;
-		case 2: Browser_pos = pos_sources; break;
-		case 3: Browser_pos = pos_players; break;
-		case 4: Browser_pos = pos_options; break;
-		default: Browser_pos = pos_servers; break;
-	}
-
-    strcpy(buf, " servers sources players options ");
-    if (Browser_pos == pos_servers)
-        strncpy(buf, "\x10óåòöåòó\x11", 9);
-    if (Browser_pos == pos_sources)
-        strncpy(buf+8, "\x10óïõòãåó\x11", 9);
-    if (Browser_pos == pos_players)
-        strncpy(buf+16, "\x10ðìáùåòó\x11", 9);
-    if (Browser_pos == pos_options)
-        strncpy(buf+24, "\x10ïðôéïîó\x11", 9);
-
-    UI_Print_Center(x, y, w, buf, false);
-
-    memset(buf, '\x1E', w/8);
-    buf[w/8] = 0;
-    buf[w/8-1] = '\x1F';
-    buf[0] = '\x1D';
-    UI_Print(x, y+8, buf, false);
-
-    switch (Browser_pos)
-    {
-    case pos_servers: Servers_Draw (x, y+16, w, h-16); break;
-    case pos_sources: Sources_Draw (x, y+16, w, h-16); break;
-    case pos_players: Players_Draw (x, y+16, w, h-16); break;
-    case pos_options: Options_Draw (x, y+16, w, h-16); break;
-    default:    ; // hmm
-    }
-
-    if (show_serverinfo)
-        Serverinfo_Draw();
-
-    if (ping_phase)
-    {
-        int x, y, w, h;
-        w = 144;
-        h = 24;
-        x = (vid.width - w)/2;
-        y = (vid.height - h)/2;
-        x = (x/8) * 8;
-        y = (y/8) * 8;
-
-        Draw_TextBox (x-16, y-16, w/8+1, h/8+2);
-
-        UI_Print_Center(x, y, w,
-            ping_phase==1 ? "Pinging Servers" : "Getting Infos",
-            false);
-        if (abort_ping)
-            UI_Print_Center(x, y+16, w, "cancelled", true);
-        else
-        {
-            UI_Print(x, y+16,
-                "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82",
-                false);
-            UI_DrawCharacter(x+8+(int)(ping_pos*15*8), y+16, '\x83');
-        }
-    }
-
-    if (updating_sources)
-    {
-        int x, y, w, h;
-        w = 144;
-        h = 24;
-        x = (vid.width - w)/2;
-        y = (vid.height - h)/2;
-        x = (x/8) * 8;
-        y = (y/8) * 8;
-
-        Draw_TextBox (x-16, y-16, w/8+1, h/8+2);
-
-        UI_Print_Center(x, y, w, "Updating Sources", false);
-
-        if (abort_ping)
-            UI_Print_Center(x, y+16, w, "cancelled", true);
-        else
-        {
-            UI_Print(x, y+16,
-                "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82",
-                false);
-            UI_DrawCharacter(x+8+(int)(ping_pos*15*8), y+16, '\x83');
-        }
-    }
-
-    if (confirmation)
-        SB_Confirmation_Draw();
-}
-
-
 void Add_Column2(int x, int y, int *pos, char *t, int w, int red)
 {
     if ((*pos) - w - 1  <=  5)
@@ -713,13 +629,13 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
     line[w/8] = 0;
     line[w/8-1] = '\x1F';
     line[0] = '\x1D';
-    if (total > 0  &&  sb_showcounters.value)
+    if (total > 0)
     {
         sprintf(buf, "%d/%d", count+1, total);
         memset(line+w/8-3-strlen(buf), ' ', strlen(buf)+1);
     }
     UI_Print(x, y+h-24, line, false);
-    if (total > 0  &&  sb_showcounters.value)
+    if (total > 0)
         UI_Print(x+w-8*(3+strlen(buf))+4, y+h-24, buf, true);
 
     // line 1
@@ -850,7 +766,19 @@ void Add_Server_Draw(void)
         Draw_Character (x+59, y+50, 13);
 }
 
-void Servers_Draw (int x, int y, int w, int h)
+void Servers_OnShow(void)
+{
+	static qbool updated = false;
+
+	if(sb_autoupdate.value && !updated) {
+		GetServerPingsAndInfos();
+		updated = true;
+	}
+
+	resort_servers = 1;
+}
+
+void Servers_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 {
     char line[1000];
     int i, pos, listsize;
@@ -1003,9 +931,60 @@ void Servers_Draw (int x, int y, int w, int h)
         Add_Server_Draw();
 }
 
-void Options_Draw(int x, int y, int w, int h)
+void Options_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 {
 	Settings_Draw(x, y, w, h, &sbsettings);
+}
+
+void PingPhase_Draw(void)
+{
+    int x, y, w, h;
+    w = 144;
+    h = 24;
+    x = (vid.width - w)/2;
+    y = (vid.height - h)/2;
+    x = (x/8) * 8;
+    y = (y/8) * 8;
+
+    Draw_TextBox (x-16, y-16, w/8+1, h/8+2);
+
+    UI_Print_Center(x, y, w,
+        ping_phase==1 ? "Pinging Servers" : "Getting Infos",
+        false);
+    if (abort_ping)
+        UI_Print_Center(x, y+16, w, "cancelled", true);
+    else
+    {
+        UI_Print(x, y+16,
+            "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82",
+            false);
+        UI_DrawCharacter(x+8+(int)(ping_pos*15*8), y+16, '\x83');
+    }
+}
+
+void UpdatingSources_Draw(void)
+{
+    int x, y, w, h;
+    w = 144;
+    h = 24;
+    x = (vid.width - w)/2;
+    y = (vid.height - h)/2;
+    x = (x/8) * 8;
+    y = (y/8) * 8;
+
+    Draw_TextBox (x-16, y-16, w/8+1, h/8+2);
+
+    UI_Print_Center(x, y, w, "Updating Sources", false);
+
+    if (abort_ping)
+        UI_Print_Center(x, y+16, w, "cancelled", true);
+    else
+    {
+        UI_Print(x, y+16,
+            "\x80\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x81\x82",
+            false);
+        UI_DrawCharacter(x+8+(int)(ping_pos*15*8), y+16, '\x83');
+    }
 }
 
 void Serverinfo_Draw ()
@@ -1363,7 +1342,7 @@ void Add_Source_Draw(void)
 }
 
 
-void Sources_Draw (int x, int y, int w, int h)
+void Sources_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 {
     int i, listsize;
     char line[1000];
@@ -1474,7 +1453,7 @@ void Sources_Draw (int x, int y, int w, int h)
 }
 
 
-void Players_Draw (int x, int y, int w, int h)
+void Players_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 {
     int i, listsize;
     char line[2000];
@@ -1586,75 +1565,6 @@ void WriteSourcesConfiguration(FILE *f)
             fprintf(f, "sb_sourcemark \"%s\"\n", sources[i]->name);
 }
 
-
-//
-// init
-//
-
-void Browser_Init(void)
-{
-    int i;
-
-    Browser_pos = pos_none;
-    Servers_pos = 0;
-    Sources_pos = 0;
-    Servers_disp = 0;
-    show_serverinfo = NULL;
-    serverinfo_pos = 0;
-
-    for (i=0; i < MAX_SERVERS; i++)
-        servers[i] = NULL;
-
-    serversn = serversn_passed = 0;
-    sourcesn = 0;
-
-	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_BROWSER);
-    Cvar_Register(&sb_status);
-    Cvar_Register(&sb_showping);
-    Cvar_Register(&sb_showaddress);
-    Cvar_Register(&sb_showmap);
-    Cvar_Register(&sb_showgamedir);
-    Cvar_Register(&sb_showplayers);
-    Cvar_Register(&sb_showfraglimit);
-    Cvar_Register(&sb_showtimelimit);
-    Cvar_Register(&sb_pingtimeout);
-    Cvar_Register(&sb_infotimeout);
-    Cvar_Register(&sb_pings);
-    Cvar_Register(&sb_pingspersec);
-    Cvar_Register(&sb_inforetries);
-    Cvar_Register(&sb_infospersec);
-    Cvar_Register(&sb_liveupdate);
-    Cvar_Register(&sb_mastertimeout);
-    Cvar_Register(&sb_masterretries);
-    Cvar_Register(&sb_sortservers);
-    Cvar_Register(&sb_sortplayers);
-    Cvar_Register(&sb_sortsources);
-    Cvar_Register(&sb_maxwidth);
-    Cvar_Register(&sb_maxheight);
-    Cvar_Register(&sb_autohide);
-    Cvar_Register(&sb_hideempty);
-    Cvar_Register(&sb_hidenotempty);
-    Cvar_Register(&sb_hidefull);
-    Cvar_Register(&sb_hidedead);
-    Cvar_Register(&sb_sourcevalidity);
-    Cvar_Register(&sb_showcounters);
-    Cvar_Register(&sb_mastercache);
-    Cvar_Register(&sb_starttab);
-	Cvar_Register(&sb_autoupdate);
-	Cvar_ResetCurrentGroup();
-
-	Settings_Page_Init(sbsettings, sbsettings_arr);
-
-//    Cmd_AddCommand("menu_serverbrowser", M_ServerBrowser_f);
-    Cmd_AddCommand("addserver", AddServer_f);
-
-    // read sources from SOURCES_PATH
-    Reload_Sources();
-	MarkDefaultSources();
-
-    Cmd_AddCommand("sb_sourceunmarkall", SB_SourceUnmarkAll);
-    Cmd_AddCommand("sb_sourcemark", SB_SourceMark);
-}
 
 void Add_Source_Key(int key)
 {
@@ -1815,83 +1725,6 @@ void Add_Server_Key(int key)
     newserver_pos = min(newserver_pos, 2);
 }
 
-void Browser_Key(int key)
-{
-    if (confirmation)
-    {
-        SB_Confirmation_Key(key);
-        return;
-    }
-
-	if (key == '`' || key == '~') {
-		Con_ToggleConsole_f ();
-		return;
-	}
-
-    if (key == K_ESCAPE  &&
-        show_serverinfo == NULL  &&
-        !adding_source  &&
-        !adding_server  &&
-        ping_phase == 0  &&
-        !updating_sources)  // exit from browser to main menu
-    {
-        M_Menu_Main_f();
-    }
-
-    if (show_serverinfo)
-    {
-        Serverinfo_Key(key);
-        return;
-    }
-
-    if (adding_source)
-    {
-        Add_Source_Key(key);
-        return;
-    }
-
-    if (adding_server)
-    {
-        Add_Server_Key(key);
-        return;
-    }
-
-    if (ping_phase || updating_sources)  // no keys when pinging
-    {
-        if (!abort_ping  &&  (key == K_ESCAPE || key == K_BACKSPACE))
-            abort_ping = 1;
-        return;
-    }
-
-    if (key != K_RIGHTARROW && key != K_LEFTARROW)
-        switch (Browser_pos)
-        {
-            case pos_servers:
-                Servers_Key(key); break;
-            case pos_sources:
-                Sources_Key(key); break;
-            case pos_players:
-                Players_Key(key); break;
-            case pos_options:
-                Options_Key(key); break;
-            default:
-                break;
-        }
-    else
-    {
-        searchtype = search_none;
-        switch (key)
-        {
-            case K_RIGHTARROW:
-                Browser_pos++;  break;
-            case K_LEFTARROW:
-                Browser_pos--;  break;
-            default: ;
-        }
-    }
-    Browser_pos = (Browser_pos + 4)%4;
-}
-
 qbool SearchNextServer(int pos)
 {
     int i;
@@ -1909,11 +1742,11 @@ qbool SearchNextServer(int pos)
     return false;
 }
 
-void Servers_Key(int key)
+int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
 {
     if (serversn_passed <= 0  &&  (key != K_SPACE || isThisAltDown())
         && tolower(key) != 'n'  && key != K_INS)
-        return;
+        return false;
 
     if ((isThisAltDown()  || searchtype == search_server) &&
         key >= ' '  &&  key <= '}')  // search
@@ -1937,6 +1770,7 @@ void Servers_Key(int key)
                 if (!SearchNextServer(0))
                     strcpy(searchstring, "îïô æïõîä");  // not found
         }
+		return true;
     }
     else
     {
@@ -1948,9 +1782,6 @@ void Servers_Key(int key)
                 newserver_pos = 0;
                 CEditBox_Init(&edit1, 14, 64);
                 adding_server = 1;
-                break;
-            case K_TAB: // go to players
-                Browser_pos = pos_players;
                 break;
             case 'j':
             case 'p':
@@ -2034,13 +1865,13 @@ void Servers_Key(int key)
             case 'v':   // past server into console
                     PasteServerToConsole(servers[Servers_pos]);
                     break;
-            default:
-                ;
+            default: return false;
         }
     }
 
     Servers_pos = max(Servers_pos, 0);
     Servers_pos = min(Servers_pos, serversn-1);
+	return true;
 }
 
 void Serverinfo_Key(int key)
@@ -2062,7 +1893,7 @@ void Serverinfo_Key(int key)
         case K_BACKSPACE:
             Serverinfo_Stop(); break;
         case K_PGUP:
-            if (Browser_pos == pos_players)
+			if (CTab_GetCurrentId(&sb_tab) == SBPG_PLAYERS)
             {
                 if (isThisCtrlDown())
                     Players_pos = 0;
@@ -2082,7 +1913,7 @@ void Serverinfo_Key(int key)
             }
             break;
         case K_PGDN:
-            if (Browser_pos == pos_players)
+            if (CTab_GetCurrentId(&sb_tab) == SBPG_PLAYERS)
             {
                 if (isThisCtrlDown())
                     Players_pos = all_players_n - 1;
@@ -2335,12 +2166,12 @@ void RemoveSourceProc(void)
     free(filebuf);
 }
 
-void Sources_Key(int key)
+int Sources_Key(int key, CTab_t *tab, CTabPage_t *page)
 {
     int i;
 
     if (sourcesn <= 0)
-        return;
+        return false;
 
     switch (key)
     {
@@ -2421,13 +2252,12 @@ void Sources_Key(int key)
             }
             resort_sources = 1;
             break;
-        default:
-            ;
+        default: return false;
     }
 
     Sources_pos = max(Sources_pos, 0);
     Sources_pos = min(Sources_pos, sourcesn-1);
-    return;
+    return true;
 }
 
 qbool SearchNextPlayer(int pos)
@@ -2447,12 +2277,12 @@ qbool SearchNextPlayer(int pos)
     return false;
 }
 
-void Players_Key(int key)
+int Players_Key(int key, CTab_t *tab, CTabPage_t *page)
 {
     int i;
 
     if (all_players_n <= 0  &&  key != K_SPACE)
-        return;
+        return false;
 
     if ((isThisAltDown()  ||  searchtype == search_player)  &&
         key >= ' '  &&  key <= '}')  // search
@@ -2476,6 +2306,7 @@ void Players_Key(int key)
                 if (!SearchNextPlayer(0))
                     strcpy(searchstring, "not found");  // not found
         }
+		return true;
     }
     else
     {
@@ -2493,7 +2324,8 @@ void Players_Key(int key)
             case K_SPACE:
                 GetServerPingsAndInfos();
                 break;
-            case K_TAB: // go to servers -- locate
+
+			case K_INS: // go to servers -- locate
                 Servers_pos = 0;
                 for (i=0; i < serversn_passed; i++)
                 {
@@ -2503,8 +2335,9 @@ void Players_Key(int key)
                         break;
                     }
                 }
-                Browser_pos = pos_servers;
+				CTab_SetCurrentId(&sb_tab, SBPG_SERVERS);
                 break;
+
             case K_UPARROW:
 			case K_MWHEELUP:
                 Players_pos--; break;
@@ -2560,18 +2393,18 @@ void Players_Key(int key)
             case 'v':   // past server into console
                 PasteServerToConsole(all_players[Players_pos]->serv);
                 break;
-            default:
-                ;
+            default: return false;
         }
     }
 
     Players_pos = max(Players_pos, 0);
     Players_pos = min(Players_pos, all_players_n-1);
+	return true;
 }
 
-void Options_Key(int key)
+int Options_Key(int key, CTab_t *tab, CTabPage_t *page)
 {
-	Settings_Key(&sbsettings, key);
+	return Settings_Key(&sbsettings, key);
 }
 
 
@@ -2787,4 +2620,154 @@ void Shutdown_SB(void)
 {
     Serverinfo_Stop();
     Sys_MSleep(150);     // wait for thread to terminate
+}
+
+
+void Browser_Draw (void)
+{
+	int x, y, w, h;
+
+#ifdef GLQUAKE
+	// do not scale this menu
+	if (scr_scaleMenu.value)
+	{
+		menuwidth = vid.width;
+		menuheight = vid.height;
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity ();
+		glOrtho  (0, menuwidth, menuheight, 0, -99999, 99999);
+	}
+#endif
+
+	w = min(640, vid.width) - 8;
+	h = min(480, vid.height) - 8;
+	x = (vid.width - w) / 2;
+	y = (vid.height - h) / 2;
+
+	CTab_Draw(&sb_tab, x, y, w, h);
+
+    if (show_serverinfo) Serverinfo_Draw();
+    if (ping_phase) PingPhase_Draw();
+    if (updating_sources) UpdatingSources_Draw();
+    if (confirmation) SB_Confirmation_Draw();
+}
+
+void Browser_Key(int key)
+{
+    if (confirmation)
+    {
+        SB_Confirmation_Key(key);
+        return;
+    }
+
+	if (key == '`' || key == '~') {
+		Con_ToggleConsole_f ();
+		return;
+	}
+
+	if ((key == K_ESCAPE || key == K_MOUSE2)  &&
+        show_serverinfo == NULL  &&
+        !adding_source  &&
+        !adding_server  &&
+        ping_phase == 0  &&
+        !updating_sources)  // exit from browser to main menu
+    {
+        M_Menu_Main_f();
+    }
+
+    if (show_serverinfo)
+    {
+        Serverinfo_Key(key);
+        return;
+    }
+
+    if (adding_source)
+    {
+        Add_Source_Key(key);
+        return;
+    }
+
+    if (adding_server)
+    {
+        Add_Server_Key(key);
+        return;
+    }
+
+    if (ping_phase || updating_sources)  // no keys when pinging
+    {
+        if (!abort_ping  &&  (key == K_ESCAPE || key == K_BACKSPACE))
+            abort_ping = 1;
+        return;
+    }
+	
+	CTab_Key(&sb_tab, key);
+}
+
+void Browser_Init(void)
+{
+    int i;
+
+    Servers_pos = 0;
+    Sources_pos = 0;
+    Servers_disp = 0;
+    show_serverinfo = NULL;
+    serverinfo_pos = 0;
+
+    for (i=0; i < MAX_SERVERS; i++)
+        servers[i] = NULL;
+
+    serversn = serversn_passed = 0;
+    sourcesn = 0;
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_BROWSER);
+    Cvar_Register(&sb_status);
+    Cvar_Register(&sb_showping);
+    Cvar_Register(&sb_showaddress);
+    Cvar_Register(&sb_showmap);
+    Cvar_Register(&sb_showgamedir);
+    Cvar_Register(&sb_showplayers);
+    Cvar_Register(&sb_showfraglimit);
+    Cvar_Register(&sb_showtimelimit);
+    Cvar_Register(&sb_pingtimeout);
+    Cvar_Register(&sb_infotimeout);
+    Cvar_Register(&sb_pings);
+    Cvar_Register(&sb_pingspersec);
+    Cvar_Register(&sb_inforetries);
+    Cvar_Register(&sb_infospersec);
+    Cvar_Register(&sb_liveupdate);
+    Cvar_Register(&sb_mastertimeout);
+    Cvar_Register(&sb_masterretries);
+    Cvar_Register(&sb_sortservers);
+    Cvar_Register(&sb_sortplayers);
+    Cvar_Register(&sb_sortsources);
+    Cvar_Register(&sb_maxwidth);
+    Cvar_Register(&sb_maxheight);
+    Cvar_Register(&sb_autohide);
+    Cvar_Register(&sb_hideempty);
+    Cvar_Register(&sb_hidenotempty);
+    Cvar_Register(&sb_hidefull);
+    Cvar_Register(&sb_hidedead);
+    Cvar_Register(&sb_sourcevalidity);
+    Cvar_Register(&sb_mastercache);
+	Cvar_Register(&sb_autoupdate);
+	Cvar_ResetCurrentGroup();
+
+	Settings_Page_Init(sbsettings, sbsettings_arr);
+
+//    Cmd_AddCommand("menu_serverbrowser", M_ServerBrowser_f);
+    Cmd_AddCommand("addserver", AddServer_f);
+
+    // read sources from SOURCES_PATH
+    Reload_Sources();
+	MarkDefaultSources();
+
+    Cmd_AddCommand("sb_sourceunmarkall", SB_SourceUnmarkAll);
+    Cmd_AddCommand("sb_sourcemark", SB_SourceMark);
+
+	CTab_Init(&sb_tab);
+	CTab_AddPage(&sb_tab, "servers", SBPG_SERVERS, Servers_OnShow, Servers_Draw, Servers_Key);
+	CTab_AddPage(&sb_tab, "sources", SBPG_SOURCES, NULL, Sources_Draw, Sources_Key);
+	CTab_AddPage(&sb_tab, "players", SBPG_PLAYERS, NULL, Players_Draw, Players_Key);
+	CTab_AddPage(&sb_tab, "options", SBPG_OPTIONS, NULL, Options_Draw, Options_Key);
+	CTab_SetCurrentId(&sb_tab, SBPG_SERVERS);
 }
