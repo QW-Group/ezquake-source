@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.19 2007-01-16 23:25:52 johnnycz Exp $
+		$Id: menu_demo.c,v 1.20 2007-01-19 23:09:48 johnnycz Exp $
 
 */
 
@@ -62,8 +62,8 @@ typedef struct demo_playlist_s
 } demo_playlist_t;
 
 extern cvar_t demo_dir;
-#ifdef GLQUAKE
 extern cvar_t     scr_scaleMenu;
+#ifdef GLQUAKE
 extern int        menuwidth;
 extern int        menuheight;
 #else
@@ -71,7 +71,6 @@ extern int        menuheight;
 #define menuheight vid.height
 #endif
 
-extern cvar_t scr_scaleMenu;
 
 // Demo browser container
 filelist_t demo_filelist;
@@ -458,8 +457,8 @@ void Menu_Demo_Draw (void)
 	}
 #endif
 
-	w = min(max(512, 320), vid.width) - 8;
-	h = min(max(432, 200), vid.height) - 8;
+	w = vid.width - 8; // here used to be a limit to 512x... size, we've considered it useless
+	h = vid.height - 8;
 	x = (vid.width - w) / 2;
 	y = (vid.height - h) / 2;
 
