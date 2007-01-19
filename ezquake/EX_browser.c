@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.27 2007-01-19 23:23:56 johnnycz Exp $
+	$Id: EX_browser.c,v 1.28 2007-01-19 23:48:31 himan Exp $
 */
 
 #include "quakedef.h"
@@ -85,13 +85,13 @@ cvar_t  sb_infospersec   = {"sb_infospersec",    "100"};
 cvar_t  sb_mastertimeout = {"sb_mastertimeout", "1000"};
 cvar_t  sb_masterretries = {"sb_masterretries",    "3"};
 
-cvar_t  sb_liveupdate    = {"sb_liveupdate",       "2"};
+cvar_t  sb_liveupdate    = {"sb_liveupdate",       "2"}; // not in menu
 
 cvar_t  sb_sortservers   = {"sb_sortservers",     "32"}; // not in new menu
 cvar_t  sb_sortplayers   = {"sb_sortplayers",     "92"}; // not in new menu
 cvar_t  sb_sortsources   = {"sb_sortsources",      "3"}; // not in new menu
 
-cvar_t  sb_autohide      = {"sb_autohide",         "1"};
+cvar_t  sb_autohide      = {"sb_autohide",         "1"}; // not in menu
 
 
 // filters
@@ -100,9 +100,9 @@ cvar_t  sb_hidenotempty  = {"sb_hidenotempty",     "0"};
 cvar_t  sb_hidefull      = {"sb_hidefull",         "0"};
 cvar_t  sb_hidedead      = {"sb_hidedead",         "1"};
 
-cvar_t  sb_sourcevalidity  = {"sb_sourcevalidity", "30"};
-cvar_t  sb_mastercache     = {"sb_mastercache",     "1"};
-cvar_t  sb_autoupdate      = {"sb_autoupdate",     "1"};
+cvar_t  sb_sourcevalidity  = {"sb_sourcevalidity", "30"}; // not in menu
+cvar_t  sb_mastercache     = {"sb_mastercache",     "1"}; // not in menu
+cvar_t  sb_autoupdate      = {"sb_autoupdate",     "1"}; // not in menu
 
 settings_page sbsettings;
 setting sbsettings_arr[] = {
@@ -128,6 +128,8 @@ setting sbsettings_arr[] = {
 	ADDSET_NUMBER	("Ping Timeout", sb_pingtimeout, 50, 1000, 50),
 	ADDSET_NUMBER	("Pings Per Server", sb_pings, 1, 5, 1),
 	ADDSET_NUMBER	("Pings Per Second", sb_pingspersec, 10, 300, 10),
+	ADDSET_NUMBER	("Master Timeout", sb_mastertimeout, 50, 1000, 50),
+	ADDSET_NUMBER	("Master Retries", sb_masterretries, 1, 5, 1),
 	ADDSET_NUMBER	("Info Timeout", sb_infotimeout, 50, 1000, 50),
 	ADDSET_NUMBER	("Info Retries", sb_inforetries, 0, 4, 1),
 	ADDSET_NUMBER	("Infos Per Second", sb_infospersec, 10, 1000, 10)
