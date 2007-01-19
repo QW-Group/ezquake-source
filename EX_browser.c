@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.26 2007-01-19 23:15:37 johnnycz Exp $
+	$Id: EX_browser.c,v 1.27 2007-01-19 23:23:56 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -91,8 +91,6 @@ cvar_t  sb_sortservers   = {"sb_sortservers",     "32"}; // not in new menu
 cvar_t  sb_sortplayers   = {"sb_sortplayers",     "92"}; // not in new menu
 cvar_t  sb_sortsources   = {"sb_sortsources",      "3"}; // not in new menu
 
-cvar_t  sb_maxwidth      = {"sb_maxwidth",       "512"}; // Max width of menu. Can we limit this to the player's resolution?
-cvar_t  sb_maxheight     = {"sb_maxheight",      "480"}; // Max height of menu. Can we limit this to the player's resolution?
 cvar_t  sb_autohide      = {"sb_autohide",         "1"};
 
 
@@ -108,7 +106,7 @@ cvar_t  sb_autoupdate      = {"sb_autoupdate",     "1"};
 
 settings_page sbsettings;
 setting sbsettings_arr[] = {
-	ADDSET_SEPARATOR("Server Filters"), // todo: add resort_servers = 1 in onshow
+	ADDSET_SEPARATOR("Server Filters"),
 	ADDSET_BOOL		("Hide Empty", sb_hideempty),
 	ADDSET_BOOL		("Hide Full", sb_hidefull),
 	ADDSET_BOOL		("Hide Not Empty", sb_hidenotempty),
@@ -122,11 +120,9 @@ setting sbsettings_arr[] = {
 	ADDSET_BOOL		("Show Timelimit", sb_showtimelimit),
 	ADDSET_BOOL		("Show Fraglimit", sb_showfraglimit),
 	ADDSET_BOOL		("Show Server Address", sb_showaddress),
-	ADDSET_BOOL		("Server Status", sb_status),
 
 	ADDSET_SEPARATOR("Display"),
-	ADDSET_NUMBER		("Max Width", sb_maxwidth, 320, 1600, 12),
-	ADDSET_NUMBER		("Max Height", sb_maxheight, 480, 1200, 12),
+	ADDSET_BOOL		("Server Status", sb_status),
 
 	ADDSET_SEPARATOR("Network Filters"),
 	ADDSET_NUMBER	("Ping Timeout", sb_pingtimeout, 50, 1000, 50),
@@ -404,25 +400,14 @@ int Servers_disp;   // server# at the top of the list
 int Sources_disp;   // source# at the top of the list
 int Players_disp;   // player# at the top of the list
 
-/*void Browser_Draw (void);
-    void Servers_Draw (int x, int y, int w, int h);
-    void Sources_Draw (int x, int y, int w, int h);
-    void Players_Draw (int x, int y, int w, int h);
-    void Options_Draw (int x, int y, int w, int h);*/
-    void Serverinfo_Draw ();
-        void Serverinfo_Players_Draw(int x, int y, int w, int h);
-        void Serverinfo_Rules_Draw(int x, int y, int w, int h);
-        void Serverinfo_Sources_Draw(int x, int y, int w, int h);
-
-/*void Browser_Key(int key);
-    void Servers_Key(int key);
-    void Sources_Key(int key);
-    void Players_Key(int key);
-    void Options_Key(int key); */
-    void Serverinfo_Key (int key);
-        void Serverinfo_Players_Key(int key);
-        void Serverinfo_Rules_Key(int key);
-        void Serverinfo_Sources_Key(int key);
+void Serverinfo_Draw ();
+    void Serverinfo_Players_Draw(int x, int y, int w, int h);
+    void Serverinfo_Rules_Draw(int x, int y, int w, int h);
+    void Serverinfo_Sources_Draw(int x, int y, int w, int h);
+void Serverinfo_Key (int key);
+    void Serverinfo_Players_Key(int key);
+    void Serverinfo_Rules_Key(int key);
+    void Serverinfo_Sources_Key(int key);
 
 //
 // serverinfo
@@ -2740,8 +2725,6 @@ void Browser_Init(void)
     Cvar_Register(&sb_sortservers);
     Cvar_Register(&sb_sortplayers);
     Cvar_Register(&sb_sortsources);
-    Cvar_Register(&sb_maxwidth);
-    Cvar_Register(&sb_maxheight);
     Cvar_Register(&sb_autohide);
     Cvar_Register(&sb_hideempty);
     Cvar_Register(&sb_hidenotempty);
