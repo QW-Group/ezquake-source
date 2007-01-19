@@ -12,6 +12,7 @@ extern int isAltDown(void);
 void CTab_Init(CTab_t *tab)
 {
     memset(tab, 0, sizeof(CTab_t));
+	tab->lastViewedPage = -1;
 }
 
 
@@ -41,7 +42,7 @@ void CTab_Free(CTab_t *tab)
 
 
 // add tab
-void CTab_AddPage(CTab_t *tab, char *name, int id, void *tag,
+void CTab_AddPage(CTab_t *tab, char *name, int id, CTabPage_OnShowType onshowFunc,
                   CTabPage_DrawType drawFunc, CTabPage_KeyType keyFunc)
 {
     int i;
@@ -76,7 +77,7 @@ void CTab_AddPage(CTab_t *tab, char *name, int id, void *tag,
     page->keyFunc = keyFunc;
     
     // set tag
-    page->tag = tag;
+    page->onshowFunc = onshowFunc;
 }
 
 
@@ -86,6 +87,12 @@ void CTab_Draw(CTab_t *tab, int x, int y, int w, int h)
     char line[1024], *s;
     int l = 0, r = 0;
     int i;
+
+	if (tab->activePage != tab->lastViewedPage && tab->activePage < tab->nPages)
+	{
+		CTabPage_OnShowType onshowFnc = tab->pages[tab->activePage].onshowFunc;
+		if (onshowFnc) onshowFnc();
+	}
 
     // make one string
     strcpy(line, " ");

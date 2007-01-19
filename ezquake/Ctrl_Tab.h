@@ -11,7 +11,7 @@
 struct CTab_s;
 struct CTabPage_s;
 
-
+typedef void (*CTabPage_OnShowType) (void);
 typedef void (*CTabPage_DrawType)(int x, int y, int w, int h, struct CTab_s *, struct CTabPage_s *);
 typedef int  (*CTabPage_KeyType)(int key, struct CTab_s *, struct CTabPage_s *);
 
@@ -23,8 +23,7 @@ typedef struct CTabPage_s
 
     CTabPage_DrawType   drawFunc;
     CTabPage_KeyType    keyFunc;
-
-    void    *tag;
+    CTabPage_OnShowType onshowFunc;
 }
 CTabPage_t;
 
@@ -34,6 +33,7 @@ typedef struct CTab_s
     CTabPage_t  pages[TAB_MAX_TABS];
     int         nPages;
     int         activePage;
+	int			lastViewedPage;
     void *tag;
 }
 CTab_t;
@@ -52,7 +52,7 @@ CTab_t * CTab_New(void);
 void CTab_Free(CTab_t *);
 
 // add tab
-void CTab_AddPage(CTab_t *, char *name, int id, void *tag,
+void CTab_AddPage(CTab_t *, char *name, int id, CTabPage_OnShowType,
                   CTabPage_DrawType, CTabPage_KeyType);
 // draw control
 void CTab_Draw(CTab_t *, int x, int y, int w, int h);
