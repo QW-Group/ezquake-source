@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.24 2007-01-16 23:25:00 johnnycz Exp $
+	$Id: EX_browser.c,v 1.25 2007-01-19 21:24:13 himan Exp $
 */
 
 #include "quakedef.h"
@@ -48,7 +48,7 @@ int adding_server = 0;
 int newserver_pos;
 
 
-cvar_t  sb_status        =  {"sb_status", "1"};
+cvar_t  sb_status        =  {"sb_status", 			"1"}; // Shows Server status at the bottom
 
 // columns
 cvar_t  sb_showping      = {"sb_showping",         "1"};
@@ -60,23 +60,24 @@ cvar_t  sb_showfraglimit = {"sb_showfraglimit",    "0"};
 cvar_t  sb_showtimelimit = {"sb_showtimelimit",    "0"};
 
 cvar_t  sb_pingtimeout   = {"sb_pingtimeout",   "1000"};
-cvar_t  sb_infotimeout   = {"sb_infotimeout",   "1000"};
-cvar_t  sb_pingspersec   = {"sb_pingspersec",    "150"};
-cvar_t  sb_pings         = {"sb_pings",            "3"};
-cvar_t  sb_inforetries   = {"sb_inforetries",      "3"};
-cvar_t  sb_infospersec   = {"sb_infospersec",    "100"};
+cvar_t  sb_infotimeout   = {"sb_infotimeout",   "1000"}; // ??? WHAT DOES THIS MEAN ??? not in menu
+cvar_t  sb_pingspersec   = {"sb_pingspersec",    "150"}; // Pings per second
+cvar_t  sb_pings         = {"sb_pings",            "3"}; // Number of times to ping a server
+cvar_t  sb_inforetries   = {"sb_inforetries",      "3"}; // ??? WHAT DOES THIS MEAN ??? not in menu
+cvar_t  sb_infospersec   = {"sb_infospersec",    "100"}; // ??? WHAT DOES THIS MEAN ??? not in menu
 cvar_t  sb_mastertimeout = {"sb_mastertimeout", "1000"};
 cvar_t  sb_masterretries = {"sb_masterretries",    "3"};
 
-cvar_t  sb_liveupdate    = {"sb_liveupdate",       "2"};
+cvar_t  sb_liveupdate    = {"sb_liveupdate",       "2"}; // ??? WHAT DOES THIS MEAN ??? not in menu
 
-cvar_t  sb_sortservers   = {"sb_sortservers",     "32"};
-cvar_t  sb_sortplayers   = {"sb_sortplayers",     "92"};
-cvar_t  sb_sortsources   = {"sb_sortsources",      "3"};
+cvar_t  sb_sortservers   = {"sb_sortservers",     "32"}; // not in new menu
+cvar_t  sb_sortplayers   = {"sb_sortplayers",     "92"}; // not in new menu
+cvar_t  sb_sortsources   = {"sb_sortsources",      "3"}; // not in new menu
 
-cvar_t  sb_maxwidth      = {"sb_maxwidth",       "512"};
-cvar_t  sb_maxheight     = {"sb_maxheight",      "480"};
-cvar_t  sb_autohide      = {"sb_autohide",         "1"};
+cvar_t  sb_maxwidth      = {"sb_maxwidth",       "512"}; // Max width of menu. Can we limit this to the player's resolution?
+cvar_t  sb_maxheight     = {"sb_maxheight",      "480"}; // Max height of menu. Can we limit this to the player's resolution?
+cvar_t  sb_autohide      = {"sb_autohide",         "1"}; // ??? WHAT DOES THIS DO ??? not in menu
+
 
 // filters
 cvar_t  sb_hideempty     = {"sb_hideempty",        "1"};
@@ -84,16 +85,38 @@ cvar_t  sb_hidenotempty  = {"sb_hidenotempty",     "0"};
 cvar_t  sb_hidefull      = {"sb_hidefull",         "0"};
 cvar_t  sb_hidedead      = {"sb_hidedead",         "1"};
 
-cvar_t  sb_sourcevalidity  = {"sb_sourcevalidity", "30"};
-cvar_t  sb_showcounters    = {"sb_showcounters",    "1"};
-cvar_t  sb_mastercache     = {"sb_mastercache",     "1"};
-cvar_t  sb_starttab        = {"sb_starttab",     "1"};
-cvar_t  sb_autoupdate      = {"sb_autoupdate",     "1"};
+cvar_t  sb_sourcevalidity  = {"sb_sourcevalidity", "30"}; // ??? WHAT DOES THIS MEAN ??? not in menu
+cvar_t  sb_mastercache     = {"sb_mastercache",     "1"}; // ??? WHAT DOES THIS MEAN ??? not in menu
+cvar_t  sb_starttab        = {"sb_starttab",     "1"}; // ??? WHAT DOES THIS MEAN ??? not in menu
+cvar_t  sb_autoupdate      = {"sb_autoupdate",     "1"}; // ??? WHAT DOES THIS MEAN ??? not in menu
 
 settings_page sbsettings;
 setting sbsettings_arr[] = {
-	ADDSET_SEPARATOR("Filters"),
-	ADDSET_BOOL		("Show Ping", sb_showping)
+	ADDSET_SEPARATOR("Display Columns"),
+	ADDSET_BOOL		("Show Ping", sb_showping),
+	ADDSET_BOOL		("Show Map", sb_showmap),
+	ADDSET_BOOL		("Show Gamedir", sb_showgamedir),
+	ADDSET_BOOL		("Show Players", sb_showplayers),
+	ADDSET_BOOL		("Show Timelimit", sb_showtimelimit),
+	ADDSET_BOOL		("Show Fraglimit", sb_showfraglimit),
+	ADDSET_BOOL		("Show Server Address", sb_showaddress),
+
+	ADDSET_SEPARATOR("Server Filters"),
+	ADDSET_BOOL		("Hide Empty", sb_hideempty),
+	ADDSET_BOOL		("Hide Full", sb_hidefull),
+	ADDSET_BOOL		("Hide Not Empty", sb_hidenotempty),
+	ADDSET_BOOL		("Hide Dead", sb_hidedead),
+	ADDSET_BOOL		("Server Status", sb_status),
+
+	ADDSET_SEPARATOR("Display"),
+	ADDSET_NUMBER		("Max Width", sb_maxwidth, 320, 1600, 12),
+	ADDSET_NUMBER		("Max Height", sb_maxheight, 480, 1200, 12),
+
+	ADDSET_SEPARATOR("Network Filters"),
+	ADDSET_NUMBER		("Ping Timeout", sb_pingtimeout, 50, 1000, 50),
+	ADDSET_NUMBER		("Pings Per Server", sb_pings, 1, 5, 1),
+	ADDSET_NUMBER		("Pings Per Second", sb_pingspersec, 10, 300, 10),
+	
 };
 
 // servers table
