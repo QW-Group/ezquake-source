@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.64 2007-01-19 23:15:37 johnnycz Exp $
+	$Id: menu.c,v 1.65 2007-01-19 23:23:56 johnnycz Exp $
 
 */
 
@@ -48,7 +48,6 @@ extern void Browser_Init(void);
 extern void Browser_Draw(void);
 extern void Browser_Key(int);
 extern cvar_t con_shift;
-extern cvar_t sb_maxwidth, sb_maxheight;
 
 void M_Menu_Main_f (void);
 	void M_Menu_SinglePlayer_f (void);

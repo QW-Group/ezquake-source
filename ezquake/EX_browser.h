@@ -48,8 +48,6 @@ extern cvar_t  sb_liveupdate;       // serveinfo window update interval (0 = off
 extern cvar_t  sb_sortplayers;      // sorting mode in players list
 extern cvar_t  sb_sortservers;      // sorting mode in servers list
 
-extern cvar_t  sb_maxwidth;         // maximum width of server browser
-extern cvar_t  sb_maxheight;        // maximum height of server browser
 extern cvar_t  sb_autohide;         // hide browser after connect
 
 extern cvar_t  sb_sourcevalidity;   // source validity in minutes
