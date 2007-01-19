@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.17 2007-01-06 11:59:17 johnnycz Exp $
+ *  $Id: cl_tcl.c,v 1.18 2007-01-19 23:53:40 johnnycz Exp $
  */
 
 #ifdef EMBED_TCL
@@ -30,7 +30,7 @@
 
 extern cmd_function_t *impulse_cmd;
 extern cmd_alias_t *cmd_alias;
-#define ALIAS_HASHPOOL_SIZE 200
+#define ALIAS_HASHPOOL_SIZE 256
 extern cmd_alias_t *cmd_alias_hash[ALIAS_HASHPOOL_SIZE];
 
 cvar_t tcl_version = {"tcl_version", "", CVAR_ROM};

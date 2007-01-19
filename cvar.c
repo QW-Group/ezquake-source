@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.34 2007-01-06 21:26:06 tonik Exp $
+    $Id: cvar.c,v 1.35 2007-01-19 23:53:40 johnnycz Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -30,7 +30,7 @@ extern cvar_t r_fullbrightSkins;
 extern cvar_t cl_fakeshaft;
 extern cvar_t allow_scripts;
 
-#define VAR_HASHPOOL_SIZE 1000
+#define VAR_HASHPOOL_SIZE 1024
 static cvar_t *cvar_hash[VAR_HASHPOOL_SIZE];
 cvar_t *cvar_vars;
 
