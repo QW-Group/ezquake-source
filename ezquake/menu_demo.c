@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.20 2007-01-19 23:09:48 johnnycz Exp $
+		$Id: menu_demo.c,v 1.21 2007-01-20 22:45:40 johnnycz Exp $
 
 */
 
@@ -778,7 +778,7 @@ void Menu_Demo_Key(int key)
 
     if (!handled)
     {
-        if (key == K_ESCAPE)
+		if (key == K_ESCAPE || key == K_MOUSE2)
         {
             M_Menu_Main_f();
         }

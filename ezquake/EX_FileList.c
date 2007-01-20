@@ -1077,7 +1077,7 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
         return true;
     }
 
-    if (key == K_ENTER)
+	if (key == K_ENTER || key == K_MOUSE1)
     {
         if (FL_IsCurrentDir(fl))
         {
@@ -1492,6 +1492,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         if (filenum == fl->current_entry)
 		{
             line[0] = 141;
+			UI_DrawGrayBox(x, y + rowh * (i + 2) + inter_dn, w, rowh);
 		}
 
 		// Max amount of characters that fits on a line.
