@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.24 2007-01-18 00:20:43 disconn3ct Exp $
+		$Id: menu_options.c,v 1.25 2007-01-20 01:35:51 johnnycz Exp $
 
 */
 
@@ -837,6 +837,12 @@ int CT_Opt_Video_Key (int key, CTab_t *tab, CTabPage_t *page) {
 
 // </VIDEO>
 
+void OnShow_SettMain(void) { Settings_OnShow(&settgeneral); }
+void OnShow_SettPlayer(void) { Settings_OnShow(&settplayer); }
+void OnShow_SettFPS(void) { Settings_OnShow(&settfps); }
+void OnShow_SettHUD(void) { Settings_OnShow(&setthud); }
+void OnShow_SettMultiview(void) { Settings_OnShow(&settmultiview); }
+
 void Menu_Options_Key(int key, int unichar) {
     int handled = CTab_Key(&options_tab, key);
 	options_unichar = unichar;
@@ -847,18 +853,6 @@ void Menu_Options_Key(int key, int unichar) {
 
 void Menu_Options_Draw(void) {
 	int x, y, w, h;
-	static int previousPage = -1;
-	if (previousPage != options_tab.activePage) {
-		switch (options_tab.activePage) {
-		case OPTPG_SETTINGS: Settings_OnShow(&settgeneral); break;
-		case OPTPG_PLAYER: Settings_OnShow(&settplayer); break;
-		case OPTPG_FPS: Settings_OnShow(&settfps); break;
-		case OPTPG_HUD: Settings_OnShow(&setthud); break;
-		case OPTPG_MULTIVIEW: Settings_OnShow(&settmultiview); break;
-		}
-	}
-
-	previousPage = options_tab.activePage;
 
 #ifdef GLQUAKE
 	// do not scale this menu
@@ -871,8 +865,8 @@ void Menu_Options_Draw(void) {
 	}
 #endif
 
-	w = min(max(512, 320), vid.width) - 8;
-	h = min(max(432, 200), vid.height) - 8;
+	w = vid.width - 8; // here used to be a limit to 512x... size
+	h = vid.height - 8;
 	x = (vid.width - w) / 2;
 	y = (vid.height - h) / 2;
 
@@ -887,11 +881,11 @@ void Menu_Options_Init(void) {
 	Settings_Page_Init(settplayer, settplayer_arr);
 
 	CTab_Init(&options_tab);
-	CTab_AddPage(&options_tab, "main", OPTPG_SETTINGS, NULL, CT_Opt_Settings_Draw, CT_Opt_Settings_Key);
-	CTab_AddPage(&options_tab, "player", OPTPG_PLAYER, NULL, CT_Opt_Player_Draw, CT_Opt_Player_Key);
-	CTab_AddPage(&options_tab, "graphics", OPTPG_FPS, NULL, CT_Opt_FPS_Draw, CT_Opt_FPS_Key);
-	CTab_AddPage(&options_tab, "hud", OPTPG_HUD, NULL, CT_Opt_HUD_Draw, CT_Opt_HUD_Key);
-	CTab_AddPage(&options_tab, "multiview", OPTPG_MULTIVIEW, NULL, CT_Opt_Multiview_Draw, CT_Opt_Multiview_Key);
+	CTab_AddPage(&options_tab, "main", OPTPG_SETTINGS, OnShow_SettMain, CT_Opt_Settings_Draw, CT_Opt_Settings_Key);
+	CTab_AddPage(&options_tab, "player", OPTPG_PLAYER, OnShow_SettPlayer, CT_Opt_Player_Draw, CT_Opt_Player_Key);
+	CTab_AddPage(&options_tab, "graphics", OPTPG_FPS, OnShow_SettFPS, CT_Opt_FPS_Draw, CT_Opt_FPS_Key);
+	CTab_AddPage(&options_tab, "hud", OPTPG_HUD, OnShow_SettHUD, CT_Opt_HUD_Draw, CT_Opt_HUD_Key);
+	CTab_AddPage(&options_tab, "multiview", OPTPG_MULTIVIEW, OnShow_SettMultiview, CT_Opt_Multiview_Draw, CT_Opt_Multiview_Key);
 	CTab_AddPage(&options_tab, "controls", OPTPG_BINDS, NULL, CT_Opt_Binds_Draw, CT_Opt_Binds_Key);
 	CTab_AddPage(&options_tab, "video", OPTPG_VIDEO, NULL, CT_Opt_Video_Draw, CT_Opt_Video_Key);
 	CTab_SetCurrentId(&options_tab, OPTPG_SETTINGS);
