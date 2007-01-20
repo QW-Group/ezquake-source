@@ -91,7 +91,7 @@ void CTab_Draw(CTab_t *tab, int x, int y, int w, int h)
 	if (tab->activePage != tab->lastViewedPage && tab->activePage < tab->nPages)
 	{
 		CTabPage_OnShowType onshowFnc = tab->pages[tab->activePage].onshowFunc;
-		if (onshowFnc) onshowFnc();
+		if (onshowFnc != NULL) onshowFnc();
 	}
 
     // make one string
@@ -155,6 +155,7 @@ void CTab_Draw(CTab_t *tab, int x, int y, int w, int h)
     line[w/8] = 0;
     line[w/8-1] = '\x1F';
     line[0] = '\x1D';
+	memcpy(line + 2, " (shift)+tab to navigate ", min((w/8)-3, 45-20));
     UI_Print_Center(x, y+8, w, line, false);
 
     // draw page
