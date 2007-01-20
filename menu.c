@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.65 2007-01-19 23:23:56 johnnycz Exp $
+	$Id: menu.c,v 1.66 2007-01-20 22:45:40 johnnycz Exp $
 
 */
 
@@ -591,6 +591,7 @@ void M_SinglePlayer_Key (int key) {
 	switch (key) {
 		case K_BACKSPACE:
 			m_topmenu = m_none;    // intentional fallthrough
+		case K_MOUSE2:
 		case K_ESCAPE:
 			M_LeaveMenu (m_main);
 			break;
@@ -622,6 +623,7 @@ void M_SinglePlayer_Key (int key) {
 			break;
 
 		case K_ENTER:
+		case K_MOUSE1:
 			switch (m_singleplayer_cursor) {
 				case 0:
 					CheckSPGame ();
@@ -768,11 +770,13 @@ void M_Load_Key (int key) {
 	switch (key) {
 		case K_BACKSPACE:
 			m_topmenu = m_none;    // intentional fallthrough
+		case K_MOUSE2:
 		case K_ESCAPE:
 			M_LeaveMenu (m_singleplayer);
 			break;
 
 		case K_ENTER:
+		case K_MOUSE1:
 			S_LocalSound ("misc/menu2.wav");
 			if (!loadable[load_cursor])
 				return;
@@ -809,11 +813,13 @@ void M_Save_Key (int key) {
 	switch (key) {
 		case K_BACKSPACE:
 			m_topmenu = m_none;    // intentional fallthrough
+		case K_MOUSE2:
 		case K_ESCAPE:
 			M_LeaveMenu (m_singleplayer);
 			break;
 
 		case K_ENTER:
+		case K_MOUSE1:
 			m_state = m_none;
 			key_dest = key_game;
 			Cbuf_AddText (va("save s%i\n", load_cursor));
@@ -875,6 +881,7 @@ void M_MultiPlayer_Key (int key) {
 	switch (key) {
 		case K_BACKSPACE:
 			m_topmenu = m_none;    // intentional fallthrough
+		case K_MOUSE2:
 		case K_ESCAPE:
 			M_LeaveMenu (m_main);
 			break;
@@ -906,6 +913,7 @@ void M_MultiPlayer_Key (int key) {
 			break;
 
 		case K_ENTER:
+		case K_MOUSE1:
 			m_entersound = true;
 			switch (m_multiplayer_cursor) {
 				case 0:
