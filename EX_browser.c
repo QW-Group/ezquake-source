@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.28 2007-01-19 23:48:31 himan Exp $
+	$Id: EX_browser.c,v 1.29 2007-01-20 02:16:26 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1735,8 +1735,12 @@ int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
         && tolower(key) != 'n'  && key != K_INS)
         return false;
 
-    if ((isThisAltDown()  || searchtype == search_server) &&
-        key >= ' '  &&  key <= '}')  // search
+	if (key == K_SPACE) {
+		GetServerPingsAndInfos();
+		return true;
+	}
+
+	if (!isThisCtrlDown() && !isThisAltDown() && key > ' ' && key <= '}')  // search
     {
         int len;
         char c = tolower(key);
@@ -1808,7 +1812,7 @@ int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
             case '6':
             case '7':
             case '8':   // sorting mode
-                if (!isThisCtrlDown())
+				if (isThisAltDown()) // fixme
                 {
                     char buf[30];
                     if ((sb_sortservers.string[0] == '-' && sb_sortservers.string[1] == key)
@@ -1824,7 +1828,6 @@ int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
                     }
                     else
                     {
-                        char buf[30];
                         strncpy(buf+1, sb_sortservers.string, 20);
                         buf[0] = key;
                     }
@@ -1832,7 +1835,7 @@ int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
                     Cvar_Set(&sb_sortservers, buf);
                     resort_servers = 1;
                 }
-                else
+                else if (isThisCtrlDown())
                 {
                     switch (key)
                     {
