@@ -48,17 +48,15 @@ static qbool FL_OnChangeTextColor (cvar_t *var, char *newval)
 	return true;
 }
 
-static void FL_RegisterColor (cvar_t *destvar, cvar_t *srcvar)
+static void FL_RegisterColor (cvar_t *var)
 {
-	destvar = srcvar;
-
-	if (destvar)
+	if (var)
 	{
 		char tempval[256];
 
-		destvar->OnChange = FL_OnChangeTextColor;
-		strlcpy (tempval, destvar->string, sizeof(tempval));
-		Cvar_Set (destvar, tempval);
+		var->OnChange = FL_OnChangeTextColor;
+		strlcpy (tempval, var->string, sizeof(tempval));
+		Cvar_Set (var, tempval);
 	}
 }
 
@@ -104,12 +102,17 @@ void FL_Init(filelist_t	*	fl,
     fl->search_valid = false;
     fl->cdup_find = false;
 
-	FL_RegisterColor (fl->file_color, file_color);
-	FL_RegisterColor (fl->selected_color, selected_color);
-	FL_RegisterColor (fl->dir_color, dir_color);
+	fl->file_color = file_color;
+	fl->selected_color = selected_color;
+	fl->dir_color = dir_color;
+
+	FL_RegisterColor (fl->file_color);
+	FL_RegisterColor (fl->selected_color);
+	FL_RegisterColor (fl->dir_color);
 
 	#ifdef WITH_ZIP
-	FL_RegisterColor (fl->zip_color, zip_color);
+	fl->zip_color = zip_color;
+	FL_RegisterColor (fl->zip_color);
 
 	fl->current_zip[0] = 0;
 	fl->in_zip = false;
