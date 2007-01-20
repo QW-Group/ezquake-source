@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.25 2007-01-20 01:35:51 johnnycz Exp $
+		$Id: menu_options.c,v 1.26 2007-01-20 01:46:15 johnnycz Exp $
 
 */
 
@@ -436,6 +436,8 @@ char *bindnames[][2] =
 	{"+moveright",      "move right"},
 	{"impulse 12",      "previous weapon"},
 	{"impulse 10",      "next weapon"},
+	{"messagemode",		"chat"},
+	{"messagemode2",	"teamchat"},
 	{"toggleproxymenu", "proxy menu"},
 	{"report",			"tp_report"},
 	{"weapon 1",       "axe"},
