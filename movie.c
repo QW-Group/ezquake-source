@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: movie.c,v 1.19 2006-11-12 04:50:12 cokeman1982 Exp $
+	$Id: movie.c,v 1.20 2007-01-20 14:42:59 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -82,39 +82,50 @@ qbool Movie_IsCapturing(void) {
 	return cls.demoplayback && !cls.timedemo && movie_is_capturing;
 }
 
-static void Movie_Start(double _time) {
-#ifdef GLQUAKE
+static void Movie_Start(double _time) 
+{
+	#ifdef GLQUAKE
 	extern cvar_t scr_sshot_format;
-#endif
-#ifndef _WIN32
+	#endif
+
+	#ifndef _WIN32
 	time_t t;
 	t = time(NULL);
 	localtime_r(&t, &movie_start_date);
-#else
+	#else
 	GetLocalTime(&movie_start_date);
-#endif
+	#endif
 	movie_is_capturing = true;
-#ifdef _WIN32
+	#ifdef _WIN32
 	movie_is_avi = !!avifile; //joe: capturing to avi
-#endif
+	#endif
 	movie_len = _time;
 	movie_start_time = cls.realtime;
 
 	movie_frame_count = 0;
 
-#ifdef _WIN32
+	#ifdef _WIN32
 	if (movie_is_avi)	//joe: capturing to avi
+	{
 		movie_is_capturing = Capture_Open (avipath);
+	}
 	else
-#endif
-#ifdef GLQUAKE
-		// TODO : Make sure the screenshot format isn't empty.
-		// DEFAULT_SSHOT_FORMAT		
-		strcpy(image_ext, scr_sshot_format.string);
-		//strcpy(image_ext, "tga");
-#else
+	#endif
+	{
+		#ifdef GLQUAKE
+		// DEFAULT_SSHOT_FORMAT
+		if(!strcmp(scr_sshot_format.string, ""))
+		{
+			strlcpy(image_ext, scr_sshot_format.string, sizeof(image_ext));		
+		}
+		else
+		{
+			strcpy(image_ext, "tga");
+		}
+		#else
 		strcpy(image_ext, "pcx");
-#endif
+		#endif
+	}
 }
 
 void Movie_Stop (void) {
