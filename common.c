@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.55 2007-01-15 05:32:32 qqshka Exp $
+    $Id: common.c,v 1.56 2007-01-21 20:14:10 cokeman1982 Exp $
 
 */
 
@@ -175,6 +175,7 @@ char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit)
 	return dest;
 }
 
+// TODO: This is not safe.
 void COM_StripExtension (char *in, char *out)
 {
 	char *dot;
@@ -378,19 +379,19 @@ int COM_GZipPack (char *source_path,
 	gzFile gzip_destination = NULL;
 
 	// Open source file.
-	fopen (source_path, "rb");
+	source = fopen (source_path, "rb");
 
 	// Failed to open source.
 	if (!source_path)
 	{
-		return -1;
+		return 0;
 	}
 
 	// Check if the destination file exists and 
 	// if we're allowed to overwrite it.
 	if (COM_FileExists (destination_path) && !overwrite)
 	{
-		return -1;
+		return 0;
 	}
 	
 	// Create the path for the destination.
@@ -402,7 +403,7 @@ int COM_GZipPack (char *source_path,
 	// Failed to open destination.
 	if (!gzip_destination)
 	{
-		return -1;
+		return 0;
 	}
 
 	// Pack.
