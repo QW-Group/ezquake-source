@@ -268,8 +268,6 @@ void StatsGrid_InitHoldItems()
 	if(stats_important_ents->list == NULL)
 	{
 		Q_free(stats_important_ents);
-		stats_important_ents = NULL;
-		stats_important_ents->count = 0;
 		return;
 	}
 
@@ -289,7 +287,7 @@ void StatsGrid_InitHoldItems()
 	for(i = 0; i < stats_important_ents->count; i++)
 	{
 		int current = strlen(stats_important_ents->list[i].name);
-		stats_important_ents->longest_name = (current > stats_important_ents->longest_name) ? current : stats_important_ents->longest_name;
+		stats_important_ents->longest_name = max(current, stats_important_ents->longest_name);
 	}
 }
 
@@ -333,9 +331,15 @@ void StatsGrid_ValidateTeamColors()
 	// players on the level. 
 
 	int player_color;
+	int tracked = Cam_TrackNum();
+
+	if (tracked < 0)
+	{
+		return;
+	}
 
 	// Get the tracked player.
-	player_info_t *player_info = &cl.players[Cam_TrackNum()];
+	player_info_t *player_info = &cl.players[tracked];
 	
 	// Get the team color of the tracked player.
 	player_color = Sbar_BottomColor(player_info);
@@ -529,7 +533,7 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 	// and since all I have to differentiate them is the userid, 
 	// I have to have enough room to fit the players. Most of this
 	// space is unused. Too lazy to do something more fancy atm :S
-	static int isdead[200]; 
+	static qbool isdead[200]; 
 
 	// Don't calculate any weights before a match has started.
 	// Don't allow setting the weight at the exact time the countdown
@@ -550,7 +554,7 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 		StatsGrid_InitTeamNames(grid);
 	}
 
-	// TODO: Make this properly (this is just a quick hack atm). Use autotrack values? (Not until jogi cleans up his damn code :D)
+	// TODO: Make this properly (this is just a quick hack atm). Use autotrack values?
 	if(player_info->stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
 	{
 		weight += 0.5;
