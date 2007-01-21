@@ -747,7 +747,6 @@ finish:
     return;
 }
 
-
 //
 // Search by name for next item.
 //
@@ -922,8 +921,73 @@ void FL_CheckPosition(filelist_t *fl)
         fl->current_entry = fl->num_entries - 1;
 }
 
+#ifdef WITH_ZIP
+void FL_CompressFile (filelist_t *fl)
+{
+	char *file_path = FL_GetCurrentPath(fl);
+
+	// Remember where we were.
+	int ce = fl->current_entry;	 
+
+	// Compress the file
+	int ret = COM_GZipPack(file_path, va("%s.gz", file_path), false); 
+
+	if (ret)
+	{
+		_unlink(file_path);
+	}
+	else
+	{
+		Com_Printf("Failed compressing file to GZip.");
+	}
+
+	FL_ReadDir(fl);				// Reload dir.
+	fl->current_entry = ce;		// Set previous position.
+	FL_CheckPosition(fl);
+}
+
+void FL_DecompressFile (filelist_t *fl)
+{
+	int ret = 0;
+
+	// Remember where we were.
+	int ce = fl->current_entry;	 
+	char *gzip_path = FL_GetCurrentPath(fl);
+	char file_path[MAX_PATH];
+
+	COM_StripExtension(gzip_path, file_path);
+
+	ret = COM_GZipUnpack(gzip_path, file_path, false); 
+
+	if (ret)
+	{
+		_unlink(gzip_path);
+	}
+	else
+	{
+		Com_Printf("Failed decompressing file from GZip.");
+	}
+
+	FL_ReadDir(fl);				// Reload dir.
+	fl->current_entry = ce;		// Set previous position.
+	FL_CheckPosition(fl);
+}
+#endif // WITH_ZIP
+
 //
-// check display position
+// Delete the current file.
+//
+void FL_DeleteFile(filelist_t *fl)
+{
+	int ce = fl->current_entry;		// Remember where we were.
+	unlink(FL_GetCurrentPath(fl));	// Delete.
+	FL_ReadDir(fl);					// Reload dir.
+	fl->current_entry = ce - 1;		// Set previous position.
+	FL_CheckPosition(fl);
+}
+
+//
+// Check display position
 //
 void FL_CheckDisplayPosition(filelist_t *fl, int lines)
 {
@@ -946,25 +1010,37 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
 {
 	int ce;
 
-	if (fl->delete_mode)
+	if (fl->mode != FL_MODE_NORMAL)
 	{
-		switch(key) {
+		switch(key) 
+		{
 			case 'y':
 			case 'Y':
 			case K_ENTER:
-				if (!FL_IsCurrentDir(fl)) {
-					ce = fl->current_entry;		// remember where we were
-					unlink(FL_GetCurrentPath(fl));
-					FL_ReadDir(fl);				// reload dir
-					fl->current_entry = ce - 1; // set previous position
-					FL_CheckPosition(fl);
+				if (!FL_IsCurrentDir(fl))
+				{
+					if (fl->mode == FL_MODE_DELETE)
+					{
+						FL_DeleteFile(fl);
+					}
+					#ifdef WITH_ZIP
+					else if (fl->mode == FL_MODE_COMPRESS)
+					{
+						FL_CompressFile(fl); // Compress file.
+					}
+					else if (fl->mode == FL_MODE_DECOMPRESS)
+					{
+						FL_DecompressFile(fl); // Decompress file.
+					}
+					#endif // WITH_ZIP
 				}
-				fl->delete_mode = false;
+
+				fl->mode = FL_MODE_NORMAL;
 				return true;
 			case 'n':
 			case 'N':
 			case K_ESCAPE:
-				fl->delete_mode = false;
+				fl->mode = FL_MODE_NORMAL;
 				return true;
 		}
 
@@ -1145,10 +1221,57 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
         return true;
     }
 
+	#ifdef WITH_ZIP
+	//
+	// Compress the current file.
+	//
+	if ((key == 'c' || key == 'C') && isAltDown())
+	{
+		if (!FL_IsCurrentDir(fl))
+		{
+			if (isShiftDown())
+			{
+				// Alt + shift + c == Compress without confirming.
+				FL_CompressFile(fl);
+			}
+			else
+			{
+				// Alt + c == Confirm before compressing.
+				fl->mode = FL_MODE_COMPRESS;
+			}
+		}
+		return true;
+	}
+
+	//
+	// Decompress the current file.
+	//
+	if ((key == 'd' || key == 'D') && isAltDown())
+	{
+		if (!strcmp(COM_FileExtension(FL_GetCurrentPath(fl)), "gz"))
+		{
+			FL_DecompressFile(fl);
+		}
+	}
+	#endif // WITH_ZIP
+
+	//
+	// Delete the current file.
+	//
 	if (key == K_DEL)
 	{
-		if (!FL_IsCurrentDir(fl)) {
-			fl->delete_mode = true;
+		if (!FL_IsCurrentDir(fl)) 
+		{
+			if (isShiftDown())
+			{
+				// Shift + del == Delete without confirming.
+				FL_DeleteFile(fl);
+			}
+			else
+			{
+				// Del == Confirm before deleting.
+				fl->mode = FL_MODE_DELETE;
+			}
 		}
 		return true;
 	}
@@ -1199,13 +1322,29 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		fl->search_string[0] = 0;
 	}
 
-	if (fl->delete_mode)
+	if (fl->mode == FL_MODE_DELETE)
 	{
 		UI_Print_Center(x, y + 8,  w, "Are you sure you want to delete this file?", true);
 		UI_Print_Center(x, y + 24, w, FL_GetCurrentDisplay(fl), false);
 		UI_Print_Center(x, y + 40, w, "(Y/N)", true);
 		return;
 	}
+	#ifdef WITH_ZIP
+	else if (fl->mode == FL_MODE_COMPRESS)
+	{
+		UI_Print_Center(x, y + 8,  w, "Are you sure you want to compress this file?", true);
+		UI_Print_Center(x, y + 24, w, FL_GetCurrentDisplay(fl), false);
+		UI_Print_Center(x, y + 40, w, "(Y/N)", true);
+		return;
+	}
+	else if (fl->mode == FL_MODE_DECOMPRESS)
+	{
+		UI_Print_Center(x, y + 8,  w, "Are you sure you want to decompress this file?", true);
+		UI_Print_Center(x, y + 24, w, FL_GetCurrentDisplay(fl), false);
+		UI_Print_Center(x, y + 40, w, "(Y/N)", true);
+		return;
+	}
+	#endif // WITH_ZIP
 
     fl->last_page_size = 0;
 

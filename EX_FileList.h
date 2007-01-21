@@ -61,27 +61,32 @@ typedef struct filedesc_s
 }
 filedesc_t;
 
+#define FL_MODE_NORMAL		0
+#define FL_MODE_DELETE		1
+#define FL_MODE_COMPRESS	2
+#define FL_MODE_DECOMPRESS	3
+
 //
-// filelist structure
+// Filelist structure
 //
 typedef struct filelist_s
 {
     char			current_dir[MAX_PATH+1];
 	char			current_zip[MAX_PATH+1];
 	qbool			in_zip;
-    qbool			error;          // error reading dir
-    qbool			need_refresh;   // dir is reread in draw func
-    qbool			need_resort;    // dir is sorted in draw func
+    qbool			error;          // Error reading dir
+    qbool			need_refresh;   // Dir is reread in draw func
+    qbool			need_resort;    // Dir is sorted in draw func
 
     filedesc_t		entries[MAX_FILELIST_ENTRIES];
     int				num_entries;
     int				current_entry;
-    int				display_entry;  // first item displayed
+    int				display_entry;  // First item displayed
 
     filetype_t		filetypes[MAX_FILELIST_TYPES];
     int				num_filetypes;
 
-    // some vars
+    // Some vars
     cvar_t *		sort_mode;
     cvar_t *		show_size;
     cvar_t *		show_date;
@@ -97,17 +102,17 @@ typedef struct filelist_s
 	cvar_t *		zip_color;
 	#endif
 
-    // for PGUP/PGDN, filled by drawing func
+    // For PGUP/PGDN, filled by drawing func
     int				last_page_size;
 
-    // for searching
+    // For searching
     char			search_string[MAX_SEARCH_STRING+1];
-    qbool			search_valid;   // if is in search mode
-    qbool			search_dirty;   // if should research
-    qbool			search_error;   // not found
-	qbool			delete_mode;	// are we deleting a file?
+    qbool			search_valid;   // If is in search mode
+    qbool			search_dirty;   // If should research
+    qbool			search_error;   // Not found
+	int				mode;			// Are we deleting/compressing a file?
 
-    // for cd ..
+    // For cd ..
     char            cdup_name[MAX_PATH+1];
     qbool			cdup_find;
 }
@@ -115,20 +120,20 @@ filelist_t;
 
 
 //
-// drawing routine
+// Drawing routine
 //
 void FL_Draw(filelist_t *, int x, int y, int w, int h);
 
 
 //
-// send key to list
+// Send key to list
 // returns: true if processed, false if ignored
 //
 qbool FL_Key(filelist_t *, int key);
 
 
 //
-// create file list
+// Create file list
 //
 void FL_Init(filelist_t	*	fl,
              cvar_t *       sort_mode,
@@ -148,49 +153,49 @@ void FL_Init(filelist_t	*	fl,
 			 char *			 initdir);
 
 //
-// add new file type (.qwd, .qwz, .mp3)
+// Add new file type (.qwd, .qwz, .mp3).
 //
 void FL_AddFileType(filelist_t *, int id, char *ext);
 
 
 //
-// set current directory (and drive)
+// Set current directory (and drive).
 //
 void FL_SetCurrentDir(filelist_t *, const char *dir);
 
 
 //
-// get current directory
+// Get current directory.
 //
 char *FL_GetCurrentDir(filelist_t *);
 
 
 //
-// get current entry
+// Get current entry.
 //
 filedesc_t * FL_GetCurrentEntry(filelist_t *);
 
 
 //
-// get current path
+// Get current path.
 //
 char *FL_GetCurrentPath(filelist_t *);
 
 
 //
-// get current display
+// Get current display.
 //
 char *FL_GetCurrentDisplay(filelist_t *fl);
 
 
 //
-// get current entry type
+// Get current entry type.
 //
 int FL_GetCurrentEntryType(filelist_t *);
 
 
 //
-// is current entry a dir ?
+// Is current entry a dir ?
 //
 qbool FL_IsCurrentDir(filelist_t *);
 
