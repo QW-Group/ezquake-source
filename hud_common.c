@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.115 2007-01-21 16:32:01 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.116 2007-01-21 18:28:15 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -4573,6 +4573,10 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 
 qbool TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s)
 {
+	char *start = s;
+	char *end = start;
+	int order = 0;
+
 	// Parse the item filter.
 	teamhold_show_rl		= Utils_RegExpMatch("RL",	s);
 	teamhold_show_quad		= Utils_RegExpMatch("QUAD",	s);
@@ -4585,7 +4589,55 @@ qbool TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s)
 	teamhold_show_mh		= Utils_RegExpMatch("MH",	s);
 	teamhold_show_ra		= Utils_RegExpMatch("RA",	s);
 	teamhold_show_ya		= Utils_RegExpMatch("YA",	s);
-	teamhold_show_ga		= Utils_RegExpMatch("GA",	s);
+	teamhold_show_ga		= Utils_RegExpMatch("GA",	s); 
+
+	// Reset the ordering of the items.
+	StatsGrid_ResetHoldItemsOrder();
+
+	// Trim spaces from the start of the word.
+	while (*start && *start == ' ')
+	{
+		start++;
+	}
+
+	end = start;
+
+	// Go through the string word for word and set a
+	// rising order for each hold item based on their
+	// order in the string.
+	while (*end)
+	{
+		if (*end != ' ')
+		{
+			// Not at the end of the word yet.
+			end++;
+			continue;
+		}
+		else
+		{
+			// We've found a word end.
+			char temp[256];
+
+			// Try matching the current word with a hold item
+			// and set it's ordering according to it's placement
+			// in the string.
+			strlcpy (temp, start, min(end - start, sizeof(temp)));
+			StatsGrid_SetHoldItemOrder(temp, order);
+			order++;
+
+			// Get rid of any additional spaces.
+			while (*end && *end == ' ')
+			{
+				end++;
+			}
+
+			// Start trying to find a new word.
+			start = end;
+		}			
+	}
+
+	// Order the hold items.
+	StatsGrid_SortHoldItems();
 
 	return false;
 }
@@ -4665,18 +4717,18 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			}
 
 			// If the item isn't of the specified type, then skip it.
-			if(!(	(teamhold_show_rl	&& !strncmp(stats_important_ents->list[i].name, "RL", 2))
+			if(!(	(teamhold_show_rl	&& !strncmp(stats_important_ents->list[i].name, "RL",	2))
 				||	(teamhold_show_quad	&& !strncmp(stats_important_ents->list[i].name, "QUAD", 4))
 				||	(teamhold_show_ring	&& !strncmp(stats_important_ents->list[i].name, "RING", 4))
 				||	(teamhold_show_pent	&& !strncmp(stats_important_ents->list[i].name, "PENT", 4))
 				||	(teamhold_show_suit	&& !strncmp(stats_important_ents->list[i].name, "SUIT", 4))
-				||	(teamhold_show_lg	&& !strncmp(stats_important_ents->list[i].name, "LG", 2))
-				||	(teamhold_show_gl	&& !strncmp(stats_important_ents->list[i].name, "GL", 2))
-				||	(teamhold_show_sng	&& !strncmp(stats_important_ents->list[i].name, "SNG", 3))
-				||	(teamhold_show_mh	&& !strncmp(stats_important_ents->list[i].name, "MH", 2))
-				||	(teamhold_show_ra	&& !strncmp(stats_important_ents->list[i].name, "RA", 2))
-				||	(teamhold_show_ya	&& !strncmp(stats_important_ents->list[i].name, "YA", 2))
-				||	(teamhold_show_ga	&& !strncmp(stats_important_ents->list[i].name, "GA", 2))
+				||	(teamhold_show_lg	&& !strncmp(stats_important_ents->list[i].name, "LG",	2))
+				||	(teamhold_show_gl	&& !strncmp(stats_important_ents->list[i].name, "GL",	2))
+				||	(teamhold_show_sng	&& !strncmp(stats_important_ents->list[i].name, "SNG",	3))
+				||	(teamhold_show_mh	&& !strncmp(stats_important_ents->list[i].name, "MH",	2))
+				||	(teamhold_show_ra	&& !strncmp(stats_important_ents->list[i].name, "RA",	2))
+				||	(teamhold_show_ya	&& !strncmp(stats_important_ents->list[i].name, "YA",	2))
+				||	(teamhold_show_ga	&& !strncmp(stats_important_ents->list[i].name, "GA",	2))
 				))
 			{
 				continue;
