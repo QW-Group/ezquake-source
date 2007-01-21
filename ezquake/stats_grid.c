@@ -14,7 +14,7 @@ void StatsGrid_Remove(stats_weight_grid_t **grid)
 		return;
 	}
 	
-	// Free all the rows-
+	// Free all the rows.
 	if((*grid)->cells != NULL)
 	{
 		for(row = 0; row < (*grid)->row_count; row++)
@@ -29,11 +29,9 @@ void StatsGrid_Remove(stats_weight_grid_t **grid)
 
 	// Free all columns.
 	Q_free((*grid)->cells);
-	(*grid)->cells = NULL;
 
 	// Free the grid itself.
 	Q_free((*grid));
-	(*grid) = NULL;
 }
 
 
@@ -68,7 +66,6 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 	if((*grid)->cells == NULL)
 	{
 		Q_free(*grid);
-		(*grid) = NULL;
 		return;
 	}
 
@@ -127,6 +124,40 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 }
 
 #define STATS_MAX_IMPORTANT_ENTS	16
+
+void StatsGrid_ResetHoldItemsOrder()
+{
+	int i;
+
+	if (stats_important_ents == NULL)
+	{
+		return;
+	}
+
+	for (i = 0; i < stats_important_ents->count; i++)
+	{
+		stats_important_ents->list[i].order = STATS_MAX_IMPORTANT_ENTS;
+	}
+}
+
+void StatsGrid_SetHoldItemOrder(const char *item_name, int order)
+{
+	int i;
+	int len = strlen(item_name);
+
+	if (stats_important_ents == NULL)
+	{
+		return;
+	}
+
+	for (i = 0; i < stats_important_ents->count; i++)
+	{
+		if (!strncasecmp(stats_important_ents->list[i].name, item_name, len))
+		{
+			stats_important_ents->list[i].order = order;
+		}
+	}
+}
 
 void StatsGrid_SetHoldItemName(char *dst_name, const char *src_name, int count)
 {
@@ -331,6 +362,7 @@ void StatsGrid_ValidateTeamColors()
 	// players on the level. 
 
 	int player_color;
+	player_info_t *player_info;
 	int tracked = Cam_TrackNum();
 
 	if (tracked < 0)
@@ -339,7 +371,7 @@ void StatsGrid_ValidateTeamColors()
 	}
 
 	// Get the tracked player.
-	player_info_t *player_info = &cl.players[tracked];
+	player_info = &cl.players[tracked];
 	
 	// Get the team color of the tracked player.
 	player_color = Sbar_BottomColor(player_info);
@@ -423,12 +455,10 @@ void StatsGrid_ResetHoldItems()
 	if(stats_important_ents->list != NULL)
 	{
 		Q_free(stats_important_ents->list);
-		stats_important_ents->list = NULL;
 	}
 
 	// Reset.
 	Q_free(stats_important_ents);
-	stats_important_ents = NULL;
 }
 
 void StatsGrid_ResetHoldItemCounts()
@@ -445,6 +475,24 @@ void StatsGrid_ResetHoldItemCounts()
 		stats_important_ents->list[i].teams_hold_count[STATS_TEAM1] = 0;
 		stats_important_ents->list[i].teams_hold_count[STATS_TEAM2] = 0;
 	}
+}
+
+static int StatsGrid_CompareHoldItems(const void *it1, const void *it2)
+{
+	const stats_entity_t *ent1 = (stats_entity_t *)it1;
+	const stats_entity_t *ent2 = (stats_entity_t *)it2;
+
+	return ent1->order - ent2->order;
+}
+
+void StatsGrid_SortHoldItems()
+{
+	if (stats_important_ents == NULL)
+	{
+		return;
+	}
+
+	qsort(stats_important_ents->list, stats_important_ents->count, sizeof(stats_entity_t), StatsGrid_CompareHoldItems);
 }
 
 void StatsGrid_CalculateHoldItem(stats_weight_grid_t *grid, int row, int col, float hold_threshold, int team_id)
