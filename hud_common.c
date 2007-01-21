@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.114 2007-01-20 20:19:40 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.115 2007-01-21 16:32:01 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -2386,7 +2386,7 @@ static sort_teams_info_t		sorted_teams[MAX_CLIENTS];
 static int						n_teams;
 static int						n_players;
 static int						n_spectators;
-static qbool					sort_teamsort = false;
+static int						sort_teamsort = 0;
 
 static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 {
@@ -2417,21 +2417,26 @@ static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 		if(sort_teamsort && cl.teamplay)
 		{
 			// Leading team on top, sort players inside of the teams.
-			r = p1->team->frags - p2->team->frags;
-			r = !r ? strcmp(p1->team->name, p2->team->name) : r;
 
-			// We want the leading team on top.
-			r = -r;
+			// Teamsort 1, first sort on team frags.
+			if (sort_teamsort == 1)
+			{
+				r = p1->team->frags - p2->team->frags;
+			}
+
+			// Teamsort == 2, sort on team name only.
+			r = (r == 0) ? -strcmp(p1->team->name, p2->team->name) : r;
 		}
-		r = !r ? i1->frags - i2->frags : r;
-		r = !r ? strcmp(i1->name, i2->name) : r;
+		
+		r = (r == 0) ? i1->frags - i2->frags : r;
+		r = (r == 0) ? strcmp(i1->name, i2->name) : r;
     }
 
-	r = !r ? (p1->playernum - p2->playernum) : r;
+	r = (r == 0) ? (p1->playernum - p2->playernum) : r;
 
 	// qsort() sorts ascending by default, we want descending.
 	// So negate the result.
-    return -r;
+	return -r;
 }
 
 static int HUD_CompareTeams(const void *vt1, const void *vt2)
@@ -2466,6 +2471,8 @@ static void HUD_Sort_Scoreboard(int flags)
     // Set team properties.
 	if(flags & HUD_SCOREBOARD_UPDATE)
 	{
+		memset(sorted_teams, 0, sizeof(sorted_teams));
+
 		for (i=0; i < MAX_CLIENTS; i++)
 		{
 			if (cl.players[i].name[0] && !cl.players[i].spectator)
@@ -2505,13 +2512,12 @@ static void HUD_Sort_Scoreboard(int flags)
 				// The total RL count for the players team.
 				if(cl.players[i].stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
 				{
-					// sort_info_teams[team].rlcount++;
 					sorted_teams[team].rlcount++;
 				}
 
-				// Set player data
+				// Set player data.
 				sorted_players[n_players + n_spectators].playernum = i;
-				sorted_players[n_players + n_spectators].team = &sorted_teams[team];
+				//sorted_players[n_players + n_spectators].team = &sorted_teams[team];
 
 				// Increase the count.
 				if (cl.players[i].spectator)
@@ -2526,20 +2532,38 @@ static void HUD_Sort_Scoreboard(int flags)
 		}
 	}
 
-    // Calc avg ping
+    // Calc avg ping.
 	if(flags & HUD_SCOREBOARD_AVG_PING)
 	{
 		for (team = 0; team < n_teams; team++)
 		{
-			//sort_info_teams[team].avg_ping /= sort_info_teams[team].nplayers;
 			sorted_teams[team].avg_ping /= sorted_teams[team].nplayers;
 		}
 	}
 
-	// Sort teams.
+	// Sort teams. 	
 	if(flags & HUD_SCOREBOARD_SORT_TEAMS)
 	{
 		qsort(sorted_teams, n_teams, sizeof(sort_teams_info_t), HUD_CompareTeams);
+
+		// BUGFIX, this needs to happen AFTER the team array has been sorted, otherwise the
+		// players might be pointing to the incorrect team adress.
+		for (i = 0; i < MAX_CLIENTS; i++)
+		{
+			player_info_t *player = &cl.players[sorted_players[i].playernum];
+			sorted_players[i].team = NULL;
+
+			// Find players team.
+			for (team = 0; team < n_teams; team++)
+			{
+				if (!strcmp(player->team, sorted_teams[team].name)
+					&& sorted_teams[team].name[0])
+				{
+					sorted_players[i].team = &sorted_teams[team];
+					break;
+				}
+			}
+		}
 	}
 
 	// Sort players.
@@ -3084,7 +3108,8 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		*hud_frags_style,
 		*hud_frags_bignum,
 		*hud_frags_bignum_scale,
-		*hud_frags_colors_alpha;
+		*hud_frags_colors_alpha,
+		*hud_frags_maxname;
 
 	extern mpic_t *sb_weapons[7][8]; // sbar.c ... Used for displaying the RL.
 	mpic_t *rl_picture;				 // Picture of RL.
@@ -3113,6 +3138,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		hud_frags_bignum		= HUD_FindVar(hud, "bignum");
 		hud_frags_bignum_scale	= HUD_FindVar(hud, "bignum_scale");
 		hud_frags_colors_alpha	= HUD_FindVar(hud, "colors_alpha");
+		hud_frags_maxname		= HUD_FindVar(hud, "maxname");
 
 		// Set the OnChange function for extra spec info.
 		hud_frags_extra_spec->OnChange = Frags_OnChangeExtraSpecInfo;
@@ -3145,7 +3171,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		clamp(space_y, 0, 128);
 	}
 
-	sort_teamsort = (qbool)hud_frags_teamsort->value;
+	sort_teamsort = (int)hud_frags_teamsort->value;
 
 	// Set character scaling.
 	char_size = ((int)hud_frags_bignum->value) ? 8 * hud_frags_bignum_scale->value : 8;
@@ -3201,17 +3227,22 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 			}
 		}
 
+		// If the user has set a limit on how many chars that
+		// are allowed to be shown for a name/teamname.
+		max_name_length = min(max(0, (int)hud_frags_maxname->value), max_name_length) + 1;
+		max_team_length = min(max(0, (int)hud_frags_maxname->value), max_team_length) + 1;
+
 		// We need a wider box to draw in if we show the names.
 		if(hud_frags_shownames->value)
 		{
-			//width += (a_cols * max_name_length * 8) + ((a_cols + 1) * space_x);
-			width += (a_cols * max_name_length * char_size) + ((a_cols + 1) * space_x);			
+			width += (a_cols * (max_name_length + 3) * 8) + ((a_cols + 1) * space_x);
+			//width += (a_cols * max_name_length * (int)char_size) + ((a_cols + 1) * space_x);			
 		}
 
 		if(cl.teamplay && hud_frags_teams->value)
 		{
-			//width += (a_cols * max_team_length * 8) + ((a_cols + 1) * space_x);
-			width += (a_cols * max_team_length * char_size) + ((a_cols + 1) * space_x);
+			width += (a_cols * max_team_length * 8) + ((a_cols + 1) * space_x);
+			//width += (a_cols * max_team_length * (int)char_size) + ((a_cols + 1) * space_x);
 		}
 	}
 
@@ -6382,6 +6413,7 @@ void CommonDraw_Init(void)
 		"bignum", "0",
 		"bignum_scale", "1.0",
 		"colors_alpha", "1.0",
+		"maxname", "16",
         NULL);
 
     HUD_Register("teamfrags", NULL, "Show list of team frags in short form.",
@@ -6404,6 +6436,7 @@ void CommonDraw_Init(void)
 		"bignum", "0",
 		"bignum_scale", "1.0",
 		"colors_alpha", "1.0",
+		"maxname", "16",
 		NULL);
 
 	HUD_Register("mp3_title", NULL, "Shows current mp3 playing.",
@@ -6493,4 +6526,5 @@ void CommonDraw_Init(void)
 */
 
 }
+
 
