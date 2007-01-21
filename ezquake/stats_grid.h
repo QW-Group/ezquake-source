@@ -53,8 +53,8 @@ typedef struct stats_entity_s
 {
 	char			name[MAX_INFO_STRING];	// The name of the entity (RA, RL, YA, QUAD).
 	vec3_t			origin;					// The entitys origin.
-	//stats_team_t	teams[TEAM_COUNT];		// The team hold counts for this entity.
 	int				teams_hold_count[TEAM_COUNT];
+	int				order;
 } stats_entity_t;
 
 typedef struct
@@ -83,6 +83,9 @@ void StatsGrid_Change(stats_weight_grid_t *grid,
 void StatsGrid_DecreaseWeight(cell_weight_t *weight, stats_weight_grid_t *grid);
 void StatsGrid_Gather();
 void StatsGrid_ResetHoldItems();
+void StatsGrid_SortHoldItems();
+void StatsGrid_SetHoldItemOrder(const char *item_name, int order);
+void StatsGrid_ResetHoldItemsOrder();
 
 extern stats_weight_grid_t	*stats_grid;			// The weight grid for all the statistics.
 extern stats_entities_t		*stats_important_ents;	// A list of "important" entities on the map, and counts on what team holds it.
