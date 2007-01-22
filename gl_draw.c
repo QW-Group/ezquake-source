@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.47 2007-01-22 12:44:13 johnnycz Exp $
+	$Id: gl_draw.c,v 1.48 2007-01-22 16:34:06 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -282,12 +282,13 @@ typedef struct cachepic_s {
 	char		name[MAX_QPATH];
 	mpic_t		pic;
 } cachepic_t;
+typedef struct cachepic_node_s {
+	cachepic_t data;
+	struct cachepic_node_s *next;
+} cachepic_node_t;
 
-#define	MAX_CACHED_PICS		128
-cachepic_t	cachepics[MAX_CACHED_PICS];
-int			numcachepics;
-
-byte	menuplyr_pixels[4096];
+#define	CACHED_PICS_HDSIZE		64
+cachepic_node_t	*cachepics[CACHED_PICS_HDSIZE];
 
 int		pic_texels, pic_count;
 
@@ -335,86 +336,84 @@ mpic_t *Draw_CacheWadPic (char *name) {
 	return pic;
 }
 
+mpic_t *CachePic_Find(const char *path) {
+	int key = Com_HashKey(path) % CACHED_PICS_HDSIZE;
+	cachepic_node_t *searchpos = cachepics[key];
+
+	while (searchpos) {
+		if (!strcmp(searchpos->data.name, path)) {
+			return &searchpos->data.pic;
+		}
+		searchpos = searchpos->next;
+	}
+
+	return NULL;
+}
+
+mpic_t* CachePic_Add(const char *path, mpic_t *pic) {
+	int key = Com_HashKey(path) % CACHED_PICS_HDSIZE;
+	cachepic_node_t *searchpos = cachepics[key];
+	cachepic_node_t **nextp = cachepics + key;
+
+	while (searchpos) {
+		nextp = &searchpos->next;
+		searchpos = searchpos->next;
+	}
+
+	searchpos = (cachepic_node_t *) Q_malloc(sizeof(cachepic_node_t));
+	// write data
+	memcpy(&searchpos->data.pic, pic, sizeof(mpic_t));
+	strncpy(searchpos->data.name, path, sizeof(searchpos->data.name));
+	searchpos->next = NULL; // terminate the list
+	*nextp = searchpos;// connect to the list
+
+	return &searchpos->data.pic;
+}
+
 mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit) 
 {
-	cachepic_t *pic;
-	int i;
+	mpic_t pic, *fpic, *pic_24bit;
 	qpic_t *dat;
-	mpic_t *pic_24bit;
 
-	for (pic = cachepics, i = 0; i < numcachepics; pic++, i++)
-	{
-		if (!strcmp (path, pic->name))
-		{
-			return &pic->pic;
-		}
-	}
-
-	if (numcachepics == MAX_CACHED_PICS)
-	{
-		if(crash)
-		{
-			Sys_Error ("numcachepics == MAX_CACHED_PICS");
-		}
-		return NULL;
-	}
+	if (fpic = CachePic_Find(path)) return fpic;
 
 	// load the pic from disk
 
 	if (only24bit)  // that not for loading 24 bit versions of ".lmp" files, but for some new images
 	{
 		if ((pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
-		{
-			pic->pic = *pic_24bit;
-
-			numcachepics++;
-			strlcpy (pic->name, path, sizeof(pic->name));
-
-			return &pic->pic;
-		}
+			return CachePic_Add(path, pic_24bit);
 
 		if(crash)
-		{
 			Sys_Error ("Draw_CachePic: failed to load %s", path);
-		}
+
 		return NULL;
 	}
 
 	if (!(dat = (qpic_t *)FS_LoadTempFile (path)))
 	{
 		if(crash)
-		{
 			Sys_Error ("Draw_CachePic: failed to load %s", path);
-		}
+
 		return NULL;
 	}
 
 	SwapPic (dat);
 
-	// HACK HACK HACK --- we need to keep the bytes for
-	// the translatable player picture just for the menu
-	// configuration dialog
-	if (!strcmp (path, "gfx/menuplyr.lmp"))
-	{
-		memcpy (menuplyr_pixels, dat->data, dat->width*dat->height);
-	}
-
-	pic->pic.width = dat->width;
-	pic->pic.height = dat->height;
-	
 	if ((pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
 	{
-		memcpy(&pic->pic.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
+		memcpy(&pic, pic_24bit, sizeof(mpic_t));
+		pic.width = dat->width;
+		pic.height = dat->height;
 	}
 	else
 	{
-		GL_LoadPicTexture (path, &pic->pic, dat->data);
+		pic.width = dat->width;
+		pic.height = dat->height;
+		GL_LoadPicTexture (path, &pic, dat->data);
 	}
 
-	numcachepics++;
-	strlcpy (pic->name, path, sizeof(pic->name));
-
-	return &pic->pic;
+	return CachePic_Add(path, &pic);
 }
 
 mpic_t *Draw_CachePic (char *path)
@@ -2007,42 +2006,6 @@ void Draw_TransPic (int x, int y, mpic_t *pic)
 	*/
 		
 	Draw_Pic (x, y, pic);
-}
-
-//Only used for the player color selection menu
-void Draw_TransPicTranslate (int x, int y, mpic_t *pic, byte *translation) {
-	int v, u, c;
-	unsigned int p, trans[64 * 64], *dest;
-	byte *src;
-
-	GL_Bind (translate_texture);
-
-	c = pic->width * pic->height;
-
-	dest = trans;
-	for (v = 0; v < 64; v++, dest += 64) {
-		src = &menuplyr_pixels[ ((v * pic->height) >> 6) *pic->width];
-		for (u = 0; u < 64; u++) {
-			p = src[(u * pic->width) >> 6];
-			dest[u] = (p == 255) ? p : d_8to24table[translation[p]];
-		}
-	}
-
-	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
-
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	glBegin (GL_QUADS);
-	glTexCoord2f (0, 0);
-	glVertex2f (x, y);
-	glTexCoord2f (1, 0);
-	glVertex2f (x + pic->width, y);
-	glTexCoord2f (1, 1);
-	glVertex2f (x + pic->width, y + pic->height);
-	glTexCoord2f (0, 1);
-	glVertex2f (x, y + pic->height);
-	glEnd ();
 }
 
 void Draw_SFill (int x, int y, int w, int h, int c, float scale)
