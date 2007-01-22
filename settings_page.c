@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.15 2007-01-18 14:42:18 qqshka Exp $
+		$Id: settings_page.c,v 1.16 2007-01-22 21:04:54 johnnycz Exp $
 
 */
 
@@ -20,6 +20,9 @@ CEditBox editbox;
 #define EDITBOXMAXLENGTH 64
 
 static float SliderPos(float min, float max, float val) { return (val-min)/(max-min); }
+
+static const char* colors[14] = { "White", "Brown", "Lavender", "Khaki", "Red", "Lt Brown", "Peach", "Lt Peach", "Purple", "Dk Purple", "Tan", "Green", "Yellow", "Blue" };
+#define COLORNAME(x) colors[bound(0, ((int) x), sizeof(colors) / sizeof(char*) - 1)]
 
 static int STHeight(setting_type st) {
 	switch (st) {
@@ -95,9 +98,10 @@ static void Setting_DrawString(int x, int y, int w, setting* setting, qbool acti
 static void Setting_DrawColor(int x, int y, int w, setting* set, qbool active)
 {
 	x = Setting_PrintLabel(x, y, w, set->label, active);
-	if (set->cvar->value >= 0)
-		Draw_Fill(x, y, LETW*3, LINEHEIGHT - 1, Sbar_ColorForMap(set->cvar->value));
-	else
+	if (set->cvar->value >= 0) {
+	 	Draw_Fill(x, y, LETW*3, LINEHEIGHT - 1, Sbar_ColorForMap(set->cvar->value));
+		UI_Print(x + 4*LETW, y, va("%i (%s)", (int) set->cvar->value, COLORNAME(set->cvar->value)), active);
+	} else
 		UI_Print(x, y, "off", active);
 }
 
