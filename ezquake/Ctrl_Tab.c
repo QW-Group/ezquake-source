@@ -92,6 +92,7 @@ void CTab_Draw(CTab_t *tab, int x, int y, int w, int h)
 	{
 		CTabPage_OnShowType onshowFnc = tab->pages[tab->activePage].onshowFunc;
 		if (onshowFnc != NULL) onshowFnc();
+		tab->lastViewedPage = tab->activePage;
 	}
 
     // make one string
