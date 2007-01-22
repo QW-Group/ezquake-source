@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.46 2007-01-14 14:27:16 tonik Exp $
+	$Id: gl_draw.c,v 1.47 2007-01-22 12:44:13 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -162,7 +162,7 @@ qbool OnChange_gl_crosshairimage(cvar_t *v, char *s) {
 		customcrosshair_loaded &= ~CROSSHAIR_IMAGE;
 		return false;
 	}
-	if (!(pic = GL_LoadPicImage(va("crosshairs/%s", s), "crosshair", 0, 0, TEX_ALPHA))) {
+	if (!(pic = Draw_CachePicSafe(va("crosshairs/%s", s), false, true))) {
 		customcrosshair_loaded &= ~CROSSHAIR_IMAGE;
 		Com_Printf("Couldn't load image %s\n", s);
 		return false;
