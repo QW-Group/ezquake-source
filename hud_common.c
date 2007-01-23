@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.116 2007-01-21 18:28:15 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.117 2007-01-23 19:15:28 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -2419,7 +2419,7 @@ static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 			// Leading team on top, sort players inside of the teams.
 
 			// Teamsort 1, first sort on team frags.
-			if (sort_teamsort == 1)
+			if (sort_teamsort == 1 && p1->team && p2->team)
 			{
 				r = p1->team->frags - p2->team->frags;
 			}
