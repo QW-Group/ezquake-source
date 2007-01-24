@@ -1008,8 +1008,6 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
 //
  qbool FL_Key(filelist_t *fl, int key)
 {
-	int ce;
-
 	if (fl->mode != FL_MODE_NORMAL)
 	{
 		switch(key) 
