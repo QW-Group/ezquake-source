@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.31 2007-01-24 23:25:54 himan Exp $
+		$Id: menu_options.c,v 1.32 2007-01-24 23:33:22 himan Exp $
 
 */
 
@@ -437,6 +437,7 @@ char *bindnames[][2] =
 	{"+moveright",      "Move Right"},
 	{"+moveup",			"Swim Up"},
 	{"+movedown",		"Swim Down"},
+	{"+zoom",			"Zoom In/Out"},
 	
 	{"impulse 12",      "Previous Weapon"},
 	{"impulse 10",      "Next Weapon"},
