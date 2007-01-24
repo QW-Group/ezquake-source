@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.83 2007-01-24 01:32:51 qqshka Exp $
+    $Id: cl_screen.c,v 1.84 2007-01-24 20:48:42 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -112,6 +112,7 @@ cvar_t  r_chaticons_alpha = {"r_chaticons_alpha", "0.8"};
 
 #ifdef GLQUAKE
 cvar_t	scr_autoid		= {"scr_autoid", "0"};
+cvar_t	scr_coloredfrags = {"scr_coloredfrags", "0"};
 #endif
 cvar_t	scr_coloredText = {"scr_coloredText", "1"};
 
@@ -3052,6 +3053,7 @@ void SCR_Init (void) {
 
 #ifdef GLQUAKE
 	Cvar_Register (&scr_autoid);
+	Cvar_Register (&scr_coloredfrags);
 #endif
 	Cvar_Register (&scr_coloredText);
 

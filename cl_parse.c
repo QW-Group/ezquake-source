@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.68 2007-01-24 01:32:50 qqshka Exp $
+	$Id: cl_parse.c,v 1.69 2007-01-24 20:48:41 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1792,7 +1792,7 @@ static void FlushString (wchar *s, int level, qbool team, int offset) {
 	extern cvar_t con_highlight, con_highlight_mark, name;
 	extern cvar_t cl_showFragsMessages;
 #ifdef GLQUAKE
-	extern cvar_t scr_coloredText;
+	extern cvar_t scr_coloredfrags;
 #endif
 	wchar white_s[4096];
 	char *mark;
@@ -1832,7 +1832,7 @@ static void FlushString (wchar *s, int level, qbool team, int offset) {
 
 	// Colorize player names here
 #ifdef GLQUAKE
-	if (scr_coloredText.value > 1 && cff.p1len)
+	if (scr_coloredfrags.value && cff.p1len)
 		text = CL_ColorizeFragMessage(text, &cff);
 #endif
 
