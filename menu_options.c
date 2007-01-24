@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.30 2007-01-24 22:56:59 johnnycz Exp $
+		$Id: menu_options.c,v 1.31 2007-01-24 23:25:54 himan Exp $
 
 */
 
@@ -169,7 +169,7 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 extern cvar_t demo_format, sys_highpriority;
 #endif
 #ifdef GLQUAKE
-extern cvar_t scr_autoid, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights;
+extern cvar_t scr_autoid, gl_crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights;
 #endif
 
 const char* BandwidthRead(void) {
@@ -338,6 +338,7 @@ setting setthud_arr[] = {
 	ADDSET_NUMBER	("Crosshair", crosshair, 0, 7, 1),
 	ADDSET_NUMBER	("Crosshair size", crosshairsize, 0.2, 3, 0.2),
 #ifdef GLQUAKE
+	ADDSET_NUMBER	("Crosshair alpha", gl_crosshairalpha, 0.1, 1, 0.1),
 	ADDSET_NAMED	("Overhead Info", scr_autoid, scrautoid_enum),
 #endif
 	ADDSET_SEPARATOR("New HUD"),
