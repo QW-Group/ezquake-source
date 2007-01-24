@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.119 2007-01-24 01:32:51 qqshka Exp $
+	$Id: hud_common.c,v 1.120 2007-01-24 19:41:47 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -2576,11 +2576,11 @@ static void HUD_Sort_Scoreboard(int flags)
 void Frags_DrawColors(int x, int y, int width, int height, 
 					  int top_color, int bottom_color, float color_alpha,
 					  int frags, int drawBrackets, int style, 
-					  int bignum, float bignum_scale)
+					  float bignum)
 {
 	char buf[32];
 	int posy = 0;
-	int char_size = bignum ? ROUND(24 * bignum_scale) : 8;
+	int char_size = (bignum > 0) ? ROUND(24 * bignum) : 8;
 
 	#ifdef GLQUAKE
 	Draw_AlphaFill(x, y, width, height / 2, top_color, color_alpha);
@@ -2592,7 +2592,7 @@ void Frags_DrawColors(int x, int y, int width, int height,
 
 	posy = y + (height - char_size) / 2;
 
-	if (bignum)
+	if (bignum > 0)
 	{
 		//
 		// Scaled big numbers for frags.
@@ -2610,7 +2610,7 @@ void Frags_DrawColors(int x, int y, int width, int height,
 		{
 			if (*t >= '0' && *t <= '9')
 			{
-				Draw_STransPic(char_x, char_y, sb_nums[0][*t - '0'], bignum_scale);
+				Draw_STransPic(char_x, char_y, sb_nums[0][*t - '0'], bignum);
 				char_x += char_size;
 			}
 
@@ -3107,7 +3107,6 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		*hud_frags_fliptext,
 		*hud_frags_style,
 		*hud_frags_bignum,
-		*hud_frags_bignum_scale,
 		*hud_frags_colors_alpha,
 		*hud_frags_maxname;
 
@@ -3136,7 +3135,6 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		hud_frags_fliptext		= HUD_FindVar(hud, "fliptext");
 		hud_frags_style			= HUD_FindVar(hud, "style");
 		hud_frags_bignum		= HUD_FindVar(hud, "bignum");
-		hud_frags_bignum_scale	= HUD_FindVar(hud, "bignum_scale");
 		hud_frags_colors_alpha	= HUD_FindVar(hud, "colors_alpha");
 		hud_frags_maxname		= HUD_FindVar(hud, "maxname");
 
@@ -3174,7 +3172,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 	sort_teamsort = (int)hud_frags_teamsort->value;
 
 	// Set character scaling.
-	char_size = ((int)hud_frags_bignum->value) ? 8 * hud_frags_bignum_scale->value : 8;
+	char_size = (hud_frags_bignum->value > 0) ? 8 * hud_frags_bignum->value : 8;
 
     if ((int)hud_frags_strip->value)
     {
@@ -3425,8 +3423,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 						info->frags,
 						drawBrackets,
 						hud_frags_style->value,
-						hud_frags_bignum->value,
-						hud_frags_bignum_scale->value);
+						hud_frags_bignum->value);
 
 					rel_player_x += cell_width + space_x;
 
@@ -3455,8 +3452,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 						info->frags,
 						drawBrackets,
 						hud_frags_style->value,
-						hud_frags_bignum->value,
-						hud_frags_bignum_scale->value);
+						hud_frags_bignum->value);
 
 					rel_player_x += cell_width + space_x;
 
@@ -3495,8 +3491,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 					info->frags,
 					drawBrackets,
 					hud_frags_style->value,
-					hud_frags_bignum->value,
-					hud_frags_bignum_scale->value);
+					hud_frags_bignum->value);
 
 				if (hud_frags_vertical->value)
 				{
@@ -3540,7 +3535,6 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 		*hud_teamfrags_extra_spec,
 		*hud_teamfrags_onlytp,
 		*hud_teamfrags_bignum,
-		*hud_teamfrags_bignum_scale,
 		*hud_teamfrags_colors_alpha;
 
 	extern mpic_t *sb_weapons[7][8]; // sbar.c
@@ -3563,7 +3557,6 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 		hud_teamfrags_extra_spec	= HUD_FindVar(hud, "extra_spec_info");
 		hud_teamfrags_onlytp		= HUD_FindVar(hud, "onlytp");
 		hud_teamfrags_bignum		= HUD_FindVar(hud, "bignum");
-		hud_teamfrags_bignum_scale	= HUD_FindVar(hud, "bignum_scale");
 		hud_teamfrags_colors_alpha	= HUD_FindVar(hud, "colors_alpha");
     }
 
@@ -3752,8 +3745,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 						sorted_teams[num].frags,
 						drawBrackets,
 						hud_teamfrags_style->value,
-						hud_teamfrags_bignum->value,
-						hud_teamfrags_bignum_scale->value);
+						hud_teamfrags_bignum->value);
 
 					_px += cell_width + space_x;
 
@@ -3773,8 +3765,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 						sorted_teams[num].frags,
 						drawBrackets,
 						hud_teamfrags_style->value,
-						hud_teamfrags_bignum->value,
-						hud_teamfrags_bignum_scale->value);
+						hud_teamfrags_bignum->value);
 
 					_px += cell_width + space_x;
 
@@ -3804,8 +3795,7 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 					sorted_teams[num].frags,
 					drawBrackets,
 					hud_teamfrags_style->value,
-					hud_teamfrags_bignum->value,
-					hud_teamfrags_bignum_scale->value);
+					hud_teamfrags_bignum->value);
 
 				if (hud_teamfrags_vertical->value)
 				{
@@ -6463,7 +6453,6 @@ void CommonDraw_Init(void)
 		"fliptext", "0",
 		"style", "0",
 		"bignum", "0",
-		"bignum_scale", "1.0",
 		"colors_alpha", "1.0",
 		"maxname", "16",
         NULL);
@@ -6486,7 +6475,6 @@ void CommonDraw_Init(void)
 		"extra_spec_info", "1",
 		"onlytp", "0",
 		"bignum", "0",
-		"bignum_scale", "1.0",
 		"colors_alpha", "1.0",
 		"maxname", "16",
 		NULL);
