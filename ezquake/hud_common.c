@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.120 2007-01-24 19:41:47 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.121 2007-01-24 22:46:49 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -68,9 +68,6 @@ int HUD_Stats(int stat_num)
 //
 
 cvar_t hud_tp_need = {"hud_tp_need",   "0"};
-
-// when show pre-selected weapon/ammo? 1) player uses this system 2) not dead 3) when playing
-#define ShowPreselectedWeap()  (cl_weaponpreselect.value && cl.stats[STAT_HEALTH] > 0 && !cls.demoplayback && !cl.spectator)
 
 /* tp need levels
 int TP_IsHealthLow(void);

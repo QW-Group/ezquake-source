@@ -46,6 +46,7 @@ cvar_t	v_viewheight = {"v_viewheight", "0"};
 cvar_t	cl_drawgun = {"r_drawviewmodel", "1"};
 cvar_t	r_viewmodelsize = {"r_viewmodelSize", "1"};
 cvar_t	r_viewmodeloffset = {"r_viewmodeloffset", ""};
+cvar_t  r_viewpreselgun = {"r_viewpreselgun", "0"};
 
 qbool Change_v_idle (cvar_t *var, char *value);
 cvar_t	v_iyaw_cycle = {"v_iyaw_cycle", "2", 0, Change_v_idle};
@@ -876,10 +877,33 @@ void V_CalcViewRoll (void) {
 void V_AddViewWeapon (float bob) {
 	vec3_t forward, right, up;
 	centity_t *cent;
+	int gun;
 	extern cvar_t scr_fov;
+	extern int IN_BestWeapon(void);
+	extern cvar_t cl_weaponpreselect;
+
+	if (ShowPreselectedWeap() && r_viewpreselgun.value) {
+		switch (IN_BestWeapon()) {
+		// check this - I have no idea where the model numbers come from (i tracked down content of cl.stats[2] in debug),
+		// if they are defined somewhere or so, so kind of "hack" here :(
+		case 1: gun = 16; break;
+		case 2: gun = 17; break;
+		case 3: gun = 20; break;
+		case 4: gun = 18; break;
+		case 5: gun = 21; break;
+		case 6: gun = 19; break;
+		case 7: gun = 22; break;
+		case 8: gun = 33; break;
+		default: gun = cl.stats[STAT_WEAPON];
+		}
+	}	
+	else
+		gun = cl.stats[STAT_WEAPON];
+
+	Com_DPrintf("%i\n", gun);
 
 	cent = &cl.viewent;
-	TP_ParseWeaponModel(cl.model_precache[cl.stats[STAT_WEAPON]]);
+	TP_ParseWeaponModel(cl.model_precache[gun]);
 
 	if (!cl_drawgun.value || (cl_drawgun.value == 2 && scr_fov.value > 90)
 		|| ((view_message.flags & (PF_GIB|PF_DEAD)))	
@@ -920,7 +944,7 @@ void V_AddViewWeapon (float bob) {
 		cent->current.origin[2] += 0.5;
 
 
-	if (cent->current.modelindex != cl.stats[STAT_WEAPON]) {
+	if (cent->current.modelindex != gun) {
 		cl.viewent.frametime = -1;
 	} else {
 		if (cent->current.frame != view_message.weaponframe) {
@@ -929,7 +953,7 @@ void V_AddViewWeapon (float bob) {
 		}
 	}
 
-	cent->current.modelindex = cl.stats[STAT_WEAPON];
+	cent->current.modelindex = gun;
 	cent->current.frame = view_message.weaponframe;
 }
 
@@ -1105,6 +1129,7 @@ void V_Init (void) {
 	Cvar_Register (&cl_drawgun);
 	Cvar_Register (&r_viewmodelsize);
 	Cvar_Register (&r_viewmodeloffset);
+	Cvar_Register (&r_viewpreselgun);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIEW);
 	Cvar_Register (&v_kicktime);
