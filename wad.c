@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: wad.c,v 1.11 2007-01-24 01:32:51 qqshka Exp $
+	$Id: wad.c,v 1.12 2007-01-24 19:30:43 cokeman1982 Exp $
 */
 // wad.c
 
@@ -132,13 +132,19 @@ void *W_GetLumpName (char *name) {
 
 	lump = W_GetLumpinfo (name);
 
-    //Tei: safe checks    
-    if(!lump)
-      return 0;
+    // Make sure we have a lump. 
+	if(!lump)
+      return NULL;
 
-	if (!strcmp(name, "conchars")) {
-		if (CRC_Block (wad_base + lump->filepos, lump->size) == 798)
+	// If we got the conchars lump, check if the CRC is the same
+	// as in the original gfx.wad, and if so, insert leds into it.
+	if (!strcmp(name, "conchars")) 
+	{
+		if (wad_base + lump->filepos + lump->size < wad_filesize 
+			&& CRC_Block (wad_base + lump->filepos, lump->size) == 798)
+		{
 			W_InsertOcranaLeds (wad_base + lump->filepos); 
+		}
 	}
 
 	return (void *) (wad_base + lump->filepos);
