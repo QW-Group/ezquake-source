@@ -134,6 +134,8 @@ void Draw_Init (void) {
 
 	Cvar_ResetCurrentGroup();
 
+	W_LoadWadFile("gfx.wad"); // safe re-init
+
 	draw_chars[0] = W_GetLumpName ("conchars");
 	draw_chars[1] = LoadAlternateCharset ("conchars-cyr");
 	if (draw_chars[1])
