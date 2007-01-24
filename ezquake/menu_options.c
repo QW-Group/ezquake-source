@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.28 2007-01-24 21:34:49 himan Exp $
+		$Id: menu_options.c,v 1.29 2007-01-24 22:41:37 himan Exp $
 
 */
 
@@ -449,7 +449,7 @@ char *bindnames[][2] =
 	{"weapon 7",       "Rocket Launcher"},
 	{"weapon 8",       "Thunderbolt"},
 
-	{"report",			"Report Status"},
+	{"tp_report",		"Report Status"},
 	{"messagemode",		"Chat"},
 	{"messagemode2",	"Teamchat"},	
 	{"toggleproxymenu", "Proxy Menu"},
