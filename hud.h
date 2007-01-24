@@ -136,4 +136,7 @@ qbool HUD_PrepareDrawByName(
 // last phase of initialization
 void HUD_Sort(void);
 
+// when show pre-selected weapon/ammo? 1) player uses this system 2) not dead 3) when playing
+#define ShowPreselectedWeap()  (cl_weaponpreselect.value && cl.stats[STAT_HEALTH] > 0 && !cls.demoplayback && !cl.spectator)
+
 #endif // __hud_h__
