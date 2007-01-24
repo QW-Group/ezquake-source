@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.26 2007-01-20 01:46:15 johnnycz Exp $
+		$Id: menu_options.c,v 1.27 2007-01-24 21:01:26 himan Exp $
 
 */
 
@@ -390,7 +390,7 @@ int CT_Opt_HUD_Key (int k, CTab_t *tab, CTabPage_t *page) {
 
 settings_page settplayer;
 setting settplayer_arr[] = {
-	ADDSET_SEPARATOR("Own Settings"),
+	ADDSET_SEPARATOR("Player Settings"),
 	ADDSET_STRING	("Name", name),
 	ADDSET_STRING	("Teamchat Prefix", cl_fakename),
 	ADDSET_STRING	("Team", team),
@@ -427,27 +427,30 @@ int CT_Opt_Player_Key (int k, CTab_t *tab, CTabPage_t *page) {
 
 char *bindnames[][2] =
 {
-	{"+attack",         "attack"},
-	{"+use",            "use"},
-	{"+jump",           "jump"},
-	{"+forward",        "move forward"},
-	{"+back",           "move back"},
-	{"+moveleft",       "move left"},
-	{"+moveright",      "move right"},
-	{"impulse 12",      "previous weapon"},
-	{"impulse 10",      "next weapon"},
-	{"messagemode",		"chat"},
-	{"messagemode2",	"teamchat"},
-	{"toggleproxymenu", "proxy menu"},
-	{"report",			"tp_report"},
-	{"weapon 1",       "axe"},
-	{"weapon 2",       "shotgun"},
-	{"weapon 3",       "super shotgun"},
-	{"weapon 4",       "nailgun"},
-	{"weapon 5",       "super nailgun"},
-	{"weapon 6",       "grenade launcher"},
-	{"weapon 7",       "rocket launcher"},
-	{"weapon 8",       "thunderbolt"},
+	{"+attack",         "Attack"},
+	{"+use",            "Use"},
+	{"+jump",           "Jump"},
+	{"+forward",        "Move Forward"},
+	{"+back",           "Move Backward"},
+	{"+moveleft",       "Move Left"},
+	{"+moveright",      "Move Right"},
+	
+	{"impulse 12",      "Previous Weapon"},
+	{"impulse 10",      "Next Weapon"},
+	
+	{"weapon 1",       "Axe"},
+	{"weapon 2",       "Shotgun"},
+	{"weapon 3",       "Super Shotgun"},
+	{"weapon 4",       "Nailgun"},
+	{"weapon 5",       "Super Nailgun"},
+	{"weapon 6",       "Grenade Launcher"},
+	{"weapon 7",       "Rocket Launcher"},
+	{"weapon 8",       "Thunderbolt"},
+
+	{"report",			"Report Status"},
+	{"messagemode",		"Chat"},
+	{"messagemode2",	"Teamchat"},	
+	{"toggleproxymenu", "Proxy Menu"},
 };
 
 #define    NUMCOMMANDS    (sizeof(bindnames)/sizeof(bindnames[0]))
