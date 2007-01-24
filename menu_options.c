@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.27 2007-01-24 21:01:26 himan Exp $
+		$Id: menu_options.c,v 1.28 2007-01-24 21:34:49 himan Exp $
 
 */
 
@@ -434,6 +434,8 @@ char *bindnames[][2] =
 	{"+back",           "Move Backward"},
 	{"+moveleft",       "Move Left"},
 	{"+moveright",      "Move Right"},
+	("+moveup",			"Swim Up"),
+	("+movedown",		"Swim Down"),
 	
 	{"impulse 12",      "Previous Weapon"},
 	{"impulse 10",      "Next Weapon"},
@@ -451,6 +453,9 @@ char *bindnames[][2] =
 	{"messagemode",		"Chat"},
 	{"messagemode2",	"Teamchat"},	
 	{"toggleproxymenu", "Proxy Menu"},
+	
+	("+showscores",		"Show Scores"),
+	("screenshot",		"Screenshot"),
 };
 
 #define    NUMCOMMANDS    (sizeof(bindnames)/sizeof(bindnames[0]))
