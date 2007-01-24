@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.60 2007-01-14 10:25:15 johnnycz Exp $
+    $Id: teamplay.c,v 1.61 2007-01-24 21:14:12 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -3202,10 +3202,13 @@ void TP_Point_f (void)
 #define SHORTNICK_LEN 3
 void TP_Report_f (void)
 {
-	char shortnick[SHORTNICK_LEN+1];
-	strncpy(shortnick, TP_PlayerName(), SHORTNICK_LEN); // someone please make a guide which *str*cpy* functions we should use and where, thanks :)
-	shortnick[SHORTNICK_LEN] = 0;
-	Cbuf_AddText(va("say_team $\\%s %%p %%A%%a/%%h $[%%l$] %%b", shortnick));
+	extern cvar_t cl_fakename;
+
+	if (*(cl_fakename.string)) { // not empty
+		Cbuf_AddText(va("say_team %%p %%A%%a/%%h $[%%l$] %%b"));
+	} else {
+		Cbuf_AddText(va("say_team $\\%.3s: %%p %%A%%a/%%h $[%%l$] %%b", TP_PlayerName()));
+	}
 }
 
 typedef struct
