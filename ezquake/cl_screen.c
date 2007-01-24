@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.84 2007-01-24 20:48:42 johnnycz Exp $
+    $Id: cl_screen.c,v 1.85 2007-01-24 23:24:07 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -59,6 +59,10 @@ float	scr_conlines;           // lines of console to display
 
 float	oldscreensize, oldfov, oldsbar;
 
+#define ZOOMEDFOV 35
+qbool	zoomedin;
+float	unzoomedfov;
+float	unzoomedsensitivity;
 
 qbool	OnFovChange (cvar_t *var, char *value);
 qbool	OnDefaultFovChange (cvar_t *var, char *value);
@@ -436,6 +440,22 @@ void SCR_SizeUp_f (void) {
 void SCR_SizeDown_f (void) {
 	Cvar_SetValue (&scr_viewsize,scr_viewsize.value - 10);
 	vid.recalc_refdef = 1;
+}
+
+void SCR_ZoomIn_f (void) {
+	if (zoomedin) return;
+	zoomedin = true;
+	unzoomedfov = scr_fov.value;
+	unzoomedsensitivity = sensitivity.value;
+	Cvar_SetValue(&scr_fov, ZOOMEDFOV);
+	Cvar_SetValue(&sensitivity, unzoomedsensitivity * ((double) ZOOMEDFOV / unzoomedfov));
+}
+
+void SCR_ZoomOut_f (void) {
+	if (!zoomedin) return;
+	zoomedin = false;
+	Cvar_SetValue(&scr_fov, unzoomedfov);
+	Cvar_SetValue(&sensitivity, unzoomedsensitivity);
 }
 
 /********************************** ELEMENTS **********************************/
@@ -3074,6 +3094,8 @@ void SCR_Init (void) {
 	Cmd_AddCommand ("screenshot", SCR_ScreenShot_f);
 	Cmd_AddCommand ("sizeup", SCR_SizeUp_f);
 	Cmd_AddCommand ("sizedown", SCR_SizeDown_f);
+	Cmd_AddCommand ("+zoom", SCR_ZoomIn_f);
+	Cmd_AddCommand ("-zoom", SCR_ZoomOut_f);
 	
 	scr_initialized = true;
 }
