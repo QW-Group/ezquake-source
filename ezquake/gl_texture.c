@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_texture.c,v 1.19 2006-09-25 09:10:43 johnnycz Exp $
+	$Id: gl_texture.c,v 1.20 2007-01-24 01:32:51 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -37,10 +37,9 @@ extern byte vid_gamma_table[256];
 extern float vid_gamma;
 
 
-int texture_extension_number = 1;
-int	gl_max_size_default;
-int anisotropy_tap = 1;
 extern int anisotropy_ext;
+int	anisotropy_tap = 1;
+int	gl_max_size_default;
 int	gl_lightmap_format = 3, gl_solid_format = 3, gl_alpha_format = 4;
 
 cvar_t	gl_max_size			= {"gl_max_size", "2048", 0, OnChange_gl_max_size};
@@ -66,8 +65,9 @@ typedef struct {
 	int			bpp;
 } gltexture_t;
 
-gltexture_t	gltextures[MAX_GLTEXTURES];
-int	numgltextures;
+static gltexture_t	gltextures[MAX_GLTEXTURES];
+static int			numgltextures = 0;
+static int			texture_extension_number = 1;
 
 #define Q_ROUND_POWER2(in, out) {						\
 	_mathlib_temp_int1 = in;							\
@@ -146,7 +146,8 @@ qbool OnChange_gl_anisotropy (cvar_t *var, char *string) {
 
 	int newvalue = Q_atoi(string);
 
-	if (newvalue == 0) { newvalue = 1; } //0 is bad, 1 is off, 2 and higher are valid modes
+	if (newvalue <= 0)
+		newvalue = 1; // 0 is bad, 1 is off, 2 and higher are valid modes
 	
 	anisotropy_tap = newvalue;
 
@@ -303,20 +304,18 @@ void GL_Upload8 (byte *data, int width, int height, int mode) {
 		Sys_Error ("GL_Upload8: image too big");
 
 	if (mode & TEX_FULLBRIGHT) {
+		// this is a fullbright mask, so make all non-fullbright colors transparent
 		mode |= TEX_ALPHA;
 		for (i = 0; i < image_size; i++) {
 			p = data[i];
 			if (p < 224)
-#ifdef __BIG_ENDIAN__
-				trans[i] = table[p] & 0xFFFFFF00;
-#else
-				trans[i] = table[p] & 0x00FFFFFF;
-#endif
+				trans[i] = table[p] & LittleLong(0x00FFFFFF); // transparent
 			else
-				trans[i] = table[p];
+				trans[i] = table[p]; // fullbright
 		}
 	} else if (mode & TEX_ALPHA) {
-
+		// if there are no transparent pixels, make it a 3 component
+		// texture even if it was specified as otherwise
 		mode &= ~TEX_ALPHA;
 		for (i = 0; i < image_size; i++) {
 			if ((p = data[i]) == 255)
@@ -683,6 +682,58 @@ int GL_LoadCharsetImage (char *filename, char *identifier) {
 }
 
 void GL_Texture_Init(void) {
+	int i;
+	extern int	translate_texture, scrap_texnum, solidskytexture, alphaskytexture, lightmap_textures;
+
+	// reset some global vars, probably we need here even more...
+
+	// reset textures array and linked globals
+	for (i = 0; i < numgltextures; i++)
+		Q_free(gltextures[i].pathname);
+
+	memset(gltextures, 0, sizeof(gltextures));
+
+	texture_extension_number = 1;
+	numgltextures  = 0;
+	currenttexture = -1;
+	current_texture = NULL; // nice names
+
+	// multi texture
+	oldtarget = GL_TEXTURE0_ARB;
+	for (i = 0; i < sizeof(cnttextures) / sizeof(cnttextures[0]); i++)
+		cnttextures[i] = -1;
+	mtexenabled = false;
+
+	// save a texture slot for translated picture
+	translate_texture = texture_extension_number++;
+
+	// save slots for scraps
+	scrap_texnum = texture_extension_number;
+	texture_extension_number += MAX_SCRAPS;
+
+	// particles
+	particletexture = texture_extension_number++;
+
+	// netgraph
+	netgraphtexture = texture_extension_number++; // actually i dunno what is this
+
+	// player skins
+	playertextures = texture_extension_number;
+	texture_extension_number += MAX_CLIENTS; // normal skins
+	texture_extension_number += MAX_CLIENTS; // fullbright skins
+
+	// sky
+	solidskytexture = texture_extension_number++;
+	alphaskytexture = texture_extension_number++;
+
+	// sky too
+	skyboxtextures = texture_extension_number;
+	texture_extension_number += 6;
+
+	// lightmap
+	lightmap_textures = texture_extension_number;
+	texture_extension_number += MAX_LIGHTMAPS;
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
 	Cvar_Register(&gl_max_size);
 	Cvar_Register(&gl_picmip);

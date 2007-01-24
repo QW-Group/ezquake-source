@@ -371,8 +371,8 @@ void QMB_InitParticles (void) {
 
 	if (COM_CheckParm ("-detailtrails"))
 		detailtrails = true;
-	else detailtrails = false;
-
+	else
+		detailtrails = false;
 
 	//Allow overkill trails
 	if (detailtrails)

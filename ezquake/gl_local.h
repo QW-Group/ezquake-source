@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.16 2006-12-07 11:53:47 disconn3ct Exp $
+	$Id: gl_local.h,v 1.17 2007-01-24 01:32:51 qqshka Exp $
 
 */
 // gl_local.h -- private refresh defs
@@ -216,6 +216,8 @@ void R_LoadSky_f(void);
 void R_AddSkyBoxSurface (msurface_t *fa);
 void R_ClearSkyBox (void);
 void R_DrawSkyBox (void);
+void R_InitSky (texture_t *mt);	// called at level load
+
 extern qbool	r_skyboxloaded;
 
 // gl_draw.c
@@ -242,6 +244,9 @@ void R_StoreEfrags (efrag_t **ppefrag);
 void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
 
 // gl_rsurf.c
+
+#define	MAX_LIGHTMAPS		64
+
 void EmitDetailPolys (void);
 void R_DrawBrushModel (entity_t *e);
 void R_DrawWorld (void);

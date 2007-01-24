@@ -21,9 +21,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // draw.h -- these are the only functions outside the refresh allowed
 // to touch the vid buffer
 
-#include "wad.h"
-
 #ifdef GLQUAKE
+
+#define	MAX_SCRAPS		2
+
+#define MAX_CHARSETS 16
+extern int		char_textures[MAX_CHARSETS];
+
 typedef struct
 {
 	int			width, height;

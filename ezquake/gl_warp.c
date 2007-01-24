@@ -28,7 +28,7 @@ extern msurface_t **skychain_tail;
 //ISUNDERWATER(TruePointContents(start)
 extern cvar_t r_fastturb;
 
-static int solidskytexture, alphaskytexture;
+int solidskytexture, alphaskytexture;
 static float speedscale, speedscale2;		// for top sky and bottom sky
 
 static msurface_t *warpface;
@@ -460,7 +460,7 @@ void R_DrawSkyChain (void) {
 }
 
 //A sky texture is 256 * 128, with the right side being a masked overlay
-void R_InitSky (miptex_t *mt) {
+void R_InitSky (texture_t *mt) {
 	int i, j, p, r, g, b;
 	byte *src;
 	unsigned trans[128 * 128], transpix, *rgba;
@@ -485,8 +485,6 @@ void R_InitSky (miptex_t *mt) {
 	((byte *) &transpix)[2] = b / (128 * 128);
 	((byte *) &transpix)[3] = 0;
 
-	if (!solidskytexture)
-		solidskytexture = texture_extension_number++;
 	GL_Bind (solidskytexture);
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_solid_format, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -499,8 +497,6 @@ void R_InitSky (miptex_t *mt) {
 		}
 	}
 
-	if (!alphaskytexture)
-		alphaskytexture = texture_extension_number++;
 	GL_Bind(alphaskytexture);
 	glTexImage2D (GL_TEXTURE_2D, 0, gl_alpha_format, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -518,6 +514,8 @@ int R_SetSky(char *skyname) {
 	
 	// START shaman RFE 1020608
 	char *mapname, *groupname;
+
+	r_skyboxloaded = false;
 	
 	mapname = TP_MapName();
 	groupname = TP_GetSkyGroupName(mapname, NULL);
@@ -526,7 +524,6 @@ int R_SetSky(char *skyname) {
 	}
 
 	if (strlen(skyname) == 0) {
-		r_skyboxloaded = false;
 		error = 1;
 		goto cleanup;		
 	}

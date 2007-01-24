@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_local.h,v 1.5 2006-08-14 15:31:53 vvd0 Exp $
+	$Id: r_local.h,v 1.6 2007-01-24 01:32:51 qqshka Exp $
 
 */
 // r_local.h -- private refresh defs
@@ -256,6 +256,7 @@ void R_SetupFrame (void);
 void R_EmitEdge (mvertex_t *pv0, mvertex_t *pv1);
 void R_ClipEdge (mvertex_t *pv0, mvertex_t *pv1, clipplane_t *clip);
 void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
+void R_InitSky (miptex_t *mt);
 
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!
 #define CACHE_SIZE      32              // used to align key data structures

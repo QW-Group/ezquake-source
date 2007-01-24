@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.39 2007-01-15 05:32:32 qqshka Exp $
+    $Id: common.h,v 1.40 2007-01-24 01:32:51 qqshka Exp $
 */
 // common.h  -- general definitions
 
@@ -200,6 +200,7 @@ byte *FS_LoadStackFile (char *path, void *buffer, int bufsize);
 byte *FS_LoadTempFile (char *path);
 byte *FS_LoadHunkFile (char *path);
 void FS_LoadCacheFile (char *path, struct cache_user_s *cu);
+byte *FS_LoadHeapFile (char *path);
 
 qbool COM_WriteFile (char *filename, void *data, int len);
 void COM_CreatePath (char *path);

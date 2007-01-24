@@ -449,7 +449,11 @@ static void NQD_ParseServerData (void)
 
 //##	CL_ClearParticles ();
 	CL_FindModelNumbers ();
+#ifdef GLQUAKE
+	R_NewMap (false);
+#else
 	R_NewMap ();
+#endif
 	TP_NewMap ();
 	MT_NewMap ();
 	Stats_NewMap ();

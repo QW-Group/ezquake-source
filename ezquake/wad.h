@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _WAD_H
 #define _WAD_H
 
-#include "bspfile.h"
+//#include "bspfile.h"
 
 //===============
 //   TYPES
@@ -62,10 +62,6 @@ typedef struct {
 	char		name[16];				// must be null terminated
 } lumpinfo_t;
 
-extern	int			wad_numlumps;
-extern	lumpinfo_t	*wad_lumps;
-extern	byte		*wad_base;
-
 void	W_LoadWadFile (char *filename);
 void	W_CleanupName (char *in, char *out);
 lumpinfo_t	*W_GetLumpinfo (char *name);
@@ -74,7 +70,7 @@ void	*W_GetLumpNum (int num);
 
 void SwapPic (qpic_t *pic);
 
-void WAD3_LoadTextureWadFile (char *filename);
-byte *WAD3_LoadTexture(miptex_t *mt);
+void WAD3_LoadWadFile (char *filename);
+byte *WAD3_LoadTexture (texture_t *tx);
 
 #endif // _WAD_H

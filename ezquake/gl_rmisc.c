@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_rmisc.c,v 1.8 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: gl_rmisc.c,v 1.9 2007-01-24 01:32:51 qqshka Exp $
 */
 // gl_rmisc.c
 
@@ -38,6 +38,9 @@ void R_InitOtherTextures (void) {
 void R_InitTextures (void) {
 	int x,y, m;
 	byte *dest;
+
+	if (r_notexture_mip)
+		return; // FIXME: may be do not Hunk_AllocName but made other stuff ???
 
 	// create a simple checkerboard texture for the default
 	r_notexture_mip = (texture_t *) Hunk_AllocName (sizeof(texture_t) + 16 * 16 + 8 * 8+4 * 4 + 2 * 2, "notexture");
@@ -226,48 +229,54 @@ void R_PreMapLoad(char *name) {
 		lightmode = gl_lightmode.value == 0 ? 0 : 2;
 }
 
-void R_NewMap (void) {
+void R_NewMap (qbool vid_restart) {
 	int	i, waterline;
 
 	// START shaman RFE 1020608
 	extern int R_SetSky(char *skyname);
-	
+
 	R_SetSky (r_skyname.string);
 	// END shaman RFE 1020608
 
-	for (i = 0; i < 256; i++)
-		d_lightstylevalue[i] = 264;		// normal light value
-
-	memset (&r_worldentity, 0, sizeof(r_worldentity));
-	r_worldentity.model = cl.worldmodel;
-
-	// clear out efrags in case the level hasn't been reloaded
-	// FIXME: is this one short?
-	for (i = 0; i < cl.worldmodel->numleafs; i++)
-		cl.worldmodel->leafs[i].efrags = NULL;
-		 	
-	r_viewleaf = NULL;
-	R_ClearParticles ();
+	if (!vid_restart) {
+		for (i = 0; i < 256; i++)
+			d_lightstylevalue[i] = 264;		// normal light value
+    
+		memset (&r_worldentity, 0, sizeof(r_worldentity));
+		r_worldentity.model = cl.worldmodel;
+    
+		// clear out efrags in case the level hasn't been reloaded
+		// FIXME: is this one short?
+		for (i = 0; i < cl.worldmodel->numleafs; i++)
+			cl.worldmodel->leafs[i].efrags = NULL;
+			 	
+		r_viewleaf = NULL;
+		R_ClearParticles ();
+	}
+	else {
+		Mod_ReloadModelsTextures(); // reload textures for brush models
+	}
 
 	GL_BuildLightmaps ();
 
-	// identify sky texture
-	for (i = 0; i < cl.worldmodel->numtextures; i++) {
-		if (!cl.worldmodel->textures[i])
-			continue;
-		for (waterline = 0; waterline < 2; waterline++) {
- 			cl.worldmodel->textures[i]->texturechain[waterline] = NULL;
-			cl.worldmodel->textures[i]->texturechain_tail[waterline] = &cl.worldmodel->textures[i]->texturechain[waterline];
+	if (!vid_restart) {
+		// identify sky texture
+		for (i = 0; i < cl.worldmodel->numtextures; i++) {
+			if (!cl.worldmodel->textures[i])
+				continue;
+			for (waterline = 0; waterline < 2; waterline++) {
+ 	 			cl.worldmodel->textures[i]->texturechain[waterline] = NULL;
+				cl.worldmodel->textures[i]->texturechain_tail[waterline] = &cl.worldmodel->textures[i]->texturechain[waterline];
+			}
 		}
+
+		//VULT CORONAS
+		InitCoronas();
+		//VULT NAMES
+		VX_TrackerClear();
+		//VULT MOTION TRAILS
+		CL_ClearBlurs();
 	}
-
-	//VULT CORONAS
-	InitCoronas();
-	//VULT NAMES
-	VX_TrackerClear();
-	//VULT MOTION TRAILS
-	CL_ClearBlurs();
-
 }
 
 void R_TimeRefresh_f (void) {

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_wgl.c,v 1.39 2007-01-08 00:58:38 disconn3ct Exp $
+	$Id: vid_wgl.c,v 1.40 2007-01-24 01:32:51 qqshka Exp $
 
 */
 
@@ -88,7 +88,7 @@ int				vid_default = MODE_WINDOWED;
 static int		windowed_default;
 unsigned char	vid_curpal[256*3];
 
-HGLRC	baseRC;
+HGLRC	baseRC = NULL;
 HDC		maindc;
 
 glvert_t glv;
@@ -125,16 +125,16 @@ qbool OnChange_vid_mode(cvar_t *var, char *string);
 //cvar_t		vid_config_x = {"vid_config_x","800",CVAR_ARCHIVE};
 //cvar_t		vid_config_y = {"vid_config_y","600",CVAR_ARCHIVE};
 
-cvar_t		vid_ref = {"vid_ref", "gl", CVAR_ROM};
-cvar_t		vid_mode = {"vid_mode","-1", CVAR_NO_RESET, OnChange_vid_mode};	// Note that -1 is NO_MODE
+cvar_t		vid_ref				 = {"vid_ref",  "gl", CVAR_ROM};
+cvar_t		vid_mode			 = {"vid_mode", "-1", CVAR_NO_RESET, OnChange_vid_mode};	// Note that -1 is NO_MODE
 cvar_t		vid_displayfrequency = {"vid_displayfrequency", "75", CVAR_NO_RESET, OnChange_vid_displayfrequency};
-cvar_t		vid_hwgammacontrol = {"vid_hwgammacontrol", "1"};
-cvar_t      vid_flashonactivity = {"vid_flashonactivity", "1", CVAR_ARCHIVE};
+cvar_t		vid_hwgammacontrol	 = {"vid_hwgammacontrol",   "1"};
+cvar_t      vid_flashonactivity  = {"vid_flashonactivity",  "1", CVAR_ARCHIVE};
 
-cvar_t      vid_conwidth  = {"vid_conwidth",  "640", CVAR_NO_RESET, OnChange_vid_con_xxx};
-cvar_t      vid_conheight = {"vid_conheight", "0", CVAR_NO_RESET, OnChange_vid_con_xxx}; // default is 0, so i can sort out is user specify conheight on cmd line or something
+cvar_t      vid_conwidth		 = {"vid_conwidth",  "640", CVAR_NO_RESET, OnChange_vid_con_xxx};
+cvar_t      vid_conheight		 = {"vid_conheight",   "0", CVAR_NO_RESET, OnChange_vid_con_xxx}; // default is 0, so i can sort out is user specify conheight on cmd line or something
 
-cvar_t		_windowed_mouse = {"_windowed_mouse","1",CVAR_ARCHIVE};
+cvar_t		_windowed_mouse		 = {"_windowed_mouse", "1", CVAR_ARCHIVE};
 
 // VVD: din't restore gamma after ALT+TAB on some ATI video cards (or drivers?...) 
 // HACK!!! FIXME {
@@ -1666,6 +1666,8 @@ void VID_InitFullDIB (HINSTANCE hInstance) {
 		Com_Printf ("No fullscreen DIB modes found\n");
 }
 
+void VID_Restart_f (void);
+
 void VID_Init (unsigned char *palette) {
 	int i, temp, basenummodes, width, height, bpp, findbpp, done;
 	HDC hdc;
@@ -1697,6 +1699,7 @@ void VID_Init (unsigned char *palette) {
 	Cvar_ResetCurrentGroup();
 
 	Cmd_AddCommand ("vid_modelist", VID_ModeList_f);
+	Cmd_AddCommand ("vid_restart", VID_Restart_f);
 
 	hIcon = LoadIcon (global_hInstance, MAKEINTRESOURCE (IDI_APPICON));
 
@@ -1874,6 +1877,57 @@ void VID_Init (unsigned char *palette) {
 	strlcpy (badmode.modedesc, "Bad mode", 9);
 	vid_canalttab = true;
 }
+
+void VID_Restart ()
+{
+	// TODO: de-init more things, and re-init it
+
+	if (baseRC)
+		wglDeleteContext (baseRC);
+
+	baseRC = NULL;
+
+	VID_SetMode (vid_mode.value, host_basepal);
+
+	baseRC = wglCreateContext( maindc );
+	if (!baseRC)
+		Sys_Error ("Could not initialize GL (wglCreateContext failed).\n\nMake sure you in are 65535 color mode, and try running -window.");
+
+	if (!wglMakeCurrent( maindc, baseRC ))
+		Sys_Error ("wglMakeCurrent failed");
+}
+
+void VID_Restart_f (void)
+{
+	extern void GFX_Init(void);
+
+	if (!host_initialized) { // sanity
+		Com_Printf("Can't do %s yet\n", Cmd_Argv(0));
+		return;
+	}
+
+	VID_Restart();
+
+	GL_Init();
+#ifdef WIN32
+	GL_Init_Win();
+#else
+	// TODO: some *nix related here
+#endif
+
+	// force models to reload (just flush, no actual loading code here)
+	Cache_Flush();
+
+	// reload 2D textures, particles textures, some other textures and gfx.wad
+	GFX_Init();
+
+	// we need done something like for map reloading, for example reload textures for brush models
+	R_NewMap(true);
+
+	// force all cached models to be loaded, so no short HDD lag then u walk over level and discover new model
+	Mod_TouchModels();
+}
+
 
 /********************************** VID MENU **********************************/
 

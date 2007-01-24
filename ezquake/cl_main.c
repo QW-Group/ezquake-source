@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.122 2007-01-14 23:19:11 johnnycz Exp $
+	$Id: cl_main.c,v 1.123 2007-01-24 01:32:50 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1105,6 +1105,13 @@ void CL_InitLocal (void) {
 	Cmd_AddCommand ("cl_messages", CL_Messages_f);//Tei, cl_messages
 }
 
+void GFX_Init (void) {
+	Draw_Init ();	// safe re-init imo (in gl)
+	SCR_Init ();	// safe re-init imo (in gl)
+	R_Init ();		// safe re-init imo (in gl)
+	Sbar_Init ();	// safe re-init imo (in gl)
+}
+
 void CL_Init (void) {
 	if (dedicated)
 		return;
@@ -1114,8 +1121,6 @@ void CL_Init (void) {
 
 	strcpy (cls.gamedirfile, com_gamedirfile);
 	strcpy (cls.gamedir, com_gamedir);
-
-	W_LoadWadFile ("gfx.wad");
 
 	Modules_Init();
 	FChecks_Init();
@@ -1149,9 +1154,8 @@ void CL_Init (void) {
 #endif
 
 	Image_Init();
-	Draw_Init ();
-	SCR_Init ();
-	R_Init ();
+
+	GFX_Init ();
 
 	S_Init ();
 
@@ -1166,7 +1170,6 @@ void CL_Init (void) {
 	CL_InitCam ();
 	TP_Init ();
 	Hud_262Init();
-	Sbar_Init ();
 	HUD_Init();
 	M_Init ();
 

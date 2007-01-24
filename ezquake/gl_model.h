@@ -76,7 +76,8 @@ typedef struct texture_s {
 	struct texture_s	*anim_next;				//in the animation sequence
 	struct texture_s	*alternate_anims;		//bmodels in frame 1 use these
 	unsigned			offsets[MIPLEVELS];		//four mip maps stored
-	unsigned			colour;					
+	unsigned			colour;					//just for r_fastturb's sake
+	qbool				loaded;					//help speed up vid_restart, actual only for brush models
 	int					isLumaTexture;
 } texture_t;
 
@@ -220,6 +221,30 @@ typedef struct {
 	void				*cachespot;		// remove?
 	mspriteframedesc_t	frames[1];
 } msprite_t;
+
+#define MAX_SPRITE_FRAMES (512)
+
+typedef struct mspriteframe2_s {
+	mspriteframe_t		frame;
+	float				interval;
+} mspriteframe2_t;
+
+typedef struct {
+	spriteframetype_t	type;
+
+	int					numframes;			// always 1 for type == SPR_SINGLE
+	int					offset;
+
+} mspriteframedesc2_t;
+
+typedef struct {
+	int					type;
+	int					maxwidth;
+	int					maxheight;
+	int					numframes;
+
+	mspriteframedesc2_t	frames[MAX_SPRITE_FRAMES];
+} msprite2_t; // actual frames follow after struct immidiately
 
 
 typedef struct {
@@ -385,11 +410,13 @@ void	Mod_ClearAll (void);
 model_t *Mod_ForName (char *name, qbool crash);
 void	*Mod_Extradata (model_t *mod);	// handles caching
 void	Mod_TouchModel (char *name);
+void	Mod_TouchModels (void); // for vid_restart
 
 mleaf_t *Mod_PointInLeaf (float *p, model_t *model);
 byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
 
-qbool Img_HasFullbrights (byte *pixels, int size);
+qbool	Img_HasFullbrights (byte *pixels, int size);
+void	Mod_ReloadModelsTextures (void); // for vid_restart
 
 #include "gl_md3.h" 
 
