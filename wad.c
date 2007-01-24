@@ -16,16 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: wad.c,v 1.10 2006-03-29 20:38:29 oldmanuk Exp $
+	$Id: wad.c,v 1.11 2007-01-24 01:32:51 qqshka Exp $
 */
 // wad.c
 
 #include "quakedef.h"
 
+static int			wad_numlumps;
+static int			wad_filesize;
+static lumpinfo_t	*wad_lumps;
+static byte			*wad_base = NULL;
 
-int			wad_numlumps;
-lumpinfo_t	*wad_lumps;
-byte		*wad_base;
 
 static void W_InsertOcranaLeds (byte *data);
 
@@ -56,20 +57,35 @@ void W_CleanupName (char *in, char *out) {
 		out[i] = 0;
 }
 
+void W_FreeWadFile (void)
+{
+	Q_free (wad_base);
+	wad_base  = NULL;
+	wad_lumps = NULL;
+	wad_numlumps = 0;
+	wad_filesize = 0;
+}
+
 void W_LoadWadFile (char *filename) {
 	lumpinfo_t *lump_p;
 	wadinfo_t *header;
 	unsigned i;
 	int infotableofs;
 
-	wad_base = FS_LoadHunkFile (filename);
+	// only one .wad can be loaded at a time
+	W_FreeWadFile ();
+
+	wad_base = FS_LoadHeapFile (filename);
+
 	if (!wad_base) {
 		if (!strcmp(filename, "gfx.wad"))
-			Sys_Error("Couldn't load gfx.wad.\nThis usually happens when you don't have original Quake 1 files in id1 subdirectory.\nEnsure you have pak0.pak and pak1.pak in subdirectory id1.");
+			Sys_Error("Couldn't load gfx.wad.\n"
+					  "This usually happens when you don't have original Quake 1 files in id1 subdirectory.\n"
+					  "Ensure you have pak0.pak and pak1.pak in subdirectory id1.");
 		else
 			Sys_Error ("W_LoadWadFile: couldn't load %s", filename);
 	}
-
+	wad_filesize = fs_filesize;
 	header = (wadinfo_t *)wad_base;
 
 	if (memcmp(header->identification, "WAD2", 4))
@@ -78,11 +94,19 @@ void W_LoadWadFile (char *filename) {
 	wad_numlumps = LittleLong(header->numlumps);
 	infotableofs = LittleLong(header->infotableofs);
 	wad_lumps = (lumpinfo_t *)(wad_base + infotableofs);
+
+	if (infotableofs + wad_numlumps * sizeof(lump_t) > wad_filesize)
+		Sys_Error ("Wad lump table exceeds file size");
 	
 	for (i = 0, lump_p = wad_lumps; i < wad_numlumps; i++,lump_p++) {
 		lump_p->filepos = LittleLong(lump_p->filepos);
 		lump_p->size = LittleLong(lump_p->size);
+
 		W_CleanupName (lump_p->name, lump_p->name);
+
+		if (lump_p->filepos < sizeof(wadinfo_t) || lump_p->filepos + lump_p->disksize > wad_filesize)
+			Sys_Error ("Wad lump %s exceeds file size", lump_p->name);
+
 		if (lump_p->type == TYP_QPIC)
 			SwapPic ( (qpic_t *)(wad_base + lump_p->filepos));
 	}
@@ -211,91 +235,99 @@ typedef struct {
 } texwadlump_t;
 
 static texwadlump_t texwadlump[TEXWAD_MAXIMAGES];
+static int wad3_numlumps = 0;
 
-void WAD3_LoadTextureWadFile (char *filename) {
+void WAD3_LoadWadFile (char *filename)
+{
 	lumpinfo_t *lumps, *lump_p;
 	wadinfo_t header;
 	int i, j, infotableofs, numlumps, lowmark;
 	FILE *file;
 
-	if (FS_FOpenFile (va("textures/wad3/%s", filename), &file) == -1)
-		if (FS_FOpenFile (va("textures/halflife/%s", filename), &file) == -1)
-			if (FS_FOpenFile (va("textures/%s", filename), &file) == -1)
-				if (FS_FOpenFile (filename, &file) == -1)
-				{
-					Com_Printf ("WARNING: Couldn't load halflife wad \"%s\"\n", filename);
-					return;
-				}
+	if (wad3_numlumps == TEXWAD_MAXIMAGES)
+		return;
 
+	if (FS_FOpenFile (va("textures/halflife/%s", filename), &file) != -1)
+		goto loaded;
+	if (FS_FOpenFile (va("textures/wad3/%s", filename), &file) != -1)
+		goto loaded;
+	if (FS_FOpenFile (va("textures/%s", filename), &file) != -1)
+		goto loaded;
+	if (FS_FOpenFile (filename, &file) != -1)
+		goto loaded;
+
+	Host_Error ("Couldn't load halflife wad \"%s\"", filename);
+
+loaded:
 	if (fread(&header, 1, sizeof(wadinfo_t), file) != sizeof(wadinfo_t)) {
-		Com_Printf ("WAD3_LoadTextureWadFile: unable to read wad header");
+		Com_Printf ("WAD3_LoadWadFile: unable to read wad header\n");
 		return;
 	}
 
 	if (memcmp(header.identification, "WAD3", 4)) {
-		Com_Printf ("WAD3_LoadTextureWadFile: Wad file %s doesn't have WAD3 id\n",filename);
+		Com_Printf ("WAD3_LoadWadFile: Wad file %s doesn't have WAD3 id\n",filename);
 		return;
 	}
 
 	numlumps = LittleLong(header.numlumps);
 	if (numlumps < 1 || numlumps > TEXWAD_MAXIMAGES) {
-		Com_Printf ("WAD3_LoadTextureWadFile: invalid number of lumps (%i)\n", numlumps);
+		Com_Printf ("WAD3_LoadWadFile: invalid number of lumps (%i)\n", numlumps);
 		return;
 	}
 
 	infotableofs = LittleLong(header.infotableofs);
 	if (fseek(file, infotableofs, SEEK_SET)) {
-		Com_Printf ("WAD3_LoadTextureWadFile: unable to seek to lump table");
+		Com_Printf ("WAD3_LoadWadFile: unable to seek to lump table\n");
 		return;
 	}
 
 	lowmark = Hunk_LowMark();
-	if (!(lumps = (lumpinfo_t *) Hunk_Alloc(sizeof(lumpinfo_t) * numlumps))) {
-		Com_Printf ("WAD3_LoadTextureWadFile: unable to allocate temporary memory for lump table");
+	if (!(lumps = Hunk_Alloc(sizeof(lumpinfo_t) * numlumps))) {
+		Com_Printf ("WAD3_LoadWadFile: unable to allocate temporary memory for lump table\n");
 		return;
 	}
 
 	if (fread(lumps, 1, sizeof(lumpinfo_t) * numlumps, file) != sizeof(lumpinfo_t) * numlumps) {
-		Com_Printf ("WAD3_LoadTextureWadFile: unable to read lump table");
+		Com_Printf ("WAD3_LoadWadFile: unable to read lump table\n");
 		Hunk_FreeToLowMark(lowmark);
 		return;
 	}
 
 	for (i = 0, lump_p = lumps; i < numlumps; i++,lump_p++) {
 		W_CleanupName (lump_p->name, lump_p->name);
-		for (j = 0; j < TEXWAD_MAXIMAGES; j++) {
-			if (!texwadlump[j].name[0] || !strcmp(lump_p->name, texwadlump[j].name))
-				break;
+		for (j = 0; j < wad3_numlumps; j++) {
+			if (!strcmp(lump_p->name, texwadlump[j].name))
+				goto skip_duplicate;
 		}
-		if (j == TEXWAD_MAXIMAGES)
-			break; // we are full, don't load any more
-		if (!texwadlump[j].name[0])
-			strlcpy (texwadlump[j].name, lump_p->name, sizeof(texwadlump[j].name));
+		strlcpy (texwadlump[j].name, lump_p->name, sizeof(texwadlump[j].name));
 		texwadlump[j].file = file;
 		texwadlump[j].position = LittleLong(lump_p->filepos);
 		texwadlump[j].size = LittleLong(lump_p->disksize);
+		wad3_numlumps++;
+		if (wad3_numlumps == TEXWAD_MAXIMAGES)
+			break;
+skip_duplicate:;
 	}
 
 	Hunk_FreeToLowMark(lowmark);
 	//leaves the file open
 }
 
+
 //converts paletted to rgba
-static byte *ConvertWad3ToRGBA(miptex_t *tex) {
-	byte *in, *data, *pal;
+byte *ConvertWad3ToRGBA(int width, int height, byte *in, qbool alpha)
+{
+	byte *data, *pal;
 	int i, p, image_size;
 
-	if (!tex->offsets[0])
-		Sys_Error("ConvertWad3ToRGBA: tex->offsets[0] == 0");
+	image_size = width * height;
+	data = Q_malloc (image_size * 4);
 
-	image_size = tex->width * tex->height;
-	in = (byte *) ((byte *) tex + tex->offsets[0]);
-	data = (byte *) Q_malloc(image_size * 4);
+	pal = (byte *) in + ((image_size * 85) / 64) + 2;
 
-	pal = in + ((image_size * 85) >> 6) + 2;
 	for (i = 0; i < image_size; i++) {
 		p = *in++;
-		if (tex->name[0] == '{' && p == 255) {
+		if (p == 255 && alpha) {
 			((int *) data)[i] = 0;
 		} else {
 			p *= 3;
@@ -308,46 +340,41 @@ static byte *ConvertWad3ToRGBA(miptex_t *tex) {
 	return data;
 }
 
-byte *WAD3_LoadTexture(miptex_t *mt) {
-	char texname[MAX_QPATH];
-	int i, j, lowmark = 0;
-	FILE *file;
-	miptex_t *tex;
+byte *WAD3_LoadTexture (texture_t *tx)
+{
+	int i, j = 0;
+	miptex_t *mt;
 	byte *data;
+	FILE *file;
 
-	if (mt->offsets[0])
-		return ConvertWad3ToRGBA(mt);
+	if (tx->offsets[0])
+		return ConvertWad3ToRGBA(tx->width, tx->height, (byte *)(tx + 1), (tx->name[0] == '{'));
 
-	texname[sizeof(texname) - 1] = 0;
-	W_CleanupName (mt->name, texname);
-	for (i = 0; i < TEXWAD_MAXIMAGES; i++) {
-		if (!texwadlump[i].name[0])
-			break;
-		if (strcmp(texname, texwadlump[i].name))
+	for (i = 0; i < wad3_numlumps; i++) {
+		if (strcasecmp(tx->name, texwadlump[i].name))
 			continue;
-
+		
 		file = texwadlump[i].file;
 		if (fseek(file, texwadlump[i].position, SEEK_SET)) {
-			Com_Printf("WAD3_LoadTexture: corrupt WAD3 file");
+			Com_Printf("WAD3_LoadTexture: corrupt WAD3 file\n");
 			return NULL;
 		}
-		lowmark = Hunk_LowMark();
-		tex = (miptex_t *) Hunk_Alloc(texwadlump[i].size);
-		if (fread(tex, 1, texwadlump[i].size, file) < texwadlump[i].size) {
-			Com_Printf("WAD3_LoadTexture: corrupt WAD3 file");
-			Hunk_FreeToLowMark(lowmark);
+		mt = Q_malloc(texwadlump[i].size);
+		if (fread(mt, 1, texwadlump[i].size, file) < texwadlump[i].size) {
+			Com_Printf("WAD3_LoadTexture: corrupt WAD3 file\n");
+			Q_free (mt);
 			return NULL;
 		}
-		tex->width = LittleLong(tex->width);
-		tex->height = LittleLong(tex->height);
-		if (tex->width != mt->width || tex->height != mt->height) {
-			Hunk_FreeToLowMark(lowmark);
+		mt->width = LittleLong(mt->width);
+		mt->height = LittleLong(mt->height);
+		if (mt->width != tx->width || mt->height != tx->height) {
+			Q_free (mt);
 			return NULL;
 		}
 		for (j = 0;j < MIPLEVELS;j++)
-			tex->offsets[j] = LittleLong(tex->offsets[j]);
-		data = ConvertWad3ToRGBA(tex);
-		Hunk_FreeToLowMark(lowmark);
+			mt->offsets[j] = LittleLong(mt->offsets[j]);
+		data = ConvertWad3ToRGBA(mt->width, mt->height, (byte *)(mt + 1), (tx->name[0] == '{'));
+		Q_free (mt);
 		return data;
 	}
 	return NULL;

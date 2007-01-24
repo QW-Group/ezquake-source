@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.58 2007-01-16 01:54:09 qqshka Exp $
+	$Id: cl_demo.c,v 1.59 2007-01-24 01:32:50 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -535,7 +535,7 @@ qbool pb_ensure(void) {
 
 	need = sizeof(pb_buf); // we need full buffer
 	need -= pb_cnt; // alredy have something
-	need = min(need, (int)sizeof(pb_buf) -pb_s - pb_cnt);
+	need = min(need, (int)sizeof(pb_buf) - pb_s - pb_cnt);
 	need = max(0, need);
 	if (need)
 		pb_cnt += (got = pb_raw_read(pb_buf + pb_s + pb_cnt, need));

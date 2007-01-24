@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.56 2007-01-21 20:14:10 cokeman1982 Exp $
+    $Id: common.c,v 1.57 2007-01-24 01:32:51 qqshka Exp $
 
 */
 
@@ -1575,10 +1575,9 @@ byte *FS_LoadFile (char *path, int usehunk) {
 	} else if (usehunk == 3) {
 		buf = (byte *) Cache_Alloc (loadcache, len + 1, base);
 	} else if (usehunk == 4) {
-		if (len+1 > loadsize)
-			buf = (byte *) Hunk_TempAlloc (len + 1);
-		else
-			buf = loadbuf;
+		buf = ((len+1 > loadsize) ? (byte *) Hunk_TempAlloc (len + 1) : loadbuf);
+	} else if (usehunk == 5) {
+		buf = Q_malloc (len + 1);
 	} else {
 		Sys_Error ("FS_LoadFile: bad usehunk\n");
 	}
@@ -1622,6 +1621,13 @@ byte *FS_LoadStackFile (char *path, void *buffer, int bufsize) {
 
 	return buf;
 }
+
+// use Q_malloc, do not forget Q_free when no needed more
+byte *FS_LoadHeapFile (char *path)
+{
+	return FS_LoadFile (path, 5);
+}
+
 
 /*
 Takes an explicit (not game tree related) path to a pak file.

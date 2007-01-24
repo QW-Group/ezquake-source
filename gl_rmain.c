@@ -61,7 +61,7 @@ refdef2_t	r_refdef2;
 mleaf_t		*r_viewleaf, *r_oldviewleaf;
 mleaf_t		*r_viewleaf2, *r_oldviewleaf2;	// for watervis hack
 
-texture_t	*r_notexture_mip;
+texture_t	*r_notexture_mip = NULL;
 
 int			d_lightstylevalue[256];	// 8.8 fraction of base light value
 int			brushmodel = 0;
@@ -206,28 +206,34 @@ void R_RotateForEntity (entity_t *e) {
 }
 
 
-mspriteframe_t *R_GetSpriteFrame (entity_t *currententity) {
-	msprite_t *psprite;
-	mspritegroup_t *pspritegroup;
-	mspriteframe_t *pspriteframe;
-	int i, numframes, frame;
-	float *pintervals, fullinterval, targettime, time;
+mspriteframe_t *R_GetSpriteFrame (entity_t *e, msprite2_t *psprite) {
+	mspriteframe_t  *pspriteframe;
+	mspriteframe2_t *pspriteframe2;
+	int i, numframes, frame, offset;
+	float fullinterval, targettime, time;
 
-	psprite = currententity->model->cache.data;
-	frame = currententity->frame;
+	frame = e->frame;
 
 	if (frame >= psprite->numframes || frame < 0) {
 		Com_Printf ("R_GetSpriteFrame: no such frame %d\n", frame);
-		frame = 0;
+		return NULL;
+	}
+
+	offset    = psprite->frames[frame].offset;
+	numframes = psprite->frames[frame].numframes;
+
+	if (offset < (int)sizeof(msprite2_t) || numframes < 1) {
+		Com_Printf ("R_GetSpriteFrame: wrong sprite\n");
+		return NULL;
 	}
 
 	if (psprite->frames[frame].type == SPR_SINGLE) {
-		pspriteframe = psprite->frames[frame].frameptr;
-	} else {
-		pspritegroup = (mspritegroup_t *)psprite->frames[frame].frameptr;
-		pintervals = pspritegroup->intervals;
-		numframes = pspritegroup->numframes;
-		fullinterval = pintervals[numframes-1];
+		pspriteframe  = (mspriteframe_t* )((byte*)psprite + offset);
+	}
+	else {
+		pspriteframe2 = (mspriteframe2_t*)((byte*)psprite + offset);
+
+		fullinterval = pspriteframe2[numframes-1].interval;
 
 		time = r_refdef2.time;
 
@@ -235,12 +241,11 @@ mspriteframe_t *R_GetSpriteFrame (entity_t *currententity) {
 		// are positive, so we don't have to worry about division by 0
 		targettime = time - ((int) (time / fullinterval)) * fullinterval;
 
-		for (i = 0; i < (numframes - 1); i++) {
-			if (pintervals[i] > targettime)
+		for (i = 0; i < (numframes - 1); i++)
+			if (pspriteframe2[i].interval > targettime)
 				break;
-		}
 
-		pspriteframe = pspritegroup->frames[i];
+		pspriteframe = &pspriteframe2[i].frame;
 	}
 
 	return pspriteframe;
@@ -249,16 +254,19 @@ mspriteframe_t *R_GetSpriteFrame (entity_t *currententity) {
 void R_DrawSpriteModel (entity_t *e) {
 	vec3_t point, right, up;
 	mspriteframe_t *frame;
-	msprite_t *psprite;
+	msprite2_t *psprite;
 
 	// don't even bother culling, because it's just a single
 	// polygon without a surface cache
-	frame = R_GetSpriteFrame (e);
-	psprite = currententity->model->cache.data;
+	psprite = (msprite2_t*)Mod_Extradata (e->model);	//locate the proper data
+	frame = R_GetSpriteFrame (e, psprite);
+
+	if (!frame)
+		return;
 
 	if (psprite->type == SPR_ORIENTED) {
 		// bullet marks on walls
-		AngleVectors (currententity->angles, NULL, right, up);
+		AngleVectors (e->angles, NULL, right, up);
 	} else if (psprite->type == SPR_FACING_UPRIGHT) {
 		VectorSet (up, 0, 0, 1);
 		right[0] = e->origin[1] - r_origin[1];
@@ -1510,20 +1518,21 @@ void R_Init (void) {
 
 	Cvar_ResetCurrentGroup();
 
-    hud_netgraph = HUD_Register("netgraph", /*"r_netgraph"*/ NULL, "Shows your network conditions in graph-form. With netgraph you can monitor your latency (ping), packet loss and network errors.",
-        HUD_PLUSMINUS | HUD_ON_SCORES, ca_onserver, 0, SCR_HUD_Netgraph,
-        "0", "top", "left", "bottom", "0", "0", "0", "0 0 0", 
-        "swap_x",       "0",
-        "swap_y",       "0",
-        "inframes",     "0",
-        "scale",        "256",
-        "ploss",        "1",
-        "width",        "256",
-        "height",       "32",
-        "lostscale",    "1",
-        "full",         "0",
-        "alpha",        "1",
-        NULL);
+	if (!hud_netgraph)
+    	hud_netgraph = HUD_Register("netgraph", /*"r_netgraph"*/ NULL, "Shows your network conditions in graph-form. With netgraph you can monitor your latency (ping), packet loss and network errors.",
+                HUD_PLUSMINUS | HUD_ON_SCORES, ca_onserver, 0, SCR_HUD_Netgraph,
+                "0", "top", "left", "bottom", "0", "0", "0", "0 0 0", 
+                "swap_x",       "0",
+                "swap_y",       "0",
+                "inframes",     "0",
+                "scale",        "256",
+                "ploss",        "1",
+                "width",        "256",
+                "height",       "32",
+                "lostscale",    "1",
+                "full",         "0",
+                "alpha",        "1",
+                NULL);
 
 	// this minigl driver seems to slow us down if the particles are drawn WITHOUT Z buffer bits 
 	if (!strcmp(gl_vendor, "METABYTE/WICKED3D")) 
@@ -1532,27 +1541,18 @@ void R_Init (void) {
 	if (!gl_allow_ztrick)
 		Cvar_SetDefault(&gl_ztrick, 0); 
 
-	R_InitTextures ();
-	R_InitBubble ();
-	R_InitParticles ();
-	CI_Init ();
+	R_InitTextures ();	// FIXME: not sure is this safe re-init
+	R_InitBubble ();	// safe re-init
+	R_InitParticles (); // safe re-init imo
+	CI_Init ();			// safe re-init
 
 	//VULT STUFF
 	if (qmb_initialized)
-		InitVXStuff();
+		InitVXStuff(); // safe re-init imo
+	else
+		; // FIXME: hm, in case of vid_restart, what we must do if before vid_restart qmb_initialized was true?
 
-	netgraphtexture = texture_extension_number;
-	texture_extension_number++;
-
-	playertextures = texture_extension_number;
-	texture_extension_number += MAX_CLIENTS;
-
-	// fullbright skins
-	texture_extension_number += MAX_CLIENTS;
-	skyboxtextures = texture_extension_number;
-	texture_extension_number += 6;
-
-	R_InitOtherTextures ();		
+	R_InitOtherTextures (); // safe re-init
 }
 
 

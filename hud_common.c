@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.118 2007-01-23 19:27:53 johnnycz Exp $
+	$Id: hud_common.c,v 1.119 2007-01-24 01:32:51 qqshka Exp $
 */
 //
 // common HUD elements
@@ -26,7 +26,7 @@ void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
 void Draw_Fill (int x, int y, int w, int h, int c);
 #endif
 
-hud_t *hud_netgraph;
+hud_t *hud_netgraph = NULL;
 
 // ----------------
 // HUD planning

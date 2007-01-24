@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_part.c,v 1.10 2006-12-18 06:46:31 qqshka Exp $
+	$Id: r_part.c,v 1.11 2007-01-24 01:32:51 qqshka Exp $
 
 */
 
@@ -183,7 +183,6 @@ void Classic_LoadParticleTexures (void) {
 	int	i, x, y;
 	unsigned int data[32][32];
 
-	particletexture = texture_extension_number++;
     GL_Bind(particletexture);
 
 	// clear to transparent white
@@ -209,14 +208,19 @@ void Classic_LoadParticleTexures (void) {
 void Classic_InitParticles (void) {
 	int i;
 
-	if ((i = COM_CheckParm ("-particles")) && i + 1 < com_argc)	{
-		r_numparticles = (int) (Q_atoi(com_argv[i + 1]));
-		r_numparticles = bound(ABSOLUTE_MIN_PARTICLES, r_numparticles, ABSOLUTE_MAX_PARTICLES);
-	} else {
-		r_numparticles = DEFAULT_NUM_PARTICLES;
-	}
+	if (!particles) {
+		if ((i = COM_CheckParm ("-particles")) && i + 1 < com_argc)	{
+			r_numparticles = (int) (Q_atoi(com_argv[i + 1]));
+			r_numparticles = bound(ABSOLUTE_MIN_PARTICLES, r_numparticles, ABSOLUTE_MAX_PARTICLES);
+		} else {
+			r_numparticles = DEFAULT_NUM_PARTICLES;
+		}
 
-	particles = (particle_t *) Hunk_AllocName (r_numparticles * sizeof(particle_t), "classic:particles");
+		particles = (particle_t *) Hunk_AllocName (r_numparticles * sizeof(particle_t), "classic:particles");
+	}
+	else {
+		Classic_ClearParticles ();
+	}
 
 #ifdef GLQUAKE
 	Classic_LoadParticleTexures();
@@ -225,6 +229,9 @@ void Classic_InitParticles (void) {
 
 void Classic_ClearParticles (void) {
 	int		i;
+
+	if (!particles)
+		return;
 	
 	free_particles = &particles[0];
 	active_particles = NULL;

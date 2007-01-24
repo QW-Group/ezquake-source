@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.48 2007-01-22 16:34:06 johnnycz Exp $
+	$Id: gl_draw.c,v 1.49 2007-01-24 01:32:51 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -47,9 +47,8 @@ byte			*draw_chars;						// 8*8 graphic characters
 mpic_t			*draw_disc;
 static mpic_t	*draw_backtile;
 
-static int		translate_texture;
+int		translate_texture;
 
-#define MAX_CHARSETS 16
 int		char_textures[MAX_CHARSETS];
 int		char_range[MAX_CHARSETS];
 
@@ -136,8 +135,10 @@ qbool OnChange_gl_smoothfont (cvar_t *var, char *string) {
 	float newval;
 	int i;
 
-	newval = Q_atof (string); if (!newval == !gl_smoothfont.value ||
-	    !char_textures[0]) return false;
+	newval = Q_atof (string);
+
+	if (!newval == !gl_smoothfont.value || !char_textures[0])
+			return false;
 
 	for (i = 0; i < MAX_CHARSETS; i++) {
 		if (!char_textures[i])
@@ -158,12 +159,12 @@ qbool OnChange_gl_smoothfont (cvar_t *var, char *string) {
 qbool OnChange_gl_crosshairimage(cvar_t *v, char *s) {
 	mpic_t *pic;
 
-	if (!s[0]) {
-		customcrosshair_loaded &= ~CROSSHAIR_IMAGE;
+	customcrosshair_loaded &= ~CROSSHAIR_IMAGE;
+
+	if (!s[0])
 		return false;
-	}
+
 	if (!(pic = Draw_CachePicSafe(va("crosshairs/%s", s), false, true))) {
-		customcrosshair_loaded &= ~CROSSHAIR_IMAGE;
 		Com_Printf("Couldn't load image %s\n", s);
 		return false;
 	}
@@ -179,6 +180,7 @@ void customCrosshair_Init(void) {
 	int i = 0, c;
 
 	customcrosshair_loaded = CROSSHAIR_NONE;
+	crosshairtexture_txt = 0;
 
 	if (FS_FOpenFile("crosshairs/crosshair.txt", &f) == -1)
 		return;
@@ -206,6 +208,23 @@ void customCrosshair_Init(void) {
 	customcrosshair_loaded |= CROSSHAIR_TXT;
 }
 
+void Draw_InitCrosshairs(void) {
+	int i;
+	char str[256] = {0};
+
+	memset(&crosshairpic, 0, sizeof(crosshairpic));
+
+	for (i = 0; i < NUMCROSSHAIRS; i++) {
+		crosshairtextures[i] = GL_LoadTexture ("", 8, 8, crosshairdata[i], TEX_ALPHA, 1);
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+	customCrosshair_Init(); // safe re-init
+
+	snprintf(str, sizeof(str), "%s", gl_crosshairimage.string);
+	Cvar_Set(&gl_crosshairimage, str);
+}
+
 
 /*
 =============================================================================
@@ -219,7 +238,6 @@ void customCrosshair_Init(void) {
 // some cards have low quality of alpha pics, so load the pics
 // without transparent pixels into a different scrap block.
 // scrap 0 is solid pics, 1 is transparent
-#define	MAX_SCRAPS		2
 #define	BLOCK_WIDTH		256
 #define	BLOCK_HEIGHT	256
 
@@ -260,12 +278,9 @@ qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y) {
 	return true;
 }
 
-int	scrap_uploads;
-
 void Scrap_Upload (void) {
 	int i;
 
-	scrap_uploads++;
 	for (i = 0; i < 2 ; i++) {
 		if (!(scrap_dirty & (1 << i)))
 			continue;
@@ -282,6 +297,7 @@ typedef struct cachepic_s {
 	char		name[MAX_QPATH];
 	mpic_t		pic;
 } cachepic_t;
+
 typedef struct cachepic_node_s {
 	cachepic_t data;
 	struct cachepic_node_s *next;
@@ -290,7 +306,7 @@ typedef struct cachepic_node_s {
 #define	CACHED_PICS_HDSIZE		64
 cachepic_node_t	*cachepics[CACHED_PICS_HDSIZE];
 
-int		pic_texels, pic_count;
+//int		pic_texels, pic_count;
 
 mpic_t *Draw_CacheWadPic (char *name) {
 	qpic_t	*p;
@@ -327,8 +343,8 @@ mpic_t *Draw_CacheWadPic (char *name) {
 		pic->tl = (y + 0.01) / (float) BLOCK_WIDTH;
 		pic->th = (y + p->height - 0.01) / (float) BLOCK_WIDTH;
 
-		pic_count++;
-		pic_texels += p->width * p->height;
+//		pic_count++;
+//		pic_texels += p->width * p->height;
 	} else {
 		GL_LoadPicTexture (name, pic, p->data);
 	}
@@ -370,12 +386,26 @@ mpic_t* CachePic_Add(const char *path, mpic_t *pic) {
 	return &searchpos->data.pic;
 }
 
+void CachePics_DeInit(void) {
+	int i;
+	cachepic_node_t *cur, *nxt;
+
+	for (i = 0; i < CACHED_PICS_HDSIZE; i++)
+		for (cur = cachepics[i]; cur; cur = nxt) {
+			nxt = cur->next;
+			Q_free(cur);
+		}
+
+	memset(cachepics, 0, sizeof(cachepics));
+}
+
 mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit) 
 {
 	mpic_t pic, *fpic, *pic_24bit;
 	qpic_t *dat;
 
-	if (fpic = CachePic_Find(path)) return fpic;
+	if ((fpic = CachePic_Find(path)))
+		return fpic;
 
 	// load the pic from disk
 
@@ -563,6 +593,9 @@ static int LoadAlternateCharset (char *name)
 void Draw_InitCharset(void) {
 	int i;
 
+	memset(char_textures, 0, sizeof(char_textures));
+	memset(char_range,    0, sizeof(char_range));
+
 	draw_chars = W_GetLumpName ("conchars");
 	for (i = 0; i < 256 * 64; i++) {
 		if (draw_chars[i] == 0)
@@ -584,99 +617,9 @@ void Draw_InitCharset(void) {
 		char_range[1] = 0;
 }
 
-/*
-void Draw_ReInit (void) {
-	int i;
-	extern void GL_Texture_Free (void);
-	//extern void ReInitVXStuff(void);
-	extern void InitVXStuff(void);//Tei Re* doest not exist. ?:) 
-	extern void QMB_InitParticles(void);
-	extern void R_InitTextures(void);
-	extern void R_InitBubble(void);
-	extern void Classic_InitParticles(void);
-	extern void R_InitOtherTextures(void);
-	extern void Cache_Flush (void);
-	extern void R_NewMap (void);
-	extern void Hunk_Check (void);
-	extern void R_Init (void);
-	extern int numgltextures;
-	extern void R_ClearParticles (void);
-	extern void GL_BuildLightmaps (void);
-	extern void InitCoronas(void);
-	extern void CL_ClearBlurs(void);
-	extern void Classic_LoadParticleTexures (void);
-
-	numgltextures = 0;
-	Cache_Flush();
-	CL_ClearBlurs();
-	GL_BuildLightmaps ();
-	
-	R_ClearParticles ();
-	Classic_LoadParticleTexures();
-	
-	QMB_InitParticles();
-	
-	//Tei: this change needed to compile because ReInit.. doest not exist yet!. 
-	//ReInitVXStuff();
-	InitVXStuff();//Tei Re* doest not exist. ?:) 
-
-	R_InitBubble();
-	R_InitTextures();
-	R_InitOtherTextures ();	
-
-	Sbar_Init();
-
-	// load the console background and the charset by hand, because we need to write the version
-	// string into the background before turning it into a texture
-	Draw_InitCharset ();
-	Draw_InitConback ();
-
-//	R_InitBubble ();
-//	Classic_InitParticles();
-// OK	InitCoronas();
-
-//	Hunk_Check();
-//	R_BlendLightmaps();
-	
-//	customCrosshair_Init();
-//	QMB_InitParticles();
-//	InitVXStuff();
-
-//	R_InitTextures();
-//	R_InitOtherTextures ();		
-
-//	R_Init();
-
-//	r_notexture_mip-> = 0;
-
-//	GL_BuildLightmaps ();
-//	GL_Texture_Init();
-
-	// save a texture slot for translated picture
-	translate_texture = texture_extension_number++;
-
-	// save slots for scraps
-	scrap_texnum = texture_extension_number;
-	texture_extension_number += MAX_SCRAPS;
-
-	// Load the crosshair pics
-	for (i = 0; i < NUMCROSSHAIRS; i++) {
-		crosshairtextures[i] = GL_LoadTexture ("", 8, 8, crosshairdata[i], TEX_ALPHA, 1);
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	}
-	customCrosshair_Init();		
-	// get the other pics we need
-	draw_disc = Draw_CacheWadPic ("disc");
-	draw_backtile = Draw_CacheWadPic ("backtile");
-}
-*/
-
 void CP_Init (void);
 
 void Draw_Init (void) {
-	int i;
-
 	Cmd_AddCommand("loadcharset", Draw_LoadCharset_f);	
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
@@ -695,31 +638,34 @@ void Draw_Init (void) {
 
 	Cvar_ResetCurrentGroup();
 
-	GL_Texture_Init();
+	draw_chars = NULL;
+	draw_disc = draw_backtile = NULL;
+
+	W_LoadWadFile("gfx.wad"); // safe re-init
+
+	CachePics_DeInit();
+
+// { scrap clearing
+	memset (scrap_allocated, 0, sizeof(scrap_allocated));
+	memset (scrap_texels,    0, sizeof(scrap_texels));
+
+	scrap_dirty = 0; // bit mask
+// }
+
+	GL_Texture_Init();  // probably safe to re-init now
 
 	// load the console background and the charset by hand, because we need to write the version
 	// string into the background before turning it into a texture
-	Draw_InitCharset ();
-	Draw_InitConback ();
-	CP_Init ();
-
-	// save a texture slot for translated picture
-	translate_texture = texture_extension_number++;
-
-	// save slots for scraps
-	scrap_texnum = texture_extension_number;
-	texture_extension_number += MAX_SCRAPS;
+	Draw_InitCharset(); // safe re-init imo
+	Draw_InitConback(); // safe re-init imo
+	CP_Init();			// safe re-init
 
 	// Load the crosshair pics
-	for (i = 0; i < NUMCROSSHAIRS; i++) {
-		crosshairtextures[i] = GL_LoadTexture ("", 8, 8, crosshairdata[i], TEX_ALPHA, 1);
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	}
-	customCrosshair_Init();		
+	Draw_InitCrosshairs();
+
 	// get the other pics we need
-	draw_disc = Draw_CacheWadPic ("disc");
-	draw_backtile = Draw_CacheWadPic ("backtile");
+	draw_disc     = Draw_CacheWadPic("disc");
+	draw_backtile = Draw_CacheWadPic("backtile");
 }
 
 qbool R_CharAvailable (wchar num)

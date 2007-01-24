@@ -25,9 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	BLOCK_HEIGHT	128
 
 #define MAX_LIGHTMAP_SIZE	(32 * 32) // it was 4096 for quite long time
-#define	MAX_LIGHTMAPS		64
 
-static int lightmap_textures;
+int lightmap_textures;
 static unsigned blocklights[MAX_LIGHTMAP_SIZE * 3];
 
 typedef struct glRect_s {
@@ -1473,11 +1472,6 @@ void GL_BuildLightmaps (void) {
 	gl_invlightmaps = !COM_CheckParm("-noinvlmaps");
 
 	r_framecount = 1;		// no dlightcache
-
-	if (!lightmap_textures) {
-		lightmap_textures = texture_extension_number;
-		texture_extension_number += MAX_LIGHTMAPS;
-	}
 
 	gl_lightmap_format = GL_RGB;
 	if (COM_CheckParm ("-noshadows") && Rulesets_AllowNoShadows())

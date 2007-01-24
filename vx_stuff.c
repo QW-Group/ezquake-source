@@ -380,9 +380,9 @@ void InitVXStuff(void)
 	explosionflashtexture5 = GL_LoadTextureImage ("textures/explosionflash5", NULL, 0, 0,  7);
 	explosionflashtexture6 = GL_LoadTextureImage ("textures/explosionflash6", NULL, 0, 0,  7);
 	explosionflashtexture7 = GL_LoadTextureImage ("textures/explosionflash7", NULL, 0, 0,  7);
-	InitCoronas();
+	InitCoronas(); // safe re-init
 
-	Init_VLights();
+	Init_VLights(); // safe re-init imo
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 
 	Cvar_Register (&amf_stat_loss);

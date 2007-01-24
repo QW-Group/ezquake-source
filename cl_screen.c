@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.82 2007-01-09 21:54:33 johnnycz Exp $
+    $Id: cl_screen.c,v 1.83 2007-01-24 01:32:51 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1611,7 +1611,6 @@ void Hud_Width_f(void)
 }
 
 #ifdef GLQUAKE
-extern int char_textures[1];
 
 /*
 void Hud_Elem_Font(hud_element_t *elem)
@@ -1971,7 +1970,6 @@ void SCR_DrawHud (void)
 				if (!(elem->flags & HUD_IMAGE))
 				{
 #ifdef GLQUAKE
-					extern int char_textures[1];
 					int std_charset = char_textures[0];
 					if (elem->charset)
 						char_textures[0] = elem->charset;

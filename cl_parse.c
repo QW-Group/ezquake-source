@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.67 2007-01-13 19:19:34 johnnycz Exp $
+	$Id: cl_parse.c,v 1.68 2007-01-24 01:32:50 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -454,7 +454,11 @@ void CL_Prespawn (void)
 		Host_Error ("Model_NextDownload: NULL worldmodel");
 
 	CL_FindModelNumbers ();
+#ifdef GLQUAKE
+	R_NewMap (false);
+#else
 	R_NewMap ();
+#endif
 	TP_NewMap();
 	MT_NewMap();
 	Stats_NewMap();
