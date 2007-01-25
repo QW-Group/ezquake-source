@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.24 2006-12-30 11:30:48 disconn3ct Exp $
+	$Id: cl_ents.c,v 1.25 2007-01-25 18:05:52 johnnycz Exp $
 
 */
 
@@ -70,6 +70,17 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_grenade] = "progs/grenade.mdl";
 	cl_modelnames[mi_bubble] = "progs/s_bubble.spr";
 	cl_modelnames[mi_flame] = "progs/flame.mdl";	//joe
+
+	// carried weapon models (drawviewmodel)
+	cl_modelnames[mi_weapon1] = "progs/v_axe.mdl";
+	cl_modelnames[mi_weapon2] = "progs/v_shot.mdl";
+	cl_modelnames[mi_weapon3] = "progs/v_shot2.mdl";
+	cl_modelnames[mi_weapon4] = "progs/v_nail.mdl";
+	cl_modelnames[mi_weapon5] = "progs/v_nail2.mdl";
+	cl_modelnames[mi_weapon6] = "progs/v_rock.mdl";
+	cl_modelnames[mi_weapon7] = "progs/v_rock2.mdl";
+	cl_modelnames[mi_weapon8] = "progs/v_light.mdl";
+
 	cl_modelnames[mi_vaxe] = "progs/v_axe.mdl";
 	cl_modelnames[mi_vbio] = "progs/v_bio.mdl";
 	cl_modelnames[mi_vgrap] = "progs/v_grap.mdl";
