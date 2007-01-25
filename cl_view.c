@@ -874,36 +874,34 @@ void V_CalcViewRoll (void) {
 	}
 }
 
+// tells the model number of the current carried/selected/preselected weapon
+// if user wish so, weapon pre-selection is also taken in account
+// todo: if user selects different weapon while the current one is still
+// firing, wait until the animation is finished
+static int V_CurrentWeaponModel(void) { 
+	extern int IN_BestWeapon(void);
+	extern cvar_t cl_weaponpreselect;
+	int bestgun;
+
+	if (ShowPreselectedWeap() && r_viewpreselgun.value)
+	{
+		bestgun = IN_BestWeapon();
+		if (bestgun == 1) return cl_modelindices[mi_vaxe];
+		if (bestgun > 1 && bestgun <= 8)
+			return cl_modelindices[mi_weapon1 - 1 + bestgun];
+	}
+	
+	return cl.stats[STAT_WEAPON];
+}
+
 void V_AddViewWeapon (float bob) {
 	vec3_t forward, right, up;
 	centity_t *cent;
-	int gun;
+	int gunmodel = V_CurrentWeaponModel();
 	extern cvar_t scr_fov;
-	extern int IN_BestWeapon(void);
-	extern cvar_t cl_weaponpreselect;
-
-	if (ShowPreselectedWeap() && r_viewpreselgun.value) {
-		switch (IN_BestWeapon()) {
-		// check this - I have no idea where the model numbers come from (i tracked down content of cl.stats[2] in debug),
-		// if they are defined somewhere or so, so kind of "hack" here :(
-		case 1: gun = 16; break;
-		case 2: gun = 17; break;
-		case 3: gun = 20; break;
-		case 4: gun = 18; break;
-		case 5: gun = 21; break;
-		case 6: gun = 19; break;
-		case 7: gun = 22; break;
-		case 8: gun = 33; break;
-		default: gun = cl.stats[STAT_WEAPON];
-		}
-	}	
-	else
-		gun = cl.stats[STAT_WEAPON];
-
-	Com_DPrintf("%i\n", gun);
 
 	cent = &cl.viewent;
-	TP_ParseWeaponModel(cl.model_precache[gun]);
+	TP_ParseWeaponModel(cl.model_precache[gunmodel]);
 
 	if (!cl_drawgun.value || (cl_drawgun.value == 2 && scr_fov.value > 90)
 		|| ((view_message.flags & (PF_GIB|PF_DEAD)))	
@@ -944,7 +942,7 @@ void V_AddViewWeapon (float bob) {
 		cent->current.origin[2] += 0.5;
 
 
-	if (cent->current.modelindex != gun) {
+	if (cent->current.modelindex != gunmodel) {
 		cl.viewent.frametime = -1;
 	} else {
 		if (cent->current.frame != view_message.weaponframe) {
@@ -953,7 +951,7 @@ void V_AddViewWeapon (float bob) {
 		}
 	}
 
-	cent->current.modelindex = gun;
+	cent->current.modelindex = gunmodel;
 	cent->current.frame = view_message.weaponframe;
 }
 
