@@ -67,7 +67,6 @@ extern cvar_t gl_externalTextures_world, gl_externalTextures_bmodels;
 
 extern int currenttexture;
 
-extern int texture_extension_number;
 extern int gl_max_size_default;
 
 #endif	//__GL_TEXTURE_H
