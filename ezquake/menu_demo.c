@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.21 2007-01-20 22:45:40 johnnycz Exp $
+		$Id: menu_demo.c,v 1.22 2007-01-26 18:22:00 disconn3ct Exp $
 
 */
 
@@ -119,8 +119,6 @@ static int demo_playlist_cursor = 0;
 static int demo_playlist_num = 0;
 static int demo_playlist_opt_cursor = 0;
 static int demo_playlist_started_test = 0;
-
-static int demo_options_cursor = 0;
 
 char demo_track[DEMO_PLAYLIST_NAME_MAX];
 
