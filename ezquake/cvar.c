@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.35 2007-01-19 23:53:40 johnnycz Exp $
+    $Id: cvar.c,v 1.36 2007-01-29 15:56:19 johnnycz Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -293,7 +293,7 @@ void Cvar_Set (cvar_t *var, char *value)
 			else if (cl_fakeshaft.value < 0.001)
 				Cbuf_AddText("say fakeshaft off\n");
 			else
-				Cbuf_AddText(va("say fakeshaft %.1f%%", cl_fakeshaft.value * 100.0));
+				Cbuf_AddText(va("say fakeshaft %.1f%%\n", cl_fakeshaft.value * 100.0));
 		}
 	}
 }

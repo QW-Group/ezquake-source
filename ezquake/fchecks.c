@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fchecks.c,v 1.13 2007-01-14 10:52:11 johnnycz Exp $
+	$Id: fchecks.c,v 1.14 2007-01-29 15:56:19 johnnycz Exp $
 
 */
 
@@ -99,7 +99,7 @@ void FChecks_FakeshaftResponse (void)
 	else if (cl_fakeshaft.value < 0.001)
 		Cbuf_AddText("say fakeshaft off\n");
 	else
-		Cbuf_AddText(va("say fakeshaft %.1f%%", cl_fakeshaft.value * 100.0));
+		Cbuf_AddText(va("say fakeshaft %.1f%%\n", cl_fakeshaft.value * 100.0));
 }
 
 qbool FChecks_FakeshaftRequest (char *s) {
