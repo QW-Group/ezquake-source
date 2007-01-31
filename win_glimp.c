@@ -1,0 +1,1974 @@
+/*
+===========================================================================
+Copyright (C) 1999-2005 Id Software, Inc.
+
+This file is part of Quake III Arena source code.
+
+Quake III Arena source code is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2 of the License,
+or (at your option) any later version.
+
+Quake III Arena source code is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Foobar; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+===========================================================================
+
+	$Id: win_glimp.c,v 1.1 2007-01-31 00:04:37 qqshka Exp $
+
+*/
+/*
+** WIN_GLIMP.C
+**
+** This file contains ALL Win32 specific stuff having to do with the
+** OpenGL refresh.  When a port is being made the following functions
+** must be implemented by the port:
+**
+** GLimp_EndFrame
+** GLimp_Init
+** GLimp_LogComment
+** GLimp_Shutdown
+**
+** Note that the GLW_xxx functions are Windows specific GL-subsystem
+** related functions that are relevant ONLY to win_glimp.c
+*/
+
+
+#include "quakedef.h"
+#include "resource.h"
+#include "winquake.h"
+
+extern	HWND	mainwindow;
+extern  LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+void WG_CheckHardwareGamma( void );
+void WG_RestoreGamma( void );
+void WG_CheckNeedSetDeviceGammaRamp (void);
+
+typedef enum {
+	RSERR_OK,
+
+	RSERR_INVALID_FULLSCREEN,
+	RSERR_INVALID_MODE,
+
+	RSERR_UNKNOWN
+} rserr_t;
+
+#define TRY_PFD_SUCCESS		0
+#define TRY_PFD_FAIL_SOFT	1
+#define TRY_PFD_FAIL_HARD	2
+
+#define	WINDOW_CLASS_NAME	"ezQuake"
+#define WINDOW_DEFAULT_NAME "ezQuake"
+
+static void		GLW_InitExtensions( void );
+static rserr_t	GLW_SetMode( const char *drivername, 
+							 int mode, 
+							 int colorbits, 
+							 qbool cdsFullscreen );
+
+//
+// variable declarations
+//
+glwstate_t glw_state;
+
+cvar_t	r_allowSoftwareGL = { "r_allowSoftwareGL", "0", CVAR_LATCH }; // don't abort out if the pixelformat claims software
+cvar_t	r_maskMinidriver  = { "r_maskMinidriver",  "0", CVAR_LATCH }; // allow a different dll name to be treated as if it were opengl32.dll
+
+static qbool s_classRegistered = false;
+
+//
+// function declaration
+//
+
+// FIXME: this is a stubs for now...
+
+void	 QGL_EnableLogging( qbool enable ) { /* TODO */ };
+
+void ( APIENTRY * qglGetIntegerv )(GLenum pname, GLint *params);
+GLenum ( APIENTRY * qglGetError )(void);
+const GLubyte * ( APIENTRY * qglGetString )(GLenum name);
+
+BOOL  ( WINAPI * qwglCopyContext)(HGLRC, HGLRC, UINT);
+HGLRC ( WINAPI * qwglCreateContext)(HDC);
+HGLRC ( WINAPI * qwglCreateLayerContext)(HDC, int);
+BOOL  ( WINAPI * qwglDeleteContext)(HGLRC);
+HGLRC ( WINAPI * qwglGetCurrentContext)(VOID);
+HDC   ( WINAPI * qwglGetCurrentDC)(VOID);
+PROC  ( WINAPI * qwglGetProcAddress)(LPCSTR);
+BOOL  ( WINAPI * qwglMakeCurrent)(HDC, HGLRC);
+BOOL  ( WINAPI * qwglDescribeLayerPlane)(HDC, int, int, UINT, LPLAYERPLANEDESCRIPTOR);
+int   ( WINAPI * qwglSetLayerPaletteEntries)(HDC, int, int, int, CONST COLORREF *);
+int   ( WINAPI * qwglGetLayerPaletteEntries)(HDC, int, int, int, COLORREF *);
+BOOL  ( WINAPI * qwglRealizeLayerPalette)(HDC, int, BOOL);
+BOOL  ( WINAPI * qwglSwapLayerBuffers)(HDC, UINT);
+BOOL  ( WINAPI * qwglShareLists)(HGLRC, HGLRC);
+BOOL  ( WINAPI * qwglUseFontBitmaps)(HDC, DWORD, DWORD, DWORD);
+BOOL  ( WINAPI * qwglUseFontOutlines)(HDC, DWORD, DWORD, DWORD, FLOAT, FLOAT, int, LPGLYPHMETRICSFLOAT);
+
+int   ( WINAPI * qwglChoosePixelFormat )(HDC, CONST PIXELFORMATDESCRIPTOR *);
+int   ( WINAPI * qwglDescribePixelFormat) (HDC, int, UINT, LPPIXELFORMATDESCRIPTOR);
+int   ( WINAPI * qwglGetPixelFormat)(HDC);
+BOOL  ( WINAPI * qwglSetPixelFormat)(HDC, int, CONST PIXELFORMATDESCRIPTOR *);
+BOOL  ( WINAPI * qwglSwapBuffers)(HDC);
+
+int ( WINAPI * qwglSwapIntervalEXT)( int interval );
+BOOL  ( WINAPI * qwglGetDeviceGammaRamp3DFX)( HDC, LPVOID );
+BOOL  ( WINAPI * qwglSetDeviceGammaRamp3DFX)( HDC, LPVOID );
+
+
+qbool QGL_Init( const char *dllname ) {
+	// bombastic function
+	ST_Printf( PRINT_ALL, "...initializing QGL\n" );
+
+	qglGetIntegerv				 = glGetIntegerv;
+	qglGetError					 = glGetError;
+	qglGetString				 = glGetString;
+
+	qwglCopyContext              = wglCopyContext;
+	qwglCreateContext            = wglCreateContext;
+	qwglCreateLayerContext       = wglCreateLayerContext;
+	qwglDeleteContext            = wglDeleteContext;
+	qwglDescribeLayerPlane       = wglDescribeLayerPlane;
+	qwglGetCurrentContext        = wglGetCurrentContext;
+	qwglGetCurrentDC             = wglGetCurrentDC;
+	qwglGetLayerPaletteEntries   = wglGetLayerPaletteEntries;
+	qwglGetProcAddress           = wglGetProcAddress;
+	qwglMakeCurrent              = wglMakeCurrent;
+	qwglRealizeLayerPalette      = wglRealizeLayerPalette;
+	qwglSetLayerPaletteEntries   = wglSetLayerPaletteEntries;
+	qwglShareLists               = wglShareLists;
+	qwglSwapLayerBuffers         = wglSwapLayerBuffers;
+	qwglUseFontBitmaps           = wglUseFontBitmapsA;
+	qwglUseFontOutlines          = wglUseFontOutlinesA;
+
+	qwglChoosePixelFormat        = ChoosePixelFormat;
+	qwglDescribePixelFormat      = DescribePixelFormat;
+	qwglGetPixelFormat           = GetPixelFormat;
+	qwglSetPixelFormat           = SetPixelFormat;
+	qwglSwapBuffers              = SwapBuffers;
+
+	qwglSwapIntervalEXT			 = 0;
+	qwglGetDeviceGammaRamp3DFX	 = NULL;
+	qwglSetDeviceGammaRamp3DFX	 = NULL;
+
+	qglActiveTextureARB			 = 0;
+	qglClientActiveTextureARB	 = 0;
+	qglMultiTexCoord2fARB		 = 0;
+
+	return true;
+}
+
+void QGL_Shutdown( void ) {
+	ST_Printf( PRINT_ALL, "...shutting down QGL\n" );
+
+	qglGetIntegerv				 = NULL;
+	qglGetError					 = NULL;
+	qglGetString				 = NULL;
+
+	qwglCopyContext              = NULL;
+	qwglCreateContext            = NULL;
+	qwglCreateLayerContext       = NULL;
+	qwglDeleteContext            = NULL;
+	qwglDescribeLayerPlane       = NULL;
+	qwglGetCurrentContext        = NULL;
+	qwglGetCurrentDC             = NULL;
+	qwglGetLayerPaletteEntries   = NULL;
+	qwglGetProcAddress           = NULL;
+	qwglMakeCurrent              = NULL;
+	qwglRealizeLayerPalette      = NULL;
+	qwglSetLayerPaletteEntries   = NULL;
+	qwglShareLists               = NULL;
+	qwglSwapLayerBuffers         = NULL;
+	qwglUseFontBitmaps           = NULL;
+	qwglUseFontOutlines          = NULL;
+
+	qwglChoosePixelFormat        = NULL;
+	qwglDescribePixelFormat      = NULL;
+	qwglGetPixelFormat           = NULL;
+	qwglSetPixelFormat           = NULL;
+	qwglSwapBuffers              = NULL;
+}
+
+
+/*
+** GLW_StartDriverAndSetMode
+*/
+static qbool GLW_StartDriverAndSetMode( const char *drivername, 
+										   int mode, 
+										   int colorbits,
+										   qbool cdsFullscreen )
+{
+	rserr_t err;
+
+	err = GLW_SetMode( drivername, r_mode.integer, colorbits, cdsFullscreen );
+
+	switch ( err )
+	{
+	case RSERR_INVALID_FULLSCREEN:
+		ST_Printf( PRINT_ALL, "...WARNING: fullscreen unavailable in this mode\n" );
+		return false;
+	case RSERR_INVALID_MODE:
+		ST_Printf( PRINT_ALL, "...WARNING: could not set the given mode (%d)\n", mode );
+		return false;
+	default:
+		break;
+	}
+	return true;
+}
+
+/*
+** ChoosePFD
+**
+** Helper function that replaces ChoosePixelFormat.
+*/
+#define MAX_PFDS 256
+
+static int GLW_ChoosePFD( HDC hDC, PIXELFORMATDESCRIPTOR *pPFD )
+{
+	PIXELFORMATDESCRIPTOR pfds[MAX_PFDS+1];
+	int maxPFD = 0;
+	int i;
+	int bestMatch = 0;
+
+	ST_Printf( PRINT_ALL, "...GLW_ChoosePFD( %d, %d, %d )\n", ( int ) pPFD->cColorBits, ( int ) pPFD->cDepthBits, ( int ) pPFD->cStencilBits );
+
+	// count number of PFDs
+	if ( glConfig.driverType > GLDRV_ICD )
+	{
+		maxPFD = qwglDescribePixelFormat( hDC, 1, sizeof( PIXELFORMATDESCRIPTOR ), &pfds[0] );
+	}
+	else
+	{
+		maxPFD = DescribePixelFormat( hDC, 1, sizeof( PIXELFORMATDESCRIPTOR ), &pfds[0] );
+	}
+	if ( maxPFD > MAX_PFDS )
+	{
+		ST_Printf( PRINT_WARNING, "...numPFDs > MAX_PFDS (%d > %d)\n", maxPFD, MAX_PFDS );
+		maxPFD = MAX_PFDS;
+	}
+
+	ST_Printf( PRINT_ALL, "...%d PFDs found\n", maxPFD - 1 );
+
+	// grab information
+	for ( i = 1; i <= maxPFD; i++ )
+	{
+		if ( glConfig.driverType > GLDRV_ICD )
+		{
+			qwglDescribePixelFormat( hDC, i, sizeof( PIXELFORMATDESCRIPTOR ), &pfds[i] );
+		}
+		else
+		{
+			DescribePixelFormat( hDC, i, sizeof( PIXELFORMATDESCRIPTOR ), &pfds[i] );
+		}
+	}
+
+	// look for a best match
+	for ( i = 1; i <= maxPFD; i++ )
+	{
+		//
+		// make sure this has hardware acceleration
+		//
+		if ( ( pfds[i].dwFlags & PFD_GENERIC_FORMAT ) != 0 ) 
+		{
+			if ( !r_allowSoftwareGL.integer )
+			{
+				if ( r_verbose.integer )
+				{
+					ST_Printf( PRINT_ALL, "...PFD %d rejected, software acceleration\n", i );
+				}
+				continue;
+			}
+		}
+
+		// verify pixel type
+		if ( pfds[i].iPixelType != PFD_TYPE_RGBA )
+		{
+			if ( r_verbose.integer )
+			{
+				ST_Printf( PRINT_ALL, "...PFD %d rejected, not RGBA\n", i );
+			}
+			continue;
+		}
+
+		// verify proper flags
+		if ( ( ( pfds[i].dwFlags & pPFD->dwFlags ) & pPFD->dwFlags ) != pPFD->dwFlags ) 
+		{
+			if ( r_verbose.integer )
+			{
+				ST_Printf( PRINT_ALL, "...PFD %d rejected, improper flags (%x instead of %x)\n", i, pfds[i].dwFlags, pPFD->dwFlags );
+			}
+			continue;
+		}
+
+		// verify enough bits
+		if ( pfds[i].cDepthBits < 15 )
+		{
+			continue;
+		}
+		if ( ( pfds[i].cStencilBits < 4 ) && ( pPFD->cStencilBits > 0 ) )
+		{
+			continue;
+		}
+
+		//
+		// selection criteria (in order of priority):
+		// 
+		//  PFD_STEREO
+		//  colorBits
+		//  depthBits
+		//  stencilBits
+		//
+		if ( bestMatch )
+		{
+			// check stereo
+			if ( ( pfds[i].dwFlags & PFD_STEREO ) && ( !( pfds[bestMatch].dwFlags & PFD_STEREO ) ) && ( pPFD->dwFlags & PFD_STEREO ) )
+			{
+				bestMatch = i;
+				continue;
+			}
+			
+			if ( !( pfds[i].dwFlags & PFD_STEREO ) && ( pfds[bestMatch].dwFlags & PFD_STEREO ) && ( pPFD->dwFlags & PFD_STEREO ) )
+			{
+				bestMatch = i;
+				continue;
+			}
+
+			// check color
+			if ( pfds[bestMatch].cColorBits != pPFD->cColorBits )
+			{
+				// prefer perfect match
+				if ( pfds[i].cColorBits == pPFD->cColorBits )
+				{
+					bestMatch = i;
+					continue;
+				}
+				// otherwise if this PFD has more bits than our best, use it
+				else if ( pfds[i].cColorBits > pfds[bestMatch].cColorBits )
+				{
+					bestMatch = i;
+					continue;
+				}
+			}
+
+			// check depth
+			if ( pfds[bestMatch].cDepthBits != pPFD->cDepthBits )
+			{
+				// prefer perfect match
+				if ( pfds[i].cDepthBits == pPFD->cDepthBits )
+				{
+					bestMatch = i;
+					continue;
+				}
+				// otherwise if this PFD has more bits than our best, use it
+				else if ( pfds[i].cDepthBits > pfds[bestMatch].cDepthBits )
+				{
+					bestMatch = i;
+					continue;
+				}
+			}
+
+			// check stencil
+			if ( pfds[bestMatch].cStencilBits != pPFD->cStencilBits )
+			{
+				// prefer perfect match
+				if ( pfds[i].cStencilBits == pPFD->cStencilBits )
+				{
+					bestMatch = i;
+					continue;
+				}
+				// otherwise if this PFD has more bits than our best, use it
+				else if ( ( pfds[i].cStencilBits > pfds[bestMatch].cStencilBits ) && 
+					 ( pPFD->cStencilBits > 0 ) )
+				{
+					bestMatch = i;
+					continue;
+				}
+			}
+		}
+		else
+		{
+			bestMatch = i;
+		}
+	}
+	
+	if ( !bestMatch )
+		return 0;
+
+	if ( ( pfds[bestMatch].dwFlags & PFD_GENERIC_FORMAT ) != 0 )
+	{
+		if ( !r_allowSoftwareGL.integer )
+		{
+			ST_Printf( PRINT_ALL, "...no hardware acceleration found\n" );
+			return 0;
+		}
+		else
+		{
+			ST_Printf( PRINT_ALL, "...using software emulation\n" );
+		}
+	}
+	else if ( pfds[bestMatch].dwFlags & PFD_GENERIC_ACCELERATED )
+	{
+		ST_Printf( PRINT_ALL, "...MCD acceleration found\n" );
+	}
+	else
+	{
+		ST_Printf( PRINT_ALL, "...hardware acceleration found\n" );
+	}
+
+	*pPFD = pfds[bestMatch];
+
+	return bestMatch;
+}
+
+/*
+** void GLW_CreatePFD
+**
+** Helper function zeros out then fills in a PFD
+*/
+static void GLW_CreatePFD( PIXELFORMATDESCRIPTOR *pPFD, int colorbits, int depthbits, int stencilbits, qbool stereo )
+{
+    PIXELFORMATDESCRIPTOR src = 
+	{
+		sizeof(PIXELFORMATDESCRIPTOR),	// size of this pfd
+		1,								// version number
+		PFD_DRAW_TO_WINDOW |			// support window
+		PFD_SUPPORT_OPENGL |			// support OpenGL
+		PFD_DOUBLEBUFFER,				// double buffered
+		PFD_TYPE_RGBA,					// RGBA type
+		24,								// 24-bit color depth
+		0, 0, 0, 0, 0, 0,				// color bits ignored
+		0,								// no alpha buffer
+		0,								// shift bit ignored
+		0,								// no accumulation buffer
+		0, 0, 0, 0, 					// accum bits ignored
+		24,								// 24-bit z-buffer	
+		8,								// 8-bit stencil buffer
+		0,								// no auxiliary buffer
+		PFD_MAIN_PLANE,					// main layer
+		0,								// reserved
+		0, 0, 0							// layer masks ignored
+    };
+
+	src.cColorBits = colorbits;
+	src.cDepthBits = depthbits;
+	src.cStencilBits = stencilbits;
+
+	if ( stereo )
+	{
+		ST_Printf( PRINT_ALL, "...attempting to use stereo\n" );
+		src.dwFlags |= PFD_STEREO;
+		glConfig.stereoEnabled = true;
+	}
+	else
+	{
+		glConfig.stereoEnabled = false;
+	}
+
+	*pPFD = src;
+}
+
+/*
+** GLW_MakeContext
+*/
+static int GLW_MakeContext( PIXELFORMATDESCRIPTOR *pPFD )
+{
+	int pixelformat;
+
+	//
+	// don't putz around with pixelformat if it's already set (e.g. this is a soft
+	// reset of the graphics system)
+	//
+	if ( !glw_state.pixelFormatSet )
+	{
+		//
+		// choose, set, and describe our desired pixel format.  If we're
+		// using a minidriver then we need to bypass the GDI functions,
+		// otherwise use the GDI functions.
+		//
+		if ( ( pixelformat = GLW_ChoosePFD( glw_state.hDC, pPFD ) ) == 0 )
+		{
+			ST_Printf( PRINT_ALL, "...GLW_ChoosePFD failed\n");
+			return TRY_PFD_FAIL_SOFT;
+		}
+		ST_Printf( PRINT_ALL, "...PIXELFORMAT %d selected\n", pixelformat );
+
+		if ( glConfig.driverType > GLDRV_ICD )
+		{
+			qwglDescribePixelFormat( glw_state.hDC, pixelformat, sizeof( *pPFD ), pPFD );
+			if ( qwglSetPixelFormat( glw_state.hDC, pixelformat, pPFD ) == FALSE )
+			{
+				ST_Printf ( PRINT_ALL, "...qwglSetPixelFormat failed\n");
+				return TRY_PFD_FAIL_SOFT;
+			}
+		}
+		else
+		{
+			DescribePixelFormat( glw_state.hDC, pixelformat, sizeof( *pPFD ), pPFD );
+
+			if ( SetPixelFormat( glw_state.hDC, pixelformat, pPFD ) == FALSE )
+			{
+				ST_Printf (PRINT_ALL, "...SetPixelFormat failed\n", glw_state.hDC );
+				return TRY_PFD_FAIL_SOFT;
+			}
+		}
+
+		glw_state.pixelFormatSet = true;
+	}
+
+	//
+	// startup the OpenGL subsystem by creating a context and making it current
+	//
+	if ( !glw_state.hGLRC )
+	{
+		ST_Printf( PRINT_ALL, "...creating GL context: " );
+		if ( ( glw_state.hGLRC = qwglCreateContext( glw_state.hDC ) ) == 0 )
+		{
+			ST_Printf (PRINT_ALL, "failed\n");
+
+			return TRY_PFD_FAIL_HARD;
+		}
+		ST_Printf( PRINT_ALL, "succeeded\n" );
+
+		ST_Printf( PRINT_ALL, "...making context current: " );
+		if ( !qwglMakeCurrent( glw_state.hDC, glw_state.hGLRC ) )
+		{
+			qwglDeleteContext( glw_state.hGLRC );
+			glw_state.hGLRC = NULL;
+			ST_Printf (PRINT_ALL, "failed\n");
+			return TRY_PFD_FAIL_HARD;
+		}
+		ST_Printf( PRINT_ALL, "succeeded\n" );
+	}
+
+	return TRY_PFD_SUCCESS;
+}
+
+
+/*
+** GLW_InitDriver
+**
+** - get a DC if one doesn't exist
+** - create an HGLRC if one doesn't exist
+*/
+static qbool GLW_InitDriver( const char *drivername, int colorbits )
+{
+	int		tpfd;
+	int		depthbits, stencilbits;
+	static PIXELFORMATDESCRIPTOR pfd;		// save between frames since 'tr' gets cleared
+
+	ST_Printf( PRINT_ALL, "Initializing OpenGL driver\n" );
+
+	//
+	// get a DC for our window if we don't already have one allocated
+	//
+	if ( glw_state.hDC == NULL )
+	{
+		ST_Printf( PRINT_ALL, "...getting DC: " );
+
+		if ( ( glw_state.hDC = GetDC( mainwindow ) ) == NULL )
+		{
+			ST_Printf( PRINT_ALL, "failed\n" );
+			return false;
+		}
+		ST_Printf( PRINT_ALL, "succeeded\n" );
+	}
+
+	if ( colorbits == 0 )
+	{
+		colorbits = glw_state.desktopBitsPixel;
+	}
+
+	//
+	// implicitly assume Z-buffer depth == desktop color depth
+	//
+	if ( r_depthbits.integer == 0 ) {
+		if ( colorbits > 16 ) {
+			depthbits = 24;
+		} else {
+			depthbits = 16;
+		}
+	} else {
+		depthbits = r_depthbits.integer;
+	}
+
+	//
+	// do not allow stencil if Z-buffer depth likely won't contain it
+	//
+	stencilbits = r_stencilbits.integer;
+	if ( depthbits < 24 )
+	{
+		stencilbits = 0;
+	}
+
+	//
+	// make two attempts to set the PIXELFORMAT
+	//
+
+	//
+	// first attempt: r_colorbits, depthbits, and r_stencilbits
+	//
+	if ( !glw_state.pixelFormatSet )
+	{
+		GLW_CreatePFD( &pfd, colorbits, depthbits, stencilbits, r_stereo.integer );
+		if ( ( tpfd = GLW_MakeContext( &pfd ) ) != TRY_PFD_SUCCESS )
+		{
+			if ( tpfd == TRY_PFD_FAIL_HARD )
+			{
+				ST_Printf( PRINT_WARNING, "...failed hard\n" );
+				return false;
+			}
+
+			//
+			// punt if we've already tried the desktop bit depth and no stencil bits
+			//
+			if ( ( r_colorbits.integer == glw_state.desktopBitsPixel ) &&
+				 ( stencilbits == 0 ) )
+			{
+				ReleaseDC( mainwindow, glw_state.hDC );
+				glw_state.hDC = NULL;
+
+				ST_Printf( PRINT_ALL, "...failed to find an appropriate PIXELFORMAT\n" );
+
+				return false;
+			}
+
+			//
+			// second attempt: desktop's color bits and no stencil
+			//
+			if ( colorbits > glw_state.desktopBitsPixel )
+			{
+				colorbits = glw_state.desktopBitsPixel;
+			}
+			GLW_CreatePFD( &pfd, colorbits, depthbits, 0, r_stereo.integer );
+			if ( GLW_MakeContext( &pfd ) != TRY_PFD_SUCCESS )
+			{
+				if ( glw_state.hDC )
+				{
+					ReleaseDC( mainwindow, glw_state.hDC );
+					glw_state.hDC = NULL;
+				}
+
+				ST_Printf( PRINT_ALL, "...failed to find an appropriate PIXELFORMAT\n" );
+
+				return false;
+			}
+		}
+
+		/*
+		** report if stereo is desired but unavailable
+		*/
+		if ( !( pfd.dwFlags & PFD_STEREO ) && ( r_stereo.integer != 0 ) ) 
+		{
+			ST_Printf( PRINT_ALL, "...failed to select stereo pixel format\n" );
+			glConfig.stereoEnabled = false;
+		}
+	}
+
+	/*
+	** store PFD specifics 
+	*/
+	glConfig.colorBits = ( int ) pfd.cColorBits;
+	glConfig.depthBits = ( int ) pfd.cDepthBits;
+	glConfig.stencilBits = ( int ) pfd.cStencilBits;
+
+	return true;
+}
+
+/*
+** GLW_CreateWindow
+**
+** Responsible for creating the Win32 window and initializing the OpenGL driver.
+*/
+static qbool GLW_CreateWindow( const char *drivername, int width, int height, int colorbits, qbool cdsFullscreen )
+{
+	RECT			r;
+	int				stylebits;
+	int				x, y, w, h;
+	int				exstyle;
+
+	//
+	// register the window class if necessary
+	//
+	if ( !s_classRegistered )
+	{
+		WNDCLASS wc;
+
+		memset( &wc, 0, sizeof( wc ) );
+
+		wc.style         = 0;
+		wc.lpfnWndProc   = (WNDPROC)MainWndProc;
+		wc.cbClsExtra    = 0;
+		wc.cbWndExtra    = 0;
+		wc.hInstance     = global_hInstance;
+		wc.hIcon         = LoadIcon ( global_hInstance, MAKEINTRESOURCE (IDI_APPICON) );;
+		wc.hCursor       = LoadCursor (NULL,IDC_ARROW);
+		wc.hbrBackground = (void *)COLOR_GRAYTEXT;
+		wc.lpszMenuName  = 0;
+		wc.lpszClassName = WINDOW_CLASS_NAME;
+
+		if ( !RegisterClass( &wc ) )
+		{
+			ST_Printf( PRINT_ERR_FATAL, "GLW_CreateWindow: could not register window class" );
+		}
+		s_classRegistered = true;
+		ST_Printf( PRINT_ALL, "...registered window class\n" );
+	}
+
+	//
+	// create the HWND if one does not already exist
+	//
+	if ( !mainwindow )
+	{
+		//
+		// compute width and height
+		//
+		r.left = 0;
+		r.top = 0;
+		r.right  = width;
+		r.bottom = height;
+
+		if ( cdsFullscreen || !strcasecmp( _3DFX_DRIVER_NAME, drivername ) )
+		{
+			exstyle   = WS_EX_TOPMOST;
+			stylebits = WS_POPUP|WS_VISIBLE|WS_SYSMENU;
+		}
+		else
+		{
+			exstyle   = 0;
+			stylebits = WS_OVERLAPPED|WS_BORDER|WS_CAPTION|WS_VISIBLE|WS_SYSMENU;
+			AdjustWindowRect (&r, stylebits, FALSE);
+		}
+
+		w = r.right - r.left;
+		h = r.bottom - r.top;
+
+		if ( cdsFullscreen || !strcasecmp( _3DFX_DRIVER_NAME, drivername ) )
+		{
+			x = 0;
+			y = 0;
+		}
+		else
+		{
+			x = vid_xpos.integer;
+			y = vid_ypos.integer;
+
+			// adjust window coordinates if necessary 
+			// so that the window is completely on screen
+			if ( x < 0 )
+				x = 0;
+			if ( y < 0 )
+				y = 0;
+
+			if ( w < glw_state.desktopWidth &&
+				 h < glw_state.desktopHeight )
+			{
+				if ( x + w > glw_state.desktopWidth )
+					x = ( glw_state.desktopWidth - w );
+				if ( y + h > glw_state.desktopHeight )
+					y = ( glw_state.desktopHeight - h );
+			}
+		}
+
+		mainwindow = CreateWindowEx (
+			 exstyle, 
+			 WINDOW_CLASS_NAME,
+			 WINDOW_DEFAULT_NAME,
+			 stylebits,
+			 x, y, w, h,
+			 NULL,
+			 NULL,
+			 global_hInstance,
+			 NULL);
+
+		if ( !mainwindow )
+		{
+			ST_Printf (PRINT_ERR_FATAL, "GLW_CreateWindow() - Couldn't create window");
+		}
+	
+		ShowWindow( mainwindow, SW_SHOW );
+		UpdateWindow( mainwindow );
+		ST_Printf( PRINT_ALL, "...created window@%d,%d (%dx%d)\n", x, y, w, h );
+	}
+	else
+	{
+		ST_Printf( PRINT_ALL, "...window already present, CreateWindowEx skipped\n" );
+	}
+
+	if ( !GLW_InitDriver( drivername, colorbits ) )
+	{
+		ShowWindow( mainwindow, SW_HIDE );
+		DestroyWindow( mainwindow );
+		mainwindow = NULL;
+
+		return false;
+	}
+
+	SetForegroundWindow( mainwindow );
+	SetFocus( mainwindow );
+
+	return true;
+}
+
+static void PrintCDSError( int value )
+{
+	switch ( value )
+	{
+	case DISP_CHANGE_RESTART:
+		ST_Printf( PRINT_ALL, "restart required\n" );
+		break;
+	case DISP_CHANGE_BADPARAM:
+		ST_Printf( PRINT_ALL, "bad param\n" );
+		break;
+	case DISP_CHANGE_BADFLAGS:
+		ST_Printf( PRINT_ALL, "bad flags\n" );
+		break;
+	case DISP_CHANGE_FAILED:
+		ST_Printf( PRINT_ALL, "DISP_CHANGE_FAILED\n" );
+		break;
+	case DISP_CHANGE_BADMODE:
+		ST_Printf( PRINT_ALL, "bad mode\n" );
+		break;
+	case DISP_CHANGE_NOTUPDATED:
+		ST_Printf( PRINT_ALL, "not updated\n" );
+		break;
+	default:
+		ST_Printf( PRINT_ALL, "unknown error %d\n", value );
+		break;
+	}
+}
+
+/*
+** GLW_SetMode
+*/
+static rserr_t GLW_SetMode( const char *drivername, 
+						    int mode, 
+							int colorbits, 
+							qbool cdsFullscreen )
+{
+	HDC hDC;
+	const char *win_fs[] = { "W", "FS" };
+	int		cdsRet;
+	DEVMODE dm;
+		
+	//
+	// print out informational messages
+	//
+	ST_Printf( PRINT_ALL, "...setting mode %d:", mode );
+	if ( !R_GetModeInfo( &glConfig.vidWidth, &glConfig.vidHeight, &glConfig.windowAspect, mode ) )
+	{
+		ST_Printf( PRINT_ALL, " invalid mode\n" );
+		return RSERR_INVALID_MODE;
+	}
+	ST_Printf( PRINT_ALL, " %d %d %s\n", glConfig.vidWidth, glConfig.vidHeight, win_fs[cdsFullscreen] );
+
+	//
+	// check our desktop attributes
+	//
+	hDC = GetDC( GetDesktopWindow() );
+	glw_state.desktopBitsPixel = GetDeviceCaps( hDC, BITSPIXEL );
+	glw_state.desktopWidth = GetDeviceCaps( hDC, HORZRES );
+	glw_state.desktopHeight = GetDeviceCaps( hDC, VERTRES );
+	ReleaseDC( GetDesktopWindow(), hDC );
+
+	//
+	// verify desktop bit depth
+	//
+	if ( glConfig.driverType != GLDRV_VOODOO )
+	{
+		if ( glw_state.desktopBitsPixel < 15 || glw_state.desktopBitsPixel == 24 )
+		{
+			if ( colorbits == 0 || ( !cdsFullscreen && colorbits >= 15 ) )
+			{
+				if ( MessageBox( NULL,
+							"It is highly unlikely that a correct\n"
+							"windowed display can be initialized with\n"
+							"the current desktop display depth.  Select\n"
+							"'OK' to try anyway.  Press 'Cancel' if you\n"
+							"have a 3Dfx Voodoo, Voodoo-2, or Voodoo Rush\n"
+							"3D accelerator installed, or if you otherwise\n"
+							"wish to quit.",
+							"Low Desktop Color Depth",
+							MB_OKCANCEL | MB_ICONEXCLAMATION ) != IDOK )
+				{
+					return RSERR_INVALID_MODE;
+				}
+			}
+		}
+	}
+
+	// do a CDS if needed
+	if ( cdsFullscreen )
+	{
+		memset( &dm, 0, sizeof( dm ) );
+		
+		dm.dmSize = sizeof( dm );
+		
+		dm.dmPelsWidth  = glConfig.vidWidth;
+		dm.dmPelsHeight = glConfig.vidHeight;
+		dm.dmFields     = DM_PELSWIDTH | DM_PELSHEIGHT;
+
+		if ( r_displayRefresh.integer != 0 )
+		{
+			dm.dmDisplayFrequency = r_displayRefresh.integer;
+			dm.dmFields |= DM_DISPLAYFREQUENCY;
+		}
+		
+		// try to change color depth if possible
+		if ( colorbits != 0 )
+		{
+			if ( glw_state.allowdisplaydepthchange )
+			{
+				dm.dmBitsPerPel = colorbits;
+				dm.dmFields |= DM_BITSPERPEL;
+				ST_Printf( PRINT_ALL, "...using colorsbits of %d\n", colorbits );
+			}
+			else
+			{
+				ST_Printf( PRINT_ALL, "WARNING:...changing depth not supported on Win95 < pre-OSR 2.x\n" );
+			}
+		}
+		else
+		{
+			ST_Printf( PRINT_ALL, "...using desktop display depth of %d\n", glw_state.desktopBitsPixel );
+		}
+
+		//
+		// if we're already in fullscreen then just create the window
+		//
+		if ( glw_state.cdsFullscreen )
+		{
+			ST_Printf( PRINT_ALL, "...already fullscreen, avoiding redundant CDS\n" );
+
+			if ( !GLW_CreateWindow ( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, true ) )
+			{
+				ST_Printf( PRINT_ALL, "...restoring display settings\n" );
+				ChangeDisplaySettings( 0, 0 );
+				return RSERR_INVALID_MODE;
+			}
+		}
+		//
+		// need to call CDS
+		//
+		else
+		{
+			ST_Printf( PRINT_ALL, "...calling CDS: " );
+			
+			// try setting the exact mode requested, because some drivers don't report
+			// the low res modes in EnumDisplaySettings, but still work
+			if ( ( cdsRet = ChangeDisplaySettings( &dm, CDS_FULLSCREEN ) ) == DISP_CHANGE_SUCCESSFUL )
+			{
+				ST_Printf( PRINT_ALL, "ok\n" );
+
+				if ( !GLW_CreateWindow ( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, true) )
+				{
+					ST_Printf( PRINT_ALL, "...restoring display settings\n" );
+					ChangeDisplaySettings( 0, 0 );
+					return RSERR_INVALID_MODE;
+				}
+				
+				glw_state.cdsFullscreen = true;
+			}
+			else
+			{
+				//
+				// the exact mode failed, so scan EnumDisplaySettings for the next largest mode
+				//
+				DEVMODE		devmode;
+				int			modeNum;
+
+				ST_Printf( PRINT_ALL, "failed, " );
+				
+				PrintCDSError( cdsRet );
+			
+				ST_Printf( PRINT_ALL, "...trying next higher resolution:" );
+				
+				// we could do a better matching job here...
+				for ( modeNum = 0 ; ; modeNum++ ) {
+					if ( !EnumDisplaySettings( NULL, modeNum, &devmode ) ) {
+						modeNum = -1;
+						break;
+					}
+					if ( devmode.dmPelsWidth >= glConfig.vidWidth
+						&& devmode.dmPelsHeight >= glConfig.vidHeight
+						&& devmode.dmBitsPerPel >= 15 ) {
+						break;
+					}
+				}
+
+				if ( modeNum != -1 && ( cdsRet = ChangeDisplaySettings( &devmode, CDS_FULLSCREEN ) ) == DISP_CHANGE_SUCCESSFUL )
+				{
+					ST_Printf( PRINT_ALL, " ok\n" );
+					if ( !GLW_CreateWindow( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, true) )
+					{
+						ST_Printf( PRINT_ALL, "...restoring display settings\n" );
+						ChangeDisplaySettings( 0, 0 );
+						return RSERR_INVALID_MODE;
+					}
+					
+					glw_state.cdsFullscreen = true;
+				}
+				else
+				{
+					ST_Printf( PRINT_ALL, " failed, " );
+					
+					PrintCDSError( cdsRet );
+					
+					ST_Printf( PRINT_ALL, "...restoring display settings\n" );
+					ChangeDisplaySettings( 0, 0 );
+					
+					glw_state.cdsFullscreen = false;
+					glConfig.isFullscreen = false;
+					if ( !GLW_CreateWindow( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, false) )
+					{
+						return RSERR_INVALID_MODE;
+					}
+					return RSERR_INVALID_FULLSCREEN;
+				}
+			}
+		}
+	}
+	else
+	{
+		if ( glw_state.cdsFullscreen )
+		{
+			ChangeDisplaySettings( 0, 0 );
+		}
+
+		glw_state.cdsFullscreen = false;
+		if ( !GLW_CreateWindow( drivername, glConfig.vidWidth, glConfig.vidHeight, colorbits, false ) )
+		{
+			return RSERR_INVALID_MODE;
+		}
+	}
+
+	//
+	// success, now check display frequency, although this won't be valid on Voodoo(2)
+	//
+	memset( &dm, 0, sizeof( dm ) );
+	dm.dmSize = sizeof( dm );
+//{ alt + tab
+	glw_state.dm = dm;
+	glw_state.vid_canalttab    = false;
+	glw_state.vid_wassuspended = false;
+//}
+	if ( EnumDisplaySettings( NULL, ENUM_CURRENT_SETTINGS, &dm ) )
+	{
+		glConfig.displayFrequency = dm.dmDisplayFrequency;
+//{ alt + tab
+		glw_state.dm = dm;
+		glw_state.vid_canalttab = true;
+//}
+	}
+
+	// NOTE: this is overridden later on standalone 3Dfx drivers
+	glConfig.isFullscreen = cdsFullscreen;
+
+	return RSERR_OK;
+}
+
+/*
+** GLW_InitExtensions
+*/
+static void GLW_InitExtensions( void )
+{
+	if ( !r_allowExtensions.integer )
+	{
+		ST_Printf( PRINT_ALL, "*** IGNORING OPENGL EXTENSIONS ***\n" );
+		return;
+	}
+
+	ST_Printf( PRINT_ALL, "Initializing OpenGL extensions\n" );
+
+	// WGL_EXT_swap_control
+	qwglSwapIntervalEXT = ( BOOL (WINAPI *)(int)) qwglGetProcAddress( "wglSwapIntervalEXT" );
+	if ( qwglSwapIntervalEXT )
+	{
+		ST_Printf( PRINT_ALL, "...using WGL_EXT_swap_control\n" );
+		r_swapInterval.modified = true;	// force a set next frame
+	}
+	else
+	{
+		ST_Printf( PRINT_ALL, "...WGL_EXT_swap_control not found\n" );
+	}
+
+	// WGL_3DFX_gamma_control
+	qwglGetDeviceGammaRamp3DFX = NULL;
+	qwglSetDeviceGammaRamp3DFX = NULL;
+
+	if ( strstr( glConfig.extensions_string, "WGL_3DFX_gamma_control" ) )
+	{
+//		if ( !r_ignorehwgamma->integer && r_ext_gamma_control->integer )
+//		{
+			qwglGetDeviceGammaRamp3DFX = ( BOOL ( WINAPI * )( HDC, LPVOID ) ) qwglGetProcAddress( "wglGetDeviceGammaRamp3DFX" );
+			qwglSetDeviceGammaRamp3DFX = ( BOOL ( WINAPI * )( HDC, LPVOID ) ) qwglGetProcAddress( "wglSetDeviceGammaRamp3DFX" );
+
+			if ( qwglGetDeviceGammaRamp3DFX && qwglSetDeviceGammaRamp3DFX )
+			{
+				ST_Printf( PRINT_ALL, "...using WGL_3DFX_gamma_control\n" );
+			}
+			else
+			{
+				qwglGetDeviceGammaRamp3DFX = NULL;
+				qwglSetDeviceGammaRamp3DFX = NULL;
+			}
+//		}
+//		else
+//		{
+//			ST_Printf( PRINT_ALL, "...ignoring WGL_3DFX_gamma_control\n" );
+//		}
+	}
+	else
+	{
+		ST_Printf( PRINT_ALL, "...WGL_3DFX_gamma_control not found\n" );
+	}
+}
+
+
+/*
+** GLW_CheckOSVersion
+*/
+static qbool GLW_CheckOSVersion( void )
+{
+#define OSR2_BUILD_NUMBER 1111
+
+	OSVERSIONINFO	vinfo;
+
+	vinfo.dwOSVersionInfoSize = sizeof(vinfo);
+
+	glw_state.allowdisplaydepthchange = false;
+
+	if ( GetVersionEx( &vinfo) )
+	{
+		if ( vinfo.dwMajorVersion > 4 )
+		{
+			glw_state.allowdisplaydepthchange = true;
+		}
+		else if ( vinfo.dwMajorVersion == 4 )
+		{
+			if ( vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT )
+			{
+				glw_state.allowdisplaydepthchange = true;
+			}
+			else if ( vinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS )
+			{
+				if ( LOWORD( vinfo.dwBuildNumber ) >= OSR2_BUILD_NUMBER )
+				{
+					glw_state.allowdisplaydepthchange = true;
+				}
+			}
+		}
+	}
+	else
+	{
+		ST_Printf( PRINT_ALL, "GLW_CheckOSVersion() - GetVersionEx failed\n" );
+		return false;
+	}
+
+	return true;
+}
+
+/*
+** GLW_LoadOpenGL
+**
+** GLimp_win.c internal function that attempts to load and use 
+** a specific OpenGL DLL.
+*/
+static qbool GLW_LoadOpenGL( const char *drivername )
+{
+	char buffer[1024];
+	qbool cdsFullscreen;
+
+	strlcpy( buffer, drivername, sizeof(buffer) );
+	Q_strlwr(buffer);
+
+	//
+	// determine if we're on a standalone driver
+	//
+	if ( strstr( buffer, "opengl32" ) != 0 || r_maskMinidriver.integer )
+	{
+		glConfig.driverType = GLDRV_ICD;
+	}
+	else
+	{
+		glConfig.driverType = GLDRV_STANDALONE;
+
+		ST_Printf( PRINT_ALL, "...assuming '%s' is a standalone driver\n", drivername );
+
+		if ( strstr( buffer, _3DFX_DRIVER_NAME ) )
+		{
+			glConfig.driverType = GLDRV_VOODOO;
+		}
+	}
+
+	// disable the 3Dfx splash screen
+	_putenv("FX_GLIDE_NO_SPLASH=0");
+
+	//
+	// load the driver and bind our function pointers to it
+	// 
+	if ( QGL_Init( buffer ) ) 
+	{
+		cdsFullscreen = r_fullscreen.integer;
+
+		// create the window and set up the context
+		if ( !GLW_StartDriverAndSetMode( drivername, r_mode.integer, r_colorbits.integer, cdsFullscreen ) )
+		{
+			// if we're on a 24/32-bit desktop and we're going fullscreen on an ICD,
+			// try it again but with a 16-bit desktop
+			if ( glConfig.driverType == GLDRV_ICD )
+			{
+				if ( r_colorbits.integer != 16 ||
+					 cdsFullscreen != true ||
+					 r_mode.integer != 3 )
+				{
+					if ( !GLW_StartDriverAndSetMode( drivername, 3, 16, true ) )
+					{
+						goto fail;
+					}
+				}
+			}
+			else
+			{
+				goto fail;
+			}
+		}
+
+		if ( glConfig.driverType == GLDRV_VOODOO )
+		{
+			glConfig.isFullscreen = true;
+		}
+
+		return true;
+	}
+fail:
+
+	QGL_Shutdown();
+
+	return false;
+}
+
+
+void GL_BeginRendering (int *x, int *y, int *width, int *height) {
+	*x = *y = 0;
+	*width  = glConfig.vidWidth;
+	*height = glConfig.vidHeight;
+}
+
+extern void CheckWindowedMouse(void);	
+// FIXME: merge with GLimp_EndFrame() !!!!!!
+void GL_EndRendering (void) {
+	//
+	// swapinterval stuff
+	//
+	if ( r_swapInterval.modified ) {
+		r_swapInterval.modified = false;
+
+		if ( !glConfig.stereoEnabled ) {	// why?
+			if ( qwglSwapIntervalEXT ) {
+				qwglSwapIntervalEXT( r_swapInterval.integer );
+			}
+		}
+	}
+
+	WG_CheckNeedSetDeviceGammaRamp();
+
+	if (!scr_skipupdate || block_drawing) {
+
+		// Multiview - Only swap the back buffer to front when all views have been drawn in multiview.
+		if (cl_multiview.value && cls.mvdplayback) 
+		{
+			if (CURRVIEW == 1)
+			{
+				GLimp_EndFrame();
+			}
+		}
+		else 
+		{
+			// Normal, swap on each frame.
+			GLimp_EndFrame(); 
+		}
+	}
+
+	CheckWindowedMouse();
+}
+
+/*
+** GLimp_EndFrame
+*/
+void GLimp_EndFrame (void)
+{
+/* move it to GL_EndRendering() temporaly
+	//
+	// swapinterval stuff
+	//
+	if ( r_swapInterval.modified ) {
+		r_swapInterval.modified = false;
+
+		if ( !glConfig.stereoEnabled ) {	// why?
+			if ( qwglSwapIntervalEXT ) {
+				qwglSwapIntervalEXT( r_swapInterval.integer );
+			}
+		}
+	}
+*/
+
+	if ( glConfig.driverType > GLDRV_ICD )
+	{
+		if ( !qwglSwapBuffers( glw_state.hDC ) )
+		{
+			ST_Printf( PRINT_ERR_FATAL, "GLimp_EndFrame() - SwapBuffers() failed!\n" );
+		}
+	}
+	else
+	{
+		SwapBuffers( glw_state.hDC );
+	}
+
+	// check logging
+//	QGL_EnableLogging( r_logFile.integer );
+}
+
+static void GLW_StartOpenGL( void )
+{
+	qbool attemptedOpenGL32 = false;
+	qbool attempted3Dfx = false;
+
+	attempted3Dfx = true; // FIXME: qqshka, we are not yet really loading standalone lib
+
+	//
+	// load and initialize the specific OpenGL driver
+	//
+	if ( !GLW_LoadOpenGL( r_glDriver.string ) )
+	{
+		if ( !strcasecmp( r_glDriver.string, OPENGL_DRIVER_NAME ) )
+		{
+			attemptedOpenGL32 = true;
+		}
+		else if ( !strcasecmp( r_glDriver.string, _3DFX_DRIVER_NAME ) )
+		{
+			attempted3Dfx = true;
+		}
+
+		if ( !attempted3Dfx )
+		{
+			attempted3Dfx = true;
+			if ( GLW_LoadOpenGL( _3DFX_DRIVER_NAME ) )
+			{
+				Cvar_Set( &r_glDriver, _3DFX_DRIVER_NAME );
+				r_glDriver.modified = false;
+			}
+			else
+			{
+				if ( !attemptedOpenGL32 )
+				{
+					if ( !GLW_LoadOpenGL( OPENGL_DRIVER_NAME ) )
+					{
+						ST_Printf( PRINT_ERR_FATAL, "GLW_StartOpenGL() - could not load OpenGL subsystem\n" );
+					}
+					Cvar_Set( &r_glDriver, OPENGL_DRIVER_NAME );
+					r_glDriver.modified = false;
+				}
+				else
+				{
+					ST_Printf( PRINT_ERR_FATAL, "GLW_StartOpenGL() - could not load OpenGL subsystem\n" );
+				}
+			}
+		}
+		else if ( !attemptedOpenGL32 )
+		{
+			attemptedOpenGL32 = true;
+			if ( GLW_LoadOpenGL( OPENGL_DRIVER_NAME ) )
+			{
+				Cvar_Set( &r_glDriver, OPENGL_DRIVER_NAME );
+				r_glDriver.modified = false;
+			}
+			else
+			{
+				ST_Printf( PRINT_ERR_FATAL, "GLW_StartOpenGL() - could not load OpenGL subsystem\n" );
+			}
+		}
+		else
+		{
+			ST_Printf( PRINT_ERR_FATAL, "GLW_StartOpenGL() - could not load OpenGL subsystem\n" );
+		}
+	}
+}
+
+/*
+** GLimp_Init
+**
+** This is the platform specific OpenGL initialization function.  It
+** is responsible for loading OpenGL, initializing it, setting
+** extensions, creating a window of the appropriate size, doing
+** fullscreen manipulations, etc.  Its overall responsibility is
+** to make sure that a functional OpenGL subsystem is operating
+** when it returns to the ref.
+*/
+void GLimp_Init( void )
+{
+	char	buf[1024];
+//	cvar_t *lastValidRenderer = Cvar_Get( "r_lastValidRenderer", "(uninitialized)", CVAR_ARCHIVE );
+
+	ST_Printf( PRINT_ALL, "Initializing OpenGL subsystem\n" );
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
+
+	Cvar_Register (&r_allowSoftwareGL);
+	Cvar_Register (&r_maskMinidriver);
+
+	Cvar_ResetCurrentGroup();
+
+	//
+	// check OS version to see if we can do fullscreen display changes
+	//
+	if ( !GLW_CheckOSVersion() )
+	{
+		ST_Printf( PRINT_ERR_FATAL, "GLimp_Init() - incorrect operating system\n" );
+	}
+
+	// load appropriate DLL and initialize subsystem
+	GLW_StartOpenGL();
+
+	// get our config strings
+	strlcpy( glConfig.vendor_string, qglGetString (GL_VENDOR), sizeof( glConfig.vendor_string ) );
+	strlcpy( glConfig.renderer_string, qglGetString (GL_RENDERER), sizeof( glConfig.renderer_string ) );
+	strlcpy( glConfig.version_string, qglGetString (GL_VERSION), sizeof( glConfig.version_string ) );
+	strlcpy( glConfig.extensions_string, qglGetString (GL_EXTENSIONS), sizeof( glConfig.extensions_string ) );
+
+	//
+	// chipset specific configuration
+	//
+	strlcpy( buf, glConfig.renderer_string, sizeof(buf) );
+	Q_strlwr( buf );
+
+	//
+	// NOTE: if changing cvars, do it within this block.  This allows them
+	// to be overridden when testing driver fixes, etc. but only sets
+	// them to their default state when the hardware is first installed/run.
+	//
+#if 0 /* qqshka: sad, that good for q3, but not for ezquake cfg managment */
+	if ( Q_stricmp( lastValidRenderer->string, glConfig.renderer_string ) )
+	{
+		glConfig.hardwareType = GLHW_GENERIC;
+
+		Cvar_Set( &r_textureMode, "GL_LINEAR_MIPMAP_NEAREST" );
+
+		// VOODOO GRAPHICS w/ 2MB
+		if ( strstr( buf, "voodoo graphics/1 tmu/2 mb" ) )
+		{
+			Cvar_Set( &r_picmip, "2" );
+		}
+		else
+		{
+			Cvar_Set( &r_picmip, "1" );
+
+			if ( strstr( buf, "rage 128" ) || strstr( buf, "rage128" ) )
+			{
+				Cvar_Set( &r_finish, "0" );
+			}
+			// Savage3D and Savage4 should always have trilinear enabled
+			else if ( strstr( buf, "savage3d" ) || strstr( buf, "s3 savage4" ) )
+			{
+				Cvar_Set( &r_texturemode, "GL_LINEAR_MIPMAP_LINEAR" );
+			}
+		}
+	}
+#endif
+	
+	//
+	// this is where hardware specific workarounds that should be
+	// detected/initialized every startup should go.
+	//
+	if ( strstr( buf, "banshee" ) || strstr( buf, "voodoo3" ) )
+	{
+		glConfig.hardwareType = GLHW_3DFX_2D3D;
+	}
+	// VOODOO GRAPHICS w/ 2MB
+	else if ( strstr( buf, "voodoo graphics/1 tmu/2 mb" ) )
+	{
+	}
+	else if ( strstr( buf, "glzicd" ) )
+	{
+	}
+	else if ( strstr( buf, "rage pro" ) || strstr( buf, "Rage Pro" ) || strstr( buf, "ragepro" ) )
+	{
+		glConfig.hardwareType = GLHW_RAGEPRO;
+	}
+	else if ( strstr( buf, "rage 128" ) )
+	{
+	}
+	else if ( strstr( buf, "permedia2" ) )
+	{
+		glConfig.hardwareType = GLHW_PERMEDIA2;
+	}
+	else if ( strstr( buf, "riva 128" ) )
+	{
+		glConfig.hardwareType = GLHW_RIVA128;
+	}
+	else if ( strstr( buf, "riva tnt " ) )
+	{
+	}
+
+//	Cvar_Set( "r_lastValidRenderer", glConfig.renderer_string );
+
+	GLW_InitExtensions();
+	WG_CheckHardwareGamma();
+
+// FIXME: if we turn off ztrick due to lack of bits in one mode, we do not turn it on if we got enought bits in other mode
+	gl_allow_ztrick = true;
+
+	if ( glConfig.depthBits < 24 )
+	{
+		extern cvar_t	gl_ztrick;
+
+		if (gl_ztrick.value)
+			ST_Printf( PRINT_WARNING, "%s will be forced to 0", gl_ztrick.name);
+
+		gl_allow_ztrick = false;
+	}
+}
+
+/*
+** GLimp_Shutdown
+**
+** This routine does all OS specific shutdown procedures for the OpenGL
+** subsystem.
+*/
+void GLimp_Shutdown( void )
+{
+//	const char *strings[] = { "soft", "hard" };
+	const char *success[] = { "failed", "success" };
+	int retVal;
+
+	// FIXME: Brian, we need better fallbacks from partially initialized failures
+	if ( !qwglMakeCurrent ) {
+		return;
+	}
+
+	ST_Printf( PRINT_ALL, "Shutting down OpenGL subsystem\n" );
+
+	// restore gamma.  We do this first because 3Dfx's extension needs a valid OGL subsystem
+	WG_RestoreGamma();
+
+	// set current context to NULL
+	if ( qwglMakeCurrent )
+	{
+		retVal = qwglMakeCurrent( NULL, NULL ) != 0;
+
+		ST_Printf( PRINT_ALL, "...wglMakeCurrent( NULL, NULL ): %s\n", success[retVal] );
+	}
+
+	// delete HGLRC
+	if ( glw_state.hGLRC )
+	{
+		retVal = qwglDeleteContext( glw_state.hGLRC ) != 0;
+		ST_Printf( PRINT_ALL, "...deleting GL context: %s\n", success[retVal] );
+		glw_state.hGLRC = NULL;
+	}
+
+	// release DC
+	if ( glw_state.hDC )
+	{
+		retVal = ReleaseDC( mainwindow, glw_state.hDC ) != 0;
+		ST_Printf( PRINT_ALL, "...releasing DC: %s\n", success[retVal] );
+		glw_state.hDC   = NULL;
+	}
+
+	// destroy window
+	if ( mainwindow )
+	{
+		ST_Printf( PRINT_ALL, "...destroying window\n" );
+		ShowWindow( mainwindow, SW_HIDE );
+		DestroyWindow( mainwindow );
+		mainwindow = NULL;
+		glw_state.pixelFormatSet = false;
+	}
+
+	// close the r_logFile
+	if ( glw_state.log_fp )
+	{
+		fclose( glw_state.log_fp );
+		glw_state.log_fp = 0;
+	}
+
+	// reset display settings
+	if ( glw_state.cdsFullscreen )
+	{
+		ST_Printf( PRINT_ALL, "...resetting display\n" );
+		ChangeDisplaySettings( 0, 0 );
+		glw_state.cdsFullscreen = false;
+	}
+
+//{ alt + tab
+	memset( &(glw_state.dm), 0, sizeof( glw_state.dm ) );
+	glw_state.vid_canalttab    = false;
+	glw_state.vid_wassuspended = false;
+//}
+
+	// shutdown QGL subsystem
+	QGL_Shutdown();
+
+	memset( &glConfig, 0, sizeof( glConfig ) );
+//	memset( &glState, 0, sizeof( glState ) );
+}
+
+/*
+** GLimp_LogComment
+*/
+void GLimp_LogComment( char *comment ) 
+{
+	if ( glw_state.log_fp ) {
+		fprintf( glw_state.log_fp, "%s", comment );
+	}
+}
+
+/******************************************************************************/
+//
+// OK, BELOW STUFF FROM Q1
+//
+/******************************************************************************/
+
+/******************************** WINDOW STUFF ********************************/
+
+int		window_center_x, window_center_y;
+RECT	window_rect;
+
+void VID_SetCaption (char *text) {
+	if (mainwindow)
+	{
+		SetWindowText(mainwindow, text);
+		UpdateWindow(mainwindow);
+	}
+}
+
+// *sigh* that more input code than video... in q3 it more clear...
+void VID_UpdateWindowStatus (void) {
+	int			width, height;
+//	RECT		window_rect;
+
+	width  = GetSystemMetrics (SM_CXSCREEN);
+	height = GetSystemMetrics (SM_CYSCREEN);
+
+	GetWindowRect ( mainwindow, &window_rect );
+	if (window_rect.left < 0)
+		window_rect.left = 0;
+	if (window_rect.top < 0)
+		window_rect.top = 0;
+	if (window_rect.right >= width)
+		window_rect.right = width-1;
+	if (window_rect.bottom >= height-1)
+		window_rect.bottom = height-1;
+
+	window_center_x = (window_rect.right + window_rect.left) / 2;
+	window_center_y = (window_rect.top + window_rect.bottom) / 2;
+
+	IN_UpdateClipCursor ();
+}
+
+void VID_NotifyActivity(void) {
+    if (!ActiveApp && vid_flashonactivity.value)
+        FlashWindow(mainwindow, TRUE);
+}
+
+// handle the mouse state when windowed if that's changed
+void CheckWindowedMouse(void) {
+	extern qbool	mouseactive;  // from in_win.c
+
+	static int windowed_mouse;
+
+	if ( glConfig.isFullscreen )
+		return;
+
+	if ( !_windowed_mouse.value )
+	{
+		if ( windowed_mouse )
+		{
+			windowed_mouse = false;
+
+			IN_DeactivateMouse ();
+			IN_ShowMouse ();
+		}
+	}
+	else
+	{
+		windowed_mouse = true;
+
+		if (key_dest == key_game && !mouseactive && ActiveApp)
+		{
+			IN_ActivateMouse ();
+			IN_HideMouse ();
+		}
+		else if (mouseactive && key_dest != key_game)
+		{
+			IN_DeactivateMouse ();
+			IN_ShowMouse ();
+		}
+	}
+}
+
+/******************************  WG_AppActivate  **********************************/
+
+void WG_AppActivate(BOOL fActive, BOOL minimized) {
+
+	if ( fActive )
+	{
+		if ( glConfig.isFullscreen )
+		{
+			if ( glw_state.vid_canalttab && glw_state.vid_wassuspended )
+			{
+				glw_state.vid_wassuspended = false;
+
+				if (ChangeDisplaySettings (&(glw_state.dm), CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+					Sys_Error ("WG_AppActivate: ChangeDisplaySettings failed");
+
+				ShowWindow (mainwindow, SW_SHOWNORMAL);
+				// Fix for alt-tab bug in NVidia drivers
+				MoveWindow (mainwindow, 0, 0, glw_state.dm.dmPelsWidth, glw_state.dm.dmPelsHeight, false);
+				Sbar_Changed ();
+			}
+		}
+		else if ( !glConfig.isFullscreen && minimized )
+		{
+			ShowWindow (mainwindow, SW_RESTORE);
+		}
+
+		if ( glw_state.vid_canalttab && !minimized )
+		{
+			v_gamma.modified = true; // force reset gamma on next frame
+		}
+	}
+	else
+	{
+		WG_RestoreGamma ();
+
+		if ( glConfig.isFullscreen )
+		{
+			if ( glw_state.vid_canalttab )
+			{ 
+				glw_state.vid_wassuspended = true;
+
+				ChangeDisplaySettings( 0, 0 );
+				ShowWindow (mainwindow, SW_MINIMIZE); //!!!!!!
+			}
+		}
+	}
+}
+
+/********************************** VID MENU **********************************/
+extern void M_Menu_Options_f (void);
+void VID_MenuDraw (void) {}
+void VID_MenuKey (int key) { if (key == K_ESCAPE) M_Menu_Options_f (); }
+
+/********************************** HW GAMMA **********************************/
+
+void VID_ShiftPalette (unsigned char *palette) {}
+
+extern cvar_t	vid_hwgammacontrol; // put here, so u remeber this cvar exist
+
+unsigned short *currentgammaramp = NULL;
+static unsigned short systemgammaramp[3][256];
+
+qbool vid_gammaworks	  = false;
+qbool vid_hwgamma_enabled = false;
+qbool old_hwgamma_enabled = false;
+qbool customgamma		  = false;
+
+// !!!!!!!!!
+// NOTE: somewhere we use glw_state.hDC somewhere hDC = GetDC( GetDesktopWindow() )
+// !!!!!!!!!
+
+//Note: ramps must point to a static array
+void VID_SetDeviceGammaRamp(unsigned short *ramps) {
+	if ( !vid_gammaworks )
+		return;
+
+	currentgammaramp = ramps; // is this really need before check for vid_hwgamma_enabled ???
+
+	if ( !vid_hwgamma_enabled )
+		return;
+
+	customgamma = true;
+
+	if ( Win2K )
+	{
+		int i, j;
+
+		for (i = 0; i < 128; i++)
+			for (j = 0; j < 3; j++)
+				ramps[j * 256 + i] = min(ramps[j * 256 + i], (i + 0x80) << 8);
+
+		for (j = 0; j < 3; j++)
+			ramps[j * 256 + 128] = min(ramps[j * 256 + 128], 0xFE00);
+	}
+
+	if ( qwglSetDeviceGammaRamp3DFX )
+		qwglSetDeviceGammaRamp3DFX( glw_state.hDC, ramps );
+	else {
+		SetDeviceGammaRamp( glw_state.hDC, ramps );
+	}
+}
+
+void WG_CheckHardwareGamma (void) {
+	HDC			hDC;
+
+	// main
+	vid_gammaworks      = false;
+	// damn helpers
+	vid_hwgamma_enabled = false;
+	old_hwgamma_enabled = false;
+	customgamma		    = false;
+	currentgammaramp    = NULL;
+
+	v_gamma.modified	= true; // force update on next frame
+
+	if ( COM_CheckParm("-nohwgamma") && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)) ) // FIXME
+		return;
+
+	if ( qwglGetDeviceGammaRamp3DFX )
+	{
+		hDC = GetDC( GetDesktopWindow() );
+		vid_gammaworks = qwglGetDeviceGammaRamp3DFX( hDC, systemgammaramp );
+		ReleaseDC( GetDesktopWindow(), hDC );
+
+		return;
+	}
+
+	// non-3Dfx standalone drivers don't support gamma changes, period
+	if ( glConfig.driverType == GLDRV_STANDALONE )
+	{
+		return;
+	}
+
+	hDC = GetDC( GetDesktopWindow() );
+	vid_gammaworks = GetDeviceGammaRamp( hDC, systemgammaramp );
+	ReleaseDC( GetDesktopWindow(), hDC );
+
+	if ( vid_gammaworks && !COM_CheckParm("-nogammareset") )
+	{
+		int i, j;
+		for (i = 0; i < 3; i++)
+			for (j = 0; j < 256; j++)
+				systemgammaramp[i][j] = (j << 8);
+	}
+}
+
+void WG_RestoreGamma(void) {
+	if ( vid_gammaworks && customgamma )
+	{
+		customgamma = false;
+
+		if ( qwglSetDeviceGammaRamp3DFX )
+		{
+			qwglSetDeviceGammaRamp3DFX( glw_state.hDC, systemgammaramp );
+		}
+		else
+		{
+			HDC hDC;
+			
+			hDC = GetDC( GetDesktopWindow() );
+			SetDeviceGammaRamp( hDC, systemgammaramp );
+			ReleaseDC( GetDesktopWindow(), hDC );
+		}
+	}
+}
+
+void WG_CheckNeedSetDeviceGammaRamp(void) {
+	vid_hwgamma_enabled = vid_hwgammacontrol.value && vid_gammaworks && ActiveApp && !Minimized;
+	vid_hwgamma_enabled = vid_hwgamma_enabled && (glConfig.isFullscreen || vid_hwgammacontrol.value == 2);
+
+	if ( vid_hwgamma_enabled != old_hwgamma_enabled )
+	{
+		old_hwgamma_enabled = vid_hwgamma_enabled;
+		if ( vid_hwgamma_enabled && currentgammaramp )
+			VID_SetDeviceGammaRamp ( currentgammaramp );
+		else
+			WG_RestoreGamma ();
+	}
+}
+
+/******************************** VID SHUTDOWN ********************************/
+
+void VID_Shutdown (void) {
+#ifdef _WIN32
+
+	extern void AppActivate(BOOL fActive, BOOL minimize);
+
+	AppActivate(false, false);
+
+#endif
+
+	RE_Shutdown( true );
+}
+
+/********************************** VID INIT **********************************/
+
+#ifdef _WIN32
+void ClearAllStates (void);
+#endif
+
+void VID_zzz (void) {
+
+	vid.width  = vid.conwidth  = min(vid.conwidth,  glConfig.vidWidth);
+	vid.height = vid.conheight = min(vid.conheight, glConfig.vidHeight);
+
+	vid.numpages = 2;
+
+	Draw_AdjustConback ();
+
+#ifdef _WIN32
+	//fix the leftover Alt from any Alt-Tab or the like that switched us away
+	ClearAllStates ();
+#endif
+
+	vid.recalc_refdef = 1;
+}
+
+void GL_Init_Win(void ) { /* TODO */ }
+
+void VID_Init (unsigned char *palette) {
+
+	vid.colormap = host_colormap;
+
+	Check_Gamma(palette);
+	VID_SetPalette(palette);
+
+	RE_Init();
+
+	VID_zzz();
+
+	GL_Init();
+
+	vid_menudrawfn = VID_MenuDraw;
+	vid_menukeyfn = VID_MenuKey;
+}
+
+void VID_Restart_f (void)
+{
+	extern void GFX_Init(void);
+
+	if (!host_initialized) { // sanity
+		Com_Printf("Can't do %s yet\n", Cmd_Argv(0));
+		return;
+	}
+
+	VID_Shutdown ();
+	VID_Init (host_basepal);
+
+	// force models to reload (just flush, no actual loading code here)
+	Cache_Flush();
+
+	// reload 2D textures, particles textures, some other textures and gfx.wad
+	GFX_Init();
+
+	// we need done something like for map reloading, for example reload textures for brush models
+	R_NewMap(true);
+
+	// force all cached models to be loaded, so no short HDD lag then u walk over level and discover new model
+	Mod_TouchModels();
+}

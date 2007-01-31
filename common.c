@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.57 2007-01-24 01:32:51 qqshka Exp $
+    $Id: common.c,v 1.58 2007-01-31 00:01:41 qqshka Exp $
 
 */
 
@@ -2358,6 +2358,8 @@ void Com_Printf_State(int state, char *fmt, ...) {
 	char* prefix;
 	char msg[MAXPRINTMSG];
 
+	msg[0] = 0;
+
 	switch (state) {
 		case PRINT_FAIL:
 			prefix = "\x02" "\x10" "fail" "\x11 ";
@@ -2365,19 +2367,29 @@ void Com_Printf_State(int state, char *fmt, ...) {
 		case PRINT_OK:
 			prefix = " " " ok " "  ";
 			break;
+		case PRINT_WARNING:
+		case PRINT_ALL:
+			prefix = ""; // FIXME: put here some color
+			break;
+		case PRINT_ERR_FATAL:
+			prefix = "";
+			break;
 		default:
 		case PRINT_INFO:
-			prefix = "\x9c\x9c\x9c\x9c\x9c\x9c ";
+			prefix = "\x9c\x9c\x9c ";
 			break;
 	}
 
 	if (state != PRINT_OK || developer.value) { // print ok msgs only in developer mode
-		strncpy(msg, prefix, sizeof(msg));
+		strlcpy(msg, prefix, sizeof(msg));
 		va_start (argptr, fmt);
 		vsnprintf (msg + strlen(msg), sizeof(msg), fmt, argptr);
 		va_end(argptr);
 		Com_Printf ("%s", msg);
 	}
+
+	if (state == PRINT_ERR_FATAL)
+		Sys_Error(msg);
 }
 
 int isspace2(int c) {

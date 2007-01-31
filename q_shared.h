@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.19 2007-01-15 22:48:38 tonik Exp $
+    $Id: q_shared.h,v 1.20 2007-01-31 00:01:41 qqshka Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -156,6 +156,8 @@ VVD: fixed by changing from "int" to "short" in 2nd string - stupid copy&paste b
 int Q_atoi (const char *str);
 float Q_atof (const char *str);
 char *Q_ftos (float value); // removes trailing zero chars
+
+char *Q_strlwr( char *s1 );
 
 // Added by VVD {
 #ifdef _WIN32

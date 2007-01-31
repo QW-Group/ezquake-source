@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.36 2007-01-29 15:56:19 johnnycz Exp $
+    $Id: cvar.c,v 1.37 2007-01-31 00:01:41 qqshka Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -246,6 +246,27 @@ void Cvar_Set (cvar_t *var, char *value)
 		return;
 	}
 
+	// we do that before OnChange check, that mean no OnChange check for latched cvars
+	if (var->flags & CVAR_LATCH)
+	{
+		if (var->latchedString)
+		{
+			if (strcmp(value, var->latchedString) == 0)
+				return; // latched string alredy has this value
+			Q_free (var->latchedString); // switching latching string to other, so free it
+		}
+		else
+		{
+			if (strcmp(value, var->string) == 0)
+				return; // we change string value to the same, do no create latched string then
+		}
+
+		Com_Printf ("%s will be changed upon restarting.\n", var->name);
+		var->latchedString = Q_strdup(value);
+		var->modified = true; // set to true even car->string is not changed yet, that how q3 does
+		return;
+	}
+
 	if (var->OnChange && !changing) {
 		changing = true;
 		if (var->OnChange(var, value)) {
@@ -259,6 +280,8 @@ void Cvar_Set (cvar_t *var, char *value)
 
 	var->string = Q_strdup (value);
 	var->value = Q_atof (var->string);
+	var->integer = Q_atoi (var->string);
+	var->modified = true;
 
 #ifndef CLIENTONLY
 	if (var->flags & CVAR_SERVERINFO)
@@ -412,7 +435,25 @@ void Cvar_Register (cvar_t *var)
 
 	// first check to see if it has already been defined
 	old = Cvar_FindVar (var->name);
+
+	// we alredy register cvar, warn about it
 	if (old && !(old->flags & CVAR_USER_CREATED)) {
+		// allow re-register lacthed cvar
+		if (old->flags & CVAR_LATCH) {
+			// if we have a latched string, take that value now
+			if ( old->latchedString ) {
+				// I did't want bother with all this CVAR_ROM and OnChange handler, just set value
+				Q_free(old->string);
+				old->string  = old->latchedString;
+				old->latchedString = NULL;
+				old->value   = Q_atof (old->string);
+				old->integer = Q_atoi (old->string);
+				old->modified = true;
+			}
+
+			return;
+		}
+
 		Com_Printf ("Can't register variable %s, already defined\n", var->name);
 		return;
 	}
@@ -437,6 +478,8 @@ void Cvar_Register (cvar_t *var)
 		var->string = Q_strdup (var->string);
 	}
 	var->value = Q_atof (var->string);
+	var->integer = Q_atoi (var->string);
+	var->modified = true;
 
 	// link the variable in
 	key = Com_HashKey (var->name) % VAR_HASHPOOL_SIZE;
@@ -654,6 +697,8 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 	v->defaultvalue = Q_strdup (string);
 	v->flags = cvarflags | CVAR_USER_CREATED;
 	v->value = Q_atof (v->string);
+	v->integer = Q_atoi (v->string);
+	v->modified = true;
 #ifdef EMBED_TCL
 	TCL_RegisterVariable (v);
 #endif

@@ -664,7 +664,8 @@ void V_UpdatePalette (void) {
 	}
 
 	current_gamma = bound (0.3, v_gamma.value, 3);
-	if (current_gamma != old_gamma) {
+	if (current_gamma != old_gamma || v_gamma.modified) {
+		v_gamma.modified = false;
 		old_gamma = current_gamma;
 		new = true;
 	}

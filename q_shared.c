@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.17 2007-01-15 22:48:38 tonik Exp $
+    $Id: q_shared.c,v 1.18 2007-01-31 00:01:41 qqshka Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -167,6 +167,17 @@ char *Q_ftos (float value)
 		str[i] = 0;
 
 	return str;
+}
+
+char *Q_strlwr( char *s1 ) {
+    char	*s;
+
+    s = s1;
+	while ( *s ) {
+		*s = tolower(*s);
+		s++;
+	}
+    return s1;
 }
 
 // Added by VVD {
