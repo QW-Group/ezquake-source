@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.1 2007-01-31 00:04:37 qqshka Exp $
+	$Id: win_glimp.c,v 1.2 2007-01-31 18:58:28 qqshka Exp $
 
 */
 /*
@@ -513,7 +513,7 @@ static int GLW_MakeContext( PIXELFORMATDESCRIPTOR *pPFD )
 
 			if ( SetPixelFormat( glw_state.hDC, pixelformat, pPFD ) == FALSE )
 			{
-				ST_Printf (PRINT_ALL, "...SetPixelFormat failed\n", glw_state.hDC );
+				ST_Printf (PRINT_ALL, "...SetPixelFormat failed\n" );
 				return TRY_PFD_FAIL_SOFT;
 			}
 		}
