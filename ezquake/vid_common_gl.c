@@ -162,13 +162,17 @@ qbool OnChange_gl_ext_texture_compression(cvar_t *var, char *string) {
 /************************************** GL INIT **************************************/
 
 void GL_Init (void) {
-	gl_vendor = (const char*) glGetString (GL_VENDOR);
-	Com_Printf_State(PRINT_INFO, "GL_VENDOR: %s\n", gl_vendor);
-	gl_renderer = (const char*) glGetString (GL_RENDERER);
-	Com_Printf_State(PRINT_INFO, "GL_RENDERER: %s\n", gl_renderer);
-	gl_version = (const char*) glGetString (GL_VERSION);
-	Com_Printf_State(PRINT_INFO, "GL_VERSION: %s\n", gl_version);
+	gl_vendor     = (const char*) glGetString (GL_VENDOR);
+	gl_renderer   = (const char*) glGetString (GL_RENDERER);
+	gl_version    = (const char*) glGetString (GL_VERSION);
 	gl_extensions = (const char*) glGetString (GL_EXTENSIONS);
+
+#ifndef _WIN32 /* we print this in different place on WIN */
+	Com_Printf_State(PRINT_INFO, "GL_VENDOR: %s\n",   gl_vendor);
+	Com_Printf_State(PRINT_INFO, "GL_RENDERER: %s\n", gl_renderer);
+	Com_Printf_State(PRINT_INFO, "GL_VERSION: %s\n",  gl_version);
+#endif
+
 	if (COM_CheckParm("-gl_ext"))
 		Com_Printf_State(PRINT_INFO, "GL_EXTENSIONS: %s\n", gl_extensions);
 
@@ -210,12 +214,16 @@ void Check_Gamma (unsigned char *pal) {
 	unsigned char palette[768];
 	int i;
 
-	if ((i = COM_CheckParm("-gamma")) != 0 && i + 1 < com_argc)
-		vid_gamma = bound (0.3, Q_atof(com_argv[i + 1]), 1);
-	else
-		vid_gamma = 1;
+	// we do not need this after host initialized
+	if (!host_initialized)
+	{
+		if ((i = COM_CheckParm("-gamma")) != 0 && i + 1 < com_argc)
+			vid_gamma = bound (0.3, Q_atof(com_argv[i + 1]), 1);
+		else
+			vid_gamma = 1;
 
-	Cvar_SetDefault (&v_gamma, vid_gamma);
+		Cvar_SetDefault (&v_gamma, vid_gamma);
+	}
 
 	if (vid_gamma != 1){
 		for (i = 0; i < 256; i++){

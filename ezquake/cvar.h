@@ -36,16 +36,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_RULESET_MIN	(1<<8)	// limited by ruleset
 #define CVAR_NO_RESET		(1<<9)	// do not perform reset to default in /cfg_load command, but /cvar_reset will still work
 #define CVAR_TEMP			(1<<10)	// created during config.cfg execution, before subsystems are initialized
+#define CVAR_LATCH			(1<<11) // will only change when C code next does a Cvar_Register(), so it can't be changed
+									// without proper initialization.  modified will be set, even though the value hasn't changed yet
 
 typedef struct cvar_s {
 	char	*name;
 	char	*string;
 	int		flags;
 	qbool	(*OnChange)(struct cvar_s *var, char *value);
-	float	value;
+	float	value;    			// may be set in Cvar_Set(), Cvar_Register(), Cvar_Create()
 	float	maxrulesetvalue;
 	float	minrulesetvalue;
-	char	*defaultvalue;		
+	char	*defaultvalue;
+	char	*latchedString;
+	int		integer;			// may be set in Cvar_Set(), Cvar_Register(), Cvar_Create()
+	qbool	modified;			// set to true in Cvar_Set(), Cvar_Register(), Cvar_Create(), reset to false manually in C code
 	struct cvar_group_s *group;		
 	struct cvar_s *next_in_group;	
 	struct cvar_s *hash_next;

@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_win.c,v 1.21 2007-01-07 19:17:23 disconn3ct Exp $
+	$Id: in_win.c,v 1.22 2007-01-31 00:01:41 qqshka Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -190,7 +190,7 @@ void IN_JoyMove (usercmd_t *cmd);
 cvar_t	m_rate			= {"m_rate",	"125"};
 cvar_t	m_showrate		= {"m_showrate", "0"};
 
-qbool use_m_smooth;
+qbool use_m_smooth = false;
 HANDLE m_event;
 
 #define	 M_HIST_SIZE  64
@@ -402,17 +402,27 @@ void IN_SMouseRead (int *mx, int *my) {
 
 void IN_SMouseInit(void) {
 	HRESULT	res;
+	qbool old_m_smooth = use_m_smooth; // remove this variable when done TODO
+
+// TODO:
+//  if (use_m_smooth)
+//   IN_SMouseDeInit();
 
 	use_m_smooth = false;
+
 	if (!COM_CheckParm("-m_smooth"))
 		return;
 
 	// create event	object
-	m_event	= CreateEvent(
-				NULL,		   // NULL secutity	attributes
-				FALSE,		  // automatic reset
-				FALSE,		  // initial state = nonsignaled
-				NULL);		  // NULL name
+	if ( !old_m_smooth )
+	{
+		m_event	= CreateEvent(
+					NULL,		   // NULL secutity	attributes
+					FALSE,		  // automatic reset
+					FALSE,		  // initial state = nonsignaled
+					NULL);		  // NULL name
+	}
+
 	if (m_event	== NULL)
 		return;
 
@@ -420,14 +430,17 @@ void IN_SMouseInit(void) {
 	if ((res = IDirectInputDevice_SetEventNotification(g_pMouse, m_event)) != DI_OK	 &&	 res !=	DI_POLLEDDEVICE)
 		return;
 
-	if (!Sys_CreateThread(IN_SMouseProc, NULL))
-        return;
+	if ( !old_m_smooth )
+	{
+		if (!Sys_CreateThread(IN_SMouseProc, NULL))
+        	return;
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
-	Cvar_Register(&m_rate);
-	Cvar_Register(&m_showrate);
+		Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
+		Cvar_Register(&m_rate);
+		Cvar_Register(&m_showrate);
 
-	Cvar_ResetCurrentGroup();
+		Cvar_ResetCurrentGroup();
+	}
 
 	use_m_smooth = true;
 }
@@ -524,6 +537,8 @@ void IN_HideMouse (void) {
 	}
 }
 
+qbool IN_InitDInput (void);
+
 void IN_ActivateMouse (void) {
 	mouseactivatetoggle = true;
 
@@ -532,8 +547,23 @@ void IN_ActivateMouse (void) {
 		if (dinput) {
 			if (g_pMouse) {
 				if (!dinput_acquired) {
-					IDirectInputDevice_Acquire(g_pMouse);
-					dinput_acquired = true;
+					HRESULT		hr;
+
+					// we may fail to reacquire if the window has been recreated
+					hr = IDirectInputDevice_Acquire(g_pMouse);
+
+					if (FAILED(hr)) {
+						if ( !IN_InitDInput() ) {
+							Com_Printf ("WARNING: can't reinitializing dinput mouse...\n");
+#if 0 /* TODO: q3 fallback to normal mouse... we not, at least yet */
+							Com_Printf ("Falling back to Win32 mouse support...\n");
+							Cvar_Set( "in_mouse", "-1" );
+#endif
+						}
+					}
+					else {
+						dinput_acquired = true;
+					}
 				}
 			} else {
 				return;

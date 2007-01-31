@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.40 2007-01-24 01:32:51 qqshka Exp $
+    $Id: common.h,v 1.41 2007-01-31 00:01:41 qqshka Exp $
 */
 // common.h  -- general definitions
 
@@ -224,10 +224,16 @@ void Com_BeginRedirect (void (*RedirectedPrint) (char *));
 void Com_EndRedirect (void);
 void Com_Printf (char *fmt, ...);
 void Com_DPrintf (char *fmt, ...);
-#define PRINT_OK	1
-#define PRINT_INFO	2
-#define PRINT_FAIL	4
+// why not just 1 2 3 4 ... ?
+#define PRINT_OK		(1<<0)
+#define PRINT_INFO		(1<<1)
+#define PRINT_FAIL		(1<<2)
+#define PRINT_WARNING	(1<<3)
+#define PRINT_ALL		(1<<4)
+#define PRINT_ERR_FATAL	(1<<5)
 void Com_Printf_State(int state, char *fmt, ...);
+// Com_Printf_State is too long name, so use define
+#define ST_Printf Com_Printf_State
 
 extern unsigned	Print_flags[16];
 extern int	Print_current;
