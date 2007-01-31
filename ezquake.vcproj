@@ -568,6 +568,9 @@
 				<File
 					RelativePath="sys_win.c">
 				</File>
+				<File
+					RelativePath=".\win_wndproc.c">
+				</File>
 			</Filter>
 			<Filter
 				Name="Sound"
@@ -1154,22 +1157,10 @@
 				Name="Video"
 				Filter="">
 				<File
-					RelativePath="vid_common_gl.c">
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
-						<Tool
-							Name="VCCLCompilerTool"/>
-					</FileConfiguration>
+					RelativePath=".\tr_init.c">
 				</File>
 				<File
-					RelativePath="vid_wgl.c">
+					RelativePath="vid_common_gl.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1197,6 +1188,9 @@
 						<Tool
 							Name="VCCLCompilerTool"/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\win_glimp.c">
 				</File>
 			</Filter>
 			<Filter
@@ -1558,6 +1552,9 @@
 				</File>
 				<File
 					RelativePath=".\textencoding.h">
+				</File>
+				<File
+					RelativePath=".\tr_types.h">
 				</File>
 				<File
 					RelativePath="version.h">
