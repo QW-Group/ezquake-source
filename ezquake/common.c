@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.58 2007-01-31 00:01:41 qqshka Exp $
+    $Id: common.c,v 1.59 2007-01-31 18:50:00 qqshka Exp $
 
 */
 
@@ -2355,7 +2355,7 @@ void Com_Printf_State(int state, char *fmt, ...) {
    PRINT_OK won't be displayed unless we're in developer mode
 */
 	va_list argptr;
-	char* prefix;
+	char *prefix = "";
 	char msg[MAXPRINTMSG];
 
 	msg[0] = 0;
@@ -2381,11 +2381,10 @@ void Com_Printf_State(int state, char *fmt, ...) {
 	}
 
 	if (state != PRINT_OK || developer.value) { // print ok msgs only in developer mode
-		strlcpy(msg, prefix, sizeof(msg));
 		va_start (argptr, fmt);
-		vsnprintf (msg + strlen(msg), sizeof(msg), fmt, argptr);
+		vsnprintf (msg, sizeof(msg), fmt, argptr);
 		va_end(argptr);
-		Com_Printf ("%s", msg);
+		Com_Printf ("%s%s", prefix, msg);
 	}
 
 	if (state == PRINT_ERR_FATAL)
