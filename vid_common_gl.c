@@ -69,8 +69,8 @@ byte color_black[4] = {0, 0, 0, 0};
 
 qbool OnChange_gl_ext_texture_compression(cvar_t *, char *);
 
-cvar_t	gl_strings = {"gl_strings", "", CVAR_ROM};
-cvar_t	gl_ext_texture_compression = {"gl_ext_texture_compression", "0", 0, OnChange_gl_ext_texture_compression};
+cvar_t	gl_strings = {"gl_strings", "", CVAR_ROM | CVAR_SILENT};
+cvar_t	gl_ext_texture_compression = {"gl_ext_texture_compression", "0", CVAR_SILENT, OnChange_gl_ext_texture_compression};
 
 /************************************* EXTENSIONS *************************************/
 
