@@ -784,6 +784,14 @@
 					RelativePath="..\..\sys_win.c"
 					>
 				</File>
+				<File
+					RelativePath="..\..\win_glimp.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\win_wndproc.c"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Sound"
@@ -1529,27 +1537,11 @@
 				Name="Video"
 				>
 				<File
-					RelativePath="..\..\vid_common_gl.c"
+					RelativePath="..\..\tr_init.c"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\vid_wgl.c"
+					RelativePath="..\..\vid_common_gl.c"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -2061,6 +2053,10 @@
 				</File>
 				<File
 					RelativePath="..\..\teamplay.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tr_types.h"
 					>
 				</File>
 				<File
