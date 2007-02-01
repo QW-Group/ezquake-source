@@ -26,7 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define _CONSOLE_H_
 
-#define		CON_TEXTSIZE	32768
 typedef struct
 {
 	wchar	*text;

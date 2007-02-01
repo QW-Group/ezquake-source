@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.43 2007-02-01 01:19:41 qqshka Exp $
+	$Id: console.c,v 1.44 2007-02-01 01:27:57 qqshka Exp $
 */
 // console.c
 
@@ -270,7 +270,7 @@ void Con_Clear_f (void) {
 	int	i;
 
 	con.numlines = 0;
-	for (i = 0; i < CON_TEXTSIZE; i++)
+	for (i = 0; i < con.maxsize; i++)
 		con.text[i] = ' ';
 	con.display = con.current;
 	Con_SetWhite(); // set default color to white
@@ -329,7 +329,7 @@ void Con_CheckResize (void) {
 
 		con_linewidth = width;
 		con_totallines = con.maxsize / con_linewidth;
-		for (i = 0; i < CON_TEXTSIZE; i++)
+		for (i = 0; i < con.maxsize; i++)
 			con.text[i] = ' ';
 		Con_SetWhite();
 	} else {
@@ -352,7 +352,7 @@ void Con_CheckResize (void) {
 
 		tempbuf = (wchar *) Hunk_TempAlloc(con.maxsize * sizeof(wchar));
 		memcpy (tempbuf, con.text, con.maxsize * sizeof(wchar));
-		for (i = 0; i < CON_TEXTSIZE; i++)
+		for (i = 0; i < con.maxsize; i++)
 			con.text[i] = ' ';
 
 		clr = Q_malloc(con.maxsize * sizeof(clrinfo_t)); // alloc temporaly
