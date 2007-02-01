@@ -296,7 +296,7 @@ void QMB_InitParticles (void) {
 		QMB_ClearParticles ();
 	}
 
-	if (!(particlefont = GL_LoadTextureImage ("textures/particles/particlefont", "qmb:particlefont", 256, 256, TEX_ALPHA | TEX_COMPLAIN))) 
+	if (!(particlefont = GL_LoadTextureImage ("textures/particles/particlefont", "qmb:particlefont", 256, 256, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE))) 
 		return;		
 
 	ADD_PARTICLE_TEXTURE(ptex_none, 0, 0, 1, 0, 0, 0, 0);	
@@ -312,13 +312,13 @@ void QMB_InitParticles (void) {
 		ADD_PARTICLE_TEXTURE(ptex_dpsmoke, particlefont, i, 8, i * 32, 64, (i + 1) * 32, 96);
 
 	//VULT PARTICLES
-	if (!(shockwave_texture = GL_LoadTextureImage ("textures/shockwavetex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN)))
+	if (!(shockwave_texture = GL_LoadTextureImage ("textures/shockwavetex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE)))
 		return;
 	ADD_PARTICLE_TEXTURE(ptex_shockwave, shockwave_texture, 0, 1, 0, 0, 128, 128);
-	if (!(lightning_texture = GL_LoadTextureImage ("textures/zing1", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN)))
+	if (!(lightning_texture = GL_LoadTextureImage ("textures/zing1", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE)))
 		return;
 	ADD_PARTICLE_TEXTURE(ptex_lightning, lightning_texture, 0, 1, 0, 0, 32, 32);
-	if (!(spark_texture = GL_LoadTextureImage ("textures/sparktex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN)))
+	if (!(spark_texture = GL_LoadTextureImage ("textures/sparktex", NULL, 0, 0, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE)))
 		return;
 	ADD_PARTICLE_TEXTURE(ptex_spark, spark_texture, 0, 1, 0, 0, 32, 32);
 

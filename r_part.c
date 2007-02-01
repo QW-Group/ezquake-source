@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_part.c,v 1.11 2007-01-24 01:32:51 qqshka Exp $
+	$Id: r_part.c,v 1.12 2007-02-01 23:49:13 qqshka Exp $
 
 */
 
@@ -200,7 +200,7 @@ void Classic_LoadParticleTexures (void) {
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	GL_Upload32 ((unsigned *) data, 32, 32, TEX_MIPMAP | TEX_ALPHA);
+	GL_Upload32 ((unsigned *) data, 32, 32, TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE ); // TEX_NOSCALE - so no affect from gl_picmip and gl_maxsize
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 }
 #endif
