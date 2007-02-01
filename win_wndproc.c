@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: win_wndproc.c,v 1.1 2007-01-31 00:04:37 qqshka Exp $
+	$Id: win_wndproc.c,v 1.2 2007-02-01 01:03:13 qqshka Exp $
 
 */
 
@@ -190,8 +190,18 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
 
 			break;
 
-		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
+			if ( wParam == 13 )
+			{
+				if ( glw_state.vid_canalttab )
+				{
+					Cvar_SetValue( &r_fullscreen, !r_fullscreen.integer );
+					Cbuf_AddText( "vid_restart\n" );
+				}
+				return 0;
+			}
+			// fall through
+		case WM_KEYDOWN:
 #ifdef WITH_KEYMAP
 			IN_TranslateKeyEvent (lParam, wParam, true);
 #else // WITH_KEYMAP
