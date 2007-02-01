@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.37 2007-01-31 00:01:41 qqshka Exp $
+    $Id: cvar.c,v 1.38 2007-02-01 22:16:29 qqshka Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -454,7 +454,9 @@ void Cvar_Register (cvar_t *var)
 			return;
 		}
 
-		Com_Printf ("Can't register variable %s, already defined\n", var->name);
+		// warn if CVAR_SILENT is not set
+		if (!(old->flags & CVAR_SILENT))
+			Com_Printf ("Can't register variable %s, already defined\n", var->name);
 		return;
 	}
 

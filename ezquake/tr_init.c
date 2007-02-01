@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.2 2007-02-01 17:39:06 qqshka Exp $
+	$Id: tr_init.c,v 1.3 2007-02-01 22:16:29 qqshka Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -59,31 +59,31 @@ cvar_t	r_displayRefresh	= { "r_displayRefresh", "0",	CVAR_ARCHIVE | CVAR_LATCH }
 //
 // archived variables that can change at any time
 //
-cvar_t	r_ignoreGLErrors	= { "r_ignoreGLErrors", "1",	CVAR_ARCHIVE };
+cvar_t	r_ignoreGLErrors	= { "r_ignoreGLErrors", "1",	CVAR_ARCHIVE | CVAR_SILENT };
 //cvar_t	r_textureMode	= { "r_textureMode",	"GL_LINEAR_MIPMAP_NEAREST", CVAR_ARCHIVE };
-cvar_t	r_swapInterval		= { "r_swapInterval",	"0",	CVAR_ARCHIVE };
+cvar_t	r_swapInterval		= { "r_swapInterval",	"0",	CVAR_ARCHIVE | CVAR_SILENT };
 #ifdef __MACOS__
-//cvar_t	r_gamma			= { "r_gamma",			"1.2",	CVAR_ARCHIVE };
+//cvar_t	r_gamma			= { "r_gamma",			"1.2",	CVAR_ARCHIVE | CVAR_SILENT };
 #else
-//cvar_t	r_gamma			= { "r_gamma",			"1",	CVAR_ARCHIVE };
+//cvar_t	r_gamma			= { "r_gamma",			"1",	CVAR_ARCHIVE | CVAR_SILENT };
 #endif
 
-cvar_t	vid_xpos			= { "vid_xpos",			"3",	CVAR_ARCHIVE };
-cvar_t	vid_ypos			= { "vid_ypos",			"22",	CVAR_ARCHIVE };
+cvar_t	vid_xpos			= { "vid_xpos",			"3",	CVAR_ARCHIVE | CVAR_SILENT };
+cvar_t	vid_ypos			= { "vid_ypos",			"22",	CVAR_ARCHIVE | CVAR_SILENT };
 
 qbool OnChange_r_con_xxx (cvar_t *var, char *string);
-cvar_t	r_conwidth			= { "r_conwidth",		"640",	CVAR_NO_RESET, OnChange_r_con_xxx };
-cvar_t	r_conheight			= { "r_conheight",		"0",	CVAR_NO_RESET, OnChange_r_con_xxx }; // default is 0, so i can sort out is user specify conheight on cmd line or something
+cvar_t	r_conwidth			= { "r_conwidth",		"640",	CVAR_NO_RESET | CVAR_SILENT, OnChange_r_con_xxx };
+cvar_t	r_conheight			= { "r_conheight",		"0",	CVAR_NO_RESET | CVAR_SILENT, OnChange_r_con_xxx }; // default is 0, so i can sort out is user specify conheight on cmd line or something
 
-cvar_t	vid_ref				= { "vid_ref",			"gl",	CVAR_ROM }; // may be rename to r_ref ???
-cvar_t  vid_hwgammacontrol	= { "r_hwgammacontrol", "1",    CVAR_ARCHIVE };
+cvar_t	vid_ref				= { "vid_ref",			"gl",	CVAR_ROM | CVAR_SILENT }; // may be rename to r_ref ???
+cvar_t  vid_hwgammacontrol	= { "r_hwgammacontrol", "1",    CVAR_ARCHIVE | CVAR_SILENT };
 #ifdef _WIN32
-cvar_t  vid_flashonactivity = { "vid_flashonactivity", "1", CVAR_ARCHIVE };
-cvar_t	_windowed_mouse		= { "_windowed_mouse",	"1",	CVAR_ARCHIVE }; // actually that more like input, but input registered after video in windows
+cvar_t  vid_flashonactivity = { "vid_flashonactivity", "1", CVAR_ARCHIVE | CVAR_SILENT };
+cvar_t	_windowed_mouse		= { "_windowed_mouse",	"1",	CVAR_ARCHIVE | CVAR_SILENT }; // actually that more like input, but input registered after video in windows
 #endif
 
-cvar_t	r_verbose			= { "r_verbose",		"0",	0 };
-//cvar_t	r_logFile		= { "r_logFile",		"0",	CVAR_CHEAT };
+cvar_t	r_verbose			= { "r_verbose",		"0",	CVAR_SILENT };
+//cvar_t	r_logFile		= { "r_logFile",		"0",	CVAR_CHEAT | CVAR_SILENT};
 
 
 void ( APIENTRY * qglMultiTexCoord2fARB )( GLenum texture, GLfloat s, GLfloat t );
@@ -456,7 +456,7 @@ void R_Register( void )
 	Cvar_Register (&r_conwidth);
 	Cvar_Register (&r_conheight);
 
-	if (!host_initialized) // compatibility with retarded cmd line, and actually this still needed for some other reasons
+	if ( !host_initialized ) // compatibility with retarded cmd line, and actually this still needed for some other reasons
 	{
 		if ((i = COM_CheckParm("-conwidth")) && i + 1 < com_argc)
 			Cvar_SetValue(&r_conwidth, (float)Q_atoi(com_argv[i + 1]));
@@ -480,9 +480,13 @@ void R_Register( void )
 
 	// make sure all the commands added here are also
 	// removed in R_Shutdown
-	Cmd_AddCommand( "modelist",		R_ModeList_f );
-	Cmd_AddCommand( "gfxinfo",		GfxInfo_f );
-	Cmd_AddCommand( "vid_restart",	VID_Restart_f );
+
+	if ( !host_initialized )
+	{
+		Cmd_AddCommand( "modelist",		R_ModeList_f );
+		Cmd_AddCommand( "gfxinfo",		GfxInfo_f );
+		Cmd_AddCommand( "vid_restart",	VID_Restart_f );
+	}
 }
 
 /*

@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.2 2007-01-31 18:58:28 qqshka Exp $
+	$Id: win_glimp.c,v 1.3 2007-02-01 22:16:29 qqshka Exp $
 
 */
 /*
@@ -1951,6 +1951,7 @@ void VID_Init (unsigned char *palette) {
 void VID_Restart_f (void)
 {
 	extern void GFX_Init(void);
+	qbool old_con_suppress;
 
 	if (!host_initialized) { // sanity
 		Com_Printf("Can't do %s yet\n", Cmd_Argv(0));
@@ -1963,8 +1964,12 @@ void VID_Restart_f (void)
 	// force models to reload (just flush, no actual loading code here)
 	Cache_Flush();
 
+	// shut up warnings during GFX_Init();
+	old_con_suppress = con_suppress;
+	con_suppress = (developer.value ? false : true);
 	// reload 2D textures, particles textures, some other textures and gfx.wad
 	GFX_Init();
+	con_suppress = old_con_suppress;
 
 	// we need done something like for map reloading, for example reload textures for brush models
 	R_NewMap(true);

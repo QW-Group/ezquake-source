@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_TEMP			(1<<10)	// created during config.cfg execution, before subsystems are initialized
 #define CVAR_LATCH			(1<<11) // will only change when C code next does a Cvar_Register(), so it can't be changed
 									// without proper initialization.  modified will be set, even though the value hasn't changed yet
+#define CVAR_SILENT			(1<<12) // skip warning when trying Cvar_Register() second time
 
 typedef struct cvar_s {
 	char	*name;
