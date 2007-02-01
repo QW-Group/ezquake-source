@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_save.c,v 1.8 2006-04-29 20:19:08 disconn3ct Exp $
+	$Id: sv_save.c,v 1.9 2007-02-01 00:17:06 qqshka Exp $
 */
 
 #ifndef SERVERONLY
@@ -142,7 +142,7 @@ void SV_LoadGame_f (void) {
 	COM_DefaultExtension (name, ".sav");
 
 	Com_Printf ("Loading game from %s...\n", name);
-	if (!(f = fopen (name, "r"))) {
+	if (!(f = fopen (name, "rb"))) {
 		Com_Printf ("ERROR: couldn't open.\n");
 		return;
 	}
