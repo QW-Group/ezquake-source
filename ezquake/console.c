@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.42 2007-01-13 00:41:34 qqshka Exp $
+	$Id: console.c,v 1.43 2007-02-01 01:19:41 qqshka Exp $
 */
 // console.c
 
@@ -316,7 +316,17 @@ void Con_CheckResize (void) {
 		return;
 
 	if (width < 1) { // video hasn't been initialized yet
-		width = 38;
+		cvar_t *cv = Cvar_FindVar (vid_conwidth.name); // vid_conwidth not yet registered, but let user specifie it via
+													   // config.cfg or somehow else
+		if ( cv ) {
+			width = max(320, cv->integer);
+			width &= 0xfff8; // make it a multiple of eight
+			width = (width >> 3) - 2;
+			width = max(width, 38);
+		}
+		else
+			width = 38;
+
 		con_linewidth = width;
 		con_totallines = con.maxsize / con_linewidth;
 		for (i = 0; i < CON_TEXTSIZE; i++)
