@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.1 2007-01-31 00:05:31 qqshka Exp $
+	$Id: tr_init.c,v 1.2 2007-02-01 17:39:06 qqshka Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -71,9 +71,9 @@ cvar_t	r_swapInterval		= { "r_swapInterval",	"0",	CVAR_ARCHIVE };
 cvar_t	vid_xpos			= { "vid_xpos",			"3",	CVAR_ARCHIVE };
 cvar_t	vid_ypos			= { "vid_ypos",			"22",	CVAR_ARCHIVE };
 
-qbool OnChange_vid_con_xxx (cvar_t *var, char *string);
-cvar_t	vid_conwidth		= { "vid_conwidth",		"640",	CVAR_NO_RESET, OnChange_vid_con_xxx };
-cvar_t	vid_conheight		= { "vid_conheight",	"0",	CVAR_NO_RESET, OnChange_vid_con_xxx }; // default is 0, so i can sort out is user specify conheight on cmd line or something
+qbool OnChange_r_con_xxx (cvar_t *var, char *string);
+cvar_t	r_conwidth			= { "r_conwidth",		"640",	CVAR_NO_RESET, OnChange_r_con_xxx };
+cvar_t	r_conheight			= { "r_conheight",		"0",	CVAR_NO_RESET, OnChange_r_con_xxx }; // default is 0, so i can sort out is user specify conheight on cmd line or something
 
 cvar_t	vid_ref				= { "vid_ref",			"gl",	CVAR_ROM }; // may be rename to r_ref ???
 cvar_t  vid_hwgammacontrol	= { "r_hwgammacontrol", "1",    CVAR_ARCHIVE };
@@ -283,8 +283,8 @@ static void R_ModeList_f( void )
 
 //============================================================================
 
-qbool OnChange_vid_con_xxx (cvar_t *var, char *string) {
-	if (var == &vid_conwidth) {
+qbool OnChange_r_con_xxx (cvar_t *var, char *string) {
+	if (var == &r_conwidth) {
 		int width = Q_atoi(string);
 
 		width = max(320, width);
@@ -297,7 +297,7 @@ qbool OnChange_vid_con_xxx (cvar_t *var, char *string) {
 
 		Cvar_SetValue(var, (float)width);
 	}
-	else if (var == &vid_conheight) {
+	else if (var == &r_conheight) {
 		int height = Q_atoi(string);
 
 		height = max(200, height);
@@ -453,21 +453,21 @@ void R_Register( void )
 
 	Cvar_Register (&vid_xpos);
 	Cvar_Register (&vid_ypos);
-	Cvar_Register (&vid_conwidth);
-	Cvar_Register (&vid_conheight);
+	Cvar_Register (&r_conwidth);
+	Cvar_Register (&r_conheight);
 
 	if (!host_initialized) // compatibility with retarded cmd line, and actually this still needed for some other reasons
 	{
 		if ((i = COM_CheckParm("-conwidth")) && i + 1 < com_argc)
-			Cvar_SetValue(&vid_conwidth, (float)Q_atoi(com_argv[i + 1]));
+			Cvar_SetValue(&r_conwidth, (float)Q_atoi(com_argv[i + 1]));
 		else // this is ether +set vid_con... or just default value which we select in cvar initialization
-			Cvar_SetValue(&vid_conwidth, vid_conwidth.value); // must trigger callback which validate value
+			Cvar_SetValue(&r_conwidth, r_conwidth.value); // must trigger callback which validate value
     
 		if ((i = COM_CheckParm("-conheight")) && i + 1 < com_argc)
-			Cvar_SetValue(&vid_conheight, (float)Q_atoi(com_argv[i + 1]));
+			Cvar_SetValue(&r_conheight, (float)Q_atoi(com_argv[i + 1]));
 		else // this is ether +set vid_con... or just default value which we select in cvar initialization
-			 // also select vid_conheight with proper aspect ratio if user omit it
-			Cvar_SetValue(&vid_conheight, vid_conheight.value ? vid_conheight.value : vid_conwidth.value * 3 / 4); // must trigger callback which validate value
+			 // also select r_conheight with proper aspect ratio if user omit it
+			Cvar_SetValue(&r_conheight, r_conheight.value ? r_conheight.value : r_conwidth.value * 3 / 4); // must trigger callback which validate value
 	}
 
 	Cvar_Register (&vid_ref);

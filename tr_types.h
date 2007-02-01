@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_types.h,v 1.1 2007-01-31 00:05:31 qqshka Exp $
+	$Id: tr_types.h,v 1.2 2007-02-01 17:39:06 qqshka Exp $
 
 */
 //
@@ -184,8 +184,8 @@ extern cvar_t	r_swapInterval;
 
 extern cvar_t	vid_xpos;
 extern cvar_t	vid_ypos;
-extern cvar_t	vid_conwidth;
-extern cvar_t	vid_conheight;
+extern cvar_t	r_conwidth;
+extern cvar_t	r_conheight;
 extern cvar_t	vid_ref;
 extern cvar_t	vid_hwgammacontrol;
 #ifdef _WIN32
