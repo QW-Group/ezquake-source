@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_texture.c,v 1.20 2007-01-24 01:32:51 qqshka Exp $
+	$Id: gl_texture.c,v 1.21 2007-02-01 20:04:27 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -746,8 +746,11 @@ void GL_Texture_Init(void) {
 	Cvar_Register(&gl_externalTextures_world);
 	Cvar_Register(&gl_externalTextures_bmodels);
 
-	glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&gl_max_size_default);
-	Cvar_SetDefault(&gl_max_size, gl_max_size_default);
+	if ( !host_initialized )
+	{
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&gl_max_size_default);
+		Cvar_SetDefault(&gl_max_size, gl_max_size_default);
+	}
 
 	no24bit = COM_CheckParm("-no24bit") ? true : false;
 	forceTextureReload = COM_CheckParm("-forceTextureReload") ? true : false;
