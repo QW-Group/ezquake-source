@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.3 2007-02-01 22:16:29 qqshka Exp $
+	$Id: win_glimp.c,v 1.4 2007-02-02 01:11:08 qqshka Exp $
 
 */
 /*
@@ -1969,6 +1969,10 @@ void VID_Restart_f (void)
 	con_suppress = (developer.value ? false : true);
 	// reload 2D textures, particles textures, some other textures and gfx.wad
 	GFX_Init();
+
+	// reload skins
+	Skin_Skins_f();
+
 	con_suppress = old_con_suppress;
 
 	// we need done something like for map reloading, for example reload textures for brush models
