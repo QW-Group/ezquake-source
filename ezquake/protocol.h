@@ -336,13 +336,14 @@ typedef struct usercmd_s {
 #define BUTTON_ATTACK2	(1 << 3)
 
 
-#define dem_cmd			0
-#define dem_read		1
-#define dem_set			2
-#define dem_multiple	3
-#define	dem_single		4
-#define dem_stats		5
-#define dem_all			6
+#define dem_cmd			0 // A user cmd movement message.
+#define dem_read		1 // A net message.
+#define dem_set			2 // Appears only once at the beginning of a demo, 
+						  // contains the outgoing / incoming sequence numbers at demo start.
+#define dem_multiple	3 // MVD ONLY. This message is directed to several clients.
+#define	dem_single		4 // MVD ONLY. This message is directed to a single client.
+#define dem_stats		5 // MVD ONLY. Stats update for a player.
+#define dem_all			6 // MVD ONLY. This message is directed to all clients.
 
 //
 // Used for saving a temporary list of temp entities.

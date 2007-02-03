@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.69 2007-01-24 20:48:41 johnnycz Exp $
+	$Id: cl_parse.c,v 1.70 2007-02-03 03:28:52 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -2173,23 +2173,29 @@ void CL_ParseStufftext (void) {
 		Cbuf_ExecuteEx (&cbuf_svc); // FIXME: execute cbuf_main too?
 }
 
-void CL_SetStat (int stat, int value) {
+void CL_SetStat (int stat, int value) 
+{
 	int	j;
 
 	if (stat < 0 || stat >= MAX_CL_STATS)
 		Host_Error ("CL_SetStat: %i is invalid", stat);
 
+	// Set the stat value for the current player we're parsing in the MVD.
+	if (cls.mvdplayback) 
+	{
+		cl.players[cls.lastto].stats[stat] = value;
 
-	if (cls.mvdplayback) {
-		cl.players[cls.lastto].stats[stat]=value;
+		// If we're not tracking the active player, 
+		// then don't update sbar and such.
 		if ( Cam_TrackNum() != cls.lastto )
 			return;
 	}
 
 	Sbar_Changed ();
 
-	if (stat == STAT_ITEMS) {
-	// set flash times
+	if (stat == STAT_ITEMS) 
+	{
+		// Set flash times.
 		Sbar_Changed ();
 		for (j = 0; j < 32; j++)
 			if ( (value & (1 << j)) && !(cl.stats[stat] & (1 << j)) )
@@ -2201,7 +2207,8 @@ void CL_SetStat (int stat, int value) {
 	if (stat == STAT_VIEWHEIGHT && cl.z_ext & Z_EXT_VIEWHEIGHT)
 		cl.viewheight = cl.stats[STAT_VIEWHEIGHT];
 
-	if (stat == STAT_TIME && cl.z_ext & Z_EXT_SERVERTIME) {
+	if (stat == STAT_TIME && cl.z_ext & Z_EXT_SERVERTIME) 
+	{
 		cl.servertime_works = true;
 		cl.servertime = cl.stats[STAT_TIME] * 0.001;
 	}
@@ -2768,11 +2775,17 @@ void CL_ParseServerMessage (void) {
 		//Tei: cl_messages, update size
 		net.size[cmd] += msg_readcount - oldread ;
 
-		if (cls.demorecording) {
-			if (!cls.demomessage.cursize) {
+		if (cls.demorecording) 
+		{
+			// Init the demo message buffer if it hasn't been done.
+			if (!cls.demomessage.cursize) 
+			{
 				SZ_Init(&cls.demomessage, cls.demomessage_data, sizeof(cls.demomessage_data));
 				SZ_Write (&cls.demomessage, net_message.data, 8);
 			}
+
+			// Write the changei n entities to the demo being recorded
+			// or the net message we just received.
 			if (cmd == svc_deltapacketentities)
 				CL_WriteDemoEntities();
 			else
@@ -2782,8 +2795,9 @@ void CL_ParseServerMessage (void) {
 
 	CL_UpdateCaption();
 
-	if (cls.demorecording) {
-		
+	if (cls.demorecording) 
+	{
+		// Write the gathered changes to the demo file.
 		if (cls.demomessage.cursize)
 			CL_WriteDemoMessage (&cls.demomessage);
 	}

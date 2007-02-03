@@ -220,81 +220,105 @@ typedef enum {
 	dl_single
 } dltype_t;		// download type
 
-// the clientPersistent_t structure is persistent through an arbitrary number of server connections
-typedef struct {
-	// connection information
+//
+// The clientPersistent_t structure is persistent through an arbitrary number of server connections.
+//
+typedef struct 
+{
+	//
+	// Connection information.
+	//
 	cactive_t	state;
 
-	int			framecount;		// incremented every frame, never reset
-	double		realtime;		// scaled by cl_demospeed
-	double		demotime;		// scaled by cl_demospeed, reset when starting a demo
-	double		trueframetime;	// time since last frame
-	double		frametime;		// time since last frame, scaled by cl_demospeed
+	//
+	// Time vars.
+	//
+	int			framecount;		// Incremented every frame, never reset.
+	double		realtime;		// Scaled by cl_demospeed.
+	double		demotime;		// Scaled by cl_demospeed, reset when starting a demo.
+	double		trueframetime;	// Time since last frame.
+	double		frametime;		// Time since last frame, scaled by cl_demospeed.
 
-	// network stuff
+	//
+	// Network stuff.
+	//
 	netchan_t	netchan;
 	char		servername[MAX_OSPATH];	// name of server from original connect
 	int			qport;
 	netadr_t	server_adr;
-
 	int socketip;
 
-// TCPCONNECT -->
+	// TCPCONNECT
 	int			sockettcp;
 	netadr_t	sockettcpdest;
 	byte		tcpinbuffer[1500];
 	int 		tcpinlen;
-// <--TCPCONNECT
 
-	// private userinfo for sending to masterless servers
+	//
+	// Private userinfo for sending to masterless servers
+	//
 	char		userinfo[MAX_INFO_STRING];
 
-	// on a local server these may differ from com_gamedirfile and com_gamedir
+	//
+	// On a local server these may differ from com_gamedirfile and com_gamedir.
+	//
 	char		gamedirfile[MAX_QPATH];
 	char		gamedir[MAX_OSPATH];
 
-	FILE		*download; // file transfer from server
+	// 
+	// Download vars.
+	//
+	FILE		*download;			// file transfer from server
 	char		downloadtempname[MAX_OSPATH];
 	char		downloadname[MAX_OSPATH];
-	int		downloadnumber;
+	int			downloadnumber;
 	dltype_t	downloadtype;
-	int		downloadpercent;
-	int		downloadrate;
+	int			downloadpercent;
+	int			downloadrate;
 
-//bliP ->
+	//
+	// Upload vars.
+	// 
 	FILE		*upload;
 	char		uploadname[MAX_OSPATH];
-	int		uploadpercent;
-	int		uploadrate;
+	int			uploadpercent;
+	int			uploadrate;
 	qbool		is_file;
 	byte		*mem_upload;
-	int		upload_pos;
-	int		upload_size;
-//<-
-	// demo recording info must be here, because record is started before entering a map (and clearing clientState_t)
-	qbool	demorecording;
-	qbool	demoplayback;
-	qbool	nqdemoplayback;
-	qbool	timedemo;
-	float	td_lastframe;       // to meter out one message a frame
-	int		td_startframe;      // cls.framecount at start
-	float	td_starttime;       // realtime at second frame of timedemo
+	int			upload_pos;
+	int			upload_size;
+
+	//
+	// Demo recording info must be here, because record 
+	// is started before entering a map (and clearing clientState_t)
+	//
+	qbool		demorecording;
+	qbool		demoplayback;
+	qbool		nqdemoplayback;
+	qbool		timedemo;
+	float		td_lastframe;       // To meter out one message a frame.
+	int			td_startframe;      // cls.framecount at start
+	float		td_starttime;       // Realtime at second frame of timedemo.
 
 	byte		demomessage_data[MAX_MSGLEN * 2];
 	sizebuf_t	demomessage;
 
-	double         fps;  // HUD -> hexum
-	double         min_fps;
+	double		fps;
+	double		min_fps;
 
 	int			challenge;
 
-	float		latency;		// rolling average
+	float		latency;		// Rolling average
 
+	qbool		mvdplayback;	// Playing MVD.
+	int			lastto;			// Contains which players are affected by a demo message.
+								// * If multiple players are affected (dem_multiple) this will be a 
+								//   bit mask containing which players the last demo message relates to. (32-bits, 32 players)
+								// * If only a single player should receive the message (dem_single),
+								//   this is a a 5-bit number containing the player number. (2^5 = 32 unique player numbers)
 
-	qbool	mvdplayback; // playing mvd 
-	int			lastto;
-	int			lasttype;
-	qbool	findtrack;
+	int			lasttype;		// The type of the last demo message.
+	qbool		findtrack;
 
 } clientPersistent_t;
 
