@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.60 2007-02-03 03:28:38 cokeman1982 Exp $
+	$Id: cl_demo.c,v 1.61 2007-02-05 15:04:59 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -2545,23 +2545,6 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 	TP_ExecTrigger ("f_demostart");
 
 	Com_Printf("Attempting to stream QTV data\n");
-}
-
-//
-// Finds the first occurance of a char in a string starting from the end.
-// 
-char *strchrrev(char *str, char chr)
-{
-	char *firstchar = str;
-	for (str = str + strlen(str)-1; str >= firstchar; str--)
-	{
-		if (*str == chr)
-		{
-			return str;
-		}
-	}
-
-	return NULL;
 }
 
 //

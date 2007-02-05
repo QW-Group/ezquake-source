@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.18 2007-01-31 00:01:41 qqshka Exp $
+    $Id: q_shared.c,v 1.19 2007-02-05 15:05:17 cokeman1982 Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -278,6 +278,22 @@ char *strnstr(const char *s, const char *find, size_t slen)
 #endif
 // Added by VVD }
 
+//
+// Finds the first occurance of a char in a string starting from the end.
+// 
+char *strchrrev(char *str, char chr)
+{
+	char *firstchar = str;
+	for (str = str + strlen(str)-1; str >= firstchar; str--)
+	{
+		if (*str == chr)
+		{
+			return str;
+		}
+	}
+
+	return NULL;
+}
 
 wchar char2wc (char c)
 {
