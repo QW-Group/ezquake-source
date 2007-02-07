@@ -1261,10 +1261,7 @@ void R_DrawWorld (void) {
 	R_RecursiveWorldNode (cl.worldmodel->nodes, 15);
 	
 	//draw the world sky
-	if (r_skyboxloaded)
-		R_DrawSkyBox ();
-	else
-		R_DrawSkyChain ();
+	R_DrawSky ();
 
 	R_DrawEntitiesOnList (&cl_firstpassents);
 
