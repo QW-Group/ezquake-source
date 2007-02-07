@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.17 2007-01-24 01:32:51 qqshka Exp $
+	$Id: gl_local.h,v 1.18 2007-02-07 14:15:28 tonik Exp $
 
 */
 // gl_local.h -- private refresh defs
@@ -206,6 +206,7 @@ extern	const char *gl_extensions;
 
 // gl_warp.c
 void GL_SubdivideSurface (msurface_t *fa);
+void GL_BuildSkySurfacePolys (msurface_t *fa);
 void EmitBothSkyLayers (msurface_t *fa);
 void EmitWaterPolys (msurface_t *fa);
 void EmitSkyPolys (msurface_t *fa, qbool mtex);
@@ -214,8 +215,6 @@ void EmitCausticsPolys (void);
 void R_DrawSkyChain (void);
 void R_LoadSky_f(void);
 void R_AddSkyBoxSurface (msurface_t *fa);
-void R_ClearSkyBox (void);
-void R_DrawSkyBox (void);
 void R_InitSky (texture_t *mt);	// called at level load
 
 extern qbool	r_skyboxloaded;

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.16 2007-01-24 01:32:51 qqshka Exp $
+	$Id: gl_model.c,v 1.17 2007-02-07 14:15:28 tonik Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -1012,7 +1012,7 @@ void Mod_LoadFaces (lump_t *l) {
 
 		if (ISSKYTEX(out->texinfo->texture->name)) {	// sky
 			out->flags |= (SURF_DRAWSKY | SURF_DRAWTILED);
-			GL_SubdivideSurface (out);	// cut up polygon for warps
+			GL_BuildSkySurfacePolys (out);	// build gl polys
 			continue;
 		}
 

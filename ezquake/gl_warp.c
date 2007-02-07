@@ -147,6 +147,42 @@ void GL_SubdivideSurface (msurface_t *fa) {
 	SubdividePolygon (numverts, verts[0]);
 }
 
+// Just build the gl polys, don't subdivide
+void GL_BuildSkySurfacePolys (msurface_t *fa)
+{
+	vec3_t		verts[64];
+	int			numverts;
+	int			i;
+	int			lindex;
+	float		*vec;
+	glpoly_t	*poly;
+	float		*vert;
+
+	//
+	// convert edges back to a normal polygon
+	//
+	numverts = 0;
+	for (i=0 ; i<fa->numedges ; i++)
+	{
+		lindex = loadmodel->surfedges[fa->firstedge + i];
+
+		if (lindex > 0)
+			vec = loadmodel->vertexes[loadmodel->edges[lindex].v[0]].position;
+		else
+			vec = loadmodel->vertexes[loadmodel->edges[-lindex].v[1]].position;
+		VectorCopy (vec, verts[numverts]);
+		numverts++;
+	}
+
+	poly = Hunk_Alloc (sizeof(glpoly_t) + (numverts-4) * VERTEXSIZE*sizeof(float));
+	poly->next = NULL;
+	fa->polys = poly;
+	poly->numverts = numverts;
+	vert = verts[0];
+	for (i=0 ; i<numverts ; i++, vert+= 3)
+		VectorCopy (vert, poly->verts[i]);
+}
+
 
 #define TURBSINSIZE 128
 #define TURBSCALE ((float) TURBSINSIZE / (2 * M_PI))
@@ -286,10 +322,10 @@ void EmitWaterPolys (msurface_t *fa) {
 				os = v[3];
 				ot = v[4];
 
-				s = os + SINTABLE_APPROX(ot * 0.125 + r_refdef2.time);
+				s = os + SINTABLE_APPROX(ot * 2 + r_refdef2.time);
 				s *= (1.0 / 64);
 
-				t = ot + SINTABLE_APPROX(os * 0.125 + r_refdef2.time);
+				t = ot + SINTABLE_APPROX(os * 2 + r_refdef2.time);
 				t *= (1.0 / 64);
 
 				//VULT RIPPLE : Not sure where this came from first, but I've seen in it more than one engine
