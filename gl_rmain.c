@@ -120,7 +120,7 @@ cvar_t  gl_waterfog_density = {"gl_turbfogDensity", "1"};
 // END shaman :: balancing variables
 
 cvar_t  gl_lumaTextures = {"gl_lumaTextures", "1"};	
-cvar_t	gl_subdivide_size = {"gl_subdivide_size", "128", CVAR_ARCHIVE};
+cvar_t	gl_subdivide_size = {"gl_subdivide_size", "64", CVAR_ARCHIVE};
 cvar_t	gl_clear = {"gl_clear", "0"};
 qbool OnChange_gl_clearColor(cvar_t *v, char *s);
 cvar_t	gl_clearColor = {"gl_clearColor", "0 0 0", 0, OnChange_gl_clearColor};
