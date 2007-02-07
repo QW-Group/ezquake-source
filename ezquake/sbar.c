@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.29 2006-11-13 01:54:06 cokeman1982 Exp $
+	$Id: sbar.c,v 1.30 2007-02-07 16:10:12 tonik Exp $
 */
 // sbar.c -- status bar code
 
@@ -79,7 +79,7 @@ void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
 
 static int	sbar_xofs;
 
-cvar_t	scr_centerSbar = {"scr_centerSbar", "0"};
+cvar_t	scr_centerSbar = {"scr_centerSbar", "1"};
 
 cvar_t	scr_compactHud = {"scr_compactHud", "0"};
 cvar_t	scr_compactHudAlign = {"scr_compactHudAlign", "0"};

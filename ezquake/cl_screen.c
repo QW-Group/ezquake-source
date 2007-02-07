@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.85 2007-01-24 23:24:07 johnnycz Exp $
+    $Id: cl_screen.c,v 1.86 2007-02-07 16:07:55 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -70,7 +70,7 @@ qbool	OnChange_scr_clock_format (cvar_t *var, char *value);
 cvar_t	scr_fov = {"fov", "90", CVAR_ARCHIVE, OnFovChange};	// 10 - 140
 cvar_t	default_fov = {"default_fov", "90", CVAR_ARCHIVE, OnDefaultFovChange};
 cvar_t	scr_viewsize = {"viewsize", "100", CVAR_ARCHIVE};
-cvar_t	scr_consize = {"scr_consize", "0.75"};
+cvar_t	scr_consize = {"scr_consize", "0.5"};
 cvar_t	scr_conspeed = {"scr_conspeed", "1000"};
 cvar_t	scr_centertime = {"scr_centertime", "2"};
 cvar_t	scr_centershift = {"scr_centershift", "0"}; // BorisU
