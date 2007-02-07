@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.45 2007-02-01 17:39:05 qqshka Exp $
+	$Id: console.c,v 1.46 2007-02-07 05:59:56 qqshka Exp $
 */
 // console.c
 
@@ -316,6 +316,7 @@ void Con_CheckResize (void) {
 		return;
 
 	if (width < 1) { // video hasn't been initialized yet
+#ifdef _WIN32 /* remove this ifdef then add same for linux */
 		cvar_t *cv = Cvar_FindVar (r_conwidth.name); // r_conwidth not yet registered, but let user specifie it via
 													 // config.cfg or somehow else
 		if ( cv ) {
@@ -325,6 +326,7 @@ void Con_CheckResize (void) {
 			width = max(width, 38);
 		}
 		else
+#endif
 			width = 38;
 
 		con_linewidth = width;
