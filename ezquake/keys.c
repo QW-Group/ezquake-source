@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.44 2007-01-10 13:35:59 oldmanuk Exp $
+    $Id: keys.c,v 1.45 2007-02-07 12:00:49 tonik Exp $
 
 */
 
@@ -528,7 +528,7 @@ CompleteCommandNew (void)
 		qwcslcpy (key_lines[edit_line] + end + 1 + diff_len, temp,
 			    MAXCMDLINE - (end + 1 + diff_len));
 		for (i = 0; start + i < MAXCMDLINE && i < strlen (cmd); i++)
-			key_lines[edit_line][start + i] = cmd[i];
+			key_lines[edit_line][start + i] = char2wc(cmd[i]);
 		key_linepos += diff_len;
 		key_lines[edit_line][min
 				     (key_linepos + qwcslen(temp),
@@ -610,7 +610,7 @@ CompleteCommandNew (void)
 				 last_cmd_length,
 				 (MAXCMDLINE - key_linepos + 1 -
 				  last_cmd_length)*sizeof(wchar));
-			memcpy (key_lines[edit_line] + key_linepos, text,
+			memcpy (key_lines[edit_line] + key_linepos, str2wcs(text),
 				len * sizeof(wchar));
 
 			del_removes = 1;
