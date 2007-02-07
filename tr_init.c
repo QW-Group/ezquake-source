@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.3 2007-02-01 22:16:29 qqshka Exp $
+	$Id: tr_init.c,v 1.4 2007-02-07 13:14:29 tonik Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -48,12 +48,12 @@ cvar_t	r_stencilbits		= { "r_stencilbits",	"8",	CVAR_ARCHIVE | CVAR_LATCH };
 #endif
 cvar_t	r_depthbits			= { "r_depthbits",		"0",	CVAR_ARCHIVE | CVAR_LATCH };
 //cvar_t	r_overBrightBits	= { "r_overBrightBits", "1", CVAR_ARCHIVE | CVAR_LATCH };
-cvar_t	r_mode				= { "r_mode",			"3",	CVAR_ARCHIVE | CVAR_LATCH };
+cvar_t	r_mode				= { "gl_mode",			"3",	CVAR_ARCHIVE | CVAR_LATCH };
 cvar_t	r_fullscreen		= { "r_fullscreen",		"1",	CVAR_ARCHIVE | CVAR_LATCH };
 cvar_t	r_customwidth		= { "r_customwidth",	"1600",	CVAR_ARCHIVE | CVAR_LATCH };
 cvar_t	r_customheight		= { "r_customheight",	"1024",	CVAR_ARCHIVE | CVAR_LATCH };
 cvar_t	r_customaspect		= { "r_customaspect",	"1",	CVAR_ARCHIVE | CVAR_LATCH }; // qqshka: unused even in q3, but I keep cvar, just do not register it
-cvar_t	r_displayRefresh	= { "r_displayRefresh", "0",	CVAR_ARCHIVE | CVAR_LATCH };
+cvar_t	r_displayRefresh	= { "vid_displayfrequency", "0",	CVAR_ARCHIVE | CVAR_LATCH };
 //cvar_t	r_intensity		= { "r_intensity",		"1",	CVAR_LATCH };
 
 //
