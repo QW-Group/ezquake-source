@@ -169,7 +169,9 @@ LINUX_C_FILES := \
 	sys_linux
 
 GLX_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(GL_C_FILES) $(LINUX_C_FILES) \
-	vid_glx
+	linux_glimp \
+	tr_init \
+	linux_signals
 
 X11_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(SW_C_FILES) $(LINUX_C_FILES) \
 	vid_x11

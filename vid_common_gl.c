@@ -167,7 +167,7 @@ void GL_Init (void) {
 	gl_version    = (const char*) glGetString (GL_VERSION);
 	gl_extensions = (const char*) glGetString (GL_EXTENSIONS);
 
-#ifndef _WIN32 /* we print this in different place on WIN */
+#if !defined( _WIN32 ) && !defined( __linux__ ) /* we print this in different place on WIN and Linux */
 	Com_Printf_State(PRINT_INFO, "GL_VENDOR: %s\n",   gl_vendor);
 	Com_Printf_State(PRINT_INFO, "GL_RENDERER: %s\n", gl_renderer);
 	Com_Printf_State(PRINT_INFO, "GL_VERSION: %s\n",  gl_version);

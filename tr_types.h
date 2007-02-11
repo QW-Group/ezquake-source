@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_types.h,v 1.2 2007-02-01 17:39:06 qqshka Exp $
+	$Id: tr_types.h,v 1.3 2007-02-11 23:28:16 qqshka Exp $
 
 */
 //
@@ -71,8 +71,8 @@ typedef struct {
 	glDriverType_t			driverType;
 	glHardwareType_t		hardwareType;
 
+// FIXME: make this work
 //	qbool				deviceSupportsGamma;
-
 
 //	textureCompression_t	textureCompression;
 //	qbool				textureEnvAddAvailable;
@@ -94,10 +94,10 @@ typedef struct {
 
 extern glconfig_t	glConfig;
 
-#ifdef _WIN32
 
 typedef struct
 {
+#ifdef _WIN32
 	HDC     hDC;			// handle to device context
 	HGLRC   hGLRC;			// handle to GL rendering context
 
@@ -115,13 +115,17 @@ typedef struct
 	qbool   vid_canalttab;
 	DEVMODE dm;
 // }
+#endif // _WIN32
+
+#ifdef __linux__
+  void *OpenGLLib; // instance of OpenGL library
+#endif
 
 	FILE *log_fp;
 } glwstate_t;
 
 extern glwstate_t glw_state;
 
-#endif // _WIN32
 
 // FIXME: VM should be OS agnostic .. in theory
 
@@ -195,6 +199,7 @@ extern cvar_t	vid_flashonactivity;
 extern cvar_t	r_verbose;
 //extern cvar_t	r_logFile;
 
+extern cvar_t r_showextensions;
 
 void GL_SetDefaultState( void );
 qbool R_GetModeInfo( int *width, int *height, float *windowAspect, int mode );
@@ -274,5 +279,17 @@ extern BOOL ( WINAPI * qwglSwapLayerBuffers)(HDC, UINT);
 extern BOOL ( WINAPI * qwglSwapIntervalEXT)( int interval );
 
 #endif	// _WIN32
+
+#if ( (defined __linux__ )  || (defined __FreeBSD__ ) ) // rb010123
+
+//GLX Functions
+extern XVisualInfo * (*qglXChooseVisual)( Display *dpy, int screen, int *attribList );
+extern GLXContext (*qglXCreateContext)( Display *dpy, XVisualInfo *vis, GLXContext shareList, Bool direct );
+extern void (*qglXDestroyContext)( Display *dpy, GLXContext ctx );
+extern Bool (*qglXMakeCurrent)( Display *dpy, GLXDrawable drawable, GLXContext ctx);
+//extern void (*qglXCopyContext)( Display *dpy, GLXContext src, GLXContext dst, GLuint mask );
+extern void (*qglXSwapBuffers)( Display *dpy, GLXDrawable drawable );
+
+#endif // __linux__ || __FreeBSD__ // rb010123
 
 #endif	// __TR_TYPES_H
