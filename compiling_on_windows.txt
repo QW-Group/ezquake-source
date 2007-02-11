@@ -30,7 +30,7 @@ Instructions:
 
 5) Open ezquake.sln for Microsoft Visual Studio 7.1. For MSVS2005 open ezquake_msvs_80.sln located in ezquake/make/msvs2005
 
-6) Select ReleaseGL configuration and press "Build"
+6) Select GLDebug configuration and press "Build". (You need to compile GLDebug first so that gas2masm.exe is compiled, if you want Release version you can compile that after that).
 
 
 
