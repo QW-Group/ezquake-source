@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_linux.c,v 1.2 2007-01-07 21:59:15 disconn3ct Exp $
+	$Id: in_linux.c,v 1.3 2007-02-11 23:28:16 qqshka Exp $
 */
 #include "quakedef.h"
 
@@ -35,20 +35,23 @@ extern int mx, my;
 extern qbool mouseinitialized;
 
 
-void IN_StartupMouse (void);
+void IN_StartupMouse( void );
 
-
-
+#ifdef GLQUAKE
+void IN_DeactivateMouse( void );
+#endif
 
 void IN_MouseMove (usercmd_t *cmd)
 {
 	static int old_mouse_x = 0, old_mouse_y = 0;
 	float mouse_x, mouse_y;
 
-#if defined  (_Soft_X11) || defined (_Soft_SVGA)
+//#if defined  (_Soft_X11) || defined (_Soft_SVGA)
+
 	if (!mouseinitialized)
 		return;
-#endif
+
+//#endif
 #ifdef _Soft_SVGA
 	// poll mouse values
 	while (mouse_update())
@@ -121,18 +124,26 @@ void IN_Init (void)
 
 	if (!COM_CheckParm ("-nomouse"))
 		IN_StartupMouse();
+	else
+    mouseinitialized = false;
 }
 
 void IN_Shutdown(void)
 {
-#if defined  (_Soft_X11) || defined (_Soft_SVGA)
+//#if defined  (_Soft_X11) || defined (_Soft_SVGA)
+
 #ifdef _Soft_SVGA
 	if (mouseinitialized)
 		mouse_close();
 #endif
 
-	mouseinitialized = false;
+#ifdef GLQUAKE
+  IN_DeactivateMouse(); // btw we trying de init this in video shutdown too...
 #endif
+
+	mouseinitialized = false;
+
+//#endif
 }
 
 int ctrlDown = 0;

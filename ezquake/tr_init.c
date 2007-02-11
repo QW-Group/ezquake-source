@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.4 2007-02-07 13:14:29 tonik Exp $
+	$Id: tr_init.c,v 1.5 2007-02-11 23:28:16 qqshka Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -84,6 +84,9 @@ cvar_t	_windowed_mouse		= { "_windowed_mouse",	"1",	CVAR_ARCHIVE | CVAR_SILENT }
 
 cvar_t	r_verbose			= { "r_verbose",		"0",	CVAR_SILENT };
 //cvar_t	r_logFile		= { "r_logFile",		"0",	CVAR_CHEAT | CVAR_SILENT};
+
+// print gl extension in /gfxinfo
+cvar_t  r_showextensions = { "r_showextensions", "0", CVAR_SILENT };
 
 
 void ( APIENTRY * qglMultiTexCoord2fARB )( GLenum texture, GLfloat s, GLfloat t );
@@ -337,11 +340,13 @@ GfxInfo_f
 void GfxInfo_f( void ) 
 {
 //	cvar_t *sys_cpustring = Cvar_Get( "sys_cpustring", "", 0 );
+#if 0
 	const char *enablestrings[] =
 	{
 		"disabled",
 		"enabled"
 	};
+#endif
 	const char *fsstrings[] =
 	{
 		"windowed",
@@ -351,7 +356,8 @@ void GfxInfo_f( void )
 	ST_Printf( PRINT_ALL, "\nGL_VENDOR: %s\n", glConfig.vendor_string );
 	ST_Printf( PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string );
 	ST_Printf( PRINT_ALL, "GL_VERSION: %s\n", glConfig.version_string );
-//	ST_Printf( PRINT_ALL, "GL_EXTENSIONS: %s\n", glConfig.extensions_string );
+	if ( r_showextensions.value )
+		ST_Printf( PRINT_ALL, "GL_EXTENSIONS: %s\n", glConfig.extensions_string );
 //	ST_Printf( PRINT_ALL, "GL_MAX_TEXTURE_SIZE: %d\n", glConfig.maxTextureSize );
 //	ST_Printf( PRINT_ALL, "GL_MAX_ACTIVE_TEXTURES_ARB: %d\n", glConfig.maxActiveTextures );
 	ST_Printf( PRINT_ALL, "\nPIXELFORMAT: color(%d-bits) Z(%d-bit) stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits );
@@ -419,11 +425,7 @@ void R_Register( void )
 //	Cvar_Register (&r_texturebits);
 	Cvar_Register (&r_colorbits);
 //	Cvar_Register (&r_stereo); // qqshka: unused but saved
-#ifdef __linux__
 	Cvar_Register (&r_stencilbits);
-#else
-	Cvar_Register (&r_stencilbits);
-#endif
 	Cvar_Register (&r_depthbits);
 //	Cvar_Register (&r_overBrightBits);
 	Cvar_Register (&r_mode);
@@ -476,6 +478,8 @@ void R_Register( void )
 	Cvar_Register (&_windowed_mouse); //that more like an input, but i have serious reason to register it here
 #endif
 
+  Cvar_Register (&r_showextensions);
+
 	Cvar_ResetCurrentGroup();
 
 	// make sure all the commands added here are also
@@ -527,4 +531,104 @@ void RE_Shutdown( qbool destroyWindow ) {
 	if ( destroyWindow ) {
 		GLimp_Shutdown();
 	}
+}
+
+/******************************************************************************/
+//
+// OK, BELOW STUFF FROM Q1
+//
+/******************************************************************************/
+
+/********************************** VID MENU **********************************/
+// hardcore friendly menu
+extern void M_Menu_Options_f (void);
+void VID_MenuDraw (void) {}
+void VID_MenuKey (int key) { if (key == K_ESCAPE) M_Menu_Options_f (); }
+
+/******************************** VID SHUTDOWN ********************************/
+
+void VID_Shutdown (void) {
+#ifdef _WIN32
+
+	extern void AppActivate(BOOL fActive, BOOL minimize);
+
+	AppActivate(false, false);
+
+#endif
+
+	RE_Shutdown( true );
+}
+
+/********************************** VID INIT **********************************/
+
+#ifdef _WIN32
+extern void ClearAllStates (void);
+#endif
+
+void VID_zzz (void) {
+
+	vid.width  = vid.conwidth  = min(vid.conwidth,  glConfig.vidWidth);
+	vid.height = vid.conheight = min(vid.conheight, glConfig.vidHeight);
+
+	vid.numpages = 2;
+
+	Draw_AdjustConback ();
+
+#ifdef _WIN32
+	//fix the leftover Alt from any Alt-Tab or the like that switched us away
+	ClearAllStates ();
+#endif
+
+	vid.recalc_refdef = 1;
+}
+
+void VID_Init (unsigned char *palette) {
+
+	vid.colormap = host_colormap;
+
+	Check_Gamma(palette);
+	VID_SetPalette(palette);
+
+	RE_Init();
+
+	VID_zzz();
+
+	GL_Init();
+
+	vid_menudrawfn = VID_MenuDraw;
+	vid_menukeyfn = VID_MenuKey;
+}
+
+void VID_Restart_f (void)
+{
+	extern void GFX_Init(void);
+	qbool old_con_suppress;
+
+	if (!host_initialized) { // sanity
+		Com_Printf("Can't do %s yet\n", Cmd_Argv(0));
+		return;
+	}
+
+	VID_Shutdown ();
+	VID_Init (host_basepal);
+
+	// force models to reload (just flush, no actual loading code here)
+	Cache_Flush();
+
+	// shut up warnings during GFX_Init();
+	old_con_suppress = con_suppress;
+	con_suppress = (developer.value ? false : true);
+	// reload 2D textures, particles textures, some other textures and gfx.wad
+	GFX_Init();
+
+	// reload skins
+	Skin_Skins_f();
+
+	con_suppress = old_con_suppress;
+
+	// we need done something like for map reloading, for example reload textures for brush models
+	R_NewMap(true);
+
+	// force all cached models to be loaded, so no short HDD lag then u walk over level and discover new model
+	Mod_TouchModels();
 }

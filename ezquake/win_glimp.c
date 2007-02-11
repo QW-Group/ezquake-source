@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.4 2007-02-02 01:11:08 qqshka Exp $
+	$Id: win_glimp.c,v 1.5 2007-02-11 23:28:16 qqshka Exp $
 
 */
 /*
@@ -1760,11 +1760,6 @@ void WG_AppActivate(BOOL fActive, BOOL minimized) {
 	}
 }
 
-/********************************** VID MENU **********************************/
-extern void M_Menu_Options_f (void);
-void VID_MenuDraw (void) {}
-void VID_MenuKey (int key) { if (key == K_ESCAPE) M_Menu_Options_f (); }
-
 /********************************** HW GAMMA **********************************/
 
 void VID_ShiftPalette (unsigned char *palette) {}
@@ -1892,92 +1887,3 @@ void WG_CheckNeedSetDeviceGammaRamp(void) {
 	}
 }
 
-/******************************** VID SHUTDOWN ********************************/
-
-void VID_Shutdown (void) {
-#ifdef _WIN32
-
-	extern void AppActivate(BOOL fActive, BOOL minimize);
-
-	AppActivate(false, false);
-
-#endif
-
-	RE_Shutdown( true );
-}
-
-/********************************** VID INIT **********************************/
-
-#ifdef _WIN32
-void ClearAllStates (void);
-#endif
-
-void VID_zzz (void) {
-
-	vid.width  = vid.conwidth  = min(vid.conwidth,  glConfig.vidWidth);
-	vid.height = vid.conheight = min(vid.conheight, glConfig.vidHeight);
-
-	vid.numpages = 2;
-
-	Draw_AdjustConback ();
-
-#ifdef _WIN32
-	//fix the leftover Alt from any Alt-Tab or the like that switched us away
-	ClearAllStates ();
-#endif
-
-	vid.recalc_refdef = 1;
-}
-
-void GL_Init_Win(void ) { /* TODO */ }
-
-void VID_Init (unsigned char *palette) {
-
-	vid.colormap = host_colormap;
-
-	Check_Gamma(palette);
-	VID_SetPalette(palette);
-
-	RE_Init();
-
-	VID_zzz();
-
-	GL_Init();
-
-	vid_menudrawfn = VID_MenuDraw;
-	vid_menukeyfn = VID_MenuKey;
-}
-
-void VID_Restart_f (void)
-{
-	extern void GFX_Init(void);
-	qbool old_con_suppress;
-
-	if (!host_initialized) { // sanity
-		Com_Printf("Can't do %s yet\n", Cmd_Argv(0));
-		return;
-	}
-
-	VID_Shutdown ();
-	VID_Init (host_basepal);
-
-	// force models to reload (just flush, no actual loading code here)
-	Cache_Flush();
-
-	// shut up warnings during GFX_Init();
-	old_con_suppress = con_suppress;
-	con_suppress = (developer.value ? false : true);
-	// reload 2D textures, particles textures, some other textures and gfx.wad
-	GFX_Init();
-
-	// reload skins
-	Skin_Skins_f();
-
-	con_suppress = old_con_suppress;
-
-	// we need done something like for map reloading, for example reload textures for brush models
-	R_NewMap(true);
-
-	// force all cached models to be loaded, so no short HDD lag then u walk over level and discover new model
-	Mod_TouchModels();
-}

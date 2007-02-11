@@ -76,9 +76,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "vx_stuff.h"
-#	ifdef _WIN32
+#	if defined(_WIN32) || defined(__linux__)
 #		include "tr_types.h"
-#	endif // _WIN32
+#	endif // _WIN32 || __linux__
 #else // GLQUAKE
 #include "r_model.h"
 #include "r_local.h"

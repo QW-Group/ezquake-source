@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.45 2007-02-07 12:00:49 tonik Exp $
+    $Id: keys.c,v 1.46 2007-02-11 23:28:16 qqshka Exp $
 
 */
 
@@ -1868,6 +1868,17 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		return;
 	}
 
+#ifdef __linux__
+  // switch windowed<->fullscreen if pressed alt+tab, I succeed only with left alt, dunno why...
+  if (key == K_ENTER && keydown[K_ALT] && (key_dest == key_console || key_dest == key_game))
+  {
+    Key_ClearStates(); // Zzzz
+    Cvar_SetValue( &r_fullscreen, !r_fullscreen.integer );                                    
+		Cbuf_AddText( "vid_restart\n" );		
+    return;
+  }
+#endif
+
 	// if not a consolekey, send to the interpreter no matter what mode is
 	if	( 
 			(key_dest == key_menu && menubound[key]) || 
@@ -1888,11 +1899,12 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		return;
 	}
 
-	if (!down)
-{
-Com_Printf("DOWN\n");
+  if (!down)
+  {
+    Com_Printf("DOWN\n");
 		return;		// other systems only care about key down events
-}
+  }
+
 
 #ifndef WITH_KEYMAP
 	if (keydown[K_SHIFT])
