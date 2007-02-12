@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.61 2007-02-05 15:04:59 cokeman1982 Exp $
+	$Id: cl_demo.c,v 1.62 2007-02-12 11:18:53 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -728,7 +728,7 @@ qbool pb_ensure(void)
 			return true;
 
 		CL_Demo_Peek(pb_tmp_buf, pb_cnt);
-		if (ConsistantMVDData(pb_tmp_buf, pb_cnt))
+		if (ConsistantMVDData((unsigned char*)pb_tmp_buf, pb_cnt))
 			return true;
 	}
 
@@ -752,7 +752,7 @@ qbool pb_ensure(void)
 	if (cls.mvdplayback && pb_cnt) { // not enough data in buffer, check do we have at least one message in buffer
 		CL_Demo_Peek(pb_tmp_buf, pb_cnt);
 
-		return !!ConsistantMVDData(pb_tmp_buf, pb_cnt);
+		return !!ConsistantMVDData((unsigned char*)pb_tmp_buf, pb_cnt);
 	}
 
 	return false;
