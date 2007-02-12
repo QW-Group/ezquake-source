@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_glimp.c,v 1.2 2007-02-12 05:30:37 qqshka Exp $
+    $Id: linux_glimp.c,v 1.3 2007-02-12 12:13:10 qqshka Exp $
 
 */
 /*
@@ -95,6 +95,8 @@ static Display *dpy = NULL;
 static int scrnum;
 static Window win = 0;
 static GLXContext ctx = NULL;
+
+Atom wm_delete_window_atom; //LordHavoc
 
 // bk001206 - not needed anymore
 // static qbool autorepeaton = true;
@@ -573,6 +575,17 @@ static void HandleEvents(void)
 		
       break;
 
+    case DestroyNotify:
+		  // window has been destroyed
+		  Host_Quit();
+		  break;
+
+		case ClientMessage:
+			// window manager messages
+			if ((event.xclient.format == 32) && ((unsigned int)event.xclient.data.l[0] == wm_delete_window_atom))
+				Host_Quit();
+			break;			
+
     case CreateNotify :
       win_x = event.xcreatewindow.x;
       win_y = event.xcreatewindow.y;
@@ -1010,6 +1023,13 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
   XSetWMNormalHints( dpy, win, &sizehints );
 
   XMapWindow( dpy, win );
+	
+	// LordHavoc: making the close button on a window do the right thing
+	// seems to involve this mess, sigh...
+	// {
+	wm_delete_window_atom = XInternAtom(dpy, "WM_DELETE_WINDOW", false);
+	XSetWMProtocols(dpy, win, &wm_delete_window_atom, 1);
+	// }
 
   if (vidmode_active)
     XMoveWindow(dpy, win, 0, 0);
