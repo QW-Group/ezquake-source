@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.16 2007-01-22 21:04:54 johnnycz Exp $
+		$Id: settings_page.c,v 1.17 2007-02-12 10:36:07 qqshka Exp $
 
 */
 
@@ -121,6 +121,12 @@ static void Setting_Increase(setting* set) {
 				Cvar_SetValue(set->cvar, set->min);
 			break;
 		case stt_action: if (set->actionfnc) set->actionfnc(); break;
+
+		// unhandled
+		case stt_separator:
+		case stt_string:
+		case stt_bind:
+			break;
 	}
 }
 
@@ -138,6 +144,13 @@ static void Setting_Decrease(setting* set) {
 				Cvar_SetValue(set->cvar, newval);
 			else if (set->type == stt_named)
 				Cvar_SetValue(set->cvar, set->max);
+			break;
+
+		//unhandled
+		case stt_separator:
+		case stt_action:
+		case stt_string:
+		case stt_bind:
 			break;
 	}
 }
@@ -271,6 +284,8 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 			case stt_named: Setting_DrawNamed(x, y, w, set, active); break;
 			case stt_string: Setting_DrawString(x, y, w, set, active); break;
 			case stt_playercolor: Setting_DrawColor(x, y, w, set, active); break;
+			//unhandled
+			case stt_bind: break;
 		}
 		y += STHeight(tab->settings[i].type);
 		if (i < tab->count)
