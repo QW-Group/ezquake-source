@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.18 2007-02-07 14:15:28 tonik Exp $
+	$Id: gl_local.h,v 1.19 2007-02-12 11:18:53 qqshka Exp $
 
 */
 // gl_local.h -- private refresh defs
@@ -25,25 +25,32 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef _WIN32
 #include <windows.h>
-#endif
+#endif // _WIN32
+
 #ifdef __APPLE__
+
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #include <OpenGL/glext.h>
-#else
+
+#else // __APPLE__
+
 #include <GL/gl.h>
 #include <GL/glu.h>
-#ifdef PBUFFER
-	#include <GL/wglext.h>
-	#include <GL/glext.h>
-#endif
-#ifdef __GNUC__
-#include <GL/glext.h>
-#endif
-#ifndef _WIN32
-#include <GL/glx.h>
-#endif
-#endif
+
+# ifdef PBUFFER
+#   include <GL/wglext.h>
+#   include <GL/glext.h>
+# endif // PBUFFER
+
+# ifdef __GNUC__
+#   include <GL/glext.h>
+# endif // __GNUC__
+
+# ifndef _WIN32
+#   include <GL/glx.h>
+# endif // _WIN32
+#endif // __APPLE__
 
 #include "gl_texture.h"
 
@@ -213,6 +220,7 @@ void EmitSkyPolys (msurface_t *fa, qbool mtex);
 void CalcCausticTexCoords(float *v, float *s, float *t);
 void EmitCausticsPolys (void);
 void R_DrawSkyChain (void);
+void R_DrawSky (void);
 void R_LoadSky_f(void);
 void R_AddSkyBoxSurface (msurface_t *fa);
 void R_InitSky (texture_t *mt);	// called at level load

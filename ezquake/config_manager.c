@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.32 2007-01-13 19:19:34 johnnycz Exp $
+    $Id: config_manager.c,v 1.33 2007-02-12 11:18:53 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -388,6 +388,7 @@ static void DumpPlusCommands(FILE *f)
 	fprintf(f, sb_showteamscores ? "+showteamscores\n" : "-showteamscores\n");
 }
 
+#if 0 /* unused ?*/
 static void DumpColorForcing(FILE *f, char *name, int topcolor, int bottomcolor)
 {
 	char *spaces;
@@ -403,6 +404,7 @@ static void DumpColorForcing(FILE *f, char *name, int topcolor, int bottomcolor)
 			fprintf	(f,	"%s%s%i\n", name, spaces, topcolor);
 	}
 }
+#endif
 
 static void DumpTeamplay(FILE *f)
 {

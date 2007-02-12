@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.47 2007-02-11 23:28:16 qqshka Exp $
+	$Id: console.c,v 1.48 2007-02-12 11:18:53 qqshka Exp $
 */
 // console.c
 
@@ -1035,7 +1035,7 @@ void AddCP(void) {
 		return; // no free space
 
 	p->texindex = i_rnd(1, bound(1, con_particles_images.value, HARD_CODED)) - 1;
-	p->texindex = bound(0, p->texindex, HARD_CODED-1);
+	p->texindex = min(p->texindex, HARD_CODED-1);
 
 	p->die = p->start = cp_time;
 	p->die += 7;

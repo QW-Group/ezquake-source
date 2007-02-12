@@ -26,6 +26,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void *Sys_GetProcAddress (const char *ExtName);
 #endif
 
+#ifdef __linux__
+# ifndef __GLXextFuncPtr
+  typedef void (*__GLXextFuncPtr)(void);
+# endif
+# ifndef glXGetProcAddressARB
+  extern __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
+# endif
+#endif
+
 void *GL_GetProcAddress (const char *ExtName)
 {
 #ifdef _WIN32
