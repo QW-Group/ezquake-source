@@ -27,10 +27,6 @@
 #define COL_DATE        8
 #define COL_TIME        5
 
-extern int isShiftDown(void);
-extern int isCtrlDown(void);
-extern int isAltDown(void);
-
 extern void cvar_toggle (cvar_t *var);
 extern void _splitpath (const char *path, char *drive, char *dir, char *file, char *ext);
 

@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.29 2007-01-20 02:16:26 johnnycz Exp $
+	$Id: EX_browser.c,v 1.30 2007-02-12 05:30:37 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -223,20 +223,10 @@ int strcmp2(const char * s1, const char * s2)
     return 0;
 }
 
-int isThisAltDown(void)
-{
-	return keydown[K_ALT] || keydown[K_RALT];
-}
-
-int isThisCtrlDown(void)
-{
-	return keydown[K_CTRL] || keydown[K_RCTRL];
-}
-
 void CopyServerToClipboard(server_data *s)
 {
     char buf[2048];
-    if (isThisCtrlDown()  ||  s->display.name[0] == 0)
+    if (isCtrlDown()  ||  s->display.name[0] == 0)
         strcpy(buf, s->display.ip);
     else
         sprintf(buf, "%s (%s)",
@@ -251,7 +241,7 @@ void PasteServerToConsole(server_data *s)
     sprintf(buf, "%s (%s)",
             s->display.name,
             s->display.ip);
-    if (isThisCtrlDown())
+    if (isCtrlDown())
         Cbuf_AddText("say_team ");
     else
         Cbuf_AddText("say ");
@@ -1558,10 +1548,10 @@ void Add_Source_Key(int key)
     switch (key)
     {
     case K_HOME:
-        if (isThisCtrlDown())
+        if (isCtrlDown())
             newsource_pos = 0; break;
     case K_END:
-        if (isThisCtrlDown())
+        if (isCtrlDown())
             newsource_pos = 4; break;
     case K_UPARROW:
 	case K_MWHEELUP:
@@ -1643,7 +1633,7 @@ void Add_Source_Key(int key)
         break;
     }
 
-    if ((!isThisCtrlDown() || tolower(key)=='v') && !isThisAltDown())
+    if ((!isCtrlDown() || tolower(key)=='v') && !isAltDown())
     {
         if (newsource_pos == 1)
             CEditBox_Key(&edit1, key);
@@ -1660,10 +1650,10 @@ void Add_Server_Key(int key)
     switch (key)
     {
     case K_HOME:
-        if (isThisCtrlDown())
+        if (isCtrlDown())
             newserver_pos = 0; break;
     case K_END:
-        if (isThisCtrlDown())
+        if (isCtrlDown())
             newserver_pos = 4; break;
     case K_UPARROW:
 	case K_MWHEELUP:
@@ -1702,7 +1692,7 @@ void Add_Server_Key(int key)
         break;
     }
 
-    if ((!isThisCtrlDown() || tolower(key)=='v') && !isThisAltDown())
+    if ((!isCtrlDown() || tolower(key)=='v') && !isAltDown())
     {
         if (newserver_pos == 0)
             CEditBox_Key(&edit1, key);
@@ -1731,7 +1721,7 @@ qbool SearchNextServer(int pos)
 
 int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
 {
-    if (serversn_passed <= 0  &&  (key != K_SPACE || isThisAltDown())
+    if (serversn_passed <= 0  &&  (key != K_SPACE || isAltDown())
         && tolower(key) != 'n'  && key != K_INS)
         return false;
 
@@ -1740,7 +1730,7 @@ int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
 		return true;
 	}
 
-	if (!isThisCtrlDown() && !isThisAltDown() && key > ' ' && key <= '}')  // search
+	if (!isCtrlDown() && !isAltDown() && key > ' ' && key <= '}')  // search
     {
         int len;
         char c = tolower(key);
@@ -1812,7 +1802,7 @@ int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
             case '6':
             case '7':
             case '8':   // sorting mode
-				if (isThisAltDown()) // fixme
+				if (isAltDown()) // fixme
                 {
                     char buf[30];
                     if ((sb_sortservers.string[0] == '-' && sb_sortservers.string[1] == key)
@@ -1835,7 +1825,7 @@ int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
                     Cvar_Set(&sb_sortservers, buf);
                     resort_servers = 1;
                 }
-                else if (isThisCtrlDown())
+                else if (isCtrlDown())
                 {
                     switch (key)
                     {
@@ -1871,7 +1861,7 @@ void Serverinfo_Key(int key)
         case K_ENTER:
             if (serverinfo_pos != 2)
             {
-                if (isThisCtrlDown())
+                if (isCtrlDown())
                     Observe_Server(show_serverinfo);
                 else
                     Join_Server(show_serverinfo);
@@ -1885,7 +1875,7 @@ void Serverinfo_Key(int key)
         case K_PGUP:
 			if (CTab_GetCurrentId(&sb_tab) == SBPG_PLAYERS)
             {
-                if (isThisCtrlDown())
+                if (isCtrlDown())
                     Players_pos = 0;
                 else
                     Players_pos--;
@@ -1894,7 +1884,7 @@ void Serverinfo_Key(int key)
             }
             else
             {
-                if (isThisCtrlDown())
+                if (isCtrlDown())
                     Servers_pos = 0;
                 else
                     Servers_pos--;
@@ -1905,7 +1895,7 @@ void Serverinfo_Key(int key)
         case K_PGDN:
             if (CTab_GetCurrentId(&sb_tab) == SBPG_PLAYERS)
             {
-                if (isThisCtrlDown())
+                if (isCtrlDown())
                     Players_pos = all_players_n - 1;
                 else
                     Players_pos++;
@@ -1914,7 +1904,7 @@ void Serverinfo_Key(int key)
             }
             else
             {
-                if (isThisCtrlDown())
+                if (isCtrlDown())
                     Servers_pos = serversn_passed-1;
                 else
                     Servers_pos++;
@@ -2199,7 +2189,7 @@ int Sources_Key(int key, CTab_t *tab, CTabPage_t *page)
         case ']':
             Toggle_Source(sources[Sources_pos]); break;
         case K_SPACE:
-            source_full_update = (isThisCtrlDown());
+            source_full_update = (isCtrlDown());
             Update_Multiple_Sources(sources, sourcesn);
             break;
         case '=':
@@ -2274,7 +2264,7 @@ int Players_Key(int key, CTab_t *tab, CTabPage_t *page)
     if (all_players_n <= 0  &&  key != K_SPACE)
         return false;
 
-    if ((isThisAltDown()  ||  searchtype == search_player)  &&
+    if ((isAltDown()  ||  searchtype == search_player)  &&
         key >= ' '  &&  key <= '}')  // search
     {
         int len;

@@ -7,8 +7,6 @@
 #include "quakedef.h"
 #include "EX_misc.h"
 
-extern int isShiftDown(void);
-
 static void LeaveNavigationMode(CPageViewer_t *viewer)
 {
     if (viewer->navigation_mode)
