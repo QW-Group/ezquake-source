@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_glx.c,v 1.39 2007-01-07 21:59:15 disconn3ct Exp $
+	$Id: vid_glx.c,v 1.40 2007-02-12 05:45:10 qqshka Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -368,9 +368,12 @@ static void GetEvent(void) {
 	case KeyPress:
 	case KeyRelease:
 		key = XLateKey(&event.xkey);
-		if (key == K_CTRL)  ctrlDown  = event.type == KeyPress;
-		if (key == K_SHIFT) shiftDown = event.type == KeyPress;
-		if (key == K_ALT)   altDown   = event.type == KeyPress;
+	  if (key == K_CTRL  || key == K_LCTRL  || key == K_RCTRL)
+      ctrlDown  = event.type == KeyPress;
+	  if (key == K_SHIFT || key == K_LSHIFT || key == K_RSHIFT)
+	    shiftDown = event.type == KeyPress;
+	  if (key == K_ALT   || key == K_LALT   || key == K_RALT)
+		  altDown   = event.type == KeyPress;
 
 #ifdef WITH_KEYMAP
 		// if set, print the current Key information
