@@ -1700,16 +1700,35 @@ void VID_SetCaption (char *text) {}
 
 // kazik -->
 
+// FIXME: this must be done somehow different
+
 int isAltDown(void)
 {
-    return 0;
+//    if (GetKeyState(VK_MENU) < 0)
+//       return 1;
+//    return 0;
+
+    extern qbool    keydown[256];
+    return keydown[K_ALT];
 }
 int isCtrlDown(void)
 {
-    return 0;
+//    if (GetKeyState(VK_CONTROL) < 0)
+//        return 1;
+//    return 0;
+
+    extern qbool    keydown[256];
+    return keydown[K_CTRL];
 }
 int isShiftDown(void)
 {
-    return 0;
+//    if (GetKeyState(VK_SHIFT) < 0)
+//        return 1;
+//    return 0;
+
+    extern qbool    keydown[256];
+    return keydown[K_SHIFT];
 }
+
+
 // kazik <--
