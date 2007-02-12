@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_linux.c,v 1.21 2007-01-07 19:17:23 disconn3ct Exp $
+	$Id: sys_linux.c,v 1.22 2007-02-12 10:02:24 qqshka Exp $
 
 */
 #include <unistd.h>
@@ -66,6 +66,7 @@ qbool stdin_ready;
 int do_stdin = 1;
 
 
+cvar_t sys_yieldcpu = {"sys_yieldcpu", "0"};
 cvar_t sys_nostdout = {"sys_nostdout", "0"};	
 cvar_t sys_extrasleep = {"sys_extrasleep", "0"};
 
@@ -107,6 +108,11 @@ void Sys_Init(void) {
 	if (dedicated) {
 		Cvar_Register (&sys_nostdout);
 		Cvar_Register (&sys_extrasleep);
+	}
+	else {
+    Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS); 	
+    Cvar_Register (&sys_yieldcpu);
+    Cvar_ResetCurrentGroup();		
 	}
 }
 

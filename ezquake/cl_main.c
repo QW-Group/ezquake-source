@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.123 2007-01-24 01:32:50 qqshka Exp $
+	$Id: cl_main.c,v 1.124 2007-02-12 10:02:24 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1328,10 +1328,13 @@ void CL_Frame (double time) {
 	minframetime = CL_MinFrameTime();
 
 	if (extratime < minframetime) {
-#ifdef _WIN32
+
 		extern cvar_t sys_yieldcpu;
-		if (sys_yieldcpu.value)
+		if (sys_yieldcpu.integer)
+#ifdef _WIN32		
 			Sys_MSleep(0);
+#else
+      usleep( bound( 0, sys_yieldcpu.integer, 1000 ) );
 #endif
 		return;
 	}
