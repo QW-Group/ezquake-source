@@ -1,7 +1,7 @@
 /*
  * EditBox functions
  *
- *    $Id: Ctrl_EditBox.c,v 1.6 2006-05-13 07:31:57 disconn3ct Exp $
+ *    $Id: Ctrl_EditBox.c,v 1.7 2007-02-12 05:30:37 qqshka Exp $
  */
 
 
@@ -11,11 +11,6 @@
 
 
 char buf[MAX_EDITTEXT+1];
-
-int isThatCtrlDown(void)
-{
-	return keydown[K_CTRL] || keydown[K_RCTRL];
-}
 
 void CEditBox_Init(CEditBox *e, int width, int max)
 {
@@ -75,7 +70,7 @@ void CEditBox_Key(CEditBox *e, int key)
 			break;
 			case 'v':
 			case 'V':
-				if (isThatCtrlDown()) {
+				if (isCtrlDown()) {
 					int len;
 					char *clip = ReadFromClipboard();
 					len = min(strlen(clip), e->max - strlen(e->text));
@@ -94,7 +89,7 @@ void CEditBox_Key(CEditBox *e, int key)
 	e->pos = max(e->pos, 0);
 	e->pos = min(e->pos, strlen(e->text));
 
-	if (!isThatCtrlDown() &&
+	if (!isCtrlDown() &&
 		key >= ' '  &&  key <= '}' &&
 		strlen(e->text) < e->max) {
 		memmove(e->text + e->pos + 1,

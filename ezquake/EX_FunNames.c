@@ -1,5 +1,5 @@
 /*
-    $Id: EX_FunNames.c,v 1.9 2006-05-14 12:23:17 disconn3ct Exp $
+    $Id: EX_FunNames.c,v 1.10 2007-02-12 05:30:37 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -47,23 +47,14 @@ int Fun_GetDollar(int c)
 // depending on the 'control and 'alt' key state
 //
 
-int isAdAltDown(void)
-{
-	return keydown[K_ALT] || keydown[K_RALT];
-}
-int isAdCtrlDown(void)
-{
-	return keydown[K_CTRL] || keydown[K_RCTRL];
-}
-
 int Fun_ConvertKey(int key)
 {
 	int ret = key;
 
-	if (isAdAltDown())       // alt
+	if (isAltDown())       // alt
 		ret = Fun_GetDollar(ret);
 
-	if (isAdCtrlDown())    // control
+	if (isCtrlDown())    // control
 		ret = ret | 128;
 
 	return ret;

@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_glimp.c,v 1.1 2007-02-11 23:28:16 qqshka Exp $
+    $Id: linux_glimp.c,v 1.2 2007-02-12 05:30:37 qqshka Exp $
 
 */
 /*
@@ -482,9 +482,12 @@ static void HandleEvents(void)
 	  case KeyPress:
 	  case KeyRelease:
 		  key = XLateKey(&event.xkey);
-		  if (key == K_CTRL)  ctrlDown  = event.type == KeyPress;
-		  if (key == K_SHIFT) shiftDown = event.type == KeyPress;
-		  if (key == K_ALT)   altDown   = event.type == KeyPress;
+		  if (key == K_CTRL  || key == K_LCTRL  || key == K_RCTRL)
+        ctrlDown  = event.type == KeyPress;
+		  if (key == K_SHIFT || key == K_LSHIFT || key == K_RSHIFT)
+			  shiftDown = event.type == KeyPress;
+		  if (key == K_ALT   || key == K_LALT   || key == K_RALT)
+			  altDown   = event.type == KeyPress;
 
 #ifdef WITH_KEYMAP
 		  // if set, print the current Key information

@@ -4,10 +4,6 @@
 #include "quakedef.h"
 
 
-extern int isShiftDown(void);
-extern int isCtrlDown(void);
-extern int isAltDown(void);
-
 // initialize control
 void CTab_Init(CTab_t *tab)
 {
