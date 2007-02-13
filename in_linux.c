@@ -14,21 +14,20 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_linux.c,v 1.3 2007-02-11 23:28:16 qqshka Exp $
+	$Id: in_linux.c,v 1.4 2007-02-13 16:49:06 qqshka Exp $
 */
 #include "quakedef.h"
 
 
-cvar_t	m_filter = {"m_filter", "0"};
-cvar_t	cl_keypad = {"cl_keypad", "1"};
-cvar_t	_windowed_mouse = {"_windowed_mouse",
 #ifdef NDEBUG
-	"1"
+#define win_mouse	"1"
 #else
-			"0"
+#define win_mouse	"0"
 #endif
-, CVAR_ARCHIVE};
-// cvar_t _windowed_mouse = {"_windowed_mouse", "1", CVAR_ARCHIVE};
+
+cvar_t	m_filter        = {"m_filter",       "0", CVAR_SILENT};
+cvar_t	cl_keypad       = {"cl_keypad",      "1", CVAR_SILENT};
+cvar_t	_windowed_mouse = {"_windowed_mouse", win_mouse, CVAR_ARCHIVE | CVAR_SILENT};
 
 	
 extern int mx, my;
@@ -39,6 +38,7 @@ void IN_StartupMouse( void );
 
 #ifdef GLQUAKE
 void IN_DeactivateMouse( void );
+void IN_Restart_f(void);
 #endif
 
 void IN_MouseMove (usercmd_t *cmd)
@@ -118,9 +118,15 @@ void IN_Init (void)
 	Cvar_Register(&cl_keypad);
 	Cvar_ResetCurrentGroup();
 
+	if (!host_initialized)
+	{
 #ifdef WITH_KEYMAP
-	IN_StartupKeymap();
+		IN_StartupKeymap();
 #endif // WITH_KEYMAP
+#ifdef GLQUAKE
+		Cmd_AddCommand ("in_restart", IN_Restart_f);
+#endif
+	}
 
 	if (!COM_CheckParm ("-nomouse"))
 		IN_StartupMouse();

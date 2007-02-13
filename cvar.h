@@ -74,13 +74,17 @@ void Cvar_Register (cvar_t *var);
 cvar_t *Cvar_Create (char *name, char *string, int cvarflags);
 
 // equivalent to "<name> <variable>" typed at the console
-void Cvar_Set (cvar_t *var, char *string);
+void Cvar_Set (cvar_t *var, char *value);
+// same but silent for latched var
+void Cvar_LatchedSet (cvar_t *var, char *value);
 
 // force a set even if the cvar is read only
-void Cvar_ForceSet (cvar_t *var, char *string);
+void Cvar_ForceSet (cvar_t *var, char *value);
 
 // expands value to a string and calls Cvar_Set
 void Cvar_SetValue (cvar_t *var, float value);
+// same but silent for latched var
+void Cvar_LatchedSetValue (cvar_t *var, float value);
 
 // sets ruleset limit for variable
 // when ruleset is active you can't set lower/higher value than this
