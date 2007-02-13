@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_glimp.c,v 1.3 2007-02-12 12:13:10 qqshka Exp $
+    $Id: linux_glimp.c,v 1.4 2007-02-13 16:49:06 qqshka Exp $
 
 */
 /*
@@ -71,9 +71,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // cvars
 //
 
-cvar_t in_mouse           = { "in_mouse",    "1", CVAR_ARCHIVE };
-cvar_t in_dgamouse        = { "in_dgamouse", "1", CVAR_ARCHIVE }; // user pref for dga mouse
-cvar_t in_nograb          = { "in_nograb",   "0", 0 }; // this is strictly for developers
+typedef enum { mt_none = 0, mt_dga, mt_normal } mousetype_t;
+
+cvar_t in_mouse           = { "in_mouse",    "1", CVAR_ARCHIVE | CVAR_LATCH }; // NOTE: "1" is mt_dga
+cvar_t in_nograb          = { "in_nograb",   "0", CVAR_LATCH }; // this is strictly for developers
 
 cvar_t r_allowSoftwareGL  = { "r_allowSoftwareGL", "0", CVAR_LATCH };   // don't abort out if the pixelformat claims software
 
@@ -291,17 +292,21 @@ static void install_grabs(void)
 
   mouseResetTime = Sys_DoubleTime();
 
-  if (in_dgamouse.value)
+  if (in_mouse.integer == mt_dga)
   {
     int MajorVersion, MinorVersion;
 
     if (!XF86DGAQueryVersion(dpy, &MajorVersion, &MinorVersion))
     {
-      // unable to query, probalby not supported, force the setting to 0
+      // unable to query, probalby not supported, force the setting to normal mouse
       ST_Printf( PRINT_ALL, "Failed to detect XF86DGA Mouse\n" );
-      Cvar_Set( &in_dgamouse, "0" );
+			// thought no need for restart here
+      Cvar_LatchedSetValue( &in_mouse, mt_normal );
     } else
     {
+      if (developer.value)                                                                            
+			  ST_Printf( PRINT_ALL, "DGA Mouse - Enabling DGA DirectVideo\n" ); 
+
       XF86DGADirectVideo(dpy, DefaultScreen(dpy), XF86DGADirectMouse);
       XWarpPointer(dpy, None, win, 0, 0, 0, 0, 0, 0);
     }
@@ -322,7 +327,7 @@ static void install_grabs(void)
 
 static void uninstall_grabs(void)
 {
-  if (in_dgamouse.value)
+  if (in_mouse.integer == mt_dga)
   {
 		if (developer.value)
 			ST_Printf( PRINT_ALL, "DGA Mouse - Disabling DGA DirectVideo\n" );
@@ -341,6 +346,94 @@ static void uninstall_grabs(void)
 
   // inviso cursor
   XUndefineCursor(dpy, win);
+}
+
+void IN_Commands (void) { /* etmpty */ }
+
+void IN_StartupMouse(void) {
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
+  // mouse variables
+	Cvar_Register (&in_mouse);
+	// developer feature, allows to break without loosing mouse pointer
+	Cvar_Register (&in_nograb);
+	Cvar_ResetCurrentGroup();
+
+	// force dga mouse to normal mouse if using nograb
+	if (in_nograb.integer && in_mouse.integer == mt_dga)
+	{
+		Com_Printf("Mouse forsed from dga to normal due to %s\n", in_nograb.name);
+		Cvar_LatchedSetValue( &in_mouse, mt_normal );
+	}
+	
+	switch (in_mouse.integer) {
+		case mt_none:   mouseinitialized = false; break;
+		case mt_dga:		mouseinitialized = true;  break;
+		case mt_normal: mouseinitialized = true;  break;
+		default:
+			Com_Printf("Unknow value %d of %s, using normal mouse\n", in_mouse.integer, in_mouse.name);
+	    Cvar_LatchedSetValue( &in_mouse, mt_normal );
+			mouseinitialized = true;
+			break;
+	}
+}
+
+void IN_ActivateMouse( void ) 
+{
+  if (!mouseinitialized || !dpy || !win)
+    return;
+	
+  if (!mouse_active)
+  {
+		if (!in_nograb.value)
+      install_grabs();
+
+    mouse_active = true;
+  }
+}
+
+void IN_DeactivateMouse( void ) 
+{
+  if (!mouseinitialized || !dpy || !win)
+    return;
+
+  if (mouse_active)
+  {
+		if (!in_nograb.value)
+      uninstall_grabs();
+
+    mouse_active = false;
+  }
+}
+
+void IN_Frame (void) {
+
+  if ( key_dest != key_game )
+  {
+    // temporarily deactivate if not in the game and
+    // running on the desktop
+    // voodoo always counts as full screen
+    if (Cvar_VariableValue ("r_fullscreen") == 0
+        && strcmp( Cvar_VariableString("r_glDriver"), _3DFX_DRIVER_NAME ) )
+    {
+      IN_DeactivateMouse ();
+      return;
+    }
+  }
+
+  IN_ActivateMouse();
+}
+
+void IN_Restart_f(void)                                                                              
+{
+	qbool old_mouse_active = mouse_active;
+	
+	IN_Shutdown();
+	IN_Init();
+	
+	// if mouse was active before restart, try to re-activate it
+	if ( old_mouse_active )
+		IN_ActivateMouse();
 }
 
 static int XLateKey(XKeyEvent *ev) {
@@ -503,7 +596,7 @@ static void HandleEvents(void)
     case MotionNotify:
       if (mouse_active)
       {
-        if (in_dgamouse.value)
+        if (in_mouse.integer == mt_dga)
         {
           if (abs(event.xmotion.x_root) > 1)
             amx += event.xmotion.x_root * 2;
@@ -519,7 +612,8 @@ static void HandleEvents(void)
 						my += amy;
           }
           amx = amy = 0;
-        } else
+        }
+				else if (in_mouse.integer == mt_normal)
         {
           // If it's a center motion, we've just returned from our warp
           if (event.xmotion.x == glConfig.vidWidth/2 &&
@@ -605,37 +699,16 @@ static void HandleEvents(void)
   }
 }
 
-void IN_ActivateMouse( void ) 
-{
-  if (!mouseinitialized || !dpy || !win)
+void Sys_SendKeyEvents (void) {
+  // XEvent event; // bk001204 - unused
+
+  if (!dpy)
     return;
 
-  if (!mouse_active)
-  {
-		if (!in_nograb.value)
-      install_grabs();
-		else if (in_dgamouse.value) // force dga mouse to 0 if using nograb
-			Cvar_Set( &in_dgamouse, "0" );
-
-    mouse_active = true;
-  }
+  IN_Frame();				
+  HandleEvents();
 }
 
-void IN_DeactivateMouse( void ) 
-{
-  if (!mouseinitialized || !dpy || !win)
-    return;
-
-  if (mouse_active)
-  {
-		if (!in_nograb.value)
-      uninstall_grabs();
-		else if (in_dgamouse.value) // force dga mouse to 0 if using nograb
-			Cvar_Set( &in_dgamouse, "0" );
-
-    mouse_active = false;
-  }
-}
 
 /*****************************************************************************/
 
@@ -816,13 +889,15 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
 
   // Check for DGA	
   dga_MajorVersion = 0, dga_MinorVersion = 0;
-  if (in_dgamouse.value)
+  if (in_mouse.integer == mt_dga)
   {
     if (!XF86DGAQueryVersion(dpy, &dga_MajorVersion, &dga_MinorVersion))
     {
       // unable to query, probalby not supported
       ST_Printf( PRINT_ALL, "Failed to detect XF86DGA Mouse\n" );
-      Cvar_Set( &in_dgamouse, "0" );
+			// mouse must not be active here, so no need for restart I thought
+			// mouse will be activated with install grabs
+      Cvar_LatchedSetValue( &in_mouse, mt_normal );
     } else
     {
       ST_Printf( PRINT_ALL, "XF86DGA Mouse (Version %d.%d) initialized\n",
@@ -1368,56 +1443,6 @@ void GLimp_EndFrame (void)
 
   // check logging
 //  QGL_EnableLogging( (qbool)r_logFile.integer ); // bk001205 - was ->value
-}
-
-/*****************************************************************************/
-/* MOUSE                                                                     */
-/*****************************************************************************/
-
-void IN_Commands (void) { /* etmpty */ }
-
-void IN_StartupMouse(void) {
-	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
-  // mouse variables
-	Cvar_Register (&in_mouse);
-	Cvar_Register (&in_dgamouse);
-	// developer feature, allows to break without loosing mouse pointer
-	Cvar_Register (&in_nograb);
-	Cvar_ResetCurrentGroup();
-
-  if (in_mouse.value)
-    mouseinitialized = true;
-  else
-    mouseinitialized = false;
-}
-
-void IN_Frame (void) {
-
-  if ( key_dest != key_game )
-  {
-    // temporarily deactivate if not in the game and
-    // running on the desktop
-    // voodoo always counts as full screen
-    if (Cvar_VariableValue ("r_fullscreen") == 0
-        && strcmp( Cvar_VariableString("r_glDriver"), _3DFX_DRIVER_NAME ) )
-    {
-      IN_DeactivateMouse ();
-      return;
-    }
-  }
-
-  IN_ActivateMouse();
-}
-
-
-void Sys_SendKeyEvents (void) {
-  // XEvent event; // bk001204 - unused
-
-  if (!dpy)
-    return;
-
-  IN_Frame();				
-  HandleEvents();
 }
 
 /************************************* Window related *******************************/

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.38 2007-02-01 22:16:29 qqshka Exp $
+    $Id: cvar.c,v 1.39 2007-02-13 16:49:05 qqshka Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -261,7 +261,12 @@ void Cvar_Set (cvar_t *var, char *value)
 				return; // we change string value to the same, do no create latched string then
 		}
 
-		Com_Printf ("%s will be changed upon restarting.\n", var->name);
+		// HACK: sometime I need somehow silently change latched cvars.
+		//       So, flag CVAR_SILENT for latched cvars mean no this warning.
+		//       However keep this flag always on latched variable is stupid imo. 
+		//       So, do not mix CVAR_LATCHED | CVAR_SILENT in cvar definition.
+		if ( !(var->flags & CVAR_SILENT) )
+			Com_Printf ("%s will be changed upon restarting.\n", var->name);
 		var->latchedString = Q_strdup(value);
 		var->modified = true; // set to true even car->string is not changed yet, that how q3 does
 		return;
@@ -348,6 +353,37 @@ void Cvar_SetValue (cvar_t *var, float value)
 
 	Cvar_Set (var, val);
 }
+
+// silently set value for latched cvar
+void Cvar_LatchedSet (cvar_t *var, char *value)
+{
+	// yea, do not mess things
+	if ( !(var->flags & CVAR_LATCH) )
+		Sys_Error("Cvar_LatchedSet: non latched var %s", var->name);
+		
+	var->flags |= CVAR_SILENT; // shut up warnings, at least some...
+	Cvar_Set(var, value);
+	// remove this flag, btw if variable have this flag before set this flag will be removed anyway..
+	var->flags &= ~CVAR_SILENT;
+	// actually set value
+	Cvar_Register( var );
+}
+
+// silently set value for latched cvar
+void Cvar_LatchedSetValue (cvar_t *var, float value)
+{
+	// yea, do not mess things
+	if ( !(var->flags & CVAR_LATCH) )
+		Sys_Error("Cvar_LatchedSet: non latched var %s", var->name);
+		
+	var->flags |= CVAR_SILENT; // shut up warnings, at least some...
+	Cvar_SetValue(var, value);
+	// remove this flag, btw if variable have this flag before set this flag will be removed anyway..
+	var->flags &= ~CVAR_SILENT;
+	// actually set value
+	Cvar_Register( var );
+}
+
 
 int Cvar_GetFlags (cvar_t *var)
 {
