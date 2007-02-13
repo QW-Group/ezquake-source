@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_linux.c,v 1.22 2007-02-12 10:02:24 qqshka Exp $
+	$Id: sys_linux.c,v 1.23 2007-02-13 08:06:31 qqshka Exp $
 
 */
 #include <unistd.h>
@@ -117,6 +117,7 @@ void Sys_Init(void) {
 }
 
 void Sys_Error (char *error, ...) { 
+        extern FILE *qconsole_log;
 	va_list argptr;
 	char string[1024];
 
@@ -129,6 +130,8 @@ void Sys_Error (char *error, ...) {
 	vsnprintf (string, sizeof(string), error, argptr);
 	va_end (argptr);
 	fprintf(stderr, "Error: %s\n", string);
+	if (qconsole_log)
+	    fprintf(qconsole_log, "Error: %s\n", string);
 
 	Host_Shutdown ();
 	exit (1);
@@ -249,8 +252,18 @@ void Sys_LowFPPrecision (void) {}
 
 int main (int argc, char **argv) {
 	double time, oldtime, newtime;
+	int i;
 
 	COM_InitArgv (argc, argv);
+
+	// let me use -condebug C:\condebug.log before Quake FS init, so I get ALL messages before quake fully init
+	if ((i = COM_CheckParm("-condebug")) && i < COM_Argc() - 1) {
+		extern FILE *qconsole_log;
+		char *s = COM_Argv(i + 1);
+		if (*s != '-' && *s != '+')
+			qconsole_log = fopen(s, "a");
+	}
+	
 #if !defined(CLIENTONLY)
 	dedicated = COM_CheckParm ("-dedicated");
 #endif
