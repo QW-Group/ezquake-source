@@ -801,12 +801,13 @@ void R_AddSkyBoxSurface (msurface_t *fa) {
 
 void MakeSkyVec (float s, float t, int axis) {
 	vec3_t v, b;
-	int j, k, farclip;
+	int j, k;
+	float skyrange;
 
-	farclip = max((int) r_farclip.value, 4096);
-	b[0] = s * (farclip >> 1);
-	b[1] = t * (farclip >> 1);
-	b[2] = (farclip >> 1);
+	skyrange = max(r_farclip.value, 4096) * 0.577; // 0.577 < 1/sqrt(3)
+	b[0] = s*skyrange;
+	b[1] = t*skyrange;
+	b[2] = skyrange;
 
 	for (j = 0; j < 3; j++) {
 		k = st_to_vec[axis][j];
@@ -879,18 +880,12 @@ static void MakeSkyVec2 (float s, float t, int axis, vec3_t v)
 {
 	vec3_t		b;
 	int			j, k;
-#ifdef FARCLIP_SKYBOX
-	int         farclip;
+	float skyrange;
 
-	farclip = max((int) r_farclip.value, 4096);
-	b[0] = s*(farclip >> 1);
-	b[1] = t*(farclip >> 1);
-	b[2] = (farclip >> 1);
-#else
-	b[0] = s*skybox_range;
-	b[1] = t*skybox_range;
-	b[2] = skybox_range;
-#endif
+	skyrange = max(r_farclip.value, 4096) * 0.577; // 0.577 < 1/sqrt(3)
+	b[0] = s*skyrange;
+	b[1] = t*skyrange;
+	b[2] = skyrange;
 
 	for (j=0 ; j<3 ; j++)
 	{
