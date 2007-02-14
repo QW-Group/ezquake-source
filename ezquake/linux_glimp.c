@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_glimp.c,v 1.4 2007-02-13 16:49:06 qqshka Exp $
+    $Id: linux_glimp.c,v 1.5 2007-02-14 15:54:21 qqshka Exp $
 
 */
 /*
@@ -65,15 +65,31 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <X11/extensions/xf86dga.h>
 #include <X11/extensions/xf86vmode.h>
 
+#ifdef WITH_EVDEV
+#include <linux/input.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <pthread.h>
+#endif
+
 #include "quakedef.h"
 
 //
 // cvars
 //
 
+#ifdef WITH_EVDEV
+typedef enum { mt_none = 0, mt_dga, mt_normal, mt_evdev } mousetype_t;
+#else
 typedef enum { mt_none = 0, mt_dga, mt_normal } mousetype_t;
+#endif
 
 cvar_t in_mouse           = { "in_mouse",    "1", CVAR_ARCHIVE | CVAR_LATCH }; // NOTE: "1" is mt_dga
+#ifdef WITH_EVDEV
+cvar_t in_mmt             = { "in_mmt",      "1", CVAR_ARCHIVE | CVAR_LATCH };
+cvar_t in_evdevice        = { "in_evdevice",  "", CVAR_ARCHIVE | CVAR_LATCH };
+#endif
 cvar_t in_nograb          = { "in_nograb",   "0", CVAR_LATCH }; // this is strictly for developers
 
 cvar_t r_allowSoftwareGL  = { "r_allowSoftwareGL", "0", CVAR_LATCH };   // don't abort out if the pixelformat claims software
@@ -111,6 +127,13 @@ static qbool mouse_active = false;
 static int mwx, mwy;
 static int amx = 0, amy = 0; // Zzzz hard to explain why we have amx and mx, for us that almost the same
 int mx, my;
+
+#ifdef WITH_EVDEV
+static int evdev_fd = 0;
+static int evdev_mt = 0;
+static pthread_t evdev_thread;
+void EvDev_UpdateMouse(void *v);
+#endif
 
 // Time mouse was reset, we ignore the first 50ms of the mouse to allow settling of events
 static double mouseResetTime = 0;
@@ -310,7 +333,51 @@ static void install_grabs(void)
       XF86DGADirectVideo(dpy, DefaultScreen(dpy), XF86DGADirectMouse);
       XWarpPointer(dpy, None, win, 0, 0, 0, 0, 0, 0);
     }
-  } else
+  }
+#ifdef WITH_EVDEV
+	else if (in_mouse.integer == mt_evdev)
+	{
+		void EvDev_UpdateMouse(void *v);
+
+		if (evdev_fd)
+		{
+			Com_Printf("BUG: evdev_fd was't closed before open\n");
+			close(evdev_fd);
+			evdev_fd = 0;
+		}
+	
+		if (in_mmt.integer)
+		{
+			if (!evdev_mt)
+				evdev_mt = !pthread_create(&evdev_thread, NULL, (void *)EvDev_UpdateMouse, NULL);
+
+			if (evdev_mt)
+			{
+				Com_DPrintf("Evdev threaded mouse input enabled\n");
+			}
+			else // well, seems better turn it off
+			{
+				Cvar_LatchedSetValue(&in_mmt, 0);
+				Com_Printf("Evdev error: creating thread\n");
+			}
+		}
+
+		// in thread case we use blocking read
+		evdev_fd = open(in_evdevice.string, O_RDONLY | (evdev_mt ? 0 : O_NONBLOCK));
+
+		if (evdev_fd == -1)
+		{
+			evdev_fd = 0;		
+			Com_Printf("Evdev error: open %s failed\n", in_evdevice.string);
+			Cvar_LatchedSetValue(&in_mouse, mt_normal); // switch to normal mouse
+		}
+		else
+		{
+			Com_DPrintf("Evdev %s enabled\n", in_evdevice.string);
+		}
+	}
+#endif	
+	else
   {
     mwx = glConfig.vidWidth / 2;
     mwy = glConfig.vidHeight / 2;
@@ -333,6 +400,23 @@ static void uninstall_grabs(void)
 			ST_Printf( PRINT_ALL, "DGA Mouse - Disabling DGA DirectVideo\n" );
     XF86DGADirectVideo(dpy, DefaultScreen(dpy), 0);
   }
+#ifdef WITH_EVDEV	
+	else if (in_mouse.integer == mt_evdev)
+	{
+		if (evdev_fd)
+		{
+      Com_DPrintf("Evdev %s closed\n", in_evdevice.string); 		
+			close(evdev_fd);
+			evdev_fd = 0;
+		}
+		if (evdev_mt)
+		{
+			if (pthread_cancel(evdev_thread))
+				Com_Printf("Evdev error: during thread cancel\n");
+			evdev_mt = 0;
+		}
+	}
+#endif	
 
   XChangePointerControl(dpy, true, true, mouse_accel_numerator, 
                         mouse_accel_denominator, mouse_threshold);
@@ -348,6 +432,102 @@ static void uninstall_grabs(void)
   XUndefineCursor(dpy, win);
 }
 
+#ifdef WITH_EVDEV
+
+#define BTN_LOGITECH8 0x117
+
+void EvDev_UpdateMouse(void *v) {
+	struct input_event event;
+	int ret;
+
+	for ( ;; )
+	{
+		ret = (evdev_fd ? read(evdev_fd, &event, sizeof(struct input_event)) : -1);
+
+//		Com_Printf("ret %d evdev_fd %d evdev_mt %d\n", ret, evdev_fd, evdev_mt);
+
+		if (!evdev_fd) {
+			// device is not open, sleep or return depend of do we use thread or not
+			if (evdev_mt)	{
+        usleep(10*1000); // 10 ms
+				continue;
+			}
+			else
+				return;
+		}
+
+		if (ret == -1 && !evdev_mt &&errno == EAGAIN)
+			 return; // we do not use thread and no data yet
+
+		if (ret < sizeof(struct input_event)) {
+			Com_Printf("Evdev error: reading from %s\n"
+						"Reverting to standard mouse input\n", in_evdevice.string);
+
+			if (evdev_fd)
+			{
+				close(evdev_fd);
+				evdev_fd = 0;
+			}
+
+			Cvar_LatchedSetValue(&in_mouse, mt_normal);
+
+			if (evdev_mt)
+				continue; // don't close thread
+			else
+				return;
+		}
+
+		if (event.type == EV_REL) {
+			switch (event.code) {
+				case REL_X:
+					mx += (signed int) event.value;
+					break;
+
+				case REL_Y:
+					my += (signed int) event.value;
+					break;
+
+				case REL_WHEEL:
+					switch ((signed int)event.value) {
+						case 1:
+							Key_Event(K_MWHEELUP, true); Key_Event(K_MWHEELUP, false); break;
+						case -1:
+							Key_Event(K_MWHEELDOWN, true); Key_Event(K_MWHEELDOWN, false); break;
+					}
+					break;
+			}
+		}
+
+		if (event.type == EV_KEY) {
+			switch (event.code) {
+				case BTN_LEFT:
+					Key_Event(K_MOUSE1, event.value); break;
+				case BTN_RIGHT:
+					Key_Event(K_MOUSE2, event.value); break;
+				case BTN_MIDDLE:
+					Key_Event(K_MOUSE3, event.value); break;
+				case BTN_SIDE:
+					Key_Event(K_MOUSE4, event.value); break;
+				case BTN_EXTRA:
+					Key_Event(K_MOUSE5, event.value); break;
+				case BTN_FORWARD:
+					Key_Event(K_MOUSE6, event.value); break;
+				case BTN_BACK:
+					Key_Event(K_MOUSE7, event.value); break;
+				case BTN_LOGITECH8:
+					Key_Event(K_MOUSE8, event.value); break;
+			}
+		}
+	}
+	
+	if (evdev_mt)
+	{
+		evdev_mt = 0;
+		Com_Printf("BUG: evdev thread closed\n");
+	}
+}
+#endif
+
 void IN_Commands (void) { /* etmpty */ }
 
 void IN_StartupMouse(void) {
@@ -355,21 +535,35 @@ void IN_StartupMouse(void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
   // mouse variables
 	Cvar_Register (&in_mouse);
+#ifdef WITH_EVDEV
+	Cvar_Register (&in_mmt);
+	Cvar_Register (&in_evdevice);
+#endif
 	// developer feature, allows to break without loosing mouse pointer
 	Cvar_Register (&in_nograb);
 	Cvar_ResetCurrentGroup();
 
 	// force dga mouse to normal mouse if using nograb
-	if (in_nograb.integer && in_mouse.integer == mt_dga)
+	if (in_mouse.integer == mt_dga && in_nograb.integer)
 	{
 		Com_Printf("Mouse forsed from dga to normal due to %s\n", in_nograb.name);
 		Cvar_LatchedSetValue( &in_mouse, mt_normal );
 	}
-	
+#ifdef WITH_EVDEV
+	if (in_mouse.integer == mt_evdev && !in_evdevice.string[0])
+	{
+		Com_Printf("Mouse forsed to normal due to empty %s\n", in_evdevice.name);
+    Cvar_LatchedSetValue( &in_mouse, mt_normal );
+	}
+#endif
+
 	switch (in_mouse.integer) {
 		case mt_none:   mouseinitialized = false; break;
 		case mt_dga:		mouseinitialized = true;  break;
 		case mt_normal: mouseinitialized = true;  break;
+#ifdef WITH_EVDEV
+		case mt_evdev:  mouseinitialized = true;  break;
+#endif
 		default:
 			Com_Printf("Unknow value %d of %s, using normal mouse\n", in_mouse.integer, in_mouse.name);
 	    Cvar_LatchedSetValue( &in_mouse, mt_normal );
@@ -569,6 +763,12 @@ static void HandleEvents(void)
   if (!dpy)
     return;
 
+#ifdef WITH_EVDEV
+	// if we use evdev without thread, peek events "manually" each frame
+	if (in_mouse.integer == mt_evdev && !evdev_mt) 
+		EvDev_UpdateMouse(NULL);
+#endif
+
   while (XPending(dpy))
   {
     XNextEvent(dpy, &event);
@@ -645,11 +845,23 @@ static void HandleEvents(void)
           mwy = event.xmotion.y;
           dowarp = true;
         }
+#ifdef WITH_EVDEV				
+				else if (in_mouse.integer == mt_evdev)
+				{
+					break; // nothing
+				}
+#endif				
       }
       break;
 
     case ButtonPress:
     case ButtonRelease:
+		
+#ifdef WITH_EVDEV
+			 if (in_mouse.integer == mt_evdev)
+				 break; // nothing
+#endif
+		
 		  switch (event.xbutton.button) {
 		    case 1:
 			    Key_Event(K_MOUSE1, event.type == ButtonPress); break;

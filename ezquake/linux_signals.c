@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_signals.c,v 1.1 2007-02-11 23:28:16 qqshka Exp $
+    $Id: linux_signals.c,v 1.2 2007-02-14 15:54:21 qqshka Exp $
 
 */
 #include <signal.h>
@@ -40,6 +40,9 @@ static void signal_handler(int sig) // bk010104 - replace this... (NOTE TTimo hu
   signalcaught = true;
   printf("Received signal %d, exiting...\n", sig);
 //#ifdef something like: not server only
+#ifdef WITH_EVDEV
+	IN_Shutdown();
+#endif
   VID_Shutdown();  // bk010104 - shouldn't this be CL_Shutdown 
 //#endif	
 	Sys_Quit();
