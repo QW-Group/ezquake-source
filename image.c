@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.34 2006-12-15 01:27:11 johnnycz Exp $
+    $Id: image.c,v 1.35 2007-02-16 00:54:57 qqshka Exp $
 */
 
 #ifdef __FreeBSD__
@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef WITH_JPEG
 #include "jpeglib.h"
+#include "jerror.h"
 /*#ifdef _WIN32
 #pragma comment(lib, "libs/libjpeg.lib")
 #endif*/
@@ -1755,6 +1756,257 @@ int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int he
 	jpeg_destroy_compress(&cinfo);
 	return true;
 }
+
+
+//
+// jpeg loading
+//
+
+typedef struct my_error_mgr * my_error_ptr;
+
+/*
+ * Here's the routine that will replace the standard error_exit method:
+ */
+
+METHODDEF(void)
+my_error_exit (j_common_ptr cinfo)
+{
+  /* cinfo->err really points to a my_error_mgr struct, so coerce pointer */
+  my_error_ptr myerr = (my_error_ptr) cinfo->err;
+
+  /* Always display the message. */
+  /* We could postpone this until after returning, if we chose. */
+  (*cinfo->err->output_message) (cinfo);
+
+  /* Return control to the setjmp point */
+  longjmp(myerr->setjmp_buffer, 1);
+}
+
+
+/*
+ * Sample routine for JPEG decompression.  We assume that the source file name
+ * is passed in.  We want to return 1 on success, 0 on error.
+ */
+
+
+
+
+/* Expanded data source object for stdio input */
+
+typedef struct {
+  struct jpeg_source_mgr pub;	/* public fields */
+
+  byte * infile;		/* source stream */
+  int currentpos;
+  int maxlen;
+  JOCTET * buffer;		/* start of buffer */
+  boolean start_of_file;	/* have we gotten any data yet? */
+} my_source_mgr;
+
+typedef my_source_mgr * my_src_ptr;
+
+#define INPUT_BUF_SIZE  4096	/* choose an efficiently fread'able size */
+
+
+METHODDEF(void)
+init_source (j_decompress_ptr cinfo)
+{
+  my_src_ptr src = (my_src_ptr) cinfo->src;
+
+  src->start_of_file = TRUE;
+}
+
+METHODDEF(boolean)
+fill_input_buffer (j_decompress_ptr cinfo)
+{
+	my_source_mgr *src = (my_source_mgr*) cinfo->src;
+	size_t nbytes;
+  
+	nbytes = src->maxlen - src->currentpos;
+	if (nbytes > INPUT_BUF_SIZE)
+		nbytes = INPUT_BUF_SIZE;
+	memcpy(src->buffer, &src->infile[src->currentpos], nbytes);
+	src->currentpos+=nbytes;
+
+	if (nbytes <= 0) {
+		if (src->start_of_file)	/* Treat empty input file as fatal error */
+		ERREXIT(cinfo, JERR_INPUT_EMPTY);
+		WARNMS(cinfo, JWRN_JPEG_EOF);
+    /* Insert a fake EOI marker */
+		src->buffer[0] = (JOCTET) 0xFF;
+		src->buffer[1] = (JOCTET) JPEG_EOI;
+		nbytes = 2;
+	}
+
+	src->pub.next_input_byte = src->buffer;
+	src->pub.bytes_in_buffer = nbytes;
+	src->start_of_file = FALSE;
+
+	return TRUE;
+}
+
+
+METHODDEF(void)
+skip_input_data (j_decompress_ptr cinfo, long num_bytes)
+{
+  my_source_mgr *src = (my_source_mgr*) cinfo->src;
+
+  if (num_bytes > 0) {
+    while (num_bytes > (long) src->pub.bytes_in_buffer) {
+      num_bytes -= (long) src->pub.bytes_in_buffer;
+      (void) fill_input_buffer(cinfo);
+    }
+    src->pub.next_input_byte += (size_t) num_bytes;
+    src->pub.bytes_in_buffer -= (size_t) num_bytes;
+  }
+}
+
+
+
+METHODDEF(void)
+term_source (j_decompress_ptr cinfo)
+{
+}
+
+
+GLOBAL(void)
+jpeg_mem_src (j_decompress_ptr cinfo, byte * infile, int maxlen)
+{
+  my_source_mgr *src;
+
+  if (cinfo->src == NULL) {	/* first time for this JPEG object? */
+    cinfo->src = (struct jpeg_source_mgr *)
+      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+				  sizeof(my_source_mgr));
+    src = (my_source_mgr*) cinfo->src;
+    src->buffer = (JOCTET *)
+      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+				  INPUT_BUF_SIZE * sizeof(JOCTET));
+  }
+
+  src = (my_source_mgr*) cinfo->src;
+  src->pub.init_source = init_source;
+  src->pub.fill_input_buffer = fill_input_buffer;
+  src->pub.skip_input_data = skip_input_data;
+  src->pub.resync_to_restart = jpeg_resync_to_restart; /* use default method */
+  src->pub.term_source = term_source;
+  src->infile = infile;
+  src->pub.bytes_in_buffer = 0; /* forces fill_input_buffer on first read */
+  src->pub.next_input_byte = NULL; /* until buffer loaded */
+
+  src->currentpos = 0;
+  src->maxlen = maxlen;
+}
+
+byte *Image_LoadJPEG(FILE *fin, char *filename, int matchwidth, int matchheight)
+{
+	byte *mem = NULL, *in, *out;
+	int i;
+
+	byte *infile = NULL;
+	int length;
+
+	if (!fin && FS_FOpenFile (filename, &fin) == -1)
+		return NULL;
+
+	infile = (byte *) Q_malloc(length = fs_filesize);
+	if (fread (infile, 1, fs_filesize, fin) != fs_filesize) {
+		Com_DPrintf ("Image_LoadJPEG: fread() failed on %s\n", COM_SkipPath(filename));
+		fclose(fin);
+		Q_free(infile);
+		return NULL;
+	}
+	fclose(fin);
+
+  /* This struct contains the JPEG decompression parameters and pointers to
+   * working space (which is allocated as needed by the JPEG library).
+   */
+  struct jpeg_decompress_struct cinfo;
+  /* We use our private extension JPEG error handler.
+   * Note that this struct must live as long as the main JPEG parameter
+   * struct, to avoid dangling-pointer problems.
+   */
+  struct my_error_mgr jerr;
+  /* More stuff */  
+  JSAMPARRAY buffer;		/* Output row buffer */
+  int size_stride;		/* physical row width in output buffer */
+
+
+  /* Step 1: allocate and initialize JPEG decompression object */
+
+  /* We set up the normal JPEG error routines, then override error_exit. */
+  cinfo.err = jpeg_std_error(&jerr.pub);
+  jerr.pub.error_exit = my_error_exit;
+  /* Establish the setjmp return context for my_error_exit to use. */
+  if (setjmp(jerr.setjmp_buffer)) {
+    // If we get here, the JPEG code has signaled an error.
+
+badjpeg:
+
+    jpeg_destroy_decompress(&cinfo);    
+
+	Q_free(infile);
+	Q_free(mem);
+	Com_DPrintf ("Image_LoadJPEG: badjpeg %s, len %d\n", COM_SkipPath(filename), length);
+    return 0;
+  }
+
+  jpeg_create_decompress(&cinfo);
+
+  jpeg_mem_src(&cinfo, infile, length);
+
+  (void) jpeg_read_header(&cinfo, TRUE);  
+
+  (void) jpeg_start_decompress(&cinfo);
+
+  image_width  = cinfo.output_width;
+  image_height = cinfo.output_height;
+
+  if (image_width > IMAGE_MAX_DIMENSIONS || image_height > IMAGE_MAX_DIMENSIONS || image_width <= 0 || image_height <= 0)
+  {
+	Com_Printf("Bad actual dimensions %dx%d in jpeg %s\n", image_width, image_height, COM_SkipPath(filename));
+	goto badjpeg;
+  }
+  if ((matchwidth && image_width != matchwidth) || (matchheight && image_height != matchheight))
+  {
+	Com_Printf("Bad match dimensions %dx%d vs %dx%d in jpeg %s\n", image_width, image_height, matchwidth, matchheight, COM_SkipPath(filename));
+	goto badjpeg; 
+  }
+
+  if (cinfo.output_components!=3)
+  {
+		Com_Printf("Bad number of componants in jpeg %s\n", COM_SkipPath(filename));
+		goto badjpeg;
+  }
+  size_stride = cinfo.output_width * cinfo.output_components;
+  /* Make a one-row-high sample array that will go away when done with image */
+   buffer = (*cinfo.mem->alloc_sarray)
+		((j_common_ptr) &cinfo, JPOOL_IMAGE, size_stride, 1);
+
+   out = mem = Q_malloc(cinfo.output_height*cinfo.output_width*4);
+   memset(out, 0, cinfo.output_height*cinfo.output_width*4);
+
+  while (cinfo.output_scanline < cinfo.output_height) {
+    (void) jpeg_read_scanlines(&cinfo, buffer, 1);    
+
+	in = buffer[0];
+	for (i = 0; i < cinfo.output_width; i++)
+	{//rgb to rgba
+		*out++ = *in++;
+		*out++ = *in++;
+		*out++ = *in++;
+		*out++ = 255;	
+	}	
+  }
+
+  (void) jpeg_finish_decompress(&cinfo);
+
+  jpeg_destroy_decompress(&cinfo);
+
+  Q_free(infile);
+  return mem;
+}
+
 
 #endif
 #endif
