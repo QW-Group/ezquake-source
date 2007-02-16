@@ -1,6 +1,6 @@
 /*
 
-	$Id: sys_mac.c,v 1.21 2007-01-08 01:22:56 disconn3ct Exp $
+	$Id: sys_mac.c,v 1.22 2007-02-16 09:30:40 qqshka Exp $
 
 */
 // sys_mac.c -- Macintosh system driver
@@ -1391,8 +1391,16 @@ void _splitpath(const char *path, char *drive, char *dir, char *file, char *ext)
 // full path
 char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
 {
-    if (maxLength-1 < PATH_MAX)
-    return NULL;
+    // too small buffer, copy in tmp[] and then look is enough space in output buffer aka absPath 
+    if (maxLength-1 < PATH_MAX)	{
+			 char tmp[PATH_MAX+1];
+			 if (realpath(relPath, tmp) && absPath && strlen(tmp) < maxLength+1) {
+					strlcpy(absPath, tmp, maxLength+1);
+          return absPath;
+			 }
+
+       return NULL;
+		}
 
     return realpath(relPath, absPath);
 }
