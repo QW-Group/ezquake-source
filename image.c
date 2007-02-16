@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.35 2007-02-16 00:54:57 qqshka Exp $
+    $Id: image.c,v 1.36 2007-02-16 01:17:22 qqshka Exp $
 */
 
 #ifdef __FreeBSD__
@@ -1760,6 +1760,7 @@ int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int he
 
 //
 // jpeg loading
+// stolen from Spikes FTE
 //
 
 typedef struct my_error_mgr * my_error_ptr;
