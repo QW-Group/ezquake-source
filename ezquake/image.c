@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.36 2007-02-16 01:17:22 qqshka Exp $
+    $Id: image.c,v 1.37 2007-02-16 01:42:00 qqshka Exp $
 */
 
 #ifdef __FreeBSD__
@@ -1907,18 +1907,6 @@ byte *Image_LoadJPEG(FILE *fin, char *filename, int matchwidth, int matchheight)
 	byte *infile = NULL;
 	int length;
 
-	if (!fin && FS_FOpenFile (filename, &fin) == -1)
-		return NULL;
-
-	infile = (byte *) Q_malloc(length = fs_filesize);
-	if (fread (infile, 1, fs_filesize, fin) != fs_filesize) {
-		Com_DPrintf ("Image_LoadJPEG: fread() failed on %s\n", COM_SkipPath(filename));
-		fclose(fin);
-		Q_free(infile);
-		return NULL;
-	}
-	fclose(fin);
-
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
    */
@@ -1932,6 +1920,17 @@ byte *Image_LoadJPEG(FILE *fin, char *filename, int matchwidth, int matchheight)
   JSAMPARRAY buffer;		/* Output row buffer */
   int size_stride;		/* physical row width in output buffer */
 
+	if (!fin && FS_FOpenFile (filename, &fin) == -1)
+		return NULL;
+
+	infile = (byte *) Q_malloc(length = fs_filesize);
+	if (fread (infile, 1, fs_filesize, fin) != fs_filesize) {
+		Com_DPrintf ("Image_LoadJPEG: fread() failed on %s\n", COM_SkipPath(filename));
+		fclose(fin);
+		Q_free(infile);
+		return NULL;
+	}
+	fclose(fin);
 
   /* Step 1: allocate and initialize JPEG decompression object */
 
