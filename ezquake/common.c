@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.59 2007-01-31 18:50:00 qqshka Exp $
+    $Id: common.c,v 1.60 2007-02-16 09:25:44 qqshka Exp $
 
 */
 
@@ -1254,11 +1254,11 @@ void COM_Init (void)
 char *va (char *format, ...)
 {
 	va_list argptr;
-	static char string[8][2048];
+	static char string[32][2048];
 	static int idx = 0;
 
 	idx++;
-	if (idx == 8)
+	if (idx == 32)
 		idx = 0;
 
 	va_start (argptr, format);
