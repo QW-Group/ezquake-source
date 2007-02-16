@@ -45,6 +45,7 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 byte *Image_LoadPNG (FILE *, char *, int, int);
 byte *Image_LoadTGA (FILE *, char *, int, int);
 byte *Image_LoadPCX (FILE *, char *, int, int);
+byte *Image_LoadJPEG(FILE *, char *, int, int);
 
 int Image_WritePNG(char *filename, int compression, byte *pixels, int width, int height);
 #ifdef GLQUAKE

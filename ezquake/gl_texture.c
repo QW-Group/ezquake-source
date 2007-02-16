@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_texture.c,v 1.21 2007-02-01 20:04:27 qqshka Exp $
+	$Id: gl_texture.c,v 1.22 2007-02-16 00:54:57 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -500,14 +500,15 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 		snprintf (name, sizeof(name), "textures/%s", link);
            	if (FS_FOpenFile (name, &f) != -1) {
            		CHECK_TEXTURE_ALREADY_LOADED;
-           		if( !strcasecmp(link + len - 3, "tga") )
-
+           		if( !data && !strcasecmp(link + len - 3, "tga") )
            		        data = Image_LoadTGA (f, name, matchwidth, matchheight);
 #ifdef WITH_PNG
-           		if( !strcasecmp(link + len - 3, "png") )
-           		{
+           		if( !data && !strcasecmp(link + len - 3, "png") )
            		        data = Image_LoadPNG (f, name, matchwidth, matchheight);
-           		}
+#endif
+#ifdef WITH_JPEG
+           		if( !data &&! strcasecmp(link + len - 3, "jpg") )
+           		        data = Image_LoadJPEG (f, name, matchwidth, matchheight);
 #endif
            		if (data)
            			return data;
@@ -528,6 +529,15 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 	if (FS_FOpenFile (name, &f) != -1) {
 		CHECK_TEXTURE_ALREADY_LOADED;
 		if ((data = Image_LoadPNG (f, name, matchwidth, matchheight)))
+			return data;
+	}
+#endif
+
+#ifdef WITH_JPEG
+	snprintf (name, sizeof(name), "%s.jpg", basename);
+	if (FS_FOpenFile (name, &f) != -1) {
+		CHECK_TEXTURE_ALREADY_LOADED;
+		if ((data = Image_LoadJPEG (f, name, matchwidth, matchheight)))
 			return data;
 	}
 #endif
