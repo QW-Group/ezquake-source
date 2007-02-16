@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.h,v 1.12 2007-02-12 05:30:37 qqshka Exp $
+	$Id: keys.h,v 1.13 2007-02-16 20:10:36 johnnycz Exp $
 
 */
 
@@ -225,7 +225,7 @@ void Key_Event (int key, qbool down);
 void Key_EventEx (int key, wchar unichar, qbool down);
 void Key_Init (void);
 void Key_WriteBindings (FILE *f);
-void Key_SetBinding (int keynum, char *binding);
+void Key_SetBinding (int keynum, const char *binding);
 void Key_Unbind (int keynum);
 void Key_ClearStates (void);
 int	 Key_StringToKeynum (char *str);
