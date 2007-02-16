@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.66 2007-01-20 22:45:40 johnnycz Exp $
+	$Id: menu.c,v 1.67 2007-02-16 20:10:36 johnnycz Exp $
 
 */
 
@@ -159,7 +159,7 @@ void M_DrawCheckbox (int x, int y, int on) {
 
 qbool Key_IsLeftRightSameBind(int b);
 
-void M_FindKeysForCommand (char *command, int *twokeys) {
+void M_FindKeysForCommand (const char *command, int *twokeys) {
 	int count, j, l;
 	char *b;
 

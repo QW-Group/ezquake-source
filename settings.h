@@ -74,8 +74,8 @@ typedef struct {
 	enum_togglefnc togglefnc;	// toggle function pointer; required for enum
 	action_fnc actionfnc;		// action function pointer; required for stt_action
 	const char** named_ints;	// array of strings; required for sett_named
-	const char*	varname;		// name of a non-static cvar_t
-	int top;					// for internal rendering purposes
+	const char*	varname;		// name of a non-static cvar_t, also used for command name for bind
+	int top;					// distance of the setting from the top of the settings page
 } setting;
 
 typedef struct {
@@ -83,4 +83,5 @@ typedef struct {
 	int count;			// amount of elements in set_tab
 	int marked;			// currently selected element in set_tab
 	int viewpoint;		// where rendering start (internal)
+	enum { SPM_NORMAL, SPM_BINDING } mode;
 } settings_page;

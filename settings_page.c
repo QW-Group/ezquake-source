@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.17 2007-02-12 10:36:07 qqshka Exp $
+		$Id: settings_page.c,v 1.18 2007-02-16 20:10:36 johnnycz Exp $
 
 */
 
@@ -105,6 +105,48 @@ static void Setting_DrawColor(int x, int y, int w, setting* set, qbool active)
 		UI_Print(x, y, "off", active);
 }
 
+static void Setting_DrawBind(int x, int y, int w, setting* set, qbool active, qbool bindmode)
+{
+	int keys[2];
+	char *name;
+	char c[2];
+	
+	c[0] = FLASHINGARROW();
+	c[1] = 0;
+
+	x = Setting_PrintLabel(x, y, w, set->label, active);
+
+	if (bindmode && active) {
+		UI_Print(x, y, c, active);
+	}
+
+	x += LETW*2;
+	
+	M_FindKeysForCommand (set->varname, keys);
+
+	if (keys[0] == -1) {
+		UI_Print (x, y, "???", active);
+	} else {
+#ifdef WITH_KEYMAP
+		char    str[256];
+		name = Key_KeynumToString (keys[0], str);
+#else // WITH_KEYMAP
+		name = Key_KeynumToString (keys[0]);
+#endif // WITH_KEYMAP else
+		UI_Print (x, y, name, active);
+		x += strlen(name)*8;
+		if (keys[1] != -1) {
+			UI_Print (x + 8, y, "or", active);
+#ifdef WITH_KEYMAP
+			UI_Print (x + 4*8, y, Key_KeynumToString (keys[1], str), active);
+#else // WITH_KEYMAP
+			UI_Print (x + 4*8, y, Key_KeynumToString (keys[1]), active);
+#endif // WITH_KEYMAP else
+		}
+	}
+
+}
+
 static void Setting_Increase(setting* set) {
 	float newval;
 
@@ -153,6 +195,46 @@ static void Setting_Decrease(setting* set) {
 		case stt_bind:
 			break;
 	}
+}
+
+static void Setting_Reset(setting* set)
+{
+	switch (set->type) {
+		case stt_num:
+		case stt_string:
+		case stt_named:
+		case stt_bool:
+			Cvar_ResetVar(set->cvar);
+			break;
+
+		case stt_bind:
+			break;
+	}
+}
+
+static void Setting_BindKey(setting* set, int key)
+{
+	Key_SetBinding(key, set->varname);
+}
+
+static void M_UnbindCommand (const char *command) {
+	int j, l;
+	char *b;
+
+	l = strlen(command);
+
+	for (j = 0; j < (sizeof(keybindings) / sizeof(*keybindings)); j++) {
+		b = keybindings[j];
+		if (!b)
+			continue;
+		if (!strncmp (b, command, l) )
+			Key_Unbind (j);
+	}
+}
+
+static void Setting_UnbindKey(setting* set)
+{
+	M_UnbindCommand(set->varname);
 }
 
 static void CheckViewpoint(settings_page *tab, int h)
@@ -209,6 +291,14 @@ qbool Settings_Key(settings_page* tab, int key)
 
 	type = tab->settings[tab->marked].type;
 
+	if (tab->mode == SPM_BINDING) {
+		if (key != K_ESCAPE)
+			Setting_BindKey(tab->settings + tab->marked, key);
+
+		tab->mode = SPM_NORMAL;
+		return true;
+	}
+
 	switch (key) { 
 	case K_DOWNARROW:
 	case K_MWHEELDOWN:
@@ -229,8 +319,9 @@ qbool Settings_Key(settings_page* tab, int key)
 
 	case K_ENTER: case K_MOUSE1:
 		switch (type) {
-		case stt_string: StringEntryLeave(tab->settings + tab->marked);
-		default: Setting_Increase(tab->settings + tab->marked);
+		case stt_string: StringEntryLeave(tab->settings + tab->marked); break;
+		case stt_bind: tab->mode = SPM_BINDING; break;
+		default: Setting_Increase(tab->settings + tab->marked); break;
 		}
 		return true;
 
@@ -241,12 +332,23 @@ qbool Settings_Key(settings_page* tab, int key)
 		default: Setting_Decrease(tab->settings + tab->marked);	return true;
 		}
 
+	case K_DEL:
+		switch (type) {
+		case stt_string: CEditBox_Key(&editbox, key); return true;
+		case stt_bind: Setting_UnbindKey(tab->settings + tab->marked); return true;
+		default: Setting_Reset(tab->settings + tab->marked); return true;
+		}
+
 	default: 
-		if (type == stt_string && key != K_TAB && key != K_ESCAPE) {
-			CEditBox_Key(&editbox, key);
-			return true;
-		} else {
+		switch (type) {
+		case stt_string:
+			if (key != K_TAB && key != K_ESCAPE) {
+				CEditBox_Key(&editbox, key);
+				return true;
+			}
 			return false;
+
+		default: return false;
 		}
 	}
 
@@ -284,8 +386,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 			case stt_named: Setting_DrawNamed(x, y, w, set, active); break;
 			case stt_string: Setting_DrawString(x, y, w, set, active); break;
 			case stt_playercolor: Setting_DrawColor(x, y, w, set, active); break;
-			//unhandled
-			case stt_bind: break;
+			case stt_bind: Setting_DrawBind(x, y, w, set, active, tab->mode == SPM_BINDING); break;
 		}
 		y += STHeight(tab->settings[i].type);
 		if (i < tab->count)
@@ -311,6 +412,7 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 	page->marked = 0;
 	page->settings = arr;
 	page->viewpoint = 0;
+	page->mode = SPM_NORMAL;
 
 	for (i = 0; i < size; i++) {
 		arr[i].top = curtop;
@@ -328,7 +430,7 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 	}
 
 	if (onlyseparators) {
-		Cbuf_AddText("Warning (Settings_Init): menu %s contained only separators\n");
+		Cbuf_AddText("Warning (Settings_Init): menu contained only separators\n");
 		page->count = 0;
 	}
 }

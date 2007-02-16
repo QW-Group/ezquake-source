@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.32 2007-01-24 23:33:22 himan Exp $
+		$Id: menu_options.c,v 1.33 2007-02-16 20:10:36 johnnycz Exp $
 
 */
 
@@ -426,176 +426,51 @@ int CT_Opt_Player_Key (int k, CTab_t *tab, CTabPage_t *page) {
 //=============================================================================
 // <BINDS>
 
-char *bindnames[][2] =
-{
-	{"+attack",         "Attack"},
-	{"+use",            "Use"},
-	{"+jump",           "Jump"},
-	{"+forward",        "Move Forward"},
-	{"+back",           "Move Backward"},
-	{"+moveleft",       "Move Left"},
-	{"+moveright",      "Move Right"},
-	{"+moveup",			"Swim Up"},
-	{"+movedown",		"Swim Down"},
-	{"+zoom",			"Zoom In/Out"},
-	
-	{"impulse 12",      "Previous Weapon"},
-	{"impulse 10",      "Next Weapon"},
-	
-	{"weapon 1",       "Axe"},
-	{"weapon 2",       "Shotgun"},
-	{"weapon 3",       "Super Shotgun"},
-	{"weapon 4",       "Nailgun"},
-	{"weapon 5",       "Super Nailgun"},
-	{"weapon 6",       "Grenade Launcher"},
-	{"weapon 7",       "Rocket Launcher"},
-	{"weapon 8",       "Thunderbolt"},
+settings_page settbinds;
+setting settbinds_arr[] = {
+	ADDSET_SEPARATOR("Movement"),
+	ADDSET_BIND("Attack", "+attack"),
+	ADDSET_BIND("Jump", "+jump"),
+	ADDSET_BIND("Move Forward", "+forward"),
+	ADDSET_BIND("Move Backward", "+back"),
+	ADDSET_BIND("Move Left", "+moveleft"),
+	ADDSET_BIND("Move Right", "+moveright"),
+	ADDSET_BIND("Swim Up", "+moveup"),
+	ADDSET_BIND("Swim Down", "+movedown"),
+	ADDSET_BIND("Zoom In/Out", "+zoom"),
 
-	{"tp_report",		"Report Status"},
-	{"messagemode",		"Chat"},
-	{"messagemode2",	"Teamchat"},	
-	{"toggleproxymenu", "Proxy Menu"},
-	
-	{"+showscores",		"Show Scores"},
-	{"screenshot",		"Screenshot"},
+	ADDSET_SEPARATOR("Weapons"),
+	ADDSET_BIND("Previous Weapon", "impulse 12"),
+	ADDSET_BIND("Next Weapon", "impulse 10"),
+
+	ADDSET_BIND("Axe", "weapon 1"),
+	ADDSET_BIND("Shotgun", "weapon 2"),
+	ADDSET_BIND("Super Shotgun", "weapon 3"),
+	ADDSET_BIND("Nailgun", "weapon 4"),
+	ADDSET_BIND("Super Nailgun", "weapon 5"),
+	ADDSET_BIND("Grenade Launcher", "weapon 6"),
+	ADDSET_BIND("Rocket Launcher", "weapon 7"),
+	ADDSET_BIND("Thunderbolt", "weapon 8"),
+
+	ADDSET_SEPARATOR("Communication"),
+	ADDSET_BIND("Report Status", "tp_report"),
+	ADDSET_BIND("Chat", "messagemode"),
+	ADDSET_BIND("Teamchat", "messagemode2"),	
+	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
+
+	ADDSET_SEPARATOR("Miscellaneous"),
+	ADDSET_BIND("Show Scores", "+showscores"),
+	ADDSET_BIND("Screenshot", "screenshot"),
 };
 
-#define    NUMCOMMANDS    (sizeof(bindnames)/sizeof(bindnames[0]))
-
-int        keys_cursor;
-int        bind_grab;
-
-static void M_UnbindCommand (char *command) {
-	int j, l;
-	char *b;
-
-	l = strlen(command);
-
-	for (j = 0; j < (sizeof(keybindings) / sizeof(*keybindings)); j++) {
-		b = keybindings[j];
-		if (!b)
-			continue;
-		if (!strncmp (b, command, l) )
-			Key_Unbind (j);
-	}
-}
-
-#define KEYSCOL1 22*8
-
 void CT_Opt_Binds_Draw (int x2, int y2, int w, int h, CTab_t *tab, CTabPage_t *page) {
-	int x, y, i, keys[2];
-	char *name;
-
-	if (bind_grab)
-		UI_Print_Center (x2, y2, w, "Press a key or button for this action", false);
-	else
-		UI_Print_Center (x2, y2, w, "Enter to change, del to clear", true);
-
-	y2 += 16;
-	// search for known bindings
-	for (i = 0; i < NUMCOMMANDS; i++) {
-		x = x2 + KEYSCOL1 + 3*8;
-		y = y2 + 8*i;
-
-		UI_Print (x2 + KEYSCOL1 - min(strlen(bindnames[i][1]), 20) * 8, y, bindnames[i][1], false);
-
-		M_FindKeysForCommand (bindnames[i][0], keys);
-
-		if (keys[0] == -1) {
-			UI_Print (x, y, "???", false);
-		} else {
-#ifdef WITH_KEYMAP
-			char    str[256];
-			name = Key_KeynumToString (keys[0], str);
-#else // WITH_KEYMAP
-			name = Key_KeynumToString (keys[0]);
-#endif // WITH_KEYMAP else
-			UI_Print (x, y, name, false);
-			x += strlen(name)*8;
-			if (keys[1] != -1) {
-				UI_Print (x + 8, y, "or", false);
-#ifdef WITH_KEYMAP
-				UI_Print (x + 4*8, y, Key_KeynumToString (keys[1], str), false);
-#else // WITH_KEYMAP
-				UI_Print (x + 4*8, y, Key_KeynumToString (keys[1]), false);
-#endif // WITH_KEYMAP else
-			}
-		}
-	}
-
-	if (bind_grab)
-		UI_DrawCharacter (x2 + KEYSCOL1 + 8, y2 + keys_cursor*8, '=');
-	else
-		UI_DrawCharacter (x2 + KEYSCOL1 + 8, y2 + keys_cursor*8, FLASHINGARROW());
+	Settings_Draw(x2, y2, w, h, &settbinds);
 }
-
 
 int CT_Opt_Binds_Key (int k, CTab_t *tab, CTabPage_t *page) {
-	int keys[2];
-
-	if (bind_grab) {
-		// defining a key
-		S_LocalSound ("misc/menu1.wav");
-		if (k == K_ESCAPE)
-			bind_grab = false;
-#ifdef WITH_KEYMAP
-		/* Massa: all keys should be bindable, including the console switching */
-		else
-#else // WITH_KEYMAP
-        else if (k != '`')
-#endif // WITH_KEYMAP else
-            Key_SetBinding (k, bindnames[keys_cursor][0]);
-
-			bind_grab = false;
-			return true;
-	}
-
-	switch (k) {
-		case K_UPARROW:
-		case K_MWHEELUP:
-			S_LocalSound ("misc/menu1.wav");
-			keys_cursor--;
-			if (keys_cursor < 0)
-				keys_cursor = NUMCOMMANDS-1;
-			break;
-
-		case K_DOWNARROW:
-		case K_MWHEELDOWN:
-			S_LocalSound ("misc/menu1.wav");
-			keys_cursor++;
-			if (keys_cursor >= NUMCOMMANDS)
-				keys_cursor = 0;
-			break;
-
-		case K_HOME:
-			S_LocalSound ("misc/menu1.wav");
-			keys_cursor = 0;
-			break;
-
-		case K_END:
-			S_LocalSound ("misc/menu1.wav");
-			keys_cursor = NUMCOMMANDS - 1;
-			break;
-
-		case K_ENTER:        // go into bind mode
-			M_FindKeysForCommand (bindnames[keys_cursor][0], keys);
-			S_LocalSound ("misc/menu2.wav");
-			if (keys[1] != -1)
-				M_UnbindCommand (bindnames[keys_cursor][0]);
-			bind_grab = true;
-			break;
-
-		case K_DEL:                // delete bindings
-			S_LocalSound ("misc/menu2.wav");
-			M_UnbindCommand (bindnames[keys_cursor][0]);
-			break;
-
-		default:
-			return false;
-	}
-
-	return true;
+	return Settings_Key(&settbinds, k);
 }
+
 // </BINDS>
 //=============================================================================
 
@@ -891,6 +766,7 @@ void Menu_Options_Init(void) {
 	Settings_Page_Init(settmultiview, settmultiview_arr);
 	Settings_Page_Init(setthud, setthud_arr);
 	Settings_Page_Init(settplayer, settplayer_arr);
+	Settings_Page_Init(settbinds, settbinds_arr);
 
 	CTab_Init(&options_tab);
 	CTab_AddPage(&options_tab, "main", OPTPG_SETTINGS, OnShow_SettMain, CT_Opt_Settings_Draw, CT_Opt_Settings_Key);

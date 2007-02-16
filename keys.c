@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.46 2007-02-11 23:28:16 qqshka Exp $
+    $Id: keys.c,v 1.47 2007-02-16 20:10:36 johnnycz Exp $
 
 */
 
@@ -1451,7 +1451,7 @@ char *Key_KeynumToString (int keynum) {
 }
 #endif // WITH_KEYMAP else
 
-void Key_SetBinding (int keynum, char *binding) {
+void Key_SetBinding (int keynum, const char *binding) {
 	if (keynum == -1)
 		return;
 
