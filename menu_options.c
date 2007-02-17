@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.33 2007-02-16 20:10:36 johnnycz Exp $
+		$Id: menu_options.c,v 1.34 2007-02-17 00:22:09 johnnycz Exp $
 
 */
 
@@ -46,7 +46,8 @@ extern int        menuheight;
 extern qbool    m_entersound; // todo - put into menu.h
 void M_Menu_Help_f (void);	// todo - put into menu.h
 extern cvar_t scr_scaleMenu;
-
+qbool OnMenuAdvancedChange(cvar_t*, char*);
+cvar_t menu_advanced = {"menu_advanced", 0};
 
 //=============================================================================
 // <SETTINGS>
@@ -243,6 +244,7 @@ setting settgeneral_arr[] = {
 #ifdef _WIN32
 	ADDSET_NUMBER	("Process Priority", sys_highpriority, -1, 1, 1),
 #endif
+	ADDSET_BOOL		("Advanced Options", menu_advanced),
 	ADDSET_SEPARATOR("Video"),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
@@ -252,8 +254,10 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
 	ADDSET_SEPARATOR("Sound"),
 	ADDSET_NUMBER	("Sound Volume", s_volume, 0, 1, 0.05),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
 	ADDSET_CUSTOM	("Quality", SoundqualityRead, SoundqualityToggle),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_SEPARATOR("Controls"),
 	ADDSET_BOOL		("Mouse Look", freelook),
 	ADDSET_NUMBER	("Mouse Speed", sensitivity, 1, 15, 0.25),
@@ -273,11 +277,13 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
 	ADDSET_BOOL		("Ignore Spectators", ignore_spec),
 	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Self Volume Levels", cl_chatsound),
 	ADDSET_NUMBER	("General Volume", con_sound_mm1_volume, 0, 1, 0.1),
 	ADDSET_NUMBER	("Team Chat Volume", con_sound_mm2_volume, 0, 1, 0.1),
 	ADDSET_NUMBER	("Spectator Volume", con_sound_spec_volume, 0, 1, 0.1),
 	ADDSET_NUMBER	("Other Volume", con_sound_other_volume, 0, 1, 0.1),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_SEPARATOR("Match Tools"),
 	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
 	ADDSET_NAMED	("Auto Record", match_auto_record, autorecord_enum),
@@ -675,6 +681,7 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("Size", r_viewmodelsize, 0.1, 1, 0.05),
 	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 1),
 #ifdef GLQUAKE
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SEPARATOR("Textures"),
 	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
 	ADDSET_BOOL		("Luma", gl_lumaTextures),
@@ -682,6 +689,7 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
 	ADDSET_BOOL		("No Textures", gl_textureless),
 	ADDSET_CUSTOM	("Quality Mode", TexturesqualityRead, TexturesqualityToggle),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_SEPARATOR("Point of View"),
 	ADDSET_NUMBER	("Rollangle", cl_rollangle, 0, 30, 2),
 	ADDSET_NUMBER	("Rollspeed", cl_rollspeed, 0, 30, 2),
