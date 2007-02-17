@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.34 2007-02-17 00:22:09 johnnycz Exp $
+		$Id: menu_options.c,v 1.35 2007-02-17 05:13:12 himan Exp $
 
 */
 
@@ -291,11 +291,13 @@ setting settgeneral_arr[] = {
 	ADDSET_CUSTOM	("Sshot Format", SshotformatRead, SshotformatToggle),
 	ADDSET_SEPARATOR("Demos"),
 	ADDSET_STRING	("Directory", demo_dir),
+	ADDSET_ADVANCED_SECTION(),
 #ifdef _WIN32
 	ADDSET_CUSTOM	("Format", DemoformatRead, DemoformatToggle),
 #endif
 	ADDSET_STRING	("Qizmo Dir", qizmo_dir),
 	ADDSET_STRING	("QWDTools Dir", qwdtools_dir),
+	ADDSET_BASIC_SECTION(),
 };
 
 settings_page settgeneral;
@@ -317,11 +319,13 @@ setting settmultiview_arr[] = {
 	ADDSET_SEPARATOR("Multiview"),
 	ADDSET_NUMBER	("Multiview", cl_multiview, 0, 4, 1),
 	ADDSET_BOOL		("Display HUD", cl_mvdisplayhud),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("HUD Flip", cl_mvhudflip),
 	ADDSET_BOOL		("HUD Vertical", cl_mvhudvertical),
 	ADDSET_BOOL		("Inset View", cl_mvinset),
 	ADDSET_BOOL		("Inset HUD", cl_mvinsethud),
 	ADDSET_BOOL		("Inset Cross", cl_mvinsetcrosshair),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_SEPARATOR("Multiview Demos"),
 	ADDSET_NAMED	("Autohud", mvd_autohud, mvdautohud_enum),
 	ADDSET_NAMED	("Autotrack", mvd_autotrack, mvdautotrack_enum),
@@ -350,8 +354,10 @@ setting setthud_arr[] = {
 	ADDSET_SEPARATOR("New HUD"),
 	ADDSET_BOOLLATE	("Gameclock", hud_gameclock_show),
 	ADDSET_BOOLLATE ("Big Gameclock", hud_gameclock_big),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOLLATE ("Teamholdbar", hud_teamholdbar_show),
 	ADDSET_BOOLLATE ("Teamholdinfo", hud_teamholdinfo_show),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOLLATE ("FPS", hud_fps_show),
 	ADDSET_BOOLLATE ("Clock", hud_clock_show),
 #ifdef GLQUAKE
@@ -375,13 +381,15 @@ setting setthud_arr[] = {
 	ADDSET_SEPARATOR("Console"),
 	ADDSET_NAMED	("Colored Text", scr_coloredText, coloredtext_enum),
 	ADDSET_NAMED	("Fun Chars More", con_funchars_mode, funcharsmode_enum),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Notify Lines", _con_notifylines, 0, 16, 1),
 	ADDSET_NUMBER	("Notify Time", con_notifytime, 0.5, 16, 0.5),
 	ADDSET_BOOL		("Timestamps", con_timestamps),
-#ifdef GLQUAKE
+	ADDSET_BASIC_SECTION(),
 	ADDSET_BOOL		("Font Smoothing", gl_smoothfont),
-#endif
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Console height", scr_consize, 0.1, 1.0, 0.05),
+	ADDSET_BASIC_SECTION(),
 
 #endif
 
@@ -448,7 +456,6 @@ setting settbinds_arr[] = {
 	ADDSET_SEPARATOR("Weapons"),
 	ADDSET_BIND("Previous Weapon", "impulse 12"),
 	ADDSET_BIND("Next Weapon", "impulse 10"),
-
 	ADDSET_BIND("Axe", "weapon 1"),
 	ADDSET_BIND("Shotgun", "weapon 2"),
 	ADDSET_BIND("Super Shotgun", "weapon 3"),
@@ -457,7 +464,7 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Grenade Launcher", "weapon 6"),
 	ADDSET_BIND("Rocket Launcher", "weapon 7"),
 	ADDSET_BIND("Thunderbolt", "weapon 8"),
-
+	
 	ADDSET_SEPARATOR("Communication"),
 	ADDSET_BIND("Report Status", "tp_report"),
 	ADDSET_BIND("Chat", "messagemode"),
@@ -467,6 +474,11 @@ setting settbinds_arr[] = {
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_BIND("Show Scores", "+showscores"),
 	ADDSET_BIND("Screenshot", "screenshot"),
+	
+	ADDSET_SEPARATOR("Demo Playback"),
+	ADDSET_BIND("Demo Stop", "disconnect"),
+	ADDSET_BIND("Demo Play", "cl_demospeed 1;echo Playing demo."),
+	ADDSET_BIND("Demo Pause", "cl_demospeed 0;echo Demo paused."),
 };
 
 void CT_Opt_Binds_Draw (int x2, int y2, int w, int h, CTab_t *tab, CTabPage_t *page) {
@@ -670,13 +682,13 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Fast Lights", gl_flashblend),
 	ADDSET_BOOL		("Dynamic Ligts", r_dynamic),
 	ADDSET_NUMBER	("Light mode", gl_lightmode, 0, 2, 1),
-	ADDSET_BOOL		("Particle Shaft", amf_lightning),
+	ADDSET_BOOL		("Particle Shaft", amf_lightning), // do we still have this? i dont have anything with amf_*
 #endif
 	ADDSET_SEPARATOR("Weapon Model"),
 #ifdef GLQUAKE
-	ADDSET_NUMBER	("Opacity", cl_drawgun, 0, 1, 0.05),
+	ADDSET_NUMBER	("Opacity", cl_drawgun, 0, 1, 0.05), // johnny what is cl_drawgun? i dont have it in ezq. i think you mean r_drawviewmodel
 #else
-	ADDSET_BOOL		("Show", cl_drawgun),
+	ADDSET_BOOL		("Show", cl_drawgun), // johnny what is cl_drawgun? i dont have it in ezq
 #endif
 	ADDSET_NUMBER	("Size", r_viewmodelsize, 0.1, 1, 0.05),
 	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 1),
