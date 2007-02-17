@@ -36,12 +36,15 @@
 // color
 #define ADDSET_COLOR(label, var) { stt_playercolor, label, false, &var, -1, 13, 1, NULL, NULL, NULL, NULL }
 
-// bind - not implemented (was too scared about all those ifdefs)
+// key bind
 #define ADDSET_BIND(label, cmd) { stt_bind, label, false, NULL, 0, 0, 0, NULL, NULL, NULL, NULL, cmd }
 
 // custom: completely customizable setting, define your own reading and writing function
 // see below for function types
 #define ADDSET_CUSTOM(label, readfnc, togglefnc, desc) { stt_custom, label, false, NULL, 0, 0, 0, readfnc, togglefnc, NULL, NULL, NULL, desc }
+
+// skin setting
+#define ADDSET_SKIN(label, var) { stt_skin, label, false, &var, 0, 0, 0, NULL, NULL, NULL, NULL, NULL }
 
 
 //
@@ -65,10 +68,11 @@ typedef enum  {
 	stt_named,		// named integer 0..max, max is number of elements in array of strings assigned to readfnc
 	stt_action,		// function is assigned to this, pointer must be stored in togglefnc
 	stt_string,		// string - fully editable by the user, needs only cvar
-	stt_playercolor,// todo - named enum 0..13
+	stt_playercolor,// named enum 0..13
+	stt_skin,		// player skin
 	stt_bind,		// keybinding, not implemented
 	stt_advmark,	// denotes advanced settings area
-	stt_basemark   // denotes basic settings area
+	stt_basemark    // denotes basic settings area
 } setting_type;
 
 typedef struct {
@@ -91,7 +95,7 @@ typedef struct {
 typedef struct {
 	setting* settings;	// array of settings
 	int count;			// amount of elements in set_tab
-	int marked;			// currently selected element in set_tab
+	int marked;			// currently selected element in settings
 	int viewpoint;		// where rendering start (internal)
-	enum { SPM_NORMAL, SPM_BINDING, SPM_VIEWHELP } mode;
+	enum { SPM_NORMAL, SPM_BINDING, SPM_VIEWHELP, SPM_CHOOSESKIN } mode;
 } settings_page;

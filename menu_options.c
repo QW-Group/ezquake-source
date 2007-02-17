@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.37 2007-02-17 21:14:02 johnnycz Exp $
+		$Id: menu_options.c,v 1.38 2007-02-17 23:24:54 johnnycz Exp $
 
 */
 
@@ -416,17 +416,17 @@ setting settplayer_arr[] = {
 	ADDSET_SEPARATOR("Teammates"),
 	ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
 	ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
-	ADDSET_STRING   ("Skin", cl_teamskin),
-	ADDSET_STRING	("Quad Skin", cl_teamquadskin),
-	ADDSET_STRING	("Pent Skin", cl_teampentskin),
-	ADDSET_STRING	("Quad+Pent Skin", cl_teambothskin),
+	ADDSET_SKIN		("Skin", cl_teamskin),
+	ADDSET_SKIN		("Quad Skin", cl_teamquadskin),
+	ADDSET_SKIN		("Pent Skin", cl_teampentskin),
+	ADDSET_SKIN		("Quad+Pent Skin", cl_teambothskin),
 	ADDSET_SEPARATOR("Enemies"),
 	ADDSET_COLOR	("Shirt Color", cl_enemytopcolor),
 	ADDSET_COLOR	("Pants Color", cl_enemybottomcolor),
-	ADDSET_STRING   ("Skin", cl_enemyskin),
-	ADDSET_STRING	("Quad Skin", cl_enemyquadskin),
-	ADDSET_STRING	("Pent Skin", cl_enemypentskin),
-	ADDSET_STRING	("Quad+Pent Skin", cl_enemybothskin),
+	ADDSET_SKIN		("Skin", cl_enemyskin),
+	ADDSET_SKIN		("Quad Skin", cl_enemyquadskin),
+	ADDSET_SKIN		("Pent Skin", cl_enemypentskin),
+	ADDSET_SKIN		("Quad+Pent Skin", cl_enemybothskin),
 };
 
 void CT_Opt_Player_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
@@ -781,6 +781,8 @@ void Menu_Options_Draw(void) {
 }
 
 void Menu_Options_Init(void) {
+	Settings_MainInit();
+
 	Settings_Page_Init(settgeneral, settgeneral_arr);
 	Settings_Page_Init(settfps, settfps_arr);
 	Settings_Page_Init(settmultiview, settmultiview_arr);
