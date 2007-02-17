@@ -1,4 +1,4 @@
-//    $Id: Ctrl.c,v 1.9 2007-01-18 14:42:18 qqshka Exp $
+//    $Id: Ctrl.c,v 1.10 2007-02-17 20:25:30 johnnycz Exp $
 
 #include "quakedef.h"
 
@@ -64,7 +64,7 @@ void UI_Print3 (int cx, int cy, char *str, clrinfo_t *clr, int clr_cnt, int red)
 	}
 }
 
-void UI_Print_Center (int cx, int cy, int w, char *str, int red)
+void UI_Print_Center (int cx, int cy, int w, const char *str, int red)
 {
 	// UH!!! wtf.... if I do:
 	// UI_Print(cx + (w - 8 * strlen(str)) / 2, cy, str, red);
@@ -115,4 +115,46 @@ void UI_DrawGrayBox(int x, int y, int w, int h)
 #else
 					Draw_FadeBox(x, y, w, h, c[0], 1);
 #endif
+}
+
+void UI_DrawBox(int x, int y, int w, int h)
+{
+	Draw_TextBox(x, y, w / 8 - 1, h / 8 - 1);
+}
+
+qbool UI_PrintTextBlock(int x, int y, int w, int h, const char* text, qbool red)
+{
+	int lpl = w / 8;	// letters per line
+	int lines = h / 8;	// lines in the text block
+	int clen = 0, cline = 0;	// current lenght, current line
+	char buf[1024];
+
+	const char *start = text, *end, *nextend;
+
+	while (*start && cline < lines) {
+		while (*start && (*start == ' ' || *start == '\n')) start++;
+		nextend = start;
+		end = nextend;
+		clen = 0;
+		while (clen < lpl && *nextend) {
+			end = nextend;
+			do {
+				nextend++;
+				clen++;
+			} while (*nextend && *nextend != ' ' && *nextend != '\n');
+			if (*nextend == '\n') {
+				if (clen < lpl)
+					end = nextend;
+				break; 
+			}
+		}
+		if (!*nextend && clen < lpl) end = nextend;
+		strlcpy(buf, start, end-start+1);
+		UI_Print(x, y + cline*8, buf, red);
+		cline++;
+		start = end;
+	}
+
+	// if the text didn't fit in there, *start won't be zero
+	return !(*start);
 }
