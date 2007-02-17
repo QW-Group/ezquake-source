@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.36 2007-02-17 20:25:30 johnnycz Exp $
+		$Id: menu_options.c,v 1.37 2007-02-17 21:14:02 johnnycz Exp $
 
 */
 
@@ -47,7 +47,7 @@ extern qbool    m_entersound; // todo - put into menu.h
 void M_Menu_Help_f (void);	// todo - put into menu.h
 extern cvar_t scr_scaleMenu;
 qbool OnMenuAdvancedChange(cvar_t*, char*);
-cvar_t menu_advanced = {"menu_advanced", 0};
+cvar_t menu_advanced = {"menu_advanced", "0"};
 
 //=============================================================================
 // <SETTINGS>
@@ -787,6 +787,8 @@ void Menu_Options_Init(void) {
 	Settings_Page_Init(setthud, setthud_arr);
 	Settings_Page_Init(settplayer, settplayer_arr);
 	Settings_Page_Init(settbinds, settbinds_arr);
+
+	Cvar_Register(&menu_advanced);
 
 	CTab_Init(&options_tab);
 	CTab_AddPage(&options_tab, "main", OPTPG_SETTINGS, OnShow_SettMain, CT_Opt_Settings_Draw, CT_Opt_Settings_Key);
