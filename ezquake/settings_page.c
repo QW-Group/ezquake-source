@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.21 2007-02-17 21:14:02 johnnycz Exp $
+		$Id: settings_page.c,v 1.22 2007-02-17 23:24:54 johnnycz Exp $
 
 */
 
@@ -16,12 +16,30 @@ CEditBox editbox;
 
 extern cvar_t menu_advanced;
 
+cvar_t  skin_browser_showsize		= {"skin_browser_showsize",		"0"};
+cvar_t  skin_browser_showdate		= {"skin_browser_showdate",		"1"};
+cvar_t  skin_browser_showtime		= {"skin_browser_showtime",		"0"};
+cvar_t  skin_browser_sortmode		= {"skin_browser_sortmode",		"1"};
+cvar_t  skin_browser_showstatus		= {"skin_browser_showstatus",	"1"};
+cvar_t  skin_browser_stripnames		= {"skin_browser_stripnames",	"1"};
+cvar_t  skin_browser_interline		= {"skin_browser_interline",	"0"};
+cvar_t  skin_browser_scrollnames	= {"skin_browser_scrollnames",	"1"};
+cvar_t	skin_browser_democolor		= {"skin_browser_democolor",	"255 255 255 255"};	// White.
+cvar_t	skin_browser_selectedcolor	= {"skin_browser_selectedcolor","0 150 235 255"};	// Light blue.
+cvar_t	skin_browser_dircolor		= {"skin_browser_dircolor",		"170 80 0 255"};	// Redish.
+#ifdef WITH_ZIP
+cvar_t	skin_browser_zipcolor		= {"skin_browser_dircolor",		"255 170 0 255"};	// Orange.
+#endif
+
+filelist_t skins_filelist;
+
 #define LETW 8
 #define LINEHEIGHT 8
 #define PADDING 1
 #define EDITBOXWIDTH 16
 #define EDITBOXMAXLENGTH 64
 #define HELPLINES 5
+#define SKINPREVIEWHEIGHT 120
 
 static float SliderPos(float min, float max, float val) { return (val-min)/(max-min); }
 
@@ -109,6 +127,12 @@ static void Setting_DrawColor(int x, int y, int w, setting* set, qbool active)
 		UI_Print(x + 4*LETW, y, va("%i (%s)", (int) set->cvar->value, COLORNAME(set->cvar->value)), active);
 	} else
 		UI_Print(x, y, "off", active);
+}
+
+static void Setting_DrawSkin(int x, int y, int w, setting* set, qbool active)
+{
+	x = Setting_PrintLabel(x, y, w, set->label, active);
+	UI_Print(x, y, set->cvar->string, active);
 }
 
 static void Setting_DrawBind(int x, int y, int w, setting* set, qbool active, qbool bindmode)
@@ -338,6 +362,10 @@ static void Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page)
 			helptext = "Press Enter to change the associated key; Press Del to remove the binding";
 		break;
 
+	case stt_skin:
+		helptext = "Press [Enter] to choose a skin image for this type of player";
+		break;
+
 	default:
 		if (s->description)
 			helptext = s->description;
@@ -346,6 +374,14 @@ static void Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page)
 
 	if (!UI_PrintTextBlock(x, y, w, h, helptext, false))
 		UI_Print(x, y + h, "Press [Space] to read more...", true);
+}
+
+static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
+{
+	UI_DrawBox(x, y, bound(w, w, 320), h);
+
+	// todo: finish the code, skinfile contains full system path to the .pcx file
+	// we need to draw it into (x,y) location
 }
 
 qbool Settings_Key(settings_page* tab, int key)
@@ -362,6 +398,23 @@ qbool Settings_Key(settings_page* tab, int key)
 
 		tab->mode = SPM_NORMAL;
 		return true;
+	}
+
+	if (tab->mode == SPM_CHOOSESKIN) {
+		if (key == K_ENTER) {
+			char buf[MAX_PATH];
+			COM_StripExtension(COM_SkipPath(FL_GetCurrentPath(&skins_filelist)), buf);
+			Cvar_Set(tab->settings[tab->marked].cvar, buf);
+			tab->mode = SPM_NORMAL;
+			return true;
+		}
+
+		if (key == K_ESCAPE) {
+			tab->mode = SPM_NORMAL;
+			return true;
+		}
+
+		return FL_Key(&skins_filelist, key);
 	}
 
 	switch (key) { 
@@ -386,6 +439,7 @@ qbool Settings_Key(settings_page* tab, int key)
 		switch (type) {
 		case stt_string: StringEntryLeave(tab->settings + tab->marked); break;
 		case stt_bind: tab->mode = SPM_BINDING; break;
+		case stt_skin: tab->mode = SPM_CHOOSESKIN; break;
 		default: Setting_Increase(tab->settings + tab->marked); break;
 		}
 		return true;
@@ -449,6 +503,13 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 
 	nexttop = tab->settings[0].top;
 
+	if (tab->mode == SPM_CHOOSESKIN) 
+	{
+		FL_Draw(&skins_filelist, x, y, w, h - SKINPREVIEWHEIGHT);
+		Setting_DrawSkinPreview(x, y + h - SKINPREVIEWHEIGHT, w, SKINPREVIEWHEIGHT, FL_GetCurrentPath(&skins_filelist));
+		return;
+	}
+
 	if (tab->mode != SPM_VIEWHELP) {
 		hbh = HELPLINES * LINEHEIGHT;
 	} else {
@@ -479,6 +540,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 			case stt_named: Setting_DrawNamed(x, y, w, set, active); break;
 			case stt_string: Setting_DrawString(x, y, w, set, active); break;
 			case stt_playercolor: Setting_DrawColor(x, y, w, set, active); break;
+			case stt_skin: Setting_DrawSkin(x, y, w, set, active); break;
 			case stt_bind: Setting_DrawBind(x, y, w, set, active, tab->mode == SPM_BINDING); break;
 		}
 		y += ch;
@@ -534,4 +596,43 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 		Cbuf_AddText("Warning (Settings_Init): menu contained only separators\n");
 		page->count = 0;
 	}
+}
+
+void Settings_MainInit(void)
+{
+	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
+	Cvar_Register(&skin_browser_showsize);
+    Cvar_Register(&skin_browser_showdate);
+    Cvar_Register(&skin_browser_showtime);
+    Cvar_Register(&skin_browser_sortmode);
+    Cvar_Register(&skin_browser_showstatus);
+    Cvar_Register(&skin_browser_stripnames);
+    Cvar_Register(&skin_browser_interline);
+	Cvar_Register(&skin_browser_scrollnames);
+	Cvar_Register(&skin_browser_selectedcolor);
+	Cvar_Register(&skin_browser_democolor);
+	Cvar_Register(&skin_browser_dircolor);
+#ifdef WITH_ZIP
+	Cvar_Register(&skin_browser_zipcolor);
+#endif
+	Cvar_ResetCurrentGroup();
+
+	FL_Init(&skins_filelist,
+        &skin_browser_sortmode,
+        &skin_browser_showsize,
+        &skin_browser_showdate,
+        &skin_browser_showtime,
+        &skin_browser_stripnames,
+        &skin_browser_interline,
+        &skin_browser_showstatus,
+		&skin_browser_scrollnames,
+		&skin_browser_democolor,
+		&skin_browser_selectedcolor,
+		&skin_browser_dircolor,
+#ifdef WITH_ZIP
+		&skin_browser_zipcolor,
+#endif
+		"./qw/skins");
+
+	FL_AddFileType(&skins_filelist, 0, ".pcx");
 }
