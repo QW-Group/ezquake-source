@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.18 2007-02-16 20:10:36 johnnycz Exp $
+		$Id: settings_page.c,v 1.19 2007-02-17 00:22:09 johnnycz Exp $
 
 */
 
@@ -13,6 +13,8 @@
 #include "Ctrl_EditBox.h"
 
 CEditBox editbox;
+
+extern cvar_t menu_advanced;
 
 #define LETW 8
 #define LINEHEIGHT 9
@@ -24,9 +26,11 @@ static float SliderPos(float min, float max, float val) { return (val-min)/(max-
 static const char* colors[14] = { "White", "Brown", "Lavender", "Khaki", "Red", "Lt Brown", "Peach", "Lt Peach", "Purple", "Dk Purple", "Tan", "Green", "Yellow", "Blue" };
 #define COLORNAME(x) colors[bound(0, ((int) x), sizeof(colors) / sizeof(char*) - 1)]
 
-static int STHeight(setting_type st) {
-	switch (st) {
+static int STHeight(setting* s) {
+	if (s->advanced && !menu_advanced.value) return 0;
+	switch (s->type) {
 	case stt_separator: return LINEHEIGHT*3;
+	case stt_advmark: case stt_basemark: return 0;
 	default: return LINEHEIGHT;
 	}
 }
@@ -242,9 +246,9 @@ static void CheckViewpoint(settings_page *tab, int h)
 	if (tab->marked == 1 && tab->settings[0].type == stt_separator) tab->viewpoint = 0;
 
 	if (tab->viewpoint > tab->marked) { 
-	// marked entry is above us
+		// marked entry is above us
 		tab->viewpoint = tab->marked;
-	} else while(STHeight(tab->settings[tab->marked].type) + tab->settings[tab->marked].top > tab->settings[tab->viewpoint].top + h) {
+	} else while(STHeight(tab->settings + tab->marked) + tab->settings[tab->marked].top > tab->settings[tab->viewpoint].top + h) {
 		// marked entry is below
 		tab->viewpoint++;
 	}
@@ -252,6 +256,7 @@ static void CheckViewpoint(settings_page *tab, int h)
 
 static void CheckCursor(settings_page *tab, qbool up)
 {
+	setting *s;
 	while (tab->marked < 0) { 
 		tab->marked = 0;
 		up = false;
@@ -260,7 +265,8 @@ static void CheckCursor(settings_page *tab, qbool up)
 		tab->marked = tab->count - 1;
 		up = true;
 	}
-	if (tab->settings[tab->marked].type == stt_separator) {
+	s = tab->settings + tab->marked;
+	if (s->type == stt_separator || (s->advanced && !menu_advanced.value) || s->type == stt_advmark || s->type == stt_basemark) {
 		tab->marked += up ? -1 : +1;
 		CheckCursor(tab, up);
 	}
@@ -281,6 +287,21 @@ static void EditBoxCheck(settings_page* tab, int oldm, int newm)
 		StringEntryLeave(tab->settings + oldm);
 	if (tab->settings[newm].type == stt_string && oldm != newm)
 		StringEntryEnter(tab->settings + newm);
+}
+
+static void RecalcPositions(settings_page* page)
+{
+	int i;
+	int curtop = 0;
+	setting *s;
+
+	for (i = 0; i < page->count; i++)
+	{
+		s = page->settings + i;
+		s->top = curtop;
+		
+		curtop += STHeight(s);
+	}
 }
 
 qbool Settings_Key(settings_page* tab, int key)
@@ -360,22 +381,33 @@ qbool Settings_Key(settings_page* tab, int key)
 void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 {
 	int i;
+	int ch;
 	int nexttop;
 	setting *set;
 	qbool active;
+	static qbool prev_adv_state = false;
 
 	if (!tab->count) return;
+
+	if (prev_adv_state != (qbool) menu_advanced.value) {
+		// someone toggled menu_advanced setting right in the currently viewed menu!
+		RecalcPositions(tab);
+		prev_adv_state = (qbool) menu_advanced.value;
+	}
 
 	nexttop = tab->settings[0].top;
 	
 	CheckViewpoint(tab, h);
 
-	for (i = tab->viewpoint; i < tab->count && tab->settings[i].top + STHeight(tab->settings[i].type) <= h + tab->settings[tab->viewpoint].top; i++)
+	for (i = tab->viewpoint; i < tab->count && tab->settings[i].top + STHeight(tab->settings + i) <= h + tab->settings[tab->viewpoint].top; i++)
 	{
 		active = i == tab->marked;
 		set = tab->settings + i;
+		ch = STHeight(tab->settings + i);
+		if ((set->advanced && !menu_advanced.value) || set->type == stt_advmark || set->type == stt_basemark) continue;
+
 		if (active && set->type != stt_separator) {
-			UI_DrawGrayBox(x, y, w, STHeight(tab->settings[i].type));
+			UI_DrawGrayBox(x, y, w, ch);
 		}
 		switch (set->type) {
 			case stt_bool: if (set->cvar) Setting_DrawBool(x, y, w, set, active); break;
@@ -388,7 +420,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 			case stt_playercolor: Setting_DrawColor(x, y, w, set, active); break;
 			case stt_bind: Setting_DrawBind(x, y, w, set, active, tab->mode == SPM_BINDING); break;
 		}
-		y += STHeight(tab->settings[i].type);
+		y += ch;
 		if (i < tab->count)
 			nexttop = tab->settings[i+1].top;
 	}
@@ -397,7 +429,11 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 void Settings_OnShow(settings_page *page)
 {
 	int oldm = page->marked;
+
+	RecalcPositions(page);
+
 	CheckCursor(page, false);
+
 	if (page->settings[page->marked].type == stt_string)
 		StringEntryEnter(page->settings + page->marked);
 }
@@ -405,8 +441,8 @@ void Settings_OnShow(settings_page *page)
 void Settings_Init(settings_page *page, setting *arr, size_t size)
 {
 	int i;
-	int curtop = 0;
 	qbool onlyseparators = true;
+	qbool advancedmode = false;
 
 	page->count = size;
 	page->marked = 0;
@@ -415,8 +451,10 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 	page->mode = SPM_NORMAL;
 
 	for (i = 0; i < size; i++) {
-		arr[i].top = curtop;
-		curtop += STHeight(arr[i].type);
+		if (arr[i].type == stt_advmark) advancedmode = true;
+		if (arr[i].type == stt_basemark) advancedmode = false;
+		arr[i].advanced = advancedmode;
+
 		if (onlyseparators && arr[i].type != stt_separator) {
 			onlyseparators = false;
 			page->marked = i;
@@ -428,6 +466,8 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 				Cbuf_AddText(va("Warning: variable %s not found\n", arr[i].varname));
 		}
 	}
+
+	RecalcPositions(page);
 
 	if (onlyseparators) {
 		Cbuf_AddText("Warning (Settings_Init): menu contained only separators\n");
