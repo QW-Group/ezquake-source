@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.19 2007-02-17 00:22:09 johnnycz Exp $
+		$Id: settings_page.c,v 1.20 2007-02-17 20:25:30 johnnycz Exp $
 
 */
 
@@ -17,9 +17,11 @@ CEditBox editbox;
 extern cvar_t menu_advanced;
 
 #define LETW 8
-#define LINEHEIGHT 9
+#define LINEHEIGHT 8
+#define PADDING 1
 #define EDITBOXWIDTH 16
 #define EDITBOXMAXLENGTH 64
+#define HELPLINES 5
 
 static float SliderPos(float min, float max, float val) { return (val-min)/(max-min); }
 
@@ -31,7 +33,7 @@ static int STHeight(setting* s) {
 	switch (s->type) {
 	case stt_separator: return LINEHEIGHT*3;
 	case stt_advmark: case stt_basemark: return 0;
-	default: return LINEHEIGHT;
+	default: return LINEHEIGHT+PADDING;
 	}
 }
 
@@ -103,7 +105,7 @@ static void Setting_DrawColor(int x, int y, int w, setting* set, qbool active)
 {
 	x = Setting_PrintLabel(x, y, w, set->label, active);
 	if (set->cvar->value >= 0) {
-	 	Draw_Fill(x, y, LETW*3, LINEHEIGHT - 1, Sbar_ColorForMap(set->cvar->value));
+	 	Draw_Fill(x, y, LETW*3, LINEHEIGHT, Sbar_ColorForMap(set->cvar->value));
 		UI_Print(x + 4*LETW, y, va("%i (%s)", (int) set->cvar->value, COLORNAME(set->cvar->value)), active);
 	} else
 		UI_Print(x, y, "off", active);
@@ -304,6 +306,47 @@ static void RecalcPositions(settings_page* page)
 	}
 }
 
+static void Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page)
+{
+	setting* s;
+	xml_variable_t *var;
+	char buf[2048];
+	const char *helptext = "";
+	size_t bufleft;
+	int l;
+
+	UI_DrawBox(x, y, w, h);
+	x += LETW; h -= LETW*2; w -= LETW*2; y += LETW;
+	
+	s = page->settings + page->marked;
+
+	switch (s->type) {
+	case stt_bool:
+	case stt_named:
+	case stt_num:
+	case stt_string:
+	case stt_playercolor:
+		buf[0] = 0;
+		bufleft = sizeof(buf) - 1;
+		helptext = "Further info not available...";
+		Help_VarDescription(s->cvar->name, buf, bufleft);
+		helptext = buf;
+		break;
+
+	case stt_bind:
+		helptext = "Press Enter to change the associated key; Press Del to remove the binding";
+		break;
+
+	default:
+		if (s->description)
+			helptext = s->description;
+		break;
+	}
+
+	if (!UI_PrintTextBlock(x, y, w, h, helptext, false))
+		UI_Print(x, y + h, "Press [Space] to read more...", true);
+}
+
 qbool Settings_Key(settings_page* tab, int key)
 {
 	qbool up = false;
@@ -360,6 +403,13 @@ qbool Settings_Key(settings_page* tab, int key)
 		default: Setting_Reset(tab->settings + tab->marked); return true;
 		}
 
+	case K_SPACE:
+		switch (tab->mode) {
+		case SPM_NORMAL: tab->mode = SPM_VIEWHELP; return true;
+		case SPM_VIEWHELP: tab->mode = SPM_NORMAL; return true;
+		}
+		break;
+
 	default: 
 		switch (type) {
 		case stt_string:
@@ -383,6 +433,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 	int i;
 	int ch;
 	int nexttop;
+	int hbh;	// help box height
 	setting *set;
 	qbool active;
 	static qbool prev_adv_state = false;
@@ -396,7 +447,16 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 	}
 
 	nexttop = tab->settings[0].top;
-	
+
+	if (tab->mode == SPM_NORMAL) {
+		hbh = HELPLINES * LINEHEIGHT;
+	} else if (tab->mode = SPM_VIEWHELP) {
+		hbh = h - LINEHEIGHT * 4;
+	}
+
+	Setting_DrawHelpBox(x, y + h - hbh, w, hbh, tab);
+	h -= hbh;
+
 	CheckViewpoint(tab, h);
 
 	for (i = tab->viewpoint; i < tab->count && tab->settings[i].top + STHeight(tab->settings + i) <= h + tab->settings[tab->viewpoint].top; i++)

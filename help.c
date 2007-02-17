@@ -149,6 +149,83 @@ void Help_DescribeVar(xml_variable_t *var)
 
 }
 
+void Help_VarDescription(const char *varname, char* buf, size_t bufleft)
+{
+	xml_variable_t *var;
+	variable_enum_value_t *cv;
+
+	var = XSD_Variable_Load(va("help/variables/%s.xml", varname));
+	if (!var) return;
+
+	if (var->description && strlen(var->description) > 1) {
+		strncat(buf, var->description, bufleft);
+		bufleft -= strlen(var->description);
+		strncat(buf, "\n", bufleft--);
+	}
+	if (var->remarks) {
+		strncat(buf, "remarks: ", bufleft);
+		bufleft -= 9;
+		strncat(buf, var->remarks, bufleft);
+		bufleft -= strlen(var->remarks);
+		strncat(buf, "\n", bufleft--);
+	}
+	switch (var->value_type) {
+	case t_boolean:
+		if (var->value.boolean_value.false_description) {
+			strncat(buf, "0: ", bufleft); bufleft -= 3;
+			strncat(buf, var->value.boolean_value.false_description, bufleft);
+			bufleft -= strlen(var->value.boolean_value.false_description);
+			strncat(buf, "\n", bufleft--);
+		}
+		if (var->value.boolean_value.true_description) {
+			strncat(buf, "1: ", bufleft); bufleft -= 3;
+			strncat(buf, var->value.boolean_value.true_description, bufleft);
+			bufleft -= strlen(var->value.boolean_value.true_description);
+			strncat(buf, "\n", bufleft--);
+		}
+		break;
+	
+	case t_float:
+		if (var->value.float_description) {
+			strncat(buf, var->value.float_description, bufleft);
+			bufleft -= strlen(var->value.float_description);
+			strncat(buf, "\n", bufleft--);
+		}
+		break;
+
+	case t_integer:
+		if (var->value.integer_description) {
+			strncat(buf, var->value.integer_description, bufleft);
+			bufleft -= strlen(var->value.integer_description);
+			strncat(buf, "\n", bufleft--);
+		}
+		break;
+
+	case t_string:
+		if (var->value.string_description) {
+			strncat(buf, var->value.string_description, bufleft);
+			bufleft -= strlen(var->value.string_description);
+			strncat(buf, "\n", bufleft--);
+		}
+		break;
+
+	case t_enum:
+		cv = var->value.enum_value;
+		while(cv) {
+			if (cv->name && cv->description) {
+				strncat(buf, cv->name, bufleft); bufleft -= strlen(cv->name);
+				strncat(buf, ":", bufleft--);
+				strncat(buf, cv->description, bufleft); bufleft -= strlen(cv->description);
+				strncat(buf, "\n", bufleft--);
+				cv = cv->next;
+			}
+		}
+		break;
+	}
+
+	XSD_Variable_Free( (xml_t *)var );
+}
+
 void Help_Describe_f(void)
 {
     qbool found = false;

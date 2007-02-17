@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.35 2007-02-17 05:13:12 himan Exp $
+		$Id: menu_options.c,v 1.36 2007-02-17 20:25:30 johnnycz Exp $
 
 */
 
@@ -238,9 +238,9 @@ void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
 setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f),
-	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f),
-	ADDSET_ACTION	("Default Config", DefaultConfig),
+	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f, "Browse the QuakeWorld for Freshies guide by Apollyon"),
+	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Open up the console"),
+	ADDSET_ACTION	("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
 #ifdef _WIN32
 	ADDSET_NUMBER	("Process Priority", sys_highpriority, -1, 1, 1),
 #endif
@@ -250,28 +250,28 @@ setting settgeneral_arr[] = {
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
 	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
 	ADDSET_NUMBER	("Field of View", scr_fov, 40, 140, 2),
-	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle),
+	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphics effects presets here"),
 	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
 	ADDSET_SEPARATOR("Sound"),
 	ADDSET_NUMBER	("Sound Volume", s_volume, 0, 1, 0.05),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
-	ADDSET_CUSTOM	("Quality", SoundqualityRead, SoundqualityToggle),
+	ADDSET_CUSTOM	("Quality", SoundqualityRead, SoundqualityToggle, "Sound sampling rate"),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_SEPARATOR("Controls"),
 	ADDSET_BOOL		("Mouse Look", freelook),
 	ADDSET_NUMBER	("Mouse Speed", sensitivity, 1, 15, 0.25),
 	ADDSET_NUMBER	("Mouse Accel.", m_accel, 0, 1, 0.1),
-	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle),
-	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle),
+	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverted mouse will make you look down when you move the mouse up"),
+	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle, "Autoswitch will switch the weapons for you if pickup new weapon or a pack with a weapon"),
 	ADDSET_BOOL		("Gun Preselect", cl_weaponpreselect),
 	ADDSET_BOOL		("Gun Auto hide", cl_weaponhide),
-	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle),
+	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "You will always have maximum walking speed if this is enabled"),
 	ADDSET_BOOL		("Smart Jump", cl_smartjump),
 	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
 	ADDSET_SEPARATOR("Connection"),
-	ADDSET_CUSTOM	("Bandwidth Limit", BandwidthRead, BandwidthToggle),
-	ADDSET_CUSTOM	("Quality", ConQualityRead, ConQualityToggle),
+	ADDSET_CUSTOM	("Bandwidth Limit", BandwidthRead, BandwidthToggle, "Select a speed close to your internet connection link speed"),
+	ADDSET_CUSTOM	("Quality", ConQualityRead, ConQualityToggle, "Ensures that packets with weapon switch command don't get lost"),
 	ADDSET_SEPARATOR("Chat settings"),
 	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
 	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
@@ -288,12 +288,12 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
 	ADDSET_NAMED	("Auto Record", match_auto_record, autorecord_enum),
 	ADDSET_NAMED	("Auto Log", match_auto_logconsole, autorecord_enum),
-	ADDSET_CUSTOM	("Sshot Format", SshotformatRead, SshotformatToggle),
+	ADDSET_CUSTOM	("Sshot Format", SshotformatRead, SshotformatToggle, "Screenshot image format"),
 	ADDSET_SEPARATOR("Demos"),
 	ADDSET_STRING	("Directory", demo_dir),
 	ADDSET_ADVANCED_SECTION(),
 #ifdef _WIN32
-	ADDSET_CUSTOM	("Format", DemoformatRead, DemoformatToggle),
+	ADDSET_CUSTOM	("Format", DemoformatRead, DemoformatToggle, "QWD is original QW demo format, QWZ is compressed demo format and MVD contains multiview data; You need Qizmo and Qwdtools for this to work"),
 #endif
 	ADDSET_STRING	("Qizmo Dir", qizmo_dir),
 	ADDSET_STRING	("QWDTools Dir", qwdtools_dir),
@@ -412,7 +412,7 @@ setting settplayer_arr[] = {
 	ADDSET_STRING	("Skin", skin),
 	ADDSET_COLOR	("Shirt Color", topcolor),
 	ADDSET_COLOR	("Pants Color", bottomcolor),
-	ADDSET_CUSTOM	("Ruleset", RulesetRead, RulesetToggle),
+	ADDSET_CUSTOM	("Ruleset", RulesetRead, RulesetToggle, "If you are taking part in a tournament, usually you need to set this to smackdown; Will limit some client features"),
 	ADDSET_SEPARATOR("Teammates"),
 	ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
 	ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
@@ -647,10 +647,10 @@ void TexturesqualityToggle(qbool back) {
 
 setting settfps_arr[] = {
 	ADDSET_SEPARATOR("Presets"),
-	ADDSET_ACTION	("Load Fast Preset", LoadFastPreset),
-	ADDSET_ACTION	("Load HQ preset", LoadHQPreset),
+	ADDSET_ACTION	("Load Fast Preset", LoadFastPreset, "Adjusted for high performance"),
+	ADDSET_ACTION	("Load HQ preset", LoadHQPreset, "Adjusted for high image quality"),
 	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle),
+	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Tells the client to cap the amount of frames rendered per second"),
 	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
 	ADDSET_BOOL		("Damage Flash", v_damagecshift),
 	ADDSET_BOOL		("Pickup Flashes", v_bonusflash),
@@ -697,10 +697,10 @@ setting settfps_arr[] = {
 	ADDSET_SEPARATOR("Textures"),
 	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
 	ADDSET_BOOL		("Luma", gl_lumaTextures),
-	ADDSET_CUSTOM	("Detail", TexturesdetailRead, TexturesdetailToggle),
+	ADDSET_CUSTOM	("Detail", TexturesdetailRead, TexturesdetailToggle, "Determines the texture quality; resolution of the textures in memory"),
 	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
 	ADDSET_BOOL		("No Textures", gl_textureless),
-	ADDSET_CUSTOM	("Quality Mode", TexturesqualityRead, TexturesqualityToggle),
+	ADDSET_CUSTOM	("Quality Mode", TexturesqualityRead, TexturesqualityToggle, "Determines the texture quality; rendering quality"),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_SEPARATOR("Point of View"),
 	ADDSET_NUMBER	("Rollangle", cl_rollangle, 0, 30, 2),

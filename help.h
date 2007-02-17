@@ -21,6 +21,7 @@ CTab_t help_tab;
 // describe
 void Help_DescribeCmd(xml_command_t *cmd);
 void Help_DescribeVar(xml_variable_t *var);
+void Help_VarDescription(const char *varname, char* buf, size_t bufleft);
 
 // initialize help system
 void Help_Init(void);
