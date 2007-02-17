@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.20 2007-02-17 20:25:30 johnnycz Exp $
+		$Id: settings_page.c,v 1.21 2007-02-17 21:14:02 johnnycz Exp $
 
 */
 
@@ -243,6 +243,7 @@ static void Setting_UnbindKey(setting* set)
 	M_UnbindCommand(set->varname);
 }
 
+// adjusts current viewed area of the settings page
 static void CheckViewpoint(settings_page *tab, int h)
 {
 	if (tab->marked == 1 && tab->settings[0].type == stt_separator) tab->viewpoint = 0;
@@ -257,7 +258,7 @@ static void CheckViewpoint(settings_page *tab, int h)
 }
 
 static void CheckCursor(settings_page *tab, qbool up)
-{
+{	// this makes sure that cursor doesn't point at some meta-entry, section heading or hidden setting
 	setting *s;
 	while (tab->marked < 0) { 
 		tab->marked = 0;
@@ -292,7 +293,8 @@ static void EditBoxCheck(settings_page* tab, int oldm, int newm)
 }
 
 static void RecalcPositions(settings_page* page)
-{
+{	// especially when "show advanced options" is being changed
+	// we need to recalculate where each option is
 	int i;
 	int curtop = 0;
 	setting *s;
@@ -309,11 +311,8 @@ static void RecalcPositions(settings_page* page)
 static void Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page)
 {
 	setting* s;
-	xml_variable_t *var;
 	char buf[2048];
 	const char *helptext = "";
-	size_t bufleft;
-	int l;
 
 	UI_DrawBox(x, y, w, h);
 	x += LETW; h -= LETW*2; w -= LETW*2; y += LETW;
@@ -327,14 +326,16 @@ static void Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page)
 	case stt_string:
 	case stt_playercolor:
 		buf[0] = 0;
-		bufleft = sizeof(buf) - 1;
 		helptext = "Further info not available...";
-		Help_VarDescription(s->cvar->name, buf, bufleft);
+		Help_VarDescription(s->cvar->name, buf, sizeof(buf) - 1);
 		helptext = buf;
 		break;
 
 	case stt_bind:
-		helptext = "Press Enter to change the associated key; Press Del to remove the binding";
+		if (page->mode == SPM_BINDING)
+			helptext = "Press the key you want to assiciate with given action";
+		else
+			helptext = "Press Enter to change the associated key; Press Del to remove the binding";
 		break;
 
 	default:
@@ -433,7 +434,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 	int i;
 	int ch;
 	int nexttop;
-	int hbh;	// help box height
+	int hbh = 0;	// help box height
 	setting *set;
 	qbool active;
 	static qbool prev_adv_state = false;
@@ -448,9 +449,9 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 
 	nexttop = tab->settings[0].top;
 
-	if (tab->mode == SPM_NORMAL) {
+	if (tab->mode != SPM_VIEWHELP) {
 		hbh = HELPLINES * LINEHEIGHT;
-	} else if (tab->mode = SPM_VIEWHELP) {
+	} else {
 		hbh = h - LINEHEIGHT * 4;
 	}
 
