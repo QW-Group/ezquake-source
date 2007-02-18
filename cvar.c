@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.39 2007-02-13 16:49:05 qqshka Exp $
+    $Id: cvar.c,v 1.40 2007-02-18 15:26:39 qqshka Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -35,7 +35,8 @@ static cvar_t *cvar_hash[VAR_HASHPOOL_SIZE];
 cvar_t *cvar_vars;
 
 cvar_t	cvar_viewdefault = {"cvar_viewdefault", "1"};
-cvar_t	cvar_viewhelp = {"cvar_viewhelp", "1"};
+cvar_t	cvar_viewhelp    = {"cvar_viewhelp",    "1"};
+cvar_t  cvar_viewlatched = {"cvar_viewlatched", "1"};
 
 
 // Use this to walk through all vars
@@ -562,8 +563,15 @@ qbool Cvar_Command (void)
 			Com_Printf ("%s : default value is \"%s\"\n", v->name, v->defaultvalue);
 			spaces = CreateSpaces(strlen(v->name) + 2);
 			Com_Printf ("%s current value is \"%s\"\n", spaces, v->string);
+
+			if ( cvar_viewlatched.integer && v->latchedString )
+				Com_Printf ( "%s latched value is \"%s\"\n", spaces, v->latchedString );
+			
 		} else {
 			Com_Printf ("\"%s\" is \"%s\"\n", v->name, v->string);
+
+			if ( cvar_viewlatched.integer && v->latchedString )
+				Com_Printf ( "latched: \"%s\"\n", v->latchedString );
 		}
 	} else {
 		// hexum - do not allow crafty people to avoid use of "set" with user created variables under ruleset smackdown
@@ -1245,6 +1253,7 @@ void Cvar_Init (void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register (&cvar_viewdefault);
 	Cvar_Register (&cvar_viewhelp);
+	Cvar_Register (&cvar_viewlatched);
 
 	Cvar_ResetCurrentGroup();
 }
