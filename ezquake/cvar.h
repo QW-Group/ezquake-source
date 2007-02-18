@@ -122,9 +122,7 @@ qbool Cvar_Delete (const char *name);
 
 void Cvar_Init (void);
 
-#ifdef WITH_KEYMAP
 void Cvar_ResetVar (cvar_t *var);
-#endif // WITH_KEYMAP 
 
 void Cvar_SetCurrentGroup(char *name);
 void Cvar_ResetCurrentGroup(void);

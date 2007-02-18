@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.33 2007-02-12 11:18:53 qqshka Exp $
+    $Id: config_manager.c,v 1.34 2007-02-18 05:10:32 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -43,7 +43,6 @@ void TP_DumpMsgFilters(FILE *f);
 void TP_ResetAllTriggers(void);
 qbool Cmd_DeleteAlias (char *);
 void DumpFlagCommands(FILE *);
-void Cvar_ResetVar (cvar_t *var);
 int Cvar_CvarCompare (const void *p1, const void *p2);
 int Cmd_AliasCompare (const void *p1, const void *p2);
 
