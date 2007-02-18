@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_svgalib.c,v 1.24 2007-01-08 01:35:49 disconn3ct Exp $
+	$Id: vid_svgalib.c,v 1.25 2007-02-18 03:33:49 rhagelstrom Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -74,6 +74,12 @@ cvar_t vid_vsync = {"vid_vsync","0",CVAR_ARCHIVE};
 int mx, my;
 qbool mouseinitialized = false;
 
+/************************************** COMPATABILITY *************************************/
+
+void VID_UnlockBuffer() {}
+
+void VID_LockBuffer() {}
+/************************************** COMPATABILITY *************************************/
 
 void VGA_UpdatePlanarScreen (void *srcbuffer);
 
