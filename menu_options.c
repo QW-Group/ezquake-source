@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.38 2007-02-17 23:24:54 johnnycz Exp $
+		$Id: menu_options.c,v 1.39 2007-02-18 15:24:22 johnnycz Exp $
 
 */
 
@@ -731,15 +731,125 @@ int CT_Opt_FPS_Key (int k, CTab_t *tab, CTabPage_t *page) {
 //=============================================================================
 /* VIDEO MENU */
 
+#ifdef GLQUAKE
+
+// these variables serve as a temporary storage for user selected settings
+// they get initialized with current settings when the page is showed
+int menu_video_res, menu_video_bpp, menu_video_freq, menu_video_fullscreen;
+
+void VidRestartAction (void) { 
+	Cvar_SetValue(&r_mode, menu_video_res);
+	Cvar_SetValue(&r_colorbits, menu_video_bpp);
+	Cvar_SetValue(&r_displayRefresh, menu_video_freq);
+	Cvar_SetValue(&r_fullscreen, menu_video_fullscreen);
+	Cbuf_AddText("vid_restart\n");
+}
+
+// this is a duplicate from tr_init.c!
+const char* glmodes[] = { "320x240", "400x300", "512x384", "640x480", "800x600", "960x720", "1024x768", "1152x864", "1280x1024", "1600x1200", "2048x1536" };
+int glmodes_size = sizeof(glmodes) / sizeof(char*);
+
+int screen_frequencies[] = { 60, 70, 72, 75, 85, 100, 120, 140, 144, 150 };
+int frequencies_size = sizeof(screen_frequencies) / sizeof(int);
+
+const char* BitDepthRead(void) { return menu_video_bpp == 32 ? "32 bit" : menu_video_bpp == 16 ? "16 bit" : "use desktop settings"; }
+const char* ResolutionRead(void) { return glmodes[bound(0, menu_video_res, glmodes_size-1)]; }
+const char* FullScreenRead(void) { return menu_video_fullscreen ? "on" : "off"; }
+const char* FreqRead(void) { return va("%i Hz", menu_video_freq); }
+
+void ResolutionToggle(qbool back) {
+	if (back) menu_video_res--; else menu_video_res++;
+	menu_video_res = bound(0, menu_video_res, glmodes_size - 1);
+}
+void BitDepthToggle(qbool back) {
+	if (back) {
+		switch (menu_video_bpp) {
+		case 0: menu_video_bpp = 32; return;
+		case 16: menu_video_bpp = 0; return;
+		default: menu_video_bpp = 16; return;
+		}
+	} else {
+		switch (menu_video_bpp) {
+		case 0: menu_video_bpp = 16; return;
+		case 16: menu_video_bpp = 32; return;
+		case 32: menu_video_bpp = 0; return;
+		}
+	}
+}
+void FullScreenToggle(qbool back) { menu_video_fullscreen = menu_video_fullscreen ? 0 : 1; }
+void FreqToggle(qbool back) {
+	int curfreq = 0;
+	int i;
+	for (i = 0; i < frequencies_size; i++) {
+		if (screen_frequencies[i] == menu_video_freq) { 
+			curfreq = i;
+			break;
+		}
+	}
+	if (back) curfreq--; else curfreq++;
+	curfreq = bound(0, curfreq, frequencies_size - 1);
+	menu_video_freq = screen_frequencies[curfreq];
+}
+
+setting settvideo_arr[] = {
+	ADDSET_SEPARATOR("Screen settings"),
+	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution used within the game"),
+	ADDSET_CUSTOM("Bit depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen"),
+	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle fullscreen and windowed mode"),
+	ADDSET_CUSTOM("Refresh frequency", FreqRead, FreqToggle, "Choose your display horizontal refresh frequency; make sure that the selected frequency is supported by your hardware!"),
+	ADDSET_ACTION("Apply changes", VidRestartAction, "Restarts the rendered and applies selected resolution"),
+	ADDSET_SEPARATOR("Text layer settings"),
+	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
+	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4)
+};
+settings_page settvideo;
+
+#endif
+
 void CT_Opt_Video_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page) {
+#ifndef GLQUAKE
+
+	// Software Rendering version menu
+
 	(*vid_menudrawfn) ();
+
+#else
+
+	// (Open)GL version menu
+	Settings_Draw(x,y,w,h, &settvideo);
+
+#endif
 }
 
 int CT_Opt_Video_Key (int key, CTab_t *tab, CTabPage_t *page) {
+#ifndef GLQUAKE
+	
+	// Software Rendering version menu
+
 	(*vid_menukeyfn) (key);
-	// i was too lazy&scared to change all those vid_menukeyfn functions out there
+	
+	// i was too lazy&scared to change vid_menukeyfn functions out there
 	// so because i know what keys have some function in there, i list them here:
-	return key == K_LEFTARROW || key == K_RIGHTARROW || key == K_DOWNARROW || key == K_UPARROW || key == K_ENTER;
+	return key == K_LEFTARROW || key == K_RIGHTARROW || key == K_DOWNARROW || key == K_UPARROW || key == K_ENTER || key == 'd';
+
+#else
+
+	// (Open)GL version menu
+	
+	return Settings_Key(&settvideo, key);
+
+#endif
+}
+
+void OnShow_SettVideo(void) {
+#ifdef GLQUAKE
+
+	menu_video_res = (int) r_mode.value;
+	menu_video_bpp = (int) r_colorbits.value;
+	menu_video_freq = (int) r_displayRefresh.value;
+	menu_video_fullscreen = (int) r_fullscreen.value;
+
+#endif
 }
 
 // </VIDEO>
@@ -789,6 +899,7 @@ void Menu_Options_Init(void) {
 	Settings_Page_Init(setthud, setthud_arr);
 	Settings_Page_Init(settplayer, settplayer_arr);
 	Settings_Page_Init(settbinds, settbinds_arr);
+	Settings_Page_Init(settvideo, settvideo_arr);
 
 	Cvar_Register(&menu_advanced);
 
@@ -799,6 +910,6 @@ void Menu_Options_Init(void) {
 	CTab_AddPage(&options_tab, "hud", OPTPG_HUD, OnShow_SettHUD, CT_Opt_HUD_Draw, CT_Opt_HUD_Key);
 	CTab_AddPage(&options_tab, "multiview", OPTPG_MULTIVIEW, OnShow_SettMultiview, CT_Opt_Multiview_Draw, CT_Opt_Multiview_Key);
 	CTab_AddPage(&options_tab, "controls", OPTPG_BINDS, NULL, CT_Opt_Binds_Draw, CT_Opt_Binds_Key);
-	CTab_AddPage(&options_tab, "video", OPTPG_VIDEO, NULL, CT_Opt_Video_Draw, CT_Opt_Video_Key);
+	CTab_AddPage(&options_tab, "video", OPTPG_VIDEO, OnShow_SettVideo, CT_Opt_Video_Draw, CT_Opt_Video_Key);
 	CTab_SetCurrentId(&options_tab, OPTPG_SETTINGS);
 }
