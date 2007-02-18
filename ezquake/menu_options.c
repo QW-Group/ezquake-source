@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.39 2007-02-18 15:24:22 johnnycz Exp $
+		$Id: menu_options.c,v 1.40 2007-02-18 15:25:21 johnnycz Exp $
 
 */
 
@@ -899,7 +899,9 @@ void Menu_Options_Init(void) {
 	Settings_Page_Init(setthud, setthud_arr);
 	Settings_Page_Init(settplayer, settplayer_arr);
 	Settings_Page_Init(settbinds, settbinds_arr);
+#ifdef GLQUAKE
 	Settings_Page_Init(settvideo, settvideo_arr);
+#endif
 
 	Cvar_Register(&menu_advanced);
 
