@@ -16,9 +16,13 @@
 #undef INCOMPLETE_TYPES_BROKEN
 
 /* Define "boolean" as unsigned char, not int, per Windows custom */
-#ifndef __RPCNDR_H__		/* don't conflict if rpcndr.h already read */
+#ifdef _WIN32
+#	ifndef __RPCNDR_H__		/* don't conflict if rpcndr.h already read */
 typedef unsigned char boolean;
-#endif
+#	endif // __RPCNDR_H__
+#else // _WIN32
+typedef int boolean;
+#endif // _WIN32
 #define HAVE_BOOLEAN		/* prevent jmorecfg.h from redefining it */
 
 
