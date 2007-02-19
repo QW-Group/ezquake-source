@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.41 2007-02-18 16:06:15 johnnycz Exp $
+		$Id: menu_options.c,v 1.42 2007-02-19 13:13:58 johnnycz Exp $
 
 */
 
@@ -729,59 +729,96 @@ int CT_Opt_FPS_Key (int k, CTab_t *tab, CTabPage_t *page) {
 
 
 //=============================================================================
-/* VIDEO MENU */
+// <VIDEO>
 
 #ifdef GLQUAKE
 
 // these variables serve as a temporary storage for user selected settings
 // they get initialized with current settings when the page is showed
-int menu_video_res, menu_video_bpp, menu_video_fullscreen;
-cvar_t vid_menu_tempfreq;
+typedef struct menu_video_settings_s {
+	int res;
+	int bpp;
+	qbool fullscreen;
+	cvar_t freq;	// this is not an int just because we need to fool settings_page module
+} menu_video_settings_t;
+qbool mvs_askmode = false;
 
-void VidRestartAction (void) { 
-	Cvar_SetValue(&r_mode, menu_video_res);
-	Cvar_SetValue(&r_colorbits, menu_video_bpp);
-	Cvar_SetValue(&r_displayRefresh, vid_menu_tempfreq.value);
-	Cvar_SetValue(&r_fullscreen, menu_video_fullscreen);
+// here we store the configuration that user selected in menu
+menu_video_settings_t mvs_selected;	
+
+// here we store the current video config in case the new video settings weren't successfull
+menu_video_settings_t mvs_previous;	
+
+// will apply given video settings
+static void ApplyVideoSettings(const menu_video_settings_t *s) {
+	Cvar_SetValue(&r_mode, s->res);
+	Cvar_SetValue(&r_colorbits, s->bpp);
+	Cvar_SetValue(&r_displayRefresh, s->freq.value);
+	Cvar_SetValue(&r_fullscreen, s->fullscreen);
 	Cbuf_AddText("vid_restart\n");
+}
+
+// will store current video settings into the given structure
+static void StoreCurrentVideoSettings(menu_video_settings_t *out) {
+	out->res = (int) r_mode.value;
+	out->bpp = (int) r_colorbits.value;
+	Cvar_SetValue(&out->freq, r_displayRefresh.value);
+	out->fullscreen = (int) r_fullscreen.value;
+}
+
+// performed when user hits the "apply" button
+void VideoApplySettings (void)
+{ 
+	StoreCurrentVideoSettings(&mvs_previous);
+
+	ApplyVideoSettings(&mvs_selected);
+
+	mvs_askmode = true;
+}
+
+// two possible results of the "keep this video settings?" dialogue
+static void KeepNewVideoSettings (void) { mvs_askmode = false; }
+static void CancelNewVideoSettings (void) { 
+	mvs_askmode = false;
+	ApplyVideoSettings(&mvs_previous);
 }
 
 // this is a duplicate from tr_init.c!
 const char* glmodes[] = { "320x240", "400x300", "512x384", "640x480", "800x600", "960x720", "1024x768", "1152x864", "1280x1024", "1600x1200", "2048x1536" };
 int glmodes_size = sizeof(glmodes) / sizeof(char*);
 
-const char* BitDepthRead(void) { return menu_video_bpp == 32 ? "32 bit" : menu_video_bpp == 16 ? "16 bit" : "use desktop settings"; }
-const char* ResolutionRead(void) { return glmodes[bound(0, menu_video_res, glmodes_size-1)]; }
-const char* FullScreenRead(void) { return menu_video_fullscreen ? "on" : "off"; }
+const char* BitDepthRead(void) { return mvs_selected.bpp == 32 ? "32 bit" : mvs_selected.bpp == 16 ? "16 bit" : "use desktop settings"; }
+const char* ResolutionRead(void) { return glmodes[bound(0, mvs_selected.res, glmodes_size-1)]; }
+const char* FullScreenRead(void) { return mvs_selected.fullscreen ? "on" : "off"; }
 
 void ResolutionToggle(qbool back) {
-	if (back) menu_video_res--; else menu_video_res++;
-	menu_video_res = bound(0, menu_video_res, glmodes_size - 1);
+	if (back) mvs_selected.res--; else mvs_selected.res++;
+	mvs_selected.res = bound(0, mvs_selected.res, glmodes_size - 1);
 }
 void BitDepthToggle(qbool back) {
 	if (back) {
-		switch (menu_video_bpp) {
-		case 0: menu_video_bpp = 32; return;
-		case 16: menu_video_bpp = 0; return;
-		default: menu_video_bpp = 16; return;
+		switch (mvs_selected.bpp) {
+		case 0: mvs_selected.bpp = 32; return;
+		case 16: mvs_selected.bpp = 0; return;
+		default: mvs_selected.bpp = 16; return;
 		}
 	} else {
-		switch (menu_video_bpp) {
-		case 0: menu_video_bpp = 16; return;
-		case 16: menu_video_bpp = 32; return;
-		case 32: menu_video_bpp = 0; return;
+		switch (mvs_selected.bpp) {
+		case 0: mvs_selected.bpp = 16; return;
+		case 16: mvs_selected.bpp = 32; return;
+		case 32: mvs_selected.bpp = 0; return;
 		}
 	}
 }
-void FullScreenToggle(qbool back) { menu_video_fullscreen = menu_video_fullscreen ? 0 : 1; }
+void FullScreenToggle(qbool back) { mvs_selected.fullscreen = mvs_selected.fullscreen ? 0 : 1; }
 
 setting settvideo_arr[] = {
 	ADDSET_SEPARATOR("Screen settings"),
 	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution used within the game"),
 	ADDSET_CUSTOM("Bit depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen"),
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle fullscreen and windowed mode"),
-	ADDSET_STRING("Refresh frequency", vid_menu_tempfreq),
-	ADDSET_ACTION("Apply changes", VidRestartAction, "Restarts the rendered and applies selected resolution"),
+	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
+	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the rendered and applies selected resolution"),
 	ADDSET_SEPARATOR("Text layer settings"),
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
 	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4)
@@ -800,7 +837,15 @@ void CT_Opt_Video_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pag
 #else
 
 	// (Open)GL version menu
-	Settings_Draw(x,y,w,h, &settvideo);
+
+#define ASKBOXWIDTH 300
+
+	if (mvs_askmode) {
+		UI_DrawBox((w-ASKBOXWIDTH)/2, h/2 - 16, ASKBOXWIDTH, 32);
+		UI_Print_Center((w-ASKBOXWIDTH)/2, h/2 - 8, ASKBOXWIDTH, "Do you wish to keep this settings?", false);
+		UI_Print_Center((w-ASKBOXWIDTH)/2, h/2, ASKBOXWIDTH, "(y/n)", true);
+	} else
+		Settings_Draw(x,y,w,h, &settvideo);
 
 #endif
 }
@@ -820,7 +865,15 @@ int CT_Opt_Video_Key (int key, CTab_t *tab, CTabPage_t *page) {
 
 	// (Open)GL version menu
 	
-	return Settings_Key(&settvideo, key);
+	if (mvs_askmode) {
+		if (key == 'y' || key == K_ENTER)
+			KeepNewVideoSettings();
+		else
+			CancelNewVideoSettings();
+
+		return true;
+	} else
+		return Settings_Key(&settvideo, key);
 
 #endif
 }
@@ -828,10 +881,7 @@ int CT_Opt_Video_Key (int key, CTab_t *tab, CTabPage_t *page) {
 void OnShow_SettVideo(void) {
 #ifdef GLQUAKE
 
-	menu_video_res = (int) r_mode.value;
-	menu_video_bpp = (int) r_colorbits.value;
-	Cvar_SetValue(&vid_menu_tempfreq, r_displayRefresh.value);
-	menu_video_fullscreen = (int) r_fullscreen.value;
+	StoreCurrentVideoSettings(&mvs_selected);
 
 #endif
 }
