@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.22 2007-02-17 23:24:54 johnnycz Exp $
+		$Id: settings_page.c,v 1.23 2007-02-19 00:31:08 johnnycz Exp $
 
 */
 
@@ -332,15 +332,14 @@ static void RecalcPositions(settings_page* page)
 	}
 }
 
-static void Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page)
+static int Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page, qbool full)
 {
 	setting* s;
 	char buf[2048];
 	const char *helptext = "";
+	int maxh;
+	const char *cp;
 
-	UI_DrawBox(x, y, w, h);
-	x += LETW; h -= LETW*2; w -= LETW*2; y += LETW;
-	
 	s = page->settings + page->marked;
 
 	switch (s->type) {
@@ -372,8 +371,24 @@ static void Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page)
 		break;
 	}
 
-	if (!UI_PrintTextBlock(x, y, w, h, helptext, false))
-		UI_Print(x, y + h, "Press [Space] to read more...", true);
+	if (full) {
+		// add some lines for wrapped words, just a rough approximation here
+		maxh = (int) ((((double) strlen(helptext) / (w / LETW - 2)) + 2) * 1.33) * LETW;
+		cp = helptext;
+		while (*cp) { if (*cp++ == '\n') maxh += LETW; } // add new line for each newline
+		maxh = max((HELPLINES + 2) * LETW, maxh);
+		if (maxh < h) {
+			y += h - maxh;
+			h = maxh;
+		}
+	}
+
+	UI_DrawBox(x, y, w, h);
+
+	if (!UI_PrintTextBlock(x + LETW, y + LETW, w - LETW*2, h - LETW*2, helptext, false) && !full)
+		UI_Print(x + LETW, y + h - LETW, "Press [Ins] to read more...", true);
+
+	return h;
 }
 
 static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
@@ -458,12 +473,18 @@ qbool Settings_Key(settings_page* tab, int key)
 		default: Setting_Reset(tab->settings + tab->marked); return true;
 		}
 
-	case K_SPACE:
+	case K_INS:
 		switch (tab->mode) {
 		case SPM_NORMAL: tab->mode = SPM_VIEWHELP; return true;
 		case SPM_VIEWHELP: tab->mode = SPM_NORMAL; return true;
 		}
 		break;
+
+	case K_ESCAPE:
+		if (tab->mode == SPM_VIEWHELP) { 
+			tab->mode = SPM_NORMAL;
+			return true;
+		} else return false;
 
 	default: 
 		switch (type) {
@@ -512,12 +533,11 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 
 	if (tab->mode != SPM_VIEWHELP) {
 		hbh = HELPLINES * LINEHEIGHT;
+		h -= Setting_DrawHelpBox(x, y + h - hbh, w, hbh, tab, false);
 	} else {
 		hbh = h - LINEHEIGHT * 4;
+		h -= Setting_DrawHelpBox(x, y + h - hbh, w, hbh, tab, true);
 	}
-
-	Setting_DrawHelpBox(x, y + h - hbh, w, hbh, tab);
-	h -= hbh;
 
 	CheckViewpoint(tab, h);
 
