@@ -1,4 +1,4 @@
-//    $Id: Ctrl.c,v 1.10 2007-02-17 20:25:30 johnnycz Exp $
+//    $Id: Ctrl.c,v 1.11 2007-02-19 00:31:08 johnnycz Exp $
 
 #include "quakedef.h"
 
@@ -132,7 +132,6 @@ qbool UI_PrintTextBlock(int x, int y, int w, int h, const char* text, qbool red)
 	const char *start = text, *end, *nextend;
 
 	while (*start && cline < lines) {
-		while (*start && (*start == ' ' || *start == '\n')) start++;
 		nextend = start;
 		end = nextend;
 		clen = 0;
@@ -153,6 +152,7 @@ qbool UI_PrintTextBlock(int x, int y, int w, int h, const char* text, qbool red)
 		UI_Print(x, y + cline*8, buf, red);
 		cline++;
 		start = end;
+		while (*start && (*start == ' ' || *start == '\n')) start++;
 	}
 
 	// if the text didn't fit in there, *start won't be zero
