@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.42 2007-02-19 13:13:58 johnnycz Exp $
+		$Id: menu_options.c,v 1.43 2007-02-19 15:07:00 johnnycz Exp $
 
 */
 
@@ -164,10 +164,10 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	name, team, skin, topcolor, bottomcolor, cl_teamtopcolor, cl_teambottomcolor, cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
 	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename,
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz,
-	ruleset
+	ruleset, scr_sshot_dir, log_dir, cl_nolerp
 ;
 #ifdef _WIN32
-extern cvar_t demo_format, sys_highpriority;
+extern cvar_t demo_format, sys_highpriority, cl_window_caption;
 #endif
 #ifdef GLQUAKE
 extern cvar_t scr_autoid, gl_crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights;
@@ -231,6 +231,7 @@ void RulesetToggle(qbool back) {
 	else if (!strcmp(ruleset.string, "smackdown")) Cvar_Set(&ruleset, "mtfl");
 	else if (!strcmp(ruleset.string, "mtfl")) Cvar_Set(&ruleset, "default");
 }
+const char *mediaroot_enum[] = { "relative to exe", "relative to home", "full path" };
 
 // START contents of Menu-> Options-> Main tab
 
@@ -289,14 +290,17 @@ setting settgeneral_arr[] = {
 	ADDSET_NAMED	("Auto Record", match_auto_record, autorecord_enum),
 	ADDSET_NAMED	("Auto Log", match_auto_logconsole, autorecord_enum),
 	ADDSET_CUSTOM	("Sshot Format", SshotformatRead, SshotformatToggle, "Screenshot image format"),
-	ADDSET_SEPARATOR("Demos"),
-	ADDSET_STRING	("Directory", demo_dir),
-	ADDSET_ADVANCED_SECTION(),
 #ifdef _WIN32
-	ADDSET_CUSTOM	("Format", DemoformatRead, DemoformatToggle, "QWD is original QW demo format, QWZ is compressed demo format and MVD contains multiview data; You need Qizmo and Qwdtools for this to work"),
+	ADDSET_CUSTOM	("Demo Format", DemoformatRead, DemoformatToggle, "QWD is original QW demo format, QWZ is compressed demo format and MVD contains multiview data; You need Qizmo and Qwdtools for this to work"),
 #endif
-	ADDSET_STRING	("Qizmo Dir", qizmo_dir),
-	ADDSET_STRING	("QWDTools Dir", qwdtools_dir),
+	ADDSET_SEPARATOR("Paths"),
+	ADDSET_NAMED    ("Media Paths Type", cl_mediaroot, mediaroot_enum),
+	ADDSET_STRING   ("Screenshots Path", scr_sshot_dir),
+	ADDSET_STRING	("Demos Path", demo_dir),
+	ADDSET_STRING   ("Logs Path", log_dir),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_STRING	("Qizmo Path", qizmo_dir),
+	ADDSET_STRING	("QWDTools Path", qwdtools_dir),
 	ADDSET_BASIC_SECTION(),
 };
 
@@ -651,6 +655,9 @@ setting settfps_arr[] = {
 	ADDSET_ACTION	("Load HQ preset", LoadHQPreset, "Adjusted for high image quality"),
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Tells the client to cap the amount of frames rendered per second"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Disable lin. interp.", cl_nolerp),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
 	ADDSET_BOOL		("Damage Flash", v_damagecshift),
 	ADDSET_BOOL		("Pickup Flashes", v_bonusflash),
@@ -821,7 +828,17 @@ setting settvideo_arr[] = {
 	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the rendered and applies selected resolution"),
 	ADDSET_SEPARATOR("Text layer settings"),
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
-	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4)
+	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
+	ADDSET_SEPARATOR("Miscellaneous"),
+#ifdef GLQUAKE
+#ifndef __MACOS__
+	ADDSET_BOOL("Vertical sync.", r_swapInterval),
+#endif
+#endif
+#ifdef _WIN32
+	ADDSET_BOOL("Activity Flash", vid_flashonactivity),
+	ADDSET_BOOL("New Caption", cl_window_caption)
+#endif
 };
 settings_page settvideo;
 
