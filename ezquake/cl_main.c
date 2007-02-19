@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.124 2007-02-12 10:02:24 qqshka Exp $
+	$Id: cl_main.c,v 1.125 2007-02-19 13:55:02 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -129,6 +129,8 @@ cvar_t	msg = {"msg", "1", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t  noaim = {"noaim", "1", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	w_switch = {"w_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	b_switch = {"b_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
+
+cvar_t  cl_mediaroot = {"cl_mediaroot", "1", CVAR_ARCHIVE};
 
 // START shaman RFE 1022306
 cvar_t  msg_filter = {"msg_filter", "0"};
@@ -1041,6 +1043,9 @@ void CL_InitLocal (void) {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
 	Cvar_Register (&allow_scripts);
+	
+  Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
+  Cvar_Register (&cl_mediaroot);	
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_NO_GROUP);
 	Cvar_Register (&password);
@@ -1050,6 +1055,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_warncmd);
 	Cvar_Register (&cl_cmdline);
 	Cvar_ForceSet (&cl_cmdline, com_args_original);
+
 	
 	Cvar_ResetCurrentGroup();
 

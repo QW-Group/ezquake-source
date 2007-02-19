@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.41 2007-01-31 00:01:41 qqshka Exp $
+    $Id: common.h,v 1.42 2007-02-19 13:55:02 qqshka Exp $
 */
 // common.h  -- general definitions
 
@@ -181,6 +181,8 @@ extern char	com_gamedir[MAX_OSPATH];
 extern char	com_basedir[MAX_OSPATH];
 extern char	com_gamedirfile[MAX_QPATH];
 
+extern char com_homedir[MAX_PATH];
+
 // QW262 -->
 #ifndef SERVERONLY
 #define UserdirSet (userdirfile[0] != '\0')
@@ -202,10 +204,12 @@ byte *FS_LoadHunkFile (char *path);
 void FS_LoadCacheFile (char *path, struct cache_user_s *cu);
 byte *FS_LoadHeapFile (char *path);
 
-qbool COM_WriteFile (char *filename, void *data, int len);
+qbool COM_WriteFile (char *filename, void *data, int len); //The filename will be prefixed by com_basedir
+qbool COM_WriteFile_2 (char *filename, void *data, int len); //The filename used as is
 void COM_CreatePath (char *path);
 int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode);
 
+char *COM_LegacyDir(char *media_dir);
 
 char *Info_ValueForKey (char *s, char *key);
 void Info_RemoveKey (char *s, char *key);

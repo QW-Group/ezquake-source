@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.60 2007-02-16 09:25:44 qqshka Exp $
+    $Id: common.c,v 1.61 2007-02-19 13:55:02 qqshka Exp $
 
 */
 
@@ -57,7 +57,7 @@ void FS_InitFilesystem (void);
 void COM_Path_f (void);
 int FS_FOpenPathFile (char *filename, FILE **file);
 
-char com_gamedirfile[MAX_QPATH];
+
 
 /*
 All of Quake's data access is through a hierarchic file system, but the contents of the file system can be transparently merged from several sources.
@@ -1308,8 +1308,10 @@ typedef struct
 
 #define	MAX_FILES_IN_PACK	2048
 
-char	com_gamedir[MAX_OSPATH];
+char	com_gamedirfile[MAX_QPATH]; // qw tf ctf and etc. In other words single dir name without path
+char	com_gamedir[MAX_OSPATH];    // c:\quake\qw
 char	com_basedir[MAX_OSPATH];
+char  com_homedir[MAX_PATH]; // something really long
 
 #ifndef SERVERONLY
 char	userdirfile[MAX_OSPATH] = {0};
@@ -1433,6 +1435,26 @@ qbool COM_WriteFile (char *filename, void *data, int len)
 	fclose (f);
 	return true;
 }
+
+//The filename used as is
+qbool COM_WriteFile_2 (char *filename, void *data, int len)
+{
+	FILE *f;
+	char name[MAX_PATH];
+
+	snprintf (name, sizeof(name), "%s", filename);
+
+	if (!(f = fopen (name, "wb"))) {
+		COM_CreatePath (name);
+		if (!(f = fopen (name, "wb")))
+			return false;
+	}
+	Sys_Printf ("COM_WriteFile_2: %s\n", name);
+	fwrite (data, 1, len, f);
+	fclose (f);
+	return true;
+}
+
 
 //Only used for CopyFile and download
 
@@ -1877,6 +1899,7 @@ void FS_InitFilesystem (void) {
 //	char	*home;
 //	char	homepath[MAX_OSPATH];
 	int i;
+  char *ev;	
 
 // 	home = getenv("HOME");
 
@@ -1918,6 +1941,41 @@ void FS_InitFilesystem (void) {
 	i = strlen(com_basedir) - 1;
 	if (i >= 0 && com_basedir[i] == '/')
 		com_basedir[i] = 0;
+		
+#ifdef _WIN32
+	// correct?
+	if ( (ev = getenv("HOMEDRIVE")) ) {
+		strlcpy(com_homedir, ev, sizeof(com_homedir));
+		if ( (ev = getenv("HOMEPATH")) )
+			strlcpy(com_homedir, ev, sizeof(com_homedir));
+		else
+	    com_homedir[0] = 0;
+	}
+	else
+		com_homedir[0] = 0;
+#else
+	ev = getenv("HOME");
+	if (ev)
+		strlcpy(com_homedir, ev, sizeof(com_homedir));
+	else
+		com_homedir[0] = 0;
+#endif
+
+//	if (!COM_CheckParm("-usehome"))
+//		*com_homedir = '\0';
+
+	if (COM_CheckParm("-nohome"))
+		com_homedir[0] = 0;
+
+	if (com_homedir[0])
+	{
+#ifdef _WIN32
+		strlcat(com_homedir, "/ezquake", sizeof(com_homedir));
+#else
+		strlcat(com_homedir, "/.ezquake", sizeof(com_homedir));
+#endif		
+		Com_Printf("Using home directory \"%s\"\n", com_homedir);
+	}
 
 	// start up with id1 by default
 	FS_AddGameDirectory(com_basedir, "id1");
@@ -1954,6 +2012,39 @@ void FS_InitFilesystem (void) {
 		FS_AddGameDirectory(homepath);
 	}
 */
+}
+
+// allow user select differet "style" how/where open/save different media files.
+// so user select media_dir is relative to quake base dir or some system HOME dir or may be full path
+// NOTE: using static buffer, use with care
+char *COM_LegacyDir(char *media_dir)
+{
+	static char dir[MAX_PATH];
+
+	// dir empty, return gamedir
+	if (!media_dir || !media_dir[0]) {
+		strlcpy(dir, cls.gamedir, sizeof(dir));
+		return dir;		
+	}
+	
+	switch (cl_mediaroot.integer) {
+		case 1:  //			/home/qqshka/ezquake/<demo_dir>
+			while(media_dir[0] == '/' || media_dir[0] == '\\')
+				media_dir++; // skip precending / probably smart
+
+			snprintf(dir, sizeof(dir), "%s/%s", com_homedir, media_dir);
+			return dir;
+		case 2:  //			/fullpath
+		  snprintf(dir, sizeof(dir), "%s", media_dir);
+			return dir;
+
+		default: //     /basedir/<demo_dir>
+			while(media_dir[0] == '/' || media_dir[0] == '\\')
+				media_dir++; // skip precending / probably smart
+
+		  snprintf(dir, sizeof(dir), "%s/%s", com_basedir, media_dir);
+			return dir;
+	}
 }
 
 

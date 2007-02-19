@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.32 2007-01-11 10:41:06 qqshka Exp $
+	$Id: utils.c,v 1.33 2007-02-19 13:55:02 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -182,7 +182,7 @@ int Util_Extend_Filename(char *filename, char **ext) {
 	return -1;
 }
 
-void Util_Process_Filename(char *string) {
+void Util_Process_FilenameEx(char *string, qbool allow_root) {
 	int i;
 
 	if (!string)
@@ -191,16 +191,26 @@ void Util_Process_Filename(char *string) {
 	for (i = 0; i < strlen(string); i++)
 		if (string[i] == '\\')
 			string[i] = '/';
-	if (string[0] == '/')
+
+	if (!allow_root && string[0] == '/')
 		for (i = 1; i <= strlen(string); i++)
 			string[i - 1] = string[i];
 }
 
-qbool Util_Is_Valid_Filename(char *s) {
+void Util_Process_Filename(char *string) {
+	Util_Process_FilenameEx(string, false);
+}
+
+qbool Util_Is_Valid_FilenameEx(char *s, qbool drive_prefix_valid) {
 	static char badchars[] = {'?', '*', ':', '<', '>', '"'};
 
 	if (!s || !*s)
 		return false;
+
+	// this will allow things like this: c:/quake/<demo_dir>
+	// probably windows specific only
+	if ( drive_prefix_valid && (isupper(s[0]) || islower(s[0])) && s[1] == ':' )
+		s += 2;
 
 	if (strstr(s, "../") || strstr(s, "..\\") )
 		return false;
@@ -211,6 +221,11 @@ qbool Util_Is_Valid_Filename(char *s) {
 		s++;
 	}
 	return true;
+}
+
+qbool Util_Is_Valid_Filename(char *s)
+{
+	return  Util_Is_Valid_FilenameEx(s, false);
 }
 
 char *Util_Invalid_Filename_Msg(char *s) {

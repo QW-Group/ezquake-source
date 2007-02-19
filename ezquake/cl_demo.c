@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.62 2007-02-12 11:18:53 qqshka Exp $
+	$Id: cl_demo.c,v 1.63 2007-02-19 13:55:02 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1204,16 +1204,17 @@ static qbool OnChange_demo_dir(cvar_t *var, char *string)
 		return false;
 
 	// Replace \ with /.
-	Util_Process_Filename(string);
+	Util_Process_FilenameEx(string, cl_mediaroot.integer == 2);
 
 	// Make sure the filename doesn't have any invalid chars in it.
-	if (!Util_Is_Valid_Filename(string)) 
+	if (!Util_Is_Valid_FilenameEx(string, cl_mediaroot.integer == 2)) 
 	{
 		Com_Printf(Util_Invalid_Filename_Msg(var->name));
 		return true;
 	}
 
 	// Change to the new folder in the demo browser.
+	// FIXME: this did't work
 	Menu_Demo_NewHome(string);
 	return false;
 }
@@ -1328,11 +1329,11 @@ void CL_Stop_f (void)
 //
 // Returns the Demo directory. If the user hasn't set the demo_dir var, the gamedir is returned.
 //
-static char *CL_DemoDirectory(void) 
+char *CL_DemoDirectory(void) 
 {
-	static char dir[MAX_OSPATH * 2];
+	static char dir[MAX_PATH];
 
-	strlcpy(dir, demo_dir.string[0] ? va("%s/%s", com_basedir, demo_dir.string) : cls.gamedir, sizeof(dir));
+	strlcpy(dir, COM_LegacyDir(demo_dir.string), sizeof(dir));
 	return dir;
 }
 
@@ -2214,7 +2215,7 @@ void CL_Play_f (void)
 			// Look in the demo dir (user specified).
 			if (!playbackfile)
 			{
-				playbackfile = FS_OpenVFS (va("%s/%s/%s", com_basedir, demo_dir.string, name), "rb", FS_NONE_OS);
+				playbackfile = FS_OpenVFS (va("%s/%s", CL_DemoDirectory(), name), "rb", FS_NONE_OS);
 			}
 
 			// Check the full system path (Run a demo anywhere on the file system).

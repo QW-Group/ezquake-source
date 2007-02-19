@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.37 2007-02-16 01:42:00 qqshka Exp $
+    $Id: image.c,v 1.38 2007-02-19 13:55:02 qqshka Exp $
 */
 
 #ifdef __FreeBSD__
@@ -675,13 +675,13 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight)
 }
 
 int Image_WritePNG (char *filename, int compression, byte *pixels, int width, int height) {
-	char name[MAX_OSPATH];
+	char name[MAX_PATH];
 	int i, bpp = 3, pngformat, width_sign;
 	FILE *fp;
 	png_structp png_ptr;
 	png_infop info_ptr;
 	png_byte **rowpointers;
-	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);
+	snprintf (name, sizeof(name), "%s", filename);
 
 	if (!png_handle)
 		return false;
@@ -743,7 +743,7 @@ int Image_WritePNGPLTE (char *filename, int compression,
 	int rowbytes = width;
 #endif
 	int i;
-	char name[MAX_OSPATH];
+	char name[MAX_PATH];
 	FILE *fp;
 	png_structp png_ptr;
 	png_infop info_ptr;
@@ -752,7 +752,7 @@ int Image_WritePNGPLTE (char *filename, int compression,
 	if (!png_handle)
 		return false;
 
-	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);
+	snprintf (name, sizeof(name), "%s", filename);
 	
 	if (!(fp = fopen (name, "wb"))) {
 		COM_CreatePath (name);
@@ -1111,13 +1111,13 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight)
 }
 
 int Image_WritePNG (char *filename, int compression, byte *pixels, int width, int height) {
-	char name[MAX_OSPATH];
+	char name[MAX_PATH];
 	int i, bpp = 3, pngformat, width_sign;
 	FILE *fp;
 	png_structp png_ptr;
 	png_infop info_ptr;
 	png_byte **rowpointers;
-	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);
+	snprintf (name, sizeof(name), "%s", filename);
 
 	width_sign = (width < 0) ? -1 : 1;
 	width = abs(width);
@@ -1176,13 +1176,13 @@ int Image_WritePNGPLTE (char *filename, int compression,
 	int rowbytes = width;
 #endif
 	int i;
-	char name[MAX_OSPATH];
+	char name[MAX_PATH];
 	FILE *fp;
 	png_structp png_ptr;
 	png_infop info_ptr;
 	png_byte **rowpointers;
 
-	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);
+	snprintf (name, sizeof(name), "%s", filename);
 	
 	if (!(fp = fopen (name, "wb"))) {
 		COM_CreatePath (name);
@@ -1444,7 +1444,7 @@ int Image_WriteTGA (char *filename, byte *pixels, int width, int height) {
 
 	memcpy (buffer + 18, pixels, size);
 
-	if (!(COM_WriteFile (filename, buffer, size + 18)))
+	if (!(COM_WriteFile_2 (filename, buffer, size + 18)))
 		retval = false;
 	Q_free (buffer);
 	return retval;
@@ -1588,7 +1588,7 @@ void jpeg_error_exit (j_common_ptr cinfo) {
 
 
 int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int height) {
-	char name[MAX_OSPATH];
+	char name[MAX_PATH];
 	FILE *outfile;
 	jpeg_error_mgr_wrapper jerr;
 	struct jpeg_compress_struct cinfo;
@@ -1597,7 +1597,7 @@ int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int he
 	if (!jpeg_handle)
 		return false;
 
-	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);	
+	snprintf (name, sizeof(name), "%s", filename);	
 	if (!(outfile = fopen (name, "wb"))) {
 		COM_CreatePath (name);
 		if (!(outfile = fopen (name, "wb")))
@@ -1712,13 +1712,13 @@ void jpeg_error_exit (j_common_ptr cinfo) {
 
 
 int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int height) {
-	char name[MAX_OSPATH];
+	char name[MAX_PATH];
 	FILE *outfile;
 	jpeg_error_mgr_wrapper jerr;
 	struct jpeg_compress_struct cinfo;
 	JSAMPROW row_pointer[1];
 
-	snprintf (name, sizeof(name), "%s/%s", com_basedir, filename);	
+	snprintf (name, sizeof(name), "%s", filename);	
 	if (!(outfile = fopen (name, "wb"))) {
 		COM_CreatePath (name);
 		if (!(outfile = fopen (name, "wb")))
@@ -2184,7 +2184,7 @@ int Image_WritePCX (char *filename, byte *data, int width, int height, int rowby
 		*pack++ = *palette++;
 
 	length = pack - (byte *) pcx;
-	if (!(COM_WriteFile (filename, pcx, length))) {
+	if (!(COM_WriteFile_2 (filename, pcx, length))) {
 		Q_free(pcx);
 		return false;
 	}

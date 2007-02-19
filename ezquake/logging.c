@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: logging.c,v 1.8 2006-04-06 23:23:18 disconn3ct Exp $
+	$Id: logging.c,v 1.9 2007-02-19 13:55:02 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -28,7 +28,7 @@ static qbool OnChange_log_dir(cvar_t *var, char *string);
 cvar_t		log_dir			= {"log_dir", "", 0, OnChange_log_dir};
 cvar_t		log_readable	= {"log_readable", "0"};
 
-#define			LOG_FILENAME_MAXSIZE	(MAX_OSPATH * 2)
+#define			LOG_FILENAME_MAXSIZE	(MAX_PATH)
 
 static FILE		*logfile;				
 static char		logfilename[LOG_FILENAME_MAXSIZE];
@@ -42,7 +42,7 @@ qbool Log_IsLogging(void) {
 static char *Log_LogDirectory(void) {
 	static char dir[LOG_FILENAME_MAXSIZE];
 
-	strlcpy(dir, log_dir.string[0] ? va("%s/%s", com_basedir, log_dir.string) : cls.gamedir, sizeof(dir));
+	strlcpy(dir, COM_LegacyDir(log_dir.string), sizeof(dir));
 	return dir;
 }
 
@@ -58,8 +58,9 @@ static qbool OnChange_log_dir(cvar_t *var, char *string) {
 	if (!string[0])
 		return false;
 
-	Util_Process_Filename(string);
-	if (!Util_Is_Valid_Filename(string)) {
+	Util_Process_FilenameEx(string, cl_mediaroot.integer == 2);
+
+	if (!Util_Is_Valid_FilenameEx(string, cl_mediaroot.integer == 2)) {
 		Com_Printf(Util_Invalid_Filename_Msg(var->name));
 		return true;
 	}

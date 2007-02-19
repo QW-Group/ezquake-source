@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.22 2007-01-26 18:22:00 disconn3ct Exp $
+		$Id: menu_demo.c,v 1.23 2007-02-19 13:55:02 qqshka Exp $
 
 */
 
@@ -61,7 +61,6 @@ typedef struct demo_playlist_s
 	char trackname[DEMO_PLAYLIST_NAME_MAX];
 } demo_playlist_t;
 
-extern cvar_t demo_dir;
 extern cvar_t     scr_scaleMenu;
 #ifdef GLQUAKE
 extern int        menuwidth;
