@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.61 2007-02-19 13:55:02 qqshka Exp $
+    $Id: common.c,v 1.62 2007-02-19 19:33:55 qqshka Exp $
 
 */
 
@@ -1975,6 +1975,11 @@ void FS_InitFilesystem (void) {
 		strlcat(com_homedir, "/.ezquake", sizeof(com_homedir));
 #endif		
 		Com_Printf("Using home directory \"%s\"\n", com_homedir);
+	}
+	else
+	{
+		// if homedir not used set it equal to basedir
+		strlcpy(com_homedir, com_basedir, sizeof(com_homedir));
 	}
 
 	// start up with id1 by default
