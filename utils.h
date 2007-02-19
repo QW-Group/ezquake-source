@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.h,v 1.13 2007-01-10 13:37:31 oldmanuk Exp $
+	$Id: utils.h,v 1.14 2007-02-19 13:55:02 qqshka Exp $
 
 */
 
@@ -37,8 +37,10 @@ int ParseFloats(char *s, float *f, int *f_size);
 
 int Util_Extend_Filename(char *filename, char **ext);
 qbool Util_Is_Valid_Filename(char *s);
+qbool Util_Is_Valid_FilenameEx(char *s, qbool drive_prefix_valid);
 char *Util_Invalid_Filename_Msg(char *s);
 void Util_Process_Filename(char *string);
+void Util_Process_FilenameEx(char *string, qbool allow_root);
 
 int Player_IdtoSlot (int id);
 int Player_SlottoId (int slot);

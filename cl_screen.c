@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.86 2007-02-07 16:07:55 tonik Exp $
+    $Id: cl_screen.c,v 1.87 2007-02-19 13:55:02 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -2572,6 +2572,14 @@ static image_format_t SShot_FormatForName(char *name) {
 #endif
 }
 
+static char *Sshot_SshotDirectory(void) {
+	static char dir[MAX_PATH];
+
+	strlcpy(dir, COM_LegacyDir(scr_sshot_dir.string), sizeof(dir));
+	return dir;
+}
+
+
 #ifdef GLQUAKE
 
 extern unsigned short ramps[3][256];
@@ -2594,7 +2602,9 @@ int SCR_Screenshot(char *name) {
 	byte *buffer;
 	image_format_t format;
 
-	name = (*name == '/') ? name + 1 : name;
+// name is fullpath now
+//	name = (*name == '/') ? name + 1 : name;
+
 	format = SShot_FormatForName(name);
 	COM_ForceExtension (name, SShot_ExtForFormat(format));
 	buffersize = glwidth * glheight * 3;
@@ -2666,7 +2676,9 @@ int SCR_Screenshot(char *name) {
 	int success = -1;
 	image_format_t format;
 
-	name = (*name == '/') ? name + 1 : name;
+// name is fullpath now
+//	name = (*name == '/') ? name + 1 : name;
+
 	format = SShot_FormatForName(name);
 	COM_ForceExtension (name, SShot_ExtForFormat(format));
 
@@ -2747,7 +2759,7 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 	for (i = 0; i < MAX_SCREENSHOT_COUNT; i++) 
 	{
 		snprintf(name, name_size, "ezquake%03i.%s", i, ext);
-		if (!(f = fopen (va("%s/%s/%s", com_basedir, sshot_dir, name), "rb")))
+		if (!(f = fopen (va("%s/%s", sshot_dir, name), "rb")))
 		{
 			break;  // file doesn't exist
 		}
@@ -2788,7 +2800,7 @@ void SCR_ScreenShot_f (void)
 		}
 	}	
 	
-	sshot_dir = scr_sshot_dir.string[0] ? scr_sshot_dir.string : cls.gamedirfile;
+	sshot_dir = Sshot_SshotDirectory();
 
 	if (Cmd_Argc() == 2) 
 	{
@@ -2820,7 +2832,7 @@ void SCR_ScreenShot_f (void)
 
 void SCR_RSShot_f (void) { 
 	int success = SSHOT_FAILED;
-	char *filename;
+	char filename[MAX_PATH];
 #ifdef GLQUAKE
 	int width, height;
 	byte *base, *pixels;
@@ -2841,7 +2853,7 @@ void SCR_RSShot_f (void) {
 
 	Com_Printf ("Remote screenshot requested.\n");
 
-	filename = "ezquake/temp/__rsshot__";
+	snprintf(filename, sizeof(filename), "%s/temp/__rsshot__", Sshot_SshotDirectory());
 
 #ifdef GLQUAKE
 
@@ -2892,7 +2904,7 @@ void SCR_RSShot_f (void) {
 		FILE	*f;
 		byte	*screen_shot;
 		int	size;
-		if ((size = COM_FileOpenRead (va("%s/%s", com_basedir, filename), &f)) == -1)
+		if ((size = COM_FileOpenRead (filename, &f)) == -1)
 		{
 			Com_Printf ("Can't send screenshot to server: can't open file %s\n", filename);
 		}
@@ -2911,7 +2923,7 @@ void SCR_RSShot_f (void) {
 		}
 	}
 
-	remove(va("%s/%s", com_basedir, filename));
+	remove(filename);
 }
 
 static void SCR_CheckMVScreenshot(void) 
@@ -2923,34 +2935,37 @@ static void SCR_CheckMVScreenshot(void)
 }
 
 static void SCR_CheckAutoScreenshot(void) {
-	char *filename, savedname[2 * MAX_OSPATH], *sshot_dir, *fullsavedname, *ext;
+	char *filename, savedname[MAX_PATH], *sshot_dir, *fullsavedname, *ext;
 	char *exts[5] = {"pcx", "tga", "png", "jpg", NULL};
 	int num;
 
 	if (!scr_autosshot_countdown || --scr_autosshot_countdown)
 		return;
 
-
 	if (!cl.intermission)
 		return;
+
+	sshot_dir = Sshot_SshotDirectory();
+
+// no, sorry
+//	while (*sshot_dir && (*sshot_dir == '/'))
+//		sshot_dir++; // will skip all '/' chars at the beginning
+
+	if (!sshot_dir[0])
+		sshot_dir = cls.gamedir;
 
 	for (filename = auto_matchname; *filename == '/' || *filename == '\\'; filename++)
 		;
 
-	sshot_dir = scr_sshot_dir.string;
-	while (*sshot_dir && (*sshot_dir == '/')) sshot_dir++; // will skip all '/' chars at the beginning
-	if (!(*sshot_dir))
-		sshot_dir = cls.gamedirfile;
-
 	ext = SShot_ExtForFormat(SShot_FormatForName(filename));
 
-	fullsavedname = va("%s/%s", sshot_dir, auto_matchname);
+	fullsavedname = va("%s/%s", sshot_dir, filename);
 	if ((num = Util_Extend_Filename(fullsavedname, exts)) == -1) {
 		Com_Printf("Error: no available filenames\n");
 		return;
 	}
 
-	snprintf (savedname, sizeof(savedname), "%s_%03i%s", auto_matchname, num, ext);
+	snprintf (savedname, sizeof(savedname), "%s_%03i%s", filename, num, ext);
 	fullsavedname = va("%s/%s", sshot_dir, savedname);
 
 #ifdef GLQUAKE

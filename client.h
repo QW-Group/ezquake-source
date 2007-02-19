@@ -269,8 +269,8 @@ typedef struct
 	// Download vars.
 	//
 	FILE		*download;			// file transfer from server
-	char		downloadtempname[MAX_OSPATH];
-	char		downloadname[MAX_OSPATH];
+	char		downloadtempname[MAX_PATH];
+	char		downloadname[MAX_PATH];
 	int			downloadnumber;
 	dltype_t	downloadtype;
 	int			downloadpercent;
@@ -495,6 +495,8 @@ extern cvar_t cl_showkeycodes;
 extern cvar_t b_switch;		// added for the sake of menu.c
 extern cvar_t w_switch;		// added for the sake of menu.c
 
+extern cvar_t  cl_mediaroot;
+
 // Multiview cvars
 extern cvar_t cl_multiview;
 extern cvar_t cl_mvdisplayhud;
@@ -544,6 +546,7 @@ extern byte		*host_colormap;
 //=============================================================================
 
 // cl_main
+
 void CL_Init (void);
 void CL_WriteConfiguration (void);
 void CL_ClearState (void);

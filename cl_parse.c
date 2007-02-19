@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.70 2007-02-03 03:28:52 cokeman1982 Exp $
+	$Id: cl_parse.c,v 1.71 2007-02-19 13:55:02 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -405,17 +405,17 @@ qbool CL_CheckOrDownloadFile (char *filename) {
 	if (cls.demoplayback)
 		return true;
 
-	strcpy (cls.downloadname, filename);
-	Com_Printf ("Downloading %s...\n", cls.downloadname);
+	snprintf (cls.downloadname, sizeof(cls.downloadname), "%s/%s", cls.gamedir, filename);
+	Com_Printf ("Downloading %s...\n", filename);
 
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted
 	// a runt file wont be left
 	COM_StripExtension (cls.downloadname, cls.downloadtempname);
-	strcat (cls.downloadtempname, ".tmp");
+	strlcat (cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 
 	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-	MSG_WriteString (&cls.netchan.message, va("download %s", cls.downloadname));
+	MSG_WriteString (&cls.netchan.message, va("download %s", filename));
 
 	cls.downloadnumber++;
 
@@ -641,8 +641,8 @@ void CL_RequestNextDownload (void) {
 
 //A download message has been received from the server
 void CL_ParseDownload (void) {
-	int size, percent, r;
-	byte name[1024];
+	int size, percent;
+
 	static float time = 0;
 	static int s = 0;
 
@@ -684,15 +684,10 @@ void CL_ParseDownload (void) {
 
 	// open the file if not opened yet
 	if (!cls.download) {
-		//if (strncmp(cls.downloadtempname,"skins/",6))
-		snprintf ((char *) name, sizeof(name), "%s/%s", cls.gamedir, cls.downloadtempname);
-		/*else
-			snprintf (name, sizeof(name), "qw/%s", cls.downloadtempname);*/
-//Com_Printf("%s\n%s\n", cls.downloadname, cls.downloadtempname);
-		COM_CreatePath ((char *) name);
 
-		cls.download = fopen ((const char *)name, "wb");
-		if (!cls.download) {
+		COM_CreatePath (cls.downloadtempname);		
+
+		if ( !(cls.download = fopen (cls.downloadtempname, "wb")) ) {
 			msg_readcount += size;
 			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
 			CL_RequestNextDownload ();
@@ -711,24 +706,13 @@ void CL_ParseDownload (void) {
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		SZ_Print (&cls.netchan.message, "nextdl");
 	} else {
-		char oldn[MAX_OSPATH], newn[MAX_OSPATH];
 
 		fclose (cls.download);
 
 		// rename the temp file to its final name
-		if (strcmp(cls.downloadtempname, cls.downloadname)) {
-			//if (strncmp(cls.downloadtempname,"skins/",6)) {
-			sprintf (oldn, "%s/%s", cls.gamedir, cls.downloadtempname);
-			sprintf (newn, "%s/%s", cls.gamedir, cls.downloadname);
-			/*} else {
-				sprintf (oldn, "qw/%s", cls.downloadtempname);
-				sprintf (newn, "qw/%s", cls.downloadname);
-			}*/
-			r = rename (oldn, newn);
-			if (r)
-				Com_Printf ("Failed to rename %s to %s.\n",
-					cls.downloadtempname, cls.downloadname);
-		}
+		if (strcmp(cls.downloadtempname, cls.downloadname))
+			if (rename(cls.downloadtempname, cls.downloadname))
+				Com_Printf ("Failed to rename %s to %s.\n",	cls.downloadtempname, cls.downloadname);
 
 		cls.download = NULL;
 		cls.downloadpercent = 0;

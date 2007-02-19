@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.37 2006-12-28 00:12:14 qqshka Exp $
+	$Id: cl_cmd.c,v 1.38 2007-02-19 13:55:02 qqshka Exp $
 */
 
 #include <time.h>
@@ -453,40 +453,48 @@ void CL_Rcon_f (void) {
 }
 
 void CL_Download_f (void){
-	//char *p, *q;
+	char *dir; // we save to demo_dir or gamedir
+	char *filename; // which file to dl, will be sent to server
+	char ondiskname[sizeof(cls.downloadname)]; // hack, save file to "right" place
+	extern char *CL_DemoDirectory(void);
 
 	if (cls.state == ca_disconnected) {
 		Com_Printf ("Must be connected.\n");
 		return;
 	}
 
-	if (Cmd_Argc() != 2) {
+	filename = Cmd_Argv(1);
+	strlcpy(ondiskname, filename, sizeof(ondiskname)); // in most cases this is same as filename
+
+	if (Cmd_Argc() != 2 || !filename[0]) {
 		Com_Printf ("Usage: %s <datafile>\n", Cmd_Argv(0));
 		return;
 	}
 
-	/*snprintf (cls.downloadname, sizeof(cls.downloadname), "%s/%s", cls.gamedir, Cmd_Argv(1));
-
-	p = cls.downloadname;
-	while (1) {
-		if ((q = strchr(p, '/')) != NULL) {
-			*q = 0;
-			Sys_mkdir(cls.downloadname);
-			*q = '/';
-			p = q + 1;
-		} else
-			break;
+	// hack: save demos in demo_dir
+	if (
+				    Utils_RegExpMatch("\\.mvd(\\.(gz|bz2|rar|zip))?$", filename)
+				 || Utils_RegExpMatch("\\.(qwd|qwz|dem)$", filename)
+			) {
+		dir = CL_DemoDirectory(); // seems filename is a demo
+		// so, we save file in /dir/<demo_dir> instead of /dir/<demo_dir>/demos
+		strlcpy(ondiskname, COM_SkipPath(filename), sizeof(ondiskname));
 	}
+	else
+		dir = cls.gamedir; // not a demo
+	
+	// download to a temp name, and only rename
+	// to the real name when done, so if interrupted
+	// a runt file wont be left
 
-	strcpy(cls.downloadtempname, cls.downloadname);
-	cls.download = fopen (cls.downloadname, "wb");*/
-	strlcpy(cls.downloadname, Cmd_Argv(1), sizeof(cls.downloadname));
-	COM_StripExtension(cls.downloadname, cls.downloadtempname);
-	strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 	cls.downloadtype = dl_single;
 
+	snprintf(cls.downloadname, sizeof(cls.downloadname), "%s/%s", dir, ondiskname);
+	COM_StripExtension(cls.downloadname, cls.downloadtempname);
+	strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
+
 	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-	SZ_Print (&cls.netchan.message, va("download %s\n", Cmd_Argv(1)));
+	SZ_Print (&cls.netchan.message, va("download %s\n", filename));
 }
 
 void CL_User_f (void) {
