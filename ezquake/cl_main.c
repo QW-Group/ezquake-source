@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.125 2007-02-19 13:55:02 qqshka Exp $
+	$Id: cl_main.c,v 1.126 2007-02-20 23:57:42 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -547,7 +547,9 @@ void CL_DNS_f (void) {
 		Com_Printf("Resolved %s to %s\n", address, h->h_name);
 }
 
-
+#ifdef GLQUAKE
+void SCR_ClearTeamInfo(void);
+#endif
 
 void CL_ClearState (void) {
 	int i;
@@ -587,6 +589,11 @@ void CL_ClearState (void) {
 	cl.free_efrags[i].entnext = NULL;
 
 	memset (&cshift_empty, 0, sizeof(cshift_empty));	// Tonik
+
+#ifdef GLQUAKE
+	// clear teaminfo structs
+	SCR_ClearTeamInfo();
+#endif
 
 	if (!com_serveractive)
 		Cvar_ForceSet (&mapname, ""); // notice mapname not valid yet
