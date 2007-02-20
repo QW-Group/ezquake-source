@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.87 2007-02-19 13:55:02 qqshka Exp $
+    $Id: cl_screen.c,v 1.88 2007-02-20 23:57:42 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -112,11 +112,16 @@ cvar_t	cl_hud = {"cl_hud", "1"};
 #ifdef GLQUAKE
 cvar_t	gl_triplebuffer = {"gl_triplebuffer", "1", CVAR_ARCHIVE};
 cvar_t  r_chaticons_alpha = {"r_chaticons_alpha", "0.8"};
-#endif
-
-#ifdef GLQUAKE
 cvar_t	scr_autoid		= {"scr_autoid", "0"};
 cvar_t	scr_coloredfrags = {"scr_coloredfrags", "0"};
+
+cvar_t	scr_teaminfo_align_right = {"scr_teaminfo_align_right", "1", CVAR_ARCHIVE};
+cvar_t	scr_teaminfo_frame_color = {"scr_teaminfo_frame_color", "10 0 0 120"};
+cvar_t	scr_teaminfo_scale = {"scr_teaminfo_scale", "1", CVAR_ARCHIVE};
+cvar_t	scr_teaminfo_y     = {"scr_teaminfo_y",     "0", CVAR_ARCHIVE};
+cvar_t  scr_teaminfo_x     = {"scr_teaminfo_x",     "0", CVAR_ARCHIVE};
+cvar_t  scr_teaminfo       = {"scr_teaminfo",       "1", CVAR_ARCHIVE};
+
 #endif
 cvar_t	scr_coloredText = {"scr_coloredText", "1"};
 
@@ -1319,6 +1324,164 @@ void DrawCI (void) {
 	}
 }
 
+/********************************* q3 like team info *****************************/
+
+// team info
+typedef struct ti_player_s {
+	vec3_t		org;
+	int			items;
+	int			health;
+	int			armor;
+	double		time; // when we recive last update about this player, so we can guess disconnects and etc
+	
+} ti_player_t;
+
+/*do not show player if no info about him during this time, affect us if we lagging too*/
+#define TI_TIMEOUT (5)
+
+static ti_player_t ti_clients[MAX_CLIENTS];
+
+#define FONTWIDTH (8)
+
+qbool VX_TrackerIsEnemy(int player);
+char *TP_LocationName (vec3_t location);
+mpic_t * SCR_GetWeaponIconByFlag (int flag);
+
+void SCR_ClearTeamInfo(void)
+{
+	memset(ti_clients, 0, sizeof(ti_clients));
+}
+
+static void SCR_Draw_TeamInfo(void)
+{
+	char *loc, tmp[1024];
+	int x, y, w, h;
+	int i, j, slots[MAX_CLIENTS], slots_num, maxname, maxloc;
+	extern mpic_t  *sb_face_invis, *sb_face_quad, *sb_face_invuln;
+	mpic_t *pic;
+	
+	float	scale = bound(0.1, scr_teaminfo_scale.value, 10);
+
+	if ( !cl.teamplay || !scr_teaminfo.integer )  // non teamplay mode	
+		return;
+		
+	for ( maxloc = maxname = slots_num = i = 0; i < MAX_CLIENTS; i++ ) {
+		if ( !cl.players[i].name[0] || cl.players[i].spectator
+				|| !ti_clients[i].time || ti_clients[i].time + TI_TIMEOUT < r_refdef2.time
+		 		|| VX_TrackerIsEnemy( i ) // not on our team
+				|| (cl.spectator && Cam_TrackNum() == i) // do not show to spec tracked player
+		 	)
+			continue;
+
+		maxname = max(maxname, strlen(cl.players[i].name));
+		maxloc =  max(maxloc, strlen(TP_LocationName(ti_clients[i].org)));
+		slots[slots_num++] = i;
+	}
+
+	if ( !slots_num )
+		return;
+
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glColor4f(1, 1, 1, 1);
+	glDisable(GL_ALPHA_TEST);
+	glEnable(GL_BLEND);
+
+	if (scale != 1) {
+		glPushMatrix ();
+		glScalef(scale, scale, 1); 
+	}
+
+	y = vid.height*0.6/scale + scr_teaminfo_y.value;
+
+	w = (maxname + maxloc + sizeof(" hhh aaa ww ppp") - 1);
+	h = slots_num;
+	
+	for ( j = 0; j < slots_num; j++ ) {
+		i = slots[j];
+
+		x = (scr_teaminfo_align_right.value ? (vid.width/scale - w * FONTWIDTH) - FONTWIDTH : FONTWIDTH);
+		x += scr_teaminfo_x.value;
+
+		if ( !j ) { // draw frame
+			byte	*col = StringToRGB(scr_teaminfo_frame_color.string);
+			glDisable (GL_TEXTURE_2D);
+			glColor4ub(col[0], col[1], col[2], col[3]);
+			glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
+			glEnable (GL_TEXTURE_2D);
+			glColor4f(1, 1, 1, 1);			
+		}
+
+		// draw name
+		snprintf(tmp, sizeof(tmp), "%*.*s", maxname, maxname, cl.players[i].name);
+		Draw_ColoredString (x, y, tmp, false);
+		x += (maxname + 1) * FONTWIDTH;
+
+		// draw location
+		loc = TP_LocationName(ti_clients[i].org);
+		if (!loc[0])
+			loc = "unknown";
+
+		snprintf(tmp, sizeof(tmp), "%*.*s", maxloc, maxloc, loc);
+		Draw_ColoredString (x, y, tmp, false);
+		x += (maxloc + 1) * FONTWIDTH;
+
+		// draw health and armor		
+		snprintf(tmp, sizeof(tmp), "%3d %3d", ti_clients[i].health, ti_clients[i].armor);
+		Draw_ColoredString (x, y, tmp, false);
+		x += (7 + 1) * FONTWIDTH;
+		
+		// draw "best" weapon icon
+		if ( (pic = SCR_GetWeaponIconByFlag(BestWeaponFromStatItems( ti_clients[i].items ))) )
+			Draw_SPic (x, y, pic, 0.5);
+		x += 2 * FONTWIDTH;
+
+		// draw powerups
+		if ( sb_face_quad && (ti_clients[i].items & IT_QUAD))
+      Draw_SPic (x, y, sb_face_quad, 1.0/3);
+		x += FONTWIDTH;			
+		if ( sb_face_invuln && (ti_clients[i].items & IT_INVULNERABILITY))
+      Draw_SPic (x, y, sb_face_invuln, 1.0/3);
+		x += FONTWIDTH;			
+		if ( sb_face_invis && (ti_clients[i].items & IT_INVISIBILITY))
+      Draw_SPic (x, y, sb_face_invis, 1.0/3);
+		x += FONTWIDTH;			
+			
+		y += FONTWIDTH;
+	}
+	
+	if (scale != 1)
+		glPopMatrix();
+
+	glEnable(GL_ALPHA_TEST);
+	glDisable(GL_BLEND);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glColor4f(1, 1, 1, 1);	
+}
+
+void Parse_TeamInfo(char *s)
+{
+	int		client;
+
+  Cmd_TokenizeString( s );
+
+	client = atoi( Cmd_Argv( 1 ) );
+
+	if (client < 0 || client >= MAX_CLIENTS) {
+		Com_DPrintf("Parse_TeamInfo: wrong client %d\n", client);
+		return;
+	}
+
+	ti_clients[ client ].time   = r_refdef2.time;
+
+	ti_clients[ client ].org[0] = atoi( Cmd_Argv( 2 ) );
+	ti_clients[ client ].org[1] = atoi( Cmd_Argv( 3 ) );
+	ti_clients[ client ].org[2] = atoi( Cmd_Argv( 4 ) );		
+	ti_clients[ client ].health = atoi( Cmd_Argv( 5 ) );
+	ti_clients[ client ].armor  = atoi( Cmd_Argv( 6 ) );
+	ti_clients[ client ].items  = atoi( Cmd_Argv( 7 ) );
+}
+
+
 #endif
 
 /**************************************** 262 HUD *****************************/
@@ -2161,6 +2324,8 @@ void SCR_TileClear (void) {
 #endif
 
 void SCR_DrawElements(void) {
+  extern qbool  sb_showscores,  sb_showteamscores;
+
 	if (scr_drawloading) {
 		SCR_DrawLoading ();
 		Sbar_Draw ();
@@ -2179,19 +2344,28 @@ void SCR_DrawElements(void) {
 			SCR_DrawRam ();
 			SCR_DrawNet ();
 			SCR_DrawTurtle ();
-			SCR_DrawPause ();
+
+			if (!sb_showscores && !sb_showteamscores) { // do not show if +showscores
+				SCR_DrawPause ();
 #ifdef GLQUAKE
-			SCR_DrawAutoID ();
+				SCR_DrawAutoID ();
 #endif
+			}
+
 			if (!cl.intermission) {
-				if (key_dest != key_menu)
-					Draw_Crosshair ();
-				SCR_CheckDrawCenterString ();
-				SCR_DrawSpeed ();
-				SCR_DrawClock ();
-				SCR_DrawGameClock ();
-				SCR_DrawDemoClock ();
-				SCR_DrawFPS ();
+     		if (!sb_showscores && !sb_showteamscores) { // do not show if +showscores 
+#ifdef GLQUAKE				
+					SCR_Draw_TeamInfo();
+#endif
+					if (key_dest != key_menu)
+						Draw_Crosshair ();
+					SCR_CheckDrawCenterString ();
+					SCR_DrawSpeed ();
+					SCR_DrawClock ();
+					SCR_DrawGameClock ();
+					SCR_DrawDemoClock ();
+					SCR_DrawFPS ();
+				}
 				
 				// QW262 
 				SCR_DrawHud ();
@@ -3089,6 +3263,13 @@ void SCR_Init (void) {
 #ifdef GLQUAKE
 	Cvar_Register (&scr_autoid);
 	Cvar_Register (&scr_coloredfrags);
+
+	Cvar_Register (&scr_teaminfo_align_right);
+  Cvar_Register (&scr_teaminfo_frame_color);
+  Cvar_Register (&scr_teaminfo_scale);
+  Cvar_Register (&scr_teaminfo_y);
+  Cvar_Register (&scr_teaminfo_x);
+  Cvar_Register (&scr_teaminfo);
 #endif
 	Cvar_Register (&scr_coloredText);
 

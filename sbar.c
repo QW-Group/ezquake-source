@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.30 2007-02-07 16:10:12 tonik Exp $
+	$Id: sbar.c,v 1.31 2007-02-20 23:57:42 qqshka Exp $
 */
 // sbar.c -- status bar code
 
@@ -1752,11 +1752,13 @@ void Sbar_Draw(void) {
 
 	// top line
 	if (sb_lines > 24 && scr_newHud.value != 1) {  // HUD -> hexum
-		if (!cl.spectator || autocam == CAM_TRACK)
-			Sbar_DrawInventory();
+		if (!sb_showscores && !sb_showteamscores) { // do not show with +showscores
+			if (!cl.spectator || autocam == CAM_TRACK)
+				Sbar_DrawInventory();
 		
-		if (cl.gametype == GAME_DEATHMATCH && (!headsup || vid.width < 512))
-			Sbar_DrawFrags();
+			if (cl.gametype == GAME_DEATHMATCH && (!headsup || vid.width < 512))
+				Sbar_DrawFrags();
+		}
 	}	
 
 	// main area
