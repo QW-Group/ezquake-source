@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.126 2007-02-20 23:57:42 qqshka Exp $
+	$Id: cl_main.c,v 1.127 2007-02-21 22:17:01 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -130,7 +130,7 @@ cvar_t  noaim = {"noaim", "1", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	w_switch = {"w_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	b_switch = {"b_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
 
-cvar_t  cl_mediaroot = {"cl_mediaroot", "1", CVAR_ARCHIVE};
+cvar_t  cl_mediaroot = {"cl_mediaroot", "0", CVAR_ARCHIVE};
 
 // START shaman RFE 1022306
 cvar_t  msg_filter = {"msg_filter", "0"};
