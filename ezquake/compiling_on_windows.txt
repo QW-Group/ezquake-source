@@ -16,7 +16,11 @@ Instructions:
  - http://www.microsoft.com/downloads/details.aspx?FamilyId=7AB978B5-5F1A-4F6A-88EB-FC646138BECA&displaylang=en
  - project file looks in DXSDK_PATH (Environment variable), you can set this in your System -> Advanced -> Environment Variables settings
 
-3) Download all required libraries, there are two ways to do it:
+3) Get platfrom SDK and set it up
+ - http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/default.aspx
+ - just follow instructions
+
+4) Download all required libraries, there are two ways to do it:
  A) go to http://ezquake.cvs.sourceforge.net/ezquake/libs/windows-x86/
     and manually download all *.lib files from there, save them into libs\windows-x86 directory
  B) Go to libs/windows-x86 dir and launch download.bat
@@ -24,13 +28,13 @@ Instructions:
     http://www.christopherlewis.com/WGet/wget-1.10.2b.zip
     and place wget.exe either in the same dir as download.bat or in your system dir
 
-4) For MS Visual Studio 8 (2005 .NET) you usually need ml.exe, grab it from 
+5) For MS Visual Studio 8 (2005 .NET) you usually need ml.exe, grab it from 
    http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/ML.EXE
    and place it into masm32 directory
 
-5) Open ezquake.sln for Microsoft Visual Studio 7.1. For MSVS2005 open ezquake_msvs_80.sln located in ezquake/make/msvs2005
+6) Open ezquake.sln for Microsoft Visual Studio 7.1. For MSVS2005 open ezquake_msvs_80.sln located in ezquake/make/msvs2005
 
-6) Select GLDebug configuration and press "Build". (You need to compile GLDebug first so that gas2masm.exe is compiled, if you want Release version you can compile that after that).
+7) Select GLDebug configuration and press "Build". (You need to compile GLDebug first so that gas2masm.exe is compiled, if you want Release version you can compile that after that).
 
 
 
@@ -62,11 +66,10 @@ Microsoft Visual Studio 8 and .s (asm) files:
 
 Troubleshooting:
 ---------------------------
-- If you get "unresolved external symbol __imp__" linker errors, go to project properties, linker, input, additional dependencies, click "..."
-  and check if Inherited values contain 12 libs. You may happen to have only one lib in there. In such case add these libs to the upper window:
-  kernel32.lib, user32.lib, gdi32.lib, winspool.lib, comdlg32.lib, advapi32.lib, shell32.lib, ole32.lib, oleaut32.lib, uuid.lib, odbc32.lib, odbccp32.lib
+- If you get "unresolved external symbol __imp__" linker errors, you need to edit the corewin_express.vsprops file (found in C:\Program Files\Microsoft Visual Studio 8\VC\VCProjectDefaults) and change the string that reads: AdditionalDependencies="kernel32.lib" to AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib"
+  It's also good to read this: http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/default.aspx
 
-- If you get "gas2masm - up-to-date" when trying to build gas2masm for the first time in MSVS2005, then try building gas2masm in debug mode.
+ If you get "gas2masm - up-to-date" when trying to build gas2masm for the first time in MSVS2005, then try building gas2masm in debug mode.
 
 
 
