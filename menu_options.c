@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.43 2007-02-19 15:07:00 johnnycz Exp $
+		$Id: menu_options.c,v 1.44 2007-02-22 23:56:06 johnnycz Exp $
 
 */
 
@@ -955,6 +955,8 @@ void Menu_Options_Init(void) {
 #endif
 
 	Cvar_Register(&menu_advanced);
+	mvs_selected.freq.name = "menu_tempval_video_freq";
+	mvs_previous.freq.name = mvs_selected.freq.name;
 
 	CTab_Init(&options_tab);
 	CTab_AddPage(&options_tab, "main", OPTPG_SETTINGS, OnShow_SettMain, CT_Opt_Settings_Draw, CT_Opt_Settings_Key);
