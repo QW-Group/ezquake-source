@@ -1786,6 +1786,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\hud_editor.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\ignore.c"
 					>
 				</File>
@@ -2210,6 +2214,10 @@
 				</File>
 				<File
 					RelativePath="..\..\hud_common.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\hud_editor.h"
 					>
 				</File>
 				<File

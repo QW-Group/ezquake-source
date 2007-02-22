@@ -16,13 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.88 2007-02-20 23:57:42 qqshka Exp $
+    $Id: cl_screen.c,v 1.89 2007-02-22 23:50:17 johnnycz Exp $
 */
 
 #include "quakedef.h"
 #include "cl_screen.h"
 #include <time.h>
 #include "mvd_utils.h"
+#include "hud_editor.h"
 
 #ifdef _WIN32
 #include "movie.h"	//joe: capturing to avi
@@ -2404,6 +2405,7 @@ void SCR_DrawElements(void) {
 
 				Sbar_Draw();
 				HUD_Draw();		// HUD -> hexum
+				HUD_Editor_Draw();
 			}
 		}
 
