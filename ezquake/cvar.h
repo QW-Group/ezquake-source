@@ -70,6 +70,9 @@ typedef struct cvar_group_s {
 // flags set
 void Cvar_Register (cvar_t *var);
 
+// Use this to walk through all vars
+cvar_t *Cvar_Next (cvar_t *var);
+
 // creates a cvar dynamically
 cvar_t *Cvar_Create (char *name, char *string, int cvarflags);
 

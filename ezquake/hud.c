@@ -1056,7 +1056,8 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
     if (i == 0)
     {
         // error in C code, probably parent should be registered earlier
-        Con_SafePrintf("HUD_Register: couldn't find place for %s\n", hud->name);
+        if (host_initialized || developer.integer) // do not warn if host not initialized yet, unless developer
+          Con_SafePrintf("HUD_Register: couldn't find place for %s\n", hud->name);
         hud->place_num = 0;
         hud->place_hud = NULL;
     }
