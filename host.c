@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.29 2007-01-06 21:26:06 tonik Exp $
+	$Id: host.c,v 1.30 2007-02-22 18:28:50 qqshka Exp $
  
 */
 
@@ -434,6 +434,7 @@ char *Host_PrintBars(char *s, int len)
 void Host_Init (int argc, char **argv, int default_memsize)
 {
 	FILE *f;
+	cvar_t *v;
 
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
@@ -488,6 +489,17 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	host_hunklevel = Hunk_LowMark ();
 
 	host_initialized = true;
+
+	// walk through all vars and forse OnChange event if cvar was modified
+	for ( v = NULL; (v = Cvar_Next ( v )); ) {
+		char val[2048];
+
+		if ( !v->modified || !v->OnChange )
+			continue; // not modified even that strange, or just have't OnChange
+
+		snprintf(val, sizeof(val), "%s", v->string);
+		Cvar_Set(v, val);
+	}
 
 	Com_Printf_State (PRINT_INFO, "Exe: "__TIME__" "__DATE__"\n");
 	Com_Printf_State (PRINT_INFO, "Hunk allocation: %4.1f MB.\n", (float) host_memsize / (1024 * 1024));
