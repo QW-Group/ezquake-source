@@ -1,9 +1,9 @@
 
 /* pngconf.h - machine configurable file for libpng
  *
- * libpng version 1.2.12 - June 27, 2006
+ * libpng version 1.2.16 - January 31, 2007
  * For conditions of distribution and use, see copyright notice in png.h
- * Copyright (c) 1998-2005 Glenn Randers-Pehrson
+ * Copyright (c) 1998-2007 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  */
@@ -17,15 +17,7 @@
 #ifndef PNGCONF_H
 #define PNGCONF_H
 
-#define PNG_STATIC
 #define PNG_1_2_X
-
-/* Backported no-assembler fix from libpng-1.4.0beta8 */
-
-/* Makefile-supplied defines go here: */
-/* End of Makefile-supplied defines. */
-
-/* End of backported no-assembler fix */
 
 /* 
  * PNG_USER_CONFIG has to be defined on the compiler command line. This
@@ -322,8 +314,8 @@
      /* If you encounter a compiler error here, see the explanation
       * near the end of INSTALL.
       */
-#warning         __png.h__ already includes setjmp.h;
-#warning         __dont__ include it again.;
+         __png.h__ already includes setjmp.h;
+         __dont__ include it again.;
 #    endif
 #  endif /* __linux__ */
 
@@ -729,10 +721,21 @@
 #endif
 
 /* PNG_ASSEMBLER_CODE was enabled by default in version 1.2.0 
-   even when PNG_USE_PNGVCRD or PNG_USE_PNGGCCRD is not defined */
+ * even when PNG_USE_PNGVCRD or PNG_USE_PNGGCCRD is not defined.
+ *
+ * PNG_NO_ASSEMBLER_CODE disables use of all assembler code and optimized C,
+ * and removes or includes several functions in the API.
+ *
+ * PNG_NO_MMX_CODE disables the use of MMX code without changing the API.
+ * When MMX code is off, then optimized C replacement functions are used.
+*/
 #if defined(PNG_READ_SUPPORTED) && !defined(PNG_NO_ASSEMBLER_CODE)
 #  ifndef PNG_ASSEMBLER_CODE_SUPPORTED
 #    define PNG_ASSEMBLER_CODE_SUPPORTED
+#  endif
+#  if defined(XP_MACOSX) && !defined(PNG_NO_MMX_CODE)
+     /* work around Intel-Mac compiler bug */
+#    define PNG_NO_MMX_CODE
 #  endif
 #  if !defined(PNG_MMX_CODE_SUPPORTED) && !defined(PNG_NO_MMX_CODE) && \
      defined(__MMX__)
