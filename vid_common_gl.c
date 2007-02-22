@@ -226,12 +226,15 @@ void Check_Gamma (unsigned char *pal) {
 	// we do not need this after host initialized
 	if (!host_initialized)
 	{
+		float old = v_gamma.value;
 		if ((i = COM_CheckParm("-gamma")) != 0 && i + 1 < com_argc)
 			vid_gamma = bound (0.3, Q_atof(com_argv[i + 1]), 1);
 		else
 			vid_gamma = 1;
 
 		Cvar_SetDefault (&v_gamma, vid_gamma);
+		// Cvar_SetDefault set not only default value, but also reset to default, fix that
+		Cvar_SetValue(&v_gamma, old ? old : vid_gamma);
 	}
 
 	if (vid_gamma != 1){
