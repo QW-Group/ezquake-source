@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.50 2007-01-19 23:53:40 johnnycz Exp $
+    $Id: cmd.c,v 1.51 2007-02-22 23:55:26 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -969,8 +969,10 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 	cmd_function_t *cmd;
 	int	key;
 
+	/* commented out when vid_restart was added
 	if (host_initialized)	// because hunk allocation would get stomped
 		assert (!"Cmd_AddCommand after host_initialized");
+	*/
 
 /*	// fail if the command is a variable name
 	if (Cvar_FindVar(cmd_name)) {
