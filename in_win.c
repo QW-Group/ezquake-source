@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_win.c,v 1.22 2007-01-31 00:01:41 qqshka Exp $
+	$Id: in_win.c,v 1.23 2007-02-22 23:50:17 johnnycz Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -821,6 +821,8 @@ void IN_MouseEvent (int mstate) {
 	}
 }
 
+float mouse_x, mouse_y;
+
 void IN_MouseMove (usercmd_t *cmd) {
 	static int old_mouse_x = 0, old_mouse_y = 0;
 	int mx, my;
@@ -830,7 +832,6 @@ void IN_MouseMove (usercmd_t *cmd) {
 	DWORD dwElements;
 	HRESULT hr;
 #endif
-	float mouse_x, mouse_y;
 
 	if (!mouseactive)
 		return;

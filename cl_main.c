@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.127 2007-02-21 22:17:01 johnnycz Exp $
+	$Id: cl_main.c,v 1.128 2007-02-22 23:50:17 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mvd_utils.h"
 #include "EX_browser.h"
 #include "qtv.h"
+#include "hud_editor.h"
 
 #ifndef _WIN32
 #include <netdb.h>
@@ -1184,6 +1185,7 @@ void CL_Init (void) {
 	TP_Init ();
 	Hud_262Init();
 	HUD_Init();
+	HUD_Editor_Init();
 	M_Init ();
 
 	SList_Init ();
