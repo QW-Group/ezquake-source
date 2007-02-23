@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_win.c,v 1.23 2007-02-22 23:50:17 johnnycz Exp $
+	$Id: in_win.c,v 1.24 2007-02-23 05:03:56 cokeman1982 Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -36,6 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif // WITH_KEYMAP
 
 #include "movie.h"
+#include "hud_editor.h"
 
 #define DINPUT_BUFFERSIZE 16
 //#define iDirectInputCreate(a,b,c,d)	pDirectInputCreate(a,b,c,d)
@@ -805,17 +806,20 @@ void IN_Shutdown (void) {
 	MW_Shutdown();
 }
 
-void IN_MouseEvent (int mstate) {
+void IN_MouseEvent (int mstate) 
+{
 	int i;
 
-	if (mouseactive && !dinput) {
+	if (mouseactive && !dinput) 
+	{
 		// perform button actions
-		for (i = 0; i < mouse_buttons; i++) {
+		for (i = 0; i < mouse_buttons; i++) 
+		{
 			if ((mstate & (1 << i)) && !(mouse_oldbuttonstate & (1 << i)))
 				Key_Event (K_MOUSE1 + i, true);
 
 			if (!(mstate & (1 << i)) && (mouse_oldbuttonstate & (1 << i)))
-					Key_Event (K_MOUSE1 + i, false);
+				Key_Event (K_MOUSE1 + i, false);
 		}
 		mouse_oldbuttonstate = mstate;
 	}
@@ -922,38 +926,47 @@ void IN_MouseMove (usercmd_t *cmd) {
 	old_mouse_x = mx;
 	old_mouse_y = my;
 
-	if (m_accel.value) {
-		float mousespeed = (sqrt (mx * mx + my * my)) / (1000.0f * (float)cls.trueframetime);
-		mouse_x *= (mousespeed * m_accel.value + sensitivity.value);
-		mouse_y *= (mousespeed * m_accel.value + sensitivity.value);
-	} else {
-		mouse_x *= sensitivity.value;
-		mouse_y *= sensitivity.value;
-	}
-
-	// add mouse X/Y movement to cmd
-	if ( (in_strafe.state & 1) || (lookstrafe.value && mlook_active))
-		cmd->sidemove += m_side.value * mouse_x;
-	else
-		cl.viewangles[YAW] -= m_yaw.value * mouse_x;
-
-	if (mlook_active)
-		V_StopPitchDrift ();
-		
-	if (mlook_active && !(in_strafe.state & 1))
+	//
+	// Do not move the player if we're in HUD editor mode.
+	//
+	if(!hud_editor.value)
 	{
-		cl.viewangles[PITCH] += m_pitch.value * mouse_y;
-		if (cl.viewangles[PITCH] > cl.maxpitch)
-			cl.viewangles[PITCH] = cl.maxpitch;
-		if (cl.viewangles[PITCH] < cl.minpitch)
-			cl.viewangles[PITCH] = cl.minpitch;
-	} else {
-		cmd->forwardmove -= m_forward.value * mouse_y;
-	}
+		if (m_accel.value) 
+		{
+			float mousespeed = (sqrt (mx * mx + my * my)) / (1000.0f * (float)cls.trueframetime);
+			mouse_x *= (mousespeed * m_accel.value + sensitivity.value);
+			mouse_y *= (mousespeed * m_accel.value + sensitivity.value);
+		} 
+		else
+		{
+			mouse_x *= sensitivity.value;
+			mouse_y *= sensitivity.value;
+		}
 
-	// if the mouse has moved, force it to the center, so there's room to move
-	if (mx || my)
-		SetCursorPos (window_center_x, window_center_y);
+		// add mouse X/Y movement to cmd
+		if ( (in_strafe.state & 1) || (lookstrafe.value && mlook_active))
+			cmd->sidemove += m_side.value * mouse_x;
+		else
+			cl.viewangles[YAW] -= m_yaw.value * mouse_x;
+
+		if (mlook_active)
+			V_StopPitchDrift ();
+			
+		if (mlook_active && !(in_strafe.state & 1))
+		{
+			cl.viewangles[PITCH] += m_pitch.value * mouse_y;
+			if (cl.viewangles[PITCH] > cl.maxpitch)
+				cl.viewangles[PITCH] = cl.maxpitch;
+			if (cl.viewangles[PITCH] < cl.minpitch)
+				cl.viewangles[PITCH] = cl.minpitch;
+		} else {
+			cmd->forwardmove -= m_forward.value * mouse_y;
+		}
+
+		// if the mouse has moved, force it to the center, so there's room to move
+		if (mx || my)
+			SetCursorPos (window_center_x, window_center_y);
+	}
 }
 
 void IN_Move (usercmd_t *cmd) {
@@ -968,15 +981,15 @@ void IN_Accumulate (void) {
 
 		//Tei, cursor free while not ingame
 		if (key_dest == key_game)
-			{
-				mx_accum += current_pos.x - window_center_x;
-				my_accum += current_pos.y - window_center_y;
-			}
+		{
+			mx_accum += current_pos.x - window_center_x;
+			my_accum += current_pos.y - window_center_y;
+		}
 		else
-			{
-				mx_accum = 0;
-				my_accum = 0;
-			}
+		{
+			mx_accum = 0;
+			my_accum = 0;
+		}
 
 		// force the mouse to the center, so there's room to move
 		if (key_dest == key_game)
