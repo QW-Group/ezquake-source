@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.44 2007-02-22 23:56:06 johnnycz Exp $
+		$Id: menu_options.c,v 1.45 2007-02-23 13:24:16 johnnycz Exp $
 
 */
 
@@ -955,8 +955,10 @@ void Menu_Options_Init(void) {
 #endif
 
 	Cvar_Register(&menu_advanced);
+#ifdef GLQUAKE
 	mvs_selected.freq.name = "menu_tempval_video_freq";
 	mvs_previous.freq.name = mvs_selected.freq.name;
+#endif
 
 	CTab_Init(&options_tab);
 	CTab_AddPage(&options_tab, "main", OPTPG_SETTINGS, OnShow_SettMain, CT_Opt_Settings_Draw, CT_Opt_Settings_Key);
