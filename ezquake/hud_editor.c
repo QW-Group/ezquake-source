@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.2 2007-02-23 05:03:45 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.3 2007-02-23 06:59:10 himan Exp $
 
 */
 
@@ -21,8 +21,12 @@ vec3_t			points[3];
 vec3_t			corners[4];
 vec3_t			center;
 vec3_t			pointer;
+mpic_t			hud_cursor;
 
 cvar_t			hud_editor = {"hud_editor", "0"};
+cvar_t			hud_cursor_scale = {"hud_cursor_scale", "0.1"};
+cvar_t			hud_cursor_alpha = {"hud_cursor_alpha", "1"};
+
 
 // Cursor location.
 double			hud_mouse_x;
@@ -125,7 +129,14 @@ static void HUD_Editor(void)
 	clamp(hud_mouse_y, 0, vid.height);
 
 	// Always draw the cursor.
-	Draw_AlphaLineRGB(hud_mouse_x, hud_mouse_y, hud_mouse_x + 2, hud_mouse_y + 2, 2, 0, 1, 0, 1);
+	if (hud_cursor.texnum)
+	{
+		Draw_SAlphaPic(hud_mouse_x,hud_mouse_y,&hud_cursor,hud_cursor_alpha.value,hud_cursor_scale.value);
+	}
+	else
+	{
+		Draw_AlphaLineRGB(hud_mouse_x, hud_mouse_y, hud_mouse_x + 2, hud_mouse_y + 2, 2, 0, 1, 0, 1);
+	}
 
 	// Check if we have a hud under the cursor (if one isn't already selected).
 	found = false;
@@ -163,7 +174,7 @@ static void HUD_Editor(void)
 	}
 
 	// Checks if we are moving an old hud.
-	if (last_moved_hud && selected_hud == NULL && !found)
+	if (last_moved_hud && selected_hud == NULL && keydown[K_MOUSE1])
 	{
 		found = true;
 		hud = last_moved_hud;
@@ -589,5 +600,8 @@ void HUD_Editor_Draw(void)
 
 void HUD_Editor_Init(void) 
 {
+	Cvar_Register(&hud_cursor_scale);
+	Cvar_Register(&hud_cursor_alpha);
 	Cvar_Register(&hud_editor);
+	hud_cursor = *GL_LoadPicImage(va("gfx/%s", "cursor"), "cursor", 0, 0, TEX_ALPHA);
 }
