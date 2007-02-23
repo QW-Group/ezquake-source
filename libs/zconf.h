@@ -3,7 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zconf.h,v 1.5 2006-12-01 11:11:46 johnnycz Exp $ */
+/* @(#) $Id: zconf.h,v 1.6 2007-02-23 12:47:16 disconn3ct Exp $ */
 
 #ifndef ZCONF_H
 #define ZCONF_H
@@ -284,7 +284,8 @@ typedef uLong FAR uLongf;
    typedef Byte       *voidp;
 #endif
 
-#if 0           /* HAVE_UNISTD_H -- this line is updated by ./configure */
+/* disconnect --> */
+#ifndef _WIN32
 #  include <sys/types.h> /* for off_t */
 #  include <unistd.h>    /* for SEEK_* and off_t */
 #  ifdef VMS
@@ -292,6 +293,8 @@ typedef uLong FAR uLongf;
 #  endif
 #  define z_off_t off_t
 #endif
+/* <-- disconnect */
+
 #ifndef SEEK_SET
 #  define SEEK_SET        0       /* Seek from beginning of file.  */
 #  define SEEK_CUR        1       /* Seek from current position.  */
