@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.3 2007-02-23 06:59:10 himan Exp $
+	$Id: hud_editor.c,v 1.4 2007-02-23 13:24:16 johnnycz Exp $
 
 */
 
@@ -21,7 +21,9 @@ vec3_t			points[3];
 vec3_t			corners[4];
 vec3_t			center;
 vec3_t			pointer;
+#ifdef GLQUAKE
 mpic_t			hud_cursor;
+#endif
 
 cvar_t			hud_editor = {"hud_editor", "0"};
 cvar_t			hud_cursor_scale = {"hud_cursor_scale", "0.1"};
@@ -128,15 +130,15 @@ static void HUD_Editor(void)
 	clamp(hud_mouse_x, 0, vid.width);
 	clamp(hud_mouse_y, 0, vid.height);
 
+#ifdef GLQUAKE
 	// Always draw the cursor.
 	if (hud_cursor.texnum)
 	{
 		Draw_SAlphaPic(hud_mouse_x,hud_mouse_y,&hud_cursor,hud_cursor_alpha.value,hud_cursor_scale.value);
 	}
 	else
-	{
+#endif
 		Draw_AlphaLineRGB(hud_mouse_x, hud_mouse_y, hud_mouse_x + 2, hud_mouse_y + 2, 2, 0, 1, 0, 1);
-	}
 
 	// Check if we have a hud under the cursor (if one isn't already selected).
 	found = false;
@@ -603,5 +605,7 @@ void HUD_Editor_Init(void)
 	Cvar_Register(&hud_cursor_scale);
 	Cvar_Register(&hud_cursor_alpha);
 	Cvar_Register(&hud_editor);
+#ifdef GLQUAKE
 	hud_cursor = *GL_LoadPicImage(va("gfx/%s", "cursor"), "cursor", 0, 0, TEX_ALPHA);
+#endif
 }
