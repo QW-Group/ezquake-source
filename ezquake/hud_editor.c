@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.4 2007-02-23 13:24:16 johnnycz Exp $
+	$Id: hud_editor.c,v 1.5 2007-02-23 19:53:25 cokeman1982 Exp $
 
 */
 
@@ -12,6 +12,7 @@
 #include "hud.h"
 #include "EX_misc.h"
 
+#ifdef GLQUAKE
 extern hud_t	*hud_huds;
 hud_t			*last_moved_hud;
 hud_t			*selected_hud;
@@ -21,14 +22,12 @@ vec3_t			points[3];
 vec3_t			corners[4];
 vec3_t			center;
 vec3_t			pointer;
-#ifdef GLQUAKE
-mpic_t			hud_cursor;
-#endif
 
-cvar_t			hud_editor = {"hud_editor", "0"};
+mpic_t			hud_cursor;
+
+cvar_t			hud_editor		 = {"hud_editor", "0"};
 cvar_t			hud_cursor_scale = {"hud_cursor_scale", "0.1"};
 cvar_t			hud_cursor_alpha = {"hud_cursor_alpha", "1"};
-
 
 // Cursor location.
 double			hud_mouse_x;
@@ -91,7 +90,7 @@ static int HUD_Editor_Get_Alignment(int x, int y, hud_t *hud_element)
 
 static void HUD_Editor_Move(float x, float y, float dx, float dy, hud_t *hud_element) 
 {
-	if (strcmp(hud_element->place->string,"screen"))
+	if (strcmp(hud_element->place->string, "screen"))
 	{
 		Cvar_Set(hud_element->pos_x, va("%f", (hud_element->pos_x->value + dx)));
 		Cvar_Set(hud_element->pos_y, va("%f", (hud_element->pos_y->value + dy)));
@@ -130,15 +129,15 @@ static void HUD_Editor(void)
 	clamp(hud_mouse_x, 0, vid.width);
 	clamp(hud_mouse_y, 0, vid.height);
 
-#ifdef GLQUAKE
 	// Always draw the cursor.
 	if (hud_cursor.texnum)
 	{
-		Draw_SAlphaPic(hud_mouse_x,hud_mouse_y,&hud_cursor,hud_cursor_alpha.value,hud_cursor_scale.value);
+		Draw_SAlphaPic(hud_mouse_x, hud_mouse_y, &hud_cursor, hud_cursor_alpha.value, hud_cursor_scale.value);
 	}
 	else
-#endif
+	{
 		Draw_AlphaLineRGB(hud_mouse_x, hud_mouse_y, hud_mouse_x + 2, hud_mouse_y + 2, 2, 0, 1, 0, 1);
+	}
 
 	// Check if we have a hud under the cursor (if one isn't already selected).
 	found = false;
@@ -591,21 +590,26 @@ static void HUD_Editor(void)
 	last_moved_hud = NULL;
 	return;
 }
+#endif // GLQUAKE
+
+void HUD_Editor_Init(void) 
+{
+	#ifdef GLQUAKE
+	Cvar_Register(&hud_cursor_scale);
+	Cvar_Register(&hud_cursor_alpha);
+	Cvar_Register(&hud_editor);
+	hud_cursor = *GL_LoadPicImage(va("gfx/%s", "cursor"), "cursor", 0, 0, TEX_ALPHA);
+	#endif // GLQUAKE
+}
+
 
 void HUD_Editor_Draw(void) 
 {
+	#ifdef GLQUAKE
 	if (!hud_editor.value)
 		return;
 
 	HUD_Editor();
+	#endif GLQUAKE
 }
 
-void HUD_Editor_Init(void) 
-{
-	Cvar_Register(&hud_cursor_scale);
-	Cvar_Register(&hud_cursor_alpha);
-	Cvar_Register(&hud_editor);
-#ifdef GLQUAKE
-	hud_cursor = *GL_LoadPicImage(va("gfx/%s", "cursor"), "cursor", 0, 0, TEX_ALPHA);
-#endif
-}
