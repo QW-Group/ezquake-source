@@ -37,6 +37,7 @@ CLIENT_C_FILES := \
 	help_files \
 	hud \
 	hud_common \
+	hud_editor \
 	ignore \
 	image \
 	keys \
