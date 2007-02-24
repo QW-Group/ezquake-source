@@ -997,7 +997,7 @@ void R_DrawSky (void)
 
 	if (r_fastsky.value) {
 		glDisable (GL_TEXTURE_2D);
-		glColor3ubv ((byte *)&d_8to24table[(byte)r_skycolor.value]);
+		glColor3ubv (StringToRGB(r_skycolor.string));
 
 		for (fa = skychain; fa; fa = fa->texturechain)
 			EmitFlatPoly (fa);
