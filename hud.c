@@ -1024,7 +1024,7 @@ qbool HUD_PrepareDraw(hud_t *hud, int width, int height, // In.
 		// the "real" positions (not relative to parent but top left of screen), 
 		// so that we get a better feedback when the user drags an 
 		// item partially offscreen and doesn't have hud_offscreen turned on.
-		if(hud_editor.value)
+		if(key_dest == key_hudeditor)
 		{
 			hud->lx = x + frame_left;
 			hud->ly = y + frame_top;

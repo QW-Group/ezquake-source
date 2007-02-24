@@ -16,12 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.50 2007-02-24 03:55:49 cokeman1982 Exp $
+    $Id: keys.c,v 1.51 2007-02-24 14:26:03 johnnycz Exp $
 
 */
 
 #include "quakedef.h"
 #include "textencoding.h"
+#include "hud_editor.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -1917,6 +1918,9 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 			else
 				M_ToggleMenu_f ();
 			break;
+		case key_hudeditor:
+			HUD_Editor_Key(key, unichar);
+			break;
 		default:
 			assert(!"Bad key_dest");
 		}
@@ -2002,6 +2006,11 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 	case key_console:
 		Key_Console (key, unichar);
 		break;
+
+	case key_hudeditor:
+		HUD_Editor_Key(key, unichar);
+		break;
+
 	default:
 		assert(!"Bad key_dest");
 	}

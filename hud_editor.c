@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.6 2007-02-24 04:16:19 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.7 2007-02-24 14:26:03 johnnycz Exp $
 
 */
 
@@ -25,7 +25,7 @@ vec3_t			pointer;
 
 mpic_t			hud_cursor;
 
-cvar_t			hud_editor		 = {"hud_editor", "0"};
+qbool hud_editor = false;
 cvar_t			hud_cursor_scale = {"hud_cursor_scale", "0.1"};
 cvar_t			hud_cursor_alpha = {"hud_cursor_alpha", "1"};
 
@@ -99,7 +99,6 @@ void HUD_Recalculate(void);
 static void HUD_Editor(void)
 {
 	extern float mouse_x, mouse_y;
-	int i;
 	int status;
 	int bx, by, bw, bh;
 	qbool found;
@@ -578,26 +577,63 @@ static void HUD_Editor(void)
 	last_moved_hud = NULL;
 	return;
 }
+
+void HUD_Editor_Toggle_f(void)
+{
+	static keydest_t key_dest_prev = key_game;
+
+	if (cls.state != ca_active) return;
+
+	hud_editor = !hud_editor;
+	S_LocalSound("misc/basekey.wav");
+
+	if (hud_editor)
+	{
+		key_dest = key_hudeditor;
+	}
+	else
+	{
+		key_dest = key_game;
+		key_dest_beforecon = key_game;
+	}
+}
 #endif // GLQUAKE
+
+void HUD_Editor_Key(int key, int unichar) {
+#ifdef GLQUAKE
+	int togglekeys[2];
+
+	M_FindKeysForCommand("toggleconsole", togglekeys);
+	if ((key == togglekeys[0]) || (key == togglekeys[1])) {
+		Con_ToggleConsole_f();
+		return;
+	}
+
+	switch (key) {
+	case K_ESCAPE:
+		HUD_Editor_Toggle_f();
+		break;
+	}
+#endif
+}
 
 void HUD_Editor_Init(void) 
 {
 	#ifdef GLQUAKE
 	Cvar_Register(&hud_cursor_scale);
 	Cvar_Register(&hud_cursor_alpha);
-	Cvar_Register(&hud_editor);
+	Cmd_AddCommand("hud_editor", HUD_Editor_Toggle_f);
+	hud_editor = false;
 	hud_cursor = *GL_LoadPicImage(va("gfx/%s", "cursor"), "cursor", 0, 0, TEX_ALPHA);
 	#endif // GLQUAKE
 }
 
-
 void HUD_Editor_Draw(void) 
 {
 	#ifdef GLQUAKE
-	if (!hud_editor.value)
+	if (!hud_editor)
 		return;
 
 	HUD_Editor();
 	#endif GLQUAKE
 }
-

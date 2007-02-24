@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_win.c,v 1.24 2007-02-23 05:03:56 cokeman1982 Exp $
+	$Id: in_win.c,v 1.25 2007-02-24 14:26:03 johnnycz Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -36,7 +36,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif // WITH_KEYMAP
 
 #include "movie.h"
-#include "hud_editor.h"
 
 #define DINPUT_BUFFERSIZE 16
 //#define iDirectInputCreate(a,b,c,d)	pDirectInputCreate(a,b,c,d)
@@ -929,7 +928,7 @@ void IN_MouseMove (usercmd_t *cmd) {
 	//
 	// Do not move the player if we're in HUD editor mode.
 	//
-	if(!hud_editor.value)
+	if(key_dest == key_game)
 	{
 		if (m_accel.value) 
 		{
@@ -980,7 +979,7 @@ void IN_Accumulate (void) {
 		GetCursorPos (&current_pos);
 
 		//Tei, cursor free while not ingame
-		if (key_dest == key_game)
+		if (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu)
 		{
 			mx_accum += current_pos.x - window_center_x;
 			my_accum += current_pos.y - window_center_y;
@@ -992,7 +991,7 @@ void IN_Accumulate (void) {
 		}
 
 		// force the mouse to the center, so there's room to move
-		if (key_dest == key_game)
+		if (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu)
 			SetCursorPos (window_center_x, window_center_y);
 		//Tei, avoid center with no-game mode
 	}
