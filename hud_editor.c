@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.7 2007-02-24 14:26:03 johnnycz Exp $
+	$Id: hud_editor.c,v 1.8 2007-02-24 14:52:22 johnnycz Exp $
 
 */
 
@@ -620,11 +620,14 @@ void HUD_Editor_Key(int key, int unichar) {
 void HUD_Editor_Init(void) 
 {
 	#ifdef GLQUAKE
+	mpic_t *picp;
+
 	Cvar_Register(&hud_cursor_scale);
 	Cvar_Register(&hud_cursor_alpha);
 	Cmd_AddCommand("hud_editor", HUD_Editor_Toggle_f);
 	hud_editor = false;
-	hud_cursor = *GL_LoadPicImage(va("gfx/%s", "cursor"), "cursor", 0, 0, TEX_ALPHA);
+	if (picp = GL_LoadPicImage(va("gfx/%s", "cursor"), "cursor", 0, 0, TEX_ALPHA))
+		hud_cursor = *picp;
 	#endif // GLQUAKE
 }
 
