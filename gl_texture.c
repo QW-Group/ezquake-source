@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_texture.c,v 1.22 2007-02-16 00:54:57 qqshka Exp $
+	$Id: gl_texture.c,v 1.23 2007-02-24 03:54:57 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -68,12 +68,6 @@ typedef struct {
 static gltexture_t	gltextures[MAX_GLTEXTURES];
 static int			numgltextures = 0;
 static int			texture_extension_number = 1;
-
-#define Q_ROUND_POWER2(in, out) {						\
-	_mathlib_temp_int1 = in;							\
-	for (out = 1; out < _mathlib_temp_int1; out <<= 1)	\
-	;												\
-}
 
 qbool OnChange_gl_max_size (cvar_t *var, char *string) {
 	int i;
