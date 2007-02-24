@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.45 2007-02-23 13:24:16 johnnycz Exp $
+		$Id: menu_options.c,v 1.46 2007-02-24 12:55:37 johnnycz Exp $
 
 */
 
@@ -524,7 +524,7 @@ const char* rocketmodel_enum[] =
 { "rocket", "grenade" };
 
 const char* rockettrail_enum[] =
-{ "off", "normal", "grenade", "alt normal", "slight blood", "big blood", "tracer 1", "tracer 2", "normal" };
+{ "off", "normal", "grenade", "alt normal", "slight blood", "big blood", "tracer 1", "tracer 2", "plasma" };
 
 const char* powerupglow_enum[] =
 { "off", "on", "own off" };
