@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.23 2007-02-19 13:55:02 qqshka Exp $
+		$Id: menu_demo.c,v 1.24 2007-02-24 12:53:15 johnnycz Exp $
 
 */
 
@@ -88,7 +88,7 @@ cvar_t	demo_browser_democolor		= {"demo_browser_democolor",	"255 255 255 255"};	
 cvar_t	demo_browser_selectedcolor	= {"demo_browser_selectedcolor","0 150 235 255"};	// Light blue.
 cvar_t	demo_browser_dircolor		= {"demo_browser_dircolor",		"170 80 0 255"};	// Redish.
 #ifdef WITH_ZIP
-cvar_t	demo_browser_zipcolor		= {"demo_browser_dircolor",		"255 170 0 255"};	// Orange.
+cvar_t	demo_browser_zipcolor		= {"demo_browser_zipcolor",		"255 170 0 255"};	// Orange.
 #endif
 
 // Demo menu container
