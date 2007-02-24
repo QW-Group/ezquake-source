@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.5 2007-02-23 19:53:25 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.6 2007-02-24 04:16:19 cokeman1982 Exp $
 
 */
 
@@ -90,17 +90,8 @@ static int HUD_Editor_Get_Alignment(int x, int y, hud_t *hud_element)
 
 static void HUD_Editor_Move(float x, float y, float dx, float dy, hud_t *hud_element) 
 {
-	if (strcmp(hud_element->place->string, "screen"))
-	{
-		Cvar_Set(hud_element->pos_x, va("%f", (hud_element->pos_x->value + dx)));
-		Cvar_Set(hud_element->pos_y, va("%f", (hud_element->pos_y->value + dy)));
-	}
-	else
-	{
-		Cvar_Set(hud_element->pos_x, va("%f", x));
-		Cvar_Set(hud_element->pos_y, va("%f", y));
-	}
-
+	Cvar_Set(hud_element->pos_x, va("%f", hud_element->pos_x->value + dx));
+	Cvar_Set(hud_element->pos_y, va("%f", hud_element->pos_y->value + dy));
 }
 
 void HUD_Recalculate(void);
@@ -381,7 +372,7 @@ static void HUD_Editor(void)
 	}
 
 	// Draw a red line from selected hud to cursor.
-	if (selected_hud != 0)
+	if (selected_hud)
 	{
 		Draw_AlphaLineRGB(hud_mouse_x, hud_mouse_y, 
 			(selected_hud->lx + (selected_hud->lw / 2)), selected_hud->ly + selected_hud->lh / 2, 
@@ -402,11 +393,11 @@ static void HUD_Editor(void)
 	// Draw the tooltips.
 	if (keydown[K_MOUSE1] && !keydown[K_MOUSE2] && hud)
 	{
-		HUD_Editor_Draw_Tooltip(hud_mouse_x, hud_mouse_y, va("%s moving", hud->name), 1, 0, 0);
+		HUD_Editor_Draw_Tooltip(hud_mouse_x, hud_mouse_y, va("(%d, %d) %s moving", (int)hud->pos_x->value, (int)hud->pos_y->value, hud->name), 1, 0, 0);
 	}
 	else if (keydown[K_MOUSE1] && keydown[K_MOUSE2] && hud)
 	{
-		HUD_Editor_Draw_Tooltip(hud_mouse_x, hud_mouse_y, va("%s resizing",hud->name), 0, 1, 0);
+		HUD_Editor_Draw_Tooltip(hud_mouse_x, hud_mouse_y, va("%s resizing", hud->name), 0, 1, 0);
 	}
 	else if (!keydown[K_MOUSE1] && !keydown[K_MOUSE2] && hud)
 	{
@@ -418,7 +409,9 @@ static void HUD_Editor(void)
 		{
 			if (selected_hud)
 			{
-				if (!strcmp(hud->name,selected_hud->name))
+				// Remove the alignment if we're pressing the right mouse button and are 
+				// holding the mouse over the selected hud element.
+				if (!strcmp(hud->name, selected_hud->name))
 				{
 					HUD_Editor_Draw_Tooltip(hud_mouse_x, hud_mouse_y, va("remove alignment", hud->name), 0, 1, 1);
 				}
@@ -470,14 +463,9 @@ static void HUD_Editor(void)
 	// Both mousebuttons (or mouse3) are down let's scale it.
 	if (((keydown[K_MOUSE1] && keydown[K_MOUSE2]) || (!keydown[K_MOUSE1] && !keydown[K_MOUSE2] && keydown[K_MOUSE3])) && !selected_hud)
 	{
-		// A non-scaleable HUD item.
-		if (hud->flags & HUD_NO_GROW)
-		{
-			return;
-		}
-
 		hud_mouse_x -= mouse_x;
 		hud_mouse_y -= mouse_y;
+
 		scale = HUD_FindVar(hud, "scale");
 		
 		if (!scale)
