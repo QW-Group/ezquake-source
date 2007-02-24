@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.23 2007-02-19 00:31:08 johnnycz Exp $
+		$Id: settings_page.c,v 1.24 2007-02-24 13:04:43 johnnycz Exp $
 
 */
 
@@ -28,7 +28,7 @@ cvar_t	skin_browser_democolor		= {"skin_browser_democolor",	"255 255 255 255"};	
 cvar_t	skin_browser_selectedcolor	= {"skin_browser_selectedcolor","0 150 235 255"};	// Light blue.
 cvar_t	skin_browser_dircolor		= {"skin_browser_dircolor",		"170 80 0 255"};	// Redish.
 #ifdef WITH_ZIP
-cvar_t	skin_browser_zipcolor		= {"skin_browser_dircolor",		"255 170 0 255"};	// Orange.
+cvar_t	skin_browser_zipcolor		= {"skin_browser_zipcolor",		"255 170 0 255"};	// Orange.
 #endif
 
 filelist_t skins_filelist;
