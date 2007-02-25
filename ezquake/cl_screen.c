@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.90 2007-02-25 11:01:10 johnnycz Exp $
+    $Id: cl_screen.c,v 1.91 2007-02-25 21:50:59 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -3197,43 +3197,65 @@ static void SCR_CheckAutoScreenshot(void) {
 		Com_Printf("Match scoreboard saved to %s\n", savedname);
 }
 
-void SCR_AutoScreenshot(char *matchname) {
-	if (cl.intermission == 1) {
+void SCR_AutoScreenshot(char *matchname) 
+{
+	if (cl.intermission == 1) 
+	{
 		scr_autosshot_countdown = vid.numpages;
 		strlcpy(auto_matchname, matchname, sizeof(auto_matchname));
 	}
 }
 
-//joe: capturing to avi
-void SCR_Movieshot(char *name) {
-#ifdef _WIN32
-	if (movie_is_avi) {
-#ifdef GLQUAKE
-		int i, size = glwidth * glheight * 3;
+// Capturing to avi.
+void SCR_Movieshot(char *name) 
+{
+	#ifdef _WIN32
+	if (movie_is_avi) 
+	{
+		int size = 0;
+		// Capturing a movie.
+		#ifdef GLQUAKE
+		int i;
 		byte *buffer, temp;
 
+		// Set buffer size to fit RGB data for the image.
+		size = glwidth * glheight * 3;
+
+		// Allocate the RGB buffer, get the pixels from GL and apply the gamma.
 		buffer = (byte *) Q_malloc (size);
 		glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
 		applyHWGamma (buffer, size);
 
+		// We now have a byte buffer with RGB values, but
+		// before we write it to the file, we need to swap
+		// them to GBR instead, which windows DIBs uses.
+		// (There's a GL Extension that allows you to use
+		// BGR_EXT instead of GL_RGB in the glReadPixels call
+		// instead, but there is no real speed gain using it).
 		for (i = 0; i < size; i += 3)
 		{
+			// Swap RGB => GBR
 			temp = buffer[i];
 			buffer[i] = buffer[i+2];
 			buffer[i+2] = temp;
 		}
-#else
+
+		#else // GLQUAKE
+
 		int i, j, rowp;
 		byte *buffer, *p;
-
-		buffer = (byte *) Q_malloc (vid.width * vid.height * 3);
+		
+		size = vid.width * vid.height * 3;
+		buffer = (byte *) Q_malloc (size);
 
 		D_EnableBackBufferAccess ();
 
 		p = buffer;
-		for (i = vid.height - 1; i >= 0; i--) {
+		for (i = vid.height - 1; i >= 0; i--) 
+		{
 			rowp = i * vid.rowbytes;
-			for (j = 0; j < vid.width; j++) {
+			for (j = 0; j < vid.width; j++) 
+			{
 				*p++ = current_pal[vid.buffer[rowp]*3+2];
 				*p++ = current_pal[vid.buffer[rowp]*3+1];
 				*p++ = current_pal[vid.buffer[rowp]*3+0];
@@ -3242,21 +3264,31 @@ void SCR_Movieshot(char *name) {
 		}
 
 		D_DisableBackBufferAccess ();
-#endif
-		Capture_WriteVideo (buffer);
+		#endif // GLQUAKE
 
-		free (buffer);
-	} else {
+		// Write the buffer to video.
+		Capture_WriteVideo (buffer, size);
+
+		Q_free (buffer);
+	} 
+	else 
+	{
+		// We're just capturing images.
 		SCR_Screenshot (name);
 	}
-#else
+
+	#else // _WIN32
+	
+	// Capturing to avi only supported in windows yet.
 	SCR_Screenshot (name);
-#endif
+	
+	#endif // _WIN32
 }
 
 /************************************ INIT ************************************/
 
-void SCR_Init (void) {
+void SCR_Init (void) 
+{
 	scr_ram = Draw_CacheWadPic ("ram");
 	scr_net = Draw_CacheWadPic ("net");
 	scr_turtle = Draw_CacheWadPic ("turtle");
