@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.24 2007-02-24 12:53:15 johnnycz Exp $
+		$Id: menu_demo.c,v 1.25 2007-02-25 22:09:09 cokeman1982 Exp $
 
 */
 
@@ -514,6 +514,7 @@ void Demo_AddDirToPlaylist (char *dir_path)
 		Demo_AddDemoToPlaylist (f->display, f->name);
 	}
 }
+
 #ifdef WITH_ZIP
 void Demo_AddZipToPlaylist (const char *zip_path)
 {
@@ -543,7 +544,7 @@ int CT_Demo_Browser_Key(int key, CTab_t *tab, CTabPage_t *page)
 	// Special case for adding zips/dirs to playlist.
 	if (key == K_INS || (key == K_ENTER && keydown[K_CTRL]))
 	{
-#ifdef WITH_ZIP
+		#ifdef WITH_ZIP
 		if (COM_ZipIsArchive (FL_GetCurrentPath(&demo_filelist)))
 		{
 			// Zip.
@@ -551,12 +552,14 @@ int CT_Demo_Browser_Key(int key, CTab_t *tab, CTabPage_t *page)
 			return true;
 		}
 		else
-#endif
-		if (FL_IsCurrentDir (&demo_filelist))
+		#endif // WITH_ZIP
 		{
-			// Dir.
-			Demo_AddDirToPlaylist (FL_GetCurrentPath(&demo_filelist));
-			return true;
+			if (FL_IsCurrentDir (&demo_filelist))
+			{
+				// Dir.
+				Demo_AddDirToPlaylist (FL_GetCurrentPath(&demo_filelist));
+				return true;
+			}
 		}
 	}
 
