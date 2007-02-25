@@ -2489,6 +2489,10 @@
 				Name="Draw_h"
 				>
 				<File
+					RelativePath="..\..\cl_screen.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\common_draw.h"
 					>
 				</File>

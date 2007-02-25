@@ -1,5 +1,5 @@
 /*
-	$Id: cl_screen.h,v 1.5 2007-02-25 11:01:10 johnnycz Exp $
+	$Id: cl_screen.h,v 1.6 2007-02-25 14:12:01 johnnycz Exp $
 */
 
 #define	ELEMENT_X_COORD(var)	((var##_x.value < 0) ? vid.width - strlen(str) * 8 + 8 * var##_x.value: 8 * var##_x.value)
@@ -7,4 +7,5 @@
 
 qbool SCR_OnChangeMVHudPos(cvar_t *var, char *newval);
 
+// the current position of the mouse pointer
 extern double cursor_x, cursor_y;
