@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.45 2007-01-05 11:56:58 disconn3ct Exp $
+	$Id: rulesets.c,v 1.46 2007-02-25 22:47:47 disconn3ct Exp $
 
 */
 
@@ -300,6 +300,22 @@ qbool OnChange_ruleset (cvar_t *var, char *value)
 
 void Rulesets_Init (void)
 {
+	int temp;
+
 	Cvar_Register (&ruleset);
+
+	// FIXME: we should print warning about deprecated cmdline param at the last line of init screen
+	if ((temp = COM_CheckParm("-ruleset")) && temp + 1 < com_argc) {
+		Com_Printf_State (PRINT_INFO, "\"-ruleset\" is deprecated. Remove it from your cmdline and your \"ruleset\" variable in your config\n");
+		if (!strcasecmp(com_argv[temp + 1], "smackdown")) {
+			Cvar_Set (&ruleset, "smackdown");
+		} else if (!strcasecmp(com_argv[temp + 1], "mtfl")) {
+			Cvar_Set (&ruleset, "mtfl");
+		} else if (strcasecmp(com_argv[temp + 1], "default")){
+			Cvar_Set (&ruleset, "default");
+			Com_Printf_State (PRINT_INFO, "Unknown ruleset \"%s\"\n", com_argv[temp + 1]);
+		}
+	}
+
 	Rulesets_Default();
 }
