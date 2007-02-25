@@ -4,13 +4,14 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.8 2007-02-24 14:52:22 johnnycz Exp $
+	$Id: hud_editor.c,v 1.9 2007-02-25 11:01:10 johnnycz Exp $
 
 */
 
 #include "quakedef.h"
 #include "hud.h"
 #include "EX_misc.h"
+#include "cl_screen.h"
 
 #ifdef GLQUAKE
 extern hud_t	*hud_huds;
@@ -23,11 +24,7 @@ vec3_t			corners[4];
 vec3_t			center;
 vec3_t			pointer;
 
-mpic_t			hud_cursor;
-
 qbool hud_editor = false;
-cvar_t			hud_cursor_scale = {"hud_cursor_scale", "0.1"};
-cvar_t			hud_cursor_alpha = {"hud_cursor_alpha", "1"};
 
 // Cursor location.
 double			hud_mouse_x;
@@ -112,22 +109,8 @@ static void HUD_Editor(void)
 	temp_hud = hud_huds;
 
 	// Updating cursor location.
-	hud_mouse_x += mouse_x;
-	hud_mouse_y += mouse_y;
-
-	// Check if we're within bounds.
-	clamp(hud_mouse_x, 0, vid.width);
-	clamp(hud_mouse_y, 0, vid.height);
-
-	// Always draw the cursor.
-	if (hud_cursor.texnum)
-	{
-		Draw_SAlphaPic(hud_mouse_x, hud_mouse_y, &hud_cursor, hud_cursor_alpha.value, hud_cursor_scale.value);
-	}
-	else
-	{
-		Draw_AlphaLineRGB(hud_mouse_x, hud_mouse_y, hud_mouse_x + 2, hud_mouse_y + 2, 2, 0, 1, 0, 1);
-	}
+	hud_mouse_x = cursor_x;
+	hud_mouse_y = cursor_y;
 
 	// Check if we have a hud under the cursor (if one isn't already selected).
 	found = false;
@@ -620,14 +603,8 @@ void HUD_Editor_Key(int key, int unichar) {
 void HUD_Editor_Init(void) 
 {
 	#ifdef GLQUAKE
-	mpic_t *picp;
-
-	Cvar_Register(&hud_cursor_scale);
-	Cvar_Register(&hud_cursor_alpha);
 	Cmd_AddCommand("hud_editor", HUD_Editor_Toggle_f);
 	hud_editor = false;
-	if (picp = GL_LoadPicImage(va("gfx/%s", "cursor"), "cursor", 0, 0, TEX_ALPHA))
-		hud_cursor = *picp;
 	#endif // GLQUAKE
 }
 
