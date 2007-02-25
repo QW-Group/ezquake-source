@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: movie.c,v 1.20 2007-01-20 14:42:59 cokeman1982 Exp $
+	$Id: movie.c,v 1.21 2007-02-25 22:22:24 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -55,9 +55,9 @@ cvar_t   movie_dir			=  {"demo_capture_dir",  "capture", 0, OnChange_movie_dir};
 cvar_t   movie_steadycam	=  {"demo_capture_steadycam", "0"};
 
 #ifdef _WIN32
-cvar_t   movie_codec		=  {"demo_capture_codec", "0"};	//joe: capturing to avi
-cvar_t   movie_mp3	= {"demo_capture_mp3", "0"};
-cvar_t   movie_mp3_kbps = {"demo_capture_mp3_kbps", "128"};
+cvar_t   movie_codec		= {"demo_capture_codec", "0"};	// Capturing to avi
+cvar_t   movie_mp3			= {"demo_capture_mp3", "0"};
+cvar_t   movie_mp3_kbps		= {"demo_capture_mp3_kbps", "128"};
 #endif
 
 static qbool movie_is_capturing = false;
@@ -240,7 +240,8 @@ void Movie_Init(void) {
 #endif
 }
 
-double Movie_StartFrame(void) {
+double Movie_StartFrame(void) 
+{
 	double time;
 	int views = 1;
 
@@ -250,36 +251,43 @@ double Movie_StartFrame(void) {
 	}
 
 	if (Cmd_FindAlias("f_captureframe"))
+	{
 		Cbuf_AddTextEx (&cbuf_main, "f_captureframe\n");
+	}
 
-	time = movie_fps.value > 0 ? 1.0 / movie_fps.value : 1 / 30.0;
+	// Default to 30 fps.
+	time = (movie_fps.value > 0) ? (1.0 / movie_fps.value) : (1 / 30.0);
 	return bound(1.0 / 1000, time / views, 1.0);
 }
 
-void Movie_FinishFrame(void) {
+void Movie_FinishFrame(void) 
+{
 	char fname[128];
 	if (!Movie_IsCapturing())
 		return;
 
-#ifdef _WIN32
-	if (!movie_is_avi) {
+	#ifdef _WIN32
+	if (!movie_is_avi) 
+	{
 		snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
 			movie_dir.string, movie_start_date.wDay, movie_start_date.wMonth, movie_start_date.wYear,
 			movie_start_date.wHour,	movie_start_date.wMinute, movie_start_date.wSecond, movie_frame_count, image_ext);
 
 		con_suppress = true;
 	}
-#else
+	#else
 	snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/shot-%06d.%s",
 		movie_dir.string, movie_start_date.tm_mday, movie_start_date.tm_mon, movie_start_date.tm_year,
 		movie_start_date.tm_hour, movie_start_date.tm_min, movie_start_date.tm_sec, movie_frame_count, image_ext);
 
 	con_suppress = true;
-#endif
+	#endif // _WIN32
 
 	//SCR_Screenshot(fname);
 	//movie_frame_count++;
 
+	// Only capture a frame after all views have been drawn
+	// in multiview mode. Otherwise always.
 	if (cl_multiview.value && cls.mvdplayback) 
 	{
 		if (CURRVIEW == 1)
@@ -291,10 +299,13 @@ void Movie_FinishFrame(void) {
 	{
 		SCR_Movieshot(fname);
 	}
+
 #ifdef _WIN32
 	if (!movie_is_avi)
 #endif
+	{
 		con_suppress = false;
+	}
 
 	// Only count the frame when all the views have been drawn
 	// in multiview mode. (Instead of counting one for each view that is drawn).
