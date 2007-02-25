@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.92 2007-02-25 23:05:20 disconn3ct Exp $
+    $Id: cl_screen.c,v 1.93 2007-02-25 23:41:00 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -130,8 +130,8 @@ cvar_t	scr_coloredText = {"scr_coloredText", "1"};
 // Tracking text.
 cvar_t	scr_tracking			= {"scr_tracking", "Tracking %t %n, [JUMP] for next"};
 cvar_t	scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
-#ifdef GLQUAKE
 cvar_t	scr_cursor_scale = {"scr_cursor_scale", "0.33"};
+#ifdef GLQUAKE
 cvar_t	scr_cursor_alpha = {"scr_cursor_alpha", "1"};
 #endif
 
@@ -2356,8 +2356,6 @@ void SCR_DrawCursor(void) {
 		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + 2, cursor_y + 2, 2, 0, 1, 0, 1);
 	}
 #else
-	// TODO: cursor code for software.
-#if 0
 	if (scr_cursor && scr_cursor->width)
 	{
 		Draw_SPic(cursor_x, cursor_y, scr_cursor, scr_cursor_scale.value);
@@ -2366,7 +2364,6 @@ void SCR_DrawCursor(void) {
 	{
 		Draw_Character(cursor_x, cursor_y, '+');
 	}
-#endif
 #endif
 }
 
@@ -3303,6 +3300,7 @@ void SCR_Init (void)
 	// so we require user to have that file for non-GL version
 	// otherwise the client will not start
 	// scr_cursor = Draw_CachePic("gfx/cursor.lmp");
+	scr_cursor = NULL;
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIEW);
@@ -3369,8 +3367,9 @@ void SCR_Init (void)
 
 	Cvar_Register (&scr_tracking);
 	Cvar_Register (&scr_spectatorMessage);
-#ifdef GLQUAKE
+
 	Cvar_Register (&scr_cursor_scale);
+#ifdef GLQUAKE
 	Cvar_Register (&scr_cursor_alpha);
 #endif
 
