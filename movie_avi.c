@@ -198,10 +198,10 @@ BOOL CALLBACK acmDriverEnumCallback (HACMDRIVERID hadid, DWORD dwInstance, DWORD
 
 qbool Capture_Open (char *filename)
 {
-	HRESULT			hr;
+	HRESULT				hr;
 	BITMAPINFOHEADER	bitmap_info_header;
 	AVISTREAMINFO		stream_header;
-	char			*fourcc;
+	char				*fourcc;
 
 	m_video_frame_counter = m_audio_frame_counter = 0;
 	m_file = NULL;
@@ -210,7 +210,9 @@ qbool Capture_Open (char *filename)
 	m_audio_is_mp3 = (qbool)movie_mp3.value;
 
 	if (*(fourcc = movie_codec.string) != '0')	// codec fourcc supplied
+	{
 		m_codec_fourcc = mmioFOURCC (fourcc[0], fourcc[1], fourcc[2], fourcc[3]);
+	}
 
 	qAVIFileInit ();
 	hr = qAVIFileOpen (&m_file, filename, OF_WRITE | OF_CREATE, NULL);
@@ -388,16 +390,11 @@ void Capture_Close (void)
 	qAVIFileExit ();
 }
 
-void Capture_WriteVideo (byte *pixel_buffer)
+void Capture_WriteVideo (byte *pixel_buffer, int size)
 {
 	HRESULT	hr;
-#ifdef GLQUAKE
-	int	size = glwidth * glheight * 3;
-#else
-	int	size = vid.width * vid.height * 3;
-#endif
 
-	// check frame size (TODO: other things too?) hasn't changed
+	// Check frame size (TODO: other things too?) hasn't changed
 	if (m_video_frame_size != size)
 	{
 		Com_Printf ("ERROR: Frame size changed\n");
@@ -410,6 +407,8 @@ void Capture_WriteVideo (byte *pixel_buffer)
 		return;
 	}
 
+	// Write the pixel buffer to to the AVIFile, one sample/frame at the time
+	// set each frame to be a keyframe (it doesn't depend on previous frames).
 	hr = qAVIStreamWrite (Capture_VideoStream(), m_video_frame_counter++, 1, pixel_buffer, m_video_frame_size, AVIIF_KEYFRAME, NULL, NULL);
 	if (FAILED(hr))
 	{
@@ -482,8 +481,10 @@ clean:
 	}
 	else
 	{
+		// The audio is not in MP3 format, just write the WAV data to the avi.
 		hr = qAVIStreamWrite (m_audio_stream, m_audio_frame_counter++, 1, sample_buffer, samples * m_wave_format.nBlockAlign, AVIIF_KEYFRAME, NULL, NULL);
 	}
+
 	if (FAILED(hr))
 	{
 		Com_Printf ("ERROR: Couldn't write to AVI file\n");
