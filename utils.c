@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.33 2007-02-19 13:55:02 qqshka Exp $
+	$Id: utils.c,v 1.34 2007-02-25 22:05:53 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -363,19 +363,11 @@ int Player_StringtoSlot(char *arg)
 
 		if (cl.players[i].name[0] && !strncasecmp(arg, stripped, arg_length))
 		{
-			if(stripped != NULL)
-			{
-				Q_free(stripped);
-				stripped = NULL;
-			}
+			Q_free(stripped);
 			return i;
 		}
 
-		if(stripped != NULL)
-		{
-			Q_free(stripped);
-			stripped = NULL;
-		}
+		Q_free(stripped);
 	}
 
 	// Check if the argument is a user id instead
@@ -472,7 +464,7 @@ qbool Util_F_Match(char *_msg, char *f_request) {
 	Q_free(msg);
 	return true;
 }
-
+		
 
 void Replace_In_String (char *src, int n, char delim, int num_args, ...){
 	
