@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.63 2007-02-19 13:55:02 qqshka Exp $
+	$Id: cl_demo.c,v 1.64 2007-02-25 22:04:17 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -687,59 +687,87 @@ int CL_Demo_Peek(void *buf, int size);
 
 vfsfile_t *playbackfile = NULL;		// The demo file used for playback.
 
-char pb_buf[1024*10];
-char pb_tmp_buf[sizeof(pb_buf)];
-int	pb_s = 0, pb_cnt = 0;
-qbool pb_eof = false;
+char pb_buf[1024*10];				// Playback buffer.
+char pb_tmp_buf[sizeof(pb_buf)];	// Temp playback buffer used for validating MVD data.
+int	pb_s = 0;						// 
+int pb_cnt = 0;						// How many bytes we've read from the playback buffer.
+qbool pb_eof = false;				// Have we reached the end of the playback buffer?
 
+//
+// Inits the demo playback buffer.
+//
 void CL_Demo_PB_Init(void *buf, int buflen) 
 {
-	// Negative buffer length is bad.
+	// The length of the buffer is out of bounds.
 	if (buflen < 0 || buflen > (int)sizeof(pb_buf))
-		Sys_Error("CL_Demo_PB_Init: buflen < 0");
+		Sys_Error("CL_Demo_PB_Init: buflen out of bounds.");
 
+	// Copy the specified init data into the playback buffer.
 	memcpy(pb_buf, buf, buflen);
+
+	// Reset any associated playback buffers.
 	pb_s = 0;
 	pb_cnt = buflen;
 	pb_eof = false;
 }
 
+//
+// Reads a chunk of data from the playback file and returns the number of bytes read.
+//
 int pb_raw_read(void *buf, int size) 
 {
 	vfserrno_t err;
 	int r = VFS_READ(playbackfile, buf, size, &err);
 
-	if (size > 0 && !r && err == VFSERR_EOF) // size > 0 mean detect EOF only if we actually trying read some data
+	// Size > 0 mean detect EOF only if we actually trying read some data.
+	if (size > 0 && !r && err == VFSERR_EOF) 
 		pb_eof = true;
 
 	return r;
 }
 
+//
+// Checks if the 
+//
 qbool pb_ensure(void) 
 {
 	int need, got = 0;
 
+	// Show how much we've read.
 	if (cl_shownet.value == 3)
 		Com_Printf(" %d", pb_cnt);
 
-	if (cls.mvdplayback && pb_cnt > 0 ) { // try decrease pb_buf[]
-		pb_raw_read(NULL, 0); // at the same time increase internal TCP buffer
-		if (pb_cnt > 2000) // seems theoretical size of one MVD packet is 1400, so 2000 must be safe to parse something
+	// Try to decrease the playback buffer.
+	if (cls.mvdplayback && pb_cnt > 0 ) 
+	{
+		// At the same time increase internal TCP buffer by faking a read to it.
+		pb_raw_read(NULL, 0); 
+		
+		// Seems theoretical size of one MVD packet is 1400, so 2000 must be safe to parse something.
+		if (pb_cnt > 2000)
 			return true;
 
+		// Peek into the playback buffer.
 		CL_Demo_Peek(pb_tmp_buf, pb_cnt);
+
+		// Make sure the MVD data is valid.
 		if (ConsistantMVDData((unsigned char*)pb_tmp_buf, pb_cnt))
 			return true;
 	}
 
-	need = sizeof(pb_buf); // we need full buffer
-	need -= pb_cnt; // alredy have something
+	need = sizeof(pb_buf);	// We want to read the entire buffer.
+	need -= pb_cnt;			// But only read stuff we haven't read yet.
 	need = min(need, (int)sizeof(pb_buf) - pb_s - pb_cnt);
 	need = max(0, need);
+	
 	if (need)
-		pb_cnt += (got = pb_raw_read(pb_buf + pb_s + pb_cnt, need));
+	{
+		got = pb_raw_read(pb_buf + pb_s + pb_cnt, need);
+		pb_cnt += got;
+	}
 
-	if (got == need) {
+	if (got == need) 
+	{
 		int tmp = (pb_s + pb_cnt) % (int)sizeof(pb_buf);
 		need = sizeof(pb_buf);
 		need -= pb_cnt;
@@ -749,7 +777,9 @@ qbool pb_ensure(void)
 	if (pb_cnt == (int)sizeof(pb_buf) || pb_eof)
 		return true; // return true if we have full buffer or get EOF
 
-	if (cls.mvdplayback && pb_cnt) { // not enough data in buffer, check do we have at least one message in buffer
+	// Not enough data in buffer, check do we have at least one message in buffer.
+	if (cls.mvdplayback && pb_cnt) 
+	{ 
 		CL_Demo_Peek(pb_tmp_buf, pb_cnt);
 
 		return !!ConsistantMVDData((unsigned char*)pb_tmp_buf, pb_cnt);
@@ -762,11 +792,11 @@ int pb_read(void *buf, int size, qbool peek)
 {
 	int need, have = 0;
 
+	// Size can't be negative.
 	if (size < 0)
-		Sys_Error("pb_read: size < 0"); // ffs
+		Sys_Error("pb_read: size < 0");
 
 	need = min(pb_cnt, size);
-	need -= have;
 	need = min(need, (int)sizeof(pb_buf) - pb_s);
 	memcpy((byte*)buf + have, (byte*)pb_buf + pb_s, need);
 	have += need;
@@ -777,7 +807,8 @@ int pb_read(void *buf, int size, qbool peek)
 	memcpy((byte*)buf + have, pb_buf, need);
 	have += need;
 
-	if (!peek) {
+	if (!peek) 
+	{
 		pb_s += have;
 		pb_s = pb_s % (int)sizeof(pb_buf);
 		pb_cnt -= have;
@@ -1376,22 +1407,23 @@ void CL_Record_f (void)
 	switch(Cmd_Argc()) 
 	{
 		case 1:
-			//
-			// Just show if anything is being recorded.
-			//
+		//
+		// Just show if anything is being recorded.
+		//
+		{			
 			if (autorecording)
 				Com_Printf("Auto demo recording is in progress\n");
 			else if (cls.demorecording)
 				Com_Printf("Recording to %s\n", demoname);
 			else
 				Com_Printf("Not recording\n");
-
 			break;
+		}
 		case 2:
-			//
-			// Start recording to the specified demo name.
-			//
-
+		//
+		// Start recording to the specified demo name.
+		//
+		{
 			if (cls.mvdplayback) 
 			{
 				Com_Printf ("Cannot record during mvd playback\n");
@@ -1446,15 +1478,24 @@ void CL_Record_f (void)
 			Com_Printf ("Recording to %s\n", nameext);
 
 			break;
-		default:		
+		}
+		default:
+		{
 			Com_Printf("Usage: %s [demoname]\n", Cmd_Argv(0));
 			break;
+		}
 	}
 }
 
-static qbool CL_RecordDemo(char *dir, char *name, qbool autorecord) 
+//
+// Starts recording a demo using autorecord or easyrecord.
+//
+static qbool CL_MatchRecordDemo(char *dir, char *name, qbool autorecord) 
 {
-	char extendedname[MAX_OSPATH * 2], strippedname[MAX_OSPATH * 2], *fullname, *exts[] = {"qwd", "qwz", "mvd", NULL};
+	char extendedname[MAX_PATH];
+	char strippedname[MAX_PATH];
+	char *fullname;
+	char *exts[] = {"qwd", "qwz", "mvd", NULL};
 	int num;
 
 	if (cls.state != ca_active) 
@@ -1465,7 +1506,7 @@ static qbool CL_RecordDemo(char *dir, char *name, qbool autorecord)
 
 	if (cls.mvdplayback) 
 	{
-			Com_Printf ("Cannot record during mvd playback\n");
+		Com_Printf ("Cannot record during mvd playback\n");
 		return false;
 	}
 
@@ -1475,37 +1516,54 @@ static qbool CL_RecordDemo(char *dir, char *name, qbool autorecord)
 		return false;
 	}
 
+	// Stop any old recordings.
 	if (cls.demorecording)
 		CL_Stop_f();
 
+	// Make sure we don't have any invalid chars in the demo name.
 	if (!Util_Is_Valid_Filename(name)) 
 	{
 		Com_Printf(Util_Invalid_Filename_Msg(name));
 		return false;
 	}
 
+	// We always record to qwd. If the user has set some other demo format
+	// we convert to that later on.
 	COM_ForceExtension(name, ".qwd");
+
 	if (autorecord) 
 	{
+		// Save the final demo name.
 		strlcpy (extendedname, name, sizeof(extendedname));
 	} 
 	else 
 	{
+		//
+		// Easy recording, file is saved using match_* settings.
+		//
+
+		// Get rid of the extension again.
 		COM_StripExtension(name, strippedname);
 		fullname = va("%s/%s", dir, strippedname);
+
+		// Find a unique filename in the specified dir.
 		if ((num = Util_Extend_Filename(fullname, exts)) == -1) 
 		{
 			Com_Printf("Error: no available filenames\n");
 			return false;
 		}
+
+		// Save the demo name..
 		snprintf (extendedname, sizeof(extendedname), "%s_%03i.qwd", strippedname, num);
 	}
 
+	// Get dir + final demo name.
 	fullname = va("%s/%s", dir, extendedname);
 
-	// open the demo file
+	// Open the demo file for writing.
 	if (!CL_Demo_Open(fullname)) 
 	{
+		// Failed to open the file, make sure it exists and try again.
 		COM_CreatePath(fullname);
 		if (!CL_Demo_Open(fullname)) 
 		{
@@ -1514,22 +1572,27 @@ static qbool CL_RecordDemo(char *dir, char *name, qbool autorecord)
 		}
 	}
 
+	// Write the demo startup stuff.
 	cls.demorecording = true;
 	CL_WriteStartupData ();
 
+	// Echo the name of the demo if we're easy recording
+	// and save the demo name for later use.
 	if (!autorecord) 
 	{
 		Com_Printf ("Recording to %s\n", extendedname);
-		strlcpy(demoname, extendedname, sizeof(demoname));	
-		strlcpy(fulldemoname, fullname, sizeof(fulldemoname));
+		strlcpy(demoname, extendedname, sizeof(demoname));		// Just demo name.
+		strlcpy(fulldemoname, fullname, sizeof(fulldemoname));  // Demo name including path.
 	}
 
 	return true;
 }
 
+//
+// Starts recording a demo and names it according to your match_ settings.
+//
 void CL_EasyRecord_f (void) 
 {
-	int c;
 	char *name;
 
 	if (cls.state != ca_active) 
@@ -1538,28 +1601,36 @@ void CL_EasyRecord_f (void)
 		return;
 	}
 
-	switch((c = Cmd_Argc())) 
+	switch(Cmd_Argc()) 
 	{
 		case 1:
-			name = MT_MatchName(); break;
+		{
+			// No name specified by the user, get it from match tools instead.
+			name = MT_MatchName(); 
+			break;
+		}
 		case 2:
-			name = Cmd_Argv(1);	break;
+		{
+			// User specified a demo name, use it.
+			name = Cmd_Argv(1);	
+			break;
+		}
 		default:
+		{
 			Com_Printf("Usage: %s [demoname]\n", Cmd_Argv(0));
 			return;
+		}
 	}
 
-	easyrecording = CL_RecordDemo(CL_DemoDirectory(), name, false);
+	easyrecording = CL_MatchRecordDemo(CL_DemoDirectory(), name, false);
 }
 
 //=============================================================================
 //							DEMO AUTO RECORDING
 //=============================================================================
 
-
-
-static char	auto_matchname[2 * MAX_OSPATH];
-static qbool temp_demo_ready = false;
+static char	auto_matchname[MAX_PATH];	// Demoname when recording auto match demo.
+static qbool temp_demo_ready = false;	// Indicates if the autorecorded match demo is done recording.
 static float auto_starttime;
 
 char *MT_TempDirectory(void);
@@ -1568,16 +1639,26 @@ extern cvar_t match_auto_record, match_auto_minlength;
 
 #define TEMP_DEMO_NAME "_!_temp_!_.qwd"
 
+#define DEMO_MATCH_NORECORD		0 // No autorecord.
+#define DEMO_MATCH_MANUALSAVE	1 // Demo will be recorded but requires manuall saving.
+#define DEMO_MATCH_AUTOSAVE		2 // Automatically saves the demo after the match is completed.
 
+//
+// Stops auto recording of a match.
+//
 void CL_AutoRecord_StopMatch(void) 
 {
+	// Not doing anything.
 	if (!autorecording)
 		return;
 
+	// Stop the recording and write end of demo stuff.
 	autorecording = false;
 	CL_StopRecording();
 	temp_demo_ready = true;
-	if (match_auto_record.value == 2)
+
+	// Automatically save the demo after the match is completed.
+	if (match_auto_record.value == DEMO_MATCH_AUTOSAVE)
 	{
 		CL_AutoRecord_SaveMatch();
 		Com_Printf ("Auto record ok\n");
@@ -1588,18 +1669,23 @@ void CL_AutoRecord_StopMatch(void)
 	}
 }
 
-
+//
+// Cancels the match.
+//
 void CL_AutoRecord_CancelMatch(void) 
 {
+	// Not recording.
 	if (!autorecording)
 		return;
 
+	// Stop the recording and write end of demo stuff.
 	autorecording = false;
 	CL_StopRecording();
 	temp_demo_ready = true;
 
-	if (match_auto_record.value == 2) 
+	if (match_auto_record.value == DEMO_MATCH_AUTOSAVE) 
 	{
+		// Only save the demo if it's longer than the specified minimum length
 		if (cls.realtime - auto_starttime > match_auto_minlength.value)
 			CL_AutoRecord_SaveMatch();
 		else
@@ -1611,19 +1697,25 @@ void CL_AutoRecord_CancelMatch(void)
 	}
 }
 
-
+//
+// Starts autorecording a match.
+//
 void CL_AutoRecord_StartMatch(char *demoname) 
 {
 	temp_demo_ready = false;
 
+	// No autorecording is set.
 	if (!match_auto_record.value)
 		return;
 
+	// Don't start autorecording if the 
+	// user already is recording a demo.
 	if (cls.demorecording) 
 	{
-		if (autorecording) 
-		{			
-			
+		// We're autorecording since before, it's
+		// ok to restart the recording then.
+		if (autorecording)
+		{
 			autorecording = false;
 			CL_StopRecording();
 		} 
@@ -1634,25 +1726,33 @@ void CL_AutoRecord_StartMatch(char *demoname)
 		}
 	}
 
+	// Save the name of the auto recorded demo for later.
 	strlcpy(auto_matchname, demoname, sizeof(auto_matchname));
-
 	
-	if (!CL_RecordDemo(MT_TempDirectory(), TEMP_DEMO_NAME, true)) 
+	// Try starting to record the demo.
+	if (!CL_MatchRecordDemo(MT_TempDirectory(), TEMP_DEMO_NAME, true)) 
 	{
 		Com_Printf ("Auto demo recording failed to start!\n");
 		return;
 	}
 
+	// We're now in business.
 	autorecording = true;
 	auto_starttime = cls.realtime;
 	Com_Printf ("Auto demo recording commenced\n");
 }
 
+//
+//
+//
 qbool CL_AutoRecord_Status(void) 
 {
 	return temp_demo_ready ? 2 : autorecording ? 1 : 0;
 }
 
+//
+// Saves an autorecorded demo.
+//
 void CL_AutoRecord_SaveMatch(void) 
 {
 	//
@@ -1661,50 +1761,64 @@ void CL_AutoRecord_SaveMatch(void)
 	//
 	int error, num;
 	FILE *f;
-	char *dir, *tempname, savedname[2 * MAX_OSPATH], *fullsavedname, *exts[] = {"qwd", "qwz", "mvd", NULL};
+	char *dir, *tempname, savedname[MAX_PATH], *fullsavedname, *exts[] = {"qwd", "qwz", "mvd", NULL};
 	
+	// The auto recorded demo hasn't finished recording, can't do this yet.
 	if (!temp_demo_ready)
 		return;
 
+	// Don't try to save it again.
 	temp_demo_ready = false;
 
+	// Get the demo dir.
 	dir = CL_DemoDirectory();
+
+	// Get the temp name of the file we've recorded.
 	tempname = va("%s/%s", MT_TempDirectory(), TEMP_DEMO_NAME);
 
+	// Get the final name where we'll save the final product.
 	fullsavedname = va("%s/%s", dir, auto_matchname);
 	
+	// Find a unique filename in the final location.
 	if ((num = Util_Extend_Filename(fullsavedname, exts)) == -1) 
 	{
 		Com_Printf("Error: no available filenames\n");
 		return;
 	}
-	snprintf (savedname, sizeof(savedname), "%s_%03i.qwd", auto_matchname, num);
 
+	// Get the final full path where we'll save the demo. (This is the final name for real now)
+	snprintf (savedname, sizeof(savedname), "%s_%03i.qwd", auto_matchname, num);
 	fullsavedname = va("%s/%s", dir, savedname);
 
+	// Try opening the temp file to make sure we can read it.
 	if (!(f = fopen(tempname, "rb")))
 		return;
-
 	fclose(f);
 
+	// Move the temp file to the final location.
 	if ((error = rename(tempname, fullsavedname))) 
 	{
+		// Failed to move, make sure the path exists and try again.
 		COM_CreatePath(fullsavedname);
 		error = rename(tempname, fullsavedname);
 	}
 
 #ifdef _WIN32
 
+	// If the file type is not QWD we need to conver it using external apps.
 	if (!strcmp(demo_format.string, "qwz") || !strcmp(demo_format.string, "mvd")) 
 	{
 		Com_Printf("Converting QWD to %s format.\n", demo_format.string);
+		
+		// Convert the file to either MVD or QWZ.
 		if (CL_Demo_Compress(fullsavedname)) 
 		{
-			qwz_packing = true;
 			return;
 		}
 		else
+		{
 			qwz_packing = false;
+		}
 	}
 
 #endif
@@ -1719,11 +1833,17 @@ void CL_AutoRecord_SaveMatch(void)
 
 #ifdef _WIN32
 
+//
+//
+//
 void CL_Demo_RemoveQWD(void)
 {
 	unlink(tempqwd_name);
 }
 
+//
+//
+//
 void CL_Demo_GetCompressedName(char* cdemo_name)
 {
 	int namelen;
@@ -1736,6 +1856,9 @@ void CL_Demo_GetCompressedName(char* cdemo_name)
 	}
 }
 
+//
+//
+//
 void CL_Demo_RemoveCompressed(void)
 {
 	char cdemo_name[255];
@@ -1743,6 +1866,9 @@ void CL_Demo_RemoveCompressed(void)
 	unlink(cdemo_name);
 }
 
+//
+//
+//
 static void StopQWZPlayback (void) 
 {
 	if (!hQizmoProcess && tempqwd_name[0]) 
@@ -1755,6 +1881,9 @@ static void StopQWZPlayback (void)
 	qwz_unpacking = false;	
 }
 
+//
+//
+//
 void CL_CheckQizmoCompletion (void) 
 {
 	DWORD ExitCode;
@@ -1826,6 +1955,9 @@ void CL_CheckQizmoCompletion (void)
 	}
 }
 
+//
+//
+//
 static void PlayQWZDemo (void) 
 {
 	extern cvar_t qizmo_dir;
@@ -1911,6 +2043,9 @@ static void PlayQWZDemo (void)
 	qwz_playback = true;
 }
 
+//
+//
+//
 int CL_Demo_Compress(char* qwdname)
 {
 	extern cvar_t qizmo_dir;
@@ -1975,7 +2110,6 @@ int CL_Demo_Compress(char* qwdname)
 double		demostarttime;
 
 #ifdef WITH_ZIP
-//
 //
 // [IN]		play_path = The compressed demo file that needs to be extracted to play it.
 // [OUT]	unpacked_path = The path to the decompressed file.
@@ -2290,6 +2424,7 @@ void CL_TimeDemo_f (void)
 
 	CL_Play_f ();
 
+	// We failed to start demoplayback.
 	if (cls.state != ca_demostart)
 		return;
 
@@ -2299,7 +2434,7 @@ void CL_TimeDemo_f (void)
 	cls.timedemo = true;
 	cls.td_starttime = 0;
 	cls.td_startframe = cls.framecount;
-	cls.td_lastframe = -1;		// get a new message this frame
+	cls.td_lastframe = -1;		// Get a new message this frame.
 }
 
 void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen);
@@ -2326,7 +2461,7 @@ void QTV_CloseRequest(qbool warn)
 }
 
 //
-//
+// Polls a QTV proxy. (Called on each frame to see if we have a new QTV request available)
 //
 void CL_QTVPoll (void)
 {
@@ -2336,37 +2471,43 @@ void CL_QTVPoll (void)
 	qbool streamavailable = false;
 	qbool saidheader = false;
 
+	// We're not playing any QTV stream.
 	if (!qtvrequest)
 		return;
 
-	need = sizeof(qtvrequestbuffer);
-	need -= 1; // for null terminator
-	need -= qtvrequestsize; // Probably already have something.
-	need = max(0, need);
+	//
+	// Calculate how much we need to read from the buffer.
+	//
+	need = sizeof(qtvrequestbuffer); // Read the entire buffer
+	need -= 1;						// For null terminator.
+	need -= qtvrequestsize;			// We probably already have something, so don't re-read something we already read.
+	need = max(0, need);			// Don't cause a crash by trying to read a negative value.
 
 	len = VFS_READ(qtvrequest, qtvrequestbuffer + qtvrequestsize, need, &err);
 
+	// EOF, end of polling.
 	if (!len && err == VFSERR_EOF) 
 	{
-		// EOF, end of polling.
 		QTV_CloseRequest(true); 
 		return;
 	}
 
+	// Increase how much we've read.
 	qtvrequestsize += len;
 	qtvrequestbuffer[qtvrequestsize] = '\0';
 
+	// We didn't read anything, abort.
 	if (!qtvrequestsize)
 		return;
 
-	// Make sure it's a complete chunk.
+	// Make sure it's a complete chunk. "\n\n" specifies the end of a message.
 	for (start = qtvrequestbuffer; *start; start++)
 	{
 		if (start[0] == '\n' && start[1] == '\n')
 			break;
 	}
 
-	// We didn't find "\n\n".
+	// We've reached the end and didn't find "\n\n" so the chunk is incomplete.
 	if (!*start)
 		return;
 
@@ -2386,7 +2527,7 @@ void CL_QTVPoll (void)
 			// Find the first colon in the string.
 			colon = strchr(start, ':');
 
-			// 
+			// We found a request.
 			if (colon)
 			{
 				// Remove the colon.
@@ -2432,26 +2573,30 @@ void CL_QTVPoll (void)
 			}
 			else
 			{
+				// What follows this is a stream.
 				if (!strcmp(start, "BEGIN"))
 				{
 					streamavailable = true;
 				}
 			}
 
-			// From s to e, we have a line.
+			// From start to end, we have a line.
 			start = end + 1;
 		}
 
 		end++;
 	}
 
+	// We found a stream.
 	if (streamavailable)
 	{
-		int cnt = qtvrequestsize - (end - qtvrequestbuffer);
+		// Get the size of the stream chunk.
+		int chunk_size = qtvrequestsize - (end - qtvrequestbuffer);
 
-		if (cnt >= 0) 
+		// Start playing the QTV stream.
+		if (chunk_size >= 0) 
 		{
-			CL_QTVPlay(qtvrequest, end, cnt);
+			CL_QTVPlay(qtvrequest, end, chunk_size);
 			qtvrequest = NULL;
 			return;
 		}
@@ -2462,32 +2607,45 @@ void CL_QTVPoll (void)
 	QTV_CloseRequest(true);
 }
 
+//
+// Returns a list of available stream sources from a QTV proxy.
+//
 void CL_QTVList_f (void)
 {
 	char *connrequest;
 	vfsfile_t *newf;
 
+	// Not enough arguments, show usage.
 	if (Cmd_Argc() < 2)
 	{
 		Com_Printf("Usage: qtvlist hostname[:port]\n");
 		return;
 	}
 
+	// Open the TCP connection to the QTV proxy.
 	if (!(newf = FS_OpenTCP(Cmd_Argv(1))))
 	{
 		Com_Printf("Couldn't connect to proxy\n");
 		return;
 	}
 
+	// Send the version of QTV the client supports.
 	connrequest =	"QTV\n"
 					"VERSION: 1\n";
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
+
+	// Get a source list from the server.
 	connrequest =	"SOURCELIST\n";
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
+
+	// "\n\n" will end the session.
 	connrequest =	"\n";
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
 
+	// Close any old request that might still be open.
 	QTV_CloseRequest(true);
+
+	// Set the current connection to be the QTVRequest to be used later.
 	qtvrequest = newf;
 }
 
@@ -2501,7 +2659,8 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 	// End any current game.
 	Host_EndGame();
 
-	// Make sure we're not playing a demo already.
+	// Close the old playback file just in case, and
+	// open the "network file" for QTV playback.
 	if (playbackfile)
 		VFS_CLOSE(playbackfile);
 	playbackfile = newf;
@@ -2514,19 +2673,21 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 	nTrack1duel = nTrack2duel = 0;
 	mv_skinsforced = false;
 
+	// We're now playing a demo.
 	cls.demoplayback	= true;
 	cls.mvdplayback		= true;	
 	cls.nqdemoplayback	= false;
 
-	// Init some buffers.
+	// Init playback buffers.
 	CL_Demo_PB_Init(buf, buflen); 
 
 	// NetQuake demo support.
 	if (cls.nqdemoplayback)
 	{
-		NQD_StartPlayback (); // may be some day qtv will stream NQ demos too...
+		NQD_StartPlayback (); // Maybe some day QTV will stream NQ demos too...
 	}
 
+	// Setup demo playback for the netchan.
 	cls.state = ca_demostart;
 	Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, 0);
 	cls.demotime = 0;
@@ -2712,6 +2873,7 @@ void CL_QTVPlay_f (void)
 		VFS_WRITE(newf, connrequest, strlen(connrequest));
 	}
 
+	// Two \n\n tells the server we're done.
 	connrequest =	"\n";
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
 
@@ -2726,6 +2888,9 @@ void CL_QTVPlay_f (void)
 //								DEMO TOOLS
 //=============================================================================
 
+//
+// Sets the playback speed of a demo.
+//
 void CL_Demo_SetSpeed_f (void) 
 {
 	extern cvar_t cl_demospeed;
@@ -2739,6 +2904,9 @@ void CL_Demo_SetSpeed_f (void)
 	Cvar_SetValue(&cl_demospeed, atof(Cmd_Argv(1)) / 100.0);
 }
 
+//
+// Jumps to a specified time in a demo (forwards only).
+//
 void CL_Demo_Jump_f (void) 
 {
     int seconds = 0, seen_col, relative = 0;
