@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_win.c,v 1.25 2007-02-24 14:26:03 johnnycz Exp $
+	$Id: in_win.c,v 1.26 2007-02-25 21:53:38 cokeman1982 Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -928,7 +928,7 @@ void IN_MouseMove (usercmd_t *cmd) {
 	//
 	// Do not move the player if we're in HUD editor mode.
 	//
-	if(key_dest == key_game)
+	if(key_dest != key_hudeditor)
 	{
 		if (m_accel.value) 
 		{
