@@ -1117,6 +1117,12 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
     hud_t		*hud;
     char		*subvar;
 
+	// We want to include Frame, frame_color, item_opacity in the list of
+	// available cvar's for the user also. If any additional cvars that
+	// common for all hud elements are added this needs to be increased.
+	int			num_params = 3;
+
+	// Allocate room for the HUD. 
     hud = (hud_t *) Q_malloc(sizeof(hud_t));
     memset(hud, 0, sizeof(hud_t));
     hud->next = hud_huds;
@@ -1124,12 +1130,28 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
     hud->min_state = min_state;
     hud->draw_func = draw_func;
 
+	// Name.
     hud->name = (char *) Q_malloc(strlen(name)+1);
     strcpy(hud->name, name);
 
+	// Description.
     hud->description = (char *) Q_malloc(strlen(description)+1);
     strcpy(hud->description, description);
 
+	// Count the number of params.
+	subvar = params;
+    va_start (argptr, params);
+	while(subvar)
+	{
+		num_params++;
+		subvar = va_arg(argptr, char *);
+	}
+	va_end (argptr);
+
+	// Allocate the params array.
+	hud->params = Q_calloc(num_params, sizeof(cvar_t *));
+
+	// Set flags.
     hud->flags = flags;
 
     Cmd_AddCommand(name, HUD_Func_f);
@@ -1245,7 +1267,7 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
     while (subvar)
     {
         char *value = va_arg(argptr, char *);
-        if (value == NULL  ||  hud->num_params >= HUD_MAX_PARAMS)
+        if (value == NULL || hud->num_params >= HUD_MAX_PARAMS || hud->num_params >= num_params)
 		{
             Sys_Error("HUD_Register: HUD_MAX_PARAMS overflow");
 		}
@@ -1258,6 +1280,24 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
     va_end (argptr);
 
     return hud;
+}
+
+void HUD_ParamsCleanup(void)
+{
+	int i = 0;
+	hud_t *hud = hud_huds;
+
+    while (hud)
+    {
+        for (i=0; i < hud->num_params; i++)
+		{
+			Cvar_Delete(hud->params[i]->name);
+		}
+
+		Q_free(hud->params);
+
+        hud = hud->next;
+    }
 }
 
 //
