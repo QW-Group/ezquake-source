@@ -1,11 +1,8 @@
-#ifdef FRAMEBUFFERS
+#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
 
 // Loads and does all the framebuffer stuff
 #include "quakedef.h"
 #include "gl_framebuffer.h"
-
-qbool	use_framebuffer;
-int		fb = 0;
 
 cvar_t	framebuffer		= {"framebuffer", "0"};
 /*
@@ -286,4 +283,4 @@ void Framebuffer_Draw (fb_t *fbs)
 	
 	glEnd();
 }
-#endif
+#endif // FRAMEBUFFERS & GLQUAKE

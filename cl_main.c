@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.128 2007-02-22 23:50:17 johnnycz Exp $
+	$Id: cl_main.c,v 1.129 2007-02-26 06:01:14 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1171,6 +1171,10 @@ void CL_Init (void) {
 
 	GFX_Init ();
 
+#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
+	Framebuffer_Init();
+#endif
+
 	S_Init ();
 
 	CDAudio_Init ();
@@ -1521,7 +1525,7 @@ void CL_Frame (double time) {
 	{
 		Cam_SetViewPlayer();
 
-			// Set up prediction for other players
+		// Set up prediction for other players
 		if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0)
 		{
 			CL_SetUpPlayerPrediction(false);
@@ -1530,7 +1534,7 @@ void CL_Frame (double time) {
 		// do client side motion prediction
 		CL_PredictMove();
 
-			// Set up prediction for other players
+		// Set up prediction for other players
 		if ((physframe && cl_independentPhysics.value != 0) || cl_independentPhysics.value == 0)
 		{
 			CL_SetUpPlayerPrediction(true);
@@ -1621,7 +1625,9 @@ void CL_Frame (double time) {
 	MT_Frame();
 
 	if (Movie_IsCapturing())
+	{
 		Movie_FinishFrame();
+	}
 
 	cls.framecount++;
 

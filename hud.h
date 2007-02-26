@@ -17,6 +17,7 @@
 #define HUD_ON_SCORES          (1 <<  8)  // draw on +showscores too
 #define HUD_NO_GROW            (1 <<  9)  // no frame grow
 #define HUD_PLUSMINUS          (1 << 10)  // auto add +/- commands
+#define HUD_OPACITY				(1 << 11)
 
 #define HUD_INVENTORY          (HUD_NO_GROW)   // aply for sbar elements
 
@@ -52,14 +53,17 @@ typedef struct hud_s
 
     void (*draw_func) (struct hud_s *); // drawing func
 
-	cvar_t *order;
-    //int draw_order;           // higher it is, later this element will be drawn
-                              // and more probable that will be on top
+	cvar_t *order;				// higher it is, later this element will be drawn
+								// and more probable that will be on top
 
     cvar_t *show;             // show cvar
     cvar_t *frame;            // frame cvar
 	cvar_t *frame_color;	  // frame color cvar
 	float frame_color_cache[4]; // cache for parsed frame color
+	
+#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
+	cvar_t *opacity;			// The overall opacity of the entire HUD element.
+#endif 
 
     // placement
     cvar_t *place;            // place string, parsed to:

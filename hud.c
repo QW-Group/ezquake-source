@@ -1109,12 +1109,13 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
                      hud_func_type draw_func,
                      char *show, char *place, char *align_x, char *align_y,
                      char *pos_x, char *pos_y, char *frame, char *frame_color,
+					 char *item_opacity,
                      char *params, ...)
 {
     int i;
     va_list     argptr;
-    hud_t  *hud;
-    char *subvar;
+    hud_t		*hud;
+    char		*subvar;
 
     hud = (hud_t *) Q_malloc(sizeof(hud_t));
     memset(hud, 0, sizeof(hud_t));
@@ -1222,6 +1223,18 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 	{
         hud->flags |= HUD_NO_FRAME;
 	}
+
+	//
+	// Item Opacity.
+	//
+	#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
+	if(use_framebuffer)
+	{
+		hud->opacity = HUD_CreateVar(name, "item_opacity", (item_opacity) ? item_opacity : "1.0");
+		hud->flags |= HUD_OPACITY;
+		hud->params[hud->num_params++] = hud->opacity;
+	}
+	#endif // FRAMEBUFFERS & GLQUAKE
     
 	//
     // Create parameters.
@@ -1318,12 +1331,12 @@ void HUD_DrawObject(hud_t *hud)
 		return;
 	}
 
-    if (cl.intermission == 2  &&  !(hud->flags & HUD_ON_FINALE))
+    if (cl.intermission == 2 && !(hud->flags & HUD_ON_FINALE))
 	{
         return;
 	}
 
-    if ((sb_showscores || sb_showteamscores)    &&  !(hud->flags & HUD_ON_SCORES))
+    if ((sb_showscores || sb_showteamscores) && !(hud->flags & HUD_ON_SCORES))
 	{
         return;
 	}
@@ -1340,18 +1353,47 @@ void HUD_DrawObject(hud_t *hud)
 		}
     }
 
-	// TODO: Set GL to draw to a frame buffer here so that the HUD element about to
-	// be drawn is not drawn directly to the back buffer... So that we can
-	// change opacity and stuff like that on the entire element after it
-	// has been drawn (below). 
-	// http://oss.sgi.com/projects/ogl-sample/registry/ARB/vertex_buffer_object.txt
-	// http://developer.nvidia.com/object/using_VBOs.html
-	// http://developer.nvidia.com/object/ogl_rtt.html <-- Render to texture example
+	#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
+	if(use_framebuffer)
+	{
+		// Make sure the main framebuffer is inited.
+		Framebuffer_Main_Init();
+
+		// Start drawing to a renderbuffer.
+		Framebuffer_Enable(&main_fb);
+	}
+	#endif // FRAMEBUFFERS & GLQUAKE
 
 	//
-	// draw object itself - updates last_draw_sequence itself
+	// Let the HUD element draw itself - updates last_draw_sequence itself.
 	//
 	hud->draw_func(hud);
+	
+	#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
+	if(use_framebuffer)
+	{
+		// Disable drawing to the renderbuffer.
+		Framebuffer_Disable(&main_fb);
+
+		glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+		if(hud->flags & HUD_OPACITY)
+		{
+			// Draw using semi-transparency.
+			glEnable (GL_BLEND);
+			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glColor4f (1, 1, 1, hud->opacity->value);
+		}
+
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		// Draw the renderbuffer to screen as texture.
+		Framebuffer_Draw(&main_fb);
+
+		// Reset the GL state to how it was before.
+		glPopAttrib();
+	}
+	#endif
 
 	// last_draw_sequence is update by HUD_PrepareDraw
     // if object was succesfully drawn (wasn't outside area etc..)
@@ -1383,10 +1425,10 @@ void HUD_Draw(void)
 
     while (hud)
     {
-        // draw
+        // Draw.
         HUD_DrawObject(hud);
 
-        // go to next
+        // Go to next.
         hud = hud->next;
     }
 
