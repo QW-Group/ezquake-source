@@ -57,5 +57,7 @@ void Framebuffer_Create (fb_t *fbs);
 
 fb_t	main_fb; // The main framebuffer that can be used generally to draw things offscreen.
 
+qbool use_framebuffer;
+
 #endif // FRAMEBUFFERS
 #endif // __GL_FRAMEBUFFER_H__

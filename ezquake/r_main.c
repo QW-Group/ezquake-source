@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_main.c,v 1.17 2007-01-10 13:37:31 oldmanuk Exp $
+	$Id: r_main.c,v 1.18 2007-02-26 06:02:40 cokeman1982 Exp $
 
 */
 
@@ -259,7 +259,7 @@ void R_Init (void) {
 
     hud_netgraph = HUD_Register("netgraph", /*"r_netgraph"*/ NULL, "Shows your network conditions in graph-form. With netgraph you can monitor your latency (ping), packet loss and network errors.",
         HUD_PLUSMINUS | HUD_ON_SCORES, ca_onserver, 0, SCR_HUD_Netgraph,
-        "0", "top", "left", "bottom", "0", "0", "0", "0 0 0",
+        "0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
         "swap_x",       "0",
         "swap_y",       "0",
         "inframes",     "0",
