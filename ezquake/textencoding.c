@@ -88,7 +88,7 @@ static wchar koi2wc (char c)
 	else if (uc == '.' + 128)
 		return 0x045e;	// belarusian y
 	else if (uc == '/' + 128)
-		return 0x042c;	// russian capital hard sign
+		return 0x042a;	// russian capital hard sign
 	else
 		return (wchar)(unsigned char)c;
 }
