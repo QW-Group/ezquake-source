@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.50 2007-02-26 05:55:22 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.51 2007-02-26 15:04:38 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1456,10 +1456,8 @@ void Draw_TextBox (int x, int y, int width, int lines) {
 	Draw_TransPic (cx, cy+8, p);
 }
 
-// This repeats a 64 * 64 tile graphic to fill the screen around a sized down refresh window.
-void Draw_TileClear (int x, int y, int w, int h) 
-{
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
+//This repeats a 64 * 64 tile graphic to fill the screen around a sized down refresh window.
+void Draw_TileClear (int x, int y, int w, int h) {
 	GL_Bind (draw_backtile->texnum);
 	glBegin (GL_QUADS);
 	glTexCoord2f (x / 64.0, y / 64.0);
@@ -1471,12 +1469,10 @@ void Draw_TileClear (int x, int y, int w, int h)
 	glTexCoord2f (x / 64.0, (y + h) / 64.0 );
 	glVertex2f (x, y + h);
 	glEnd ();
-	glPopAttrib();
 }
 
 void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float r, float g, float b, float thickness, qbool fill, float alpha) 
 {
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	alpha = bound(0, alpha, 1);
 
 	if (!alpha)
@@ -1510,7 +1506,6 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float r, float g, float
 		glRectf(x, y + h, x + w, y + h - thickness);
 	}
 
-	/*
 	glEnable (GL_TEXTURE_2D);
 	if (alpha < 1) 
 	{
@@ -1518,8 +1513,6 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float r, float g, float
 		glDisable (GL_BLEND);
 	}
 	glColor3ubv (color_white);
-	*/
-	glPopAttrib();
 }
 
 void Draw_AlphaRectangle (int x, int y, int w, int h, int c, float thickness, qbool fill, float alpha)
@@ -1572,10 +1565,11 @@ void Draw_Outline (int x, int y, int w, int h, int c, float thickness)
 	Draw_AlphaRectangle (x, y, w, h, c, thickness, false, 1);
 }
 
+// HUD -> Cokeman
+// 
+
 void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, float r, float g, float b, float alpha) 
 {
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
-
 	alpha = bound(0, alpha, 1);
 
 	if (!alpha)
@@ -1605,7 +1599,6 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 	glVertex2f (x_end, y_end);
 	glEnd ();
 
-	/*
 	glEnable (GL_TEXTURE_2D);
 	if (alpha < 1) 
 	{
@@ -1613,8 +1606,6 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 		glDisable (GL_BLEND);
 	}
 	glColor3ubv (color_white);
-	*/
-	glPopAttrib();
 }
 
 void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, int c, float alpha) 
@@ -1634,8 +1625,6 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 	int i;
 	int start;
 	int end;
-
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
 
 	alpha = bound(0, alpha, 1);
 
@@ -1709,7 +1698,6 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 
 	glEnd ();
 
-	/*
 	glEnable (GL_TEXTURE_2D);
 	if (alpha < 1) 
 	{
@@ -1717,9 +1705,6 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 		glDisable (GL_BLEND);
 	}
 	glColor3ubv (color_white);
-	*/
-
-	glPopAttrib();
 }
 
 void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, int c, float alpha)
@@ -1761,6 +1746,8 @@ void Draw_AlphaCircleFill (int x, int y, float radius, int color, float alpha)
 	Draw_AlphaCircle (x, y, radius, 1.0, true, color, alpha);
 }
 
+// HUD -> hexum
+// kazik -->
 //
 // SCALE versions of some functions
 //
@@ -1769,10 +1756,8 @@ void Draw_SCharacter (int x, int y, int num, float scale)
 {
     int row, col;
     float frow, fcol, size;
-	//qbool atest = false;
-	//qbool blend = false;
-
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
+	qbool atest = false;
+	qbool blend = false;
 
     if (num == 32)
         return;     // space
@@ -1790,9 +1775,9 @@ void Draw_SCharacter (int x, int y, int num, float scale)
     size = 0.0625;
 
 	if (gl_alphafont.value)	{
-		//if ((atest = glIsEnabled(GL_ALPHA_TEST)))
+		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
 			glDisable(GL_ALPHA_TEST);
-		//if (!(blend = glIsEnabled(GL_BLEND)))
+		if (!(blend = glIsEnabled(GL_BLEND)))
 			glEnable(GL_BLEND);
 	}
 
@@ -1809,16 +1794,12 @@ void Draw_SCharacter (int x, int y, int num, float scale)
     glVertex2f (x, y+scale*8*2); // disconnect: hack, hack, hack?
     glEnd ();
 
-	/*
-	if (gl_alphafont.value)	
-	{
+	if (gl_alphafont.value)	{
 		if (atest)
 			glEnable(GL_ALPHA_TEST);
 		if (!blend)
 			glDisable(GL_BLEND);
-	}*/
-
-	glPopAttrib();
+	}
 }
 
 void Draw_SString (int x, int y, char *str, float scale)
@@ -1848,8 +1829,6 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width
 {
 	float newsl, newtl, newsh, newth;
     float oldglwidth, oldglheight;
-
-	//glPushAttrib(GL_ALL_ATTRIB_BITS);
 
     if (scrap_dirty)
 	{
@@ -1896,10 +1875,6 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width
 
 	glEnd ();
 
-	// Bad way to do this, should use glPushAttrib(...)
-	// and glPopAttrib() instead. But when doing this here
-	// it causes some pictures to get drawn instead of the
-	// proper ones.
 	if(alpha < 1.0)
 	{
 		glEnable (GL_ALPHA_TEST);
@@ -1909,8 +1884,6 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width
 //		glCullFace (GL_FRONT);
 		glColor4f (1, 1, 1, 1);
 	}
-
-	//glPopAttrib();
 }
 
 void Draw_SAlphaSubPic (int x, int y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale, float alpha)
@@ -1983,8 +1956,6 @@ void Draw_TransPic (int x, int y, mpic_t *pic)
 
 void Draw_SFill (int x, int y, int w, int h, int c, float scale)
 {
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
-
     glDisable (GL_TEXTURE_2D);
     glColor3f (host_basepal[c*3]/255.0,
         host_basepal[c*3+1]/255.0,
@@ -1998,12 +1969,8 @@ void Draw_SFill (int x, int y, int w, int h, int c, float scale)
     glVertex2f (x, y+h*scale);
 
     glEnd ();
-
-	/*
     glColor3f (1,1,1);
     glEnable (GL_TEXTURE_2D);
-	*/
-	glPopAttrib();
 }
 
 void Draw_ConsoleBackground (int lines) 
@@ -2015,8 +1982,7 @@ void Draw_ConsoleBackground (int lines)
 		 && (    scr_conback.value == 2 // always per level conback
 			 || (scr_conback.value == 1 && SCR_NEED_CONSOLE_BACKGROUND) // only at load time
 			)
-	   ) 
-	{
+	   ) {
 		static char last_mapname[MAX_QPATH] = {0};
 		static mpic_t *last_lvlshot = NULL;
 
@@ -2068,12 +2034,10 @@ void Draw_FadeBox (int x, int y, int width, int height,
     glDisable (GL_BLEND);
     glEnable (GL_TEXTURE_2D);
 }*/
+// kazik <--
 
-void Draw_FadeScreen (void) 
-{
+void Draw_FadeScreen (void) {
 	float alpha;
-
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
 
 	alpha = bound(0, scr_menualpha.value, 1);
 	if (!alpha)
@@ -2095,27 +2059,21 @@ void Draw_FadeScreen (void)
 	glVertex2f (0, vid.height);
 	glEnd ();
 
-	/*
 	if (alpha < 1) {
 		glDisable (GL_BLEND);
 		glEnable (GL_ALPHA_TEST);
 	}
-	
 	glColor3ubv (color_white);
 	glEnable (GL_TEXTURE_2D);
-	*/
-
-	glPopAttrib();
 
 	Sbar_Changed();
 }
 
 //=============================================================================
 
-// Draws the little blue disc in the corner of the screen. 
-// Call before beginning any disc IO.
-void Draw_BeginDisc (void) 
-{
+//Draws the little blue disc in the corner of the screen. 
+//Call before beginning any disc IO.
+void Draw_BeginDisc (void) {
 	if (!draw_disc)
 		return;
 	glDrawBuffer  (GL_FRONT);
@@ -2123,12 +2081,11 @@ void Draw_BeginDisc (void)
 	glDrawBuffer  (GL_BACK);
 }
 
-// Erases the disc icon.
-// Call after completing any disc IO
+//Erases the disc icon.
+//Call after completing any disc IO
 void Draw_EndDisc (void) {}
 
-void GL_Set2D (void) 
-{
+void GL_Set2D (void) {
 	glViewport (glx, gly, glwidth, glheight);
 
 	glMatrixMode(GL_PROJECTION);
