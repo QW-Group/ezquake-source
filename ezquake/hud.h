@@ -81,7 +81,7 @@ typedef struct hud_s
     cvar_t *pos_x;            // position cvars
     cvar_t *pos_y;
 
-    cvar_t *params[HUD_MAX_PARAMS];
+	cvar_t **params;			// Registered parameters for the HUD element.
     int num_params;
 
     cactive_t  min_state;     // at least this state is required
