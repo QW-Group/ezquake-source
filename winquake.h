@@ -60,7 +60,11 @@ typedef struct {
 
 #endif
 
+#ifndef GLQUAKE
+// use it for soft only
 #include <ddraw.h>
+#endif
+
 #include <dsound.h>
 
 extern	HINSTANCE	global_hInstance;
