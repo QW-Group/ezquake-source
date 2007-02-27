@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_linux.c,v 1.4 2007-02-13 16:49:06 qqshka Exp $
+	$Id: in_linux.c,v 1.5 2007-02-27 23:57:47 qqshka Exp $
 */
 #include "quakedef.h"
 
@@ -41,10 +41,11 @@ void IN_DeactivateMouse( void );
 void IN_Restart_f(void);
 #endif
 
+float mouse_x, mouse_y;
+
 void IN_MouseMove (usercmd_t *cmd)
 {
 	static int old_mouse_x = 0, old_mouse_y = 0;
-	float mouse_x, mouse_y;
 
 //#if defined  (_Soft_X11) || defined (_Soft_SVGA)
 
@@ -55,6 +56,7 @@ void IN_MouseMove (usercmd_t *cmd)
 #ifdef _Soft_SVGA
 	// poll mouse values
 	while (mouse_update())
+		; // FIXME: is there was missed ; or it was ok ?
 #endif
 
 	if (m_filter.value) {
