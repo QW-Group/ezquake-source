@@ -116,8 +116,9 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
                      int flags, cactive_t min_state, int draw_order,
                      hud_func_type draw_func,
                      char *show, char *place, char *align_x, char *align_y,
-					 char *pos_x, char *pos_y, char *frame, char *frame_color,
-                     char *params, ...);
+                     char *pos_x, char *pos_y, char *frame, char *frame_color,
+                     char *item_opacity, char *params, ...);
+
 
 //
 // Draw all active elements.
