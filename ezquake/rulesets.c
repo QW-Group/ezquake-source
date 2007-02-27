@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.48 2007-02-27 17:06:57 johnnycz Exp $
+	$Id: rulesets.c,v 1.49 2007-02-27 23:10:15 johnnycz Exp $
 
 */
 
@@ -62,7 +62,7 @@ qbool RuleSets_DisallowExternalTexture (model_t *mod)
 	case MOD_EYES:
 		return true;
 	case MOD_BACKPACK:
-		return true; // todo: proper texture loading protection; (rulesetDef.ruleset == rs_smackdown);
+		return rulesetDef.ruleset == rs_smackdown;
 	default:
 		return false;
 	}
@@ -282,6 +282,9 @@ qbool OnChange_ruleset (cvar_t *var, char *value)
 		default:
 			break;
 	}
+
+	// we need to mark custom textures in the memory (like for backpack and eyes) to be reloaded again
+	Cache_Flush();
 
 	if (!strcasecmp(value, "smackdown")) {
 		Rulesets_Smackdown(true);
