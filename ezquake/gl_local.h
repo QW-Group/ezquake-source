@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.19 2007-02-12 11:18:53 qqshka Exp $
+	$Id: gl_local.h,v 1.20 2007-02-27 01:20:24 cokeman1982 Exp $
 
 */
 // gl_local.h -- private refresh defs
@@ -38,14 +38,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <GL/gl.h>
 #include <GL/glu.h>
 
-# ifdef PBUFFER
-#   include <GL/wglext.h>
-#   include <GL/glext.h>
-# endif // PBUFFER
-
 # ifdef __GNUC__
 #   include <GL/glext.h>
 # endif // __GNUC__
+
+#ifdef FRAMEBUFFERS
+#include "GL/glext.h"
+#endif
 
 # ifndef _WIN32
 #   include <GL/glx.h>
@@ -53,6 +52,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif // __APPLE__
 
 #include "gl_texture.h"
+#include "gl_framebuffer.h"
 
 #ifndef APIENTRY
 #define APIENTRY
