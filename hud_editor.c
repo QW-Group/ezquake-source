@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.10 2007-02-27 05:33:06 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.11 2007-02-27 17:51:12 cokeman1982 Exp $
 
 */
 
@@ -15,9 +15,9 @@
 #include "hud_editor.h"
 
 #ifdef GLQUAKE
-extern hud_t		*hud_huds;
-hud_t				*last_moved_hud = NULL;
-hud_t				*selected_hud = NULL;
+extern hud_t		*hud_huds;				// The list of HUDs.
+hud_t				*last_moved_hud = NULL;	// The HUD that was being moved during the last call of HUD_Editor()
+hud_t				*selected_hud = NULL;	// The currently selected HUD.
 int					win_x;
 int					win_y;
 vec3_t				points[3];
@@ -25,13 +25,14 @@ vec3_t				corners[4];
 vec3_t				center;
 vec3_t				pointer;
 
-qbool				hud_editor = false;
+qbool				hud_editor = false;		// If we're in HUD editor mode or not.
 hud_editor_mode_t	hud_editor_mode = hud_editmode_off;
 
 // Cursor location.
-double			hud_mouse_x;
+double			hud_mouse_x;				// The screen coordinates of the mouse cursor.
 double			hud_mouse_y;
 
+// Macros for what mouse buttons are clicked.
 #define MOUSEDOWN_1_2		( keydown[K_MOUSE1] &&  keydown[K_MOUSE2])
 #define MOUSEDOWN_1_3		( keydown[K_MOUSE1] &&  keydown[K_MOUSE3])
 #define MOUSEDOWN_1_2_3		( keydown[K_MOUSE1] &&  keydown[K_MOUSE2] &&  keydown[K_MOUSE3])
@@ -64,7 +65,7 @@ typedef struct hud_grephandle_s
 	struct hud_grephandle_s	*previous;
 } hud_grephandle_t;
 
-hud_grephandle_t *hud_greps = NULL;
+hud_grephandle_t *hud_greps = NULL;	// The list of "grep handles" that are shown if a HUD element is moved offscreen.
 
 //
 // Draws a tool tip with a background next to the cursor.
@@ -90,15 +91,23 @@ static void HUD_Editor_DrawTooltip(int x, int y, char *string, float r, float g,
 
 void vectoangles(vec3_t vec, vec3_t ang); // cl_cam.c
 
+//
+// Get which part of the screen to align to based on where the mouse cursor is.
+//
 static int HUD_Editor_Get_Alignment(int x, int y, hud_t *hud_element) 
 {
 	vec3_t center, pointer, angles;
 
+	// Find the center of the HUD element.
 	center[0] = hud_element->lx + hud_element->lw / 2;
 	center[1] = hud_element->ly + hud_element->lh / 2;
+
+	// The position of the mouse cursor relative to the 
+	// center of the HUD element.
 	pointer[0] = x - center[0];
 	pointer[1] = center[1] - y;
 
+	// Get the angles between the two vectors.
 	vectoangles(pointer, angles);
 
 	if (angles[1] < 45 || angles[1] > 315)
@@ -107,7 +116,7 @@ static int HUD_Editor_Get_Alignment(int x, int y, hud_t *hud_element)
 	}
 	else if (angles[1] > 45 && angles[1] < 135)
 	{
-		return 2;
+		return 2; 
 	}
 	else if (angles[1] > 135 && angles[1] < 225)
 	{
@@ -121,11 +130,18 @@ static int HUD_Editor_Get_Alignment(int x, int y, hud_t *hud_element)
 	return -1;
 }
 
+//
+// Moves a HUD element.
+//
 static void HUD_Editor_Move(float x, float y, float dx, float dy, hud_t *hud_element) 
 {
 	Cvar_Set(hud_element->pos_x, va("%f", hud_element->pos_x->value + dx));
 	Cvar_Set(hud_element->pos_y, va("%f", hud_element->pos_y->value + dy));
 }
+
+// =============================================================================
+// HUD Editor Grep Handles
+// =============================================================================
 
 //
 // Finds a HUD grephandle (if the hud element has gone offscreen).
@@ -148,6 +164,10 @@ static hud_grephandle_t *HUD_Editor_FindGrep(hud_t *hud_element)
 	return NULL;
 }
 
+//
+// Returns an "offscreen" arrow in the correct direction based on where
+// offscreen the HUD element is located.
+//
 static char *HUD_Editor_GetGrepArrow(hud_grephandle_t *grep)
 {
 	switch(grep->pos)
@@ -160,26 +180,31 @@ static char *HUD_Editor_GetGrepArrow(hud_grephandle_t *grep)
 	}
 }
 
+//
+// Draws the grephandles.
+//
 static void HUD_Editor_DrawGreps()
 {
 	clrinfo_t color;
 	hud_grephandle_t *greps_it = NULL;
 	greps_it = hud_greps;
+
+	// Orange.
 	color.c = RGBA_2_Int(255, 150, 0, 255);
 	color.i = 0;
 
 	while(greps_it)
 	{
-		
-
-		//HUD_Editor_DrawTooltip(greps_it->x, greps_it->y, va("%s %s", HUD_Editor_GetGrepArrow(greps_it), greps_it->hud->name), 1, 0, 0, 0.5);
 		Draw_ColoredString3(greps_it->x, greps_it->y, va("%s %s", HUD_Editor_GetGrepArrow(greps_it), greps_it->hud->name), &color, 1, 0);
-		//Draw_AlphaRectangleRGB(greps_it->x, greps_it->y, greps_it->width, greps_it->height, 0, 1, 0, 1, false, 1.0);
 
 		greps_it = greps_it->next;
 	}
 }
 
+//
+// Get's the position offscreen for a HUD element
+// left/right/top/bottom or visible if it's not offscreen.
+//
 static hud_greppos_t HUD_Editor_GetHudGrepPosition(hud_t *h)
 {
 	if(h->lx + h->lw <= 0)
@@ -202,10 +227,16 @@ static hud_greppos_t HUD_Editor_GetHudGrepPosition(hud_t *h)
 	return pos_visible;
 }
 
+//
+// Positions a grephandle based on it's position and where the HUD element
+// it's associated with is located.
+//
 static void HUD_Editor_PositionGrep(hud_t *hud_element, hud_grephandle_t *grep)
 {
+	// Get the position of the grephandle.
 	grep->pos = HUD_Editor_GetHudGrepPosition(hud_element);
 
+	// Position the grephandle on screen.
 	switch(grep->pos)
 	{
 		case pos_top :
@@ -231,6 +262,9 @@ static void HUD_Editor_PositionGrep(hud_t *hud_element, hud_grephandle_t *grep)
 	}
 }
 
+//
+// Creates a new grephandle and associates it with a HUD element´that is offscreen.
+//
 static hud_grephandle_t *HUD_Editor_CreateGrep(hud_t *hud_element)
 {
 	hud_grephandle_t *grep = NULL;
@@ -251,13 +285,18 @@ static hud_grephandle_t *HUD_Editor_CreateGrep(hud_t *hud_element)
 	return grep;
 }
 
+//
+// Destroys a grephandle (called if it's no longer offscreen).
+//
 static void HUD_Editor_DestroyGrep(hud_grephandle_t *grep)
 {
+	// Already destroyed.
 	if(!grep)
 	{
 		return;
 	}
 
+	// Relink any neighbours in the list.
 	if(grep->next && grep->previous)
 	{
 		grep->previous->next = grep->next;
@@ -277,13 +316,14 @@ static void HUD_Editor_DestroyGrep(hud_grephandle_t *grep)
 		hud_greps = NULL;
 	}
 
-	grep->next = NULL;
-	grep->previous = NULL;
 	memset(grep, 0, sizeof(grep));
 
 	Q_free(grep);
 }
 
+//
+// Finds a HUD element associated with the grephandle under the mouse cursor.
+//
 static hud_t *HUD_Editor_FindHudByGrep()
 {
 	hud_grephandle_t *greps_it = NULL;
@@ -306,6 +346,9 @@ static hud_t *HUD_Editor_FindHudByGrep()
 	return NULL;
 }
 
+//
+// Main HUD Editor loop.
+//
 static void HUD_Editor(void)
 {
 	extern float mouse_x, mouse_y;
@@ -825,11 +868,17 @@ static void HUD_Editor(void)
 	return;
 }
 
+//
+// Toggles the HUD Editor on or off.
+//
 void HUD_Editor_Toggle_f(void)
 {
 	static keydest_t key_dest_prev = key_game;
 
-	if (cls.state != ca_active) return;
+	if (cls.state != ca_active) 
+	{
+		return;
+	}
 
 	hud_editor = !hud_editor;
 	S_LocalSound("misc/basekey.wav");
@@ -848,6 +897,9 @@ void HUD_Editor_Toggle_f(void)
 }
 #endif // GLQUAKE
 
+//
+// Handles key events sent to the HUD editor.
+//
 void HUD_Editor_Key(int key, int unichar) 
 {
 	#ifdef GLQUAKE
