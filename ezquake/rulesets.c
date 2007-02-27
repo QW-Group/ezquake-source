@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.46 2007-02-25 22:47:47 disconn3ct Exp $
+	$Id: rulesets.c,v 1.47 2007-02-27 17:00:25 johnnycz Exp $
 
 */
 
@@ -62,7 +62,7 @@ qbool RuleSets_DisallowExternalTexture (model_t *mod)
 	case MOD_EYES:
 		return true;
 	case MOD_BACKPACK:
-		return (rulesetDef.ruleset == rs_smackdown);
+		return true; // todo: proper texture loading protection; (rulesetDef.ruleset == rs_smackdown);
 	default:
 		return false;
 	}
