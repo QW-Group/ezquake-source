@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.93 2007-02-25 23:41:00 johnnycz Exp $
+    $Id: cl_screen.c,v 1.94 2007-02-27 01:11:50 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -3295,6 +3295,13 @@ void SCR_Init (void)
 	scr_turtle = Draw_CacheWadPic ("turtle");
 #ifdef GLQUAKE
 	scr_cursor = Draw_CachePicSafe("gfx/cursor.lmp", false, false);
+	
+	// Failed to load anything, maybe missing .lmp-file, so just try
+	// loading any 24-bit version that's available instead.
+	if(!scr_cursor)
+	{
+		scr_cursor = Draw_CachePicSafe("gfx/cursor", false, true);
+	}
 #else
 	// sadly, noone coded Draw_CachePicSafe for Release yet
 	// so we require user to have that file for non-GL version
