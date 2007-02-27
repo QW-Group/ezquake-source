@@ -14,7 +14,9 @@ cvar_t	fb_x			= {"fb_x","0"};
 cvar_t	fb_y			= {"fb_y","0"};
 */
 
-int texture_extension_number;
+fb_t	main_fb; // The main framebuffer that can be used generally to draw things offscreen.
+
+qbool	use_framebuffer = false;
 
 //
 // EXT_framebuffer_object - http://oss.sgi.com/projects/ogl-sample/registry/EXT/framebuffer_object.txt
@@ -48,18 +50,22 @@ extern PFNGLMULTITEXCOORD2FARBPROC     glMultiTexCoord2fEXT     = NULL;
 void Framebuffer_Init (void)
 {
 	char *ext = (char*)glGetString( GL_EXTENSIONS );
-	int temp;
+//	int temp;
 
-	if ((temp = COM_CheckParm("-framebuffer")) && temp + 1 < com_argc)
-	{
-		use_framebuffer = Q_atoi(com_argv[temp+1]);
-	}
-	
+	// FIXME: alredy initialized, what to do?
+	//        doubt this will work on vid_restart...
 	if (use_framebuffer)
 	{
 		return;
 	}
 
+/* wtf, and a bit later set to use_framebuffer = true;
+	if ((temp = COM_CheckParm("-framebuffer")) && temp + 1 < com_argc)
+	{
+		use_framebuffer = Q_atoi(com_argv[temp+1]);
+	}
+*/
+	
 	// Check if the driver supports framebuffers.
 	if( strstr( ext, "EXT_framebuffer_object" ) == NULL || !strstr(ext, "GL_ARB_multitexture"))
 	{
@@ -111,7 +117,6 @@ void Framebuffer_Init (void)
 
 		/*
 		Cmd_AddCommand("framebuffer_load", Framebuffer_Main_Init);
-		Cvar_Register(&framebuffer);
 
 		Cvar_Register(&fb_width);
 		Cvar_Register(&fb_height);
@@ -120,6 +125,9 @@ void Framebuffer_Init (void)
 		Cvar_Register(&fb_x);
 		Cvar_Register(&fb_y);
 		*/
+
+		// FIXME: which group we belong?
+		Cvar_Register(&framebuffer);
 	}
 }
 
@@ -166,6 +174,8 @@ void Framebuffer_Create (fb_t *fbs)
 	// Set the texture specs.
 	if (!fbs->texture)
 	{
+		extern int texture_extension_number;
+
 		// Make sure the texture resolution is a power of 2.
 		Q_ROUND_POWER2(window_rect.right - window_rect.left, fbs->width);
 		Q_ROUND_POWER2(window_rect.bottom - window_rect.top, fbs->height);
@@ -284,3 +294,4 @@ void Framebuffer_Draw (fb_t *fbs)
 	glEnd();
 }
 #endif // FRAMEBUFFERS & GLQUAKE
+
