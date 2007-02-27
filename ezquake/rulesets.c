@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.47 2007-02-27 17:00:25 johnnycz Exp $
+	$Id: rulesets.c,v 1.48 2007-02-27 17:06:57 johnnycz Exp $
 
 */
 
@@ -273,12 +273,14 @@ qbool OnChange_ruleset (cvar_t *var, char *value)
 	switch(rulesetDef.ruleset) {
 		case rs_smackdown:
 			Rulesets_Smackdown(false);
+			break;
 		case rs_mtfl:
 			Rulesets_MTFL(false);
+			break;
 		case rs_default:
-			;
+			break;
 		default:
-			;
+			break;
 	}
 
 	if (!strcasecmp(value, "smackdown")) {
