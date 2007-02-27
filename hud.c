@@ -1401,6 +1401,12 @@ void HUD_DrawObject(hud_t *hud)
 
 		// Start drawing to a renderbuffer.
 		Framebuffer_Enable(&main_fb);
+
+		// clear buffer?
+		glEnable (GL_ALPHA_TEST); // thought it alredy so here
+//		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glClearColor(1, 1, 1, 0); // may be that a right thing, not sure
+		glClear(GL_COLOR_BUFFER_BIT); // so is it actually clear buffer?
 	}
 	#endif // FRAMEBUFFERS & GLQUAKE
 
@@ -1424,8 +1430,6 @@ void HUD_DrawObject(hud_t *hud)
 			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			glColor4f (1, 1, 1, hud->opacity->value);
 		}
-
-		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Draw the renderbuffer to screen as texture.
 		Framebuffer_Draw(&main_fb);
