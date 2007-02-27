@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.64 2007-02-25 22:04:17 cokeman1982 Exp $
+	$Id: cl_demo.c,v 1.65 2007-02-27 16:29:40 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -2053,7 +2053,9 @@ int CL_Demo_Compress(char* qwdname)
 	STARTUPINFO si;
 	PROCESS_INFORMATION	pi;
 	char cmdline[1024];
-	char* execute, *path, outputpath[255];
+	char *path, outputpath[255];
+	char *appname;
+	char *parameters;
 
 	if (hQizmoProcess) 
 	{
@@ -2068,13 +2070,15 @@ int CL_Demo_Compress(char* qwdname)
 
 	if (!strcmp(demo_format.string, "qwz")) 
 	{
-		execute = "qizmo.exe -q -C";
+		appname = "qizmo.exe";
+		parameters = "-q -C";
 		path = qizmo_dir.string;
 		outputpath[0] = 0;
 	} 
 	else if (!strcmp(demo_format.string, "mvd")) 
 	{
-		execute = "qwdtools.exe -c -o * -od";
+		appname = "qwdtools.exe";
+		parameters = "-c -o * -od";
 		path = qwdtools_dir.string;
 		strlcpy(outputpath, qwdname, COM_SkipPath(qwdname) - qwdname);
 	} 
@@ -2084,13 +2088,14 @@ int CL_Demo_Compress(char* qwdname)
 		return 0;
 	}
 
-	strlcpy (cmdline, va("%s/%s/%s \"%s\" \"%s\"", com_basedir, path, execute, outputpath, qwdname), sizeof(cmdline));
+	strlcpy (cmdline, va("\"%s/%s/%s\" %s \"%s\" \"%s\"", com_basedir, path, appname, parameters, outputpath, qwdname), sizeof(cmdline));
+	Com_DPrintf("Executing ---\n%s\n---\n", cmdline);
 
 	if (!CreateProcess (NULL, cmdline, NULL, NULL,
 		FALSE, GetPriorityClass(GetCurrentProcess()),
 		NULL, va("%s/%s", com_basedir, path), &si, &pi))
 	{
-		Com_Printf ("Couldn't execute %s/%s/qizmo.exe\n", com_basedir, qizmo_dir.string);
+		Com_Printf ("Couldn't execute %s/%s/%s\n", com_basedir, path, appname);
 		return 0;
 	}
 
