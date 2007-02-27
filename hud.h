@@ -48,66 +48,70 @@
 
 typedef struct hud_s
 {
-    char *name;               // element name
-    char *description;        // little help
+    char *name;							// Element name.
+    char *description;					// Little help.
 
-    void (*draw_func) (struct hud_s *); // drawing func
+    void (*draw_func) (struct hud_s *);	// Drawing function.
 
-	cvar_t *order;				// higher it is, later this element will be drawn
-								// and more probable that will be on top
+	cvar_t *order;						// Higher it is, later this element will be drawn
+										// and more probable that will be on top.
 
-    cvar_t *show;             // show cvar
-    cvar_t *frame;            // frame cvar
-	cvar_t *frame_color;	  // frame color cvar
-	float frame_color_cache[4]; // cache for parsed frame color
+    cvar_t *show;						// Show cvar.
+    cvar_t *frame;						// Frame cvar.
+	cvar_t *frame_color;				// Frame color cvar.
+	float frame_color_cache[4];			// Cache for parsed frame color.
 	
 #if defined(FRAMEBUFFERS) && defined(GLQUAKE)
-	cvar_t *opacity;			// The overall opacity of the entire HUD element.
+	cvar_t *opacity;					// The overall opacity of the entire HUD element.
 #endif 
 
     // placement
-    cvar_t *place;            // place string, parsed to:
-    struct hud_s *place_hud;  // if snapped to hud element
-    qbool place_outside;   // if hud: inside ot outside
-    int place_num;            // place number (our or parent if hud)
-                              // note: item is placed at another HUD element
-                              // if place_hud != NULL
+    cvar_t *place;						// Place string, parsed to:
+    struct hud_s *place_hud;			// if snapped to hud element
+    qbool place_outside;				// if hud: inside ot outside
+    int place_num;						// place number (our or parent if hud)
+										// note: item is placed at another HUD element
+										// if place_hud != NULL
 
-    cvar_t *align_x;          // alignment cvars (left, right, ...)
+    cvar_t *align_x;					// Alignment cvars (left, right, ...)
     cvar_t *align_y;
-    int    align_x_num;       // parsed alignment
+    int    align_x_num;					// Parsed alignment.
     int    align_y_num;
 
-    cvar_t *pos_x;            // position cvars
+    cvar_t *pos_x;						// Position cvars.
     cvar_t *pos_y;
 
-	cvar_t **params;			// Registered parameters for the HUD element.
+	cvar_t **params;					// Registered parameters for the HUD element.
     int num_params;
 
-    cactive_t  min_state;     // at least this state is required
-                              // to draw this element
+    cactive_t  min_state;				// At least this state is required
+										// to draw this element.
 
     unsigned   flags;
 
-    // last draw parameters (mostly used by children)
-    int lx, ly, lw, lh;       // last position
-    int al, ar, at, ab;       // last frame params
+    // Last draw parameters (mostly used by children)
+    int lx, ly, lw, lh;					// Last position.
+    int al, ar, at, ab;					// Last frame params.
 
-    int last_try_sequence;    // sequence, at which object tried to draw itself
-    int last_draw_sequence;   // sequence, at which it was last drawn successfully
+    int last_try_sequence;				// Sequence, at which object tried to draw itself.
+    int last_draw_sequence;				// Sequence, at which it was last drawn successfully.
 
-    struct hud_s *next;
+    struct hud_s *next;					// Next HUD in the list.
 } hud_t;
 
 typedef  void (*hud_func_type) (struct hud_s *);
 
 #define MAX_HUD_ELEMENTS 256
 
-// initialize
+//
+// Initialize
+// 
 void HUD_Init(void);
 
-// add element to list
+//
+// Add element to list
 // parameter format: "name1", "default1", ..., "nameX", "defaultX", NULL
+//
 hud_t * HUD_Register(char *name, char *var_alias, char *description,
                      int flags, cactive_t min_state, int draw_order,
                      hud_func_type draw_func,
@@ -115,30 +119,41 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 					 char *pos_x, char *pos_y, char *frame, char *frame_color,
                      char *params, ...);
 
-// draw all active elements
+//
+// Draw all active elements.
+//
 void HUD_Draw(void);
 
-// retrieve hud cvar
+//
+// Retrieve hud cvar.
+//
 cvar_t *HUD_FindVar(hud_t *hud, char *subvar);
 
-// find element in list
+//
+// Find element in list.
+//
 hud_t * HUD_Find(char *name);
 
-// calculate screen position of element
+//
+// Calculate screen position of element.
 // return value:
 //    true  - draw it
 //    false - don't draw, it is off screen (mayby partially)
+//
 qbool HUD_PrepareDraw(
-    /* in  */ hud_t *hud, int width, int height,
-    /* out */ int *ret_x, int *ret_y);
+			hud_t *hud, int width, int height,		// In.
+			int *ret_x, int *ret_y);				// Out.
 
 qbool HUD_PrepareDrawByName(
-    /* in  */ char *element, int width, int height,
-    /* out */ int *ret_x, int *ret_y);
+			char *element, int width, int height,	// In.
+			int *ret_x, int *ret_y);				// Out.
 
 
-// last phase of initialization
+// Sort all HUD Elements.
 void HUD_Sort(void);
+
+// Recalculate the position of all hud elements.
+void HUD_Recalculate(void);
 
 // when show pre-selected weapon/ammo? 1) player uses this system 2) not dead 3) when playing
 #define ShowPreselectedWeap()  (cl_weaponpreselect.value && cl.stats[STAT_HEALTH] > 0 && !cls.demoplayback && !cl.spectator)

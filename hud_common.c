@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.122 2007-02-26 06:02:28 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.123 2007-02-27 05:32:52 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -4502,14 +4502,15 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 		hud_teamholdbar_vertical_text		= HUD_FindVar(hud, "vertical_text");
     }
 
+	height = max(1, hud_teamholdbar_height->value);
+	width = max(0, hud_teamholdbar_width->value);
+
 	// Don't show when not in teamplay/demoplayback.
 	if(!HUD_ShowInDemoplayback(hud_teamholdbar_onlytp->value))
 	{
+		HUD_PrepareDraw(hud, width , height, &x, &y);
 		return;
 	}
-
-	height = max(1, hud_teamholdbar_height->value);
-	width = max(0, hud_teamholdbar_width->value);
 
 	if (HUD_PrepareDraw(hud, width , height, &x, &y))
 	{
@@ -4666,21 +4667,23 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 		Cvar_Set (hud_teamholdinfo_itemfilter, val);
     }
 
+	// Get the height based on how many items we have, or what the user has set it to.
+	height = max(0, hud_teamholdinfo_height->value);
+	width = max(0, hud_teamholdinfo_width->value);
+
 	// Don't show when not in teamplay/demoplayback.
 	if(!HUD_ShowInDemoplayback(hud_teamholdinfo_onlytp->value))
 	{
+		HUD_PrepareDraw(hud, width , height, &x, &y);
 		return;
 	}
 
 	// We don't have anything to show.
 	if(stats_important_ents == NULL || stats_grid == NULL)
 	{
+		HUD_PrepareDraw(hud, width , height, &x, &y);
 		return;
 	}
-
-	// Get the height based on how many items we have, or what the user has set it to.
-	height = max(0, hud_teamholdinfo_height->value);
-	width = max(0, hud_teamholdinfo_width->value);
 
 	if (HUD_PrepareDraw(hud, width , height, &x, &y))
 	{

@@ -1057,6 +1057,13 @@ qbool HUD_PrepareDraw(hud_t *hud, int width, int height, // In.
         hud->at = frame_top;
         hud->ab = frame_bottom;
 
+		// Check if we're supposed to draw the entire item or just the outline/frame.
+		// (If we're in hud editor align/place mode)
+		if(!HUD_Editor_ConfirmDraw(hud))
+		{
+			return false;
+		}
+
         // Remember drawing sequence.
         hud->last_draw_sequence = host_screenupdatecount;
         return true;
