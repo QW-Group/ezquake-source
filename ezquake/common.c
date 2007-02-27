@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.62 2007-02-19 19:33:55 qqshka Exp $
+    $Id: common.c,v 1.63 2007-02-27 23:56:25 qqshka Exp $
 
 */
 
@@ -1308,10 +1308,14 @@ typedef struct
 
 #define	MAX_FILES_IN_PACK	2048
 
+//
+// WARNING: if u add some FS related global variable then made appropriate change to FS_ShutDown() too, if required.
+//
+
 char	com_gamedirfile[MAX_QPATH]; // qw tf ctf and etc. In other words single dir name without path
-char	com_gamedir[MAX_OSPATH];    // c:\quake\qw
-char	com_basedir[MAX_OSPATH];
-char  com_homedir[MAX_PATH]; // something really long
+char	com_gamedir[MAX_OSPATH];    // c:/quake/qw
+char	com_basedir[MAX_OSPATH];	// c:/quake
+char	com_homedir[MAX_PATH];		// something really long C:/Documents and Settings/qqshka
 
 #ifndef SERVERONLY
 char	userdirfile[MAX_OSPATH] = {0};
@@ -1326,8 +1330,8 @@ typedef struct searchpath_s
 	struct searchpath_s *next;
 } searchpath_t;
 
-searchpath_t	*com_searchpaths;
-searchpath_t	*com_base_searchpaths;	// without gamedirs
+searchpath_t	*com_searchpaths = NULL;
+searchpath_t	*com_base_searchpaths = NULL;	// without gamedirs
 
 /*
 ================
@@ -1895,11 +1899,48 @@ void FS_SetGamedir (char *dir) {
 	// <-- QW262
 }
 
-void FS_InitFilesystem (void) {
+void FS_ShutDown( void ) {
+
+	// free data
+	while (com_searchpaths)	{
+		searchpath_t  *next;
+
+		if (com_searchpaths->pack) {
+			fclose (com_searchpaths->pack->handle); // close pack file handler
+			Q_free (com_searchpaths->pack->files);
+			Q_free (com_searchpaths->pack);
+		}
+		next = com_searchpaths->next;
+		Q_free (com_searchpaths);
+		com_searchpaths = next;
+	}
+
+	// flush all data, so it will be forced to reload
+	Cache_Flush ();
+
+	// reset globals
+
+	com_base_searchpaths = com_searchpaths = NULL;
+
+	com_gamedirfile[0]	= 0;
+	com_gamedir[0]		= 0;
+	com_basedir[0]		= 0;
+	com_homedir[0]		= 0;
+
+#ifndef SERVERONLY
+	userdirfile[0]		= 0;
+	com_userdir[0]		= 0;
+	userdir_type		= -1;
+#endif
+}
+
+void FS_InitFilesystemEx( qbool guess_cwd ) {
 //	char	*home;
 //	char	homepath[MAX_OSPATH];
 	int i;
-  char *ev;	
+	char *ev;	
+
+	FS_ShutDown();
 
 // 	home = getenv("HOME");
 
@@ -1909,7 +1950,7 @@ void FS_InitFilesystem (void) {
 		strlcpy (com_basedir, com_argv[i + 1], sizeof(com_basedir));
 	}
 #ifdef _WIN32
-	else if (!COM_CheckParm("-useworkdir")) { // so, com_basedir directory will be is where ezquake*.exe located
+	else if (guess_cwd) { // so, com_basedir directory will be is where ezquake*.exe located
 		char *e;
 
 		if(!GetModuleFileName(NULL, com_basedir, sizeof(com_basedir)-1))
@@ -1960,9 +2001,6 @@ void FS_InitFilesystem (void) {
 	else
 		com_homedir[0] = 0;
 #endif
-
-//	if (!COM_CheckParm("-usehome"))
-//		*com_homedir = '\0';
 
 	if (COM_CheckParm("-nohome"))
 		com_homedir[0] = 0;
@@ -2017,6 +2055,19 @@ void FS_InitFilesystem (void) {
 		FS_AddGameDirectory(homepath);
 	}
 */
+}
+
+void FS_InitFilesystem( void ) {
+	FILE *f;
+
+	FS_InitFilesystemEx( false ); // first attempt, simplified
+
+	if ( FS_FOpenFile( "gfx.wad", &f ) >= 0 ) { // we found gfx.wad, seems we have proper com_basedir
+		fclose( f );
+		return;
+	}
+
+	FS_InitFilesystemEx( true );  // second attempt
 }
 
 // allow user select differet "style" how/where open/save different media files.
