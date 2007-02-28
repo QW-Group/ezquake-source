@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.63 2007-02-27 23:56:25 qqshka Exp $
+    $Id: common.c,v 1.64 2007-02-28 03:36:29 qqshka Exp $
 
 */
 
@@ -1935,37 +1935,37 @@ void FS_ShutDown( void ) {
 }
 
 void FS_InitFilesystemEx( qbool guess_cwd ) {
-//	char	*home;
-//	char	homepath[MAX_OSPATH];
 	int i;
 	char *ev;	
 
 	FS_ShutDown();
 
-// 	home = getenv("HOME");
-
-	// -basedir <path>
-	// Overrides the system supplied base directory (under id1)
-	if ((i = COM_CheckParm ("-basedir")) && i < com_argc - 1) {
-		strlcpy (com_basedir, com_argv[i + 1], sizeof(com_basedir));
-	}
-#ifdef _WIN32
-	else if (guess_cwd) { // so, com_basedir directory will be is where ezquake*.exe located
+	if (guess_cwd) { // so, com_basedir directory will be where ezquake*.exe located
 		char *e;
 
+#if defined(_WIN32)	
 		if(!GetModuleFileName(NULL, com_basedir, sizeof(com_basedir)-1))
-			Sys_Error("GetModuleFileName failed");
+			Sys_Error("FS_InitFilesystemEx: GetModuleFileName failed");
+#elif defined(__linux__)
+    if (!Sys_fullpath(com_basedir, "/proc/self/exe", sizeof(com_basedir)))
+			Sys_Error("FS_InitFilesystemEx: Sys_fullpath failed");
+#else
+		com_basedir[0] = 0; // FIXME: MAC / FreeBSD
+#endif
 
+		// strip ezquake*.exe, we need only path
 		for (e = com_basedir+strlen(com_basedir)-1; e >= com_basedir; e--)
-		{
 			if (*e == '/' || *e == '\\')
 			{
 				*e = 0;
 				break;
 			}
-		}
 	}
-#endif
+	else if ((i = COM_CheckParm ("-basedir")) && i < com_argc - 1) {
+		// -basedir <path>
+		// Overrides the system supplied base directory (under id1)
+		strlcpy (com_basedir, com_argv[i + 1], sizeof(com_basedir));
+	}
  	else { // made com_basedir equa to cwd
 //#ifdef __FreeBSD__
 //		strlcpy(com_basedir, DATADIR, sizeof(com_basedir) - 1);
@@ -2022,16 +2022,10 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 
 	// start up with id1 by default
 	FS_AddGameDirectory(com_basedir, "id1");
-//	if (home != NULL)
-//		FS_AddGameDirectory(va("%s/.ezquake/id1", home));
 
 	FS_AddGameDirectory(com_basedir, "ezquake");
-//	if (home != NULL)
-//		FS_AddGameDirectory(va("%s/.ezquake/ezquake", home));
 
 	FS_AddGameDirectory(com_basedir, "qw");
-//	if (home != NULL)
-//		FS_AddGameDirectory(va("%s/.ezquake/qw", home));
 
 	// any set gamedirs will be freed up to here
 	com_base_searchpaths = com_searchpaths;
@@ -2046,15 +2040,6 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 		i = COM_CheckParm ("+gamedir");
 	if (i && i < com_argc - 1)
 		FS_SetGamedir (com_argv[i + 1]);
-
-/*
-	if (home != NULL) {
-		snprintf(homepath, sizeof(homepath), "%s/.ezquake/%s", home, com_gamedirfile);
-		COM_CreatePath(homepath);
-		Sys_mkdir(homepath);
-		FS_AddGameDirectory(homepath);
-	}
-*/
 }
 
 void FS_InitFilesystem( void ) {
