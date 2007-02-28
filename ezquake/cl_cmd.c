@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.38 2007-02-19 13:55:02 qqshka Exp $
+	$Id: cl_cmd.c,v 1.39 2007-02-28 10:03:22 qqshka Exp $
 */
 
 #include <time.h>
@@ -102,9 +102,11 @@ void CL_ForwardToServer_f (void) {
 		if (cl_crypt_rcon.value && strcasecmp(Cmd_Argv(1), "techlogin") == 0 && Cmd_Argc() > 2)
 		{
 			time(&client_time);
-			for (i = 0; i < sizeof(client_time); ++i)
-				snprintf(client_time_str + i * 2, sizeof(client_time_str) - i * 2, "%02X",
-					 (unsigned int)((client_time >> (i * 8)) & 0xFF));
+			for (client_time_str[0] = i = 0; i < sizeof(client_time); i++) {
+				char tmp[3];
+				snprintf(tmp, sizeof(tmp), "%02X", (unsigned int)((client_time >> (i * 8)) & 0xFF));
+				strlcat(client_time_str, tmp, sizeof(client_time_str));
+			}
 
 			server_string_len = Cmd_Argc() + strlen(Cmd_Argv(1)) + DIGEST_SIZE * 2 + 16;
 			for (i = 3; i < Cmd_Argc(); ++i)
@@ -396,9 +398,12 @@ void CL_Rcon_f (void) {
 	if (cl_crypt_rcon.value)
 	{
 		time(&client_time);
-		for (i = 0; i < sizeof(client_time); ++i)
-			snprintf(client_time_str + i * 2, sizeof(client_time_str) - i * 2, "%02X",
-				 (unsigned int)((client_time >> (i * 8)) & 0xFF));
+		for (client_time_str[0] = i = 0; i < sizeof(client_time); i++) {
+			char tmp[3];
+			snprintf(tmp, sizeof(tmp), "%02X", (unsigned int)((client_time >> (i * 8)) & 0xFF));
+			strlcat(client_time_str, tmp, sizeof(client_time_str));
+		}
+		
 		SHA1_Init();
 		SHA1_Update((unsigned char *)"rcon ");
 		if (rcon_password.string[0])
