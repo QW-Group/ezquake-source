@@ -1433,8 +1433,10 @@ void HUD_DrawObject(hud_t *hud)
 		if(hud->flags & HUD_OPACITY)
 		{
 			// Draw using semi-transparency.
+			glDisable(GL_ALPHA_TEST);
 			glEnable (GL_BLEND);
 			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			glColor4f (1, 1, 1, hud->opacity->value);
 		}
 
