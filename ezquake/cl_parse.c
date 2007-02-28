@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.72 2007-02-20 23:57:42 qqshka Exp $
+	$Id: cl_parse.c,v 1.73 2007-02-28 09:35:08 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -2149,7 +2149,7 @@ void CL_ParseStufftext (void) {
 	
 	else if (!strcmp (s, "cmd snap") || (!strncmp (s, "r_skyname ", 10) && !strchr (s, '\n')))
 		Cbuf_AddTextEx (&cbuf_svc, va("%s\n", s));
-	else if (!strncmp(s, "tinfo ", 6)) {
+	else if (!strncmp(s, "//tinfo ", 8)) {
 #ifdef GLQUAKE
 		extern void Parse_TeamInfo(char *s);
 		Parse_TeamInfo( s );
