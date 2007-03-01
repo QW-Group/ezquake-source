@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.33 2007-02-16 09:25:44 qqshka Exp $
+	$Id: mvd_utils.c,v 1.34 2007-03-01 04:53:29 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -409,7 +409,7 @@ void MVD_Init_Info_f (void) {
 	mvd_cg_info.timelimit=cl.timelimit;
 
 	
-	strncpy(mvd_cg_info.team1,mvd_new_info[0].p_info->team,sizeof(mvd_cg_info.team1));
+	strncpy(mvd_cg_info.team1, (z ? mvd_new_info[0].p_info->team : ""),sizeof(mvd_cg_info.team1));
 	for (i = 0; i < z; i++) {
 		if(strcmp(mvd_new_info[i].p_info->team,mvd_cg_info.team1)){
 			strncpy(mvd_cg_info.team2,mvd_new_info[i].p_info->team,sizeof(mvd_cg_info.team2));
