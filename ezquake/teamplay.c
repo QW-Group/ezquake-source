@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.61 2007-01-24 21:14:12 johnnycz Exp $
+    $Id: teamplay.c,v 1.62 2007-03-01 09:37:11 qqshka Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -3923,7 +3923,7 @@ qbool TP_CheckSoundTrigger (char *str)
 		for (j = i - 1; j >= 0; j--) {
 			// quick check for chars that cannot be used
 			// as sound triggers but might be part of a file name
-			if (isalnum(str[j]))
+			if (isalnum((unsigned char)str[j]))
 				continue;	// file name or chat
 
 			if (strchr(tp_soundtrigger.string, str[j]))	{
