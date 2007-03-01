@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.12 2007-03-01 23:23:22 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.13 2007-03-01 23:44:42 cokeman1982 Exp $
 
 */
 
@@ -198,6 +198,8 @@ static hud_alignmode_t HUD_Editor_GetAlignmentFromString(char *alignstr)
 	{
 		return hud_align_topright;
 	}
+
+	return hud_align_center;
 }
 
 //
@@ -1281,7 +1283,6 @@ static void HUD_Editor_DrawTooltips(hud_t *hud_hover)
 static void HUD_Editor(void)
 {
 	extern float mouse_x, mouse_y;
-	int status;
 	qbool found;
 	hud_t				*hud_hover	= NULL;
 
