@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.51 2007-02-26 15:04:38 johnnycz Exp $
+	$Id: gl_draw.c,v 1.52 2007-03-01 23:24:38 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1577,6 +1577,8 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 		return;
 	}
 
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+
 	glDisable (GL_TEXTURE_2D);
 	if (alpha < 1) 
 	{
@@ -1617,6 +1619,38 @@ void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thick
 		alpha);
 }
 
+void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, int color)
+{
+	byte bytecolor[4];
+	int i = 0;
+
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+	glEnable (GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
+
+	glColor4ubv(Int_2_RGBA(color, bytecolor));
+	glDisable (GL_TEXTURE_2D);
+
+	if(fill)
+	{
+		glBegin(GL_TRIANGLE_FAN);
+	}
+	else
+	{
+		glBegin (GL_LINE_LOOP);
+	}
+
+	for(i = 0; i < num_vertices; i++)
+	{
+		glVertex2f(x + vertices[i][0], y + vertices[i][1]);
+	}
+
+	glEnd();
+
+	glPopAttrib();
+}
+
 #define CIRCLE_LINE_COUNT	40
 
 void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, float r, float g, float b, float alpha)
@@ -1632,6 +1666,8 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 	{
 		return;
 	}
+
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
 
 	glDisable (GL_TEXTURE_2D);
 	if (alpha < 1) 

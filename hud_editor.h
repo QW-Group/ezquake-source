@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.h,v 1.6 2007-02-27 23:20:45 qqshka Exp $
+	$Id: hud_editor.h,v 1.7 2007-03-01 23:24:47 cokeman1982 Exp $
 
 */
 
@@ -30,6 +30,11 @@ typedef enum
 {
 	hud_editmode_off,
 	hud_editmode_align,
+	hud_editmode_place,
+	hud_editmode_move_resize,
+	hud_editmode_move_lockedaxis,
+	hud_editmode_hudmenu,
+	hud_editmode_menu,
 	hud_editmode_normal
 } hud_editor_mode_t;
 

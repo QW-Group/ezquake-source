@@ -185,6 +185,9 @@ extern int _mathlib_temp_int1, _mathlib_temp_int2, _mathlib_temp_int3;
 extern float _mathlib_temp_float1, _mathlib_temp_float2, _mathlib_temp_float3;
 extern vec3_t _mathlib_temp_vec1, _mathlib_temp_vec2, _mathlib_temp_vec3;
 
+qbool IsPointInPolygon(int npol, vec3_t *v, float x, float y);
+int GetPolyCentroid(vec3_t *v, int n, float *xCentroid, float *yCentroid, float *area);
+
 #define Q_ROUND_POWER2(in, out) {						\
 	_mathlib_temp_int1 = in;							\
 	for (out = 1; out < _mathlib_temp_int1; out <<= 1)	\
