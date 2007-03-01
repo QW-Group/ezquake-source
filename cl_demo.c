@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.65 2007-02-27 16:29:40 johnnycz Exp $
+	$Id: cl_demo.c,v 1.66 2007-03-01 09:38:45 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -2721,7 +2721,7 @@ void CL_QTVPlay_f (void)
 {
 	char *connrequest;
 	vfsfile_t *newf;
-	char *host;
+	char stream_host[1024] = {0}, *stream, *host;
 
 	// Show usage.
 	if (Cmd_Argc() < 2)
@@ -2828,17 +2828,27 @@ void CL_QTVPlay_f (void)
 	}
 
 	// The argument is the host address for the QTV server.
-	host = connrequest;
 
 	// Find the position of the last @ char in the connection string,
 	// this is when the user specifies a specific stream # on the QTV proxy
 	// that he wants to stream. Default is to stream the first one.
 	// [stream@]hostname[:port]
 	// (QTV proxies can be chained, so we must get the last @)
-	connrequest = strchrrev(connrequest, '@');
+	// In other words split stream and host part
+
+	strlcpy(stream_host, connrequest, sizeof(stream_host));
+
+	connrequest = strchrrev(stream_host, '@');
 	if (connrequest)
 	{
-		host = connrequest + 1;
+		stream = stream_host; // stream part
+		connrequest[0] = 0; // truncate
+		host   = connrequest + 1; // host part
+	}
+	else
+	{
+		stream = ""; // use default stream, user not specifie stream part
+		host   = stream_host; // arg is just host
 	}
 	
 	// Open a TCP socket to the specified host.
@@ -2851,16 +2861,6 @@ void CL_QTVPlay_f (void)
 		return;
 	}
 
-	// Get the full host string that the user specified again.
-	host = Cmd_Argv(1);
-
-	// If the user didn't specify any specific stream, there is no 
-	// need to send a SOURCE request.
-	if (!connrequest)
-	{
-		host = NULL;
-	}
-
 	// Send a QTV request to the proxy.
 	connrequest =	"QTV\n"
 					"VERSION: 1\n";
@@ -2868,11 +2868,11 @@ void CL_QTVPlay_f (void)
 
 	// If the user specified a specific stream such as "5@hostname:port"
 	// we need to send a SOURCE request.
-	if (host)
+	if (stream[0])
 	{
 		connrequest =	"SOURCE: ";
 		VFS_WRITE(newf, connrequest, strlen(connrequest));
-		connrequest =	host;
+		connrequest =	stream;
 		VFS_WRITE(newf, connrequest, strlen(connrequest));
 		connrequest =	"\n";
 		VFS_WRITE(newf, connrequest, strlen(connrequest));
