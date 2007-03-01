@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: mathlib.c,v 1.3 2006-08-14 15:31:49 vvd0 Exp $
+	$Id: mathlib.c,v 1.4 2007-03-01 23:23:38 cokeman1982 Exp $
 
 */
 
@@ -319,6 +319,67 @@ int GreatestCommonDivisor (int i1, int i2) {
 			return (i2);
 		return GreatestCommonDivisor (i1, i2 % i1);
 	}
+}
+
+//
+// Based on http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html#The%20C%20Code
+//
+qbool IsPointInPolygon(int npol, vec3_t *v, float x, float y)
+{
+	int i, j;
+	qbool c = false;
+
+	for (i = 0, j = npol-1; i < npol; j = i++) 
+	{
+		if ((((v[i][1] <= y) && (y < v[j][1])) ||
+             ((v[j][1]<=y) && (y < v[i][1]))) &&
+            (x < (v[j][0] - v[i][0]) * (y - v[i][1]) / (v[j][1] - v[i][1]) + v[i][0]))
+		{
+			c = !c;
+		}
+	}
+
+	return c;
+}
+
+//
+// From: http://www.cse.ucsc.edu/~pang/160/f98/Gems/GemsIV/centroid.c
+// polyCentroid: Calculates the centroid (xCentroid, yCentroid) and area
+// of a polygon, given its vertices (x[0], y[0]) ... (x[n-1], y[n-1]). It
+// is assumed that the contour is closed, i.e., that the vertex following
+// (x[n-1], y[n-1]) is (x[0], y[0]).  The algebraic sign of the area is
+// positive for counterclockwise ordering of vertices in x-y plane;
+// otherwise negative.
+//
+// Returned values:  0 for normal execution;  1 if the polygon is
+// degenerate (number of vertices < 3);  and 2 if area = 0 (and the centroid is undefined).
+int GetPolyCentroid(vec3_t *v, int n, float *xCentroid, float *yCentroid, float *area)
+{
+	register int i, j;
+	float ai, atmp = 0, xtmp = 0, ytmp = 0;
+	
+	if (n < 3)
+	{
+		return 1;
+	}
+	
+	for (i = n - 1, j = 0; j < n; i = j, j++)
+	{
+		ai = v[i][0] * v[j][1] - v[j][0] * v[i][1];
+		atmp += ai;
+		xtmp += (v[j][0] + v[i][0]) * ai;
+		ytmp += (v[j][1] + v[i][1]) * ai;
+	}
+
+	*area = atmp / 2;
+
+	if (atmp != 0)
+	{
+		*xCentroid =	xtmp / (3 * atmp);
+		*yCentroid =	ytmp / (3 * atmp);
+		return 0;
+	}
+	return 2;
 }
 
 #ifndef id386
