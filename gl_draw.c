@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.52 2007-03-01 23:24:38 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.53 2007-03-01 23:44:22 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1576,8 +1576,6 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 	{
 		return;
 	}
-
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
 
 	glDisable (GL_TEXTURE_2D);
 	if (alpha < 1) 
