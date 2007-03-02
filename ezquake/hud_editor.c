@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.13 2007-03-01 23:44:42 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.14 2007-03-02 02:48:35 cokeman1982 Exp $
 
 */
 
@@ -51,6 +51,7 @@ double				hud_mouse_y;
 #define HUD_ALIGN_POLYCOUNT_CORNER	5
 #define HUD_ALIGN_POLYCOUNT_EDGE	4
 #define HUD_ALIGN_POLYCOUNT_CENTER	8
+#define HUD_ALIGN_POLYCOUNT_CONSOLE	4
 
 vec3_t *hud_align_current_poly = NULL;	// The current alignment polygon when in alignment mode.
 int hud_align_current_polycount = 0;	// Number of vertices in teh polygon.
@@ -65,6 +66,10 @@ vec3_t hud_align_bottomright_poly[HUD_ALIGN_POLYCOUNT_CORNER];
 vec3_t hud_align_right_poly[HUD_ALIGN_POLYCOUNT_EDGE];
 vec3_t hud_align_center_poly[HUD_ALIGN_POLYCOUNT_CENTER];
 
+vec3_t hud_align_consoleleft_poly[HUD_ALIGN_POLYCOUNT_CONSOLE];
+vec3_t hud_align_console_poly[HUD_ALIGN_POLYCOUNT_CONSOLE];
+vec3_t hud_align_consoleright_poly[HUD_ALIGN_POLYCOUNT_CONSOLE];
+
 typedef enum hud_alignmode_s
 {
 	hud_align_center,
@@ -75,12 +80,14 @@ typedef enum hud_alignmode_s
 	hud_align_bottom,
 	hud_align_bottomright,
 	hud_align_right,
-	hud_align_topright
+	hud_align_topright,
+	hud_align_consoleleft,
+	hud_align_consoleright,
+	hud_align_console	
 	// Not including before/after for now.
 } hud_alignmode_t;
 
 hud_alignmode_t				hud_alignmode = align_center;
-int							hud_placement = HUD_PLACE_SCREEN;
 
 typedef enum hud_greppos_s
 {
@@ -153,6 +160,9 @@ static char *HUD_Editor_GetAlignmentString(hud_alignmode_t align)
 		case hud_align_bottomright :return "right bottom";
 		case hud_align_right :		return "right center";
 		case hud_align_topright :	return "right top";
+		case hud_align_consoleleft :return "left console";	
+		case hud_align_console :	return "center console";
+		case hud_align_consoleright:return "right console";		
 		default :					return "";
 	}
 }
@@ -198,6 +208,18 @@ static hud_alignmode_t HUD_Editor_GetAlignmentFromString(char *alignstr)
 	{
 		return hud_align_topright;
 	}
+	else if(!strcmp(alignstr, "left console"))
+	{
+		return hud_align_consoleleft;
+	}
+	else if(!strcmp(alignstr, "center console"))
+	{
+		return hud_align_console;
+	}
+	else if(!strcmp(alignstr, "right console"))
+	{
+		return hud_align_consoleright;
+	}
 
 	return hud_align_center;
 }
@@ -211,8 +233,108 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 	extern qbool IsPointInPolygon(int npol, vec3_t *v, float x, float y);
 	
 	// For less clutter.
-	float mid_x = hud_element->lw / 2.0;
-	float mid_y = hud_element->lh / 2.0;
+	float	mid_x		= 0.0;
+	float	mid_y		= 0.0;
+	int		offset_x	= 0;
+	int		offset_y	= 0;
+	
+	if(hud_element)
+	{
+		// Aligns for HUD elements.
+		offset_x = hud_element->lx;
+		offset_y = hud_element->ly;
+		mid_x = hud_element->lw / 2.0;
+		mid_y = hud_element->lh / 2.0;		
+	}
+	else
+	{
+		// Aligns for Screen.
+		offset_x = 0;
+		offset_y = (int)(vid.height * 0.05);
+		mid_x = vid.width / 2.0;
+		mid_y = (vid.height + offset_y) / 2.0;
+	}
+
+	if(!hud_element)
+	{
+		// Console left.
+		{
+			hud_align_consoleleft_poly[0][0] = 0;
+			hud_align_consoleleft_poly[0][1] = 0;
+			hud_align_consoleleft_poly[0][2] = 0;
+
+			hud_align_consoleleft_poly[1][0] = 0;
+			hud_align_consoleleft_poly[1][1] = offset_y;
+			hud_align_consoleleft_poly[1][2] = 0;
+
+			hud_align_consoleleft_poly[2][0] = mid_x / 2.0;
+			hud_align_consoleleft_poly[2][1] = offset_y;
+			hud_align_consoleleft_poly[2][2] = 0;
+
+			hud_align_consoleleft_poly[3][0] = mid_x / 2.0;
+			hud_align_consoleleft_poly[3][1] = 0;
+			hud_align_consoleleft_poly[3][2] = 0;
+
+			if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CONSOLE, hud_align_consoleleft_poly, x, y))
+			{
+				hud_align_current_poly = hud_align_consoleleft_poly;
+				hud_align_current_polycount = HUD_ALIGN_POLYCOUNT_CONSOLE;
+				return hud_align_consoleleft;
+			}
+		}
+
+		// Console.
+		{
+			hud_align_console_poly[0][0] = mid_x / 2.0;
+			hud_align_console_poly[0][1] = 0;
+			hud_align_console_poly[0][2] = 0;
+
+			hud_align_console_poly[1][0] = mid_x / 2.0;
+			hud_align_console_poly[1][1] = offset_y;
+			hud_align_console_poly[1][2] = 0;
+
+			hud_align_console_poly[2][0] = mid_x + (mid_x / 2.0);
+			hud_align_console_poly[2][1] = offset_y;
+			hud_align_console_poly[2][2] = 0;
+
+			hud_align_console_poly[3][0] = mid_x + (mid_x / 2.0);
+			hud_align_console_poly[3][1] = 0;
+			hud_align_console_poly[3][2] = 0;
+
+			if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CONSOLE, hud_align_console_poly, x, y))
+			{
+				hud_align_current_poly = hud_align_console_poly;
+				hud_align_current_polycount = HUD_ALIGN_POLYCOUNT_CONSOLE;
+				return hud_align_console;
+			}
+		}
+
+		// Console right.
+		{
+			hud_align_consoleright_poly[0][0] = mid_x + (mid_x / 2.0);
+			hud_align_consoleright_poly[0][1] = 0;
+			hud_align_consoleright_poly[0][2] = 0;
+
+			hud_align_consoleright_poly[1][0] = mid_x + (mid_x / 2.0);
+			hud_align_consoleright_poly[1][1] = offset_y;
+			hud_align_consoleright_poly[1][2] = 0;
+
+			hud_align_consoleright_poly[2][0] = 2 * mid_x;
+			hud_align_consoleright_poly[2][1] = offset_y;
+			hud_align_consoleright_poly[2][2] = 0;
+
+			hud_align_consoleright_poly[3][0] = 2 * mid_x;
+			hud_align_consoleright_poly[3][1] = 0;
+			hud_align_consoleright_poly[3][2] = 0;
+
+			if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CONSOLE, hud_align_consoleright_poly, x, y))
+			{
+				hud_align_current_poly = hud_align_consoleright_poly;
+				hud_align_current_polycount = HUD_ALIGN_POLYCOUNT_CONSOLE;
+				return hud_align_consoleright;
+			}
+		}
+	}
 
 	// Top right.
 	{
@@ -229,14 +351,14 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 		hud_align_topright_poly[2][2] = 0;
 
 		hud_align_topright_poly[3][0] = 2 * mid_x;
-		hud_align_topright_poly[3][1] = mid_y - (mid_y / 2.0);;
+		hud_align_topright_poly[3][1] = mid_y - (mid_y / 2.0);
 		hud_align_topright_poly[3][2] = 0;
 
 		hud_align_topright_poly[4][0] = 2 * mid_x;
 		hud_align_topright_poly[4][1] = 0;
 		hud_align_topright_poly[4][2] = 0;
 
-		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CORNER, hud_align_topright_poly, x - hud_element->lx, y - hud_element->ly))
+		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CORNER, hud_align_topright_poly, x - offset_x, y - offset_y))
 		{
 			hud_align_current_poly = hud_align_topright_poly;
 			hud_align_current_polycount = HUD_ALIGN_POLYCOUNT_CORNER;
@@ -262,7 +384,7 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 		hud_align_top_poly[3][1] = 0;
 		hud_align_top_poly[3][2] = 0;
 
-		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_EDGE, hud_align_top_poly, x - hud_element->lx, y - hud_element->ly))
+		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_EDGE, hud_align_top_poly, x - offset_x, y - offset_y))
 		{
 			hud_align_current_poly = hud_align_top_poly;
 			hud_align_current_polycount = HUD_ALIGN_POLYCOUNT_EDGE;
@@ -292,7 +414,7 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 		hud_align_topleft_poly[4][1] = 0;
 		hud_align_topleft_poly[4][2] = 0;
 
-		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CORNER, hud_align_topleft_poly, x - hud_element->lx, y - hud_element->ly))
+		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CORNER, hud_align_topleft_poly, x - offset_x, y - offset_y))
 		{
 			hud_align_current_poly = hud_align_topleft_poly;
 			hud_align_current_polycount = HUD_ALIGN_POLYCOUNT_CORNER;
@@ -318,7 +440,7 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 		hud_align_left_poly[3][1] = mid_y - (mid_y / 4.0);
 		hud_align_left_poly[3][2] = 0;
 
-		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_EDGE, hud_align_left_poly, x - hud_element->lx, y - hud_element->ly))
+		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_EDGE, hud_align_left_poly, x - offset_x, y - offset_y))
 		{
 			hud_align_current_poly = hud_align_left_poly;
 			hud_align_current_polycount = HUD_ALIGN_POLYCOUNT_EDGE;
@@ -348,7 +470,7 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 		hud_align_bottomleft_poly[4][1] = mid_y + (mid_y / 4.0);
 		hud_align_bottomleft_poly[4][2] = 0;
 
-		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CORNER, hud_align_bottomleft_poly, x - hud_element->lx, y - hud_element->ly))
+		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CORNER, hud_align_bottomleft_poly, x - offset_x, y - offset_y))
 		{
 			hud_align_current_poly = hud_align_bottomleft_poly;
 			hud_align_current_polycount = HUD_ALIGN_POLYCOUNT_CORNER;
@@ -374,7 +496,7 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 		hud_align_bottom_poly[3][1] = mid_y + (mid_y / 2.0);
 		hud_align_bottom_poly[3][2] = 0;
 
-		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_EDGE, hud_align_bottom_poly, x - hud_element->lx, y - hud_element->ly))
+		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_EDGE, hud_align_bottom_poly, x - offset_x, y - offset_y))
 		{
 			hud_align_current_poly = hud_align_bottom_poly;
 			hud_align_current_polycount = HUD_ALIGN_POLYCOUNT_EDGE;
@@ -404,7 +526,7 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 		hud_align_bottomright_poly[4][1] = mid_y + (mid_y / 2.0);
 		hud_align_bottomright_poly[4][2] = 0;
 
-		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CORNER, hud_align_bottomright_poly, x - hud_element->lx, y - hud_element->ly))
+		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CORNER, hud_align_bottomright_poly, x - offset_x, y - offset_y))
 		{
 			hud_align_current_poly = hud_align_bottomright_poly;
 			hud_align_current_polycount = HUD_ALIGN_POLYCOUNT_CORNER;
@@ -430,7 +552,7 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 		hud_align_right_poly[3][1] = mid_y + (mid_y / 4.0);
 		hud_align_right_poly[3][2] = 0;
 
-		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_EDGE, hud_align_right_poly, x - hud_element->lx, y - hud_element->ly))
+		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_EDGE, hud_align_right_poly, x - offset_x, y - offset_y))
 		{
 			hud_align_current_poly = hud_align_right_poly;
 			hud_align_current_polycount = HUD_ALIGN_POLYCOUNT_EDGE;
@@ -472,7 +594,7 @@ static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 		hud_align_center_poly[7][1] = mid_y / 2.0;
 		hud_align_center_poly[7][2] = 0;
 
-		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CENTER, hud_align_center_poly, x - hud_element->lx, y - hud_element->ly))
+		if (IsPointInPolygon(HUD_ALIGN_POLYCOUNT_CENTER, hud_align_center_poly, x - offset_x, y - offset_y))
 		{
 			hud_align_current_poly = hud_align_center_poly;
 			hud_align_current_polycount = HUD_ALIGN_POLYCOUNT_CENTER;
@@ -534,14 +656,36 @@ static hud_t *HUD_Editor_FindNextChild(hud_t *hud_element)
 //
 static void HUD_Editor_Move(float dx, float dy, hud_t *hud_element) 
 {
+	if(!hud_element)
+	{
+		return;
+	}
+
 	Cvar_Set(hud_element->pos_x, va("%f", hud_element->pos_x->value + dx));
 	Cvar_Set(hud_element->pos_y, va("%f", hud_element->pos_y->value + dy));
 }
 
 //
+// Draw the current alignment.
+//
+static void HUD_Editor_DrawAlignment(hud_t *hud_parent)
+{
+	extern void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, int color);
+
+	if(hud_parent)
+	{
+		Draw_Polygon(hud_parent->lx, hud_parent->ly, hud_align_current_poly, hud_align_current_polycount, true, RGBA_2_Int(255, 255, 0, 50));
+	}
+	else
+	{
+		Draw_Polygon(0, 0, hud_align_current_poly, hud_align_current_polycount, true, RGBA_2_Int(255, 255, 0, 50));
+	}
+}
+
+//
 // Check if we're supposed to be moving anything.
 //
-static qbool HUD_Editor_Moving(hud_t *hud)
+static qbool HUD_Editor_Moving(hud_t *hud_hover)
 {
 	// Mouse delta (in_win.c)
 	extern float mouse_x, mouse_y;
@@ -549,33 +693,33 @@ static qbool HUD_Editor_Moving(hud_t *hud)
 	// Left mousebutton down = lets move it !
 	if (hud_editor_mode == hud_editmode_move_resize) //MOUSEDOWN_1_ONLY && hud)
 	{
-		// Move using the mouse delta instead of the absolute
-		// mouse cursor coordinates on the screen.
-		HUD_Editor_Move(mouse_x, mouse_y, hud);
-		last_moved_hud = hud;
-		HUD_Recalculate();
+		// If we just entered movement mode, nothing is selected
+		// so select the hud we're hovering to start with.
+		if(!selected_hud && hud_hover)
+		{
+			selected_hud = hud_hover;
+			return true;
+		}
+
+		if(selected_hud)
+		{
+			// Move using the mouse delta instead of the absolute
+			// mouse cursor coordinates on the screen.
+			HUD_Editor_Move(mouse_x, mouse_y, hud_hover);
+			//last_moved_hud = hud_hover;
+			HUD_Recalculate();
+			return true;
+		}
+	}
+	else if(hud_editor_prevmode == hud_editmode_move_resize)
+	{
+		selected_hud = NULL;
+		//last_moved_hud = NULL;
 		return true;
 	}
 
 	// Should we stop after this?
 	return false;
-}
-
-//
-// Draw the current alignment.
-//
-static void HUD_Editor_DrawAlignment(hud_t *hud)
-{
-	extern void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, int color);
-
-	if(hud)
-	{
-		Draw_Polygon(hud->lx, hud->ly, hud_align_current_poly, hud_align_current_polycount, true, RGBA_2_Int(255, 255, 0, 50));
-	}
-	else
-	{
-		// TODO: Show alignment for non-HUDs
-	}
 }
 
 //
@@ -599,12 +743,15 @@ static qbool HUD_Editor_Aligning(hud_t *hud_hover)
 		{
 			if(selected_hud->place_hud)
 			{
+				// Placed at another HUD, so align onto that.
 				hud_alignmode = HUD_Editor_GetAlignment(hud_mouse_x, hud_mouse_y, selected_hud->place_hud);
 				HUD_Editor_DrawAlignment(selected_hud->place_hud);
 			}
 			else
 			{
-				// TODO : Align to screen/console
+				// Placed on the screen.
+				hud_alignmode = HUD_Editor_GetAlignment(hud_mouse_x, hud_mouse_y, NULL);
+				HUD_Editor_DrawAlignment(NULL);
 			}
 		}
 	}
@@ -617,9 +764,21 @@ static qbool HUD_Editor_Aligning(hud_t *hud_hover)
 		// We must have something to align.
 		if(selected_hud)
 		{
-			if(selected_hud->place_hud)
+			// Reset position.
+			Cvar_Set(selected_hud->pos_x, "0");
+			Cvar_Set(selected_hud->pos_y, "0");
+
+			// Align to the area the mouse is placed over (previously set in hud_alignmode).
+			Cbuf_AddText(va("align %s %s", selected_hud->name, HUD_Editor_GetAlignmentString(hud_alignmode)));
+			HUD_Recalculate();
+			
+			// Free selection.
+			selected_hud = NULL;
+			return true;
+
+			/*if(selected_hud->place_hud)
 			{
-				// Placed another HUD.
+				// Placed at another HUD.
 
 				// Reset position.
 				Cvar_Set(selected_hud->pos_x, "0");
@@ -636,8 +795,19 @@ static qbool HUD_Editor_Aligning(hud_t *hud_hover)
 			else
 			{
 				// Not placing at a HUD.
+
+				// Reset position.
+				Cvar_Set(selected_hud->pos_x, "0");
+				Cvar_Set(selected_hud->pos_y, "0");
+
+				// Align to the area the mouse is placed over (previously set in hud_alignmode).
+				Cbuf_AddText(va("align %s %s", selected_hud->name, HUD_Editor_GetAlignmentString(hud_alignmode)));
+				HUD_Recalculate();
+				
+				// Free selection.
 				selected_hud = NULL;
-			}
+				return true;
+			}*/
 		}
 	}
 
@@ -671,7 +841,7 @@ static qbool HUD_Editor_Placing(hud_t *hud_hover)
 				{
 					// Red "not allowed".
 					Draw_AlphaRectangleRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 1, 0, 0, 1, true, 0.1);
-					Draw_AlphaRectangleRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 1, 0, 0, 1, false, 1);
+					Draw_AlphaRectangleRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 1, 0, 0, 1, false, 2);
 				}
 				else
 				{
@@ -680,6 +850,18 @@ static qbool HUD_Editor_Placing(hud_t *hud_hover)
 				}
 
 				return true;
+			}
+			
+			// Placement at the screen (We don't care about stuff like IFREE, HBAR, SBAR and so on).
+			if(!strcmp(selected_hud->place->string, "screen"))
+			{
+				// Not allowed, already placed there.
+				Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 1, 0, 0, 1, true, 0.1);
+			}
+			else
+			{
+				// Allowed.
+				Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 0, 1, 0, 1, true, 0.1);
 			}
 		}
 	}
@@ -712,10 +894,27 @@ static qbool HUD_Editor_Placing(hud_t *hud_hover)
 				selected_hud = NULL;
 				return true;
 			}
+			else
+			{
+				// Mouse button was released on on the "screen".
 
-			// Mouse button was released on "non-occupied space", 
-			// either screen or console (Don't bother with all the obscure ones like IFREE and so on).
-			// TODO: Place @Screen/console
+				if(!strcmp(selected_hud->place->string, "screen"))
+				{
+					return false;
+				}
+
+				// Place at other HUD.
+				Cvar_Set(selected_hud->align_x, "center");
+				Cvar_Set(selected_hud->align_y, "center");
+				Cvar_Set(selected_hud->pos_x, "0");
+				Cvar_Set(selected_hud->pos_y, "0");
+				Cvar_Set(selected_hud->place, "screen");
+				HUD_Recalculate();
+
+				// Free selection.
+				selected_hud = NULL;
+				return true;
+			}
 		}
 	}
 
@@ -1023,31 +1222,18 @@ static qbool HUD_Editor_FindHudUnderCursor(hud_t **hud)
 		}
 	}
 
-	// Draw the "grep handles" for offscreen HUDs.
-	HUD_Editor_DrawGreps();
-	
+	// Still didn't find anything new, then check if we already
+	// had something selected since last time and was moving.
+	if(!found && selected_hud && hud_editor_prevmode == hud_editmode_move_resize)
+	{
+		found = true;
+		(*hud) = selected_hud;
+	}
+
+	// Nothing found, make sure result is NULL.
 	if (!found)
 	{
 		(*hud) = NULL;
-	}
-
-	// Check if we are moving an old hud already, then we want that HUD.
-	if (last_moved_hud && selected_hud == NULL && keydown[K_MOUSE1])
-	{
-		found = true;
-		(*hud) = last_moved_hud;
-	}
-
-	// Draw a rectangle around the currently active HUD element.
-	if(found && (*hud))
-	{
-		Draw_OutlineRGB((*hud)->lx, (*hud)->ly, (*hud)->lw, (*hud)->lh, 0, 1, 0, 1);
-	}
-
-	// If we are realigning draw a green outline for the selected hud element.
-	if (selected_hud)
-	{
-		Draw_OutlineRGB(selected_hud->lx, selected_hud->ly, selected_hud->lw, selected_hud->lh, 0, 1, 0, 1);
 	}
 
 	return found;
@@ -1119,38 +1305,27 @@ static void HUD_Editor_GetAlignmentPoint(hud_t *hud, int *x, int *y)
 //
 // Draws connections to/from a HUD element.
 //
-static void HUD_Editor_DrawConnections(hud_t *hud)
+static void HUD_Editor_DrawConnections(hud_t *hud_hover)
 {
 	hud_t *child = NULL;
-	hud_t *parent = NULL;
 	int align_x = 0.0;
 	int align_y = 0.0;
 
-	if (!hud)
+	if (!hud_hover)
 	{
 		return;
 	}
 
 	// If the hud we are hovering above has a parent draw a line to it.
-	if (hud->place && hud->place->string && strlen(hud->place->string))
+	if (hud_hover->place_hud)
 	{
-		parent = HUD_Find(hud->place->string);
-		if (parent && !selected_hud)
-		{
-			// Draw a line from the alignment point on the parent to the HUD.
-			HUD_Editor_GetAlignmentPoint(hud, &align_x, &align_y);
-			Draw_AlphaLineRGB(HUD_CENTER_X(hud), HUD_CENTER_Y(hud), align_x, align_y, 1, 1, 0, 0, 0.5); // Red.
-		}
-	}
-
-	// Don't show the connnections to the children of the HUD element we're already placed at.
-	if(hud_editor_mode == hud_editmode_place && parent && !strcmp(hud->name, parent->name))
-	{
-		return;
+		// Draw a line from the alignment point on the parent to the HUD.
+		HUD_Editor_GetAlignmentPoint(hud_hover, &align_x, &align_y);
+		Draw_AlphaLineRGB(HUD_CENTER_X(hud_hover), HUD_CENTER_Y(hud_hover), align_x, align_y, 1, 0, 1, 0, 0.1); // Red.	
 	}
 
 	// Draw a line to all children of the HUD we're hovering.
-	while((child = HUD_Editor_FindNextChild(hud)))
+	while((child = HUD_Editor_FindNextChild(hud_hover)))
 	{
 		// Don't bother with hidden children.
 		if(!child->show->value)
@@ -1160,7 +1335,7 @@ static void HUD_Editor_DrawConnections(hud_t *hud)
 
 		// Draw a line from the alignment point on the parent to the child.
 		HUD_Editor_GetAlignmentPoint(child, &align_x, &align_y);
-		Draw_AlphaLineRGB(align_x, align_y, HUD_CENTER_X(child), HUD_CENTER_Y(child), 1, 1, 0, 0, 0.5); // Red.
+		Draw_AlphaLineRGB(align_x, align_y, HUD_CENTER_X(child), HUD_CENTER_Y(child), 1, 0, 1, 0, 0.1); // Red.
 	}
 }
 
@@ -1180,17 +1355,17 @@ static void HUD_Editor_EvaluateState(hud_t *hud_hover)
 		// Move + resize (Locked to an axis).
 		HUD_Editor_SetMode(hud_editmode_move_lockedaxis);
 	}
-	else if (hud_hover && MOUSEDOWN_1_ONLY && isCtrlDown())
+	else if ((hud_hover || hud_editor_prevmode == hud_editmode_place) && MOUSEDOWN_1_ONLY && isCtrlDown())
 	{
 		// Place.
 		HUD_Editor_SetMode(hud_editmode_place);
 	}
-	else if (hud_hover && MOUSEDOWN_1_ONLY && isAltDown())
+	else if ((hud_hover || hud_editor_prevmode == hud_editmode_align) && MOUSEDOWN_1_ONLY && isAltDown())
 	{
 		// Align.
 		HUD_Editor_SetMode(hud_editmode_align);
 	}
-	else if (hud_hover && MOUSEDOWN_1_ONLY)
+	else if ((hud_hover || selected_hud) && MOUSEDOWN_1_ONLY)
 	{
 		// Move + resize.
 		HUD_Editor_SetMode(hud_editmode_move_resize);
@@ -1284,7 +1459,7 @@ static void HUD_Editor(void)
 {
 	extern float mouse_x, mouse_y;
 	qbool found;
-	hud_t				*hud_hover	= NULL;
+	hud_t *hud_hover	= NULL;
 
 	// Updating cursor location.
 	hud_mouse_x = cursor_x;
@@ -1293,6 +1468,21 @@ static void HUD_Editor(void)
 	// Find the HUD we're moving or have the cursor over.
 	// Also draws highlights and such.
 	found = HUD_Editor_FindHudUnderCursor(&hud_hover);
+
+	// Draw the "grep handles" for offscreen HUDs.
+	HUD_Editor_DrawGreps();
+
+	// Draw a rectangle around the currently active HUD element.
+	if(found && hud_hover)
+	{
+		Draw_OutlineRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 0, 1, 0, 1);
+	}
+
+	// If we are realigning draw a green outline for the selected hud element.
+	if (selected_hud)
+	{
+		Draw_OutlineRGB(selected_hud->lx, selected_hud->ly, selected_hud->lw, selected_hud->lh, 0, 1, 0, 2);
+	}
 
 	// Check the mouse/keyboard states and if we're hovering above a hud or not.
 	HUD_Editor_EvaluateState(hud_hover);
@@ -1307,7 +1497,7 @@ static void HUD_Editor(void)
 	}
 
 	// If we still havent found anything we return !
-	if (!found)
+	/*if (!found)
 	{
 		if (MOUSEDOWN_NONE) 
 		{
@@ -1316,7 +1506,7 @@ static void HUD_Editor(void)
 		}
 
 		return;
-	}
+	}*/
 
 	// Draw tooltips for the HUD.
 	HUD_Editor_DrawTooltips(hud_hover);
