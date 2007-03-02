@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.30 2007-02-22 18:28:50 qqshka Exp $
+	$Id: host.c,v 1.31 2007-03-02 17:51:31 disconn3ct Exp $
  
 */
 
@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef __FreeBSD__
 #include <sys/types.h>
 #include <sys/sysctl.h>
-#ifdef __i386__
+#ifdef id386
 #include <sys/time.h>
 #include <machine/cpufunc.h>
 #endif
@@ -247,7 +247,7 @@ void SYSINFO_Init(void)
 	int mib[2], val;
 	size_t len;
 
-#ifdef __i386__
+#ifdef id386
 	unsigned long long old_tsc, tsc_freq;
 	struct timeval tp, old_tp;
 #endif
@@ -269,7 +269,7 @@ void SYSINFO_Init(void)
 
 	SYSINFO_processor_description = cpu_model;
 
-#ifdef __i386__
+#ifdef id386
 	gettimeofday(&old_tp, NULL);
 	old_tsc = rdtsc();
 	do {
