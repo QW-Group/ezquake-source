@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1250"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="gas2masm"
 	ProjectGUID="{AD648F18-37A4-4776-96B1-65321DBA52B7}"
 	RootNamespace="gas2masm"
@@ -145,10 +145,10 @@
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
 				PrecompiledHeaderFile="Release/gas2masm_msvs_80.pch"
-				AssemblerListingLocation=""
-				ObjectFile=""
-				ProgramDataBaseFileName=""
-				WarningLevel="4"
+				AssemblerListingLocation="Release/"
+				ObjectFile="Release/"
+				ProgramDataBaseFileName="Release/"
+				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="0"
 			/>
