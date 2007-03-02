@@ -13,11 +13,15 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tcl.h,v 1.3 2006-08-27 14:32:29 disconn3ct Exp $
+ * RCS: @(#) $Id: tcl.h,v 1.4 2007-03-02 23:59:23 disconn3ct Exp $
  */
 
 #ifndef _TCL
 #define _TCL
+
+/* disconnect --> */
+#define STATIC_BUILD
+/* <-- disconnect */
 
 /*
  * For C++ compilers, use extern "C"

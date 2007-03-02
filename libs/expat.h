@@ -5,6 +5,10 @@
 #ifndef Expat_INCLUDED
 #define Expat_INCLUDED 1
 
+/* disconnect --> */
+#define XML_STATIC
+/* <-- disconnect */
+
 #ifdef __VMS
 /*      0        1         2         3      0        1         2         3
         1234567890123456789012345678901     1234567890123456789012345678901 */
