@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.14 2007-03-02 02:48:35 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.15 2007-03-02 15:50:18 qqshka Exp $
 
 */
 
@@ -230,8 +230,6 @@ static hud_alignmode_t HUD_Editor_GetAlignmentFromString(char *alignstr)
 //
 static hud_alignmode_t HUD_Editor_GetAlignment(int x, int y, hud_t *hud_element)
 {
-	extern qbool IsPointInPolygon(int npol, vec3_t *v, float x, float y);
-	
 	// For less clutter.
 	float	mid_x		= 0.0;
 	float	mid_y		= 0.0;
@@ -1605,7 +1603,7 @@ void HUD_Editor_Draw(void)
 		return;
 
 	HUD_Editor();
-	#endif GLQUAKE
+	#endif // GLQUAKE
 }
 
 //
