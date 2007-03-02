@@ -13,13 +13,14 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.46 2007-02-24 12:55:37 johnnycz Exp $
+		$Id: menu_options.c,v 1.47 2007-03-02 03:30:26 johnnycz Exp $
 
 */
 
 #include "quakedef.h"
 #include "settings.h"
 #include "settings_page.h"
+#include "Ctrl_EditBox.h"
 
 typedef enum {
 	OPTPG_SETTINGS,
@@ -29,6 +30,7 @@ typedef enum {
 	OPTPG_MULTIVIEW,
 	OPTPG_BINDS,
 	OPTPG_VIDEO,
+	OPTPG_CONFIG,
 }	options_tab_t;
 
 CTab_t options_tab;
@@ -905,11 +907,175 @@ void OnShow_SettVideo(void) {
 
 // </VIDEO>
 
+// *********
+// <CONFIG>
+
+// Menu Options Config Page Mode
+
+filelist_t configs_filelist;
+cvar_t  cfg_browser_showsize		= {"cfg_browser_showsize",		"1"};
+cvar_t  cfg_browser_showdate		= {"cfg_browser_showdate",		"1"};
+cvar_t  cfg_browser_showtime		= {"cfg_browser_showtime",		"1"};
+cvar_t  cfg_browser_sortmode		= {"cfg_browser_sortmode",		"1"};
+cvar_t  cfg_browser_showstatus		= {"cfg_browser_showstatus",	"1"};
+cvar_t  cfg_browser_stripnames		= {"cfg_browser_stripnames",	"1"};
+cvar_t  cfg_browser_interline		= {"cfg_browser_interline",	"0"};
+cvar_t  cfg_browser_scrollnames	= {"cfg_browser_scrollnames",	"1"};
+cvar_t	cfg_browser_democolor		= {"cfg_browser_democolor",	"255 255 255 255"};	// White.
+cvar_t	cfg_browser_selectedcolor	= {"cfg_browser_selectedcolor","0 150 235 255"};	// Light blue.
+cvar_t	cfg_browser_dircolor		= {"cfg_browser_dircolor",		"170 80 0 255"};	// Redish.
+#ifdef WITH_ZIP
+cvar_t	cfg_browser_zipcolor		= {"cfg_browser_zipcolor",		"255 170 0 255"};	// Orange.
+#endif
+
+CEditBox filenameeb;
+
+enum { MOCPM_SETTINGS, MOCPM_CHOOSECONFIG, MOCPM_CHOOSESCRIPT, MOCPM_ENTERFILENAME } MOpt_configpage_mode;
+
+extern cvar_t cfg_backup, cfg_legacy_exec, cfg_legacy_write, cfg_save_aliases, cfg_save_binds, cfg_save_cmdline,
+	cfg_save_cmds, cfg_save_cvars, cfg_save_unchanged, cfg_save_userinfo;
+
+void MOpt_LoadConfig(void) { 
+	MOpt_configpage_mode = MOCPM_CHOOSECONFIG;
+	FL_SetCurrentDir(&configs_filelist, "./ezquake/configs");
+}
+void MOpt_SaveConfig(void) { 
+	MOpt_configpage_mode = MOCPM_ENTERFILENAME;
+	filenameeb.text[0] = 0;
+	filenameeb.pos = 0;
+}
+
+void MOpt_LoadScript(void) {
+	MOpt_configpage_mode = MOCPM_CHOOSESCRIPT;
+	FL_SetCurrentDir(&configs_filelist, "./ezquake/cfg");
+}
+
+void MOpt_CfgSaveAllOn(void) {
+	Cvar_SetValue(&cfg_backup, 1);
+	Cvar_SetValue(&cfg_legacy_exec, 3);
+	Cvar_SetValue(&cfg_legacy_write, 1);
+	Cvar_SetValue(&cfg_save_aliases, 1);
+	Cvar_SetValue(&cfg_save_binds, 1);
+	Cvar_SetValue(&cfg_save_cmdline, 1);
+	Cvar_SetValue(&cfg_save_cmds, 1);
+	Cvar_SetValue(&cfg_save_cvars, 1);
+	Cvar_SetValue(&cfg_save_unchanged, 1);
+	Cvar_SetValue(&cfg_save_userinfo, 1);
+}
+
+const char* MOpt_legacywrite_enum[] = { "off", "non-qw dir frontend.cfg", "also config.cfg", "non-qw config.cfg" };
+const char* MOpt_userinfo_enum[] = { "off", "all but player", "all" };
+
+settings_page settconfig;
+setting settconfig_arr[] = {
+	ADDSET_SEPARATOR("Save & Load"),
+	ADDSET_ACTION("Load Configuration", MOpt_LoadConfig, "You can load a configuration from a file here"),
+	ADDSET_ACTION("Export Configuration", MOpt_SaveConfig, "Will export your current configuration to a file"),
+	ADDSET_ACTION("Load Script", MOpt_LoadScript, "Choose and load quake scripts here"),
+	ADDSET_SEPARATOR("Export Settings"),
+	ADDSET_ACTION("Preset: Export All", MOpt_CfgSaveAllOn, "Will turn all following settings to enabled"),
+	ADDSET_BOOL("Unchanged Settings", cfg_save_unchanged),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL("Backup old file", cfg_backup),
+	ADDSET_NAMED("Load Legacy", cfg_legacy_exec, MOpt_legacywrite_enum),
+	ADDSET_BOOL("Save Legacy", cfg_legacy_write),
+	ADDSET_BOOL("Aliases", cfg_save_aliases),
+	ADDSET_BOOL("Binds", cfg_save_binds),
+	ADDSET_BOOL("Cmdline", cfg_save_cmdline),
+	ADDSET_BOOL("Init Commands", cfg_save_cmds),
+	ADDSET_BOOL("Variables", cfg_save_cvars),
+	ADDSET_NAMED("Userinfo", cfg_save_userinfo, MOpt_userinfo_enum)
+};
+
+#define INPUTBOXWIDTH 300
+#define INPUTBOXHEIGHT 48
+
+void MOpt_FilenameInputBoxDraw(int x, int y, int w, int h)
+{
+	UI_DrawBox(x + (w-INPUTBOXWIDTH) / 2, y + (h-INPUTBOXHEIGHT) / 2, INPUTBOXWIDTH, INPUTBOXHEIGHT);
+	UI_Print_Center(x, y + h/2 - 8, w, "Enter the config file name", false);
+	CEditBox_Draw(&filenameeb, x + (w-INPUTBOXWIDTH)/2 + 16, y + h/2 + 8, true);
+}
+
+qbool MOpt_FileNameInputBoxKey(int key)
+{
+	CEditBox_Key(&filenameeb, key);
+	return true;
+}
+
+char *MOpt_FileNameInputBoxGetText(void)
+{
+	return filenameeb.text;
+}
+
+void CT_Opt_Config_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
+{
+	switch (MOpt_configpage_mode) {
+	case MOCPM_SETTINGS:
+		Settings_Draw(x,y,w,h,&settconfig);
+		break;
+
+	case MOCPM_CHOOSESCRIPT:
+	case MOCPM_CHOOSECONFIG:
+		FL_Draw(&configs_filelist, x,y,w,h);
+		break;
+
+	case MOCPM_ENTERFILENAME:
+		MOpt_FilenameInputBoxDraw(x,y,w,h);
+		break;
+	}
+}
+
+int CT_Opt_Config_Key(int key, CTab_t *tab, CTabPage_t *page)
+{
+	switch (MOpt_configpage_mode) {
+	case MOCPM_SETTINGS:
+		return Settings_Key(&settconfig, key);
+		break;
+	
+	case MOCPM_CHOOSECONFIG:
+		if (key == K_ENTER || key == K_MOUSE1) {
+			Cbuf_AddText(va("cfg_load \"%s\"\n", COM_SkipPath(FL_GetCurrentEntry(&configs_filelist)->name)));
+			MOpt_configpage_mode = MOCPM_SETTINGS;
+			return true;
+		} else if (key == K_ESCAPE) {
+			MOpt_configpage_mode = MOCPM_SETTINGS;
+			return true;
+		} else return FL_Key(&configs_filelist, key);
+		
+	case MOCPM_CHOOSESCRIPT:
+		if (key == K_ENTER || key == K_MOUSE1) {
+			Cbuf_AddText(va("exec \"cfg/%s\"\n", COM_SkipPath(FL_GetCurrentEntry(&configs_filelist)->name)));
+			MOpt_configpage_mode = MOCPM_SETTINGS;
+			return true;
+		} else if (key == K_ESCAPE) {
+			MOpt_configpage_mode = MOCPM_SETTINGS;
+			return true;
+		} else return FL_Key(&configs_filelist, key);
+
+	case MOCPM_ENTERFILENAME:
+		if (key == K_ENTER || key == K_MOUSE1) {
+			Cbuf_AddText(va("cfg_save \"%s\"\n", MOpt_FileNameInputBoxGetText()));
+			MOpt_configpage_mode = MOCPM_SETTINGS;
+			return true;
+		} else if (key == K_ESCAPE) {
+			MOpt_configpage_mode = MOCPM_SETTINGS;
+			return true;
+		} else return MOpt_FileNameInputBoxKey(key);
+	}
+
+	return false;
+}
+
+// </CONFIG>
+// *********
+
 void OnShow_SettMain(void) { Settings_OnShow(&settgeneral); }
 void OnShow_SettPlayer(void) { Settings_OnShow(&settplayer); }
 void OnShow_SettFPS(void) { Settings_OnShow(&settfps); }
 void OnShow_SettHUD(void) { Settings_OnShow(&setthud); }
 void OnShow_SettMultiview(void) { Settings_OnShow(&settmultiview); }
+void OnShow_SettConfig(void) { Settings_OnShow(&settconfig); }
 
 void Menu_Options_Key(int key, int unichar) {
     int handled = CTab_Key(&options_tab, key);
@@ -953,12 +1119,53 @@ void Menu_Options_Init(void) {
 #ifdef GLQUAKE
 	Settings_Page_Init(settvideo, settvideo_arr);
 #endif
+	Settings_Page_Init(settconfig, settconfig_arr);
 
 	Cvar_Register(&menu_advanced);
 #ifdef GLQUAKE
-	mvs_selected.freq.name = "menu_tempval_video_freq";
+	mvs_selected.freq.name = "menu_tempval_video_freq";	// this is here just to not get a crash in Cvar_Set
 	mvs_previous.freq.name = mvs_selected.freq.name;
 #endif
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_CONFIG);
+	Cvar_Register(&cfg_browser_showsize);
+    Cvar_Register(&cfg_browser_showdate);
+    Cvar_Register(&cfg_browser_showtime);
+    Cvar_Register(&cfg_browser_sortmode);
+    Cvar_Register(&cfg_browser_showstatus);
+    Cvar_Register(&cfg_browser_stripnames);
+    Cvar_Register(&cfg_browser_interline);
+	Cvar_Register(&cfg_browser_scrollnames);
+	Cvar_Register(&cfg_browser_selectedcolor);
+	Cvar_Register(&cfg_browser_democolor);
+	Cvar_Register(&cfg_browser_dircolor);
+#ifdef WITH_ZIP
+	Cvar_Register(&cfg_browser_zipcolor);
+#endif
+	Cvar_ResetCurrentGroup();
+
+
+	FL_Init(&configs_filelist,
+        &cfg_browser_sortmode,
+        &cfg_browser_showsize,
+        &cfg_browser_showdate,
+        &cfg_browser_showtime,
+        &cfg_browser_stripnames,
+        &cfg_browser_interline,
+        &cfg_browser_showstatus,
+		&cfg_browser_scrollnames,
+		&cfg_browser_democolor,
+		&cfg_browser_selectedcolor,
+		&cfg_browser_dircolor,
+#ifdef WITH_ZIP
+		&cfg_browser_zipcolor,
+#endif
+		"./ezquake/configs");
+
+	FL_AddFileType(&configs_filelist, 0, ".cfg");
+	FL_AddFileType(&configs_filelist, 1, ".txt");
+
+	CEditBox_Init(&filenameeb, 32, 64);
 
 	CTab_Init(&options_tab);
 	CTab_AddPage(&options_tab, "main", OPTPG_SETTINGS, OnShow_SettMain, CT_Opt_Settings_Draw, CT_Opt_Settings_Key);
@@ -968,5 +1175,6 @@ void Menu_Options_Init(void) {
 	CTab_AddPage(&options_tab, "multiview", OPTPG_MULTIVIEW, OnShow_SettMultiview, CT_Opt_Multiview_Draw, CT_Opt_Multiview_Key);
 	CTab_AddPage(&options_tab, "controls", OPTPG_BINDS, NULL, CT_Opt_Binds_Draw, CT_Opt_Binds_Key);
 	CTab_AddPage(&options_tab, "video", OPTPG_VIDEO, OnShow_SettVideo, CT_Opt_Video_Draw, CT_Opt_Video_Key);
+	CTab_AddPage(&options_tab, "config", OPTPG_CONFIG, OnShow_SettConfig, CT_Opt_Config_Draw, CT_Opt_Config_Key);
 	CTab_SetCurrentId(&options_tab, OPTPG_SETTINGS);
 }
