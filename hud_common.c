@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.123 2007-02-27 05:32:52 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.124 2007-03-03 04:16:51 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -610,7 +610,11 @@ void SCR_HUD_DrawDemoClock(hud_t *hud)
         *hud_democlock_blink,
 		*hud_democlock_scale;
 
-	if (!cls.demoplayback) return;
+	if (!cls.demoplayback) 
+	{
+		HUD_PrepareDraw(hud, width, height, &x, &y);
+		return;
+	}
 
     if (hud_democlock_big == NULL)    // first time
     {
@@ -1772,6 +1776,7 @@ void SCR_HUD_DrawArmor(hud_t *hud)
 #ifdef GLQUAKE
 void SCR_HUD_DrawHealthDamage(hud_t *hud)
 {
+	// TODO: This is very naughty, HUD_PrepareDraw(hud, width, height, &x, &y); MUST be called.
 	Draw_AMFStatLoss (STAT_HEALTH, hud);
 	if (HUD_Stats(STAT_HEALTH) <= 0)
 	{
@@ -1781,6 +1786,7 @@ void SCR_HUD_DrawHealthDamage(hud_t *hud)
 
 void SCR_HUD_DrawArmorDamage(hud_t *hud)
 {
+	// TODO: NAUGHTY!! HUD_PrepareDraw(hud, width, height, &x, &y); plz
 	Draw_AMFStatLoss (STAT_ARMOR, hud);
 }
 #endif
