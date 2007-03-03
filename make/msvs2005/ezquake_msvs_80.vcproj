@@ -172,7 +172,7 @@
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include"
-				PreprocessorDefinitions="__LITTLE_ENDIAN__;NDEBUG;id386;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM"
+				PreprocessorDefinitions="__LITTLE_ENDIAN__;NDEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM"
 				StringPooling="true"
 				ExceptionHandling="0"
 				RuntimeLibrary="0"
@@ -404,7 +404,7 @@
 				Optimization="0"
 				FavorSizeOrSpeed="0"
 				AdditionalIncludeDirectories="..\..\libs;$(DXSDK_DIR)\Include"
-				PreprocessorDefinitions="__LITTLE_ENDIAN__;_DEBUG;id386;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM"
+				PreprocessorDefinitions="__LITTLE_ENDIAN__;_DEBUG;WITH_TCL;WITH_PNG;WITH_ZLIB;WITH_ZIP;JSS_CAM"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="false"
 				RuntimeLibrary="0"
@@ -2545,6 +2545,22 @@
 			<File
 				RelativePath="..\..\cl_math.s"
 				>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\d_draw.s"
@@ -2558,7 +2574,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2578,7 +2610,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2598,7 +2646,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2618,7 +2682,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2638,7 +2718,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2658,7 +2754,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2678,7 +2790,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2689,6 +2817,22 @@
 			<File
 				RelativePath="..\..\math.s"
 				>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\r_aclipa.s"
@@ -2702,7 +2846,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2722,7 +2882,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2742,7 +2918,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2762,7 +2954,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2782,7 +2990,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2793,6 +3017,22 @@
 			<File
 				RelativePath="..\..\snd_mixa.s"
 				>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\surf16.s"
@@ -2806,7 +3046,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2826,7 +3082,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="GLRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2837,6 +3109,22 @@
 			<File
 				RelativePath="..\..\sys_x86.s"
 				>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="qasm"
+					/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 	</Files>
