@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.6 2007-03-03 10:35:13 qqshka Exp $
+	$Id: tr_init.c,v 1.7 2007-03-03 14:49:00 qqshka Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -269,6 +269,19 @@ qbool R_GetModeInfo( int *width, int *height, float *windowAspect, int mode ) {
     return true;
 }
 
+// search mode which match params, in r_vidModes[]
+// return -1 if not found and from 0 to s_numVidModes if found
+int R_MatchMode( int width, int height )
+{
+	int i;
+
+	for ( i = 0; i < s_numVidModes && (width || height); i++ )
+		if ( (!width || width == r_vidModes[i].width) && (!height || height == r_vidModes[i].height) )
+			return i; // found
+
+	return -1; // not found
+}
+
 /*
 ** R_ModeList_f
 */
@@ -438,7 +451,7 @@ void R_Register( void )
 	// temporary latched variables that can only change over a restart
 	//
 	Cvar_Register (&r_displayRefresh);
-	AssertCvarRange( &r_displayRefresh, 0, 200, true );
+	AssertCvarRange( &r_displayRefresh, 0, 300, true ); // useless in most cases thought
 //	Cvar_Register (&r_intensity);
 
 	//
@@ -460,6 +473,34 @@ void R_Register( void )
 
 	if ( !host_initialized ) // compatibility with retarded cmd line, and actually this still needed for some other reasons
 	{
+		int w, h;
+
+		w = ((i = COM_CheckParm("-width"))  && i + 1 < com_argc) ? Q_atoi(com_argv[i + 1]) : 0;
+		h = ((i = COM_CheckParm("-height")) && i + 1 < com_argc) ? Q_atoi(com_argv[i + 1]) : 0;
+
+#ifdef _WIN32
+		if (COM_CheckParm("-current")) {
+			// ok, pseudo current
+			w = GetSystemMetrics (SM_CXSCREEN);
+			h = GetSystemMetrics (SM_CYSCREEN);
+			Cvar_LatchedSetValue(&r_displayRefresh, 0); // current mean current
+			Cvar_LatchedSetValue(&r_colorbits, 0); // use desktop bpp
+		}
+#endif
+
+		if ( w || h ) {
+			int m = R_MatchMode( w, h );
+
+			if (m == -1) { // ok, mode not found, trying custom
+				w = w ? w : h * 4 / 3; // guessing width from height may cause some problems thought, because 4/3 uneven
+				h = h ? h : w * 3 / 4;
+				Cvar_LatchedSetValue(&r_customwidth,  w);
+				Cvar_LatchedSetValue(&r_customheight, h);
+			}
+
+			Cvar_LatchedSetValue(&r_mode, m);
+		}
+
 		if ((i = COM_CheckParm("-conwidth")) && i + 1 < com_argc)
 			Cvar_SetValue(&r_conwidth, (float)Q_atoi(com_argv[i + 1]));
 		else // this is ether +set vid_con... or just default value which we select in cvar initialization
@@ -482,11 +523,12 @@ void R_Register( void )
 
 	Cvar_ResetCurrentGroup();
 
-	// make sure all the commands added here are also
-	// removed in R_Shutdown
-
 	if ( !host_initialized )
 	{
+#ifdef _WIN32
+		void VID_ShowFreq_f(void);
+		Cmd_AddCommand( "vid_showfreq",	VID_ShowFreq_f );
+#endif
 		Cmd_AddCommand( "modelist",		R_ModeList_f );
 		Cmd_AddCommand( "gfxinfo",		GfxInfo_f );
 		Cmd_AddCommand( "vid_restart",	VID_Restart_f );
@@ -522,10 +564,6 @@ RE_Shutdown
 void RE_Shutdown( qbool destroyWindow ) {
 
 	ST_Printf( PRINT_ALL, "R_Shutdown( %i )\n", destroyWindow );
-
-	// FIXME/TODO
-	// Cmd_RemoveCommand ( "gfxinfo" );
-	// Cmd_RemoveCommand ( "modelist" );
 
 	// shut down platform specific OpenGL stuff
 	if ( destroyWindow ) {
