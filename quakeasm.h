@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: quakeasm.h,v 1.12 2007-03-02 17:51:31 disconn3ct Exp $
+	$Id: quakeasm.h,v 1.13 2007-03-03 01:38:20 disconn3ct Exp $
 
 */
 //
@@ -41,7 +41,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // !!! must be kept the same as in d_iface.h !!!
 #define TRANSPARENT_COLOR	255
 
-#ifndef GLQUAKE
+#if !defined (GLQUAKE)
 	.extern C(d_zistepu)
 	.extern C(d_pzbuffer)
 	.extern C(d_zistepv)
