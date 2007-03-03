@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.125 2007-03-03 05:07:22 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.126 2007-03-03 05:11:38 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -602,7 +602,7 @@ void SCR_HUD_DrawGameClock(hud_t *hud)
 //
 void SCR_HUD_DrawDemoClock(hud_t *hud)
 {
-    int width = 0
+    int width = 0;
 	int height = 0;
     int x = 0;
 	int y = 0;
