@@ -151,7 +151,7 @@ void Cmd_AddLegacyCommand (char *oldname, char *newname);
 
 #define	ALIAS_HAS_PARAMETERS	8
 
-#ifdef EMBED_TCL
+#ifdef WITH_TCL
 #define		ALIAS_TCL				16
 #endif
 

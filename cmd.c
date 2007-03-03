@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.51 2007-02-22 23:55:26 johnnycz Exp $
+    $Id: cmd.c,v 1.52 2007-03-03 00:11:11 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -439,7 +439,7 @@ char *Cmd_AliasString (char *name)
 	key = Com_HashKey (name) % ALIAS_HASHPOOL_SIZE;
 	for (alias = cmd_alias_hash[key]; alias; alias = alias->hash_next) {
 		if (!strcasecmp(name, alias->name))
-#ifdef EMBED_TCL
+#ifdef WITH_TCL
 			if (!(alias->flags & ALIAS_TCL))
 #endif
 				return alias->value;
@@ -469,7 +469,7 @@ void Cmd_Viewalias_f (void)
 
 			for (alias = cmd_alias, i=m=0; alias ; alias=alias->next, i++)
 				if (ReSearchMatch(alias->name)) {
-#ifdef EMBED_TCL
+#ifdef WITH_TCL
 					if (alias->flags & ALIAS_TCL)
 						Com_Printf ("%s : Tcl procedure\n", alias->name);
 					else
@@ -484,7 +484,7 @@ void Cmd_Viewalias_f (void)
 
 		} else 	{
 			if ((alias = Cmd_FindAlias(name)))
-#ifdef EMBED_TCL
+#ifdef WITH_TCL
 				if (alias->flags & ALIAS_TCL)
 					Com_Printf ("%s : Tcl procedure\n", name);
 				else
@@ -1145,7 +1145,7 @@ void Cmd_AddMacroEx(char *s, char *(*f)(void), qbool teamplay)
 	strlcpy(macro_commands[macro_count].name, s, sizeof(macro_commands[macro_count].name));
 	macro_commands[macro_count].func = f;
 	macro_commands[macro_count].teamplay = teamplay;
-#ifdef EMBED_TCL
+#ifdef WITH_TCL
 	if (!teamplay)	// don't allow teamplay protected macros since there's no protection for this in TCL yet
 		TCL_RegisterMacro (macro_commands + macro_count);
 #endif
@@ -1484,7 +1484,7 @@ checkaliases:
 	if ((a = Cmd_FindAlias(cmd_argv[0]))) {
 
 		// QW262 -->
-#ifdef EMBED_TCL
+#ifdef WITH_TCL
 		if (a->flags & ALIAS_TCL)
 		{
 			TCL_ExecuteAlias (a);
