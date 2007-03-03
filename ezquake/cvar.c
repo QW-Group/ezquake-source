@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.40 2007-02-18 15:26:39 qqshka Exp $
+    $Id: cvar.c,v 1.41 2007-03-03 00:11:11 disconn3ct Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -527,7 +527,7 @@ void Cvar_Register (cvar_t *var)
 	var->next = cvar_vars;
 	cvar_vars = var;
 
-#ifdef EMBED_TCL
+#ifdef WITH_TCL
 	TCL_RegisterVariable (var);
 #endif
 
@@ -745,7 +745,7 @@ cvar_t *Cvar_Create (char *name, char *string, int cvarflags)
 	v->value = Q_atof (v->string);
 	v->integer = Q_atoi (v->string);
 	v->modified = true;
-#ifdef EMBED_TCL
+#ifdef WITH_TCL
 	TCL_RegisterVariable (v);
 #endif
 
@@ -781,7 +781,7 @@ qbool Cvar_Delete (const char *name)
 				prev->next = var->next;
 			else
 				cvar_vars = var->next;
-#ifdef EMBED_TCL
+#ifdef WITH_TCL
 			TCL_UnregisterVariable (name);
 #endif
 			// free

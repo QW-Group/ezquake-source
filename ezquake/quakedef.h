@@ -43,7 +43,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "expat.h"
 #include "pcre.h"
-#ifdef EMBED_TCL
+
+#ifdef WITH_TCL
 #include "embed_tcl.h"
 #endif
 

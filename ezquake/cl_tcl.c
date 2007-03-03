@@ -17,10 +17,10 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.18 2007-01-19 23:53:40 johnnycz Exp $
+ *  $Id: cl_tcl.c,v 1.19 2007-03-03 00:11:11 disconn3ct Exp $
  */
 
-#ifdef EMBED_TCL
+#ifdef WITH_TCL
 #include "tcl.h"
 #include <time.h>
 #ifdef __FreeBSD__

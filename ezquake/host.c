@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.31 2007-03-02 17:51:31 disconn3ct Exp $
+	$Id: host.c,v 1.32 2007-03-03 00:11:11 disconn3ct Exp $
  
 */
 
@@ -441,7 +441,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	Host_InitMemory (default_memsize);
 
-#ifdef EMBED_TCL
+#ifdef WITH_TCL
 	// interpreter should be initialized
 	// before any cvar definitions
 	TCL_InterpInit ();
@@ -480,7 +480,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	SYSINFO_Init();
 
-#ifdef EMBED_TCL
+#ifdef WITH_TCL
 	if (!TCL_InterpLoaded())
 		Com_Printf_State (PRINT_FAIL, "Could not load "TCL_LIB_NAME", embedded Tcl disabled\n");
 #endif
@@ -568,7 +568,7 @@ void Host_Shutdown (void)
 #ifndef SERVERONLY
 	Con_Shutdown();
 #endif
-#ifdef EMBED_TCL
+#ifdef WITH_TCL
 	TCL_Shutdown ();
 #endif
 }
