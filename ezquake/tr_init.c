@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.5 2007-02-11 23:28:16 qqshka Exp $
+	$Id: tr_init.c,v 1.6 2007-03-03 10:35:13 qqshka Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -478,7 +478,7 @@ void R_Register( void )
 	Cvar_Register (&_windowed_mouse); //that more like an input, but i have serious reason to register it here
 #endif
 
-  Cvar_Register (&r_showextensions);
+	Cvar_Register (&r_showextensions);
 
 	Cvar_ResetCurrentGroup();
 
@@ -539,12 +539,6 @@ void RE_Shutdown( qbool destroyWindow ) {
 //
 /******************************************************************************/
 
-/********************************** VID MENU **********************************/
-// hardcore friendly menu
-extern void M_Menu_Options_f (void);
-void VID_MenuDraw (void) {}
-void VID_MenuKey (int key) { if (key == K_ESCAPE) M_Menu_Options_f (); }
-
 /******************************** VID SHUTDOWN ********************************/
 
 void VID_Shutdown (void) {
@@ -594,9 +588,6 @@ void VID_Init (unsigned char *palette) {
 	VID_zzz();
 
 	GL_Init();
-
-	vid_menudrawfn = VID_MenuDraw;
-	vid_menukeyfn = VID_MenuKey;
 }
 
 void VID_Restart_f (void)
