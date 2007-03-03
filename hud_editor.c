@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.15 2007-03-02 15:50:18 qqshka Exp $
+	$Id: hud_editor.c,v 1.16 2007-03-03 05:00:16 cokeman1982 Exp $
 
 */
 
@@ -16,7 +16,6 @@
 
 #ifdef GLQUAKE
 extern hud_t		*hud_huds;				// The list of HUDs.
-hud_t				*last_moved_hud = NULL;	// The HUD that was being moved during the last call of HUD_Editor()
 hud_t				*selected_hud = NULL;	// The currently selected HUD.
 int					win_x;
 int					win_y;
@@ -30,8 +29,8 @@ hud_editor_mode_t	hud_editor_mode = hud_editmode_off;
 hud_editor_mode_t	hud_editor_prevmode =  hud_editmode_off;
 
 // Cursor location.
-double				hud_mouse_x;			// The screen coordinates of the mouse cursor.
-double				hud_mouse_y;
+float				hud_mouse_x;			// The screen coordinates of the mouse cursor.
+float				hud_mouse_y;
 
 // Macros for what mouse buttons are clicked.
 #define MOUSEDOWN_1_2		( keydown[K_MOUSE1] &&  keydown[K_MOUSE2])
@@ -659,8 +658,8 @@ static void HUD_Editor_Move(float dx, float dy, hud_t *hud_element)
 		return;
 	}
 
-	Cvar_Set(hud_element->pos_x, va("%f", hud_element->pos_x->value + dx));
-	Cvar_Set(hud_element->pos_y, va("%f", hud_element->pos_y->value + dy));
+	Cvar_SetValue(hud_element->pos_x, hud_element->pos_x->value + dx);
+	Cvar_SetValue(hud_element->pos_y, hud_element->pos_y->value + dy);
 }
 
 //
@@ -680,6 +679,273 @@ static void HUD_Editor_DrawAlignment(hud_t *hud_parent)
 	}
 }
 
+typedef struct hud_resize_handle_s
+{
+	int x;
+	int y;
+	int width;
+	int height;
+} hud_resize_handle_t;
+
+#define HUD_RESIZEHANDLE_THICKNESS		5
+#define HUD_RESIZEHANDLE_SIZEFACTOR		0.3
+#define HUD_RESIZEHANDLE_COUNT			8
+#define HUD_RESIZE_MAGICSCALE			200 // HACK : This seems to work nice though...
+
+#define HUD_RESIZEHANDLE_NONE			-1
+#define HUD_RESIZEHANDLE_TOPLEFT		0
+#define HUD_RESIZEHANDLE_TOP			1
+#define HUD_RESIZEHANDLE_TOPRIGHT		2
+#define HUD_RESIZEHANDLE_RIGHT			3
+#define HUD_RESIZEHANDLE_BOTTOMRIGHT	4
+#define HUD_RESIZEHANDLE_BOTTOM			5
+#define HUD_RESIZEHANDLE_BOTTOMLEFT		6
+#define HUD_RESIZEHANDLE_LEFT			7
+
+//
+// Resizes the height/width of a HUD element by a delta size and alignment.
+//
+static void HUD_Editor_ResizeDelta(cvar_t *size, float delta_size, hud_alignmode_t alignment)
+{
+	if(!size)
+	{
+		return;
+	}
+
+	switch(alignment)
+	{
+		case hud_align_right :
+		case hud_align_bottom :
+			Cvar_SetValue(size, size->value + delta_size);
+			break;
+		case hud_align_left :		
+		case hud_align_top :
+			Cvar_SetValue(size, size->value - delta_size);
+			break;
+	}
+}
+
+//
+// Scales a HUD element.
+//
+static void HUD_EditorScaleDelta(cvar_t *scale, float delta_scale, hud_alignmode_t alignment)
+{
+	if(!scale)
+	{
+		return;
+	}
+
+	switch(alignment)
+	{
+		case hud_align_topleft :
+		case hud_align_bottomleft :
+			Cvar_SetValue(scale, scale->value - delta_scale);
+			break;
+		case hud_align_topright :
+		case hud_align_bottomright :		
+			Cvar_SetValue(scale, scale->value + delta_scale);
+			break;
+	}
+
+	if(scale->value < 0)
+	{
+		Cvar_SetValue(scale, 0);
+	}
+}
+
+//
+// Checks if the HUD element we're hovering has any dimension variables
+// and handles resizing for it if it does by drawing resize handles
+// that the user can click.
+//
+static qbool HUD_Editor_Resizing(hud_t *hud_hover)
+{
+	extern float mouse_x, mouse_y; // in_win.c, delta mouse.
+	int i					= 0;
+	qbool done				= false;
+	static cvar_t *width	= NULL;
+	static cvar_t *height	= NULL;
+	static cvar_t *scale	= NULL;
+	static hud_resize_handle_t *resize_handles[HUD_RESIZEHANDLE_COUNT];
+	static int last_resize_handle = HUD_RESIZEHANDLE_NONE;
+
+	// Select a HUD if it hasn't already been done.
+	if(hud_hover && hud_editor_mode == hud_editmode_move_resize 
+		&& !selected_hud && hud_hover)
+	{
+		selected_hud = hud_hover;
+		return true;
+	}
+	
+	// Try getting any available dimension variables
+	// that are available for this HUD element, these
+	// aren't mandatory for all HUD elements, so only
+	// some will have them.
+	if(hud_hover)
+	{
+		width	= HUD_FindVar(hud_hover, "width");
+		height	= HUD_FindVar(hud_hover, "height");
+		scale	= HUD_FindVar(hud_hover, "scale");
+
+		if(width)
+		{
+			// Right & left.
+			hud_resize_handle_t right;
+			hud_resize_handle_t left;
+			
+			right.width		= HUD_RESIZEHANDLE_THICKNESS;
+			right.height	= hud_hover->lh * HUD_RESIZEHANDLE_SIZEFACTOR;
+			right.x			= hud_hover->lw - right.width;
+			right.y			= (hud_hover->lh - right.height) / 2;			
+			resize_handles[HUD_RESIZEHANDLE_RIGHT] = &right;
+
+			left.width		= HUD_RESIZEHANDLE_THICKNESS;
+			left.height		= hud_hover->lh * HUD_RESIZEHANDLE_SIZEFACTOR;
+			left.x			= 0;
+			left.y			= (hud_hover->lh - left.height) / 2;			
+			resize_handles[HUD_RESIZEHANDLE_LEFT] = &left;
+		}
+
+		if(height)
+		{
+			// Top & bottom
+			hud_resize_handle_t top;
+			hud_resize_handle_t bottom;
+			
+			top.width		= hud_hover->lw * HUD_RESIZEHANDLE_SIZEFACTOR;
+			top.height		= HUD_RESIZEHANDLE_THICKNESS;
+			top.x			= (hud_hover->lw - top.width) / 2;
+			top.y			= 0;			
+			resize_handles[HUD_RESIZEHANDLE_TOP] = &top;
+
+			bottom.width		= hud_hover->lw * HUD_RESIZEHANDLE_SIZEFACTOR;
+			bottom.height		= HUD_RESIZEHANDLE_THICKNESS;
+			bottom.x			= (hud_hover->lw - bottom.width) / 2;
+			bottom.y			= hud_hover->lh - bottom.height;			
+			resize_handles[HUD_RESIZEHANDLE_BOTTOM] = &bottom;
+		}
+
+		if(scale)
+		{
+			// Top left, top right, bottom left & bottom right.
+			hud_resize_handle_t topleft;
+			hud_resize_handle_t bottomleft;
+			hud_resize_handle_t topright;
+			hud_resize_handle_t bottomright;
+			
+			topleft.width		= HUD_RESIZEHANDLE_THICKNESS;
+			topleft.height		= HUD_RESIZEHANDLE_THICKNESS;
+			topleft.x			= 0;
+			topleft.y			= 0;
+			resize_handles[HUD_RESIZEHANDLE_TOPLEFT] = &topleft;
+
+			bottomleft.width	= HUD_RESIZEHANDLE_THICKNESS;
+			bottomleft.height	= HUD_RESIZEHANDLE_THICKNESS;
+			bottomleft.x		= 0;
+			bottomleft.y		= hud_hover->lh - bottomleft.height;
+			resize_handles[HUD_RESIZEHANDLE_BOTTOMLEFT] = &bottomleft;
+
+			topright.width		= HUD_RESIZEHANDLE_THICKNESS;
+			topright.height		= HUD_RESIZEHANDLE_THICKNESS;
+			topright.x			= hud_hover->lw - topright.width;
+			topright.y			= 0;
+			resize_handles[HUD_RESIZEHANDLE_TOPRIGHT] = &topright;
+
+			bottomright.width	= HUD_RESIZEHANDLE_THICKNESS;
+			bottomright.height	= HUD_RESIZEHANDLE_THICKNESS;
+			bottomright.x		= hud_hover->lw - bottomright.width;
+			bottomright.y		= hud_hover->lh - bottomright.height;
+			resize_handles[HUD_RESIZEHANDLE_BOTTOMRIGHT] = &bottomright;
+		}
+	}
+
+	for(i = 0; i < HUD_RESIZEHANDLE_COUNT; i++)
+	{
+		// Non existant for this HUD element.
+		if(!resize_handles[i])
+		{
+			continue;
+		}
+
+		if(!done && hud_editor_mode == hud_editmode_move_resize)
+		{
+			// We're in resize mode, so check if we're clicking any of the
+			// resize handles.
+
+			if(selected_hud && (last_resize_handle == i) || 
+				  (hud_mouse_x >= (selected_hud->lx + resize_handles[i]->x)
+				&& hud_mouse_x <= (selected_hud->lx + resize_handles[i]->x + resize_handles[i]->width)
+				&& hud_mouse_y >= (selected_hud->ly + resize_handles[i]->y)
+				&& hud_mouse_y <= (selected_hud->ly + resize_handles[i]->y + resize_handles[i]->height)))
+			{
+				// Keep track of which resize handle we're grabbing
+				// so that it doesn't matter if the mouse "slips" outside
+				// it's bounding box as long as the mouse is still pressed.
+				if(last_resize_handle < 0 || last_resize_handle != i)
+				{
+					last_resize_handle = i;
+				}
+
+				// Draw the resize handle highlighted.
+				Draw_AlphaFillRGB(selected_hud->lx + resize_handles[last_resize_handle]->x, selected_hud->ly + resize_handles[last_resize_handle]->y, 
+					resize_handles[last_resize_handle]->width, resize_handles[last_resize_handle]->height,
+					1, 1, 0, 0.5);
+
+				// Check which resize handle that has been selected
+				// and resize the HUD element accordingly.
+				switch(i)
+				{
+					case HUD_RESIZEHANDLE_RIGHT : 
+						HUD_Editor_ResizeDelta(width, mouse_x, hud_align_right);
+						break;
+					case HUD_RESIZEHANDLE_LEFT : 
+						HUD_Editor_ResizeDelta(width, mouse_x, hud_align_left);
+						break;
+					case HUD_RESIZEHANDLE_TOP : 
+						HUD_Editor_ResizeDelta(height, mouse_y, hud_align_top);
+						break;
+					case HUD_RESIZEHANDLE_BOTTOM : 
+						HUD_Editor_ResizeDelta(height, mouse_y, hud_align_bottom);
+						break;
+					case HUD_RESIZEHANDLE_TOPRIGHT :
+						// HACK : Dividing by 200 seems to work fine, but this could probably be done a lot nicer.
+						HUD_EditorScaleDelta(scale, (mouse_x - mouse_y) / HUD_RESIZE_MAGICSCALE, hud_align_topright);
+						break;
+					case HUD_RESIZEHANDLE_BOTTOMRIGHT :
+						HUD_EditorScaleDelta(scale, (mouse_x + mouse_y) / HUD_RESIZE_MAGICSCALE, hud_align_bottomright);
+						break;
+					case HUD_RESIZEHANDLE_TOPLEFT :
+						HUD_EditorScaleDelta(scale, (mouse_x + mouse_y) / HUD_RESIZE_MAGICSCALE, hud_align_topleft);
+						break;
+					case HUD_RESIZEHANDLE_BOTTOMLEFT :
+						HUD_EditorScaleDelta(scale, (mouse_x - mouse_y) / HUD_RESIZE_MAGICSCALE, hud_align_bottomleft);
+						break;
+				}
+
+				// Recalculate all HUD elements.
+				HUD_Recalculate();
+				return true;
+			}
+		}
+		else if(hud_editor_prevmode == hud_editmode_move_resize)
+		{
+			// We left resize mode.
+			selected_hud = NULL;
+			last_resize_handle = HUD_RESIZEHANDLE_NONE;
+		}
+		else if(hud_hover)
+		{
+			// If we're hovering a HUD, always draw all it's resize handles.
+			Draw_AlphaFillRGB(hud_hover->lx + resize_handles[i]->x, hud_hover->ly + resize_handles[i]->y, 
+				resize_handles[i]->width, resize_handles[i]->height,
+				1, 1, 0, 0.2);
+		}
+	}
+
+	// We didn't perform any action, so let others try.
+	return false;
+}
+
 //
 // Check if we're supposed to be moving anything.
 //
@@ -689,7 +955,7 @@ static qbool HUD_Editor_Moving(hud_t *hud_hover)
 	extern float mouse_x, mouse_y;
 
 	// Left mousebutton down = lets move it !
-	if (hud_editor_mode == hud_editmode_move_resize) //MOUSEDOWN_1_ONLY && hud)
+	if (hud_editor_mode == hud_editmode_move_resize)
 	{
 		// If we just entered movement mode, nothing is selected
 		// so select the hud we're hovering to start with.
@@ -704,16 +970,14 @@ static qbool HUD_Editor_Moving(hud_t *hud_hover)
 			// Move using the mouse delta instead of the absolute
 			// mouse cursor coordinates on the screen.
 			HUD_Editor_Move(mouse_x, mouse_y, hud_hover);
-			//last_moved_hud = hud_hover;
 			HUD_Recalculate();
 			return true;
 		}
 	}
 	else if(hud_editor_prevmode == hud_editmode_move_resize)
 	{
+		// We've left move mode, so deselect.
 		selected_hud = NULL;
-		//last_moved_hud = NULL;
-		return true;
 	}
 
 	// Should we stop after this?
@@ -767,45 +1031,12 @@ static qbool HUD_Editor_Aligning(hud_t *hud_hover)
 			Cvar_Set(selected_hud->pos_y, "0");
 
 			// Align to the area the mouse is placed over (previously set in hud_alignmode).
-			Cbuf_AddText(va("align %s %s", selected_hud->name, HUD_Editor_GetAlignmentString(hud_alignmode)));
+			Cbuf_AddText(va("align %s %s\n", selected_hud->name, HUD_Editor_GetAlignmentString(hud_alignmode)));
 			HUD_Recalculate();
 			
 			// Free selection.
 			selected_hud = NULL;
 			return true;
-
-			/*if(selected_hud->place_hud)
-			{
-				// Placed at another HUD.
-
-				// Reset position.
-				Cvar_Set(selected_hud->pos_x, "0");
-				Cvar_Set(selected_hud->pos_y, "0");
-
-				// Align to the area the mouse is placed over (previously set in hud_alignmode).
-				Cbuf_AddText(va("align %s %s", selected_hud->name, HUD_Editor_GetAlignmentString(hud_alignmode)));
-				HUD_Recalculate();
-
-				// Free selection.
-				selected_hud = NULL;
-				return true;
-			}
-			else
-			{
-				// Not placing at a HUD.
-
-				// Reset position.
-				Cvar_Set(selected_hud->pos_x, "0");
-				Cvar_Set(selected_hud->pos_y, "0");
-
-				// Align to the area the mouse is placed over (previously set in hud_alignmode).
-				Cbuf_AddText(va("align %s %s", selected_hud->name, HUD_Editor_GetAlignmentString(hud_alignmode)));
-				HUD_Recalculate();
-				
-				// Free selection.
-				selected_hud = NULL;
-				return true;
-			}*/
 		}
 	}
 
@@ -1155,6 +1386,13 @@ static qbool HUD_Editor_FindHudUnderCursor(hud_t **hud)
 		return false;
 	}
 
+	// Check if we already had something selected since last time and was moving.
+	if(selected_hud && hud_editor_mode == hud_editmode_move_resize)
+	{
+		found = true;
+		(*hud) = selected_hud;
+	}
+
 	while(temp_hud->next)
 	{
 		// Not visible.
@@ -1170,8 +1408,22 @@ static qbool HUD_Editor_FindHudUnderCursor(hud_t **hud)
 			&& hud_mouse_y >= temp_hud->ly 
 			&& hud_mouse_y <= (temp_hud->ly + temp_hud->lh))
 		{
-			found = true;
-			(*hud) = temp_hud;
+			// If we're moving/resizing something only continue checking for 
+			// more HUD elements we have the mouse over if we haven't already 
+			// found one. If we don't do this when you drag a HUD element
+			// over another HUD element that has a greater Z-order the selection
+			// will jump to that HUD element, and you'll start moving that instead.
+			//
+			// Vice versa if we would skip any HUD item after we've found one
+			// when not already moving an item, it would mean that we could only
+			// select HUD elements that are topmost in the Z-order, so an item
+			// placed within another item would not be selectable.
+			if((hud_editor_mode == hud_editmode_move_resize && !found) 
+				|| hud_editor_mode != hud_editmode_move_resize) 
+			{
+				found = true;
+				(*hud) = temp_hud;
+			}
 		}
 
 		// Draw an outline for all hud elements (faint).
@@ -1220,14 +1472,6 @@ static qbool HUD_Editor_FindHudUnderCursor(hud_t **hud)
 		}
 	}
 
-	// Still didn't find anything new, then check if we already
-	// had something selected since last time and was moving.
-	if(!found && selected_hud && hud_editor_prevmode == hud_editmode_move_resize)
-	{
-		found = true;
-		(*hud) = selected_hud;
-	}
-
 	// Nothing found, make sure result is NULL.
 	if (!found)
 	{
@@ -1238,66 +1482,102 @@ static qbool HUD_Editor_FindHudUnderCursor(hud_t **hud)
 }
 
 //
-// Returns the point a HUD is aligned to.
+// Returns the point a HUD is aligned to on it's parent in screen coordinates.
 //
 static void HUD_Editor_GetAlignmentPoint(hud_t *hud, int *x, int *y)
 {
+	extern float scr_con_current; // Console height. console.c
+	int parent_x = 0;
+	int parent_y = 0;
+	int parent_w = 0;
+	int parent_h = 0;
 	hud_alignmode_t alignmode = HUD_Editor_GetAlignmentFromString(va("%s %s", hud->align_x->string, hud->align_y->string));
-
-	(*x) = HUD_CENTER_X(hud);
-	(*y) = HUD_CENTER_Y(hud);
 
 	if(hud->place_hud)
 	{
-		int parent_x = hud->place_hud->lx;
-		int parent_y = hud->place_hud->ly;
-		int parent_w = hud->place_hud->lw;
-		int parent_h = hud->place_hud->lh;
+		// Placed at another HUD.
+		parent_x = hud->place_hud->lx;
+		parent_y = hud->place_hud->ly;
+		parent_w = hud->place_hud->lw;
+		parent_h = hud->place_hud->lh;
 
-		switch(alignmode)
-		{
-			case hud_align_center:
-				(*x) = HUD_CENTER_X(hud->place_hud);
-				(*y) = HUD_CENTER_Y(hud->place_hud);
-				break;
-			case hud_align_right:
-				(*x) = parent_x + parent_w;
-				(*y) = parent_y + (parent_h / 2);
-				break;
-			case hud_align_topright:
-				(*x) = parent_x + parent_w;
-				(*y) = parent_y;
-				break;
-			case hud_align_top:
-				(*x) = parent_x + (parent_w / 2);
-				(*y) = parent_y;
-				break;
-			case hud_align_topleft:
-				(*x) = parent_x;
-				(*y) = parent_y;
-				break;
-			case hud_align_left:
-				(*x) = parent_x;
-				(*y) = parent_y + (parent_h / 2);
-				break;
-			case hud_align_bottomleft:
-				(*x) = parent_x;
-				(*y) = parent_y + parent_h;
-				break;
-			case hud_align_bottom:
-				(*x) = parent_x + (parent_w / 2);
-				(*y) = parent_y + parent_h;
-				break;
-			case hud_align_bottomright:
-				(*x) = parent_x + parent_w;
-				(*y) = parent_y + parent_h;
-				break;
-		}
+		(*x) = HUD_CENTER_X(hud->place_hud);
+		(*y) = HUD_CENTER_Y(hud->place_hud);
 	}
 	else
 	{
-		// TODO: Not aligned to another HUD.
+		// Placed at "screen".
+		parent_x = 0;
+		parent_y = 0;
+		parent_w = vid.width;
+		parent_h = vid.height;
+
+		(*x) = vid.width / 2;
+		(*y) = vid.height / 2;
 	}
+
+	switch(alignmode)
+	{
+		default:
+		case hud_align_center:
+			// Already set.
+			break;
+		case hud_align_right:
+			(*x) = parent_x + parent_w;
+			(*y) = parent_y + (parent_h / 2);
+			break;
+		case hud_align_topright:
+			(*x) = parent_x + parent_w;
+			(*y) = parent_y;
+			break;
+		case hud_align_top:
+			(*x) = parent_x + (parent_w / 2);
+			(*y) = parent_y;
+			break;
+		case hud_align_topleft:
+			(*x) = parent_x;
+			(*y) = parent_y;
+			break;
+		case hud_align_left:
+			(*x) = parent_x;
+			(*y) = parent_y + (parent_h / 2);
+			break;
+		case hud_align_bottomleft:
+			(*x) = parent_x;
+			(*y) = parent_y + parent_h;
+			break;
+		case hud_align_bottom:
+			(*x) = parent_x + (parent_w / 2);
+			(*y) = parent_y + parent_h;
+			break;
+		case hud_align_bottomright:
+			(*x) = parent_x + parent_w;
+			(*y) = parent_y + parent_h;
+			break;
+		case hud_align_consoleleft:
+			(*x) = parent_x;
+			(*y) = scr_con_current;
+			break;
+		case hud_align_console:
+			(*x) = parent_x + (parent_w / 2);
+			(*y) = scr_con_current;
+			break;
+		case hud_align_consoleright:
+			(*x) = parent_x + parent_w;
+			(*y) = scr_con_current;
+			break;
+	}	
+}
+
+//
+// Draws a green line to each corner of a HUD element from a specified point. 
+//
+static void HUD_Editor_DrawLinesToEachCorner(hud_t *hud, int x, int y)
+{
+	Draw_AlphaLineRGB(hud->lx, hud->ly,						x, y, 1, 0, 1, 0, 0.1);
+	Draw_AlphaLineRGB(hud->lx, hud->ly + hud->lh,			x, y, 1, 0, 1, 0, 0.1);
+	Draw_AlphaLineRGB(hud->lx + hud->lw, hud->ly,			x, y, 1, 0, 1, 0, 0.1);
+	Draw_AlphaLineRGB(hud->lx + hud->lw, hud->ly + hud->lh, x, y, 1, 0, 1, 0, 0.1);	
 }
 
 //
@@ -1308,19 +1588,17 @@ static void HUD_Editor_DrawConnections(hud_t *hud_hover)
 	hud_t *child = NULL;
 	int align_x = 0.0;
 	int align_y = 0.0;
-
+	
 	if (!hud_hover)
 	{
 		return;
 	}
 
-	// If the hud we are hovering above has a parent draw a line to it.
-	if (hud_hover->place_hud)
-	{
-		// Draw a line from the alignment point on the parent to the HUD.
-		HUD_Editor_GetAlignmentPoint(hud_hover, &align_x, &align_y);
-		Draw_AlphaLineRGB(HUD_CENTER_X(hud_hover), HUD_CENTER_Y(hud_hover), align_x, align_y, 1, 0, 1, 0, 0.1); // Red.	
-	}
+	// Get the alignment point at the parent in screen coordinates.
+	HUD_Editor_GetAlignmentPoint(hud_hover, &align_x, &align_y);
+	
+	// Draw a line to the parent of the HUD we're hovering.
+	Draw_AlphaLineRGB(HUD_CENTER_X(hud_hover), HUD_CENTER_Y(hud_hover), align_x, align_y, 1, 0, 1, 0, 0.1); // Red.	
 
 	// Draw a line to all children of the HUD we're hovering.
 	while((child = HUD_Editor_FindNextChild(hud_hover)))
@@ -1494,21 +1772,14 @@ static void HUD_Editor(void)
 		Draw_AlphaLineRGB(hud_mouse_x, hud_mouse_y, HUD_CENTER_X(selected_hud), HUD_CENTER_Y(selected_hud), 1, 1, 0, 0, 1); // Red.
 	}
 
-	// If we still havent found anything we return !
-	/*if (!found)
-	{
-		if (MOUSEDOWN_NONE) 
-		{
-			selected_hud = NULL;
-			last_moved_hud = NULL;
-		}
-
-		return;
-	}*/
-
 	// Draw tooltips for the HUD.
 	HUD_Editor_DrawTooltips(hud_hover);
 	
+	if(HUD_Editor_Resizing(hud_hover))
+	{
+		return;
+	}
+
 	// Check if we should move.
 	if(HUD_Editor_Moving(hud_hover))
 	{
@@ -1534,6 +1805,8 @@ static void HUD_Editor(void)
 void HUD_Editor_Toggle_f(void)
 {
 	static keydest_t key_dest_prev = key_game;
+	static int old_hud_planmode = 0;
+	extern cvar_t hud_planmode; // hud_common.c
 
 	if (cls.state != ca_active) 
 	{
@@ -1547,12 +1820,17 @@ void HUD_Editor_Toggle_f(void)
 	{
 		key_dest = key_hudeditor;
 		HUD_Editor_SetMode(hud_editmode_normal);
+		
+		// Set planmode by default. 
+		old_hud_planmode = hud_planmode.value;
+		Cvar_SetValue(&hud_planmode, 1.0);
 	}
 	else
 	{
 		key_dest = key_game;
 		key_dest_beforecon = key_game;
 		HUD_Editor_SetMode(hud_editmode_off);
+		Cvar_SetValue(&hud_planmode, old_hud_planmode);
 	}
 }
 #endif // GLQUAKE
@@ -1563,6 +1841,7 @@ void HUD_Editor_Toggle_f(void)
 void HUD_Editor_Key(int key, int unichar) 
 {
 	#ifdef GLQUAKE
+	static int planmode = 1;
 	int togglekeys[2];
 
 	M_FindKeysForCommand("toggleconsole", togglekeys);
@@ -1576,6 +1855,11 @@ void HUD_Editor_Key(int key, int unichar)
 	{
 		case K_ESCAPE:
 			HUD_Editor_Toggle_f();
+			break;
+		case 'p':
+			// Toggle HUD plan mode.
+			planmode = !planmode;
+			Cbuf_AddText(va("hud_planmode %d\n", planmode));
 			break;
 	}
 	#endif
