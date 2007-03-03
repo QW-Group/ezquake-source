@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.5 2007-02-11 23:28:16 qqshka Exp $
+	$Id: win_glimp.c,v 1.6 2007-03-03 14:47:45 qqshka Exp $
 
 */
 /*
@@ -1633,6 +1633,42 @@ void GLimp_LogComment( char *comment )
 // OK, BELOW STUFF FROM Q1
 //
 /******************************************************************************/
+
+/*************************** DISPLAY FREQUENCY ****************************/
+
+void VID_ShowFreq_f(void) {
+	int freq, cnt = 0;
+	DEVMODE	testMode;
+
+	if ( !host_initialized || !glw_state.hDC )
+		return;
+
+	memset((void*) &testMode, 0, sizeof(testMode));
+	testMode.dmSize = sizeof(testMode);
+
+	Com_Printf("Possible display frequency:");
+
+	testMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
+
+	//
+	// check our attributes
+	//
+	testMode.dmBitsPerPel = GetDeviceCaps( glw_state.hDC, BITSPIXEL );
+	testMode.dmPelsWidth  = GetDeviceCaps( glw_state.hDC, HORZRES );
+	testMode.dmPelsHeight = GetDeviceCaps( glw_state.hDC, VERTRES );
+
+	for ( freq = 1; freq < 301; freq++ )
+	{
+		testMode.dmDisplayFrequency = freq;
+		if ( ChangeDisplaySettings (&testMode, CDS_FULLSCREEN | CDS_TEST ) != DISP_CHANGE_SUCCESSFUL )
+			continue; // mode can't be set
+
+		Com_Printf(" %d", freq);
+		cnt++;
+	}
+
+	Com_Printf("%s\n", cnt ? "" : " none");
+}
 
 /******************************** WINDOW STUFF ********************************/
 
