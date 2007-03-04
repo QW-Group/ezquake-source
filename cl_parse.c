@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.74 2007-03-01 13:43:29 qqshka Exp $
+	$Id: cl_parse.c,v 1.75 2007-03-04 22:39:47 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -441,10 +441,21 @@ void CL_FindModelNumbers (void) {
 void CL_ProxyEnter (void) {
 	if (!strcmp(cl.levelname, "Qizmo menu") ||	// qizmo detection
 		strstr(cl.serverinfo, "*QTV")) {		// fteqtv detection
-		M_EnterProxyMenu();
+
+		// if we are connected only to the proxy frontend
+		// we presume that the menu is on
+		M_EnterProxyMenu();				
+
 	} else if (key_dest == key_menu && m_state == m_proxy) {
+
+		// this happens when we connect to a server using a proxy
 		M_LeaveMenus();
 	}
+
+	// if we used console to connect to a server via proxy,
+	// cancel return to the proxy menu, because it's not there
+	if (key_dest_beforecon == key_menu)
+		key_dest_beforecon = key_game;
 }
 
 void CL_Prespawn (void)
