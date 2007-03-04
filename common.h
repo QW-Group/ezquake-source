@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.43 2007-03-04 19:14:35 disconn3ct Exp $
+    $Id: common.h,v 1.44 2007-03-04 19:29:29 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -113,6 +113,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	IT_SIGIL3			(1<<30)
 #define	IT_SIGIL4			(1<<31)
 
+//
+// entity effects
+//
+#define	EF_BRIGHTFIELD		1
+#define	EF_MUZZLEFLASH 		2
+#define	EF_BRIGHTLIGHT 		4
+#define	EF_DIMLIGHT 		8
+#define	EF_FLAG1	 		16
+#define	EF_FLAG2	 		32
+#define EF_BLUE				64
+#define EF_RED				128
+
 // print flags
 #define	PRINT_LOW			0		// pickup messages
 #define	PRINT_MEDIUM		1		// death messages
@@ -124,29 +136,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	GAME_COOP			0
 #define	GAME_DEATHMATCH		1
 
-#define	MAX_INFO_KEY	64
+#define	MAX_INFO_KEY 64
 #define	MAX_INFO_STRING	384
-#define	MAX_SERVERINFO_STRING	512
-#define	MAX_LOCALINFO_STRING	32768
+#define	MAX_SERVERINFO_STRING 512
+#define	MAX_LOCALINFO_STRING 32768
 
 //============================================================================
 
-#define MAX_COM_TOKEN	1024
+#define MAX_COM_TOKEN 1024
 
 extern	char	com_token[MAX_COM_TOKEN];
 extern	qbool	com_eof;
-
-char *COM_Parse (char *data);
-
 extern	int		com_argc;
 extern	char	**com_argv;
 
-void COM_InitArgv (int argc, char **argv);
-int COM_Argc (void);
+char *COM_Parse (char *data);
 char *COM_Argv (int arg); // range and null checked
 void COM_ClearArgv (int arg);
-int COM_CheckParm (char *parm);
 void COM_AddParm (char *parm);
+void COM_InitArgv (int argc, char **argv);
+int COM_Argc (void);
+int COM_CheckParm (char *parm);
 
 void COM_Init (void);
 
@@ -165,10 +175,9 @@ qbool COM_FileExists (char *path);
 
 void COM_StoreOriginalCmdline(int argc, char **argv);
 
-extern char * SYSINFO_GetString(void);
+extern char *SYSINFO_GetString(void);
 
-char *va(char *format, ...);
-// does a varargs printf into a temp buffer
+char *va(char *format, ...); // does a varargs printf into a temp buffer
 
 //============================================================================
 
@@ -187,8 +196,8 @@ extern char com_homedir[MAX_PATH];
 // QW262 -->
 #ifndef SERVERONLY
 #define UserdirSet (userdirfile[0] != '\0')
-extern	char	userdirfile[MAX_OSPATH];
-extern	char	com_userdir[MAX_OSPATH];
+extern	char userdirfile[MAX_OSPATH];
+extern	char com_userdir[MAX_OSPATH];
 void COM_SetUserDirectory (char *dir, char *type);
 #endif
 // <-- QW262

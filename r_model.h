@@ -26,22 +26,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "bspfile.h"
 
 /*
-
 d*_t structures are on-disk representations
 m*_t structures are in-memory
-
 */
 
-// entity effects
-
-#define	EF_BRIGHTFIELD			1
-#define	EF_MUZZLEFLASH 			2
-#define	EF_BRIGHTLIGHT 			4
-#define	EF_DIMLIGHT 			8
-#define	EF_FLAG1	 			16
-#define	EF_FLAG2	 			32
-#define EF_BLUE					64
-#define EF_RED					128
 
 /*
 ==============================================================================
@@ -61,16 +49,14 @@ typedef struct {
 } mvertex_t;
 
 typedef struct texture_s {
-	char		name[16];
-	unsigned	width, height;
-// hetman /r_drawflat for software builds {
-	int         colour;
-// } hetman
-	int			anim_total;				// total tenths in sequence ( 0 = no)
-	int			anim_min, anim_max;		// time for this frame min <=time< max
-	struct texture_s *anim_next;		// in the animation sequence
-	struct texture_s *alternate_anims;	// bmodels in frmae 1 use these
-	unsigned	offsets[MIPLEVELS];		// four mip maps stored
+	char				name[16];
+	unsigned			width, height;
+	int					colour;					// hetman: r_drawflat for software builds
+	int					anim_total;				// total tenths in sequence ( 0 = no)
+	int					anim_min, anim_max;		// time for this frame min <=time< max
+	struct texture_s	*anim_next;				// in the animation sequence
+	struct texture_s	*alternate_anims;		// bmodels in frmae 1 use these
+	unsigned			offsets[MIPLEVELS];		// four mip maps stored
 } texture_t;
 
 
@@ -80,9 +66,7 @@ typedef struct texture_s {
 #define SURF_DRAWTURB		0x10
 #define SURF_DRAWTILED		0x20
 #define SURF_DRAWBACKGROUND	0x40
-// hetman /r_drawflat for software builds {
-#define SURF_FORBRUSH       0x80
-// } hetman
+#define SURF_FORBRUSH       0x80 // / hetman: r_drawflat for software builds
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct {
@@ -351,7 +335,7 @@ typedef struct model_s {
 void	Mod_Init (void);
 void	Mod_ClearAll (void);
 model_t *Mod_ForName (char *name, qbool crash);
-void	*Mod_Extradata (model_t *mod);	// handles caching
+void	*Mod_Extradata (model_t *mod); // handles caching
 void	Mod_TouchModel (char *name);
 
 mleaf_t *Mod_PointInLeaf (float *p, model_t *model);

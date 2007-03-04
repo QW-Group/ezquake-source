@@ -30,19 +30,18 @@ d*_t structures are on-disk representations
 m*_t structures are in-memory
 */
 
-// entity effects
 
-#define	EF_BRIGHTFIELD			1
-#define	EF_MUZZLEFLASH 			2
-#define	EF_BRIGHTLIGHT 			4
-#define	EF_DIMLIGHT 			8
-#define	EF_FLAG1	 			16
-#define	EF_FLAG2	 			32
-#define EF_BLUE					64
-#define EF_RED					128
+/*
+==============================================================================
 
+BRUSH MODELS
 
+==============================================================================
+*/
+
+//
 // in memory representation
+//
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct {
 	vec3_t		position;
@@ -55,7 +54,7 @@ typedef struct texture_s {
 	int					fb_texturenum;			//index of fullbright mask or 0
 	struct msurface_s	*texturechain[2];		
 	struct msurface_s	**texturechain_tail[2];	
-												//		Points to the node right after the last non-NULL node in the texturechain.
+												//Points to the node right after the last non-NULL node in the texturechain.
 	int					anim_total;				//total tenths in sequence ( 0 = no)
 	int					anim_min, anim_max;		//time for this frame min <=time< max
 	struct texture_s	*anim_next;				//in the animation sequence
@@ -167,6 +166,15 @@ typedef struct mleaf_s {
 	byte		ambient_sound_level[NUM_AMBIENTS];
 } mleaf_t;
 
+/*
+==============================================================================
+
+SPRITE MODELS
+
+==============================================================================
+*/
+
+
 // FIXME: shorten these?
 typedef struct mspriteframe_s {
 	int		width;
@@ -219,6 +227,15 @@ typedef struct {
 
 	mspriteframedesc2_t	frames[MAX_SPRITE_FRAMES];
 } msprite2_t; // actual frames follow after struct immidiately
+
+/*
+==============================================================================
+
+ALIAS MODELS
+
+Alias models are position independent, so the cache manager can move them.
+==============================================================================
+*/
 
 
 typedef struct {
@@ -277,6 +294,12 @@ typedef struct {
 	int					fb_texturenum[MAX_SKINS][4];
 	maliasframedesc_t	frames[1];	// variable sized
 } aliashdr_t;
+
+//===================================================================
+
+//
+// Whole model
+//
 
 #define	MAXALIASVERTS	2048
 #define	MAXALIASFRAMES	256
@@ -378,11 +401,12 @@ typedef struct model_s {
 
 } model_t;
 
+//============================================================================
 
 void	Mod_Init (void);
 void	Mod_ClearAll (void);
 model_t *Mod_ForName (char *name, qbool crash);
-void	*Mod_Extradata (model_t *mod);	// handles caching
+void	*Mod_Extradata (model_t *mod); // handles caching
 void	Mod_TouchModel (char *name);
 void	Mod_TouchModels (void); // for vid_restart
 
@@ -392,6 +416,6 @@ byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
 qbool	Img_HasFullbrights (byte *pixels, int size);
 void	Mod_ReloadModelsTextures (void); // for vid_restart
 
-#include "gl_md3.h" 
+#include "gl_md3.h"
 
 #endif	// __MODEL__
