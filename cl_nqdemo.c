@@ -6,7 +6,6 @@
 #define MAX_BIG_MSGLEN 8000
 int CL_Demo_Read(void *buf, int size);
 #define SCR_EndLoadingPlaque()
-int cl_oldentframecount;
 int cl_entframecount;
 void R_PreMapLoad (char *);
 #define CL_EntityParticles(a)
@@ -995,7 +994,6 @@ static void NQD_ParseServerMessage (void)
 
 	nq_player_teleported = false;		// OMG, it's a hack!
 	message_with_datagram = false;
-	cl_oldentframecount = cl_entframecount;
 	cl_entframecount++;
 
 	if (cl_shownet.value == 1)
@@ -1274,6 +1272,5 @@ void NQD_StartPlayback (void)
 	nq_signon = 0;
 	nq_mtime[0] = 0;
 	nq_maxclients = 0;
-	cl_oldentframecount = -1;
 	cl_entframecount = 0;
 }
