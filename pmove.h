@@ -21,25 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __PMOVE_H__
 #define __PMOVE_H__
 
-typedef struct {
-	vec3_t	normal;
-	float	dist;
-} plane_t;
-
-typedef struct {
-	qbool	allsolid;		// if true, plane is not valid
-	qbool	startsolid;		// if true, the initial point was in a solid area
-	qbool	inopen, inwater;
-	float	fraction;		// time completed, 1.0 = didn't hit anything
-	vec3_t	endpos;			// final position
-	plane_t	plane;			// surface normal at impact
-	union {				// entity the surface is on
-		int		entnum;	// for pmove
-		struct edict_s	*ent;	// for sv_world
-	} e;
-} trace_t;
-
-
 #define	MAX_PHYSENTS	64 
 
 typedef struct {
@@ -60,7 +41,7 @@ typedef enum {
 } pmtype_t;
 
 typedef struct {
-	int			sequence;	// just for debugging prints
+	int			sequence; // just for debugging prints
 
 	// player state
 	vec3_t		origin;
@@ -68,26 +49,25 @@ typedef struct {
 	vec3_t		velocity;
 	qbool		jump_held;
 #ifndef SERVERONLY
-	int		jump_msec;		// msec since last jump
+	int			jump_msec; // msec since last jump
 #endif
 	float		waterjumptime;
-	int	pm_type;
+	qbool		onground;
+	int			pm_type;
 
 	// world state
-	int		numphysent;
+	int			numphysent;
 	physent_t	physents[MAX_PHYSENTS];	// 0 should be the world
 
 	// input
 	usercmd_t	cmd;
 
 	// results
-	int		numtouch;
-	int		touchindex[MAX_PHYSENTS];
-	qbool		onground;
-	int		groundent;		// index in physents array, only valid
-						// when onground is true
-	int		waterlevel;
-	int		watertype;
+	int			numtouch;
+	int			touchindex[MAX_PHYSENTS];
+	int			groundent; // index in physents array, only valid when onground is true
+	int			waterlevel;
+	int			watertype;
 } playermove_t;
 
 typedef struct {
@@ -109,7 +89,7 @@ typedef struct {
 } movevars_t;
 
 
-extern	movevars_t	movevars;
+extern	movevars_t		movevars;
 extern	playermove_t	pmove;
 
 void PM_PlayerMove (void);
