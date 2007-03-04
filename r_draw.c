@@ -71,7 +71,8 @@ mpic_t *Draw_CacheWadPic (char *name) {
 	return pic;
 }
 
-mpic_t *Draw_CachePic (char *path) {
+static mpic_t *Draw_CachePicBase(char *path, qbool syserror)
+{
 	cachepic_t *pic;
 	int i;
 	qpic_t *dat;
@@ -96,8 +97,12 @@ mpic_t *Draw_CachePic (char *path) {
 	FS_LoadCacheFile (path, &pic->cache);
 	
 	dat = (qpic_t *)pic->cache.data;
-	if (!dat)
-		Sys_Error ("Draw_CachePic: failed to load %s", path);
+	if (!dat) {
+		if (syserror)
+			Sys_Error ("Draw_CachePic: failed to load %s", path);
+		else
+			return NULL;
+	}
 
 	SwapPic (dat);
 
@@ -105,6 +110,20 @@ mpic_t *Draw_CachePic (char *path) {
 	((mpic_t *) dat)->alpha = memchr (&dat->data, 255, dat->width * ((mpic_t *)dat)->height) != NULL;
 
 	return (mpic_t *)dat;
+}
+
+// load a required picture (if not present, exit with an error)
+mpic_t *Draw_CachePic (char *path) {
+	return Draw_CachePicBase(path, true);
+}
+
+// load an optional picture (if not present, returns null)
+mpic_t *Draw_CachePicSafe (char *path, qbool syserror, qbool obsolete)
+{
+	// 3rd argument is unused because we don't have 24bit pictures support in non-gl rendering
+	// and yes, 2nd argument is illogical because calling a function that has 'Safe' in the name
+	// we would expect that it automatically presumes not lead to app exit
+	return Draw_CachePicBase (path, syserror);
 }
 
 // returns Q_malloc'd data, or NULL or error
