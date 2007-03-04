@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cmodel.c,v 1.1 2007-03-04 21:06:22 disconn3ct Exp $
+	$Id: cmodel.c,v 1.2 2007-03-04 22:40:14 disconn3ct Exp $
 */
 // cmodel.c
 
@@ -90,6 +90,39 @@ HULL BOXES
 static hull_t		box_hull;
 static dclipnode_t	box_clipnodes[6];
 static mplane_t		box_planes[6];
+
+/*
+** CM_InitBoxHull
+**
+** Set up the planes and clipnodes so that the six floats of a bounding box
+** can just be stored out and get a proper hull_t structure.
+*/
+static void CM_InitBoxHull (void)
+{
+	int		i;
+	int		side;
+
+	box_hull.clipnodes = box_clipnodes;
+	box_hull.planes = box_planes;
+	box_hull.firstclipnode = 0;
+	box_hull.lastclipnode = 5;
+
+	for (i=0 ; i<6 ; i++)
+	{
+		box_clipnodes[i].planenum = i;
+		
+		side = i&1;
+		
+		box_clipnodes[i].children[side] = CONTENTS_EMPTY;
+		if (i != 5)
+			box_clipnodes[i].children[side^1] = i + 1;
+		else
+			box_clipnodes[i].children[side^1] = CONTENTS_SOLID;
+		
+		box_planes[i].type = i>>1;
+		box_planes[i].normal[i>>1] = 1;
+	}
+}
 
 /*
 ** CM_HullForBox

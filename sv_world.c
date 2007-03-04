@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_world.c,v 1.12 2007-03-04 19:55:46 disconn3ct Exp $
+	$Id: sv_world.c,v 1.13 2007-03-04 22:40:14 disconn3ct Exp $
 
 */
 // sv_world.c -- world query functions
@@ -50,35 +50,7 @@ HULL BOXES
 static	hull_t		box_hull;
 static	dclipnode_t	box_clipnodes[6];
 static	mplane_t	box_planes[6];
-
-//Set up the planes and clipnodes so that the six floats of a bounding box
-//can just be stored out and get a proper hull_t structure.
-void SV_InitBoxHull (void) {
-	int i, side;
-
-	box_hull.clipnodes = box_clipnodes;
-	box_hull.planes = box_planes;
-	box_hull.firstclipnode = 0;
-	box_hull.lastclipnode = 5;
-
-	for (i = 0; i < 6; i++) {
-		box_clipnodes[i].planenum = i;
-
-		side = i&1;
-
-		box_clipnodes[i].children[side] = CONTENTS_EMPTY;
-		if (i != 5)
-			box_clipnodes[i].children[side ^ 1] = i + 1;
-		else
-			box_clipnodes[i].children[side ^ 1] = CONTENTS_SOLID;
-
-		box_planes[i].type = i>>1;
-		box_planes[i].normal[i>>1] = 1;
-	}
 	
-}
-
-
 //Returns a hull that can be used for testing or clipping an object of mins/maxs size.
 //Offset is filled in to contain the adjustment that must be added to the
 //testing object's origin to get a point to use with the returned hull.
@@ -204,8 +176,6 @@ areanode_t *SV_CreateAreaNode (int depth, vec3_t mins, vec3_t maxs) {
 }
 
 void SV_ClearWorld (void) {
-	SV_InitBoxHull ();
-	
 	memset (sv_areanodes, 0, sizeof(sv_areanodes));
 	sv_numareanodes = 0;
 	SV_CreateAreaNode (0, sv.worldmodel->mins, sv.worldmodel->maxs);
