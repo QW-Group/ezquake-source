@@ -52,19 +52,6 @@ void PM_InitBoxHull (void) {
 	
 }
 
-//To keep everything totally uniform, bounding boxes are turned into small
-//BSP trees instead of being compared directly.
-hull_t	*PM_HullForBox (vec3_t mins, vec3_t maxs) {
-	box_planes[0].dist = maxs[0];
-	box_planes[1].dist = mins[0];
-	box_planes[2].dist = maxs[1];
-	box_planes[3].dist = mins[1];
-	box_planes[4].dist = maxs[2];
-	box_planes[5].dist = mins[2];
-
-	return &box_hull;
-}
-
 int PM_HullPointContents (hull_t *hull, int num, vec3_t p) {
 	float d;
 	dclipnode_t *node;
@@ -236,7 +223,7 @@ qbool PM_TestPlayerPosition (vec3_t pos) {
 		} else{
 			VectorSubtract (pe->mins, player_maxs, mins);
 			VectorSubtract (pe->maxs, player_mins, maxs);
-			hull = PM_HullForBox (mins, maxs);
+			hull = CM_HullForBox (mins, maxs);
 			VectorSubtract(pos, pe->origin, pos_l);
 		}
 
@@ -270,7 +257,7 @@ trace_t PM_PlayerTrace (vec3_t start, vec3_t end) {
 		} else {
 			VectorSubtract (pe->mins, player_maxs, mins);
 			VectorSubtract (pe->maxs, player_mins, maxs);
-			hull = PM_HullForBox (mins, maxs);
+			hull = CM_HullForBox (mins, maxs);
 			VectorCopy(pe->origin, offset);
 		}
 
@@ -325,7 +312,7 @@ trace_t PM_TraceLine (vec3_t start, vec3_t end) {
 		if (pe->model)
 			hull = &pmove.physents[i].model->hulls[0];
 		else
-			hull = PM_HullForBox (pe->mins, pe->maxs);
+			hull = CM_HullForBox (pe->mins, pe->maxs);
 
 		// PM_HullForEntity (ent, mins, maxs, offset);
 		VectorCopy (pe->origin, offset);
