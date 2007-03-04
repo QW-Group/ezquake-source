@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.16 2007-03-03 05:00:16 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.17 2007-03-04 19:48:17 cokeman1982 Exp $
 
 */
 
@@ -946,6 +946,10 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 	return false;
 }
 
+static qbool hud_editor_locked_axis_is_x = true;	// Are we locking X- or Y-axis movement?
+static qbool hud_editor_lockaxis_found = false;		// Have we found what axist to lock on to?
+static qbool hud_editor_finding_lockaxis = false;	// Are we in the process of finding the lock axis?
+
 //
 // Check if we're supposed to be moving anything.
 //
@@ -953,9 +957,9 @@ static qbool HUD_Editor_Moving(hud_t *hud_hover)
 {
 	// Mouse delta (in_win.c)
 	extern float mouse_x, mouse_y;
-
+	
 	// Left mousebutton down = lets move it !
-	if (hud_editor_mode == hud_editmode_move_resize)
+	if (hud_editor_mode == hud_editmode_move_resize || hud_editor_mode == hud_editmode_move_lockedaxis)
 	{
 		// If we just entered movement mode, nothing is selected
 		// so select the hud we're hovering to start with.
@@ -969,18 +973,79 @@ static qbool HUD_Editor_Moving(hud_t *hud_hover)
 		{
 			// Move using the mouse delta instead of the absolute
 			// mouse cursor coordinates on the screen.
-			HUD_Editor_Move(mouse_x, mouse_y, hud_hover);
+
+			// Lock the movement to the axis that the user starts
+			// dragging the HUD element along if we're in locked-axis mode.
+			if(hud_editor_mode == hud_editmode_move_lockedaxis)
+			{
+				// We haven't found the axis.
+				if(!hud_editor_lockaxis_found)
+				{
+					static float last_mouse_x = 0.0;
+					static float last_mouse_y = 0.0;
+
+					if(!hud_editor_finding_lockaxis)
+					{
+						// Start trying to find the lock axis.
+						hud_editor_finding_lockaxis = true;
+						last_mouse_x = 0; 
+						last_mouse_y = 0; 
+					}					
+					else 
+					{
+						// Get the delta of the mouse movement from when the 
+						// user clicked the mouse button and started dragging.
+						float mouse_delta_x = fabs(last_mouse_x - mouse_x);
+						float mouse_delta_y = fabs(last_mouse_y - mouse_y);
+	
+						// Increment the mouse movement since last frame.
+						last_mouse_x += mouse_x; 
+						last_mouse_y += mouse_y; 
+
+						// If the mouse has moved more than 5 pixels in any
+						// direction we decide to lock onto that axis.
+						if(mouse_delta_x > 5 || mouse_delta_y > 5)
+						{
+							hud_editor_locked_axis_is_x = (mouse_delta_x > mouse_delta_y);
+							hud_editor_lockaxis_found = true;
+						}
+					}
+				}
+
+				// Move while locked to the axis.
+				if(hud_editor_locked_axis_is_x)
+				{
+					// Move only along X-axis.
+					HUD_Editor_Move(mouse_x, 0, hud_hover);								
+				}
+				else
+				{					
+					// Move only along Y-axis.
+					HUD_Editor_Move(0, mouse_y, hud_hover);	
+				}
+			}
+			else
+			{
+				// Ordinary move.
+				HUD_Editor_Move(mouse_x, mouse_y, hud_hover);
+			}
+
 			HUD_Recalculate();
 			return true;
 		}
 	}
-	else if(hud_editor_prevmode == hud_editmode_move_resize)
+	else if((hud_editor_prevmode == hud_editmode_move_resize && hud_editor_mode != hud_editmode_move_lockedaxis) 
+		 || (hud_editor_prevmode == hud_editmode_move_lockedaxis && hud_editor_mode != hud_editmode_move_resize))
 	{
+		// Only deselect if we're going from a move mode to a non-move mode (Such as align/place).
+
 		// We've left move mode, so deselect.
 		selected_hud = NULL;
+		hud_editor_lockaxis_found = false;	
+		hud_editor_finding_lockaxis = false;
 	}
 
-	// Should we stop after this?
+	// We haven't handled the input.
 	return false;
 }
 
@@ -1387,7 +1452,7 @@ static qbool HUD_Editor_FindHudUnderCursor(hud_t **hud)
 	}
 
 	// Check if we already had something selected since last time and was moving.
-	if(selected_hud && hud_editor_mode == hud_editmode_move_resize)
+	if(selected_hud && (hud_editor_mode == hud_editmode_move_resize || hud_editor_mode == hud_editmode_move_lockedaxis))
 	{
 		found = true;
 		(*hud) = selected_hud;
@@ -1418,8 +1483,8 @@ static qbool HUD_Editor_FindHudUnderCursor(hud_t **hud)
 			// when not already moving an item, it would mean that we could only
 			// select HUD elements that are topmost in the Z-order, so an item
 			// placed within another item would not be selectable.
-			if((hud_editor_mode == hud_editmode_move_resize && !found) 
-				|| hud_editor_mode != hud_editmode_move_resize) 
+			if(((hud_editor_mode == hud_editmode_move_resize || hud_editor_mode == hud_editmode_move_lockedaxis) && !found) 
+				|| (hud_editor_mode != hud_editmode_move_resize && hud_editor_mode != hud_editmode_move_lockedaxis)) 
 			{
 				found = true;
 				(*hud) = temp_hud;
@@ -1734,12 +1799,41 @@ static void HUD_Editor_DrawTooltips(hud_t *hud_hover)
 static void HUD_Editor(void)
 {
 	extern float mouse_x, mouse_y;
-	qbool found;
-	hud_t *hud_hover	= NULL;
+	qbool found = false;
+	hud_t *hud_hover = NULL;
 
 	// Updating cursor location.
-	hud_mouse_x = cursor_x;
-	hud_mouse_y = cursor_y;
+	if(hud_editor_mode == hud_editmode_move_lockedaxis) // && hud_editor_lockaxis_found)
+	{
+		// Don't update the HUD Editor cursor if the axis is locked
+		// so that we avoid explicit checks for that.
+		// The cursor will still move around the screen properly.
+		if(hud_editor_locked_axis_is_x)
+		{
+			hud_mouse_x = cursor_x;
+
+			// Draw a line that indicates that the movement is locked to the X-axis.
+			if (selected_hud)
+			{
+				Draw_AlphaLineRGB(0, HUD_CENTER_Y(selected_hud), vid.width, HUD_CENTER_Y(selected_hud), 1, 1, 0, 0, 0.3); // Red.
+			}
+		}
+		else
+		{
+			hud_mouse_y = cursor_y;
+
+			if (selected_hud)
+			{
+				Draw_AlphaLineRGB(HUD_CENTER_X(selected_hud), 0, HUD_CENTER_X(selected_hud), vid.height, 1, 1, 0, 0, 0.3); // Red.
+			}
+		}		
+	}
+	else
+	{
+		// Normal operation, always update cursor.
+		hud_mouse_x = cursor_x;
+		hud_mouse_y = cursor_y;
+	}
 
 	// Find the HUD we're moving or have the cursor over.
 	// Also draws highlights and such.
