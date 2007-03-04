@@ -945,6 +945,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\cmodel.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\com_msg.c"
 					>
 				</File>
@@ -2041,6 +2045,10 @@
 				</File>
 				<File
 					RelativePath="..\..\cmd.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\cmodel.h"
 					>
 				</File>
 				<File
