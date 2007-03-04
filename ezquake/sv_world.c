@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_world.c,v 1.10 2006-11-08 20:53:24 qqshka Exp $
+	$Id: sv_world.c,v 1.11 2007-03-04 19:14:05 disconn3ct Exp $
 
 */
 // sv_world.c -- world query functions
@@ -450,7 +450,9 @@ edict_t	*SV_TestEntityPosition (edict_t *ent) {
 	trace_t	trace;
 	int movetype;
 
+	// only clip against bmodels
 	movetype = (ent->v.solid == SOLID_TRIGGER || ent->v.solid == SOLID_NOT) ? MOVE_NOMONSTERS : MOVE_NORMAL;
+
 	trace = SV_Trace (ent->v.origin, ent->v.mins, ent->v.maxs, ent->v.origin, movetype, ent);
 
 	if (trace.startsolid)
