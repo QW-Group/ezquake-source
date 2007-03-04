@@ -63,10 +63,10 @@ typedef struct texture_s {
 #define	SURF_PLANEBACK		2
 #define	SURF_DRAWSKY		4
 #define SURF_DRAWSPRITE		8
-#define SURF_DRAWTURB		0x10
-#define SURF_DRAWTILED		0x20
-#define SURF_DRAWBACKGROUND	0x40
-#define SURF_FORBRUSH       0x80 // / hetman: r_drawflat for software builds
+#define SURF_DRAWTURB		16
+#define SURF_DRAWTILED		32
+#define SURF_DRAWBACKGROUND	64
+#define SURF_FORBRUSH       128 // / hetman: r_drawflat for software builds
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct {
@@ -260,7 +260,9 @@ typedef enum {MOD_NORMAL, MOD_PLAYER, MOD_EYES, MOD_FLAME, MOD_THUNDERBOLT, MOD_
 
 typedef struct model_s {
 	char		name[MAX_QPATH];
-	qbool	needload;		// bmodels and sprites don't cache normally
+	qbool		needload;		// bmodels and sprites don't cache normally
+
+//	unsigned short	crc; ++ @CMODEL@
 
 	modhint_t	modhint;
 
@@ -293,6 +295,7 @@ typedef struct model_s {
 	medge_t		*edges;
 
 	int			numnodes;
+//	int			firstnode; ++ @CMODEL@
 	mnode_t		*nodes;
 
 	int			numtexinfo;
@@ -304,29 +307,29 @@ typedef struct model_s {
 	int			numsurfedges;
 	int			*surfedges;
 
-	int			numclipnodes;
-	dclipnode_t	*clipnodes;
+	int			numclipnodes; // -- @CMODEL@
+	dclipnode_t	*clipnodes; // -- @CMODEL@
 
 	int			nummarksurfaces;
 	msurface_t	**marksurfaces;
 
-	hull_t		hulls[MAX_MAP_HULLS];
+	hull_t		hulls[MAX_MAP_HULLS]; // -- @CMODEL@
 
 	int			numtextures;
 	texture_t	**textures;
 
 	byte		*visdata;
 	byte		*lightdata;
-	char		*entities;
+	char		*entities; // -- @CMODEL@
 
-	unsigned	checksum;		// for world models only
-	unsigned	checksum2;		// for world models only
+	unsigned	checksum; // for world models only -- @CMODEL@
+	unsigned	checksum2; // for world models only -- @CMODEL@
 
-	int			bspversion;
-	qbool	isworldmodel;
+	int			bspversion; // -- @CMODEL@
+	qbool		isworldmodel; // -- @CMODEL@
 
 	// additional model data
-	cache_user_t	cache;		// only access through Mod_Extradata
+	cache_user_t	cache;	// only access through Mod_Extradata
 
 } model_t;
 

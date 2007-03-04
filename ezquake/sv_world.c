@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_world.c,v 1.11 2007-03-04 19:14:05 disconn3ct Exp $
+	$Id: sv_world.c,v 1.12 2007-03-04 19:55:46 disconn3ct Exp $
 
 */
 // sv_world.c -- world query functions
@@ -79,19 +79,6 @@ void SV_InitBoxHull (void) {
 }
 
 
-//To keep everything totally uniform, bounding boxes are turned into small
-//BSP trees instead of being compared directly.
-hull_t	*SV_HullForBox (vec3_t mins, vec3_t maxs) {
-	box_planes[0].dist = maxs[0];
-	box_planes[1].dist = mins[0];
-	box_planes[2].dist = maxs[1];
-	box_planes[3].dist = mins[1];
-	box_planes[4].dist = maxs[2];
-	box_planes[5].dist = mins[2];
-
-	return &box_hull;
-}
-
 //Returns a hull that can be used for testing or clipping an object of mins/maxs size.
 //Offset is filled in to contain the adjustment that must be added to the
 //testing object's origin to get a point to use with the returned hull.
@@ -138,7 +125,7 @@ hull_t *SV_HullForEntity (edict_t *ent, vec3_t mins, vec3_t maxs, vec3_t offset)
 	} else {	// create a temp hull from bounding box sizes
 		VectorSubtract (ent->v.mins, maxs, hullmins);
 		VectorSubtract (ent->v.maxs, mins, hullmaxs);
-		hull = SV_HullForBox (hullmins, hullmaxs);
+		hull = CM_HullForBox (hullmins, hullmaxs);
 		
 		VectorCopy (ent->v.origin, offset);
 	}
