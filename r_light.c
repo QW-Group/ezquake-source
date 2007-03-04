@@ -31,12 +31,14 @@ R_AnimateLight
 */
 void R_AnimateLight (void)
 {
-	int			i,j,k;
-	
+	int			i,j,l1,l2;
+	float		lerpfrac;
+
 //
 // light animations
 // 'm' is normal light, 'a' is no light, 'z' is double bright
 	i = (int)(r_refdef2.time*10);
+	lerpfrac = r_refdef2.time * 10 - i;
 	for (j=0 ; j<MAX_LIGHTSTYLES ; j++)
 	{
 		if (!cl_lightstyle[j].length)
@@ -44,10 +46,16 @@ void R_AnimateLight (void)
 			d_lightstylevalue[j] = 256;
 			continue;
 		}
-		k = i % cl_lightstyle[j].length;
-		k = cl_lightstyle[j].map[k] - 'a';
-		k = k*22;
-		d_lightstylevalue[j] = k;
+
+		l1 = i % cl_lightstyle[j].length;
+		l1 = (cl_lightstyle[j].map[l1] - 'a') * 22;
+		l2 = (i + 1) % cl_lightstyle[j].length;
+		l2 = (cl_lightstyle[j].map[l2] - 'a') * 22;
+
+		if (l1 - l2 > 220 || l2 - l1 > 220)
+			d_lightstylevalue[j] = l2;
+		else
+			d_lightstylevalue[j] = l1 + (l2 - l1) * lerpfrac;
 	}	
 }
 
