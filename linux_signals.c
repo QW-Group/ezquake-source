@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_signals.c,v 1.2 2007-02-14 15:54:21 qqshka Exp $
+    $Id: linux_signals.c,v 1.3 2007-03-04 10:42:23 qqshka Exp $
 
 */
 #include <signal.h>
@@ -30,35 +30,41 @@ static qbool signalcaught = false;
 
 static void signal_handler(int sig) // bk010104 - replace this... (NOTE TTimo huh?)
 {
-  if (signalcaught)
-  {
-    printf("DOUBLE SIGNAL FAULT: Received signal %d, exiting...\n", sig);
-    Sys_Quit();
+	if (signalcaught)
+	{
+		printf("DOUBLE SIGNAL FAULT: Received signal %d, exiting...\n", sig);
+		Sys_Quit();
 		exit(0);
-  }
+	}
 
-  signalcaught = true;
-  printf("Received signal %d, exiting...\n", sig);
-//#ifdef something like: not server only
+	signalcaught = true;
+	printf("Received signal %d, exiting...\n", sig);
+
+#ifndef SERVERONLY
+//
+// client related things 
+//
 #ifdef WITH_EVDEV
 	IN_Shutdown();
 #endif
-  VID_Shutdown();  // bk010104 - shouldn't this be CL_Shutdown 
-//#endif	
+	VID_Shutdown();  // bk010104 - shouldn't this be CL_Shutdown 
+
+#endif	
+
 	Sys_Quit();
 	exit(0);
 }
 
 void InitSig(void)
 {
-  signal(SIGHUP,  signal_handler);
+	signal(SIGHUP,  signal_handler);
 	signal(SIGINT,  signal_handler); // btw, q3 do not have this signal handling
-  signal(SIGQUIT, signal_handler);
-  signal(SIGILL,  signal_handler);
-  signal(SIGTRAP, signal_handler);
-  signal(SIGIOT,  signal_handler);
-  signal(SIGBUS,  signal_handler);
-  signal(SIGFPE,  signal_handler);
-  signal(SIGSEGV, signal_handler);
-  signal(SIGTERM, signal_handler);
+	signal(SIGQUIT, signal_handler);
+	signal(SIGILL,  signal_handler);
+	signal(SIGTRAP, signal_handler);
+	signal(SIGIOT,  signal_handler);
+	signal(SIGBUS,  signal_handler);
+	signal(SIGFPE,  signal_handler);
+	signal(SIGSEGV, signal_handler);
+	signal(SIGTERM, signal_handler);
 }
