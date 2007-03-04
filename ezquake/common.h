@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.42 2007-02-19 13:55:02 qqshka Exp $
+    $Id: common.h,v 1.43 2007-03-04 19:14:35 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cmd.h"
 #include "net.h"
 #include "protocol.h"
+#include "cmodel.h"
 
 #ifdef WITH_ZIP
 #include "unzip.h"
