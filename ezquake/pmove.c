@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: pmove.c,v 1.18 2007-03-05 00:16:24 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -40,12 +41,7 @@ vec3_t	player_maxs = {16, 16, 32};
 #define BLOCKED_OTHER	4
 #define BLOCKED_ANY	7
 
-
-void PM_InitBoxHull (void);
-
-void PM_Init (void) {
-	PM_InitBoxHull ();
-}
+void PM_Init (void) { }
 
 
 // Add an entity to touch list, discarding duplicates

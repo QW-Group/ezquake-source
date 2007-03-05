@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cmodel.h,v 1.3 2007-03-04 19:55:46 disconn3ct Exp $
+	$Id: cmodel.h,v 1.4 2007-03-05 00:16:24 disconn3ct Exp $
 */
 
 #ifndef __CMODEL_H__
@@ -68,27 +68,27 @@ typedef struct {
 	} e;
 } trace_t;
 
-/*typedef struct {
+typedef struct {
 	vec3_t	mins, maxs;
 	vec3_t	origin;
 	hull_t	hulls[MAX_MAP_HULLS];
-} cmodel_t;*/
+} cmodel_t;
 
 hull_t *CM_HullForBox (vec3_t mins, vec3_t maxs);
-//int CM_HullPointContents (hull_t *hull, int num, vec3_t p);
-//trace_t CM_HullTrace (hull_t *hull, vec3_t start, vec3_t end);
-//struct cleaf_s *CM_PointInLeaf (const vec3_t p);
-//int CM_Leafnum (const struct cleaf_s *leaf);
-//int CM_LeafAmbientLevel (const struct cleaf_s *leaf, int ambient_channel);
-//byte *CM_LeafPVS (const struct cleaf_s *leaf);
-//byte *CM_LeafPHS (const struct cleaf_s *leaf);		// only for the server
-//byte *CM_FatPVS (vec3_t org);
-//int CM_FindTouchedLeafs (const vec3_t mins, const vec3_t maxs, int leafs[], int maxleafs, int headnode, int *topnode);
-//char *CM_EntityString (void);
-//int CM_NumInlineModels (void);
-//cmodel_t *CM_InlineModel (char *name);
-//void CM_InvalidateMap (void);
-//cmodel_t *CM_LoadMap (char *name, qbool clientload, unsigned *checksum, unsigned *checksum2);
-//void CM_Init (void);
+int CM_HullPointContents (hull_t *hull, int num, vec3_t p);
+trace_t CM_HullTrace (hull_t *hull, vec3_t start, vec3_t end);
+struct cleaf_s *CM_PointInLeaf (const vec3_t p);
+int CM_Leafnum (const struct cleaf_s *leaf);
+int CM_LeafAmbientLevel (const struct cleaf_s *leaf, int ambient_channel);
+byte *CM_LeafPVS (const struct cleaf_s *leaf);
+byte *CM_LeafPHS (const struct cleaf_s *leaf); // only for the server
+byte *CM_FatPVS (vec3_t org);
+int CM_FindTouchedLeafs (const vec3_t mins, const vec3_t maxs, int leafs[], int maxleafs, int headnode, int *topnode);
+char *CM_EntityString (void);
+int CM_NumInlineModels (void);
+cmodel_t *CM_InlineModel (char *name);
+void CM_InvalidateMap (void);
+cmodel_t *CM_LoadMap (char *name, qbool clientload, unsigned *checksum, unsigned *checksum2);
+void CM_Init (void);
 
 #endif /* !__CMODEL_H__ */

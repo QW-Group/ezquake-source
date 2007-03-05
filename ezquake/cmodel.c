@@ -14,13 +14,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cmodel.c,v 1.2 2007-03-04 22:40:14 disconn3ct Exp $
+	$Id: cmodel.c,v 1.3 2007-03-05 00:16:24 disconn3ct Exp $
 */
 // cmodel.c
 
 #include "common.h"
 
-/*
+
 typedef struct cnode_s {
 	// common with leaf
 	int				contents; // 0, to differentiate from leafs
@@ -30,9 +30,9 @@ typedef struct cnode_s {
 	mplane_t	*plane;
 	struct cnode_s	*children[2];	
 } cnode_t;
-*/
 
-/*
+
+
 typedef struct cleaf_s {
 	// common with node
 	int				contents; // a negative contents number
@@ -41,9 +41,9 @@ typedef struct cleaf_s {
 // leaf specific
 	byte			ambient_sound_level[NUM_AMBIENTS];
 } cleaf_t;
-*/
 
-/*
+
+
 static char			loadname[32];	// for hunk tags
 
 static char			map_name[MAX_QPATH];
@@ -77,7 +77,7 @@ static char			*map_entitystring;
 static qbool		map_halflife;
 
 static byte			*cmod_base;					// for CM_Load* functions
-*/
+
 
 /*
 ===============================================================================
@@ -140,4 +140,10 @@ hull_t *CM_HullForBox (vec3_t mins, vec3_t maxs)
 	box_planes[5].dist = mins[2];
 
 	return &box_hull;
+}
+
+void CM_Init (void)
+{
+	memset (map_novis, 0xff, sizeof(map_novis));
+	CM_InitBoxHull ();
 }

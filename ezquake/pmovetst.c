@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: pmovetst.c,v 1.7 2007-03-05 00:16:24 disconn3ct Exp $
 */
 #include "quakedef.h"
 
@@ -25,32 +26,6 @@ static	mplane_t	box_planes[6];
 
 extern	vec3_t player_mins;
 extern	vec3_t player_maxs;
-
-//Set up the planes and clipnodes so that the six floats of a bounding box can just be stored out and get a proper hull_t structure.
-void PM_InitBoxHull (void) {
-	int i, side;
-
-	box_hull.clipnodes = box_clipnodes;
-	box_hull.planes = box_planes;
-	box_hull.firstclipnode = 0;
-	box_hull.lastclipnode = 5;
-
-	for (i = 0; i < 6; i++) {
-		box_clipnodes[i].planenum = i;
-
-		side = i & 1;
-
-		box_clipnodes[i].children[side] = CONTENTS_EMPTY;
-		if (i != 5)
-			box_clipnodes[i].children[side^1] = i + 1;
-		else
-			box_clipnodes[i].children[side^1] = CONTENTS_SOLID;
-
-		box_planes[i].type = i>>1;
-		box_planes[i].normal[i>>1] = 1;
-	}
-	
-}
 
 int PM_HullPointContents (hull_t *hull, int num, vec3_t p) {
 	float d;
