@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.22 2007-02-25 21:53:48 cokeman1982 Exp $
+	$Id: vid_win.c,v 1.23 2007-03-05 02:14:02 cokeman1982 Exp $
 
 */
 
@@ -1326,7 +1326,7 @@ int VID_SetMode (int modenum, unsigned char *palette) {
 
 	// Set either the fullscreen or windowed mode
 	if (modelist[modenum].type == MS_WINDOWED) {
-		if (_windowed_mouse.value && (key_dest == key_game || key_dest == key_hudeditor)) {
+		if (_windowed_mouse.value && (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu)) {
 			stat = VID_SetWindowedMode(modenum);
 			IN_ActivateMouse ();
 			IN_HideMouse ();
@@ -1933,10 +1933,10 @@ void VID_Update (vrect_t *rects) {
 			windowed_mouse = false;
 		} else {
 			windowed_mouse = true;
-			if ((key_dest == key_game || key_dest == key_hudeditor) && !mouseactive && ActiveApp) {
+			if ((key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu) && !mouseactive && ActiveApp) {
 				IN_ActivateMouse ();
 				IN_HideMouse ();
-			} else if (mouseactive && (key_dest != key_game && key_dest != key_hudeditor)) {
+			} else if (mouseactive && (key_dest != key_game && key_dest != key_hudeditor && key_dest != key_menu)) {
 				IN_DeactivateMouse ();
 				IN_ShowMouse ();
 			}
@@ -2156,7 +2156,7 @@ void AppActivate(BOOL fActive, BOOL minimize) {
 				}
 				IN_ActivateMouse ();
 				IN_HideMouse ();
-			} else if ((modestate == MS_WINDOWED) && _windowed_mouse.value && (key_dest == key_game || key_dest == key_hudeditor)) {
+			} else if ((modestate == MS_WINDOWED) && _windowed_mouse.value && (key_dest == key_game || key_dest == key_hudeditor || key_dest == key_menu)) {
 				IN_ActivateMouse ();
 				IN_HideMouse ();
 			}
