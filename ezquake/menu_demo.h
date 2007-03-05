@@ -1,6 +1,6 @@
 /*
 	Demo Menu module
-	$Id: menu_demo.h,v 1.5 2007-01-15 21:14:33 cokeman1982 Exp $
+	$Id: menu_demo.h,v 1.6 2007-03-05 01:03:53 johnnycz Exp $
 */
 
 // <interface for menu.c>
@@ -12,6 +12,9 @@ void Menu_Demo_Key(int key);
 
 // process request to draw the demo menu
 void Menu_Demo_Draw (void);
+
+// process mouse move event
+qbool Menu_Demo_Mouse_Move(const mouse_state_t *);
 
 // sets new starting dir
 void Menu_Demo_NewHome(const char *);

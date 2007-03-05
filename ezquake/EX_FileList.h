@@ -115,6 +115,10 @@ typedef struct filelist_s
     // For cd ..
     char            cdup_name[MAX_PATH+1];
     qbool			cdup_find;
+
+	// for mouse navigation
+	int				width;
+	int				height;
 }
 filelist_t;
 
@@ -131,6 +135,12 @@ void FL_Draw(filelist_t *, int x, int y, int w, int h);
 //
 qbool FL_Key(filelist_t *, int key);
 
+
+//
+// Send Mouse Move event to the list
+// returns: true if processed, false if mouse pointed somewhere else
+//
+qbool FL_Mouse_Move(filelist_t *, const mouse_state_t *ms);
 
 //
 // Create file list

@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.30 2007-02-12 05:30:37 qqshka Exp $
+	$Id: EX_browser.c,v 1.31 2007-03-05 01:03:53 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -53,7 +53,6 @@ double searchtime = -10;
 enum {search_none = 0, search_server, search_player} searchtype = search_none;
 char searchstring[MAX_SEARCH+1];
 
-
 // add source
 CEditBox edit1, edit2;
 int adding_source = 0;
@@ -64,6 +63,9 @@ int newsource_pos;
 int adding_server = 0;
 int newserver_pos;
 
+struct {
+	int x, y, w, h;
+} Browser_window;
 
 cvar_t  sb_status        =  {"sb_status", 			"1"}; // Shows Server status at the bottom
 
@@ -1789,6 +1791,7 @@ int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
                 Servers_pos -= 10; break;
             case K_PGDN:
                 Servers_pos += 10; break;
+			case K_MOUSE1:
             case K_ENTER:
                 Serverinfo_Start(servers[Servers_pos]); break;
             case K_SPACE:
@@ -2184,6 +2187,7 @@ int Sources_Key(int key, CTab_t *tab, CTabPage_t *page)
             Sources_pos -= 10; break;
         case K_PGDN:
             Sources_pos += 10; break;
+		case K_MOUSE1:
         case K_ENTER:
             Toggle_Source(sources[Sources_pos++]); break;
         case ']':
@@ -2332,6 +2336,7 @@ int Players_Key(int key, CTab_t *tab, CTabPage_t *page)
                 Players_pos -= 10; break;
             case K_PGDN:
                 Players_pos += 10; break;
+			case K_MOUSE1:
             case K_ENTER:
                 Serverinfo_Start(all_players[Players_pos]->serv); break;
             case '1':
@@ -2387,6 +2392,28 @@ int Options_Key(int key, CTab_t *tab, CTabPage_t *page)
 	return Settings_Key(&sbsettings, key);
 }
 
+qbool Servers_Mouse_Move(const mouse_state_t *ms)
+{
+	Servers_pos = Servers_disp + ms->y / 8 - 1;
+	return true;
+}
+
+qbool Sources_Mouse_Move(const mouse_state_t *ms)
+{
+	Sources_pos = Sources_disp + ms->y / 8 - 1;
+	return true;
+}
+
+qbool Players_Mouse_Move(const mouse_state_t *ms)
+{
+	Players_pos = Players_disp + ms->y / 8 - 1;
+	return true;
+}
+
+qbool Options_Mouse_Move(const mouse_state_t *ms)
+{
+	return Settings_Mouse_Move(&sbsettings, ms);
+}
 
 //
 // sorting routine
@@ -2602,6 +2629,7 @@ void Shutdown_SB(void)
     Sys_MSleep(150);     // wait for thread to terminate
 }
 
+#define BROWSERPADDING 4
 
 void Browser_Draw (void)
 {
@@ -2619,10 +2647,15 @@ void Browser_Draw (void)
 	}
 #endif
 
-	w = min(640, vid.width) - 8;
-	h = min(480, vid.height) - 8;
+	w = min(640, vid.width) - BROWSERPADDING*2;
+	h = min(480, vid.height) - BROWSERPADDING*2;
 	x = (vid.width - w) / 2;
 	y = (vid.height - h) / 2;
+
+	Browser_window.x = x;
+	Browser_window.y = y;
+	Browser_window.w = w;
+	Browser_window.h = h;
 
 	CTab_Draw(&sb_tab, x, y, w, h);
 
@@ -2682,6 +2715,46 @@ void Browser_Key(int key)
 	
 	CTab_Key(&sb_tab, key);
 }
+
+qbool Browser_Mouse_Move(const mouse_state_t *ms)
+{
+	mouse_state_t nms;
+
+	nms.x = ms->x - Browser_window.x;
+	nms.y = ms->y - Browser_window.y;
+	nms.x_old = ms->x_old - Browser_window.x;
+	nms.y_old = ms->y_old - Browser_window.y;
+
+	return CTab_Mouse_Move(&sb_tab, &nms);
+}
+
+CTabPage_Handlers_t sb_servers_handlers = {
+	Servers_Draw,
+	Servers_Key,
+	Servers_OnShow,
+	Servers_Mouse_Move
+};
+
+CTabPage_Handlers_t sb_sources_handlers = {
+	Sources_Draw,
+	Sources_Key,
+	NULL,
+	Sources_Mouse_Move
+};
+
+CTabPage_Handlers_t sb_players_handlers = {
+	Players_Draw,
+	Players_Key,
+	NULL,
+	Players_Mouse_Move
+};
+
+CTabPage_Handlers_t sb_options_handlers = {
+	Options_Draw,
+	Options_Key,
+	NULL,
+	Options_Mouse_Move
+};
 
 void Browser_Init(void)
 {
@@ -2743,9 +2816,9 @@ void Browser_Init(void)
     Cmd_AddCommand("sb_sourcemark", SB_SourceMark);
 
 	CTab_Init(&sb_tab);
-	CTab_AddPage(&sb_tab, "servers", SBPG_SERVERS, Servers_OnShow, Servers_Draw, Servers_Key);
-	CTab_AddPage(&sb_tab, "sources", SBPG_SOURCES, NULL, Sources_Draw, Sources_Key);
-	CTab_AddPage(&sb_tab, "players", SBPG_PLAYERS, NULL, Players_Draw, Players_Key);
-	CTab_AddPage(&sb_tab, "options", SBPG_OPTIONS, NULL, Options_Draw, Options_Key);
+	CTab_AddPage(&sb_tab, "servers", SBPG_SERVERS, &sb_servers_handlers);
+	CTab_AddPage(&sb_tab, "sources", SBPG_SOURCES, &sb_sources_handlers);
+	CTab_AddPage(&sb_tab, "players", SBPG_PLAYERS, &sb_players_handlers);
+	CTab_AddPage(&sb_tab, "options", SBPG_OPTIONS, &sb_options_handlers);
 	CTab_SetCurrentId(&sb_tab, SBPG_SERVERS);
 }

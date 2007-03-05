@@ -302,6 +302,16 @@ void Help_Draw(int x, int y, int w, int h)
     CTab_Draw(&help_tab, x, y, w, h);
 }
 
+CTabPage_Handlers_t help_files_handlers = {
+	Help_Files_Draw,
+	Help_Files_Key
+};
+
+CTabPage_Handlers_t help_browser_handlers = {
+	Help_Browser_Draw,
+	Help_Browser_Key
+};
+
 void Help_Init(void)
 {
     Cmd_AddCommand("describe", Help_Describe_f);
@@ -312,9 +322,9 @@ void Help_Init(void)
     Help_Browser_Init();
     Help_Files_Init();
 
-    CTab_AddPage(&help_tab, "files", help_files, NULL, Help_Files_Draw, Help_Files_Key);
+    CTab_AddPage(&help_tab, "files", help_files, &help_files_handlers);
 //    CTab_AddPage(&help_tab, "help", help_help, NULL, NULL, NULL);
-    CTab_AddPage(&help_tab, "browser", help_browser, NULL, Help_Browser_Draw, Help_Browser_Key);
+    CTab_AddPage(&help_tab, "browser", help_browser, &help_browser_handlers);
 //    CTab_AddPage(&help_tab, "online", help_online, NULL, NULL, NULL);
 //    CTab_AddPage(&help_tab, "options", help_options, NULL, NULL, NULL);
 

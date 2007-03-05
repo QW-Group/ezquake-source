@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.94 2007-02-27 01:11:50 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.95 2007-03-05 01:03:53 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -130,7 +130,7 @@ cvar_t	scr_coloredText = {"scr_coloredText", "1"};
 // Tracking text.
 cvar_t	scr_tracking			= {"scr_tracking", "Tracking %t %n, [JUMP] for next"};
 cvar_t	scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
-cvar_t	scr_cursor_scale = {"scr_cursor_scale", "0.33"};
+cvar_t	scr_cursor_scale = {"scr_cursor_scale", "0.2"};
 #ifdef GLQUAKE
 cvar_t	scr_cursor_alpha = {"scr_cursor_alpha", "1"};
 #endif
@@ -2330,26 +2330,36 @@ void SCR_TileClear (void) {
 
 #endif
 
-void SCR_DrawCursor(void) {
+// calculates the cursor scale based on the current screen/text size
+static double SCR_GetCursorScale(void) {
+	return (double) scr_cursor_scale.value * ((double) vid.width / (double)vid.conwidth);
+}
+
+static void SCR_DrawCursor(void) {
 	// from in_*.c
 	extern float mouse_x, mouse_y;
+	static mouse_state_t ms = { 0, 0, 0, 0 };
 
-	// Updating cursor location.
-	cursor_x += mouse_x;
-	cursor_y += mouse_y;
+	// Updating cursor location
+	ms.x += mouse_x;
+	ms.y += mouse_y;
 
-	// Check if we're within bounds.
-	clamp(cursor_x, 0, vid.width);
-	clamp(cursor_y, 0, vid.height);
+	// Bound the cursor to displayed area
+	clamp(ms.x, 0, vid.width);
+	clamp(ms.y, 0, vid.height);
+
+	// write the global variables which are used only by HUD Editor at the moment
+	cursor_x = ms.x;
+	cursor_y = ms.y;
 
 	// disable the cursor in all but following client parts
-	if (key_dest != key_hudeditor) return;
+	if (key_dest != key_hudeditor && key_dest != key_menu) return;
 
 	// Always draw the cursor.
 #ifdef GLQUAKE
 	if (scr_cursor && scr_cursor->texnum)
 	{
-		Draw_SAlphaPic(cursor_x, cursor_y, scr_cursor, scr_cursor_alpha.value, scr_cursor_scale.value);
+		Draw_SAlphaPic(cursor_x, cursor_y, scr_cursor, scr_cursor_alpha.value, SCR_GetCursorScale());
 	}
 	else
 	{
@@ -2358,13 +2368,31 @@ void SCR_DrawCursor(void) {
 #else
 	if (scr_cursor && scr_cursor->width)
 	{
-		Draw_SPic(cursor_x, cursor_y, scr_cursor, scr_cursor_scale.value);
+		Draw_SPic(cursor_x, cursor_y, scr_cursor, SCR_GetCursorScale());
 	}
 	else
 	{
 		Draw_Character(cursor_x, cursor_y, '+');
 	}
 #endif
+
+	if (ms.x != ms.x_old || ms.y != ms.y_old)
+	{
+		// send mouse cursor status to appropriate windows
+		switch (key_dest) {
+		case key_menu:
+			Menu_Mouse_Moved(&ms);
+			break;
+		case key_hudeditor:
+			// todo: HUD_Editor_Mouse_Moved(cursor_x, cursor_y);
+			// HUD Editor currently reads global variables cursor_x|y
+			break;
+		}
+	}
+
+	// remember the position for future
+	ms.x_old = ms.x;
+	ms.y_old = ms.y;
 }
 
 void SCR_DrawElements(void) {
@@ -3293,21 +3321,15 @@ void SCR_Init (void)
 	scr_ram = Draw_CacheWadPic ("ram");
 	scr_net = Draw_CacheWadPic ("net");
 	scr_turtle = Draw_CacheWadPic ("turtle");
-#ifdef GLQUAKE
 	scr_cursor = Draw_CachePicSafe("gfx/cursor.lmp", false, false);
-	
+
+#ifdef GLQUAKE
 	// Failed to load anything, maybe missing .lmp-file, so just try
 	// loading any 24-bit version that's available instead.
 	if(!scr_cursor)
 	{
 		scr_cursor = Draw_CachePicSafe("gfx/cursor", false, true);
 	}
-#else
-	// sadly, noone coded Draw_CachePicSafe for Release yet
-	// so we require user to have that file for non-GL version
-	// otherwise the client will not start
-	// scr_cursor = Draw_CachePic("gfx/cursor.lmp");
-	scr_cursor = NULL;
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIEW);

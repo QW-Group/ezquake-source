@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.24 2007-02-24 13:04:43 johnnycz Exp $
+		$Id: settings_page.c,v 1.25 2007-03-05 01:03:53 johnnycz Exp $
 
 */
 
@@ -399,6 +399,17 @@ static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
 	// we need to draw it into (x,y) location
 }
 
+static int FindSetting_AtPos(const settings_page *page, int top)
+{
+	int i, r = 0;
+	for (i = 0; i < page->count; i++)
+	{
+		if (page->settings[i].top < top)
+			r = i;
+	}
+	return r;
+}
+
 qbool Settings_Key(settings_page* tab, int key)
 {
 	qbool up = false;
@@ -416,7 +427,7 @@ qbool Settings_Key(settings_page* tab, int key)
 	}
 
 	if (tab->mode == SPM_CHOOSESKIN) {
-		if (key == K_ENTER) {
+		if (key == K_ENTER || key == K_MOUSE1) {
 			char buf[MAX_PATH];
 			COM_StripExtension(COM_SkipPath(FL_GetCurrentPath(&skins_filelist)), buf);
 			Cvar_Set(tab->settings[tab->marked].cvar, buf);
@@ -424,7 +435,7 @@ qbool Settings_Key(settings_page* tab, int key)
 			return true;
 		}
 
-		if (key == K_ESCAPE) {
+		if (key == K_ESCAPE || key == K_MOUSE2) {
 			tab->mode = SPM_NORMAL;
 			return true;
 		}
@@ -479,6 +490,11 @@ qbool Settings_Key(settings_page* tab, int key)
 		case SPM_VIEWHELP: tab->mode = SPM_NORMAL; return true;
 		}
 		break;
+
+	case K_MOUSE2:
+		if (tab->mode == SPM_VIEWHELP) {
+			tab->mode = SPM_NORMAL; return true;
+		} else return false;
 
 	case K_ESCAPE:
 		if (tab->mode == SPM_VIEWHELP) { 
@@ -579,6 +595,35 @@ void Settings_OnShow(settings_page *page)
 
 	if (page->settings[page->marked].type == stt_string)
 		StringEntryEnter(page->settings + page->marked);
+}
+
+qbool Settings_Mouse_Move(settings_page *page, const mouse_state_t *ms) 
+{
+	int nmark;
+	int omark = page->marked;
+
+	switch (page->mode) {
+	case SPM_BINDING: return true;
+	case SPM_CHOOSESKIN:
+		// todo: add call to skin_browser mouse move
+		break;
+	
+	case SPM_NORMAL:
+		nmark = FindSetting_AtPos(page, page->settings[page->viewpoint].top + ms->y);
+		nmark = bound(0, nmark, page->count - 1);
+		if (page->settings[nmark].type != stt_separator)
+		{
+			page->marked = nmark;
+			CheckCursor(page, ms->x < ms->x_old);
+			EditBoxCheck(page, omark, nmark);
+		}
+		return true;
+
+	case SPM_VIEWHELP:
+		return false;
+		break;
+	}
+	return false;
 }
 
 void Settings_Init(settings_page *page, setting *arr, size_t size)
