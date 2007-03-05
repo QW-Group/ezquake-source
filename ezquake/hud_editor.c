@@ -2,9 +2,9 @@
 	
 	HUD Editor module
 
-	made by jogihoogi, Feb 2007
+	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.17 2007-03-04 19:48:17 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.18 2007-03-05 01:33:23 cokeman1982 Exp $
 
 */
 
@@ -15,21 +15,28 @@
 #include "hud_editor.h"
 
 #ifdef GLQUAKE
-extern hud_t		*hud_huds;				// The list of HUDs.
-hud_t				*selected_hud = NULL;	// The currently selected HUD.
-int					win_x;
-int					win_y;
-vec3_t				points[3];
-vec3_t				corners[4];
-vec3_t				center;
-vec3_t				pointer;
 
-qbool				hud_editor = false;		// If we're in HUD editor mode or not.
-hud_editor_mode_t	hud_editor_mode = hud_editmode_off;
-hud_editor_mode_t	hud_editor_prevmode =  hud_editmode_off;
+extern mpic_t		*scr_cursor_icon;	// cl_screen.c
+extern cvar_t		hud_planmode;		// hud_common.c
 
-// Cursor location.
-float				hud_mouse_x;			// The screen coordinates of the mouse cursor.
+mpic_t				*hud_editor_move_icon	= NULL;
+mpic_t				*hud_editor_resize_icon	= NULL;
+mpic_t				*hud_editor_align_icon	= NULL;
+mpic_t				*hud_editor_place_icon	= NULL;
+
+cvar_t				hud_editor_allowresize	= {"hud_editor_allowresize", "1"};	// Show resize handles / allow resizing.
+cvar_t				hud_editor_allowmove	= {"hud_editor_allowmove", "1"};	// Allow moving.
+cvar_t				hud_editor_allowplace	= {"hud_editor_allowplace", "1"};	// Allow placing HUDs.
+cvar_t				hud_editor_allowalign	= {"hud_editor_allowalign", "1"};	// Allow aligning HUDs.
+
+extern hud_t		*hud_huds;										// The list of HUDs.
+hud_t				*selected_hud			= NULL;					// The currently selected HUD.
+
+qbool				hud_editor				= false;				// If we're in HUD editor mode or not.
+hud_editor_mode_t	hud_editor_mode			= hud_editmode_off;		// The current mode the HUD editor is in.
+hud_editor_mode_t	hud_editor_prevmode		= hud_editmode_off;		// The previous mode the HUD editor was in.
+
+float				hud_mouse_x;									// The screen coordinates of the mouse cursor.
 float				hud_mouse_y;
 
 // Macros for what mouse buttons are clicked.
@@ -44,9 +51,12 @@ float				hud_mouse_y;
 #define MOUSEDOWN_2_3_ONLY	(!keydown[K_MOUSE1] &&  keydown[K_MOUSE2] &&  keydown[K_MOUSE3])
 #define MOUSEDOWN_NONE		(!keydown[K_MOUSE1] && !keydown[K_MOUSE2] && !keydown[K_MOUSE3])
 
-#define HUD_CENTER_X(h)		((h)->lx + (h)->lw / 2)
+#define HUD_CENTER_X(h)		((h)->lx + (h)->lw / 2)	// Gets the coordinates for the center point of the specified hud.
 #define HUD_CENTER_Y(h)		((h)->ly + (h)->lh / 2)
 
+//
+// HUD align polygons.
+//
 #define HUD_ALIGN_POLYCOUNT_CORNER	5
 #define HUD_ALIGN_POLYCOUNT_EDGE	4
 #define HUD_ALIGN_POLYCOUNT_CENTER	8
@@ -86,31 +96,33 @@ typedef enum hud_alignmode_s
 	// Not including before/after for now.
 } hud_alignmode_t;
 
-hud_alignmode_t				hud_alignmode = align_center;
+hud_alignmode_t	hud_alignmode = align_center;
 
+// Possible positions for a grep handle.
 typedef enum hud_greppos_s
 {
-	pos_visible,
+	pos_visible,	// On screen.
 	pos_top,
 	pos_left,
 	pos_bottom,
 	pos_right
 } hud_greppos_t;
 
+// A Grep handle for when a HUD goes offscreen.
 typedef struct hud_grephandle_s
 {
-	hud_t					*hud;
+	hud_t					*hud;			// HUD associated with this grep handle.
 	int						x;
 	int						y;
 	int						width;
 	int						height;
-	qbool					highlighted;
-	hud_greppos_t			pos;
+	qbool					highlighted;	// Should this grephandle be drawn highlighted?
+	hud_greppos_t			pos;			// The offscreen position of the HUD associated with this handle.
 	struct hud_grephandle_s	*next;
 	struct hud_grephandle_s	*previous;
 } hud_grephandle_t;
 
-hud_grephandle_t *hud_greps = NULL;	// The list of "grep handles" that are shown if a HUD element is moved offscreen.
+hud_grephandle_t *hud_greps = NULL;			// The list of "grep handles" that are shown if a HUD element is moved offscreen.
 
 //
 // Sets a new HUD Editor mode (and saves the previous one).
@@ -762,12 +774,18 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 {
 	extern float mouse_x, mouse_y; // in_win.c, delta mouse.
 	int i					= 0;
-	qbool done				= false;
+	qbool found_handle		= false;	// Did we find any handle under the cursor?
 	static cvar_t *width	= NULL;
 	static cvar_t *height	= NULL;
 	static cvar_t *scale	= NULL;
 	static hud_resize_handle_t *resize_handles[HUD_RESIZEHANDLE_COUNT];
 	static int last_resize_handle = HUD_RESIZEHANDLE_NONE;
+
+	// Is this mode turned on?
+	if(!hud_editor_allowresize.value)
+	{
+		return false;
+	}
 
 	// Select a HUD if it hasn't already been done.
 	if(hud_hover && hud_editor_mode == hud_editmode_move_resize 
@@ -776,7 +794,7 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 		selected_hud = hud_hover;
 		return true;
 	}
-	
+
 	// Try getting any available dimension variables
 	// that are available for this HUD element, these
 	// aren't mandatory for all HUD elements, so only
@@ -867,7 +885,7 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 			continue;
 		}
 
-		if(!done && hud_editor_mode == hud_editmode_move_resize)
+		if(hud_editor_mode == hud_editmode_move_resize)
 		{
 			// We're in resize mode, so check if we're clicking any of the
 			// resize handles.
@@ -885,6 +903,8 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 				{
 					last_resize_handle = i;
 				}
+
+				found_handle = true;
 
 				// Draw the resize handle highlighted.
 				Draw_AlphaFillRGB(selected_hud->lx + resize_handles[last_resize_handle]->x, selected_hud->ly + resize_handles[last_resize_handle]->y, 
@@ -936,10 +956,35 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 		else if(hud_hover)
 		{
 			// If we're hovering a HUD, always draw all it's resize handles.
-			Draw_AlphaFillRGB(hud_hover->lx + resize_handles[i]->x, hud_hover->ly + resize_handles[i]->y, 
+			
+			if((hud_mouse_x >= (hud_hover->lx + resize_handles[i]->x)
+				&& hud_mouse_x <= (hud_hover->lx + resize_handles[i]->x + resize_handles[i]->width)
+				&& hud_mouse_y >= (hud_hover->ly + resize_handles[i]->y)
+				&& hud_mouse_y <= (hud_hover->ly + resize_handles[i]->y + resize_handles[i]->height)))
+			{
+				// Highlight the resize handle under the cursor.
+				Draw_AlphaFillRGB(hud_hover->lx + resize_handles[i]->x, hud_hover->ly + resize_handles[i]->y, 
+					resize_handles[i]->width, resize_handles[i]->height,
+					1, 1, 0, 0.5);
+
+				// Set the resize cursor icon since we're hovering a resize handle.
+				scr_cursor_icon = hud_editor_resize_icon;
+				found_handle = true;
+			}
+			else
+			{
+				// Normal resize handle.
+				Draw_AlphaFillRGB(hud_hover->lx + resize_handles[i]->x, hud_hover->ly + resize_handles[i]->y, 
 				resize_handles[i]->width, resize_handles[i]->height,
 				1, 1, 0, 0.2);
+			}
 		}
+	}
+
+	// We didn't hover any resize handle so show no icon.
+	if(!found_handle)
+	{
+		scr_cursor_icon = NULL;
 	}
 
 	// We didn't perform any action, so let others try.
@@ -947,7 +992,7 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 }
 
 static qbool hud_editor_locked_axis_is_x = true;	// Are we locking X- or Y-axis movement?
-static qbool hud_editor_lockaxis_found = false;		// Have we found what axist to lock on to?
+static qbool hud_editor_lockaxis_found= false;		// Have we found what axist to lock on to?
 static qbool hud_editor_finding_lockaxis = false;	// Are we in the process of finding the lock axis?
 
 //
@@ -957,7 +1002,26 @@ static qbool HUD_Editor_Moving(hud_t *hud_hover)
 {
 	// Mouse delta (in_win.c)
 	extern float mouse_x, mouse_y;
-	
+
+	// Is this mode allowed?
+	if(!hud_editor_allowmove.value)
+	{
+		return false;
+	}
+
+	// Set the move cursor icon if we're hovering a HUD element
+	// unless it's not already set (resize may have set it if
+	// a resize handle is being hovered).
+	if(hud_hover && !scr_cursor_icon)
+	{
+		scr_cursor_icon = hud_editor_move_icon;
+	}
+	else if(!hud_hover)
+	{
+		// Not hovering anything so show no cursor.
+		scr_cursor_icon = NULL;
+	}
+
 	// Left mousebutton down = lets move it !
 	if (hud_editor_mode == hud_editmode_move_resize || hud_editor_mode == hud_editmode_move_lockedaxis)
 	{
@@ -1054,6 +1118,12 @@ static qbool HUD_Editor_Moving(hud_t *hud_hover)
 //
 static qbool HUD_Editor_Aligning(hud_t *hud_hover)
 {
+	// Is this mode allowed?
+	if(!hud_editor_allowalign.value)
+	{
+		return false;
+	}
+
 	if(hud_editor_mode == hud_editmode_align)
 	{
 		// If we just entered alignment mode, nothing is selected
@@ -1063,6 +1133,9 @@ static qbool HUD_Editor_Aligning(hud_t *hud_hover)
 			selected_hud = hud_hover;
 			return true;
 		}
+
+		// Set the align icon for the cursor.
+		scr_cursor_icon = hud_editor_align_icon;
 
 		// We have something selected so show some visual
 		// feedback for when aligning to the user.
@@ -1113,6 +1186,24 @@ static qbool HUD_Editor_Aligning(hud_t *hud_hover)
 //
 static qbool HUD_Editor_Placing(hud_t *hud_hover)
 {
+	// Is this mode allowed?
+	if(!hud_editor_allowplace.value)
+	{
+		return false;
+	}
+
+	// Show the place icon at the cursor if ctrl is pressed
+	// while hovering a HUD element.
+	if(hud_hover && isCtrlDown())
+	{
+		// Set the place cursor icon.
+		scr_cursor_icon = hud_editor_place_icon;
+	}
+	else if(!hud_hover)
+	{
+		scr_cursor_icon = NULL;
+	}
+
 	if(hud_editor_mode == hud_editmode_place)
 	{
 		// If we just entered placement mode, nothing is selected
@@ -1122,7 +1213,10 @@ static qbool HUD_Editor_Placing(hud_t *hud_hover)
 			selected_hud = hud_hover;
 			return true;
 		}
-		
+
+		// Set the place cursor icon.
+		scr_cursor_icon = hud_editor_place_icon;
+
 		if(selected_hud)
 		{
 			// Find the center of the selected HUD so we know where
@@ -1693,7 +1787,7 @@ static void HUD_Editor_EvaluateState(hud_t *hud_hover)
 
 	if (hud_hover && MOUSEDOWN_1_ONLY && isShiftDown())
 	{
-		// Move + resize (Locked to an axis).
+		// Move (Locked to an axis).
 		HUD_Editor_SetMode(hud_editmode_move_lockedaxis);
 	}
 	else if ((hud_hover || hud_editor_prevmode == hud_editmode_place) && MOUSEDOWN_1_ONLY && isCtrlDown())
@@ -1803,7 +1897,7 @@ static void HUD_Editor(void)
 	hud_t *hud_hover = NULL;
 
 	// Updating cursor location.
-	if(hud_editor_mode == hud_editmode_move_lockedaxis) // && hud_editor_lockaxis_found)
+	if(hud_editor_mode == hud_editmode_move_lockedaxis)
 	{
 		// Don't update the HUD Editor cursor if the axis is locked
 		// so that we avoid explicit checks for that.
@@ -1900,8 +1994,7 @@ void HUD_Editor_Toggle_f(void)
 {
 	static keydest_t key_dest_prev = key_game;
 	static int old_hud_planmode = 0;
-	extern cvar_t hud_planmode; // hud_common.c
-
+	
 	if (cls.state != ca_active) 
 	{
 		return;
@@ -1912,6 +2005,8 @@ void HUD_Editor_Toggle_f(void)
 
 	if (hud_editor)
 	{
+		// Start HUD Editor.
+
 		key_dest = key_hudeditor;
 		HUD_Editor_SetMode(hud_editmode_normal);
 		
@@ -1921,9 +2016,13 @@ void HUD_Editor_Toggle_f(void)
 	}
 	else
 	{
+		// Exit the HUD Editor.
+
 		key_dest = key_game;
 		key_dest_beforecon = key_game;
 		HUD_Editor_SetMode(hud_editmode_off);
+
+		// Reset to the old value for HUD planmode.
 		Cvar_SetValue(&hud_planmode, old_hud_planmode);
 	}
 }
@@ -1953,7 +2052,23 @@ void HUD_Editor_Key(int key, int unichar)
 		case 'p':
 			// Toggle HUD plan mode.
 			planmode = !planmode;
-			Cbuf_AddText(va("hud_planmode %d\n", planmode));
+			Cvar_SetValue(&hud_planmode, planmode);
+			break;
+		case K_F1 :
+			// Toggle moving.
+			Cvar_SetValue(&hud_editor_allowmove, !hud_editor_allowmove.value);
+			break;
+		case K_F2 :
+			// Toggle resizing.
+			Cvar_SetValue(&hud_editor_allowresize, !hud_editor_allowresize.value);
+			break;
+		case K_F3 :
+			// Toggle aligning.
+			Cvar_SetValue(&hud_editor_allowalign, !hud_editor_allowalign.value);
+			break;
+		case K_F4 :
+			// Toggle placing.
+			Cvar_SetValue(&hud_editor_allowplace, !hud_editor_allowplace.value);
 			break;
 	}
 	#endif
@@ -1964,8 +2079,29 @@ void HUD_Editor_Key(int key, int unichar)
 //
 void HUD_Editor_Init(void) 
 {
+	extern mpic_t *SCR_LoadCursorImage(char *cursorimage);
+
 	#ifdef GLQUAKE
+	// Register commands.
 	Cmd_AddCommand("hud_editor", HUD_Editor_Toggle_f);
+
+	// Register variables.
+	Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
+	Cvar_Register(&hud_editor_allowresize);
+	Cvar_Register(&hud_editor_allowmove);
+	Cvar_Register(&hud_editor_allowplace);
+	Cvar_Register(&hud_editor_allowalign);
+    Cvar_ResetCurrentGroup();
+
+	// Load HUD editor cursor icons.
+	hud_editor_move_icon = SCR_LoadCursorImage("gfx/hud_move_icon");
+	hud_editor_resize_icon = SCR_LoadCursorImage("gfx/hud_resize_icon");
+	hud_editor_align_icon = SCR_LoadCursorImage("gfx/hud_align_icon");
+	hud_editor_place_icon = SCR_LoadCursorImage("gfx/hud_place_icon");
+
+	// Default to showing the "move" icon.
+	scr_cursor_icon = hud_editor_move_icon;
+
 	hud_editor = false;
 	HUD_Editor_SetMode(hud_editmode_off);
 	#endif // GLQUAKE
