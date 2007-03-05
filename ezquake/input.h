@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: input.h,v 1.6 2007-01-07 19:17:23 disconn3ct Exp $
+	$Id: input.h,v 1.7 2007-03-05 17:22:22 cokeman1982 Exp $
 */
 // input.h -- external (non-keyboard) input devices
 
@@ -63,6 +63,7 @@ extern cvar_t	cl_keypad;
 
 extern cvar_t	freelook;
 extern cvar_t	sensitivity;
+extern cvar_t	cursor_sensitivity;
 extern cvar_t	lookspring;
 extern cvar_t	lookstrafe;
 

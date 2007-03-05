@@ -373,6 +373,7 @@ cvar_t	cl_pitchspeed = {"cl_pitchspeed","150", CVAR_ARCHIVE};
 cvar_t	lookspring = {"lookspring","0",CVAR_ARCHIVE};
 cvar_t	lookstrafe = {"lookstrafe","0",CVAR_ARCHIVE};
 cvar_t	sensitivity = {"sensitivity","12",CVAR_ARCHIVE};
+cvar_t	cursor_sensitivity = {"cursor_sensitivity", "1", CVAR_ARCHIVE};
 cvar_t	freelook = {"freelook","1",CVAR_ARCHIVE};
 
 cvar_t	m_pitch = {"m_pitch","0.022", CVAR_ARCHIVE};
@@ -795,6 +796,7 @@ void CL_InitInput (void) {
 	Cvar_Register (&lookspring);
 	Cvar_Register (&lookstrafe);
 	Cvar_Register (&sensitivity);
+	Cvar_Register (&cursor_sensitivity);	
 	Cvar_Register (&freelook);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);

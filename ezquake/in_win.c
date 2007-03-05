@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_win.c,v 1.27 2007-03-05 01:03:53 johnnycz Exp $
+	$Id: in_win.c,v 1.28 2007-03-05 17:22:14 cokeman1982 Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -904,7 +904,8 @@ void IN_MouseMove (usercmd_t *cmd) {
 				Key_Event (K_MOUSE1 + i, false);
 		}
 		mouse_oldbuttonstate = mstate_di;
-	} else
+	} 
+	else
 #endif
 	{
 		GetCursorPos (&current_pos);
@@ -913,23 +914,34 @@ void IN_MouseMove (usercmd_t *cmd) {
 		mx_accum = my_accum = 0;
 	}
 
-	if (m_filter.value) {
-        float filterfrac = bound(0, m_filter.value, 1) / 2.0;
-        mouse_x = (mx * (1 - filterfrac) + old_mouse_x * filterfrac);
-        mouse_y = (my * (1 - filterfrac) + old_mouse_y * filterfrac);
-	} else {
-		mouse_x = mx;
-		mouse_y = my;
-	}
-
-	old_mouse_x = mx;
-	old_mouse_y = my;
-
 	//
-	// Do not move the player if we're in HUD editor mode.
+	// Do not move the player if we're in HUD editor or menu mode. 
+	// And don't apply ingame sensitivity, since that will make movements jerky.
 	//
-	if(key_dest != key_hudeditor && key_dest != key_menu)
+	if(key_dest == key_hudeditor || key_dest == key_menu)
 	{
+		old_mouse_x = mouse_x = mx * cursor_sensitivity.value;
+		old_mouse_y = mouse_y = my * cursor_sensitivity.value;
+	}
+	else
+	{
+		// Normal game mode.
+
+		if (m_filter.value) 
+		{
+			float filterfrac = bound(0, m_filter.value, 1) / 2.0;
+			mouse_x = (mx * (1 - filterfrac) + old_mouse_x * filterfrac);
+			mouse_y = (my * (1 - filterfrac) + old_mouse_y * filterfrac);
+		} 
+		else 
+		{
+			mouse_x = mx;
+			mouse_y = my;
+		}
+
+		old_mouse_x = mx;
+		old_mouse_y = my;
+
 		if (m_accel.value) 
 		{
 			float mousespeed = (sqrt (mx * mx + my * my)) / (1000.0f * (float)cls.trueframetime);
@@ -961,10 +973,12 @@ void IN_MouseMove (usercmd_t *cmd) {
 		} else {
 			cmd->forwardmove -= m_forward.value * mouse_y;
 		}
+	}
 
-		// if the mouse has moved, force it to the center, so there's room to move
-		if (mx || my)
-			SetCursorPos (window_center_x, window_center_y);
+	// if the mouse has moved, force it to the center, so there's room to move
+	if (mx || my)
+	{
+		SetCursorPos (window_center_x, window_center_y);
 	}
 }
 
