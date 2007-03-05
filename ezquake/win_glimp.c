@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.6 2007-03-03 14:47:45 qqshka Exp $
+	$Id: win_glimp.c,v 1.7 2007-03-05 01:21:26 cokeman1982 Exp $
 
 */
 /*
@@ -1735,12 +1735,12 @@ void CheckWindowedMouse(void) {
 	{
 		windowed_mouse = true;
 
-		if (key_dest == key_game && !mouseactive && ActiveApp)
+		if ((key_dest == key_game || key_dest == key_hudeditor) && !mouseactive && ActiveApp)
 		{
 			IN_ActivateMouse ();
 			IN_HideMouse ();
 		}
-		else if (mouseactive && key_dest != key_game)
+		else if (mouseactive && (key_dest != key_game && key_dest != key_hudeditor))
 		{
 			IN_DeactivateMouse ();
 			IN_ShowMouse ();
