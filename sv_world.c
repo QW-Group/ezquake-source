@@ -16,8 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_world.c,v 1.13 2007-03-04 22:40:14 disconn3ct Exp $
-
+	$Id: sv_world.c,v 1.14 2007-03-05 00:16:24 disconn3ct Exp $
 */
 // sv_world.c -- world query functions
 
@@ -42,19 +41,16 @@ typedef struct {
 int SV_HullPointContents (hull_t *hull, int num, vec3_t p);
 
 /*
-===============================================================================
-HULL BOXES
-===============================================================================
-*/
+================
+SV_HullForEntity
 
-static	hull_t		box_hull;
-static	dclipnode_t	box_clipnodes[6];
-static	mplane_t	box_planes[6];
-	
-//Returns a hull that can be used for testing or clipping an object of mins/maxs size.
-//Offset is filled in to contain the adjustment that must be added to the
-//testing object's origin to get a point to use with the returned hull.
-hull_t *SV_HullForEntity (edict_t *ent, vec3_t mins, vec3_t maxs, vec3_t offset) {
+Returns a hull that can be used for testing or clipping an object of mins/maxs size.
+Offset is filled in to contain the adjustment that must be added to the
+testing object's origin to get a point to use with the returned hull.
+================
+*/
+hull_t *SV_HullForEntity (edict_t *ent, vec3_t mins, vec3_t maxs, vec3_t offset)
+{
 	model_t *model;
 	vec3_t size, hullmins, hullmaxs;
 	hull_t *hull;

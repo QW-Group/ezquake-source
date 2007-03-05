@@ -16,10 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.32 2007-03-03 00:11:11 disconn3ct Exp $
- 
+	$Id: host.c,v 1.33 2007-03-05 00:16:24 disconn3ct Exp $
 */
-
 // this should be the only file that includes both server.h and client.h
 
 #ifdef _WIN32
@@ -470,6 +468,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Netchan_Init ();
 	QLib_Init();
 	Sys_Init ();
+	CM_Init ();
 	PM_Init ();
 	Mod_Init ();
 
