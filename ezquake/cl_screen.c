@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.95 2007-03-05 01:03:53 johnnycz Exp $
+    $Id: cl_screen.c,v 1.96 2007-03-05 01:26:57 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -52,7 +52,7 @@ extern byte	current_pal[768];	// Tonik
 extern cvar_t	scr_newHud;		// HUD -> hexum
 
 
-// only the refresh window will be updated unless these variables are flagged 
+// only the refresh window will be updated unless these variables are flagged
 int		scr_copytop;
 int		scr_copyeverything;
 
@@ -69,78 +69,81 @@ float	unzoomedsensitivity;
 qbool	OnFovChange (cvar_t *var, char *value);
 qbool	OnDefaultFovChange (cvar_t *var, char *value);
 qbool	OnChange_scr_clock_format (cvar_t *var, char *value);
-cvar_t	scr_fov = {"fov", "90", CVAR_ARCHIVE, OnFovChange};	// 10 - 140
-cvar_t	default_fov = {"default_fov", "90", CVAR_ARCHIVE, OnDefaultFovChange};
-cvar_t	scr_viewsize = {"viewsize", "100", CVAR_ARCHIVE};
-cvar_t	scr_consize = {"scr_consize", "0.5"};
-cvar_t	scr_conspeed = {"scr_conspeed", "1000"};
-cvar_t	scr_centertime = {"scr_centertime", "2"};
-cvar_t	scr_centershift = {"scr_centershift", "0"}; // BorisU
-cvar_t	scr_showram = {"showram", "1"};
-cvar_t	scr_showturtle = {"showturtle", "0"};
-cvar_t	scr_showpause = {"showpause", "1"};
-cvar_t	scr_printspeed = {"scr_printspeed", "8"};
+cvar_t	scr_fov					= {"fov", "90", CVAR_ARCHIVE, OnFovChange};	// 10 - 140
+cvar_t	default_fov				= {"default_fov", "90", CVAR_ARCHIVE, OnDefaultFovChange};
+cvar_t	scr_viewsize			= {"viewsize", "100", CVAR_ARCHIVE};
+cvar_t	scr_consize				= {"scr_consize", "0.5"};
+cvar_t	scr_conspeed			= {"scr_conspeed", "1000"};
+cvar_t	scr_centertime			= {"scr_centertime", "2"};
+cvar_t	scr_centershift			= {"scr_centershift", "0"};
+cvar_t	scr_showram				= {"showram", "1"};
+cvar_t	scr_showturtle			= {"showturtle", "0"};
+cvar_t	scr_showpause			= {"showpause", "1"};
+cvar_t	scr_printspeed			= {"scr_printspeed", "8"};
 qbool	OnChange_scr_allowsnap(cvar_t *, char *);
-cvar_t	scr_allowsnap = {"scr_allowsnap", "1", 0, OnChange_scr_allowsnap};
+cvar_t	scr_allowsnap			= {"scr_allowsnap", "1", 0, OnChange_scr_allowsnap};
 
-cvar_t	scr_clock = {"cl_clock", "0"};
-cvar_t	scr_clock_format = {"cl_clock_format", "%H:%M:%S", 0, OnChange_scr_clock_format};
-cvar_t	scr_clock_x = {"cl_clock_x", "0"};
-cvar_t	scr_clock_y = {"cl_clock_y", "-1"};
+cvar_t	scr_clock				= {"cl_clock", "0"};
+cvar_t	scr_clock_format		= {"cl_clock_format", "%H:%M:%S", 0, OnChange_scr_clock_format};
+cvar_t	scr_clock_x				= {"cl_clock_x", "0"};
+cvar_t	scr_clock_y				= {"cl_clock_y", "-1"};
 
-cvar_t	scr_gameclock = {"cl_gameclock", "0"};
-cvar_t	scr_gameclock_x = {"cl_gameclock_x", "0"};
-cvar_t	scr_gameclock_y = {"cl_gameclock_y", "-3"};
+cvar_t	scr_gameclock			= {"cl_gameclock", "0"};
+cvar_t	scr_gameclock_x			= {"cl_gameclock_x", "0"};
+cvar_t	scr_gameclock_y			= {"cl_gameclock_y", "-3"};
 
-cvar_t	scr_democlock = {"cl_democlock", "0"};
-cvar_t	scr_democlock_x = {"cl_democlock_x", "0"};
-cvar_t	scr_democlock_y = {"cl_democlock_y", "-2"};
+cvar_t	scr_democlock			= {"cl_democlock", "0"};
+cvar_t	scr_democlock_x			= {"cl_democlock_x", "0"};
+cvar_t	scr_democlock_y			= {"cl_democlock_y", "-2"};
 
-cvar_t	show_speed = {"show_speed", "0"};
-cvar_t	show_speed_x = {"show_speed_x", "-1"};
-cvar_t	show_speed_y = {"show_speed_y", "1"};
+cvar_t	show_speed				= {"show_speed", "0"};
+cvar_t	show_speed_x			= {"show_speed_x", "-1"};
+cvar_t	show_speed_y			= {"show_speed_y", "1"};
 
-cvar_t	show_fps = {"show_fps", "0"};
-cvar_t	show_fps_x = {"show_fps_x", "-5"};
-cvar_t	show_fps_y = {"show_fps_y", "-1"};
+cvar_t	show_fps				= {"show_fps", "0"};
+cvar_t	show_fps_x				= {"show_fps_x", "-5"};
+cvar_t	show_fps_y				= {"show_fps_y", "-1"};
 
 cvar_t	scr_sshot_format		= {"sshot_format", DEFAULT_SSHOT_FORMAT};
 cvar_t	scr_sshot_dir			= {"sshot_dir", ""};
 
-// QW262 -->
-cvar_t	cl_hud = {"cl_hud", "1"};
-// <-- QW262
+cvar_t	cl_hud					= {"cl_hud", "1"};	// QW262 HUD.
 
 #ifdef GLQUAKE
-cvar_t	gl_triplebuffer = {"gl_triplebuffer", "1", CVAR_ARCHIVE};
-cvar_t  r_chaticons_alpha = {"r_chaticons_alpha", "0.8"};
-cvar_t	scr_autoid		= {"scr_autoid", "0"};
-cvar_t	scr_coloredfrags = {"scr_coloredfrags", "0"};
+cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1", CVAR_ARCHIVE};
+cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
+cvar_t	scr_autoid				= {"scr_autoid", "0"};
+cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
 
 cvar_t	scr_teaminfo_align_right = {"scr_teaminfo_align_right", "1", CVAR_ARCHIVE};
 cvar_t	scr_teaminfo_frame_color = {"scr_teaminfo_frame_color", "10 0 0 120"};
-cvar_t	scr_teaminfo_scale = {"scr_teaminfo_scale", "1", CVAR_ARCHIVE};
-cvar_t	scr_teaminfo_y     = {"scr_teaminfo_y",     "0", CVAR_ARCHIVE};
-cvar_t  scr_teaminfo_x     = {"scr_teaminfo_x",     "0", CVAR_ARCHIVE};
-cvar_t  scr_teaminfo       = {"scr_teaminfo",       "1", CVAR_ARCHIVE};
+cvar_t	scr_teaminfo_scale		= {"scr_teaminfo_scale", "1", CVAR_ARCHIVE};
+cvar_t	scr_teaminfo_y			= {"scr_teaminfo_y",     "0", CVAR_ARCHIVE};
+cvar_t  scr_teaminfo_x			= {"scr_teaminfo_x",     "0", CVAR_ARCHIVE};
+cvar_t  scr_teaminfo			= {"scr_teaminfo",       "1", CVAR_ARCHIVE};
 
 #endif
-cvar_t	scr_coloredText = {"scr_coloredText", "1"};
+cvar_t	scr_coloredText			= {"scr_coloredText", "1"};
 
 // Tracking text.
 cvar_t	scr_tracking			= {"scr_tracking", "Tracking %t %n, [JUMP] for next"};
 cvar_t	scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
+
+cvar_t	scr_cursor_scale		= {"scr_cursor_scale", "0.33"};			// The mouse cursor scale.
+cvar_t	scr_cursor_iconoffset_x	= {"scr_cursor_iconoffset_x", "10"};	// How much the cursor icon should be offseted from the cursor.
+cvar_t	scr_cursor_iconoffset_y	= {"scr_cursor_iconoffset_y", "0"};
 cvar_t	scr_cursor_scale = {"scr_cursor_scale", "0.2"};
 #ifdef GLQUAKE
-cvar_t	scr_cursor_alpha = {"scr_cursor_alpha", "1"};
+cvar_t	scr_cursor_alpha		= {"scr_cursor_alpha", "1"};
 #endif
 
-qbool	scr_initialized;                // ready to draw
+qbool	scr_initialized;	// Ready to draw.
 
 mpic_t	*scr_ram;
 mpic_t	*scr_net;
 mpic_t	*scr_turtle;
-mpic_t  *scr_cursor;
+mpic_t  *scr_cursor;		// Cursor image.
+mpic_t	*scr_cursor_icon;	// Cursor icon image (load icon or similar).
 
 int		scr_fullupdate;
 
@@ -169,7 +172,7 @@ static void SCR_CheckAutoScreenshot(void);
 static void SCR_CheckMVScreenshot(void);
 void SCR_DrawMultiviewBorders(void);
 void SCR_DrawMVStatus(void);
-void SCR_DrawMVStatusStrings(void); 
+void SCR_DrawMVStatusStrings(void);
 void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
 void Draw_AlphaString (int x, int y, char *str, float alpha);
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
@@ -219,8 +222,8 @@ void SCR_DrawCenterString (void) {
 	y = ((scr_center_lines <= 4) ? vid.height * 0.35 : 48);
 
 	// shift all centerprint but not proxy menu - more user-friendly way
-	if (m_state != m_proxy) 
-		y += scr_centershift.value*8; 
+	if (m_state != m_proxy)
+		y += scr_centershift.value*8;
 
 	while (1) {
 		// scan the width of the line
@@ -230,7 +233,7 @@ void SCR_DrawCenterString (void) {
 		}
 		x = (vid.width - l * 8) / 2;
 		for (j = 0; j < l; j++, x += 8) {
-			Draw_Character (x, y, start[j]);        
+			Draw_Character (x, y, start[j]);
 			if (!remaining--)
 				return;
 		}
@@ -285,7 +288,7 @@ qbool	concussioned = false;
 
 qbool OnFovChange (cvar_t *var, char *value)
 {
-	
+
 	float newfov = Q_atof(value);
 
 	if (newfov > 140)
@@ -324,7 +327,7 @@ qbool OnFovChange (cvar_t *var, char *value)
 qbool OnDefaultFovChange (cvar_t *var, char *value)
 {
 	float newfov = Q_atof(value);
-	
+
 	if (newfov < 10.0 || newfov > 140.0){
 		Com_Printf("Invalid default_fov\n");
 		return true;
@@ -359,14 +362,14 @@ static void SCR_CalcRefdef (void) {
 
 	// force the status bar to redraw
 	Sbar_Changed ();
-	
+
 	// bound viewsize
 	if (scr_viewsize.value < 30)
 		Cvar_Set (&scr_viewsize, "30");
 	if (scr_viewsize.value > 120)
 		Cvar_Set (&scr_viewsize, "120");
 
-	// intermission is always full screen   
+	// intermission is always full screen
 	size = cl.intermission ? 120 : scr_viewsize.value;
 
 	if (size >= 120)
@@ -412,7 +415,7 @@ static void SCR_CalcRefdef (void) {
 	r_refdef.vrect.x = (vid.width - r_refdef.vrect.width) / 2;
 	if (full)
 		r_refdef.vrect.y = 0;
-	else 
+	else
 		r_refdef.vrect.y = (h - r_refdef.vrect.height) / 2;
 
 	r_refdef.fov_x = scr_fov.value;
@@ -484,7 +487,7 @@ void SCR_DrawRam (void) {
 
 void SCR_DrawTurtle (void) {
 	static int  count;
-	
+
 	if (!scr_showturtle.value)
 		return;
 
@@ -632,7 +635,7 @@ void SCR_DrawGameClock (void) {
 	if (!scr_gameclock.value)
 		return;
 
-	if (scr_gameclock.value == 2 || scr_gameclock.value == 4) 
+	if (scr_gameclock.value == 2 || scr_gameclock.value == 4)
 		timelimit = 60 * Q_atof(Info_ValueForKey(cl.serverinfo, "timelimit")) + 1;
 	else
 		timelimit = 0;
@@ -812,20 +815,20 @@ int qglProject (float objx, float objy, float objz, float *model, float *proj, i
 
 	in[0] = objx; in[1] = objy; in[2] = objz; in[3] = 1.0;
 
-	
+
 	for (i = 0; i < 4; i++)
 		out[i] = in[0] * model[0 * 4 + i] + in[1] * model[1 * 4 + i] + in[2] * model[2 * 4 + i] + in[3] * model[3 * 4 + i];
 
-	
+
 	for (i = 0; i < 4; i++)
 		in[i] =	out[0] * proj[0 * 4 + i] + out[1] * proj[1 * 4 + i] + out[2] * proj[2 * 4 + i] + out[3] * proj[3 * 4 + i];
 
 	if (!in[3])
-		return 0;	
+		return 0;
 
 	VectorScale(in, 1 / in[3], in);
 
-	
+
 	*winx = view[0] + (1 + in[0]) * view[2] / 2;
 	*winy = view[1] + (1 + in[1]) * view[3] / 2;
 	*winz = (1 + in[2]) / 2;
@@ -870,7 +873,7 @@ void SCR_SetupAutoID (void) {
 	{
 		tracknum = Cam_TrackNum();
 	}
-	
+
 	VectorCopy(vpn, visitem.forward);
 	VectorCopy(vright, visitem.right);
 	VectorCopy(vup, visitem.up);
@@ -879,7 +882,7 @@ void SCR_SetupAutoID (void) {
 	state = cl.frames[cl.parsecount & UPDATE_MASK].playerstate;
 	info = cl.players;
 
-	for (j = 0; j < MAX_CLIENTS; j++, info++, state++) 
+	for (j = 0; j < MAX_CLIENTS; j++, info++, state++)
 	{
 		if (state->messagenum != cl.parsecount || j == cl.playernum || j == tracknum || info->spectator)
 			continue;
@@ -892,7 +895,7 @@ void SCR_SetupAutoID (void) {
 		// he's visible on screen, this only happens in some cases.
 		if (R_CullSphere(state->origin, 0))
 			continue;
-		
+
 		VectorCopy (state->origin, visitem.entorg);
 		visitem.entorg[2] += 27;
 		VectorSubtract (visitem.entorg, visitem.vieworg, visitem.dir);
@@ -939,7 +942,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 	int health_length;
 	int armor;
 	int armor_length;
-	
+
 	// Draw health above the name.
 	name_length = strlen(autoid_p->player->name) * 4;
 	health = autoid_p->player->stats[STAT_HEALTH];
@@ -976,7 +979,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 	armor = autoid_p->player->stats[STAT_ARMOR];
 	armor = min(100, armor);
 	armor_length = ROUND((name_length/100.0) * armor);
-	
+
 	if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR1)
 	{
 		// Green armor.
@@ -996,7 +999,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 		// Red armor.
 		strlcpy(armor_name, "&cf00RA", sizeof(armor_name));
 		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, name_length*2, 4, AUTOID_ARMORBAR_RED_ARMOR, 0.2);
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length*2, 4, AUTOID_ARMORBAR_RED_ARMOR, 1.0);		
+		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length*2, 4, AUTOID_ARMORBAR_RED_ARMOR, 1.0);
 	}
 
 	if(scr_autoid.value >= 3 && autoid_p->player->stats[STAT_ITEMS] & (IT_ARMOR1 | IT_ARMOR2 | IT_ARMOR3))
@@ -1005,8 +1008,8 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 		// Draw the name of the armor type.
 		//
 		Draw_ColoredString(
-			x - AUTOID_ARMORNAME_OFFSET_X, 
-			y - AUTOID_ARMORNAME_OFFSET_Y, 
+			x - AUTOID_ARMORNAME_OFFSET_X,
+			y - AUTOID_ARMORNAME_OFFSET_Y,
 			armor_name, 0);
 	}
 
@@ -1024,19 +1027,19 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 			case IT_SHOTGUN:
 				weapon_pic = sb_weapons[0][0];
 				break;
-			case IT_SUPER_SHOTGUN: 
+			case IT_SUPER_SHOTGUN:
 				weapon_pic = sb_weapons[0][1];
 				break;
-			case IT_NAILGUN: 
+			case IT_NAILGUN:
 				weapon_pic = sb_weapons[0][2];
 				break;
-			case IT_SUPER_NAILGUN: 
+			case IT_SUPER_NAILGUN:
 				weapon_pic = sb_weapons[0][3];
 				break;
 			case IT_GRENADE_LAUNCHER:
 				weapon_pic = sb_weapons[0][4];
 				break;
-			case IT_ROCKET_LAUNCHER: 
+			case IT_ROCKET_LAUNCHER:
 				weapon_pic = sb_weapons[0][5];
 				break;
 			case IT_LIGHTNING:
@@ -1049,13 +1052,13 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 
 		// Only draw the best weapon if it's the RL when autoid = 4
 		// Otherwise draw the current best weapon when autoid = 5
-		if(weapon_pic != NULL && 
+		if(weapon_pic != NULL &&
 			((scr_autoid.value == 4 && best_weapon == IT_ROCKET_LAUNCHER)
 			|| (scr_autoid.value >= 5 && best_weapon > 0)))
 		{
 			Draw_SSubPic (
-				x - name_length - weapon_pic->width - AUTOID_WEAPON_OFFSET_X, 
-				y - AUTOID_HEALTHBAR_OFFSET_Y - ROUND((weapon_pic->height/2.0)), 
+				x - name_length - weapon_pic->width - AUTOID_WEAPON_OFFSET_X,
+				y - AUTOID_HEALTHBAR_OFFSET_Y - ROUND((weapon_pic->height/2.0)),
 				weapon_pic,
 				0,
 				0,
@@ -1066,19 +1069,19 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 	}
 }
 
-void SCR_DrawAutoID (void) 
+void SCR_DrawAutoID (void)
 {
 	int i, x, y;
-	
+
 	if (!scr_autoid.value || (!cls.demoplayback && !cl.spectator))
 		return;
 
-	for (i = 0; i < autoid_count; i++) 
+	for (i = 0; i < autoid_count; i++)
 	{
 		x =  autoids[i].x * vid.width / glwidth;
 		y =  (glheight - autoids[i].y) * vid.height / glheight;
 		Draw_String(x - strlen(autoids[i].player->name) * 4, y - 8, autoids[i].player->name);
-		
+
 		// We only have health/armor info for all players when in demo playback.
 		if(cls.demoplayback && scr_autoid.value >= 2)
 		{
@@ -1148,8 +1151,8 @@ void CI_Init (void) {
 
 	ci_initialized = false;
 
-	if (!(ci_font = GL_LoadTextureImage ("textures/chaticons", "ci:chaticons", FONT_SIZE, FONT_SIZE, TEX_ALPHA | TEX_COMPLAIN))) 
-		return;		
+	if (!(ci_font = GL_LoadTextureImage ("textures/chaticons", "ci:chaticons", FONT_SIZE, FONT_SIZE, TEX_ALPHA | TEX_COMPLAIN)))
+		return;
 
 	ADD_CICON_TEXTURE(citex_chat,     ci_font, 0, 1,  0, 0,  64, 64); // get chat part from font
 	ADD_CICON_TEXTURE(citex_afk,      ci_font, 0, 1, 64, 0, 128, 64); // get afk part
@@ -1295,7 +1298,7 @@ void DrawCI (void) {
 
 	glEnable(GL_TEXTURE_2D);
 
-	for (i = 0; i < ci_count; i++) 
+	for (i = 0; i < ci_count; i++)
 	{
 		p = &ci_clients[i];
 		flags = p->flags;
@@ -1340,7 +1343,7 @@ typedef struct ti_player_s {
 	int			health;
 	int			armor;
 	double		time; // when we recive last update about this player, so we can guess disconnects and etc
-	
+
 } ti_player_t;
 
 /*do not show player if no info about him during this time, affect us if we lagging too*/
@@ -1366,12 +1369,12 @@ static void SCR_Draw_TeamInfo(void)
 	int i, j, slots[MAX_CLIENTS], slots_num, maxname, maxloc;
 	extern mpic_t  *sb_face_invis, *sb_face_quad, *sb_face_invuln;
 	mpic_t *pic;
-	
+
 	float	scale = bound(0.1, scr_teaminfo_scale.value, 10);
 
-	if ( !cl.teamplay || !scr_teaminfo.integer )  // non teamplay mode	
+	if ( !cl.teamplay || !scr_teaminfo.integer )  // non teamplay mode
 		return;
-		
+
 	for ( maxloc = maxname = slots_num = i = 0; i < MAX_CLIENTS; i++ ) {
 		if ( !cl.players[i].name[0] || cl.players[i].spectator
 				|| !ti_clients[i].time || ti_clients[i].time + TI_TIMEOUT < r_refdef2.time
@@ -1395,14 +1398,14 @@ static void SCR_Draw_TeamInfo(void)
 
 	if (scale != 1) {
 		glPushMatrix ();
-		glScalef(scale, scale, 1); 
+		glScalef(scale, scale, 1);
 	}
 
 	y = vid.height*0.6/scale + scr_teaminfo_y.value;
 
 	w = (maxname + maxloc + sizeof(" hhh aaa ww ppp") - 1);
 	h = slots_num;
-	
+
 	for ( j = 0; j < slots_num; j++ ) {
 		i = slots[j];
 
@@ -1415,7 +1418,7 @@ static void SCR_Draw_TeamInfo(void)
 			glColor4ub(col[0], col[1], col[2], col[3]);
 			glRectf(x, y, x + w * FONTWIDTH, y + h * FONTWIDTH);
 			glEnable (GL_TEXTURE_2D);
-			glColor4f(1, 1, 1, 1);			
+			glColor4f(1, 1, 1, 1);
 		}
 
 		// draw name
@@ -1432,11 +1435,11 @@ static void SCR_Draw_TeamInfo(void)
 		Draw_ColoredString (x, y, tmp, false);
 		x += (maxloc + 1) * FONTWIDTH;
 
-		// draw health and armor		
+		// draw health and armor
 		snprintf(tmp, sizeof(tmp), "%3d %3d", ti_clients[i].health, ti_clients[i].armor);
 		Draw_ColoredString (x, y, tmp, false);
 		x += (7 + 1) * FONTWIDTH;
-		
+
 		// draw "best" weapon icon
 		if ( (pic = SCR_GetWeaponIconByFlag(BestWeaponFromStatItems( ti_clients[i].items ))) )
 			Draw_SPic (x, y, pic, 0.5);
@@ -1445,24 +1448,24 @@ static void SCR_Draw_TeamInfo(void)
 		// draw powerups
 		if ( sb_face_quad && (ti_clients[i].items & IT_QUAD))
       Draw_SPic (x, y, sb_face_quad, 1.0/3);
-		x += FONTWIDTH;			
+		x += FONTWIDTH;
 		if ( sb_face_invuln && (ti_clients[i].items & IT_INVULNERABILITY))
       Draw_SPic (x, y, sb_face_invuln, 1.0/3);
-		x += FONTWIDTH;			
+		x += FONTWIDTH;
 		if ( sb_face_invis && (ti_clients[i].items & IT_INVISIBILITY))
       Draw_SPic (x, y, sb_face_invis, 1.0/3);
-		x += FONTWIDTH;			
-			
+		x += FONTWIDTH;
+
 		y += FONTWIDTH;
 	}
-	
+
 	if (scale != 1)
 		glPopMatrix();
 
 	glEnable(GL_ALPHA_TEST);
 	glDisable(GL_BLEND);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	glColor4f(1, 1, 1, 1);	
+	glColor4f(1, 1, 1, 1);
 }
 
 void Parse_TeamInfo(char *s)
@@ -1482,7 +1485,7 @@ void Parse_TeamInfo(char *s)
 
 	ti_clients[ client ].org[0] = atoi( Cmd_Argv( 2 ) );
 	ti_clients[ client ].org[1] = atoi( Cmd_Argv( 3 ) );
-	ti_clients[ client ].org[2] = atoi( Cmd_Argv( 4 ) );		
+	ti_clients[ client ].org[2] = atoi( Cmd_Argv( 4 ) );
 	ti_clients[ client ].health = atoi( Cmd_Argv( 5 ) );
 	ti_clients[ client ].armor  = atoi( Cmd_Argv( 6 ) );
 	ti_clients[ client ].items  = atoi( Cmd_Argv( 7 ) );
@@ -1574,11 +1577,11 @@ void Hud_Add_f(void)
 					hud_list = elem->next;
 				Hud_DeleteElement(elem);
 			}
-		} 
-		
+		}
+
 		a2 = Cmd_Argv(2);
 		a3 = Cmd_Argv(3);
-		
+
 		if (!strcasecmp(a2, "cvar")) {
 			if( (var = Cvar_FindVar(a3)) ) {
 				elem = Hud_NewElement();
@@ -1587,7 +1590,7 @@ void Hud_Add_f(void)
 			} else {
 				Com_Printf("cvar \"%s\" not found\n", a3);
 				return;
-			} 
+			}
 		} else if (!strcasecmp(a2, "str")) {
 			elem = Hud_NewElement();
 			elem->contents = Q_strdup( a3 );
@@ -1661,7 +1664,7 @@ void Hud_Add_f(void)
 
 void Hud_Elem_Remove(hud_element_t *elem)
 {
-	if (prev) 
+	if (prev)
 		prev->next = elem->next;
 	else
 		hud_list = elem->next;
@@ -1673,8 +1676,8 @@ void Hud_Remove_f(void)
 	hud_element_t	*elem, *next_elem;
 	char			*name;
 	int				i;
-	
-	for (i=1; i<Cmd_Argc(); i++) {	
+
+	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 		if (IsRegexp(name)) {
 			if(!ReSearchInit(name))
@@ -1727,8 +1730,8 @@ void Hud_Bg_f(void)
 {
 	hud_element_t *elem;
 	char	*name = Cmd_Argv(1);
-	
-	if (Cmd_Argc() != 3) 
+
+	if (Cmd_Argc() != 3)
 		Com_Printf("Usage: hud_bg <name> <bgcolor>\n");
 	else if (IsRegexp(name)) {
 		if(!ReSearchInit(name))
@@ -1753,7 +1756,7 @@ void Hud262_Move_f(void)
 {
 	hud_element_t *elem;
 	char	*name = Cmd_Argv(1);
-		
+
 	if (Cmd_Argc() != 4)
 		Com_Printf("Usage: hud_move <name> <dx> <dy>\n");
 	else if (IsRegexp(name)) {
@@ -1763,7 +1766,7 @@ void Hud262_Move_f(void)
 		ReSearchDone();
 	} else {
 		if ((elem = Hud_FindElement(name)))
-			Hud_Elem_Move(elem);	
+			Hud_Elem_Move(elem);
 		else
 			Com_Printf("HudElement \"%s\" not found\n", name);
 	}
@@ -1795,7 +1798,7 @@ void Hud_Width_f(void)
 		ReSearchDone();
 	} else {
 		if ((elem = Hud_FindElement(name)))
-			Hud_Elem_Width(elem);	
+			Hud_Elem_Width(elem);
 		else
 			Com_Printf("HudElement \"%s\" not found\n", name);
 	}
@@ -1817,7 +1820,7 @@ void Hud_Font_f(void)
 {
 	hud_element_t *elem;
 	char	*name = Cmd_Argv(1);
-		
+
 	if (Cmd_Argc() != 3)
 		Com_Printf("Usage: hud_font <name> <font>\n");
 	else if (IsRegexp(name)) {
@@ -1827,7 +1830,7 @@ void Hud_Font_f(void)
 		ReSearchDone();
 	} else {
 		if ((elem = Hud_FindElement(name)))
-			Hud_Elem_Font(elem);	
+			Hud_Elem_Font(elem);
 		else
 			Com_Printf("HudElement \"%s\" not found\n", name);
 	}
@@ -1882,7 +1885,7 @@ void Hud_Blink_f(void)
 {
 	hud_element_t *elem;
 	char	*name = Cmd_Argv(1);
-		
+
 	if (Cmd_Argc() != 4)
 		Com_Printf("Usage: hud_blink <name> <ms> <mask>\n");
 	else if (IsRegexp(name)) {
@@ -1892,7 +1895,7 @@ void Hud_Blink_f(void)
 		ReSearchDone();
 	} else {
 		if ((elem = Hud_FindElement(name)))
-			Hud_Elem_Blink(elem);	
+			Hud_Elem_Blink(elem);
 		else
 			Com_Printf("HudElement \"%s\" not found\n", name);
 	}
@@ -1909,7 +1912,7 @@ void Hud_Disable_f(void)
 	char			*name;
 	int				i;
 
-	for (i=1; i<Cmd_Argc(); i++) {	
+	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 		if (IsRegexp(name)) {
 			if(!ReSearchInit(name))
@@ -1918,7 +1921,7 @@ void Hud_Disable_f(void)
 			ReSearchDone();
 		} else {
 			if ((elem = Hud_FindElement(name)))
-				Hud_Elem_Disable(elem);	
+				Hud_Elem_Disable(elem);
 			else
 				Com_Printf("HudElement \"%s\" not found\n", name);
 		}
@@ -1936,7 +1939,7 @@ void Hud_Enable_f(void)
 	char			*name;
 	int				i;
 
-	for (i=1; i<Cmd_Argc(); i++) {	
+	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 		if (IsRegexp(name)) {
 			if(!ReSearchInit(name))
@@ -1945,7 +1948,7 @@ void Hud_Enable_f(void)
 			ReSearchDone();
 		} else {
 			if ((elem = Hud_FindElement(name)))
-				Hud_Elem_Enable(elem);	
+				Hud_Elem_Enable(elem);
 			else
 				Com_Printf("HudElement \"%s\" not found\n", name);
 		}
@@ -1987,7 +1990,7 @@ void Hud_List_f(void)
 			Com_Printf("%s : %s : %s\n", elem->name, type, param);
 		}
 	}
-	
+
 	Com_Printf ("------------\n%i/%i hud elements\n", m, i);
 	if (c>1)
 		ReSearchDone();
@@ -2194,7 +2197,7 @@ void SCR_DrawHud (void)
 
 		x = input.x*8 + 1; // top left
 		y = input.y*8;
-	
+
 		if (input.bg)
 			Draw_Fill(x, y, input.len*8, 8, input.bg);
 
@@ -2287,7 +2290,7 @@ void SCR_TileClear (void) {
 		// left
 		Draw_TileClear (0, 0, r_refdef.vrect.x, vid.height - sb_lines);
 		// right
-		Draw_TileClear (r_refdef.vrect.x + r_refdef.vrect.width, 0, 
+		Draw_TileClear (r_refdef.vrect.x + r_refdef.vrect.width, 0,
 			vid.width - (r_refdef.vrect.x + r_refdef.vrect.width), vid.height - sb_lines);
 	}
 	if (r_refdef.vrect.y > 0) {
@@ -2297,8 +2300,8 @@ void SCR_TileClear (void) {
 	if (r_refdef.vrect.y + r_refdef.vrect.height < vid.height - sb_lines) {
 		// bottom
 		Draw_TileClear (r_refdef.vrect.x,
-			r_refdef.vrect.y + r_refdef.vrect.height, 
-			r_refdef.vrect.width, 
+			r_refdef.vrect.y + r_refdef.vrect.height,
+			r_refdef.vrect.width,
 			vid.height - sb_lines - (r_refdef.vrect.height + r_refdef.vrect.y));
 	}
 }
@@ -2311,7 +2314,7 @@ void SCR_TileClear (void) {
 		Draw_TileClear (0, 0, vid.width, vid.height);
 		Sbar_Changed ();
 	} else {
-		char str[11] = "xxxxxxxxxx";		
+		char str[11] = "xxxxxxxxxx";
 		if (scr_viewsize.value < 100) {
 			// clear background for counters
 			if (show_speed.value)
@@ -2352,14 +2355,22 @@ static void SCR_DrawCursor(void) {
 	cursor_x = ms.x;
 	cursor_y = ms.y;
 
-	// disable the cursor in all but following client parts
-	if (key_dest != key_hudeditor && key_dest != key_menu) return;
+	// Disable the cursor in all but following client parts.
+	if (key_dest != key_hudeditor)
+	{
+		return;
+	}
 
 	// Always draw the cursor.
 #ifdef GLQUAKE
 	if (scr_cursor && scr_cursor->texnum)
 	{
-		Draw_SAlphaPic(cursor_x, cursor_y, scr_cursor, scr_cursor_alpha.value, SCR_GetCursorScale());
+		Draw_SAlphaPic(cursor_x, cursor_y, scr_cursor, scr_cursor_alpha.value, scr_cursor_scale.value);
+
+		if (scr_cursor_icon && scr_cursor_icon->texnum)
+		{
+			Draw_SAlphaPic(cursor_x + scr_cursor_iconoffset_x.value, cursor_y + scr_cursor_iconoffset_y.value, scr_cursor_icon, scr_cursor_alpha.value, scr_cursor_scale.value);
+		}
 	}
 	else
 	{
@@ -2425,8 +2436,8 @@ void SCR_DrawElements(void) {
 			}
 
 			if (!cl.intermission) {
-     		if (!sb_showscores && !sb_showteamscores) { // do not show if +showscores 
-#ifdef GLQUAKE				
+     		if (!sb_showscores && !sb_showteamscores) { // do not show if +showscores
+#ifdef GLQUAKE
 					SCR_Draw_TeamInfo();
 #endif
 					if (key_dest != key_menu)
@@ -2438,8 +2449,8 @@ void SCR_DrawElements(void) {
 					SCR_DrawDemoClock ();
 					SCR_DrawFPS ();
 				}
-				
-				// QW262 
+
+				// QW262
 				SCR_DrawHud ();
 
 				MVD_Screen ();
@@ -2481,7 +2492,7 @@ void SCR_DrawElements(void) {
 		}
 
 		if (!scr_autosshot_countdown) {
-			SCR_DrawConsole ();	
+			SCR_DrawConsole ();
 			M_Draw ();
 		}
 #ifdef GLQUAKE
@@ -2558,7 +2569,7 @@ void SCR_UpdateScreen (void) {
 	{
 		SCR_CalcRefdef();
 	}
- 
+
 	// do 3D refresh drawing, and then update the screen
 	GL_BeginRendering (&glx, &gly, &glwidth, &glheight);
 
@@ -2602,7 +2613,7 @@ void SCR_UpdateScreen (void) {
 	// then the first view that is drawn will be
 	// 4x as bright as the last view for instance.
 	// (using a multiview value of 4 in this example).
-	if(cls.mvdplayback && cl_multiview.value) 
+	if(cls.mvdplayback && cl_multiview.value)
 	{
 		if(CURRVIEW == 1)
 		{
@@ -2665,7 +2676,7 @@ void SCR_UpdateScreen (void) {
 		oldfov = scr_fov.value;
 		vid.recalc_refdef = true;
 	}
-	
+
 	if (oldscreensize != scr_viewsize.value) {
 		oldscreensize = scr_viewsize.value;
 		vid.recalc_refdef = true;
@@ -2695,7 +2706,7 @@ void SCR_UpdateScreen (void) {
 	SCR_SetUpToDrawConsole ();
 
 	// Multiview
-	if (!(cl_multiview.value && cls.mvdplayback)) 
+	if (!(cl_multiview.value && cls.mvdplayback))
 	{
 		SCR_EraseCenterString ();
 	}
@@ -2783,7 +2794,7 @@ static char *SShot_ExtForFormat(int format) {
 
 static image_format_t SShot_FormatForName(char *name) {
 	char *ext;
-	
+
 	ext = COM_FileExtension(name);
 
 #ifdef GLQUAKE
@@ -2860,7 +2871,7 @@ int SCR_Screenshot(char *name) {
 	buffersize = glwidth * glheight * 3;
 
 	buffer = (byte *) Q_malloc (buffersize);
-	glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer); 
+	glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
 
 #ifdef WITH_PNG
 	if (format == IMAGE_PNG) {
@@ -3006,7 +3017,7 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 		strlcpy(ext, DEFAULT_SSHOT_FORMAT, sizeof(ext));
 	}
 
-	for (i = 0; i < MAX_SCREENSHOT_COUNT; i++) 
+	for (i = 0; i < MAX_SCREENSHOT_COUNT; i++)
 	{
 		snprintf(name, name_size, "ezquake%03i.%s", i, ext);
 		if (!(f = fopen (va("%s/%s", sshot_dir, name), "rb")))
@@ -3015,8 +3026,8 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 		}
 		fclose(f);
 	}
-	
-	if (i == MAX_SCREENSHOT_COUNT) 
+
+	if (i == MAX_SCREENSHOT_COUNT)
 	{
 		Com_Printf ("Error: Cannot create more than %d screenshots\n", MAX_SCREENSHOT_COUNT);
 		return -1;
@@ -3025,10 +3036,10 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 	return 1;
 }
 
-void SCR_ScreenShot_f (void) 
-{	
+void SCR_ScreenShot_f (void)
+{
 	char name[MAX_OSPATH], *filename, *sshot_dir;
-	int success;	
+	int success;
 
 	// Multiview
 	if (cls.mvdplayback && cl_multiview.value)
@@ -3048,27 +3059,27 @@ void SCR_ScreenShot_f (void)
 			Com_DPrintf ("Waiting with screenshot because all views haven't been drawn... view = %d\n", CURRVIEW);
 			return;
 		}
-	}	
-	
+	}
+
 	sshot_dir = Sshot_SshotDirectory();
 
-	if (Cmd_Argc() == 2) 
+	if (Cmd_Argc() == 2)
 	{
 		strlcpy (name, Cmd_Argv(1), sizeof(name));
-	} 
-	else if (Cmd_Argc() == 1) 
+	}
+	else if (Cmd_Argc() == 1)
 	{
 		if (SCR_GetScreenShotName (name, sizeof(name), sshot_dir) < 0)
 		{
 			return;
 		}
-	} 
-	else 
+	}
+	else
 	{
 		Com_Printf("Usage: %s [filename]\n", Cmd_Argv(0));
 		return;
 	}
-	
+
 	for (filename = name; *filename == '/' || *filename == '\\'; filename++)
 		;
 
@@ -3080,7 +3091,7 @@ void SCR_ScreenShot_f (void)
 	}
 }
 
-void SCR_RSShot_f (void) { 
+void SCR_RSShot_f (void) {
 	int success = SSHOT_FAILED;
 	char filename[MAX_PATH];
 #ifdef GLQUAKE
@@ -3094,11 +3105,11 @@ void SCR_RSShot_f (void) {
 	if (cls.state < ca_onserver)
 		return;		// gotta be connected
 
-	if (!scr_allowsnap.value) { 
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd); 
-		SZ_Print (&cls.netchan.message, "snap\n"); 
-		Com_Printf ("Refusing remote screen shot request.\n"); 
-		return; 
+	if (!scr_allowsnap.value) {
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		SZ_Print (&cls.netchan.message, "snap\n");
+		Com_Printf ("Refusing remote screen shot request.\n");
+		return;
 	}
 
 	Com_Printf ("Remote screenshot requested.\n");
@@ -3176,7 +3187,7 @@ void SCR_RSShot_f (void) {
 	remove(filename);
 }
 
-static void SCR_CheckMVScreenshot(void) 
+static void SCR_CheckMVScreenshot(void)
 {
 	if(scr_mvsshot_in_progress && cls.mvdplayback && cl_multiview.value)
 	{
@@ -3226,9 +3237,9 @@ static void SCR_CheckAutoScreenshot(void) {
 		Com_Printf("Match scoreboard saved to %s\n", savedname);
 }
 
-void SCR_AutoScreenshot(char *matchname) 
+void SCR_AutoScreenshot(char *matchname)
 {
-	if (cl.intermission == 1) 
+	if (cl.intermission == 1)
 	{
 		scr_autosshot_countdown = vid.numpages;
 		strlcpy(auto_matchname, matchname, sizeof(auto_matchname));
@@ -3236,10 +3247,10 @@ void SCR_AutoScreenshot(char *matchname)
 }
 
 // Capturing to avi.
-void SCR_Movieshot(char *name) 
+void SCR_Movieshot(char *name)
 {
 	#ifdef _WIN32
-	if (movie_is_avi) 
+	if (movie_is_avi)
 	{
 		int size = 0;
 		// Capturing a movie.
@@ -3273,17 +3284,17 @@ void SCR_Movieshot(char *name)
 
 		int i, j, rowp;
 		byte *buffer, *p;
-		
+
 		size = vid.width * vid.height * 3;
 		buffer = (byte *) Q_malloc (size);
 
 		D_EnableBackBufferAccess ();
 
 		p = buffer;
-		for (i = vid.height - 1; i >= 0; i--) 
+		for (i = vid.height - 1; i >= 0; i--)
 		{
 			rowp = i * vid.rowbytes;
-			for (j = 0; j < vid.width; j++) 
+			for (j = 0; j < vid.width; j++)
 			{
 				*p++ = current_pal[vid.buffer[rowp]*3+2];
 				*p++ = current_pal[vid.buffer[rowp]*3+1];
@@ -3299,38 +3310,51 @@ void SCR_Movieshot(char *name)
 		Capture_WriteVideo (buffer, size);
 
 		Q_free (buffer);
-	} 
-	else 
+	}
+	else
 	{
 		// We're just capturing images.
 		SCR_Screenshot (name);
 	}
 
 	#else // _WIN32
-	
+
 	// Capturing to avi only supported in windows yet.
 	SCR_Screenshot (name);
-	
+
 	#endif // _WIN32
+}
+
+mpic_t *SCR_LoadCursorImage(char *cursorimage)
+{
+	mpic_t *image = NULL;
+	#ifdef GLQUAKE
+	image = Draw_CachePicSafe(va("%s.lmp", cursorimage), false, false);
+
+	// Failed to load anything, maybe missing .lmp-file, so just try
+	// loading any 24-bit version that's available instead.
+	if(!image)
+	{
+		image = Draw_CachePicSafe(cursorimage, false, true);
+	}
+	#else
+	// sadly, noone coded Draw_CachePicSafe for Release yet
+	// so we require user to have that file for non-GL version
+	// otherwise the client will not start
+	// image = Draw_CachePic(cursorimage);
+	image = NULL;
+	#endif
+	return image;
 }
 
 /************************************ INIT ************************************/
 
-void SCR_Init (void) 
+void SCR_Init (void)
 {
 	scr_ram = Draw_CacheWadPic ("ram");
 	scr_net = Draw_CacheWadPic ("net");
 	scr_turtle = Draw_CacheWadPic ("turtle");
-	scr_cursor = Draw_CachePicSafe("gfx/cursor.lmp", false, false);
-
-#ifdef GLQUAKE
-	// Failed to load anything, maybe missing .lmp-file, so just try
-	// loading any 24-bit version that's available instead.
-	if(!scr_cursor)
-	{
-		scr_cursor = Draw_CachePicSafe("gfx/cursor", false, true);
-	}
-#endif
+	scr_cursor = SCR_LoadCursorImage("gfx/cursor");
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIEW);
 	Cvar_Register (&scr_fov);
@@ -3355,7 +3379,7 @@ void SCR_Init (void)
 	Cvar_Register (&scr_showturtle);
 	Cvar_Register (&scr_showpause);
 	Cvar_Register (&scr_centertime);
-	Cvar_Register (&scr_centershift); 
+	Cvar_Register (&scr_centershift);
 
 	Cvar_Register (&scr_clock_x);
 	Cvar_Register (&scr_clock_y);
@@ -3369,7 +3393,7 @@ void SCR_Init (void)
 	Cvar_Register (&scr_democlock_x);
 	Cvar_Register (&scr_democlock_y);
 	Cvar_Register (&scr_democlock);
-	
+
 	Cvar_Register (&show_speed);
 	Cvar_Register (&show_speed_x);
 	Cvar_Register (&show_speed_y);
@@ -3398,6 +3422,8 @@ void SCR_Init (void)
 	Cvar_Register (&scr_spectatorMessage);
 
 	Cvar_Register (&scr_cursor_scale);
+	Cvar_Register (&scr_cursor_iconoffset_x);
+	Cvar_Register (&scr_cursor_iconoffset_y);
 #ifdef GLQUAKE
 	Cvar_Register (&scr_cursor_alpha);
 #endif
@@ -3408,14 +3434,14 @@ void SCR_Init (void)
 	Cvar_Register (&scr_sshot_dir);
 
 	Cvar_ResetCurrentGroup();
-	
-	
+
+
 	Cmd_AddCommand ("screenshot", SCR_ScreenShot_f);
 	Cmd_AddCommand ("sizeup", SCR_SizeUp_f);
 	Cmd_AddCommand ("sizedown", SCR_SizeDown_f);
 	Cmd_AddCommand ("+zoom", SCR_ZoomIn_f);
 	Cmd_AddCommand ("-zoom", SCR_ZoomOut_f);
-	
+
 	scr_initialized = true;
 }
 
@@ -3424,35 +3450,35 @@ void SCR_DrawMultiviewBorders()
 	//
 	// Draw black borders around the views.
 	//
-	if (cl_multiview.value == 2 && !cl_mvinset.value) 
+	if (cl_multiview.value == 2 && !cl_mvinset.value)
 	{
-		Draw_Fill(0, vid.height / 2, vid.width - 1, 1, 0); 
+		Draw_Fill(0, vid.height / 2, vid.width - 1, 1, 0);
 	}
-	else if (cl_multiview.value == 2 && cl_mvinset.value) 
+	else if (cl_multiview.value == 2 && cl_mvinset.value)
 	{
-		if (vid.width <= 512 && cl_sbar.value) 
+		if (vid.width <= 512 && cl_sbar.value)
 		{
 			Draw_Fill(vid.width / 3 * 2 + 1, vid.height / 3 - sb_lines / 3, vid.width / 3 + 2, 1, 0);
 			Draw_Fill(vid.width / 3 * 2 + 1, 0, 1, vid.height / 3 - sb_lines / 3, 0);
-		} 
-		else if ((vid.width > 512 && cl_sbar.value && !cl_mvinsethud.value) || (vid.width > 512 && cl_sbar.value && !cl_mvdisplayhud.value)) 
+		}
+		else if ((vid.width > 512 && cl_sbar.value && !cl_mvinsethud.value) || (vid.width > 512 && cl_sbar.value && !cl_mvdisplayhud.value))
 		{
 			Draw_Fill(vid.width / 3 * 2, vid.height / 3 - sb_lines / 3, vid.width / 3, 1, 0);
 			Draw_Fill(vid.width / 3 * 2, 0, 1, vid.height / 3 - sb_lines/3, 0);
 		}
-		else 
+		else
 		{
 			// sbar 0 and <= 512 conwidth
 			Draw_Fill(vid.width / 3 * 2 + 1, vid.height / 3, vid.width / 3 + 2, 1, 0);
 			Draw_Fill(vid.width / 3 * 2 + 1, 0, 1, vid.height / 3, 0);
 		}
 	}
-	else if (cl_multiview.value == 3) 
+	else if (cl_multiview.value == 3)
 	{
 		Draw_Fill(vid.width / 2, vid.height / 2, 1, vid.height / 2, 0);
-		Draw_Fill(0, vid.height / 2, vid.width, 1, 0); 
+		Draw_Fill(0, vid.height / 2, vid.width, 1, 0);
 	}
-	else if (cl_multiview.value == 4) 
+	else if (cl_multiview.value == 4)
 	{
 		Draw_Fill(vid.width / 2, 0, 1, vid.height, 0);
 		Draw_Fill(0, vid.height / 2, vid.width, 1, 0);
@@ -3463,34 +3489,34 @@ mpic_t * SCR_GetWeaponIconByFlag (int flag)
 {
 	extern mpic_t *sb_weapons[7][8];  // sbar.c Weapon pictures.
 
-	if (flag == IT_LIGHTNING || flag == IT_SUPER_LIGHTNING) 
+	if (flag == IT_LIGHTNING || flag == IT_SUPER_LIGHTNING)
 	{
 		return sb_weapons[0][6];
-	} 
-	else if (flag == IT_ROCKET_LAUNCHER) 
+	}
+	else if (flag == IT_ROCKET_LAUNCHER)
 	{
 		return sb_weapons[0][5];
-	} 
-	else if (flag == IT_GRENADE_LAUNCHER) 
+	}
+	else if (flag == IT_GRENADE_LAUNCHER)
 	{
 		return sb_weapons[0][4];
-	} 
-	else if (flag == IT_SUPER_NAILGUN) 
+	}
+	else if (flag == IT_SUPER_NAILGUN)
 	{
 		return sb_weapons[0][3];
-	} 
-	else if (flag == IT_NAILGUN) 
+	}
+	else if (flag == IT_NAILGUN)
 	{
 		return sb_weapons[0][2];
-	} 
-	else if (flag == IT_SUPER_SHOTGUN) 
+	}
+	else if (flag == IT_SUPER_SHOTGUN)
 	{
 		return sb_weapons[0][1];
-	} 
-	else if (flag == IT_SHOTGUN) 
+	}
+	else if (flag == IT_SHOTGUN)
 	{
 		return sb_weapons[0][0];
-	} 
+	}
 
 	return NULL;
 }
@@ -3563,7 +3589,7 @@ void SCR_SetMVStatusGatheredPosition (mv_viewrect_t *view, int hud_width, int hu
 void SCR_SetMVStatusPosition (int position, mv_viewrect_t *view, int hud_width, int hud_height, int *x, int *y)
 {
 	switch (position)
-	{			
+	{
 		case MV_HUD_POS_BOTTOM_LEFT :
 		{
 			(*x) = 0;
@@ -3582,7 +3608,7 @@ void SCR_SetMVStatusPosition (int position, mv_viewrect_t *view, int hud_width, 
 			(*y) = 0;
 			break;
 		}
-		case MV_HUD_POS_TOP_LEFT : 
+		case MV_HUD_POS_TOP_LEFT :
 		{
 			(*x) = 0;
 			(*y) = 0;
@@ -3606,7 +3632,7 @@ void SCR_SetMVStatusPosition (int position, mv_viewrect_t *view, int hud_width, 
 			(*y) = max(0, (view->height - hud_height));
 			break;
 		}
-	}	
+	}
 }
 
 void SCR_SetMVStatusGatheredPosition (mv_viewrect_t *view, int hud_width, int hud_height, int *x, int *y)
@@ -3626,49 +3652,49 @@ void SCR_SetMVStatusGatheredPosition (mv_viewrect_t *view, int hud_width, int hu
 				SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_CENTER, view, hud_width, hud_height, x, y);
 			}
 			else if (CURRVIEW == 1)
-			{			
-				// Bottom view. (Put the hud at the top)				
+			{
+				// Bottom view. (Put the hud at the top)
 				SCR_SetMVStatusPosition (MV_HUD_POS_TOP_CENTER, view, hud_width, hud_height, x, y);
 			}
 		}
 	}
 	else if (cl_multiview.value == 3)
 	{
-		if (CURRVIEW == 2) 
-		{ 
+		if (CURRVIEW == 2)
+		{
 			// Top view. (Put the hud at the bottom)
 			SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_CENTER, view, hud_width, hud_height, x, y);
 		}
-		else if (CURRVIEW == 3) 
-		{ 
+		else if (CURRVIEW == 3)
+		{
 			// Bottom left view. (Put the hud at the top right)
 			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_RIGHT, view, hud_width, hud_height, x, y);
 		}
-		else if (CURRVIEW == 1) 
-		{ 
+		else if (CURRVIEW == 1)
+		{
 			// Bottom right view. (Put the hud at the top left)
 			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_LEFT, view, hud_width, hud_height, x, y);
 		}
 	}
 	else if (cl_multiview.value == 4)
 	{
-		if (CURRVIEW == 2) 
-		{ 
+		if (CURRVIEW == 2)
+		{
 			// Top left view. (Put the hud at the bottom right)
 			SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_RIGHT, view, hud_width, hud_height, x, y);
 		}
-		else if (CURRVIEW == 3) 
-		{ 
+		else if (CURRVIEW == 3)
+		{
 			// Top right view. (Put the hud at the bottom left)
 			SCR_SetMVStatusPosition (MV_HUD_POS_BOTTOM_LEFT, view, hud_width, hud_height, x, y);
 		}
-		else if (CURRVIEW == 4) 
-		{ 
+		else if (CURRVIEW == 4)
+		{
 			// Bottom left view. (Put the hud at the top right)
 			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_RIGHT, view, hud_width, hud_height, x, y);
 		}
-		else if (CURRVIEW == 1) 
-		{ 
+		else if (CURRVIEW == 1)
+		{
 			// Bottom right view. (Put the hud at the top left)
 			SCR_SetMVStatusPosition (MV_HUD_POS_TOP_LEFT, view, hud_width, hud_height, x, y);
 		}
@@ -3721,7 +3747,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 		// Green armor.
 		strlcpy(armor_color_code, "&c0f0", sizeof(armor_color_code));
 		armor_amount_width = ROUND(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 100.0);
-		
+
 		#ifdef GLQUAKE
 		armor_color[0] = 80 / 255.0;
 		armor_color[1] = 190 / 255.0;
@@ -3750,7 +3776,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 		armor_color[0] = 190 / 255.0;
 		armor_color[1] = 50 / 255.0;
 		armor_color[2] = 0;
-		#endif	
+		#endif
 	}
 
 	if (cl.stats[STAT_ARMOR] > 0)
@@ -3759,11 +3785,11 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 		// Background fill for armor.
 		//
 		#ifdef GLQUAKE
-		Draw_AlphaFillRGB (x, 
-			y, 
-			armor_amount_width, 
-			8, 
-			armor_color[0], armor_color[1], armor_color[2], 
+		Draw_AlphaFillRGB (x,
+			y,
+			armor_amount_width,
+			8,
+			armor_color[0], armor_color[1], armor_color[2],
 			0.3);
 		#endif
 
@@ -3815,7 +3841,7 @@ void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 	{
 		// Crazy health.
 		Draw_AlphaFillRGB (x, y, MV_HUD_HEALTH_WIDTH, 8, AUTOID_HEALTHBAR_UNNATURAL_COLOR, MV_HEALTH_OPACITY);
-		
+
 	}
 	#endif
 
@@ -3836,30 +3862,30 @@ void SCR_MV_DrawPowerups (int x, int y)
 	extern mpic_t  *sb_face_invuln;
 	extern mpic_t  *sb_face_invis_invuln;
 
-	if (   cl.stats[STAT_ITEMS] & IT_INVULNERABILITY 
+	if (   cl.stats[STAT_ITEMS] & IT_INVULNERABILITY
 		&& cl.stats[STAT_ITEMS] & IT_INVISIBILITY)
 	{
 		// Pentagram + Ring.
 		#ifdef GLQUAKE
 		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invis_invuln->width) / 2,
-			y - sb_face_invis_invuln->height / 2, 
+			y - sb_face_invis_invuln->height / 2,
 			sb_face_invis_invuln, 0.4);
 		#else
 		Draw_Pic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invuln->width) / 2,
-			y - sb_face_invuln->height / 2, 
+			y - sb_face_invuln->height / 2,
 			sb_face_invis_invuln);
 		#endif
 	}
 	else if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)
-	{		
+	{
 		// Pentagram.
 		#ifdef GLQUAKE
 		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invuln->width) / 2,
-			y - sb_face_invuln->height / 2, 
+			y - sb_face_invuln->height / 2,
 			sb_face_invuln, 0.4);
 		#else
 		Draw_Pic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invuln->width) / 2,
-			y - sb_face_invuln->height / 2, 
+			y - sb_face_invuln->height / 2,
 			sb_face_invuln);
 		#endif
 	}
@@ -3868,11 +3894,11 @@ void SCR_MV_DrawPowerups (int x, int y)
 		// Ring.
 		#ifdef GLQUAKE
 		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invis->width) / 2,
-			y - sb_face_invis->height / 2, 
+			y - sb_face_invis->height / 2,
 			sb_face_invis, 0.4);
 		#else
 		Draw_Pic (x + (MV_HUD_HEALTH_WIDTH - sb_face_invuln->width) / 2,
-			y - sb_face_invuln->height / 2, 
+			y - sb_face_invuln->height / 2,
 			sb_face_invis);
 		#endif
 	}
@@ -3882,11 +3908,11 @@ void SCR_MV_DrawPowerups (int x, int y)
 		// Ring.
 		#ifdef GLQUAKE
 		Draw_AlphaPic (x + (MV_HUD_HEALTH_WIDTH - sb_face_quad->width) / 2,
-			y - sb_face_quad->height / 2, 
+			y - sb_face_quad->height / 2,
 			sb_face_quad, 0.4);
 		#else
 		Draw_Pic (x + (MV_HUD_HEALTH_WIDTH - sb_face_quad->width) / 2,
-			y - sb_face_quad->height / 2, 
+			y - sb_face_quad->height / 2,
 			sb_face_quad);
 		#endif
 	}
@@ -3896,11 +3922,11 @@ void SCR_MV_DrawCurrentWeapon (int x, int y, int *width, int *height)
 {
 	mpic_t *current_weapon = NULL;
 	current_weapon = SCR_GetActiveWeaponIcon();
-	
+
 	if (current_weapon)
 	{
-		Draw_Pic (x, 
-			y - (current_weapon->height / 4), 
+		Draw_Pic (x,
+			y - (current_weapon->height / 4),
 			current_weapon);
 	}
 
@@ -3993,7 +4019,7 @@ void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position, qbool f
 		if(!vertical)
 		{
 			hud_height = 3*8;
-			hud_width = 
+			hud_width =
 				8 * (strlen(name)) +				// Name.
 				MV_HUD_ARMOR_WIDTH + 				// Armor + space.
 				MV_HUD_HEALTH_WIDTH + 				// Health.
@@ -4026,7 +4052,7 @@ void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position, qbool f
 		}
 
 		// Draw powerups in the middle background of the hud.
-		SCR_MV_DrawPowerups (view->x + hud_x + (hud_width / 2), view->y + hud_y + (hud_height / 2));	
+		SCR_MV_DrawPowerups (view->x + hud_x + (hud_width / 2), view->y + hud_y + (hud_height / 2));
 
 		// Draw the elements vertically? (Add a small gap between the items when
 		// drawing them vertically, otherwise they're too close together).
@@ -4067,7 +4093,7 @@ void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position, qbool f
 			// Current weapon.
 			SCR_MV_DrawCurrentWeapon (view ->x + hud_x, view->y + hud_y, &currweap_width, &currweap_height);
 			MV_FLIP(currweap_width, currweap_height);
-	
+
 			// Health.
 			SCR_MV_DrawHealth (view->x + hud_x, view->y + hud_y, &health_width, &health_height, style);
 			MV_FLIP(health_width, health_height);
@@ -4101,7 +4127,7 @@ void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position, qbool f
 
 void SCR_SetMVStatusTwoViewRect (mv_viewrect_t *view)
 {
-	if (CURRVIEW == 2) 
+	if (CURRVIEW == 2)
 	{
 		// Top.
 		view->x			= 0;
@@ -4109,8 +4135,8 @@ void SCR_SetMVStatusTwoViewRect (mv_viewrect_t *view)
 		view->width		= vid.width;
 		view->height	= vid.height / 2;
 	}
-	else if (CURRVIEW == 1) 
-	{ 
+	else if (CURRVIEW == 1)
+	{
 		// Bottom.
 		view->x			= 0;
 		view->y			= vid.height / 2;
@@ -4121,80 +4147,80 @@ void SCR_SetMVStatusTwoViewRect (mv_viewrect_t *view)
 
 void SCR_SetMVStatusTwoInsetViewRect (mv_viewrect_t *view)
 {
-	if (CURRVIEW == 2) 
-	{ 
+	if (CURRVIEW == 2)
+	{
 		// Main.
 		view->x			= 0;
 		view->y			= 0;
 		view->width		= vid.width;
 		view->height	= vid.height;
 	}
-	else if (CURRVIEW == 1) 
-	{ 
+	else if (CURRVIEW == 1)
+	{
 		// Top right.
 		view->width		= (vid.width / 3);
 		view->height	= (vid.height / 3);
 		view->x			= (vid.width / 3) * 2;
-		view->y			= 0; 
+		view->y			= 0;
 	}
 }
 
 void SCR_SetMVStatusThreeViewRect (mv_viewrect_t *view)
 {
-	if (CURRVIEW == 2) 
-	{ 
+	if (CURRVIEW == 2)
+	{
 		// Top.
 		view->x			= 0;
 		view->y			= 0;
 		view->width		= vid.width;
 		view->height	= vid.height / 2;
 	}
-	else if (CURRVIEW == 3) 
-	{ 
+	else if (CURRVIEW == 3)
+	{
 		// Bottom left.
 		view->x			= 0;
 		view->y			= vid.height / 2;
 		view->width		= vid.width / 2;
 		view->height	= vid.height / 2;
 	}
-	else if (CURRVIEW == 1) 
-	{ 
+	else if (CURRVIEW == 1)
+	{
 		// Bottom right.
 		view->x			= vid.width / 2;
 		view->y			= vid.height / 2;
 		view->width		= vid.width / 2;
 		view->height	= vid.height / 2;
-	}	
+	}
 }
 
 void SCR_SetMVStatusFourViewRect (mv_viewrect_t *view)
 {
-	if (CURRVIEW == 2) 
-	{ 
+	if (CURRVIEW == 2)
+	{
 		// Top left.
 		view->x			= 0;
 		view->y			= 0;
 		view->width		= vid.width / 2;
 		view->height	= vid.height / 2;
 	}
-	else if (CURRVIEW == 3) 
-	{ 
+	else if (CURRVIEW == 3)
+	{
 		// Top right.
 		view->x			= vid.width / 2;
 		view->y			= 0;
 		view->width		= vid.width / 2;
 		view->height	= vid.height / 2;
 	}
-	else if (CURRVIEW == 4) 
-	{ 
+	else if (CURRVIEW == 4)
+	{
 		// Bottom left.
 		view->x			= 0;
 		view->y			= vid.height / 2;
 		view->width		= vid.width / 2;
 		view->height	= vid.height / 2;
 	}
-	else if (CURRVIEW == 1) 
-	{ 
+	else if (CURRVIEW == 1)
+	{
 		// Bottom right.
 		view->x			= vid.width / 2;
 		view->y			= vid.height / 2;
@@ -4219,7 +4245,7 @@ void SCR_DrawMVStatus(void)
 	//
 	// Get the view rect to draw the hud within based on the current
 	// multiview mode, and what view that is being drawn.
-	// 
+	//
 	if (cl_multiview.value == 2)
 	{
 		if (cl_mvinset.value)
@@ -4243,16 +4269,16 @@ void SCR_DrawMVStatus(void)
 	// Only draw if we the view rect was set properly.
 	if (view.x != -1)
 	{
-		SCR_DrawMVStatusView (&view, 
-			(int)cl_mvdisplayhud.value, 
-			mv_hudpos, 
-			(qbool)cl_mvhudflip.value, 
+		SCR_DrawMVStatusView (&view,
+			(int)cl_mvdisplayhud.value,
+			mv_hudpos,
+			(qbool)cl_mvhudflip.value,
 			(qbool)cl_mvhudvertical.value);
 	}
 }
 
-void SCR_DrawMVStatusStrings(void) 
-{	
+void SCR_DrawMVStatusStrings(void)
+{
 	int xb = 0, yb = 0, xc = 0, yc = 0, xd = 0, yd = 0;
 	char strng[80];
 	char weapons[40];
@@ -4263,10 +4289,10 @@ void SCR_DrawMVStatusStrings(void)
 	char name[16];
 
 	int i;
-	
+
 	extern int powerup_cam_active, cam_1, cam_2, cam_3, cam_4;
 	extern cvar_t mvd_pc_view_1, mvd_pc_view_2, mvd_pc_view_3, mvd_pc_view_4;
-	
+
 	// Only in MVD.
 	if (!cl_multiview.value || !cls.mvdplayback)
 	{
@@ -4276,38 +4302,38 @@ void SCR_DrawMVStatusStrings(void)
 	//
 	// Get the current weapon.
 	//
-	if (cl.stats[STAT_ACTIVEWEAPON] & IT_LIGHTNING || cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_LIGHTNING) 
+	if (cl.stats[STAT_ACTIVEWEAPON] & IT_LIGHTNING || cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_LIGHTNING)
 	{
 		strlcpy(weapon, "lg", sizeof(weapon));
-	} 
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_ROCKET_LAUNCHER) 
+	}
+	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_ROCKET_LAUNCHER)
 	{
 		strlcpy(weapon, "rl", sizeof(weapon));
-	} 
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_GRENADE_LAUNCHER) 
+	}
+	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_GRENADE_LAUNCHER)
 	{
 		strlcpy(weapon, "gl", sizeof(weapon));
-	} 
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_NAILGUN) 
+	}
+	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_NAILGUN)
 	{
 		strlcpy(weapon, "sn", sizeof(weapon));
-	} 
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_NAILGUN) 
+	}
+	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_NAILGUN)
 	{
 		strlcpy(weapon, "ng", sizeof(weapon));
-	} 
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_SHOTGUN) 
+	}
+	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SUPER_SHOTGUN)
 	{
 		strlcpy(weapon, "ss", sizeof(weapon));
-	} 
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SHOTGUN) 
+	}
+	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_SHOTGUN)
 	{
 		strlcpy(weapon, "sg", sizeof(weapon));
-	} 
-	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_AXE) 
+	}
+	else if (cl.stats[STAT_ACTIVEWEAPON] & IT_AXE)
 	{
 		strlcpy(weapon, "ax", sizeof(weapon));
-	} 
+	}
 	else
 	{
 		strlcpy(weapon, "??", sizeof(weapon));
@@ -4321,19 +4347,19 @@ void SCR_DrawMVStatusStrings(void)
 	pups[0] = pups[1] = pups[2] = ' ';
 	pups[3] = '\0';
 
-	if (cl.stats[STAT_ITEMS] & IT_QUAD) 
+	if (cl.stats[STAT_ITEMS] & IT_QUAD)
 	{
 		pups[0] = 'Q';
 		pups[0] |= 128;
 	}
 
-	if (cl.stats[STAT_ITEMS] & IT_INVISIBILITY) 
+	if (cl.stats[STAT_ITEMS] & IT_INVISIBILITY)
 	{
 		pups[1] = 'R';
 		pups[1] |= 128;
 	}
 
-	if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) 
+	if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)
 	{
 		pups[2] = 'P';
 		pups[2] |= 128;
@@ -4341,7 +4367,7 @@ void SCR_DrawMVStatusStrings(void)
 
 	strng[0] = '\0';
 
-	for (i = 0; i < 8; i++) 
+	for (i = 0; i < 8; i++)
 	{
 		weapons[i]=' ';
 		weapons[8] = '\0';
@@ -4381,30 +4407,30 @@ void SCR_DrawMVStatusStrings(void)
 	}
 
 	armor = ' ';
-	if (cl.stats[STAT_ITEMS] & IT_ARMOR1) 
+	if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
 	{
 		armor='g';
 		armor |= 128;
 	}
-	else if (cl.stats[STAT_ITEMS] & IT_ARMOR2) 
+	else if (cl.stats[STAT_ITEMS] & IT_ARMOR2)
 	{
 		armor='y';
 		armor |= 128;
 	}
-	else if (cl.stats[STAT_ITEMS] & IT_ARMOR3) 
+	else if (cl.stats[STAT_ITEMS] & IT_ARMOR3)
 	{
 		armor='r';
 		armor |= 128;
 	}
-	
+
 	//
 	// Get the player's name.
 	//
 	strlcpy(name, cl.players[nPlayernum].name, sizeof(name));
 
-	if (strcmp(cl.players[nPlayernum].name, "") && !cl.players[nPlayernum].spectator) 
+	if (strcmp(cl.players[nPlayernum].name, "") && !cl.players[nPlayernum].spectator)
 	{
-		if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && cl_multiview.value == 2 && cl_mvinset.value) 
+		if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && cl_multiview.value == 2 && cl_mvinset.value)
 		{
 			// mvinset and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
@@ -4413,7 +4439,7 @@ void SCR_DrawMVStatusStrings(void)
 										weapon,
 										sAmmo);
 		}
-		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && vid.width <= 512) 
+		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0 && vid.width <= 512)
 		{
 			// Resolution width <= 512 and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
@@ -4422,7 +4448,7 @@ void SCR_DrawMVStatusStrings(void)
 										weapon,
 										sAmmo);
 		}
-		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0) 
+		else if (cl.players[nPlayernum].stats[STAT_HEALTH] <= 0)
 		{
 			// > 512 and dead
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
@@ -4432,7 +4458,7 @@ void SCR_DrawMVStatusStrings(void)
 										sAmmo);
 		}
 
-		else if (cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1) 
+		else if (cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1)
 		{
 			// mvinset
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
@@ -4443,8 +4469,8 @@ void SCR_DrawMVStatusStrings(void)
 												cl.players[nPlayernum].stats[STAT_HEALTH],
 												weapon,
 												sAmmo);
-		} 
-		else if (cl_multiview.value && vid.width <= 512) 
+		}
+		else if (cl_multiview.value && vid.width <= 512)
 		{
 			// <= 512 and alive
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]);
@@ -4455,8 +4481,8 @@ void SCR_DrawMVStatusStrings(void)
 												cl.players[nPlayernum].stats[STAT_HEALTH],
 												weapon,
 												sAmmo);
-		}		
-		else 
+		}
+		else
 		{
 			snprintf(sAmmo, sizeof(sAmmo), "%02d", cl.players[nPlayernum].stats[STAT_AMMO]); // > 512 and alive
 			sprintf(strng, "%s %s  %c%03d %03d %s:%-3s", pups,
@@ -4496,11 +4522,11 @@ void SCR_DrawMVStatusStrings(void)
 		strng[0] = '\0';
 		weapons[0] = '\0';
 	}
-		
+
 	//
 	// Placement.
-	// 
-	if (cl_multiview.value == 1) 
+	//
+	if (cl_multiview.value == 1)
 	{
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
@@ -4509,11 +4535,11 @@ void SCR_DrawMVStatusStrings(void)
 			xd = vid.width - strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 	}
-	else if (cl_multiview.value == 2) 
+	else if (cl_multiview.value == 2)
 	{
-		if (!cl_mvinset.value) 
+		if (!cl_mvinset.value)
 		{
-			if (CURRVIEW == 2) 
+			if (CURRVIEW == 2)
 			{
 				// Top
 				xb = vid.width - strlen(strng) * 8 - 12;
@@ -4523,8 +4549,8 @@ void SCR_DrawMVStatusStrings(void)
 				xd = vid.width - strlen(weapons) * 8 - 84;
 				yd = vid.height / 2 - sb_lines - 8;
 			}
-			else if (CURRVIEW == 1) 
-			{ 
+			else if (CURRVIEW == 1)
+			{
 				// Bottom
 				xb = vid.width - strlen(strng) * 8 - 12;
 				yb = vid.height - sb_lines - 16;
@@ -4533,11 +4559,11 @@ void SCR_DrawMVStatusStrings(void)
 				xd = vid.width - strlen(weapons) * 8 - 84;
 				yd = vid.height - sb_lines - 8;
 			}
-		} 
-		else if (cl_mvinset.value) 
+		}
+		else if (cl_mvinset.value)
 		{
-			if (CURRVIEW == 2) 
-			{ 
+			if (CURRVIEW == 2)
+			{
 				// Main
 				xb = vid.width - strlen(strng) * 8 - 12;
 				yb = vid.height / 2 - sb_lines - 16;
@@ -4546,29 +4572,29 @@ void SCR_DrawMVStatusStrings(void)
 				xd = vid.width - strlen(weapons) * 8 - 84;
 				yd = vid.height / 2 - sb_lines - 8;
 			}
-			else if (CURRVIEW == 1) 
-			{ 
+			else if (CURRVIEW == 1)
+			{
 				// Top right
 				xb = vid.width - strlen(strng) * 8; // hud
 				yb = vid.height / 3 - 16;
-				if (cl_mvinsetcrosshair.value) 
+				if (cl_mvinsetcrosshair.value)
 				{
 					xc = vid.width - (double)(vid.width / 3) / 2 - 2;
 					yc = (vid.height / 3) / 2;
-				} 
-				else 
-				{ 
-					xc = yc = -2; 
+				}
+				else
+				{
+					xc = yc = -2;
 				}
 				xd = vid.width - strlen(weapons) * 8 - 70; // weapons
 				yd = vid.height / 3 - 8;
 			}
-		}		
+		}
 	}
-	else if (cl_multiview.value == 3) 
+	else if (cl_multiview.value == 3)
 	{
-		if (CURRVIEW == 2) 
-		{ 
+		if (CURRVIEW == 2)
+		{
 			// top
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height / 2 - sb_lines - 16;
@@ -4577,8 +4603,8 @@ void SCR_DrawMVStatusStrings(void)
 			xd = vid.width - strlen(weapons) * 8 - 84;
 			yd = vid.height / 2 - sb_lines - 8;
 		}
-		else if (CURRVIEW == 3) 
-		{ 
+		else if (CURRVIEW == 3)
+		{
 			// Bottom left
 			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
@@ -4587,8 +4613,8 @@ void SCR_DrawMVStatusStrings(void)
 			xd = vid.width - (vid.width/2)- strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 		}
-		else if (CURRVIEW == 1) 
-		{ 
+		else if (CURRVIEW == 1)
+		{
 			// Bottom right
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
@@ -4598,10 +4624,10 @@ void SCR_DrawMVStatusStrings(void)
 			yd = vid.height - sb_lines - 8;
 		}
 	}
-	else if (cl_multiview.value == 4) 
+	else if (cl_multiview.value == 4)
 	{
-		if (CURRVIEW == 2) 
-		{ 
+		if (CURRVIEW == 2)
+		{
 			// Top left
 			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
 			yb = vid.height / 2 - sb_lines - 16;
@@ -4610,8 +4636,8 @@ void SCR_DrawMVStatusStrings(void)
 			xd = vid.width - (vid.width / 2)- strlen(weapons) * 8 - 84;
 			yd = vid.height/2 - sb_lines - 8;
 		}
-		else if (CURRVIEW == 3) 
-		{ 
+		else if (CURRVIEW == 3)
+		{
 			// Top right
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height / 2 - sb_lines - 16;
@@ -4622,8 +4648,8 @@ void SCR_DrawMVStatusStrings(void)
 			xd = vid.width - strlen(weapons) * 8 - 84;
 			yd = vid.height / 2 - sb_lines - 8;
 		}
-		else if (CURRVIEW == 4) 
-		{ 
+		else if (CURRVIEW == 4)
+		{
 			// Bottom left
 			xb = vid.width - (vid.width / 2)- strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
@@ -4632,8 +4658,8 @@ void SCR_DrawMVStatusStrings(void)
 			xd = vid.width - (vid.width / 2)- strlen(weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 		}
-		else if (CURRVIEW == 1) 
-		{ 
+		else if (CURRVIEW == 1)
+		{
 			// Bottom right
 			xb = vid.width - strlen(strng) * 8 - 12;
 			yb = vid.height - sb_lines - 16;
@@ -4650,7 +4676,7 @@ void SCR_DrawMVStatusStrings(void)
 	}
 
 	// Fill the void
-	if (cl_sbar.value && cl_multiview.value==2 && cl_mvinset.value && cl_mvinsethud.value && cl_mvdisplayhud.value) 
+	if (cl_sbar.value && cl_multiview.value==2 && cl_mvinset.value && cl_mvinsethud.value && cl_mvdisplayhud.value)
 	{
 		if (vid.width > 512)
 		{
@@ -4668,13 +4694,13 @@ void SCR_DrawMVStatusStrings(void)
 	{
 		Draw_String(xb, yb, strng);
 	}
-	else if (cl_multiview.value == 2 && cl_mvdisplayhud.value && CURRVIEW == 1 && cl_mvinsethud.value) 
+	else if (cl_multiview.value == 2 && cl_mvdisplayhud.value && CURRVIEW == 1 && cl_mvinsethud.value)
 	{
 		if (vid.width > 512)
 		{
 			Draw_String(xb, yb, strng);
 		}
-		else 
+		else
 		{
 			// <= 512 mvinset, just draw the name
 			int var, limit;
@@ -4740,3 +4766,4 @@ void Hud_262Init (void)
 //	Cmd_AddCommand ("hud262_button",Hud_Button_f);
 }
 // <-- QW262
+
