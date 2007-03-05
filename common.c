@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.64 2007-02-28 03:36:29 qqshka Exp $
+    $Id: common.c,v 1.65 2007-03-05 17:01:28 qqshka Exp $
 
 */
 
@@ -1944,10 +1944,11 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 		char *e;
 
 #if defined(_WIN32)	
-		if(!GetModuleFileName(NULL, com_basedir, sizeof(com_basedir)-1))
+		if(!(i = GetModuleFileName(NULL, com_basedir, sizeof(com_basedir)-1)))
 			Sys_Error("FS_InitFilesystemEx: GetModuleFileName failed");
+		com_basedir[i] = 0; // ensure null terminator
 #elif defined(__linux__)
-    if (!Sys_fullpath(com_basedir, "/proc/self/exe", sizeof(com_basedir)))
+		if (!Sys_fullpath(com_basedir, "/proc/self/exe", sizeof(com_basedir)))
 			Sys_Error("FS_InitFilesystemEx: Sys_fullpath failed");
 #else
 		com_basedir[0] = 0; // FIXME: MAC / FreeBSD

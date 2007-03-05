@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.34 2007-01-14 22:02:48 qqshka Exp $
+	$Id: sys_win.c,v 1.35 2007-03-05 17:01:28 qqshka Exp $
 
 */
 // sys_win.c
@@ -547,13 +547,16 @@ char	*argv[MAX_NUM_ARGVS];
 static char exename[1024] = {0};
 
 void ParseCommandLine (char *lpCmdLine) {
+    int i;
 	argc = 1;
 	argv[0] = exename;
 
-	if(!GetModuleFileName(NULL, exename, sizeof(exename)-1)) // here we get loong string, with full path
+	if(!(i = GetModuleFileName(NULL, exename, sizeof(exename)-1))) // here we get loong string, with full path
 		exename[0] = 0; // oh, something bad
-	else
+	else {
+		exename[i] = 0; // ensure null terminator
 		strlcpy(exename, COM_SkipPath(exename), sizeof(exename));
+	}
 
 	while (*lpCmdLine && (argc < MAX_NUM_ARGVS))
 	{
