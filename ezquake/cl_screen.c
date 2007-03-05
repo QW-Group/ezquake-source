@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.96 2007-03-05 01:26:57 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.97 2007-03-05 01:39:53 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -129,10 +129,9 @@ cvar_t	scr_coloredText			= {"scr_coloredText", "1"};
 cvar_t	scr_tracking			= {"scr_tracking", "Tracking %t %n, [JUMP] for next"};
 cvar_t	scr_spectatorMessage	= {"scr_spectatorMessage", "1"};
 
-cvar_t	scr_cursor_scale		= {"scr_cursor_scale", "0.33"};			// The mouse cursor scale.
+cvar_t	scr_cursor_scale		= {"scr_cursor_scale", "0.2"};			// The mouse cursor scale.
 cvar_t	scr_cursor_iconoffset_x	= {"scr_cursor_iconoffset_x", "10"};	// How much the cursor icon should be offseted from the cursor.
 cvar_t	scr_cursor_iconoffset_y	= {"scr_cursor_iconoffset_y", "0"};
-cvar_t	scr_cursor_scale = {"scr_cursor_scale", "0.2"};
 #ifdef GLQUAKE
 cvar_t	scr_cursor_alpha		= {"scr_cursor_alpha", "1"};
 #endif
