@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.97 2007-03-05 01:39:53 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.98 2007-03-05 01:53:42 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -2355,7 +2355,7 @@ static void SCR_DrawCursor(void) {
 	cursor_y = ms.y;
 
 	// Disable the cursor in all but following client parts.
-	if (key_dest != key_hudeditor)
+	if (key_dest != key_hudeditor && key_dest != key_menu)
 	{
 		return;
 	}
@@ -2364,11 +2364,11 @@ static void SCR_DrawCursor(void) {
 #ifdef GLQUAKE
 	if (scr_cursor && scr_cursor->texnum)
 	{
-		Draw_SAlphaPic(cursor_x, cursor_y, scr_cursor, scr_cursor_alpha.value, scr_cursor_scale.value);
+		Draw_SAlphaPic(cursor_x, cursor_y, scr_cursor, scr_cursor_alpha.value, SCR_GetCursorScale());
 
 		if (scr_cursor_icon && scr_cursor_icon->texnum)
 		{
-			Draw_SAlphaPic(cursor_x + scr_cursor_iconoffset_x.value, cursor_y + scr_cursor_iconoffset_y.value, scr_cursor_icon, scr_cursor_alpha.value, scr_cursor_scale.value);
+			Draw_SAlphaPic(cursor_x + scr_cursor_iconoffset_x.value, cursor_y + scr_cursor_iconoffset_y.value, scr_cursor_icon, scr_cursor_alpha.value, SCR_GetCursorScale());
 		}
 	}
 	else
