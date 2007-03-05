@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.25 2007-03-05 01:03:53 johnnycz Exp $
+		$Id: settings_page.c,v 1.26 2007-03-05 23:52:47 johnnycz Exp $
 
 */
 
@@ -415,6 +415,7 @@ qbool Settings_Key(settings_page* tab, int key)
 	qbool up = false;
 	setting_type type;
 	int oldm = tab->marked;
+	char *skinpath;
 
 	type = tab->settings[tab->marked].type;
 
@@ -429,8 +430,11 @@ qbool Settings_Key(settings_page* tab, int key)
 	if (tab->mode == SPM_CHOOSESKIN) {
 		if (key == K_ENTER || key == K_MOUSE1) {
 			char buf[MAX_PATH];
-			COM_StripExtension(COM_SkipPath(FL_GetCurrentPath(&skins_filelist)), buf);
-			Cvar_Set(tab->settings[tab->marked].cvar, buf);
+			skinpath = FL_GetCurrentPath(&skins_filelist);
+			if (skinpath) {
+				COM_StripExtension(COM_SkipPath(skinpath), buf);
+				Cvar_Set(tab->settings[tab->marked].cvar, buf);
+			}
 			tab->mode = SPM_NORMAL;
 			return true;
 		}
