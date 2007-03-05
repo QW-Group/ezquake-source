@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.18 2007-03-05 01:33:23 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.19 2007-03-05 01:54:26 cokeman1982 Exp $
 
 */
 
@@ -2021,6 +2021,7 @@ void HUD_Editor_Toggle_f(void)
 		key_dest = key_game;
 		key_dest_beforecon = key_game;
 		HUD_Editor_SetMode(hud_editmode_off);
+		scr_cursor_icon = NULL;
 
 		// Reset to the old value for HUD planmode.
 		Cvar_SetValue(&hud_planmode, old_hud_planmode);
@@ -2098,9 +2099,6 @@ void HUD_Editor_Init(void)
 	hud_editor_resize_icon = SCR_LoadCursorImage("gfx/hud_resize_icon");
 	hud_editor_align_icon = SCR_LoadCursorImage("gfx/hud_align_icon");
 	hud_editor_place_icon = SCR_LoadCursorImage("gfx/hud_place_icon");
-
-	// Default to showing the "move" icon.
-	scr_cursor_icon = hud_editor_move_icon;
 
 	hud_editor = false;
 	HUD_Editor_SetMode(hud_editmode_off);
