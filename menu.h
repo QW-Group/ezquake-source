@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.h,v 1.14 2007-02-16 20:10:36 johnnycz Exp $
+	$Id: menu.h,v 1.15 2007-03-05 01:03:53 johnnycz Exp $
 
 */
 
@@ -43,6 +43,7 @@ void M_DrawSlider (int x, int y, float range);
 void M_DrawCheckbox (int x, int y, int on);
 void M_FindKeysForCommand (const char *command, int *twokeys);
 void M_BuildTranslationTable(int top, int bottom);
+qbool Menu_Mouse_Moved(const mouse_state_t* ms);
 
 extern int m_yofs;
 

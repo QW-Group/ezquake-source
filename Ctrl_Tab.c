@@ -9,6 +9,7 @@ void CTab_Init(CTab_t *tab)
 {
     memset(tab, 0, sizeof(CTab_t));
 	tab->lastViewedPage = -1;
+	tab->hoveredPage = -1;
 }
 
 
@@ -38,8 +39,7 @@ void CTab_Free(CTab_t *tab)
 
 
 // add tab
-void CTab_AddPage(CTab_t *tab, char *name, int id, CTabPage_OnShowType onshowFunc,
-                  CTabPage_DrawType drawFunc, CTabPage_KeyType keyFunc)
+void CTab_AddPage(CTab_t *tab, const char *name, int id, const CTabPage_Handlers_t *handlers)
 {
     int i;
     CTabPage_t *page;
@@ -69,11 +69,7 @@ void CTab_AddPage(CTab_t *tab, char *name, int id, CTabPage_OnShowType onshowFun
     page->id = id;
 
     // set handlers
-    page->drawFunc = drawFunc;
-    page->keyFunc = keyFunc;
-    
-    // set tag
-    page->onshowFunc = onshowFunc;
+    memcpy(&page->handlers, handlers, sizeof(CTabPage_Handlers_t));
 }
 
 
@@ -86,24 +82,32 @@ void CTab_Draw(CTab_t *tab, int x, int y, int w, int h)
 
 	if (tab->activePage != tab->lastViewedPage && tab->activePage < tab->nPages)
 	{
-		CTabPage_OnShowType onshowFnc = tab->pages[tab->activePage].onshowFunc;
+		CTabPage_OnShowType onshowFnc = tab->pages[tab->activePage].handlers.onshow;
 		if (onshowFnc != NULL) onshowFnc();
 		tab->lastViewedPage = tab->activePage;
 	}
+
+	tab->width = w;
+	tab->height = h;
 
     // make one string
     strcpy(line, " ");
     for (i=0; i < tab->nPages; i++)
     {
-        if (tab->activePage == i)
+		if (tab->activePage == i)
         {
             line[strlen(line)-1] = 0;
             l = strlen(line);
-            strcat(line, "\x10");
+			strcat(line, "\x10");
         }
 
+		if (tab->hoveredPage == i)
+		{
+			l = strlen(line) - 1;
+		}
+
         strcat(line, tab->pages[i].name);
-        if (tab->activePage == i)
+        if (tab->activePage == i || tab->hoveredPage == i)
         {
             s = line + l + 1;
             while (*s)
@@ -117,6 +121,11 @@ void CTab_Draw(CTab_t *tab, int x, int y, int w, int h)
         }
         else
             strcat(line, " ");
+
+		if (tab->hoveredPage == i)
+		{
+			r = strlen(line);
+		}
     }
 
     // if it is less than screen width, we're done
@@ -157,8 +166,8 @@ void CTab_Draw(CTab_t *tab, int x, int y, int w, int h)
     UI_Print_Center(x, y+8, w, line, false);
 
     // draw page
-    if (tab->pages[tab->activePage].drawFunc != NULL)
-        tab->pages[tab->activePage].drawFunc(x, y+16, w, h-16, tab, &tab->pages[tab->activePage]);
+    if (tab->pages[tab->activePage].handlers.draw != NULL)
+        tab->pages[tab->activePage].handlers.draw(x, y+16, w, h-16, tab, &tab->pages[tab->activePage]);
 }
 
 
@@ -167,13 +176,19 @@ int CTab_Key(CTab_t *tab, int key)
 {
     int handled;
 
+	if (tab->hoveredPage >= 0)
+	{
+		tab->activePage = tab->hoveredPage;
+		return true;
+	}
+
     // we first call tabs handlers, because they might override
     // default tab keys for modal dialogs
     // tabs are responsible for not using "our" keys for other
     // purposes
     handled = false;
-    if (tab->pages[tab->activePage].keyFunc != NULL)
-        handled = tab->pages[tab->activePage].keyFunc(key, tab, &tab->pages[tab->activePage]);
+    if (tab->pages[tab->activePage].handlers.key != NULL)
+        handled = tab->pages[tab->activePage].handlers.key(key, tab, &tab->pages[tab->activePage]);
 
     // then try our handlers
     if (!handled)
@@ -220,6 +235,34 @@ int CTab_Key(CTab_t *tab, int key)
     return handled;
 }
 
+static qbool CTab_Navi_Mouse_Move (CTab_t *tab, const mouse_state_t *ms) 
+{
+	if (!tab->width) return false;
+	tab->hoveredPage = tab->nPages * (ms->x / (double) tab->width);
+	return true;
+}
+
+qbool CTab_Mouse_Move(CTab_t *tab, const mouse_state_t *ms)
+{
+	if (ms->y <= 16) {
+		return CTab_Navi_Mouse_Move(tab, ms);
+	} else {
+		CTabPage_MouseMoveType mmf;
+		mouse_state_t lms;
+
+		lms.x = ms->x;
+		lms.y = ms->y - 16;
+		lms.x_old = ms->x_old;
+		lms.y_old = ms->y_old;
+		tab->hoveredPage = -1;
+
+		mmf = tab->pages[tab->activePage].handlers.mousemove;
+		if (mmf)
+			return mmf(&lms);
+	}
+
+	return false;
+}
 
 // get current page
 CTabPage_t * CTab_GetCurrent(CTab_t *tab)

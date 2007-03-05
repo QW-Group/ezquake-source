@@ -1273,6 +1273,22 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
     return false;
 }
 
+qbool FL_Mouse_Move(filelist_t *fl, const mouse_state_t *ms)
+{
+	int entry;
+
+	if (ms->x > fl->width || ms->y > fl->height)
+		return false;
+
+	// we presume that each line is 8 px high
+
+	entry = (int) ms->y / 8 - 2;
+	fl->current_entry = fl->display_entry + entry;
+	FL_CheckPosition(fl);
+
+	return true;
+}
+
 //
 // This is used only in FL_Draw below, EX_browser.c has Add_Column2
 //
@@ -1341,6 +1357,9 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 	#endif // WITH_ZIP
 
     fl->last_page_size = 0;
+
+	fl->width = w;
+	fl->height = h;
 
     // Calculate interline (The space between each row)
     interline = fl->interline->value;

@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.47 2007-03-02 03:30:26 johnnycz Exp $
+		$Id: menu_options.c,v 1.48 2007-03-05 01:03:53 johnnycz Exp $
 
 */
 
@@ -316,6 +316,13 @@ int CT_Opt_Settings_Key (int k, CTab_t *tab, CTabPage_t *page) {
 	return Settings_Key(&settgeneral, k);
 }
 
+void OnShow_SettMain(void) { Settings_OnShow(&settgeneral); }
+
+qbool CT_Opt_Settings_Mouse_Move(const mouse_state_t *ms)
+{
+	return Settings_Mouse_Move(&settgeneral, ms);
+}
+
 // </SETTINGS>
 //=============================================================================
 
@@ -346,6 +353,14 @@ void CT_Opt_Multiview_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t 
 int CT_Opt_Multiview_Key (int k, CTab_t *tab, CTabPage_t *page) {
 	return Settings_Key(&settmultiview, k);
 }
+
+void OnShow_SettMultiview(void) { Settings_OnShow(&settmultiview); }
+
+qbool CT_Opt_Multiview_Mouse_Move(const mouse_state_t *ms)
+{
+	return Settings_Mouse_Move(&settmultiview, ms);
+}
+
 
 settings_page setthud;
 setting setthud_arr[] = {
@@ -409,6 +424,14 @@ int CT_Opt_HUD_Key (int k, CTab_t *tab, CTabPage_t *page) {
 	return Settings_Key(&setthud, k);
 }
 
+void OnShow_SettHUD(void) { Settings_OnShow(&setthud); }
+
+qbool CT_Opt_HUD_Mouse_Move(const mouse_state_t *ms)
+{
+	return Settings_Mouse_Move(&setthud, ms);
+}
+
+
 settings_page settplayer;
 setting settplayer_arr[] = {
 	ADDSET_SEPARATOR("Player Settings"),
@@ -442,6 +465,14 @@ void CT_Opt_Player_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pa
 int CT_Opt_Player_Key (int k, CTab_t *tab, CTabPage_t *page) {
 	return Settings_Key(&settplayer, k);
 }
+
+void OnShow_SettPlayer(void) { Settings_OnShow(&settplayer); }
+
+qbool CT_Opt_Player_Mouse_Move(const mouse_state_t *ms)
+{
+	return Settings_Mouse_Move(&settplayer, ms);
+}
+
 
 //=============================================================================
 // <BINDS>
@@ -493,6 +524,11 @@ void CT_Opt_Binds_Draw (int x2, int y2, int w, int h, CTab_t *tab, CTabPage_t *p
 
 int CT_Opt_Binds_Key (int k, CTab_t *tab, CTabPage_t *page) {
 	return Settings_Key(&settbinds, k);
+}
+
+qbool CT_Opt_Binds_Mouse_Move(const mouse_state_t *ms)
+{
+	return Settings_Mouse_Move(&settbinds, ms);
 }
 
 // </BINDS>
@@ -733,6 +769,14 @@ int CT_Opt_FPS_Key (int k, CTab_t *tab, CTabPage_t *page) {
 	return Settings_Key(&settfps, k);
 }
 
+void OnShow_SettFPS(void) { Settings_OnShow(&settfps); }
+
+qbool CT_Opt_FPS_Mouse_Move(const mouse_state_t *ms)
+{
+	return Settings_Mouse_Move(&settfps, ms);
+}
+
+
 // </FPS>
 //=============================================================================
 
@@ -905,6 +949,16 @@ void OnShow_SettVideo(void) {
 #endif
 }
 
+qbool CT_Opt_Video_Mouse_Move(const mouse_state_t *ms)
+{
+#ifdef GLQUAKE
+	return Settings_Mouse_Move(&settvideo, ms);
+#else
+	return false;
+#endif
+}
+
+
 // </VIDEO>
 
 // *********
@@ -1067,15 +1121,72 @@ int CT_Opt_Config_Key(int key, CTab_t *tab, CTabPage_t *page)
 	return false;
 }
 
+void OnShow_SettConfig(void) { Settings_OnShow(&settconfig); }
+
+qbool CT_Opt_Config_Mouse_Move(const mouse_state_t *ms)
+{
+	return Settings_Mouse_Move(&settconfig, ms);
+}
+
+
 // </CONFIG>
 // *********
 
-void OnShow_SettMain(void) { Settings_OnShow(&settgeneral); }
-void OnShow_SettPlayer(void) { Settings_OnShow(&settplayer); }
-void OnShow_SettFPS(void) { Settings_OnShow(&settfps); }
-void OnShow_SettHUD(void) { Settings_OnShow(&setthud); }
-void OnShow_SettMultiview(void) { Settings_OnShow(&settmultiview); }
-void OnShow_SettConfig(void) { Settings_OnShow(&settconfig); }
+CTabPage_Handlers_t options_main_handlers = {
+	CT_Opt_Settings_Draw,
+	CT_Opt_Settings_Key,
+	OnShow_SettMain,
+	CT_Opt_Settings_Mouse_Move
+};
+
+CTabPage_Handlers_t options_player_handlers = {
+	CT_Opt_Player_Draw,
+	CT_Opt_Player_Key,
+	OnShow_SettPlayer,
+	CT_Opt_Player_Mouse_Move
+};
+
+CTabPage_Handlers_t options_graphics_handlers = {
+	CT_Opt_FPS_Draw,
+	CT_Opt_FPS_Key,
+	OnShow_SettFPS,
+	CT_Opt_FPS_Mouse_Move
+};
+
+CTabPage_Handlers_t options_hud_handlers = {
+	CT_Opt_HUD_Draw,
+	CT_Opt_HUD_Key,
+	OnShow_SettHUD,
+	CT_Opt_HUD_Mouse_Move
+};
+
+CTabPage_Handlers_t options_multiview_handlers = {
+	CT_Opt_Multiview_Draw,
+	CT_Opt_Multiview_Key,
+	OnShow_SettMultiview,
+	CT_Opt_Multiview_Mouse_Move
+};
+
+CTabPage_Handlers_t options_controls_handlers = {
+	CT_Opt_Binds_Draw,
+	CT_Opt_Binds_Key,
+	NULL,
+	CT_Opt_Binds_Mouse_Move
+};
+
+CTabPage_Handlers_t options_video_handlers = {
+	CT_Opt_Video_Draw,
+	CT_Opt_Video_Key,
+	OnShow_SettVideo,
+	CT_Opt_Video_Mouse_Move
+};
+
+CTabPage_Handlers_t options_config_handlers = {
+	CT_Opt_Config_Draw,
+	CT_Opt_Config_Key,
+	OnShow_SettConfig,
+	CT_Opt_Config_Mouse_Move
+};
 
 void Menu_Options_Key(int key, int unichar) {
     int handled = CTab_Key(&options_tab, key);
@@ -1084,6 +1195,8 @@ void Menu_Options_Key(int key, int unichar) {
 	if (!handled && (key == K_ESCAPE || key == K_MOUSE2))
 		M_Menu_Main_f();
 }
+
+#define OPTPADDING 4
 
 void Menu_Options_Draw(void) {
 	int x, y, w, h;
@@ -1099,12 +1212,27 @@ void Menu_Options_Draw(void) {
 	}
 #endif
 
-	w = vid.width - 8; // here used to be a limit to 512x... size
-	h = vid.height - 8;
-	x = (vid.width - w) / 2;
-	y = (vid.height - h) / 2;
+	w = vid.width - OPTPADDING*2; // here used to be a limit to 512x... size
+	h = vid.height - OPTPADDING*2;
+	x = OPTPADDING;
+	y = OPTPADDING;
 
 	CTab_Draw(&options_tab, x, y, w, h);
+}
+
+qbool Menu_Options_Mouse_Move(const mouse_state_t *ms)
+{
+	mouse_state_t nms;
+
+	// we are sending relative coordinates
+	nms.x = ms->x - OPTPADDING;
+	nms.y = ms->y - OPTPADDING;
+	nms.x_old = ms->x_old - OPTPADDING;
+	nms.y_old = ms->y_old - OPTPADDING;
+
+	if (nms.x < 0 || nms.y < 0) return false;
+
+	return CTab_Mouse_Move(&options_tab, &nms);
 }
 
 void Menu_Options_Init(void) {
@@ -1168,13 +1296,13 @@ void Menu_Options_Init(void) {
 	CEditBox_Init(&filenameeb, 32, 64);
 
 	CTab_Init(&options_tab);
-	CTab_AddPage(&options_tab, "main", OPTPG_SETTINGS, OnShow_SettMain, CT_Opt_Settings_Draw, CT_Opt_Settings_Key);
-	CTab_AddPage(&options_tab, "player", OPTPG_PLAYER, OnShow_SettPlayer, CT_Opt_Player_Draw, CT_Opt_Player_Key);
-	CTab_AddPage(&options_tab, "graphics", OPTPG_FPS, OnShow_SettFPS, CT_Opt_FPS_Draw, CT_Opt_FPS_Key);
-	CTab_AddPage(&options_tab, "hud", OPTPG_HUD, OnShow_SettHUD, CT_Opt_HUD_Draw, CT_Opt_HUD_Key);
-	CTab_AddPage(&options_tab, "multiview", OPTPG_MULTIVIEW, OnShow_SettMultiview, CT_Opt_Multiview_Draw, CT_Opt_Multiview_Key);
-	CTab_AddPage(&options_tab, "controls", OPTPG_BINDS, NULL, CT_Opt_Binds_Draw, CT_Opt_Binds_Key);
-	CTab_AddPage(&options_tab, "video", OPTPG_VIDEO, OnShow_SettVideo, CT_Opt_Video_Draw, CT_Opt_Video_Key);
-	CTab_AddPage(&options_tab, "config", OPTPG_CONFIG, OnShow_SettConfig, CT_Opt_Config_Draw, CT_Opt_Config_Key);
+	CTab_AddPage(&options_tab, "main", OPTPG_SETTINGS, &options_main_handlers);
+	CTab_AddPage(&options_tab, "player", OPTPG_PLAYER, &options_player_handlers);
+	CTab_AddPage(&options_tab, "graphics", OPTPG_FPS, &options_graphics_handlers);
+	CTab_AddPage(&options_tab, "hud", OPTPG_HUD, &options_hud_handlers);
+	CTab_AddPage(&options_tab, "multiview", OPTPG_MULTIVIEW, &options_multiview_handlers);
+	CTab_AddPage(&options_tab, "controls", OPTPG_BINDS, &options_controls_handlers);
+	CTab_AddPage(&options_tab, "video", OPTPG_VIDEO, &options_video_handlers);
+	CTab_AddPage(&options_tab, "config", OPTPG_CONFIG, &options_config_handlers);
 	CTab_SetCurrentId(&options_tab, OPTPG_SETTINGS);
 }

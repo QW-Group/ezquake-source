@@ -14,19 +14,24 @@ struct CTabPage_s;
 typedef void (*CTabPage_OnShowType) (void);
 typedef void (*CTabPage_DrawType)(int x, int y, int w, int h, struct CTab_s *, struct CTabPage_s *);
 typedef int  (*CTabPage_KeyType)(int key, struct CTab_s *, struct CTabPage_s *);
+typedef qbool (*CTabPage_MouseMoveType) (const mouse_state_t * ms);
 
+typedef struct CTabPage_Handlers_s
+{
+    CTabPage_DrawType   draw;
+    CTabPage_KeyType    key;
+    CTabPage_OnShowType onshow;
+	CTabPage_MouseMoveType mousemove;
+}
+CTabPage_Handlers_t;
 
 typedef struct CTabPage_s
 {
     char    name[TAB_MAX_NAME_LENGTH+1];
     int     id;
-
-    CTabPage_DrawType   drawFunc;
-    CTabPage_KeyType    keyFunc;
-    CTabPage_OnShowType onshowFunc;
+	CTabPage_Handlers_t handlers;
 }
 CTabPage_t;
-
 
 typedef struct CTab_s
 {
@@ -34,6 +39,9 @@ typedef struct CTab_s
     int         nPages;
     int         activePage;
 	int			lastViewedPage;
+	int			hoveredPage;
+	int			width;
+	int			height;
     void *tag;
 }
 CTab_t;
@@ -52,13 +60,15 @@ CTab_t * CTab_New(void);
 void CTab_Free(CTab_t *);
 
 // add tab
-void CTab_AddPage(CTab_t *, char *name, int id, CTabPage_OnShowType,
-                  CTabPage_DrawType, CTabPage_KeyType);
+void CTab_AddPage(CTab_t *, const char *name, int id, const CTabPage_Handlers_t *handlers);
 // draw control
 void CTab_Draw(CTab_t *, int x, int y, int w, int h);
 
 // process key
 int CTab_Key(CTab_t *, int key);
+
+// process mouse move event
+qbool CTab_Mouse_Move(CTab_t *, const mouse_state_t *ms);
 
 // get current page
 CTabPage_t * CTab_GetCurrent(CTab_t *);

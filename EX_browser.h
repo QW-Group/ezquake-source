@@ -203,4 +203,10 @@ void SB_Test_Frame(void);
 // case insensitive and red-insensitive compare
 int strcmp2(const char * s1, const char * s2);
 
+// browser menu module
+void Browser_Init(void);
+void Browser_Draw(void);
+void Browser_Key(int);
+qbool Browser_Mouse_Move(const mouse_state_t *ms);
+
 #endif  // __EX_BROWSER__H__

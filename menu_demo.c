@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.25 2007-02-25 22:09:09 cokeman1982 Exp $
+		$Id: menu_demo.c,v 1.26 2007-03-05 01:03:53 johnnycz Exp $
 
 */
 
@@ -435,6 +435,8 @@ void CT_Demo_Options_Draw(int x, int y, int w, int h, CTab_t *tab, CTabPage_t *p
 	Settings_Draw(x, y, w, h, &demoplsett); 
 }
 
+#define DEMOPAGEPADDING 4
+
 // in the end leads calls one of the four functions above
 void Menu_Demo_Draw (void)
 {
@@ -454,10 +456,10 @@ void Menu_Demo_Draw (void)
 	}
 #endif
 
-	w = vid.width - 8; // here used to be a limit to 512x... size, we've considered it useless
-	h = vid.height - 8;
-	x = (vid.width - w) / 2;
-	y = (vid.height - h) / 2;
+	w = vid.width - DEMOPAGEPADDING*2; // here used to be a limit to 512x... size, we've considered it useless
+	h = vid.height - DEMOPAGEPADDING*2;
+	x = DEMOPAGEPADDING;
+	y = DEMOPAGEPADDING;
 
 	CTab_Draw(&demo_tab, x, y, w, h);
 }
@@ -769,6 +771,16 @@ int CT_Demo_Options_Key(int key, CTab_t *tab, CTabPage_t *page)
 	return Settings_Key(&demoplsett, key);
 }
 
+qbool CT_Demo_Browser_Mouse_Move(const mouse_state_t *ms)
+{
+	return FL_Mouse_Move(&demo_filelist, ms);
+}
+
+qbool CT_Demo_Options_Mouse_Move(const mouse_state_t *ms)
+{
+	return Settings_Mouse_Move(&demoplsett, ms);
+}
+
 // will lead to call of one of the 4 functions above
 void Menu_Demo_Key(int key)
 {
@@ -785,6 +797,41 @@ void Menu_Demo_Key(int key)
     }
 }
 // </key processing for each page>
+
+qbool Menu_Demo_Mouse_Move(const mouse_state_t *ms)
+{
+	mouse_state_t nms;
+
+	nms.x = ms->x - DEMOPAGEPADDING;
+	nms.y = ms->y - DEMOPAGEPADDING;
+	nms.x_old = ms->x_old - DEMOPAGEPADDING;
+	nms.y_old = ms->y_old - DEMOPAGEPADDING;
+	return CTab_Mouse_Move(&demo_tab, &nms);
+}
+
+CTabPage_Handlers_t demo_browser_handlers = {
+	CT_Demo_Browser_Draw,
+	CT_Demo_Browser_Key,
+	NULL,
+	CT_Demo_Browser_Mouse_Move
+};
+
+CTabPage_Handlers_t demo_playlist_handlers = {
+	CT_Demo_Playlist_Draw,
+	CT_Demo_Playlist_Key
+};
+
+CTabPage_Handlers_t demo_entry_handlers = {
+	CT_Demo_Entry_Draw,
+	CT_Demo_Entry_Key
+};
+
+CTabPage_Handlers_t demo_options_handlers = {
+	CT_Demo_Options_Draw,
+	CT_Demo_Options_Key,
+	NULL,
+	CT_Demo_Options_Mouse_Move
+};
 
 // set new initial dir
 void Menu_Demo_NewHome(char *homedir)
@@ -852,9 +899,9 @@ void Menu_Demo_Init(void)
 
 	// initialize tab control
     CTab_Init(&demo_tab);
-	CTab_AddPage(&demo_tab, "browser", DEMOPG_BROWSER, NULL, CT_Demo_Browser_Draw, CT_Demo_Browser_Key);
-	CTab_AddPage(&demo_tab, "playlist", DEMOPG_PLAYLIST, NULL, CT_Demo_Playlist_Draw, CT_Demo_Playlist_Key);
-	CTab_AddPage(&demo_tab, "entry", DEMOPG_ENTRY, NULL, CT_Demo_Entry_Draw, CT_Demo_Entry_Key);
-	CTab_AddPage(&demo_tab, "options", DEMOPG_OPTIONS, NULL, CT_Demo_Options_Draw, CT_Demo_Options_Key);
+	CTab_AddPage(&demo_tab, "browser", DEMOPG_BROWSER, &demo_browser_handlers);
+	CTab_AddPage(&demo_tab, "playlist", DEMOPG_PLAYLIST, &demo_playlist_handlers);
+	CTab_AddPage(&demo_tab, "entry", DEMOPG_ENTRY, &demo_entry_handlers);
+	CTab_AddPage(&demo_tab, "options", DEMOPG_OPTIONS, &demo_options_handlers);
 	CTab_SetCurrentId(&demo_tab, DEMOPG_BROWSER);
 }

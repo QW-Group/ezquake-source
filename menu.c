@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.67 2007-02-16 20:10:36 johnnycz Exp $
+	$Id: menu.c,v 1.68 2007-03-05 01:03:53 johnnycz Exp $
 
 */
 
@@ -44,9 +44,6 @@ void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
 void CL_Disconnect_f(void);
 
-extern void Browser_Init(void);
-extern void Browser_Draw(void);
-extern void Browser_Key(int);
 extern cvar_t con_shift;
 
 void M_Menu_Main_f (void);
@@ -100,6 +97,13 @@ int            m_topmenu;       // set if a submenu was entered via a
                                 // menu_* command
 #define    SLIDER_RANGE    10
 
+typedef struct menu_window_s {
+	int x;
+	int y;
+	int w;
+	int h;
+} menu_window_t;
+
 //=============================================================================
 /* Support Routines */
 
@@ -119,16 +123,37 @@ void M_DrawCharacter (int cx, int line, int num) {
 	Draw_Character (cx + ((menuwidth - 320)>>1), line + m_yofs, num);
 }
 
+void M_Print_GetPoint(int cx, int cy, int *rx, int *ry, const char *str, qbool red) {
+	cx += ((menuwidth - 320)>>1);
+	cy += m_yofs;
+	*rx = cx;
+	*ry = cy;
+	if (red)
+		Draw_Alt_String (cx, cy, str);
+	else
+		Draw_String(cx, cy, str);
+}
+
 void M_Print (int cx, int cy, char *str) {
-	Draw_Alt_String (cx + ((menuwidth - 320)>>1), cy + m_yofs, str);
+	int rx, ry;
+	M_Print_GetPoint(cx, cy, &rx, &ry, str, true);
 }
 
 void M_PrintWhite (int cx, int cy, char *str) {
 	Draw_String (cx + ((menuwidth - 320)>>1), cy + m_yofs, str);
 }
 
-void M_DrawTransPic (int x, int y, mpic_t *pic) {
+// replacement of M_DrawTransPic - sometimes we need the real coordinate of the pic
+static void M_DrawTransPic_GetPoint (int x, int y, int *rx, int *ry, mpic_t *pic)
+{
+	*rx = x + ((menuwidth - 320)>>1);
+	*ry = y + m_yofs;
 	Draw_TransPic (x + ((menuwidth - 320)>>1), y + m_yofs, pic);
+}
+
+void M_DrawTransPic (int x, int y, mpic_t *pic) {
+	int tx, ty;
+	M_DrawTransPic_GetPoint(x, y, &tx, &ty, pic);
 }
 
 void M_DrawPic (int x, int y, mpic_t *pic) {
@@ -189,6 +214,63 @@ void M_FindKeysForCommand (const char *command, int *twokeys) {
 			}
 		}
 	}
+}
+
+// will apply menu scaling effect for given window region
+// scr_scaleMenu 1 uses glOrtho function and we use the same algorithm in here
+static void M_Window_Adjust(const menu_window_t *original, menu_window_t *scaled)
+{
+#ifdef GLQUAKE
+	double sc_x, sc_y; // scale factors
+
+	if (scr_scaleMenu.value)
+	{
+		sc_x = (double) vid.width / (double) menuwidth;
+		sc_y = (double) vid.height / (double) menuheight;
+		scaled->x = original->x * sc_x;
+		scaled->y = original->y * sc_y;
+		scaled->w = original->w * sc_x;
+		scaled->h = original->h * sc_y;
+	}
+	else
+	{
+		memcpy(scaled, original, sizeof(menu_window_t));
+	}
+#else
+	memcpy(scaled, original, sizeof(menu_window_t));
+#endif
+}
+
+// this function will look at window borders and current mouse cursor position
+// and will change which item in the window should be selected
+// we presume that all entries have same height and occupy the whole window
+// 1st par: input, window position & size
+// 2nd par: input, mouse position
+// 3rd par: input, how many entries does the window have
+// 4th par: output, newly selected entry, first entry is 0, second 1, ...
+// return value: does the cursor belong to this window? yes/no
+static qbool M_Mouse_Select(const menu_window_t *uw, const mouse_state_t *m, int entries, int *newentry)
+{
+	double entryheight;
+	double nentry;
+	menu_window_t rw;
+	menu_window_t *w = &rw; // just a language "shortcut"
+	
+	M_Window_Adjust(uw, w);
+
+	// window is invisible
+	if (!(w->h > 0) || !(w->w > 0)) return false;
+
+	// check if the pointer is inside of the window
+	if (m->x < w->x || m->y < w->y || m->x > w->x + w->w || m->y > w->y + w->h)
+		return false; // no, it's not
+
+	entryheight = w->h / entries;
+	nentry = (int) (m->y - w->y) / (int) entryheight;
+	
+	*newentry = bound(0, nentry, entries-1);
+
+	return true;
 }
 
 //=============================================================================
@@ -269,7 +351,7 @@ void M_ToggleProxyMenu_f (void) {
 
 int    m_main_cursor;
 #define    MAIN_ITEMS    5
-
+menu_window_t m_main_window;
 
 void M_Menu_Main_f (void) {
 	M_EnterMenu (m_main);
@@ -280,9 +362,20 @@ void M_Main_Draw (void) {
 	mpic_t *p;
 
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
+
+	// the Main Manu heading
 	p = Draw_CachePic ("gfx/ttl_main.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
-	M_DrawTransPic (72, 32, Draw_CachePic ("gfx/mainmenu.lmp") );
+
+	// Main Menu items
+	p = Draw_CachePic ("gfx/mainmenu.lmp");
+	m_main_window.w = p->width;
+	m_main_window.h = p->height;
+	M_DrawTransPic_GetPoint (72, 32, &m_main_window.x, &m_main_window.y, p);
+	
+	// main menu specific correction, mainmenu.lmp|png have some useless extra space at the bottom
+	// that makes the mouse pointer position calculation imperfect
+	m_main_window.h *= 0.9;
 
 	f = (int)(curtime * 10)%6;
 
@@ -361,6 +454,10 @@ void M_Main_Key (int key) {
 	}
 }
 
+static qbool M_Main_Mouse_Move(const mouse_state_t* ms)
+{
+	return M_Mouse_Select(&m_main_window, ms, MAIN_ITEMS, &m_main_cursor);
+}
 
 //=============================================================================
 /* OPTIONS MENU */
@@ -500,6 +597,7 @@ void M_Quit_Key (int key) {
 int    m_singleplayer_cursor;
 qbool m_singleplayer_confirm;
 qbool m_singleplayer_notavail;
+menu_window_t m_singleplayer_window;
 
 extern    cvar_t    maxclients;
 
@@ -531,7 +629,10 @@ void M_SinglePlayer_Draw (void) {
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
 	p = Draw_CachePic ("gfx/ttl_sgl.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
-	M_DrawTransPic (72, 32, Draw_CachePic ("gfx/sp_menu.lmp") );
+	p = Draw_CachePic ("gfx/sp_menu.lmp");
+	m_singleplayer_window.w = p->width;
+	m_singleplayer_window.h = p->height;
+	M_DrawTransPic_GetPoint(72, 32, &m_singleplayer_window.x, &m_singleplayer_window.y, p);
 
 	f = (int)(curtime * 10)%6;
 	M_DrawTransPic (54, 32 + m_singleplayer_cursor * 20,Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
@@ -559,7 +660,6 @@ static void StartNewGame (void) {
 	if (com_serveractive)
 		Cbuf_AddText ("disconnect\n");
 
-
 	progs = (dprograms_t *) FS_LoadHunkFile ("spprogs.dat");
 	if (progs && !file_from_gamedir)
 		Cbuf_AddText ("gamedir qw\n");
@@ -579,10 +679,10 @@ void M_SinglePlayer_Key (int key) {
 	}
 
 	if (m_singleplayer_confirm) {
-		if (key == K_ESCAPE || key == 'n') {
+		if (key == K_ESCAPE || key == 'n' || key == K_MOUSE2) {
 			m_singleplayer_confirm = false;
 			m_entersound = true;
-		} else if (key == 'y' || key == K_ENTER) {
+		} else if (key == 'y' || key == K_ENTER || key == K_MOUSE1) {
 			StartNewGame ();
 		}
 		return;
@@ -651,6 +751,11 @@ void M_SinglePlayer_Key (int key) {
 	}
 }
 
+qbool M_SinglePlayer_Mouse_Move(const mouse_state_t* ms)
+{
+	return M_Mouse_Select(&m_singleplayer_window, ms, SINGLEPLAYER_ITEMS, &m_singleplayer_cursor);
+}
+
 #else    // !CLIENTONLY
 
 void M_Menu_SinglePlayer_f (void) {
@@ -693,6 +798,7 @@ void M_SinglePlayer_Key (key) {
 int        load_cursor;        // 0 < load_cursor < MAX_SAVEGAMES
 char    m_filenames[MAX_SAVEGAMES][SAVEGAME_COMMENT_LENGTH + 1];
 int        loadable[MAX_SAVEGAMES];
+menu_window_t load_window, save_window;
 
 void M_ScanSaves (char *sp_gamedir) {
 	int i, j, version;
@@ -741,12 +847,21 @@ void M_Menu_Save_f (void) {
 void M_Load_Draw (void) {
 	int i;
 	mpic_t *p;
+	int lx, ly;	// lower bounds of the window
 
 	p = Draw_CachePic ("gfx/p_load.lmp");
 	M_DrawPic ( (320 - p->width) >> 1, 4, p);
 
 	for (i = 0; i < MAX_SAVEGAMES; i++)
-		M_Print (16, 32 + 8*i, m_filenames[i]);
+	{
+		if (i == 0)
+			M_Print_GetPoint (16, 32 + 8*i, &load_window.x, &load_window.y, m_filenames[i], load_cursor == 0);
+		else 
+			M_Print_GetPoint (16, 32 + 8*i, &lx, &ly, m_filenames[i], load_cursor == i);
+	}
+
+	load_window.w = SAVEGAME_COMMENT_LENGTH*8; // presume 8 pixels for each letter
+	load_window.h = ly - load_window.y + 8;
 
 	// line cursor
 	M_DrawCharacter (8, 32 + load_cursor * 8, FLASHINGARROW());
@@ -755,12 +870,21 @@ void M_Load_Draw (void) {
 void M_Save_Draw (void) {
 	int i;
 	mpic_t *p;
+	int lx, ly;	// lower bounds of the window
 
 	p = Draw_CachePic ("gfx/p_save.lmp");
 	M_DrawPic ( (320 - p->width) >> 1, 4, p);
 
 	for (i = 0; i < MAX_SAVEGAMES; i++)
-		M_Print (16, 32 + 8 * i, m_filenames[i]);
+	{
+		if (i == 0)
+			M_Print_GetPoint (16, 32 + 8 * i, &save_window.x, &save_window.y, m_filenames[i], load_cursor == 0);
+		else
+			M_Print_GetPoint (16, 32 + 8 * i, &lx, &ly, m_filenames[i], load_cursor == i);
+	}
+
+	save_window.w = lx - SAVEGAME_COMMENT_LENGTH*8;
+	save_window.h = ly - save_window.y + 8;
 
 	// line cursor
 	M_DrawCharacter (8, 32 + load_cursor * 8, FLASHINGARROW());
@@ -845,6 +969,16 @@ void M_Save_Key (int key) {
 	}
 }
 
+qbool M_Save_Mouse_Move(const mouse_state_t *ms)
+{
+	return M_Mouse_Select(&save_window, ms, MAX_SAVEGAMES, &load_cursor);
+}
+
+qbool M_Load_Mouse_Move(const mouse_state_t *ms)
+{
+	return M_Mouse_Select(&load_window, ms, MAX_SAVEGAMES, &load_cursor);
+}
+
 #endif
 
 //=============================================================================
@@ -856,6 +990,7 @@ int    m_multiplayer_cursor;
 #else
 #define    MULTIPLAYER_ITEMS    3
 #endif
+menu_window_t m_multiplayer_window;
 
 void M_Menu_MultiPlayer_f (void) {
 	M_EnterMenu (m_multiplayer);
@@ -863,16 +998,21 @@ void M_Menu_MultiPlayer_f (void) {
 
 void M_MultiPlayer_Draw (void) {
 	mpic_t    *p;
+	int lx, ly;
 
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
 	p = Draw_CachePic ("gfx/p_multi.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
-	M_Print (80, 40, "Join Game");
+	M_Print_GetPoint (80, 40, &m_multiplayer_window.x, &m_multiplayer_window.y, "Join Game", m_multiplayer_cursor == 0);
+	m_multiplayer_window.h = 8;
 #ifndef CLIENTONLY
-	M_Print (80, 48, "Create Game");
+	M_Print_GetPoint (80, 48, &lx, &ly, "Create Game", m_multiplayer_cursor == 1);
+	m_multiplayer_window.h += 8;
 #endif
-	M_Print (80, 56, "Demos");
-
+	M_Print_GetPoint (80, 56, &lx, &ly, "Demos", m_multiplayer_cursor == MULTIPLAYER_ITEMS - 1);
+	m_multiplayer_window.h += 8;
+	m_multiplayer_window.w = 20 * 8; // presume 20 letters long word and 8 pixels for a letter
+	
 	// cursor
 	M_DrawCharacter (64, 40 + m_multiplayer_cursor * 8, FLASHINGARROW());
 }
@@ -929,6 +1069,11 @@ void M_MultiPlayer_Key (int key) {
 					break;
 			}
 	}
+}
+
+qbool M_MultiPlayer_Mouse_Move(const mouse_state_t *ms)
+{
+	return M_Mouse_Select(&m_multiplayer_window, ms, MULTIPLAYER_ITEMS, &m_multiplayer_cursor);
 }
 
 
@@ -1091,9 +1236,11 @@ void M_Menu_MP3_Control_Key(int key) {
 		switch(key) {
 			case K_BACKSPACE:
 				m_topmenu = m_none;
+			case K_MOUSE2:
 			case K_ESCAPE:
 				M_LeaveMenu (m_main);
 				break;
+			case K_MOUSE1:
 			case K_ENTER:
 				if (MP3_IsActive())
 					MP3_Execute_f();
@@ -1106,6 +1253,7 @@ void M_Menu_MP3_Control_Key(int key) {
 	switch (key) {
 		case K_BACKSPACE:
 			m_topmenu = m_none;
+		case K_MOUSE2:
 		case K_ESCAPE:
 			M_LeaveMenu (m_main);
 			break;
@@ -1131,6 +1279,7 @@ void M_Menu_MP3_Control_Key(int key) {
 			if (mp3_cursor == M_MP3_CONTROL_NUMENTRIES - 2)
 				mp3_cursor--;
 			break;
+		case K_MOUSE1:
 		case K_ENTER:
 			switch (mp3_cursor) {
 				case 0:  MP3_Play_f(); break;
@@ -1532,69 +1681,74 @@ void M_Menu_GameOptions_f (void) {
 	_timelimit = max (0, min((int)timelimit.value, 60));
 }
 
-int gameoptions_cursor_table[] = {40, 56, 64, 72, 80, 96, 104, 120, 128};
+int gameoptions_cursor_table[] = {48, 56, 64, 72, 80, 88, 96, 104, 112};
 #define    NUM_GAMEOPTIONS    9
 int        gameoptions_cursor;
+menu_window_t gameoptions_window;
 
 void M_GameOptions_Draw (void) {
 	mpic_t *p;
 	char *msg;
+	int lx, ly; // lower bounds
 
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
 	p = Draw_CachePic ("gfx/p_multi.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
-	M_DrawTextBox (152, 32, 10, 1);
-	M_Print (160, 40, "begin game");
+	//M_DrawTextBox (152, 32, 10, 1);
+	M_Print_GetPoint (160, 48, &gameoptions_window.x, &gameoptions_window.y, "begin game", gameoptions_cursor == 0);
 
-	M_Print (0, 56, "        game type");
+	M_Print_GetPoint (0, 56, &gameoptions_window.x, &ly, "        game type", gameoptions_cursor == 1);
 	if (!_deathmatch)
-		M_Print (160, 56, "cooperative");
+		M_Print_GetPoint (160, 56, &lx, &ly, "cooperative", gameoptions_cursor == 1);
 	else
-		M_Print (160, 56, va("deathmatch %i", _deathmatch));
+		M_Print_GetPoint (160, 56, &lx, &ly, va("deathmatch %i", _deathmatch), gameoptions_cursor == 1);
 
-	M_Print (0, 64, "         teamplay");
+	M_Print_GetPoint (0, 64, &lx, &ly, "         teamplay", gameoptions_cursor == 2);
 
 	switch(_teamplay) {
 		default: msg = "Off"; break;
 		case 1: msg = "No Friendly Fire"; break;
 		case 2: msg = "Friendly Fire"; break;
 	}
-	M_Print (160, 64, msg);
+	M_Print_GetPoint (160, 64, &lx, &ly, msg, gameoptions_cursor == 2);
 
 	if (_deathmatch == 0) {
-		M_Print (0, 72, "            skill");
+		M_Print_GetPoint (0, 72, &lx, &ly, "            skill", gameoptions_cursor == 3);
 		switch (_skill) {
-			case 0:  M_Print (160, 72, "Easy"); break;
-			case 1:  M_Print (160, 72, "Normal"); break;
-			case 2:  M_Print (160, 72, "Hard"); break;
-			default: M_Print (160, 72, "Nightmare");
+			case 0:  M_Print_GetPoint (160, 72, &lx, &ly, "Easy", gameoptions_cursor == 3); break;
+			case 1:  M_Print_GetPoint (160, 72, &lx, &ly, "Normal", gameoptions_cursor == 3); break;
+			case 2:  M_Print_GetPoint (160, 72, &lx, &ly, "Hard", gameoptions_cursor == 3); break;
+			default: M_Print_GetPoint (160, 72, &lx, &ly, "Nightmare", gameoptions_cursor == 3);
 		}
 	} else {
-		M_Print (0, 72, "        fraglimit");
+		M_Print_GetPoint (0, 72, &lx, &ly, "        fraglimit", gameoptions_cursor == 3);
 		if (_fraglimit == 0)
-			M_Print (160, 72, "none");
+			M_Print_GetPoint (160, 72, &lx, &ly, "none", gameoptions_cursor == 3);
 		else
-			M_Print (160, 72, va("%i frags", _fraglimit));
+			M_Print_GetPoint (160, 72, &lx, &ly, va("%i frags", _fraglimit), gameoptions_cursor == 3);
 
-		M_Print (0, 80, "        timelimit");
+		M_Print_GetPoint (0, 80, &lx, &ly, "        timelimit", gameoptions_cursor == 4);
 		if (_timelimit == 0)
-			M_Print (160, 80, "none");
+			M_Print_GetPoint (160, 80, &lx, &ly, "none", gameoptions_cursor == 4);
 		else
-			M_Print (160, 80, va("%i minutes", _timelimit));
+			M_Print_GetPoint (160, 80, &lx, &ly, va("%i minutes", _timelimit), gameoptions_cursor == 4);
 	}
-	M_Print (0, 96, "       maxclients");
-	M_Print (160, 96, va("%i", _maxclients) );
+	M_Print_GetPoint (0, 88, &lx, &ly, "       maxclients", gameoptions_cursor == 5);
+	M_Print_GetPoint (160, 88, &lx, &ly, va("%i", _maxclients), gameoptions_cursor == 5 );
 
-	M_Print (0, 104, "       maxspect.");
-	M_Print (160, 104, va("%i", _maxspectators) );
+	M_Print_GetPoint (0, 96, &lx, &ly, "       maxspect.", gameoptions_cursor == 6);
+	M_Print_GetPoint (160, 96, &lx, &ly, va("%i", _maxspectators), gameoptions_cursor == 6 );
 
-	M_Print (0, 120, "         Episode");
-	M_Print (160, 120, episodes[startepisode].description);
+	M_Print_GetPoint (0, 104, &lx, &ly, "         Episode", gameoptions_cursor == 7);
+	M_Print_GetPoint (160, 104, &lx, &ly, episodes[startepisode].description, gameoptions_cursor == 7);
 
-	M_Print (0, 128, "           Level");
-	M_Print (160, 128, levels[episodes[startepisode].firstLevel + startlevel].description);
-	M_Print (160, 136, levels[episodes[startepisode].firstLevel + startlevel].name);
+	M_Print_GetPoint (0, 112, &lx, &ly, "           Level", gameoptions_cursor == 8);
+	M_Print_GetPoint (160, 112, &lx, &ly, levels[episodes[startepisode].firstLevel + startlevel].description, gameoptions_cursor == 8);
+	M_Print_GetPoint (160, 120, &lx, &ly, levels[episodes[startepisode].firstLevel + startlevel].name, gameoptions_cursor == 8);
+
+	gameoptions_window.w = 30 * 8;
+	gameoptions_window.h = ly - gameoptions_window.y;
 
 	// line cursor
 	M_DrawCharacter (144, gameoptions_cursor_table[gameoptions_cursor], FLASHINGARROW());
@@ -1677,9 +1831,16 @@ void M_NetStart_Change (int dir) {
 }
 
 void M_GameOptions_Key (int key) {
+
+	if (key == K_MOUSE1 && gameoptions_cursor != 0) {
+		M_NetStart_Change (1);
+		return;
+	}
+
 	switch (key) {
 		case K_BACKSPACE:
 			m_topmenu = m_none;    // intentional fallthrough
+		case K_MOUSE2:
 		case K_ESCAPE:
 			M_LeaveMenu (m_multiplayer);
 			break;
@@ -1728,7 +1889,9 @@ void M_GameOptions_Key (int key) {
 			M_NetStart_Change (1);
 			break;
 
+		case K_MOUSE1:
 		case K_ENTER:
+			if (key == K_MOUSE1 && gameoptions_cursor != 0) break;
 			S_LocalSound ("misc/menu2.wav");
 			//        if (gameoptions_cursor == 0)
 			{
@@ -1765,6 +1928,12 @@ void M_GameOptions_Key (int key) {
 			break;
 	}
 }
+
+qbool M_GameOptions_Mouse_Move(const mouse_state_t *ms)
+{
+	return M_Mouse_Select(&gameoptions_window, ms, NUM_GAMEOPTIONS, &gameoptions_cursor);
+}
+
 #endif    // !CLIENTONLY
 
 // SLIST -->
@@ -2069,5 +2238,24 @@ void M_Keydown (int key, int unichar) {
 			M_Menu_MP3_Playlist_Key (key);
 			break;
 #endif
+	}
+}
+
+qbool Menu_Mouse_Moved(const mouse_state_t* ms)
+{
+	// send the mouse position to appropriate modules here
+	switch (m_state) {
+	case m_main:			return M_Main_Mouse_Move(ms);
+	case m_singleplayer:	return M_SinglePlayer_Mouse_Move(ms);
+	case m_multiplayer:		return M_MultiPlayer_Mouse_Move(ms);
+#ifndef CLIENTONLY
+	case m_load:			return M_Load_Mouse_Move(ms);
+	case m_save:			return M_Load_Mouse_Move(ms);
+	case m_gameoptions:		return M_GameOptions_Mouse_Move(ms);
+#endif
+	case m_options:			return Menu_Options_Mouse_Move(ms);
+	case m_slist:			return Browser_Mouse_Move(ms);
+	case m_demos:			return Menu_Demo_Mouse_Move(ms);
+	case m_none: default:	return false;
 	}
 }
