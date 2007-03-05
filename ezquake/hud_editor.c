@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.19 2007-03-05 01:54:26 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.20 2007-03-05 04:44:27 cokeman1982 Exp $
 
 */
 
@@ -772,13 +772,13 @@ static void HUD_EditorScaleDelta(cvar_t *scale, float delta_scale, hud_alignmode
 //
 static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 {
-	extern float mouse_x, mouse_y; // in_win.c, delta mouse.
+	extern float mouse_x, mouse_y;		// in_win.c, delta mouse.
 	int i					= 0;
 	qbool found_handle		= false;	// Did we find any handle under the cursor?
 	static cvar_t *width	= NULL;
 	static cvar_t *height	= NULL;
-	static cvar_t *scale	= NULL;
-	static hud_resize_handle_t *resize_handles[HUD_RESIZEHANDLE_COUNT];
+	static cvar_t *scale	= NULL;	
+	hud_resize_handle_t *resize_handles[HUD_RESIZEHANDLE_COUNT];
 	static int last_resize_handle = HUD_RESIZEHANDLE_NONE;
 
 	// Is this mode turned on?
@@ -805,12 +805,14 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 		height	= HUD_FindVar(hud_hover, "height");
 		scale	= HUD_FindVar(hud_hover, "scale");
 
+		memset(resize_handles, 0, sizeof(resize_handles));
+
 		if(width)
 		{
 			// Right & left.
 			hud_resize_handle_t right;
 			hud_resize_handle_t left;
-			
+
 			right.width		= HUD_RESIZEHANDLE_THICKNESS;
 			right.height	= hud_hover->lh * HUD_RESIZEHANDLE_SIZEFACTOR;
 			right.x			= hud_hover->lw - right.width;
@@ -955,8 +957,7 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 		}
 		else if(hud_hover)
 		{
-			// If we're hovering a HUD, always draw all it's resize handles.
-			
+			// If we're hovering a HUD, always draw all it's resize handles.			
 			if((hud_mouse_x >= (hud_hover->lx + resize_handles[i]->x)
 				&& hud_mouse_x <= (hud_hover->lx + resize_handles[i]->x + resize_handles[i]->width)
 				&& hud_mouse_y >= (hud_hover->ly + resize_handles[i]->y)
