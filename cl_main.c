@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.129 2007-02-26 06:01:14 cokeman1982 Exp $
+	$Id: cl_main.c,v 1.130 2007-03-05 19:16:24 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1331,17 +1331,15 @@ void CL_Frame (double time) {
 	double minframetime;
 	static double	extraphysframetime;	//#fps
 
+	extern cvar_t r_lerpframes;
 #ifdef GLQUAKE
 	extern cvar_t gl_clear;
 	extern cvar_t gl_polyblend;
-#endif
-	extern cvar_t r_lerpframes;
-
-#ifndef GLQUAKE
+#else
 	extern cvar_t r_waterwarp;
 	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
 		v_damagecshift, v_suitcshift, v_bonusflash;
-#endif
+#endif // GLQUAKE
 
 	extratime += time;
 	minframetime = CL_MinFrameTime();
@@ -1495,9 +1493,17 @@ void CL_Frame (double time) {
 			if (   (!cls.demoplayback && !cl.spectator) // not demo playback and not a spec
 				|| (!cls.demoplayback &&  cl.spectator && Cam_TrackNum() == -1) // not demo, spec free fly
 				|| ( cls.demoplayback && cls.mvdplayback && Cam_TrackNum() == -1) // mvd demo and free fly
-			   )
+				)
 				IN_Move (&dummy);
 		}
+	}
+
+	// We need to move the mouse also when disconnected 
+	// to get the cursor working properly.
+	if(cls.state == ca_disconnected)
+	{
+		usercmd_t dummy;
+		IN_Move (&dummy);
 	}
 
 	{ // chat icons
