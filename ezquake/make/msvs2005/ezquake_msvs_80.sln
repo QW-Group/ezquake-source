@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
+# Visual C++ Express 2005
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ezquake", "ezquake_msvs_80.vcproj", "{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}"
 	ProjectSection(ProjectDependencies) = postProject
 		{AD648F18-37A4-4776-96B1-65321DBA52B7} = {AD648F18-37A4-4776-96B1-65321DBA52B7}
@@ -30,7 +30,6 @@ Global
 		{AD648F18-37A4-4776-96B1-65321DBA52B7}.GLRelease|Win32.ActiveCfg = Release|Win32
 		{AD648F18-37A4-4776-96B1-65321DBA52B7}.GLRelease|Win32.Build.0 = Release|Win32
 		{AD648F18-37A4-4776-96B1-65321DBA52B7}.Release|Win32.ActiveCfg = Release|Win32
-		{AD648F18-37A4-4776-96B1-65321DBA52B7}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

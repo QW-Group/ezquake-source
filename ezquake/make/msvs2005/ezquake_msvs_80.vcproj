@@ -2484,6 +2484,10 @@
 					RelativePath="..\..\server.h"
 					>
 				</File>
+				<File
+					RelativePath="..\..\sv_world.h"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Sound_h"
