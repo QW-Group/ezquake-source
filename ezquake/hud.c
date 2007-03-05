@@ -426,7 +426,7 @@ void HUD_Hide_f (void)
 }
 
 //
-// Move the specified hud element.
+// Toggles specified hud element.
 //
 void HUD_Toggle_f (void)
 {
@@ -539,13 +539,13 @@ void HUD_Place_f (void)
         return;
     }
 
-    // place with helper
+    // Place with helper.
     strlcpy(temp, hud->place->string, sizeof(temp));
     Cvar_Set(hud->place, Cmd_Argv(2));
     if (!HUD_FindPlace(hud))
     {
         Com_Printf("place: invalid area argument: %s\n", Cmd_Argv(2));
-        Cvar_Set(hud->place, temp); // restore old value
+        Cvar_Set(hud->place, temp); // Restore old value.
     }
 }
 
@@ -700,6 +700,7 @@ void HUD_Recalculate_f(void)
 //
 void HUD_Init(void)
 {
+	// Commands.
     Cmd_AddCommand ("show", HUD_Show_f);
     Cmd_AddCommand ("hide", HUD_Hide_f);
     Cmd_AddCommand ("move", HUD_Move_f);
@@ -709,7 +710,7 @@ void HUD_Init(void)
     Cmd_AddCommand ("align", HUD_Align_f);
     Cmd_AddCommand ("hud_recalculate", HUD_Recalculate_f);
 
-	// variables
+	// Variables.
     Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
 	Cvar_Register (&hud_offscreen);
     Cvar_ResetCurrentGroup();
