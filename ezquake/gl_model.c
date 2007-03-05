@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.17 2007-02-07 14:15:28 tonik Exp $
+	$Id: gl_model.c,v 1.18 2007-03-05 17:12:00 qqshka Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -459,6 +459,12 @@ void Mod_LoadTextures (lump_t *l) {
 		loadmodel->textures[i] = tx;
 
 		memcpy (tx->name, mt->name, sizeof(tx->name));
+
+		if (!tx->name[0]) {
+			snprintf(tx->name, sizeof(tx->name), "unnamed%d", i);
+			Com_DPrintf("Warning: unnamed texture in %s, renaming to %s\n", loadmodel->name, tx->name);
+		}
+
 		tx->width  = mt->width;
 		tx->height = mt->height;
 		tx->loaded = false; // so texture will be reloaded
