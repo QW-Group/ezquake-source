@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_init.c,v 1.12 2007-03-06 17:18:23 disconn3ct Exp $
+	$Id: sv_init.c,v 1.13 2007-03-06 17:43:17 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -30,7 +30,16 @@ char localmodels[MAX_MODELS][5];			// inline model names for precache
 
 char localinfo[MAX_LOCALINFO_STRING + 1];	// local game info
 
-int SV_ModelIndex (char *name) {
+cvar_t	sv_loadentfiles = {"sv_loadentfiles", "0"};
+
+
+/*
+================
+SV_ModelIndex
+================
+*/
+int SV_ModelIndex (char *name)
+{
 	int i;
 	
 	if (!name || !name[0])
@@ -39,13 +48,21 @@ int SV_ModelIndex (char *name) {
 	for (i = 1; i < MAX_MODELS && sv.model_precache[i]; i++)
 		if (!strcmp(sv.model_precache[i], name))
 			return i;
-	if (i == MAX_MODELS || !sv.model_precache[i])
-		Host_Error ("SV_ModelIndex: model %s not precached", name);
-	return i;
+
+	Host_Error ("SV_ModelIndex: model %s not precached", name);
+
+	return 0; // shut up compiler
 }
 
-//Moves to the next signon buffer if needed
-void SV_FlushSignon (void) {
+/*
+================
+SV_FlushSignon
+
+Moves to the next signon buffer if needed
+================
+*/
+void SV_FlushSignon (void)
+{
 	if (sv.signon.cursize < sv.signon.maxsize - 512)
 		return;
 
@@ -58,9 +75,17 @@ void SV_FlushSignon (void) {
 	sv.signon.cursize = 0;
 }
 
-//Entity baselines are used to compress the update messages to the clients --
-//only the fields that differ from the baseline will be transmitted
-void SV_CreateBaseline (void) {
+/*
+================
+SV_CreateBaseline
+
+Entity baselines are used to compress the update messages
+to the clients -- only the fields that differ from the
+baseline will be transmitted
+================
+*/
+void SV_CreateBaseline (void)
+{
 	int i, entnum, max_edicts;	
 	edict_t *svent;
 
@@ -108,13 +133,21 @@ void SV_CreateBaseline (void) {
 	}
 }
 
-//Grabs the current state of the progs serverinfo flags and each
-//client for saving across the transition to another level
-void SV_SaveSpawnparms (void) {
+/*
+================
+SV_SaveSpawnparms
+
+Grabs the current state of the progs serverinfo flags 
+and each client for saving across the
+transition to another level
+================
+*/
+void SV_SaveSpawnparms (void)
+{
 	int i, j;
 
 	if (!sv.state)
-		return;		// no progs loaded yet
+		return; // no progs loaded yet
 
 	// serverflags is the only game related thing maintained
 	svs.serverflags = pr_global_struct->serverflags;
@@ -194,49 +227,43 @@ void SV_CalcPHS (void) {
 	Com_DPrintf ("Average leafs visible / hearable / total: %i / %i / %i\n", vcount/num, count/num, num);
 }
 
-unsigned SV_CheckModel(char *mdl) {
-	byte stackbuf[1024];		// avoid dirtying the cache heap
+unsigned SV_CheckModel (char *mdl)
+{
+	byte stackbuf[1024]; // avoid dirtying the cache heap
 	byte *buf;
 	unsigned short crc;
 
 	buf = (byte *) FS_LoadStackFile (mdl, stackbuf, sizeof(stackbuf));
-	if (!buf)
-		Host_Error ("SV_CheckModel: could not load %s\n", mdl);
+	if (!buf) {
+		if (!strcmp(mdl, "progs/player.mdl"))
+			return 33168;
+		else if (!strcmp(mdl, "progs/eyes.mdl"))
+			return 6967;
+		else
+			Host_Error ("SV_CheckModel: could not load %s\n", mdl);
+	}
+
 	crc = CRC_Block(buf, fs_filesize);
 
 	return crc;
 }
 
-cvar_t	sv_loadentfiles = {"sv_loadentfiles", "0"};
-void SV_LoadEntFile (void) {
-	char name[MAX_OSPATH], *data, crc[32];
+/*
+================
+SV_SpawnServer
 
-	Info_SetValueForStarKey (svs.info,  "*entfile", "", MAX_SERVERINFO_STRING);
+Change the server to a new map, taking all connected
+clients along with it.
 
-	if (!sv_loadentfiles.value)
-		return;
-
-	COM_StripExtension (sv.worldmodel->name, name);
-	strcat (name, ".ent");
-
-	data = (char *) FS_LoadHunkFile (name);
-	if (!data)
-		return;
-
-	sv.worldmodel->entities = data;
-
-	Com_DPrintf ("Loaded entfile %s\n", name);
-
-	sprintf (crc, "%i", CRC_Block ((byte *)data, fs_filesize));
-	Info_SetValueForStarKey (svs.info, "*entfile", crc, MAX_SERVERINFO_STRING);
-}
-
-//Change the server to a new map, taking all connected clients along with it.
-//This is only called from the SV_Map_f() function.
-void SV_SpawnServer (char *mapname, qbool devmap) {
+This is only called from the SV_Map_f() function.
+================
+*/
+void SV_SpawnServer (char *mapname, qbool devmap)
+{
+	char *entitystring;
 	edict_t *ent;
 	int i;
-	extern qbool	sv_allow_cheats;
+	extern qbool sv_allow_cheats;
 	extern cvar_t sv_cheats;
 
 	Com_DPrintf ("SpawnServer: %s\n", mapname);
@@ -245,7 +272,7 @@ void SV_SpawnServer (char *mapname, qbool devmap) {
 
 	SV_SaveSpawnparms ();
 
-	svs.spawncount++;		// any partially connected client will be restarted
+	svs.spawncount++; // any partially connected client will be restarted
 
 	sv.state = ss_dead;
 	com_serveractive = false;
@@ -280,8 +307,6 @@ void SV_SpawnServer (char *mapname, qbool devmap) {
 
 	SZ_Init (&sv.multicast, sv.multicast_buf, sizeof(sv.multicast_buf));
 
-	SZ_Init (&sv.master, sv.master_buf, sizeof(sv.master_buf));
-	
 	SZ_Init (&sv.signon, sv.signon_buffers[0], sizeof(sv.signon_buffers[0]));
 	sv.num_signon_buffers = 1;
 
@@ -297,8 +322,7 @@ void SV_SpawnServer (char *mapname, qbool devmap) {
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		ent = EDICT_NUM(i+1);
 		svs.clients[i].edict = ent;
-		//ZOID - make sure we update frags right
-		svs.clients[i].old_frags = 0;
+		svs.clients[i].old_frags = 0; //ZOID - make sure we update frags right
 	}
 
 	sv.time = 1.0;
@@ -352,11 +376,21 @@ void SV_SpawnServer (char *mapname, qbool devmap) {
 	// run the frame start qc function to let progs check cvars
 	SV_ProgStartFrame ();
 
-	// check for a custom entity file
-	SV_LoadEntFile ();
-
 	// load and spawn all other entities
-	ED_LoadFromFile (sv.worldmodel->entities);
+	entitystring = NULL;
+	if ((int) sv_loadentfiles.value) {
+		entitystring = (char *)FS_LoadHunkFile (va("maps/%s.ent", sv.mapname));
+		if (entitystring) {
+			Com_DPrintf ("Using entfile maps/%s.ent\n", sv.mapname);
+			Info_SetValueForStarKey (svs.info, "*entfile", va("%i",
+				CRC_Block((byte *)entitystring, fs_filesize)), MAX_SERVERINFO_STRING);
+		}
+	}
+	if (!entitystring) {
+		Info_SetValueForStarKey (svs.info,  "*entfile", "", MAX_SERVERINFO_STRING);
+		entitystring = sv.worldmodel->entities;
+	}
+	ED_LoadFromFile (entitystring);
 
 	// look up some model indexes for specialized message compression
 	SV_FindModelNumbers ();
