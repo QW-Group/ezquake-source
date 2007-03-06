@@ -42,6 +42,7 @@ typedef struct CTab_s
 	int			hoveredPage;
 	int			width;
 	int			height;
+    struct { int x, y, x2, y2; } navi_boxes[TAB_MAX_TABS];
     void *tag;
 }
 CTab_t;

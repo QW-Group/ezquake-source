@@ -72,13 +72,61 @@ void CTab_AddPage(CTab_t *tab, const char *name, int id, const CTabPage_Handlers
     memcpy(&page->handlers, handlers, sizeof(CTabPage_Handlers_t));
 }
 
+// will draw tab navigation bar, remember labels positions
+// and will return the width of the navigation bar
+static int CTab_Draw_PageLinks(CTab_t *tab, int x, int y, int w, int h)
+{
+    char buf[TAB_MAX_NAME_LENGTH+3];
+    int i, cx, cy, ww, wh;          // current x/y, word width/height
+    qbool ap, hp;                   // active page / hovered page
+
+    cx = 0; cy = 0;
+    for (i = 0; i < tab->nPages; i++)
+    {
+        *buf = 0;
+        ap = tab->activePage == i;
+        hp = tab->hoveredPage == i;
+        
+        // add leading space/brace
+        strcat(buf, ap ? "\x10" : " ");
+        
+        // adds white or red variant of the page name to the buf string
+        strcat(buf, tab->pages[i].name);
+
+        // add closing space/brace
+        strcat(buf, ap ? "\x11" : " ");
+        
+        ww = strlen(buf) * LETTERWIDTH;
+        wh = LETTERHEIGHT;
+
+        // this is not the first word we are printing and we don't fit on the line anymore
+        if (cx && (cx + ww > w)) {
+            // so wrap the line already
+            cx = 0;
+            cy += LETTERHEIGHT;
+        }
+
+        UI_Print(x + cx, y + cy, buf, ap || hp);
+
+        // remember where the text was so we can point to it with the mouse later
+        tab->navi_boxes[i].x = cx;
+        tab->navi_boxes[i].y = cy;
+        tab->navi_boxes[i].x2 = cx+ww-LETTERWIDTH;
+        tab->navi_boxes[i].y2 = cy+wh;
+
+        // we substract 1 letter here and above because we want only one (common) space
+        // between the labels, not two (one for each)
+        cx += ww - LETTERWIDTH;
+    }
+
+    return cy + LETTERHEIGHT;
+}
 
 // draw control
 void CTab_Draw(CTab_t *tab, int x, int y, int w, int h)
 {
-    char line[1024], *s;
-    int l = 0, r = 0;
-    int i;
+    char line[1024];
+	int nav_height;
 
 	if (tab->activePage != tab->lastViewedPage && tab->activePage < tab->nPages)
 	{
@@ -90,71 +138,7 @@ void CTab_Draw(CTab_t *tab, int x, int y, int w, int h)
 	tab->width = w;
 	tab->height = h;
 
-    // make one string
-    strcpy(line, " ");
-    for (i=0; i < tab->nPages; i++)
-    {
-		if (tab->activePage == i)
-        {
-            line[strlen(line)-1] = 0;
-            l = strlen(line);
-			strcat(line, "\x10");
-        }
-
-		if (tab->hoveredPage == i)
-		{
-			l = strlen(line) - 1;
-		}
-
-        strcat(line, tab->pages[i].name);
-        if (tab->activePage == i || tab->hoveredPage == i)
-        {
-            s = line + l + 1;
-            while (*s)
-                *s++ ^= 128;
-        }
-
-        if (tab->activePage == i)
-        {
-            r = strlen(line);
-            strcat(line, "\x11");
-        }
-        else
-            strcat(line, " ");
-
-		if (tab->hoveredPage == i)
-		{
-			r = strlen(line);
-		}
-    }
-
-    // if it is less than screen width, we're done
-    if (strlen(line) <= w/8)
-    {
-        UI_Print_Center(x, y, w, line, false);
-    }
-    // else, cut sth off
-    else
-    {
-        char *buf;
-
-        int p = 0;
-        int q = strlen(line);
-        float m = l + (r - l) / 2.0;
-
-        while (q - p  >  w/8)
-        {
-            if (m-p > q-m)
-                p++;
-            else
-                q--;
-        }
-
-        line[q] = 0;
-        buf = line + p;
-
-        UI_Print_Center(x, y, w, buf, false);
-    }
+	nav_height = CTab_Draw_PageLinks(tab, x, y, w, h);
 
     // draw separator
     memset(line, '\x1E', w/8);
@@ -163,11 +147,12 @@ void CTab_Draw(CTab_t *tab, int x, int y, int w, int h)
     line[0] = '\x1D';
 	memcpy(line + 2, " \x10shift\x11+\x10tab\x11 ", min((w/8)-3, 15));
 	memcpy(line + w/8 - 2 - 7, " \x10tab\x11 ", 7);
-    UI_Print_Center(x, y+8, w, line, false);
+    UI_Print_Center(x, y + nav_height, w, line, false);
+	nav_height += 8;
 
     // draw page
     if (tab->pages[tab->activePage].handlers.draw != NULL)
-        tab->pages[tab->activePage].handlers.draw(x, y+16, w, h-16, tab, &tab->pages[tab->activePage]);
+        tab->pages[tab->activePage].handlers.draw(x, y + nav_height, w, h- nav_height, tab, &tab->pages[tab->activePage]);
 }
 
 
@@ -176,7 +161,7 @@ int CTab_Key(CTab_t *tab, int key)
 {
     int handled;
 
-	if (tab->hoveredPage >= 0)
+	if (tab->hoveredPage >= 0 && key == K_MOUSE1)
 	{
 		tab->activePage = tab->hoveredPage;
 		return true;
@@ -237,21 +222,34 @@ int CTab_Key(CTab_t *tab, int key)
 
 static qbool CTab_Navi_Mouse_Move (CTab_t *tab, const mouse_state_t *ms) 
 {
+    int i;
 	if (!tab->width) return false;
-	tab->hoveredPage = tab->nPages * (ms->x / (double) tab->width);
-	return true;
+
+    for (i = 0; i < tab->nPages; i++)
+    {
+        if (!(tab->navi_boxes[i].x > ms->x || tab->navi_boxes[i].y > ms->y || tab->navi_boxes[i].x2 < ms->x || tab->navi_boxes[i].y2 < ms->y))
+        {   // pointer is within the bounds
+            tab->hoveredPage = i;
+            return true;
+        }
+    }
+	return false;
 }
 
 qbool CTab_Mouse_Move(CTab_t *tab, const mouse_state_t *ms)
 {
-	if (ms->y <= 16) {
+	if (ms->y <= tab->navi_boxes[tab->nPages-1].y2)
+    {   // pointer is in the navigation area
 		return CTab_Navi_Mouse_Move(tab, ms);
-	} else {
+	}
+    else // pointer is in the main area
+    {
 		CTabPage_MouseMoveType mmf;
 		mouse_state_t lms;
 
 		lms.x = ms->x;
-		lms.y = ms->y - 16;
+        // substract navigation header height
+        lms.y = ms->y - (tab->navi_boxes[tab->nPages-1].y2 + LETTERHEIGHT);
 		lms.x_old = ms->x_old;
 		lms.y_old = ms->y_old;
 		tab->hoveredPage = -1;
@@ -261,7 +259,7 @@ qbool CTab_Mouse_Move(CTab_t *tab, const mouse_state_t *ms)
 			return mmf(&lms);
 	}
 
-	return false;
+    return false;
 }
 
 // get current page
