@@ -16,10 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_cmds.c,v 1.19 2006-12-26 18:07:30 tonik Exp $
+	$Id: pr_cmds.c,v 1.20 2007-03-06 18:54:30 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
+#include "sv_world.h"
 
 #define	RETURN_EDICT(e)		(((int *) pr_globals)[OFS_RETURN] = EDICT_TO_PROG(e))
 #define	RETURN_STRING(s)	(((int *) pr_globals)[OFS_RETURN] = PR_SetString(s))
@@ -57,58 +58,7 @@ char *PF_VarString (int first) {
 	return pr_varstring_temp;
 }
 
-static void PR_CheckEmptyString (char *s) {
-	if (s[0] <= ' ')
-		PR_RunError ("Bad string");
-}
-
-//for PF_checkclient --->
-
-#define	MAX_CHECK	16
-static	byte	checkpvs[MAX_MAP_LEAFS / 8];
-
-static int PF_newcheckclient (int check) {
-	int i;
-	byte *pvs;
-	edict_t *ent;
-	mleaf_t *leaf;
-	vec3_t org;
-
-	// cycle to the next one
-	check = bound(1, check, MAX_CLIENTS);
-
-	i = (check == MAX_CLIENTS) ? 1 : check + 1;
-
-	for ( ;  ; i++) {
-		if (i == MAX_CLIENTS + 1)
-			i = 1;
-
-		ent = EDICT_NUM(i);
-
-		if (i == check)
-			break;	// didn't find anything else
-
-		if (ent->free)
-			continue;
-		if (ent->v.health <= 0)
-			continue;
-		if ((int) ent->v.flags & FL_NOTARGET)
-			continue;
-
-		// anything that is a client, or has a client as an enemy
-		break;
-	}
-
-	// get the PVS for the entity
-	VectorAdd (ent->v.origin, ent->v.view_ofs, org);
-	leaf = Mod_PointInLeaf (org, sv.worldmodel);
-	pvs = Mod_LeafPVS (leaf, sv.worldmodel);
-	memcpy (checkpvs, pvs, (sv.worldmodel->numleafs+7)>>3 );
-
-	return i;
-}
-
-//for PF_checkclient <---
+//============================================================================
 
 //for message writing --->
 
@@ -226,13 +176,21 @@ void PF_setorigin (void) {
 	SV_LinkEdict (e, false);
 }
 
-//void(entity e, string m) setmodel = #3
-//Also sets size, mins, and maxs for inline bmodels
-void PF_setmodel (void) {
-	edict_t	*e;
-	char *m, **check;
+/*
+=================
+PF_setmodel
+
+Also sets size, mins, and maxs for inline bmodels
+
+void setmodel(entity e, string m) = #3
+=================
+*/
+static void PF_setmodel (void)
+{
 	int i;
+	edict_t	*e;
 	model_t	*mod;
+	char *m, **check;
 
 	e = G_EDICT(OFS_PARM0);
 	m = G_STRING(OFS_PARM1);
@@ -572,18 +530,74 @@ void PF_break (void) {
 	//PR_RunError ("break statement");
 }
 
-/*
-entity() clientlist = #17
+//============================================================================
 
-Returns a client (or object that has a client enemy) that would be a valid target.
+static	byte checkpvs[MAX_MAP_LEAFS / 8];
+
+static int PF_newcheckclient (int check)
+{
+	int i;
+	byte *pvs;
+	edict_t *ent;
+	mleaf_t *leaf;
+	vec3_t org;
+
+	// cycle to the next one
+	check = bound(1, check, MAX_CLIENTS);
+
+	i = (check == MAX_CLIENTS) ? 1 : check + 1;
+
+	for ( ;  ; i++) {
+		if (i == MAX_CLIENTS + 1)
+			i = 1;
+
+		ent = EDICT_NUM(i);
+
+		if (i == check)
+			break; // didn't find anything else
+
+		if (ent->free)
+			continue;
+		if (ent->v.health <= 0)
+			continue;
+		if ((int) ent->v.flags & FL_NOTARGET)
+			continue;
+
+		// anything that is a client, or has a client as an enemy
+		break;
+	}
+
+	// get the PVS for the entity
+	VectorAdd (ent->v.origin, ent->v.view_ofs, org);
+	leaf = Mod_PointInLeaf (org, sv.worldmodel);
+	pvs = Mod_LeafPVS (leaf, sv.worldmodel);
+	memcpy (checkpvs, pvs, (sv.worldmodel->numleafs+7)>>3 );
+
+	return i;
+}
+
+/*
+=================
+PF_checkclient
+
+Returns a client (or object that has a client enemy) that would be a
+valid target.
+
 If there are more than one valid options, they are cycled each frame
-If (self.origin + self.viewofs) is not in the PVS of the current target, it is not returned at all.
+
+If (self.origin + self.viewofs) is not in the PVS of the current target,
+it is not returned at all.
+
+entity checkclient() = #17
+=================
 */
-void PF_checkclient (void) {
+#define	MAX_CHECK 16
+static void PF_checkclient (void)
+{
+	int l;
+	vec3_t vieworg;
 	edict_t	*ent, *self;
 	mleaf_t	*leaf;
-	int l;
-	vec3_t view;
 
 	// find a new check if on a new frame
 	if (sv.time - sv.lastchecktime >= 0.1) {
@@ -600,8 +614,8 @@ void PF_checkclient (void) {
 
 	// if current entity can't possibly see the check entity, return 0
 	self = PROG_TO_EDICT(pr_global_struct->self);
-	VectorAdd (self->v.origin, self->v.view_ofs, view);
-	leaf = Mod_PointInLeaf (view, sv.worldmodel);
+	VectorAdd (self->v.origin, self->v.view_ofs, vieworg);
+	leaf = Mod_PointInLeaf (vieworg, sv.worldmodel);
 	l = (leaf - sv.worldmodel->leafs) - 1;
 	if (l < 0 || !(checkpvs[l >> 3] & (1 << (l & 7)))) {
 		RETURN_EDICT(sv.edicts);
@@ -612,9 +626,17 @@ void PF_checkclient (void) {
 	RETURN_EDICT(ent);
 }
 
-//void(entity client, string s)stuffcmd = #21
-//Sends text over to the client's execution buffer
-void PF_stuffcmd (void) {
+/*
+=================
+PF_stuffcmd
+
+Sends text over to the client's execution buffer
+
+void stuffcmd(entity client, string s) = #21;
+=================
+*/
+static void PF_stuffcmd (void)
+{
 	int entnum, buflen, newlen, i;
 	client_t *cl;
 	char *buf, *str;
@@ -667,9 +689,17 @@ void PF_stuffcmd (void) {
 	}
 }
 
-//void(string s) localcmd = #46
-//Sends text over to the client's execution buffer
-void PF_localcmd (void) {
+/*
+=================
+PF_localcmd
+
+Sends text over to the server's execution buffer
+
+void localcmd(string cmd) = #46
+=================
+*/
+static void PF_localcmd (void)
+{
 	char *str;
 	
 	str = G_STRING(OFS_PARM0);	
@@ -707,33 +737,57 @@ void PF_cvar_set (void) {
 	Cvar_Set (var, val);
 }
 
-//entity(vector org, float rad) findradius = #22
-//Returns a chain of entities that have origins within a spherical area
-void PF_findradius (void) {
-	int i, j;
-	float rad, *org;
-	vec3_t eorg;
-	edict_t *ent, *chain;
+/*
+=================
+PF_findradius
 
-	chain = (edict_t *) sv.edicts;
+Returns a chain of entities that have origins within a spherical area
+
+entity findradius(vector origin, float radius) = #22
+=================
+*/
+#ifdef rad2
+#undef rad2
+#endif
+static void PF_findradius (void)
+{
+	int i, j, numtouch;
+	vec3_t mins, maxs, eorg;
+	edict_t *touchlist[SV_MAX_EDICTS], *ent, *chain;
+	float rad, rad2, *org;
 
 	org = G_VECTOR(OFS_PARM0);
 	rad = G_FLOAT(OFS_PARM1);
+	rad2 = rad * rad;
 
-	ent = NEXT_EDICT(sv.edicts);
-	for (i = 1; i < sv.num_edicts; i++, ent = NEXT_EDICT(ent)) {
-		if (ent->free)
-			continue;
+	for (i = 0; i < 3; i++) {
+		// enlarge the bbox a bit
+		mins[i] = org[i] - rad - 1;
+		maxs[i] = org[i] + rad + 1;
+	}
+
+	numtouch = SV_AreaEdicts (mins, maxs, touchlist, SV_MAX_EDICTS, AREA_SOLID);
+	numtouch += SV_AreaEdicts (mins, maxs, &touchlist[numtouch], SV_MAX_EDICTS - numtouch, AREA_TRIGGERS);
+
+	chain = (edict_t *)sv.edicts;
+
+	// touch linked edicts
+	for (i = 0; i < numtouch; i++) {
+		ent = touchlist[i];
+
 		if (ent->v.solid == SOLID_NOT)
-			continue;
+			continue; // FIXME?
+
 		for (j = 0; j < 3; j++)
-			eorg[j] = org[j] - (ent->v.origin[j] + (ent->v.mins[j] + ent->v.maxs[j]) * 0.5);			
-		if (DotProduct(eorg, eorg) > rad * rad)
+			eorg[j] = org[j] - (ent->v.origin[j] + (ent->v.mins[j] + ent->v.maxs[j]) * 0.5);
+
+		if (DotProduct(eorg, eorg) > rad2)
 			continue;
 
 		ent->v.chain = EDICT_TO_PROG(chain);
 		chain = ent;
 	}
+
 	RETURN_EDICT(chain);
 }
 
@@ -818,14 +872,35 @@ void PF_Find (void) {
 	RETURN_EDICT(sv.edicts);
 }
 
-//string(string s) precache_file = #68
-void PF_precache_file (void) {
+static void PR_CheckEmptyString (char *s)
+{
+	if (s[0] <= ' ')
+		PR_RunError ("Bad string");
+}
+
+
+/*
+===============
+PF_precache_file
+
+string precache_file(string s) = #68
+===============
+*/
+static void PF_precache_file (void)
+{
 	// precache_file is only used to copy files with qcc, it does nothing
 	G_INT(OFS_RETURN) = G_INT(OFS_PARM0);
 }
 
-//void(string s) precache_sound = #19
-void PF_precache_sound (void) {
+/*
+===============
+PF_precache_sound
+
+void precache_sound(string s) = #19
+===============
+*/
+static void PF_precache_sound (void)
+{
 	char *s;
 	int i;
 
@@ -847,8 +922,15 @@ void PF_precache_sound (void) {
 	PR_RunError ("PF_precache_sound: overflow");
 }
 
-//void(string s) precache_model = #20
-void PF_precache_model (void) {
+/*
+===============
+PF_precache_model
+
+void precache_model(string s) = #20
+===============
+*/
+static void PF_precache_model (void)
+{
 	char *s;
 	int i;
 
@@ -1032,13 +1114,43 @@ void PF_aim (void) {
 	return;
 }
 
-//void(float to, float f) WriteByte = #52
-void PF_WriteByte (void) {
+// this is an extremely nasty hack
+static void CheckIntermission (void)
+{
+	sizebuf_t *msg = WriteDest();
+
+	if (G_FLOAT(OFS_PARM1) != svc_intermission)
+		return;
+
+	if ( (msg->cursize == 2 && msg->data[0] == svc_cdtrack)	/* QW progs send svc_cdtrack first */
+		|| msg->cursize == 0  /* just in case */ )
+	{
+		sv.intermission_running = true;
+		sv.intermission_hunt = 1;	// start looking for WriteCoord's
+		// prefix the svc_intermission message with an sv.time update
+		// to make sure intermission screen has the right value
+		MSG_WriteByte (&sv.reliable_datagram, svc_updatestatlong);
+		MSG_WriteByte (&sv.reliable_datagram, STAT_TIME);
+		MSG_WriteLong (&sv.reliable_datagram, (int)(sv.time * 1000));
+	}
+}
+
+/*
+=================
+PF_WriteByte
+
+void WriteByte(float to, float f) = #52
+=================
+*/
+static void PF_WriteByte (void)
+{
 	if (G_FLOAT(OFS_PARM0) == MSG_ONE) {
 		client_t *cl = Write_GetClient();
 		ClientReliableCheckBlock(cl, 1);
 		ClientReliableWrite_Byte(cl, G_FLOAT(OFS_PARM1));
 	} else {
+		if (G_FLOAT(OFS_PARM0) == MSG_ALL)
+			CheckIntermission ();
 		MSG_WriteByte (WriteDest(), G_FLOAT(OFS_PARM1));
 	}
 }
@@ -1076,13 +1188,29 @@ void PF_WriteLong (void) {
 	}
 }
 
-//void(float to, float f) WriteCoord = #56
-void PF_WriteCoord (void) {
+/*
+=================
+PF_WriteCoord
+
+void WriteCoord(float to, float f) = #56
+=================
+*/
+static void PF_WriteCoord (void)
+{
 	if (G_FLOAT(OFS_PARM0) == MSG_ONE) {
 		client_t *cl = Write_GetClient();
 		ClientReliableCheckBlock(cl, 2);
 		ClientReliableWrite_Coord(cl, G_FLOAT(OFS_PARM1));
 	} else {
+		if (sv.intermission_hunt) {
+			sv.intermission_origin[sv.intermission_hunt - 1] = G_FLOAT(OFS_PARM1);
+			sv.intermission_hunt++;
+			if (sv.intermission_hunt == 4) {
+				sv.intermission_origin_valid = true;
+				sv.intermission_hunt = 0;
+			}
+		}
+
 		MSG_WriteCoord (WriteDest(), G_FLOAT(OFS_PARM1));
 	}
 }

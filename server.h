@@ -100,10 +100,15 @@ typedef struct {
 	int			num_signon_buffers;
 	int			signon_buffer_size[MAX_SIGNON_BUFFERS];
 	byte		signon_buffers[MAX_SIGNON_BUFFERS][MAX_DATAGRAM];
+
+	qbool		intermission_running;	// when true, use intermission PVS
+	int			intermission_hunt;		// looking for WriteCoords to fill in intermission_origin
+	qbool		intermission_origin_valid;
+	vec3_t		intermission_origin;
 } server_t;
 
 
-#define	NUM_SPAWN_PARMS			16
+#define NUM_SPAWN_PARMS 16
 
 typedef enum {
 	cs_free,		// can be reused for a new connection
@@ -133,17 +138,17 @@ typedef struct client_s {
 	int			userid;				// identifying number
 	char		userinfo[MAX_INFO_STRING];	// infostring
 
-	qbool	sendinfo;			// at end of frame, send info to all
-										// this prevents malicious multiple broadcasts
+	qbool		sendinfo;			// at end of frame, send info to all
+									// this prevents malicious multiple broadcasts
 	float		lastnametime;		// time of last name change
 	int			lastnamecount;		// time of last name change
 	unsigned	checksum;			// checksum for calcs
-	qbool	drop;				// lose this guy next opportunity
+	qbool		drop;				// lose this guy next opportunity
 	int			lossage;			// loss percentage
 
 	usercmd_t	lastcmd;			// for filling in big drops and partial predictions
 	double		cmdtime;			// realtime of last message
-	qbool	jump_held;
+	qbool		jump_held;
 
 	float		maxspeed;			// localized maxspeed
 	float		entgravity;			// localized ent gravity
@@ -170,7 +175,7 @@ typedef struct client_s {
 	int			sprint_level;
 
 	double		connection_started;	// or time of disconnect for zombies
-	qbool	send_message;		// set on frames a datagram arived on
+	qbool		send_message;		// set on frames a datagram arived on
 
 	// spawn parms are carried from level to level
 	float		spawn_parms[NUM_SPAWN_PARMS];
@@ -180,7 +185,7 @@ typedef struct client_s {
 	
 	int			stats[MAX_CL_STATS];
 
-	double          lastservertimeupdate;   // last svs.realtime we sent STAT_TIME to the client
+	double		lastservertimeupdate;   // last svs.realtime we sent STAT_TIME to the client
 
 	client_frame_t	frames[UPDATE_BACKUP];	// updates can be deltad from here
 
@@ -197,7 +202,7 @@ typedef struct client_s {
 	FILE		*upload;
 	char		uploadfn[MAX_QPATH];
 	netadr_t	snap_from;
-	qbool	remote_snap;
+	qbool		remote_snap;
  
 //===== NETWORK ============
 	int			chokecount;
@@ -356,8 +361,8 @@ extern	cvar_t	timelimit;
 extern	cvar_t	skill;
 extern	cvar_t	coop;
 
-extern	serverPersistent_t	svs;				// persistant server info
-extern	server_t		sv;					// local server
+extern	serverPersistent_t svs; // persistant server info
+extern	server_t sv; // local server
 
 extern	client_t	*sv_client;
 extern	edict_t		*sv_player;
