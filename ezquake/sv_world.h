@@ -16,30 +16,30 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: sv_world.h,v 1.8 2007-03-06 18:54:31 disconn3ct Exp $
 */
 // sv_world.h
-#ifndef _SV_WORLD_H_
-#define _SV_WORLD_H_
-#include "pmove.h" // FIXME
+#ifndef __SV_WORLD_H__
+#define __SV_WORLD_H__
 
-#define MOVE_NORMAL	0
+#define MOVE_NORMAL		0
 #define MOVE_NOMONSTERS	1
 #define MOVE_MISSILE	2
 
 typedef struct areanode_s
 {
-	int			axis; // -1 = leaf node
-	float			dist;
+	int					axis; // -1 = leaf node
+	float				dist;
 	struct areanode_s	*children[2];
-	link_t			trigger_edicts;
-	link_t			solid_edicts;
+	link_t				trigger_edicts;
+	link_t				solid_edicts;
 } areanode_t;
 
-#define AREA_SOLID	0
+#define AREA_SOLID		0
 #define AREA_TRIGGERS	11
 
-#define AREA_DEPTH	4
-#define AREA_NODES	32
+#define AREA_DEPTH		4
+#define AREA_NODES		32
 
 extern areanode_t sv_areanodes[AREA_NODES];
 
@@ -77,4 +77,7 @@ trace_t SV_Trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, 
 
 // passedict is explicitly excluded from clipping checks (normally NULL)
 
-#endif /* _SV_WORLD_H_ */
+
+int SV_AreaEdicts (vec3_t mins, vec3_t maxs, edict_t **edicts, int max_edicts, int area);
+
+#endif /* !__SV_WORLD_H__ */
