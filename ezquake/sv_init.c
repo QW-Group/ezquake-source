@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_init.c,v 1.10 2006-07-25 15:51:45 disconn3ct Exp $
+	$Id: sv_init.c,v 1.11 2007-03-06 16:49:52 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -311,7 +311,7 @@ void SV_SpawnServer (char *server, qbool devmap) {
 #endif
 
 	com_serveractive = true;
-	strlcpy (sv.name, server, sizeof(sv.name));
+	strlcpy (sv.mapname, server, sizeof(sv.mapname));
 	snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", server);
 	sv.worldmodel = Mod_ForName (sv.modelname, true);
 	SV_CalcPHS ();
@@ -345,7 +345,7 @@ void SV_SpawnServer (char *server, qbool devmap) {
 	ent->v.solid = SOLID_BSP;
 	ent->v.movetype = MOVETYPE_PUSH;
 
-	pr_global_struct->mapname = PR_SetString(sv.name);
+	pr_global_struct->mapname = PR_SetString(sv.mapname);
 	// serverflags are for cross level information (sigils)
 	pr_global_struct->serverflags = svs.serverflags;
 
@@ -379,6 +379,6 @@ void SV_SpawnServer (char *server, qbool devmap) {
 	SV_CreateBaseline ();
 	sv.signon_buffer_size[sv.num_signon_buffers - 1] = sv.signon.cursize;
 
-	Info_SetValueForKey (svs.info, "map", sv.name, MAX_SERVERINFO_STRING);
+	Info_SetValueForKey (svs.info, "map", sv.mapname, MAX_SERVERINFO_STRING);
 	Com_DPrintf ("Server spawned.\n");
 }

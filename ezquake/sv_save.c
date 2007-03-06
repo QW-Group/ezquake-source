@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_save.c,v 1.9 2007-02-01 00:17:06 qqshka Exp $
+	$Id: sv_save.c,v 1.10 2007-03-06 16:49:52 disconn3ct Exp $
 */
 
 #ifndef SERVERONLY
@@ -105,7 +105,7 @@ void SV_SaveGame_f (void) {
 	for (i = 0 ; i < NUM_SPAWN_PARMS; i++)
 		fprintf (f, "%f\n", svs.clients->spawn_parms[i]);
 	fprintf (f, "%d\n", current_skill);
-	fprintf (f, "%s\n", sv.name);
+	fprintf (f, "%s\n", sv.mapname);
 	fprintf (f, "%f\n", sv.time);
 
 	// write the light styles
