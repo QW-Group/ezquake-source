@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.126 2007-03-03 05:11:38 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.127 2007-03-06 17:10:24 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -4052,12 +4052,12 @@ void HUD_NewRadarMap()
 	conversion_formula_found = false;
 
 	// Allocate a string for the path to the radar image.
-	len = strlen (RADAR_BASE_PATH_FORMAT) +  strlen (mapname.string);
+	len = strlen (RADAR_BASE_PATH_FORMAT) +  strlen (host_mapname.string);
 	radar_filename = Q_calloc (len, sizeof(char));
-	snprintf (radar_filename, len, RADAR_BASE_PATH_FORMAT, mapname.string);
+	snprintf (radar_filename, len, RADAR_BASE_PATH_FORMAT, host_mapname.string);
 
 	// Load the map picture.
-	if ((radar_pic_p = GL_LoadPicImage (radar_filename, mapname.string, 0, 0, TEX_ALPHA)) != NULL)
+	if ((radar_pic_p = GL_LoadPicImage (radar_filename, host_mapname.string, 0, 0, TEX_ALPHA)) != NULL)
 	{
 		radar_pic = *radar_pic_p;
 		radar_pic_found = true;

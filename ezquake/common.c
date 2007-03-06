@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.65 2007-03-05 17:01:28 qqshka Exp $
+    $Id: common.c,v 1.66 2007-03-06 17:10:24 disconn3ct Exp $
 
 */
 
@@ -44,7 +44,7 @@ usercmd_t nullcmd; // guaranteed to be zero
 static char	*largv[MAX_NUM_ARGVS + 1];
 
 cvar_t	developer = {"developer", "0"};
-cvar_t	mapname = {"mapname", "", CVAR_ROM};
+cvar_t	host_mapname = {"mapname", "", CVAR_ROM};
 
 qbool com_serveractive = false;
 
@@ -1243,7 +1243,7 @@ void COM_Init (void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_NO_GROUP);
 	Cvar_Register (&developer);
-	Cvar_Register (&mapname);
+	Cvar_Register (&host_mapname);
 
 	Cvar_ResetCurrentGroup();
 

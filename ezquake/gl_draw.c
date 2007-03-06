@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.53 2007-03-01 23:44:22 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.54 2007-03-06 17:10:24 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -2012,7 +2012,7 @@ void Draw_ConsoleBackground (int lines)
 	mpic_t *lvlshot = NULL;
 	float alpha = (SCR_NEED_CONSOLE_BACKGROUND ? 1 : bound(0, scr_conalpha.value, 1));
 
-	if (mapname.string[0] // we have mapname
+	if (host_mapname.string[0] // we have mapname
 		 && (    scr_conback.value == 2 // always per level conback
 			 || (scr_conback.value == 1 && SCR_NEED_CONSOLE_BACKGROUND) // only at load time
 			)
@@ -2020,16 +2020,16 @@ void Draw_ConsoleBackground (int lines)
 		static char last_mapname[MAX_QPATH] = {0};
 		static mpic_t *last_lvlshot = NULL;
 
-		if (strncmp(mapname.string, last_mapname, sizeof(last_mapname))) { // lead to call Draw_CachePicSafe() once per level
+		if (strncmp(host_mapname.string, last_mapname, sizeof(last_mapname))) { // lead to call Draw_CachePicSafe() once per level
 			char name[MAX_QPATH];
 
-			snprintf(name, sizeof(name), "textures/levelshots/%s.xxx", mapname.string);
+			snprintf(name, sizeof(name), "textures/levelshots/%s.xxx", host_mapname.string);
 			if ((last_lvlshot = Draw_CachePicSafe(name, false, true))) { // resize
 				last_lvlshot->width  = conback.width;
 				last_lvlshot->height = conback.height;
 			}
 
-			strlcpy(last_mapname, mapname.string, sizeof(last_mapname)); // save
+			strlcpy(last_mapname, host_mapname.string, sizeof(last_mapname)); // save
 		}
 
 		lvlshot = last_lvlshot;

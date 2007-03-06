@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_part.c,v 1.12 2007-02-01 23:49:13 qqshka Exp $
+	$Id: r_part.c,v 1.13 2007-03-06 17:10:25 disconn3ct Exp $
 
 */
 
@@ -252,7 +252,7 @@ void R_ReadPointFile_f (void) {
 	if (!com_serveractive)
 		return;
 
-	snprintf (name, sizeof(name), "maps/%s.pts", mapname.string);
+	snprintf (name, sizeof(name), "maps/%s.pts", host_mapname.string);
 
 	if (FS_FOpenFile (name, &f) == -1) {
 		Com_Printf ("couldn't open %s\n", name);

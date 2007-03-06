@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.130 2007-03-05 19:16:24 cokeman1982 Exp $
+	$Id: cl_main.c,v 1.131 2007-03-06 17:10:24 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -597,7 +597,7 @@ void CL_ClearState (void) {
 #endif
 
 	if (!com_serveractive)
-		Cvar_ForceSet (&mapname, ""); // notice mapname not valid yet
+		Cvar_ForceSet (&host_mapname, ""); // notice mapname not valid yet
 }
 
 //Sends a disconnect message to the server
@@ -696,7 +696,7 @@ void CL_Disconnect (void) {
 
 	cls.qport++; //a hack I picked up from qizmo
 
-	Cvar_ForceSet (&mapname, ""); // notice mapname not valid yet
+	Cvar_ForceSet (&host_mapname, ""); // notice mapname not valid yet
 }
 
 void CL_Disconnect_f (void) {

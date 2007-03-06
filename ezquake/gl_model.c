@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.18 2007-03-05 17:12:00 qqshka Exp $
+	$Id: gl_model.c,v 1.19 2007-03-06 17:10:24 disconn3ct Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -1326,7 +1326,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer) {
 	if (mod->bspversion != Q1_BSPVERSION && mod->bspversion != HL_BSPVERSION)
 		Host_Error ("Mod_LoadBrushModel: %s has wrong version number (%i should be %i (Quake) or %i (HalfLife))", mod->name, mod->bspversion, Q1_BSPVERSION, HL_BSPVERSION);
 
-	loadmodel->isworldmodel = !strcmp(loadmodel->name, va("maps/%s.bsp", mapname.string));
+	loadmodel->isworldmodel = !strcmp(loadmodel->name, va("maps/%s.bsp", host_mapname.string));
 
 #ifndef CLIENTONLY
 	if (loadmodel->isworldmodel) {

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_main.c,v 1.18 2007-02-26 06:02:40 cokeman1982 Exp $
+	$Id: r_main.c,v 1.19 2007-03-06 17:10:25 disconn3ct Exp $
 
 */
 
@@ -295,7 +295,7 @@ void R_Init (void) {
 
 
 void R_PreMapLoad(char *name) {
-	Cvar_ForceSet (&mapname, name);
+	Cvar_ForceSet (&host_mapname, name);
 }
 
 void R_NewMap (void) {

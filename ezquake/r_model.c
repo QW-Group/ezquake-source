@@ -981,7 +981,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer) {
 	if (mod->bspversion != Q1_BSPVERSION && mod->bspversion != HL_BSPVERSION)
 		Host_Error ("Mod_LoadBrushModel: %s has wrong version number (%i should be %i (Quake) or %i (HalfLife))", mod->name, mod->bspversion, Q1_BSPVERSION, HL_BSPVERSION);
 
-	loadmodel->isworldmodel = !strcmp(loadmodel->name, va("maps/%s.bsp", mapname.string));
+	loadmodel->isworldmodel = !strcmp(loadmodel->name, va("maps/%s.bsp", host_mapname.string));
 
 #ifndef CLIENTONLY
 	if (loadmodel->isworldmodel) {
