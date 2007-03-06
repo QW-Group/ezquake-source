@@ -13,7 +13,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * RCS: @(#) $Id: tcl.h,v 1.4 2007-03-02 23:59:23 disconn3ct Exp $
+ * RCS: @(#) $Id: tcl.h,v 1.5 2007-03-06 23:30:04 disconn3ct Exp $
  */
 
 #ifndef _TCL
@@ -63,10 +63,10 @@ extern "C" {
 #define TCL_MAJOR_VERSION   8
 #define TCL_MINOR_VERSION   4
 #define TCL_RELEASE_LEVEL   TCL_FINAL_RELEASE
-#define TCL_RELEASE_SERIAL  13
+#define TCL_RELEASE_SERIAL  14
 
 #define TCL_VERSION	    "8.4"
-#define TCL_PATCH_LEVEL	    "8.4.13"
+#define TCL_PATCH_LEVEL	    "8.4.14"
 
 /*
  * The following definitions set up the proper options for Windows
@@ -319,9 +319,6 @@ typedef long LONG;
 /*
  * Miscellaneous declarations.
  */
-#ifndef NULL
-#   define NULL 0
-#endif
 
 #ifndef _CLIENTDATA
 #   ifndef NO_VOID
@@ -345,6 +342,7 @@ typedef long LONG;
 #	define TCL_WIDE_INT_TYPE long long
 #	undef TCL_WIDE_INT_IS_LONG
 #    endif /* __LP64__ */
+#    undef HAVE_STRUCT_STAT64
 #endif /* __APPLE__ */
 
 /*
@@ -389,7 +387,11 @@ typedef struct stati64 Tcl_StatBuf;
 #         define TCL_LL_MODIFIER	"L"
 #         define TCL_LL_MODIFIER_SIZE	1
 #      else /* __BORLANDC__ */
+#         if _MSC_VER < 1400 || !defined(_M_IX86)
 typedef struct _stati64	Tcl_StatBuf;
+#         else
+typedef struct _stat64 Tcl_StatBuf;
+#         endif /* _MSC_VER < 1400 */
 #         define TCL_LL_MODIFIER	"I64"
 #         define TCL_LL_MODIFIER_SIZE	3
 #      endif /* __BORLANDC__ */
@@ -828,8 +830,11 @@ int		Tcl_IsShared _ANSI_ARGS_((Tcl_Obj *objPtr));
 #else
 #   define Tcl_IncrRefCount(objPtr) \
 	++(objPtr)->refCount
+    /*
+     * Use empty if ; else to handle use in unbraced outer if/else conditions
+     */
 #   define Tcl_DecrRefCount(objPtr) \
-	if (--(objPtr)->refCount <= 0) TclFreeObj(objPtr)
+	if (--(objPtr)->refCount > 0) ; else TclFreeObj(objPtr)
 #   define Tcl_IsShared(objPtr) \
 	((objPtr)->refCount > 1)
 #endif
@@ -2237,7 +2242,11 @@ typedef struct Tcl_Parse {
     /*
      * unsigned int isn't 100% accurate as it should be a strict 4-byte
      * value (perhaps wchar_t).  64-bit systems may have troubles.  The
-     * size of this value must be reflected correctly in regcustom.h.
+     * size of this value must be reflected correctly in regcustom.h and
+     * in tclEncoding.c.
+     * XXX: Tcl is currently UCS-2 and planning UTF-16 for the Unicode
+     * XXX: string rep that Tcl_UniChar represents.  Changing the size
+     * XXX: of Tcl_UniChar is /not/ supported.
      */
 typedef unsigned int Tcl_UniChar;
 #else
