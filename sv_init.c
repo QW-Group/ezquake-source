@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_init.c,v 1.11 2007-03-06 16:49:52 disconn3ct Exp $
+	$Id: sv_init.c,v 1.12 2007-03-06 17:18:23 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -233,13 +233,13 @@ void SV_LoadEntFile (void) {
 
 //Change the server to a new map, taking all connected clients along with it.
 //This is only called from the SV_Map_f() function.
-void SV_SpawnServer (char *server, qbool devmap) {
+void SV_SpawnServer (char *mapname, qbool devmap) {
 	edict_t *ent;
 	int i;
 	extern qbool	sv_allow_cheats;
 	extern cvar_t sv_cheats;
 
-	Com_DPrintf ("SpawnServer: %s\n",server);
+	Com_DPrintf ("SpawnServer: %s\n", mapname);
 
 	NET_InitServer();
 
@@ -305,14 +305,14 @@ void SV_SpawnServer (char *server, qbool devmap) {
 
 #ifndef SERVERONLY
 	{
-		void R_PreMapLoad(char *mapname);
-		R_PreMapLoad(server);
+		void R_PreMapLoad (char *mapname);
+		R_PreMapLoad (mapname);
 	}
 #endif
 
 	com_serveractive = true;
-	strlcpy (sv.mapname, server, sizeof(sv.mapname));
-	snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", server);
+	strlcpy (sv.mapname, mapname, sizeof(sv.mapname));
+	snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", mapname);
 	sv.worldmodel = Mod_ForName (sv.modelname, true);
 	SV_CalcPHS ();
 
