@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.31 2007-03-05 01:03:53 johnnycz Exp $
+	$Id: EX_browser.c,v 1.32 2007-03-06 23:33:22 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -2394,19 +2394,26 @@ int Options_Key(int key, CTab_t *tab, CTabPage_t *page)
 
 qbool Servers_Mouse_Move(const mouse_state_t *ms)
 {
+    if (show_serverinfo) return false;
 	Servers_pos = Servers_disp + ms->y / 8 - 1;
+    Servers_pos = bound(0, Servers_pos, serversn - 1);
 	return true;
 }
 
 qbool Sources_Mouse_Move(const mouse_state_t *ms)
 {
+    if (show_serverinfo) return false;
 	Sources_pos = Sources_disp + ms->y / 8 - 1;
+    Sources_pos = bound(0, Sources_pos, sourcesn - 1);
 	return true;
 }
 
 qbool Players_Mouse_Move(const mouse_state_t *ms)
 {
+    if (show_serverinfo) return false;
+
 	Players_pos = Players_disp + ms->y / 8 - 1;
+    Players_pos = bound(0, Players_pos, all_players_n - 1);
 	return true;
 }
 
