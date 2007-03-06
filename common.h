@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.44 2007-03-04 19:29:29 disconn3ct Exp $
+    $Id: common.h,v 1.45 2007-03-06 17:10:24 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -307,7 +307,7 @@ extern qbool	dedicated;
 #endif
 
 extern cvar_t	developer;
-extern cvar_t	mapname;
+extern cvar_t	host_mapname;
 
 extern qbool	com_serveractive; // true if sv.state != ss_dead
 extern int	CL_ClientState (); // returns cls.state

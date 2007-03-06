@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.62 2007-03-01 09:37:11 qqshka Exp $
+    $Id: teamplay.c,v 1.63 2007-03-06 17:10:25 disconn3ct Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -2885,7 +2885,7 @@ int	TP_CountPlayers (void)
 
 char *TP_MapName(void)
 {
-	return mapname.string;
+	return host_mapname.string;
 }
 
 // START shaman RFE 1020608

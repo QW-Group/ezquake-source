@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.39 2007-02-28 10:03:22 qqshka Exp $
+	$Id: cl_cmd.c,v 1.40 2007-03-06 17:10:23 disconn3ct Exp $
 */
 
 #include <time.h>
@@ -812,7 +812,7 @@ void CL_Changing_f (void) {
 			cls.state = ca_connected;	// not active anymore, but not disconnected
 
 			if (!com_serveractive)
-				Cvar_ForceSet (&mapname, ""); // notice mapname not valid yet
+				Cvar_ForceSet (&host_mapname, ""); // notice mapname not valid yet
 		}
 		return;
 	}
@@ -822,7 +822,7 @@ void CL_Changing_f (void) {
 	cls.state = ca_connected;	// not active anymore, but not disconnected
 
 	if (!com_serveractive)
-		Cvar_ForceSet (&mapname, ""); // notice mapname not valid yet
+		Cvar_ForceSet (&host_mapname, ""); // notice mapname not valid yet
 
 	Com_Printf ("\nChanging map...\n");
 }
