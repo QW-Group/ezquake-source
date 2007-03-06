@@ -60,7 +60,7 @@ typedef struct {
 
 	char		sky[32];			// skybox file name ("unit1_", etc)
 	
-	char		name[64];						// map name
+	char		mapname[64];						// map name
 	char		modelname[MAX_QPATH];			// maps/<name>.bsp, for model_precache[0]
 	struct model_s 	*worldmodel;
 	char		*model_precache[MAX_MODELS];	// NULL terminated
