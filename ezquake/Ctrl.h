@@ -1,8 +1,10 @@
-//    $Id: Ctrl.h,v 1.7 2007-02-17 20:25:30 johnnycz Exp $
+//    $Id: Ctrl.h,v 1.8 2007-03-06 15:52:06 johnnycz Exp $
 
 #ifndef __CTRL_H__
 #define __CTRL_H__
 
+#define LETTERWIDTH 8
+#define LETTERHEIGHT 8
 
 void UI_DrawCharacter (int cx, int line, int num);
 void UI_Print (int cx, int cy, const char *str, int red);
