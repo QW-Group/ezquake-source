@@ -51,16 +51,16 @@ typedef struct {
 	int			lastcheck;			// used by PF_checkclient
 	double		lastchecktime;		// for monster ai 
 
-	qbool	paused;				// are we paused?
-	qbool	loadgame;			// handle connections specially
+	qbool		paused;				// are we paused?
+	qbool		loadgame;			// handle connections specially
 
 	//check player/eyes models for hacks
 	unsigned	model_player_checksum;
 	unsigned	eyes_player_checksum;
 
-	char		sky[32];			// skybox file name ("unit1_", etc)
+	char		sky[32];						// skybox file name ("unit1_", etc)
 	
-	char		mapname[64];						// map name
+	char		mapname[64];					// map name
 	char		modelname[MAX_QPATH];			// maps/<name>.bsp, for model_precache[0]
 	struct model_s 	*worldmodel;
 	char		*model_precache[MAX_MODELS];	// NULL terminated
@@ -75,7 +75,7 @@ typedef struct {
 
 	
 	int			entmap[SV_MAX_EDICTS];	// because QW protocol only handles 512 entities,
-	// translate entnums dynamically before sending
+										// translate entnums dynamically before sending
 	entity_translation_t	translations[512];	// translated numbers are tracked here
 
 	byte		*pvs, *phs;			// fully expanded and decompressed
@@ -91,10 +91,6 @@ typedef struct {
 	// the multicast buffer is used to send a message to a set of clients
 	sizebuf_t	multicast;
 	byte		multicast_buf[MAX_MSGLEN];
-
-	// the master buffer is used for building log packets
-	sizebuf_t	master;
-	byte		master_buf[MAX_DATAGRAM];
 
 	// the signon buffer will be sent to each client as they connect
 	// includes the entity baselines, the static entities, etc
