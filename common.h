@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.45 2007-03-06 17:10:24 disconn3ct Exp $
+    $Id: common.h,v 1.46 2007-03-07 01:00:33 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -390,7 +390,7 @@ int COM_ZipUnpack (unzFile zip_file,
 				   qbool overwrite, 
 				   const char *password);
 
-COM_ZipUnpackToTemp (unzFile zip_file, 
+int COM_ZipUnpackToTemp (unzFile zip_file, 
 				   qbool case_sensitive, 
 				   qbool keep_path, 
 				   const char *password,
