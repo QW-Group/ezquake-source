@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.131 2007-03-06 17:10:24 disconn3ct Exp $
+	$Id: cl_main.c,v 1.132 2007-03-07 07:14:44 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -101,6 +101,7 @@ cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};
 cvar_t cl_nolerp			= {"cl_nolerp", "0"}; // 0 is good for indep-phys, 1 is good for old-phys
 // END shaman :: balancing variables
 cvar_t cl_lerp_monsters			= {"cl_lerp_monsters", "1"};
+cvar_t cl_fix_mvd				= {"cl_fix_mvd", "0", CVAR_ARCHIVE};
 
 cvar_t r_rocketlight			= {"r_rocketLight", "1"};
 cvar_t r_rocketlightcolor		= {"r_rocketLightColor", "0"};
@@ -1048,6 +1049,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_timeout);
 	Cvar_Register (&cl_useproxy);
 	Cvar_Register (&cl_crypt_rcon);
+	Cvar_Register (&cl_fix_mvd);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
 	Cvar_Register (&allow_scripts);
