@@ -16,13 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pmovetst.c,v 1.7 2007-03-05 00:16:24 disconn3ct Exp $
+	$Id: pmovetst.c,v 1.8 2007-03-07 01:00:33 disconn3ct Exp $
 */
 #include "quakedef.h"
-
-static	hull_t		box_hull;
-static	dclipnode_t	box_clipnodes[6];
-static	mplane_t	box_planes[6];
 
 extern	vec3_t player_mins;
 extern	vec3_t player_maxs;

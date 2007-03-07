@@ -930,7 +930,7 @@ void FL_CompressFile (filelist_t *fl)
 
 	if (ret)
 	{
-		_unlink(file_path);
+		unlink(file_path);
 	}
 	else
 	{
@@ -957,7 +957,7 @@ void FL_DecompressFile (filelist_t *fl)
 
 	if (ret)
 	{
-		_unlink(gzip_path);
+		unlink(gzip_path);
 	}
 	else
 	{

@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cmodel.c,v 1.3 2007-03-05 00:16:24 disconn3ct Exp $
+	$Id: cmodel.c,v 1.4 2007-03-07 01:00:32 disconn3ct Exp $
 */
 // cmodel.c
 
@@ -43,7 +43,7 @@ typedef struct cleaf_s {
 } cleaf_t;
 
 
-
+/*
 static char			loadname[32];	// for hunk tags
 
 static char			map_name[MAX_QPATH];
@@ -77,7 +77,7 @@ static char			*map_entitystring;
 static qbool		map_halflife;
 
 static byte			*cmod_base;					// for CM_Load* functions
-
+*/
 
 /*
 ===============================================================================
@@ -144,6 +144,6 @@ hull_t *CM_HullForBox (vec3_t mins, vec3_t maxs)
 
 void CM_Init (void)
 {
-	memset (map_novis, 0xff, sizeof(map_novis));
+//	memset (map_novis, 0xff, sizeof(map_novis));
 	CM_InitBoxHull ();
 }

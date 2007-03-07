@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.66 2007-03-06 17:10:24 disconn3ct Exp $
+    $Id: common.c,v 1.67 2007-03-07 01:00:32 disconn3ct Exp $
 
 */
 
@@ -798,7 +798,7 @@ static void COM_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_i
 		FileTimeToSystemTime(&local_filetime, &ent->time);
 		#else
 		// FIXME: Dunno how to do this in *nix.
-		ent->time = 0;
+		memset (&ent->time, 0, sizeof (ent->time));
 		#endif // WIN32
 	}
 
@@ -851,7 +851,7 @@ int COM_ZipUnpack (unzFile zip_file,
 	return error;
 }
 
-COM_ZipUnpackToTemp (unzFile zip_file, 
+int COM_ZipUnpackToTemp (unzFile zip_file, 
 				   qbool case_sensitive, 
 				   qbool keep_path, 
 				   const char *password,
