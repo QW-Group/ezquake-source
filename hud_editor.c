@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.20 2007-03-05 04:44:27 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.21 2007-03-07 01:51:41 cokeman1982 Exp $
 
 */
 
@@ -112,7 +112,7 @@ typedef enum hud_greppos_s
 typedef struct hud_grephandle_s
 {
 	hud_t					*hud;			// HUD associated with this grep handle.
-	int						x;
+	int						x;				// The position in screen coordinates for the grephandle.
 	int						y;
 	int						width;
 	int						height;
@@ -794,6 +794,8 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 		selected_hud = hud_hover;
 		return true;
 	}
+	
+	memset(resize_handles, 0, sizeof(resize_handles));
 
 	// Try getting any available dimension variables
 	// that are available for this HUD element, these
@@ -805,13 +807,11 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 		height	= HUD_FindVar(hud_hover, "height");
 		scale	= HUD_FindVar(hud_hover, "scale");
 
-		memset(resize_handles, 0, sizeof(resize_handles));
-
 		if(width)
 		{
 			// Right & left.
-			hud_resize_handle_t right;
-			hud_resize_handle_t left;
+			static hud_resize_handle_t right;
+			static hud_resize_handle_t left;
 
 			right.width		= HUD_RESIZEHANDLE_THICKNESS;
 			right.height	= hud_hover->lh * HUD_RESIZEHANDLE_SIZEFACTOR;
@@ -829,8 +829,8 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 		if(height)
 		{
 			// Top & bottom
-			hud_resize_handle_t top;
-			hud_resize_handle_t bottom;
+			static hud_resize_handle_t top;
+			static hud_resize_handle_t bottom;
 			
 			top.width		= hud_hover->lw * HUD_RESIZEHANDLE_SIZEFACTOR;
 			top.height		= HUD_RESIZEHANDLE_THICKNESS;
@@ -848,10 +848,10 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 		if(scale)
 		{
 			// Top left, top right, bottom left & bottom right.
-			hud_resize_handle_t topleft;
-			hud_resize_handle_t bottomleft;
-			hud_resize_handle_t topright;
-			hud_resize_handle_t bottomright;
+			static hud_resize_handle_t topleft;
+			static hud_resize_handle_t bottomleft;
+			static hud_resize_handle_t topright;
+			static hud_resize_handle_t bottomright;
 			
 			topleft.width		= HUD_RESIZEHANDLE_THICKNESS;
 			topleft.height		= HUD_RESIZEHANDLE_THICKNESS;
