@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.26 2007-03-07 07:14:44 qqshka Exp $
+	$Id: cl_ents.c,v 1.27 2007-03-07 22:55:22 qqshka Exp $
 
 */
 
@@ -1370,8 +1370,11 @@ void CL_ParsePlayerinfo (void) {
 
 		if (flags & DF_MODEL)
 			state->modelindex = MSG_ReadByte ();
-		else// check for possible bug in mvd/qtv
-			state->modelindex = ( i = state->modelindex ) ? i : ( cl_fix_mvd.integer ? cl_modelindices[mi_player] : i );
+		else // check for possible bug in mvd/qtv
+		{
+			if (cl_fix_mvd.integer && !state->modelindex && !cl.players[num].spectator && cl_modelindices[mi_player] != -1)
+				state->modelindex = cl_modelindices[mi_player];
+		}
 
 		if (flags & DF_SKINNUM)
 			state->skinnum = MSG_ReadByte ();
