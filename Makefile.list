@@ -92,6 +92,7 @@ SERVER_C_FILES := \
 	sv_world
 
 COMMON_C_FILES := \
+	cmodel \
 	cmd \
 	com_msg \
 	common \
