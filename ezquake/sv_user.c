@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.24 2007-01-07 20:35:24 tonik Exp $
+	$Id: sv_user.c,v 1.25 2007-03-08 22:45:22 tonik Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -1039,6 +1039,7 @@ static void Cmd_Join_f (void)
 		PR_ExecuteProgram (SpectatorDisconnect);
 
 	sv_client->old_frags = 0;
+	sv_client->spec_track = 0;
 	SetUpClientEdict (sv_client, sv_client->edict);
 
 	// turn the spectator into a player
@@ -1105,6 +1106,7 @@ static void Cmd_Observe_f (void)
 	PR_ExecuteProgram (pr_global_struct->ClientDisconnect);
 
 	sv_client->old_frags = 0;
+	sv_client->spec_track = 0;
 	SetUpClientEdict (sv_client, sv_client->edict);
 
 	// turn the player into a spectator
