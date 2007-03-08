@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.19 2007-03-06 17:10:24 disconn3ct Exp $
+	$Id: gl_model.c,v 1.20 2007-03-08 22:55:34 disconn3ct Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -288,6 +288,50 @@ qbool Img_HasFullbrights (byte *pixels, int size) {
 
 byte	*mod_base;
 
+/* Some id maps have textures with identical names but different looks.
+We hardcode a list of names, checksums and alternative names to provide a way
+for external texture packs to differentiate them. */
+static struct {
+	int md4;
+	char *origname, *newname;
+} translate_names[] = {
+	{ 0xeb2ec07f, "sky1", "sky4_blue" }, // not sure if there are there blue sky1's; just in case
+	{ 0xeb3524c7, "sky1", "sky4_purple" },
+	{ 0xeb2ec07f, "sky4", "sky4_blue" },
+	{ 0xeb3524c7, "sky4", "sky4_purple" },
+	{ 0xd4ba8386, "metal5_2", "metal5_2_arc" },
+	{ 0xf172572f, "metal5_2", "metal5_2_x" },
+	{ 0x025054f9, "metal5_4", "metal5_4_arc" },
+	{ 0x7e09f8b3, "metal5_4", "metal5_4_double" },
+	{ 0x2eedf929, "metal5_8", "metal5_8_back" },
+	{ 0x10f0687c, "metal5_8", "metal5_8_rune" },
+	{ 0xa571c4ba, "plat_top1", "plat_top1_bolt" },
+	{ 0x7476d32b, "plat_top1", "plat_top1_cable" },
+	{ 0, NULL, NULL },
+};
+
+static void TranslateTextureName (texture_t *tx)
+{
+	int i;
+	int checksum;
+	qbool checksum_done = false;
+
+	for (i = 0; translate_names[i].origname; i++) {
+		if (strcmp(tx->name, translate_names[i].origname))
+			continue;
+		if (!checksum_done) {
+			checksum = Com_BlockChecksum(tx+1, tx->width*tx->height);
+			checksum_done = true;
+			//Com_DPrintf ("checksum(\"%s\") = 0x%x\n", tx->name, checksum);
+		}
+		if (translate_names[i].md4 == checksum) {
+			//Com_DPrintf ("Translating %s --> %s\n", tx->name, translate_names[i].newname);
+			assert (strlen(translate_names[i].newname) < sizeof(tx->name));
+			strcpy (tx->name, translate_names[i].newname);
+			return;
+		}
+	}
+}
 
 int Mod_LoadExternalTexture(texture_t *tx, int mode) {
 	char *name, *mapname, *groupname;
@@ -497,6 +541,8 @@ void Mod_LoadTextures (lump_t *l) {
 				// 32 pixels from the bottom to make it look nice.
 				memcpy (tx+1, (byte *)(tx+1) + 32*31, 32);
 			}
+
+			TranslateTextureName (tx);
 
 			// just for r_fastturb's sake
 			{
