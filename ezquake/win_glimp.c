@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.9 2007-03-08 10:12:54 qqshka Exp $
+	$Id: win_glimp.c,v 1.10 2007-03-08 11:08:19 qqshka Exp $
 
 */
 /*
@@ -1767,6 +1767,9 @@ void WG_AppActivate(BOOL fActive, BOOL minimized) {
 				if (ChangeDisplaySettings (&(glw_state.dm), CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
 					Sys_Error ("WG_AppActivate: ChangeDisplaySettings failed");
 
+#ifdef NDEBUG /* some alt+tab work around, bring on top of Z order, debug configuration does't have WS_EX_TOPMOST flag so ... */
+				SetWindowPos(mainwindow, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+#endif
 				ShowWindow (mainwindow, SW_SHOWNORMAL);
 				// Fix for alt-tab bug in NVidia drivers
 				MoveWindow (mainwindow, 0, 0, glw_state.dm.dmPelsWidth, glw_state.dm.dmPelsHeight, false);
@@ -1794,7 +1797,10 @@ void WG_AppActivate(BOOL fActive, BOOL minimized) {
 				glw_state.vid_wassuspended = true;
 
 				ChangeDisplaySettings( 0, 0 );
-				ShowWindow (mainwindow, SW_MINIMIZE); //!!!!!!
+#ifdef NDEBUG /* some alt+tab work around, bring on bottom of Z order, debug configuration does't have WS_EX_TOPMOST flag so ...*/
+				SetWindowPos(mainwindow, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+#endif
+				ShowWindow (mainwindow, SW_MINIMIZE);
 			}
 		}
 	}
