@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.98 2007-03-05 01:53:42 cokeman1982 Exp $
+    $Id: cl_screen.c,v 1.99 2007-03-08 20:27:38 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -548,7 +548,7 @@ void SCR_DrawSpeed (void) {
 	static double lastframetime = 0;
 	static int lastmynum = -1;
 
-	if (!show_speed.value)
+	if (!show_speed.value || scr_newHud.value == 1) // newHud has its own speed
 		return;
 
 	t = Sys_DoubleTime();
@@ -606,7 +606,7 @@ void SCR_DrawClock (void) {
 	struct tm *ptm;
 	char str[80];
 
-	if (!scr_clock.value)
+	if (!scr_clock.value || scr_newHud.value == 1) // newHud  has its own clock
 		return;
 
 	if (scr_clock.value == 2) {
@@ -631,7 +631,7 @@ void SCR_DrawGameClock (void) {
 	char str[80], *s;
 	float timelimit;
 
-	if (!scr_gameclock.value)
+	if (!scr_gameclock.value || scr_newHud.value == 1) // newHud has its own gameclock
 		return;
 
 	if (scr_gameclock.value == 2 || scr_gameclock.value == 4)
@@ -658,7 +658,7 @@ void SCR_DrawDemoClock (void) {
 	int x, y;
 	char str[80];
 
-	if (!cls.demoplayback || !scr_democlock.value)
+	if (!cls.demoplayback || !scr_democlock.value || scr_newHud.value == 1) // newHud has its own democlock
 		return;
 
 	if (scr_democlock.value == 2)
