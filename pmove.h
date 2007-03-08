@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pmove.h,v 1.7 2007-03-04 19:55:46 disconn3ct Exp $
+	$Id: pmove.h,v 1.8 2007-03-08 21:11:39 disconn3ct Exp $
 */
 
 #ifndef __PMOVE_H__
@@ -90,14 +90,11 @@ typedef struct {
 } movevars_t;
 
 
-extern	movevars_t		movevars;
-extern	playermove_t	pmove;
+extern movevars_t movevars;
+extern playermove_t pmove;
 
 void PM_PlayerMove (void);
 void PM_Init (void);
-
-qbool PM_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, trace_t *trace);
-int PM_HullPointContents (hull_t *hull, int num, vec3_t p);
 
 int PM_PointContents (vec3_t point);
 void PM_CategorizePosition (void);
