@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.8 2007-03-05 02:14:14 cokeman1982 Exp $
+	$Id: win_glimp.c,v 1.9 2007-03-08 10:12:54 qqshka Exp $
 
 */
 /*
@@ -735,7 +735,11 @@ static qbool GLW_CreateWindow( const char *drivername, int width, int height, in
 
 		if ( cdsFullscreen || !strcasecmp( _3DFX_DRIVER_NAME, drivername ) )
 		{
+#ifdef _DEBUG
+			exstyle   = 0; // this must allow debug in full screen
+#else
 			exstyle   = WS_EX_TOPMOST;
+#endif
 			stylebits = WS_POPUP|WS_VISIBLE|WS_SYSMENU;
 		}
 		else
