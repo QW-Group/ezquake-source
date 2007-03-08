@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cmodel.c,v 1.4 2007-03-07 01:00:32 disconn3ct Exp $
+	$Id: cmodel.c,v 1.5 2007-03-08 21:11:38 disconn3ct Exp $
 */
 // cmodel.c
 
@@ -107,18 +107,11 @@ static void CM_InitBoxHull (void)
 	box_hull.firstclipnode = 0;
 	box_hull.lastclipnode = 5;
 
-	for (i=0 ; i<6 ; i++)
-	{
+	for (i=0 ; i<6 ; i++) {
 		box_clipnodes[i].planenum = i;
-		
 		side = i&1;
-		
 		box_clipnodes[i].children[side] = CONTENTS_EMPTY;
-		if (i != 5)
-			box_clipnodes[i].children[side^1] = i + 1;
-		else
-			box_clipnodes[i].children[side^1] = CONTENTS_SOLID;
-		
+		box_clipnodes[i].children[side^1] = (i != 5) ? (i + 1) : CONTENTS_SOLID;
 		box_planes[i].type = i>>1;
 		box_planes[i].normal[i>>1] = 1;
 	}
@@ -141,6 +134,153 @@ hull_t *CM_HullForBox (vec3_t mins, vec3_t maxs)
 
 	return &box_hull;
 }
+
+int CM_HullPointContents (hull_t *hull, int num, vec3_t p)
+{
+	dclipnode_t *node;
+	mplane_t *plane;
+	float d;
+
+	while (num >= 0) {
+		if (num < hull->firstclipnode || num > hull->lastclipnode)
+			Sys_Error ("CM_HullPointContents: bad node number");
+
+		node = hull->clipnodes + num;
+		plane = hull->planes + node->planenum;
+		
+		d = PlaneDiff (p, plane);
+		num = (d < 0) ? node->children[1] : node->children[0];
+	}
+	return num;
+}
+
+
+/*
+===============================================================================
+
+LINE TESTING IN HULLS
+
+===============================================================================
+*/
+
+// 1/32 epsilon to keep floating point happy
+#define DIST_EPSILON (0.03125)
+
+static hull_t trace_hull;
+static trace_t trace_trace;
+
+static qbool RecursiveHullTrace (int num, float p1f, float p2f, vec3_t p1, vec3_t p2)
+{
+	float t1, t2, frac, midf;
+	dclipnode_t *node;
+	mplane_t *plane;
+	int side, i;
+	vec3_t mid;
+
+	// check for empty
+	if (num < 0) {
+		if (num != CONTENTS_SOLID) {
+			trace_trace.allsolid = false;
+			if (num == CONTENTS_EMPTY)
+				trace_trace.inopen = true;
+			else
+				trace_trace.inwater = true;
+		} else {
+			trace_trace.startsolid = true;
+		}
+
+		return true; // empty
+	}
+
+	// FIXME, check at load time
+	if (num < trace_hull.firstclipnode || num > trace_hull.lastclipnode)
+		Sys_Error ("RecursiveHullTrace: bad node number");
+
+	// find the point distances
+	node = trace_hull.clipnodes + num;
+	plane = trace_hull.planes + node->planenum;
+
+	if (plane->type < 3) {
+		t1 = p1[plane->type] - plane->dist;
+		t2 = p2[plane->type] - plane->dist;
+	} else {
+		t1 = DotProduct (plane->normal, p1) - plane->dist;
+		t2 = DotProduct (plane->normal, p2) - plane->dist;
+	}
+	
+	if (t1 >= 0 && t2 >= 0)
+		return RecursiveHullTrace (node->children[0], p1f, p2f, p1, p2);
+	if (t1 < 0 && t2 < 0)
+		return RecursiveHullTrace (node->children[1], p1f, p2f, p1, p2);
+
+	// put the crosspoint DIST_EPSILON pixels on the near side
+	frac = (t1<0) ? (t1 + DIST_EPSILON)/(t1-t2) : (t1 - DIST_EPSILON)/(t1-t2);
+	frac = bound (0, frac, 1);
+		
+	midf = p1f + (p2f - p1f) * frac;
+	for (i = 0; i < 3; i++)
+		mid[i] = p1[i] + frac * (p2[i] - p1[i]);
+
+	side = (t1 < 0);
+
+	// move up to the node
+	if (!RecursiveHullTrace (node->children[side], p1f, midf, p1, mid))
+		return false;
+
+	if (CM_HullPointContents (&trace_hull, node->children[side^1], mid) != CONTENTS_SOLID)
+		return RecursiveHullTrace (node->children[side^1], midf, p2f, mid, p2); // go past the node
+	
+	if (trace_trace.allsolid)
+		return false; // never got out of the solid area
+		
+	// the other side of the node is solid, this is the impact point
+	if (!side) {
+		VectorCopy (plane->normal, trace_trace.plane.normal);
+		trace_trace.plane.dist = plane->dist;
+	} else {
+		VectorNegate (plane->normal, trace_trace.plane.normal);
+		trace_trace.plane.dist = -plane->dist;
+	}
+
+	while (CM_HullPointContents (&trace_hull, trace_hull.firstclipnode, mid) == CONTENTS_SOLID) {
+		// shouldn't really happen, but does occasionally
+		frac -= 0.1;
+		if (frac < 0) {
+			trace_trace.fraction = midf;
+			VectorCopy (mid, trace_trace.endpos);
+//			Com_DPrintf ("backup past 0\n");
+			return false;
+		}
+		midf = p1f + (p2f - p1f) * frac;
+		for (i=0 ; i<3 ; i++)
+			mid[i] = p1[i] + frac * (p2[i] - p1[i]);
+	}
+
+	trace_trace.fraction = midf;
+	VectorCopy (mid, trace_trace.endpos);
+
+	return false;
+}
+
+// trace a line through the supplied clipping hull
+// does not fill trace.e.ent
+trace_t CM_HullTrace (hull_t *hull, vec3_t start, vec3_t end)
+{
+	// fill in a default trace
+	memset (&trace_trace, 0, sizeof(trace_trace));
+	trace_trace.fraction = 1;
+	trace_trace.allsolid = true;
+//	trace_trace.startsolid = true; // this was (commented out) in pmovetst.c, why? -- Tonik
+	VectorCopy (end, trace_trace.endpos);
+
+	trace_hull = *hull;
+
+	RecursiveHullTrace (trace_hull.firstclipnode, 0, 1, start, end);
+
+	return trace_trace;
+}
+
+//===========================================================================
 
 void CM_Init (void)
 {
