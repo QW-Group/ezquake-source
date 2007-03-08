@@ -173,13 +173,9 @@ cvar_t gl_clipparticles = {"gl_clipparticles", "1"};
 cvar_t gl_bounceparticles = {"gl_bounceparticles", "1"};
 // END shaman :: balancing variables
 
-static qbool TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal) {
-	trace_t trace;
-
-	memset (&trace, 0, sizeof(trace));
-	trace.fraction = 1;
-	if (PM_RecursiveHullCheck (cl.worldmodel->hulls, 0, 0, 1, start, end, &trace))
-		return false;
+static qbool TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal)
+{
+	trace_t trace = PM_TraceLine (start, end);
 	VectorCopy (trace.endpos, impact);
 	if (normal)
 		VectorCopy (trace.plane.normal, normal);
