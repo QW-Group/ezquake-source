@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.132 2007-03-07 07:14:44 qqshka Exp $
+	$Id: cl_main.c,v 1.133 2007-03-08 12:20:23 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -169,7 +169,6 @@ int		fps_count;
 double		lastfps;
 
 void CL_Multiview(void);
-void CL_UpdateCaption(void);
 
 // emodel and pmodel are encrypted to prevent llamas from easily hacking them
 char emodel_name[] = { 'e'^0xe5, 'm'^0xe5, 'o'^0xe5, 'd'^0xe5, 'e'^0xe5, 'l'^0xe5, 0 };
@@ -256,8 +255,6 @@ void CL_MakeActive(void) {
 		host_skipframe = true;
 		demostarttime = cls.demotime;		
 	}
-
-	CL_UpdateCaption();
 
 	Con_ClearNotify ();
 	TP_ExecTrigger ("f_spawn");
@@ -684,7 +681,6 @@ void CL_Disconnect (void) {
 
 	CL_StopUpload();
 	DeleteServerAliases();
-	CL_UpdateCaption();
 	CL_RE_Trigger_ResetLasttime();
 
 // TCPCONNECT -->
@@ -1353,7 +1349,8 @@ void CL_Frame (double time) {
 #ifdef _WIN32		
 			Sys_MSleep(0);
 #else
-      usleep( bound( 0, sys_yieldcpu.integer, 1000 ) );
+		// that work bad on linux, at least on my system, dunno why.
+		usleep( bound( 0, sys_yieldcpu.integer, 1000 ) );
 #endif
 		return;
 	}
@@ -1644,6 +1641,8 @@ void CL_Frame (double time) {
 	CL_CalcFPS(); // HUD -> hexum
 
 	CL_QTVPoll();
+
+	CL_UpdateCaption(false);
 }
 
 //============================================================================
@@ -1916,17 +1915,26 @@ void CL_Multiview(void)
 	bExitmultiview = true;
 }
 
-void CL_UpdateCaption(void)
+void CL_UpdateCaption(qbool force)
 {
+	static char caption[512] = {0};
+	char str[512] = {0};
+
 	if (!cl_window_caption.value)
 	{
 		if (!cls.demoplayback && (cls.state == ca_active))
-			VID_SetCaption (va("ezQuake: %s", cls.servername));
+			snprintf(str, sizeof(str), "ezQuake: %s", cls.servername);
 		else
-			VID_SetCaption("ezQuake");
+			snprintf(str, sizeof(str), "ezQuake");
 	}
 	else
 	{
-		VID_SetCaption (va("%s - %s", CL_Macro_Serverstatus(), MT_ShortStatus()));
+		snprintf(str, sizeof(str), "%s - %s", CL_Macro_Serverstatus(), MT_ShortStatus());
+	}
+
+	if (force || strcmp(str, caption))
+	{
+		VID_SetCaption(str);
+		strlcpy(caption, str, sizeof(caption));
 	}
 }

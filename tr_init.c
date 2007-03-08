@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.7 2007-03-03 14:49:00 qqshka Exp $
+	$Id: tr_init.c,v 1.8 2007-03-08 12:20:24 qqshka Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -660,4 +660,7 @@ void VID_Restart_f (void)
 
 	// force all cached models to be loaded, so no short HDD lag then u walk over level and discover new model
 	Mod_TouchModels();
+
+	// window may be re-created, so caption need to be forced to update
+	CL_UpdateCaption(true);
 }

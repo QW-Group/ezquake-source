@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.75 2007-03-04 22:39:47 johnnycz Exp $
+	$Id: cl_parse.c,v 1.76 2007-03-08 12:20:24 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1597,7 +1597,6 @@ void CL_ProcessServerInfo (void) {
 	cl.fpd = fpd;
 	if (skin_refresh)
 		TP_RefreshSkins();
-	CL_UpdateCaption();
 }
 
 /*
@@ -1703,7 +1702,6 @@ void CL_ParseServerInfoChange (void) {
 	Info_SetValueForKey (cl.serverinfo, key, value, MAX_SERVERINFO_STRING);
 
 	CL_ProcessServerInfo ();
-	CL_UpdateCaption();
 }
 
 char *CL_Color2ConColor(int color)
@@ -2795,8 +2793,6 @@ void CL_ParseServerMessage (void) {
 				SZ_Write(&cls.demomessage, net_message.data + msg_svc_start, msg_readcount - msg_svc_start);
 		}
 	}
-
-	CL_UpdateCaption();
 
 	if (cls.demorecording) 
 	{
