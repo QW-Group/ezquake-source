@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.20 2007-03-08 22:55:34 disconn3ct Exp $
+	$Id: gl_model.c,v 1.21 2007-03-08 23:17:37 tonik Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -310,7 +310,7 @@ static struct {
 	{ 0, NULL, NULL },
 };
 
-static void TranslateTextureName (texture_t *tx)
+static char *TranslateTextureName (texture_t *tx)
 {
 	int i;
 	int checksum;
@@ -327,14 +327,15 @@ static void TranslateTextureName (texture_t *tx)
 		if (translate_names[i].md4 == checksum) {
 			//Com_DPrintf ("Translating %s --> %s\n", tx->name, translate_names[i].newname);
 			assert (strlen(translate_names[i].newname) < sizeof(tx->name));
-			strcpy (tx->name, translate_names[i].newname);
-			return;
+			return translate_names[i].newname;
 		}
 	}
+
+	return NULL;
 }
 
 int Mod_LoadExternalTexture(texture_t *tx, int mode) {
-	char *name, *mapname, *groupname;
+	char *name, *altname, *mapname, *groupname;
 
 	if (loadmodel->bspversion == HL_BSPVERSION)
 		return 0;
@@ -348,6 +349,7 @@ int Mod_LoadExternalTexture(texture_t *tx, int mode) {
 	}
 
 	name = tx->name;
+	altname = TranslateTextureName (tx);
 	mapname = TP_MapName();
 	groupname = TP_GetMapGroupName(mapname, NULL);
 
@@ -367,6 +369,13 @@ int Mod_LoadExternalTexture(texture_t *tx, int mode) {
 		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/bmodels/%s", name), name, 0, 0, mode))) {
 			if (!ISTURBTEX(name))
 				tx->fb_texturenum = GL_LoadTextureImage (va("textures/bmodels/%s_luma", name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
+		}
+	}
+
+	if (!tx->gl_texturenum && altname) {
+		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s", altname), altname, 0, 0, mode))) {
+			if (!ISTURBTEX(name))
+				tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s_luma", altname), va("@fb_%s", altname), 0, 0, mode | TEX_LUMA);
 		}
 	}
 
@@ -541,8 +550,6 @@ void Mod_LoadTextures (lump_t *l) {
 				// 32 pixels from the bottom to make it look nice.
 				memcpy (tx+1, (byte *)(tx+1) + 32*31, 32);
 			}
-
-			TranslateTextureName (tx);
 
 			// just for r_fastturb's sake
 			{
