@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.8 2007-03-08 12:20:24 qqshka Exp $
+	$Id: tr_init.c,v 1.9 2007-03-09 21:44:50 qqshka Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -474,6 +474,15 @@ void R_Register( void )
 	if ( !host_initialized ) // compatibility with retarded cmd line, and actually this still needed for some other reasons
 	{
 		int w, h;
+
+		if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed"))
+			Cvar_LatchedSetValue(&r_fullscreen, 0);
+
+		if ((i = COM_CheckParm("-freq")) && i + 1 < com_argc)
+			Cvar_LatchedSetValue(&r_displayRefresh, Q_atoi(com_argv[i + 1]));
+
+		if ((i = COM_CheckParm("-bpp")) && i + 1 < com_argc)
+			Cvar_LatchedSetValue(&r_colorbits, Q_atoi(com_argv[i + 1]));
 
 		w = ((i = COM_CheckParm("-width"))  && i + 1 < com_argc) ? Q_atoi(com_argv[i + 1]) : 0;
 		h = ((i = COM_CheckParm("-height")) && i + 1 < com_argc) ? Q_atoi(com_argv[i + 1]) : 0;
