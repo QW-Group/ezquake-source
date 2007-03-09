@@ -2,7 +2,7 @@
 //Lordhavoc gets credit for it anyway
 
 #include "quakedef.h"
-
+#if 0
 typedef struct ctrace_s {
 	qbool	allsolid;			// if true, the entire trace was in solid
 	qbool	startsolid;			// if true, the initial point was in solid
@@ -432,4 +432,19 @@ float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t 
 		Com_Printf("fraction out of bounds %f %s:%d\n", maxfrac, __LINE__, __FILE__);
 
 	return maxfrac;
+}
+#endif
+
+/* disconnect:
+if this function will not break things we can
+merge it with TraceLine (both should be void) and remove collision.c
+*/
+float CL_TraceLine (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal)
+{
+	trace_t trace = PM_TraceLine (start, end); /* PM_TraceLine hits bmodels and players */
+	VectorCopy (trace.endpos, impact);
+	if (normal)
+		VectorCopy (trace.plane.normal, normal);
+
+	return 0.0;
 }
