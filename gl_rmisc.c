@@ -16,11 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_rmisc.c,v 1.10 2007-03-06 17:10:24 disconn3ct Exp $
+	$Id: gl_rmisc.c,v 1.11 2007-03-09 16:39:49 qqshka Exp $
 */
 // gl_rmisc.c
 
 #include "quakedef.h"
+#include "vx_stuff.h"
 
 
 void R_InitOtherTextures (void) {
