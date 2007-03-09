@@ -1698,10 +1698,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\cl_collision.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\collision.c"
 					>
 				</File>
@@ -2146,14 +2142,6 @@
 				>
 				<File
 					RelativePath="..\..\auth.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\cl_collision.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\collision.h"
 					>
 				</File>
 				<File

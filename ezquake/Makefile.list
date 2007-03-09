@@ -109,7 +109,6 @@ COMMON_C_FILES := \
 	zone
 
 GL_C_FILES := \
-	cl_collision \
 	collision \
 	gl_draw \
 	gl_md3 \

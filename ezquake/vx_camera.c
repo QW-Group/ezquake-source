@@ -3,7 +3,6 @@
 
 
 #include "quakedef.h"
-#include "cl_collision.h"
 
 vec3_t	camera_pos; //Where the camera is
 vec3_t	camera_angles; //Where the camera is looking
