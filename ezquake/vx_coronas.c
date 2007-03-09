@@ -1,6 +1,7 @@
 //VultureIIC
 
 #include "quakedef.h"
+#include "vx_stuff.h"
 
 //fixme: move to header
 extern float bubblecolor[NUM_DLIGHTTYPES][4];
@@ -63,7 +64,7 @@ void R_UpdateCoronas(void)
 		c->scale += c->growth * frametime; 
 		c->alpha += c->fade * frametime; 
 
-		CL_TraceLine (r_refdef.vieworg, c->origin, impact, normal, 0, true, NULL);
+		CL_TraceLine (r_refdef.vieworg, c->origin, impact, normal);
 		if (!VectorCompare(impact, c->origin))//Can't see it, so make it fade out(faster)
 		{
 			c->los = false;
@@ -353,7 +354,7 @@ void NewCorona (coronatype_t type, vec3_t origin)
 		//I want to move it out of the wall so we can see it
 		//Mainly for the hwguy
 		//Sigh, if only they knew "omg see gunshots thru wall hax"
-		CL_TraceLine (r_refdef.vieworg, origin, impact, normal, 0, true, NULL);
+		CL_TraceLine (r_refdef.vieworg, origin, impact, normal);
 		if (!VectorCompare(origin, impact))
 		{
 			VectorSubtract(r_refdef.vieworg, origin, vec);

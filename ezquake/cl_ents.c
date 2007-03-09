@@ -16,11 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.27 2007-03-07 22:55:22 qqshka Exp $
+	$Id: cl_ents.c,v 1.28 2007-03-09 01:28:51 disconn3ct Exp $
 
 */
 
 #include "quakedef.h"
+#include "vx_stuff.h"
 
 
 static int MVD_TranslateFlags(int src);

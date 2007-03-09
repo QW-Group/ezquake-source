@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.99 2007-03-08 20:27:38 disconn3ct Exp $
+    $Id: cl_screen.c,v 1.100 2007-03-09 01:28:51 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mvd_utils.h"
 #include "hud_editor.h"
 #include "EX_misc.h"
+#include "vx_stuff.h"
 
 #ifdef _WIN32
 #include "movie.h"	//joe: capturing to avi

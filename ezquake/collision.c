@@ -4,23 +4,16 @@
 #include "quakedef.h"
 
 typedef struct ctrace_s {
-	// if true, the entire trace was in solid
-	qbool	allsolid;
-	// if true, the initial point was in solid
-	qbool	startsolid;
-	// if true, the trace passed through empty somewhere
-	qbool	inopen;
-	// if true, the trace passed through water somewhere
-	qbool	inwater;
+	qbool	allsolid;			// if true, the entire trace was in solid
+	qbool	startsolid;			// if true, the initial point was in solid
+	qbool	inopen;				// if true, the trace passed through empty somewhere
+	qbool	inwater;			// if true, the trace passed through water somewhere
 	// fraction of the total distance that was traveled before impact
 	// (1.0 = did not hit anything)
 	float	fraction;
-	// final position
-	float	endpos[3];
-	// surface normal at impact
-	plane_t	plane;
-	// entity the surface is on
-	void	*ent;
+	float	endpos[3];			// final position
+	plane_t	plane;				// surface normal at impact
+	void	*ent;				
 	// if not zero, treats this value as empty, and all others as solid (impact
 	// on content change)
 	int	startcontents;
@@ -378,9 +371,14 @@ static void Collision_ClipTrace (ctrace_t *trace, const void *cent, const model_
 
 
 
-/* disconnect: all stuff above was needed only for this */
-int cl_traceline_endcontents;
-float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t normal, int contents, int hitbmodels, entity_t *hitent)
+/* disconnect: all stuff above was needed only for this
+there was int contents param, but it seems it's not used in this function and it all calls it was 0. anyway it's removed
+there also was qbool hitbmodels, it was true in all calls, so this function MUST HID BMODELS!
+and entity_t *hitent which was always NULL, well look for original function in CVS...
+
+and return value is nowhere used, so this it only fills 3rd and 4th param with some value
+*/
+float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t normal)
 {
 	float maxfrac;
 	int n;
@@ -388,24 +386,18 @@ float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t 
 	float tracemins[3], tracemaxs[3];
 	ctrace_t trace;
 
-	if (hitent)
-		hitent = NULL;
-	//Mod_CheckLoaded(cl.worldmodel);
-	Collision_ClipTrace(&trace, NULL, cl.worldmodel, vec3_origin, vec3_origin, vec3_origin, vec3_origin, start, vec3_origin, vec3_origin, end);
+	Collision_ClipTrace (&trace, NULL, cl.worldmodel, vec3_origin, vec3_origin, vec3_origin, vec3_origin, start, vec3_origin, vec3_origin, end);
 
 	if (impact)
 		VectorCopy (trace.endpos, impact);
+
 	if (normal)
 		VectorCopy (trace.plane.normal, normal);
-	cl_traceline_endcontents = trace.endcontents;
-	maxfrac = trace.fraction;
-	//VULT
-	/*if (hitent && trace.fraction < 1)
-		hitent = &cl_visedicts[0];*/
-	if (hitent && trace.fraction < 1)
-		hitent = &cl_visents.list[0];
 
-	if (hitbmodels) {
+	maxfrac = trace.fraction;
+
+	/* we want to hit bmodels too*/
+	{
 		tracemins[0] = min(start[0], end[0]);
 		tracemaxs[0] = max(start[0], end[0]);
 		tracemins[1] = min(start[1], end[1]);
@@ -417,6 +409,7 @@ float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t 
 		for (n = 0;n < cl_visents.count;n++) {
 			if (cl_visents.list[n].model->type != mod_brush)
 				continue;
+
 			ent = &cl_visents.list[n];
 			if (ent->model->mins[0] > tracemaxs[0] || ent->model->maxs[0] < tracemins[0]
 			 || ent->model->mins[1] > tracemaxs[1] || ent->model->maxs[1] < tracemins[1]
@@ -431,12 +424,12 @@ float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t 
 					VectorCopy(trace.endpos, impact);
 				if (normal)
 					VectorCopy(trace.plane.normal, normal);
-				cl_traceline_endcontents = trace.endcontents;
-				if (hitent)
-					hitent = ent;
 			}
 		}
 	}
-	if (maxfrac < 0 || maxfrac > 1) Com_Printf("fraction out of bounds %f %s:%d\n", maxfrac, __LINE__, __FILE__);
-		return maxfrac;
+
+	if (maxfrac < 0 || maxfrac > 1)
+		Com_Printf("fraction out of bounds %f %s:%d\n", maxfrac, __LINE__, __FILE__);
+
+	return maxfrac;
 }

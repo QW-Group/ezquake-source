@@ -3,6 +3,7 @@
 #ifdef GLQUAKE
 
 #include "quakedef.h"
+#include "vx_stuff.h"
 
 int GL_LoadTextureImage (char * , char *, int, int, int);
 int coronatexture;
