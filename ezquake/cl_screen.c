@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.100 2007-03-09 01:28:51 disconn3ct Exp $
+    $Id: cl_screen.c,v 1.101 2007-03-09 23:15:10 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -3407,11 +3407,11 @@ void SCR_Init (void)
 	Cvar_Register (&scr_coloredfrags);
 
 	Cvar_Register (&scr_teaminfo_align_right);
-  Cvar_Register (&scr_teaminfo_frame_color);
-  Cvar_Register (&scr_teaminfo_scale);
-  Cvar_Register (&scr_teaminfo_y);
-  Cvar_Register (&scr_teaminfo_x);
-  Cvar_Register (&scr_teaminfo);
+	Cvar_Register (&scr_teaminfo_frame_color);
+	Cvar_Register (&scr_teaminfo_scale);
+	Cvar_Register (&scr_teaminfo_y);
+	Cvar_Register (&scr_teaminfo_x);
+	Cvar_Register (&scr_teaminfo);
 #endif
 	Cvar_Register (&scr_coloredText);
 
