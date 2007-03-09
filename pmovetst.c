@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pmovetst.c,v 1.9 2007-03-08 21:11:39 disconn3ct Exp $
+	$Id: pmovetst.c,v 1.10 2007-03-09 01:28:51 disconn3ct Exp $
 */
 #include "quakedef.h"
 
@@ -57,7 +57,6 @@ int PM_PointContents (vec3_t p)
 	hull_t *hull = &pmove.physents[0].model->hulls[0];
 	return CM_HullPointContents (hull, hull->firstclipnode, p);
 }
-
 
 /*
 ================
@@ -115,7 +114,7 @@ trace_t PM_PlayerTrace (vec3_t start, vec3_t end)
 	total.e.entnum = -1;
 	VectorCopy (end, total.endpos);
 
-	PM_TraceBounds(start, end, tracemins, tracemaxs);
+	PM_TraceBounds (start, end, tracemins, tracemaxs);
 
 	for (i = 0; i < pmove.numphysent; i++) {
 		pe = &pmove.physents[i];

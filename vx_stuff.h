@@ -45,7 +45,7 @@ int	explosionflashtexture5;
 int	explosionflashtexture6;
 int	explosionflashtexture7;
 
-float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t normal, int contents, int hitbmodels, entity_t *hitent);
+float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t normal);
 void WeatherEffect(void);
 int QW_strncmp (char *s1, char *s2);
 void VXSparks (vec3_t org, byte col[2], float dist, float count, float size, float life);

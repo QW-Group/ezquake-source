@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cmodel.c,v 1.5 2007-03-08 21:11:38 disconn3ct Exp $
+	$Id: cmodel.c,v 1.6 2007-03-09 01:28:51 disconn3ct Exp $
 */
 // cmodel.c
 
@@ -147,10 +147,11 @@ int CM_HullPointContents (hull_t *hull, int num, vec3_t p)
 
 		node = hull->clipnodes + num;
 		plane = hull->planes + node->planenum;
-		
+
 		d = PlaneDiff (p, plane);
 		num = (d < 0) ? node->children[1] : node->children[0];
 	}
+
 	return num;
 }
 
@@ -181,6 +182,7 @@ static qbool RecursiveHullTrace (int num, float p1f, float p2f, vec3_t p1, vec3_
 	if (num < 0) {
 		if (num != CONTENTS_SOLID) {
 			trace_trace.allsolid = false;
+
 			if (num == CONTENTS_EMPTY)
 				trace_trace.inopen = true;
 			else
@@ -216,7 +218,7 @@ static qbool RecursiveHullTrace (int num, float p1f, float p2f, vec3_t p1, vec3_
 	// put the crosspoint DIST_EPSILON pixels on the near side
 	frac = (t1<0) ? (t1 + DIST_EPSILON)/(t1-t2) : (t1 - DIST_EPSILON)/(t1-t2);
 	frac = bound (0, frac, 1);
-		
+
 	midf = p1f + (p2f - p1f) * frac;
 	for (i = 0; i < 3; i++)
 		mid[i] = p1[i] + frac * (p2[i] - p1[i]);
@@ -227,11 +229,13 @@ static qbool RecursiveHullTrace (int num, float p1f, float p2f, vec3_t p1, vec3_
 	if (!RecursiveHullTrace (node->children[side], p1f, midf, p1, mid))
 		return false;
 
+	// go past the node
 	if (CM_HullPointContents (&trace_hull, node->children[side^1], mid) != CONTENTS_SOLID)
-		return RecursiveHullTrace (node->children[side^1], midf, p2f, mid, p2); // go past the node
+		return RecursiveHullTrace (node->children[side^1], midf, p2f, mid, p2);
 	
+	// never got out of the solid area
 	if (trace_trace.allsolid)
-		return false; // never got out of the solid area
+		return false;
 		
 	// the other side of the node is solid, this is the impact point
 	if (!side) {
@@ -245,12 +249,14 @@ static qbool RecursiveHullTrace (int num, float p1f, float p2f, vec3_t p1, vec3_
 	while (CM_HullPointContents (&trace_hull, trace_hull.firstclipnode, mid) == CONTENTS_SOLID) {
 		// shouldn't really happen, but does occasionally
 		frac -= 0.1;
+
 		if (frac < 0) {
 			trace_trace.fraction = midf;
 			VectorCopy (mid, trace_trace.endpos);
 //			Com_DPrintf ("backup past 0\n");
 			return false;
 		}
+
 		midf = p1f + (p2f - p1f) * frac;
 		for (i=0 ; i<3 ; i++)
 			mid[i] = p1[i] + frac * (p2[i] - p1[i]);

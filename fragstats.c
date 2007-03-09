@@ -16,10 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: fragstats.c,v 1.18 2007-01-09 12:33:50 oldmanuk Exp $
+    $Id: fragstats.c,v 1.19 2007-03-09 01:28:51 disconn3ct Exp $
 */
 
 #include "quakedef.h"
+#include "vx_stuff.h"
 
 cvar_t cl_parsefrags = {"cl_parseFrags", "1"};
 cvar_t cl_showFragsMessages = {"con_fragmessages", "1"};

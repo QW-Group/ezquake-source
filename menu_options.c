@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.48 2007-03-05 01:03:53 johnnycz Exp $
+		$Id: menu_options.c,v 1.49 2007-03-09 01:28:51 disconn3ct Exp $
 
 */
 
@@ -21,6 +21,7 @@
 #include "settings.h"
 #include "settings_page.h"
 #include "Ctrl_EditBox.h"
+#include "vx_stuff.h"
 
 typedef enum {
 	OPTPG_SETTINGS,

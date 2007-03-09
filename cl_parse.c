@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.76 2007-03-08 12:20:24 qqshka Exp $
+	$Id: cl_parse.c,v 1.77 2007-03-09 01:28:51 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "localtime.h"
 #include "sbar.h"
 #include "textencoding.h"
+#include "vx_stuff.h"
 
 
 void R_TranslatePlayerSkin (int playernum);

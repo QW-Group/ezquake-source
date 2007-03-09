@@ -1,6 +1,7 @@
 //VULTUREIIC
 
 #include "quakedef.h"
+#include "vx_stuff.h"
 
 #define	MAX_BLURS	128
 
@@ -86,7 +87,7 @@ void CL_CreateBlurs (vec3_t start, vec3_t end, entity_t *ent)
 
 	if (ISPAUSED)
 		return;
-/*	CL_TraceLine (r_refdef.vieworg, start, impact, normal, 0, true, NULL);
+/*	CL_TraceLine (r_refdef.vieworg, start, impact, normal);
 		if (!VectorCompare(impact, start))//Can't see it, so make it fade out(faster)
 			return;*/
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.31 2007-02-20 23:57:42 qqshka Exp $
+	$Id: sbar.c,v 1.32 2007-03-09 01:28:51 disconn3ct Exp $
 */
 // sbar.c -- status bar code
 
@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
+#include "vx_stuff.h"
 
 
 int sb_updates;		// if >= vid.numpages, no update needed

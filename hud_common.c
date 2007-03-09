@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.127 2007-03-06 17:10:24 disconn3ct Exp $
+	$Id: hud_common.c,v 1.128 2007-03-09 01:28:51 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -13,6 +13,7 @@
 #include "png.h"
 #include "image.h"
 #include "stats_grid.h"
+#include "vx_stuff.h"
 
 #ifndef STAT_MINUS
 #define STAT_MINUS		10

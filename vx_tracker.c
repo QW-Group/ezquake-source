@@ -1,5 +1,6 @@
 //VULTUREIIC
 #include "quakedef.h"
+#include "vx_stuff.h"
 
 // seems noone uses next variables outside file, so make static
 // {

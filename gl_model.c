@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.21 2007-03-08 23:17:37 tonik Exp $
+	$Id: gl_model.c,v 1.22 2007-03-09 01:28:51 disconn3ct Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -812,7 +812,8 @@ void Mod_LoadVisibility (lump_t *l) {
 }
 
 
-static void Mod_ParseWadsFromEntityLump(char *data) {	
+static void Mod_ParseWadsFromEntityLump (char *data)
+{
 	char *s, key[1024], value[1024];	
 	int i, j, k;
 
