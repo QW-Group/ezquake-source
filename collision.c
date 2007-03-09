@@ -2,7 +2,31 @@
 //Lordhavoc gets credit for it anyway
 
 #include "quakedef.h"
-#include "collision.h"
+
+typedef struct ctrace_s {
+	// if true, the entire trace was in solid
+	qbool	allsolid;
+	// if true, the initial point was in solid
+	qbool	startsolid;
+	// if true, the trace passed through empty somewhere
+	qbool	inopen;
+	// if true, the trace passed through water somewhere
+	qbool	inwater;
+	// fraction of the total distance that was traveled before impact
+	// (1.0 = did not hit anything)
+	float	fraction;
+	// final position
+	float	endpos[3];
+	// surface normal at impact
+	plane_t	plane;
+	// entity the surface is on
+	void	*ent;
+	// if not zero, treats this value as empty, and all others as solid (impact
+	// on content change)
+	int	startcontents;
+	// the contents that was hit at the end or impact point
+	int	endcontents;
+} ctrace_t; // TODO: ?merge it with trace_t?
 
 typedef struct {
 	// the hull we're tracing through
@@ -180,6 +204,8 @@ static hull_t box_hull;
 static dclipnode_t box_clipnodes[6];
 static mplane_t box_planes[6];
 
+/*
+// disconnect: not used?
 void Collision_Init (void)
 {
 	int i;
@@ -208,7 +234,7 @@ void Collision_Init (void)
 		box_planes[i].normal[i>>1] = 1;
 	}
 }
-
+*/
 
 static hull_t *HullForBBoxEntity (const vec3_t corigin, const vec3_t cmins, const vec3_t cmaxs, const vec3_t mins, const vec3_t maxs, vec3_t offset)
 {
@@ -253,7 +279,7 @@ static const hull_t *HullForBrushModel (const model_t *cmodel, const vec3_t cori
 	return hull;
 }
 
-void Collision_ClipTrace (ctrace_t *trace, const void *cent, const model_t *cmodel, const vec3_t corigin, const vec3_t cangles, const vec3_t cmins, const vec3_t cmaxs, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end)
+static void Collision_ClipTrace (ctrace_t *trace, const void *cent, const model_t *cmodel, const vec3_t corigin, const vec3_t cangles, const vec3_t cmins, const vec3_t cmaxs, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end)
 {
 	RecursiveHullCheckTraceInfo_t rhc;
 	vec3_t offset, forward, left, up;
@@ -350,3 +376,67 @@ void Collision_ClipTrace (ctrace_t *trace, const void *cent, const model_t *cmod
 	}
 }
 
+
+
+/* disconnect: all stuff above was needed only for this */
+int cl_traceline_endcontents;
+float CL_TraceLine (const vec3_t start, const vec3_t end, vec3_t impact, vec3_t normal, int contents, int hitbmodels, entity_t *hitent)
+{
+	float maxfrac;
+	int n;
+	entity_t *ent;
+	float tracemins[3], tracemaxs[3];
+	ctrace_t trace;
+
+	if (hitent)
+		hitent = NULL;
+	//Mod_CheckLoaded(cl.worldmodel);
+	Collision_ClipTrace(&trace, NULL, cl.worldmodel, vec3_origin, vec3_origin, vec3_origin, vec3_origin, start, vec3_origin, vec3_origin, end);
+
+	if (impact)
+		VectorCopy (trace.endpos, impact);
+	if (normal)
+		VectorCopy (trace.plane.normal, normal);
+	cl_traceline_endcontents = trace.endcontents;
+	maxfrac = trace.fraction;
+	//VULT
+	/*if (hitent && trace.fraction < 1)
+		hitent = &cl_visedicts[0];*/
+	if (hitent && trace.fraction < 1)
+		hitent = &cl_visents.list[0];
+
+	if (hitbmodels) {
+		tracemins[0] = min(start[0], end[0]);
+		tracemaxs[0] = max(start[0], end[0]);
+		tracemins[1] = min(start[1], end[1]);
+		tracemaxs[1] = max(start[1], end[1]);
+		tracemins[2] = min(start[2], end[2]);
+		tracemaxs[2] = max(start[2], end[2]);
+
+		// look for embedded bmodels
+		for (n = 0;n < cl_visents.count;n++) {
+			if (cl_visents.list[n].model->type != mod_brush)
+				continue;
+			ent = &cl_visents.list[n];
+			if (ent->model->mins[0] > tracemaxs[0] || ent->model->maxs[0] < tracemins[0]
+			 || ent->model->mins[1] > tracemaxs[1] || ent->model->maxs[1] < tracemins[1]
+			 || ent->model->mins[2] > tracemaxs[2] || ent->model->maxs[2] < tracemins[2])
+			 	continue;
+
+			Collision_ClipTrace(&trace, ent, ent->model, ent->origin, ent->angles, ent->model->mins, ent->model->maxs, start, vec3_origin, vec3_origin, end);
+
+			if (trace.allsolid || trace.startsolid || trace.fraction < maxfrac) {
+				maxfrac = trace.fraction;
+				if (impact)
+					VectorCopy(trace.endpos, impact);
+				if (normal)
+					VectorCopy(trace.plane.normal, normal);
+				cl_traceline_endcontents = trace.endcontents;
+				if (hitent)
+					hitent = ent;
+			}
+		}
+	}
+	if (maxfrac < 0 || maxfrac > 1) Com_Printf("fraction out of bounds %f %s:%d\n", maxfrac, __LINE__, __FILE__);
+		return maxfrac;
+}
