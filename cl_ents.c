@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.28 2007-03-09 01:28:51 disconn3ct Exp $
+	$Id: cl_ents.c,v 1.29 2007-03-10 14:11:07 disconn3ct Exp $
 
 */
 
@@ -1820,7 +1820,7 @@ void CL_SetSolidEntities (void) {
 	packet_entities_t *pak;
 	entity_state_t *state;
 
-	pmove.physents[0].model = cl.worldmodel;
+	pmove.physents[0].model = cl.clipmodels[1];
 	VectorClear (pmove.physents[0].origin);
 	pmove.physents[0].info = 0;
 	pmove.numphysent = 1;
@@ -1831,17 +1831,14 @@ void CL_SetSolidEntities (void) {
 	for (i = 0; i < pak->num_entities; i++) {
 		state = &pak->entities[i];
 
-	
-		if (pmove.numphysent == MAX_PHYSENTS)
-			break;
-	
-
 		if (!state->modelindex)
 			continue;
-		if (!cl.model_precache[state->modelindex])
-			continue;
-		if (cl.model_precache[state->modelindex]->hulls[1].firstclipnode) {
-			pmove.physents[pmove.numphysent].model = cl.model_precache[state->modelindex];
+
+		if (cl.clipmodels[state->modelindex]) {
+			if (pmove.numphysent == MAX_PHYSENTS)
+				break;
+
+			pmove.physents[pmove.numphysent].model = cl.clipmodels[state->modelindex];
 			VectorCopy (state->origin, pmove.physents[pmove.numphysent].origin);
 			pmove.numphysent++;
 		}

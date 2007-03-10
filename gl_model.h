@@ -163,7 +163,6 @@ typedef struct mleaf_s {
 
 	msurface_t	**firstmarksurface;
 	int			nummarksurfaces;
-	byte		ambient_sound_level[NUM_AMBIENTS];
 } mleaf_t;
 
 /*
@@ -331,7 +330,9 @@ typedef enum {MOD_NORMAL, MOD_PLAYER, MOD_EYES, MOD_FLAME, MOD_THUNDERBOLT, MOD_
 
 typedef struct model_s {
 	char		name[MAX_QPATH];
-	qbool	needload;		// bmodels and sprites don't cache normally
+	qbool		needload; // bmodels and sprites don't cache normally
+
+	unsigned short	crc;
 
 	modhint_t	modhint;
 
@@ -348,13 +349,14 @@ typedef struct model_s {
 // brush model
 	int			firstmodelsurface, nummodelsurfaces;
 
+	// FIXME, don't really need these two
 	int			numsubmodels;
 	dmodel_t	*submodels;
 
 	int			numplanes;
 	mplane_t	*planes;
 
-	int			numleafs;		// number of visible leafs, not counting 0
+	int			numleafs; // number of visible leafs, not counting 0
 	mleaf_t		*leafs;
 
 	int			numvertexes;
@@ -364,6 +366,7 @@ typedef struct model_s {
 	medge_t		*edges;
 
 	int			numnodes;
+	int			firstnode;
 	mnode_t		*nodes;
 
 	int			numtexinfo;
@@ -375,26 +378,17 @@ typedef struct model_s {
 	int			numsurfedges;
 	int			*surfedges;
 
-	int			numclipnodes;
-	dclipnode_t	*clipnodes;
-
 	int			nummarksurfaces;
 	msurface_t	**marksurfaces;
-
-	hull_t		hulls[MAX_MAP_HULLS];
 
 	int			numtextures;
 	texture_t	**textures;
 
 	byte		*visdata;
 	byte		*lightdata;
-	char		*entities;
-
-	unsigned	checksum;
-	unsigned	checksum2;
 
 	int			bspversion;
-	qbool	isworldmodel;
+	qbool		isworldmodel; // -- @ZQUAKE@
 
 	// additional model data
 	cache_user_t	cache;		// only access through Mod_Extradata

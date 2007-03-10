@@ -1101,7 +1101,7 @@ void R_DrawBrushModel (entity_t *e) {
 				continue;
 
 			if (!gl_flashblend.value || (cl_dlights[k].bubble && gl_flashblend.value != 2))
-				R_MarkLights (&cl_dlights[k], 1 << k, clmodel->nodes + clmodel->hulls[0].firstclipnode);
+				R_MarkLights (&cl_dlights[k], 1 << k, clmodel->nodes + clmodel->firstnode);
 		}
 	}
 

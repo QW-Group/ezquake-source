@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.36 2007-01-14 19:47:06 johnnycz Exp $
+    $Id: snd_dma.c,v 1.37 2007-03-10 14:11:08 disconn3ct Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -571,17 +571,16 @@ void S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation)
 
 static void S_UpdateAmbientSounds (void)
 {
-	mleaf_t *l;
+	struct cleaf_s *leaf;
 	int vol;
 	int ambient_channel;
 	channel_t *chan;
 
-	// calc ambient sound levels
-	if (!cl.worldmodel)
+	if (cls.state != ca_active)
 		return;
 
-	l = Mod_PointInLeaf (listener_origin, cl.worldmodel);
-	if (!l || !s_ambientlevel.value) {
+	leaf = CM_PointInLeaf (listener_origin);
+	if (!CM_Leafnum(leaf) || !s_ambientlevel.value) {
 		for (ambient_channel = 0 ; ambient_channel< NUM_AMBIENTS ; ambient_channel++)
 			channels[ambient_channel].sfx = NULL;
 		return;
@@ -591,7 +590,7 @@ static void S_UpdateAmbientSounds (void)
 		chan = &channels[ambient_channel];
 		chan->sfx = ambient_sfx[ambient_channel];
 
-		vol = (int) (s_ambientlevel.value * l->ambient_sound_level[ambient_channel]);
+		vol = (int) (s_ambientlevel.value * CM_LeafAmbientLevel(leaf, ambient_channel));
 		if (vol < 8)
 			vol = 0;
 

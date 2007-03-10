@@ -464,15 +464,6 @@ void Mod_LoadVisibility (lump_t *l) {
 	memcpy (loadmodel->visdata, mod_base + l->fileofs, l->filelen);
 }
 
-void Mod_LoadEntities (lump_t *l) {
-	if (!l->filelen) {
-		loadmodel->entities = NULL;
-		return;
-	}
-	loadmodel->entities = (char *) Hunk_AllocName ( l->filelen, loadname);
-	memcpy (loadmodel->entities, mod_base + l->fileofs, l->filelen);
-}
-
 void Mod_LoadVertexes (lump_t *l) {
 	dvertex_t *in;
 	mvertex_t *out;
@@ -747,7 +738,7 @@ void Mod_LoadLeafs (lump_t *l) {
 	mleaf_t *out;
 	int i, j, count, p;
 
-	in = (void *) (mod_base + l->fileofs);
+	in = (dleaf_t *) (mod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadLeafs: funny lump size in %s",loadmodel->name);
 	count = l->filelen / sizeof(*in);
@@ -771,123 +762,7 @@ void Mod_LoadLeafs (lump_t *l) {
 		p = LittleLong(in->visofs);
 		out->compressed_vis = (p == -1) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;
-
-		for (j = 0; j < 4; j++)
-			out->ambient_sound_level[j] = in->ambient_level[j];
 	}	
-}
-
-void Mod_LoadClipnodes (lump_t *l) {
-	dclipnode_t *in, *out;
-	int i, count;
-	hull_t *hull;
-
-	in = (void *)(mod_base + l->fileofs);
-	if (l->filelen % sizeof(*in))
-		Host_Error ("Mod_LoadClipnodes: funny lump size in %s",loadmodel->name);
-	count = l->filelen / sizeof(*in);
-	out = (dclipnode_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
-
-	loadmodel->clipnodes = out;
-	loadmodel->numclipnodes = count;
-
-	if (loadmodel->bspversion == HL_BSPVERSION) {
-		hull = &loadmodel->hulls[1];
-		hull->clipnodes = out;
-		hull->firstclipnode = 0;
-		hull->lastclipnode = count-1;
-		hull->planes = loadmodel->planes;
-		hull->clip_mins[0] = -16;
-		hull->clip_mins[1] = -16;
-		hull->clip_mins[2] = -36;
-		hull->clip_maxs[0] = 16;
-		hull->clip_maxs[1] = 16;
-		hull->clip_maxs[2] = 36;
-
-		hull = &loadmodel->hulls[2];
-		hull->clipnodes = out;
-		hull->firstclipnode = 0;
-		hull->lastclipnode = count-1;
-		hull->planes = loadmodel->planes;
-		hull->clip_mins[0] = -32;
-		hull->clip_mins[1] = -32;
-		hull->clip_mins[2] = -32;
-		hull->clip_maxs[0] = 32;
-		hull->clip_maxs[1] = 32;
-		hull->clip_maxs[2] = 32;
-
-		hull = &loadmodel->hulls[3];
-		hull->clipnodes = out;
-		hull->firstclipnode = 0;
-		hull->lastclipnode = count-1;
-		hull->planes = loadmodel->planes;
-		hull->clip_mins[0] = -16;
-		hull->clip_mins[1] = -16;
-		hull->clip_mins[2] = -18;
-		hull->clip_maxs[0] = 16;
-		hull->clip_maxs[1] = 16;
-		hull->clip_maxs[2] = 18;
-	} else {
-		hull = &loadmodel->hulls[1];
-		hull->clipnodes = out;
-		hull->firstclipnode = 0;
-		hull->lastclipnode = count-1;
-		hull->planes = loadmodel->planes;
-		hull->clip_mins[0] = -16;
-		hull->clip_mins[1] = -16;
-		hull->clip_mins[2] = -24;
-		hull->clip_maxs[0] = 16;
-		hull->clip_maxs[1] = 16;
-		hull->clip_maxs[2] = 32;
-
-		hull = &loadmodel->hulls[2];
-		hull->clipnodes = out;
-		hull->firstclipnode = 0;
-		hull->lastclipnode = count-1;
-		hull->planes = loadmodel->planes;
-		hull->clip_mins[0] = -32;
-		hull->clip_mins[1] = -32;
-		hull->clip_mins[2] = -24;
-		hull->clip_maxs[0] = 32;
-		hull->clip_maxs[1] = 32;
-		hull->clip_maxs[2] = 64;
-	}
-
-	for (i = 0; i < count; i++, out++, in++) {
-		out->planenum = LittleLong(in->planenum);
-		out->children[0] = LittleShort(in->children[0]);
-		out->children[1] = LittleShort(in->children[1]);
-	}
-}
-
-//Deplicate the drawing hull structure as a clipping hull
-void Mod_MakeHull0 (void) {
-	mnode_t *in, *child;
-	dclipnode_t *out;
-	int i, j, count;
-	hull_t *hull;
-
-	hull = &loadmodel->hulls[0];	
-
-	in = loadmodel->nodes;
-	count = loadmodel->numnodes;
-	out = (dclipnode_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
-
-	hull->clipnodes = out;
-	hull->firstclipnode = 0;
-	hull->lastclipnode = count-1;
-	hull->planes = loadmodel->planes;
-
-	for (i = 0; i < count; i++, out++, in++) {
-		out->planenum = in->plane - loadmodel->planes;
-		for (j = 0; j < 2; j++) {
-			child = in->children[j];
-			if (child->contents < 0)
-				out->children[j] = child->contents;
-			else
-				out->children[j] = child - loadmodel->nodes;
-		}
-	}
 }
 
 void Mod_LoadMarksurfaces (lump_t *l) {	
@@ -968,7 +843,7 @@ float RadiusFromBounds (vec3_t mins, vec3_t maxs) {
 extern void D_SeekTextures (void);
 
 void Mod_LoadBrushModel (model_t *mod, void *buffer) {
-	int i, j;
+	int i;
 	dheader_t *header;
 	dmodel_t *bm;
 	
@@ -983,70 +858,32 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer) {
 
 	loadmodel->isworldmodel = !strcmp(loadmodel->name, va("maps/%s.bsp", host_mapname.string));
 
-#ifndef CLIENTONLY
-	if (loadmodel->isworldmodel) {
-		extern cvar_t sv_halflifebsp;
-		Cvar_ForceSet(&sv_halflifebsp, loadmodel->bspversion == HL_BSPVERSION ? "1" : "0");
-	}
-#endif
-
 	// swap all the lumps
 	mod_base = (byte *)header;
 
 	for (i = 0; i < sizeof(dheader_t) / 4; i++)
 		((int *)header)[i] = LittleLong ( ((int *)header)[i]);
 
-	mod->checksum = 0;
-	mod->checksum2 = 0;
-
-	// checksum all of the map, except for entities
-	for (i = 0; i < HEADER_LUMPS; i++) {
-		if (i == LUMP_ENTITIES)
-			continue;
-		mod->checksum ^= Com_BlockChecksum(mod_base + header->lumps[i].fileofs, 
-			header->lumps[i].filelen);
-
-		if (i == LUMP_VISIBILITY || i == LUMP_LEAFS || i == LUMP_NODES)
-			continue;
-		mod->checksum2 ^= Com_BlockChecksum(mod_base + header->lumps[i].fileofs, 
-			header->lumps[i].filelen);
-	}
-
 	// load into heap
-	if (!dedicated) {
-		Mod_LoadVertexes (&header->lumps[LUMP_VERTEXES]);
-		Mod_LoadEdges (&header->lumps[LUMP_EDGES]);
-		Mod_LoadSurfedges (&header->lumps[LUMP_SURFEDGES]);
-		Mod_LoadLighting (&header->lumps[LUMP_LIGHTING]);
-	}
-
+	Mod_LoadVertexes (&header->lumps[LUMP_VERTEXES]);
+	Mod_LoadEdges (&header->lumps[LUMP_EDGES]);
+	Mod_LoadSurfedges (&header->lumps[LUMP_SURFEDGES]);
+	Mod_LoadTextures (&header->lumps[LUMP_TEXTURES]);
+	Mod_LoadLighting (&header->lumps[LUMP_LIGHTING]);
 	Mod_LoadPlanes (&header->lumps[LUMP_PLANES]);
-	if (!dedicated) {
-		Mod_LoadTextures (&header->lumps[LUMP_TEXTURES]);
-		Mod_LoadTexinfo (&header->lumps[LUMP_TEXINFO]);
-		Mod_LoadFaces (&header->lumps[LUMP_FACES]);
-		Mod_LoadMarksurfaces (&header->lumps[LUMP_MARKSURFACES]);
-	}
+	Mod_LoadTexinfo (&header->lumps[LUMP_TEXINFO]);
+	Mod_LoadFaces (&header->lumps[LUMP_FACES]);
+	Mod_LoadMarksurfaces (&header->lumps[LUMP_MARKSURFACES]);
 	Mod_LoadVisibility (&header->lumps[LUMP_VISIBILITY]);
 	Mod_LoadLeafs (&header->lumps[LUMP_LEAFS]);
 	Mod_LoadNodes (&header->lumps[LUMP_NODES]);
-	Mod_LoadClipnodes (&header->lumps[LUMP_CLIPNODES]);
-	Mod_LoadEntities (&header->lumps[LUMP_ENTITIES]);
 	Mod_LoadSubmodels (&header->lumps[LUMP_MODELS]);
-
-	Mod_MakeHull0 ();
 
 	mod->numframes = 2;		// regular and alternate animation
 
 	// set up the submodels (FIXME: this is confusing)
 	for (i = 0; i < mod->numsubmodels; i++) {
 		bm = &mod->submodels[i];
-
-		mod->hulls[0].firstclipnode = bm->headnode[0];
-		for (j = 1; j < MAX_MAP_HULLS; j++) {
-			mod->hulls[j].firstclipnode = bm->headnode[j];
-			mod->hulls[j].lastclipnode = mod->numclipnodes-1;
-		}
 
 		mod->firstmodelsurface = bm->firstface;
 		mod->nummodelsurfaces = bm->numfaces;
@@ -1055,7 +892,11 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer) {
 		VectorCopy (bm->mins, mod->mins);
 
 		mod->radius = RadiusFromBounds (mod->mins, mod->maxs);
-	
+
+		mod->firstnode = bm->headnode[0];
+		if ((unsigned)mod->firstnode > loadmodel->numnodes)
+			Host_Error ("Inline model %i has bad firstnode", i);
+
 		mod->numleafs = bm->visleafs;
 
 		if (i < mod->numsubmodels - 1){	
@@ -1246,23 +1087,8 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer) {
 	else if (!strcmp(mod->name, "progs/backpack.mdl"))
 		mod->modhint = MOD_BACKPACK;
 
-	if (mod->modhint == MOD_PLAYER || mod->modhint == MOD_EYES) {
-		unsigned short crc;
-		char st[40];
-
-		crc = CRC_Block (buffer, fs_filesize);
-	
-		sprintf(st, "%d", (int) crc);
-		Info_SetValueForKey (cls.userinfo, mod->modhint == MOD_PLAYER ? pmodel_name : emodel_name, st, MAX_INFO_STRING);
-
-		if (cls.state >= ca_connected) {
-			MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-			sprintf(st, "setinfo %s %d", 
-				mod->modhint == MOD_PLAYER ? pmodel_name : emodel_name,
-				(int)crc);
-			SZ_Print (&cls.netchan.message, st);
-		}
-	}
+	if (mod->modhint == MOD_PLAYER || mod->modhint == MOD_EYES)
+		mod->crc = CRC_Block (buffer, fs_filesize);
 
 	start = Hunk_LowMark ();
 

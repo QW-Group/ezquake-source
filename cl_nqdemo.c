@@ -363,29 +363,28 @@ static void NQD_ParseServerData (void)
 	char	mapname_s[MAX_QPATH];
 
 	Com_DPrintf ("Serverdata packet received.\n");
-//
-// wipe the client_state_t struct
-//
+
+	// wipe the client_state_t struct
 	CL_ClearState ();
 
-// parse protocol version number
+	// parse protocol version number
 	i = MSG_ReadLong ();
 	if (i != NQ_PROTOCOL_VERSION)
 		Host_Error ("Server returned version %i, not %i", i, NQ_PROTOCOL_VERSION);
 
-// parse maxclients
+	// parse maxclients
 	nq_maxclients = MSG_ReadByte ();
 	if (nq_maxclients < 1 || nq_maxclients > NQ_MAX_CLIENTS)
 		Host_Error ("Bad maxclients (%u) from server", nq_maxclients);
 
-// parse gametype
+	// parse gametype
 	cl.gametype = MSG_ReadByte() ? GAME_DEATHMATCH : GAME_COOP;
 
-// parse signon message
+	// parse signon message
 	str = MSG_ReadString ();
 	strncpy (cl.levelname, str, sizeof(cl.levelname)-1);
 
-// separate the printfs so the server message can have a color
+	// separate the printfs so the server message can have a color
 	Com_Printf("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
 	Com_Printf ("%c%s\n", 2, str);
 
@@ -395,7 +394,7 @@ static void NQD_ParseServerData (void)
 // needlessly purge it
 //
 
-// precache models
+	// precache models
 	for (nummodels=1 ; ; nummodels++)
 	{
 		str = MSG_ReadString ();
@@ -407,7 +406,7 @@ static void NQD_ParseServerData (void)
 		Mod_TouchModel (str);
 	}
 
-// precache sounds
+	// precache sounds
 	for (numsounds=1 ; ; numsounds++)
 	{
 		str = MSG_ReadString ();
@@ -416,15 +415,13 @@ static void NQD_ParseServerData (void)
 		if (numsounds == MAX_SOUNDS)
 			Host_Error ("Server sent too many sound precaches");
 		strlcpy (cl.sound_name[numsounds], str, sizeof(cl.sound_name[0]));
-//		S_TouchSound (str);
+//		S_TouchSound (str); @ZQ@
 	}
 
-//
-// now we try to load everything else until a cache allocation fails
-//
-	COM_StripExtension (COM_SkipPath (cl.model_name[1]), mapname_s);
-	R_PreMapLoad (mapname_s);
-//	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, NULL, &cl.map_checksum2);
+	// now we try to load everything else until a cache allocation fails
+	COM_StripExtension (COM_SkipPath (cl.model_name[1]), mapname_s); // ?TONIK?
+	R_PreMapLoad (mapname_s); // ?TONIK?
+	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, NULL, &cl.map_checksum2);
 
 	for (i = 1; i < nummodels; i++)
 	{
@@ -432,8 +429,8 @@ static void NQD_ParseServerData (void)
 		if (cl.model_precache[i] == NULL)
 			Host_Error ("Model %s not found", cl.model_name[i]);
 
-//		if (cl.model_name[i][0] == '*')
-//			cl.clipmodels[i] = CM_InlineModel(cl.model_name[i]);
+		if (cl.model_name[i][0] == '*')
+			cl.clipmodels[i] = CM_InlineModel(cl.model_name[i]);
 	}
 
 	for (i=1 ; i<numsounds ; i++) {
@@ -441,12 +438,12 @@ static void NQD_ParseServerData (void)
 	}
 
 
-// local state
+	// local state
 	cl.worldmodel = cl.model_precache[1];
 	if (!cl.model_precache[1])
 		Host_Error ("NQD_ParseServerData: NULL worldmodel");
 
-//##	CL_ClearParticles ();
+//	CL_ClearParticles (); @ZQ@
 	CL_FindModelNumbers ();
 #ifdef GLQUAKE
 	R_NewMap (false);
@@ -464,13 +461,13 @@ static void NQD_ParseServerData (void)
 	HUD_NewMap ();
 #endif
 
-	Hunk_Check ();		// make sure nothing is hurt
+	Hunk_Check (); // make sure nothing is hurt
 
 	nq_signon = 0;
 	nq_num_entities = 0;
-	nq_drawpings = false;	// unless we have the ProQuake extension
+	nq_drawpings = false; // unless we have the ProQuake extension
 	cl.servertime_works = true;
-//##	cl.allow_fbskins = true;
+//	cl.allow_fbskins = true; @ZQ@
 	cls.state = ca_onserver;
 }
 

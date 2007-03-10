@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.22 2007-03-08 21:11:38 disconn3ct Exp $
+	$Id: gl_local.h,v 1.23 2007-03-10 14:11:08 disconn3ct Exp $
 
 */
 // gl_local.h -- private refresh defs
@@ -211,7 +211,8 @@ extern	const char *gl_version;
 extern	const char *gl_extensions;
 
 #define ISUNDERWATER(x) ((x) == CONTENTS_WATER || (x) == CONTENTS_SLIME || (x) == CONTENTS_LAVA)
-#define TruePointContents(p) CM_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
+//#define TruePointContents(p) CM_HullPointContents(&cl.worldmodel->hulls[0], 0, p)
+#define TruePointContents(p) CM_HullPointContents(&cl.clipmodels[1]->hulls[0], 0, p) // ?TONIK?
 
 // gl_warp.c
 void GL_SubdivideSurface (msurface_t *fa);
