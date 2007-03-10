@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_world.c,v 1.15 2007-03-06 18:54:30 disconn3ct Exp $
+	$Id: sv_world.c,v 1.16 2007-03-10 00:36:53 disconn3ct Exp $
 */
 // sv_world.c -- world query functions
 
@@ -39,8 +39,6 @@ typedef struct {
 	edict_t		*passedict;
 } moveclip_t;
 
-
-int SV_HullPointContents (hull_t *hull, int num, vec3_t p);
 
 /*
 ================
@@ -374,35 +372,26 @@ void SV_LinkEdict (edict_t *ent, qbool touch_triggers)
 		SV_TouchLinks ( ent, sv_areanodes );
 }
 
+
+
 /*
 ===============================================================================
+
 POINT TESTING IN HULLS
+
 ===============================================================================
 */
-#if defined(_WIN32) || !defined(id386)
-int SV_HullPointContents (hull_t *hull, int num, vec3_t p) {
-	float d;
-	dclipnode_t *node;
-	mplane_t *plane;
 
-	while (num >= 0) {
-		if (num < hull->firstclipnode || num > hull->lastclipnode)
-			Host_Error ("SV_HullPointContents: bad node number");
-	
-		node = hull->clipnodes + num;
-		plane = hull->planes + node->planenum;
-		
-		d = PlaneDiff(p, plane);
-		num = (d < 0) ? node->children[1] : node->children[0];
-	}
 
-	return num;
-}
-#endif
+/*
+==================
+SV_PointContents
 
+==================
+*/
 int SV_PointContents (vec3_t p)
 {
-	return SV_HullPointContents (&sv.worldmodel->hulls[0], 0, p);
+	return CM_HullPointContents (&sv.worldmodel->hulls[0], sv.worldmodel->hulls[0].firstclipnode, p);
 }
 
 //===========================================================================
@@ -430,127 +419,12 @@ edict_t	*SV_TestEntityPosition (edict_t *ent)
 	return NULL;
 }
 
-/*
-===============================================================================
-LINE TESTING IN HULLS
-===============================================================================
-*/
-
-// 1/32 epsilon to keep floating point happy
-#define	DIST_EPSILON	(0.03125)
-
-qbool SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, trace_t *trace) {
-	dclipnode_t	*node;
-	mplane_t *plane;
-	float t1, t2, frac, midf;
-	int i, side;
-	vec3_t mid;
-
-	// check for empty
-	if (num < 0) {
-		if (num != CONTENTS_SOLID) {
-			trace->allsolid = false;
-			if (num == CONTENTS_EMPTY)
-				trace->inopen = true;
-			else
-				trace->inwater = true;
-		} else {
-			trace->startsolid = true;
-		}
-		return true;		// empty
-	}
-
-	if (num < hull->firstclipnode || num > hull->lastclipnode)
-		Host_Error ("SV_RecursiveHullCheck: bad node number");
-
-	// find the point distances
-	node = hull->clipnodes + num;
-	plane = hull->planes + node->planenum;
-
-	if (plane->type < 3) {
-		t1 = p1[plane->type] - plane->dist;
-		t2 = p2[plane->type] - plane->dist;
-	} else {
-		t1 = DotProduct (plane->normal, p1) - plane->dist;
-		t2 = DotProduct (plane->normal, p2) - plane->dist;
-	}
-
-	if (t1 >= 0 && t2 >= 0)
-		return SV_RecursiveHullCheck (hull, node->children[0], p1f, p2f, p1, p2, trace);
-	if (t1 < 0 && t2 < 0)
-		return SV_RecursiveHullCheck (hull, node->children[1], p1f, p2f, p1, p2, trace);
-
-	// put the crosspoint DIST_EPSILON pixels on the near side
-	frac = (t1 < 0) ? (t1 + DIST_EPSILON) / (t1 - t2) : (t1 - DIST_EPSILON) / (t1 - t2);
-	frac = bound(0, frac, 1);
-		
-	midf = p1f + (p2f - p1f)*frac;
-	for (i=0 ; i<3 ; i++)
-		mid[i] = p1[i] + frac*(p2[i] - p1[i]);
-
-	side = (t1 < 0);
-
-	// move up to the node
-	if (!SV_RecursiveHullCheck (hull, node->children[side], p1f, midf, p1, mid, trace) )
-		return false;
-
-#ifdef PARANOID
-	if (SV_HullPointContents (sv_hullmodel, mid, node->children[side]) == CONTENTS_SOLID) {
-		Com_Printf ("mid PointInHullSolid\n");
-		return false;
-	}
-#endif
-
-	if (SV_HullPointContents (hull, node->children[side ^ 1], mid) != CONTENTS_SOLID)
-	// go past the node
-		return SV_RecursiveHullCheck (hull, node->children[side ^ 1], midf, p2f, mid, p2, trace);
-	
-	if (trace->allsolid)
-		return false;		// never got out of the solid area
-		
-//==================
-// the other side of the node is solid, this is the impact point
-//==================
-	if (!side) {
-		VectorCopy (plane->normal, trace->plane.normal);
-		trace->plane.dist = plane->dist;
-	} else {
-		VectorNegate (plane->normal, trace->plane.normal);
-		trace->plane.dist = -plane->dist;
-	}
-
-	while (SV_HullPointContents (hull, hull->firstclipnode, mid) == CONTENTS_SOLID) { 
-		// shouldn't really happen, but does occasionally
-		frac -= 0.1;
-		if (frac < 0) {
-			trace->fraction = midf;
-			VectorCopy (mid, trace->endpos);
-			Com_DPrintf ("backup past 0\n");
-			return false;
-		}
-		midf = p1f + (p2f - p1f)*frac;
-		for (i = 0; i < 3; i++)
-			mid[i] = p1[i] + frac * (p2[i] - p1[i]);
-	}
-
-	trace->fraction = midf;
-	VectorCopy (mid, trace->endpos);
-
-	return false;
-}
-
 //Handles selection or creation of a clipping hull, and offseting (and eventually rotation) of the end points
 trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end)
 {
 	trace_t trace;
 	vec3_t offset, start_l, end_l;
 	hull_t *hull;
-
-	// fill in a default trace ?TONIK?
-	memset (&trace, 0, sizeof(trace_t));
-	trace.fraction = 1;
-	trace.allsolid = true;
-	VectorCopy (end, trace.endpos);
 
 	// get the clipping hull
 	hull = SV_HullForEntity (ent, mins, maxs, offset);
@@ -559,11 +433,10 @@ trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t max
 	VectorSubtract (end, offset, end_l);
 
 	// trace a line through the apropriate clipping hull
-	SV_RecursiveHullCheck (hull, hull->firstclipnode, 0, 1, start_l, end_l, &trace);
+	trace = CM_HullTrace (hull, start_l, end_l);
 
 	// fix trace up by the offset
-	if (trace.fraction != 1)
-		VectorAdd (trace.endpos, offset, trace.endpos);
+	VectorAdd (trace.endpos, offset, trace.endpos); // ?TONIK?: if (trace.fraction != 1) VectorAdd (....
 
 	// did we clip the move?
 	if (trace.fraction < 1 || trace.startsolid  )
