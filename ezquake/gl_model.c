@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.26 2007-03-10 19:17:55 tonik Exp $
+	$Id: gl_model.c,v 1.27 2007-03-10 20:03:31 tonik Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -405,7 +405,6 @@ static qbool Mod_LoadExternalSkyTexture (texture_t *tx)
 	mapname = Cvar_VariableString("mapname");
 	snprintf (solidname, sizeof(solidname), "%s_solid", tx->name);
 	snprintf (alphaname, sizeof(alphaname), "%s_alpha", tx->name);
-	Com_Printf ("tx name: %s    altname: %s\n", tx->name, altname);
 
 	solidskytexture = GL_LoadTextureImage (va("textures/%s/%s", mapname, solidname), solidname, 0, 0, 0);
 	if (!solidskytexture && altname) {
