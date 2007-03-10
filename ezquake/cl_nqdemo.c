@@ -742,26 +742,6 @@ static float NQD_LerpPoint (void)
 	return frac;
 }
 
-
-//part of ZQuake mathlib;  an equivalent in ezQuake?
-void LerpAngles (const vec3_t from, const vec3_t to, float frac, vec3_t out)
-{
-        int i;
-        float delta;
-
-        for (i = 0; i < 3; i++)
-        {
-                delta = to[i] - from[i];
-
-                if (delta > 180)
-                        delta -= 360;
-                else if (delta < -180)
-                        delta += 360;
-
-                out[i] = from[i] + frac * delta;
-        }
-}
-
 static void NQD_LerpPlayerinfo (float f)
 {
 	if (cl.intermission) {
@@ -777,7 +757,7 @@ static void NQD_LerpPlayerinfo (float f)
 	}
 
 	VectorInterpolate (nq_mvelocity[1], f, nq_mvelocity[0], cl.simvel);
-	LerpAngles (nq_mviewangles[1], nq_mviewangles[0], f, cl.simangles);
+	AngleInterpolate (nq_mviewangles[1], f, nq_mviewangles[0], cl.simangles);
 	VectorCopy (cl.simangles, cl.viewangles);
 }
 
@@ -867,7 +847,7 @@ void NQD_LinkEntities (void)
 			ent.angles[2] = 0;
 		}
 		else
-			LerpAngles (cent->old_angles, cent->current.angles, f, ent.angles);
+			AngleInterpolate (cent->old_angles, f ,cent->current.angles, ent.angles);
 
 		// calculate origin
 		for (i = 0; i < 3; i++)
