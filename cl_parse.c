@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.77 2007-03-09 01:28:51 disconn3ct Exp $
+	$Id: cl_parse.c,v 1.78 2007-03-10 03:50:12 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1719,6 +1719,7 @@ char *CL_Color2ConColor(int color)
 	return buf;
 }
 
+/* the most evil thing Tonik ever done
 wchar *qwcsncat (wchar *dst, wchar *src, size_t len)
 {
 	while (*dst)
@@ -1729,56 +1730,69 @@ wchar *qwcsncat (wchar *dst, wchar *src, size_t len)
 	}
 	return dst;
 }
+*/
 
 wchar* CL_ColorizeFragMessage(wchar *source, cfrags_format *cff)
 /* will add colors to nicks in "ParadokS rides JohnNy_cz's rocket"
    source - source frag message, dest - destination buffer, destlen - length of buffer
    cff - see the cfrags_format definition */
 {
-	wchar col1[6+1], col2[6+1];
-	static wchar dest[2048] = {0};
-	int destlen = sizeof(dest)/sizeof(dest[0]);
+	static wchar dest_buf[2048] = {0};
+	wchar col1[6+1] = {0}, col2[6+1] = {0}, *dest = dest_buf, *col_off;
+	int destlen = sizeof(dest_buf)/sizeof(dest_buf[0]), len;
 
-	*dest = 0; // new string
+	dest[0] = 0; // new string
 
 	qwcslcpy(col1, str2wcs(CL_Color2ConColor(cff->p1col)), sizeof(col1)/sizeof(wchar));
 	qwcslcpy(col2, str2wcs(CL_Color2ConColor(cff->p2col)), sizeof(col2)/sizeof(wchar));
 
 	// before 1st nick
-	qwcsncat(dest, source, min(destlen, cff->p1pos));
-	destlen -= cff->p1pos;
+	qwcslcpy(dest, source, bound(0, cff->p1pos + 1, destlen));
+	destlen -= (len = qwcslen(dest));
+	dest += len;
 	// color1
-	qwcsncat(dest, col1, min(destlen, sizeof(col1)));
-	destlen -= sizeof(col1);
+	len = qwcslen(col1) + 1;
+	qwcslcpy(dest, col1, bound(0, len, destlen));
+	destlen -= (len = qwcslen(dest));
+	dest += len;
 	// 1st nick
-	qwcsncat(dest, source + cff->p1pos, min(destlen, cff->p1len));
-	destlen -= cff->p1len;
+	qwcslcpy(dest, source + cff->p1pos, bound(0, cff->p1len + 1, destlen));
+	destlen -= (len = qwcslen(dest));
+	dest += len;
 	// color off
-	qwcsncat(dest, str2wcs("&cfff"), min(destlen, 6));
-	destlen -= 6;
+	len = qwcslen(col_off = str2wcs("&cfff")) + 1;
+	qwcslcpy(dest, col_off, bound(0, len, destlen));
+	destlen -= (len = qwcslen(dest));
+	dest += len;
 
 	if (cff->p2len)
 	{
 		// middle part
-		qwcsncat(dest, source + cff->p1pos + cff->p1len, min(destlen, cff->p2pos - cff->p1len - cff->p1pos));
-		destlen -= cff->p2pos - cff->p1len - cff->p1pos;
+		qwcslcpy(dest, source + cff->p1pos + cff->p1len, bound(0, cff->p2pos - cff->p1len - cff->p1pos + 1, destlen));
+		destlen -= (len = qwcslen(dest));
+		dest += len;
 		// color2
-		qwcsncat(dest, col2, min(destlen, sizeof(col2)));
-		destlen -= sizeof(col2);
+		len = qwcslen(col2) + 1;
+		qwcslcpy(dest, col2, bound(0, len, destlen));
+		destlen -= (len = qwcslen(dest));
+		dest += len;
 		// 2nd nick
-		qwcsncat(dest, source + cff->p2pos, min(destlen, cff->p2len));
-		destlen -= cff->p2len;
+		qwcslcpy(dest, source + cff->p2pos, bound(0, cff->p2len + 1, destlen));
+		destlen -= (len = qwcslen(dest));
+		dest += len;
 		// color off
-		qwcsncat(dest, str2wcs("&cfff"), min(destlen, 6));
-		destlen -= 6;
+		len = qwcslen(col_off = str2wcs("&cfff")) + 1;
+		qwcslcpy(dest, col_off, bound(0, len, destlen));
+		destlen -= (len = qwcslen(dest));
+		dest += len;
 		// the rest
-		qwcsncat(dest, source + cff->p2pos + cff->p2len, destlen);
+		qwcslcpy(dest, source + cff->p2pos + cff->p2len, destlen);
 	} else {
 		// the rest
-		qwcsncat(dest, source + cff->p1pos + cff->p1len, destlen);
+		qwcslcpy(dest, source + cff->p1pos + cff->p1len, destlen);
 	}
 	
-	return dest;
+	return dest_buf;
 }
 
 //for CL_ParsePrint
