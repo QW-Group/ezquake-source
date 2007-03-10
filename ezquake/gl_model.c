@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.25 2007-03-10 19:00:55 tonik Exp $
+	$Id: gl_model.c,v 1.26 2007-03-10 19:17:55 tonik Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -390,6 +390,47 @@ int Mod_LoadExternalTexture(texture_t *tx, int mode) {
 	return tx->gl_texturenum;
 }
 
+static qbool Mod_LoadExternalSkyTexture (texture_t *tx)
+{
+	char *altname, *mapname;
+	char solidname[MAX_QPATH], alphaname[MAX_QPATH];
+	char altsolidname[MAX_QPATH], altalphaname[MAX_QPATH];
+	byte alphapixel = 255;
+	extern int solidskytexture, alphaskytexture;
+
+	if (!gl_externalTextures_world.value)
+		return false;
+
+	altname = TranslateTextureName (tx);
+	mapname = Cvar_VariableString("mapname");
+	snprintf (solidname, sizeof(solidname), "%s_solid", tx->name);
+	snprintf (alphaname, sizeof(alphaname), "%s_alpha", tx->name);
+	Com_Printf ("tx name: %s    altname: %s\n", tx->name, altname);
+
+	solidskytexture = GL_LoadTextureImage (va("textures/%s/%s", mapname, solidname), solidname, 0, 0, 0);
+	if (!solidskytexture && altname) {
+		snprintf (altsolidname, sizeof(altsolidname), "%s_solid", altname);
+		solidskytexture = GL_LoadTextureImage (va("textures/%s", altsolidname), altsolidname, 0, 0, 0);
+	}
+	if (!solidskytexture)
+		solidskytexture = GL_LoadTextureImage (va("textures/%s", solidname), solidname, 0, 0, 0);
+	if (!solidskytexture)
+		return false;
+
+	alphaskytexture = GL_LoadTextureImage (va("textures/%s/%s", mapname, alphaname), alphaname, 0, 0, TEX_ALPHA);
+	if (!alphaskytexture && altname) {
+		snprintf (altalphaname, sizeof(altalphaname), "%s_alpha", altname);
+		alphaskytexture = GL_LoadTextureImage (va("textures/%s", altalphaname), altalphaname, 0, 0, TEX_ALPHA);
+	}
+	if (!alphaskytexture)
+		alphaskytexture = GL_LoadTextureImage (va("textures/%s", alphaname), alphaname, 0, 0, TEX_ALPHA);
+	if (!alphaskytexture) {
+		// Load a texture consisting of a single transparent pixel
+		alphaskytexture = GL_LoadTexture (alphaname, 1, 1, &alphapixel, TEX_ALPHA, 1);
+	}
+	return true;
+}
+
 void Mod_LoadBrushModelTextures (model_t *m)
 {
 	char		*texname;
@@ -420,8 +461,9 @@ void Mod_LoadBrushModelTextures (model_t *m)
 
 //		Com_Printf("tx %s\n", tx->name);
 
-		if (loadmodel->isworldmodel && loadmodel->bspversion != HL_BSPVERSION && ISSKYTEX(tx->name)) {	
-			R_InitSky (tx);
+		if (loadmodel->isworldmodel && loadmodel->bspversion != HL_BSPVERSION && ISSKYTEX(tx->name)) {
+			if (!Mod_LoadExternalSkyTexture (tx))
+				R_InitSky (tx);
 			tx->loaded = true;
 			continue; // mark as loaded
 		}
