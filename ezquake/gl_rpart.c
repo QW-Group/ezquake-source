@@ -181,7 +181,10 @@ static qbool TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal)
 	if (normal)
 		VectorCopy (trace.plane.normal, normal);
 
-	return true;
+	if (trace.startsolid || !trace.allsolid)
+		return false;
+	else
+		return false;
 }
 
 static byte *ColorForParticle(part_type_t type) {
