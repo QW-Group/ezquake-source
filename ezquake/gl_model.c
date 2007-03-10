@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.24 2007-03-10 14:11:08 disconn3ct Exp $
+	$Id: gl_model.c,v 1.25 2007-03-10 19:00:55 tonik Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -295,16 +295,16 @@ static struct {
 	int md4;
 	char *origname, *newname;
 } translate_names[] = {
-	{ 0xeb2ec07f, "sky4", "sky4_blue" },
-	{ 0xeb3524c7, "sky4", "sky1" },
-	{ 0xd4ba8386, "metal5_2", "metal5_2_arc" },
-	{ 0xf172572f, "metal5_2", "metal5_2_x" },
-	{ 0x025054f9, "metal5_4", "metal5_4_arc" },
-	{ 0x7e09f8b3, "metal5_4", "metal5_4_double" },
-	{ 0x2eedf929, "metal5_8", "metal5_8_back" },
-	{ 0x10f0687c, "metal5_8", "metal5_8_rune" },
-	{ 0xa571c4ba, "plat_top1", "plat_top1_bolt" },
-	{ 0x7476d32b, "plat_top1", "plat_top1_cable" },
+	{ 0x8a010dc0, "sky4", "sky4_blue" },
+	{ 0xde688b77, "sky4", "sky1" },
+	{ 0x45d110ec, "metal5_2", "metal5_2_arc" },
+	{ 0x0d275f87, "metal5_2", "metal5_2_x" },
+	{ 0xf8e27da8, "metal5_4", "metal5_4_arc" },
+	{ 0xa301c52e, "metal5_4", "metal5_4_double" },
+	{ 0xfaa8bf77, "metal5_8", "metal5_8_back" },
+	{ 0x88792923, "metal5_8", "metal5_8_rune" },
+	{ 0xfe4f9f5a, "plat_top1", "plat_top1_bolt" },
+	{ 0x9ac3fccf, "plat_top1", "plat_top1_cable" },
 	{ 0, NULL, NULL },
 };
 
