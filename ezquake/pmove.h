@@ -16,29 +16,29 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pmove.h,v 1.8 2007-03-08 21:11:39 disconn3ct Exp $
+	$Id: pmove.h,v 1.9 2007-03-10 14:11:08 disconn3ct Exp $
 */
 
 #ifndef __PMOVE_H__
 #define __PMOVE_H__
 
-#define	MAX_PHYSENTS	64 
+#define	MAX_PHYSENTS 64 
 
 typedef struct {
-	vec3_t	origin;
-	model_t	*model;		// only for bsp models
-	vec3_t	mins, maxs;	// only for non-bsp models
-	int		info;		// for client or server to identify
+	vec3_t		origin;
+	cmodel_t	*model;		// only for bsp models
+	vec3_t		mins, maxs;	// only for non-bsp models
+	int			info;		// for client or server to identify
 } physent_t;
 
 typedef enum {
-	PM_NORMAL,			// normal ground movement
-	PM_OLD_SPECTATOR,	// fly, no clip to world (QW bug)
-	PM_SPECTATOR,		// fly, no clip to world
-	PM_DEAD,			// no acceleration
-	PM_FLY,				// fly, bump into walls
-	PM_NONE,			// can't move
-	PM_FREEZE			// can't move or look around (TODO)
+	PM_NORMAL,				// normal ground movement
+	PM_OLD_SPECTATOR,		// fly, no clip to world (QW bug)
+	PM_SPECTATOR,			// fly, no clip to world
+	PM_DEAD,				// no acceleration
+	PM_FLY,					// fly, bump into walls
+	PM_NONE,				// can't move
+	PM_FREEZE				// can't move or look around (TODO)
 } pmtype_t;
 
 typedef struct {
@@ -58,7 +58,7 @@ typedef struct {
 
 	// world state
 	int			numphysent;
-	physent_t	physents[MAX_PHYSENTS];	// 0 should be the world
+	physent_t	physents[MAX_PHYSENTS]; // 0 should be the world
 
 	// input
 	usercmd_t	cmd;
@@ -84,9 +84,9 @@ typedef struct {
 	float	entgravity;
 	float	bunnyspeedcap;
 	float	ktjump;
-	qbool	slidefix;		// NQ-style movement down ramps
+	qbool	slidefix; // NQ-style movement down ramps
 	qbool	airstep;
-	qbool	pground;		// NQ-style "onground" flag handling.
+	qbool	pground; // NQ-style "onground" flag handling.
 } movevars_t;
 
 

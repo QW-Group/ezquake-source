@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.25 2007-03-08 22:45:22 tonik Exp $
+	$Id: sv_user.c,v 1.26 2007-03-10 14:11:08 disconn3ct Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -281,12 +281,11 @@ void Cmd_PreSpawn_f (void) {
 
 		//Com_DPrintf ("Client check = %d\n", check);
 
-		if (sv_mapcheck.value && check != sv.worldmodel->checksum &&
-			check != sv.worldmodel->checksum2) {
+		if (sv_mapcheck.value && check !=  sv.map_checksum && check != sv.map_checksum2) {
 			SV_ClientPrintf (sv_client, PRINT_HIGH, 
 				"Map model file does not match (%s), %i != %i/%i.\n"
 				"You may need a new version of the map, or the proper install files.\n",
-				sv.modelname, check, sv.worldmodel->checksum, sv.worldmodel->checksum2);
+				sv.modelname, check, sv.map_checksum, sv.map_checksum2);
 			SV_DropClient (sv_client); 
 			return;
 		}
@@ -1039,7 +1038,6 @@ static void Cmd_Join_f (void)
 		PR_ExecuteProgram (SpectatorDisconnect);
 
 	sv_client->old_frags = 0;
-	sv_client->spec_track = 0;
 	SetUpClientEdict (sv_client, sv_client->edict);
 
 	// turn the spectator into a player
@@ -1106,7 +1104,6 @@ static void Cmd_Observe_f (void)
 	PR_ExecuteProgram (pr_global_struct->ClientDisconnect);
 
 	sv_client->old_frags = 0;
-	sv_client->spec_track = 0;
 	SetUpClientEdict (sv_client, sv_client->edict);
 
 	// turn the player into a spectator
@@ -1350,7 +1347,8 @@ out:
 
 //=============================================================================
 
-void AddLinksToPmove ( areanode_t *node ) {
+void AddLinksToPmove (areanode_t *node)
+{
 	link_t *l, *next;
 	edict_t *check;
 	int pl, i;
@@ -1370,25 +1368,35 @@ void AddLinksToPmove ( areanode_t *node ) {
 		check = EDICT_FROM_AREA(l);
 
 		if (check->v.owner == pl)
-			continue;		// player's own missile
-		if (check->v.solid == SOLID_BSP || check->v.solid == SOLID_BBOX || check->v.solid == SOLID_SLIDEBOX) {
+			continue; // player's own missile
+
+		if (check->v.solid == SOLID_BSP ||
+			check->v.solid == SOLID_BBOX ||
+			check->v.solid == SOLID_SLIDEBOX) {
 			if (check == sv_player)
 				continue;
 
 			for (i = 0; i < 3; i++)
 				if (check->v.absmin[i] > pmove_maxs[i] || check->v.absmax[i] < pmove_mins[i])
 					break;
+
 			if (i != 3)
 				continue;
+
 			if (pmove.numphysent == MAX_PHYSENTS)
 				return;
+
 			pe = &pmove.physents[pmove.numphysent];
 			pmove.numphysent++;
 
 			VectorCopy (check->v.origin, pe->origin);
 			pe->info = NUM_FOR_EDICT(check);
 			if (check->v.solid == SOLID_BSP) {
+				if ((unsigned)check->v.modelindex >= MAX_MODELS)
+					Host_Error ("AddLinksToPmove: check->v.modelindex >= MAX_MODELS");
 				pe->model = sv.models[(int)(check->v.modelindex)];
+				if (!pe->model)
+					Host_Error ("SOLID_BSP with a non-bsp model");
 			} else {
 				pe->model = NULL;
 				VectorCopy (check->v.mins, pe->mins);
@@ -1401,10 +1409,10 @@ void AddLinksToPmove ( areanode_t *node ) {
 	if (node->axis == -1)
 		return;
 
-	if ( pmove_maxs[node->axis] > node->dist )
-		AddLinksToPmove ( node->children[0] );
-	if ( pmove_mins[node->axis] < node->dist )
-		AddLinksToPmove ( node->children[1] );
+	if (pmove_maxs[node->axis] > node->dist)
+		AddLinksToPmove (node->children[0]);
+	if (pmove_mins[node->axis] < node->dist)
+		AddLinksToPmove (node->children[1]);
 }
 
 int SV_PMTypeForClient (client_t *cl)

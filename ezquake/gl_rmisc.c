@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_rmisc.c,v 1.11 2007-03-09 16:39:49 qqshka Exp $
+	$Id: gl_rmisc.c,v 1.12 2007-03-10 14:11:08 disconn3ct Exp $
 */
 // gl_rmisc.c
 
@@ -223,9 +223,8 @@ void R_TranslatePlayerSkin (int playernum) {
 }
 
 
-void R_PreMapLoad(char *name) {
-
-	Cvar_ForceSet (&host_mapname, name);
+void R_PreMapLoad(char *name)
+{
 	if (!dedicated)
 		lightmode = gl_lightmode.value == 0 ? 0 : 2;
 }

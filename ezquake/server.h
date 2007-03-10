@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: server.h,v 1.19 2007-03-10 14:11:08 disconn3ct Exp $
 */
 // server.h
 
@@ -62,11 +63,13 @@ typedef struct {
 	
 	char		mapname[64];					// map name
 	char		modelname[MAX_QPATH];			// maps/<name>.bsp, for model_precache[0]
-	struct model_s 	*worldmodel;
+	unsigned	map_checksum;
+	unsigned	map_checksum2;
+	cmodel_t	*worldmodel;
 	char		*model_precache[MAX_MODELS];	// NULL terminated
 	char		*sound_precache[MAX_SOUNDS];	// NULL terminated
 	char		*lightstyles[MAX_LIGHTSTYLES];
-	struct model_s		*models[MAX_MODELS];
+	cmodel_t	*models[MAX_MODELS];
 
 	int			num_edicts;			// increases towards MAX_EDICTS
 	edict_t		*edicts;			// can NOT be array indexed, because
@@ -77,8 +80,6 @@ typedef struct {
 	int			entmap[SV_MAX_EDICTS];	// because QW protocol only handles 512 entities,
 										// translate entnums dynamically before sending
 	entity_translation_t	translations[512];	// translated numbers are tracked here
-
-	byte		*pvs, *phs;			// fully expanded and decompressed
 
 	// added to every client's unreliable buffer each frame, then cleared
 	sizebuf_t	datagram;

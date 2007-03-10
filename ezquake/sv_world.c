@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_world.c,v 1.16 2007-03-10 00:36:53 disconn3ct Exp $
+	$Id: sv_world.c,v 1.17 2007-03-10 14:11:08 disconn3ct Exp $
 */
 // sv_world.c -- world query functions
 
@@ -51,7 +51,7 @@ testing object's origin to get a point to use with the returned hull.
 */
 hull_t *SV_HullForEntity (edict_t *ent, vec3_t mins, vec3_t maxs, vec3_t offset)
 {
-	model_t *model;
+	cmodel_t *model;
 	vec3_t size, hullmins, hullmaxs;
 	hull_t *hull;
 
@@ -61,31 +61,20 @@ hull_t *SV_HullForEntity (edict_t *ent, vec3_t mins, vec3_t maxs, vec3_t offset)
 		if (ent->v.movetype != MOVETYPE_PUSH)
 			Host_Error ("SOLID_BSP without MOVETYPE_PUSH");
 
-		model = sv.models[(int)ent->v.modelindex];
+		if ((unsigned)ent->v.modelindex >= MAX_MODELS)
+			Host_Error ("SV_HullForEntity: ent.modelindex >= MAX_MODELS");
 
-		if (!model || model->type != mod_brush)
+		model = sv.models[(int)ent->v.modelindex];
+		if (!model)
 			Host_Error ("SOLID_BSP with a non-bsp model");
 
 		VectorSubtract (maxs, mins, size);
-		if (model->bspversion == HL_BSPVERSION) {
-			if (size[0] < 3) {
-				hull = &model->hulls[0]; // 0x0x0
-			} else if (size[0] <= 32) {
-				if (size[2] < 54) // pick the nearest of 36 or 72
-					hull = &model->hulls[3]; // 32x32x36
-				else
-					hull = &model->hulls[1]; // 32x32x72
-			} else {
-				hull = &model->hulls[2]; // 64x64x64
-			}
-		} else {
-			if (size[0] < 3)
-				hull = &model->hulls[0];
-			else if (size[0] <= 32)
-				hull = &model->hulls[1];
-			else
-				hull = &model->hulls[2];
-		}
+		if (size[0] < 3)
+			hull = &model->hulls[0];
+		else if (size[0] <= 32)
+			hull = &model->hulls[1];
+		else
+			hull = &model->hulls[2];
 
 		// calculate an offset value to center the origin
 		VectorSubtract (hull->clip_mins, mins, offset);
@@ -270,39 +259,21 @@ static void SV_TouchLinks (edict_t *ent, areanode_t *node)
 	}
 }
 
-void SV_FindTouchedLeafs (edict_t *ent, mnode_t *node) {
-	mplane_t *splitplane;
-	mleaf_t *leaf;
-	int sides, leafnum;
+/*
+====================
+SV_LinkToLeafs
+====================
+*/
+void SV_LinkToLeafs (edict_t *ent)
+{
+	int	i, leafnums[MAX_ENT_LEAFS];
 
-	if (node->contents == CONTENTS_SOLID)
-		return;
-	
-	// add an efrag if the node is a leaf
-
-	if (node->contents < 0) {
-		if (ent->num_leafs == MAX_ENT_LEAFS)
-			return;
-
-		leaf = (mleaf_t *)node;
-		leafnum = leaf - sv.worldmodel->leafs - 1;
-
-		ent->leafnums[ent->num_leafs] = leafnum;
-		ent->num_leafs++;			
-		return;
+	ent->num_leafs = CM_FindTouchedLeafs (ent->v.absmin, ent->v.absmax, leafnums,
+													MAX_ENT_LEAFS, 0, NULL);
+	for (i = 0; i < ent->num_leafs; i++) {
+		// ent->leafnums are real leafnum minus one (for pvs checks)
+		ent->leafnums[i] = leafnums[i] - 1;
 	}
-
-	// NODE_MIXED
-
-	splitplane = node->plane;
-	sides = BOX_ON_PLANE_SIDE(ent->v.absmin, ent->v.absmax, splitplane);
-
-	// recurse down the contacted sides
-	if (sides & 1)
-		SV_FindTouchedLeafs (ent, node->children[0]);
-
-	if (sides & 2)
-		SV_FindTouchedLeafs (ent, node->children[1]);
 }
 
 void SV_LinkEdict (edict_t *ent, qbool touch_triggers)
@@ -341,9 +312,10 @@ void SV_LinkEdict (edict_t *ent, qbool touch_triggers)
 	}
 	
 	// link to PVS leafs
-	ent->num_leafs = 0;
 	if (ent->v.modelindex)
-		SV_FindTouchedLeafs (ent, sv.worldmodel->nodes);
+		SV_LinkToLeafs (ent);
+	else
+		ent->num_leafs = 0;
 
 	if (ent->v.solid == SOLID_NOT)
 		return;
@@ -465,13 +437,8 @@ void SV_ClipToLinks ( areanode_t *node, moveclip_t *clip)
 	// touch linked edicts
 	for (i = 0; i < numtouch; i++) {
 		touch = touchlist[i];
-
-		if (touch->v.solid == SOLID_NOT)
-			continue;
-
 		if (touch == clip->passedict)
 			continue;
-
 		if (touch->v.solid == SOLID_TRIGGER)
 			Host_Error ("Trigger in clipping list");
 

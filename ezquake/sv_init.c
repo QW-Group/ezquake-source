@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_init.c,v 1.13 2007-03-06 17:43:17 disconn3ct Exp $
+	$Id: sv_init.c,v 1.14 2007-03-10 14:11:08 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -167,66 +167,6 @@ void SV_SaveSpawnparms (void)
 	}
 }
 
-//Expands the PVS and calculates the PHS
-//(Potentially Hearable Set)
-void SV_CalcPHS (void) {
-	int rowbytes, rowwords, i, j, k, l, index, num, bitbyte, count, vcount;
-	unsigned *dest, *src;
-	byte *scan;
-
-	Com_DPrintf ("Building PHS...\n");
-
-	num = sv.worldmodel->numleafs;
-	rowwords = (num + 31) >> 5;
-	rowbytes = rowwords * 4;
-
-	sv.pvs = (byte *) Hunk_Alloc (rowbytes * num);
-	scan = sv.pvs;
-	vcount = 0;
-	for (i = 0; i < num; i++, scan += rowbytes)	{
-		memcpy (scan, Mod_LeafPVS(sv.worldmodel->leafs + i, sv.worldmodel), rowbytes);
-		if (i == 0)
-			continue;
-		for (j = 0; j < num; j++) {
-			if ( scan[j >> 3] & (1 << (j & 7)) ) {
-				vcount++;
-			}
-		}
-	}
-
-	sv.phs = (byte *) Hunk_Alloc (rowbytes*num);
-	count = 0;
-	scan = sv.pvs;
-	dest = (unsigned *)sv.phs;
-	for (i = 0; i < num; i++, dest += rowwords, scan += rowbytes) {
-		memcpy (dest, scan, rowbytes);
-		for (j = 0; j < rowbytes; j++) {
-			bitbyte = scan[j];
-			if (!bitbyte)
-				continue;
-			for (k = 0; k < 8; k++) {
-				if (! (bitbyte & (1 << k)) )
-					continue;
-				// or this pvs row into the phs
-				// +1 because pvs is 1 based
-				index = ((j << 3) + k + 1);
-				if (index >= num)
-					continue;
-				src = (unsigned *)sv.pvs + index*rowwords;
-				for (l = 0; l < rowwords; l++)
-					dest[l] |= src[l];
-			}
-		}
-
-		if (i == 0)
-			continue;
-		for (j = 0; j < num; j++)
-			if ( ((byte *)dest)[j >> 3] & (1 << (j &7 )) )
-				count++;
-	}
-	Com_DPrintf ("Average leafs visible / hearable / total: %i / %i / %i\n", vcount/num, count/num, num);
-}
-
 unsigned SV_CheckModel (char *mdl)
 {
 	byte stackbuf[1024]; // avoid dirtying the cache heap
@@ -334,11 +274,11 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	}
 #endif
 
-	com_serveractive = true;
 	strlcpy (sv.mapname, mapname, sizeof(sv.mapname));
+	Cvar_ForceSet (&host_mapname, mapname);
 	snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", mapname);
-	sv.worldmodel = Mod_ForName (sv.modelname, true);
-	SV_CalcPHS ();
+
+	sv.worldmodel = CM_LoadMap (sv.modelname, false, &sv.map_checksum, &sv.map_checksum2);
 
 	// clear physics interaction links
 	SV_ClearWorld ();
@@ -348,9 +288,9 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 	sv.model_precache[0] = pr_strings;
 	sv.model_precache[1] = sv.modelname;
 	sv.models[1] = sv.worldmodel;
-	for (i = 1; i < sv.worldmodel->numsubmodels; i++) {
+	for (i = 1; i < CM_NumInlineModels(); i++) {
 		sv.model_precache[1+i] = localmodels[i];
-		sv.models[i + 1] = Mod_ForName (localmodels[i], false);
+		sv.models[i + 1] = CM_InlineModel (localmodels[i]);
 	}
 
 	//check player/eyes models for hacks
@@ -361,10 +301,11 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 
 	// precache and static commands can be issued during map initialization
 	sv.state = ss_loading;
+	com_serveractive = true;
 
 	ent = EDICT_NUM(0);
 	ent->free = false;
-	ent->v.model = PR_SetString(sv.worldmodel->name);
+	ent->v.model = PR_SetString(sv.modelname);
 	ent->v.modelindex = 1;		// world model
 	ent->v.solid = SOLID_BSP;
 	ent->v.movetype = MOVETYPE_PUSH;
@@ -386,9 +327,10 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 				CRC_Block((byte *)entitystring, fs_filesize)), MAX_SERVERINFO_STRING);
 		}
 	}
+
 	if (!entitystring) {
 		Info_SetValueForStarKey (svs.info,  "*entfile", "", MAX_SERVERINFO_STRING);
-		entitystring = sv.worldmodel->entities;
+		entitystring = CM_EntityString();
 	}
 	ED_LoadFromFile (entitystring);
 

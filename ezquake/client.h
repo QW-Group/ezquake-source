@@ -333,34 +333,35 @@ extern clientPersistent_t	cls;
 
 // the clientState_t structure is wiped completely at every server signon
 typedef struct {
-	int			servercount;	// server identification for prespawns
+	int			servercount;		// server identification for prespawns
 
 	char		serverinfo[MAX_SERVERINFO_STRING];
+
+	int			protoversion;
 	// some important serverinfo keys are mirrored here:
 	int			deathmatch;
 	int			teamplay;
-	int			gametype;		// GAME_COOP or GAME_DEATHMATCH
-	qbool		teamfortress;	// true if gamedir is "fortress"
-	int			fpd;			// FAQ proxy flags
-	int			z_ext;			// ZQuake protocol extensions flags
+	int			gametype;			// GAME_COOP or GAME_DEATHMATCH
+	qbool		teamfortress;		// true if gamedir is "fortress"
+	int			fpd;				// FAQ proxy flags
+	int			z_ext;				// ZQuake protocol extensions flags
 	int			timelimit;
 	int			fraglimit;
-	float			maxfps;
-	float			minpitch;
-	float			maxpitch;
+	float		maxfps;
+	float		minpitch;
+	float		maxpitch;
 
 	int			last_fps;
 
-	int			parsecount;		// server message counter
-	
+	int			parsecount;			// server message counter
 	int			oldparsecount;
 
-	int			validsequence;	// this is the sequence number of the last good
-								// packetentity_t we got.  If this is 0, we can't
-								// render a frame yet
+	int			validsequence;		// this is the sequence number of the last good
+									// packetentity_t we got.  If this is 0, we can't
+									// render a frame yet
 	int			oldvalidsequence;
-	int			delta_sequence;	// sequence number of the packet we can request
-								// delta from
+	int			delta_sequence;		// sequence number of the packet we can request
+									// delta from
 
 	int			spectator;
 
@@ -370,7 +371,7 @@ typedef struct {
 	frame_t		frames[UPDATE_BACKUP];
 
 	// information for local display
-	int			stats[MAX_CL_STATS];	// health, etc
+	int			stats[MAX_CL_STATS];// health, etc
 	float		item_gettime[32];	// cl.time of acquiring item, for blinking
 	float		faceanimtime;		// use anim frame if cl.time < this
 
@@ -382,14 +383,14 @@ typedef struct {
 	vec3_t		viewangles;
 
 	// the client simulates or interpolates movement to get these values
-	double		time;			// this is the time value that the client
-								// is rendering at.  always <= realtime
+	double		time;				// this is the time value that the client
+									// is rendering at.  always <= realtime
 
 	double		servertime;
-	qbool	servertime_works;	// Does the server actually send STAT_TIME/svc_time?
-	double		gametime;		// match duration
-	double		gamestarttime;	// this gets saved on match start
-	double		gamepausetime;	// this gets increased during the pause
+	qbool		servertime_works;	// Does the server actually send STAT_TIME/svc_time?
+	double		gametime;			// match duration
+	double		gamestarttime;		// this gets saved on match start
+	double		gamepausetime;		// this gets increased during the pause
 
 
 	vec3_t		simorg;
@@ -398,23 +399,23 @@ typedef struct {
 
 	// pitch drifting vars
 	float		pitchvel;
-	qbool	nodrift;
+	qbool		nodrift;
 	float		driftmove;
 	double		laststop;
 
-	qbool	onground;
-	float		crouch;			// local amount for smoothing stepups
+	qbool		onground;
+	float		crouch;				// local amount for smoothing stepups
 	float		viewheight;
 
-	qbool	paused;			// a combination of PAUSED_SERVER and PAUSED_DEMO flags
+	qbool		paused;				// a combination of PAUSED_SERVER and PAUSED_DEMO flags
 
 	float		ideal_punchangle;	// temporary view kick from weapon firing
-	float		punchangle;		// drifts towards ideal_punchangle
-	float		rollangle;		// smooth out rollangle changes when strafing
+	float		punchangle;			// drifts towards ideal_punchangle
+	float		rollangle;			// smooth out rollangle changes when strafing
 
-	int			intermission;	// don't change view angle, full screen, etc
-	int			completed_time;	// latched from time at intermission start
-	int			solo_completed_time;	// to draw on intermission screen
+	int			intermission;		// don't change view angle, full screen, etc
+	int			completed_time;		// latched from time at intermission start
+	int			solo_completed_time;// to draw on intermission screen
 
 	// information that is static for the entire time connected to a server
 	char		model_name[MAX_MODELS][MAX_QPATH];
@@ -423,18 +424,21 @@ typedef struct {
 	struct model_s	*model_precache[MAX_MODELS];
 	struct sfx_s	*sound_precache[MAX_SOUNDS];
 
-	char		levelname[40];	// for display on solo scoreboard
+	cmodel_t	*clipmodels[MAX_MODELS];
+	unsigned	map_checksum2;
+
+	char		levelname[40];		// for display on solo scoreboard
 	int			playernum;
-	int			viewplayernum;	// either playernum or spec_track (in chase camera mode)
+	int			viewplayernum;		// either playernum or spec_track (in chase camera mode)
 
 	// refresh related state
 	struct model_s	*worldmodel;	// cl_entitites[0].model
 	struct efrag_s	*free_efrags;
-	int				num_statics;	// stored top down in cl_entities
+	int			num_statics;		// stored top down in cl_entities
 
-	int			cdtrack;		// cd audio
+	int			cdtrack;			// cd audio
 
-	centity_t	viewent;		// weapon model
+	centity_t	viewent;			// weapon model
 
 	// all player information
 	player_info_t	players[MAX_CLIENTS];
@@ -455,18 +459,16 @@ typedef struct {
  	int			whensaidhead;       // Head value for floodprots
 
 	
-	qbool	standby;
-	qbool	countdown;
+	qbool		standby;
+	qbool		countdown;
 	float		fbskins;		
 	float		fakeshaft;	
-	qbool	userfb;			
+	qbool		userfb;			
 	int			minlight;
 	float		watervis;
-	qbool	allow_lumas;
+	qbool		allow_lumas;
 
 	interpolate_t	int_projectiles[MAX_PROJECTILES];
-
-	int			protoversion;
 } clientState_t;
 
 extern	clientState_t	cl;

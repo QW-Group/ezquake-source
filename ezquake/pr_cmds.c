@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_cmds.c,v 1.20 2007-03-06 18:54:30 disconn3ct Exp $
+	$Id: pr_cmds.c,v 1.21 2007-03-10 14:11:08 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -61,7 +61,6 @@ char *PF_VarString (int first) {
 //============================================================================
 
 //for message writing --->
-
 #define	MSG_BROADCAST	0		// unreliable to all
 #define	MSG_ONE			1		// reliable to one (msg_entity)
 #define	MSG_ALL			2		// reliable to all
@@ -189,7 +188,7 @@ static void PF_setmodel (void)
 {
 	int i;
 	edict_t	*e;
-	model_t	*mod;
+	cmodel_t *mod;
 	char *m, **check;
 
 	e = G_EDICT(OFS_PARM0);
@@ -209,7 +208,7 @@ static void PF_setmodel (void)
 
 	// if it is an inline model, get the size information for it
 	if (m[0] == '*') {
-		mod = Mod_ForName (m, true);
+		mod = CM_InlineModel (m);
 		VectorCopy (mod->mins, e->v.mins);
 		VectorCopy (mod->maxs, e->v.maxs);
 		VectorSubtract (mod->maxs, mod->mins, e->v.size);
@@ -532,14 +531,14 @@ void PF_break (void) {
 
 //============================================================================
 
-static	byte checkpvs[MAX_MAP_LEAFS / 8];
+// Unlike Quake's Mod_LeafPVS, CM_LeafPVS returns a pointer to static data
+// uncompressed at load time, so it's safe to store for future use
+static byte	*checkpvs;
 
 static int PF_newcheckclient (int check)
 {
 	int i;
-	byte *pvs;
 	edict_t *ent;
-	mleaf_t *leaf;
 	vec3_t org;
 
 	// cycle to the next one
@@ -569,9 +568,7 @@ static int PF_newcheckclient (int check)
 
 	// get the PVS for the entity
 	VectorAdd (ent->v.origin, ent->v.view_ofs, org);
-	leaf = Mod_PointInLeaf (org, sv.worldmodel);
-	pvs = Mod_LeafPVS (leaf, sv.worldmodel);
-	memcpy (checkpvs, pvs, (sv.worldmodel->numleafs+7)>>3 );
+	checkpvs = CM_LeafPVS (CM_PointInLeaf(org));
 
 	return i;
 }
@@ -597,7 +594,6 @@ static void PF_checkclient (void)
 	int l;
 	vec3_t vieworg;
 	edict_t	*ent, *self;
-	mleaf_t	*leaf;
 
 	// find a new check if on a new frame
 	if (sv.time - sv.lastchecktime >= 0.1) {
@@ -615,9 +611,8 @@ static void PF_checkclient (void)
 	// if current entity can't possibly see the check entity, return 0
 	self = PROG_TO_EDICT(pr_global_struct->self);
 	VectorAdd (self->v.origin, self->v.view_ofs, vieworg);
-	leaf = Mod_PointInLeaf (vieworg, sv.worldmodel);
-	l = (leaf - sv.worldmodel->leafs) - 1;
-	if (l < 0 || !(checkpvs[l >> 3] & (1 << (l & 7)))) {
+	l = CM_Leafnum(CM_PointInLeaf(vieworg)) - 1;
+	if ((l < 0) || !(checkpvs[l >> 3] & (1 << (l & 7)))) {
 		RETURN_EDICT(sv.edicts);
 		return;
 	}
@@ -877,7 +872,6 @@ static void PR_CheckEmptyString (char *s)
 	if (s[0] <= ' ')
 		PR_RunError ("Bad string");
 }
-
 
 /*
 ===============

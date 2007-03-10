@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pmovetst.c,v 1.10 2007-03-09 01:28:51 disconn3ct Exp $
+	$Id: pmovetst.c,v 1.11 2007-03-10 14:11:08 disconn3ct Exp $
 */
 #include "quakedef.h"
 
@@ -122,7 +122,7 @@ trace_t PM_PlayerTrace (vec3_t start, vec3_t end)
 		if (pe->model) {
 			hull = &pmove.physents[i].model->hulls[1];
 
-			if (i > 0 && PM_CullTraceBox(tracemins, tracemaxs, pe->origin, pe->model->mins, pe->model->maxs, hull->clip_mins, hull->clip_maxs))
+			if (i > 0 && PM_CullTraceBox (tracemins, tracemaxs, pe->origin, pe->model->mins, pe->model->maxs, hull->clip_mins, hull->clip_maxs))
 				continue;
 
 			VectorSubtract (hull->clip_mins, player_mins, offset);
@@ -131,7 +131,7 @@ trace_t PM_PlayerTrace (vec3_t start, vec3_t end)
 			VectorSubtract (pe->mins, player_maxs, mins);
 			VectorSubtract (pe->maxs, player_mins, maxs);
 
-			if (PM_CullTraceBox(tracemins, tracemaxs, pe->origin, mins, maxs, vec3_origin, vec3_origin))
+			if (PM_CullTraceBox (tracemins, tracemaxs, pe->origin, mins, maxs, vec3_origin, vec3_origin))
 				continue;
 
 			hull = CM_HullForBox (mins, maxs);
@@ -184,11 +184,8 @@ trace_t PM_TraceLine (vec3_t start, vec3_t end)
 
 	for (i = 0; i < pmove.numphysent; i++) {
 		pe = &pmove.physents[i];
-	// get the clipping hull
-		if (pe->model)
-			hull = &pmove.physents[i].model->hulls[0];
-		else
-			hull = CM_HullForBox (pe->mins, pe->maxs);
+		// get the clipping hull
+		hull = (pe->model) ? (&pmove.physents[i].model->hulls[0]) : (CM_HullForBox (pe->mins, pe->maxs));
 
 		// PM_HullForEntity (ent, mins, maxs, offset);
 		VectorCopy (pe->origin, offset);

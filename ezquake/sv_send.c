@@ -150,16 +150,13 @@ MULTICAST_PVS	send to clients potentially visible from org
 MULTICAST_PHS	send to clients potentially hearable from org
 =================
 */
-void SV_Multicast (vec3_t origin, int to) {
+void SV_Multicast (vec3_t origin, int to)
+{
+	int leafnum, j;
 	client_t *client;
 	byte *mask;
-	mleaf_t *leaf;
-	int leafnum, j;
 	qbool reliable;
-	vec3_t org;
-
-	leaf = Mod_PointInLeaf (origin, sv.worldmodel);
-	leafnum = leaf ? leaf - sv.worldmodel->leafs : 0;
+	vec3_t vieworg;
 
 	reliable = false;
 
@@ -167,19 +164,19 @@ void SV_Multicast (vec3_t origin, int to) {
 	case MULTICAST_ALL_R:
 		reliable = true;	// intentional fallthrough
 	case MULTICAST_ALL:
-		mask = sv.pvs;		// leaf 0 is everything;
+		mask = NULL;		// leaf 0 is everything
 		break;
 
 	case MULTICAST_PHS_R:
 		reliable = true;	// intentional fallthrough
 	case MULTICAST_PHS:
-		mask = sv.phs + leafnum * 4*((sv.worldmodel->numleafs+31)>>5);
+		mask = CM_LeafPHS (CM_PointInLeaf(origin));
 		break;
 
 	case MULTICAST_PVS_R:
 		reliable = true;	// intentional fallthrough
 	case MULTICAST_PVS:
-		mask = sv.pvs + leafnum * 4*((sv.worldmodel->numleafs+31)>>5);
+		mask = CM_LeafPVS (CM_PointInLeaf (origin));
 		break;
 
 	default:
@@ -192,16 +189,20 @@ void SV_Multicast (vec3_t origin, int to) {
 		if (client->state != cs_spawned)
 			continue;
 
-		VectorAdd (client->edict->v.origin, client->edict->v.view_ofs, org);
+		if (!mask)
+			goto inrange;	// multicast to all
+
+		VectorAdd (client->edict->v.origin, client->edict->v.view_ofs, vieworg);
+
 		if (to == MULTICAST_PHS_R || to == MULTICAST_PHS) {
-			if (VectorL2Compare(origin, org, 1024))
+			if (VectorL2Compare(origin, vieworg, 1024))
 				goto inrange;
 		}
 
-		leaf = Mod_PointInLeaf (org, sv.worldmodel);
-		if (leaf) {
+		leafnum = CM_Leafnum(CM_PointInLeaf(vieworg));
+		if (leafnum) {
 			// -1 is because pvs rows are 1 based, not 0 based like leafs
-			leafnum = leaf - sv.worldmodel->leafs - 1;
+			leafnum = leafnum - 1;
 			if (!(mask[leafnum >> 3] & (1 << (leafnum & 7))))
 				continue;
 		}

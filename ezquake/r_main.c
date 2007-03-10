@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_main.c,v 1.19 2007-03-06 17:10:25 disconn3ct Exp $
+	$Id: r_main.c,v 1.20 2007-03-10 14:11:08 disconn3ct Exp $
 
 */
 
@@ -294,9 +294,7 @@ void R_Init (void) {
 }
 
 
-void R_PreMapLoad(char *name) {
-	Cvar_ForceSet (&host_mapname, name);
-}
+void R_PreMapLoad(char *name) { }
 
 void R_NewMap (void) {
 	int i;
@@ -825,7 +823,7 @@ void R_DrawBEntitiesOnList (visentlist_t *vislist) {
 					continue;
 
 				R_MarkLights (&cl_dlights[k], 1<<k,
-					clmodel->nodes + clmodel->hulls[0].firstclipnode);
+					clmodel->nodes + clmodel->firstnode);
 			}
 		}
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.33 2007-03-05 00:16:24 disconn3ct Exp $
+	$Id: host.c,v 1.34 2007-03-10 14:11:08 disconn3ct Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -384,8 +384,17 @@ void Host_InitMemory (int memsize)
 //Can only be called when changing levels!
 void Host_ClearMemory (void)
 {
-	D_FlushCaches ();
-	Mod_ClearAll ();
+	// FIXME, move to CL_ClearState
+	if (!dedicated)
+		D_FlushCaches ();
+
+	// FIXME, move to CL_ClearState
+#ifndef SERVERONLY
+	if (!dedicated)
+		Mod_ClearAll ();
+#endif
+
+	CM_InvalidateMap ();
 
 	// any data previously allocated on hunk is no longer valid
 	Hunk_FreeToLowMark (host_hunklevel);

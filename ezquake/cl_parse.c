@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.78 2007-03-10 03:50:12 qqshka Exp $
+	$Id: cl_parse.c,v 1.79 2007-03-10 14:11:08 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -480,9 +480,9 @@ void CL_Prespawn (void)
 	StatsGrid_Remove(&stats_grid);
 	StatsGrid_ResetHoldItems();
 #ifdef GLQUAKE
-	HUD_NewMap();		// Cokeman 2006-05-28 HUD mvdradar
+	HUD_NewMap(); // Cokeman 2006-05-28 HUD mvdradar
 #endif
-	Hunk_Check();		// make sure nothing is hurt
+	Hunk_Check(); // make sure nothing is hurt
 
 #if 0
 //TEI: loading entitys from map, at clientside,
@@ -496,8 +496,7 @@ void CL_Prespawn (void)
 
 	// done with modellist, request first of static signon messages
 	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-	MSG_WriteString (&cls.netchan.message, va("prespawn %i 0 %i", cl.servercount, cl.worldmodel->checksum2));
-
+	MSG_WriteString (&cls.netchan.message, va("prespawn %i 0 %i", cl.servercount, cl.map_checksum2));
 }
 
 /*
@@ -560,6 +559,7 @@ void VWepModel_NextDownload (void)
 
 void Model_NextDownload (void) {
 	int	i;
+	char *s;
 
 
 	if (cls.downloadnumber == 0) {
@@ -569,11 +569,14 @@ void Model_NextDownload (void) {
 
 	cls.downloadtype = dl_model;
 	for ( ; cl.model_name[cls.downloadnumber][0]; cls.downloadnumber++)	{
-		if (cl.model_name[cls.downloadnumber][0] == '*')
-			continue;	// inline brush model
-		if (!CL_CheckOrDownloadFile(cl.model_name[cls.downloadnumber]))
-			return;		// started a download
+		s = cl.model_name[cls.downloadnumber];
+		if (s[0] == '*')
+			continue; // inline brush model
+		if (!CL_CheckOrDownloadFile(s))
+			return;	// started a download
 	}
+
+	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, NULL, &cl.map_checksum2);
 
 	for (i = 1; i < MAX_MODELS; i++) {
 		if (!cl.model_name[i][0])
@@ -586,6 +589,9 @@ void Model_NextDownload (void) {
 			Host_EndGame();
 			return;
 		}
+
+		if (cl.model_name[i][0] == '*')
+			cl.clipmodels[i] = CM_InlineModel(cl.model_name[i]);
 	}
 	// all done
 #ifdef VWEP_TEST
@@ -1171,6 +1177,7 @@ void CL_ParseModellist (void) {
 			if (!com_serveractive) {
 				char mapname[MAX_QPATH];
 				COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
+				Cvar_ForceSet (&host_mapname, mapname);
 				R_PreMapLoad(mapname);
 			}
 	}
