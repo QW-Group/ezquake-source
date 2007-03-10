@@ -177,14 +177,17 @@ cvar_t gl_bounceparticles = {"gl_bounceparticles", "1"};
 static qbool TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal)
 {
 	trace_t trace = PM_TraceLine (start, end);
-	VectorCopy (trace.endpos, impact);
-	if (normal)
-		VectorCopy (trace.plane.normal, normal);
 
-	if (trace.startsolid || !trace.allsolid)
+	if (trace.startsolid || !trace.allsolid) {
 		return false;
-	else
-		return false;
+	} else {
+		VectorCopy (trace.endpos, impact);
+
+		if (normal)
+			VectorCopy (trace.plane.normal, normal);
+
+		return true;
+	}
 }
 
 static byte *ColorForParticle(part_type_t type) {
