@@ -16,20 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.35 2007-03-05 17:01:28 qqshka Exp $
+	$Id: sys_win.c,v 1.36 2007-03-11 06:01:43 disconn3ct Exp $
 
 */
 // sys_win.c
 
-#include "quakedef.h"
-#include "winquake.h"
-#include "resource.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <io.h>			// _open, etc
 #include <direct.h>		// _mkdir
 #include <conio.h>		// _putch
+#include "quakedef.h"
+#include "winquake.h"
+#include "resource.h"
+#include "keys.h"
 
 #define MINIMUM_WIN_MEMORY	0x0c00000
 #define MAXIMUM_WIN_MEMORY	0x1000000

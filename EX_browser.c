@@ -1,9 +1,12 @@
 /*
-	$Id: EX_browser.c,v 1.32 2007-03-06 23:33:22 johnnycz Exp $
+	$Id: EX_browser.c,v 1.33 2007-03-11 06:01:38 disconn3ct Exp $
 */
 
 #include "quakedef.h"
-
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#endif
 #ifdef _WIN32
 #include "winquake.h"
 #else
@@ -11,12 +14,16 @@
 #include <unistd.h>
 #endif
 
+#include "keys.h"
 #include "EX_browser.h"
 #include "Ctrl_EditBox.h"
 #include "EX_misc.h"
 #include "EX_FunNames.h"
 #include "settings.h"
 #include "settings_page.h"
+#include "Ctrl.h"
+#include "Ctrl_Tab.h"
+#include "menu.h"
 
 
 int source_unique = 0;

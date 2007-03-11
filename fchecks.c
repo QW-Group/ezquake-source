@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fchecks.c,v 1.14 2007-01-29 15:56:19 johnnycz Exp $
+	$Id: fchecks.c,v 1.15 2007-03-11 06:01:38 disconn3ct Exp $
 
 */
 
@@ -26,6 +26,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #include "quakedef.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "rulesets.h"
+#include "version.h"
+#include "auth.h"
+#include "fmod.h"
+#include "utils.h"
+#include "modules.h"
 
 
 static float f_system_reply_time, f_cmdline_reply_time, f_scripts_reply_time, f_fshaft_reply_time, f_ruleset_reply_time, f_reply_time, f_mod_reply_time, f_version_reply_time, f_skins_reply_time, f_server_reply_time;

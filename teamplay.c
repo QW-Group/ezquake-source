@@ -16,17 +16,28 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.63 2007-03-06 17:10:25 disconn3ct Exp $
+    $Id: teamplay.c,v 1.64 2007-03-11 06:01:43 disconn3ct Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
 
-#include "quakedef.h"
 #include <time.h>
 #include <string.h>
-
-
+#include "quakedef.h"
 #include "ignore.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "teamplay.h"
+#include "rulesets.h"
+#include "pmove.h"
+#include "stats_grid.h"
+#include "utils.h"
+#include "qsound.h"
 
 
 qbool OnChangeSkinForcing(cvar_t *var, char *string);

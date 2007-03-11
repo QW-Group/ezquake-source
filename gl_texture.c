@@ -17,10 +17,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_texture.c,v 1.24 2007-02-27 04:17:09 qqshka Exp $
+	$Id: gl_texture.c,v 1.25 2007-03-11 06:01:39 disconn3ct Exp $
 */
 
 #include "quakedef.h"
+#include "crc.h"
+#include "image.h"
+#include "gl_model.h"
+#include "gl_local.h"
 
 
 qbool OnChange_gl_max_size (cvar_t *var, char *string);

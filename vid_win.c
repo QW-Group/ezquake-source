@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.23 2007-03-05 02:14:02 cokeman1982 Exp $
+	$Id: vid_win.c,v 1.24 2007-03-11 06:01:43 disconn3ct Exp $
 
 */
 
@@ -25,6 +25,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cdaudio.h"
 #include "d_local.h"
 #include "resource.h"
+#include "keys.h"
+#include "qsound.h"
+
 
 #ifdef WITH_KEYMAP
 #include "keymap.h"

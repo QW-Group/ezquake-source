@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.10 2007-03-08 11:08:19 qqshka Exp $
+	$Id: win_glimp.c,v 1.11 2007-03-11 06:01:43 disconn3ct Exp $
 
 */
 /*
@@ -42,6 +42,21 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "quakedef.h"
 #include "resource.h"
 #include "winquake.h"
+#include "input.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#if defined(_WIN32) || defined(__linux__)
+#include "tr_types.h"
+#endif // _WIN32 || __linux__
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "rulesets.h"
+#include "sbar.h"
+#include "keys.h"
+
 
 extern	HWND	mainwindow;
 extern  LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

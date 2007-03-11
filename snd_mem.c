@@ -16,11 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mem.c,v 1.10 2006-11-15 19:19:11 vvd0 Exp $
+    $Id: snd_mem.c,v 1.11 2007-03-11 06:01:42 disconn3ct Exp $
 */
 // snd_mem.c -- sound caching
 
 #include "quakedef.h"
+#include "fmod.h"
+#include "qsound.h"
 
 
 static void ResampleSfx (sfx_t *sfx, unsigned char *in_data, size_t in_length, const snd_format_t* in_format, unsigned char *out_data)

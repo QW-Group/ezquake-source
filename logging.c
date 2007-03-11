@@ -17,11 +17,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: logging.c,v 1.9 2007-02-19 13:55:02 qqshka Exp $
+	$Id: logging.c,v 1.10 2007-03-11 06:01:40 disconn3ct Exp $
 */
 
 #include "quakedef.h"
 #include "logging.h"
+#include "utils.h"
+
 
 static qbool OnChange_log_dir(cvar_t *var, char *string);
 

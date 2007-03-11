@@ -19,8 +19,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
+#include "gl_model.h"
+#include "gl_local.h"
 #include "vx_stuff.h"
 #include "vx_vertexlights.h"
+#include "utils.h"
+#include "qsound.h"
+#include "hud.h"
+#include "hud_common.h"
+#include "hud_common.h"
 
 
 entity_t	r_worldentity;

@@ -1,11 +1,21 @@
 /*
-	$Id: mvd_utils.c,v 1.34 2007-03-01 04:53:29 qqshka Exp $
+	$Id: mvd_utils.c,v 1.35 2007-03-11 06:01:41 disconn3ct Exp $
 */
 
 #include "quakedef.h"
 #include "cl_screen.h"
 #include "parser.h"
 #include "localtime.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "teamplay.h"
+#include "utils.h"
+
 
 #define MH_INFO		14
 #define RA_INFO		13

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.50 2007-02-18 04:42:38 qqshka Exp $
+	$Id: console.c,v 1.51 2007-03-11 06:01:37 disconn3ct Exp $
 */
 // console.c
 
@@ -27,11 +27,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #else
 #include <stdio.h>
 #endif
-
-
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#if defined(_WIN32) || defined(__linux__)
+#include "tr_types.h"
+#endif // _WIN32 || __linux__
+#endif
+#include "keys.h"
 #include "ignore.h"
 #include "logging.h"
-
+#include "utils.h"
 #include "localtime.h"
 
 

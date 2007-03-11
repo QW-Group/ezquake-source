@@ -17,11 +17,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: auth.c,v 1.12 2006-09-25 09:10:43 johnnycz Exp $
+	$Id: auth.c,v 1.13 2007-03-11 06:01:35 disconn3ct Exp $
 */
 
 #include "quakedef.h"
 #include "winquake.h"
+#include "modules.h"
+#include "utils.h"
+
 
 cvar_t	auth_validateclients	= {"auth_validate", "1"};		
 cvar_t	auth_viewcrc			= {"auth_viewcrc", "0"};				

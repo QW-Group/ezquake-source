@@ -16,17 +16,18 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_mix.c,v 1.14 2006-12-16 16:21:18 disconn3ct Exp $
+    $Id: snd_mix.c,v 1.15 2007-03-11 06:01:42 disconn3ct Exp $
 
 */
 // snd_mix.c -- portable code to mix sounds for snd_dma.c
 
 #include "quakedef.h"
-
+#include "qsound.h"
 #ifdef _WIN32
 #include "winquake.h"
 #include "movie.h" //joe: capturing audio
 #endif
+
 
 #define PAINTBUFFER_SIZE 512
 typedef struct portable_samplepair_s {

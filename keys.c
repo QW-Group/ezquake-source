@@ -16,16 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.51 2007-02-24 14:26:03 johnnycz Exp $
+    $Id: keys.c,v 1.52 2007-03-11 06:01:40 disconn3ct Exp $
 
 */
 
-#include "quakedef.h"
-#include "textencoding.h"
-#include "hud_editor.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif
+#include "quakedef.h"
+#include "textencoding.h"
+#include "hud.h"
+#include "hud_common.h"
+#include "hud_editor.h"
+#include "menu.h"
+#include "keys.h"
+
 
 //key up events are sent even if in console mode
 

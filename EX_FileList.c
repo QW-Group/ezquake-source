@@ -21,6 +21,11 @@
 #include "localtime.h"
 #include "EX_misc.h"
 #include "EX_FunNames.h"
+#include "Ctrl.h"
+#include "EX_FileList.h"
+#include "utils.h"
+#include "keys.h"
+
 
 // column width
 #define COL_SIZE        4

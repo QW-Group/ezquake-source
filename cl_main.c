@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.133 2007-03-08 12:20:23 qqshka Exp $
+	$Id: cl_main.c,v 1.134 2007-03-11 06:01:35 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -34,8 +34,30 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mvd_utils.h"
 #include "EX_browser.h"
 #include "qtv.h"
+#include "hud.h"
+#include "hud_common.h"
 #include "hud_editor.h"
-
+#include "auth.h"
+#include "input.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "teamplay.h"
+#include "rulesets.h"
+#include "version.h"
+#include "stats_grid.h"
+#include "fmod.h"
+#include "modules.h"
+#include "sbar.h"
+#include "utils.h"
+#include "qsound.h"
+#include "menu.h"
+#include "keys.h"
+#include "image.h"
 #ifndef _WIN32
 #include <netdb.h>
 #include <sys/socket.h>

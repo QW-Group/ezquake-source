@@ -4,13 +4,21 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.26 2007-03-05 23:52:47 johnnycz Exp $
+		$Id: settings_page.c,v 1.27 2007-03-11 06:01:42 disconn3ct Exp $
 
 */
 
 #include "quakedef.h"
 #include "settings.h"
+#include "Ctrl.h"
 #include "Ctrl_EditBox.h"
+#include "EX_FileList.h"
+#include "help.h"
+#include "crc.h"
+#include "sbar.h"
+#include "menu.h"
+#include "keys.h"
+
 
 CEditBox editbox;
 

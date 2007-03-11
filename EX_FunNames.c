@@ -1,8 +1,9 @@
 /*
-    $Id: EX_FunNames.c,v 1.10 2007-02-12 05:30:37 qqshka Exp $
+    $Id: EX_FunNames.c,v 1.11 2007-03-11 06:01:38 disconn3ct Exp $
 */
 
 #include "quakedef.h"
+#include "keys.h"
 
 
 // ----------------------------------------------

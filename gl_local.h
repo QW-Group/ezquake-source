@@ -16,12 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.23 2007-03-10 14:11:08 disconn3ct Exp $
+	$Id: gl_local.h,v 1.24 2007-03-11 06:01:39 disconn3ct Exp $
 
 */
 // gl_local.h -- private refresh defs
-
-// disable data conversion warnings
+#ifndef __GL_LOCAL_H__
+#define __GL_LOCAL_H__
 
 #ifdef _WIN32
 #include <windows.h>
@@ -38,17 +38,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <GL/gl.h>
 #include <GL/glu.h>
 
-# ifdef __GNUC__
-#   include <GL/glext.h>
-# endif // __GNUC__
+#ifdef __GNUC__
+#include <GL/glext.h>
+#endif // __GNUC__
 
 #ifdef FRAMEBUFFERS
 #include "GL/glext.h"
 #endif
 
-# ifndef _WIN32
-#   include <GL/glx.h>
-# endif // _WIN32
+#ifndef _WIN32
+#include <GL/glx.h>
+#endif // _WIN32
 #endif // __APPLE__
 
 #include "gl_texture.h"
@@ -142,7 +142,13 @@ extern	int	skytexturenum;		// index in cl.loadmodel, not gl texture object
 extern	int underwatertexture, detailtexture;
 
 // Tomaz - Fog Begin
-extern  cvar_t  gl_fogenable; extern  cvar_t  gl_fogstart;extern  cvar_t  gl_fogend; extern  cvar_t  gl_fogred; extern  cvar_t  gl_fogblue; extern  cvar_t  gl_foggreen; extern  cvar_t  gl_fogsky;
+extern  cvar_t  gl_fogenable;
+extern  cvar_t  gl_fogstart;
+extern  cvar_t  gl_fogend;
+extern  cvar_t  gl_fogred;
+extern  cvar_t  gl_fogblue;
+extern  cvar_t  gl_foggreen;
+extern  cvar_t  gl_fogsky;
 // Tomaz - Fog End
 
 extern	cvar_t	r_drawentities;
@@ -325,3 +331,5 @@ qbool CheckExtension (const char *extension);
 void Check_Gamma (unsigned char *pal);
 void VID_SetPalette (unsigned char *palette);
 void GL_Init (void);
+
+#endif /* !__GL_LOCAL_H__ */

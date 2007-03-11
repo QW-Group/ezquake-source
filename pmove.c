@@ -16,10 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pmove.c,v 1.18 2007-03-05 00:16:24 disconn3ct Exp $
+	$Id: pmove.c,v 1.19 2007-03-11 06:01:41 disconn3ct Exp $
 */
 
 #include "quakedef.h"
+#include "pmove.h"
 
 movevars_t	movevars;
 playermove_t	pmove;

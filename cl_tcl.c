@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.19 2007-03-03 00:11:11 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.20 2007-03-11 06:01:36 disconn3ct Exp $
  */
 
 #ifdef WITH_TCL
@@ -27,6 +27,16 @@
 #include <dlfcn.h>
 #endif
 #include "quakedef.h"
+#include "embed_tcl.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "teamplay.h"
+#include "rulesets.h"
 
 extern cmd_function_t *impulse_cmd;
 extern cmd_alias_t *cmd_alias;

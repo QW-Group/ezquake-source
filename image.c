@@ -17,14 +17,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.38 2007-02-19 13:55:02 qqshka Exp $
+    $Id: image.c,v 1.39 2007-03-11 06:01:40 disconn3ct Exp $
 */
 
 #ifdef __FreeBSD__
 #include <dlfcn.h>
 #endif
 #include "quakedef.h"
-
+#include "image.h"
 
 #ifdef WITH_PNG
 #include "png.h"

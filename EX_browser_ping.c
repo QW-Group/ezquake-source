@@ -29,7 +29,8 @@
 #define ioctlsocket ioctl
 
 #endif
-
+#include "hud.h"
+#include "hud_common.h"
 #include "EX_browser.h"
 
 #define ICMP_ECHO       8

@@ -1,4 +1,5 @@
 #include "quakedef.h"
+#include "pmove.h"
 
 float CL_TraceLine (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal)
 {

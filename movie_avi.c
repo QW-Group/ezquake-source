@@ -19,10 +19,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // movie_avi.c
 
-#include "quakedef.h"
-#include "movie_avi.h"
 #include <windows.h>
 #include <vfw.h>
+#include "quakedef.h"
+#include "movie_avi.h"
+#include "qsound.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#endif
+
 
 static void (CALLBACK *qAVIFileInit)(void);
 static HRESULT (CALLBACK *qAVIFileOpen)(PAVIFILE *, LPCTSTR, UINT, LPCLSID);

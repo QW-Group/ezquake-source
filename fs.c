@@ -1,8 +1,9 @@
 /*
-    $Id: fs.c,v 1.4 2007-01-15 21:58:29 cokeman1982 Exp $
+    $Id: fs.c,v 1.5 2007-03-11 06:01:38 disconn3ct Exp $
 */
 
 #include "quakedef.h"
+#include "fs.h"
 
 // fs related things
 

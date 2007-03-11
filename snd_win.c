@@ -16,13 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_win.c,v 1.11 2006-11-15 19:19:11 vvd0 Exp $
+    $Id: snd_win.c,v 1.12 2007-03-11 06:01:42 disconn3ct Exp $
 */
 
+#include <dsound.h>
 #include "quakedef.h"
 #include "winquake.h"
-
-#include <dsound.h>
+#include "qsound.h"
 
 
 // 64K is > 1 second at 16-bit, 22050 Hz

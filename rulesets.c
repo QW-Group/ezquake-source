@@ -17,11 +17,19 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.49 2007-02-27 23:10:15 johnnycz Exp $
+	$Id: rulesets.c,v 1.50 2007-03-11 06:01:42 disconn3ct Exp $
 
 */
 
 #include "quakedef.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+
 
 typedef struct locked_cvar_s
 {

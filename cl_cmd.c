@@ -16,16 +16,27 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.40 2007-03-06 17:10:23 disconn3ct Exp $
+	$Id: cl_cmd.c,v 1.41 2007-03-11 06:01:35 disconn3ct Exp $
 */
 
 #include <time.h>
 #include "quakedef.h"
 #include "winquake.h"
 #include "sha1.h"
-// #include <io.h>
-
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "teamplay.h"
 #include "config_manager.h"
+#include "rulesets.h"
+#include "version.h"
+#include "utils.h"
+#include "menu.h"
+
 
 extern qbool Match_Running ;
 

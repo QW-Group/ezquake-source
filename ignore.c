@@ -17,12 +17,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: ignore.c,v 1.6 2006-03-20 13:51:27 vvd0 Exp $
+	$Id: ignore.c,v 1.7 2007-03-11 06:01:40 disconn3ct Exp $
 */
 
 
 #include "quakedef.h"
 #include "ignore.h"
+#include "utils.h"
+
 
 #define MAX_TEAMIGNORELIST	4
 #define	FLOODLIST_SIZE		10

@@ -16,11 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_misc.c,v 1.13 2007-01-05 18:41:07 disconn3ct Exp $
+	$Id: r_misc.c,v 1.14 2007-03-11 06:01:42 disconn3ct Exp $
 
 */
 
 #include "quakedef.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "hud.h"
+#include "hud_common.h"
+#include "rulesets.h"
 
 
 char *Skin_FindName (player_info_t *sc) ;

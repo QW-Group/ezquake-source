@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.128 2007-03-09 01:28:51 disconn3ct Exp $
+	$Id: hud_common.c,v 1.129 2007-03-11 06:01:40 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -14,12 +14,22 @@
 #include "image.h"
 #include "stats_grid.h"
 #include "vx_stuff.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "rulesets.h"
+#include "utils.h"
+#include "sbar.h"
+#include "hud.h"
+
 
 #ifndef STAT_MINUS
 #define STAT_MINUS		10
 #endif
-
-#define ROUND(f)   ((f>=0)?(int)(f + .5):(int)(f - .5))
 
 #ifdef GLQUAKE
 void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);

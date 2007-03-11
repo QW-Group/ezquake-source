@@ -1,13 +1,14 @@
 /*
  * EditBox functions
  *
- *    $Id: Ctrl_EditBox.c,v 1.7 2007-02-12 05:30:37 qqshka Exp $
+ *    $Id: Ctrl_EditBox.c,v 1.8 2007-03-11 06:01:37 disconn3ct Exp $
  */
 
 
 #include "quakedef.h"
 #include "EX_misc.h"
 #include "Ctrl_EditBox.h"
+#include "keys.h"
 
 
 char buf[MAX_EDITTEXT+1];

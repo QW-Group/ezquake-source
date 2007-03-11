@@ -1,6 +1,8 @@
 // help, browser tab
 
 #include "quakedef.h"
+#include "EX_FileList.h"
+#include "help.h"
 
 
 CPageViewer_t help_viewer;

@@ -6,6 +6,10 @@
 
 #include "quakedef.h"
 #include "EX_misc.h"
+#include "Ctrl.h"
+#include "Ctrl_PageViewer.h"
+#include "keys.h"
+
 
 static void LeaveNavigationMode(CPageViewer_t *viewer)
 {

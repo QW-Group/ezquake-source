@@ -16,12 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.29 2007-03-10 14:11:07 disconn3ct Exp $
+	$Id: cl_ents.c,v 1.30 2007-03-11 06:01:35 disconn3ct Exp $
 
 */
 
 #include "quakedef.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
 #include "vx_stuff.h"
+#include "pmove.h"
+#include "utils.h"
 
 
 static int MVD_TranslateFlags(int src);

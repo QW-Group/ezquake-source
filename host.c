@@ -16,13 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.34 2007-03-10 14:11:08 disconn3ct Exp $
+	$Id: host.c,v 1.35 2007-03-11 06:01:39 disconn3ct Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
+#include <setjmp.h>
 
 #ifdef __FreeBSD__
 #include <sys/types.h>
@@ -32,10 +33,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <machine/cpufunc.h>
 #endif
 #endif
-
 #include "quakedef.h"
 #include "EX_browser.h"
-#include <setjmp.h>
+#ifdef WITH_TCL
+#include "embed_tcl.h"
+#endif
+#include "modules.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "rulesets.h"
+#include "teamplay.h"
+#include "pmove.h"
+#include "version.h"
+#include "qsound.h"
+#include "keys.h"
+
 
 #if !defined(CLIENTONLY) && !defined(SERVERONLY)
 qbool	dedicated = false;

@@ -5,7 +5,13 @@
 
 #include "quakedef.h"
 #include "common_draw.h"
+#include "hud.h"
+#include "hud_common.h"
 #include "hud_editor.h"
+#include "utils.h"
+#include "sbar.h"
+#include "keys.h"
+
 
 #define sbar_last_width 320  // yeah yeah I know, *garbage* -> leave it be :>
 

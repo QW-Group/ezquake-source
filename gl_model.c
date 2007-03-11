@@ -16,13 +16,25 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.28 2007-03-11 01:01:28 disconn3ct Exp $
+	$Id: gl_model.c,v 1.29 2007-03-11 06:01:39 disconn3ct Exp $
 */
 // gl_model.c  -- model loading and caching
 
 // models are the only shared resource between a client and server running on the same machine.
 
 #include "quakedef.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "teamplay.h"
+#include "rulesets.h"
+#include "wad.h"
+#include "crc.h"
+#include "fmod.h"
 
 
 //VULT MODELS
