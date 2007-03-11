@@ -254,11 +254,11 @@ void D_DrawSurfaces (void) {
 					)
 					continue; 
 				drawpface = draws->data;
-				if (drawpface->texinfo->texture->colour == ((int) r_floorcolor.value & 0xFF)) {
+				if (drawpface->texinfo->texture->flatcolor3ub == ((int) r_floorcolor.value & 0xFF)) {
 					texture_floor = drawpface->texinfo->texture;
 					found_floor = true;
 				}
-				else if (drawpface->texinfo->texture->colour == ((int) r_wallcolor.value & 0xFF)) {
+				else if (drawpface->texinfo->texture->flatcolor3ub == ((int) r_wallcolor.value & 0xFF)) {
 					texture_wall = drawpface->texinfo->texture;
 					found_wall = true;
 				}

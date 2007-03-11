@@ -289,11 +289,11 @@ void Mod_LoadTextures (lump_t *l) {
 			memcpy (tx->name, mt->name, sizeof(tx->name));
             tx->width = tx->height = 16;
 			if ((int) my++ % 2 == 0) {
-				tx->colour = (int) r_floorcolor.value & 0xFF;
+				tx->flatcolor3ub = (int) r_floorcolor.value & 0xFF;
 				memset (tx + 1, (int) r_floorcolor.value & 0xFF, 16 * 16);
 			}
 			else {
-				tx->colour = (int) r_wallcolor.value & 0xFF; 
+				tx->flatcolor3ub = (int) r_wallcolor.value & 0xFF; 
 				memset (tx + 1, (int) r_wallcolor.value & 0xFF, 16 * 16);
 			}
             for (j = 0; j < MIPLEVELS; j++)
@@ -335,7 +335,7 @@ void Mod_LoadTextures (lump_t *l) {
 			loadmodel->textures[i] = tx = (texture_t *) Hunk_AllocName (sizeof(texture_t) + pixels, loadname);
 			memcpy (tx->name, mt->name, sizeof(tx->name));
 // hetman /r_drawflat for software builds {
-			tx->colour = 300;
+			tx->flatcolor3ub = 300;
 // } hetman
 			tx->width = mt->width;
 			tx->height = mt->height;
