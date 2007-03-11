@@ -178,16 +178,18 @@ static qbool TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal)
 {
 	trace_t trace = PM_TraceLine (start, end);
 
-	if (trace.startsolid || !trace.allsolid) {
+	VectorCopy (trace.endpos, impact);
+
+	if (normal)
+		VectorCopy (trace.plane.normal, normal);
+
+	if (!trace.allsolid)
 		return false;
-	} else {
-		VectorCopy (trace.endpos, impact);
 
-		if (normal)
-			VectorCopy (trace.plane.normal, normal);
+	if (trace.startsolid)
+		return false;
 
-		return true;
-	}
+	return true;
 }
 
 static byte *ColorForParticle(part_type_t type) {
@@ -1686,19 +1688,16 @@ void QMB_StaticBubble (entity_t *ent) {
 //VULT PARTICLES
 //This WAS supposed to do more than just rain but I haven't really got around to
 //writing anything else for it.
-void WeatherEffect(void)
+void ParticleFirePool (vec3_t);
+extern cvar_t tei_lavafire;
+void WeatherEffect (void)
 {
 	vec3_t org, start, impact, normal;
 	int i;
-	float trace;
-	col_t colour={128,128,128,75};
-	void ParticleFirePool(vec3_t);
-	extern cvar_t tei_lavafire;
+	col_t colour = {128, 128, 128, 75};
 
-	if (amf_weather_rain.value)
-	{
-		for (i=0;i<=(int)amf_weather_rain.value;i++)
-		{
+	if ((int) amf_weather_rain.value) {
+		for (i = 0; i <= (int) amf_weather_rain.value; i++) {
 			VectorCopy(r_refdef.vieworg, org);
 			org[0] = org[0] + (rand() % 3000) - 1500;
 			org[1] = org[1] + (rand() % 3000) - 1500;
@@ -1708,15 +1707,14 @@ void WeatherEffect(void)
 			//Trace a line straight up, get the impact location
 
 			//trace up slowly until we are in sky
-			trace = TraceLineN(start, org, impact, normal);
+			TraceLineN (start, org, impact, normal);
 
 			//fixme: see is surface above has SURF_DRAWSKY (we'll come back to that, when the important stuff is done fist, eh?)
-			//if (Mod_PointInLeaf(impact, cl.worldmodel)->contents == CONTENTS_SKY)
-			if (TruePointContents(impact) == CONTENTS_SKY && trace)
-			{
-				VectorCopy(impact, org);
+			//if (TruePointContents (impact) == CONTENTS_SKY && trace) {
+			if (Mod_PointInLeaf(impact, cl.worldmodel)->contents == CONTENTS_SKY) {
+				VectorCopy (impact, org);
 				org[2] = org[2] - 1;
-				AddParticle(p_rain, org, 1, 1, 15, colour, zerodir);
+				AddParticle (p_rain, org, 1, 1, 15, colour, zerodir);
 			}
 		}
 
@@ -1724,38 +1722,35 @@ void WeatherEffect(void)
 
 	//Tei, lavafire on 2 or superior 
 	// this can be more better for some users than "eshaders"
-	if (tei_lavafire.value > 2)
-	for(i=0;i<(int)tei_lavafire.value;i++)
-	{
-		
-
-			VectorCopy(r_refdef.vieworg, org);
+	if (tei_lavafire.value > 2) {
+		for (i = 0; i < (int) tei_lavafire.value; i++) {
+			VectorCopy( r_refdef.vieworg, org);
 			org[0] = org[0] + (rand() % 3000) - 1500;
 			org[1] = org[1] + (rand() % 3000) - 1500;
 			VectorCopy(org, start);
 			org[2] = org[2] - 15000;
 
-			trace = TraceLineN(start, org, impact, normal);
+			TraceLineN (start, org, impact, normal);
 
-			if (TruePointContents(impact) == CONTENTS_LAVA && trace)
-			{
-				ParticleFirePool(impact);
+			//if (TruePointContents (impact) == CONTENTS_LAVA && trace) {
+			if (Mod_PointInLeaf(impact, cl.worldmodel)->contents == CONTENTS_LAVA) {
+				ParticleFirePool (impact);
 			}
+		}
 	}
-
-};
+}
 
 //VULT PARTICLES
-void RainSplash(vec3_t org)
+void RainSplash (vec3_t org)
 {
 	vec3_t pos;
-	col_t colour={255,255,255,255};
+	col_t colour = {255,255,255,255};
 	
-	VectorCopy(org, pos);
+	VectorCopy (org, pos);
 	pos[2] = pos[2] + 1; //To get above the water on servers that don't use watervis
 
 	//VULT - Sometimes the shockwave effect isn't noticable enough?
-	AddParticle(p_2dshockwave, pos, 1, 5, 0.5, colour, vec3_origin);
+	AddParticle (p_2dshockwave, pos, 1, 5, 0.5, colour, vec3_origin);
 }
 
 //VULT PARTICLES
