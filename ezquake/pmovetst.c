@@ -16,9 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pmovetst.c,v 1.11 2007-03-10 14:11:08 disconn3ct Exp $
+	$Id: pmovetst.c,v 1.12 2007-03-11 06:01:41 disconn3ct Exp $
 */
 #include "quakedef.h"
+#include "pmove.h"
 
 extern	vec3_t player_mins;
 extern	vec3_t player_maxs;

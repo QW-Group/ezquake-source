@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.67 2007-03-07 01:00:32 disconn3ct Exp $
+    $Id: common.c,v 1.68 2007-03-11 06:01:37 disconn3ct Exp $
 
 */
 
@@ -32,7 +32,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #endif
 
+#include "utils.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "teamplay.h"
 #include "mdfour.h"
+#include "crc.h"
+#include "stats_grid.h"
+
 
 void Draw_BeginDisc ();
 void Draw_EndDisc ();

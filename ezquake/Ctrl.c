@@ -1,6 +1,8 @@
-//    $Id: Ctrl.c,v 1.11 2007-02-19 00:31:08 johnnycz Exp $
+//    $Id: Ctrl.c,v 1.12 2007-03-11 06:01:37 disconn3ct Exp $
 
 #include "quakedef.h"
+#include "utils.h"
+
 
 #ifdef GLQUAKE
 cvar_t     menu_marked_bgcolor = {"menu_marked_bgcolor", "0 0 0 128"};

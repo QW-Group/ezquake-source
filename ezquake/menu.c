@@ -16,28 +16,34 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.68 2007-03-05 01:03:53 johnnycz Exp $
+	$Id: menu.c,v 1.69 2007-03-11 06:01:41 disconn3ct Exp $
 
 */
-
-#include "quakedef.h"
-#include "winquake.h"
-//#include "cl_slist.h"
-#ifndef CLIENTONLY
-#include "server.h"
-#endif
-
-#include "mp3_player.h"
-#include "EX_browser.h"
-#include "menu_demo.h"
-#include "menu_proxy.h"
-#include "menu_options.h"
 
 #ifndef _WIN32
 #include <dirent.h>
 #include <sys/stat.h>
 #endif
-
+#include "quakedef.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#endif
+#include "winquake.h"
+#ifndef CLIENTONLY
+#include "server.h"
+#endif
+#include "menu.h"
+#include "mp3_player.h"
+#include "EX_browser.h"
+#include "menu_demo.h"
+#include "menu_proxy.h"
+#include "menu_options.h"
+#include "EX_FileList.h"
+#include "help.h"
+#include "utils.h"
+#include "qsound.h"
+#include "keys.h"
 
 qbool vid_windowedmouse = true;
 void (*vid_menudrawfn)(void);

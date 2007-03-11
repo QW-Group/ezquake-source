@@ -16,12 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_edge.c,v 1.5 2006-08-14 15:31:53 vvd0 Exp $
+	$Id: r_edge.c,v 1.6 2007-03-11 06:01:42 disconn3ct Exp $
 
 */
 // r_edge.c
 
 #include "quakedef.h"
+#include "qsound.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+
 
 edge_t	*auxedges;
 edge_t	*r_edges, *edge_p, *edge_max;

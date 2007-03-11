@@ -17,13 +17,23 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: match_tools.c,v 1.26 2006-11-25 16:28:13 disconn3ct Exp $
+	$Id: match_tools.c,v 1.27 2007-03-11 06:01:41 disconn3ct Exp $
 */
 
 
 #include "quakedef.h"
 #include <time.h>
 #include "logging.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "teamplay.h"
+#include "utils.h"
+
 
 #define MAX_STATIC_STRING 1024
 qbool Match_Running ;

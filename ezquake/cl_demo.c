@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.67 2007-03-11 01:01:28 disconn3ct Exp $
+	$Id: cl_demo.c,v 1.68 2007-03-11 06:01:35 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -24,6 +24,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "movie.h"
 #include "menu_demo.h"
 #include "qtv.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "teamplay.h"
+#include "pmove.h"
+#include "fs.h"
+#include "utils.h"
+
 
 float olddemotime, nextdemotime;		
 

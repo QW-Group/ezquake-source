@@ -1,6 +1,9 @@
 #include "quakedef.h"
+#include "gl_model.h"
+#include "gl_local.h"
 #include "gl_md3.h"
 #include "vx_vertexlights.h" 
+
 
 #define	INTERP_MAXDIST		300
 

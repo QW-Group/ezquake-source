@@ -15,8 +15,11 @@
 #include <errno.h>
 #include <unistd.h>
 #endif
-
+#include "menu.h"
 #include "EX_browser.h"
+#include "sbar.h"
+#include "keys.h"
+
 
 extern qbool useNewPing;
 

@@ -1,4 +1,8 @@
 #include "quakedef.h"
+#include "EX_FileList.h"
+#include "help.h"
+#include "keys.h"
+
 
 #define CONSOLE_HELP_MARGIN 2
 

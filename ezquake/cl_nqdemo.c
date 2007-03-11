@@ -1,7 +1,20 @@
 // cl_nqdemo.c
 
 #include "quakedef.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
 #include "cdaudio.h"
+#include "stats_grid.h"
+#include "sbar.h"
+#include "qsound.h"
+#include "hud.h"
+#include "hud_common.h"
+
 
 #define MAX_BIG_MSGLEN 8000
 int CL_Demo_Read(void *buf, int size);

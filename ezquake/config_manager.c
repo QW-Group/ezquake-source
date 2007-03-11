@@ -16,10 +16,13 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.34 2007-02-18 05:10:32 qqshka Exp $
+    $Id: config_manager.c,v 1.35 2007-03-11 06:01:37 disconn3ct Exp $
 */
 
 #include "quakedef.h"
+#include "input.h"
+#include "utils.h"
+#include "keys.h"
 
 
 void Key_WriteBindings (FILE *);

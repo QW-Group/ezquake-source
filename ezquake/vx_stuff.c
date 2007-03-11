@@ -3,7 +3,13 @@
 #ifdef GLQUAKE
 
 #include "quakedef.h"
+#include "gl_model.h"
+#include "gl_local.h"
+#include "hud.h"
+#include "hud_common.h"
 #include "vx_stuff.h"
+#include "sbar.h"
+
 
 int GL_LoadTextureImage (char * , char *, int, int, int);
 int coronatexture;
@@ -225,7 +231,7 @@ void Draw_AlphaWindow (int x1, int y1, int x2, int y2, int col, float alpha)
 
 }
 
-void Draw_AMFStatLoss (int stat, hud_t* hud) {
+void Draw_AMFStatLoss (int stat, struct hud_s* hud) {
     static int * vxdmgcnt, * vxdmgcnt_t, * vxdmgcnt_o;
 	static int x;
     float alpha;

@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_win.c,v 1.28 2007-03-05 17:22:14 cokeman1982 Exp $
+	$Id: in_win.c,v 1.29 2007-03-11 06:01:40 disconn3ct Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -36,6 +36,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif // WITH_KEYMAP
 
 #include "movie.h"
+#include "input.h"
+#include "keys.h"
+
 
 #define DINPUT_BUFFERSIZE 16
 //#define iDirectInputCreate(a,b,c,d)	pDirectInputCreate(a,b,c,d)

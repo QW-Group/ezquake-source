@@ -16,11 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.52 2007-03-03 00:11:11 disconn3ct Exp $
+    $Id: cmd.c,v 1.53 2007-03-11 06:01:36 disconn3ct Exp $
 */
 
 #include "quakedef.h"
-
+#ifdef WITH_TCL
+#include "embed_tcl.h"
+#endif
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "teamplay.h"
 
 #ifndef SERVERONLY
 qbool CL_CheckServerCommand (void);

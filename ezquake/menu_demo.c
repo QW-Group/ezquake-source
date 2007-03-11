@@ -16,13 +16,23 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.26 2007-03-05 01:03:53 johnnycz Exp $
+		$Id: menu_demo.c,v 1.27 2007-03-11 06:01:41 disconn3ct Exp $
 
 */
 
 #include "quakedef.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#endif
 #include "settings.h"
 #include "settings_page.h"
+#include "EX_FileList.h"
+#include "Ctrl.h"
+#include "Ctrl_Tab.h"
+#include "menu.h"
+#include "keys.h"
+
 
 #ifdef _WIN32
 #define    DEMO_TIME    FILETIME

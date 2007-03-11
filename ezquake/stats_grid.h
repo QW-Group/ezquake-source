@@ -5,8 +5,6 @@
 #ifndef __STATS_GRID__H__
 #define __STATS_GRID__H__
 
-#define ROUND(f)   ((f>=0)?(int)(f + .5):(int)(f - .5))
-
 #define TEAM_COUNT		2
 #define STATS_TEAM1		0
 #define STATS_TEAM2		1

@@ -16,10 +16,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.54 2007-03-06 17:10:24 disconn3ct Exp $
+	$Id: gl_draw.c,v 1.55 2007-03-11 06:01:39 disconn3ct Exp $
 */
 
 #include "quakedef.h"
+#include "gl_model.h"
+#include "gl_local.h"
+#include "wad.h"
+#include "stats_grid.h"
+#include "utils.h"
+#include "sbar.h"
 
 
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;

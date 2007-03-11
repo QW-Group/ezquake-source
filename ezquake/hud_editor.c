@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.21 2007-03-07 01:51:41 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.22 2007-03-11 06:01:40 disconn3ct Exp $
 
 */
 
@@ -13,6 +13,10 @@
 #include "EX_misc.h"
 #include "cl_screen.h"
 #include "hud_editor.h"
+#include "qsound.h"
+#include "menu.h"
+#include "keys.h"
+
 
 #ifdef GLQUAKE
 

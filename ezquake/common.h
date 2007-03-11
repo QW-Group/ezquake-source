@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.47 2007-03-08 12:20:24 qqshka Exp $
+    $Id: common.h,v 1.48 2007-03-11 06:01:37 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -28,17 +28,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // include frequently used headers
 
 #include "q_shared.h"
-#include "fs.h"
 #include "zone.h"
 #include "cvar.h"
 #include "cmd.h"
 #include "net.h"
 #include "protocol.h"
 #include "cmodel.h"
-
-#ifdef WITH_ZIP
-#include "unzip.h"
-#endif
 
 //============================================================================
 
@@ -370,6 +365,7 @@ int COM_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 #endif // WITH_ZLIB
 
 #ifdef WITH_ZIP
+#include "unzip.h"
 qbool COM_ZipIsArchive (char *zip_path);
 
 int COM_ZipBreakupArchivePath (char *archive_extension,			// The extension of the archive type we're looking fore "zip" for example.
@@ -426,4 +422,7 @@ int COM_ZipGetNextFile (unzFile zip_file, sys_dirent *ent);
 
 #endif // WITH_ZIP
 
-#endif /* __COMMON_H__ */
+// HUD -> hexum
+extern  int         host_screenupdatecount; // kazik, incremented every screen update, never reset
+
+#endif /* !__COMMON_H__ */

@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.12 2006-10-03 22:57:50 johnnycz Exp $
+	$Id: common_draw.c,v 1.13 2007-03-11 06:01:37 disconn3ct Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -8,6 +8,9 @@
 #include "EX_misc.h"
 #include "localtime.h"
 #include "common_draw.h"
+#include "stats_grid.h"
+#include "utils.h"
+
 
 #if 0
 void Draw_CenterString (int y, char *str)

@@ -16,21 +16,43 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.101 2007-03-09 23:15:10 qqshka Exp $
+    $Id: cl_screen.c,v 1.102 2007-03-11 06:01:36 disconn3ct Exp $
 */
-
+#include <time.h>
 #include "quakedef.h"
 #include "cl_screen.h"
-#include <time.h>
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
 #include "mvd_utils.h"
+#include "hud.h"
+#include "hud_common.h"
 #include "hud_editor.h"
 #include "EX_misc.h"
 #include "vx_stuff.h"
-
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "teamplay.h"
+#include "input.h"
+#include "utils.h"
+#include "sbar.h"
+#include "menu.h"
+#include "keys.h"
+#include "image.h"
 #ifdef _WIN32
 #include "movie.h"	//joe: capturing to avi
 #include "movie_avi.h"	//
 #endif
+
 
 #ifdef GLQUAKE
 int				glx, gly, glwidth, glheight;
@@ -912,8 +934,6 @@ void SCR_SetupAutoID (void) {
 			autoid_count++;
 	}
 }
-
-#define ROUND(f)   ((f>=0)?(int)(f + .5):(int)(f - .5))
 
 #define AUTOID_HEALTHBAR_BG_COLOR			180/255.0, 115/255.0, 115/255.0
 #define AUTOID_HEALTHBAR_NORMAL_COLOR		80/255.0, 0, 0

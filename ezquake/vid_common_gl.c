@@ -21,6 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // vid_common_gl.c -- Common code for vid_wgl.c and vid_glx.c
 
 #include "quakedef.h"
+#include "gl_model.h"
+#include "gl_local.h"
+
 
 #ifdef __APPLE__
 void *Sys_GetProcAddress (const char *ExtName);

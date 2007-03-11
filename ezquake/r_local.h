@@ -16,10 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_local.h,v 1.6 2007-01-24 01:32:51 qqshka Exp $
+	$Id: r_local.h,v 1.7 2007-03-11 06:01:42 disconn3ct Exp $
 
 */
 // r_local.h -- private refresh defs
+
+#ifndef __R_LOCAL_H__
+#define __R_LOCAL_H__
 
 #include "r_shared.h"
 
@@ -260,3 +263,5 @@ void R_InitSky (miptex_t *mt);
 
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!
 #define CACHE_SIZE      32              // used to align key data structures
+
+#endif /* !__R_LOCAL_H__*/

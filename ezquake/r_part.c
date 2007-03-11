@@ -16,11 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_part.c,v 1.13 2007-03-06 17:10:25 disconn3ct Exp $
+	$Id: r_part.c,v 1.14 2007-03-11 06:01:42 disconn3ct Exp $
 
 */
 
 #include "quakedef.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#endif
 
 #ifdef GLQUAKE
 

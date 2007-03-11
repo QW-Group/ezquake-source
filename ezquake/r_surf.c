@@ -16,12 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_surf.c,v 1.7 2006-08-14 15:31:53 vvd0 Exp $
+	$Id: r_surf.c,v 1.8 2007-03-11 06:01:42 disconn3ct Exp $
 
 */
 // r_surf.c: surface-related refresh code
 
 #include "quakedef.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+
 
 drawsurf_t	r_drawsurf;
 

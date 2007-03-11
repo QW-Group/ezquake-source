@@ -1,6 +1,10 @@
 //VULTUREIIC
 #include "quakedef.h"
+#include "gl_model.h"
+#include "gl_local.h"
 #include "vx_stuff.h"
+#include "utils.h"
+
 
 // seems noone uses next variables outside file, so make static
 // {

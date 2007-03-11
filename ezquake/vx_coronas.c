@@ -1,6 +1,8 @@
 //VultureIIC
 
 #include "quakedef.h"
+#include "gl_model.h"
+#include "gl_local.h"
 #include "vx_stuff.h"
 
 //fixme: move to header

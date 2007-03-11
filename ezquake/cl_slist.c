@@ -16,11 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_slist.c,v 1.9 2006-05-16 00:13:55 disconn3ct Exp $
+    $Id: cl_slist.c,v 1.10 2007-03-11 06:01:36 disconn3ct Exp $
 */
 
 #include "quakedef.h"
 #include "cl_slist.h"
+#include "utils.h"
+
 
 static qbool slist_initialised = false;
 

@@ -8,11 +8,14 @@
 	made by:
 		johnnycz, Jan 2007
 	last edit:
-		$Id: menu_proxy.c,v 1.1 2007-01-09 20:09:52 johnnycz Exp $
+		$Id: menu_proxy.c,v 1.2 2007-03-11 06:01:41 disconn3ct Exp $
 
 */
 
 #include "quakedef.h"
+#include "menu.h"
+#include "keys.h"
+
 
 #define PROXYACCESS "say proxy:menu"
 #define ProxyMenuToggle() Cbuf_AddText(PROXYACCESS "\n");

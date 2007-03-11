@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.32 2007-03-09 01:28:51 disconn3ct Exp $
+	$Id: sbar.c,v 1.33 2007-03-11 06:01:42 disconn3ct Exp $
 */
 // sbar.c -- status bar code
 
@@ -25,7 +25,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "server.h"
 #endif
 #include "vx_stuff.h"
-
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "teamplay.h"
+#include "utils.h"
+#include "sbar.h"
 
 int sb_updates;		// if >= vid.numpages, no update needed
 extern cvar_t show_fps2;

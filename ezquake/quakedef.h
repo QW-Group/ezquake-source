@@ -20,10 +20,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // quakedef.h -- primary header for client
 
 
-//define	PARANOID // speed sapping error checking
+//define PARANOID // speed sapping error checking
 
-#ifndef  __QUAKEDEF_H_
-#define  __QUAKEDEF_H_
+#ifndef  __QUAKEDEF_H__
+#define  __QUAKEDEF_H__
 
 #ifdef WITH_PNG
 #ifndef WITH_PNG_STATIC
@@ -39,69 +39,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #endif
 
+#include "expat.h" // FIXME?
+#include "pcre.h" // FIXME?
+
 #include "common.h"
 
-#include "expat.h"
-#include "pcre.h"
-
-#ifdef WITH_TCL
-#include "embed_tcl.h"
-#endif
-
 #include "vid.h"
-#include "draw.h"
 #include "screen.h"
 #include "render.h"
+#include "draw.h"
 #include "console.h"
 #include "cl_view.h"
 
 #include "client.h"
-#include "qsound.h"
-#include "sbar.h"
-#include "utils.h"
-#include "hud.h"
-#include "hud_common.h"
-#include "image.h"
-#include "modules.h"
-#include "keys.h"
-#include "fmod.h"
-#include "auth.h"
-#include "menu.h"
-#include "input.h"
-#include "stats_grid.h"
 
-#include "version.h"
-#include "crc.h"
+#include "xsd.h" // FIXME?
 
-#ifdef GLQUAKE
-#include "gl_model.h"
-#include "gl_local.h"
-#	if defined(_WIN32) || defined(__linux__)
-#		include "tr_types.h"
-#	endif // _WIN32 || __linux__
-#else // GLQUAKE
-#include "r_model.h"
-#include "r_local.h"
-#endif // GLQUAKE
-
-#include "wad.h"
-
-#include "pmove.h"
-#include "rulesets.h"
-#include "teamplay.h"
-
-#include "xsd.h"
-#include "Ctrl.h"
-#include "Ctrl_Tab.h"
-#include "Ctrl_PageViewer.h"
-#include "EX_FileList.h"
-#include "help.h"
-
-#ifndef CLIENTONLY
-#include "server.h"
-#endif
-
-// HUD -> hexum
-extern  int         host_screenupdatecount; // kazik, incremented every screen update, never reset
-
-#endif //__QUAKEDEF_H_
+#endif /* !__QUAKEDEF_H__ */

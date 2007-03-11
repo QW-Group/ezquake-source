@@ -16,10 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.80 2007-03-11 01:01:28 disconn3ct Exp $
+	$Id: cl_parse.c,v 1.81 2007-03-11 06:01:35 disconn3ct Exp $
 */
 
 #include "quakedef.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
 #include "cdaudio.h"
 #include "ignore.h"
 #include "fchecks.h"
@@ -29,6 +36,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sbar.h"
 #include "textencoding.h"
 #include "vx_stuff.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "teamplay.h"
+#include "pmove.h"
+#include "stats_grid.h"
+#include "auth.h"
+#include "qsound.h"
+#include "menu.h"
+#include "keys.h"
+#include "hud.h"
+#include "hud_common.h"
 
 
 void R_TranslatePlayerSkin (int playernum);

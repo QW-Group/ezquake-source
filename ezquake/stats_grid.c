@@ -1,5 +1,14 @@
-
+#include "quakedef.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
 #include "stats_grid.h"
+#include "sbar.h"
+
 
 stats_weight_grid_t *stats_grid = NULL;
 stats_entities_t *stats_important_ents = NULL;

@@ -2,6 +2,9 @@
 
 
 #include "quakedef.h"
+#include "Ctrl.h"
+#include "Ctrl_Tab.h"
+#include "keys.h"
 
 
 // initialize control

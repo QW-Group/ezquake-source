@@ -16,12 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_rmisc.c,v 1.12 2007-03-10 14:11:08 disconn3ct Exp $
+	$Id: gl_rmisc.c,v 1.13 2007-03-11 06:01:39 disconn3ct Exp $
 */
 // gl_rmisc.c
 
 #include "quakedef.h"
 #include "vx_stuff.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "rulesets.h"
 
 
 void R_InitOtherTextures (void) {

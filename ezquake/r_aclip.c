@@ -16,13 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_aclip.c,v 1.4 2006-08-14 15:31:53 vvd0 Exp $
+	$Id: r_aclip.c,v 1.5 2007-03-11 06:01:41 disconn3ct Exp $
 
 */
 // r_aclip.c: clip routines for drawing Alias models directly to the screen
 
 #include "quakedef.h"
 #include "d_local.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+
 
 static finalvert_t		fv[2][8];
 static auxvert_t		av[8];

@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.49 2007-03-09 01:28:51 disconn3ct Exp $
+		$Id: menu_options.c,v 1.50 2007-03-11 06:01:41 disconn3ct Exp $
 
 */
 
@@ -22,6 +22,27 @@
 #include "settings_page.h"
 #include "Ctrl_EditBox.h"
 #include "vx_stuff.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#if defined(_WIN32) || defined(__linux__)
+#include "tr_types.h"
+#endif // _WIN32 || __linux__
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#include "teamplay.h"
+#include "EX_FileList.h"
+#include "Ctrl.h"
+#include "Ctrl_Tab.h"
+#include "input.h"
+#include "qsound.h"
+#include "menu.h"
+#include "keys.h"
+#include "hud.h"
+#include "hud_common.h"
+
 
 typedef enum {
 	OPTPG_SETTINGS,

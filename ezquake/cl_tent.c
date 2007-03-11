@@ -16,12 +16,23 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.26 2007-03-09 01:28:51 disconn3ct Exp $
+	$Id: cl_tent.c,v 1.27 2007-03-11 06:01:36 disconn3ct Exp $
 */
 // cl_tent.c -- client side temporary entities
 
 #include "quakedef.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
 #include "vx_stuff.h"
+#include "rulesets.h"
+#include "pmove.h"
+#include "utils.h"
+#include "qsound.h"
 
 
 #define	MAX_BEAMS 32

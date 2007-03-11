@@ -16,11 +16,18 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: win_wndproc.c,v 1.2 2007-02-01 01:03:13 qqshka Exp $
+	$Id: win_wndproc.c,v 1.3 2007-03-11 06:01:43 disconn3ct Exp $
 
 */
 
 #include "quakedef.h"
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#if defined(_WIN32) || defined(__linux__)
+#include "tr_types.h"
+#endif // _WIN32 || __linux__
+#endif
 #include "cdaudio.h"
 #ifdef WITH_KEYMAP
 #include "keymap.h"
