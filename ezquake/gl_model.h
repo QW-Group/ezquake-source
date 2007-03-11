@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+	$Id: gl_model.h,v 1.11 2007-03-11 02:01:01 disconn3ct Exp $
 */
 
 #ifndef __MODEL__
@@ -40,6 +41,7 @@ BRUSH MODELS
 
 ==============================================================================
 */
+
 
 //
 // in memory representation
@@ -71,22 +73,22 @@ typedef struct texture_s {
 #define	SURF_PLANEBACK		2
 #define	SURF_DRAWSKY		4
 #define SURF_DRAWSPRITE		8
-#define SURF_DRAWTURB		0x10
-#define SURF_DRAWTILED		0x20
-#define SURF_DRAWBACKGROUND	0x40
-#define SURF_UNDERWATER		0x80
-#define SURF_DRAWALPHA		0x100
+#define SURF_DRAWTURB		16
+#define SURF_DRAWTILED		32
+#define SURF_DRAWBACKGROUND	64
+#define SURF_UNDERWATER		128
+#define SURF_DRAWALPHA		256
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct medge_s {
-	unsigned short	v[2];
-	unsigned int	cachededgeoffset;
+	unsigned short		v[2];
+	unsigned int		cachededgeoffset;
 } medge_t;
 
 typedef struct mtexinfo_s {
-	float		vecs[2][4];
-	texture_t	*texture;
-	int			flags;
+	float				vecs[2][4];
+	texture_t			*texture;
+	int					flags;
 } mtexinfo_t;
 
 #define VERTEXSIZE 9 //xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 
@@ -122,7 +124,7 @@ typedef struct msurface_s {
 
 	mtexinfo_t			*texinfo;
 	
-// lighting info
+	// lighting info
 	int					dlightframe;
 	int					dlightbits;
 
@@ -134,7 +136,7 @@ typedef struct msurface_s {
 } msurface_t;
 
 typedef struct mnode_s {
-// common with leaf
+	// common with leaf
 	int					contents;					// 0, to differentiate from leafs
 	int					visframe;					// node needs to be traversed if current
 	
@@ -142,7 +144,7 @@ typedef struct mnode_s {
 
 	struct mnode_s		*parent;
 
-// node specific
+	// node specific
 	mplane_t			*plane;
 	struct mnode_s		*children[2];	
 
@@ -166,6 +168,7 @@ typedef struct mleaf_s {
 	msurface_t			**firstmarksurface;
 	int					nummarksurfaces;
 } mleaf_t;
+
 
 /*
 ==============================================================================
@@ -200,8 +203,8 @@ typedef struct msprite_s {
 	int					maxwidth;
 	int					maxheight;
 	int					numframes;
-	float				beamlength;		// remove?
-	void				*cachespot;		// remove?
+	float				beamlength; // remove?
+	void				*cachespot; // remove?
 	mspriteframedesc_t	frames[1];
 } msprite_t;
 
@@ -228,6 +231,7 @@ typedef struct msprite2_s {
 
 	mspriteframedesc2_t	frames[MAX_SPRITE_FRAMES];
 } msprite2_t; // actual frames follow after struct immidiately
+
 
 /*
 ==============================================================================
@@ -329,69 +333,69 @@ typedef enum {MOD_NORMAL, MOD_PLAYER, MOD_EYES, MOD_FLAME, MOD_THUNDERBOLT, MOD_
 #define	EF_TRACER3	128			// purple trail
 
 typedef struct model_s {
-	char		name[MAX_QPATH];
-	qbool		needload; // bmodels and sprites don't cache normally
+	char				name[MAX_QPATH];
+	qbool				needload; // bmodels and sprites don't cache normally
 
-	unsigned short	crc;
+	unsigned short		crc;
 
-	modhint_t	modhint;
+	modhint_t			modhint;
 
-	modtype_t	type;
-	int			numframes;
-	synctype_t	synctype;
+	modtype_t			type;
+	int					numframes;
+	synctype_t			synctype;
 	
-	int			flags;
+	int					flags;
 
-// volume occupied by the model graphics
-	vec3_t		mins, maxs;
-	float		radius;
+	// volume occupied by the model graphics
+	vec3_t				mins, maxs;
+	float				radius;
 
-// brush model
-	int			firstmodelsurface, nummodelsurfaces;
+	// brush model
+	int					firstmodelsurface, nummodelsurfaces;
 
 	// FIXME, don't really need these two
-	int			numsubmodels;
-	dmodel_t	*submodels;
+	int					numsubmodels;
+	dmodel_t			*submodels;
 
-	int			numplanes;
-	mplane_t	*planes;
+	int					numplanes;
+	mplane_t			*planes;
 
-	int			numleafs; // number of visible leafs, not counting 0
-	mleaf_t		*leafs;
+	int					numleafs; // number of visible leafs, not counting 0
+	mleaf_t				*leafs;
 
-	int			numvertexes;
-	mvertex_t	*vertexes;
+	int					numvertexes;
+	mvertex_t			*vertexes;
 
-	int			numedges;
-	medge_t		*edges;
+	int					numedges;
+	medge_t				*edges;
 
-	int			numnodes;
-	int			firstnode;
-	mnode_t		*nodes;
+	int					numnodes;
+	int					firstnode;
+	mnode_t				*nodes;
 
-	int			numtexinfo;
-	mtexinfo_t	*texinfo;
+	int					numtexinfo;
+	mtexinfo_t			*texinfo;
 
-	int			numsurfaces;
-	msurface_t	*surfaces;
+	int					numsurfaces;
+	msurface_t			*surfaces;
 
-	int			numsurfedges;
-	int			*surfedges;
+	int					numsurfedges;
+	int					*surfedges;
 
-	int			nummarksurfaces;
-	msurface_t	**marksurfaces;
+	int					nummarksurfaces;
+	msurface_t			**marksurfaces;
 
-	int			numtextures;
-	texture_t	**textures;
+	int					numtextures;
+	texture_t			**textures;
 
-	byte		*visdata;
-	byte		*lightdata;
+	byte				*visdata;
+	byte				*lightdata;
 
-	int			bspversion;
-	qbool		isworldmodel; // -- @ZQUAKE@
+	int					bspversion;
+	qbool				isworldmodel;
 
 	// additional model data
-	cache_user_t	cache;		// only access through Mod_Extradata
+	cache_user_t		cache; // only access through Mod_Extradata
 
 } model_t;
 
