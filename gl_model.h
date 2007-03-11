@@ -26,8 +26,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "bspfile.h"
 
 /*
+
 d*_t structures are on-disk representations
 m*_t structures are in-memory
+
 */
 
 
@@ -43,7 +45,7 @@ BRUSH MODELS
 // in memory representation
 //
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
-typedef struct {
+typedef struct mvertex_s {
 	vec3_t		position;
 } mvertex_t;
 
@@ -51,17 +53,17 @@ typedef struct texture_s {
 	char				name[16];
 	unsigned			width, height;
 	int					gl_texturenum;
-	int					fb_texturenum;			//index of fullbright mask or 0
+	int					fb_texturenum;				//index of fullbright mask or 0
 	struct msurface_s	*texturechain[2];		
 	struct msurface_s	**texturechain_tail[2];	
-												//Points to the node right after the last non-NULL node in the texturechain.
-	int					anim_total;				//total tenths in sequence ( 0 = no)
-	int					anim_min, anim_max;		//time for this frame min <=time< max
-	struct texture_s	*anim_next;				//in the animation sequence
-	struct texture_s	*alternate_anims;		//bmodels in frame 1 use these
-	unsigned			offsets[MIPLEVELS];		//four mip maps stored
-	unsigned			colour;					//just for r_fastturb's sake
-	qbool				loaded;					//help speed up vid_restart, actual only for brush models
+													//Points to the node right after the last non-NULL node in the texturechain.
+	int					anim_total;					//total tenths in sequence ( 0 = no)
+	int					anim_min, anim_max;			//time for this frame min <=time< max
+	struct texture_s	*anim_next;					//in the animation sequence
+	struct texture_s	*alternate_anims;			//bmodels in frame 1 use these
+	unsigned			offsets[MIPLEVELS];			//four mip maps stored
+	unsigned			flatcolor3ub;				//just for r_fastturb's sake
+	qbool				loaded;						//help speed up vid_restart, actual only for brush models
 	int					isLumaTexture;
 } texture_t;
 
@@ -76,93 +78,93 @@ typedef struct texture_s {
 #define SURF_DRAWALPHA		0x100
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
-typedef struct {
+typedef struct medge_s {
 	unsigned short	v[2];
 	unsigned int	cachededgeoffset;
 } medge_t;
 
-typedef struct {
+typedef struct mtexinfo_s {
 	float		vecs[2][4];
 	texture_t	*texture;
 	int			flags;
 } mtexinfo_t;
 
-#define	VERTEXSIZE	9	//xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 
-						//s2t2 = lightmap tex coords; s3t2 = detail tex coords
+#define VERTEXSIZE 9 //xyz s1t1 s2t2 s3t3 where xyz = vert coords; s1t1 = normal tex coords; 
+					 //s2t2 = lightmap tex coords; s3t2 = detail tex coords
 
 typedef struct glpoly_s {
 	struct	glpoly_s	*next;
-	struct	glpoly_s	*chain;				//next lightmap poly in chain
-	struct	glpoly_s	*fb_chain;			//next fb poly in chain
-	struct	glpoly_s	*luma_chain;			//next luma poly in chain
-	struct	glpoly_s	*caustics_chain;	//next caustic poly in chain
-	struct	glpoly_s	*detail_chain;		//next detail poly in chain
-	int		numverts;
-	float	verts[4][VERTEXSIZE];	// variable sized (xyz s1t1 s2t2)
+	struct	glpoly_s	*chain;						//next lightmap poly in chain
+	struct	glpoly_s	*fb_chain;					//next fb poly in chain
+	struct	glpoly_s	*luma_chain;				//next luma poly in chain
+	struct	glpoly_s	*caustics_chain;			//next caustic poly in chain
+	struct	glpoly_s	*detail_chain;				//next detail poly in chain
+	int					numverts;
+	float				verts[4][VERTEXSIZE];		// variable sized (xyz s1t1 s2t2)
 } glpoly_t;
 
 typedef struct msurface_s {
-	int			visframe;		// should be drawn when node is crossed
+	int					visframe;					// should be drawn when node is crossed
 
-	mplane_t	*plane;
-	int			flags;
+	mplane_t			*plane;
+	int					flags;
 
-	int			firstedge;	// look up in model->surfedges[], negative numbers
-	int			numedges;	// are backwards edges
+	int					firstedge;					// look up in model->surfedges[], negative numbers
+	int					numedges;					// are backwards edges
 	
-	short		texturemins[2];
-	short		extents[2];
+	short				texturemins[2];
+	short				extents[2];
 
-	int			light_s, light_t;	// gl lightmap coordinates
+	int					light_s, light_t;			// gl lightmap coordinates
 
-	glpoly_t	*polys;				// multiple if warped
+	glpoly_t			*polys;						// multiple if warped
 	struct	msurface_s	*texturechain;
 
-	mtexinfo_t	*texinfo;
+	mtexinfo_t			*texinfo;
 	
 // lighting info
-	int			dlightframe;
-	int			dlightbits;
+	int					dlightframe;
+	int					dlightbits;
 
-	int			lightmaptexturenum;
-	byte		styles[MAXLIGHTMAPS];
-	int			cached_light[MAXLIGHTMAPS];	// values currently used in lightmap
-	qbool	cached_dlight;				// true if dynamic light in cache
-	byte		*samples;		// [numstyles*surfsize]
+	int					lightmaptexturenum;
+	byte				styles[MAXLIGHTMAPS];
+	int					cached_light[MAXLIGHTMAPS];	// values currently used in lightmap
+	qbool				cached_dlight;				// true if dynamic light in cache
+	byte				*samples;					// [numstyles*surfsize]
 } msurface_t;
 
 typedef struct mnode_s {
 // common with leaf
-	int			contents;		// 0, to differentiate from leafs
-	int			visframe;		// node needs to be traversed if current
+	int					contents;					// 0, to differentiate from leafs
+	int					visframe;					// node needs to be traversed if current
 	
-	float		minmaxs[6];		// for bounding box culling
+	float				minmaxs[6];					// for bounding box culling
 
-	struct mnode_s	*parent;
+	struct mnode_s		*parent;
 
 // node specific
-	mplane_t	*plane;
-	struct mnode_s	*children[2];	
+	mplane_t			*plane;
+	struct mnode_s		*children[2];	
 
 	unsigned short		firstsurface;
 	unsigned short		numsurfaces;
 } mnode_t;
 
 typedef struct mleaf_s {
-// common with node
-	int			contents;		// wil be a negative contents number
-	int			visframe;		// node needs to be traversed if current
+	// common with node
+	int					contents;					// wil be a negative contents number
+	int					visframe;					// node needs to be traversed if current
 
-	float		minmaxs[6];		// for bounding box culling
+	float				minmaxs[6];					// for bounding box culling
 
-	struct mnode_s	*parent;
+	struct mnode_s		*parent;
 
-// leaf specific
-	byte		*compressed_vis;
-	struct efrag_s	*efrags;
+	// leaf specific
+	byte				*compressed_vis;
+	struct efrag_s		*efrags;
 
-	msurface_t	**firstmarksurface;
-	int			nummarksurfaces;
+	msurface_t			**firstmarksurface;
+	int					nummarksurfaces;
 } mleaf_t;
 
 /*
@@ -176,24 +178,24 @@ SPRITE MODELS
 
 // FIXME: shorten these?
 typedef struct mspriteframe_s {
-	int		width;
-	int		height;
-	float	up, down, left, right;
-	int		gl_texturenum;
+	int					width;
+	int					height;
+	float				up, down, left, right;
+	int					gl_texturenum;
 } mspriteframe_t;
 
-typedef struct {
-	int				numframes;
-	float			*intervals;
-	mspriteframe_t	*frames[1];
+typedef struct mspritegroup_s {
+	int					numframes;
+	float				*intervals;
+	mspriteframe_t		*frames[1];
 } mspritegroup_t;
 
-typedef struct {
+typedef struct mspriteframedesc_s {
 	spriteframetype_t	type;
 	mspriteframe_t		*frameptr;
 } mspriteframedesc_t;
 
-typedef struct {
+typedef struct msprite_s {
 	int					type;
 	int					maxwidth;
 	int					maxheight;
@@ -210,7 +212,7 @@ typedef struct mspriteframe2_s {
 	float				interval;
 } mspriteframe2_t;
 
-typedef struct {
+typedef struct mspriteframedesc2_s {
 	spriteframetype_t	type;
 
 	int					numframes;			// always 1 for type == SPR_SINGLE
@@ -218,7 +220,7 @@ typedef struct {
 
 } mspriteframedesc2_t;
 
-typedef struct {
+typedef struct msprite2_s {
 	int					type;
 	int					maxwidth;
 	int					maxheight;
@@ -237,7 +239,7 @@ Alias models are position independent, so the cache manager can move them.
 */
 
 
-typedef struct {
+typedef struct maliasframedesc_s {
 	int					firstpose;
 	int					numposes;
 	float				interval;
@@ -248,16 +250,16 @@ typedef struct {
 	char				name[16];
 } maliasframedesc_t;
 
-typedef struct {
+typedef struct maliasgroupframedesc_s {
 	trivertx_t			bboxmin;
 	trivertx_t			bboxmax;
 	int					frame;
 } maliasgroupframedesc_t;
 
-typedef struct {
-	int						numframes;
-	int						intervals;
-	maliasgroupframedesc_t	frames[1];
+typedef struct maliasgroup_s {
+	int					numframes;
+	int					intervals;
+	maliasgroupframedesc_t frames[1];
 } maliasgroup_t;
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
@@ -267,23 +269,23 @@ typedef struct mtriangle_s {
 } mtriangle_t;
 
 
-#define	MAX_SKINS	32
-typedef struct {
-	int			ident;
-	int			version;
-	vec3_t		scale;
-	vec3_t		scale_origin;
-	float		boundingradius;
-	vec3_t		eyeposition;
-	int			numskins;
-	int			skinwidth;
-	int			skinheight;
-	int			numverts;
-	int			numtris;
-	int			numframes;
-	synctype_t	synctype;
-	int			flags;
-	float		size;
+#define MAX_SKINS 32
+typedef struct aliashdr_s {
+	int					ident;
+	int					version;
+	vec3_t				scale;
+	vec3_t				scale_origin;
+	float				boundingradius;
+	vec3_t				eyeposition;
+	int					numskins;
+	int					skinwidth;
+	int					skinheight;
+	int					numverts;
+	int					numtris;
+	int					numframes;
+	synctype_t			synctype;
+	int					flags;
+	float				size;
 
 	int					numposes;
 	int					poseverts;
@@ -303,21 +305,19 @@ typedef struct {
 #define	MAXALIASVERTS	2048
 #define	MAXALIASFRAMES	256
 #define	MAXALIASTRIS	2048
-extern	aliashdr_t	*pheader;
-extern	stvert_t	stverts[MAXALIASVERTS];
-extern	mtriangle_t	triangles[MAXALIASTRIS];
-extern	trivertx_t	*poseverts[MAXALIASFRAMES];
+extern	aliashdr_t		*pheader;
+extern	stvert_t		stverts[MAXALIASVERTS];
+extern	mtriangle_t		triangles[MAXALIASTRIS];
+extern	trivertx_t		*poseverts[MAXALIASFRAMES];
 
 
 typedef enum {mod_brush, mod_sprite, mod_alias, mod_alias3} modtype_t;
 
 // some models are special
-//VULT MODELS
-//typedef enum {MOD_NORMAL, MOD_PLAYER, MOD_EYES, MOD_FLAME, MOD_THUNDERBOLT, MOD_BACKPACK} modhint_t;
-typedef enum {MOD_NORMAL, MOD_PLAYER, MOD_EYES, MOD_FLAME, MOD_THUNDERBOLT, MOD_CLUSTER,
+typedef enum {MOD_NORMAL, MOD_PLAYER, MOD_EYES, MOD_FLAME, MOD_THUNDERBOLT, MOD_BACKPACK,
 	MOD_FLAG, MOD_SPIKE, MOD_TF_TRAIL, MOD_GRENADE, MOD_TESLA, MOD_SENTRYGUN, MOD_DETPACK,
 	MOD_LASER, MOD_DEMON, MOD_SOLDIER, MOD_OGRE, MOD_ENFORCER, MOD_VOORSPIKE, MOD_LAVABALL,
-	MOD_RAIL, MOD_RAIL2, MOD_BUILDINGGIBS, MOD_BACKPACK, MOD_SHAMBLER, MOD_TELEPORTDESTINATION} modhint_t;
+	MOD_RAIL, MOD_RAIL2, MOD_BUILDINGGIBS, MOD_CLUSTER, MOD_SHAMBLER, MOD_TELEPORTDESTINATION} modhint_t;
 
 #define	EF_ROCKET	1			// leave a trail
 #define	EF_GRENADE	2			// leave a trail

@@ -285,7 +285,7 @@ void EmitWaterPolys (msurface_t *fa) {
 			col = StringToRGB(r_telecolor.string);
 		}
 		else {
-			col = (byte *) &fa->texinfo->texture->colour;
+			col = (byte *) &fa->texinfo->texture->flatcolor3ub;
 		}
 		glColor3ubv (col);
 

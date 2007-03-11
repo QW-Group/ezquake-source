@@ -19,13 +19,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // client.h
 
+
+#define MAX_STATIC_SOUNDS 256
+typedef struct
+{
+	vec3_t		org;
+	int			sound_num;
+	int			vol;
+	int			atten;
+} static_sound_t;
+
+
 extern cvar_t cl_demospeed;
 #define ISPAUSED (cl.paused || (!cl_demospeed.value && cls.demoplayback))
 #define	MAX_PROJECTILES	32 
 
 typedef struct {
-	char		name[16];
-	qbool	failedload;		// the name isn't a valid skin
+	char			name[16];
+	qbool			failedload;		// the name isn't a valid skin
 	cache_user_t	cache;
 } skin_t;
 
@@ -426,6 +437,9 @@ typedef struct {
 
 	cmodel_t	*clipmodels[MAX_MODELS];
 	unsigned	map_checksum2;
+
+	static_sound_t	static_sounds[MAX_STATIC_SOUNDS];
+	int			num_static_sounds;
 
 	char		levelname[40];		// for display on solo scoreboard
 	int			playernum;

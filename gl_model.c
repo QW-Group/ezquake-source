@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.27 2007-03-10 20:03:31 tonik Exp $
+	$Id: gl_model.c,v 1.28 2007-03-11 01:01:28 disconn3ct Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -430,7 +430,7 @@ static qbool Mod_LoadExternalSkyTexture (texture_t *tx)
 	return true;
 }
 
-void Mod_LoadBrushModelTextures (model_t *m)
+void R_LoadBrushModelTextures (model_t *m)
 {
 	char		*texname;
 	texture_t	*tx;
@@ -593,12 +593,12 @@ void Mod_LoadTextures (lump_t *l) {
 			// just for r_fastturb's sake
 			{
 				byte *data = (byte *) &d_8to24table[*((byte *) mt + mt->offsets[0] + ((mt->height * mt->width) >> 1))];
-				tx->colour = (255 << 24) + (data[0] << 0) + (data[1] << 8) + (data[2] << 16);
+				tx->flatcolor3ub = (255 << 24) + (data[0] << 0) + (data[1] << 8) + (data[2] << 16);
 			}
 		}
 	}
 
-	Mod_LoadBrushModelTextures (loadmodel);
+	R_LoadBrushModelTextures (loadmodel);
 
 	// sequence the animations
 	for (i = 0; i < m->nummiptex; i++) {
@@ -692,7 +692,7 @@ void Mod_LoadSpriteModelTextures (model_t *m)
 void Mod_LoadModelTextures (model_t *m)
 {
 	if (m->type == mod_brush)
-		Mod_LoadBrushModelTextures (m);
+		R_LoadBrushModelTextures (m);
 //	else if (m->type == mod_sprite)
 //		Mod_LoadSpriteModelTextures (m);
 }
