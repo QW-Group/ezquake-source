@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.79 2007-03-10 14:11:08 disconn3ct Exp $
+	$Id: cl_parse.c,v 1.80 2007-03-11 01:01:28 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1256,19 +1256,26 @@ void CL_GenStatic (vec3_t origin) {
 }
 
 
-void CL_ParseStaticSound (void) {
+void CL_ParseStaticSound (void)
+{
 	extern cvar_t cl_staticsounds;
-	vec3_t org;
-	int sound_num, vol, atten, i;
+	static_sound_t ss;
+	int i;
 	
 	for (i = 0; i < 3; i++)
-		org[i] = MSG_ReadCoord ();
-	sound_num = MSG_ReadByte ();
-	vol = MSG_ReadByte ();
-	atten = MSG_ReadByte ();
+		ss.org[i] = MSG_ReadCoord ();
 
-	if (cl_staticsounds.value)
-		S_StaticSound (cl.sound_precache[sound_num], org, vol, atten);
+	ss.sound_num = MSG_ReadByte ();
+	ss.vol = MSG_ReadByte ();
+	ss.atten = MSG_ReadByte ();
+
+	if (cl.num_static_sounds < MAX_STATIC_SOUNDS) {
+		cl.static_sounds[cl.num_static_sounds] = ss;
+		cl.num_static_sounds++;
+	}
+
+	if ((int) cl_staticsounds.value)
+		S_StaticSound (cl.sound_precache[ss.sound_num], ss.org, ss.vol, ss.atten);
 }
 
 /*

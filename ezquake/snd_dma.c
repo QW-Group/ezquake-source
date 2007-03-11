@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.37 2007-03-10 14:11:08 disconn3ct Exp $
+    $Id: snd_dma.c,v 1.38 2007-03-11 01:01:28 disconn3ct Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -596,11 +596,11 @@ static void S_UpdateAmbientSounds (void)
 
 		// don't adjust volume too fast
 		if (chan->master_vol < vol) {
-			chan->master_vol += (int) (cls.frametime * s_ambientfade.value);
+			chan->master_vol += Q_rint (cls.frametime * s_ambientfade.value);
 			if (chan->master_vol > vol)
 				chan->master_vol = vol;
 		} else if (chan->master_vol > vol) {
-			chan->master_vol -= (int) (cls.frametime * s_ambientfade.value);
+			chan->master_vol -= Q_rint (cls.frametime * s_ambientfade.value);
 			if (chan->master_vol < vol)
 				chan->master_vol = vol;
 		}

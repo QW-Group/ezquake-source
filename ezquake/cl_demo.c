@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.66 2007-03-01 09:38:45 qqshka Exp $
+	$Id: cl_demo.c,v 1.67 2007-03-11 01:01:28 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -536,7 +536,21 @@ static void CL_WriteStartupData (void)
 		}
 	}
 
-	// Static sounds are skipped in demos, life is hard.
+	// spawnstaticsound
+	for (i = 0; i < cl.num_static_sounds; i++) {
+		static_sound_t *ss = &cl.static_sounds[i];
+		MSG_WriteByte (&buf, svc_spawnstaticsound);
+		for (j = 0; j < 3; j++)
+			MSG_WriteCoord (&buf, ss->org[j]);
+		MSG_WriteByte (&buf, ss->sound_num);
+		MSG_WriteByte (&buf, ss->vol);
+		MSG_WriteByte (&buf, ss->atten);
+
+		if (buf.cursize > MAX_MSGLEN/2) {
+			CL_WriteStartupDemoMessage (&buf, seq++);
+			SZ_Clear (&buf); 
+		}
+	}
 
 	//
 	// Write entity baselines.
