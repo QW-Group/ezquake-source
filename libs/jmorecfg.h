@@ -21,7 +21,9 @@
  */
 
 // mh - disable silly warning
+#ifdef _WIN32
 #pragma warning( disable : 4142 )
+#endif
 
 #define BITS_IN_JSAMPLE  8	/* use 8 or 12 */
 
