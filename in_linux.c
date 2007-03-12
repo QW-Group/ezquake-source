@@ -14,10 +14,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_linux.c,v 1.5 2007-02-27 23:57:47 qqshka Exp $
+	$Id: in_linux.c,v 1.6 2007-03-12 03:20:04 disconn3ct Exp $
 */
 #include "quakedef.h"
-
+#include "input.h"
 
 #ifdef NDEBUG
 #define win_mouse	"1"
@@ -29,7 +29,7 @@ cvar_t	m_filter        = {"m_filter",       "0", CVAR_SILENT};
 cvar_t	cl_keypad       = {"cl_keypad",      "1", CVAR_SILENT};
 cvar_t	_windowed_mouse = {"_windowed_mouse", win_mouse, CVAR_ARCHIVE | CVAR_SILENT};
 
-	
+
 extern int mx, my;
 extern qbool mouseinitialized;
 
@@ -99,7 +99,7 @@ void IN_MouseMove (usercmd_t *cmd)
 	} else {
 		cmd->forwardmove -= m_forward.value * mouse_y;
 	}
-	
+
 	mx = my = 0; // clear for next update
 }
 

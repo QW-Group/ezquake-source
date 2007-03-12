@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_x11.c,v 1.20 2007-01-07 21:59:15 disconn3ct Exp $
+	$Id: vid_x11.c,v 1.21 2007-03-12 03:20:04 disconn3ct Exp $
 */
 // vid_x11.c -- general x video driver
 
@@ -38,6 +38,8 @@ typedef unsigned int	PIXEL24;
 #include <X11/extensions/XShm.h>
 
 #include "quakedef.h"
+#include "keys.h"
+#include "input.h"
 #include "d_local.h"
 
 #ifdef WITH_KEYMAP

@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.52 2007-03-11 06:01:40 disconn3ct Exp $
+    $Id: keys.c,v 1.53 2007-03-12 03:20:04 disconn3ct Exp $
 
 */
 
@@ -30,6 +30,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud_editor.h"
 #include "menu.h"
 #include "keys.h"
+
+#ifdef __linux__
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#include "tr_types.h"
+#else
+#include "r_model.h"
+#include "r_local.h"
+#endif
+#endif
 
 
 //key up events are sent even if in console mode
@@ -81,7 +92,7 @@ int		keyshift[UNKNOWN + 256];		// key to map to if shift held down in console
 #endif // WITH_KEYMAP
 int		key_repeats[UNKNOWN + 256];	// if > 1, it is autorepeating
 qbool	keydown[UNKNOWN + 256];
-qbool	keyactive[UNKNOWN + 256];	
+qbool	keyactive[UNKNOWN + 256];
 
 typedef struct
 {
@@ -308,7 +319,7 @@ qbool CheckForCommand (void) {
 #define COLUMNWIDTH 20
 #define MINCOLUMNWIDTH 18	// the last column may be slightly smaller
 
-void PaddedPrint (char *s) {	
+void PaddedPrint (char *s) {
 	extern int con_linewidth;
 	int nextcolx = 0;
 
@@ -509,7 +520,7 @@ void CompleteCommandNew (void)
 		diff_len = strlen (cmd) - (end - start + 1);
 		qwcslcpy (temp, key_lines[edit_line] + end + 1, sizeof(temp)/sizeof(temp[0]));
 		qwcslcpy (key_lines[edit_line] + end + 1 + diff_len, temp, MAXCMDLINE - (end + 1 + diff_len));
-		
+
 		for (i = 0; start + i < MAXCMDLINE && i < strlen (cmd); i++)
 		{
 			key_lines[edit_line][start + i] = char2wc(cmd[i]);
@@ -560,7 +571,7 @@ void CompleteCommandNew (void)
 			//Com_Printf("%i\n",try);
 			test = try - 1;
 			testvar = key_linepos;
-			
+
 			while ((testvar != 0)
 			       && !(isspace (key_lines[edit_line][testvar]))
 			       && (key_lines[edit_line][testvar] != '\\')
@@ -569,18 +580,18 @@ void CompleteCommandNew (void)
 			{
 				testvar--;
 			}
-		
+
 			testvar = key_linepos - testvar;
-			
+
 			my_string_length =	strlen (jogi_avail_complete[test].name);
-			
+
 			memset(text, 0, sizeof(text));
 
 			for (i = 0; i < bound(0, my_string_length-testvar+1, sizeof(text)); i++)
 			{
 				text[i] = jogi_avail_complete[test].name[i + testvar -1 ];
 			}
-			
+
 			len = strlen (text);
 
 			memmove (key_lines[edit_line] + key_linepos + len,
@@ -621,14 +632,14 @@ void CompleteCommand (void) {
 	wchar temp[MAXCMDLINE];
 	int c, a, v, start, end, i, diff_len, size;
 
-	if (key_linepos < 2 || isspace(key_lines[edit_line][key_linepos - 1]))	
+	if (key_linepos < 2 || isspace(key_lines[edit_line][key_linepos - 1]))
 		return;
 
 	for (start = key_linepos - 1; start >= 1 && !isspace(key_lines[edit_line][start]); start--)
 		;
-	if (start == 0)	
+	if (start == 0)
 		start = 1;
-	if (isspace(key_lines[edit_line][start]))	
+	if (isspace(key_lines[edit_line][start]))
 		start++;
 	end = key_linepos - 1;
 
@@ -642,7 +653,7 @@ void CompleteCommand (void) {
 		start++;
 	}
 	if (start > end)
-		return;	
+		return;
 
 	compl_len = strlen (s);
 	compl_clen = 0;
@@ -711,7 +722,7 @@ void CompleteCommand (void) {
 	diff_len = strlen(cmd) - (end - start + 1);
 	qwcslcpy(temp, key_lines[edit_line] + end + 1, sizeof(temp)/sizeof(temp[0]));
 	qwcslcpy(key_lines[edit_line] + end + 1 + diff_len, temp, MAXCMDLINE - (end + 1 + diff_len));
-	for (i = 0; start + i < MAXCMDLINE && i < strlen(cmd); i++)	
+	for (i = 0; start + i < MAXCMDLINE && i < strlen(cmd); i++)
 		key_lines[edit_line][start + i] = cmd[i];
 	key_linepos += diff_len;
 	key_lines[edit_line][min(key_linepos + qwcslen(temp), MAXCMDLINE - 1)] = 0;
@@ -748,7 +759,7 @@ void RemoveColors(char *name) {
 	s = name;
 	for (s = name; *s == '_'; s++) ;
 	memmove(name, s, strlen(s) + 1);
-	
+
 	for (s = name + strlen(name); s > name  &&  (*(s - 1) == '_'); s--) ;
 
 	*s = 0;
@@ -854,11 +865,11 @@ qbool con_redchars    = false;
 //
 // Interactive line editing and console scrollback.
 //
-void Key_Console (int key, int unichar) 
+void Key_Console (int key, int unichar)
 {
 	int i, len;
 
-	switch (key) 
+	switch (key)
 	{
 		case 'M': case 'm': case 'J': case 'j':		//^M,^J = Enter
 		{
@@ -870,7 +881,7 @@ void Key_Console (int key, int unichar)
 		{
 			CompleteCommandNew_Reset ();
 			con_redchars = false;
-			
+
 			// Backslash text are commands.
 			if (key_lines[edit_line][1] != '/' || key_lines[edit_line][2] != '/')
 			{
@@ -922,7 +933,7 @@ void Key_Console (int key, int unichar)
 						}
 					}
 				}
-				if (no_lf) 
+				if (no_lf)
 				{
 					Cbuf_AddText ("\n");
 				}
@@ -960,7 +971,7 @@ void Key_Console (int key, int unichar)
 				{
 					CompleteCommand ();
 				}
-				else 
+				else
 				{
 					Com_Printf("cl_newCompletion has to be set to either 0 or 1\n");
 				}
@@ -971,7 +982,7 @@ void Key_Console (int key, int unichar)
 			// added by stopp
 			return;
 		}
-		case 'H': case 'h':		// ^H = BACKSPACE	
+		case 'H': case 'h':		// ^H = BACKSPACE
 		{
 			if (!keydown[K_CTRL])
 			{
@@ -1077,17 +1088,17 @@ void Key_Console (int key, int unichar)
 		}
 	    case K_UPARROW:
 		{
-			if (key == K_UPARROW && keydown[K_CTRL]) 
+			if (key == K_UPARROW && keydown[K_CTRL])
 			{
 				AdjustConsoleHeight (-10);
 				return;
 			}
 
-			do 
+			do
 			{
 				history_line = (history_line - 1) & (CMDLINES - 1);
 			} while (history_line != edit_line && !key_lines[history_line][1]);
-			
+
 			if (history_line == edit_line)
 			{
 				history_line = (edit_line + 1) & (CMDLINES - 1);
@@ -1106,7 +1117,7 @@ void Key_Console (int key, int unichar)
 		}
 		case K_DOWNARROW:
 		{
-			if (key == K_DOWNARROW && keydown[K_CTRL]) 
+			if (key == K_DOWNARROW && keydown[K_CTRL])
 			{
 				AdjustConsoleHeight (10);
 				return;
@@ -1117,17 +1128,17 @@ void Key_Console (int key, int unichar)
 				return;
 			}
 
-			do 
+			do
 			{
 				history_line = (history_line + 1) & (CMDLINES - 1);
 			} while (history_line != edit_line && !key_lines[history_line][1]);
 
-			if (history_line == edit_line) 
+			if (history_line == edit_line)
 			{
 				key_lines[edit_line][0] = ']';
 				key_lines[edit_line][1] = 0;
 				key_linepos = 1;
-			} 
+			}
 			else
 			{
 				qwcscpy(key_lines[edit_line], key_lines[history_line]);
@@ -1198,11 +1209,11 @@ void Key_Console (int key, int unichar)
 	}
 
 	if (((key == 'V' || key == 'v') && keydown[K_CTRL])
-		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT])) 
+		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT]))
 	{
 		wchar *clipText;
-	
-		if ((clipText = Sys_GetClipboardTextW())) 
+
+		if ((clipText = Sys_GetClipboardTextW()))
 		{
 			len = qwcslen(clipText);
 			if (len + qwcslen(key_lines[edit_line]) > MAXCMDLINE - 1)
@@ -1211,7 +1222,7 @@ void Key_Console (int key, int unichar)
 			}
 
 			if (len > 0)
-			{	
+			{
 				// Insert the string.
 				memmove (key_lines[edit_line] + key_linepos + len,
 					key_lines[edit_line] + key_linepos, (qwcslen(key_lines[edit_line]) - key_linepos + 1)*sizeof(wchar));
@@ -1222,9 +1233,9 @@ void Key_Console (int key, int unichar)
 		return;
 	}
 
-	if (key == 'u' && keydown[K_CTRL]) 
-	{			
-		if (key_linepos > 1) 
+	if (key == 'u' && keydown[K_CTRL])
+	{
+		if (key_linepos > 1)
 		{
 			qwcscpy(key_lines[edit_line] + 1, key_lines[edit_line] + key_linepos);
 			key_linepos = 1;
@@ -1236,7 +1247,7 @@ void Key_Console (int key, int unichar)
 		return;	// non printable
 
 #ifdef WITH_KEYMAP
-	if (con_funchars_mode.value) 
+	if (con_funchars_mode.value)
 	{
 		// CTRL+y toggles yellowchars
 		if (keydown[K_CTRL] && key == 'y' && !keydown[K_ALTGR] && !keydown[K_ALT]) {
@@ -1267,9 +1278,9 @@ void Key_Console (int key, int unichar)
 		{
 			unichar = unichar - '0' + 0x12;	// yellow number
 		}
-		else 
+		else
 		{
-			switch (key) 
+			switch (key)
 			{
 				case '[': unichar = 0x10; break;
 				case ']': unichar = 0x11; break;
@@ -1325,10 +1336,10 @@ int			chat_linepos = 0;
 void Key_Message (int key, wchar unichar) {
 	int len;
 
-	switch (key) 
+	switch (key)
 	{
 		case K_ENTER:
-			if (chat_buffer[0]) 
+			if (chat_buffer[0])
 			{
 				Cbuf_AddText (chat_team ? "say_team \"" : "say \"");
 				Cbuf_AddText(encode_say(chat_buffer));
@@ -1364,7 +1375,7 @@ void Key_Message (int key, wchar unichar) {
 			return;
 
 		case K_BACKSPACE:
-			if (chat_linepos > 0) 
+			if (chat_linepos > 0)
 			{
 				qwcscpy(chat_buffer + chat_linepos - 1, chat_buffer + chat_linepos);
 				chat_linepos--;
@@ -1378,17 +1389,17 @@ void Key_Message (int key, wchar unichar) {
 	}
 
 	if (((key == 'V' || key == 'v') && keydown[K_CTRL])
-		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT])) 
+		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT]))
 	{
 		wchar *clipText;
-	
-		if ((clipText = Sys_GetClipboardTextW())) 
+
+		if ((clipText = Sys_GetClipboardTextW()))
 		{
 			len = qwcslen(clipText);
 			if (len + qwcslen(chat_buffer) > MAXCMDLINE - 1)
 				len = MAXCMDLINE - 1 - qwcslen(chat_buffer);
-			if (len > 0) 
-			{  
+			if (len > 0)
+			{
 				// insert the string
 				memmove (chat_buffer + chat_linepos + len,
 					chat_buffer + chat_linepos, (qwcslen(chat_buffer) - chat_linepos + 1)*sizeof(wchar));
@@ -1424,7 +1435,7 @@ int Key_StringToKeynum (char *str) {
 	int        keynum;
 	char       ret[11];
 #endif // WITH_KEYMAP
-	
+
 	if (!str || !str[0])
 		return -1;
 	if (!str[1])
@@ -1517,9 +1528,9 @@ char *Key_KeynumToString (int keynum, char *buffer) {
 #else // WITH_KEYMAP
 //FIXME: handle quote special (general escape sequence?)
 char *Key_KeynumToString (int keynum) {
-	keyname_t *kn;	
+	keyname_t *kn;
 	static char tinystr[2];
-	
+
 	if (keynum == -1)
 		return "<KEY NOT FOUND>";
 	if (keynum > 32 && keynum < 127) {	// printable ascii
@@ -1527,7 +1538,7 @@ char *Key_KeynumToString (int keynum) {
 		tinystr[1] = 0;
 		return tinystr;
 	}
-	
+
 	for (kn=keynames ; kn->name ; kn++)
 		if (keynum == kn->keynum)
 			return kn->name;
@@ -1541,7 +1552,7 @@ void Key_SetBinding (int keynum, const char *binding) {
 		return;
 
 #ifndef __APPLE__
-	if (keynum == K_CTRL || keynum == K_ALT || keynum == K_SHIFT || keynum == K_WIN) {	
+	if (keynum == K_CTRL || keynum == K_ALT || keynum == K_SHIFT || keynum == K_WIN) {
 		Key_SetBinding(keynum + 1, binding);
 		Key_SetBinding(keynum + 2, binding);
 		return;
@@ -1587,7 +1598,7 @@ void Key_Unbind_f (void) {
 
 void Key_Unbindall_f (void) {
 	int i;
-	
+
 	for (i = 0; i < sizeof(keybindings) / sizeof(*keybindings); i++)
 		if (keybindings[i])
 			Key_Unbind (i);
@@ -1623,7 +1634,7 @@ qbool Key_IsLeftRightSameBind(int b) {
 
 void Key_Bind_f (void) {
 	int c, b;
-	
+
 	c = Cmd_Argc();
 
 	if (c < 2) {
@@ -1638,7 +1649,7 @@ void Key_Bind_f (void) {
 	if (c == 2) {
 #ifndef __APPLE__
 		if ((b == K_CTRL || b == K_ALT || b == K_SHIFT || b == K_WIN) && (keybindings[b + 1] || keybindings[b + 2])) {
-			
+
 			if (keybindings[b + 1] && keybindings[b + 2] && !strcmp(keybindings[b + 1], keybindings[b + 2])) {
 				Com_Printf ("\"%s\" = \"%s\"\n", Cmd_Argv(1), keybindings[b + 1]);
 			} else {
@@ -1648,13 +1659,13 @@ void Key_Bind_f (void) {
 		} else
 #endif
 		{
-			
+
 			//		and the following should print "ctrl (etc) is not bound" since K_CTRL cannot be bound
 			Key_PrintBindInfo(b, Cmd_Argv(1));
 		}
 		return;
 	}
-	
+
 	// copy the rest of the command line
 	Key_SetBinding (b, Cmd_MakeArgs(2));
 }
@@ -1672,7 +1683,7 @@ void Key_BindList_f (void) {
 #else // WITH_KEYMAP
 			Com_Printf ("%s \"%s\"\n", Key_KeynumToString(i), keybindings[i + 1]);
 #endif // WITH_KEYMAP else
-			i += 2;	
+			i += 2;
 		} else {
 			if (keybindings[i])
 #ifdef WITH_KEYMAP
@@ -1961,16 +1972,16 @@ void Key_EventEx (int key, wchar unichar, qbool down)
   if (key == K_ENTER && keydown[K_ALT] && (key_dest == key_console || key_dest == key_game))
   {
     Key_ClearStates(); // Zzzz
-    Cvar_SetValue( &r_fullscreen, !r_fullscreen.integer );                                    
-		Cbuf_AddText( "vid_restart\n" );		
+    Cvar_SetValue( &r_fullscreen, !r_fullscreen.integer );
+		Cbuf_AddText( "vid_restart\n" );
     return;
   }
 #endif
 
 	// if not a consolekey, send to the interpreter no matter what mode is
-	if	( 
-			(key_dest == key_menu && menubound[key]) || 
-			((key_dest == key_console || key_dest == key_message) && !consolekeys[key]) || 
+	if	(
+			(key_dest == key_menu && menubound[key]) ||
+			((key_dest == key_console || key_dest == key_message) && !consolekeys[key]) ||
 			(key_dest == key_game && (cls.state == ca_active || !consolekeys[key]))
 		) {
 		kb = keybindings[key];

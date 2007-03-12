@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <dlfcn.h>
 #include <alsa/asoundlib.h>
 #include "quakedef.h"
+#include "qsound.h"
 
 // Define all dynamic ALSA functions...
 #define ALSA_FUNC(ret, func, params) \
@@ -307,7 +308,7 @@ qbool SNDDMA_Init_ALSA (void)
 
 	// Tell the Quake sound system what's going on...
 	channels = stereo ? 2 : 1; // FIXME
-	
+
 	memset((void *) shm, 0, sizeof(*shm));
 	shm->format.channels = channels;
 	shm->format.width = width;

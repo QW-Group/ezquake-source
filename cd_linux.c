@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the included (GNU.txt) GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cd_linux.c,v 1.7 2006-12-15 01:27:11 johnnycz Exp $
+	$Id: cd_linux.c,v 1.8 2007-03-12 03:20:03 disconn3ct Exp $
 */
 // cd_linux.c
 
@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "cdaudio.h"
+#include "qsound.h"
 
 static qbool cdValid = false;
 static qbool	playing = false;
@@ -62,7 +63,7 @@ static void CDAudio_Eject(void)
 	if (ioctl(cdfile, CDIOCEJECT) == -1)
 		Com_DPrintf ("ioctl cdioceject failed\n");
 #else
-	if ( ioctl(cdfile, CDROMEJECT) == -1 ) 
+	if ( ioctl(cdfile, CDROMEJECT) == -1 )
 		Com_DPrintf ("ioctl cdromeject failed\n");
 #endif
 }
@@ -77,7 +78,7 @@ static void CDAudio_CloseDoor(void)
 	if (ioctl(cdfile, CDIOCCLOSE) == -1)
 		Com_DPrintf ("ioctl cdiocclose failed\n");
 #else
-	if ( ioctl(cdfile, CDROMCLOSETRAY) == -1 ) 
+	if ( ioctl(cdfile, CDROMCLOSETRAY) == -1 )
 		Com_DPrintf ("ioctl cdromclosetray failed\n");
 #endif
 }
@@ -97,7 +98,7 @@ static int CDAudio_GetAudioDiskInfo(void)
 	{
 		Com_DPrintf ("ioctl cdioreadtocheader failed\n");
 #else
-	if ( ioctl(cdfile, CDROMREADTOCHDR, &tochdr) == -1 ) 
+	if ( ioctl(cdfile, CDROMREADTOCHDR, &tochdr) == -1 )
     {
       Com_DPrintf ("ioctl cdromreadtochdr failed\n");
 #endif
@@ -138,7 +139,7 @@ void CDAudio_Play(byte track, qbool looping)
 
 	if (cdfile == -1 || !enabled)
 		return;
-	
+
 	if (!cdValid)
 	{
 		CDAudio_GetAudioDiskInfo();
@@ -208,7 +209,7 @@ void CDAudio_Play(byte track, qbool looping)
 	{
 		Com_DPrintf ("ioctl cdiocplaytracks failed\n");
 #else
-	if ( ioctl(cdfile, CDROMPLAYTRKIND, &ti) == -1 ) 
+	if ( ioctl(cdfile, CDROMPLAYTRKIND, &ti) == -1 )
     {
 		Com_DPrintf ("ioctl cdromplaytrkind failed\n");
 #endif
@@ -219,7 +220,7 @@ void CDAudio_Play(byte track, qbool looping)
 	if (ioctl(cdfile, CDIOCRESUME) == -1)
 		Com_DPrintf ("ioctl cdiocresume failed\n");
 #else
-	if ( ioctl(cdfile, CDROMRESUME) == -1 ) 
+	if ( ioctl(cdfile, CDROMRESUME) == -1 )
 		Com_DPrintf ("ioctl cdromresume failed\n");
 #endif
 
@@ -236,7 +237,7 @@ void CDAudio_Stop(void)
 {
 	if (cdfile == -1 || !enabled)
 		return;
-	
+
 	if (!playing)
 		return;
 
@@ -264,7 +265,7 @@ void CDAudio_Pause(void)
 	if (ioctl(cdfile, CDIOCPAUSE) == -1)
 		Com_DPrintf ("ioctl cdiocpause failed\n");
 #else
-	if ( ioctl(cdfile, CDROMPAUSE) == -1 ) 
+	if ( ioctl(cdfile, CDROMPAUSE) == -1 )
 		Com_DPrintf ("ioctl cdrompause failed\n");
 #endif
 
@@ -277,18 +278,18 @@ void CDAudio_Resume(void)
 {
 	if (cdfile == -1 || !enabled)
 		return;
-	
+
 	if (!cdValid)
 		return;
 
 	if (!wasPlaying)
 		return;
-	
+
 #ifdef __FreeBSD__
 	if (ioctl(cdfile, CDIOCRESUME) == -1)
 		Com_DPrintf ("ioctl cdiocresume failed\n");
 #else
-	if ( ioctl(cdfile, CDROMRESUME) == -1 ) 
+	if ( ioctl(cdfile, CDROMRESUME) == -1 )
 		Com_DPrintf ("ioctl cdromresume failed\n");
 #endif
 	playing = true;

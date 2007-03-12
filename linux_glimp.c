@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_glimp.c,v 1.5 2007-02-14 15:54:21 qqshka Exp $
+    $Id: linux_glimp.c,v 1.6 2007-03-12 03:20:04 disconn3ct Exp $
 
 */
 /*
@@ -74,6 +74,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 #include "quakedef.h"
+#include "keys.h"
+#include "tr_types.h"
+#include "input.h"
 
 //
 // cvars
@@ -141,7 +144,7 @@ static double mouseResetTime = 0;
 
 static int mouse_accel_numerator;
 static int mouse_accel_denominator;
-static int mouse_threshold;    
+static int mouse_threshold;
 
 qbool vidmode_ext = false;
 static int vidmode_MajorVersion = 0, vidmode_MinorVersion = 0; // major and minor of XF86VidExtensions
@@ -178,7 +181,7 @@ void (*qglXSwapBuffers)( Display *dpy, GLXDrawable drawable );
 
 const char *(APIENTRY *qglXQueryExtensionsString)(Display *dpy, int screen);
 
-//GLX_SGI_swap_control                                                                              
+//GLX_SGI_swap_control
 GLint (APIENTRY *qglXSwapIntervalSGI)(GLint interval);
 
 void	 QGL_EnableLogging( qbool enable ) { /* TODO */ };
@@ -190,7 +193,7 @@ qbool QGL_Init( const char *dllname ) {
 	qglGetIntegerv               = glGetIntegerv;
 	qglGetError                  = glGetError;
 	qglGetString                 = glGetString;
-	
+
 	qglXChooseVisual             = glXChooseVisual;
 	qglXCreateContext            = glXCreateContext;
 	qglXDestroyContext           = glXDestroyContext;
@@ -200,7 +203,7 @@ qbool QGL_Init( const char *dllname ) {
 
   qglXQueryExtensionsString    = glXQueryExtensionsString;
 
-// extensions	
+// extensions
   qglXSwapIntervalSGI          = 0;
 
 	qglActiveTextureARB			     = 0;
@@ -216,14 +219,14 @@ void QGL_Shutdown( void ) {
 	qglGetIntegerv               = NULL;
 	qglGetError                  = NULL;
 	qglGetString                 = NULL;
-	
+
 	qglXChooseVisual             = NULL;
 	qglXCreateContext            = NULL;
 	qglXDestroyContext           = NULL;
 	qglXMakeCurrent              = NULL;
 //	qglXCopyContext              = NULL;
 	qglXSwapBuffers              = NULL;
-	
+
   qglXQueryExtensionsString    = NULL;
 }
 
@@ -268,7 +271,7 @@ static const char *Q_stristr( const char *s, const char *find)
 
 static Cursor CreateNullCursor(Display *display, Window root)
 {
-  Pixmap cursormask; 
+  Pixmap cursormask;
   XGCValues xgc;
   GC gc;
   XColor dummycolour;
@@ -327,8 +330,8 @@ static void install_grabs(void)
       Cvar_LatchedSetValue( &in_mouse, mt_normal );
     } else
     {
-      if (developer.value)                                                                            
-			  ST_Printf( PRINT_ALL, "DGA Mouse - Enabling DGA DirectVideo\n" ); 
+      if (developer.value)
+			  ST_Printf( PRINT_ALL, "DGA Mouse - Enabling DGA DirectVideo\n" );
 
       XF86DGADirectVideo(dpy, DefaultScreen(dpy), XF86DGADirectMouse);
       XWarpPointer(dpy, None, win, 0, 0, 0, 0, 0, 0);
@@ -345,7 +348,7 @@ static void install_grabs(void)
 			close(evdev_fd);
 			evdev_fd = 0;
 		}
-	
+
 		if (in_mmt.integer)
 		{
 			if (!evdev_mt)
@@ -367,7 +370,7 @@ static void install_grabs(void)
 
 		if (evdev_fd == -1)
 		{
-			evdev_fd = 0;		
+			evdev_fd = 0;
 			Com_Printf("Evdev error: open %s failed\n", in_evdevice.string);
 			Cvar_LatchedSetValue(&in_mouse, mt_normal); // switch to normal mouse
 		}
@@ -376,7 +379,7 @@ static void install_grabs(void)
 			Com_DPrintf("Evdev %s enabled\n", in_evdevice.string);
 		}
 	}
-#endif	
+#endif
 	else
   {
     mwx = glConfig.vidWidth / 2;
@@ -400,12 +403,12 @@ static void uninstall_grabs(void)
 			ST_Printf( PRINT_ALL, "DGA Mouse - Disabling DGA DirectVideo\n" );
     XF86DGADirectVideo(dpy, DefaultScreen(dpy), 0);
   }
-#ifdef WITH_EVDEV	
+#ifdef WITH_EVDEV
 	else if (in_mouse.integer == mt_evdev)
 	{
 		if (evdev_fd)
 		{
-      Com_DPrintf("Evdev %s closed\n", in_evdevice.string); 		
+      Com_DPrintf("Evdev %s closed\n", in_evdevice.string);
 			close(evdev_fd);
 			evdev_fd = 0;
 		}
@@ -416,9 +419,9 @@ static void uninstall_grabs(void)
 			evdev_mt = 0;
 		}
 	}
-#endif	
+#endif
 
-  XChangePointerControl(dpy, true, true, mouse_accel_numerator, 
+  XChangePointerControl(dpy, true, true, mouse_accel_numerator,
                         mouse_accel_denominator, mouse_threshold);
 
   XUngrabPointer(dpy, CurrentTime);
@@ -519,7 +522,7 @@ void EvDev_UpdateMouse(void *v) {
 			}
 		}
 	}
-	
+
 	if (evdev_mt)
 	{
 		evdev_mt = 0;
@@ -572,11 +575,11 @@ void IN_StartupMouse(void) {
 	}
 }
 
-void IN_ActivateMouse( void ) 
+void IN_ActivateMouse( void )
 {
   if (!mouseinitialized || !dpy || !win)
     return;
-	
+
   if (!mouse_active)
   {
 		if (!in_nograb.value)
@@ -586,7 +589,7 @@ void IN_ActivateMouse( void )
   }
 }
 
-void IN_DeactivateMouse( void ) 
+void IN_DeactivateMouse( void )
 {
   if (!mouseinitialized || !dpy || !win)
     return;
@@ -618,13 +621,13 @@ void IN_Frame (void) {
   IN_ActivateMouse();
 }
 
-void IN_Restart_f(void)                                                                              
+void IN_Restart_f(void)
 {
 	qbool old_mouse_active = mouse_active;
-	
+
 	IN_Shutdown();
 	IN_Init();
-	
+
 	// if mouse was active before restart, try to re-activate it
 	if ( old_mouse_active )
 		IN_ActivateMouse();
@@ -716,13 +719,13 @@ static int XLateKey(XKeyEvent *ev) {
 		case XK_Shift_L:		key = K_LSHIFT; break;
 		case XK_Shift_R:		key = K_RSHIFT; break;
 
-		case XK_Execute: 
+		case XK_Execute:
 		case XK_Control_L:		key = K_LCTRL; break;
 		case XK_Control_R:		key = K_RCTRL; break;
 
-		case XK_Alt_L:	
+		case XK_Alt_L:
 		case XK_Meta_L:			key = K_LALT; break;
-		case XK_Alt_R:	
+		case XK_Alt_R:
 		case XK_Meta_R:			key = K_RALT; break;
 
 		case XK_Super_L:		key = K_LWIN; break;
@@ -754,18 +757,18 @@ static int XLateKey(XKeyEvent *ev) {
 
 static void HandleEvents(void)
 {
-  extern int ctrlDown, shiftDown, altDown; 
+  extern int ctrlDown, shiftDown, altDown;
   int key;
   XEvent event;
   qbool dowarp = false;
   int dx, dy;
-	
+
   if (!dpy)
     return;
 
 #ifdef WITH_EVDEV
 	// if we use evdev without thread, peek events "manually" each frame
-	if (in_mouse.integer == mt_evdev && !evdev_mt) 
+	if (in_mouse.integer == mt_evdev && !evdev_mt)
 		EvDev_UpdateMouse(NULL);
 #endif
 
@@ -845,23 +848,23 @@ static void HandleEvents(void)
           mwy = event.xmotion.y;
           dowarp = true;
         }
-#ifdef WITH_EVDEV				
+#ifdef WITH_EVDEV
 				else if (in_mouse.integer == mt_evdev)
 				{
 					break; // nothing
 				}
-#endif				
+#endif
       }
       break;
 
     case ButtonPress:
     case ButtonRelease:
-		
+
 #ifdef WITH_EVDEV
 			 if (in_mouse.integer == mt_evdev)
 				 break; // nothing
 #endif
-		
+
 		  switch (event.xbutton.button) {
 		    case 1:
 			    Key_Event(K_MOUSE1, event.type == ButtonPress); break;
@@ -872,13 +875,13 @@ static void HandleEvents(void)
 		    case 4:
 			    Key_Event(K_MWHEELUP, event.type == ButtonPress); break;
 		    case 5:
-			    Key_Event(K_MWHEELDOWN, event.type == ButtonPress); break;			
+			    Key_Event(K_MWHEELDOWN, event.type == ButtonPress); break;
         case 6:
           Key_Event(K_MOUSE4, event.type == ButtonPress); break;
         case 7:
           Key_Event(K_MOUSE5, event.type == ButtonPress); break;
 		  }
-		
+
       break;
 
     case DestroyNotify:
@@ -890,7 +893,7 @@ static void HandleEvents(void)
 			// window manager messages
 			if ((event.xclient.format == 32) && ((unsigned int)event.xclient.data.l[0] == wm_delete_window_atom))
 				Host_Quit();
-			break;			
+			break;
 
     case CreateNotify :
       win_x = event.xcreatewindow.x;
@@ -906,7 +909,7 @@ static void HandleEvents(void)
 
   if (dowarp)
   {
-    XWarpPointer(dpy,None,win,0,0,0,0, 
+    XWarpPointer(dpy,None,win,0,0,0,0,
                  (glConfig.vidWidth/2),(glConfig.vidHeight/2));
   }
 }
@@ -917,7 +920,7 @@ void Sys_SendKeyEvents (void) {
   if (!dpy)
     return;
 
-  IN_Frame();				
+  IN_Frame();
   HandleEvents();
 }
 
@@ -979,7 +982,7 @@ void GLimp_Shutdown( void )
 /*
 ** GLimp_LogComment
 */
-void GLimp_LogComment( char *comment ) 
+void GLimp_LogComment( char *comment )
 {
   if ( glw_state.log_fp )
   {
@@ -992,8 +995,8 @@ void GLimp_LogComment( char *comment )
 */
 // bk001204 - prototype needed
 int GLW_SetMode( const char *drivername, int mode, qbool fullscreen );
-static qbool GLW_StartDriverAndSetMode( const char *drivername, 
-                                           int mode, 
+static qbool GLW_StartDriverAndSetMode( const char *drivername,
+                                           int mode,
                                            qbool fullscreen )
 {
   rserr_t err;
@@ -1007,13 +1010,13 @@ static qbool GLW_StartDriverAndSetMode( const char *drivername,
     fullscreen = false;
   }
 #endif
-	
+
 	if (fullscreen && in_nograb.value)
 	{
 		ST_Printf( PRINT_ALL, "Fullscreen not allowed with in_nograb 1\n");
     Cvar_Set( &r_fullscreen, "0" );
     r_fullscreen.modified = false;
-    fullscreen = false;		
+    fullscreen = false;
 	}
 
   err = GLW_SetMode( drivername, mode, fullscreen );
@@ -1081,7 +1084,7 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
     fprintf(stderr, "Error couldn't open the X display\n");
     return RSERR_INVALID_MODE;
   }
-  
+
   scrnum = DefaultScreen(dpy);
   root = RootWindow(dpy, scrnum);
 
@@ -1099,7 +1102,7 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
     vidmode_ext = true;
   }
 
-  // Check for DGA	
+  // Check for DGA
   dga_MajorVersion = 0, dga_MinorVersion = 0;
   if (in_mouse.integer == mt_dga)
   {
@@ -1264,7 +1267,7 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
       continue;
     }
 
-    ST_Printf( PRINT_ALL, "Using %d/%d/%d Color bits, %d depth, %d stencil display.\n", 
+    ST_Printf( PRINT_ALL, "Using %d/%d/%d Color bits, %d depth, %d stencil display.\n",
                attrib[ATTR_RED_IDX], attrib[ATTR_GREEN_IDX], attrib[ATTR_BLUE_IDX],
                attrib[ATTR_DEPTH_IDX], attrib[ATTR_STENCIL_IDX]);
 
@@ -1287,7 +1290,7 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
   attr.event_mask = X_MASK;
   if (vidmode_active)
   {
-    mask = CWBackPixel | CWColormap | CWSaveUnder | CWBackingStore | 
+    mask = CWBackPixel | CWColormap | CWSaveUnder | CWBackingStore |
            CWEventMask | CWOverrideRedirect;
     attr.override_redirect = True;
     attr.backing_store = NotUseful;
@@ -1295,8 +1298,8 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
   } else
     mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
 
-  win = XCreateWindow(dpy, root, 0, 0, 
-                      actualWidth, actualHeight, 
+  win = XCreateWindow(dpy, root, 0, 0,
+                      actualWidth, actualHeight,
                       0, visinfo->depth, InputOutput,
                       visinfo->visual, mask, &attr);
 
@@ -1310,7 +1313,7 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
   XSetWMNormalHints( dpy, win, &sizehints );
 
   XMapWindow( dpy, win );
-	
+
 	// LordHavoc: making the close button on a window do the right thing
 	// seems to involve this mess, sigh...
 	// {
@@ -1342,7 +1345,7 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
     {
       ST_Printf( PRINT_ALL, "\n\n***********************************************************\n" );
       ST_Printf( PRINT_ALL, " You are using software Mesa (no hardware acceleration)!   \n" );
-      ST_Printf( PRINT_ALL, " Driver DLL used: %s\n", drivername ); 
+      ST_Printf( PRINT_ALL, " Driver DLL used: %s\n", drivername );
       ST_Printf( PRINT_ALL, " If this is intentional, add\n" );
       ST_Printf( PRINT_ALL, "       \"+set r_allowSoftwareGL 1\"\n" );
       ST_Printf( PRINT_ALL, " to the command line when starting the game.\n" );
@@ -1354,7 +1357,7 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
       ST_Printf( PRINT_ALL, "...using software Mesa (r_allowSoftwareGL==1).\n" );
     }
   }
-	
+
   glConfig.isFullscreen	= fullscreen; // qqshka: this line absent in q3, dunno is this correct...
 
   return RSERR_OK;
@@ -1393,7 +1396,7 @@ static void GLW_InitExtensions( void )
 /*
 ** GLW_LoadOpenGL
 **
-** GLimp_win.c internal function that that attempts to load and use 
+** GLimp_win.c internal function that that attempts to load and use
 ** a specific OpenGL DLL.
 */
 static qbool GLW_LoadOpenGL( const char *name )
@@ -1454,7 +1457,7 @@ int qXErrorHandler(Display *dpy, XErrorEvent *ev)
   XGetErrorText(dpy, ev->error_code, buf, 1024);
   ST_Printf( PRINT_ALL, "X Error of failed request: %s\n", buf);
   ST_Printf( PRINT_ALL, "  Major opcode of failed request: %d\n", ev->request_code, buf);
-  ST_Printf( PRINT_ALL, "  Minor opcode of failed request: %d\n", ev->minor_code);  
+  ST_Printf( PRINT_ALL, "  Minor opcode of failed request: %d\n", ev->minor_code);
   ST_Printf( PRINT_ALL, "  Serial number of failed request: %d\n", ev->serial);
   return 0;
 }
@@ -1463,7 +1466,7 @@ int qXErrorHandler(Display *dpy, XErrorEvent *ev)
 ** GLimp_Init
 **
 ** This routine is responsible for initializing the OS specific portions
-** of OpenGL.  
+** of OpenGL.
 */
 void GLimp_Init( void )
 {
@@ -1544,7 +1547,7 @@ void GLimp_Init( void )
   // append GLX extensions, DO NOT CONFUSE WITH GL EXTENSIONS
 	strlcat( glConfig.extensions_string, " ", sizeof( glConfig.extensions_string ) );
   strlcat( glConfig.extensions_string, qglXQueryExtensionsString(dpy, scrnum), sizeof( glConfig.extensions_string ) );
-										 
+
   //
   // chipset specific configuration
   //
@@ -1644,7 +1647,7 @@ void GL_EndRendering (void) {
 
 /*
 ** GLimp_EndFrame
-** 
+**
 ** Responsible for doing a swapbuffers and possibly for other stuff
 ** as yet to be determined.  Probably better not to make this a GLimp
 ** function and instead do a call to GLimp_SwapBuffers.
@@ -1691,13 +1694,13 @@ void GLW_InitGamma (void)
 	customgamma		      = false;
 	currentgammaramp    = NULL;
 
-	v_gamma.modified	= true; // force update on next frame	
+	v_gamma.modified	= true; // force update on next frame
 
 	if (COM_CheckParm("-nohwgamma") && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) // FIXME
 		return;
 
 	XF86VidModeGetGammaRampSize(dpy, scrnum, &size);
-	
+
 	vid_gammaworks = (size == 256);
 
 	if ( vid_gammaworks )
