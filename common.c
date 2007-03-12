@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.68 2007-03-11 06:01:37 disconn3ct Exp $
+    $Id: common.c,v 1.69 2007-03-12 03:20:45 disconn3ct Exp $
 
 */
 
@@ -73,10 +73,10 @@ int FS_FOpenPathFile (char *filename, FILE **file);
 
 /*
 All of Quake's data access is through a hierarchic file system, but the contents of the file system can be transparently merged from several sources.
- 
+
 The "base directory" is the path to the directory holding the quake.exe and all game directories.  The sys_* files pass this to host_init in quakeparms_t->basedir.  This can be overridden with the "-basedir" command line parm to allow code debugging in a different directory.  The base directory is
 only used during filesystem initialization.
- 
+
 The "game directory" is the first tree on the search path and directory that all generated files (savegames, screenshots, demos, config files) will be saved to.  This can be overridden with the "-game" command line parameter.  The game directory can never be changed while quake is executing.  This is a precacution against having a malicious server instruct clients to write files over areas they shouldn't.
 */
 
@@ -110,7 +110,7 @@ char *COM_SkipPath (char *pathname)
 	last = pathname;
 	p = pathname;
 
-	while (*p) 
+	while (*p)
 	{
 		if (*p == '/' || *p == '\\')
 		{
@@ -150,7 +150,7 @@ char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit)
 		int left_size = 0;
 		int temp = 0;
 		char *right_dir = COM_SkipPath(src);
-		
+
 		// Get the size of the right-most part of the path (filename/directory).
 		right_size = strlen (right_dir);
 
@@ -167,16 +167,16 @@ char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit)
 		// Get the final right size.
 		right_size = size_to_fit - left_size - DOT_SIZE - 1;
 
-		// Make sure we don't have negative values, 
+		// Make sure we don't have negative values,
 		// because then our safety checks won't work.
 		left_size = max (0, left_size);
 		right_size = max (0, right_size);
-		
+
 		if (left_size < destination_size)
 		{
 			strlcpy (dest, src, destination_size);
 			strlcpy (dest + left_size, "...", destination_size);
-				
+
 			if (left_size + DOT_SIZE + right_size < destination_size)
 			{
 				strlcpy (dest + left_size + DOT_SIZE, src + strlen(src) - right_size, right_size + 1);
@@ -283,7 +283,7 @@ int COM_GetTempDir(char *buf, int bufsize)
 {
 	int returnval = 0;
 	#ifdef WIN32
-	
+
 	returnval = GetTempPath (bufsize, buf);
 
 	if (returnval > bufsize || returnval == 0)
@@ -293,7 +293,7 @@ int COM_GetTempDir(char *buf, int bufsize)
 	#else // UNIX
 	// TODO: I'm not a unix person, is this proper?
 	char *tmp = getenv("tmp");
-	
+
 	returnval = strlen(tmp);
 
 	if (returnval > bufsize || returnval == 0)
@@ -301,14 +301,14 @@ int COM_GetTempDir(char *buf, int bufsize)
 		return -1;
 	}
 
-	strlcpy (buf, tmp, bufsize); 
+	strlcpy (buf, tmp, bufsize);
 	#endif // WIN32
 
 	return returnval;
 }
 
 //
-// Get a unique temp filename. 
+// Get a unique temp filename.
 //
 int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qbool verify_exists)
 {
@@ -366,7 +366,7 @@ qbool COM_FileExists (char *path)
 	FILE *fexists = NULL;
 
 	// Try opening the file to see if it exists.
-	fexists = fopen(path, "rb"); 
+	fexists = fopen(path, "rb");
 
 	// The file exists.
 	if (fexists)
@@ -399,13 +399,13 @@ int COM_GZipPack (char *source_path,
 		return 0;
 	}
 
-	// Check if the destination file exists and 
+	// Check if the destination file exists and
 	// if we're allowed to overwrite it.
 	if (COM_FileExists (destination_path) && !overwrite)
 	{
 		return 0;
 	}
-	
+
 	// Create the path for the destination.
 	COM_CreatePath (COM_SkipPath (destination_path));
 
@@ -427,7 +427,7 @@ int COM_GZipPack (char *source_path,
 		{
 			gzwrite (gzip_destination, inbuf, bytes_read);
 		}
-		
+
 		fclose (source);
 		gzclose (gzip_destination);
 	}
@@ -445,13 +445,13 @@ int COM_GZipUnpack (char *source_path,		// The path to the compressed source fil
 	FILE *dest		= NULL;
 	int retval		= 0;
 
-	// Check if the destination file exists and 
+	// Check if the destination file exists and
 	// if we're allowed to overwrite it.
 	if (COM_FileExists (destination_path) && !overwrite)
 	{
 		return 0;
 	}
-	
+
 	// Create the path for the destination.
 	COM_CreatePath (COM_SkipPath (destination_path));
 
@@ -473,7 +473,7 @@ int COM_GZipUnpack (char *source_path,		// The path to the compressed source fil
 		{
 			fwrite (out, 1, retval, dest);
 		}
-		
+
 		gzclose (gzip_file);
 		fclose (dest);
 	}
@@ -483,10 +483,10 @@ int COM_GZipUnpack (char *source_path,		// The path to the compressed source fil
 
 //
 // Unpack a .gz file to a temp file.
-// 
+//
 int COM_GZipUnpackToTemp (char *source_path,		// The compressed source file.
 						  char *unpack_path,		// A buffer that will contain the path to the unpacked file.
-						  int unpack_path_size,		// The size of the buffer.	
+						  int unpack_path_size,		// The size of the buffer.
 						  char *append_extension)	// The extension if any that should be appended to the filename.
 {
 	// Get a unique temp filename.
@@ -535,18 +535,18 @@ int COM_ZlibInflate(FILE *source, FILE *dest)
 	strm.avail_in	= 0;
 	strm.next_in	= Z_NULL;
 	ret				= inflateInit(&strm);
-	
+
 	if (ret != Z_OK)
 	{
 		return ret;
 	}
 
 	// Decompress until deflate stream ends or end of file.
-	do 
+	do
 	{
 		strm.avail_in = fread(in, 1, CHUNK, source);
-		
-		if (ferror(source)) 
+
+		if (ferror(source))
 		{
 			(void)inflateEnd(&strm);
 			return Z_ERRNO;
@@ -560,16 +560,16 @@ int COM_ZlibInflate(FILE *source, FILE *dest)
 		strm.next_in = in;
 
 		// Run inflate() on input until output buffer not full.
-		do 
+		do
 		{
 			strm.avail_out = CHUNK;
 			strm.next_out = out;
 			ret = inflate(&strm, Z_NO_FLUSH);
-			
-			// State not clobbered.
-			assert(ret != Z_STREAM_ERROR);  
 
-			switch (ret) 
+			// State not clobbered.
+			assert(ret != Z_STREAM_ERROR);
+
+			switch (ret)
 			{
 				case Z_NEED_DICT:
 					ret = Z_DATA_ERROR; // Fall through.
@@ -581,7 +581,7 @@ int COM_ZlibInflate(FILE *source, FILE *dest)
 
 			have = CHUNK - strm.avail_out;
 
-			if (fwrite(out, 1, have, dest) != have || ferror(dest)) 
+			if (fwrite(out, 1, have, dest) != have || ferror(dest))
 			{
 				(void)inflateEnd(&strm);
 				return Z_ERRNO;
@@ -599,7 +599,7 @@ int COM_ZlibInflate(FILE *source, FILE *dest)
 
 //
 // Unpack a zlib file. ... NOT the same as gzip!
-// 
+//
 int COM_ZlibUnpack (char *source_path,		// The path to the compressed source file.
 					char *destination_path, // The destination file path.
 					qbool overwrite)		// Overwrite the destination file if it exists?
@@ -614,14 +614,14 @@ int COM_ZlibUnpack (char *source_path,		// The path to the compressed source fil
 		return 0;
 	}
 
-	// Check if the destination file exists and 
+	// Check if the destination file exists and
 	// if we're allowed to overwrite it.
 	if (COM_FileExists (destination_path) && !overwrite)
 	{
 		fclose (source);
 		return 0;
 	}
-	
+
 	// Create the path for the destination.
 	COM_CreatePath (COM_SkipPath (destination_path));
 
@@ -639,7 +639,7 @@ int COM_ZlibUnpack (char *source_path,		// The path to the compressed source fil
 
 	fclose (source);
 	fclose (dest);
-	
+
 	return (retval != Z_OK) ? 0 : 1;
 }
 
@@ -648,7 +648,7 @@ int COM_ZlibUnpack (char *source_path,		// The path to the compressed source fil
 //
 int COM_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 						  char *unpack_path,		// A buffer that will contain the path to the unpacked file.
-						  int unpack_path_size,		// The size of the buffer.	
+						  int unpack_path_size,		// The size of the buffer.
 						  char *append_extension)	// The extension if any that should be appended to the filename.
 {
 	// Get a unique temp filename.
@@ -685,9 +685,9 @@ int COM_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 
 #define ZIP_WRITEBUFFERSIZE (8192)
 
-int COM_ZipUnpackOneFileToTemp (unzFile zip_file, 
+int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 						  const char *filename_inzip,
-						  qbool case_sensitive, 
+						  qbool case_sensitive,
 						  qbool keep_path,
 						  const char *password,
 						  char *unpack_path,			// The path where the file was unpacked.
@@ -744,12 +744,12 @@ int COM_ZipBreakupArchivePath (char *archive_extension,			// The extension of th
 	strlcpy (regexp, va("(.*?\\.%s)(\\\\|/)(.*)", archive_extension), sizeof(regexp));
 
 	// Get the archive path.
-	if (Utils_RegExpGetGroup (regexp, path, &archive_path_found, &result_length, 1))
+	if (Utils_RegExpGetGroup (regexp, path, (const char **) &archive_path_found, &result_length, 1))
 	{
 		strlcpy (archive_path, archive_path_found, archive_path_size);
 
 		// Get the path of the demo in the zip.
-		if (Utils_RegExpGetGroup (regexp, path, &inzip_path_found, &result_length, 3))
+		if (Utils_RegExpGetGroup (regexp, path, (const char **) &inzip_path_found, &result_length, 3))
 		{
 			strlcpy (inzip_path, inzip_path_found, inzip_path_size);
 			Q_free (archive_path_found);
@@ -798,7 +798,7 @@ static void COM_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_i
 
 	// TODO : Zip size is unsigned long, dir entry unsigned int, data loss possible for really large files.
 	ent->size = (unsigned int)unzip_fileinfo->uncompressed_size;
-  
+
     // Get the filetime.
 	{
 		// FIXME: This gets the wrong date...
@@ -814,24 +814,24 @@ static void COM_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_i
 		#endif // WIN32
 	}
 
-	// FIXME: There is no directory structure inside of zip files, but the files are named as if there is. 
+	// FIXME: There is no directory structure inside of zip files, but the files are named as if there is.
 	// that is, if the file is in the root it will be named "file" in the zip file info. If it's in a directory
 	// it will be named "dir/file". So we could find out if it's a directory or not by checking the filename here.
 	ent->directory = 0;
 	ent->hidden = 0;
 }
 
-int COM_ZipUnpack (unzFile zip_file, 
-				   char *destination_path, 
-				   qbool case_sensitive, 
-				   qbool keep_path, 
-				   qbool overwrite, 
+int COM_ZipUnpack (unzFile zip_file,
+				   char *destination_path,
+				   qbool case_sensitive,
+				   qbool keep_path,
+				   qbool overwrite,
 				   const char *password)
 {
 	int error = UNZ_OK;
 	unsigned long file_num = 0;
 	unz_global_info global_info;
-	
+
 	// Get the number of files in the zip archive.
 	error = unzGetGlobalInfo (zip_file, &global_info);
 
@@ -863,9 +863,9 @@ int COM_ZipUnpack (unzFile zip_file,
 	return error;
 }
 
-int COM_ZipUnpackToTemp (unzFile zip_file, 
-				   qbool case_sensitive, 
-				   qbool keep_path, 
+int COM_ZipUnpackToTemp (unzFile zip_file,
+				   qbool case_sensitive,
+				   qbool keep_path,
 				   const char *password,
 				   char *unpack_path,			// The path where the file was unpacked.
 				   int unpack_path_size)		// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.)
@@ -931,11 +931,11 @@ int COM_ZipUnpackOneFile (unzFile zip_file,				// The zip file opened with COM_Z
 	return retval;
 }
 
-int COM_ZipUnpackCurrentFile (unzFile zip_file, 
-							  const char *destination_path, 
-							  qbool case_sensitive, 
-							  qbool keep_path, 
-							  qbool overwrite, 
+int COM_ZipUnpackCurrentFile (unzFile zip_file,
+							  const char *destination_path,
+							  qbool case_sensitive,
+							  qbool keep_path,
+							  qbool overwrite,
 							  const char *password)
 {
 	int				error = UNZ_OK;
@@ -981,7 +981,7 @@ int COM_ZipUnpackCurrentFile (unzFile zip_file,
 
 		// Create the relative path before extracting.
 		if (keep_path)
-		{	
+		{
 			COM_CreatePath (va("%s%c%s", destination_path, PATH_SEPARATOR, filename));
 		}
 	}
@@ -991,9 +991,9 @@ int COM_ZipUnpackCurrentFile (unzFile zip_file,
 	//
 	{
 		#define	EXPECTED_BYTES_READ	1
-		int	bytes_read	= 0;		
+		int	bytes_read	= 0;
 		FILE *fout		= NULL;
-		
+
 		error = UNZ_OK;
 
 		//
@@ -1062,7 +1062,7 @@ int COM_ZipUnpackCurrentFile (unzFile zip_file,
 		// TODO : Change file date for the file.
 	}
 
-finish:	
+finish:
 	Q_free (buf);
 
 	return error;
@@ -1075,7 +1075,7 @@ static int COM_ZipGetDetails (unzFile zip_file, sys_dirent *ent)
 	char filename_inzip[MAX_PATH_LENGTH];
 	unz_file_info unzip_fileinfo;
 
-	error = unzGetCurrentFileInfo (zip_file, 
+	error = unzGetCurrentFileInfo (zip_file,
 		&unzip_fileinfo,						// File info.
 		filename_inzip, sizeof(filename_inzip), // The files name will be copied to this.
 		NULL, 0, NULL, 0);						// Extras + comment stuff. We don't care about this.
@@ -1106,14 +1106,14 @@ int COM_ZipGetFirst (unzFile zip_file, sys_dirent *ent)
 	{
 		return error;
 	}
-	
+
 	return 1;
 }
 
 int COM_ZipGetNextFile (unzFile zip_file, sys_dirent *ent)
 {
 	int error = UNZ_OK;
-	
+
 	// Get the next file.
 	error = unzGoToNextFile (zip_file);
 
@@ -1669,7 +1669,7 @@ byte *FS_LoadHeapFile (char *path)
 
 /*
 Takes an explicit (not game tree related) path to a pak file.
- 
+
 Loads the header and directory, adding the files at the beginning
 of the list so they override previous pack files.
 */
@@ -1948,14 +1948,14 @@ void FS_ShutDown( void ) {
 
 void FS_InitFilesystemEx( qbool guess_cwd ) {
 	int i;
-	char *ev;	
+	char *ev;
 
 	FS_ShutDown();
 
 	if (guess_cwd) { // so, com_basedir directory will be where ezquake*.exe located
 		char *e;
 
-#if defined(_WIN32)	
+#if defined(_WIN32)
 		if(!(i = GetModuleFileName(NULL, com_basedir, sizeof(com_basedir)-1)))
 			Sys_Error("FS_InitFilesystemEx: GetModuleFileName failed");
 		com_basedir[i] = 0; // ensure null terminator
@@ -1995,7 +1995,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	i = strlen(com_basedir) - 1;
 	if (i >= 0 && com_basedir[i] == '/')
 		com_basedir[i] = 0;
-		
+
 #ifdef _WIN32
 	// correct?
 	if ( (ev = getenv("HOMEDRIVE")) ) {
@@ -2024,7 +2024,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 		strlcat(com_homedir, "/ezquake", sizeof(com_homedir));
 #else
 		strlcat(com_homedir, "/.ezquake", sizeof(com_homedir));
-#endif		
+#endif
 		Com_Printf("Using home directory \"%s\"\n", com_homedir);
 	}
 	else
@@ -2078,9 +2078,9 @@ char *COM_LegacyDir(char *media_dir)
 	// dir empty, return gamedir
 	if (!media_dir || !media_dir[0]) {
 		strlcpy(dir, cls.gamedir, sizeof(dir));
-		return dir;		
+		return dir;
 	}
-	
+
 	switch (cl_mediaroot.integer) {
 		case 1:  //			/home/qqshka/ezquake/<demo_dir>
 			while(media_dir[0] == '/' || media_dir[0] == '\\')
