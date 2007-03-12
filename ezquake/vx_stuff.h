@@ -194,6 +194,4 @@ void VX_LightningTrail (vec3_t start, vec3_t end);
 
 void Amf_Reset_DamageStats (void);
 
-void Draw_AMFStatLoss (int stat, struct hud_s* hud);
-
 #endif // __VX_STUFF__H__

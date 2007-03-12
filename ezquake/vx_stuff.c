@@ -116,12 +116,12 @@ int QW_strncmp (char *s1, char *s2)
 
 char *TP_ConvertToWhiteText(char *s)
 {
-	static char	buf[4096];	
+	static char	buf[4096];
 	char	*out, *p;
 	buf[0] = 0;
 	out = buf;
 
-	for (p = s; *p; p++) 
+	for (p = s; *p; p++)
 	{
 		*out++ = *p - (*p & 128);
 	}
@@ -130,7 +130,7 @@ char *TP_ConvertToWhiteText(char *s)
 }
 ///////////////////////////////////////
 //Model Checking
-typedef struct 
+typedef struct
 {
 	char *number;
 	char *name;
@@ -163,7 +163,7 @@ checkmodel_t tp_checkmodels[]=
 
 #define NUMCHECKMODELS (sizeof(tp_checkmodels) / sizeof(tp_checkmodels[0]))
 
-checkmodel_t *TP_GetModels (char *s)	
+checkmodel_t *TP_GetModels (char *s)
 {
 	unsigned int i;
 	char *f = TP_ConvertToWhiteText(s);
@@ -186,7 +186,7 @@ void CheckModels_f(void)
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (!cl.players[i].name[0]) //not in game
-			continue; 
+			continue;
 		//check pmodel
 		mod = TP_GetModels(Info_ValueForKey(cl.players[i].userinfo, "pmodel"));
 		if (mod == NULL)
@@ -212,7 +212,7 @@ void CheckModels_f(void)
 		{
 			Com_Printf("Warning: %s has ILLEGAL eyes model (%s)\n", Info_ValueForKey(cl.players[i].userinfo, "name"), mod->name);
 		}
-	}	
+	}
 };
 ////////////////////////////////
 /// test stuff
@@ -226,12 +226,12 @@ void Draw_AlphaWindow (int x1, int y1, int x2, int y2, int col, float alpha)
 	dist = y2-y1;
 	Draw_Fill (x1, y1, 1, dist, 2);							//Border - Left
 	Draw_Fill (x2, y1, 1, dist+1, 1);							//Border - Right
-	
+
 	Draw_AlphaFill (x1, y1, x2-x1, y2-y1, col, alpha);
 
 }
 
-void Draw_AMFStatLoss (int stat, struct hud_s* hud) {
+void Draw_AMFStatLoss (int stat, hud_t* hud) {
     static int * vxdmgcnt, * vxdmgcnt_t, * vxdmgcnt_o;
 	static int x;
     float alpha;
@@ -267,7 +267,7 @@ void Draw_AMFStatLoss (int stat, struct hud_s* hud) {
       	glDisable(GL_ALPHA_TEST);
       	glEnable (GL_BLEND);
       	glColor4f(1, 1, 1, alpha);
-		if (hud) {    
+		if (hud) {
 			static cvar_t *scale = NULL, *style, *digits, *align;
 			if (scale == NULL)  // first time called
 			{
@@ -288,7 +288,7 @@ void Draw_AMFStatLoss (int stat, struct hud_s* hud) {
     }
 }
 
-void SCR_DrawAMFstats (void) 
+void SCR_DrawAMFstats (void)
 {
 	int x, y, numlines;
 	char st[80];
@@ -298,13 +298,13 @@ void SCR_DrawAMFstats (void)
 
 	numlines = 6;
 	numlines += 2; //margins
-	
+
 	sprintf(st, "Particle Count: %3d ", ParticleCount);
 	x = vid.width - strlen(st)*8 -8;
 	y = vid.height*0.1;
 	Draw_AlphaWindow(x-8, y-8, x+strlen(st)*8, y+numlines*8-8, 1, 0.33);
 	Draw_String(x, y, st);
-	
+
 	sprintf(st, "Highest: %3d ", ParticleCountHigh);
 	x = vid.width - strlen(st) * 8 - 8;
 	y = y + 8;
@@ -335,7 +335,7 @@ void SCR_DrawAMFstats (void)
 void Amf_SetMode_f(void)
 {
 	char mode[10];
-	if (Cmd_Argc() != 2) 
+	if (Cmd_Argc() != 2)
 	{
 		Com_Printf("Usage: %s [modename]\n", Cmd_Argv(0));
 		return;
@@ -373,7 +373,7 @@ void Amf_SetMode_f(void)
 #endif
 		Cvar_SetValue (&gl_bounceparticles, 0);
 	}
-	
+
 }
 
 void InitVXStuff(void)
@@ -405,7 +405,7 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_camera_death);
 
 	Cvar_ResetCurrentGroup();
-	
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 
 	Cvar_Register (&amf_showstats);

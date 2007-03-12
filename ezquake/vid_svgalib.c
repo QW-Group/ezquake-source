@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_svgalib.c,v 1.25 2007-02-18 03:33:49 rhagelstrom Exp $
+	$Id: vid_svgalib.c,v 1.26 2007-03-12 03:20:04 disconn3ct Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -29,6 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "vgamouse.h"
 
 #include "quakedef.h"
+#include "keys.h"
+#include "input.h"
 #include "d_local.h"
 
 #ifdef WITH_KEYMAP
@@ -550,7 +552,7 @@ void VID_Update (vrect_t *rects)
 				offset = rects->y * vid.rowbytes + rects->x;
 				while (ycount--) {
 					register int i = offset % 0x10000;
-	
+
 					if (offset / 0x10000 != vidpage) {
 						vidpage=offset / 0x10000;
 						vga_setpage(vidpage);

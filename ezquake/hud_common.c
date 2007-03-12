@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.129 2007-03-11 06:01:40 disconn3ct Exp $
+	$Id: hud_common.c,v 1.130 2007-03-12 03:20:03 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -623,7 +623,7 @@ void SCR_HUD_DrawDemoClock(hud_t *hud)
         *hud_democlock_blink,
 		*hud_democlock_scale;
 
-	if (!cls.demoplayback) 
+	if (!cls.demoplayback)
 	{
 		HUD_PrepareDraw(hud, width, height, &x, &y);
 		return;
@@ -1787,6 +1787,7 @@ void SCR_HUD_DrawArmor(hud_t *hud)
 }
 
 #ifdef GLQUAKE
+void Draw_AMFStatLoss (int stat, hud_t* hud);
 void SCR_HUD_DrawHealthDamage(hud_t *hud)
 {
 	// TODO: This is very naughty, HUD_PrepareDraw(hud, width, height, &x, &y); MUST be called.
@@ -2068,7 +2069,7 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
 	}
 
 	// Get the path for the pic.
-	snprintf (pic_path, sizeof(pic_path), HUD_GROUP_PIC_BASEPATH, newpic); 
+	snprintf (pic_path, sizeof(pic_path), HUD_GROUP_PIC_BASEPATH, newpic);
 
 	// Try loading the pic.
 	if (!(temp_pic = GL_LoadPicImage(pic_path, newpic, 0, 0, TEX_ALPHA)))
@@ -2443,7 +2444,7 @@ static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 			// Teamsort == 2, sort on team name only.
 			r = (r == 0) ? -strcmp(p1->team->name, p2->team->name) : r;
 		}
-		
+
 		r = (r == 0) ? i1->frags - i2->frags : r;
 		r = (r == 0) ? strcmp(i1->name, i2->name) : r;
     }
@@ -2557,7 +2558,7 @@ static void HUD_Sort_Scoreboard(int flags)
 		}
 	}
 
-	// Sort teams. 	
+	// Sort teams.
 	if(flags & HUD_SCOREBOARD_SORT_TEAMS)
 	{
 		qsort(sorted_teams, n_teams, sizeof(sort_teams_info_t), HUD_CompareTeams);
@@ -2589,9 +2590,9 @@ static void HUD_Sort_Scoreboard(int flags)
 	}
 }
 
-void Frags_DrawColors(int x, int y, int width, int height, 
+void Frags_DrawColors(int x, int y, int width, int height,
 					  int top_color, int bottom_color, float color_alpha,
-					  int frags, int drawBrackets, int style, 
+					  int frags, int drawBrackets, int style,
 					  float bignum)
 {
 	char buf[32];
@@ -2618,7 +2619,7 @@ void Frags_DrawColors(int x, int y, int width, int height,
 		int char_x;
 		int char_y;
 		sprintf(buf, "%d", frags);
-		
+
 		char_x = max(x, x + (width  - (int)strlen(buf) * char_size) / 2);
 		char_y = max(y, posy);
 
@@ -2636,7 +2637,7 @@ void Frags_DrawColors(int x, int y, int width, int height,
 	else
 	{
 		// Normal text size.
-		sprintf(buf, "%3d", frags);		
+		sprintf(buf, "%3d", frags);
 		Draw_String(x - 2 + (width - char_size * strlen(buf) - 2) / 2, posy, buf);
 	}
 
@@ -3250,7 +3251,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 		if(hud_frags_shownames->value)
 		{
 			width += (a_cols * (max_name_length + 3) * 8) + ((a_cols + 1) * space_x);
-			//width += (a_cols * max_name_length * (int)char_size) + ((a_cols + 1) * space_x);			
+			//width += (a_cols * max_name_length * (int)char_size) + ((a_cols + 1) * space_x);
 		}
 
 		if(cl.teamplay && hud_frags_teams->value)
@@ -3303,12 +3304,12 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 			if(player_pos + 1 <= (a_rows * a_cols))
 			{
 				// If I'm not "outside" the shown frags, start drawing from the top.
-				num = 0; 
+				num = 0;
 			}
 			else
 			{
 				// Always include me in the shown frags.
-				num = abs((a_rows * a_cols) - (player_pos + 1)); 
+				num = abs((a_rows * a_cols) - (player_pos + 1));
 			}
 
 			// Make sure we're not trying to go outside the player array.
@@ -3345,7 +3346,7 @@ void SCR_HUD_DrawFrags(hud_t *hud)
 					{
 						element_width += (max_name_length) * 8;
 					}
-					
+
 					if(hud_frags_teams->value)
 					{
 						element_width += (max_team_length) * 8;
@@ -4150,7 +4151,7 @@ void HUD_AutoLoad_MVD(int autoload) {
 
 		Com_DPrintf("Loading MVD Hud\n");
 		// Store current settings.
-		if (!autohud.active) 
+		if (!autohud.active)
 		{
 			extern cvar_t cfg_save_cmdline, cfg_save_cvars, cfg_save_cmds, cfg_save_aliases, cfg_save_binds;
 
@@ -4174,7 +4175,7 @@ void HUD_AutoLoad_MVD(int autoload) {
 			Cvar_SetValue(&cfg_save_binds,		1);
 
 			// Save a temporary config.
-			DumpConfig(TEMPHUD_NAME".cfg"); 
+			DumpConfig(TEMPHUD_NAME".cfg");
 
 			Cvar_SetValue(&cfg_save_cmdline,	old_cmdline);
 			Cvar_SetValue(&cfg_save_cvars,		old_cvars);
@@ -4596,7 +4597,7 @@ qbool TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s)
 	teamhold_show_mh		= Utils_RegExpMatch("MH",	s);
 	teamhold_show_ra		= Utils_RegExpMatch("RA",	s);
 	teamhold_show_ya		= Utils_RegExpMatch("YA",	s);
-	teamhold_show_ga		= Utils_RegExpMatch("GA",	s); 
+	teamhold_show_ga		= Utils_RegExpMatch("GA",	s);
 
 	// Reset the ordering of the items.
 	StatsGrid_ResetHoldItemsOrder();
@@ -4640,7 +4641,7 @@ qbool TeamHold_OnChangeItemFilterInfo(cvar_t *var, char *s)
 
 			// Start trying to find a new word.
 			start = end;
-		}			
+		}
 	}
 
 	// Order the hold items.
