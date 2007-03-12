@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: zone.c,v 1.11 2007-03-12 02:34:18 disconn3ct Exp $
+	$Id: zone.c,v 1.12 2007-03-12 03:04:41 disconn3ct Exp $
 */
 // zone.c - memory management
 
@@ -407,12 +407,14 @@ void Cache_Print (void) {
 	cache_system_t *cd;
 
 	for (cd = cache_head.next; cd != &cache_head; cd = cd->next) {
-		Com_Printf ("%8i : %s\n", cd->size, cd->name);
+		Com_Printf ("%5.1f kB : %s\n", (cd->size/(float)(1024)), cd->name);
 	}
 }
 
 void Cache_Report (void) {
-	Com_Printf ("%4.1f megabyte data cache\n", (hunk_size - hunk_high_used - hunk_low_used) / (float)(1024*1024) );
+	Com_Printf ("%4.1f of %4.1f megabyte data cache free\n",
+		((hunk_size - hunk_high_used - hunk_low_used) / (float)(1024*1024)),
+		(hunk_size / (float)(1024*1024)));
 }
 
 void Cache_Init (void) {
