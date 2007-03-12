@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: zone.c,v 1.10 2006-05-16 03:10:11 disconn3ct Exp $
+	$Id: zone.c,v 1.11 2007-03-12 02:34:18 disconn3ct Exp $
 */
 // zone.c - memory management
 
@@ -28,11 +28,11 @@ void Cache_FreeHigh (int new_high_hunk);
 
 //============================================================================
 
-#define	HUNK_SENTINEL	0x1df001ed
+#define HUNK_SENTINEL 0x1df001ed
 
 typedef struct {
 	int		sentinal;
-	int		size;		// including sizeof(hunk_t), -1 = not allocated
+	int		size; // including sizeof(hunk_t), -1 = not allocated
 	char	name[8];
 } hunk_t;
 
@@ -43,14 +43,14 @@ int		hunk_low_used;
 int		hunk_high_used;
 
 qbool	hunk_tempactive;
-int			hunk_tempmark;
+int		hunk_tempmark;
 
 //Run consistancy and sentinal trahing checks
 
 void Hunk_Check (void) {
-	hunk_t	*h;
-	
-	for (h = (hunk_t *)hunk_base; (byte *)h != hunk_base + hunk_low_used; ) {
+	hunk_t *h;
+
+	for (h = (hunk_t *) hunk_base; (byte *) h != hunk_base + hunk_low_used;) {
 		if (h->sentinal != HUNK_SENTINEL)
 			Sys_Error ("Hunk_Check: trashed sentinel");
 		if (h->size < 16 || h->size + (byte *) h - hunk_base > hunk_size)
@@ -87,17 +87,17 @@ void Hunk_Print (qbool all) {
 			Com_Printf ("-------------------------\n");
 			h = starthigh;
 		}
-		
+
 		// if totally done, break
 		if ( h == endhigh )
 			break;
 
 		// run consistancy checks
 		if (h->sentinal != HUNK_SENTINEL)
-			Sys_Error ("Hunk_Check: trashed sentinal");
+			Sys_Error ("Hunk_Print: trashed sentinal");
 		if (h->size < 16 || h->size + (byte *)h - hunk_base > hunk_size)
-			Sys_Error ("Hunk_Check: bad size");
-			
+			Sys_Error ("Hunk_Print: bad size");
+
 		next = (hunk_t *)((byte *)h+h->size);
 		count++;
 		totalblocks++;
@@ -121,23 +121,23 @@ void Hunk_Print (qbool all) {
 
 	Com_Printf ("-------------------------\n");
 	Com_Printf ("%8i total blocks\n", totalblocks);
-	
+
 }
 
 void *Hunk_AllocName (int size, char *name) {
-	hunk_t	*h;
+	hunk_t *h;
 
 #ifdef PARANOID
 	Hunk_Check ();
 #endif
 
 	if (size < 0)
-		Sys_Error ("Hunk_Alloc: bad size: %i", size);
+		Sys_Error ("Hunk_AllocName: bad size: %i", size);
 
 	size = sizeof(hunk_t) + ((size + 15) & ~15);
 
 	if (hunk_size - hunk_low_used - hunk_high_used < size)
-	  	Sys_Error ("Not enough RAM allocated.  Try using \"-mem 16\" on the ezQuake command line.");
+	  	Sys_Error ("Hunk_AllocName: Not enough RAM allocated.  Try using \"-mem 16\" on the ezQuake command line.");
 
 	h = (hunk_t *)(hunk_base + hunk_low_used);
 	hunk_low_used += size;
@@ -205,7 +205,7 @@ void *Hunk_HighAllocName (int size, char *name) {
 	size = sizeof(hunk_t) + ((size+15)&~15);
 
 	if (hunk_size - hunk_low_used - hunk_high_used < size)
-	  	Sys_Error ("Not enough RAM allocated.  Try using \"-mem 16\" on the ezQuake command line.");
+	  	Sys_Error ("Hunk_HighAllocName: Not enough RAM allocated.  Try using \"-mem 16\" on the ezQuake command line.");
 
 	hunk_high_used += size;
 	Cache_FreeHigh (hunk_high_used);
@@ -247,19 +247,19 @@ CACHE MEMORY
 */
 
 typedef struct cache_system_s {
-	int						size;		// including this header
+	int						size; // including this header
 	cache_user_t			*user;
 	char					name[16];
 	struct cache_system_s	*prev, *next;
-	struct cache_system_s	*lru_prev, *lru_next;	// for LRU flushing	
+	struct cache_system_s	*lru_prev, *lru_next; // for LRU flushing
 } cache_system_t;
 
 cache_system_t *Cache_TryAlloc (int size, qbool nobottom);
 
-cache_system_t	cache_head;
+cache_system_t cache_head;
 
 void Cache_Move ( cache_system_t *c) {
-	cache_system_t		*new;
+	cache_system_t *new;
 
 	// we are clearing up space at the bottom, so only allocate it late
 	new = Cache_TryAlloc (c->size, true);
@@ -272,21 +272,21 @@ void Cache_Move ( cache_system_t *c) {
 		new->user->data = (void *) (new + 1);
 	} else {
 		//cache move failed
-		Cache_Free (c->user);		// tough luck...
+		Cache_Free (c->user); // tough luck...
 	}
 }
 
 //Throw things out until the hunk can be expanded to the given point
 void Cache_FreeLow (int new_low_hunk) {
 	cache_system_t *c;
-	
+
 	while (1) {
 		c = cache_head.next;
 		if (c == &cache_head)
-			return;		// nothing in cache at all
+			return; // nothing in cache at all
 		if ((byte *) c >= hunk_base + new_low_hunk)
-			return;		// there is space to grow the hunk
-		Cache_Move (c);	// reclaim the space
+			return; // there is space to grow the hunk
+		Cache_Move (c); // reclaim the space
 	}
 }
 
@@ -298,13 +298,13 @@ void Cache_FreeHigh (int new_high_hunk) {
 	while (1) {
 		c = cache_head.prev;
 		if (c == &cache_head)
-			return;		// nothing in cache at all
+			return; // nothing in cache at all
 		if ((byte *) c + c->size <= hunk_base + hunk_size - new_high_hunk)
-			return;		// there is space to grow the hunk
+			return; // there is space to grow the hunk
 		if (c == prev) {
-			Cache_Free (c->user);	// didn't move out of the way
+			Cache_Free (c->user); // didn't move out of the way
 		} else {
-			Cache_Move (c);	// try to move it
+			Cache_Move (c); // try to move it
 			prev = c;
 		}
 	}
@@ -357,7 +357,7 @@ cache_system_t *Cache_TryAlloc (int size, qbool nobottom) {
 
 	do {
 		if (!nobottom || cs != cache_head.next) {
-			if ( (byte *)cs - (byte *)new >= size) {	
+			if ( (byte *)cs - (byte *)new >= size) {
 				// found space
 				memset (new, 0, sizeof(*new));
 				new->size = size;
@@ -373,7 +373,7 @@ cache_system_t *Cache_TryAlloc (int size, qbool nobottom) {
 			}
 		}
 
-		// continue looking		
+		// continue looking
 		new = (cache_system_t *)((byte *)cs + cs->size);
 		cs = cs->next;
 
@@ -394,7 +394,7 @@ cache_system_t *Cache_TryAlloc (int size, qbool nobottom) {
 		return new;
 	}
 
-	return NULL;		// couldn't allocate
+	return NULL; // couldn't allocate
 }
 
 //Throw everything out, so new data will be demand cached
@@ -412,7 +412,7 @@ void Cache_Print (void) {
 }
 
 void Cache_Report (void) {
-	Com_DPrintf ("%4.1f megabyte data cache\n", (hunk_size - hunk_high_used - hunk_low_used) / (float)(1024*1024) );
+	Com_Printf ("%4.1f megabyte data cache\n", (hunk_size - hunk_high_used - hunk_low_used) / (float)(1024*1024) );
 }
 
 void Cache_Init (void) {
@@ -420,11 +420,13 @@ void Cache_Init (void) {
 	cache_head.lru_next = cache_head.lru_prev = &cache_head;
 
 	Cmd_AddCommand ("flush", Cache_Flush);
+	Cmd_AddCommand ("cache_print", Cache_Print);
+	Cmd_AddCommand ("cache_report", Cache_Report);
 }
 
 //Frees the memory and removes it from the LRU list
 void Cache_Free (cache_user_t *c) {
-	cache_system_t	*cs;
+	cache_system_t *cs;
 
 	if (!c->data)
 		Sys_Error ("Cache_Free: not allocated");
@@ -441,7 +443,7 @@ void Cache_Free (cache_user_t *c) {
 }
 
 void *Cache_Check (cache_user_t *c) {
-	cache_system_t	*cs;
+	cache_system_t *cs;
 
 	if (!c->data)
 		return NULL;
@@ -456,7 +458,7 @@ void *Cache_Check (cache_user_t *c) {
 }
 
 void *Cache_Alloc (cache_user_t *c, int size, char *name) {
-	cache_system_t	*cs;
+	cache_system_t *cs;
 
 	if (c->data)
 		Sys_Error ("Cache_Alloc: already allocated");
@@ -466,7 +468,7 @@ void *Cache_Alloc (cache_user_t *c, int size, char *name) {
 
 	size = (size + sizeof(cache_system_t) + 15) & ~15;
 
-	// find memory for it	
+	// find memory for it
 	while (1) {
 		if ((cs = Cache_TryAlloc (size, false)))	{
 			strncpy (cs->name, name, sizeof(cs->name)-1);
