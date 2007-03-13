@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.130 2007-03-12 03:20:03 disconn3ct Exp $
+	$Id: hud_common.c,v 1.131 2007-03-13 05:14:33 qqshka Exp $
 */
 //
 // common HUD elements
@@ -4138,7 +4138,6 @@ void HUD_NewRadarMap()
 #define TEMPHUD_FULLPATH "configs/"TEMPHUD_NAME".cfg"
 
 // will check if user wants to un/load external MVD HUD automatically
-void DumpConfig(char *name);
 void HUD_AutoLoad_MVD(int autoload) {
 	char *cfg_suffix = "custom";
 	extern cvar_t scr_fov;
