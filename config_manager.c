@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.35 2007-03-11 06:01:37 disconn3ct Exp $
+    $Id: config_manager.c,v 1.36 2007-03-13 09:07:16 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -78,6 +78,8 @@ cvar_t	cfg_save_sysinfo	=	{"cfg_save_sysinfo", "0"};
 cvar_t	cfg_save_cmdline	=	{"cfg_save_cmdline", "1"};
 
 cvar_t	cfg_backup			=	{"cfg_backup", "0"};
+
+cvar_t  cfg_use_home		=	{"cfg_use_home", "1"};
 
 /************************************ DUMP FUNCTIONS ************************************/
 
@@ -681,7 +683,11 @@ void DumpConfig(char *name)
 	FILE	*f;
 	char	*outfile, *newlines = "\n";
 
-	outfile = va("%s/ezquake/configs/%s", com_basedir, name);
+	if (cfg_use_home.integer) // use home dir for cfg
+		outfile = va("%s/%s", com_homedir, name);
+	else // use ezquake dir
+		outfile = va("%s/ezquake/configs/%s", com_basedir, name);
+
 	if (!(f	= fopen	(outfile, "w"))) {
 		COM_CreatePath(outfile);
 		if (!(f	= fopen	(outfile, "w"))) {
@@ -787,20 +793,27 @@ void DumpHUD(char *name)
 
 void SaveConfig_f(void)
 {
-	char *filename, *filename_ext, *backupname_ext;
+	char filename[MAX_PATH] = {0}, *arg1, *filename_ext, *backupname_ext;
 	FILE *f;
 
+/* load config.cfg by default if no params
 	if (Cmd_Argc() != 2) {
 		Com_Printf("Usage: %s <filename>\n", Cmd_Argv(0));
 		return;
 	}
+*/
 
-	filename = COM_SkipPath(Cmd_Argv(1));
+	arg1 = COM_SkipPath(Cmd_Argv(1));
+	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : "config.cfg"); // use config.cfg if no params was specified
+
 	COM_ForceExtension(filename, ".cfg");
 
-
 	if (cfg_backup.value) {
-		filename_ext = va("%s/ezquake/configs/%s", com_basedir, filename);
+		if (cfg_use_home.integer) // use home dir for cfg
+			filename_ext = va("%s/%s", com_homedir, filename);
+		else // use ezquake dir
+			filename_ext = va("%s/ezquake/configs/%s", com_basedir, filename);
+
 		if ((f = fopen(filename_ext, "r"))) {
 			fclose(f);
 			backupname_ext = (char *) Q_malloc(strlen(filename_ext) + 5);
@@ -829,21 +842,60 @@ void ResetConfigs_f(void)
 	ResetConfigs(true);
 }
 
+// well exec /home/qqshka/ezquake/config.cfg does't work, security or something, so adding this
+// so this is some replacement for exec
+void LoadHomeCfg(const char *filename)
+{
+	char fullname[MAX_PATH] = {0}, *fileBuffer;
+    int size;
+    FILE *f;
+
+	snprintf(fullname, sizeof(fullname) - 4, "%s/%s", com_homedir, filename);
+	COM_ForceExtension(fullname, ".cfg");
+
+	if (!(f = fopen(fullname, "r"))) {
+	    Com_DPrintf("LoadHomeCfg: %s not found\n", filename); // hrm
+		return;
+	}
+
+	size = COM_FileLength(f);
+	fileBuffer = Q_malloc(size + 1); // +1 for null terminator
+	fread(fileBuffer, 1, size, f);
+	fileBuffer[size] = 0;
+	fclose(f);
+
+	Cbuf_AddText (fileBuffer);
+	Cbuf_AddText ("\n");
+	Q_free(fileBuffer);
+}
+
 void LoadConfig_f(void)
 {
 	FILE *f;
-	char *filename;
+	char filename[MAX_PATH] = {0}, fullname[MAX_PATH] = {0}, *arg1;
 
+/* load config.cfg by default if no params
 	if (Cmd_Argc() != 2) {
 		Com_Printf("Usage: %s <filename>\n", Cmd_Argv(0));
 		return;
 	}
-	filename = COM_SkipPath(Cmd_Argv(1));
+*/
+
+	arg1 = COM_SkipPath(Cmd_Argv(1));
+	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : "config.cfg"); // use config.cfg if no params was specified
+
 	COM_ForceExtension(filename, ".cfg");
-	if (!(f = fopen(va("%s/ezquake/configs/%s", com_basedir, filename), "r"))) {
+
+	if (cfg_use_home.integer) // use home dir for cfg
+		snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
+	else // use ezquake dir
+		snprintf(fullname, sizeof(fullname), "%s/ezquake/configs/%s", com_basedir, filename);
+
+	if (!(f = fopen(fullname, "r"))) {
 		Com_Printf("Couldn't load config %s\n", filename);
 		return;
 	}
+
 	fclose(f);
 
 	con_suppress = true;
@@ -852,9 +904,12 @@ void LoadConfig_f(void)
 
 	Com_Printf("Loading config %s ...\n", filename);
 
-
 	Cbuf_AddText ("cl_warncmd 0\n");
-	Cbuf_AddText(va("exec configs/%s\n", filename));
+
+	if (cfg_use_home.integer)
+		LoadHomeCfg(filename); // well, we can't use exec here, because exec does't support full path by design
+	else
+		Cbuf_AddText(va("exec configs/%s\n", filename));
 
 	/* johnnycz:
 	  This should be called with TP_ExecTrigger("f_cfgload"); but definition
@@ -901,6 +956,7 @@ void ConfigManager_Init(void)
 	Cvar_Register(&cfg_save_cmdline);
 	Cvar_Register(&cfg_save_sysinfo);
 	Cvar_Register(&cfg_backup);
+	Cvar_Register(&cfg_use_home);
 
 	Cvar_ResetCurrentGroup();
 }
