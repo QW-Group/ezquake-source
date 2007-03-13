@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.35 2007-03-11 06:01:39 disconn3ct Exp $
+	$Id: host.c,v 1.36 2007-03-13 09:07:16 qqshka Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -479,10 +479,33 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	FS_InitFilesystem ();
 
 	if (!dedicated) {
-		Cbuf_AddText ("exec default.cfg\n");
-		//ExecDefaultConfig ();
-		Cbuf_AddText ("exec config.cfg\n");
-		Cbuf_Execute ();
+		char cfg[MAX_PATH] = {0};
+
+		Cbuf_AddText("exec default.cfg\n");
+
+		snprintf(cfg, sizeof(cfg), "%s/config.cfg", com_homedir);
+
+		if ((f = fopen(cfg, "r"))) { // found cfg in home dir, use it
+		    extern void LoadHomeCfg(const char *filename);
+
+			fclose(f);
+
+			Com_Printf("Using home config %s\n", cfg);
+			LoadHomeCfg("config.cfg"); // well, we can't use exec here, because exec does't support full path by design
+		}
+		else {
+			snprintf(cfg, sizeof(cfg), "%s/ezquake/configs/config.cfg", com_basedir);
+
+			if ((f = fopen(cfg, "r"))) { // found cfg in ezquake dir, use it, if not found in home dir
+				fclose(f);
+
+				Cbuf_AddText("exec configs/config.cfg\n");
+			}
+			else // well, search it on whole file system if not found in above cases
+				Cbuf_AddText("exec config.cfg\n");
+		}
+
+		Cbuf_Execute();
 	}
 
 	Cbuf_AddEarlyCommands ();
