@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.69 2007-03-12 03:20:45 disconn3ct Exp $
+    $Id: common.c,v 1.70 2007-03-13 08:27:49 qqshka Exp $
 
 */
 
@@ -2001,9 +2001,9 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	if ( (ev = getenv("HOMEDRIVE")) ) {
 		strlcpy(com_homedir, ev, sizeof(com_homedir));
 		if ( (ev = getenv("HOMEPATH")) )
-			strlcpy(com_homedir, ev, sizeof(com_homedir));
+			strlcat(com_homedir, ev, sizeof(com_homedir));
 		else
-	    com_homedir[0] = 0;
+			com_homedir[0] = 0;
 	}
 	else
 		com_homedir[0] = 0;
