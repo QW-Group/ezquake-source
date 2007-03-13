@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.134 2007-03-11 06:01:35 disconn3ct Exp $
+	$Id: cl_main.c,v 1.135 2007-03-13 02:30:58 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1072,8 +1072,8 @@ void CL_InitLocal (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
 	Cvar_Register (&allow_scripts);
 	
-  Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
-  Cvar_Register (&cl_mediaroot);	
+	Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
+	Cvar_Register (&cl_mediaroot);	
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_NO_GROUP);
 	Cvar_Register (&password);
