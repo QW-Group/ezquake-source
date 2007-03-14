@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_glimp.c,v 1.7 2007-03-14 01:01:05 qqshka Exp $
+    $Id: linux_glimp.c,v 1.8 2007-03-14 02:39:49 qqshka Exp $
 
 */
 /*
@@ -95,7 +95,7 @@ cvar_t in_evdevice        = { "in_evdevice",  "", CVAR_ARCHIVE | CVAR_LATCH };
 #endif
 cvar_t in_nograb          = { "in_nograb",   "0", CVAR_LATCH }; // this is strictly for developers
 
-cvar_t r_allowSoftwareGL  = { "r_allowSoftwareGL", "0", CVAR_LATCH };   // don't abort out if the pixelformat claims software
+cvar_t r_allowSoftwareGL  = { "vid_allowSoftwareGL", "0", CVAR_LATCH };   // don't abort out if the pixelformat claims software
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
@@ -1475,7 +1475,7 @@ void GLimp_Init( void )
   qbool attempted3Dfx = false;
   qbool success = false;
   char  buf[1024];
-//  cvar_t *lastValidRenderer = ri.Cvar_Get( "r_lastValidRenderer", "(uninitialized)", CVAR_ARCHIVE );
+//  cvar_t *lastValidRenderer = ri.Cvar_Get( "vid_lastValidRenderer", "(uninitialized)", CVAR_ARCHIVE );
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
 	Cvar_Register (&r_allowSoftwareGL);
