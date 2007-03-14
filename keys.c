@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.53 2007-03-12 03:20:04 disconn3ct Exp $
+    $Id: keys.c,v 1.54 2007-03-14 01:05:59 qqshka Exp $
 
 */
 
@@ -1973,7 +1973,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
   {
     Key_ClearStates(); // Zzzz
     Cvar_SetValue( &r_fullscreen, !r_fullscreen.integer );
-		Cbuf_AddText( "vid_restart\n" );
+	Cbuf_AddText( "vid_restart\n" );
     return;
   }
 #endif
