@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_glimp.c,v 1.6 2007-03-12 03:20:04 disconn3ct Exp $
+    $Id: linux_glimp.c,v 1.7 2007-03-14 01:01:05 qqshka Exp $
 
 */
 /*
@@ -610,8 +610,7 @@ void IN_Frame (void) {
     // temporarily deactivate if not in the game and
     // running on the desktop
     // voodoo always counts as full screen
-    if (Cvar_VariableValue ("r_fullscreen") == 0
-        && strcmp( Cvar_VariableString("r_glDriver"), _3DFX_DRIVER_NAME ) )
+    if (r_fullscreen.integer == 0 && strcmp( r_glDriver.string, _3DFX_DRIVER_NAME ) )
     {
       IN_DeactivateMouse ();
       return;
