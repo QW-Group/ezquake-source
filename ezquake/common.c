@@ -16,12 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.70 2007-03-13 08:27:49 qqshka Exp $
+    $Id: common.c,v 1.71 2007-03-14 00:20:39 johnnycz Exp $
 
 */
 
 #ifdef _WIN32
 #include <direct.h>
+#include <Shlobj.h>
+#include <Shfolder.h>
 #else
 #include <unistd.h>
 #endif
@@ -1948,7 +1950,9 @@ void FS_ShutDown( void ) {
 
 void FS_InitFilesystemEx( qbool guess_cwd ) {
 	int i;
+#ifndef _WIN32
 	char *ev;
+#endif
 
 	FS_ShutDown();
 
@@ -1997,16 +2001,11 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 		com_basedir[i] = 0;
 
 #ifdef _WIN32
-	// correct?
-	if ( (ev = getenv("HOMEDRIVE")) ) {
-		strlcpy(com_homedir, ev, sizeof(com_homedir));
-		if ( (ev = getenv("HOMEPATH")) )
-			strlcat(com_homedir, ev, sizeof(com_homedir));
-		else
-			com_homedir[0] = 0;
-	}
-	else
-		com_homedir[0] = 0;
+    // gets "C:\documents and settings\johnny\my documents" path
+    if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_PERSONAL, 0))
+    {
+        *com_homedir = 0;
+    }
 #else
 	ev = getenv("HOME");
 	if (ev)
@@ -2021,7 +2020,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	if (com_homedir[0])
 	{
 #ifdef _WIN32
-		strlcat(com_homedir, "/ezquake", sizeof(com_homedir));
+		strlcat(com_homedir, "/ezQuake", sizeof(com_homedir));
 #else
 		strlcat(com_homedir, "/.ezquake", sizeof(com_homedir));
 #endif
