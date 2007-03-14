@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.50 2007-03-11 06:01:41 disconn3ct Exp $
+		$Id: menu_options.c,v 1.51 2007-03-14 05:12:20 himan Exp $
 
 */
 
@@ -264,12 +264,13 @@ void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f, "Browse the QuakeWorld for Freshies guide by Apollyon"),
-	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Open up the console"),
+//	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Open up the console"), // Do we need this? =) -Up2
 	ADDSET_ACTION	("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
 #ifdef _WIN32
-	ADDSET_NUMBER	("Process Priority", sys_highpriority, -1, 1, 1),
+	ADDSET_NUMBER	("Process Priority", sys_highpriority, -1, 1, 1), // 2JOHNNY: could we make this cycle through a list, instead of it being a slider? (look at "quality" under connection) -up2
 #endif
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
+	//Video
 	ADDSET_SEPARATOR("Video"),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
@@ -277,12 +278,19 @@ setting settgeneral_arr[] = {
 	ADDSET_NUMBER	("Field of View", scr_fov, 40, 140, 2),
 	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphics effects presets here"),
 	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
-	ADDSET_SEPARATOR("Sound"),
-	ADDSET_NUMBER	("Sound Volume", s_volume, 0, 1, 0.05),
+	//Sound & Volume
+	ADDSET_SEPARATOR("Sound & Volume"),
+	ADDSET_NUMBER	("Primary Volume", s_volume, 0, 1, 0.05),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Self Volume Levels", cl_chatsound),
+	ADDSET_NUMBER	("Chat Volume", con_sound_mm1_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Team Chat Volume", con_sound_mm2_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Spectator Volume", con_sound_spec_volume, 0, 1, 0.1),
+	ADDSET_NUMBER	("Other Volume", con_sound_other_volume, 0, 1, 0.1),
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
 	ADDSET_CUSTOM	("Quality", SoundqualityRead, SoundqualityToggle, "Sound sampling rate"),
 	ADDSET_BASIC_SECTION(),
+	//Controls
 	ADDSET_SEPARATOR("Controls"),
 	ADDSET_BOOL		("Mouse Look", freelook),
 	ADDSET_NUMBER	("Mouse Speed", sensitivity, 1, 15, 0.25),
@@ -293,36 +301,39 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Gun Auto hide", cl_weaponhide),
 	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "You will always have maximum walking speed if this is enabled"),
 	ADDSET_BOOL		("Smart Jump", cl_smartjump),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
+	ADDSET_BASIC_SECTION(),
+	//Connection
 	ADDSET_SEPARATOR("Connection"),
 	ADDSET_CUSTOM	("Bandwidth Limit", BandwidthRead, BandwidthToggle, "Select a speed close to your internet connection link speed"),
 	ADDSET_CUSTOM	("Quality", ConQualityRead, ConQualityToggle, "Ensures that packets with weapon switch command don't get lost"),
+	//Chat Settings
 	ADDSET_SEPARATOR("Chat settings"),
 	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
 	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
 	ADDSET_BOOL		("Ignore Spectators", ignore_spec),
-	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Self Volume Levels", cl_chatsound),
-	ADDSET_NUMBER	("General Volume", con_sound_mm1_volume, 0, 1, 0.1),
-	ADDSET_NUMBER	("Team Chat Volume", con_sound_mm2_volume, 0, 1, 0.1),
-	ADDSET_NUMBER	("Spectator Volume", con_sound_spec_volume, 0, 1, 0.1),
-	ADDSET_NUMBER	("Other Volume", con_sound_other_volume, 0, 1, 0.1),
+	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
 	ADDSET_BASIC_SECTION(),
+	//Match Tools
 	ADDSET_SEPARATOR("Match Tools"),
 	ADDSET_BOOL		("Auto Screenshot", match_auto_sshot),
-	ADDSET_NAMED	("Auto Record", match_auto_record, autorecord_enum),
-	ADDSET_NAMED	("Auto Log", match_auto_logconsole, autorecord_enum),
+	ADDSET_NAMED	("Auto Record Demo", match_auto_record, autorecord_enum),
+	ADDSET_NAMED	("Auto Log Match", match_auto_logconsole, autorecord_enum),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_CUSTOM	("Sshot Format", SshotformatRead, SshotformatToggle, "Screenshot image format"),
 #ifdef _WIN32
 	ADDSET_CUSTOM	("Demo Format", DemoformatRead, DemoformatToggle, "QWD is original QW demo format, QWZ is compressed demo format and MVD contains multiview data; You need Qizmo and Qwdtools for this to work"),
 #endif
+	ADDSET_BASIC_SECTION(),
+	ADDSET_ADVANCED_SECTION(), // I think all of paths should be advanced? -Up2
+	//Paths
 	ADDSET_SEPARATOR("Paths"),
 	ADDSET_NAMED    ("Media Paths Type", cl_mediaroot, mediaroot_enum),
 	ADDSET_STRING   ("Screenshots Path", scr_sshot_dir),
 	ADDSET_STRING	("Demos Path", demo_dir),
 	ADDSET_STRING   ("Logs Path", log_dir),
-	ADDSET_ADVANCED_SECTION(),
 	ADDSET_STRING	("Qizmo Path", qizmo_dir),
 	ADDSET_STRING	("QWDTools Path", qwdtools_dir),
 	ADDSET_BASIC_SECTION(),
@@ -463,7 +474,7 @@ setting settplayer_arr[] = {
 	ADDSET_STRING	("Skin", skin),
 	ADDSET_COLOR	("Shirt Color", topcolor),
 	ADDSET_COLOR	("Pants Color", bottomcolor),
-	ADDSET_CUSTOM	("Ruleset", RulesetRead, RulesetToggle, "If you are taking part in a tournament, usually you need to set this to smackdown; Will limit some client features"),
+	ADDSET_CUSTOM	("Ruleset", RulesetRead, RulesetToggle, "If you are taking part in a tournament, you usually need to set this to smackdown; (this will limit some client features."),
 	ADDSET_SEPARATOR("Teammates"),
 	ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
 	ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
@@ -749,13 +760,13 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Fast Lights", gl_flashblend),
 	ADDSET_BOOL		("Dynamic Ligts", r_dynamic),
 	ADDSET_NUMBER	("Light mode", gl_lightmode, 0, 2, 1),
-	ADDSET_BOOL		("Particle Shaft", amf_lightning), // do we still have this? i dont have anything with amf_*
+	ADDSET_BOOL		("Particle Shaft", amf_lightning),
 #endif
 	ADDSET_SEPARATOR("Weapon Model"),
 #ifdef GLQUAKE
-	ADDSET_NUMBER	("Opacity", cl_drawgun, 0, 1, 0.05), // johnny what is cl_drawgun? i dont have it in ezq. i think you mean r_drawviewmodel
+	ADDSET_NUMBER	("Opacity", cl_drawgun, 0, 1, 0.05),
 #else
-	ADDSET_BOOL		("Show", cl_drawgun), // johnny what is cl_drawgun? i dont have it in ezq
+	ADDSET_BOOL		("Show", cl_drawgun),
 #endif
 	ADDSET_NUMBER	("Size", r_viewmodelsize, 0.1, 1, 0.05),
 	ADDSET_NUMBER	("Shift", r_viewmodeloffset, -10, 10, 1),
@@ -851,7 +862,7 @@ void VideoApplySettings (void)
 	mvs_askmode = true;
 }
 
-// two possible results of the "keep this video settings?" dialogue
+// two possible results of the "keep these video settings?" dialogue
 static void KeepNewVideoSettings (void) { mvs_askmode = false; }
 static void CancelNewVideoSettings (void) { 
 	mvs_askmode = false;
@@ -927,7 +938,7 @@ void CT_Opt_Video_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pag
 
 	if (mvs_askmode) {
 		UI_DrawBox((w-ASKBOXWIDTH)/2, h/2 - 16, ASKBOXWIDTH, 32);
-		UI_Print_Center((w-ASKBOXWIDTH)/2, h/2 - 8, ASKBOXWIDTH, "Do you wish to keep this settings?", false);
+		UI_Print_Center((w-ASKBOXWIDTH)/2, h/2 - 8, ASKBOXWIDTH, "Do you wish to keep these settings?", false);
 		UI_Print_Center((w-ASKBOXWIDTH)/2, h/2, ASKBOXWIDTH, "(y/n)", true);
 	} else
 		Settings_Draw(x,y,w,h, &settvideo);
