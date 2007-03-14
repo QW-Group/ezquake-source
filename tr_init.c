@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.10 2007-03-11 06:01:43 disconn3ct Exp $
+	$Id: tr_init.c,v 1.11 2007-03-14 00:48:45 qqshka Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -616,6 +616,10 @@ void VID_zzz (void) {
 
 	vid.width  = vid.conwidth  = min(vid.conwidth,  glConfig.vidWidth);
 	vid.height = vid.conheight = min(vid.conheight, glConfig.vidHeight);
+
+	// we need cap cvars, after resolution changed, here may be conwidth > width, so set cvars right
+	Cvar_SetValue(&r_conwidth,  r_conwidth.value);  // must trigger callback which validate value
+	Cvar_SetValue(&r_conheight, r_conheight.value); // must trigger callback which validate value
 
 	vid.numpages = 2;
 
