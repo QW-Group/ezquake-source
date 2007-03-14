@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.36 2007-03-13 09:07:16 qqshka Exp $
+    $Id: config_manager.c,v 1.37 2007-03-14 20:22:43 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -873,6 +873,7 @@ void LoadConfig_f(void)
 {
 	FILE *f;
 	char filename[MAX_PATH] = {0}, fullname[MAX_PATH] = {0}, *arg1;
+	int use_home;
 
 /* load config.cfg by default if no params
 	if (Cmd_Argc() != 2) {
@@ -898,6 +899,8 @@ void LoadConfig_f(void)
 
 	fclose(f);
 
+	use_home = cfg_use_home.integer; // ResetConfigs() may change it, so save it fo future use
+
 	con_suppress = true;
 	ResetConfigs(false);
 	con_suppress = false;
@@ -906,7 +909,7 @@ void LoadConfig_f(void)
 
 	Cbuf_AddText ("cl_warncmd 0\n");
 
-	if (cfg_use_home.integer)
+	if (use_home)
 		LoadHomeCfg(filename); // well, we can't use exec here, because exec does't support full path by design
 	else
 		Cbuf_AddText(va("exec configs/%s\n", filename));
