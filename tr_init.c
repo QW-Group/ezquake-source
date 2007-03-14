@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.12 2007-03-14 02:39:49 qqshka Exp $
+	$Id: tr_init.c,v 1.13 2007-03-14 04:43:33 qqshka Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -33,7 +33,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "tr_types.h"
 #endif // _WIN32 || __linux__
 #endif
-#include "qsound.h"
 
 glconfig_t	glConfig;
 //glstate_t	glState;
