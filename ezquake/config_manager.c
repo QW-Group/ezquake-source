@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.37 2007-03-14 20:22:43 qqshka Exp $
+    $Id: config_manager.c,v 1.38 2007-03-14 22:08:56 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -79,7 +79,7 @@ cvar_t	cfg_save_cmdline	=	{"cfg_save_cmdline", "1"};
 
 cvar_t	cfg_backup			=	{"cfg_backup", "0"};
 
-cvar_t  cfg_use_home		=	{"cfg_use_home", "1"};
+cvar_t  cfg_use_home		=	{"cfg_use_home", "0"};
 
 /************************************ DUMP FUNCTIONS ************************************/
 
@@ -887,19 +887,28 @@ void LoadConfig_f(void)
 
 	COM_ForceExtension(filename, ".cfg");
 
-	if (cfg_use_home.integer) // use home dir for cfg
+	use_home = cfg_use_home.integer;
+
+	if (use_home) // use home dir for cfg
 		snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
 	else // use ezquake dir
 		snprintf(fullname, sizeof(fullname), "%s/ezquake/configs/%s", com_basedir, filename);
 
 	if (!(f = fopen(fullname, "r"))) {
-		Com_Printf("Couldn't load config %s\n", filename);
-		return;
+		use_home = !use_home; // cfg was't found, invert setting and repeat search, mostly this need only at load time
+
+		if (use_home) // use home dir for cfg
+			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
+		else // use ezquake dir
+			snprintf(fullname, sizeof(fullname), "%s/ezquake/configs/%s", com_basedir, filename);
+
+		if (!(f = fopen(fullname, "r"))) {
+			Com_Printf("Couldn't load config %s\n", filename);
+			return;
+		}
 	}
 
 	fclose(f);
-
-	use_home = cfg_use_home.integer; // ResetConfigs() may change it, so save it fo future use
 
 	con_suppress = true;
 	ResetConfigs(false);
