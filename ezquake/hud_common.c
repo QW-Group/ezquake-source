@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.131 2007-03-13 05:14:33 qqshka Exp $
+	$Id: hud_common.c,v 1.132 2007-03-14 16:42:45 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -5832,8 +5832,14 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 	// the settings that the user set, if we try, and the user turns off
 	// autosize again the size of the HUD will remain "autosized" until the user
 	// resets it by hand again.
-	width_limit = hud_radar_width->value;
+    width_limit = hud_radar_width->value;
 	height_limit = hud_radar_height->value;
+
+    // we support also sizes specified as a percentage of total screen width/height
+    if (strchr(hud_radar_width->string, '%'))
+        width_limit = width_limit * vid.conwidth / 100.0;
+    if (strchr(hud_radar_height->string, '%'))
+	    height_limit = hud_radar_height->value * vid.conheight / 100.0;
 
 	// This map doesn't have a map pic.
 	if(!radar_pic_found)
@@ -6524,8 +6530,8 @@ void CommonDraw_Init(void)
         HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawRadar,
         "0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
 		"opacity", "0.5",
-		"width", "200",
-		"height", "200",
+		"width", "30%",
+		"height", "25%",
 		"autosize", "0",
 		"show_powerups", "1",
 		"show_names", "0",
@@ -6536,8 +6542,8 @@ void CommonDraw_Init(void)
 		"show_stats", "1",
 		"fade_players", "1",
 		"show_hold", "0",
-		"weaponfilter", "ssg ng sng gl rl lg",
-		"itemfilter", "backpack quad pent suit ring health armor shells cells rockets nails mega",
+		"weaponfilter", "gl rl lg",
+		"itemfilter", "backpack quad pent armor mega",
 		"otherfilter", "projectiles gibs explosions shotgun",
 		"onlytp", "0",
         NULL);
