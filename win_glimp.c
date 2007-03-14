@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.11 2007-03-11 06:01:43 disconn3ct Exp $
+	$Id: win_glimp.c,v 1.12 2007-03-14 02:39:50 qqshka Exp $
 
 */
 /*
@@ -92,8 +92,8 @@ static rserr_t	GLW_SetMode( const char *drivername,
 //
 glwstate_t glw_state;
 
-cvar_t	r_allowSoftwareGL = { "r_allowSoftwareGL", "0", CVAR_LATCH }; // don't abort out if the pixelformat claims software
-cvar_t	r_maskMinidriver  = { "r_maskMinidriver",  "0", CVAR_LATCH }; // allow a different dll name to be treated as if it were opengl32.dll
+cvar_t	r_allowSoftwareGL = { "vid_allowSoftwareGL", "0", CVAR_LATCH }; // don't abort out if the pixelformat claims software
+cvar_t	r_maskMinidriver  = { "vid_maskMinidriver",  "0", CVAR_LATCH }; // allow a different dll name to be treated as if it were opengl32.dll
 
 static qbool s_classRegistered = false;
 
@@ -1432,7 +1432,7 @@ static void GLW_StartOpenGL( void )
 void GLimp_Init( void )
 {
 	char	buf[1024];
-//	cvar_t *lastValidRenderer = Cvar_Get( "r_lastValidRenderer", "(uninitialized)", CVAR_ARCHIVE );
+//	cvar_t *lastValidRenderer = Cvar_Get( "vid_lastValidRenderer", "(uninitialized)", CVAR_ARCHIVE );
 
 	ST_Printf( PRINT_ALL, "Initializing OpenGL subsystem\n" );
 
