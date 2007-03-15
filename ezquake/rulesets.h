@@ -22,7 +22,6 @@ void Rulesets_Init(void);
 char *Rulesets_Ruleset(void);
 
 
-qbool RuleSets_DisallowExternalTexture(model_t *mod);
 qbool Rulesets_AllowTimerefresh(void);
 float Rulesets_MaxFPS(void);
 qbool Rulesets_RestrictTriggers(void);
