@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_linux.c,v 1.6 2007-03-12 03:20:04 disconn3ct Exp $
+	$Id: in_linux.c,v 1.7 2007-03-15 18:26:59 qqshka Exp $
 */
 #include "quakedef.h"
 #include "input.h"
@@ -122,6 +122,10 @@ void IN_Init (void)
 
 	if (!host_initialized)
 	{
+#ifdef WITH_EVDEV
+		extern void IN_EvdevList_f(void);
+		Cmd_AddCommand ("in_evdevlist", IN_EvdevList_f);
+#endif
 #ifdef WITH_KEYMAP
 		IN_StartupKeymap();
 #endif // WITH_KEYMAP

@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_glimp.c,v 1.8 2007-03-14 02:39:49 qqshka Exp $
+    $Id: linux_glimp.c,v 1.9 2007-03-15 18:26:59 qqshka Exp $
 
 */
 /*
@@ -531,7 +531,31 @@ void EvDev_UpdateMouse(void *v) {
 }
 #endif
 
-void IN_Commands (void) { /* etmpty */ }
+void IN_Commands (void) { /* empty */ }
+
+#ifdef WITH_EVDEV
+// idea/code stolen from Alan 'Strider' Kivlin
+// thought whole ezQuake's EVDEV code wroten by him.
+void IN_EvdevList_f(void) {
+	int fd, i;
+
+	for( i = 0; i < 10; i++ ) {
+		char device[64], name[128];
+
+		snprintf(device, sizeof(device), "/dev/input/event%i", i);
+		fd = open(device, O_RDONLY);
+		
+		if( fd == -1 )
+			continue;
+
+		name[0] = 0;
+		ioctl(fd, EVIOCGNAME(sizeof(name)), name);
+		close(fd);
+
+		Com_Printf("event%i: %s\n", i, name);		
+	}
+}
+#endif
 
 void IN_StartupMouse(void) {
 
