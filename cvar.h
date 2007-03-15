@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #ifndef __CVAR_H__
-
 #define __CVAR_H__
 
 #include "cvar_groups.h"
@@ -155,4 +154,4 @@ void CharsToWhite(char* start, char* end);
 
 #endif
 
-#endif //__CVAR_H__
+#endif /* !__CVAR_H__ */
