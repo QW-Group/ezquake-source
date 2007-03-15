@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.43 2007-03-15 16:13:36 disconn3ct Exp $
+    $Id: cvar.c,v 1.44 2007-03-15 21:13:53 disconn3ct Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -232,16 +232,14 @@ void Cvar_Set (cvar_t *var, char *value)
 		return;
 
 	if (var->flags & CVAR_ROM) {
-		if (con_initialized)
-			Com_Printf ("\"%s\" is write protected\n", var->name);
+		Com_Printf ("\"%s\" is write protected\n", var->name);
 		return;
 	}
 
 	if (var->flags & CVAR_RULESET_MIN) {
 		test  = Q_atof (value);
 		if (test < var->minrulesetvalue) {
-			if (con_initialized)
-				Com_Printf ("min \"%s\" is limited to %0.2f\n", var->name,var->minrulesetvalue);
+			Com_Printf ("min \"%s\" is limited to %0.2f\n", var->name,var->minrulesetvalue);
 			return;
 		}
 	}
@@ -249,8 +247,7 @@ void Cvar_Set (cvar_t *var, char *value)
 	if (var->flags & CVAR_RULESET_MAX) {
 		test  = Q_atof (value);
 		if (test > var->maxrulesetvalue) {
-			if (con_initialized)
-				Com_Printf ("max \"%s\" is limited to %0.2f\n", var->name,var->maxrulesetvalue);
+			Com_Printf ("max \"%s\" is limited to %0.2f\n", var->name,var->maxrulesetvalue);
 			return;
 		}
 	}
