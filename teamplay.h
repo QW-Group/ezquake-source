@@ -129,7 +129,6 @@ char *TP_ParseFunChars (char *s, qbool chat);
 void TP_NewMap (void);
 int TP_CategorizeMessage (char *s, int *offset);
 qbool TP_FilterMessage (char *s);
-void TP_ParseWeaponModel(model_t *model);
 
 
 wchar *TP_ParseWhiteText(wchar *s, qbool team, int offset);

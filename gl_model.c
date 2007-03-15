@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.29 2007-03-11 06:01:39 disconn3ct Exp $
+	$Id: gl_model.c,v 1.30 2007-03-15 16:13:36 disconn3ct Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -1515,7 +1515,7 @@ void Mod_FloodFillSkin( byte *skin, int skinwidth, int skinheight ) {
 	}
 }
 
-
+extern qbool RuleSets_DisallowExternalTexture(model_t *mod);
 static int Mod_LoadExternalSkin(char *identifier, int *fb_texnum) {
 	char loadpath[64];
 	int texmode, texnum;

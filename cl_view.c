@@ -907,6 +907,7 @@ static int V_CurrentWeaponModel(void) {
 	return cl.stats[STAT_WEAPON];
 }
 
+extern void TP_ParseWeaponModel(model_t *model);
 void V_AddViewWeapon (float bob) {
 	vec3_t forward, right, up;
 	centity_t *cent;
