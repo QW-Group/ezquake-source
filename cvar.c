@@ -16,31 +16,22 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.44 2007-03-15 21:13:53 disconn3ct Exp $
+    $Id: cvar.c,v 1.45 2007-03-16 07:22:37 disconn3ct Exp $
 */
 // cvar.c -- dynamic variable tracking
 
-#include "quakedef.h"
+#include "common.h"
 #ifdef WITH_TCL
 #include "embed_tcl.h"
 #endif
-//#ifdef GLQUAKE
-//#include "gl_model.h"
-//#include "gl_local.h"
-//#else
-//#include "r_model.h"
-//#include "r_local.h"
-//#endif
 #include "teamplay.h"
 #include "rulesets.h"
-#include "EX_FileList.h"
-#include "help.h"
-#include "utils.h"
 #include "keys.h"
-
+#include "utils.h"
 
 extern void CL_UserinfoChanged (char *key, char *value);
 extern void SV_ServerinfoChanged (char *key, char *value);
+extern void Help_DescribeCvar (cvar_t *v);
 
 extern cvar_t r_fullbrightSkins;
 extern cvar_t cl_fakeshaft;
@@ -200,6 +191,7 @@ int Cvar_CompleteCountPossible (char *partial)
 
 	return c;
 }
+
 void Cvar_RulesetSet(cvar_t *var, char *val, int m)
 {
 	float rulesetval_f = Q_atof (val);
@@ -311,33 +303,6 @@ void Cvar_Set (cvar_t *var, char *value)
 	if (var->flags & CVAR_USERINFO)
 		CL_UserinfoChanged (var->name, var->string);
 #endif
-
-	if (!cl.spectator && cls.state != ca_disconnected) {
-
-		if (!strcmp(var->name, "r_fullbrightSkins")) {
-			float fbskins;
-			fbskins = bound(0, var->value, cl.fbskins);
-			if (fbskins > 0) {
-				Cbuf_AddText (va("say all skins %d%% fullbright\n", (int) (fbskins * 100)));
-			} else {
-				Cbuf_AddText (va("say not using fullbright skins\n"));
-			}
-		} else if (!strcmp(var->name, "allow_scripts")) {
-			if (allow_scripts.value < 1)
-				Cbuf_AddText("say not using scripts\n");
-			else if (allow_scripts.value < 2)
-				Cbuf_AddText("say using simple scripts\n");
-			else
-				Cbuf_AddText("say using advanced scripts\n");
-		} else if (!strcmp(var->name, "cl_fakeshaft")) {
-			if (cl_fakeshaft.value > 0.999)
-				Cbuf_AddText("say fakeshaft on\n");
-			else if (cl_fakeshaft.value < 0.001)
-				Cbuf_AddText("say fakeshaft off\n");
-			else
-				Cbuf_AddText(va("say fakeshaft %.1f%%\n", cl_fakeshaft.value * 100.0));
-		}
-	}
 }
 
 void Cvar_ForceSet (cvar_t *var, char *value)
@@ -567,24 +532,22 @@ qbool Cvar_Command (void)
 		return false;
 
 	if (Cmd_Argc() == 1) {
-		xml_variable_t *var = XSD_Variable_Load(va("help/variables/%s.xml", Cmd_Argv(0)));
-
 		if (cvar_viewhelp.value)
-			Help_DescribeVar(var);
+			Help_DescribeCvar (v);
 
 		if (cvar_viewdefault.value) {
 			Com_Printf ("%s : default value is \"%s\"\n", v->name, v->defaultvalue);
 			spaces = CreateSpaces(strlen(v->name) + 2);
 			Com_Printf ("%s current value is \"%s\"\n", spaces, v->string);
 
-			if ( cvar_viewlatched.integer && v->latchedString )
-				Com_Printf ( "%s latched value is \"%s\"\n", spaces, v->latchedString );
+			if (cvar_viewlatched.integer && v->latchedString)
+				Com_Printf ("%s latched value is \"%s\"\n", spaces, v->latchedString);
 			
 		} else {
 			Com_Printf ("\"%s\" is \"%s\"\n", v->name, v->string);
 
-			if ( cvar_viewlatched.integer && v->latchedString )
-				Com_Printf ( "latched: \"%s\"\n", v->latchedString );
+			if (cvar_viewlatched.integer && v->latchedString)
+				Com_Printf ("latched: \"%s\"\n", v->latchedString);
 		}
 	} else {
 		// hexum - do not allow crafty people to avoid use of "set" with user created variables under ruleset smackdown
