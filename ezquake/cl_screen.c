@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.102 2007-03-11 06:01:36 disconn3ct Exp $
+    $Id: cl_screen.c,v 1.103 2007-03-16 16:32:29 johnnycz Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -2362,6 +2362,7 @@ static void SCR_DrawCursor(void) {
 	// from in_*.c
 	extern float mouse_x, mouse_y;
 	static mouse_state_t ms = { 0, 0, 0, 0 };
+    double scale = SCR_GetCursorScale();
 
 	// Updating cursor location
 	ms.x += mouse_x;
@@ -2385,16 +2386,16 @@ static void SCR_DrawCursor(void) {
 #ifdef GLQUAKE
 	if (scr_cursor && scr_cursor->texnum)
 	{
-		Draw_SAlphaPic(cursor_x, cursor_y, scr_cursor, scr_cursor_alpha.value, SCR_GetCursorScale());
+		Draw_SAlphaPic(cursor_x, cursor_y, scr_cursor, scr_cursor_alpha.value, scale);
 
 		if (scr_cursor_icon && scr_cursor_icon->texnum)
 		{
-			Draw_SAlphaPic(cursor_x + scr_cursor_iconoffset_x.value, cursor_y + scr_cursor_iconoffset_y.value, scr_cursor_icon, scr_cursor_alpha.value, SCR_GetCursorScale());
+			Draw_SAlphaPic(cursor_x + scr_cursor_iconoffset_x.value, cursor_y + scr_cursor_iconoffset_y.value, scr_cursor_icon, scr_cursor_alpha.value, scale);
 		}
 	}
 	else
 	{
-		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + 2, cursor_y + 2, 2, 0, 1, 0, 1);
+		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + 50*scale, cursor_y + 50*scale, 10*scale, 0, 1, 0, 1);
 	}
 #else
 	if (scr_cursor && scr_cursor->width)
