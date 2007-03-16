@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.55 2007-03-15 20:37:20 disconn3ct Exp $
+    $Id: cmd.c,v 1.56 2007-03-16 07:15:09 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -773,7 +773,6 @@ void Cmd_UnAlias_re_f (void)
 void Cmd_UnAliasAll_f (void)
 {
 	cmd_alias_t	*a, *next;
-	int i;
 
 	for (a = cmd_alias; a ; a = next) {
 		next = a->next;
