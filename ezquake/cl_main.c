@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.135 2007-03-13 02:30:58 qqshka Exp $
+	$Id: cl_main.c,v 1.136 2007-03-16 07:22:37 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -67,7 +67,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 int	host_screenupdatecount; // kazik - HUD -> hexum
 
-cvar_t	allow_scripts = {"allow_scripts", "2"};
+
+qbool OnChange_allow_scripts (cvar_t *var, char *value);
+cvar_t	allow_scripts = {"allow_scripts", "2", 0, OnChange_allow_scripts};
 cvar_t	rcon_password = {"rcon_password", ""};
 cvar_t	rcon_address = {"rcon_address", ""};
 cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "0"};
@@ -97,7 +99,8 @@ cvar_t	cl_muzzleflash = {"cl_muzzleflash", "1"};
 cvar_t	cl_rocket2grenade = {"cl_r2g", "0"};
 cvar_t	cl_demospeed = {"cl_demospeed", "1"};
 cvar_t	cl_staticsounds = {"cl_staticSounds", "1"};
-cvar_t	cl_fakeshaft = {"cl_fakeshaft", "0"};
+qbool OnChange_cl_fakeshaft (cvar_t *var, char *value);
+cvar_t	cl_fakeshaft = {"cl_fakeshaft", "0", 0, OnChange_cl_fakeshaft};
 cvar_t	cl_parseWhiteText = {"cl_parseWhiteText", "1"};
 cvar_t	cl_filterdrawviewmodel = {"cl_filterdrawviewmodel", "0"};
 cvar_t	cl_oldPL = {"cl_oldPL", "0"};
@@ -1092,6 +1095,8 @@ void CL_InitLocal (void) {
 	if (COM_CheckParm("-norjscripts"))
 	{
 		Cvar_SetValue(&allow_scripts, 0);
+		// TODO: we should block allow_scripts changes only if match in progress
+		// And print some warning if this cmdline switch used
 		Cvar_SetFlags(&allow_scripts, Cvar_GetFlags(&allow_scripts) | CVAR_ROM);
 	}
 

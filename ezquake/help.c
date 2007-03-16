@@ -153,6 +153,12 @@ void Help_DescribeVar(xml_variable_t *var)
 
 }
 
+void Help_DescribeCvar (cvar_t *v)
+{
+	xml_variable_t *var = XSD_Variable_Load(va("help/variables/%s.xml", v->name));
+	Help_DescribeVar(var);
+}
+
 void Help_VarDescription(const char *varname, char* buf, size_t bufleft)
 {
 	xml_variable_t *var;

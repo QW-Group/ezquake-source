@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_main.c,v 1.21 2007-03-11 06:01:42 disconn3ct Exp $
+	$Id: r_main.c,v 1.22 2007-03-16 07:22:37 disconn3ct Exp $
 
 */
 
@@ -128,7 +128,8 @@ cvar_t	r_maxedges = {"r_maxedges", "0"};
 cvar_t	r_numedges = {"r_numedges", "0"};
 cvar_t	r_aliastransbase = {"r_aliastransbase", "200"};
 cvar_t	r_aliastransadj = {"r_aliastransadj", "100"};
-cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "0"};
+qbool OnChange_r_fullbrightSkins (cvar_t *var, char *value);
+cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "0", OnChange_r_fullbrightSkins};
 cvar_t  r_max_size_1 = {"r_max_size_1", "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t	r_fastturb = {"r_fastturb", "0"};

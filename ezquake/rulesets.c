@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.51 2007-03-15 16:12:54 disconn3ct Exp $
+	$Id: rulesets.c,v 1.52 2007-03-16 07:22:37 disconn3ct Exp $
 
 */
 
@@ -331,4 +331,57 @@ void Rulesets_Init (void)
 	}
 
 	Rulesets_Default();
+}
+
+
+/*
+false = OK to change
+false = block cvar change
+*/
+qbool OnChange_r_fullbrightSkins (cvar_t *var, char *value)
+{
+	float fbskins = bound (0.0, Q_atof (value), cl.fbskins);
+
+	if (!cl.spectator && cls.state != ca_disconnected) {
+		if (fbskins > 0.0)
+			Cbuf_AddText (va("say all skins %d%% fullbright\n", (int) (fbskins * 100.0)));
+		else
+			Cbuf_AddText (va("say not using fullbright skins\n"));
+	}
+
+	return false;
+}
+
+qbool OnChange_allow_scripts (cvar_t *var, char *value)
+{
+	int val = Q_atoi (value);
+
+	// TODO: dont allow change if match in progress
+	if (!cl.spectator && cls.state != ca_disconnected) {
+		if (val < 1)
+			Cbuf_AddText("say not using scripts\n");
+		else if (val < 2)
+			Cbuf_AddText("say using simple scripts\n");
+		else
+			Cbuf_AddText("say using advanced scripts\n");
+	}
+
+	return false;
+}
+
+qbool OnChange_cl_fakeshaft (cvar_t *var, char *value)
+{
+	float fakeshaft = Q_atof (value);
+
+	// TODO: dont allow change if match in progress
+	if (!cl.spectator && cls.state != ca_disconnected) {
+		if (fakeshaft > 0.999)
+			Cbuf_AddText("say fakeshaft on\n");
+		else if (fakeshaft < 0.001)
+			Cbuf_AddText("say fakeshaft off\n");
+		else
+			Cbuf_AddText(va("say fakeshaft %.1f%%\n", fakeshaft * 100.0));
+	}
+
+	return false;
 }
