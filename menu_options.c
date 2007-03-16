@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.51 2007-03-14 05:12:20 himan Exp $
+		$Id: menu_options.c,v 1.52 2007-03-16 16:31:55 johnnycz Exp $
 
 */
 
@@ -842,6 +842,7 @@ static void ApplyVideoSettings(const menu_video_settings_t *s) {
 	Cvar_SetValue(&r_displayRefresh, s->freq.value);
 	Cvar_SetValue(&r_fullscreen, s->fullscreen);
 	Cbuf_AddText("vid_restart\n");
+    Com_Printf("askmode: %s\n", mvs_askmode ? "on" : "off");
 }
 
 // will store current video settings into the given structure
@@ -964,7 +965,7 @@ int CT_Opt_Video_Key (int key, CTab_t *tab, CTabPage_t *page) {
 	if (mvs_askmode) {
 		if (key == 'y' || key == K_ENTER)
 			KeepNewVideoSettings();
-		else
+		else if (key == 'n' || key == K_ESCAPE)
 			CancelNewVideoSettings();
 
 		return true;
@@ -1017,7 +1018,7 @@ cvar_t	cfg_browser_zipcolor		= {"cfg_browser_zipcolor",		"255 170 0 255"};	// Or
 
 CEditBox filenameeb;
 
-enum { MOCPM_SETTINGS, MOCPM_CHOOSECONFIG, MOCPM_CHOOSESCRIPT, MOCPM_ENTERFILENAME } MOpt_configpage_mode;
+enum { MOCPM_SETTINGS, MOCPM_CHOOSECONFIG, MOCPM_CHOOSESCRIPT, MOCPM_ENTERFILENAME } MOpt_configpage_mode = MOCPM_SETTINGS;
 
 extern cvar_t cfg_backup, cfg_legacy_exec, cfg_legacy_write, cfg_save_aliases, cfg_save_binds, cfg_save_cmdline,
 	cfg_save_cmds, cfg_save_cvars, cfg_save_unchanged, cfg_save_userinfo;
