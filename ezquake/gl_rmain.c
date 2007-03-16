@@ -98,7 +98,7 @@ cvar_t	r_novis = {"r_novis", "0"};
 cvar_t	r_netgraph = {"r_netgraph", "0"};
 cvar_t	r_netstats = {"r_netstats", "0"};
 qbool OnChange_r_fullbrightSkins (cvar_t *var, char *value);
-cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "1", OnChange_r_fullbrightSkins};
+cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "1", 0, OnChange_r_fullbrightSkins};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t  r_fastturb = {"r_fastturb", "0"};
 // START shaman RFE 1022504

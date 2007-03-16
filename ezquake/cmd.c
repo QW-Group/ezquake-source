@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.56 2007-03-16 07:15:09 disconn3ct Exp $
+    $Id: cmd.c,v 1.57 2007-03-16 07:29:11 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -782,7 +782,7 @@ void Cmd_UnAliasAll_f (void)
 	cmd_alias = NULL;
 
 	// clear hash
-	memset (cmd_alias_hash, 0, ALIAS_HASHPOOL_SIZE);
+	memset (cmd_alias_hash, 0, sizeof(cmd_alias_t*) * ALIAS_HASHPOOL_SIZE);
 }
 
 
