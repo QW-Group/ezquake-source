@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.52 2007-03-16 16:31:55 johnnycz Exp $
+		$Id: menu_options.c,v 1.53 2007-03-16 23:01:21 johnnycz Exp $
 
 */
 
@@ -257,6 +257,22 @@ void RulesetToggle(qbool back) {
 }
 const char *mediaroot_enum[] = { "relative to exe", "relative to home", "full path" };
 
+#ifdef _WIN32
+void PriorityToggle(qbool back) {
+    int newp = sys_highpriority.value + (back ? -1 : 1);
+    if (newp < -1) newp = 1;
+    if (newp > 1) newp = -1;
+    Cvar_SetValue(&sys_highpriority, newp);
+}
+const char* PriorityRead(void) {
+    switch ((int) sys_highpriority.value) {
+    case -1: return "low";
+    case 1: return "high";
+    default: return "normal";
+    }
+}
+#endif
+
 // START contents of Menu-> Options-> Main tab
 
 void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
@@ -264,10 +280,10 @@ void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f, "Browse the QuakeWorld for Freshies guide by Apollyon"),
-//	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Open up the console"), // Do we need this? =) -Up2
+	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Open up the console"),
 	ADDSET_ACTION	("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
 #ifdef _WIN32
-	ADDSET_NUMBER	("Process Priority", sys_highpriority, -1, 1, 1), // 2JOHNNY: could we make this cycle through a list, instead of it being a slider? (look at "quality" under connection) -up2
+    ADDSET_CUSTOM	("Process Priority", PriorityRead, PriorityToggle, "Change client process priority. If you experience tearing or lagging, change this value to something different."),
 #endif
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
 	//Video
@@ -1021,13 +1037,16 @@ CEditBox filenameeb;
 enum { MOCPM_SETTINGS, MOCPM_CHOOSECONFIG, MOCPM_CHOOSESCRIPT, MOCPM_ENTERFILENAME } MOpt_configpage_mode = MOCPM_SETTINGS;
 
 extern cvar_t cfg_backup, cfg_legacy_exec, cfg_legacy_write, cfg_save_aliases, cfg_save_binds, cfg_save_cmdline,
-	cfg_save_cmds, cfg_save_cvars, cfg_save_unchanged, cfg_save_userinfo;
+	cfg_save_cmds, cfg_save_cvars, cfg_save_unchanged, cfg_save_userinfo, cfg_use_home;
 
-void MOpt_LoadConfig(void) { 
+void MOpt_ImportConfig(void) { 
 	MOpt_configpage_mode = MOCPM_CHOOSECONFIG;
-	FL_SetCurrentDir(&configs_filelist, "./ezquake/configs");
+    if (cfg_use_home.value)
+        FL_SetCurrentDir(&configs_filelist, com_homedir);
+    else
+	    FL_SetCurrentDir(&configs_filelist, "./ezquake/configs");
 }
-void MOpt_SaveConfig(void) { 
+void MOpt_ExportConfig(void) { 
 	MOpt_configpage_mode = MOCPM_ENTERFILENAME;
 	filenameeb.text[0] = 0;
 	filenameeb.pos = 0;
@@ -1040,29 +1059,39 @@ void MOpt_LoadScript(void) {
 
 void MOpt_CfgSaveAllOn(void) {
 	Cvar_SetValue(&cfg_backup, 1);
-	Cvar_SetValue(&cfg_legacy_exec, 3);
-	Cvar_SetValue(&cfg_legacy_write, 1);
+	Cvar_SetValue(&cfg_legacy_exec, 1);
+	Cvar_SetValue(&cfg_legacy_write, 0);
 	Cvar_SetValue(&cfg_save_aliases, 1);
 	Cvar_SetValue(&cfg_save_binds, 1);
 	Cvar_SetValue(&cfg_save_cmdline, 1);
 	Cvar_SetValue(&cfg_save_cmds, 1);
 	Cvar_SetValue(&cfg_save_cvars, 1);
 	Cvar_SetValue(&cfg_save_unchanged, 1);
-	Cvar_SetValue(&cfg_save_userinfo, 1);
+	Cvar_SetValue(&cfg_save_userinfo, 2);
 }
 
 const char* MOpt_legacywrite_enum[] = { "off", "non-qw dir frontend.cfg", "also config.cfg", "non-qw config.cfg" };
 const char* MOpt_userinfo_enum[] = { "off", "all but player", "all" };
 
+void MOpt_LoadCfg(void) { Cbuf_AddText("cfg_load\n"); }
+void MOpt_SaveCfg(void) { Cbuf_AddText("cfg_save\n"); }
+
 settings_page settconfig;
 setting settconfig_arr[] = {
-	ADDSET_SEPARATOR("Save & Load"),
-	ADDSET_ACTION("Load Configuration", MOpt_LoadConfig, "You can load a configuration from a file here"),
-	ADDSET_ACTION("Export Configuration", MOpt_SaveConfig, "Will export your current configuration to a file"),
+    ADDSET_SEPARATOR("Load & Save"),
+    ADDSET_ACTION("Reload settings", MOpt_LoadCfg, "Reset the settings to last saved configuration"),
+    ADDSET_ACTION("Save settings", MOpt_SaveCfg, "Save the settings"),
+	ADDSET_ADVANCED_SECTION(),
+    ADDSET_BOOL("Save to profile dir", cfg_use_home),
+    ADDSET_BASIC_SECTION(),
+    ADDSET_SEPARATOR("Export & Import"),
+	ADDSET_ACTION("Import config ...", MOpt_ImportConfig, "You can load a configuration from a file here"),
+	ADDSET_ACTION("Export config ...", MOpt_ExportConfig, "Will export your current configuration to a file"),
+    ADDSET_SEPARATOR("Scripts"),
 	ADDSET_ACTION("Load Script", MOpt_LoadScript, "Choose and load quake scripts here"),
-	ADDSET_SEPARATOR("Export Settings"),
-	ADDSET_ACTION("Preset: Export All", MOpt_CfgSaveAllOn, "Will turn all following settings to enabled"),
-	ADDSET_BOOL("Unchanged Settings", cfg_save_unchanged),
+	ADDSET_SEPARATOR("Config Saving Options"),
+    ADDSET_ACTION("Default Save Opt.", MOpt_CfgSaveAllOn, "Configuration saving settings will be reset to defaults"),
+    ADDSET_BOOL("Save Unchanged Opt.", cfg_save_unchanged),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL("Backup old file", cfg_backup),
 	ADDSET_NAMED("Load Legacy", cfg_legacy_exec, MOpt_legacywrite_enum),
