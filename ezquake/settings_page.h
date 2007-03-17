@@ -1,6 +1,6 @@
 /*
 	Settings page module
-	$Id: settings_page.h,v 1.7 2007-03-05 01:03:53 johnnycz Exp $
+	$Id: settings_page.h,v 1.8 2007-03-17 00:32:52 johnnycz Exp $
 */
 
 /** Guide to create settings page:
@@ -10,6 +10,11 @@
 	2) in some Init function call Settings_Page_Init(a, b); - a and b are variables from steps a and b
 	3) place calls to _Draw and _Kry functions to appropriate places
  */
+
+#ifndef __SETTINGS_PAGE_H__
+#define __SETTINGS_PAGE_H__
+
+#include "keys.h"
 
 #define Settings_Page_Init(set_page, settings) Settings_Init(&set_page, settings, sizeof(settings) / sizeof(setting))
 
@@ -30,3 +35,5 @@ qbool Settings_Key(settings_page* page, int key);
 
 // mouse move handler
 qbool Settings_Mouse_Move(settings_page * page, const mouse_state_t *ms);
+
+#endif // __SETTINGS_PAGE_H__

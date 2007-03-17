@@ -3,6 +3,7 @@
 #ifndef __CTRL_TAB_H__
 #define __CTRL_TAB_H__
 
+#include "keys.h"
 
 #define TAB_MAX_NAME_LENGTH     15
 #define TAB_MAX_TABS            16

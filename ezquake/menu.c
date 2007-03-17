@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.69 2007-03-11 06:01:41 disconn3ct Exp $
+	$Id: menu.c,v 1.70 2007-03-17 00:32:52 johnnycz Exp $
 
 */
 
@@ -2249,6 +2249,11 @@ void M_Keydown (int key, int unichar) {
 
 qbool Menu_Mouse_Moved(const mouse_state_t* ms)
 {
+    // don't implement handling of mouse buttons anywhere yet
+    if (ms->button_down || ms->button_up) {
+        return false;
+    }
+
 	// send the mouse position to appropriate modules here
 	switch (m_state) {
 	case m_main:			return M_Main_Mouse_Move(ms);

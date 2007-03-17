@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.h,v 1.14 2007-02-24 14:26:03 johnnycz Exp $
+	$Id: keys.h,v 1.15 2007-03-17 00:32:52 johnnycz Exp $
 
 */
 
@@ -217,6 +217,24 @@ extern int		key_lastpress;
 extern wchar 	chat_buffer[];
 extern int 		chat_linepos;
 extern qbool	chat_team;
+
+// this is message type sent across windows that accept mouse pointer
+typedef struct mouse_state_s {
+	double x;           // current mouse pointer horisontal position
+	double y;           // current mouse pointer vertical position
+	double x_old;	    // previous mouse pointer positions
+	double y_old;
+    qbool buttons[9];   // button states .. omit button 0
+    int button_down;    // number of the button that just has been pressed down
+    int button_up;      // number of the button that just has been released
+} mouse_state_t;
+
+// exported only to be changed in the cl_screen.c module where mouse position gets updated
+// do not access this variable anywhere else, prefer "window-messages" system
+extern mouse_state_t scr_pointer_state;
+
+// used in cl_screen module which is responsible for updating the mouse pointer position
+void Mouse_MoveEvent(void);
 
 void History_Init (void);
 void History_Shutdown (void);

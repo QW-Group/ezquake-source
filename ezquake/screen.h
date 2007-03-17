@@ -81,10 +81,3 @@ hud_element_t *Hud_FindElement(char *name);
 // Flash & Conc for TF
 extern qbool	concussioned;
 extern qbool flashed;
-
-typedef struct mouse_state_s {
-	double x;	// current mouse pointer horisontal position
-	double y;	// current mouse pointer vertical position
-	double x_old;	// previous mouse pointer positions
-	double y_old;
-} mouse_state_t;
