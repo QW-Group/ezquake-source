@@ -16,9 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.h,v 1.15 2007-03-05 01:03:53 johnnycz Exp $
+	$Id: menu.h,v 1.16 2007-03-17 00:32:52 johnnycz Exp $
 
 */
+
+#ifndef __MENU_H__
+#define __MENU_H__
+
+#include "keys.h"
 
 //
 // menus
@@ -60,3 +65,5 @@ enum {
     m_mp3_control, m_mp3_playlist
 #endif
 } m_state;
+
+#endif // __MENU_H_

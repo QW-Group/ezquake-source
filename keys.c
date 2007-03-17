@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.54 2007-03-14 01:05:59 qqshka Exp $
+    $Id: keys.c,v 1.55 2007-03-17 00:32:52 johnnycz Exp $
 
 */
 
@@ -279,6 +279,9 @@ keyname_t keynames[] = {
 
 	{NULL,0}
 };
+
+mouse_state_t scr_pointer_state;
+
 // jogi add start
 /*
 ==============================================================================
@@ -1859,6 +1862,8 @@ void Key_Init (void) {
 	for (i = 0; i < 12; i++)
 		menubound[K_F1 + i] = true;
 
+    memset(&scr_pointer_state, 0, sizeof(mouse_state_t));
+
 	// register our functions
 	Cmd_AddCommand ("bindlist",Key_BindList_f);
 	Cmd_AddCommand ("bind",Key_Bind_f);
@@ -1870,6 +1875,56 @@ void Key_Init (void) {
 	Cvar_Register (&con_funchars_mode);
 
 	Cvar_ResetCurrentGroup();
+}
+
+// sends new mouse state message to active module and it's windows
+// returns:
+//   true: message was received and handled
+//   false: message wasn't handled by any window
+static qbool Mouse_EventDispatch(void)
+{
+	// send mouse cursor status to appropriate windows
+	switch (key_dest) {
+	case key_menu: return Menu_Mouse_Moved(&scr_pointer_state);
+	case key_hudeditor:
+		// todo: HUD_Editor_Mouse_Moved(&scr_pointer_state);
+		// HUD Editor currently reads global variables cursor_x|y
+        break;
+	}
+    
+    return false;
+}
+
+// called by Key_Event, updates button states
+qbool Mouse_ButtonEvent(int key, qbool down)
+{
+    key = key - K_MOUSE1 + 1;   // get the button number, starting from 1
+    key = bound(0, key, 8);
+
+    if (down) {
+        scr_pointer_state.button_down = key;
+        scr_pointer_state.button_up = 0;
+        scr_pointer_state.buttons[key] = true;
+    } else {
+        scr_pointer_state.button_up = key;
+        scr_pointer_state.button_down = 0;
+        scr_pointer_state.buttons[key] = false;
+    }
+
+    // report if the button event has been handled or not
+    return Mouse_EventDispatch();
+}
+
+// called by cl_screen.c each time it figures out that the mouse has moved
+void Mouse_MoveEvent(void)
+{
+    // no button has been pressed
+    scr_pointer_state.button_down = 0;
+    scr_pointer_state.button_up = 0;
+
+    // the rest of scr_pointer_state has already been updated by cl_screen module
+
+    Mouse_EventDispatch();  // so just dispatch the message with new state
 }
 
 //Called by the system between frames for both key up and key down events Should NOT be called during an interrupt!
@@ -2034,6 +2089,10 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 void Key_Event (int key, qbool down)
 {
 	assert (key >= 0 && key <= 255);
+
+    if (key >= K_MOUSE1 && key <= K_MOUSE8) {
+        if (Mouse_ButtonEvent(key, down)) { return; }
+    }
 
 #ifdef WITH_KEYMAP
 	Key_EventEx (key, key, down);

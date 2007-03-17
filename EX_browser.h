@@ -2,6 +2,7 @@
 #define __EX_BROWSER__H__
 
 #include "localtime.h"
+#include "keys.h"
 
 #define MAX_UNBOUND 200
 

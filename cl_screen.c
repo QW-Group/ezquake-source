@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.103 2007-03-16 16:32:29 johnnycz Exp $
+    $Id: cl_screen.c,v 1.104 2007-03-17 00:32:52 johnnycz Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -2361,20 +2361,19 @@ static double SCR_GetCursorScale(void) {
 static void SCR_DrawCursor(void) {
 	// from in_*.c
 	extern float mouse_x, mouse_y;
-	static mouse_state_t ms = { 0, 0, 0, 0 };
     double scale = SCR_GetCursorScale();
 
 	// Updating cursor location
-	ms.x += mouse_x;
-	ms.y += mouse_y;
+	scr_pointer_state.x += mouse_x;
+	scr_pointer_state.y += mouse_y;
 
 	// Bound the cursor to displayed area
-	clamp(ms.x, 0, vid.width);
-	clamp(ms.y, 0, vid.height);
+	clamp(scr_pointer_state.x, 0, vid.width);
+	clamp(scr_pointer_state.y, 0, vid.height);
 
 	// write the global variables which are used only by HUD Editor at the moment
-	cursor_x = ms.x;
-	cursor_y = ms.y;
+	cursor_x = scr_pointer_state.x;
+	cursor_y = scr_pointer_state.y;
 
 	// Disable the cursor in all but following client parts.
 	if (key_dest != key_hudeditor && key_dest != key_menu)
@@ -2408,23 +2407,14 @@ static void SCR_DrawCursor(void) {
 	}
 #endif
 
-	if (ms.x != ms.x_old || ms.y != ms.y_old)
+	if (scr_pointer_state.x != scr_pointer_state.x_old || scr_pointer_state.y != scr_pointer_state.y_old)
 	{
-		// send mouse cursor status to appropriate windows
-		switch (key_dest) {
-		case key_menu:
-			Menu_Mouse_Moved(&ms);
-			break;
-		case key_hudeditor:
-			// todo: HUD_Editor_Mouse_Moved(cursor_x, cursor_y);
-			// HUD Editor currently reads global variables cursor_x|y
-			break;
-		}
-	}
+        Mouse_MoveEvent();
+    }
 
 	// remember the position for future
-	ms.x_old = ms.x;
-	ms.y_old = ms.y;
+	scr_pointer_state.x_old = scr_pointer_state.x;
+	scr_pointer_state.y_old = scr_pointer_state.y;
 }
 
 void SCR_DrawElements(void) {
