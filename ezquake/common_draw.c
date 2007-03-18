@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.13 2007-03-11 06:01:37 disconn3ct Exp $
+	$Id: common_draw.c,v 1.14 2007-03-18 18:25:55 disconn3ct Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -45,7 +45,7 @@ int SCR_DrawDemoStatus(void)
 
     w = min(((vid.width / 2) / 16) * 2, 40);
     //w = 20;
-    
+
     x = vid.width / 2 - (w*8/2);
     y = vid.height - sb_lines - 8;
 
@@ -167,7 +167,7 @@ void PrepareCrosshair(int num, byte tab[10][10])
         CSET(-2, 2);
         CSET(-2, 1);
         CSET(-1, 2);
-       
+
         CSET(2, 2);
         CSET(2, 1);
         CSET(1, 2);
@@ -454,7 +454,7 @@ void SCR_NetStats(int x, int y, float period)
 
     if (cls.state != ca_active)
         return;
- 
+
     if (period < 0)
         period = 0;
 
@@ -523,7 +523,7 @@ void SCR_NetStats(int x, int y, float period)
         with_delta = result.delta;
     }
 
-    Draw_String(x+36, y, "ìáôåîãù");
+    Draw_String(x+36, y, "ï¿½ï¿½ï¿½");
     y+=12;
 
     sprintf(line, "min  %4.1f %3d ms", f_min, ping_min);
@@ -542,7 +542,7 @@ void SCR_NetStats(int x, int y, float period)
     Draw_String(x, y, line);
     y+=12;
 
-    Draw_String(x+20, y, "ðáãëåô ìïóó");
+    Draw_String(x+20, y, "ï¿½ï¿½ï¿½ ï¿½ï¿½");
     y+=12;
 
     sprintf(line, "lost       %3d %%", lost_lost);
@@ -565,7 +565,7 @@ void SCR_NetStats(int x, int y, float period)
     y+=12;
 
 
-    Draw_String(x+4, y, "ðáãëåô óéúå¯ÂÐÓ");
+    Draw_String(x+4, y, "ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½");
     y+=12;
 
     sprintf(line, "out    %3d %5d", size_out, bandwidth_out);
@@ -619,9 +619,9 @@ void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, int timet
 {
     extern  mpic_t  *sb_nums[2][11];
     extern  mpic_t  *sb_colon/*, *sb_slash*/;
-	SYSTEMTIME tm; 
+	SYSTEMTIME tm;
     char *t;
-	
+
 	GetLocalTime(&tm); // needed here for colon blinking
 
 	switch (timetype) {
@@ -669,7 +669,7 @@ void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, int tim
 {
     char *t;
 	SYSTEMTIME tm;
-	
+
 	GetLocalTime(&tm); // needed here for colon blinking
 
 	switch (timetype) {
@@ -729,9 +729,9 @@ void SCR_DrawFill(int x, int y, int w, int h, int c, float opacity)
 #define SPEED_TEXT_ALIGN_CENTER	2
 #define SPEED_TEXT_ALIGN_FAR	3
 
-void SCR_DrawHUDSpeed (int x, int y, int width, int height, 
-					 int type, 
-					 float tick_spacing, 
+void SCR_DrawHUDSpeed (int x, int y, int width, int height,
+					 int type,
+					 float tick_spacing,
 					 float opacity,
 					 int vertical,
 					 int vertical_text,
@@ -762,7 +762,7 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
         velocity = cl.simvel;
     }
 
-	// Calculate the speed 
+	// Calculate the speed
     if (!type)
 	{
 		// Based on XY.
@@ -790,21 +790,21 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 	// Set the color based on the speed.
     switch (player_speed / 500)
     {
-		case 0:  
-			color1 = color_stopped; 
-			color2 = color_normal; 
+		case 0:
+			color1 = color_stopped;
+			color2 = color_normal;
 			break;
-		case 1:  
-			color1 = color_normal; 
-			color2 = color_fast; 
+		case 1:
+			color1 = color_normal;
+			color2 = color_fast;
 			break;
-		case 2:  
-			color1 = color_fast; 
-			color2 = color_fastest; 
+		case 2:
+			color1 = color_fast;
+			color2 = color_fastest;
 			break;
-		default: 
-			color1 = color_fastest; 
-			color2 = color_insane; 
+		default:
+			color1 = color_fastest;
+			color2 = color_insane;
 			break;
     }
 
@@ -824,31 +824,31 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 					1,						// Height
 					SPEED_WHITE,			// Color
 					opacity);				// Opacity
-				
+
 				// Right.
 				SCR_DrawFill(x + width - SPEED_TAG_LENGTH + 1,
-					y + (int)(f * height), 					 
+					y + (int)(f * height),
 					SPEED_TAG_LENGTH,
 					1,
-					SPEED_WHITE, 
+					SPEED_WHITE,
 					opacity);
 			}
 			else
 			{
 				// Above.
-				SCR_DrawFill(x + (int)(f * width), 
+				SCR_DrawFill(x + (int)(f * width),
 					y,
-					1, 
-					SPEED_TAG_LENGTH, 
-					SPEED_WHITE, 
+					1,
+					SPEED_TAG_LENGTH,
+					SPEED_WHITE,
 					opacity);
-				
+
 				// Below.
-				SCR_DrawFill(x + (int)(f * width), 
+				SCR_DrawFill(x + (int)(f * width),
 					y + height - SPEED_TAG_LENGTH + 1,
-					1, 
-					SPEED_TAG_LENGTH, 
-					SPEED_WHITE, 
+					1,
+					SPEED_TAG_LENGTH,
+					SPEED_WHITE,
 					opacity);
 			}
 		}
@@ -861,78 +861,78 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 		if(vertical)
 		{
 			// Left.
-			SCR_DrawFill(x + SPEED_OUTLINE_SPACING, 
+			SCR_DrawFill(x + SPEED_OUTLINE_SPACING,
 				y,
-				1, 
-				height, 
-				SPEED_WHITE, 
+				1,
+				height,
+				SPEED_WHITE,
 				opacity);
 
 			// Right.
-			SCR_DrawFill(x + width - SPEED_OUTLINE_SPACING, 
-				y, 
-				1, 
-				height, 
-				SPEED_WHITE, 
+			SCR_DrawFill(x + width - SPEED_OUTLINE_SPACING,
+				y,
+				1,
+				height,
+				SPEED_WHITE,
 				opacity);
 		}
 		else
 		{
 			// Above.
-			SCR_DrawFill(x, 
+			SCR_DrawFill(x,
 				y + SPEED_OUTLINE_SPACING,
-				width, 
-				1, 
-				SPEED_WHITE, 
+				width,
+				1,
+				SPEED_WHITE,
 				opacity);
 
 			// Below.
-			SCR_DrawFill(x, 
-				y + height - SPEED_OUTLINE_SPACING, 
-				width, 
-				1, 
-				SPEED_WHITE, 
+			SCR_DrawFill(x,
+				y + height - SPEED_OUTLINE_SPACING,
+				width,
+				1,
+				SPEED_WHITE,
 				opacity);
 		}
 	}
 
 	//
 	// Draw fill.
-	// 
+	//
 	{
 		if(vertical)
 		{
 			// Draw the right color (slower).
-			SCR_DrawFill (x + SPEED_FILL_SPACING, 
-				y,				 
-				width - (2 * SPEED_FILL_SPACING), 
+			SCR_DrawFill (x + SPEED_FILL_SPACING,
+				y,
+				width - (2 * SPEED_FILL_SPACING),
 				height - color_offset,
 				color1,
 				opacity);
-			
+
 			// Draw the left color (faster).
 			SCR_DrawFill (x + SPEED_FILL_SPACING,
-				y + height - color_offset,				
-				width - (2 * SPEED_FILL_SPACING), 
-				color_offset, 
+				y + height - color_offset,
+				width - (2 * SPEED_FILL_SPACING),
+				color_offset,
 				color2,
 				opacity);
 		}
 		else
 		{
 			// Draw the right color (slower).
-			SCR_DrawFill (x + color_offset, 
-				y + SPEED_FILL_SPACING, 
-				width - color_offset, 
-				height - (2 * SPEED_FILL_SPACING), 
+			SCR_DrawFill (x + color_offset,
+				y + SPEED_FILL_SPACING,
+				width - color_offset,
+				height - (2 * SPEED_FILL_SPACING),
 				color1,
 				opacity);
-			
+
 			// Draw the left color (faster).
-			SCR_DrawFill (x, 
-				y + SPEED_FILL_SPACING, 
-				color_offset, 
-				height - (2 * SPEED_FILL_SPACING), 
+			SCR_DrawFill (x,
+				y + SPEED_FILL_SPACING,
+				color_offset,
+				height - (2 * SPEED_FILL_SPACING),
 				color2,
 				opacity);
 		}
@@ -949,8 +949,8 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 		{
 			case SPEED_TEXT_ALIGN_NONE:		return;
 			case SPEED_TEXT_ALIGN_FAR:		y = y + height - 4*8; break;
-			case SPEED_TEXT_ALIGN_CENTER:	y = ROUND(y + height/2.0 - 16); break;
-			case SPEED_TEXT_ALIGN_CLOSE:	
+			case SPEED_TEXT_ALIGN_CENTER:	y = Q_rint(y + height/2.0 - 16); break;
+			case SPEED_TEXT_ALIGN_CLOSE:
 			default: break;
 		}
 
@@ -986,8 +986,8 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 		{
 			case SPEED_TEXT_ALIGN_NONE:		return;
 			case SPEED_TEXT_ALIGN_FAR:		x = x + width - 4*8; break;
-			case SPEED_TEXT_ALIGN_CENTER:	x = ROUND(x + width/2.0 - 16); break;
-			case SPEED_TEXT_ALIGN_CLOSE:	
+			case SPEED_TEXT_ALIGN_CENTER:	x = Q_rint(x + width/2.0 - 16); break;
+			case SPEED_TEXT_ALIGN_CLOSE:
 			default: break;
 		}
 
@@ -995,7 +995,7 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 	}
 }
 // ================================================================
-// Draws a word wrapped scrolling string inside the given bounds. 
+// Draws a word wrapped scrolling string inside the given bounds.
 // ================================================================
 void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, int wordwrap, int scroll, double scroll_delay, char *txt)
 {
@@ -1005,7 +1005,7 @@ void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, 
 	char c;					// Current char.
 	int width_as_text = width / 8;		// How many chars that fits the given width.
 	int height_as_rows = 0;			// How many rows that fits the given height.
-	
+
 	// Scroll variables.
 	double t;				// Current time.
 	static double t_last_scroll = 0;	// Time at the last scroll.
@@ -1020,11 +1020,11 @@ void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, 
 		y_spacing = 8;
 	}
 
-	height_as_rows = height / y_spacing; 
+	height_as_rows = height / y_spacing;
 
 	// Scroll the text.
 	if(scroll)
-	{		
+	{
 		text_length = strlen(txt);
 
 		// If the text has changed since last time we scrolled
@@ -1036,11 +1036,11 @@ void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, 
 			last_text_length = text_length;
 
 		}
-		
+
 		// Check if the text is longer that can fit inside the given bounds.
 		if((wordwrap && text_length > (width_as_text * height_as_rows)) // For more than one row.
 			|| (!wordwrap && text_length > width_as_text)) // One row.
-		{			
+		{
 			// Set what position to start printing the string at.
 			if((wordwrap && text_length - scroll_position >= width_as_text * height_as_rows) // More than one row.
 				|| (!wordwrap && (text_length - scroll_position) >= width_as_text)) // One row.
@@ -1055,7 +1055,7 @@ void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, 
 			if((t - t_last_scroll) > scroll_delay)
 			{
 				t_last_scroll = t;
-				
+
 				if(scroll_direction)
 				{
 					scroll_position++;
@@ -1118,7 +1118,7 @@ void SCR_DrawWordWrapString(int x, int y, int y_spacing, int width, int height, 
 				cur_x++;
 				break;
 		}
-		
+
 		// Check so that the draw position isn't outside the textbox.
 		if(cur_x >= width_as_text)
 		{
