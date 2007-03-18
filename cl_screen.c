@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.105 2007-03-18 18:25:55 disconn3ct Exp $
+    $Id: cl_screen.c,v 1.106 2007-03-18 18:36:24 disconn3ct Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -1078,7 +1078,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 		{
 			Draw_SSubPic (
 				x - name_length - weapon_pic->width - AUTOID_WEAPON_OFFSET_X,
-				y - AUTOID_HEALTHBAR_OFFSET_Y - ROUND((weapon_pic->height/2.0)),
+				y - AUTOID_HEALTHBAR_OFFSET_Y - Q_rint((weapon_pic->height/2.0)),
 				weapon_pic,
 				0,
 				0,
