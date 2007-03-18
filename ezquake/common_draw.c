@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.14 2007-03-18 18:25:55 disconn3ct Exp $
+	$Id: common_draw.c,v 1.15 2007-03-18 18:36:24 disconn3ct Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -975,7 +975,7 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 				break;
 			}
 
-			Draw_String(ROUND(x + width/2.0 - 4), y, va("%1d", (player_speed % i) / next));
+			Draw_String(Q_rint(x + width/2.0 - 4), y, va("%1d", (player_speed % i) / next));
 			y += 8;
 		}
 	}
@@ -991,7 +991,7 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 			default: break;
 		}
 
-		Draw_String(x, ROUND(y + height/2.0 - 4), va("%4d", player_speed));
+		Draw_String(x, Q_rint(y + height/2.0 - 4), va("%4d", player_speed));
 	}
 }
 // ================================================================

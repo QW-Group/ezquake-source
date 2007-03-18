@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.71 2007-03-14 00:20:39 johnnycz Exp $
+    $Id: common.c,v 1.72 2007-03-18 18:36:24 disconn3ct Exp $
 
 */
 
@@ -164,7 +164,7 @@ char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit)
 		left_size = size_to_fit - right_size - DOT_SIZE;
 
 		// Only let the left have 35% of the total size.
-		left_size = min (left_size, ROUND(0.35 * size_to_fit));
+		left_size = min (left_size, Q_rint(0.35 * size_to_fit));
 
 		// Get the final right size.
 		right_size = size_to_fit - left_size - DOT_SIZE - 1;

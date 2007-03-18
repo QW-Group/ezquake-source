@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.132 2007-03-14 16:42:45 johnnycz Exp $
+	$Id: hud_common.c,v 1.133 2007-03-18 18:36:24 disconn3ct Exp $
 */
 //
 // common HUD elements
@@ -940,7 +940,7 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 			arc_length = fabs((circle_endangle - circle_startangle) * hud_speed2_radius->value);
 
 			// Calculate the angle where the speed needle should point.
-			needle_offset = arc_length * (player_speed % ROUND(hud_speed2_wrapspeed->value)) / ROUND(hud_speed2_wrapspeed->value);
+			needle_offset = arc_length * (player_speed % Q_rint(hud_speed2_wrapspeed->value)) / Q_rint(hud_speed2_wrapspeed->value);
 			needle_angle = needle_offset / hud_speed2_radius->value;
 
 			// Draw from the center of the half circle.
@@ -2597,7 +2597,7 @@ void Frags_DrawColors(int x, int y, int width, int height,
 {
 	char buf[32];
 	int posy = 0;
-	int char_size = (bignum > 0) ? ROUND(24 * bignum) : 8;
+	int char_size = (bignum > 0) ? Q_rint(24 * bignum) : 8;
 
 	#ifdef GLQUAKE
 	Draw_AlphaFill(x, y, width, height / 2, top_color, color_alpha);
@@ -2686,7 +2686,7 @@ void Frags_DrawHealthBar(int original_health, int x, int y, int height, int widt
 	health = min(100, health);
 
 	// Draw a health bar.
-	health_height = ROUND((height / 100.0) * health);
+	health_height = Q_rint((height / 100.0) * health);
 	health_height = (health_height > 0.0 && health_height < 1.0) ? 1 : health_height;
 	health_height = (health_height < 0.0) ? 0.0 : health_height;
 	Draw_Fill(x, y + height - (int)health_height, 3, (int)health_height, FRAGS_HEALTHBAR_NORMAL_COLOR);
@@ -2695,12 +2695,12 @@ void Frags_DrawHealthBar(int original_health, int x, int y, int height, int widt
 	health = original_health;
 	if(health > 100 && health <= 200)
 	{
-		health_height = (int)ROUND((height / 100.0) * (health - 100));
+		health_height = (int)Q_rint((height / 100.0) * (health - 100));
 		Draw_Fill(x, y + height - health_height, width, health_height, FRAGS_HEALTHBAR_MEGA_COLOR);
 	}
 	else if(health > 200 && health <= 250)
 	{
-		health_height = (int)ROUND((height / 100.0) * (health - 200));
+		health_height = (int)Q_rint((height / 100.0) * (health - 200));
 		Draw_Fill(x, y, width, height, FRAGS_HEALTHBAR_MEGA_COLOR);
 		Draw_Fill(x, y + height - health_height, width, health_height, FRAGS_HEALTHBAR_TWO_MEGA_COLOR);
 	}
@@ -2743,14 +2743,14 @@ int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, 
 		if((style == TEAMFRAGS_EXTRA_SPEC_BEFORE || style == TEAMFRAGS_EXTRA_SPEC_NOICON)
 			&& style != TEAMFRAGS_EXTRA_SPEC_RLTEXT)
 		{
-			y_pos = ROUND(py + (height / 2.0) - 4);
+			y_pos = Q_rint(py + (height / 2.0) - 4);
 			Draw_ColoredString(px, y_pos, va("%d", sorted_teams[num].rlcount), 0);
 			px += 8 + 1;
 		}
 
 		if(style != TEAMFRAGS_EXTRA_SPEC_NOICON && style != TEAMFRAGS_EXTRA_SPEC_RLTEXT)
 		{
-			y_pos = ROUND(py + (height / 2.0) - (rl_picture.height / 2.0));
+			y_pos = Q_rint(py + (height / 2.0) - (rl_picture.height / 2.0));
 
 			#ifdef GLQUAKE
 			Draw_SSubPic (px, y_pos, &rl_picture, 0, 0, rl_picture.width, rl_picture.height, 1);
@@ -2766,13 +2766,13 @@ int TeamFrags_DrawExtraSpecInfo(int num, int px, int py, int width, int height, 
 
 		if(style == TEAMFRAGS_EXTRA_SPEC_ONTOP && style != TEAMFRAGS_EXTRA_SPEC_RLTEXT)
 		{
-			y_pos = ROUND(py + (height / 2.0) - 4);
+			y_pos = Q_rint(py + (height / 2.0) - 4);
 			Draw_ColoredString(px - 14, y_pos, va("%d", sorted_teams[num].rlcount), 0);
 		}
 
 		if(style == TEAMFRAGS_EXTRA_SPEC_RLTEXT)
 		{
-			y_pos = ROUND(py + (height / 2.0) - 4);
+			y_pos = Q_rint(py + (height / 2.0) - 4);
 			Draw_ColoredString(px, y_pos, va("&ce00RL&cfff%d", sorted_teams[num].rlcount), 0);
 			px += 8*3 + 1;
 		}
@@ -2878,7 +2878,7 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 	// Only draw the armor if the current player has one and if the style allows it.
 	if(armor_bg_power && hud_frags_show_armor)
 	{
-		armor_height = ROUND((cell_height / armor_bg_power) * armor);
+		armor_height = Q_rint((cell_height / armor_bg_power) * armor);
 
 		#ifdef GLQUAKE
 		Draw_AlphaFill(px,												// x
@@ -2904,13 +2904,13 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 			#ifdef GLQUAKE
 			// Draw the rl-pic.
 			Draw_SSubPic (px,
-				py + ROUND((cell_height/2.0)) - (rl_picture->height/2.0),
+				py + Q_rint((cell_height/2.0)) - (rl_picture->height/2.0),
 				rl_picture, 0, 0,
 				rl_picture->width,
 				rl_picture->height, 1);
 			#else
 			Draw_SSubPic (px,
-				py + ROUND((cell_height/2.0)) - (rl_picture->height/2.0),
+				py + Q_rint((cell_height/2.0)) - (rl_picture->height/2.0),
 				rl_picture, 0, 0,
 				rl_picture->width,
 				rl_picture->height, 1);
@@ -2919,7 +2919,7 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 		else
 		{
 			// Just print "RL" instead.
-			Draw_String(px + 12 - 8, py + ROUND((cell_height/2.0)) - 4, "RL");
+			Draw_String(px + 12 - 8, py + Q_rint((cell_height/2.0)) - 4, "RL");
 		}
 	}
 
@@ -2934,34 +2934,34 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 			&& info->stats[STAT_ITEMS] & IT_INVISIBILITY
 			&& info->stats[STAT_ITEMS] & IT_QUAD)
 		{
-			Draw_ColoredString(ROUND(powerups_x - 10), py, "&c0ffQ&cf00P&cff0R", 0);
+			Draw_ColoredString(Q_rint(powerups_x - 10), py, "&c0ffQ&cf00P&cff0R", 0);
 		}
 		else if(info->stats[STAT_ITEMS] & IT_QUAD
 			&& info->stats[STAT_ITEMS] & IT_INVULNERABILITY)
 		{
-			Draw_ColoredString(ROUND(powerups_x - 8), py, "&c0ffQ&cf00P", 0);
+			Draw_ColoredString(Q_rint(powerups_x - 8), py, "&c0ffQ&cf00P", 0);
 		}
 		else if(info->stats[STAT_ITEMS] & IT_QUAD
 			&& info->stats[STAT_ITEMS] & IT_INVISIBILITY)
 		{
-			Draw_ColoredString(ROUND(powerups_x - 8), py, "&c0ffQ&cff0R", 0);
+			Draw_ColoredString(Q_rint(powerups_x - 8), py, "&c0ffQ&cff0R", 0);
 		}
 		else if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY
 			&& info->stats[STAT_ITEMS] & IT_INVISIBILITY)
 		{
-			Draw_ColoredString(ROUND(powerups_x - 8), py, "&cf00P&cff0R", 0);
+			Draw_ColoredString(Q_rint(powerups_x - 8), py, "&cf00P&cff0R", 0);
 		}
 		else if(info->stats[STAT_ITEMS] & IT_QUAD)
 		{
-			Draw_ColoredString(ROUND(powerups_x - 4), py, "&c0ffQ", 0);
+			Draw_ColoredString(Q_rint(powerups_x - 4), py, "&c0ffQ", 0);
 		}
 		else if(info->stats[STAT_ITEMS] & IT_INVULNERABILITY)
 		{
-			Draw_ColoredString(ROUND(powerups_x - 4), py, "&cf00P", 0);
+			Draw_ColoredString(Q_rint(powerups_x - 4), py, "&cf00P", 0);
 		}
 		else if(info->stats[STAT_ITEMS] & IT_INVISIBILITY)
 		{
-			Draw_ColoredString(ROUND(powerups_x - 4), py, "&cff0R", 0);
+			Draw_ColoredString(Q_rint(powerups_x - 4), py, "&cff0R", 0);
 		}
 	}
 
@@ -3034,7 +3034,7 @@ int Frags_DrawText(int px, int py,
 	int char_size = 8;
 	int y_pos;
 
-	y_pos = ROUND(py + (cell_height / 2.0) - 4);
+	y_pos = Q_rint(py + (cell_height / 2.0) - 4);
 
 	// Draw team
 	if(showteams && cl.teamplay)
@@ -4291,7 +4291,7 @@ void TeamHold_DrawBars(int x, int y, int width, int height,
 	int team2_width = 0;
 	int bar_height = 0;
 
-	bar_height = ROUND(height/2.0);
+	bar_height = Q_rint (height/2.0);
 	team1_width = (int) (width * team1_percent);
 	team2_width = (int) (width * team2_percent);
 
@@ -4332,7 +4332,7 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 		_x = x;
 		_y = y;
 		_width = max(0, width);
-		_height = ROUND(height * team1_percent);
+		_height = Q_rint(height * team1_percent);
 		_height = max(0, height);
 
 		#ifdef GLQUAKE
@@ -4343,9 +4343,9 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 
 		// Team 2.
 		_x = x;
-		_y = ROUND(y + (height * team1_percent));
+		_y = Q_rint(y + (height * team1_percent));
 		_width = max(0, width);
-		_height = ROUND(height * team2_percent);
+		_height = Q_rint(height * team2_percent);
 		_height = max(0, _height);
 
 		#ifdef GLQUAKE
@@ -4368,9 +4368,9 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 					int percent100 = 0;
 
 					_x = x + (width / 2) - 4;
-					_y = ROUND(y + (height * team1_percent)/2 - 12);
+					_y = Q_rint(y + (height * team1_percent)/2 - 12);
 
-					percent = ROUND(100 * team1_percent);
+					percent = Q_rint(100 * team1_percent);
 
 					if((percent100 = percent / 100))
 					{
@@ -4392,7 +4392,7 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 				else
 				{
 					_x = x + (width / 2) - 12;
-					_y = ROUND(y + (height * team1_percent)/2 - 4);
+					_y = Q_rint(y + (height * team1_percent)/2 - 4);
 					Draw_String(_x, _y, va("%2.0f%%", 100 * team1_percent));
 				}
 			}
@@ -4407,9 +4407,9 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 					int percent100 = 0;
 
 					_x = x + (width / 2) - 4;
-					_y = ROUND(y + (height * team1_percent) + (height * team2_percent)/2 - 12);
+					_y = Q_rint(y + (height * team1_percent) + (height * team2_percent)/2 - 12);
 
-					percent = ROUND(100 * team2_percent);
+					percent = Q_rint(100 * team2_percent);
 
 					if((percent100 = percent / 100))
 					{
@@ -4431,7 +4431,7 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 				else
 				{
 					_x = x + (width / 2) - 12;
-					_y = ROUND(y + (height * team1_percent) + (height * team2_percent)/2 - 4);
+					_y = Q_rint(y + (height * team1_percent) + (height * team2_percent)/2 - 4);
 					Draw_String(_x, _y, va("%2.0f%%", 100 * team2_percent));
 				}
 			}
@@ -4446,7 +4446,7 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 		// Team 1.
 		_x = x;
 		_y = y;
-		_width = ROUND(width * team1_percent);
+		_width = Q_rint(width * team1_percent);
 		_width = max(0, _width);
 		_height = max(0, height);
 
@@ -4457,9 +4457,9 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 		#endif
 
 		// Team 2.
-		_x = ROUND(x + (width * team1_percent));
+		_x = Q_rint(x + (width * team1_percent));
 		_y = y;
-		_width = ROUND(width * team2_percent);
+		_width = Q_rint(width * team2_percent);
 		_width = max(0, _width);
 		_height = max(0, height);
 
@@ -4475,7 +4475,7 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 			// Team 1.
 			if(team1_percent > 0.05)
 			{
-				_x = ROUND(x + (width * team1_percent)/2 - 8);
+				_x = Q_rint(x + (width * team1_percent)/2 - 8);
 				_y = y + (height / 2) - 4;
 				Draw_String(_x, _y, va("%2.0f%%", 100 * team1_percent));
 			}
@@ -4483,7 +4483,7 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 			// Team 2.
 			if(team2_percent > 0.05)
 			{
-				_x = ROUND(x + (width * team1_percent) + (width * team2_percent)/2 - 8);
+				_x = Q_rint(x + (width * team1_percent) + (width * team2_percent)/2 - 8);
 				_y = y + (height / 2) - 4;
 				Draw_String(_x, _y, va("%2.0f%%", 100 * team2_percent));
 			}
@@ -4779,7 +4779,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 				// Show a percenteage bar for the item.
 				//
 				TeamHold_DrawPercentageBar(x + names_width, _y,
-					ROUND(hud_teamholdinfo_width->value - names_width), 8,
+					Q_rint(hud_teamholdinfo_width->value - names_width), 8,
 					team1_percent, team2_percent,
 					stats_important_ents->teams[STATS_TEAM1].color,
 					stats_important_ents->teams[STATS_TEAM2].color,
@@ -4791,7 +4791,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 			else if(hud_teamholdinfo_style->value == HUD_TEAMHOLDINFO_STYLE_PERCENT_BARS2)
 			{
 				TeamHold_DrawBars(x + names_width, _y,
-					ROUND(hud_teamholdinfo_width->value - names_width), 8,
+					Q_rint(hud_teamholdinfo_width->value - names_width), 8,
 					team1_percent, team2_percent,
 					stats_important_ents->teams[STATS_TEAM1].color,
 					stats_important_ents->teams[STATS_TEAM2].color,
@@ -4856,8 +4856,8 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pi
 			p_cell_length_y = map_y_slope*(8.0 * grid->cell_length) * scale;
 
 			// Add rounding errors (so that we don't get weird gaps in the grid).
-			p_cell_length_x += tl_x - ROUND(tl_x);
-			p_cell_length_y += tl_y - ROUND(tl_y);
+			p_cell_length_x += tl_x - Q_rint(tl_x);
+			p_cell_length_y += tl_y - Q_rint(tl_y);
 
 			// Don't draw the stats stuff outside the picture.
 			if(tl_x + p_cell_length_x > pic_width || tl_y + p_cell_length_y > pic_height || x + tl_x < x || y + tl_y < y)
@@ -4919,10 +4919,10 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pi
 			// Draw the cell in the color of the team with the
 			// biggest weight for this cell. Or draw deaths.
 			Draw_AlphaFill(
-				x + ROUND(tl_x),			// X.
-				y + ROUND(tl_y),			// Y.
-				ROUND(p_cell_length_x),		// Width.
-				ROUND(p_cell_length_y),		// Height.
+				x + Q_rint(tl_x),			// X.
+				y + Q_rint(tl_y),			// Y.
+				Q_rint(p_cell_length_x),		// Width.
+				Q_rint(p_cell_length_y),		// Height.
 				color,						// Color.
 				weight);					// Alpha.
 		}
@@ -5067,8 +5067,8 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 		entity_q_y = cl_visents.list[i].origin[1]*8;
 
 		// Convert from quake coordiantes -> pixel coordinates.
-		entity_p_x = x + ROUND((map_x_slope*entity_q_x + map_x_intercept) * scale);
-		entity_p_y = y + ROUND((map_y_slope*entity_q_y + map_y_intercept) * scale);
+		entity_p_x = x + Q_rint((map_x_slope*entity_q_x + map_x_intercept) * scale);
+		entity_p_y = y + Q_rint((map_y_slope*entity_q_y + map_y_intercept) * scale);
 
 		// TODO: Replace all model name comparison below with MOD_HINT's instead for less comparisons (create new ones in Mod_LoadAliasModel() in r_model.c and gl_model.c/.h for the ones that don't have one already).
 
@@ -5366,8 +5366,8 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 
 		for(i = 0; i < stats_important_ents->count; i++)
 		{
-			entity_p_x = x + ROUND((map_x_slope*8*stats_important_ents->list[i].origin[0] + map_x_intercept) * scale);
-			entity_p_y = y + ROUND((map_y_slope*8*stats_important_ents->list[i].origin[1] + map_y_intercept) * scale);
+			entity_p_x = x + Q_rint((map_x_slope*8*stats_important_ents->list[i].origin[0] + map_x_intercept) * scale);
+			entity_p_y = y + Q_rint((map_y_slope*8*stats_important_ents->list[i].origin[1] + map_y_intercept) * scale);
 
 			Draw_ColoredString(entity_p_x  - (8 * strlen(stats_important_ents->list[i].name)) / 2.0, entity_p_y - 4,
 				va("&c55f%s", stats_important_ents->list[i].name), 0);
@@ -5410,8 +5410,8 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			entity_q_x = temp_entities.list[i].pos[0]*8;
 			entity_q_y = temp_entities.list[i].pos[1]*8;
 
-			entity_p_x = x + ROUND((map_x_slope*entity_q_x + map_x_intercept) * scale);
-			entity_p_y = y + ROUND((map_y_slope*entity_q_y + map_y_intercept) * scale);
+			entity_p_x = x + Q_rint((map_x_slope*entity_q_x + map_x_intercept) * scale);
+			entity_p_y = y + Q_rint((map_y_slope*entity_q_y + map_y_intercept) * scale);
 
 			if(radar_show_explosions
 				&& (temp_entities.list[i].type == TE_EXPLOSION
@@ -5523,8 +5523,8 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 			player_angle = cls.demoplayback ? state->viewangles[1] : cl.simangles[1];
 
 			// Convert from quake coordiantes -> pixel coordinates.
-			player_p_x = ROUND((map_x_slope*player_q_x + map_x_intercept) * scale);
-			player_p_y = ROUND((map_y_slope*player_q_y + map_y_intercept) * scale);
+			player_p_x = Q_rint((map_x_slope*player_q_x + map_x_intercept) * scale);
+			player_p_y = Q_rint((map_y_slope*player_q_y + map_y_intercept) * scale);
 
 			player_color = Sbar_BottomColor(info);
 
@@ -5844,7 +5844,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 	// This map doesn't have a map pic.
 	if(!radar_pic_found)
 	{
-		if(HUD_PrepareDraw(hud, ROUND(width_limit), ROUND(height_limit), &x, &y))
+		if(HUD_PrepareDraw(hud, Q_rint(width_limit), Q_rint(height_limit), &x, &y))
 		{
 			Draw_String(x, y, "No radar picture found!");
 		}
@@ -5854,7 +5854,7 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 	// Make sure we can translate the coordinates.
 	if(!conversion_formula_found)
 	{
-		if(HUD_PrepareDraw(hud, ROUND(width_limit), ROUND(height_limit), &x, &y))
+		if(HUD_PrepareDraw(hud, Q_rint(width_limit), Q_rint(height_limit), &x, &y))
 		{
 			Draw_String(x, y, "No conversion formula found!");
 		}
@@ -5891,17 +5891,17 @@ void SCR_HUD_DrawRadar(hud_t *hud)
 		height = radar_pic.height * scale;
 	}
 
-	if (HUD_PrepareDraw(hud, ROUND(width_limit), ROUND(height_limit), &x, &y))
+	if (HUD_PrepareDraw(hud, Q_rint(width_limit), Q_rint(height_limit), &x, &y))
 	{
 		float player_size = 1.0;
 		static int lastframecount = -1;
 
 		// Place the map picture in the center of the HUD element.
-		x += ROUND((width_limit / 2.0) - (width / 2.0));
+		x += Q_rint((width_limit / 2.0) - (width / 2.0));
 		x = max(0, x);
 		x = min(x + width, x);
 
-		y += ROUND((height_limit / 2.0) - (height / 2.0));
+		y += Q_rint((height_limit / 2.0) - (height / 2.0));
 		y = max(0, y);
 		y = min(y + height, y);
 

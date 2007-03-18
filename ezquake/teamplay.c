@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.64 2007-03-11 06:01:43 disconn3ct Exp $
+    $Id: teamplay.c,v 1.65 2007-03-18 18:36:24 disconn3ct Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -1487,8 +1487,8 @@ void MV_UpdateSkins()
 	// Find out if we're tracking a team.
 	//
 	{
-		// Get the team of the first slot.		
-		strlcpy(tracked_team, cl.players[mv_trackslots[0]].team, sizeof(tracked_team));	
+		// Get the team of the first slot.
+		strlcpy(tracked_team, cl.players[mv_trackslots[0]].team, sizeof(tracked_team));
 
 		for(i = 0; i < 4; i++)
 		{
@@ -1496,8 +1496,8 @@ void MV_UpdateSkins()
 			if(mv_trackslots[i] < 0)
 			{
 				continue;
-			}			
-			
+			}
+
 			// Check if the team matches.
 			if(!strcmp(cl.players[mv_trackslots[i]].team, tracked_team))
 			{
@@ -1520,7 +1520,7 @@ void MV_UpdateSkins()
 	{
 		// Only set the colors for all the players once, because
 		// we're tracking multiple people... We can't know who's
-		// a team member or an enemy.	
+		// a team member or an enemy.
 
 		i = 0;
 
@@ -1530,12 +1530,12 @@ void MV_UpdateSkins()
 			strlcpy(friendlyteam, cl.players[i].team, sizeof(friendlyteam));
 			i++;
 		}
-		
+
 		skinforcing_team = friendlyteam;
 	}
 	else if(trackingteam)
 	{
-		skinforcing_team = tracked_team;		
+		skinforcing_team = tracked_team;
 	}
 
 	// Set the colors based on team.
@@ -1583,9 +1583,9 @@ void TP_UpdateSkins(void)
 	}
 	else
 	{
-		for (slot = 0; slot < MAX_CLIENTS; slot++) 
+		for (slot = 0; slot < MAX_CLIENTS; slot++)
 		{
-			if (cl.players[slot].skin_refresh) 
+			if (cl.players[slot].skin_refresh)
 			{
 				CL_NewTranslation(slot);
 				cl.players[slot].skin_refresh = false;
@@ -1946,7 +1946,7 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 	for (node = locdata; node; node = node->next) {
 		char row[2*MAX_LOC_NAME];
 
-		sprintf(row, "%4d %4d %4d %s\n", ROUND(8*node->coord[0]), ROUND(8*node->coord[1]), ROUND(8*node->coord[2]), node->name);
+		sprintf(row, "%4d %4d %4d %s\n", Q_rint(8*node->coord[0]), Q_rint(8*node->coord[1]), Q_rint(8*node->coord[2]), node->name);
 		strcat(buf, row);
 	}
 
@@ -2954,7 +2954,7 @@ returns a combination of these values:
 2 -- team message
 4 -- spectator
 8 -- spec team message
-Note that sometimes we can't be sure who really sent the message,  e.g. when there's a 
+Note that sometimes we can't be sure who really sent the message,  e.g. when there's a
 player "unnamed" in your team and "(unnamed)" in the enemy team. The result will be 3 (1+2)
 */
 int TP_CategorizeMessage (char *s, int *offset)
