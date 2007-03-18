@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.55 2007-03-11 06:01:39 disconn3ct Exp $
+	$Id: gl_draw.c,v 1.56 2007-03-18 18:25:55 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -194,7 +194,7 @@ void customCrosshair_Init(void) {
 	while (i < 64) {
 		c = fgetc(f);
 		if (c == EOF) {
-			Com_Printf("Invalid format in crosshair.txt (Need 64 X's and O's)\n");	
+			Com_Printf("Invalid format in crosshair.txt (Need 64 X's and O's)\n");
 			fclose(f);
 			return;
 		}
@@ -204,7 +204,7 @@ void customCrosshair_Init(void) {
 			Com_Printf("Invalid format in crosshair.txt (Only X's and O's and whitespace permitted)\n");
 			fclose(f);
 			return;
-		}		
+		}
 		customcrosshairdata[i++] = (c == 'x' || c  == 'X') ? 0xfe : 0xff;
 	}
 	fclose(f);
@@ -257,10 +257,10 @@ qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y) {
 	int i, j, best, best2;
 
 	best = BLOCK_HEIGHT;
-	
+
 	for (i = 0; i < BLOCK_WIDTH - w; i++) {
 		best2 = 0;
-		
+
 		for (j = 0; j < w; j++) {
 			if (scrap_allocated[scrapnum][i + j] >= best)
 				break;
@@ -272,10 +272,10 @@ qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y) {
 			*y = best = best2;
 		}
 	}
-	
+
 	if (best + h > BLOCK_HEIGHT)
 		return false;
-	
+
 	for (i = 0; i < w; i++)
 		scrap_allocated[scrapnum][*x + i] = best + h;
 
@@ -320,7 +320,7 @@ mpic_t *Draw_CacheWadPic (char *name) {
 
 	p = W_GetLumpName (name);
 	pic = (mpic_t *)p;
-	
+
 	if (
 		(pic_24bit = GL_LoadPicImage(va("textures/wad/%s", name), name, 0, 0, TEX_ALPHA)) ||
 		(pic_24bit = GL_LoadPicImage(va("gfx/%s", name), name, 0, 0, TEX_ALPHA))
@@ -405,7 +405,7 @@ void CachePics_DeInit(void) {
 	memset(cachepics, 0, sizeof(cachepics));
 }
 
-mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit) 
+mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit)
 {
 	mpic_t pic, *fpic, *pic_24bit;
 	qpic_t *dat;
@@ -613,7 +613,7 @@ void Draw_InitCharset(void) {
 	if (!char_textures[0])
 		Cvar_Set(&gl_consolefont, "original");
 
-	if (!char_textures[0])	
+	if (!char_textures[0])
 		Sys_Error("Draw_InitCharset: Couldn't load charset");
 
 	char_textures[1] = LoadAlternateCharset ("conchars-cyr");
@@ -626,7 +626,7 @@ void Draw_InitCharset(void) {
 void CP_Init (void);
 
 void Draw_Init (void) {
-	Cmd_AddCommand("loadcharset", Draw_LoadCharset_f);	
+	Cmd_AddCommand("loadcharset", Draw_LoadCharset_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register (&scr_conalpha);
@@ -639,7 +639,7 @@ void Draw_Init (void) {
 	Cvar_Register (&scr_menualpha);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CROSSHAIR);
-	Cvar_Register (&gl_crosshairimage);	
+	Cvar_Register (&gl_crosshairimage);
 	Cvar_Register (&gl_crosshairalpha);
 
 	Cvar_ResetCurrentGroup();
@@ -777,7 +777,7 @@ void Draw_String (int x, int y, const char *str) {
 
 	glBegin (GL_QUADS);
 
-	while (*str) {	// stop rendering when out of characters		
+	while (*str) {	// stop rendering when out of characters
 		if ((num = *str++) != 32)	// skip spaces
 			Draw_CharPoly(x, y, num);
 
@@ -818,7 +818,7 @@ void Draw_AlphaString (int x, int y, const char *str, float alpha)
 
 	if (y <= -8)
 		return;			// totally off screen
-	
+
 	if (!str || !str[0])
 		return;
 
@@ -838,7 +838,7 @@ void Draw_AlphaString (int x, int y, const char *str, float alpha)
 
 	glBegin (GL_QUADS);
 
-	while (*str) {	// stop rendering when out of characters		
+	while (*str) {	// stop rendering when out of characters
 		if ((num = *str++) != 32)	// skip spaces
 			Draw_CharPoly(x, y, num);
 
@@ -899,7 +899,7 @@ void Draw_Alt_String (int x, int y, const char *str) {
 }
 
 
-int HexToInt(char c) 
+int HexToInt(char c)
 {
 	if (isdigit(c))
 		return c - '0';
@@ -938,7 +938,7 @@ void Draw_ColoredString (int x, int y, const char *text, int red) {
 	glBegin (GL_QUADS);
 
 	for ( ; *text; text++) {
-		
+
 		if (*text == '&') {
 			if (text[1] == 'c' && text[2] && text[3] && text[4])	{
 				r = HexToInt(text[2]);
@@ -1179,44 +1179,44 @@ void Draw_Crosshair (void) {
 		return;
 	}
 
-	if ((crosshair.value >= 2 && crosshair.value <= NUMCROSSHAIRS + 1) || 
+	if ((crosshair.value >= 2 && crosshair.value <= NUMCROSSHAIRS + 1) ||
 		((customcrosshair_loaded & CROSSHAIR_TXT) && crosshair.value == 1) ||
-		(customcrosshair_loaded & CROSSHAIR_IMAGE)) 
+		(customcrosshair_loaded & CROSSHAIR_IMAGE))
 	{
 		// Multiview
-		if (cl_multiview.value && cls.mvdplayback) 
+		if (cl_multiview.value && cls.mvdplayback)
 		{
-			if (cl_multiview.value == 1) 
+			if (cl_multiview.value == 1)
 			{
-				x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value; 
+				x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value;
 				y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
 			}
-			else if (cl_multiview.value == 2) 
+			else if (cl_multiview.value == 2)
 			{
-				if (!cl_mvinset.value) 
+				if (!cl_mvinset.value)
 				{
-					if (CURRVIEW == 1) 
+					if (CURRVIEW == 1)
 					{
-						x = vid.width / 2; 
+						x = vid.width / 2;
 						y = vid.height * 3/4;
-					} 
-					else if (CURRVIEW == 2) 
-					{ 
+					}
+					else if (CURRVIEW == 2)
+					{
 						// top cv2
-						x = vid.width / 2; 
+						x = vid.width / 2;
 						y = vid.height / 4;
 					}
-				} 
-				else 
-				{ 
+				}
+				else
+				{
 					// inset
-					if (CURRVIEW == 2) 
-					{ 
+					if (CURRVIEW == 2)
+					{
 						// normal
-						x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value; 
+						x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value;
 						y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
-					} 
-					else if (CURRVIEW == 1) 
+					}
+					else if (CURRVIEW == 1)
 					{
 						x = vid.width - (vid.width/3)/2;
 						if (cl_sbar.value)
@@ -1230,63 +1230,63 @@ void Draw_Crosshair (void) {
 						}
 					}
 				}
-			} 
-			else if (cl_multiview.value == 3) 
+			}
+			else if (cl_multiview.value == 3)
 			{
-				if (CURRVIEW == 2) 
-				{ 
+				if (CURRVIEW == 2)
+				{
 					// top
 					x = vid.width / 2;
 					y = vid.height / 4;
-				} 
-				else if (CURRVIEW == 3) 
-				{ 
+				}
+				else if (CURRVIEW == 3)
+				{
 					// bl
 					x = vid.width / 4;
 					y = vid.height/2 + vid.height/4;
 				}
-				else 
-				{ 
+				else
+				{
 					// br
 					x = vid.width/2 + vid.width/4;
 					y = vid.height/2 + vid.height/4;
 				}
 
-			} 
-			else if (cl_multiview.value >= 4) 
+			}
+			else if (cl_multiview.value >= 4)
 			{
-				if (CURRVIEW == 2) 
-				{ 
+				if (CURRVIEW == 2)
+				{
 					// tl
 					x = vid.width/4;
 					y = vid.height/4;
 				}
-				else if (CURRVIEW == 3) 
-				{ 
+				else if (CURRVIEW == 3)
+				{
 					// tr
 					x = vid.width/2 + vid.width/4;
 					y = vid.height/4;
 
 				}
-				else if (CURRVIEW == 4) 
-				{ 
+				else if (CURRVIEW == 4)
+				{
 					// bl
 					x = vid.width/4;
 					y = vid.height/2 + vid.height/4;
 
 				}
-				else if (CURRVIEW == 1) 
-				{ 
+				else if (CURRVIEW == 1)
+				{
 					// br
 					x = vid.width/2 + vid.width/4;
 					y = vid.height/2 + vid.height/4;
 				}
 			}
-		} 
-		else 
-		{ 
+		}
+		else
+		{
 			// not mv
-			x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value; 
+			x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value;
 			y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
 		}
 
@@ -1320,7 +1320,7 @@ void Draw_Crosshair (void) {
 			th = crosshairpic.th;
 			tl = crosshairpic.tl;
 		} else {
-			GL_Bind ((crosshair.value >= 2) ? crosshairtextures[(int) crosshair.value - 2] : crosshairtexture_txt);	
+			GL_Bind ((crosshair.value >= 2) ? crosshairtextures[(int) crosshair.value - 2] : crosshairtexture_txt);
 			ofs1 = 3.5;
 			ofs2 = 4.5;
 			tl = sl = 0;
@@ -1328,26 +1328,26 @@ void Draw_Crosshair (void) {
 		}
 
 		// Multiview for the case of mv == 2 with mvinset
-		if (cl_multiview.value == 2 && cls.mvdplayback && cl_mvinset.value) 
+		if (cl_multiview.value == 2 && cls.mvdplayback && cl_mvinset.value)
 		{
-			if (CURRVIEW == 1) 
+			if (CURRVIEW == 1)
 			{
 				ofs1 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
 				ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
-			} 
-			else 
-			{ 
+			}
+			else
+			{
 				// normal
 				ofs1 *= (vid.width / 320) * bound(0, crosshairsize.value, 20);
 				ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value, 20);
 			}
-		} 
-		else if (cl_multiview.value > 1 && cls.mvdplayback) 
+		}
+		else if (cl_multiview.value > 1 && cls.mvdplayback)
 		{
 			ofs1 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
 			ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value*0.5, 20);
-		} 
-		else 
+		}
+		else
 		{
 			ofs1 *= (vid.width / 320) * bound(0, crosshairsize.value, 20);
 			ofs2 *= (vid.width / 320) * bound(0, crosshairsize.value, 20);
@@ -1364,7 +1364,7 @@ void Draw_Crosshair (void) {
 		glVertex2f (x - ofs1, y + ofs2);
 		glEnd ();
 
-		if (gl_crosshairalpha.value) 
+		if (gl_crosshairalpha.value)
 		{
 			glDisable(GL_BLEND);
 			glEnable (GL_ALPHA_TEST);
@@ -1372,8 +1372,8 @@ void Draw_Crosshair (void) {
 
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		glColor3ubv (color_white);
-	} 
-	else if (crosshair.value) 
+	}
+	else if (crosshair.value)
 	{
 		// Multiview
 		if (cls.mvdplayback && cl_multiview.value == 2 && cl_mvinset.value && CURRVIEW == 1)
@@ -1387,24 +1387,24 @@ void Draw_Crosshair (void) {
 				Draw_Character (vid.width - (vid.width/3)/2-4, (vid.height/3)/2 - 2, '+');
 			}
 		}
-		else if (cls.mvdplayback && cl_multiview.value == 2 && !cl_mvinset.value) 
+		else if (cls.mvdplayback && cl_multiview.value == 2 && !cl_mvinset.value)
 		{
 			Draw_Character (vid.width / 2 - 4, vid.height * 3/4 - 2, '+');
 			Draw_Character (vid.width / 2 - 4, vid.height / 4 - 2, '+');
 		}
-		else if (cls.mvdplayback && cl_multiview.value == 3) 
+		else if (cls.mvdplayback && cl_multiview.value == 3)
 		{
 			Draw_Character (vid.width / 2 - 4, vid.height / 4 - 2, '+');
 			Draw_Character (vid.width / 4 - 4, vid.height/2 + vid.height/4 - 2, '+');
 			Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
 		}
-		else if (cls.mvdplayback && cl_multiview.value >= 4) 
+		else if (cls.mvdplayback && cl_multiview.value >= 4)
 		{
 			Draw_Character (vid.width/4 - 4, vid.height/4 - 2, '+');
 			Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/4 - 2, '+');
 			Draw_Character (vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
 			Draw_Character (vid.width/2 + vid.width/4 - 4, vid.height/2 + vid.height/4 - 2, '+');
-		} 
+		}
 		else
 		{
 			Draw_Character (scr_vrect.x + scr_vrect.width / 2 - 4 + cl_crossx.value, scr_vrect.y + scr_vrect.height / 2 - 4 + cl_crossy.value, '+');
@@ -1477,7 +1477,7 @@ void Draw_TileClear (int x, int y, int w, int h) {
 	glEnd ();
 }
 
-void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float r, float g, float b, float thickness, qbool fill, float alpha) 
+void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float r, float g, float b, float thickness, qbool fill, float alpha)
 {
 	alpha = bound(0, alpha, 1);
 
@@ -1487,13 +1487,13 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float r, float g, float
 	}
 
 	glDisable (GL_TEXTURE_2D);
-	if (alpha < 1) 
+	if (alpha < 1)
 	{
 		glEnable (GL_BLEND);
 		glDisable(GL_ALPHA_TEST);
 		glColor4f (r, g, b, alpha);
-	} 
-	else 
+	}
+	else
 	{
 		glColor3f (r, g, b);
 	}
@@ -1506,14 +1506,14 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float r, float g, float
 	}
 	else
 	{
-		glRectf(x, y, x + w	, y + thickness);		
+		glRectf(x, y, x + w	, y + thickness);
 		glRectf(x, y + thickness, x + thickness, y + h - thickness);
-		glRectf(x + w - thickness, y + thickness, x + w, y + h - thickness);		
+		glRectf(x + w - thickness, y + thickness, x + w, y + h - thickness);
 		glRectf(x, y + h, x + w, y + h - thickness);
 	}
 
 	glEnable (GL_TEXTURE_2D);
-	if (alpha < 1) 
+	if (alpha < 1)
 	{
 		glEnable (GL_ALPHA_TEST);
 		glDisable (GL_BLEND);
@@ -1523,7 +1523,7 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float r, float g, float
 
 void Draw_AlphaRectangle (int x, int y, int w, int h, int c, float thickness, qbool fill, float alpha)
 {
-	Draw_AlphaRectangleRGB (x, y, w, h, 
+	Draw_AlphaRectangleRGB (x, y, w, h,
 		host_basepal[c * 3] / 255.0,
 		host_basepal[c * 3 + 1] / 255.0,
 		host_basepal[c * 3 + 2] / 255.0,
@@ -1545,7 +1545,7 @@ void Draw_FillRGB (int x, int y, int w, int h, float r, float g, float b)
 	Draw_AlphaFillRGB (x, y, w, h, r, g, b, 1);
 }
 
-void Draw_Fill (int x, int y, int w, int h, int c) 
+void Draw_Fill (int x, int y, int w, int h, int c)
 {
 	Draw_AlphaFill(x, y, w, h, c, 1);
 }
@@ -1572,9 +1572,9 @@ void Draw_Outline (int x, int y, int w, int h, int c, float thickness)
 }
 
 // HUD -> Cokeman
-// 
+//
 
-void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, float r, float g, float b, float alpha) 
+void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, float r, float g, float b, float alpha)
 {
 	alpha = bound(0, alpha, 1);
 
@@ -1584,13 +1584,13 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 	}
 
 	glDisable (GL_TEXTURE_2D);
-	if (alpha < 1) 
+	if (alpha < 1)
 	{
 		glEnable (GL_BLEND);
 		glDisable(GL_ALPHA_TEST);
 		glColor4f (r, g, b, alpha);
-	} 
-	else 
+	}
+	else
 	{
 		glColor3f (r, g, b);
 	}
@@ -1601,12 +1601,12 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 	}
 
 	glBegin (GL_LINES);
-	glVertex2f (x_start, y_start);	
+	glVertex2f (x_start, y_start);
 	glVertex2f (x_end, y_end);
 	glEnd ();
 
 	glEnable (GL_TEXTURE_2D);
-	if (alpha < 1) 
+	if (alpha < 1)
 	{
 		glEnable(GL_ALPHA_TEST);
 		glDisable (GL_BLEND);
@@ -1614,7 +1614,7 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 	glColor3ubv (color_white);
 }
 
-void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, int c, float alpha) 
+void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, int c, float alpha)
 {
 	Draw_AlphaLineRGB (x_start, y_start, x_end, y_end, thickness,
 		host_basepal[c * 3] / 255.0,
@@ -1674,13 +1674,13 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 
 	glDisable (GL_TEXTURE_2D);
-	if (alpha < 1) 
+	if (alpha < 1)
 	{
 		glEnable (GL_BLEND);
 		glDisable(GL_ALPHA_TEST);
 		glColor4f (r, g, b, alpha);
-	} 
-	else 
+	}
+	else
 	{
 		glColor3f (r, g, b);
 	}
@@ -1700,8 +1700,8 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 	}
 
 	// Get the vertex index where to start and stop drawing.
-	start	= ROUND((startangle * CIRCLE_LINE_COUNT) / (2*M_PI));
-	end		= ROUND((endangle   * CIRCLE_LINE_COUNT) / (2*M_PI));
+	start	= Q_rint((startangle * CIRCLE_LINE_COUNT) / (2*M_PI));
+	end		= Q_rint((endangle   * CIRCLE_LINE_COUNT) / (2*M_PI));
 
 	// If the end is less than the start, increase the index so that
 	// we start on a "new" circle.
@@ -1718,7 +1718,7 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 	{
       angle = i*2*M_PI / CIRCLE_LINE_COUNT;
       glVertex2f (x + radius*cos(angle), y - radius*sin(angle));
-	  
+
 	  // When filling we're drawing triangles so we need to
 	  // create a vertex in the middle of the vertex to fill
 	  // the entire pie slice/circle.
@@ -1739,7 +1739,7 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 	glEnd ();
 
 	glEnable (GL_TEXTURE_2D);
-	if (alpha < 1) 
+	if (alpha < 1)
 	{
 		glEnable (GL_ALPHA_TEST);
 		glDisable (GL_BLEND);
@@ -1749,10 +1749,10 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 
 void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, int c, float alpha)
 {
-	Draw_AlphaPieSliceRGB (x, y, radius, startangle, endangle, thickness, fill, 
-		host_basepal[c * 3] / 255.0, 
-		host_basepal[c * 3 + 1] / 255.0, 
-		host_basepal[c * 3 + 2] / 255.0, 
+	Draw_AlphaPieSliceRGB (x, y, radius, startangle, endangle, thickness, fill,
+		host_basepal[c * 3] / 255.0,
+		host_basepal[c * 3 + 1] / 255.0,
+		host_basepal[c * 3 + 2] / 255.0,
 		alpha);
 }
 
@@ -1803,7 +1803,7 @@ void Draw_SCharacter (int x, int y, int num, float scale)
         return;     // space
 
     num &= 255;
-    
+
     if (y <= -8 * scale)
         return;         // totally off screen
 
@@ -1893,22 +1893,22 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width
 		glCullFace (GL_FRONT);
 		glColor4f (1, 1, 1, alpha);
 	}
-	
-    GL_Bind (gl->texnum);	
+
+    GL_Bind (gl->texnum);
     glBegin (GL_QUADS);
-   
+
 	// Upper left corner.
 	glTexCoord2f (newsl, newtl);
     glVertex2f (x, y);
-   
+
 	// Upper right corner.
 	glTexCoord2f (newsh, newtl);
     glVertex2f (x + scale_x * width, y);
-   
+
 	// Bottom right corner.
 	glTexCoord2f (newsh, newth);
     glVertex2f (x + scale_x * width, y + scale_y * height);
-    
+
 	// Bottom left corner.
 	glTexCoord2f (newsl, newth);
     glVertex2f (x, y + scale_y * height);
@@ -1936,7 +1936,7 @@ void Draw_SSubPic(int x, int y, mpic_t *gl, int srcx, int srcy, int width, int h
 	Draw_SAlphaSubPic (x, y, gl, srcx, srcy, width, height, scale, 1);
 }
 
-void Draw_AlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float alpha) 
+void Draw_AlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float alpha)
 {
 	Draw_SAlphaSubPic (x, y, pic, srcx, srcy, width, height, 1, alpha);
 }
@@ -1948,7 +1948,7 @@ void Draw_SubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int 
 
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha)
 {
-	Draw_SAlphaSubPic (x , y, pic, 0, 0, pic->width, pic->height, 1, alpha);	
+	Draw_SAlphaSubPic (x , y, pic, 0, 0, pic->width, pic->height, 1, alpha);
 }
 
 void Draw_SAlphaPic (int x, int y, mpic_t *gl, float alpha, float scale)
@@ -1963,12 +1963,12 @@ void Draw_SPic (int x, int y, mpic_t *gl, float scale)
 
 void Draw_STransPic (int x, int y, mpic_t *pic, float scale)
 {
-    /*if (   x < 0 || (unsigned)(x + scale*pic->width) > vid.width 
+    /*if (   x < 0 || (unsigned)(x + scale*pic->width) > vid.width
 		|| y < 0 || (unsigned)(y + scale*pic->height) > vid.height )
     {
         Sys_Error ("Draw_TransPic: bad coordinates");
     }*/
-        
+
     Draw_SPic (x, y, pic, scale);
 }
 
@@ -1977,20 +1977,20 @@ void Draw_TransSubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, 
     Draw_SubPic(x, y, pic, srcx, srcy, width, height);
 }
 
-void Draw_Pic (int x, int y, mpic_t *pic) 
+void Draw_Pic (int x, int y, mpic_t *pic)
 {
 	Draw_SAlphaSubPic (x, y, pic, 0, 0, pic->width, pic->height, 1, 1);
 }
 
-void Draw_TransPic (int x, int y, mpic_t *pic) 
+void Draw_TransPic (int x, int y, mpic_t *pic)
 {
 	/*
 	// Why do this? GL Can handle drawing partialy outside the screen.
-	if (   x < 0 || (unsigned) (x + pic->width) > vid.width 
+	if (   x < 0 || (unsigned) (x + pic->width) > vid.width
 		|| y < 0 || (unsigned) (y + pic->height) > vid.height )
 		Sys_Error ("Draw_TransPic: bad coordinates");
 	*/
-		
+
 	Draw_Pic (x, y, pic);
 }
 
@@ -2013,7 +2013,7 @@ void Draw_SFill (int x, int y, int w, int h, int c, float scale)
     glEnable (GL_TEXTURE_2D);
 }
 
-void Draw_ConsoleBackground (int lines) 
+void Draw_ConsoleBackground (int lines)
 {
 	mpic_t *lvlshot = NULL;
 	float alpha = (SCR_NEED_CONSOLE_BACKGROUND ? 1 : bound(0, scr_conalpha.value, 1));
@@ -2111,7 +2111,7 @@ void Draw_FadeScreen (void) {
 
 //=============================================================================
 
-//Draws the little blue disc in the corner of the screen. 
+//Draws the little blue disc in the corner of the screen.
 //Call before beginning any disc IO.
 void Draw_BeginDisc (void) {
 	if (!draw_disc)

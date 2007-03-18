@@ -22,7 +22,7 @@ void StatsGrid_Remove(stats_weight_grid_t **grid)
 	{
 		return;
 	}
-	
+
 	// Free all the rows.
 	if((*grid)->cells != NULL)
 	{
@@ -44,11 +44,11 @@ void StatsGrid_Remove(stats_weight_grid_t **grid)
 }
 
 
-void StatsGrid_Init(stats_weight_grid_t **grid, 
-						 float falloff_interval, 
+void StatsGrid_Init(stats_weight_grid_t **grid,
+						 float falloff_interval,
 						 float falloff_value,
 						 int cell_length,
-						 float grid_width, 
+						 float grid_width,
 						 float grid_height,
 						 float hold_threshold)
 {
@@ -57,7 +57,7 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 
 	// Allocate the grid.
 	(*grid) = (stats_weight_grid_t *)Q_malloc(sizeof(stats_weight_grid_t));
-	
+
 	if((*grid) == NULL)
 	{
 		// Failure.
@@ -65,12 +65,12 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 	}
 
 	// Get the row and col count.
-	(*grid)->row_count = ROUND(grid_height / cell_length);
-	(*grid)->col_count = ROUND(grid_width / cell_length);
+	(*grid)->row_count = Q_rint(grid_height / cell_length);
+	(*grid)->col_count = Q_rint(grid_width / cell_length);
 
 	// Allocate the rows.
 	(*grid)->cells = (stats_cell_t **)Q_calloc((*grid)->row_count, sizeof(stats_cell_t *));
-	
+
 	// If we failed allocating the rows, cleanup and return.
 	if((*grid)->cells == NULL)
 	{
@@ -106,14 +106,14 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 
 			(*grid)->cells[row][col].teams[STATS_TEAM2].weight = 0.0;
 			(*grid)->cells[row][col].teams[STATS_TEAM2].change_time = 0.0;
-			(*grid)->cells[row][col].teams[STATS_TEAM2].death_weight = 0.0;			
+			(*grid)->cells[row][col].teams[STATS_TEAM2].death_weight = 0.0;
 
 			// Save the quake coordinates of the cells upper left corner.
 			(*grid)->cells[row][col].tl_x = cl.worldmodel->mins[0] + (col * cell_length);
 			(*grid)->cells[row][col].tl_y = cl.worldmodel->mins[1] + (row * cell_length);
 		}
 	}
-	
+
 	// If everything went well set the rest of the stuff.
 	(*grid)->falloff_interval	= falloff_interval;
 	(*grid)->falloff_value		= falloff_value;
@@ -122,7 +122,7 @@ void StatsGrid_Init(stats_weight_grid_t **grid,
 	(*grid)->height				= grid_height;
 
 	// We will wait with setting these until the match has started.
-	
+
 	(*grid)->teams[STATS_TEAM1].color			= 0;
 	(*grid)->teams[STATS_TEAM2].color			= 0;
 	(*grid)->teams[STATS_TEAM1].hold_count		= 0;
@@ -246,17 +246,17 @@ void StatsGrid_InitHoldItems()
 		else if(!strcmp(cl_visents.list[i].model->name, "progs/g_rock2.mdl"))
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "RL", ++rl_count);
-		}		
+		}
 		else if(!strcmp(cl_visents.list[i].model->name, "progs/g_light.mdl"))
 		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "LG", ++lg_count);
 		}
 		else if(!strcmp(cl_visents.list[i].model->name, "progs/g_rock.mdl"))
-		{			
+		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "GL", ++gl_count);
 		}
 		else if(!strcmp(cl_visents.list[i].model->name, "progs/g_nail2.mdl"))
-		{		
+		{
 			StatsGrid_SetHoldItemName(temp_ents[ents_count].name, "SNG", ++sng_count);
 		}
 		else if(!strcmp(cl_visents.list[i].model->name, "maps/b_bh100.bsp"))
@@ -336,7 +336,7 @@ void StatsGrid_InitTeamNames(stats_weight_grid_t *grid)
 	int i;
 
 	// Go through the rest of the players until another team is found, that must be team2.
-	for (i = 0; i < MAX_CLIENTS; i++) 
+	for (i = 0; i < MAX_CLIENTS; i++)
 	{
 		// Skip spectators.
 		if(!cl.players[i].name[0] || cl.players[i].spectator)
@@ -368,7 +368,7 @@ void StatsGrid_ValidateTeamColors()
 	// and has "teamcolor" and "enemycolor" set. When you switch to a player
 	// that has another team than the one you tracked at match start, the team
 	// colors saved on the stats grid will not match the team color of the actual
-	// players on the level. 
+	// players on the level.
 
 	int player_color;
 	player_info_t *player_info;
@@ -381,7 +381,7 @@ void StatsGrid_ValidateTeamColors()
 
 	// Get the tracked player.
 	player_info = &cl.players[tracked];
-	
+
 	// Get the team color of the tracked player.
 	player_color = Sbar_BottomColor(player_info);
 
@@ -391,7 +391,7 @@ void StatsGrid_ValidateTeamColors()
 	}
 
 	// If the player being tracked is a member of team 1 for instance but has a
-	// team color that doesn't match the one saved for team 1 in the 
+	// team color that doesn't match the one saved for team 1 in the
 	// stats grid, then swap the team colors in the stats grid.
 	if (!strncmp(stats_grid->teams[STATS_TEAM1].name, player_info->team, sizeof(stats_grid->teams[STATS_TEAM1].name))
 		&& stats_grid->teams[STATS_TEAM1].color != player_color)
@@ -437,7 +437,7 @@ void StatsGrid_Change(stats_weight_grid_t *grid,
 			grid->cells[row][col].tl_y = row * cell_length;
 		}
 	}
-	
+
 	grid->falloff_interval	= falloff_interval;
 	grid->falloff_value		= falloff_value;
 }
@@ -523,7 +523,7 @@ void StatsGrid_CalculateHoldItem(stats_weight_grid_t *grid, int row, int col, fl
 			&& fabs(grid->cells[row][col].tl_y - stats_important_ents->list[i].origin[1]) <= stats_important_ents->hold_radius)
 		{
 			stats_important_ents->list[i].teams_hold_count[team_id]++;
-			
+
 			// If this is the first time, set the name of the team in the entity struct.
 			if(!stats_important_ents->teams[team_id].name[0])
 			{
@@ -571,8 +571,8 @@ void StatsGrid_DecreaseTeamWeights(stats_weight_grid_t *grid, int row, int col, 
 	StatsGrid_DecreaseWeight(&grid->cells[row][col].teams[STATS_TEAM2], grid);
 }
 
-void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid, 
-								  player_state_t *player_state, 
+void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
+								  player_state_t *player_state,
 								  player_info_t *player_info)
 {
 	float weight = 0.0;
@@ -587,15 +587,15 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 	cell_weight_t *weight_t = NULL;
 
 	// HACK: This is so that I can keep death status of the players
-	// and since all I have to differentiate them is the userid, 
+	// and since all I have to differentiate them is the userid,
 	// I have to have enough room to fit the players. Most of this
 	// space is unused. Too lazy to do something more fancy atm :S
-	static qbool isdead[200]; 
+	static qbool isdead[200];
 
 	// Don't calculate any weights before a match has started.
 	// Don't allow setting the weight at the exact time the countdown
 	// or standby ends (cl.gametime == 0), that will result in a weight
-	// being set in the position that the player was the milisecond before 
+	// being set in the position that the player was the milisecond before
 	// he spawned, so wait one second before starting to set any weights.
 	if(cl.countdown				|| cl.standby			|| cl.gametime <= 1
 		|| grid == NULL			|| grid->cells == NULL
@@ -623,7 +623,7 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 	else if(player_info->stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER)
 	{
 		weight += 0.3;
-	} 
+	}
 	else if(player_info->stats[STAT_ITEMS] & IT_SUPER_NAILGUN)
 	{
 		weight += 0.2;
@@ -694,9 +694,9 @@ void StatsGrid_SetWeightForPlayer(stats_weight_grid_t *grid,
 	{
 		isdead[player_info->userid] = false;
 	}
-	
-	if(player_info->stats[STAT_HEALTH] <= 0 && !isdead[player_info->userid])		
-	{ 
+
+	if(player_info->stats[STAT_HEALTH] <= 0 && !isdead[player_info->userid])
+	{
 		#define DEATH_WEIGHT		0.2
 		#define DEATH_WEIGHT_CLOSE	DEATH_WEIGHT * 0.8
 		#define DEATH_WEIGHT_FAR	DEATH_WEIGHT * 0.5
@@ -804,7 +804,7 @@ void StatsGrid_Gather()
 			fabs(cl.worldmodel->maxs[0] - cl.worldmodel->mins[0]), // Width of the map in quake coordinates.
 			fabs(cl.worldmodel->maxs[1] - cl.worldmodel->mins[1]), // Height (if we're talking 2D where Y = height).
 			0.0);					// The threshold before a team is considered to "hold" a cell.
-		
+
 		// We failed initializing the grid, so don't do anything.
 		if(stats_grid == NULL)
 		{

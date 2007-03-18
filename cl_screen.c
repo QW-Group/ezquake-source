@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.104 2007-03-17 00:32:52 johnnycz Exp $
+    $Id: cl_screen.c,v 1.105 2007-03-18 18:25:55 disconn3ct Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -967,7 +967,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 	name_length = strlen(autoid_p->player->name) * 4;
 	health = autoid_p->player->stats[STAT_HEALTH];
 	health = min(100, health);
-	health_length = ROUND((name_length/100.0) * health);
+	health_length = Q_rint((name_length/100.0) * health);
 
 	// Normal health.
 	Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, name_length*2, 4, AUTOID_HEALTHBAR_BG_COLOR, 0.4);
@@ -978,13 +978,13 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 	// Mega health
 	if(health > 100 && health <= 200)
 	{
-		health_length = ROUND((name_length/100.0) * (health - 100));
+		health_length = Q_rint((name_length/100.0) * (health - 100));
 		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, health_length*2, 4, AUTOID_HEALTHBAR_MEGA_COLOR, 1.0);
 	}
 	else if(health > 200 && health <= 250)
 	{
 		// Super health.
-		health_length = ROUND((name_length/100.0) * (health - 200));
+		health_length = Q_rint((name_length/100.0) * (health - 200));
 		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, name_length*2, 4, AUTOID_HEALTHBAR_MEGA_COLOR, 1.0);
 		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, health_length*2, 4, AUTOID_HEALTHBAR_TWO_MEGA_COLOR, 1.0);
 	}
@@ -998,7 +998,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 	// Draw armor.
 	armor = autoid_p->player->stats[STAT_ARMOR];
 	armor = min(100, armor);
-	armor_length = ROUND((name_length/100.0) * armor);
+	armor_length = Q_rint((name_length/100.0) * armor);
 
 	if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR1)
 	{
@@ -3757,7 +3757,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 	{
 		// Green armor.
 		strlcpy(armor_color_code, "&c0f0", sizeof(armor_color_code));
-		armor_amount_width = ROUND(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 100.0);
+		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 100.0);
 
 		#ifdef GLQUAKE
 		armor_color[0] = 80 / 255.0;
@@ -3769,7 +3769,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 	{
 		// Yellow armor.
 		strlcpy(armor_color_code, "&cff0", sizeof(armor_color_code));
-		armor_amount_width = ROUND(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 150.0);
+		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 150.0);
 
 		#ifdef GLQUAKE
 		armor_color[0] = 250 / 255.0;
@@ -3781,7 +3781,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 	{
 		// Red armor.
 		strlcpy(armor_color_code, "&cf00", sizeof(armor_color_code));
-		armor_amount_width = ROUND(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 200.0);
+		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 200.0);
 
 		#ifdef GLQUAKE
 		armor_color[0] = 190 / 255.0;
@@ -3824,7 +3824,7 @@ void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 	int health_amount_width = 0;
 
 	health = min(100, health);
-	health_amount_width = ROUND(abs((MV_HUD_HEALTH_WIDTH * health) / 100.0));
+	health_amount_width = Q_rint(abs((MV_HUD_HEALTH_WIDTH * health) / 100.0));
 
 	if (health > 0)
 	{
@@ -3836,14 +3836,14 @@ void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 	if (health > 100 && health <= 200)
 	{
 		// Mega health.
-		health_amount_width = ROUND((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 100));
+		health_amount_width = Q_rint((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 100));
 
 		Draw_AlphaFillRGB (x, y, health_amount_width, 8, AUTOID_HEALTHBAR_MEGA_COLOR, MV_HEALTH_OPACITY);
 	}
 	else if (health > 200 && health <= 250)
 	{
 		// Super health.
-		health_amount_width = ROUND((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 200));
+		health_amount_width = Q_rint((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 200));
 
 		Draw_AlphaFillRGB (x, y, MV_HUD_HEALTH_WIDTH, 8, AUTOID_HEALTHBAR_MEGA_COLOR, MV_HEALTH_OPACITY);
 		Draw_AlphaFillRGB (x, y, health_amount_width, 8, AUTOID_HEALTHBAR_TWO_MEGA_COLOR, MV_HEALTH_OPACITY);
@@ -3977,11 +3977,11 @@ void SCR_MV_DrawWeapons (int x, int y, int *width, int *height, int hud_width, i
 		// Evenly distribute the weapons.
 		if (!vertical)
 		{
-			weapon_x += ROUND((float)hud_width / WEAPON_COUNT);
+			weapon_x += Q_rint((float)hud_width / WEAPON_COUNT);
 		}
 		else
 		{
-			weapon_y += ROUND((float)hud_height / WEAPON_COUNT);
+			weapon_y += Q_rint((float)hud_height / WEAPON_COUNT);
 		}
 	}
 }
