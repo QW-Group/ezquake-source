@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.27 2007-03-11 06:01:42 disconn3ct Exp $
+		$Id: settings_page.c,v 1.28 2007-03-19 13:23:20 johnnycz Exp $
 
 */
 
@@ -70,6 +70,12 @@ static int Setting_PrintLabel(int x, int y, int w, const char *l, qbool active)
 	x = w/2 + x;
 	// if (active) UI_DrawCharacter(x, y, FLASHINGARROW());
 	return x + LETW*2;
+}
+
+// tells what is the horizontal position of the left corner of the slider
+static int Slider_Startpos(int w)
+{
+    return w/2 + LETW*2;
 }
 
 static void Setting_DrawNum(int x, int y, int w, setting* setting, qbool active)
@@ -276,14 +282,14 @@ static void Setting_UnbindKey(setting* set)
 }
 
 // adjusts current viewed area of the settings page
-static void CheckViewpoint(settings_page *tab, int h)
+static void CheckViewpoint(settings_page *tab)
 {
 	if (tab->marked == 1 && tab->settings[0].type == stt_separator) tab->viewpoint = 0;
 
 	if (tab->viewpoint > tab->marked) { 
 		// marked entry is above us
 		tab->viewpoint = tab->marked;
-	} else while(STHeight(tab->settings + tab->marked) + tab->settings[tab->marked].top > tab->settings[tab->viewpoint].top + h) {
+	} else while(STHeight(tab->settings + tab->marked) + tab->settings[tab->marked].top > tab->settings[tab->viewpoint].top + tab->height) {
 		// marked entry is below
 		tab->viewpoint++;
 	}
@@ -418,6 +424,25 @@ static int FindSetting_AtPos(const settings_page *page, int top)
 	return r;
 }
 
+// will choose correct value for the selected setting according to
+// where the user has clicked on the slidebar
+static void Setting_Slider_Click(const settings_page *page, const mouse_state_t *ms)
+{
+    double p, vmin, vmax, vnew, vsteps;
+    setting* s = page->settings + page->marked;
+    
+    p = (ms->x - Slider_Startpos(page->width)) / UI_SliderWidth();
+    p = bound(0, p, 1);
+
+    if (s->type != stt_num) return;
+
+    vmin = s->min;
+    vmax = s->max;
+    vnew = vmin + (vmax-vmin) * p;
+    for (vsteps = vmin; vsteps < vmax && vsteps < vnew; vsteps += s->step) ; // empty body
+    Cvar_SetValue(s->cvar, vsteps);
+}
+
 qbool Settings_Key(settings_page* tab, int key)
 {
 	qbool up = false;
@@ -528,8 +553,16 @@ qbool Settings_Key(settings_page* tab, int key)
 	}
 
 	CheckCursor(tab, up);
+    CheckViewpoint(tab);
 	EditBoxCheck(tab, oldm, tab->marked);
 	return true;
+}
+
+static void Setting_Click(settings_page* page, const mouse_state_t *ms)
+{
+    if (page->settings[page->marked].type == stt_num) {
+        Setting_Slider_Click(page, ms);
+    } else Settings_Key(page, K_MOUSE1);
 }
 
 void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
@@ -543,6 +576,8 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 	static qbool prev_adv_state = false;
 
 	if (!tab->count) return;
+
+    w -= tab->scrollbar->width;
 
 	if (prev_adv_state != (qbool) menu_advanced.value) {
 		// someone toggled menu_advanced setting right in the currently viewed menu!
@@ -567,7 +602,8 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 		h -= Setting_DrawHelpBox(x, y + h - hbh, w, hbh, tab, true);
 	}
 
-	CheckViewpoint(tab, h);
+    tab->width = w; tab->height = h;
+    ScrollBar_Draw(tab->scrollbar, x + w, y, h);
 
 	for (i = tab->viewpoint; i < tab->count && tab->settings[i].top + STHeight(tab->settings + i) <= h + tab->settings[tab->viewpoint].top; i++)
 	{
@@ -609,15 +645,40 @@ void Settings_OnShow(settings_page *page)
 		StringEntryEnter(page->settings + page->marked);
 }
 
-qbool Settings_Mouse_Move(settings_page *page, const mouse_state_t *ms) 
+qbool Settings_Mouse_Event(settings_page *page, const mouse_state_t *ms) 
 {
 	int nmark;
 	int omark = page->marked;
 
+    if (page->scrollbar->mouselocked || (ms->x > (page->width - page->scrollbar->width)))
+    {
+        if (ScrollBar_MouseEvent(page->scrollbar, ms))
+        {
+            page->viewpoint = page->count * page->scrollbar->curpos;
+        }
+
+        return true;
+    }
+
+    if (page->mode == SPM_NORMAL && ms->button_up == 1) {
+        Setting_Click(page, ms);
+        return true;
+    }
+
 	switch (page->mode) {
-	case SPM_BINDING: return true;
-	case SPM_CHOOSESKIN:
-		// todo: add call to skin_browser mouse move
+	case SPM_BINDING:
+        if (ms->button_down) return true;
+        if (ms->button_up) {
+            Setting_BindKey(page->settings + page->marked, K_MOUSE1 + ms->button_up - 1);
+            page->mode = SPM_NORMAL;
+            return true;
+        }
+        break;
+
+    case SPM_CHOOSESKIN:
+        if (ms->button_up == 1) Settings_Key(page, K_MOUSE1);
+        else FL_Mouse_Event(&skins_filelist, ms);
+        return true;
 		break;
 	
 	case SPM_NORMAL:
@@ -649,6 +710,7 @@ void Settings_Init(settings_page *page, setting *arr, size_t size)
 	page->settings = arr;
 	page->viewpoint = 0;
 	page->mode = SPM_NORMAL;
+    page->scrollbar = ScrollBar_Create(NULL);
 
 	for (i = 0; i < size; i++) {
 		if (arr[i].type == stt_advmark) advancedmode = true;

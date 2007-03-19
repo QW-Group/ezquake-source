@@ -70,7 +70,7 @@ void CTab_Draw(CTab_t *, int x, int y, int w, int h);
 int CTab_Key(CTab_t *, int key);
 
 // process mouse move event
-qbool CTab_Mouse_Move(CTab_t *, const mouse_state_t *ms);
+qbool CTab_Mouse_Event(CTab_t *, const mouse_state_t *ms);
 
 // get current page
 CTabPage_t * CTab_GetCurrent(CTab_t *);

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.106 2007-03-18 18:36:24 disconn3ct Exp $
+    $Id: cl_screen.c,v 1.107 2007-03-19 13:23:20 johnnycz Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -2394,7 +2394,10 @@ static void SCR_DrawCursor(void) {
 	}
 	else
 	{
-		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + 50*scale, cursor_y + 50*scale, 10*scale, 0, 1, 0, 1);
+		Draw_AlphaLineRGB(cursor_x + 10*scale, cursor_y + 10*scale, cursor_x + 40*scale, cursor_y + 40*scale, 10*scale, 0, 1, 0, 1);
+        Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + 20*scale, cursor_y, 10*scale, 0, 1, 0, 1);
+		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x, cursor_y + 20*scale, 10*scale, 0, 1, 0, 1);
+        Draw_AlphaLineRGB(cursor_x + 20*scale, cursor_y, cursor_x, cursor_y + 20*scale, 10*scale, 0, 1, 0, 1);
 	}
 #else
 	if (scr_cursor && scr_cursor->width)

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.55 2007-03-17 00:32:52 johnnycz Exp $
+    $Id: keys.c,v 1.56 2007-03-19 13:23:20 johnnycz Exp $
 
 */
 
@@ -1885,7 +1885,7 @@ static qbool Mouse_EventDispatch(void)
 {
 	// send mouse cursor status to appropriate windows
 	switch (key_dest) {
-	case key_menu: return Menu_Mouse_Moved(&scr_pointer_state);
+	case key_menu: return Menu_Mouse_Event(&scr_pointer_state);
 	case key_hudeditor:
 		// todo: HUD_Editor_Mouse_Moved(&scr_pointer_state);
 		// HUD Editor currently reads global variables cursor_x|y
@@ -2091,7 +2091,10 @@ void Key_Event (int key, qbool down)
 	assert (key >= 0 && key <= 255);
 
     if (key >= K_MOUSE1 && key <= K_MOUSE8) {
-        if (Mouse_ButtonEvent(key, down)) { return; }
+        // if the Mouse_ButtonEvent return true means that the window which received
+        // a mouse click handled it and we do not have to send old
+        // K_MOUSE* key event
+        if (Mouse_ButtonEvent(key, down)) return;
     }
 
 #ifdef WITH_KEYMAP

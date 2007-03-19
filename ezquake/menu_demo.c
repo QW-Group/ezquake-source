@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.27 2007-03-11 06:01:41 disconn3ct Exp $
+		$Id: menu_demo.c,v 1.28 2007-03-19 13:23:20 johnnycz Exp $
 
 */
 
@@ -586,7 +586,7 @@ int CT_Demo_Browser_Key(int key, CTab_t *tab, CTabPage_t *page)
 			// Add the selected demo to the playlist.
 			Demo_AddDemoToPlaylist (FL_GetCurrentDisplay (&demo_filelist), FL_GetCurrentPath (&demo_filelist));
 		}
-        else if (key == K_ENTER)
+        else if (key == K_ENTER || key == K_MOUSE1)
         {
 			if (keydown[K_CTRL])
 			{
@@ -781,14 +781,19 @@ int CT_Demo_Options_Key(int key, CTab_t *tab, CTabPage_t *page)
 	return Settings_Key(&demoplsett, key);
 }
 
-qbool CT_Demo_Browser_Mouse_Move(const mouse_state_t *ms)
+qbool CT_Demo_Browser_Mouse_Event(const mouse_state_t *ms)
 {
-	return FL_Mouse_Move(&demo_filelist, ms);
+    if (ms->button_up == 1) {
+        CT_Demo_Browser_Key(K_MOUSE1, &demo_tab, demo_tab.pages + DEMOPG_BROWSER);
+        return true;
+    }
+
+	return FL_Mouse_Event(&demo_filelist, ms);
 }
 
-qbool CT_Demo_Options_Mouse_Move(const mouse_state_t *ms)
+qbool CT_Demo_Options_Mouse_Event(const mouse_state_t *ms)
 {
-	return Settings_Mouse_Move(&demoplsett, ms);
+	return Settings_Mouse_Event(&demoplsett, ms);
 }
 
 // will lead to call of one of the 4 functions above
@@ -808,22 +813,27 @@ void Menu_Demo_Key(int key)
 }
 // </key processing for each page>
 
-qbool Menu_Demo_Mouse_Move(const mouse_state_t *ms)
+qbool Menu_Demo_Mouse_Event(const mouse_state_t *ms)
 {
-	mouse_state_t nms;
+	mouse_state_t nms = *ms;
 
-	nms.x = ms->x - DEMOPAGEPADDING;
-	nms.y = ms->y - DEMOPAGEPADDING;
-	nms.x_old = ms->x_old - DEMOPAGEPADDING;
-	nms.y_old = ms->y_old - DEMOPAGEPADDING;
-	return CTab_Mouse_Move(&demo_tab, &nms);
+    if (ms->button_up == 2) {
+        Menu_Demo_Key(K_MOUSE2);
+        return true;
+    }
+
+	nms.x -= DEMOPAGEPADDING;
+	nms.y -= DEMOPAGEPADDING;
+	nms.x_old -= DEMOPAGEPADDING;
+	nms.y_old -= DEMOPAGEPADDING;
+	return CTab_Mouse_Event(&demo_tab, &nms);
 }
 
 CTabPage_Handlers_t demo_browser_handlers = {
 	CT_Demo_Browser_Draw,
 	CT_Demo_Browser_Key,
 	NULL,
-	CT_Demo_Browser_Mouse_Move
+	CT_Demo_Browser_Mouse_Event
 };
 
 CTabPage_Handlers_t demo_playlist_handlers = {
@@ -836,11 +846,11 @@ CTabPage_Handlers_t demo_entry_handlers = {
 	CT_Demo_Entry_Key
 };
 
-CTabPage_Handlers_t demo_options_handlers = {
+CTabPage_Handlers_t demo_options_handlers = {   
 	CT_Demo_Options_Draw,
 	CT_Demo_Options_Key,
 	NULL,
-	CT_Demo_Options_Mouse_Move
+	CT_Demo_Options_Mouse_Event
 };
 
 // set new initial dir

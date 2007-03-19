@@ -140,7 +140,7 @@ qbool FL_Key(filelist_t *, int key);
 // Send Mouse Move event to the list
 // returns: true if processed, false if mouse pointed somewhere else
 //
-qbool FL_Mouse_Move(filelist_t *, const mouse_state_t *ms);
+qbool FL_Mouse_Event(filelist_t *, const mouse_state_t *ms);
 
 //
 // Create file list
