@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.107 2007-03-19 13:23:20 johnnycz Exp $
+    $Id: cl_screen.c,v 1.108 2007-03-19 14:57:45 johnnycz Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -52,7 +52,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "movie.h"	//joe: capturing to avi
 #include "movie_avi.h"	//
 #endif
-
+#include "Ctrl.h"
 
 #ifdef GLQUAKE
 int				glx, gly, glwidth, glheight;
@@ -2406,7 +2406,7 @@ static void SCR_DrawCursor(void) {
 	}
 	else
 	{
-		Draw_Character(cursor_x, cursor_y, '+');
+		Draw_Character(cursor_x - LETTERWIDTH/2, cursor_y - LETTERHEIGHT/2, '+');
 	}
 #endif
 
@@ -2509,10 +2509,10 @@ void SCR_DrawElements(void) {
 			SCR_DrawConsole ();
 			M_Draw ();
 		}
-#ifdef GLQUAKE
-		SCR_DrawCursor();
-#endif
-	}
+
+        SCR_DrawCursor();
+	
+    }
 }
 
 /******************************* UPDATE SCREEN *******************************/
