@@ -1,7 +1,8 @@
-//    $Id: Ctrl.c,v 1.12 2007-03-11 06:01:37 disconn3ct Exp $
+//    $Id: Ctrl.c,v 1.13 2007-03-19 13:23:20 johnnycz Exp $
 
 #include "quakedef.h"
 #include "utils.h"
+#include "Ctrl.h"
 
 
 #ifdef GLQUAKE
@@ -48,6 +49,7 @@ int UI_DrawSlider (int x, int y, float range) {
 	return x+(i+1)*8;
 }
 
+int UI_SliderWidth(void) { return (SLIDER_RANGE+1)*LETTERWIDTH; }
 
 void UI_Print3 (int cx, int cy, char *str, clrinfo_t *clr, int clr_cnt, int red)
 {

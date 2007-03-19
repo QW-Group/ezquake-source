@@ -1278,7 +1278,7 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
     return false;
 }
 
-qbool FL_Mouse_Move(filelist_t *fl, const mouse_state_t *ms)
+qbool FL_Mouse_Event(filelist_t *fl, const mouse_state_t *ms)
 {
 	int entry;
 

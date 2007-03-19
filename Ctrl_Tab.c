@@ -223,10 +223,18 @@ int CTab_Key(CTab_t *tab, int key)
     return handled;
 }
 
-static qbool CTab_Navi_Mouse_Move (CTab_t *tab, const mouse_state_t *ms) 
+static qbool CTab_Navi_Mouse_Event (CTab_t *tab, const mouse_state_t *ms) 
 {
     int i;
 	if (!tab->width) return false;
+
+    if (ms->button_up == 1) {
+        CTab_Key(tab, K_MOUSE1);
+        return true;
+    } else if (ms->button_up == 2) {
+        CTab_Key(tab, K_MOUSE2);
+        return true;
+    }
 
     for (i = 0; i < tab->nPages; i++)
     {
@@ -239,22 +247,23 @@ static qbool CTab_Navi_Mouse_Move (CTab_t *tab, const mouse_state_t *ms)
 	return false;
 }
 
-qbool CTab_Mouse_Move(CTab_t *tab, const mouse_state_t *ms)
+qbool CTab_Mouse_Event(CTab_t *tab, const mouse_state_t *ms)
 {
-	if (ms->y <= tab->navi_boxes[tab->nPages-1].y2)
-    {   // pointer is in the navigation area
-		return CTab_Navi_Mouse_Move(tab, ms);
-	}
-    else // pointer is in the main area
-    {
-		CTabPage_MouseMoveType mmf;
-		mouse_state_t lms;
+    int nav_height = tab->navi_boxes[tab->nPages-1].y2;
 
-		lms.x = ms->x;
-        // substract navigation header height
-        lms.y = ms->y - (tab->navi_boxes[tab->nPages-1].y2 + LETTERHEIGHT);
-		lms.x_old = ms->x_old;
-		lms.y_old = ms->y_old;
+    if (ms->x < 0 || ms->x > tab->width || ms->y < 0 || ms->y > tab->height)
+        return false;
+
+	if (ms->y <= nav_height)
+    {   // pointer is in the navigation area
+		return CTab_Navi_Mouse_Event(tab, ms);
+	}
+    else if (ms->y >= nav_height + LETTERHEIGHT) 
+    {   // pointer is in the main area
+		CTabPage_MouseMoveType mmf;
+		mouse_state_t lms = *ms;
+
+        lms.y -= nav_height + LETTERHEIGHT;
 		tab->hoveredPage = -1;
 
 		mmf = tab->pages[tab->activePage].handlers.mousemove;

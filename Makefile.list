@@ -2,6 +2,7 @@ CLIENT_C_FILES := \
 	Ctrl \
 	Ctrl_EditBox \
 	Ctrl_PageViewer \
+	Ctrl_ScrollBar \
 	Ctrl_Tab \
 	EX_FileList \
 	EX_FunNames \

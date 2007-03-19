@@ -208,6 +208,6 @@ int strcmp2(const char * s1, const char * s2);
 void Browser_Init(void);
 void Browser_Draw(void);
 void Browser_Key(int);
-qbool Browser_Mouse_Move(const mouse_state_t *ms);
+qbool Browser_Mouse_Event(const mouse_state_t *ms);
 
 #endif  // __EX_BROWSER__H__

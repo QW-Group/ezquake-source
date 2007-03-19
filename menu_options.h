@@ -1,6 +1,6 @@
 /*
 	Options Menu module
-	$Id: menu_options.h,v 1.3 2007-03-05 01:03:53 johnnycz Exp $
+	$Id: menu_options.h,v 1.4 2007-03-19 13:23:20 johnnycz Exp $
 */
 
 // <interface for menu.c>
@@ -14,5 +14,5 @@ void Menu_Options_Key(int key, int unichar);
 void Menu_Options_Draw (void);
 
 // process mouse move
-qbool Menu_Options_Mouse_Move(const mouse_state_t *);
+qbool Menu_Options_Mouse_Event(const mouse_state_t *);
 // </interface>

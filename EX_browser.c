@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.33 2007-03-11 06:01:38 disconn3ct Exp $
+	$Id: EX_browser.c,v 1.34 2007-03-19 13:23:20 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -2399,7 +2399,7 @@ int Options_Key(int key, CTab_t *tab, CTabPage_t *page)
 	return Settings_Key(&sbsettings, key);
 }
 
-qbool Servers_Mouse_Move(const mouse_state_t *ms)
+qbool Servers_Mouse_Event(const mouse_state_t *ms)
 {
     if (show_serverinfo) return false;
 	Servers_pos = Servers_disp + ms->y / 8 - 1;
@@ -2407,7 +2407,7 @@ qbool Servers_Mouse_Move(const mouse_state_t *ms)
 	return true;
 }
 
-qbool Sources_Mouse_Move(const mouse_state_t *ms)
+qbool Sources_Mouse_Event(const mouse_state_t *ms)
 {
     if (show_serverinfo) return false;
 	Sources_pos = Sources_disp + ms->y / 8 - 1;
@@ -2415,7 +2415,7 @@ qbool Sources_Mouse_Move(const mouse_state_t *ms)
 	return true;
 }
 
-qbool Players_Mouse_Move(const mouse_state_t *ms)
+qbool Players_Mouse_Event(const mouse_state_t *ms)
 {
     if (show_serverinfo) return false;
 
@@ -2424,9 +2424,9 @@ qbool Players_Mouse_Move(const mouse_state_t *ms)
 	return true;
 }
 
-qbool Options_Mouse_Move(const mouse_state_t *ms)
+qbool Options_Mouse_Event(const mouse_state_t *ms)
 {
-	return Settings_Mouse_Move(&sbsettings, ms);
+	return Settings_Mouse_Event(&sbsettings, ms);
 }
 
 //
@@ -2730,44 +2730,49 @@ void Browser_Key(int key)
 	CTab_Key(&sb_tab, key);
 }
 
-qbool Browser_Mouse_Move(const mouse_state_t *ms)
+qbool Browser_Mouse_Event(const mouse_state_t *ms)
 {
-	mouse_state_t nms;
+	mouse_state_t nms = *ms;
 
-	nms.x = ms->x - Browser_window.x;
-	nms.y = ms->y - Browser_window.y;
-	nms.x_old = ms->x_old - Browser_window.x;
-	nms.y_old = ms->y_old - Browser_window.y;
+    if (ms->button_up == 2) {
+        Browser_Key(K_MOUSE2);
+        return true;
+    }
 
-	return CTab_Mouse_Move(&sb_tab, &nms);
+	nms.x -= Browser_window.x;
+	nms.y -= Browser_window.y;
+	nms.x_old -= Browser_window.x;
+	nms.y_old -= Browser_window.y;
+
+	return CTab_Mouse_Event(&sb_tab, &nms);
 }
 
 CTabPage_Handlers_t sb_servers_handlers = {
 	Servers_Draw,
 	Servers_Key,
 	Servers_OnShow,
-	Servers_Mouse_Move
+	Servers_Mouse_Event
 };
 
 CTabPage_Handlers_t sb_sources_handlers = {
 	Sources_Draw,
 	Sources_Key,
 	NULL,
-	Sources_Mouse_Move
+	Sources_Mouse_Event
 };
 
 CTabPage_Handlers_t sb_players_handlers = {
 	Players_Draw,
 	Players_Key,
 	NULL,
-	Players_Mouse_Move
+	Players_Mouse_Event
 };
 
 CTabPage_Handlers_t sb_options_handlers = {
 	Options_Draw,
 	Options_Key,
 	NULL,
-	Options_Mouse_Move
+	Options_Mouse_Event
 };
 
 void Browser_Init(void)

@@ -6,6 +6,11 @@
 // see settings_page.h for further info
 //
 
+#ifndef __SETTINGS_H__
+#define __SETTINGS_H__
+
+#include "Ctrl.h"
+
 // start advanced settings section
 #define ADDSET_ADVANCED_SECTION() { stt_advmark, NULL, false, NULL, 0, 0, 0, NULL, NULL, NULL, NULL }
 
@@ -97,5 +102,9 @@ typedef struct {
 	int count;			// amount of elements in set_tab
 	int marked;			// currently selected element in settings
 	int viewpoint;		// where rendering start (internal)
+    PScrollBar  scrollbar;  // scrollbar gui element
 	enum { SPM_NORMAL, SPM_BINDING, SPM_VIEWHELP, SPM_CHOOSESKIN } mode;
+    int width, height;  // last drawed width and height
 } settings_page;
+
+#endif // __SETTINGS_H__

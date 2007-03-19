@@ -1,6 +1,6 @@
 /*
 	Settings page module
-	$Id: settings_page.h,v 1.8 2007-03-17 00:32:52 johnnycz Exp $
+	$Id: settings_page.h,v 1.9 2007-03-19 13:23:20 johnnycz Exp $
 */
 
 /** Guide to create settings page:
@@ -34,6 +34,6 @@ void Settings_OnShow(settings_page *tab);
 qbool Settings_Key(settings_page* page, int key);
 
 // mouse move handler
-qbool Settings_Mouse_Move(settings_page * page, const mouse_state_t *ms);
+qbool Settings_Mouse_Event(settings_page * page, const mouse_state_t *ms);
 
 #endif // __SETTINGS_PAGE_H__

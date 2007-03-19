@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.70 2007-03-17 00:32:52 johnnycz Exp $
+	$Id: menu.c,v 1.71 2007-03-19 13:23:20 johnnycz Exp $
 
 */
 
@@ -460,9 +460,14 @@ void M_Main_Key (int key) {
 	}
 }
 
-static qbool M_Main_Mouse_Move(const mouse_state_t* ms)
+static qbool M_Main_Mouse_Event(const mouse_state_t* ms)
 {
-	return M_Mouse_Select(&m_main_window, ms, MAIN_ITEMS, &m_main_cursor);
+	M_Mouse_Select(&m_main_window, ms, MAIN_ITEMS, &m_main_cursor);
+    
+    if (ms->button_up == 1) M_Main_Key(K_MOUSE1);
+    if (ms->button_up == 2) M_Main_Key(K_MOUSE2);
+
+    return true;
 }
 
 //=============================================================================
@@ -757,9 +762,14 @@ void M_SinglePlayer_Key (int key) {
 	}
 }
 
-qbool M_SinglePlayer_Mouse_Move(const mouse_state_t* ms)
+qbool M_SinglePlayer_Mouse_Event(const mouse_state_t* ms)
 {
-	return M_Mouse_Select(&m_singleplayer_window, ms, SINGLEPLAYER_ITEMS, &m_singleplayer_cursor);
+	M_Mouse_Select(&m_singleplayer_window, ms, SINGLEPLAYER_ITEMS, &m_singleplayer_cursor);
+
+    if (ms->button_up == 1) M_SinglePlayer_Key(K_MOUSE1);
+    if (ms->button_up == 2) M_SinglePlayer_Key(K_MOUSE2);
+
+    return true;
 }
 
 #else    // !CLIENTONLY
@@ -975,14 +985,19 @@ void M_Save_Key (int key) {
 	}
 }
 
-qbool M_Save_Mouse_Move(const mouse_state_t *ms)
+qbool M_Save_Mouse_Event(const mouse_state_t *ms)
 {
 	return M_Mouse_Select(&save_window, ms, MAX_SAVEGAMES, &load_cursor);
 }
 
-qbool M_Load_Mouse_Move(const mouse_state_t *ms)
+qbool M_Load_Mouse_Event(const mouse_state_t *ms)
 {
-	return M_Mouse_Select(&load_window, ms, MAX_SAVEGAMES, &load_cursor);
+	M_Mouse_Select(&load_window, ms, MAX_SAVEGAMES, &load_cursor);
+
+    if (ms->button_up == 1) M_Load_Key(K_MOUSE1);
+    if (ms->button_up == 2) M_Load_Key(K_MOUSE2);
+
+    return true;
 }
 
 #endif
@@ -1077,9 +1092,14 @@ void M_MultiPlayer_Key (int key) {
 	}
 }
 
-qbool M_MultiPlayer_Mouse_Move(const mouse_state_t *ms)
+qbool M_MultiPlayer_Mouse_Event(const mouse_state_t *ms)
 {
-	return M_Mouse_Select(&m_multiplayer_window, ms, MULTIPLAYER_ITEMS, &m_multiplayer_cursor);
+	M_Mouse_Select(&m_multiplayer_window, ms, MULTIPLAYER_ITEMS, &m_multiplayer_cursor);
+
+    if (ms->button_up == 1) M_MultiPlayer_Key(K_MOUSE1);
+    if (ms->button_up == 2) M_MultiPlayer_Key(K_MOUSE2);
+    
+    return true;
 }
 
 
@@ -1935,9 +1955,14 @@ void M_GameOptions_Key (int key) {
 	}
 }
 
-qbool M_GameOptions_Mouse_Move(const mouse_state_t *ms)
+qbool M_GameOptions_Mouse_Event(const mouse_state_t *ms)
 {
-	return M_Mouse_Select(&gameoptions_window, ms, NUM_GAMEOPTIONS, &gameoptions_cursor);
+	M_Mouse_Select(&gameoptions_window, ms, NUM_GAMEOPTIONS, &gameoptions_cursor);
+
+    if (ms->button_up == 1) M_GameOptions_Key(K_MOUSE1);
+    if (ms->button_up == 2) M_GameOptions_Key(K_MOUSE2);
+
+    return true;
 }
 
 #endif    // !CLIENTONLY
@@ -2247,26 +2272,29 @@ void M_Keydown (int key, int unichar) {
 	}
 }
 
-qbool Menu_Mouse_Moved(const mouse_state_t* ms)
+qbool Menu_Mouse_Event(const mouse_state_t* ms)
 {
-    // don't implement handling of mouse buttons anywhere yet
-    if (ms->button_down || ms->button_up) {
-        return false;
+    // an exception: mp3 player handles only mouse2 as a "go back"
+    if (ms->button_up == 2 && (m_state == m_mp3_control || m_state == m_mp3_playlist)) {
+        if (m_state == m_mp3_control)       M_Menu_MP3_Control_Key(K_MOUSE2);
+        else if (m_state == m_mp3_playlist) M_Menu_MP3_Playlist_Key(K_MOUSE2);
+        return true;
     }
 
-	// send the mouse position to appropriate modules here
-	switch (m_state) {
-	case m_main:			return M_Main_Mouse_Move(ms);
-	case m_singleplayer:	return M_SinglePlayer_Mouse_Move(ms);
-	case m_multiplayer:		return M_MultiPlayer_Mouse_Move(ms);
+	// send the mouse state to appropriate modules here
+    // functions should report if they handled the event or not
+    switch (m_state) {
+	case m_main:			return M_Main_Mouse_Event(ms);
+	case m_singleplayer:	return M_SinglePlayer_Mouse_Event(ms);
+	case m_multiplayer:		return M_MultiPlayer_Mouse_Event(ms);
 #ifndef CLIENTONLY
-	case m_load:			return M_Load_Mouse_Move(ms);
-	case m_save:			return M_Load_Mouse_Move(ms);
-	case m_gameoptions:		return M_GameOptions_Mouse_Move(ms);
+	case m_load:			return M_Load_Mouse_Event(ms);
+	case m_save:			return M_Load_Mouse_Event(ms);
+	case m_gameoptions:		return M_GameOptions_Mouse_Event(ms);
 #endif
-	case m_options:			return Menu_Options_Mouse_Move(ms);
-	case m_slist:			return Browser_Mouse_Move(ms);
-	case m_demos:			return Menu_Demo_Mouse_Move(ms);
+	case m_options:			return Menu_Options_Mouse_Event(ms);
+	case m_slist:			return Browser_Mouse_Event(ms);
+	case m_demos:			return Menu_Demo_Mouse_Event(ms);
 	case m_none: default:	return false;
 	}
 }

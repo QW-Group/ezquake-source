@@ -1261,6 +1261,9 @@
 					RelativePath="Ctrl_PageViewer.c">
 				</File>
 				<File
+					RelativePath="Ctrl_ScrollBar.c">
+				</File>
+				<File
 					RelativePath="Ctrl_Tab.c">
 				</File>
 				<File
