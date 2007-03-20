@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.71 2007-03-19 13:23:20 johnnycz Exp $
+	$Id: menu.c,v 1.72 2007-03-20 12:39:44 johnnycz Exp $
 
 */
 
@@ -2274,12 +2274,14 @@ void M_Keydown (int key, int unichar) {
 
 qbool Menu_Mouse_Event(const mouse_state_t* ms)
 {
+#if defined(_WIN32) || defined(__XMMS__)
     // an exception: mp3 player handles only mouse2 as a "go back"
     if (ms->button_up == 2 && (m_state == m_mp3_control || m_state == m_mp3_playlist)) {
         if (m_state == m_mp3_control)       M_Menu_MP3_Control_Key(K_MOUSE2);
         else if (m_state == m_mp3_playlist) M_Menu_MP3_Playlist_Key(K_MOUSE2);
         return true;
     }
+#endif
 
 	// send the mouse state to appropriate modules here
     // functions should report if they handled the event or not
