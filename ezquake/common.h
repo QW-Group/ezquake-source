@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.48 2007-03-11 06:01:37 disconn3ct Exp $
+    $Id: common.h,v 1.49 2007-03-21 16:57:31 vvd0 Exp $
 */
 // common.h  -- general definitions
 
@@ -338,7 +338,7 @@ void SV_Frame (double time);
 int isspace2(int c);
 
 #ifdef WITH_ZLIB
-
+#include "zlib.h"
 int COM_GZipPack (char *source_path,
 				  char *destination_path,
 				  qbool overwrite);
