@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.54 2007-03-19 13:23:20 johnnycz Exp $
+		$Id: menu_options.c,v 1.55 2007-03-21 17:03:10 vvd0 Exp $
 
 */
 
@@ -25,9 +25,9 @@
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#if defined(_WIN32) || defined(__linux__)
+#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 #include "tr_types.h"
-#endif // _WIN32 || __linux__
+#endif // _WIN32 || __linux__ || __FreeBSD__
 #else
 #include "r_model.h"
 #include "r_local.h"

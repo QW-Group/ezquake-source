@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fchecks.c,v 1.15 2007-03-11 06:01:38 disconn3ct Exp $
+	$Id: fchecks.c,v 1.16 2007-03-21 17:03:10 vvd0 Exp $
 
 */
 
@@ -224,9 +224,7 @@ qbool FChecks_SystemRequest (char *s) {
 	if (cl.spectator || (f_system_reply_time && cls.realtime - f_system_reply_time < 20))
 		return false;
 
-//	#if defined(_WIN32) || defined(__linux__)
-
-	if (Util_F_Match(s, "f_system"))	{
+	if (Util_F_Match(s, "f_system")) {
 	    char *sys_string;
 
 		if (allow_f_system.value)
@@ -243,8 +241,6 @@ qbool FChecks_SystemRequest (char *s) {
 		f_system_reply_time = cls.realtime;
 		return true;
 	}
-	
-//	#endif
 	
 	return false;
 }
