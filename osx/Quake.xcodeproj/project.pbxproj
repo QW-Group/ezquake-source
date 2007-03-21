@@ -276,8 +276,7 @@
 		F827709509DFE12F00AE5EF8 /* match_tools.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CA609DFE12E00AE5EF8 /* match_tools.c */; };
 		F827709709DFE12F00AE5EF8 /* mathlib.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CA809DFE12E00AE5EF8 /* mathlib.c */; };
 		F827709809DFE12F00AE5EF8 /* mathlib.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CA909DFE12E00AE5EF8 /* mathlib.h */; };
-		F827709909DFE12F00AE5EF8 /* mdfour.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CAA09DFE12E00AE5EF8 /* mdfour.c */; };
-		F827709A09DFE12F00AE5EF8 /* mdfour.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CAB09DFE12E00AE5EF8 /* mdfour.h */; };
+		F827709909DFE12F00AE5EF8 /* md4.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CAA09DFE12E00AE5EF8 /* md4.c */; };
 		F827709B09DFE12F00AE5EF8 /* menu.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CAC09DFE12E00AE5EF8 /* menu.c */; };
 		F827709C09DFE12F00AE5EF8 /* menu.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CAD09DFE12E00AE5EF8 /* menu.h */; };
 		F827709E09DFE12F00AE5EF8 /* mgraph.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CAF09DFE12E00AE5EF8 /* mgraph.h */; };
@@ -488,8 +487,7 @@
 		F827747809DFE13000AE5EF8 /* match_tools.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CA609DFE12E00AE5EF8 /* match_tools.c */; };
 		F827747A09DFE13000AE5EF8 /* mathlib.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CA809DFE12E00AE5EF8 /* mathlib.c */; };
 		F827747B09DFE13000AE5EF8 /* mathlib.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CA909DFE12E00AE5EF8 /* mathlib.h */; };
-		F827747C09DFE13000AE5EF8 /* mdfour.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CAA09DFE12E00AE5EF8 /* mdfour.c */; };
-		F827747D09DFE13000AE5EF8 /* mdfour.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CAB09DFE12E00AE5EF8 /* mdfour.h */; };
+		F827747C09DFE13000AE5EF8 /* md4.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CAA09DFE12E00AE5EF8 /* md4.c */; };
 		F827747E09DFE13000AE5EF8 /* menu.c in Sources */ = {isa = PBXBuildFile; fileRef = F8276CAC09DFE12E00AE5EF8 /* menu.c */; };
 		F827747F09DFE13000AE5EF8 /* menu.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CAD09DFE12E00AE5EF8 /* menu.h */; };
 		F827748109DFE13000AE5EF8 /* mgraph.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F8276CAF09DFE12E00AE5EF8 /* mgraph.h */; };
@@ -710,7 +708,6 @@
 				F82773F809DFE13000AE5EF8 /* mac.h in CopyFiles */,
 				F82773FB09DFE13000AE5EF8 /* mac_prefs.h in CopyFiles */,
 				F827747B09DFE13000AE5EF8 /* mathlib.h in CopyFiles */,
-				F827747D09DFE13000AE5EF8 /* mdfour.h in CopyFiles */,
 				F827747F09DFE13000AE5EF8 /* menu.h in CopyFiles */,
 				F827748109DFE13000AE5EF8 /* mgraph.h in CopyFiles */,
 				F827749E09DFE13000AE5EF8 /* modelgen.h in CopyFiles */,
@@ -829,7 +826,6 @@
 				F827701509DFE12F00AE5EF8 /* mac.h in CopyFiles */,
 				F827701809DFE12F00AE5EF8 /* mac_prefs.h in CopyFiles */,
 				F827709809DFE12F00AE5EF8 /* mathlib.h in CopyFiles */,
-				F827709A09DFE12F00AE5EF8 /* mdfour.h in CopyFiles */,
 				F827709C09DFE12F00AE5EF8 /* menu.h in CopyFiles */,
 				F827709E09DFE12F00AE5EF8 /* mgraph.h in CopyFiles */,
 				F82770BB09DFE12F00AE5EF8 /* modelgen.h in CopyFiles */,
@@ -1303,8 +1299,7 @@
 		F8276CA609DFE12E00AE5EF8 /* match_tools.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = match_tools.c; sourceTree = "<group>"; };
 		F8276CA809DFE12E00AE5EF8 /* mathlib.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = mathlib.c; sourceTree = "<group>"; };
 		F8276CA909DFE12E00AE5EF8 /* mathlib.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = mathlib.h; sourceTree = "<group>"; };
-		F8276CAA09DFE12E00AE5EF8 /* mdfour.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = mdfour.c; sourceTree = "<group>"; };
-		F8276CAB09DFE12E00AE5EF8 /* mdfour.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = mdfour.h; sourceTree = "<group>"; };
+		F8276CAA09DFE12E00AE5EF8 /* md4.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = md4.c; sourceTree = "<group>"; };
 		F8276CAC09DFE12E00AE5EF8 /* menu.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = menu.c; sourceTree = "<group>"; };
 		F8276CAD09DFE12E00AE5EF8 /* menu.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = menu.h; sourceTree = "<group>"; };
 		F8276CAF09DFE12E00AE5EF8 /* mgraph.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = mgraph.h; sourceTree = "<group>"; };
@@ -1899,8 +1894,7 @@
 				F8276CA609DFE12E00AE5EF8 /* match_tools.c */,
 				F8276CA809DFE12E00AE5EF8 /* mathlib.c */,
 				F8276CA909DFE12E00AE5EF8 /* mathlib.h */,
-				F8276CAA09DFE12E00AE5EF8 /* mdfour.c */,
-				F8276CAB09DFE12E00AE5EF8 /* mdfour.h */,
+				F8276CAA09DFE12E00AE5EF8 /* md4.c */,
 				F8276CAC09DFE12E00AE5EF8 /* menu.c */,
 				F8276CAD09DFE12E00AE5EF8 /* menu.h */,
 				F8276CAF09DFE12E00AE5EF8 /* mgraph.h */,
@@ -2300,7 +2294,7 @@
 				F82773FA09DFE13000AE5EF8 /* mac_prefs.c in Sources */,
 				F827747809DFE13000AE5EF8 /* match_tools.c in Sources */,
 				F827747A09DFE13000AE5EF8 /* mathlib.c in Sources */,
-				F827747C09DFE13000AE5EF8 /* mdfour.c in Sources */,
+				F827747C09DFE13000AE5EF8 /* md4.c in Sources */,
 				F827747E09DFE13000AE5EF8 /* menu.c in Sources */,
 				F827749F09DFE13000AE5EF8 /* modules.c in Sources */,
 				F82774A109DFE13000AE5EF8 /* movie.c in Sources */,
@@ -2454,7 +2448,7 @@
 				F827701709DFE12F00AE5EF8 /* mac_prefs.c in Sources */,
 				F827709509DFE12F00AE5EF8 /* match_tools.c in Sources */,
 				F827709709DFE12F00AE5EF8 /* mathlib.c in Sources */,
-				F827709909DFE12F00AE5EF8 /* mdfour.c in Sources */,
+				F827709909DFE12F00AE5EF8 /* md4.c in Sources */,
 				F827709B09DFE12F00AE5EF8 /* menu.c in Sources */,
 				F82770BC09DFE12F00AE5EF8 /* modules.c in Sources */,
 				F82770BE09DFE12F00AE5EF8 /* movie.c in Sources */,

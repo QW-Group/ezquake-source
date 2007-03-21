@@ -102,7 +102,7 @@ COMMON_C_FILES := \
 	fs \
 	host \
 	mathlib \
-	mdfour \
+	md4 \
 	net \
 	net_chan \
 	q_shared \
