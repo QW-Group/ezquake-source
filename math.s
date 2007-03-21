@@ -23,7 +23,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: math.s,v 1.3 2006-06-13 13:13:02 vvd0 Exp $
+	$Id: math.s,v 1.4 2007-03-21 16:55:44 vvd0 Exp $
 */
 
 #include "asm_i386.h"
@@ -361,7 +361,8 @@ Lerror:
 .globl C(ShortSwap)
 C(ShortSwap):
 
-	movzwl	val(%esp),%eax
+/*	movzwl	val(%esp),%eax*/
+	movw	val(%esp),%ax
 	xchgb	%al,%ah
 	ret
 
