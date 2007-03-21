@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_types.h,v 1.3 2007-02-11 23:28:16 qqshka Exp $
+	$Id: tr_types.h,v 1.4 2007-03-21 17:03:10 vvd0 Exp $
 
 */
 //
@@ -117,7 +117,7 @@ typedef struct
 // }
 #endif // _WIN32
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
   void *OpenGLLib; // instance of OpenGL library
 #endif
 

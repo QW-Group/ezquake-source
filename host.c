@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.36 2007-03-13 09:07:16 qqshka Exp $
+	$Id: host.c,v 1.37 2007-03-21 17:03:10 vvd0 Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef __FreeBSD__
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#include <osreldate.h>
 #ifdef id386
 #include <sys/time.h>
 #include <machine/cpufunc.h>
@@ -268,7 +269,12 @@ void SYSINFO_Init(void)
 #endif
 
 	mib[0] = CTL_HW;
-	mib[1] = HW_PHYSMEM;
+	mib[1] =
+#if __FreeBSD_version >= 500000
+		HW_REALMEM;
+#else
+		HW_PHYSMEM;
+#endif
 // VVD: We can use HW_REALMEM (hw.realmem) for RELENG_5/6/7 for getting exact result,
 // but RELENG_4 have only HW_PHYSMEM (hw.physmem).
 	len = sizeof(val);
@@ -294,8 +300,8 @@ void SYSINFO_Init(void)
 	SYSINFO_MHz = (int)((tsc_freq - old_tsc) /
 						(tp.tv_sec - old_tp.tv_sec + (tp.tv_usec - old_tp.tv_usec) / 1000000.) /
 						1000000. + .5);
-// VVD: We can use sysctl hw.clockrate, but it don't work on i486 - always 0
-// (don't know about Pentium 1/2/3 - work on Pentium 4) and RELENG_4 have no this sysctl.
+// VVD: We can use sysctl hw.clockrate, but it don't work on i486 - always 0.
+// Must work on Pentium 1/2/3; tested on Pentium 4. And RELENG_4 have no this sysctl.
 #endif
 
 #ifdef GLQUAKE

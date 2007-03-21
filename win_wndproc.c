@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: win_wndproc.c,v 1.3 2007-03-11 06:01:43 disconn3ct Exp $
+	$Id: win_wndproc.c,v 1.4 2007-03-21 17:03:11 vvd0 Exp $
 
 */
 
@@ -24,9 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#if defined(_WIN32) || defined(__linux__)
+#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 #include "tr_types.h"
-#endif // _WIN32 || __linux__
+#endif // _WIN32 || __linux__ || __FreeBSD__
 #endif
 #include "cdaudio.h"
 #ifdef WITH_KEYMAP

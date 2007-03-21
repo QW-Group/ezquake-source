@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_glimp.c,v 1.9 2007-03-15 18:26:59 qqshka Exp $
+    $Id: linux_glimp.c,v 1.10 2007-03-21 17:03:10 vvd0 Exp $
 
 */
 /*
@@ -38,8 +38,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <termios.h>
 #include <sys/ioctl.h>
+#ifdef __FreeBSD__
+   #include <sys/stat.h>
+#endif
 #ifdef __linux__
-  #include <sys/stat.h>
+   #include <sys/stat.h>
   #include <sys/vt.h>
 #endif
 #include <stdarg.h>

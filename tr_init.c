@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.13 2007-03-14 04:43:33 qqshka Exp $
+	$Id: tr_init.c,v 1.14 2007-03-21 17:03:10 vvd0 Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -29,9 +29,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#if defined(_WIN32) || defined(__linux__)
+#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 #include "tr_types.h"
-#endif // _WIN32 || __linux__
+#endif // _WIN32 || __linux__ || __FreeBSD__
 #endif
 
 glconfig_t	glConfig;

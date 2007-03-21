@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.12 2007-03-14 02:39:50 qqshka Exp $
+	$Id: win_glimp.c,v 1.13 2007-03-21 17:03:10 vvd0 Exp $
 
 */
 /*
@@ -46,9 +46,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#if defined(_WIN32) || defined(__linux__)
+#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 #include "tr_types.h"
-#endif // _WIN32 || __linux__
+#endif // _WIN32 || __linux__ || __FreeBSD__
 #else
 #include "r_model.h"
 #include "r_local.h"
