@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.72 2007-03-18 18:36:24 disconn3ct Exp $
+    $Id: common.c,v 1.73 2007-03-21 16:54:11 vvd0 Exp $
 
 */
 
@@ -43,7 +43,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #endif
 #include "teamplay.h"
-#include "mdfour.h"
 #include "crc.h"
 #include "stats_grid.h"
 
@@ -2403,31 +2402,6 @@ byte COM_BlockSequenceCRCByte (byte *base, int length, int sequence) {
 	return crc;
 }
 
-
-//============================================================================
-
-///////////////////////////////////////////////////////////////
-//	MD4-based checksum utility functions
-//
-//	Copyright (C) 2000       Jeff Teunissen <d2deek@pmail.net>
-//
-//	Author: Jeff Teunissen	<d2deek@pmail.net>
-//	Date: 01 Jan 2000
-
-unsigned Com_BlockChecksum (void *buffer, int length) {
-	int				digest[4];
-	unsigned 		val;
-
-	mdfour ( (unsigned char *) digest, (unsigned char *) buffer, length );
-
-	val = digest[0] ^ digest[1] ^ digest[2] ^ digest[3];
-
-	return val;
-}
-
-void Com_BlockFullChecksum (void *buffer, int len, unsigned char *outbuf) {
-	mdfour ( outbuf, (unsigned char *) buffer, len );
-}
 //=====================================================================
 
 #define	MAXPRINTMSG	4096
