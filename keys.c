@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.56 2007-03-19 13:23:20 johnnycz Exp $
+    $Id: keys.c,v 1.57 2007-03-21 15:14:30 johnnycz Exp $
 
 */
 
@@ -1997,6 +1997,12 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 		}
 		return;
 	}
+
+    // special case for accessing the menu via mouse when in console in disconnected mode:
+    if (key == K_MOUSE2 && key_dest == key_game && cls.state == ca_disconnected)
+    {
+        M_ToggleMenu_f();
+    }
 
 	// key up events only generate commands if the game key binding is a button command (leading + sign).
 	// These will occur even in console mode, to keep the character from continuing an action started before a
