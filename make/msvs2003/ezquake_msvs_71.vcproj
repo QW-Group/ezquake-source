@@ -340,13 +340,13 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90">
 			<File
-				RelativePath="winquake.rc">
+				RelativePath="..\..\winquake.rc">
 			</File>
 			<Filter
 				Name="OpenGL"
 				Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90">
 				<File
-					RelativePath="gl_draw.c">
+					RelativePath="..\..\gl_draw.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -361,7 +361,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="gl_md3.c">
+					RelativePath="..\..\gl_md3.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -376,7 +376,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="gl_mesh.c">
+					RelativePath="..\..\gl_mesh.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -391,7 +391,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="gl_model.c">
+					RelativePath="..\..\gl_model.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -406,7 +406,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="gl_ngraph.c">
+					RelativePath="..\..\gl_ngraph.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -421,7 +421,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="gl_refrag.c">
+					RelativePath="..\..\gl_refrag.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -436,7 +436,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="gl_rlight.c">
+					RelativePath="..\..\gl_rlight.c">
 					<FileConfiguration
 						Name="GLDebug|Win32">
 						<Tool
@@ -469,7 +469,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="gl_rmain.c">
+					RelativePath="..\..\gl_rmain.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -484,7 +484,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="gl_rmisc.c">
+					RelativePath="..\..\gl_rmisc.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -499,7 +499,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="gl_rpart.c">
+					RelativePath="..\..\gl_rpart.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -514,7 +514,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="gl_rsurf.c">
+					RelativePath="..\..\gl_rsurf.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -529,7 +529,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="gl_texture.c">
+					RelativePath="..\..\gl_texture.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -544,7 +544,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="gl_warp.c">
+					RelativePath="..\..\gl_warp.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -563,97 +563,97 @@
 				Name="System"
 				Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90">
 				<File
-					RelativePath="localtime_win.c">
+					RelativePath="..\..\localtime_win.c">
 				</File>
 				<File
-					RelativePath="sys_win.c">
+					RelativePath="..\..\sys_win.c">
 				</File>
 				<File
-					RelativePath=".\win_wndproc.c">
+					RelativePath="..\..\win_wndproc.c">
 				</File>
 			</Filter>
 			<Filter
 				Name="Sound"
 				Filter="">
 				<File
-					RelativePath="cd_win.c">
+					RelativePath="..\..\cd_win.c">
 				</File>
 				<File
-					RelativePath="snd_dma.c">
+					RelativePath="..\..\snd_dma.c">
 				</File>
 				<File
-					RelativePath="snd_mem.c">
+					RelativePath="..\..\snd_mem.c">
 				</File>
 				<File
-					RelativePath="snd_mix.c">
+					RelativePath="..\..\snd_mix.c">
 				</File>
 				<File
-					RelativePath="snd_win.c">
+					RelativePath="..\..\snd_win.c">
 				</File>
 			</Filter>
 			<Filter
 				Name="Input"
 				Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90">
 				<File
-					RelativePath="cl_input.c">
+					RelativePath="..\..\cl_input.c">
 				</File>
 				<File
-					RelativePath="in_win.c">
+					RelativePath="..\..\in_win.c">
 				</File>
 				<File
-					RelativePath="keys.c">
+					RelativePath="..\..\keys.c">
 				</File>
 				<File
-					RelativePath=".\textencoding.c">
+					RelativePath="..\..\textencoding.c">
 				</File>
 			</Filter>
 			<Filter
 				Name="Server"
 				Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90">
 				<File
-					RelativePath="sv_ccmds.c">
+					RelativePath="..\..\sv_ccmds.c">
 				</File>
 				<File
-					RelativePath="sv_ents.c">
+					RelativePath="..\..\sv_ents.c">
 				</File>
 				<File
-					RelativePath="sv_init.c">
+					RelativePath="..\..\sv_init.c">
 				</File>
 				<File
-					RelativePath="sv_main.c">
+					RelativePath="..\..\sv_main.c">
 				</File>
 				<File
-					RelativePath="sv_master.c">
+					RelativePath="..\..\sv_master.c">
 				</File>
 				<File
-					RelativePath="sv_move.c">
+					RelativePath="..\..\sv_move.c">
 				</File>
 				<File
-					RelativePath="sv_nchan.c">
+					RelativePath="..\..\sv_nchan.c">
 				</File>
 				<File
-					RelativePath="sv_phys.c">
+					RelativePath="..\..\sv_phys.c">
 				</File>
 				<File
-					RelativePath="sv_save.c">
+					RelativePath="..\..\sv_save.c">
 				</File>
 				<File
-					RelativePath="sv_send.c">
+					RelativePath="..\..\sv_send.c">
 				</File>
 				<File
-					RelativePath="sv_user.c">
+					RelativePath="..\..\sv_user.c">
 				</File>
 				<File
-					RelativePath="sv_world.c">
+					RelativePath="..\..\sv_world.c">
 				</File>
 				<Filter
 					Name="Network"
 					Filter="">
 					<File
-						RelativePath="net.c">
+						RelativePath="..\..\net.c">
 					</File>
 					<File
-						RelativePath="net_chan.c">
+						RelativePath="..\..\net_chan.c">
 					</File>
 				</Filter>
 			</Filter>
@@ -661,102 +661,102 @@
 				Name="VM"
 				Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90">
 				<File
-					RelativePath="pr_cmds.c">
+					RelativePath="..\..\pr_cmds.c">
 				</File>
 				<File
-					RelativePath="pr_edict.c">
+					RelativePath="..\..\pr_edict.c">
 				</File>
 				<File
-					RelativePath="pr_exec.c">
+					RelativePath="..\..\pr_exec.c">
 				</File>
 			</Filter>
 			<Filter
 				Name="Misc"
 				Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90">
 				<File
-					RelativePath="cmd.c">
+					RelativePath="..\..\cmd.c">
 				</File>
 				<File
-					RelativePath="com_msg.c">
+					RelativePath="..\..\com_msg.c">
 				</File>
 				<File
-					RelativePath="common.c">
+					RelativePath="..\..\common.c">
 				</File>
 				<File
-					RelativePath="console.c">
+					RelativePath="..\..\console.c">
 				</File>
 				<File
-					RelativePath="crc.c">
+					RelativePath="..\..\crc.c">
 				</File>
 				<File
-					RelativePath="cvar.c">
+					RelativePath="..\..\cvar.c">
 				</File>
 				<File
-					RelativePath=".\fs.c">
+					RelativePath="..\..\fs.c">
 				</File>
 				<File
-					RelativePath="host.c">
+					RelativePath="..\..\host.c">
 				</File>
 				<File
-					RelativePath="image.c">
+					RelativePath="..\..\image.c">
 				</File>
 				<File
-					RelativePath="mathlib.c">
+					RelativePath="..\..\mathlib.c">
 				</File>
 				<File
-					RelativePath="mdfour.c">
+					RelativePath="..\..\md4.c">
 				</File>
 				<File
-					RelativePath="menu.c">
+					RelativePath="..\..\menu.c">
 				</File>
 				<File
-					RelativePath=".\menu_demo.c">
+					RelativePath="..\..\menu_demo.c">
 				</File>
 				<File
-					RelativePath=".\menu_options.c">
+					RelativePath="..\..\menu_options.c">
 				</File>
 				<File
-					RelativePath=".\menu_proxy.c">
+					RelativePath="..\..\menu_proxy.c">
 				</File>
 				<File
-					RelativePath="pmove.c">
+					RelativePath="..\..\pmove.c">
 				</File>
 				<File
-					RelativePath="pmovetst.c">
+					RelativePath="..\..\pmovetst.c">
 				</File>
 				<File
-					RelativePath="q_shared.c">
+					RelativePath="..\..\q_shared.c">
 				</File>
 				<File
-					RelativePath="sbar.c">
+					RelativePath="..\..\sbar.c">
 				</File>
 				<File
-					RelativePath="sha1.c">
+					RelativePath="..\..\sha1.c">
 				</File>
 				<File
-					RelativePath="skin.c">
+					RelativePath="..\..\skin.c">
 				</File>
 				<File
-					RelativePath="teamplay.c">
+					RelativePath="..\..\teamplay.c">
 				</File>
 				<File
-					RelativePath="version.c">
+					RelativePath="..\..\version.c">
 				</File>
 				<File
-					RelativePath="wad.c">
+					RelativePath="..\..\wad.c">
 				</File>
 				<File
-					RelativePath="zone.c">
+					RelativePath="..\..\zone.c">
 				</File>
 			</Filter>
 			<Filter
 				Name="Draw"
 				Filter="">
 				<File
-					RelativePath="common_draw.c">
+					RelativePath="..\..\common_draw.c">
 				</File>
 				<File
-					RelativePath="r_aclip.c">
+					RelativePath="..\..\r_aclip.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -771,7 +771,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="r_alias.c">
+					RelativePath="..\..\r_alias.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -786,7 +786,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="r_bsp.c">
+					RelativePath="..\..\r_bsp.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -801,7 +801,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="r_draw.c">
+					RelativePath="..\..\r_draw.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -816,7 +816,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="r_edge.c">
+					RelativePath="..\..\r_edge.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -831,7 +831,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="r_efrag.c">
+					RelativePath="..\..\r_efrag.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -846,7 +846,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="r_light.c">
+					RelativePath="..\..\r_light.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -861,7 +861,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="r_main.c">
+					RelativePath="..\..\r_main.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -876,7 +876,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="r_misc.c">
+					RelativePath="..\..\r_misc.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -891,7 +891,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="r_model.c">
+					RelativePath="..\..\r_model.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -906,10 +906,10 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="r_part.c">
+					RelativePath="..\..\r_part.c">
 				</File>
 				<File
-					RelativePath="r_rast.c">
+					RelativePath="..\..\r_rast.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -924,7 +924,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="r_sky.c">
+					RelativePath="..\..\r_sky.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -939,7 +939,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="r_sprite.c">
+					RelativePath="..\..\r_sprite.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -954,7 +954,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="r_surf.c">
+					RelativePath="..\..\r_surf.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -969,7 +969,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="r_vars.c">
+					RelativePath="..\..\r_vars.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -988,7 +988,7 @@
 				Name="Software"
 				Filter="">
 				<File
-					RelativePath="d_edge.c">
+					RelativePath="..\..\d_edge.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1003,7 +1003,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="d_fill.c">
+					RelativePath="..\..\d_fill.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1018,7 +1018,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="d_init.c">
+					RelativePath="..\..\d_init.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1033,7 +1033,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="d_modech.c">
+					RelativePath="..\..\d_modech.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1048,7 +1048,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="d_polyse.c">
+					RelativePath="..\..\d_polyse.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1063,7 +1063,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="d_scan.c">
+					RelativePath="..\..\d_scan.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1078,7 +1078,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="d_sky.c">
+					RelativePath="..\..\d_sky.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1093,7 +1093,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="d_sprite.c">
+					RelativePath="..\..\d_sprite.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1108,7 +1108,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="d_surf.c">
+					RelativePath="..\..\d_surf.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1123,7 +1123,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="d_vars.c">
+					RelativePath="..\..\d_vars.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1138,7 +1138,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="d_zpoint.c">
+					RelativePath="..\..\d_zpoint.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1157,10 +1157,10 @@
 				Name="Video"
 				Filter="">
 				<File
-					RelativePath=".\tr_init.c">
+					RelativePath="..\..\tr_init.c">
 				</File>
 				<File
-					RelativePath="vid_common_gl.c">
+					RelativePath="..\..\vid_common_gl.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1175,7 +1175,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="vid_win.c">
+					RelativePath="..\..\vid_win.c">
 					<FileConfiguration
 						Name="GLDebug|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1190,180 +1190,180 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\win_glimp.c">
+					RelativePath="..\..\win_glimp.c">
 				</File>
 			</Filter>
 			<Filter
 				Name="Client"
 				Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90">
 				<File
-					RelativePath="cl_cam.c">
+					RelativePath="..\..\cl_cam.c">
 				</File>
 				<File
-					RelativePath="cl_cmd.c">
+					RelativePath="..\..\cl_cmd.c">
 				</File>
 				<File
-					RelativePath="cl_demo.c">
+					RelativePath="..\..\cl_demo.c">
 				</File>
 				<File
-					RelativePath="cl_ents.c">
+					RelativePath="..\..\cl_ents.c">
 				</File>
 				<File
-					RelativePath="cl_main.c">
+					RelativePath="..\..\cl_main.c">
 				</File>
 				<File
-					RelativePath="cl_nqdemo.c">
+					RelativePath="..\..\cl_nqdemo.c">
 				</File>
 				<File
-					RelativePath="cl_parse.c">
+					RelativePath="..\..\cl_parse.c">
 				</File>
 				<File
-					RelativePath="cl_pred.c">
+					RelativePath="..\..\cl_pred.c">
 				</File>
 				<File
-					RelativePath="cl_screen.c">
+					RelativePath="..\..\cl_screen.c">
 				</File>
 				<File
-					RelativePath="cl_slist.c">
+					RelativePath="..\..\cl_slist.c">
 				</File>
 				<File
-					RelativePath="cl_tcl.c">
+					RelativePath="..\..\cl_tcl.c">
 				</File>
 				<File
-					RelativePath="cl_tent.c">
+					RelativePath="..\..\cl_tent.c">
 				</File>
 				<File
-					RelativePath="cl_view.c">
+					RelativePath="..\..\cl_view.c">
 				</File>
 			</Filter>
 			<Filter
 				Name="Addons"
 				Filter="">
 				<File
-					RelativePath="auth.c">
+					RelativePath="..\..\auth.c">
 				</File>
 				<File
-					RelativePath="cl_collision.c">
+					RelativePath="..\..\cl_collision.c">
 				</File>
 				<File
-					RelativePath="collision.c">
+					RelativePath="..\..\collision.c">
 				</File>
 				<File
-					RelativePath="config_manager.c">
+					RelativePath="..\..\config_manager.c">
 				</File>
 				<File
-					RelativePath="Ctrl.c">
+					RelativePath="..\..\Ctrl.c">
 				</File>
 				<File
-					RelativePath="Ctrl_EditBox.c">
+					RelativePath="..\..\Ctrl_EditBox.c">
 				</File>
 				<File
-					RelativePath="Ctrl_PageViewer.c">
+					RelativePath="..\..\Ctrl_PageViewer.c">
+				</File>
+ 				<File
+					RelativePath="..\..\Ctrl_ScrollBar.c">
 				</File>
 				<File
-					RelativePath="Ctrl_ScrollBar.c">
+					RelativePath="..\..\Ctrl_Tab.c">
 				</File>
 				<File
-					RelativePath="Ctrl_Tab.c">
+					RelativePath="..\..\document_rendering.c">
 				</File>
 				<File
-					RelativePath="document_rendering.c">
+					RelativePath="..\..\EX_browser.c">
 				</File>
 				<File
-					RelativePath="EX_browser.c">
+					RelativePath="..\..\EX_browser_net.c">
 				</File>
 				<File
-					RelativePath="EX_browser_net.c">
+					RelativePath="..\..\EX_browser_ping.c">
 				</File>
 				<File
-					RelativePath="EX_browser_ping.c">
+					RelativePath="..\..\EX_browser_sources.c">
 				</File>
 				<File
-					RelativePath="EX_browser_sources.c">
+					RelativePath="..\..\EX_FileList.c">
 				</File>
 				<File
-					RelativePath="EX_FileList.c">
+					RelativePath="..\..\EX_FunNames.c">
 				</File>
 				<File
-					RelativePath="EX_FunNames.c">
+					RelativePath="..\..\EX_misc.c">
 				</File>
 				<File
-					RelativePath="EX_misc.c">
+					RelativePath="..\..\fchecks.c">
 				</File>
 				<File
-					RelativePath="fchecks.c">
+					RelativePath="..\..\fmod.c">
 				</File>
 				<File
-					RelativePath="fmod.c">
+					RelativePath="..\..\fragstats.c">
 				</File>
 				<File
-					RelativePath="fragstats.c">
+					RelativePath="..\..\help.c">
 				</File>
 				<File
-					RelativePath="help.c">
+					RelativePath="..\..\help_browser.c">
 				</File>
 				<File
-					RelativePath="help_browser.c">
+					RelativePath="..\..\help_files.c">
 				</File>
 				<File
-					RelativePath="help_files.c">
+					RelativePath="..\..\hud.c">
 				</File>
 				<File
-					RelativePath="hud.c">
+					RelativePath="..\..\hud_common.c">
 				</File>
 				<File
-					RelativePath="hud_common.c">
+					RelativePath="..\..\hud_editor.c">
 				</File>
 				<File
-					RelativePath="hud_editor.c">
+					RelativePath="..\..\ignore.c">
 				</File>
 				<File
-					RelativePath="ignore.c">
+					RelativePath="..\..\keymap.c">
 				</File>
 				<File
-					RelativePath="keymap.c">
+					RelativePath="..\..\logging.c">
 				</File>
 				<File
-					RelativePath="logging.c">
+					RelativePath="..\..\match_tools.c">
 				</File>
 				<File
-					RelativePath="match_tools.c">
+					RelativePath="..\..\modules.c">
 				</File>
 				<File
-					RelativePath="modules.c">
+					RelativePath="..\..\movie.c">
 				</File>
 				<File
-					RelativePath="movie.c">
+					RelativePath="..\..\movie_avi.c">
 				</File>
 				<File
-					RelativePath="movie_avi.c">
+					RelativePath="..\..\mp3_player.c">
 				</File>
 				<File
-					RelativePath="mp3_player.c">
+					RelativePath="..\..\mvd_utils.c">
 				</File>
 				<File
-					RelativePath="mvd_utils.c">
+					RelativePath="..\..\parser.c">
 				</File>
 				<File
-					RelativePath="parser.c">
+					RelativePath="..\..\qtv.c">
 				</File>
 				<File
-					RelativePath="qtv.c">
+					RelativePath="..\..\rulesets.c">
 				</File>
 				<File
-					RelativePath="rulesets.c">
+					RelativePath="..\..\settings_page.c">
 				</File>
 				<File
-					RelativePath=".\settings_page.c">
+					RelativePath="..\..\stats_grid.c">
 				</File>
 				<File
-					RelativePath="stats_grid.c">
+					RelativePath="..\..\utils.c">
 				</File>
 				<File
-					RelativePath="utils.c">
-				</File>
-				<File
-					RelativePath="vx_camera.c">
+					RelativePath="..\..\vx_camera.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1378,7 +1378,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="vx_coronas.c">
+					RelativePath="..\..\vx_coronas.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1393,7 +1393,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="vx_motiontrail.c">
+					RelativePath="..\..\vx_motiontrail.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1408,7 +1408,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="vx_stuff.c">
+					RelativePath="..\..\vx_stuff.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1423,7 +1423,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="vx_tracker.c">
+					RelativePath="..\..\vx_tracker.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1438,7 +1438,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="vx_vertexlights.c">
+					RelativePath="..\..\vx_vertexlights.c">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1453,16 +1453,16 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="xsd.c">
+					RelativePath="..\..\xsd.c">
 				</File>
 				<File
-					RelativePath="xsd_command.c">
+					RelativePath="..\..\xsd_command.c">
 				</File>
 				<File
-					RelativePath="xsd_document.c">
+					RelativePath="..\..\xsd_document.c">
 				</File>
 				<File
-					RelativePath="xsd_variable.c">
+					RelativePath="..\..\xsd_variable.c">
 				</File>
 			</Filter>
 		</Filter>
@@ -1470,121 +1470,121 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;fi;fd">
 			<File
-				RelativePath="libs/pcre.h">
+				RelativePath="..\..\libs/pcre.h">
 			</File>
 			<File
-				RelativePath="resource.h">
+				RelativePath="..\..\resource.h">
 			</File>
 			<Filter
 				Name="Misc_h"
 				Filter="h;hpp;hxx;hm;inl;fi;fd">
 				<File
-					RelativePath="adivtab.h">
+					RelativePath="..\..\adivtab.h">
 				</File>
 				<File
-					RelativePath="anorm_dots.h">
+					RelativePath="..\..\anorm_dots.h">
 				</File>
 				<File
-					RelativePath="anorms.h">
+					RelativePath="..\..\anorms.h">
 				</File>
 				<File
-					RelativePath="bothdefs.h">
+					RelativePath="..\..\bothdefs.h">
 				</File>
 				<File
-					RelativePath="bspfile.h">
+					RelativePath="..\..\bspfile.h">
 				</File>
 				<File
-					RelativePath="cmd.h">
+					RelativePath="..\..\cmd.h">
 				</File>
 				<File
-					RelativePath="common.h">
+					RelativePath="..\..\common.h">
 				</File>
 				<File
-					RelativePath="crc.h">
+					RelativePath="..\..\crc.h">
 				</File>
 				<File
-					RelativePath="cvar.h">
+					RelativePath="..\..\cvar.h">
 				</File>
 				<File
-					RelativePath="embed_tcl.h">
+					RelativePath="..\..\embed_tcl.h">
 				</File>
 				<File
-					RelativePath=".\fs.h">
+					RelativePath="..\..\fs.h">
 				</File>
 				<File
-					RelativePath="image.h">
+					RelativePath="..\..\image.h">
 				</File>
 				<File
-					RelativePath="input.h">
+					RelativePath="..\..\input.h">
 				</File>
 				<File
-					RelativePath="keys.h">
+					RelativePath="..\..\keys.h">
 				</File>
 				<File
-					RelativePath="mathlib.h">
+					RelativePath="..\..\mathlib.h">
 				</File>
 				<File
-					RelativePath=".\menu_demo.h">
+					RelativePath="..\..\menu_demo.h">
 				</File>
 				<File
-					RelativePath=".\menu_options.h">
+					RelativePath="..\..\menu_options.h">
 				</File>
 				<File
-					RelativePath="modelgen.h">
+					RelativePath="..\..\modelgen.h">
 				</File>
 				<File
-					RelativePath="png.h">
+					RelativePath="..\..\png.h">
 				</File>
 				<File
-					RelativePath="q_shared.h">
+					RelativePath="..\..\q_shared.h">
 				</File>
 				<File
-					RelativePath="sbar.h">
+					RelativePath="..\..\sbar.h">
 				</File>
 				<File
-					RelativePath="screen.h">
+					RelativePath="..\..\screen.h">
 				</File>
 				<File
-					RelativePath="sha1.h">
+					RelativePath="..\..\sha1.h">
 				</File>
 				<File
-					RelativePath="spritegn.h">
+					RelativePath="..\..\spritegn.h">
 				</File>
 				<File
-					RelativePath="sys.h">
+					RelativePath="..\..\sys.h">
 				</File>
 				<File
-					RelativePath="teamplay.h">
+					RelativePath="..\..\teamplay.h">
 				</File>
 				<File
-					RelativePath=".\textencoding.h">
+					RelativePath="..\..\textencoding.h">
 				</File>
 				<File
-					RelativePath=".\tr_types.h">
+					RelativePath="..\..\tr_types.h">
 				</File>
 				<File
-					RelativePath="version.h">
+					RelativePath="..\..\version.h">
 				</File>
 				<File
-					RelativePath="vid.h">
+					RelativePath="..\..\vid.h">
 				</File>
 				<File
-					RelativePath="wad.h">
+					RelativePath="..\..\wad.h">
 				</File>
 				<File
-					RelativePath="winquake.h">
+					RelativePath="..\..\winquake.h">
 				</File>
 				<File
-					RelativePath="zone.h">
+					RelativePath="..\..\zone.h">
 				</File>
 				<Filter
 					Name="Net_h"
 					Filter="">
 					<File
-						RelativePath="net.h">
+						RelativePath="..\..\net.h">
 					</File>
 					<File
-						RelativePath="protocol.h">
+						RelativePath="..\..\protocol.h">
 					</File>
 				</Filter>
 			</Filter>
@@ -1592,118 +1592,118 @@
 				Name="Addons_h"
 				Filter="h;hpp;hxx;hm;inl;fi;fd">
 				<File
-					RelativePath="auth.h">
+					RelativePath="..\..\auth.h">
 				</File>
 				<File
-					RelativePath="auth_allowip.h">
+					RelativePath="..\..\auth_allowip.h">
 				</File>
 				<File
-					RelativePath="cl_collision.h">
+					RelativePath="..\..\cl_collision.h">
 				</File>
 				<File
-					RelativePath="collision.h">
+					RelativePath="..\..\collision.h">
 				</File>
 				<File
-					RelativePath="config_manager.h">
+					RelativePath="..\..\config_manager.h">
 				</File>
 				<File
-					RelativePath="Ctrl.h">
+					RelativePath="..\..\Ctrl.h">
 				</File>
 				<File
-					RelativePath="Ctrl_EditBox.h">
+					RelativePath="..\..\Ctrl_EditBox.h">
 				</File>
 				<File
-					RelativePath="Ctrl_PageViewer.h">
+					RelativePath="..\..\Ctrl_PageViewer.h">
 				</File>
 				<File
-					RelativePath="Ctrl_Tab.h">
+					RelativePath="..\..\Ctrl_Tab.h">
 				</File>
 				<File
-					RelativePath="cvar_groups.h">
+					RelativePath="..\..\cvar_groups.h">
 				</File>
 				<File
-					RelativePath="document_rendering.h">
+					RelativePath="..\..\document_rendering.h">
 				</File>
 				<File
-					RelativePath="EX_browser.h">
+					RelativePath="..\..\EX_browser.h">
 				</File>
 				<File
-					RelativePath="EX_FileList.h">
+					RelativePath="..\..\EX_FileList.h">
 				</File>
 				<File
-					RelativePath="EX_FunNames.h">
+					RelativePath="..\..\EX_FunNames.h">
 				</File>
 				<File
-					RelativePath="EX_misc.h">
+					RelativePath="..\..\EX_misc.h">
 				</File>
 				<File
-					RelativePath="fchecks.h">
+					RelativePath="..\..\fchecks.h">
 				</File>
 				<File
-					RelativePath="fmod.h">
+					RelativePath="..\..\fmod.h">
 				</File>
 				<File
-					RelativePath="gl_texture.h">
+					RelativePath="..\..\gl_texture.h">
 				</File>
 				<File
-					RelativePath="help.h">
+					RelativePath="..\..\help.h">
 				</File>
 				<File
-					RelativePath="hud.h">
+					RelativePath="..\..\hud.h">
 				</File>
 				<File
-					RelativePath="hud_common.h">
+					RelativePath="..\..\hud_common.h">
 				</File>
 				<File
-					RelativePath="hud_editor.h">
+					RelativePath="..\..\hud_editor.h">
 				</File>
 				<File
-					RelativePath="ignore.h">
+					RelativePath="..\..\ignore.h">
 				</File>
 				<File
-					RelativePath="keymap.h">
+					RelativePath="..\..\keymap.h">
 				</File>
 				<File
-					RelativePath="logging.h">
+					RelativePath="..\..\logging.h">
 				</File>
 				<File
-					RelativePath="modules.h">
+					RelativePath="..\..\modules.h">
 				</File>
 				<File
-					RelativePath="movie.h">
+					RelativePath="..\..\movie.h">
 				</File>
 				<File
-					RelativePath="movie_avi.h">
+					RelativePath="..\..\movie_avi.h">
 				</File>
 				<File
-					RelativePath="mp3_player.h">
+					RelativePath="..\..\mp3_player.h">
 				</File>
 				<File
-					RelativePath="mvd_utils.h">
+					RelativePath="..\..\mvd_utils.h">
 				</File>
 				<File
-					RelativePath="parser.h">
+					RelativePath="..\..\parser.h">
 				</File>
 				<File
-					RelativePath="qtv.h">
+					RelativePath="..\..\qtv.h">
 				</File>
 				<File
-					RelativePath="rulesets.h">
+					RelativePath="..\..\rulesets.h">
 				</File>
 				<File
-					RelativePath="security.h">
+					RelativePath="..\..\security.h">
 				</File>
 				<File
-					RelativePath=".\settings_page.h">
+					RelativePath="..\..\settings_page.h">
 				</File>
 				<File
-					RelativePath="stats_grid.h">
+					RelativePath="..\..\stats_grid.h">
 				</File>
 				<File
-					RelativePath="utils.h">
+					RelativePath="..\..\utils.h">
 				</File>
 				<File
-					RelativePath="vx_camera.h">
+					RelativePath="..\..\vx_camera.h">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1718,7 +1718,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="vx_stuff.h">
+					RelativePath="..\..\vx_stuff.h">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1733,7 +1733,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="vx_vertexlights.h">
+					RelativePath="..\..\vx_vertexlights.h">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1748,26 +1748,26 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="xsd.h">
+					RelativePath="..\..\xsd.h">
 				</File>
 				<File
-					RelativePath="xsd_command.h">
+					RelativePath="..\..\xsd_command.h">
 				</File>
 				<File
-					RelativePath="xsd_document.h">
+					RelativePath="..\..\xsd_document.h">
 				</File>
 				<File
-					RelativePath="xsd_variable.h">
+					RelativePath="..\..\xsd_variable.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="OpenGL_h"
 				Filter="">
 				<File
-					RelativePath="gl_local.h">
+					RelativePath="..\..\gl_local.h">
 				</File>
 				<File
-					RelativePath="gl_md3.h">
+					RelativePath="..\..\gl_md3.h">
 					<FileConfiguration
 						Name="Release|Win32"
 						ExcludedFromBuild="TRUE">
@@ -1782,88 +1782,88 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="gl_model.h">
+					RelativePath="..\..\gl_model.h">
 				</File>
 				<File
-					RelativePath="gl_warp_sin.h">
+					RelativePath="..\..\gl_warp_sin.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Software_h"
 				Filter="">
 				<File
-					RelativePath="d_iface.h">
+					RelativePath="..\..\d_iface.h">
 				</File>
 				<File
-					RelativePath="d_ifacea.h">
+					RelativePath="..\..\d_ifacea.h">
 				</File>
 				<File
-					RelativePath="d_local.h">
+					RelativePath="..\..\d_local.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Main_h"
 				Filter="">
 				<File
-					RelativePath="quakedef.h">
+					RelativePath="..\..\quakedef.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Client_h"
 				Filter="">
 				<File
-					RelativePath="cl_view.h">
+					RelativePath="..\..\cl_view.h">
 				</File>
 				<File
-					RelativePath="client.h">
+					RelativePath="..\..\client.h">
 				</File>
 				<File
-					RelativePath="console.h">
+					RelativePath="..\..\console.h">
 				</File>
 				<File
-					RelativePath="menu.h">
+					RelativePath="..\..\menu.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Server_h"
 				Filter="">
 				<File
-					RelativePath="pmove.h">
+					RelativePath="..\..\pmove.h">
 				</File>
 				<File
-					RelativePath="server.h">
+					RelativePath="..\..\server.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Sound_h"
 				Filter="">
 				<File
-					RelativePath="cdaudio.h">
+					RelativePath="..\..\cdaudio.h">
 				</File>
 				<File
-					RelativePath="sound.h">
+					RelativePath="..\..\sound.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Draw_h"
 				Filter="">
 				<File
-					RelativePath="common_draw.h">
+					RelativePath="..\..\common_draw.h">
 				</File>
 				<File
-					RelativePath="draw.h">
+					RelativePath="..\..\draw.h">
 				</File>
 				<File
-					RelativePath="r_local.h">
+					RelativePath="..\..\r_local.h">
 				</File>
 				<File
-					RelativePath="r_model.h">
+					RelativePath="..\..\r_model.h">
 				</File>
 				<File
-					RelativePath="r_shared.h">
+					RelativePath="..\..\r_shared.h">
 				</File>
 				<File
-					RelativePath="render.h">
+					RelativePath="..\..\render.h">
 				</File>
 			</Filter>
 		</Filter>
@@ -1871,14 +1871,14 @@
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;cnt;rtf;gif;jpg;jpeg;jpe">
 			<File
-				RelativePath="ezquake.ico">
+				RelativePath="..\..\ezquake.ico">
 			</File>
 		</Filter>
 		<Filter
 			Name="Asm Files"
 			Filter="">
 			<File
-				RelativePath="cl_math.s">
+				RelativePath="..\..\cl_math.s">
 				<FileConfiguration
 					Name="GLDebug|Win32">
 					<Tool
@@ -1925,7 +1925,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="d_draw.s">
+				RelativePath="..\..\d_draw.s">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1950,7 +1950,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="d_draw16.s">
+				RelativePath="..\..\d_draw16.s">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1975,7 +1975,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="d_parta.s">
+				RelativePath="..\..\d_parta.s">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2000,7 +2000,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="d_polysa.s">
+				RelativePath="..\..\d_polysa.s">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2025,7 +2025,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="d_scana.s">
+				RelativePath="..\..\d_scana.s">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2050,7 +2050,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="d_spr8.s">
+				RelativePath="..\..\d_spr8.s">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2075,7 +2075,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="d_varsa.s">
+				RelativePath="..\..\d_varsa.s">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2100,7 +2100,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="math.s">
+				RelativePath="..\..\math.s">
 				<FileConfiguration
 					Name="GLDebug|Win32">
 					<Tool
@@ -2147,7 +2147,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="r_aclipa.s">
+				RelativePath="..\..\r_aclipa.s">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2172,7 +2172,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="r_aliasa.s">
+				RelativePath="..\..\r_aliasa.s">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2197,7 +2197,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="r_drawa.s">
+				RelativePath="..\..\r_drawa.s">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2222,7 +2222,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="r_edgea.s">
+				RelativePath="..\..\r_edgea.s">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2247,7 +2247,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="r_varsa.s">
+				RelativePath="..\..\r_varsa.s">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2272,7 +2272,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="snd_mixa.s">
+				RelativePath="..\..\snd_mixa.s">
 				<FileConfiguration
 					Name="GLDebug|Win32">
 					<Tool
@@ -2320,7 +2320,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="surf8.s">
+				RelativePath="..\..\surf8.s">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2345,7 +2345,7 @@ del $(OUTDIR)\$(InputName).spp
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="sys_x86.s">
+				RelativePath="..\..\sys_x86.s">
 				<FileConfiguration
 					Name="GLDebug|Win32">
 					<Tool
