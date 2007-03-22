@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.56 2007-03-18 18:25:55 disconn3ct Exp $
+	$Id: gl_draw.c,v 1.57 2007-03-22 00:03:04 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -624,6 +624,7 @@ void Draw_InitCharset(void) {
 }
 
 void CP_Init (void);
+void Draw_InitConsoleBackground(void);
 
 void Draw_Init (void) {
 	Cmd_AddCommand("loadcharset", Draw_LoadCharset_f);
@@ -668,6 +669,8 @@ void Draw_Init (void) {
 
 	// Load the crosshair pics
 	Draw_InitCrosshairs();
+	// so console background will be re-init
+	Draw_InitConsoleBackground();
 
 	// get the other pics we need
 	draw_disc     = Draw_CacheWadPic("disc");
@@ -2013,7 +2016,17 @@ void Draw_SFill (int x, int y, int w, int h, int c, float scale)
     glEnable (GL_TEXTURE_2D);
 }
 
-void Draw_ConsoleBackground (int lines)
+static char last_mapname[MAX_QPATH] = {0};
+static mpic_t *last_lvlshot = NULL;
+
+// need for vid_restart
+void Draw_InitConsoleBackground(void)
+{
+	last_lvlshot = NULL;
+	last_mapname[0] = 0;
+}
+
+void Draw_ConsoleBackground (int lines) 
 {
 	mpic_t *lvlshot = NULL;
 	float alpha = (SCR_NEED_CONSOLE_BACKGROUND ? 1 : bound(0, scr_conalpha.value, 1));
@@ -2023,9 +2036,6 @@ void Draw_ConsoleBackground (int lines)
 			 || (scr_conback.value == 1 && SCR_NEED_CONSOLE_BACKGROUND) // only at load time
 			)
 	   ) {
-		static char last_mapname[MAX_QPATH] = {0};
-		static mpic_t *last_lvlshot = NULL;
-
 		if (strncmp(host_mapname.string, last_mapname, sizeof(last_mapname))) { // lead to call Draw_CachePicSafe() once per level
 			char name[MAX_QPATH];
 
