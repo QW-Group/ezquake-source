@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.55 2007-03-21 17:03:10 vvd0 Exp $
+		$Id: menu_options.c,v 1.56 2007-03-23 20:20:25 himan Exp $
 
 */
 
@@ -170,7 +170,7 @@ const char* allowscripts_enum[] = { "off", "simple", "all" };
 const char* scrautoid_enum[] = { "off", "nick", "health+armor", "health+armor+type", "all (rl)", "all (best gun)" };
 const char* coloredtext_enum[] = { "off", "simple", "frag messages" };
 const char* autorecord_enum[] = { "off", "don't save", "auto save" };
-const char* hud_enum[] = { "old", "new", "combined" };
+const char* hud_enum[] = { "classic", "new", "combined" };
 
 const char* SshotformatRead(void) {
 	return scr_sshot_format.string;
@@ -306,21 +306,7 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
 	ADDSET_CUSTOM	("Quality", SoundqualityRead, SoundqualityToggle, "Sound sampling rate"),
 	ADDSET_BASIC_SECTION(),
-	//Controls
-	ADDSET_SEPARATOR("Controls"),
-	ADDSET_BOOL		("Mouse Look", freelook),
-	ADDSET_NUMBER	("Mouse Speed", sensitivity, 1, 15, 0.25),
-	ADDSET_NUMBER	("Mouse Accel.", m_accel, 0, 1, 0.1),
-	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverted mouse will make you look down when you move the mouse up"),
-	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle, "Autoswitch will switch the weapons for you if pickup new weapon or a pack with a weapon"),
-	ADDSET_BOOL		("Gun Preselect", cl_weaponpreselect),
-	ADDSET_BOOL		("Gun Auto hide", cl_weaponhide),
-	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "You will always have maximum walking speed if this is enabled"),
-	ADDSET_BOOL		("Smart Jump", cl_smartjump),
-	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
-	ADDSET_BASIC_SECTION(),
-	//Connection
+		//Connection
 	ADDSET_SEPARATOR("Connection"),
 	ADDSET_CUSTOM	("Bandwidth Limit", BandwidthRead, BandwidthToggle, "Select a speed close to your internet connection link speed"),
 	ADDSET_CUSTOM	("Quality", ConQualityRead, ConQualityToggle, "Ensures that packets with weapon switch command don't get lost"),
@@ -433,9 +419,9 @@ setting setthud_arr[] = {
 #ifdef GLQUAKE
 	ADDSET_BOOLLATE ("Radar", hud_radar_show),
 #endif
-	ADDSET_SEPARATOR("Old HUD"),
-	ADDSET_BOOL		("Old Status Bar", cl_sbar),
-	ADDSET_BOOL		("Old HUD Left", cl_hudswap),
+	ADDSET_SEPARATOR("Quake Classic HUD"),
+	ADDSET_BOOL		("Status Bar", cl_sbar),
+	ADDSET_BOOL		("HUD Left", cl_hudswap),
 	ADDSET_BOOL		("Show FPS", show_fps),
 	ADDSET_BOOL		("Show Clock", scr_clock),
 	ADDSET_BOOL		("Show Gameclock", scr_gameclock),
@@ -530,12 +516,14 @@ settings_page settbinds;
 setting settbinds_arr[] = {
 	ADDSET_SEPARATOR("Movement"),
 	ADDSET_BIND("Attack", "+attack"),
-	ADDSET_BIND("Jump", "+jump"),
+	ADDSET_BIND("Jump/Swim up", "+jump"),
 	ADDSET_BIND("Move Forward", "+forward"),
 	ADDSET_BIND("Move Backward", "+back"),
 	ADDSET_BIND("Move Left", "+moveleft"),
 	ADDSET_BIND("Move Right", "+moveright"),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Swim Up", "+moveup"),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_BIND("Swim Down", "+movedown"),
 	ADDSET_BIND("Zoom In/Out", "+zoom"),
 
@@ -560,11 +548,28 @@ setting settbinds_arr[] = {
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_BIND("Show Scores", "+showscores"),
 	ADDSET_BIND("Screenshot", "screenshot"),
+	ADDSET_BIND("Quit", "quit"),
+
+	ADDSET_SEPARATOR("Settings"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BOOL		("Mouse Look", freelook),
+	ADDSET_BASIC_SECTION(),
+	ADDSET_NUMBER	("Mouse Speed", sensitivity, 1, 15, 0.25),
+	ADDSET_NUMBER	("Mouse Accel.", m_accel, 0, 1, 0.1),
+	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverted mouse will make you look down when you move the mouse up"),
+	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle, "Autoswitch will switch your current weapon to the one picked up if it's better than the one you currently have"),
+	ADDSET_BOOL		("Gun Preselect", cl_weaponpreselect),
+	ADDSET_BOOL		("Gun Auto hide", cl_weaponhide),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "Maximum walking speed at all times"),
+	ADDSET_BOOL		("Smart Jump", cl_smartjump),
+	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
+	ADDSET_BASIC_SECTION(),
 	
 	ADDSET_SEPARATOR("Demo Playback"),
-	ADDSET_BIND("Demo Stop", "disconnect"),
-	ADDSET_BIND("Demo Play", "cl_demospeed 1;echo Playing demo."),
-	ADDSET_BIND("Demo Pause", "cl_demospeed 0;echo Demo paused."),
+	ADDSET_BIND("Stop", "disconnect"),
+	ADDSET_BIND("Play", "cl_demospeed 1;echo Playing demo."),
+	ADDSET_BIND("Pause", "cl_demospeed 0;echo Demo paused."),
 };
 
 void CT_Opt_Binds_Draw (int x2, int y2, int w, int h, CTab_t *tab, CTabPage_t *page) {
@@ -766,8 +771,10 @@ setting settfps_arr[] = {
 	ADDSET_NAMED	("Grenade Trail", r_grenadetrail, grenadetrail_enum),
 	ADDSET_NUMBER	("Fakeshaft", cl_fakeshaft, 0, 1, 0.05),
 #ifdef GLQUAKE
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Hide Nails", amf_hidenails),
 	ADDSET_BOOL		("Hide Rockets", amf_hiderockets),
+	ADDSET_BASIC_SECTION(),
 #endif
 	ADDSET_SEPARATOR("Lighting"),
 	ADDSET_NAMED	("Powerup Glow", r_powerupglow, powerupglow_enum),
@@ -795,7 +802,6 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
 	ADDSET_BOOL		("No Textures", gl_textureless),
 	ADDSET_CUSTOM	("Quality Mode", TexturesqualityRead, TexturesqualityToggle, "Determines the texture quality; rendering quality"),
-	ADDSET_BASIC_SECTION(),
 	ADDSET_SEPARATOR("Point of View"),
 	ADDSET_NUMBER	("Rollangle", cl_rollangle, 0, 30, 2),
 	ADDSET_NUMBER	("Rollspeed", cl_rollspeed, 0, 30, 2),
@@ -804,6 +810,7 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("Kick Roll", v_kickroll, 0, 10, 0.5),
 	ADDSET_NUMBER	("Kick Time", v_kicktime, 0, 10, 0.5),
 	ADDSET_NUMBER	("View Height", v_viewheight, -7, 6, 0.5),
+	ADDSET_BASIC_SECTION(),
 #endif
 };
 
