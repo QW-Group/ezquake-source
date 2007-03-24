@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.40 2007-03-21 17:03:10 vvd0 Exp $
+    $Id: snd_dma.c,v 1.41 2007-03-24 13:34:28 qqshka Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -94,7 +94,7 @@ cvar_t s_swapstereo = {"s_swapstereo", "0", CVAR_ARCHIVE};
 cvar_t s_khz = {"s_khz", "11", CVAR_ARCHIVE, OnChange_s_khz};
 #ifdef __FreeBSD__
 cvar_t s_stereo = {"s_stereo", "1"};
-cvar_t s_device = {"s_device", "default"};
+//cvar_t s_device = {"s_device", "default"};
 cvar_t s_device = {"s_device", "/dev/dsp0.0"};
 cvar_t s_bits = {"s_bits", "16"};
 #endif
