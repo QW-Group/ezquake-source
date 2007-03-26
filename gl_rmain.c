@@ -685,7 +685,7 @@ void R_AliasSetupLighting(entity_t *ent) {
 }
 
 void R_DrawAliasModel (entity_t *ent) {
-	int i, anim, skinnum, texture, fb_texture, playernum;
+	int i, anim, skinnum, texture, fb_texture, playernum = -1;
 	float scale;
 	vec3_t mins, maxs;
 	aliashdr_t *paliashdr;
