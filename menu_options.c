@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.57 2007-03-26 17:27:17 himan Exp $
+		$Id: menu_options.c,v 1.58 2007-03-26 18:47:46 johnnycz Exp $
 
 */
 
@@ -279,8 +279,8 @@ void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
 setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f, "Browse the "QuakeWorld for Freshies" guide by Apollyon."),
-	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens up the consol.e"),
+	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f, "Browse the \"QuakeWorld for Freshies\" guide by Apollyon."),
+	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens up the console."),
 	ADDSET_ACTION	("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
 #ifdef _WIN32
     ADDSET_CUSTOM	("Process Priority", PriorityRead, PriorityToggle, "Change client process priority. If you experience tearing or lagging, change this value to something different."),
