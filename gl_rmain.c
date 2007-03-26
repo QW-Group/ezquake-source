@@ -99,6 +99,9 @@ cvar_t	r_netgraph = {"r_netgraph", "0"};
 cvar_t	r_netstats = {"r_netstats", "0"};
 qbool OnChange_r_fullbrightSkins (cvar_t *var, char *value);
 cvar_t	r_fullbrightSkins = {"r_fullbrightSkins", "1", 0, OnChange_r_fullbrightSkins};
+cvar_t	r_enemyskincolor	= {"r_enemyskincolor", ""};
+cvar_t	r_teamskincolor		= {"r_teamskincolor",  ""};
+cvar_t	r_skincolormode		= {"r_skincolormode",  "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t  r_fastturb = {"r_fastturb", "0"};
 // START shaman RFE 1022504
@@ -335,6 +338,7 @@ int		lastposenum;
 float	r_framelerp;
 float	r_modelalpha;
 float	r_lerpdistance;
+float   r_modelcolor[3];
 
 //VULT COLOURED MODEL LIGHTS
 extern vec3_t lightcolor;
@@ -402,11 +406,20 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex) 
 			{
 				for (i=0;i<3;i++)
 					lc[i] = lightcolor[i] / 256 + l;
-					//Com_Printf("rgb light : %f %f %f\n", lc[0], lc[1], lc[2]);
-					glColor4f(lc[0],lc[1],lc[2], r_modelalpha);
+
+				//Com_Printf("rgb light : %f %f %f\n", lc[0], lc[1], lc[2]);
+				if (r_modelcolor[0] < 0)
+					glColor4f(lc[0], lc[1], lc[2], r_modelalpha); // normal color
+				else
+					glColor4f(r_modelcolor[0] * lc[0], r_modelcolor[1] * lc[1], r_modelcolor[2] * lc[2], r_modelalpha); // forced
 			}
-			else 
-				glColor4f(l, l, l, r_modelalpha);
+			else
+			{
+				if (r_modelcolor[0] < 0)
+					glColor4f(l, l, l, r_modelalpha); // normal color
+				else
+					glColor4f(r_modelcolor[0] * l, r_modelcolor[1] * l, r_modelcolor[2] * l, r_modelalpha); // forced
+			}
 
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 			glVertex3fv(interpolated_verts);
@@ -672,12 +685,14 @@ void R_AliasSetupLighting(entity_t *ent) {
 }
 
 void R_DrawAliasModel (entity_t *ent) {
-	int i, anim, skinnum, texture, fb_texture;
+	int i, anim, skinnum, texture, fb_texture, playernum;
 	float scale;
 	vec3_t mins, maxs;
 	aliashdr_t *paliashdr;
 	model_t *clmodel;
 	maliasframedesc_t *oldframe, *frame;
+	cvar_t *cv = NULL;
+	byte *color32bit = NULL;
 
 	//	entity_t *self;
 	//static sfx_t *step;//foosteps sounds, commented out
@@ -818,22 +833,21 @@ void R_DrawAliasModel (entity_t *ent) {
 	texture = paliashdr->gl_texturenum[skinnum][anim];
 	fb_texture = paliashdr->fb_texturenum[skinnum][anim];
 
-	
-
-
 	r_modelalpha = ((ent->flags & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
 	//VULT MOTION TRAILS
 	if (ent->alpha)
 		r_modelalpha = ent->alpha;
 
+	if(ent->scoreboard)
+		playernum = ent->scoreboard - cl.players;
+
 	// we can't dynamically colormap textures, so they are cached separately for the players.  Heads are just uncolored.
-	if (ent->scoreboard && !gl_nocolors.value) {
-		i = ent->scoreboard - cl.players;
-		if (i >= 0 && i < MAX_CLIENTS) {
+	if (!gl_nocolors.value) {
+		if (playernum >= 0 && playernum < MAX_CLIENTS) {
 			if (!ent->scoreboard->skin)
-				CL_NewTranslation(i);
-		    texture = playertextures + i;
-			fb_texture = playerfbtextures[i];
+				CL_NewTranslation(playernum);
+		    texture = playertextures + playernum;
+			fb_texture = playerfbtextures[playernum];
 		}
 	}
 	if (full_light || !gl_fb_models.value)
@@ -845,42 +859,82 @@ void R_DrawAliasModel (entity_t *ent) {
 	if (gl_affinemodels.value)
 		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 
-	
+	if (ent->model->modhint == MOD_PLAYER && playernum >= 0 && playernum < MAX_CLIENTS) {
+		extern qbool VX_TrackerIsEnemy(int player);
+		cv = VX_TrackerIsEnemy(playernum) ? &r_enemyskincolor : &r_teamskincolor;
+	}
 
-	if (fb_texture && gl_mtexable) {
-		
-		GL_DisableMultitexture ();
-		GL_Bind (texture);
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	if (cv && cv->string[0])
+	    color32bit = StringToRGB(cv->string);
 
-		GL_EnableMultitexture ();
-		GL_Bind (fb_texture);
+	if (color32bit) {
+		//
+		// seems we select force some color for such model
+		//
 
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+		for (i = 0; i < 3; i++) {
+			r_modelcolor[i] = (float)color32bit[i] / 255.0;
+			r_modelcolor[i] = bound(0, r_modelcolor[i], 1);
+		}
 
-		R_SetupAliasFrame (oldframe, frame, paliashdr, true);
-
-		GL_DisableMultitexture ();
-	} 
-	else 
-	{
 		GL_DisableMultitexture();
-		GL_Bind (texture);
-		
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		GL_Bind (r_skincolormode.integer ? texture : particletexture); // particletexture is just solid white texture
 
+		//
+		// we may use different methods for filling model surfaces, mixing(modulate), replace, add etc..
+		//	
+		switch(r_skincolormode.integer) {
+			case 1:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);	break;
+			case 2:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);		break;
+			case 3:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);		break;
+			case 4:		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);		break;
+			default:	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);	break;
+		}
+   
 		R_SetupAliasFrame (oldframe, frame, paliashdr, false);
+	}
+	else
+	{
+		r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 
-		if (fb_texture) {
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-			glEnable (GL_ALPHA_TEST);
+		if (fb_texture && gl_mtexable) {
+			
+			GL_DisableMultitexture ();
+    
+			GL_Bind (texture);
+			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    
+			GL_EnableMultitexture ();
 			GL_Bind (fb_texture);
-
+    
+			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+    
+			R_SetupAliasFrame (oldframe, frame, paliashdr, true);
+    
+			GL_DisableMultitexture ();
+		} 
+		else 
+		{
+			GL_DisableMultitexture();
+			GL_Bind (texture);
+			
+			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    
 			R_SetupAliasFrame (oldframe, frame, paliashdr, false);
-
-			glDisable (GL_ALPHA_TEST);
+    
+			if (fb_texture) {
+				glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+				glEnable (GL_ALPHA_TEST);
+				GL_Bind (fb_texture);
+    
+				R_SetupAliasFrame (oldframe, frame, paliashdr, false);
+    
+				glDisable (GL_ALPHA_TEST);
+			}
 		}
 	}
+
+	r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 
 // Underwater caustics on alias models of QRACK -->
 	#define GL_RGB_SCALE 0x8573
@@ -1471,6 +1525,9 @@ void R_Init (void) {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SKIN);
 	Cvar_Register (&r_fullbrightSkins);
+	Cvar_Register (&r_enemyskincolor);
+	Cvar_Register (&r_teamskincolor);
+	Cvar_Register (&r_skincolormode);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_LIGHTING);
 	Cvar_Register (&r_dynamic);
