@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.56 2007-03-23 20:20:25 himan Exp $
+		$Id: menu_options.c,v 1.57 2007-03-26 17:27:17 himan Exp $
 
 */
 
@@ -279,8 +279,8 @@ void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 
 setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f, "Browse the QuakeWorld for Freshies guide by Apollyon"),
-	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Open up the console"),
+	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f, "Browse the "QuakeWorld for Freshies" guide by Apollyon."),
+	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens up the consol.e"),
 	ADDSET_ACTION	("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
 #ifdef _WIN32
     ADDSET_CUSTOM	("Process Priority", PriorityRead, PriorityToggle, "Change client process priority. If you experience tearing or lagging, change this value to something different."),
@@ -292,7 +292,7 @@ setting settgeneral_arr[] = {
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
 	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
 	ADDSET_NUMBER	("Field of View", scr_fov, 40, 140, 2),
-	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphics effects presets here"),
+	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphics effects presets here."),
 	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
 	//Sound & Volume
 	ADDSET_SEPARATOR("Sound & Volume"),
@@ -304,12 +304,12 @@ setting settgeneral_arr[] = {
 	ADDSET_NUMBER	("Spectator Volume", con_sound_spec_volume, 0, 1, 0.1),
 	ADDSET_NUMBER	("Other Volume", con_sound_other_volume, 0, 1, 0.1),
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
-	ADDSET_CUSTOM	("Quality", SoundqualityRead, SoundqualityToggle, "Sound sampling rate"),
+	ADDSET_CUSTOM	("Quality", SoundqualityRead, SoundqualityToggle, "Sound sampling rate."),
 	ADDSET_BASIC_SECTION(),
 		//Connection
 	ADDSET_SEPARATOR("Connection"),
-	ADDSET_CUSTOM	("Bandwidth Limit", BandwidthRead, BandwidthToggle, "Select a speed close to your internet connection link speed"),
-	ADDSET_CUSTOM	("Quality", ConQualityRead, ConQualityToggle, "Ensures that packets with weapon switch command don't get lost"),
+	ADDSET_CUSTOM	("Bandwidth Limit", BandwidthRead, BandwidthToggle, "Select a speed close to your internet connection link speed."),
+	ADDSET_CUSTOM	("Quality", ConQualityRead, ConQualityToggle, "Ensures that packets with weapon switch command don't get lost."),
 	//Chat Settings
 	ADDSET_SEPARATOR("Chat settings"),
 	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
@@ -326,7 +326,7 @@ setting settgeneral_arr[] = {
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_CUSTOM	("Sshot Format", SshotformatRead, SshotformatToggle, "Screenshot image format"),
 #ifdef _WIN32
-	ADDSET_CUSTOM	("Demo Format", DemoformatRead, DemoformatToggle, "QWD is original QW demo format, QWZ is compressed demo format and MVD contains multiview data; You need Qizmo and Qwdtools for this to work"),
+	ADDSET_CUSTOM	("Demo Format", DemoformatRead, DemoformatToggle, "QWD is original QW demo format, QWZ is compressed demo format and MVD contains multiview data; You need Qizmo and Qwdtools for this to work."),
 #endif
 	ADDSET_BASIC_SECTION(),
 	ADDSET_ADVANCED_SECTION(), // I think all of paths should be advanced? -Up2
@@ -556,12 +556,12 @@ setting settbinds_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("Mouse Speed", sensitivity, 1, 15, 0.25),
 	ADDSET_NUMBER	("Mouse Accel.", m_accel, 0, 1, 0.1),
-	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverted mouse will make you look down when you move the mouse up"),
-	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle, "Autoswitch will switch your current weapon to the one picked up if it's better than the one you currently have"),
+	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverted mouse will make you look down when you move the mouse up."),
+	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle, "Switches to picked up weapon if more powerful than what you're holding."),
 	ADDSET_BOOL		("Gun Preselect", cl_weaponpreselect),
 	ADDSET_BOOL		("Gun Auto hide", cl_weaponhide),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "Maximum walking speed at all times"),
+	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "Maximum walking speed at all times."),
 	ADDSET_BOOL		("Smart Jump", cl_smartjump),
 	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
 	ADDSET_BASIC_SECTION(),
@@ -746,7 +746,7 @@ setting settfps_arr[] = {
 	ADDSET_ACTION	("Load Fast Preset", LoadFastPreset, "Adjusted for high performance"),
 	ADDSET_ACTION	("Load HQ preset", LoadHQPreset, "Adjusted for high image quality"),
 	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Tells the client to cap the amount of frames rendered per second"),
+	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Tells the client to cap the amount of frames rendered per second."),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Disable lin. interp.", cl_nolerp),
 	ADDSET_BASIC_SECTION(),
@@ -798,10 +798,10 @@ setting settfps_arr[] = {
 	ADDSET_SEPARATOR("Textures"),
 	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
 	ADDSET_BOOL		("Luma", gl_lumaTextures),
-	ADDSET_CUSTOM	("Detail", TexturesdetailRead, TexturesdetailToggle, "Determines the texture quality; resolution of the textures in memory"),
+	ADDSET_CUSTOM	("Detail", TexturesdetailRead, TexturesdetailToggle, "Determines the texture quality; resolution of the textures in memory."),
 	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
 	ADDSET_BOOL		("No Textures", gl_textureless),
-	ADDSET_CUSTOM	("Quality Mode", TexturesqualityRead, TexturesqualityToggle, "Determines the texture quality; rendering quality"),
+	ADDSET_CUSTOM	("Quality Mode", TexturesqualityRead, TexturesqualityToggle, "Determines the texture quality; rendering quality."),
 	ADDSET_SEPARATOR("Point of View"),
 	ADDSET_NUMBER	("Rollangle", cl_rollangle, 0, 30, 2),
 	ADDSET_NUMBER	("Rollspeed", cl_rollspeed, 0, 30, 2),
@@ -924,11 +924,11 @@ void FullScreenToggle(qbool back) { mvs_selected.fullscreen = mvs_selected.fulls
 
 setting settvideo_arr[] = {
 	ADDSET_SEPARATOR("Screen settings"),
-	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution used within the game"),
-	ADDSET_CUSTOM("Bit depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen"),
-	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle fullscreen and windowed mode"),
+	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution used within the game."),
+	ADDSET_CUSTOM("Bit depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
+	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle fullscreen and windowed mode."),
 	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
-	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the rendered and applies selected resolution"),
+	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the rendered and applies selected resolution."),
 	ADDSET_SEPARATOR("Text layer settings"),
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
 	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
@@ -1086,18 +1086,18 @@ void MOpt_SaveCfg(void) { Cbuf_AddText("cfg_save\n"); }
 settings_page settconfig;
 setting settconfig_arr[] = {
     ADDSET_SEPARATOR("Load & Save"),
-    ADDSET_ACTION("Reload settings", MOpt_LoadCfg, "Reset the settings to last saved configuration"),
+    ADDSET_ACTION("Reload settings", MOpt_LoadCfg, "Reset the settings to last saved configuration."),
     ADDSET_ACTION("Save settings", MOpt_SaveCfg, "Save the settings"),
 	ADDSET_ADVANCED_SECTION(),
     ADDSET_BOOL("Save to profile dir", cfg_use_home),
     ADDSET_BASIC_SECTION(),
     ADDSET_SEPARATOR("Export & Import"),
-	ADDSET_ACTION("Import config ...", MOpt_ImportConfig, "You can load a configuration from a file here"),
-	ADDSET_ACTION("Export config ...", MOpt_ExportConfig, "Will export your current configuration to a file"),
+	ADDSET_ACTION("Import config ...", MOpt_ImportConfig, "You can load a configuration from a file here."),
+	ADDSET_ACTION("Export config ...", MOpt_ExportConfig, "Will export your current configuration to a file."),
     ADDSET_SEPARATOR("Scripts"),
-	ADDSET_ACTION("Load Script", MOpt_LoadScript, "Choose and load quake scripts here"),
+	ADDSET_ACTION("Load Script", MOpt_LoadScript, "Choose and load quake scripts here."),
 	ADDSET_SEPARATOR("Config Saving Options"),
-    ADDSET_ACTION("Default Save Opt.", MOpt_CfgSaveAllOn, "Configuration saving settings will be reset to defaults"),
+    ADDSET_ACTION("Default Save Opt.", MOpt_CfgSaveAllOn, "Configuration saving settings will be reset to defaults."),
     ADDSET_BOOL("Save Unchanged Opt.", cfg_save_unchanged),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL("Backup old file", cfg_backup),
