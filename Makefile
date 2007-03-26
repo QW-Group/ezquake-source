@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.60 2007-03-21 17:03:10 vvd0 Exp $
+#	$Id: Makefile,v 1.61 2007-03-26 18:56:42 vvd0 Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -102,8 +102,9 @@ GL_LIBS = libs/$(LIB_PREFIX)/libjpeg.a
 
 ifeq ($(OS),freebsd)
 X11BASE ?= /usr/X11R6
-CFLAGS += -I$(X11BASE)/include
-LDFLAGS += -L$(X11BASE)/lib
+LOCALBASE ?= /usr/local
+CFLAGS += -I$(X11BASE)/include -I$(LOCALBASE)/include
+LDFLAGS += -L$(X11BASE)/lib -L$(LOCALBASE)/lib
 endif
 
 include Makefile.list

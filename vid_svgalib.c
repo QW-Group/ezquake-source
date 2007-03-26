@@ -14,16 +14,18 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_svgalib.c,v 1.26 2007-03-12 03:20:04 disconn3ct Exp $
+	$Id: vid_svgalib.c,v 1.27 2007-03-26 18:56:42 vvd0 Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#ifndef __FreeBSD__
 #include <sys/vt.h>
+#include <sys/io.h>
+#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
-#include <sys/io.h>
 #include "vga.h"
 #include "vgakeyboard.h"
 #include "vgamouse.h"
