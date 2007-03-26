@@ -1,5 +1,6 @@
 master "id limbo" 192.246.40.37:27000
 master "id dm" 192.246.40.37:27006
+master "QuakeServers.net" asgaard.morphos-team.net:27000
 master "id ctf" 192.246.40.37:27002
 master "id tf" 192.246.40.37:27003
 master "id misc" 192.246.40.37:27004
