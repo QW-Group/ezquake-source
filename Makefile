@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.61 2007-03-26 18:56:42 vvd0 Exp $
+#	$Id: Makefile,v 1.62 2007-03-27 15:48:51 vvd0 Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -174,7 +174,14 @@ $(X11_S_OBJS): $(X11_DIR)/%.o: %.s
 SVGA_C_OBJS = $(addprefix $(SVGA_DIR)/, $(addsuffix .o, $(SVGA_C_FILES)))
 SVGA_S_OBJS = $(addprefix $(SVGA_DIR)/, $(addsuffix .o, $(SVGA_S_FILES)))
 SVGA_CFLAGS = $(CFLAGS) -D_Soft_SVGA
-SVGA_LDFLAGS = $(LDFLAGS) -lvga -ldl
+SVGA_LDFLAGS = $(LDFLAGS) -lvga
+ifeq ($(OS),linux)
+# FreeBSD don't need -ldl, but it need /usr/ports/graphics/svgalib to be installed:
+# > cd /usr/ports/graphics/svgalib
+# > make install clean
+# for compiling and for running.
+SVGA_LDFLAGS += -ldl
+endif
 
 svga: _DIR = $(SVGA_DIR)
 svga: _OBJS = $(SVGA_C_OBJS) $(SVGA_S_OBJS) $(COMMON_LIBS)
