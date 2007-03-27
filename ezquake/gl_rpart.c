@@ -178,6 +178,7 @@ qbool qmb_initialized = false;
 cvar_t gl_clipparticles = {"gl_clipparticles", "1"};
 cvar_t gl_bounceparticles = {"gl_bounceparticles", "1"};
 // END shaman :: balancing variables
+cvar_t amf_part_fulldetail = {"gl_particle_fulldetail", "0", CVAR_LATCH};
 
 static qbool TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal)
 {
@@ -288,7 +289,9 @@ do {																													\
 void QMB_InitParticles (void) {
 	int	i, count = 0, particlefont;
 
-	if (!qmb_initialized) {
+    Cvar_Register (&amf_part_fulldetail);
+
+    if (!qmb_initialized) {
 		Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 		Cvar_Register (&gl_clipparticles);
 		Cvar_Register (&gl_bounceparticles);
@@ -379,7 +382,7 @@ void QMB_InitParticles (void) {
 	ADD_PARTICLE_TYPE(p_chunkdir, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 255, -32, 0, pm_bounce, 1.475);
 	ADD_PARTICLE_TYPE(p_smallspark, pd_beam, GL_SRC_ALPHA, GL_ONE, ptex_spark, 255, -64, 0, pm_bounce, 1.5); //grav was -64
 
-	if (COM_CheckParm ("-detailtrails"))
+	if (COM_CheckParm ("-detailtrails") || amf_part_fulldetail.integer)
 		detailtrails = true;
 	else
 		detailtrails = false;
