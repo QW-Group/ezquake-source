@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: skin.c,v 1.9 2007-03-11 06:01:42 disconn3ct Exp $
+	$Id: skin.c,v 1.10 2007-03-27 21:20:52 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -167,10 +167,39 @@ void Skin_Find (player_info_t *sc) {
 	strlcpy(skin->name, name, sizeof(skin->name));
 }
 
+byte *Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp)
+{
+	byte *pic;
+
+	*max_w = *max_h = *bpp = 0;
+
+#ifdef GLQUAKE
+	if ((pic = GL_LoadImagePixels (name, 0, 0, 0))) {
+		// no limit in gl
+		*max_w	= image_width;
+		*max_h	= image_height;
+		*bpp	= 4; // 32 bit
+
+		return pic;
+	}
+#endif
+
+	if ((pic = Image_LoadPCX (NULL, name, 0, 0))) {
+		// pcx is limited
+		*max_w	= 320;
+		*max_h	= 200;
+		*bpp	= 1; // 8 bit
+
+		return pic;
+	}
+
+	return NULL;
+}
+
 //Returns a pointer to the skin bitmap, or NULL to use the default
 byte *Skin_Cache (skin_t *skin) {
-	int y;
-	byte *pic, *out, *pix;
+	int y, max_w, max_h, bpp;
+	byte *pic = NULL, *out, *pix;
 	char name[MAX_OSPATH];
 
 	if (cls.downloadtype == dl_skin)
@@ -183,30 +212,39 @@ byte *Skin_Cache (skin_t *skin) {
 	if ((out = (byte *) Cache_Check (&skin->cache)))
 		return out;
 
-	// load the pic from disk
-	snprintf (name, sizeof(name), "skins/%s.pcx", skin->name);
-	if (!(pic = Image_LoadPCX (NULL, name, 0, 0)) || image_width > 320 || image_height > 200) {
-		if (pic)
-			free (pic);
-		Com_Printf ("Couldn't load skin %s\n", name);
+	// not cached, load from HDD
 
+	snprintf (name, sizeof(name), "skins/%s.pcx", skin->name);
+
+	if (!(pic = Skin_PixelsLoad(name, &max_w, &max_h, &bpp)) || image_width > max_w || image_height > max_h) {
+		Com_Printf ("Couldn't load skin %s\n", name);
+		Q_free(pic);
+	}
+
+	if (!pic) { // attempt load at least default/base
 		snprintf (name, sizeof(name), "skins/%s.pcx", baseskin.string);
-		if (!(pic = Image_LoadPCX (NULL, name, 0, 0)) || image_width > 320 || image_height > 200) {
-			if (pic)
-				free (pic);
+
+		if (!(pic = Skin_PixelsLoad(name, &max_w, &max_h, &bpp)) || image_width > max_w || image_height > max_h) {
+//			Com_Printf ("Couldn't load skin %s\n", name);
+			Q_free(pic);
 			skin->failedload = true;
 			return NULL;
 		}
 	}
 
-	if (!(out = pix = (byte *) Cache_Alloc (&skin->cache, 320 * 200, skin->name)))
+	if (!(out = pix = (byte *) Cache_Alloc (&skin->cache, max_w * max_h * bpp, skin->name)))
 		Sys_Error ("Skin_Cache: couldn't allocate");
 
-	memset (out, 0, 320 * 200);
-	for (y = 0; y < image_height; y++, pix += 320)
-		memcpy (pix, pic + y * image_width, image_width);
+	memset (out, 0, max_w * max_h * bpp);
+	for (y = 0; y < image_height; y++, pix += (max_w * bpp))
+		memcpy (pix, pic + y * image_width * bpp, image_width * bpp);
 
-	free (pic);
+	Q_free (pic);
+#ifdef GLQUAKE
+	skin->bpp 		 = bpp;
+	skin->width		 = image_width;
+	skin->height	 = image_height;
+#endif
 	skin->failedload = false;
 
 	return out;

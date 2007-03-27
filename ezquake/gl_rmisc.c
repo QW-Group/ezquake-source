@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_rmisc.c,v 1.13 2007-03-11 06:01:39 disconn3ct Exp $
+	$Id: gl_rmisc.c,v 1.14 2007-03-27 21:20:52 qqshka Exp $
 */
 // gl_rmisc.c
 
@@ -135,7 +135,35 @@ void R_TranslatePlayerSkin (int playernum) {
 
 	if (!player->skin)
 		Skin_Find(player);
+
 	if ((original = Skin_Cache(player->skin)) != NULL) {
+#ifdef GLQUAKE
+		switch (player->skin->bpp) {
+		case 4:
+		    // bind desired texture
+			GL_Bind(playertextures + playernum);
+
+			// set some params for desired texture
+//			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+//			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+//			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+ 			// TEX_NOSCALE - so no affect from gl_picmip and gl_maxsize
+			GL_Upload32 ((unsigned*) original, player->skin->width, player->skin->height,
+														 TEX_MIPMAP/* | TEX_ALPHA */ | TEX_NOSCALE );
+
+//			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+			playerfbtextures[playernum] = 0; // no full bright texture
+
+			return; // we done all we want
+
+		case 1:
+			break;
+		default:
+			Sys_Error("R_TranslatePlayerSkin: wrong bpp %d", player->skin->bpp);
+		}
+#endif
 		//skin data width
 		inwidth = 320;
 		inheight = 200;
@@ -184,9 +212,10 @@ void R_TranslatePlayerSkin (int playernum) {
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	playerfbtextures[playernum] = 0;
+	playerfbtextures[playernum] = 0; // by default no full bright texture
+
 	if (Img_HasFullbrights ((byte *) original, inwidth * inheight)) {
-		playerfbtextures[playernum] = playertextures + playernum + MAX_CLIENTS;
+		playerfbtextures[playernum] = playertextures + playernum + MAX_CLIENTS; // ok, skin have full bright colors
 
 		GL_Bind(playerfbtextures[playernum]);
 
