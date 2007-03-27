@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.28 2007-03-19 13:23:20 johnnycz Exp $
+		$Id: settings_page.c,v 1.29 2007-03-27 22:15:13 johnnycz Exp $
 
 */
 
@@ -774,4 +774,5 @@ void Settings_MainInit(void)
 		"./qw/skins");
 
 	FL_AddFileType(&skins_filelist, 0, ".pcx");
+    FL_AddFileType(&skins_filelist, 0, ".png");
 }
