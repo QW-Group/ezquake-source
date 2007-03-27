@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_win.c,v 1.31 2007-03-27 20:11:27 johnnycz Exp $
+	$Id: in_win.c,v 1.32 2007-03-27 21:38:13 johnnycz Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -69,6 +69,8 @@ static unsigned int mstate_di;
 unsigned int uiWheelMessage;
 
 qbool	mouseactive;
+
+qbool   input_initialized = false;
 
 // joystick defines and variables
 // where should defines be moved?
@@ -196,6 +198,12 @@ qbool OnChange_IN_DInput(cvar_t *var, char *value);
 qbool OnChange_IN_M_Smooth(cvar_t *var, char *value);
 cvar_t  in_dinput = {"in_dinput", "0", 0, OnChange_IN_DInput};
 cvar_t  m_smooth = {"m_smooth", "0", 0, OnChange_IN_M_Smooth};
+
+qbool OnChange_IN_M_MWHook(cvar_t *var, char *value);
+cvar_t  m_mwhook = {"m_mwhook", "0", 0, OnChange_IN_M_MWHook};
+
+qbool OnChange_IN_M_OS_Parameters(cvar_t *var, char *value);
+cvar_t  m_os_parameters = {"m_os_parameters", "0", 0, OnChange_IN_M_OS_Parameters};
 
 qbool use_m_smooth = false;
 HANDLE m_event;
@@ -747,15 +755,15 @@ void IN_StartupMouse (void) {
 		mouseparmsvalid = SystemParametersInfo (SPI_GETMOUSE, 0, originalmouseparms, 0);
 
 		if (mouseparmsvalid) {
-			if (COM_CheckParm ("-noforcemspd")) 
+			if (COM_CheckParm ("-noforcemspd") || m_os_parameters.integer == 1) 
 				newmouseparms[2] = originalmouseparms[2];
 
-			if (COM_CheckParm ("-noforcemaccel")) {
+			if (COM_CheckParm ("-noforcemaccel") || m_os_parameters.integer == 2) {
 				newmouseparms[0] = originalmouseparms[0];
 				newmouseparms[1] = originalmouseparms[1];
 			}
 
-			if (COM_CheckParm ("-noforcemparms")) {
+            if (COM_CheckParm ("-noforcemparms") || m_os_parameters.integer > 2) {
 				newmouseparms[0] = originalmouseparms[0];
 				newmouseparms[1] = originalmouseparms[1];
 				newmouseparms[2] = originalmouseparms[2];
@@ -764,7 +772,7 @@ void IN_StartupMouse (void) {
 		mouse_buttons = 8;
 	}
 
-	if (COM_CheckParm ("-m_mwhook"))
+	if (COM_CheckParm ("-m_mwhook") || m_mwhook.integer)
 		MW_Set_Hook();
 
 	// if a fullscreen video mode was set before the mouse was initialized, set the mouse state appropriately
@@ -777,6 +785,8 @@ void IN_Init (void) {
 	Cvar_Register (&m_filter);
     Cvar_Register (&in_dinput);
     Cvar_Register (&m_smooth);
+    Cvar_Register (&m_mwhook);
+    Cvar_Register (&m_os_parameters);
 
 	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_KEYBOARD); // keyboard variables
 	Cvar_Register (&cl_keypad);
@@ -794,6 +804,8 @@ void IN_Init (void) {
 
 	IN_StartupMouse ();
 	IN_StartupJoystick ();
+
+    input_initialized = true;
 }
 
 void IN_Shutdown (void) {
@@ -812,6 +824,8 @@ void IN_Shutdown (void) {
 	}
 #endif
 	MW_Shutdown();
+
+    input_initialized = false;
 }
 
 void IN_MouseEvent (int mstate) 
@@ -1490,15 +1504,41 @@ int isShiftDown(void)
 //    return keydown[K_SHIFT] || keydown[K_RSHIFT];
 }
 
+
+// the if(!input_initialized) check doesn't make sense yet,
+// these OnChage functions will be called even 
 qbool OnChange_IN_DInput(cvar_t *var, char *value) {
+    if (!input_initialized) return false; // this doesn't make sense here yet
+
     Com_Printf("Save your config now and DirectInput will be de/activated on next client start\n");
     return false;
 }
 
 qbool OnChange_IN_M_Smooth(cvar_t *var, char *value) {
-    if (!in_dinput.integer && *value == '1') {
+    if (!input_initialized) return false;
+
+    if (!in_dinput.integer && atoi(value)) {
         Com_Printf("Don't forget to turn on DirectInput too (in_dinput)\n");
     }
     Com_Printf("Save your config now and mouse smoothing will be de/activated on next client start\n");
+    return false;
+}
+
+qbool OnChange_IN_M_MWHook(cvar_t *var, char *value) {
+    if (!input_initialized) return false;
+
+    Com_Printf("Save your config now and MouseWare Hook will be activated on next client start\n");
+    return false;
+}
+
+qbool OnChange_IN_M_OS_Parameters(cvar_t *var, char *value) {
+    int newval = atoi(value);
+
+    if (!input_initialized) return false;
+
+    if (newval && in_dinput.value) {
+        Com_Printf("This setting has no effect when using DirectInput");
+    }
+    Com_Printf("Save your config now and the mouse parameters will be changed on next client start\n");
     return false;
 }
