@@ -14,12 +14,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_svgalib.c,v 1.27 2007-03-26 18:56:42 vvd0 Exp $
+	$Id: vid_svgalib.c,v 1.28 2007-03-27 15:48:51 vvd0 Exp $
 */
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#ifndef __FreeBSD__
+#ifdef __FreeBSD__
+#include <machine/cpufunc.h>
+#else
 #include <sys/vt.h>
 #include <sys/io.h>
 #endif
