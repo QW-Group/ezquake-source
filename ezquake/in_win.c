@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_win.c,v 1.29 2007-03-11 06:01:40 disconn3ct Exp $
+	$Id: in_win.c,v 1.30 2007-03-27 16:43:43 johnnycz Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -189,9 +189,13 @@ void IN_StartupJoystick (void);
 void Joy_AdvancedUpdate_f (void);
 void IN_JoyMove (usercmd_t *cmd);
 
-
+// directinput features
 cvar_t	m_rate			= {"m_rate",	"125"};
 cvar_t	m_showrate		= {"m_showrate", "0"};
+qbool OnChange_IN_M_DInput(cvar_t *var, char *value);
+qbool OnChange_IN_M_Smooth(cvar_t *var, char *value);
+cvar_t  m_dinput = {"m_dinput", "0", 0, OnChange_IN_M_DInput};
+cvar_t  m_smooth = {"m_smooth", "0", 0, OnChange_IN_M_Smooth};
 
 qbool use_m_smooth = false;
 HANDLE m_event;
@@ -413,7 +417,7 @@ void IN_SMouseInit(void) {
 
 	use_m_smooth = false;
 
-	if (!COM_CheckParm("-m_smooth"))
+	if (!COM_CheckParm("-m_smooth") && !m_smooth.integer)
 		return;
 
 	// create event	object
@@ -722,7 +726,7 @@ void IN_StartupMouse (void) {
 
 	in_mwheeltype = MWHEEL_UNKNOWN;
 
-	if (COM_CheckParm ("-dinput")) {
+	if (COM_CheckParm ("-dinput") || m_dinput.integer) {
 #if DIRECTINPUT_VERSION	>= 0x0700
 		dinput = IN_InitDInput ();
 
@@ -771,6 +775,8 @@ void IN_StartupMouse (void) {
 void IN_Init (void) {
 	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_MOUSE); // mouse variables
 	Cvar_Register (&m_filter);
+    Cvar_Register (&m_dinput);
+    Cvar_Register (&m_smooth);
 
 	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_KEYBOARD); // keyboard variables
 	Cvar_Register (&cl_keypad);
@@ -1482,4 +1488,17 @@ int isShiftDown(void)
     return 0;
 //    extern qbool    keydown[256];
 //    return keydown[K_SHIFT] || keydown[K_RSHIFT];
+}
+
+qbool OnChange_IN_M_DInput(cvar_t *var, char *value) {
+    Com_Printf("Save your config now and DirectInput will be de/activated on next client start\n");
+    return false;
+}
+
+qbool OnChange_IN_M_Smooth(cvar_t *var, char *value) {
+    if (!m_dinput.integer && *value == '1') {
+        Com_Printf("Don't forget to turn on DirectInput too (m_dinput)\n");
+    }
+    Com_Printf("Save your config now and mouse smoothing will be de/activated on next client start\n");
+    return false;
 }
