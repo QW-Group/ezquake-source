@@ -7,7 +7,7 @@
     made by:
         johnnycz, Mar 2007
     last edit:
-        $Id: Ctrl_ScrollBar.c,v 1.1 2007-03-19 21:37:45 johnnycz Exp $
+        $Id: Ctrl_ScrollBar.c,v 1.2 2007-03-27 19:50:12 johnnycz Exp $
 
 */
 
@@ -18,13 +18,13 @@
 #define SCRBARSCALE 0.25
 
 // In GL shouw .png scrollbar images
-#ifdef GLQUAKE
 mpic_t *scrbar_up, *scrbar_down, *scrbar_bg, *scrbar_slider;
 int scrollbar_width;
 int slider_height;
 
-static void ScrollBars_Init()
+void ScrollBars_Init()
 {
+#ifdef GLQUAKE
 	scrbar_bg = Draw_CachePicSafe("textures/scrollbars/slidebg", false, true);
 	scrbar_up = Draw_CachePicSafe("textures/scrollbars/arrow_up", false, true);
 	scrbar_down = Draw_CachePicSafe("textures/scrollbars/arrow_down", false, true);
@@ -32,25 +32,17 @@ static void ScrollBars_Init()
     if (scrbar_slider) {
         scrollbar_width = scrbar_slider->width * SCRBARSCALE;
         slider_height = scrbar_slider->height * SCRBARSCALE;
-    } else {
+    } else
+#endif
+    {
         scrollbar_width = 8;
         slider_height = 8;
     }
 }
-#else
-
-#define scrollbar_width 8
-#define slider_height 8
-
-#endif
 
 PScrollBar ScrollBar_Create(ScrollPos_setter pos_setter)
 {
     PScrollBar scb_new = Q_malloc(sizeof(ScrollBar));
-
-#ifdef GLQUAKE
-    if (!scrbar_up) ScrollBars_Init();
-#endif
 
     if (!scb_new) return NULL;
 

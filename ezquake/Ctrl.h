@@ -1,4 +1,4 @@
-//    $Id: Ctrl.h,v 1.9 2007-03-19 13:23:20 johnnycz Exp $
+//    $Id: Ctrl.h,v 1.10 2007-03-27 19:50:12 johnnycz Exp $
 
 #ifndef __CTRL_H__
 #define __CTRL_H__
@@ -33,6 +33,8 @@ qbool UI_PrintTextBlock(int x, int y, int w, int h, const char* text, qbool red)
 // <scrollbar>
 // if this part gets too big, it might be moved to own header (Ctrl_*.h)
 //
+
+void ScrollBars_Init();
 
 typedef void (*ScrollPos_setter) (double);
 
