@@ -37,6 +37,10 @@ extern cvar_t cl_demospeed;
 typedef struct {
 	char			name[16];
 	qbool			failedload;		// the name isn't a valid skin
+#ifdef GLQUAKE
+	int				width, height;	// this is valid for pcx too, but used for 32bit skins only
+	int				bpp;			// used in gl,  bpp = 1 for pcx and 4 for 32bit skins
+#endif
 	cache_user_t	cache;
 } skin_t;
 
