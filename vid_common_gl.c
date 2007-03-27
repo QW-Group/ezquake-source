@@ -83,6 +83,7 @@ qbool OnChange_gl_ext_texture_compression(cvar_t *, char *);
 
 cvar_t	gl_strings = {"gl_strings", "", CVAR_ROM | CVAR_SILENT};
 cvar_t	gl_ext_texture_compression = {"gl_ext_texture_compression", "0", CVAR_SILENT, OnChange_gl_ext_texture_compression};
+cvar_t  gl_maxtmu2 = {"gl_maxtmu2", "0", CVAR_LATCH};
 
 /************************************* EXTENSIONS *************************************/
 
@@ -120,7 +121,7 @@ void CheckMultiTextureExtensions (void) {
 	glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, (GLint *)&gl_textureunits);
 	gl_textureunits = min(gl_textureunits, 4);
 
-	if (COM_CheckParm("-maxtmu2") /*|| !strcmp(gl_vendor, "ATI Technologies Inc.")*/)
+	if (COM_CheckParm("-maxtmu2") /*|| !strcmp(gl_vendor, "ATI Technologies Inc.")*/ || gl_maxtmu2.value)
 		gl_textureunits = min(gl_textureunits, 2);
 
 	if (gl_textureunits < 2)
@@ -191,7 +192,7 @@ void GL_Init (void) {
 	Cvar_Register (&gl_strings);
 	Cvar_ForceSet (&gl_strings, va("GL_VENDOR: %s\nGL_RENDERER: %s\n"
 		"GL_VERSION: %s\nGL_EXTENSIONS: %s", gl_vendor, gl_renderer, gl_version, gl_extensions));
-
+    Cvar_Register (&gl_maxtmu2);
 #ifndef __APPLE__
 	glClearColor (1,0,0,0);
 #else
