@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_texture.c,v 1.25 2007-03-11 06:01:39 disconn3ct Exp $
+	$Id: gl_texture.c,v 1.26 2007-03-27 20:04:15 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -57,6 +57,7 @@ cvar_t	gl_scaleModelTextures		= {"gl_scaleModelTextures", "0"};
 cvar_t	gl_scaleTurbTextures		= {"gl_scaleTurbTextures", "1"};
 cvar_t	gl_externalTextures_world	= {"gl_externalTextures_world", "1"};
 cvar_t	gl_externalTextures_bmodels	= {"gl_externalTextures_bmodels", "1"};
+cvar_t  gl_no24bit                  = {"gl_no24bit", "0", CVAR_LATCH};
 
 typedef struct {
 	int			texnum;
@@ -753,6 +754,7 @@ void GL_Texture_Init(void) {
 	Cvar_Register(&gl_miptexLevel);
 	Cvar_Register(&gl_externalTextures_world);
 	Cvar_Register(&gl_externalTextures_bmodels);
+    Cvar_Register(&gl_no24bit);
 
 	if ( !host_initialized )
 	{
@@ -760,6 +762,6 @@ void GL_Texture_Init(void) {
 		Cvar_SetDefault(&gl_max_size, gl_max_size_default);
 	}
 
-	no24bit = COM_CheckParm("-no24bit") ? true : false;
+	no24bit = (COM_CheckParm("-no24bit") || gl_no24bit.integer) ? true : false;
 	forceTextureReload = COM_CheckParm("-forceTextureReload") ? true : false;
 }
