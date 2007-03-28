@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_rmisc.c,v 1.15 2007-03-28 01:05:30 qqshka Exp $
+	$Id: gl_rmisc.c,v 1.16 2007-03-28 13:17:14 qqshka Exp $
 */
 // gl_rmisc.c
 
@@ -74,7 +74,6 @@ void R_InitTextures (void) {
 	}	
 }
 
-char *Skin_FindName (player_info_t *sc) ;
 //Translates a skin texture by the per-player color lookup
 void R_TranslatePlayerSkin (int playernum) {
 	byte translate[256], *inrow, *original;
@@ -136,7 +135,7 @@ void R_TranslatePlayerSkin (int playernum) {
 	if (!player->skin)
 		Skin_Find(player);
 
-	if (player->skin && (original = Skin_Cache(player->skin)) != NULL) {
+	if ((original = Skin_Cache(player->skin)) != NULL) {
 		switch (player->skin->bpp) {
 		case 4: // 32 bit skin
 
@@ -170,9 +169,6 @@ void R_TranslatePlayerSkin (int playernum) {
 		inwidth = 296;
 		inheight = 194;
 	}
-
-	if (player->skin)
-		player->skin->texnum = 0; // this is 8 bit skin
 
 	GL_Bind(playernmtextures[playernum] = playertextures + playernum);
 

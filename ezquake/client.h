@@ -774,6 +774,7 @@ void Cam_Lock(int playernum);
 
 // skin.c
 void	Skin_Find (player_info_t *sc);
+char	*Skin_FindName (player_info_t *sc);
 byte	*Skin_Cache (skin_t *skin);
 void	Skin_Skins_f (void);
 void	Skin_AllSkins_f (void);
