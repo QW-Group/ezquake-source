@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: skin.c,v 1.14 2007-03-28 18:34:10 qqshka Exp $
+	$Id: skin.c,v 1.15 2007-03-28 19:05:07 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -268,13 +268,19 @@ void Skin_NextDownload (void) {
 
 	cls.downloadtype = dl_skin;
 
-	for ( ; cls.downloadnumber != MAX_CLIENTS; cls.downloadnumber++) {
+	for ( ; cls.downloadnumber >= 0 && cls.downloadnumber < MAX_CLIENTS; cls.downloadnumber++) {
 		sc = &cl.players[cls.downloadnumber];
 		if (!sc->name[0])
 			continue;
+
 		Skin_Find (sc);
+
 		if (noskins.value)
 			continue;
+
+		if(Skin_Cache (sc->skin))
+			continue; // we have it in cache
+
 		if (!CL_CheckOrDownloadFile(va("skins/%s.pcx", sc->skin->name)))
 			return;		// started a download
 	}
