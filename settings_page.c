@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.29 2007-03-27 22:15:13 johnnycz Exp $
+		$Id: settings_page.c,v 1.30 2007-03-28 17:03:22 johnnycz Exp $
 
 */
 
@@ -407,10 +407,39 @@ static int Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page, 
 
 static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
 {
+// todo: PCX doesn't work, Draw_CachePicSafe doesn't load it
+    static mpic_t *curpic = NULL;
+    static char lastpicname[_MAX_PATH] = "";
+    char *c;
+    char buf[_MAX_PATH];
+    float hsc, wsc;
+
+// this means the length of "qw/"
+#define QWDIRLEN 3
+
 	UI_DrawBox(x, y, bound(w, w, 320), h);
 
-	// todo: finish the code, skinfile contains full system path to the .pcx file
-	// we need to draw it into (x,y) location
+    if (strcmp(lastpicname, skinfile))
+    {
+        // get the "qw/skins/freddy" part out of the full path
+        if (strlen(skinfile) <= strlen(com_basedir) + QWDIRLEN)
+        {
+            return;
+        }
+        c = skinfile + strlen(com_basedir) + QWDIRLEN + 1;
+        COM_StripExtension(c, buf);
+
+        curpic = Draw_CachePicSafe(buf, false, true);
+        strlcpy(lastpicname, skinfile, sizeof(lastpicname));
+    }
+
+    if (curpic)
+    {
+        wsc = (float) (w-LETW*2) / (float) curpic->width;
+        hsc = (float) (h-LETW*2) / (float) curpic->height;
+        Draw_SPic(x+LETW, y+LETW, curpic, min(wsc,hsc));
+    }
+#undef SKINDIRLEN
 }
 
 static int FindSetting_AtPos(const settings_page *page, int top)
@@ -774,5 +803,7 @@ void Settings_MainInit(void)
 		"./qw/skins");
 
 	FL_AddFileType(&skins_filelist, 0, ".pcx");
-    FL_AddFileType(&skins_filelist, 0, ".png");
+    FL_AddFileType(&skins_filelist, 1, ".png");
+    FL_AddFileType(&skins_filelist, 2, ".jpg");
+    FL_AddFileType(&skins_filelist, 3, ".tga");
 }
