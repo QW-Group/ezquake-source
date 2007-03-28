@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_rmisc.c,v 1.16 2007-03-28 13:17:14 qqshka Exp $
+	$Id: gl_rmisc.c,v 1.17 2007-03-28 15:02:12 qqshka Exp $
 */
 // gl_rmisc.c
 
@@ -109,46 +109,24 @@ void R_TranslatePlayerSkin (int playernum) {
 	player->_topcolor = player->topcolor;
 	player->_bottomcolor = player->bottomcolor;
 
-	top = bound(0, player->topcolor, 13) * 16;
-	bottom = bound(0, player->bottomcolor, 13) * 16;
-
-	for (i = 0; i < 256; i++)
-		translate[i] = i;
-
-	for (i = 0; i < 16; i++) {
-		if (top < 128)	// the artists made some backwards ranges.  sigh.
-			translate[TOP_RANGE + i] = top + i;
-		else
-			translate[TOP_RANGE + i] = top + 15 - i;
-
-		if (bottom < 128)
-			translate[BOTTOM_RANGE + i] = bottom + i;
-		else
-			translate[BOTTOM_RANGE + i] = bottom + 15 - i;
-	}
-
-	// locate the original skin pixels
-	// real model width
-	tinwidth = 296;
-	tinheight = 194;
-
 	if (!player->skin)
 		Skin_Find(player);
+
+	playerfbtextures[playernum] = 0; // no full bright texture by default
+
+	if (player->skin->texnum && player->skin->bpp == 4) { // do not even bother call Skin_Cache(), we have texture num alredy
+//		Com_Printf("    ###SHORT loaded skin %s %d\n", player->skin->name, player->skin->texnum);
+
+		playernmtextures[playernum] = player->skin->texnum;
+		return;
+	}
 
 	if ((original = Skin_Cache(player->skin)) != NULL) {
 		switch (player->skin->bpp) {
 		case 4: // 32 bit skin
+//			Com_Printf("    ###FULL loaded skin %s %d\n", player->skin->name, player->skin->texnum);
 
-			playerfbtextures[playernum] = 0; // no full bright texture
-
-			// check, may be we alredy loaded this texture before, speed up things
-			if ((playernmtextures[playernum] = player->skin->texnum)) {
-//				Com_Printf("    ###SHORT loaded skin %s\n", player->skin->name);
-				return;
-			}
-
-//			Com_Printf("    ###FULL loaded skin %s\n", player->skin->name);
-
+			// FIXME: in ideal, GL_LoadTexture() must be issued in Skin_Cache(), but I fail with that, so move it here
 			playernmtextures[playernum] = player->skin->texnum =
 				GL_LoadTexture (player->skin->name, player->skin->width, player->skin->height, original, TEX_MIPMAP | TEX_NOSCALE, 4);
 
@@ -168,6 +146,31 @@ void R_TranslatePlayerSkin (int playernum) {
 		original = player_8bit_texels;
 		inwidth = 296;
 		inheight = 194;
+	}
+
+//	Com_Printf("    ###8 bit loaded skin %s %d\n", player->skin->name, player->skin->texnum);
+
+	// locate the original skin pixels
+	// real model width
+	tinwidth = 296;
+	tinheight = 194;
+
+	top = bound(0, player->topcolor, 13) * 16;
+	bottom = bound(0, player->bottomcolor, 13) * 16;
+
+	for (i = 0; i < 256; i++)
+		translate[i] = i;
+
+	for (i = 0; i < 16; i++) {
+		if (top < 128)	// the artists made some backwards ranges.  sigh.
+			translate[TOP_RANGE + i] = top + i;
+		else
+			translate[TOP_RANGE + i] = top + 15 - i;
+
+		if (bottom < 128)
+			translate[BOTTOM_RANGE + i] = bottom + i;
+		else
+			translate[BOTTOM_RANGE + i] = bottom + 15 - i;
 	}
 
 	GL_Bind(playernmtextures[playernum] = playertextures + playernum);
@@ -208,8 +211,6 @@ void R_TranslatePlayerSkin (int playernum) {
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	playerfbtextures[playernum] = 0; // by default no full bright texture
 
 	if (Img_HasFullbrights ((byte *) original, inwidth * inheight)) {
 		playerfbtextures[playernum] = playertextures + playernum + MAX_CLIENTS; // ok, skin have full bright colors

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: skin.c,v 1.12 2007-03-28 13:17:14 qqshka Exp $
+	$Id: skin.c,v 1.13 2007-03-28 15:02:13 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -243,10 +243,15 @@ byte *Skin_Cache (skin_t *skin) {
 
 	Q_free (pic);
 #ifdef GLQUAKE
-	skin->texnum	 = 0; // will be filled later, if that was 32bit skin, this is speed up trick
-	skin->bpp 		 = bpp;
-	skin->width		 = image_width;
-	skin->height	 = image_height;
+	skin->bpp 	 = bpp;
+	skin->width	 = image_width;
+	skin->height = image_height;
+
+	// load 32bit skin ASAP, so later we not affected by Cache changes, actually we does't need cache for 32bit skins at all
+//	skin->texnum = (bpp != 1) ? GL_LoadTexture (skin->name, skin->width, skin->height, pix, TEX_MIPMAP | TEX_NOSCALE, bpp) : 0;
+// FIXME: Above line does't work, texture loaded wrong, seems I need set some global gl states, but I dunno which,
+// so moved it to R_TranslatePlayerSkin() and here set texture to 0
+	skin->texnum = 0;
 #endif
 	skin->failedload = false;
 
