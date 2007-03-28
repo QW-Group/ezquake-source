@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.39 2007-03-11 06:01:40 disconn3ct Exp $
+    $Id: image.c,v 1.40 2007-03-28 18:34:10 qqshka Exp $
 */
 
 #ifdef __FreeBSD__
@@ -2130,6 +2130,30 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 	image_height = height;
 	return data;
 }
+
+#ifdef GLQUAKE
+
+// this does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture
+byte *Image_LoadPCX_As32Bit (FILE *fin, char *filename, int matchwidth, int matchheight) {
+	byte *pix = Image_LoadPCX (fin, filename, matchwidth, matchheight);
+	unsigned *out;
+	int size, i;
+
+	if (!pix)
+		return NULL;
+
+	size = image_width * image_height;
+	out = Q_malloc(size * sizeof(unsigned));
+
+	for (i = 0; i < size; i++)
+		out[i] = d_8to24table[pix[i]];
+
+	Q_free(pix);
+
+	return (byte*) out;
+}
+
+#endif
 
 #ifdef GLQUAKE
 int Image_WritePCX (char *filename, byte *data, int width, int height, byte *palette)

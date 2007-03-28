@@ -47,6 +47,11 @@ byte *Image_LoadTGA (FILE *, char *, int, int);
 byte *Image_LoadPCX (FILE *, char *, int, int);
 byte *Image_LoadJPEG(FILE *, char *, int, int);
 
+#ifdef GLQUAKE
+// this does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture
+byte *Image_LoadPCX_As32Bit (FILE *, char *, int, int);
+#endif
+
 int Image_WritePNG(char *filename, int compression, byte *pixels, int width, int height);
 #ifdef GLQUAKE
 int Image_WritePNGPLTE (char *filename, int compression, byte *pixels,
