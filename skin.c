@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: skin.c,v 1.10 2007-03-27 21:20:52 qqshka Exp $
+	$Id: skin.c,v 1.11 2007-03-28 01:05:30 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -241,6 +241,7 @@ byte *Skin_Cache (skin_t *skin) {
 
 	Q_free (pic);
 #ifdef GLQUAKE
+	skin->texnum	 = 0; // will be filled later, if that was 32bit skin, this is speed up trick
 	skin->bpp 		 = bpp;
 	skin->width		 = image_width;
 	skin->height	 = image_height;
