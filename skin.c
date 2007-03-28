@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: skin.c,v 1.11 2007-03-28 01:05:30 qqshka Exp $
+	$Id: skin.c,v 1.12 2007-03-28 13:17:14 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -149,14 +149,16 @@ void Skin_Find (player_info_t *sc) {
 	for (i = 0; i < numskins; i++) {
 		if (!strcmp(name, skins[i].name)) {
 			sc->skin = &skins[i];
-			Skin_Cache(sc->skin);
+// no mess plz, we call this later
+//			Skin_Cache(sc->skin);
 			return;
 		}
 	}
 
 	if (numskins == MAX_CACHED_SKINS) {	// ran out of spots, so flush everything
-		Skin_Skins_f();
-		return;
+		Skin_Skins_f(); // this must set numskins to 0
+// quake expect we set sc->skin to something not NULL, so no return
+//		return;
 	}
 
 	skin = &skins[numskins];
@@ -278,8 +280,12 @@ void Skin_NextDownload (void) {
 		sc = &cl.players[i];
 		if (!sc->name[0])
 			continue;
+
+		if (!sc->skin)
+			Skin_Find (sc);
+
 		Skin_Cache (sc->skin);
-		sc->skin = NULL;
+		sc->skin = NULL; // this way triggered skin loading, as i understand in R_TranslatePlayerSkin()
 	}
 
 	if (cls.state == ca_onserver && cbuf_current != &cbuf_main) {	//only download when connecting

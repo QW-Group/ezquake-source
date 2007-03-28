@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_misc.c,v 1.14 2007-03-11 06:01:42 disconn3ct Exp $
+	$Id: r_misc.c,v 1.15 2007-03-28 13:17:14 qqshka Exp $
 
 */
 
@@ -32,8 +32,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud_common.h"
 #include "rulesets.h"
 
-
-char *Skin_FindName (player_info_t *sc) ;
 
 void R_TranslatePlayerSkin (int playernum) {
 	char s[512];
