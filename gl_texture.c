@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_texture.c,v 1.26 2007-03-27 20:04:15 johnnycz Exp $
+	$Id: gl_texture.c,v 1.27 2007-03-28 18:34:10 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -506,15 +506,16 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
            		        data = Image_LoadPNG (f, name, matchwidth, matchheight);
 #endif
 #ifdef WITH_JPEG
-           		if( !data &&! strcasecmp(link + len - 3, "jpg") )
+           		if( !data && !strcasecmp(link + len - 3, "jpg") )
            		        data = Image_LoadJPEG (f, name, matchwidth, matchheight);
 #endif
-           		if (data)
+           		if( !(mode & TEX_NO_PCX) && !data && !strcasecmp(link + len - 3, "pcx") )  // TEX_NO_PCX - preventing loading skins here
+           		        data = Image_LoadPCX_As32Bit (f, name, matchwidth, matchheight);
+
+           		if ( data )
            			return data;
            	}
 	}
-
-
 
 	snprintf (name, sizeof(name), "%s.tga", basename);
 	if (FS_FOpenFile (name, &f) != -1) {
@@ -540,6 +541,15 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 			return data;
 	}
 #endif
+
+
+	snprintf (name, sizeof(name), "%s.pcx", basename);
+	if (!(mode & TEX_NO_PCX) && FS_FOpenFile (name, &f) != -1) { // TEX_NO_PCX - preventing loading skins here
+		CHECK_TEXTURE_ALREADY_LOADED;
+		if ((data = Image_LoadPCX_As32Bit (f, name, matchwidth, matchheight)))
+			return data;
+	}
+
 
 	if (mode & TEX_COMPLAIN) {
 		if (!no24bit)

@@ -22,14 +22,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define __GL_TEXTURE_H
 
-#define	TEX_COMPLAIN		1
-#define TEX_MIPMAP			2
-#define TEX_ALPHA			4
-#define TEX_LUMA			8
-#define TEX_FULLBRIGHT		16
-#define	TEX_NOSCALE			32
-#define	TEX_BRIGHTEN		64
-#define TEX_NOCOMPRESS		128
+#define	TEX_COMPLAIN		(1<<0)
+#define TEX_MIPMAP			(1<<1)
+#define TEX_ALPHA			(1<<2)
+#define TEX_LUMA			(1<<3)
+#define TEX_FULLBRIGHT		(1<<4)
+#define	TEX_NOSCALE			(1<<5)
+#define	TEX_BRIGHTEN		(1<<6)
+#define TEX_NOCOMPRESS		(1<<7)
+#define TEX_NO_PCX			(1<<8) // do not load pcx images
 
 #define MAX_GLTEXTURES 1024
 
