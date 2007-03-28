@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.25 2007-03-26 00:22:09 qqshka Exp $
+	$Id: gl_local.h,v 1.26 2007-03-28 01:05:30 qqshka Exp $
 
 */
 // gl_local.h -- private refresh defs
@@ -136,6 +136,7 @@ extern	int			d_lightstylevalue[256];	// 8.8 fraction of base light value
 extern	int	particletexture;
 extern	int	netgraphtexture;
 extern	int	playertextures;
+extern	int	playernmtextures[MAX_CLIENTS];
 extern	int	playerfbtextures[MAX_CLIENTS];
 extern	int	skyboxtextures;
 extern	int	skytexturenum;		// index in cl.loadmodel, not gl texture object

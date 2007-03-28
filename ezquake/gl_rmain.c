@@ -46,6 +46,7 @@ int			c_brush_polys, c_alias_polys;
 
 int			particletexture;	// little dot for particles
 int			playertextures;		// up to 16 color translated skins
+int			playernmtextures[MAX_CLIENTS];
 int			playerfbtextures[MAX_CLIENTS];
 int			skyboxtextures;
 int			underwatertexture, detailtexture;	
@@ -846,7 +847,7 @@ void R_DrawAliasModel (entity_t *ent) {
 		if (playernum >= 0 && playernum < MAX_CLIENTS) {
 			if (!ent->scoreboard->skin)
 				CL_NewTranslation(playernum);
-		    texture = playertextures + playernum;
+		    texture    = playernmtextures[playernum];
 			fb_texture = playerfbtextures[playernum];
 		}
 	}
