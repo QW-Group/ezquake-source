@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.65 2007-03-18 18:36:24 disconn3ct Exp $
+    $Id: teamplay.c,v 1.66 2007-03-28 12:36:49 qqshka Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -1462,10 +1462,6 @@ char *TP_ParseFunChars (char *s, qbool chat)
 }
 
 /************************* SKIN FORCING & REFRESHING *************************/
-
-
-
-char *Skin_FindName (player_info_t *sc);
 
 void MV_UpdateSkins()
 {
