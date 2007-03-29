@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.31 2007-03-29 09:59:16 johnnycz Exp $
+		$Id: settings_page.c,v 1.32 2007-03-29 13:21:19 qqshka Exp $
 
 */
 
@@ -410,9 +410,9 @@ static int Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page, 
 static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
 {
     static mpic_t *curpic = NULL;
-    static char lastpicname[_MAX_PATH] = "";
+    static char lastpicname[MAX_PATH] = "";
     char *c;
-    char buf[_MAX_PATH];
+    char buf[MAX_PATH];
     float hsc, wsc;
 
 // this means the length of "qw/"
