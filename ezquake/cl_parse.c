@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.81 2007-03-11 06:01:35 disconn3ct Exp $
+	$Id: cl_parse.c,v 1.82 2007-03-29 01:13:08 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -422,12 +422,17 @@ qbool CL_CheckOrDownloadFile (char *filename) {
 
 	//ZOID - can't download when recording
 	if (cls.demorecording) {
-		Com_Printf ("Unable to download %s in record mode.\n", cls.downloadname);
+		Com_Printf ("Unable to download %s in record mode.\n", filename);
 		return true;
 	}
 	//ZOID - can't download when playback
 	if (cls.demoplayback)
 		return true;
+
+	if (cls.state < ca_connected) {
+		Com_DPrintf ("Unable to download %s, not connected\n", filename);
+		return true;
+	}
 
 	snprintf (cls.downloadname, sizeof(cls.downloadname), "%s/%s", cls.gamedir, filename);
 	Com_Printf ("Downloading %s...\n", filename);
