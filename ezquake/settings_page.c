@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.30 2007-03-28 17:03:22 johnnycz Exp $
+		$Id: settings_page.c,v 1.31 2007-03-29 09:59:16 johnnycz Exp $
 
 */
 
@@ -405,9 +405,10 @@ static int Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page, 
 	return h;
 }
 
+// will draw the skin preview in given window
+// perhaps move a part of this into Ctrl.c or *draw*.c
 static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
 {
-// todo: PCX doesn't work, Draw_CachePicSafe doesn't load it
     static mpic_t *curpic = NULL;
     static char lastpicname[_MAX_PATH] = "";
     char *c;
@@ -417,7 +418,11 @@ static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
 // this means the length of "qw/"
 #define QWDIRLEN 3
 
-	UI_DrawBox(x, y, bound(w, w, 320), h);
+	UI_DrawBox(x, y, w, h);
+    x += LETTERWIDTH;
+    y += LETTERHEIGHT;
+    w -= LETTERWIDTH;
+    h -= LETTERHEIGHT;
 
     if (strcmp(lastpicname, skinfile))
     {
@@ -432,14 +437,14 @@ static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
         curpic = Draw_CachePicSafe(buf, false, true);
         strlcpy(lastpicname, skinfile, sizeof(lastpicname));
     }
-
+    
     if (curpic)
     {
-        wsc = (float) (w-LETW*2) / (float) curpic->width;
-        hsc = (float) (h-LETW*2) / (float) curpic->height;
-        Draw_SPic(x+LETW, y+LETW, curpic, min(wsc,hsc));
+        wsc = (float) w / (float) curpic->width;
+        hsc = (float) h / (float) curpic->height;
+        Draw_SPic(x, y, curpic, min(wsc,hsc));
     }
-#undef SKINDIRLEN
+#undef QWDIRLEN
 }
 
 static int FindSetting_AtPos(const settings_page *page, int top)
