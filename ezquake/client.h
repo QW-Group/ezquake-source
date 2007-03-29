@@ -37,6 +37,7 @@ extern cvar_t cl_demospeed;
 typedef struct {
 	char			name[16];
 	qbool			failedload;		// the name isn't a valid skin
+	qbool			warned;			// warning about falied to load was alredy printed
 #ifdef GLQUAKE
 	int				width, height;	// this is valid for pcx too, but used for 32bit skins only
 	int				bpp;			// used in gl,  bpp = 1 for pcx and 4 for 32bit skins
@@ -775,7 +776,7 @@ void Cam_Lock(int playernum);
 // skin.c
 void	Skin_Find (player_info_t *sc);
 char	*Skin_FindName (player_info_t *sc);
-byte	*Skin_Cache (skin_t *skin);
+byte	*Skin_Cache (skin_t *skin, qbool no_baseskin);
 void	Skin_Skins_f (void);
 void	Skin_AllSkins_f (void);
 void	Skin_NextDownload (void);

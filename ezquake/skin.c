@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: skin.c,v 1.15 2007-03-28 19:05:07 qqshka Exp $
+	$Id: skin.c,v 1.16 2007-03-29 01:19:53 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -150,12 +150,13 @@ void Skin_Find (player_info_t *sc) {
 		if (!strcmp(name, skins[i].name)) {
 			sc->skin = &skins[i];
 // no mess plz, we call this later
-//			Skin_Cache(sc->skin);
+//			Skin_Cache(sc->skin, false);
 			return;
 		}
 	}
 
 	if (numskins == MAX_CACHED_SKINS) {	// ran out of spots, so flush everything
+		Com_Printf ("MAX_CACHED_SKINS reached, flushing skins\n");
 		Skin_Skins_f(); // this must set numskins to 0
 // quake expect we set sc->skin to something not NULL, so no return
 //		return;
@@ -200,15 +201,18 @@ byte *Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp)
 }
 
 //Returns a pointer to the skin bitmap, or NULL to use the default
-byte *Skin_Cache (skin_t *skin) {
+byte *Skin_Cache (skin_t *skin, qbool no_baseskin) {
 	int y, max_w, max_h, bpp;
 	byte *pic = NULL, *out, *pix;
 	char name[MAX_OSPATH];
 
-	if (cls.downloadtype == dl_skin)
-		return NULL;		// use base until downloaded
+// no need for that
+//	if (cls.downloadtype == dl_skin)
+//		return NULL;		// use base until downloaded
+
 	if (noskins.value == 1) // JACK: So NOSKINS > 1 will show skins, but
 		return NULL;		// not download new ones.
+
 	if (skin->failedload)
 		return NULL;
 
@@ -220,8 +224,17 @@ byte *Skin_Cache (skin_t *skin) {
 	snprintf (name, sizeof(name), "skins/%s.pcx", skin->name);
 
 	if (!(pic = Skin_PixelsLoad(name, &max_w, &max_h, &bpp)) || image_width > max_w || image_height > max_h) {
-		Com_Printf ("Couldn't load skin %s\n", name);
+
 		Q_free(pic);
+
+		if (no_baseskin) {
+			skin->warned = true;
+			return NULL; // well, we not set skin->failedload = true, that how I need it here
+		}
+		else if (!skin->warned)
+			Com_Printf ("Couldn't load skin %s\n", name);
+
+		skin->warned = true;
 	}
 
 	if (!pic) { // attempt load at least default/base
@@ -258,13 +271,13 @@ byte *Skin_Cache (skin_t *skin) {
 
 	return out;
 }
+
 void Skin_NextDownload (void) {
 	player_info_t *sc;
 	int i;
 
-	if (cls.downloadnumber == 0) {
+	if (cls.downloadnumber == 0)
 		Com_Printf ("Checking skins...\n");
-	}
 
 	cls.downloadtype = dl_skin;
 
@@ -278,8 +291,8 @@ void Skin_NextDownload (void) {
 		if (noskins.value)
 			continue;
 
-		if(Skin_Cache (sc->skin))
-			continue; // we have it in cache
+		if (Skin_Cache (sc->skin, true))
+			continue; // we have it in cache, that mean we somehow able load this skin
 
 		if (!CL_CheckOrDownloadFile(va("skins/%s.pcx", sc->skin->name)))
 			return;		// started a download
@@ -296,11 +309,11 @@ void Skin_NextDownload (void) {
 		if (!sc->skin)
 			Skin_Find (sc);
 
-		Skin_Cache (sc->skin);
+		Skin_Cache (sc->skin, false);
 		sc->skin = NULL; // this way triggered skin loading, as i understand in R_TranslatePlayerSkin()
 	}
 
-	if (cls.state == ca_onserver && cbuf_current != &cbuf_main) {	//only download when connecting
+	if (cls.state == ca_onserver /* && cbuf_current != &cbuf_main */) {	//only download when connecting
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString (&cls.netchan.message, va("begin %i", cl.servercount));
 		Cache_Report ();		// print remaining memory
