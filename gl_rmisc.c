@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_rmisc.c,v 1.17 2007-03-28 15:02:12 qqshka Exp $
+	$Id: gl_rmisc.c,v 1.18 2007-03-29 01:19:53 qqshka Exp $
 */
 // gl_rmisc.c
 
@@ -121,7 +121,7 @@ void R_TranslatePlayerSkin (int playernum) {
 		return;
 	}
 
-	if ((original = Skin_Cache(player->skin)) != NULL) {
+	if ((original = Skin_Cache(player->skin, false)) != NULL) {
 		switch (player->skin->bpp) {
 		case 4: // 32 bit skin
 //			Com_Printf("    ###FULL loaded skin %s %d\n", player->skin->name, player->skin->texnum);

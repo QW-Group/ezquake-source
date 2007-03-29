@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_alias.c,v 1.7 2007-03-11 06:01:42 disconn3ct Exp $
+	$Id: r_alias.c,v 1.8 2007-03-29 01:19:53 qqshka Exp $
 
 */
 
@@ -525,7 +525,7 @@ void R_AliasSetupSkin (entity_t *ent) {
 	if (ent->scoreboard) {
 		if (!ent->scoreboard->skin)
 			Skin_Find (ent->scoreboard);
-		base = Skin_Cache (ent->scoreboard->skin);
+		base = Skin_Cache (ent->scoreboard->skin, false);
 		if (base) {
 			r_affinetridesc.pskin = base;
 			r_affinetridesc.skinwidth = 320;
