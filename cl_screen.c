@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.110 2007-03-30 15:03:26 qqshka Exp $
+    $Id: cl_screen.c,v 1.111 2007-03-30 22:25:49 qqshka Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -1432,7 +1432,7 @@ static void SCR_Draw_TeamInfo(void)
 
 	y = vid.height*0.6/scale + scr_teaminfo_y.value;
 
-	w = (maxname + maxloc + sizeof(" ppp hhh aaa w") - 1);
+	w = (maxname + maxloc + sizeof(" ppp hhh aaa ww") - 1);
 	h = slots_num;
 
 	for ( j = 0; j < slots_num; j++ ) {
