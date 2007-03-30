@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.109 2007-03-27 19:50:13 johnnycz Exp $
+    $Id: cl_screen.c,v 1.110 2007-03-30 15:03:26 qqshka Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -140,10 +140,12 @@ cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
 
 cvar_t	scr_teaminfo_align_right = {"scr_teaminfo_align_right", "1", CVAR_ARCHIVE};
 cvar_t	scr_teaminfo_frame_color = {"scr_teaminfo_frame_color", "10 0 0 120"};
-cvar_t	scr_teaminfo_scale		= {"scr_teaminfo_scale", "1", CVAR_ARCHIVE};
-cvar_t	scr_teaminfo_y			= {"scr_teaminfo_y",     "0", CVAR_ARCHIVE};
-cvar_t  scr_teaminfo_x			= {"scr_teaminfo_x",     "0", CVAR_ARCHIVE};
-cvar_t  scr_teaminfo			= {"scr_teaminfo",       "1", CVAR_ARCHIVE};
+cvar_t	scr_teaminfo_scale		 = {"scr_teaminfo_scale",       "1",  CVAR_ARCHIVE};
+cvar_t	scr_teaminfo_y			 = {"scr_teaminfo_y",           "0",  CVAR_ARCHIVE};
+cvar_t  scr_teaminfo_x			 = {"scr_teaminfo_x",           "0",  CVAR_ARCHIVE};
+cvar_t  scr_teaminfo_loc_width	 = {"scr_teaminfo_loc_width",   "5",  CVAR_ARCHIVE};
+cvar_t  scr_teaminfo_name_width	 = {"scr_teaminfo_name_width",  "10", CVAR_ARCHIVE};
+cvar_t  scr_teaminfo			 = {"scr_teaminfo",             "1",  CVAR_ARCHIVE};
 
 #endif
 cvar_t	scr_coloredText			= {"scr_coloredText", "1"};
@@ -1395,6 +1397,7 @@ static void SCR_Draw_TeamInfo(void)
 	if ( !cl.teamplay || !scr_teaminfo.integer )  // non teamplay mode
 		return;
 
+	// fill data we require to draw teaminfo
 	for ( maxloc = maxname = slots_num = i = 0; i < MAX_CLIENTS; i++ ) {
 		if ( !cl.players[i].name[0] || cl.players[i].spectator
 				|| !ti_clients[i].time || ti_clients[i].time + TI_TIMEOUT < r_refdef2.time
@@ -1403,10 +1406,16 @@ static void SCR_Draw_TeamInfo(void)
 		 	)
 			continue;
 
+		// dynamically guess max length of name/lock
 		maxname = max(maxname, strlen(cl.players[i].name));
-		maxloc =  max(maxloc, strlen(TP_LocationName(ti_clients[i].org)));
+		maxloc  = max(maxloc, strlen(TP_LocationName(ti_clients[i].org)));
 		slots[slots_num++] = i;
 	}
+
+	// well, better use fixed loc length
+	maxloc  = bound(0, scr_teaminfo_loc_width.integer, 100);
+	// limit name length
+	maxname = bound(0, maxname, scr_teaminfo_name_width.integer);
 
 	if ( !slots_num )
 		return;
@@ -1423,7 +1432,7 @@ static void SCR_Draw_TeamInfo(void)
 
 	y = vid.height*0.6/scale + scr_teaminfo_y.value;
 
-	w = (maxname + maxloc + sizeof(" hhh aaa ww ppp") - 1);
+	w = (maxname + maxloc + sizeof(" ppp hhh aaa w") - 1);
 	h = slots_num;
 
 	for ( j = 0; j < slots_num; j++ ) {
@@ -1440,6 +1449,17 @@ static void SCR_Draw_TeamInfo(void)
 			glEnable (GL_TEXTURE_2D);
 			glColor4f(1, 1, 1, 1);
 		}
+
+		// draw powerups
+		if ( sb_face_quad && (ti_clients[i].items & IT_QUAD))
+			Draw_SPic (x, y, sb_face_quad, 1.0/3);
+		x += FONTWIDTH;
+		if ( sb_face_invuln && (ti_clients[i].items & IT_INVULNERABILITY))
+			Draw_SPic (x, y, sb_face_invuln, 1.0/3);
+		x += FONTWIDTH;
+		if ( sb_face_invis && (ti_clients[i].items & IT_INVISIBILITY))
+			Draw_SPic (x, y, sb_face_invis, 1.0/3);
+		x += FONTWIDTH;
 
 		// draw name
 		snprintf(tmp, sizeof(tmp), "%*.*s", maxname, maxname, cl.players[i].name);
@@ -1464,17 +1484,6 @@ static void SCR_Draw_TeamInfo(void)
 		if ( (pic = SCR_GetWeaponIconByFlag(BestWeaponFromStatItems( ti_clients[i].items ))) )
 			Draw_SPic (x, y, pic, 0.5);
 		x += 2 * FONTWIDTH;
-
-		// draw powerups
-		if ( sb_face_quad && (ti_clients[i].items & IT_QUAD))
-      Draw_SPic (x, y, sb_face_quad, 1.0/3);
-		x += FONTWIDTH;
-		if ( sb_face_invuln && (ti_clients[i].items & IT_INVULNERABILITY))
-      Draw_SPic (x, y, sb_face_invuln, 1.0/3);
-		x += FONTWIDTH;
-		if ( sb_face_invis && (ti_clients[i].items & IT_INVISIBILITY))
-      Draw_SPic (x, y, sb_face_invis, 1.0/3);
-		x += FONTWIDTH;
 
 		y += FONTWIDTH;
 	}
@@ -3425,6 +3434,8 @@ void SCR_Init (void)
 	Cvar_Register (&scr_teaminfo_scale);
 	Cvar_Register (&scr_teaminfo_y);
 	Cvar_Register (&scr_teaminfo_x);
+	Cvar_Register (&scr_teaminfo_loc_width);
+	Cvar_Register (&scr_teaminfo_name_width);
 	Cvar_Register (&scr_teaminfo);
 #endif
 	Cvar_Register (&scr_coloredText);
