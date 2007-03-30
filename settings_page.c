@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.32 2007-03-29 13:21:19 qqshka Exp $
+		$Id: settings_page.c,v 1.33 2007-03-30 22:04:56 johnnycz Exp $
 
 */
 
@@ -406,14 +406,10 @@ static int Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page, 
 }
 
 // will draw the skin preview in given window
-// perhaps move a part of this into Ctrl.c or *draw*.c
 static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
 {
     static mpic_t *curpic = NULL;
     static char lastpicname[MAX_PATH] = "";
-    char *c;
-    char buf[MAX_PATH];
-    float hsc, wsc;
 
 // this means the length of "qw/"
 #define QWDIRLEN 3
@@ -426,7 +422,10 @@ static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
 
     if (strcmp(lastpicname, skinfile))
     {
-        // get the "qw/skins/freddy" part out of the full path
+        char *c;
+        char buf[MAX_PATH];
+
+        // get the "qw/skins/freddy" part from the full path
         if (strlen(skinfile) <= strlen(com_basedir) + QWDIRLEN)
         {
             return;
@@ -440,9 +439,7 @@ static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
     
     if (curpic)
     {
-        wsc = (float) w / (float) curpic->width;
-        hsc = (float) h / (float) curpic->height;
-        Draw_SPic(x, y, curpic, min(wsc,hsc));
+        Draw_FitPic(x, y, w, h, curpic);
     }
 #undef QWDIRLEN
 }

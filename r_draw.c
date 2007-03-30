@@ -1186,6 +1186,12 @@ void Draw_SPic (int x, int y, mpic_t *pic, float scale)
     Draw_TransPic(x, y, pic);
 }
 
+void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl)
+{
+    // no scale in SOFT yet...
+    Draw_TransPic(x, y, gl);
+}
+
 void Draw_SSubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float scale)
 {
     // no scale in SOFT yet..

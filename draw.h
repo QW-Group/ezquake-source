@@ -98,6 +98,8 @@ void Draw_SCharacter (int x, int y, int num, float scale);
 void Draw_SString (int x, int y, char *str, float scale);
 void Draw_SAlt_String (int x, int y, char *str, float scale);
 void Draw_SPic (int x, int y, mpic_t *, float scale);
+// will fit image into given area; will keep it's proportions
+void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl);
 void Draw_SAlphaPic (int x, int y, mpic_t *, float alpha, float scale);
 void Draw_SSubPic(int x, int y, mpic_t *, int srcx, int srcy, int width, int height, float scale);
 void Draw_STransPic (int x, int y, mpic_t *, float scale);
