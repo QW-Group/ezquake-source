@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.57 2007-03-22 00:03:04 qqshka Exp $
+	$Id: gl_draw.c,v 1.58 2007-03-30 22:04:56 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1962,6 +1962,14 @@ void Draw_SAlphaPic (int x, int y, mpic_t *gl, float alpha, float scale)
 void Draw_SPic (int x, int y, mpic_t *gl, float scale)
 {
 	Draw_SAlphaSubPic (x, y, gl, 0, 0, gl->width, gl->height, scale, 1);
+}
+
+void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl)
+{
+    float sw, sh;
+    sw = (float) fit_width / (float) gl->width;
+    sh = (float) fit_height / (float) gl->height;
+    Draw_SPic(x, y, gl, min(sw, sh));
 }
 
 void Draw_STransPic (int x, int y, mpic_t *pic, float scale)
