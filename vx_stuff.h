@@ -117,6 +117,7 @@ extern cvar_t amf_tracker_x;
 extern cvar_t amf_tracker_y;
 extern cvar_t amf_tracker_frame_color;
 extern cvar_t amf_tracker_scale;
+extern cvar_t amf_tracker_images_scale;
 
 
 void SCR_DrawAMFstats(void);
