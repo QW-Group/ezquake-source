@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.66 2007-03-28 12:36:49 qqshka Exp $
+    $Id: teamplay.c,v 1.67 2007-03-31 23:28:19 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -3206,17 +3206,166 @@ void TP_Point_f (void)
 	FlagCommand (&pointflags, default_pointflags);
 }
 
-#define SHORTNICK_LEN 3
-void TP_Report_f (void)
-{
-	extern cvar_t cl_fakename;
+/*******
+ * Set of inbuilt teamplay messages starts here
+ */
 
-	if (*(cl_fakename.string)) { // not empty
-		Cbuf_AddText(va("say_team %%p %%A%%a/%%h $[%%l$] %%b"));
-	} else {
-		Cbuf_AddText(va("say_team $\\%.3s: %%p %%A%%a/%%h $[%%l$] %%b", TP_PlayerName()));
-	}
+#define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
+#define HAVE_LG() (cl.stats[STAT_ITEMS] & IT_LIGHTNING)
+#define HOLD_RL() (cl.stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER)
+#define HOLD_LG() (cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING)
+#define TOOK(x) (!strcmp(Macro_Took(), tp_name_##x##.string))
+#define COLORED(c,str) "{&c" #c #str "&cfff}"
+#define INPOINT(thing) strstr(Macro_PointName(), tp_name_##thing##.string)
+
+typedef char * MSGPART;
+
+// will return short version of player's nick for teamplay messages
+char *TP_ShortNick(void)
+{
+    extern cvar_t cl_fakename;
+    static char buf[7];
+
+    if (*(cl_fakename.string))  return cl_fakename.string;
+    else {
+        snprintf(buf, sizeof(buf), "$\\%.3s:", TP_PlayerName());
+        return buf;
+    }
+}      
+
+void TP_Send_TeamSay(char *format, ...)
+{
+    char tp_msg_head[256], tp_msg_body[256], tp_msg[512];
+    va_list argptr;
+
+    snprintf(tp_msg_head, sizeof(tp_msg_head), "say_team %s ", TP_ShortNick());
+
+	va_start (argptr, format);
+    vsnprintf(tp_msg_body, sizeof(tp_msg_body), format, argptr);
+	va_end (argptr);
+
+    snprintf(tp_msg, sizeof(tp_msg), "%s%s\n", tp_msg_head, tp_msg_body);
+    
+    Cbuf_AddText(tp_msg);
 }
+
+#define tp_sep_red		"$R$R"      // enemy, lost
+#define tp_sep_green	"$G$G"      // killed quad/ring/pent enemy, safe
+#define tp_sep_yellow	"$Y$Y"      // help
+#define tp_sep_white	"$x04$x04"  // Two white bubbles, location of item
+#define tp_sep_blue		"$B$B"      // 
+
+/*
+Should we enforce special colors this way below or we just should make
+these values new default?
+In my opinion with new defaults we should wait for different color syntax. - johnnycz
+However this brings a problem - you always have to use these and cannot
+use the %-macros nor the $-macros.
+*/
+
+#define tp_ib_name_rl	    COLORED(f0f,rl)	    // purple rl
+#define tp_ib_name_lg	    COLORED(f0f,lg)	    // purple lg
+#define tp_ib_name_ga	    COLORED(0b0,ga)	    // green ga
+#define tp_ib_name_ya	    COLORED(ff0,ya)	    // yellow ya
+#define tp_ib_name_ra	    COLORED(e00,ra)	    // red ra
+#define tp_ib_name_mh	    COLORED(03F,mega)	// blue mega
+#define tp_ib_name_backpack	COLORED(F0F,pack)	// purple backpack
+#define tp_ib_name_quad	    COLORED(03F,quad)	// blue quad
+#define tp_ib_name_pent	    COLORED(e00,pent)	// red pent
+#define tp_ib_name_ring	    COLORED(ff0,ring)	// yellow eyes
+#define tp_ib_name_enemy	COLORED(e00,enemy)	// red enemy
+#define tp_ib_name_team	    COLORED(0b0,team)	// green "team" (with powerup)
+#define tp_ib_name_quaded	COLORED(03F,quaded)	// blue "quaded"
+#define tp_ib_name_pented	COLORED(e00,pented)	// red "pented"
+#define tp_ib_name_rlg      COLORED(f0f,rlg)    // purple rlg
+
+void TP_Msg_Report_f (void)
+{
+    // this could be done by using 1 argument but all '%'
+    // would have to be replaced by '%%'
+    TP_Send_TeamSay("%s", "%p %A%a/%h $[%l$] %b");
+}
+
+void TP_Msg_Lost_f (void)
+{
+    MSGPART msg1 = "";
+    MSGPART msg2 = "";
+
+    if (TOOK(quad))
+    {
+        msg1 = tp_ib_name_quad " over ";
+    }
+
+    if (HOLD_RL() || HOLD_LG())
+    {
+        msg2 = "lost " COLORED(f0f,$weapon) " $[{%d}$] %E";
+    }
+    else
+    {
+        msg2 = "lost $[{%d}$] %E";
+    }
+
+    TP_Send_TeamSay("%s%s", msg1, msg2);
+}
+
+void TP_Msg_EnemyPowerup_f (void)
+{
+    MSGPART msg1 = "";
+    MSGPART msg2 = "";
+
+	msg1 = tp_ib_name_enemy " $[{%q}$]";
+	
+	if (INPOINT(quaded) || INPOINT(pented) || INPOINT(eyes))
+	{
+		msg2 = " at {%y}";
+	}
+	
+	TP_Send_TeamSay(tp_sep_red " %s%s", msg1, msg2);
+}
+
+void TP_Msg_SafeHelp(qbool safe)
+{
+	MSGPART msg1 = "";
+	MSGPART msg2 = "";
+	MSGPART msg3 = "";
+	MSGPART msg4 = "";
+	MSGPART msg5 = "";
+
+	if (safe && INPOINT(enemy))
+		return; // if you see enemy, then it's not safe (really?)
+	
+	if (safe)
+	{
+		msg1 = tp_sep_green;
+		msg2 = "safe";
+	}
+	else
+	{
+		msg1 = tp_sep_yellow;
+		msg2 = "help";
+	}
+
+	msg3 = "$[{%l}$]";
+
+	if (TOOK(quad) || TOOK(pent) || TOOK(ring))
+		msg4 = tp_ib_name_team " %p";
+	else
+		msg4 = "";
+		
+    if		(HAVE_RL() && HAVE_LG())	msg5 = tp_ib_name_rlg ":$rockets/$cells";
+    else if (HAVE_RL())					msg5 = tp_ib_name_rl ":$rockets";
+    else if (HAVE_LG())					msg5 = tp_ib_name_lg ":$cells";
+    else								msg5 = "";
+
+	TP_Send_TeamSay("%s %s %s %s %s", msg1, msg2, msg3, msg4, msg5);
+}
+
+void TP_Msg_Safe_f (void) { TP_Msg_SafeHelp(true); }
+void TP_Msg_Help_f (void) { TP_Msg_SafeHelp(false); }
+
+
+/***********/
+
 
 typedef struct
 {
@@ -4193,5 +4342,11 @@ void TP_Init (void)
 	Cmd_AddCommand ("tp_took", TP_Took_f);
 	Cmd_AddCommand ("tp_pickup", TP_Pickup_f);
 	Cmd_AddCommand ("tp_point", TP_Point_f);
-	Cmd_AddCommand ("tp_report", TP_Report_f);
+
+	Cmd_AddCommand ("tp_report", TP_Msg_Report_f);
+    Cmd_AddCommand ("tp_lost", TP_Msg_Lost_f);
+    Cmd_AddCommand ("tp_enemypwr", TP_Msg_EnemyPowerup_f);
+    Cmd_AddCommand ("tp_safe", TP_Msg_Safe_f);
+    Cmd_AddCommand ("tp_help", TP_Msg_Help_f);
+    
 }
