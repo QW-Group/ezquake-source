@@ -67,6 +67,7 @@ cvar_t		amf_tracker_x = {"r_tracker_x", "0", CVAR_ARCHIVE};
 cvar_t		amf_tracker_y = {"r_tracker_y", "0", CVAR_ARCHIVE};
 cvar_t		amf_tracker_frame_color = {"r_tracker_frame_color", "0 0 0 0", CVAR_ARCHIVE};
 cvar_t		amf_tracker_scale = {"r_tracker_scale", "1", CVAR_ARCHIVE};
+cvar_t		amf_tracker_images_scale = {"r_tracker_images_scale", "1", CVAR_ARCHIVE};
 cvar_t		amf_part_gunshot = {"gl_particle_gunshots", "0", CVAR_ARCHIVE};
 cvar_t		amf_part_gunshot_type = {"gl_particle_gunshots_type", "1", CVAR_ARCHIVE};
 cvar_t		amf_part_spikes = {"gl_particle_spikes", "0", CVAR_ARCHIVE}; // 0.1
@@ -419,7 +420,7 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_tracker_y);
 	Cvar_Register (&amf_tracker_frame_color);
 	Cvar_Register (&amf_tracker_scale);
-
+	Cvar_Register (&amf_tracker_images_scale);
 
 	Cvar_ResetCurrentGroup();
 

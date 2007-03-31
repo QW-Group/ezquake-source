@@ -5,7 +5,6 @@
 #include "vx_stuff.h"
 #include "utils.h"
 
-
 // seems noone uses next variables outside file, so make static
 // {
 static int active_track = 0;
@@ -346,12 +345,13 @@ void VX_TrackerStreakEndOddTeamkilled(int player, int count)
 //We need a seperate function, since our messages are in colour... and transparent
 void VXSCR_DrawTrackerString (void)
 {
-	char	*start;
+	char	*start, image[256], fullpath[MAX_PATH];
 	int		l;
 	int		j;
 	int		x, y;
 	int		i, w;
 	float	alpha = 1, scale = bound(0.1, amf_tracker_scale.value, 10);
+	float	im_scale = bound(0.1, amf_tracker_images_scale.value, 10);
 	byte	*col = StringToRGB(amf_tracker_frame_color.string);
 	vec3_t	kolorkodes = {1,1,1};
 
@@ -384,6 +384,30 @@ void VXSCR_DrawTrackerString (void)
 
 			while (start[l] && start[l] != '\n')
 			{
+				if (start[l] == '\\') { // we found opening slash, get image name now
+					int from, to;
+
+					from = to = ++l;
+
+					for( ; start[l]; l++) {
+						if (start[l] == '\n')
+							break; // something bad, we does't found closing slash
+
+						if (start[l] == '\\')
+							break; // found closing slash
+
+						to = l + 1;
+					}
+
+					if (to > from)
+						w += 2; // we got potential image name, treat image as two printable characters
+
+					if (start[l] == '\\')
+						l++; // advance
+
+					continue;
+				}
+
 				if (start[l] == '&')
 				{
 					if (start[l + 1] == 'r') {
@@ -410,8 +434,48 @@ void VXSCR_DrawTrackerString (void)
 
 			glColor4f(kolorkodes[0], kolorkodes[1], kolorkodes[2], alpha);
 
-			for (j = 0 ; j < l ;)
+			for (j = 0; j < l;)
 			{
+				if (start[j] == '\\') { // we found opening slash, get image name now
+					int from, to;
+
+					from = to = ++j;
+
+					for( ; start[j]; j++) {
+						if (start[j] == '\n')
+							break; // something bad, we does't found closing slash
+
+						if (start[j] == '\\')
+							break; // found closing slash
+
+						to = j + 1;
+					}
+
+					if (to > from) { // we got potential image name, treat image as two printable characters
+						mpic_t *pic;
+						int size = to - from;
+
+						size = min(size, (int)sizeof(image) - 1);
+
+						memcpy(image, (start + from), size); // copy image name to temp buffer
+						image[size] = 0;
+
+						if (image[0]) {
+							snprintf(fullpath, sizeof(fullpath), "textures/tracker/%s", image);
+
+							if ((pic = Draw_CachePicSafe(fullpath, false, true)))
+								Draw_FitPic((float)x - 0.5 * 8 * 2 * (im_scale - 1), (float)y - 0.5 * 8 * (im_scale - 1), im_scale * 8 * 2, im_scale * 8, pic);
+						}
+
+						x += 8 * 2;
+					}
+
+					if (start[j] == '\\')
+						j++; // advance
+
+					continue;
+				}
+
 				if (start[j] == '&') 
 				{
 					if (start[j + 1] == 'r')	
