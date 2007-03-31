@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.58 2007-03-26 18:47:46 johnnycz Exp $
+		$Id: menu_options.c,v 1.59 2007-03-31 10:22:38 johnnycz Exp $
 
 */
 
@@ -1289,7 +1289,10 @@ void Menu_Options_Draw(void) {
 	}
 #endif
 
-	w = vid.width - OPTPADDING*2; // here used to be a limit to 512x... size
+    // this will add top, left and bottom padding
+    // right padding is not added because it causes annoying scrollbar behaviour
+    // when mouse gets off the scrollbar to the right side of it
+	w = vid.width - OPTPADDING; // here used to be a limit to 512x... size
 	h = vid.height - OPTPADDING*2;
 	x = OPTPADDING;
 	y = OPTPADDING;
