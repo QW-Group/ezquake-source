@@ -1,4 +1,4 @@
-//    $Id: Ctrl.h,v 1.10 2007-03-27 19:50:12 johnnycz Exp $
+//    $Id: Ctrl.h,v 1.11 2007-03-31 15:24:10 johnnycz Exp $
 
 #ifndef __CTRL_H__
 #define __CTRL_H__
@@ -54,7 +54,7 @@ typedef struct ScrollBar_s {
 } ScrollBar, *PScrollBar;
 
 // scrollbar constructor
-// 1st parameter: a function it should call 
+// 1st parameter: a function it should call, can be NULL
 PScrollBar ScrollBar_Create(ScrollPos_setter);
 
 // scrollbar destructor

@@ -21,6 +21,7 @@
 #define __EX_FILELIST_H__
 
 #include "keys.h"
+#include "Ctrl.h"
 
 //
 // maximum-s
@@ -82,6 +83,7 @@ typedef struct filelist_s
     int				num_entries;
     int				current_entry;
     int				display_entry;  // First item displayed
+    int             displayed_entries_count;    // ammount of entries that fit on the screen
 
     filetype_t		filetypes[MAX_FILELIST_TYPES];
     int				num_filetypes;
@@ -117,8 +119,12 @@ typedef struct filelist_s
     qbool			cdup_find;
 
 	// for mouse navigation
-	int				width;
-	int				height;
+    int             list_y_offset;
+	int				list_width;
+	int				list_height;
+
+    // associated scrollbar GUI element
+    PScrollBar      scrollbar;
 }
 filelist_t;
 

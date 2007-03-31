@@ -7,7 +7,7 @@
     made by:
         johnnycz, Mar 2007
     last edit:
-        $Id: Ctrl_ScrollBar.c,v 1.2 2007-03-27 19:50:12 johnnycz Exp $
+        $Id: Ctrl_ScrollBar.c,v 1.3 2007-03-31 15:24:10 johnnycz Exp $
 
 */
 
@@ -66,19 +66,16 @@ qbool ScrollBar_MouseEvent(PScrollBar scrbar, const mouse_state_t *ms)
     if (!ms->button_down && !ms->button_up && !ms->buttons[1])
         return false;   
 
-    if (ms->button_down)
-    {
-        scrbar->mouselocked = true;
-        // todo: detect large leap
-    }
-    else if (ms->button_up)
+    if (ms->button_up)
     {
         scrbar->mouselocked = false;
     }
-    else // ms->buttons[1] == true
+    else // button_down or mousemove
     {
         double y = ms->y - scrollbar_width - slider_height/2;
         double ah = scrbar->height - scrollbar_width*2 - slider_height; 
+
+        scrbar->mouselocked = true;
         y = bound(0, y, ah);
         scrbar->curpos = y / ah;
         scrbar->curpos = bound(0, scrbar->curpos, 1);

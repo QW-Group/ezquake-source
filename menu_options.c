@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.59 2007-03-31 10:22:38 johnnycz Exp $
+		$Id: menu_options.c,v 1.60 2007-03-31 15:24:10 johnnycz Exp $
 
 */
 
@@ -1162,7 +1162,7 @@ int CT_Opt_Config_Key(int key, CTab_t *tab, CTabPage_t *page)
 			Cbuf_AddText(va("cfg_load \"%s\"\n", COM_SkipPath(FL_GetCurrentEntry(&configs_filelist)->name)));
 			MOpt_configpage_mode = MOCPM_SETTINGS;
 			return true;
-		} else if (key == K_ESCAPE) {
+		} else if (key == K_ESCAPE || key == K_MOUSE2) {
 			MOpt_configpage_mode = MOCPM_SETTINGS;
 			return true;
 		} else return FL_Key(&configs_filelist, key);
@@ -1172,7 +1172,7 @@ int CT_Opt_Config_Key(int key, CTab_t *tab, CTabPage_t *page)
 			Cbuf_AddText(va("exec \"cfg/%s\"\n", COM_SkipPath(FL_GetCurrentEntry(&configs_filelist)->name)));
 			MOpt_configpage_mode = MOCPM_SETTINGS;
 			return true;
-		} else if (key == K_ESCAPE) {
+		} else if (key == K_ESCAPE || key == K_MOUSE2) {
 			MOpt_configpage_mode = MOCPM_SETTINGS;
 			return true;
 		} else return FL_Key(&configs_filelist, key);
@@ -1182,7 +1182,7 @@ int CT_Opt_Config_Key(int key, CTab_t *tab, CTabPage_t *page)
 			Cbuf_AddText(va("cfg_save \"%s\"\n", MOpt_FileNameInputBoxGetText()));
 			MOpt_configpage_mode = MOCPM_SETTINGS;
 			return true;
-		} else if (key == K_ESCAPE) {
+        } else if (key == K_ESCAPE || key == K_MOUSE2) {
 			MOpt_configpage_mode = MOCPM_SETTINGS;
 			return true;
 		} else return MOpt_FileNameInputBoxKey(key);
@@ -1196,13 +1196,17 @@ void OnShow_SettConfig(void) { Settings_OnShow(&settconfig); }
 qbool CT_Opt_Config_Mouse_Event(const mouse_state_t *ms)
 {
     if (MOpt_configpage_mode == MOCPM_CHOOSECONFIG || MOpt_configpage_mode == MOCPM_CHOOSESCRIPT) {
-        if (ms->button_up == 1)
-            CT_Opt_Config_Key(K_MOUSE1, &options_tab, options_tab.pages + OPTPG_CONFIG);
-        else
-            FL_Mouse_Event(&configs_filelist, ms);
-    } else Settings_Mouse_Event(&settconfig, ms);
+        if (FL_Mouse_Event(&configs_filelist, ms))
+            return true;
+        else if (ms->button_up == 1 || ms->button_up == 2)
+            return CT_Opt_Config_Key(K_MOUSE1 - 1 + ms->button_up, &options_tab, options_tab.pages + OPTPG_CONFIG);
 
-    return true;
+        return true;
+    }
+    else
+    {
+        return Settings_Mouse_Event(&settconfig, ms);
+    }
 }
 
 
