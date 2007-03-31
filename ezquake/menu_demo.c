@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.28 2007-03-19 13:23:20 johnnycz Exp $
+		$Id: menu_demo.c,v 1.29 2007-03-31 15:24:10 johnnycz Exp $
 
 */
 
@@ -466,7 +466,8 @@ void Menu_Demo_Draw (void)
 	}
 #endif
 
-	w = vid.width - DEMOPAGEPADDING*2; // here used to be a limit to 512x... size, we've considered it useless
+    // don't add padding on the right side so the scrolling is friendly
+	w = vid.width - DEMOPAGEPADDING; // here used to be a limit to 512x... size, we've considered it useless
 	h = vid.height - DEMOPAGEPADDING*2;
 	x = DEMOPAGEPADDING;
 	y = DEMOPAGEPADDING;
@@ -783,12 +784,15 @@ int CT_Demo_Options_Key(int key, CTab_t *tab, CTabPage_t *page)
 
 qbool CT_Demo_Browser_Mouse_Event(const mouse_state_t *ms)
 {
-    if (ms->button_up == 1) {
-        CT_Demo_Browser_Key(K_MOUSE1, &demo_tab, demo_tab.pages + DEMOPG_BROWSER);
+    if (FL_Mouse_Event(&demo_filelist, ms)) {
+        return true;
+    } else if (ms->button_up >= 1 && ms->button_up <= 2) {
+        CT_Demo_Browser_Key(K_MOUSE1 - 1 + ms->button_up, &demo_tab, demo_tab.pages + DEMOPG_BROWSER);
         return true;
     }
 
-	return FL_Mouse_Event(&demo_filelist, ms);
+    // this specially "eats" button_up event, there is no reason to process other events anyway
+	return true;
 }
 
 qbool CT_Demo_Options_Mouse_Event(const mouse_state_t *ms)

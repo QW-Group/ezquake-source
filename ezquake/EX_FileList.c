@@ -107,6 +107,8 @@ void FL_Init(filelist_t	*	fl,
 	fl->selected_color = selected_color;
 	fl->dir_color = dir_color;
 
+    fl->scrollbar = ScrollBar_Create(NULL);
+
 	FL_RegisterColor (fl->file_color);
 	FL_RegisterColor (fl->selected_color);
 	FL_RegisterColor (fl->dir_color);
@@ -990,8 +992,9 @@ void FL_DeleteFile(filelist_t *fl)
 //
 // Check display position
 //
-void FL_CheckDisplayPosition(filelist_t *fl, int lines)
+void FL_CheckDisplayPosition(filelist_t *fl)
 {
+    int lines = fl->displayed_entries_count;
     // FIXME: move list earlier..
     if (fl->current_entry > fl->display_entry + lines - 1)
         fl->display_entry = fl->current_entry - lines + 1;
@@ -1001,6 +1004,8 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
 
     if (fl->current_entry < fl->display_entry)
         fl->display_entry = fl->current_entry;
+
+    FL_CheckPosition(fl);
 }
 
 //
@@ -1181,42 +1186,42 @@ void FL_CheckDisplayPosition(filelist_t *fl, int lines)
     if (key == K_UPARROW || key == K_MWHEELUP)
     {
         fl->current_entry--;
-        FL_CheckPosition(fl);
+        FL_CheckDisplayPosition(fl);
         return true;
     }
 
     if (key == K_DOWNARROW || key == K_MWHEELDOWN)
     {
         fl->current_entry++;
-        FL_CheckPosition(fl);
+        FL_CheckDisplayPosition(fl);
         return true;
     }
 
     if (key == K_PGUP)
     {
         fl->current_entry -= fl->last_page_size;
-        FL_CheckPosition(fl);
+        FL_CheckDisplayPosition(fl);
         return true;
     }
 
     if (key == K_PGDN)
     {
         fl->current_entry += fl->last_page_size;
-        FL_CheckPosition(fl);
+        FL_CheckDisplayPosition(fl);
         return true;
     }
 
     if (key == K_HOME)
     {
         fl->current_entry = 0;
-        FL_CheckPosition(fl);
+        FL_CheckDisplayPosition(fl);
         return true;
     }
 
     if (key == K_END)
     {
         fl->current_entry = fl->num_entries - 1;
-        FL_CheckPosition(fl);
+        FL_CheckDisplayPosition(fl);
         return true;
     }
 
@@ -1282,7 +1287,25 @@ qbool FL_Mouse_Event(filelist_t *fl, const mouse_state_t *ms)
 {
 	int entry;
 
-	if (ms->x > fl->width || ms->y > fl->height)
+    if (fl->scrollbar->mouselocked || 
+        ((ms->x > fl->list_width) && (ms->x <= (fl->list_width + fl->scrollbar->width))))
+    {   // catch the scrollbar mouse event
+
+        if (ScrollBar_MouseEvent(fl->scrollbar, ms))
+        {
+            if (fl->num_entries > fl->displayed_entries_count) {
+                fl->display_entry = (fl->num_entries - fl->displayed_entries_count) * fl->scrollbar->curpos;
+            }
+        }
+
+        return true;
+    }
+
+    // we don't handle mouse clicks, that's up to the module above us
+    if (ms->button_down || ms->button_up) return false;
+
+    // no other area then the list interests us
+    if (ms->x > fl->list_width || ms->y >= (fl->list_y_offset + fl->list_height) || ms->y <= fl->list_y_offset)
 		return false;
 
 	// we presume that each line is 8 px high
@@ -1363,8 +1386,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 
     fl->last_page_size = 0;
 
-	fl->width = w;
-	fl->height = h;
+    w -= fl->scrollbar->width;
 
     // Calculate interline (The space between each row)
     interline = fl->interline->value;
@@ -1465,11 +1487,16 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
         listsize -= 3;
 	}
 
-    fl->last_page_size = listsize;  // Remember for PGUP/PGDN
+    fl->list_width = w;
+	fl->list_height = listsize*rowh;
+    fl->list_y_offset = 2 * rowh;
 
-    // Check / fix display position now
+    // draw the scrollbar and substract it's width; draw under the 2 header lines
+    ScrollBar_Draw(fl->scrollbar, x + w, y + 2 * rowh, listsize*rowh);
+
+    fl->last_page_size = listsize;  // Remember for PGUP/PGDN
+    fl->displayed_entries_count = listsize;
     FL_CheckPosition(fl);
-    FL_CheckDisplayPosition(fl, listsize);
 
     for (i = 0; i < listsize; i++)
     {

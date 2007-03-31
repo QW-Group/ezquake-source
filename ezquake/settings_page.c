@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.33 2007-03-30 22:04:56 johnnycz Exp $
+		$Id: settings_page.c,v 1.34 2007-03-31 15:24:10 johnnycz Exp $
 
 */
 
@@ -608,8 +608,6 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 
 	if (!tab->count) return;
 
-    w -= tab->scrollbar->width;
-
 	if (prev_adv_state != (qbool) menu_advanced.value) {
 		// someone toggled menu_advanced setting right in the currently viewed menu!
 		RecalcPositions(tab);
@@ -624,6 +622,8 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 		Setting_DrawSkinPreview(x, y + h - SKINPREVIEWHEIGHT, w, SKINPREVIEWHEIGHT, FL_GetCurrentPath(&skins_filelist));
 		return;
 	}
+
+    w -= tab->scrollbar->width;
 
 	if (tab->mode != SPM_VIEWHELP) {
 		hbh = HELPLINES * LINEHEIGHT;
@@ -681,7 +681,11 @@ qbool Settings_Mouse_Event(settings_page *page, const mouse_state_t *ms)
 	int nmark;
 	int omark = page->marked;
 
-    if (page->scrollbar->mouselocked || (ms->x > (page->width - page->scrollbar->width)))
+    // scrollbar associated with this page handles the event
+    // page has to be in normal mode and user is already scrolling or
+    // just started scrolling
+    if (page->mode == SPM_NORMAL && (page->scrollbar->mouselocked || 
+        (ms->x > (page->width - page->scrollbar->width))))
     {
         if (ScrollBar_MouseEvent(page->scrollbar, ms))
         {
@@ -707,8 +711,8 @@ qbool Settings_Mouse_Event(settings_page *page, const mouse_state_t *ms)
         break;
 
     case SPM_CHOOSESKIN:
-        if (ms->button_up == 1) Settings_Key(page, K_MOUSE1);
-        else FL_Mouse_Event(&skins_filelist, ms);
+        if (FL_Mouse_Event(&skins_filelist, ms)) return true;
+        else if (ms->button_up == 1) Settings_Key(page, K_MOUSE1);
         return true;
 		break;
 	
