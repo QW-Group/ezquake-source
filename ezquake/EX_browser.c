@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.34 2007-03-19 13:23:20 johnnycz Exp $
+	$Id: EX_browser.c,v 1.35 2007-03-31 23:49:46 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1868,6 +1868,7 @@ void Serverinfo_Key(int key)
 {
     switch (key)
     {
+        case K_MOUSE1:
         case K_ENTER:
             if (serverinfo_pos != 2)
             {
@@ -1879,6 +1880,7 @@ void Serverinfo_Key(int key)
             else
                 Serverinfo_Sources_Key(key);
             break;
+        case K_MOUSE2:
         case K_ESCAPE:
         case K_BACKSPACE:
             Serverinfo_Stop(); break;
@@ -2401,7 +2403,16 @@ int Options_Key(int key, CTab_t *tab, CTabPage_t *page)
 
 qbool Servers_Mouse_Event(const mouse_state_t *ms)
 {
-    if (show_serverinfo) return false;
+    if (show_serverinfo) {
+        if (ms->button_up) {
+            Browser_Key(K_MOUSE1 - 1 + ms->button_up);
+        } else return false;
+    }
+    if (ms->button_up == 1)
+    {
+        Servers_Key(K_MOUSE1, &sb_tab, sb_tab.pages + SBPG_SERVERS);
+        return true;
+    }
 	Servers_pos = Servers_disp + ms->y / 8 - 1;
     Servers_pos = bound(0, Servers_pos, serversn - 1);
 	return true;
