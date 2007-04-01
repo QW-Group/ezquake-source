@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.67.2.1 2007-04-01 10:18:09 johnnycz Exp $
+    $Id: teamplay.c,v 1.67.2.2 2007-04-01 18:07:40 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -3214,9 +3214,9 @@ void TP_Point_f (void)
 #define HAVE_LG() (cl.stats[STAT_ITEMS] & IT_LIGHTNING)
 #define HOLD_RL() (cl.stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER)
 #define HOLD_LG() (cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING)
-#define TOOK(x) (!strcmp(Macro_Took(), tp_name_##x##.string))
+#define TOOK(x) (!strcmp(Macro_Took(), tp_name_##x.string))
 #define COLORED(c,str) "{&c" #c #str "&cfff}"
-#define INPOINT(thing) strstr(Macro_PointName(), tp_name_##thing##.string)
+#define INPOINT(thing) strstr(Macro_PointName(), tp_name_##thing.string)
 
 typedef char * MSGPART;
 
