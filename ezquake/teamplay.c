@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.67.2.2 2007-04-01 18:07:40 johnnycz Exp $
+    $Id: teamplay.c,v 1.67.2.3 2007-04-01 18:11:47 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -3289,6 +3289,7 @@ void TP_Msg_Report_f (void)
 
 void TP_Msg_Lost_f (void)
 {
+    MSGPART led = tp_sep_red;
     MSGPART msg1 = "";
     MSGPART msg2 = "";
 
@@ -3306,7 +3307,7 @@ void TP_Msg_Lost_f (void)
         msg2 = "lost $[{%d}$] %E";
     }
 
-    TP_Send_TeamSay("%s%s", msg1, msg2);
+    TP_Send_TeamSay("%s %s%s", led, msg1, msg2);
 }
 
 void TP_Msg_EnemyPowerup_f (void)
