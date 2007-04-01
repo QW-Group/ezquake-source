@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_cmds.c,v 1.21 2007-03-10 14:11:08 disconn3ct Exp $
+	$Id: pr_cmds.c,v 1.21.2.1 2007-04-01 17:47:18 johnnycz Exp $
 */
 
 #include "qwsvdef.h"
@@ -1327,7 +1327,7 @@ void PF_logfrag (void) {
 
 	SZ_Print (&svs.log[svs.logsequence & 1], s);
 	if (sv_fraglogfile) {
-		fprintf (sv_fraglogfile, s);
+		fprintf (sv_fraglogfile, "%s", s);
 		fflush (sv_fraglogfile);
 	}
 }
