@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (C) 2000-2003       Anton Gavrilov, A Nourai
 
 This program is free software; you can redistribute it and/or
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.68 2007-04-01 10:19:21 johnnycz Exp $
+    $Id: teamplay.c,v 1.69 2007-04-01 18:14:22 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -3214,9 +3214,9 @@ void TP_Point_f (void)
 #define HAVE_LG() (cl.stats[STAT_ITEMS] & IT_LIGHTNING)
 #define HOLD_RL() (cl.stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER)
 #define HOLD_LG() (cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING)
-#define TOOK(x) (!strcmp(Macro_Took(), tp_name_##x##.string))
+#define TOOK(x) (!strcmp(Macro_Took(), tp_name_##x.string))
 #define COLORED(c,str) "{&c" #c #str "&cfff}"
-#define INPOINT(thing) strstr(Macro_PointName(), tp_name_##thing##.string)
+#define INPOINT(thing) strstr(Macro_PointName(), tp_name_##thing.string)
 
 typedef char * MSGPART;
 
@@ -3289,6 +3289,7 @@ void TP_Msg_Report_f (void)
 
 void TP_Msg_Lost_f (void)
 {
+    MSGPART led = tp_sep_red;
     MSGPART msg1 = "";
     MSGPART msg2 = "";
 
@@ -3306,7 +3307,7 @@ void TP_Msg_Lost_f (void)
         msg2 = "lost $[{%d}$] %E";
     }
 
-    TP_Send_TeamSay("%s%s", msg1, msg2);
+    TP_Send_TeamSay("%s %s%s", led, msg1, msg2);
 }
 
 void TP_Msg_EnemyPowerup_f (void)
