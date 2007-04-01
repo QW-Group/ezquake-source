@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.67 2007-03-31 23:28:19 johnnycz Exp $
+    $Id: teamplay.c,v 1.68 2007-04-01 10:19:21 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -3226,13 +3226,14 @@ char *TP_ShortNick(void)
     extern cvar_t cl_fakename;
     static char buf[7];
 
-    if (*(cl_fakename.string))  return cl_fakename.string;
+    if (*(cl_fakename.string)) return "";
     else {
         snprintf(buf, sizeof(buf), "$\\%.3s:", TP_PlayerName());
         return buf;
     }
 }      
 
+// wrapper for snprintf & Cbuf_AddText that will add say_team nick part
 void TP_Send_TeamSay(char *format, ...)
 {
     char tp_msg_head[256], tp_msg_body[256], tp_msg[512];
