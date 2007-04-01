@@ -5,7 +5,6 @@
 ;  ezquake.nsi (this file)
 ;  ezquake-gl.exe (GLRelease)
 ;  ezquake.exe (Release)
-;  ezstart.exe (CVS/ezstart/)
 ;  gnu.txt (GNU GENERAL PUBLIC LICENSE, Version 2, June 1991)
 ;  mw_hook.dll (who uses this nowaday? :-/ )
 ;  qw/ (dir)
@@ -107,7 +106,6 @@ Section "!ezQuake client" Main
   
   ; Put file there
   File "ezquake-gl.exe"
-  File "ezstart.exe"
 
   CreateDirectory $INSTDIR\ezquake
   SetOutPath $INSTDIR\ezquake
@@ -201,7 +199,7 @@ Section "Start Menu Shortcuts" StartMenu
   SetOutPath $INSTDIR
   CreateDirectory "$SMPROGRAMS\ezQuake"
   CreateShortCut "$SMPROGRAMS\ezQuake\Uninstall.lnk" "$INSTDIR\ezuninstall.exe" ""
-  CreateShortCut "$SMPROGRAMS\ezQuake\ezQuake.lnk" "$INSTDIR\ezstart.exe" "" "$INSTDIR\ezquake-gl.exe"
+  CreateShortCut "$SMPROGRAMS\ezQuake\ezQuake.lnk" "$INSTDIR\ezquake-gl.exe" "" "$INSTDIR\ezquake-gl.exe"
   CreateShortCut "$SMPROGRAMS\ezQuake\Manual.lnk" "$INSTDIR\ezquake\manual\index.html" ""
 SectionEnd
 
@@ -219,7 +217,6 @@ Section "Uninstall"
   Delete "$INSTDIR\ezquake.exe"
   Delete "$INSTDIR\ezquake-gl.exe"
   Delete "$INSTDIR\ezquake-security.dll"
-  Delete "$INSTDIR\ezstart.exe"
   Delete "$INSTDIR\ezuninstall.exe"
   RMDir /r "$INSTDIR\ezquake\help"
   RMDir /r "$INSTDIR\ezquake\keymaps"
