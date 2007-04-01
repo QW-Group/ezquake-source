@@ -91,9 +91,11 @@ InstallDirRegKey HKLM "Software\ezQuake" "Install_dir"
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 
+
 ;--------------------------------
 ; Language
 !insertmacro MUI_LANGUAGE "English"
+
 
 ;--------------------------------
 ; The stuff to install
