@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.37 2007-03-21 17:03:10 vvd0 Exp $
+	$Id: host.c,v 1.38 2007-04-02 22:15:59 qqshka Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -544,12 +544,17 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	host_initialized = true;
 
-	// walk through all vars and forse OnChange event if cvar was modified
+	// walk through all vars and forse OnChange event if cvar was modified,
+	// also apply that to variables which mirrored in userinfo because of cl_parsefunchars was't applyed as this moment,
+	// same for serverinfo and may be this fix something also.
 	for ( v = NULL; (v = Cvar_Next ( v )); ) {
 		char val[2048];
 
-		if ( !v->modified || !v->OnChange )
-			continue; // not modified even that strange, or just have't OnChange
+//		if ( !v->modified )
+//			continue; // not modified even that strange at this moment
+
+		if ( Cvar_GetFlags( v ) & (CVAR_ROM | CVAR_INIT) )
+			continue;
 
 		snprintf(val, sizeof(val), "%s", v->string);
 		Cvar_Set(v, val);
