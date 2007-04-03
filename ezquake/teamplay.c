@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.67.2.3 2007-04-01 18:11:47 johnnycz Exp $
+    $Id: teamplay.c,v 1.67.2.4 2007-04-03 23:59:39 johnnycz Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -2305,8 +2305,8 @@ static qbool TP_IsFlagMessage(char *message)
 	        strstr(message, " has taken your Key") ||
 	        strstr(message, " has your flag") ||
 	        strstr(message, " took your flag!") ||
-	        strstr(message, " �� �� flag!") ||
-	        strstr(message, " ���� ��") || strstr(message, " �������") ||
+	        strstr(message, " &#65533;&#65533; &#65533;&#65533; flag!") ||
+	        strstr(message, " &#65533;&#65533;&#65533;&#65533; &#65533;&#65533;") || strstr(message, " &#65533;&#65533;&#65533;&#65533;&#65533;&#65533;&#65533;") ||
 	        strstr(message, " took the blue flag") || strstr(message, " took the red flag") ||
 	        strstr(message, " Has the Red Flag") || strstr(message, " Has the Blue Flag")
 	   )
@@ -3212,6 +3212,7 @@ void TP_Point_f (void)
 
 #define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
 #define HAVE_LG() (cl.stats[STAT_ITEMS] & IT_LIGHTNING)
+#define HOLD_GL() (cl.stats[STAT_ACTIVEWEAPON] == IT_GRENADE_LAUNCHER) // only used in tp_lost
 #define HOLD_RL() (cl.stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER)
 #define HOLD_LG() (cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING)
 #define TOOK(x) (!strcmp(Macro_Took(), tp_name_##x.string))
@@ -3273,7 +3274,8 @@ use the %-macros nor the $-macros.
 #define tp_ib_name_backpack	COLORED(F0F,pack)	// purple backpack
 #define tp_ib_name_quad	    COLORED(03F,quad)	// blue quad
 #define tp_ib_name_pent	    COLORED(e00,pent)	// red pent
-#define tp_ib_name_ring	    COLORED(ff0,ring)	// yellow eyes
+#define tp_ib_name_ring	    COLORED(ff0,ring)	// yellow ring
+#define tp_ib_name_eyes	    COLORED(ff0,eyes)	// yellow eyes (remember, ring is when you see the ring, eyes is when someone has rings!)
 #define tp_ib_name_enemy	COLORED(e00,enemy)	// red enemy
 #define tp_ib_name_team	    COLORED(0b0,team)	// green "team" (with powerup)
 #define tp_ib_name_quaded	COLORED(03F,quaded)	// blue "quaded"
@@ -3298,13 +3300,13 @@ void TP_Msg_Lost_f (void)
         msg1 = tp_ib_name_quad " over ";
     }
 
-    if (HOLD_RL() || HOLD_LG())
+    if (HOLD_RL() || HOLD_LG() || HOLD_GL())
     {
-        msg2 = "lost " COLORED(f0f,$weapon) " $[{%d}$] %E";
+        msg2 = "lost " COLORED(f0f,$weapon) " $[{%d}$] e:%E";
     }
     else
     {
-        msg2 = "lost $[{%d}$] %E";
+        msg2 = "lost $[{%d}$] e:%E";
     }
 
     TP_Send_TeamSay("%s %s%s", led, msg1, msg2);
@@ -3313,16 +3315,41 @@ void TP_Msg_Lost_f (void)
 void TP_Msg_EnemyPowerup_f (void)
 {
     MSGPART msg1 = "";
-    MSGPART msg2 = "";
 
-	msg1 = tp_ib_name_enemy " $[{%q}$]";
-	
-	if (INPOINT(quaded) || INPOINT(pented) || INPOINT(eyes))
+	if (INPOINT(quaded) && INPOINT(pented) && INPOINT(eyes))
 	{
-		msg2 = " at {%y}";
+	msg1 = tp_ib_name_quaded " " tp_ib_name_pented " " tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
+	}
+	else if (INPOINT(quaded) && INPOINT(pented))
+	{
+	msg1 = tp_ib_name_quaded " " tp_ib_name_pented " " tp_ib_name_enemy " at $[{%y}$]";
+	}
+	else if (INPOINT(quaded) && INPOINT(eyes))
+	{
+	msg1 = tp_ib_name_quaded " " tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
+	}
+	else if (INPOINT(pented) && INPOINT(eyes))
+	{
+	msg1 = tp_ib_name_pented " " tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
+	}
+	else if (INPOINT(quaded))
+	{
+	msg1 = tp_ib_name_quaded " " tp_ib_name_enemy " at $[{%y}$]";
+	}
+	else if (INPOINT(pented))
+	{
+	msg1 = tp_ib_name_pented " " tp_ib_name_enemy " at $[{%y}$]";
+	}
+	else if (INPOINT(eyes))
+	{
+	msg1 = tp_ib_name_enemy " " tp_ib_name_eyes " at $[{%y}$]";
+	}
+	else
+	{
+	msg1 = tp_ib_name_enemy " {%q}";
 	}
 	
-	TP_Send_TeamSay(tp_sep_red " %s%s", msg1, msg2);
+	TP_Send_TeamSay(tp_sep_red " %s", msg1);
 }
 
 void TP_Msg_SafeHelp(qbool safe)
@@ -3349,8 +3376,20 @@ void TP_Msg_SafeHelp(qbool safe)
 
 	msg3 = "$[{%l}$]";
 
-	if (TOOK(quad) || TOOK(pent) || TOOK(ring))
-		msg4 = tp_ib_name_team " %p";
+	if (TOOK(quad) && TOOK(pent) && TOOK(ring))
+		msg4 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring;
+	else if (TOOK(quad) && TOOK(pent))
+		msg4 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent;
+	else if (TOOK(quad) && TOOK(ring))
+		msg4 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_ring;
+	else if (TOOK(pent) && TOOK(ring))
+		msg4 = tp_ib_name_team " " tp_ib_name_pent " " tp_ib_name_ring;
+	else if (TOOK(quad))
+		msg4 = tp_ib_name_team " " tp_ib_name_quad;
+	else if (TOOK(pent))
+		msg4 = tp_ib_name_team " " tp_ib_name_pent;
+	else if (TOOK(ring))
+		msg4 = tp_ib_name_team " " tp_ib_name_ring;
 	else
 		msg4 = "";
 		
