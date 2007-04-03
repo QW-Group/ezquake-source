@@ -1390,10 +1390,15 @@ void BuildSurfaceDisplayList (msurface_t *fa) {
 	vertpage = 0;
 
 	// draw texture
-	poly = (glpoly_t *) Hunk_Alloc (sizeof(glpoly_t) + (lnumverts - 4) * VERTEXSIZE*sizeof(float));
-	poly->next = fa->polys;
-	fa->polys = poly;
-	poly->numverts = lnumverts;
+	if (!fa->polys) { // seems map loaded first time, so light maps loaded first time too
+		poly = (glpoly_t *) Hunk_Alloc (sizeof(glpoly_t) + (lnumverts - 4) * VERTEXSIZE*sizeof(float));
+		poly->next = fa->polys;
+		fa->polys = poly;
+		poly->numverts = lnumverts;
+	}
+	else { // seems vid_restart issued, so do not allocate memory, we alredy done it, I hope
+		poly = fa->polys;
+	}
 
 	for (i = 0; i < lnumverts; i++) {
 		lindex = currentmodel->surfedges[fa->firstedge + i];
