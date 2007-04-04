@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_win.c,v 1.32 2007-03-27 21:38:13 johnnycz Exp $
+	$Id: in_win.c,v 1.32.2.1 2007-04-04 22:03:36 qqshka Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -49,10 +49,10 @@ static HRESULT (WINAPI *pDirectInputCreateEx)(HINSTANCE hinst,
 		DWORD dwVersion, REFIID riidltf, LPVOID *ppvOut, LPUNKNOWN punkOuter) = NULL;
 
 // mouse variables
-cvar_t	m_filter = {"m_filter", "0"};
+cvar_t	m_filter = {"m_filter", "0", CVAR_ARCHIVE | CVAR_SILENT};
 
 // compatibility with old Quake -- setting to 0 disables KP_* codes
-cvar_t	cl_keypad = {"cl_keypad", "1"};
+cvar_t	cl_keypad = {"cl_keypad", "1", CVAR_ARCHIVE};
 
 int			mouse_buttons;
 int			mouse_oldbuttonstate;
@@ -60,10 +60,10 @@ POINT		current_pos;
 int			mx_accum, my_accum;
 
 static qbool	restore_spi;
-static int originalmouseparms[3], newmouseparms[3] = {0, 0, 0};
+static int originalmouseparms[3], newmouseparms[3];
 qbool mouseinitialized = false;
 static qbool	mouseparmsvalid, mouseactivatetoggle;
-static qbool	mouseshowtoggle = 1;
+static qbool	mouseshowtoggle = true;
 static qbool	dinput_acquired;
 static unsigned int mstate_di;
 unsigned int uiWheelMessage;
@@ -100,8 +100,8 @@ PDWORD	pdwRawValue[JOY_MAX_AXES];
 // this means that advanced controller configuration needs to be executed each time.
 // this avoids any problems with getting back to a default usage or when changing from one controller to another.
 // this way at least something works.
-cvar_t	in_joystick = {"joystick","0",CVAR_ARCHIVE};
-cvar_t	joy_name = {"joyname", "joystick"};
+cvar_t	in_joystick  = {"joystick","0",CVAR_ARCHIVE};
+cvar_t	joy_name     = {"joyname", "joystick"};
 cvar_t	joy_advanced = {"joyadvanced", "0"};
 cvar_t	joy_advaxisx = {"joyadvaxisx", "0"};
 cvar_t	joy_advaxisy = {"joyadvaxisy", "0"};
@@ -142,7 +142,7 @@ static qbool	dinput;
 // Some drivers send DIMOFS_Z, some send WM_MOUSEWHEEL, and some send both.
 // To get the mouse wheel to work in any case but avoid duplicate events,
 // we will only use one event source, wherever we receive the first event.
-mwheelmsg_t		in_mwheeltype = MWHEEL_UNKNOWN;
+mwheelmsg_t		in_mwheeltype;
 
 typedef struct MYDATA {
 	LONG  lX;                   // X axis goes here
@@ -182,9 +182,12 @@ static DIDATAFORMAT	df = {
 	NUM_OBJECTS,                // number of objects
 	rgodf,                      // and here they are
 };
+
 #else
 #define dinput false
 #endif
+
+typedef enum { mt_none = 0, mt_normal, mt_dinput } mousetype_t;
 
 // forward-referenced functions
 void IN_StartupJoystick (void);
@@ -192,21 +195,19 @@ void Joy_AdvancedUpdate_f (void);
 void IN_JoyMove (usercmd_t *cmd);
 
 // directinput features
-cvar_t	m_rate			= {"m_rate",	"125"};
-cvar_t	m_showrate		= {"m_showrate", "0"};
-qbool OnChange_IN_DInput(cvar_t *var, char *value);
-qbool OnChange_IN_M_Smooth(cvar_t *var, char *value);
-cvar_t  in_dinput = {"in_dinput", "0", 0, OnChange_IN_DInput};
-cvar_t  m_smooth = {"m_smooth", "0", 0, OnChange_IN_M_Smooth};
+cvar_t	m_rate			= {"m_rate",	      "125", CVAR_SILENT};
+cvar_t	m_showrate		= {"m_showrate",      "0",   CVAR_SILENT};
+cvar_t  in_mouse		= {"in_mouse",        "1",   CVAR_LATCH};  // NOTE: "1" is mt_normal
+cvar_t  in_m_smooth		= {"in_m_smooth",     "0",   CVAR_LATCH};
 
-qbool OnChange_IN_M_MWHook(cvar_t *var, char *value);
-cvar_t  m_mwhook = {"m_mwhook", "0", 0, OnChange_IN_M_MWHook};
+cvar_t  in_m_mwhook		= {"in_m_mwhook",     "0",   CVAR_LATCH};
 
-qbool OnChange_IN_M_OS_Parameters(cvar_t *var, char *value);
-cvar_t  m_os_parameters = {"m_os_parameters", "0", 0, OnChange_IN_M_OS_Parameters};
+cvar_t  in_m_os_parameters = {"in_m_os_parameters", "0",   CVAR_LATCH};
 
 qbool use_m_smooth = false;
 HANDLE m_event;
+
+HANDLE smooth_thread;
 
 #define	 M_HIST_SIZE  64
 #define	 M_HIST_MASK  (M_HIST_SIZE - 1)
@@ -224,6 +225,8 @@ int		 m_history_x_rseq =	0;		// read	sequence
 int		 m_history_y_rseq =	0;
 int		 wheel_up_count	= 0;
 int		 wheel_dn_count	= 0;
+
+int		 last_wseq_printed = 0;
 
 #define INPUT_CASE_DIMOFS_BUTTON(NUM)	\
 	case (DIMOFS_BUTTON0 + NUM):		\
@@ -250,7 +253,11 @@ DWORD WINAPI IN_SMouseProc (void* lpParameter) {
 	int value;
 
 	while (1) {
-		if ((ret = WaitForSingleObject(m_event,	INFINITE)) == WAIT_OBJECT_0) {
+
+		if (!use_m_smooth)
+			ExitThread(1); // someone kill us
+
+		if ((ret = WaitForSingleObject(m_event,	500/*INFINITE*/)) == WAIT_OBJECT_0) {
 			int mx = 0, my = 0;
 			DIDEVICEOBJECTDATA	od;
 			HRESULT hr;
@@ -318,7 +325,6 @@ DWORD WINAPI IN_SMouseProc (void* lpParameter) {
 
 int IN_GetMouseRate(void) {
 // returns frequency of mouse input in Hz
-	static last_wseq_printed;
 	double t;
 
 	if (m_history_x_wseq > last_wseq_printed) {
@@ -415,28 +421,61 @@ void IN_SMouseRead (int *mx, int *my) {
 	}
 }
 
+void IN_SMouseShutdown(void)
+{
+	double start = Sys_DoubleTime();
+
+	if (!use_m_smooth)
+		return;
+
+	use_m_smooth = false; // signaling to thread, time to die
+
+	//
+	// wait thread termination
+	//
+	while( smooth_thread ) {
+    	DWORD exitCode;
+
+    	if(!GetExitCodeThread(smooth_thread, &exitCode))
+			Sys_Error("IN_SMouseShutdown: GetExitCodeThread: failed");
+
+		if (exitCode != STILL_ACTIVE) {
+			// ok, thread terminated
+
+			// Terminating a thread does not necessarily remove the thread object from the operating system.
+			// A thread object is deleted when the last handle to the thread is closed. 
+ 			CloseHandle(smooth_thread);
+			smooth_thread = NULL;
+			break;
+		}
+
+		if (Sys_DoubleTime() - start > 5)
+			Sys_Error("IN_SMouseShutdown: thread does't respond");
+
+		Sys_MSleep(1); // sleep a bit, may be that help thread die fast
+	}
+
+	if (m_event) {
+		CloseHandle(m_event); // close event
+		m_event = NULL;
+	}
+}
+
 void IN_SMouseInit(void) {
 	HRESULT	res;
-	qbool old_m_smooth = use_m_smooth; // remove this variable when done TODO
+	DWORD threadid; // we does't use it, so its not global
 
-// TODO:
-//  if (use_m_smooth)
-//   IN_SMouseDeInit();
+	IN_SMouseShutdown();
 
-	use_m_smooth = false;
-
-	if (!COM_CheckParm("-m_smooth") && !m_smooth.integer)
+	if (!in_m_smooth.integer)
 		return;
 
 	// create event	object
-	if ( !old_m_smooth )
-	{
-		m_event	= CreateEvent(
-					NULL,		   // NULL secutity	attributes
+	m_event	= CreateEvent(
+					NULL,		  // NULL secutity	attributes
 					FALSE,		  // automatic reset
 					FALSE,		  // initial state = nonsignaled
 					NULL);		  // NULL name
-	}
 
 	if (m_event	== NULL)
 		return;
@@ -445,19 +484,28 @@ void IN_SMouseInit(void) {
 	if ((res = IDirectInputDevice_SetEventNotification(g_pMouse, m_event)) != DI_OK	 &&	 res !=	DI_POLLEDDEVICE)
 		return;
 
-	if ( !old_m_smooth )
-	{
-		if (!Sys_CreateThread(IN_SMouseProc, NULL))
-        	return;
+	use_m_smooth = true; // better set it to true ASAP, because it used in IN_SMouseProc()
 
-		Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
-		Cvar_Register(&m_rate);
-		Cvar_Register(&m_showrate);
+	smooth_thread = CreateThread (
+    	NULL,               // pointer to security attributes
+    	0,                  // initial thread stack size
+    	IN_SMouseProc,      // pointer to thread function
+    	NULL,               // argument for new thread
+    	CREATE_SUSPENDED,   // creation flags
+    	&threadid);         // pointer to receive thread ID
 
-		Cvar_ResetCurrentGroup();
+	if (!smooth_thread) {
+		Com_Printf("IN_SMouseInit: CreateThread: failed\n");
+
+		CloseHandle(m_event); // close event
+		m_event = NULL;
+
+		use_m_smooth = false;
+		return;
 	}
 
-	use_m_smooth = true;
+	SetThreadPriority(smooth_thread, THREAD_PRIORITY_HIGHEST);
+	ResumeThread(smooth_thread); // wake up thread
 }
 #else
 int IN_GetMouseRate(void) {
@@ -473,11 +521,15 @@ MW_DllFunc2 DLL_MW_SetHook = NULL;
 qbool MW_Hook_enabled = false;
 HINSTANCE mw_hDLL;
 
+static long mw_old_buttons = 0;
+
 static void MW_Set_Hook (void) {
 	if (MW_Hook_enabled) {
 		Com_Printf("MouseWare hook already loaded\n");
 		return;
 	}
+
+	mw_old_buttons = 0;
 
 	if (!(mw_hDLL = LoadLibrary("mw_hook.dll"))) {
 		Com_Printf("Couldn't find mw_hook.dll\n");
@@ -495,6 +547,7 @@ static void MW_Set_Hook (void) {
 		FreeLibrary(mw_hDLL);
 		return;
 	}
+
 	MW_Hook_enabled = true;
 	Com_Printf_State (PRINT_OK, "MouseWare hook initialized\n");
 }
@@ -519,10 +572,9 @@ static void MW_Shutdown(void) {
 void MW_Hook_Message (long buttons) {
 	int key, flag;
 	long changed_buttons;
-	static long old_buttons = 0;
 
 	buttons &= 0xFFF8;
-	changed_buttons = buttons ^ old_buttons;
+	changed_buttons = buttons ^ mw_old_buttons;
 
 	for (key = K_MOUSE4, flag = 8; key <= K_MOUSE8; key++, flag <<= 1) {
 		if (changed_buttons & flag) {
@@ -530,7 +582,7 @@ void MW_Hook_Message (long buttons) {
 		}
 	}
 
-	old_buttons = buttons;
+	mw_old_buttons = buttons;
 }
 
 void IN_UpdateClipCursor (void) {
@@ -570,10 +622,9 @@ void IN_ActivateMouse (void) {
 					if (FAILED(hr)) {
 						if ( !IN_InitDInput() ) {
 							Com_Printf ("WARNING: can't reinitializing dinput mouse...\n");
-#if 0 /* TODO: q3 fallback to normal mouse... we not, at least yet */
 							Com_Printf ("Falling back to Win32 mouse support...\n");
-							Cvar_Set( "in_mouse", "-1" );
-#endif
+							Cvar_LatchedSetValue( &in_mouse, mt_normal );
+							Cbuf_AddText ("in_restart\n");
 						}
 					}
 					else {
@@ -727,15 +778,15 @@ qbool IN_InitDInput (void) {
 }
 
 void IN_StartupMouse (void) {
-	if (COM_CheckParm ("-nomouse"))
+	if (in_mouse.integer == mt_none)
 		return;
 
 	mouseinitialized = true;
 
 	in_mwheeltype = MWHEEL_UNKNOWN;
 
-	if (COM_CheckParm ("-dinput") || in_dinput.integer) {
 #if DIRECTINPUT_VERSION	>= 0x0700
+	if (in_mouse.integer == mt_dinput) {
 		dinput = IN_InitDInput ();
 
 		if (dinput) {
@@ -746,24 +797,22 @@ void IN_StartupMouse (void) {
 		} else {
 			Com_Printf_State (PRINT_FAIL, "DirectInput not initialized\n");
 		}
-#else
-		Com_Printf ("DirectInput not supported in this build\n");
-#endif
 	}
+#endif
 
 	if (!dinput) {
 		mouseparmsvalid = SystemParametersInfo (SPI_GETMOUSE, 0, originalmouseparms, 0);
 
 		if (mouseparmsvalid) {
-			if (COM_CheckParm ("-noforcemspd") || m_os_parameters.integer == 1) 
+			if (in_m_os_parameters.integer == 1) 
 				newmouseparms[2] = originalmouseparms[2];
 
-			if (COM_CheckParm ("-noforcemaccel") || m_os_parameters.integer == 2) {
+			if (in_m_os_parameters.integer == 2) {
 				newmouseparms[0] = originalmouseparms[0];
 				newmouseparms[1] = originalmouseparms[1];
 			}
 
-            if (COM_CheckParm ("-noforcemparms") || m_os_parameters.integer > 2) {
+            if (in_m_os_parameters.integer > 2) {
 				newmouseparms[0] = originalmouseparms[0];
 				newmouseparms[1] = originalmouseparms[1];
 				newmouseparms[2] = originalmouseparms[2];
@@ -772,7 +821,7 @@ void IN_StartupMouse (void) {
 		mouse_buttons = 8;
 	}
 
-	if (COM_CheckParm ("-m_mwhook") || m_mwhook.integer)
+	if (in_m_mwhook.integer)
 		MW_Set_Hook();
 
 	// if a fullscreen video mode was set before the mouse was initialized, set the mouse state appropriately
@@ -780,25 +829,140 @@ void IN_StartupMouse (void) {
 		IN_ActivateMouse ();
 }
 
+//
+// we have million variables, reset it to some default values, so each IN_Init() acts same.
+// I've set only mouse variables, know nothing about JOYSTICK.
+//
+void IN_SetGlobals(void) {
+
+    input_initialized = false;
+
+	// reset to default params, like global variables have
+	mouse_buttons = mouse_oldbuttonstate = 0;
+	mx_accum      = my_accum = 0;
+	restore_spi   = false;
+	memset(&current_pos,       0, sizeof(current_pos));
+	memset(originalmouseparms, 0, sizeof(originalmouseparms));
+	memset(newmouseparms,      0, sizeof(newmouseparms));
+
+	mouseparmsvalid  = mouseactivatetoggle = false;
+	mouseshowtoggle  = true;  // hrm !!!
+	dinput_acquired  = false;
+	mstate_di        = 0;
+	uiWheelMessage   = 0;
+
+	mouseactive      = false;
+	mouseinitialized = false;
+
+	// Some drivers send DIMOFS_Z, some send WM_MOUSEWHEEL, and some send both.
+	// To get the mouse wheel to work in any case but avoid duplicate events,
+	// we will only use one event source, wherever we receive the first event.
+	in_mwheeltype = MWHEEL_UNKNOWN;
+
+#if DIRECTINPUT_VERSION	>= 0x0700
+	use_m_smooth  = false;
+	m_event       = NULL;
+	smooth_thread = NULL;
+
+	memset(m_history_x, 0, sizeof(m_history_x));	// history
+	memset(m_history_y, 0, sizeof(m_history_y));
+	m_history_x_wseq =	0;		// write sequence
+	m_history_y_wseq =	0;
+	m_history_x_rseq =	0;		// read	sequence
+	m_history_y_rseq =	0;
+	wheel_up_count	 =  0;
+	wheel_dn_count	 =  0;
+
+	last_wseq_printed=  0;
+
+	dinput = false;
+#endif
+}
+
 void IN_Init (void) {
+	//
+	// reset globals to default
+	//
+	IN_SetGlobals();
+
 	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_MOUSE); // mouse variables
+// can be changed at any time
+	Cvar_Register (&m_rate);
+	Cvar_Register (&m_showrate);
+
 	Cvar_Register (&m_filter);
-    Cvar_Register (&in_dinput);
-    Cvar_Register (&m_smooth);
-    Cvar_Register (&m_mwhook);
-    Cvar_Register (&m_os_parameters);
 
-	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_KEYBOARD); // keyboard variables
-	Cvar_Register (&cl_keypad);
+// latched
+    Cvar_Register (&in_mouse);
+    Cvar_Register (&in_m_smooth);
+    Cvar_Register (&in_m_mwhook);
+    Cvar_Register (&in_m_os_parameters);
 
-#ifdef WITH_KEYMAP
-	IN_StartupKeymap();
-#endif // WITH_KEYMAP
+    if (!host_initialized)
+    {
+		void IN_Restart_f(void);
 
-	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_JOY); // joystick variables
-	Cvar_Register (&in_joystick);
+		if (COM_CheckParm("-dinput"))
+			Cvar_LatchedSetValue (&in_mouse, mt_dinput);
+
+		if (COM_CheckParm ("-nomouse"))
+			Cvar_LatchedSetValue (&in_mouse, mt_none);
+
+		if (COM_CheckParm("-m_smooth"))
+			Cvar_LatchedSetValue (&in_m_smooth, 1);
+
+		if (COM_CheckParm ("-m_mwhook"))
+			Cvar_LatchedSetValue (&in_m_mwhook, 1);
+
+		if (COM_CheckParm ("-noforcemspd")) 
+			Cvar_LatchedSetValue (&in_m_os_parameters, 1);
+
+		if (COM_CheckParm ("-noforcemaccel"))
+			Cvar_LatchedSetValue (&in_m_os_parameters, 2);
+
+        if (COM_CheckParm ("-noforcemparms"))
+			Cvar_LatchedSetValue (&in_m_os_parameters, 3);
+
+		Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_KEYBOARD); // keyboard variables
+		Cvar_Register (&cl_keypad);
+    
+		Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_JOY); // joystick variables
+		Cvar_Register (&in_joystick);
+
+		Cmd_AddCommand ("in_restart", IN_Restart_f);
+	}
 
 	Cvar_ResetCurrentGroup ();
+
+	switch(in_mouse.integer) {
+		case mt_none:
+			break;
+
+		case mt_normal:
+			if (in_m_smooth.integer)
+				Com_Printf ("%s will be ignored with non dinput mouse\n", in_m_smooth.name);
+			break;
+				
+		case mt_dinput:
+#if DIRECTINPUT_VERSION	>= 0x0700
+			if (in_m_os_parameters.integer)
+				Com_Printf ("%s will be ignored with dinput mouse\n", in_m_os_parameters.name);
+			break;
+#else
+			Com_Printf ("DirectInput not supported in this build\n");
+			Cvar_LatchedSetValue (&in_mouse, mt_normal);
+			break;
+#endif
+		default:
+			Com_Printf("Unknow value %d of %s, using normal mouse\n", in_mouse.integer, in_mouse.name);
+			Cvar_LatchedSetValue (&in_mouse, mt_normal);
+			break;
+	}
+
+#ifdef WITH_KEYMAP
+	if (!host_initialized)
+		IN_StartupKeymap();
+#endif // WITH_KEYMAP
 
 	uiWheelMessage = RegisterWindowMessage ("MSWHEEL_ROLLMSG");
 
@@ -813,6 +977,9 @@ void IN_Shutdown (void) {
 	IN_ShowMouse ();
 
 #if DIRECTINPUT_VERSION	>= 0x0700
+
+	IN_SMouseShutdown();
+
     if (g_pMouse) {
 		IDirectInputDevice_Release(g_pMouse);
 		g_pMouse = NULL;
@@ -822,10 +989,41 @@ void IN_Shutdown (void) {
 		IDirectInput_Release(g_pdi);
 		g_pdi = NULL;
 	}
+
+	MW_Shutdown(); // mouseware hook
+
+	if (hInstDI) {
+		FreeLibrary(hInstDI);
+		hInstDI = NULL;
+	}
+
+#else
+
+	MW_Shutdown(); // mouseware hook
+
 #endif
-	MW_Shutdown();
+
+	//
+	// reset globals to default
+	//
+	IN_SetGlobals();
 
     input_initialized = false;
+}
+
+void IN_Restart_f(void)
+{
+	if (!host_initialized) { // sanity
+		Com_Printf("Can't do %s yet\n", Cmd_Argv(0));
+		return;
+	}
+
+	IN_Shutdown();
+	IN_Init();
+
+	// hrm, force activate mouse
+	IN_ActivateMouse ();
+	IN_HideMouse ();
 }
 
 void IN_MouseEvent (int mstate) 
@@ -1502,43 +1700,4 @@ int isShiftDown(void)
     return 0;
 //    extern qbool    keydown[256];
 //    return keydown[K_SHIFT] || keydown[K_RSHIFT];
-}
-
-
-// the if(!input_initialized) check doesn't make sense yet,
-// these OnChage functions will be called even 
-qbool OnChange_IN_DInput(cvar_t *var, char *value) {
-    if (!input_initialized) return false; // this doesn't make sense here yet
-
-    Com_Printf("Save your config now and DirectInput will be de/activated on next client start\n");
-    return false;
-}
-
-qbool OnChange_IN_M_Smooth(cvar_t *var, char *value) {
-    if (!input_initialized) return false;
-
-    if (!in_dinput.integer && atoi(value)) {
-        Com_Printf("Don't forget to turn on DirectInput too (in_dinput)\n");
-    }
-    Com_Printf("Save your config now and mouse smoothing will be de/activated on next client start\n");
-    return false;
-}
-
-qbool OnChange_IN_M_MWHook(cvar_t *var, char *value) {
-    if (!input_initialized) return false;
-
-    Com_Printf("Save your config now and MouseWare Hook will be activated on next client start\n");
-    return false;
-}
-
-qbool OnChange_IN_M_OS_Parameters(cvar_t *var, char *value) {
-    int newval = atoi(value);
-
-    if (!input_initialized) return false;
-
-    if (newval && in_dinput.value) {
-        Com_Printf("This setting has no effect when using DirectInput");
-    }
-    Com_Printf("Save your config now and the mouse parameters will be changed on next client start\n");
-    return false;
 }
