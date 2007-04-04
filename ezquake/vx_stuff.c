@@ -68,6 +68,14 @@ cvar_t		amf_tracker_y = {"r_tracker_y", "0", CVAR_ARCHIVE};
 cvar_t		amf_tracker_frame_color = {"r_tracker_frame_color", "0 0 0 0", CVAR_ARCHIVE};
 cvar_t		amf_tracker_scale = {"r_tracker_scale", "1", CVAR_ARCHIVE};
 cvar_t		amf_tracker_images_scale = {"r_tracker_images_scale", "1", CVAR_ARCHIVE};
+cvar_t		amf_tracker_color_good      = {"r_tracker_color_good",     "090", CVAR_ARCHIVE}; // good news
+cvar_t		amf_tracker_color_bad       = {"r_tracker_color_bad",      "900", CVAR_ARCHIVE}; // bad news
+cvar_t		amf_tracker_color_tkgood    = {"r_tracker_color_tkgood",   "990", CVAR_ARCHIVE}; // team kill, not on ur team
+cvar_t		amf_tracker_color_tkbad     = {"r_tracker_color_tkbad",    "009", CVAR_ARCHIVE}; // team kill, on ur team
+cvar_t		amf_tracker_color_myfrag    = {"r_tracker_color_myfrag",   "090", CVAR_ARCHIVE}; // use this color for frag which u done
+cvar_t		amf_tracker_color_fragonme  = {"r_tracker_color_fragonme", "900", CVAR_ARCHIVE}; // use this color when u frag someone
+cvar_t		amf_tracker_color_suicide   = {"r_tracker_color_suicide",  "900", CVAR_ARCHIVE}; // use this color when u suicides
+
 cvar_t		amf_part_gunshot = {"gl_particle_gunshots", "0", CVAR_ARCHIVE};
 cvar_t		amf_part_gunshot_type = {"gl_particle_gunshots_type", "1", CVAR_ARCHIVE};
 cvar_t		amf_part_spikes = {"gl_particle_spikes", "0", CVAR_ARCHIVE}; // 0.1
@@ -421,6 +429,14 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_tracker_frame_color);
 	Cvar_Register (&amf_tracker_scale);
 	Cvar_Register (&amf_tracker_images_scale);
+
+	Cvar_Register (&amf_tracker_color_good);	
+	Cvar_Register (&amf_tracker_color_bad);
+	Cvar_Register (&amf_tracker_color_tkgood);
+	Cvar_Register (&amf_tracker_color_tkbad);
+	Cvar_Register (&amf_tracker_color_myfrag);
+	Cvar_Register (&amf_tracker_color_fragonme);
+	Cvar_Register (&amf_tracker_color_suicide);
 
 	Cvar_ResetCurrentGroup();
 

@@ -118,6 +118,13 @@ extern cvar_t amf_tracker_y;
 extern cvar_t amf_tracker_frame_color;
 extern cvar_t amf_tracker_scale;
 extern cvar_t amf_tracker_images_scale;
+extern cvar_t amf_tracker_color_good;		// good news
+extern cvar_t amf_tracker_color_bad;		// bad news
+extern cvar_t amf_tracker_color_tkgood;		// team kill, not on ur team
+extern cvar_t amf_tracker_color_tkbad;		// team kill, on ur team
+extern cvar_t amf_tracker_color_myfrag;		// use this color for frag which u done
+extern cvar_t amf_tracker_color_fragonme;	// use this color when u frag someone
+extern cvar_t amf_tracker_color_suicide;	// use this color when u suicides
 
 
 void SCR_DrawAMFstats(void);
