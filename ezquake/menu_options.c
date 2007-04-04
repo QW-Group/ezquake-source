@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60 2007-03-31 15:24:10 johnnycz Exp $
+		$Id: menu_options.c,v 1.60.2.1 2007-04-04 11:10:34 johnnycz Exp $
 
 */
 
@@ -181,7 +181,7 @@ void SshotformatToggle(qbool back) {
 	else if (!strcmp(scr_sshot_format.string, "tga")) Cvar_Set(&scr_sshot_format, "jpg");
 }
 
-extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_weaponhide, con_funchars_mode, con_notifytime, scr_consize, ignore_opponents, _con_notifylines,
+extern cvar_t mvd_autotrack, /* mvd_moreinfo, */ mvd_status, cl_weaponpreselect, cl_weaponhide, con_funchars_mode, con_notifytime, scr_consize, ignore_opponents, _con_notifylines,
 	ignore_qizmo_spec, ignore_spec, msg_filter, crosshair, crosshairsize, cl_smartjump, scr_coloredText,
 	cl_rollangle, cl_rollspeed, v_gunkick, v_kickpitch, v_kickroll, v_kicktime, v_viewheight, match_auto_sshot, match_auto_record, match_auto_logconsole,
 	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, scr_clock, scr_gameclock, show_fps, rate, cl_c2sImpulseBackup,
@@ -377,7 +377,7 @@ setting settmultiview_arr[] = {
 	ADDSET_SEPARATOR("Multiview Demos"),
 	ADDSET_NAMED	("Autohud", mvd_autohud, mvdautohud_enum),
 	ADDSET_NAMED	("Autotrack", mvd_autotrack, mvdautotrack_enum),
-	ADDSET_BOOL		("Moreinfo", mvd_moreinfo), 
+	// missing ADDSET_BOOL		("Moreinfo", mvd_moreinfo), 
 	ADDSET_BOOL     ("Status", mvd_status),
 };
 
@@ -569,7 +569,7 @@ setting settbinds_arr[] = {
 	ADDSET_SEPARATOR("Demo Playback"),
 	ADDSET_BIND("Stop", "disconnect"),
 	ADDSET_BIND("Play", "cl_demospeed 1;echo Playing demo."),
-	ADDSET_BIND("Pause", "cl_demospeed 0;echo Demo paused."),
+	ADDSET_BIND("Pause", "cl_demospeed 0;echo Demo paused.")
 };
 
 void CT_Opt_Binds_Draw (int x2, int y2, int w, int h, CTab_t *tab, CTabPage_t *page) {
@@ -579,6 +579,8 @@ void CT_Opt_Binds_Draw (int x2, int y2, int w, int h, CTab_t *tab, CTabPage_t *p
 int CT_Opt_Binds_Key (int k, CTab_t *tab, CTabPage_t *page) {
 	return Settings_Key(&settbinds, k);
 }
+
+void OnShow_SettBinds(void) { Settings_OnShow(&settbinds); }
 
 qbool CT_Opt_Binds_Mouse_Event(const mouse_state_t *ms)
 {
@@ -675,7 +677,7 @@ void LoadHQPreset(void) {
 #endif
 }
 
-const char* grenadetrail_enum[] = { "off", "normal", "grenade", "alt", "blood", "big blood", "tracer1", "tracer2", "plasma", "lavaball", "fuel rod", "plasma rocket" };
+const char* grenadetrail_enum[] = { "off", "normal", "grenade", "alt normal", "slight blood", "big blood", "tracer 1", "tracer 2", "plasma", "lavaball", "fuel rod", "plasma rocket" };
 
 extern cvar_t cl_maxfps;
 const char* FpslimitRead(void) {
@@ -1251,7 +1253,7 @@ CTabPage_Handlers_t options_multiview_handlers = {
 CTabPage_Handlers_t options_controls_handlers = {
 	CT_Opt_Binds_Draw,
 	CT_Opt_Binds_Key,
-	NULL,
+	OnShow_SettBinds,
 	CT_Opt_Binds_Mouse_Event
 };
 
