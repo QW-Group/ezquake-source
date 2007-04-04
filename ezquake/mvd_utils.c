@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.35 2007-03-11 06:01:41 disconn3ct Exp $
+	$Id: mvd_utils.c,v 1.35.2.1 2007-04-04 11:10:53 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -357,7 +357,8 @@ cvar_t mvd_pc_view_3 = {"mvd_pc_view_3",""};
 cvar_t mvd_pc_view_4 = {"mvd_pc_view_4",""};
 
 
-cvar_t mvd_moreinfo = {"mvd_moreinfo","0"};
+// no implementation of this anywhere
+// cvar_t mvd_moreinfo = {"mvd_moreinfo","0"};
 
 
 
