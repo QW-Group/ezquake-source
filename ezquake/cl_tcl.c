@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.20.2.2 2007-04-05 23:11:25 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.20.2.3 2007-04-05 23:20:24 disconn3ct Exp $
  */
 
 #ifdef WITH_TCL
@@ -189,7 +189,7 @@ static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *cons
 	Cmd_TokenizeString (line);
 
 	// Execute 'line' in the 'cbuf_tcl' command buffer
-	Cmd_ExecuteStringEx (&cbuf_current, line);
+	Cmd_ExecuteStringEx (cbuf_current, line);
 /*	cbuf_old = cbuf_current;
 	cbuf_current = &cbuf_tcl;
 
