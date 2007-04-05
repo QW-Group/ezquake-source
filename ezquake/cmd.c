@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.58.2.1 2007-04-05 21:03:06 disconn3ct Exp $
+    $Id: cmd.c,v 1.58.2.2 2007-04-05 23:11:25 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -36,7 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 qbool CL_CheckServerCommand (void);
 #endif
 
-static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
+void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
 
 cvar_t cl_warncmd = {"cl_warncmd", "0"};
 
@@ -1404,7 +1404,7 @@ qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
 #endif /* SERVERONLY */
 
 //A complete command line has been parsed, so try to execute it
-static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
+void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 {
 	cvar_t *v;
 	cmd_function_t *cmd;
@@ -1425,7 +1425,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 #endif
 
 	if (!Cmd_Argc())
-		goto done;		// no tokens
+		goto done; // no tokens
 
 #ifndef SERVERONLY
 	if (cbuf_current == &cbuf_svc) {
@@ -1448,6 +1448,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 				goto done;
 			}
 		}
+
 		/*
 		                char **s;
 				if (cbuf_current == &cbuf_safe) {

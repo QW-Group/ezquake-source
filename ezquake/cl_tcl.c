@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.20.2.1 2007-04-05 21:03:06 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.20.2.2 2007-04-05 23:11:25 disconn3ct Exp $
  */
 
 #ifdef WITH_TCL
@@ -153,6 +153,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 	return (TCL_OK);
 }
 
+extern void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
 static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *const objv[])
 {
 	Tcl_Obj *args;
@@ -160,7 +161,7 @@ static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *cons
 	char *str_utf, *line, *argv;
 	int str_utf_len;
 	int i;
-	cbuf_t *cbuf_old;
+//	cbuf_t *cbuf_old;
 
 
 	if (objc < 2) {
@@ -188,7 +189,8 @@ static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *cons
 	Cmd_TokenizeString (line);
 
 	// Execute 'line' in the 'cbuf_tcl' command buffer
-	cbuf_old = cbuf_current;
+	Cmd_ExecuteStringEx (&cbuf_current, line);
+/*	cbuf_old = cbuf_current;
 	cbuf_current = &cbuf_tcl;
 
 	Cbuf_AddText (line);
@@ -196,6 +198,7 @@ static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *cons
 	Cbuf_ExecuteEx (&cbuf_tcl);
 
 	cbuf_current = cbuf_old;
+*/
 
 	// Free memory
 	Tcl_DStringFree (&str_byte);
