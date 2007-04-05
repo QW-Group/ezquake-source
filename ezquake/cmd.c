@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.58 2007-03-17 06:04:32 qqshka Exp $
+    $Id: cmd.c,v 1.58.2.1 2007-04-05 21:03:06 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -44,6 +44,9 @@ cbuf_t	cbuf_main;
 #ifndef SERVERONLY
 cbuf_t	cbuf_svc;
 cbuf_t	cbuf_safe, cbuf_formatted_comms;
+#ifdef WITH_TCL
+cbuf_t	cbuf_tcl;
+#endif
 #endif
 
 cbuf_t	*cbuf_current = NULL;
@@ -109,6 +112,9 @@ void Cbuf_Init (void)
 	Cbuf_Register(&cbuf_svc, 1 << 13); // 8kb
 	Cbuf_Register(&cbuf_safe, 1 << 11); // 2kb
 	Cbuf_Register(&cbuf_formatted_comms, 1 << 11); // 2kb
+#ifdef WITH_TCL
+	Cbuf_Register(&cbuf_tcl, 1 << 11); // 2kb
+#endif
 #endif
 }
 
