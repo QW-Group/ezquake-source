@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.45 2007-03-16 07:22:37 disconn3ct Exp $
+    $Id: cvar.c,v 1.46 2007-04-06 20:15:39 qqshka Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -222,6 +222,12 @@ void Cvar_Set (cvar_t *var, char *value)
 
 	if (!var)
 		return;
+
+	// C code may wrongly use Cvar_Set on non registered variable, some 99.99% accurate check
+	if (!var->next /* this is fast, but a bit flawed logic */ && !Cvar_FindVar(var->name)) {
+		Com_Printf("Cvar_Set: on non linked var %s\n", var->name);
+		return;
+	}
 
 	if (var->flags & CVAR_ROM) {
 		Com_Printf ("\"%s\" is write protected\n", var->name);
