@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.35.2.1 2007-04-04 11:10:53 johnnycz Exp $
+	$Id: mvd_utils.c,v 1.35.2.2 2007-04-06 16:59:23 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -357,8 +357,7 @@ cvar_t mvd_pc_view_3 = {"mvd_pc_view_3",""};
 cvar_t mvd_pc_view_4 = {"mvd_pc_view_4",""};
 
 
-// no implementation of this anywhere
-// cvar_t mvd_moreinfo = {"mvd_moreinfo","0"};
+cvar_t mvd_moreinfo = {"mvd_moreinfo","0"};
 
 
 
@@ -987,6 +986,10 @@ void MVD_Status_Announcer_f (int i, int z){
 	if (mvd_new_info[i].info.info[z].mention==1)
 	{
 		mvd_new_info[i].info.info[z].mention = 0;
+
+		if (!mvd_moreinfo.integer)
+			return;
+
 		switch (z){
 			case 2: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ssg.string,TP_LocationName(*pl));break;
 			case 3: Com_Printf("%s Took %s @ %s\n",pn, tp_name_ng.string,TP_LocationName(*pl));break;
@@ -1006,6 +1009,10 @@ void MVD_Status_Announcer_f (int i, int z){
 	else if (mvd_new_info[i].info.info[z].mention==-1)
 	{
 		mvd_new_info[i].info.info[z].mention = 0;
+
+		if (!mvd_moreinfo.integer)
+			return;
+
 		switch (z) {
 			case 5: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_gl.string,TP_LocationName(*pl));break;
 			case 6: Com_Printf("%s Lost %s @ %s\n",pn, tp_name_rl.string,TP_LocationName(*pl));break;
@@ -1982,6 +1989,7 @@ void MVD_Utils_Init (void) {
 	Cvar_Register (&mvd_pc_view_3);
 	Cvar_Register (&mvd_pc_view_4);
 
+	Cvar_Register (&mvd_moreinfo);
 	
 	Cmd_AddCommand ("mvd_runs",MVD_List_Runs_f);
 	Cmd_AddCommand ("mvd_xml",MVD_Status_Xml);

@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.1 2007-04-04 11:10:34 johnnycz Exp $
+		$Id: menu_options.c,v 1.60.2.2 2007-04-06 16:59:23 qqshka Exp $
 
 */
 
@@ -181,7 +181,7 @@ void SshotformatToggle(qbool back) {
 	else if (!strcmp(scr_sshot_format.string, "tga")) Cvar_Set(&scr_sshot_format, "jpg");
 }
 
-extern cvar_t mvd_autotrack, /* mvd_moreinfo, */ mvd_status, cl_weaponpreselect, cl_weaponhide, con_funchars_mode, con_notifytime, scr_consize, ignore_opponents, _con_notifylines,
+extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_weaponhide, con_funchars_mode, con_notifytime, scr_consize, ignore_opponents, _con_notifylines,
 	ignore_qizmo_spec, ignore_spec, msg_filter, crosshair, crosshairsize, cl_smartjump, scr_coloredText,
 	cl_rollangle, cl_rollspeed, v_gunkick, v_kickpitch, v_kickroll, v_kicktime, v_viewheight, match_auto_sshot, match_auto_record, match_auto_logconsole,
 	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, scr_clock, scr_gameclock, show_fps, rate, cl_c2sImpulseBackup,
@@ -377,7 +377,7 @@ setting settmultiview_arr[] = {
 	ADDSET_SEPARATOR("Multiview Demos"),
 	ADDSET_NAMED	("Autohud", mvd_autohud, mvdautohud_enum),
 	ADDSET_NAMED	("Autotrack", mvd_autotrack, mvdautotrack_enum),
-	// missing ADDSET_BOOL		("Moreinfo", mvd_moreinfo), 
+	ADDSET_BOOL		("Moreinfo", mvd_moreinfo), 
 	ADDSET_BOOL     ("Status", mvd_status),
 };
 
