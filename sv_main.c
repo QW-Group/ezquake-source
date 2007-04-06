@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_main.c,v 1.23 2006-11-07 13:14:15 vvd0 Exp $
+	$Id: sv_main.c,v 1.24 2007-04-06 21:16:03 qqshka Exp $
 */
 
 #include "qwsvdef.h"
@@ -359,6 +359,7 @@ void SVC_Ping (void) {
 //With a challenge, they must give a valid IP address.
 void SVC_GetChallenge (void) {
 	int i, oldest, oldestTime;
+	char buf[256], *over;
 
 	oldest = 0;
 	oldestTime = 0x7fffffff;
@@ -382,8 +383,26 @@ void SVC_GetChallenge (void) {
 	}
 
 	// send it back
-	Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c%i", S2C_CHALLENGE, 
-			svs.challenges[i].challenge);
+
+	snprintf(buf, sizeof(buf), "%c%i", S2C_CHALLENGE, svs.challenges[i].challenge);
+	over = buf + strlen(buf) + 1;
+
+#ifdef PROTOCOL_VERSION_FTE
+	//tell the client what fte extensions we support
+	if (svs.fteprotocolextensions)
+	{
+		int lng;
+
+		lng = LittleLong(PROTOCOL_VERSION_FTE);
+		memcpy(over, &lng, sizeof(int)); // FIXME sizeof(int) or sizeof(long)???
+		over += 4;
+
+		lng = LittleLong(svs.fteprotocolextensions);
+		memcpy(over, &lng, sizeof(int));
+		over += 4;
+	}
+#endif
+	Netchan_OutOfBand(NS_SERVER, net_from, over-buf, buf);
 }
 
 //A connection request that did not come from the master
@@ -394,6 +413,9 @@ void SVC_DirectConnect (void) {
 	client_t	*cl, *newcl;
 	edict_t		*ent;
 	qbool	spectator;
+#ifdef PROTOCOL_VERSION_FTE
+	unsigned int protextsupported = 0;
+#endif
 
 	version = atoi(Cmd_Argv(1));
 	if (version != PROTOCOL_VERSION) {
@@ -407,6 +429,28 @@ void SVC_DirectConnect (void) {
 
 	// note an extra byte is needed to replace spectator key
 	strlcpy (userinfo, Cmd_Argv(4), sizeof(userinfo)-1);
+
+#ifdef PROTOCOL_VERSION_FTE
+
+//
+// WARNING: WARNING: WARNING: using Cmd_TokenizeString() so do all Cmd_Argv() above.
+//
+
+	while(!msg_badread)
+	{
+		Cmd_TokenizeString(MSG_ReadStringLine());
+		switch(Q_atoi(Cmd_Argv(0)))
+		{
+		case PROTOCOL_VERSION_FTE:
+			protextsupported = Q_atoi(Cmd_Argv(1));
+			Com_DPrintf("Client supports 0x%x fte extensions\n", protextsupported);
+			break;
+		}
+	}
+
+	msg_badread = false;
+
+#endif
 
 	// see if the challenge is valid
 	if (net_from.type != NA_LOOPBACK) {
@@ -502,6 +546,10 @@ void SVC_DirectConnect (void) {
 	// this is the only place a client_t is ever initialized
 	memset (newcl, 0, sizeof(*newcl));
 	newcl->userid = SV_GenerateUserID();
+
+#ifdef PROTOCOL_VERSION_FTE
+	newcl->fteprotocolextensions = protextsupported;
+#endif
 
 	strlcpy (newcl->userinfo, userinfo, sizeof(newcl->userinfo));
 
@@ -1102,6 +1150,10 @@ void SV_InitLocal (void) {
 
 	for (i = 1; i < MAX_MODELS; i++)
 		snprintf (localmodels[i], sizeof(localmodels[i]), "*%i", i);
+
+#ifdef PEXT_CHUNKEDDOWNLOADS
+	svs.fteprotocolextensions |= PEXT_CHUNKEDDOWNLOADS;
+#endif
 
 	Info_SetValueForStarKey (svs.info, "*version", va("ezQuake %s", VersionString()), MAX_SERVERINFO_STRING);
 //	Info_SetValueForStarKey (svs.info, "*ez_version", VersionString(), MAX_SERVERINFO_STRING);

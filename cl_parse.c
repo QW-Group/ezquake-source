@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.82 2007-03-29 01:13:08 qqshka Exp $
+	$Id: cl_parse.c,v 1.83 2007-04-06 21:16:03 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -440,6 +440,9 @@ qbool CL_CheckOrDownloadFile (char *filename) {
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted
 	// a runt file wont be left
+
+	cls.downloadmethod = DL_QW; // by default its DL_QW, if server support DL_QWCHUNKED it will be changed.
+
 	COM_StripExtension (cls.downloadname, cls.downloadtempname);
 	strlcat (cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 
@@ -661,6 +664,201 @@ void Sound_NextDownload (void) {
 	MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, 0));
 }
 
+#ifdef PEXT_CHUNKEDDOWNLOADS
+
+//
+// FTE's chunked download
+//
+
+extern void CL_RequestNextDownload (void);
+
+void CL_SendChunkDownloadReq(void)
+{
+	int i;
+
+	if (cls.downloadmethod != DL_QWCHUNKS)
+		return;
+
+	i = CL_RequestADownloadChunk();
+
+	if (i < 0)
+		; //we can stop downloading now.
+	else {
+		char msg[64];
+		snprintf(msg, sizeof(msg), "nextdl %i", i);
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		SZ_Print (&cls.netchan.message, msg);
+	}
+}
+
+#define MAXBLOCKS 64	//must be power of 2
+#define DLBLOCKSIZE 1024
+
+double downloadstarttime;
+
+int downloadsize;
+int receivedbytes;
+int recievedblock[MAXBLOCKS];
+int firstblock;
+int blockcycle;
+
+static void MSG_ReadData (void *data, int len)
+{
+	int		i;
+
+	for (i=0 ; i<len ; i++)
+		((byte *)data)[i] = MSG_ReadByte ();
+}
+
+void CL_ParseChunkedDownload(void)
+{
+	byte *svname;
+	int totalsize;
+	int chunknum;
+	char data[DLBLOCKSIZE];
+
+	chunknum = MSG_ReadLong();
+	if (chunknum < 0)
+	{
+		if (cls.download) { // ensure FILE is closed
+			Com_Printf ("cls.download shouldn't have been set\n");
+			fclose (cls.download);
+			cls.download = NULL;
+		}
+
+		totalsize = MSG_ReadLong();
+		svname = MSG_ReadString();
+
+		if (cls.demoplayback)
+			return;
+
+		if (totalsize < 0)
+		{
+			if (totalsize == -2)
+				Com_Printf("Server permissions deny downloading file %s\n", svname);
+			else
+				Com_Printf("Couldn't find file %s on the server\n", svname);
+
+			CL_RequestNextDownload();
+			return;
+		}
+
+		if (cls.downloadmethod == DL_QWCHUNKS)
+			Host_Error("Received second download - \"%s\"\n", svname);
+
+// FIXME: damn, fixme!!!!!
+//		if (strcasecmp(cls.downloadname, svname))
+//			Host_Error("Server sent the wrong download - \"%s\" instead of \"%s\"\n", svname, cls.downloadname);
+
+		//start the new download
+		COM_CreatePath (cls.downloadtempname);		
+
+		if ( !(cls.download = fopen (cls.downloadtempname, "wb")) ) {
+			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
+			CL_RequestNextDownload ();
+			return;
+		}
+
+		cls.downloadmethod  = DL_QWCHUNKS;
+		cls.downloadpercent = 0;
+		downloadsize        = totalsize;
+
+		downloadstarttime   = Sys_DoubleTime();
+
+		firstblock    = 0;
+		receivedbytes = 0;
+		blockcycle    = -1;	//so it requests 0 first. :)
+		memset(recievedblock, 0, sizeof(recievedblock));
+		return;
+	}
+
+//	Com_Printf("Received dl block %i: ", chunknum);
+
+	MSG_ReadData(data, DLBLOCKSIZE);
+
+	if (!cls.download) { // hrm ?
+//		Com_Printf ("cls.download not set\n");
+		return;
+	}
+
+	if (cls.downloadmethod != DL_QWCHUNKS)
+		Host_Error("cls.downloadmethod != DL_QWCHUNKS\n");
+
+	if (cls.demoplayback)
+	{	//err, yeah, when playing demos we don't actually pay any attention to this.
+		return;
+	}
+	if (chunknum < firstblock)
+	{
+//		Com_Printf("too old\n", chunknum);
+		return;
+	}
+	if (chunknum-firstblock >= MAXBLOCKS)
+	{
+//		Com_Printf("too new!\n", chunknum);
+		return;
+	}
+
+	if (recievedblock[chunknum&(MAXBLOCKS-1)])
+	{
+//		Com_Printf("duplicated\n", chunknum);
+		return;
+	}
+//	Com_Printf("usable\n", chunknum);
+	receivedbytes+=DLBLOCKSIZE;
+	recievedblock[chunknum&(MAXBLOCKS-1)] = true;
+
+	while(recievedblock[firstblock&(MAXBLOCKS-1)])
+	{
+		recievedblock[firstblock&(MAXBLOCKS-1)] = false;
+		firstblock++;
+	}
+
+	fseek(cls.download, chunknum*DLBLOCKSIZE, SEEK_SET);
+	if (downloadsize - chunknum*DLBLOCKSIZE < DLBLOCKSIZE)	//final block is actually meant to be smaller than we recieve.
+		fwrite(data, 1, downloadsize - chunknum*DLBLOCKSIZE, cls.download);
+	else
+		fwrite(data, 1, DLBLOCKSIZE, cls.download);
+
+	cls.downloadpercent = receivedbytes/(float)downloadsize*100;
+}
+
+int CL_RequestADownloadChunk(void)
+{
+	int i;
+	int b;
+
+	if (cls.downloadmethod != DL_QWCHUNKS)
+	{
+		Com_Printf("download not initiated\n");
+		return 0;
+	}
+
+	blockcycle++;
+	for (i = 0; i < MAXBLOCKS; i++)
+	{
+		b = ((i+blockcycle)&(MAXBLOCKS-1)) + firstblock;
+
+		if (!recievedblock[b&(MAXBLOCKS-1)])	//don't ask for ones we've already got.
+		{
+			if (b >= (downloadsize+DLBLOCKSIZE-1)/DLBLOCKSIZE)	//don't ask for blocks that are over the size of the file.
+				continue;
+//			Com_Printf("Requesting block %i\n", b);
+			return b;
+		}
+	}
+
+//	Com_Printf("^1 EOF?\n");
+
+	Com_DPrintf("Download took %i seconds\n", (int)(Sys_DoubleTime() - downloadstarttime));
+
+	CL_FinishDownload(true); // this also request next dl
+
+	return -1;
+}
+
+#endif // PEXT_CHUNKEDDOWNLOADS
+
 void CL_RequestNextDownload (void) {
 	switch (cls.downloadtype) {
 	case dl_single:
@@ -685,6 +883,31 @@ void CL_RequestNextDownload (void) {
 	}
 }
 
+void CL_FinishDownload(qbool rename_files)
+{
+	if (cls.download)
+		fclose (cls.download);
+
+	//
+	// if we fail of some kind, do not rename files
+	//
+	if (rename_files) {
+		// rename the temp file to its final name
+		if (strcmp(cls.downloadtempname, cls.downloadname))
+			if (rename(cls.downloadtempname, cls.downloadname))
+				Com_Printf ("Failed to rename %s to %s.\n",	cls.downloadtempname, cls.downloadname);
+	}
+
+	cls.download = NULL;
+	cls.downloadpercent = 0;
+	cls.downloadmethod = DL_NONE;
+
+	// get another file if needed
+
+	if (cls.state != ca_disconnected)
+		CL_RequestNextDownload ();
+}
+
 //A download message has been received from the server
 void CL_ParseDownload (void) {
 	int size, percent;
@@ -692,13 +915,16 @@ void CL_ParseDownload (void) {
 	static float time = 0;
 	static int s = 0;
 
-#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+#ifdef PEXT_CHUNKEDDOWNLOADS
 	if (cls.fteprotocolextensions & PEXT_CHUNKEDDOWNLOADS)
 	{
 		CL_ParseChunkedDownload();
 		return;
 	}
 #endif
+
+	if (cls.downloadmethod != DL_QW)
+		Host_Error("cls.downloadmethod != DL_QW\n");
 
 	// read the data
 	size = MSG_ReadShort ();
@@ -724,7 +950,7 @@ void CL_ParseDownload (void) {
 			fclose (cls.download);
 			cls.download = NULL;
 		}
-		CL_RequestNextDownload ();
+		CL_FinishDownload(false); // this also request next dl
 		return;
 	}
 
@@ -736,7 +962,7 @@ void CL_ParseDownload (void) {
 		if ( !(cls.download = fopen (cls.downloadtempname, "wb")) ) {
 			msg_readcount += size;
 			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
-			CL_RequestNextDownload ();
+			CL_FinishDownload(false); // this also request next dl
 			return;
 		}
 	}
@@ -752,20 +978,7 @@ void CL_ParseDownload (void) {
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		SZ_Print (&cls.netchan.message, "nextdl");
 	} else {
-
-		fclose (cls.download);
-
-		// rename the temp file to its final name
-		if (strcmp(cls.downloadtempname, cls.downloadname))
-			if (rename(cls.downloadtempname, cls.downloadname))
-				Com_Printf ("Failed to rename %s to %s.\n",	cls.downloadtempname, cls.downloadname);
-
-		cls.download = NULL;
-		cls.downloadpercent = 0;
-
-		// get another file if needed
-
-		CL_RequestNextDownload ();
+		CL_FinishDownload(true); // this also request next dl
 	}
 }
 
@@ -1030,10 +1243,29 @@ void CL_ParseServerData (void) {
 
 	// parse protocol version number
 	// allow 2.2 and 2.29 demos to play
+#ifdef PROTOCOL_VERSION_FTE
+	cls.fteprotocolextensions = 0;
+
+	for(;;)
+	{
+		protover = MSG_ReadLong ();
+		if (protover == PROTOCOL_VERSION_FTE)
+		{
+			cls.fteprotocolextensions =  MSG_ReadLong();
+			Com_DPrintf ("Using FTE extensions 0x%x\n", cls.fteprotocolextensions);
+			continue;
+		}
+		if (protover == PROTOCOL_VERSION) //this ends the version info
+			break;
+		if (cls.demoplayback && (protover == 26 || protover == 27 || protover == 28))	//older versions, maintain demo compatability.
+			break;
+		Host_Error ("Server returned version %i, not %i\nYou probably need to upgrade.\nCheck http://www.quakeworld.net/", protover, PROTOCOL_VERSION);
+	}
+#else
 	protover = MSG_ReadLong ();
-	if (protover != PROTOCOL_VERSION &&
-		!(cls.demoplayback && (protover == 26 || protover == 27 || protover == 28)))
+	if (protover != PROTOCOL_VERSION &&	!(cls.demoplayback && (protover == 26 || protover == 27 || protover == 28)))
 		Host_Error ("Server returned version %i, not %i\nYou probably need to upgrade.\nCheck http://www.quakeworld.net,\nhttp://ezquake.sourceforge.net,\nhttp://mvdsv.sourceforge.net", protover, PROTOCOL_VERSION);
+#endif
 
 	cl.protoversion = protover;
 	cl.servercount = MSG_ReadLong ();

@@ -292,6 +292,15 @@ typedef struct
 	dltype_t	downloadtype;
 	int			downloadpercent;
 	int			downloadrate;
+#ifdef PEXT_CHUNKEDDOWNLOADS
+	enum {DL_NONE = 0, DL_QW, DL_QWCHUNKS} downloadmethod;
+#else
+	enum {DL_NONE = 0, DL_QW             } downloadmethod;
+#endif
+
+#ifdef PROTOCOL_VERSION_FTE
+	unsigned int fteprotocolextensions;
+#endif
 
 	//
 	// Upload vars.
@@ -695,6 +704,8 @@ void CL_StartFileUpload(void); //bliP
 
 void CL_ParseClientdata (void);	
 
+void CL_FinishDownload(qbool rename_files);
+
 // cl_tent.c
 void CL_InitTEnts (void);
 void CL_ClearTEnts (void);
@@ -772,6 +783,15 @@ void Cam_TryLock (void);
 int Cam_TrackNum(void);
 void Cam_Lock(int playernum);
 
+// cl_chunked_dl.c
+
+#ifdef PEXT_CHUNKEDDOWNLOADS
+
+void	CL_ParseChunkedDownload(void);
+int		CL_RequestADownloadChunk(void);
+void	CL_SendChunkDownloadReq(void);
+
+#endif
 
 // skin.c
 void	Skin_Find (player_info_t *sc);

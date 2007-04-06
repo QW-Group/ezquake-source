@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.137 2007-04-02 15:45:13 qqshka Exp $
+	$Id: cl_main.c,v 1.138 2007-04-06 21:16:03 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -64,6 +64,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
+#ifndef CLIENTONLY
+#include "server.h"
+#endif
 
 int	host_screenupdatecount; // kazik - HUD -> hexum
 
@@ -77,6 +80,9 @@ cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "0"};
 cvar_t	cl_timeout = {"cl_timeout", "60"};
 
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
+#ifdef PROTOCOL_VERSION_FTE
+cvar_t  cl_nopext  = {"cl_nopext", "0"};
+#endif
 
 cvar_t	cl_sbar		= {"cl_sbar", "0", CVAR_ARCHIVE};
 cvar_t	cl_hudswap	= {"cl_hudswap", "0", CVAR_ARCHIVE};
@@ -301,13 +307,37 @@ void CL_UserinfoChanged (char *key, char *string) {
 	}
 }
 
+#ifdef PROTOCOL_VERSION_FTE
+unsigned int CL_SupportedFTEExtensions(void)
+{
+	unsigned int fteprotextsupported = 0;
+
+#ifdef PEXT_CHUNKEDDOWNLOADS
+	fteprotextsupported |= PEXT_CHUNKEDDOWNLOADS;
+#endif
+
+	return fteprotextsupported;
+}
+#endif
+
 //called by CL_Connect_f and CL_CheckResend
-static void CL_SendConnectPacket(void) {
+static void CL_SendConnectPacket(
+#ifdef PROTOCOL_VERSION_FTE
+							unsigned int ftepext
+#endif
+								) {
 	char data[2048];
 	char biguserinfo[MAX_INFO_STRING + 32];
 
 	if (cls.state != ca_disconnected)
 		return;
+
+#ifdef PROTOCOL_VERSION_FTE
+	if (cl_nopext.integer)	//imagine it's an unenhanced server
+		ftepext        		   = 0;
+
+	cls.fteprotocolextensions  = (ftepext & CL_SupportedFTEExtensions());
+#endif
 
 	connect_time = cls.realtime;	// for retransmit requests
 	cls.qport = Cvar_VariableValue("qport");
@@ -317,6 +347,15 @@ static void CL_SendConnectPacket(void) {
 	Info_SetValueForStarKey (biguserinfo, "*z_ext", va("%i", CLIENT_EXTENSIONS), sizeof(biguserinfo));
 
 	snprintf(data, sizeof(data), "\xff\xff\xff\xff" "connect %i %i %i \"%s\"\n", PROTOCOL_VERSION, cls.qport, cls.challenge, biguserinfo);
+
+#ifdef PROTOCOL_VERSION_FTE
+	if (cls.fteprotocolextensions) {
+		char tmp[128];
+		snprintf(tmp, sizeof(tmp), "0x%x 0x%x\n", PROTOCOL_VERSION_FTE, cls.fteprotocolextensions);
+		strlcat(data, tmp, sizeof(data));
+	}
+#endif
+
 	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
 
@@ -329,7 +368,11 @@ void CL_CheckForResend (void) {
 		// if the local server is running and we are not, then connect
 		strlcpy (cls.servername, "local", sizeof(cls.servername));
 		NET_StringToAdr("local", &cls.server_adr);
+#ifdef PROTOCOL_VERSION_FTE
+		CL_SendConnectPacket (svs.fteprotocolextensions);	// we don't need a challenge on the local server
+#else
 		CL_SendConnectPacket ();	// we don't need a challenge on the local server
+#endif
 		// FIXME: cls.state = ca_connecting so that we don't send the packet twice?
 		return;
 	}
@@ -699,10 +742,7 @@ void CL_Disconnect (void) {
 
 	Cam_Reset();
 
-	if (cls.download) {
-		fclose(cls.download);
-		cls.download = NULL;
-	}
+	CL_FinishDownload(false);
 
 	CL_StopUpload();
 	DeleteServerAliases();
@@ -764,6 +804,9 @@ extern void CL_PrintQStatReply (char *s);
 void CL_ConnectionlessPacket (void) {
 	int c;
 	char *s, cmdtext[2048];
+#ifdef PROTOCOL_VERSION_FTE
+	unsigned int pext = 0;
+#endif
 	
     MSG_BeginReading ();
     MSG_ReadLong ();        // skip the -1
@@ -779,7 +822,22 @@ void CL_ConnectionlessPacket (void) {
 			return;
 		Com_Printf("%s: challenge\n", NET_AdrToString(net_from));
 		cls.challenge = atoi(MSG_ReadString());
+
+#ifdef PROTOCOL_VERSION_FTE
+		for(;;)
+		{
+			c = MSG_ReadLong();
+			if (msg_badread)
+				break;
+			if (c == PROTOCOL_VERSION_FTE)
+				pext = MSG_ReadLong();
+			else
+				MSG_ReadLong();
+		}
+		CL_SendConnectPacket(pext);
+#else
 		CL_SendConnectPacket();
+#endif
 		break;	
 	case S2C_CONNECTION:
 		if (!NET_CompareAdr(net_from, cls.server_adr))
@@ -1071,6 +1129,9 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_useproxy);
 	Cvar_Register (&cl_crypt_rcon);
 	Cvar_Register (&cl_fix_mvd);
+#ifdef PROTOCOL_VERSION_FTE
+	Cvar_Register (&cl_nopext);
+#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
 	Cvar_Register (&allow_scripts);

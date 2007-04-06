@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.41 2007-03-11 06:01:35 disconn3ct Exp $
+	$Id: cl_cmd.c,v 1.42 2007-04-06 21:16:03 qqshka Exp $
 */
 
 #include <time.h>
@@ -503,7 +503,8 @@ void CL_Download_f (void){
 	// to the real name when done, so if interrupted
 	// a runt file wont be left
 
-	cls.downloadtype = dl_single;
+	cls.downloadtype   = dl_single;
+	cls.downloadmethod = DL_QW; // by default its DL_QW, if server support DL_QWCHUNKED it will be changed.
 
 	snprintf(cls.downloadname, sizeof(cls.downloadname), "%s/%s", dir, ondiskname);
 	COM_StripExtension(cls.downloadname, cls.downloadtempname);

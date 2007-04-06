@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: server.h,v 1.19 2007-03-10 14:11:08 disconn3ct Exp $
+	$Id: server.h,v 1.20 2007-04-06 21:16:03 qqshka Exp $
 */
 // server.h
 
@@ -191,6 +191,9 @@ typedef struct client_s {
 	client_frame_t	frames[UPDATE_BACKUP];	// updates can be deltad from here
 
 	FILE		*download;			// file being downloaded
+#ifdef PROTOCOL_VERSION_FTE
+	int			download_position; // chunked download used fseek(), since this is may be pak file, we need offset in pak file
+#endif
 	int			downloadsize;		// total bytes
 	int			downloadcount;		// bytes sent
 
@@ -204,6 +207,10 @@ typedef struct client_s {
 	char		uploadfn[MAX_QPATH];
 	netadr_t	snap_from;
 	qbool		remote_snap;
+
+#ifdef PROTOCOL_VERSION_FTE
+	unsigned int	fteprotocolextensions;
+#endif
  
 //===== NETWORK ============
 	int			chokecount;
@@ -277,6 +284,10 @@ typedef struct {
 	svstats_t	stats;
 
 	char		info[MAX_SERVERINFO_STRING];
+
+#ifdef PROTOCOL_VERSION_FTE
+	unsigned int fteprotocolextensions;
+#endif
 
 	// log messages are used so that fraglog processes can get stats
 	int			logsequence;	// the message currently being filled

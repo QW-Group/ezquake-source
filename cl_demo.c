@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.68 2007-03-11 06:01:35 disconn3ct Exp $
+	$Id: cl_demo.c,v 1.69 2007-04-06 21:16:03 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -356,6 +356,13 @@ static void CL_WriteStartupData (void)
 	// Send the serverdata.
 	//
 	MSG_WriteByte (&buf, svc_serverdata);
+#ifdef PROTOCOL_VERSION_FTE
+	if (cls.fteprotocolextensions)	//maintain demo compatability
+	{
+		MSG_WriteLong (&buf, PROTOCOL_VERSION_FTE);
+		MSG_WriteLong (&buf, cls.fteprotocolextensions);
+	}
+#endif
 	MSG_WriteLong (&buf, PROTOCOL_VERSION);
 	MSG_WriteLong (&buf, cl.servercount);
 	MSG_WriteString (&buf, cls.gamedirfile);

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.26 2007-03-10 14:11:08 disconn3ct Exp $
+	$Id: sv_user.c,v 1.27 2007-04-06 21:16:03 qqshka Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -123,6 +123,13 @@ void Cmd_New_f (void) {
 
 	// send the serverdata
 	MSG_WriteByte (&sv_client->netchan.message, svc_serverdata);
+#ifdef PROTOCOL_VERSION_FTE
+	if (sv_client->fteprotocolextensions) // let the client know
+	{
+		MSG_WriteLong (&sv_client->netchan.message, PROTOCOL_VERSION_FTE);
+		MSG_WriteLong (&sv_client->netchan.message, sv_client->fteprotocolextensions);
+	}
+#endif
 	MSG_WriteLong (&sv_client->netchan.message, PROTOCOL_VERSION);
 	MSG_WriteLong (&sv_client->netchan.message, svs.spawncount);
 	MSG_WriteString (&sv_client->netchan.message, gamedir);
@@ -522,12 +529,57 @@ void Cmd_Begin_f (void) {
 
 //=============================================================================
 
+#ifdef PEXT_CHUNKEDDOWNLOADS
+
+void SV_NextChunkedDownload(int chunknum)
+{
+#define CHUNKSIZE 1024
+	char buffer[CHUNKSIZE];
+	int i;
+
+	if (chunknum < 0)
+		return; // hm, what about upper limit?
+
+	if (sv_client->datagram.cursize + CHUNKSIZE+5+50 > sv_client->datagram.maxsize)
+		return;	//choked!
+
+	if (fseek(sv_client->download, sv_client->download_position + chunknum*CHUNKSIZE, SEEK_SET))
+		return; // FIXME: ERROR of some kind
+
+	i = fread(buffer, 1, CHUNKSIZE, sv_client->download);
+
+	if (i > 0)
+	{
+		if (i != CHUNKSIZE)
+			memset(buffer+i, 0, CHUNKSIZE-i);
+
+		MSG_WriteByte(&sv_client->datagram, svc_download);
+		MSG_WriteLong(&sv_client->datagram, chunknum);
+		SZ_Write(&sv_client->datagram, buffer, CHUNKSIZE);
+	}
+	else {
+		; // FIXME: EOF/READ ERROR
+	}
+}
+
+#endif
+
 void Cmd_NextDL_f (void) {
 	byte buffer[FILE_TRANSFER_BUF_SIZE];
 	int r, percent, size;
 
 	if (!sv_client->download)
 		return;
+
+#ifdef PEXT_CHUNKEDDOWNLOADS
+	if (sv_client->fteprotocolextensions & PEXT_CHUNKEDDOWNLOADS)
+	{
+		extern void	SV_NextChunkedDownload(int chunknum);
+
+		SV_NextChunkedDownload(atoi(Cmd_Argv(1)));
+		return;
+	}
+#endif
 
 	r = sv_client->downloadsize - sv_client->downloadcount;
 	r = min(r, 768);
@@ -689,6 +741,16 @@ void Cmd_Download_f (void) {
 		goto deny_download;
 	}
 
+#ifdef PROTOCOL_VERSION_FTE
+	// chunked download used fseek(), since this is may be pak file, we need offset in pak file
+	if ((sv_client->download_position = ftell(sv_client->download)) == -1L)
+	{
+		fclose(sv_client->download);
+		sv_client->download = NULL;
+		goto deny_download;
+	}
+#endif
+
 	// special check for maps that came from a pak file
 	if (!strcasecmp(dirname, "maps") && file_from_pak && !allow_download_pakmaps.value) {
 		fclose (sv_client->download);
@@ -697,14 +759,38 @@ void Cmd_Download_f (void) {
 	}
 
 	// all checks passed, start downloading
+
+#ifdef PEXT_CHUNKEDDOWNLOADS
+	if (sv_client->fteprotocolextensions & PEXT_CHUNKEDDOWNLOADS)
+	{
+		ClientReliableWrite_Begin (sv_client, svc_download, 10+strlen(name));
+		ClientReliableWrite_Long (sv_client, -1);
+		ClientReliableWrite_Long (sv_client, sv_client->downloadsize);
+		ClientReliableWrite_String (sv_client, name);
+	}
+#endif
+
 	Cmd_NextDL_f ();
 	Sys_Printf ("Downloading %s to %s\n", name, sv_client->name);
 	return;
 
 deny_download:
-	ClientReliableWrite_Begin (sv_client, svc_download, 4);
-	ClientReliableWrite_Short (sv_client, -1);
-	ClientReliableWrite_Byte (sv_client, 0);
+
+#ifdef PEXT_CHUNKEDDOWNLOADS
+	if (sv_client->fteprotocolextensions & PEXT_CHUNKEDDOWNLOADS)
+	{
+		ClientReliableWrite_Begin (sv_client, svc_download, 10+strlen(name));
+		ClientReliableWrite_Long (sv_client, -1);
+		ClientReliableWrite_Long (sv_client, -1); // FIXME: -1 = Couldn't download, -2 = deny, we always use -1 atm
+		ClientReliableWrite_String (sv_client, name);
+	}
+	else
+#endif
+	{
+		ClientReliableWrite_Begin (sv_client, svc_download, 4);
+		ClientReliableWrite_Short (sv_client, -1);
+		ClientReliableWrite_Byte (sv_client, 0);
+	}
 }
 
 //=============================================================================

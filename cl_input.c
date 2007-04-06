@@ -602,6 +602,10 @@ void CL_SendCmd (void) {
 	if (cls.demoplayback && !cls.mvdplayback)	
 		return; // sendcmds come from the demo
 
+#ifdef PEXT_CHUNKEDDOWNLOADS
+	CL_SendChunkDownloadReq();
+#endif
+
 	// save this command off for prediction
 	i = cls.netchan.outgoing_sequence & UPDATE_MASK;
 	cmd = &cl.frames[i].cmd;

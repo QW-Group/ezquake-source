@@ -275,6 +275,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 		Z_EXT_VIEWHEIGHT|Z_EXT_SERVERTIME|Z_EXT_PITCHLIMITS|	\
 		Z_EXT_JOIN_OBSERVE|Z_EXT_PF_ONGROUND)
 
+//===============================================
+
+// fte protocol extensions.
+
+#define PROTOCOL_VERSION_FTE			(('F'<<0) + ('T'<<8) + ('E'<<16) + ('X' << 24))
+
+#ifdef PROTOCOL_VERSION_FTE
+
+#define PEXT_CHUNKEDDOWNLOADS	0x20000000	//alternate file download method. Hopefully it'll give quadroupled download speed, especially on higher pings.
+
+#endif
+
 /*
 ==========================================================
   ELEMENTS COMMUNICATED ACROSS THE NET
