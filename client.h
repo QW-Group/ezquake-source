@@ -292,6 +292,7 @@ typedef struct
 	dltype_t	downloadtype;
 	int			downloadpercent;
 	int			downloadrate;
+	double		downloadstarttime;
 #ifdef PEXT_CHUNKEDDOWNLOADS
 	enum {DL_NONE = 0, DL_QW, DL_QWCHUNKS} downloadmethod;
 #else

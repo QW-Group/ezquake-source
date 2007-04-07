@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.83 2007-04-06 21:16:03 qqshka Exp $
+	$Id: cl_parse.c,v 1.84 2007-04-07 00:20:20 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -441,7 +441,8 @@ qbool CL_CheckOrDownloadFile (char *filename) {
 	// to the real name when done, so if interrupted
 	// a runt file wont be left
 
-	cls.downloadmethod = DL_QW; // by default its DL_QW, if server support DL_QWCHUNKED it will be changed.
+	cls.downloadmethod    = DL_QW; // by default its DL_QW, if server support DL_QWCHUNKED it will be changed.
+	cls.downloadstarttime = Sys_DoubleTime();
 
 	COM_StripExtension (cls.downloadname, cls.downloadtempname);
 	strlcat (cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
@@ -694,8 +695,6 @@ void CL_SendChunkDownloadReq(void)
 #define MAXBLOCKS 64	//must be power of 2
 #define DLBLOCKSIZE 1024
 
-double downloadstarttime;
-
 int downloadsize;
 int receivedbytes;
 int recievedblock[MAXBLOCKS];
@@ -716,6 +715,7 @@ void CL_ParseChunkedDownload(void)
 	int totalsize;
 	int chunknum;
 	char data[DLBLOCKSIZE];
+	double tm;
 
 	chunknum = MSG_ReadLong();
 	if (chunknum < 0)
@@ -762,8 +762,6 @@ void CL_ParseChunkedDownload(void)
 		cls.downloadmethod  = DL_QWCHUNKS;
 		cls.downloadpercent = 0;
 		downloadsize        = totalsize;
-
-		downloadstarttime   = Sys_DoubleTime();
 
 		firstblock    = 0;
 		receivedbytes = 0;
@@ -821,6 +819,9 @@ void CL_ParseChunkedDownload(void)
 		fwrite(data, 1, DLBLOCKSIZE, cls.download);
 
 	cls.downloadpercent = receivedbytes/(float)downloadsize*100;
+
+	tm = Sys_DoubleTime() - cls.downloadstarttime; // how long we dl-ing
+	cls.downloadrate = (tm ? receivedbytes / 1024 / tm : 0); // some average dl speed in KB/s
 }
 
 int CL_RequestADownloadChunk(void)
@@ -849,8 +850,6 @@ int CL_RequestADownloadChunk(void)
 	}
 
 //	Com_Printf("^1 EOF?\n");
-
-	Com_DPrintf("Download took %i seconds\n", (int)(Sys_DoubleTime() - downloadstarttime));
 
 	CL_FinishDownload(true); // this also request next dl
 
@@ -892,6 +891,9 @@ void CL_FinishDownload(qbool rename_files)
 	// if we fail of some kind, do not rename files
 	//
 	if (rename_files) {
+
+		Com_DPrintf("Download took %.1f seconds\n", Sys_DoubleTime() - cls.downloadstarttime);
+
 		// rename the temp file to its final name
 		if (strcmp(cls.downloadtempname, cls.downloadname))
 			if (rename(cls.downloadtempname, cls.downloadname))
