@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.69 2007-04-01 18:14:22 johnnycz Exp $
+    $Id: teamplay.c,v 1.70 2007-04-07 13:35:11 disconn3ct Exp $
 */
 
 #define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -2299,20 +2299,21 @@ void TP_MsgTrigger_f (void)
 	}
 }
 
-static qbool TP_IsFlagMessage(char *message)
+static qbool TP_IsFlagMessage (char *message)
 {
-	if (strstr(message, " has your key!") ||
-	        strstr(message, " has taken your Key") ||
-	        strstr(message, " has your flag") ||
-	        strstr(message, " took your flag!") ||
-	        strstr(message, " �� �� flag!") ||
-	        strstr(message, " ���� ��") || strstr(message, " �������") ||
-	        strstr(message, " took the blue flag") || strstr(message, " took the red flag") ||
-	        strstr(message, " Has the Red Flag") || strstr(message, " Has the Blue Flag")
-	   )
-		return true;
-
-	return false;
+	return
+	   (strstr(message, " has your key!") ||
+		strstr(message, " has taken your Key") ||
+        strstr(message, " has your flag") ||
+        strstr(message, " took your flag!") ||
+        strstr(message, " &#65533;&#65533; &#65533;&#65533; flag!") ||
+        strstr(message, " &#65533;&#65533;&#65533;&#65533; &#65533;&#65533;") ||
+		strstr(message, " &#65533;&#65533;&#65533;&#65533;&#65533;&#65533;&#65533;") ||
+        strstr(message, " took the blue flag") ||
+		strstr(message, " took the red flag") ||
+        strstr(message, " Has the Red Flag") ||
+		strstr(message, " Has the Blue Flag")
+		) ? true : false;
 }
 
 void TP_SearchForMsgTriggers (char *s, int level)
