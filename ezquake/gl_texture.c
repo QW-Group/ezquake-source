@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_texture.c,v 1.27.2.1 2007-04-04 22:00:58 qqshka Exp $
+	$Id: gl_texture.c,v 1.27.2.2 2007-04-07 21:24:53 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -703,6 +703,7 @@ int GL_LoadCharsetImage (char *filename, char *identifier) {
 }
 
 void GL_Texture_Init(void) {
+	cvar_t *cv;
 	int i;
 	extern int	translate_texture, scrap_texnum, solidskytexture, alphaskytexture, lightmap_textures;
 
@@ -768,11 +769,12 @@ void GL_Texture_Init(void) {
 	Cvar_Register(&gl_externalTextures_bmodels);
     Cvar_Register(&gl_no24bit);
 
-	if ( !host_initialized )
-	{
-		glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&gl_max_size_default);
-		Cvar_SetDefault(&gl_max_size, gl_max_size_default);
-	}
+	i = (cv = Cvar_FindVar(gl_max_size.name)) ? cv->integer : 0;
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *)&gl_max_size_default);
+	Cvar_SetDefault(&gl_max_size, gl_max_size_default);
+
+	if (i) // this way user can specifie gl_max_size in his cfg
+		Cvar_SetValue(&gl_max_size, i);
 
 	no24bit = (COM_CheckParm("-no24bit") || gl_no24bit.integer) ? true : false;
 	forceTextureReload = COM_CheckParm("-forceTextureReload") ? true : false;
