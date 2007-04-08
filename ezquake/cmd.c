@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.58.2.2 2007-04-05 23:11:25 disconn3ct Exp $
+    $Id: cmd.c,v 1.58.2.3 2007-04-08 15:18:57 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -44,9 +44,6 @@ cbuf_t	cbuf_main;
 #ifndef SERVERONLY
 cbuf_t	cbuf_svc;
 cbuf_t	cbuf_safe, cbuf_formatted_comms;
-#ifdef WITH_TCL
-cbuf_t	cbuf_tcl;
-#endif
 #endif
 
 cbuf_t	*cbuf_current = NULL;
@@ -69,12 +66,12 @@ void Cmd_Wait_f (void)
 
 void Cbuf_AddText (char *text)
 {
-	Cbuf_AddTextEx (&cbuf_main, text);
+	Cbuf_AddTextEx (cbuf_current ? cbuf_current : &cbuf_main, text);
 }
 
 void Cbuf_InsertText (char *text)
 {
-	Cbuf_InsertTextEx (&cbuf_main, text);
+	Cbuf_InsertTextEx (cbuf_current ? cbuf_current : &cbuf_main, text);
 }
 
 void Cbuf_Execute (void)
@@ -112,9 +109,6 @@ void Cbuf_Init (void)
 	Cbuf_Register(&cbuf_svc, 1 << 13); // 8kb
 	Cbuf_Register(&cbuf_safe, 1 << 11); // 2kb
 	Cbuf_Register(&cbuf_formatted_comms, 1 << 11); // 2kb
-#ifdef WITH_TCL
-	Cbuf_Register(&cbuf_tcl, 1 << 11); // 2kb
-#endif
 #endif
 }
 
@@ -374,8 +368,8 @@ void Cmd_Exec_f (void)
 
 #ifndef SERVERONLY
 	if (cbuf_current == &cbuf_svc) {
-		Cbuf_AddText (f);
-		Cbuf_AddText ("\n");
+		Cbuf_AddTextEx (&cbuf_main, f);
+		Cbuf_AddTextEx (&cbuf_main, "\n");
 	} else
 #endif
 	{
