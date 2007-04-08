@@ -23,6 +23,46 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //=========================================
 
+// fte protocol extensions.
+#define PROTOCOL_VERSION_FTE	(('F'<<0) + ('T'<<8) + ('E'<<16) + ('X' << 24)) //fte extensions.
+
+#ifdef PROTOCOL_VERSION_FTE 
+
+#define FTE_PEXT_HLBSP				0x00000200	//stops fte servers from complaining
+#define FTE_PEXT_MODELDBL			0x00001000
+#define FTE_PEXT_ENTITYDBL			0x00002000	//max of 1024 ents instead of 512
+#define FTE_PEXT_ENTITYDBL2			0x00004000	//max of 1024 ents instead of 512
+#define FTE_PEXT_FLOATCOORDS		0x00008000	//supports floating point origins.
+#define FTE_PEXT_SPAWNSTATIC2		0x00400000	//Sends an entity delta instead of a baseline.
+#define FTE_PEXT_256PACKETENTITIES	0x01000000	//Client can recieve 256 packet entities.
+#define FTE_PEXT_CHUNKEDDOWNLOADS	0x20000000	//alternate file download method. Hopefully it'll give quadroupled download speed, especially on higher pings.
+
+#endif
+
+//=========================================
+
+// ZQuake protocol extensions (*z_ext serverinfo key)
+#define Z_EXT_PM_TYPE		(1<<0)	// basic PM_TYPE functionality (reliable jump_held)
+#define Z_EXT_PM_TYPE_NEW	(1<<1)	// adds PM_FLY, PM_SPECTATOR
+#define Z_EXT_VIEWHEIGHT	(1<<2)	// STAT_VIEWHEIGHT
+#define Z_EXT_SERVERTIME	(1<<3)	// STAT_TIME
+#define Z_EXT_PITCHLIMITS	(1<<4)	// serverinfo maxpitch & minpitch
+#define Z_EXT_JOIN_OBSERVE	(1<<5)	// server: "join" and "observe" commands are supported
+									// client: on-the-fly spectator <-> player switching supported
+#define Z_EXT_PF_ONGROUND	(1<<6)	// server: PF_ONGROUND is valid for all svc_playerinfo
+
+// what our client supports
+#define CLIENT_EXTENSIONS (Z_EXT_PM_TYPE|Z_EXT_PM_TYPE_NEW| \
+		Z_EXT_VIEWHEIGHT|Z_EXT_SERVERTIME|Z_EXT_PITCHLIMITS| \
+		Z_EXT_JOIN_OBSERVE|Z_EXT_PF_ONGROUND)
+
+// what our server supports
+#define SERVER_EXTENSIONS (Z_EXT_PM_TYPE|Z_EXT_PM_TYPE_NEW| \
+		Z_EXT_VIEWHEIGHT|Z_EXT_SERVERTIME|Z_EXT_PITCHLIMITS| \
+		Z_EXT_JOIN_OBSERVE|Z_EXT_PF_ONGROUND)
+
+//=========================================
+
 #define	PORT_CLIENT	27001
 #define	PORT_MASTER	27000
 #define	PORT_SERVER	27500
@@ -54,80 +94,86 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //==================
 
 // server to client
-#define	svc_bad				0
-#define	svc_nop				1
-#define	svc_disconnect		2
-#define	svc_updatestat		3	// [byte] [byte]
-#define	nq_svc_version		4	// [long] server version
-#define	svc_setview			5	// [short] entity number
-#define	svc_sound			6	// <see code>
-#define	nq_svc_time			7	// [float] server time
-#define	svc_print			8	// [byte] id [string] null terminated string
-#define	svc_stufftext		9	// [string] stuffed into client's console buffer
-								// the string should be \n terminated
-#define	svc_setangle		10	// [angle3] set the view angle to this absolute value
+#define	svc_bad					0
+#define	svc_nop					1
+#define	svc_disconnect			2
+#define	svc_updatestat			3		// [byte] [byte]
+#define	nq_svc_version			4		// [long] server version
+#define	svc_setview				5		// [short] entity number
+#define	svc_sound				6		// <see code>
+#define	nq_svc_time				7		// [float] server time
+#define	svc_print				8		// [byte] id [string] null terminated string
+#define	svc_stufftext			9		// [string] stuffed into client's console buffer
+										// the string should be \n terminated
+#define	svc_setangle			10		// [angle3] set the view angle to this absolute value
 	
-#define	svc_serverdata		11	// [long] protocol ...
-#define	svc_lightstyle		12	// [byte] [string]
-#define	nq_svc_updatename	13	// [byte] [string]
-#define	svc_updatefrags		14	// [byte] [short]
-#define	nq_svc_clientdata	15	// <shortbits + data>
-#define	svc_stopsound		16	// <see code>
-#define	nq_svc_updatecolors	17	// [byte] [byte] [byte]
-#define	nq_svc_particle		18	// [vec3] <variable>
-#define	svc_damage			19
+#define	svc_serverdata			11		// [long] protocol ...
+#define	svc_lightstyle			12		// [byte] [string]
+#define	nq_svc_updatename		13		// [byte] [string]
+#define	svc_updatefrags			14		// [byte] [short]
+#define	nq_svc_clientdata		15		// <shortbits + data>
+#define	svc_stopsound			16		// <see code>
+#define	nq_svc_updatecolors		17		// [byte] [byte] [byte]
+#define	nq_svc_particle			18		// [vec3] <variable>
+#define	svc_damage				19
 	
-#define	svc_spawnstatic		20
-//	svc_spawnbinary		21
-#define	svc_spawnbaseline	22
+#define	svc_spawnstatic			20
+#define	svc_fte_spawnstatic2	21		// @!@!@!
+#define	svc_spawnbaseline		22
 	
-#define	svc_temp_entity		23	// variable
-#define	svc_setpause		24	// [byte] on / off
-#define nq_svc_signonnum	25	// [byte]  used for the signon sequence
+#define	svc_temp_entity			23		// variable
+#define	svc_setpause			24		// [byte] on / off
+#define nq_svc_signonnum		25		// [byte]  used for the signon sequence
 
-#define	svc_centerprint		26	// [string] to put in center of the screen
+#define	svc_centerprint			26		// [string] to put in center of the screen
 
-#define	svc_killedmonster	27
-#define	svc_foundsecret		28
+#define	svc_killedmonster		27
+#define	svc_foundsecret			28
 
-#define	svc_spawnstaticsound	29	// [coord3] [byte] samp [byte] vol [byte] aten
+#define	svc_spawnstaticsound	29		// [coord3] [byte] samp [byte] vol [byte] aten
 
-#define	svc_intermission	30		// [vec3_t] origin [vec3_t] angle
-#define	svc_finale			31		// [string] text
+#define	svc_intermission		30		// [vec3_t] origin [vec3_t] angle
+#define	svc_finale				31		// [string] text
 
-#define	svc_cdtrack			32		// [byte] track
-#define svc_sellscreen		33
+#define	svc_cdtrack				32		// [byte] track
+#define svc_sellscreen			33
 
-#define nq_svc_cutscene		34		// same as svc_smallkick
+#define nq_svc_cutscene			34		// same as svc_smallkick
 
-#define	svc_smallkick		34		// set client punchangle to 2
-#define	svc_bigkick			35		// set client punchangle to 4
+#define	svc_smallkick			34		// set client punchangle to 2
+#define	svc_bigkick				35		// set client punchangle to 4
 
-#define	svc_updateping		36		// [byte] [short]
-#define	svc_updateentertime	37		// [byte] [float]
+#define	svc_updateping			36		// [byte] [short]
+#define	svc_updateentertime		37		// [byte] [float]
 
-#define	svc_updatestatlong	38		// [byte] [long]
+#define	svc_updatestatlong		38		// [byte] [long]
 
-#define	svc_muzzleflash		39		// [short] entity
+#define	svc_muzzleflash			39		// [short] entity
 
-#define	svc_updateuserinfo	40		// [byte] slot [long] uid
-									// [string] userinfo
+#define	svc_updateuserinfo		40		// [byte] slot [long] uid
+										// [string] userinfo
 
-#define	svc_download		41		// [short] size [size bytes]
-#define	svc_playerinfo		42		// variable
-#define	svc_nails			43		// [byte] num [48 bits] xyzpy 12 12 12 4 8 
-#define	svc_chokecount		44		// [byte] packets choked
-#define	svc_modellist		45		// [strings]
-#define	svc_soundlist		46		// [strings]
-#define	svc_packetentities	47		// [...]
+#define	svc_download			41		// [short] size [size bytes]
+#define	svc_playerinfo			42		// variable
+#define	svc_nails				43		// [byte] num [48 bits] xyzpy 12 12 12 4 8 
+#define	svc_chokecount			44		// [byte] packets choked
+#define	svc_modellist			45		// [strings]
+#define	svc_soundlist			46		// [strings]
+#define	svc_packetentities		47		// [...]
 #define	svc_deltapacketentities	48		// [...]
-#define svc_maxspeed		49		// maxspeed change, for prediction
-#define svc_entgravity		50		// gravity change, for prediction
-#define svc_setinfo			51		// setinfo on a client
-#define svc_serverinfo		52		// serverinfo
-#define svc_updatepl		53		// [byte] [byte]
-#define svc_nails2			54		
-#define svc_qizmovoice		83
+#define svc_maxspeed			49		// maxspeed change, for prediction
+#define svc_entgravity			50		// gravity change, for prediction
+#define svc_setinfo				51		// setinfo on a client
+#define svc_serverinfo			52		// serverinfo
+#define svc_updatepl			53		// [byte] [byte]
+#define svc_nails2				54		// [byte] num [52 bits] nxyzpy 8 12 12 12 4 8
+										// mvdsv extended svcs (for mvd playback)
+#ifdef FTE_PEXT_MODELDBL
+#define	svc_fte_modellistshort	60		// [strings]
+#endif
+
+#define svc_fte_spawnbaseline2	66
+#define svc_qizmovoice			83
 
 //==============================================
 
@@ -159,18 +205,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	PF_GIB			(1 << 10)		// offset the view height differently
 // bits 11..13 are player move type bits (ZQuake extension)
 #define PF_PMC_SHIFT	11
-#define	PF_PMC_MASK	7
-#define	PF_ONGROUND		(1<<14)		// ZQuake extension
+#define	PF_PMC_MASK		7
+#define	PF_ONGROUND		(1<<14)			// ZQuake extension
 
 // player move types
-#define PMC_NORMAL			0		// normal ground movement
-#define PMC_NORMAL_JUMP_HELD		1		// normal ground novement + jump_held
+#define PMC_NORMAL				0		// normal ground movement
+#define PMC_NORMAL_JUMP_HELD	1		// normal ground novement + jump_held
 #define PMC_OLD_SPECTATOR		2		// fly through walls (QW compatibility mode)
 #define PMC_SPECTATOR			3		// fly through walls
-#define PMC_FLY				4		// fly, bump into walls
-#define PMC_NONE			5		// can't move (client had better lerp the origin...)
-#define PMC_FREEZE			6		// TODO: lerp movement and viewangles
-#define PMC_EXTRA3			7		// future extension
+#define PMC_FLY					4		// fly, bump into walls
+#define PMC_NONE				5		// can't move (client had better lerp the origin...)
+#define PMC_FREEZE				6		// TODO: lerp movement and viewangles
+#define PMC_EXTRA3				7		// future extension
 
 //==============================================
 
@@ -207,7 +253,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	U_ORIGIN3	(1 << 11)
 #define	U_ANGLE2	(1 << 12)
 #define	U_FRAME		(1 << 13)
-#define	U_REMOVE	(1 << 14)		// REMOVE this entity, don't add it
+#define	U_REMOVE	(1 << 14)	// REMOVE this entity, don't add it
 #define	U_MOREBITS	(1 << 15)
 
 // if MOREBITS is set, these additional flags are read in next
@@ -217,7 +263,45 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	U_COLORMAP	(1 << 3)
 #define	U_SKIN		(1 << 4)
 #define	U_EFFECTS	(1 << 5)
-#define	U_SOLID		(1 << 6)		// the entity should be solid for prediction
+#define	U_SOLID		(1 << 6)	// the entity should be solid for prediction
+
+#ifdef PROTOCOL_VERSION_FTE
+#define U_FTE_EVENMORE	(1<<7)		//extension info follows
+
+//fte extensions
+//EVENMORE flags
+#ifdef FTE_PEXT_SCALE
+#define U_FTE_SCALE		(1<<0)		//scaler of alias models
+#endif
+#ifdef FTE_PEXT_TRANS
+#define U_FTE_TRANS		(1<<1)		//transparency value
+#endif
+#ifdef FTE_PEXT_FATNESS
+#define U_FTE_FATNESS	(1<<2)		//byte describing how fat an alias model should be. 
+								//moves verticies along normals
+								// Useful for vacuum chambers...
+#endif
+#ifdef FTE_PEXT_MODELDBL
+#define U_FTE_MODELDBL	(1<<3)		//extra bit for modelindexes
+#endif
+#define U_FTE_UNUSED1	(1<<4)
+//FIXME: IMPLEMENT
+#ifdef FTE_PEXT_ENTITYDBL
+#define U_FTE_ENTITYDBL	(1<<5)		//use an extra byte for origin parts, cos one of them is off
+#endif
+#ifdef FTE_PEXT_ENTITYDBL2
+#define U_FTE_ENTITYDBL2 (1<<6)		//use an extra byte for origin parts, cos one of them is off
+#endif
+#define U_FTE_YETMORE	(1<<7)		//even more extension info stuff.
+#define U_FTE_DRAWFLAGS	(1<<8)		//use an extra qbyte for origin parts, cos one of them is off
+#define U_FTE_ABSLIGHT	(1<<9)		//Force a lightlevel
+#define U_FTE_COLOURMOD	(1<<10)		//rgb
+#define U_FTE_DPFLAGS (1<<11)
+#define U_FTE_TAGINFO (1<<12)
+#define U_FTE_LIGHT (1<<13)
+#define	U_FTE_EFFECTS16	(1<<14)
+#define U_FTE_FARMORE (1<<15)
+#endif
 
 //==============================================
 
@@ -253,39 +337,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #define	DEFAULT_VIEWHEIGHT	22
-//==============================================
-
-// ZQuake protocol extensions (*z_ext serverinfo key)
-#define Z_EXT_PM_TYPE		(1<<0)	// basic PM_TYPE functionality (reliable jump_held)
-#define Z_EXT_PM_TYPE_NEW	(1<<1)	// adds PM_FLY, PM_SPECTATOR
-#define Z_EXT_VIEWHEIGHT	(1<<2)	// STAT_VIEWHEIGHT
-#define Z_EXT_SERVERTIME	(1<<3)	// STAT_TIME
-#define Z_EXT_PITCHLIMITS	(1<<4)	// serverinfo maxpitch & minpitch
-#define Z_EXT_JOIN_OBSERVE	(1<<5)	// server: "join" and "observe" commands are supported
-					// client: on-the-fly spectator <-> player switching supported
-#define Z_EXT_PF_ONGROUND	(1<<6)	// server: PF_ONGROUND is valid for all svc_playerinfo
-
-// what our client supports
-#define CLIENT_EXTENSIONS (Z_EXT_PM_TYPE|Z_EXT_PM_TYPE_NEW|	\
-		Z_EXT_VIEWHEIGHT|Z_EXT_SERVERTIME|Z_EXT_PITCHLIMITS|	\
-		Z_EXT_JOIN_OBSERVE|Z_EXT_PF_ONGROUND)
-
-// what our server supports
-#define SERVER_EXTENSIONS (Z_EXT_PM_TYPE|Z_EXT_PM_TYPE_NEW|	\
-		Z_EXT_VIEWHEIGHT|Z_EXT_SERVERTIME|Z_EXT_PITCHLIMITS|	\
-		Z_EXT_JOIN_OBSERVE|Z_EXT_PF_ONGROUND)
-
-//===============================================
-
-// fte protocol extensions.
-
-#define PROTOCOL_VERSION_FTE			(('F'<<0) + ('T'<<8) + ('E'<<16) + ('X' << 24))
-
-#ifdef PROTOCOL_VERSION_FTE
-
-#define PEXT_CHUNKEDDOWNLOADS	0x20000000	//alternate file download method. Hopefully it'll give quadroupled download speed, especially on higher pings.
-
-#endif
 
 /*
 ==========================================================

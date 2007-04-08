@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.138 2007-04-06 21:16:03 qqshka Exp $
+	$Id: cl_main.c,v 1.139 2007-04-08 12:50:26 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -308,13 +308,31 @@ void CL_UserinfoChanged (char *key, char *string) {
 }
 
 #ifdef PROTOCOL_VERSION_FTE
-unsigned int CL_SupportedFTEExtensions(void)
+unsigned int CL_SupportedFTEExtensions (void)
 {
 	unsigned int fteprotextsupported = 0;
 
-#ifdef PEXT_CHUNKEDDOWNLOADS
-	fteprotextsupported |= PEXT_CHUNKEDDOWNLOADS;
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+	fteprotextsupported |= FTE_PEXT_CHUNKEDDOWNLOADS;
 #endif
+#ifdef FTE_PEXT_HLBSP
+	fteprotextsupported |= FTE_PEXT_HLBSP;
+#endif
+#ifdef FTE_PEXT_MODELDBL
+	fteprotextsupported |= FTE_PEXT_MODELDBL;
+#endif
+#ifdef FTE_PEXT_ENTITYDBL
+	fteprotextsupported |= FTE_PEXT_ENTITYDBL;
+#endif
+#ifdef FTE_PEXT_ENTITYDBL2
+	fteprotextsupported |= FTE_PEXT_ENTITYDBL2;
+#endif
+#ifdef FTE_PEXT_SPAWNSTATIC2
+	fteprotextsupported |= FTE_PEXT_SPAWNSTATIC2;
+#endif
+//#ifdef FTE_PEXT_256PACKETENTITIES
+//	fteprotextsupported |= FTE_PEXT_256PACKETENTITIES;
+//#endif
 
 	return fteprotextsupported;
 }

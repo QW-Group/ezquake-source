@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.69 2007-04-06 21:16:03 qqshka Exp $
+	$Id: cl_demo.c,v 1.70 2007-04-08 12:50:26 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1434,6 +1434,11 @@ void CL_Record_f (void)
 	if (cls.state != ca_active) 
 	{
 		Com_Printf ("You must be connected before using record\n");
+		return;
+	}
+
+	if (cls.fteprotocolextensions) {
+		Com_Printf ("recording with protocol extensions is not yet implemented\n");
 		return;
 	}
 

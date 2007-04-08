@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.49 2007-03-21 16:57:31 vvd0 Exp $
+    $Id: common.h,v 1.50 2007-04-08 12:50:27 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -38,10 +38,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //============================================================================
 
 // per-level limits
-#define	CL_MAX_EDICTS		768		// FIXME: ouch! ouch! ouch!
+#define	CL_MAX_EDICTS		2048	// FIXME: ouch! ouch! ouch!
 #define	SV_MAX_EDICTS		1024	// FIXME: ouch! ouch! ouch!
 #define	MAX_LIGHTSTYLES		64
-#define	MAX_MODELS			256		// these are sent over the net as bytes
+#define	MAX_MODELS			512		// these are sent over the net as bytes
 #define MAX_VWEP_MODELS 	32		// could be increased to 256
 #define	MAX_SOUNDS			256		// so they cannot be blindly increased
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.27 2007-04-06 21:16:03 qqshka Exp $
+	$Id: sv_user.c,v 1.28 2007-04-08 12:50:27 disconn3ct Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -529,7 +529,7 @@ void Cmd_Begin_f (void) {
 
 //=============================================================================
 
-#ifdef PEXT_CHUNKEDDOWNLOADS
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 
 void SV_NextChunkedDownload(int chunknum)
 {
@@ -571,8 +571,8 @@ void Cmd_NextDL_f (void) {
 	if (!sv_client->download)
 		return;
 
-#ifdef PEXT_CHUNKEDDOWNLOADS
-	if (sv_client->fteprotocolextensions & PEXT_CHUNKEDDOWNLOADS)
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+	if (sv_client->fteprotocolextensions & FTE_PEXT_CHUNKEDDOWNLOADS)
 	{
 		extern void	SV_NextChunkedDownload(int chunknum);
 
@@ -760,8 +760,8 @@ void Cmd_Download_f (void) {
 
 	// all checks passed, start downloading
 
-#ifdef PEXT_CHUNKEDDOWNLOADS
-	if (sv_client->fteprotocolextensions & PEXT_CHUNKEDDOWNLOADS)
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+	if (sv_client->fteprotocolextensions & FTE_PEXT_CHUNKEDDOWNLOADS)
 	{
 		ClientReliableWrite_Begin (sv_client, svc_download, 10+strlen(name));
 		ClientReliableWrite_Long (sv_client, -1);
@@ -776,8 +776,8 @@ void Cmd_Download_f (void) {
 
 deny_download:
 
-#ifdef PEXT_CHUNKEDDOWNLOADS
-	if (sv_client->fteprotocolextensions & PEXT_CHUNKEDDOWNLOADS)
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+	if (sv_client->fteprotocolextensions & FTE_PEXT_CHUNKEDDOWNLOADS)
 	{
 		ClientReliableWrite_Begin (sv_client, svc_download, 10+strlen(name));
 		ClientReliableWrite_Long (sv_client, -1);

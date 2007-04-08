@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.30 2007-03-11 06:01:35 disconn3ct Exp $
+	$Id: cl_ents.c,v 1.31 2007-04-08 12:50:26 disconn3ct Exp $
 
 */
 
@@ -358,6 +358,9 @@ void CL_SetupPacketEntity (int number, entity_state_t *state, qbool changed) {
 //Can go from either a baseline or a previous packet_entity
 void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 	int i;
+#ifdef PROTOCOL_VERSION_FTE
+	int morebits;
+#endif
 
 	// set everything to the state we are delta'ing from
 	*to = *from;
@@ -369,6 +372,16 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 		i = MSG_ReadByte ();
 		bits |= i;
 	}
+
+#ifdef PROTOCOL_VERSION_FTE
+	if (bits & U_FTE_EVENMORE && cls.fteprotocolextensions) {
+		morebits = MSG_ReadByte ();
+		if (morebits & U_FTE_YETMORE)
+			morebits |= MSG_ReadByte()<<8;
+	} else {
+		morebits = 0;
+	}
+#endif
 
 	to->flags = bits;
 
@@ -408,6 +421,21 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 	if (bits & U_SOLID) {
 		// FIXME
 	}
+
+#ifdef PROTOCOL_VERSION_FTE
+#ifdef FTE_PEXT_ENTITYDBL
+	if (morebits & U_FTE_ENTITYDBL)
+		to->number += 512;
+#endif
+#ifdef FTE_PEXT_ENTITYDBL2
+	if (morebits & U_FTE_ENTITYDBL2)
+		to->number += 1024;
+#endif
+#ifdef FTE_PEXT_MODELDBL
+	if (morebits & U_FTE_MODELDBL)
+		to->modelindex += 256;
+#endif
+#endif
 }
 
 void FlushEntityPacket (void) {
@@ -442,6 +470,16 @@ void CL_ParsePacketEntities (qbool delta) {
 	packet_entities_t *oldp, *newp, dummy;
 	qbool full;
 	byte from;
+#ifdef PROTOCOL_VERSION_FTE
+	int maxentities;
+#endif
+
+#ifdef PROTOCOL_VERSION_FTE
+	if (cls.mvdplayback || (cls.fteprotocolextensions & FTE_PEXT_256PACKETENTITIES))
+		maxentities	= MAX_MVD_PACKET_ENTITIES; // @!@!@!
+	else
+		maxentities = MAX_PACKET_ENTITIES;
+#endif
 
 	newpacket = cls.netchan.incoming_sequence & UPDATE_MASK;
 	newp = &cl.frames[newpacket].packet_entities;
@@ -505,8 +543,13 @@ void CL_ParsePacketEntities (qbool delta) {
 		if (!word) {
 			while (oldindex < oldp->num_entities) {
 				// copy all the rest of the entities from the old packet
+#ifdef PROTOCOL_VERSION_FTE
+				if (newindex >= maxentities)
+#else
 				if (newindex >= MAX_MVD_PACKET_ENTITIES || (newindex >= MAX_PACKET_ENTITIES && !cls.mvdplayback))
+#endif
 					Host_Error ("CL_ParsePacketEntities: newindex == MAX_PACKET_ENTITIES");
+
 				newp->entities[newindex] = oldp->entities[oldindex];
 				CL_SetupPacketEntity(newp->entities[newindex].number, &newp->entities[newindex], false);
 				newindex++;
@@ -514,7 +557,29 @@ void CL_ParsePacketEntities (qbool delta) {
 			}
 			break;
 		}
+
 		newnum = word & 511;
+#ifdef PROTOCOL_VERSION_FTE
+		if (word & U_MOREBITS && (cls.fteprotocolextensions & FTE_PEXT_ENTITYDBL)) {
+			//fte extensions for huge entity counts
+			int oldpos = msg_readcount;
+			int excessive;
+			excessive = MSG_ReadByte();
+			if (excessive & U_FTE_EVENMORE) {
+				excessive = MSG_ReadByte();
+#ifdef FTE_PEXT_ENTITYDBL
+				if (excessive & U_FTE_ENTITYDBL)
+					newnum += 512;
+#endif
+#ifdef FTE_PEXT_ENTITYDBL2
+				if (excessive & U_FTE_ENTITYDBL2)
+					newnum += 1024;
+#endif
+			}
+
+			msg_readcount = oldpos; //undo the read...
+		}
+#endif
 		oldnum = oldindex >= oldp->num_entities ? 9999 : oldp->entities[oldindex].number;
 
 		while (newnum > oldnum) 	{
@@ -526,8 +591,13 @@ void CL_ParsePacketEntities (qbool delta) {
 			}
 
 			// copy one of the old entities over to the new packet unchanged
+#ifdef PROTOCOL_VERSION_FTE
+			if (newindex >= maxentities)
+#else
 			if (newindex >= MAX_MVD_PACKET_ENTITIES || (newindex >= MAX_PACKET_ENTITIES && !cls.mvdplayback))
+#endif
 				Host_Error ("CL_ParsePacketEntities: newindex == MAX_PACKET_ENTITIES");
+
 			newp->entities[newindex] = oldp->entities[oldindex];
 			CL_SetupPacketEntity(oldnum, &newp->entities[newindex], word > 511);
 			newindex++;
@@ -537,7 +607,13 @@ void CL_ParsePacketEntities (qbool delta) {
 
 		if (newnum < oldnum) {
 			// new from baseline
+
 			if (word & U_REMOVE) {
+#ifdef PROTOCOL_VERSION_FTE
+				if (word & U_MOREBITS && (cls.fteprotocolextensions & FTE_PEXT_ENTITYDBL))
+					if (MSG_ReadByte() & U_FTE_EVENMORE)
+						MSG_ReadByte();
+#endif
 				if (full) {
 					Com_Printf ("WARNING: U_REMOVE on full update\n");
 					FlushEntityPacket ();
@@ -546,8 +622,14 @@ void CL_ParsePacketEntities (qbool delta) {
 				}
 				continue;
 			}
+
+#ifdef PROTOCOL_VERSION_FTE
+			if (newindex >= maxentities)
+#else
 			if (newindex >= MAX_MVD_PACKET_ENTITIES || (newindex >= MAX_PACKET_ENTITIES && !cls.mvdplayback))
+#endif
 				Host_Error ("CL_ParsePacketEntities: newindex == MAX_PACKET_ENTITIES");
+
 			CL_ParseDelta (&cl_entities[newnum].baseline, &newp->entities[newindex], word);
 			CL_SetupPacketEntity (newnum, &newp->entities[newindex], word > 511); 
 			newindex++;
@@ -562,9 +644,19 @@ void CL_ParsePacketEntities (qbool delta) {
 				Com_Printf ("WARNING: delta on full update");
 			}
 			if (word & U_REMOVE) {
+#ifdef PROTOCOL_VERSION_FTE
+				if (word & U_MOREBITS && (cls.fteprotocolextensions & FTE_PEXT_ENTITYDBL))
+					if (MSG_ReadByte() & U_FTE_EVENMORE)
+						MSG_ReadByte();
+#endif
 				oldindex++;
 				continue;
 			}
+
+#ifdef PROTOCOL_VERSION_FTE
+			if (newindex >= maxentities)
+				Host_Error ("CL_ParsePacketEntities: newindex == MAX_PACKET_ENTITIES");
+#endif
 			CL_ParseDelta (&oldp->entities[oldindex], &newp->entities[newindex], word);
 			CL_SetupPacketEntity (newnum, &newp->entities[newindex], word > 511);
 			newindex++;

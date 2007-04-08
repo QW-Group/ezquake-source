@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_main.c,v 1.24 2007-04-06 21:16:03 qqshka Exp $
+	$Id: sv_main.c,v 1.25 2007-04-08 12:50:27 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -1151,8 +1151,8 @@ void SV_InitLocal (void) {
 	for (i = 1; i < MAX_MODELS; i++)
 		snprintf (localmodels[i], sizeof(localmodels[i]), "*%i", i);
 
-#ifdef PEXT_CHUNKEDDOWNLOADS
-	svs.fteprotocolextensions |= PEXT_CHUNKEDDOWNLOADS;
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+	svs.fteprotocolextensions |= FTE_PEXT_CHUNKEDDOWNLOADS;
 #endif
 
 	Info_SetValueForStarKey (svs.info, "*version", va("ezQuake %s", VersionString()), MAX_SERVERINFO_STRING);

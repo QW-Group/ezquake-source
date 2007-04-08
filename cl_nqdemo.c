@@ -29,7 +29,7 @@ extern cvar_t cl_rocket2grenade;
 void CL_FindModelNumbers (void);
 void TP_NewMap (void);
 void CL_ParseBaseline (entity_state_t *es);
-void CL_ParseStatic (void);
+void CL_ParseStatic (qbool extended);
 void CL_ParseStaticSound (void);
 
 #define	NQ_PROTOCOL_VERSION	15
@@ -1148,7 +1148,7 @@ static void NQD_ParseServerMessage (void)
 			CL_ParseBaseline (&cl_entities[i].baseline);
 			break;
 		case svc_spawnstatic:
-			CL_ParseStatic ();
+			CL_ParseStatic (false);
 			break;
 		case svc_temp_entity:
 			CL_ParseTEnt ();

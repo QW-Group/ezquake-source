@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.84 2007-04-07 00:20:20 qqshka Exp $
+	$Id: cl_parse.c,v 1.85 2007-04-08 12:50:26 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -665,7 +665,7 @@ void Sound_NextDownload (void) {
 	MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, 0));
 }
 
-#ifdef PEXT_CHUNKEDDOWNLOADS
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 
 //
 // FTE's chunked download
@@ -856,7 +856,7 @@ int CL_RequestADownloadChunk(void)
 	return -1;
 }
 
-#endif // PEXT_CHUNKEDDOWNLOADS
+#endif // FTE_PEXT_CHUNKEDDOWNLOADS
 
 void CL_RequestNextDownload (void) {
 	switch (cls.downloadtype) {
@@ -917,8 +917,8 @@ void CL_ParseDownload (void) {
 	static float time = 0;
 	static int s = 0;
 
-#ifdef PEXT_CHUNKEDDOWNLOADS
-	if (cls.fteprotocolextensions & PEXT_CHUNKEDDOWNLOADS)
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+	if (cls.fteprotocolextensions & FTE_PEXT_CHUNKEDDOWNLOADS)
 	{
 		CL_ParseChunkedDownload();
 		return;
@@ -1418,18 +1418,27 @@ void CL_ParseSoundlist (void) {
 	Sound_NextDownload ();
 }
 
-void CL_ParseModellist (void) {
+void CL_ParseModellist (qbool extended)
+{
 	int	nummodels, n;
 	char *str;
 
 	// precache models and note certain default indexes
-	nummodels = MSG_ReadByte();
+	nummodels = (extended) ? (unsigned) MSG_ReadShort () : MSG_ReadByte ();
 
 	while (1) {
 		str = MSG_ReadString ();
 		if (!str[0])
 			break;
-		if (++nummodels==MAX_MODELS)
+#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
+		nummodels++;
+		if (nummodels >= MAX_MODELS) //Spike: tweeked this, we still complain if the server exceeds the standard limit without using extensions.
+			Host_Error ("Server sent too many model_precache");
+		if (nummodels >= 256 && !(cls.fteprotocolextensions & FTE_PEXT_MODELDBL))
+#else
+		if (++nummodels == MAX_MODELS)
+#endif
+
 			Host_Error ("Server sent too many model_precache");
 
 		if (str[0] == '/') str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
@@ -1446,7 +1455,11 @@ void CL_ParseModellist (void) {
 
 	if ((n = MSG_ReadByte())) {
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
+		MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, (nummodels&0xff00)+n));
+#else
 		MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, n));
+#endif
 		return;
 	}
 
@@ -1469,12 +1482,39 @@ void CL_ParseBaseline (entity_state_t *es) {
 	}
 }
 
+//Spike: an easy way to keep compatability with other entity extensions
+#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_SPAWNSTATIC2)
+extern void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits);
+static void CL_ParseSpawnBaseline2 (void) {
+	entity_state_t nullst, es;
+
+	if (!(cls.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2)) {
+		Com_Printf ("illegible server message\nsvc_fte_spawnbaseline2 (%i) without FTE_PEXT_SPAWNSTATIC2\n", svc_fte_spawnbaseline2);
+		Host_EndGame();
+	}
+
+	memset(&nullst, 0, sizeof (entity_state_t));
+	memset(&es, 0, sizeof (entity_state_t));
+
+	CL_ParseDelta(&nullst, &es, MSG_ReadShort());
+	memcpy(&cl_entities[es.number].baseline, &es, sizeof(es));
+}
+#endif
+
 //Static entities are non-interactive world objects like torches
-void CL_ParseStatic (void) {
+void CL_ParseStatic (qbool extended)
+{
 	entity_t *ent;
 	entity_state_t es;
 
-	CL_ParseBaseline (&es);
+	if (extended) {
+		entity_state_t nullst;
+		memset (&nullst, 0, sizeof(entity_state_t));
+
+		CL_ParseDelta (&nullst, &es, MSG_ReadShort());
+	} else
+		CL_ParseBaseline (&es);
+
 
 	if (cl.num_statics >= MAX_STATIC_ENTITIES)
 		Host_Error ("Too many static entities");
@@ -2909,9 +2949,24 @@ void CL_ParseServerMessage (void) {
 			CL_ParseBaseline (&cl_entities[i].baseline);
 			break;
 
-		case svc_spawnstatic:
-			CL_ParseStatic ();
+#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_SPAWNSTATIC2)
+		case svc_fte_spawnbaseline2:
+			CL_ParseSpawnBaseline2 ();
 			break;
+#endif
+
+		case svc_spawnstatic:
+			CL_ParseStatic (false);
+			break;
+
+#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_SPAWNSTATIC2)
+		case svc_fte_spawnstatic2:
+			if (cls.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2)
+				CL_ParseStatic (true);
+			else
+				Host_Error("CL_ParseServerMessage: svc_fte_modellistshort without FTE_PEXT_SPAWNSTATIC2");
+			break;
+#endif
 
 		case svc_temp_entity:
 			CL_ParseTEnt ();
@@ -3024,9 +3079,18 @@ void CL_ParseServerMessage (void) {
 			break;
 
 		case svc_modellist:
-			CL_ParseModellist ();
+			CL_ParseModellist (false);
 			break;
 
+#if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
+		case svc_fte_modellistshort:
+			if (cls.fteprotocolextensions & FTE_PEXT_MODELDBL)
+				CL_ParseModellist (true);
+			else
+				Host_Error("CL_ParseServerMessage: svc_fte_modellistshort without FTE_PEXT_MODELDBL");
+
+			break;
+#endif
 		case svc_soundlist:
 			CL_ParseSoundlist ();
 			break;

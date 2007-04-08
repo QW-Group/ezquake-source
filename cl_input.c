@@ -602,7 +602,7 @@ void CL_SendCmd (void) {
 	if (cls.demoplayback && !cls.mvdplayback)	
 		return; // sendcmds come from the demo
 
-#ifdef PEXT_CHUNKEDDOWNLOADS
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	CL_SendChunkDownloadReq();
 #endif
 

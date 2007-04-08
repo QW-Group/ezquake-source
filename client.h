@@ -293,14 +293,14 @@ typedef struct
 	int			downloadpercent;
 	int			downloadrate;
 	double		downloadstarttime;
-#ifdef PEXT_CHUNKEDDOWNLOADS
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	enum {DL_NONE = 0, DL_QW, DL_QWCHUNKS} downloadmethod;
 #else
 	enum {DL_NONE = 0, DL_QW             } downloadmethod;
 #endif
 
 #ifdef PROTOCOL_VERSION_FTE
-	unsigned int fteprotocolextensions;
+	unsigned int fteprotocolextensions; // the extensions we told the server that we support.
 #endif
 
 	//
@@ -786,7 +786,7 @@ void Cam_Lock(int playernum);
 
 // cl_chunked_dl.c
 
-#ifdef PEXT_CHUNKEDDOWNLOADS
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 
 void	CL_ParseChunkedDownload(void);
 int		CL_RequestADownloadChunk(void);
