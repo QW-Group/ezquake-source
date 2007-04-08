@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.111 2007-03-30 22:25:49 qqshka Exp $
+    $Id: cl_screen.c,v 1.112 2007-04-08 22:08:25 qqshka Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -160,6 +160,8 @@ cvar_t	scr_cursor_iconoffset_y	= {"scr_cursor_iconoffset_y", "0"};
 #ifdef GLQUAKE
 cvar_t	scr_cursor_alpha		= {"scr_cursor_alpha", "1"};
 #endif
+
+cvar_t  scr_showcrosshair       = {"scr_showcrosshair", "1"}; // so crosshair does't affected by +showscores, or vice versa
 
 qbool	scr_initialized;	// Ready to draw.
 
@@ -2459,12 +2461,14 @@ void SCR_DrawElements(void) {
 			}
 
 			if (!cl.intermission) {
-     		if (!sb_showscores && !sb_showteamscores) { // do not show if +showscores
+
+				if (key_dest != key_menu && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores)))
+					Draw_Crosshair ();
+
+     			if (!sb_showscores && !sb_showteamscores) { // do not show if +showscores
 #ifdef GLQUAKE
 					SCR_Draw_TeamInfo();
 #endif
-					if (key_dest != key_menu)
-						Draw_Crosshair ();
 					SCR_CheckDrawCenterString ();
 					SCR_DrawSpeed ();
 					SCR_DrawClock ();
@@ -3452,6 +3456,8 @@ void SCR_Init (void)
 #ifdef GLQUAKE
 	Cvar_Register (&scr_cursor_alpha);
 #endif
+
+	Cvar_Register (&scr_showcrosshair);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREENSHOTS);
 	Cvar_Register (&scr_allowsnap);
