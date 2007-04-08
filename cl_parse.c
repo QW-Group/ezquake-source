@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.85 2007-04-08 12:50:26 disconn3ct Exp $
+	$Id: cl_parse.c,v 1.86 2007-04-08 15:08:35 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -720,26 +720,30 @@ void CL_ParseChunkedDownload(void)
 	chunknum = MSG_ReadLong();
 	if (chunknum < 0)
 	{
+		totalsize = MSG_ReadLong();
+		svname    = MSG_ReadString();
+
 		if (cls.download) { // ensure FILE is closed
-			Com_Printf ("cls.download shouldn't have been set\n");
+			if (totalsize != -3) // -3 = dl stopped, so this known issue, do not warn
+				Com_Printf ("cls.download shouldn't have been set\n");
+
 			fclose (cls.download);
 			cls.download = NULL;
 		}
-
-		totalsize = MSG_ReadLong();
-		svname = MSG_ReadString();
 
 		if (cls.demoplayback)
 			return;
 
 		if (totalsize < 0)
 		{
-			if (totalsize == -2)
-				Com_Printf("Server permissions deny downloading file %s\n", svname);
-			else
-				Com_Printf("Couldn't find file %s on the server\n", svname);
+			switch (totalsize)
+			{
+				case -3: Com_DPrintf("Server cancel downloading file %s\n", svname);			break;
+				case -2: Com_Printf("Server permissions deny downloading file %s\n", svname);	break;
+				default: Com_Printf("Couldn't find file %s on the server\n", svname);			break;
+			}
 
-			CL_RequestNextDownload();
+			CL_FinishDownload(false); // this also request next dl
 			return;
 		}
 
@@ -755,7 +759,7 @@ void CL_ParseChunkedDownload(void)
 
 		if ( !(cls.download = fopen (cls.downloadtempname, "wb")) ) {
 			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
-			CL_RequestNextDownload ();
+			CL_FinishDownload(false); // this also request next dl
 			return;
 		}
 
