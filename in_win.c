@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_win.c,v 1.33 2007-04-04 05:33:17 qqshka Exp $
+	$Id: in_win.c,v 1.34 2007-04-08 13:37:41 qqshka Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -1020,10 +1020,6 @@ void IN_Restart_f(void)
 
 	IN_Shutdown();
 	IN_Init();
-
-	// hrm, force activate mouse
-	IN_ActivateMouse ();
-	IN_HideMouse ();
 }
 
 void IN_MouseEvent (int mstate) 

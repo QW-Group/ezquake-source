@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.13 2007-03-21 17:03:10 vvd0 Exp $
+	$Id: win_glimp.c,v 1.14 2007-04-08 13:37:41 qqshka Exp $
 
 */
 /*
@@ -1737,8 +1737,16 @@ void CheckWindowedMouse(void) {
 
 	static int windowed_mouse;
 
-	if ( glConfig.isFullscreen )
+	if ( glConfig.isFullscreen ) // well, activate mouse in fullscreen mode too
+	{
+		if (!mouseactive && ActiveApp)
+		{
+			IN_ActivateMouse ();
+			IN_HideMouse ();
+		}
+
 		return;
+	}
 
 	if ( !_windowed_mouse.value )
 	{
