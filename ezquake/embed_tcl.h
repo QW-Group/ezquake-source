@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: embed_tcl.h,v 1.2 2006-09-22 00:35:20 johnnycz Exp $
+ *  $Id: embed_tcl.h,v 1.2.2.1 2007-04-09 22:33:24 disconn3ct Exp $
  */
 
 #ifndef EMBED_TCL_H
@@ -32,6 +32,9 @@
 #else
 #	define	TCL_LIB_NAME	"libtcl.so"
 #endif
+
+extern int in_tcl;
+
 
 void TCL_InterpInit (void);
 void TCL_Shutdown (void);

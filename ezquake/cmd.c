@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.58.2.6 2007-04-09 20:01:02 disconn3ct Exp $
+    $Id: cmd.c,v 1.58.2.7 2007-04-09 22:33:23 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -37,6 +37,7 @@ qbool CL_CheckServerCommand (void);
 #endif
 
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
+static int gtf = 0; // global trigger flag
 
 cvar_t cl_warncmd = {"cl_warncmd", "0"};
 
@@ -54,8 +55,15 @@ cbuf_t	*cbuf_current = NULL;
 //This allows commands like: bind g "impulse 5 ; +attack ; wait ; -attack ; impulse 2"
 void Cmd_Wait_f (void)
 {
+	if (in_tcl) {
+			Com_Printf ("command wait cant be used with TCL\n");
+			return;
+	}
+
 	if (cbuf_current)
 		cbuf_current->wait = true;
+
+	return;
 }
 
 /*
@@ -177,6 +185,8 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 	qbool comment, quotes;
 
 #ifndef SERVERONLY
+	if (cbuf == &cbuf_safe)
+		gtf++;
 	nextsize = cbuf->text_end - cbuf->text_start;
 #endif
 
@@ -257,6 +267,9 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 			return;
 		}
 	}
+
+	if (cbuf == &cbuf_safe)
+		gtf--;
 
 	cbuf->runAwayLoop = 0;
 }
@@ -1408,7 +1421,6 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	char *p, *n, *s;
 	char text_exp[1024];
 
-
 	oldcontext = cbuf_current;
 	cbuf_current = context;
 
@@ -1432,7 +1444,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	// check functions
 	if ((cmd = Cmd_FindCommand(cmd_argv[0]))) {
 #ifndef SERVERONLY
-		if ((cbuf_current == &cbuf_safe)) {
+		if (cbuf_current == &cbuf_safe || gtf) {
 			if (!Cmd_IsCommandAllowedInMessageTrigger(cmd_argv[0])) {
 				Com_Printf ("\"%s\" cannot be used in message triggers\n", cmd_argv[0]);
 				goto done;

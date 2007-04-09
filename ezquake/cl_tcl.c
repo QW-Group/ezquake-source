@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.20.2.6 2007-04-09 20:01:02 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.20.2.7 2007-04-09 22:33:23 disconn3ct Exp $
  */
 
 #ifdef WITH_TCL
@@ -43,6 +43,7 @@ extern cmd_alias_t *cmd_alias;
 #define ALIAS_HASHPOOL_SIZE 256
 extern cmd_alias_t *cmd_alias_hash[ALIAS_HASHPOOL_SIZE];
 
+int in_tcl;
 cvar_t tcl_version = {"tcl_version", "", CVAR_ROM};
 
 #ifdef USE_TCL_STUBS
@@ -189,10 +190,13 @@ static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *cons
 	cbuf_tcl.text_buf = (char *) Q_malloc (cbuf_tcl.maxsize);
 	cbuf_tcl.text_start = cbuf_tcl.text_end = (cbuf_tcl.maxsize >> 1);
 	cbuf_tcl.wait = false;
+	cbuf_tcl.runAwayLoop = 0;
 
 	// Execute 'line' in current command buffer
+	in_tcl++;
 	Cbuf_AddTextEx (&cbuf_tcl, line);
 	Cbuf_ExecuteEx (&cbuf_tcl);
+	in_tcl--;
 
 	// Free memory
 	Q_free (cbuf_tcl.text_buf);
