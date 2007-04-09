@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.20.2.7 2007-04-09 22:33:23 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.20.2.8 2007-04-09 22:59:00 disconn3ct Exp $
  */
 
 #ifdef WITH_TCL
@@ -302,7 +302,7 @@ static void TCL_Eval_f (void)
 	rc = Tcl_EvalObjEx (interp, script, TCL_EVAL_GLOBAL);
 	result = Tcl_GetStringResult (interp);
 	if (rc != TCL_OK) {
-		Com_Printf ("Error in Tcl script: %s\n", result ? result : "unknown");
+		Com_Printf ("Error in Tcl script, line %i: %s\n", interp->errorLine, result ? result : "unknown");
 		return;
 	}
 	if (result && *result) {
@@ -406,7 +406,7 @@ static void TCL_Proc_f (void)
 
 	if (rc != TCL_OK) {
 		result = Tcl_GetStringResult (interp);
-		Com_Printf ("Tcl error: %s\n", result ? result : "unknown");
+		Com_Printf ("Tcl error, line %i: %s\n", interp->errorLine, result ? result : "unknown");
 		return;
 	}
 }
