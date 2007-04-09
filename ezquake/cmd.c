@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.58.2.7 2007-04-09 22:33:23 disconn3ct Exp $
+    $Id: cmd.c,v 1.58.2.8 2007-04-09 22:58:42 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1444,7 +1444,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	// check functions
 	if ((cmd = Cmd_FindCommand(cmd_argv[0]))) {
 #ifndef SERVERONLY
-		if (cbuf_current == &cbuf_safe || gtf) {
+		if (gtf || cbuf_current == &cbuf_safe) {
 			if (!Cmd_IsCommandAllowedInMessageTrigger(cmd_argv[0])) {
 				Com_Printf ("\"%s\" cannot be used in message triggers\n", cmd_argv[0]);
 				goto done;
