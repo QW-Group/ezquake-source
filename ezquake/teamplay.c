@@ -16,10 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.67.2.4 2007-04-03 23:59:39 johnnycz Exp $
+    $Id: teamplay.c,v 1.67.2.5 2007-04-09 22:31:57 disconn3ct Exp $
 */
 
-#define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
+#define TP_ISEYESMODEL(x) ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
 
 #include <time.h>
 #include <string.h>
@@ -2698,9 +2698,8 @@ static void CL_RE_Trigger_Match_f (void)
 				if (!(rt->flags & RE_NOACTION)) {
 					string = Cmd_AliasString (rt->name);
 					if (string) {
-						Cbuf_InsertTextEx(&cbuf_safe,"\nwait\n");
-						Cbuf_InsertTextEx(&cbuf_safe,string);
-						Cbuf_ExecuteEx(&cbuf_safe);
+						Cbuf_InsertTextEx (&cbuf_safe,string);
+						Cbuf_ExecuteEx (&cbuf_safe);
 					} else {
 						Com_Printf ("re_trigger \"%s\" has no matching alias\n", rt->name);
 					}
@@ -2712,7 +2711,6 @@ static void CL_RE_Trigger_Match_f (void)
 }
 
 qbool allow_re_triggers;
-
 qbool CL_SearchForReTriggers (char *s, unsigned trigger_type)
 {
 	pcre_trigger_t *rt;
@@ -2773,7 +2771,6 @@ qbool CL_SearchForReTriggers (char *s, unsigned trigger_type)
 					trig_alias = Cmd_FindAlias (rt->name);
 					Print_current++;
 					if (trig_alias) {
-						Cbuf_InsertTextEx (&cbuf_safe,"\nwait\n");
 						Cbuf_InsertTextEx (&cbuf_safe,rt->name);
 						Cbuf_ExecuteEx (&cbuf_safe);
 					} else
