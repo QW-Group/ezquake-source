@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.20.2.5 2007-04-09 13:58:04 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.20.2.6 2007-04-09 20:01:02 disconn3ct Exp $
  */
 
 #ifdef WITH_TCL
@@ -40,7 +40,6 @@
 
 extern cmd_function_t *impulse_cmd;
 extern cmd_alias_t *cmd_alias;
-extern cbuf_t cbuf_tcl;
 #define ALIAS_HASHPOOL_SIZE 256
 extern cmd_alias_t *cmd_alias_hash[ALIAS_HASHPOOL_SIZE];
 
@@ -160,6 +159,7 @@ static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *cons
 	char *str_utf, *line, *argv;
 	int str_utf_len;
 	int i;
+	cbuf_t cbuf_tcl;
 
 	if (objc < 2) {
 		Tcl_WrongNumArgs (interp, 1, objv, "qw_command");
@@ -184,11 +184,18 @@ static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *cons
 	Tcl_UtfToExternalDString (qw_enc, str_utf, str_utf_len, &str_byte);
 	line = Tcl_DStringValue (&str_byte);
 
+	// Register cbuf_tcl
+	cbuf_tcl.maxsize = 1 << 11;
+	cbuf_tcl.text_buf = (char *) Q_malloc (cbuf_tcl.maxsize);
+	cbuf_tcl.text_start = cbuf_tcl.text_end = (cbuf_tcl.maxsize >> 1);
+	cbuf_tcl.wait = false;
+
 	// Execute 'line' in current command buffer
 	Cbuf_AddTextEx (&cbuf_tcl, line);
 	Cbuf_ExecuteEx (&cbuf_tcl);
 
 	// Free memory
+	Q_free (cbuf_tcl.text_buf);
 	Tcl_DStringFree (&str_byte);
 	Tcl_SetResult (interp, NULL, TCL_STATIC);
 

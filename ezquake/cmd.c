@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.58.2.5 2007-04-09 14:01:22 disconn3ct Exp $
+    $Id: cmd.c,v 1.58.2.6 2007-04-09 20:01:02 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -44,9 +44,6 @@ cbuf_t	cbuf_main;
 #ifndef SERVERONLY
 cbuf_t	cbuf_svc;
 cbuf_t	cbuf_safe, cbuf_formatted_comms;
-#ifdef WITH_TCL
-cbuf_t cbuf_tcl;
-#endif
 #endif
 
 cbuf_t	*cbuf_current = NULL;
@@ -112,9 +109,6 @@ void Cbuf_Init (void)
 	Cbuf_Register(&cbuf_svc, 1 << 13); // 8kb
 	Cbuf_Register(&cbuf_safe, 1 << 11); // 2kb
 	Cbuf_Register(&cbuf_formatted_comms, 1 << 11); // 2kb
-#ifdef WITH_TCL
-	Cbuf_Register(&cbuf_tcl, 1 << 11); // 2kb
-#endif
 #endif
 }
 
@@ -1413,13 +1407,10 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	cbuf_t *inserttarget, *oldcontext;
 	char *p, *n, *s;
 	char text_exp[1024];
-	qbool fromtcl;
 
 
 	oldcontext = cbuf_current;
 	cbuf_current = context;
-
-	fromtcl = (context == &cbuf_tcl);
 
 #ifndef SERVERONLY
 	Cmd_ExpandString (text, text_exp);
@@ -1441,12 +1432,12 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	// check functions
 	if ((cmd = Cmd_FindCommand(cmd_argv[0]))) {
 #ifndef SERVERONLY
-		if ((cbuf_current == &cbuf_safe) || (fromtcl && oldcontext == &cbuf_safe)) {
+		if ((cbuf_current == &cbuf_safe)) {
 			if (!Cmd_IsCommandAllowedInMessageTrigger(cmd_argv[0])) {
 				Com_Printf ("\"%s\" cannot be used in message triggers\n", cmd_argv[0]);
 				goto done;
 			}
-		} else if ((cbuf_current == &cbuf_formatted_comms) || (fromtcl && oldcontext == &cbuf_formatted_comms)) {
+		} else if ((cbuf_current == &cbuf_formatted_comms)) {
 			if (!Cmd_IsCommandAllowedInTeamPlayMacros(cmd_argv[0])) {
 				Com_Printf("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
 				goto done;
@@ -1468,7 +1459,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	// check cvars
 	if ((v = Cvar_FindVar (Cmd_Argv(0)))) {
 #ifndef SERVERONLY
-		if ((cbuf_current == &cbuf_formatted_comms) || (fromtcl && oldcontext == &cbuf_formatted_comms)) {
+		if ((cbuf_current == &cbuf_formatted_comms)) {
 			Com_Printf("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
 			goto done;
 		}
@@ -1486,7 +1477,7 @@ checkaliases:
 		if (a->flags & ALIAS_TCL)
 		{
 			TCL_ExecuteAlias (a);
-			return;
+			goto done;
 		}
 #endif
 
@@ -1570,7 +1561,7 @@ checkaliases:
 
 	if (!host_initialized && Cmd_Argc() > 1) {
 		if (Cvar_CreateTempVar())
-			return;
+			goto done;
 	}
 
 #ifndef SERVERONLY
