@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.58.2.4 2007-04-09 13:58:04 disconn3ct Exp $
+    $Id: cmd.c,v 1.58.2.5 2007-04-09 14:01:22 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1413,28 +1413,13 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	cbuf_t *inserttarget, *oldcontext;
 	char *p, *n, *s;
 	char text_exp[1024];
-	int test = 0;
 	qbool fromtcl;
 
-	if (context == &cbuf_main)
-		test = 1;
-	if (context == &cbuf_svc)
-		test = 2;
-	if (context == &cbuf_safe)
-		test = 3;
-	if (context == &cbuf_formatted_comms)
-		test = 4;
-	if (context == &cbuf_tcl)
-		test = 5;
 
 	oldcontext = cbuf_current;
 	cbuf_current = context;
 
-	if (fromtcl = (context == &cbuf_tcl)) {
-		Com_Printf ("%i--->TCL: %s\n", test, text);
-	} else {
-		Com_Printf ("%i-->norm: %s\n", test, text);
-	}
+	fromtcl = (context == &cbuf_tcl);
 
 #ifndef SERVERONLY
 	Cmd_ExpandString (text, text_exp);
