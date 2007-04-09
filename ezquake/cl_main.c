@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.136.2.1 2007-04-04 21:55:26 qqshka Exp $
+	$Id: cl_main.c,v 1.136.2.2 2007-04-09 20:24:12 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1520,16 +1520,23 @@ void CL_Frame (double time) {
 			Cbuf_ExecuteEx(&cbuf_svc);
 
 			CL_SendToServer();
+
+			if (cls.state == ca_disconnected) // We need to move the mouse also when disconnected 
+			{
+				usercmd_t dummy;
+				IN_Move (&dummy);
+			}
 		}
 		else
 		{
-			usercmd_t dummy;
 			if (   (!cls.demoplayback && !cl.spectator) // not demo playback and not a spec
 				|| (!cls.demoplayback &&  cl.spectator && Cam_TrackNum() == -1) // not demo, spec free fly
 				|| ( cls.demoplayback && cls.mvdplayback && Cam_TrackNum() == -1) // mvd demo and free fly
 				|| cls.state == ca_disconnected // We need to move the mouse also when disconnected 
-				)
+				) {
+				usercmd_t dummy;
 				IN_Move (&dummy);
+			}
 		}
 	}
 
