@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.58.2.3 2007-04-08 15:18:57 disconn3ct Exp $
+    $Id: cmd.c,v 1.58.2.4 2007-04-09 13:58:04 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -36,7 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 qbool CL_CheckServerCommand (void);
 #endif
 
-void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
+static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
 
 cvar_t cl_warncmd = {"cl_warncmd", "0"};
 
@@ -44,6 +44,9 @@ cbuf_t	cbuf_main;
 #ifndef SERVERONLY
 cbuf_t	cbuf_svc;
 cbuf_t	cbuf_safe, cbuf_formatted_comms;
+#ifdef WITH_TCL
+cbuf_t cbuf_tcl;
+#endif
 #endif
 
 cbuf_t	*cbuf_current = NULL;
@@ -109,6 +112,9 @@ void Cbuf_Init (void)
 	Cbuf_Register(&cbuf_svc, 1 << 13); // 8kb
 	Cbuf_Register(&cbuf_safe, 1 << 11); // 2kb
 	Cbuf_Register(&cbuf_formatted_comms, 1 << 11); // 2kb
+#ifdef WITH_TCL
+	Cbuf_Register(&cbuf_tcl, 1 << 11); // 2kb
+#endif
 #endif
 }
 
@@ -162,8 +168,7 @@ void Cbuf_InsertTextEx (cbuf_t *cbuf, char *text)
 	// Calculate optimal position of text in buffer
 	new_start = ((cbuf->maxsize - new_bufsize) >> 1);
 
-	memmove (cbuf->text_buf + (new_start + len), cbuf->text_buf + cbuf->text_start,
-	         cbuf->text_end - cbuf->text_start);
+	memmove (cbuf->text_buf + (new_start + len), cbuf->text_buf + cbuf->text_start, cbuf->text_end - cbuf->text_start);
 	memcpy (cbuf->text_buf + new_start, text, len);
 	cbuf->text_start = new_start;
 	cbuf->text_end = cbuf->text_start + new_bufsize;
@@ -235,6 +240,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		}
 
 		cursize = cbuf->text_end - cbuf->text_start;
+
 		Cmd_ExecuteStringEx (cbuf, line);	// execute the command line
 
 		if (cbuf->text_end - cbuf->text_start > cursize)
@@ -252,7 +258,6 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 			// skip out while text still remains in buffer, leaving it for next frame
 			cbuf->wait = false;
 #ifndef SERVERONLY
-
 			cbuf->runAwayLoop += Q_rint(0.5 * cls.frametime * MAX_RUNAWAYLOOP);
 #endif
 			return;
@@ -1154,7 +1159,8 @@ void Cmd_AddMacroEx(char *s, char *(*f)(void), qbool teamplay)
 	macro_commands[macro_count].func = f;
 	macro_commands[macro_count].teamplay = teamplay;
 #ifdef WITH_TCL
-	if (!teamplay)	// don't allow teamplay protected macros since there's no protection for this in TCL yet
+// disconnect: it seems macro are safe with TCL NOW
+//	if (!teamplay)	// don't allow teamplay protected macros since there's no protection for this in TCL yet
 		TCL_RegisterMacro (macro_commands + macro_count);
 #endif
 	macro_count++;
@@ -1398,7 +1404,7 @@ qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
 #endif /* SERVERONLY */
 
 //A complete command line has been parsed, so try to execute it
-void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
+static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 {
 	cvar_t *v;
 	cmd_function_t *cmd;
@@ -1407,9 +1413,28 @@ void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	cbuf_t *inserttarget, *oldcontext;
 	char *p, *n, *s;
 	char text_exp[1024];
+	int test = 0;
+	qbool fromtcl;
+
+	if (context == &cbuf_main)
+		test = 1;
+	if (context == &cbuf_svc)
+		test = 2;
+	if (context == &cbuf_safe)
+		test = 3;
+	if (context == &cbuf_formatted_comms)
+		test = 4;
+	if (context == &cbuf_tcl)
+		test = 5;
 
 	oldcontext = cbuf_current;
 	cbuf_current = context;
+
+	if (fromtcl = (context == &cbuf_tcl)) {
+		Com_Printf ("%i--->TCL: %s\n", test, text);
+	} else {
+		Com_Printf ("%i-->norm: %s\n", test, text);
+	}
 
 #ifndef SERVERONLY
 	Cmd_ExpandString (text, text_exp);
@@ -1431,41 +1456,17 @@ void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	// check functions
 	if ((cmd = Cmd_FindCommand(cmd_argv[0]))) {
 #ifndef SERVERONLY
-		if (cbuf_current == &cbuf_safe) {
-			if( !Cmd_IsCommandAllowedInMessageTrigger(cmd_argv[0])) {
+		if ((cbuf_current == &cbuf_safe) || (fromtcl && oldcontext == &cbuf_safe)) {
+			if (!Cmd_IsCommandAllowedInMessageTrigger(cmd_argv[0])) {
 				Com_Printf ("\"%s\" cannot be used in message triggers\n", cmd_argv[0]);
 				goto done;
 			}
-		} else if (cbuf_current == &cbuf_formatted_comms) {
-			if( !Cmd_IsCommandAllowedInTeamPlayMacros(cmd_argv[0]) ) {
+		} else if ((cbuf_current == &cbuf_formatted_comms) || (fromtcl && oldcontext == &cbuf_formatted_comms)) {
+			if (!Cmd_IsCommandAllowedInTeamPlayMacros(cmd_argv[0])) {
 				Com_Printf("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
 				goto done;
 			}
 		}
-
-		/*
-		                char **s;
-				if (cbuf_current == &cbuf_safe) {
-					for (s = msgtrigger_commands; *s; s++) {
-						if (!strcasecmp(cmd_argv[0], *s))
-							break;
-					}
-					if (!*s)
-					{
-						Com_Printf ("\"%s\" cannot be used in message triggers\n", cmd_argv[0]);
-						goto done;
-					}
-				} else if (cbuf_current == &cbuf_formatted_comms) {
-					for (s = formatted_comms_commands; *s; s++) {
-						if (!strcasecmp(cmd_argv[0], *s))
-							break;
-					}
-					if (!*s) {
-						Com_Printf("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
-						goto done;
-					}
-				}*/
-
 #endif
 
 		if (cmd->function)
@@ -1482,7 +1483,7 @@ void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	// check cvars
 	if ((v = Cvar_FindVar (Cmd_Argv(0)))) {
 #ifndef SERVERONLY
-		if (cbuf_current == &cbuf_formatted_comms) {
+		if ((cbuf_current == &cbuf_formatted_comms) || (fromtcl && oldcontext == &cbuf_formatted_comms)) {
 			Com_Printf("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
 			goto done;
 		}

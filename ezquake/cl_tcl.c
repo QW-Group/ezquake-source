@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.20.2.4 2007-04-08 15:18:57 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.20.2.5 2007-04-09 13:58:04 disconn3ct Exp $
  */
 
 #ifdef WITH_TCL
@@ -40,6 +40,7 @@
 
 extern cmd_function_t *impulse_cmd;
 extern cmd_alias_t *cmd_alias;
+extern cbuf_t cbuf_tcl;
 #define ALIAS_HASHPOOL_SIZE 256
 extern cmd_alias_t *cmd_alias_hash[ALIAS_HASHPOOL_SIZE];
 
@@ -152,7 +153,6 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 	return (TCL_OK);
 }
 
-extern void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
 static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *const objv[])
 {
 	Tcl_Obj *args;
@@ -183,12 +183,10 @@ static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *cons
 	str_utf = Tcl_GetStringFromObj (args, &str_utf_len);
 	Tcl_UtfToExternalDString (qw_enc, str_utf, str_utf_len, &str_byte);
 	line = Tcl_DStringValue (&str_byte);
-	Cmd_TokenizeString (line);
 
 	// Execute 'line' in current command buffer
-	Cbuf_AddText (line);
-	Cbuf_AddText ("\n");
-	Cbuf_ExecuteEx (cbuf_current);
+	Cbuf_AddTextEx (&cbuf_tcl, line);
+	Cbuf_ExecuteEx (&cbuf_tcl);
 
 	// Free memory
 	Tcl_DStringFree (&str_byte);
