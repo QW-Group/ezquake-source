@@ -995,6 +995,9 @@ void FL_DeleteFile(filelist_t *fl)
 void FL_CheckDisplayPosition(filelist_t *fl)
 {
     int lines = fl->displayed_entries_count;
+
+    if (fl->current_entry < 0) fl->current_entry = 0;
+
     // FIXME: move list earlier..
     if (fl->current_entry > fl->display_entry + lines - 1)
         fl->display_entry = fl->current_entry - lines + 1;
