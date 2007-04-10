@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.58 2007-03-30 22:04:56 johnnycz Exp $
+	$Id: gl_draw.c,v 1.58.2.1 2007-04-10 06:02:56 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -952,14 +952,16 @@ void Draw_ColoredString (int x, int y, const char *text, int red) {
 						glColor3f(r / 16.0, g / 16.0, b / 16.0);
 						white = false;
 					}
-					text += 5;
+					text += 4;
+					continue;
 				}
             } else if (text[1] == 'r')	{
 				if (!white) {
 					glColor3ubv(color_white);
 					white = true;
 				}
-				text += 2;
+				text += 1;
+				continue;
 			}
 		}
 
