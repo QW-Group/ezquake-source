@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.111.2.2 2007-04-10 09:48:56 qqshka Exp $
+    $Id: cl_screen.c,v 1.111.2.3 2007-04-10 11:42:46 johnnycz Exp $
 */
 #include <time.h>
 #include "quakedef.h"
