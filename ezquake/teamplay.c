@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.67.2.5 2007-04-09 22:31:57 disconn3ct Exp $
+    $Id: teamplay.c,v 1.67.2.6 2007-04-11 01:16:06 disconn3ct Exp $
 */
 
 #define TP_ISEYESMODEL(x) ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -1109,63 +1109,62 @@ char *Macro_Count_Last_NearbyFriendlyPlayers (void)
 
 // Note: longer macro names like "armortype" must be defined
 // _before_ the shorter ones like "armor" to be parsed properly
-void TP_AddMacros(void)
+void TP_AddMacros (void)
 {
-	qbool teamplay = Rulesets_RestrictTriggers();
+	int teamplay = (int) Rulesets_RestrictTriggers ();
 
-	Cmd_AddMacro("lastip", Macro_Lastip_f);
-	Cmd_AddMacro("qt", Macro_Quote_f);
-	Cmd_AddMacro("latency", Macro_Latency);
-	Cmd_AddMacro("ping", Macro_Latency);
-	Cmd_AddMacro("time", Macro_Time);
-	Cmd_AddMacro("date", Macro_Date);
+	Cmd_AddMacro ("lastip", Macro_Lastip_f);
+	Cmd_AddMacro ("qt", Macro_Quote_f);
+	Cmd_AddMacro ("latency", Macro_Latency);
+	Cmd_AddMacro ("ping", Macro_Latency);
+	Cmd_AddMacro ("time", Macro_Time);
+	Cmd_AddMacro ("date", Macro_Date);
 
-	Cmd_AddMacroEx("health", Macro_Health, teamplay);
-	Cmd_AddMacroEx("armortype", Macro_ArmorType, teamplay);
-	Cmd_AddMacroEx("armor", Macro_Armor, teamplay);
+	Cmd_AddMacroEx ("health", Macro_Health, teamplay);
+	Cmd_AddMacroEx ("armortype", Macro_ArmorType, teamplay);
+	Cmd_AddMacroEx ("armor", Macro_Armor, teamplay);
 
-	Cmd_AddMacroEx("shells", Macro_Shells, teamplay);
-	Cmd_AddMacroEx("nails", Macro_Nails, teamplay);
-	Cmd_AddMacroEx("rockets", Macro_Rockets, teamplay);
-	Cmd_AddMacroEx("cells", Macro_Cells, teamplay);
+	Cmd_AddMacroEx ("shells", Macro_Shells, teamplay);
+	Cmd_AddMacroEx ("nails", Macro_Nails, teamplay);
+	Cmd_AddMacroEx ("rockets", Macro_Rockets, teamplay);
+	Cmd_AddMacroEx ("cells", Macro_Cells, teamplay);
 
-	Cmd_AddMacro("weaponnum", Macro_WeaponNum);
-	Cmd_AddMacroEx("weapons", Macro_Weapons, teamplay);
-	Cmd_AddMacro("weapon", Macro_Weapon);
+	Cmd_AddMacro ("weaponnum", Macro_WeaponNum);
+	Cmd_AddMacroEx ("weapons", Macro_Weapons, teamplay);
+	Cmd_AddMacro ("weapon", Macro_Weapon);
 
-	Cmd_AddMacroEx("ammo", Macro_Ammo, teamplay);
+	Cmd_AddMacroEx ("ammo", Macro_Ammo, teamplay);
 
-	Cmd_AddMacroEx("bestweapon", Macro_BestWeapon, teamplay);
-	Cmd_AddMacroEx("bestammo", Macro_BestAmmo, teamplay);
+	Cmd_AddMacroEx ("bestweapon", Macro_BestWeapon, teamplay);
+	Cmd_AddMacroEx ("bestammo", Macro_BestAmmo, teamplay);
 
-	Cmd_AddMacroEx("powerups", Macro_Powerups, teamplay);
+	Cmd_AddMacroEx ("powerups", Macro_Powerups, teamplay);
 
-	Cmd_AddMacroEx("location", Macro_Location, teamplay);
-	Cmd_AddMacroEx("deathloc", Macro_LastDeath, teamplay);
-
-
-	Cmd_AddMacroEx("tookatloc", Macro_TookAtLoc, teamplay);
-	Cmd_AddMacroEx("tookloc", Macro_TookLoc, teamplay);
-	Cmd_AddMacroEx("took", Macro_Took, teamplay);
-
-	Cmd_AddMacroEx("pointatloc", Macro_PointNameAtLocation, teamplay);
-	Cmd_AddMacroEx("pointloc", Macro_PointLocation, teamplay);
-	Cmd_AddMacroEx("point", Macro_PointName, teamplay);
-
-	Cmd_AddMacroEx("need", Macro_Need, teamplay);
-
-	Cmd_AddMacroEx("droploc", Macro_LastDrop, teamplay);
-	Cmd_AddMacroEx("droptime", Macro_LastDropTime, teamplay);
-
-	Cmd_AddMacro("tf_skin", Macro_TF_Skin);
-
-	Cmd_AddMacro("triggermatch", Macro_LastTrigger_Match);
+	Cmd_AddMacroEx ("location", Macro_Location, teamplay);
+	Cmd_AddMacroEx ("deathloc", Macro_LastDeath, teamplay);
 
 
-	Cmd_AddMacroEx("ledpoint", Macro_Point_LED, teamplay);
-	Cmd_AddMacroEx("ledstatus", Macro_MyStatus_LED, teamplay);
+	Cmd_AddMacroEx ("tookatloc", Macro_TookAtLoc, teamplay);
+	Cmd_AddMacroEx ("tookloc", Macro_TookLoc, teamplay);
+	Cmd_AddMacroEx ("took", Macro_Took, teamplay);
 
-};
+	Cmd_AddMacroEx ("pointatloc", Macro_PointNameAtLocation, teamplay);
+	Cmd_AddMacroEx ("pointloc", Macro_PointLocation, teamplay);
+	Cmd_AddMacroEx ("point", Macro_PointName, teamplay);
+
+	Cmd_AddMacroEx ("need", Macro_Need, teamplay);
+
+	Cmd_AddMacroEx ("droploc", Macro_LastDrop, teamplay);
+	Cmd_AddMacroEx ("droptime", Macro_LastDropTime, teamplay);
+
+	Cmd_AddMacro ("tf_skin", Macro_TF_Skin);
+
+	Cmd_AddMacro ("triggermatch", Macro_LastTrigger_Match);
+
+
+	Cmd_AddMacroEx ("ledpoint", Macro_Point_LED, teamplay);
+	Cmd_AddMacroEx ("ledstatus", Macro_MyStatus_LED, teamplay);
+}
 
 /********************** MACRO/FUNCHAR/WHITE TEXT PARSING **********************/
 
