@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.111.2.3 2007-04-10 11:42:46 johnnycz Exp $
+    $Id: cl_screen.c,v 1.111.2.4 2007-04-11 01:15:14 disconn3ct Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -2334,7 +2334,7 @@ void SCR_DrawHud (void)
 	hud_element_t* elem;
 	int x,y;
 	unsigned int l;
-	char buf[256];
+	char buf[1024];
 	char *st = NULL;
 	Hud_Func func;
 	double tblink = 0.0;
