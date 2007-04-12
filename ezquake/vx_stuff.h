@@ -118,6 +118,8 @@ extern cvar_t amf_tracker_y;
 extern cvar_t amf_tracker_frame_color;
 extern cvar_t amf_tracker_scale;
 extern cvar_t amf_tracker_images_scale;
+extern cvar_t amf_tracker_string_suicides;
+extern cvar_t amf_tracker_string_died;
 extern cvar_t amf_tracker_color_good;		// good news
 extern cvar_t amf_tracker_color_bad;		// bad news
 extern cvar_t amf_tracker_color_tkgood;		// team kill, not on ur team

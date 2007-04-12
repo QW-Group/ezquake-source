@@ -169,7 +169,7 @@ void VX_TrackerDeath(int player, int weapon, int count)
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
 	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r", cl.players[player].name, SuiColor(player), GetWeaponName(weapon));
+		snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r%s", cl.players[player].name, SuiColor(player), GetWeaponName(weapon), amf_tracker_string_died.string);
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&c960You died&r\n%s deaths: %i", GetWeaponName(weapon), count);
 
@@ -181,7 +181,7 @@ void VX_TrackerSuicide(int player, int weapon, int count)
 	char outstring[MAX_TRACKER_MSG_LEN]="";
 
 	if (amf_tracker_frags.value == 2)
-		snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r", cl.players[player].name, SuiColor(player), GetWeaponName(weapon));
+		snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r%s", cl.players[player].name, SuiColor(player), GetWeaponName(weapon), amf_tracker_string_suicides.string);
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&c960You killed yourself&r\n%s suicides: %i", GetWeaponName(weapon), count);
 
