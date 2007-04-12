@@ -75,6 +75,9 @@ cvar_t		amf_tracker_color_tkbad     = {"r_tracker_color_tkbad",    "009", CVAR_A
 cvar_t		amf_tracker_color_myfrag    = {"r_tracker_color_myfrag",   "090", CVAR_ARCHIVE}; // use this color for frag which u done
 cvar_t		amf_tracker_color_fragonme  = {"r_tracker_color_fragonme", "900", CVAR_ARCHIVE}; // use this color when u frag someone
 cvar_t		amf_tracker_color_suicide   = {"r_tracker_color_suicide",  "900", CVAR_ARCHIVE}; // use this color when u suicides
+cvar_t		amf_tracker_string_suicides = {"r_tracker_string_suicides", " (suicides)", CVAR_ARCHIVE};
+cvar_t		amf_tracker_string_died     = {"r_tracker_string_died",     " (died)",     CVAR_ARCHIVE};
+
 
 cvar_t		amf_part_gunshot = {"gl_particle_gunshots", "0", CVAR_ARCHIVE};
 cvar_t		amf_part_gunshot_type = {"gl_particle_gunshots_type", "1", CVAR_ARCHIVE};
@@ -437,6 +440,9 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_tracker_color_myfrag);
 	Cvar_Register (&amf_tracker_color_fragonme);
 	Cvar_Register (&amf_tracker_color_suicide);
+
+	Cvar_Register (&amf_tracker_string_suicides);
+	Cvar_Register (&amf_tracker_string_died);
 
 	Cvar_ResetCurrentGroup();
 
