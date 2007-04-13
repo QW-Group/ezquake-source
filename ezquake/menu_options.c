@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.2 2007-04-06 16:59:23 qqshka Exp $
+		$Id: menu_options.c,v 1.60.2.3 2007-04-13 23:25:54 himan Exp $
 
 */
 
@@ -539,8 +539,18 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Rocket Launcher", "weapon 7"),
 	ADDSET_BIND("Thunderbolt", "weapon 8"),
 	
-	ADDSET_SEPARATOR("Communication"),
+	ADDSET_SEPARATOR("Teamplay"),
 	ADDSET_BIND("Report Status", "tp_report"),
+	ADDSET_BIND("Lost location", "tp_lost"),
+	ADDSET_BIND("Location safe", "tp_safe"),
+	ADDSET_BIND("Coming from location", "tp_coming"),
+	ADDSET_BIND("Help location", "tp_help"),
+	ADDSET_BIND("Enemy Quad Dead", "tp_quaddead"),
+	ADDSET_BIND("Enemy has Powerup", "tp_enemypwr"),
+	ADDSET_BIND("Get Quad", "tp_getquad"),
+	ADDSET_BIND("Get Pent", "tp_getpent"),
+
+	ADDSET_SEPARATOR("Communication"),
 	ADDSET_BIND("Chat", "messagemode"),
 	ADDSET_BIND("Teamchat", "messagemode2"),	
 	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
