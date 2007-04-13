@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.67.2.7 2007-04-13 16:06:50 himan Exp $
+    $Id: teamplay.c,v 1.67.2.8 2007-04-13 23:25:29 himan Exp $
 */
 
 #define TP_ISEYESMODEL(x) ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -3488,7 +3488,7 @@ void TP_Msg_GetPentQuad(qbool quad)
 	}
 	
 	//$R$R get powerup(1)
-	TP_Send_TeamSay(tp_sep_red "get %s", msg1);
+	TP_Send_TeamSay(tp_sep_red " get %s", msg1);
 }
 void TP_Msg_GetQuad_f (void) { TP_Msg_GetPentQuad(true); }
 void TP_Msg_GetPent_f (void) { TP_Msg_GetPentQuad(false); }
