@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.36.2.1 2007-04-14 04:03:47 disconn3ct Exp $
+	$Id: sys_win.c,v 1.36.2.2 2007-04-14 04:28:27 disconn3ct Exp $
 
 */
 // sys_win.c
@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 
 #define MINIMUM_WIN_MEMORY	0x0c00000
-#define MAXIMUM_WIN_MEMORY	0x1000000
+#define MAXIMUM_WIN_MEMORY	0x2000000
 
 #define PAUSE_SLEEP		50				// sleep time on pause or minimization
 #define NOT_FOCUS_SLEEP	20				// sleep time when not focus
@@ -643,7 +643,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	}
 
 	// take the greater of all the available memory or half the total memory,
-	// but at least 8 Mb and no more than 16 Mb, unless they explicitly request otherwise
+	// but at least 8 Mb and no more than 32 Mb, unless they explicitly request otherwise
 	lpBuffer.dwLength = sizeof(MEMORYSTATUS);
 	GlobalMemoryStatus (&lpBuffer);
 
