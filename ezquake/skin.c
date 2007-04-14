@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: skin.c,v 1.16 2007-03-29 01:19:53 qqshka Exp $
+	$Id: skin.c,v 1.16.2.1 2007-04-14 04:27:44 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -316,7 +316,6 @@ void Skin_NextDownload (void) {
 	if (cls.state == ca_onserver /* && cbuf_current != &cbuf_main */) {	//only download when connecting
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString (&cls.netchan.message, va("begin %i", cl.servercount));
-		Cache_Report ();		// print remaining memory
 	}
 }
 
