@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.58.2.9 2007-04-11 01:16:06 disconn3ct Exp $
+    $Id: cmd.c,v 1.58.2.10 2007-04-14 04:25:38 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -559,17 +559,13 @@ void Cmd_AliasList_f (void)
 	cmd_alias_t *a;
 	int i, c, m = 0;
 	static int count;
-	static qbool sorted = false;
 	static cmd_alias_t *sorted_aliases[2048];
 
 #define MAX_SORTED_ALIASES (sizeof(sorted_aliases) / sizeof(sorted_aliases[0]))
 
-	if (!sorted) {
-		for (a = cmd_alias, count = 0; a && count < MAX_SORTED_ALIASES; a = a->next, count++)
-			sorted_aliases[count] = a;
-		qsort(sorted_aliases, count, sizeof (cmd_alias_t *), Cmd_AliasCompare);
-		sorted = true;
-	}
+	for (a = cmd_alias, count = 0; a && count < MAX_SORTED_ALIASES; a = a->next, count++)
+		sorted_aliases[count] = a;
+	qsort(sorted_aliases, count, sizeof (cmd_alias_t *), Cmd_AliasCompare);
 
 	if (count == MAX_SORTED_ALIASES)
 		assert(!"count == MAX_SORTED_ALIASES");
@@ -1126,17 +1122,13 @@ void Cmd_CmdList_f (void)
 	cmd_function_t *cmd;
 	int i, c, m = 0;
 	static int count;
-	static qbool sorted = false;
 	static cmd_function_t *sorted_cmds[512];
 
 #define MAX_SORTED_CMDS (sizeof(sorted_cmds) / sizeof(sorted_cmds[0]))
 
-	if (!sorted) {
-		for (cmd = cmd_functions, count = 0; cmd && count < MAX_SORTED_CMDS; cmd = cmd->next, count++)
-			sorted_cmds[count] = cmd;
-		qsort(sorted_cmds, count, sizeof (cmd_function_t *), Cmd_CommandCompare);
-		sorted = true;
-	}
+	for (cmd = cmd_functions, count = 0; cmd && count < MAX_SORTED_CMDS; cmd = cmd->next, count++)
+		sorted_cmds[count] = cmd;
+	qsort(sorted_cmds, count, sizeof (cmd_function_t *), Cmd_CommandCompare);
 
 	if (count == MAX_SORTED_CMDS)
 		assert(!"count == MAX_SORTED_CMDS");
@@ -1211,7 +1203,7 @@ char *Cmd_MacroString (const char *s, int *macro_length)
 		macro = &macro_commands[i];
 		if (!strncasecmp (s, macro->name, strlen (macro->name))) {
 #ifndef SERVERONLY
-			if (cbuf_current == &cbuf_main && macro->teamplay)
+			if (cbuf_current == &cbuf_main && (macro->teamplay == MACRO_DISALLOWED))
 				cbuf_current = &cbuf_formatted_comms;
 #endif
 			*macro_length = strlen (macro->name);
@@ -1233,21 +1225,14 @@ static int Cmd_MacroCompare (const void *p1, const void *p2)
 void Cmd_MacroList_f (void)
 {
 	int i, c, m = 0;
-	static qbool sorted = false;
 	static macro_command_t *sorted_macros[MAX_MACROS];
 
-	if (!macro_count) {
-		Com_Printf ("No macros!\n");
-		return;
-	}
+	for (i = 0; i < macro_count; i++)
+		sorted_macros[i] = &macro_commands[i];
+	qsort (sorted_macros, macro_count, sizeof (macro_command_t *), Cmd_MacroCompare);
 
-	if (!sorted) {
-		for (i = 0; i < macro_count; i++)
-			sorted_macros[i] = &macro_commands[i];
-
-		qsort (sorted_macros, macro_count, sizeof (macro_command_t *), Cmd_MacroCompare);
-		sorted = true;
-	}
+	if (macro_count == MAX_MACROS)
+		assert(!"count == MAX_MACROS");
 
 	c = Cmd_Argc();
 	if (c > 1)
