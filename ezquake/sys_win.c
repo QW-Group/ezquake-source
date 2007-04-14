@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.36 2007-03-11 06:01:43 disconn3ct Exp $
+	$Id: sys_win.c,v 1.36.2.1 2007-04-14 04:03:47 disconn3ct Exp $
 
 */
 // sys_win.c
@@ -630,7 +630,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		if (!AllocConsole())
 			Sys_Error ("Couldn't allocate dedicated server console");
 		SetConsoleCtrlHandler (HandlerRoutine, TRUE);
-		SetConsoleTitle ("fqds");
+		SetConsoleTitle ("ezqds");
 		hinput = GetStdHandle (STD_INPUT_HANDLE);
 		houtput = GetStdHandle (STD_OUTPUT_HANDLE);
 	}
