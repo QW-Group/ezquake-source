@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.73 2007-03-21 16:54:11 vvd0 Exp $
+    $Id: common.c,v 1.73.2.1 2007-04-15 00:56:40 disconn3ct Exp $
 
 */
 
@@ -1379,16 +1379,16 @@ int COM_FileOpenRead (char *path, FILE **hndl)
 
 void COM_Path_f (void)
 {
-	searchpath_t *s;
+	searchpath_t *search;
 
 	Com_Printf ("Current search path:\n");
-	for (s = com_searchpaths; s; s = s->next) {
-		if (s == com_base_searchpaths)
+	for (search = com_searchpaths; search; search = search->next) {
+		if (search == com_base_searchpaths)
 			Com_Printf ("----------\n");
-		if (s->pack)
-			Com_Printf ("%s (%i files)\n", s->pack->filename, s->pack->numfiles);
+		if (search->pack)
+			Com_Printf ("%s (%i files)\n", search->pack->filename, search->pack->numfiles);
 		else
-			Com_Printf ("%s\n", s->filename);
+			Com_Printf ("%s\n", search->filename);
 	}
 }
 
@@ -1541,7 +1541,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 	// search through the path, one element at a time
 	for (search = com_searchpaths; search; search = search->next) {
 		if (search == com_base_searchpaths && com_searchpaths != com_base_searchpaths)
-			file_from_gamedir = 0;
+			file_from_gamedir = false;
 
 		// is the element a pak file?
 		if (search->pack) {
@@ -1549,8 +1549,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 			pak = search->pack;
 			for (i = 0; i < pak->numfiles; i++) {
 				if (!strcmp (pak->files[i].name, filename)) {	// found it!
-					if (developer.value)
-						Sys_Printf ("PackFile: %s : %s\n", pak->filename, filename);
+					Com_DPrintf ("PackFile: %s : %s\n", pak->filename, filename);
 					// open a new file on the pakfile
 					if (!(*file = fopen (pak->filename, "rb")))
 						Sys_Error ("Couldn't reopen %s\n", pak->filename);
@@ -2445,10 +2444,6 @@ void Com_Printf (char *fmt, ...) {
 	// write it to the scrollable buffer
 	//	Con_Print (va("ezQuake: %s", msg));
 	Con_Print (msg);
-
-#ifndef SERVERONLY
-	Print_flags[Print_current] = 0;
-#endif
 }
 
 //A Com_Printf that only shows up if the "developer" cvar is set
