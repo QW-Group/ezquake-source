@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.59 2007-04-15 14:54:50 johnnycz Exp $
+    $Id: cmd.c,v 1.60 2007-04-15 17:31:48 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -58,11 +58,12 @@ cbuf_t *cbuf_current = NULL;
 //This allows commands like: bind g "impulse 5 ; +attack ; wait ; -attack ; impulse 2"
 void Cmd_Wait_f (void)
 {
+#ifdef WITH_TCL
 	if (in_tcl) {
 			Com_Printf ("command wait cant be used with TCL\n");
 			return;
 	}
-
+#endif
 	if (cbuf_current)
 		cbuf_current->wait = true;
 
