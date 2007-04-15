@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.57 2007-03-21 15:14:30 johnnycz Exp $
+    $Id: keys.c,v 1.58 2007-04-15 22:49:18 johnnycz Exp $
 
 */
 
@@ -45,9 +45,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //key up events are sent even if in console mode
 
-cvar_t cl_chatmode = {"cl_chatmode", "2"};
-cvar_t con_funchars_mode = {"con_funchars_mode", "0"};
-cvar_t cl_newCompletion = { "cl_newCompletion", "1" }; // addeded by jogi
+cvar_t cl_chatmode          = {"cl_chatmode", "2"};
+cvar_t con_funchars_mode    = {"con_funchars_mode", "0"};
+cvar_t con_tilde_mode       = {"con_tilde_mode", "0"};
+cvar_t cl_newCompletion     = {"cl_newCompletion", "1" }; // addeded by jogi
 
 #ifdef WITH_KEYMAP
 // variable to enable/disable key informations (e.g. scancode) to the consoloe:
@@ -1873,6 +1874,7 @@ void Key_Init (void) {
 	Cvar_Register (&cl_chatmode);
 	Cvar_Register (&cl_newCompletion);
 	Cvar_Register (&con_funchars_mode);
+    Cvar_Register (&con_tilde_mode);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -1925,6 +1927,25 @@ void Mouse_MoveEvent(void)
     // the rest of scr_pointer_state has already been updated by cl_screen module
 
     Mouse_EventDispatch();  // so just dispatch the message with new state
+}
+
+// will tell if the key should be currently translated into command binded to it
+// or send to some client module
+static qbool Key_ConsoleKey(int key)
+{
+    // this makes it possible to type chars under tilde key into the console
+    qbool con_key = (con_tilde_mode.integer && (key == 96 || key == 126)) ? true : consolekeys[key];
+
+    if (key_dest == key_menu && menubound[key])
+        return false;
+    
+    if ((key_dest == key_console || key_dest == key_message) && !con_key)
+        return false;
+    
+    if (key_dest == key_game && (cls.state == ca_active || !con_key))
+        return false;
+
+    return true;
 }
 
 //Called by the system between frames for both key up and key down events Should NOT be called during an interrupt!
@@ -2040,11 +2061,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 #endif
 
 	// if not a consolekey, send to the interpreter no matter what mode is
-	if	(
-			(key_dest == key_menu && menubound[key]) ||
-			((key_dest == key_console || key_dest == key_message) && !consolekeys[key]) ||
-			(key_dest == key_game && (cls.state == ca_active || !consolekeys[key]))
-		) {
+	if (!Key_ConsoleKey(key)) {
 		kb = keybindings[key];
 		if (kb) {
 			if (kb[0] == '+'){	// button commands add keynum as a parm
