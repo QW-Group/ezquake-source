@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.58.2.11 2007-04-15 17:28:49 disconn3ct Exp $
+    $Id: cmd.c,v 1.58.2.12 2007-04-15 20:13:14 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -78,12 +78,12 @@ void Cmd_Wait_f (void)
 
 void Cbuf_AddText (const char *text)
 {
-	Cbuf_AddTextEx (cbuf_current ? cbuf_current : &cbuf_main, text);
+	Cbuf_AddTextEx (&cbuf_main, text);
 }
 
 void Cbuf_InsertText (const char *text)
 {
-	Cbuf_InsertTextEx (cbuf_current ? cbuf_current : &cbuf_main, text);
+	Cbuf_InsertTextEx (&cbuf_main, text);
 }
 
 void Cbuf_Execute (void)
