@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.52 2007-03-16 07:22:37 disconn3ct Exp $
+	$Id: rulesets.c,v 1.53 2007-04-15 14:54:50 johnnycz Exp $
 
 */
 
@@ -265,25 +265,26 @@ static void Rulesets_Default (void)
 	rulesetDef.ruleset = rs_default;
 }
 
+void Cmd_ReInitAllMacro (void);
 qbool OnChange_ruleset (cvar_t *var, char *value)
 {
 	if (cls.state != ca_disconnected) {
-		Com_Printf("%s can be changed only in disconneced mode\n", var->name);
+		Com_Printf ("%s can be changed only in disconneced mode\n", var->name);
 		return true;
 	}
 
-	if (strcasecmp(value, "smackdown") && strcasecmp(value, "mtfl") && strcasecmp(value, "default")) {
+	if (strncasecmp (value, "smackdown", 9) && strncasecmp (value, "mtfl", 4) && strncasecmp (value, "default", 7)) {
 		Com_Printf_State (PRINT_INFO, "Unknown ruleset \"%s\"\n", value);
 		return true;
 	}
 
 	// All checks passed  so we can remove old ruleset and set a new one
-	switch(rulesetDef.ruleset) {
+	switch (rulesetDef.ruleset) {
 		case rs_smackdown:
-			Rulesets_Smackdown(false);
+			Rulesets_Smackdown (false);
 			break;
 		case rs_mtfl:
-			Rulesets_MTFL(false);
+			Rulesets_MTFL (false);
 			break;
 		case rs_default:
 			break;
@@ -292,23 +293,25 @@ qbool OnChange_ruleset (cvar_t *var, char *value)
 	}
 
 	// we need to mark custom textures in the memory (like for backpack and eyes) to be reloaded again
-	Cache_Flush();
+	Cache_Flush ();
 
-	if (!strcasecmp(value, "smackdown")) {
-		Rulesets_Smackdown(true);
+	if (!strncasecmp (value, "smackdown", 9)) {
+		Rulesets_Smackdown (true);
 		Com_Printf_State (PRINT_OK, "Ruleset Smackdown initialized\n");
-		return false;
-	} else if (!strcasecmp(value, "mtfl")) {
-		Rulesets_MTFL(true);
+	} else if (!strncasecmp (value, "mtfl", 4)) {
+		Rulesets_MTFL (true);
 		Com_Printf_State (PRINT_OK, "Ruleset MTFL initialized\n");
-		return false;
-	} else if (!strcasecmp(value, "default")) {
-		Rulesets_Default();
+	} else if (!strncasecmp (value, "default", 7)) {
+		Rulesets_Default ();
 		Com_Printf_State (PRINT_OK, "Ruleset default initialized\n");
-		return false;
+	} else {
+		Sys_Error ("OnChange_ruleset: WTF?\n");
+		return true; // this will never happen
 	}
 
-	return true; // this will never happen
+	Cmd_ReInitAllMacro ();
+
+	return false;
 }
 
 void Rulesets_Init (void)

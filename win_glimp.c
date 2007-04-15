@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.14 2007-04-08 13:37:41 qqshka Exp $
+$Id: win_glimp.c,v 1.15 2007-04-15 14:54:50 johnnycz Exp $
 
 */
 /*

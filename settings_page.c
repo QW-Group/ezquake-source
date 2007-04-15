@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.34 2007-03-31 15:24:10 johnnycz Exp $
+		$Id: settings_page.c,v 1.35 2007-04-15 14:54:50 johnnycz Exp $
 
 */
 
@@ -55,11 +55,14 @@ static const char* colors[14] = { "White", "Brown", "Lavender", "Khaki", "Red", 
 #define COLORNAME(x) colors[bound(0, ((int) x), sizeof(colors) / sizeof(char*) - 1)]
 
 static int STHeight(setting* s) {
-	if (s->advanced && !menu_advanced.value) return 0;
+	if (s->advanced && !menu_advanced.value)
+    {
+        return 0;
+    }
 	switch (s->type) {
 	case stt_separator: return LINEHEIGHT*3;
 	case stt_advmark: case stt_basemark: return 0;
-	default: return LINEHEIGHT+PADDING;
+    default: return LINEHEIGHT+PADDING;
 	}
 }
 
@@ -114,7 +117,11 @@ static void Setting_DrawSeparator(int x, int y, int w, setting* set)
 
 static void Setting_DrawAction(int x, int y, int w, setting* set, qbool active)
 {
-	Setting_PrintLabel(x, y, w, set->label, active);
+    // this will make it centered
+    UI_Print_Center(x, y, w, set->label, active);
+    
+    // this will make it aligned to the left side from the center
+    // Setting_PrintLabel(x, y, w, set->label, active);
 }
 
 static void Setting_DrawNamed(int x, int y, int w, setting* set, qbool active)
@@ -281,9 +288,37 @@ static void Setting_UnbindKey(setting* set)
 	M_UnbindCommand(set->varname);
 }
 
+// will find the lowest number of the setting on 'page' that can be used as the lowest viewpoint
+// and will ensure that whole bottom of the page is still visible
+static int Settings_LowestViewpoint(settings_page *page)
+{
+    setting *lastset = page->settings + page->count - 1;
+    int bottom = lastset->top + STHeight(lastset);
+    
+    // represents the 'top' number we are looking for
+    int best_top = bottom - page->height;
+
+    // presume the lowest viewpoint is the last entry
+    int lwp = page->count - 1;
+
+    // this is when the page fits whole on the screen
+    if (bottom < page->height) return 0;
+
+    if (!page->count) return 0;
+
+    // it can only get better from now
+    while (lwp && page->settings[lwp].top >= best_top) lwp--;
+
+    return lwp + 1;
+}
+
 // adjusts current viewed area of the settings page
 static void CheckViewpoint(settings_page *tab)
 {
+    int lwp = Settings_LowestViewpoint(tab);
+    
+    tab->viewpoint = bound(0, tab->viewpoint, lwp);
+
 	if (tab->marked == 1 && tab->settings[0].type == stt_separator) tab->viewpoint = 0;
 
 	if (tab->viewpoint > tab->marked) { 
@@ -480,6 +515,7 @@ qbool Settings_Key(settings_page* tab, int key)
 	setting_type type;
 	int oldm = tab->marked;
 	char *skinpath;
+    qbool skip_check_viewpoint = false;
 
 	type = tab->settings[tab->marked].type;
 
@@ -512,13 +548,22 @@ qbool Settings_Key(settings_page* tab, int key)
 	}
 
 	switch (key) { 
-	case K_DOWNARROW:
-	case K_MWHEELDOWN:
-		tab->marked++; break;
-	case K_UPARROW: 
+	case K_DOWNARROW:   tab->marked++; break;
+	case K_UPARROW:     tab->marked--; up = true; break;
+	case K_MWHEELDOWN:  
+        if (tab->viewpoint < Settings_LowestViewpoint(tab))
+            tab->viewpoint++; 
+
+        skip_check_viewpoint = true; 
+        break;
+
 	case K_MWHEELUP:
-		tab->marked--; up = true; break;
-	case K_PGDN: tab->marked += 5; break;
+        if (tab->viewpoint > 0)
+            tab->viewpoint--;
+        skip_check_viewpoint = true;
+        break;
+
+    case K_PGDN: tab->marked += 5; break;
 	case K_PGUP: tab->marked -= 5; up = true; break;
 	case K_END: tab->marked = tab->count - 1; up = true; break;
 	case K_HOME: tab->marked = 0; break;
@@ -584,16 +629,33 @@ qbool Settings_Key(settings_page* tab, int key)
 	}
 
 	CheckCursor(tab, up);
-    CheckViewpoint(tab);
+
+    if (!skip_check_viewpoint)
+        CheckViewpoint(tab);
+
 	EditBoxCheck(tab, oldm, tab->marked);
 	return true;
 }
 
 static void Setting_Click(settings_page* page, const mouse_state_t *ms)
 {
+    // don't accept clicks on the label
+    if (ms->x < page->width/2 && (page->settings + page->marked)->type != stt_action) return;
+
     if (page->settings[page->marked].type == stt_num) {
         Setting_Slider_Click(page, ms);
     } else Settings_Key(page, K_MOUSE1);
+}
+
+static void Settings_AdjustScrollBar(settings_page *page)
+{
+    double lwp = Settings_LowestViewpoint(page);
+    double percentage = lwp ? (double) page->viewpoint / lwp : 0;
+    
+    // do not adjust the scrollbar if we are scrolling, it would look weird
+    if (page->scrollbar->mouselocked) return;
+
+    page->scrollbar->curpos = bound(0, percentage, 1);
 }
 
 void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
@@ -634,6 +696,8 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 	}
 
     tab->width = w; tab->height = h;
+
+    Settings_AdjustScrollBar(tab);
     ScrollBar_Draw(tab->scrollbar, x + w, y, h);
 
 	for (i = tab->viewpoint; i < tab->count && tab->settings[i].top + STHeight(tab->settings + i) <= h + tab->settings[tab->viewpoint].top; i++)
@@ -689,7 +753,7 @@ qbool Settings_Mouse_Event(settings_page *page, const mouse_state_t *ms)
     {
         if (ScrollBar_MouseEvent(page->scrollbar, ms))
         {
-            page->viewpoint = page->count * page->scrollbar->curpos;
+            page->viewpoint = Settings_LowestViewpoint(page) * page->scrollbar->curpos;
         }
 
         return true;
@@ -719,7 +783,11 @@ qbool Settings_Mouse_Event(settings_page *page, const mouse_state_t *ms)
 	case SPM_NORMAL:
 		nmark = FindSetting_AtPos(page, page->settings[page->viewpoint].top + ms->y);
 		nmark = bound(0, nmark, page->count - 1);
-		if (page->settings[nmark].type != stt_separator)
+        if (page->settings[nmark].type == stt_num && ms->buttons[1] == true)
+        {
+            Setting_Slider_Click(page, ms);
+        }
+		else if (page->settings[nmark].type != stt_separator)
 		{
 			page->marked = nmark;
 			CheckCursor(page, ms->x < ms->x_old);

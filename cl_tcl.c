@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  $Id: cl_tcl.c,v 1.20 2007-03-11 06:01:36 disconn3ct Exp $
+ *  $Id: cl_tcl.c,v 1.21 2007-04-15 14:54:50 johnnycz Exp $
  */
 
 #ifdef WITH_TCL
@@ -43,6 +43,7 @@ extern cmd_alias_t *cmd_alias;
 #define ALIAS_HASHPOOL_SIZE 256
 extern cmd_alias_t *cmd_alias_hash[ALIAS_HASHPOOL_SIZE];
 
+int in_tcl;
 cvar_t tcl_version = {"tcl_version", "", CVAR_ROM};
 
 #ifdef USE_TCL_STUBS
@@ -137,7 +138,7 @@ static int TCL_Alias (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *co
 		cmd_alias_hash[h] = a;
 	}
 
-	strcpy (a->name, s);
+	strlcpy (a->name, s, MAX_ALIAS_NAME);
 
 	a->flags = ALIAS_TCL;
 
@@ -159,14 +160,14 @@ static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *cons
 	char *str_utf, *line, *argv;
 	int str_utf_len;
 	int i;
-	cmd_function_t *cmd;
-
+	cbuf_t cbuf_tcl;
 
 	if (objc < 2) {
 		Tcl_WrongNumArgs (interp, 1, objv, "qw_command");
 		return (TCL_ERROR);
 	}
 
+	// Get the command from TCL structures
 	args = Tcl_DuplicateObj (objv[1]);
 	for (i = 2; i < objc; ++i) {
 		Tcl_AppendToObj (args, " ", 1);
@@ -183,34 +184,22 @@ static int TCL_Cmd (ClientData data, Tcl_Interp* interp, int objc, Tcl_Obj *cons
 	str_utf = Tcl_GetStringFromObj (args, &str_utf_len);
 	Tcl_UtfToExternalDString (qw_enc, str_utf, str_utf_len, &str_byte);
 	line = Tcl_DStringValue (&str_byte);
-	Cmd_TokenizeString (line);
 
-	cmd = Cmd_FindCommand (Cmd_Argv(0));
-	if (!cmd) {
-		Tcl_DStringFree (&str_byte);
-		Tcl_SetResult (interp, "cmd: unknown command", TCL_STATIC);
-		return (TCL_ERROR);
-	}
-	if (cbuf_current == &cbuf_safe) {
-		if( !Cmd_IsCommandAllowedInMessageTrigger(Cmd_Argv(0))) {
-			Tcl_DStringFree (&str_byte);
-			Tcl_SetResult (interp, "cmd: invalid message trigger command", TCL_STATIC);
-			return (TCL_ERROR);
-		}
-	} else if (cbuf_current == &cbuf_formatted_comms) {
-		if( !Cmd_IsCommandAllowedInTeamPlayMacros(Cmd_Argv(0)) ) {
-			Tcl_DStringFree (&str_byte);
-			Tcl_SetResult (interp, "cmd: invalid teamplay $macros command", TCL_STATIC);
-			return (TCL_ERROR);
-		}
-	}
+	// Register cbuf_tcl
+	cbuf_tcl.maxsize = 1 << 11;
+	cbuf_tcl.text_buf = (char *) Q_malloc (cbuf_tcl.maxsize);
+	cbuf_tcl.text_start = cbuf_tcl.text_end = (cbuf_tcl.maxsize >> 1);
+	cbuf_tcl.wait = false;
+	cbuf_tcl.runAwayLoop = 0;
 
-	if (cmd->function) {
-		cmd->function ();
-	} else {
-		Cmd_ForwardToServer ();
-	}
+	// Execute 'line' in current command buffer
+	in_tcl++;
+	Cbuf_AddTextEx (&cbuf_tcl, line);
+	Cbuf_ExecuteEx (&cbuf_tcl);
+	in_tcl--;
 
+	// Free memory
+	Q_free (cbuf_tcl.text_buf);
 	Tcl_DStringFree (&str_byte);
 	Tcl_SetResult (interp, NULL, TCL_STATIC);
 
@@ -313,7 +302,7 @@ static void TCL_Eval_f (void)
 	rc = Tcl_EvalObjEx (interp, script, TCL_EVAL_GLOBAL);
 	result = Tcl_GetStringResult (interp);
 	if (rc != TCL_OK) {
-		Com_Printf ("Error in Tcl script: %s\n", result ? result : "unknown");
+		Com_Printf ("Error in Tcl script, line %i: %s\n", interp->errorLine, result ? result : "unknown");
 		return;
 	}
 	if (result && *result) {
@@ -344,11 +333,11 @@ static void TCL_Exec_f (void)
 		Com_Printf ("%s <filename> : execute file as Tcl script\n", Cmd_Argv(0));
 		return;
 	}
-	strcpy (filename, Cmd_Argv(1));
+	strlcpy (filename, Cmd_Argv(1), sizeof(filename));
 	COM_DefaultExtension (filename, ".tcl");
 
-	mark = Hunk_LowMark ();
-	eval_buf = (char *)FS_LoadHunkFile(filename);
+	mark = Hunk_LowMark();
+	eval_buf = (char *) FS_LoadHunkFile (filename);
 	if (!eval_buf) {
 		Com_Printf ("%s: unable to load %s\n", Cmd_Argv(0), filename);
 		return;
@@ -363,7 +352,8 @@ static void TCL_Exec_f (void)
 			result = Tcl_GetVar (interp, "errorInfo", TCL_GLOBAL_ONLY);
 		else
 			result = Tcl_GetStringResult (interp);
-		Com_Printf ("Error in Tcl script: %s\n", result ? result : "unknown");
+
+		Com_Printf ("Error in Tcl script %s, line %i:\n -->%s\n", filename, interp->errorLine, result ? result : "unknown");
 		return;
 	}
 }
@@ -416,7 +406,7 @@ static void TCL_Proc_f (void)
 
 	if (rc != TCL_OK) {
 		result = Tcl_GetStringResult (interp);
-		Com_Printf ("Tcl error: %s\n", result ? result : "unknown");
+		Com_Printf ("Tcl error, line %i: %s\n", interp->errorLine, result ? result : "unknown");
 		return;
 	}
 }

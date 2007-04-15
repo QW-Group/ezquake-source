@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.36 2007-04-06 16:59:07 qqshka Exp $
+$Id: mvd_utils.c,v 1.37 2007-04-15 14:54:50 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1990,7 +1990,6 @@ void MVD_Utils_Init (void) {
 	Cvar_Register (&mvd_pc_view_4);
 
 	Cvar_Register (&mvd_moreinfo);
-
 	
 	Cmd_AddCommand ("mvd_runs",MVD_List_Runs_f);
 	Cmd_AddCommand ("mvd_xml",MVD_Status_Xml);

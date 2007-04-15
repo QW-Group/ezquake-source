@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60 2007-03-31 15:24:10 johnnycz Exp $
+		$Id: menu_options.c,v 1.61 2007-04-15 14:54:50 johnnycz Exp $
 
 */
 
@@ -539,8 +539,18 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Rocket Launcher", "weapon 7"),
 	ADDSET_BIND("Thunderbolt", "weapon 8"),
 	
-	ADDSET_SEPARATOR("Communication"),
+	ADDSET_SEPARATOR("Teamplay"),
 	ADDSET_BIND("Report Status", "tp_report"),
+	ADDSET_BIND("Lost location", "tp_lost"),
+	ADDSET_BIND("Location safe", "tp_safe"),
+	ADDSET_BIND("Coming from location", "tp_coming"),
+	ADDSET_BIND("Help location", "tp_help"),
+	ADDSET_BIND("Enemy Quad Dead", "tp_quaddead"),
+	ADDSET_BIND("Enemy has Powerup", "tp_enemypwr"),
+	ADDSET_BIND("Get Quad", "tp_getquad"),
+	ADDSET_BIND("Get Pent", "tp_getpent"),
+
+	ADDSET_SEPARATOR("Communication"),
 	ADDSET_BIND("Chat", "messagemode"),
 	ADDSET_BIND("Teamchat", "messagemode2"),	
 	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
@@ -569,7 +579,7 @@ setting settbinds_arr[] = {
 	ADDSET_SEPARATOR("Demo Playback"),
 	ADDSET_BIND("Stop", "disconnect"),
 	ADDSET_BIND("Play", "cl_demospeed 1;echo Playing demo."),
-	ADDSET_BIND("Pause", "cl_demospeed 0;echo Demo paused."),
+	ADDSET_BIND("Pause", "cl_demospeed 0;echo Demo paused.")
 };
 
 void CT_Opt_Binds_Draw (int x2, int y2, int w, int h, CTab_t *tab, CTabPage_t *page) {
@@ -579,6 +589,8 @@ void CT_Opt_Binds_Draw (int x2, int y2, int w, int h, CTab_t *tab, CTabPage_t *p
 int CT_Opt_Binds_Key (int k, CTab_t *tab, CTabPage_t *page) {
 	return Settings_Key(&settbinds, k);
 }
+
+void OnShow_SettBinds(void) { Settings_OnShow(&settbinds); }
 
 qbool CT_Opt_Binds_Mouse_Event(const mouse_state_t *ms)
 {
@@ -675,7 +687,7 @@ void LoadHQPreset(void) {
 #endif
 }
 
-const char* grenadetrail_enum[] = { "off", "normal", "grenade", "alt", "blood", "big blood", "tracer1", "tracer2", "plasma", "lavaball", "fuel rod", "plasma rocket" };
+const char* grenadetrail_enum[] = { "off", "normal", "grenade", "alt normal", "slight blood", "big blood", "tracer 1", "tracer 2", "plasma", "lavaball", "fuel rod", "plasma rocket" };
 
 extern cvar_t cl_maxfps;
 const char* FpslimitRead(void) {
@@ -1251,7 +1263,7 @@ CTabPage_Handlers_t options_multiview_handlers = {
 CTabPage_Handlers_t options_controls_handlers = {
 	CT_Opt_Binds_Draw,
 	CT_Opt_Binds_Key,
-	NULL,
+	OnShow_SettBinds,
 	CT_Opt_Binds_Mouse_Event
 };
 

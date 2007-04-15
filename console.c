@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.52 2007-03-21 17:03:10 vvd0 Exp $
+	$Id: console.c,v 1.53 2007-04-15 14:54:50 johnnycz Exp $
 */
 // console.c
 
@@ -570,10 +570,10 @@ void Con_PrintW (wchar *txt) {
 	}
 
 	if ((Print_flags[Print_current] & PR_SKIP))
-		return;
+		goto zomfg;
 
 	if (!con_initialized || con_suppress)
-		return;
+		goto zomfg;
 
 	if (txt[0] == 1 || txt[0] == 2)	{
 		mask = 128;		// go to colored text
@@ -668,6 +668,10 @@ void Con_PrintW (wchar *txt) {
 				break;
 		}
 	}
+zomfg:
+#ifndef SERVERONLY
+	Print_flags[Print_current] = 0;
+#endif
 }
 
 void Con_Print (char *txt)

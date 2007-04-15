@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: zone.c,v 1.12 2007-03-12 03:04:41 disconn3ct Exp $
+	$Id: zone.c,v 1.13 2007-04-15 14:54:50 johnnycz Exp $
 */
 // zone.c - memory management
 
@@ -137,7 +137,7 @@ void *Hunk_AllocName (int size, char *name) {
 	size = sizeof(hunk_t) + ((size + 15) & ~15);
 
 	if (hunk_size - hunk_low_used - hunk_high_used < size)
-	  	Sys_Error ("Hunk_AllocName: Not enough RAM allocated.  Try using \"-mem 16\" on the ezQuake command line.");
+	  	Sys_Error ("Hunk_AllocName: Not enough RAM allocated.  Try using \"-mem 128\" on the ezQuake command line.");
 
 	h = (hunk_t *)(hunk_base + hunk_low_used);
 	hunk_low_used += size;
@@ -205,7 +205,7 @@ void *Hunk_HighAllocName (int size, char *name) {
 	size = sizeof(hunk_t) + ((size+15)&~15);
 
 	if (hunk_size - hunk_low_used - hunk_high_used < size)
-	  	Sys_Error ("Hunk_HighAllocName: Not enough RAM allocated.  Try using \"-mem 16\" on the ezQuake command line.");
+	  	Sys_Error ("Hunk_HighAllocName: Not enough RAM allocated.  Try using \"-mem 128\" on the ezQuake command line.");
 
 	hunk_high_used += size;
 	Cache_FreeHigh (hunk_high_used);

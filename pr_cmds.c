@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: pr_cmds.c,v 1.22 2007-04-01 10:41:01 tonik Exp $
+$Id: pr_cmds.c,v 1.23 2007-04-15 14:54:50 johnnycz Exp $
 */
 
 #include "qwsvdef.h"

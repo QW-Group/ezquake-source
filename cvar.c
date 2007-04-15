@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cvar.c,v 1.46 2007-04-06 20:15:39 qqshka Exp $
+$Id: cvar.c,v 1.47 2007-04-15 14:54:50 johnnycz Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -644,18 +644,14 @@ void Cvar_CvarList (qbool use_regex)
 	cvar_t *var;
 	unsigned int i, c = 0, m = 0;
 	static unsigned int count;
-	static qbool sorted = false;
 	static cvar_t *sorted_cvars[2048]; // disconnect@28.06.2005: it was 512 before
 	char *pattern;
 
 #define MAX_SORTED_CVARS (sizeof(sorted_cvars) / sizeof(sorted_cvars[0]))
 
-	if (!sorted) {
-		for (var = cvar_vars, count = 0; var && count < MAX_SORTED_CVARS; var = var->next, count++)
-			sorted_cvars[count] = var;
-		qsort(sorted_cvars, count, sizeof (cvar_t *), Cvar_CvarCompare);
-		sorted = true;
-	}
+	for (var = cvar_vars, count = 0; var && count < MAX_SORTED_CVARS; var = var->next, count++)
+		sorted_cvars[count] = var;
+	qsort(sorted_cvars, count, sizeof (cvar_t *), Cvar_CvarCompare);
 
 	if (count == MAX_SORTED_CVARS)
 		assert(!"count == MAX_SORTED_CVARS");

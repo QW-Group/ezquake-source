@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.86 2007-04-08 15:08:35 qqshka Exp $
+$Id: cl_parse.c,v 1.87 2007-04-15 14:54:50 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -2123,16 +2123,17 @@ static void FlushString (wchar *s, int level, qbool team, int offset) {
 	extern cvar_t scr_coloredfrags;
 #endif
 	wchar white_s[4096];
+	wchar zomfg[4096]; // FIXME
 	char *mark;
 	wchar *text;
 	char *f;
 	cfrags_format cff = {0, 0, 0, 0, 0, 0, false};
 	char *s0;
 
-	qwcslcpy(white_s, s, 4096);
+	qwcslcpy (white_s, s, sizeof (white_s));
 
-	s0 = wcs2str(s);
-	f = strstr(s0, name.string);
+	s0 = wcs2str (s);
+	f = strstr (s0, name.string);
 	CL_SearchForReTriggers (s0 /*+ offset*/, 1<<level); // re_triggers
 
 	// highlighting on && nickname found && it's not our own text (nickname not close to the beginning)
@@ -2164,10 +2165,12 @@ static void FlushString (wchar *s, int level, qbool team, int offset) {
 		text = CL_ColorizeFragMessage(text, &cff);
 #endif
 
-	if (cl_showFragsMessages.value || !cff.isFragMsg) {
-		Com_Printf("%s", mark);
-		Con_PrintW(text);		// FIXME logging
-	}
+	// disconnect: There should be something like Com_PrintfW...
+	// else we are forced to this:
+	qwcslcpy (zomfg, str2wcs(mark), sizeof (zomfg));
+	qwcslcpy (zomfg, text, sizeof (zomfg));
+	if (cl_showFragsMessages.value || !cff.isFragMsg)
+		Con_PrintW(zomfg); // FIXME logging
 
 	if (level >= 4)
 		return;

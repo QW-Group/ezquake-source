@@ -16,37 +16,41 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.58 2007-03-17 06:04:32 qqshka Exp $
+    $Id: cmd.c,v 1.59 2007-04-15 14:54:50 johnnycz Exp $
 */
 
 #include "quakedef.h"
 #ifdef WITH_TCL
 #include "embed_tcl.h"
 #endif
+#ifndef SERVERONLY
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #else
 #include "r_model.h"
 #include "r_local.h"
-#endif
+#endif /* !GLQUAKE */
 #include "teamplay.h"
+#include "rulesets.h"
+#endif /* !SERVERONLY */
 
 #ifndef SERVERONLY
 qbool CL_CheckServerCommand (void);
 #endif
 
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
+static int gtf = 0; // global trigger flag
 
 cvar_t cl_warncmd = {"cl_warncmd", "0"};
 
-cbuf_t	cbuf_main;
+cbuf_t cbuf_main;
 #ifndef SERVERONLY
-cbuf_t	cbuf_svc;
-cbuf_t	cbuf_safe, cbuf_formatted_comms;
+cbuf_t cbuf_svc;
+cbuf_t cbuf_safe, cbuf_formatted_comms;
 #endif
 
-cbuf_t	*cbuf_current = NULL;
+cbuf_t *cbuf_current = NULL;
 
 //=============================================================================
 
@@ -54,8 +58,15 @@ cbuf_t	*cbuf_current = NULL;
 //This allows commands like: bind g "impulse 5 ; +attack ; wait ; -attack ; impulse 2"
 void Cmd_Wait_f (void)
 {
+	if (in_tcl) {
+			Com_Printf ("command wait cant be used with TCL\n");
+			return;
+	}
+
 	if (cbuf_current)
 		cbuf_current->wait = true;
+
+	return;
 }
 
 /*
@@ -64,14 +75,14 @@ void Cmd_Wait_f (void)
 =============================================================================
 */
 
-void Cbuf_AddText (char *text)
+void Cbuf_AddText (const char *text)
 {
-	Cbuf_AddTextEx (&cbuf_main, text);
+	Cbuf_AddTextEx (cbuf_current ? cbuf_current : &cbuf_main, text);
 }
 
-void Cbuf_InsertText (char *text)
+void Cbuf_InsertText (const char *text)
 {
-	Cbuf_InsertTextEx (&cbuf_main, text);
+	Cbuf_InsertTextEx (cbuf_current ? cbuf_current : &cbuf_main, text);
 }
 
 void Cbuf_Execute (void)
@@ -90,32 +101,28 @@ void Cbuf_Execute (void)
 //fuh : I'll take care of that one day.
 static void Cbuf_Register (cbuf_t *cbuf, int maxsize)
 {
-	assert(!host_initialized);
+	assert (!host_initialized);
 	cbuf->maxsize = maxsize;
 	cbuf->text_buf = (char *) Hunk_Alloc(maxsize);
 	cbuf->text_start = cbuf->text_end = (cbuf->maxsize >> 1);
 	cbuf->wait = false;
 }
 
-/*
-============
-Cbuf_Init
-============
-*/
 void Cbuf_Init (void)
 {
-	Cbuf_Register(&cbuf_main, 1 << 18); // 256kb
+	Cbuf_Register (&cbuf_main, 1 << 18); // 256kb
 #ifndef SERVERONLY
-	Cbuf_Register(&cbuf_svc, 1 << 13); // 8kb
-	Cbuf_Register(&cbuf_safe, 1 << 11); // 2kb
-	Cbuf_Register(&cbuf_formatted_comms, 1 << 11); // 2kb
+	Cbuf_Register (&cbuf_svc, 1 << 13); // 8kb
+	Cbuf_Register (&cbuf_safe, 1 << 11); // 2kb
+	Cbuf_Register (&cbuf_formatted_comms, 1 << 11); // 2kb
 #endif
 }
 
 //Adds command text at the end of the buffer
-void Cbuf_AddTextEx (cbuf_t *cbuf, char *text)
+void Cbuf_AddTextEx (cbuf_t *cbuf, const char *text)
 {
-	int len, new_start, new_bufsize;
+	int new_start, new_bufsize;
+	size_t len;
 
 	len = strlen (text);
 
@@ -141,11 +148,12 @@ void Cbuf_AddTextEx (cbuf_t *cbuf, char *text)
 }
 
 //Adds command text at the beginning of the buffer
-void Cbuf_InsertTextEx (cbuf_t *cbuf, char *text)
+void Cbuf_InsertTextEx (cbuf_t *cbuf, const char *text)
 {
-	int len, new_start, new_bufsize;
+	int new_start, new_bufsize;
+	size_t len;
 
-	len = strlen(text);
+	len = strlen (text);
 
 	if (len <= cbuf->text_start) {
 		memcpy (cbuf->text_buf + (cbuf->text_start - len), text, len);
@@ -162,8 +170,7 @@ void Cbuf_InsertTextEx (cbuf_t *cbuf, char *text)
 	// Calculate optimal position of text in buffer
 	new_start = ((cbuf->maxsize - new_bufsize) >> 1);
 
-	memmove (cbuf->text_buf + (new_start + len), cbuf->text_buf + cbuf->text_start,
-	         cbuf->text_end - cbuf->text_start);
+	memmove (cbuf->text_buf + (new_start + len), cbuf->text_buf + cbuf->text_start, cbuf->text_end - cbuf->text_start);
 	memcpy (cbuf->text_buf + new_start, text, len);
 	cbuf->text_start = new_start;
 	cbuf->text_end = cbuf->text_start + new_bufsize;
@@ -178,6 +185,9 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 	qbool comment, quotes;
 
 #ifndef SERVERONLY
+	if (cbuf == &cbuf_safe)
+		gtf++;
+
 	nextsize = cbuf->text_end - cbuf->text_start;
 #endif
 
@@ -191,10 +201,12 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		for (i = 0; i < cursize; i++) {
 			if (text[i] == '\n')
 				break;
+
 			if (text[i] == '"') {
 				quotes = !quotes;
 				continue;
 			}
+
 			if (comment || quotes)
 				continue;
 
@@ -218,7 +230,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		// Copy text to line, skipping carriage return chars
 		src = text;
 		dest = line;
-		j = min (i, sizeof(line) - 1);
+		j = min (i, sizeof (line) - 1);
 		for ( ; j; j--, src++) {
 			if (*src != '\r')
 				*dest++ = *src;
@@ -235,11 +247,11 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		}
 
 		cursize = cbuf->text_end - cbuf->text_start;
+
 		Cmd_ExecuteStringEx (cbuf, line);	// execute the command line
 
 		if (cbuf->text_end - cbuf->text_start > cursize)
 			cbuf->runAwayLoop++;
-
 
 		if (cbuf->runAwayLoop > MAX_RUNAWAYLOOP) {
 			Com_Printf("\x02" "A recursive alias has caused an infinite loop.");
@@ -252,14 +264,23 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 			// skip out while text still remains in buffer, leaving it for next frame
 			cbuf->wait = false;
 #ifndef SERVERONLY
+			cbuf->runAwayLoop += Q_rint (0.5 * cls.frametime * MAX_RUNAWAYLOOP);
 
-			cbuf->runAwayLoop += Q_rint(0.5 * cls.frametime * MAX_RUNAWAYLOOP);
+			if (cbuf == &cbuf_safe)
+				gtf--;
 #endif
 			return;
 		}
 	}
 
+#ifndef SERVERONLY
+	if (cbuf == &cbuf_safe)
+		gtf--;
+#endif
+
 	cbuf->runAwayLoop = 0;
+
+	return;
 }
 
 /*
@@ -278,10 +299,11 @@ void Cbuf_AddEarlyCommands (void)
 {
 	int i;
 
-	for (i = 0; i < COM_Argc() - 2; i++) {
-		if (strcasecmp(COM_Argv(i), "+set"))
+	for (i = 0; i < COM_Argc () - 2; i++) {
+		if (strcasecmp (COM_Argv(i), "+set"))
 			continue;
-		Cbuf_AddText (va("set %s %s\n", COM_Argv(i+1), COM_Argv(i+2)));
+
+		Cbuf_AddText (va ("set %s %s\n", COM_Argv (i + 1), COM_Argv (i + 2)));
 		i += 2;
 	}
 }
@@ -295,11 +317,10 @@ quake -nosound +cmd amlev1
 */
 void Cmd_StuffCmds_f (void)
 {
-	int k, len;
+	int k, len = 0;
 	char *s, *text, *token;
 
 	// build the combined string to parse from
-	len = 0;
 	for (k = 1; k < com_argc; k++)
 		len += strlen (com_argv[k]) + 1;
 
@@ -368,8 +389,8 @@ void Cmd_Exec_f (void)
 
 #ifndef SERVERONLY
 	if (cbuf_current == &cbuf_svc) {
-		Cbuf_AddText (f);
-		Cbuf_AddText ("\n");
+		Cbuf_AddTextEx (&cbuf_main, f);
+		Cbuf_AddTextEx (&cbuf_main, "\n");
 	} else
 #endif
 	{
@@ -538,17 +559,13 @@ void Cmd_AliasList_f (void)
 	cmd_alias_t *a;
 	int i, c, m = 0;
 	static int count;
-	static qbool sorted = false;
 	static cmd_alias_t *sorted_aliases[2048];
 
 #define MAX_SORTED_ALIASES (sizeof(sorted_aliases) / sizeof(sorted_aliases[0]))
 
-	if (!sorted) {
-		for (a = cmd_alias, count = 0; a && count < MAX_SORTED_ALIASES; a = a->next, count++)
-			sorted_aliases[count] = a;
-		qsort(sorted_aliases, count, sizeof (cmd_alias_t *), Cmd_AliasCompare);
-		sorted = true;
-	}
+	for (a = cmd_alias, count = 0; a && count < MAX_SORTED_ALIASES; a = a->next, count++)
+		sorted_aliases[count] = a;
+	qsort(sorted_aliases, count, sizeof (cmd_alias_t *), Cmd_AliasCompare);
 
 	if (count == MAX_SORTED_ALIASES)
 		assert(!"count == MAX_SORTED_ALIASES");
@@ -1105,17 +1122,13 @@ void Cmd_CmdList_f (void)
 	cmd_function_t *cmd;
 	int i, c, m = 0;
 	static int count;
-	static qbool sorted = false;
 	static cmd_function_t *sorted_cmds[512];
 
 #define MAX_SORTED_CMDS (sizeof(sorted_cmds) / sizeof(sorted_cmds[0]))
 
-	if (!sorted) {
-		for (cmd = cmd_functions, count = 0; cmd && count < MAX_SORTED_CMDS; cmd = cmd->next, count++)
-			sorted_cmds[count] = cmd;
-		qsort(sorted_cmds, count, sizeof (cmd_function_t *), Cmd_CommandCompare);
-		sorted = true;
-	}
+	for (cmd = cmd_functions, count = 0; cmd && count < MAX_SORTED_CMDS; cmd = cmd->next, count++)
+		sorted_cmds[count] = cmd;
+	qsort(sorted_cmds, count, sizeof (cmd_function_t *), Cmd_CommandCompare);
 
 	if (count == MAX_SORTED_CMDS)
 		assert(!"count == MAX_SORTED_CMDS");
@@ -1146,23 +1159,39 @@ void Cmd_CmdList_f (void)
 static macro_command_t macro_commands[MAX_MACROS];
 static int macro_count = 0;
 
-void Cmd_AddMacroEx(char *s, char *(*f)(void), qbool teamplay)
+void Cmd_ReInitAllMacro (void)
+{
+	int i;
+	int teamplay;
+
+	teamplay = (int) Rulesets_RestrictTriggers ();
+
+	for (i = 0; i < macro_count; i++)
+		if (macro_commands[i].teamplay != MACRO_NORULES)
+			macro_commands[i].teamplay = teamplay;
+}
+
+void Cmd_AddMacroEx (const char *s, char *(*f) (void), int teamplay)
 {
 	if (macro_count == MAX_MACROS)
-		Sys_Error("Cmd_AddMacro: macro_count == MAX_MACROS");
-	strlcpy(macro_commands[macro_count].name, s, sizeof(macro_commands[macro_count].name));
+		Sys_Error ("Cmd_AddMacro: macro_count == MAX_MACROS");
+
+	snprintf (macro_commands[macro_count].name, sizeof (macro_commands[macro_count].name), "%s", s);
 	macro_commands[macro_count].func = f;
 	macro_commands[macro_count].teamplay = teamplay;
+
 #ifdef WITH_TCL
-	if (!teamplay)	// don't allow teamplay protected macros since there's no protection for this in TCL yet
+// disconnect: it seems macro are safe with TCL NOW
+//	if (!teamplay)	// don't allow teamplay protected macros since there's no protection for this in TCL yet
 		TCL_RegisterMacro (macro_commands + macro_count);
 #endif
+
 	macro_count++;
 }
 
-void Cmd_AddMacro(char *s, char *(*f)(void))
+void Cmd_AddMacro (const char *s, char *(*f) (void))
 {
-	Cmd_AddMacroEx(s, f, false);
+	Cmd_AddMacroEx (s, f, MACRO_NORULES);
 }
 
 char *Cmd_MacroString (const char *s, int *macro_length)
@@ -1172,58 +1201,55 @@ char *Cmd_MacroString (const char *s, int *macro_length)
 
 	for (i = 0; i < macro_count; i++) {
 		macro = &macro_commands[i];
-		if (!strncasecmp(s, macro->name, strlen(macro->name))) {
+		if (!strncasecmp (s, macro->name, strlen (macro->name))) {
 #ifndef SERVERONLY
-			if (cbuf_current == &cbuf_main && macro->teamplay)
+			if (cbuf_current == &cbuf_main && (macro->teamplay == MACRO_DISALLOWED))
 				cbuf_current = &cbuf_formatted_comms;
 #endif
-			*macro_length = strlen(macro->name);
+			*macro_length = strlen (macro->name);
 			return macro->func();
 		}
 		macro++;
 	}
+
 	*macro_length = 0;
+
 	return NULL;
 }
 
-int Cmd_MacroCompare (const void *p1, const void *p2)
+static int Cmd_MacroCompare (const void *p1, const void *p2)
 {
-	return strcmp((*((macro_command_t **) p1))->name, (*((macro_command_t **) p2))->name);
+	return strcmp ((*((macro_command_t **) p1))->name, (*((macro_command_t **) p2))->name);
 }
 
 void Cmd_MacroList_f (void)
 {
 	int i, c, m = 0;
-	static qbool sorted = false;
 	static macro_command_t *sorted_macros[MAX_MACROS];
 
-	if (!macro_count) {
-		Com_Printf("No macros!");
-		return;
-	}
+	for (i = 0; i < macro_count; i++)
+		sorted_macros[i] = &macro_commands[i];
+	qsort (sorted_macros, macro_count, sizeof (macro_command_t *), Cmd_MacroCompare);
 
-	if (!sorted) {
-		for (i = 0; i < macro_count; i++)
-			sorted_macros[i] = &macro_commands[i];
-		qsort(sorted_macros, macro_count, sizeof (macro_command_t *), Cmd_MacroCompare);
-		sorted = true;
-	}
+	if (macro_count == MAX_MACROS)
+		assert(!"count == MAX_MACROS");
 
 	c = Cmd_Argc();
-	if (c>1)
-		if (!ReSearchInit(Cmd_Argv(1)))
+	if (c > 1)
+		if (!ReSearchInit (Cmd_Argv (1)))
 			return;
 
 	Com_Printf ("List of macros:\n");
 	for (i = 0; i < macro_count; i++) {
-		if (c==1 || ReSearchMatch(sorted_macros[i]->name)) {
+		if (c==1 || ReSearchMatch (sorted_macros[i]->name)) {
 			Com_Printf ("$%s\n", sorted_macros[i]->name);
 			m++;
 		}
 	}
 
-	if (c>1)
+	if (c > 1)
 		ReSearchDone();
+
 	Com_Printf ("------------\n%i/%i macros\n", m, macro_count);
 }
 
@@ -1232,23 +1258,21 @@ void Cmd_MacroList_f (void)
 //Expands all $cvar expressions to cvar values
 //If not SERVERONLY, also expands $macro expressions
 //Note: dest must point to a 1024 byte buffer
-void Cmd_ExpandString (char *data, char *dest)
+void Cmd_ExpandString (const char *data, char *dest)
 {
 	unsigned int c;
 	char buf[255], *str;
-	int i, len, quotes = 0, name_length = 0;
-	cvar_t	*var, *bestvar;
+	int i, len = 0, quotes = 0, name_length = 0;
+	cvar_t *var, *bestvar;
 #ifndef SERVERONLY
 	int macro_length;
 #endif
-
-	len = 0;
 
 	while ((c = *data)) {
 		if (c == '"')
 			quotes++;
 
-		if (c == '$' && !(quotes&1)) {
+		if (c == '$' && !(quotes & 1)) {
 			data++;
 
 			// Copy the text after '$' to a temp buffer
@@ -1258,14 +1282,15 @@ void Cmd_ExpandString (char *data, char *dest)
 			while ((c = *data) > 32) {
 				if (c == '$')
 					break;
+
 				data++;
 				buf[i++] = c;
 				buf[i] = 0;
-				if ((var = Cvar_FindVar(buf))) {
-					bestvar = var;
-				}
 
-				if (i >= (int)sizeof(buf)-1)
+				if ((var = Cvar_FindVar (buf)))
+					bestvar = var;
+
+				if (i >= (int) sizeof (buf) - 1)
 					break; // there no more space in buf
 			}
 
@@ -1274,7 +1299,7 @@ void Cmd_ExpandString (char *data, char *dest)
 				str = Cmd_MacroString (buf, &macro_length);
 				name_length = macro_length;
 
-				if (bestvar && (!str || (strlen(bestvar->name) > macro_length))) {
+				if (bestvar && (!str || (strlen (bestvar->name) > macro_length))) {
 					str = bestvar->string;
 					name_length = strlen(bestvar->name);
 				}
@@ -1283,7 +1308,7 @@ void Cmd_ExpandString (char *data, char *dest)
 			{
 				if (bestvar) {
 					str = bestvar->string;
-					name_length = strlen(bestvar->name);
+					name_length = strlen (bestvar->name);
 				} else {
 					str = NULL;
 				}
@@ -1291,21 +1316,22 @@ void Cmd_ExpandString (char *data, char *dest)
 
 			if (str) {
 				// check buffer size
-				if (len + strlen(str) >= 1024 - 1)
+				if (len + strlen (str) >= 1024 - 1)
 					break;
 
-				strcpy(&dest[len], str);
-				len += strlen(str);
+				strcpy (&dest[len], str);
+				len += strlen (str);
 				i = name_length;
 				while (buf[i])
 					dest[len++] = buf[i++];
 			} else {
 				// no matching cvar or macro
 				dest[len++] = '$';
-				if (len + strlen(buf) >= 1024 - 1)
+				if (len + strlen (buf) >= 1024 - 1)
 					break;
+
 				strcpy (&dest[len], buf);
-				len += strlen(buf);
+				len += strlen (buf);
 			}
 		} else {
 			dest[len] = c;
@@ -1314,14 +1340,14 @@ void Cmd_ExpandString (char *data, char *dest)
 			if (len >= 1024 - 1)
 				break;
 		}
-	};
+	}
 
 	dest[len] = 0;
 }
 
-int Commands_Compare_Func(const void * arg1, const void * arg2)
+int Commands_Compare_Func (const void * arg1, const void * arg2)
 {
-	return strcasecmp( * ( char** ) arg1, * ( char** ) arg2 );
+	return strcasecmp (*(char**) arg1, *(char**) arg2);
 }
 char *msgtrigger_commands[] = {
                                   "play", "playvol", "stopsound", "set", "echo", "say", "say_team",
@@ -1377,7 +1403,7 @@ qbool AllowedImpulse(int imp)
 	return false;
 }
 
-qbool Cmd_IsCommandAllowedInMessageTrigger( const char *command )
+static qbool Cmd_IsCommandAllowedInMessageTrigger( const char *command )
 {
 	if( !strcasecmp( command, "impulse") )
 		return AllowedImpulse(Q_atoi(Cmd_Argv(1)));
@@ -1386,7 +1412,7 @@ qbool Cmd_IsCommandAllowedInMessageTrigger( const char *command )
 	                   sizeof(msgtrigger_commands)/sizeof(msgtrigger_commands[0]),
 	                   sizeof(msgtrigger_commands[0]),Commands_Compare_Func) != NULL;
 }
-qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
+static qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
 {
 	char **s;
 	for (s = formatted_comms_commands; *s; s++) {
@@ -1419,7 +1445,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 #endif
 
 	if (!Cmd_Argc())
-		goto done;		// no tokens
+		goto done; // no tokens
 
 #ifndef SERVERONLY
 	if (cbuf_current == &cbuf_svc) {
@@ -1431,40 +1457,17 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	// check functions
 	if ((cmd = Cmd_FindCommand(cmd_argv[0]))) {
 #ifndef SERVERONLY
-		if (cbuf_current == &cbuf_safe) {
-			if( !Cmd_IsCommandAllowedInMessageTrigger(cmd_argv[0])) {
+		if (gtf || cbuf_current == &cbuf_safe) {
+			if (!Cmd_IsCommandAllowedInMessageTrigger(cmd_argv[0])) {
 				Com_Printf ("\"%s\" cannot be used in message triggers\n", cmd_argv[0]);
 				goto done;
 			}
-		} else if (cbuf_current == &cbuf_formatted_comms) {
-			if( !Cmd_IsCommandAllowedInTeamPlayMacros(cmd_argv[0]) ) {
-				Com_Printf("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
+		} else if ((cbuf_current == &cbuf_formatted_comms)) {
+			if (!Cmd_IsCommandAllowedInTeamPlayMacros(cmd_argv[0])) {
+				Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
 				goto done;
 			}
 		}
-		/*
-		                char **s;
-				if (cbuf_current == &cbuf_safe) {
-					for (s = msgtrigger_commands; *s; s++) {
-						if (!strcasecmp(cmd_argv[0], *s))
-							break;
-					}
-					if (!*s)
-					{
-						Com_Printf ("\"%s\" cannot be used in message triggers\n", cmd_argv[0]);
-						goto done;
-					}
-				} else if (cbuf_current == &cbuf_formatted_comms) {
-					for (s = formatted_comms_commands; *s; s++) {
-						if (!strcasecmp(cmd_argv[0], *s))
-							break;
-					}
-					if (!*s) {
-						Com_Printf("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
-						goto done;
-					}
-				}*/
-
 #endif
 
 		if (cmd->function)
@@ -1481,8 +1484,8 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	// check cvars
 	if ((v = Cvar_FindVar (Cmd_Argv(0)))) {
 #ifndef SERVERONLY
-		if (cbuf_current == &cbuf_formatted_comms) {
-			Com_Printf("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
+		if ((cbuf_current == &cbuf_formatted_comms)) {
+			Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", cmd_argv[0]);
 			goto done;
 		}
 #endif
@@ -1499,7 +1502,7 @@ checkaliases:
 		if (a->flags & ALIAS_TCL)
 		{
 			TCL_ExecuteAlias (a);
-			return;
+			goto done;
 		}
 #endif
 
@@ -1583,7 +1586,7 @@ checkaliases:
 
 	if (!host_initialized && Cmd_Argc() > 1) {
 		if (Cvar_CreateTempVar())
-			return;
+			goto done;
 	}
 
 #ifndef SERVERONLY
@@ -1746,24 +1749,6 @@ void Cmd_If_Exists_f(void)
 }
 
 #endif /* SERVERONLY */
-
-//Returns the position (1 to argc - 1) in the command's argument list where the given parameter apears, or 0 if not present
-int Cmd_CheckParm (char *parm)
-{
-	int i, c;
-
-	if (!parm)
-		assert(!"Cmd_CheckParm: NULL");
-
-	c = Cmd_Argc();
-	for (i = 1; i < c; i++)
-		if (! strcasecmp (parm, Cmd_Argv (i)))
-			return i;
-
-	return 0;
-}
-
-
 
 void Cmd_Init (void)
 {

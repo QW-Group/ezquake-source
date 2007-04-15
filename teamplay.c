@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (C) 2000-2003       Anton Gavrilov, A Nourai
 
 This program is free software; you can redistribute it and/or
@@ -16,10 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.70 2007-04-07 13:35:11 disconn3ct Exp $
+$Id: teamplay.c,v 1.71 2007-04-15 14:54:50 johnnycz Exp $
 */
 
-#define TP_ISEYESMODEL(x)       ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
+#define TP_ISEYESMODEL(x) ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
 
 #include <time.h>
 #include <string.h>
@@ -1109,63 +1109,62 @@ char *Macro_Count_Last_NearbyFriendlyPlayers (void)
 
 // Note: longer macro names like "armortype" must be defined
 // _before_ the shorter ones like "armor" to be parsed properly
-void TP_AddMacros(void)
+void TP_AddMacros (void)
 {
-	qbool teamplay = Rulesets_RestrictTriggers();
+	int teamplay = (int) Rulesets_RestrictTriggers ();
 
-	Cmd_AddMacro("lastip", Macro_Lastip_f);
-	Cmd_AddMacro("qt", Macro_Quote_f);
-	Cmd_AddMacro("latency", Macro_Latency);
-	Cmd_AddMacro("ping", Macro_Latency);
-	Cmd_AddMacro("time", Macro_Time);
-	Cmd_AddMacro("date", Macro_Date);
+	Cmd_AddMacro ("lastip", Macro_Lastip_f);
+	Cmd_AddMacro ("qt", Macro_Quote_f);
+	Cmd_AddMacro ("latency", Macro_Latency);
+	Cmd_AddMacro ("ping", Macro_Latency);
+	Cmd_AddMacro ("time", Macro_Time);
+	Cmd_AddMacro ("date", Macro_Date);
 
-	Cmd_AddMacroEx("health", Macro_Health, teamplay);
-	Cmd_AddMacroEx("armortype", Macro_ArmorType, teamplay);
-	Cmd_AddMacroEx("armor", Macro_Armor, teamplay);
+	Cmd_AddMacroEx ("health", Macro_Health, teamplay);
+	Cmd_AddMacroEx ("armortype", Macro_ArmorType, teamplay);
+	Cmd_AddMacroEx ("armor", Macro_Armor, teamplay);
 
-	Cmd_AddMacroEx("shells", Macro_Shells, teamplay);
-	Cmd_AddMacroEx("nails", Macro_Nails, teamplay);
-	Cmd_AddMacroEx("rockets", Macro_Rockets, teamplay);
-	Cmd_AddMacroEx("cells", Macro_Cells, teamplay);
+	Cmd_AddMacroEx ("shells", Macro_Shells, teamplay);
+	Cmd_AddMacroEx ("nails", Macro_Nails, teamplay);
+	Cmd_AddMacroEx ("rockets", Macro_Rockets, teamplay);
+	Cmd_AddMacroEx ("cells", Macro_Cells, teamplay);
 
-	Cmd_AddMacro("weaponnum", Macro_WeaponNum);
-	Cmd_AddMacroEx("weapons", Macro_Weapons, teamplay);
-	Cmd_AddMacro("weapon", Macro_Weapon);
+	Cmd_AddMacro ("weaponnum", Macro_WeaponNum);
+	Cmd_AddMacroEx ("weapons", Macro_Weapons, teamplay);
+	Cmd_AddMacro ("weapon", Macro_Weapon);
 
-	Cmd_AddMacroEx("ammo", Macro_Ammo, teamplay);
+	Cmd_AddMacroEx ("ammo", Macro_Ammo, teamplay);
 
-	Cmd_AddMacroEx("bestweapon", Macro_BestWeapon, teamplay);
-	Cmd_AddMacroEx("bestammo", Macro_BestAmmo, teamplay);
+	Cmd_AddMacroEx ("bestweapon", Macro_BestWeapon, teamplay);
+	Cmd_AddMacroEx ("bestammo", Macro_BestAmmo, teamplay);
 
-	Cmd_AddMacroEx("powerups", Macro_Powerups, teamplay);
+	Cmd_AddMacroEx ("powerups", Macro_Powerups, teamplay);
 
-	Cmd_AddMacroEx("location", Macro_Location, teamplay);
-	Cmd_AddMacroEx("deathloc", Macro_LastDeath, teamplay);
-
-
-	Cmd_AddMacroEx("tookatloc", Macro_TookAtLoc, teamplay);
-	Cmd_AddMacroEx("tookloc", Macro_TookLoc, teamplay);
-	Cmd_AddMacroEx("took", Macro_Took, teamplay);
-
-	Cmd_AddMacroEx("pointatloc", Macro_PointNameAtLocation, teamplay);
-	Cmd_AddMacroEx("pointloc", Macro_PointLocation, teamplay);
-	Cmd_AddMacroEx("point", Macro_PointName, teamplay);
-
-	Cmd_AddMacroEx("need", Macro_Need, teamplay);
-
-	Cmd_AddMacroEx("droploc", Macro_LastDrop, teamplay);
-	Cmd_AddMacroEx("droptime", Macro_LastDropTime, teamplay);
-
-	Cmd_AddMacro("tf_skin", Macro_TF_Skin);
-
-	Cmd_AddMacro("triggermatch", Macro_LastTrigger_Match);
+	Cmd_AddMacroEx ("location", Macro_Location, teamplay);
+	Cmd_AddMacroEx ("deathloc", Macro_LastDeath, teamplay);
 
 
-	Cmd_AddMacroEx("ledpoint", Macro_Point_LED, teamplay);
-	Cmd_AddMacroEx("ledstatus", Macro_MyStatus_LED, teamplay);
+	Cmd_AddMacroEx ("tookatloc", Macro_TookAtLoc, teamplay);
+	Cmd_AddMacroEx ("tookloc", Macro_TookLoc, teamplay);
+	Cmd_AddMacroEx ("took", Macro_Took, teamplay);
 
-};
+	Cmd_AddMacroEx ("pointatloc", Macro_PointNameAtLocation, teamplay);
+	Cmd_AddMacroEx ("pointloc", Macro_PointLocation, teamplay);
+	Cmd_AddMacroEx ("point", Macro_PointName, teamplay);
+
+	Cmd_AddMacroEx ("need", Macro_Need, teamplay);
+
+	Cmd_AddMacroEx ("droploc", Macro_LastDrop, teamplay);
+	Cmd_AddMacroEx ("droptime", Macro_LastDropTime, teamplay);
+
+	Cmd_AddMacro ("tf_skin", Macro_TF_Skin);
+
+	Cmd_AddMacro ("triggermatch", Macro_LastTrigger_Match);
+
+
+	Cmd_AddMacroEx ("ledpoint", Macro_Point_LED, teamplay);
+	Cmd_AddMacroEx ("ledstatus", Macro_MyStatus_LED, teamplay);
+}
 
 /********************** MACRO/FUNCHAR/WHITE TEXT PARSING **********************/
 
@@ -2699,9 +2698,8 @@ static void CL_RE_Trigger_Match_f (void)
 				if (!(rt->flags & RE_NOACTION)) {
 					string = Cmd_AliasString (rt->name);
 					if (string) {
-						Cbuf_InsertTextEx(&cbuf_safe,"\nwait\n");
-						Cbuf_InsertTextEx(&cbuf_safe,string);
-						Cbuf_ExecuteEx(&cbuf_safe);
+						Cbuf_InsertTextEx (&cbuf_safe,string);
+						Cbuf_ExecuteEx (&cbuf_safe);
 					} else {
 						Com_Printf ("re_trigger \"%s\" has no matching alias\n", rt->name);
 					}
@@ -2713,7 +2711,6 @@ static void CL_RE_Trigger_Match_f (void)
 }
 
 qbool allow_re_triggers;
-
 qbool CL_SearchForReTriggers (char *s, unsigned trigger_type)
 {
 	pcre_trigger_t *rt;
@@ -2774,7 +2771,6 @@ qbool CL_SearchForReTriggers (char *s, unsigned trigger_type)
 					trig_alias = Cmd_FindAlias (rt->name);
 					Print_current++;
 					if (trig_alias) {
-						Cbuf_InsertTextEx (&cbuf_safe,"\nwait\n");
 						Cbuf_InsertTextEx (&cbuf_safe,rt->name);
 						Cbuf_ExecuteEx (&cbuf_safe);
 					} else
@@ -3213,11 +3209,21 @@ void TP_Point_f (void)
 
 #define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
 #define HAVE_LG() (cl.stats[STAT_ITEMS] & IT_LIGHTNING)
+#define HOLD_GL() (cl.stats[STAT_ACTIVEWEAPON] == IT_GRENADE_LAUNCHER) // only used in tp_lost
 #define HOLD_RL() (cl.stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER)
 #define HOLD_LG() (cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING)
+
+#define HAVE_QUAD() (cl.stats[STAT_ITEMS] & IT_QUAD) //quad
+#define HAVE_PENT() (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) //pent
+#define HAVE_RING() (cl.stats[STAT_ITEMS] & IT_INVISIBILITY) //ring
+#define HAVE_GA() (cl.stats[STAT_ITEMS] & IT_ARMOR1) //ga
+#define HAVE_YA() (cl.stats[STAT_ITEMS] & IT_ARMOR2) //ya
+#define HAVE_RA() (cl.stats[STAT_ITEMS] & IT_ARMOR3) //ra
+
 #define TOOK(x) (!strcmp(Macro_Took(), tp_name_##x.string))
 #define COLORED(c,str) "{&c" #c #str "&cfff}"
 #define INPOINT(thing) strstr(Macro_PointName(), tp_name_##thing.string)
+#define DEAD() (cl.stats[STAT_HEALTH] < 1)
 
 typedef char * MSGPART;
 
@@ -3274,57 +3280,147 @@ use the %-macros nor the $-macros.
 #define tp_ib_name_backpack	COLORED(F0F,pack)	// purple backpack
 #define tp_ib_name_quad	    COLORED(03F,quad)	// blue quad
 #define tp_ib_name_pent	    COLORED(e00,pent)	// red pent
-#define tp_ib_name_ring	    COLORED(ff0,ring)	// yellow eyes
+#define tp_ib_name_ring	    COLORED(ff0,ring)	// yellow ring
+#define tp_ib_name_eyes	    COLORED(ff0,eyes)	// yellow eyes (remember, ring is when you see the ring, eyes is when someone has rings!)
 #define tp_ib_name_enemy	COLORED(e00,enemy)	// red enemy
 #define tp_ib_name_team	    COLORED(0b0,team)	// green "team" (with powerup)
 #define tp_ib_name_quaded	COLORED(03F,quaded)	// blue "quaded"
 #define tp_ib_name_pented	COLORED(e00,pented)	// red "pented"
 #define tp_ib_name_rlg      COLORED(f0f,rlg)    // purple rlg
+#define tp_ib_name_safe	    COLORED(0b0,safe)	// green safe
+#define tp_ib_name_help	    COLORED(ff0,help)	// yellow help
 
-void TP_Msg_Report_f (void)
-{
-    // this could be done by using 1 argument but all '%'
-    // would have to be replaced by '%%'
-    TP_Send_TeamSay("%s", "%p %A%a/%h $[%l$] %b");
-}
+
 
 void TP_Msg_Lost_f (void)
 {
     MSGPART led = tp_sep_red;
     MSGPART msg1 = "";
-    MSGPART msg2 = "";
+	MSGPART msg2 = "";
 
     if (TOOK(quad))
     {
         msg1 = tp_ib_name_quad " over ";
     }
 
-    if (HOLD_RL() || HOLD_LG())
+    if (HOLD_RL() || HOLD_LG() || HOLD_GL()) // gl could be useful too
     {
-        msg2 = "lost " COLORED(f0f,$weapon) " $[{%d}$] %E";
+        msg2 = "lost " COLORED(f0f,$weapon) " $[{%d}$] e:%E";
     }
     else
     {
-        msg2 = "lost $[{%d}$] %E";
+        msg2 = "lost $[{%d}$] e:%E";
     }
 
     TP_Send_TeamSay("%s %s%s", led, msg1, msg2);
 }
 
+
+
+void TP_Msg_ReportComing(qbool report) // tp_report and tp_coming are similar, differences are led color, where %l is, and the word "coming"
+{
+    MSGPART msg1 = "";
+	MSGPART msg2 = "";
+	MSGPART msg3 = "";
+	MSGPART msg4 = "";
+	MSGPART msg5 = "";
+	MSGPART msg6 = "";
+	
+	if (report)
+	{
+		msg1 = tp_sep_blue;
+	}
+	else
+	{
+		if (DEAD()) // you can't be coming if you're dead! no correct location to report either, so wait until you're alive!
+		{
+			TP_Msg_Lost_f();
+			return;
+		}
+		else
+		{
+			msg1 = tp_sep_white " {coming}";
+		}
+	}
+	
+	
+	if (DEAD()) // if player is dead, report lost
+	{
+		TP_Msg_Lost_f();
+		return;
+	}
+	
+	if (HAVE_GA())
+		msg3 = COLORED(0b0,%a);
+	else if (HAVE_YA())
+		msg3 = COLORED(ff0,%a);
+	else if (HAVE_RA())
+		msg3 = COLORED(e00,%a);
+	else
+		msg3 = "0";
+	
+	if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
+		msg5 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring " ";
+	else if (HAVE_QUAD() && HAVE_PENT())
+		msg5 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " ";
+	else if (HAVE_QUAD() && HAVE_RING())
+		msg5 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_ring " ";
+	else if (HAVE_PENT() && HAVE_RING())
+		msg5 = tp_ib_name_team " " tp_ib_name_pent " " tp_ib_name_ring " ";
+	else if (HAVE_QUAD())
+		msg5 = tp_ib_name_team " " tp_ib_name_quad " ";
+	else if (HAVE_PENT())
+		msg5 = tp_ib_name_team " " tp_ib_name_pent " ";
+	else if (HAVE_RING())
+		msg5 = tp_ib_name_team " " tp_ib_name_ring " ";
+	else
+		msg5 = "";
+		
+    if		(HAVE_RL() && HAVE_LG())	msg6 = tp_ib_name_rlg ":$rockets/$cells";
+    else if (HAVE_RL())					msg6 = tp_ib_name_rl ":$rockets";
+    else if (HAVE_LG())					msg6 = tp_ib_name_lg ":$cells";
+    else								msg6 = "";
+	
+	msg2 = "%h";
+	msg4 = "$[{%l}$]";
+	
+	// $B$B(1) health(2)/armor(3) location(4) powerup(5) rlg:x(6) //tp_report
+	if (report)
+		TP_Send_TeamSay("%s %s/%s %s%s%s", msg1, msg2, msg3, msg4, msg5, msg6);
+	// $W$W(1) coming(1) location(4) health()/armor(3) powerup(5) rlg:x(6) //tp_coming
+	else
+		TP_Send_TeamSay("%s %s %s/%s %s%s", msg1, msg4, msg2, msg3, msg5, msg6); // notice that in tp_coming, we report our location before anything else!
+}
+void TP_Msg_Report_f (void) { TP_Msg_ReportComing(true); }
+void TP_Msg_Coming_f (void) { TP_Msg_ReportComing(false); }
+
+
+
 void TP_Msg_EnemyPowerup_f (void)
 {
     MSGPART msg1 = "";
-    MSGPART msg2 = "";
 
-	msg1 = tp_ib_name_enemy " $[{%q}$]";
+	if (INPOINT(quaded) && INPOINT(pented) && INPOINT(eyes))
+		msg1 = tp_ib_name_quaded " " tp_ib_name_pented " " tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
+	else if (INPOINT(quaded) && INPOINT(pented))
+		msg1 = tp_ib_name_quaded " " tp_ib_name_pented " " tp_ib_name_enemy " at $[{%y}$]";
+	else if (INPOINT(quaded) && INPOINT(eyes))
+		msg1 = tp_ib_name_quaded " " tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
+	else if (INPOINT(pented) && INPOINT(eyes))
+		msg1 = tp_ib_name_pented " " tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
+	else if (INPOINT(quaded))
+		msg1 = tp_ib_name_quaded " " tp_ib_name_enemy " at $[{%y}$]";
+	else if (INPOINT(pented))
+		msg1 = tp_ib_name_pented " " tp_ib_name_enemy " at $[{%y}$]";
+	else if (INPOINT(eyes))
+		msg1 = tp_ib_name_enemy " " tp_ib_name_eyes " at $[{%y}$]";
+	else
+		msg1 = tp_ib_name_enemy " {%q}";
 	
-	if (INPOINT(quaded) || INPOINT(pented) || INPOINT(eyes))
-	{
-		msg2 = " at {%y}";
-	}
-	
-	TP_Send_TeamSay(tp_sep_red " %s%s", msg1, msg2);
+	TP_Send_TeamSay(tp_sep_red " %s", msg1);
 }
+
+
 
 void TP_Msg_SafeHelp(qbool safe)
 {
@@ -3335,23 +3431,35 @@ void TP_Msg_SafeHelp(qbool safe)
 	MSGPART msg5 = "";
 
 	if (safe && INPOINT(enemy))
-		return; // if you see enemy, then it's not safe (really?)
+		return; // if you see enemy, then it's not safe (really?)  (most of the time).
 	
 	if (safe)
 	{
 		msg1 = tp_sep_green;
-		msg2 = "safe";
+		msg2 = tp_ib_name_safe;
 	}
 	else
 	{
 		msg1 = tp_sep_yellow;
-		msg2 = "help";
+		msg2 = tp_ib_name_help;
 	}
 
 	msg3 = "$[{%l}$]";
 
-	if (TOOK(quad) || TOOK(pent) || TOOK(ring))
-		msg4 = tp_ib_name_team " %p";
+	if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
+		msg4 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring " ";
+	else if (HAVE_QUAD() && HAVE_PENT())
+		msg4 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " ";
+	else if (HAVE_QUAD() && HAVE_RING())
+		msg4 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_ring " ";
+	else if (HAVE_PENT() && HAVE_RING())
+		msg4 = tp_ib_name_team " " tp_ib_name_pent " " tp_ib_name_ring " ";
+	else if (HAVE_QUAD())
+		msg4 = tp_ib_name_team " " tp_ib_name_quad " ";
+	else if (HAVE_PENT())
+		msg4 = tp_ib_name_team " " tp_ib_name_pent " ";
+	else if (HAVE_RING())
+		msg4 = tp_ib_name_team " " tp_ib_name_ring " ";
 	else
 		msg4 = "";
 		
@@ -3359,13 +3467,43 @@ void TP_Msg_SafeHelp(qbool safe)
     else if (HAVE_RL())					msg5 = tp_ib_name_rl ":$rockets";
     else if (HAVE_LG())					msg5 = tp_ib_name_lg ":$cells";
     else								msg5 = "";
-
-	TP_Send_TeamSay("%s %s %s %s %s", msg1, msg2, msg3, msg4, msg5);
+	//1=sep, 2=safe/help 3=loc 4=powerup 5=weap
+	TP_Send_TeamSay("%s %s %s %s%s", msg1, msg2, msg3, msg4, msg5);
 }
-
 void TP_Msg_Safe_f (void) { TP_Msg_SafeHelp(true); }
 void TP_Msg_Help_f (void) { TP_Msg_SafeHelp(false); }
 
+
+
+void TP_Msg_GetPentQuad(qbool quad)
+{
+	MSGPART msg1 = "";
+
+	if (quad)
+	{
+		msg1 = tp_ib_name_quad;
+	}
+	else
+	{
+		msg1 = tp_ib_name_pent;
+	}
+	
+	//$R$R get powerup(1)
+	TP_Send_TeamSay(tp_sep_red " get %s", msg1);
+}
+void TP_Msg_GetQuad_f (void) { TP_Msg_GetPentQuad(true); }
+void TP_Msg_GetPent_f (void) { TP_Msg_GetPentQuad(false); }
+
+
+
+void TP_Msg_QuadDead_f (void)
+{
+    MSGPART msg1 = "";
+
+	msg1 = tp_ib_name_quad " dead";
+	
+	TP_Send_TeamSay(tp_sep_green " %s", msg1);
+}
 
 /***********/
 
@@ -4347,9 +4485,13 @@ void TP_Init (void)
 	Cmd_AddCommand ("tp_point", TP_Point_f);
 
 	Cmd_AddCommand ("tp_report", TP_Msg_Report_f);
+	Cmd_AddCommand ("tp_coming", TP_Msg_Coming_f);
     Cmd_AddCommand ("tp_lost", TP_Msg_Lost_f);
     Cmd_AddCommand ("tp_enemypwr", TP_Msg_EnemyPowerup_f);
+	Cmd_AddCommand ("tp_quaddead", TP_Msg_QuadDead_f);
     Cmd_AddCommand ("tp_safe", TP_Msg_Safe_f);
     Cmd_AddCommand ("tp_help", TP_Msg_Help_f);
+	Cmd_AddCommand ("tp_getquad", TP_Msg_GetQuad_f);
+	Cmd_AddCommand ("tp_getpent", TP_Msg_GetPent_f);
     
 }

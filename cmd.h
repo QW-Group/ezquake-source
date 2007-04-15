@@ -33,7 +33,7 @@ The game starts with a Cbuf_AddText ("exec quake.rc\n"); Cbuf_Execute ();
 */
 
 typedef struct cbuf_s {
-	char		*text_buf;
+	char	*text_buf;
 	int		maxsize;
 	int		text_start;
 	int		text_end;
@@ -41,26 +41,26 @@ typedef struct cbuf_s {
 	int		runAwayLoop;
 } cbuf_t;
 
-extern cbuf_t	cbuf_main;
+extern cbuf_t cbuf_main;
 #ifndef SERVERONLY
 extern cbuf_t cbuf_safe; // msg_trigger commands
 extern cbuf_t cbuf_formatted_comms;
 extern cbuf_t cbuf_svc; // svc_stufftext commands
 #endif
-extern cbuf_t	*cbuf_current;
+extern cbuf_t *cbuf_current;
 
-void Cbuf_AddTextEx (cbuf_t *cbuf, char *text);
-void Cbuf_InsertTextEx (cbuf_t *cbuf, char *text);
+void Cbuf_AddTextEx (cbuf_t *cbuf, const char *text);
+void Cbuf_InsertTextEx (cbuf_t *cbuf, const char *text);
 void Cbuf_ExecuteEx (cbuf_t *cbuf);
 
 void Cbuf_Init (void);
 // allocates an initial text buffer that will grow as needed
 
-void Cbuf_AddText (char *text);
+void Cbuf_AddText (const char *text);
 // as new commands are generated from the console or keybindings,
 // the text is added to the end of the command buffer.
 
-void Cbuf_InsertText (char *text);
+void Cbuf_InsertText (const char *text);
 // when a command wants to issue other commands immediately, the text is
 // inserted at the beginning of the buffer, before any remaining unexecuted
 // commands.
@@ -101,7 +101,7 @@ qbool Cmd_Exists (char *cmd_name);
 
 cmd_function_t *Cmd_FindCommand (const char *cmd_name);  // for message triggers
 
-char 	*Cmd_CompleteCommand (char *partial);
+char *Cmd_CompleteCommand (char *partial);
 // attempts to match a partial command for automatic command line completion
 // returns NULL if nothing fits
 
@@ -113,11 +113,7 @@ char *Cmd_MakeArgs (int start);
 // functions. Cmd_Argv () will return an empty string, not a NULL
 // if arg > argc, so string operations are always safe.
 
-int Cmd_CheckParm (char *parm);
-// Returns the position (1 to argc-1) in the command's argument list
-// where the given parameter apears, or 0 if not present
-
-void Cmd_ExpandString (char *data, char *dest);
+void Cmd_ExpandString (const char *data, char *dest);
 // Expands all $cvar or $macro expressions.
 // dest should point to a 1024-byte buffer
 
@@ -141,7 +137,7 @@ void Cmd_AddLegacyCommand (char *oldname, char *newname);
 
 //===========================================================================
 
-#define	MAX_ALIAS_NAME	32
+#define	MAX_ALIAS_NAME 32
 
 #define ALIAS_ARCHIVE			1
 
@@ -152,15 +148,15 @@ void Cmd_AddLegacyCommand (char *oldname, char *newname);
 #define	ALIAS_HAS_PARAMETERS	8
 
 #ifdef WITH_TCL
-#define		ALIAS_TCL				16
+#define	ALIAS_TCL				16
 #endif
 
 typedef struct cmd_alias_s {
 	struct cmd_alias_s	*hash_next;
 	struct cmd_alias_s	*next;
-	char	name[MAX_ALIAS_NAME];
-	char	*value;
-	int		flags;
+	char				name[MAX_ALIAS_NAME];
+	char				*value;
+	int					flags;
 } cmd_alias_t;
 
 qbool Cmd_DeleteAlias (char *name);	// return true if successful
@@ -168,19 +164,20 @@ cmd_alias_t *Cmd_FindAlias (char *name); // returns NULL on failure
 char *Cmd_AliasString (char *name); // returns NULL on failure
 void Cmd_WriteAliases (FILE *f);
 
-void DeleteServerAliases(void);
+void DeleteServerAliases (void);
+
+#define	MAX_MACRO_NAME 32
+#define MACRO_NORULES -1
+#define MACRO_ALLOWED 0
+#define MACRO_DISALLOWED 1
 
 typedef struct
 {
-	char name[32];
+	char name[MAX_MACRO_NAME];
 	char *(*func) (void);
-	qbool teamplay;
-}
-macro_command_t;
+	int teamplay;			
+} macro_command_t;
 
-void Cmd_AddMacro(char *s, char *(*f)(void)); 
-void Cmd_AddMacroEx(char *s, char *(*f)(void), qbool teamplay);
+void Cmd_AddMacro (const char *s, char *(*f)(void)); 
+void Cmd_AddMacroEx (const char *s, char *(*f) (void), qbool teamplay);
 char *Cmd_MacroString (const char *s, int *macro_length);
-
-qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command );
-qbool Cmd_IsCommandAllowedInMessageTrigger( const char *command );

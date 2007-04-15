@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.142 2007-04-14 19:37:35 qqshka Exp $
+$Id: cl_main.c,v 1.143 2007-04-15 14:54:49 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 

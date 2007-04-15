@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_win.c,v 1.34 2007-04-08 13:37:41 qqshka Exp $
+$Id: in_win.c,v 1.35 2007-04-15 14:54:50 johnnycz Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
