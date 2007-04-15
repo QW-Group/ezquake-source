@@ -179,5 +179,5 @@ typedef struct
 } macro_command_t;
 
 void Cmd_AddMacro (const char *s, char *(*f)(void)); 
-void Cmd_AddMacroEx (const char *s, char *(*f) (void), qbool teamplay);
+void Cmd_AddMacroEx (const char *s, char *(*f) (void), int teamplay);
 char *Cmd_MacroString (const char *s, int *macro_length);
