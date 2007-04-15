@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.67.2.8 2007-04-13 23:25:29 himan Exp $
+    $Id: teamplay.c,v 1.67.2.9 2007-04-15 18:05:00 himan Exp $
 */
 
 #define TP_ISEYESMODEL(x) ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -3359,25 +3359,25 @@ void TP_Msg_ReportComing(qbool report) // tp_report and tp_coming are similar, d
 		msg3 = "0";
 	
 	if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
-		msg5 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring " ";
+		msg5 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring;
 	else if (HAVE_QUAD() && HAVE_PENT())
-		msg5 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " ";
+		msg5 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent;
 	else if (HAVE_QUAD() && HAVE_RING())
-		msg5 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_ring " ";
+		msg5 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_ring;
 	else if (HAVE_PENT() && HAVE_RING())
-		msg5 = tp_ib_name_team " " tp_ib_name_pent " " tp_ib_name_ring " ";
+		msg5 = " " tp_ib_name_team " " tp_ib_name_pent " " tp_ib_name_ring;
 	else if (HAVE_QUAD())
-		msg5 = tp_ib_name_team " " tp_ib_name_quad " ";
+		msg5 = " " tp_ib_name_team " " tp_ib_name_quad;
 	else if (HAVE_PENT())
-		msg5 = tp_ib_name_team " " tp_ib_name_pent " ";
+		msg5 = " " tp_ib_name_team " " tp_ib_name_pent;
 	else if (HAVE_RING())
-		msg5 = tp_ib_name_team " " tp_ib_name_ring " ";
+		msg5 = " " tp_ib_name_team " " tp_ib_name_ring;
 	else
 		msg5 = "";
 		
-    if		(HAVE_RL() && HAVE_LG())	msg6 = tp_ib_name_rlg ":$rockets/$cells";
-    else if (HAVE_RL())					msg6 = tp_ib_name_rl ":$rockets";
-    else if (HAVE_LG())					msg6 = tp_ib_name_lg ":$cells";
+    if		(HAVE_RL() && HAVE_LG())	msg6 = " " tp_ib_name_rlg ":$rockets/$cells";
+    else if (HAVE_RL())					msg6 = " " tp_ib_name_rl ":$rockets";
+    else if (HAVE_LG())					msg6 = " " tp_ib_name_lg ":$cells";
     else								msg6 = "";
 	
 	msg2 = "%h";
@@ -3388,7 +3388,7 @@ void TP_Msg_ReportComing(qbool report) // tp_report and tp_coming are similar, d
 		TP_Send_TeamSay("%s %s/%s %s%s%s", msg1, msg2, msg3, msg4, msg5, msg6);
 	// $W$W(1) coming(1) location(4) health()/armor(3) powerup(5) rlg:x(6) //tp_coming
 	else
-		TP_Send_TeamSay("%s %s %s/%s %s%s", msg1, msg4, msg2, msg3, msg5, msg6); // notice that in tp_coming, we report our location before anything else!
+		TP_Send_TeamSay("%s %s %s/%s%s%s", msg1, msg4, msg2, msg3, msg5, msg6); // notice that in tp_coming, we report our location before anything else!
 }
 void TP_Msg_Report_f (void) { TP_Msg_ReportComing(true); }
 void TP_Msg_Coming_f (void) { TP_Msg_ReportComing(false); }
