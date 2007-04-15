@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.61 2007-04-15 14:54:50 johnnycz Exp $
+		$Id: menu_options.c,v 1.62 2007-04-15 15:18:34 johnnycz Exp $
 
 */
 
@@ -1352,8 +1352,12 @@ void Menu_Options_Init(void) {
 
 	Cvar_Register(&menu_advanced);
 #ifdef GLQUAKE
-	mvs_selected.freq.name = "menu_tempval_video_freq";	// this is here just to not get a crash in Cvar_Set
+	// this is here just to not get a crash in Cvar_Set
+    mvs_selected.freq.name = "menu_tempval_video_freq";
 	mvs_previous.freq.name = mvs_selected.freq.name;
+    // this is here to fool one particular check in Cvar_Set
+    mvs_selected.freq.next = &mvs_selected.freq;
+    mvs_previous.freq.next = &mvs_previous.freq;
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONFIG);
