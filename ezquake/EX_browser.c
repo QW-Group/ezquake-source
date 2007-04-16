@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.35.2.1 2007-04-16 09:48:24 johnnycz Exp $
+	$Id: EX_browser.c,v 1.35.2.2 2007-04-16 10:06:59 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -2704,8 +2704,9 @@ void Browser_Key(int key)
         return;
     }
 
-	if (key == '`' || key == '~') {
-		Con_ToggleConsole_f ();
+	if ((ping_phase || updating_sources) && (key == '`' || key == '~' || key == 'm')) {
+        M_LeaveMenus();
+		// Con_ToggleConsole_f ();
 		return;
 	}
 
