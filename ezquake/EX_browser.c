@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.35 2007-03-31 23:49:46 johnnycz Exp $
+	$Id: EX_browser.c,v 1.35.2.1 2007-04-16 09:48:24 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -2421,6 +2421,12 @@ qbool Servers_Mouse_Event(const mouse_state_t *ms)
 qbool Sources_Mouse_Event(const mouse_state_t *ms)
 {
     if (show_serverinfo) return false;
+
+    if (ms->button_up == 1)
+    {
+        Sources_Key(K_MOUSE1, &sb_tab, sb_tab.pages + SBPG_SOURCES);
+        return true;
+    }
 	Sources_pos = Sources_disp + ms->y / 8 - 1;
     Sources_pos = bound(0, Sources_pos, sourcesn - 1);
 	return true;
