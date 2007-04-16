@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.34.2.1 2007-04-04 11:13:57 johnnycz Exp $
+		$Id: settings_page.c,v 1.34.2.2 2007-04-16 09:22:00 johnnycz Exp $
 
 */
 
@@ -288,12 +288,16 @@ static void Setting_UnbindKey(setting* set)
 	M_UnbindCommand(set->varname);
 }
 
+static int Settings_PageHeight(const settings_page *page)
+{
+    return page->settings[page->count - 1].top + STHeight(page->settings + page->count - 1);
+}
+
 // will find the lowest number of the setting on 'page' that can be used as the lowest viewpoint
 // and will ensure that whole bottom of the page is still visible
-static int Settings_LowestViewpoint(settings_page *page)
+static int Settings_LowestViewpoint(const settings_page *page)
 {
-    setting *lastset = page->settings + page->count - 1;
-    int bottom = lastset->top + STHeight(lastset);
+    int bottom = Settings_PageHeight(page);
     
     // represents the 'top' number we are looking for
     int best_top = bottom - page->height;
@@ -698,7 +702,8 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
     tab->width = w; tab->height = h;
 
     Settings_AdjustScrollBar(tab);
-    ScrollBar_Draw(tab->scrollbar, x + w, y, h);
+    if (tab->height < Settings_PageHeight(tab))
+        ScrollBar_Draw(tab->scrollbar, x + w, y, h);
 
 	for (i = tab->viewpoint; i < tab->count && tab->settings[i].top + STHeight(tab->settings + i) <= h + tab->settings[tab->viewpoint].top; i++)
 	{
