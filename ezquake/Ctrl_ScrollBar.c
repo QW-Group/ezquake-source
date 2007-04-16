@@ -7,7 +7,7 @@
     made by:
         johnnycz, Mar 2007
     last edit:
-        $Id: Ctrl_ScrollBar.c,v 1.3 2007-03-31 15:24:10 johnnycz Exp $
+        $Id: Ctrl_ScrollBar.c,v 1.3.2.1 2007-04-16 08:55:54 johnnycz Exp $
 
 */
 
@@ -92,10 +92,22 @@ qbool ScrollBar_MouseEvent(PScrollBar scrbar, const mouse_state_t *ms)
 static void SCRB_DrawGL(PScrollBar scrbar, int x, int y, int h)
 {
     int w = scrollbar_width;
-    Draw_Fill(x,y,w,h,4);
+    // height of one background image
+    int sh = (scrbar_bg->height) * SCRBARSCALE;
+    // how many complete background images fit in here
+    int compl_bgs = h / sh;                           
+    // height of the part of the last background image
+    int rest_bgh = (h - compl_bgs * sh) / SCRBARSCALE;
+    int i;
+    
+    for (i = 0; i < compl_bgs; i++)
+        Draw_SPic(x, y + i*sh, scrbar_bg, SCRBARSCALE);
+    // add the last part to fill the whole background
+    Draw_SSubPic(x, y + i*sh, scrbar_bg, 0, 0, scrbar_bg->width, rest_bgh, SCRBARSCALE);
+    
+    // draw the remaining parts of the scrollbar
     Draw_SPic(x, y, scrbar_up, SCRBARSCALE);
     Draw_SPic(x, y + h - w, scrbar_down, SCRBARSCALE);
-    // Draw_SPic(x, y + w, scrbar_bg, SCRBARSCALE);
     Draw_SPic(x, y + w + (h-2*w-slider_height)*scrbar->curpos, scrbar_slider, SCRBARSCALE);
 }
 
