@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.37.2.1 2007-04-04 22:06:40 qqshka Exp $
+	$Id: host.c,v 1.37.2.2 2007-04-16 22:30:56 disconn3ct Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -461,6 +461,33 @@ char *Host_PrintBars(char *s, int len)
 	return temp;
 }
 
+static void Commands_For_Configs_Init (void)
+{
+extern void SV_Floodprot_f (void);
+extern void TP_MsgTrigger_f (void);
+extern void TP_MsgFilter_f (void);
+extern void TP_Took_f (void);
+extern void TP_Pickup_f (void);
+extern void TP_Point_f (void);
+
+	//disconnect: fix it if i forgot something
+	Cmd_AddCommand ("floodprot", SV_Floodprot_f);
+	Cmd_AddCommand ("msg_trigger", TP_MsgTrigger_f);
+	Cmd_AddCommand ("filter", TP_MsgFilter_f);
+	Cmd_AddCommand ("tp_took", TP_Took_f);
+	Cmd_AddCommand ("tp_pickup", TP_Pickup_f);
+	Cmd_AddCommand ("tp_point", TP_Point_f);
+//	Cmd_AddCommand ("allskins", Skin_AllSkins_f);
+//	Cmd_AddCommand ("mapgroup", MT_MapGroup_f);
+#ifdef GLQUAKE
+//	Cmd_AddCommand ("skygroup", MT_SkyGroup_f);
+//	Cmd_AddCommand ("fog",CL_Fog_f);
+#endif
+//	Cmd_AddCommand ("hud_recalculate", HUD_Recalculate_f);
+//	Cmd_AddCommand("sb_sourceunmarkall", SB_SourceUnmarkAll);
+//	Cmd_AddCommand("sb_sourcemark", SB_SourceMark);
+}
+
 void Host_Init (int argc, char **argv, int default_memsize)
 {
 	FILE *f;
@@ -483,6 +510,8 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Key_Init ();
 
 	FS_InitFilesystem ();
+
+	Commands_For_Configs_Init ();
 
 	if (!dedicated) {
 		char cfg[MAX_PATH] = {0};

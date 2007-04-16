@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_ccmds.c,v 1.9 2006-07-25 15:51:44 disconn3ct Exp $
+	$Id: sv_ccmds.c,v 1.9.4.1 2007-04-16 22:30:56 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -338,6 +338,7 @@ void SV_Serverinfo_f (void) {
 	if (Cmd_Argc() == 1) {
 		Com_Printf ("Server info settings:\n");
 		Info_Print (svs.info);
+		Com_Printf ("[%i/%i]\n", strlen(svs.info), MAX_SERVERINFO_STRING);
 		return;
 	}
 
@@ -613,7 +614,6 @@ void SV_InitOperatorCommands (void) {
 	Cmd_AddCommand ("localinfo", SV_Localinfo_f);
 	Cmd_AddCommand ("gamedir", SV_Gamedir_f);
 	Cmd_AddCommand ("sv_gamedir", SV_Gamedir);
-	Cmd_AddCommand ("floodprot", SV_Floodprot_f);
 
 	cl_warncmd.value = 1;
 }

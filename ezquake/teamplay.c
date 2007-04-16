@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.67.2.10 2007-04-15 20:15:16 disconn3ct Exp $
+    $Id: teamplay.c,v 1.67.2.11 2007-04-16 22:30:56 disconn3ct Exp $
 */
 
 #define TP_ISEYESMODEL(x) ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -4477,13 +4477,8 @@ void TP_Init (void)
 	Cmd_AddCommand ("addloc", TP_AddLoc_f);
 	Cmd_AddCommand ("removeloc", TP_RemoveLoc_f);
 	Cmd_AddCommand ("clearlocs", TP_ClearLocs_f);
-	Cmd_AddCommand ("filter", TP_MsgFilter_f);
-	Cmd_AddCommand ("msg_trigger", TP_MsgTrigger_f);
 	Cmd_AddCommand ("teamcolor", TP_TeamColor_f);
 	Cmd_AddCommand ("enemycolor", TP_EnemyColor_f);
-	Cmd_AddCommand ("tp_took", TP_Took_f);
-	Cmd_AddCommand ("tp_pickup", TP_Pickup_f);
-	Cmd_AddCommand ("tp_point", TP_Point_f);
 
 	Cmd_AddCommand ("tp_report", TP_Msg_Report_f);
 	Cmd_AddCommand ("tp_coming", TP_Msg_Coming_f);
