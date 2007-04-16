@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.37.2.2 2007-04-16 22:30:56 disconn3ct Exp $
+	$Id: host.c,v 1.37.2.3 2007-04-16 22:55:08 disconn3ct Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -469,6 +469,14 @@ extern void TP_MsgFilter_f (void);
 extern void TP_Took_f (void);
 extern void TP_Pickup_f (void);
 extern void TP_Point_f (void);
+extern void MT_AddMapGroups (void);
+extern void MT_MapGroup_f (void);
+#ifdef GLQUAKE
+extern void MT_AddSkyGroups (void);
+extern void MT_SkyGroup_f (void);
+extern void CL_Fog_f (void);
+#endif
+
 
 	//disconnect: fix it if i forgot something
 	Cmd_AddCommand ("floodprot", SV_Floodprot_f);
@@ -477,15 +485,20 @@ extern void TP_Point_f (void);
 	Cmd_AddCommand ("tp_took", TP_Took_f);
 	Cmd_AddCommand ("tp_pickup", TP_Pickup_f);
 	Cmd_AddCommand ("tp_point", TP_Point_f);
-//	Cmd_AddCommand ("allskins", Skin_AllSkins_f);
-//	Cmd_AddCommand ("mapgroup", MT_MapGroup_f);
+
+	MT_AddMapGroups ();
+	Cmd_AddCommand ("mapgroup", MT_MapGroup_f);
+
 #ifdef GLQUAKE
-//	Cmd_AddCommand ("skygroup", MT_SkyGroup_f);
-//	Cmd_AddCommand ("fog",CL_Fog_f);
+	MT_AddSkyGroups ();
+	Cmd_AddCommand ("skygroup", MT_SkyGroup_f);
+	Cmd_AddCommand ("fog", CL_Fog_f);
 #endif
+	Cmd_AddCommand ("allskins", Skin_AllSkins_f);
+
 //	Cmd_AddCommand ("hud_recalculate", HUD_Recalculate_f);
-//	Cmd_AddCommand("sb_sourceunmarkall", SB_SourceUnmarkAll);
-//	Cmd_AddCommand("sb_sourcemark", SB_SourceMark);
+//	Cmd_AddCommand ("sb_sourceunmarkall", SB_SourceUnmarkAll);
+//	Cmd_AddCommand ("sb_sourcemark", SB_SourceMark);
 }
 
 void Host_Init (int argc, char **argv, int default_memsize)

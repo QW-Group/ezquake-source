@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.136.2.2 2007-04-09 20:24:12 qqshka Exp $
+	$Id: cl_main.c,v 1.136.2.3 2007-04-16 22:55:08 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1127,10 +1127,6 @@ void CL_InitLocal (void) {
 
 	Cmd_AddCommand ("dns", CL_DNS_f);
 	Cmd_AddCommand ("reconnect", CL_Reconnect_f);
-
-#ifdef GLQUAKE
-	Cmd_AddCommand ("fog",CL_Fog_f);
-#endif
 
 	Cmd_AddMacro("connectiontype", CL_Macro_ConnectionType);
 	Cmd_AddMacro("demoplayback", CL_Macro_Demoplayback);
