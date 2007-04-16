@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.73.2.1 2007-04-15 00:56:40 disconn3ct Exp $
+    $Id: common.c,v 1.73.2.2 2007-04-16 14:40:25 disconn3ct Exp $
 
 */
 
@@ -292,10 +292,11 @@ int COM_GetTempDir(char *buf, int bufsize)
 		return -1;
 	}
 	#else // UNIX
-	// TODO: I'm not a unix person, is this proper?
-	char *tmp = getenv("tmp");
+	char *tmp;
+	if (!(tmp = getenv ("TMPDIR")))
+		tmp = P_tmpdir; // defined at <stdio.h>
 
-	returnval = strlen(tmp);
+	returnval = strlen (tmp);
 
 	if (returnval > bufsize || returnval == 0)
 	{
@@ -348,11 +349,8 @@ int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qb
 
 	// TODO: I'm no unix person, is this proper?
 	tmp = tempnam(path, "ezq");
-
 	if (!tmp)
-	{
 		return -1;
-	}
 
 	strlcpy (filename, tmp, filename_size);
 	Q_free (tmp);
@@ -694,7 +692,8 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 						  char *unpack_path,			// The path where the file was unpacked.
 						  int unpack_path_size)			// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.
 {
-	int	retval = UNZ_OK;
+	int retval;
+
 
 	// Get a unique temp filename.
 	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true))
@@ -702,8 +701,9 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 		return UNZ_ERRNO;
 	}
 
-	// Delete the existing temp file (it is created when the filename is received above).
-	if (unlink (unpack_path))
+	// Delete the temp file if it exists (it is created when the filename is received above).
+	retval = unlink (unpack_path);
+	if (!retval || (retval && qerrno != ENOENT))
 	{
 		return UNZ_ERRNO;
 	}
