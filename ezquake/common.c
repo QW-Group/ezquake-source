@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.73.2.3 2007-04-16 15:12:09 disconn3ct Exp $
+    $Id: common.c,v 1.73.2.4 2007-04-16 18:47:25 disconn3ct Exp $
 
 */
 
@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <direct.h>
 #include <Shlobj.h>
 #include <Shfolder.h>
+#include <errno.h>
 #else
 #include <unistd.h>
 #endif
