@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.42 2007-03-26 18:56:42 vvd0 Exp $
+    $Id: snd_dma.c,v 1.42.2.1 2007-04-16 17:11:50 disconn3ct Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -97,11 +97,11 @@ cvar_t s_stereo = {"s_stereo", "1"};
 cvar_t s_device = {"s_device", "/dev/dsp0.0"};
 cvar_t s_bits = {"s_bits", "16"};
 #endif
- 
+
 #ifdef __linux__
 cvar_t s_stereo = {"s_stereo", "1"};
 cvar_t s_bits = {"s_bits", "16"};
-cvar_t s_device = {"s_device", "default"};
+cvar_t s_device = {"s_device", "plug:hw"};
 cvar_t s_noalsa = {"s_noalsa", "0"};
 #endif
 
@@ -235,16 +235,16 @@ void S_Init (void)
 		Cvar_Set (&s_loadas8bit, "1");
 		Com_Printf ("loading all sounds as 8bit\n");
 	}
-	
+
 	snd_initialized = true;
-	
+
 	S_Startup ();
 
 	SND_InitScaletable ();
-	
+
 	known_sfx = (sfx_t *) Hunk_AllocName (MAX_SFX * sizeof(sfx_t), "sfx_t");
 	num_sfx = 0;
-	
+
 	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound ("ambience/water1.wav");
 	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound ("ambience/wind2.wav");
 
