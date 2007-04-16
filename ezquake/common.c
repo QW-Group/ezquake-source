@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.73.2.2 2007-04-16 14:40:25 disconn3ct Exp $
+    $Id: common.c,v 1.73.2.3 2007-04-16 15:12:09 disconn3ct Exp $
 
 */
 
@@ -684,6 +684,13 @@ int COM_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 
 #define ZIP_WRITEBUFFERSIZE (8192)
 
+/*
+[19:23:40] <@disconnect|bla> Cokeman: how do you delete temporary files on windows? =:-)
+[19:23:51] <@Cokeman> I don't :D
+[19:23:52] Cokeman hides
+[19:23:55] <@disconnect|bla> zomfg :E
+[19:24:04] <@disconnect|bla> OK. Linux have same behavior now.
+*/
 int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 						  const char *filename_inzip,
 						  qbool case_sensitive,
