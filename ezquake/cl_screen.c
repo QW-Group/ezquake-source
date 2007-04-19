@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cl_screen.c,v 1.111.2.4 2007-04-11 01:15:14 disconn3ct Exp $
+$Id: cl_screen.c,v 1.111.2.5 2007-04-19 16:51:06 qqshka Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -1453,7 +1453,8 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 			case 'n': // draw name
 
 				if(!width_only) {
-					snprintf(tmp, sizeof(tmp), "%*.*s", maxname, maxname, ti_clients[i].nick[0] ? ti_clients[i].nick : cl.players[i].name);
+					char *nick = TP_ParseFunChars(ti_clients[i].nick[0] ? ti_clients[i].nick : cl.players[i].name, false);
+					snprintf(tmp, sizeof(tmp), "%*.*s", maxname, maxname, nick);
 					Draw_ColoredString (x, y, tmp, false);
 				}
 				x += maxname * FONTWIDTH;
@@ -1568,7 +1569,7 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 					if (!loc[0])
 						loc = "unknown";
     
-					snprintf(tmp, sizeof(tmp), "%*.*s", maxloc, maxloc, loc);
+					snprintf(tmp, sizeof(tmp), "%*.*s", maxloc, maxloc, TP_ParseFunChars(loc, false));
 					Draw_ColoredString (x, y, tmp, false);
 				}
 				x += maxloc * FONTWIDTH;
@@ -1632,6 +1633,7 @@ static void SCR_Draw_TeamInfo(void)
 {
 	int x, y, w, h;
 	int i, j, slots[MAX_CLIENTS], slots_num, maxname, maxloc;
+	char tmp[1024], *nick;
 
 	float	scale = bound(0.1, scr_teaminfo_scale.value, 10);
 
@@ -1647,9 +1649,13 @@ static void SCR_Draw_TeamInfo(void)
 		 	)
 			continue;
 
-		// dynamically guess max length of name/lock
-		maxname = max(maxname, strlen(ti_clients[i].nick[0] ? ti_clients[i].nick : cl.players[i].name)); // use nick or name
-		maxloc  = max(maxloc, strlen(TP_LocationName(ti_clients[i].org)));
+		// dynamically guess max length of name/location
+		nick = (ti_clients[i].nick[0] ? ti_clients[i].nick : cl.players[i].name); // we use nick or name
+		maxname = max(maxname, strlen(TP_ParseFunChars(nick, false)));
+
+		strlcpy(tmp, TP_LocationName(ti_clients[i].org), sizeof(tmp));
+		maxloc  = max(maxloc,  strlen(TP_ParseFunChars(tmp,  false)));
+
 		slots[slots_num++] = i;
 	}
 
