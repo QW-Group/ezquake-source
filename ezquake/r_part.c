@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_part.c,v 1.14 2007-03-11 06:01:42 disconn3ct Exp $
+	$Id: r_part.c,v 1.14.2.1 2007-04-19 23:44:02 qqshka Exp $
 
 */
 
@@ -48,9 +48,11 @@ typedef struct particle_s {
 
 #endif
 
-#define DEFAULT_NUM_PARTICLES	2048
+//#define DEFAULT_NUM_PARTICLES	2048
 #define ABSOLUTE_MIN_PARTICLES	512
 #define ABSOLUTE_MAX_PARTICLES	8192
+
+cvar_t r_particles_count = {"r_particles_count", "2048", CVAR_ARCHIVE};
 
 static int	ramp1[8] = {0x6f, 0x6d, 0x6b, 0x69, 0x67, 0x65, 0x63, 0x61};
 static int	ramp2[8] = {0x6f, 0x6e, 0x6d, 0x6c, 0x6b, 0x6a, 0x68, 0x66};
@@ -209,22 +211,22 @@ void Classic_LoadParticleTexures (void) {
 }
 #endif
 
+void Classic_AllocParticles (void) {
+
+	r_numparticles = bound(ABSOLUTE_MIN_PARTICLES, r_particles_count.integer, ABSOLUTE_MAX_PARTICLES);
+
+	if (particles || r_numparticles < 1) // seems Classic_AllocParticles() called from wrong place
+		Sys_Error("Classic_AllocParticles: internal error");
+
+	// can't alloc on Hunk, using native memory
+	particles = (particle_t *) Q_malloc (r_numparticles * sizeof(particle_t));
+}
+
 void Classic_InitParticles (void) {
-	int i;
-
-	if (!particles) {
-		if ((i = COM_CheckParm ("-particles")) && i + 1 < com_argc)	{
-			r_numparticles = (int) (Q_atoi(com_argv[i + 1]));
-			r_numparticles = bound(ABSOLUTE_MIN_PARTICLES, r_numparticles, ABSOLUTE_MAX_PARTICLES);
-		} else {
-			r_numparticles = DEFAULT_NUM_PARTICLES;
-		}
-
-		particles = (particle_t *) Hunk_AllocName (r_numparticles * sizeof(particle_t), "classic:particles");
-	}
-	else {
-		Classic_ClearParticles ();
-	}
+	if (!particles)
+		Classic_AllocParticles ();
+	else
+		Classic_ClearParticles (); // also re-alloc particles
 
 #ifdef GLQUAKE
 	Classic_LoadParticleTexures();
@@ -236,7 +238,10 @@ void Classic_ClearParticles (void) {
 
 	if (!particles)
 		return;
-	
+
+	Q_free (particles);			// free
+	Classic_AllocParticles ();	// and alloc again
+		
 	free_particles = &particles[0];
 	active_particles = NULL;
 
@@ -707,6 +712,17 @@ void Classic_DrawParticles (void) {
 
 
 void R_InitParticles(void) {
+	if (!host_initialized) {
+		int i;
+
+		Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
+		Cvar_Register (&r_particles_count);
+		Cvar_ResetCurrentGroup();
+
+		if ((i = COM_CheckParm ("-particles")) && i + 1 < com_argc)
+			Cvar_SetValue(&r_particles_count, Q_atoi(com_argv[i + 1]));
+	}
+
 	Classic_InitParticles();
 #ifdef GLQUAKE
 	QMB_InitParticles();

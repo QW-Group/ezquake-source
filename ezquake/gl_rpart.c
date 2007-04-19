@@ -28,15 +28,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 //VULT
-float alphatrail_s;
-float alphatrail_l;
-float varray_vertex[16];
-int shockwave_texture;
-int lightning_texture;
-int spark_texture;
+static float alphatrail_s;
+static float alphatrail_l;
+static float varray_vertex[16];
 
 // START shaman :: balancing variables
-#define DEFAULT_NUM_PARTICLES				2048 // 4096
+//#define DEFAULT_NUM_PARTICLES				2048 // 4096
 #define ABSOLUTE_MIN_PARTICLES				256
 #define ABSOLUTE_MAX_PARTICLES				32768
 /*
@@ -165,9 +162,9 @@ static particle_type_t particle_types[num_particletypes];
 static int particle_type_index[num_particletypes];	
 static particle_texture_t particle_textures[num_particletextures];
 
-int r_numparticles;		
+static int r_numparticles;		
 static vec3_t zerodir = {22, 22, 22};
-int particle_count = 0;
+static int particle_count = 0;
 static float particle_time;		
 static vec3_t trail_stop;
 
@@ -286,27 +283,41 @@ do {																													\
 	count++;																											\
 } while(0);
 
+void QMB_AllocParticles (void) {
+	extern cvar_t r_particles_count;
+
+	r_numparticles = bound(ABSOLUTE_MIN_PARTICLES, r_particles_count.integer, ABSOLUTE_MAX_PARTICLES);
+
+	if (particles || r_numparticles < 1) // seems QMB_AllocParticles() called from wrong place
+		Sys_Error("QMB_AllocParticles: internal error");
+
+	// can't alloc on Hunk, using native memory
+	particles = (particle_t *) Q_malloc (r_numparticles * sizeof(particle_t));
+}
+
 void QMB_InitParticles (void) {
 	int	i, count = 0, particlefont;
+	int shockwave_texture, lightning_texture, spark_texture; // VULT
 
     Cvar_Register (&amf_part_fulldetail);
+	if (!host_initialized)
+		if (COM_CheckParm ("-detailtrails"))
+			Cvar_LatchedSetValue (&amf_part_fulldetail, 1);
 
     if (!qmb_initialized) {
-		Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
-		Cvar_Register (&gl_clipparticles);
-		Cvar_Register (&gl_bounceparticles);
-		Cvar_ResetCurrentGroup();
-
-		if ((i = COM_CheckParm ("-particles")) && i + 1 < com_argc)	{
-			r_numparticles = (int) (Q_atoi(com_argv[i + 1]));
-			r_numparticles = bound(ABSOLUTE_MIN_PARTICLES, r_numparticles, ABSOLUTE_MAX_PARTICLES);
-		} else {
-			r_numparticles = DEFAULT_NUM_PARTICLES;
+		if (!host_initialized) {
+			Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
+			Cvar_Register (&gl_clipparticles);
+			Cvar_Register (&gl_bounceparticles);
+			Cvar_ResetCurrentGroup();
 		}
-		particles = (particle_t *) Hunk_AllocName(r_numparticles * sizeof(particle_t), "qmb:particles");
+
+		Q_free (particles); // yeah, shit happens, work around
+		QMB_AllocParticles ();
 	}
 	else {
-		QMB_ClearParticles ();
+		QMB_ClearParticles (); // also re-allocc particles
+		qmb_initialized = false; // so QMB particle system will be turned off if we fail to load some texture
 	}
 
 	if (!(particlefont = GL_LoadTextureImage ("textures/particles/particlefont", "qmb:particlefont", 256, 256, TEX_ALPHA | TEX_COMPLAIN | TEX_NOSCALE))) 
@@ -382,13 +393,8 @@ void QMB_InitParticles (void) {
 	ADD_PARTICLE_TYPE(p_chunkdir, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 255, -32, 0, pm_bounce, 1.475);
 	ADD_PARTICLE_TYPE(p_smallspark, pd_beam, GL_SRC_ALPHA, GL_ONE, ptex_spark, 255, -64, 0, pm_bounce, 1.5); //grav was -64
 
-	if (COM_CheckParm ("-detailtrails") || amf_part_fulldetail.integer)
-		detailtrails = true;
-	else
-		detailtrails = false;
-
 	//Allow overkill trails
-	if (detailtrails)
+	if (amf_part_fulldetail.integer)
 	{
 		ADD_PARTICLE_TYPE(p_streaktrail, pd_billboard, GL_SRC_ALPHA, GL_ONE, ptex_generic, 128, 0, 0, pm_die, 0);
 	}
@@ -405,6 +411,9 @@ void QMB_ClearParticles (void) {
 
 	if (!qmb_initialized)
 		return;
+
+	Q_free (particles);		// free
+	QMB_AllocParticles ();	// and alloc again
 
 	particle_count = 0;
 	memset(particles, 0, r_numparticles * sizeof(particle_t));
@@ -1045,7 +1054,7 @@ __inline static void AddParticle(part_type_t type, vec3_t org, int count, float 
 		case p_lightningbeam:
 			VectorCopy(org, p->org);
 			VectorCopy(dir, p->endorg);
-			if (detailtrails && type == p_streaktrail)
+			if (amf_part_fulldetail.integer && type == p_streaktrail)
 				p->size = size * 3;
 			VectorClear(p->vel);
 			p->growth = -p->size/time;
@@ -1828,8 +1837,7 @@ void VX_ParticleTrail (vec3_t start, vec3_t end, float size, float time, col_t c
 	float		len;
 	time *= amf_part_traillen.value;
 	
-
-	if (detailtrails)
+	if (amf_part_fulldetail.integer)
 	{
 		VectorSubtract (end, start, vec);
 		len = VectorNormalize(vec);
