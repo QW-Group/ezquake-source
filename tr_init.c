@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.14 2007-03-21 17:03:10 vvd0 Exp $
+	$Id: tr_init.c,v 1.15 2007-04-19 00:16:27 qqshka Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -67,7 +67,7 @@ cvar_t	r_displayRefresh	= { "vid_displayfrequency", "0",	CVAR_ARCHIVE | CVAR_LAT
 //
 cvar_t	r_ignoreGLErrors	= { "vid_ignoreGLErrors",	"1",	CVAR_ARCHIVE | CVAR_SILENT };
 //cvar_t	r_textureMode	= { "vid_textureMode",	"GL_LINEAR_MIPMAP_NEAREST", CVAR_ARCHIVE };
-cvar_t	r_swapInterval		= { "vid_swapInterval",		"0",	CVAR_ARCHIVE | CVAR_SILENT };
+cvar_t	r_swapInterval		= { "vid_vsync",			"0",	CVAR_ARCHIVE | CVAR_SILENT };
 #ifdef __MACOS__
 //cvar_t	r_gamma			= { "vid_gamma",			"1.2",	CVAR_ARCHIVE | CVAR_SILENT };
 #else
