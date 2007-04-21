@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.12 2007-04-21 08:13:06 himan Exp $
+    $Id: teamplay.c,v 1.67.2.13 2007-04-21 19:12:14 himan Exp $
 */
  
 #define TP_ISEYESMODEL(x) ((x) && cl.model_precache[(x)] && cl.model_precache[(x)]->modhint == MOD_EYES)
@@ -3344,29 +3344,24 @@ void TP_Msg_ReportComing(qbool report) // tp_report and tp_coming are similar, d
 	MSGPART msg5 = "";
 	MSGPART msg6 = "";
  
+if (DEAD()) // no matter what, if dead report lost
+{
+	TP_Msg_Lost_f();
+	return;
+}
+else
+{
 	if (report)
 	{
 		msg1 = tp_sep_blue;
 	}
 	else
 	{
-		if (DEAD()) // you can't be coming if you're dead! no correct location to report either, so wait until you're alive!
-		{
-			TP_Msg_Lost_f();
-			return;
-		}
-		else
-		{
-			msg1 = tp_sep_white " {coming}";
-		}
+		msg1 = tp_sep_white " {coming}";
 	}
+}
  
- 
-	if (DEAD()) // if player is dead, report lost
-	{
-		TP_Msg_Lost_f();
-		return;
-	}
+
  
 	if (HAVE_GA())
 		msg3 = COLORED(0b0,%a);
