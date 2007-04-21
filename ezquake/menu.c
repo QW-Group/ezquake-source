@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.72 2007-03-20 12:39:44 johnnycz Exp $
+	$Id: menu.c,v 1.72.2.1 2007-04-21 10:38:28 johnnycz Exp $
 
 */
 
@@ -195,7 +195,7 @@ void M_FindKeysForCommand (const char *command, int *twokeys) {
 	char *b;
 
 	twokeys[0] = twokeys[1] = -1;
-	l = strlen(command);
+	l = strlen(command) + 1;
 	count = 0;
 
 	for (j = 0 ; j < (sizeof(keybindings) / sizeof(*keybindings)); j++) {
