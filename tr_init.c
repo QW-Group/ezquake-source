@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.15 2007-04-19 00:16:27 qqshka Exp $
+	$Id: tr_init.c,v 1.16 2007-04-23 21:48:56 qqshka Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -496,9 +496,17 @@ void R_Register( void )
 #ifdef _WIN32
 		if (COM_CheckParm("-current")) {
 			// ok, pseudo current
+			int freq = 0;
+			DEVMODE dm;
+
+			memset( &dm, 0, sizeof( dm ) );
+			dm.dmSize = sizeof( dm );
+			if ( EnumDisplaySettings( NULL, ENUM_CURRENT_SETTINGS, &dm ) )
+				freq = dm.dmDisplayFrequency; // get actual frequency
+
 			w = GetSystemMetrics (SM_CXSCREEN);
 			h = GetSystemMetrics (SM_CYSCREEN);
-			Cvar_LatchedSetValue(&r_displayRefresh, 0); // current mean current
+			Cvar_LatchedSetValue(&r_displayRefresh, freq); // current mean current
 			Cvar_LatchedSetValue(&r_colorbits, 0); // use desktop bpp
 		}
 #endif
