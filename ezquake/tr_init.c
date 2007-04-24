@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.14.2.1 2007-04-19 00:16:12 qqshka Exp $
+	$Id: tr_init.c,v 1.14.2.2 2007-04-24 14:32:38 disconn3ct Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -479,7 +479,7 @@ void R_Register( void )
 
 	if ( !host_initialized ) // compatibility with retarded cmd line, and actually this still needed for some other reasons
 	{
-		int w, h;
+		int w = 0, h = 0;
 
 		if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed"))
 			Cvar_LatchedSetValue(&r_fullscreen, 0);
@@ -494,11 +494,23 @@ void R_Register( void )
 		h = ((i = COM_CheckParm("-height")) && i + 1 < com_argc) ? Q_atoi(com_argv[i + 1]) : 0;
 
 #ifdef _WIN32
-		if (COM_CheckParm("-current")) {
+		if (!( // no!
+			strcmp (r_displayRefresh.defaultvalue, r_displayRefresh.string) || // refresh rate wasnt changed
+			strcmp (r_colorbits.defaultvalue, r_colorbits.string ) || // bpp wasnt changed
+			w || h) // width and height wasnt changed
+		) {
 			// ok, pseudo current
+			int freq = 0;
+			DEVMODE dm;
+
+			memset( &dm, 0, sizeof( dm ) );
+			dm.dmSize = sizeof( dm );
+			if ( EnumDisplaySettings( NULL, ENUM_CURRENT_SETTINGS, &dm ) )
+				freq = dm.dmDisplayFrequency; // get actual frequency
+
 			w = GetSystemMetrics (SM_CXSCREEN);
 			h = GetSystemMetrics (SM_CYSCREEN);
-			Cvar_LatchedSetValue(&r_displayRefresh, 0); // current mean current
+			Cvar_LatchedSetValue(&r_displayRefresh, freq); // current mean current
 			Cvar_LatchedSetValue(&r_colorbits, 0); // use desktop bpp
 		}
 #endif
