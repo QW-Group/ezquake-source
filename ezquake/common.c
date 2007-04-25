@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.73.2.4 2007-04-16 18:47:25 disconn3ct Exp $
+    $Id: common.c,v 1.73.2.5 2007-04-25 21:52:21 johnnycz Exp $
 
 */
 
@@ -1287,6 +1287,22 @@ char *va (char *format, ...)
 	va_end (argptr);
 
 	return string[idx];
+}
+
+// equals to consecutive calls of strtok(s, " ") that assign values to array
+int COM_GetFloatTokens(const char *s, float *fl_array, int fl_array_size)
+{
+    int i;
+    if (!s || !*s) return 0;
+    
+    for(i = 0; *s && i < fl_array_size; i++)
+    {
+        fl_array[i] = atof(s);
+        while(*s && *s != ' ') s++; // skips the number
+        while(*s && *s == ' ') s++; // skips the spaces
+    }
+
+    return i;
 }
 
 /*
