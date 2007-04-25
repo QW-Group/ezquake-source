@@ -2,13 +2,11 @@
     Arithmetic expression evaluator
     @author johnnycz
     last edit:
-$Id: parser.c,v 1.14.2.2 2007-04-25 22:21:57 johnnycz Exp $
+$Id: parser.c,v 1.14.2.3 2007-04-25 22:36:57 johnnycz Exp $
 
 */
 
-#include "stdlib.h"
-#include "stdio.h"
-#include "ctype.h"
+#include "quakedef.h"
 #include "parser.h"
 
 #define GLOBAL /* */
@@ -223,7 +221,7 @@ GLOBAL double Expr_Eval(const char *str, int *errcode)
 {
     double val;
 
-    EParser p = (EParser) malloc(sizeof(expr_parser_t));
+    EParser p = (EParser) Q_malloc(sizeof(expr_parser_t));
     Init_Parser(p, str);
     val = E(p);
     *errcode = p->error;
