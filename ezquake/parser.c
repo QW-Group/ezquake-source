@@ -2,7 +2,7 @@
     Arithmetic expression evaluator
     @author johnnycz
     last edit:
-$Id: parser.c,v 1.14.2.1 2007-04-25 21:57:08 johnnycz Exp $
+$Id: parser.c,v 1.14.2.2 2007-04-25 22:21:57 johnnycz Exp $
 
 */
 
@@ -32,7 +32,6 @@ typedef struct {
     int lookahead;
     int ahead_op;
     int error;
-    const char* errmsg;
 } expr_parser_t, *EParser;
 
 #define CURCHAR(p) (p->string[p->pos])
@@ -48,18 +47,18 @@ LOCAL void Next_Token(EParser p)
 
     while(c = CURCHAR(p), c && c == ' ') p->pos++;
     
-    if (!c) { p->lookahead = TK_EOF; return; }
-
-    if (isdigit(c) || c == '.') { p->lookahead = TK_NUM; return; }
-    if (c == '+')               { p->lookahead = TK_PLUS; return; }
-    if (c == '*')               { p->lookahead = TK_ASTERISK; return; }
-    if (c == '-')               { p->lookahead = TK_MINUS; return; }
-    if (c == '(')               { p->lookahead = TK_BR_O; return; }
-    if (c == '(')               { p->lookahead = TK_BR_C; return; }
-    if (isalpha(c))             { p->lookahead = TK_ID; return; }
-
-    p->lookahead = TK_INVALID;
-    p->error = ERR_INVALID_TOKEN;
+    if (!c)                     { p->lookahead = TK_EOF; }
+    else if (c == '+')          { p->lookahead = TK_PLUS; }
+    else if (c == '*')          { p->lookahead = TK_ASTERISK; }
+    else if (c == '-')          { p->lookahead = TK_MINUS; }
+    else if (c == '(')          { p->lookahead = TK_BR_O; }
+    else if (c == '(')          { p->lookahead = TK_BR_C; }
+    else if (isdigit(c) || c == '.') { p->lookahead = TK_NUM; }
+    else if (isalpha(c))        { p->lookahead = TK_ID; }
+    else {
+        p->lookahead = TK_INVALID;
+        p->error = ERR_INVALID_TOKEN;
+    }
 }
 
 LOCAL double Match(EParser p, int token)
@@ -144,7 +143,7 @@ Following code represents this grammar
  F -> (E)
  F -> id
 
- / and - operators should be easy to added later
+ / and - operators should be easy to add later
 
 */
 
@@ -176,7 +175,6 @@ LOCAL double F(EParser p)
 
     default:
         p->error = ERR_INVALID_TOKEN;
-        m = 0.0;
     }
     return m;
 }
@@ -184,15 +182,12 @@ LOCAL double F(EParser p)
 
 LOCAL double Tap(EParser p, double v)
 {
-    double ret = v;
-
     if (p->lookahead == TK_ASTERISK)
     {
         Match(p, TK_ASTERISK);
-        ret = ret * Tap(p, F(p));
+        return v * Tap(p, F(p));
     }
-
-    return ret;
+    return v;
 }
 
 LOCAL double T(EParser p)
@@ -202,14 +197,13 @@ LOCAL double T(EParser p)
 
 LOCAL double Eap(EParser p, double v)
 {
-    double ret = v;
     if (p->lookahead == TK_PLUS)
     {
         Match(p, TK_PLUS);
-        ret = v + Eap(p,T(p));
+        return v + Eap(p,T(p));
     }
 
-    return ret;
+    return v;
 }
 
 LOCAL double E(EParser p)
