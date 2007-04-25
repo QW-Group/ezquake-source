@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.35 2007-03-11 06:01:43 disconn3ct Exp $
+	$Id: utils.c,v 1.35.2.1 2007-04-25 21:49:28 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -469,73 +469,77 @@ qbool Util_F_Match(char *_msg, char *f_request) {
 }
 		
 
-void Replace_In_String (char *src, int n, char delim, int num_args, ...){
-	
+void Replace_In_String (char *src, int n, char delim, int num_args, ...)
+{
 	va_list ap;
 	char msg[1024];
-	char count[5];
-	int y=0,i=0,j=0,k=0,l=0,m=0;
-	char *arg1, *arg2 ;
+    char buf[256];
+    char *msgp;
+	int i, pad;
+    qbool right;
+	char *arg1, *arg2;
 	
-	if (n>sizeof(msg))
-		return;
-
+    // we will write the result back to src in code that follows
 	strlcpy(msg,src,sizeof(msg));
+    msgp = msg;
+    *src = '\0';
 
-	while (msg[i] != '\0' && j < n) {
-		if(msg[i++] != delim)
-			src[j++] = msg[i-1];
-		else{
-			if (msg[i] == '-'){
-				m = 1;
-				i++;
-			}
-			if (strspn(msg+i,"1234567890")){
-					l = strspn(msg+i,"1234567890");
-					if(l>5){
-						strncpy(count,msg+i,sizeof(count));
-						k = atoi(count);
-					}else if(l == 1){
-						k = atoi(msg+i);
-					}else{
-						strncpy(count,msg+i,l);
-						k = atoi(count);
-					}
-			i += l ;
-			}
-			
+	while (*msgp)
+    {
+		if(*msgp != delim)
+        {
+            buf[0] = *msgp++;
+            buf[1] = '\0';
+            strlcat(src, buf, n);
+        }
+		else
+        {
+            // process the delimiter
+            msgp++;
+            if (!*msgp) break;
+            
+            // process the initial minus
+            right = *msgp == '-';
+            if (right) msgp++;
+            if (!*msgp) break;
 
+            // process the number
+            pad = atoi(msgp);
+            while (isdigit(*msgp)) msgp++;
+            if (!*msgp) break;
+
+            // go through all available patterns
 			va_start(ap, num_args);
-			for(y=0; y < num_args; y++){
-				arg1 = va_arg(ap,char *);
-				if( (arg2 = va_arg(ap,char *)) == NULL)
-					break;
+			for (i=0; i < num_args; i++)
+            {
+				arg1 = va_arg(ap,char *);   // the pattern
+                if (!arg1) break;
+                
+                arg2 = va_arg(ap,char *);   // the string to replace it with
+				if (!arg2) break;
 
-				if (msg[i] == *arg1){
-					if (j+strlen(arg2)>n || j + k > n)
-						break;
-
-					if(k && m){
-                    strcpy(src + j ,va("%-*s",k,arg2));
-		    			j+=k;
-					}else if (k && !m){
-                    strcpy(src + j ,va("%*s",k,arg2));
-					j+=k;
-					}else{
-                    strcpy(src + j ,va("%s",arg2));
-					j+=strlen(arg2);
+				// the pattern matched
+                if (*msgp == *arg1)
+                {
+                    if (pad)
+                    {
+					    if (right)  snprintf(buf, sizeof(buf)-1, "%-*s", pad, arg2);
+                        else        snprintf(buf, sizeof(buf)-1, "%*s", pad, arg2);
+                    }
+                    else
+                    {
+                        strlcpy(buf, arg2, sizeof(buf));
 					}
-					m=0;
-					
-					continue;
+                    
+                    strlcat(src, buf, n);
+                    break;
 				}
 			}
 			va_end(ap);
-		i++;
-		k=l=0;
+
+		msgp++;
 		}
 	}	
-	src[j]='\0';
 }
 
 /********************************** TF Utils ****************************************/
