@@ -1,7 +1,22 @@
-/*
-	$Id: parser.h,v 1.4 2007-02-18 05:10:32 qqshka Exp $
+/**
+
+    This module allows you to evaluate string representation
+    of an arithmetic expression into a number
+
+    Supports:
+      binary operators: +, *
+      unary operators: -
+
+$Id: parser.h,v 1.4.2.1 2007-04-25 21:57:08 johnnycz Exp $
 */
 
-int eval_string_int (char *src);
-int eval_string_float (char *src);
-int Solve_String (char *src);
+#ifndef __PARSER_H__
+#define __PARSER_H__
+
+#define ERR_SUCCESS         0
+#define ERR_INVALID_TOKEN   1
+#define ERR_UNEXPECTED_CHAR 2
+
+extern double Expr_Eval(const char *str, int *errcode);
+
+#endif // __PARSER_H__
