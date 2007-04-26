@@ -7,9 +7,7 @@ Copyright (C) 2001-2002       A Nourai
 #define _SECURITY_H
 
 #include "quakedef.h"
-#ifdef _WIN32
-#include <windows.h>
-#endif
+
 
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)

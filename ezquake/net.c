@@ -16,14 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.c,v 1.15 2007-03-11 06:01:41 disconn3ct Exp $
+    $Id: net.c,v 1.15.2.1 2007-04-26 22:49:20 disconn3ct Exp $
 */
 
 #include "quakedef.h"
 #include "server.h"
-#ifdef _WIN32
-#include "winquake.h"
-#endif
+
 
 netadr_t	net_local_cl_ipadr;
 netadr_t	net_local_sv_ipadr;

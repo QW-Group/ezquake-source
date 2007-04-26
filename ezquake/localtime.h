@@ -3,7 +3,7 @@
 
 #ifdef _WIN32
 
-#include <windows.h>
+#include <windows.h> // FIXME: we should include it only at winquake.h
 
 #else
 

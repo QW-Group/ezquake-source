@@ -16,16 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net_chan.c,v 1.8 2006-05-16 10:54:11 disconn3ct Exp $
+    $Id: net_chan.c,v 1.8.4.1 2007-04-26 22:49:20 disconn3ct Exp $
 */
 
 #include <time.h>
 #include "quakedef.h"
 #include "server.h"
 
-#ifdef _WIN32
-#include "winquake.h"
-#endif
 
 #define	PACKET_HEADER 8
 

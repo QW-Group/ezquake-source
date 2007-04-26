@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.72.2.1 2007-04-21 10:38:28 johnnycz Exp $
+	$Id: menu.c,v 1.72.2.2 2007-04-26 22:49:20 disconn3ct Exp $
 
 */
 
@@ -29,7 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #endif
-#include "winquake.h"
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
