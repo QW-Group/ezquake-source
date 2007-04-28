@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.35.2.3 2007-04-25 21:57:07 johnnycz Exp $
+	$Id: mvd_utils.c,v 1.35.2.4 2007-04-28 12:43:39 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -671,15 +671,109 @@ void MVD_Info (void){
 	}
 }
 
+int currentplayer_num;
 
+expr_val MVD_Var_Vals(const char *n)
+{
+#define VN(x) (*n == (x))
+	int i = currentplayer_num;
+    int stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];
+	double bp_at, bp_pw;
+	
+	// get armortype
+	if      (stats & IT_ARMOR1) bp_at = ga_val;
+	else if (stats & IT_ARMOR2) bp_at = ya_val;
+	else if (stats & IT_ARMOR3)	bp_at = ra_val;
+	else                        bp_at = 0;
+	
+	// get powerup type
+	bp_pw=0;
+	if (stats & IT_QUAD)            bp_pw += quad_val;
+	if (stats & IT_INVULNERABILITY)	bp_pw += pent_val;
+	if (stats & IT_INVISIBILITY)    bp_pw += ring_val;
+	
+	// a - armor value
+    // A - armor type
+    // b - average run time
+    // B - average run frags
+    // c - current run time
+    // C - current run frags
+    // d - average quad run time
+    // D - average quad runt frags
+    // e - 
+    // E - average pent run frags
+    // f - frags
+    // F -
+    // h - health
+    // i - took ssg
+    // I - 
+    // j - took ng
+    // J - took sng
+    // k - took gl
+    // K - lost gl
+    // l - took rl
+    // L - lost rl
+    // m - took lg
+    // M - lost lg
+    // n - took mh 
+    // N - took ga
+    // o - took ya
+    // O - took ra
+    // p - powerups
+    // P - 
+    // q -
+    // Q -
+    // r -
+    // R -
+    // s -
+    // S -
+    // t -
+    // T -
+    // u -
+    // U -
+    // v -
+    // V -
+    // w - 
+    // W - best weapon
+    // x - took ring
+    // X - lost ring
+    // y - took quad
+    // Y - lost quad
+    // z - took pent
+
+	if      (VN('a'))  return Get_Expr_Double(mvd_new_info[i].p_info->stats[STAT_ARMOR]); 
+	else if (VN('A'))  return Get_Expr_Double(bp_at); 
+	else if (VN('c'))  return Get_Expr_Double(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].time); 
+	else if (VN('C'))  return Get_Expr_Integer(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].frags); 
+	else if (VN('f'))  return Get_Expr_Integer(mvd_new_info[i].p_info->frags); 
+	else if (VN('h'))  return Get_Expr_Integer(mvd_new_info[i].p_info->stats[STAT_HEALTH]); 
+	else if (VN('j'))  return Get_Expr_Integer(mvd_new_info[i].info.info[NG_INFO].count); 
+	else if (VN('J'))  return Get_Expr_Integer(mvd_new_info[i].info.info[SNG_INFO].count); 
+	else if (VN('k'))  return Get_Expr_Integer(mvd_new_info[i].info.info[GL_INFO].count); 
+	else if (VN('K'))  return Get_Expr_Integer(mvd_new_info[i].info.info[GL_INFO].lost); 
+	else if (VN('l'))  return Get_Expr_Integer(mvd_new_info[i].info.info[RL_INFO].count); 
+	else if (VN('L'))  return Get_Expr_Integer(mvd_new_info[i].info.info[RL_INFO].lost); 
+	else if (VN('m'))  return Get_Expr_Integer(mvd_new_info[i].info.info[LG_INFO].count); 
+	else if (VN('M'))  return Get_Expr_Integer(mvd_new_info[i].info.info[LG_INFO].lost); 
+	else if (VN('n'))  return Get_Expr_Integer(mvd_new_info[i].info.info[MH_INFO].count); 
+	else if (VN('N'))  return Get_Expr_Integer(mvd_new_info[i].info.info[GA_INFO].count); 
+	else if (VN('o'))  return Get_Expr_Integer(mvd_new_info[i].info.info[YA_INFO].count); 
+	else if (VN('O'))  return Get_Expr_Integer(mvd_new_info[i].info.info[RA_INFO].count); 
+	else if (VN('p'))  return Get_Expr_Double(bp_pw); 
+	else if (VN('W'))  return Get_Expr_Integer(MVD_AutoTrackBW_f(i)); 
+	else if (VN('x'))  return Get_Expr_Double(mvd_new_info[i].info.info[RING_INFO].count); 
+	else if (VN('X'))  return Get_Expr_Double(mvd_new_info[i].info.info[RING_INFO].lost); 
+	else if (VN('y'))  return Get_Expr_Double(mvd_new_info[i].info.info[QUAD_INFO].count); 
+	else if (VN('Y'))  return Get_Expr_Double(mvd_new_info[i].info.info[QUAD_INFO].lost); 
+	else if (VN('z'))  return Get_Expr_Double(mvd_new_info[i].info.info[PENT_INFO].count); 
+	else return Get_Expr_Integer(0);
+}
 
 int MVD_FindBestPlayer_f(void)
 {
 	int bp_id, eval_error, i, h, y = 0;
 	const char* vals_str;
     const char* eq;
-    char buf[1024];
-	float bp_at,bp_bw,bp_pw,bp_h;
 	float lastval = 0;
     double value;
 	
@@ -705,26 +799,7 @@ int MVD_FindBestPlayer_f(void)
     }
 	
 	for ( i=0; i<mvd_cg_info.pcount ; i++ )
-    {
-	    // get bestweapon
-        int stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];
-		bp_bw = MVD_AutoTrackBW_f(i);
-		
-		// get armortype
-		if      (stats & IT_ARMOR1) bp_at = ga_val;
-		else if (stats & IT_ARMOR2) bp_at = ya_val;
-		else if (stats & IT_ARMOR3)	bp_at = ra_val;
-		else                        bp_at = 0;
-		
-		// get powerup type
-		bp_pw=0;
-		if (stats & IT_QUAD)            bp_pw += quad_val;
-		if (stats & IT_INVULNERABILITY)	bp_pw += pent_val;
-		if (stats & IT_INVISIBILITY)    bp_pw += ring_val;
-		
-		// get health
-		bp_h=mvd_new_info[i].p_info->stats[STAT_HEALTH];
-		
+    {		
         // choose equation
 	    if      (mvd_cg_info.pcount == 2)   eq = mvd_autotrack_1on1.string;
 	    else if (mvd_cg_info.pcount == 4)   eq = mvd_autotrack_2on2.string;
@@ -736,87 +811,9 @@ int MVD_FindBestPlayer_f(void)
 	    else if (mvd_autotrack.integer == 3 && cl_multiview.value)
 		    eq = multitrack_str;
     		
-	    // a - armor value
-	    // A - armor type
-	    // b - average run time
-	    // B - average run frags
-	    // c - current run time
-	    // C - current run frags
-	    // d - average quad run time
-	    // D - average quad runt frags
-	    // e - 
-	    // E - average pent run frags
-	    // f - frags
-	    // F -
-	    // h - health
-	    // i - took ssg
-	    // I - 
-	    // j - took ng
-	    // J - took sng
-	    // k - took gl
-	    // K - lost gl
-	    // l - took rl
-	    // L - lost rl
-	    // m - took lg
-	    // M - lost lg
-	    // n - took mh 
-	    // N - took ga
-	    // o - took ya
-	    // O - took ra
-	    // p - powerups
-	    // P - 
-	    // q -
-	    // Q -
-	    // r -
-	    // R -
-	    // s -
-	    // S -
-	    // t -
-	    // T -
-	    // u -
-	    // U -
-	    // v -
-	    // V -
-	    // w - 
-	    // W - best weapon
-	    // x - took ring
-	    // X - lost ring
-	    // y - took quad
-	    // Y - lost quad
-	    // z - took pent
-    	
-	    strlcpy(buf, eq, sizeof(buf));
-	    Replace_In_String(buf,sizeof(buf),'%',25,
-		    "a",va("%f",mvd_new_info[i].p_info->stats[STAT_ARMOR]),
-		    "A",va("%f",bp_at),
-		    "c",va("%f",mvd_new_info[i].info.runs[mvd_new_info[i].info.run].time),
-		    "C",va("%i",mvd_new_info[i].info.runs[mvd_new_info[i].info.run].frags),
-		    "f",va("%i",mvd_new_info[i].p_info->frags),
-		    "h",va("%i",mvd_new_info[i].p_info->stats[STAT_HEALTH]),
-		    "j",va("%i",mvd_new_info[i].info.info[NG_INFO].count),
-		    "J",va("%i",mvd_new_info[i].info.info[SNG_INFO].count),
-		    "k",va("%i",mvd_new_info[i].info.info[GL_INFO].count),
-		    "K",va("%i",mvd_new_info[i].info.info[GL_INFO].lost),
-		    "l",va("%i",mvd_new_info[i].info.info[RL_INFO].count),
-		    "L",va("%i",mvd_new_info[i].info.info[RL_INFO].lost),
-		    "m",va("%i",mvd_new_info[i].info.info[LG_INFO].count),
-		    "M",va("%i",mvd_new_info[i].info.info[LG_INFO].lost),
-		    "n",va("%i",mvd_new_info[i].info.info[MH_INFO].count),
-		    "N",va("%i",mvd_new_info[i].info.info[GA_INFO].count),
-		    "o",va("%i",mvd_new_info[i].info.info[YA_INFO].count),
-		    "O",va("%i",mvd_new_info[i].info.info[RA_INFO].count),
-		    "p",va("%f",bp_pw),
-		    "W",va("%f",bp_bw),
-		    "x",va("%f",mvd_new_info[i].info.info[RING_INFO].count),
-		    "X",va("%f",mvd_new_info[i].info.info[RING_INFO].lost),
-		    "y",va("%f",mvd_new_info[i].info.info[QUAD_INFO].count),
-		    "Y",va("%f",mvd_new_info[i].info.info[QUAD_INFO].lost),
-		    "z",va("%f",mvd_new_info[i].info.info[PENT_INFO].count)
-        );
-		
-        // todo: Update Expr_Eval so that it handles variables
-        // (should be easy fix)
-		value = Expr_Eval(buf, &eval_error);
+		// store global variable which is used in MVD_Var_Vals
+		currentplayer_num = i;
+		eval_error = Expr_Eval_Double(eq, MVD_Var_Vals, &value);
 
 		if (eval_error != ERR_SUCCESS) {
             switch (eval_error) {
@@ -838,17 +835,14 @@ int MVD_FindBestPlayer_f(void)
 		mvd_new_info[i].value = value;
 	}
 	
-	lastval=0;
-	bp_id=0;
-	for ( h=0 ; h<mvd_cg_info.pcount ; h++ ){
-		if(lastval < mvd_new_info[h].value){
+	lastval = mvd_new_info[0].value;
+	bp_id = mvd_new_info[0].id;
+	for ( h=1 ; h<mvd_cg_info.pcount ; h++ ) {
+		if (lastval < mvd_new_info[h].value) {
 			lastval = mvd_new_info[h].value;
 			bp_id 	= mvd_new_info[h].id;
 		}
 	}
-	#ifdef DEBUG
-	printf("MVD_FindBestPlayer_f Stopped %i\n",bp_id);
-	#endif
 	return bp_id ;
 }
 
