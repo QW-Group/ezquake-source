@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.57 2007-03-21 15:14:30 johnnycz Exp $
+    $Id: keys.c,v 1.57.2.1 2007-04-29 12:02:09 qqshka Exp $
 
 */
 
@@ -2029,7 +2029,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 	}
 
 #if defined( __linux__ ) && defined(GLQUAKE)
-  // switch windowed<->fullscreen if pressed alt+tab, I succeed only with left alt, dunno why...
+  // switch windowed<->fullscreen if pressed alt+enter, I succeed only with left alt, dunno why...
   if (key == K_ENTER && keydown[K_ALT] && (key_dest == key_console || key_dest == key_game))
   {
     Key_ClearStates(); // Zzzz
