@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.133 2007-03-18 18:36:24 disconn3ct Exp $
+	$Id: hud_common.c,v 1.133.2.1 2007-04-30 15:15:56 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -833,6 +833,12 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 		// This depends on the orientation of the circle (left, right, up, down).
 		float circle_startangle = 0.0;
 		float circle_endangle = 0.0;
+
+		// Avoid divison by zero.
+		if(hud_speed2_radius->value <= 0)
+		{
+			return;
+		}
 
 		// Get the velocity.
 		if (cl.players[cl.playernum].spectator && Cam_TrackNum() >= 0)
