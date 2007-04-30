@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.136.2.4 2007-04-22 19:01:12 johnnycz Exp $
+	$Id: cl_main.c,v 1.136.2.5 2007-04-30 14:33:05 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1145,6 +1145,7 @@ void GFX_Init (void) {
 	SCR_Init ();	// safe re-init imo (in gl)
 	R_Init ();		// safe re-init imo (in gl)
 	Sbar_Init ();	// safe re-init imo (in gl)
+	HUD_Editor_Init(); // Need to reload some textures.
 }
 
 void CL_Init (void) {
