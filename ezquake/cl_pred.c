@@ -286,15 +286,15 @@ double lerp_time;
 void CL_PredictMove (void) {
 	int i, oldphysent;
 	frame_t *from = NULL, *to;
-// shaman RFE 1036160 {
+
 	double playertime;
     float f = 0;
 
 	playertime = cls.realtime - cls.latency;
 	if (playertime > cls.realtime)
 		playertime = cls.realtime;
-// } shaman RFE 1036160 
-	if (ISPAUSED)
+
+	if(cl.paused)
 		return;
 
 	if (cl.intermission) {
