@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.136.2.5 2007-04-30 14:33:05 cokeman1982 Exp $
+	$Id: cl_main.c,v 1.136.2.6 2007-05-01 19:05:47 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1211,7 +1211,6 @@ void CL_Init (void) {
 	TP_Init ();
 	Hud_262Init();
 	HUD_Init();
-	HUD_Editor_Init();
 	M_Init ();
 
 	SList_Init ();
