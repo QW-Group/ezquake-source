@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sbar.c,v 1.34 2007-03-12 03:20:04 disconn3ct Exp $
+	$Id: sbar.c,v 1.34.2.1 2007-05-01 16:46:48 cokeman1982 Exp $
 */
 // sbar.c -- status bar code
 
@@ -412,7 +412,7 @@ int scoreboardteams;
 static __inline int Sbar_PlayerNum(void) {
 	int mynum;
 
-		if (!cl.spectator || (mynum = Cam_TrackNum()) == -1)
+	if (!cl.spectator || (mynum = Cam_TrackNum()) == -1)
 		mynum = cl.playernum;
 
 	return mynum;
@@ -1766,15 +1766,14 @@ void Sbar_Draw(void) {
 	else
 		sbar_xofs = 0;
 
-	// top line
-	if (sb_lines > 24 && scr_newHud.value != 1) {  // HUD -> hexum
-		if (!sb_showscores && !sb_showteamscores) { // do not show with +showscores
-			if (!cl.spectator || autocam == CAM_TRACK)
-				Sbar_DrawInventory();
+	// Top line. Do not show with +showscores
+	if (sb_lines > 24 && scr_newHud.value != 1 && !sb_showscores && !sb_showteamscores) 
+	{ 
+		if (!cl.spectator || autocam == CAM_TRACK)
+			Sbar_DrawInventory();
 
-			if (cl.gametype == GAME_DEATHMATCH && (!headsup || vid.width < 512))
-				Sbar_DrawFrags();
-		}
+		if (cl.gametype == GAME_DEATHMATCH && (!headsup || vid.width < 512))
+			Sbar_DrawFrags();
 	}
 
 	// main area
@@ -1799,7 +1798,7 @@ void Sbar_Draw(void) {
 				else
 					Sbar_DrawNormal();
 
-				strlcpy(st,scr_tracking.string,sizeof(st));
+				strlcpy(st, scr_tracking.string, sizeof(st));
 
 				Replace_In_String(st, sizeof(st), '%', 2, "n", cl.players[spec_track].name, "t", cl.teamplay ? cl.players[spec_track].team : "");
 
@@ -1875,6 +1874,10 @@ void Sbar_Draw(void) {
 		return;
 #endif
 
-	if (vid.width >= 512 && sb_lines > 0 && cl.gametype == GAME_DEATHMATCH && !scr_centerSbar.value)
+	if (vid.width >= 512 && sb_lines > 0 
+		&& cl.gametype == GAME_DEATHMATCH && !scr_centerSbar.value 
+		&& (cl_multiview.value && cl_mvinset.value && CURRVIEW == 1)) // BUGFIX: Only draw the frags for the first player when using mvinset.
+	{
 		Sbar_MiniDeathmatchOverlay ();
+	}
 }
