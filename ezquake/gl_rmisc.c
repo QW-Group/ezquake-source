@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_rmisc.c,v 1.18.2.1 2007-05-01 18:59:33 cokeman1982 Exp $
+	$Id: gl_rmisc.c,v 1.18.2.2 2007-05-01 23:44:20 cokeman1982 Exp $
 */
 // gl_rmisc.c
 
@@ -267,11 +267,10 @@ void R_PreMapLoad(char *name)
 void R_NewMap (qbool vid_restart) {
 	int	i, waterline;
 
-	// START shaman RFE 1020608
 	extern int R_SetSky(char *skyname);
+	extern void HUD_NewRadarMap(); // hud_common.c
 
 	R_SetSky (r_skyname.string);
-	// END shaman RFE 1020608
 
 	if (!vid_restart) {
 		for (i = 0; i < 256; i++)

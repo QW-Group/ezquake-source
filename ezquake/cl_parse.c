@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.82.2.1 2007-04-15 00:56:40 disconn3ct Exp $
+	$Id: cl_parse.c,v 1.82.2.2 2007-05-01 23:44:02 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1852,7 +1852,7 @@ static void FlushString (wchar *s, int level, qbool team, int offset) {
 	cfrags_format cff = {0, 0, 0, 0, 0, 0, false};
 	char *s0;
 
-	qwcslcpy (white_s, s, sizeof (white_s));
+	qwcslcpy (white_s, s, sizeof (white_s) / sizeof(wchar));
 
 	s0 = wcs2str (s);
 	f = strstr (s0, name.string);
@@ -1889,8 +1889,8 @@ static void FlushString (wchar *s, int level, qbool team, int offset) {
 
 	// disconnect: There should be something like Com_PrintfW...
 	// else we are forced to this:
-	qwcslcpy (zomfg, str2wcs(mark), sizeof (zomfg));
-	qwcslcpy (zomfg, text, sizeof (zomfg));
+	qwcslcpy (zomfg, str2wcs(mark), sizeof (zomfg) / sizeof(wchar));
+	qwcslcpy (zomfg, text, sizeof (zomfg) / sizeof(wchar));
 	if (cl_showFragsMessages.value || !cff.isFragMsg)
 		Con_PrintW(zomfg); // FIXME logging
 
