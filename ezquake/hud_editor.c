@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.22 2007-03-11 06:01:40 disconn3ct Exp $
+	$Id: hud_editor.c,v 1.22.2.1 2007-05-01 18:12:39 cokeman1982 Exp $
 
 */
 
@@ -1560,7 +1560,7 @@ static qbool HUD_Editor_FindHudUnderCursor(hud_t **hud)
 	while(temp_hud->next)
 	{
 		// Not visible.
-		if (!temp_hud->show->value)
+		if (!temp_hud->show->value || (temp_hud->place_hud && !temp_hud->place_hud->show->value))
 		{
 			temp_hud = temp_hud->next;
 			continue;
