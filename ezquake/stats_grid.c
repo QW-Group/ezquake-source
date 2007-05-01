@@ -225,7 +225,7 @@ void StatsGrid_InitHoldItems()
 
 	// Go through the entities and check for the important ones
 	// and save their name and location.
-	for (i = 0; i < cl_visents.count; i++)
+	for (i = 0; i < cl_visents.count && (ents_count < STATS_MAX_IMPORTANT_ENTS); i++)
 	{
 		if(!strcmp(cl_visents.list[i].model->name, "progs/invulner.mdl"))
 		{
