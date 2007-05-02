@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.14 2007-05-02 02:12:02 himan Exp $
+    $Id: teamplay.c,v 1.67.2.15 2007-05-02 02:34:39 himan Exp $
 */
 
 #define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
@@ -3479,7 +3479,7 @@ void TP_Msg_EnemyPowerup_f (void)
 		msg1 = tp_sep_green;
 		msg2 = "team " tp_ib_name_pent " " tp_ib_name_ring;
 		}
-	else if (HAVE_QUAD() || ((INPOINT(quaded)) && INPOINT(teammate)))
+	else if (HAVE_QUAD() || (INPOINT(quaded) && INPOINT(teammate)))
 		{
 		msg1 = tp_sep_green;
 		msg2 = "team " tp_ib_name_quad;
@@ -3580,47 +3580,31 @@ void TP_Msg_GetPentQuad(qbool quad)
  
 	if (quad)
 	{
-		if (HAVE_QUAD() || (INPOINT(teammate) && INPOINT(quaded)))
-		{
-			msg1 = tp_sep_green;
-			msg2 = "team " tp_ib_name_quad;
-		}
-		else if (INPOINT(enemy) && INPOINT(quaded))
-		{
-			TP_Msg_EnemyPowerup_f();
-			return;
-		}
+		if (HAVE_QUAD() || (INPOINT(quaded) && (INPOINT(teammate) || INPOINT(enemy))))
+			TP_Msg_EnemyPowerup_f(); // send to tp_enemypwr
 		else if (INPOINT(eyes) && INPOINT(quaded))
-		{
-			return;
-		}
+			{
+			return; // Don't know for sure if it's enemy or not, and can't assume like we do in tp_enemypwr because this isn't tp_ENEMYpwr
+			}
 		else
-		{
+			{
 			msg1 = tp_sep_yellow;
 			msg2 = "get " tp_ib_name_quad;
-		}
+			}
 	}
 	else
 	{
-		if (HAVE_PENT() || (INPOINT(teammate) && INPOINT(pented)))
-		{
-			msg1 = tp_sep_green;
-			msg2 = "team " tp_ib_name_pent;
-		}
-		else if (INPOINT(enemy) && INPOINT(pented))
-		{
-			TP_Msg_EnemyPowerup_f();
-			return;
-		}
+		if (HAVE_PENT() || (INPOINT(pented) && (INPOINT(teammate) || INPOINT(enemy))))
+			TP_Msg_EnemyPowerup_f(); // send to tp_enemypwr
 		else if (INPOINT(eyes) && INPOINT(pented))
-		{
-			return;
-		}
+			{
+			return; // Don't know for sure if it's enemy or not, and can't assume like we do in tp_enemypwr because this isn't tp_ENEMYpwr
+			}
 		else
-		{
+			{
 			msg1 = tp_sep_yellow;
 			msg2 = "get " tp_ib_name_pent;
-		}
+			}
 	}
  
 	//$R$R get powerup(1)
@@ -3635,10 +3619,8 @@ void TP_Msg_QuadDead_f (void) // tp_enemypwr for all cases?
 {
     MSGPART msg1 = "";
  
-	if (HAVE_QUAD() || (INPOINT(quaded) && INPOINT(teammate)))
-		msg1 = "team " tp_ib_name_quad; // Pressed the wrong button. Quad isn't dead, you/teammate have it.
-	else if (INPOINT(quaded) && INPOINT(enemy))
-		TP_Msg_EnemyPowerup_f(); // Pressed the wrong button. Quad isn't dead, enemy has it.
+	if (HAVE_QUAD() || INPOINT(quaded)) // If ANYONE has quad
+		TP_Msg_EnemyPowerup_f(); // tp_enemypwr can handle this
 	else msg1 = tp_ib_name_quad " dead";;
  
 	TP_Send_TeamSay(tp_sep_green " %s", msg1);
