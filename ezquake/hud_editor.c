@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.22.2.2 2007-05-02 18:33:04 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.22.2.3 2007-05-02 18:36:38 cokeman1982 Exp $
 
 */
 
@@ -1995,16 +1995,8 @@ static void HUD_Editor(void)
 		Draw_AlphaLineRGB(hud_mouse_x, hud_mouse_y, HUD_CENTER_X(selected_hud), HUD_CENTER_Y(selected_hud), 1, 1, 0, 0, 1); // Red.
 	}
 
-	/*
 	// Check if we're performing any action.
-	if(HUD_Editor_Resizing(hud_hover)
-	|| HUD_Editor_Moving(hud_hover)
-	|| HUD_Editor_Placing(hud_hover)
-	|| HUD_Editor_Aligning(hud_hover))
-	{
-		// We only want one of the above to run.
-	}*/
-
+	// (Only perform one at any given time).
 	HUD_Editor_Resizing(hud_hover)
 	|| HUD_Editor_Moving(hud_hover)
 	|| HUD_Editor_Placing(hud_hover)
