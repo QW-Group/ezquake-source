@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.133.2.1 2007-04-30 15:15:56 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.133.2.2 2007-05-02 21:30:34 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -358,6 +358,8 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 		Replace_In_String(track_string, sizeof(track_string), '%', 2,
 			"n", cl.players[spec_track].name,						// Replace %n with player name.
 			"t", cl.teamplay ? cl.players[spec_track].team : "");	// Replace %t with player team if teamplay is on.
+
+		width = 8 * strlen(track_string);
 	}
 
 	height = 8 * views;
