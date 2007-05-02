@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.15 2007-05-02 02:34:39 himan Exp $
+    $Id: teamplay.c,v 1.67.2.16 2007-05-02 03:16:31 himan Exp $
 */
 
 #define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
@@ -3323,31 +3323,24 @@ use the %-macros nor the $-macros.
  
  
  
-void TP_Msg_Lost_f (void)
+void TP_Msg_Lost_f (void) // Is this function useful? tp_report does this already.
 {
     MSGPART led = tp_sep_red;
     MSGPART msg1 = "";
 	MSGPART msg2 = "";
  
     if (HAVE_QUAD())
-    {
         msg1 = tp_ib_name_quad " over ";
-    }
  
     if (HOLD_RL() || HOLD_LG() || HOLD_GL()) // gl could be useful too
-    {
         msg2 = "lost " COLORED(f0f,$weapon) " $[{%d}$] e:%E";
-    }
     else
-    {
         msg2 = "lost $[{%d}$] e:%E";
-    }
  
     TP_Send_TeamSay("%s %s%s", led, msg1, msg2);
 }
- 
- 
- 
+
+
 void TP_Msg_ReportComing(qbool report) // tp_report and tp_coming are similar, differences are led color, where %l is, and the word "coming"
 {
     MSGPART msg1 = "";
@@ -3355,88 +3348,66 @@ void TP_Msg_ReportComing(qbool report) // tp_report and tp_coming are similar, d
 	MSGPART msg3 = "";
 	MSGPART msg4 = "";
 	MSGPART msg5 = "";
-	MSGPART msg6 = "";
  
 	if (DEAD()) // no matter what, if dead report lost
-	{
 		TP_Msg_Lost_f();
-		return;
-	}
 	else
 	{
 		if (report)
-		{
 			msg1 = tp_sep_blue;
-		}
 		else
-		{
 			msg1 = tp_sep_white " {coming}";
-		}
 	}
  
-
- 
-	if (HAVE_GA())
-		msg3 = COLORED(0b0,%a);
-	else if (HAVE_YA())
-		msg3 = COLORED(ff0,%a);
-	else if (HAVE_RA())
-		msg3 = COLORED(e00,%a);
-	else
-		msg3 = "0";
- 
 	if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
-		msg5 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring;
+		msg4 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring;
 	else if (HAVE_QUAD() && HAVE_PENT())
-		msg5 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent;
+		msg4 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent;
 	else if (HAVE_QUAD() && HAVE_RING())
-		msg5 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_ring;
+		msg4 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_ring;
 	else if (HAVE_PENT() && HAVE_RING())
-		msg5 = " " tp_ib_name_team " " tp_ib_name_pent " " tp_ib_name_ring;
+		msg4 = " " tp_ib_name_team " " tp_ib_name_pent " " tp_ib_name_ring;
 	else if (HAVE_QUAD())
-		msg5 = " " tp_ib_name_team " " tp_ib_name_quad;
+		msg4 = " " tp_ib_name_team " " tp_ib_name_quad;
 	else if (HAVE_PENT())
-		msg5 = " " tp_ib_name_team " " tp_ib_name_pent;
+		msg4 = " " tp_ib_name_team " " tp_ib_name_pent;
 	else if (HAVE_RING())
-		msg5 = " " tp_ib_name_team " " tp_ib_name_ring;
+		msg4 = " " tp_ib_name_team " " tp_ib_name_ring;
 	else
-		msg5 = "";
+		msg4 = "";
  
-    if		(HAVE_RL() && HAVE_LG())	msg6 = " " tp_ib_name_rlg ":$rockets/$cells";
-    else if (HAVE_RL())					msg6 = " " tp_ib_name_rl ":$rockets";
-    else if (HAVE_LG())					msg6 = " " tp_ib_name_lg ":$cells";
-    else								msg6 = "";
+    if		(HAVE_RL() && HAVE_LG())	msg5 = " " tp_ib_name_rlg ":$rockets/$cells";
+    else if (HAVE_RL())					msg5 = " " tp_ib_name_rl ":$rockets";
+    else if (HAVE_LG())					msg5 = " " tp_ib_name_lg ":$cells";
+    else								msg5 = "";
  
-	msg2 = "%h";
-	msg4 = "$[{%l}$]";
+	msg2 = "%h/$colored_armor";
+	msg3 = "$[{%l}$]";
  
-	// $B$B(1) health(2)/armor(3) location(4) powerup(5) rlg:x(6) //tp_report
+	// $B$B(1) health(2)/armor location(3) powerup(4) rlg:x(5) //tp_report
 	if (report)
-		TP_Send_TeamSay("%s %s/%s %s%s%s", msg1, msg2, msg3, msg4, msg5, msg6);
-	// $W$W(1) coming(1) location(4) health()/armor(3) powerup(5) rlg:x(6) //tp_coming
+		TP_Send_TeamSay("%s %s %s%s%s", msg1, msg2, msg3, msg4, msg5);
+	// $W$W(1) coming(1) location(3) health(2)/armor powerup(5) rlg:x(6) //tp_coming
 	else
-		TP_Send_TeamSay("%s %s %s/%s%s%s", msg1, msg4, msg2, msg3, msg5, msg6); // notice that in tp_coming, we report our location before anything else!
+		TP_Send_TeamSay("%s %s %s%s%s", msg1, msg3, msg2, msg4, msg5); // notice that in tp_coming, we report our location before anything else!
 }
 void TP_Msg_Report_f (void) { TP_Msg_ReportComing(true); }
-void TP_Msg_Coming_f (void) { TP_Msg_ReportComing(false); }
- 
- 
+void TP_Msg_Coming_f (void) { TP_Msg_ReportComing(false); } 
 
- 
+
 void TP_Msg_EnemyPowerup_f (void)
-				/*
-				This is the "go-to" function!". It contains all possible scenarios for any player, teammate or enemy, with any combination of powerup.
-				note: in cases where you have pent and enemy has quad (or vice versa), team powerup is displayed only, NOT ENEMY POWERUP ------------------------------------------ FIX FIX FIX FIX change this around
-				Note: we are assuming map has no more than 1 of each (quad,pent,ring)
-				Note: this function does not take into account only teammate or only enemy (without powerup). Do not change this behaviour.
-				*/
-{
+{		/*
+		This is the "go-to" function!". It contains all possible scenarios for any player, teammate or enemy, with any combination of powerup.
+		note: in cases where you have pent and enemy has quad (or vice versa), team powerup is displayed only, NOT ENEMY POWERUP ------------------------------------------ FIX FIX FIX FIX change this around
+		Note: we are assuming map has no more than 1 of each (quad,pent,ring)
+		Note: this function does not take into account only teammate or only enemy (without powerup). Do not change this behaviour.
+		*/
     MSGPART msg1 = "";
 	MSGPART msg2 = "";
  
 	if (INPOINT(quaded) && INPOINT(pented) && INPOINT(eyes))
 		/*
-				Note we don't have && INPOINT(enemy) in the above if.
+		Note we don't have && INPOINT(enemy) in the above if.
 		This is because $point DOES NOT TELL YOU TEAMMATE/ENEMY if they have ring (because there is no way to know).
 		Therefore, we are assuming enemy because this function is ENEMY powerup. So if user hits this by accident (when teammate has quad/pent with ring, then it's their fault.
 		*/
@@ -3516,115 +3487,98 @@ void TP_Msg_EnemyPowerup_f (void)
 		}
 
 	TP_Send_TeamSay("%s %s", msg1, msg2);
-}
- 
- 
- 
+} 
+
+
 void TP_Msg_SafeHelp(qbool safe)
 {
 	MSGPART msg1 = "";
 	MSGPART msg2 = "";
 	MSGPART msg3 = "";
 	MSGPART msg4 = "";
-	MSGPART msg5 = "";
- 
-	if (safe && INPOINT(enemy))
-		return; // if you see enemy, then it's not safe (really?)  (most of the time).
- 
+
 	if (safe)
-	{
-		msg1 = tp_sep_green;
-		msg2 = tp_ib_name_safe;
-	}
+		{
+			if (INPOINT(enemy))
+				return;
+			else
+				msg1 = tp_sep_green " " tp_ib_name_safe;
+		}
 	else
-	{
-		msg1 = tp_sep_yellow;
-		msg2 = tp_ib_name_help;
-	}
+		msg1 = tp_sep_yellow " " tp_ib_name_help;
  
-	msg3 = "$[{%l}$]";
+	msg2 = "$[{%l}$]";
  
 	if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
-		msg4 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring " ";
+		msg3 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring;
 	else if (HAVE_QUAD() && HAVE_PENT())
-		msg4 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " ";
+		msg3 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent;
 	else if (HAVE_QUAD() && HAVE_RING())
-		msg4 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_ring " ";
+		msg3 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_ring;
 	else if (HAVE_PENT() && HAVE_RING())
-		msg4 = tp_ib_name_team " " tp_ib_name_pent " " tp_ib_name_ring " ";
+		msg3 = " " tp_ib_name_team " " tp_ib_name_pent " " tp_ib_name_ring;
 	else if (HAVE_QUAD())
-		msg4 = tp_ib_name_team " " tp_ib_name_quad " ";
+		msg3 = " " tp_ib_name_team " " tp_ib_name_quad;
 	else if (HAVE_PENT())
-		msg4 = tp_ib_name_team " " tp_ib_name_pent " ";
+		msg3 = " " tp_ib_name_team " " tp_ib_name_pent;
 	else if (HAVE_RING())
-		msg4 = tp_ib_name_team " " tp_ib_name_ring " ";
+		msg3 = " " tp_ib_name_team " " tp_ib_name_ring;
 	else
-		msg4 = "";
+		msg3 = "";
  
-    if		(HAVE_RL() && HAVE_LG())	msg5 = tp_ib_name_rlg ":$rockets/$cells";
-    else if (HAVE_RL())					msg5 = tp_ib_name_rl ":$rockets";
-    else if (HAVE_LG())					msg5 = tp_ib_name_lg ":$cells";
-    else								msg5 = "";
-	//1=sep, 2=safe/help 3=loc 4=powerup 5=weap
-	TP_Send_TeamSay("%s %s %s %s%s", msg1, msg2, msg3, msg4, msg5);
+    if		(HAVE_RL() && HAVE_LG())	msg4 = " " tp_ib_name_rlg ":$rockets/$cells";
+    else if (HAVE_RL())					msg4 = " " tp_ib_name_rl ":$rockets";
+    else if (HAVE_LG())					msg4 = " " tp_ib_name_lg ":$cells";
+    else								msg4 = "";
+	//(1)sep, (1)=safe/help (2)=loc 3=powerup 4=weap
+	TP_Send_TeamSay("%s %s%s%s", msg1, msg2, msg3, msg4);
 }
 void TP_Msg_Safe_f (void) { TP_Msg_SafeHelp(true); }
 void TP_Msg_Help_f (void) { TP_Msg_SafeHelp(false); }
- 
- 
+
+
 void TP_Msg_GetPentQuad(qbool quad)
 // same todo as enemypwr
 {
 	MSGPART msg1 = "";
-	MSGPART msg2 = "";
  
 	if (quad)
 	{
 		if (HAVE_QUAD() || (INPOINT(quaded) && (INPOINT(teammate) || INPOINT(enemy))))
 			TP_Msg_EnemyPowerup_f(); // send to tp_enemypwr
 		else if (INPOINT(eyes) && INPOINT(quaded))
-			{
 			return; // Don't know for sure if it's enemy or not, and can't assume like we do in tp_enemypwr because this isn't tp_ENEMYpwr
-			}
 		else
-			{
-			msg1 = tp_sep_yellow;
-			msg2 = "get " tp_ib_name_quad;
-			}
+			msg1 = "get " tp_ib_name_quad;
 	}
 	else
 	{
 		if (HAVE_PENT() || (INPOINT(pented) && (INPOINT(teammate) || INPOINT(enemy))))
 			TP_Msg_EnemyPowerup_f(); // send to tp_enemypwr
 		else if (INPOINT(eyes) && INPOINT(pented))
-			{
 			return; // Don't know for sure if it's enemy or not, and can't assume like we do in tp_enemypwr because this isn't tp_ENEMYpwr
-			}
 		else
-			{
-			msg1 = tp_sep_yellow;
-			msg2 = "get " tp_ib_name_pent;
-			}
+			msg1 = "get " tp_ib_name_pent;
 	}
  
 	//$R$R get powerup(1)
-	TP_Send_TeamSay("%s %s", msg1, msg2);
+	TP_Send_TeamSay(tp_sep_yellow " %s", msg1);
 }
 void TP_Msg_GetQuad_f (void) { TP_Msg_GetPentQuad(true); }
 void TP_Msg_GetPent_f (void) { TP_Msg_GetPentQuad(false); }
- 
- 
- 
+
+
 void TP_Msg_QuadDead_f (void) // tp_enemypwr for all cases?
 {
     MSGPART msg1 = "";
  
 	if (HAVE_QUAD() || INPOINT(quaded)) // If ANYONE has quad
 		TP_Msg_EnemyPowerup_f(); // tp_enemypwr can handle this
-	else msg1 = tp_ib_name_quad " dead";;
+	else msg1 = tp_ib_name_quad " dead";
  
 	TP_Send_TeamSay(tp_sep_green " %s", msg1);
 }
+
 
 void TP_Msg_Took_f (void)
 {
@@ -3634,6 +3588,7 @@ void TP_Msg_Took_f (void)
  
 	TP_Send_TeamSay(tp_sep_white " %s", msg1);
 }
+
 
 void TP_Msg_Point_f (void)
 {
