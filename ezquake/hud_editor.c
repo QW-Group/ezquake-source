@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.22.2.1 2007-05-01 18:12:39 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.22.2.2 2007-05-02 18:33:04 cokeman1982 Exp $
 
 */
 
@@ -143,6 +143,8 @@ static void HUD_Editor_SetMode(hud_editor_mode_t newmode)
 static void HUD_Editor_DrawTooltip(int x, int y, char *string, float r, float g, float b, float a) 
 {
 	int len = strlen(string) * 8;
+
+	y -= 9;
 
 	// Make sure we're drawing within the screen.
 	if (x + len > vid.width)
@@ -1536,6 +1538,34 @@ static hud_t *HUD_Editor_FindHudByGrep()
 }
 
 //
+// Draws the outline of the visible HUD elements.
+//
+static void HUD_Editor_DrawOutlines(void)
+{
+	hud_t *temp_hud	= hud_huds;
+
+	if(!temp_hud)
+	{
+		return;
+	}
+
+	while(temp_hud->next)
+	{
+		// Check if the item is visible.
+		if (!temp_hud->show->value || (temp_hud->place_hud && !temp_hud->place_hud->show->value))
+		{
+			temp_hud = temp_hud->next;
+			continue;
+		}
+
+		// Draw an outline for all hud elements (faint).
+		Draw_AlphaRectangleRGB(temp_hud->lx, temp_hud->ly, temp_hud->lw, temp_hud->lh, 0, 1, 0, 1, false, 0.1);
+
+		temp_hud = temp_hud->next;
+	}
+}
+
+//
 // Finds if there's any HUD under the cursor and draws outlines for all HUD elements.
 //
 static qbool HUD_Editor_FindHudUnderCursor(hud_t **hud)
@@ -1589,9 +1619,6 @@ static qbool HUD_Editor_FindHudUnderCursor(hud_t **hud)
 				(*hud) = temp_hud;
 			}
 		}
-
-		// Draw an outline for all hud elements (faint).
-		Draw_AlphaRectangleRGB(temp_hud->lx, temp_hud->ly, temp_hud->lw, temp_hud->lh, 0, 1, 0, 1, false, 0.1);
 
 		// Check if the hud element is offscreen and
 		// if there's any grep handle for this hud element
@@ -1938,6 +1965,9 @@ static void HUD_Editor(void)
 	// Also draws highlights and such.
 	found = HUD_Editor_FindHudUnderCursor(&hud_hover);
 
+	// Draw faint outlines for all visible hud elements.
+	HUD_Editor_DrawOutlines();
+
 	// Draw the "grep handles" for offscreen HUDs.
 	HUD_Editor_DrawGreps();
 
@@ -1965,31 +1995,23 @@ static void HUD_Editor(void)
 		Draw_AlphaLineRGB(hud_mouse_x, hud_mouse_y, HUD_CENTER_X(selected_hud), HUD_CENTER_Y(selected_hud), 1, 1, 0, 0, 1); // Red.
 	}
 
+	/*
+	// Check if we're performing any action.
+	if(HUD_Editor_Resizing(hud_hover)
+	|| HUD_Editor_Moving(hud_hover)
+	|| HUD_Editor_Placing(hud_hover)
+	|| HUD_Editor_Aligning(hud_hover))
+	{
+		// We only want one of the above to run.
+	}*/
+
+	HUD_Editor_Resizing(hud_hover)
+	|| HUD_Editor_Moving(hud_hover)
+	|| HUD_Editor_Placing(hud_hover)
+	|| HUD_Editor_Aligning(hud_hover);
+
 	// Draw tooltips for the HUD.
 	HUD_Editor_DrawTooltips(hud_hover);
-	
-	if(HUD_Editor_Resizing(hud_hover))
-	{
-		return;
-	}
-
-	// Check if we should move.
-	if(HUD_Editor_Moving(hud_hover))
-	{
-		return;
-	}
-
-	// Check if we're placing.
-	if(HUD_Editor_Placing(hud_hover))
-	{
-		return;
-	}
-
-	// Check if we're aligning.
-	if(HUD_Editor_Aligning(hud_hover))
-	{
-		return;
-	}
 }
 
 //
