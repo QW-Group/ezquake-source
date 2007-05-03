@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.35.2.2 2007-04-16 10:06:59 johnnycz Exp $
+	$Id: EX_browser.c,v 1.35.2.3 2007-05-03 22:13:30 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -2793,22 +2793,8 @@ CTabPage_Handlers_t sb_options_handlers = {
 	Options_Mouse_Event
 };
 
-void Browser_Init(void)
+void Browser_Init (void)
 {
-    int i;
-
-    Servers_pos = 0;
-    Sources_pos = 0;
-    Servers_disp = 0;
-    show_serverinfo = NULL;
-    serverinfo_pos = 0;
-
-    for (i=0; i < MAX_SERVERS; i++)
-        servers[i] = NULL;
-
-    serversn = serversn_passed = 0;
-    sourcesn = 0;
-
 	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_BROWSER);
     Cvar_Register(&sb_status);
     Cvar_Register(&sb_showping);
@@ -2842,15 +2828,7 @@ void Browser_Init(void)
 
 	Settings_Page_Init(sbsettings, sbsettings_arr);
 
-//    Cmd_AddCommand("menu_serverbrowser", M_ServerBrowser_f);
     Cmd_AddCommand("addserver", AddServer_f);
-
-    // read sources from SOURCES_PATH
-    Reload_Sources();
-	MarkDefaultSources();
-
-    Cmd_AddCommand("sb_sourceunmarkall", SB_SourceUnmarkAll);
-    Cmd_AddCommand("sb_sourcemark", SB_SourceMark);
 
 	CTab_Init(&sb_tab);
 	CTab_AddPage(&sb_tab, "servers", SBPG_SERVERS, &sb_servers_handlers);
@@ -2858,4 +2836,25 @@ void Browser_Init(void)
 	CTab_AddPage(&sb_tab, "players", SBPG_PLAYERS, &sb_players_handlers);
 	CTab_AddPage(&sb_tab, "options", SBPG_OPTIONS, &sb_options_handlers);
 	CTab_SetCurrentId(&sb_tab, SBPG_SERVERS);
+}
+
+void Browser_Init2 (void)
+{
+    int i;
+
+    Servers_pos = 0;
+    Sources_pos = 0;
+    Servers_disp = 0;
+    show_serverinfo = NULL;
+    serverinfo_pos = 0;
+
+    for (i=0; i < MAX_SERVERS; i++)
+        servers[i] = NULL;
+
+    serversn = serversn_passed = 0;
+    sourcesn = 0;
+
+    // read sources from SOURCES_PATH
+	Reload_Sources();
+	MarkDefaultSources();
 }
