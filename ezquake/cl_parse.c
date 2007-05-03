@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.82.2.2 2007-05-01 23:44:02 cokeman1982 Exp $
+	$Id: cl_parse.c,v 1.82.2.3 2007-05-03 21:44:14 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -2190,8 +2190,7 @@ void CL_ParsePrint (void) {
 	}
 
 	// emulate qwcslcat (which is not implemented)
-	qwcslcpy (cl.sprint_buf + qwcslen(cl.sprint_buf), s, sizeof(cl.sprint_buf)/sizeof(wchar) - qwcslen(cl.sprint_buf));
-	s = NULL; // s point to str[] which we will use later, so u will not mess
+	qwcslcpy (cl.sprint_buf + qwcslen(cl.sprint_buf), str2wcs (s0), sizeof(cl.sprint_buf)/sizeof(wchar) - qwcslen(cl.sprint_buf));
 	cl.sprint_level = level;
 
 	if ((p = qwcsrchr(cl.sprint_buf, '\n'))) {
