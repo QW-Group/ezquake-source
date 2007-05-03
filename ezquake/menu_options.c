@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.4 2007-04-20 19:10:00 johnnycz Exp $
+		$Id: menu_options.c,v 1.60.2.5 2007-05-03 22:40:41 johnnycz Exp $
 
 */
 
@@ -915,7 +915,7 @@ const char* FullScreenRead(void) { return mvs_selected.fullscreen ? "on" : "off"
 
 void ResolutionToggle(qbool back) {
 	if (back) mvs_selected.res--; else mvs_selected.res++;
-	mvs_selected.res = bound(0, mvs_selected.res, glmodes_size - 1);
+	mvs_selected.res = (mvs_selected.res + glmodes_size) % glmodes_size;
 }
 void BitDepthToggle(qbool back) {
 	if (back) {
