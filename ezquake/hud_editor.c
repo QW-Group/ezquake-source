@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.22.2.3 2007-05-02 18:36:38 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.22.2.4 2007-05-03 21:05:38 cokeman1982 Exp $
 
 */
 
@@ -40,10 +40,13 @@ qbool				hud_editor				= false;				// If we're in HUD editor mode or not.
 hud_editor_mode_t	hud_editor_mode			= hud_editmode_off;		// The current mode the HUD editor is in.
 hud_editor_mode_t	hud_editor_prevmode		= hud_editmode_off;		// The previous mode the HUD editor was in.
 
+qbool				hud_editor_showhelp		= false;				// Show the help plaque or not?
+
 float				hud_mouse_x;									// The screen coordinates of the mouse cursor.
 float				hud_mouse_y;
 
 // Macros for what mouse buttons are clicked.
+#define MOUSEDOWN			( keydown[K_MOUSE1] ||  keydown[K_MOUSE2]|| keydown[K_MOUSE3])
 #define MOUSEDOWN_1_2		( keydown[K_MOUSE1] &&  keydown[K_MOUSE2])
 #define MOUSEDOWN_1_3		( keydown[K_MOUSE1] &&  keydown[K_MOUSE3])
 #define MOUSEDOWN_1_2_3		( keydown[K_MOUSE1] &&  keydown[K_MOUSE2] &&  keydown[K_MOUSE3])
@@ -1817,6 +1820,12 @@ static void HUD_Editor_EvaluateState(hud_t *hud_hover)
 	// Alt	 + Mouse 1	= Align
 	// Shift + Mouse 1	= Lock moving to one axis (If you start dragging along x-axis, it will stick to that)
 
+	if(MOUSEDOWN)
+	{
+		// Turn of help on mouse click.
+		hud_editor_showhelp = false;
+	}
+
 	if (hud_hover && MOUSEDOWN_1_ONLY && isShiftDown())
 	{
 		// Move (Locked to an axis).
@@ -1920,6 +1929,61 @@ static void HUD_Editor_DrawTooltips(hud_t *hud_hover)
 }
 
 //
+// Draws a help window.
+//
+static void HUD_Editor_DrawHelp()
+{
+	#define HUD_EDITOR_HELP_WIDTH			62
+	#define HUD_EDITOR_HELP_LINES			35
+	#define HUD_EDITOR_HELP_X				((vid.width - (HUD_EDITOR_HELP_WIDTH * 8)) / 2)
+	#define HUD_EDITOR_HELP_Y				(vid.height / 4)
+	#define HUD_EDITOR_HELP_TITLE			"&cfd0HUD EDITOR HELP"
+	#define HUD_EDITOR_HELP_NEWLINE			(line++ * 9)
+	#define HUD_EDITOR_HELP_DRAWLINE(str)	Draw_ColoredString(HUD_EDITOR_HELP_X + 8, HUD_EDITOR_HELP_Y + HUD_EDITOR_HELP_NEWLINE, str, 0)
+
+	int line = 1;
+
+	Draw_TextBox(HUD_EDITOR_HELP_X, HUD_EDITOR_HELP_Y, HUD_EDITOR_HELP_WIDTH, HUD_EDITOR_HELP_LINES);
+
+	Draw_ColoredString(
+		HUD_EDITOR_HELP_X + (strlen(HUD_EDITOR_HELP_TITLE) * 8 + HUD_EDITOR_HELP_WIDTH) / 2, 
+		HUD_EDITOR_HELP_Y + HUD_EDITOR_HELP_NEWLINE, 
+		HUD_EDITOR_HELP_TITLE, 1);
+
+	line++;	
+	HUD_EDITOR_HELP_DRAWLINE("The HUD Editor helps you to customize your Heads Up Display.");
+	HUD_EDITOR_HELP_DRAWLINE("When you move the cursor over a HUD element it will be");
+	HUD_EDITOR_HELP_DRAWLINE("highlighted and it's name will be shown. When hovering a HUD");
+	HUD_EDITOR_HELP_DRAWLINE("you can perform the following actions:");
+	line++;
+	HUD_EDITOR_HELP_DRAWLINE("* &cfd0MOVE&r relative to the HUD elements parent/alignment by");
+	HUD_EDITOR_HELP_DRAWLINE("  holding down &c0dfMOUSE 1&r and &c0dfdragging&r.");
+	HUD_EDITOR_HELP_DRAWLINE("  (Lock movement to a specific axis by holding down &c0dfSHIFT&r).");
+	line++;
+	HUD_EDITOR_HELP_DRAWLINE("* &cfd0RESIZE&r the HUD element by clicking on one of the");
+	HUD_EDITOR_HELP_DRAWLINE("  &c0dfresize handles&r that appears when hovering and item and");
+	HUD_EDITOR_HELP_DRAWLINE("  &c0dfdragging&r. (Not all HUD elements are resizeable/scaleable)");
+	line++;
+	HUD_EDITOR_HELP_DRAWLINE("* &cfd0PLACE&r the HUD element at another HUD element or a location");
+	HUD_EDITOR_HELP_DRAWLINE("  such as the screen/console by holding down &c0dfCTRL&r when");
+	HUD_EDITOR_HELP_DRAWLINE("  dragging. The target that the element will be placed in");
+	HUD_EDITOR_HELP_DRAWLINE("  will turn green if you can place it there, red otherwise.");
+	line++;
+	HUD_EDITOR_HELP_DRAWLINE("* &cfd0ALIGN&r the HUD element in different ways to it's parent by");
+	HUD_EDITOR_HELP_DRAWLINE("  holding down &c0dfALT&r when dragging. Doing this will show");
+	HUD_EDITOR_HELP_DRAWLINE("  yellow highlights at the position you're about to align to.");
+	line++;
+	HUD_EDITOR_HELP_DRAWLINE("  &cfd0Keyboard shortcuts:");
+	HUD_EDITOR_HELP_DRAWLINE("  &c0dfP&r   Toggle HUD planmode on/off (default on).");
+	HUD_EDITOR_HELP_DRAWLINE("  &c0df&cfd0H&r   Toggle this help.");
+	HUD_EDITOR_HELP_DRAWLINE("  &c0dfF1&r  Toggle if moving should be allowed.");
+	HUD_EDITOR_HELP_DRAWLINE("  &c0dfF2&r  Toggle resizing.");
+	HUD_EDITOR_HELP_DRAWLINE("  &c0dfF3&r  Toggle aligning.");
+	HUD_EDITOR_HELP_DRAWLINE("  &c0dfF4&r  Toggle placing.");
+	line++;
+}
+
+//
 // Main HUD Editor function.
 //
 static void HUD_Editor(void)
@@ -1927,6 +1991,12 @@ static void HUD_Editor(void)
 	extern float mouse_x, mouse_y;
 	qbool found = false;
 	hud_t *hud_hover = NULL;
+
+	// Show the help window?
+	if(hud_editor_showhelp)
+	{
+		HUD_Editor_DrawHelp();
+	}
 
 	// Updating cursor location.
 	if(hud_editor_mode == hud_editmode_move_lockedaxis)
@@ -2011,11 +2081,19 @@ static void HUD_Editor(void)
 //
 void HUD_Editor_Toggle_f(void)
 {
+	extern cvar_t scr_newHud;
 	static keydest_t key_dest_prev = key_game;
 	static int old_hud_planmode = 0;
 	
 	if (cls.state != ca_active) 
 	{
+		Com_Printf("You need to be in game to use the HUD editor.\n");
+		return;
+	}
+
+	if (!scr_newHud.value)
+	{
+		Com_Printf("You have to have scr_newHud turned on to use the HUD editor.\n");
 		return;
 	}
 
@@ -2032,6 +2110,9 @@ void HUD_Editor_Toggle_f(void)
 		// Set planmode by default. 
 		old_hud_planmode = hud_planmode.value;
 		Cvar_SetValue(&hud_planmode, 1.0);
+
+		// Start showing the help plaque so the user learns the controls.
+		hud_editor_showhelp = true;
 	}
 	else
 	{
@@ -2069,10 +2150,14 @@ void HUD_Editor_Key(int key, int unichar)
 		case K_ESCAPE:
 			HUD_Editor_Toggle_f();
 			break;
-		case 'p':
+		case 'p' :
 			// Toggle HUD plan mode.
 			planmode = !planmode;
 			Cvar_SetValue(&hud_planmode, planmode);
+			break;
+		case 'h' :
+			// Toggle the help window.
+			hud_editor_showhelp = !hud_editor_showhelp;
 			break;
 		case K_F1 :
 			// Toggle moving.
