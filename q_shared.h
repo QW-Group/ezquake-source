@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.22 2007-03-04 19:14:05 disconn3ct Exp $
+    $Id: q_shared.h,v 1.23 2007-05-03 12:03:55 johnnycz Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -192,6 +192,8 @@ wchar *qwcschr (const wchar *ws, wchar wc);
 wchar *qwcsrchr (const wchar *ws, wchar wc);
 size_t qwcslen (const wchar *s);
 #endif
+
+// NOTE: size is not the number of bytes to copy, but the number of characters. sizeof(dest) / sizeof(wchar) should be used.
 size_t qwcslcpy (wchar *dst, const wchar *src, size_t size);
 size_t qwcslcat (wchar *dst, const wchar *src, size_t size);
 wchar *Q_wcsdup(const wchar *src);

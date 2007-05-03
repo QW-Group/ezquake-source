@@ -1493,13 +1493,13 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
     fl->list_width = w;
 	fl->list_height = listsize*rowh;
     fl->list_y_offset = 2 * rowh;
-
-    // draw the scrollbar and substract it's width; draw under the 2 header lines
-    ScrollBar_Draw(fl->scrollbar, x + w, y + 2 * rowh, listsize*rowh);
-
     fl->last_page_size = listsize;  // Remember for PGUP/PGDN
     fl->displayed_entries_count = listsize;
     FL_CheckPosition(fl);
+
+    if (fl->displayed_entries_count < fl->num_entries) {
+        ScrollBar_Draw(fl->scrollbar, x + fl->list_width, y + fl->list_y_offset, fl->list_height);
+    }
 
     for (i = 0; i < listsize; i++)
     {

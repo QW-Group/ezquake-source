@@ -16,16 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.26 2007-03-28 01:05:30 qqshka Exp $
+	$Id: gl_local.h,v 1.27 2007-05-03 12:03:54 johnnycz Exp $
 
 */
 // gl_local.h -- private refresh defs
 #ifndef __GL_LOCAL_H__
 #define __GL_LOCAL_H__
 
-#ifdef _WIN32
-#include <windows.h>
-#endif // _WIN32
 
 #ifdef __APPLE__
 

@@ -3,10 +3,6 @@
 
 #include "xsd.h"
 
-#ifndef _WIN32
-#define boolean qbool
-#endif
-
 typedef enum
 {
     // plain text
@@ -74,7 +70,7 @@ typedef struct document_tag_p_s
     struct document_tag_s *next;
     // --------------------
     document_tag_t *tags;
-    boolean indent;
+    qbool indent;
     document_align_t align;
 }
 document_tag_p_t;
@@ -86,7 +82,7 @@ typedef struct document_tag_section_s
     struct document_tag_s *next;
     // --------------------
     document_tag_t *tags;
-    boolean indent;
+    qbool indent;
     char *title;
     char *id;
 }
@@ -291,9 +287,5 @@ xml_t * XSD_Document_LoadFromHandle(FILE *f, int len);
 
 // read document content from file, return NULL if error
 xml_document_t * XSD_Document_Load(char *filename);
-
-#ifndef _WIN32
-#undef boolean
-#endif
 
 #endif // __XSD_DOCUMENT_H__

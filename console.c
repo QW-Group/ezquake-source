@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.53 2007-04-15 14:54:50 johnnycz Exp $
+	$Id: console.c,v 1.54 2007-05-03 12:03:54 johnnycz Exp $
 */
 // console.c
 
@@ -775,7 +775,8 @@ void Con_DrawNotify (void) {
 		}
 
 		// FIXME: clean this up
-		s = qwcscpy (temp, chat_buffer);
+		qwcslcpy (temp, chat_buffer, sizeof(temp) / sizeof(wchar));
+		s = temp;
 
 		// add the cursor frame
 		if ((int) (curtime * con_cursorspeed) & 1) {

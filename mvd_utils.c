@@ -1,5 +1,5 @@
 /*
-$Id: mvd_utils.c,v 1.37 2007-04-15 14:54:50 johnnycz Exp $
+$Id: mvd_utils.c,v 1.38 2007-05-03 12:03:54 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -299,7 +299,23 @@ mvd_new_info_t mvd_new_info[MAX_CLIENTS];
 
 int FindBestNick(char *s, int use);
 int MVD_AutoTrackBW_f(int i);
-float axe_val, sg_val, ssg_val, ng_val, sng_val, gl_val, rl_val, lg_val, ga_val, ya_val, ra_val, ring_val, quad_val, pent_val ;
+
+#define PL_VALUES_COUNT 14
+static float pl_values[PL_VALUES_COUNT];
+#define axe_val     (pl_values[0])
+#define sg_val      (pl_values[1])
+#define ssg_val     (pl_values[2])
+#define ng_val      (pl_values[3])
+#define sng_val     (pl_values[4])
+#define gl_val      (pl_values[5])
+#define rl_val      (pl_values[6])
+#define lg_val      (pl_values[7])
+#define ga_val      (pl_values[8])
+#define ya_val      (pl_values[9])
+#define ra_val      (pl_values[10])
+#define ring_val    (pl_values[11])
+#define quad_val    (pl_values[12])
+#define pent_val    (pl_values[13])
 
 int mvd_demo_track_run = 0;
 int last_track;
@@ -468,11 +484,11 @@ void MVD_Demo_Track (void){
 	if(strlen(track_name)){
 		track_player=FindBestNick(track_name,1);
 		if (track_player != -1 )
-			Cbuf_AddText (va("track %s\n",cl.players[track_player].name));
+			Cbuf_AddText (va("track \"%s\"\n",cl.players[track_player].name));
 	}else if (strlen(demo_playlist_track_name.string)){
 		track_player=FindBestNick(demo_playlist_track_name.string,1);
 		if (track_player != -1 )
-			Cbuf_AddText (va("track %s\n",cl.players[track_player].name));
+			Cbuf_AddText (va("track \"%s\"\n",cl.players[track_player].name));
 	}
 
 	mvd_demo_track_run = 1;
@@ -655,234 +671,179 @@ void MVD_Info (void){
 	}
 }
 
+int currentplayer_num;
 
-int MVD_FindBestPlayer_f(void){
-
-	int bp_id, status, i, h, y = 0;
+expr_val MVD_Var_Vals(const char *n)
+{
+#define VN(x) (*n == (x))
+	int i = currentplayer_num;
+    int stats = mvd_new_info[i].p_info->stats[STAT_ITEMS];
+	double bp_at, bp_pw;
 	
-	char val[1024],string1[1024];
-	float bp_at,bp_bw,bp_pw,bp_h;
-	float lastval = 0;
+	// get armortype
+	if      (stats & IT_ARMOR1) bp_at = ga_val;
+	else if (stats & IT_ARMOR2) bp_at = ya_val;
+	else if (stats & IT_ARMOR3)	bp_at = ra_val;
+	else                        bp_at = 0;
 	
-	#ifdef DEBUG
-	printf("MVD_FindBestPlayer_f Started\n");
-	#endif
+	// get powerup type
+	bp_pw=0;
+	if (stats & IT_QUAD)            bp_pw += quad_val;
+	if (stats & IT_INVULNERABILITY)	bp_pw += pent_val;
+	if (stats & IT_INVISIBILITY)    bp_pw += ring_val;
 	
-	if (mvd_cg_info.gametype == 2)
-		strncpy(val,mvd_autotrack_1on1_values.string,sizeof(val));
-	else if (mvd_cg_info.gametype == 4)
-		strncpy(val,mvd_autotrack_2on2_values.string,sizeof(val));
-	else if (mvd_cg_info.gametype == 8)
-		strncpy(val,mvd_autotrack_4on4_values.string,sizeof(val));
-	else if (mvd_autotrack.value == 2)
-		strncpy(val,mvd_autotrack_custom_values.string,sizeof(val));
-	else
-		strncpy(val,mvd_autotrack_1on1_values.string,sizeof(val));
-	
-	
-	// checking if mvd_autotrack_xonx_values have right format
-	if (strtok(val, " ") != NULL){
-		for(y=1;y<=13;y++){
-			if (strtok(NULL, " ") != NULL){
-			}else{
-				Com_Printf("mvd_autotrack aborting due to wrong use of mvd_autotrack_*_value\n");
-				Cvar_SetValue(&mvd_autotrack,0);
-				return 0;
-			}
-		}
-	} else {
-		Com_Printf("mvd_autotrack aborting due to wrong use of mvd_autotrack_*_value\n");
-		Cvar_SetValue(&mvd_autotrack,0);
-	return 0;
-	}
-	
-	if (mvd_cg_info.gametype == 0)
-		strncpy(val,mvd_autotrack_1on1_values.string,sizeof(val));
-	else if (mvd_cg_info.gametype == 1)
-		strncpy(val,mvd_autotrack_2on2_values.string,sizeof(val));
-	else if (mvd_cg_info.gametype == 3)
-		strncpy(val,mvd_autotrack_4on4_values.string,sizeof(val));
-	else if (mvd_autotrack.value == 2)
-		strncpy(val,mvd_autotrack_custom_values.string,sizeof(val));
-	else
-		strncpy(val,mvd_autotrack_1on1_values.string,sizeof(val));
-
-	if (mvd_autotrack.value == 2)
-		strncpy(val,mvd_autotrack_custom_values.string,sizeof(val));
-	else if (mvd_autotrack.value == 3 && cl_multiview.value)
-		strncpy(val,multitrack_val,sizeof(val));
-	
-	// getting values
-	//val = mvd_autotrack_1on1_values.string;
-	axe_val	=atof(strtok(val, " "));
-	sg_val	=atof(strtok(NULL, " "));
-	ssg_val	=atof(strtok(NULL, " "));
-	ng_val	=atof(strtok(NULL, " "));
-	sng_val	=atof(strtok(NULL, " "));
-	gl_val	=atof(strtok(NULL, " "));
-	rl_val	=atof(strtok(NULL, " "));
-	lg_val	=atof(strtok(NULL, " "));
-	ga_val	=atof(strtok(NULL, " "));
-	ya_val	=atof(strtok(NULL, " "));
-	ra_val	=atof(strtok(NULL, " "));
-	ring_val=atof(strtok(NULL, " "));
-	quad_val=atof(strtok(NULL, " "));
-	pent_val=atof(strtok(NULL, " "));
-	//axe_val=sg_val=ssg_val=ng_val=sng_val=gl_val=rl_val=lg_val=ga_val=ya_val=ra_val=ring_val=quad_val=pent_val=10;
-	
-	
-	for ( i=0; i<mvd_cg_info.pcount ; i++ ){
-	
-		// get bestweapon
-		
-		bp_bw = MVD_AutoTrackBW_f(i);
-		
-
-	
-		
-		// get armortype
-		if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_ARMOR1)
-			bp_at = ga_val ;
-		else if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_ARMOR2)
-			bp_at = ya_val ;
-		else if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_ARMOR3)
-			bp_at = ra_val ;
-		else
-			bp_at = 0;
-		
-		// get powerup type
-		bp_pw=0;
-		if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_QUAD)
-			bp_pw += quad_val;
-		if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_INVULNERABILITY)
-			bp_pw += pent_val;
-		if (mvd_new_info[i].p_info->stats[STAT_ITEMS] & IT_INVISIBILITY)
-			bp_pw += ring_val;
-		
-		// get health
-		bp_h=mvd_new_info[i].p_info->stats[STAT_HEALTH];
-		
-	if (mvd_cg_info.pcount == 2)
-		strncpy(string1,mvd_autotrack_1on1.string,sizeof(string1));
-	else if (mvd_cg_info.pcount == 4)
-		strncpy(string1,mvd_autotrack_2on2.string,sizeof(string1));
-	else if (mvd_cg_info.pcount == 8)
-		strncpy(string1,mvd_autotrack_4on4.string,sizeof(string1));
-	else
-		strncpy(string1,mvd_autotrack_1on1.string,sizeof(string1));
-		
-	if (mvd_autotrack.value == 2)
-		strncpy(string1,mvd_autotrack_custom.string,sizeof(string1));
-	else if (mvd_autotrack.value == 3 && cl_multiview.value)
-		strncpy(string1,multitrack_str,sizeof(string1));
-		
 	// a - armor value
-	// A - armor type
-	// b - average run time
-	// B - average run frags
-	// c - current run time
-	// C - current run frags
-	// d - average quad run time
-	// D - average quad runt frags
-	// e - 
-	// E - average pent run frags
-	// f - frags
-	// F -
-	// h - health
-	// i - took ssg
-	// I - 
-	// j - took ng
-	// J - took sng
-	// k - took gl
-	// K - lost gl
-	// l - took rl
-	// L - lost rl
-	// m - took lg
-	// M - lost lg
-	// n - took mh 
-	// N - took ga
-	// o - took ya
-	// O - took ra
-	// p - powerups
-	// P - 
-	// q -
-	// Q -
-	// r -
-	// R -
-	// s -
-	// S -
-	// t -
-	// T -
-	// u -
-	// U -
-	// v -
-	// V -
-	// w - 
-	// W - best weapon
-	// x - took ring
-	// X - lost ring
-	// y - took quad
-	// Y - lost quad
-	// z - took pent
-	
-	
-	Replace_In_String(string1,sizeof(string1),'%',25,\
-		"a",va("%f",mvd_new_info[i].p_info->stats[STAT_ARMOR]),\
-		"A",va("%f",bp_at),\
-		"c",va("%f",mvd_new_info[i].info.runs[mvd_new_info[i].info.run].time),\
-		"C",va("%i",mvd_new_info[i].info.runs[mvd_new_info[i].info.run].frags),\
-		"f",va("%i",mvd_new_info[i].p_info->frags),\
-		"h",va("%i",mvd_new_info[i].p_info->stats[STAT_HEALTH]),\
-		"j",va("%i",mvd_new_info[i].info.info[NG_INFO].count),\
-		"J",va("%i",mvd_new_info[i].info.info[SNG_INFO].count),\
-		"k",va("%i",mvd_new_info[i].info.info[GL_INFO].count),\
-		"K",va("%i",mvd_new_info[i].info.info[GL_INFO].lost),\
-		"l",va("%i",mvd_new_info[i].info.info[RL_INFO].count),\
-		"L",va("%i",mvd_new_info[i].info.info[RL_INFO].lost),\
-		"m",va("%i",mvd_new_info[i].info.info[LG_INFO].count),\
-		"M",va("%i",mvd_new_info[i].info.info[LG_INFO].lost),\
-		"n",va("%i",mvd_new_info[i].info.info[MH_INFO].count),\
-		"N",va("%i",mvd_new_info[i].info.info[GA_INFO].count),\
-		"o",va("%i",mvd_new_info[i].info.info[YA_INFO].count),\
-		"O",va("%i",mvd_new_info[i].info.info[RA_INFO].count),\
-		"p",va("%f",bp_pw),\
-		"W",va("%f",bp_bw),\
-		"x",va("%f",mvd_new_info[i].info.info[RING_INFO].count),\
-		"X",va("%f",mvd_new_info[i].info.info[RING_INFO].lost),\
-		"y",va("%f",mvd_new_info[i].info.info[QUAD_INFO].count),\
-		"Y",va("%f",mvd_new_info[i].info.info[QUAD_INFO].lost),\
-		"z",va("%f",mvd_new_info[i].info.info[PENT_INFO].count));
-		
-		
-		status=eval_string_float(string1);
+    // A - armor type
+    // b - average run time
+    // B - average run frags
+    // c - current run time
+    // C - current run frags
+    // d - average quad run time
+    // D - average quad runt frags
+    // e - 
+    // E - average pent run frags
+    // f - frags
+    // F -
+    // h - health
+    // i - took ssg
+    // I - 
+    // j - took ng
+    // J - took sng
+    // k - took gl
+    // K - lost gl
+    // l - took rl
+    // L - lost rl
+    // m - took lg
+    // M - lost lg
+    // n - took mh 
+    // N - took ga
+    // o - took ya
+    // O - took ra
+    // p - powerups
+    // P - 
+    // q -
+    // Q -
+    // r -
+    // R -
+    // s -
+    // S -
+    // t -
+    // T -
+    // u -
+    // U -
+    // v -
+    // V -
+    // w - 
+    // W - best weapon
+    // x - took ring
+    // X - lost ring
+    // y - took quad
+    // Y - lost quad
+    // z - took pent
 
-		
-		if(status<0){
+	if      (VN('a'))  return Get_Expr_Double(mvd_new_info[i].p_info->stats[STAT_ARMOR]); 
+	else if (VN('A'))  return Get_Expr_Double(bp_at); 
+	else if (VN('c'))  return Get_Expr_Double(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].time); 
+	else if (VN('C'))  return Get_Expr_Integer(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].frags); 
+	else if (VN('f'))  return Get_Expr_Integer(mvd_new_info[i].p_info->frags); 
+	else if (VN('h'))  return Get_Expr_Integer(mvd_new_info[i].p_info->stats[STAT_HEALTH]); 
+	else if (VN('j'))  return Get_Expr_Integer(mvd_new_info[i].info.info[NG_INFO].count); 
+	else if (VN('J'))  return Get_Expr_Integer(mvd_new_info[i].info.info[SNG_INFO].count); 
+	else if (VN('k'))  return Get_Expr_Integer(mvd_new_info[i].info.info[GL_INFO].count); 
+	else if (VN('K'))  return Get_Expr_Integer(mvd_new_info[i].info.info[GL_INFO].lost); 
+	else if (VN('l'))  return Get_Expr_Integer(mvd_new_info[i].info.info[RL_INFO].count); 
+	else if (VN('L'))  return Get_Expr_Integer(mvd_new_info[i].info.info[RL_INFO].lost); 
+	else if (VN('m'))  return Get_Expr_Integer(mvd_new_info[i].info.info[LG_INFO].count); 
+	else if (VN('M'))  return Get_Expr_Integer(mvd_new_info[i].info.info[LG_INFO].lost); 
+	else if (VN('n'))  return Get_Expr_Integer(mvd_new_info[i].info.info[MH_INFO].count); 
+	else if (VN('N'))  return Get_Expr_Integer(mvd_new_info[i].info.info[GA_INFO].count); 
+	else if (VN('o'))  return Get_Expr_Integer(mvd_new_info[i].info.info[YA_INFO].count); 
+	else if (VN('O'))  return Get_Expr_Integer(mvd_new_info[i].info.info[RA_INFO].count); 
+	else if (VN('p'))  return Get_Expr_Double(bp_pw); 
+	else if (VN('W'))  return Get_Expr_Integer(MVD_AutoTrackBW_f(i)); 
+	else if (VN('x'))  return Get_Expr_Double(mvd_new_info[i].info.info[RING_INFO].count); 
+	else if (VN('X'))  return Get_Expr_Double(mvd_new_info[i].info.info[RING_INFO].lost); 
+	else if (VN('y'))  return Get_Expr_Double(mvd_new_info[i].info.info[QUAD_INFO].count); 
+	else if (VN('Y'))  return Get_Expr_Double(mvd_new_info[i].info.info[QUAD_INFO].lost); 
+	else if (VN('z'))  return Get_Expr_Double(mvd_new_info[i].info.info[PENT_INFO].count); 
+	else return Get_Expr_Integer(0);
+}
+
+int MVD_FindBestPlayer_f(void)
+{
+	int bp_id, eval_error, i, h, y = 0;
+	const char* vals_str;
+    const char* eq;
+	float lastval = 0;
+    double value;
+	
+    // FIXME!
+    // if you run a demo and then anther demo, mvd_cg_info will not change!
+    // so most probably if you run 4on4 demo and then 1on1 or vice versa, during the second
+    // demo the autotrack will not work
+	if      (mvd_cg_info.gametype == 0) vals_str = mvd_autotrack_1on1_values.string;
+	else if (mvd_cg_info.gametype == 1) vals_str = mvd_autotrack_2on2_values.string;
+	else if (mvd_cg_info.gametype == 3) vals_str = mvd_autotrack_4on4_values.string;
+	else if (mvd_autotrack.integer == 2)  vals_str = mvd_autotrack_custom_values.string;
+	else if (mvd_autotrack.integer == 3 && cl_multiview.value)
+        vals_str = multitrack_val;
+    else                                vals_str = mvd_autotrack_1on1_values.string;
+
+    // will extract user string "1 5 8 100.4 ..." into pl_values array which is
+    // later accessed via macros like ra_val, quad_val, rl_val, ...
+    if (COM_GetFloatTokens(vals_str, pl_values, PL_VALUES_COUNT) != PL_VALUES_COUNT)
+    {
+	    Com_Printf("mvd_autotrack aborting due to wrong use of mvd_autotrack_*_value\n");
+		Cvar_SetValue(&mvd_autotrack,0);
+		return 0;
+    }
+	
+	for ( i=0; i<mvd_cg_info.pcount ; i++ )
+    {		
+        // choose equation
+	    if      (mvd_cg_info.pcount == 2)   eq = mvd_autotrack_1on1.string;
+	    else if (mvd_cg_info.pcount == 4)   eq = mvd_autotrack_2on2.string;
+	    else if (mvd_cg_info.pcount == 8)   eq = mvd_autotrack_4on4.string;
+	    else                                eq = mvd_autotrack_1on1.string;
+    		
+	    if (mvd_autotrack.integer == 2)
+		    eq = mvd_autotrack_custom.string;
+	    else if (mvd_autotrack.integer == 3 && cl_multiview.value)
+		    eq = multitrack_str;
+    		
+		// store global variable which is used in MVD_Var_Vals
+		currentplayer_num = i;
+		eval_error = Expr_Eval_Double(eq, MVD_Var_Vals, &value);
+
+		if (eval_error != ERR_SUCCESS) {
+            switch (eval_error) {
+            case ERR_INVALID_TOKEN:
+                Com_Printf("Invalid character found in the expression, autotracking OFF\n");
+                break;
+            case ERR_UNEXPECTED_CHAR:
+                Com_Printf("Unexpected token in the expression, autotracking OFF\n");
+                break;
+            default:
+                Com_Printf("Unknown error when evaluating the expression, autotracking OFF\n");
+                break;
+            }
+
 			Cvar_SetValue(&mvd_autotrack,0);
-			Com_Printf("Something went wrong ! %i\n",status);
-			return(0);
+			return 0;
 		}
 		
-		mvd_new_info[i].value = atof(string1);
+		mvd_new_info[i].value = value;
 	}
 	
-
-
-	lastval=0;
-	bp_id=0;
-	for ( h=0 ; h<mvd_cg_info.pcount ; h++ ){
-		if(lastval < mvd_new_info[h].value){
+	lastval = mvd_new_info[0].value;
+	bp_id = mvd_new_info[0].id;
+	for ( h=1 ; h<mvd_cg_info.pcount ; h++ ) {
+		if (lastval < mvd_new_info[h].value) {
 			lastval = mvd_new_info[h].value;
 			bp_id 	= mvd_new_info[h].id;
 		}
-		
 	}
-	#ifdef DEBUG
-	printf("MVD_FindBestPlayer_f Stopped %i\n",bp_id);
-	#endif
 	return bp_id ;
-	
-	
 }
 
 int MVD_AutoTrackBW_f(int i){
@@ -968,7 +929,7 @@ void MVD_AutoTrack_f(void) {
 	
 		id = MVD_FindBestPlayer_f();
 		if ( id != last_track){
-			sprintf(arg,"track %s \n",cl.players[id].name);
+			sprintf(arg,"track \"%s\"\n",cl.players[id].name);
 			Cbuf_AddText(arg);
 			last_track = id;
 		}

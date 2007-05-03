@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.16 2007-04-23 21:48:56 qqshka Exp $
+	$Id: tr_init.c,v 1.17 2007-05-03 12:03:56 johnnycz Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -479,7 +479,7 @@ void R_Register( void )
 
 	if ( !host_initialized ) // compatibility with retarded cmd line, and actually this still needed for some other reasons
 	{
-		int w, h;
+		int w = 0, h = 0;
 
 		if (COM_CheckParm("-window") || COM_CheckParm("-startwindowed"))
 			Cvar_LatchedSetValue(&r_fullscreen, 0);
@@ -494,7 +494,11 @@ void R_Register( void )
 		h = ((i = COM_CheckParm("-height")) && i + 1 < com_argc) ? Q_atoi(com_argv[i + 1]) : 0;
 
 #ifdef _WIN32
-		if (COM_CheckParm("-current")) {
+		if (!( // no!
+			strcmp (r_displayRefresh.defaultvalue, r_displayRefresh.string) || // refresh rate wasnt changed
+			strcmp (r_colorbits.defaultvalue, r_colorbits.string ) || // bpp wasnt changed
+			w || h) // width and height wasnt changed
+		) {
 			// ok, pseudo current
 			int freq = 0;
 			DEVMODE dm;

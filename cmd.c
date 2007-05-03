@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.61 2007-04-15 20:12:57 disconn3ct Exp $
+    $Id: cmd.c,v 1.62 2007-05-03 12:03:54 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1118,42 +1118,58 @@ int Cmd_CommandCompare (const void *p1, const void *p2)
 	return strcmp((*((cmd_function_t **) p1))->name, (*((cmd_function_t **) p2))->name);
 }
 
-void Cmd_CmdList_f (void)
+void Cmd_CmdList (qbool use_regex)
 {
-	cmd_function_t *cmd;
-	int i, c, m = 0;
-	static int count;
 	static cmd_function_t *sorted_cmds[512];
+	int i, c, m = 0, count;
+	cmd_function_t *cmd;
+	char *pattern;
 
-#define MAX_SORTED_CMDS (sizeof(sorted_cmds) / sizeof(sorted_cmds[0]))
+#define MAX_SORTED_CMDS (sizeof (sorted_cmds) / sizeof (sorted_cmds[0]))
 
 	for (cmd = cmd_functions, count = 0; cmd && count < MAX_SORTED_CMDS; cmd = cmd->next, count++)
 		sorted_cmds[count] = cmd;
-	qsort(sorted_cmds, count, sizeof (cmd_function_t *), Cmd_CommandCompare);
+	qsort (sorted_cmds, count, sizeof (cmd_function_t *), Cmd_CommandCompare);
 
 	if (count == MAX_SORTED_CMDS)
 		assert(!"count == MAX_SORTED_CMDS");
 
-	c = Cmd_Argc();
-	if (c>1)
+	pattern = (Cmd_Argc() > 1) ? Cmd_Argv(1) : NULL;
+
+	if (use_regex && ((c = Cmd_Argc()) > 1))
 		if (!ReSearchInit(Cmd_Argv(1)))
 			return;
 
 	Com_Printf ("List of commands:\n");
 	for (i = 0; i < count; i++) {
 		cmd = sorted_cmds[i];
-		if (c==1 || ReSearchMatch(cmd->name)) {
-			Com_Printf ("%s\n", cmd->name);
-			m++;
+		if (use_regex) {
+			if (!(c == 1 || ReSearchMatch (cmd->name)))
+				continue;
+		} else {
+			if (pattern && !Q_glob_match (pattern, cmd->name))
+				continue;
 		}
+
+		Com_Printf ("%s\n", cmd->name);
+		m++;
 	}
 
-	if (c>1)
-		ReSearchDone();
+	if (use_regex && (c > 1))
+		ReSearchDone ();
+
 	Com_Printf ("------------\n%i/%i commands\n", m,count);
 }
 
+void Cmd_CmdList_f (void)
+{
+	Cmd_CmdList (false);
+}
 
+void Cmd_CmdList_re_f (void)
+{
+	Cmd_CmdList (true);
+}
 
 #define MAX_MACROS 64
 
@@ -1767,6 +1783,7 @@ void Cmd_Init (void)
 	Cmd_AddCommand ("unalias_re", Cmd_UnAlias_re_f);
 	Cmd_AddCommand ("wait", Cmd_Wait_f);
 	Cmd_AddCommand ("cmdlist", Cmd_CmdList_f);
+	Cmd_AddCommand ("cmdlist_re", Cmd_CmdList_re_f);
 #ifndef SERVERONLY
 	Cmd_AddCommand ("if", Cmd_If_f);
 	Cmd_AddCommand ("if_exists", Cmd_If_Exists_f);

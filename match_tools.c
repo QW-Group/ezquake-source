@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: match_tools.c,v 1.27 2007-03-11 06:01:41 disconn3ct Exp $
+	$Id: match_tools.c,v 1.28 2007-05-03 12:03:54 johnnycz Exp $
 */
 
 
@@ -1016,7 +1016,7 @@ void MT_MapGroup_f(void) {
 		DeleteMapGroup(group);
 }
 
-static void MT_AddMapGroups(void) {
+void MT_AddMapGroups(void) {
 	char exmy_group[256] = {0}, exmy_map[6] = {'e', 0, 'm', 0, ' ', 0};
 	int i, j;
 	mapgroup_t *tempnode;
@@ -1290,7 +1290,7 @@ void MT_SkyGroup_f(void) {
 
 }
 
-static void MT_AddSkyGroups(void) {
+void MT_AddSkyGroups (void) {
 	char clear[256] = {0};
 
 	strcat(clear, "skygroup exmy clear");
@@ -1352,13 +1352,6 @@ void MT_Init(void) {
 	Cmd_AddCommand("match_format_macrolist", MT_Macrolist_f);
 	Cmd_AddCommand("match_forcestart", MT_Match_ForceStart_f);
 	Cmd_AddCommand("match_save", MT_SaveMatch_f);
-	Cmd_AddCommand ("mapgroup", MT_MapGroup_f);
-
-// START shaman RFE 1020608
-#ifdef GLQUAKE
-	Cmd_AddCommand ("skygroup", MT_SkyGroup_f);
-#endif
-// END shaman RFE 1020608
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_MATCH_TOOLS);
 	Cvar_Register(&match_format_solo);
@@ -1389,13 +1382,4 @@ void MT_Init(void) {
 	Cvar_Register(&match_auto_spectating);
 
 	Cvar_ResetCurrentGroup();
-
-	MT_AddMapGroups();
-
-// START shaman RFE 1020608
-#ifdef GLQUAKE
-	MT_AddSkyGroups();
-#endif
-// END shaman RFE 1020608
-
 }

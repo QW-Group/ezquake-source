@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.74 2007-04-15 14:54:50 johnnycz Exp $
+    $Id: common.c,v 1.75 2007-05-03 12:03:54 johnnycz Exp $
 
 */
 
@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <direct.h>
 #include <Shlobj.h>
 #include <Shfolder.h>
+#include <errno.h>
 #else
 #include <unistd.h>
 #endif
@@ -292,10 +293,11 @@ int COM_GetTempDir(char *buf, int bufsize)
 		return -1;
 	}
 	#else // UNIX
-	// TODO: I'm not a unix person, is this proper?
-	char *tmp = getenv("tmp");
+	char *tmp;
+	if (!(tmp = getenv ("TMPDIR")))
+		tmp = P_tmpdir; // defined at <stdio.h>
 
-	returnval = strlen(tmp);
+	returnval = strlen (tmp);
 
 	if (returnval > bufsize || returnval == 0)
 	{
@@ -348,11 +350,8 @@ int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qb
 
 	// TODO: I'm no unix person, is this proper?
 	tmp = tempnam(path, "ezq");
-
 	if (!tmp)
-	{
 		return -1;
-	}
 
 	strlcpy (filename, tmp, filename_size);
 	Q_free (tmp);
@@ -686,6 +685,13 @@ int COM_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 
 #define ZIP_WRITEBUFFERSIZE (8192)
 
+/*
+[19:23:40] <@disconnect|bla> Cokeman: how do you delete temporary files on windows? =:-)
+[19:23:51] <@Cokeman> I don't :D
+[19:23:52] Cokeman hides
+[19:23:55] <@disconnect|bla> zomfg :E
+[19:24:04] <@disconnect|bla> OK. Linux have same behavior now.
+*/
 int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 						  const char *filename_inzip,
 						  qbool case_sensitive,
@@ -694,7 +700,8 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 						  char *unpack_path,			// The path where the file was unpacked.
 						  int unpack_path_size)			// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.
 {
-	int	retval = UNZ_OK;
+	int retval;
+
 
 	// Get a unique temp filename.
 	if (!COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true))
@@ -702,8 +709,9 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 		return UNZ_ERRNO;
 	}
 
-	// Delete the existing temp file (it is created when the filename is received above).
-	if (unlink (unpack_path))
+	// Delete the temp file if it exists (it is created when the filename is received above).
+	retval = unlink (unpack_path);
+	if (!retval || (retval && qerrno != ENOENT))
 	{
 		return UNZ_ERRNO;
 	}
@@ -1279,6 +1287,22 @@ char *va (char *format, ...)
 	va_end (argptr);
 
 	return string[idx];
+}
+
+// equals to consecutive calls of strtok(s, " ") that assign values to array
+int COM_GetFloatTokens(const char *s, float *fl_array, int fl_array_size)
+{
+    int i;
+    if (!s || !*s) return 0;
+    
+    for(i = 0; *s && i < fl_array_size; i++)
+    {
+        fl_array[i] = atof(s);
+        while(*s && *s != ' ') s++; // skips the number
+        while(*s && *s == ' ') s++; // skips the spaces
+    }
+
+    return i;
 }
 
 /*

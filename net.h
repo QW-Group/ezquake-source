@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: net.h,v 1.14 2007-01-12 09:54:07 oldmanuk Exp $
+    $Id: net.h,v 1.15 2007-05-03 12:03:54 johnnycz Exp $
 */
 // net.h -- quake's interface to the networking layer
 
@@ -24,6 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __NET_H__
 
 #ifdef _WIN32
+#include <winsock.h>
+typedef unsigned int socklen_t;
+
 #define EWOULDBLOCK	WSAEWOULDBLOCK
 #define EMSGSIZE	WSAEMSGSIZE
 #define ECONNRESET	WSAECONNRESET

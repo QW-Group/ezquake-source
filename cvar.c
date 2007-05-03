@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cvar.c,v 1.47 2007-04-15 14:54:50 johnnycz Exp $
+$Id: cvar.c,v 1.48 2007-05-03 12:03:54 johnnycz Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -641,17 +641,16 @@ int Cvar_CvarCompare (const void *p1, const void *p2)
 
 void Cvar_CvarList (qbool use_regex)
 {
+	static cvar_t *sorted_cvars[2048];
+	int i, c, m = 0, count;
 	cvar_t *var;
-	unsigned int i, c = 0, m = 0;
-	static unsigned int count;
-	static cvar_t *sorted_cvars[2048]; // disconnect@28.06.2005: it was 512 before
 	char *pattern;
 
-#define MAX_SORTED_CVARS (sizeof(sorted_cvars) / sizeof(sorted_cvars[0]))
+#define MAX_SORTED_CVARS (sizeof (sorted_cvars) / sizeof (sorted_cvars[0]))
 
 	for (var = cvar_vars, count = 0; var && count < MAX_SORTED_CVARS; var = var->next, count++)
 		sorted_cvars[count] = var;
-	qsort(sorted_cvars, count, sizeof (cvar_t *), Cvar_CvarCompare);
+	qsort (sorted_cvars, count, sizeof (cvar_t *), Cvar_CvarCompare);
 
 	if (count == MAX_SORTED_CVARS)
 		assert(!"count == MAX_SORTED_CVARS");
@@ -666,23 +665,23 @@ void Cvar_CvarList (qbool use_regex)
 	for (i = 0; i < count; i++) {
 		var = sorted_cvars[i];
 		if (use_regex) {
-			if (!(c==1 || ReSearchMatch(var->name)))
+			if (!(c == 1 || ReSearchMatch (var->name)))
 				continue;
 		} else {
-			if (pattern && !Q_glob_match(pattern, var->name))
+			if (pattern && !Q_glob_match (pattern, var->name))
 				continue;
 		}
 
-			Com_Printf ("%c%c%c %s\n",
-						var->flags & (CVAR_ARCHIVE|CVAR_USER_ARCHIVE) ? '*' : ' ',
-						var->flags & CVAR_USERINFO ? 'u' : ' ',
-						var->flags & CVAR_SERVERINFO ? 's' : ' ',
-						var->name);
-			m++;
+		Com_Printf ("%c%c%c %s\n",
+			var->flags & (CVAR_ARCHIVE|CVAR_USER_ARCHIVE) ? '*' : ' ',
+			var->flags & CVAR_USERINFO ? 'u' : ' ',
+			var->flags & CVAR_SERVERINFO ? 's' : ' ',
+			var->name);
+		m++;
 	}
 	
 	if (use_regex && (c > 1))
-		ReSearchDone();
+		ReSearchDone ();
 
 	Com_Printf ("------------\n%i/%i %svariables\n", m, count, (pattern) ? "matching " : "");
 }

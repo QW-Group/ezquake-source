@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.19 2007-02-05 15:05:17 cokeman1982 Exp $
+    $Id: q_shared.c,v 1.20 2007-05-03 12:03:55 johnnycz Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -285,12 +285,8 @@ char *strchrrev(char *str, char chr)
 {
 	char *firstchar = str;
 	for (str = str + strlen(str)-1; str >= firstchar; str--)
-	{
 		if (*str == chr)
-		{
 			return str;
-		}
-	}
 
 	return NULL;
 }
@@ -302,15 +298,12 @@ wchar char2wc (char c)
 
 char wc2char (wchar wc)
 {
-	if (wc <= 255)
-		return (char)wc;
-	else
-		return '?';
+	return (wc <= 255) ? (char)wc : '?';
 }
 
 wchar *str2wcs (const char *s)
 {
-	static wchar buf[65536];	//ouch! ouch!
+	static wchar buf[65536]; //ouch! ouch!
 	int i;
 
 	for (i = 0; i < 65536 - 1; i++) {
@@ -324,7 +317,7 @@ wchar *str2wcs (const char *s)
 
 char *wcs2str (const wchar *ws)
 {
-	static char buf[65536];		//ouch! ouch!
+	static char buf[65536];	//ouch! ouch!
 	int i;
 
 	for (i = 0; i < 65536 - 1; i++) {
@@ -339,8 +332,9 @@ char *wcs2str (const wchar *ws)
 // PLZ free returned string after it no longer need!!!
 char *wcs2str_malloc (const wchar *ws)
 {
-	int i, len = qwcslen(ws);
-	char *buf = (char *) Q_malloc(len + 1);
+	int i;
+	size_t len = qwcslen(ws);
+	char *buf = (char *) Q_malloc (len + 1);
 
 	for (i = 0; i < len; i++) {
 		if (ws[i] == 0)
@@ -369,9 +363,10 @@ wchar *qwcscpy (wchar *dest, const wchar *src)
 }
 #endif
 
+// NOTE: size is not the number of bytes to copy, but the number of characters. sizeof(dest) / sizeof(wchar) should be used.
 size_t qwcslcpy (wchar *dst, const wchar *src, size_t size)
 {
-	int len = qwcslen (src);
+	size_t len = qwcslen (src);
 
 	if (len < size) {
 		// it'll fit
@@ -382,22 +377,23 @@ size_t qwcslcpy (wchar *dst, const wchar *src, size_t size)
 	if (size == 0)
 		return len;
 
-	assert (size >= 0);		// if a negative size was passed, then we're fucked
+	assert (size >= 0);	// if a negative size was passed, then we're fucked
 
 	memcpy (dst, src, (size - 1) * sizeof(wchar));
 	dst[size - 1] = 0;
 
 	return len;
 }
+
 size_t qwcslcat (wchar *dst, const wchar *src, size_t size)
 {
-	int dstlen = qwcslen(dst);
-	int srclen = qwcslen(src);
-	int len = dstlen + srclen;
+	size_t dstlen = qwcslen (dst);
+	size_t srclen = qwcslen (src);
+	size_t len = dstlen + srclen;
 
 	if (len < size) {
 		// it'll fit
-		memcpy (dst + dstlen, src, (srclen + 1)*sizeof(wchar));
+		memcpy (dst + dstlen, src, (srclen + 1) * sizeof(wchar));
 		return len;
 	}
 
@@ -407,13 +403,14 @@ size_t qwcslcat (wchar *dst, const wchar *src, size_t size)
 	if (size == 0)
 		return srclen;
 
-	assert (size >= 0);		// if a negative size was passed, then we're fucked
+	assert (size >= 0);	// if a negative size was passed, then we're fucked
 
 	memcpy (dst + dstlen, src, (size - 1 - dstlen)*sizeof(wchar));
 	dst[size - 1] = 0;
 
 	return len;
 }
+
 wchar *qwcschr (const wchar *ws, wchar wc)
 {
 	while (*ws) {
@@ -435,7 +432,7 @@ wchar *qwcsrchr (const wchar *ws, wchar wc)
 	return p;
 }
 
-wchar *Q_wcsdup(const wchar *src)
+wchar *Q_wcsdup (const wchar *src)
 {
 	wchar *out;
 	size_t size = (qwcslen(src) + 1) * sizeof(wchar);

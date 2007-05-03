@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-$Id: host.c,v 1.39 2007-04-15 14:54:50 johnnycz Exp $
+$Id: host.c,v 1.40 2007-05-03 12:03:54 johnnycz Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -461,6 +461,81 @@ char *Host_PrintBars(char *s, int len)
 	return temp;
 }
 
+static void Commands_For_Configs_Init (void)
+{
+extern void SV_Floodprot_f (void);
+extern void TP_MsgTrigger_f (void);
+extern void TP_MsgFilter_f (void);
+extern void TP_Took_f (void);
+extern void TP_Pickup_f (void);
+extern void TP_Point_f (void);
+extern void MT_AddMapGroups (void);
+extern void MT_MapGroup_f (void);
+#ifdef GLQUAKE
+extern void MT_AddSkyGroups (void);
+extern void MT_SkyGroup_f (void);
+extern void CL_Fog_f (void);
+#endif
+
+
+	//disconnect: fix it if i forgot something
+	Cmd_AddCommand ("floodprot", SV_Floodprot_f);
+	Cmd_AddCommand ("msg_trigger", TP_MsgTrigger_f);
+	Cmd_AddCommand ("filter", TP_MsgFilter_f);
+	Cmd_AddCommand ("tp_took", TP_Took_f);
+	Cmd_AddCommand ("tp_pickup", TP_Pickup_f);
+	Cmd_AddCommand ("tp_point", TP_Point_f);
+
+	MT_AddMapGroups ();
+	Cmd_AddCommand ("mapgroup", MT_MapGroup_f);
+
+#ifdef GLQUAKE
+	MT_AddSkyGroups ();
+	Cmd_AddCommand ("skygroup", MT_SkyGroup_f);
+	Cmd_AddCommand ("fog", CL_Fog_f);
+#endif
+	Cmd_AddCommand ("allskins", Skin_AllSkins_f);
+
+//	Cmd_AddCommand ("hud_recalculate", HUD_Recalculate_f);
+//	Cmd_AddCommand ("sb_sourceunmarkall", SB_SourceUnmarkAll);
+//	Cmd_AddCommand ("sb_sourcemark", SB_SourceMark);
+}
+
+qbool CmdLine_Play_Args(void)
+{
+	if (COM_Argc() >= 2) { // check .qtv files
+		char *infile = COM_Argv(1);
+
+		if (infile[0] && infile[0] != '-' && infile[0] != '+') {
+			char tmp[1024] = {0}, *ext = COM_FileExtension(infile);
+
+			if (!strncasecmp(ext, "qtv", sizeof("qtv")))
+				snprintf(tmp, sizeof(tmp), "qtvplay \"#%s\"\n", infile);
+			else if (   !strncasecmp(ext, "mvd", sizeof("mvd"))
+					 || !strncasecmp(ext, "qwd", sizeof("qwd"))
+					 || !strncasecmp(ext, "dem", sizeof("dem"))
+					 || !strncasecmp(ext, "qwz", sizeof("qwz"))
+					)
+				snprintf(tmp, sizeof(tmp), "playdemo \"%s\"\n", infile);
+
+            if (tmp[0]) {
+				Cbuf_AddText(tmp);
+                return true;
+            }
+		}
+	}
+    return false;
+}
+
+void Startup_Place(void)
+{
+    extern cvar_t cl_onload;
+    if (!strcmp(cl_onload.string, "menu"))
+	    Cbuf_AddText("togglemenu\n");
+    else if (!strcmp(cl_onload.string, "browser"))
+	    Cbuf_AddText("menu_slist\n");
+}
+
 void Host_Init (int argc, char **argv, int default_memsize)
 {
 	FILE *f;
@@ -483,6 +558,8 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Key_Init ();
 
 	FS_InitFilesystem ();
+
+	Commands_For_Configs_Init ();
 
 	if (!dedicated) {
 		char cfg[MAX_PATH] = {0};
@@ -599,6 +676,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 		Cmd_StuffCmds_f ();		// process command line arguments
 		Cbuf_AddText ("cl_warncmd 1\n");
 	}
+
+    if (!CmdLine_Play_Args())
+        Startup_Place();
 }
 
 //FIXME: this is a callback from Sys_Quit and Sys_Error.  It would be better

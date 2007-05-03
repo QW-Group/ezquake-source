@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.62 2007-04-15 15:18:34 johnnycz Exp $
+		$Id: menu_options.c,v 1.63 2007-05-03 12:03:54 johnnycz Exp $
 
 */
 
@@ -1355,7 +1355,8 @@ void Menu_Options_Init(void) {
 	// this is here just to not get a crash in Cvar_Set
     mvs_selected.freq.name = "menu_tempval_video_freq";
 	mvs_previous.freq.name = mvs_selected.freq.name;
-    // this is here to fool one particular check in Cvar_Set
+    mvs_selected.freq.string = NULL;
+    mvs_previous.freq.string = NULL;
     mvs_selected.freq.next = &mvs_selected.freq;
     mvs_previous.freq.next = &mvs_previous.freq;
 #endif

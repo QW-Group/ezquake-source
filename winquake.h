@@ -37,18 +37,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define LLKHF_UP			(KF_UP >> 8)
 #define KF_UP				0x8000
 
-
-//Tei, needed to compile on vc6
-#ifndef ULONG_PTR
-
-typedef long LONG_PTR;
-typedef unsigned long ULONG_PTR;
-typedef ULONG_PTR DWORD_PTR;
-
-#endif
-//Tei, needed to compile on vc6
-
-
 typedef struct {
     DWORD   vkCode;
     DWORD   scanCode;
@@ -58,13 +46,14 @@ typedef struct {
 //	ULONG   dwExtraInfo;
 } *PKBDLLHOOKSTRUCT;
 
-#endif
+#endif // !WITHOUT_WINKEYHOOK
 
 #ifndef GLQUAKE
 // use it for soft only
 #include <ddraw.h>
 #endif
 
+#include <mmsystem.h>
 #include <dsound.h>
 
 extern	HINSTANCE	global_hInstance;
@@ -102,11 +91,8 @@ extern HANDLE	hinput, houtput;
 
 void IN_UpdateClipCursor (void);
 
-void VID_NotifyActivity(void);
-
 void S_BlockSound (void);
 void S_UnblockSound (void);
 
 #endif // !SERVERONLY
-typedef unsigned int socklen_t;
 #endif // _WIN32

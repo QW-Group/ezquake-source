@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.37 2007-04-15 14:54:50 johnnycz Exp $
+	$Id: sys_win.c,v 1.38 2007-05-03 12:03:55 johnnycz Exp $
 
 */
 // sys_win.c
@@ -668,28 +668,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	Host_Init (argc, argv, memsize);
 
 	oldtime = Sys_DoubleTime ();
-
-// { probably that code may be located in Host_Init() at end of function, so this will work for both, linux and windows
-	if (COM_Argc() >= 2) { // check .qtv files
-		char *infile = COM_Argv(1);
-
-		if (infile[0] && infile[0] != '-' && infile[0] != '+') {
-			char tmp[1024] = {0}, *ext = COM_FileExtension(infile);
-
-			if (!strncasecmp(ext, "qtv", sizeof("qtv")))
-				snprintf(tmp, sizeof(tmp), "qtvplay \"#%s\"\n", infile);
-			else if (   !strncasecmp(ext, "mvd", sizeof("mvd"))
-					 || !strncasecmp(ext, "qwd", sizeof("qwd"))
-					 || !strncasecmp(ext, "dem", sizeof("dem"))
-					 || !strncasecmp(ext, "qwz", sizeof("qwz"))
-					)
-				snprintf(tmp, sizeof(tmp), "playdemo \"%s\"\n", infile);
-
-			if (tmp[0])
-				Cbuf_AddText(tmp);
-		}
-	}
-// }
 
     /* main window message loop */
 	while (1) {

@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.133 2007-03-18 18:36:24 disconn3ct Exp $
+	$Id: hud_common.c,v 1.134 2007-05-03 12:03:54 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -358,6 +358,8 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 		Replace_In_String(track_string, sizeof(track_string), '%', 2,
 			"n", cl.players[spec_track].name,						// Replace %n with player name.
 			"t", cl.teamplay ? cl.players[spec_track].team : "");	// Replace %t with player team if teamplay is on.
+
+		width = 8 * strlen(track_string);
 	}
 
 	height = 8 * views;
@@ -833,6 +835,12 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 		// This depends on the orientation of the circle (left, right, up, down).
 		float circle_startangle = 0.0;
 		float circle_endangle = 0.0;
+
+		// Avoid divison by zero.
+		if(hud_speed2_radius->value <= 0)
+		{
+			return;
+		}
 
 		// Get the velocity.
 		if (cl.players[cl.playernum].spectator && Cam_TrackNum() >= 0)

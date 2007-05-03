@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.143 2007-04-15 14:54:49 johnnycz Exp $
+$Id: cl_main.c,v 1.144 2007-05-03 12:03:54 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1209,10 +1209,6 @@ void CL_InitLocal (void) {
 	Cmd_AddCommand ("dns", CL_DNS_f);
 	Cmd_AddCommand ("reconnect", CL_Reconnect_f);
 
-#ifdef GLQUAKE
-	Cmd_AddCommand ("fog",CL_Fog_f);
-#endif
-
 	Cmd_AddMacro("connectiontype", CL_Macro_ConnectionType);
 	Cmd_AddMacro("demoplayback", CL_Macro_Demoplayback);
 	Cmd_AddMacro("demotime", CL_Macro_Demotime);
@@ -1230,6 +1226,7 @@ void GFX_Init (void) {
 	SCR_Init ();	// safe re-init imo (in gl)
 	R_Init ();		// safe re-init imo (in gl)
 	Sbar_Init ();	// safe re-init imo (in gl)
+	HUD_Editor_Init(); // Need to reload some textures.
 }
 
 void CL_Init (void) {
@@ -1295,7 +1292,6 @@ void CL_Init (void) {
 	TP_Init ();
 	Hud_262Init();
 	HUD_Init();
-	HUD_Editor_Init();
 	M_Init ();
 
 	SList_Init ();
@@ -1312,11 +1308,6 @@ void CL_Init (void) {
 	MP3_Init();
 	SB_RootInit();
 	QTV_Init();
-
-	if (!strcmp(cl_onload.string, "menu"))
-		Cbuf_AddText("togglemenu\n");
-	else if (!strcmp(cl_onload.string, "browser"))
-		Cbuf_AddText("menu_slist\n");
 }
 
 //============================================================================

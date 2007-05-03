@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: wad.c,v 1.14 2007-03-11 06:01:43 disconn3ct Exp $
+	$Id: wad.c,v 1.15 2007-05-03 12:03:56 johnnycz Exp $
 */
 // wad.c
 
@@ -263,18 +263,15 @@ void WAD3_LoadWadFile (char *filename)
 	if (wad3_numlumps == TEXWAD_MAXIMAGES)
 		return;
 
-	if (FS_FOpenFile (va("textures/halflife/%s", filename), &file) != -1)
-		goto loaded;
-	if (FS_FOpenFile (va("textures/wad3/%s", filename), &file) != -1)
-		goto loaded;
-	if (FS_FOpenFile (va("textures/%s", filename), &file) != -1)
-		goto loaded;
-	if (FS_FOpenFile (filename, &file) != -1)
-		goto loaded;
+	if (FS_FOpenFile (va("textures/halflife/%s", filename), &file) == -1)
+		if (FS_FOpenFile (va("textures/wad3/%s", filename), &file) == -1)
+			if (FS_FOpenFile (va("textures/%s", filename), &file) == -1)
+				if (FS_FOpenFile (filename, &file) == -1)
+				{
+					Com_Printf ("WAD3_LoadWadFile: couldn't load halflife wad \"%s\"", filename);
+					return;
+				}
 
-	Host_Error ("Couldn't load halflife wad \"%s\"", filename);
-
-loaded:
 	if (fread(&header, 1, sizeof(wadinfo_t), file) != sizeof(wadinfo_t)) {
 		Com_Printf ("WAD3_LoadWadFile: unable to read wad header\n");
 		return;

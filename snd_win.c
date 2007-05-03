@@ -16,10 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_win.c,v 1.12 2007-03-11 06:01:42 disconn3ct Exp $
+    $Id: snd_win.c,v 1.13 2007-05-03 12:03:55 johnnycz Exp $
 */
 
-#include <dsound.h>
 #include "quakedef.h"
 #include "winquake.h"
 #include "qsound.h"

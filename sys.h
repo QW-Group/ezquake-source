@@ -31,9 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define Sys_MSleep(x) usleep((x) * 1000)
 #endif
 
-#ifdef _WIN32
-#include <windows.h>
-#else
+#ifndef _WIN32
 #define DWORD unsigned int
 #define WINAPI
 #ifndef MAX_PATH
