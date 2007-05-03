@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.57.2.1 2007-04-29 12:02:09 qqshka Exp $
+    $Id: keys.c,v 1.57.2.2 2007-05-03 22:27:23 johnnycz Exp $
 
 */
 
@@ -1348,13 +1348,15 @@ void Key_Message (int key, wchar unichar) {
 				Cbuf_AddText(encode_say(chat_buffer));
 				Cbuf_AddText("\"\n");
 			}
-			key_dest = key_dest_beforemm;
+            if (key_dest_beforemm != key_message)
+			    key_dest = key_dest_beforemm;
 			chat_linepos = 0;
 			chat_buffer[0] = 0;
 			return;
 
 		case K_ESCAPE:
-			key_dest = key_dest_beforemm;
+            if (key_dest_beforemm != key_message)
+			    key_dest = key_dest_beforemm;
 			chat_buffer[0] = 0;
 			chat_linepos = 0;
 			return;
