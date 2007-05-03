@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.37.2.5 2007-05-03 22:13:30 disconn3ct Exp $
+	$Id: host.c,v 1.37.2.6 2007-05-03 22:20:48 disconn3ct Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -478,6 +478,7 @@ extern void CL_Fog_f (void);
 #endif
 extern void SB_SourceUnmarkAll(void);
 extern void SB_SourceMark(void);
+extern void Browser_Init2(void);
 
 
 	//disconnect: fix it if i forgot something
@@ -498,11 +499,9 @@ extern void SB_SourceMark(void);
 #endif
 	Cmd_AddCommand ("allskins", Skin_AllSkins_f);
 
-//	Cmd_AddCommand ("hud_recalculate", HUD_Recalculate_f);
+	Browser_Init2();
 	Cmd_AddCommand ("sb_sourceunmarkall", SB_SourceUnmarkAll);
 	Cmd_AddCommand ("sb_sourcemark", SB_SourceMark);
-
-	Browser_Init2();
 }
 
 qbool CmdLine_Play_Args(void)
