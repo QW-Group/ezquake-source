@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.82.2.3 2007-05-03 21:44:14 disconn3ct Exp $
+	$Id: cl_parse.c,v 1.82.2.4 2007-05-03 21:54:52 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -487,6 +487,16 @@ void CL_ProxyEnter (void) {
 		key_dest_beforecon = key_game;
 }
 
+static void CL_TransmitModelCrc (int index, char *info_key)
+{
+	if (index != -1) {
+		struct model_s *model = cl.model_precache[index];
+		unsigned short crc = model->crc;
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString (&cls.netchan.message, va("setinfo %s %d", info_key, (int) crc));
+	}
+}
+
 void CL_Prespawn (void)
 {
 	cl.worldmodel = cl.model_precache[1];
@@ -511,6 +521,9 @@ void CL_Prespawn (void)
 	HUD_NewMap(); // Cokeman 2006-05-28 HUD mvdradar
 #endif
 	Hunk_Check(); // make sure nothing is hurt
+
+	CL_TransmitModelCrc (cl_modelindices[mi_player], "pmodel");
+	CL_TransmitModelCrc (cl_modelindices[mi_eyes], "emodel");
 
 #if 0
 //TEI: loading entitys from map, at clientside,

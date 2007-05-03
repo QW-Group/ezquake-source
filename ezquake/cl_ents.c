@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.30 2007-03-11 06:01:35 disconn3ct Exp $
+	$Id: cl_ents.c,v 1.30.2.1 2007-05-03 21:54:52 disconn3ct Exp $
 
 */
 
@@ -67,6 +67,7 @@ void CL_InitEnts(void) {
 
 	cl_modelnames[mi_spike] = "progs/spike.mdl";
 	cl_modelnames[mi_player] = "progs/player.mdl";
+	cl_modelnames[mi_eyes] = "progs/eyes.mdl";
 	cl_modelnames[mi_flag] = "progs/flag.mdl";
 	cl_modelnames[mi_tf_flag] = "progs/tf_flag.mdl";
 	cl_modelnames[mi_tf_stan] = "progs/tf_stan.mdl";
