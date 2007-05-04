@@ -2,7 +2,7 @@
     Arithmetic expression evaluator
     @author johnnycz
     last edit:
-$Id: parser.c,v 1.15 2007-05-03 12:03:55 johnnycz Exp $
+$Id: parser.c,v 1.16 2007-05-04 11:48:47 johnnycz Exp $
 
 */
 
@@ -371,7 +371,7 @@ Following code represents this grammar
 
 */
 
-extern expr_val E(EParser p);
+LOCAL expr_val E(EParser p);
 
 LOCAL expr_val F(EParser p)
 {
