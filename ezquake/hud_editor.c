@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.22.2.5 2007-05-04 20:57:22 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.22.2.6 2007-05-04 21:35:27 cokeman1982 Exp $
 
 */
 
@@ -41,6 +41,7 @@ hud_editor_mode_t	hud_editor_mode			= hud_editmode_off;		// The current mode the
 hud_editor_mode_t	hud_editor_prevmode		= hud_editmode_off;		// The previous mode the HUD editor was in.
 
 qbool				hud_editor_showhelp		= false;				// Show the help plaque or not?
+qbool				hud_editor_showoutlines	= true;					// Show guidelines around the HUD elements.
 
 float				hud_mouse_x;									// The screen coordinates of the mouse cursor.
 float				hud_mouse_y;
@@ -1547,7 +1548,7 @@ static void HUD_Editor_DrawOutlines(void)
 {
 	hud_t *temp_hud	= hud_huds;
 
-	if(!temp_hud)
+	if(!temp_hud || !hud_editor_showoutlines)
 	{
 		return;
 	}
@@ -1783,7 +1784,7 @@ static void HUD_Editor_DrawConnections(hud_t *hud_hover)
 	int align_x = 0.0;
 	int align_y = 0.0;
 	
-	if (!hud_hover)
+	if (!hud_hover || !hud_editor_showoutlines)
 	{
 		return;
 	}
@@ -1975,12 +1976,13 @@ static void HUD_Editor_DrawHelp()
 		"yellow highlights at the position you're about to align to.\n"
 		"\n"
 		"  &cfd0Keyboard shortcuts:\n"
-		"  &c0dfP&r   Toggle HUD planmode on/off (default on).\n"
-		"  &c0dfH&r   Toggle this help.\n"
-		"  &c0dfF1&r  Toggle if moving should be allowed.\n"
-		"  &c0dfF2&r  Toggle resizing.\n"
-		"  &c0dfF3&r  Toggle aligning.\n"
-		"  &c0dfF4&r  Toggle placing.\n",
+		"  &c0dfP&r      Toggle HUD planmode on/off (default on).\n"
+		"  &c0dfH&r      Toggle this help.\n"
+		"  &c0dfF1&r     Toggle if moving should be allowed.\n"
+		"  &c0dfF2&r     Toggle resizing.\n"
+		"  &c0dfF3&r     Toggle aligning.\n"
+		"  &c0dfF4&r     Toggle placing.\n"
+		"  &c0dfSPACE&r  Toggle outlines/guidelines.\n",
 		0);
 }
 
@@ -2167,6 +2169,10 @@ void HUD_Editor_Key(int key, int unichar)
 		case 'h' :
 			// Toggle the help window.
 			hud_editor_showhelp = !hud_editor_showhelp;
+			break;
+		case K_SPACE :
+			// Toggle hud element outlines.
+			hud_editor_showoutlines = !hud_editor_showoutlines;
 			break;
 		case K_F1 :
 			// Toggle moving.
