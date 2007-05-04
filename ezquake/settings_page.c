@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.34.2.2 2007-04-16 09:22:00 johnnycz Exp $
+		$Id: settings_page.c,v 1.34.2.3 2007-05-04 16:39:00 johnnycz Exp $
 
 */
 
@@ -54,6 +54,15 @@ static float SliderPos(float min, float max, float val) { return (val-min)/(max-
 static const char* colors[14] = { "White", "Brown", "Lavender", "Khaki", "Red", "Lt Brown", "Peach", "Lt Peach", "Purple", "Dk Purple", "Tan", "Green", "Yellow", "Blue" };
 #define COLORNAME(x) colors[bound(0, ((int) x), sizeof(colors) / sizeof(char*) - 1)]
 
+float VARFVAL(const cvar_t *v)
+{
+    if ((v->flags & CVAR_LATCH) && v->latchedString)
+        return atof(v->latchedString);
+    else return v->value;
+}
+
+#define VARSVAL(x) (((x).flags & CVAR_LATCH) ? ((x).latchedString) : ((x).string))
+
 static int STHeight(setting* s) {
 	if (s->advanced && !menu_advanced.value)
     {
@@ -85,11 +94,11 @@ static void Setting_DrawNum(int x, int y, int w, setting* setting, qbool active)
 {
 	char buf[16];
 	x = Setting_PrintLabel(x,y,w, setting->label, active);
-	x = UI_DrawSlider (x, y, SliderPos(setting->min, setting->max, setting->cvar->value));
+	x = UI_DrawSlider (x, y, SliderPos(setting->min, setting->max, VARFVAL(setting->cvar)));
 	if (setting->step > 0.99)
-		snprintf(buf, sizeof(buf), "%3d", (int) setting->cvar->value);
+		snprintf(buf, sizeof(buf), "%3d", (int) VARFVAL(setting->cvar));
 	else
-		snprintf(buf, sizeof(buf), "%3.1f", setting->cvar->value);
+		snprintf(buf, sizeof(buf), "%3.1f", VARFVAL(setting->cvar));
 
 	UI_Print(x + LETW, y, buf, active);
 }
@@ -97,7 +106,7 @@ static void Setting_DrawNum(int x, int y, int w, setting* setting, qbool active)
 static void Setting_DrawBool(int x, int y, int w, setting* setting, qbool active)
 {
 	x = Setting_PrintLabel(x,y,w, setting->label, active);
-	UI_Print(x, y, setting->cvar->value ? "on" : "off", active);
+	UI_Print(x, y, VARFVAL(setting->cvar) ? "on" : "off", active);
 }
 
 static void Setting_DrawBoolAdv(int x, int y, int w, setting* setting, qbool active)
@@ -127,7 +136,8 @@ static void Setting_DrawAction(int x, int y, int w, setting* set, qbool active)
 static void Setting_DrawNamed(int x, int y, int w, setting* set, qbool active)
 {
 	x = Setting_PrintLabel(x, y, w, set->label, active);
-	UI_Print(x, y, set->named_ints[(int) bound(set->min, set->cvar->value, set->max)], active);
+	UI_Print(x, y, set->named_ints[(int) bound(set->min, VARFVAL(set->cvar), set->max)], active);
+    
 }
 
 static void Setting_DrawString(int x, int y, int w, setting* setting, qbool active)
@@ -136,16 +146,16 @@ static void Setting_DrawString(int x, int y, int w, setting* setting, qbool acti
 	if (active) {
 		CEditBox_Draw(&editbox, x, y, true);
 	} else {
-		UI_Print(x, y, setting->cvar->string, false);
+		UI_Print(x, y, VARSVAL(*(setting->cvar)), false);
 	}
 }
 
 static void Setting_DrawColor(int x, int y, int w, setting* set, qbool active)
 {
 	x = Setting_PrintLabel(x, y, w, set->label, active);
-	if (set->cvar->value >= 0) {
-	 	Draw_Fill(x, y, LETW*3, LINEHEIGHT, Sbar_ColorForMap(set->cvar->value));
-		UI_Print(x + 4*LETW, y, va("%i (%s)", (int) set->cvar->value, COLORNAME(set->cvar->value)), active);
+	if (VARFVAL(set->cvar) >= 0) {
+	 	Draw_Fill(x, y, LETW*3, LINEHEIGHT, Sbar_ColorForMap(VARFVAL(set->cvar)));
+		UI_Print(x + 4*LETW, y, va("%i (%s)", (int) VARFVAL(set->cvar), COLORNAME(VARFVAL(set->cvar))), active);
 	} else
 		UI_Print(x, y, "off", active);
 }
@@ -202,12 +212,12 @@ static void Setting_Increase(setting* set) {
 	float newval;
 
 	switch (set->type) {
-		case stt_bool: Cvar_Set (set->cvar, set->cvar->value ? "0" : "1"); break;
+		case stt_bool: Cvar_Set (set->cvar, VARFVAL(set->cvar) ? "0" : "1"); break;
 		case stt_custom: if (set->togglefnc) set->togglefnc(false); break;
 		case stt_num:
 		case stt_named:
 		case stt_playercolor:
-			newval = set->cvar->value + set->step;
+			newval = VARFVAL(set->cvar) + set->step;
 			if (set->max >= newval)
 				Cvar_SetValue(set->cvar, newval);
 			else if (set->type == stt_named)
@@ -227,12 +237,12 @@ static void Setting_Decrease(setting* set) {
 	float newval;
 
 	switch (set->type) {
-		case stt_bool: Cvar_Set (set->cvar, set->cvar->value ? "0" : "1"); break;
+		case stt_bool: Cvar_Set (set->cvar, VARFVAL(set->cvar) ? "0" : "1"); break;
 		case stt_custom: if (set->togglefnc) set->togglefnc(true); break;
 		case stt_num:
 		case stt_named:
 		case stt_playercolor:
-			newval = set->cvar->value - set->step;
+			newval = VARFVAL(set->cvar) - set->step;
 			if (set->min <= newval)
 				Cvar_SetValue(set->cvar, newval);
 			else if (set->type == stt_named)

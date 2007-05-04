@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.6 2007-05-04 14:58:24 johnnycz Exp $
+		$Id: menu_options.c,v 1.60.2.7 2007-05-04 16:39:00 johnnycz Exp $
 
 */
 
@@ -467,7 +467,6 @@ qbool CT_Opt_HUD_Mouse_Event(const mouse_state_t *ms)
 	return Settings_Mouse_Event(&setthud, ms);
 }
 
-
 settings_page settplayer;
 setting settplayer_arr[] = {
 	ADDSET_SEPARATOR("Player Settings"),
@@ -512,6 +511,12 @@ qbool CT_Opt_Player_Mouse_Event(const mouse_state_t *ms)
 
 //=============================================================================
 // <BINDS>
+
+extern cvar_t in_mouse, in_m_smooth, m_rate, in_m_os_parameters;
+const char* in_mouse_enum[] = { "off", "system", "Direct Input" };
+const char* in_m_os_parameters_enum[] = { "off", "keep accel settings", "keep speed settings", "keep all settings" };
+
+void Menu_Input_Restart(void) { Cbuf_AddText("in_restart\n"); }
 
 settings_page settbinds;
 setting settbinds_arr[] = {
@@ -561,19 +566,32 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Screenshot", "screenshot"),
 	ADDSET_BIND("Quit", "quit"),
 
-	ADDSET_SEPARATOR("Settings"),
+	ADDSET_SEPARATOR("Mouse Settings"),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Mouse Look", freelook),
+	ADDSET_BOOL		("Freelook", freelook),
 	ADDSET_BASIC_SECTION(),
-	ADDSET_NUMBER	("Mouse Speed", sensitivity, 1, 15, 0.25),
-	ADDSET_NUMBER	("Mouse Accel.", m_accel, 0, 1, 0.1),
-	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverted mouse will make you look down when you move the mouse up."),
+	ADDSET_NUMBER	("Sensitivity", sensitivity, 1, 15, 0.25),
+	ADDSET_NUMBER	("Acceleration", m_accel, 0, 1, 0.1),
+	ADDSET_CUSTOM	("Inverted Mouse", InvertMouseRead, InvertMouseToggle, "Inverted mouse will make you look down when you move the mouse up."),
+#ifdef _WIN32
+    ADDSET_ADVANCED_SECTION(),
+    ADDSET_STRING   ("X sensitivity", m_yaw),
+    ADDSET_STRING   ("Y sensitivity", m_pitch),
+    ADDSET_NAMED    ("Mouse Input Type", in_mouse, in_mouse_enum),
+    ADDSET_BOOL     ("DInput: Smoothing", in_m_smooth),
+    ADDSET_STRING   ("DInput: Rate (Hz)", m_rate),
+    ADDSET_NAMED    ("OS Mouse: Parms.", in_m_os_parameters, in_m_os_parameters_enum),
+    ADDSET_ACTION   ("Apply", Menu_Input_Restart, "Will restart the mouse input module and apply some settings"),
+    ADDSET_BASIC_SECTION(),
+#endif
+    ADDSET_SEPARATOR("Weapon Handling"),
 	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle, "Switches to picked up weapon if more powerful than what you're holding."),
 	ADDSET_BOOL		("Gun Preselect", cl_weaponpreselect),
 	ADDSET_BOOL		("Gun Auto hide", cl_weaponhide),
-	ADDSET_ADVANCED_SECTION(),
+    ADDSET_SEPARATOR("Movement"),
 	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "Maximum walking speed at all times."),
-	ADDSET_BOOL		("Smart Jump", cl_smartjump),
+	ADDSET_ADVANCED_SECTION(),
+    ADDSET_BOOL		("Smart Jump", cl_smartjump),
 	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
 	ADDSET_BASIC_SECTION(),
 	
@@ -764,7 +782,7 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Disable lin. interp.", cl_nolerp),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
-	ADDSET_BOOL		("Damage Flash", v_damagecshift),
+	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
 	ADDSET_BOOL		("Pickup Flashes", v_bonusflash),
 	ADDSET_SEPARATOR("Environment"),
 #ifdef GLQUAKE
