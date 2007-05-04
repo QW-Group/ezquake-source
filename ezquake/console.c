@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.52.2.3 2007-05-01 23:44:12 cokeman1982 Exp $
+	$Id: console.c,v 1.52.2.4 2007-05-04 09:09:36 johnnycz Exp $
 */
 // console.c
 
@@ -461,6 +461,13 @@ void Con_Init (void) {
 	Cvar_Register (&con_highlight_mark);
 	// added by jogi stop
 
+	Cvar_Register (&con_timestamps); 
+	Cvar_Register (&con_shift); 
+
+	Cvar_ResetCurrentGroup();
+
+    Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
+
 	Cvar_Register (&con_sound_mm1_file); 
 	Cvar_Register (&con_sound_mm2_file); 
 	Cvar_Register (&con_sound_spec_file); 
@@ -479,11 +486,7 @@ void Con_Init (void) {
 	Cmd_AddLegacyCommand("con_sound_spec_volume", "s_spec_volume");
 	Cmd_AddLegacyCommand("con_sound_other_volume", "s_otherchat_volume");
 
-
-	Cvar_Register (&con_timestamps); 
-	Cvar_Register (&con_shift); 
-
-	Cvar_ResetCurrentGroup();
+    Cvar_ResetCurrentGroup();
 
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
 	Cmd_AddCommand ("messagemode", Con_MessageMode_f);
