@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.16 2007-05-02 03:16:31 himan Exp $
+    $Id: teamplay.c,v 1.67.2.17 2007-05-04 06:53:33 himan Exp $
 */
 
 #define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
@@ -40,6 +40,41 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define COLORED(c,str) "{&c" #c #str "&cfff}"
 #define INPOINT(thing) strstr(Macro_PointName(), tp_name_##thing.string)
 #define DEAD() (cl.stats[STAT_HEALTH] < 1)
+
+/*
+Should we enforce special colors this way below or we just should make
+these values new default?
+In my opinion with new defaults we should wait for different color syntax. - johnnycz
+However this brings a problem - you always have to use these and cannot
+use the %-macros nor the $-macros.
+*/
+#define tp_ib_name_rl	    COLORED(f0f,rl)	    // purple rl
+#define tp_ib_name_lg	    COLORED(f0f,lg)	    // purple lg
+#define tp_ib_name_gl	    COLORED(f0f,gl)	    // purple gl
+#define tp_ib_name_sng	    COLORED(f0f,sng)	// purple sng
+#define tp_ib_name_ga	    COLORED(0b0,ga)	    // green ga
+#define tp_ib_name_ya	    COLORED(ff0,ya)	    // yellow ya
+#define tp_ib_name_ra	    COLORED(e00,ra)	    // red ra
+#define tp_ib_name_mh	    COLORED(03F,mega)	// blue mega
+#define tp_ib_name_backpack	COLORED(F0F,pack)	// purple backpack
+#define tp_ib_name_quad	    COLORED(03F,quad)	// blue quad
+#define tp_ib_name_pent	    COLORED(e00,pent)	// red pent
+#define tp_ib_name_ring	    COLORED(ff0,ring)	// yellow ring
+#define tp_ib_name_eyes	    COLORED(ff0,eyes)	// yellow eyes (remember, ring is when you see the ring, eyes is when someone has rings!)
+#define tp_ib_name_enemy	COLORED(e00,enemy)	// red enemy
+#define tp_ib_name_team	    COLORED(0b0,team)	// green "team" (with powerup)
+#define tp_ib_name_teammate	COLORED(0b0,teammate)// green "teamate"
+#define tp_ib_name_quaded	COLORED(03F,quaded)	// blue "quaded"
+#define tp_ib_name_pented	COLORED(e00,pented)	// red "pented"
+#define tp_ib_name_rlg      COLORED(f0f,rlg)    // purple rlg
+#define tp_ib_name_safe	    COLORED(0b0,safe)	// green safe
+#define tp_ib_name_help	    COLORED(ff0,help)	// yellow help
+
+#define tp_sep_red		"$R$R"      // enemy, lost
+#define tp_sep_green	"$G$G"      // killed quad/ring/pent enemy, safe
+#define tp_sep_yellow	"$Y$Y"      // help
+#define tp_sep_white	"$x04$x04"  // Two white bubbles, location of item
+#define tp_sep_blue		"$B$B"      // 
  
 typedef char * MSGPART;
  
@@ -507,6 +542,31 @@ char *Macro_Colored_Armor_f (void)
 		msg = COLORED(e00,%a);
 	else
 		msg = "0";
+ 
+	snprintf (macro_buf, sizeof(macro_buf), "%s", msg);
+	return macro_buf;
+}
+
+char *Macro_Colored_Powerups_f (void)
+{
+	char* msg = "";
+ 
+	if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
+		msg = tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring;
+	else if (HAVE_QUAD() && HAVE_PENT())
+		msg = tp_ib_name_quad " " tp_ib_name_pent;
+	else if (HAVE_QUAD() && HAVE_RING())
+		msg = tp_ib_name_quad " " tp_ib_name_ring;
+	else if (HAVE_PENT() && HAVE_RING())
+		msg = tp_ib_name_pent " " tp_ib_name_ring;
+	else if (HAVE_QUAD())
+		msg = tp_ib_name_quad;
+	else if (HAVE_PENT())
+		msg = tp_ib_name_pent;
+	else if (HAVE_RING())
+		msg = tp_ib_name_ring;
+	else
+		msg = "";
  
 	snprintf (macro_buf, sizeof(macro_buf), "%s", msg);
 	return macro_buf;
@@ -1164,6 +1224,7 @@ void TP_AddMacros (void)
 	Cmd_AddMacroEx ("armortype", Macro_ArmorType, teamplay);
 	Cmd_AddMacroEx ("armor", Macro_Armor, teamplay);
 	Cmd_AddMacroEx ("colored_armor", Macro_Colored_Armor_f, teamplay);
+	Cmd_AddMacroEx ("colored_powerups", Macro_Colored_Powerups_f, teamplay);
  
 	Cmd_AddMacroEx ("shells", Macro_Shells, teamplay);
 	Cmd_AddMacroEx ("nails", Macro_Nails, teamplay);
@@ -3081,13 +3142,13 @@ char *pknames[] = {"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
 #define NUM_ITEMFLAGS 27
  
 #define it_powerups	(it_quad|it_pent|it_ring)
-#define it_weapons	(it_lg|it_rl|it_gl|it_sng|it_ng|it_ssg)
+#define it_weapons	(it_lg|it_rl|it_gl|it_sng)// Does anyone really care to report ng/ssg?
 #define it_armor	(it_ra|it_ya|it_ga)
 #define it_ammo		(it_cells|it_rockets|it_nails|it_shells)
 #define it_players	(it_teammate|it_enemy|it_eyes)
  
 #define default_pkflags (it_powerups|it_suit|it_armor|it_weapons|it_mh| \
-				it_rockets|it_pack|it_flag)
+				it_rockets|it_cells||it_pack|it_flag)
  
 #define default_tookflags (it_powerups|it_ra|it_ya|it_lg|it_rl|it_mh|it_flag)
  
@@ -3285,44 +3346,8 @@ void TP_Send_TeamSay(char *format, ...)
     Cbuf_AddText(tp_msg);
 }
  
-#define tp_sep_red		"$R$R"      // enemy, lost
-#define tp_sep_green	"$G$G"      // killed quad/ring/pent enemy, safe
-#define tp_sep_yellow	"$Y$Y"      // help
-#define tp_sep_white	"$x04$x04"  // Two white bubbles, location of item
-#define tp_sep_blue		"$B$B"      // 
- 
-/*
-Should we enforce special colors this way below or we just should make
-these values new default?
-In my opinion with new defaults we should wait for different color syntax. - johnnycz
-However this brings a problem - you always have to use these and cannot
-use the %-macros nor the $-macros.
-*/
- 
-#define tp_ib_name_rl	    COLORED(f0f,rl)	    // purple rl
-#define tp_ib_name_lg	    COLORED(f0f,lg)	    // purple lg
-#define tp_ib_name_gl	    COLORED(f0f,gl)	    // purple gl
-#define tp_ib_name_sng	    COLORED(f0f,sng)	// purple sng
-#define tp_ib_name_ga	    COLORED(0b0,ga)	    // green ga
-#define tp_ib_name_ya	    COLORED(ff0,ya)	    // yellow ya
-#define tp_ib_name_ra	    COLORED(e00,ra)	    // red ra
-#define tp_ib_name_mh	    COLORED(03F,mega)	// blue mega
-#define tp_ib_name_backpack	COLORED(F0F,pack)	// purple backpack
-#define tp_ib_name_quad	    COLORED(03F,quad)	// blue quad
-#define tp_ib_name_pent	    COLORED(e00,pent)	// red pent
-#define tp_ib_name_ring	    COLORED(ff0,ring)	// yellow ring
-#define tp_ib_name_eyes	    COLORED(ff0,eyes)	// yellow eyes (remember, ring is when you see the ring, eyes is when someone has rings!)
-#define tp_ib_name_enemy	COLORED(e00,enemy)	// red enemy
-#define tp_ib_name_team	    COLORED(0b0,team)	// green "team" (with powerup)
-#define tp_ib_name_teammate	COLORED(0b0,teammate)// green "teamate"
-#define tp_ib_name_quaded	COLORED(03F,quaded)	// blue "quaded"
-#define tp_ib_name_pented	COLORED(e00,pented)	// red "pented"
-#define tp_ib_name_rlg      COLORED(f0f,rlg)    // purple rlg
-#define tp_ib_name_safe	    COLORED(0b0,safe)	// green safe
-#define tp_ib_name_help	    COLORED(ff0,help)	// yellow help
- 
- 
- 
+///////////// Teamplay Scripts /////////////
+
 void TP_Msg_Lost_f (void) // Is this function useful? tp_report does this already.
 {
     MSGPART led = tp_sep_red;
@@ -3340,7 +3365,7 @@ void TP_Msg_Lost_f (void) // Is this function useful? tp_report does this alread
     TP_Send_TeamSay("%s %s%s", led, msg1, msg2);
 }
 
-
+// moved more defines to the beginning, clean up, added $colored_powerups
 void TP_Msg_ReportComing(qbool report) // tp_report and tp_coming are similar, differences are led color, where %l is, and the word "coming"
 {
     MSGPART msg1 = "";
@@ -3358,23 +3383,9 @@ void TP_Msg_ReportComing(qbool report) // tp_report and tp_coming are similar, d
 		else
 			msg1 = tp_sep_white " {coming}";
 	}
- 
-	if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
-		msg4 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring;
-	else if (HAVE_QUAD() && HAVE_PENT())
-		msg4 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent;
-	else if (HAVE_QUAD() && HAVE_RING())
-		msg4 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_ring;
-	else if (HAVE_PENT() && HAVE_RING())
-		msg4 = " " tp_ib_name_team " " tp_ib_name_pent " " tp_ib_name_ring;
-	else if (HAVE_QUAD())
-		msg4 = " " tp_ib_name_team " " tp_ib_name_quad;
-	else if (HAVE_PENT())
-		msg4 = " " tp_ib_name_team " " tp_ib_name_pent;
-	else if (HAVE_RING())
-		msg4 = " " tp_ib_name_team " " tp_ib_name_ring;
-	else
-		msg4 = "";
+
+	if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
+		msg4 = " " tp_ib_name_team " $colored_powerups";
  
     if		(HAVE_RL() && HAVE_LG())	msg5 = " " tp_ib_name_rlg ":$rockets/$cells";
     else if (HAVE_RL())					msg5 = " " tp_ib_name_rl ":$rockets";
@@ -3509,22 +3520,8 @@ void TP_Msg_SafeHelp(qbool safe)
  
 	msg2 = "$[{%l}$]";
  
-	if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
-		msg3 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring;
-	else if (HAVE_QUAD() && HAVE_PENT())
-		msg3 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent;
-	else if (HAVE_QUAD() && HAVE_RING())
-		msg3 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_ring;
-	else if (HAVE_PENT() && HAVE_RING())
-		msg3 = " " tp_ib_name_team " " tp_ib_name_pent " " tp_ib_name_ring;
-	else if (HAVE_QUAD())
-		msg3 = " " tp_ib_name_team " " tp_ib_name_quad;
-	else if (HAVE_PENT())
-		msg3 = " " tp_ib_name_team " " tp_ib_name_pent;
-	else if (HAVE_RING())
-		msg3 = " " tp_ib_name_team " " tp_ib_name_ring;
-	else
-		msg3 = "";
+	if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
+		msg3 = " " tp_ib_name_team " $colored_powerups";
  
     if		(HAVE_RL() && HAVE_LG())	msg4 = " " tp_ib_name_rlg ":$rockets/$cells";
     else if (HAVE_RL())					msg4 = " " tp_ib_name_rl ":$rockets";
@@ -3580,13 +3577,30 @@ void TP_Msg_QuadDead_f (void) // tp_enemypwr for all cases?
 }
 
 
-void TP_Msg_Took_f (void)
+void TP_Msg_Took_f (void) // we need tp_tookpriorities // rockets/cells dont work, tp_took lines ~3120
 {
     MSGPART msg1 = "";
+	MSGPART msg2 = "";
  
-	//took
- 
-	TP_Send_TeamSay(tp_sep_white " %s", msg1);
+	if (TOOK(nothing)) // notice: shit we don't want is shown in $took currently.
+		return;
+	else if (TOOK(quad) || TOOK(pent) || TOOK(ring))
+		TP_Msg_EnemyPowerup_f();
+	else
+	{
+		msg2 = "$[{%l}$]";
+		if	(TOOK(rl))											msg1 = tp_ib_name_rl;
+		else if (TOOK(lg))										msg1 = tp_ib_name_lg;
+		else if (TOOK(gl))										msg1 = tp_ib_name_gl;
+		else if (TOOK(sng))										msg1 = tp_ib_name_sng;
+		else if (TOOK(backpack))								msg1 = tp_ib_name_backpack;
+		else if (TOOK(rockets) || TOOK(cells))					msg1 = "{$took}";
+		else if (TOOK(mh))										msg1 = tp_ib_name_mh;
+		else if (TOOK(ra))										msg1 = tp_ib_name_ra;
+		else if (TOOK(ya))										msg1 = tp_ib_name_ya;
+		else if (TOOK(ga))										msg1 = tp_ib_name_ga;
+	}
+	TP_Send_TeamSay(tp_sep_white " {took} %s at %s", msg1, msg2);
 }
 
 
@@ -4632,5 +4646,6 @@ void TP_Init (void)
 	Cmd_AddCommand ("tp_getquad", TP_Msg_GetQuad_f);
 	Cmd_AddCommand ("tp_getpent", TP_Msg_GetPent_f);
 	Cmd_AddCommand ("tp_msgpoint", TP_Msg_Point_f);
+	Cmd_AddCommand ("tp_msgtook", TP_Msg_Took_f);
  
 }
