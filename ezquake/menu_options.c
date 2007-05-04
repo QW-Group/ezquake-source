@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.5 2007-05-03 22:40:41 johnnycz Exp $
+		$Id: menu_options.c,v 1.60.2.6 2007-05-04 14:58:24 johnnycz Exp $
 
 */
 
@@ -171,6 +171,7 @@ const char* scrautoid_enum[] = { "off", "nick", "health+armor", "health+armor+ty
 const char* coloredtext_enum[] = { "off", "simple", "frag messages" };
 const char* autorecord_enum[] = { "off", "don't save", "auto save" };
 const char* hud_enum[] = { "classic", "new", "combined" };
+const char* ignorespec_enum[] = { "off", "on (as player)", "on (always)" };
 
 const char* SshotformatRead(void) {
 	return scr_sshot_format.string;
@@ -314,7 +315,7 @@ setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Chat settings"),
 	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
 	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
-	ADDSET_BOOL		("Ignore Spectators", ignore_spec),
+	ADDSET_NAMED	("Ignore Spectators", ignore_spec, ignorespec_enum),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
 	ADDSET_BASIC_SECTION(),
