@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.7 2007-05-04 16:39:00 johnnycz Exp $
+		$Id: menu_options.c,v 1.60.2.8 2007-05-05 06:18:43 himan Exp $
 
 */
 
@@ -281,10 +281,10 @@ void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f, "Browse the \"QuakeWorld for Freshies\" guide by Apollyon."),
-	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens up the console."),
+	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens the console."),
 	ADDSET_ACTION	("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
 #ifdef _WIN32
-    ADDSET_CUSTOM	("Process Priority", PriorityRead, PriorityToggle, "Change client process priority. If you experience tearing or lagging, change this value to something different."),
+    ADDSET_CUSTOM	("Process Priority", PriorityRead, PriorityToggle, "Change client process priority. If you experience tearing or lagging, change this value to something that works for you."),
 #endif
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
 	//Video
@@ -514,7 +514,7 @@ qbool CT_Opt_Player_Mouse_Event(const mouse_state_t *ms)
 
 extern cvar_t in_mouse, in_m_smooth, m_rate, in_m_os_parameters;
 const char* in_mouse_enum[] = { "off", "system", "Direct Input" };
-const char* in_m_os_parameters_enum[] = { "off", "keep accel settings", "keep speed settings", "keep all settings" };
+const char* in_m_os_parameters_enum[] = { "off", "Keep accel settings", "Keep speed settings", "Keep all settings" };
 
 void Menu_Input_Restart(void) { Cbuf_AddText("in_restart\n"); }
 
@@ -549,6 +549,8 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Report Status", "tp_report"),
 	ADDSET_BIND("Lost location", "tp_lost"),
 	ADDSET_BIND("Location safe", "tp_safe"),
+	ADDSET_BIND("Point at item", "tp_msgpoint"),
+	ADDSET_BIND("Took item", "tp_msgtook"),
 	ADDSET_BIND("Coming from location", "tp_coming"),
 	ADDSET_BIND("Help location", "tp_help"),
 	ADDSET_BIND("Enemy Quad Dead", "tp_quaddead"),
@@ -572,7 +574,7 @@ setting settbinds_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("Sensitivity", sensitivity, 1, 15, 0.25),
 	ADDSET_NUMBER	("Acceleration", m_accel, 0, 1, 0.1),
-	ADDSET_CUSTOM	("Inverted Mouse", InvertMouseRead, InvertMouseToggle, "Inverted mouse will make you look down when you move the mouse up."),
+	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Invert mouse will make you look down when the mouse is moved up."),
 #ifdef _WIN32
     ADDSET_ADVANCED_SECTION(),
     ADDSET_STRING   ("X sensitivity", m_yaw),
@@ -581,7 +583,7 @@ setting settbinds_arr[] = {
     ADDSET_BOOL     ("DInput: Smoothing", in_m_smooth),
     ADDSET_STRING   ("DInput: Rate (Hz)", m_rate),
     ADDSET_NAMED    ("OS Mouse: Parms.", in_m_os_parameters, in_m_os_parameters_enum),
-    ADDSET_ACTION   ("Apply", Menu_Input_Restart, "Will restart the mouse input module and apply some settings"),
+    ADDSET_ACTION   ("Apply", Menu_Input_Restart, "Will restart the mouse input module and apply settings."),
     ADDSET_BASIC_SECTION(),
 #endif
     ADDSET_SEPARATOR("Weapon Handling"),
@@ -589,7 +591,7 @@ setting settbinds_arr[] = {
 	ADDSET_BOOL		("Gun Preselect", cl_weaponpreselect),
 	ADDSET_BOOL		("Gun Auto hide", cl_weaponhide),
     ADDSET_SEPARATOR("Movement"),
-	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "Maximum walking speed at all times."),
+	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "Maximum forward speed at all times."),
 	ADDSET_ADVANCED_SECTION(),
     ADDSET_BOOL		("Smart Jump", cl_smartjump),
 	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
@@ -774,10 +776,10 @@ void TexturesqualityToggle(qbool back) {
 
 setting settfps_arr[] = {
 	ADDSET_SEPARATOR("Presets"),
-	ADDSET_ACTION	("Load Fast Preset", LoadFastPreset, "Adjusted for high performance"),
-	ADDSET_ACTION	("Load HQ preset", LoadHQPreset, "Adjusted for high image quality"),
+	ADDSET_ACTION	("Load Fast Preset", LoadFastPreset, "Adjust for high performance."),
+	ADDSET_ACTION	("Load HQ preset", LoadHQPreset, "Adjust for high image-quality."),
 	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Tells the client to cap the amount of frames rendered per second."),
+	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Tells the client to limit the amount of frames rendered per second."),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Disable lin. interp.", cl_nolerp),
 	ADDSET_BASIC_SECTION(),
@@ -955,11 +957,11 @@ void FullScreenToggle(qbool back) { mvs_selected.fullscreen = mvs_selected.fulls
 
 setting settvideo_arr[] = {
 	ADDSET_SEPARATOR("Screen settings"),
-	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution used within the game."),
+	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
 	ADDSET_CUSTOM("Bit depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
-	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle fullscreen and windowed mode."),
+	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
 	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
-	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the rendered and applies selected resolution."),
+	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
 	ADDSET_SEPARATOR("Text layer settings"),
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
 	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
