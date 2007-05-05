@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.19 2007-05-05 18:57:42 johnnycz Exp $
+    $Id: teamplay.c,v 1.67.2.20 2007-05-05 19:32:15 himan Exp $
 */
 
 #define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
@@ -3511,7 +3511,7 @@ void TP_Msg_SafeHelp(qbool safe)
 	if (safe)
 		{
 			if (INPOINT(enemy))
-				return;
+				return; // if you see enemy, it's usually not safe
 			else
 				msg1 = tp_sep_green " " tp_ib_name_safe;
 		}
@@ -3564,12 +3564,12 @@ void TP_Msg_GetQuad_f (void) { TP_Msg_GetPentQuad(true); }
 void TP_Msg_GetPent_f (void) { TP_Msg_GetPentQuad(false); }
 
 
-void TP_Msg_QuadDead_f (void) // tp_enemypwr for all cases?
+void TP_Msg_QuadDead_f (void)
 {
     MSGPART msg1 = "";
  
 	if (HAVE_QUAD() || INPOINT(quaded)) // If ANYONE has quad
-		TP_Msg_EnemyPowerup_f(); // tp_enemypwr can handle this
+		TP_Msg_EnemyPowerup_f(); // tp_enemypwr can handle this & all cases regarding players/powerups
 	else msg1 = tp_ib_name_quad " dead";
  
 	TP_Send_TeamSay(tp_sep_yellow " %s", msg1);
@@ -3584,7 +3584,7 @@ void TP_Msg_Took_f (void) // later: runes, flag
 	if (TOOK(nothing))
 		return;
 	else if (TOOK(quad) || TOOK(pent) || TOOK(ring))
-		TP_Msg_EnemyPowerup_f();
+		TP_Msg_EnemyPowerup_f(); // tp_enemypwr can handle all cases with player/powerup
 	else
 	{
 		msg2 = "$[{%l}$]";
@@ -3612,7 +3612,7 @@ void TP_Msg_Point_f (void)
  
 	if (INPOINT(nothing))
 		return;
-	else if (INPOINT(eyes) || ((INPOINT(enemy) || INPOINT(teammate)) && (INPOINT(quaded) || INPOINT (pented)))) // enemy with powerup
+	else if (INPOINT(eyes) || ((INPOINT(enemy) || INPOINT(teammate)) && (INPOINT(quaded) || INPOINT (pented)))) // enemy with powerup, or player with eyes
 		TP_Msg_EnemyPowerup_f(); // we use tp_enemypwr because it checks for all cases of player + powerup =)
 	else
 	{ // the following are grouped into the if's by the color leds they will be.
@@ -3652,10 +3652,12 @@ void TP_Msg_Point_f (void)
 					else if (INPOINT(nails)) 	msg2 = "{nails}";
 					
 					else if (INPOINT(mh))		msg2 = tp_ib_name_mh; // why does this display as ga? BUG BUG BUGBUG BUG BUGBUG BUG BUGBUG BUG BUGBUG BUG BUGBUG BUG
+					
+					else msg2 = "$point"; // this should never happen
 			}
 	}
 	
-	//led(1) item(2) at loc
+	//led(1) item(2) at loc(3)
 	TP_Send_TeamSay("%s %s %s", msg1, msg2, msg3);
 }
 
@@ -3664,7 +3666,7 @@ void TP_Msg_Need_f (void)
 {
     MSGPART msg1 = "";
  
-	// need
+	// todo
 	
 	TP_Send_TeamSay(tp_sep_green " %s", msg1);
 }
