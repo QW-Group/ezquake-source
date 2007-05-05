@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.41.2.1 2007-04-16 22:55:08 disconn3ct Exp $
+	$Id: cl_cmd.c,v 1.41.2.2 2007-05-05 13:53:32 cokeman1982 Exp $
 */
 
 #include <time.h>
@@ -195,8 +195,12 @@ void CL_Say_f (void) {
 	
 
 	SZ_Print (&cls.netchan.message, " ");
+	
+	// Get rid of the leading/tailing "'s that Cmd_Args() contains.
+	strlcpy(msg, Cmd_Args() + 1, sizeof(msg));
+	msg[max(0, strlen(msg) - 1)] = 0;
 
-	s = TP_ParseMacroString (Cmd_Args());
+	s = TP_ParseMacroString (msg);
 	s = TP_ParseFunChars (s, true);
 
 	if (!strcasecmp(Cmd_Argv(0), "say_team") && !cl.spectator && cl_fakename.string[0] && !strchr(s, '\x0d') /* explicit $\ in message overrides cl_fakename */)
