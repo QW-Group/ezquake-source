@@ -4,12 +4,11 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.1 2007-05-05 22:28:29 johnnycz Exp $
+  $Id: tp_msgs.c,v 1.1.2.2 2007-05-05 22:38:41 johnnycz Exp $
 
 */
 
 #include "quakedef.h"
-#include "tp_msgs.h"
 #include "teamplay.h"
 
 #define GLOBAL /* */
