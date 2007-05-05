@@ -1,4 +1,12 @@
+/**
 
+  Inbuilt teamplay messages module
+
+  made by johnnycz, Up2nOgOoD[ROCK]
+  last edit:
+  $Id: tp_msgs.h,v 1.1.2.2 2007-05-05 22:29:16 johnnycz Exp $
+
+*/
 
 #ifndef __TP_MSGS_H__
 #define __TP_MSGS_H__
