@@ -177,3 +177,86 @@ typedef struct locdata_s {
 } locdata_t;
 
 int BestWeaponFromStatItems (int stat);
+
+#define it_quad		(1 << 0)
+#define it_pent		(1 << 1)
+#define it_ring		(1 << 2)
+#define it_suit		(1 << 3)
+#define it_ra		(1 << 4)
+#define it_ya		(1 << 5)
+#define it_ga		(1 << 6)
+#define it_mh		(1 << 7)
+#define it_health	(1 << 8)
+#define it_lg		(1 << 9)
+#define it_rl		(1 << 10)
+#define it_gl		(1 << 11)
+#define it_sng		(1 << 12)
+#define it_ng		(1 << 13)
+#define it_ssg		(1 << 14)
+#define it_pack		(1 << 15)
+#define it_cells	(1 << 16)
+#define it_rockets	(1 << 17)
+#define it_nails	(1 << 18)
+#define it_shells	(1 << 19)
+#define it_flag		(1 << 20)
+#define it_teammate	(1 << 21)
+#define it_enemy	(1 << 22)
+#define it_eyes		(1 << 23)
+#define it_sentry   (1 << 24)
+#define it_disp		(1 << 25)
+#define it_runes	(1 << 26)
+#define it_quaded   (1 << 27)
+#define it_pented   (1 << 28)
+#define NUM_ITEMFLAGS 29
+ 
+#define it_powerups	(it_quad|it_pent|it_ring)
+#define it_weapons	(it_lg|it_rl|it_gl|it_sng)// Does anyone really care to report ng/ssg?
+#define it_armor	(it_ra|it_ya|it_ga)
+#define it_ammo		(it_cells|it_rockets|it_nails|it_shells)
+#define it_players	(it_teammate|it_enemy|it_eyes)
+
+// this structure is cleared after entering a new map
+typedef struct tvars_s
+{
+	int		health;
+	int		items;
+	int		olditems;
+	int		activeweapon;
+	int		stat_framecounts[MAX_CL_STATS];
+	double	deathtrigger_time;
+	float	f_skins_reply_time;
+	float	f_version_reply_time;
+	char	lastdeathloc[MAX_LOC_NAME];
+	char	tookname[32];
+    int     tookflag;
+    char	tookloc[MAX_LOC_NAME];
+	double	tooktime;
+	double	pointtime; // cls.realtime for which pointitem & pointloc are valid
+	char	pointname[32];
+    int     pointflag;
+	char	pointloc[MAX_LOC_NAME];
+	int		pointtype;
+	char	nearestitemloc[MAX_LOC_NAME];
+	char	lastreportedloc[MAX_LOC_NAME];
+	double	lastdrop_time;
+	char	lastdroploc[MAX_LOC_NAME];
+	char	lasttrigger_match[256];
+ 
+	int	numenemies;
+	int	numfriendlies;
+	int	last_numenemies;
+	int	last_numfriendlies;
+ 
+	int enemy_powerups;
+	double enemy_powerups_time;
+} tvars_t;
+ 
+extern tvars_t vars;
+
+extern char *TP_PlayerName (void);
+
+#define	TP_TOOK_EXPIRE_TIME		15
+#define	TP_POINT_EXPIRE_TIME	TP_TOOK_EXPIRE_TIME
+
+extern void TP_FindPoint (void);
+#define TOOK_EMPTY() (!vars.tooktime || cls.realtime > vars.tooktime + TP_TOOK_EXPIRE_TIME)
