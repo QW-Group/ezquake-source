@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.30.2.1 2007-05-03 21:54:52 disconn3ct Exp $
+	$Id: cl_ents.c,v 1.30.2.2 2007-05-05 22:03:40 disconn3ct Exp $
 
 */
 
@@ -756,7 +756,7 @@ void CL_LinkPacketEntities (void) {
 					//VULT PARTICLES
 					else if (r_rockettrail.value == 8)
 					{
-						byte color[2];
+						byte color[3];
 						color[0] = 0; color[1] = 70; color[2] = 255;
 						FireballTrail (*old_origin, ent.origin, &cent->trail_origin, color, 2, 0.5);
 					}
@@ -767,7 +767,7 @@ void CL_LinkPacketEntities (void) {
 						FuelRodGunTrail (*old_origin, ent.origin, ent.angles, &cent->trail_origin);
 					else if (r_rockettrail.value == 11)
 					{
-						byte color[2];
+						byte color[3];
 						color[0] = 255; color[1] = 70; color[2] = 5;
 						FireballTrailWave (*old_origin, ent.origin, &cent->trail_origin, color, 2, 0.5, ent.angles);
 					}
@@ -835,7 +835,7 @@ void CL_LinkPacketEntities (void) {
 					//VULT PARTICLES
 					else if (r_grenadetrail.value == 8)
 					{
-						byte color[2];
+						byte color[3];
 						color[0] = 0; color[1] = 70; color[2] = 255;
 						FireballTrail (*old_origin, ent.origin, &cent->trail_origin, color, 2, 0.5);
 					}
@@ -846,7 +846,7 @@ void CL_LinkPacketEntities (void) {
 						FuelRodGunTrail (*old_origin, ent.origin, ent.angles, &cent->trail_origin);
 					else if (r_grenadetrail.value == 11)
 					{
-						byte color[2];
+						byte color[3];
 						color[0] = 255; color[1] = 70; color[2] = 5;
 						FireballTrailWave (*old_origin, ent.origin, &cent->trail_origin, color, 2, 0.5, ent.angles);
 					}
@@ -912,7 +912,7 @@ void CL_LinkPacketEntities (void) {
 			{
 				if (amf_nailtrail_plasma.value)
 				{
-					byte color[2];
+					byte color[3];
 					color[0] = 0; color[1] = 70; color[2] = 255;
 					FireballTrail (*old_origin, ent.origin, &cent->trail_origin, color, 0.6, 0.3);
 				}

@@ -1772,7 +1772,7 @@ void RainSplash (vec3_t org)
 
 //VULT PARTICLES
 //Cheap function which will generate some sparks for me to be called elsewhere
-void SparkGen (vec3_t org, byte col[2], float count, float size, float life)
+void SparkGen (vec3_t org, byte col[3], float count, float size, float life)
 {
 	col_t color;
 	vec3_t dir;
@@ -2269,7 +2269,7 @@ void AMFDEBUGTRAIL (vec3_t start, vec3_t end, float time)
 }
 
 //VULT PARTICLES
-void FireballTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[2], float size, float life)
+void FireballTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[3], float size, float life)
 {
 	col_t color;
 	color[0] = col[0];
@@ -2294,7 +2294,7 @@ void FireballTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[2],
 }
 
 //VULT PARTICLES
-void FireballTrailWave (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[2], float size, float life, vec3_t angle)
+void FireballTrailWave (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[3], float size, float life, vec3_t angle)
 {
 	int i, j;
 	vec3_t dir, vec;

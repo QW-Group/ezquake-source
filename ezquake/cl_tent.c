@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.27 2007-03-11 06:01:36 disconn3ct Exp $
+	$Id: cl_tent.c,v 1.27.2.1 2007-05-05 22:03:41 disconn3ct Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -214,7 +214,7 @@ void CL_ParseTEnt (void) {
 	vec3_t pos;
 	dlight_t *dl;
 #ifdef GLQUAKE
-	byte col[2];
+	byte col[3];
 #endif
 	pos[0] = pos[1] = pos[2] = 0;
 	type = MSG_ReadByte ();

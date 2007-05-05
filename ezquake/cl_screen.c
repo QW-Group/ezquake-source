@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.111.2.5 2007-04-19 16:51:06 qqshka Exp $
+$Id: cl_screen.c,v 1.111.2.6 2007-05-05 22:03:41 disconn3ct Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -1127,7 +1127,7 @@ void SCR_DrawAutoID (void)
 
 // qqshka: code is a mixture of autoid and particle engine
 
-typedef byte col_t[4];
+typedef byte col_t[4]; // FIXME: why 4?
 
 typedef struct ci_player_s {
 	vec3_t		org;

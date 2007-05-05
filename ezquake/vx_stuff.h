@@ -47,8 +47,7 @@ int	explosionflashtexture7;
 float CL_TraceLine (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal);
 void WeatherEffect(void);
 int QW_strncmp (char *s1, char *s2);
-void VXSparks (vec3_t org, byte col[2], float dist, float count, float size, float life);
-void SparkGen (vec3_t org, byte col[2], float count, float size, float life);
+void SparkGen (vec3_t org, byte col[3], float count, float size, float life);
 extern cvar_t tei_lavafire;
 extern cvar_t tei_slime;
 
@@ -151,8 +150,8 @@ void VXExplosion (vec3_t org);
 void VXBlood (vec3_t org, float count);
 void AMFDEBUGTRAIL (vec3_t start, vec3_t end, float time);
 void FuelRodGunTrail (vec3_t start, vec3_t end, vec3_t angle, vec3_t *trail_origin);
-void FireballTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[2], float size, float life);
-void FireballTrailWave (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[2], float size, float life, vec3_t angle);
+void FireballTrail (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[3], float size, float life);
+void FireballTrailWave (vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[3], float size, float life, vec3_t angle);
 
 void DrawMuzzleflash (vec3_t start, vec3_t angle, vec3_t vel);
 void VXNailhit (vec3_t org, float count);
