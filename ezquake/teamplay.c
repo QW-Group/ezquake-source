@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.20 2007-05-05 19:32:15 himan Exp $
+    $Id: teamplay.c,v 1.67.2.21 2007-05-05 20:10:38 himan Exp $
 */
 
 #define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
@@ -3150,7 +3150,7 @@ char *pknames[] = {"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
 #define default_pkflags (it_powerups|it_suit|it_armor|it_weapons|it_mh| \
 				it_rockets|it_cells||it_pack|it_flag)
  
-#define default_tookflags (it_powerups|it_ra|it_ya|it_lg|it_rl|it_mh|it_flag)
+#define default_tookflags (it_powerups|it_ra|it_ya|it_ga|it_lg|it_rl|it_gl|it_sng|it_pack|it_rockets|it_cells|it_mh|it_flag)
  
 /*
 powerups flag runes players suit armor sentry  mh disp rl lg pack gl sng rockets cells nails
@@ -3375,7 +3375,10 @@ void TP_Msg_ReportComing(qbool report) // tp_report and tp_coming are similar, d
 	MSGPART msg5 = "";
  
 	if (DEAD()) // no matter what, if dead report lost
+		{
 		TP_Msg_Lost_f();
+		return;
+		}
 	else
 	{
 		if (report)
@@ -3541,7 +3544,10 @@ void TP_Msg_GetPentQuad(qbool quad)
 	if (quad)
 	{
 		if (HAVE_QUAD() || (INPOINT(quaded) && (INPOINT(teammate) || INPOINT(enemy))))
+			{
 			TP_Msg_EnemyPowerup_f(); // send to tp_enemypwr
+			return;
+			}
 		else if (INPOINT(eyes) && INPOINT(quaded))
 			return; // Don't know for sure if it's enemy or not, and can't assume like we do in tp_enemypwr because this isn't tp_ENEMYpwr
 		else
@@ -3550,7 +3556,10 @@ void TP_Msg_GetPentQuad(qbool quad)
 	else
 	{
 		if (HAVE_PENT() || (INPOINT(pented) && (INPOINT(teammate) || INPOINT(enemy))))
+			{
 			TP_Msg_EnemyPowerup_f(); // send to tp_enemypwr
+			return;
+			}
 		else if (INPOINT(eyes) && INPOINT(pented))
 			return; // Don't know for sure if it's enemy or not, and can't assume like we do in tp_enemypwr because this isn't tp_ENEMYpwr
 		else
@@ -3569,7 +3578,10 @@ void TP_Msg_QuadDead_f (void)
     MSGPART msg1 = "";
  
 	if (HAVE_QUAD() || INPOINT(quaded)) // If ANYONE has quad
+		{
 		TP_Msg_EnemyPowerup_f(); // tp_enemypwr can handle this & all cases regarding players/powerups
+		return;
+		}
 	else msg1 = tp_ib_name_quad " dead";
  
 	TP_Send_TeamSay(tp_sep_yellow " %s", msg1);
@@ -3584,7 +3596,10 @@ void TP_Msg_Took_f (void) // later: runes, flag
 	if (TOOK(nothing))
 		return;
 	else if (TOOK(quad) || TOOK(pent) || TOOK(ring))
+		{
 		TP_Msg_EnemyPowerup_f(); // tp_enemypwr can handle all cases with player/powerup
+		return;
+		}
 	else
 	{
 		msg2 = "$[{%l}$]";
@@ -3613,7 +3628,10 @@ void TP_Msg_Point_f (void)
 	if (INPOINT(nothing))
 		return;
 	else if (INPOINT(eyes) || ((INPOINT(enemy) || INPOINT(teammate)) && (INPOINT(quaded) || INPOINT (pented)))) // enemy with powerup, or player with eyes
+		{
 		TP_Msg_EnemyPowerup_f(); // we use tp_enemypwr because it checks for all cases of player + powerup =)
+		return;
+		}
 	else
 	{ // the following are grouped into the if's by the color leds they will be.
 		msg3 = "at $[{%y}$] e:%E"; // this has to be established at the beginning because it's the same for all cases except when you see enemy.
