@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.17 2007-05-04 06:53:33 himan Exp $
+    $Id: teamplay.c,v 1.67.2.18 2007-05-05 06:48:20 himan Exp $
 */
 
 #define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
@@ -3361,11 +3361,11 @@ void TP_Msg_Lost_f (void) // Is this function useful? tp_report does this alread
         msg2 = "lost " COLORED(f0f,$weapon) " $[{%d}$] e:%E";
     else
         msg2 = "lost $[{%d}$] e:%E";
- 
+	//$R$R quad over(1) lost weapon(2)
     TP_Send_TeamSay("%s %s%s", led, msg1, msg2);
 }
 
-// moved more defines to the beginning, clean up, added $colored_powerups
+
 void TP_Msg_ReportComing(qbool report) // tp_report and tp_coming are similar, differences are led color, where %l is, and the word "coming"
 {
     MSGPART msg1 = "";
@@ -3494,7 +3494,7 @@ void TP_Msg_EnemyPowerup_f (void)
 	else
 		{
 		msg1 = tp_sep_red;
-		msg2 = tp_ib_name_enemy " {%q}"; // %q is last seen powerup of enemy. defaults to quad, which is nice
+		msg2 = tp_ib_name_enemy " {%q}"; // %q is last seen powerup of enemy. defaults to quad, which is nice (but it won't be colored correctly!)
 		}
 
 	TP_Send_TeamSay("%s %s", msg1, msg2);
@@ -3535,7 +3535,6 @@ void TP_Msg_Help_f (void) { TP_Msg_SafeHelp(false); }
 
 
 void TP_Msg_GetPentQuad(qbool quad)
-// same todo as enemypwr
 {
 	MSGPART msg1 = "";
  
@@ -3558,7 +3557,7 @@ void TP_Msg_GetPentQuad(qbool quad)
 			msg1 = "get " tp_ib_name_pent;
 	}
  
-	//$R$R get powerup(1)
+	//$Y$Y get powerup(1)
 	TP_Send_TeamSay(tp_sep_yellow " %s", msg1);
 }
 void TP_Msg_GetQuad_f (void) { TP_Msg_GetPentQuad(true); }
@@ -3573,22 +3572,23 @@ void TP_Msg_QuadDead_f (void) // tp_enemypwr for all cases?
 		TP_Msg_EnemyPowerup_f(); // tp_enemypwr can handle this
 	else msg1 = tp_ib_name_quad " dead";
  
-	TP_Send_TeamSay(tp_sep_green " %s", msg1);
+	TP_Send_TeamSay(tp_sep_yellow " %s", msg1);
 }
 
 
-void TP_Msg_Took_f (void) // we need tp_tookpriorities // rockets/cells dont work, tp_took lines ~3120
+void TP_Msg_Took_f (void) // later: runes, flag
 {
     MSGPART msg1 = "";
 	MSGPART msg2 = "";
  
-	if (TOOK(nothing)) // notice: shit we don't want is shown in $took currently.
+	if (TOOK(nothing))
 		return;
 	else if (TOOK(quad) || TOOK(pent) || TOOK(ring))
 		TP_Msg_EnemyPowerup_f();
 	else
 	{
 		msg2 = "$[{%l}$]";
+		
 		if	(TOOK(rl))											msg1 = tp_ib_name_rl;
 		else if (TOOK(lg))										msg1 = tp_ib_name_lg;
 		else if (TOOK(gl))										msg1 = tp_ib_name_gl;
@@ -3612,10 +3612,8 @@ void TP_Msg_Point_f (void)
  
 	if (INPOINT(nothing))
 		return;
-	else if (INPOINT(eyes) || (INPOINT(enemy) && (INPOINT(quaded) || INPOINT (pented)))) // enemy with powerup
-		TP_Msg_EnemyPowerup_f();
-	else if (INPOINT(teammate) && (INPOINT(quaded) || INPOINT (pented))) // teammate with powerup
-		TP_Msg_EnemyPowerup_f(); // we use tp_enemypwr because it has checks for team quad/pent =]
+	else if (INPOINT(eyes) || ((INPOINT(enemy) || INPOINT(teammate)) && (INPOINT(quaded) || INPOINT (pented)))) // enemy with powerup
+		TP_Msg_EnemyPowerup_f(); // we use tp_enemypwr because it checks for all cases of player + powerup =)
 	else
 	{ // the following are grouped into the if's by the color leds they will be.
 		msg3 = "at $[{%y}$] e:%E"; // this has to be established at the beginning because it's the same for all cases except when you see enemy.
@@ -3661,6 +3659,15 @@ void TP_Msg_Point_f (void)
 	TP_Send_TeamSay("%s %s %s", msg1, msg2, msg3);
 }
 
+
+void TP_Msg_Need_f (void)
+{
+    MSGPART msg1 = "";
+ 
+	// need
+	
+	TP_Send_TeamSay(tp_sep_green " %s", msg1);
+}
  
 /***********/
  
