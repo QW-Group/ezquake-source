@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.18 2007-05-05 06:48:20 himan Exp $
+    $Id: teamplay.c,v 1.67.2.19 2007-05-05 18:57:42 johnnycz Exp $
 */
 
 #define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
@@ -38,7 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
 #define TOOK(x) (!strcmp(Macro_Took(), tp_name_##x.string))
 #define COLORED(c,str) "{&c" #c #str "&cfff}"
-#define INPOINT(thing) strstr(Macro_PointName(), tp_name_##thing.string)
+#define INPOINT(thing) (!strcmp(Macro_PointName(), tp_name_##thing.string))
 #define DEAD() (cl.stats[STAT_HEALTH] < 1)
 
 /*
