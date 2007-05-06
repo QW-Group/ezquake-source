@@ -97,6 +97,7 @@ COMMON_C_FILES := \
 	cmd \
 	com_msg \
 	common \
+	cpu \
 	crc \
 	cvar \
 	fs \

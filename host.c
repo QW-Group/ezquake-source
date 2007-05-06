@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-$Id: host.c,v 1.40 2007-05-03 12:03:54 johnnycz Exp $
+	$Id: host.c,v 1.41 2007-05-06 21:50:21 disconn3ct Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -54,6 +54,7 @@ $Id: host.c,v 1.40 2007-05-03 12:03:54 johnnycz Exp $
 #include "qsound.h"
 #include "keys.h"
 
+#include "cpu.h"
 
 #if !defined(CLIENTONLY) && !defined(SERVERONLY)
 qbool	dedicated = false;
@@ -85,6 +86,7 @@ char *  SYSINFO_3D_description        = NULL;
 #ifdef _WIN32
 void SYSINFO_Init(void)
 {
+	char temp[1024];
 	MEMORYSTATUS    memstat;
 	LONG            ret;
 	HKEY            hKey;
@@ -113,7 +115,7 @@ void SYSINFO_Init(void)
 
 		if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_DWORD)
 			SYSINFO_MHz = *((DWORD *)data);
-
+/*
 		datasize = 1024;
 		ret = RegQueryValueEx(
 		          hKey,
@@ -125,7 +127,7 @@ void SYSINFO_Init(void)
 
 		if (ret == ERROR_SUCCESS  &&  datasize > 0  &&  type == REG_SZ)
 			SYSINFO_processor_description = Q_strdup((char *) data);
-
+*/
 		RegCloseKey(hKey);
 	}
 
@@ -139,11 +141,16 @@ void SYSINFO_Init(void)
 #endif
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
-
+/*
 	if (SYSINFO_processor_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
+*/
+	ProcessorName (temp);
+	strlcat(f_system_string, ", ", sizeof(f_system_string));
+	strlcat(f_system_string, temp, sizeof(f_system_string));
+
 	if (SYSINFO_MHz) {
 		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
@@ -541,6 +548,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	FILE *f;
 	cvar_t *v;
 
+	CPU_Init ();
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
 
@@ -610,6 +618,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Cvar_CleanUpTempVars ();
 
 	SYSINFO_Init();
+	Cmd_AddCommand ("cpuinfo", CPU_Info);
 
 #ifdef WITH_TCL
 	if (!TCL_InterpLoaded())

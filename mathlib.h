@@ -22,6 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define __MATHLIB_H_
 
+#ifdef id386
+#include "asmlib.h"
+#endif
+
 typedef float vec_t;
 typedef vec_t vec3_t[3];
 typedef vec_t vec5_t[5];
@@ -45,8 +49,6 @@ struct mplane_s;
 
 #define NANMASK (255 << 23)
 #define	IS_NAN(x) (((*(int *) &(x)) & NANMASK) == NANMASK)
-
-#define Q_rint(x) ((x) > 0 ? (int) ((x) + 0.5) : (int) ((x) - 0.5))
 
 #define DotProduct(x,y)			((x)[0] * (y)[0] + (x)[1] * (y)[1] + (x)[2] * (y)[2])
 #define VectorSubtract(a,b,c)	((c)[0] = (a)[0] - (b)[0], (c)[1] = (a)[1] - (b)[1], (c)[2] = (a)[2] - (b)[2])
@@ -193,5 +195,20 @@ extern vec3_t _mathlib_temp_vec1, _mathlib_temp_vec2, _mathlib_temp_vec3;
 	for (out = 1; out < _mathlib_temp_int1; out <<= 1)	\
 	;												\
 }
+
+
+#ifndef id386
+#define Q_rint(x) ((x) > 0 ? (int) ((x) + 0.5) : (int) ((x) - 0.5))
+#define INT(x) (int(x))
+#define MinI(a,b) min(a,b)
+#define MinD(a,b) min(a,b)
+#define MaxI(a,b) max(a,b)
+#define MaxD(a,b) max(a,b)
+#else /* !id386 */
+#define Q_rint(x) (Round(x))
+#define INT(x) (Truncate(x))
+#endif
+
+
 
 #endif	//__MATHLIB_H_
