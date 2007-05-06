@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.23 2007-05-06 00:09:27 disconn3ct Exp $
+    $Id: teamplay.c,v 1.67.2.24 2007-05-06 20:01:33 johnnycz Exp $
 */
 
 #include <time.h>
@@ -46,7 +46,7 @@ cvar_t	cl_parseSay = {"cl_parseSay", "1"};
 cvar_t	cl_parseFunChars = {"cl_parseFunChars", "1"};
 cvar_t	cl_nofake = {"cl_nofake", "2"};
 cvar_t	tp_loadlocs = {"tp_loadlocs", "1"};
-cvar_t  tp_pointpriorities = {"tp_pointpriorities", "1"};
+cvar_t  tp_pointpriorities = {"tp_pointpriorities", "0"};
 
  
 cvar_t  cl_teamtopcolor = {"teamtopcolor", "-1", 0, OnChangeColorForcing};
