@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="ezquake"
 	ProjectGUID="{222A5DBE-5433-44A7-8EC6-AFF123ABE1B5}"
 	RootNamespace="ezquake"
@@ -1916,6 +1916,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\tp_triggers.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\utils.c"
 					>
 				</File>
@@ -2348,6 +2352,10 @@
 				</File>
 				<File
 					RelativePath="..\..\tp_msgs.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tp_triggers.h"
 					>
 				</File>
 				<File

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.82.2.4 2007-05-03 21:54:52 disconn3ct Exp $
+	$Id: cl_parse.c,v 1.82.2.5 2007-05-06 00:09:26 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -44,6 +44,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #endif
 #include "teamplay.h"
+#include "tp_triggers.h"
 #include "pmove.h"
 #include "stats_grid.h"
 #include "auth.h"
@@ -52,7 +53,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 #include "hud.h"
 #include "hud_common.h"
-
 
 void R_TranslatePlayerSkin (int playernum);
 void R_PreMapLoad(char *mapname);
