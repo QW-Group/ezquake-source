@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.82.2.5 2007-05-06 00:09:26 disconn3ct Exp $
+	$Id: cl_parse.c,v 1.82.2.6 2007-05-06 16:54:00 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -2582,6 +2582,15 @@ void CL_ParseServerMessage (void) {
 #ifdef _WIN32
 			VID_NotifyActivity();
 #endif
+
+			if (cls.mvdplayback == QTV_PLAYBACK) { // workaround, do not disconnect in case of QTV playback
+
+				if (strcmp(s = MSG_ReadString(), "EndOfDemo"))
+					Com_Printf("WARNING: non standart disconnect message from QTV '%s'\n", s);
+
+				break;
+			}
+
 			if (cls.state == ca_connected) {
 				Host_Error(	"Server disconnected\n"
 							"Server version may not be compatible");

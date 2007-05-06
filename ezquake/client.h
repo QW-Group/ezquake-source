@@ -237,6 +237,9 @@ typedef enum {
 	dl_single
 } dltype_t;		// download type
 
+// cl.mvdplayback == QTV_PLAYBACK if qtv playback
+#define QTV_PLAYBACK 2
+
 //
 // The clientPersistent_t structure is persistent through an arbitrary number of server connections.
 //
