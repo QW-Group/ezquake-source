@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.70 2007-04-08 12:50:26 disconn3ct Exp $
+	$Id: cl_demo.c,v 1.71 2007-05-06 16:49:58 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -2718,7 +2718,7 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 
 	// We're now playing a demo.
 	cls.demoplayback	= true;
-	cls.mvdplayback		= true;	
+	cls.mvdplayback		= QTV_PLAYBACK;	
 	cls.nqdemoplayback	= false;
 
 	// Init playback buffers.
