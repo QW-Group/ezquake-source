@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.41.2.3 2007-05-05 19:17:26 johnnycz Exp $
+	$Id: cl_cmd.c,v 1.41.2.4 2007-05-07 12:33:29 johnnycz Exp $
 */
 
 #include <time.h>
@@ -154,7 +154,7 @@ void CL_ForwardToServer_f (void) {
 
 //Handles both say and say_team
 void CL_Say_f (void) {
-	char *s, msg[1024];
+	char *s, msg[1024], qmsg[1024];
 	int tmp;
 	qbool qizmo = false;
 	extern cvar_t cl_fakename;
@@ -199,11 +199,34 @@ void CL_Say_f (void) {
 	s = TP_ParseMacroString (Cmd_Args());
 	s = TP_ParseFunChars (s, true);
 
-	if (!strcasecmp(Cmd_Argv(0), "say_team") && !cl.spectator && cl_fakename.string[0] && !strchr(s, '\x0d') /* explicit $\ in message overrides cl_fakename */)
+    /* The string in 's' can be both wrapped in quotes or without wrapper quotes,
+       but to make cl_fakename works properly, we need it to be always wrapped in quotes.
+       messagemode/messagemode2 commands send text in quotes,
+       say/say_team typed in the console sends text without quotes
+       So if quotes are missing, we add them.
+    */
+    // first char isn't quote, last char isn't quote or string is shorter then 2 chars
+    if (s[0] != '\"' || s[strlen(s)-1] != '\"' || s[1] == '\0')
+    {
+        snprintf(qmsg, sizeof(qmsg), "\"%s\"", s);
+        s = qmsg;
+    }
+
+    // if team message mode and teamname is set and message is not custom mm2 message...
+	if (!strcasecmp(Cmd_Argv(0), "say_team") && !cl.spectator && cl_fakename.string[0] && !strchr(s, '\x0d'))
 	{
 		char tmp[1024], tmp2[1024];
-		strlcpy (tmp, cl_fakename.string, sizeof(tmp)); // TP_ParseFunChars wants a string < 1024 chars (fix it?)
-		strlcpy (tmp2, s, sizeof(tmp));	// save the message text, because TP_ParseFunChars will overwrite the temp memory
+        size_t len = strlen(s) - 1; // cut the trailing quote (")
+
+        len = bound(0, len, sizeof(tmp));
+
+		// TP_ParseFunChars wants a string < 1024 chars (fix it?)
+        strlcpy (tmp, cl_fakename.string, sizeof(tmp));
+		
+        // 1) save the message text, because TP_ParseFunChars will overwrite the temp memory
+        // 2) cut the leading quote (+1) and also the trailing quote (len is 1 char shorter)
+        strlcpy (tmp2, s+1, len);
+
 		snprintf (msg, sizeof(msg), "\x0d%s: %s", TP_ParseFunChars(tmp, true), tmp2);
 		s = msg;
 	}
