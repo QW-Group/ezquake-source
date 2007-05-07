@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.35.2.3 2007-05-03 22:13:30 disconn3ct Exp $
+	$Id: EX_browser.c,v 1.35.2.4 2007-05-07 19:02:20 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -671,11 +671,11 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
         {
             char buf[10], *max;
             max =  ValueForKey(s, "maxclients");
-            sprintf(buf, "%d/%s", s->playersn, max==NULL ? "??" : max);
+            snprintf(buf, sizeof(buf), "%d/%s", s->playersn, max==NULL ? "??" : max);
             strcat(line, buf);
             max =  ValueForKey(s, "maxspectators");
-            sprintf(buf, "-%d/%s", s->spectatorsn, max==NULL ? "??" : max);
-            strcat(line, buf);
+            snprintf(buf, sizeof(buf), "-%d/%s", s->spectatorsn, max==NULL ? "??" : max);
+            strlcat(line, buf, sizeof(line));
         }
 
         if (ValueForKey(s, "status") == NULL)
@@ -688,27 +688,27 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
 
             if (dm  &&  strlen(line) + 7 <= w/8)
             {
-                sprintf(buf, "\xa0 dmm%s", dm);
-                strcat(line, buf);
+                snprintf(buf, sizeof(buf), "\xa0 dmm%s", dm);
+                strlcat(line, buf, sizeof(line));
             }
 
             if (fl  &&  strlen(line) + 8 <= w/8)
             {
-                sprintf(buf, "\xa0 fl:%s", fl);
-                strcat(line, buf);
+                snprintf(buf, sizeof(buf), "\xa0 fl:%s", fl);
+                strlcat(line, buf, sizeof(line));
             }
 
             if (tl  &&  strlen(line) + 7 <= w/8)
             {
-                sprintf(buf, "\xa0 tl:%s", tl);
-                strcat(line, buf);
+                snprintf(buf, sizeof(buf), "\xa0 tl:%s", tl);
+                strlcat(line, buf, sizeof(line));
             }
         }
         else
         {
             char buf[200];
-            sprintf(buf, "\xa0 %s", ValueForKey(s, "status"));
-            strcat(line, buf);
+            snprintf(buf, sizeof(buf), "\xa0 %s", ValueForKey(s, "status"));
+            strlcat(line, buf, sizeof(line));
         }
 
         // draw line
