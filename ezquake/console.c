@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.52.2.4 2007-05-04 09:09:36 johnnycz Exp $
+	$Id: console.c,v 1.52.2.5 2007-05-07 19:38:24 johnnycz Exp $
 */
 // console.c
 
@@ -64,7 +64,7 @@ cvar_t		_con_notifylines = {"con_notifylines","4"};
 cvar_t		con_notifytime = {"con_notifytime","3"};		//seconds
 cvar_t		con_wordwrap = {"con_wordwrap","1"};
 cvar_t		con_clearnotify = {"con_clearnotify","1"};
-cvar_t	    x                = {"x", "$x", CVAR_ROM};
+//cvar_t	    xyzh                = {"x", "$x", CVAR_ROM};
 
 // added by jogi start
 cvar_t		con_highlight  		= {"con_highlight","0"};
@@ -449,7 +449,7 @@ void Con_Init (void) {
 	Cvar_Register (&con_notifytime);
 	Cvar_Register (&con_wordwrap);
 	Cvar_Register (&con_clearnotify);
-	Cvar_Register (&x);
+	//Cvar_Register (&xyzh);
 
 #ifdef GLQUAKE
 	Cvar_Register (&con_particles_alpha);
