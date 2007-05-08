@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.24 2007-05-06 20:01:33 johnnycz Exp $
+    $Id: teamplay.c,v 1.67.2.25 2007-05-08 15:45:11 johnnycz Exp $
 */
 
 #include <time.h>
@@ -823,12 +823,15 @@ qbool TP_SuppressMessage(char *buf)
 	return false;
 }
  
+// things like content '%e' macro get hidden in here causing you yourself cannot see
+// how many enemies are around you, the number get replaced with a 'x' char
+// and then printed on screen as a message
 void TP_PrintHiddenMessage(char *buf, int nodisplay)
 {
 	qbool team, hide = false;
 	char dest[4096], msg[4096], *s, *d, c, *name;
 	int length, offset, flags;
-	extern cvar_t con_sound_mm2_file, con_sound_mm2_volume;
+	extern cvar_t con_sound_mm2_file, con_sound_mm2_volume, cl_fakename;
  
 	if (!buf || !(length = strlen(buf)))
 		return;
@@ -868,7 +871,12 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
 		name[31] = 0;
  
 	if (team)
-		snprintf(msg, sizeof(msg), "(%s): %s\n", name, TP_ParseFunChars(dest, true));
+    {
+        if (cl_fakename.string[0])
+            snprintf(msg, sizeof(msg), "%s: %s\n", cl_fakename.string, TP_ParseFunChars(dest, true));
+        else 
+            snprintf(msg, sizeof(msg), "(%s): %s\n", name, TP_ParseFunChars(dest, true));
+    }
 	else
 		snprintf(msg, sizeof(msg), "%s: %s\n", name, TP_ParseFunChars(dest, true));
  
