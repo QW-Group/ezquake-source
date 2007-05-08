@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.25 2007-05-08 15:45:11 johnnycz Exp $
+    $Id: teamplay.c,v 1.67.2.26 2007-05-08 23:27:28 himan Exp $
 */
 
 #include <time.h>
@@ -2226,6 +2226,7 @@ char *pknames[] = {"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
 #define default_pkflags (it_powerups|it_suit|it_armor|it_weapons|it_mh| \
 				it_rockets|it_cells||it_pack|it_flag)
  
+ // tp_took
 #define default_tookflags (it_powerups|it_ra|it_ya|it_ga|it_lg|it_rl|it_gl|it_sng|it_pack|it_rockets|it_cells|it_mh|it_flag)
  
 /*
@@ -2234,6 +2235,7 @@ Notice this list takes into account ctf/tf as well. Dm players don't worry about
 
  below are defaults for tp_point (what comes up in point. also see tp_pointpriorities to prioritize this list) First items have highest priority (powerups in this case)
 */
+// tp_point
 #define default_pointflags (it_powerups|it_flag|it_runes|it_players|it_suit|it_armor|it_sentry|it_mh| \
 				it_disp|it_rl|it_lg|it_pack|it_gl|it_sng|it_rockets|it_cells|it_nails)
  

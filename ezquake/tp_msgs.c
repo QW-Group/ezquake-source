@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.2 2007-05-05 22:38:41 johnnycz Exp $
+  $Id: tp_msgs.c,v 1.1.2.3 2007-05-08 23:27:28 himan Exp $
 
 */
 
@@ -27,6 +27,8 @@
 #define HAVE_GA() (cl.stats[STAT_ITEMS] & IT_ARMOR1) //ga
 #define HAVE_YA() (cl.stats[STAT_ITEMS] & IT_ARMOR2) //ya
 #define HAVE_RA() (cl.stats[STAT_ITEMS] & IT_ARMOR3) //ra
+
+// just some shortcuts:
 #define INPOINTARMOR() (INPOINT(ra) || INPOINT(ya) || INPOINT(ga))
 #define INPOINTWEAPON() (INPOINT(rl) || INPOINT(lg) || INPOINT(gl) || INPOINT(sng))
 #define INPOINTPOWERUP() (INPOINT(quad) || INPOINT(pent) || INPOINT(ring))
@@ -62,6 +64,7 @@ use the %-macros nor the $-macros.
 #define tp_ib_name_pent	    COLORED(e00,pent)	// red pent
 #define tp_ib_name_ring	    COLORED(ff0,ring)	// yellow ring
 #define tp_ib_name_eyes	    COLORED(ff0,eyes)	// yellow eyes (remember, ring is when you see the ring, eyes is when someone has rings!)
+#define tp_ib_name_flag	    COLORED(f60,flag)	// orange flag
 #define tp_ib_name_enemy	COLORED(e00,enemy)	// red enemy
 #define tp_ib_name_team	    COLORED(0b0,team)	// green "team" (with powerup)
 #define tp_ib_name_teammate	COLORED(0b0,teammate)// green "teamate"
@@ -366,16 +369,18 @@ GLOBAL void TP_Msg_Took_f (void) // later: runes, flag
 	{
 		msg2 = "$[{%l}$]";
 		
-		if	(TOOK(rl))											msg1 = tp_ib_name_rl;
-		else if (TOOK(lg))										msg1 = tp_ib_name_lg;
-		else if (TOOK(gl))										msg1 = tp_ib_name_gl;
-		else if (TOOK(sng))										msg1 = tp_ib_name_sng;
-		else if (TOOK(pack))    								msg1 = tp_ib_name_backpack;
-		else if (TOOK(rockets) || TOOK(cells))					msg1 = "{$took}";
-		else if (TOOK(mh))										msg1 = tp_ib_name_mh;
-		else if (TOOK(ra))										msg1 = tp_ib_name_ra;
-		else if (TOOK(ya))										msg1 = tp_ib_name_ya;
-		else if (TOOK(ga))										msg1 = tp_ib_name_ga;
+		if	(TOOK(rl))									msg1 = tp_ib_name_rl;
+		else if (TOOK(lg))								msg1 = tp_ib_name_lg;
+		else if (TOOK(gl))								msg1 = tp_ib_name_gl;
+		else if (TOOK(sng))								msg1 = tp_ib_name_sng;
+		else if (TOOK(pack))    						msg1 = tp_ib_name_backpack;
+		else if (TOOK(rockets) || TOOK(cells))			msg1 = "{$took}";
+		else if (TOOK(mh))								msg1 = tp_ib_name_mh;
+		else if (TOOK(ra))								msg1 = tp_ib_name_ra;
+		else if (TOOK(ya))								msg1 = tp_ib_name_ya;
+		else if (TOOK(ga))								msg1 = tp_ib_name_ga;
+		else if (TOOK(flag))							msg1 = tp_ib_name_flag;
+		else 											msg1 = "{$took}"; // This should never happen
 	}
 	TP_Send_TeamSay(tp_sep_white " {took} %s at %s", msg1, msg2);
 }
@@ -434,9 +439,17 @@ GLOBAL void TP_Msg_Point_f (void)
 					else if (INPOINT(cells)) 	msg2 = "{cells}";
 					else if (INPOINT(nails)) 	msg2 = "{nails}";
 					
-					else if (INPOINT(mh))		msg2 = tp_ib_name_mh; // why does this display as ga? BUG BUG BUGBUG BUG BUGBUG BUG BUGBUG BUG BUGBUG BUG BUGBUG BUG
+					else if (INPOINT(mh))		msg2 = tp_ib_name_mh;
 					
-					else msg2 = "$point"; // this should never happen
+					//TF
+					else if (INPOINT(flag))		msg2 = tp_ib_name_flag;
+					/*else if (INPOINT(disp))			msg2 = tp_ib_name_disp;
+					else if (INPOINT(sentry))			msg2 = tp_ib_name_sentry;
+					
+					else if (INPOINT(runes))			msg2 = tp_ib_name_rune;
+					*/
+					
+					else msg2 = "{$point}"; // this should never happen
 			}
 	}
 	
@@ -453,6 +466,11 @@ GLOBAL void TP_Msg_Need_f (void)
 	
 	TP_Send_TeamSay(tp_sep_green " %s", msg1);
 }
+
+///////////////////////////////////
+//////// End teamplay scripts ////////
+///////////////////////////////////
+
 
 GLOBAL const char *TP_MSG_Colored_Armor(void)
 {
