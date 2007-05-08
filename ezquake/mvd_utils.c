@@ -1,5 +1,5 @@
 /*
-	$Id: mvd_utils.c,v 1.35.2.5 2007-05-07 06:03:34 himan Exp $
+	$Id: mvd_utils.c,v 1.35.2.6 2007-05-08 16:00:03 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1271,7 +1271,8 @@ int MVD_Stats_Gather_f (void){
 		if ((((pent_time + 300) - cls.demotime) < 5) && !pent_is_active){
 			if(!pent_mentioned){
 				pent_mentioned = 1;
-				Com_Printf("pent in 5 secs\n");
+                // fixme
+				// Com_Printf("pent in 5 secs\n");
 			}
 			if (powerup_cam_active ==1)
 					powerup_cam_active = 3;
@@ -1281,7 +1282,8 @@ int MVD_Stats_Gather_f (void){
 		if ((((quad_time + 60) - cls.demotime) < 5) && !quad_is_active){
 			if(!quad_mentioned){
 				quad_mentioned = 1;
-				Com_Printf("quad in 5 secs\n");
+                // fixme
+				// Com_Printf("quad in 5 secs\n");
 			}
 			if (powerup_cam_active ==2)
 				powerup_cam_active = 3;
