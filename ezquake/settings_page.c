@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.34.2.3 2007-05-04 16:39:00 johnnycz Exp $
+		$Id: settings_page.c,v 1.34.2.4 2007-05-10 23:25:43 johnnycz Exp $
 
 */
 
@@ -142,8 +142,10 @@ static void Setting_DrawNamed(int x, int y, int w, setting* set, qbool active)
 
 static void Setting_DrawString(int x, int y, int w, setting* setting, qbool active)
 {
-	x = Setting_PrintLabel(x,y,w, setting->label, active);
+	int x0 = x;
+    x = Setting_PrintLabel(x,y,w, setting->label, active);
 	if (active) {
+        editbox.width = (w - x + x0) / 8;
 		CEditBox_Draw(&editbox, x, y, true);
 	} else {
 		UI_Print(x, y, VARSVAL(*(setting->cvar)), false);
@@ -547,7 +549,8 @@ qbool Settings_Key(settings_page* tab, int key)
 			skinpath = FL_GetCurrentPath(&skins_filelist);
 			if (skinpath) {
 				COM_StripExtension(COM_SkipPath(skinpath), buf);
-				Cvar_Set(tab->settings[tab->marked].cvar, buf);
+                if (strcmp(buf, "."))
+				    Cvar_Set(tab->settings[tab->marked].cvar, buf);
 			}
 			tab->mode = SPM_NORMAL;
 			return true;
