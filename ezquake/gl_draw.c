@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_draw.c,v 1.58.2.2 2007-04-30 15:15:28 cokeman1982 Exp $
+	$Id: gl_draw.c,v 1.58.2.3 2007-05-10 23:09:29 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -40,7 +40,7 @@ qbool OnChange_gl_crosshairimage(cvar_t *, char *);
 cvar_t	gl_crosshairimage   = {"crosshairimage", "", 0, OnChange_gl_crosshairimage};
 
 qbool OnChange_gl_consolefont (cvar_t *, char *);
-cvar_t	gl_consolefont		= {"gl_consolefont", "moondid2", 0, OnChange_gl_consolefont};
+cvar_t	gl_consolefont		= {"gl_consolefont", "povo5", 0, OnChange_gl_consolefont};
 cvar_t	gl_alphafont		= {"gl_alphafont", "0"};
 
 cvar_t	gl_crosshairalpha	= {"crosshairalpha", "1"};
