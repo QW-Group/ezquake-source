@@ -119,6 +119,7 @@ Section "!ezQuake client" Main
   File "ezquake\pak0.pak"
   File "ezquake\help.pak"
   File "ezquake\locs.pak"
+  File "ezquake\pak.lst"
 
   CreateDirectory $INSTDIR\ezquake\cfg
   SetOutPath $INSTDIR\ezquake\cfg
@@ -128,6 +129,8 @@ Section "!ezQuake client" Main
   CreateDirectory $INSTDIR\ezquake\help\manual
   CreateDirectory $INSTDIR\ezquake\help\xsd
   CreateDirectory $INSTDIR\ezquake\help\xsl
+  SetOutPath $INSTDIR\ezquake\help
+  File /r "ezquake\help\index.xml"
   SetOutPath $INSTDIR\ezquake\help\manual
   File /r "ezquake\help\manual\*.*"
   SetOutPath $INSTDIR\ezquake\help\xsd
@@ -158,6 +161,9 @@ Section "!ezQuake client" Main
   CreateDirectory $INSTDIR\qw
   SetOutPath $INSTDIR\qw
   File "qw\fragfile.dat"
+  CreateDirectory $INSTDIR\qw\skins
+  SetOutPath $INSTDIR\qw\skins
+  File "qw\skins\*.*"
 
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\ezQuake "Install_Dir" "$INSTDIR"
@@ -178,7 +184,7 @@ SectionEnd
 
 Section "QuakeWorld Progs" Progs
   SetOutPath $INSTDIR\ezquake
-  File "qw\progs.dat"
+  File "ezquake\progs.pak"
 SectionEnd
 
 Section "Manual" Manual
