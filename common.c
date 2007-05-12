@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.75 2007-05-03 12:03:54 johnnycz Exp $
+    $Id: common.c,v 1.76 2007-05-12 13:13:48 qqshka Exp $
 
 */
 
@@ -267,6 +267,7 @@ void COM_DefaultExtension (char *path, char *extension)
 
 // If path doesn't have an extension or has a different extension, append(!) specified extension
 // Extension should include the .
+// path buffer supposed to be MAX_OSPATH size
 void COM_ForceExtension (char *path, char *extension)
 {
 	char *src;
@@ -276,6 +277,28 @@ void COM_ForceExtension (char *path, char *extension)
 		return;
 
 	strncat (path, extension, MAX_OSPATH);
+}
+
+// If path doesn't have an extension or has a different extension, append(!) specified extension
+// a bit extended version of COM_ForceExtension(), we suply size of path, so append safe, sure if u provide right path size
+void COM_ForceExtensionEx (char *path, char *extension, int path_size)
+{
+	char *src;
+
+	if (path_size < 1 || path_size <= strlen(extension)) // too small buffer, can't even theoreticaly append extension
+		Sys_Error("COM_ForceExtensionEx: internall error"); // this is looks like a bug, be fatal then
+
+	src = path + strlen(path) - strlen(extension);
+	if (src >= path && !strcmp(src, extension))
+		return; // seems we alredy have this extension
+	
+	strlcat(path, extension, path_size);
+
+	src = path + strlen(path) - strlen(extension);
+	if (src >= path && !strcmp(src, extension))
+		return; // seems we succeed
+
+	Com_Printf("Failed to force extension %s for %s\n", extension, path); // its good to know about failure
 }
 
 //
