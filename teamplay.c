@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.73 2007-05-03 12:03:56 johnnycz Exp $
+    $Id: teamplay.c,v 1.74 2007-05-12 16:29:16 johnnycz Exp $
 */
 
 #define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
@@ -1205,6 +1205,9 @@ void TP_AddMacros (void)
  
 	Cmd_AddMacroEx ("ledpoint", Macro_Point_LED, teamplay);
 	Cmd_AddMacroEx ("ledstatus", Macro_MyStatus_LED, teamplay);
+
+    Cmd_AddMacroEx ("lastloc", Macro_Last_Location, teamplay);
+    Cmd_AddMacroEx ("lastpowerup", Macro_LastSeenPowerup, teamplay);
 }
  
 /********************** MACRO/FUNCHAR/WHITE TEXT PARSING **********************/
