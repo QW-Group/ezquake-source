@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.44 2007-05-03 12:03:54 johnnycz Exp $
+	$Id: cl_cmd.c,v 1.45 2007-05-12 15:13:45 qqshka Exp $
 */
 
 #include <time.h>
@@ -689,7 +689,24 @@ void CL_Userdir_f (void)
 
 #ifdef _WIN32
 void CL_Windows_f (void) {
+#ifdef GLQUAKE
+
+	//
+	// WIN OpenGL version
+	//
+	if (!ActiveApp)
+		return; // alredy not active
+
+	ShowWindow(mainwindow, SW_MINIMIZE);
+
+#else
+
+	//
+	// software version
+	//
 	SendMessage(mainwindow, WM_SYSKEYUP, VK_TAB, 1 | (0x0F << 16) | (1<<29));
+
+#endif
 }
 #endif
 
