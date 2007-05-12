@@ -6,3 +6,4 @@ wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/linux-x86/libpng
 wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/linux-x86/libtcl8.4.a
 wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/linux-x86/libz.a
 wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/linux-x86/minizip.a
+wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/linux-x86/asmlibe.a

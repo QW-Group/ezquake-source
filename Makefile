@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.62 2007-03-27 15:48:51 vvd0 Exp $
+#	$Id: Makefile,v 1.63 2007-05-12 21:41:10 hexum Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -97,7 +97,7 @@ CFLAGS = $(BASE_CFLAGS) $(DEBUG_CFLAGS) -D_DEBUG
 endif
 
 LDFLAGS = -lm -lpthread
-COMMON_LIBS = libs/$(LIB_PREFIX)/minizip.a libs/$(LIB_PREFIX)/libpng.a libs/$(LIB_PREFIX)/libz.a libs/$(LIB_PREFIX)/libpcre.a libs/$(LIB_PREFIX)/libexpat.a libs/$(LIB_PREFIX)/libtcl8.4.a
+COMMON_LIBS = libs/$(LIB_PREFIX)/minizip.a libs/$(LIB_PREFIX)/libpng.a libs/$(LIB_PREFIX)/libz.a libs/$(LIB_PREFIX)/libpcre.a libs/$(LIB_PREFIX)/libexpat.a libs/$(LIB_PREFIX)/libtcl8.4.a libs/$(LIB_PREFIX)/asmlibe.a
 GL_LIBS = libs/$(LIB_PREFIX)/libjpeg.a
 
 ifeq ($(OS),freebsd)
