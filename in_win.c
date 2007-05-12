@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: in_win.c,v 1.35 2007-04-15 14:54:50 johnnycz Exp $
+$Id: in_win.c,v 1.36 2007-05-12 17:09:11 qqshka Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -63,7 +63,6 @@ static qbool	restore_spi;
 static int originalmouseparms[3], newmouseparms[3];
 qbool mouseinitialized = false;
 static qbool	mouseparmsvalid, mouseactivatetoggle;
-static qbool	mouseshowtoggle = true;
 static qbool	dinput_acquired;
 static unsigned int mstate_di;
 unsigned int uiWheelMessage;
@@ -591,17 +590,15 @@ void IN_UpdateClipCursor (void) {
 }
 
 void IN_ShowMouse (void) {
-	if (!mouseshowtoggle) {
-		ShowCursor (TRUE);
-		mouseshowtoggle = 1;
-	}
+
+	while (ShowCursor (TRUE) < 0)
+		;
 }
 
 void IN_HideMouse (void) {
-	if (mouseshowtoggle) {
-		ShowCursor (FALSE);
-		mouseshowtoggle = 0;
-	}
+
+	while (ShowCursor (FALSE) >= 0)
+		;
 }
 
 qbool IN_InitDInput (void);
@@ -846,7 +843,6 @@ void IN_SetGlobals(void) {
 	memset(newmouseparms,      0, sizeof(newmouseparms));
 
 	mouseparmsvalid  = mouseactivatetoggle = false;
-	mouseshowtoggle  = true;  // hrm !!!
 	dinput_acquired  = false;
 	mstate_di        = 0;
 	uiWheelMessage   = 0;
