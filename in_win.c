@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: in_win.c,v 1.36 2007-05-12 17:09:11 qqshka Exp $
+$Id: in_win.c,v 1.37 2007-05-12 17:14:26 qqshka Exp $
 */
 // in_win.c -- windows 95 mouse and joystick code
 
@@ -801,15 +801,15 @@ void IN_StartupMouse (void) {
 		mouseparmsvalid = SystemParametersInfo (SPI_GETMOUSE, 0, originalmouseparms, 0);
 
 		if (mouseparmsvalid) {
-			if (in_m_os_parameters.integer == 1) 
+			if (in_m_os_parameters.integer == 1)    // keeps the OS acceleration settings
 				newmouseparms[2] = originalmouseparms[2];
 
-			if (in_m_os_parameters.integer == 2) {
+			if (in_m_os_parameters.integer == 2) {  // keeps the OS speed settings
 				newmouseparms[0] = originalmouseparms[0];
 				newmouseparms[1] = originalmouseparms[1];
 			}
 
-            if (in_m_os_parameters.integer > 2) {
+            if (in_m_os_parameters.integer > 2) {   // keeps both OS acceleration and speed settings
 				newmouseparms[0] = originalmouseparms[0];
 				newmouseparms[1] = originalmouseparms[1];
 				newmouseparms[2] = originalmouseparms[2];
