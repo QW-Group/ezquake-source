@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.90 2007-05-13 13:41:42 johnnycz Exp $
+$Id: cl_parse.c,v 1.91 2007-05-13 13:53:18 hexum Exp $
 */
 
 #include "quakedef.h"
@@ -498,6 +498,7 @@ static void CL_TransmitModelCrc (int index, char *info_key)
 		unsigned short crc = model->crc;
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString (&cls.netchan.message, va("setinfo %s %d", info_key, (int) crc));
+		Info_SetValueForKey(cls.userinfo, info_key, va("%d", (int) crc), MAX_INFO_STRING);
 	}
 }
 
