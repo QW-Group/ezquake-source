@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.63 2007-05-12 21:41:10 hexum Exp $
+#	$Id: Makefile,v 1.64 2007-05-13 14:07:48 hexum Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -127,8 +127,10 @@ glx: $(GLX_TARGET)
 $(GLX_TARGET): $(GLX_DIR) $(GLX_C_OBJS) $(GLX_S_OBJS)
 	@echo [LINK] $@
 	$(BUILD)
+ifeq ($(TYPE),release)
 	@echo [STRIP] $@
 	$(STRIP) $(STRIPFLAGS) $(GLX_TARGET)
+endif
 
 $(GLX_C_OBJS): $(GLX_DIR)/%.o: %.c
 	@echo [CC] $<
@@ -156,8 +158,10 @@ x11: $(X11_TARGET)
 $(X11_TARGET): $(X11_DIR) $(X11_C_OBJS) $(X11_S_OBJS)
 	@echo [LINK] $@
 	$(BUILD)
+ifeq ($(TYPE),release)
 	@echo [STRIP] $@
 	$(STRIP) $(STRIPFLAGS) $(X11_TARGET)
+endif
 
 $(X11_C_OBJS): $(X11_DIR)/%.o: %.c
 	@echo [CC] $<
@@ -192,8 +196,10 @@ svga: $(SVGA_TARGET)
 $(SVGA_TARGET): $(SVGA_DIR) $(SVGA_C_OBJS) $(SVGA_S_OBJS)
 	@echo [LINK] $@
 	$(BUILD)
+ifeq ($(TYPE),release)
 	@echo [STRIP] $@
 	$(STRIP) $(STRIPFLAGS) $(SVGA_TARGET)
+endif
 
 $(SVGA_C_OBJS): $(SVGA_DIR)/%.o: %.c
 	@echo [CC] $<
