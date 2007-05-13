@@ -9,6 +9,7 @@ master "Ocrana" 62.112.145.134:27000
 master "Qizmos" 194.177.125.71:27000
 file "Global" global.txt
 file "European Servers" eu-sv.txt
+file "Europe 4on4" eu-4on4.txt
 file "Australian Servers" au-sv.txt
 file "Capture The Flag" ctf.txt
 file "North America Servers" na-sv.txt
