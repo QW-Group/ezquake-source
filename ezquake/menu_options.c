@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.9 2007-05-13 00:51:56 johnnycz Exp $
+		$Id: menu_options.c,v 1.60.2.10 2007-05-13 08:44:15 johnnycz Exp $
 
 */
 
@@ -235,6 +235,7 @@ const char* DemoformatRead(void) {
 	return demo_format.string;
 }
 void DemoformatToggle(qbool back) {
+    if (back) DemoformatToggle(false); // trick
 	if (!strcmp(demo_format.string, "qwd")) Cvar_Set(&demo_format, "qwz");
 	else if (!strcmp(demo_format.string, "qwz")) Cvar_Set(&demo_format, "mvd");
 	else if (!strcmp(demo_format.string, "mvd")) Cvar_Set(&demo_format, "qwd");
