@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.64 2007-05-13 14:07:48 hexum Exp $
+#	$Id: Makefile,v 1.65 2007-05-13 14:14:45 hexum Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -226,8 +226,10 @@ mac: $(MAC_TARGET)
 $(MAC_TARGET): $(MAC_DIR) $(MAC_C_OBJS) $(MAC_S_OBJS)
 	@echo [LINK] $@
 	$(BUILD)
+ifeq ($(TYPE),release)
 	@echo [STRIP] $@
 	$(STRIP) $(STRIPFLAGS) $(MAC_TARGET)
+endif
 
 $(MAC_C_OBJS): $(MAC_DIR)/%.o: %.c
 	@echo [CC] $<
