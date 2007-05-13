@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.8 2007-05-05 06:18:43 himan Exp $
+		$Id: menu_options.c,v 1.60.2.9 2007-05-13 00:51:56 johnnycz Exp $
 
 */
 
@@ -177,6 +177,7 @@ const char* SshotformatRead(void) {
 	return scr_sshot_format.string;
 }
 void SshotformatToggle(qbool back) {
+    if (back) SshotformatToggle(false);  // a trick: scroll forward twice = once back
 	if (!strcmp(scr_sshot_format.string, "jpg")) Cvar_Set(&scr_sshot_format, "png");
 	else if (!strcmp(scr_sshot_format.string, "png")) Cvar_Set(&scr_sshot_format, "tga");
 	else if (!strcmp(scr_sshot_format.string, "tga")) Cvar_Set(&scr_sshot_format, "jpg");
@@ -206,6 +207,9 @@ const char* BandwidthRead(void) {
 	else return "ADSL (> 256k)";
 }
 void BandwidthToggle(qbool back) {
+    if (back) {
+        int i; for (i = 0; i < 3; i++) BandwidthToggle(false);
+    }
 	if (rate.value < 4000) Cvar_SetValue(&rate, 5670);
 	else if (rate.value < 6000) Cvar_SetValue(&rate, 7168);
 	else if (rate.value < 8000) Cvar_SetValue(&rate, 14336);
@@ -252,6 +256,7 @@ const char* RulesetRead(void) {
 	return ruleset.string;
 }
 void RulesetToggle(qbool back) {
+
 	if (!strcmp(ruleset.string, "default")) Cvar_Set(&ruleset, "smackdown");
 	else if (!strcmp(ruleset.string, "smackdown")) Cvar_Set(&ruleset, "mtfl");
 	else if (!strcmp(ruleset.string, "mtfl")) Cvar_Set(&ruleset, "default");
