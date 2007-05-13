@@ -16,7 +16,7 @@
 	made by:
 		johnnycz, Dec 2006
 	last edit:
-		$Id: menu_demo.c,v 1.29 2007-03-31 15:24:10 johnnycz Exp $
+		$Id: menu_demo.c,v 1.30 2007-05-13 13:41:43 johnnycz Exp $
 
 */
 
@@ -858,9 +858,14 @@ CTabPage_Handlers_t demo_options_handlers = {
 };
 
 // set new initial dir
-void Menu_Demo_NewHome(char *homedir)
+void Menu_Demo_NewHome(const char *homedir)
 {
-	FL_SetCurrentDir(&demo_filelist, homedir);
+    char buf[MAX_OSPATH];
+
+    strlcpy(buf, com_basedir, sizeof(buf)); 
+    strlcat(buf, "/", sizeof(buf));
+    strlcat(buf, homedir, sizeof(buf));
+	FL_SetCurrentDir(&demo_filelist, buf);
 }
 
 void Menu_Demo_Init(void)

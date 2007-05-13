@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.63 2007-05-03 12:03:54 johnnycz Exp $
+		$Id: menu_options.c,v 1.64 2007-05-13 13:41:43 johnnycz Exp $
 
 */
 
@@ -171,11 +171,13 @@ const char* scrautoid_enum[] = { "off", "nick", "health+armor", "health+armor+ty
 const char* coloredtext_enum[] = { "off", "simple", "frag messages" };
 const char* autorecord_enum[] = { "off", "don't save", "auto save" };
 const char* hud_enum[] = { "classic", "new", "combined" };
+const char* ignorespec_enum[] = { "off", "on (as player)", "on (always)" };
 
 const char* SshotformatRead(void) {
 	return scr_sshot_format.string;
 }
 void SshotformatToggle(qbool back) {
+    if (back) SshotformatToggle(false);  // a trick: scroll forward twice = once back
 	if (!strcmp(scr_sshot_format.string, "jpg")) Cvar_Set(&scr_sshot_format, "png");
 	else if (!strcmp(scr_sshot_format.string, "png")) Cvar_Set(&scr_sshot_format, "tga");
 	else if (!strcmp(scr_sshot_format.string, "tga")) Cvar_Set(&scr_sshot_format, "jpg");
@@ -205,6 +207,9 @@ const char* BandwidthRead(void) {
 	else return "ADSL (> 256k)";
 }
 void BandwidthToggle(qbool back) {
+    if (back) {
+        int i; for (i = 0; i < 3; i++) BandwidthToggle(false);
+    }
 	if (rate.value < 4000) Cvar_SetValue(&rate, 5670);
 	else if (rate.value < 6000) Cvar_SetValue(&rate, 7168);
 	else if (rate.value < 8000) Cvar_SetValue(&rate, 14336);
@@ -230,6 +235,7 @@ const char* DemoformatRead(void) {
 	return demo_format.string;
 }
 void DemoformatToggle(qbool back) {
+    if (back) DemoformatToggle(false); // trick
 	if (!strcmp(demo_format.string, "qwd")) Cvar_Set(&demo_format, "qwz");
 	else if (!strcmp(demo_format.string, "qwz")) Cvar_Set(&demo_format, "mvd");
 	else if (!strcmp(demo_format.string, "mvd")) Cvar_Set(&demo_format, "qwd");
@@ -251,6 +257,7 @@ const char* RulesetRead(void) {
 	return ruleset.string;
 }
 void RulesetToggle(qbool back) {
+
 	if (!strcmp(ruleset.string, "default")) Cvar_Set(&ruleset, "smackdown");
 	else if (!strcmp(ruleset.string, "smackdown")) Cvar_Set(&ruleset, "mtfl");
 	else if (!strcmp(ruleset.string, "mtfl")) Cvar_Set(&ruleset, "default");
@@ -280,10 +287,10 @@ void DefaultConfig(void) { Cbuf_AddText("cfg_reset\n"); }
 setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_ACTION	("QuakeWorld Help", M_Menu_Help_f, "Browse the \"QuakeWorld for Freshies\" guide by Apollyon."),
-	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens up the console."),
+	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens the console."),
 	ADDSET_ACTION	("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
 #ifdef _WIN32
-    ADDSET_CUSTOM	("Process Priority", PriorityRead, PriorityToggle, "Change client process priority. If you experience tearing or lagging, change this value to something different."),
+    ADDSET_CUSTOM	("Process Priority", PriorityRead, PriorityToggle, "Change client process priority. If you experience tearing or lagging, change this value to something that works for you."),
 #endif
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
 	//Video
@@ -314,7 +321,7 @@ setting settgeneral_arr[] = {
 	ADDSET_SEPARATOR("Chat settings"),
 	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
 	ADDSET_BOOL		("Ignore Observers", ignore_qizmo_spec),
-	ADDSET_BOOL		("Ignore Spectators", ignore_spec),
+	ADDSET_NAMED	("Ignore Spectators", ignore_spec, ignorespec_enum),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NAMED	("Message Filtering", msg_filter, msgfilter_enum),
 	ADDSET_BASIC_SECTION(),
@@ -466,7 +473,6 @@ qbool CT_Opt_HUD_Mouse_Event(const mouse_state_t *ms)
 	return Settings_Mouse_Event(&setthud, ms);
 }
 
-
 settings_page settplayer;
 setting settplayer_arr[] = {
 	ADDSET_SEPARATOR("Player Settings"),
@@ -512,6 +518,12 @@ qbool CT_Opt_Player_Mouse_Event(const mouse_state_t *ms)
 //=============================================================================
 // <BINDS>
 
+extern cvar_t in_mouse, in_m_smooth, m_rate, in_m_os_parameters;
+const char* in_mouse_enum[] = { "off", "system", "Direct Input" };
+const char* in_m_os_parameters_enum[] = { "off", "Keep accel settings", "Keep speed settings", "Keep all settings" };
+
+void Menu_Input_Restart(void) { Cbuf_AddText("in_restart\n"); }
+
 settings_page settbinds;
 setting settbinds_arr[] = {
 	ADDSET_SEPARATOR("Movement"),
@@ -543,6 +555,8 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Report Status", "tp_report"),
 	ADDSET_BIND("Lost location", "tp_lost"),
 	ADDSET_BIND("Location safe", "tp_safe"),
+	ADDSET_BIND("Point at item", "tp_msgpoint"),
+	ADDSET_BIND("Took item", "tp_msgtook"),
 	ADDSET_BIND("Coming from location", "tp_coming"),
 	ADDSET_BIND("Help location", "tp_help"),
 	ADDSET_BIND("Enemy Quad Dead", "tp_quaddead"),
@@ -560,19 +574,32 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Screenshot", "screenshot"),
 	ADDSET_BIND("Quit", "quit"),
 
-	ADDSET_SEPARATOR("Settings"),
+	ADDSET_SEPARATOR("Mouse Settings"),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Mouse Look", freelook),
+	ADDSET_BOOL		("Freelook", freelook),
 	ADDSET_BASIC_SECTION(),
-	ADDSET_NUMBER	("Mouse Speed", sensitivity, 1, 15, 0.25),
-	ADDSET_NUMBER	("Mouse Accel.", m_accel, 0, 1, 0.1),
-	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Inverted mouse will make you look down when you move the mouse up."),
+	ADDSET_NUMBER	("Sensitivity", sensitivity, 1, 15, 0.25),
+	ADDSET_NUMBER	("Acceleration", m_accel, 0, 1, 0.1),
+	ADDSET_CUSTOM	("Invert Mouse", InvertMouseRead, InvertMouseToggle, "Invert mouse will make you look down when the mouse is moved up."),
+#ifdef _WIN32
+    ADDSET_ADVANCED_SECTION(),
+    ADDSET_STRING   ("X sensitivity", m_yaw),
+    ADDSET_STRING   ("Y sensitivity", m_pitch),
+    ADDSET_NAMED    ("Mouse Input Type", in_mouse, in_mouse_enum),
+    ADDSET_BOOL     ("DInput: Smoothing", in_m_smooth),
+    ADDSET_STRING   ("DInput: Rate (Hz)", m_rate),
+    ADDSET_NAMED    ("OS Mouse: Parms.", in_m_os_parameters, in_m_os_parameters_enum),
+    ADDSET_ACTION   ("Apply", Menu_Input_Restart, "Will restart the mouse input module and apply settings."),
+    ADDSET_BASIC_SECTION(),
+#endif
+    ADDSET_SEPARATOR("Weapon Handling"),
 	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle, "Switches to picked up weapon if more powerful than what you're holding."),
 	ADDSET_BOOL		("Gun Preselect", cl_weaponpreselect),
 	ADDSET_BOOL		("Gun Auto hide", cl_weaponhide),
+    ADDSET_SEPARATOR("Movement"),
+	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "Maximum forward speed at all times."),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "Maximum walking speed at all times."),
-	ADDSET_BOOL		("Smart Jump", cl_smartjump),
+    ADDSET_BOOL		("Smart Jump", cl_smartjump),
 	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
 	ADDSET_BASIC_SECTION(),
 	
@@ -755,15 +782,15 @@ void TexturesqualityToggle(qbool back) {
 
 setting settfps_arr[] = {
 	ADDSET_SEPARATOR("Presets"),
-	ADDSET_ACTION	("Load Fast Preset", LoadFastPreset, "Adjusted for high performance"),
-	ADDSET_ACTION	("Load HQ preset", LoadHQPreset, "Adjusted for high image quality"),
+	ADDSET_ACTION	("Load Fast Preset", LoadFastPreset, "Adjust for high performance."),
+	ADDSET_ACTION	("Load HQ preset", LoadHQPreset, "Adjust for high image-quality."),
 	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Tells the client to cap the amount of frames rendered per second."),
+	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Tells the client to limit the amount of frames rendered per second."),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Disable lin. interp.", cl_nolerp),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
-	ADDSET_BOOL		("Damage Flash", v_damagecshift),
+	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
 	ADDSET_BOOL		("Pickup Flashes", v_bonusflash),
 	ADDSET_SEPARATOR("Environment"),
 #ifdef GLQUAKE
@@ -915,7 +942,7 @@ const char* FullScreenRead(void) { return mvs_selected.fullscreen ? "on" : "off"
 
 void ResolutionToggle(qbool back) {
 	if (back) mvs_selected.res--; else mvs_selected.res++;
-	mvs_selected.res = bound(0, mvs_selected.res, glmodes_size - 1);
+	mvs_selected.res = (mvs_selected.res + glmodes_size) % glmodes_size;
 }
 void BitDepthToggle(qbool back) {
 	if (back) {
@@ -936,11 +963,11 @@ void FullScreenToggle(qbool back) { mvs_selected.fullscreen = mvs_selected.fulls
 
 setting settvideo_arr[] = {
 	ADDSET_SEPARATOR("Screen settings"),
-	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution used within the game."),
+	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
 	ADDSET_CUSTOM("Bit depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
-	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle fullscreen and windowed mode."),
+	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
 	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
-	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the rendered and applies selected resolution."),
+	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
 	ADDSET_SEPARATOR("Text layer settings"),
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
 	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),

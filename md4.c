@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: md4.c,v 1.1 2007-03-21 16:54:11 vvd0 Exp $
+	$Id: md4.c,v 1.2 2007-05-13 13:41:43 johnnycz Exp $
 
 */
 /* GLOBAL.H - RSAREF types and constants */
@@ -30,7 +30,7 @@ typedef unsigned char *POINTER;
 typedef unsigned short int UINT2;
 
 /* UINT4 defines a four byte word */
-#ifdef __alpha__
+#if defined(__alpha__) || defined(_LP64)
 typedef unsigned int UINT4;
 #else
 typedef unsigned long int UINT4;

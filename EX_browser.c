@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.36 2007-05-03 12:03:53 johnnycz Exp $
+	$Id: EX_browser.c,v 1.37 2007-05-13 13:41:42 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -671,11 +671,11 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
         {
             char buf[10], *max;
             max =  ValueForKey(s, "maxclients");
-            sprintf(buf, "%d/%s", s->playersn, max==NULL ? "??" : max);
+            snprintf(buf, sizeof(buf), "%d/%s", s->playersn, max==NULL ? "??" : max);
             strcat(line, buf);
             max =  ValueForKey(s, "maxspectators");
-            sprintf(buf, "-%d/%s", s->spectatorsn, max==NULL ? "??" : max);
-            strcat(line, buf);
+            snprintf(buf, sizeof(buf), "-%d/%s", s->spectatorsn, max==NULL ? "??" : max);
+            strlcat(line, buf, sizeof(line));
         }
 
         if (ValueForKey(s, "status") == NULL)
@@ -688,27 +688,27 @@ void Draw_Server_Statusbar(int x, int y, int w, int h, server_data *s, int count
 
             if (dm  &&  strlen(line) + 7 <= w/8)
             {
-                sprintf(buf, "\xa0 dmm%s", dm);
-                strcat(line, buf);
+                snprintf(buf, sizeof(buf), "\xa0 dmm%s", dm);
+                strlcat(line, buf, sizeof(line));
             }
 
             if (fl  &&  strlen(line) + 8 <= w/8)
             {
-                sprintf(buf, "\xa0 fl:%s", fl);
-                strcat(line, buf);
+                snprintf(buf, sizeof(buf), "\xa0 fl:%s", fl);
+                strlcat(line, buf, sizeof(line));
             }
 
             if (tl  &&  strlen(line) + 7 <= w/8)
             {
-                sprintf(buf, "\xa0 tl:%s", tl);
-                strcat(line, buf);
+                snprintf(buf, sizeof(buf), "\xa0 tl:%s", tl);
+                strlcat(line, buf, sizeof(line));
             }
         }
         else
         {
             char buf[200];
-            sprintf(buf, "\xa0 %s", ValueForKey(s, "status"));
-            strcat(line, buf);
+            snprintf(buf, sizeof(buf), "\xa0 %s", ValueForKey(s, "status"));
+            strlcat(line, buf, sizeof(line));
         }
 
         // draw line
@@ -2793,22 +2793,8 @@ CTabPage_Handlers_t sb_options_handlers = {
 	Options_Mouse_Event
 };
 
-void Browser_Init(void)
+void Browser_Init (void)
 {
-    int i;
-
-    Servers_pos = 0;
-    Sources_pos = 0;
-    Servers_disp = 0;
-    show_serverinfo = NULL;
-    serverinfo_pos = 0;
-
-    for (i=0; i < MAX_SERVERS; i++)
-        servers[i] = NULL;
-
-    serversn = serversn_passed = 0;
-    sourcesn = 0;
-
 	Cvar_SetCurrentGroup(CVAR_GROUP_SERVER_BROWSER);
     Cvar_Register(&sb_status);
     Cvar_Register(&sb_showping);
@@ -2842,15 +2828,7 @@ void Browser_Init(void)
 
 	Settings_Page_Init(sbsettings, sbsettings_arr);
 
-//    Cmd_AddCommand("menu_serverbrowser", M_ServerBrowser_f);
     Cmd_AddCommand("addserver", AddServer_f);
-
-    // read sources from SOURCES_PATH
-    Reload_Sources();
-	MarkDefaultSources();
-
-    Cmd_AddCommand("sb_sourceunmarkall", SB_SourceUnmarkAll);
-    Cmd_AddCommand("sb_sourcemark", SB_SourceMark);
 
 	CTab_Init(&sb_tab);
 	CTab_AddPage(&sb_tab, "servers", SBPG_SERVERS, &sb_servers_handlers);
@@ -2858,4 +2836,25 @@ void Browser_Init(void)
 	CTab_AddPage(&sb_tab, "players", SBPG_PLAYERS, &sb_players_handlers);
 	CTab_AddPage(&sb_tab, "options", SBPG_OPTIONS, &sb_options_handlers);
 	CTab_SetCurrentId(&sb_tab, SBPG_SERVERS);
+}
+
+void Browser_Init2 (void)
+{
+    int i;
+
+    Servers_pos = 0;
+    Sources_pos = 0;
+    Servers_disp = 0;
+    show_serverinfo = NULL;
+    serverinfo_pos = 0;
+
+    for (i=0; i < MAX_SERVERS; i++)
+        servers[i] = NULL;
+
+    serversn = serversn_passed = 0;
+    sourcesn = 0;
+
+    // read sources from SOURCES_PATH
+	Reload_Sources();
+	MarkDefaultSources();
 }

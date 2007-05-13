@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.54 2007-05-03 12:03:54 johnnycz Exp $
+	$Id: console.c,v 1.55 2007-05-13 13:41:43 johnnycz Exp $
 */
 // console.c
 
@@ -64,7 +64,7 @@ cvar_t		_con_notifylines = {"con_notifylines","4"};
 cvar_t		con_notifytime = {"con_notifytime","3"};		//seconds
 cvar_t		con_wordwrap = {"con_wordwrap","1"};
 cvar_t		con_clearnotify = {"con_clearnotify","1"};
-cvar_t	    x                = {"x", "$x", CVAR_ROM};
+//cvar_t	    xyzh                = {"x", "$x", CVAR_ROM};
 
 // added by jogi start
 cvar_t		con_highlight  		= {"con_highlight","0"};
@@ -449,7 +449,7 @@ void Con_Init (void) {
 	Cvar_Register (&con_notifytime);
 	Cvar_Register (&con_wordwrap);
 	Cvar_Register (&con_clearnotify);
-	Cvar_Register (&x);
+	//Cvar_Register (&xyzh);
 
 #ifdef GLQUAKE
 	Cvar_Register (&con_particles_alpha);
@@ -460,6 +460,13 @@ void Con_Init (void) {
 	Cvar_Register (&con_highlight);
 	Cvar_Register (&con_highlight_mark);
 	// added by jogi stop
+
+	Cvar_Register (&con_timestamps); 
+	Cvar_Register (&con_shift); 
+
+	Cvar_ResetCurrentGroup();
+
+    Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
 
 	Cvar_Register (&con_sound_mm1_file); 
 	Cvar_Register (&con_sound_mm2_file); 
@@ -479,11 +486,7 @@ void Con_Init (void) {
 	Cmd_AddLegacyCommand("con_sound_spec_volume", "s_spec_volume");
 	Cmd_AddLegacyCommand("con_sound_other_volume", "s_otherchat_volume");
 
-
-	Cvar_Register (&con_timestamps); 
-	Cvar_Register (&con_shift); 
-
-	Cvar_ResetCurrentGroup();
+    Cvar_ResetCurrentGroup();
 
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
 	Cmd_AddCommand ("messagemode", Con_MessageMode_f);

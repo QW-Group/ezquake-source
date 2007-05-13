@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.62 2007-05-03 12:03:54 johnnycz Exp $
+    $Id: cmd.c,v 1.63 2007-05-13 13:41:43 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -33,6 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif /* !GLQUAKE */
 #include "teamplay.h"
 #include "rulesets.h"
+#include "tp_triggers.h"
 #endif /* !SERVERONLY */
 
 #ifndef SERVERONLY
@@ -1744,8 +1745,10 @@ void Cmd_If_Exists_f(void)
 	name = Cmd_Argv(2);
 	if ( ( (iscvar = !strcmp(type, "cvar")) && Cvar_FindVar (name) )			||
 	        ( (isalias = !strcmp(type, "alias")) && Cmd_FindAlias (name) )			||
+#ifndef SERVERONLY
 	        ( (istrigger = !strcmp(type, "trigger")) && CL_FindReTrigger (name) )	||
 	        ( (ishud = !strcmp(type, "hud")) && Hud_FindElement (name) ) )
+#endif
 		exists = true;
 	else {
 		exists = false;

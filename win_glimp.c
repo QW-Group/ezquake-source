@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-$Id: win_glimp.c,v 1.15 2007-04-15 14:54:50 johnnycz Exp $
+$Id: win_glimp.c,v 1.16 2007-05-13 13:41:44 johnnycz Exp $
 
 */
 /*
@@ -96,6 +96,12 @@ cvar_t	r_allowSoftwareGL = { "vid_allowSoftwareGL", "0", CVAR_LATCH }; // don't 
 cvar_t	r_maskMinidriver  = { "vid_maskMinidriver",  "0", CVAR_LATCH }; // allow a different dll name to be treated as if it were opengl32.dll
 
 static qbool s_classRegistered = false;
+
+// VVD: didn't restore gamma after ALT+TAB on some ATI video cards (or drivers?...) 
+// HACK!!! FIXME {
+cvar_t	vid_forcerestoregamma = {"vid_forcerestoregamma", "0"};
+int		restore_gamma = 0;
+// }
 
 //
 // function declaration
@@ -1440,6 +1446,7 @@ void GLimp_Init( void )
 
 	Cvar_Register (&r_allowSoftwareGL);
 	Cvar_Register (&r_maskMinidriver);
+	Cvar_Register (&vid_forcerestoregamma);
 
 	Cvar_ResetCurrentGroup();
 
@@ -1806,6 +1813,11 @@ void WG_AppActivate(BOOL fActive, BOOL minimized) {
 
 		if ( glw_state.vid_canalttab && !minimized )
 		{
+			// VVD: didn't restore gamma after ALT+TAB on some ATI video cards (or drivers?...)
+			// HACK!!! FIXME {
+			if (restore_gamma == 0 && (int)vid_forcerestoregamma.value)
+				restore_gamma = 1;
+			// }
 			v_gamma.modified = true; // force reset gamma on next frame
 		}
 	}

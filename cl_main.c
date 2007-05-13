@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.144 2007-05-03 12:03:54 johnnycz Exp $
+$Id: cl_main.c,v 1.145 2007-05-13 13:41:42 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -47,6 +47,7 @@ $Id: cl_main.c,v 1.144 2007-05-03 12:03:54 johnnycz Exp $
 #include "r_local.h"
 #endif
 #include "teamplay.h"
+#include "tp_triggers.h"
 #include "rulesets.h"
 #include "version.h"
 #include "stats_grid.h"

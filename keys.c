@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.59 2007-04-29 12:00:15 qqshka Exp $
+    $Id: keys.c,v 1.60 2007-05-13 13:41:43 johnnycz Exp $
 
 */
 
@@ -87,6 +87,7 @@ keydest_t	key_dest, key_dest_beforemm, key_dest_beforecon;
 
 char	*keybindings[UNKNOWN + 256];
 qbool	consolekeys[UNKNOWN + 256];	// if true, can't be rebound while in console
+qbool	hudeditorkeys[UNKNOWN + 256];	// if true, can't be rebound while in hud editor
 qbool	menubound[UNKNOWN + 256];		// if true, can't be rebound while in menu
 #ifndef WITH_KEYMAP
 int		keyshift[UNKNOWN + 256];		// key to map to if shift held down in console
@@ -1349,13 +1350,15 @@ void Key_Message (int key, wchar unichar) {
 				Cbuf_AddText(encode_say(chat_buffer));
 				Cbuf_AddText("\"\n");
 			}
-			key_dest = key_dest_beforemm;
+            if (key_dest_beforemm != key_message)
+			    key_dest = key_dest_beforemm;
 			chat_linepos = 0;
 			chat_buffer[0] = 0;
 			return;
 
 		case K_ESCAPE:
-			key_dest = key_dest_beforemm;
+            if (key_dest_beforemm != key_message)
+			    key_dest = key_dest_beforemm;
 			chat_buffer[0] = 0;
 			chat_linepos = 0;
 			return;
@@ -1859,6 +1862,20 @@ void Key_Init (void) {
 	keyshift['\\'] = '|';
 #endif // WITH_KEYMAP
 
+    hudeditorkeys[K_ALT] = true;
+    hudeditorkeys[K_LALT] = true;
+    hudeditorkeys[K_SHIFT] = true;
+    hudeditorkeys[K_LSHIFT] = true;
+    hudeditorkeys[K_CTRL] = true;
+    hudeditorkeys[K_LCTRL] = true;
+    hudeditorkeys['h'] = true;
+    hudeditorkeys['p'] = true;
+	hudeditorkeys[K_SPACE] = true;
+    hudeditorkeys[K_F1] = true;
+    hudeditorkeys[K_F2] = true;
+    hudeditorkeys[K_F3] = true;
+    hudeditorkeys[K_F4] = true;
+
 	menubound[K_ESCAPE] = true;
 	for (i = 0; i < 12; i++)
 		menubound[K_F1 + i] = true;
@@ -1934,7 +1951,8 @@ void Mouse_MoveEvent(void)
 static qbool Key_ConsoleKey(int key)
 {
     // this makes it possible to type chars under tilde key into the console
-    qbool con_key = (con_tilde_mode.integer && (key == 96 || key == 126)) ? true : consolekeys[key];
+    qbool con_key = (con_tilde_mode.integer && (key == '`' || key == '~')) ? true : consolekeys[key];
+    qbool hud_key = (con_tilde_mode.integer && (key == '`' || key == '~')) ? true : hudeditorkeys[key];
 
     if (key_dest == key_menu && menubound[key])
         return false;
@@ -1943,6 +1961,9 @@ static qbool Key_ConsoleKey(int key)
         return false;
     
     if (key_dest == key_game && (cls.state == ca_active || !con_key))
+        return false;
+
+    if (key_dest == key_hudeditor && !hud_key)
         return false;
 
     return true;

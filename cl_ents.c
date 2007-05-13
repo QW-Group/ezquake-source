@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.32 2007-04-14 19:37:35 qqshka Exp $
+	$Id: cl_ents.c,v 1.33 2007-05-13 13:41:42 johnnycz Exp $
 
 */
 
@@ -67,6 +67,7 @@ void CL_InitEnts(void) {
 
 	cl_modelnames[mi_spike] = "progs/spike.mdl";
 	cl_modelnames[mi_player] = "progs/player.mdl";
+	cl_modelnames[mi_eyes] = "progs/eyes.mdl";
 	cl_modelnames[mi_flag] = "progs/flag.mdl";
 	cl_modelnames[mi_tf_flag] = "progs/tf_flag.mdl";
 	cl_modelnames[mi_tf_stan] = "progs/tf_stan.mdl";
@@ -896,7 +897,7 @@ void CL_LinkPacketEntities (void) {
 					//VULT PARTICLES
 					else if (r_rockettrail.value == 8)
 					{
-						byte color[2];
+						byte color[3];
 						color[0] = 0; color[1] = 70; color[2] = 255;
 						FireballTrail (*old_origin, ent.origin, &cent->trail_origin, color, 2, 0.5);
 					}
@@ -907,7 +908,7 @@ void CL_LinkPacketEntities (void) {
 						FuelRodGunTrail (*old_origin, ent.origin, ent.angles, &cent->trail_origin);
 					else if (r_rockettrail.value == 11)
 					{
-						byte color[2];
+						byte color[3];
 						color[0] = 255; color[1] = 70; color[2] = 5;
 						FireballTrailWave (*old_origin, ent.origin, &cent->trail_origin, color, 2, 0.5, ent.angles);
 					}
@@ -975,7 +976,7 @@ void CL_LinkPacketEntities (void) {
 					//VULT PARTICLES
 					else if (r_grenadetrail.value == 8)
 					{
-						byte color[2];
+						byte color[3];
 						color[0] = 0; color[1] = 70; color[2] = 255;
 						FireballTrail (*old_origin, ent.origin, &cent->trail_origin, color, 2, 0.5);
 					}
@@ -986,7 +987,7 @@ void CL_LinkPacketEntities (void) {
 						FuelRodGunTrail (*old_origin, ent.origin, ent.angles, &cent->trail_origin);
 					else if (r_grenadetrail.value == 11)
 					{
-						byte color[2];
+						byte color[3];
 						color[0] = 255; color[1] = 70; color[2] = 5;
 						FireballTrailWave (*old_origin, ent.origin, &cent->trail_origin, color, 2, 0.5, ent.angles);
 					}
@@ -1052,7 +1053,7 @@ void CL_LinkPacketEntities (void) {
 			{
 				if (amf_nailtrail_plasma.value)
 				{
-					byte color[2];
+					byte color[3];
 					color[0] = 0; color[1] = 70; color[2] = 255;
 					FireballTrail (*old_origin, ent.origin, &cent->trail_origin, color, 0.6, 0.3);
 				}

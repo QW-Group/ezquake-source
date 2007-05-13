@@ -1,5 +1,5 @@
 /*
-$Id: mvd_utils.c,v 1.38 2007-05-03 12:03:54 johnnycz Exp $
+$Id: mvd_utils.c,v 1.39 2007-05-13 13:41:44 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -326,7 +326,7 @@ int last_track;
 // mvd_info cvars
 cvar_t			mvd_info		= {"mvd_info", "0"};
 cvar_t			mvd_info_show_header	= {"mvd_info_show_header", "0"};
-cvar_t			mvd_info_setup	= {"mvd_info_setup", "%6n %3f %10l %4a %4h %3w"};
+cvar_t			mvd_info_setup	= {"mvd_info_setup", "%p%n ê%lë %h/%a %w"};
 cvar_t			mvd_info_x		= {"mvd_info_x", "0"};
 cvar_t			mvd_info_y		= {"mvd_info_y", "0"};
 
@@ -1271,7 +1271,8 @@ int MVD_Stats_Gather_f (void){
 		if ((((pent_time + 300) - cls.demotime) < 5) && !pent_is_active){
 			if(!pent_mentioned){
 				pent_mentioned = 1;
-				Com_Printf("pent in 5 secs\n");
+                // fixme
+				// Com_Printf("pent in 5 secs\n");
 			}
 			if (powerup_cam_active ==1)
 					powerup_cam_active = 3;
@@ -1281,7 +1282,8 @@ int MVD_Stats_Gather_f (void){
 		if ((((quad_time + 60) - cls.demotime) < 5) && !quad_is_active){
 			if(!quad_mentioned){
 				quad_mentioned = 1;
-				Com_Printf("quad in 5 secs\n");
+                // fixme
+				// Com_Printf("quad in 5 secs\n");
 			}
 			if (powerup_cam_active ==2)
 				powerup_cam_active = 3;

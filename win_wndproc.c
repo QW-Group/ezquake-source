@@ -16,9 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: win_wndproc.c,v 1.4 2007-03-21 17:03:11 vvd0 Exp $
+	$Id: win_wndproc.c,v 1.5 2007-05-13 13:41:44 johnnycz Exp $
 
 */
+
+#include <time.h>
 
 #include "quakedef.h"
 #ifdef GLQUAKE
@@ -116,7 +118,6 @@ int IN_MapKey (int key);
 #include "mw_hook.h"
 void MW_Hook_Message (long buttons);
 
-
 /* main window procedure */
 LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lParam) {
 	extern void VID_UpdateWindowStatus (void);
@@ -124,6 +125,19 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
     LONG lRet = 1;
 	int fActive, fMinimized, temp;
 	extern unsigned int uiWheelMessage;
+
+	// VVD: didn't restore gamma after ALT+TAB on some ATI video cards (or drivers?...)
+	// HACK!!! FIXME {
+	extern int	restore_gamma;
+	static time_t time_old;
+	static float old_gamma;
+	if (restore_gamma == 2) {
+		if (time(NULL) - time_old > 0) {
+			Cvar_SetValue(&v_gamma, old_gamma);
+			restore_gamma = 0;
+		}
+	}
+	// }
 
 	if (uMsg == uiWheelMessage) {
 		uMsg = WM_MOUSEWHEEL;
@@ -192,6 +206,15 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
 			fMinimized = (BOOL) HIWORD(wParam);
 			AppActivate(!(fActive == WA_INACTIVE), fMinimized);
 
+			// VVD: didn't restore gamma after ALT+TAB on some ATI video cards (or drivers?...)
+			// HACK!!! FIXME {
+			if (restore_gamma == 1) {
+				time_old = time(NULL);
+				restore_gamma = 2;
+				old_gamma = v_gamma.value;
+				Cvar_SetValue(&v_gamma, old_gamma + 0.01);
+			}
+			// }
 			// fix the leftover Alt from any Alt-Tab or the like that switched us away
 			ClearAllStates ();
 

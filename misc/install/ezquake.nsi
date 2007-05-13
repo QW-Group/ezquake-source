@@ -8,16 +8,21 @@
 ;  gnu.txt (GNU GENERAL PUBLIC LICENSE, Version 2, June 1991)
 ;  mw_hook.dll (who uses this nowaday? :-/ )
 ;  qw/ (dir)
-;    qwprogs.dat (use the one delivered with ZQuake)
-;    spprogs.dat (use the one delivered with ZQuake)
 ;    fragfile.dat (CVS/ezquake/misc/fragfile/fragfile.dat)
+;    skins/ (dir)
+;      (CVS/media/game/skins/ go here)
 ;  ezquake/ (dir)
 ;    pak0.pak (pak)
-;      / (from cvs/media/ except for cvs/media/textures/wad)
+;      / (from cvs/media/game except for cvs/media/game/textures/wad and cvs/media/game/skins/)
+;    hud.pak (pak)
+;      /textures/wad (from cvs/media/textures/wad)
+;    help.pak
 ;      /help/variables/ (from documentation system)
 ;      /help/commands/ (from documentation system)
-;    pak1.pak (pak)
-;      /textures/wad (from cvs/media/textures/wad)
+;    progs.pak (pak)
+;      qwprogs.dat (use the one delivered with ZQuake)
+;      spprogs.dat (use the one delivered with ZQuake)
+;    locs.pak (pak) (CVS/media/game/locs.pak)
 ;    cfg/ (dir, see CVS/ezquake/misc/cfg/)
 ;    help/ (dir, see CVS/documentation)
 ;      manual/ (cvs/documentation/manual)
@@ -112,6 +117,9 @@ Section "!ezQuake client" Main
   CreateDirectory $INSTDIR\ezquake
   SetOutPath $INSTDIR\ezquake
   File "ezquake\pak0.pak"
+  File "ezquake\help.pak"
+  File "ezquake\locs.pak"
+  File "ezquake\pak.lst"
 
   CreateDirectory $INSTDIR\ezquake\cfg
   SetOutPath $INSTDIR\ezquake\cfg
@@ -121,6 +129,8 @@ Section "!ezQuake client" Main
   CreateDirectory $INSTDIR\ezquake\help\manual
   CreateDirectory $INSTDIR\ezquake\help\xsd
   CreateDirectory $INSTDIR\ezquake\help\xsl
+  SetOutPath $INSTDIR\ezquake\help
+  File /r "ezquake\help\index.xml"
   SetOutPath $INSTDIR\ezquake\help\manual
   File /r "ezquake\help\manual\*.*"
   SetOutPath $INSTDIR\ezquake\help\xsd
@@ -142,6 +152,7 @@ Section "!ezQuake client" Main
   File "ezquake\sb\qizmo.txt"
   File "ezquake\sb\sa-sv.txt"
   File "ezquake\sb\tf.txt"
+  File "ezquake\sb\eu-4on4.txt"
   ; here we make sure user always has some server browser sources file even if he unchecks next section and doesn't have any sources.txt yet
   SetOverwrite off
   File "ezquake\sb\sources.txt"
@@ -150,6 +161,9 @@ Section "!ezQuake client" Main
   CreateDirectory $INSTDIR\qw
   SetOutPath $INSTDIR\qw
   File "qw\fragfile.dat"
+  CreateDirectory $INSTDIR\qw\skins
+  SetOutPath $INSTDIR\qw\skins
+  File "qw\skins\*.*"
 
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\ezQuake "Install_Dir" "$INSTDIR"
@@ -169,10 +183,8 @@ Section "Server Browser Index" SBIndex
 SectionEnd
 
 Section "QuakeWorld Progs" Progs
-  CreateDirectory $INSTDIR\qw
-  SetOutPath $INSTDIR\qw
-  File "qw\qwprogs.dat"
-  File "qw\spprogs.dat"
+  SetOutPath $INSTDIR\ezquake
+  File "ezquake\progs.pak"
 SectionEnd
 
 Section "Manual" Manual
@@ -183,7 +195,7 @@ SectionEnd
 
 Section /o "Modern HUD Icons" HUDIcons
   SetOutPath $INSTDIR\ezquake
-  File "ezquake\pak1.pak"
+  File "ezquake\hud.pak"
 SectionEnd
 
 Section /o "Software rendering" Software
@@ -225,7 +237,10 @@ Section "Uninstall"
   RMDir /r "$INSTDIR\ezquake\manual"
   RMDir /r "$INSTDIR\ezquake\sb"
   Delete "$INSTDIR\ezquake\pak0.pak"
-  Delete "$INSTDIR\ezquake\pak1.pak"
+  Delete "$INSTDIR\ezquake\hud.pak"
+  Delete "$INSTDIR\ezquake\locs.pak"
+  Delete "$INSTDIR\ezquake\progs.pak"
+  Delete "$INSTDIR\ezquake\help.pak"
 
   ; Remove shortcuts, if any
   Delete "$SMPROGRAMS\ezQuake\*.*"
@@ -251,7 +266,7 @@ LangString DESC_Section4 ${LANG_ENGLISH} "Will install executable with software 
 LangString DESC_Section5 ${LANG_ENGLISH} "Check in case you want to bind extra mouse buttons when using Logitech mouse with MouseWare drivers."
 LangString DESC_Section6 ${LANG_ENGLISH} "Start menu shortcuts"
 LangString DSC_SCT_MAN ${LANG_ENGLISH} "Offline version of the documentation."
-LangString DSC_SCT_PGS ${LANG_ENGLISH} "You need this to run a server or a Singleplayer game."
+LangString DSC_SCT_PGS ${LANG_ENGLISH} "You need this to host a Multiplayer game or start a Singleplayer game."
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${Main} $(DESC_Section1)

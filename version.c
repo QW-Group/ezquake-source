@@ -23,7 +23,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: version.c,v 1.12 2007-04-01 00:19:16 johnnycz Exp $
+	$Id: version.c,v 1.13 2007-05-13 13:41:44 johnnycz Exp $
 */
 
 #include "common.h"

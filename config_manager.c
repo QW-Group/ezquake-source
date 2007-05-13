@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.39 2007-05-03 12:03:54 johnnycz Exp $
+    $Id: config_manager.c,v 1.40 2007-05-13 13:41:43 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -250,6 +250,36 @@ static void DumpVariables(FILE	*f)
 		spaces = CreateSpaces(col_size - strlen(var->name) - 5);
 		fprintf	(f, "%s %s%s\"%s\"\n", (var->flags & CVAR_USER_ARCHIVE) ? "seta" : "set ", var->name, spaces, var->string);
 	}
+}
+
+void DumpVariablesDefaults_f(void)
+{
+	cvar_t *var;
+	cvar_group_t *group;
+    char filepath[MAX_PATH];
+    FILE *f;
+
+    snprintf(filepath, sizeof(filepath), "%s/ezquake/configs/cvar_defaults.cfg", com_basedir);
+
+    f = fopen(filepath, "w");
+    if (!f)
+    {
+        Com_Printf("Couldn't open %s for writing\n", filepath);
+        return;
+    }
+
+	for (group = cvar_groups; group; group = group->next) {
+	    fprintf(f, "\n//%s\n", group->name);
+
+        for (var = group->head; var; var = var->next_in_group) {
+		    fprintf(f, "%s \"%s\"\n", var->name, var->string);
+		}
+	}
+
+    if (fclose(f))
+        Com_Printf("Couldn't close %s", filepath);
+    else
+        Com_Printf("Variables default values dumped to:\n%s", filepath);
 }
 
 #define MAX_ALIGN_COL 60
@@ -934,6 +964,7 @@ void ConfigManager_Init(void)
 	Cmd_AddCommand("cfg_load", LoadConfig_f);
 	Cmd_AddCommand("cfg_reset",	ResetConfigs_f);
 	Cmd_AddCommand("hud_export", DumpHUD_f);
+    Cmd_AddCommand("dump_defaults", DumpVariablesDefaults_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONFIG);
 	Cvar_Register(&cfg_save_unchanged);

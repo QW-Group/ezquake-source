@@ -1,4 +1,4 @@
-//    $Id: Ctrl.c,v 1.13 2007-03-19 13:23:20 johnnycz Exp $
+//    $Id: Ctrl.c,v 1.14 2007-05-13 13:41:42 johnnycz Exp $
 
 #include "quakedef.h"
 #include "utils.h"
@@ -128,37 +128,85 @@ void UI_DrawBox(int x, int y, int w, int h)
 
 qbool UI_PrintTextBlock(int x, int y, int w, int h, const char* text, qbool red)
 {
-	int lpl = w / 8;	// letters per line
-	int lines = h / 8;	// lines in the text block
-	int clen = 0, cline = 0;	// current lenght, current line
+	int letters_per_line = w / 8;	// Letters per line.
+	int lines = h / 8;				// Lines in the text block.
+	int linelen = 0;				// Current line length.
+	int linecount = 0;				// Current line.
 	char buf[1024];
 
-	const char *start = text, *end, *nextend;
+	const char *start = text, *end, *wordend;
 
-	while (*start && cline < lines) {
-		nextend = start;
-		end = nextend;
-		clen = 0;
-		while (clen < lpl && *nextend) {
-			end = nextend;
-			do {
-				nextend++;
-				clen++;
-			} while (*nextend && *nextend != ' ' && *nextend != '\n');
-			if (*nextend == '\n') {
-				if (clen < lpl)
-					end = nextend;
+	while (*start && linecount < lines) 
+	{
+		wordend = start;
+		end = wordend;
+		linelen = 0;
+
+		// Read the next line.
+		while (linelen < letters_per_line && *wordend) 
+		{
+			end = wordend;
+
+			// Read the next word.
+			do 
+			{
+				wordend++;
+				linelen++;
+			}
+			while (*wordend && *wordend != ' ' && *wordend != '\n');
+			
+			// Make sure we didn't find a word that was too long and
+			// caused us to go outside of the line boundary.
+			if(linelen >= letters_per_line)
+			{
+				// Try to find the last word boundary (whis
+				do
+				{
+					wordend--;
+					linelen--;
+				}
+				while(*wordend && *wordend != ' ' && linelen > 0);
+
+				// Check if failed to find a word boundary. 
+				// If that's the case just break the line at the max letters allowed for a line.
+				// Otherwise break at the last word boundary.
+				end = (linelen == 0) ? (end + letters_per_line - 1) : wordend;
+				break;
+			}
+
+			// Check if it's time for a new line.
+			if (*wordend == '\n') 
+			{
+				end = wordend; 
 				break; 
 			}
 		}
-		if (!*nextend && clen < lpl) end = nextend;
-		strlcpy(buf, start, end-start+1);
-		UI_Print(x, y + cline*8, buf, red);
-		cline++;
+		
+		// End of string found.
+		if (!*wordend && linelen < letters_per_line)
+		{
+			end = wordend;
+		}
+
+		// Break the line after the word, not after the next whitespace
+		// so the next line won't start with that whitespace.
+		while (*end && *end == ' ')
+		{
+			end++;
+		}
+
+		// Make sure we consume any newline character before printing.
+		if(*start && *start == '\n')
+		{
+			start++;
+		}
+
+		strlcpy(buf, start, end - start + 1);
+		UI_Print(x, y + (linecount * 8), buf, red);
+		linecount++;
 		start = end;
-		while (*start && (*start == ' ' || *start == '\n')) start++;
 	}
 
-	// if the text didn't fit in there, *start won't be zero
+	// If the text didn't fit in there, *start won't be zero.
 	return !(*start);
 }

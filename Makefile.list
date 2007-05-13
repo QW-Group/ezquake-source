@@ -65,6 +65,8 @@ CLIENT_C_FILES := \
 	snd_mix \
 	stats_grid \
 	teamplay \
+	tp_msgs \
+	tp_triggers \
 	textencoding \
 	utils \
 	wad \

@@ -16,33 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.74 2007-05-12 16:29:16 johnnycz Exp $
+    $Id: teamplay.c,v 1.75 2007-05-13 13:41:44 johnnycz Exp $
 */
 
-#define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
-#define HAVE_LG() (cl.stats[STAT_ITEMS] & IT_LIGHTNING)
-#define HOLD_GL() (cl.stats[STAT_ACTIVEWEAPON] == IT_GRENADE_LAUNCHER) // only used in tp_lost
-#define HOLD_RL() (cl.stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER)
-#define HOLD_LG() (cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING)
- 
-#define HAVE_QUAD() (cl.stats[STAT_ITEMS] & IT_QUAD) //quad
-#define HAVE_PENT() (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) //pent
-#define HAVE_RING() (cl.stats[STAT_ITEMS] & IT_INVISIBILITY) //ring
-#define HAVE_GA() (cl.stats[STAT_ITEMS] & IT_ARMOR1) //ga
-#define HAVE_YA() (cl.stats[STAT_ITEMS] & IT_ARMOR2) //ya
-#define HAVE_RA() (cl.stats[STAT_ITEMS] & IT_ARMOR3) //ra
-#define INPOINTARMOR() (INPOINT(ra) || INPOINT(ya) || INPOINT(ga))
-#define INPOINTWEAPON() (INPOINT(rl) || INPOINT(lg) || INPOINT(gl) || INPOINT(sng))
-#define INPOINTPOWERUP() (INPOINT(quad) || INPOINT(pent) || INPOINT(ring))
-#define INPOINTAMMO() (INPOINT(rockets) || INPOINT(cells) || INPOINT(nails))
- 
-#define TOOK(x) (!strcmp(Macro_Took(), tp_name_##x.string))
-#define COLORED(c,str) "{&c" #c #str "&cfff}"
-#define INPOINT(thing) strstr(Macro_PointName(), tp_name_##thing.string)
-#define DEAD() (cl.stats[STAT_HEALTH] < 1)
- 
-typedef char * MSGPART;
- 
 #include <time.h>
 #include <string.h>
 #include "quakedef.h"
@@ -60,6 +36,7 @@ typedef char * MSGPART;
 #include "stats_grid.h"
 #include "utils.h"
 #include "qsound.h"
+#include "tp_msgs.h"
  
  
 qbool OnChangeSkinForcing(cvar_t *var, char *string);
@@ -67,12 +44,9 @@ qbool OnChangeColorForcing(cvar_t *var, char *string);
  
 cvar_t	cl_parseSay = {"cl_parseSay", "1"};
 cvar_t	cl_parseFunChars = {"cl_parseFunChars", "1"};
-cvar_t	tp_triggers = {"tp_triggers", "1"};
-cvar_t	tp_msgtriggers = {"tp_msgtriggers", "1"};
-cvar_t	tp_forceTriggers = {"tp_forceTriggers", "0"};
 cvar_t	cl_nofake = {"cl_nofake", "2"};
 cvar_t	tp_loadlocs = {"tp_loadlocs", "1"};
-cvar_t  tp_pointpriorities = {"tp_pointpriorities", "1"};
+cvar_t  tp_pointpriorities = {"tp_pointpriorities", "0"};
 
  
 cvar_t  cl_teamtopcolor = {"teamtopcolor", "-1", 0, OnChangeColorForcing};
@@ -88,9 +62,7 @@ cvar_t	cl_enemypentskin = {"enemypentskin", "", 0, OnChangeSkinForcing};
 cvar_t	cl_teambothskin = {"teambothskin", "", 0, OnChangeSkinForcing};
 cvar_t	cl_enemybothskin = {"enemybothskin", "", 0, OnChangeSkinForcing};
  
- 
-cvar_t  tp_soundtrigger = {"tp_soundtrigger", "~"};
- 
+
 cvar_t	tp_name_axe = {"tp_name_axe", "axe"};
 cvar_t	tp_name_sg = {"tp_name_sg", "sg"};
 cvar_t	tp_name_ssg = {"tp_name_ssg", "ssg"};
@@ -170,146 +142,9 @@ void R_TranslatePlayerSkin (int playernum);
 #define POINT_TYPE_TEAMMATE		3
 #define	POINT_TYPE_ENEMY		4
  
-#define	TP_TOOK_EXPIRE_TIME		15
-#define	TP_POINT_EXPIRE_TIME	TP_TOOK_EXPIRE_TIME
- 
-// this structure is cleared after entering a new map
-typedef struct tvars_s
-{
-	int		health;
-	int		items;
-	int		olditems;
-	int		activeweapon;
-	int		stat_framecounts[MAX_CL_STATS];
-	double	deathtrigger_time;
-	float	f_skins_reply_time;
-	float	f_version_reply_time;
-	char	lastdeathloc[MAX_LOC_NAME];
-	char	tookname[32];
-	char	tookloc[MAX_LOC_NAME];
-	double	tooktime;
-	double	pointtime; // cls.realtime for which pointitem & pointloc are valid
-	char	pointname[32];
-	char	pointloc[MAX_LOC_NAME];
-	int		pointtype;
-	char	nearestitemloc[MAX_LOC_NAME];
-	char	lastreportedloc[MAX_LOC_NAME];
-	double	lastdrop_time;
-	char	lastdroploc[MAX_LOC_NAME];
-	char	lasttrigger_match[256];
- 
-	int	numenemies;
-	int	numfriendlies;
-	int	last_numenemies;
-	int	last_numfriendlies;
- 
-	int enemy_powerups;
-	double enemy_powerups_time;
-} tvars_t;
- 
 tvars_t vars;
- 
-static char lastip[32]; // FIXME: remove it
- 
-// re-triggers stuff
-cvar_t re_sub[10] = {{"re_trigger_match_0", "", CVAR_ROM},
-                    {"re_trigger_match_1", "", CVAR_ROM},
-                    {"re_trigger_match_2", "", CVAR_ROM},
-                    {"re_trigger_match_3", "", CVAR_ROM},
-                    {"re_trigger_match_4", "", CVAR_ROM},
-                    {"re_trigger_match_5", "", CVAR_ROM},
-                    {"re_trigger_match_6", "", CVAR_ROM},
-                    {"re_trigger_match_7", "", CVAR_ROM},
-                    {"re_trigger_match_8", "", CVAR_ROM},
-                    {"re_trigger_match_9", "", CVAR_ROM}};
- 
-cvar_t re_subi[10] = {{"internal0"},
-                     {"internal1"},
-                     {"internal2"},
-                     {"internal3"},
-                     {"internal4"},
-                     {"internal5"},
-                     {"internal6"},
-                     {"internal7"},
-                     {"internal8"},
-                     {"internal9"}};
- 
-static pcre_trigger_t *re_triggers;
-static pcre_internal_trigger_t *internal_triggers;
-/********************************** TRIGGERS **********************************/
- 
-typedef struct f_trigger_s
-{
-	char *name;
-	qbool restricted;
-	qbool teamplay;
-} f_trigger_t;
- 
-f_trigger_t f_triggers[] = {
-                               {"f_newmap", false, false},
-                               {"f_spawn", false, false},
-                               {"f_mapend", false, false},
-                               {"f_reloadstart", false, false},
-                               {"f_reloadend", false, false},
-                               {"f_cfgload", false, false},
-                               {"f_exit", false, false},
-                               {"f_demostart", false, false},
-                               {"f_demoend", false, false},
-                               {"f_captureframe", false, false},
- 
-							   {"f_freeflyspectate", false, false},
-							   {"f_trackspectate", false, false},
- 
-                               {"f_weaponchange", false, false},
- 
-                               {"f_took", true, true},
-                               {"f_respawn", true, true},
-                               {"f_death", true, true},
-                               {"f_flagdeath", true, true},
- 
-                               {"f_conc", true, true},
-                               {"f_flash", true, true},
-                               {"f_bonusflash", true, true},
-                           };
- 
-#define num_f_triggers	(sizeof(f_triggers) / sizeof(f_triggers[0]))
- 
-void TP_ExecTrigger (char *trigger)
-{
-	int i, j, numteammates = 0;
-	cmd_alias_t *alias;
- 
-	if (!tp_triggers.value || ((cls.demoplayback || cl.spectator) && cl_restrictions.value))
-		return;
- 
-	for (i = 0; i < num_f_triggers; i++) {
-		if (!strcmp (f_triggers[i].name, trigger))
-			break;
-	}
-	if (i == num_f_triggers)
-		Sys_Error ("Unknown f_trigger \"%s\"", trigger);
- 
-	if (f_triggers[i].teamplay && !tp_forceTriggers.value) {
-		if (!cl.teamplay)
-			return;
- 
-		for (j = 0; j < MAX_CLIENTS; j++) {
-			if (cl.players[j].name[0] && !cl.players[j].spectator && j != cl.playernum) {
-				if (!strcmp(cl.players[j].team, cl.players[cl.playernum].team))
-					numteammates++;
-			}
-		}
- 
-		if (!numteammates)
-			return;
-	}
- 
-	if ((alias = Cmd_FindAlias(trigger))) {
-		if (!(f_triggers[i].restricted && Rulesets_RestrictTriggers())) {
-			Cbuf_AddTextEx (&cbuf_main, va("%s\n", alias->value));
-		}
-	}
-}
+
+char lastip[32]; // FIXME: remove it
  
 /*********************************** MACROS ***********************************/
  
@@ -497,16 +332,14 @@ char *Macro_BestWeaponAndAmmo (void)
  
 char *Macro_Colored_Armor_f (void)
 {
+    snprintf(macro_buf, sizeof(macro_buf), "%s", TP_MSG_Colored_Armor());
+    return macro_buf;
+}
+
+char *Macro_Colored_Powerups_f (void)
+{
 	char* msg = "";
  
-	if (HAVE_GA())
-		msg = COLORED(0b0,%a);
-	else if (HAVE_YA())
-		msg = COLORED(ff0,%a);
-	else if (HAVE_RA())
-		msg = COLORED(e00,%a);
-	else
-		msg = "0";
  
 	snprintf (macro_buf, sizeof(macro_buf), "%s", msg);
 	return macro_buf;
@@ -610,10 +443,12 @@ char *Macro_Date (void)
 	return macro_buf;
 }
  
+
+
 // returns the last item picked up
 char *Macro_Took (void)
 {
-	if (!vars.tooktime || cls.realtime > vars.tooktime + TP_TOOK_EXPIRE_TIME)
+	if (TOOK_EMPTY())
 		strlcpy (macro_buf, tp_name_nothing.string, sizeof(macro_buf));
 	else
 		strlcpy (macro_buf, vars.tookname, sizeof(macro_buf));
@@ -988,12 +823,15 @@ qbool TP_SuppressMessage(char *buf)
 	return false;
 }
  
+// things like content '%e' macro get hidden in here causing you yourself cannot see
+// how many enemies are around you, the number get replaced with a 'x' char
+// and then printed on screen as a message
 void TP_PrintHiddenMessage(char *buf, int nodisplay)
 {
 	qbool team, hide = false;
 	char dest[4096], msg[4096], *s, *d, c, *name;
 	int length, offset, flags;
-	extern cvar_t con_sound_mm2_file, con_sound_mm2_volume;
+	extern cvar_t con_sound_mm2_file, con_sound_mm2_volume, cl_fakename;
  
 	if (!buf || !(length = strlen(buf)))
 		return;
@@ -1033,7 +871,12 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
 		name[31] = 0;
  
 	if (team)
-		snprintf(msg, sizeof(msg), "(%s): %s\n", name, TP_ParseFunChars(dest, true));
+    {
+        if (cl_fakename.string[0])
+            snprintf(msg, sizeof(msg), "%s: %s\n", cl_fakename.string, TP_ParseFunChars(dest, true));
+        else 
+            snprintf(msg, sizeof(msg), "(%s): %s\n", name, TP_ParseFunChars(dest, true));
+    }
 	else
 		snprintf(msg, sizeof(msg), "%s: %s\n", name, TP_ParseFunChars(dest, true));
  
@@ -1164,6 +1007,7 @@ void TP_AddMacros (void)
 	Cmd_AddMacroEx ("armortype", Macro_ArmorType, teamplay);
 	Cmd_AddMacroEx ("armor", Macro_Armor, teamplay);
 	Cmd_AddMacroEx ("colored_armor", Macro_Colored_Armor_f, teamplay);
+	Cmd_AddMacroEx ("colored_powerups", Macro_Colored_Powerups_f, teamplay);
  
 	Cmd_AddMacroEx ("shells", Macro_Shells, teamplay);
 	Cmd_AddMacroEx ("nails", Macro_Nails, teamplay);
@@ -2231,679 +2075,7 @@ done_locmacros:
 	return buf;
 }
  
-/****************************** MESSAGE TRIGGERS ******************************/
- 
-typedef struct msg_trigger_s
-{
-	char	name[32];
-	char	string[64];
-	int		level;
-	struct msg_trigger_s *next;
-} msg_trigger_t;
- 
-static msg_trigger_t *msg_triggers;
- 
-void TP_ResetAllTriggers (void)
-{
-	msg_trigger_t *temp;
- 
-	while (msg_triggers) {
-		temp = msg_triggers->next;
-		Q_free(msg_triggers);
-		msg_triggers = temp;
-	}
-}
- 
-void TP_DumpTriggers (FILE *f)
-{
-	msg_trigger_t *t;
- 
-	for (t = msg_triggers; t; t = t->next) {
-		if (t->level == PRINT_HIGH)
-			fprintf(f, "msg_trigger  %s \"%s\"\n", t->name, t->string);
-		else
-			fprintf(f, "msg_trigger  %s \"%s\" -l %c\n", t->name, t->string, t->level == 4 ? 't' : '0' + t->level);
-	}
-}
- 
-msg_trigger_t *TP_FindTrigger (char *name)
-{
-	msg_trigger_t *t;
- 
-	for (t = msg_triggers; t; t = t->next)
-		if (!strcmp(t->name, name))
-			return t;
- 
-	return NULL;
-}
- 
-void TP_MsgTrigger_f (void)
-{
-	int c;
-	char *name;
-	msg_trigger_t *trig;
- 
-	c = Cmd_Argc();
- 
-	if (c > 5) {
-		Com_Printf ("msg_trigger <trigger name> \"string\" [-l <level>]\n");
-		return;
-	}
- 
-	if (c == 1) {
-		if (!msg_triggers)
-			Com_Printf ("no triggers defined\n");
-		else
-			for (trig=msg_triggers; trig; trig=trig->next)
-				Com_Printf ("%s : \"%s\"\n", trig->name, trig->string);
-		return;
-	}
- 
-	name = Cmd_Argv(1);
-	if (strlen(name) > 31) {
-		Com_Printf ("trigger name too long\n");
-		return;
-	}
- 
-	if (c == 2) {
-		trig = TP_FindTrigger (name);
-		if (trig)
-			Com_Printf ("%s: \"%s\"\n", trig->name, trig->string);
-		else
-			Com_Printf ("trigger \"%s\" not found\n", name);
-		return;
-	}
- 
-	if (c >= 3) {
-		if (strlen(Cmd_Argv(2)) > 63) {
-			Com_Printf ("trigger string too long\n");
-			return;
-		}
- 
-		if (!(trig = TP_FindTrigger (name))) {
-			// allocate new trigger
-			trig = (msg_trigger_t *) Q_malloc (sizeof(msg_trigger_t));
-			trig->next = msg_triggers;
-			msg_triggers = trig;
-			strcpy (trig->name, name);
-			trig->level = PRINT_HIGH;
-		}
- 
-		strlcpy (trig->string, Cmd_Argv(2), sizeof(trig->string));
-		if (c == 5 && !strcasecmp (Cmd_Argv(3), "-l")) {
-			if (!strcmp(Cmd_Argv(4), "t")) {
-				trig->level = 4;
-			} else {
-				trig->level = Q_atoi (Cmd_Argv(4));
-				if ((unsigned) trig->level > PRINT_CHAT)
-					trig->level = PRINT_HIGH;
-			}
-		}
-	}
-}
 
-static qbool TP_IsFlagMessage (char *message)
-{
-	return
-	   (strstr(message, " has your key!") ||
-		strstr(message, " has taken your Key") ||
-        strstr(message, " has your flag") ||
-        strstr(message, " took your flag!") ||
-        strstr(message, " &#65533;&#65533; &#65533;&#65533; flag!") ||
-        strstr(message, " &#65533;&#65533;&#65533;&#65533; &#65533;&#65533;") ||
-		strstr(message, " &#65533;&#65533;&#65533;&#65533;&#65533;&#65533;&#65533;") ||
-        strstr(message, " took the blue flag") ||
-		strstr(message, " took the red flag") ||
-        strstr(message, " Has the Red Flag") ||
-		strstr(message, " Has the Blue Flag")
-		) ? true : false;
-}
- 
-void TP_SearchForMsgTriggers (char *s, int level)
-{
-	msg_trigger_t	*t;
-	char *string;
- 
-	// message triggers disabled
-	if (!tp_msgtriggers.value)
-		return;
- 
-	// triggers banned by ruleset
-	if (Rulesets_RestrictTriggers () && !cls.demoplayback && !cl.spectator)
-		return;
- 
-	// we are in spec/demo mode, so play triggers if user want it
-	if ((cls.demoplayback || cl.spectator) && cl_restrictions.value)
-		return;
- 
-	for (t = msg_triggers; t; t = t->next) {
-		if ((t->level == level || (t->level == 3 && level == 4)) && t->string[0] && strstr(s, t->string)) {
-			if (level == PRINT_CHAT && (
-			            strstr (s, "f_version") || strstr (s, "f_skins") || strstr(s, "f_fakeshaft") ||
-			            strstr (s, "f_server") || strstr (s, "f_scripts") || strstr (s, "f_cmdline") ||
-			            strstr (s, "f_system") || strstr (s, "f_speed") || strstr (s, "f_modified"))
-			   )
-				continue; // don't let llamas fake proxy replies
- 
-			if (cl.teamfortress && level == PRINT_HIGH && TP_IsFlagMessage(s))
-				continue;
- 
-			if ((string = Cmd_AliasString (t->name))) {
-				strlcpy(vars.lasttrigger_match, s, sizeof(vars.lasttrigger_match));
-				Cbuf_AddTextEx (&cbuf_safe, va("%s\n", string));
-			} else {
-				Com_Printf ("trigger \"%s\" has no matching alias\n", t->name);
-			}
-		}
-	}
-}
- 
-/**************************** REGEXP TRIGGERS *********************************/
- 
-typedef void ReTrigger_func (pcre_trigger_t *);
- 
-static void Trig_ReSearch_do (ReTrigger_func f)
-{
-	pcre_trigger_t *trig;
- 
-	for( trig = re_triggers; trig; trig = trig->next) {
-		if (ReSearchMatch (trig->name))
-			f (trig);
-	}
-}
- 
-static pcre_trigger_t *prev;
-pcre_trigger_t *CL_FindReTrigger (char *name)
-{
-	pcre_trigger_t *t;
- 
-	prev=NULL;
-	for (t=re_triggers; t; t=t->next) {
-		if (!strcmp(t->name, name))
-			return t;
- 
-		prev = t;
-	}
-	return NULL;
-}
- 
-static void DeleteReTrigger (pcre_trigger_t *t)
-{
-	if (t->regexp) (pcre_free)(t->regexp);
-	if (t->regexp_extra) (pcre_free)(t->regexp_extra);
-	if (t->regexpstr) Q_free(t->regexpstr);
-	Q_free(t->name);
-	Q_free(t);
-}
- 
-static void RemoveReTrigger (pcre_trigger_t *t)
-{
-	// remove from list
-	if (prev)
-		prev->next = t->next;
-	else
-		re_triggers = t->next;
-	// free memory
-	DeleteReTrigger(t);
-}
- 
-static void CL_RE_Trigger_f (void)
-{
-	int c,i,m;
-	char *name;
-	char *regexpstr;
-	pcre_trigger_t *trig;
-	pcre *re;
-	pcre_extra *re_extra;
-	const char *error;
-	int error_offset;
-	qbool newtrigger=false;
-	qbool re_search = false;
- 
-	c = Cmd_Argc();
-	if (c > 3) {
-		Com_Printf ("re_trigger <trigger name> <regexp>\n");
-		return;
-	}
- 
-	if (c == 2 && IsRegexp(Cmd_Argv(1))) {
-		re_search = true;
-	}
- 
-	if (c == 1 || re_search) {
-		if (!re_triggers) {
-			Com_Printf ("no regexp_triggers defined\n");
-		} else {
-			if (re_search && !ReSearchInit(Cmd_Argv(1)))
-				return;
- 
-			Com_Printf ("List of re_triggers:\n");
- 
-			for (trig=re_triggers, i=m=0; trig; trig=trig->next, i++) {
-				if (!re_search || ReSearchMatch(trig->name)) {
-					Com_Printf ("%s : \"%s\" : %d\n", trig->name, trig->regexpstr, trig->counter);
-					m++;
-				}
-			}
- 
-			Com_Printf ("------------\n%i/%i re_triggers\n", m, i);
-			if (re_search)
-				ReSearchDone();
-		}
-		return;
-	}
- 
-	name = Cmd_Argv(1);
-	trig = CL_FindReTrigger (name);
- 
-	if (c == 2) {
-		if (trig) {
-			Com_Printf ("%s: \"%s\"\n", trig->name, trig->regexpstr);
-			Com_Printf ("  options: mask=%d interval=%g%s%s%s%s%s\n", trig->flags & 0xFF,
-			            trig->min_interval,
-			            trig->flags & RE_FINAL ? " final" : "",
-			            trig->flags & RE_REMOVESTR ? " remove" : "",
-			            trig->flags & RE_NOLOG ? " nolog" : "",
-			            trig->flags & RE_ENABLED ? "" : " disabled",
-			            trig->flags & RE_NOACTION ? " noaction" : ""
-			           );
-			Com_Printf ("  matched %d times\n", trig->counter);
-		} else {
-			Com_Printf ("re_trigger \"%s\" not found\n", name);
-		}
-		return;
-	}
- 
-	if (c == 3) {
-		regexpstr = Cmd_Argv(2);
-		if (!trig) {
-			// allocate new trigger
-			newtrigger = true;
-			trig = (pcre_trigger_t *) Q_malloc (sizeof(pcre_trigger_t));
-			trig->next = re_triggers;
-			re_triggers = trig;
-			trig->name = Q_strdup (name);
-			trig->flags = RE_PRINT_ALL | RE_ENABLED; // catch all printed messages by default
-		}
- 
-		error = NULL;
-		if ((re = pcre_compile(regexpstr, 0, &error, &error_offset, NULL))) {
-			error = NULL;
-			re_extra = pcre_study(re, 0, &error);
-			if (error) {
-				Com_Printf ("Regexp study error: %s\n", &error);
-			} else {
-				if (!newtrigger) {
-					(pcre_free)(trig->regexp);
-					if (trig->regexp_extra)
-						(pcre_free)(trig->regexp_extra);
-					Q_free(trig->regexpstr);
-				}
-				trig->regexpstr = Q_strdup (regexpstr);
-				trig->regexp = re;
-				trig->regexp_extra = re_extra;
-				return;
-			}
-		} else {
-			Com_Printf ("Invalid regexp: %s\n", error);
-		}
-		prev = NULL;
-		RemoveReTrigger(trig);
-	}
-}
- 
-static void CL_RE_Trigger_Options_f (void)
-{
-	int c,i;
-	char* name;
-	pcre_trigger_t *trig;
- 
-	c = Cmd_Argc ();
-	if (c < 3) {
-		Com_Printf ("re_trigger_options <trigger name> <option1> <option2>\n");
-		return;
-	}
- 
-	name = Cmd_Argv (1);
-	trig = CL_FindReTrigger (name);
- 
-	if (!trig) {
-		Com_Printf ("re_trigger \"%s\" not found\n", name);
-		return;
-	}
- 
-	for(i=2; i<c; i++) {
-		if (!strcmp(Cmd_Argv(i), "final")) {
-			trig->flags |= RE_FINAL;
-		} else if (!strcmp(Cmd_Argv(i), "remove")) {
-			trig->flags |= RE_REMOVESTR;
-		} else if (!strcmp(Cmd_Argv(i), "notfinal")) {
-			trig->flags &= ~RE_FINAL;
-		} else if (!strcmp(Cmd_Argv(i), "noremove")) {
-			trig->flags &= ~RE_REMOVESTR;
-		} else if (!strcmp(Cmd_Argv(i), "mask")) {
-			trig->flags &= ~0xFF;
-			trig->flags |= 0xFF & atoi(Cmd_Argv(i+1));
-			i++;
-		} else if (!strcmp(Cmd_Argv(i), "interval") ) {
-			trig->min_interval = atof(Cmd_Argv(i+1));
-			i++;
-		} else if (!strcmp(Cmd_Argv(i), "enable")) {
-			trig->flags |= RE_ENABLED;
-		} else if (!strcmp(Cmd_Argv(i), "disable")) {
-			trig->flags &= ~RE_ENABLED;
-		} else if (!strcmp(Cmd_Argv(i), "noaction")) {
-			trig->flags |= RE_NOACTION;
-		} else if (!strcmp(Cmd_Argv(i), "action")) {
-			trig->flags &= ~RE_NOACTION;
-		} else if (!strcmp(Cmd_Argv(i), "nolog")) {
-			trig->flags |= RE_NOLOG;
-		} else if (!strcmp(Cmd_Argv(i), "log")) {
-			trig->flags &= ~RE_NOLOG;
-		} else {
-			Com_Printf("re_trigger_options: invalid option.\n"
-			           "valid options:\n  final\n  notfinal\n  remove\n"
-			           "  noremove\n  mask <trigger_mask>\n  interval <min_interval>)\n"
-			           "  enable\n  disable\n  noaction\n  action\n  nolog\n  log\n");
-		}
-	}
-}
- 
-static void CL_RE_Trigger_Delete_f (void)
-{
-	pcre_trigger_t *trig, *next_trig;
-	char *name;
-	int i;
- 
-	for (i = 1; i < Cmd_Argc(); i++) {
-		name = Cmd_Argv(i);
-		if (IsRegexp(name)) {
-			if(!ReSearchInit(name))
-				return;
-			prev = NULL;
-			for (trig = re_triggers; trig; ) {
-				if (ReSearchMatch (trig->name)) {
-					next_trig = trig->next;
-					RemoveReTrigger(trig);
-					trig = next_trig;
-				} else {
-					prev = trig;
-					trig = trig->next;
-				}
-			}
-			ReSearchDone();
-		} else {
-			if ((trig = CL_FindReTrigger(name)))
-				RemoveReTrigger(trig);
-		}
-	}
-}
- 
-static void Trig_Enable(pcre_trigger_t *trig)
-{
-	trig->flags |= RE_ENABLED;
-}
- 
-static void CL_RE_Trigger_Enable_f (void)
-{
-	pcre_trigger_t *trig;
-	char *name;
-	int i;
- 
-	for (i = 1; i < Cmd_Argc(); i++) {
-		name = Cmd_Argv (i);
-		if (IsRegexp (name)) {
-			if(!ReSearchInit (name))
-				return;
-			Trig_ReSearch_do (Trig_Enable);
-			ReSearchDone ();
-		} else {
-			if ((trig = CL_FindReTrigger (name)))
-				Trig_Enable (trig);
-		}
-	}
-}
- 
-static void Trig_Disable (pcre_trigger_t *trig)
-{
-	trig->flags &= ~RE_ENABLED;
-}
- 
-static void CL_RE_Trigger_Disable_f (void)
-{
-	pcre_trigger_t *trig;
-	char *name;
-	int i;
- 
-	for (i = 1; i < Cmd_Argc (); i++) {
-		name = Cmd_Argv (i);
-		if (IsRegexp (name)) {
-			if(!ReSearchInit (name))
-				return;
-			Trig_ReSearch_do (Trig_Disable);
-			ReSearchDone ();
-		} else {
-			if ((trig = CL_FindReTrigger (name)))
-				Trig_Disable (trig);
-		}
-	}
-}
- 
-void CL_RE_Trigger_ResetLasttime (void)
-{
-	pcre_trigger_t *trig;
- 
-	for (trig=re_triggers; trig; trig=trig->next)
-		trig->lasttime = 0.0;
-}
- 
-void Re_Trigger_Copy_Subpatterns (char *s, int* offsets, int num, cvar_t	*re_sub)
-{
-	int	i;
-	char tmp;
- 
-	for (i=0; i < 2 * num; i += 2) {
-		tmp = s[offsets[i + 1]];
-		s[offsets[i + 1]] = '\0';
-		Cvar_ForceSet(&re_sub[i / 2],s + offsets[i]);
-		s[offsets[i + 1]] = tmp;
-	}
-}
- 
-static void CL_RE_Trigger_Match_f (void)
-{
-	int c;
-	char *tr_name;
-	char *s;
-	pcre_trigger_t *rt;
-	char *string;
-	int result;
-	int offsets[99];
- 
-	c = Cmd_Argc();
- 
-	if (c != 3) {
-		Com_Printf ("re_trigger_match <trigger name> <string>\n");
-		return;
-	}
- 
-	tr_name = Cmd_Argv(1);
-	s = Cmd_Argv(2);
- 
-	for (rt = re_triggers; rt; rt = rt->next)
-		if (!strcmp(rt->name, tr_name)) {
-			result = pcre_exec (rt->regexp, rt->regexp_extra, s, strlen(s), 0, 0, offsets, 99);
- 
-			if (result >= 0) {
-				rt->lasttime = cls.realtime;
-				rt->counter++;
-				Re_Trigger_Copy_Subpatterns (s, offsets, min (result,10), re_sub);
- 
-				if (!(rt->flags & RE_NOACTION)) {
-					string = Cmd_AliasString (rt->name);
-					if (string) {
-						Cbuf_InsertTextEx (&cbuf_safe, "\nwait\n");
-						Cbuf_InsertTextEx (&cbuf_safe, string);
-						Cbuf_ExecuteEx (&cbuf_safe);
-					} else {
-						Com_Printf ("re_trigger \"%s\" has no matching alias\n", rt->name);
-					}
-				}
-			}
-			return;
-		}
-	Com_Printf ("re_trigger \"%s\" not found\n", tr_name);
-}
- 
-qbool allow_re_triggers;
-qbool CL_SearchForReTriggers (char *s, unsigned trigger_type)
-{
-	pcre_trigger_t *rt;
-	pcre_internal_trigger_t *irt;
-	cmd_alias_t *trig_alias;
-	qbool removestr = false;
-	int result;
-	int offsets[99];
-	int len = strlen(s);
- 
-	// internal triggers - always enabled
-	if (trigger_type < RE_PRINT_ECHO) {
-		allow_re_triggers = true;
-		for (irt = internal_triggers; irt; irt = irt->next) {
-			if (irt->flags & trigger_type) {
-				result = pcre_exec (irt->regexp, irt->regexp_extra, s, len, 0, 0, offsets, 99);
-				if (result >= 0) {
-					Re_Trigger_Copy_Subpatterns (s, offsets, min(result,10), re_subi);
-					irt->func (s);
-				}
-			}
-		}
-		if (!allow_re_triggers)
-			return false;
-	}
- 
-	// message triggers disabled
-	if (!tp_msgtriggers.value)
-		return false;
- 
-	// triggers banned by ruleset or FPD and we are a player
-	if (((cl.fpd & FPD_NO_SOUNDTRIGGERS) || (cl.fpd & FPD_NO_TIMERS) ||
-	        Rulesets_RestrictTriggers ()) && !cls.demoplayback && !cl.spectator)
-		return false;
- 
-	// we are in spec/demo mode, so play triggers if user want it
-	if ((cls.demoplayback || cl.spectator) && cl_restrictions.value)
-		return false;
- 
-	// regexp triggers
-	for (rt = re_triggers; rt; rt = rt->next)
-		if ( (rt->flags & RE_ENABLED) &&	// enabled
-		        (rt->flags & trigger_type) &&	// mask fits
-		        rt->regexp &&					// regexp not empty
-		        (rt->min_interval == 0.0 ||
-		         cls.realtime >= rt->min_interval + rt->lasttime)) // not too fast.
-			// TODO: disable it ^^^ for FPD_NO_TIMERS case.
-			// probably it dont solve re_trigger timers problem
-			// you always trigger on statusbar(TF) or wp_stats (KTPro/KTX) messages and get 0.5~1.5 accuracy for your timer
-		{
-			result = pcre_exec (rt->regexp, rt->regexp_extra, s, len, 0, 0, offsets, 99);
-			if (result >= 0) {
-				rt->lasttime = cls.realtime;
-				rt->counter++;
-				Re_Trigger_Copy_Subpatterns (s, offsets, min(result,10), re_sub);
- 
-				if (!(rt->flags & RE_NOACTION)) {
-					trig_alias = Cmd_FindAlias (rt->name);
-					Print_current++;
-					if (trig_alias) {
-						Cbuf_InsertTextEx (&cbuf_safe, "\nwait\n");
-						Cbuf_InsertTextEx (&cbuf_safe, rt->name);
-						Cbuf_ExecuteEx (&cbuf_safe);
-					} else
-						Com_Printf ("re_trigger \"%s\" has no matching alias\n", rt->name);
-					Print_current--;
-				}
- 
-				if (rt->flags & RE_REMOVESTR)
-					removestr = true;
-				if (rt->flags & RE_NOLOG)
-					Print_flags[Print_current] |= PR_LOG_SKIP;
-				if (rt->flags & RE_FINAL)
-					break;
-			}
-		}
- 
-	if (removestr)
-		Print_flags[Print_current] |= PR_SKIP;
- 
-	return removestr;
-}
- 
-// Internal triggers
-static void AddInternalTrigger (char* regexpstr, unsigned mask, internal_trigger_func func)
-{
-	pcre_internal_trigger_t *trig;
-	const char *error;
-	int error_offset;
- 
-	trig = (pcre_internal_trigger_t *) Q_malloc (sizeof(pcre_internal_trigger_t));
-	trig->next = internal_triggers;
-	internal_triggers = trig;
- 
-	trig->regexp = pcre_compile (regexpstr, 0, &error, &error_offset, NULL);
-	trig->regexp_extra = pcre_study (trig->regexp, 0, &error);
-	trig->func = func;
-	trig->flags = mask;
-}
- 
-static void INTRIG_Disable (char *s)
-{
-	allow_re_triggers = false;
-	Print_flags[Print_current] |= PR_LOG_SKIP;
-}
- 
-static void INTRIG_Lastip_port (char *s)
-{
-	/* subpatterns of this regexp is maximum 21 chars */
-	/* strlen (<3>.<3>.<3>.<3>:< 5 >) = 21 */
- 
-	// reset current lastip value
-	memset (lastip, 0, sizeof (lastip));
- 
-	memcpy (lastip, va ("%s.%s.%s.%s:%s",
-	                    re_subi[1].string,
-	                    re_subi[2].string,
-	                    re_subi[3].string,
-	                    re_subi[4].string,
-	                    re_subi[5].string), sizeof (lastip));
-}
- 
-static void InitInternalTriggers(void)
-{
-	// dont allow cheating by triggering showloc command
-	AddInternalTrigger("^(Location :|Angles   :)", 4, INTRIG_Disable); // showloc command
-	// dont allow cheating by triggering dispenser warning
-	AddInternalTrigger("^Enemies are using your dispenser!$", 16, INTRIG_Disable);
-	// lastip
-	AddInternalTrigger("([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|1?\\d\\d|2[0-4]\\d|25[0-5])\\:(\\d{5})", 8, INTRIG_Lastip_port);
-}
- 
-static void TP_InitReTriggers()
-{
-	unsigned i;
- 
-	for(i=0;i<10;i++)
-		Cvar_Register (re_sub+i);
- 
-	Cmd_AddCommand ("re_trigger", CL_RE_Trigger_f);
-	Cmd_AddCommand ("re_trigger_options", CL_RE_Trigger_Options_f);
-	Cmd_AddCommand ("re_trigger_delete", CL_RE_Trigger_Delete_f);
-	Cmd_AddCommand ("re_trigger_enable", CL_RE_Trigger_Enable_f);
-	Cmd_AddCommand ("re_trigger_disable", CL_RE_Trigger_Disable_f);
-	Cmd_AddCommand ("re_trigger_match", CL_RE_Trigger_Match_f);
-	InitInternalTriggers();
-}
- 
 /************************* BASIC MATCH INFO FUNCTIONS *************************/
  
 char *TP_PlayerName (void)
@@ -3053,47 +2225,13 @@ int TP_CategorizeMessage (char *s, int *offset)
 char *pknames[] = {"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
                    "mh", "health", "lg", "rl", "gl", "sng", "ng", "ssg", "pack",
                    "cells", "rockets", "nails", "shells", "flag",
-                   "teammate", "enemy", "eyes", "sentry", "disp", "runes"};
- 
-#define it_quad		(1 << 0)
-#define it_pent		(1 << 1)
-#define it_ring		(1 << 2)
-#define it_suit		(1 << 3)
-#define it_ra		(1 << 4)
-#define it_ya		(1 << 5)
-#define it_ga		(1 << 6)
-#define it_mh		(1 << 7)
-#define it_health	(1 << 8)
-#define it_lg		(1 << 9)
-#define it_rl		(1 << 10)
-#define it_gl		(1 << 11)
-#define it_sng		(1 << 12)
-#define it_ng		(1 << 13)
-#define it_ssg		(1 << 14)
-#define it_pack		(1 << 15)
-#define it_cells	(1 << 16)
-#define it_rockets	(1 << 17)
-#define it_nails	(1 << 18)
-#define it_shells	(1 << 19)
-#define it_flag		(1 << 20)
-#define it_teammate	(1 << 21)
-#define it_enemy	(1 << 22)
-#define it_eyes		(1 << 23)
-#define it_sentry   (1 << 24)
-#define it_disp		(1 << 25)
-#define it_runes	(1 << 26)
-#define NUM_ITEMFLAGS 27
- 
-#define it_powerups	(it_quad|it_pent|it_ring)
-#define it_weapons	(it_lg|it_rl|it_gl|it_sng|it_ng|it_ssg)
-#define it_armor	(it_ra|it_ya|it_ga)
-#define it_ammo		(it_cells|it_rockets|it_nails|it_shells)
-#define it_players	(it_teammate|it_enemy|it_eyes)
+                   "teammate", "enemy", "eyes", "sentry", "disp", "runes", "quaded", "pented"};
  
 #define default_pkflags (it_powerups|it_suit|it_armor|it_weapons|it_mh| \
-				it_rockets|it_pack|it_flag)
+				it_rockets|it_cells||it_pack|it_flag)
  
-#define default_tookflags (it_powerups|it_ra|it_ya|it_lg|it_rl|it_mh|it_flag)
+ // tp_took
+#define default_tookflags (it_powerups|it_ra|it_ya|it_ga|it_lg|it_rl|it_gl|it_sng|it_pack|it_rockets|it_cells|it_mh|it_flag)
  
 /*
 powerups flag runes players suit armor sentry  mh disp rl lg pack gl sng rockets cells nails
@@ -3101,6 +2239,7 @@ Notice this list takes into account ctf/tf as well. Dm players don't worry about
 
  below are defaults for tp_point (what comes up in point. also see tp_pointpriorities to prioritize this list) First items have highest priority (powerups in this case)
 */
+// tp_point
 #define default_pointflags (it_powerups|it_flag|it_runes|it_players|it_suit|it_armor|it_sentry|it_mh| \
 				it_disp|it_rl|it_lg|it_pack|it_gl|it_sng|it_rockets|it_cells|it_nails)
  
@@ -3253,407 +2392,7 @@ void TP_Pickup_f (void)
 void TP_Point_f (void)
 {
 	FlagCommand (&pointflags, default_pointflags);
-}
- 
-/*******
- * Set of inbuilt teamplay messages starts here
- */
- 
-// will return short version of player's nick for teamplay messages
-char *TP_ShortNick(void)
-{
-    extern cvar_t cl_fakename;
-    static char buf[7];
- 
-    if (*(cl_fakename.string)) return "";
-    else {
-        snprintf(buf, sizeof(buf), "$\\%.3s:", TP_PlayerName());
-        return buf;
-    }
-}      
- 
-// wrapper for snprintf & Cbuf_AddText that will add say_team nick part
-void TP_Send_TeamSay(char *format, ...)
-{
-    char tp_msg_head[256], tp_msg_body[256], tp_msg[512];
-    va_list argptr;
- 
-    snprintf(tp_msg_head, sizeof(tp_msg_head), "say_team %s ", TP_ShortNick());
- 
-	va_start (argptr, format);
-    vsnprintf(tp_msg_body, sizeof(tp_msg_body), format, argptr);
-	va_end (argptr);
- 
-    snprintf(tp_msg, sizeof(tp_msg), "%s%s\n", tp_msg_head, tp_msg_body);
- 
-    Cbuf_AddText(tp_msg);
-}
- 
-#define tp_sep_red		"$R$R"      // enemy, lost
-#define tp_sep_green	"$G$G"      // killed quad/ring/pent enemy, safe
-#define tp_sep_yellow	"$Y$Y"      // help
-#define tp_sep_white	"$x04$x04"  // Two white bubbles, location of item
-#define tp_sep_blue		"$B$B"      // 
- 
-/*
-Should we enforce special colors this way below or we just should make
-these values new default?
-In my opinion with new defaults we should wait for different color syntax. - johnnycz
-However this brings a problem - you always have to use these and cannot
-use the %-macros nor the $-macros.
-*/
- 
-#define tp_ib_name_rl	    COLORED(f0f,rl)	    // purple rl
-#define tp_ib_name_lg	    COLORED(f0f,lg)	    // purple lg
-#define tp_ib_name_gl	    COLORED(f0f,gl)	    // purple gl
-#define tp_ib_name_sng	    COLORED(f0f,sng)	// purple sng
-#define tp_ib_name_ga	    COLORED(0b0,ga)	    // green ga
-#define tp_ib_name_ya	    COLORED(ff0,ya)	    // yellow ya
-#define tp_ib_name_ra	    COLORED(e00,ra)	    // red ra
-#define tp_ib_name_mh	    COLORED(03F,mega)	// blue mega
-#define tp_ib_name_backpack	COLORED(F0F,pack)	// purple backpack
-#define tp_ib_name_quad	    COLORED(03F,quad)	// blue quad
-#define tp_ib_name_pent	    COLORED(e00,pent)	// red pent
-#define tp_ib_name_ring	    COLORED(ff0,ring)	// yellow ring
-#define tp_ib_name_eyes	    COLORED(ff0,eyes)	// yellow eyes (remember, ring is when you see the ring, eyes is when someone has rings!)
-#define tp_ib_name_enemy	COLORED(e00,enemy)	// red enemy
-#define tp_ib_name_team	    COLORED(0b0,team)	// green "team" (with powerup)
-#define tp_ib_name_teammate	COLORED(0b0,teammate)// green "teamate"
-#define tp_ib_name_quaded	COLORED(03F,quaded)	// blue "quaded"
-#define tp_ib_name_pented	COLORED(e00,pented)	// red "pented"
-#define tp_ib_name_rlg      COLORED(f0f,rlg)    // purple rlg
-#define tp_ib_name_safe	    COLORED(0b0,safe)	// green safe
-#define tp_ib_name_help	    COLORED(ff0,help)	// yellow help
- 
- 
- 
-void TP_Msg_Lost_f (void) // Is this function useful? tp_report does this already.
-{
-    MSGPART led = tp_sep_red;
-    MSGPART msg1 = "";
-	MSGPART msg2 = "";
- 
-    if (HAVE_QUAD())
-        msg1 = tp_ib_name_quad " over ";
- 
-    if (HOLD_RL() || HOLD_LG() || HOLD_GL()) // gl could be useful too
-        msg2 = "lost " COLORED(f0f,$weapon) " $[{%d}$] e:%E";
-    else
-        msg2 = "lost $[{%d}$] e:%E";
- 
-    TP_Send_TeamSay("%s %s%s", led, msg1, msg2);
-}
-
-
-void TP_Msg_ReportComing(qbool report) // tp_report and tp_coming are similar, differences are led color, where %l is, and the word "coming"
-{
-    MSGPART msg1 = "";
-	MSGPART msg2 = "";
-	MSGPART msg3 = "";
-	MSGPART msg4 = "";
-	MSGPART msg5 = "";
- 
-	if (DEAD()) // no matter what, if dead report lost
-		TP_Msg_Lost_f();
-	else
-	{
-		if (report)
-			msg1 = tp_sep_blue;
-		else
-			msg1 = tp_sep_white " {coming}";
-	}
- 
-	if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
-		msg4 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring;
-	else if (HAVE_QUAD() && HAVE_PENT())
-		msg4 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent;
-	else if (HAVE_QUAD() && HAVE_RING())
-		msg4 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_ring;
-	else if (HAVE_PENT() && HAVE_RING())
-		msg4 = " " tp_ib_name_team " " tp_ib_name_pent " " tp_ib_name_ring;
-	else if (HAVE_QUAD())
-		msg4 = " " tp_ib_name_team " " tp_ib_name_quad;
-	else if (HAVE_PENT())
-		msg4 = " " tp_ib_name_team " " tp_ib_name_pent;
-	else if (HAVE_RING())
-		msg4 = " " tp_ib_name_team " " tp_ib_name_ring;
-	else
-		msg4 = "";
- 
-    if		(HAVE_RL() && HAVE_LG())	msg5 = " " tp_ib_name_rlg ":$rockets/$cells";
-    else if (HAVE_RL())					msg5 = " " tp_ib_name_rl ":$rockets";
-    else if (HAVE_LG())					msg5 = " " tp_ib_name_lg ":$cells";
-    else								msg5 = "";
- 
-	msg2 = "%h/$colored_armor";
-	msg3 = "$[{%l}$]";
- 
-	// $B$B(1) health(2)/armor location(3) powerup(4) rlg:x(5) //tp_report
-	if (report)
-		TP_Send_TeamSay("%s %s %s%s%s", msg1, msg2, msg3, msg4, msg5);
-	// $W$W(1) coming(1) location(3) health(2)/armor powerup(5) rlg:x(6) //tp_coming
-	else
-		TP_Send_TeamSay("%s %s %s%s%s", msg1, msg3, msg2, msg4, msg5); // notice that in tp_coming, we report our location before anything else!
-}
-void TP_Msg_Report_f (void) { TP_Msg_ReportComing(true); }
-void TP_Msg_Coming_f (void) { TP_Msg_ReportComing(false); } 
-
-
-void TP_Msg_EnemyPowerup_f (void)
-{		/*
-		This is the "go-to" function!". It contains all possible scenarios for any player, teammate or enemy, with any combination of powerup.
-		note: in cases where you have pent and enemy has quad (or vice versa), team powerup is displayed only, NOT ENEMY POWERUP ------------------------------------------ FIX FIX FIX FIX change this around
-		Note: we are assuming map has no more than 1 of each (quad,pent,ring)
-		Note: this function does not take into account only teammate or only enemy (without powerup). Do not change this behaviour.
-		*/
-    MSGPART msg1 = "";
-	MSGPART msg2 = "";
- 
-	if (INPOINT(quaded) && INPOINT(pented) && INPOINT(eyes))
-		/*
-		Note we don't have && INPOINT(enemy) in the above if.
-		This is because $point DOES NOT TELL YOU TEAMMATE/ENEMY if they have ring (because there is no way to know).
-		Therefore, we are assuming enemy because this function is ENEMY powerup. So if user hits this by accident (when teammate has quad/pent with ring, then it's their fault.
-		*/
-		{
-		msg1 = tp_sep_red;
-		msg2 = tp_ib_name_quaded " " tp_ib_name_pented " " tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
-		}
-	else if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
-		{
-		msg1 = tp_sep_green;
-		msg2 = "team " tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring;
-		} 
-	else if (INPOINT(quaded) && INPOINT(pented) && INPOINT(enemy))
-		{
-		msg1 = tp_sep_red;
-		msg2 = tp_ib_name_quaded " " tp_ib_name_pented " " tp_ib_name_enemy " at $[{%y}$]";
-		}
-	else if ((HAVE_QUAD() && HAVE_PENT()) || (INPOINT(quaded) && INPOINT(pented) && INPOINT(teammate)))
-		{
-		msg1 = tp_sep_green;
-		msg2 = "team " tp_ib_name_quad " " tp_ib_name_pent;
-		} 
-	else if (INPOINT(quaded) && INPOINT(eyes))
-		{ // again we assume enemy
-		msg1 = tp_sep_red;
-		msg2 = tp_ib_name_quaded " " tp_ib_name_eyes " " tp_ib_name_enemy " at $[{%y}$]";
-		}
-	else if (HAVE_QUAD() && HAVE_RING())
-		{
-		msg1 = tp_sep_green;
-		msg2 = "team " tp_ib_name_quad " " tp_ib_name_ring;
-		}
-	else if (INPOINT(pented) && INPOINT(eyes))
-		{ // assume enemy
-		msg1 = tp_sep_red;
-		msg2 = tp_ib_name_pented " " tp_ib_name_enemy " at $[{%y}$]";
-		}
-	else if (HAVE_RING() && HAVE_PENT())
-		{
-		msg1 = tp_sep_green;
-		msg2 = "team " tp_ib_name_pent " " tp_ib_name_ring;
-		}
-	else if (HAVE_QUAD() || (INPOINT(quaded) && INPOINT(teammate)))
-		{
-		msg1 = tp_sep_green;
-		msg2 = "team " tp_ib_name_quad;
-		}
-	else if (INPOINT(quaded) && INPOINT(enemy))
-		{
-		msg1 = tp_sep_red;
-		msg2 = tp_ib_name_quaded " " tp_ib_name_enemy " at $[{%y}$]";
-		}
-		else if (HAVE_PENT() || (INPOINT(pented) && INPOINT(teammate)))
-		{
-		msg1 = tp_sep_green;
-		msg2 = "team " tp_ib_name_pent;	
-		}
-	else if (INPOINT(pented) && INPOINT(enemy))
-		{
-		msg1 = tp_sep_red;
-		msg2 = tp_ib_name_pented " " tp_ib_name_enemy " at $[{%y}$]";
-		}
-	else if (INPOINT(eyes))
-		{ // assume enemy
-		msg1 = tp_sep_red;
-		msg2 = tp_ib_name_enemy " " tp_ib_name_eyes " at $[{%y}$]";
-		}
-	else if (HAVE_RING())
-		{
-		msg1 = tp_sep_green;
-		msg2 = "team " tp_ib_name_ring;
-		}
-	else
-		{
-		msg1 = tp_sep_red;
-		msg2 = tp_ib_name_enemy " {%q}"; // %q is last seen powerup of enemy. defaults to quad, which is nice
-		}
-
-	TP_Send_TeamSay("%s %s", msg1, msg2);
 } 
-
-
-void TP_Msg_SafeHelp(qbool safe)
-{
-	MSGPART msg1 = "";
-	MSGPART msg2 = "";
-	MSGPART msg3 = "";
-	MSGPART msg4 = "";
-
-	if (safe)
-		{
-			if (INPOINT(enemy))
-				return;
-			else
-				msg1 = tp_sep_green " " tp_ib_name_safe;
-		}
-	else
-		msg1 = tp_sep_yellow " " tp_ib_name_help;
- 
-	msg2 = "$[{%l}$]";
- 
-	if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
-		msg3 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring;
-	else if (HAVE_QUAD() && HAVE_PENT())
-		msg3 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent;
-	else if (HAVE_QUAD() && HAVE_RING())
-		msg3 = " " tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_ring;
-	else if (HAVE_PENT() && HAVE_RING())
-		msg3 = " " tp_ib_name_team " " tp_ib_name_pent " " tp_ib_name_ring;
-	else if (HAVE_QUAD())
-		msg3 = " " tp_ib_name_team " " tp_ib_name_quad;
-	else if (HAVE_PENT())
-		msg3 = " " tp_ib_name_team " " tp_ib_name_pent;
-	else if (HAVE_RING())
-		msg3 = " " tp_ib_name_team " " tp_ib_name_ring;
-	else
-		msg3 = "";
- 
-    if		(HAVE_RL() && HAVE_LG())	msg4 = " " tp_ib_name_rlg ":$rockets/$cells";
-    else if (HAVE_RL())					msg4 = " " tp_ib_name_rl ":$rockets";
-    else if (HAVE_LG())					msg4 = " " tp_ib_name_lg ":$cells";
-    else								msg4 = "";
-	//(1)sep, (1)=safe/help (2)=loc 3=powerup 4=weap
-	TP_Send_TeamSay("%s %s%s%s", msg1, msg2, msg3, msg4);
-}
-void TP_Msg_Safe_f (void) { TP_Msg_SafeHelp(true); }
-void TP_Msg_Help_f (void) { TP_Msg_SafeHelp(false); }
-
-
-void TP_Msg_GetPentQuad(qbool quad)
-// same todo as enemypwr
-{
-	MSGPART msg1 = "";
- 
-	if (quad)
-	{
-		if (HAVE_QUAD() || (INPOINT(quaded) && (INPOINT(teammate) || INPOINT(enemy))))
-			TP_Msg_EnemyPowerup_f(); // send to tp_enemypwr
-		else if (INPOINT(eyes) && INPOINT(quaded))
-			return; // Don't know for sure if it's enemy or not, and can't assume like we do in tp_enemypwr because this isn't tp_ENEMYpwr
-		else
-			msg1 = "get " tp_ib_name_quad;
-	}
-	else
-	{
-		if (HAVE_PENT() || (INPOINT(pented) && (INPOINT(teammate) || INPOINT(enemy))))
-			TP_Msg_EnemyPowerup_f(); // send to tp_enemypwr
-		else if (INPOINT(eyes) && INPOINT(pented))
-			return; // Don't know for sure if it's enemy or not, and can't assume like we do in tp_enemypwr because this isn't tp_ENEMYpwr
-		else
-			msg1 = "get " tp_ib_name_pent;
-	}
- 
-	//$R$R get powerup(1)
-	TP_Send_TeamSay(tp_sep_yellow " %s", msg1);
-}
-void TP_Msg_GetQuad_f (void) { TP_Msg_GetPentQuad(true); }
-void TP_Msg_GetPent_f (void) { TP_Msg_GetPentQuad(false); }
-
-
-void TP_Msg_QuadDead_f (void) // tp_enemypwr for all cases?
-{
-    MSGPART msg1 = "";
- 
-	if (HAVE_QUAD() || INPOINT(quaded)) // If ANYONE has quad
-		TP_Msg_EnemyPowerup_f(); // tp_enemypwr can handle this
-	else msg1 = tp_ib_name_quad " dead";
- 
-	TP_Send_TeamSay(tp_sep_green " %s", msg1);
-}
-
-
-void TP_Msg_Took_f (void)
-{
-    MSGPART msg1 = "";
- 
-	//took
- 
-	TP_Send_TeamSay(tp_sep_white " %s", msg1);
-}
-
-
-void TP_Msg_Point_f (void)
-{
-    MSGPART msg1 = "";
-	MSGPART msg2 = "";
-	MSGPART msg3 = "";
- 
-	if (INPOINT(nothing))
-		return;
-	else if (INPOINT(eyes) || (INPOINT(enemy) && (INPOINT(quaded) || INPOINT (pented)))) // enemy with powerup
-		TP_Msg_EnemyPowerup_f();
-	else if (INPOINT(teammate) && (INPOINT(quaded) || INPOINT (pented))) // teammate with powerup
-		TP_Msg_EnemyPowerup_f(); // we use tp_enemypwr because it has checks for team quad/pent =]
-	else
-	{ // the following are grouped into the if's by the color leds they will be.
-		msg3 = "at $[{%y}$] e:%E"; // this has to be established at the beginning because it's the same for all cases except when you see enemy.
-	
-		if (INPOINT(enemy))
-			{
-				msg1 = tp_sep_red;
-				msg2 = "%E " tp_ib_name_enemy;
-				msg3 = "at $[{%y}$]"; // here we change msg3 because our msg2 says how many enemies we have.
-			}
-		else if (INPOINT(teammate))
-			{
-				msg1 = tp_sep_green;
-				msg2 = tp_ib_name_teammate;
-			}
-		else if (INPOINTPOWERUP() || INPOINTWEAPON() || INPOINTARMOR() || INPOINTAMMO() || INPOINT(backpack) || INPOINT(mh))
-		//  flag, disp, sent, rune
-			{
-				msg1 = tp_sep_yellow; // if we see any of these items ready for pickup, then we are yellow led status (meaning notice)
-					if (INPOINT(quad))			msg2 = tp_ib_name_quad;
-					else if (INPOINT(pent))		msg2 = tp_ib_name_pent;
-					else if (INPOINT(ring))		msg2 = tp_ib_name_ring;
-					
-					else if (INPOINT(rl))		msg2 = tp_ib_name_rl;
-					else if (INPOINT(lg))		msg2 = tp_ib_name_lg;
-					else if (INPOINT(gl))		msg2 = tp_ib_name_gl;
-					else if (INPOINT(sng))		msg2 = tp_ib_name_sng;
-					else if (INPOINT(backpack))	msg2 = tp_ib_name_backpack;
-					
-					else if (INPOINT(ra))		msg2 = tp_ib_name_ra;
-					else if (INPOINT(ya))		msg2 = tp_ib_name_ya;
-					else if (INPOINT(ga))		msg2 = tp_ib_name_ga;
-					
-					else if (INPOINT(rockets)) 	msg2 = "{rockets}";
-					else if (INPOINT(cells)) 	msg2 = "{cells}";
-					else if (INPOINT(nails)) 	msg2 = "{nails}";
-					
-					else if (INPOINT(mh))		msg2 = tp_ib_name_mh; // why does this display as ga? BUG BUG BUGBUG BUG BUGBUG BUG BUGBUG BUG BUGBUG BUG BUGBUG BUG
-			}
-	}
-	
-	//led(1) item(2) at loc
-	TP_Send_TeamSay("%s %s %s", msg1, msg2, msg3);
-}
-
- 
-/***********/
- 
  
 typedef struct
 {
@@ -3866,6 +2605,7 @@ static qbool CheckTrigger (void)
 	int	i, count;
 	player_info_t *player;
 	char *myteam;
+	extern cvar_t tp_forceTriggers;
  
 	if (cl.spectator || Rulesets_RestrictTriggers())
 		return false;
@@ -3903,6 +2643,7 @@ static void ExecTookTrigger (char *s, int flag, vec3_t org)
 		return;
  
 	vars.tooktime = cls.realtime;
+    vars.tookflag = flag;
 	strncpy (vars.tookname, s, sizeof(vars.tookname)-1);
 	strncpy (vars.tookloc, TP_LocationName (org), sizeof(vars.tookloc)-1);
  
@@ -4209,6 +2950,7 @@ void TP_FindPoint (void)
 	if (best >= 0 && bestinfo) {
 		qbool teammate, eyes;
 		char *name, buf[256] = {0};
+        int flag = 0;
  
 		eyes = beststate->modelindex && cl.model_precache[beststate->modelindex] &&
 		       cl.model_precache[beststate->modelindex]->modhint == MOD_EYES;
@@ -4216,13 +2958,25 @@ void TP_FindPoint (void)
 			teammate = !strcmp(Utils_TF_ColorToTeam(bestinfo->real_bottomcolor), TP_PlayerTeam());
  
 			if (eyes)
+            {
 				name = tp_name_eyes.string;		//duck on 2night2.bsp (TF map)
+                flag = it_eyes;
+            }
 			else if (cl.spectator)
+            {
 				name = bestinfo->name;
+                flag = it_players;
+            }
 			else if (teammate)
+            {
 				name = tp_name_teammate.string[0] ? tp_name_teammate.string : "teammate";
+                flag = it_teammate;
+            }
 			else
+            {
 				name = tp_name_enemy.string;
+                flag = it_enemy;
+            }
  
 			if (!eyes)
 				name = va("%s%s%s", name, name[0] ? " " : "", Skin_To_TFSkin(Info_ValueForKey(bestinfo->userinfo, "skin")));
@@ -4230,30 +2984,48 @@ void TP_FindPoint (void)
 			teammate = (cl.teamplay && !strcmp(bestinfo->team, TP_PlayerTeam()));
  
 			if (eyes)
+            {
 				name = tp_name_eyes.string;
+                flag = it_eyes;
+            }
 			else if (cl.spectator || (teammate && !tp_name_teammate.string[0]))
+            {
 				name = bestinfo->name;
+                flag = it_teammate;
+            }
 			else
+            {
 				name = teammate ? tp_name_teammate.string : tp_name_enemy.string;
+                flag = teammate ? it_enemy : it_teammate;
+            }
 		}
 		if (beststate->effects & EF_BLUE)
+        {
 			strncat(buf, tp_name_quaded.string, sizeof(buf) - strlen(buf) - 1);
+            flag |= it_quaded;
+        }
 		if (beststate->effects & EF_RED)
+        {
 			strncat(buf, va("%s%s", buf[0] ? " " : "", tp_name_pented.string), sizeof(buf) - strlen(buf) - 1);
+            flag |= it_pented;
+        }
 		strncat(buf, va("%s%s", buf[0] ? " " : "", name), sizeof(buf) - strlen(buf) - 1);
 		strlcpy (vars.pointname, buf, sizeof(vars.pointname));
+        vars.pointflag = flag;
 		strlcpy (vars.pointloc, TP_LocationName (beststate->origin), sizeof(vars.pointloc));
  
 		vars.pointtype = (teammate && !eyes) ? POINT_TYPE_TEAMMATE : POINT_TYPE_ENEMY;
 	} else if (best >= 0) {
 		char *p;
- 
-		if (!bestitem->cvar) {
+
+        vars.pointflag = bestitem->itemflag;
+
+        if (!bestitem->cvar) {
 			// armors are special
 			switch (bestent->skinnum) {
-					case 0: p = tp_name_ga.string; break;
-					case 1: p = tp_name_ya.string; break;
-					default: p = tp_name_ra.string;
+					case 0: p = tp_name_ga.string; vars.pointflag = it_ga; break;
+                    case 1: p = tp_name_ya.string; vars.pointflag = it_ya; break;
+					default: p = tp_name_ra.string; vars.pointflag = it_ra;
 			}
 		} else {
 			p = bestitem->cvar->string;
@@ -4267,6 +3039,7 @@ void TP_FindPoint (void)
 		strlcpy (vars.pointname, tp_name_nothing.string, sizeof(vars.pointname));
 		vars.pointloc[0] = 0;
 		vars.pointtype = POINT_TYPE_ITEM;
+        vars.pointflag = 0;
 	}
 	vars.pointtime = cls.realtime;
 }
@@ -4342,75 +3115,6 @@ void TP_StatChanged (int stat, int value)
 			break;
 	}
 	vars.stat_framecounts[stat] = cls.framecount;
-}
- 
-/******************************* SOUND TRIGGERS *******************************/
- 
-//Find and execute sound triggers. A sound trigger must be terminated by either a CR or LF.
-//Returns true if a sound was found and played
-qbool TP_CheckSoundTrigger (char *str)
-{
-	int i, j, start, length;
-	char soundname[MAX_OSPATH];
-	FILE *f;
- 
-	if (!*str)
-		return false;
- 
-	if (!tp_soundtrigger.string[0])
-		return false;
- 
-	for (i = strlen(str) - 1; i; i--)	{
-		if (str[i] != 0x0A && str[i] != 0x0D)
-			continue;
- 
-		for (j = i - 1; j >= 0; j--) {
-			// quick check for chars that cannot be used
-			// as sound triggers but might be part of a file name
-			if (isalnum((unsigned char)str[j]))
-				continue;	// file name or chat
- 
-			if (strchr(tp_soundtrigger.string, str[j]))	{
-				// this might be a sound trigger
- 
-				start = j + 1;
-				length = i - start;
- 
-				if (!length)
-					break;
-				if (length >= MAX_QPATH)
-					break;
- 
-				strlcpy (soundname, str + start, length + 1);
-				if (strstr(soundname, ".."))
-					break;	// no thank you
- 
-				// clean up the message
-				strcpy (str + j, str + i);
- 
-				if (!snd_initialized)
-					return false;
- 
-				COM_DefaultExtension (soundname, ".wav");
- 
-				// make sure we have it on disk (FIXME)
-				FS_FOpenFile (va("sound/%s", soundname), &f);
-				if (!f)
-					return false;
-				fclose (f);
- 
-				// now play the sound
-				S_LocalSound (soundname);
-				return true;
-			}
-			if (str[j] == '\\')
-				str[j] = '/';
-			if (str[j] <= ' ' || strchr("\"&'*,:;<>?\\|\x7f", str[j]))
-				break;	// we don't allow these in a file name
-		}
-	}
- 
-	return false;
 }
  
 /****************************** MESSAGE FILTERS ******************************/
@@ -4517,10 +3221,10 @@ void TP_DumpMsgFilters(FILE *f)
 }
  
 /************************************ INIT ************************************/
- 
+extern void TP_InitTriggers (void);
 void TP_Init (void)
 {
-	TP_InitReTriggers();
+	TP_InitTriggers();
 	TP_AddMacros();
  
 	Cvar_SetCurrentGroup(CVAR_GROUP_CHAT);
@@ -4543,12 +3247,8 @@ void TP_Init (void)
 	Cvar_Register (&cl_teamskin);
  
 	Cvar_SetCurrentGroup(CVAR_GROUP_COMMUNICATION);
-	Cvar_Register (&tp_triggers);
-	Cvar_Register (&tp_msgtriggers);
-	Cvar_Register (&tp_forceTriggers);
 	Cvar_Register (&tp_loadlocs);
 	Cvar_Register (&tp_pointpriorities);
-	Cvar_Register (&tp_soundtrigger);
 	Cvar_Register (&tp_weapon_order);
  
 	Cvar_SetCurrentGroup(CVAR_GROUP_ITEM_NAMES);
@@ -4636,5 +3336,6 @@ void TP_Init (void)
 	Cmd_AddCommand ("tp_getquad", TP_Msg_GetQuad_f);
 	Cmd_AddCommand ("tp_getpent", TP_Msg_GetPent_f);
 	Cmd_AddCommand ("tp_msgpoint", TP_Msg_Point_f);
- 
+	Cmd_AddCommand ("tp_msgtook", TP_Msg_Took_f);
+
 }

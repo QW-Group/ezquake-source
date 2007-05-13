@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.76 2007-05-12 13:13:48 qqshka Exp $
+    $Id: common.c,v 1.77 2007-05-13 13:41:43 johnnycz Exp $
 
 */
 
@@ -46,7 +46,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "crc.h"
 #include "stats_grid.h"
-
+#include "tp_triggers.h"
 
 void Draw_BeginDisc ();
 void Draw_EndDisc ();

@@ -1916,6 +1916,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\tp_msgs.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tp_triggers.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\utils.c"
 					>
 				</File>
@@ -2348,6 +2356,14 @@
 				</File>
 				<File
 					RelativePath="..\..\textencoding.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tp_msgs.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tp_triggers.h"
 					>
 				</File>
 				<File

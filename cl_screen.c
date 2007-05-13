@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.116 2007-04-19 16:50:49 qqshka Exp $
+$Id: cl_screen.c,v 1.117 2007-05-13 13:41:43 johnnycz Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -138,7 +138,7 @@ cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
 cvar_t	scr_autoid				= {"scr_autoid", "0"};
 cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
 
-cvar_t  scr_teaminfo_order       = {"scr_teaminfo_order", "%p%n %l %h %a %w", CVAR_ARCHIVE, OnChange_scr_clock_format};
+cvar_t  scr_teaminfo_order       = {"scr_teaminfo_order", "%p%n ê%lë %h/%a %w", CVAR_ARCHIVE, OnChange_scr_clock_format};
 cvar_t	scr_teaminfo_align_right = {"scr_teaminfo_align_right", "1", CVAR_ARCHIVE};
 cvar_t	scr_teaminfo_frame_color = {"scr_teaminfo_frame_color", "10 0 0 120"};
 cvar_t	scr_teaminfo_scale		 = {"scr_teaminfo_scale",       "1",  CVAR_ARCHIVE};
@@ -147,7 +147,7 @@ cvar_t  scr_teaminfo_x			 = {"scr_teaminfo_x",           "0",  CVAR_ARCHIVE};
 cvar_t  scr_teaminfo_loc_width	 = {"scr_teaminfo_loc_width",   "5",  CVAR_ARCHIVE};
 cvar_t  scr_teaminfo_name_width	 = {"scr_teaminfo_name_width",  "6",  CVAR_ARCHIVE};
 cvar_t	scr_teaminfo_low_health	 = {"scr_teaminfo_low_health",  "10", CVAR_ARCHIVE};
-cvar_t	scr_teaminfo_armor_style = {"scr_teaminfo_armor_style", "0",  CVAR_ARCHIVE};
+cvar_t	scr_teaminfo_armor_style = {"scr_teaminfo_armor_style", "3",  CVAR_ARCHIVE};
 cvar_t	scr_teaminfo_weapon_style= {"scr_teaminfo_weapon_style","0",  CVAR_ARCHIVE};
 cvar_t  scr_teaminfo			 = {"scr_teaminfo",             "1",  CVAR_ARCHIVE};
 
@@ -1127,7 +1127,7 @@ void SCR_DrawAutoID (void)
 
 // qqshka: code is a mixture of autoid and particle engine
 
-typedef byte col_t[4];
+typedef byte col_t[4]; // FIXME: why 4?
 
 typedef struct ci_player_s {
 	vec3_t		org;
