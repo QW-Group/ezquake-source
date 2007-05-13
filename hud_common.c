@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.134 2007-05-03 12:03:54 johnnycz Exp $
+	$Id: hud_common.c,v 1.135 2007-05-13 22:24:17 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -25,6 +25,7 @@
 #include "utils.h"
 #include "sbar.h"
 #include "hud.h"
+#include "Ctrl.h"
 
 
 #ifndef STAT_MINUS
@@ -4813,7 +4814,49 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 }
 
 #ifdef WITH_PNG
+
+void SCR_HUD_DrawOwnFrags(hud_t *hud)
+{
+    // not implemented yet: scale, color
+    // fixme: add appropriate opengl functions that will add alpha, scale and color
+    int width = VX_OwnFragTextLen() * LETTERWIDTH;
+    int height = LETTERHEIGHT;
+    int x, y;
+    double alpha;
+    static cvar_t
+        *hud_ownfrags_timeout = NULL;
+//        *hud_ownfrags_scale = NULL;
+//        *hud_ownfrags_color = NULL;
+
+    if (hud_ownfrags_timeout == NULL)    // first time
+    {
+		// hud_ownfrags_scale				= HUD_FindVar(hud, "scale");
+        // hud_ownfrags_color               = HUD_FindVar(hud, "color");
+        hud_ownfrags_timeout            = HUD_FindVar(hud, "timeout");
+    }
+
+    if (VX_OwnFragTime() > hud_ownfrags_timeout->value) {
+        return;
+    }
+
+    /*
+    width *= hud_ownfrags_scale->value;
+    height *= hud_ownfrags_scale->value;
+    */
+
+    alpha = 2 - hud_ownfrags_timeout->value / VX_OwnFragTime() * 2;
+    alpha = bound(0, alpha, 1);
+
+    if (!HUD_PrepareDraw(hud, width , height, &x, &y))
+        return;
+
+    if (VX_OwnFragTime() < hud_ownfrags_timeout->value)
+        Draw_ColoredString(x, y, VX_OwnFragText(), false);
+}
+
 #ifdef GLQUAKE
+
+
 
 // What stats to draw.
 #define HUD_RADAR_STATS_NONE				0
@@ -6580,6 +6623,20 @@ void CommonDraw_Init(void)
 		"style", "1",
 		"itemfilter", "quad ra ya ga mega pent rl quad",
         NULL);
+
+#ifdef GLQUAKE
+    HUD_Register("ownfrags" /* jeez someone give me a better name please */, NULL, "Highlights your own frags",
+        0, ca_active, 1, SCR_HUD_DrawOwnFrags,
+        "1", "screen", "center", "top", "0", "50", "0.2", "0 0 100", NULL,
+        /*
+        "scale", "2",
+        "color", "255 255 255",
+        */
+        "timeout", "3",
+        NULL
+        );
+
+#endif
 
 /* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
 #ifdef GLQUAKE

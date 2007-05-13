@@ -23,6 +23,11 @@ typedef struct
 
 trackmsg_t trackermsg[MAX_TRACKERMESSAGES];
 
+static struct {
+    double time;
+    char text[MAX_SCOREBOARDNAME+20];
+} ownfragtext;
+
 void VX_TrackerClear()
 {
 	int i;
@@ -35,6 +40,7 @@ void VX_TrackerClear()
 		trackermsg[i].msg[0] = 0;
 //		trackermsg[i].tt = ; // no need
 	}
+    ownfragtext.text[0] = '\0';
 }
 
 //When a message fades away, this moves all the other messages up a slot
@@ -96,6 +102,30 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 	trackermsg[active_track].die = r_refdef2.time + max(0, amf_tracker_time.value);
 	trackermsg[active_track].tt = tt;
 	active_track += 1;
+}
+
+// Own Frags Text
+#define OWNFRAGPREFIX "You've fragged "
+
+static void VX_OwnFragNew(const char *victim)
+{
+    ownfragtext.time = r_refdef2.time;
+    snprintf(ownfragtext.text, sizeof(ownfragtext.text), "%s%s", OWNFRAGPREFIX, victim);
+}
+
+int VX_OwnFragTextLen(void)
+{
+    return (int) strlen(ownfragtext.text);
+}
+
+double VX_OwnFragTime(void)
+{
+    return r_refdef2.time - ownfragtext.time;
+}
+
+const char * VX_OwnFragText(void)
+{
+    return ownfragtext.text;
 }
 
 // return true if player enemy comparing to u, handle spectator mode
@@ -197,7 +227,10 @@ void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, i
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&r%s &c900killed you&r\n%s deaths: %i", cl.players[killer].name, GetWeaponName(weapon), player_wcount);
 	else if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
+    {
 		snprintf(outstring, sizeof(outstring), "&c900You killed &r%s\n%s kills: %i", cl.players[player].name, GetWeaponName(weapon), killer_wcount);
+        VX_OwnFragNew(cl.players[player].name);
+    }
 
 	VX_TrackerAddText(outstring, tt_death);
 }

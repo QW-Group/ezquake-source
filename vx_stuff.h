@@ -202,4 +202,9 @@ void VX_LightningTrail (vec3_t start, vec3_t end);
 
 void Amf_Reset_DamageStats (void);
 
+
+int VX_OwnFragTextLen(void);
+double VX_OwnFragTime(void);
+const char * VX_OwnFragText(void);
+
 #endif // __VX_STUFF__H__
