@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.5 2007-05-14 08:19:50 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.6 2007-05-14 08:21:19 himan Exp $
 
 */
 
@@ -195,7 +195,7 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 		This is because $point DOES NOT TELL YOU TEAMMATE/ENEMY if they have ring (because there is no way to know).
 		Therefore, we are assuming enemy because this function is ENEMY powerup. So if user hits this by accident (when teammate has quad/pent with ring, then it's their fault.
 		*/
-	else if (INPOINT(eyes))
+	if (INPOINT(eyes))
 	{
 		if (INPOINT(quad) && INPOINT(pent))
 		{
