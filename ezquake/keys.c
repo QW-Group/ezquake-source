@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.57.2.4 2007-05-04 21:35:36 cokeman1982 Exp $
+    $Id: keys.c,v 1.57.2.5 2007-05-14 00:02:20 disconn3ct Exp $
 
 */
 
@@ -1976,8 +1976,9 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 
 	//	Com_Printf ("%i : %i\n", key, down); //@@@
 
+	/* disconnect: really FIXME CTRL+r or CTRL+[ with in_builinkeymap 1 cause to unichar < 32 */
 	//FIXME
-	if (unichar < 32 || (unichar > 127 && unichar <= 256))
+	if (/*unichar < 32 ||*/ (unichar > 127 && unichar <= 256))
 		unichar = 0;
 
 	if (key == K_LALT || key == K_RALT)
