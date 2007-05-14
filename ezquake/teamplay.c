@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.27 2007-05-13 22:31:39 johnnycz Exp $
+    $Id: teamplay.c,v 1.67.2.28 2007-05-14 03:38:21 himan Exp $
 */
 
 #include <time.h>
@@ -339,6 +339,12 @@ char *Macro_Colored_Armor_f (void)
 char *Macro_Colored_Powerups_f (void)
 {
 	snprintf (macro_buf, sizeof(macro_buf), "%s", TP_MSG_Colored_Powerup());
+	return macro_buf;
+}
+
+char *Macro_Colored_Short_Powerups_f (void) // same as above, but displays "qrp" instead of "quad ring pent"
+{
+	snprintf (macro_buf, sizeof(macro_buf), "%s", TP_MSG_Colored_Short_Powerups());
 	return macro_buf;
 } 
  
@@ -1005,6 +1011,7 @@ void TP_AddMacros (void)
 	Cmd_AddMacroEx ("armor", Macro_Armor, teamplay);
 	Cmd_AddMacroEx ("colored_armor", Macro_Colored_Armor_f, teamplay);
 	Cmd_AddMacroEx ("colored_powerups", Macro_Colored_Powerups_f, teamplay);
+	Cmd_AddMacroEx ("colored_short_powerups", Macro_Colored_Short_Powerups_f, teamplay);
  
 	Cmd_AddMacroEx ("shells", Macro_Shells, teamplay);
 	Cmd_AddMacroEx ("nails", Macro_Nails, teamplay);

@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.3 2007-05-08 23:27:28 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.4 2007-05-14 03:38:21 himan Exp $
 
 */
 
@@ -14,7 +14,7 @@
 #define GLOBAL /* */
 #define LOCAL static
 
-
+#define HAVE_FLAG() (cl.stats[STAT_ITEMS] & IT_FLAG)
 #define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
 #define HAVE_LG() (cl.stats[STAT_ITEMS] & IT_LIGHTNING)
 #define HOLD_GL() (cl.stats[STAT_ACTIVEWEAPON] == IT_GRENADE_LAUNCHER) // only used in tp_lost
@@ -112,9 +112,14 @@ LOCAL void TP_Send_TeamSay(char *format, ...)
     Cbuf_AddText(tp_msg);
 }
  
+ 
+ 
+///////////////////////////////////
+//////// Start teamplay scripts ///////
+///////////////////////////////////
 
-GLOBAL void TP_Msg_Lost_f (void) // Is this function useful? tp_report does this already.
-{
+GLOBAL void TP_Msg_Lost_f (void)
+{ // This function has no use in being an external (client bind), excep that people are probably used to having this. Notice that tp_report makes this function obsolete.
     MSGPART led = tp_sep_red;
     MSGPART msg1 = "";
 	MSGPART msg2 = "";
@@ -131,8 +136,8 @@ GLOBAL void TP_Msg_Lost_f (void) // Is this function useful? tp_report does this
 }
 
 
-GLOBAL void TP_Msg_ReportComing(qbool report) // tp_report and tp_coming are similar, differences are led color, where %l is, and the word "coming"
-{
+GLOBAL void TP_Msg_ReportComing(qbool report)
+{ // tp_report and tp_coming are similar, differences are led color, where %l is, and the word "coming"
     MSGPART msg1 = "";
 	MSGPART msg2 = "";
 	MSGPART msg3 = "";
@@ -153,7 +158,7 @@ GLOBAL void TP_Msg_ReportComing(qbool report) // tp_report and tp_coming are sim
 	}
 
 	if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
-		msg4 = " " tp_ib_name_team " $colored_powerups";
+		msg4 = " " tp_ib_name_team " $colored_short_powerups";
  
     if		(HAVE_RL() && HAVE_LG())	msg5 = " " tp_ib_name_rlg ":$rockets/$cells";
     else if (HAVE_RL())					msg5 = " " tp_ib_name_rl ":$rockets";
@@ -174,7 +179,7 @@ GLOBAL void TP_Msg_Report_f (void) { TP_Msg_ReportComing(true); }
 GLOBAL void TP_Msg_Coming_f (void) { TP_Msg_ReportComing(false); } 
 
 
-GLOBAL void TP_Msg_EnemyPowerup_f (void)
+GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monster.
 {		/*
 		This is the "go-to" function!". It contains all possible scenarios for any player, teammate or enemy, with any combination of powerup.
 		note: in cases where you have pent and enemy has quad (or vice versa), team powerup is displayed only, NOT ENEMY POWERUP ------------------------------------------ FIX FIX FIX FIX change this around
@@ -353,7 +358,8 @@ GLOBAL void TP_Msg_QuadDead_f (void)
 }
 
 
-GLOBAL void TP_Msg_Took_f (void) // later: runes, flag
+
+GLOBAL void TP_Msg_Took_f (void)
 {
     MSGPART msg1 = "";
 	MSGPART msg2 = "";
@@ -417,7 +423,7 @@ GLOBAL void TP_Msg_Point_f (void)
 				msg1 = tp_sep_green;
 				msg2 = tp_ib_name_teammate;
 			}
-		else if (INPOINTPOWERUP() || INPOINTWEAPON() || INPOINTARMOR() || INPOINTAMMO() || INPOINT(pack) || INPOINT(mh))
+		else if (INPOINTPOWERUP() || INPOINTWEAPON() || INPOINTARMOR() || INPOINTAMMO() || INPOINT(pack) || INPOINT(mh) || INPOINT(flag) || INPOINT (disp) || INPOINT(sentry) || INPOINT(runes)) // How can I do if INPONIT(anything) or if INPOINT() not empty?
 		//  flag, disp, sent, rune
 			{
 				msg1 = tp_sep_yellow; // if we see any of these items ready for pickup, then we are yellow led status (meaning notice)
@@ -429,7 +435,7 @@ GLOBAL void TP_Msg_Point_f (void)
 					else if (INPOINT(lg))		msg2 = tp_ib_name_lg;
 					else if (INPOINT(gl))		msg2 = tp_ib_name_gl;
 					else if (INPOINT(sng))		msg2 = tp_ib_name_sng;
-					else if (INPOINT(pack))	msg2 = tp_ib_name_backpack;
+					else if (INPOINT(pack))		msg2 = tp_ib_name_backpack;
 					
 					else if (INPOINT(ra))		msg2 = tp_ib_name_ra;
 					else if (INPOINT(ya))		msg2 = tp_ib_name_ya;
@@ -443,14 +449,13 @@ GLOBAL void TP_Msg_Point_f (void)
 					
 					//TF
 					else if (INPOINT(flag))		msg2 = tp_ib_name_flag;
-					/*else if (INPOINT(disp))			msg2 = tp_ib_name_disp;
-					else if (INPOINT(sentry))			msg2 = tp_ib_name_sentry;
+					else if (INPOINT(disp))		msg2 = "{disp}";	// note we can'te tell if it's enemy or team disp
+					else if (INPOINT(sentry))	msg2 = "{sentry}"; // note we can'te tell if it's enemy or team sent
 					
-					else if (INPOINT(runes))			msg2 = tp_ib_name_rune;
-					*/
-					
-					else msg2 = "{$point}"; // this should never happen
+					//ctf, other
+					else if (INPOINT(runes))	msg2 = "rune";
 			}
+		else msg2 = "{$point}"; // this should never happen
 	}
 	
 	//led(1) item(2) at loc(3)
@@ -493,19 +498,43 @@ GLOBAL const char * TP_MSG_Colored_Powerup(void)
     MSGPART msg = "";
 
     if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
-		msg = tp_ib_name_quad " " tp_ib_name_pent " " tp_ib_name_ring;
+		msg = tp_ib_name_quad " " tp_ib_name_ring " " tp_ib_name_pent;
 	else if (HAVE_QUAD() && HAVE_PENT())
 		msg = tp_ib_name_quad " " tp_ib_name_pent;
 	else if (HAVE_QUAD() && HAVE_RING())
 		msg = tp_ib_name_quad " " tp_ib_name_ring;
 	else if (HAVE_PENT() && HAVE_RING())
-		msg = tp_ib_name_pent " " tp_ib_name_ring;
+		msg = tp_ib_name_ring " " tp_ib_name_pent;
 	else if (HAVE_QUAD())
 		msg = tp_ib_name_quad;
 	else if (HAVE_PENT())
 		msg = tp_ib_name_pent;
 	else if (HAVE_RING())
 		msg = tp_ib_name_ring;
+	else
+		msg = "";
+
+    return msg;
+}
+
+GLOBAL const char * TP_MSG_Colored_Short_Powerups(void) // this displays "qrp" instead of "quad ring pent", some people prefer this!
+{
+    MSGPART msg = "";
+
+    if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
+		msg = "{&c03Fq}{&cff0r}{&ce00p}";
+	else if (HAVE_QUAD() && HAVE_PENT())
+		msg = "{&c03Fq}{&ce00p}";
+	else if (HAVE_QUAD() && HAVE_RING())
+		msg = "{&c03Fq}{&cff0r}";
+	else if (HAVE_PENT() && HAVE_RING())
+		msg = "{&cff0r}{&ce00p}";
+	else if (HAVE_QUAD())
+		msg = "{&c03Fq}";
+	else if (HAVE_PENT())
+		msg = "{&ce00p}";
+	else if (HAVE_RING())
+		msg = "{&cff0r}";
 	else
 		msg = "";
 
