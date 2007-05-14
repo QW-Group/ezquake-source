@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.28 2007-05-14 03:38:21 himan Exp $
+    $Id: teamplay.c,v 1.67.2.29 2007-05-14 08:19:49 himan Exp $
 */
 
 #include <time.h>
@@ -46,7 +46,7 @@ cvar_t	cl_parseSay = {"cl_parseSay", "1"};
 cvar_t	cl_parseFunChars = {"cl_parseFunChars", "1"};
 cvar_t	cl_nofake = {"cl_nofake", "2"};
 cvar_t	tp_loadlocs = {"tp_loadlocs", "1"};
-cvar_t  tp_pointpriorities = {"tp_pointpriorities", "0"};
+cvar_t  tp_pointpriorities = {"tp_pointpriorities", "0"}; // FIXME: buggy
 
  
 cvar_t  cl_teamtopcolor = {"teamtopcolor", "-1", 0, OnChangeColorForcing};
@@ -113,14 +113,15 @@ cvar_t	tp_name_status_green = {"tp_name_status_green", "$G"};
 cvar_t	tp_name_status_yellow = {"tp_name_status_yellow", "$Y"};
 cvar_t	tp_name_status_red = {"tp_name_status_red", "$R"};
 cvar_t	tp_name_status_blue = {"tp_name_status_blue", "$B"};
+cvar_t	tp_name_status_white = {"tp_name_status_white", "$x04"};
  
-cvar_t	tp_need_ra = {"tp_need_ra", "110"};
+cvar_t	tp_need_ra = {"tp_need_ra", "120"};
 cvar_t	tp_need_ya = {"tp_need_ya", "80"};
 cvar_t	tp_need_ga = {"tp_need_ga", "50"};
-cvar_t	tp_need_health = {"tp_need_health", "60"};
+cvar_t	tp_need_health = {"tp_need_health", "50"};
 cvar_t	tp_need_weapon = {"tp_need_weapon", "35687"};
 cvar_t	tp_need_rl = {"tp_need_rl", "1"};
-cvar_t	tp_need_rockets = {"tp_need_rockets", "7"};
+cvar_t	tp_need_rockets = {"tp_need_rockets", "5"};
 cvar_t	tp_need_cells = {"tp_need_cells", "20"};
 cvar_t	tp_need_nails = {"tp_need_nails", "40"};
 cvar_t	tp_need_shells = {"tp_need_shells", "12"};
