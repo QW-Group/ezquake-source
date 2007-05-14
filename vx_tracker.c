@@ -227,10 +227,10 @@ void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, i
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator))
 		snprintf(outstring, sizeof(outstring), "&r%s &c900killed you&r\n%s deaths: %i", cl.players[killer].name, GetWeaponName(weapon), player_wcount);
 	else if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
-    {
 		snprintf(outstring, sizeof(outstring), "&c900You killed &r%s\n%s kills: %i", cl.players[player].name, GetWeaponName(weapon), killer_wcount);
+    
+    if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator))
         VX_OwnFragNew(cl.players[player].name);
-    }
 
 	VX_TrackerAddText(outstring, tt_death);
 }
