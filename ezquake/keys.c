@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.57.2.5 2007-05-14 00:02:20 disconn3ct Exp $
+    $Id: keys.c,v 1.57.2.6 2007-05-15 23:59:26 johnnycz Exp $
 
 */
 
@@ -1352,6 +1352,8 @@ void Key_Message (int key, wchar unichar) {
 			}
             if (key_dest_beforemm != key_message)
 			    key_dest = key_dest_beforemm;
+            else
+                key_dest = key_game;
 			chat_linepos = 0;
 			chat_buffer[0] = 0;
 			return;
