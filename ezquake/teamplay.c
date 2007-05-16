@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.30 2007-05-16 15:27:27 johnnycz Exp $
+    $Id: teamplay.c,v 1.67.2.31 2007-05-16 15:35:23 himan Exp $
 */
 
 #include <time.h>
@@ -3327,15 +3327,15 @@ void TP_Init (void)
 	Cmd_AddCommand ("teamcolor", TP_TeamColor_f);
 	Cmd_AddCommand ("enemycolor", TP_EnemyColor_f);
  
-	Cmd_AddCommand ("tp_report", TP_Msg_Report_f);
-	Cmd_AddCommand ("tp_coming", TP_Msg_Coming_f);
-    Cmd_AddCommand ("tp_lost", TP_Msg_Lost_f);
-    Cmd_AddCommand ("tp_enemypwr", TP_Msg_EnemyPowerup_f);
-	Cmd_AddCommand ("tp_quaddead", TP_Msg_QuadDead_f);
-    Cmd_AddCommand ("tp_safe", TP_Msg_Safe_f);
-    Cmd_AddCommand ("tp_help", TP_Msg_Help_f);
-	Cmd_AddCommand ("tp_getquad", TP_Msg_GetQuad_f);
-	Cmd_AddCommand ("tp_getpent", TP_Msg_GetPent_f);
+	Cmd_AddCommand ("tp_msgreport", TP_Msg_Report_f);
+	Cmd_AddCommand ("tp_msgcoming", TP_Msg_Coming_f);
+    Cmd_AddCommand ("tp_msglost", TP_Msg_Lost_f);
+    Cmd_AddCommand ("tp_msgenemypwr", TP_Msg_EnemyPowerup_f);
+	Cmd_AddCommand ("tp_msgquaddead", TP_Msg_QuadDead_f);
+    Cmd_AddCommand ("tp_msgsafe", TP_Msg_Safe_f);
+    Cmd_AddCommand ("tp_msghelp", TP_Msg_Help_f);
+	Cmd_AddCommand ("tp_msggetquad", TP_Msg_GetQuad_f);
+	Cmd_AddCommand ("tp_msggetpent", TP_Msg_GetPent_f);
 	Cmd_AddCommand ("tp_msgpoint", TP_Msg_Point_f);
 	Cmd_AddCommand ("tp_msgtook", TP_Msg_Took_f);
 

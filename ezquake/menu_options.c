@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.10 2007-05-13 08:44:15 johnnycz Exp $
+		$Id: menu_options.c,v 1.60.2.11 2007-05-16 15:35:23 himan Exp $
 
 */
 
@@ -552,17 +552,17 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Thunderbolt", "weapon 8"),
 	
 	ADDSET_SEPARATOR("Teamplay"),
-	ADDSET_BIND("Report Status", "tp_report"),
-	ADDSET_BIND("Lost location", "tp_lost"),
-	ADDSET_BIND("Location safe", "tp_safe"),
+	ADDSET_BIND("Report Status", "tp_msgreport"),
+	ADDSET_BIND("Lost location", "tp_msglost"),
+	ADDSET_BIND("Location safe", "tp_msgsafe"),
 	ADDSET_BIND("Point at item", "tp_msgpoint"),
 	ADDSET_BIND("Took item", "tp_msgtook"),
-	ADDSET_BIND("Coming from location", "tp_coming"),
-	ADDSET_BIND("Help location", "tp_help"),
-	ADDSET_BIND("Enemy Quad Dead", "tp_quaddead"),
-	ADDSET_BIND("Enemy has Powerup", "tp_enemypwr"),
-	ADDSET_BIND("Get Quad", "tp_getquad"),
-	ADDSET_BIND("Get Pent", "tp_getpent"),
+	ADDSET_BIND("Coming from location", "tp_msgcoming"),
+	ADDSET_BIND("Help location", "tp_msghelp"),
+	ADDSET_BIND("Enemy Quad Dead", "tp_msgquaddead"),
+	ADDSET_BIND("Enemy has Powerup", "tp_msgenemypwr"),
+	ADDSET_BIND("Get Quad", "tp_msggetquad"),
+	ADDSET_BIND("Get Pent", "tp_msggetpent"),
 
 	ADDSET_SEPARATOR("Communication"),
 	ADDSET_BIND("Chat", "messagemode"),
