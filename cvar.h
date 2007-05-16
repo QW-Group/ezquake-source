@@ -51,6 +51,7 @@ typedef struct cvar_s {
 	char	*latchedString;
 	int		integer;			// may be set in Cvar_Set(), Cvar_Register(), Cvar_Create()
 	qbool	modified;			// set to true in Cvar_Set(), Cvar_Register(), Cvar_Create(), reset to false manually in C code
+	qbool   teamplay;			// is this variable protected so that it can be only used within messaging?
 	struct cvar_group_s *group;		
 	struct cvar_s *next_in_group;	
 	struct cvar_s *hash_next;

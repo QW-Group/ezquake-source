@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cvar.c,v 1.48 2007-05-03 12:03:54 johnnycz Exp $
+$Id: cvar.c,v 1.49 2007-05-16 17:39:02 johnnycz Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -805,6 +805,39 @@ void Cvar_Set_f (void)
 		var->flags |= CVAR_USER_ARCHIVE;
 }
 
+void Cvar_Set_tp_f (void)
+{
+	cvar_t *var;
+	char *var_name;
+
+	if (Cmd_Argc() != 3) {
+		Com_Printf ("Usage: %s <cvar> <value>\n", Cmd_Argv(0));
+		return;
+	}
+
+	var_name = Cmd_Argv (1);
+	var = Cvar_FindVar (var_name);
+
+	if (var) {
+        if (!var->teamplay) {
+            Com_Printf("\"%s\" is not a teamplay variable\n", var->name);
+            return;
+        } else {
+		    Cvar_Set (var, Cmd_Argv(2));
+        }
+	} else {
+		if (Cmd_Exists(var_name)) {
+			Com_Printf ("\"%s\" is a command\n", var_name);
+			return;
+		}
+		var = Cvar_Create (var_name, Cmd_Argv(2), 0);
+        var->teamplay = true;
+	}
+
+	if (cvar_seta)
+		var->flags |= CVAR_USER_ARCHIVE;
+}
+
 void Cvar_Set_ex_f (void)
 {
 	cvar_t	*var;
@@ -1214,6 +1247,7 @@ void Cvar_Init (void)
 	Cmd_AddCommand ("cvarlist", Cvar_CvarList_f);
 	Cmd_AddCommand ("cvarlist_re", Cvar_CvarList_re_f);
 	Cmd_AddCommand ("set", Cvar_Set_f);
+	Cmd_AddCommand ("set_tp", Cvar_Set_tp_f);
 	Cmd_AddCommand ("set_ex", Cvar_Set_ex_f);
 	Cmd_AddCommand ("set_alias_str", Cvar_Set_Alias_Str_f);
 	Cmd_AddCommand ("set_bind_str", Cvar_Set_Bind_Str_f);

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.63 2007-05-13 13:41:43 johnnycz Exp $
+    $Id: cmd.c,v 1.64 2007-05-16 17:39:02 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1320,6 +1320,8 @@ void Cmd_ExpandString (const char *data, char *dest)
 				if (bestvar && (!str || (strlen (bestvar->name) > macro_length))) {
 					str = bestvar->string;
 					name_length = strlen(bestvar->name);
+                    if (bestvar->teamplay)
+                        cbuf_current = &cbuf_formatted_comms;
 				}
 			} else
 #endif
@@ -1327,7 +1329,9 @@ void Cmd_ExpandString (const char *data, char *dest)
 				if (bestvar) {
 					str = bestvar->string;
 					name_length = strlen (bestvar->name);
-				} else {
+                    if (bestvar->teamplay)
+                        cbuf_current = &cbuf_formatted_comms;
+                } else {
 					str = NULL;
 				}
 			}
@@ -1386,7 +1390,7 @@ char *msgtrigger_commands[] = {
                               };
 
 char *formatted_comms_commands[] = {
-                                       "if", "wait", "echo", "say", "say_team",
+                                       "if", "wait", "echo", "say", "say_team", "set_tp",
                                        "tp_point", "tp_pickup", "tp_took",
                                        NULL
                                    };
