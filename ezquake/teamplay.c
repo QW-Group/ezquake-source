@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.29 2007-05-14 08:19:49 himan Exp $
+    $Id: teamplay.c,v 1.67.2.30 2007-05-16 15:27:27 johnnycz Exp $
 */
 
 #include <time.h>
@@ -2997,7 +2997,7 @@ void TP_FindPoint (void)
 			else
             {
 				name = teammate ? tp_name_teammate.string : tp_name_enemy.string;
-                flag = teammate ? it_enemy : it_teammate;
+                flag = teammate ? it_teammate : it_enemy;
             }
 		}
 		if (beststate->effects & EF_BLUE)
