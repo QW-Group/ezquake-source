@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.8 2007-05-17 06:25:34 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.9 2007-05-17 06:49:46 himan Exp $
 
 */
 
@@ -482,6 +482,23 @@ GLOBAL void TP_Msg_Need_f (void)
 	
 	TP_Send_TeamSay(tp_sep_green " %s", msg1);
 }
+
+LOCAL void TP_Msg_TrickReplace(qbool trick)
+{
+    MSGPART msg1 = "";
+	MSGPART msg2 = "";
+	
+	if (trick)
+		msg1 = "{trick}";
+	else
+		msg1 = "{replace}";
+		
+	msg2 = "$[{%l}$]";
+	
+	TP_Send_TeamSay(tp_sep_yellow " %s %s", msg1, msg2);
+}
+GLOBAL void TP_Msg_Trick_f (void) { TP_Msg_TrickReplace(true); }
+GLOBAL void TP_Msg_Replace_f (void) { TP_Msg_TrickReplace(false); }
 
 ///////////////////////////////////
 //////// End teamplay scripts ////////

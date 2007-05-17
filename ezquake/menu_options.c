@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.11 2007-05-16 15:35:23 himan Exp $
+		$Id: menu_options.c,v 1.60.2.12 2007-05-17 06:49:45 himan Exp $
 
 */
 
@@ -563,6 +563,10 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Enemy has Powerup", "tp_msgenemypwr"),
 	ADDSET_BIND("Get Quad", "tp_msggetquad"),
 	ADDSET_BIND("Get Pent", "tp_msggetpent"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BIND("Trick at location", "tp_msgtrick"),
+	ADDSET_BIND("Replace at location", "tp_msgreplace"),
+	ADDSET_BASIC_SECTION(),
 
 	ADDSET_SEPARATOR("Communication"),
 	ADDSET_BIND("Chat", "messagemode"),
