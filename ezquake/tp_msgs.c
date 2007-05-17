@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.7 2007-05-16 15:35:24 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.8 2007-05-17 06:25:34 himan Exp $
 
 */
 
@@ -130,7 +130,7 @@ GLOBAL void TP_Msg_Lost_f (void)
 			msg1 = tp_ib_name_quad " over ";
  
 		if (HOLD_RL() || HOLD_LG() || HOLD_GL()) // gl could be useful too
-			msg2 = "lost $[{%d}$] " COLORED(f0f,$weapon) " e:%E";
+			msg2 = "lost "  COLORED(f0f,$weapon) " $[{%d}$] e:%E";
 		else
 			msg2 = "lost $[{%d}$] e:%E";
 		}
@@ -163,22 +163,22 @@ GLOBAL void TP_Msg_ReportComing(qbool report)
 		}
 
 	if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
-		msg4 = " " tp_ib_name_team " $colored_short_powerups";
+		msg2 = " $colored_short_powerups";
  
-    if		(HAVE_RL() && HAVE_LG())	msg5 = " " tp_ib_name_rlg ":$rockets/$cells";
-    else if (HAVE_RL())					msg5 = " " tp_ib_name_rl ":$rockets";
-    else if (HAVE_LG())					msg5 = " " tp_ib_name_lg ":$cells";
+    if		(HAVE_RL() && HAVE_LG())	msg5 = tp_ib_name_rlg ":$rockets/$cells";
+    else if (HAVE_RL())					msg5 = tp_ib_name_rl ":$rockets";
+    else if (HAVE_LG())					msg5 = tp_ib_name_lg ":$cells";
     else								msg5 = "";
  
-	msg2 = "%h/$colored_armor";
-	msg3 = "$[{%l}$]";
+	msg3 = "$colored_armor/%h";
+	msg4 = "$[{%l}$]";
  
-	// $B$B(1) health(2)/armor location(3) powerup(4) rlg:x(5) //tp_report
+	// $B$B(1) powerup (2) health(3)/armor location(4) rlg:x(5) //tp_report
 	if (report)
-		TP_Send_TeamSay("%s %s %s%s%s", msg1, msg2, msg3, msg4, msg5);
-	// $W$W(1) coming(1) location(3) health(2)/armor powerup(5) rlg:x(6) //tp_coming
+		TP_Send_TeamSay("%s%s %s %s %s", msg1, msg2, msg3, msg4, msg5);
+	// $W$W(1) coming(1) powerup(2) location(4) health(3)/armor rlg:x(5) //tp_coming
 	else
-		TP_Send_TeamSay("%s %s %s%s%s", msg1, msg3, msg2, msg4, msg5); // notice that in tp_coming, we report our location before anything else!
+		TP_Send_TeamSay("%s%s %s %s %s", msg1, msg2, msg4, msg3, msg5); // notice that in tp_coming, we report our location before anything else!
 }
 GLOBAL void TP_Msg_Report_f (void) { TP_Msg_ReportComing(true); }
 GLOBAL void TP_Msg_Coming_f (void) { TP_Msg_ReportComing(false); } 
@@ -193,7 +193,10 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 		*/
 	MSGPART msg1 = "";
 	MSGPART msg2 = "";
- Com_Printf("started function after msgs\n");
+	
+	if (flashed) return;
+    TP_FindPoint();
+	
 		/*
 		Note we don't have && INPOINT(enemy) in the below if.
 		This is because $point DOES NOT TELL YOU TEAMMATE/ENEMY if they have ring (because there is no way to know).
@@ -201,7 +204,6 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 		*/
 	if (INPOINT(eyes)) // we assume enemy!
 	{
-	Com_Printf("Found player with eyes\n");
 		if (INPOINT(quaded) && INPOINT(pented))
 			{
 			msg1 = tp_sep_red;
@@ -225,7 +227,6 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 	}
 	else if (INPOINT(enemy))
 	{
-	Com_Printf("Found enemy\n");
 		if (INPOINT(quaded) && INPOINT(pented))
 			{
 			msg1 = tp_sep_red;
@@ -244,14 +245,12 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 	}
 	else if (HAVEPOWERUP())
 	{ // Notice this is the only case where we can evaluate ring/eyes - when player has it!
-	Com_Printf("have powerup\n");
 			msg1 = tp_sep_green;
 			msg2 = "team $colored_powerups";
 			// notice, this $colored_powerups takes care of all cases for you. You have atleast one powerup here, if you have additional powerups they show too - no need for more ifs.
 	}
 	else if (INPOINT(teammate))
 	{
-	Com_Printf("teammate\n");
 		if (INPOINT(quaded) && INPOINT(pented))
 			{
 			msg1 = tp_sep_green;
@@ -270,7 +269,6 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 	}
 	else
 	{
-	Com_Printf("skipped all others\n");
 		msg1 = tp_sep_red;
 		msg2 = tp_ib_name_enemy " {%q}"; // %q is last seen powerup of enemy. defaults to quad, which is nice (but it won't be colored)
 	}
@@ -373,32 +371,35 @@ GLOBAL void TP_Msg_Took_f (void)
 {
     MSGPART msg1 = "";
 	MSGPART msg2 = "";
+	MSGPART msg3 = "";
  
 	if (TOOK_EMPTY())
 		return;
 	else if (TOOK(quad) || TOOK(pent) || TOOK(ring))
-		{
-		TP_Msg_EnemyPowerup_f(); // tp_enemypwr can handle all cases with player/powerup
-		return;
+		{ // notice we can't send this check to tp_msgenemypwr, that's because if enemy with powerup is in your view, tp_enemypwr reports enemypwr first, but in this function you want to report TEAM quad.
+				msg1 = tp_sep_green;
+				msg2 = " team $colored_powerups";
+				msg3 = "";
 		}
 	else
 	{
-		msg2 = "$[{%l}$]";
+		if	(TOOK(rl))									msg2 = tp_ib_name_rl;
+		else if (TOOK(lg))								msg2 = tp_ib_name_lg;
+		else if (TOOK(gl))								msg2 = tp_ib_name_gl;
+		else if (TOOK(sng))								msg2 = tp_ib_name_sng;
+		else if (TOOK(pack))    						msg2 = tp_ib_name_backpack;
+		else if (TOOK(rockets) || TOOK(cells))			msg2 = "{$took}";
+		else if (TOOK(mh))								msg2 = tp_ib_name_mh;
+		else if (TOOK(ra))								msg2 = tp_ib_name_ra;
+		else if (TOOK(ya))								msg2 = tp_ib_name_ya;
+		else if (TOOK(ga))								msg2 = tp_ib_name_ga;
+		else if (TOOK(flag))							msg2 = tp_ib_name_flag;
+		else 											msg2 = "{$took}"; // This should never happen
 		
-		if	(TOOK(rl))									msg1 = tp_ib_name_rl;
-		else if (TOOK(lg))								msg1 = tp_ib_name_lg;
-		else if (TOOK(gl))								msg1 = tp_ib_name_gl;
-		else if (TOOK(sng))								msg1 = tp_ib_name_sng;
-		else if (TOOK(pack))    						msg1 = tp_ib_name_backpack;
-		else if (TOOK(rockets) || TOOK(cells))			msg1 = "{$took}";
-		else if (TOOK(mh))								msg1 = tp_ib_name_mh;
-		else if (TOOK(ra))								msg1 = tp_ib_name_ra;
-		else if (TOOK(ya))								msg1 = tp_ib_name_ya;
-		else if (TOOK(ga))								msg1 = tp_ib_name_ga;
-		else if (TOOK(flag))							msg1 = tp_ib_name_flag;
-		else 											msg1 = "{$took}"; // This should never happen
+		msg1 = tp_sep_white " {took} ";
+		msg3 = " at $[{%l}$]";
 	}
-	TP_Send_TeamSay(tp_sep_white " {took} %s at %s", msg1, msg2);
+	TP_Send_TeamSay("%s%s%s", msg1, msg2, msg3);
 }
 
 
