@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.12 2007-05-17 06:49:45 himan Exp $
+		$Id: menu_options.c,v 1.60.2.13 2007-05-17 22:50:41 johnnycz Exp $
 
 */
 
@@ -25,9 +25,7 @@
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 #include "tr_types.h"
-#endif // _WIN32 || __linux__ || __FreeBSD__
 #else
 #include "r_model.h"
 #include "r_local.h"
@@ -903,20 +901,24 @@ menu_video_settings_t mvs_previous;
 
 // will apply given video settings
 static void ApplyVideoSettings(const menu_video_settings_t *s) {
+#ifndef __APPLE__
 	Cvar_SetValue(&r_mode, s->res);
 	Cvar_SetValue(&r_colorbits, s->bpp);
 	Cvar_SetValue(&r_displayRefresh, s->freq.value);
 	Cvar_SetValue(&r_fullscreen, s->fullscreen);
+#endif
 	Cbuf_AddText("vid_restart\n");
     Com_Printf("askmode: %s\n", mvs_askmode ? "on" : "off");
 }
 
 // will store current video settings into the given structure
 static void StoreCurrentVideoSettings(menu_video_settings_t *out) {
+#ifndef __APPLE__
 	out->res = (int) r_mode.value;
 	out->bpp = (int) r_colorbits.value;
 	Cvar_SetValue(&out->freq, r_displayRefresh.value);
 	out->fullscreen = (int) r_fullscreen.value;
+#endif
 }
 
 // performed when user hits the "apply" button
@@ -973,11 +975,13 @@ setting settvideo_arr[] = {
 	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
 	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
 	ADDSET_SEPARATOR("Text layer settings"),
+#ifndef __APPLE__
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
 	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
+#endif	
 	ADDSET_SEPARATOR("Miscellaneous"),
 #ifdef GLQUAKE
-#ifndef __MACOS__
+#ifndef __APPLE__
 	ADDSET_BOOL("Vertical sync.", r_swapInterval),
 #endif
 #endif
