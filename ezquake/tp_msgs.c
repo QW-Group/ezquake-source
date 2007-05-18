@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.9 2007-05-17 06:49:46 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.10 2007-05-18 23:34:50 johnnycz Exp $
 
 */
 
@@ -44,6 +44,9 @@
 #define INPOINT(thing) (!flashed && (vars.pointflag & it_##thing))
 
 #define DEAD() (cl.stats[STAT_HEALTH] < 1)
+
+// call TP_GetNeed() before using this!
+#define NEED(x) (vars.needflags & it##x)
 
 /*
 Should we enforce special colors this way below or we just should make

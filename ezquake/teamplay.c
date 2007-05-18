@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.32 2007-05-17 06:49:45 himan Exp $
+    $Id: teamplay.c,v 1.67.2.33 2007-05-18 23:34:49 johnnycz Exp $
 */
 
 #include <time.h>
@@ -612,13 +612,17 @@ char *Macro_LastDropTime (void)
 		snprintf (macro_buf, 32, "%d", -1);
 	return macro_buf;
 }
- 
+
+// fixme: rewrite this function into two separate functions
+// first will just set vars.needflags value (put into TP_GetNeed function below)
+// second will read it's value and produce appropriate $need macro string
 char *Macro_Need (void)
 {
 	int i, weapon;
 	char *needammo = NULL;
  
 	macro_buf[0] = 0;
+	vars.needflags = 0;
  
 	// check armor
 	if (((cl.stats[STAT_ITEMS] & IT_ARMOR1) && cl.stats[STAT_ARMOR] < tp_need_ga.value)
@@ -627,13 +631,17 @@ char *Macro_Need (void)
 		|| (!(cl.stats[STAT_ITEMS] & (IT_ARMOR1|IT_ARMOR2|IT_ARMOR3))
 		&& (tp_need_ga.value || tp_need_ya.value || tp_need_ra.value))
 	   )
+	{
 		strlcpy (macro_buf, tp_name_armor.string, sizeof(macro_buf));
+		vars.needflags |= it_armor;
+	}
  
 	// check health
 	if (tp_need_health.value && cl.stats[STAT_HEALTH] < tp_need_health.value) {
 		if (macro_buf[0])
 			strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 		strlcat (macro_buf, tp_name_health.string, sizeof(macro_buf));
+		vars.needflags |= it_health;
 	}
  
 	if (cl.teamfortress) {
@@ -641,21 +649,25 @@ char *Macro_Need (void)
 			if (macro_buf[0])
 				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat (macro_buf, tp_name_rockets.string, sizeof(macro_buf));
+			vars.needflags |= it_rockets;
 		}
 		if (cl.stats[STAT_SHELLS] < tp_need_shells.value) {
 			if (macro_buf[0])
 				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat (macro_buf, tp_name_shells.string, sizeof(macro_buf));
+			vars.needflags |= it_shells;
 		}
 		if (cl.stats[STAT_NAILS] < tp_need_nails.value)	{
 			if (macro_buf[0])
 				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat (macro_buf, tp_name_nails.string, sizeof(macro_buf));
+			vars.needflags |= it_shells;
 		}
 		if (cl.stats[STAT_CELLS] < tp_need_cells.value)	{
 			if (macro_buf[0])
 				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat (macro_buf, tp_name_cells.string, sizeof(macro_buf));
+			vars.needflags |= it_cells;
 		}
 		goto done;
 	}
@@ -679,32 +691,41 @@ char *Macro_Need (void)
 		if (macro_buf[0])
 			strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 		strlcat (macro_buf, tp_name_weapon.string, sizeof(macro_buf));
+		vars.needflags |= it_weapons;
 	} else {
 		if (tp_need_rl.value && !(cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)) {
 			if (macro_buf[0])
 				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat (macro_buf, tp_name_rl.string, sizeof(macro_buf));
+			vars.needflags |= it_rl;
 		}
  
 		switch (weapon) {
-				case 2: case 3: if (cl.stats[STAT_SHELLS] < tp_need_shells.value)
+				case 2: case 3: if (cl.stats[STAT_SHELLS] < tp_need_shells.value) {
 					needammo = tp_name_shells.string;
+					vars.needflags |= it_shells;
+				}
 				break;
-				case 4: case 5: if (cl.stats[STAT_NAILS] < tp_need_nails.value)
+				case 4: case 5: if (cl.stats[STAT_NAILS] < tp_need_nails.value) {
 					needammo = tp_name_nails.string;
+					vars.needflags |= it_nails;
+				}
 				break;
-				case 6: case 7: if (cl.stats[STAT_ROCKETS] < tp_need_rockets.value)
+				case 6: case 7: if (cl.stats[STAT_ROCKETS] < tp_need_rockets.value) {
 					needammo = tp_name_rockets .string;
-				break;
-				case 8: if (cl.stats[STAT_CELLS] < tp_need_cells.value)
+					vars.needflags |= it_rockets;
+				} break;
+				case 8: if (cl.stats[STAT_CELLS] < tp_need_cells.value) {
 					needammo = tp_name_cells.string;
-				break;
+					vars.needflags |= it_cells;
+				} break;
 		}
  
 		if (needammo) {
 			if (macro_buf[0])
 				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat (macro_buf, needammo, sizeof(macro_buf));
+			vars.needflags |= it_ammo;
 		}
 	}
  
@@ -715,6 +736,11 @@ done:
 	return macro_buf;
 }
  
+void TP_GetNeed(void)
+{
+	Macro_Need();
+}
+
 char *Macro_Point_LED(void)
 {
 	TP_FindPoint();

@@ -184,6 +184,7 @@ typedef struct tvars_s
 	double	lastdrop_time;
 	char	lastdroploc[MAX_LOC_NAME];
 	char	lasttrigger_match[256];
+	int		needflags;	// sum of items player needs, updated on TP_GetNeed()
  
 	int	numenemies;
 	int	numfriendlies;
@@ -203,3 +204,6 @@ extern char *TP_PlayerName (void);
 
 extern void TP_FindPoint (void);
 #define TOOK_EMPTY() (!vars.tooktime || cls.realtime > vars.tooktime + TP_TOOK_EXPIRE_TIME)
+
+// updates the state of vars.needflags
+void TP_GetNeed(void);
