@@ -390,15 +390,17 @@ void Amf_SetMode_f(void)
 
 void InitVXStuff(void)
 {
-	coronatexture = GL_LoadTextureImage ("textures/flash", NULL, 0, 0,  7);
-	gunflashtexture = GL_LoadTextureImage ("textures/gunflash", NULL, 0, 0,  7);
-	explosionflashtexture1 = GL_LoadTextureImage ("textures/explosionflash1", NULL, 0, 0,  7);
-	explosionflashtexture2 = GL_LoadTextureImage ("textures/explosionflash2", NULL, 0, 0,  7);
-	explosionflashtexture3 = GL_LoadTextureImage ("textures/explosionflash3", NULL, 0, 0,  7);
-	explosionflashtexture4 = GL_LoadTextureImage ("textures/explosionflash4", NULL, 0, 0,  7);
-	explosionflashtexture5 = GL_LoadTextureImage ("textures/explosionflash5", NULL, 0, 0,  7);
-	explosionflashtexture6 = GL_LoadTextureImage ("textures/explosionflash6", NULL, 0, 0,  7);
-	explosionflashtexture7 = GL_LoadTextureImage ("textures/explosionflash7", NULL, 0, 0,  7);
+	int flags = TEX_COMPLAIN | TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE;
+
+	coronatexture          = GL_LoadTextureImage ("textures/flash",           NULL, 0, 0, flags);
+	gunflashtexture        = GL_LoadTextureImage ("textures/gunflash",        NULL, 0, 0, flags);
+	explosionflashtexture1 = GL_LoadTextureImage ("textures/explosionflash1", NULL, 0, 0, flags);
+	explosionflashtexture2 = GL_LoadTextureImage ("textures/explosionflash2", NULL, 0, 0, flags);
+	explosionflashtexture3 = GL_LoadTextureImage ("textures/explosionflash3", NULL, 0, 0, flags);
+	explosionflashtexture4 = GL_LoadTextureImage ("textures/explosionflash4", NULL, 0, 0, flags);
+	explosionflashtexture5 = GL_LoadTextureImage ("textures/explosionflash5", NULL, 0, 0, flags);
+	explosionflashtexture6 = GL_LoadTextureImage ("textures/explosionflash6", NULL, 0, 0, flags);
+	explosionflashtexture7 = GL_LoadTextureImage ("textures/explosionflash7", NULL, 0, 0, flags);
 	InitCoronas(); // safe re-init
 
 	Init_VLights(); // safe re-init imo
