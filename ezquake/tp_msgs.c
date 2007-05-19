@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.11 2007-05-19 01:50:40 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.12 2007-05-19 01:52:09 himan Exp $
 
 */
 
@@ -555,14 +555,14 @@ GLOBAL const char * TP_MSG_Colored_Short_Powerups(void) // this displays "qrp" i
 {
     MSGPART msg = "";
 
-    if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
-		msg = tp_ib_name_q tp_ib_name_p tp_ib_name_r;
+    if (HAVE_QUAD() && HAVE_RING() && HAVE_PENT())
+		msg = tp_ib_name_q tp_ib_name_r tp_ib_name_p;
 	else if (HAVE_QUAD() && HAVE_PENT())
 		msg = tp_ib_name_q tp_ib_name_p;
 	else if (HAVE_QUAD() && HAVE_RING())
 		msg = tp_ib_name_q tp_ib_name_r;
 	else if (HAVE_PENT() && HAVE_RING())
-		msg = tp_ib_name_p tp_ib_name_r;
+		msg = tp_ib_name_r tp_ib_name_p;
 	else if (HAVE_QUAD())
 		msg = tp_ib_name_q;
 	else if (HAVE_PENT())
