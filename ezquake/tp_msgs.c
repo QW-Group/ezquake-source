@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.10 2007-05-18 23:34:50 johnnycz Exp $
+  $Id: tp_msgs.c,v 1.1.2.11 2007-05-19 01:50:40 himan Exp $
 
 */
 
@@ -67,6 +67,9 @@ use the %-macros nor the $-macros.
 #define tp_ib_name_quad	    COLORED(03F,quad)	// blue quad
 #define tp_ib_name_pent	    COLORED(e00,pent)	// red pent
 #define tp_ib_name_ring	    COLORED(ff0,ring)	// yellow ring
+#define tp_ib_name_q	    COLORED(03F,q)		// blue q for quad
+#define tp_ib_name_p	    COLORED(e00,p)		// red p for pent
+#define tp_ib_name_r	    COLORED(ff0,r)		// yellow r for ring
 #define tp_ib_name_eyes	    COLORED(ff0,eyes)	// yellow eyes (remember, ring is when you see the ring, eyes is when someone has rings!)
 #define tp_ib_name_flag	    COLORED(f60,flag)	// orange flag
 #define tp_ib_name_enemy	COLORED(e00,enemy)	// red enemy
@@ -553,19 +556,19 @@ GLOBAL const char * TP_MSG_Colored_Short_Powerups(void) // this displays "qrp" i
     MSGPART msg = "";
 
     if (HAVE_QUAD() && HAVE_PENT() && HAVE_RING())
-		msg = "{&c03Fq}{&cff0r}{&ce00p}";
+		msg = tp_ib_name_q tp_ib_name_p tp_ib_name_r;
 	else if (HAVE_QUAD() && HAVE_PENT())
-		msg = "{&c03Fq}{&ce00p}";
+		msg = tp_ib_name_q tp_ib_name_p;
 	else if (HAVE_QUAD() && HAVE_RING())
-		msg = "{&c03Fq}{&cff0r}";
+		msg = tp_ib_name_q tp_ib_name_r;
 	else if (HAVE_PENT() && HAVE_RING())
-		msg = "{&cff0r}{&ce00p}";
+		msg = tp_ib_name_p tp_ib_name_r;
 	else if (HAVE_QUAD())
-		msg = "{&c03Fq}";
+		msg = tp_ib_name_q;
 	else if (HAVE_PENT())
-		msg = "{&ce00p}";
+		msg = tp_ib_name_p;
 	else if (HAVE_RING())
-		msg = "{&cff0r}";
+		msg = tp_ib_name_r;
 	else
 		msg = "";
 
