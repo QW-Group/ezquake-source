@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.73.2.8 2007-05-19 15:49:54 cokeman1982 Exp $
+    $Id: common.c,v 1.73.2.9 2007-05-19 15:50:46 cokeman1982 Exp $
 
 */
 
@@ -734,7 +734,6 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 
 	// Delete the temp file if it exists (it is created when the filename is received above).
 	retval = unlink (unpack_path);
-	//if (!retval || (retval && qerrno != ENOENT))
 	if (retval || (retval < 0 && qerrno != ENOENT))
 	{
 		return UNZ_ERRNO;
