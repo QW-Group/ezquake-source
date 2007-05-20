@@ -1,7 +1,7 @@
 /*
  * EditBox functions
  *
- *    $Id: Ctrl_EditBox.c,v 1.8 2007-03-11 06:01:37 disconn3ct Exp $
+ *    $Id: Ctrl_EditBox.c,v 1.8.2.1 2007-05-20 10:04:02 johnnycz Exp $
  */
 
 
@@ -42,6 +42,8 @@ void CEditBox_Draw(CEditBox *e, int x, int y, qbool active)
 
 void CEditBox_Key(CEditBox *e, int key)
 {
+	char c;
+
 	switch (key) {
 			case K_LEFTARROW:
 				e->pos--;
@@ -92,11 +94,18 @@ void CEditBox_Key(CEditBox *e, int key)
 
 	if (!isCtrlDown() &&
 		key >= ' '  &&  key <= '}' &&
-		strlen(e->text) < e->max) {
+		strlen(e->text) < e->max)
+	{
 		memmove(e->text + e->pos + 1,
 			e->text + e->pos,
 			strlen(e->text + e->pos) + 1);
-		e->text[e->pos] = key;
+		
+		c = key;
+		if (isShiftDown() && c >= 'a' && c <= 'z')
+			c = toupper(c);
+
+		e->text[e->pos] = c;
+
 		e->pos++;
 	}
 }
