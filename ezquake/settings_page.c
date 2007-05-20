@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.34.2.5 2007-05-20 10:05:19 johnnycz Exp $
+		$Id: settings_page.c,v 1.34.2.6 2007-05-20 10:37:46 johnnycz Exp $
 
 */
 
@@ -587,7 +587,6 @@ qbool Settings_Key(settings_page* tab, int key)
 
 	case K_ENTER: case K_MOUSE1: case '=': case KP_PLUS:
 		switch (type) {
-		case stt_action: return false;
 		case stt_string: StringEntryLeave(tab->settings + tab->marked); break;
 		case stt_bind: tab->mode = SPM_BINDING; break;
 		case stt_skin: tab->mode = SPM_CHOOSESKIN; break;
