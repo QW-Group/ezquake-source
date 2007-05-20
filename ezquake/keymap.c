@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keymap.c,v 1.10 2007-01-12 11:37:03 oldmanuk Exp $
+	$Id: keymap.c,v 1.10.2.1 2007-05-20 09:09:35 johnnycz Exp $
 
 */
 // keymap.c -- support for international keyboard layouts
@@ -29,7 +29,7 @@ extern cvar_t cl_keypad;
 
 // name of the keymapping:
 cvar_t	keymap_name = {"keymap_name", "Default"};
-cvar_t	in_builtinkeymap = {"in_builtinkeymap", "0"};
+cvar_t	in_builtinkeymap = {"in_builtinkeymap", "1"};
 
 // flag, which shows if a keymapping is active or not:
 static qbool keymap_active = false; 
