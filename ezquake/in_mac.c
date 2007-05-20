@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_mac.c,v 1.12 2007-01-07 19:17:23 disconn3ct Exp $
+	$Id: in_mac.c,v 1.12.2.1 2007-05-20 08:49:49 johnnycz Exp $
 */
 // in_mac.c -- macintosh mouse support using InputSprocket
 #define __OPENTRANSPORTPROVIDERS__
@@ -32,6 +32,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <IOKit/hidsystem/IOHIDParameter.h>
 #include <IOKit/hidsystem/event_status_driver.h>
 
+#include "keys.h"
+#include "input.h"
 #include "mac.h"
 
 extern CGDirectDisplayID vid_CGDevices[];
@@ -47,6 +49,8 @@ static void IN_GetDelta_CG (void);
 
 qbool suspend_mouse = false;
 qbool disconnected_mouse = false;
+
+float mouse_x, mouse_y;
 
 #ifndef DEBUG
 #define DEBUG 0
