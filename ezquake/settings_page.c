@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.34.2.4 2007-05-10 23:25:43 johnnycz Exp $
+		$Id: settings_page.c,v 1.34.2.5 2007-05-20 10:05:19 johnnycz Exp $
 
 */
 
@@ -584,15 +584,10 @@ qbool Settings_Key(settings_page* tab, int key)
 	case K_PGUP: tab->marked -= 5; up = true; break;
 	case K_END: tab->marked = tab->count - 1; up = true; break;
 	case K_HOME: tab->marked = 0; break;
-	case K_RIGHTARROW:
+
+	case K_ENTER: case K_MOUSE1: case '=': case KP_PLUS:
 		switch (type) {
 		case stt_action: return false;
-		case stt_string: CEditBox_Key(&editbox, key); return true;
-		default: Setting_Increase(tab->settings + tab->marked);	return true;
-		}
-
-	case K_ENTER: case K_MOUSE1:
-		switch (type) {
 		case stt_string: StringEntryLeave(tab->settings + tab->marked); break;
 		case stt_bind: tab->mode = SPM_BINDING; break;
 		case stt_skin: tab->mode = SPM_CHOOSESKIN; break;
@@ -600,7 +595,7 @@ qbool Settings_Key(settings_page* tab, int key)
 		}
 		return true;
 
-	case K_LEFTARROW: 
+	case K_BACKSPACE: case '-': case KP_MINUS:
 		switch (type) {
 		case stt_action: return false;
 		case stt_string: CEditBox_Key(&editbox, key); return true;
@@ -635,7 +630,7 @@ qbool Settings_Key(settings_page* tab, int key)
 	default: 
 		switch (type) {
 		case stt_string:
-			if (key != K_TAB && key != K_ESCAPE) {
+			if (key != K_TAB && key != K_ESCAPE && key != K_LEFTARROW && key != K_RIGHTARROW) {
 				CEditBox_Key(&editbox, key);
 				return true;
 			}

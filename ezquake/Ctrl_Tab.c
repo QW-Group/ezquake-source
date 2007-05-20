@@ -148,8 +148,8 @@ void CTab_Draw(CTab_t *tab, int x, int y, int w, int h)
     line[w/8] = 0;
     line[w/8-1] = '\x1F';
     line[0] = '\x1D';
-	memcpy(line + 2, " \x10shift\x11+\x10tab\x11 ", min((w/8)-3, 15));
-	memcpy(line + w/8 - 2 - 7, " \x10tab\x11 ", 7);
+	// memcpy(line + 2, " \x10shift\x11+\x10tab\x11 ", min((w/8)-3, 15));
+	// memcpy(line + w/8 - 2 - 7, " \x10tab\x11 ", 7);
     UI_Print_Center(x, y + nav_height, w, line, false);
 	nav_height += 8;
 
@@ -196,17 +196,13 @@ int CTab_Key(CTab_t *tab, int key)
                 break;
 
 			case K_LEFTARROW:
-				if (isCtrlDown() || isShiftDown()) {
-					tab->activePage--;
-					handled = true;
-				}
+				tab->activePage--;
+				handled = true;
 				break;
 
 			case K_RIGHTARROW:
-				if (isCtrlDown() || isShiftDown()) {
-					tab->activePage++;
-					handled = true;
-				}
+				tab->activePage++;
+				handled = true;
 				break;
 
 			case K_TAB:
