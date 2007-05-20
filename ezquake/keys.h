@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keys.h,v 1.15 2007-03-17 00:32:52 johnnycz Exp $
+	$Id: keys.h,v 1.15.2.1 2007-05-20 10:44:04 johnnycz Exp $
 
 */
 
@@ -253,6 +253,7 @@ int	IN_Key_Clean(int key);
 #else // WITH_KEYMAP
 char *Key_KeynumToString (int keynum);
 #endif // WITH_KEYMAP 
+void Key_Unbindall_f (void);
 
 int isShiftDown(void);                                                                       
 int isCtrlDown(void);                                                                        
