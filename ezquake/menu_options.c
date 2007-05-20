@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.14 2007-05-18 05:38:14 himan Exp $
+		$Id: menu_options.c,v 1.60.2.15 2007-05-20 08:50:56 johnnycz Exp $
 
 */
 
@@ -255,7 +255,7 @@ const char* RulesetRead(void) {
 	return ruleset.string;
 }
 void RulesetToggle(qbool back) {
-
+	if (back) RulesetToggle(false);
 	if (!strcmp(ruleset.string, "default")) Cvar_Set(&ruleset, "smackdown");
 	else if (!strcmp(ruleset.string, "smackdown")) Cvar_Set(&ruleset, "mtfl");
 	else if (!strcmp(ruleset.string, "mtfl")) Cvar_Set(&ruleset, "default");
