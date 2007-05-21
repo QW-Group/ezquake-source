@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.91 2007-05-13 13:53:18 hexum Exp $
+$Id: cl_parse.c,v 1.92 2007-05-21 21:04:16 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -571,7 +571,7 @@ void VWepModel_NextDownload (void)
 	for ( ; cls.downloadnumber < MAX_VWEP_MODELS; cls.downloadnumber++)
 	{
 		if (!cl.vw_model_name[cls.downloadnumber][0] ||
-			cl.vw_model_name[cls.downloadnumber][0] == '*')
+			cl.vw_model_name[cls.downloadnumber][0] == '-')
 			continue;
 		if (!CL_CheckOrDownloadFile(cl.vw_model_name[cls.downloadnumber]))
 			return;		// started a download
@@ -2482,7 +2482,7 @@ void CL_ParsePrint (void) {
 	}
 
 	// emulate qwcslcat (which is not implemented)
-	qwcslcpy (cl.sprint_buf + qwcslen(cl.sprint_buf), str2wcs (s0), sizeof(cl.sprint_buf)/sizeof(wchar) - qwcslen(cl.sprint_buf));
+	qwcslcpy (cl.sprint_buf + qwcslen(cl.sprint_buf), s, sizeof(cl.sprint_buf)/sizeof(wchar) - qwcslen(cl.sprint_buf));
 	cl.sprint_level = level;
 
 	if ((p = qwcsrchr(cl.sprint_buf, '\n'))) {
