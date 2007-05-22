@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.38.2.3 2007-05-20 10:44:04 johnnycz Exp $
+    $Id: config_manager.c,v 1.38.2.4 2007-05-22 12:50:45 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -594,6 +594,8 @@ static void ResetBinds(void)
 	Key_SetBinding('d',      "+moveright");
 	Key_SetBinding('e',      "impulse 10");
 	Key_SetBinding('q',      "impulse 12");
+	Key_SetBinding('t',      "messagemode");
+	Key_SetBinding('y',      "messagemode2");
 	Key_SetBinding(K_ALT,    "+zoom");
 	Key_SetBinding(K_F12,    "screenshot");
 	Key_SetBinding(K_TAB,    "+showscores");
