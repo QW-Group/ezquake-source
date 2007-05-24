@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.13 2007-05-24 16:31:03 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.14 2007-05-24 16:34:03 himan Exp $
 
 */
 
@@ -202,7 +202,6 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 		*/
 	MSGPART msg1 = "";
 	MSGPART msg2 = "";
-	MSGPART msg3 = "";
 	
 	if (flashed) return;
     TP_FindPoint();
@@ -213,8 +212,6 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 		Therefore, we are assuming enemy because this function is ENEMY powerup. So if user hits this by accident (when teammate has quad/pent with ring, then it's their fault.
 		*/
 		
-	msg3 = ""; // this is empty for all except the case where you have powerup, where we use this for need
-	
 	if (INPOINT(eyes)) // we assume enemy!
 	{
 		if (INPOINT(quaded) && INPOINT(pented))
