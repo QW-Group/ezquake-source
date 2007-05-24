@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.19.2.2 2007-05-01 23:44:40 cokeman1982 Exp $
+    $Id: q_shared.c,v 1.19.2.3 2007-05-24 15:12:02 disconn3ct Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -306,7 +306,7 @@ wchar *str2wcs (const char *s)
 	static wchar buf[65536]; //ouch! ouch!
 	int i;
 
-	for (i = 0; i < 65536 - 1; i++) {
+	for (i = 0; i < sizeof(buf) - 1; i++) {
 		if (s[i] == 0)
 			break;
 		buf[i] = (short)(unsigned char)s[i];
@@ -320,7 +320,7 @@ char *wcs2str (const wchar *ws)
 	static char buf[65536];	//ouch! ouch!
 	int i;
 
-	for (i = 0; i < 65536 - 1; i++) {
+	for (i = 0; i < sizeof(buf) - 1; i++) {
 		if (ws[i] == 0)
 			break;
 		buf[i] = ws[i] <= 255 ? (char)ws[i] : '?';
