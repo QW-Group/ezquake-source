@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgOoD[ROCK]
   last edit:
-  $Id: tp_msgs.h,v 1.1.2.4 2007-05-17 06:49:46 himan Exp $
+  $Id: tp_msgs.h,v 1.1.2.5 2007-05-24 16:31:03 himan Exp $
 
 */
 
@@ -25,6 +25,7 @@ extern void TP_Msg_Point_f (void);
 extern void TP_Msg_Need_f (void);
 extern void TP_Msg_Trick_f (void);
 extern void TP_Msg_Replace_f (void);
+extern void TP_Msg_Need_f (void);
 
 extern const char* TP_MSG_Colored_Armor(void);
 extern const char * TP_MSG_Colored_Powerup(void);

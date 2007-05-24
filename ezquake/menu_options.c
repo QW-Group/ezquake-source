@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.15 2007-05-20 08:50:56 johnnycz Exp $
+		$Id: menu_options.c,v 1.60.2.16 2007-05-24 16:31:03 himan Exp $
 
 */
 
@@ -550,6 +550,7 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Location safe", "tp_msgsafe"),
 	ADDSET_BIND("Point at item", "tp_msgpoint"),
 	ADDSET_BIND("Took item", "tp_msgtook"),
+	ADDSET_BIND("Need items", "tp_msgneed"),
 	ADDSET_BIND("Coming from location", "tp_msgcoming"),
 	ADDSET_BIND("Help location", "tp_msghelp"),
 	ADDSET_BIND("Enemy Quad Dead", "tp_msgquaddead"),

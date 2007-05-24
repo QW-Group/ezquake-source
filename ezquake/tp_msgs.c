@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.12 2007-05-19 01:52:09 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.13 2007-05-24 16:31:03 himan Exp $
 
 */
 
@@ -14,10 +14,12 @@
 #define GLOBAL /* */
 #define LOCAL static
 
+#define NEED_WEAPON() (NEED(rl) || NEED(lg))
 #define HAVE_FLAG() (cl.stats[STAT_ITEMS] & IT_FLAG)
 #define HAVE_RL() (cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)
 #define HAVE_LG() (cl.stats[STAT_ITEMS] & IT_LIGHTNING)
-#define HOLD_GL() (cl.stats[STAT_ACTIVEWEAPON] == IT_GRENADE_LAUNCHER) // only used in tp_lost
+#define HAVE_GL() (cl.stats[STAT_ITEMS] & IT_GRENADE_LAUNCHER)
+#define HOLD_GL() (cl.stats[STAT_ACTIVEWEAPON] == IT_GRENADE_LAUNCHER)
 #define HOLD_RL() (cl.stats[STAT_ACTIVEWEAPON] == IT_ROCKET_LAUNCHER)
 #define HOLD_LG() (cl.stats[STAT_ACTIVEWEAPON] == IT_LIGHTNING)
  
@@ -46,7 +48,7 @@
 #define DEAD() (cl.stats[STAT_HEALTH] < 1)
 
 // call TP_GetNeed() before using this!
-#define NEED(x) (vars.needflags & it##x)
+#define NEED(x) (vars.needflags & it_##x)
 
 /*
 Should we enforce special colors this way below or we just should make
@@ -174,6 +176,7 @@ GLOBAL void TP_Msg_ReportComing(qbool report)
     if		(HAVE_RL() && HAVE_LG())	msg5 = tp_ib_name_rlg ":$rockets/$cells";
     else if (HAVE_RL())					msg5 = tp_ib_name_rl ":$rockets";
     else if (HAVE_LG())					msg5 = tp_ib_name_lg ":$cells";
+	else if (HAVE_GL())					msg5 = tp_ib_name_gl ":$rockets";
     else								msg5 = "";
  
 	msg3 = "$colored_armor/%h";
@@ -199,6 +202,7 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 		*/
 	MSGPART msg1 = "";
 	MSGPART msg2 = "";
+	MSGPART msg3 = "";
 	
 	if (flashed) return;
     TP_FindPoint();
@@ -208,6 +212,9 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 		This is because $point DOES NOT TELL YOU TEAMMATE/ENEMY if they have ring (because there is no way to know).
 		Therefore, we are assuming enemy because this function is ENEMY powerup. So if user hits this by accident (when teammate has quad/pent with ring, then it's their fault.
 		*/
+		
+	msg3 = ""; // this is empty for all except the case where you have powerup, where we use this for need
+	
 	if (INPOINT(eyes)) // we assume enemy!
 	{
 		if (INPOINT(quaded) && INPOINT(pented))
@@ -250,27 +257,40 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 			}
 	}
 	else if (HAVEPOWERUP())
-	{ // Notice this is the only case where we can evaluate ring/eyes - when player has it!
+	{
+		TP_GetNeed();
+		if (DEAD()) // if you are dead with powerup, then you dont technically have it.
+			{
+			TP_Msg_Lost_f(); // this function will take care of it
+			return;
+			}		
+		else if (NEED(health) || NEED(armor) || NEED_WEAPON() || NEED(rockets) || NEED(cells)) // all things we care for
+			{
 			msg1 = tp_sep_green;
-			msg2 = "team $colored_powerups";
-			// notice, this $colored_powerups takes care of all cases for you. You have atleast one powerup here, if you have additional powerups they show too - no need for more ifs.
+			msg2 = tp_ib_name_team " $colored_powerups need %u";
+			}
+		else
+			{
+			msg1 = tp_sep_green;
+			msg2 = tp_ib_name_team " $colored_powerups";
+			}
 	}
 	else if (INPOINT(teammate))
 	{
 		if (INPOINT(quaded) && INPOINT(pented))
 			{
 			msg1 = tp_sep_green;
-			msg2 = "team " tp_ib_name_quad " " tp_ib_name_pent;
+			msg2 = tp_ib_name_team " " tp_ib_name_quad " " tp_ib_name_pent;
 			}
 		else if (INPOINT(quaded))
 			{
 			msg1 = tp_sep_green;
-			msg2 = "team " tp_ib_name_quad;
+			msg2 = tp_ib_name_team " " tp_ib_name_quad;
 			}
 		else if (INPOINT(pented))
 			{
 			msg1 = tp_sep_green;
-			msg2 = "team " tp_ib_name_pent;	
+			msg2 = tp_ib_name_team " " tp_ib_name_pent;	
 			}
 	}
 	else
@@ -291,16 +311,12 @@ LOCAL void TP_Msg_SafeHelp(qbool safe)
 	MSGPART msg4 = "";
 
 	if (safe)
-	{
-		if (DEAD() || INPOINT(enemy)) // if you're dead or see enemy, probably not safe
-			return;
-		else
 			msg1 = tp_sep_green " " tp_ib_name_safe;
-	}
 	else // now help
-	
-	msg1 = tp_sep_yellow " " tp_ib_name_help;
- 	msg2 = "$[{%l}$]";
+		{
+		msg1 = tp_sep_yellow " " tp_ib_name_help;
+		msg2 = "$[{%l}$]";
+		}
  
 	if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
 		msg3 = " " tp_ib_name_team " $colored_powerups";
@@ -323,7 +339,10 @@ LOCAL void TP_Msg_GetPentQuad(qbool quad)
 	if (quad)
 	{
 		if (DEAD() && HAVE_QUAD())
-			msg1 = tp_ib_name_quad " dead"; // player messed up, he's dead with quad, so there's no quad to get!
+			{ // player messed up, he's dead with quad, so there's no quad to get!
+			TP_Msg_Lost_f();
+			return;
+			}
 		else if (INPOINT(eyes) && INPOINT(quaded))
 			return; // Don't know for sure if it's enemy or not, and can't assume like we do in tp_enemypwr because this isn't tp_ENEMYpwr
 		else if (INPOINT(quaded))
@@ -360,7 +379,10 @@ GLOBAL void TP_Msg_QuadDead_f (void)
     MSGPART msg1 = "";
  
 	if (DEAD() && HAVE_QUAD()) // when you have quad and you die, before you spawn you're still glowing (in some mods/settings), meaning you have quad. this check is necessary!
-		msg1 = tp_ib_name_quad " dead";
+		{
+		TP_Msg_Lost_f();
+		return;
+		}
 	else if (HAVE_QUAD() || INPOINT(quaded)) // If ANYONE has quad
 		{
 		TP_Msg_EnemyPowerup_f(); // tp_enemypwr can handle this & all cases regarding players/powerups
@@ -382,10 +404,19 @@ GLOBAL void TP_Msg_Took_f (void)
 	if (TOOK_EMPTY())
 		return;
 	else if (TOOK(quad) || TOOK(pent) || TOOK(ring))
-		{ // notice we can't send this check to tp_msgenemypwr, that's because if enemy with powerup is in your view, tp_enemypwr reports enemypwr first, but in this function you want to report TEAM quad.
-				msg1 = tp_sep_green;
-				msg2 = " team $colored_powerups";
-				msg3 = "";
+		{
+		TP_GetNeed();
+		if (NEED(health) || NEED(armor) || NEED_WEAPON() || NEED(rockets) || NEED(cells))
+			{
+			msg1 = tp_sep_green;
+			msg2 = " " tp_ib_name_team " $colored_powerups need %u";
+			}
+		else
+			{ // notice we can't send this check to tp_msgenemypwr, that's because if enemy with powerup is in your view, tp_enemypwr reports enemypwr first, but in this function you want to report TEAM quad.
+			msg1 = tp_sep_green;
+			msg2 = " " tp_ib_name_team " $colored_powerups";
+			msg3 = "";
+			}
 		}
 	else
 	{
@@ -402,7 +433,7 @@ GLOBAL void TP_Msg_Took_f (void)
 		else if (TOOK(flag))							msg2 = tp_ib_name_flag;
 		else 											msg2 = "{$took}"; // This should never happen
 		
-		msg1 = tp_sep_white " {took} ";
+		msg1 = tp_sep_white " took ";
 		msg3 = " at $[{%l}$]";
 	}
 	TP_Send_TeamSay("%s%s%s", msg1, msg2, msg3);
@@ -484,7 +515,15 @@ GLOBAL void TP_Msg_Need_f (void)
 {
     MSGPART msg1 = "";
  
-	// todo
+	if (DEAD())
+		return; // if you're dead, you need better aim :E
+	else
+		TP_GetNeed();
+	
+	if (NEED(health) || NEED(armor) || NEED_WEAPON() || NEED(rockets) || NEED(cells) || NEED(shells) || NEED(nails))
+		msg1 = "need %u";
+	else
+		return;
 	
 	TP_Send_TeamSay(tp_sep_green " %s", msg1);
 }
@@ -505,7 +544,6 @@ LOCAL void TP_Msg_TrickReplace(qbool trick)
 }
 GLOBAL void TP_Msg_Trick_f (void) { TP_Msg_TrickReplace(true); }
 GLOBAL void TP_Msg_Replace_f (void) { TP_Msg_TrickReplace(false); }
-
 ///////////////////////////////////
 //////// End teamplay scripts ////////
 ///////////////////////////////////

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.33 2007-05-18 23:34:49 johnnycz Exp $
+    $Id: teamplay.c,v 1.67.2.34 2007-05-24 16:31:03 himan Exp $
 */
 
 #include <time.h>
@@ -3366,5 +3366,6 @@ void TP_Init (void)
 	Cmd_AddCommand ("tp_msgtook", TP_Msg_Took_f);
 	Cmd_AddCommand ("tp_msgtrick", TP_Msg_Trick_f);
 	Cmd_AddCommand ("tp_msgreplace", TP_Msg_Replace_f);
+	Cmd_AddCommand ("tp_msgneed", TP_Msg_Need_f);
 
 }
