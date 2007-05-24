@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: fchecks.c,v 1.16 2007-03-21 17:03:10 vvd0 Exp $
+	$Id: fchecks.c,v 1.16.2.1 2007-05-24 15:16:19 disconn3ct Exp $
 
 */
 
@@ -93,7 +93,7 @@ void FChecks_ScriptsResponse (void)
         Cbuf_AddText("say using advanced scripts\n");
 }
 
-qbool FChecks_ScriptsRequest (char *s) {
+static qbool FChecks_ScriptsRequest (const char *s) {
 	if (cl.spectator || (f_scripts_reply_time && cls.realtime - f_scripts_reply_time < 20))
 		return false;
 
@@ -115,7 +115,7 @@ void FChecks_FakeshaftResponse (void)
 		Cbuf_AddText(va("say fakeshaft %.1f%%\n", cl_fakeshaft.value * 100.0));
 }
 
-qbool FChecks_FakeshaftRequest (char *s) {
+static qbool FChecks_FakeshaftRequest (const char *s) {
 	if (cl.spectator || (f_fshaft_reply_time && cls.realtime - f_fshaft_reply_time < 20))
 		return false;
 
@@ -127,7 +127,7 @@ qbool FChecks_FakeshaftRequest (char *s) {
 	return false;
 }
 
-qbool FChecks_VersionRequest (char *s) {
+static qbool FChecks_VersionRequest (const char *s) {
 	if (cl.spectator || (f_version_reply_time && cls.realtime - f_version_reply_time < 20))
 		return false;
 
@@ -139,7 +139,7 @@ qbool FChecks_VersionRequest (char *s) {
 	return false;
 }
 
-qbool FChecks_SkinRequest (char *s) {
+static qbool FChecks_SkinRequest (const char *s) {
 	float fbskins;		
 
 	fbskins = bound(0, r_fullbrightSkins.value, cl.fbskins);	
@@ -154,7 +154,7 @@ qbool FChecks_SkinRequest (char *s) {
 	return false;
 }
 
-qbool FChecks_CheckFModRequest (char *s) {
+static qbool FChecks_CheckFModRequest (const char *s) {
 	if (cl.spectator || (f_mod_reply_time && cls.realtime - f_mod_reply_time < 20))
 		return false;
 
@@ -166,7 +166,7 @@ qbool FChecks_CheckFModRequest (char *s) {
 	return false;
 }
 
-qbool FChecks_CheckFServerRequest (char *s) {
+static qbool FChecks_CheckFServerRequest (const char *s) {
 	netadr_t adr;
 
 	if (cl.spectator || (f_server_reply_time && cls.realtime - f_server_reply_time < 20))
@@ -180,7 +180,7 @@ qbool FChecks_CheckFServerRequest (char *s) {
 	return false;
 }
 
-qbool FChecks_CheckFRulesetRequest (char *s) {
+static qbool FChecks_CheckFRulesetRequest (const char *s) {
 	extern cvar_t cl_independentPhysics;
 	extern cvar_t allow_scripts;
 	char *sScripts, *sIPhysics, *sp1, *sp2;
@@ -201,7 +201,7 @@ qbool FChecks_CheckFRulesetRequest (char *s) {
 	return false;
 }
 
-qbool FChecks_CmdlineRequest (char *s) {
+static qbool FChecks_CmdlineRequest (const char *s) {
 	if (cl.spectator || (f_cmdline_reply_time && cls.realtime - f_cmdline_reply_time < 20))
 		return false;
 
@@ -220,7 +220,7 @@ qbool FChecks_CmdlineRequest (char *s) {
 	return false;
 }
 
-qbool FChecks_SystemRequest (char *s) {
+static qbool FChecks_SystemRequest (const char *s) {
 	if (cl.spectator || (f_system_reply_time && cls.realtime - f_system_reply_time < 20))
 		return false;
 
@@ -245,7 +245,7 @@ qbool FChecks_SystemRequest (char *s) {
 	return false;
 }
 
-void FChecks_CheckRequest(char *s) {
+void FChecks_CheckRequest (const char *s) {
 	qbool fcheck = false;
 
 	fcheck |= FChecks_VersionRequest (s);
