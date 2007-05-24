@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.49.2.2 2007-05-12 13:20:24 qqshka Exp $
+    $Id: common.h,v 1.49.2.3 2007-05-24 20:40:35 disconn3ct Exp $
 */
 // common.h  -- general definitions
 
@@ -339,7 +339,6 @@ void CL_Disconnect ();
 void CL_BeginLocalConnection (void);
 void CL_UpdateCaption(qbool force);
 void Con_Init (void);
-void Con_Print (char *txt);
 
 void SV_Init (void);
 void SV_Shutdown (char *finalmsg);

@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: tp_triggers.c,v 1.1.2.2 2007-05-24 15:38:13 disconn3ct Exp $
+	$Id: tp_triggers.c,v 1.1.2.3 2007-05-24 20:40:36 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -134,11 +134,14 @@ void TP_ExecTrigger (char *trigger)
  
 //Find and execute sound triggers. A sound trigger must be terminated by either a CR or LF.
 //Returns true if a sound was found and played
-qbool TP_CheckSoundTrigger (char *str)
+qbool TP_CheckSoundTrigger (wchar *wstr)
 {
+	char *str;
 	int i, j, start, length;
 	char soundname[MAX_OSPATH];
 	FILE *f;
+
+	str = wcs2str (wstr);
  
 	if (!*str)
 		return false;
@@ -173,6 +176,7 @@ qbool TP_CheckSoundTrigger (char *str)
  
 				// clean up the message
 				strcpy (str + j, str + i);
+				qwcscpy (wstr + j, wstr + i);
  
 				if (!snd_initialized)
 					return false;

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.52.2.5 2007-05-07 19:38:24 johnnycz Exp $
+	$Id: console.c,v 1.52.2.6 2007-05-24 20:40:35 disconn3ct Exp $
 */
 // console.c
 
@@ -676,12 +676,6 @@ zomfg:
 	Print_flags[Print_current] = 0;
 #endif
 }
-
-void Con_Print (char *txt)
-{
-	Con_PrintW (str2wcs(txt));
-}
-
 
 /*
 ==============================================================================

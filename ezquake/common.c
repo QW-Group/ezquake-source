@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.73.2.9 2007-05-19 15:50:46 cokeman1982 Exp $
+    $Id: common.c,v 1.73.2.10 2007-05-24 20:40:35 disconn3ct Exp $
 
 */
 
@@ -2465,6 +2465,7 @@ void Com_EndRedirect (void) {
 //All console printing must go through this in order to be logged to disk
 unsigned Print_flags[16];
 int Print_current = 0;
+
 void Com_Printf (char *fmt, ...) {
 	va_list argptr;
 	char msg[MAXPRINTMSG];
@@ -2490,10 +2491,9 @@ void Com_Printf (char *fmt, ...) {
 
 	// write it to the scrollable buffer
 	//	Con_Print (va("ezQuake: %s", msg));
-	Con_Print (msg);
+	Con_PrintW (str2wcs(msg));
 }
 
-//A Com_Printf that only shows up if the "developer" cvar is set
 void Com_DPrintf (char *fmt, ...) {
 	va_list argptr;
 	char msg[MAXPRINTMSG];

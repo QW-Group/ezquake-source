@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.34 2007-05-24 16:31:03 himan Exp $
+    $Id: teamplay.c,v 1.67.2.35 2007-05-24 20:40:35 disconn3ct Exp $
 */
 
 #include <time.h>
@@ -833,13 +833,12 @@ char *Macro_LastSeenPowerup(void)
 	return macro_buf;
 }
  
- 
-qbool TP_SuppressMessage(char *buf)
+qbool TP_SuppressMessage (wchar *buf)
 {
-	int len;
-	char *s;
+	size_t len;
+	wchar *s;
  
-	if ((len = strlen(buf)) < 4)
+	if ((len = qwcslen (buf)) < 4)
 		return false;
  
 	s = buf + len - 4;
@@ -912,7 +911,7 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
  
 	flags = TP_CategorizeMessage (msg, &offset);
  
-	if (flags == 2 && !TP_FilterMessage(msg + offset))
+	if (flags == 2 && !TP_FilterMessage(wc2char(msg) + offset))
 		return;
  
 	if (con_sound_mm2_volume.value > 0 && nodisplay == 0) {
@@ -1084,10 +1083,11 @@ void TP_AddMacros (void)
  
 /********************** MACRO/FUNCHAR/WHITE TEXT PARSING **********************/
  
-wchar *TP_ParseWhiteText(wchar *s, qbool team, int offset)
+wchar *TP_ParseWhiteText (const wchar *s, qbool team, int offset)
 {
 	static wchar	buf[4096];
-	wchar *out, *p, *p1;
+	wchar *out, *p1;
+	const wchar* p;
 	extern cvar_t	cl_parseWhiteText;
 	qbool	parsewhite;
  
@@ -2195,7 +2195,7 @@ returns a combination of these values:
 Note that sometimes we can't be sure who really sent the message,  e.g. when there's a
 player "unnamed" in your team and "(unnamed)" in the enemy team. The result will be 3 (1+2)
 */
-int TP_CategorizeMessage (char *s, int *offset)
+int TP_CategorizeMessage (const char *s, int *offset)
 {
 	int i, msglen, len, flags, tracknum;
 	player_info_t	*player;
@@ -3145,53 +3145,57 @@ void TP_StatChanged (int stat, int value)
 }
  
 /****************************** MESSAGE FILTERS ******************************/
- 
+
+#ifdef _WIN32
+#define wcscasecmp(s1, s2)	_wcsicmp  ((s1),   (s2))
+#endif
+
 #define MAX_FILTER_LENGTH 4
 char filter_strings[8][MAX_FILTER_LENGTH + 1];
 int	num_filters = 0;
  
 //returns false if the message shouldn't be printed.
 //Matching filters are stripped from the message
-qbool TP_FilterMessage (char *s)
+qbool TP_FilterMessage (wchar *source)
 {
-	int i, j, len, maxlen;
+	size_t i, j, maxlen, len;
  
 	if (!num_filters)
 		return true;
  
-	len = strlen (s);
-	if (len < 2 || s[len - 1] != '\n' || s[len - 2] == '#')
+	len = qwcslen (source);
+	if (len < 2 || source[len - 1] != '\n' || source[len - 2] == '#')
 		return true;
  
 	maxlen = MAX_FILTER_LENGTH + 1;
-	for (i = len - 2 ; i >= 0 && maxlen > 0 ; i--, maxlen--) {
-		if (s[i] == ' ')
+	for (i = len - 2 ; i != 0 && maxlen != 0 ; i--, maxlen--) {
+		if (source[i] == ' ')
 			return true;
-		if (s[i] == '#')
+		if (source[i] == '#')
 			break;
 	}
-	if (i < 0 || !maxlen)
-		return true;	// no filter at all
+	if (!i || !maxlen)
+		return true; // no filter at all
  
-	s[len - 1] = 0;	// so that strcmp works properly
+	source[len - 1] = 0; // so that strcmp works properly
  
 	for (j = 0; j < num_filters; j++)
-		if (!strcasecmp(s + i + 1, filter_strings[j])) {
+		if (!wcscasecmp(source + i + 1, str2wcs(filter_strings[j]))) {
 			// strip the filter from message
-			if (i && s[i - 1] == ' ')	{
+			if (i && source[i - 1] == ' ')	{
 				// there's a space just before the filter, remove it
 				// so that soundtriggers like ^blah #att work
-				s[i - 1] = '\n';
-				s[i] = 0;
+				source[i - 1] = '\n';
+				source[i] = 0;
 			} else {
-				s[i] = '\n';
-				s[i + 1] = 0;
+				source[i] = '\n';
+				source[i + 1] = 0;
 			}
 			return true;
 		}
  
-	s[len - 1] = '\n';
-	return false;	// this message is not for us, don't print it
+	source[len - 1] = '\n';
+	return false; // this message is not for us, don't print it
 }
  
 void TP_MsgFilter_f (void)

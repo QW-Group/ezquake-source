@@ -49,7 +49,7 @@ qbool TP_IsItemVisible(item_vis_t *visitem);
 void TP_ExecTrigger (char *s);
 void TP_StatChanged (int stat, int value);
 void TP_CheckPickupSound (char *s, vec3_t org);
-qbool TP_CheckSoundTrigger (char *str);
+qbool TP_CheckSoundTrigger (wchar *str);
 
 
 char *TP_PlayerName(void);
@@ -70,11 +70,11 @@ char *TP_GetMapGroupName(char *mapname, qbool *system);
 char *TP_ParseMacroString (char *s);
 char *TP_ParseFunChars (char *s, qbool chat);
 void TP_NewMap (void);
-int TP_CategorizeMessage (char *s, int *offset);
-qbool TP_FilterMessage (char *s);
+int TP_CategorizeMessage (const char *s, int *offset);
+qbool TP_FilterMessage (wchar *s);
 
 
-wchar *TP_ParseWhiteText(wchar *s, qbool team, int offset);
+wchar *TP_ParseWhiteText (const wchar *s, qbool team, int offset);
 
 
 

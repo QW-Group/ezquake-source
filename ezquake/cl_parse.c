@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.82.2.7 2007-05-21 23:43:55 johnnycz Exp $
+	$Id: cl_parse.c,v 1.82.2.8 2007-05-24 20:40:34 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1787,7 +1787,7 @@ wchar *qwcsncat (wchar *dst, wchar *src, size_t len)
 }
 */
 
-wchar* CL_ColorizeFragMessage(wchar *source, cfrags_format *cff)
+static wchar* CL_ColorizeFragMessage (const wchar *source, cfrags_format *cff)
 /* will add colors to nicks in "ParadokS rides JohnNy_cz's rocket"
    source - source frag message, dest - destination buffer, destlen - length of buffer
    cff - see the cfrags_format definition */
@@ -1850,60 +1850,69 @@ wchar* CL_ColorizeFragMessage(wchar *source, cfrags_format *cff)
 	return dest_buf;
 }
 
-//for CL_ParsePrint
-static void FlushString (wchar *s, int level, qbool team, int offset) {
-	extern cvar_t con_highlight, con_highlight_mark, name;
-	extern cvar_t cl_showFragsMessages;
+extern cvar_t con_highlight, con_highlight_mark, name;
+extern cvar_t cl_showFragsMessages;
 #ifdef GLQUAKE
-	extern cvar_t scr_coloredfrags;
+extern cvar_t scr_coloredfrags;
 #endif
-	wchar white_s[4096];
-	wchar zomfg[4096]; // FIXME
-	char *mark;
-	wchar *text;
-	char *f;
-	cfrags_format cff = {0, 0, 0, 0, 0, 0, false};
-	char *s0;
+//for CL_ParsePrint
+static void FlushString (const wchar *s, int level, qbool team, int offset) {
+	char *s0; // C-char copy of s
 
-	qwcslcpy (white_s, s, sizeof (white_s) / sizeof(wchar));
+	char *mark; // -->
+	const wchar *text; // needed for con_highlight work
+	char *f; // <--
+
+	wchar zomfg[4096]; // FIXME
+
+	cfrags_format cff = {0, 0, 0, 0, 0, 0, false}; // Stats_ParsePrint stuff
+
 
 	s0 = wcs2str (s);
 	f = strstr (s0, name.string);
-	CL_SearchForReTriggers (s0 /*+ offset*/, 1<<level); // re_triggers
+	CL_SearchForReTriggers (s0, 1<<level); // re_triggers, s0 not modified
 
 	// highlighting on && nickname found && it's not our own text (nickname not close to the beginning)
 	if (con_highlight.value && f && ((f - s0) > 1)) {
 		switch ((int)(con_highlight.value)) {
 		case 1:
-			mark = ""; text = white_s;
+			mark = "";
+			text = s;
 			break;
 		case 2:
 			mark = con_highlight_mark.string;
-			text = (level == PRINT_CHAT) ? TP_ParseWhiteText(s, team, offset) : s;
+			text = (level == PRINT_CHAT) ? (const wchar *) TP_ParseWhiteText (s, team, offset) : s;
 			break;
 		default:
 		case 3:
 			mark = con_highlight_mark.string;
-			text = white_s;
+			text = s;
 			break;
 		}
 	} else {
 		mark = ""; 
-		text = (level == PRINT_CHAT) ? TP_ParseWhiteText(s, team, offset) : s;
+		text = (level == PRINT_CHAT) ? (const wchar *) TP_ParseWhiteText(s, team, offset) : s;
 	}
 	
-	Stats_ParsePrint(s0, level, &cff);
+	// s0 is same after Stats_ParsePrint like before, but Stats_ParsePrint modify it during it's work
+	// we can change this function a bit, so s0 can be const char*
+	Stats_ParsePrint (s0, level, &cff);
 
 	// Colorize player names here
 #ifdef GLQUAKE
 	if (scr_coloredfrags.value && cff.p1len)
-		text = CL_ColorizeFragMessage(text, &cff);
+		text = CL_ColorizeFragMessage (text, &cff);
 #endif
 
-	// disconnect: There should be something like Com_PrintfW...
-	// else we are forced to this:
-	qwcslcpy (zomfg, str2wcs(mark), sizeof (zomfg) / sizeof(wchar));
-	qwcslcpy (zomfg, text, sizeof (zomfg) / sizeof(wchar));
+	/* FIXME
+	 * disconnect: There should be something like Com_PrintfW...
+	 * we have to *Print* message with one Con_Printf/Con_PrintfW call
+	 * else re_triggers with remove option will be fucked
+	 * so we have to use additional buffer
+	 */
+	memset (zomfg, 0, sizeof (zomfg));
+	qwcslcpy (zomfg, str2wcs(mark), sizeof (zomfg) / sizeof (wchar));
+	qwcslcpy (zomfg + qwcslen (zomfg), text, sizeof (zomfg) / sizeof (wchar) - qwcslen (zomfg));
 	if (cl_showFragsMessages.value || !cff.isFragMsg)
 		Con_PrintW(zomfg); // FIXME logging
 
@@ -1913,10 +1922,11 @@ static void FlushString (wchar *s, int level, qbool team, int offset) {
 	if (team)
 		level = 4;
 
-	TP_SearchForMsgTriggers (wcs2str(s + offset), level);
+	TP_SearchForMsgTriggers ((const char *)wcs2str(s + offset), level);
 }
 
 
+/*
 void MakeChatRed(char *t, int mm2)
 {
     if (mm2)
@@ -1973,21 +1983,23 @@ void MakeChatRed(char *t, int mm2)
                 t[i] |= 128;
     }
 }
+*/
 
-void CL_ParsePrint (void) {
-	qbool suppress_talksound;	
-	qbool cut_message = false;
-	wchar *s, str[2048], *p, check_flood, dest[2048], *c, *d, *f, e, b; 
+extern qbool TP_SuppressMessage (wchar *);
+extern cvar_t cl_chatsound, msg_filter;
+extern cvar_t ignore_qizmo_spec;
+void CL_ParsePrint (void)
+{
+	qbool suppress_talksound;
+	/*qbool cut_message = false;*/
+	wchar *s, str[2048], *p, check_flood/*, dest[2048], *c, *d, *f, e, b*/;
 	char *s0;
-	int len, level, flags = 0, offset = 0;
-	extern cvar_t cl_chatsound, msg_filter;
-	extern cvar_t ignore_qizmo_spec;
+	int level, flags = 0, offset = 0;
+	size_t len;
 
 	int client;
 	int type;
 	char *msg;
-
-	extern qbool TP_SuppressMessage(char *);
 
 	char *chat_sound_file;
 	float chat_sound_vol = 0.0;
@@ -1996,12 +2008,11 @@ void CL_ParsePrint (void) {
 	s0 = MSG_ReadString ();
 	s = decode_string (s0);
 
-	qwcslcpy(str, s, sizeof(str)/sizeof(str[0]));
+	qwcslcpy (str, s, sizeof(str)/sizeof(str[0]));
 	s = str; // so no memmory overwrite, because decode_string() uses static buffers
 
 	if (level == PRINT_CHAT) {
-	
-		if (TP_SuppressMessage(s0))
+		if (TP_SuppressMessage (s))
 			return;
 
 		/*
@@ -2033,6 +2044,8 @@ void CL_ParsePrint (void) {
 
 		*/
 
+		/*
+		// disconnect: this code do same as TP_SuppressMessage function
 		f = s;
 	    while ((e = *f++)) {
 			if (e == '\x7f') {
@@ -2056,41 +2069,41 @@ void CL_ParsePrint (void) {
 			s = dest;
 
 		}
-
+		*/
 		
-		s0 = wcs2str(s);
+		s0 = wcs2str (s); // TP_SuppressMessage may modify the source string, so s0 should be updated
 
 		flags = TP_CategorizeMessage (s0, &offset);
-		FChecks_CheckRequest(s0);
-		Auth_CheckResponse (s0, flags, offset);						
+		FChecks_CheckRequest (s0);
+		Auth_CheckResponse(s0, flags, offset); // @CHECKME@
 
-		if (Ignore_Message(s0, flags, offset))						
+		if (Ignore_Message(s0, flags, offset)) // @CHECKME@
 			return;
 
-		if ( flags == 0 && ignore_qizmo_spec.value && strlen(s0) > 0 && s0[0] == '[' && strstr(s0, "]: ") ) 
+		if (flags == 0 && ignore_qizmo_spec.value && strlen (s0) > 0 && s0[0] == '[' && strstr(s0, "]: ") ) 
 			return;
 
-		if (flags == 2 && !TP_FilterMessage(s0 + offset))
+		if (flags == 2 && !TP_FilterMessage (s + offset))
 			return;
 
-		check_flood = Ignore_Check_Flood(s0, flags, offset);			
+		check_flood = Ignore_Check_Flood(s0, flags, offset); // @CHECKME@		
 		if (check_flood == IGNORE_NO_ADD)							
 			return;
 		else if (check_flood == NO_IGNORE_ADD)					
-			Ignore_Flood_Add(s0);
+			Ignore_Flood_Add(s0); // @CHECKME@
 
 		suppress_talksound = false;
 
 		if (flags == 2)
-			suppress_talksound = TP_CheckSoundTrigger (s0 + offset);
+			suppress_talksound = TP_CheckSoundTrigger (s + offset); // @CHECKME@
 
-		if (!cl_chatsound.value ||		// no sound at all
+		if (!cl_chatsound.value ||						// no sound at all
 			(cl_chatsound.value == 2 && flags != 2))	// only play sound in mm2
 			suppress_talksound = true;
 
         chat_sound_file = NULL;
 
-		client = SeparateChat(s0, &type, &msg);
+		client = SeparateChat(s0, &type, &msg); // @CHECKME@
 
         if (client >= 0 && !suppress_talksound)
         {
@@ -2146,7 +2159,7 @@ void CL_ParsePrint (void) {
 		}
 
 #ifdef _WIN32
-	    if (level >= PRINT_HIGH && s[0])
+	    if (level >= PRINT_HIGH && s[0]) // actually there are no need for level >= PRINT_HIGH check
 	        VID_NotifyActivity();
 #endif
 
@@ -2163,7 +2176,7 @@ void CL_ParsePrint (void) {
 */
 			// END shaman BUG 1020636
 
-					if (con_timestamps.value != 0)
+					if (con_timestamps.value != 0) // @CHECKME@
 					{
 						SYSTEMTIME lt;
 						char tmpbuf[16];

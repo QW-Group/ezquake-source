@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.57.2.6 2007-05-15 23:59:26 johnnycz Exp $
+    $Id: keys.c,v 1.57.2.7 2007-05-24 20:40:35 disconn3ct Exp $
 
 */
 
@@ -945,7 +945,7 @@ void Key_Console (int key, int unichar)
 			}
 
 			Con_PrintW (key_lines[edit_line]);	// FIXME logging
-			Con_Print ("\n");
+			Con_PrintW (str2wcs("\n"));
 			edit_line = (edit_line + 1) & (CMDLINES - 1);
 			history_line = edit_line;
 			key_lines[edit_line][0] = ']';
