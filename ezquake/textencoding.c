@@ -157,7 +157,7 @@ static struct {
 
 wchar *decode_string (const char *s)
 {
-	static wchar buf[1024];	// should be enough for everyone!!!
+	static wchar buf[2048];	// should be enough for everyone!!!
 	char encoding[13];
 	char enc_str[1024];
 	const char *p, *q, *r;
