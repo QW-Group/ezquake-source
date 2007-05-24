@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.35 2007-05-24 20:40:35 disconn3ct Exp $
+    $Id: teamplay.c,v 1.67.2.36 2007-05-24 20:44:35 disconn3ct Exp $
 */
 
 #include <time.h>
@@ -911,7 +911,7 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
  
 	flags = TP_CategorizeMessage (msg, &offset);
  
-	if (flags == 2 && !TP_FilterMessage(wc2char(msg) + offset))
+	if (flags == 2 && !TP_FilterMessage(str2wcs(msg) + offset))
 		return;
  
 	if (con_sound_mm2_volume.value > 0 && nodisplay == 0) {
