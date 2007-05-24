@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: tp_triggers.c,v 1.1.2.1 2007-05-06 00:09:27 disconn3ct Exp $
+	$Id: tp_triggers.c,v 1.1.2.2 2007-05-24 15:38:13 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -663,16 +663,18 @@ void CL_RE_Trigger_ResetLasttime (void)
 	for (trig=re_triggers; trig; trig=trig->next)
 		trig->lasttime = 0.0;
 }
- 
+
 void Re_Trigger_Copy_Subpatterns (const char *s, int* offsets, int num, cvar_t *re_sub)
 {
-	int	i;
+	int i;
 	char *tmp;
- 
+	size_t len;
+
 	for (i = 0; i < 2 * num; i += 2) {
-		tmp = (char *) Q_malloc (offsets[i + 1] + 1);
-		snprintf (tmp, sizeof(tmp), "%s", s + offsets[i]);
-		Cvar_ForceSet (&re_sub[i / 2], tmp);
+		len = offsets[i + 1] - offsets[i] + 1;
+		tmp = (char *) Q_malloc (len);
+		snprintf (tmp, len, "%s", s + offsets[i]);
+		Cvar_ForceSet(&re_sub[i / 2], tmp);
 		Q_free (tmp);
 	}
 }
@@ -837,12 +839,12 @@ static void INTRIG_Lastip_port (const char *s)
 	// reset current lastip value
 	memset (lastip, 0, sizeof (lastip));
  
-	memcpy (lastip, va ("%s.%s.%s.%s:%s",
-	                    re_subi[1].string,
-	                    re_subi[2].string,
-	                    re_subi[3].string,
-	                    re_subi[4].string,
-	                    re_subi[5].string), sizeof (lastip));
+	snprintf (lastip, sizeof (lastip), "%s.%s.%s.%s:%s",
+						re_subi[1].string,
+						re_subi[2].string,
+						re_subi[3].string,
+						re_subi[4].string,
+						re_subi[5].string);
 }
  
 static void InitInternalTriggers(void)
