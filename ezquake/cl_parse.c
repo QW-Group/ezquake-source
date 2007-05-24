@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.82.2.8 2007-05-24 20:40:34 disconn3ct Exp $
+	$Id: cl_parse.c,v 1.82.2.9 2007-05-24 21:02:26 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -2075,7 +2075,7 @@ void CL_ParsePrint (void)
 
 		flags = TP_CategorizeMessage (s0, &offset);
 		FChecks_CheckRequest (s0);
-		Auth_CheckResponse(s0, flags, offset); // @CHECKME@
+		Auth_CheckResponse (s0, flags, offset);
 
 		if (Ignore_Message(s0, flags, offset)) // @CHECKME@
 			return;
@@ -2094,8 +2094,10 @@ void CL_ParsePrint (void)
 
 		suppress_talksound = false;
 
-		if (flags == 2)
-			suppress_talksound = TP_CheckSoundTrigger (s + offset); // @CHECKME@
+		if (flags == 2) {
+			suppress_talksound = TP_CheckSoundTrigger (s + offset);
+			s0 = wcs2str (s); // TP_CheckSoundTrigger may modify the source string, so s0 should be updated
+		}
 
 		if (!cl_chatsound.value ||						// no sound at all
 			(cl_chatsound.value == 2 && flags != 2))	// only play sound in mm2
