@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.14 2007-05-24 16:34:03 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.15 2007-05-25 15:32:58 himan Exp $
 
 */
 
@@ -194,12 +194,7 @@ GLOBAL void TP_Msg_Coming_f (void) { TP_Msg_ReportComing(false); }
 
 
 GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monster. // need $point and $took to see red/blue flag!
-{		/*
-		This is the "go-to" function!". It contains all possible scenarios for any player, teammate or enemy, with any combination of powerup.
-		note: in cases where you have pent and enemy has quad (or vice versa), team powerup is displayed only, NOT ENEMY POWERUP ------------------------------------------ FIX FIX FIX FIX change this around
-		Note: we are assuming map has no more than 1 of each (quad,pent,ring)
-		Note: this function does not take into account only teammate or only enemy (without powerup). Do not change this behaviour.
-		*/
+{		// This is the "go-to" function!". It contains all possible scenarios for any player, teammate or enemy, with any combination of powerup.
 	MSGPART msg1 = "";
 	MSGPART msg2 = "";
 	
