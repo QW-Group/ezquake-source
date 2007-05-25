@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.16 2007-05-24 16:31:03 himan Exp $
+		$Id: menu_options.c,v 1.60.2.17 2007-05-25 17:50:08 himan Exp $
 
 */
 
@@ -988,7 +988,7 @@ setting settvideo_arr[] = {
 	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
 	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
 	
-	ADDSET_SEPARATOR("Text layer settings"),
+	ADDSET_SEPARATOR("Font Size"),
 #ifndef __APPLE__
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
 	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
