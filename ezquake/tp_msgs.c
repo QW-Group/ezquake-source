@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.15 2007-05-25 15:32:58 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.16 2007-05-26 18:21:40 himan Exp $
 
 */
 
@@ -142,8 +142,9 @@ GLOBAL void TP_Msg_Lost_f (void)
 		else
 			msg2 = "lost $[{%d}$] e:%E";
 		}
-	else
-		return; // if alive, then don't say anything
+	else // if alive and reporting last death location
+		msg1 = "lost $[{%d}$]";
+		
 	//$R$R quad over(1) lost loc weapon(2)
     TP_Send_TeamSay("%s %s%s", led, msg1, msg2);
 }
@@ -165,13 +166,21 @@ GLOBAL void TP_Msg_ReportComing(qbool report)
 	else
 		{
 		if (report)
+			{
 			msg1 = tp_sep_blue;
+			msg4 = "$[{%l}$]";
+			}
 		else
-			msg1 = tp_sep_white " {coming}";
+			{
+			msg1 = tp_sep_white;
+			msg4 = "{coming} $[{%l}$]";
+			}
 		}
 
 	if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
 		msg2 = " $colored_short_powerups";
+	else
+		msg2 = "";
  
     if		(HAVE_RL() && HAVE_LG())	msg5 = tp_ib_name_rlg ":$rockets/$cells";
     else if (HAVE_RL())					msg5 = tp_ib_name_rl ":$rockets";
@@ -180,8 +189,7 @@ GLOBAL void TP_Msg_ReportComing(qbool report)
     else								msg5 = "";
  
 	msg3 = "$colored_armor/%h";
-	msg4 = "$[{%l}$]";
- 
+	 
 	// $B$B(1) powerup (2) health(3)/armor location(4) rlg:x(5) //tp_report
 	if (report)
 		TP_Send_TeamSay("%s%s %s %s %s", msg1, msg2, msg3, msg4, msg5);
@@ -303,22 +311,23 @@ LOCAL void TP_Msg_SafeHelp(qbool safe)
 	MSGPART msg4 = "";
 
 	if (safe)
-			msg1 = tp_sep_green " " tp_ib_name_safe;
+		msg1 = tp_sep_green " " tp_ib_name_safe;
 	else // now help
-		{
 		msg1 = tp_sep_yellow " " tp_ib_name_help;
-		msg2 = "$[{%l}$]";
-		}
+	
+	msg3 = "$[{%l}$]";
  
 	if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
-		msg3 = " " tp_ib_name_team " $colored_powerups";
+		msg2 = " $colored_short_powerups";
+	else
+		msg2 = "";
  
     if		(HAVE_RL() && HAVE_LG())	msg4 = " " tp_ib_name_rlg ":$rockets/$cells";
     else if (HAVE_RL())					msg4 = " " tp_ib_name_rl ":$rockets";
     else if (HAVE_LG())					msg4 = " " tp_ib_name_lg ":$cells";
     else								msg4 = "";
 	//(1)sep, (1)=safe/help (2)=loc 3=powerup 4=weap
-	TP_Send_TeamSay("%s %s%s%s", msg1, msg2, msg3, msg4);
+	TP_Send_TeamSay("%s%s %s%s", msg1, msg2, msg3, msg4);
 }
 GLOBAL void TP_Msg_Safe_f (void) { TP_Msg_SafeHelp(true); }
 GLOBAL void TP_Msg_Help_f (void) { TP_Msg_SafeHelp(false); }
@@ -392,6 +401,8 @@ GLOBAL void TP_Msg_Took_f (void)
     MSGPART msg1 = "";
 	MSGPART msg2 = "";
 	MSGPART msg3 = "";
+	MSGPART msg4 = "";
+	MSGPART msg5 = "";
  
 	if (TOOK_EMPTY())
 		return;
@@ -425,10 +436,16 @@ GLOBAL void TP_Msg_Took_f (void)
 		else if (TOOK(flag))							msg2 = tp_ib_name_flag;
 		else 											msg2 = "{$took}"; // This should never happen
 		
-		msg1 = tp_sep_white " took ";
-		msg3 = " at $[{%l}$]";
+		if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
+			msg4 = " $colored_short_powerups";
+		else
+			msg4 = "";
+		
+		msg1 = tp_sep_white;
+		msg3 = "at $[{%l}$]";
+		msg5 = " took ";
 	}
-	TP_Send_TeamSay("%s%s%s", msg1, msg2, msg3);
+	TP_Send_TeamSay("%s%s%s%s %s", msg1, msg4, msg5, msg2, msg3);
 }
 
 
@@ -437,6 +454,7 @@ GLOBAL void TP_Msg_Point_f (void)
     MSGPART msg1 = "";
 	MSGPART msg2 = "";
 	MSGPART msg3 = "";
+	MSGPART msg4 = "";
  
     if (flashed) return;
     TP_FindPoint();
@@ -481,16 +499,16 @@ GLOBAL void TP_Msg_Point_f (void)
 					else if (INPOINT(ya))		msg2 = tp_ib_name_ya;
 					else if (INPOINT(ga))		msg2 = tp_ib_name_ga;
 					
-					else if (INPOINT(rockets)) 	msg2 = "{rockets}";
-					else if (INPOINT(cells)) 	msg2 = "{cells}";
-					else if (INPOINT(nails)) 	msg2 = "{nails}";
+					else if (INPOINT(rockets)) 	msg2 = "{$point}";
+					else if (INPOINT(cells)) 	msg2 = "{$point}";
+					else if (INPOINT(nails)) 	msg2 = "{$point}";
 					
 					else if (INPOINT(mh))		msg2 = tp_ib_name_mh;
 					
 					//TF
 					else if (INPOINT(flag))		msg2 = tp_ib_name_flag; // need to see between blue/red colors!
-					else if (INPOINT(disp))		msg2 = "{disp}";	// note we can'te tell if it's enemy or team disp
-					else if (INPOINT(sentry))	msg2 = "{sentry}"; // note we can'te tell if it's enemy or team sent
+					else if (INPOINT(disp))		msg2 = "{$point}";	// note we can'te tell if it's enemy or team disp
+					else if (INPOINT(sentry))	msg2 = "{$point}"; // note we can'te tell if it's enemy or team sent
 					
 					//ctf, other
 					else if (INPOINT(runes))	msg2 = "rune";
@@ -498,8 +516,13 @@ GLOBAL void TP_Msg_Point_f (void)
 		else msg2 = "{$point}"; // this should never happen
 	}
 	
+		if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
+			msg4 = " $colored_short_powerups";
+		else
+			msg4 = "";
+	
 	//led(1) item(2) at loc(3)
-	TP_Send_TeamSay("%s %s %s", msg1, msg2, msg3);
+	TP_Send_TeamSay("%s%s %s %s", msg1, msg4, msg2, msg3);
 }
 
 
@@ -524,15 +547,21 @@ LOCAL void TP_Msg_TrickReplace(qbool trick)
 {
     MSGPART msg1 = "";
 	MSGPART msg2 = "";
+	MSGPART msg3 = "";
 	
 	if (trick)
-		msg1 = "{trick}";
+		msg1 = " {trick}";
 	else
-		msg1 = "{replace}";
+		msg1 = " {replace}";
+		
+	if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
+		msg3 = " $colored_short_powerups";
+	else
+		msg3 = "";
 		
 	msg2 = "$[{%l}$]";
 	
-	TP_Send_TeamSay(tp_sep_yellow " %s %s", msg1, msg2);
+	TP_Send_TeamSay(tp_sep_yellow "%s%s %s", msg3, msg1, msg2);
 }
 GLOBAL void TP_Msg_Trick_f (void) { TP_Msg_TrickReplace(true); }
 GLOBAL void TP_Msg_Replace_f (void) { TP_Msg_TrickReplace(false); }
