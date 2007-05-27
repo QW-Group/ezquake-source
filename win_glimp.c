@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-$Id: win_glimp.c,v 1.16 2007-05-13 13:41:44 johnnycz Exp $
+$Id: win_glimp.c,v 1.17 2007-05-27 15:25:45 qqshka Exp $
 
 */
 /*
@@ -99,7 +99,7 @@ static qbool s_classRegistered = false;
 
 // VVD: didn't restore gamma after ALT+TAB on some ATI video cards (or drivers?...) 
 // HACK!!! FIXME {
-cvar_t	vid_forcerestoregamma = {"vid_forcerestoregamma", "0"};
+cvar_t	vid_forcerestoregamma = {"vid_forcerestoregamma", "0", CVAR_SILENT};
 int		restore_gamma = 0;
 // }
 
