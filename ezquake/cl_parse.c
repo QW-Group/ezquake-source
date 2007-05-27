@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_parse.c,v 1.82.2.9 2007-05-24 21:02:26 disconn3ct Exp $
+	$Id: cl_parse.c,v 1.82.2.10 2007-05-27 13:54:11 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -513,6 +513,7 @@ void CL_Prespawn (void)
 	MT_NewMap();
 	Stats_NewMap();
 	CL_ProxyEnter();
+	MVD_Stats_Cleanup_f();
 
 	// Reset the status grid.
 	StatsGrid_Remove(&stats_grid);
