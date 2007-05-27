@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: version.h,v 1.4.4.1 2007-05-27 14:40:13 disconn3ct Exp $
+	$Id: version.h,v 1.4.4.2 2007-05-27 15:58:41 johnnycz Exp $
 */
 // version.h
 
@@ -59,7 +59,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define QW_RENDERER			"Soft"
 #endif
 
-#define VERSION_NUMBER "1.8 beta2"
+#define VERSION_NUMBER "1.8 stable"
 
 int build_number (void);
 void CL_Version_f (void);
