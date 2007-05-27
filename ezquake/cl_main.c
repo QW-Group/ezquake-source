@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_main.c,v 1.136.2.7 2007-05-06 00:09:26 disconn3ct Exp $
+	$Id: cl_main.c,v 1.136.2.8 2007-05-27 15:05:32 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -738,6 +738,9 @@ void CL_Disconnect_f (void) {
 
 //The server is changing levels
 void CL_Reconnect_f (void) {
+	if (cls.mvdplayback == QTV_PLAYBACK)
+		return; // change map during qtv playback
+
 	if (cls.download)  // don't change when downloading
 		return;
 
