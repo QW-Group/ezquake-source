@@ -17,12 +17,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: auth.c,v 1.13.2.2 2007-05-24 21:02:26 disconn3ct Exp $
+	$Id: auth.c,v 1.13.2.3 2007-05-27 14:40:50 disconn3ct Exp $
 */
 
 #include "quakedef.h"
 #include "modules.h"
 #include "utils.h"
+#include "version.h"
 
 
 cvar_t	auth_validateclients	= {"auth_validate", "1"};		
@@ -152,7 +153,7 @@ static void Auth_AuthenticateClient(int slot) {
 static void Auth_CheckAuthResponse (const char *s, int flags, int offset) {
 	int response, slot;
 
-	response = Auth_CheckString("ezQuake version ", s, flags, offset, &slot, NULL, 0);
+	response = Auth_CheckString("ezQuake " VERSION_NUMBER " ", s, flags, offset, &slot, NULL, 0);
 	if (response == AUTH_NOTHING || (!cls.demoplayback && slot == cl.playernum))
 		return;
 
