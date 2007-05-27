@@ -239,7 +239,7 @@ typedef enum {
 	dl_single
 } dltype_t;		// download type
 
-// cl.mvdplayback == QTV_PLAYBACK if qtv playback
+// cls.mvdplayback == QTV_PLAYBACK if qtv playback
 #define QTV_PLAYBACK 2
 
 //
