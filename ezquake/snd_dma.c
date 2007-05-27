@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.42.2.1 2007-04-16 17:11:50 disconn3ct Exp $
+    $Id: snd_dma.c,v 1.42.2.2 2007-05-27 12:01:27 disconn3ct Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -123,10 +123,10 @@ static void S_SoundInfo_f (void)
 	Com_Printf("%5u total_channels\n", total_channels);
 }
 
-static void S_Startup (void)
+static qbool S_Startup (void)
 {
 	if (!snd_initialized)
-		return;
+		return false;
 
 	shm = &sn;
 	memset((void *)shm, 0, sizeof(*shm));
@@ -135,8 +135,10 @@ static void S_Startup (void)
 		Com_Printf ("S_Startup: SNDDMA_Init failed.\n");
 		shm = NULL;
 		sound_spatialized = false;
-		return;
+		return false;
 	}
+
+	return true;
 }
 
 void S_Shutdown (void)
@@ -159,7 +161,10 @@ static void S_Restart_f (void)
 	S_Shutdown();
 	Com_DPrintf("sound: Shutdown OK\n");
 
-	S_Startup();
+	if (!S_Startup()) {
+		 snd_initialized = false;
+		 return;
+	}
 
 	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound ("ambience/water1.wav");
 	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound ("ambience/wind2.wav");
@@ -238,9 +243,12 @@ void S_Init (void)
 
 	snd_initialized = true;
 
-	S_Startup ();
-
 	SND_InitScaletable ();
+
+	if (!S_Startup ()) {
+		snd_initialized = false;
+		 return;
+	}
 
 	known_sfx = (sfx_t *) Hunk_AllocName (MAX_SFX * sizeof(sfx_t), "sfx_t");
 	num_sfx = 0;

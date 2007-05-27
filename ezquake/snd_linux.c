@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_linux.c,v 1.11 2006-12-15 01:27:11 johnnycz Exp $
+    $Id: snd_linux.c,v 1.11.2.1 2007-05-27 12:01:27 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -37,6 +37,7 @@ qbool SNDDMA_Init_OSS(void);
 int SNDDMA_GetDMAPos_OSS(void);
 void SNDDMA_Shutdown_OSS(void);
 
+extern cvar_t s_device;
 
 // Main functions
 qbool SNDDMA_Init(void)
@@ -63,6 +64,7 @@ qbool SNDDMA_Init(void)
 			// Fall back to OSS...
 			SNDDMA_ALSA = false;
 			Com_Printf("sound: Falling back to OSS...\n");
+			Cvar_Set(&s_device, "/dev/dsp");
 			retval = SNDDMA_Init_OSS();
 		}
 	}
