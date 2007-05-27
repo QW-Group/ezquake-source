@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.16 2007-05-26 18:21:40 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.17 2007-05-27 04:30:54 himan Exp $
 
 */
 
@@ -309,11 +309,18 @@ LOCAL void TP_Msg_SafeHelp(qbool safe)
 	MSGPART msg2 = "";
 	MSGPART msg3 = "";
 	MSGPART msg4 = "";
+	MSGPART msg5 = "";
 
 	if (safe)
-		msg1 = tp_sep_green " " tp_ib_name_safe;
+		{
+		msg1 = tp_sep_green;
+		msg5 = tp_ib_name_safe;
+		}
 	else // now help
-		msg1 = tp_sep_yellow " " tp_ib_name_help;
+		{
+		msg1 = tp_sep_yellow;
+		msg5 = tp_ib_name_help;
+		}
 	
 	msg3 = "$[{%l}$]";
  
@@ -327,7 +334,7 @@ LOCAL void TP_Msg_SafeHelp(qbool safe)
     else if (HAVE_LG())					msg4 = " " tp_ib_name_lg ":$cells";
     else								msg4 = "";
 	//(1)sep, (1)=safe/help (2)=loc 3=powerup 4=weap
-	TP_Send_TeamSay("%s%s %s%s", msg1, msg2, msg3, msg4);
+	TP_Send_TeamSay("%s%s %s %s%s", msg1, msg2, msg5, msg3, msg4);
 }
 GLOBAL void TP_Msg_Safe_f (void) { TP_Msg_SafeHelp(true); }
 GLOBAL void TP_Msg_Help_f (void) { TP_Msg_SafeHelp(false); }
