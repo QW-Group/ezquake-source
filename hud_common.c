@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.137 2007-05-28 16:40:38 johnnycz Exp $
+	$Id: hud_common.c,v 1.138 2007-05-28 20:52:07 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -4869,14 +4869,14 @@ void SCR_HUD_DrawKeys(hud_t *hud)
 	scale = max(0, scale);
 
 	i = 0;
-	line1[i++] = b.attack ? 'x' : ' ';
-	line1[i++] = b.forward ? '^' : ' ';
-	line1[i++] = b.jump ? 'J' : ' ';
+	line1[i++] = b.attack  ? 'x' + 128 : 'x';
+	line1[i++] = b.forward ? '^' + 128 : '^';
+	line1[i++] = b.jump    ? 'J' + 128 : 'J';
 	line1[i++] = '\0';
 	i = 0;
-	line2[i++] = b.left ? '<' : ' '; 
-	line2[i++] = b.back ? '_' : ' ';
-	line2[i++] = b.right ? '>' : ' ';
+	line2[i++] = b.left    ? '<' + 128 : '<'; 
+	line2[i++] = b.back    ? '_' + 128 : '_';
+	line2[i++] = b.right   ? '>' + 128 : '>';
 	line2[i++] = '\0';
 
 	width = LETTERWIDTH * strlen(line1) * scale;
@@ -6674,7 +6674,7 @@ void CommonDraw_Init(void)
 
 	HUD_Register("keys", NULL, "Shows which keys user does press at the moment",
 		0, ca_active, 1, SCR_HUD_DrawKeys,
-		"0", "screen", "right", "center", "0", "0", "0", "20 20 20", NULL,
+		"0", "screen", "right", "center", "0", "0", "0.5", "20 20 20", NULL,
 		"scale", "2",
 		NULL
 		);
