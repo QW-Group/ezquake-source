@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.34.2.7 2007-05-28 12:24:00 johnnycz Exp $
+		$Id: settings_page.c,v 1.34.2.8 2007-05-28 12:24:41 johnnycz Exp $
 
 */
 
@@ -247,7 +247,7 @@ static void Setting_Decrease(setting* set) {
 			newval = VARFVAL(set->cvar) - set->step;
 			if (set->min <= newval)
 				Cvar_SetValue(set->cvar, newval);
-			else if (set->type == stt_named)
+			else if (set->type == stt_named || set->type == stt_playercolor)
 				Cvar_SetValue(set->cvar, set->max);
 			break;
 
