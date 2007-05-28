@@ -585,7 +585,6 @@ extern byte		*host_colormap;
 // cl_main
 
 void CL_Init (void);
-void CL_WriteConfiguration (void);
 void CL_ClearState (void);
 void CL_ReadPackets (void);
 void CL_BeginServerConnect(void);
@@ -595,6 +594,15 @@ qbool CL_ConnectedToProxy(void);
 void CL_MakeActive(void);
 
 extern char emodel_name[], pmodel_name[];
+
+// cl_cmd
+typedef struct {
+	qbool forward, back, left, right, jump, attack, up, down;
+} usermainbuttons_t;
+void CL_WriteConfiguration (void);
+void CL_PrintQStatReply (char *s);
+// returns last button user pressed
+usermainbuttons_t CL_GetLastCmd (void);
 
 // cl_nqdemo.c
 void NQD_StartPlayback (void);

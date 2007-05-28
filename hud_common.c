@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.135 2007-05-13 22:24:17 johnnycz Exp $
+	$Id: hud_common.c,v 1.136 2007-05-28 16:21:38 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -4856,7 +4856,42 @@ void SCR_HUD_DrawOwnFrags(hud_t *hud)
 
 #ifdef GLQUAKE
 
+void SCR_HUD_DrawKeys(hud_t *hud)
+{
+	char line1[4], line2[4];
+	int width, height, x, y;
+	usermainbuttons_t b = CL_GetLastCmd();
+	int i;
+	cvar_t* vscale = NULL;
+	float scale;
+	
+	if (!vscale) {
+		vscale = HUD_FindVar(hud, "scale");
+	}
 
+	scale = vscale->value;
+	scale = max(0, scale);
+
+	i = 0;
+	line1[i++] = b.attack ? 'x' : ' ';
+	line1[i++] = b.forward ? '^' : ' ';
+	line1[i++] = b.jump ? 'J' : ' ';
+	line1[i++] = '\0';
+	i = 0;
+	line2[i++] = b.left ? '<' : ' '; 
+	line2[i++] = b.back ? '_' : ' ';
+	line2[i++] = b.right ? '>' : ' ';
+	line2[i++] = '\0';
+
+	width = LETTERWIDTH * strlen(line1) * scale;
+	height = LETTERHEIGHT * 2 * scale;
+	
+    if (!HUD_PrepareDraw(hud, width ,height, &x, &y))
+        return;
+
+	Draw_SString(x, y, line1, scale);
+	Draw_SString(x, y + LETTERHEIGHT*scale, line2, scale);
+}
 
 // What stats to draw.
 #define HUD_RADAR_STATS_NONE				0
@@ -6637,6 +6672,13 @@ void CommonDraw_Init(void)
         );
 
 #endif
+
+	HUD_Register("keys", NULL, "Shows which keys user does press at the moment",
+		0, ca_active, 1, SCR_HUD_DrawKeys,
+		"0", "screen", "right", "center", "0", "0", "0", "20 20 20", NULL,
+		"scale", "2",
+		NULL
+		);
 
 /* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
 #ifdef GLQUAKE
