@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.36 2007-05-03 12:03:56 johnnycz Exp $
+	$Id: utils.c,v 1.37 2007-05-28 10:47:36 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 
 
-int TP_CategorizeMessage (char *s, int *offset);
+int TP_CategorizeMessage (const char *s, int *offset);
 
 /************************************** General Utils **************************************/
 
@@ -436,7 +436,7 @@ int Player_GetSlot(char *arg)
 
 /********************************** String Utils ****************************************/
 
-qbool Util_F_Match(char *_msg, char *f_request) {
+qbool Util_F_Match (const char *_msg, char *f_request) {
 	int offset, i, status, flags;
 	char *s, *msg;
 

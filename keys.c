@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.60 2007-05-13 13:41:43 johnnycz Exp $
+    $Id: keys.c,v 1.61 2007-05-28 10:47:34 johnnycz Exp $
 
 */
 
@@ -945,7 +945,7 @@ void Key_Console (int key, int unichar)
 			}
 
 			Con_PrintW (key_lines[edit_line]);	// FIXME logging
-			Con_Print ("\n");
+			Con_PrintW (str2wcs("\n"));
 			edit_line = (edit_line + 1) & (CMDLINES - 1);
 			history_line = edit_line;
 			key_lines[edit_line][0] = ']';
@@ -1350,15 +1350,22 @@ void Key_Message (int key, wchar unichar) {
 				Cbuf_AddText(encode_say(chat_buffer));
 				Cbuf_AddText("\"\n");
 			}
-            if (key_dest_beforemm != key_message)
+            
+			if (key_dest_beforemm != key_message && key_dest_beforemm != key_console)
 			    key_dest = key_dest_beforemm;
+            else
+                key_dest = key_game;
+
 			chat_linepos = 0;
 			chat_buffer[0] = 0;
 			return;
 
 		case K_ESCAPE:
-            if (key_dest_beforemm != key_message)
+            if (key_dest_beforemm != key_message && key_dest_beforemm != key_console)
 			    key_dest = key_dest_beforemm;
+            else
+                key_dest = key_game;
+
 			chat_buffer[0] = 0;
 			chat_linepos = 0;
 			return;
@@ -1976,8 +1983,9 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 
 	//	Com_Printf ("%i : %i\n", key, down); //@@@
 
+	/* disconnect: really FIXME CTRL+r or CTRL+[ with in_builinkeymap 1 cause to unichar < 32 */
 	//FIXME
-	if (unichar < 32 || (unichar > 127 && unichar <= 256))
+	if (/*unichar < 32 ||*/ (unichar > 127 && unichar <= 256))
 		unichar = 0;
 
 	if (key == K_LALT || key == K_RALT)

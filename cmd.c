@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.64 2007-05-16 17:39:02 johnnycz Exp $
+    $Id: cmd.c,v 1.65 2007-05-28 10:47:32 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1636,7 +1636,7 @@ static qbool is_numeric (char *c)
 	         (*c == '.' && isdigit((int)(unsigned char)c[1])) );
 }
 
-void Re_Trigger_Copy_Subpatterns (char *s, int* offsets, int num, cvar_t *re_sub); // QW262
+void Re_Trigger_Copy_Subpatterns (const char *s, int* offsets, int num, cvar_t *re_sub); // QW262
 extern cvar_t re_sub[10]; // QW262
 
 void Cmd_If_f (void)

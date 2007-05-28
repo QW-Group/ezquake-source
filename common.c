@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.77 2007-05-13 13:41:43 johnnycz Exp $
+    $Id: common.c,v 1.78 2007-05-28 10:47:32 johnnycz Exp $
 
 */
 
@@ -734,7 +734,7 @@ int COM_ZipUnpackOneFileToTemp (unzFile zip_file,
 
 	// Delete the temp file if it exists (it is created when the filename is received above).
 	retval = unlink (unpack_path);
-	if (!retval || (retval && qerrno != ENOENT))
+	if (retval || (retval < 0 && qerrno != ENOENT))
 	{
 		return UNZ_ERRNO;
 	}
@@ -2465,6 +2465,7 @@ void Com_EndRedirect (void) {
 //All console printing must go through this in order to be logged to disk
 unsigned Print_flags[16];
 int Print_current = 0;
+
 void Com_Printf (char *fmt, ...) {
 	va_list argptr;
 	char msg[MAXPRINTMSG];
@@ -2490,10 +2491,9 @@ void Com_Printf (char *fmt, ...) {
 
 	// write it to the scrollable buffer
 	//	Con_Print (va("ezQuake: %s", msg));
-	Con_Print (msg);
+	Con_PrintW (str2wcs(msg));
 }
 
-//A Com_Printf that only shows up if the "developer" cvar is set
 void Com_DPrintf (char *fmt, ...) {
 	va_list argptr;
 	char msg[MAXPRINTMSG];

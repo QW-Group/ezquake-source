@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: wad.c,v 1.16 2007-05-13 13:41:44 johnnycz Exp $
+	$Id: wad.c,v 1.17 2007-05-28 10:47:37 johnnycz Exp $
 */
 // wad.c
 
@@ -114,7 +114,7 @@ void W_LoadWadFile (char *filename) {
 
 		W_CleanupName (lump_p->name, lump_p->name);
 
-		if (lump_p->filepos < sizeof(wadinfo_t) || lump_p->filepos + lump_p->disksize > wad_filesize)
+		if (lump_p->filepos < sizeof(wadinfo_t) || lump_p->filepos + LittleLong(lump_p->disksize) > wad_filesize)
 			Sys_Error ("Wad lump %s exceeds file size", lump_p->name);
 
 		if (lump_p->type == TYP_QPIC)

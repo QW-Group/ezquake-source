@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.15 2007-03-18 18:36:24 disconn3ct Exp $
+	$Id: common_draw.c,v 1.16 2007-05-28 10:47:32 johnnycz Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -523,7 +523,7 @@ void SCR_NetStats(int x, int y, float period)
         with_delta = result.delta;
     }
 
-    Draw_String(x+36, y, "���");
+    Draw_Alt_String(x+36, y, "latency");
     y+=12;
 
     sprintf(line, "min  %4.1f %3d ms", f_min, ping_min);
@@ -542,7 +542,7 @@ void SCR_NetStats(int x, int y, float period)
     Draw_String(x, y, line);
     y+=12;
 
-    Draw_String(x+20, y, "��� ��");
+    Draw_Alt_String(x+20, y, "packet loss");
     y+=12;
 
     sprintf(line, "lost       %3d %%", lost_lost);
@@ -565,7 +565,7 @@ void SCR_NetStats(int x, int y, float period)
     y+=12;
 
 
-    Draw_String(x+4, y, "��� ���");
+    Draw_Alt_String(x+4, y, "packet size/BPS");
     y+=12;
 
     sprintf(line, "out    %3d %5d", size_out, bandwidth_out);

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.75 2007-05-13 13:41:44 johnnycz Exp $
+    $Id: teamplay.c,v 1.76 2007-05-28 10:47:34 johnnycz Exp $
 */
 
 #include <time.h>
@@ -46,7 +46,7 @@ cvar_t	cl_parseSay = {"cl_parseSay", "1"};
 cvar_t	cl_parseFunChars = {"cl_parseFunChars", "1"};
 cvar_t	cl_nofake = {"cl_nofake", "2"};
 cvar_t	tp_loadlocs = {"tp_loadlocs", "1"};
-cvar_t  tp_pointpriorities = {"tp_pointpriorities", "0"};
+cvar_t  tp_pointpriorities = {"tp_pointpriorities", "0"}; // FIXME: buggy
 
  
 cvar_t  cl_teamtopcolor = {"teamtopcolor", "-1", 0, OnChangeColorForcing};
@@ -113,14 +113,15 @@ cvar_t	tp_name_status_green = {"tp_name_status_green", "$G"};
 cvar_t	tp_name_status_yellow = {"tp_name_status_yellow", "$Y"};
 cvar_t	tp_name_status_red = {"tp_name_status_red", "$R"};
 cvar_t	tp_name_status_blue = {"tp_name_status_blue", "$B"};
+cvar_t	tp_name_status_white = {"tp_name_status_white", "$x04"};
  
-cvar_t	tp_need_ra = {"tp_need_ra", "110"};
+cvar_t	tp_need_ra = {"tp_need_ra", "120"};
 cvar_t	tp_need_ya = {"tp_need_ya", "80"};
 cvar_t	tp_need_ga = {"tp_need_ga", "50"};
-cvar_t	tp_need_health = {"tp_need_health", "60"};
+cvar_t	tp_need_health = {"tp_need_health", "50"};
 cvar_t	tp_need_weapon = {"tp_need_weapon", "35687"};
 cvar_t	tp_need_rl = {"tp_need_rl", "1"};
-cvar_t	tp_need_rockets = {"tp_need_rockets", "7"};
+cvar_t	tp_need_rockets = {"tp_need_rockets", "5"};
 cvar_t	tp_need_cells = {"tp_need_cells", "20"};
 cvar_t	tp_need_nails = {"tp_need_nails", "40"};
 cvar_t	tp_need_shells = {"tp_need_shells", "12"};
@@ -338,10 +339,13 @@ char *Macro_Colored_Armor_f (void)
 
 char *Macro_Colored_Powerups_f (void)
 {
-	char* msg = "";
- 
- 
-	snprintf (macro_buf, sizeof(macro_buf), "%s", msg);
+	snprintf (macro_buf, sizeof(macro_buf), "%s", TP_MSG_Colored_Powerup());
+	return macro_buf;
+}
+
+char *Macro_Colored_Short_Powerups_f (void) // same as above, but displays "qrp" instead of "quad ring pent"
+{
+	snprintf (macro_buf, sizeof(macro_buf), "%s", TP_MSG_Colored_Short_Powerups());
 	return macro_buf;
 } 
  
@@ -608,13 +612,17 @@ char *Macro_LastDropTime (void)
 		snprintf (macro_buf, 32, "%d", -1);
 	return macro_buf;
 }
- 
+
+// fixme: rewrite this function into two separate functions
+// first will just set vars.needflags value (put into TP_GetNeed function below)
+// second will read it's value and produce appropriate $need macro string
 char *Macro_Need (void)
 {
 	int i, weapon;
 	char *needammo = NULL;
  
 	macro_buf[0] = 0;
+	vars.needflags = 0;
  
 	// check armor
 	if (((cl.stats[STAT_ITEMS] & IT_ARMOR1) && cl.stats[STAT_ARMOR] < tp_need_ga.value)
@@ -623,13 +631,17 @@ char *Macro_Need (void)
 		|| (!(cl.stats[STAT_ITEMS] & (IT_ARMOR1|IT_ARMOR2|IT_ARMOR3))
 		&& (tp_need_ga.value || tp_need_ya.value || tp_need_ra.value))
 	   )
+	{
 		strlcpy (macro_buf, tp_name_armor.string, sizeof(macro_buf));
+		vars.needflags |= it_armor;
+	}
  
 	// check health
 	if (tp_need_health.value && cl.stats[STAT_HEALTH] < tp_need_health.value) {
 		if (macro_buf[0])
 			strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 		strlcat (macro_buf, tp_name_health.string, sizeof(macro_buf));
+		vars.needflags |= it_health;
 	}
  
 	if (cl.teamfortress) {
@@ -637,21 +649,25 @@ char *Macro_Need (void)
 			if (macro_buf[0])
 				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat (macro_buf, tp_name_rockets.string, sizeof(macro_buf));
+			vars.needflags |= it_rockets;
 		}
 		if (cl.stats[STAT_SHELLS] < tp_need_shells.value) {
 			if (macro_buf[0])
 				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat (macro_buf, tp_name_shells.string, sizeof(macro_buf));
+			vars.needflags |= it_shells;
 		}
 		if (cl.stats[STAT_NAILS] < tp_need_nails.value)	{
 			if (macro_buf[0])
 				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat (macro_buf, tp_name_nails.string, sizeof(macro_buf));
+			vars.needflags |= it_shells;
 		}
 		if (cl.stats[STAT_CELLS] < tp_need_cells.value)	{
 			if (macro_buf[0])
 				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat (macro_buf, tp_name_cells.string, sizeof(macro_buf));
+			vars.needflags |= it_cells;
 		}
 		goto done;
 	}
@@ -675,32 +691,41 @@ char *Macro_Need (void)
 		if (macro_buf[0])
 			strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 		strlcat (macro_buf, tp_name_weapon.string, sizeof(macro_buf));
+		vars.needflags |= it_weapons;
 	} else {
 		if (tp_need_rl.value && !(cl.stats[STAT_ITEMS] & IT_ROCKET_LAUNCHER)) {
 			if (macro_buf[0])
 				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat (macro_buf, tp_name_rl.string, sizeof(macro_buf));
+			vars.needflags |= it_rl;
 		}
  
 		switch (weapon) {
-				case 2: case 3: if (cl.stats[STAT_SHELLS] < tp_need_shells.value)
+				case 2: case 3: if (cl.stats[STAT_SHELLS] < tp_need_shells.value) {
 					needammo = tp_name_shells.string;
+					vars.needflags |= it_shells;
+				}
 				break;
-				case 4: case 5: if (cl.stats[STAT_NAILS] < tp_need_nails.value)
+				case 4: case 5: if (cl.stats[STAT_NAILS] < tp_need_nails.value) {
 					needammo = tp_name_nails.string;
+					vars.needflags |= it_nails;
+				}
 				break;
-				case 6: case 7: if (cl.stats[STAT_ROCKETS] < tp_need_rockets.value)
+				case 6: case 7: if (cl.stats[STAT_ROCKETS] < tp_need_rockets.value) {
 					needammo = tp_name_rockets .string;
-				break;
-				case 8: if (cl.stats[STAT_CELLS] < tp_need_cells.value)
+					vars.needflags |= it_rockets;
+				} break;
+				case 8: if (cl.stats[STAT_CELLS] < tp_need_cells.value) {
 					needammo = tp_name_cells.string;
-				break;
+					vars.needflags |= it_cells;
+				} break;
 		}
  
 		if (needammo) {
 			if (macro_buf[0])
 				strlcat (macro_buf, tp_name_separator.string, sizeof(macro_buf));
 			strlcat (macro_buf, needammo, sizeof(macro_buf));
+			vars.needflags |= it_ammo;
 		}
 	}
  
@@ -711,6 +736,11 @@ done:
 	return macro_buf;
 }
  
+void TP_GetNeed(void)
+{
+	Macro_Need();
+}
+
 char *Macro_Point_LED(void)
 {
 	TP_FindPoint();
@@ -803,13 +833,12 @@ char *Macro_LastSeenPowerup(void)
 	return macro_buf;
 }
  
- 
-qbool TP_SuppressMessage(char *buf)
+qbool TP_SuppressMessage (wchar *buf)
 {
-	int len;
-	char *s;
+	size_t len;
+	wchar *s;
  
-	if ((len = strlen(buf)) < 4)
+	if ((len = qwcslen (buf)) < 4)
 		return false;
  
 	s = buf + len - 4;
@@ -882,7 +911,7 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
  
 	flags = TP_CategorizeMessage (msg, &offset);
  
-	if (flags == 2 && !TP_FilterMessage(msg + offset))
+	if (flags == 2 && !TP_FilterMessage(str2wcs(msg) + offset))
 		return;
  
 	if (con_sound_mm2_volume.value > 0 && nodisplay == 0) {
@@ -1008,6 +1037,7 @@ void TP_AddMacros (void)
 	Cmd_AddMacroEx ("armor", Macro_Armor, teamplay);
 	Cmd_AddMacroEx ("colored_armor", Macro_Colored_Armor_f, teamplay);
 	Cmd_AddMacroEx ("colored_powerups", Macro_Colored_Powerups_f, teamplay);
+	Cmd_AddMacroEx ("colored_short_powerups", Macro_Colored_Short_Powerups_f, teamplay);
  
 	Cmd_AddMacroEx ("shells", Macro_Shells, teamplay);
 	Cmd_AddMacroEx ("nails", Macro_Nails, teamplay);
@@ -1056,10 +1086,11 @@ void TP_AddMacros (void)
  
 /********************** MACRO/FUNCHAR/WHITE TEXT PARSING **********************/
  
-wchar *TP_ParseWhiteText(wchar *s, qbool team, int offset)
+wchar *TP_ParseWhiteText (const wchar *s, qbool team, int offset)
 {
 	static wchar	buf[4096];
-	wchar *out, *p, *p1;
+	wchar *out, *p1;
+	const wchar* p;
 	extern cvar_t	cl_parseWhiteText;
 	qbool	parsewhite;
  
@@ -2168,7 +2199,7 @@ returns a combination of these values:
 Note that sometimes we can't be sure who really sent the message,  e.g. when there's a
 player "unnamed" in your team and "(unnamed)" in the enemy team. The result will be 3 (1+2)
 */
-int TP_CategorizeMessage (char *s, int *offset)
+int TP_CategorizeMessage (const char *s, int *offset)
 {
 	int i, msglen, len, flags, tracknum;
 	player_info_t	*player;
@@ -2996,7 +3027,7 @@ void TP_FindPoint (void)
 			else
             {
 				name = teammate ? tp_name_teammate.string : tp_name_enemy.string;
-                flag = teammate ? it_enemy : it_teammate;
+                flag = teammate ? it_teammate : it_enemy;
             }
 		}
 		if (beststate->effects & EF_BLUE)
@@ -3118,53 +3149,57 @@ void TP_StatChanged (int stat, int value)
 }
  
 /****************************** MESSAGE FILTERS ******************************/
- 
+
+#ifdef _WIN32
+#define wcscasecmp(s1, s2)	_wcsicmp  ((s1),   (s2))
+#endif
+
 #define MAX_FILTER_LENGTH 4
 char filter_strings[8][MAX_FILTER_LENGTH + 1];
 int	num_filters = 0;
  
 //returns false if the message shouldn't be printed.
 //Matching filters are stripped from the message
-qbool TP_FilterMessage (char *s)
+qbool TP_FilterMessage (wchar *source)
 {
-	int i, j, len, maxlen;
+	size_t i, j, maxlen, len;
  
 	if (!num_filters)
 		return true;
  
-	len = strlen (s);
-	if (len < 2 || s[len - 1] != '\n' || s[len - 2] == '#')
+	len = qwcslen (source);
+	if (len < 2 || source[len - 1] != '\n' || source[len - 2] == '#')
 		return true;
  
 	maxlen = MAX_FILTER_LENGTH + 1;
-	for (i = len - 2 ; i >= 0 && maxlen > 0 ; i--, maxlen--) {
-		if (s[i] == ' ')
+	for (i = len - 2 ; i != 0 && maxlen != 0 ; i--, maxlen--) {
+		if (source[i] == ' ')
 			return true;
-		if (s[i] == '#')
+		if (source[i] == '#')
 			break;
 	}
-	if (i < 0 || !maxlen)
-		return true;	// no filter at all
+	if (!i || !maxlen)
+		return true; // no filter at all
  
-	s[len - 1] = 0;	// so that strcmp works properly
+	source[len - 1] = 0; // so that strcmp works properly
  
 	for (j = 0; j < num_filters; j++)
-		if (!strcasecmp(s + i + 1, filter_strings[j])) {
+		if (!wcscasecmp(source + i + 1, str2wcs(filter_strings[j]))) {
 			// strip the filter from message
-			if (i && s[i - 1] == ' ')	{
+			if (i && source[i - 1] == ' ')	{
 				// there's a space just before the filter, remove it
 				// so that soundtriggers like ^blah #att work
-				s[i - 1] = '\n';
-				s[i] = 0;
+				source[i - 1] = '\n';
+				source[i] = 0;
 			} else {
-				s[i] = '\n';
-				s[i + 1] = 0;
+				source[i] = '\n';
+				source[i + 1] = 0;
 			}
 			return true;
 		}
  
-	s[len - 1] = '\n';
-	return false;	// this message is not for us, don't print it
+	source[len - 1] = '\n';
+	return false; // this message is not for us, don't print it
 }
  
 void TP_MsgFilter_f (void)
@@ -3326,16 +3361,19 @@ void TP_Init (void)
 	Cmd_AddCommand ("teamcolor", TP_TeamColor_f);
 	Cmd_AddCommand ("enemycolor", TP_EnemyColor_f);
  
-	Cmd_AddCommand ("tp_report", TP_Msg_Report_f);
-	Cmd_AddCommand ("tp_coming", TP_Msg_Coming_f);
-    Cmd_AddCommand ("tp_lost", TP_Msg_Lost_f);
-    Cmd_AddCommand ("tp_enemypwr", TP_Msg_EnemyPowerup_f);
-	Cmd_AddCommand ("tp_quaddead", TP_Msg_QuadDead_f);
-    Cmd_AddCommand ("tp_safe", TP_Msg_Safe_f);
-    Cmd_AddCommand ("tp_help", TP_Msg_Help_f);
-	Cmd_AddCommand ("tp_getquad", TP_Msg_GetQuad_f);
-	Cmd_AddCommand ("tp_getpent", TP_Msg_GetPent_f);
+	Cmd_AddCommand ("tp_msgreport", TP_Msg_Report_f);
+	Cmd_AddCommand ("tp_msgcoming", TP_Msg_Coming_f);
+    Cmd_AddCommand ("tp_msglost", TP_Msg_Lost_f);
+    Cmd_AddCommand ("tp_msgenemypwr", TP_Msg_EnemyPowerup_f);
+	Cmd_AddCommand ("tp_msgquaddead", TP_Msg_QuadDead_f);
+    Cmd_AddCommand ("tp_msgsafe", TP_Msg_Safe_f);
+    Cmd_AddCommand ("tp_msghelp", TP_Msg_Help_f);
+	Cmd_AddCommand ("tp_msggetquad", TP_Msg_GetQuad_f);
+	Cmd_AddCommand ("tp_msggetpent", TP_Msg_GetPent_f);
 	Cmd_AddCommand ("tp_msgpoint", TP_Msg_Point_f);
 	Cmd_AddCommand ("tp_msgtook", TP_Msg_Took_f);
+	Cmd_AddCommand ("tp_msgtrick", TP_Msg_Trick_f);
+	Cmd_AddCommand ("tp_msgreplace", TP_Msg_Replace_f);
+	Cmd_AddCommand ("tp_msgneed", TP_Msg_Need_f);
 
 }

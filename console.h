@@ -63,7 +63,6 @@ void Con_Init (void);
 void Con_Shutdown (void);
 void Con_DrawConsole (int lines);
 void Con_SafePrintf (char *fmt, ...);
-void Con_Print (char *txt);
 void Con_PrintW (wchar *txt);
 void Con_Clear_f (void);
 void Con_DrawNotify (void);

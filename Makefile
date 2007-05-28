@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.65 2007-05-13 14:14:45 hexum Exp $
+#	$Id: Makefile,v 1.66 2007-05-28 10:47:31 johnnycz Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -12,7 +12,7 @@ CC_BASEVERSION = $(shell $(CC) -dumpversion | sed -e 's/\..*//g')
 # TYPE = release debug
 TYPE=release
 STRIP = $(_E)strip
-STRIPFLAGS = --strip-unneeded --remove-section=.comment
+#STRIPFLAGS = --strip-unneeded --remove-section=.comment
 
 # ARCH = x86 ppc
 # OS = linux darwin freebsd

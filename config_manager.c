@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.40 2007-05-13 13:41:43 johnnycz Exp $
+    $Id: config_manager.c,v 1.41 2007-05-28 10:47:32 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -575,6 +575,49 @@ static void ResetPlusCommands(void)
 	Cbuf_AddText("-showteamscores\n");
 }
 
+static void ResetBinds(void)
+{
+	Key_Unbindall_f();
+
+	Key_SetBinding(K_ESCAPE, "togglemenu");
+	Key_SetBinding('`',      "toggleconsole");
+	Key_SetBinding(K_PAUSE,  "toggleproxymenu");
+
+	Key_SetBinding(K_MOUSE1, "+attack");
+	Key_SetBinding(K_CTRL,   "+attack");
+	Key_SetBinding(K_MOUSE2, "+jump");
+	Key_SetBinding(K_SPACE,  "+jump");
+
+	Key_SetBinding('w',      "+forward");
+	Key_SetBinding('s',      "+back");
+	Key_SetBinding('a',      "+moveleft");
+	Key_SetBinding('d',      "+moveright");
+	Key_SetBinding('e',      "impulse 10");
+	Key_SetBinding('q',      "impulse 12");
+	Key_SetBinding('t',      "messagemode");
+	Key_SetBinding('y',      "messagemode2");
+	Key_SetBinding(K_ALT,    "+zoom");
+	Key_SetBinding(K_F12,    "screenshot");
+	Key_SetBinding(K_TAB,    "+showscores");
+
+	Key_SetBinding('f',      "tp_msgreport");
+	Key_SetBinding('z',      "tp_msgtook");
+	Key_SetBinding('x',		 "tp_msgsafe");
+	Key_SetBinding('c',      "tp_msghelp");
+	Key_SetBinding('v',      "tp_msgpoint");
+
+	// user will get confusing warnings on these if he joins a server where these do not exist
+	// maybe some wrappers should be made for these commands which would
+	// before calling them check if they exist
+    Key_SetBinding('r',      "shownick");
+	Key_SetBinding(K_F1,     "yes");
+	Key_SetBinding(K_F2,     "agree");
+	Key_SetBinding(K_F3,     "ready");
+	Key_SetBinding(K_F4,     "break");
+	Key_SetBinding(K_F5,     "join");
+	Key_SetBinding(K_F6,     "observe");
+}
+
 static void ResetTeamplayCommands(void)
 {
 	allskins[0]	= 0;
@@ -659,7 +702,7 @@ static void Config_PrintPreamble(FILE *f)
 
 /************************************ MAIN FUCTIONS	************************************/
 
-static void ResetConfigs(qbool resetall)
+static void ResetConfigs(qbool resetall, qbool read_legacy_configs)
 {
 	FILE *f;
 
@@ -669,7 +712,7 @@ static void ResetConfigs(qbool resetall)
 
 	DeleteUserVariables();
 
-	Cbuf_AddText("unbindall\n");
+	ResetBinds();
 
 	ResetPlusCommands();
 
@@ -677,14 +720,16 @@ static void ResetConfigs(qbool resetall)
 
 	ResetMiscCommands();
 
-
-	Cbuf_AddText ("cl_warncmd 0\n");
-	Cbuf_AddText ("exec default.cfg\n");
-	if (FS_FOpenFile("autoexec.cfg", &f) != -1) {
-		Cbuf_AddText ("exec autoexec.cfg\n");
-		fclose(f);
+	if (read_legacy_configs)
+	{
+		Cbuf_AddText ("cl_warncmd 0\n");
+		Cbuf_AddText ("exec default.cfg\n");
+		if (FS_FOpenFile("autoexec.cfg", &f) != -1) {
+			Cbuf_AddText ("exec autoexec.cfg\n");
+			fclose(f);
+		}
+		Cbuf_AddText ("cl_warncmd 1\n");
 	}
-	Cbuf_AddText ("cl_warncmd 1\n");
 }
 
 void DumpConfig(char *name)
@@ -843,12 +888,16 @@ void SaveConfig_f(void)
 
 void ResetConfigs_f(void)
 {
-	if (Cmd_Argc() != 1) {
-		Com_Printf("Usage: %s \n",	Cmd_Argv(0));
+	int argc = Cmd_Argc();
+	qbool read_legacy_configs = argc == 2 && !strcmp(Cmd_Argv(1), "full");
+
+	if (argc != 1 && !read_legacy_configs) {
+		Com_Printf("Usage: %s [full]\n",	Cmd_Argv(0));
 		return;
 	}
 	Com_Printf("Resetting configuration to default state...\n");
-	ResetConfigs(true);
+
+	ResetConfigs(true, read_legacy_configs);
 }
 
 // well exec /home/qqshka/ezquake/config.cfg does't work, security or something, so adding this
@@ -920,7 +969,7 @@ void LoadConfig_f(void)
 	fclose(f);
 
 	con_suppress = true;
-	ResetConfigs(false);
+	ResetConfigs(false, true);
 	con_suppress = false;
 
 	Com_Printf("Loading config %s ...\n", filename);

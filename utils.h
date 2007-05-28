@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.h,v 1.14 2007-02-19 13:55:02 qqshka Exp $
+	$Id: utils.h,v 1.15 2007-05-28 10:47:36 johnnycz Exp $
 
 */
 
@@ -50,7 +50,7 @@ int Player_NumtoSlot (int num);
 int Player_GetSlot(char *arg);
 char *Player_MyName(void);
 
-qbool Util_F_Match(char *msg, char *f_req);
+qbool Util_F_Match (const char *msg, char *f_req);
 
 char *Utils_TF_ColorToTeam(int);
 int Utils_TF_TeamToColor(char *);

@@ -7,7 +7,7 @@
     made by:
         johnnycz, Mar 2007
     last edit:
-        $Id: Ctrl_ScrollBar.c,v 1.4 2007-05-03 12:03:52 johnnycz Exp $
+        $Id: Ctrl_ScrollBar.c,v 1.5 2007-05-28 10:47:31 johnnycz Exp $
 
 */
 
@@ -15,7 +15,7 @@
 #include "keys.h"
 #include "Ctrl.h"
 
-#define SCRBARSCALE 0.25
+#define SCRBARSCALE 0.33
 
 // In GL shouw .png scrollbar images
 mpic_t *scrbar_up, *scrbar_down, *scrbar_bg, *scrbar_slider;

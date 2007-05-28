@@ -1,6 +1,6 @@
 /*
 
-	$Id: sys_mac.c,v 1.22 2007-02-16 09:30:40 qqshka Exp $
+	$Id: sys_mac.c,v 1.23 2007-05-28 10:47:34 johnnycz Exp $
 
 */
 // sys_mac.c -- Macintosh system driver
@@ -8,6 +8,7 @@
 #define __OPENTRANSPORTPROVIDERS__
 
 #include "quakedef.h"
+#include "keys.h"
 
 #include <pthread.h>
 
@@ -34,6 +35,8 @@
 #include <stdio.h>
 
 char *kAppName = "ezQuake";
+
+cvar_t	sys_yieldcpu = {"sys_yieldcpu", "0"};
 
 // The following are needed for activate/deactivate
 extern qbool video_restart;
@@ -1455,4 +1458,8 @@ void *Sys_GetProcAddress (const char *ExtName)
 			ExtName,
 			CFStringGetSystemEncoding(),
 			0));
+}
+
+wchar *Sys_GetClipboardTextW(void) {
+	return NULL;
 }

@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.37 2007-05-13 13:41:42 johnnycz Exp $
+	$Id: EX_browser.c,v 1.38 2007-05-28 10:47:31 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1537,8 +1537,13 @@ void SB_SourceMark(void)
 void MarkDefaultSources(void) {
 	int i;
     for (i=0; i < sourcesn; i++)
-        if (!strcmp(sources[i]->name, "id limbo") || !strcmp(sources[i]->name, "Global"))
+	{
+        if (!strcmp(sources[i]->name, "id limbo") || 
+			!strcmp(sources[i]->name, "Global") ||
+			!strcmp(sources[i]->name, "QuakeServers.net")
+		)
             sources[i]->checked = 1;
+	}
 }
 
 

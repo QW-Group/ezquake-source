@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_dma.c,v 1.44 2007-05-13 19:20:41 hexum Exp $
+    $Id: snd_dma.c,v 1.45 2007-05-28 10:47:34 johnnycz Exp $
 */
 // snd_dma.c -- main control for any streaming sound output device
 
@@ -137,7 +137,7 @@ static qbool S_Startup (void)
 		sound_spatialized = false;
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -247,7 +247,7 @@ void S_Init (void)
 
 	if (!S_Startup ()) {
 		snd_initialized = false;
-		return;
+		 return;
 	}
 
 	known_sfx = (sfx_t *) Hunk_AllocName (MAX_SFX * sizeof(sfx_t), "sfx_t");

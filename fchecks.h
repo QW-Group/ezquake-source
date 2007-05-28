@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define  _FCHECKS_H_
 
 void FChecks_Init(void);
-void FChecks_CheckRequest(char *);
+void FChecks_CheckRequest (const char *);
 
 extern cvar_t allow_scripts;
 

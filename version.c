@@ -23,13 +23,11 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: version.c,v 1.13 2007-05-13 13:41:44 johnnycz Exp $
+	$Id: version.c,v 1.14 2007-05-28 10:47:36 johnnycz Exp $
 */
 
 #include "common.h"
 #include "version.h"
-
-#define VERSION_NUMBER "1.9 alpha"
 
 static char *date = __DATE__ ;
 static char *mon[12] = 

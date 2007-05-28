@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.64 2007-05-13 13:41:43 johnnycz Exp $
+		$Id: menu_options.c,v 1.65 2007-05-28 10:47:34 johnnycz Exp $
 
 */
 
@@ -25,9 +25,7 @@
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 #include "tr_types.h"
-#endif // _WIN32 || __linux__ || __FreeBSD__
 #else
 #include "r_model.h"
 #include "r_local.h"
@@ -257,7 +255,7 @@ const char* RulesetRead(void) {
 	return ruleset.string;
 }
 void RulesetToggle(qbool back) {
-
+	if (back) RulesetToggle(false);
 	if (!strcmp(ruleset.string, "default")) Cvar_Set(&ruleset, "smackdown");
 	else if (!strcmp(ruleset.string, "smackdown")) Cvar_Set(&ruleset, "mtfl");
 	else if (!strcmp(ruleset.string, "mtfl")) Cvar_Set(&ruleset, "default");
@@ -293,14 +291,12 @@ setting settgeneral_arr[] = {
     ADDSET_CUSTOM	("Process Priority", PriorityRead, PriorityToggle, "Change client process priority. If you experience tearing or lagging, change this value to something that works for you."),
 #endif
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
-	//Video
-	ADDSET_SEPARATOR("Video"),
-	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
-	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
-	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
-	ADDSET_NUMBER	("Field of View", scr_fov, 40, 140, 2),
-	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphics effects presets here."),
-	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
+	
+	//Connection
+	ADDSET_SEPARATOR("Connection"),
+	ADDSET_CUSTOM	("Bandwidth Limit", BandwidthRead, BandwidthToggle, "Select a speed close to your internet connection link speed."),
+	ADDSET_CUSTOM	("Quality", ConQualityRead, ConQualityToggle, "Ensures that packets with weapon switch command don't get lost."),
+	
 	//Sound & Volume
 	ADDSET_SEPARATOR("Sound & Volume"),
 	ADDSET_NUMBER	("Primary Volume", s_volume, 0, 1, 0.05),
@@ -313,10 +309,7 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
 	ADDSET_CUSTOM	("Quality", SoundqualityRead, SoundqualityToggle, "Sound sampling rate."),
 	ADDSET_BASIC_SECTION(),
-		//Connection
-	ADDSET_SEPARATOR("Connection"),
-	ADDSET_CUSTOM	("Bandwidth Limit", BandwidthRead, BandwidthToggle, "Select a speed close to your internet connection link speed."),
-	ADDSET_CUSTOM	("Quality", ConQualityRead, ConQualityToggle, "Ensures that packets with weapon switch command don't get lost."),
+	
 	//Chat Settings
 	ADDSET_SEPARATOR("Chat settings"),
 	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
@@ -412,7 +405,7 @@ setting setthud_arr[] = {
 	ADDSET_NUMBER	("Crosshair size", crosshairsize, 0.2, 3, 0.2),
 #ifdef GLQUAKE
 	ADDSET_NUMBER	("Crosshair alpha", gl_crosshairalpha, 0.1, 1, 0.1),
-	ADDSET_NAMED	("Overhead Info", scr_autoid, scrautoid_enum),
+	ADDSET_NAMED	("Overhead Name", scr_autoid, scrautoid_enum),
 #endif
 	ADDSET_SEPARATOR("New HUD"),
 	ADDSET_BOOLLATE	("Gameclock", hud_gameclock_show),
@@ -472,25 +465,25 @@ qbool CT_Opt_HUD_Mouse_Event(const mouse_state_t *ms)
 {
 	return Settings_Mouse_Event(&setthud, ms);
 }
-
+//// PLAYER SETTINGS /////
 settings_page settplayer;
 setting settplayer_arr[] = {
 	ADDSET_SEPARATOR("Player Settings"),
 	ADDSET_STRING	("Name", name),
 	ADDSET_STRING	("Teamchat Prefix", cl_fakename),
 	ADDSET_STRING	("Team", team),
-	ADDSET_STRING	("Skin", skin),
+	ADDSET_SKIN		("Skin", skin),
 	ADDSET_COLOR	("Shirt Color", topcolor),
 	ADDSET_COLOR	("Pants Color", bottomcolor),
 	ADDSET_CUSTOM	("Ruleset", RulesetRead, RulesetToggle, "If you are taking part in a tournament, you usually need to set this to smackdown; (this will limit some client features."),
-	ADDSET_SEPARATOR("Teammates"),
+	ADDSET_SEPARATOR("Team Colors"),
 	ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
 	ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
 	ADDSET_SKIN		("Skin", cl_teamskin),
 	ADDSET_SKIN		("Quad Skin", cl_teamquadskin),
 	ADDSET_SKIN		("Pent Skin", cl_teampentskin),
 	ADDSET_SKIN		("Quad+Pent Skin", cl_teambothskin),
-	ADDSET_SEPARATOR("Enemies"),
+	ADDSET_SEPARATOR("Enemy Colors"),
 	ADDSET_COLOR	("Shirt Color", cl_enemytopcolor),
 	ADDSET_COLOR	("Pants Color", cl_enemybottomcolor),
 	ADDSET_SKIN		("Skin", cl_enemyskin),
@@ -552,17 +545,22 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Thunderbolt", "weapon 8"),
 	
 	ADDSET_SEPARATOR("Teamplay"),
-	ADDSET_BIND("Report Status", "tp_report"),
-	ADDSET_BIND("Lost location", "tp_lost"),
-	ADDSET_BIND("Location safe", "tp_safe"),
+	ADDSET_BIND("Report Status", "tp_msgreport"),
+	ADDSET_BIND("Lost location", "tp_msglost"),
+	ADDSET_BIND("Location safe", "tp_msgsafe"),
 	ADDSET_BIND("Point at item", "tp_msgpoint"),
 	ADDSET_BIND("Took item", "tp_msgtook"),
-	ADDSET_BIND("Coming from location", "tp_coming"),
-	ADDSET_BIND("Help location", "tp_help"),
-	ADDSET_BIND("Enemy Quad Dead", "tp_quaddead"),
-	ADDSET_BIND("Enemy has Powerup", "tp_enemypwr"),
-	ADDSET_BIND("Get Quad", "tp_getquad"),
-	ADDSET_BIND("Get Pent", "tp_getpent"),
+	ADDSET_BIND("Need items", "tp_msgneed"),
+	ADDSET_BIND("Coming from location", "tp_msgcoming"),
+	ADDSET_BIND("Help location", "tp_msghelp"),
+	ADDSET_BIND("Enemy Quad Dead", "tp_msgquaddead"),
+	ADDSET_BIND("Enemy has Powerup", "tp_msgenemypwr"),
+	ADDSET_BIND("Get Quad", "tp_msggetquad"),
+	ADDSET_BIND("Get Pent", "tp_msggetpent"),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_BIND("Trick at location", "tp_msgtrick"),
+	ADDSET_BIND("Replace at location", "tp_msgreplace"),
+	ADDSET_BASIC_SECTION(),
 
 	ADDSET_SEPARATOR("Communication"),
 	ADDSET_BIND("Chat", "messagemode"),
@@ -784,18 +782,19 @@ setting settfps_arr[] = {
 	ADDSET_SEPARATOR("Presets"),
 	ADDSET_ACTION	("Load Fast Preset", LoadFastPreset, "Adjust for high performance."),
 	ADDSET_ACTION	("Load HQ preset", LoadHQPreset, "Adjust for high image-quality."),
+	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphics effects presets here."),
+	
 	ADDSET_SEPARATOR("Miscellaneous"),
-	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Tells the client to limit the amount of frames rendered per second."),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Disable lin. interp.", cl_nolerp),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
 	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
 	ADDSET_BOOL		("Pickup Flashes", v_bonusflash),
+	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
+	
 	ADDSET_SEPARATOR("Environment"),
-#ifdef GLQUAKE
-	ADDSET_NUMBER	("Draw Distance", r_farclip, 4096, 8192, 4096),
-#endif
+
 	ADDSET_BOOL		("Simple Sky", r_fastsky),
 	ADDSET_BOOL		("Simple walls", r_drawflat),
 	ADDSET_BOOL		("Simple turbs", r_fastturb), 
@@ -803,6 +802,7 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Gib Filter", cl_gibfilter),
 	ADDSET_NAMED	("Dead Body Filter", cl_deadbodyfilter, deadbodyfilter_enum),
 	ADDSET_SEPARATOR("Projectiles"),
+	
 	ADDSET_NAMED	("Explosion Type", r_explosiontype, explosiontype_enum),
 	ADDSET_NAMED	("Rocket Model", cl_rocket2grenade, rocketmodel_enum),
 	ADDSET_NAMED	("Rocket Trail", r_rockettrail, rockettrail_enum),
@@ -835,13 +835,16 @@ setting settfps_arr[] = {
 #ifdef GLQUAKE
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SEPARATOR("Textures"),
-	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
 	ADDSET_BOOL		("Luma", gl_lumaTextures),
 	ADDSET_CUSTOM	("Detail", TexturesdetailRead, TexturesdetailToggle, "Determines the texture quality; resolution of the textures in memory."),
 	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
 	ADDSET_BOOL		("No Textures", gl_textureless),
-	ADDSET_CUSTOM	("Quality Mode", TexturesqualityRead, TexturesqualityToggle, "Determines the texture quality; rendering quality."),
-	ADDSET_SEPARATOR("Point of View"),
+	
+	ADDSET_BASIC_SECTION(),
+	ADDSET_SEPARATOR("Field of View"),
+	ADDSET_NUMBER	("View Size (fov)", scr_fov, 40, 140, 2),
+	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Rollangle", cl_rollangle, 0, 30, 2),
 	ADDSET_NUMBER	("Rollspeed", cl_rollspeed, 0, 30, 2),
 	ADDSET_BOOL		("Gun Kick", v_gunkick),
@@ -899,20 +902,24 @@ menu_video_settings_t mvs_previous;
 
 // will apply given video settings
 static void ApplyVideoSettings(const menu_video_settings_t *s) {
+#ifndef __APPLE__
 	Cvar_SetValue(&r_mode, s->res);
 	Cvar_SetValue(&r_colorbits, s->bpp);
 	Cvar_SetValue(&r_displayRefresh, s->freq.value);
 	Cvar_SetValue(&r_fullscreen, s->fullscreen);
+#endif
 	Cbuf_AddText("vid_restart\n");
     Com_Printf("askmode: %s\n", mvs_askmode ? "on" : "off");
 }
 
 // will store current video settings into the given structure
 static void StoreCurrentVideoSettings(menu_video_settings_t *out) {
+#ifndef __APPLE__
 	out->res = (int) r_mode.value;
 	out->bpp = (int) r_colorbits.value;
 	Cvar_SetValue(&out->freq, r_displayRefresh.value);
 	out->fullscreen = (int) r_fullscreen.value;
+#endif
 }
 
 // performed when user hits the "apply" button
@@ -962,24 +969,42 @@ void BitDepthToggle(qbool back) {
 void FullScreenToggle(qbool back) { mvs_selected.fullscreen = mvs_selected.fullscreen ? 0 : 1; }
 
 setting settvideo_arr[] = {
+	//Video
+	ADDSET_SEPARATOR("Video"),
+	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
+	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
+	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
+	ADDSET_CUSTOM	("Quality Mode", TexturesqualityRead, TexturesqualityToggle, "Determines the texture quality; rendering quality."),
+	
 	ADDSET_SEPARATOR("Screen settings"),
 	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
+#ifdef GLQUAKE
+#ifndef __APPLE__
+	ADDSET_BOOL("Vertical sync", r_swapInterval),
+#endif
+#endif
 	ADDSET_CUSTOM("Bit depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
 	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
 	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
-	ADDSET_SEPARATOR("Text layer settings"),
+	
+	ADDSET_SEPARATOR("Font Size"),
+#ifndef __APPLE__
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
 	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
+#endif
+
 	ADDSET_SEPARATOR("Miscellaneous"),
+	
+	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Limits the amount of frames rendered per second. May help with lag; best to consult forums about the best value for your setup."),
+	ADDSET_ADVANCED_SECTION(),
 #ifdef GLQUAKE
-#ifndef __MACOS__
-	ADDSET_BOOL("Vertical sync.", r_swapInterval),
-#endif
-#endif
+	ADDSET_NUMBER("Draw Distance", r_farclip, 4096, 8192, 4096),
+	ADDSET_BASIC_SECTION(),
 #ifdef _WIN32
 	ADDSET_BOOL("Activity Flash", vid_flashonactivity),
 	ADDSET_BOOL("New Caption", cl_window_caption)
+#endif
 #endif
 };
 settings_page settvideo;

@@ -17,12 +17,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: auth.c,v 1.14 2007-05-03 12:03:53 johnnycz Exp $
+	$Id: auth.c,v 1.15 2007-05-28 10:47:31 johnnycz Exp $
 */
 
 #include "quakedef.h"
 #include "modules.h"
 #include "utils.h"
+#include "version.h"
 
 
 cvar_t	auth_validateclients	= {"auth_validate", "1"};		
@@ -75,7 +76,7 @@ static qbool verify_response(int index, char *hash) {
 	return retval;
 }
 
-static int Auth_CheckString (char *id, char *s, int flags, int offset, int *out_slot, char *out_data, int out_size) {
+static int Auth_CheckString (char *id, const char *s, int flags, int offset, int *out_slot, char *out_data, int out_size) {
 	int len, slot;
 	char name[32], *index;
 	char hash[30];
@@ -113,7 +114,7 @@ static int Auth_CheckString (char *id, char *s, int flags, int offset, int *out_
 }
 
 
-static void Auth_CheckFServerResponse (char *s, int flags, int offset) {
+static void Auth_CheckFServerResponse (const char *s, int flags, int offset) {
 	int response, slot;
 	char data[16], *port;
 
@@ -149,10 +150,10 @@ static void Auth_AuthenticateClient(int slot) {
 	cl.players[slot].validated = true;
 }
 
-static void Auth_CheckAuthResponse (char *s, int flags, int offset) {
+static void Auth_CheckAuthResponse (const char *s, int flags, int offset) {
 	int response, slot;
 
-	response = Auth_CheckString("ezQuake version ", s, flags, offset, &slot, NULL, 0);
+	response = Auth_CheckString("ezQuake " VERSION_NUMBER " ", s, flags, offset, &slot, NULL, 0);
 	if (response == AUTH_NOTHING || (!cls.demoplayback && slot == cl.playernum))
 		return;
 
@@ -230,7 +231,8 @@ void Auth_Init(void) {
 	Cmd_AddCommand ("validate_clients", Auth_Verify_Clients_f);
 }
 
-void Auth_CheckResponse (char *s, int flags, int offset) {
-	Auth_CheckAuthResponse(s, flags, offset);
-	Auth_CheckFServerResponse(s, flags, offset);
+void Auth_CheckResponse (const char *s, int flags, int offset)
+{
+	Auth_CheckAuthResponse (s, flags, offset);
+	Auth_CheckFServerResponse (s, flags, offset);
 }

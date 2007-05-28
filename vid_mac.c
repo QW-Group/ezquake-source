@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __OPENTRANSPORTPROVIDERS__
 
 #include "quakedef.h"
+#include "gl_local.h"
+#include "keys.h"
 
 #include <DrawSprocket.h>
 #include <AGL/agl.h>
@@ -1708,7 +1710,7 @@ int isAltDown(void)
 //       return 1;
 //    return 0;
 
-    extern qbool    keydown[256];
+    extern qbool    keydown[UNKNOWN + 256];
     return keydown[K_ALT];
 }
 int isCtrlDown(void)
@@ -1717,7 +1719,7 @@ int isCtrlDown(void)
 //        return 1;
 //    return 0;
 
-    extern qbool    keydown[256];
+    extern qbool    keydown[UNKNOWN + 256];
     return keydown[K_CTRL];
 }
 int isShiftDown(void)
@@ -1726,7 +1728,7 @@ int isShiftDown(void)
 //        return 1;
 //    return 0;
 
-    extern qbool    keydown[256];
+    extern qbool    keydown[UNKNOWN + 256];
     return keydown[K_SHIFT];
 }
 
