@@ -95,7 +95,7 @@ void Draw_TextBox (int x, int y, int width, int lines);
 
 // HUD -> hexum
 void Draw_SCharacter (int x, int y, int num, float scale);
-void Draw_SString (int x, int y, char *str, float scale);
+void Draw_SString (int x, int y, const char *str, float scale);
 void Draw_SAlt_String (int x, int y, char *str, float scale);
 void Draw_SPic (int x, int y, mpic_t *, float scale);
 // will fit image into given area; will keep it's proportions

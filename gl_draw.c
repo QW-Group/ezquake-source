@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.63 2007-05-13 13:41:43 johnnycz Exp $
+$Id: gl_draw.c,v 1.64 2007-05-28 16:40:38 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1849,7 +1849,7 @@ void Draw_SCharacter (int x, int y, int num, float scale)
 	}
 }
 
-void Draw_SString (int x, int y, char *str, float scale)
+void Draw_SString (int x, int y, const char *str, float scale)
 {
     while (*str)
     {

@@ -1167,7 +1167,7 @@ void Draw_SCharacter (int x, int y, int num, float scale)
     Draw_Character(x, y, num);
 }
 
-void Draw_SString (int x, int y, char *str, float scale)
+void Draw_SString (int x, int y, const char *str, float scale)
 {
     // no scale in SOFT yet..
     Draw_String(x, y, str);

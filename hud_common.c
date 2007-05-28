@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.136 2007-05-28 16:21:38 johnnycz Exp $
+	$Id: hud_common.c,v 1.137 2007-05-28 16:40:38 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -4824,13 +4824,13 @@ void SCR_HUD_DrawOwnFrags(hud_t *hud)
     int x, y;
     double alpha;
     static cvar_t
-        *hud_ownfrags_timeout = NULL;
-//        *hud_ownfrags_scale = NULL;
+        *hud_ownfrags_timeout = NULL,
+        *hud_ownfrags_scale = NULL;
 //        *hud_ownfrags_color = NULL;
 
     if (hud_ownfrags_timeout == NULL)    // first time
     {
-		// hud_ownfrags_scale				= HUD_FindVar(hud, "scale");
+		hud_ownfrags_scale				= HUD_FindVar(hud, "scale");
         // hud_ownfrags_color               = HUD_FindVar(hud, "color");
         hud_ownfrags_timeout            = HUD_FindVar(hud, "timeout");
     }
@@ -4839,11 +4839,9 @@ void SCR_HUD_DrawOwnFrags(hud_t *hud)
         return;
     }
 
-    /*
     width *= hud_ownfrags_scale->value;
     height *= hud_ownfrags_scale->value;
-    */
-
+    
     alpha = 2 - hud_ownfrags_timeout->value / VX_OwnFragTime() * 2;
     alpha = bound(0, alpha, 1);
 
@@ -4851,10 +4849,8 @@ void SCR_HUD_DrawOwnFrags(hud_t *hud)
         return;
 
     if (VX_OwnFragTime() < hud_ownfrags_timeout->value)
-        Draw_ColoredString(x, y, VX_OwnFragText(), false);
+        Draw_SString(x, y, VX_OwnFragText(), hud_ownfrags_scale->value);
 }
-
-#ifdef GLQUAKE
 
 void SCR_HUD_DrawKeys(hud_t *hud)
 {
@@ -4892,6 +4888,9 @@ void SCR_HUD_DrawKeys(hud_t *hud)
 	Draw_SString(x, y, line1, scale);
 	Draw_SString(x, y + LETTERHEIGHT*scale, line2, scale);
 }
+
+#ifdef GLQUAKE
+
 
 // What stats to draw.
 #define HUD_RADAR_STATS_NONE				0
@@ -6664,10 +6663,10 @@ void CommonDraw_Init(void)
         0, ca_active, 1, SCR_HUD_DrawOwnFrags,
         "1", "screen", "center", "top", "0", "50", "0.2", "0 0 100", NULL,
         /*
-        "scale", "2",
         "color", "255 255 255",
         */
         "timeout", "3",
+		"scale", "1.5",
         NULL
         );
 
