@@ -105,7 +105,7 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 }
 
 // Own Frags Text
-#define OWNFRAGPREFIX "You've fragged "
+#define OWNFRAGPREFIX "You fragged "
 
 static void VX_OwnFragNew(const char *victim)
 {
