@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: rulesets.c,v 1.52.2.1 2007-04-11 01:16:06 disconn3ct Exp $
+	$Id: rulesets.c,v 1.52.2.2 2007-05-29 13:42:17 disconn3ct Exp $
 
 */
 
@@ -320,20 +320,21 @@ void Rulesets_Init (void)
 
 	Cvar_Register (&ruleset);
 
-	// FIXME: we should print warning about deprecated cmdline param at the last line of init screen
-	if ((temp = COM_CheckParm("-ruleset")) && temp + 1 < com_argc) {
-//		Com_Printf_State (PRINT_INFO, "\"-ruleset\" is deprecated. Remove it from your cmdline and your \"ruleset\" variable in your config\n");
-		if (!strcasecmp(com_argv[temp + 1], "smackdown")) {
+	if ((temp = COM_CheckParm ("-ruleset")) && temp + 1 < com_argc) {
+		if (!strcasecmp (com_argv[temp + 1], "smackdown")) {
 			Cvar_Set (&ruleset, "smackdown");
-		} else if (!strcasecmp(com_argv[temp + 1], "mtfl")) {
+			return;
+		} else if (!strcasecmp (com_argv[temp + 1], "mtfl")) {
 			Cvar_Set (&ruleset, "mtfl");
-		} else if (strcasecmp(com_argv[temp + 1], "default")){
+			return;
+		} else if (strcasecmp (com_argv[temp + 1], "default")){
 			Cvar_Set (&ruleset, "default");
-			Com_Printf_State (PRINT_INFO, "Unknown ruleset \"%s\"\n", com_argv[temp + 1]);
+			return;
+		} else {
+			Rulesets_Default ();
+			return;
 		}
 	}
-
-	Rulesets_Default();
 }
 
 
