@@ -1,5 +1,5 @@
 /*
-$Id: mvd_utils.c,v 1.40 2007-05-29 18:10:12 johnnycz Exp $
+$Id: mvd_utils.c,v 1.41 2007-05-29 20:45:21 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -345,6 +345,7 @@ cvar_t mvd_autotrack_4on4 = {"mvd_autotrack_4on4", "%a * %A + 50 * %W + %p + %f"
 cvar_t mvd_autotrack_4on4_values = {"mvd_autotrack_4on4_values", "1 2 4 2 4 6 10 10 1 2 3 500 900 1000"}; 
 cvar_t mvd_autotrack_custom = {"mvd_autotrack_custom", "%a * %A + 50 * %W + %p + %f"};
 cvar_t mvd_autotrack_custom_values = {"mvd_autotrack_custom_values", "1 2 3 2 3 6 6 1 2 3 500 900 1000"}; 
+cvar_t mvd_autotrack_lockteam = {"mvd_autotrack_lockteam", "0"};
 
 cvar_t mvd_multitrack_1 = {"mvd_multitrack_1", "%f"};
 cvar_t mvd_multitrack_1_values = {"mvd_multitrack_1_values", "1 2 3 2 3 5 8 8 1 2 3 0 0 0"};
@@ -837,10 +838,16 @@ int MVD_FindBestPlayer_f(void)
 		mvd_new_info[i].value = value;
 	}
 	
-	lastval = mvd_new_info[0].value;
-	bp_id = mvd_new_info[0].id;
-	for ( h=1 ; h<mvd_cg_info.pcount ; h++ ) {
+	if (cl.viewplayernum >= mvd_cg_info.pcount) {
+		return mvd_new_info[0].id;
+	}
+	lastval = mvd_new_info[cl.viewplayernum].value;
+	bp_id = mvd_new_info[cl.viewplayernum].id;
+	for ( h=0 ; h<mvd_cg_info.pcount ; h++ ) {
 		if (lastval < mvd_new_info[h].value) {
+			if (mvd_autotrack_lockteam.integer && strcmp(cl.players[h].team, cl.players[cl.viewplayernum].team))
+				continue;
+
 			lastval = mvd_new_info[h].value;
 			bp_id 	= mvd_new_info[h].id;
 		}
@@ -1923,6 +1930,7 @@ void MVD_Utils_Init (void) {
 	Cvar_Register (&mvd_autotrack_4on4_values);
 	Cvar_Register (&mvd_autotrack_custom);
 	Cvar_Register (&mvd_autotrack_custom_values);
+	Cvar_Register (&mvd_autotrack_lockteam);
 
 	Cvar_Register (&mvd_multitrack_1);
 	Cvar_Register (&mvd_multitrack_1_values);
