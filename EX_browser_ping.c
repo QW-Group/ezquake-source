@@ -45,25 +45,17 @@ int sock;
 void SB_RootInit(void)
 {
     int arg;
-/*
-    if (COM_CheckParm("-nosockraw"))
-    {
-        sock = -1;
-        return;
-    }
-*/
+
 	if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP)) == INVALID_SOCKET) {
-		/*
-		disconnect: always error 1 @ my ~x86 gentoo
-		but it's OK if i run ezQ as root.
-		What if i run ezQ as limited user on windows?
-		BTW, NewPing (aka no SOCK_RAW ping) is unstable on linux and very inaccurate :E
-		*/
+		/* disconnect: SOCK_RAW is only avail for root on linux
+		 * and for administrator users on winxp.
+		 * for case of vista it seems raw sockets are forbidden even for administratos
+		 * BTW, NewPing (aka no SOCK_RAW ping) is unstable on linux and very inaccurate :E
+		 */
 		Com_DPrintf ("SB_RootInit: socket: (%i): %s\n", qerrno, strerror(qerrno));
 	}
 
-
-	if (sock < 0 || COM_CheckParm("-nosockraw")) {
+	if (sock < 0 || COM_CheckParm("-nosockraw") || WinVISTA) {
 		useNewPing = true;
 		return;
 	}
