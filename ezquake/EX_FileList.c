@@ -549,6 +549,12 @@ void FL_ReadZip (filelist_t *fl)
 
 	fl->error = false;
 
+	// Make sure we don't have some garbage left from the previous dir.
+	// This caused a bug where some files inside of a zip would be
+	// regarded as zip files, since the files with the same index
+	// in the parent directory were zip files.
+	memset(fl->entries, 0, sizeof(fl->entries));
+
 	do
     {
 		// Pointer to the current file entry.
@@ -591,7 +597,6 @@ void FL_ReadZip (filelist_t *fl)
 		}
 skip:
         // Get next filesystem entry
-		//temp = Sys_ReadDirNext(search, &ent);
 		temp = COM_ZipGetNextFile (zip_file, &ent);
     }
     while (temp > 0);
