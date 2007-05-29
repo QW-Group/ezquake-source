@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.138 2007-05-28 20:52:07 johnnycz Exp $
+	$Id: hud_common.c,v 1.139 2007-05-29 22:15:45 johnnycz Exp $
 */
 //
 // common HUD elements
@@ -313,8 +313,13 @@ void SCR_HUD_DrawTracking(hud_t *hud)
     int x = 0, y = 0, width = 0, height = 0;
     char track_string[MAX_TRACKING_STRING];
 
-	static cvar_t *hud_tracking_format;
-	hud_tracking_format = HUD_FindVar(hud, "format");
+	static cvar_t *hud_tracking_format = NULL,
+		*hud_tracking_scale;
+
+	if (!hud_tracking_format) {
+		hud_tracking_format = HUD_FindVar(hud, "format");
+		hud_tracking_scale = HUD_FindVar(hud, "scale");
+	}
 
 	strlcpy(track_string, hud_tracking_format->string, sizeof(track_string));
 
@@ -364,6 +369,8 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 	}
 
 	height = 8 * views;
+	height *= hud_tracking_scale->value;
+	width *= hud_tracking_scale->value;
 
 	if(!HUD_PrepareDraw(hud, width, height, &x, &y))
 	{
@@ -379,13 +386,13 @@ void SCR_HUD_DrawTracking(hud_t *hud)
 			{
 				continue;
 			}
-			Draw_ColoredString(x, y + view*8, tracked_strings[view], 0);
+			Draw_SString(x, y + view*8, tracked_strings[view], hud_tracking_scale->value);
 		}
 	}
 	else if (cl.spectator && autocam == CAM_TRACK && !cl_multiview.value)
 	{
 		// Normal
-		Draw_ColoredString(x, y, track_string, 0);
+		Draw_SString(x, y, track_string, hud_tracking_scale->value);
 	}
 }
 
@@ -6425,6 +6432,7 @@ void CommonDraw_Init(void)
 		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawTracking,
 		"1", "face", "center", "before", "0", "0", "0", "0 0 0", NULL,
 		"format", "Tracking %t %n, [JUMP] for next",
+		"scale", "1",
 		NULL);
 
     // groups
