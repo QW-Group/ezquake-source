@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: win_glimp.c,v 1.13.2.3 2007-05-27 15:26:28 qqshka Exp $
+	$Id: win_glimp.c,v 1.13.2.4 2007-05-29 13:31:48 disconn3ct Exp $
 
 */
 /*
@@ -1871,7 +1871,7 @@ void VID_SetDeviceGammaRamp(unsigned short *ramps) {
 
 	customgamma = true;
 
-	if ( Win2K )
+	if ( Win2K || WinXP || Win2K3 || WinVISTA)
 	{
 		int i, j;
 
