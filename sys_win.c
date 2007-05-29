@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.38 2007-05-03 12:03:55 johnnycz Exp $
+	$Id: sys_win.c,v 1.39 2007-05-29 13:23:08 disconn3ct Exp $
 
 */
 // sys_win.c
@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define NOT_FOCUS_SLEEP	20				// sleep time when not focus
 
 qbool		ActiveApp, Minimized;
-qbool        WinNT, Win2K;
+qbool		WinNT, Win2K, WinXP, Win2K3, WinVISTA;
 
 
 qbool OnChange_sys_highpriority (cvar_t *, char *);
@@ -452,8 +452,11 @@ void Sys_Init_ (void) {
 	if ((vinfo.dwMajorVersion < 4) || (vinfo.dwPlatformId == VER_PLATFORM_WIN32s))
 		Sys_Error ("ezQuake requires at least Win95 or NT 4.0");
 
-	WinNT = (vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) ? true : false;
-	Win2K = WinNT && (vinfo.dwMajorVersion == 5);
+	WinNT = (vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) ? true : false; // NT4
+	Win2K = WinNT && (vinfo.dwMajorVersion == 5) && (vinfo.dwMinorVersion == 0); // 2000
+	WinXP = WinNT && (vinfo.dwMajorVersion == 5) && (vinfo.dwMinorVersion == 1); // XP
+	Win2K3 = WinNT && (vinfo.dwMajorVersion == 5) && (vinfo.dwMinorVersion == 2); // 2003 or 2003 R2 or XP Pro 64
+	WinVISTA = WinNT && (vinfo.dwMajorVersion == 6) && (vinfo.dwMinorVersion == 0); // Vista or Longhorn Server
 }
 
 /********************************* CLIPBOARD *********************************/
