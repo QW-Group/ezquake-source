@@ -1,5 +1,5 @@
 /*
-$Id: mvd_utils.c,v 1.39 2007-05-13 13:41:44 johnnycz Exp $
+$Id: mvd_utils.c,v 1.40 2007-05-29 18:10:12 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -741,32 +741,34 @@ expr_val MVD_Var_Vals(const char *n)
     // Y - lost quad
     // z - took pent
 
-	if      (VN('a'))  return Get_Expr_Double(mvd_new_info[i].p_info->stats[STAT_ARMOR]); 
-	else if (VN('A'))  return Get_Expr_Double(bp_at); 
-	else if (VN('c'))  return Get_Expr_Double(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].time); 
-	else if (VN('C'))  return Get_Expr_Integer(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].frags); 
-	else if (VN('f'))  return Get_Expr_Integer(mvd_new_info[i].p_info->frags); 
-	else if (VN('h'))  return Get_Expr_Integer(mvd_new_info[i].p_info->stats[STAT_HEALTH]); 
-	else if (VN('j'))  return Get_Expr_Integer(mvd_new_info[i].info.info[NG_INFO].count); 
-	else if (VN('J'))  return Get_Expr_Integer(mvd_new_info[i].info.info[SNG_INFO].count); 
-	else if (VN('k'))  return Get_Expr_Integer(mvd_new_info[i].info.info[GL_INFO].count); 
-	else if (VN('K'))  return Get_Expr_Integer(mvd_new_info[i].info.info[GL_INFO].lost); 
-	else if (VN('l'))  return Get_Expr_Integer(mvd_new_info[i].info.info[RL_INFO].count); 
-	else if (VN('L'))  return Get_Expr_Integer(mvd_new_info[i].info.info[RL_INFO].lost); 
-	else if (VN('m'))  return Get_Expr_Integer(mvd_new_info[i].info.info[LG_INFO].count); 
-	else if (VN('M'))  return Get_Expr_Integer(mvd_new_info[i].info.info[LG_INFO].lost); 
-	else if (VN('n'))  return Get_Expr_Integer(mvd_new_info[i].info.info[MH_INFO].count); 
-	else if (VN('N'))  return Get_Expr_Integer(mvd_new_info[i].info.info[GA_INFO].count); 
-	else if (VN('o'))  return Get_Expr_Integer(mvd_new_info[i].info.info[YA_INFO].count); 
-	else if (VN('O'))  return Get_Expr_Integer(mvd_new_info[i].info.info[RA_INFO].count); 
-	else if (VN('p'))  return Get_Expr_Double(bp_pw); 
-	else if (VN('W'))  return Get_Expr_Integer(MVD_AutoTrackBW_f(i)); 
-	else if (VN('x'))  return Get_Expr_Double(mvd_new_info[i].info.info[RING_INFO].count); 
-	else if (VN('X'))  return Get_Expr_Double(mvd_new_info[i].info.info[RING_INFO].lost); 
-	else if (VN('y'))  return Get_Expr_Double(mvd_new_info[i].info.info[QUAD_INFO].count); 
-	else if (VN('Y'))  return Get_Expr_Double(mvd_new_info[i].info.info[QUAD_INFO].lost); 
-	else if (VN('z'))  return Get_Expr_Double(mvd_new_info[i].info.info[PENT_INFO].count); 
-	else return Get_Expr_Integer(0);
+	switch (*n) {
+    case 'a': return Get_Expr_Double(mvd_new_info[i].p_info->stats[STAT_ARMOR]);
+    case 'A': return Get_Expr_Double(bp_at);
+    case 'c': return Get_Expr_Double(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].time);
+    case 'C': return Get_Expr_Integer(mvd_new_info[i].info.runs[mvd_new_info[i].info.run].frags);
+    case 'f': return Get_Expr_Integer(mvd_new_info[i].p_info->frags);
+    case 'h': return Get_Expr_Integer(mvd_new_info[i].p_info->stats[STAT_HEALTH]);
+    case 'j': return Get_Expr_Integer(mvd_new_info[i].info.info[NG_INFO].count);
+    case 'J': return Get_Expr_Integer(mvd_new_info[i].info.info[SNG_INFO].count);
+    case 'k': return Get_Expr_Integer(mvd_new_info[i].info.info[GL_INFO].count);
+    case 'K': return Get_Expr_Integer(mvd_new_info[i].info.info[GL_INFO].lost);
+    case 'l': return Get_Expr_Integer(mvd_new_info[i].info.info[RL_INFO].count);
+    case 'L': return Get_Expr_Integer(mvd_new_info[i].info.info[RL_INFO].lost);
+    case 'm': return Get_Expr_Integer(mvd_new_info[i].info.info[LG_INFO].count);
+    case 'M': return Get_Expr_Integer(mvd_new_info[i].info.info[LG_INFO].lost);
+    case 'n': return Get_Expr_Integer(mvd_new_info[i].info.info[MH_INFO].count);
+    case 'N': return Get_Expr_Integer(mvd_new_info[i].info.info[GA_INFO].count);
+    case 'o': return Get_Expr_Integer(mvd_new_info[i].info.info[YA_INFO].count);
+    case 'O': return Get_Expr_Integer(mvd_new_info[i].info.info[RA_INFO].count);
+    case 'p': return Get_Expr_Double(bp_pw);
+    case 'W': return Get_Expr_Integer(MVD_AutoTrackBW_f(i));
+    case 'x': return Get_Expr_Double(mvd_new_info[i].info.info[RING_INFO].count);
+    case 'X': return Get_Expr_Double(mvd_new_info[i].info.info[RING_INFO].lost);
+    case 'y': return Get_Expr_Double(mvd_new_info[i].info.info[QUAD_INFO].count);
+    case 'Y': return Get_Expr_Double(mvd_new_info[i].info.info[QUAD_INFO].lost);
+    case 'z': return Get_Expr_Double(mvd_new_info[i].info.info[PENT_INFO].count);
+	}
+	return Get_Expr_Integer(0);
 }
 
 int MVD_FindBestPlayer_f(void)
