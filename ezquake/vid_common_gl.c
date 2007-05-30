@@ -37,6 +37,11 @@ void *Sys_GetProcAddress (const char *ExtName);
   extern __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
 # endif
 #endif
+#ifdef __FreeBSD__
+# ifndef glXGetProcAddressARB
+  extern __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
+# endif
+#endif
 
 void *GL_GetProcAddress (const char *ExtName)
 {

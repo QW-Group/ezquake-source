@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-    $Id: teamplay.c,v 1.67.2.36 2007-05-24 20:44:35 disconn3ct Exp $
+    $Id: teamplay.c,v 1.67.2.37 2007-05-30 19:01:44 vvd0 Exp $
 */
 
 #include <time.h>
@@ -3180,7 +3180,11 @@ qbool TP_FilterMessage (wchar *source)
 	source[len - 1] = 0; // so that strcmp works properly
  
 	for (j = 0; j < num_filters; j++)
+#ifndef __FreeBSD__
 		if (!wcscasecmp(source + i + 1, str2wcs(filter_strings[j]))) {
+#else // FIXME: FreeBSD have no wcscasecmp function.
+		if (!strcasecmp(wcs2str(source + i + 1), filter_strings[j])) {
+#endif
 			// strip the filter from message
 			if (i && source[i - 1] == ' ')	{
 				// there's a space just before the filter, remove it

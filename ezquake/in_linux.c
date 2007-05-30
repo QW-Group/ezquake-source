@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_linux.c,v 1.7.2.1 2007-05-27 15:35:22 disconn3ct Exp $
+	$Id: in_linux.c,v 1.7.2.2 2007-05-30 19:01:44 vvd0 Exp $
 */
 
 #include "quakedef.h"
@@ -142,12 +142,15 @@ void IN_Init (void)
 	{
 		typedef enum { mt_none = 0, mt_dga, mt_normal, mt_evdev } mousetype_t;
 		extern cvar_t in_mouse;
+#ifdef WITH_EVDEV
 		extern cvar_t in_mmt;
 		extern cvar_t in_evdevice;
+#endif
 
 		if (COM_CheckParm ("-nodga") || COM_CheckParm ("-nomdga"))
 			Cvar_LatchedSetValue (&in_mouse, mt_normal);
 
+#ifdef WITH_EVDEV
 		if (i == COM_CheckParm ("-mevdev") && (i < com_argc - 1)) {
 			Cvar_LatchedSet (&in_evdevice, com_argv[i + 1]);
 			Cvar_LatchedSetValue (&in_mouse, mt_evdev);
@@ -155,6 +158,7 @@ void IN_Init (void)
 
 		if (COM_CheckParm ("-mmt"))
 			Cvar_LatchedSetValue (&in_mmt, 1);
+#endif
 
 		if (COM_CheckParm ("-nomouse"))
 			Cvar_LatchedSetValue (&in_mouse, mt_none);

@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_glimp.c,v 1.10 2007-03-21 17:03:10 vvd0 Exp $
+    $Id: linux_glimp.c,v 1.10.2.1 2007-05-30 19:01:44 vvd0 Exp $
 
 */
 /*
@@ -80,6 +80,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "keys.h"
 #include "tr_types.h"
 #include "input.h"
+#include "rulesets.h"
 
 //
 // cvars
