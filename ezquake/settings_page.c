@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.34.2.8 2007-05-28 12:24:41 johnnycz Exp $
+		$Id: settings_page.c,v 1.34.2.9 2007-05-30 18:45:56 johnnycz Exp $
 
 */
 
@@ -461,6 +461,8 @@ static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
 {
     static mpic_t *curpic = NULL;
     static char lastpicname[MAX_PATH] = "";
+
+	if (!skinfile) return;
 
 // this means the length of "qw/"
 #define QWDIRLEN 3
