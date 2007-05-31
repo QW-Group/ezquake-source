@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.67.2.38 2007-05-31 13:06:04 disconn3ct Exp $
+    $Id: teamplay.c,v 1.67.2.39 2007-05-31 17:56:26 disconn3ct Exp $
 */
 
 #include <time.h>
@@ -97,7 +97,7 @@ cvar_t	tp_name_rune1 = {"tp_name_rune1", "resistance rune"};
 cvar_t	tp_name_rune2 = {"tp_name_rune2", "strength rune"};
 cvar_t	tp_name_rune3 = {"tp_name_rune3", "haste rune"};
 cvar_t	tp_name_rune4 = {"tp_name_rune4", "regeneration rune"};
-cvar_t	tp_name_teammate = {"tp_name_teammate", "teammate"};
+cvar_t	tp_name_teammate = {"tp_name_teammate", ""};
 cvar_t	tp_name_enemy = {"tp_name_enemy", "enemy"};
 cvar_t	tp_name_eyes = {"tp_name_eyes", "eyes"};
 cvar_t	tp_name_quaded = {"tp_name_quaded", "quaded"};
