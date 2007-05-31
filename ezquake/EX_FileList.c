@@ -990,7 +990,7 @@ void FL_DeleteFile(filelist_t *fl)
 	int ce = fl->current_entry;		// Remember where we were.
 	unlink(FL_GetCurrentPath(fl));	// Delete.
 	FL_ReadDir(fl);					// Reload dir.
-	fl->current_entry = ce - 1;		// Set previous position.
+	fl->current_entry = ce;
 	FL_CheckPosition(fl);
 }
 
