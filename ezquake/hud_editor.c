@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.22.2.6 2007-05-04 21:35:27 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.22.2.7 2007-05-31 19:45:10 cokeman1982 Exp $
 
 */
 
@@ -1287,6 +1287,13 @@ static qbool HUD_Editor_Placing(hud_t *hud_hover)
 				Cvar_Set(selected_hud->pos_x, "0");
 				Cvar_Set(selected_hud->pos_y, "0");
 				Cvar_Set(selected_hud->place, hud_hover->name);
+				
+				// Make sure the child has a higher order.
+				if((int)selected_hud->order->value <= (int)hud_hover->order->value)
+				{
+					Cvar_SetValue(selected_hud->order, hud_hover->order->value + 1);
+				}
+
 				HUD_Recalculate();
 
 				// Free selection.
@@ -1591,7 +1598,7 @@ static qbool HUD_Editor_FindHudUnderCursor(hud_t **hud)
 		(*hud) = selected_hud;
 	}
 
-	while(temp_hud->next)
+	while(temp_hud)
 	{
 		// Not visible.
 		if (!temp_hud->show->value || (temp_hud->place_hud && !temp_hud->place_hud->show->value))

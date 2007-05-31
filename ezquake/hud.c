@@ -499,6 +499,25 @@ void HUD_Move_f (void)
 }
 
 //
+// Reorders children so that they are place infront of their parent.
+//
+void HUD_ReorderChildren(void)
+{
+	hud_t *hud = hud_huds;
+
+	// Give all children a higher Z-order.
+	while(hud)
+	{
+		if(hud->place_hud && hud->order->value <= hud->place_hud->order->value)
+		{
+			Cvar_SetValue(hud->order, hud->place_hud->order->value + 1);
+		}
+
+		hud = hud->next;
+	}
+}
+
+//
 // Place the specified hud element.
 //
 void HUD_Place_f (void)
@@ -553,6 +572,10 @@ void HUD_Place_f (void)
         Com_Printf("place: invalid area argument: %s\n", Cmd_Argv(2));
         Cvar_Set(hud->place, temp); // Restore old value.
     }
+	else
+	{
+		HUD_ReorderChildren();
+	}
 }
 
 //
@@ -1109,6 +1132,8 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
 qbool HUD_OnChangeOrder(cvar_t *var, char *val)
 {
 	Cvar_SetValue (var, atoi(val));
+
+	HUD_ReorderChildren();
 
 	HUD_Sort();
 
