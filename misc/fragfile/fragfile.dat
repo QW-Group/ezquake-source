@@ -150,14 +150,15 @@
 
 #DEFINE WEAPON_CLASS    RAIL_GUN            "rail gun"          "rail"		//for dmm8
 
-#DEFINE WEAPON_CLASS    DROWN               "drown"
+#DEFINE WEAPON_CLASS    DROWN               "drowned"
+#DEFINE WEAPON_CLASS    LAVA               "fried"
 #DEFINE WEAPON_CLASS    TRAP                "trap"
 #DEFINE WEAPON_CLASS    TELEFRAG            "telefrag"          "tele"
 #DEFINE WEAPON_CLASS    DISCHARGE           "discharge"         "dschrge"
 #DEFINE WEAPON_CLASS    SQUISH              "squish"
 #DEFINE WEAPON_CLASS    FALL                "fall"
 #DEFINE WEAPON_CLASS    STOMP               "stomp" // ktpro/ktx stomp kills
-
+#DEFINE WEAPON_CLASS    TEAMKILL            "kills"          "tkills"
 
 //
 //OBITUARIES
@@ -167,11 +168,11 @@
 
 #DEFINE OBITUARY    PLAYER_DEATH     DROWN              " sleeps with the fishes"
 #DEFINE OBITUARY    PLAYER_DEATH     DROWN              " sucks it down"
-#DEFINE OBITUARY    PLAYER_DEATH     DROWN              " gulped a load of slime"
-#DEFINE OBITUARY    PLAYER_DEATH     DROWN              " can't exist on slime alone"
-#DEFINE OBITUARY    PLAYER_DEATH     DROWN              " burst into flames"
-#DEFINE OBITUARY    PLAYER_DEATH     DROWN              " turned into hot slag"
-#DEFINE OBITUARY    PLAYER_DEATH     DROWN              " visits the Volcano God"
+#DEFINE OBITUARY    PLAYER_DEATH     LAVA              " gulped a load of slime"
+#DEFINE OBITUARY    PLAYER_DEATH     LAVA              " can't exist on slime alone"
+#DEFINE OBITUARY    PLAYER_DEATH     LAVA              " burst into flames"
+#DEFINE OBITUARY    PLAYER_DEATH     LAVA              " turned into hot slag"
+#DEFINE OBITUARY    PLAYER_DEATH     LAVA              " visits the Volcano God"
 
 #DEFINE OBITUARY    PLAYER_DEATH     FALL               " cratered"
 #DEFINE OBITUARY    PLAYER_DEATH     FALL               " fell to his death"
@@ -207,11 +208,11 @@
 #DEFINE OBITUARY    PLAYER_SUICIDE   DISCHARGE          " heats up the water"
 
 #DEFINE OBITUARY    X_TEAMKILLS_UNKNOWN SQUISH          " squished a teammate"
-#DEFINE OBITUARY    X_TEAMKILLS_UNKNOWN NOWEAPON        " mows down a teammate"
-#DEFINE OBITUARY    X_TEAMKILLS_UNKNOWN NOWEAPON        " checks his glasses"
-#DEFINE OBITUARY    X_TEAMKILLS_UNKNOWN NOWEAPON        " checks her glasses"
-#DEFINE OBITUARY    X_TEAMKILLS_UNKNOWN NOWEAPON        " gets a frag for the other team"
-#DEFINE OBITUARY    X_TEAMKILLS_UNKNOWN NOWEAPON        " loses another friend"
+#DEFINE OBITUARY    X_TEAMKILLS_UNKNOWN TEAMKILL        " mows down a teammate"
+#DEFINE OBITUARY    X_TEAMKILLS_UNKNOWN TEAMKILL        " checks his glasses"
+#DEFINE OBITUARY    X_TEAMKILLS_UNKNOWN TEAMKILL        " checks her glasses"
+#DEFINE OBITUARY    X_TEAMKILLS_UNKNOWN TEAMKILL        " gets a frag for the other team"
+#DEFINE OBITUARY    X_TEAMKILLS_UNKNOWN TEAMKILL        " loses another friend"
 
 #DEFINE OBITUARY    X_TEAMKILLED_UNKNOWN STOMP          " was crushed by his teammate" // ktpro stomp tk
 #DEFINE OBITUARY    X_TEAMKILLED_UNKNOWN STOMP          " was crushed by her teammate" // ktpro stomp tk
