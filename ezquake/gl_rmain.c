@@ -1079,6 +1079,10 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 				break;
 			case mod_brush:
 				brushmodel = 1;
+
+				// Get rid of Z-fighting for textures by offsetting the
+				// drawing of entity models compared to normal polygons.
+				// (Only works if gl_ztrick is turned off)
 				glEnable(GL_POLYGON_OFFSET_FILL);
 				R_DrawBrushModel (currententity);
 				glDisable(GL_POLYGON_OFFSET_FILL);
