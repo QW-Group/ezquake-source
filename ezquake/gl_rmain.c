@@ -1079,7 +1079,9 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 				break;
 			case mod_brush:
 				brushmodel = 1;
+				glEnable(GL_POLYGON_OFFSET_FILL);
 				R_DrawBrushModel (currententity);
+				glDisable(GL_POLYGON_OFFSET_FILL);
 				brushmodel = 0;
 				break;
 			case mod_sprite:
@@ -1638,7 +1640,7 @@ void R_RenderScene (void) {
 	S_ExtraUpdate ();	// don't let sound get messed up if going slow
 
 	R_DrawEntitiesOnList (&cl_visents);
-	R_DrawEntitiesOnList (&cl_alphaents);
+	R_DrawEntitiesOnList (&cl_alphaents);	
 
 	R_DrawWaterSurfaces ();
 

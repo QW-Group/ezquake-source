@@ -210,6 +210,8 @@ void GL_Init (void) {
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.666);
 
+	glPolygonOffset(1.0, 1.0);
+
 	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
 	glShadeModel (GL_FLAT);
 
