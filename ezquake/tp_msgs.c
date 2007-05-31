@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.17 2007-05-27 04:30:54 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.18 2007-05-31 17:57:09 disconn3ct Exp $
 
 */
 
@@ -91,17 +91,17 @@ use the %-macros nor the $-macros.
  
 typedef const char * MSGPART;
  
+extern cvar_t cl_fakename;
 // will return short version of player's nick for teamplay messages
 LOCAL char *TP_ShortNick(void)
 {
-    extern cvar_t cl_fakename;
-    static char buf[7];
+	static char buf[7];
  
-    if (*(cl_fakename.string)) return "";
-    else {
-        snprintf(buf, sizeof(buf), "$\\%.3s:", TP_PlayerName());
-        return buf;
-    }
+	if (*(cl_fakename.string)) return "";
+	else {
+		snprintf(buf, sizeof(buf), "$\\%.3s:", TP_PlayerName());
+		return buf;
+	}
 }      
  
 // wrapper for snprintf & Cbuf_AddText that will add say_team nick part
@@ -455,7 +455,7 @@ GLOBAL void TP_Msg_Took_f (void)
 	TP_Send_TeamSay("%s%s%s%s %s", msg1, msg4, msg5, msg2, msg3);
 }
 
-
+extern cvar_t tp_name_teammate;
 GLOBAL void TP_Msg_Point_f (void)
 {
     MSGPART msg1 = "";
@@ -486,7 +486,10 @@ GLOBAL void TP_Msg_Point_f (void)
 		else if (INPOINT(teammate))
 			{
 				msg1 = tp_sep_green;
-				msg2 = tp_ib_name_teammate;
+				if (tp_name_teammate.string[0])
+					msg2 = tp_ib_name_teammate;
+				else
+					msg2 = va ("{&c0b0%s&cfff}", Macro_PointName());
 			}
 		else if (INPOINTPOWERUP() || INPOINTWEAPON() || INPOINTARMOR() || INPOINTAMMO() || INPOINT(pack) || INPOINT(mh) || INPOINT(flag) || INPOINT (disp) || INPOINT(sentry) || INPOINT(runes)) // How can I do if INPONIT(anything) or if INPOINT() not empty?
 		//  flag, disp, sent, rune
