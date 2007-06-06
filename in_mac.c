@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_mac.c,v 1.13 2007-05-28 10:47:34 johnnycz Exp $
+	$Id: in_mac.c,v 1.14 2007-06-06 21:57:22 disconn3ct Exp $
 */
 // in_mac.c -- macintosh mouse support using InputSprocket
 #define __OPENTRANSPORTPROVIDERS__
@@ -432,29 +432,43 @@ void IN_Move (usercmd_t *cmd)
 
 	IN_GetDelta ();// actual function depends on the current OS
 	
-	posx *= sensitivity.value;
-	posy *= sensitivity.value;
-	
 	//
-	// add mouse X/Y movement to cmd
+	// Do not move the player if we're in HUD editor or menu mode. 
+	// And don't apply ingame sensitivity, since that will make movements jerky.
 	//
 	
-	if ( (in_strafe.state & 1) || (lookstrafe.value && mlook_active ))
-		cmd->sidemove += m_side.value * posx;
-	else
-		cl.viewangles[YAW] -= m_yaw.value * posx;
-	
-	// If mouselook is on and there's been motion, don't drift
-	if (mlook_active)
-		V_StopPitchDrift ();
-		
-	if (mlook_active && !(in_strafe.state & 1))
+	if(key_dest == key_hudeditor || key_dest == key_menu)
 	{
-		cl.viewangles[PITCH] += (m_pitch.value * posy);
-		cl.viewangles[PITCH] = bound(cl.minpitch, cl.viewangles[PITCH], cl.maxpitch);
+		mouse_x = posx;
+		mouse_y = posy;
 	}
 	else
-		cmd->forwardmove -= m_forward.value * posy;
+	{
+		posx *= sensitivity.value;
+		posy *= sensitivity.value;
+
+		//
+		// add mouse X/Y movement to cmd
+		//
+
+		if ( (in_strafe.state & 1) || (lookstrafe.value && mlook_active ))
+			cmd->sidemove += m_side.value * posx;
+		else
+			cl.viewangles[YAW] -= m_yaw.value * posx;
+
+		// If mouselook is on and there's been motion, don't drift
+		if (mlook_active)
+			V_StopPitchDrift ();
+		
+		
+		if (mlook_active && !(in_strafe.state & 1))
+		{
+			cl.viewangles[PITCH] += (m_pitch.value * posy);
+			cl.viewangles[PITCH] = bound(cl.minpitch, cl.viewangles[PITCH], cl.maxpitch);
+		}
+		else
+			cmd->forwardmove -= m_forward.value * posy;
+	}
 }
 
 /*

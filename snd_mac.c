@@ -35,7 +35,7 @@ static pascal void snd_completion(SndChannelPtr pChannel, SndDoubleBufferPtr pDo
 
 static unsigned char dma[64*1024];
 #define SoundBufferSize (1 * 1024)
-SndChannelPtr  			gChannel;            // pointer to the sound channel
+SndChannelPtr  			gChannel = nil;            // pointer to the sound channel
 SndDoubleBufferHeader 	gHeader;             // the double buffer header
 static char sRandomBuf[SoundBufferSize];
 
@@ -133,6 +133,7 @@ void SNDDMA_Shutdown(void)
 		while (myStatus.scChannelBusy);
 
 		SndDisposeChannel (gChannel, true);
+		gChannel = nil;
 		
 	}
 	
