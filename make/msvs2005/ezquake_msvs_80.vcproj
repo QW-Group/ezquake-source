@@ -504,6 +504,10 @@
 				Filter="cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90"
 				>
 				<File
+					RelativePath="..\..\gl_bloom.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\gl_draw.c"
 					>
 					<FileConfiguration
@@ -2450,6 +2454,10 @@
 			<Filter
 				Name="OpenGL_h"
 				>
+				<File
+					RelativePath="..\..\gl_bloom.h"
+					>
+				</File>
 				<File
 					RelativePath="..\..\gl_local.h"
 					>
