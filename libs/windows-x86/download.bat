@@ -6,3 +6,4 @@ wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/libt
 wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/libz.lib
 wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/mgllt.lib
 wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/minizip.lib
+wget http://ezquake.cvs.sourceforge.net/*checkout*/ezquake/libs/windows-x86/asmlibm.lib
