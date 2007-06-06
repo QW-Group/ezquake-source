@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.h,v 1.8 2007-03-03 04:59:33 cokeman1982 Exp $
+	$Id: hud_editor.h,v 1.9 2007-06-06 15:34:59 cokeman1982 Exp $
 
 */
 
@@ -36,6 +36,7 @@ typedef enum
 	hud_editmode_move_lockedaxis,
 	hud_editmode_hudmenu,
 	hud_editmode_menu,
+	hud_editmode_hoverlist,
 	hud_editmode_normal
 } hud_editor_mode_t;
 

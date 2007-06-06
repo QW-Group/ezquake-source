@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.61 2007-05-28 10:47:34 johnnycz Exp $
+    $Id: keys.c,v 1.62 2007-06-06 15:34:59 cokeman1982 Exp $
 
 */
 
@@ -1882,6 +1882,9 @@ void Key_Init (void) {
     hudeditorkeys[K_F2] = true;
     hudeditorkeys[K_F3] = true;
     hudeditorkeys[K_F4] = true;
+	hudeditorkeys[K_MOUSE1] = true;
+	hudeditorkeys[K_MOUSE2] = true;
+	hudeditorkeys[K_MOUSE3] = true;
 
 	menubound[K_ESCAPE] = true;
 	for (i = 0; i < 12; i++)

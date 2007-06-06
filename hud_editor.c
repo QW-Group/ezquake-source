@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.24 2007-05-13 13:41:43 johnnycz Exp $
+	$Id: hud_editor.c,v 1.25 2007-06-06 15:34:59 cokeman1982 Exp $
 
 */
 
@@ -130,7 +130,161 @@ typedef struct hud_grephandle_s
 	struct hud_grephandle_s	*previous;
 } hud_grephandle_t;
 
-hud_grephandle_t *hud_greps = NULL;			// The list of "grep handles" that are shown if a HUD element is moved offscreen.
+hud_grephandle_t	*hud_greps = NULL;					// The list of "grep handles" that are shown if a HUD element is moved offscreen.
+
+hud_grephandle_t	*hud_hoverlist = NULL;				// The list of HUDs the mouse is hovering.
+int					hud_hoverlist_count = 0;			// The number of hovered HUDs.
+qbool				hud_hoverlist_pos_is_set = false;	// Has the coordinates been set for the hoverlist yet?
+float				hud_hoverlist_x;					// The x position of the hover list.
+float				hud_hoverlist_y;					// The y position of the hover list.
+hud_grephandle_t	hud_containers[MAX_HUD_ELEMENTS];	// List of HUDs which have been hovered.
+
+//
+// Adds a new HUD to the list of HUDs that are being hovered.
+//
+static void HUD_Editor_AddHoverHud(hud_grephandle_t *hud_container)
+{
+	// Nothing to add.
+	if(!hud_container)
+	{
+		return;
+	}
+
+	hud_container->next = hud_hoverlist;
+	if(hud_hoverlist)
+	{
+		hud_hoverlist->previous = hud_container;
+	}
+
+	hud_hoverlist = hud_container;
+	
+	hud_hoverlist_count++;
+}
+
+//
+// Associates ("Creates") a HUD with a HUD container.
+//
+static hud_grephandle_t *HUD_Editor_CreateHoverHud(hud_t *hud)
+{
+	static int i = 0;
+	int j = 0;
+
+	if(i >= MAX_HUD_ELEMENTS - 1)
+	{
+		return NULL;
+	}
+
+	// Check if the HUD already exists and use that one if that's the case.
+	for(j = 0; j < MAX_HUD_ELEMENTS && hud_containers[j].hud; j++)
+	{
+		if(hud_containers[j].hud == hud)
+		{
+			hud_containers[j].next = NULL;
+			hud_containers[j].previous = NULL;
+			return &hud_containers[j];
+		}
+	}
+
+	// The HUD wasn't found so add it to the end of the list.
+	hud_containers[i].hud = hud;
+	hud_containers[i].next = NULL;
+	hud_containers[i].previous = NULL;
+	i++;
+
+	return &hud_containers[i - 1];
+}
+
+//
+// Find the HUD that is being selected in the hover list.
+//
+static hud_t *HUD_Editor_FindHoverListSelection(hud_grephandle_t *list)
+{
+	hud_t *match = NULL;
+	hud_grephandle_t *hud_iter = list;
+
+	while(hud_iter)
+	{
+		if(hud_iter->hud
+			&& hud_mouse_x > hud_iter->x
+			&& hud_mouse_x < (hud_iter->x + hud_iter->width) 
+			&& hud_mouse_y > hud_iter->y
+			&& hud_mouse_y < (hud_iter->y + hud_iter->height))
+		{
+			hud_iter->highlighted = true;
+			match = hud_iter->hud;
+		}
+		else
+		{
+			hud_iter->highlighted = false;
+		}
+
+		hud_iter = hud_iter->next;
+	}
+
+	return match;
+}
+
+//
+// Draw the hover list.
+//
+static qbool HUD_Editor_DrawHoverList(int x, int y, hud_grephandle_t *list)
+{
+	#define PADDING 5
+	#define LINEGAP	1
+	int width = 0;
+	int height = 0;
+	int i = 0;
+	clrinfo_t color, highlight;
+	hud_grephandle_t *hud_iter = list;
+
+	// No point in showing a list if there's only one hud under the cursor
+	// or if the user hasn't right-clicked.
+	if(hud_hoverlist_count <= 1 || hud_editor_mode != hud_editmode_hoverlist)
+	{
+		return false;
+	}
+
+	// Get the width of to draw with.
+	while(hud_iter)
+	{
+		width = max(width, (PADDING + 2 + strlen(hud_iter->hud->name)) * 8);
+		hud_iter = hud_iter->next;
+	}
+
+	// Draw the background fill.
+	height = ((hud_hoverlist_count - 1) * (8 + LINEGAP)) + (2 * PADDING);
+	Draw_AlphaFillRGB(x, y - height, width, height, 0, 0, 0, 1.0);
+	
+	hud_iter = list;
+
+	// Highlight color (yellow).
+	highlight.c = RGBA_2_Int(0, 255, 0, 255);
+	highlight.i = 0;
+
+	// Orange.
+	color.c = RGBA_2_Int(255, 150, 0, 255);
+	color.i = 0;
+
+	// Draw the list items.
+	while(hud_iter)		
+	{
+		// Calculate the size and position of the HUD in the list.
+		hud_iter->x = x;
+		hud_iter->y = y - height + (i * 8) + LINEGAP;
+		hud_iter->width = width;
+		hud_iter->height = 8;
+
+		// Draw the z-order + name of the HUD.
+		Draw_ColoredString3(hud_iter->x, hud_iter->y, 
+			va("%2d - %s", hud_iter->hud->order->integer, hud_iter->hud->name), 
+			(hud_iter->highlighted ? &highlight : &color), 1, 0);
+
+		hud_iter = hud_iter->next;
+		i++;
+	}
+
+	return true;
+}
 
 //
 // Sets a new HUD Editor mode (and saves the previous one).
@@ -1287,6 +1441,13 @@ static qbool HUD_Editor_Placing(hud_t *hud_hover)
 				Cvar_Set(selected_hud->pos_x, "0");
 				Cvar_Set(selected_hud->pos_y, "0");
 				Cvar_Set(selected_hud->place, hud_hover->name);
+				
+				// Make sure the child has a higher order.
+				if((int)selected_hud->order->value <= (int)hud_hover->order->value)
+				{
+					Cvar_SetValue(selected_hud->order, hud_hover->order->value + 1);
+				}
+
 				HUD_Recalculate();
 
 				// Free selection.
@@ -1469,6 +1630,10 @@ static hud_grephandle_t *HUD_Editor_CreateGrep(hud_t *hud_element)
 	grep->hud		= hud_element;
 	grep->previous	= NULL;
 	grep->next		= hud_greps;
+	if(hud_greps)
+	{
+		hud_greps->previous = grep;
+	}
 
 	hud_greps		= grep;
 
@@ -1591,7 +1756,19 @@ static qbool HUD_Editor_FindHudUnderCursor(hud_t **hud)
 		(*hud) = selected_hud;
 	}
 
-	while(temp_hud->next)
+	// If the hover list is being showed, only look for HUDs in that
+	// not the HUD's that are below the cursor.
+	if(hud_editor_mode == hud_editmode_hoverlist && hud_hoverlist_count > 0)
+	{
+		(*hud) = HUD_Editor_FindHoverListSelection(hud_hoverlist);
+		return (hud != NULL);
+	}
+
+	// Reset the hoverlist since we might be hovering something new.
+	hud_hoverlist_count = 0;
+	hud_hoverlist = NULL;
+
+	while(temp_hud)
 	{
 		// Not visible.
 		if (!temp_hud->show->value || (temp_hud->place_hud && !temp_hud->place_hud->show->value))
@@ -1621,6 +1798,9 @@ static qbool HUD_Editor_FindHudUnderCursor(hud_t **hud)
 			{
 				found = true;
 				(*hud) = temp_hud;
+
+				// Add this HUD to the list of HUDs under the cursor.
+				HUD_Editor_AddHoverHud(HUD_Editor_CreateHoverHud(temp_hud));
 			}
 		}
 
@@ -1827,6 +2007,15 @@ static void HUD_Editor_EvaluateState(hud_t *hud_hover)
 		hud_editor_showhelp = false;
 	}
 
+	if (hud_editor_mode == hud_editmode_hoverlist)
+	{
+		if (!MOUSEDOWN)
+		{
+			// Stay in hoverlist mode until the user clicks something.
+			return;
+		}
+	}
+	
 	if (hud_hover && MOUSEDOWN_1_ONLY && isShiftDown())
 	{
 		// Move (Locked to an axis).
@@ -1846,6 +2035,11 @@ static void HUD_Editor_EvaluateState(hud_t *hud_hover)
 	{
 		// Move + resize.
 		HUD_Editor_SetMode(hud_editmode_move_resize);
+	}
+	else if (hud_hoverlist_count > 1 && MOUSEDOWN_2_ONLY)
+	{
+		// Hover list for when hovering more than one HUD.
+		HUD_Editor_SetMode(hud_editmode_hoverlist);
 	}
 	else if (hud_hover && MOUSEDOWN_2_ONLY)
 	{
@@ -2028,8 +2222,22 @@ static void HUD_Editor(void)
 		hud_mouse_y = cursor_y;
 	}
 
+	// If we just entered hoverlist mode we want to keep the mouse coordinates
+	// so we know where to draw the list until the user has picked a HUD.
+	if (!hud_hoverlist_pos_is_set 
+		&& hud_editor_mode == hud_editmode_hoverlist 
+		&& hud_editor_prevmode != hud_editmode_hoverlist)
+	{
+		hud_hoverlist_x = cursor_x;
+		hud_hoverlist_y = cursor_y;
+		hud_hoverlist_pos_is_set = true;
+	}
+	else if (hud_editor_mode != hud_editmode_hoverlist)
+	{
+		hud_hoverlist_pos_is_set = false;
+	}
+
 	// Find the HUD we're moving or have the cursor over.
-	// Also draws highlights and such.
 	found = HUD_Editor_FindHudUnderCursor(&hud_hover);
 
 	// Draw faint outlines for all visible hud elements.
@@ -2064,7 +2272,8 @@ static void HUD_Editor(void)
 
 	// Check if we're performing any action.
 	// (Only perform one at any given time).
-	HUD_Editor_Resizing(hud_hover)
+	HUD_Editor_DrawHoverList(hud_hoverlist_x, hud_hoverlist_y, hud_hoverlist)
+	|| HUD_Editor_Resizing(hud_hover)
 	|| HUD_Editor_Moving(hud_hover)
 	|| HUD_Editor_Placing(hud_hover)
 	|| HUD_Editor_Aligning(hud_hover);
@@ -2255,7 +2464,6 @@ qbool HUD_Editor_ConfirmDraw(hud_t *hud)
 
 		return false;
 	}
-
 	#endif // GLQUAKE
 
 	return true;
