@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_linux.c,v 1.8 2007-05-28 10:47:33 johnnycz Exp $
+	$Id: in_linux.c,v 1.9 2007-06-06 18:20:38 hexum Exp $
 */
 
 #include "quakedef.h"
@@ -148,7 +148,7 @@ void IN_Init (void)
 		if (COM_CheckParm ("-nodga") || COM_CheckParm ("-nomdga"))
 			Cvar_LatchedSetValue (&in_mouse, mt_normal);
 
-		if (i == COM_CheckParm ("-mevdev") && (i < com_argc - 1)) {
+		if (i = COM_CheckParm ("-mevdev") && (i < com_argc - 1)) {
 			Cvar_LatchedSet (&in_evdevice, com_argv[i + 1]);
 			Cvar_LatchedSetValue (&in_mouse, mt_evdev);
 		}
