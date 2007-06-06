@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.28 2007-05-28 10:47:33 johnnycz Exp $
+	$Id: gl_local.h,v 1.29 2007-06-06 21:24:35 cokeman1982 Exp $
 
 */
 // gl_local.h -- private refresh defs
@@ -173,6 +173,13 @@ extern	cvar_t	r_farclip;
 extern	cvar_t	r_drawflat;
 extern	cvar_t	r_wallcolor;
 extern	cvar_t	r_floorcolor;
+extern	cvar_t	r_bloom;
+extern	cvar_t	r_bloom_alpha;
+extern	cvar_t	r_bloom_diamond_size;
+extern	cvar_t	r_bloom_intensity;
+extern	cvar_t	r_bloom_darken;
+extern	cvar_t	r_bloom_sample_size;
+extern	cvar_t	r_bloom_fast_sample;
 
 extern	cvar_t	r_skyname;
 extern  cvar_t  gl_caustics;

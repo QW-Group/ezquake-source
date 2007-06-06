@@ -1537,3 +1537,7 @@ void GL_BuildLightmaps (void) {
 	if (gl_mtexable)
  		GL_DisableMultitexture();
 }
+
+
+
+

@@ -27,8 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qsound.h"
 #include "hud.h"
 #include "hud_common.h"
-#include "hud_common.h"
-
+#include "gl_bloom.h"
 
 entity_t	r_worldentity;
 
@@ -1475,6 +1474,15 @@ void R_Init (void) {
 	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);
 #endif
 
+	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
+	Cvar_Register (&r_bloom);
+	Cvar_Register (&r_bloom_darken);
+	Cvar_Register (&r_bloom_alpha);
+	Cvar_Register (&r_bloom_diamond_size);
+	Cvar_Register (&r_bloom_intensity);
+	Cvar_Register (&r_bloom_sample_size);
+	Cvar_Register (&r_bloom_fast_sample);
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 	Cvar_Register (&gl_solidparticles);
 	Cvar_Register (&gl_part_explosions);
@@ -1617,6 +1625,8 @@ void R_Init (void) {
 		; // FIXME: hm, in case of vid_restart, what we must do if before vid_restart qmb_initialized was true?
 
 	R_InitOtherTextures (); // safe re-init
+
+	R_InitBloomTextures();
 }
 
 
@@ -1759,6 +1769,8 @@ void R_RenderView (void) {
 		R_DrawCoronas();
 
 	R_DrawViewModel ();
+
+	R_BloomBlend(true);
 
 	if (r_speeds.value) {
 		time2 = Sys_DoubleTime ();
