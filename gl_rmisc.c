@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_rmisc.c,v 1.19 2007-05-03 12:03:54 johnnycz Exp $
+	$Id: gl_rmisc.c,v 1.20 2007-06-09 13:03:05 cokeman1982 Exp $
 */
 // gl_rmisc.c
 
@@ -71,7 +71,7 @@ void R_InitTextures (void) {
 					*dest++ = 0x0e;
 			}
 		}
-	}	
+	}
 }
 
 //Translates a skin texture by the per-player color lookup

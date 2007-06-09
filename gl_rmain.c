@@ -1768,9 +1768,9 @@ void R_RenderView (void) {
 	if (amf_coronas.value || CoronaCount)
 		R_DrawCoronas();
 
-	R_DrawViewModel ();
+	R_BloomBlend();
 
-	R_BloomBlend(true);
+	R_DrawViewModel ();
 
 	if (r_speeds.value) {
 		time2 = Sys_DoubleTime ();
