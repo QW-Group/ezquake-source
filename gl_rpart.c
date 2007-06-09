@@ -1629,18 +1629,20 @@ void QMB_TeleportSplash (vec3_t org) {
 		}
 	}
 
-	
-	VectorSet(color, 140, 140, 255);
-	VectorClear(angle);
-	for (i = 0; i < 5; i++) {
-		angle[2] = 0;
-		for (j = 0; j < 5; j++) {
-			AngleVectors(angle, NULL, NULL, neworg);
-			VectorMA(org, 70, neworg, neworg);	
-			AddParticle(p_sparkray, org, 1, 6 + (i & 3), 5,  color, neworg);
-			angle[2] += 360 / 5;
+	if (gl_part_telesplash.integer != 2)
+	{
+		VectorSet(color, 140, 140, 255);
+		VectorClear(angle);
+		for (i = 0; i < 5; i++) {
+			angle[2] = 0;
+			for (j = 0; j < 5; j++) {
+				AngleVectors(angle, NULL, NULL, neworg);
+				VectorMA(org, 70, neworg, neworg);	
+				AddParticle(p_sparkray, org, 1, 6 + (i & 3), 5,  color, neworg);
+				angle[2] += 360 / 5;
+			}
+			angle[0] += 180 / 5;
 		}
-		angle[0] += 180 / 5;
 	}
 }
 
