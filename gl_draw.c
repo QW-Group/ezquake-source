@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.64 2007-05-28 16:40:38 johnnycz Exp $
+$Id: gl_draw.c,v 1.65 2007-06-09 23:24:22 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -287,7 +287,7 @@ qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y) {
 void Scrap_Upload (void) {
 	int i;
 
-	for (i = 0; i < 2 ; i++) {
+	for (i = 0; i < MAX_SCRAPS; i++) {
 		if (!(scrap_dirty & (1 << i)))
 			continue;
 		scrap_dirty &= ~(1 << i);
@@ -344,10 +344,10 @@ mpic_t *Draw_CacheWadPic (char *name) {
 				scrap_texels[texnum][(y + i) * BLOCK_WIDTH + x + j] = p->data[k];
 		texnum += scrap_texnum;
 		pic->texnum = texnum;
-		pic->sl = (x + 0.01) / (float) BLOCK_WIDTH;
-		pic->sh = (x + p->width - 0.01) / (float) BLOCK_WIDTH;
-		pic->tl = (y + 0.01) / (float) BLOCK_WIDTH;
-		pic->th = (y + p->height - 0.01) / (float) BLOCK_WIDTH;
+		pic->sl = (x + 0.25) / (float) BLOCK_WIDTH;
+		pic->sh = (x + p->width - 0.25) / (float) BLOCK_WIDTH;
+		pic->tl = (y + 0.25) / (float) BLOCK_WIDTH;
+		pic->th = (y + p->height - 0.25) / (float) BLOCK_WIDTH;
 
 //		pic_count++;
 //		pic_texels += p->width * p->height;
