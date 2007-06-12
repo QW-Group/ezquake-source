@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 	Ported by Cokeman, June 2007
 	last edit:
-	$Id: gl_bloom.c,v 1.2 2007-06-09 13:03:04 cokeman1982 Exp $
+	$Id: gl_bloom.c,v 1.3 2007-06-12 20:06:06 cokeman1982 Exp $
 
 */
 
@@ -71,11 +71,11 @@ static float Diamond4x[4][4] = {
 static int BLOOM_SIZE;
 
 cvar_t      r_bloom = {"r_bloom", "0", true};
-cvar_t      r_bloom_alpha = {"r_bloom_alpha", "0.3", true};
+cvar_t      r_bloom_alpha = {"r_bloom_alpha", "0.5", true};
 cvar_t      r_bloom_diamond_size = {"r_bloom_diamond_size", "8", true};
 cvar_t      r_bloom_intensity = {"r_bloom_intensity", "1", true};
-cvar_t      r_bloom_darken = {"r_bloom_darken", "32", true};
-cvar_t      r_bloom_sample_size = {"r_bloom_sample_size", "32", true};
+cvar_t      r_bloom_darken = {"r_bloom_darken", "3", true};
+cvar_t      r_bloom_sample_size = {"r_bloom_sample_size", "256", true};
 cvar_t      r_bloom_fast_sample = {"r_bloom_fast_sample", "0", true};
 
 int r_bloomscreentexture;
@@ -141,8 +141,7 @@ void R_Bloom_InitBackUpTexture( int width, int height )
 
 	r_screenbackuptexture_size = width;
 
-	//r_bloombackuptexture = R_LoadPic( "***r_bloombackuptexture***", &data, width, height, IT_NOMIPMAP|IT_NOCOMPRESS|IT_NOPICMIP|IT_NOALPHA, 3 );
-	r_bloombackuptexture = GL_LoadTexture ( "***r_bloombackuptexture***", width, height, data, 0, 4); // false, false, 4);
+	r_bloombackuptexture = GL_LoadTexture ( "***r_bloombackuptexture***", width, height, data, 0, 4);
 
 	free ( data );
 }
@@ -192,8 +191,7 @@ void R_Bloom_InitEffectTexture( void )
 	data = malloc( BLOOM_SIZE * BLOOM_SIZE * 4 );
 	memset( data, 0, BLOOM_SIZE * BLOOM_SIZE * 4 );
 
-	// r_bloomeffecttexture = R_LoadPic( "***r_bloomeffecttexture***", &data, BLOOM_SIZE, BLOOM_SIZE, IT_NOMIPMAP|IT_NOCOMPRESS|IT_NOPICMIP|IT_NOALPHA, 3 );
-	r_bloomeffecttexture = GL_LoadTexture ( "***r_bloomeffecttexture***", BLOOM_SIZE, BLOOM_SIZE, data, 0, 4); // false, false, 4);
+	r_bloomeffecttexture = GL_LoadTexture ( "***r_bloomeffecttexture***", BLOOM_SIZE, BLOOM_SIZE, data, 0, 4);
 
 	free ( data );
 }
@@ -252,8 +250,7 @@ void R_Bloom_InitTextures( void )
 		r_screendownsamplingtexture_size = (int)(BLOOM_SIZE * 2);
 		data = malloc( r_screendownsamplingtexture_size * r_screendownsamplingtexture_size * 4 );
 		memset( data, 0, r_screendownsamplingtexture_size * r_screendownsamplingtexture_size * 4 );
-		//r_bloomdownsamplingtexture = R_LoadPic( "***r_bloomdownsamplingtexture***", &data, r_screendownsamplingtexture_size, r_screendownsamplingtexture_size, IT_NOMIPMAP|IT_NOCOMPRESS|IT_NOPICMIP|IT_NOALPHA, 3 );
-		r_bloomdownsamplingtexture = GL_LoadTexture ( "***r_bloomdownsamplingtexture***", r_screendownsamplingtexture_size, r_screendownsamplingtexture_size, data, 0, 4); // false, false, 4);
+		r_bloomdownsamplingtexture = GL_LoadTexture ( "***r_bloomdownsamplingtexture***", r_screendownsamplingtexture_size, r_screendownsamplingtexture_size, data, 0, 4);
 		free ( data );
 	}
 
@@ -415,7 +412,7 @@ void R_Bloom_GeneratexDiamonds( void )
 	int         i, j;
 	static float intensity;
 
-	//set up sample size workspace
+	// Setup sample size workspace
 	glViewport( 0, 0, sample_width, sample_height );
 	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity ();
@@ -432,7 +429,7 @@ void R_Bloom_GeneratexDiamonds( void )
 	glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
 	glEnable(GL_BLEND);
 
-    //darkening passes
+    // Darkening passes
 	if( r_bloom_darken.value )
 	{
 		glBlendFunc(GL_DST_COLOR, GL_ZERO);
