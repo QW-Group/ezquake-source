@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.93 2007-05-28 10:47:32 johnnycz Exp $
+$Id: cl_parse.c,v 1.94 2007-06-14 15:49:17 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -54,6 +54,7 @@ $Id: cl_parse.c,v 1.93 2007-05-28 10:47:32 johnnycz Exp $
 #include "hud.h"
 #include "hud_common.h"
 #include "mvd_utils.h"
+#include "input.h"
 
 void R_TranslatePlayerSkin (int playernum);
 void R_PreMapLoad(char *mapname);
@@ -687,7 +688,48 @@ void Sound_NextDownload (void) {
 // FTE's chunked download
 //
 
+
 extern void CL_RequestNextDownload (void);
+
+
+#define MAXBLOCKS 64	//must be power of 2
+#define DLBLOCKSIZE 1024
+
+
+int downloadsize;
+int receivedbytes;
+int recievedblock[MAXBLOCKS];
+int firstblock;
+int blockcycle;
+
+
+int CL_RequestADownloadChunk(void)
+{
+	int i;
+	int b;
+
+	if (cls.downloadmethod != DL_QWCHUNKS) // paranoia
+		Host_Error("download not initiated\n");
+
+	for (i = 0; i < MAXBLOCKS; i++)
+	{
+		blockcycle++;
+
+		b = ((blockcycle) & (MAXBLOCKS-1)) + firstblock;
+
+		if (!recievedblock[b&(MAXBLOCKS-1)])	//don't ask for ones we've already got.
+		{
+			if (b >= (downloadsize+DLBLOCKSIZE-1)/DLBLOCKSIZE)	//don't ask for blocks that are over the size of the file.
+				continue;
+//			Com_Printf("Requesting block %d | i:%d b:%d f:%d\n", b, i, blockcycle, firstblock);
+			return b;
+		}
+	}
+
+//	Com_Printf("^1 EOF?\n");
+
+	return -1;
+}
 
 void CL_SendChunkDownloadReq(void)
 {
@@ -698,24 +740,13 @@ void CL_SendChunkDownloadReq(void)
 
 	i = CL_RequestADownloadChunk();
 
+	// i < 0 mean client complete download, let server know
+	// qqshka: download percent optional, server does't really require it, that my extension, hope does't fuck up something
+	CL_SendClientCommand(i < 0 ? true : false, "nextdl %d %d", i, cls.downloadpercent);
+
 	if (i < 0)
-		; //we can stop downloading now.
-	else {
-		char msg[64];
-		snprintf(msg, sizeof(msg), "nextdl %i", i);
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		SZ_Print (&cls.netchan.message, msg);
-	}
+		CL_FinishDownload(true); // this also request next dl
 }
-
-#define MAXBLOCKS 64	//must be power of 2
-#define DLBLOCKSIZE 1024
-
-int downloadsize;
-int receivedbytes;
-int recievedblock[MAXBLOCKS];
-int firstblock;
-int blockcycle;
 
 static void MSG_ReadData (void *data, int len)
 {
@@ -806,24 +837,28 @@ void CL_ParseChunkedDownload(void)
 	{	//err, yeah, when playing demos we don't actually pay any attention to this.
 		return;
 	}
+
 	if (chunknum < firstblock)
 	{
-//		Com_Printf("too old\n", chunknum);
+//		Com_Printf("too old %d\n", chunknum);
 		return;
 	}
+
 	if (chunknum-firstblock >= MAXBLOCKS)
 	{
-//		Com_Printf("too new!\n", chunknum);
+//		Com_Printf("too new %d!\n", chunknum);
 		return;
 	}
 
 	if (recievedblock[chunknum&(MAXBLOCKS-1)])
 	{
-//		Com_Printf("duplicated\n", chunknum);
+//		Com_Printf("duplicated %d\n", chunknum);
 		return;
 	}
-//	Com_Printf("usable\n", chunknum);
-	receivedbytes+=DLBLOCKSIZE;
+
+//	Com_Printf("usable %d\n", chunknum);
+
+	receivedbytes += DLBLOCKSIZE;
 	recievedblock[chunknum&(MAXBLOCKS-1)] = true;
 
 	while(recievedblock[firstblock&(MAXBLOCKS-1)])
@@ -832,9 +867,9 @@ void CL_ParseChunkedDownload(void)
 		firstblock++;
 	}
 
-	fseek(cls.download, chunknum*DLBLOCKSIZE, SEEK_SET);
-	if (downloadsize - chunknum*DLBLOCKSIZE < DLBLOCKSIZE)	//final block is actually meant to be smaller than we recieve.
-		fwrite(data, 1, downloadsize - chunknum*DLBLOCKSIZE, cls.download);
+	fseek(cls.download, chunknum * DLBLOCKSIZE, SEEK_SET);
+	if (downloadsize - chunknum * DLBLOCKSIZE < DLBLOCKSIZE)	//final block is actually meant to be smaller than we recieve.
+		fwrite(data, 1, downloadsize - chunknum * DLBLOCKSIZE, cls.download);
 	else
 		fwrite(data, 1, DLBLOCKSIZE, cls.download);
 
@@ -842,38 +877,6 @@ void CL_ParseChunkedDownload(void)
 
 	tm = Sys_DoubleTime() - cls.downloadstarttime; // how long we dl-ing
 	cls.downloadrate = (tm ? receivedbytes / 1024 / tm : 0); // some average dl speed in KB/s
-}
-
-int CL_RequestADownloadChunk(void)
-{
-	int i;
-	int b;
-
-	if (cls.downloadmethod != DL_QWCHUNKS)
-	{
-		Com_Printf("download not initiated\n");
-		return 0;
-	}
-
-	blockcycle++;
-	for (i = 0; i < MAXBLOCKS; i++)
-	{
-		b = ((i+blockcycle)&(MAXBLOCKS-1)) + firstblock;
-
-		if (!recievedblock[b&(MAXBLOCKS-1)])	//don't ask for ones we've already got.
-		{
-			if (b >= (downloadsize+DLBLOCKSIZE-1)/DLBLOCKSIZE)	//don't ask for blocks that are over the size of the file.
-				continue;
-//			Com_Printf("Requesting block %i\n", b);
-			return b;
-		}
-	}
-
-//	Com_Printf("^1 EOF?\n");
-
-	CL_FinishDownload(true); // this also request next dl
-
-	return -1;
 }
 
 #endif // FTE_PEXT_CHUNKEDDOWNLOADS

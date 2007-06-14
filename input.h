@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: input.h,v 1.7 2007-03-05 17:22:22 cokeman1982 Exp $
+	$Id: input.h,v 1.8 2007-06-14 15:49:18 qqshka Exp $
 */
 // input.h -- external (non-keyboard) input devices
 
@@ -44,6 +44,7 @@ extern kbutton_t in_strafe;
 extern kbutton_t in_speed;
 
 void CL_InitInput (void);
+void CL_SendClientCommand(qbool reliable, char *format, ...);
 void CL_SendCmd (void);
 void CL_BaseMove (usercmd_t *cmd);
 float CL_KeyState (kbutton_t *key, qbool lookbutton);

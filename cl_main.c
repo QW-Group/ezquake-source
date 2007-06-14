@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.146 2007-05-27 15:05:47 qqshka Exp $
+$Id: cl_main.c,v 1.147 2007-06-14 15:49:17 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -778,6 +778,8 @@ void CL_Disconnect (void) {
 
 	cls.qport++; //a hack I picked up from qizmo
 
+	SZ_Clear(&cls.cmdmsg);
+
 	Cvar_ForceSet (&host_mapname, ""); // notice mapname not valid yet
 }
 
@@ -1239,6 +1241,9 @@ void CL_Init (void) {
 
 	cls.state = ca_disconnected;
 	cls.min_fps = 999999; // HUD -> hexum
+
+	SZ_Init(&cls.cmdmsg, cls.cmdmsg_data, sizeof(cls.cmdmsg_data));
+	cls.cmdmsg.allowoverflow = true;
 
 	strcpy (cls.gamedirfile, com_gamedirfile);
 	strcpy (cls.gamedir, com_gamedir);

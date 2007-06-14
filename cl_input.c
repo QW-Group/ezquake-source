@@ -590,6 +590,30 @@ void CL_FinishMove (usercmd_t *cmd) {
 		cmd->angles[i] = (Q_rint(cmd->angles[i] * 65536.0 / 360.0) & 65535) * (360.0 / 65536.0);
 }
 
+void CL_SendClientCommand(qbool reliable, char *format, ...)
+{
+	va_list		argptr;
+	char		string[2048];
+
+	if (cls.demoplayback)
+		return;	// no point.
+
+	va_start (argptr, format);
+	vsnprintf (string, sizeof(string), format, argptr);
+	va_end (argptr);
+
+	if (reliable)
+	{
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString (&cls.netchan.message, string);
+	}
+	else
+	{
+		MSG_WriteByte (&cls.cmdmsg, clc_stringcmd);
+		MSG_WriteString (&cls.cmdmsg, string);
+	}
+}
+
 void CL_SendCmd (void) {
 	sizebuf_t buf;
 	byte data[128];
@@ -646,6 +670,11 @@ void CL_SendCmd (void) {
 	}
 
 	SZ_Init (&buf, data, sizeof(data)); 
+
+	SZ_Write (&buf, cls.cmdmsg.data, cls.cmdmsg.cursize);
+	if (cls.cmdmsg.overflowed)
+		Com_DPrintf("cls.cmdmsg overflowed\n");
+	SZ_Clear (&cls.cmdmsg);
 
 	// begin a client move command
 	MSG_WriteByte (&buf, clc_move);
@@ -834,4 +863,3 @@ void CL_InitInput (void) {
 #endif
 }
 
-void CL_ClearStates (void) {}

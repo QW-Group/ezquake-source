@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_user.c,v 1.28 2007-04-08 12:50:27 disconn3ct Exp $
+	$Id: sv_user.c,v 1.29 2007-06-14 15:49:18 qqshka Exp $
 */
 // sv_user.c -- server code for moving users
 
@@ -529,16 +529,39 @@ void Cmd_Begin_f (void) {
 
 //=============================================================================
 
+/*
+==================
+SV_CompleteDownoload
+==================
+
+This is a sub routine for  SV_NextDl_f(), called when download complete, we set up some fields for sv_client.
+
+*/
+void SV_CompleteDownoload(void)
+{
+	if (!sv_client->download)
+		return;
+
+	fclose (sv_client->download);
+	sv_client->download = NULL;
+}
+
+
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 
-void SV_NextChunkedDownload(int chunknum)
+// qqshka: percent is optional, u can't relay on it
+
+void SV_NextChunkedDownload(int chunknum, int percent)
 {
 #define CHUNKSIZE 1024
 	char buffer[CHUNKSIZE];
 	int i;
 
 	if (chunknum < 0)
-		return; // hm, what about upper limit?
+	{  // qqshka: FTE's chunked download does't have any way of signaling what client complete dl-ing, so doing it this way.
+		SV_CompleteDownoload();
+		return;
+	}
 
 	if (sv_client->datagram.cursize + CHUNKSIZE+5+50 > sv_client->datagram.maxsize)
 		return;	//choked!
@@ -574,9 +597,7 @@ void Cmd_NextDL_f (void) {
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	if (sv_client->fteprotocolextensions & FTE_PEXT_CHUNKEDDOWNLOADS)
 	{
-		extern void	SV_NextChunkedDownload(int chunknum);
-
-		SV_NextChunkedDownload(atoi(Cmd_Argv(1)));
+		SV_NextChunkedDownload(atoi(Cmd_Argv(1)), atoi(Cmd_Argv(2)));
 		return;
 	}
 #endif
@@ -595,12 +616,8 @@ void Cmd_NextDL_f (void) {
 	ClientReliableWrite_Byte (sv_client, percent);
 	ClientReliableWrite_SZ (sv_client, buffer, r);
 
-	if (sv_client->downloadcount != sv_client->downloadsize)
-		return;
-
-	fclose (sv_client->download);
-	sv_client->download = NULL;
-
+	if (sv_client->downloadcount == sv_client->downloadsize)
+		SV_CompleteDownoload();
 }
 
 void OutofBandPrintf (netadr_t where, char *fmt, ...) {
