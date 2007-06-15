@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.60.2.18 2007-05-31 13:25:13 disconn3ct Exp $
+		$Id: menu_options.c,v 1.60.2.19 2007-06-15 09:49:12 johnnycz Exp $
 
 */
 
@@ -820,7 +820,7 @@ setting settfps_arr[] = {
 #ifdef GLQUAKE
 	ADDSET_BOOL		("Colored Lights", gl_colorlights),
 	ADDSET_BOOL		("Fast Lights", gl_flashblend),
-	ADDSET_BOOL		("Dynamic Ligts", r_dynamic),
+	ADDSET_BOOL		("Dynamic Lights", r_dynamic),
 	ADDSET_NUMBER	("Light mode", gl_lightmode, 0, 2, 1),
 	ADDSET_BOOL		("Particle Shaft", amf_lightning),
 #endif
