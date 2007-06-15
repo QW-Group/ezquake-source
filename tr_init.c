@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.17 2007-05-03 12:03:56 johnnycz Exp $
+	$Id: tr_init.c,v 1.18 2007-06-15 21:07:12 himan Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -556,7 +556,7 @@ void R_Register( void )
 		void VID_ShowFreq_f(void);
 		Cmd_AddCommand( "vid_showfreq",	VID_ShowFreq_f );
 #endif
-		Cmd_AddCommand( "modelist",		R_ModeList_f );
+		Cmd_AddCommand( "vid_modelist",		R_ModeList_f );
 		Cmd_AddCommand( "gfxinfo",		GfxInfo_f );
 		Cmd_AddCommand( "vid_restart",	VID_Restart_f );
 	}
