@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.41 2007-05-28 10:47:32 johnnycz Exp $
+    $Id: config_manager.c,v 1.42 2007-06-15 12:26:06 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -600,7 +600,7 @@ static void ResetBinds(void)
 	Key_SetBinding(K_F12,    "screenshot");
 	Key_SetBinding(K_TAB,    "+showscores");
 
-	Key_SetBinding('f',      "tp_msgreport");
+	Key_SetBinding('r',      "tp_msgreport");
 	Key_SetBinding('z',      "tp_msgtook");
 	Key_SetBinding('x',		 "tp_msgsafe");
 	Key_SetBinding('c',      "tp_msghelp");
@@ -609,7 +609,7 @@ static void ResetBinds(void)
 	// user will get confusing warnings on these if he joins a server where these do not exist
 	// maybe some wrappers should be made for these commands which would
 	// before calling them check if they exist
-    Key_SetBinding('r',      "shownick");
+    Key_SetBinding('f',      "shownick");
 	Key_SetBinding(K_F1,     "yes");
 	Key_SetBinding(K_F2,     "agree");
 	Key_SetBinding(K_F3,     "ready");

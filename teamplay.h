@@ -207,3 +207,5 @@ extern void TP_FindPoint (void);
 
 // updates the state of vars.needflags
 void TP_GetNeed(void);
+
+char *Macro_PointName (void);

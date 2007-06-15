@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.25 2007-06-06 15:34:59 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.26 2007-06-15 12:26:06 johnnycz Exp $
 
 */
 

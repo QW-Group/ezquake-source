@@ -227,8 +227,9 @@ void Help_VarDescription(const char *varname, char* buf, size_t bufleft)
 				strncat(buf, ":", bufleft--);
 				strncat(buf, cv->description, bufleft); bufleft -= strlen(cv->description);
 				strncat(buf, "\n", bufleft--);
-				cv = cv->next;
 			}
+
+			cv = cv->next;
 		}
 		break;
 	}

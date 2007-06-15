@@ -19,12 +19,13 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_signals.c,v 1.3 2007-03-04 10:42:23 qqshka Exp $
+    $Id: linux_signals.c,v 1.4 2007-06-15 12:26:07 johnnycz Exp $
 
 */
 #include <signal.h>
 
 #include "quakedef.h"
+#include "input.h"
 
 static qbool signalcaught = false;
 
@@ -42,14 +43,14 @@ static void signal_handler(int sig) // bk010104 - replace this... (NOTE TTimo hu
 
 #ifndef SERVERONLY
 //
-// client related things 
+// client related things
 //
 #ifdef WITH_EVDEV
 	IN_Shutdown();
 #endif
-	VID_Shutdown();  // bk010104 - shouldn't this be CL_Shutdown 
+	VID_Shutdown();  // bk010104 - shouldn't this be CL_Shutdown
 
-#endif	
+#endif
 
 	Sys_Quit();
 	exit(0);

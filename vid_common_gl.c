@@ -37,6 +37,11 @@ void *Sys_GetProcAddress (const char *ExtName);
   extern __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
 # endif
 #endif
+#ifdef __FreeBSD__
+# ifndef glXGetProcAddressARB
+  extern __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *);
+# endif
+#endif
 
 void *GL_GetProcAddress (const char *ExtName)
 {
@@ -204,6 +209,11 @@ void GL_Init (void) {
 
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.666);
+
+	// Get rid of Z-fighting for textures by offsetting the
+	// drawing of entity models compared to normal polygons.
+	// (Only works if gl_ztrick is turned off)
+	glPolygonOffset(1.0, 1.0);
 
 	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
 	glShadeModel (GL_FLAT);

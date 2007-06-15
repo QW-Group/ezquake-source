@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.65 2007-05-28 10:47:34 johnnycz Exp $
+		$Id: menu_options.c,v 1.66 2007-06-15 12:26:07 johnnycz Exp $
 
 */
 
@@ -291,12 +291,12 @@ setting settgeneral_arr[] = {
     ADDSET_CUSTOM	("Process Priority", PriorityRead, PriorityToggle, "Change client process priority. If you experience tearing or lagging, change this value to something that works for you."),
 #endif
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
-	
+
 	//Connection
 	ADDSET_SEPARATOR("Connection"),
 	ADDSET_CUSTOM	("Bandwidth Limit", BandwidthRead, BandwidthToggle, "Select a speed close to your internet connection link speed."),
 	ADDSET_CUSTOM	("Quality", ConQualityRead, ConQualityToggle, "Ensures that packets with weapon switch command don't get lost."),
-	
+
 	//Sound & Volume
 	ADDSET_SEPARATOR("Sound & Volume"),
 	ADDSET_NUMBER	("Primary Volume", s_volume, 0, 1, 0.05),
@@ -309,7 +309,7 @@ setting settgeneral_arr[] = {
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
 	ADDSET_CUSTOM	("Quality", SoundqualityRead, SoundqualityToggle, "Sound sampling rate."),
 	ADDSET_BASIC_SECTION(),
-	
+
 	//Chat Settings
 	ADDSET_SEPARATOR("Chat settings"),
 	ADDSET_NAMED	("Ignore Opponents", ignore_opponents, ignoreopponents_enum),
@@ -377,7 +377,7 @@ setting settmultiview_arr[] = {
 	ADDSET_SEPARATOR("Multiview Demos"),
 	ADDSET_NAMED	("Autohud", mvd_autohud, mvdautohud_enum),
 	ADDSET_NAMED	("Autotrack", mvd_autotrack, mvdautotrack_enum),
-	ADDSET_BOOL		("Moreinfo", mvd_moreinfo), 
+	ADDSET_BOOL		("Moreinfo", mvd_moreinfo),
 	ADDSET_BOOL     ("Status", mvd_status),
 };
 
@@ -543,7 +543,7 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Grenade Launcher", "weapon 6"),
 	ADDSET_BIND("Rocket Launcher", "weapon 7"),
 	ADDSET_BIND("Thunderbolt", "weapon 8"),
-	
+
 	ADDSET_SEPARATOR("Teamplay"),
 	ADDSET_BIND("Report Status", "tp_msgreport"),
 	ADDSET_BIND("Lost location", "tp_msglost"),
@@ -564,7 +564,7 @@ setting settbinds_arr[] = {
 
 	ADDSET_SEPARATOR("Communication"),
 	ADDSET_BIND("Chat", "messagemode"),
-	ADDSET_BIND("Teamchat", "messagemode2"),	
+	ADDSET_BIND("Teamchat", "messagemode2"),
 	ADDSET_BIND("Proxy Menu", "toggleproxymenu"),
 
 	ADDSET_SEPARATOR("Miscellaneous"),
@@ -600,7 +600,7 @@ setting settbinds_arr[] = {
     ADDSET_BOOL		("Smart Jump", cl_smartjump),
 	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
 	ADDSET_BASIC_SECTION(),
-	
+
 	ADDSET_SEPARATOR("Demo Playback"),
 	ADDSET_BIND("Stop", "disconnect"),
 	ADDSET_BIND("Play", "cl_demospeed 1;echo Playing demo."),
@@ -646,7 +646,7 @@ const char* explosiontype_enum[] =
 const char* muzzleflashes_enum[] =
 { "off", "on", "own off" };
 
-const char* deadbodyfilter_enum[] = 
+const char* deadbodyfilter_enum[] =
 { "off", "decent", "instant" };
 
 const char* rocketmodel_enum[] =
@@ -783,7 +783,7 @@ setting settfps_arr[] = {
 	ADDSET_ACTION	("Load Fast Preset", LoadFastPreset, "Adjust for high performance."),
 	ADDSET_ACTION	("Load HQ preset", LoadHQPreset, "Adjust for high image-quality."),
 	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphics effects presets here."),
-	
+
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Disable lin. interp.", cl_nolerp),
@@ -792,17 +792,17 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
 	ADDSET_BOOL		("Pickup Flashes", v_bonusflash),
 	ADDSET_BOOL		("Fullbright skins", r_fullbrightSkins),
-	
+
 	ADDSET_SEPARATOR("Environment"),
 
 	ADDSET_BOOL		("Simple Sky", r_fastsky),
 	ADDSET_BOOL		("Simple walls", r_drawflat),
-	ADDSET_BOOL		("Simple turbs", r_fastturb), 
+	ADDSET_BOOL		("Simple turbs", r_fastturb),
 	ADDSET_BOOL		("Draw flame", r_drawflame),
 	ADDSET_BOOL		("Gib Filter", cl_gibfilter),
 	ADDSET_NAMED	("Dead Body Filter", cl_deadbodyfilter, deadbodyfilter_enum),
 	ADDSET_SEPARATOR("Projectiles"),
-	
+
 	ADDSET_NAMED	("Explosion Type", r_explosiontype, explosiontype_enum),
 	ADDSET_NAMED	("Rocket Model", cl_rocket2grenade, rocketmodel_enum),
 	ADDSET_NAMED	("Rocket Trail", r_rockettrail, rockettrail_enum),
@@ -820,7 +820,7 @@ setting settfps_arr[] = {
 #ifdef GLQUAKE
 	ADDSET_BOOL		("Colored Lights", gl_colorlights),
 	ADDSET_BOOL		("Fast Lights", gl_flashblend),
-	ADDSET_BOOL		("Dynamic Ligts", r_dynamic),
+	ADDSET_BOOL		("Dynamic Lights", r_dynamic),
 	ADDSET_NUMBER	("Light mode", gl_lightmode, 0, 2, 1),
 	ADDSET_BOOL		("Particle Shaft", amf_lightning),
 #endif
@@ -839,7 +839,7 @@ setting settfps_arr[] = {
 	ADDSET_CUSTOM	("Detail", TexturesdetailRead, TexturesdetailToggle, "Determines the texture quality; resolution of the textures in memory."),
 	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
 	ADDSET_BOOL		("No Textures", gl_textureless),
-	
+
 	ADDSET_BASIC_SECTION(),
 	ADDSET_SEPARATOR("Field of View"),
 	ADDSET_NUMBER	("View Size (fov)", scr_fov, 40, 140, 2),
@@ -895,10 +895,10 @@ typedef struct menu_video_settings_s {
 qbool mvs_askmode = false;
 
 // here we store the configuration that user selected in menu
-menu_video_settings_t mvs_selected;	
+menu_video_settings_t mvs_selected;
 
 // here we store the current video config in case the new video settings weren't successfull
-menu_video_settings_t mvs_previous;	
+menu_video_settings_t mvs_previous;
 
 // will apply given video settings
 static void ApplyVideoSettings(const menu_video_settings_t *s) {
@@ -924,7 +924,7 @@ static void StoreCurrentVideoSettings(menu_video_settings_t *out) {
 
 // performed when user hits the "apply" button
 void VideoApplySettings (void)
-{ 
+{
 	StoreCurrentVideoSettings(&mvs_previous);
 
 	ApplyVideoSettings(&mvs_selected);
@@ -934,7 +934,7 @@ void VideoApplySettings (void)
 
 // two possible results of the "keep these video settings?" dialogue
 static void KeepNewVideoSettings (void) { mvs_askmode = false; }
-static void CancelNewVideoSettings (void) { 
+static void CancelNewVideoSettings (void) {
 	mvs_askmode = false;
 	ApplyVideoSettings(&mvs_previous);
 }
@@ -975,7 +975,7 @@ setting settvideo_arr[] = {
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
 	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
 	ADDSET_CUSTOM	("Quality Mode", TexturesqualityRead, TexturesqualityToggle, "Determines the texture quality; rendering quality."),
-	
+
 	ADDSET_SEPARATOR("Screen settings"),
 	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
 #ifdef GLQUAKE
@@ -987,7 +987,7 @@ setting settvideo_arr[] = {
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
 	ADDSET_STRING("Refresh frequency", mvs_selected.freq),
 	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
-	
+
 	ADDSET_SEPARATOR("Font Size"),
 #ifndef __APPLE__
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
@@ -995,7 +995,7 @@ setting settvideo_arr[] = {
 #endif
 
 	ADDSET_SEPARATOR("Miscellaneous"),
-	
+
 	ADDSET_CUSTOM	("FPS Limit", FpslimitRead, FpslimitToggle, "Limits the amount of frames rendered per second. May help with lag; best to consult forums about the best value for your setup."),
 	ADDSET_ADVANCED_SECTION(),
 #ifdef GLQUAKE
@@ -1015,9 +1015,9 @@ void CT_Opt_Video_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pag
 #ifndef GLQUAKE
 
 	// Software Rendering version menu
-
+#ifdef _WIN32
 	(*vid_menudrawfn) ();
-
+#endif
 #else
 
 	// (Open)GL version menu
@@ -1036,11 +1036,11 @@ void CT_Opt_Video_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pag
 
 int CT_Opt_Video_Key (int key, CTab_t *tab, CTabPage_t *page) {
 #ifndef GLQUAKE
-	
-	// Software Rendering version menu
 
+	// Software Rendering version menu
+#ifdef _WIN32
 	(*vid_menukeyfn) (key);
-	
+#endif
 	// i was too lazy&scared to change vid_menukeyfn functions out there
 	// so because i know what keys have some function in there, i list them here:
 	return key == K_LEFTARROW || key == K_RIGHTARROW || key == K_DOWNARROW || key == K_UPARROW || key == K_ENTER || key == 'd';
@@ -1048,7 +1048,7 @@ int CT_Opt_Video_Key (int key, CTab_t *tab, CTabPage_t *page) {
 #else
 
 	// (Open)GL version menu
-	
+
 	if (mvs_askmode) {
 		if (key == 'y' || key == K_ENTER)
 			KeepNewVideoSettings();
@@ -1110,14 +1110,14 @@ enum { MOCPM_SETTINGS, MOCPM_CHOOSECONFIG, MOCPM_CHOOSESCRIPT, MOCPM_ENTERFILENA
 extern cvar_t cfg_backup, cfg_legacy_exec, cfg_legacy_write, cfg_save_aliases, cfg_save_binds, cfg_save_cmdline,
 	cfg_save_cmds, cfg_save_cvars, cfg_save_unchanged, cfg_save_userinfo, cfg_use_home;
 
-void MOpt_ImportConfig(void) { 
+void MOpt_ImportConfig(void) {
 	MOpt_configpage_mode = MOCPM_CHOOSECONFIG;
     if (cfg_use_home.value)
         FL_SetCurrentDir(&configs_filelist, com_homedir);
     else
 	    FL_SetCurrentDir(&configs_filelist, "./ezquake/configs");
 }
-void MOpt_ExportConfig(void) { 
+void MOpt_ExportConfig(void) {
 	MOpt_configpage_mode = MOCPM_ENTERFILENAME;
 	filenameeb.text[0] = 0;
 	filenameeb.pos = 0;
@@ -1220,7 +1220,7 @@ int CT_Opt_Config_Key(int key, CTab_t *tab, CTabPage_t *page)
 	case MOCPM_SETTINGS:
 		return Settings_Key(&settconfig, key);
 		break;
-	
+
 	case MOCPM_CHOOSECONFIG:
 		if (key == K_ENTER || key == K_MOUSE1) {
 			Cbuf_AddText(va("cfg_load \"%s\"\n", COM_SkipPath(FL_GetCurrentEntry(&configs_filelist)->name)));
@@ -1230,7 +1230,7 @@ int CT_Opt_Config_Key(int key, CTab_t *tab, CTabPage_t *page)
 			MOpt_configpage_mode = MOCPM_SETTINGS;
 			return true;
 		} else return FL_Key(&configs_filelist, key);
-		
+
 	case MOCPM_CHOOSESCRIPT:
 		if (key == K_ENTER || key == K_MOUSE1) {
 			Cbuf_AddText(va("exec \"cfg/%s\"\n", COM_SkipPath(FL_GetCurrentEntry(&configs_filelist)->name)));

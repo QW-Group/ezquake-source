@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: in_linux.c,v 1.9 2007-06-06 18:20:38 hexum Exp $
+	$Id: in_linux.c,v 1.10 2007-06-15 12:26:07 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -126,7 +126,11 @@ void IN_Move (usercmd_t *cmd)
 
 void IN_Init (void)
 {
-	int i = 0;
+#ifdef GLQUAKE
+#ifdef WITH_EVDEV
+	int i;
+#endif
+#endif
 
 	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_MOUSE);
 	Cvar_Register (&m_filter);
@@ -140,21 +144,26 @@ void IN_Init (void)
 
 	if (!host_initialized)
 	{
+#ifdef GLQUAKE
 		typedef enum { mt_none = 0, mt_dga, mt_normal, mt_evdev } mousetype_t;
 		extern cvar_t in_mouse;
+#ifdef WITH_EVDEV
 		extern cvar_t in_mmt;
 		extern cvar_t in_evdevice;
+#endif /* !WITH_EVDEV */
 
 		if (COM_CheckParm ("-nodga") || COM_CheckParm ("-nomdga"))
 			Cvar_LatchedSetValue (&in_mouse, mt_normal);
 
-		if (i = COM_CheckParm ("-mevdev") && (i < com_argc - 1)) {
+#ifdef WITH_EVDEV
+		if ((i = COM_CheckParm ("-mevdev")) && (i < com_argc - 1)) {
 			Cvar_LatchedSet (&in_evdevice, com_argv[i + 1]);
 			Cvar_LatchedSetValue (&in_mouse, mt_evdev);
 		}
 
 		if (COM_CheckParm ("-mmt"))
 			Cvar_LatchedSetValue (&in_mmt, 1);
+#endif /* !WITH_EVDEV */
 
 		if (COM_CheckParm ("-nomouse"))
 			Cvar_LatchedSetValue (&in_mouse, mt_none);
@@ -162,7 +171,9 @@ void IN_Init (void)
 #ifdef WITH_EVDEV
 		extern void IN_EvdevList_f(void);
 		Cmd_AddCommand ("in_evdevlist", IN_EvdevList_f);
-#endif
+#endif /* !WITH_EVDEV */
+#endif /* !GLQUAKE */
+
 #ifdef WITH_KEYMAP
 		IN_StartupKeymap();
 #endif // WITH_KEYMAP

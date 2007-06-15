@@ -78,7 +78,7 @@ void SB_RootInit(void)
 	}
 
     arg = 1;
-	if (setsockopt(sock, SOL_SOCKET, SO_DONTLINGER, (char*)&arg, sizeof(int)) == -1) {
+	if (setsockopt (sock, SOL_SOCKET, SO_DONTLINGER, (char*)&arg, sizeof(int)) == -1) {
 		// disconnect: always error 10042 @ WinXP inside VMware 
 		Com_DPrintf ("SB_RootInit: setsockopt: (%i): %s\n", qerrno, strerror(qerrno));
 	}

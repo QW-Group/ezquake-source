@@ -135,7 +135,7 @@ qbool OnChange_gl_clearColor(cvar_t *v, char *s);
 cvar_t	gl_clearColor = {"gl_clearColor", "0 0 0", 0, OnChange_gl_clearColor};
 cvar_t	gl_cull = {"gl_cull", "1"};
 
-cvar_t	gl_ztrick = {"gl_ztrick", "1"};
+cvar_t	gl_ztrick = {"gl_ztrick", "0"};
 
 cvar_t	gl_smoothmodels = {"gl_smoothmodels", "1"};
 cvar_t	gl_affinemodels = {"gl_affinemodels", "0"};
@@ -1078,7 +1078,22 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 				break;
 			case mod_brush:
 				brushmodel = 1;
+
+				// Get rid of Z-fighting for textures by offsetting the
+				// drawing of entity models compared to normal polygons.
+				// (Only works if gl_ztrick is turned off)
+				if(!gl_ztrick.value)
+				{
+					glEnable(GL_POLYGON_OFFSET_FILL);
+				}
+
 				R_DrawBrushModel (currententity);
+				
+				if(!gl_ztrick.value)
+				{
+					glDisable(GL_POLYGON_OFFSET_FILL);
+				}
+				
 				brushmodel = 0;
 				break;
 			case mod_sprite:
@@ -1648,7 +1663,7 @@ void R_RenderScene (void) {
 	S_ExtraUpdate ();	// don't let sound get messed up if going slow
 
 	R_DrawEntitiesOnList (&cl_visents);
-	R_DrawEntitiesOnList (&cl_alphaents);
+	R_DrawEntitiesOnList (&cl_alphaents);	
 
 	R_DrawWaterSurfaces ();
 

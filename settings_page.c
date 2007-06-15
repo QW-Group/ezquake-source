@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.38 2007-05-28 10:47:34 johnnycz Exp $
+		$Id: settings_page.c,v 1.39 2007-06-15 12:26:07 johnnycz Exp $
 
 */
 
@@ -222,7 +222,7 @@ static void Setting_Increase(setting* set) {
 			newval = VARFVAL(set->cvar) + set->step;
 			if (set->max >= newval)
 				Cvar_SetValue(set->cvar, newval);
-			else if (set->type == stt_named)
+			else if (set->type == stt_named || set->type == stt_playercolor)
 				Cvar_SetValue(set->cvar, set->min);
 			break;
 		case stt_action: if (set->actionfnc) set->actionfnc(); break;
@@ -247,7 +247,7 @@ static void Setting_Decrease(setting* set) {
 			newval = VARFVAL(set->cvar) - set->step;
 			if (set->min <= newval)
 				Cvar_SetValue(set->cvar, newval);
-			else if (set->type == stt_named)
+			else if (set->type == stt_named || set->type == stt_playercolor)
 				Cvar_SetValue(set->cvar, set->max);
 			break;
 
@@ -461,6 +461,8 @@ static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
 {
     static mpic_t *curpic = NULL;
     static char lastpicname[MAX_PATH] = "";
+
+	if (!skinfile) return;
 
 // this means the length of "qw/"
 #define QWDIRLEN 3
