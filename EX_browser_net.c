@@ -226,13 +226,17 @@ void Parse_Serverinfo(server_data *s, char *info)
         sprintf(s->display.timelimit, "%*.*s", COL_TIMELIMIT, COL_TIMELIMIT, strlen(tmp) > COL_TIMELIMIT ? "99" : tmp);
 
     tmp = ValueForKey(s, "*gamedir");
-    if (tmp != NULL)
+    s->qizmo = false;
+	if (tmp != NULL)
         sprintf(s->display.gamedir, "%.*s", COL_GAMEDIR, tmp==NULL ? "" : tmp);
     else
     {
         tmp = ValueForKey(s, "*progs");
         if (tmp != NULL  &&  !strcmp(tmp, "666"))
+		{
             sprintf(s->display.gamedir, "qizmo");
+			s->qizmo = true;
+		}
     }
 
     tmp = ValueForKey(s, "map");

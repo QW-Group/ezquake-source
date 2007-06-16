@@ -98,6 +98,7 @@ typedef struct server_data_s
     int playersn;
 	server_occupancy	occupancy;
     int spectatorsn;
+	qbool qizmo;
 	qbool support_teams; // is server support team per player
 } server_data;
 

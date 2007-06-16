@@ -1,4 +1,4 @@
-//    $Id: Ctrl.c,v 1.16 2007-06-16 22:23:00 johnnycz Exp $
+//    $Id: Ctrl.c,v 1.17 2007-06-16 23:00:18 johnnycz Exp $
 
 #include "quakedef.h"
 #include "utils.h"
@@ -101,12 +101,22 @@ void UI_MakeLine2(char *buf, int w)
 	buf[w] = 0;
 }
 
+void UI_DrawColoredAlphaBox(int x, int y, int w, int h, float r, float g, float b, float a)
+{
+#ifdef GLQUAKE
+	Draw_AlphaFillRGB(x, y, w, h, r, g, b, a);
+#else
+	Draw_FadeBox(x, y, w, h, (c[0]+c[1]+c[2])/3, a);
+#endif
+}
+
 void UI_DrawGrayBox(int x, int y, int w, int h)
 {	// ridiculous function, eh?
-	byte *c = StringToRGB(menu_marked_bgcolor.string);
-#ifdef GLQUAKE
+	byte c[4];
 	float fade = 1;
 
+	memcpy(c, StringToRGB(menu_marked_bgcolor.string), sizeof(byte)*4);
+#ifdef GLQUAKE
 	if (menu_marked_fade.value) {
 		fade = 0.5 * (1.0 + sin(menu_marked_fade.value * Sys_DoubleTime())); // this give us sinusoid from 0 to 1
 		fade = 0.5 + (1.0 - 0.5) * fade ; // this give us sinusoid from 0.5 to 1, so no zero alpha
@@ -114,11 +124,8 @@ void UI_DrawGrayBox(int x, int y, int w, int h)
 	}
 #endif
 
-#ifdef GLQUAKE
-					Draw_AlphaFillRGB(x, y, w, h, fade*c[0]/255, fade*c[1]/255, fade*c[2]/255, (float)c[3]/255);
-#else
-					Draw_FadeBox(x, y, w, h, c[0], 1);
-#endif
+	UI_DrawColoredAlphaBox(x,y,w,h, 
+		fade*c[0]/255.0, fade*c[1]/255.0, fade*c[2]/255.0, c[3]/255.0);
 }
 
 void UI_DrawBox(int x, int y, int w, int h)

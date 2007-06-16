@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.39 2007-06-16 22:23:00 johnnycz Exp $
+	$Id: EX_browser.c,v 1.40 2007-06-16 23:00:18 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -863,6 +863,12 @@ void Servers_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 				UI_DrawGrayBox(x, y+8*(i+1), w, 8);
 				UI_DrawCharacter(x + 8*pos, y+8*(i+1), FLASHINGARROW());
 			}
+			else if (servers[servnum]->qizmo)
+				UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, 0.1, 0.1, 0.3, 1);
+			else if (servnum % 2)
+				UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, 0.1, 0.1, 0.1, 0.5);
+			else 
+				UI_DrawColoredAlphaBox(x, y+8*(i+1), w, 8, 0.2, 0.2, 0.2, 0.5);
 
             // Display server
             pos = w/8;
