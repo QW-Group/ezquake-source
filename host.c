@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.42 2007-05-13 13:41:43 johnnycz Exp $
+	$Id: host.c,v 1.43 2007-06-16 22:39:48 disconn3ct Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -86,7 +86,9 @@ char *  SYSINFO_3D_description        = NULL;
 #ifdef _WIN32
 void SYSINFO_Init(void)
 {
+#ifdef id386
 	char temp[1024];
+#endif
 	MEMORYSTATUS    memstat;
 	LONG            ret;
 	HKEY            hKey;
@@ -141,15 +143,17 @@ void SYSINFO_Init(void)
 #endif
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
-/*
+
+#ifndef id386
 	if (SYSINFO_processor_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
 	}
-*/
+#else
 	ProcessorName (temp);
 	strlcat(f_system_string, ", ", sizeof(f_system_string));
 	strlcat(f_system_string, temp, sizeof(f_system_string));
+#endif
 
 	if (SYSINFO_MHz) {
 		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
