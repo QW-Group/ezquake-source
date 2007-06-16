@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.38 2007-05-28 10:47:31 johnnycz Exp $
+	$Id: EX_browser.c,v 1.39 2007-06-16 22:23:00 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -73,6 +73,9 @@ int newserver_pos;
 struct {
 	int x, y, w, h;
 } Browser_window;
+
+// must correspond to server_occupancy enum values
+static const char* occupancy_colors[] = { "00f", "0f0", "f00" };
 
 cvar_t  sb_status        =  {"sb_status", 			"1"}; // Shows Server status at the bottom
 
@@ -595,7 +598,20 @@ void AddServer_f(void)
 // drawing routines
 //
 
-void Add_Column2(int x, int y, int *pos, char *t, int w, int red)
+void Add_ColumnColored(int x, int y, int *pos, const char *t, int w, const char* color)
+{
+	char buf[100];
+    if ((*pos) - w - 1  <=  5)
+        return;
+
+	snprintf(buf, sizeof(buf), "&c%s%s", color, t);
+	
+    (*pos) -= w;
+	UI_Print_Center(x + (*pos)*8, y, 8*(w+4), buf, false);
+    (*pos)--;
+}
+
+void Add_Column2(int x, int y, int *pos, const char *t, int w, int red)
 {
     if ((*pos) - w - 1  <=  5)
         return;
@@ -872,7 +888,8 @@ void Servers_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
             if (sb_showfraglimit.value)
                 Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.fraglimit, COL_FRAGLIMIT, servnum==Servers_pos);
             if (sb_showplayers.value)
-                Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.players, COL_PLAYERS, servnum==Servers_pos);
+				Add_ColumnColored(x, y+8*(i+1), &pos, servers[servnum]->display.players, COL_PLAYERS, occupancy_colors[servers[servnum]->occupancy]);
+			
             if (sb_showmap.value)
                 Add_Column2(x, y+8*(i+1), &pos, servers[servnum]->display.map, COL_MAP, servnum==Servers_pos);
             if (sb_showgamedir.value)

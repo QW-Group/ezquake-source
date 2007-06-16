@@ -81,6 +81,10 @@ typedef struct playerinfo_s
 	qbool spec; // flag: is spectator or player
 } playerinfo;
 
+typedef enum {
+	SERVER_EMPTY = 0, SERVER_NONEMPTY = 1, SERVER_FULL = 2
+} server_occupancy;
+
 typedef struct server_data_s
 {
     int passed_filters;
@@ -92,6 +96,7 @@ typedef struct server_data_s
 
     playerinfo *players[MAX_PLAYERS];
     int playersn;
+	server_occupancy	occupancy;
     int spectatorsn;
 	qbool support_teams; // is server support team per player
 } server_data;

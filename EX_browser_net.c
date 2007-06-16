@@ -243,6 +243,9 @@ void Parse_Serverinfo(server_data *s, char *info)
     if (tmp != NULL  &&  strlen(tmp) > 2)
         tmp = "99";
     i = s->playersn > 99 ? 99 : s->playersn;
+	if (i < 1) { s->occupancy = SERVER_EMPTY; }
+	else if (i > 0 && i < atoi(tmp)) { s->occupancy = SERVER_NONEMPTY; }
+	else { s->occupancy = SERVER_FULL; }
     if (tmp != NULL)
         sprintf(s->display.players, "%2d/%-2s", i, tmp==NULL ? "" : tmp);
 }

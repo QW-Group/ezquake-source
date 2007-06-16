@@ -1,4 +1,4 @@
-//    $Id: Ctrl.c,v 1.15 2007-05-28 10:47:31 johnnycz Exp $
+//    $Id: Ctrl.c,v 1.16 2007-06-16 22:23:00 johnnycz Exp $
 
 #include "quakedef.h"
 #include "utils.h"
@@ -51,7 +51,7 @@ int UI_DrawSlider (int x, int y, float range) {
 
 int UI_SliderWidth(void) { return (SLIDER_RANGE+1)*LETTERWIDTH; }
 
-void UI_Print3 (int cx, int cy, char *str, clrinfo_t *clr, int clr_cnt, int red)
+void UI_Print3 (int cx, int cy, const char *str, clrinfo_t *clr, int clr_cnt, int red)
 {
 	if (red)
 	{
