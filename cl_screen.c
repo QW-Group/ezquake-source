@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.118 2007-05-28 10:47:32 johnnycz Exp $
+$Id: cl_screen.c,v 1.119 2007-06-17 17:54:45 cokeman1982 Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -2816,9 +2816,7 @@ void SCR_UpdateScreen (void) {
 	SCR_SetUpToDrawConsole ();
 
 	V_RenderView ();
-
-	SCR_SetupAutoID ();
-
+	
 	SCR_SetupCI ();
 
 	GL_Set2D ();

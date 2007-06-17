@@ -1785,6 +1785,8 @@ void R_RenderView (void) {
 
 	R_DrawViewModel ();
 
+	SCR_SetupAutoID ();
+
 	R_BloomBlend();
 
 	if (r_speeds.value) {
