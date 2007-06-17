@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.139 2007-05-29 22:15:45 johnnycz Exp $
+	$Id: hud_common.c,v 1.140 2007-06-17 18:21:39 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -2178,6 +2178,7 @@ void SCR_HUD_Group1(hud_t *hud)
 
 void SCR_HUD_Group2(hud_t *hud)
 {
+	extern void DrawNewText(int x, int y, char *text);
     static cvar_t *width = NULL,
 		*height,
 		*picture,
@@ -4824,6 +4825,7 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 
 void SCR_HUD_DrawOwnFrags(hud_t *hud)
 {
+	#ifdef GLQUAKE
     // not implemented yet: scale, color
     // fixme: add appropriate opengl functions that will add alpha, scale and color
     int width = VX_OwnFragTextLen() * LETTERWIDTH;
@@ -4857,6 +4859,7 @@ void SCR_HUD_DrawOwnFrags(hud_t *hud)
 
     if (VX_OwnFragTime() < hud_ownfrags_timeout->value)
         Draw_SString(x, y, VX_OwnFragText(), hud_ownfrags_scale->value);
+	#endif // GLQUAKE
 }
 
 void SCR_HUD_DrawKeys(hud_t *hud)

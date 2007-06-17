@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.65 2007-06-09 23:24:22 qqshka Exp $
+$Id: gl_draw.c,v 1.66 2007-06-17 18:21:39 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -26,7 +26,6 @@ $Id: gl_draw.c,v 1.65 2007-06-09 23:24:22 qqshka Exp $
 #include "stats_grid.h"
 #include "utils.h"
 #include "sbar.h"
-
 
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
 extern cvar_t scr_coloredText, con_shift;

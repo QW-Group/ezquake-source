@@ -506,6 +506,14 @@
 				<File
 					RelativePath="..\..\gl_bloom.c"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\gl_draw.c"
@@ -984,6 +992,10 @@
 				</File>
 				<File
 					RelativePath="..\..\cvar.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_controls.c"
 					>
 				</File>
 				<File
@@ -2131,6 +2143,10 @@
 				</File>
 				<File
 					RelativePath="..\..\embed_tcl.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\ez_controls.h"
 					>
 				</File>
 				<File
