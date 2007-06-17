@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.66 2007-06-17 18:21:39 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.67 2007-06-17 18:51:02 himan Exp $
 */
 
 #include "quakedef.h"
@@ -46,7 +46,7 @@ cvar_t	gl_crosshairalpha	= {"crosshairalpha", "1"};
 
 
 qbool OnChange_gl_smoothfont (cvar_t *var, char *string);
-cvar_t gl_smoothfont = {"gl_smoothfont", "0", 0, OnChange_gl_smoothfont};
+cvar_t gl_smoothfont = {"gl_smoothfont", "1", 0, OnChange_gl_smoothfont};
 
 byte			*draw_chars;						// 8*8 graphic characters
 mpic_t			*draw_disc;
