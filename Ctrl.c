@@ -1,4 +1,4 @@
-//    $Id: Ctrl.c,v 1.17 2007-06-16 23:00:18 johnnycz Exp $
+//    $Id: Ctrl.c,v 1.18 2007-06-17 18:06:46 johnnycz Exp $
 
 #include "quakedef.h"
 #include "utils.h"
@@ -106,7 +106,7 @@ void UI_DrawColoredAlphaBox(int x, int y, int w, int h, float r, float g, float 
 #ifdef GLQUAKE
 	Draw_AlphaFillRGB(x, y, w, h, r, g, b, a);
 #else
-	Draw_FadeBox(x, y, w, h, (c[0]+c[1]+c[2])/3, a);
+	Draw_FadeBox(x, y, w, h, (r+g+b)/3.0, a);
 #endif
 }
 
