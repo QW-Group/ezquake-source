@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-    $Id: linux_glimp.c,v 1.11 2007-06-15 12:26:07 johnnycz Exp $
+    $Id: linux_glimp.c,v 1.12 2007-06-17 03:57:53 qqshka Exp $
 
 */
 /*
@@ -1666,9 +1666,9 @@ void GL_EndRendering (void) {
 		}
 	}
 
-  GLW_CheckNeedSetDeviceGammaRamp();
+	GLW_CheckNeedSetDeviceGammaRamp();
 
-  GLimp_EndFrame();
+	GLimp_EndFrame();
 }
 
 
@@ -1681,7 +1681,10 @@ void GL_EndRendering (void) {
 */
 void GLimp_EndFrame (void)
 {
-  qglXSwapBuffers(dpy, win);
+	qglXSwapBuffers(dpy, win);
+
+	if (cls.state != ca_active)
+		glClear (GL_COLOR_BUFFER_BIT);
 
   // check logging
 //  QGL_EnableLogging( (qbool)r_logFile.integer ); // bk001205 - was ->value

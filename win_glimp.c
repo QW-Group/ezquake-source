@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-$Id: win_glimp.c,v 1.18 2007-05-29 13:23:08 disconn3ct Exp $
+$Id: win_glimp.c,v 1.19 2007-06-17 03:57:53 qqshka Exp $
 
 */
 /*
@@ -1354,6 +1354,9 @@ void GLimp_EndFrame (void)
 	{
 		SwapBuffers( glw_state.hDC );
 	}
+
+	if (cls.state != ca_active)
+		glClear (GL_COLOR_BUFFER_BIT);
 
 	// check logging
 //	QGL_EnableLogging( r_logFile.integer );
