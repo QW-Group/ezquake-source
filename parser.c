@@ -1,17 +1,24 @@
 /**
-    Arithmetic expression evaluator
+	Arithmetic expression evaluator
     @author johnnycz
     last edit:
-$Id: parser.c,v 1.16 2007-05-04 11:48:47 johnnycz Exp $
+$Id: parser.c,v 1.17 2007-06-18 21:56:00 johnnycz Exp $
 
 */
 
-#include "stdlib.h"
-#include "ctype.h"
+// todo set_calc: strlen(x), int(x), substr(x,pos,len), set_substr, pos, tobrown, towhite, xor, div, mod
+// todo if: isin, !isin, =~, !~
+
+#include <stdlib.h>
+#include <math.h>
+#include <ctype.h>
+#include <string.h>
 #include "parser.h"
 
 #define GLOBAL /* */
 #define LOCAL static
+
+#define REAL_COMPARE_EPSILON 0.00000001
 
 //
 // Tokens
@@ -33,7 +40,17 @@ $Id: parser.c,v 1.16 2007-05-04 11:48:47 johnnycz Exp $
 #define TK_BR_C     301
 // variable
 #define TK_VAR      500
-
+// comparisions
+#define TK_LT		600
+#define TK_LE		601
+#define TK_EQ       602
+#define TK_EQ2		603
+#define TK_GE       604
+#define TK_GT       605
+#define TK_NE       606
+// logic
+#define TK_AND      700
+#define TK_OR       701
 
 typedef struct {
     const char *string;			// input string
@@ -96,6 +113,17 @@ GLOBAL expr_val Get_Expr_Dummy(void)
 	t.type = ET_INT;
 	t.i_val = 0;
 	return t;
+}
+
+LOCAL int Compare_Double(double a, double b)
+{
+	double diff = fabs(a-b);
+	if (diff < REAL_COMPARE_EPSILON) 
+		return 0; // a == b
+	else if (a > b)
+		return 1;
+	else
+		return -1;
 }
 
 LOCAL expr_val operator_plus (EParser p, const expr_val e1, const expr_val e2)
@@ -200,10 +228,167 @@ LOCAL expr_val operator_divide(EParser p, const expr_val e1)
 		ret.d_val = 1/d;
 	} else 	{
 		SetError(p, ERR_ZERO_DIV);
+		ret = Get_Expr_Dummy();
 	}
 
 	return ret;
 }
+
+// test: "1==1.0", "2==2.0", "5/2==2.5"
+LOCAL expr_val operator_eq(EParser p, const expr_val e1, const expr_val e2)
+{
+	expr_val ret;
+	ret.type = ET_BOOL;
+
+	switch(e1.type) {
+	case ET_INT: switch (e2.type) {
+		case ET_INT: ret.b_val = e1.i_val == e2.i_val; break;
+		case ET_DBL: ret.b_val = !Compare_Double(e1.i_val, e2.d_val); break;
+		case ET_BOOL: ret.b_val = e2.b_val ? e1.i_val == 1 : e1.i_val == 0; break;
+		case ET_STR: SetError(p, ERR_TYPE_MISMATCH); break;
+		} break;
+	case ET_DBL: switch (e2.type) {
+		case ET_INT: ret.b_val = !Compare_Double(e1.d_val, e2.i_val); break;
+		case ET_DBL: ret.b_val = !Compare_Double(e1.d_val, e2.d_val); break;
+		case ET_BOOL: SetError(p, ERR_TYPE_MISMATCH); break;
+		case ET_STR: SetError(p, ERR_TYPE_MISMATCH); break;
+		} break;
+	case ET_BOOL: switch (e2.type) {
+		case ET_INT: ret.b_val = e1.b_val ? e2.i_val == 1 : e2.i_val == 0; break;
+		case ET_DBL: SetError(p, ERR_TYPE_MISMATCH); break;
+		case ET_BOOL: ret.b_val = e1.b_val == e2.b_val; break;
+		case ET_STR: SetError(p, ERR_TYPE_MISMATCH); break;
+	    } break;
+	case ET_STR: switch (e2.type) {
+		case ET_STR: ret.b_val = !strcmp(e1.s_val, e2.s_val); break;
+		default: SetError(p, ERR_TYPE_MISMATCH); break;
+		} break;
+	}
+
+	return ret;
+}
+
+// test: "1<1.0", ...
+LOCAL expr_val operator_lt(EParser p, const expr_val e1, const expr_val e2)
+{
+	expr_val ret;
+	ret.type = ET_BOOL;
+
+	switch(e1.type) {
+	case ET_INT: switch (e2.type) {
+		case ET_INT: ret.b_val = e1.i_val < e2.i_val; break;
+		case ET_DBL: ret.b_val = Compare_Double(e1.i_val, e2.d_val) == -1; break;
+		case ET_BOOL: SetError(p, ERR_TYPE_MISMATCH); break;
+		case ET_STR: SetError(p, ERR_TYPE_MISMATCH); break;
+		} break;
+	case ET_DBL: switch (e2.type) {
+		case ET_INT: ret.b_val = Compare_Double(e1.d_val, e2.i_val) == -1; break;
+		case ET_DBL: ret.b_val = Compare_Double(e1.d_val, e2.d_val) == -1; break;
+		case ET_BOOL: SetError(p, ERR_TYPE_MISMATCH); break;
+		case ET_STR: SetError(p, ERR_TYPE_MISMATCH); break;
+		} break;
+	case ET_BOOL: switch (e2.type) {
+		case ET_BOOL: ret.b_val = !e1.b_val && e2.b_val; break;
+		default: SetError(p, ERR_TYPE_MISMATCH); break;
+	    } break;
+	case ET_STR: switch (e2.type) {
+		case ET_STR: ret.b_val = strcmp(e1.s_val, e2.s_val) == -1; break;
+		default: SetError(p, ERR_TYPE_MISMATCH); break;
+		} break;
+	}
+
+	return ret;
+}
+
+// this obscurity here just defines operators "<=", ">", "!=" and ">="
+// by using operators "<" and "=="
+#define LT_VAL() (operator_lt(p,e1,e2).b_val)
+#define EQ_VAL() (operator_eq(p,e1,e2).b_val)
+#define ADDOP(name,cond) \
+LOCAL expr_val operator_##name (EParser p, const expr_val e1, const expr_val e2) { \
+	expr_val ret; ret.type = ET_BOOL; ret.b_val = (cond); return ret; }
+
+ADDOP(le, LT_VAL() || EQ_VAL());
+ADDOP(gt, !LT_VAL() && !EQ_VAL());
+ADDOP(ne, !EQ_VAL());
+ADDOP(ge, !LT_VAL());
+
+#undef ADDOP
+#undef LT_VAL
+#undef EQ_VAL
+
+
+LOCAL expr_val operator_and(EParser p, const expr_val e1, const expr_val e2)
+{
+	expr_val ret;
+	ret.type = ET_BOOL;
+
+	switch (e1.type) {
+	case ET_INT: switch (e2.type) {
+		case ET_INT: ret.b_val = e1.i_val && e2.i_val; break;
+		case ET_DBL: ret.b_val = e1.i_val && e2.d_val; break;
+		case ET_BOOL: ret.b_val = e1.i_val && e2.b_val; break;
+		case ET_STR: ret.i_val = e1.i_val && *e2.s_val; break;
+	    } break;
+	case ET_DBL: switch (e2.type) {
+	    case ET_INT: ret.b_val = e1.d_val && e2.i_val; break;
+		case ET_DBL: ret.b_val = e1.d_val && e2.d_val; break;
+		case ET_BOOL: ret.b_val = e1.d_val && e2.b_val; break;
+		case ET_STR: ret.b_val = e1.d_val && *e2.s_val; break;
+		} break;
+	case ET_BOOL: switch (e2.type) {
+		case ET_INT: ret.b_val = e1.b_val && e2.i_val; break;
+		case ET_DBL: ret.b_val = e1.b_val && e2.d_val; break;
+		case ET_BOOL: ret.b_val = e1.b_val && e2.b_val; break;
+		case ET_STR: ret.b_val = e1.b_val && *e2.s_val; break;
+		} break;
+	case ET_STR: switch (e2.type) {
+		case ET_INT: ret.b_val = *e1.s_val && e2.i_val; break;
+		case ET_DBL: ret.b_val = *e1.s_val && e2.d_val; break;
+		case ET_BOOL: ret.b_val = *e1.s_val && e2.b_val; break;
+		case ET_STR: ret.b_val = *e1.s_val && *e2.s_val; break;
+		} break;
+	}
+
+	return ret;
+}
+
+// a copy-paste of operator_and, I couldn't think of better way, limited C :(
+LOCAL expr_val operator_or(EParser p, const expr_val e1, const expr_val e2)
+{
+	expr_val ret;
+	ret.type = ET_BOOL;
+
+	switch (e1.type) {
+	case ET_INT: switch (e2.type) {
+		case ET_INT: ret.b_val = e1.i_val || e2.i_val; break;
+		case ET_DBL: ret.b_val = e1.i_val || e2.d_val; break;
+		case ET_BOOL: ret.b_val = e1.i_val || e2.b_val; break;
+		case ET_STR: ret.i_val = e1.i_val || *e2.s_val; break;
+	    } break;
+	case ET_DBL: switch (e2.type) {
+	    case ET_INT: ret.b_val = e1.d_val || e2.i_val; break;
+		case ET_DBL: ret.b_val = e1.d_val || e2.d_val; break;
+		case ET_BOOL: ret.b_val = e1.d_val || e2.b_val; break;
+		case ET_STR: ret.b_val = e1.d_val || *e2.s_val; break;
+		} break;
+	case ET_BOOL: switch (e2.type) {
+		case ET_INT: ret.b_val = e1.b_val || e2.i_val; break;
+		case ET_DBL: ret.b_val = e1.b_val || e2.d_val; break;
+		case ET_BOOL: ret.b_val = e1.b_val || e2.b_val; break;
+		case ET_STR: ret.b_val = e1.b_val || *e2.s_val; break;
+		} break;
+	case ET_STR: switch (e2.type) {
+		case ET_INT: ret.b_val = *e1.s_val || e2.i_val; break;
+		case ET_DBL: ret.b_val = *e1.s_val || e2.d_val; break;
+		case ET_BOOL: ret.b_val = *e1.s_val || e2.b_val; break;
+		case ET_STR: ret.b_val = *e1.s_val || *e2.s_val; break;
+		} break;
+	}
+
+	return ret;
+}
+
 
 // does the input string contain str as the very first string?
 LOCAL int Follows(EParser p, const char *str)
@@ -226,6 +411,17 @@ LOCAL void Next_Token(EParser p)
     
     if (!c)                     { p->lookahead = TK_EOF; }
 	else if (Follows(p, "mod")) { p->lookahead = TK_MOD; }	// not implemented
+	else if (Follows(p, "and") || Follows(p, "AND") || Follows(p, "&&"))
+	{ p->lookahead = TK_AND; }
+	else if (Follows(p, "or") || Follows(p, "OR") || Follows(p, "||"))
+	{ p->lookahead = TK_OR; }
+	else if (Follows(p, "<="))  { p->lookahead = TK_LE; }
+	else if (Follows(p, "=="))  { p->lookahead = TK_EQ2; }
+	else if (Follows(p, "!="))  { p->lookahead = TK_NE; }
+	else if (Follows(p, ">="))  { p->lookahead = TK_GE; }
+	else if (c == '=')          { p->lookahead = TK_EQ; }
+	else if (c == '<')          { p->lookahead = TK_LT; }
+	else if (c == '>')          { p->lookahead = TK_GT; }
     else if (c == '+')          { p->lookahead = TK_PLUS; }
     else if (c == '*')          { p->lookahead = TK_ASTERISK; }
     else if (c == '-')          { p->lookahead = TK_MINUS; }
@@ -303,6 +499,20 @@ LOCAL expr_val Match(EParser p, int token)
         // add error check here
         return Match_Var(p);
 
+	case TK_AND:
+		if		(Follows(p, "and")) { p->pos += 3; Next_Token(p); }
+		else if (Follows(p, "AND")) { p->pos += 3; Next_Token(p); }
+		else if (Follows(p, "&&"))  { p->pos += 2; Next_Token(p); }
+		else UNEXP_CHAR(p);
+		break;
+
+	case TK_OR:
+		if		(Follows(p, "or")) { p->pos += 2; Next_Token(p); }
+		else if (Follows(p, "OR")) { p->pos += 2; Next_Token(p); }
+		else if (Follows(p, "||"))  { p->pos += 2; Next_Token(p); }
+		else UNEXP_CHAR(p);
+		break;
+
     case TK_BR_O:
         if (!Follows(p, "(")) UNEXP_CHAR(p);
         p->pos++;
@@ -338,6 +548,41 @@ LOCAL expr_val Match(EParser p, int token)
         p->pos++;
         Next_Token(p);
         break;
+
+	case TK_LT:
+		if (!Follows(p, "<")) UNEXP_CHAR(p);
+		p->pos++; Next_Token(p);
+		break;
+
+	case TK_LE:
+		if (!Follows(p, "<=")) UNEXP_CHAR(p);
+		p->pos += 2; Next_Token(p);
+		break;
+
+	case TK_EQ:
+		if (!Follows(p, "=")) UNEXP_CHAR(p);
+		p->pos++; Next_Token(p);
+		break;
+
+	case TK_EQ2:
+		if (!Follows(p, "==")) UNEXP_CHAR(p);
+		p->pos += 2; Next_Token(p);
+		break;
+
+	case TK_NE:
+		if (!Follows(p, "!=") && !Follows(p, "<>")) UNEXP_CHAR(p);
+		p->pos += 2; Next_Token(p);
+		break;
+
+	case TK_GE:
+		if (!Follows(p, ">=")) UNEXP_CHAR(p);
+		p->pos += 2; Next_Token(p);
+		break;
+
+	case TK_GT:
+		if (!Follows(p, ">")) UNEXP_CHAR(p);
+		p->pos++; Next_Token(p);
+		break;
     
     }
 
@@ -349,29 +594,39 @@ LOCAL expr_val Match(EParser p, int token)
 
 Following code represents this grammar
 
- S ->E
- E ->TE'
- E'->+TE'
- E'->lambda
- T ->FT'
- T'->*FT'
- T'->lambda
- F ->(E)
- F ->var
- F ->number
+ S -> C
+ C -> BC'
+ C'-> orBC'
+ C'-> lambda
+ B -> EB'
+ B'-> <EB'
+ B'-> lambda
+ E -> TE'
+ E'-> +TE'
+ E'-> lambda
+ T -> FT'
+ T'-> *FT'
+ T'-> lambda
+ F -> (C)
+ F -> var
+ F -> number
 
  which came from following grammar after eliminating left recursion
+ C -> C or B
+ C -> B
+ B -> B < E
+ B -> E
  E -> E + T
  E -> T
  T -> T * F
  T -> F
- F -> (E)
+ F -> (C)
  F -> var
  F -> number
 
 */
 
-LOCAL expr_val E(EParser p);
+LOCAL expr_val C(EParser p);
 
 LOCAL expr_val F(EParser p)
 {
@@ -381,7 +636,7 @@ LOCAL expr_val F(EParser p)
     {
     case TK_BR_O:
         Match(p, TK_BR_O);
-        m = E(p);
+        m = C(p);
         Match(p, TK_BR_C);
         break;
 
@@ -430,28 +685,61 @@ LOCAL expr_val T(EParser p)
 
 LOCAL expr_val Eap(EParser p, expr_val v)
 {
-    if (p->lookahead == TK_PLUS)
-    {
-        Match(p, TK_PLUS);
-        return operator_plus(p, v, Eap(p,T(p)));
-    }
-	if (p->lookahead == TK_MINUS)
-	{
-		Match(p, TK_MINUS);
-		return operator_plus(p, v, Eap(p, operator_minus(p, T(p))));
-	}
-
-    return v;
+    if (p->lookahead == TK_PLUS) {
+        Match(p, TK_PLUS); return operator_plus(p, v, Eap(p,T(p)));
+	} else if (p->lookahead == TK_MINUS) {
+		Match(p, TK_MINUS); return operator_plus(p, v, Eap(p, operator_minus(p, T(p))));
+	} else 
+		return v;
 }
 
-LOCAL expr_val E(EParser p)
+LOCAL expr_val E(EParser p) { return Eap(p, T(p)); }
+
+LOCAL expr_val Bap(EParser p, expr_val v)
 {
-    return Eap(p, T(p));
+	switch (p->lookahead) {
+	case TK_LT: Match(p, TK_LT); return operator_lt(p, v, Bap(p, E(p)));
+	case TK_LE: Match(p, TK_LE); return operator_le(p, v, Bap(p, E(p)));
+	case TK_EQ: Match(p, TK_EQ); return operator_eq(p, v, Bap(p, E(p)));
+	case TK_EQ2: Match(p, TK_EQ2); return operator_eq(p, v, Bap(p, E(p)));
+	case TK_NE: Match(p, TK_NE); return operator_ne(p, v, Bap(p, E(p)));
+	case TK_GE: Match(p, TK_GE); return operator_ge(p, v, Bap(p, E(p)));
+	case TK_GT: Match(p, TK_GT); return operator_gt(p, v, Bap(p, E(p)));
+	default: return v;
+	}
 }
 
-LOCAL expr_val S(EParser p) { return E(p); }
+LOCAL expr_val B(EParser p) { return Bap(p, E(p)); }
+
+LOCAL expr_val Cap(EParser p, expr_val v)
+{
+	if (p->lookahead == TK_AND) {
+		Match(p, TK_AND); return operator_and(p, v, Cap(p, B(p)));
+	} else if (p->lookahead == TK_OR) {
+		Match(p, TK_OR); return operator_or(p, v, Cap(p, B(p)));
+	} else
+		return v;
+}
+
+LOCAL expr_val C(EParser p) { return Cap(p, B(p)); }
+
+LOCAL expr_val S(EParser p) { return C(p); }
 
 // -- grammar end --
+
+GLOBAL const char* Parser_Error_Description(int error)
+{
+	switch (error) {
+	case ERR_SUCCESS:			return "Evaluation succeeded";
+	case ERR_INVALID_TOKEN:		return "Invalid token found";
+	case ERR_UNEXPECTED_CHAR:	return "Unexpected character";
+	case ERR_TYPE_MISMATCH:		return "Type mismatch";
+	case ERR_ZERO_DIV:			return "Division by zero";
+	case ERR_NOTIMPL:			return "Operation not implemented";
+	case ERR_MALFORMED_NUM:		return "Malformed number found";
+	default:					return "Unknown error";
+	}
+}
 
 LOCAL void Init_Parser(EParser p, variable_val_fnc f, const char *str)
 {
@@ -462,7 +750,7 @@ LOCAL void Init_Parser(EParser p, variable_val_fnc f, const char *str)
     Next_Token(p);
 }
 
-LOCAL expr_val Expr_Eval(const char *str, variable_val_fnc f, int *error)
+GLOBAL expr_val Expr_Eval(const char *str, variable_val_fnc f, int *error)
 {
     expr_parser_t p;
 	expr_val e;

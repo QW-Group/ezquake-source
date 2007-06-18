@@ -9,7 +9,7 @@
 	  types: double, integer
 	  variables: optionally preceded with '%'
 
-$Id: parser.h,v 1.5 2007-05-03 12:03:55 johnnycz Exp $
+$Id: parser.h,v 1.6 2007-06-18 21:56:00 johnnycz Exp $
 */
 
 #ifndef __PARSER_H__
@@ -45,7 +45,10 @@ extern expr_val Get_Expr_Double(double v);
 extern expr_val Get_Expr_Integer(int v);
 extern expr_val Get_Expr_Dummy(void);
 
+extern const char* Parser_Error_Description(int error);
+
 // evaluate str, write the result and return error level
+extern expr_val Expr_Eval(const char* str, variable_val_fnc f, int* error);
 extern int Expr_Eval_Int(const char *str, variable_val_fnc f, int *result);
 extern int Expr_Eval_Double(const char *str, variable_val_fnc f, double *result);
 

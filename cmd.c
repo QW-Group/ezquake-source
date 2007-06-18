@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.65 2007-05-28 10:47:32 johnnycz Exp $
+    $Id: cmd.c,v 1.66 2007-06-18 21:55:59 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "tp_triggers.h"
 #endif /* !SERVERONLY */
+#include "parser.h"
 
 #ifndef SERVERONLY
 qbool CL_CheckServerCommand (void);
@@ -1772,6 +1773,40 @@ void Cmd_If_Exists_f(void)
 		return;
 }
 
+#ifdef _DEBUG
+
+void Cmd_Eval_f(void)
+{
+	int errn;
+	expr_val value;
+
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: eval <expression>\n"
+			"Prints the value of given expression after evaluation in the internal parser\n");
+		return;
+	}
+
+	value = Expr_Eval(Cmd_Argv(1), NULL, &errn);
+
+	if (errn != ERR_SUCCESS)
+	{
+		Com_Printf("Error occured:\n%s\n", Parser_Error_Description(errn));
+		return;
+	}
+	else
+	{
+		switch (value.type) {
+		case ET_INT:  Com_Printf("Result: %i (integer)\n", value.i_val); break;
+		case ET_DBL:  Com_Printf("Result: %f (double)\n",  value.d_val); break;
+		case ET_BOOL: Com_Printf("Result: %s (bool)\n", value.b_val ? "true" : "false"); break;
+		case ET_STR:  Com_Printf("Result: (string)\n\"%s\"\n", value.s_val); break;
+		default:      Com_Printf("Error: Unknown value type\n"); break;
+		}
+	}
+}
+
+#endif /* _DEBUG */
+
 #endif /* SERVERONLY */
 
 void Cmd_Init (void)
@@ -1794,6 +1829,9 @@ void Cmd_Init (void)
 #ifndef SERVERONLY
 	Cmd_AddCommand ("if", Cmd_If_f);
 	Cmd_AddCommand ("if_exists", Cmd_If_Exists_f);
+#ifdef _DEBUG
+	Cmd_AddCommand ("eval", Cmd_Eval_f);
+#endif
 #endif
 
 	Cmd_AddCommand ("macrolist", Cmd_MacroList_f);
