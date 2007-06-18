@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.150 2007-06-18 00:49:28 qqshka Exp $
+$Id: cl_main.c,v 1.151 2007-06-18 16:59:21 himan Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -76,7 +76,7 @@ qbool OnChange_allow_scripts (cvar_t *var, char *value);
 cvar_t	allow_scripts = {"allow_scripts", "2", 0, OnChange_allow_scripts};
 cvar_t	rcon_password = {"rcon_password", ""};
 cvar_t	rcon_address = {"rcon_address", ""};
-cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "0"};
+cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "1"};
 
 cvar_t	cl_timeout = {"cl_timeout", "60"};
 
