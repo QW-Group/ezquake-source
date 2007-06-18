@@ -704,10 +704,11 @@ void R_DrawAliasModel (entity_t *ent) {
 	VectorSubtract (r_origin, r_entorigin, modelorg);
 
 	//TODO: use modhints here? 
-	//VULT CORONAS
-	if ((!strcmp (ent->model->name, "progs/flame.mdl") /*|| !strcmp (ent->model->name, "progs/flame2.mdl")*/
-	|| !strcmp (ent->model->name, "progs/flame3.mdl")) && (  (amf_coronas.value/* && (rand() % 2 < 2)*/)
-	|| !strcmp(ent->model->name, "progs/flame0.mdl")) )//joe: support coronas for non-flamed torch too
+	//VULT CORONAS	
+	if (		
+		(!strcmp (ent->model->name, "progs/flame.mdl") || 
+		!strcmp (ent->model->name, "progs/flame0.mdl") || 
+		!strcmp (ent->model->name, "progs/flame3.mdl") ) && amf_coronas.value )
 	{
 		//FIXME: This is slow and pathetic as hell, really we should just check the entity
 		//alternativley add some kind of permanent client side TE for the torch
