@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_main.c,v 1.25 2007-04-08 12:50:27 disconn3ct Exp $
+	$Id: sv_main.c,v 1.26 2007-06-18 00:49:28 qqshka Exp $
 */
 
 #include "qwsvdef.h"
@@ -1062,6 +1062,9 @@ void SV_InitLocal (void) {
 	extern cvar_t sv_maxpitch, sv_minpitch, pm_airstep, pm_pground, pm_slidefix, pm_ktjump, pm_bunnyspeedcap;
 	extern cvar_t pm_stopspeed, pm_spectatormaxspeed, pm_accelerate, pm_airaccelerate, pm_wateraccelerate;
 	extern cvar_t pm_friction, pm_waterfriction;
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+	extern cvar_t sv_downloadchunksperframe;
+#endif
 
 	SV_InitOperatorCommands	();
 
@@ -1090,6 +1093,10 @@ void SV_InitLocal (void) {
 	Cvar_Register (&sv_halflifebsp);
 	Cvar_Register (&sv_maxpitch);
 	Cvar_Register (&sv_minpitch);
+
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+	Cvar_Register (&sv_downloadchunksperframe);
+#endif
 
 	Cvar_Register (&filterban);
 	Cvar_Register (&skill);

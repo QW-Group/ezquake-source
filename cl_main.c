@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.149 2007-06-17 16:31:55 disconn3ct Exp $
+$Id: cl_main.c,v 1.150 2007-06-18 00:49:28 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -83,6 +83,10 @@ cvar_t	cl_timeout = {"cl_timeout", "60"};
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 #ifdef PROTOCOL_VERSION_FTE
 cvar_t  cl_nopext  = {"cl_nopext", "0"};
+#endif
+
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+cvar_t  cl_chunksperframe  = {"cl_chunksperframe", "2"};
 #endif
 
 cvar_t	cl_sbar		= {"cl_sbar", "0", CVAR_ARCHIVE};
@@ -931,6 +935,13 @@ void CL_ConnectionlessPacket (void) {
 		break;
 
 	case A2C_PRINT:		// print command from somewhere
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+		if (net_message.cursize > 100 && !strncmp(net_message.data + 5, "\\chunk", sizeof("\\chunk")-1)) {
+			CL_Parse_OOB_ChunkedDownload();
+			return;
+		}
+#endif
+
 		if (net_message.data[msg_readcount] == '\\') {
 			if (qstat_senttime && curtime - qstat_senttime < 10) {
 				CL_PrintQStatReply (MSG_ReadString());
@@ -1157,6 +1168,9 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_fix_mvd);
 #ifdef PROTOCOL_VERSION_FTE
 	Cvar_Register (&cl_nopext);
+#endif
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+	Cvar_Register (&cl_chunksperframe);
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);

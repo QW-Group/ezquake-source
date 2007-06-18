@@ -727,6 +727,15 @@ void CL_ParseClientdata (void);
 
 void CL_FinishDownload(qbool rename_files);
 
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+
+void	CL_ParseChunkedDownload(void);
+void	CL_Parse_OOB_ChunkedDownload(void);
+int		CL_RequestADownloadChunk(void);
+void	CL_SendChunkDownloadReq(void);
+
+#endif
+
 // cl_tent.c
 void CL_InitTEnts (void);
 void CL_ClearTEnts (void);
@@ -803,16 +812,6 @@ void Cam_TryLock (void);
 
 int Cam_TrackNum(void);
 void Cam_Lock(int playernum);
-
-// cl_chunked_dl.c
-
-#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
-
-void	CL_ParseChunkedDownload(void);
-int		CL_RequestADownloadChunk(void);
-void	CL_SendChunkDownloadReq(void);
-
-#endif
 
 // skin.c
 void	Skin_Find (player_info_t *sc);

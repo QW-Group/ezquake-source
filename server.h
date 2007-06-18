@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: server.h,v 1.20 2007-04-06 21:16:03 qqshka Exp $
+	$Id: server.h,v 1.21 2007-06-18 00:49:28 qqshka Exp $
 */
 // server.h
 
@@ -193,6 +193,9 @@ typedef struct client_s {
 	FILE		*download;			// file being downloaded
 #ifdef PROTOCOL_VERSION_FTE
 	int			download_position; // chunked download used fseek(), since this is may be pak file, we need offset in pak file
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+	int			download_chunks_perframe;
+#endif
 #endif
 	int			downloadsize;		// total bytes
 	int			downloadcount;		// bytes sent

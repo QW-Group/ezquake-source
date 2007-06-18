@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.94 2007-06-14 15:49:17 qqshka Exp $
+$Id: cl_parse.c,v 1.95 2007-06-18 00:49:28 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -696,6 +696,8 @@ extern void CL_RequestNextDownload (void);
 #define DLBLOCKSIZE 1024
 
 
+int chunked_download_number = 0; // never reset, bumped up
+
 int downloadsize;
 int receivedbytes;
 int recievedblock[MAXBLOCKS];
@@ -733,20 +735,58 @@ int CL_RequestADownloadChunk(void)
 
 void CL_SendChunkDownloadReq(void)
 {
-	int i;
+	extern cvar_t cl_chunksperframe;
+	int i, j, chunks = bound(1, cl_chunksperframe.integer, 5);
 
-	if (cls.downloadmethod != DL_QWCHUNKS)
-		return;
+	for (j = 0; j < chunks; j++)
+	{
+		if (cls.downloadmethod != DL_QWCHUNKS)
+			return;
 
-	i = CL_RequestADownloadChunk();
+		i = CL_RequestADownloadChunk();
+		// i < 0 mean client complete download, let server know
+		// qqshka: download percent optional, server does't really require it, that my extension, hope does't fuck up something
+		CL_SendClientCommand(i < 0 ? true : false, "nextdl %d %d %d", i, cls.downloadpercent, chunked_download_number);
 
-	// i < 0 mean client complete download, let server know
-	// qqshka: download percent optional, server does't really require it, that my extension, hope does't fuck up something
-	CL_SendClientCommand(i < 0 ? true : false, "nextdl %d %d", i, cls.downloadpercent);
-
-	if (i < 0)
-		CL_FinishDownload(true); // this also request next dl
+		if (i < 0)
+			CL_FinishDownload(true); // this also request next dl
+	}
 }
+
+void CL_ParseDownload (void);
+
+void CL_Parse_OOB_ChunkedDownload(void)
+{
+	int j;
+
+//	Com_Printf("%6.6s\n", net_message.data + 5);
+
+	for ( j = 0; j < sizeof("\\chunk")-1; j++ )
+		MSG_ReadByte ();
+
+	//
+	// qqshka: well, this is evil.
+	// In case of when one file completed download and next started
+	// here may be some packets which travel via network,
+	// so we got packets from different file, that mean we may assemble wrong data,
+	// need somehow discard such packets, i have no idea how, so adding at least this check.
+	//
+
+	if (chunked_download_number != MSG_ReadLong ())
+	{
+		Com_DPrintf("Dropping OOB chunked message, out of sequence\n");
+		return;
+	}
+	
+	if (MSG_ReadByte() != svc_download)
+	{
+		Com_DPrintf("Something wrong in OOB message and chunked download\n");
+		return;
+	}
+
+	CL_ParseDownload ();
+}
+
 
 static void MSG_ReadData (void *data, int len)
 {
@@ -812,6 +852,9 @@ void CL_ParseChunkedDownload(void)
 
 		cls.downloadmethod  = DL_QWCHUNKS;
 		cls.downloadpercent = 0;
+
+		chunked_download_number++;
+
 		downloadsize        = totalsize;
 
 		firstblock    = 0;
@@ -821,7 +864,7 @@ void CL_ParseChunkedDownload(void)
 		return;
 	}
 
-//	Com_Printf("Received dl block %i: ", chunknum);
+//	Com_Printf("Received dl block %i:\n", chunknum);
 
 	MSG_ReadData(data, DLBLOCKSIZE);
 
