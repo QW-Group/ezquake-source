@@ -1,7 +1,7 @@
 
 #include "quakedef.h"
 #include "keys.h"
-#include "draw.h"
+//#include "draw.h"
 //#include "string.h"
 #include "ez_controls.h"
 
