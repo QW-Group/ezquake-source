@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.62 2007-06-06 15:34:59 cokeman1982 Exp $
+    $Id: keys.c,v 1.63 2007-06-18 15:12:24 johnnycz Exp $
 
 */
 
@@ -1927,21 +1927,23 @@ static qbool Mouse_EventDispatch(void)
 // called by Key_Event, updates button states
 qbool Mouse_ButtonEvent(int key, qbool down)
 {
-    key = key - K_MOUSE1 + 1;   // get the button number, starting from 1
-    key = bound(0, key, 8);
+	if (key >= K_MOUSE1 && key <= K_MOUSE8)
+	{	// in this case we convert the button number to the range 1..8
+		key = key - K_MOUSE1 + 1;   // get the button number, starting from 1
+		key = bound(1, key, 8);
+		scr_pointer_state.buttons[key] = down;
+	}
+	else if (key != K_MWHEELDOWN && key != K_MWHEELUP)
+	{
+		// not a mouse button received
+		return false;
+	}
 
-    if (down) {
-        scr_pointer_state.button_down = key;
-        scr_pointer_state.button_up = 0;
-        scr_pointer_state.buttons[key] = true;
-    } else {
-        scr_pointer_state.button_up = key;
-        scr_pointer_state.button_down = 0;
-        scr_pointer_state.buttons[key] = false;
-    }
+	scr_pointer_state.button_down = down ? key : 0;
+	scr_pointer_state.button_up   = down ? 0 : key;
 
-    // report if the button event has been handled or not
-    return Mouse_EventDispatch();
+	// report if the button event has been handled or not
+	return Mouse_EventDispatch();
 }
 
 // called by cl_screen.c each time it figures out that the mouse has moved
@@ -2151,6 +2153,11 @@ void Key_Event (int key, qbool down)
         // K_MOUSE* key event
         if (Mouse_ButtonEvent(key, down)) return;
     }
+
+	if (key == K_MWHEELDOWN || key == K_MWHEELUP) {
+		// same logic applies here as for handling K_MOUSE1..8 buttons
+		if (Mouse_ButtonEvent(key, down)) return;
+	}
 
 #ifdef WITH_KEYMAP
 	Key_EventEx (key, key, down);

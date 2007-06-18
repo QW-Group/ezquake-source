@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.73 2007-05-03 12:03:54 johnnycz Exp $
+	$Id: menu.c,v 1.74 2007-06-18 15:12:24 johnnycz Exp $
 
 */
 
@@ -2281,6 +2281,13 @@ qbool Menu_Mouse_Event(const mouse_state_t* ms)
         return true;
     }
 #endif
+
+	if (ms->button_down == K_MWHEELDOWN || ms->button_up == K_MWHEELDOWN ||
+		ms->button_down == K_MWHEELUP   || ms->button_up == K_MWHEELUP)
+	{
+		// menus do not handle this type of mouse wheel event, they accept it as a key event	
+		return false;
+	}
 
 	// send the mouse state to appropriate modules here
     // functions should report if they handled the event or not
