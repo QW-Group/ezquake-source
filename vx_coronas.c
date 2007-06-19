@@ -24,7 +24,9 @@ typedef struct
 	int texture;
 } corona_t;
 
-#define MAX_CORONAS 256
+//Tei: original whas 256, upped so whas low (?!) for some games
+#define MAX_CORONAS 300
+
 corona_t	r_corona[MAX_CORONAS];
 
 #define CORONA_SCALE 130
@@ -76,8 +78,7 @@ void R_UpdateCoronas(void)
 
 			//Tei: this has been commented out for multiplayer,
 			// because some coronas see trough walls and can be cheat.
-			// #1041604	Eyecandy - cheaty (2nd)
-
+			// #1041604	Eyecandy - cheaty (2nd)			
 			/*
 			if (c->type == C_FIRE)
 			{
@@ -89,6 +90,8 @@ void R_UpdateCoronas(void)
 				c->fade += c->fade;
 				c->growth += c->growth;
 			}*/
+
+
 				
 		}
 		else
@@ -236,7 +239,23 @@ void NewCorona (coronatype_t type, vec3_t origin)
 
 	if(!corona_found)
 	{
-		Com_Printf("No free coronas\n");
+		//Tei: last attemp to get a valid corona to "canivalize"
+		c = r_corona;
+		for (i=0 ; i < MAX_CORONAS ; i++, c++)
+		{
+			//Search a fire corona that is about to die soon
+			if ( (c->type == C_FIRE) &&
+			     (c->die <  (cl.time +0.1f) || c->scale <= 0.1f || c->alpha <= 0.1f)
+			   )
+			{
+				memset (c, 0, sizeof(*c));
+				corona_found = true;
+				//sucesfully canivalize a fire corona that whas about to die.
+				break;
+			}			
+		}
+		//If can't canivalize a corona, It exit silently
+		//This is the worst case scenario, and will never happend
 		return;		
 	}
 
