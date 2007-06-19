@@ -750,6 +750,7 @@ void DrawTextureChains (model_t *model, int contents)
 {
 	extern cvar_t gl_lumaTextures;
 	
+	
 	int waterline, i, k, GL_LIGHTMAP_TEXTURE = 0, GL_FB_TEXTURE = 0;
 	msurface_t *s;
 	texture_t *t;
@@ -765,6 +766,9 @@ void DrawTextureChains (model_t *model, int contents)
 	qbool draw_mtex_fbs;
 
 	qbool mtex_lightmaps, mtex_fbs;
+
+	qbool isInternalModel;//Internal models are compiled inside the bsp file
+		// used for moving things, like platforms
 
 	drawLumasGlowing = (com_serveractive || cl.allow_lumas) && (gl_fb_bmodels.value || gl_fogenable.value);
 
@@ -784,6 +788,12 @@ void DrawTextureChains (model_t *model, int contents)
 	{
 		glEnable(GL_FOG);
 	}
+
+	//Tei: notice the paranoid testing :D
+	if (model && model->name && model->name[0]=='*')
+		isInternalModel = true;
+	else
+		isInternalModel = false;
 	
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
@@ -877,7 +887,9 @@ void DrawTextureChains (model_t *model, int contents)
                 v = s->polys->verts[0];
 				for (k = 0 ; k < s->polys->numverts ; k++, v += VERTEXSIZE) {
 					if (doMtex1) {
-						if((gl_textureless.value) && !brushmodel) { //Qrack
+						
+						//Tei: textureless for the map model, and the internal models 
+						if((gl_textureless.value && (isInternalModel || !brushmodel)) ) { //Qrack
 							qglMultiTexCoord2f (GL_TEXTURE0_ARB, 0, 0);
                             
 							if (mtex_lightmaps)
