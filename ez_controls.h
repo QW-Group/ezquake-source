@@ -13,12 +13,19 @@
 #define CONTROL_FOCUSED		(1 << 7)
 
 //
-// Control - Function pointers 
+// Control - Function pointer types.
 //
 typedef void (*ez_control_handler_fp) (struct ez_control_s *self);
 typedef qbool (*ez_control_mouse_handler_fp) (struct ez_control_s *self, mouse_state_t *mouse_state);
 typedef qbool (*ez_control_key_handler_fp) (struct ez_control_s *self, int key, qbool down);
 typedef qbool (*ez_control_keychange_handler_fp) (struct ez_control_s *self, int key);
+typedef void (*ez_control_move_handler_fp) (struct ez_control_s *self, int parent_abs_x, int parent_abs_y);
+typedef void (*ez_control_destroy_handler_fp) (struct ez_tree_s *tree, struct ez_control_s *self, qbool destroy_children);
+
+// 
+// Double Linked List - Function pointer types.
+//
+typedef int (* PtFuncCompare)(const void *, const void *);
 
 typedef struct ez_dllist_node_s
 {
@@ -43,6 +50,9 @@ typedef struct ez_control_s
 	int 				width;
 	int					height;
 
+	int					absolute_x;		// The absolute screen coordinates for the HUD element.
+	int					absolute_y;	
+
 	int					draw_order;		// The order the control is drawn in.
 	int					tab_order;		// The tab number of the control.
 	
@@ -53,36 +63,38 @@ typedef struct ez_control_s
 
 	mouse_state_t		prev_mouse_state;
 	
-	ez_control_mouse_handler_fp	on_mouse;
-	ez_control_mouse_handler_fp	on_mouse_click;
-	ez_control_mouse_handler_fp	on_mouse_up;
-	ez_control_mouse_handler_fp	on_mouse_down;
-	ez_control_mouse_handler_fp	on_mouse_hover;
-	ez_control_mouse_handler_fp	on_mouse_enter;
-	ez_control_mouse_handler_fp	on_mouse_leave;
+	ez_control_mouse_handler_fp		on_mouse;
+	ez_control_mouse_handler_fp		on_mouse_click;
+	ez_control_mouse_handler_fp		on_mouse_up;
+	ez_control_mouse_handler_fp		on_mouse_down;
+	ez_control_mouse_handler_fp		on_mouse_hover;
+	ez_control_mouse_handler_fp		on_mouse_enter;
+	ez_control_mouse_handler_fp		on_mouse_leave;
 
 	ez_control_key_handler_fp		on_key;
 	ez_control_keychange_handler_fp on_key_up;
 	ez_control_keychange_handler_fp on_key_down;
 
-	ez_control_handler_fp		on_draw;
+	ez_control_handler_fp			on_draw;
 
-	ez_control_handler_fp		on_destroy;
+	ez_control_destroy_handler_fp	on_destroy;
 
-	ez_control_handler_fp		on_move;
-	ez_control_handler_fp		on_got_focus;
-	ez_control_handler_fp		on_lost_focus;
-	ez_control_handler_fp		on_layout_children;
+	ez_control_move_handler_fp		on_move;
 
-	struct ez_control_s			*parent;
-	ez_double_linked_list_t		children;
+	ez_control_handler_fp			on_got_focus;
+	ez_control_handler_fp			on_lost_focus;
+	ez_control_handler_fp			on_layout_children;
+
+	struct ez_control_s				*parent;
+	ez_double_linked_list_t			children;
 } ez_control_t;
 
 typedef struct ez_tree_s
 {
-	ez_control_t			*root;		// The control tree.
-	ez_double_linked_list_t	drawlist;	// A list with the controls ordered in their drawing order.
-	ez_double_linked_list_t	tablist;	// A list with the controls ordered in their tabbing order.
+	ez_control_t			*root;				// The control tree.
+	ez_dllist_node_t		*focused_node;		// The node of focused control (from the tablist). 
+	ez_double_linked_list_t	drawlist;			// A list with the controls ordered in their drawing order.
+	ez_double_linked_list_t	tablist;			// A list with the controls ordered in their tabbing order.
 } ez_tree_t;
 
 //
@@ -101,6 +113,21 @@ void *EZ_double_linked_list_RemoveByPayload(ez_double_linked_list_t *list, void 
 void *EZ_double_linked_list_Remove(ez_double_linked_list_t *list, ez_dllist_node_t *item);
 
 //
+// Double Linked List - Orders a list.
+//
+void EZ_double_linked_list_Order(ez_double_linked_list_t *list, PtFuncCompare compare_function);
+
+//
+// Control Tree - Orders the draw list based on the draw order property.
+//
+void EZ_tree_OrderTabList(ez_tree_t *tree);
+
+//
+// Control Tree - Orders the draw list based on the draw order property.
+//
+void EZ_tree_OrderDrawList(ez_tree_t *tree);
+
+//
 // Control Tree - Draws a control tree.
 // 
 void EZ_tree_Draw(ez_tree_t *tree);
@@ -116,24 +143,37 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms);
 qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, qbool down);
 
 //
+// Tree Control - Finds any orphans and adds them to the root control.
+//
+void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree);
+
+//
 // Control - Initializes a control.
 //
-ez_control_t *EZ_control_Init(char *name, char *description, int x, int y, int width, int height, char *background_name, int flags);
+ez_control_t *EZ_control_Init(ez_tree_t *tree, ez_control_t *parent, 
+							  char *name, char *description, 
+							  int x, int y, int width, int height, 
+							  char *background_name, int flags);
 
 //
 // Control - Destroys a specified control.
 //
-void EZ_control_Destroy(ez_control_t *self, qbool destroy_children);
+void EZ_control_Destroy(ez_tree_t *tree, ez_control_t *self, qbool destroy_children);
 
 //
-// Control - Finds any orphans and adds them to the root control.
+// Control - Set color of a control.
 //
-void EZ_control_UnOrphanizeChildren(ez_control_t *root_node, ez_tree_t *tree);
+void EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, byte alpha);
 
 //
 // Control - Sets the size of a control.
 //
-void EZ_control_SetSize(ez_control_t *self, int x, int y, int width, int height);
+void EZ_control_SetSize(ez_control_t *self, int width, int height);
+
+//
+// Control - Sets the position of a control.
+//
+void EZ_control_SetPosition(ez_control_t *self, int x, int y);
 
 //
 // Control - Returns true if this control is the root control.
