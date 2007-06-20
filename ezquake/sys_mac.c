@@ -1,6 +1,6 @@
 /*
 
-	$Id: sys_mac.c,v 1.22.2.1 2007-05-17 22:50:41 johnnycz Exp $
+	$Id: sys_mac.c,v 1.22.2.2 2007-06-20 19:29:31 zwoch Exp $
 
 */
 // sys_mac.c -- Macintosh system driver
@@ -221,10 +221,10 @@ void Sys_Error (char *error, ...)
 		Str255 briefMsg;
 		
 		param.movable 		= 0;
-		param.filterProc 	= NULL;
-		param.defaultText	= "\pOK";
-		param.cancelText 	= NULL;
-		param.otherText 	= NULL;
+		param.filterProc 	= nil;
+		param.defaultText	= nil;
+		param.cancelText 	= nil;
+		param.otherText 	= nil;
 		param.helpButton 	= false;
 		param.defaultButton	= kAlertStdAlertOKButton;
 		param.cancelButton	= 0;
@@ -783,7 +783,7 @@ static void SetGlobalsFromPrefs (void)
 
 	if (macPrefs.color_depth == kMenuBpp16)
 		vid_currentprofile.colorbits = 16;
-	else
+//hack	else
 		vid_currentprofile.colorbits = 32;
 
 	if (macPrefs.tex_depth == kMenuBpp16) {
