@@ -4,12 +4,17 @@
     of an arithmetic expression into a number
 
     Supports:
-      binary operators: +, -, *, /
+      parentheses (, )
+	  binary operators:
+          +, -, *, / (arithmetic, also + for string concatenation)
+		  <, <=, =, ==, >=, >, =~, !~, isin, !isin
+		  and, AND, &&, or, OR, ||
       unary operators: -
-	  types: double, integer
+	  types: double, integer, bool
+	    string (wrapped in quotes or apostrophes or surrounded by white-space chars)
 	  variables: optionally preceded with '%'
 
-$Id: parser.h,v 1.7 2007-06-20 16:38:37 johnnycz Exp $
+$Id: parser.h,v 1.8 2007-06-20 17:41:58 johnnycz Exp $
 */
 
 #ifndef __PARSER_H__
@@ -17,16 +22,7 @@ $Id: parser.h,v 1.7 2007-06-20 16:38:37 johnnycz Exp $
 
 #define MAX_VAR_NAME		32
 
-#define ERR_SUCCESS         0
-#define ERR_INVALID_TOKEN   1
-#define ERR_UNEXPECTED_CHAR 2
-#define ERR_TYPE_MISMATCH	3
-#define ERR_ZERO_DIV		4
-#define ERR_NOTIMPL			5
-#define ERR_MALFORMED_NUM   6
-#define ERR_OUT_OF_MEM		7
-#define ERR_INTERNAL        8
-#define ERR_REGEXP			9
+#define EXPR_EVAL_SUCCESS	0
 
 typedef enum { ET_INT, ET_DBL, ET_BOOL, ET_STR } expr_type;
 

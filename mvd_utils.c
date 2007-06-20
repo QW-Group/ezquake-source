@@ -1,5 +1,5 @@
 /*
-$Id: mvd_utils.c,v 1.42 2007-06-20 16:38:37 johnnycz Exp $
+$Id: mvd_utils.c,v 1.43 2007-06-20 17:41:58 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -820,19 +820,8 @@ int MVD_FindBestPlayer_f(void)
 		currentplayer_num = i;
 		eval_error = Expr_Eval_Double(eq, &mvd_pars_extra, &value);
 
-		if (eval_error != ERR_SUCCESS) {
-            switch (eval_error) {
-            case ERR_INVALID_TOKEN:
-                Com_Printf("Invalid character found in the expression, autotracking OFF\n");
-                break;
-            case ERR_UNEXPECTED_CHAR:
-                Com_Printf("Unexpected token in the expression, autotracking OFF\n");
-                break;
-            default:
-                Com_Printf("Unknown error when evaluating the expression, autotracking OFF\n");
-                break;
-            }
-
+		if (eval_error != EXPR_EVAL_SUCCESS) {
+			Com_Printf("Expression evaluation error: %s\n", Parser_Error_Description(eval_error));
 			Cvar_SetValue(&mvd_autotrack,0);
 			return 0;
 		}

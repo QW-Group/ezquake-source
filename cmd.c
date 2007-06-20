@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.67 2007-06-20 16:38:37 johnnycz Exp $
+    $Id: cmd.c,v 1.68 2007-06-20 17:41:58 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -1716,7 +1716,7 @@ void Cmd_If_New(void)
 	}
 
 	error = Expr_Eval_Bool(expr, &pars_ex, &result);
-	if (error != ERR_SUCCESS) {
+	if (error != EXPR_EVAL_SUCCESS) {
 		Com_Printf("Error in condition: %s (\"%s\")\n", Parser_Error_Description(error), expr);
 		free(expr);
 		return;
@@ -1902,7 +1902,7 @@ void Cmd_Eval_f(void)
 
 	value = Expr_Eval(Cmd_Argv(1), NULL, &errn);
 
-	if (errn != ERR_SUCCESS)
+	if (errn != EXPR_EVAL_SUCCESS)
 	{
 		Com_Printf("Error occured: %s\n", Parser_Error_Description(errn));
 		return;

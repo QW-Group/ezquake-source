@@ -2,7 +2,7 @@
 	Arithmetic expression evaluator
     @author johnnycz
     last edit:
-$Id: parser.c,v 1.18 2007-06-20 16:38:37 johnnycz Exp $
+$Id: parser.c,v 1.19 2007-06-20 17:41:58 johnnycz Exp $
 
 */
 
@@ -25,6 +25,16 @@ $Id: parser.c,v 1.18 2007-06-20 16:38:37 johnnycz Exp $
 #define MAX_NUMBER_LENGTH		32
 #define BOOL_TRUE	1
 #define BOOL_FALSE	0
+
+#define ERR_INVALID_TOKEN   1
+#define ERR_UNEXPECTED_CHAR 2
+#define ERR_TYPE_MISMATCH	3
+#define ERR_ZERO_DIV		4
+#define ERR_NOTIMPL			5
+#define ERR_MALFORMED_NUM   6
+#define ERR_OUT_OF_MEM		7
+#define ERR_INTERNAL        8
+#define ERR_REGEXP			9
 
 //
 // Tokens
@@ -78,7 +88,7 @@ typedef struct {
 
 LOCAL void SetError(EParser p, int error)
 {
-	if (p->error == ERR_SUCCESS)
+	if (p->error == EXPR_EVAL_SUCCESS)
 	{
 		p->error = error;
 	} // else keep the previous error
@@ -414,7 +424,6 @@ LOCAL expr_val operator_lt(EParser p, const expr_val e1, const expr_val e2)
 // by using operators "<" and "=="
 #define LT_VAL() (operator_lt(p,e1,e2).b_val)
 #define EQ_VAL() (operator_eq(p,e1,e2).b_val)
-#define STR_EXP_CMP() (strcmp(e1.s_val, e2.s_val))
 #define ADDOP(name,cond)										\
 LOCAL expr_val operator_##name (EParser p, const expr_val e1, const expr_val e2) {	\
 	expr_val ret; ret.type = ET_BOOL;												\
@@ -874,71 +883,45 @@ LOCAL expr_val C(EParser p);
 
 LOCAL expr_val F(EParser p)
 {
-	expr_val m = Get_Expr_Dummy();
-
-    switch (p->lookahead)
+	switch (p->lookahead)
     {
-    case TK_BR_O:
-        Match(p, TK_BR_O);
-        m = C(p);
-        Match(p, TK_BR_C);
-        break;
-
-    case TK_VAR:
-        m = Match(p, TK_VAR);
-        break;
-
-	case TK_STR:
-		m = Match(p, TK_STR);
-		break;
-
-    case TK_DOUBLE:
-        m = Match(p, TK_DOUBLE);
-        break;
-
-	case TK_INTEGER:
-		m = Match(p, TK_INTEGER);
-		break;
-
-    case TK_MINUS:
-        Match(p, TK_MINUS);
-		m = operator_minus(p, F(p));
-        break;
-
-    default:
-        SetError(p, ERR_INVALID_TOKEN);
+	case TK_BR_O: {
+		expr_val m;
+        Match(p, TK_BR_O); m = C(p); Match(p, TK_BR_C);
+        return m;
+		}
+	case TK_VAR:		return Match(p, TK_VAR);
+	case TK_STR:		return Match(p, TK_STR);
+    case TK_DOUBLE:		return Match(p, TK_DOUBLE);
+	case TK_INTEGER:	return Match(p, TK_INTEGER);
+    case TK_MINUS:		Match(p, TK_MINUS);
+		return operator_minus(p, F(p));
+	default: SetError(p, ERR_INVALID_TOKEN); return Get_Expr_Dummy();
     }
-    return m;
 }
 
 LOCAL expr_val Tap(EParser p, expr_val v)
 {
-    if (p->lookahead == TK_ASTERISK)
-    {
-        Match(p, TK_ASTERISK);
+	switch (p->lookahead) {
+	case TK_ASTERISK: Match(p, TK_ASTERISK);
         return operator_multiply(p, v, Tap(p, F(p)));
-    }
-	if (p->lookahead == TK_SLASH)
-	{
-		Match(p, TK_SLASH);
+	case TK_SLASH: Match(p, TK_SLASH);
 		return operator_multiply(p, v, Tap(p, operator_divide(p, F(p))));
+	default: return v;
 	}
-    return v;
 }
 
-LOCAL expr_val T(EParser p)
-{
-    return Tap(p, F(p));
-}
+LOCAL expr_val T(EParser p) { return Tap(p, F(p)); }
 
 LOCAL expr_val Eap(EParser p, expr_val v)
 {
-    if (p->lookahead == TK_PLUS) {
-        Match(p, TK_PLUS); return operator_plus(p, v, Eap(p,T(p)));
-	} else if (p->lookahead == TK_MINUS) {
-		Match(p, TK_MINUS); return operator_plus(p, v, Eap(p, operator_minus(p, T(p))));
-	} else 
-		return v;
+	switch (p->lookahead) {
+	case TK_PLUS: Match(p, TK_PLUS);
+		return operator_plus(p, v, Eap(p,T(p)));
+	case TK_MINUS: Match(p, TK_MINUS);
+		return operator_plus(p, v, Eap(p, operator_minus(p, T(p))));
+	default: return v;
+	}
 }
 
 LOCAL expr_val E(EParser p) { return Eap(p, T(p)); }
@@ -965,12 +948,13 @@ LOCAL expr_val B(EParser p) { return Bap(p, E(p)); }
 
 LOCAL expr_val Cap(EParser p, expr_val v)
 {
-	if (p->lookahead == TK_AND) {
-		Match(p, TK_AND); return operator_and(p, v, Cap(p, B(p)));
-	} else if (p->lookahead == TK_OR) {
-		Match(p, TK_OR); return operator_or(p, v, Cap(p, B(p)));
-	} else
-		return v;
+	switch (p->lookahead) {
+	case TK_AND: Match(p, TK_AND);
+		return operator_and(p, v, Cap(p, B(p)));
+	case TK_OR: Match(p, TK_OR);
+		return operator_or(p, v, Cap(p, B(p)));
+	default: return v;
+	}
 }
 
 LOCAL expr_val C(EParser p) { return Cap(p, B(p)); }
@@ -982,7 +966,7 @@ LOCAL expr_val S(EParser p) { return C(p); }
 GLOBAL const char* Parser_Error_Description(int error)
 {
 	switch (error) {
-	case ERR_SUCCESS:			return "Evaluation succeeded";
+	case EXPR_EVAL_SUCCESS:		return "Evaluation succeeded";
 	case ERR_INVALID_TOKEN:		return "Invalid token found";
 	case ERR_UNEXPECTED_CHAR:	return "Unexpected character";
 	case ERR_TYPE_MISMATCH:		return "Type mismatch";
@@ -999,7 +983,7 @@ GLOBAL const char* Parser_Error_Description(int error)
 LOCAL void Init_Parser(EParser p, const parser_extra* f, const char *str)
 {
     p->pos = 0;
-    p->error = ERR_SUCCESS;
+    p->error = EXPR_EVAL_SUCCESS;
     p->string = str;
 	p->varfnc = f ? f->var2val_fnc : 0;
 	p->re_patfnc = f ? f->subpatt_fnc : 0;
@@ -1022,7 +1006,7 @@ GLOBAL int Expr_Eval_Int(const char *str, const parser_extra* f, int *result)
 	expr_val e;
 
 	e = Expr_Eval(str, f, &err);
-	if (err == ERR_SUCCESS) *result = Get_Integer(e);
+	if (err == EXPR_EVAL_SUCCESS) *result = Get_Integer(e);
 
 	return err;
 }
@@ -1033,7 +1017,7 @@ GLOBAL int Expr_Eval_Double(const char *str, const parser_extra* f, double *resu
 	expr_val e;
 
 	e = Expr_Eval(str, f, &err);
-	if (err == ERR_SUCCESS) *result = Get_Double(e);
+	if (err == EXPR_EVAL_SUCCESS) *result = Get_Double(e);
 
     return err;
 }
@@ -1044,7 +1028,7 @@ GLOBAL int Expr_Eval_Bool(const char* str, const parser_extra* f, int *result)
 	expr_val e;
 
 	e = Expr_Eval(str, f, &err);
-	if (err == ERR_SUCCESS) *result = Get_Bool(e);
+	if (err == EXPR_EVAL_SUCCESS) *result = Get_Bool(e);
 
     return err;
 }
