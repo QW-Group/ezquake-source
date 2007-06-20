@@ -1,5 +1,5 @@
 /*
-$Id: mvd_utils.c,v 1.41 2007-05-29 20:45:21 johnnycz Exp $
+$Id: mvd_utils.c,v 1.42 2007-06-20 16:38:37 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -772,6 +772,8 @@ expr_val MVD_Var_Vals(const char *n)
 	return Get_Expr_Integer(0);
 }
 
+static parser_extra mvd_pars_extra = { MVD_Var_Vals, NULL };
+
 int MVD_FindBestPlayer_f(void)
 {
 	int bp_id, eval_error, i, h, y = 0;
@@ -816,7 +818,7 @@ int MVD_FindBestPlayer_f(void)
     		
 		// store global variable which is used in MVD_Var_Vals
 		currentplayer_num = i;
-		eval_error = Expr_Eval_Double(eq, MVD_Var_Vals, &value);
+		eval_error = Expr_Eval_Double(eq, &mvd_pars_extra, &value);
 
 		if (eval_error != ERR_SUCCESS) {
             switch (eval_error) {

@@ -2,23 +2,29 @@
 	Arithmetic expression evaluator
     @author johnnycz
     last edit:
-$Id: parser.c,v 1.17 2007-06-18 21:56:00 johnnycz Exp $
+$Id: parser.c,v 1.18 2007-06-20 16:38:37 johnnycz Exp $
 
 */
 
 // todo set_calc: strlen(x), int(x), substr(x,pos,len), set_substr, pos, tobrown, towhite, xor, div, mod
-// todo if: isin, !isin, =~, !~
 
 #include <stdlib.h>
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
+#ifndef snprintf
+#include "q_shared.h"
+#endif
+#include "pcre.h"
 #include "parser.h"
 
 #define GLOBAL /* */
 #define LOCAL static
 
-#define REAL_COMPARE_EPSILON 0.00000001
+#define REAL_COMPARE_EPSILON	0.00000001
+#define MAX_NUMBER_LENGTH		32
+#define BOOL_TRUE	1
+#define BOOL_FALSE	0
 
 //
 // Tokens
@@ -40,6 +46,7 @@ $Id: parser.c,v 1.17 2007-06-18 21:56:00 johnnycz Exp $
 #define TK_BR_C     301
 // variable
 #define TK_VAR      500
+#define TK_STR      501
 // comparisions
 #define TK_LT		600
 #define TK_LE		601
@@ -48,6 +55,10 @@ $Id: parser.c,v 1.17 2007-06-18 21:56:00 johnnycz Exp $
 #define TK_GE       604
 #define TK_GT       605
 #define TK_NE       606
+#define TK_ISIN     607
+#define TK_NISIN    608
+#define TK_REEQ     609
+#define TK_RENE     610
 // logic
 #define TK_AND      700
 #define TK_OR       701
@@ -59,6 +70,8 @@ typedef struct {
     int error;					// first error
 	int warning;				// last warning
 	variable_val_fnc varfnc;	// pointer to a function returning variable values
+	subpatterns_report_fnc re_patfnc;
+								// a function where we report regexp-found subpatterns
 } expr_parser_t, *EParser;
 
 #define CURCHAR(p) (p->string[p->pos])
@@ -88,6 +101,17 @@ LOCAL int Get_Integer(const expr_val e)
 	case ET_DBL: return (int) e.d_val;
 	case ET_BOOL:return e.b_val;
 	case ET_STR: default: return 0;
+	}
+}
+
+LOCAL int Get_Bool(const expr_val e)
+{
+	switch (e.type) {
+	case ET_INT: return e.i_val;
+	case ET_DBL: return (int) e.d_val;
+	case ET_BOOL:return e.b_val;
+	case ET_STR: return *e.s_val;
+	default: return 0;
 	}
 }
 
@@ -126,6 +150,58 @@ LOCAL int Compare_Double(double a, double b)
 		return -1;
 }
 
+LOCAL expr_val ToString(EParser p, const expr_val e)
+{
+	expr_val r;
+	switch (e.type) {
+	case ET_STR: r = e; break;
+	case ET_INT:
+		r.s_val = (char *) malloc(MAX_NUMBER_LENGTH);
+		if (!r.s_val) { SetError(p, ERR_OUT_OF_MEM); return Get_Expr_Dummy(); }
+		snprintf(r.s_val, MAX_NUMBER_LENGTH, "%i", e.i_val);
+		break;
+
+	case ET_DBL:
+		r.s_val = (char *) malloc(MAX_NUMBER_LENGTH);
+		if (!r.s_val) { SetError(p, ERR_OUT_OF_MEM); return Get_Expr_Dummy(); }
+		snprintf(r.s_val, MAX_NUMBER_LENGTH, "%f", e.d_val);
+		break;
+
+	case ET_BOOL:
+		r.s_val = (char *) malloc(6);
+		if (!r.s_val) { SetError(p, ERR_OUT_OF_MEM); return Get_Expr_Dummy(); }
+		snprintf(r.s_val, 6, "%s", e.b_val ? "true" : "false");
+		break;
+	}
+
+	return r;
+}
+
+LOCAL expr_val Concat(EParser p, const expr_val e1, const expr_val e2)
+{
+	size_t len;
+	expr_val ret;
+	if (e1.type != ET_STR || e2.type != ET_STR) {
+		SetError(p, ERR_INTERNAL);
+		return Get_Expr_Dummy();
+	}
+
+	len = strlen(e1.s_val) + strlen(e2.s_val) + 1;
+	ret.type = ET_STR;
+	ret.s_val = malloc(len);
+	if (!ret.s_val) {
+		SetError(p, ERR_OUT_OF_MEM);
+		return Get_Expr_Dummy();
+	}
+	strcpy(ret.s_val, e1.s_val);
+	strcat(ret.s_val, e2.s_val);
+	free(e1.s_val);
+	free(e2.s_val);
+	ret.s_val[len-1] = '\0';
+	
+	return ret;
+}
+
 LOCAL expr_val operator_plus (EParser p, const expr_val e1, const expr_val e2)
 {
 	expr_val ret;
@@ -153,7 +229,7 @@ LOCAL expr_val operator_plus (EParser p, const expr_val e1, const expr_val e2)
         } break;
 
 	case ET_STR: switch (e2.type) {
-		case ET_STR:	SetError(p, ERR_NOTIMPL); break;
+		case ET_STR:	ret = Concat(p, e1, e2); break;
 		default:		SetError(p, ERR_TYPE_MISMATCH); break;
 		} break;
 	}
@@ -234,35 +310,72 @@ LOCAL expr_val operator_divide(EParser p, const expr_val e1)
 	return ret;
 }
 
+typedef enum { 
+	CMPRESULT_lt,
+	CMPRESULT_le,
+	CMPRESULT_eq,
+	CMPRESULT_ne,
+	CMPRESULT_ge,
+	CMPRESULT_gt
+} cmp_type;
+
+// this will be called if one of the expressions is string
+// and we want to do a comparision on them
+LOCAL expr_val string_check_cmp(EParser p, const expr_val e1, const expr_val e2, cmp_type ctype)
+{
+	expr_val r;
+	r.type = ET_BOOL;
+	r.b_val = BOOL_FALSE;
+
+	if (e1.type != ET_STR && e2.type != ET_STR)	{
+		SetError(p, ERR_INTERNAL);
+	} else if (e1.type != ET_STR) {
+		free(e2.s_val);
+		SetError(p, ERR_TYPE_MISMATCH);
+	} else if (e2.type != ET_STR) {
+		free(e1.s_val);
+		SetError(p, ERR_TYPE_MISMATCH);
+	} else {	// both STR
+		int a = strcmp(e1.s_val, e2.s_val);
+		switch(ctype) {
+		case CMPRESULT_lt: r.b_val = a <  0; break;
+		case CMPRESULT_le: r.b_val = a <= 0; break;
+		case CMPRESULT_eq: r.b_val = a == 0; break;
+		case CMPRESULT_ne: r.b_val = a != 0; break;
+		case CMPRESULT_ge: r.b_val = a >= 0; break;
+		case CMPRESULT_gt: r.b_val = a >  0; break;
+		}					  
+		free(e1.s_val);
+		free(e2.s_val);
+	}
+	return r;
+}
+
 // test: "1==1.0", "2==2.0", "5/2==2.5"
 LOCAL expr_val operator_eq(EParser p, const expr_val e1, const expr_val e2)
 {
 	expr_val ret;
 	ret.type = ET_BOOL;
 
+	if (e1.type == ET_STR || e2.type == ET_STR)
+		return string_check_cmp(p, e1, e2, CMPRESULT_eq);
+
 	switch(e1.type) {
 	case ET_INT: switch (e2.type) {
 		case ET_INT: ret.b_val = e1.i_val == e2.i_val; break;
 		case ET_DBL: ret.b_val = !Compare_Double(e1.i_val, e2.d_val); break;
 		case ET_BOOL: ret.b_val = e2.b_val ? e1.i_val == 1 : e1.i_val == 0; break;
-		case ET_STR: SetError(p, ERR_TYPE_MISMATCH); break;
 		} break;
 	case ET_DBL: switch (e2.type) {
 		case ET_INT: ret.b_val = !Compare_Double(e1.d_val, e2.i_val); break;
 		case ET_DBL: ret.b_val = !Compare_Double(e1.d_val, e2.d_val); break;
 		case ET_BOOL: SetError(p, ERR_TYPE_MISMATCH); break;
-		case ET_STR: SetError(p, ERR_TYPE_MISMATCH); break;
 		} break;
 	case ET_BOOL: switch (e2.type) {
 		case ET_INT: ret.b_val = e1.b_val ? e2.i_val == 1 : e2.i_val == 0; break;
 		case ET_DBL: SetError(p, ERR_TYPE_MISMATCH); break;
 		case ET_BOOL: ret.b_val = e1.b_val == e2.b_val; break;
-		case ET_STR: SetError(p, ERR_TYPE_MISMATCH); break;
 	    } break;
-	case ET_STR: switch (e2.type) {
-		case ET_STR: ret.b_val = !strcmp(e1.s_val, e2.s_val); break;
-		default: SetError(p, ERR_TYPE_MISMATCH); break;
-		} break;
 	}
 
 	return ret;
@@ -274,27 +387,24 @@ LOCAL expr_val operator_lt(EParser p, const expr_val e1, const expr_val e2)
 	expr_val ret;
 	ret.type = ET_BOOL;
 
+	if (e1.type == ET_STR || e2.type == ET_STR)
+		return string_check_cmp(p, e1, e2, CMPRESULT_lt);
+
 	switch(e1.type) {
 	case ET_INT: switch (e2.type) {
 		case ET_INT: ret.b_val = e1.i_val < e2.i_val; break;
 		case ET_DBL: ret.b_val = Compare_Double(e1.i_val, e2.d_val) == -1; break;
 		case ET_BOOL: SetError(p, ERR_TYPE_MISMATCH); break;
-		case ET_STR: SetError(p, ERR_TYPE_MISMATCH); break;
 		} break;
 	case ET_DBL: switch (e2.type) {
 		case ET_INT: ret.b_val = Compare_Double(e1.d_val, e2.i_val) == -1; break;
 		case ET_DBL: ret.b_val = Compare_Double(e1.d_val, e2.d_val) == -1; break;
 		case ET_BOOL: SetError(p, ERR_TYPE_MISMATCH); break;
-		case ET_STR: SetError(p, ERR_TYPE_MISMATCH); break;
 		} break;
 	case ET_BOOL: switch (e2.type) {
 		case ET_BOOL: ret.b_val = !e1.b_val && e2.b_val; break;
 		default: SetError(p, ERR_TYPE_MISMATCH); break;
 	    } break;
-	case ET_STR: switch (e2.type) {
-		case ET_STR: ret.b_val = strcmp(e1.s_val, e2.s_val) == -1; break;
-		default: SetError(p, ERR_TYPE_MISMATCH); break;
-		} break;
 	}
 
 	return ret;
@@ -304,9 +414,14 @@ LOCAL expr_val operator_lt(EParser p, const expr_val e1, const expr_val e2)
 // by using operators "<" and "=="
 #define LT_VAL() (operator_lt(p,e1,e2).b_val)
 #define EQ_VAL() (operator_eq(p,e1,e2).b_val)
-#define ADDOP(name,cond) \
-LOCAL expr_val operator_##name (EParser p, const expr_val e1, const expr_val e2) { \
-	expr_val ret; ret.type = ET_BOOL; ret.b_val = (cond); return ret; }
+#define STR_EXP_CMP() (strcmp(e1.s_val, e2.s_val))
+#define ADDOP(name,cond)										\
+LOCAL expr_val operator_##name (EParser p, const expr_val e1, const expr_val e2) {	\
+	expr_val ret; ret.type = ET_BOOL;												\
+	if (e1.type == ET_STR || e2.type == ET_STR)										\
+		return string_check_cmp(p, e1, e2, CMPRESULT_##name);						\
+	else ret.b_val = (cond); return ret;											\
+}
 
 ADDOP(le, LT_VAL() || EQ_VAL());
 ADDOP(gt, !LT_VAL() && !EQ_VAL());
@@ -317,6 +432,72 @@ ADDOP(ge, !LT_VAL());
 #undef LT_VAL
 #undef EQ_VAL
 
+LOCAL expr_val operator_isin(EParser p, const expr_val e1, const expr_val e2)
+{
+	expr_val s1 = ToString(p, e1);
+	expr_val s2 = ToString(p, e2);
+	expr_val r; r.type = ET_BOOL;
+
+	if (!(*s1.s_val)) {
+		r.b_val = BOOL_FALSE;
+	} else {
+		r.b_val = strstr(s2.s_val, s1.s_val) ? BOOL_TRUE : BOOL_FALSE;
+	}
+
+	free(s1.s_val);
+	free(s2.s_val);
+	return r;
+}
+
+LOCAL expr_val operator_nisin(EParser p, const expr_val e1, const expr_val e2)
+{
+	expr_val r = operator_isin(p, e1, e2);
+	r.b_val = !r.b_val;
+	return r;
+}
+
+LOCAL expr_val operator_reeq(EParser p, const expr_val e1, const expr_val e2)
+{
+	expr_val r;
+	expr_val strr = ToString(p, e1);
+	expr_val mask = ToString(p, e2);
+	// this makes sense for "111 =~ 1.1", however we are doing str->double->str conversion
+	// and it can happen that the result string won't be the same as the source
+	pcre*		regexp;
+	const char	*error;
+	int		error_offset;
+	int		rc;
+	int		offsets[99];
+
+	r.type = ET_BOOL;
+
+	regexp = pcre_compile (mask.s_val, 0, &error, &error_offset, NULL);
+	if (!regexp) {
+		SetError(p, ERR_REGEXP);
+		return Get_Expr_Dummy();
+	}
+	rc = pcre_exec (regexp, NULL, strr.s_val, strlen(strr.s_val),
+	                0, 0, offsets, 99);
+	if (rc >= 0) {
+		if (p->re_patfnc)
+			p->re_patfnc(strr.s_val, offsets, rc > 99 ? 99 : rc);
+		r.b_val = BOOL_TRUE;
+	} else
+		r.b_val = BOOL_FALSE;
+
+	free(e1.s_val);
+	free(e2.s_val);
+
+	pcre_free (regexp);
+	return r;
+}
+
+LOCAL expr_val operator_rene(EParser p, const expr_val e1, const expr_val e2)
+{
+	expr_val r = operator_reeq(p, e1, e2);
+	r.b_val = !r.b_val;
+	return r;
+}
 
 LOCAL expr_val operator_and(EParser p, const expr_val e1, const expr_val e2)
 {
@@ -410,6 +591,8 @@ LOCAL void Next_Token(EParser p)
     while(c = CURCHAR(p), c && c == ' ') p->pos++;
     
     if (!c)                     { p->lookahead = TK_EOF; }
+	else if (Follows(p, "isin")) { p->lookahead = TK_ISIN; }
+	else if (Follows(p, "!isin")) { p->lookahead = TK_NISIN; }
 	else if (Follows(p, "mod")) { p->lookahead = TK_MOD; }	// not implemented
 	else if (Follows(p, "and") || Follows(p, "AND") || Follows(p, "&&"))
 	{ p->lookahead = TK_AND; }
@@ -419,6 +602,8 @@ LOCAL void Next_Token(EParser p)
 	else if (Follows(p, "=="))  { p->lookahead = TK_EQ2; }
 	else if (Follows(p, "!="))  { p->lookahead = TK_NE; }
 	else if (Follows(p, ">="))  { p->lookahead = TK_GE; }
+	else if (Follows(p, "=~"))  { p->lookahead = TK_REEQ; }
+	else if (Follows(p, "!~"))  { p->lookahead = TK_RENE; }
 	else if (c == '=')          { p->lookahead = TK_EQ; }
 	else if (c == '<')          { p->lookahead = TK_LT; }
 	else if (c == '>')          { p->lookahead = TK_GT; }
@@ -428,7 +613,7 @@ LOCAL void Next_Token(EParser p)
 	else if (c == '/')			{ p->lookahead = TK_SLASH; }
     else if (c == '(')          { p->lookahead = TK_BR_O; }
     else if (c == ')')          { p->lookahead = TK_BR_C; }
-    else if (isdigit(c) || c == '.') { 
+    else if (c >= '0' && c <= '9' || c == '.') {  // isdigit screamed with debug warnings here in some occasions
 		int dbl = 0;
 		const char *cp = p->string + p->pos;
 		while (isdigit(*cp) || *cp == '.') {
@@ -439,11 +624,8 @@ LOCAL void Next_Token(EParser p)
 		else if (dbl == 1)	{ p->lookahead = TK_DOUBLE; }
 		else				{ SetError(p, ERR_MALFORMED_NUM); }
 	}
-    else if (isalpha(c) || c == '%') { p->lookahead = TK_VAR; }
-    else {
-        p->lookahead = TK_INVALID;
-        SetError(p, ERR_INVALID_TOKEN);
-    }
+    else if (c == '%') { p->lookahead = TK_VAR; }
+	else p->lookahead = TK_STR;
 }
 
 LOCAL expr_val Match_Var(EParser p)
@@ -453,9 +635,9 @@ LOCAL expr_val Match_Var(EParser p)
 	size_t vnlen = 0;
 	
 	// var name can start with % sign
-	if (p->string[p->pos] == '%') p->pos++;
+	if (p->string[p->pos] == '%' || p->string[p->pos] == '$') p->pos++;
 
-	while (p->string[p->pos] && isalpha(p->string[p->pos]) && vnlen < sizeof(varname))
+	while (p->string[p->pos] && (isalpha(p->string[p->pos]) ||  p->string[p->pos] == '_') && vnlen < sizeof(varname))
 	{	
 		*wp++ = *(p->string + p->pos++);
 		vnlen++;
@@ -465,6 +647,45 @@ LOCAL expr_val Match_Var(EParser p)
     Next_Token(p);
 
 	return p->varfnc ? p->varfnc(varname) : Get_Expr_Dummy();
+}
+
+LOCAL expr_val Match_String(EParser p)
+{
+	expr_val ret;
+	size_t len = 0;
+	int startpos = p->pos;
+	char firstc = p->string[startpos];
+	
+	if (firstc == '\'') {
+		p->pos++; startpos++;
+		while (p->string[p->pos] && p->string[p->pos] != '\'') {
+			len++; p->pos++;
+		}
+		p->pos++;	// skip the '
+	} else if (firstc == '\"') {
+		p->pos++; startpos++;
+		while (p->string[p->pos] && p->string[p->pos] != '\"') {
+			len++; p->pos++;
+		}
+		p->pos++;	// skip the "
+	} else {
+		while (p->string[p->pos] && !iswspace(p->string[p->pos])) {
+			len++; p->pos++;
+		}
+	}
+
+	ret.type = ET_STR;
+	ret.s_val = (char *) malloc(len+1);
+	if (!ret.s_val) {
+		SetError(p, ERR_OUT_OF_MEM);
+		return Get_Expr_Dummy();
+	}
+	strncpy(ret.s_val, p->string + startpos, len);
+	ret.s_val[len] = '\0';
+
+	Next_Token(p);
+
+	return ret;
 }
 
 // check if we are reading string we expected, return it's value (if any)
@@ -498,6 +719,9 @@ LOCAL expr_val Match(EParser p, int token)
     case TK_VAR:
         // add error check here
         return Match_Var(p);
+
+	case TK_STR:
+		return Match_String(p);
 
 	case TK_AND:
 		if		(Follows(p, "and")) { p->pos += 3; Next_Token(p); }
@@ -584,6 +808,26 @@ LOCAL expr_val Match(EParser p, int token)
 		p->pos++; Next_Token(p);
 		break;
     
+	case TK_ISIN:
+		if (!Follows(p, "isin")) UNEXP_CHAR(p);
+		p->pos += 4; Next_Token(p);
+		break;
+
+	case TK_NISIN:
+		if (!Follows(p, "!isin")) UNEXP_CHAR(p);
+		p->pos += 5; Next_Token(p);
+		break;
+
+	case TK_REEQ:
+		if (!Follows(p, "=~")) UNEXP_CHAR(p);
+		p->pos += 2; Next_Token(p);
+		break;
+
+	case TK_RENE:
+		if (!Follows(p, "!~")) UNEXP_CHAR(p);
+		p->pos += 2; Next_Token(p);
+		break;
+
     }
 
     return ret;
@@ -643,6 +887,10 @@ LOCAL expr_val F(EParser p)
     case TK_VAR:
         m = Match(p, TK_VAR);
         break;
+
+	case TK_STR:
+		m = Match(p, TK_STR);
+		break;
 
     case TK_DOUBLE:
         m = Match(p, TK_DOUBLE);
@@ -705,6 +953,10 @@ LOCAL expr_val Bap(EParser p, expr_val v)
 	case TK_NE: Match(p, TK_NE); return operator_ne(p, v, Bap(p, E(p)));
 	case TK_GE: Match(p, TK_GE); return operator_ge(p, v, Bap(p, E(p)));
 	case TK_GT: Match(p, TK_GT); return operator_gt(p, v, Bap(p, E(p)));
+	case TK_ISIN: Match(p, TK_ISIN); return operator_isin(p, v, Bap(p, E(p)));
+	case TK_NISIN: Match(p, TK_NISIN); return operator_nisin(p, v, Bap(p, E(p)));
+	case TK_REEQ: Match(p, TK_REEQ); return operator_reeq(p, v, Bap(p, E(p)));
+	case TK_RENE: Match(p, TK_RENE); return operator_rene(p, v, Bap(p, E(p)));
 	default: return v;
 	}
 }
@@ -737,20 +989,24 @@ GLOBAL const char* Parser_Error_Description(int error)
 	case ERR_ZERO_DIV:			return "Division by zero";
 	case ERR_NOTIMPL:			return "Operation not implemented";
 	case ERR_MALFORMED_NUM:		return "Malformed number found";
+	case ERR_OUT_OF_MEM:		return "Out of memory";
+	case ERR_INTERNAL:			return "Internal error";
+	case ERR_REGEXP:			return "Regexp error";
 	default:					return "Unknown error";
 	}
 }
 
-LOCAL void Init_Parser(EParser p, variable_val_fnc f, const char *str)
+LOCAL void Init_Parser(EParser p, const parser_extra* f, const char *str)
 {
     p->pos = 0;
     p->error = ERR_SUCCESS;
     p->string = str;
-	p->varfnc = f;
+	p->varfnc = f ? f->var2val_fnc : 0;
+	p->re_patfnc = f ? f->subpatt_fnc : 0;
     Next_Token(p);
 }
 
-GLOBAL expr_val Expr_Eval(const char *str, variable_val_fnc f, int *error)
+GLOBAL expr_val Expr_Eval(const char *str, const parser_extra* f, int *error)
 {
     expr_parser_t p;
 	expr_val e;
@@ -760,7 +1016,7 @@ GLOBAL expr_val Expr_Eval(const char *str, variable_val_fnc f, int *error)
 	return e;
 }
 
-GLOBAL int Expr_Eval_Int(const char *str, variable_val_fnc f, int *result)
+GLOBAL int Expr_Eval_Int(const char *str, const parser_extra* f, int *result)
 {
 	int err;
 	expr_val e;
@@ -771,13 +1027,24 @@ GLOBAL int Expr_Eval_Int(const char *str, variable_val_fnc f, int *result)
 	return err;
 }
 
-GLOBAL int Expr_Eval_Double(const char *str, variable_val_fnc f, double *result)
+GLOBAL int Expr_Eval_Double(const char *str, const parser_extra* f, double *result)
 {
 	int err;
 	expr_val e;
 
 	e = Expr_Eval(str, f, &err);
 	if (err == ERR_SUCCESS) *result = Get_Double(e);
+
+    return err;
+}
+
+GLOBAL int Expr_Eval_Bool(const char* str, const parser_extra* f, int *result)
+{
+	int err;
+	expr_val e;
+
+	e = Expr_Eval(str, f, &err);
+	if (err == ERR_SUCCESS) *result = Get_Bool(e);
 
     return err;
 }

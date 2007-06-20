@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.66 2007-06-18 21:55:59 johnnycz Exp $
+    $Id: cmd.c,v 1.67 2007-06-20 16:38:37 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -45,6 +45,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
 static int gtf = 0; // global trigger flag
 
 cvar_t cl_warncmd = {"cl_warncmd", "0"};
+cvar_t cl_oldif = {"cl_oldif", "0"};
 
 cbuf_t cbuf_main;
 #ifndef SERVERONLY
@@ -1640,7 +1641,117 @@ static qbool is_numeric (char *c)
 void Re_Trigger_Copy_Subpatterns (const char *s, int* offsets, int num, cvar_t *re_sub); // QW262
 extern cvar_t re_sub[10]; // QW262
 
-void Cmd_If_f (void)
+void Cmd_CatchTriggerSubpatterns(const char *s, int* offsets, int num)
+{
+	Re_Trigger_Copy_Subpatterns(s, offsets, min(num, 10), re_sub);
+}
+
+// this is a test replacement of the "if" command
+void Cmd_If_New(void)
+{
+	// syntax of this command has two possibilities:
+	// if (<expr>) then <cmd1> [else <cmd2>]
+	// if o1 o2 o3 [then] <cmd1> [else <cmd2>]
+	// the second one is for backward compatibility
+	parser_extra pars_ex;
+	int c;
+	int then_pos = 0;
+	qbool then_found = false, else_found = false;
+	int i, clen;
+	size_t expr_len = 0;
+	char* expr, * curarg;
+	int result, error;
+	char buf[1024];
+	qbool addquot_1 = false, addquot_3 = false;
+
+	pars_ex.subpatt_fnc = Cmd_CatchTriggerSubpatterns;
+	pars_ex.var2val_fnc = NULL;
+
+	c = Cmd_Argc();
+
+	// 0  1 2    3
+	// if e then c
+	if (c < 4) {
+		Com_Printf("Usage: if <expr> then <cmds> [else <cmds>]\n");
+		return;
+	}
+
+	for (i = 2; i < c; i++) {
+		if (!strcmp(Cmd_Argv(i), "then")) {
+			then_pos = i; then_found = true; break;
+		}
+	}
+
+	if (!then_pos) then_pos = 4;
+
+	if (then_pos == 4 && Cmd_Argv(1)[0] != '(')
+	{	// backward compatibility patch: most configs contain "<a> isin <b>", where
+		// one of the strings can get wrongly interpretted as some non-string token in the parser
+		// so if we have 3 arguments long expression and it is not enclosed in parentheses,
+		// we force the operands be enclosed in quotes (') to make sure they get recognized as strings
+		if (Cmd_Argv(1)[0] != '\'') addquot_1 = true;
+		if (Cmd_Argv(3)[0] != '\'') addquot_3 = true;
+	}
+
+	for (i = 1; i < then_pos; i++) {
+		clen = strlen(Cmd_Argv(i));
+		expr_len += clen ? clen + 1 : 3; // we will take '' as a representation of an empty string
+		if (i == 1 && addquot_1) expr_len += 2;
+		if (i == 3 && addquot_3) expr_len += 2;
+	}
+
+	expr = (char *) Q_malloc(expr_len+1);
+	expr[0] = '\0';
+
+	for (i = 1; i < then_pos; i++) {
+		if (i > 1) strcat(expr, " ");
+		curarg = Cmd_Argv(i);
+		if (*curarg)
+		{
+			if ((i == 1 && addquot_1) || (i == 3 && addquot_3)) strlcat(expr, "'", expr_len);
+			strlcat(expr, curarg, expr_len);
+			if ((i == 1 && addquot_1) || (i == 3 && addquot_3)) strlcat(expr, "'", expr_len);
+		}
+		else strlcat(expr, "''", expr_len);
+	}
+
+	error = Expr_Eval_Bool(expr, &pars_ex, &result);
+	if (error != ERR_SUCCESS) {
+		Com_Printf("Error in condition: %s (\"%s\")\n", Parser_Error_Description(error), expr);
+		free(expr);
+		return;
+	}
+	free(expr);
+
+	if (then_found) then_pos++;	// skin "then"
+
+	buf[0] = '\0';
+	if (result)	// true case
+	{		
+		for (i = then_pos; i < c; i++) {
+			if (!else_found && !strcmp(Cmd_Argv(i), "else")) break;
+			if (buf[0])
+				strlcat (buf, " ", sizeof(buf));
+			strlcat (buf, Cmd_Argv(i), sizeof(buf));
+		}
+	}
+	else // result = false
+	{
+		for (i = then_pos; i < c; i++) {
+			if (else_found) {
+				if (buf[0])
+					strlcat (buf, " ", sizeof(buf));
+				strlcat (buf, Cmd_Argv(i), sizeof(buf));
+			}
+			if (!else_found && !strcmp(Cmd_Argv(i), "else")) else_found = true;
+		}
+	}
+
+	strlcat (buf, "\n", sizeof(buf));
+	Cbuf_InsertTextEx (cbuf_current ? cbuf_current : &cbuf_main, buf);
+}
+
+void Cmd_If_Old (void)
 {
 	int	i, c;
 	char *op, buf[1024] = {0};
@@ -1732,6 +1843,11 @@ void Cmd_If_f (void)
 	Cbuf_InsertTextEx (cbuf_current ? cbuf_current : &cbuf_main, buf);
 }
 
+void Cmd_If_f(void) {
+	if (cl_oldif.value) Cmd_If_Old();
+	else				Cmd_If_New();
+}
+
 void Cmd_If_Exists_f(void)
 {
 	int	argc;
@@ -1773,8 +1889,6 @@ void Cmd_If_Exists_f(void)
 		return;
 }
 
-#ifdef _DEBUG
-
 void Cmd_Eval_f(void)
 {
 	int errn;
@@ -1790,7 +1904,7 @@ void Cmd_Eval_f(void)
 
 	if (errn != ERR_SUCCESS)
 	{
-		Com_Printf("Error occured:\n%s\n", Parser_Error_Description(errn));
+		Com_Printf("Error occured: %s\n", Parser_Error_Description(errn));
 		return;
 	}
 	else
@@ -1799,13 +1913,11 @@ void Cmd_Eval_f(void)
 		case ET_INT:  Com_Printf("Result: %i (integer)\n", value.i_val); break;
 		case ET_DBL:  Com_Printf("Result: %f (double)\n",  value.d_val); break;
 		case ET_BOOL: Com_Printf("Result: %s (bool)\n", value.b_val ? "true" : "false"); break;
-		case ET_STR:  Com_Printf("Result: (string)\n\"%s\"\n", value.s_val); break;
+		case ET_STR:  Com_Printf("Result: (string)\n\"%s\"\n", value.s_val); free(value.s_val); break;
 		default:      Com_Printf("Error: Unknown value type\n"); break;
 		}
 	}
 }
-
-#endif /* _DEBUG */
 
 #endif /* SERVERONLY */
 
@@ -1829,10 +1941,12 @@ void Cmd_Init (void)
 #ifndef SERVERONLY
 	Cmd_AddCommand ("if", Cmd_If_f);
 	Cmd_AddCommand ("if_exists", Cmd_If_Exists_f);
-#ifdef _DEBUG
 	Cmd_AddCommand ("eval", Cmd_Eval_f);
 #endif
-#endif
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
+	Cvar_Register(&cl_oldif);
+	Cvar_ResetCurrentGroup();
 
 	Cmd_AddCommand ("macrolist", Cmd_MacroList_f);
 	qsort(msgtrigger_commands,
