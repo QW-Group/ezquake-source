@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.151 2007-06-18 16:59:21 himan Exp $
+$Id: cl_main.c,v 1.152 2007-06-20 15:19:22 himan Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -130,7 +130,7 @@ cvar_t cl_fp_messages		= {"cl_fp_messages", "4"};
 cvar_t cl_fp_persecond		= {"cl_fp_persecond", "4"};		
 cvar_t cl_cmdline			= {"cl_cmdline", "", CVAR_ROM};	
 cvar_t cl_useproxy			= {"cl_useproxy", "0"};			
-cvar_t cl_window_caption	= {"cl_window_caption", "0"};
+cvar_t cl_window_caption	= {"cl_window_caption", "1"};
 
 cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};	
 // START shaman :: balancing variables
