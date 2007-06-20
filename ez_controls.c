@@ -1,9 +1,11 @@
 
 #include "quakedef.h"
 #include "keys.h"
-//#include "draw.h"
-//#include "string.h"
 #include "ez_controls.h"
+
+// =========================================================================================
+// Double Linked List
+// =========================================================================================
 
 //
 // Add item to double linked list.
@@ -76,6 +78,44 @@ void *EZ_double_linked_list_Remove(ez_double_linked_list_t *list, ez_dllist_node
 }
 
 //
+// Double Linked List - Orders a list.
+//
+void EZ_double_linked_list_Order(ez_double_linked_list_t *list, PtFuncCompare compare_function)
+{
+	int i = 0;
+	void *payload = NULL;
+	ez_dllist_node_t *iter = NULL;
+	void **items = (void **)Q_calloc(list->count, sizeof(void *));
+
+	iter = list->head;
+	
+	while(iter)
+	{
+		items[i] = iter->payload;
+		i++;
+
+		iter = iter->next;
+	}
+
+	qsort(items, list->count, sizeof(void *), compare_function);
+
+	iter = list->head;
+
+	for(i = 0; i < list->count; i++)
+	{
+		iter->payload = items[i];
+
+		iter = iter->next;
+	}
+
+	Q_free(items);
+}
+
+// =========================================================================================
+// Control Tree
+// =========================================================================================
+
+//
 // Control Tree - Draws a control tree.
 // 
 void EZ_tree_Draw(ez_tree_t *tree)
@@ -106,6 +146,27 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 		assert(!"EZ_tree_MouseEvent: NULL tree reference.\n");
 		return false;
 	}
+
+	// Check if we should move the focused control.
+	if(tree->focused_node)
+	{
+		ez_control_t *focused_control = (ez_control_t *)tree->focused_node->payload;
+
+		if(!focused_control)
+		{
+			Sys_Error("EZ_tree_MouseEvent(): Focused control NULL.\n");
+		}
+		
+		// Set the new position of the control if it's being moved.
+		if(focused_control->flags & CONTROL_MOVING)
+		{
+			// Root control will be moved relative to the screen.
+			int x = (focused_control->parent) ? (focused_control->parent->absolute_x - ms->x) : ms->x;
+			int y = (focused_control->parent) ? (focused_control->parent->absolute_y - ms->y) : ms->y;
+
+			EZ_control_SetPosition(focused_control, x, y);
+		}
+	}
 	
 	iter = tree->drawlist.head;
 
@@ -116,7 +177,7 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 		if(POINT_IN_RECTANGLE(ms->x, ms->y, payload->x, payload->y, payload->width, payload->height)
 			&& payload->on_mouse)
 		{
-			//mouse_handled = EZ_control_OnMouseEvent(payload, ms);
+			mouse_handled = EZ_control_OnMouseEvent(payload, ms);
 			mouse_handled = payload->on_mouse(payload, ms);
 		}
 
@@ -134,65 +195,41 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 //
 // Control Tree - Moves the focus to the next control in the control tree.
 //
-void EZ_tree_FocusNext(ez_tree_t *tree)
+void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 {
 	qbool found = false;
+	ez_dllist_node_t *node_iter = NULL;
 	ez_control_t *payload = NULL;
 
-	if(tree->focused_node && tree->focused_node->payload)
+	if(tree->focused_node)
 	{
-		// Remove the focus flag from the currently focused control.
-		payload = (ez_control_t *)tree->focused_node->payload;
-		payload->flags &= ~CONTROL_FOCUSED;
-
-		// Find the next focusable control.
-		// (Search from the current focused control to the end of the tab list).
-		tree->focused_node = tree->focused_node->next;
-		while(tree->focused_node)
+		// Find the next control that can be focused.
+		do
 		{
-			payload = (ez_control_t *)tree->focused_node->payload;
-
-			if(payload->flags & CONTROL_FOCUSABLE)
-			{
-				found = true;
-				break;
-			}
-
-			tree->focused_node = tree->focused_node->next;
-		} 
+			node_iter = (next_control) ? tree->focused_node->next : tree->focused_node->previous;
+		}
+		while(node_iter && !(found = EZ_control_SetFocus((ez_control_t *)node_iter->payload)));
 	}
 	
 	// We haven't found a focusable control yet, 
 	// or there was no focused control to start with.
-	// So search for one from the start of the tab list.
+	// So search for one from the start/end of the tab list 
+	// (depending on what direction we're searching in)
 	if(!found || !tree->focused_node)
 	{
-		tree->focused_node = tree->tablist.head;
+		node_iter = (next_control) ? tree->tablist.head : tree->tablist.tail;
 
-		while(tree->focused_node)
+		do
 		{
-			payload = (ez_control_t *)tree->focused_node->payload;
-			
-			if(payload->flags & CONTROL_FOCUSABLE)
-			{
-				found = true;
-				break;
-			}
-
-			tree->focused_node = tree->focused_node->next;
+			node_iter = (next_control) ? tree->focused_node->next : tree->focused_node->previous;
 		}
+		while(node_iter && !(found = EZ_control_SetFocus((ez_control_t *)node_iter->payload)));
 	}
 
-	// We found something new to focus on, so set the appropriate flags.
-	if(tree->focused_node)
+	// There is nothing to focus on.
+	if(!found)
 	{
-		// All nodes have to have a control associated with it, otherwise something is wrong!
-		if(!tree->focused_node->payload)
-		{
-			Sys_Error("EZ_tree_FocusNext(): Focused node has no control associated with it.\n");
-		}
-
-		((ez_control_t *)tree->focused_node->payload)->flags |= CONTROL_FOCUSED;
+		tree->focused_node = NULL;
 	}
 }
 
@@ -206,10 +243,12 @@ qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, qbool down)
 		switch(key)
 		{
 			case K_TAB :
-			{
-				EZ_tree_FocusNext(tree);
+			{				
+				// Focus on the next focusable control (TAB)
+				// or the previous (Alt + TAB)
+				EZ_tree_ChangeFocus(tree, !isAltDown());
 				return true;
-			}			
+			}
 		}
 
 		return EZ_control_OnKeyEvent(tree->root, key, down);
@@ -254,7 +293,7 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree)
 }
 
 //
-// Order function for the draw list based on the draw_order property.
+// Control Tree - Order function for the draw list based on the draw_order property.
 //
 static int EZ_tree_DrawOrderFunc(const void *val1, const void *val2)
 {
@@ -273,7 +312,7 @@ void EZ_tree_OrderDrawList(ez_tree_t *tree)
 }
 
 //
-// Order function for the tab list based on the tab_order property.
+// Control - Tree Order function for the tab list based on the tab_order property.
 //
 static int EZ_tree_TabOrderFunc(const void *val1, const void *val2)
 {
@@ -291,39 +330,9 @@ void EZ_tree_OrderTabList(ez_tree_t *tree)
 	EZ_double_linked_list_Order(&tree->tablist, EZ_tree_TabOrderFunc);
 }
 
-//
-// Double Linked List - Orders a list.
-//
-void EZ_double_linked_list_Order(ez_double_linked_list_t *list, PtFuncCompare compare_function)
-{
-	int i = 0;
-	void *payload = NULL;
-	ez_dllist_node_t *iter = NULL;
-	void **items = (void **)Q_calloc(list->count, sizeof(void *));
-
-	iter = list->head;
-	
-	while(iter)
-	{
-		items[i] = iter->payload;
-		i++;
-
-		iter = iter->next;
-	}
-
-	qsort(items, list->count, sizeof(void *), compare_function);
-
-	iter = list->head;
-
-	for(i = 0; i < list->count; i++)
-	{
-		iter->payload = items[i];
-
-		iter = iter->next;
-	}
-
-	Q_free(items);
-}
+// =========================================================================================
+// Control
+// =========================================================================================
 
 //
 // Control - Initializes a control and adds it to the specified control tree.
@@ -344,6 +353,7 @@ ez_control_t *EZ_control_Init(ez_tree_t *tree, ez_control_t *parent,
 	
 	control = (ez_control_t *)Q_malloc(sizeof(ez_control_t));
 
+	control->control_tree = tree;
 	control->name = name;
 	control->description = description;
 	control->flags = flags;
@@ -384,23 +394,23 @@ ez_control_t *EZ_control_Init(ez_tree_t *tree, ez_control_t *parent,
 //
 // Control - Destroys a specified control.
 //
-void EZ_control_Destroy(ez_tree_t *tree, ez_control_t *self, qbool destroy_children)
+void EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 {
 	ez_dllist_node_t *iter = NULL; 
 	ez_dllist_node_t *temp = NULL;
 
-	if(!tree)
-	{
-		// Very bad!
-		char *msg = "EZ_control_Destroy, tried to destroy control without a tree.\n";
-		assert(!msg);
-		Sys_Error(msg);
-		return;
-	}
-
 	// Nothing to destroy :(
 	if(!self)
 	{
+		return;
+	}
+
+	if(!self->control_tree)
+	{
+		// Very bad!
+		char *msg = "EZ_control_Destroy(): tried to destroy control without a tree.\n";
+		assert(!msg);
+		Sys_Error(msg);
 		return;
 	}
 
@@ -412,7 +422,7 @@ void EZ_control_Destroy(ez_tree_t *tree, ez_control_t *self, qbool destroy_child
 		if(destroy_children)
 		{
 			// Destroy the child!
-			EZ_control_Destroy(tree, (ez_control_t *)iter->payload, destroy_children);
+			EZ_control_Destroy((ez_control_t *)iter->payload, destroy_children);
 		}
 		else
 		{
@@ -430,30 +440,77 @@ void EZ_control_Destroy(ez_tree_t *tree, ez_control_t *self, qbool destroy_child
 	// Cleanup any specifics this control may have.
 	if(self->on_destroy)
 	{
-		self->on_destroy(tree, self, destroy_children);
+		self->on_destroy(self->control_tree, self, destroy_children);
 	}
 
 	Q_free(self);
 }
 
 //
-// Control - Sets the tab order of a control.
+// Control - Focuses on a control.
 //
-void EZ_control_SetTabOrder(ez_tree_t *tree, ez_control_t *self, int tab_order)
+qbool EZ_control_SetFocus(ez_control_t *self)
 {
-	self->tab_order = tab_order;
+	ez_tree_t *tree = NULL;
 
-	EZ_tree_OrderTabList(tree);
+	if(!self)
+	{
+		Sys_Error("EZ_control_SetFocus(): Cannot focus on a NULL control.\n");
+	}
+
+	// We can't focus on this control.
+	if(!(self->flags & CONTROL_FOCUSABLE))
+	{
+		return false;
+	}
+
+	tree = self->control_tree;
+	
+	if(tree->focused_node)
+	{
+		ez_control_t *payload = NULL;
+		
+		if(!tree->focused_node->payload)
+		{
+			Sys_Error("EZ_control_SetFocus(): Focused node has a NULL payload.\n");
+		}
+
+		tree->focused_node = NULL;
+
+		payload = (ez_control_t *)tree->focused_node->payload;
+		payload->flags &= ~CONTROL_FOCUSED;
+		
+		// Raise event for losing the focus.
+		EZ_control_OnLostFocus(payload);
+	}
+
+	self->flags |= CONTROL_FOCUSED;
+	tree->focused_node = tree->focused_node;
+
+	// Raise event for getting focus.
+	EZ_control_OnGotFocus(self);
+
+	return true;
 }
 
 //
 // Control - Sets the tab order of a control.
 //
-void EZ_control_SetDrawOrder(ez_tree_t *tree, ez_control_t *self, int draw_order)
+void EZ_control_SetTabOrder(ez_control_t *self, int tab_order)
+{
+	self->tab_order = tab_order;
+
+	EZ_tree_OrderTabList(self->control_tree);
+}
+
+//
+// Control - Sets the tab order of a control.
+//
+void EZ_control_SetDrawOrder(ez_control_t *self, int draw_order)
 {
 	self->draw_order = draw_order;
 
-	EZ_tree_OrderTabList(tree);
+	EZ_tree_OrderTabList(self->control_tree);
 }
 
 //
@@ -463,6 +520,8 @@ void EZ_control_SetSize(ez_control_t *self, int width, int height)
 {
 	self->width = width;
 	self->height = height;
+
+	EZ_control_OnResize(self);
 }
 
 //
@@ -470,10 +529,10 @@ void EZ_control_SetSize(ez_control_t *self, int width, int height)
 //
 void EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, byte alpha)
 {
-	self->background_frame[0] = r;
-	self->background_frame[1] = g;
-	self->background_frame[2] = b;
-	self->background_frame[3] = alpha;
+	self->background_color[0] = r;
+	self->background_color[1] = g;
+	self->background_color[2] = b;
+	self->background_color[3] = alpha;
 }
 
 //
@@ -486,11 +545,6 @@ void EZ_control_SetPosition(ez_control_t *self, int x, int y)
 
 	if(self->parent)
 	{
-		/*
-		self->absolute_x = self->parent->absolute_x + self->x;
-		self->absolute_y = self->parent->absolute_y + self->y;
-		*/
-
 		// We moved ourselves, so send my parents position
 		EZ_control_OnMove(self, self->parent->absolute_x, self->parent->absolute_y);
 	}
@@ -532,18 +586,17 @@ ez_control_t *EZ_control_RemoveChild(ez_control_t *self, ez_control_t *child)
 	return (ez_control_t *)EZ_double_linked_list_RemoveByPayload(&self->children, child);
 }
 
-// =========================================================================================
-// Control - Base Event Handlers (Any inheriting controls can have their own implementation)
-// =========================================================================================
-
 //
 // Control - The control got focus.
 //
 void EZ_control_OnGotFocus(ez_control_t *self)
 {
-	if(self->on_got_focus)
+	if(self->flags & CONTROL_FOCUSED)
 	{
-		self->on_got_focus(self);
+		if(self->on_got_focus)
+		{
+			self->on_got_focus(self);
+		}
 	}
 }
 
@@ -559,6 +612,20 @@ void EZ_control_OnLostFocus(ez_control_t *self)
 }
 
 //
+// Control - The control was resized.
+//
+void EZ_control_OnResize(ez_control_t *self)
+{
+	if(self->flags & CONTROL_RESIZABLE)
+	{
+		if(self->on_resize)
+		{
+			self->on_resize(self);
+		}
+	}
+}
+
+//
 // Control - The control was moved.
 //
 void EZ_control_OnMove(ez_control_t *self, int parent_abs_x, int parent_abs_y)
@@ -570,6 +637,7 @@ void EZ_control_OnMove(ez_control_t *self, int parent_abs_x, int parent_abs_y)
 	self->absolute_x = parent_abs_x + self->x;
 	self->absolute_y = parent_abs_y + self->y;
 
+	// Tell the children we've moved.
 	while(iter)
 	{
 		payload = (ez_control_t *)iter->payload;
@@ -601,14 +669,14 @@ void EZ_control_LayoutChildren(ez_control_t *self)
 void EZ_control_OnDraw(ez_control_t *self)
 {
 	#ifdef GLQUAKE
-	if(self->background_frame[3] > 0.0)
+	if(self->background_color[3] > 0.0)
 	{
 		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
-			self->background_frame[0] / 255.0,
-			self->background_frame[1] / 255.0,
-			self->background_frame[2] / 255.0,
+			self->background_color[0] / 255.0,
+			self->background_color[1] / 255.0,
+			self->background_color[2] / 255.0,
 			1, true, 
-			self->background_frame[3] / 255.0);
+			self->background_color[3] / 255.0);
 	}
 
 	#else	
@@ -819,6 +887,8 @@ qbool EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *mouse_state)
 	{
 		self->flags |= CONTROL_MOVING;
 	}
+
+	EZ_control_SetFocus(self);
 
 	if(self->on_mouse_down)
 	{
