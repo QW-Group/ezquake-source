@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.57.2.8 2007-05-28 10:01:52 johnnycz Exp $
+    $Id: keys.c,v 1.57.2.9 2007-06-20 18:12:17 zwoch Exp $
 
 */
 
@@ -967,7 +967,6 @@ void Key_Console (int key, int unichar)
 			// added by jogi start
 			else
 			{
-				#ifndef __APPLE__
 				if (cl_newCompletion.value)
 				{
 					CompleteCommandNew ();
@@ -980,9 +979,6 @@ void Key_Console (int key, int unichar)
 				{
 					Com_Printf("cl_newCompletion has to be set to either 0 or 1\n");
 				}
-				#else // __APPLE__
-				CompleteCommand (); //disconnect: CompleteCommandNew are broken on mac.
-				#endif // __APPLE__
 			}
 			// added by stopp
 			return;
