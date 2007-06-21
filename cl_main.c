@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.152 2007-06-20 15:19:22 himan Exp $
+$Id: cl_main.c,v 1.153 2007-06-21 11:31:37 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -794,10 +794,6 @@ void CL_Disconnect_f (void) {
 	demo_playlist_started= 0;
 	mvd_demo_track_run = 0;
 	
-	// this can't go into Host_EndGame() because after QTV start, we connect to it --
-	// QTV would be turned off right after we started it - client does disconnect before every connect
-	QTV_ShutDown();	
-	
 	Host_EndGame();
 }
 
@@ -1329,7 +1325,6 @@ void CL_Init (void) {
 	Stats_Init();
 	MP3_Init();
 	SB_RootInit();
-	QTV_Init();
 
 	Rulesets_Init();
 }
