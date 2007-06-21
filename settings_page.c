@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.39 2007-06-15 12:26:07 johnnycz Exp $
+		$Id: settings_page.c,v 1.40 2007-06-21 18:01:24 johnnycz Exp $
 
 */
 
@@ -48,6 +48,10 @@ filelist_t skins_filelist;
 #define EDITBOXMAXLENGTH 64
 #define HELPLINES 5
 #define SKINPREVIEWHEIGHT 120
+
+#define ENUM_NAME(setting_pointer,position) (setting_pointer->named_ints[position*2])
+#define ENUM_VALUE(setting_pointer,position) (setting_pointer->named_ints[position*2+1])
+#define ENUM_ITEM_NOT_FOUND	-1
 
 static float SliderPos(float min, float max, float val) { return (val-min)/(max-min); }
 
@@ -136,8 +140,30 @@ static void Setting_DrawAction(int x, int y, int w, setting* set, qbool active)
 static void Setting_DrawNamed(int x, int y, int w, setting* set, qbool active)
 {
 	x = Setting_PrintLabel(x, y, w, set->label, active);
-	UI_Print(x, y, set->named_ints[(int) bound(set->min, VARFVAL(set->cvar), set->max)], active);
-    
+	UI_Print(x, y, set->named_ints[(int) bound(set->min, VARFVAL(set->cvar), set->max)], active);    
+}
+
+static int Enum_Find_ValueCode(setting* set)
+{
+	int i;
+	for (i = 0; i <= set->max; i++)
+	{
+		if (!strcmp(set->cvar->string, ENUM_VALUE(set, i)))
+			return i;
+	}
+	return ENUM_ITEM_NOT_FOUND;
+}
+
+static void Setting_DrawEnum(int x, int y, int w, setting* set, qbool active)
+{
+	int i;
+	x = Setting_PrintLabel(x, y, w, set->label, active);
+	i = Enum_Find_ValueCode(set);
+	if (i == ENUM_ITEM_NOT_FOUND) {
+		UI_Print(x, y, "custom", active);
+	} else {
+		UI_Print(x, y, ENUM_NAME(set, i), active);
+	}
 }
 
 static void Setting_DrawString(int x, int y, int w, setting* setting, qbool active)
@@ -210,6 +236,17 @@ static void Setting_DrawBind(int x, int y, int w, setting* set, qbool active, qb
 
 }
 
+static void Setting_IncreaseEnum(setting* set, int step)
+{
+	int i;
+	if (set->type != stt_enum) return;
+	i = Enum_Find_ValueCode(set) + step;
+	if (i > set->max) i = 0;
+	if (i < 0) i = set->max;
+	// Cvar_Set doesn't take const char*
+	Cvar_Set(set->cvar, va("%s", ENUM_VALUE(set, i)));
+}
+
 static void Setting_Increase(setting* set) {
 	float newval;
 
@@ -226,6 +263,7 @@ static void Setting_Increase(setting* set) {
 				Cvar_SetValue(set->cvar, set->min);
 			break;
 		case stt_action: if (set->actionfnc) set->actionfnc(); break;
+		case stt_enum: Setting_IncreaseEnum(set, set->step); break;
 
 		// unhandled
 		case stt_separator:
@@ -251,6 +289,7 @@ static void Setting_Decrease(setting* set) {
 				Cvar_SetValue(set->cvar, set->max);
 			break;
 
+		case stt_enum: Setting_IncreaseEnum(set, -set->step); break;
 		//unhandled
 		case stt_separator:
 		case stt_action:
@@ -413,6 +452,7 @@ static int Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page, 
 	case stt_num:
 	case stt_string:
 	case stt_playercolor:
+	case stt_enum:
 		buf[0] = 0;
 		helptext = "Further info not available...";
 		Help_VarDescription(s->cvar->name, buf, sizeof(buf) - 1);
@@ -731,6 +771,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 			case stt_separator: Setting_DrawSeparator(x, y, w, set); break;
 			case stt_action: Setting_DrawAction(x, y, w, set, active); break;
 			case stt_named: Setting_DrawNamed(x, y, w, set, active); break;
+			case stt_enum: Setting_DrawEnum(x, y, w, set, active); break;
 			case stt_string: Setting_DrawString(x, y, w, set, active); break;
 			case stt_playercolor: Setting_DrawColor(x, y, w, set, active); break;
 			case stt_skin: Setting_DrawSkin(x, y, w, set, active); break;

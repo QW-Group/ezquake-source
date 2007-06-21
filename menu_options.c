@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.66 2007-06-15 12:26:07 johnnycz Exp $
+		$Id: menu_options.c,v 1.67 2007-06-21 18:01:24 johnnycz Exp $
 
 */
 
@@ -171,15 +171,8 @@ const char* autorecord_enum[] = { "off", "don't save", "auto save" };
 const char* hud_enum[] = { "classic", "new", "combined" };
 const char* ignorespec_enum[] = { "off", "on (as player)", "on (always)" };
 
-const char* SshotformatRead(void) {
-	return scr_sshot_format.string;
-}
-void SshotformatToggle(qbool back) {
-    if (back) SshotformatToggle(false);  // a trick: scroll forward twice = once back
-	if (!strcmp(scr_sshot_format.string, "jpg")) Cvar_Set(&scr_sshot_format, "png");
-	else if (!strcmp(scr_sshot_format.string, "png")) Cvar_Set(&scr_sshot_format, "tga");
-	else if (!strcmp(scr_sshot_format.string, "tga")) Cvar_Set(&scr_sshot_format, "jpg");
-}
+const char* scr_sshot_format_enum[] = {
+	"JPG", "jpg", "PNG", "png", "TGA", "tga" };
 
 extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_weaponhide, con_funchars_mode, con_notifytime, scr_consize, ignore_opponents, _con_notifylines,
 	ignore_qizmo_spec, ignore_spec, msg_filter, crosshair, crosshairsize, cl_smartjump, scr_coloredText,
@@ -197,85 +190,26 @@ extern cvar_t demo_format, sys_highpriority, cl_window_caption;
 extern cvar_t scr_autoid, gl_crosshairalpha, gl_smoothfont, amf_hidenails, amf_hiderockets, gl_anisotropy, gl_lumaTextures, gl_textureless, gl_colorlights;
 #endif
 
-const char* BandwidthRead(void) {
-	if (rate.value < 4000) return "Modem (33k)";
-	else if (rate.value < 6000) return "Modem (56k)";
-	else if (rate.value < 8000) return "ISDN (112k)";
-	else if (rate.value < 15000) return "Cable (128k)";
-	else return "ADSL (> 256k)";
-}
-void BandwidthToggle(qbool back) {
-    if (back) {
-        int i; for (i = 0; i < 3; i++) BandwidthToggle(false);
-    }
-	if (rate.value < 4000) Cvar_SetValue(&rate, 5670);
-	else if (rate.value < 6000) Cvar_SetValue(&rate, 7168);
-	else if (rate.value < 8000) Cvar_SetValue(&rate, 14336);
-	else if (rate.value < 15000) Cvar_SetValue(&rate, 30000);
-	else Cvar_SetValue(&rate, 3800);
-}
-const char* ConQualityRead(void) {
-	int q = (int) cl_c2sImpulseBackup.value;
-	if (!q) return "Perfect";
-	else if (q < 3) return "Low packetloss";
-	else if (q < 5) return "Medium packetloss";
-	else return "High packetloss";
-}
-void ConQualityToggle(qbool back) {
-	int q = (int) cl_c2sImpulseBackup.value;
-	if (!q) Cvar_SetValue(&cl_c2sImpulseBackup, 2);
-	else if (q < 3) Cvar_SetValue(&cl_c2sImpulseBackup, 4);
-	else if (q < 5) Cvar_SetValue(&cl_c2sImpulseBackup, 6);
-	else Cvar_SetValue(&cl_c2sImpulseBackup, 0);
-}
+const char* bandwidth_enum[] = { 
+	"Modem (33k)", "3800", "Modem (56k)", "5670", 
+	"ISDN (112k)", "9856", "Cable (128k)", "14336",
+	"ADSL (> 256k)", "30000" };
+
+const char* cl_c2sImpulseBackup_enum[] = {
+	"Perfect", "0", "Low packetloss", "2", "Medium packetloss", "4",
+	"High packetloss", "6" };
+
 #ifdef _WIN32
-const char* DemoformatRead(void) {
-	return demo_format.string;
-}
-void DemoformatToggle(qbool back) {
-    if (back) DemoformatToggle(false); // trick
-	if (!strcmp(demo_format.string, "qwd")) Cvar_Set(&demo_format, "qwz");
-	else if (!strcmp(demo_format.string, "qwz")) Cvar_Set(&demo_format, "mvd");
-	else if (!strcmp(demo_format.string, "mvd")) Cvar_Set(&demo_format, "qwd");
-}
+const char* demoformat_enum[] = { "QuakeWorld Demo", "qwd", "Qizmo compressed QWD", "qwz", "MultiViewDemo", "mvd" };
 #endif
-const char* SoundqualityRead(void) {
-	static char buf[7];
-	snprintf(buf, sizeof(buf), "%.2s kHz", s_khz.string);
-	return buf;
-}
-void SoundqualityToggle(qbool back) {
-	switch ((int) s_khz.value) {
-	case 11: Cvar_SetValue(&s_khz, 22); break;
-	case 22: Cvar_SetValue(&s_khz, 44); break;
-	default: Cvar_SetValue(&s_khz, 11); break;
-	}
-}
-const char* RulesetRead(void) {
-	return ruleset.string;
-}
-void RulesetToggle(qbool back) {
-	if (back) RulesetToggle(false);
-	if (!strcmp(ruleset.string, "default")) Cvar_Set(&ruleset, "smackdown");
-	else if (!strcmp(ruleset.string, "smackdown")) Cvar_Set(&ruleset, "mtfl");
-	else if (!strcmp(ruleset.string, "mtfl")) Cvar_Set(&ruleset, "default");
-}
+
+const char* s_khz_enum[] = {
+	"11 kHz", "11", "22 kHz", "22", "44 kHz", "44" };
+const char* ruleset_enum[] = { "ezQuake default", "default", "Smackdown", "smackdown", "Moscow TF League", "mtfl" };
 const char *mediaroot_enum[] = { "relative to exe", "relative to home", "full path" };
 
 #ifdef _WIN32
-void PriorityToggle(qbool back) {
-    int newp = sys_highpriority.value + (back ? -1 : 1);
-    if (newp < -1) newp = 1;
-    if (newp > 1) newp = -1;
-    Cvar_SetValue(&sys_highpriority, newp);
-}
-const char* PriorityRead(void) {
-    switch ((int) sys_highpriority.value) {
-    case -1: return "low";
-    case 1: return "high";
-    default: return "normal";
-    }
-}
+const char *priority_enum[] = { "low", "-1", "normal", "0", "high", "1" };
 #endif
 
 // START contents of Menu-> Options-> Main tab
@@ -288,14 +222,14 @@ setting settgeneral_arr[] = {
 	ADDSET_ACTION	("Go To Console", Con_ToggleConsole_f, "Opens the console."),
 	ADDSET_ACTION	("Reset To Defaults", DefaultConfig, "Reset all settings to defaults"),
 #ifdef _WIN32
-    ADDSET_CUSTOM	("Process Priority", PriorityRead, PriorityToggle, "Change client process priority. If you experience tearing or lagging, change this value to something that works for you."),
+	ADDSET_ENUM		("Process Priority", sys_highpriority, priority_enum),
 #endif
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
 
 	//Connection
 	ADDSET_SEPARATOR("Connection"),
-	ADDSET_CUSTOM	("Bandwidth Limit", BandwidthRead, BandwidthToggle, "Select a speed close to your internet connection link speed."),
-	ADDSET_CUSTOM	("Quality", ConQualityRead, ConQualityToggle, "Ensures that packets with weapon switch command don't get lost."),
+	ADDSET_ENUM 	("Bandwidth Limit", rate, bandwidth_enum),
+	ADDSET_ENUM		("Quality", cl_c2sImpulseBackup, cl_c2sImpulseBackup_enum),
 
 	//Sound & Volume
 	ADDSET_SEPARATOR("Sound & Volume"),
@@ -307,7 +241,7 @@ setting settgeneral_arr[] = {
 	ADDSET_NUMBER	("Spectator Volume", con_sound_spec_volume, 0, 1, 0.1),
 	ADDSET_NUMBER	("Other Volume", con_sound_other_volume, 0, 1, 0.1),
 	ADDSET_BOOL		("Static Sounds", cl_staticsounds),
-	ADDSET_CUSTOM	("Quality", SoundqualityRead, SoundqualityToggle, "Sound sampling rate."),
+	ADDSET_ENUM 	("Quality", s_khz, s_khz_enum),
 	ADDSET_BASIC_SECTION(),
 
 	//Chat Settings
@@ -324,9 +258,9 @@ setting settgeneral_arr[] = {
 	ADDSET_NAMED	("Auto Record Demo", match_auto_record, autorecord_enum),
 	ADDSET_NAMED	("Auto Log Match", match_auto_logconsole, autorecord_enum),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_CUSTOM	("Sshot Format", SshotformatRead, SshotformatToggle, "Screenshot image format"),
+	ADDSET_ENUM 	("Sshot Format", scr_sshot_format, scr_sshot_format_enum),
 #ifdef _WIN32
-	ADDSET_CUSTOM	("Demo Format", DemoformatRead, DemoformatToggle, "QWD is original QW demo format, QWZ is compressed demo format and MVD contains multiview data; You need Qizmo and Qwdtools for this to work."),
+	ADDSET_ENUM     ("Demo Format", demo_format, demoformat_enum),
 #endif
 	ADDSET_BASIC_SECTION(),
 	ADDSET_ADVANCED_SECTION(), // I think all of paths should be advanced? -Up2
@@ -475,7 +409,7 @@ setting settplayer_arr[] = {
 	ADDSET_SKIN		("Skin", skin),
 	ADDSET_COLOR	("Shirt Color", topcolor),
 	ADDSET_COLOR	("Pants Color", bottomcolor),
-	ADDSET_CUSTOM	("Ruleset", RulesetRead, RulesetToggle, "If you are taking part in a tournament, you usually need to set this to smackdown; (this will limit some client features."),
+	ADDSET_ENUM    	("Ruleset", ruleset, ruleset_enum),
 	ADDSET_SEPARATOR("Team Colors"),
 	ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
 	ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
@@ -740,40 +674,18 @@ void FpslimitToggle(qbool back) {
 }
 
 #ifdef GLQUAKE
-const char* TexturesdetailRead(void) { // 1, 8, 256, 2048
-	if (gl_max_size.value < 8) return "low";
-	else if (gl_max_size.value < 200) return "medium";
-	else if (gl_max_size.value < 1025) return "high";
-	else return "max";
-}
-void TexturesdetailToggle(qbool back) {
-	if (gl_max_size.value < 8) Cvar_SetValue(&gl_max_size, 8);
-	else if (gl_max_size.value < 200) Cvar_SetValue(&gl_max_size, 256);
-	else if (gl_max_size.value < 1025) Cvar_SetValue(&gl_max_size, 2048);
-	else Cvar_SetValue(&gl_max_size, 1);
-}
+const char* gl_max_size_enum[] = {
+	"low", "1", "medium", "8", "high", "256", "max", "2048"
+};
+
 extern cvar_t gl_texturemode;
-static int Texturesquality(void) {
-	if (!strcmp(gl_texturemode.string, "GL_NEAREST")) return 0;
-	else if (!strcmp(gl_texturemode.string, "GL_NEAREST_MIPMAP_NEAREST")) return 1;
-	else if (!strcmp(gl_texturemode.string, "GL_LINEAR")) return 2;
-	else if (!strcmp(gl_texturemode.string, "GL_LINEAR_MIPMAP_NEAREST")) return 3;
-	else return 4;
-}
-const char* TexturesqualityRead(void) {
-	switch (Texturesquality()) {
-	case 0: return "very low"; case 1: return "low"; case 2: return "medium"; case 3: return "high"; default: return "very high";
-	}
-}
-void TexturesqualityToggle(qbool back) {
-	switch (Texturesquality()) {
-	case 0: Cvar_Set(&gl_texturemode, "GL_NEAREST_MIPMAP_NEAREST"); return;
-	case 1: Cvar_Set(&gl_texturemode, "GL_LINEAR"); return;
-	case 2: Cvar_Set(&gl_texturemode, "GL_LINEAR_MIPMAP_NEAREST"); return;
-	case 3: Cvar_Set(&gl_texturemode, "GL_LINEAR_MIPMAP_LINEAR"); return;
-	default: Cvar_Set(&gl_texturemode, "GL_NEAREST"); return;
-	}
-}
+const char* gl_texturemode_enum[] = {
+	"very low", "GL_NEAREST_MIPMAP_NEAREST",
+	"low", "GL_LINEAR",
+	"medium", "GL_LINEAR_MIPMAP_NEAREST",
+	"high", "GL_LINEAR_MIPMAP_LINEAR",
+	"very high", "GL_NEAREST"
+};
 #endif
 
 // START contents of Menu -> Options -> Graphics tab
@@ -836,7 +748,7 @@ setting settfps_arr[] = {
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SEPARATOR("Textures"),
 	ADDSET_BOOL		("Luma", gl_lumaTextures),
-	ADDSET_CUSTOM	("Detail", TexturesdetailRead, TexturesdetailToggle, "Determines the texture quality; resolution of the textures in memory."),
+	ADDSET_ENUM 	("Detail", gl_max_size, gl_max_size_enum),
 	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
 	ADDSET_BOOL		("No Textures", gl_textureless),
 
@@ -974,7 +886,7 @@ setting settvideo_arr[] = {
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
 	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
-	ADDSET_CUSTOM	("Quality Mode", TexturesqualityRead, TexturesqualityToggle, "Determines the texture quality; rendering quality."),
+	ADDSET_ENUM		("Quality Mode", gl_texturemode, gl_texturemode_enum),
 
 	ADDSET_SEPARATOR("Screen settings"),
 	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),

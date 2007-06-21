@@ -26,6 +26,9 @@
 // number: will show a slider allowing you to choose setting from range min..max 
 #define ADDSET_NUMBER(label, var, min, max, step) { stt_num, label, false, &var, min, max, step, NULL, NULL, NULL, NULL }
 
+// enum: custom name for each custom value .. works like "named", but you specify the range of values too
+#define ADDSET_ENUM(label, var, strs) { stt_enum, label, false, &var, 0, (sizeof(strs)/sizeof(char*))/2-1, 1, NULL, NULL, NULL, strs }
+
 // bool: will display on/off option
 #define ADDSET_BOOL(label, var) { stt_bool, label, false, &var, 0, 0, 0, NULL, NULL, NULL, NULL }
 
@@ -71,6 +74,7 @@ typedef enum  {
 	stt_bool,		// simple boolean setting, needs cvar
 	stt_custom,		// fully customizable setting, needs readfnc and togglefnc
 	stt_named,		// named integer 0..max, max is number of elements in array of strings assigned to readfnc
+	stt_enum,		// named enum, pairs of "name", "value"
 	stt_action,		// function is assigned to this, pointer must be stored in togglefnc
 	stt_string,		// string - fully editable by the user, needs only cvar
 	stt_playercolor,// named enum 0..13
@@ -91,7 +95,7 @@ typedef struct {
 	enum_readfnc readfnc;		// reading function pointer; required for enum
 	enum_togglefnc togglefnc;	// toggle function pointer; required for enum
 	action_fnc actionfnc;		// action function pointer; required for stt_action
-	const char** named_ints;	// array of strings; required for sett_named
+	const char** named_ints;	// array of strings; required for sett_named and stt_enum
 	const char*	varname;		// name of a non-static cvar_t, also used for command name for bind
 	const char* description;	// manual-like description
 	int top;					// distance of the setting from the top of the settings page
