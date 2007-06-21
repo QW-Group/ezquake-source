@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.43 2007-06-16 22:39:48 disconn3ct Exp $
+	$Id: host.c,v 1.44 2007-06-21 14:48:44 johnnycz Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -548,6 +548,9 @@ void Startup_Place(void)
 	    Cbuf_AddText("togglemenu\n");
     else if (!strcmp(cl_onload.string, "browser"))
 	    Cbuf_AddText("menu_slist\n");
+	else if (!strcmp(cl_onload.string, "console"))
+		; // donothing
+	else Cbuf_AddText(va("%s\n", cl_onload.string));
 }
 
 void Host_Init (int argc, char **argv, int default_memsize)
