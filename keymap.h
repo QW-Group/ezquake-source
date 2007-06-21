@@ -34,7 +34,7 @@ void	IN_StartupKeymap (void);    // register the variables
 void	IN_Keycode_f (void);        // command "keycode"
 void	IN_Keymap_Reset_f (void);   // command "keymap_reset"
 void	IN_Keymap_Init_f (void);    // command "keymap_init"
-void	IN_Keymaplist_f (void);     // command "keymaplist", "keymap_list"
+void	IN_Keymaplist_f (void);     // command "keymap_list"
 void	IN_Keymap_Load_f (void);    // command "keymap_load"
 void	IN_Keymap_Save_f (void);    // command "keymap_save"
 

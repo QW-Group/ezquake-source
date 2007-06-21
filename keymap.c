@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: keymap.c,v 1.11 2007-05-28 10:47:34 johnnycz Exp $
+	$Id: keymap.c,v 1.12 2007-06-21 14:29:26 johnnycz Exp $
 
 */
 // keymap.c -- support for international keyboard layouts
@@ -145,7 +145,7 @@ void	IN_StartupKeymap (void) {
 	Cmd_AddCommand ("keymap_init",  IN_Keymap_Init_f);
 
 	// write a list of all bindings at console:
-	Cmd_AddCommand ("keymaplist",    IN_Keymaplist_f);
+	Cmd_AddLegacyCommand("keymaplist", "keymap_list");
 	Cmd_AddCommand ("keymap_list",   IN_Keymaplist_f);
 
 	// Initialize keymappings and the load from file:
@@ -951,10 +951,8 @@ static void IN_Keymap_Print_f( int scancode, qbool ext )
 ===========
 IN_Keymaplist_f
 
-  command "keymaplist"
   command "keymap_list"
 Syntax:
-  keymaplist
   keymap_list
 
 Prints a list of all active keycode-mappings
