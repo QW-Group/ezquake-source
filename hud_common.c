@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.140 2007-06-17 18:21:39 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.141 2007-06-22 23:15:02 qqshka Exp $
 */
 //
 // common HUD elements
@@ -4074,6 +4074,9 @@ void HUD_NewRadarMap()
 	mpic_t *radar_pic_p = NULL;
 	png_textp txt = NULL;
 	char *radar_filename = NULL;
+
+	if (!cl.worldmodel)
+		return; // seems we are not ready to do that
 
 	// Reset the radar pic status.
 	memset (&radar_pic, 0, sizeof(radar_pic));

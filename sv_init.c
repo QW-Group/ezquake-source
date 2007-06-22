@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_init.c,v 1.14 2007-03-10 14:11:08 disconn3ct Exp $
+	$Id: sv_init.c,v 1.15 2007-06-22 23:15:02 qqshka Exp $
 */
 
 #include "qwsvdef.h"
@@ -357,4 +357,12 @@ void SV_SpawnServer (char *mapname, qbool devmap)
 
 	Info_SetValueForKey (svs.info, "map", sv.mapname, MAX_SERVERINFO_STRING);
 	Com_DPrintf ("Server spawned.\n");
+
+#ifndef SERVERONLY
+	if (!dedicated)
+	{
+		void CL_ClearState (void);
+		CL_ClearState ();
+	}
+#endif
 }
