@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.78 2007-05-28 10:47:32 johnnycz Exp $
+    $Id: common.c,v 1.79 2007-06-23 11:59:25 tei Exp $
 
 */
 
@@ -1251,6 +1251,26 @@ int COM_CheckParm (char *parm)
 	return 0;
 }
 
+
+//Tei: added cos -data feature use it.
+int COM_CheckParmOffset (char *parm, int offset)
+{
+	int             i;
+
+	for (i=offset ; i<com_argc ; i++)
+	{
+		if (!com_argv[i])
+			continue;               // NEXTSTEP sometimes clears appkit vars.
+
+		if (!strcmp (parm,com_argv[i]))
+			return i;
+	}
+
+	return 0;
+}
+//qbism// 1999-12-23 Multiple "-data" parameters by Maddes  end
+
+
 int COM_Argc (void)
 {
 	return com_argc;
@@ -2083,6 +2103,25 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	FS_AddGameDirectory(com_basedir, "ezquake");
 
 	FS_AddGameDirectory(com_basedir, "qw");
+
+
+	//
+	// -data <datadir>
+	// Adds datadirs similar to "-game"
+	//
+    //Tei: original code from qbism.
+	i = 1;
+	added = 0;
+	while(i = COM_CheckParmOffset ("-data", i))
+	{
+		if (i && i < com_argc-1)
+		{
+			FS_AddGameDirectory(com_basedir,com_argv[i+1]);
+			added++;
+		}
+		i++;
+	} 
+    
 
 	// any set gamedirs will be freed up to here
 	com_base_searchpaths = com_searchpaths;
