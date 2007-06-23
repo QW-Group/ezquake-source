@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.79 2007-06-23 11:59:25 tei Exp $
+    $Id: common.c,v 1.80 2007-06-23 21:58:47 tei Exp $
 
 */
 
@@ -2111,13 +2111,11 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	//
     //Tei: original code from qbism.
 	i = 1;
-	added = 0;
 	while(i = COM_CheckParmOffset ("-data", i))
 	{
 		if (i && i < com_argc-1)
 		{
 			FS_AddGameDirectory(com_basedir,com_argv[i+1]);
-			added++;
 		}
 		i++;
 	} 
