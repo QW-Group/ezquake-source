@@ -126,7 +126,6 @@ void EZ_tree_Draw(ez_tree_t *tree)
 	while(iter)
 	{
 		payload = (ez_control_t *)iter->payload;
-		//EZ_control_OnDraw(payload);
 		CONTROL_RAISE_EVENT(NULL, payload, OnDraw);
 		
 		iter = iter->next;
@@ -177,8 +176,6 @@ int EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 
 		if(POINT_IN_RECTANGLE(ms->x, ms->y, payload->x, payload->y, payload->width, payload->height))
 		{
-			//mouse_handled = payload->events.OnMouseEvent(payload, ms);
-			//EZ_control_OnMouseEvent(payload, ms);
 			CONTROL_RAISE_EVENT(&mouse_handled, payload, OnMouseEvent, ms);
 		}
 
@@ -250,13 +247,12 @@ qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar)
 				// Focus on the next focusable control (TAB)
 				// or the previous (Alt + TAB)
 				EZ_tree_ChangeFocus(tree, !isAltDown());
-				key_handled = true;;
+				key_handled = true;
 			}
 		}
 
 		if(!key_handled)
 		{
-			// EZ_control_OnKeyEvent(tree->root, key, unichar);
 			CONTROL_RAISE_EVENT(&key_handled, tree->root, OnKeyEvent, key, unichar);
 		}
 	}
@@ -570,18 +566,12 @@ int EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, by
 //
 int EZ_control_SetPosition(ez_control_t *self, int x, int y)
 {
+	// Set the new relative position.
 	self->x = x;
 	self->y = y;
 
-	if(self->parent)
-	{
-		// We moved ourselves, so send my parents position
-		CONTROL_RAISE_EVENT(NULL, self, OnMove, self->parent->absolute_x, self->parent->absolute_y);
-	}
-	else
-	{
-		CONTROL_RAISE_EVENT(NULL, self, OnMove, 0, 0);
-	}
+	// Raise the event that we have moved.
+	CONTROL_RAISE_EVENT(NULL, self, OnMove);
 
 	return 0;
 }
@@ -663,24 +653,24 @@ int EZ_control_OnResize(ez_control_t *self)
 //
 // Control - The control was moved.
 //
-int EZ_control_OnMove(ez_control_t *self, int parent_abs_x, int parent_abs_y)
+int EZ_control_OnMove(ez_control_t *self)
 {
 	ez_control_t *payload = NULL;
 	ez_dllist_node_t *iter = self->children.head;
 
 	// Update the absolute screen position based on the parents position.
-	self->absolute_x = parent_abs_x + self->x;
-	self->absolute_y = parent_abs_y + self->y;
+	self->absolute_x = (self->parent ? self->parent->absolute_x : 0) + self->x;
+	self->absolute_y = (self->parent ? self->parent->absolute_y : 0) + self->y;
 
 	// Tell the children we've moved.
 	while(iter)
 	{
 		payload = (ez_control_t *)iter->payload;
-		CONTROL_RAISE_EVENT(NULL, payload, OnMove, self->absolute_x, self->absolute_y);
+		CONTROL_RAISE_EVENT(NULL, payload, OnMove);
 		iter = iter->next;
 	}
 
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnMove, parent_abs_x, parent_abs_y);
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnMove);
 
 	return 0;
 }

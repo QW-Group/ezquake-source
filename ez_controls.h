@@ -101,35 +101,12 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree);
 // Control
 // =========================================================================================
 
-/*
-//
-// Default override macros. 
-// These makes it more convenient in inheriting classes to use the parents implementation
-// of event handlers, without having to write all the code for all of them.
-//
-#define CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, eventname)			\
-	qbool EZ_##controlname_##eventname(ez_control_t *self, mouse_state_t *ms)	\
-	{																			\
-		EZ_##parent_##eventname(self, ms);										\
-	}
-
-#define CONTROL_OVERRIDE_OnMouseEvent(controlname, parent)	CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseEvent)
-#define CONTROL_OVERRIDE_OnMouseClick(controlname, parent)	CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseClick)
-#define CONTROL_OVERRIDE_OnMouseDown(controlname, parent)	CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseDown)
-#define CONTROL_OVERRIDE_OnMouseUp(controlname, parent)		CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseUp)
-#define CONTROL_OVERRIDE_OnMouseEnter(controlname, parent)	CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseEnter)
-#define CONTROL_OVERRIDE_OnMouseHover(controlname, parent)	CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseHover)
-#define CONTROL_OVERRIDE_OnMouseLeave(controlname, parent)	CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseLeave)
-#define CONTROL_OVERRIDE_OnMouseWheel(controlname, parent)	CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseWheel)
-*/
-
 //
 // Control - Function pointer types.
 //
 typedef int (*ez_control_handler_fp) (struct ez_control_s *self);
 typedef int (*ez_control_mouse_handler_fp) (struct ez_control_s *self, mouse_state_t *mouse_state);
 typedef int (*ez_control_key_handler_fp) (struct ez_control_s *self, int key, int unichar);
-typedef int (*ez_control_move_handler_fp) (struct ez_control_s *self, int parent_abs_x, int parent_abs_y);
 typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool destroy_children);
 
 #define CONTROL_EVENT_HANDLER(name, ctrl, eventhandler) (ctrl##->##name.##eventhandler)
@@ -178,7 +155,7 @@ typedef struct ez_control_events_s
 	ez_control_handler_fp			OnLayoutChildren;
 	ez_control_handler_fp			OnDraw;
 	ez_control_destroy_handler_fp	OnDestroy;
-	ez_control_move_handler_fp		OnMove;
+	ez_control_handler_fp			OnMove;
 	ez_control_handler_fp			OnResize;
 	ez_control_handler_fp			OnGotFocus;
 	ez_control_handler_fp			OnLostFocus;
@@ -193,11 +170,11 @@ typedef struct ez_control_s
 	int 				width;
 	int					height;
 
-	int					absolute_x;		// The absolute screen coordinates for the HUD element.
+	int					absolute_x;						// The absolute screen coordinates for the control.
 	int					absolute_y;	
 
-	int					draw_order;		// The order the control is drawn in.
-	int					tab_order;		// The tab number of the control.
+	int					draw_order;						// The order the control is drawn in.
+	int					tab_order;						// The tab number of the control.
 	
 	int					flags;
 
@@ -214,7 +191,7 @@ typedef struct ez_control_s
 
 	struct ez_tree_s			*control_tree;			// The control tree the control belongs to.
 
-	int							override_count;			// The current number of 
+	int							override_count;			// The current number of times the event handler needs to be called before it's executed.
 	int							inheritance_level;		// The class's level of inheritance. Control -> SubControl -> SubSubControl
 														// SubSubControl would have a value of 2.
 														// !!! This is class specific, should never be changed !!!
@@ -285,7 +262,7 @@ int EZ_control_OnLostFocus(ez_control_t *self);
 //
 // Control - The control was moved.
 //
-int EZ_control_OnMove(ez_control_t *self, int x, int y);
+int EZ_control_OnMove(ez_control_t *self);
 
 //
 // Control - The control was resized.
