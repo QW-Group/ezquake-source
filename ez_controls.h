@@ -41,6 +41,11 @@ typedef struct ez_double_linked_list_s
 void EZ_double_linked_list_Add(ez_double_linked_list_t *list, void *payload);
 
 //
+// Finds a given node based on the specified payload.
+//
+ez_dllist_node_t *EZ_double_linked_list_FindByPayload(ez_double_linked_list_t *list, void *payload);
+
+//
 // Removes an item from a linked list by it's payload.
 //
 void *EZ_double_linked_list_RemoveByPayload(ez_double_linked_list_t *list, void *payload);
@@ -117,7 +122,7 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 #define CONTROL_RAISE_EVENT(retval, ctrl, eventhandler, ...)										\
 {																									\
 	int temp = 0;																					\
-	int *p = retval;																				\
+	int *p = (int *)retval;																			\
 	(ctrl)->override_count = (ctrl)->inheritance_level;												\
 	if(CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))											\
 		temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ctrl), __VA_ARGS__);			\
@@ -129,7 +134,7 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 //
 #define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventhandler, ...)									\
 {																									\
-	int *p = retval, temp = 0;																		\
+	int *p = (int *)retval, temp = 0;																\
 	if(CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler))									\
 	{																								\
 		if(ctrl->override_count == 0)																\
@@ -137,7 +142,7 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 		else																						\
 			ctrl->override_count--;																	\
 	}																								\
-	if(p) *p = temp;																				\
+	if(p) (*p) = temp;																				\
 }																									\
 
 #define EZ_CONTROL_INHERITANCE_LEVEL	0
@@ -211,34 +216,119 @@ ez_control_t *EZ_control_Init(ez_tree_t *tree, ez_control_t *parent,
 int EZ_control_Destroy(ez_control_t *self, qbool destroy_children);
 
 //
+// Control - Sets the OnDestroy event handler.
+//
+void EZ_control_SetOnDestroy(ez_control_t *self, ez_control_destroy_handler_fp OnDestroy);
+
+//
+// Control - Sets the OnLayoutChildren event handler.
+//
+void EZ_control_SetOnLayoutChildren(ez_control_t *self, ez_control_handler_fp OnLayoutChildren);
+
+//
+// Control - Sets the OnMove event handler.
+//
+void EZ_control_SetOnMove(ez_control_t *self, ez_control_handler_fp OnMove);
+
+//
+// Control - Sets the OnResize event handler.
+//
+void EZ_control_SetOnResize(ez_control_t *self, ez_control_handler_fp OnResize);
+
+//
+// Control - Sets the OnKeyEvent event handler.
+//
+void EZ_control_SetOnKeyEvent(ez_control_t *self, ez_control_key_handler_fp OnKeyEvent);
+
+//
+// Control - Sets the OnLostFocus event handler.
+//
+void EZ_control_SetOnLostFocus(ez_control_t *self, ez_control_handler_fp OnLostFocus);
+
+//
+// Control - Sets the OnGotFocus event handler.
+//
+void EZ_control_SetOnGotFocus(ez_control_t *self, ez_control_handler_fp OnGotFocus);
+
+//
+// Control - Sets the OnMouseHover event handler.
+//
+void EZ_control_SetOnMouseHover(ez_control_t *self, ez_control_mouse_handler_fp OnMouseHover);
+
+//
+// Control - Sets the OnMouseLeave event handler.
+//
+void EZ_control_SetOnMouseLeave(ez_control_t *self, ez_control_mouse_handler_fp OnMouseLeave);
+
+//
+// Control - Sets the OnMouseEnter event handler.
+//
+void EZ_control_SetOnMouseEnter(ez_control_t *self, ez_control_mouse_handler_fp OnMouseEnter);
+
+//
+// Control - Sets the OnMouseClick event handler.
+//
+void EZ_control_SetOnMouseClick(ez_control_t *self, ez_control_mouse_handler_fp OnMouseClick);
+
+//
+// Control - Sets the OnMouseEvent event handler.
+//
+void EZ_control_SetOnMouseUp(ez_control_t *self, ez_control_mouse_handler_fp OnMouseUp);
+
+//
+// Control - Sets the OnMouseUp event handler.
+//
+void EZ_control_SetOnMouseUp(ez_control_t *self, ez_control_mouse_handler_fp OnMouseUp);
+
+//
+// Control - Sets the OnMouseDown event handler.
+//
+void EZ_control_SetOnMouseDown(ez_control_t *self, ez_control_mouse_handler_fp OnMouseDown);
+
+//
+// Control - Sets the OnMouseEvent event handler.
+//
+void EZ_control_SetOnMouseEvent(ez_control_t *self, ez_control_mouse_handler_fp OnMouseEvent);
+
+//
+// Control - Sets the OnDraw event handler.
+//
+void EZ_control_SetOnDraw(ez_control_t *self, ez_control_handler_fp OnDraw);
+
+//
 // Control - Set color of a control.
 //
-int EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, byte alpha);
+void EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, byte alpha);
 
 //
 // Control - Sets the size of a control.
 //
-int EZ_control_SetSize(ez_control_t *self, int width, int height);
+void EZ_control_SetSize(ez_control_t *self, int width, int height);
 
 //
 // Control - Sets the position of a control.
 //
-int EZ_control_SetPosition(ez_control_t *self, int x, int y);
+void EZ_control_SetPosition(ez_control_t *self, int x, int y);
 
 //
 // Control - Focuses on a control.
 //
-int EZ_control_SetFocus(ez_control_t *self);
+qbool EZ_control_SetFocus(ez_control_t *self);
+
+//
+// Control - Focuses on a control associated with a specified node from the tab list.
+//
+qbool EZ_control_SetFocusByNode(ez_control_t *self, ez_dllist_node_t *node);
 
 //
 // Control - Returns true if this control is the root control.
 //
-int EZ_control_IsRoot(ez_control_t *self);
+qbool EZ_control_IsRoot(ez_control_t *self);
 
 //
 // Control - Adds a child to the control.
 //
-int EZ_control_AddChild(ez_control_t *self, ez_control_t *child);
+void EZ_control_AddChild(ez_control_t *self, ez_control_t *child);
 
 //
 // Control - Remove a child from the control. Returns a reference to the child that was removed.

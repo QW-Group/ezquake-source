@@ -41,9 +41,9 @@ void EZ_double_linked_list_Add(ez_double_linked_list_t *list, void *payload)
 }
 
 //
-// Removes an item from a linked list by it's payload.
+// Finds a given node based on the specified payload.
 //
-void *EZ_double_linked_list_RemoveByPayload(ez_double_linked_list_t *list, void *payload)
+ez_dllist_node_t *EZ_double_linked_list_FindByPayload(ez_double_linked_list_t *list, void *payload)
 {
 	ez_dllist_node_t *iter = list->head;
 
@@ -51,13 +51,22 @@ void *EZ_double_linked_list_RemoveByPayload(ez_double_linked_list_t *list, void 
 	{
 		if(iter->payload == payload)
 		{
-			return EZ_double_linked_list_Remove(list, iter);
+			return iter;
 		}
 
 		iter = iter->next;
 	}
-
+	
 	return NULL;
+}
+
+//
+// Removes an item from a linked list by it's payload.
+//
+void *EZ_double_linked_list_RemoveByPayload(ez_double_linked_list_t *list, void *payload)
+{
+	ez_dllist_node_t *node = EZ_double_linked_list_FindByPayload(list, payload);
+	return EZ_double_linked_list_Remove(list, node);
 }
 
 //
@@ -165,16 +174,20 @@ int EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 			int y = (focused_control->parent) ? (focused_control->parent->absolute_y - ms->y) : ms->y;
 
 			EZ_control_SetPosition(focused_control, x, y);
+			
+			mouse_handled = true;
 		}
 	}
 	
-	iter = tree->drawlist.head;
+	// We start drawing from back to front, so if we want to click
+	// the foremost control we have to start from the bacak.
+	iter = tree->drawlist.tail;
 
 	while(iter)
 	{
 		payload = (ez_control_t *)iter->payload;
 
-		if(POINT_IN_RECTANGLE(ms->x, ms->y, payload->x, payload->y, payload->width, payload->height))
+		if(POINT_IN_RECTANGLE(ms->x, ms->y, payload->absolute_x, payload->absolute_y, payload->width, payload->height))
 		{
 			CONTROL_RAISE_EVENT(&mouse_handled, payload, OnMouseEvent, ms);
 		}
@@ -184,7 +197,7 @@ int EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 			return mouse_handled;
 		}
 
-		iter = iter->next;
+		iter = iter->previous;
 	}
 
 	return mouse_handled;
@@ -206,7 +219,7 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 		{
 			node_iter = (next_control) ? tree->focused_node->next : tree->focused_node->previous;
 		}
-		while(node_iter && !(found = EZ_control_SetFocus((ez_control_t *)node_iter->payload)));
+		while(node_iter && !(found = EZ_control_SetFocusByNode((ez_control_t *)node_iter->payload, node_iter)));
 	}
 	
 	// We haven't found a focusable control yet, 
@@ -221,7 +234,7 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 		{
 			node_iter = (next_control) ? tree->focused_node->next : tree->focused_node->previous;
 		}
-		while(node_iter && !(found = EZ_control_SetFocus((ez_control_t *)node_iter->payload)));
+		while(node_iter && !(found = EZ_control_SetFocusByNode((ez_control_t *)node_iter->payload, node_iter)));
 	}
 
 	// There is nothing to focus on.
@@ -303,7 +316,7 @@ static int EZ_tree_DrawOrderFunc(const void *val1, const void *val2)
 	const ez_control_t *control1 = (ez_control_t *)val1;
 	const ez_control_t *control2 = (ez_control_t *)val2;
 
-	return (control1->draw_order - control2->draw_order);
+	return (control2->draw_order - control1->draw_order);
 }
 
 //
@@ -468,15 +481,149 @@ int EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 }
 
 //
+// Control - Sets the OnDestroy event handler.
+//
+void EZ_control_SetOnDestroy(ez_control_t *self, ez_control_destroy_handler_fp OnDestroy)
+{
+	self->event_handlers.OnDestroy = OnDestroy;
+}
+
+//
+// Control - Sets the OnLayoutChildren event handler.
+//
+void EZ_control_SetOnLayoutChildren(ez_control_t *self, ez_control_handler_fp OnLayoutChildren)
+{
+	self->event_handlers.OnLayoutChildren = OnLayoutChildren;
+}
+
+//
+// Control - Sets the OnMove event handler.
+//
+void EZ_control_SetOnMove(ez_control_t *self, ez_control_handler_fp OnMove)
+{
+	self->event_handlers.OnMove = OnMove;
+}
+
+//
+// Control - Sets the OnResize event handler.
+//
+void EZ_control_SetOnResize(ez_control_t *self, ez_control_handler_fp OnResize)
+{
+	self->event_handlers.OnResize = OnResize;
+}
+
+//
+// Control - Sets the OnKeyEvent event handler.
+//
+void EZ_control_SetOnKeyEvent(ez_control_t *self, ez_control_key_handler_fp OnKeyEvent)
+{
+	self->event_handlers.OnKeyEvent = OnKeyEvent;
+}
+
+//
+// Control - Sets the OnLostFocus event handler.
+//
+void EZ_control_SetOnLostFocus(ez_control_t *self, ez_control_handler_fp OnLostFocus)
+{
+	self->event_handlers.OnLostFocus = OnLostFocus;
+}
+
+//
+// Control - Sets the OnGotFocus event handler.
+//
+void EZ_control_SetOnGotFocus(ez_control_t *self, ez_control_handler_fp OnGotFocus)
+{
+	self->event_handlers.OnGotFocus = OnGotFocus;
+}
+
+//
+// Control - Sets the OnMouseHover event handler.
+//
+void EZ_control_SetOnMouseHover(ez_control_t *self, ez_control_mouse_handler_fp OnMouseHover)
+{
+	self->event_handlers.OnMouseHover = OnMouseHover;
+}
+
+//
+// Control - Sets the OnMouseLeave event handler.
+//
+void EZ_control_SetOnMouseLeave(ez_control_t *self, ez_control_mouse_handler_fp OnMouseLeave)
+{
+	self->event_handlers.OnMouseLeave = OnMouseLeave;
+}
+
+//
+// Control - Sets the OnMouseEnter event handler.
+//
+void EZ_control_SetOnMouseEnter(ez_control_t *self, ez_control_mouse_handler_fp OnMouseEnter)
+{
+	self->event_handlers.OnMouseEnter = OnMouseEnter;
+}
+
+//
+// Control - Sets the OnMouseClick event handler.
+//
+void EZ_control_SetOnMouseClick(ez_control_t *self, ez_control_mouse_handler_fp OnMouseClick)
+{
+	self->event_handlers.OnMouseClick = OnMouseClick;
+}
+
+//
+// Control - Sets the OnMouseUp event handler.
+//
+void EZ_control_SetOnMouseUp(ez_control_t *self, ez_control_mouse_handler_fp OnMouseUp)
+{
+	self->event_handlers.OnMouseUp = OnMouseUp;
+}
+
+//
+// Control - Sets the OnMouseDown event handler.
+//
+void EZ_control_SetOnMouseDown(ez_control_t *self, ez_control_mouse_handler_fp OnMouseDown)
+{
+	self->event_handlers.OnMouseDown = OnMouseDown;
+}
+
+//
+// Control - Sets the OnMouseEvent event handler.
+//
+void EZ_control_SetOnMouseEvent(ez_control_t *self, ez_control_mouse_handler_fp OnMouseEvent)
+{
+	self->event_handlers.OnMouseEvent = OnMouseEvent;
+}
+
+//
+// Control - Sets the OnDraw event handler.
+//
+void EZ_control_SetOnDraw(ez_control_t *self, ez_control_handler_fp OnDraw)
+{
+	self->event_handlers.OnDraw = OnDraw;
+}
+
+//
 // Control - Focuses on a control.
 //
 qbool EZ_control_SetFocus(ez_control_t *self)
 {
+	return EZ_control_SetFocusByNode(self, EZ_double_linked_list_FindByPayload(&self->control_tree->tablist, self));
+}
+
+//
+// Control - Focuses on a control associated with a specified node from the tab list.
+//
+qbool EZ_control_SetFocusByNode(ez_control_t *self, ez_dllist_node_t *node)
+{
 	ez_tree_t *tree = NULL;
 
-	if(!self)
+	if(!self || !node->payload)
 	{
 		Sys_Error("EZ_control_SetFocus(): Cannot focus on a NULL control.\n");
+	}
+
+	// The nodes payload and the control must be the same.
+	if(self != node->payload)
+	{
+		return false;
 	}
 
 	// We can't focus on this control.
@@ -486,7 +633,8 @@ qbool EZ_control_SetFocus(ez_control_t *self)
 	}
 
 	tree = self->control_tree;
-	
+
+	// Steal the focus from the currently focused control.
 	if(tree->focused_node)
 	{
 		ez_control_t *payload = NULL;
@@ -496,17 +644,25 @@ qbool EZ_control_SetFocus(ez_control_t *self)
 			Sys_Error("EZ_control_SetFocus(): Focused node has a NULL payload.\n");
 		}
 
-		tree->focused_node = NULL;
-
 		payload = (ez_control_t *)tree->focused_node->payload;
+
+		// We're trying to focus on the already focused node.
+		if(payload == self)
+		{
+			return true;
+		}
+
+		// Remove the focus flag and set the focus node to NULL.
 		payload->flags &= ~CONTROL_FOCUSED;
+		tree->focused_node = NULL;
 		
 		// Raise event for losing the focus.
 		CONTROL_RAISE_EVENT(NULL, payload, OnLostFocus);
 	}
 
+	// Set the new focus.
 	self->flags |= CONTROL_FOCUSED;
-	tree->focused_node = tree->focused_node;
+	tree->focused_node = node;
 
 	// Raise event for getting focus.
 	CONTROL_RAISE_EVENT(NULL, self, OnGotFocus);
@@ -520,7 +676,6 @@ qbool EZ_control_SetFocus(ez_control_t *self)
 void EZ_control_SetTabOrder(ez_control_t *self, int tab_order)
 {
 	self->tab_order = tab_order;
-
 	EZ_tree_OrderTabList(self->control_tree);
 }
 
@@ -530,41 +685,36 @@ void EZ_control_SetTabOrder(ez_control_t *self, int tab_order)
 void EZ_control_SetDrawOrder(ez_control_t *self, int draw_order)
 {
 	self->draw_order = draw_order;
-
 	EZ_tree_OrderTabList(self->control_tree);
 }
 
 //
 // Control - Sets the size of a control.
 //
-int EZ_control_SetSize(ez_control_t *self, int width, int height)
+void EZ_control_SetSize(ez_control_t *self, int width, int height)
 {
 	self->width = width;
 	self->height = height;
 
 	// EZ_control_OnResize(self);
 	CONTROL_RAISE_EVENT(NULL, self, OnResize);
-
-	return 0;
 }
 
 //
 // Control - Set color of a control.
 //
-int EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, byte alpha)
+void EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, byte alpha)
 {
 	self->background_color[0] = r;
 	self->background_color[1] = g;
 	self->background_color[2] = b;
 	self->background_color[3] = alpha;
-
-	return 0;
 }
 
 //
 // Control - Sets the position of a control.
 //
-int EZ_control_SetPosition(ez_control_t *self, int x, int y)
+void EZ_control_SetPosition(ez_control_t *self, int x, int y)
 {
 	// Set the new relative position.
 	self->x = x;
@@ -572,14 +722,12 @@ int EZ_control_SetPosition(ez_control_t *self, int x, int y)
 
 	// Raise the event that we have moved.
 	CONTROL_RAISE_EVENT(NULL, self, OnMove);
-
-	return 0;
 }
 
 //
 // Control - Returns true if this control is the root control.
 //
-int EZ_control_IsRoot(ez_control_t *self)
+qbool EZ_control_IsRoot(ez_control_t *self)
 {
 	return (self->parent == NULL);
 }
@@ -587,7 +735,7 @@ int EZ_control_IsRoot(ez_control_t *self)
 //
 // Control - Adds a child to the control.
 //
-int EZ_control_AddChild(ez_control_t *self, ez_control_t *child)
+void EZ_control_AddChild(ez_control_t *self, ez_control_t *child)
 {
 	// Remove the control from it's current parent.
 	if(child->parent)
@@ -598,8 +746,6 @@ int EZ_control_AddChild(ez_control_t *self, ez_control_t *child)
 	child->parent = self;
 
 	EZ_double_linked_list_Add(&self->children, child);
-
-	return 0;
 }
 
 //
@@ -630,6 +776,11 @@ int EZ_control_OnGotFocus(ez_control_t *self)
 //
 int EZ_control_OnLostFocus(ez_control_t *self)
 {
+	if(self->flags & CONTROL_FOCUSED)
+	{
+		return 0;
+	}
+
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnLostFocus);
 
 	return 0;
@@ -755,12 +906,12 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 		return mouse_handled;
 	}
 
-	mouse_inside = POINT_IN_RECTANGLE(ms->x, ms->y, self->x, self->y, self->width, self->height);
-	prev_mouse_inside = !POINT_IN_RECTANGLE(old_ms->x, old_ms->y, self->x, self->y, self->width, self->height);
+	mouse_inside = POINT_IN_RECTANGLE(ms->x, ms->y, self->absolute_x, self->absolute_y, self->width, self->height);
+	prev_mouse_inside = !POINT_IN_RECTANGLE(old_ms->x, old_ms->y, self->absolute_x, self->absolute_y, self->width, self->height);
 
 	if(mouse_inside)
 	{
-		if(prev_mouse_inside)
+		if(!prev_mouse_inside)
 		{
 			// Were we inside of the control last time? Otherwise we've just entered it.
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseEnter, ms);
@@ -776,7 +927,7 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseDown, ms);
 		}
 		
-		if(ms->button_up != old_ms->button_up)
+		if(!mouse_handled && ms->button_up != old_ms->button_up)
 		{
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseUp, ms);
 		}
@@ -789,7 +940,10 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 		}
 	}
 
-	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseEvent, ms);
+	if(!mouse_handled)
+	{
+		CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseEvent, ms);
+	}
 
 	// Save the mouse state for the next time we check.
 	self->prev_mouse_state = *ms;
@@ -857,14 +1011,18 @@ int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *mouse_state)
 	if(!(self->flags & CONTROL_MOVABLE) && mouse_state->button_down == 1)
 	{
 		self->flags |= CONTROL_MOVING;
+		mouse_handled = true;
 	}
 
-	EZ_control_SetFocus(self);
+	mouse_handled = EZ_control_SetFocus(self);
 
+	/*
+	TODO : Fix OnMouseClick
 	if(!mouse_handled)
 	{
 		CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseClick, mouse_state);
 	}
+	*/
 
 	return mouse_handled;
 }
