@@ -90,7 +90,7 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms);
 //
 // Control Tree - Key event.
 //
-qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, qbool down);
+qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar);
 
 //
 // Tree Control - Finds any orphans and adds them to the root control.
@@ -101,15 +101,88 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree);
 // Control
 // =========================================================================================
 
+/*
+//
+// Default override macros. 
+// These makes it more convenient in inheriting classes to use the parents implementation
+// of event handlers, without having to write all the code for all of them.
+//
+#define CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, eventname)			\
+	qbool EZ_##controlname_##eventname(ez_control_t *self, mouse_state_t *ms)	\
+	{																			\
+		EZ_##parent_##eventname(self, ms);										\
+	}
+
+#define CONTROL_OVERRIDE_OnMouseEvent(controlname, parent)	CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseEvent)
+#define CONTROL_OVERRIDE_OnMouseClick(controlname, parent)	CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseClick)
+#define CONTROL_OVERRIDE_OnMouseDown(controlname, parent)	CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseDown)
+#define CONTROL_OVERRIDE_OnMouseUp(controlname, parent)		CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseUp)
+#define CONTROL_OVERRIDE_OnMouseEnter(controlname, parent)	CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseEnter)
+#define CONTROL_OVERRIDE_OnMouseHover(controlname, parent)	CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseHover)
+#define CONTROL_OVERRIDE_OnMouseLeave(controlname, parent)	CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseLeave)
+#define CONTROL_OVERRIDE_OnMouseWheel(controlname, parent)	CONTROL_USE_PARENT_MOUSEEVENT(controlname, parent, OnMouseWheel)
+*/
+
 //
 // Control - Function pointer types.
 //
-typedef void (*ez_control_handler_fp) (struct ez_control_s *self);
-typedef qbool (*ez_control_mouse_handler_fp) (struct ez_control_s *self, mouse_state_t *mouse_state);
-typedef qbool (*ez_control_key_handler_fp) (struct ez_control_s *self, int key, qbool down);
-typedef qbool (*ez_control_keychange_handler_fp) (struct ez_control_s *self, int key);
-typedef void (*ez_control_move_handler_fp) (struct ez_control_s *self, int parent_abs_x, int parent_abs_y);
-typedef void (*ez_control_destroy_handler_fp) (struct ez_tree_s *tree, struct ez_control_s *self, qbool destroy_children);
+typedef int (*ez_control_handler_fp) (struct ez_control_s *self);
+typedef int (*ez_control_mouse_handler_fp) (struct ez_control_s *self, mouse_state_t *mouse_state);
+typedef int (*ez_control_key_handler_fp) (struct ez_control_s *self, int key, int unichar);
+typedef int (*ez_control_move_handler_fp) (struct ez_control_s *self, int parent_abs_x, int parent_abs_y);
+typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool destroy_children);
+
+#define CONTROL_EVENT_HANDLER(name, ctrl, eventhandler) (ctrl##->##name.##eventhandler)
+
+//
+// Raises an event.
+//
+#define CONTROL_RAISE_EVENT(retval, ctrl, eventhandler, ...)										\
+{																									\
+	int temp = 0;																					\
+	int *p = retval;																				\
+	(ctrl)->override_count = (ctrl)->inheritance_level;												\
+	if(CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))											\
+		temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ctrl), __VA_ARGS__);			\
+	if(p) (*p) = temp;																				\
+}																									\
+
+//
+// Calls a event handler function.
+//
+#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventhandler, ...)									\
+{																									\
+	int *p = retval, temp = 0;																		\
+	if(CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler))									\
+	{																								\
+		if(ctrl->override_count == 0)																\
+			temp = CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler)(ctrl, __VA_ARGS__);	\
+		else																						\
+			ctrl->override_count--;																	\
+	}																								\
+	if(p) *p = temp;																				\
+}																									\
+
+#define EZ_CONTROL_INHERITANCE_LEVEL	0
+
+typedef struct ez_control_events_s
+{
+	ez_control_mouse_handler_fp		OnMouseEvent;
+	ez_control_mouse_handler_fp		OnMouseClick;
+	ez_control_mouse_handler_fp		OnMouseUp;
+	ez_control_mouse_handler_fp		OnMouseDown;
+	ez_control_mouse_handler_fp		OnMouseHover;
+	ez_control_mouse_handler_fp		OnMouseEnter;
+	ez_control_mouse_handler_fp		OnMouseLeave;
+	ez_control_key_handler_fp		OnKeyEvent;
+	ez_control_handler_fp			OnLayoutChildren;
+	ez_control_handler_fp			OnDraw;
+	ez_control_destroy_handler_fp	OnDestroy;
+	ez_control_move_handler_fp		OnMove;
+	ez_control_handler_fp			OnResize;
+	ez_control_handler_fp			OnGotFocus;
+	ez_control_handler_fp			OnLostFocus;
+} ez_control_events_t;
 
 typedef struct ez_control_s
 {
@@ -132,35 +205,19 @@ typedef struct ez_control_s
 	mpic_t				*background;
 
 	mouse_state_t		prev_mouse_state;
-	
-	ez_control_mouse_handler_fp		on_mouse;
-	ez_control_mouse_handler_fp		on_mouse_click;
-	ez_control_mouse_handler_fp		on_mouse_up;
-	ez_control_mouse_handler_fp		on_mouse_down;
-	ez_control_mouse_handler_fp		on_mouse_hover;
-	ez_control_mouse_handler_fp		on_mouse_enter;
-	ez_control_mouse_handler_fp		on_mouse_leave;
 
-	ez_control_key_handler_fp		on_key;
-	ez_control_keychange_handler_fp on_key_up;
-	ez_control_keychange_handler_fp on_key_down;
+	ez_control_events_t	events;							// The base reaction for events. Is only set at initialization.
+	ez_control_events_t event_handlers;					// Can be set by the user of the class to react to events.
 
-	ez_control_handler_fp			on_draw;
+	struct ez_control_s			*parent;				// The parent of the control. Only the root node has no parent.
+	ez_double_linked_list_t		children;				// List of children belonging to the control.
 
-	ez_control_destroy_handler_fp	on_destroy;
+	struct ez_tree_s			*control_tree;			// The control tree the control belongs to.
 
-	ez_control_move_handler_fp		on_move;
-
-	ez_control_handler_fp			on_resize;
-
-	ez_control_handler_fp			on_got_focus;
-	ez_control_handler_fp			on_lost_focus;
-	ez_control_handler_fp			on_layout_children;
-
-	struct ez_control_s				*parent;				// The parent of the control. Only the root node has no parent.
-	ez_double_linked_list_t			children;				// List of children belonging to the control.
-
-	struct ez_tree_s				*control_tree;			// The control tree the control belongs to.
+	int							override_count;			// The current number of 
+	int							inheritance_level;		// The class's level of inheritance. Control -> SubControl -> SubSubControl
+														// SubSubControl would have a value of 2.
+														// !!! This is class specific, should never be changed !!!
 } ez_control_t;
 
 //
@@ -174,37 +231,37 @@ ez_control_t *EZ_control_Init(ez_tree_t *tree, ez_control_t *parent,
 //
 // Control - Destroys a specified control.
 //
-void EZ_control_Destroy(ez_control_t *self, qbool destroy_children);
+int EZ_control_Destroy(ez_control_t *self, qbool destroy_children);
 
 //
 // Control - Set color of a control.
 //
-void EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, byte alpha);
+int EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, byte alpha);
 
 //
 // Control - Sets the size of a control.
 //
-void EZ_control_SetSize(ez_control_t *self, int width, int height);
+int EZ_control_SetSize(ez_control_t *self, int width, int height);
 
 //
 // Control - Sets the position of a control.
 //
-void EZ_control_SetPosition(ez_control_t *self, int x, int y);
+int EZ_control_SetPosition(ez_control_t *self, int x, int y);
 
 //
 // Control - Focuses on a control.
 //
-qbool EZ_control_SetFocus(ez_control_t *self);
+int EZ_control_SetFocus(ez_control_t *self);
 
 //
 // Control - Returns true if this control is the root control.
 //
-qbool EZ_control_IsRoot(ez_control_t *self);
+int EZ_control_IsRoot(ez_control_t *self);
 
 //
 // Control - Adds a child to the control.
 //
-void EZ_control_AddChild(ez_control_t *self, ez_control_t *child);
+int EZ_control_AddChild(ez_control_t *self, ez_control_t *child);
 
 //
 // Control - Remove a child from the control. Returns a reference to the child that was removed.
@@ -218,89 +275,79 @@ ez_control_t *EZ_control_RemoveChild(ez_control_t *self, ez_control_t *child);
 //
 // Control - The control got focus.
 //
-void EZ_control_OnGotFocus(ez_control_t *self);
+int EZ_control_OnGotFocus(ez_control_t *self);
 
 //
 // Control - The control lost focus.
 //
-void EZ_control_OnLostFocus(ez_control_t *self);
+int EZ_control_OnLostFocus(ez_control_t *self);
 
 //
 // Control - The control was moved.
 //
-void EZ_control_OnMove(ez_control_t *self, int x, int y);
+int EZ_control_OnMove(ez_control_t *self, int x, int y);
 
 //
 // Control - The control was resized.
 //
-void EZ_control_OnResize(ez_control_t *self);
+int EZ_control_OnResize(ez_control_t *self);
 
 //
 // Control - Layouts children.
 //
-void EZ_control_LayoutChildren(ez_control_t *self);
+int EZ_control_OnLayoutChildren(ez_control_t *self);
 
 //
 // Control - Draws the control.
 //
-void EZ_control_OnDraw(ez_control_t *self);
+int EZ_control_OnDraw(ez_control_t *self);
 
 //
 // Control - Key event.
 //
-qbool EZ_control_OnKeyEvent(ez_control_t *self, int key, qbool down);
-
-//
-// Control - Key released.
-//
-qbool EZ_control_OnKeyUp(ez_control_t *self, int key);
-
-//
-// Control - Key pressed.
-//
-qbool EZ_control_OnKeyDown(ez_control_t *self, int key);
+int EZ_control_OnKeyEvent(ez_control_t *self, int key, int unichar);
 
 //
 // Control -
 // The initial mouse event is handled by this, and then raises more specialized event handlers
 // based on the new mouse state.
 //
-qbool EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms);
+int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms);
 
 //
 // Control - The mouse was pressed and then released within the bounds of the control.
 //
-qbool EZ_control_OnMouseClick(ez_control_t *self, mouse_state_t *mouse_state);
+int EZ_control_OnMouseClick(ez_control_t *self, mouse_state_t *mouse_state);
 
 //
 // Control - The mouse entered the controls bounds.
 //
-qbool EZ_control_OnMouseEnter(ez_control_t *self, mouse_state_t *mouse_state);
+int EZ_control_OnMouseEnter(ez_control_t *self, mouse_state_t *mouse_state);
 
 //
 // Control - The mouse left the controls bounds.
 //
-qbool EZ_control_OnMouseLeave(ez_control_t *self, mouse_state_t *mouse_state);
+int EZ_control_OnMouseLeave(ez_control_t *self, mouse_state_t *mouse_state);
 
 //
 // Control - A mouse button was released within the bounds of the control.
 //
-qbool EZ_control_OnMouseUp(ez_control_t *self, mouse_state_t *mouse_state);
+int EZ_control_OnMouseUp(ez_control_t *self, mouse_state_t *mouse_state);
 
 //
 // Control - A mouse button was pressed within the bounds of the control.
 //
-qbool EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *mouse_state);
+int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *mouse_state);
 
 //
 // Control - The mouse wheel was triggered within the bounds of the control.
 //
-qbool EZ_control_OnMouseWheel(ez_control_t *self, mouse_state_t *mouse_state);
+int EZ_control_OnMouseWheel(ez_control_t *self, mouse_state_t *mouse_state);
 
 //
 // Control - The mouse is hovering within the bounds of the control.
 //
-qbool EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
+int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
 
 #endif // __EZ_CONTROLS_H__
 

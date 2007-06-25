@@ -126,7 +126,8 @@ void EZ_tree_Draw(ez_tree_t *tree)
 	while(iter)
 	{
 		payload = (ez_control_t *)iter->payload;
-		EZ_control_OnDraw(payload);
+		//EZ_control_OnDraw(payload);
+		CONTROL_RAISE_EVENT(NULL, payload, OnDraw);
 		
 		iter = iter->next;
 	}
@@ -135,9 +136,9 @@ void EZ_tree_Draw(ez_tree_t *tree)
 //
 // Control Tree - Dispatches a mouse event to a control tree.
 //
-qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
+int EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 {
-	qbool mouse_handled = false;
+	int mouse_handled = false;
 	ez_control_t *payload = NULL;
 	ez_dllist_node_t *iter = NULL;
 	
@@ -174,11 +175,11 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 	{
 		payload = (ez_control_t *)iter->payload;
 
-		if(POINT_IN_RECTANGLE(ms->x, ms->y, payload->x, payload->y, payload->width, payload->height)
-			&& payload->on_mouse)
+		if(POINT_IN_RECTANGLE(ms->x, ms->y, payload->x, payload->y, payload->width, payload->height))
 		{
-			mouse_handled = EZ_control_OnMouseEvent(payload, ms);
-			mouse_handled = payload->on_mouse(payload, ms);
+			//mouse_handled = payload->events.OnMouseEvent(payload, ms);
+			//EZ_control_OnMouseEvent(payload, ms);
+			CONTROL_RAISE_EVENT(&mouse_handled, payload, OnMouseEvent, ms);
 		}
 
 		if(mouse_handled)
@@ -236,8 +237,10 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 //
 // Control Tree - Key event.
 //
-qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, qbool down)
+qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar)
 {
+	int key_handled = false;
+
 	if(tree && tree->root)
 	{
 		switch(key)
@@ -247,14 +250,18 @@ qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, qbool down)
 				// Focus on the next focusable control (TAB)
 				// or the previous (Alt + TAB)
 				EZ_tree_ChangeFocus(tree, !isAltDown());
-				return true;
+				key_handled = true;;
 			}
 		}
 
-		return EZ_control_OnKeyEvent(tree->root, key, down);
+		if(!key_handled)
+		{
+			// EZ_control_OnKeyEvent(tree->root, key, unichar);
+			CONTROL_RAISE_EVENT(&key_handled, tree->root, OnKeyEvent, key, unichar);
+		}
 	}
 
-	return false;
+	return key_handled;
 }
 
 //
@@ -356,8 +363,26 @@ ez_control_t *EZ_control_Init(ez_tree_t *tree, ez_control_t *parent,
 	control->control_tree = tree;
 	control->name = name;
 	control->description = description;
-	control->flags = flags;
+	control->flags = flags | CONTROL_ENABLED;
 	control->draw_order = order++;
+
+	// This should NEVER be changed.
+	control->inheritance_level = EZ_CONTROL_INHERITANCE_LEVEL; 
+
+	control->events.OnMouseEvent		= EZ_control_OnMouseEvent;
+	control->events.OnMouseDown			= EZ_control_OnMouseDown;
+	control->events.OnMouseUp			= EZ_control_OnMouseUp;
+	control->events.OnMouseEnter		= EZ_control_OnMouseEnter;
+	control->events.OnMouseLeave		= EZ_control_OnMouseLeave;
+	control->events.OnMouseHover		= EZ_control_OnMouseHover;
+	control->events.OnDestroy			= EZ_control_Destroy;
+	control->events.OnDraw				= EZ_control_OnDraw;
+	control->events.OnGotFocus			= EZ_control_OnGotFocus;
+	control->events.OnKeyEvent			= EZ_control_OnKeyEvent;
+	control->events.OnLostFocus			= EZ_control_OnLostFocus;
+	control->events.OnLayoutChildren	= EZ_control_OnLayoutChildren;
+	control->events.OnMove				= EZ_control_OnMove;
+	control->events.OnResize			= EZ_control_OnResize;
 	
 	// Load the background image.
 	if(background_name)
@@ -394,7 +419,7 @@ ez_control_t *EZ_control_Init(ez_tree_t *tree, ez_control_t *parent,
 //
 // Control - Destroys a specified control.
 //
-void EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
+int EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 {
 	ez_dllist_node_t *iter = NULL; 
 	ez_dllist_node_t *temp = NULL;
@@ -402,7 +427,7 @@ void EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 	// Nothing to destroy :(
 	if(!self)
 	{
-		return;
+		return 0;
 	}
 
 	if(!self->control_tree)
@@ -411,7 +436,7 @@ void EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 		char *msg = "EZ_control_Destroy(): tried to destroy control without a tree.\n";
 		assert(!msg);
 		Sys_Error(msg);
-		return;
+		return 0;
 	}
 
 	iter = self->children.head;
@@ -422,7 +447,8 @@ void EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 		if(destroy_children)
 		{
 			// Destroy the child!
-			EZ_control_Destroy((ez_control_t *)iter->payload, destroy_children);
+			//EZ_control_Destroy((ez_control_t *)iter->payload, destroy_children);
+			CONTROL_RAISE_EVENT(NULL, ((ez_control_t *)iter->payload), OnDestroy, destroy_children);
 		}
 		else
 		{
@@ -438,12 +464,11 @@ void EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 	}
 
 	// Cleanup any specifics this control may have.
-	if(self->on_destroy)
-	{
-		self->on_destroy(self->control_tree, self, destroy_children);
-	}
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDestroy, destroy_children);
 
 	Q_free(self);
+
+	return 0;
 }
 
 //
@@ -481,14 +506,14 @@ qbool EZ_control_SetFocus(ez_control_t *self)
 		payload->flags &= ~CONTROL_FOCUSED;
 		
 		// Raise event for losing the focus.
-		EZ_control_OnLostFocus(payload);
+		CONTROL_RAISE_EVENT(NULL, payload, OnLostFocus);
 	}
 
 	self->flags |= CONTROL_FOCUSED;
 	tree->focused_node = tree->focused_node;
 
 	// Raise event for getting focus.
-	EZ_control_OnGotFocus(self);
+	CONTROL_RAISE_EVENT(NULL, self, OnGotFocus);
 
 	return true;
 }
@@ -516,29 +541,34 @@ void EZ_control_SetDrawOrder(ez_control_t *self, int draw_order)
 //
 // Control - Sets the size of a control.
 //
-void EZ_control_SetSize(ez_control_t *self, int width, int height)
+int EZ_control_SetSize(ez_control_t *self, int width, int height)
 {
 	self->width = width;
 	self->height = height;
 
-	EZ_control_OnResize(self);
+	// EZ_control_OnResize(self);
+	CONTROL_RAISE_EVENT(NULL, self, OnResize);
+
+	return 0;
 }
 
 //
 // Control - Set color of a control.
 //
-void EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, byte alpha)
+int EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, byte alpha)
 {
 	self->background_color[0] = r;
 	self->background_color[1] = g;
 	self->background_color[2] = b;
 	self->background_color[3] = alpha;
+
+	return 0;
 }
 
 //
 // Control - Sets the position of a control.
 //
-void EZ_control_SetPosition(ez_control_t *self, int x, int y)
+int EZ_control_SetPosition(ez_control_t *self, int x, int y)
 {
 	self->x = x;
 	self->y = y;
@@ -546,18 +576,20 @@ void EZ_control_SetPosition(ez_control_t *self, int x, int y)
 	if(self->parent)
 	{
 		// We moved ourselves, so send my parents position
-		EZ_control_OnMove(self, self->parent->absolute_x, self->parent->absolute_y);
+		CONTROL_RAISE_EVENT(NULL, self, OnMove, self->parent->absolute_x, self->parent->absolute_y);
 	}
 	else
 	{
-		EZ_control_OnMove(self, 0, 0);
+		CONTROL_RAISE_EVENT(NULL, self, OnMove, 0, 0);
 	}
+
+	return 0;
 }
 
 //
 // Control - Returns true if this control is the root control.
 //
-qbool EZ_control_IsRoot(ez_control_t *self)
+int EZ_control_IsRoot(ez_control_t *self)
 {
 	return (self->parent == NULL);
 }
@@ -565,7 +597,7 @@ qbool EZ_control_IsRoot(ez_control_t *self)
 //
 // Control - Adds a child to the control.
 //
-void EZ_control_AddChild(ez_control_t *self, ez_control_t *child)
+int EZ_control_AddChild(ez_control_t *self, ez_control_t *child)
 {
 	// Remove the control from it's current parent.
 	if(child->parent)
@@ -576,6 +608,8 @@ void EZ_control_AddChild(ez_control_t *self, ez_control_t *child)
 	child->parent = self;
 
 	EZ_double_linked_list_Add(&self->children, child);
+
+	return 0;
 }
 
 //
@@ -589,46 +623,47 @@ ez_control_t *EZ_control_RemoveChild(ez_control_t *self, ez_control_t *child)
 //
 // Control - The control got focus.
 //
-void EZ_control_OnGotFocus(ez_control_t *self)
+int EZ_control_OnGotFocus(ez_control_t *self)
 {
-	if(self->flags & CONTROL_FOCUSED)
+	if(!(self->flags & CONTROL_FOCUSED))
 	{
-		if(self->on_got_focus)
-		{
-			self->on_got_focus(self);
-		}
+		return 0;
 	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnGotFocus);
+
+	return 0;
 }
 
 //
 // Control - The control lost focus.
 //
-void EZ_control_OnLostFocus(ez_control_t *self)
+int EZ_control_OnLostFocus(ez_control_t *self)
 {
-	if(self->on_lost_focus)
-	{
-		self->on_lost_focus(self);
-	}
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnLostFocus);
+
+	return 0;
 }
 
 //
 // Control - The control was resized.
 //
-void EZ_control_OnResize(ez_control_t *self)
+int EZ_control_OnResize(ez_control_t *self)
 {
-	if(self->flags & CONTROL_RESIZABLE)
+	if(!(self->flags & CONTROL_RESIZABLE))
 	{
-		if(self->on_resize)
-		{
-			self->on_resize(self);
-		}
+		
 	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnResize);
+
+	return 0;
 }
 
 //
 // Control - The control was moved.
 //
-void EZ_control_OnMove(ez_control_t *self, int parent_abs_x, int parent_abs_y)
+int EZ_control_OnMove(ez_control_t *self, int parent_abs_x, int parent_abs_y)
 {
 	ez_control_t *payload = NULL;
 	ez_dllist_node_t *iter = self->children.head;
@@ -641,32 +676,28 @@ void EZ_control_OnMove(ez_control_t *self, int parent_abs_x, int parent_abs_y)
 	while(iter)
 	{
 		payload = (ez_control_t *)iter->payload;
-		EZ_control_OnMove(payload, self->absolute_x, self->absolute_y);
-
-		if(self->on_move)
-		{
-			self->on_move(payload, self->absolute_x, self->absolute_y);
-		}
-
+		CONTROL_RAISE_EVENT(NULL, payload, OnMove, self->absolute_x, self->absolute_y);
 		iter = iter->next;
 	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnMove, parent_abs_x, parent_abs_y);
+
+	return 0;
 }
 
 //
 // Control - Layouts children.
 //
-void EZ_control_LayoutChildren(ez_control_t *self)
+int EZ_control_OnLayoutChildren(ez_control_t *self)
 {
-	if(self->on_layout_children)
-	{
-		self->on_layout_children(self);
-	}
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnLayoutChildren);
+	return 0;
 }
 
 //
 // Control - Draws the control.
 //
-void EZ_control_OnDraw(ez_control_t *self)
+int EZ_control_OnDraw(ez_control_t *self)
 {
 	#ifdef GLQUAKE
 	if(self->background_color[3] > 0.0)
@@ -700,10 +731,9 @@ void EZ_control_OnDraw(ez_control_t *self)
 	#endif
 
 	// Draw control specifics.
-	if(self->on_draw)
-	{
-		self->on_draw(self);
-	}
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDraw);
+
+	return 0;
 }
 
 
@@ -711,66 +741,24 @@ void EZ_control_OnDraw(ez_control_t *self)
 //
 // Control - Key event.
 //
-qbool EZ_control_OnKeyEvent(ez_control_t *self, int key, qbool down)
+int EZ_control_OnKeyEvent(ez_control_t *self, int key, int unichar)
 {
-	qbool key_handled = false;
-
-	if(down)
-	{
-		key_handled = EZ_control_OnKeyDown(self, key);
-	}
-	else
-	{
-		key_handled = EZ_control_OnKeyUp(self, key);
-	}
-
-	if(self->on_key)
-	{
-		key_handled = self->on_key(self, key, down);
-	}
-
+	int key_handled = false;
+	CONTROL_EVENT_HANDLER_CALL(&key_handled, self, OnKeyEvent, key, unichar);
 	return key_handled;
 }
-
-//
-// Control - Key released.
-//
-qbool EZ_control_OnKeyUp(ez_control_t *self, int key)
-{
-	if(self->on_key_up)
-	{
-		return self->on_key_up(self, key);
-	}
-
-	return false;
-}
-
-//
-// Control - Key pressed.
-//
-qbool EZ_control_OnKeyDown(ez_control_t *self, int key)
-{
-	if(self->on_key_down)
-	{
-		return self->on_key_down(self, key);
-	}
-
-	return false;
-}
-
-#define POINT_IN_RECTANGLE(p_x, p_y, r_x, r_y, r_width, r_height) ((p_x >= r_x) && (p_y >= r_y) && (p_x <= (r_x + r_width)) && (p_y <= (r_y + r_height)))
 
 //
 // Control -
 // The initial mouse event is handled by this, and then raises more specialized event handlers
 // based on the new mouse state.
 //
-qbool EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
+int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 {
 	mouse_state_t *old_ms = &self->prev_mouse_state;
 	qbool mouse_inside = false;
 	qbool prev_mouse_inside = false;
-	qbool mouse_handled = false;
+	int mouse_handled = false;
 
 	if(!ms)
 	{
@@ -785,36 +773,33 @@ qbool EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 		if(prev_mouse_inside)
 		{
 			// Were we inside of the control last time? Otherwise we've just entered it.
-			EZ_control_OnMouseEnter(self, ms);
+			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseEnter, ms);
 		}
 		else
 		{
 			// We're hovering the control.
-			EZ_control_OnMouseHover(self, ms);
+			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseHover, ms);
 		}
 
 		if(ms->button_down != old_ms->button_down)
 		{
-			mouse_handled = EZ_control_OnMouseDown(self, ms);
+			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseDown, ms);
 		}
 		
 		if(ms->button_up != old_ms->button_up)
 		{
-			mouse_handled = EZ_control_OnMouseUp(self, ms);
+			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseUp, ms);
 		}
 	}
 	else if(prev_mouse_inside)
 	{
 		if(!mouse_inside)
 		{
-			mouse_handled = EZ_control_OnMouseLeave(self, ms);
+			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseLeave, ms);
 		}
 	}
 
-	if(self->on_mouse)
-	{
-		mouse_handled = self->on_mouse(self, ms);
-	}
+	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseEvent, ms);
 
 	// Save the mouse state for the next time we check.
 	self->prev_mouse_state = *ms;
@@ -825,58 +810,54 @@ qbool EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 //
 // Control - The mouse was pressed and then released within the bounds of the control.
 //
-qbool EZ_control_OnMouseClick(ez_control_t *self, mouse_state_t *mouse_state)
+int EZ_control_OnMouseClick(ez_control_t *self, mouse_state_t *mouse_state)
 {
-	return false;
+	int mouse_handled = false;
+	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseClick, mouse_state);
+	return mouse_handled;
 }
 
 //
 // Control - The mouse entered the controls bounds.
 //
-qbool EZ_control_OnMouseEnter(ez_control_t *self, mouse_state_t *mouse_state)
+int EZ_control_OnMouseEnter(ez_control_t *self, mouse_state_t *mouse_state)
 {
-	if(self->on_mouse_enter)
-	{
-		return self->on_mouse_enter(self, mouse_state);
-	}
-
-	return false;
+	int mouse_handled = false;
+	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseEnter, mouse_state);
+	return mouse_handled;
 }
 
 //
 // Control - The mouse left the controls bounds.
 //
-qbool EZ_control_OnMouseLeave(ez_control_t *self, mouse_state_t *mouse_state)
+int EZ_control_OnMouseLeave(ez_control_t *self, mouse_state_t *mouse_state)
 {
-	if(self->on_mouse_leave)
-	{
-		return self->on_mouse_leave(self, mouse_state);
-	}
-
-	return false;
+	int mouse_handled = false;
+	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseLeave, mouse_state);
+	return mouse_handled;
 }
 
 //
 // Control - A mouse button was released within the bounds of the control.
 //
-qbool EZ_control_OnMouseUp(ez_control_t *self, mouse_state_t *mouse_state)
+int EZ_control_OnMouseUp(ez_control_t *self, mouse_state_t *mouse_state)
 {
+	int mouse_handled = false;
+
 	// Stop moving.
 	self->flags &= ~CONTROL_MOVING;
 
-	if(self->on_mouse_up)
-	{
-		return self->on_mouse_up(self, mouse_state);
-	}
-
-	return false;
+	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseUp, mouse_state);
+	return mouse_handled;
 }
 
 //
 // Control - A mouse button was pressed within the bounds of the control.
 //
-qbool EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *mouse_state)
+int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *mouse_state)
 {
+	int mouse_handled = false;
+
 	if(!(self->flags & CONTROL_ENABLED))
 	{
 		return false;
@@ -890,33 +871,34 @@ qbool EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *mouse_state)
 
 	EZ_control_SetFocus(self);
 
-	if(self->on_mouse_down)
+	if(!mouse_handled)
 	{
-		return self->on_mouse_down(self, mouse_state);
+		CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseClick, mouse_state);
 	}
 
-	return false;
+	return mouse_handled;
 }
 
+/*
 //
 // Control - The mouse wheel was triggered within the bounds of the control.
 //
-qbool EZ_control_OnMouseWheel(ez_control_t *self, mouse_state_t *mouse_state)
+int EZ_control_OnMouseWheel(ez_control_t *self, mouse_state_t *mouse_state)
 {
-	return false;
+	int wheel_handled = false;
+	CONTROL_EVENT_HANDLER_CALL(&wheel_handled, self, OnMouseWheel, mouse_state);
+	return wheel_handled;
 }
+*/
 
 //
 // Control - The mouse is hovering within the bounds of the control.
 //
-qbool EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state)
+int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state)
 {
-	if(self->on_mouse_hover)
-	{
-		return self->on_mouse_hover(self, mouse_state);
-	}
-
-	return false;
+	int mouse_handled = false;
+	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseHover, mouse_state);
+	return mouse_handled;
 }
 
 
