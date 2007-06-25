@@ -170,12 +170,14 @@ int EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 		if(focused_control->flags & CONTROL_MOVING)
 		{
 			// Root control will be moved relative to the screen.
-			int x = (focused_control->parent) ? (focused_control->parent->absolute_x - ms->x) : ms->x;
-			int y = (focused_control->parent) ? (focused_control->parent->absolute_y - ms->y) : ms->y;
+			int x = focused_control->x + (ms->x - ms->x_old);
+			int y = focused_control->y + (ms->y - ms->y_old);
+
+			// TODO : Make it so that you cannot move a child outside it's parent (except maybe dragging and dropping)
 
 			EZ_control_SetPosition(focused_control, x, y);
 			
-			mouse_handled = true;
+			//mouse_handled = true;
 		}
 	}
 	
@@ -627,7 +629,7 @@ qbool EZ_control_SetFocusByNode(ez_control_t *self, ez_dllist_node_t *node)
 	}
 
 	// We can't focus on this control.
-	if(!(self->flags & CONTROL_FOCUSABLE))
+	if(!(self->flags & CONTROL_FOCUSABLE) || !(self->flags & CONTROL_ENABLED))
 	{
 		return false;
 	}
@@ -927,7 +929,7 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseDown, ms);
 		}
 		
-		if(!mouse_handled && ms->button_up != old_ms->button_up)
+		if(ms->button_up != old_ms->button_up)
 		{
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseUp, ms);
 		}
@@ -1006,15 +1008,15 @@ int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *mouse_state)
 	{
 		return false;
 	}
-	
-	// The control is being moved.
-	if(!(self->flags & CONTROL_MOVABLE) && mouse_state->button_down == 1)
-	{
-		self->flags |= CONTROL_MOVING;
-		mouse_handled = true;
-	}
 
 	mouse_handled = EZ_control_SetFocus(self);
+	
+	// The control is being moved.
+	if((self->flags & CONTROL_MOVABLE) && mouse_state->button_down == 1)
+	{
+		self->flags |= CONTROL_MOVING;
+		//return true;
+	}
 
 	/*
 	TODO : Fix OnMouseClick
