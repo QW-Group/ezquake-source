@@ -1,5 +1,11 @@
 
 #include "quakedef.h"
+
+#ifdef GLQUAKE
+#include "gl_model.h"
+#include "gl_local.h"
+#endif // GLQUAKE
+
 #include "keys.h"
 #include "ez_controls.h"
 
@@ -877,7 +883,15 @@ int EZ_control_OnLayoutChildren(ez_control_t *self)
 int EZ_control_OnDraw(ez_control_t *self)
 {
 	#ifdef GLQUAKE
-	if(self->background_color[3] > 0.0)
+
+	if (self->parent && (self->flags & CONTROL_CONTAINED))
+	{
+		ez_control_t *p = self->parent;
+		glEnable(GL_SCISSOR_TEST);
+		glScissor(p->absolute_x, glheight - (p->absolute_y + p->height), p->width, p->height);
+	}
+
+	if (self->background_color[3] > 0.0)
 	{
 		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
 			self->background_color[0] / 255.0,
@@ -887,8 +901,8 @@ int EZ_control_OnDraw(ez_control_t *self)
 			self->background_color[3] / 255.0);
 	}
 
-	#else	
-	if(self->parent 
+	#else // SOFTWARE
+	if (self->parent 
 		&& (self->absolute_x >= self->parent->absolute_x) 
 		&& (self->absolute_y >= self->parent->absolute_y)
 		&& ((self->absolute_x + self->width) <= (self->parent->absolute_x + self->parent->width)
@@ -905,10 +919,14 @@ int EZ_control_OnDraw(ez_control_t *self)
 		Draw_Fill(self->absolute_x + self->width, self->absolute_y, 1, self->height, 0);
 		Draw_Fill(self->absolute_x, self->absolute_y + self->height, self->width, 1, 0);
 	}
-	#endif
+	#endif // GLQUAKE
 
 	// Draw control specifics.
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDraw);
+
+	#ifdef GLQUAKE
+	glDisable(GL_SCISSOR_TEST);
+	#endif // GLQUAKE
 
 	return 0;
 }
