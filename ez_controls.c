@@ -150,7 +150,7 @@ int EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 	ez_control_t *payload = NULL;
 	ez_dllist_node_t *iter = NULL;
 	
-	if(!tree)
+	if (!tree)
 	{
 		assert(!"EZ_tree_MouseEvent: NULL tree reference.\n");
 		return false;
@@ -161,45 +161,79 @@ int EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 	{
 		ez_control_t *focused_control = (ez_control_t *)tree->focused_node->payload;
 
-		if(!focused_control)
+		if (!focused_control)
 		{
 			Sys_Error("EZ_tree_MouseEvent(): Focused control NULL.\n");
 		}
 		
 		// Set the new position of the control if it's being moved.
-		if(focused_control->flags & CONTROL_MOVING)
+		if (focused_control->flags & CONTROL_MOVING)
 		{
-			// Root control will be moved relative to the screen.
+			// Root control will be moved relative to the screen,
+			// others relative to their parent.
 			int x = focused_control->x + (ms->x - ms->x_old);
 			int y = focused_control->y + (ms->y - ms->y_old);
 
-			// TODO : Make it so that you cannot move a child outside it's parent (except maybe dragging and dropping)
+			// Should the control be contained within it's parent?
+			// Then don't allow the mouse to move outside the parent
+			// while moving the control.
+			if (focused_control->parent && (focused_control->flags & CONTROL_CONTAINED))
+			{
+				int p_x = focused_control->parent->absolute_x;
+				int p_y = focused_control->parent->absolute_y;
+				int p_w = focused_control->parent->width;
+				int p_h = focused_control->parent->height;
+
+				if ((ms->x < p_x) || (ms->x > (p_x + p_w)))
+				{
+					ms->x = ms->x_old;
+					x = focused_control->x;
+				}
+
+				if ((ms->y < p_y) || (ms->y > (p_y + p_h)))
+				{
+					ms->y = ms->y_old;
+					y = focused_control->y;
+				}
+			}
 
 			EZ_control_SetPosition(focused_control, x, y);
-			
-			//mouse_handled = true;
 		}
 	}
 	
 	// We start drawing from back to front, so if we want to click
-	// the foremost control we have to start from the bacak.
-	iter = tree->drawlist.tail;
-
-	while(iter)
+	// the foremost control we have to start from the back.
+	for (iter = tree->drawlist.tail; iter; iter = iter->previous)
 	{
 		payload = (ez_control_t *)iter->payload;
 
-		if(POINT_IN_RECTANGLE(ms->x, ms->y, payload->absolute_x, payload->absolute_y, payload->width, payload->height))
+		if (POINT_IN_RECTANGLE(ms->x, ms->y, payload->absolute_x, payload->absolute_y, payload->width, payload->height))
 		{
+			// If the control should be contained within it's parent,
+			// the mouse must be within the parents bounds also for
+			// the control to receive any mouse input.
+			if (payload->parent && (payload->flags & CONTROL_CONTAINED))
+			{
+				int p_x = payload->parent->absolute_x;
+				int p_y = payload->parent->absolute_y;
+				int p_w = payload->parent->width;
+				int p_h = payload->parent->height;
+
+				// Mouse is outside of parent so skip it!
+				if (!POINT_IN_RECTANGLE(ms->x, ms->y, p_x, p_y, p_w, p_h))
+				{
+					continue;
+				}
+			}
+
+			// Notify the control of the mouse event.
 			CONTROL_RAISE_EVENT(&mouse_handled, payload, OnMouseEvent, ms);
 		}
 
-		if(mouse_handled)
+		if (mouse_handled)
 		{
 			return mouse_handled;
 		}
-
-		iter = iter->previous;
 	}
 
 	return mouse_handled;

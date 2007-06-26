@@ -3,14 +3,17 @@
 
 #define POINT_IN_RECTANGLE(p_x, p_y, r_x, r_y, r_width, r_height) ((p_x >= r_x) && (p_y >= r_y) && (p_x <= (r_x + r_width)) && (p_y <= (r_y + r_height)))
 
-#define CONTROL_ENABLED		(1 << 0)
-#define CONTROL_TABBABLE	(1 << 1)
-#define CONTROL_MOVABLE		(1 << 2)
-#define CONTROL_RESIZABLE	(1 << 3)
-#define CONTROL_MOVING		(1 << 4)
-#define CONTROL_RESIZING	(1 << 5)
-#define CONTROL_FOCUSABLE	(1 << 6)
-#define CONTROL_FOCUSED		(1 << 7)
+#define CONTROL_ENABLED				(1 << 0)	// Is the control usable?
+#define CONTROL_MOVABLE				(1 << 1)	// Can the control be moved?
+#define CONTROL_RESIZABLE			(1 << 2)	// Can the control be resized?
+#define CONTROL_MOVING				(1 << 3)	// Is the control in the process of being moved?
+#define CONTROL_RESIZING			(1 << 4)	// Is the control in the process of being resized?
+#define CONTROL_FOCUSABLE			(1 << 5)	// Can the control be given focus?
+#define CONTROL_FOCUSED				(1 << 6)	// Is the control currently in focus?
+#define CONTROL_RESIZE_HORIZONTAL	(1 << 7)	// Is the control resizeable horizontally?
+#define CONTROL_RESIZE_VERTICAL		(1 << 8)	// Is the control resizeable vertically?
+#define CONTROL_CONTAINED			(1 << 9)	// Is the control contained within it's parent or can it go outside its edges?
+#define CONTROL_CLICKED				(1 << 10)	// Is the control being clicked? (If the mouse button is released outside the control a click event isn't raised).
 
 // =========================================================================================
 // Double Linked List
@@ -174,6 +177,11 @@ typedef struct ez_control_s
 	int					y;
 	int 				width;
 	int					height;
+	
+	int					width_max;
+	int					width_min;
+	int					height_max;
+	int					height_min;
 
 	int					absolute_x;						// The absolute screen coordinates for the control.
 	int					absolute_y;	
@@ -188,8 +196,8 @@ typedef struct ez_control_s
 
 	mouse_state_t		prev_mouse_state;
 
-	ez_control_events_t	events;							// The base reaction for events. Is only set at initialization.
-	ez_control_events_t event_handlers;					// Can be set by the user of the class to react to events.
+	ez_control_events_t			events;					// The base reaction for events. Is only set at initialization.
+	ez_control_events_t			event_handlers;			// Can be set by the user of the class to react to events.
 
 	struct ez_control_s			*parent;				// The parent of the control. Only the root node has no parent.
 	ez_double_linked_list_t		children;				// List of children belonging to the control.
