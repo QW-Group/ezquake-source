@@ -115,6 +115,7 @@ COMMON_C_FILES := \
 GL_C_FILES := \
 	collision \
 	gl_draw \
+	gl_bloom \
 	gl_md3 \
 	gl_mesh \
 	gl_model \
