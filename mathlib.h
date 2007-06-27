@@ -209,6 +209,6 @@ extern vec3_t _mathlib_temp_vec1, _mathlib_temp_vec2, _mathlib_temp_vec3;
 #define INT(x) (Truncate(x))
 #endif
 
-
+#define clamp(a,b,c) (a = min(max(a, b), c))
 
 #endif	//__MATHLIB_H_

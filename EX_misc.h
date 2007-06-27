@@ -1,10 +1,6 @@
 #ifndef __EX_MISC__H__
 #define __EX_MISC__H__
 
-
-// clamp values (macro)
-#define clamp(a,b,c) (a = min(max(a, b), c))
-
 // make any intermediate directories for given filename path
 //void MakeIntermediatePath(char *);
 
