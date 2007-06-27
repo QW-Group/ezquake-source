@@ -3,18 +3,6 @@
 
 #define POINT_IN_RECTANGLE(p_x, p_y, r_x, r_y, r_width, r_height) ((p_x >= r_x) && (p_y >= r_y) && (p_x <= (r_x + r_width)) && (p_y <= (r_y + r_height)))
 
-#define CONTROL_ENABLED				(1 << 0)	// Is the control usable?
-#define CONTROL_MOVABLE				(1 << 1)	// Can the control be moved?
-#define CONTROL_RESIZABLE			(1 << 2)	// Can the control be resized?
-#define CONTROL_MOVING				(1 << 3)	// Is the control in the process of being moved?
-#define CONTROL_RESIZING			(1 << 4)	// Is the control in the process of being resized?
-#define CONTROL_FOCUSABLE			(1 << 5)	// Can the control be given focus?
-#define CONTROL_FOCUSED				(1 << 6)	// Is the control currently in focus?
-#define CONTROL_RESIZE_HORIZONTAL	(1 << 7)	// Is the control resizeable horizontally?
-#define CONTROL_RESIZE_VERTICAL		(1 << 8)	// Is the control resizeable vertically?
-#define CONTROL_CONTAINED			(1 << 9)	// Is the control contained within it's parent or can it go outside its edges?
-#define CONTROL_CLICKED				(1 << 10)	// Is the control being clicked? (If the mouse button is released outside the control a click event isn't raised).
-
 // =========================================================================================
 // Double Linked List
 // =========================================================================================
@@ -109,6 +97,20 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree);
 // Control
 // =========================================================================================
 
+#define CONTROL_ENABLED				(1 << 0)	// Is the control usable?
+#define CONTROL_MOVABLE				(1 << 1)	// Can the control be moved?
+#define CONTROL_MOVING				(1 << 2)	// Is the control in the process of being moved?
+#define CONTROL_FOCUSABLE			(1 << 3)	// Can the control be given focus?
+#define CONTROL_FOCUSED				(1 << 4)	// Is the control currently in focus?
+#define CONTROL_RESIZE_H			(1 << 5)	// Is the control resizeable horizontally?
+#define CONTROL_RESIZE_V			(1 << 6)	// Is the control resizeable vertically?
+#define CONTROL_RESIZING_RIGHT		(1 << 7)	// Are we resizing the control to the right?
+#define CONTROL_RESIZING_LEFT		(1 << 8)	// Are we resizing the control to the left?
+#define CONTROL_RESIZING_TOP		(1 << 9)	// Resizing upwards.
+#define CONTROL_RESIZING_BOTTOM		(1 << 10)	// Resizing downards.
+#define CONTROL_CONTAINED			(1 << 11)	// Is the control contained within it's parent or can it go outside its edges?
+#define CONTROL_CLICKED				(1 << 12)	// Is the control being clicked? (If the mouse button is released outside the control a click event isn't raised).
+
 //
 // Control - Function pointer types.
 //
@@ -116,6 +118,15 @@ typedef int (*ez_control_handler_fp) (struct ez_control_s *self);
 typedef int (*ez_control_mouse_handler_fp) (struct ez_control_s *self, mouse_state_t *mouse_state);
 typedef int (*ez_control_key_handler_fp) (struct ez_control_s *self, int key, int unichar);
 typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool destroy_children);
+
+#define CONTROL_IS_CONTAINED(self) (self##->parent && (self##->flags & CONTROL_CONTAINED))
+#define MOUSE_OUTSIDE_PARENT_GENERIC(ctrl, mouse_state, axis, h)									\
+	(ctrl##->parent																					\
+	&& (((int) mouse_state##->##axis <= ctrl##->parent->absolute_##axis)							\
+	|| ((int) mouse_state##->##axis >= (ctrl##->parent->absolute_##axis + ctrl##->parent->##h))))	\
+
+#define MOUSE_OUTSIDE_PARENT_X(ctrl, mouse_state) MOUSE_OUTSIDE_PARENT_GENERIC(ctrl, mouse_state, x, width)
+#define MOUSE_OUTSIDE_PARENT_Y(ctrl, mouse_state) MOUSE_OUTSIDE_PARENT_GENERIC(ctrl, mouse_state, y, height)
 
 #define CONTROL_EVENT_HANDLER(name, ctrl, eventhandler) (ctrl##->##name.##eventhandler)
 
@@ -182,6 +193,8 @@ typedef struct ez_control_s
 	int					width_min;
 	int					height_max;
 	int					height_min;
+
+	int					resize_handle_thickness;
 
 	int					absolute_x;						// The absolute screen coordinates for the control.
 	int					absolute_y;	

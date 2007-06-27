@@ -158,83 +158,18 @@ int EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 	
 	if (!tree)
 	{
-		assert(!"EZ_tree_MouseEvent: NULL tree reference.\n");
-		return false;
-	}
-
-	// Check if we should move the focused control.
-	if(tree->focused_node)
-	{
-		ez_control_t *focused_control = (ez_control_t *)tree->focused_node->payload;
-
-		if (!focused_control)
-		{
-			Sys_Error("EZ_tree_MouseEvent(): Focused control NULL.\n");
-		}
-		
-		// Set the new position of the control if it's being moved.
-		if (focused_control->flags & CONTROL_MOVING)
-		{
-			// Root control will be moved relative to the screen,
-			// others relative to their parent.
-			int x = focused_control->x + (ms->x - ms->x_old);
-			int y = focused_control->y + (ms->y - ms->y_old);
-
-			// Should the control be contained within it's parent?
-			// Then don't allow the mouse to move outside the parent
-			// while moving the control.
-			if (focused_control->parent && (focused_control->flags & CONTROL_CONTAINED))
-			{
-				int p_x = focused_control->parent->absolute_x;
-				int p_y = focused_control->parent->absolute_y;
-				int p_w = focused_control->parent->width;
-				int p_h = focused_control->parent->height;
-
-				if ((ms->x < p_x) || (ms->x > (p_x + p_w)))
-				{
-					ms->x = ms->x_old;
-					x = focused_control->x;
-				}
-
-				if ((ms->y < p_y) || (ms->y > (p_y + p_h)))
-				{
-					ms->y = ms->y_old;
-					y = focused_control->y;
-				}
-			}
-
-			EZ_control_SetPosition(focused_control, x, y);
-		}
+		Sys_Error("EZ_tree_MouseEvent: NULL tree reference.\n");
 	}
 	
-	// We start drawing from back to front, so if we want to click
-	// the foremost control we have to start from the back.
+	// Propagate the mouse event in the opposite order that we drew
+	// the controls (Since they are drawn from back to front), so
+	// that the foremost control gets it first.
 	for (iter = tree->drawlist.tail; iter; iter = iter->previous)
 	{
 		payload = (ez_control_t *)iter->payload;
 
-		if (POINT_IN_RECTANGLE(ms->x, ms->y, payload->absolute_x, payload->absolute_y, payload->width, payload->height))
-		{
-			// If the control should be contained within it's parent,
-			// the mouse must be within the parents bounds also for
-			// the control to receive any mouse input.
-			if (payload->parent && (payload->flags & CONTROL_CONTAINED))
-			{
-				int p_x = payload->parent->absolute_x;
-				int p_y = payload->parent->absolute_y;
-				int p_w = payload->parent->width;
-				int p_h = payload->parent->height;
-
-				// Mouse is outside of parent so skip it!
-				if (!POINT_IN_RECTANGLE(ms->x, ms->y, p_x, p_y, p_w, p_h))
-				{
-					continue;
-				}
-			}
-
-			// Notify the control of the mouse event.
-			CONTROL_RAISE_EVENT(&mouse_handled, payload, OnMouseEvent, ms);
-		}
+		// Notify the control of the mouse event.
+		CONTROL_RAISE_EVENT(&mouse_handled, payload, OnMouseEvent, ms);
 
 		if (mouse_handled)
 		{
@@ -417,10 +352,17 @@ ez_control_t *EZ_control_Init(ez_tree_t *tree, ez_control_t *parent,
 	control->flags = flags | CONTROL_ENABLED;
 	control->draw_order = order++;
 
+	control->resize_handle_thickness = 5;
+	control->width_max = vid.conwidth;
+	control->height_max = vid.conheight;
+	control->width_min = 5;
+	control->height_min = 5;
+
 	// This should NEVER be changed.
 	control->inheritance_level = EZ_CONTROL_INHERITANCE_LEVEL; 
 
 	control->events.OnMouseEvent		= EZ_control_OnMouseEvent;
+	control->events.OnMouseClick		= EZ_control_OnMouseClick;
 	control->events.OnMouseDown			= EZ_control_OnMouseDown;
 	control->events.OnMouseUp			= EZ_control_OnMouseUp;
 	control->events.OnMouseEnter		= EZ_control_OnMouseEnter;
@@ -697,6 +639,9 @@ qbool EZ_control_SetFocusByNode(ez_control_t *self, ez_dllist_node_t *node)
 		// Remove the focus flag and set the focus node to NULL.
 		payload->flags &= ~CONTROL_FOCUSED;
 		tree->focused_node = NULL;
+
+		// Reset all manipulation flags.
+		payload->flags &= ~(CONTROL_CLICKED | CONTROL_MOVING | CONTROL_RESIZING_LEFT | CONTROL_RESIZING_RIGHT | CONTROL_RESIZING_BOTTOM | CONTROL_RESIZING_TOP);
 		
 		// Raise event for losing the focus.
 		CONTROL_RAISE_EVENT(NULL, payload, OnLostFocus);
@@ -833,10 +778,7 @@ int EZ_control_OnLostFocus(ez_control_t *self)
 //
 int EZ_control_OnResize(ez_control_t *self)
 {
-	if(!(self->flags & CONTROL_RESIZABLE))
-	{
-		
-	}
+	
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnResize);
 
@@ -884,6 +826,8 @@ int EZ_control_OnDraw(ez_control_t *self)
 {
 	#ifdef GLQUAKE
 
+	// Make sure parts located outside the parent aren't drawn
+	// when the control is contained within it's parent.
 	if (self->parent && (self->flags & CONTROL_CONTAINED))
 	{
 		ez_control_t *p = self->parent;
@@ -899,6 +843,13 @@ int EZ_control_OnDraw(ez_control_t *self)
 			self->background_color[2] / 255.0,
 			1, true, 
 			self->background_color[3] / 255.0);
+
+		Draw_String(self->absolute_x, self->absolute_y, va("%s%s%s%s", 
+			((self->flags & CONTROL_MOVING) ? "M" : " "), 
+			((self->flags & CONTROL_FOCUSED) ? "F" : " "), 
+			((self->flags & CONTROL_CLICKED) ? "C" : " "), 
+			((self->flags & CONTROL_RESIZING_LEFT) ? "R" : " ") 
+			));
 	}
 
 	#else // SOFTWARE
@@ -910,7 +861,7 @@ int EZ_control_OnDraw(ez_control_t *self)
 	{
 		// TODO: Draw the control normally in software.
 	}
-	else
+	else if (self->parent)
 	{
 		// Only draw the outline of the control when it's not completly inside
 		// it's parent, since drawing only half of the control in software is not supported.
@@ -953,19 +904,39 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 	mouse_state_t *old_ms = &self->prev_mouse_state;
 	qbool mouse_inside = false;
 	qbool prev_mouse_inside = false;
+	qbool mouse_inside_parent = false;
+	qbool prev_mouse_inside_parent = false;
+	qbool is_contained = CONTROL_IS_CONTAINED(self);
 	int mouse_handled = false;
 
-	if(!ms)
+	if (!ms)
 	{
-		return mouse_handled;
+		Sys_Error("EZ_control_OnMouseEvent(): mouse_state_t NULL\n");
 	}
 
 	mouse_inside = POINT_IN_RECTANGLE(ms->x, ms->y, self->absolute_x, self->absolute_y, self->width, self->height);
-	prev_mouse_inside = !POINT_IN_RECTANGLE(old_ms->x, old_ms->y, self->absolute_x, self->absolute_y, self->width, self->height);
+	prev_mouse_inside = !POINT_IN_RECTANGLE(ms->x_old, ms->y_old, self->absolute_x, self->absolute_y, self->width, self->height);
 
-	if(mouse_inside)
+	// If the control contained within it's parent,
+	// the mouse must be within the parents bounds also for
+	// the control to generate any mouse events.
+	if (is_contained)
 	{
-		if(!prev_mouse_inside)
+		int p_x = self->parent->absolute_x;
+		int p_y = self->parent->absolute_y;
+		int p_w = self->parent->width;
+		int p_h = self->parent->height;
+		mouse_inside_parent = POINT_IN_RECTANGLE(ms->x, ms->y, p_x, p_y, p_w, p_h);
+		prev_mouse_inside_parent =  !POINT_IN_RECTANGLE(ms->x_old, ms->y_old, p_x, p_y, p_w, p_h);
+	}
+
+	// Raise more specific events.
+	//
+	// For contained controls (parts of the control outside of the parent are not drawn)
+	// we only want to trigger mouse events when the mouse click is both inside the control and the parent.
+	if ((!is_contained && mouse_inside) || (is_contained && mouse_inside && mouse_inside_parent))
+	{
+		if (!prev_mouse_inside)
 		{
 			// Were we inside of the control last time? Otherwise we've just entered it.
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseEnter, ms);
@@ -976,25 +947,84 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseHover, ms);
 		}
 
-		if(ms->button_down != old_ms->button_down)
+		if (ms->button_down != old_ms->button_down)
 		{
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseDown, ms);
 		}
 		
-		if(ms->button_up != old_ms->button_up)
+		if (ms->button_up != old_ms->button_up)
 		{
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseUp, ms);
 		}
 	}
-	else if(prev_mouse_inside)
+	else if((!is_contained && prev_mouse_inside) || (is_contained && prev_mouse_inside_parent))
 	{
-		if(!mouse_inside)
-		{
-			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseLeave, ms);
-		}
+		CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseLeave, ms);
 	}
 
-	if(!mouse_handled)
+	// TODO : Move these to new methods.
+
+	if (self->flags & CONTROL_RESIZING_LEFT)
+	{
+		int mouse_delta = Round(ms->x_old - ms->x);
+		int width = 0;
+		int x = 0;
+
+		// Set the new width based on how much the mouse has moved
+		// keeping it within the allowed bounds.
+		width = self->width + mouse_delta;
+		clamp(width, self->width_min, self->width_max);
+
+		// Move the control to counter act the resizing.
+		x = self->x + (self->width - width);
+
+		if (CONTROL_IS_CONTAINED(self))
+		{
+			if (MOUSE_OUTSIDE_PARENT_X(self, ms)) 
+			{
+				ms->x = ms->x_old;
+				x = self->x;
+				width = self->width;
+			}
+		}
+
+		EZ_control_SetSize(self, width, self->height);
+		EZ_control_SetPosition(self, x, self->y);
+
+		mouse_handled = true;
+	}
+	else if (self->flags & CONTROL_MOVING)
+	{
+		// Root control will be moved relative to the screen,
+		// others relative to their parent.
+		int x = self->x + (ms->x - ms->x_old);
+		int y = self->y + (ms->y - ms->y_old);
+
+		// Should the control be contained within it's parent?
+		// Then don't allow the mouse to move outside the parent
+		// while moving the control.
+		if (CONTROL_IS_CONTAINED(self))
+		{
+			if (MOUSE_OUTSIDE_PARENT_X(self, ms)) 
+			{
+				ms->x = ms->x_old;
+				x = self->x;
+			}
+			
+			if (MOUSE_OUTSIDE_PARENT_Y(self, ms))
+			{
+				ms->y = ms->y_old;
+				y = self->y;
+			}
+		}
+
+		mouse_handled = true;
+		EZ_control_SetPosition(self, x, y);
+	}
+
+	// Let any event handler run if the mouse event wasn't handled.
+	// TODO: Should probably always be allowed to run, just not overwrite mouse_handled.
+	if (!mouse_handled)
 	{
 		CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseEvent, ms);
 	}
@@ -1031,6 +1061,10 @@ int EZ_control_OnMouseEnter(ez_control_t *self, mouse_state_t *mouse_state)
 int EZ_control_OnMouseLeave(ez_control_t *self, mouse_state_t *mouse_state)
 {
 	int mouse_handled = false;
+
+	// Stop moving since the mouse is outside the control.
+	self->flags &= ~CONTROL_MOVING;
+
 	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseLeave, mouse_state);
 	return mouse_handled;
 }
@@ -1042,32 +1076,90 @@ int EZ_control_OnMouseUp(ez_control_t *self, mouse_state_t *mouse_state)
 {
 	int mouse_handled = false;
 
-	// Stop moving.
-	self->flags &= ~CONTROL_MOVING;
+	// Stop moving / resizing.
+	self->flags &= ~(CONTROL_MOVING | CONTROL_RESIZING_BOTTOM | CONTROL_RESIZING_LEFT | CONTROL_RESIZING_RIGHT | CONTROL_RESIZING_TOP);
 
+	// Raise a click event.
+	if (self->flags & CONTROL_CLICKED)
+	{
+		self->flags &= ~CONTROL_CLICKED;
+		CONTROL_RAISE_EVENT(NULL, self, OnMouseClick, mouse_state);
+	}
+
+	// Call event handler.
 	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseUp, mouse_state);
+
 	return mouse_handled;
 }
 
 //
 // Control - A mouse button was pressed within the bounds of the control.
 //
-int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *mouse_state)
+int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 {
 	int mouse_handled = false;
 
-	if(!(self->flags & CONTROL_ENABLED))
+	if (!(self->flags & CONTROL_ENABLED))
 	{
 		return false;
 	}
 
-	mouse_handled = EZ_control_SetFocus(self);
+	// Make sure the current control is focused.
+	if (self->control_tree->focused_node)
+	{
+		// If the focused node isn't this one, refocus.
+		if (self->control_tree->focused_node->payload != self)
+		{
+			mouse_handled = EZ_control_SetFocus(self);
+		}
+	}
+	else
+	{
+		// If there's no focused node, focus on this one.
+		mouse_handled = EZ_control_SetFocus(self);
+	}
+
+	// Check if the mouse is at the edges of the control, and turn on the correct reszie mode if it is.
+	if (((self->flags & CONTROL_RESIZE_H) || (self->flags & CONTROL_RESIZE_V)) && (ms->button_down == 1))
+	{
+		if (self->flags & CONTROL_RESIZE_H)
+		{
+			// Left side of the control.
+			if (POINT_IN_RECTANGLE(ms->x, ms->y, 
+				self->absolute_x, self->absolute_y, 
+				self->resize_handle_thickness, self->height))
+			{
+				self->flags |= CONTROL_RESIZING_LEFT;
+				mouse_handled = true;
+			}
+
+			// Right side of the control.
+			if (POINT_IN_RECTANGLE(ms->x, ms->y, 
+				self->absolute_x + self->width - self->resize_handle_thickness, self->absolute_y, 
+				self->resize_handle_thickness, self->height))
+			{
+				self->flags |= CONTROL_RESIZING_RIGHT;
+				mouse_handled = true;
+			}
+		}
+
+		if (self->flags & CONTROL_RESIZE_V)
+		{
+			
+		}
+	}
 	
 	// The control is being moved.
-	if((self->flags & CONTROL_MOVABLE) && mouse_state->button_down == 1)
+	if ((self->flags & CONTROL_MOVABLE) && (ms->button_down == 1))
 	{
 		self->flags |= CONTROL_MOVING;
-		//return true;
+		mouse_handled = true;
+	}
+
+	if (ms->button_down)
+	{
+		self->flags |= CONTROL_CLICKED;
+		mouse_handled = true;
 	}
 
 	/*
@@ -1099,7 +1191,12 @@ int EZ_control_OnMouseWheel(ez_control_t *self, mouse_state_t *mouse_state)
 int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state)
 {
 	int mouse_handled = false;
-	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseHover, mouse_state);
+
+	if (!mouse_handled)
+	{
+		CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseHover, mouse_state);
+	}
+
 	return mouse_handled;
 }
 
