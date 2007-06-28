@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.75 2007-06-28 21:54:27 johnnycz Exp $
+	$Id: menu.c,v 1.76 2007-06-28 22:08:47 johnnycz Exp $
 
 */
 
@@ -95,6 +95,8 @@ void M_Main_Key (int key);
 
 
 int FindBestNick (char *s,int use);
+
+m_state_t m_state;
 
 qbool    m_entersound;          // play after drawing a frame, so caching
                                 // won't disrupt the sound

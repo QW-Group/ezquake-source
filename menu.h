@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.h,v 1.18 2007-06-28 21:54:27 johnnycz Exp $
+	$Id: menu.h,v 1.19 2007-06-28 22:08:47 johnnycz Exp $
 
 */
 
@@ -56,7 +56,7 @@ extern int m_yofs;
 #define FLASHINGARROW() (12+((int)(curtime*4)&1))
 #define FLASHINGCURSOR() (10+((int)(curtime*4)&1))
 
-enum {
+typedef enum {
     m_none, m_main, m_proxy, m_singleplayer, m_load, m_save,
 	m_multiplayer, m_gameoptions, m_slist, m_demos,
     m_options,
@@ -65,6 +65,8 @@ enum {
 #if defined(_WIN32) || ((defined(__linux__) || defined(__FreeBSD__)) && defined(WITH_XMMS))
     m_mp3_control, m_mp3_playlist
 #endif
-} m_state;
+} m_state_t;
+
+extern m_state_t m_state;
 
 #endif // __MENU_H_
