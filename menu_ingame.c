@@ -4,7 +4,7 @@
 
 	made by johnnycz, June 2007
 	last edit:
-	$Id: menu_ingame.c,v 1.1 2007-06-28 21:54:28 johnnycz Exp $
+	$Id: menu_ingame.c,v 1.2 2007-06-28 22:16:11 johnnycz Exp $
 
 */
 
@@ -27,6 +27,7 @@ void MIng_Back(void)			{ M_LeaveMenus(); }
 void MDemoCtrl_SkipMinute(void)	{ Cbuf_AddText("demo_jump +1:00\n"); }
 
 setting ingame_menu_entries[] = {
+	ADDSET_SEPARATOR("In-game Menu"),
 	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
 	ADDSET_ACTION("Join", MIng_Join, ""),
 	ADDSET_ACTION("Observe", MIng_Observe, ""),
@@ -34,6 +35,7 @@ setting ingame_menu_entries[] = {
 };
 
 setting democtrl_menu_entries[] = {
+	ADDSET_SEPARATOR("Demo Control Menu"),
 	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
 	ADDSET_ACTION("Skip 1 minute", MDemoCtrl_SkipMinute, ""),
 	ADDSET_ACTION("Return to game", MIng_Back, "")
@@ -41,13 +43,11 @@ setting democtrl_menu_entries[] = {
 
 void M_Ingame_Draw(void) {
 	M_Unscale_Menu();
-	UI_Print_Center(0, TOPMARGIN, vid.width, "Ingame Menu", true);
-	Settings_Draw(0, TOPMARGIN+LETTERWIDTH, vid.width, vid.height - TOPMARGIN - LETTERWIDTH, &ingame_menu);
+	Settings_Draw(0, TOPMARGIN, vid.width, vid.height - TOPMARGIN, &ingame_menu);
 }
 void M_Democtrl_Draw(void) {
 	M_Unscale_Menu();
-	UI_Print_Center(0, TOPMARGIN, vid.width, "Demo Control Menu", true);
-	Settings_Draw(0, TOPMARGIN+LETTERWIDTH, vid.width, vid.height - TOPMARGIN - LETTERWIDTH, &democtrl_menu);
+	Settings_Draw(0, TOPMARGIN, vid.width, vid.height - TOPMARGIN, &democtrl_menu);
 }
 
 void M_Ingame_Key(int key) {
@@ -70,12 +70,12 @@ void M_Democtrl_Key(int key) {
 
 qbool Menu_Ingame_Mouse_Event(const mouse_state_t *ms) {
 	mouse_state_t m = *ms;
-	m.y -= TOPMARGIN+LETTERWIDTH;
+	m.y -= TOPMARGIN;
 	return Settings_Mouse_Event(&ingame_menu, &m);
 }
 qbool Menu_Democtrl_Mouse_Event(const mouse_state_t *ms) {
 	mouse_state_t m = *ms;
-	m.y -= TOPMARGIN+LETTERWIDTH;
+	m.y -= TOPMARGIN;
 	return Settings_Mouse_Event(&democtrl_menu, &m);
 }
 
