@@ -907,6 +907,69 @@ int EZ_control_OnKeyEvent(ez_control_t *self, int key, int unichar)
 	return key_handled;
 }
 
+typedef enum
+{
+	RESIZE_LEFT		= (1 << 0),
+	RESIZE_RIGHT	= (1 << 1),
+	RESIZE_UP		= (1 << 2),
+	RESIZE_DOWN		= (1 << 3)
+} resize_direction_t;
+
+//
+// Control - Resizes the control by moving the left corner.
+//
+static void EZ_control_ResizeByDirection(ez_control_t *self, mouse_state_t *ms, resize_direction_t direction)
+{
+	int mouse_delta_x = Round(ms->x_old - ms->x);
+	int mouse_delta_y = Round(ms->y_old - ms->y);
+	int width = self->width;
+	int height = self->height;
+	int x = self->x;
+	int y = self->y;
+	int diff = 0;
+	qbool resize_width = (direction & RESIZE_LEFT) || (direction & RESIZE_RIGHT);
+	qbool resize_height = (direction & RESIZE_UP) || (direction & RESIZE_DOWN);
+
+	if (resize_width)
+	{
+		// Set the new width based on how much the mouse has moved
+		// keeping it within the allowed bounds.
+		width = self->width + ((direction & RESIZE_LEFT) ? mouse_delta_x : -mouse_delta_x);
+		clamp(width, self->width_min, self->width_max);
+
+		// Move the control to counter act the resizing when resizing to the left.
+		x = self->x + ((direction & RESIZE_LEFT) ? (self->width - width) : 0);
+	}
+
+	if (resize_height)
+	{
+		height = self->height + ((direction & RESIZE_UP) ? mouse_delta_y : -mouse_delta_y);
+		clamp(height, self->height_min, self->height_max);
+		diff = (self->height - height);
+		y = self->y + ((direction & RESIZE_UP) ? (self->height - height) : 0);
+	}
+
+	if (CONTROL_IS_CONTAINED(self))
+	{
+		if (resize_width && MOUSE_OUTSIDE_PARENT_X(self, ms)) 
+		{
+			ms->x = ms->x_old;
+			x = self->x;
+			width = self->width;
+		}
+	
+		if (resize_height && MOUSE_OUTSIDE_PARENT_Y(self, ms)) 
+		{
+			ms->y = ms->y_old;
+			y = self->y;
+			height = self->height;
+		}
+	}
+
+	EZ_control_SetSize(self, width, height);
+	EZ_control_SetPosition(self, x, y);
+}
+
 //
 // Control -
 // The initial mouse event is handled by this, and then raises more specialized event handlers
@@ -921,11 +984,14 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 	qbool prev_mouse_inside_parent = false;
 	qbool is_contained = CONTROL_IS_CONTAINED(self);
 	int mouse_handled = false;
+	int mouse_delta = 0;
 
 	if (!ms)
 	{
 		Sys_Error("EZ_control_OnMouseEvent(): mouse_state_t NULL\n");
 	}
+
+	mouse_delta = Round(ms->x_old - ms->x);
 
 	mouse_inside = POINT_IN_RECTANGLE(ms->x, ms->y, self->absolute_x, self->absolute_y, self->width, self->height);
 	prev_mouse_inside = !POINT_IN_RECTANGLE(ms->x_old, ms->y_old, self->absolute_x, self->absolute_y, self->width, self->height);
@@ -979,31 +1045,22 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 
 	if (self->flags & CONTROL_RESIZING_LEFT)
 	{
-		int mouse_delta = Round(ms->x_old - ms->x);
-		int width = 0;
-		int x = 0;
-
-		// Set the new width based on how much the mouse has moved
-		// keeping it within the allowed bounds.
-		width = self->width + mouse_delta;
-		clamp(width, self->width_min, self->width_max);
-
-		// Move the control to counter act the resizing.
-		x = self->x + (self->width - width);
-
-		if (CONTROL_IS_CONTAINED(self))
-		{
-			if (MOUSE_OUTSIDE_PARENT_X(self, ms)) 
-			{
-				ms->x = ms->x_old;
-				x = self->x;
-				width = self->width;
-			}
-		}
-
-		EZ_control_SetSize(self, width, self->height);
-		EZ_control_SetPosition(self, x, self->y);
-
+		EZ_control_ResizeByDirection(self, ms, RESIZE_LEFT);
+		mouse_handled = true;
+	}
+	else if (self->flags & CONTROL_RESIZING_RIGHT)
+	{
+		EZ_control_ResizeByDirection(self, ms, RESIZE_RIGHT);
+		mouse_handled = true;
+	}
+	else if (self->flags & CONTROL_RESIZING_TOP)
+	{
+		EZ_control_ResizeByDirection(self, ms, RESIZE_UP);
+		mouse_handled = true;
+	}
+	else if (self->flags & CONTROL_RESIZING_BOTTOM)
+	{
+		EZ_control_ResizeByDirection(self, ms, RESIZE_DOWN);
 		mouse_handled = true;
 	}
 	else if (self->flags & CONTROL_MOVING)
@@ -1163,7 +1220,23 @@ int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 
 		if (self->flags & CONTROL_RESIZE_V)
 		{
-			
+			// Top of the control.
+			if (POINT_IN_RECTANGLE(ms->x, ms->y, 
+				self->absolute_x, self->absolute_y, 
+				self->width, self->resize_handle_thickness))
+			{
+				self->flags |= CONTROL_RESIZING_TOP;
+				mouse_handled = true;
+			}
+
+			// Bottom of the control.
+			if (POINT_IN_RECTANGLE(ms->x, ms->y, 
+				self->absolute_x, self->absolute_y + self->height - self->resize_handle_thickness, 
+				self->width, self->resize_handle_thickness))
+			{
+				self->flags |= CONTROL_RESIZING_BOTTOM;
+				mouse_handled = true;
+			}
 		}
 	}
 	
