@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.71 2007-05-06 16:49:58 qqshka Exp $
+	$Id: cl_demo.c,v 1.72 2007-06-28 18:30:43 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -37,7 +37,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 
 
-float olddemotime, nextdemotime;		
+float olddemotime, nextdemotime;
+
+double bufferingtime; // if we stream from QTV, this is non zero when we trying fill our buffer
 
 //
 // Vars related to QIZMO compressed demos. 
@@ -815,7 +817,18 @@ qbool pb_ensure(void)
 	{ 
 		CL_Demo_Peek(pb_tmp_buf, pb_cnt);
 
-		return !!ConsistantMVDData((unsigned char*)pb_tmp_buf, pb_cnt);
+		if(ConsistantMVDData((unsigned char*)pb_tmp_buf, pb_cnt))
+			return true;
+	}
+
+	if (cls.mvdplayback == QTV_PLAYBACK)
+	{
+		double prebufferseconds = 2; // hard coded pre buffering time is 2 seconds
+
+		bufferingtime = Sys_DoubleTime() + prebufferseconds;
+
+		if (developer.integer == 2)
+			Com_Printf("qtv: no enough buffered, buffering for %.1f\n", prebufferseconds); // print some annoying message
 	}
 
 	return false;
@@ -906,7 +919,23 @@ qbool CL_GetDemoMessage (void)
 
 	// Demo paused, don't read anything.
 	if (cl.paused & PAUSED_DEMO)
+	{
+		pb_ensure(); // perform our operations on socket, in case of QTV
 		return false;
+	}
+
+	// mean we are buffering for QTV, so not ready parse
+	if (bufferingtime && bufferingtime > Sys_DoubleTime())
+	{
+		extern qbool	host_skipframe;
+
+		pb_ensure(); // perform our operations on socket, in case of QTV
+		host_skipframe = true; // this will force not update cls.demotime
+
+		return false;
+	}
+
+	bufferingtime = 0;
 
 	//
 	// Adjust the time for MVD playback.
@@ -2442,6 +2471,8 @@ void CL_Play_f (void)
 	olddemotime = nextdemotime = 0;	
 	cls.findtrack = true;
 
+	bufferingtime = 0;
+
 	// Used for knowing who messages is directed to in MVD's.
 	cls.lastto = cls.lasttype = 0;
 
@@ -2698,6 +2729,7 @@ void CL_QTVList_f (void)
 void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 {
 	int i;
+	double prebufferseconds = 2; // hard coded pre buffering time is 2 seconds
 
 	// End any current game.
 	Host_EndGame();
@@ -2735,10 +2767,14 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 	Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, 0);
 	cls.demotime = 0;
 	demostarttime = -1.0;		
-
 	olddemotime = nextdemotime = 0;	
 	cls.findtrack = true;
+
+	bufferingtime = Sys_DoubleTime() + prebufferseconds;
+
+	// Used for knowing who messages is directed to in MVD's.
 	cls.lastto = cls.lasttype = 0;
+
 	CL_ClearPredict();
 	
 	// Recording not allowed during mvdplayback.
@@ -2749,7 +2785,7 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 
 	TP_ExecTrigger ("f_demostart");
 
-	Com_Printf("Attempting to stream QTV data\n");
+	Com_Printf("Attempting to stream QTV data, buffer is %.1fs\n", prebufferseconds);
 }
 
 //
