@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.62.2.2 2007-05-27 12:01:27 disconn3ct Exp $
+#	$Id: Makefile,v 1.62.2.3 2007-06-28 16:38:04 zwoch Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -27,7 +27,7 @@ ifeq ($(ARCH),x86)
 	ARCH_CFLAGS = -march=i686 -D__LITTLE_ENDIAN__ -Did386
 endif
 ifeq ($(ARCH),ppc)
-	ARCH_CFLAGS = -arch ppc -faltivec -maltivec -mcpu=7450 -mtune=7450 -mpowerpc -mpowerpc-gfxopt -D__BIG_ENDIAN__
+	ARCH_CFLAGS = -arch i386 -arch ppc
 endif
 
 # TODO: LIB_PREFIX must be $(OS)-$(ARCH)
@@ -37,7 +37,7 @@ ifeq ($(OS),linux)
 endif
 ifeq ($(OS),darwin)
 	DEFAULT_TARGET = mac
-	OS_GL_CFLAGS = -I/opt/local/include/ -I/Developer/Headers/FlatCarbon -I/sw/include -FOpenGL -FAGL
+	OS_GL_CFLAGS = -I/opt/local/include/ -I/Developer/Headers/FlatCarbon -FOpenGL -FAGL
 endif
 ifeq ($(OS),freebsd)
 	DEFAULT_TARGET = glx
@@ -215,7 +215,7 @@ $(SVGA_S_OBJS): $(SVGA_DIR)/%.o: %.s
 
 MAC_C_OBJS = $(addprefix $(MAC_DIR)/, $(addsuffix .o, $(MAC_C_FILES)))
 MAC_CFLAGS = $(CFLAGS) $(GLCFLAGS)
-MAC_LDFLAGS = $(LDFLAGS) -L/sw/lib -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
+MAC_LDFLAGS = $(LDFLAGS) -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
 
 mac: _DIR = $(MAC_DIR)
 mac: _OBJS = $(MAC_C_OBJS) $(COMMON_LIBS) $(GL_LIBS)
