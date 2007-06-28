@@ -189,14 +189,18 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 	ez_dllist_node_t *node_iter = NULL;
 	ez_control_t *payload = NULL;
 
+	// FIXME: Not working properly
+
 	if(tree->focused_node)
 	{
+		node_iter = (next_control) ? tree->focused_node->next : tree->focused_node->previous;
+
 		// Find the next control that can be focused.
-		do
+		while(node_iter && !found)
 		{
-			node_iter = (next_control) ? tree->focused_node->next : tree->focused_node->previous;
+			found = EZ_control_SetFocusByNode((ez_control_t *)node_iter->payload, node_iter);
+			node_iter = (next_control) ? node_iter->next : node_iter->previous;
 		}
-		while(node_iter && !(found = EZ_control_SetFocusByNode((ez_control_t *)node_iter->payload, node_iter)));
 	}
 	
 	// We haven't found a focusable control yet, 
@@ -207,11 +211,12 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 	{
 		node_iter = (next_control) ? tree->tablist.head : tree->tablist.tail;
 
-		do
+		// Find the next control that can be focused.
+		while(node_iter && !found)
 		{
-			node_iter = (next_control) ? tree->focused_node->next : tree->focused_node->previous;
+			found = EZ_control_SetFocusByNode((ez_control_t *)node_iter->payload, node_iter);
+			node_iter = (next_control) ? node_iter->next : node_iter->previous;
 		}
-		while(node_iter && !(found = EZ_control_SetFocusByNode((ez_control_t *)node_iter->payload, node_iter)));
 	}
 
 	// There is nothing to focus on.
@@ -228,20 +233,28 @@ qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar)
 {
 	int key_handled = false;
 
-	if(tree && tree->root)
+	if (!tree)
 	{
-		switch(key)
+		Sys_Error("EZ_tree_KeyEvent(): NULL control tree specified.\n");
+	}
+
+	if (tree->root)
+	{
+		switch (key)
 		{
+			case 'k' :
+				key_handled = true;
+				break;
 			case K_TAB :
 			{				
 				// Focus on the next focusable control (TAB)
-				// or the previous (Alt + TAB)
-				EZ_tree_ChangeFocus(tree, !isAltDown());
+				// or the previous (Shift + TAB)
+				EZ_tree_ChangeFocus(tree, !isShiftDown());
 				key_handled = true;
 			}
 		}
 
-		if(!key_handled)
+		if (!key_handled)
 		{
 			CONTROL_RAISE_EVENT(&key_handled, tree->root, OnKeyEvent, key, unichar);
 		}
@@ -947,12 +960,12 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseHover, ms);
 		}
 
-		if (ms->button_down != old_ms->button_down)
+		if (ms->button_down && (ms->button_down != old_ms->button_down))
 		{
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseDown, ms);
 		}
 		
-		if (ms->button_up != old_ms->button_up)
+		if (ms->button_up && (ms->button_up != old_ms->button_up))
 		{
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseUp, ms);
 		}
@@ -1117,6 +1130,11 @@ int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 	{
 		// If there's no focused node, focus on this one.
 		mouse_handled = EZ_control_SetFocus(self);
+	}
+
+	if (!(self->flags & CONTROL_FOCUSED))
+	{
+		return false;
 	}
 
 	// Check if the mouse is at the edges of the control, and turn on the correct reszie mode if it is.
