@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.74 2007-06-18 15:12:24 johnnycz Exp $
+	$Id: menu.c,v 1.75 2007-06-28 21:54:27 johnnycz Exp $
 
 */
 
@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "menu_demo.h"
 #include "menu_proxy.h"
 #include "menu_options.h"
+#include "menu_ingame.h"
 #include "EX_FileList.h"
 #include "help.h"
 #include "utils.h"
@@ -221,6 +222,20 @@ void M_FindKeysForCommand (const char *command, int *twokeys) {
 	}
 }
 
+void M_Unscale_Menu(void)
+{
+#ifdef GLQUAKE
+	// do not scale this menu
+	if (scr_scaleMenu.value) {
+		menuwidth = vid.width;
+		menuheight = vid.height;
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity ();
+		glOrtho  (0, menuwidth, menuheight, 0, -99999, 99999);
+	}
+#endif
+}
+
 // will apply menu scaling effect for given window region
 // scr_scaleMenu 1 uses glOrtho function and we use the same algorithm in here
 static void M_Window_Adjust(const menu_window_t *original, menu_window_t *scaled)
@@ -280,21 +295,6 @@ static qbool M_Mouse_Select(const menu_window_t *uw, const mouse_state_t *m, int
 
 //=============================================================================
 
-void M_ToggleMenu_f (void) {
-	m_entersound = true;
-
-	if (key_dest == key_menu) {
-		if (m_state != m_main) {
-			M_Menu_Main_f ();
-			return;
-		}
-		key_dest = key_game;
-		m_state = m_none;
-	} else {
-		M_Menu_Main_f ();
-	}
-}
-
 void M_EnterMenu (int state) {
 	if (key_dest != key_menu) {
 		m_topmenu = state;
@@ -311,6 +311,32 @@ void M_EnterMenu (int state) {
 	key_dest = key_menu;
 	m_state = state;
 	m_entersound = true;
+}
+
+static void M_ToggleHeadMenus(int type)
+{
+	m_entersound = true;
+
+	if (key_dest == key_menu) {
+		if (m_state != type) {
+			M_EnterMenu(type);
+			return;
+		}
+		key_dest = key_game;
+		m_state = m_none;
+	} else {
+		M_EnterMenu(type);
+	}
+}
+
+void M_ToggleMenu_f (void) {
+	if (cls.state == ca_active) {
+		if (cls.demoplayback || cls.mvdplayback)
+			M_ToggleHeadMenus(m_democtrl);
+		else
+			M_ToggleHeadMenus(m_ingame);
+	}
+	else M_ToggleHeadMenus(m_main);
 }
 
 void M_EnterProxyMenu () {
@@ -2039,7 +2065,7 @@ void M_Init (void) {
 	Help_Init();
 	Menu_Demo_Init();	// menu_demo module
 	Menu_Options_Init(); // menu_options module
-
+	Menu_Ingame_Init();
 
 	Cmd_AddCommand ("togglemenu", M_ToggleMenu_f);
 	Cmd_AddCommand ("toggleproxymenu", M_ToggleProxyMenu_f);
@@ -2080,6 +2106,8 @@ void M_Draw (void) {
 			VID_LockBuffer ();
 #endif
 		} else {
+			// if you don't like fade in ingame menu, uncomment this
+			// if (m_state != m_ingame && m_state != m_democtrl)
 			Draw_FadeScreen ();
 		}
 
@@ -2139,6 +2167,9 @@ void M_Draw (void) {
 		case m_proxy:
 			M_Proxy_Draw ();
 			break;
+
+		case m_ingame: M_Ingame_Draw(); break;
+		case m_democtrl: M_Democtrl_Draw(); break;
 
 		case m_help:
 			M_Help_Draw ();
@@ -2233,6 +2264,9 @@ void M_Keydown (int key, int unichar) {
 			M_Proxy_Key (key);
 			return;
 
+		case m_ingame: M_Ingame_Key(key); return;
+		case m_democtrl: M_Democtrl_Key(key); return;
+
 		case m_help:
 			M_Help_Key (key);
 			return;
@@ -2303,6 +2337,8 @@ qbool Menu_Mouse_Event(const mouse_state_t* ms)
 	case m_options:			return Menu_Options_Mouse_Event(ms);
 	case m_slist:			return Browser_Mouse_Event(ms);
 	case m_demos:			return Menu_Demo_Mouse_Event(ms);
+	case m_ingame:			return Menu_Ingame_Mouse_Event(ms);
+	case m_democtrl:		return Menu_Democtrl_Mouse_Event(ms);
 	case m_none: default:	return false;
 	}
 }

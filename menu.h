@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.h,v 1.17 2007-03-19 13:23:20 johnnycz Exp $
+	$Id: menu.h,v 1.18 2007-06-28 21:54:27 johnnycz Exp $
 
 */
 
@@ -48,6 +48,7 @@ void M_DrawSlider (int x, int y, float range);
 void M_DrawCheckbox (int x, int y, int on);
 void M_FindKeysForCommand (const char *command, int *twokeys);
 void M_BuildTranslationTable(int top, int bottom);
+void M_Unscale_Menu(void);
 qbool Menu_Mouse_Event(const mouse_state_t* ms);
 
 extern int m_yofs;
@@ -60,7 +61,7 @@ enum {
 	m_multiplayer, m_gameoptions, m_slist, m_demos,
     m_options,
 	m_help,
-	m_quit,
+	m_quit, m_democtrl, m_ingame, 
 #if defined(_WIN32) || ((defined(__linux__) || defined(__FreeBSD__)) && defined(WITH_XMMS))
     m_mp3_control, m_mp3_playlist
 #endif

@@ -46,6 +46,7 @@ CLIENT_C_FILES := \
 	match_tools \
 	menu \
 	menu_demo \
+	menu_ingame \
 	menu_options \
 	menu_proxy \
 	modules \
