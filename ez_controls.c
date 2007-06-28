@@ -1043,25 +1043,32 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 
 	// TODO : Move these to new methods.
 
-	if (self->flags & CONTROL_RESIZING_LEFT)
+	if ((self->flags & CONTROL_RESIZING_LEFT)
+	 || (self->flags & CONTROL_RESIZING_RIGHT) 
+	 || (self->flags & CONTROL_RESIZING_TOP)
+	 || (self->flags & CONTROL_RESIZING_BOTTOM))
 	{
-		EZ_control_ResizeByDirection(self, ms, RESIZE_LEFT);
-		mouse_handled = true;
-	}
-	else if (self->flags & CONTROL_RESIZING_RIGHT)
-	{
-		EZ_control_ResizeByDirection(self, ms, RESIZE_RIGHT);
-		mouse_handled = true;
-	}
-	else if (self->flags & CONTROL_RESIZING_TOP)
-	{
-		EZ_control_ResizeByDirection(self, ms, RESIZE_UP);
-		mouse_handled = true;
-	}
-	else if (self->flags & CONTROL_RESIZING_BOTTOM)
-	{
-		EZ_control_ResizeByDirection(self, ms, RESIZE_DOWN);
-		mouse_handled = true;
+		if (self->flags & CONTROL_RESIZING_LEFT)
+		{
+			EZ_control_ResizeByDirection(self, ms, RESIZE_LEFT);
+			mouse_handled = true;
+		}
+		else if (self->flags & CONTROL_RESIZING_RIGHT)
+		{
+			EZ_control_ResizeByDirection(self, ms, RESIZE_RIGHT);
+			mouse_handled = true;
+		}
+
+		if (self->flags & CONTROL_RESIZING_TOP)
+		{
+			EZ_control_ResizeByDirection(self, ms, RESIZE_UP);
+			mouse_handled = true;
+		}
+		else if (self->flags & CONTROL_RESIZING_BOTTOM)
+		{
+			EZ_control_ResizeByDirection(self, ms, RESIZE_DOWN);
+			mouse_handled = true;
+		}
 	}
 	else if (self->flags & CONTROL_MOVING)
 	{
