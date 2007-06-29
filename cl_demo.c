@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.72 2007-06-28 18:30:43 qqshka Exp $
+	$Id: cl_demo.c,v 1.73 2007-06-29 08:23:23 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -821,7 +821,7 @@ qbool pb_ensure(void)
 			return true;
 	}
 
-	if (cls.mvdplayback == QTV_PLAYBACK)
+	if (cls.mvdplayback == QTV_PLAYBACK && !bufferingtime)
 	{
 		double prebufferseconds = 2; // hard coded pre buffering time is 2 seconds
 
