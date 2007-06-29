@@ -608,11 +608,3 @@
 #DEFINE FLAG_ALERT   X_CAPTURES_FLAG   " captures the рЕД вАРЕХОУСЕ ╜ цп╦"	//Canalzon 8
 #DEFINE FLAG_ALERT   X_CAPTURES_FLAG   " цаптуред the ред flag!"	//kw4
 #DEFINE FLAG_ALERT   X_CAPTURES_FLAG   " цаптуред the блуе flag!"	//kw4
-
-#DEFINE OBITUARY    X_FRAGGED_BY_Y  Q_SHOTGUN          " was lead poisoned by "
-#DEFINE OBITUARY    X_FRAGGED_BY_Y  Q_SUPER_SHOTGUN    " ate 8 loads of "   "'s buckshot"
-#DEFINE OBITUARY    X_FRAGGED_BY_Y  Q_SUPER_NAILGUN    " was straw-cuttered by "
-#DEFINE OBITUARY    X_FRAGGED_BY_Y  Q_ROCKET_LAUNCHER  " was smeared by "   "'s quad rocket"
-#DEFINE OBITUARY    X_FRAGGED_BY_Y  Q_ROCKET_LAUNCHER  " was brutalized by " "'s quad rocket"
-#DEFINE OBITUARY    X_FRAGS_Y       Q_ROCKET_LAUNCHER  " rips " " a new one"
-#DEFINE OBITUARY    X_FRAGGED_BY_Y  Q_LIGHTNING_GUN    " gets a natural disaster from "
