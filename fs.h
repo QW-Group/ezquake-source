@@ -1,9 +1,11 @@
 /*
-    $Id: fs.h,v 1.2 2007-01-15 05:32:32 qqshka Exp $
+    $Id: fs.h,v 1.3 2007-06-29 23:57:19 johnnycz Exp $
 */
 
 #ifndef __FS_H__
 #define __FS_H__
+
+void FS_InitModuleFS (void);
 
 // ====================================================================
 // VFS

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.80 2007-06-23 21:58:47 tei Exp $
+    $Id: common.c,v 1.81 2007-06-29 23:57:19 johnnycz Exp $
 
 */
 
@@ -47,6 +47,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "crc.h"
 #include "stats_grid.h"
 #include "tp_triggers.h"
+#include "fs.h"
 
 void Draw_BeginDisc ();
 void Draw_EndDisc ();
@@ -1817,6 +1818,49 @@ qbool FS_AddPak (char *pakfile) {
 	com_searchpaths = search;
 	return true;
 }
+
+qbool FS_RemovePak (const char *pakfile) {
+	searchpath_t *prev = NULL;
+	searchpath_t *cur = com_searchpaths;
+	searchpath_t *temp;
+	qbool ret = false;
+	
+	while (cur) {
+		if (cur->pack) {
+			if (!strcmp(cur->pack->filename, pakfile)) {
+				if (!fclose(cur->pack->handle)) {
+					if (prev)
+						prev->next = cur->next;
+					else
+						com_searchpaths = cur->next;
+
+					temp = cur;
+					cur = cur->next;
+					Q_free(temp);
+					ret = true;
+				} else Com_Printf("Couldn't close file handler to %s\n", cur->pack->filename);
+			}
+		}
+		prev = cur;
+		cur = cur->next;
+	}
+
+	return ret;
+}
+
+void FS_ListPaths(void) {
+	searchpath_t *cur = com_searchpaths;
+
+	while (cur) {
+		if (cur->pack)
+			Com_Printf("PAK: %s (%i files)\n", cur->pack->filename, cur->pack->numfiles);
+		else
+			Com_Printf("dir: %s\n", cur->filename);
+		
+		cur = cur->next;
+	}
+}
+
 #ifndef SERVERONLY
 
 void FS_AddUserPaks (char *dir) {
@@ -2138,6 +2182,8 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 
 void FS_InitFilesystem( void ) {
 	FILE *f;
+
+	FS_InitModuleFS();
 
 	FS_InitFilesystemEx( false ); // first attempt, simplified
 

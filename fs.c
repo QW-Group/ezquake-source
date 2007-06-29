@@ -1,9 +1,10 @@
 /*
-    $Id: fs.c,v 1.5 2007-03-11 06:01:38 disconn3ct Exp $
+    $Id: fs.c,v 1.6 2007-06-29 23:57:19 johnnycz Exp $
 */
 
 #include "quakedef.h"
 #include "fs.h"
+#include "common.h"
 
 // fs related things
 
@@ -548,3 +549,74 @@ vfsfile_t *FS_OpenTCP(char *name)
 
 // VFS
 //======================================================================================================
+
+typedef enum { PAKOP_ADD, PAKOP_REM } pak_operation_t;
+
+static qbool FS_PakOperation(char* pakfile, pak_operation_t op)
+{
+	switch (op) {
+	case PAKOP_REM: return FS_RemovePak(pakfile);
+	case PAKOP_ADD: return FS_AddPak(pakfile);
+	}
+
+	return false;
+}
+
+static qbool FS_PakOper_NoPath(char* pakfile, pak_operation_t op)
+{
+	char pathbuf[MAX_PATH];
+	
+	if (op != PAKOP_REM) // do not allow removing e.g. "pak"
+		if (FS_PakOperation(pakfile, op)) return true;
+
+	// This is nonstandard, therefore should be discussed first
+	// snprintf(pathbuf, sizeof(pathbuf), "addons/%s.pak", pakfile);
+	// if (FS_PakOperation(pathbuf, op)) return true;
+
+	snprintf(pathbuf, sizeof(pathbuf), "ezquake/%s.pak", pakfile);
+	if (FS_PakOperation(pathbuf, op)) return true;
+
+	snprintf(pathbuf, sizeof(pathbuf), "qw/%s.pak", pakfile);
+	if (FS_PakOperation(pathbuf, op)) return true;
+
+	snprintf(pathbuf, sizeof(pathbuf), "id1/%s.pak", pakfile);
+	if (FS_PakOperation(pathbuf, op)) return true;
+
+	return false;
+}
+
+static void FS_PakOper_Process(pak_operation_t op)
+{
+	int i;
+	int c = Cmd_Argc();
+
+	if (cls.state != ca_disconnected && !cls.demoplayback && !cls.mvdplayback) {
+		Com_Printf("This command cannot be used while connected\n");
+		return;
+	}
+	if (c < 2) {
+		Com_Printf("Usage: %s <pakname> [<pakname> [<pakname> ...]\n", op == PAKOP_ADD ? "addpak" : "removepak");
+		return;
+	}
+
+	for (i = 1; i < c; i++)
+	{
+		if (FS_PakOper_NoPath(Cmd_Argv(i), op)) {
+			Com_Printf("Pak %s has been %s\n", Cmd_Argv(i), op == PAKOP_ADD ? "added" : "removed");
+			Cache_Flush();
+		}
+		else Com_Printf("Pak not %s\n", op == PAKOP_ADD ? "added" : "removed");
+	}
+}
+
+void FS_PakAdd_f(void) { FS_PakOper_Process(PAKOP_ADD); }
+void FS_PakRem_f(void) { FS_PakOper_Process(PAKOP_REM); }
+
+void FS_ListPaths_f(void) { FS_ListPaths(); }
+
+void FS_InitModuleFS (void)
+{
+	Cmd_AddCommand("loadpak", FS_PakAdd_f);
+	Cmd_AddCommand("removepak", FS_PakRem_f);
+	Cmd_AddCommand("listpaths", FS_ListPaths_f);
+}
