@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.154 2007-06-21 14:48:44 johnnycz Exp $
+$Id: cl_main.c,v 1.155 2007-06-29 20:34:12 tonik Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -1474,7 +1474,7 @@ void CL_Frame (double time) {
 		cls.frametime = min(0.2, cls.trueframetime);
 
 	//#fps:
-	if (cl_independentPhysics.value != 0) 
+	if (cl_independentPhysics.value != 0 && !cls.demoplayback) 
 	{
 		double minphysframetime = MinPhysFrameTime();
 
@@ -1491,6 +1491,9 @@ void CL_Frame (double time) {
 				physframetime = minphysframetime;
 			extraphysframetime -= physframetime;
 		}	
+	} else {
+		extraphysframetime = 0;
+		physframe = true;
 	}
 
 	if (cls.demoplayback) {
