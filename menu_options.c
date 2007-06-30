@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.68 2007-06-30 11:16:03 johnnycz Exp $
+		$Id: menu_options.c,v 1.69 2007-06-30 11:36:16 johnnycz Exp $
 
 */
 
@@ -698,7 +698,7 @@ setting settfps_arr[] = {
 
 	ADDSET_SEPARATOR("Miscellaneous"),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Disable lin. interp.", cl_nolerp),
+	ADDSET_BOOL		("Disable lin.interp.", cl_nolerp),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NAMED	("Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
 	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
