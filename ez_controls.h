@@ -147,18 +147,18 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 //
 // Calls a event handler function.
 //
-#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventhandler, ...)									\
-{																									\
-	int *p = (int *)retval, temp = 0;																\
-	if(CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler))									\
-	{																								\
-		if(((ez_control_t *)ctrl)->override_count == 0)												\
-			temp = CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler)(ctrl, __VA_ARGS__);	\
-		else																						\
-			((ez_control_t *)ctrl)->override_count--;												\
-	}																								\
-	if(p) (*p) = temp;																				\
-}																									\
+#define CONTROL_EVENT_HANDLER_CALL(retval, ctrl, eventhandler, ...)														\
+{																														\
+	int *p = (int *)retval, temp = 0;																					\
+	if(CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler))														\
+	{																													\
+		if(((ez_control_t *)ctrl)->override_count == 0)																	\
+			temp = CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler)((ez_control_t *)ctrl, ##__VA_ARGS__);	\
+		else																											\
+			((ez_control_t *)ctrl)->override_count--;																	\
+	}																													\
+	if(p) (*p) = temp;																									\
+}																														\
 
 //
 // Validates a method call -
