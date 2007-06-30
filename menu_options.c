@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.67 2007-06-21 18:01:24 johnnycz Exp $
+		$Id: menu_options.c,v 1.68 2007-06-30 11:16:03 johnnycz Exp $
 
 */
 
@@ -1073,7 +1073,7 @@ setting settconfig_arr[] = {
     ADDSET_SEPARATOR("Scripts"),
 	ADDSET_ACTION("Load Script", MOpt_LoadScript, "Choose and load quake scripts here."),
 	ADDSET_SEPARATOR("Config Saving Options"),
-    ADDSET_ACTION("Default Save Opt.", MOpt_CfgSaveAllOn, "Configuration saving settings will be reset to defaults."),
+    ADDSET_ACTION("Reset Saving Options", MOpt_CfgSaveAllOn, "Configuration saving settings will be reset to defaults."),
     ADDSET_BOOL("Save Unchanged Opt.", cfg_save_unchanged),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL("Backup old file", cfg_backup),
