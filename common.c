@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.81 2007-06-29 23:57:19 johnnycz Exp $
+    $Id: common.c,v 1.82 2007-06-30 10:47:59 johnnycz Exp $
 
 */
 
@@ -1846,19 +1846,6 @@ qbool FS_RemovePak (const char *pakfile) {
 	}
 
 	return ret;
-}
-
-void FS_ListPaths(void) {
-	searchpath_t *cur = com_searchpaths;
-
-	while (cur) {
-		if (cur->pack)
-			Com_Printf("PAK: %s (%i files)\n", cur->pack->filename, cur->pack->numfiles);
-		else
-			Com_Printf("dir: %s\n", cur->filename);
-		
-		cur = cur->next;
-	}
 }
 
 #ifndef SERVERONLY

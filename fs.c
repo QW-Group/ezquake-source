@@ -1,5 +1,5 @@
 /*
-    $Id: fs.c,v 1.6 2007-06-29 23:57:19 johnnycz Exp $
+    $Id: fs.c,v 1.7 2007-06-30 10:48:00 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -612,11 +612,8 @@ static void FS_PakOper_Process(pak_operation_t op)
 void FS_PakAdd_f(void) { FS_PakOper_Process(PAKOP_ADD); }
 void FS_PakRem_f(void) { FS_PakOper_Process(PAKOP_REM); }
 
-void FS_ListPaths_f(void) { FS_ListPaths(); }
-
 void FS_InitModuleFS (void)
 {
 	Cmd_AddCommand("loadpak", FS_PakAdd_f);
 	Cmd_AddCommand("removepak", FS_PakRem_f);
-	Cmd_AddCommand("listpaths", FS_ListPaths_f);
 }

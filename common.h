@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.54 2007-06-29 23:57:19 johnnycz Exp $
+    $Id: common.h,v 1.55 2007-06-30 10:47:59 johnnycz Exp $
 */
 // common.h  -- general definitions
 
@@ -220,7 +220,6 @@ void FS_LoadCacheFile (char *path, struct cache_user_s *cu);
 byte *FS_LoadHeapFile (char *path);
 qbool FS_AddPak (char *pakfile);
 qbool FS_RemovePak (const char *pakfile);
-void FS_ListPaths(void);
 
 qbool COM_WriteFile (char *filename, void *data, int len); //The filename will be prefixed by com_basedir
 qbool COM_WriteFile_2 (char *filename, void *data, int len); //The filename used as is
