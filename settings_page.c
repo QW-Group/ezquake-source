@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.40 2007-06-21 18:01:24 johnnycz Exp $
+		$Id: settings_page.c,v 1.41 2007-06-30 11:31:29 johnnycz Exp $
 
 */
 
@@ -491,7 +491,7 @@ static int Setting_DrawHelpBox(int x, int y, int w, int h, settings_page* page, 
 	UI_DrawBox(x, y, w, h);
 
 	if (!UI_PrintTextBlock(x + LETW, y + LETW, w - LETW*2, h - LETW*2, helptext, false) && !full)
-		UI_Print(x + LETW, y + h - LETW, "Press [Ins] to read more...", true);
+		UI_Print(x + LETW, y + h - LETW, "Press [F1] to read more...", true);
 
 	return h;
 }
@@ -650,6 +650,7 @@ qbool Settings_Key(settings_page* tab, int key)
 		default: Setting_Reset(tab->settings + tab->marked); return true;
 		}
 
+	case K_F1:
 	case K_INS:
 		switch (tab->mode) {
 		case SPM_NORMAL: tab->mode = SPM_VIEWHELP; return true;
