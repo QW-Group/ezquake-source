@@ -110,6 +110,7 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree);
 #define CONTROL_RESIZING_BOTTOM		(1 << 10)	// Resizing downards.
 #define CONTROL_CONTAINED			(1 << 11)	// Is the control contained within it's parent or can it go outside its edges?
 #define CONTROL_CLICKED				(1 << 12)	// Is the control being clicked? (If the mouse button is released outside the control a click event isn't raised).
+#define CONTROL_VISIBLE				(1 << 13)	// Is the control visible?
 
 //
 // Control - Function pointer types.
@@ -137,7 +138,7 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 {																									\
 	int temp = 0;																					\
 	int *p = (int *)retval;																			\
-	(ctrl)->override_count = (ctrl)->inheritance_level;												\
+	((ez_control_t *)ctrl)->override_count = ((ez_control_t *)ctrl)->inheritance_level;				\
 	if(CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))											\
 		temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ctrl), __VA_ARGS__);			\
 	if(p) (*p) = temp;																				\
@@ -151,15 +152,23 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 	int *p = (int *)retval, temp = 0;																\
 	if(CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler))									\
 	{																								\
-		if(ctrl->override_count == 0)																\
+		if(((ez_control_t *)ctrl)->override_count == 0)												\
 			temp = CONTROL_EVENT_HANDLER(event_handlers, (ctrl), eventhandler)(ctrl, __VA_ARGS__);	\
 		else																						\
-			ctrl->override_count--;																	\
+			((ez_control_t *)ctrl)->override_count--;												\
 	}																								\
 	if(p) (*p) = temp;																				\
 }																									\
 
+//
+// Validates a method call -
+// Should be called first in all method calls for inherited classes to make sure
+// the call isn't attempted on an object 
+//
+#define CONTROL_VALIDATE_CALL(ctrl, id, funcname) if( ctrl##->CLASS_ID < id ) Sys_Error("EZ_controls: Cannot pass a less specific object as an argument to %s\n", funcname)
+
 #define EZ_CONTROL_INHERITANCE_LEVEL	0
+#define EZ_CLASS_ID					0
 
 typedef struct ez_control_events_s
 {
@@ -182,19 +191,23 @@ typedef struct ez_control_events_s
 
 typedef struct ez_control_s
 {
-	char				*name;
-	char				*description;
-	int	 				x;
+	int					CLASS_ID;						// An ID unique for this class, this is set at initilization
+														// and should never be changed after that.
+	char				*name;							// The name of the control.
+	char				*description;					// A short description of the control.
+	
+	int	 				x;								// Relative position to it's parent.
 	int					y;
-	int 				width;
+	
+	int 				width;							// Size.
 	int					height;
 	
-	int					width_max;
+	int					width_max;						// Max/min sizes for the control.
 	int					width_min;
 	int					height_max;
 	int					height_min;
 
-	int					resize_handle_thickness;
+	int					resize_handle_thickness;		// The thickness of the resize handles on the sides of the control.
 
 	int					absolute_x;						// The absolute screen coordinates for the control.
 	int					absolute_y;	
@@ -202,12 +215,13 @@ typedef struct ez_control_s
 	int					draw_order;						// The order the control is drawn in.
 	int					tab_order;						// The tab number of the control.
 	
-	int					flags;
+	int					flags;							// Flags defining such as visibility, focusability, and manipulation
+														// being performed on the control.
 
-	byte				background_color[4];
-	mpic_t				*background;
+	byte				background_color[4];			// The background color of the control RGBA.
+	mpic_t				*background;					// The background picture.
 
-	mouse_state_t		prev_mouse_state;
+	mouse_state_t		prev_mouse_state;				// The last mouse event that was passed on to this control.
 
 	ez_control_events_t			events;					// The base reaction for events. Is only set at initialization.
 	ez_control_events_t			event_handlers;			// Can be set by the user of the class to react to events.
@@ -220,13 +234,25 @@ typedef struct ez_control_s
 	int							override_count;			// The current number of times the event handler needs to be called before it's executed.
 	int							inheritance_level;		// The class's level of inheritance. Control -> SubControl -> SubSubControl
 														// SubSubControl would have a value of 2.
-														// !!! This is class specific, should never be changed !!!
+														// !!! This is class specific, should never be changed except in init function !!!
 } ez_control_t;
+
+//
+// Control - Creates a new control and initializes it.
+//
+ez_control_t *EZ_control_Create(ez_tree_t *tree, ez_control_t *parent, 
+							  char *name, char *description, 
+							  int x, int y, int width, int height, 
+							  char *background_name, int flags);
+
+//
+// Control - Initializes a control and adds it to the specified control tree.
+//
 
 //
 // Control - Initializes a control.
 //
-ez_control_t *EZ_control_Init(ez_tree_t *tree, ez_control_t *parent, 
+void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *parent, 
 							  char *name, char *description, 
 							  int x, int y, int width, int height, 
 							  char *background_name, int flags);
@@ -436,6 +462,81 @@ int EZ_control_OnMouseWheel(ez_control_t *self, mouse_state_t *mouse_state);
 // Control - The mouse is hovering within the bounds of the control.
 //
 int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
+
+// =========================================================================================
+// Button
+// =========================================================================================
+
+#define EZ_BUTTON_INHERITANCE_LEVEL		1
+#define EZ_BUTTON_ID					1
+
+typedef struct ez_button_events_s
+{
+	ez_control_handler_fp	OnAction;			// The event that's raised when the button is clicked / activated via a button.
+} ez_button_events_t;
+
+typedef struct ez_button_s
+{
+	ez_control_t			super;				// The super class.
+
+	ez_button_events_t		events;				// Specific events for the button control.
+	ez_button_events_t		event_handlers;		// Specific event handlers for the button control.
+
+	mpic_t					*hover_image;		// The image that is shown for the button when the mouse is over it.
+	mpic_t					*pressed_image;		// The image that is shown when the button is pressed.
+
+	byte					color_hover[4];
+	byte					color_pressed[4];
+} ez_button_t;
+
+//
+// Button - Creates a new button and initializes it.
+//
+ez_button_t *EZ_button_Create(ez_tree_t *tree, ez_control_t *parent, 
+							  char *name, char *description, 
+							  int x, int y, int width, int height, 
+							  char *background_name, char *hover_image, char *pressed_image,
+							  int flags);
+
+//
+// Button - Initializes a button.
+//
+void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent, 
+							  char *name, char *description, 
+							  int x, int y, int width, int height, 
+							  char *background_name, char *hover_image, char *pressed_image,
+							  int flags);
+
+//
+// Button - Destroys the button.
+//
+void EZ_button_Destroy(ez_control_t *self, qbool destroy_children);
+
+//
+// Button - OnAction event handler.
+//
+int EZ_button_OnAction(ez_control_t *self);
+
+// 
+// Button - Sets the pressed color of the button.
+//
+void EZ_button_SetPressedColor(ez_control_t *self, byte r, byte g, byte b, byte alpha);
+
+// 
+// Button - Sets the hover color of the button.
+//
+void EZ_button_SetHoverColor(ez_control_t *self, byte r, byte g, byte b, byte alpha);
+
+// 
+// Button - Sets the OnAction event handler.
+//
+void EZ_button_SetOnAction(ez_control_t *self, ez_control_handler_fp OnAction);
+
+//
+// Button - OnDraw event.
+//
+int EZ_button_OnDraw(ez_control_t *self);
+
 
 #endif // __EZ_CONTROLS_H__
 

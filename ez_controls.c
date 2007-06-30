@@ -141,8 +141,24 @@ void EZ_tree_Draw(ez_tree_t *tree)
 	while(iter)
 	{
 		payload = (ez_control_t *)iter->payload;
+
+		#ifdef GLQUAKE
+		// Make sure parts located outside the parent aren't drawn
+		// when the control is contained within it's parent.
+		if (payload->parent && (payload->flags & CONTROL_CONTAINED))
+		{
+			ez_control_t *p = payload->parent;
+			glEnable(GL_SCISSOR_TEST);
+			glScissor(p->absolute_x, glheight - (p->absolute_y + p->height), p->width, p->height);
+		}
+		#endif // GLQUAKE
+
 		CONTROL_RAISE_EVENT(NULL, payload, OnDraw);
-		
+
+		#ifdef GLQUAKE
+		glDisable(GL_SCISSOR_TEST);
+		#endif // GLQUAKE
+
 		iter = iter->next;
 	}
 }
@@ -341,14 +357,13 @@ void EZ_tree_OrderTabList(ez_tree_t *tree)
 // =========================================================================================
 
 //
-// Control - Initializes a control and adds it to the specified control tree.
+// Control - Creates a new control and initializes it.
 //
-ez_control_t *EZ_control_Init(ez_tree_t *tree, ez_control_t *parent, 
+ez_control_t *EZ_control_Create(ez_tree_t *tree, ez_control_t *parent, 
 							  char *name, char *description, 
 							  int x, int y, int width, int height, 
 							  char *background_name, int flags)
 {
-	static int order = 0;
 	ez_control_t *control = NULL;
 	
 	// We have to have a tree to add the control to.
@@ -359,10 +374,35 @@ ez_control_t *EZ_control_Init(ez_tree_t *tree, ez_control_t *parent,
 	
 	control = (ez_control_t *)Q_malloc(sizeof(ez_control_t));
 
+	EZ_control_Init(control, tree, parent, name, description, x, y, width, height, background_name, flags);
+
+	return control;
+}
+
+//
+// Control - Initializes a control and adds it to the specified control tree.
+//
+void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *parent, 
+							  char *name, char *description, 
+							  int x, int y, int width, int height, 
+							  char *background_name, int flags)
+{
+	static int order = 0;
+
+	control->CLASS_ID = EZ_CLASS_ID;
+
 	control->control_tree = tree;
 	control->name = name;
 	control->description = description;
-	control->flags = flags | CONTROL_ENABLED;
+	control->flags = flags | CONTROL_ENABLED | CONTROL_VISIBLE;
+	
+	// Default to containing a child within it's parent
+	// if the parent is being contained by it's parent.
+	if (parent && parent->flags & CONTROL_CONTAINED)
+	{
+		control->flags |= CONTROL_CONTAINED;
+	}
+	
 	control->draw_order = order++;
 
 	control->resize_handle_thickness = 5;
@@ -418,8 +458,6 @@ ez_control_t *EZ_control_Init(ez_tree_t *tree, ez_control_t *parent,
 
 	EZ_control_SetPosition(control, x, y);
 	EZ_control_SetSize(control, width, height);
-
-	return control;
 }
 
 //
@@ -445,6 +483,9 @@ int EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 		return 0;
 	}
 
+	// Cleanup any specifics this control may have.
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDestroy, destroy_children);
+
 	iter = self->children.head;
 
 	// Destroy the children! 
@@ -453,7 +494,6 @@ int EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 		if(destroy_children)
 		{
 			// Destroy the child!
-			//EZ_control_Destroy((ez_control_t *)iter->payload, destroy_children);
 			CONTROL_RAISE_EVENT(NULL, ((ez_control_t *)iter->payload), OnDestroy, destroy_children);
 		}
 		else
@@ -468,9 +508,6 @@ int EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 		// Remove the child from the list.
 		EZ_double_linked_list_Remove(&self->children, temp);
 	}
-
-	// Cleanup any specifics this control may have.
-	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDestroy, destroy_children);
 
 	Q_free(self);
 
@@ -839,16 +876,7 @@ int EZ_control_OnDraw(ez_control_t *self)
 {
 	#ifdef GLQUAKE
 
-	// Make sure parts located outside the parent aren't drawn
-	// when the control is contained within it's parent.
-	if (self->parent && (self->flags & CONTROL_CONTAINED))
-	{
-		ez_control_t *p = self->parent;
-		glEnable(GL_SCISSOR_TEST);
-		glScissor(p->absolute_x, glheight - (p->absolute_y + p->height), p->width, p->height);
-	}
-
-	if (self->background_color[3] > 0.0)
+	if (self->background_color[3] > 0)
 	{
 		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
 			self->background_color[0] / 255.0,
@@ -887,10 +915,6 @@ int EZ_control_OnDraw(ez_control_t *self)
 
 	// Draw control specifics.
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDraw);
-
-	#ifdef GLQUAKE
-	glDisable(GL_SCISSOR_TEST);
-	#endif // GLQUAKE
 
 	return 0;
 }
@@ -1303,6 +1327,147 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state)
 	return mouse_handled;
 }
 
+// =========================================================================================
+// Button
+// =========================================================================================
 
+//
+// Button - Creates a new button and initializes it.
+//
+ez_button_t *EZ_button_Create(ez_tree_t *tree, ez_control_t *parent, 
+							  char *name, char *description, 
+							  int x, int y, int width, int height, 
+							  char *background_name, char *hover_image, char *pressed_image,
+							  int flags)
+{
+	ez_button_t *button = NULL;
+	
+	// We have to have a tree to add the control to.
+	if (!tree)
+	{
+		return NULL;
+	}
+	
+	button = (ez_button_t *)Q_malloc(sizeof(ez_button_t));
+	EZ_button_Init(button, tree, parent, name, description, x, y, width, height, background_name, hover_image, pressed_image, flags);
+	return button;
+}
 
+//
+// Button - Initializes a button.
+//
+void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent, 
+							  char *name, char *description, 
+							  int x, int y, int width, int height, 
+							  char *background_name, char *hover_image, char *pressed_image,
+							  int flags)
+{
+	// Initialize the inherited class first.
+	EZ_control_Init(&button->super, tree, parent, name, description, x, y, width, height, background_name, flags);
+
+	// Initilize the button specific stuff.
+	button->super.CLASS_ID = EZ_BUTTON_ID;
+	button->super.inheritance_level = EZ_BUTTON_INHERITANCE_LEVEL;
+
+	button->super.flags = flags | CONTROL_FOCUSABLE | CONTROL_CONTAINED;
+
+	// Override the draw function.
+	button->super.events.OnDraw = EZ_button_OnDraw;
+
+	// Button specific events.
+	button->events.OnAction = EZ_button_OnAction;
+
+	// TODO : Load button images.
+}
+
+//
+// Button - Destroys the button.
+//
+void EZ_button_Destroy(ez_control_t *self, qbool destroy_children)
+{
+	ez_button_t *button = NULL;
+	CONTROL_VALIDATE_CALL(self, EZ_BUTTON_ID, "EZ_button_Destroy()");
+	button = (ez_button_t *)self;
+
+	// TODO: Cleanup button images?
+
+	// FIXME: Can we just free a part like this here? How about children, will they be properly destroyed?
+	EZ_control_Destroy(&button->super, destroy_children);
+}
+
+//
+// Button - OnAction event handler.
+//
+int EZ_button_OnAction(ez_control_t *self)
+{
+	ez_button_t *button = NULL;
+	CONTROL_VALIDATE_CALL(self, EZ_BUTTON_ID, "EZ_button_OnAction()");
+	button = (ez_button_t *)self;
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, button, OnAction);
+
+	return 0;
+}
+
+// 
+// Button - Sets the pressed color of the button.
+//
+void EZ_button_SetPressedColor(ez_control_t *self, byte r, byte g, byte b, byte alpha)
+{
+	ez_button_t *button = NULL;
+	CONTROL_VALIDATE_CALL(self, EZ_BUTTON_ID, "EZ_button_SetPressedColor()");
+	button = (ez_button_t *)self;
+
+	button->color_pressed[0] = r;
+	button->color_pressed[1] = g;
+	button->color_pressed[2] = b;
+	button->color_pressed[3] = alpha;
+}
+
+// 
+// Button - Sets the hover color of the button.
+//
+void EZ_button_SetHoverColor(ez_control_t *self, byte r, byte g, byte b, byte alpha)
+{
+	ez_button_t *button = NULL;
+	CONTROL_VALIDATE_CALL(self, EZ_BUTTON_ID, "EZ_button_SetHoverColor()");
+	button = (ez_button_t *)self;
+
+	button->color_hover[0] = r;
+	button->color_hover[1] = g;
+	button->color_hover[2] = b;
+	button->color_hover[3] = alpha;
+}
+
+// 
+// Button - Sets the OnAction event handler.
+//
+void EZ_button_SetOnAction(ez_control_t *self, ez_control_handler_fp OnAction)
+{
+	// Make sure we're not trying to pass an object instance that isn't specific enough.
+	ez_button_t *button = NULL;
+	CONTROL_VALIDATE_CALL(self, EZ_BUTTON_ID, "EZ_button_SetOnAction()");
+	button = (ez_button_t *)self;
+
+	button->event_handlers.OnAction = OnAction;
+}
+
+//
+// Button - OnDraw event.
+//
+int EZ_button_OnDraw(ez_control_t *self)
+{
+	EZ_control_OnDraw(self);
+
+	#ifdef GLQUAKE
+
+	Draw_AlphaCircleFillRGB(self->x, self->y, 5, 255, 255, 0 , 255);
+
+	#endif // GLQUAKE
+
+	// Draw control specifics.
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDraw);
+
+	return 0;
+}
 
