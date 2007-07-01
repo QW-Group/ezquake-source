@@ -25,6 +25,8 @@ int			ConsistantMVDData(unsigned char *buffer, int remaining);
 //======================================
 
 void		QTV_Say_f (void);
+void		QTV_Cmd_ForwardToServer (void);
+void		QTV_Cl_ForwardToServer_f (void);
 
 #endif // __QTV_H__
 

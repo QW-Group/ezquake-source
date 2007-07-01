@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.49 2007-07-01 00:58:45 qqshka Exp $
+	$Id: cl_cmd.c,v 1.50 2007-07-01 04:34:02 qqshka Exp $
 */
 
 #include <time.h>
@@ -54,6 +54,11 @@ void S_StopAllSounds (qbool clear);
 void Cmd_ForwardToServer (void) {
 	char *s;
 
+	if (cls.mvdplayback == QTV_PLAYBACK) {
+		QTV_Cmd_ForwardToServer();
+		return;
+	}
+
 	if (cls.state == ca_disconnected) {
 		Com_Printf ("Can't \"%s\", not connected\n", Cmd_Argv(0));
 		return;
@@ -78,6 +83,12 @@ void CL_ForwardToServer_f (void) {
 	extern cvar_t	cl_crypt_rcon;
 	time_t		client_time;
 // Added by VVD }
+
+	if (cls.mvdplayback == QTV_PLAYBACK) {
+		QTV_Cl_ForwardToServer_f();
+		return;
+	}
+
 	if (cls.state == ca_disconnected) {
 		Com_Printf ("Can't \"%s\", not connected\n", Cmd_Argv(0));
 		return;
@@ -567,6 +578,11 @@ void CL_User_f (void) {
 
 void CL_Users_f (void) {
 	int i, c;
+
+	if (cls.mvdplayback == QTV_PLAYBACK) {
+		QTV_Cmd_ForwardToServer();
+		return;
+	}
 
 	c = 0;
 	Com_Printf ("userid frags name\n");

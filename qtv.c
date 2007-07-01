@@ -1,7 +1,7 @@
 /*
 	Support for FTE QuakeTV
 
-	$Id: qtv.c,v 1.9 2007-07-01 00:48:00 qqshka Exp $
+	$Id: qtv.c,v 1.10 2007-07-01 04:34:02 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -75,14 +75,16 @@ gottotallength:
 
 //=================================================
 
-void QTV_Say_f (void)
+extern vfsfile_t *playbackfile;
+
+void QTV_ForwardToServerEx (qbool skip_if_no_params, qbool use_first_argument)
 {
-    extern vfsfile_t *playbackfile;
 	char data[1024 + 100] = {0}, text[1024], *s;
 	sizebuf_t buf;
 
-	if (Cmd_Argc() < 2)
-		return;
+	if (skip_if_no_params)
+		if (Cmd_Argc() < 2)
+			return;
 
 	// lowercase command
 	for (s = Cmd_Argv(0); *s; s++)
@@ -98,7 +100,16 @@ void QTV_Say_f (void)
 	s = TP_ParseMacroString (Cmd_Args());
 	s = TP_ParseFunChars (s, true);
 
-	snprintf(text, sizeof(text), "%s %s", Cmd_Argv(0), s);
+	text[0] = 0; // *cat is dangerous, ensure we empty buffer before use it
+
+	if (use_first_argument)
+		strlcat(text, Cmd_Argv(0), sizeof(text));
+
+	if (s[0])
+	{
+		strlcat(text, " ", sizeof(text));
+		strlcat(text, s,   sizeof(text));
+	}
 
 	MSG_WriteShort  (&buf, 2 + 1 + strlen(text) + 1); // short + byte + null terminated string
 	MSG_WriteByte   (&buf, qtv_clc_stringcmd);
@@ -107,3 +118,18 @@ void QTV_Say_f (void)
 	VFS_WRITE(playbackfile, buf.data, buf.cursize);
 }
 
+void QTV_Say_f (void)
+{
+	QTV_ForwardToServerEx (true, true);
+}
+
+void QTV_Cmd_ForwardToServer (void)
+{
+	QTV_ForwardToServerEx (false, true);
+}
+
+// don't forward the first argument
+void QTV_Cl_ForwardToServer_f (void)
+{
+	QTV_ForwardToServerEx (false, false);
+}

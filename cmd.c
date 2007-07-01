@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.68 2007-06-20 17:41:58 johnnycz Exp $
+    $Id: cmd.c,v 1.69 2007-07-01 04:34:02 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1127,17 +1127,24 @@ void Cmd_CmdList (qbool use_regex)
 	int i, c, m = 0, count;
 	cmd_function_t *cmd;
 	char *pattern;
+	qbool forwarded_only = !strcmp(">", Cmd_Argv(1)); // "cmdlist >" mean show only commands forwarded to server
 
 #define MAX_SORTED_CMDS (sizeof (sorted_cmds) / sizeof (sorted_cmds[0]))
 
-	for (cmd = cmd_functions, count = 0; cmd && count < MAX_SORTED_CMDS; cmd = cmd->next, count++)
+	for (cmd = cmd_functions, count = 0; cmd && count < MAX_SORTED_CMDS; cmd = cmd->next)
+	{
+		if (forwarded_only && cmd->function)
+			continue; // if function is NULL then this is forwarded to server command
+
 		sorted_cmds[count] = cmd;
+		count++;
+	}
 	qsort (sorted_cmds, count, sizeof (cmd_function_t *), Cmd_CommandCompare);
 
 	if (count == MAX_SORTED_CMDS)
 		assert(!"count == MAX_SORTED_CMDS");
 
-	pattern = (Cmd_Argc() > 1) ? Cmd_Argv(1) : NULL;
+	pattern = (!forwarded_only && Cmd_Argc() > 1) ? Cmd_Argv(1) : NULL;
 
 	if (use_regex && ((c = Cmd_Argc()) > 1))
 		if (!ReSearchInit(Cmd_Argv(1)))
