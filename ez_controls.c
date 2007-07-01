@@ -92,15 +92,16 @@ void *EZ_double_linked_list_Remove(ez_double_linked_list_t *list, ez_dllist_node
 	return payload;
 }
 
+typedef void * PVOID;
+
 //
 // Double Linked List - Orders a list.
 //
 void EZ_double_linked_list_Order(ez_double_linked_list_t *list, PtFuncCompare compare_function)
 {
 	int i = 0;
-	void *payload = NULL;
 	ez_dllist_node_t *iter = NULL;
-	void **items = (void **)Q_calloc(list->count, sizeof(void *));
+	PVOID **items = (PVOID **)Q_calloc(list->count, sizeof(PVOID *));
 
 	iter = list->head;
 	
@@ -112,14 +113,13 @@ void EZ_double_linked_list_Order(ez_double_linked_list_t *list, PtFuncCompare co
 		iter = iter->next;
 	}
 
-	qsort(items, list->count, sizeof(void *), compare_function);
+	qsort(items, list->count, sizeof(PVOID *), compare_function);
 
 	iter = list->head;
 
 	for(i = 0; i < list->count; i++)
 	{
 		iter->payload = items[i];
-
 		iter = iter->next;
 	}
 
@@ -319,10 +319,10 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree)
 //
 static int EZ_tree_DrawOrderFunc(const void *val1, const void *val2)
 {
-	const ez_control_t *control1 = (ez_control_t *)val1;
-	const ez_control_t *control2 = (ez_control_t *)val2;
+	const ez_control_t **control1 = (const ez_control_t **)val1;
+	const ez_control_t **control2 = (const ez_control_t **)val2;
 
-	return (control2->draw_order - control1->draw_order);
+	return ((*control1)->draw_order - (*control2)->draw_order);
 }
 
 //
@@ -338,10 +338,10 @@ void EZ_tree_OrderDrawList(ez_tree_t *tree)
 //
 static int EZ_tree_TabOrderFunc(const void *val1, const void *val2)
 {
-	const ez_control_t *control1 = (ez_control_t *)val1;
-	const ez_control_t *control2 = (ez_control_t *)val2;
+	const ez_control_t **control1 = (const ez_control_t **)val1;
+	const ez_control_t **control2 = (const ez_control_t **)val2;
 
-	return (control1->tab_order - control2->tab_order);
+	return ((*control1)->tab_order - (*control2)->tab_order);
 }
 
 //
@@ -455,6 +455,9 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 
 	EZ_double_linked_list_Add(&tree->drawlist, (void *)control);
 	EZ_double_linked_list_Add(&tree->tablist, (void *)control);
+
+	EZ_tree_OrderDrawList(tree);
+	EZ_tree_OrderTabList(tree);
 
 	EZ_control_SetPosition(control, x, y);
 	EZ_control_SetSize(control, width, height);
@@ -1030,7 +1033,7 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 		int p_w = self->parent->width;
 		int p_h = self->parent->height;
 		mouse_inside_parent = POINT_IN_RECTANGLE(ms->x, ms->y, p_x, p_y, p_w, p_h);
-		prev_mouse_inside_parent =  !POINT_IN_RECTANGLE(ms->x_old, ms->y_old, p_x, p_y, p_w, p_h);
+		prev_mouse_inside_parent = POINT_IN_RECTANGLE(ms->x_old, ms->y_old, p_x, p_y, p_w, p_h);
 	}
 
 	// Raise more specific events.
@@ -1157,6 +1160,7 @@ int EZ_control_OnMouseClick(ez_control_t *self, mouse_state_t *mouse_state)
 int EZ_control_OnMouseEnter(ez_control_t *self, mouse_state_t *mouse_state)
 {
 	int mouse_handled = false;
+	self->flags |= CONTROL_MOUSE_OVER;
 	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseEnter, mouse_state);
 	return mouse_handled;
 }
@@ -1169,8 +1173,8 @@ int EZ_control_OnMouseLeave(ez_control_t *self, mouse_state_t *mouse_state)
 	int mouse_handled = false;
 
 	// Stop moving since the mouse is outside the control.
-	self->flags &= ~CONTROL_MOVING;
-
+	self->flags &= ~(CONTROL_MOVING | CONTROL_MOUSE_OVER);
+	
 	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseLeave, mouse_state);
 	return mouse_handled;
 }
@@ -1457,13 +1461,51 @@ void EZ_button_SetOnAction(ez_control_t *self, ez_control_handler_fp OnAction)
 //
 int EZ_button_OnDraw(ez_control_t *self)
 {
-	EZ_control_OnDraw(self);
+	qbool mouse_inside = 0;
+	ez_button_t *button = NULL;
+	CONTROL_VALIDATE_CALL(self, EZ_BUTTON_ID, "EZ_button_SetOnAction()");
+	button = (ez_button_t *)self;
 
-	#ifdef GLQUAKE
+	if (self->flags & CONTROL_CLICKED)
+	{
+		#ifdef GLQUAKE
+		Draw_AlphaFillRGB(self->x, self->y, self->width, self->height, 
+			button->color_pressed[0] / 255.0,
+			button->color_pressed[1] / 255.0, 
+			button->color_pressed[2] / 255.0, 
+			button->color_pressed[3] / 255.0);
+		#endif // GLQUAKE
+	}
 
-	Draw_AlphaCircleFillRGB(self->x, self->y, 5, 255, 255, 0 , 255);
+//	mouse_inside = POINT_IN_RECTANGLE(ms->x, ms->y, self->absolute_x, self->absolute_y, self->width, self->height);
 
-	#endif // GLQUAKE
+	if (self->flags & CONTROL_MOUSE_OVER)
+	{
+		if (self->flags & CONTROL_CLICKED)
+		{
+			#ifdef GLQUAKE
+			Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
+					button->color_pressed[0] / 255.0,
+					button->color_pressed[1] / 255.0, 
+					button->color_pressed[2] / 255.0, 
+					button->color_pressed[3] / 255.0);
+			#endif // GLQUAKE
+		}
+		else
+		{
+			#ifdef GLQUAKE
+			Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
+					button->color_hover[0] / 255.0,
+					button->color_hover[1] / 255.0, 
+					button->color_hover[2] / 255.0, 
+					button->color_hover[3] / 255.0);
+			#endif // GLQUAKE
+		}
+	}
+	else
+	{
+		EZ_control_OnDraw(self);
+	}
 
 	// Draw control specifics.
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDraw);
