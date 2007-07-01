@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_texture.c,v 1.30 2007-04-15 14:54:50 johnnycz Exp $
+$Id: gl_texture.c,v 1.31 2007-07-01 00:55:02 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -340,7 +340,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 
 	ScaleDimensions(width, height, &scaled_width, &scaled_height, mode);
 
-	if (developer.integer == 2)
+	if (developer.integer >= 3)
 		Com_DPrintf("???: %s\n", identifier);
 
 	if (identifier[0]) {

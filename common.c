@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.82 2007-06-30 10:47:59 johnnycz Exp $
+    $Id: common.c,v 1.83 2007-07-01 00:55:02 qqshka Exp $
 
 */
 
@@ -1617,7 +1617,8 @@ int FS_FOpenFile (char *filename, FILE **file) {
 			pak = search->pack;
 			for (i = 0; i < pak->numfiles; i++) {
 				if (!strcmp (pak->files[i].name, filename)) {	// found it!
-					Com_DPrintf ("PackFile: %s : %s\n", pak->filename, filename);
+					if (developer.integer >= 3)
+						Com_DPrintf ("PackFile: %s : %s\n", pak->filename, filename);
 					// open a new file on the pakfile
 					if (!(*file = fopen (pak->filename, "rb")))
 						Sys_Error ("Couldn't reopen %s\n", pak->filename);

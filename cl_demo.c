@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.74 2007-07-01 00:48:00 qqshka Exp $
+	$Id: cl_demo.c,v 1.75 2007-07-01 00:55:02 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -829,7 +829,7 @@ qbool pb_ensure(void)
 
 		bufferingtime = Sys_DoubleTime() + prebufferseconds;
 
-		if (developer.integer == 2)
+		if (developer.integer >= 2)
 			Com_DPrintf("qtv: no enough buffered, buffering for %.1f\n", prebufferseconds); // print some annoying message
 	}
 
