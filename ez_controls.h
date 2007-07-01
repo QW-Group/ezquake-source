@@ -111,6 +111,7 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree);
 #define CONTROL_CONTAINED			(1 << 11)	// Is the control contained within it's parent or can it go outside its edges?
 #define CONTROL_CLICKED				(1 << 12)	// Is the control being clicked? (If the mouse button is released outside the control a click event isn't raised).
 #define CONTROL_VISIBLE				(1 << 13)	// Is the control visible?
+#define CONTROL_MOUSE_OVER			(1 << 14)
 
 //
 // Control - Function pointer types.
