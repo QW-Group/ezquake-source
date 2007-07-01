@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.141 2007-06-22 23:15:02 qqshka Exp $
+	$Id: hud_common.c,v 1.142 2007-07-01 21:32:22 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -26,6 +26,7 @@
 #include "sbar.h"
 #include "hud.h"
 #include "Ctrl.h"
+#include "console.h" // gavoja
 
 
 #ifndef STAT_MINUS
@@ -567,6 +568,40 @@ void SCR_HUD_DrawClock(hud_t *hud)
         else
             SCR_DrawSmallClock(x, y, hud_clock_style->value, hud_clock_blink->value, hud_clock_scale->value, TIMETYPE_CLOCK);
     }
+}
+
+//---------------------
+//
+// draw HUD notify
+//
+
+void SCR_HUD_DrawNotify(hud_t* hud)
+{
+	static cvar_t* hud_notify_rows = NULL;
+	static cvar_t* hud_notify_scale;
+	static cvar_t* hud_notify_time;
+	static cvar_t* hud_notify_cols;
+
+	int x;
+	int y;
+	int width;
+	int height;
+
+	if (hud_notify_rows == NULL) // First time.
+	{
+       hud_notify_rows  = HUD_FindVar(hud, "rows");
+       hud_notify_cols  = HUD_FindVar(hud, "cols");
+       hud_notify_scale = HUD_FindVar(hud, "scale");
+       hud_notify_time  = HUD_FindVar(hud, "time");
+	}
+
+	height = Q_rint((con_linewidth / hud_notify_cols->integer) * hud_notify_rows->integer * 8 * hud_notify_scale->integer);
+	width  = 8 * hud_notify_cols->integer * hud_notify_scale->integer;
+
+	if (HUD_PrepareDraw(hud, width, height, &x, &y))
+	{
+		SCR_DrawNotify(x, y, hud_notify_scale->integer, hud_notify_time->integer, hud_notify_rows->integer, hud_notify_cols->integer);
+	}
 }
 
 //---------------------
@@ -6114,8 +6149,17 @@ void CommonDraw_Init(void)
 		"countdown","0",
         NULL);
 
+	HUD_Register("notify", NULL, "Shows last console lines",
+		HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawNotify,
+		"1", "top", "left", "top", "0", "0", "0", "0 0 0", NULL,
+		"rows", "4",
+		"cols", "30",
+		"scale", "1",
+		"time", "4",
+		NULL);
+
 	// fps
-	HUD_Register("fps", /*"show_fps"*/ NULL, // hexum -> don't support aliases for now
+	HUD_Register("fps", NULL, 
         "Shows your current framerate in frames per second (fps). "
         "Can also show minimum framerate, that occured in last measure period.",
         HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFPS,

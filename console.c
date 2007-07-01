@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.56 2007-05-28 10:47:33 johnnycz Exp $
+	$Id: console.c,v 1.57 2007-07-01 21:32:21 cokeman1982 Exp $
 */
 // console.c
 
@@ -60,6 +60,7 @@ cvar_t		con_particles_alpha  = {"con_particles_alpha",  "1"};
 cvar_t		con_particles_images = {"con_particles_images", "3"};
 #endif
 
+cvar_t		con_notify = {"con_notify", "1"};
 cvar_t		_con_notifylines = {"con_notifylines","4"};
 cvar_t		con_notifytime = {"con_notifytime","3"};		//seconds
 cvar_t		con_wordwrap = {"con_wordwrap","1"};
@@ -449,6 +450,7 @@ void Con_Init (void) {
 	Cvar_Register (&con_notifytime);
 	Cvar_Register (&con_wordwrap);
 	Cvar_Register (&con_clearnotify);
+	Cvar_Register (&con_notify);
 	//Cvar_Register (&xyzh);
 
 #ifdef GLQUAKE
@@ -723,6 +725,9 @@ void Con_DrawNotify (void) {
 	clrinfo_t clr[sizeof(buf)];
 	float time;
 
+	if (!con_notify.value)
+		return;
+
 	maxlines = _con_notifylines.value;
 	if (maxlines > NUM_CON_TIMES)
 		maxlines = NUM_CON_TIMES;
@@ -801,6 +806,170 @@ void Con_DrawNotify (void) {
 #ifdef GLQUAKE
 void DrawCP (int lines);
 #endif
+
+// Draws the last few lines of output as a custom HUD element.
+void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyLines, int notifyCols)
+{
+	int v, skip, maxlines, i, j, k, idx, draw, offset;
+	wchar *text, *s;
+	wchar buf[1024];
+	clrinfo_t clr[sizeof(buf)];
+	float time;
+	int notifyWidth;
+
+	if (notifyCols > (con_linewidth))
+		notifyCols = con_linewidth;
+
+	if (notifyCols < 10)
+		notifyCols = 10;
+
+	notifyWidth = notifyCols * 8;
+	maxlines = notifyLines;
+
+	if (maxlines > NUM_CON_TIMES)
+		maxlines = NUM_CON_TIMES;
+	if (maxlines < 0)
+		maxlines = 0;
+
+	v = 0;
+
+	for (i = con.current - maxlines + 1; i <= con.current; i++)
+	{
+		if (i < 0)
+			continue;
+
+		time = con_times[i % NUM_CON_TIMES];
+		if (time == 0)
+			continue;
+
+		time = cls.realtime - time;
+		if (time > con_notifytime.value)
+			continue;
+
+		idx = (i % con_totallines)*con_linewidth;
+		text = con.text + idx;
+
+		clearnotify = 0;
+		scr_copytop = 1;
+
+		// Copy current line to buffer
+		offset = 0;
+		draw = 0;
+		for(j = 0; j < con_linewidth; j++)
+		{
+			// each new line of a notify hud element
+			if ((j % notifyCols) == 0 && j != 0)
+			{
+				for (k = 0; k < (j - offset); ++k)
+				{
+					if (buf[k] != ' ')
+					{
+						draw = 1;
+						break;
+					}
+				}
+
+				buf[j - offset] = '\0';
+				offset = j;
+			}
+			else if (j == (con_linewidth - 1)) // Ending of the string.
+			{
+				for (k = 0; k < (j - offset); ++k)
+				{
+					if (buf[k] != ' ')
+					{
+						draw = 1;
+						break;
+					}
+				}
+
+				buf[j - offset] = '\0';
+			}
+
+			// Output.
+			if (draw)
+			{
+				if (!draw)
+					continue;
+
+				Draw_ScalableColoredString (
+					posX,
+					v + posY,
+					buf,
+					clr,
+					notifyCols,
+					0,
+					scale
+					);
+
+				// move text down
+				v += (8 * scale);
+
+				if (v > (notifyLines * scale))
+					notifyLines = v;
+
+				draw = 0;
+			}
+
+			buf[j - offset] = text[j];
+			clr[j - offset] = con.clr[idx + j]; // copy whole color struct
+			clr[j - offset].i = j; // set proper index
+		}
+	}
+
+	if (key_dest == key_message)
+	{
+		wchar temp[MAXCMDLINE + 1];
+
+		clearnotify = 0;
+		scr_copytop = 1;
+
+		if (chat_team)
+		{
+			Draw_SString (posX, v + posY, "say_team: ", scale);
+			skip = 10;
+		}
+		else
+		{
+			Draw_SString (posX, v + posY, "say: ", scale);
+			skip = 5;
+		}
+
+		// FIXME: clean this up
+		qwcslcpy (temp, chat_buffer, sizeof(temp) / sizeof(wchar));
+		s = temp;
+
+		// Add the cursor frame.
+		if ((int) (curtime * con_cursorspeed) & 1)
+		{
+			if (chat_linepos == qwcslen(s))
+				s[chat_linepos+1] = '\0';
+			s[chat_linepos] = 11;
+		}
+
+
+		if (chat_linepos + skip >= notifyCols)
+			s += 1 + chat_linepos + skip - notifyCols;
+
+		j = 0;
+
+		while (s[j] && (j + skip < notifyCols))
+		{
+			Draw_SCharacter (
+				posX + (j + skip) * 8 * scale,
+				v + posY,
+				s[j],
+				scale
+				);
+
+			j++;
+		}
+
+		v += (8 * scale);
+		if (v > con_notifylines)
+			con_notifylines = v + bound(0, con_shift.value, 8);
+	}
+}
 
 //Draws the console with the solid background
 void Con_DrawConsole (int lines) {
@@ -1182,5 +1351,6 @@ void DrawCP (int lines) {
 
 	AddCP(); // add particle
 }
+
 
 #endif

@@ -55,6 +55,7 @@ extern  qbool    con_addtimestamp;
 extern	int			con_ormask;
 
 extern int con_totallines;
+extern int con_linewidth;
 extern qbool con_initialized, con_suppress;
 extern	int	con_notifylines;		// scan lines to clear for notify lines
 
@@ -66,6 +67,9 @@ void Con_SafePrintf (char *fmt, ...);
 void Con_PrintW (wchar *txt);
 void Con_Clear_f (void);
 void Con_DrawNotify (void);
+
+void SCR_DrawNotify(int x, int y, float scale, int notifyTime, int notifyLines, int notifyCols);
+
 void Con_ClearNotify (void);
 void Con_ToggleConsole_f (void);
 

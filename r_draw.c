@@ -335,6 +335,12 @@ void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int 
 	Draw_ColoredString(x, y, wcs2str(text), red);
 }
 
+// No scale in software. Sorry :(
+void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale) 
+{
+       Draw_ColoredString(x, y, wcs2str(text), red);
+}
+
 void Draw_Pixel(int x, int y, byte color) {
 	byte *dest;
 

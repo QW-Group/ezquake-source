@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.67 2007-06-17 18:51:02 himan Exp $
+$Id: gl_draw.c,v 1.68 2007-07-01 21:32:22 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1160,6 +1160,101 @@ _continue:
 	glEnd ();
 
 	if (gl_alphafont.value)	{
+		if (atest)
+			glEnable(GL_ALPHA_TEST);
+		if (!blend)
+			glDisable(GL_BLEND);
+	}
+
+	glColor4ubv(white4);
+
+	if (scr_coloredText.value)
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+}
+
+void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale)
+{
+	byte white4[4] = {255, 255, 255, 255}, rgba[4];
+	int num, i, last, j, k;
+	qbool atest = false;
+	qbool blend = false;
+	int slot, oldslot;
+
+	if (!*text || !clr)
+		return;
+
+	if (gl_alphafont.value)
+	{
+		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
+			glDisable(GL_ALPHA_TEST);
+		if (!(blend = glIsEnabled(GL_BLEND)))
+			glEnable(GL_BLEND);
+	}
+
+	if (scr_coloredText.value)
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	GL_Bind (char_textures[0]);
+	oldslot = 0;
+
+	glColor4ubv(white4);
+
+	glBegin (GL_QUADS);
+
+	for (last = int_white, j = i = 0; text[i]; i++)
+	{
+		if (scr_coloredText.value && j < clr_cnt && i == clr[j].i)
+		{
+			if (clr[j].c != last)
+				glColor4ubv(Int_2_RGBA(last = clr[j].c, rgba));
+			j++;
+		}
+
+		num = text[i];
+		if (num == 32)
+		{
+			x += (8 * scale);
+			continue;
+		}
+
+		slot = 0;
+		if ((num & 0xFF00) != 0)
+		{
+			for (k = 1; k < MAX_CHARSETS; k++)
+			{
+				if (char_range[k] == (num & 0xFF00))
+				{
+					slot = k;
+					break;
+				}
+			}
+
+			if (k == MAX_CHARSETS)
+				num = '?';
+		}
+
+		if (slot != oldslot)
+		{
+			glEnd ();
+			GL_Bind (char_textures[slot]);
+			glBegin (GL_QUADS);
+			oldslot = slot;
+		}
+
+		num &= 255;
+		// Do not convert to red if we use coloredText.
+		if (!scr_coloredText.value && red) 
+			num |= 128;
+
+		Draw_SCharacter(x, y, num, scale);
+
+		x += (8 * scale);
+	}
+
+	glEnd ();
+
+	if (gl_alphafont.value) 
+	{
 		if (atest)
 			glEnable(GL_ALPHA_TEST);
 		if (!blend)

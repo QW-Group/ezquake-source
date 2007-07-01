@@ -21,6 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // draw.h -- these are the only functions outside the refresh allowed
 // to touch the vid buffer
 
+#ifndef __DRAW_H__
+#define __DRAW_H__
+
 #ifdef GLQUAKE
 
 #define	MAX_SCRAPS		2
@@ -87,6 +90,8 @@ typedef struct clrinfo_s {
 void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red);
 void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red);
 
+void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale);
+
 mpic_t *Draw_CachePicSafe (char *path, qbool true, qbool only24bit);
 mpic_t *Draw_CachePic (char *path);
 mpic_t *Draw_CacheWadPic (char *name);
@@ -132,3 +137,9 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
 
 qbool R_CharAvailable (wchar num);
+
+#endif // __DRAW_H__	
+
+
+
+
