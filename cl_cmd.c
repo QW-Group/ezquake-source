@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.47 2007-05-28 16:21:38 johnnycz Exp $
+	$Id: cl_cmd.c,v 1.48 2007-07-01 00:48:00 qqshka Exp $
 */
 
 #include <time.h>
@@ -158,6 +158,11 @@ void CL_Say_f (void) {
 	int tmp;
 	qbool qizmo = false;
 	extern cvar_t cl_fakename;
+
+	if (cls.mvdplayback == QTV_PLAYBACK) {
+		QTV_Say_f();
+		return;
+	}
 
 	if (Cmd_Argc() < 2)
 		return;

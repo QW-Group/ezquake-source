@@ -1,12 +1,28 @@
 /*
-	Support for FTE QuakeTV automated startup and connecting
+	Support for FTE QuakeTV
 
-	$Id: qtv.c,v 1.8 2007-06-21 11:31:37 johnnycz Exp $
+	$Id: qtv.c,v 1.9 2007-07-01 00:48:00 qqshka Exp $
 */
 
 #include "quakedef.h"
 #include "winquake.h"
 #include "qtv.h"
+#include "teamplay.h"
+#include "fs.h"
+
+cvar_t	qtv_buffertime = {"qtv_buffertime", "0.5"};
+
+
+void QTV_Init(void)
+{
+	Cvar_SetCurrentGroup(CVAR_GROUP_MVD); // FIXME: add qtv group instead
+	
+	Cvar_Register(&qtv_buffertime);
+
+	Cvar_ResetCurrentGroup();
+}
+
+//=================================================
 
 // ripped from FTEQTV, original name is SV_ConsistantMVDData
 // return non zero if we have at least one message
@@ -55,5 +71,39 @@ gottotallength:
 		available += length;
 		buffer += length;
 	}
+}
+
+//=================================================
+
+void QTV_Say_f (void)
+{
+    extern vfsfile_t *playbackfile;
+	char data[1024 + 100] = {0}, text[1024], *s;
+	sizebuf_t buf;
+
+	if (Cmd_Argc() < 2)
+		return;
+
+	// lowercase command
+	for (s = Cmd_Argv(0); *s; s++)
+		*s = (char) tolower(*s);
+
+	if (cls.state == ca_disconnected) {
+		Com_Printf ("Can't \"%s\", not connected\n", Cmd_Argv(0));
+		return;
+	}
+
+	SZ_Init(&buf, data, sizeof(data));
+
+	s = TP_ParseMacroString (Cmd_Args());
+	s = TP_ParseFunChars (s, true);
+
+	snprintf(text, sizeof(text), "%s %s", Cmd_Argv(0), s);
+
+	MSG_WriteShort  (&buf, 2 + 1 + strlen(text) + 1); // short + byte + null terminated string
+	MSG_WriteByte   (&buf, qtv_clc_stringcmd);
+	MSG_WriteString (&buf, text);
+
+	VFS_WRITE(playbackfile, buf.data, buf.cursize);
 }
 

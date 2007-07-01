@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.73 2007-06-29 08:23:23 qqshka Exp $
+	$Id: cl_demo.c,v 1.74 2007-07-01 00:48:00 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -40,6 +40,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 float olddemotime, nextdemotime;
 
 double bufferingtime; // if we stream from QTV, this is non zero when we trying fill our buffer
+
+#define QTVBUFFERTIME bound(0.1, qtv_buffertime.value, 10);
 
 //
 // Vars related to QIZMO compressed demos. 
@@ -823,12 +825,12 @@ qbool pb_ensure(void)
 
 	if (cls.mvdplayback == QTV_PLAYBACK && !bufferingtime)
 	{
-		double prebufferseconds = 2; // hard coded pre buffering time is 2 seconds
+		double prebufferseconds = QTVBUFFERTIME;
 
 		bufferingtime = Sys_DoubleTime() + prebufferseconds;
 
 		if (developer.integer == 2)
-			Com_Printf("qtv: no enough buffered, buffering for %.1f\n", prebufferseconds); // print some annoying message
+			Com_DPrintf("qtv: no enough buffered, buffering for %.1f\n", prebufferseconds); // print some annoying message
 	}
 
 	return false;
@@ -2729,7 +2731,7 @@ void CL_QTVList_f (void)
 void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 {
 	int i;
-	double prebufferseconds = 2; // hard coded pre buffering time is 2 seconds
+	double prebufferseconds = QTVBUFFERTIME;
 
 	// End any current game.
 	Host_EndGame();
