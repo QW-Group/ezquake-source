@@ -898,10 +898,10 @@ int EZ_control_OnDraw(ez_control_t *self)
 
 	#else // SOFTWARE
 	if (self->parent 
-		&& (self->absolute_x >= self->parent->absolute_x) 
+		&& (self->absolute_x >= self->parent->absolute_x)
 		&& (self->absolute_y >= self->parent->absolute_y)
-		&& ((self->absolute_x + self->width) <= (self->parent->absolute_x + self->parent->width)
-		&& ((self->absolute_y + self->height) <= (self->parent->absolute_y + self->parent->height)
+		&& ((self->absolute_x + self->width) <= (self->parent->absolute_x + self->parent->width))
+		&& ((self->absolute_y + self->height) <= (self->parent->absolute_y + self->parent->height)))
 	{
 		// TODO: Draw the control normally in software.
 	}
