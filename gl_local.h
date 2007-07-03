@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_local.h,v 1.29 2007-06-06 21:24:35 cokeman1982 Exp $
+	$Id: gl_local.h,v 1.30 2007-07-03 00:07:05 cokeman1982 Exp $
 
 */
 // gl_local.h -- private refresh defs
@@ -247,6 +247,9 @@ extern qbool	r_skyboxloaded;
 
 // gl_draw.c
 void GL_Set2D (void);
+void GL_EnableScissorRectangle(int x, int y, int width, int height);
+void GL_EnableScissor(int left, int right, int top, int bottom);
+void GL_DisableScissor(); 
 
 // gl_rmain.c
 qbool R_CullBox (vec3_t mins, vec3_t maxs);

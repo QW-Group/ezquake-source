@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.68 2007-07-01 21:32:22 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.69 2007-07-03 00:07:05 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -230,6 +230,21 @@ void Draw_InitCrosshairs(void) {
 	Cvar_Set(&gl_crosshairimage, str);
 }
 
+void GL_EnableScissorRectangle(int x, int y, int width, int height)
+{
+	glEnable(GL_SCISSOR_TEST);
+	glScissor(x, glheight - (y + height), width, height);
+}
+
+void GL_EnableScissor(int left, int right, int top, int bottom)
+{
+	GL_EnableScissorRectangle(left, top, (right - left), (bottom - top));
+}
+
+void GL_DisableScissor()
+{
+	glDisable(GL_SCISSOR_TEST);
+}
 
 /*
 =============================================================================
