@@ -208,6 +208,11 @@ typedef struct ez_control_s
 	int					height_max;
 	int					height_min;
 
+	int					bound_top;
+	int					bound_left;
+	int					bound_right;
+	int					bound_bottom;
+
 	int					resize_handle_thickness;		// The thickness of the resize handles on the sides of the control.
 
 	int					absolute_x;						// The absolute screen coordinates for the control.
@@ -476,6 +481,19 @@ typedef struct ez_button_events_s
 	ez_control_handler_fp	OnAction;			// The event that's raised when the button is clicked / activated via a button.
 } ez_button_events_t;
 
+typedef enum ez_textalign_e
+{
+	top_left,
+	top_center,
+	top_right,
+	middle_left,
+	middle_center,
+	middle_right,
+	bottom_left,
+	bottom_center,
+	bottom_right
+} ez_textalign_t;
+
 typedef struct ez_button_s
 {
 	ez_control_t			super;				// The super class.
@@ -483,11 +501,26 @@ typedef struct ez_button_s
 	ez_button_events_t		events;				// Specific events for the button control.
 	ez_button_events_t		event_handlers;		// Specific event handlers for the button control.
 
+	mpic_t					*focused_image;		// The image for the button when it is focused.
+	mpic_t					*normal_image;		// The normal image used for the button.
 	mpic_t					*hover_image;		// The image that is shown for the button when the mouse is over it.
 	mpic_t					*pressed_image;		// The image that is shown when the button is pressed.
 
-	byte					color_hover[4];
-	byte					color_pressed[4];
+	byte					color_focused[4];	// Color of the focus indicator of the button.
+	byte					color_normal[4];	// The normal color of the button.
+	byte					color_hover[4];		// Color when the button is hovered.
+	byte					color_pressed[4];	// Color when the button is pressed.
+
+	int						padding_top;
+	int						padding_left;
+	int						padding_right;
+	int						padding_bottom;
+	char					*text;				// The text for the button.
+	ez_textalign_t			text_alignment;		// Text alignment.
+	clrinfo_t				focused_text_color;	// Text color when the button is focused.
+	clrinfo_t				normal_text_color;	// Text color when the button is in it's normal state.
+	clrinfo_t				hover_text_color;	// Text color when the button is hovered.
+	clrinfo_t				pressed_text_color;	// Text color when the button is pressed.
 } ez_button_t;
 
 //
@@ -519,19 +552,29 @@ void EZ_button_Destroy(ez_control_t *self, qbool destroy_children);
 int EZ_button_OnAction(ez_control_t *self);
 
 // 
+// Button - Sets the normal color of the button.
+//
+void EZ_button_SetNormalColor(ez_button_t *self, byte r, byte g, byte b, byte alpha);
+
+// 
 // Button - Sets the pressed color of the button.
 //
-void EZ_button_SetPressedColor(ez_control_t *self, byte r, byte g, byte b, byte alpha);
+void EZ_button_SetPressedColor(ez_button_t *self, byte r, byte g, byte b, byte alpha);
 
 // 
 // Button - Sets the hover color of the button.
 //
-void EZ_button_SetHoverColor(ez_control_t *self, byte r, byte g, byte b, byte alpha);
+void EZ_button_SetHoverColor(ez_button_t *self, byte r, byte g, byte b, byte alpha);
+
+// 
+// Button - Sets the focused color of the button.
+//
+void EZ_button_SetFocusedColor(ez_button_t *self, byte r, byte g, byte b, byte alpha);
 
 // 
 // Button - Sets the OnAction event handler.
 //
-void EZ_button_SetOnAction(ez_control_t *self, ez_control_handler_fp OnAction);
+void EZ_button_SetOnAction(ez_button_t *self, ez_control_handler_fp OnAction);
 
 //
 // Button - OnDraw event.

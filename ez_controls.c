@@ -131,6 +131,42 @@ void EZ_double_linked_list_Order(ez_double_linked_list_t *list, PtFuncCompare co
 // =========================================================================================
 
 //
+// Control tree - 
+// Sets the drawing bounds for a control and then calls the function
+// recursivly on all it's children. These bounds are used to restrict the drawing
+// of all children that should be contained within it's parent, and their children
+// to within the bounds of the parent.
+//
+static void EZ_tree_SetDrawBounds(ez_control_t *control)
+{
+	ez_dllist_node_t *iter = NULL;
+	ez_control_t *child = NULL;
+	ez_control_t *p = control->parent;
+
+	// If the control has a parent, set the corresponding bound
+	// to the parents bound, otherwise use the drawing area of
+	// the control as bounds (aka windows).
+	control->bound_top		= (p) ? (p->bound_top)		: (control->absolute_y);
+	control->bound_bottom	= (p) ? (p->bound_bottom)	: (control->absolute_y + control->height);
+	control->bound_left		= (p) ? (p->bound_left)		: (control->absolute_x);
+	control->bound_right	= (p) ? (p->bound_right)	: (control->absolute_x + control->width);
+
+	// Calculate the bounds for the children.
+	for (iter = control->children.head; iter; iter = iter->next)
+	{
+		child = (ez_control_t *)iter->payload;
+		
+		// TODO : Probably should some better check for infinte loop here also.
+		if (child == control)
+		{
+			Sys_Error("EZ_tree_SetChildBound(): Infinite loop, child is its own parent\n");
+		}
+
+		EZ_tree_SetDrawBounds(child);
+	}
+}
+
+//
 // Control Tree - Draws a control tree.
 // 
 void EZ_tree_Draw(ez_tree_t *tree)
@@ -138,7 +174,15 @@ void EZ_tree_Draw(ez_tree_t *tree)
 	ez_control_t *payload = NULL;
 	ez_dllist_node_t *iter = tree->drawlist.head;
 
-	while(iter)
+	if (!tree->root)
+	{
+		return;
+	}
+
+	// Calculate the drawing bounds for all the controls in the control tree.
+	EZ_tree_SetDrawBounds(tree->root);
+
+	while (iter)
 	{
 		payload = (ez_control_t *)iter->payload;
 
@@ -148,15 +192,15 @@ void EZ_tree_Draw(ez_tree_t *tree)
 		if (payload->parent && (payload->flags & CONTROL_CONTAINED))
 		{
 			ez_control_t *p = payload->parent;
-			glEnable(GL_SCISSOR_TEST);
-			glScissor(p->absolute_x, glheight - (p->absolute_y + p->height), p->width, p->height);
+			GL_EnableScissor(p->bound_left, p->bound_right, p->bound_top, p->bound_bottom);
 		}
+
 		#endif // GLQUAKE
 
 		CONTROL_RAISE_EVENT(NULL, payload, OnDraw);
 
 		#ifdef GLQUAKE
-		glDisable(GL_SCISSOR_TEST);
+		GL_DisableScissor();
 		#endif // GLQUAKE
 
 		iter = iter->next;
@@ -214,6 +258,7 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 		// Find the next control that can be focused.
 		while(node_iter && !found)
 		{
+			ez_control_t *ha = (ez_control_t *)node_iter->payload;
 			found = EZ_control_SetFocusByNode((ez_control_t *)node_iter->payload, node_iter);
 			node_iter = (next_control) ? node_iter->next : node_iter->previous;
 		}
@@ -230,6 +275,7 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 		// Find the next control that can be focused.
 		while(node_iter && !found)
 		{
+			ez_control_t *ha = (ez_control_t *)node_iter->payload;
 			found = EZ_control_SetFocusByNode((ez_control_t *)node_iter->payload, node_iter);
 			node_iter = (next_control) ? node_iter->next : node_iter->previous;
 		}
@@ -1021,7 +1067,7 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 	mouse_delta_y = Round(ms->y_old - ms->y);
 
 	mouse_inside = POINT_IN_RECTANGLE(ms->x, ms->y, self->absolute_x, self->absolute_y, self->width, self->height);
-	prev_mouse_inside = !POINT_IN_RECTANGLE(ms->x_old, ms->y_old, self->absolute_x, self->absolute_y, self->width, self->height);
+	prev_mouse_inside = POINT_IN_RECTANGLE(ms->x_old, ms->y_old, self->absolute_x, self->absolute_y, self->width, self->height);
 
 	// If the control contained within it's parent,
 	// the mouse must be within the parents bounds also for
@@ -1033,7 +1079,7 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 		int p_w = self->parent->width;
 		int p_h = self->parent->height;
 		mouse_inside_parent = POINT_IN_RECTANGLE(ms->x, ms->y, p_x, p_y, p_w, p_h);
-		prev_mouse_inside_parent = POINT_IN_RECTANGLE(ms->x_old, ms->y_old, p_x, p_y, p_w, p_h);
+		prev_mouse_inside_parent = POINT_IN_RECTANGLE(old_ms->x, old_ms->y, p_x, p_y, p_w, p_h);
 	}
 
 	// Raise more specific events.
@@ -1063,7 +1109,7 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseUp, ms);
 		}
 	}
-	else if((!is_contained && prev_mouse_inside) || (is_contained && prev_mouse_inside_parent))
+	else if((!is_contained && prev_mouse_inside) || (is_contained && !prev_mouse_inside_parent))
 	{
 		CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseLeave, ms);
 	}
@@ -1106,8 +1152,8 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 	{
 		// Root control will be moved relative to the screen,
 		// others relative to their parent.
-		int x = self->x + (ms->x - ms->x_old);
-		int y = self->y + (ms->y - ms->y_old);
+		int x = self->x + Round(ms->x - ms->x_old);
+		int y = self->y + Round(ms->y - ms->y_old);
 
 		// Should the control be contained within it's parent?
 		// Then don't allow the mouse to move outside the parent
@@ -1118,16 +1164,17 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 			{
 				ms->x = ms->x_old;
 				x = self->x;
+				mouse_handled = true;
 			}
 			
 			if (MOUSE_OUTSIDE_PARENT_Y(self, ms))
 			{
-				ms->y = ms->y_old;
+				ms->y = ms->y_old;				
 				y = self->y;
+				mouse_handled = true;
 			}
 		}
 
-		mouse_handled = true;
 		EZ_control_SetPosition(self, x, y);
 	}
 
@@ -1373,7 +1420,7 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 	button->super.CLASS_ID = EZ_BUTTON_ID;
 	button->super.inheritance_level = EZ_BUTTON_INHERITANCE_LEVEL;
 
-	button->super.flags = flags | CONTROL_FOCUSABLE | CONTROL_CONTAINED;
+	button->super.flags |= (flags | CONTROL_FOCUSABLE | CONTROL_CONTAINED);
 
 	// Override the draw function.
 	button->super.events.OnDraw = EZ_button_OnDraw;
@@ -1389,9 +1436,7 @@ void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
 //
 void EZ_button_Destroy(ez_control_t *self, qbool destroy_children)
 {
-	ez_button_t *button = NULL;
-	CONTROL_VALIDATE_CALL(self, EZ_BUTTON_ID, "EZ_button_Destroy()");
-	button = (ez_button_t *)self;
+	ez_button_t *button = (ez_button_t *)self;
 
 	// TODO: Cleanup button images?
 
@@ -1404,56 +1449,62 @@ void EZ_button_Destroy(ez_control_t *self, qbool destroy_children)
 //
 int EZ_button_OnAction(ez_control_t *self)
 {
-	ez_button_t *button = NULL;
-	CONTROL_VALIDATE_CALL(self, EZ_BUTTON_ID, "EZ_button_OnAction()");
-	button = (ez_button_t *)self;
-
+	ez_button_t *button = (ez_button_t *)self;
 	CONTROL_EVENT_HANDLER_CALL(NULL, button, OnAction);
 
 	return 0;
+}	
+
+// 
+// Button - Sets the normal color of the button.
+//
+void EZ_button_SetNormalColor(ez_button_t *self, byte r, byte g, byte b, byte alpha)
+{
+	self->color_normal[0] = r;
+	self->color_normal[1] = g;
+	self->color_normal[2] = b;
+	self->color_normal[3] = alpha;
 }
 
 // 
 // Button - Sets the pressed color of the button.
 //
-void EZ_button_SetPressedColor(ez_control_t *self, byte r, byte g, byte b, byte alpha)
+void EZ_button_SetPressedColor(ez_button_t *self, byte r, byte g, byte b, byte alpha)
 {
-	ez_button_t *button = NULL;
-	CONTROL_VALIDATE_CALL(self, EZ_BUTTON_ID, "EZ_button_SetPressedColor()");
-	button = (ez_button_t *)self;
-
-	button->color_pressed[0] = r;
-	button->color_pressed[1] = g;
-	button->color_pressed[2] = b;
-	button->color_pressed[3] = alpha;
+	self->color_pressed[0] = r;
+	self->color_pressed[1] = g;
+	self->color_pressed[2] = b;
+	self->color_pressed[3] = alpha;
 }
 
 // 
 // Button - Sets the hover color of the button.
 //
-void EZ_button_SetHoverColor(ez_control_t *self, byte r, byte g, byte b, byte alpha)
+void EZ_button_SetHoverColor(ez_button_t *self, byte r, byte g, byte b, byte alpha)
 {
-	ez_button_t *button = NULL;
-	CONTROL_VALIDATE_CALL(self, EZ_BUTTON_ID, "EZ_button_SetHoverColor()");
-	button = (ez_button_t *)self;
+	self->color_hover[0] = r;
+	self->color_hover[1] = g;
+	self->color_hover[2] = b;
+	self->color_hover[3] = alpha;
+}
 
-	button->color_hover[0] = r;
-	button->color_hover[1] = g;
-	button->color_hover[2] = b;
-	button->color_hover[3] = alpha;
+// 
+// Button - Sets the focused color of the button.
+//
+void EZ_button_SetFocusedColor(ez_button_t *self, byte r, byte g, byte b, byte alpha)
+{
+	self->color_focused[0] = r;
+	self->color_focused[1] = g;
+	self->color_focused[2] = b;
+	self->color_focused[3] = alpha;
 }
 
 // 
 // Button - Sets the OnAction event handler.
 //
-void EZ_button_SetOnAction(ez_control_t *self, ez_control_handler_fp OnAction)
+void EZ_button_SetOnAction(ez_button_t *self, ez_control_handler_fp OnAction)
 {
-	// Make sure we're not trying to pass an object instance that isn't specific enough.
-	ez_button_t *button = NULL;
-	CONTROL_VALIDATE_CALL(self, EZ_BUTTON_ID, "EZ_button_SetOnAction()");
-	button = (ez_button_t *)self;
-
-	button->event_handlers.OnAction = OnAction;
+	self->event_handlers.OnAction = OnAction;
 }
 
 //
@@ -1461,10 +1512,25 @@ void EZ_button_SetOnAction(ez_control_t *self, ez_control_handler_fp OnAction)
 //
 int EZ_button_OnDraw(ez_control_t *self)
 {
+	int text_x = 0;
+	int text_y = 0;
 	qbool mouse_inside = 0;
-	ez_button_t *button = NULL;
-	CONTROL_VALIDATE_CALL(self, EZ_BUTTON_ID, "EZ_button_SetOnAction()");
-	button = (ez_button_t *)self;
+	ez_button_t *button = (ez_button_t *)self;
+
+	// Run the parents implementation first.
+	EZ_control_OnDraw(self);
+
+	switch (button->text_alignment)
+	{
+		case top_left :
+			text_x = button->padding_left;
+			text_y = button->padding_top;
+			break;
+		case top_center :
+			text_x = button->padding_left;
+			text_y = button->padding_top;
+			break;
+	}
 
 	if (self->flags & CONTROL_CLICKED)
 	{
@@ -1477,38 +1543,60 @@ int EZ_button_OnDraw(ez_control_t *self)
 		#endif // GLQUAKE
 	}
 
-//	mouse_inside = POINT_IN_RECTANGLE(ms->x, ms->y, self->absolute_x, self->absolute_y, self->width, self->height);
-
 	if (self->flags & CONTROL_MOUSE_OVER)
 	{
 		if (self->flags & CONTROL_CLICKED)
 		{
 			#ifdef GLQUAKE
 			Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
-					button->color_pressed[0] / 255.0,
-					button->color_pressed[1] / 255.0, 
-					button->color_pressed[2] / 255.0, 
-					button->color_pressed[3] / 255.0);
+				button->color_pressed[0] / 255.0,
+				button->color_pressed[1] / 255.0, 
+				button->color_pressed[2] / 255.0, 
+				button->color_pressed[3] / 255.0);
 			#endif // GLQUAKE
 		}
 		else
 		{
 			#ifdef GLQUAKE
 			Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
-					button->color_hover[0] / 255.0,
-					button->color_hover[1] / 255.0, 
-					button->color_hover[2] / 255.0, 
-					button->color_hover[3] / 255.0);
+				button->color_hover[0] / 255.0,
+				button->color_hover[1] / 255.0, 
+				button->color_hover[2] / 255.0, 
+				button->color_hover[3] / 255.0);
 			#endif // GLQUAKE
 		}
 	}
 	else
 	{
-		EZ_control_OnDraw(self);
+		#ifdef GLQUAKE
+		Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
+			button->color_normal[0] / 255.0,
+			button->color_normal[1] / 255.0, 
+			button->color_normal[2] / 255.0, 
+			button->color_normal[3] / 255.0);
+		#endif // GLQUAKE
+	}
+
+	if (self->flags & CONTROL_FOCUSED)
+	{
+		#ifdef GLQUAKE
+		Draw_AlphaOutlineRGB(self->absolute_x, self->absolute_y, self->width, self->height,
+			button->color_focused[0] / 255.0,
+			button->color_focused[1] / 255.0, 
+			button->color_focused[2] / 255.0,
+			1,
+			button->color_focused[3] / 255.0);
+
+		//Draw_ColoredString3(self->absolute_x, self->absolute_y, button->text, button->focused_text_color, 1, 0);
+		#endif // GLQUAKE
 	}
 
 	// Draw control specifics.
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDraw);
+
+	#ifdef GLQUAKE
+	//GL_DisableScissor();
+	#endif // GLQUAKE
 
 	return 0;
 }
