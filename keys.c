@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.64 2007-06-30 11:31:29 johnnycz Exp $
+    $Id: keys.c,v 1.65 2007-07-03 00:09:21 cokeman1982 Exp $
 
 */
 
@@ -1869,6 +1869,7 @@ void Key_Init (void) {
 	keyshift['\\'] = '|';
 #endif // WITH_KEYMAP
 
+	
     hudeditorkeys[K_ALT] = true;
     hudeditorkeys[K_LALT] = true;
     hudeditorkeys[K_SHIFT] = true;
@@ -1912,16 +1913,20 @@ void Key_Init (void) {
 //   false: message wasn't handled by any window
 static qbool Mouse_EventDispatch(void)
 {
-	// send mouse cursor status to appropriate windows
-	switch (key_dest) {
-	case key_menu: return Menu_Mouse_Event(&scr_pointer_state);
-	case key_hudeditor:
-		// todo: HUD_Editor_Mouse_Moved(&scr_pointer_state);
-		// HUD Editor currently reads global variables cursor_x|y
-        break;
+	qbool mouse_handled = false;
+
+	// Send mouse cursor status to appropriate windows
+	switch (key_dest) 
+	{
+		case key_menu: 
+			mouse_handled = Menu_Mouse_Event(&scr_pointer_state);
+			break;
+		case key_hudeditor: 
+			mouse_handled = HUD_Editor_MouseEvent(&scr_pointer_state);
+			break;
 	}
     
-    return false;
+    return mouse_handled;
 }
 
 // called by Key_Event, updates button states
