@@ -136,17 +136,17 @@
 //
 #DEFINE WEAPON_CLASS    AXE                 "axe"
 #DEFINE WEAPON_CLASS    SHOTGUN             "shotgun"           "sg"
-#DEFINE WEAPON_CLASS    Q_SHOTGUN           "q shotgun"         "sg &c009q&r"
+#DEFINE WEAPON_CLASS    Q_SHOTGUN           "q shotgun"         "&c009q&r-sg"
 #DEFINE WEAPON_CLASS    SUPER_SHOTGUN       "super shotgun"     "ssg"
-#DEFINE WEAPON_CLASS    Q_SUPER_SHOTGUN     "q super shotgun"   "ssg &c009q&r"
+#DEFINE WEAPON_CLASS    Q_SUPER_SHOTGUN     "q super shotgun"   "&c009q&r-ssg"
 #DEFINE WEAPON_CLASS    NAILGUN             "nailgun"           "ng"
 #DEFINE WEAPON_CLASS    SUPER_NAILGUN       "super nailgun"     "sng"
-#DEFINE WEAPON_CLASS    Q_SUPER_NAILGUN     "q super nailgun"   "sng &c009q&r"
+#DEFINE WEAPON_CLASS    Q_SUPER_NAILGUN     "q super nailgun"   "&c009q&r-sng"
 #DEFINE WEAPON_CLASS    GRENADE_LAUNCHER    "grenade launcher"  "gl"
 #DEFINE WEAPON_CLASS    ROCKET_LAUNCHER     "rocket launcher"   "rl"
-#DEFINE WEAPON_CLASS    Q_ROCKET_LAUNCHER   "q rocket launcher" "rl &c009q&r"
+#DEFINE WEAPON_CLASS    Q_ROCKET_LAUNCHER   "q rocket launcher" "&c009q&r-rl"
 #DEFINE WEAPON_CLASS    LIGHTNING_GUN       "lightning gun"     "lg"
-#DEFINE WEAPON_CLASS    Q_LIGHTNING_GUN     "q lightning gun"   "lg &c009q&r"
+#DEFINE WEAPON_CLASS    Q_LIGHTNING_GUN     "q lightning gun"   "&c009q&r-lg"
 
 #DEFINE WEAPON_CLASS    RAIL_GUN            "rail gun"          "rail"		//for dmm8
 
