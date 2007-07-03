@@ -374,7 +374,7 @@
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  FLAME_THROWER 	   " is burnt up by "  "'s flame"
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  FLAME_THROWER 	   " is fried by " "'s fire"
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  FLAME_THROWER 	   " feels " "'s fire of wrath"
-#DEFINE OBITUARY    X_FRAGGED_BY_Y  FLAME_THROWER 	   " is reduced to ashes by"
+#DEFINE OBITUARY    X_FRAGGED_BY_Y  FLAME_THROWER 	   " is reduced to ashes by "
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  FLAME_THROWER 	   " is grilled by " "'s flame"
 #DEFINE OBITUARY    X_FRAGGED_BY_Y  INCENDIARY_ROCKET  " gets well done by " "'s incendiary rocket"
 #DEFINE OBITUARY    X_FRAGGED_BY_Y   FLAME_THROWER			" burns to death by " "'s flame"
