@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.65 2007-07-03 00:09:21 cokeman1982 Exp $
+    $Id: keys.c,v 1.66 2007-07-04 19:34:17 tonik Exp $
 
 */
 
@@ -989,7 +989,7 @@ void Key_Console (int key, int unichar)
 		}
 		case 'H': case 'h':		// ^H = BACKSPACE
 		{
-			if (!keydown[K_CTRL])
+			if (!keydown[K_CTRL] || keydown[K_ALT])
 			{
 				break;
 			}
@@ -1086,7 +1086,7 @@ void Key_Console (int key, int unichar)
 		}
 		case 'P': case 'p':		// ^P = back in history
 		{
-			if (!keydown[K_CTRL])
+			if (!keydown[K_CTRL] || keydown[K_ALT])
 			{
 				break;
 			}
@@ -1115,7 +1115,7 @@ void Key_Console (int key, int unichar)
 		}
 		case 'N': case 'n':		// ^N = forward in history
 		{
-			if (!keydown[K_CTRL])
+			if (!keydown[K_CTRL] || keydown[K_ALT])
 			{
 				break;
 			}
@@ -1213,7 +1213,7 @@ void Key_Console (int key, int unichar)
 		}
 	}
 
-	if (((key == 'V' || key == 'v') && keydown[K_CTRL])
+	if (((key == 'V' || key == 'v') && keydown[K_CTRL] && !keydown[K_ALT])
 		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT]))
 	{
 		wchar *clipText;
@@ -1238,7 +1238,7 @@ void Key_Console (int key, int unichar)
 		return;
 	}
 
-	if (key == 'u' && keydown[K_CTRL])
+	if (key == 'u' && keydown[K_CTRL] && !keydown[K_ALT])
 	{
 		if (key_linepos > 1)
 		{
@@ -1402,7 +1402,7 @@ void Key_Message (int key, wchar unichar) {
 			return;
 	}
 
-	if (((key == 'V' || key == 'v') && keydown[K_CTRL])
+	if (((key == 'V' || key == 'v') && keydown[K_CTRL] && !keydown[K_ALT])
 		|| ((key == K_INS || key == KP_INS) && keydown[K_SHIFT]))
 	{
 		wchar *clipText;
