@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.50 2007-07-01 04:34:02 qqshka Exp $
+	$Id: cl_cmd.c,v 1.51 2007-07-04 10:03:53 qqshka Exp $
 */
 
 #include <time.h>
@@ -578,11 +578,6 @@ void CL_User_f (void) {
 
 void CL_Users_f (void) {
 	int i, c;
-
-	if (cls.mvdplayback == QTV_PLAYBACK) {
-		QTV_Cmd_ForwardToServer();
-		return;
-	}
 
 	c = 0;
 	Com_Printf ("userid frags name\n");
