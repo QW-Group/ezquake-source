@@ -264,7 +264,7 @@
 // "up2 destroys his sentrygun"
 
 // TeamFortress
-#DEFINE WEAPON_CLASS    GRAPPLE             "grapple"           "grap"
+#DEFINE WEAPON_CLASS    GRAPPLE             "grapple"           "grpl"
 #DEFINE WEAPON_CLASS    BIOWEAPON           "bioweapon"         "bio"
 #DEFINE WEAPON_CLASS    SNIPER_RIFLE        "sniper rifle"      "snipe"
 #DEFINE WEAPON_CLASS    FLAME_THROWER       "flame thrower"     "flame"
@@ -292,7 +292,6 @@
 #DEFINE WEAPON_CLASS    DRONE               "drone"
 #DEFINE WEAPON_CLASS    KNIFE               "knife"
 #DEFINE WEAPON_CLASS    LUDE                "spy"
-#DEFINE WEAPON_CLASS    MACHINEGUN          "mgun"
 #DEFINE WEAPON_CLASS    PROXI               "proxi"
 #DEFINE WEAPON_CLASS    SENTRYGUN           "sent"
 #DEFINE WEAPON_CLASS    SPANNER             "span"
@@ -308,14 +307,12 @@
 
 // Sniper
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AIRSTRIKE			" was bombed by " "'s AirStrike call"
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	MACHINEGUN			" enjoys " "'s machinegun"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		" takes a bullet in the chest from "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		" succumbs to sniperfire from "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		" gets a third eye from "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		" gets his head blown off by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		" is made legless by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		" gets his legs blown off by "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_SPRAY		" collects "  "'s bullet spray."
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		" gets a sucking chest wound from "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		"'s liver is blown out by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		"'s chest explodes from " "'s sniper round"
@@ -323,6 +320,8 @@
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		"'s labotomized by " "'s sniper round"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		" is neutered by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_RIFLE		"'s legs explode open from " "'s shot"
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_SPRAY		" collects "  "'s bullet spray."
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	SNIPER_SPRAY			" enjoys " "'s machinegun"
 
 // Soldier
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	NAILGREN			" gets flayed by "  "'s nail grenade"
@@ -403,7 +402,7 @@
 // General Kills
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" is split from crotch to sternum by "		 "'s axe swing"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" is split in two with a powerful axe blow from "
-#DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" was knife-murdered by "
+#DEFINE OBITUARY	X_FRAGGED_BY_Y	KNIFE				" was knife-murdered by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" was put on the chop block by "
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					" was sliced and diced by " "'s blade"
 #DEFINE OBITUARY	X_FRAGGED_BY_Y	AXE					"'s death put another notch on "  "'s axe"
