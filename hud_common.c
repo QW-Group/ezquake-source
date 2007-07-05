@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.142 2007-07-01 21:32:22 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.143 2007-07-05 20:11:19 himan Exp $
 */
 //
 // common HUD elements
@@ -6151,7 +6151,7 @@ void CommonDraw_Init(void)
 
 	HUD_Register("notify", NULL, "Shows last console lines",
 		HUD_PLUSMINUS, ca_disconnected, 8, SCR_HUD_DrawNotify,
-		"1", "top", "left", "top", "0", "0", "0", "0 0 0", NULL,
+		"0", "top", "left", "top", "0", "0", "0", "0 0 0", NULL,
 		"rows", "4",
 		"cols", "30",
 		"scale", "1",
