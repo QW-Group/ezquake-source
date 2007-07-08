@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 	Ported by Cokeman, June 2007
 	last edit:
-	$Id: gl_bloom.c,v 1.3 2007-06-12 20:06:06 cokeman1982 Exp $
+	$Id: gl_bloom.c,v 1.4 2007-07-08 15:25:24 cokeman1982 Exp $
 
 */
 
@@ -286,7 +286,7 @@ void R_InitBloomTextures( void )
 void R_Bloom_DrawEffect( void )
 {
 	GL_Bind(r_bloomeffecttexture);
-	//glBindTexture(GL_TEXTURE_2D, r_bloomeffecttexture);
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glColor4f(r_bloom_alpha.value, r_bloom_alpha.value, r_bloom_alpha.value, 1.0f);
@@ -534,13 +534,11 @@ void R_Bloom_DownsampleView( void )
 
 		// Copy the screen and draw resized.
 		GL_Bind(r_bloomscreentexture);
-		//glBindTexture(GL_TEXTURE_2D, r_bloomscreentexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, curView_x, glheight - (curView_y + curView_height), curView_width, curView_height);
 		R_Bloom_Quad( 0,  glheight - midsample_height, midsample_width, midsample_height, screenText_tcw, screenText_tch  );
 
 		// Now copy into Downsampling (mid-sized) texture.
 		GL_Bind(r_bloomdownsamplingtexture);
-		//glBindTexture(GL_TEXTURE_2D, r_bloomdownsamplingtexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, midsample_width, midsample_height);
 
 		// Now draw again in bloom size.
@@ -552,7 +550,6 @@ void R_Bloom_DownsampleView( void )
 		glBlendFunc(GL_ONE, GL_ONE);
 		glColor4f( 0.5f, 0.5f, 0.5f, 1.0f );
 		GL_Bind(r_bloomscreentexture);
-		//glBindTexture(GL_TEXTURE_2D, r_bloomscreentexture);
 		R_Bloom_Quad( 0,  glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch );
 		glColor4f( 1.0f, 1.0f, 1.0f, 1.0f );
 		glDisable( GL_BLEND );
@@ -561,7 +558,6 @@ void R_Bloom_DownsampleView( void )
 	{    
 		// Downsample simple.
 		GL_Bind(r_bloomscreentexture);
-		//glBindTexture(GL_TEXTURE_2D, r_bloomscreentexture);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, curView_x, glheight - (curView_y + curView_height), curView_width, curView_height);
 		R_Bloom_Quad( 0, glheight - sample_height, sample_width, sample_height, screenText_tcw, screenText_tch );
 	}
@@ -570,7 +566,6 @@ void R_Bloom_DownsampleView( void )
 // =================
 // R_BloomBlend
 // =================
-//void R_BloomBlend ( refdef_t *fd, meshlist_t *meshlist )
 void R_BloomBlend (void)
 {
 	extern vrect_t	scr_vrect;
@@ -607,8 +602,6 @@ void R_BloomBlend (void)
 	glColor4f( 1, 1, 1, 1 );
 
 	// Setup current sizes
-	//  curView_x = fd->x;
-	//  curView_y = fd->y;
 	curView_x = scr_vrect.x * ((float)glwidth / vid.width);
 	curView_y = scr_vrect.y * ((float)glheight / vid.height);
 	curView_width = scr_vrect.width * ((float)glwidth / vid.width);
@@ -643,7 +636,6 @@ void R_BloomBlend (void)
 	// Restore the screen-backup to the screen.
 	glDisable(GL_BLEND);
 	GL_Bind(r_bloombackuptexture);
-	//glBindTexture(GL_TEXTURE_2D, r_bloombackuptexture);
 	glColor4f( 1, 1, 1, 1 );
 	R_Bloom_Quad( 0,
 		glheight - (r_screenbackuptexture_size * sampleText_tch),
