@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.119 2007-06-17 17:54:45 cokeman1982 Exp $
+$Id: cl_screen.c,v 1.120 2007-07-08 15:23:20 cokeman1982 Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -3566,7 +3566,7 @@ void SCR_Movieshot(char *name)
 mpic_t *SCR_LoadCursorImage(char *cursorimage)
 {
 	mpic_t *image = NULL;
-	#ifdef GLQUAKE
+
 	image = Draw_CachePicSafe(va("%s.lmp", cursorimage), false, false);
 
 	// Failed to load anything, maybe missing .lmp-file, so just try
@@ -3575,13 +3575,7 @@ mpic_t *SCR_LoadCursorImage(char *cursorimage)
 	{
 		image = Draw_CachePicSafe(cursorimage, false, true);
 	}
-	#else
-	// sadly, noone coded Draw_CachePicSafe for Release yet
-	// so we require user to have that file for non-GL version
-	// otherwise the client will not start
-	// image = Draw_CachePic(cursorimage);
-	image = NULL;
-	#endif
+
 	return image;
 }
 
