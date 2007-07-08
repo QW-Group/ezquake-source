@@ -177,8 +177,8 @@ void Draw_EnableScissor(int left, int right, int top, int bottom)
 	clamp(top, 0, vid.height);
 	clamp(bottom, 0, vid.height);
 
-	left = (left > right) ? (right) : (left);
-	top	 = (top > bottom) ? (bottom) : (right);
+	left = (left > right) ? right  : left;
+	top	 = (top > bottom) ? bottom : top;
 
 	scissor_left	= left;
 	scissor_right	= right;
@@ -186,7 +186,7 @@ void Draw_EnableScissor(int left, int right, int top, int bottom)
 	scissor_bottom	= bottom;
 }
 
-void SW_EnableScissorRectangle(int x, int y, int width, int height)
+void Draw_EnableScissorRectangle(int x, int y, int width, int height)
 {
 	Draw_EnableScissor(x, (x + width), y, (y + height));
 }
@@ -357,7 +357,6 @@ void Draw_CharacterW (int x, int y, wchar num)
 
 void Draw_String (int x, int y, const char *str) 
 {
-	//Draw_Fill(scissor_left, y, 1, 8, 4);
 	while (*str) 
 	{
 		Draw_Character (x, y, *str);
@@ -458,7 +457,10 @@ void Draw_Pixel(int x, int y, byte color)
 {
 	byte *dest;
 
-	dest = vid.buffer + y * vid.rowbytes + x;
+	if ((x < scissor_left) || (x > scissor_right) || (y < scissor_top) || (y > scissor_bottom))
+		return;
+
+	dest = vid.buffer + (y * vid.rowbytes) + x;
 	*dest = color;
 }
 
@@ -810,55 +812,12 @@ void Draw_TextBox (int x, int y, int width, int lines)
 
 void Draw_Pic (int x, int y, mpic_t *pic) 
 {
-	byte *dest, *source;
-	int v;
-
-	if (pic->alpha)
-	{
-		Draw_TransPic (x, y, pic);
-		return;
-	}
-
-	if (x < 0 || x + pic->width > vid.width || y < 0 || y + pic->height > vid.height)
-		Sys_Error ("Draw_Pic: bad coordinates");
-
-	source = pic->data;
-
-	dest = vid.buffer + y * vid.rowbytes + x;
-
-	for (v = 0; v < pic->height; v++) {
-		memcpy (dest, source, pic->width);
-		dest += vid.rowbytes;
-		source += pic->width;
-	}
+	Draw_TransSubPic(x, y, pic, 0, 0, pic->width, pic->height);
 }
-
-void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height);
 
 void Draw_SubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height) 
 {
-	byte *dest, *source;
-	int v;
-
-	if (pic->alpha) 
-	{
-		Draw_TransSubPic (x, y, pic, srcx, srcy, width, height);
-		return;
-	}
-
-	if ((x < 0) || (x + width > vid.width) || (y < 0) || (y + height > vid.height))
-		return;
-
-	source = pic->data + (srcy * pic->width) + srcx;
-
-	dest = vid.buffer + (y * vid.rowbytes) + x;
-
-	for (v = 0; v < height; v++) 
-	{
-		memcpy (dest, source, width);
-		dest += vid.rowbytes;
-		source += pic->width;
-	}
+	Draw_TransSubPic (x, y, pic, srcx, srcy, width, height);
 }
 
 void Draw_TransPic (int x, int y, mpic_t *pic) 
@@ -871,41 +830,70 @@ void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width,
 	byte *dest, *source, tbyte;
 	int v, u, i;
 
-	if ((x < 0) || (x + width > vid.width) || (y < 0) || (y + height > vid.height))
+	// Completely outside of scissor bounds.
+	if (((x + width) < scissor_left) || ((x - width) > scissor_right) 
+	 || ((y + height) < scissor_top) || ((y - height) > scissor_bottom))
 		return;
+
+	// Move the position in the source so that we only draw the part that is
+	// within the scissor bounds.
+	{
+		srcx += (x < scissor_left) ? (scissor_left - x) : 0;
+		width -= ((x + width) > scissor_right) ? ((x + width) - scissor_right) : 0;
+
+		srcy += (y < scissor_top) ? (scissor_top - y) : 0;
+		height -= ((y + height) > scissor_bottom) ? ((y + height) - scissor_bottom) : 0; 
+	}
+
+	if ((width < 0) || (height < 0) || (srcx > pic->width) || (srcy > pic->height))
+	{
+		return;
+	}
 
 	source = pic->data + srcy * pic->width + srcx;
 
 	dest = vid.buffer + y * vid.rowbytes + x;
 
-	if (width & 7) 
-	{	
-		// general
-		for (v = 0; v < height; v++) 
-		{
-			for (u = 0; u < width; u++)
+	if (pic->alpha)
+	{
+		if (width & 7) 
+		{	
+			// General
+			for (v = 0; v < height; v++) 
 			{
-				if ((tbyte = source[u]) != TRANSPARENT_COLOR)
-					dest[u] = tbyte;
-			}
-
-			dest += vid.rowbytes;
-			source += pic->width;
-		}
-	} 
-	else 
-	{	
-		// unwound
-		for (v = 0; v < height; v++) 
-		{
-			for (u = 0; u < width; u += 8) 
-			{
-				for (i = 0; i < 8; i++)
+				for (u = 0; u < width; u++)
 				{
-					if ((tbyte = source[u + i]) != TRANSPARENT_COLOR)
-						dest[u + i] = tbyte;
+					if ((tbyte = source[u]) != TRANSPARENT_COLOR)
+						dest[u] = tbyte;
 				}
+
+				dest += vid.rowbytes;
+				source += pic->width;
 			}
+		} 
+		else 
+		{	
+			// Unwound
+			for (v = 0; v < height; v++) 
+			{
+				for (u = 0; u < width; u += 8) 
+				{
+					for (i = 0; i < 8; i++)
+					{
+						if ((tbyte = source[u + i]) != TRANSPARENT_COLOR)
+							dest[u + i] = tbyte;
+					}
+				}
+				dest += vid.rowbytes;
+				source += pic->width;
+			}
+		}
+	}
+	else
+	{
+		for (v = 0; v < height; v++) 
+		{
+			memcpy (dest, source, width);
 			dest += vid.rowbytes;
 			source += pic->width;
 		}
@@ -1083,21 +1071,11 @@ void Draw_Fill (int x, int y, int w, int h, int c)
 	byte *dest;
 	int u, v;
 
-	if (!(cls.mvdplayback && cl_multiview.value == 2)) 
-	{ 
-		if (x < 0 || x + w > vid.width || y < 0 || y + h > vid.height) 
-		{
-			//Com_Printf ("Bad Draw_Fill(%d, %d, %d, %d, %c)\n", x, y, w, h, c);
-			return;
-		}
-	}
-
-	dest = vid.buffer + y*vid.rowbytes + x;
-	for (v = 0; v < h; v++, dest += vid.rowbytes)
+	for (v = 0; v < h; v++)
 	{
 		for (u = 0; u < w; u++)
 		{
-			dest[u] = c;
+			Draw_Pixel(x + u, y + v, c);
 		}
 	}
 }
@@ -1108,139 +1086,58 @@ void Draw_Fill (int x, int y, int w, int h, int c)
 // Draw_FadeBox
 // ================
 
-void Draw_FadeBox (int x, int y, int width, int height, byte color, float a)
+void Draw_FadeBox (int x, int y, int width, int height, byte color, float alpha)
 {
-    int         _x, _y;
-    byte        *pbuf;
-    //int         col_index;
-    //byte        color;
+	int t;
+	int cur_x, cur_y;
 
-    if (a <= 0)
-        return;
+	if (alpha <= 0)
+		return;
 
-    VID_UnlockBuffer ();
-    S_ExtraUpdate ();
-    VID_LockBuffer ();
+	for (cur_y = y; cur_y < y + height; cur_y++)
+	{
+		if (alpha < 0.333)
+		{
+			t = (cur_y & 1) << 1;
 
-	/*
-    // find color
-    clamp(r, 0, 1);
-    clamp(g, 0, 1);
-    clamp(b, 0, 1);
-    col_index = ((int)(r*63) << 12) +
-                ((int)(g*63) <<  6) +
-                ((int)(b*63) <<  0);
-    color = 0; // color = d_15to8table[col_index];
-	*/
+			for (cur_x = x; cur_x < x + width; cur_x++)
+			{
+				if ((cur_x & 3) == t)
+					Draw_Pixel(cur_x, cur_y, color); 
+			}
+		}
+		else if (alpha < 0.666)
+		{
+			t = (cur_y & 1);
 
-    for (_y=y; _y < y + height; _y++)
-    {
-        int t;
+			for (cur_x = x; cur_x < x + width; cur_x++)
+			{
+				if ((cur_x & 1) == t)
+					Draw_Pixel(cur_x, cur_y, color);
+			}
+		}
+		else if (alpha < 1)
+		{
+			t = (cur_y & 1) << 1;
 
-        pbuf = (byte *)(vid.buffer + vid.rowbytes*_y);
-        if (a < 0.333)
-        {
-            t = (_y & 1) << 1;
-
-            for (_x = x; _x < x + width; _x++)
-            {
-                if ((_x & 3) == t)
-                    pbuf[_x] = color;
-            }
-        }
-        else if (a < 0.666)
-        {
-            t = (_y & 1);
-
-            for (_x = x; _x < x + width; _x++)
-            {
-                if ((_x & 1) == t)
-                    pbuf[_x] = color;
-            }
-        }
-        else if (a < 1)
-        {
-            t = (_y & 1) << 1;
-
-            for (_x = x; _x < x + width; _x++)
-            {
-                if ((_x & 3) != t)
-                    pbuf[_x] = color;
-            }
-        }
-        else
-        {
-            for (_x = x; _x < x + width; _x++)
-                pbuf[_x] = color;
-        }
-    }
-
-    VID_UnlockBuffer ();
-    S_ExtraUpdate ();
-    VID_LockBuffer ();
+			for (cur_x = x; cur_x < x + width; cur_x++)
+			{
+				if ((cur_x & 3) != t)
+					Draw_Pixel(cur_x, cur_y, color);
+			}
+		}
+		else
+		{
+			for (cur_x = x; cur_x < x + width; cur_x++)
+				Draw_Pixel(cur_x, cur_y, color);
+		}
+	}
 }
 
 void Draw_FadeScreen (void) 
 {
-	int x,y;
-	byte *pbuf;
-	float alpha;
 
-	alpha = bound(0, scr_menualpha.value, 1);
-
-	if (!alpha)
-		return;
-
-	VID_UnlockBuffer ();
-	S_ExtraUpdate ();
-	VID_LockBuffer ();
-
-	for (y = 0; y < vid.height; y++) 
-	{
-		int	t;
-
-		pbuf = (byte *) (vid.buffer + vid.rowbytes * y);
-
-        if (alpha < 1 / 3.0)
-		{
-            t = (y & 1) << 1;
-
-            for (x = 0; x < vid.width; x++) 
-			{
-                if ((x & 3) == t)
-                    pbuf[x] = 0;
-            }
-		} 
-		else if (alpha < 2 / 3.0)
-		{
-            t = (y & 1) << 1;
-
-            for (x = 0; x < vid.width; x++)
-			{
-                if ((x & 1) == t)
-                    pbuf[x] = 0;
-            }
-		} 
-		else if (alpha < 1) 
-		{
-			t = (y & 1) << 1;
-
-			for (x = 0; x < vid.width; x++) 
-			{
-				if ((x & 3) != t)
-					pbuf[x] = 0;
-			}
-		} 
-		else
-		{            
-			for (x = 0; x < vid.width; x++)
-                pbuf[x] = 0;
-		}
-	}
-
-	VID_UnlockBuffer ();
-	S_ExtraUpdate ();
-	VID_LockBuffer ();
+	Draw_FadeBox(0, 0, vid.width, vid.height, 0, scr_menualpha.value);
 }
 
 //
