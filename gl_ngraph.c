@@ -25,9 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud.h"
 #include "hud_common.h"
 
-
-#define clamp(a,b,c) (a = min(max(a, b), c))
-
 int	netgraphtexture;	// netgraph texture
 
 // HUD -> hexum
