@@ -450,7 +450,7 @@ void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int 
 // No scale in software. Sorry :(
 void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale) 
 {
-       Draw_ColoredString(x, y, wcs2str(text), red);
+	Draw_ColoredString(x, y, wcs2str(text), red);
 }
 
 void Draw_Pixel(int x, int y, byte color) 
@@ -1068,7 +1068,6 @@ void Draw_TileClear (int x, int y, int w, int h)
 // 
 void Draw_Fill (int x, int y, int w, int h, int c) 
 {
-	byte *dest;
 	int u, v;
 
 	for (v = 0; v < h; v++)
