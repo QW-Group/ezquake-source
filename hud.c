@@ -50,9 +50,6 @@ char *snap_strings[] = {
 // Hud elements list.
 hud_t *hud_huds = NULL;
 
-// cvars.
-cvar_t hud_offscreen = {"hud_offscreen", "1"};
-
 //
 // Hud plus func - show element.
 //
@@ -741,7 +738,6 @@ void HUD_Init(void)
 
 	// Variables.
     Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
-	Cvar_Register (&hud_offscreen);
     Cvar_ResetCurrentGroup();
 
 	// Register the hud items.
@@ -1040,64 +1036,33 @@ qbool HUD_PrepareDraw(hud_t *hud, int width, int height, // In.
 
     y += hud->pos_y->value;
 
-    //
-    // Find if on-screen.
-    //
-    if (
-		#ifdef GLQUAKE
-		!hud_offscreen.value && // Only allow drawing off screen in GL (A lot more work for software).
-		#endif		
-		(x < 0  ||  x + width > vid.width  ||
-         y < 0  ||  y + height > vid.height))
-    {
-		// When in HUD editor mode, we also want to save
-		// the "real" positions (not relative to parent but top left of screen), 
-		// so that we get a better feedback when the user drags an 
-		// item partially offscreen and doesn't have hud_offscreen turned on.
-		if(key_dest == key_hudeditor)
-		{
-			hud->lx = x + frame_left;
-			hud->ly = y + frame_top;
-			hud->lw = width - frame_left - frame_right;
-			hud->lh = height - frame_top - frame_bottom;
-			hud->al = frame_left;
-			hud->ar = frame_right;
-			hud->at = frame_top;
-			hud->ab = frame_bottom;
-		}
+    // Draw frame.
+    HUD_DrawFrame(hud, x, y, width, height);
 
-        return false;
-    }
-    else
-    {
-        // Draw frame.
-        HUD_DrawFrame(hud, x, y, width, height);
+    // Assign values.
+    *ret_x = x + frame_left;
+    *ret_y = y + frame_top;
 
-        // Assign values.
-        *ret_x = x + frame_left;
-        *ret_y = y + frame_top;
+    // Remember values for children.
+    hud->lx = x + frame_left;
+    hud->ly = y + frame_top;
+    hud->lw = width - frame_left - frame_right;
+    hud->lh = height - frame_top - frame_bottom;
+    hud->al = frame_left;
+    hud->ar = frame_right;
+    hud->at = frame_top;
+    hud->ab = frame_bottom;
 
-        // Remember values for children.
-        hud->lx = x + frame_left;
-        hud->ly = y + frame_top;
-        hud->lw = width - frame_left - frame_right;
-        hud->lh = height - frame_top - frame_bottom;
-        hud->al = frame_left;
-        hud->ar = frame_right;
-        hud->at = frame_top;
-        hud->ab = frame_bottom;
+	// Check if we're supposed to draw the entire item or just the outline/frame.
+	// (If we're in hud editor align/place mode)
+	if(!HUD_Editor_ConfirmDraw(hud))
+	{
+		return false;
+	}
 
-		// Check if we're supposed to draw the entire item or just the outline/frame.
-		// (If we're in hud editor align/place mode)
-		if(!HUD_Editor_ConfirmDraw(hud))
-		{
-			return false;
-		}
-
-        // Remember drawing sequence.
-        hud->last_draw_sequence = host_screenupdatecount;
-        return true;
-    }
+    // Remember drawing sequence.
+    hud->last_draw_sequence = host_screenupdatecount;
+    return true;    
 }
 
 //
