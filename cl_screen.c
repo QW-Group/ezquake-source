@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.120 2007-07-08 15:23:20 cokeman1982 Exp $
+$Id: cl_screen.c,v 1.121 2007-07-08 19:02:20 cokeman1982 Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -2624,11 +2624,14 @@ static void SCR_DrawCursor(void) {
         Draw_AlphaLineRGB(cursor_x + 20*scale, cursor_y, cursor_x, cursor_y + 20*scale, 10*scale, 0, 1, 0, 1);
 	}
 #else
+	/*
+	// FIXME: When the cursor is loaded in software, width and height are fine, but when reaching this point it's fucked up!!!
 	if (scr_cursor && scr_cursor->width)
 	{
 		Draw_SPic(cursor_x, cursor_y, scr_cursor, SCR_GetCursorScale());
 	}
 	else
+	*/
 	{
 		Draw_Character(cursor_x - LETTERWIDTH/2, cursor_y - LETTERHEIGHT/2, '+');
 	}
