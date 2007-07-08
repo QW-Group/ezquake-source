@@ -61,7 +61,6 @@ void Draw_SubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int h
 void Draw_Pic (int x, int y, mpic_t *pic);
 void Draw_TransPic (int x, int y, mpic_t *pic);
 void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height);
-void Draw_TransPicTranslate (int x, int y, mpic_t *pic, byte *translation);
 void Draw_ConsoleBackground (int lines);
 void Draw_BeginDisc (void);
 void Draw_EndDisc (void);
@@ -82,7 +81,8 @@ byte* Int_2_RGBA(int i, byte rgba[4]);
 
 void Draw_ColoredString2 (int x, int y, const char *text, int *clr, int red);
 
-typedef struct clrinfo_s {
+typedef struct clrinfo_s 
+{
 	int c; // color
 	int i; // index when this colors starts
 } clrinfo_t;
@@ -98,19 +98,17 @@ mpic_t *Draw_CacheWadPic (char *name);
 void Draw_Crosshair(void);
 void Draw_TextBox (int x, int y, int width, int lines);
 
-// HUD -> hexum
 void Draw_SCharacter (int x, int y, int num, float scale);
 void Draw_SString (int x, int y, const char *str, float scale);
 void Draw_SAlt_String (int x, int y, char *str, float scale);
 void Draw_SPic (int x, int y, mpic_t *, float scale);
-// will fit image into given area; will keep it's proportions
+// Will fit image into given area; will keep it's proportions
 void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl);
 void Draw_SAlphaPic (int x, int y, mpic_t *, float alpha, float scale);
 void Draw_SSubPic(int x, int y, mpic_t *, int srcx, int srcy, int width, int height, float scale);
 void Draw_STransPic (int x, int y, mpic_t *, float scale);
 void Draw_SFill (int x, int y, int w, int h, int c, float scale);
 
-// HUD -> Cokeman
 void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, float r, float g, float b, float alpha);
 void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, int c, float alpha);
 void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
@@ -137,6 +135,10 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
 
 qbool R_CharAvailable (wchar num);
+
+void Draw_EnableScissorRectangle(int x, int y, int width, int height);
+void Draw_EnableScissor(int left, int right, int top, int bottom);
+void Draw_DisableScissor();
 
 #endif // __DRAW_H__	
 

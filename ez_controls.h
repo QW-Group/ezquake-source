@@ -470,6 +470,48 @@ int EZ_control_OnMouseWheel(ez_control_t *self, mouse_state_t *mouse_state);
 int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state);
 
 // =========================================================================================
+// Label
+// =========================================================================================
+
+#define EZ_LABEL_INHERITANCE_LEVEL		1
+#define EZ_LABEL_ID						2
+
+#define LABEL_LARGEFONT		(1 << 0)	// Use the large font.
+#define LABEL_AUTOSIZE		(1 << 1)	// Autosize the label to fit the text (if it's not wrapped).
+#define LABEL_AUTOELLIPSIS	(1 << 2)	// Show ... at the end of the text if it doesn't fit within the label.
+#define LABEL_WRAPTEXT		(1 << 3)	// Wrap the text to fit inside the label.
+
+typedef struct ez_label_s
+{
+	ez_control_t		super;
+
+	char				*text;
+	int					text_flags;
+	clrinfo_t			color;
+	float				scale;
+} ez_label_t;
+
+ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent, 
+							  char *name, char *description, 
+							  int x, int y, int width, int height, 
+							  char *background_name, 
+							  int flags, int text_flags,
+							  char *text, clrinfo_t text_color);
+
+void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent, 
+				  char *name, char *description, 
+				  int x, int y, int width, int height, 
+				  char *background_name, 
+				  int flags, int text_flags,
+				  char *text, clrinfo_t text_color);
+
+void EZ_button_SetTextColor(ez_label_t *self, byte r, byte g, byte b, byte alpha);
+
+void EZ_button_SetText(ez_label_t *self, const char *text);
+
+int EZ_label_OnDraw(ez_control_t *label);
+
+// =========================================================================================
 // Button
 // =========================================================================================
 

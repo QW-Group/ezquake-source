@@ -186,22 +186,17 @@ void EZ_tree_Draw(ez_tree_t *tree)
 	{
 		payload = (ez_control_t *)iter->payload;
 
-		#ifdef GLQUAKE
 		// Make sure parts located outside the parent aren't drawn
 		// when the control is contained within it's parent.
 		if (payload->parent && (payload->flags & CONTROL_CONTAINED))
 		{
 			ez_control_t *p = payload->parent;
-			GL_EnableScissor(p->bound_left, p->bound_right, p->bound_top, p->bound_bottom);
+			Draw_EnableScissor(p->bound_left, p->bound_right, p->bound_top, p->bound_bottom);
 		}
-
-		#endif // GLQUAKE
 
 		CONTROL_RAISE_EVENT(NULL, payload, OnDraw);
 
-		#ifdef GLQUAKE
-		GL_DisableScissor();
-		#endif // GLQUAKE
+		Draw_DisableScissor();
 
 		iter = iter->next;
 	}
@@ -1114,6 +1109,13 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 		CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseLeave, ms);
 	}
 
+	// Make sure we remove the click flag always when releasing the button
+	// not just when we're hovering above the control.
+	if (ms->button_up && (ms->button_up != old_ms->button_up))
+	{
+		self->flags &= ~CONTROL_CLICKED;
+	}
+
 	// TODO : Move these to new methods.
 
 	// Check for moving and resizing.
@@ -1240,7 +1242,7 @@ int EZ_control_OnMouseUp(ez_control_t *self, mouse_state_t *mouse_state)
 	if (self->flags & CONTROL_CLICKED)
 	{
 		self->flags &= ~CONTROL_CLICKED;
-		CONTROL_RAISE_EVENT(NULL, self, OnMouseClick, mouse_state);
+		CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseClick, mouse_state);
 	}
 
 	// Call event handler.
@@ -1379,6 +1381,85 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state)
 }
 
 // =========================================================================================
+// Label
+// =========================================================================================
+
+//
+// Label - Creates a label control and initializes it.
+//
+ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent, 
+							  char *name, char *description, 
+							  int x, int y, int width, int height, 
+							  char *background_name, 
+							  int flags, int text_flags,
+							  char *text, clrinfo_t text_color)
+{
+	ez_label_t *label = NULL;
+	
+	// We have to have a tree to add the control to.
+	if (!tree)
+	{
+		return NULL;
+	}
+	
+	label = (ez_label_t *)Q_malloc(sizeof(ez_label_t));
+	EZ_label_Init(label, tree, parent, name, description, x, y, width, height, background_name, flags, text_flags, text, text_color);
+	return label;
+}
+
+//
+// Label - Initializes a label control.
+//
+void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent, 
+				  char *name, char *description, 
+				  int x, int y, int width, int height, 
+				  char *background_name, 
+				  int flags, int text_flags,
+				  char *text, clrinfo_t text_color)
+{
+	// Initialize the inherited class first.
+	EZ_control_Init(&label->super, tree, parent, name, description, x, y, width, height, background_name, flags);
+
+	label->super.CLASS_ID = EZ_LABEL_ID;
+	label->super.inheritance_level = EZ_LABEL_INHERITANCE_LEVEL;
+
+	label->super.flags |= CONTROL_CONTAINED;
+	label->scale		= 1.0;
+	label->text			= text;
+	label->text_flags	|= text_flags;
+	label->color		= text_color;
+}
+
+//
+// Label - Sets the text color of a label.
+//
+void EZ_label_SetTextColor(ez_label_t *self, byte r, byte g, byte b, byte alpha)
+{
+	self->color.c = RGBA_2_Int(r, g, b, alpha);
+}
+
+//
+// Label - Sets the text of a label.
+//
+void EZ_label_SetText(ez_label_t *self, char *text)
+{
+	self->text = text;
+}
+
+//
+// Label - Draws a label control.
+//
+int EZ_label_OnDraw(ez_control_t *self)
+{
+	ez_label_t *label = (ez_label_t *)self;
+	EZ_control_OnDraw(self);
+
+	Draw_ColoredString3(self->absolute_x, self->absolute_y, label->text, &label->color, 1, 0);
+
+	return 0;
+}
+
+// =========================================================================================
 // Button
 // =========================================================================================
 
@@ -1514,11 +1595,17 @@ int EZ_button_OnDraw(ez_control_t *self)
 {
 	int text_x = 0;
 	int text_y = 0;
+	int text_len = 0;
 	qbool mouse_inside = 0;
 	ez_button_t *button = (ez_button_t *)self;
 
 	// Run the parents implementation first.
 	EZ_control_OnDraw(self);
+
+	if (button->text)
+	{
+		text_len = strlen(button->text);
+	}
 
 	switch (button->text_alignment)
 	{
@@ -1529,6 +1616,14 @@ int EZ_button_OnDraw(ez_control_t *self)
 		case top_center :
 			text_x = button->padding_left;
 			text_y = button->padding_top;
+			break;
+		case top_right :
+			text_x = self->width - (text_len * 8) - button->padding_right;
+			text_y = button->padding_top;
+			break;
+		case middle_left :
+			text_x = button->padding_left;
+			//text_y = button-
 			break;
 	}
 
@@ -1593,10 +1688,6 @@ int EZ_button_OnDraw(ez_control_t *self)
 
 	// Draw control specifics.
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDraw);
-
-	#ifdef GLQUAKE
-	//GL_DisableScissor();
-	#endif // GLQUAKE
 
 	return 0;
 }

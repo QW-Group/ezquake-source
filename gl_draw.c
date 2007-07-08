@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.70 2007-07-03 22:06:57 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.71 2007-07-08 15:20:03 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -230,18 +230,18 @@ void Draw_InitCrosshairs(void) {
 	Cvar_Set(&gl_crosshairimage, str);
 }
 
-void GL_EnableScissorRectangle(int x, int y, int width, int height)
+void Draw_EnableScissorRectangle(int x, int y, int width, int height)
 {
 	glEnable(GL_SCISSOR_TEST);
 	glScissor(x, glheight - (y + height), width, height);
 }
 
-void GL_EnableScissor(int left, int right, int top, int bottom)
+void Draw_EnableScissor(int left, int right, int top, int bottom)
 {
-	GL_EnableScissorRectangle(left, top, (right - left), (bottom - top));
+	Draw_EnableScissorRectangle(left, top, (right - left), (bottom - top));
 }
 
-void GL_DisableScissor()
+void Draw_DisableScissor()
 {
 	glDisable(GL_SCISSOR_TEST);
 }
@@ -419,37 +419,50 @@ void CachePics_DeInit(void) {
 	memset(cachepics, 0, sizeof(cachepics));
 }
 
+//
+// Loads an image into the cache.
+// Variables:
+//		crash - Crash the client if loading fails.
+//		only24bit - Don't fall back to loading the normal 8-bit texture if 
+//					loading the 24-bit version fails.
+//
 mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit)
 {
 	mpic_t pic, *fpic, *pic_24bit;
 	qpic_t *dat;
 
+	// Check if the picture was already cached.
 	if ((fpic = CachePic_Find(path)))
 		return fpic;
 
-	// load the pic from disk
+	// Try loading the pic from disk.
 
-	if (only24bit)  // that not for loading 24 bit versions of ".lmp" files, but for some new images
+	// Only load the 24-bit version of the picture.
+	if (only24bit)
 	{
 		if ((pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
 			return CachePic_Add(path, pic_24bit);
 
 		if(crash)
-			Sys_Error ("Draw_CachePic: failed to load %s", path);
+			Sys_Error ("Draw_CachePicSafe: failed to load %s", path);
 
 		return NULL;
 	}
 
+	// Load the ".lmp" file.
 	if (!(dat = (qpic_t *)FS_LoadTempFile (path)))
 	{
 		if(crash)
-			Sys_Error ("Draw_CachePic: failed to load %s", path);
+			Sys_Error ("Draw_CachePicSafe: failed to load %s", path);
 
 		return NULL;
 	}
 
+	// Make sure the width and height are correct.
 	SwapPic (dat);
 
+	// Try loading the 24-bit picture.
+	// If that fails load the data for the lmp instead.
 	if ((pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
 	{
 		memcpy(&pic, pic_24bit, sizeof(mpic_t));
@@ -463,6 +476,7 @@ mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit)
 		GL_LoadPicTexture (path, &pic, dat->data);
 	}
 
+	// Add the picture to the cache.
 	return CachePic_Add(path, &pic);
 }
 
