@@ -219,6 +219,9 @@ void MacSetupScreen ()
 				   numDevices > 1)
 				   ? USE_DSP : USE_AGL;
 
+	// force DSp for now..
+	fullscreenX = USE_DSP;
+
 	// Allow fullscreen overides for testing
 	if (COM_CheckParm("-useAGL"))
 		fullscreenX = USE_AGL;

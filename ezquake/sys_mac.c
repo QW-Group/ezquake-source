@@ -1,6 +1,6 @@
 /*
 
-	$Id: sys_mac.c,v 1.22.2.2 2007-06-20 19:29:31 zwoch Exp $
+	$Id: sys_mac.c,v 1.22.2.3 2007-07-08 18:00:10 zwoch Exp $
 
 */
 // sys_mac.c -- Macintosh system driver
@@ -752,7 +752,7 @@ void SetVideoCvarsForPrefs (void)
 	Cvar_SetValue (&vid_mode, gScreen.profile->mode);
 	Cvar_SetValue (&gl_vid_screen, gScreen.profile->screen);
 	Cvar_SetValue (&gl_vid_colorbits, gScreen.profile->colorbits);
-//	Cvar_SetValue (&gl_texturebits, gScreen.profile->texturebits);
+	Cvar_SetValue (&gl_texturebits, gScreen.profile->texturebits);
 
 	if (inwindow)
   		Cvar_Set (&gl_vid_windowed, "1");
@@ -790,7 +790,7 @@ static void SetGlobalsFromPrefs (void)
 		vid_currentprofile.texturebits = 16;
 		gl_solid_format = GL_RGB5;
 		gl_alpha_format = GL_RGBA4;
-	} else {
+//hack	} else {
 		vid_currentprofile.texturebits = 32;
 		gl_solid_format = GL_RGB8;
 		gl_alpha_format = GL_RGBA8;
