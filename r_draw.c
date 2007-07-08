@@ -31,7 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "wad.h"
 #include "qsound.h"
 
-
 typedef struct 
 {
 	vrect_t	rect;
@@ -56,6 +55,11 @@ cvar_t	scr_menualpha	= {"scr_menualpha", "0.7"};
 void customCrosshair_Init(void);
 
 extern cvar_t con_shift;
+
+int scissor_left	= 0;
+int	scissor_right	= 0;
+int scissor_top		= 0;
+int scissor_bottom	= 0;
 
 //=============================================================================
 // Support Routines 
@@ -108,7 +112,7 @@ static mpic_t *Draw_CachePicBase(char *path, qbool syserror)
 	if (dat)
 		return (mpic_t *)dat;
 
-	// load the pic from disk
+	// Load the pic from disk.
 	FS_LoadCacheFile (path, &pic->cache);
 	
 	dat = (qpic_t *)pic->cache.data;
@@ -166,9 +170,39 @@ static byte *LoadAlternateCharset (const char *name)
 	return data;
 }
 
+void Draw_EnableScissor(int left, int right, int top, int bottom)
+{
+	clamp(left, 0, vid.width);
+	clamp(right, 0, vid.width);
+	clamp(top, 0, vid.height);
+	clamp(bottom, 0, vid.height);
+
+	left = (left > right) ? (right) : (left);
+	top	 = (top > bottom) ? (bottom) : (right);
+
+	scissor_left	= left;
+	scissor_right	= right;
+	scissor_top		= top;
+	scissor_bottom	= bottom;
+}
+
+void SW_EnableScissorRectangle(int x, int y, int width, int height)
+{
+	Draw_EnableScissor(x, (x + width), y, (y + height));
+}
+
+void Draw_DisableScissor()
+{
+	scissor_left	= 0;
+	scissor_right	= vid.width;
+	scissor_top		= 0;
+	scissor_bottom	= vid.height;
+}
 
 void Draw_Init (void) 
 {
+	Draw_DisableScissor();
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register(&scr_conalpha);
 
@@ -195,6 +229,9 @@ void Draw_Init (void)
 	customCrosshair_Init();
 }
 
+// 
+// Checks if a unicode character is available.
+// 
 qbool R_CharAvailable (wchar num)
 {
 	int i;
@@ -222,17 +259,24 @@ void Draw_Character (int x, int y, int num)
 
 void Draw_CharacterW (int x, int y, wchar num) 
 {
-	byte *dest, *source;
-	int drawline, row, col, slot;
+	// The length of a row in the charset image, 16 characters, 8 pixels each. 16*8 = 128
+	#define CHARSET_ROW_LENGTH	(16 * 8)
+
+	byte *dest, *source;	// Draw destination and character source.
+	int row_outside = 0;	// How many lines of the character are outside the specified scissor bounds.
+	int row_drawcount = 0;	// How many lines of the character should be drawn.
+	int col_outside = 0;	// The number of columns in the character that aren't visible.
+	int col_drawcount = 0;	// How many columns of the character that should be drawn.
+	int row, col;			// Row and column for the character in the charset texture.
+	int slot = 0;			// The slot for the charset the character was located in.
 	int i = 0;
 
-	if (y <= -8)
-		return;		// Totally off screen
-
-	if ((y > ((int) vid.height - 8)) || (x < 0) || (x > vid.width - 8))
+	// Don't draw if we're outside the scissor bounds.
+	if ((y <= (scissor_top - 8))  || (y > scissor_bottom) 
+	 || (x <= (scissor_left - 8)) || (x > scissor_right))
 		return;
 
-	slot = 0;
+	// Find a characterset with the character available in it.
 	if ((num & 0xFF00) != 0)
 	{
 		for (i = 1; i < MAX_CHARSETS; i++)
@@ -248,39 +292,72 @@ void Draw_CharacterW (int x, int y, wchar num)
 			num = '?';
 	}
 
-	row = (num >> 4) & 0x0F;
-	col = num & 0x0F;
-	source = draw_chars[slot] + (row << 10) + (col << 3);
+	row = (num >> 4) & 0x0F; // 'a' = 97 ASCII		(97 >> 4) = 6, row 6 in the charset (Row of characters, not pixels).
+	col = num & 0x0F;		 // 'a' = 112 ASCII		(112 & 0x0F) = 1, column 1 (0-index).
+	
+	// Get the buffer position of the character,
+	// 16 chars per row
+	// 8*8 pixels per char
+	// Example: 'a' = 97 gives row = 6, col = 1
+	// (16 chars per row) * (8*8 pixels per char) * (6 rows) = 6144
+	source = draw_chars[slot] + (16 * 8*8 * row) + (8 * col);
 
-	if (y < 0) 
+	//
+	// Clip the character according to scissor bounds.
+	//
 	{
-		// clipped
-		drawline = 8 + y;
-		source -= 128 * y;
-		y = 0;
-	} 
-	else 
-	{
-		drawline = 8;
+		if (x < scissor_left)
+		{
+			// Outside to the left.
+			col_outside = (scissor_left - x);		// How many pixel columns of the character are outside?
+			source += col_outside;					// Move forward in the charset buffer so that only the visible part is drawn.
+			x = scissor_left;						// Set the new drawing point to start at.		
+		}
+		else if (x > (scissor_right - 8))
+		{
+			// Outside to the right.
+			col_outside = (scissor_right - x);	
+		}
+
+		// The number of columns to draw.
+		col_drawcount = (8 - col_outside);
+
+		if (y < scissor_top) 
+		{
+			// Outside at the top.
+			row_outside = (scissor_top - y);				// How many lines we should draw of the character.
+			source += CHARSET_ROW_LENGTH * row_outside;		// Draw the bottom part of the image by moving our pos in the source.
+			y = scissor_top;								// Move the point we draw at to match the bounds.
+		}
+		else if (y > (scissor_bottom - 8))
+		{
+			row_outside = (scissor_bottom - y);
+		}
+
+		// The number of lines to draw.
+		row_drawcount = (8 - row_outside);
 	}
 
-	dest = vid.buffer + y*vid.rowbytes + x;
+	// Get the destination in the video buffer.
+	dest = vid.buffer + (y * vid.rowbytes) + x;
 
-	while (drawline--) 
+	// Draw the character to the video buffer.
+	while (row_drawcount--)
 	{
-		for (i = 0; i < 8; i++)
+		for (i = 0; i < col_drawcount; i++)
 		{
 			if (source[i])
 				dest[i] = source[i];
 		}
 
-		source += 128;
-		dest += vid.rowbytes;
+		source += CHARSET_ROW_LENGTH;		// Advance to the next row of the character source.
+		dest += vid.rowbytes;				// Next row of the video buffer.
 	}
 }
 
 void Draw_String (int x, int y, const char *str) 
 {
+	//Draw_Fill(scissor_left, y, 1, 8, 4);
 	while (*str) 
 	{
 		Draw_Character (x, y, *str);
