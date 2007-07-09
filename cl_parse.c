@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.95 2007-06-18 00:49:28 qqshka Exp $
+$Id: cl_parse.c,v 1.96 2007-07-09 18:16:55 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -55,6 +55,7 @@ $Id: cl_parse.c,v 1.95 2007-06-18 00:49:28 qqshka Exp $
 #include "hud_common.h"
 #include "mvd_utils.h"
 #include "input.h"
+#include "qtv.h"
 
 void R_TranslatePlayerSkin (int playernum);
 void R_PreMapLoad(char *mapname);
@@ -449,8 +450,16 @@ qbool CL_CheckOrDownloadFile (char *filename) {
 	COM_StripExtension (cls.downloadname, cls.downloadtempname);
 	strlcat (cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 
-	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-	MSG_WriteString (&cls.netchan.message, va("download %s", filename));
+	if (cls.mvdplayback == QTV_PLAYBACK) {
+		char buf[1024];
+		snprintf(buf, sizeof(buf), "download %s\n", filename);
+		Cmd_TokenizeString(buf);
+		QTV_Cmd_ForwardToServer ();
+	}
+	else {
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString (&cls.netchan.message, va("download %s", filename));
+	}
 
 	cls.downloadnumber++;
 
@@ -741,7 +750,17 @@ void CL_SendChunkDownloadReq(void)
 	for (j = 0; j < chunks; j++)
 	{
 		if (cls.downloadmethod != DL_QWCHUNKS)
+		{
+
+// { 	this is an evil hack, so we download fast during qtvplayback, even this is have nothing with chunked download
+			if (cls.mvdplayback == QTV_PLAYBACK) {
+				Cmd_TokenizeString("nextdl");		
+				QTV_Cmd_ForwardToServer ();
+			}
+
+// }
 			return;
+		}
 
 		i = CL_RequestADownloadChunk();
 		// i < 0 mean client complete download, let server know
@@ -1005,10 +1024,10 @@ void CL_ParseDownload (void) {
 		s = 0;
 	}
 
-	if (cls.demoplayback) {
+	if (cls.demoplayback && cls.mvdplayback != QTV_PLAYBACK) {
 		if (size > 0)
 			msg_readcount += size;
-		return; // not in demo playback
+		return; // not in demo playback, except qtv
 	}
 
 	if (size == -1)	{
@@ -1043,8 +1062,14 @@ void CL_ParseDownload (void) {
 		// request next block
 		cls.downloadpercent = percent;
 
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		SZ_Print (&cls.netchan.message, "nextdl");
+		if (cls.mvdplayback == QTV_PLAYBACK) {
+			Cmd_TokenizeString("nextdl");
+			QTV_Cmd_ForwardToServer ();
+		}
+		else {
+			MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+			SZ_Print (&cls.netchan.message, "nextdl");
+		}
 	} else {
 		CL_FinishDownload(true); // this also request next dl
 	}
