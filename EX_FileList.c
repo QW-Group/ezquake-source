@@ -44,7 +44,7 @@ static double last_search_enter_time = 0.0;
 static qbool FL_OnChangeTextColor (cvar_t *var, char *newval)
 {
 	byte *color = StringToRGB(newval);
-	var->value = RGBA_2_Int(color[0], color[1], color[2], color[3]);
+	var->value = RGBA_TO_COLOR(color[0], color[1], color[2], color[3]);
 
 	return true;
 }
@@ -1516,7 +1516,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		clrinfo_t clr[2]; // here we use _one_ color, at begining of the string
 		static char	last_name[sizeof(name)]	= {0}; // this is for scroll, can't put it inside scroll code
 
-		clr[0].c = int_white;
+		clr[0].c = COLOR_WHITE;
 		clr[0].i = 0; // begin of the string
 
         if (filenum >= fl->num_entries)
@@ -1570,7 +1570,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
             Add_Column(line, &pos, size, COL_SIZE);
 
 		// End of name, switch to white.
-		clr[1].c = int_white;
+		clr[1].c = COLOR_WHITE;
 		clr[1].i = pos;
 
 		// Set the name.
@@ -1662,18 +1662,18 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 				if (entry->is_directory)
 				{
 					// Set directory color.
-					clr[0].c = (fl->dir_color == NULL) ? int_white : (int)fl->dir_color->value;
+					clr[0].c = (fl->dir_color == NULL) ? COLOR_WHITE : (int)fl->dir_color->value;
 				}
 				#ifdef WITH_ZIP
 				else if (entry->is_zip)
 				{
 					// Set zip color.
-					clr[0].c = (fl->zip_color == NULL) ? int_white : (int)fl->zip_color->value;
+					clr[0].c = (fl->zip_color == NULL) ? COLOR_WHITE : (int)fl->zip_color->value;
 				}
 				#endif // WITH_ZIP
 				else
 				{
-					clr[0].c = (fl->file_color == NULL) ? int_white : (int)fl->file_color->value;
+					clr[0].c = (fl->file_color == NULL) ? COLOR_WHITE : (int)fl->file_color->value;
 				}
 			}
 
@@ -1693,7 +1693,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		// Color the selected entry.
 		if (filenum == fl->current_entry)
 		{
-			clr[0].c = (fl->selected_color == NULL) ? int_white : (int)fl->selected_color->value;
+			clr[0].c = (fl->selected_color == NULL) ? COLOR_WHITE : (int)fl->selected_color->value;
 			clr[0].i = 1; // Don't color the cursor (index 0).
 		}
 

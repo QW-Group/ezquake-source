@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.57 2007-07-01 21:32:21 cokeman1982 Exp $
+	$Id: console.c,v 1.58 2007-07-10 21:20:11 cokeman1982 Exp $
 */
 // console.c
 
@@ -270,7 +270,7 @@ void Con_SetWhite (void) {
 // no need for memset(), Con_SetColor() do it too
 //	memset (con.clr, 0, con.maxsize * sizeof(clrinfo_t)); // set whole struct array to zero
 
-	Con_SetColor(0, con.maxsize, int_white); // set white color
+	Con_SetColor(0, con.maxsize, COLOR_WHITE); // set white color
 }
 
 void Con_Clear_f (void) {
@@ -516,7 +516,7 @@ void Con_Linefeed (void) {
 	idx = (con.current%con_totallines)*con_linewidth;
 	for (i = 0; i < con_linewidth; i++)
 		con.text[idx + i] = ' ';
-	Con_SetColor(idx, con_linewidth, int_white);
+	Con_SetColor(idx, con_linewidth, COLOR_WHITE);
 
 	// mark time for transparent overlay
 	if (con.current >= 0)
@@ -529,7 +529,6 @@ Con_SafePrintf
 
 Okay to call even when the screen can't be updated
 
-HUD -> hexum
 ==================
 */
 void Con_SafePrintf (char *fmt, ...)
@@ -550,7 +549,7 @@ void Con_SafePrintf (char *fmt, ...)
 
 //Handles cursor positioning, line wrapping, etc
 void Con_PrintW (wchar *txt) {
-	int y, c, l, d, mask, color = int_white, r, g, b, idx;
+	int y, c, l, d, mask, color = COLOR_WHITE, r, g, b, idx;
 	wchar *s;
 	static int cr;
 
@@ -597,12 +596,12 @@ void Con_PrintW (wchar *txt) {
 				g = HexToInt(txt[3]);
 				b = HexToInt(txt[4]);
 				if (r >= 0 && g >= 0 && b >= 0) {
-					color = RGBA_2_Int(255 * r / 16, 255 * g / 16, 255 * b / 16, 255);
+					color = RGBA_TO_COLOR(255 * r / 16, 255 * g / 16, 255 * b / 16, 255);
 					txt += 5;
 					continue; // we got color, get now normal char
 				}
             } else if (txt[1] == 'r') {
-				color = int_white;
+				color = COLOR_WHITE;
 				txt += 2;
 				continue; // we got color, get now normal char
 			}

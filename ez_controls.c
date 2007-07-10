@@ -1,4 +1,25 @@
 
+/*
+Copyright (C) 2007 ezQuake team
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+$Id: ez_controls.c,v 1.22 2007-07-10 21:20:11 cokeman1982 Exp $
+*/
+
 #include "quakedef.h"
 
 #ifdef GLQUAKE
@@ -922,12 +943,8 @@ int EZ_control_OnDraw(ez_control_t *self)
 
 	if (self->background_color[3] > 0)
 	{
-		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
-			self->background_color[0] / 255.0,
-			self->background_color[1] / 255.0,
-			self->background_color[2] / 255.0,
-			1, true, 
-			self->background_color[3] / 255.0);
+		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 1, true, 
+			RGBA_TO_COLOR(self->background_color[0], self->background_color[1], self->background_color[2], self->background_color[3]));
 
 		Draw_String(self->absolute_x, self->absolute_y, va("%s%s%s%s", 
 			((self->flags & CONTROL_MOVING) ? "M" : " "), 
@@ -1058,8 +1075,8 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 		Sys_Error("EZ_control_OnMouseEvent(): mouse_state_t NULL\n");
 	}
 
-	mouse_delta_x = Round(ms->x_old - ms->x);
-	mouse_delta_y = Round(ms->y_old - ms->y);
+	mouse_delta_x = Q_rint(ms->x_old - ms->x);
+	mouse_delta_y = Q_rint(ms->y_old - ms->y);
 
 	mouse_inside = POINT_IN_RECTANGLE(ms->x, ms->y, self->absolute_x, self->absolute_y, self->width, self->height);
 	prev_mouse_inside = POINT_IN_RECTANGLE(ms->x_old, ms->y_old, self->absolute_x, self->absolute_y, self->width, self->height);
@@ -1154,8 +1171,8 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 	{
 		// Root control will be moved relative to the screen,
 		// others relative to their parent.
-		int x = self->x + Round(ms->x - ms->x_old);
-		int y = self->y + Round(ms->y - ms->y_old);
+		int x = self->x + Q_rint(ms->x - ms->x_old);
+		int y = self->y + Q_rint(ms->y - ms->y_old);
 
 		// Should the control be contained within it's parent?
 		// Then don't allow the mouse to move outside the parent
@@ -1435,7 +1452,7 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 //
 void EZ_label_SetTextColor(ez_label_t *self, byte r, byte g, byte b, byte alpha)
 {
-	self->color.c = RGBA_2_Int(r, g, b, alpha);
+	self->color.c = RGBA_TO_COLOR(r, g, b, alpha);
 }
 
 //
@@ -1631,10 +1648,7 @@ int EZ_button_OnDraw(ez_control_t *self)
 	{
 		#ifdef GLQUAKE
 		Draw_AlphaFillRGB(self->x, self->y, self->width, self->height, 
-			button->color_pressed[0] / 255.0,
-			button->color_pressed[1] / 255.0, 
-			button->color_pressed[2] / 255.0, 
-			button->color_pressed[3] / 255.0);
+			RGBA_TO_COLOR(button->color_pressed[0], button->color_pressed[1], button->color_pressed[2], button->color_pressed[3]));
 		#endif // GLQUAKE
 	}
 
@@ -1644,20 +1658,14 @@ int EZ_button_OnDraw(ez_control_t *self)
 		{
 			#ifdef GLQUAKE
 			Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
-				button->color_pressed[0] / 255.0,
-				button->color_pressed[1] / 255.0, 
-				button->color_pressed[2] / 255.0, 
-				button->color_pressed[3] / 255.0);
+				RGBA_TO_COLOR(button->color_pressed[0], button->color_pressed[1], button->color_pressed[2], button->color_pressed[3]));
 			#endif // GLQUAKE
 		}
 		else
 		{
 			#ifdef GLQUAKE
 			Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
-				button->color_hover[0] / 255.0,
-				button->color_hover[1] / 255.0, 
-				button->color_hover[2] / 255.0, 
-				button->color_hover[3] / 255.0);
+				RGBA_TO_COLOR(button->color_hover[0], button->color_hover[1], button->color_hover[2], button->color_hover[3]));
 			#endif // GLQUAKE
 		}
 	}
@@ -1665,22 +1673,15 @@ int EZ_button_OnDraw(ez_control_t *self)
 	{
 		#ifdef GLQUAKE
 		Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
-			button->color_normal[0] / 255.0,
-			button->color_normal[1] / 255.0, 
-			button->color_normal[2] / 255.0, 
-			button->color_normal[3] / 255.0);
+			RGBA_TO_COLOR(button->color_normal[0], button->color_normal[1], button->color_normal[2], button->color_normal[3]));
 		#endif // GLQUAKE
 	}
 
 	if (self->flags & CONTROL_FOCUSED)
 	{
 		#ifdef GLQUAKE
-		Draw_AlphaOutlineRGB(self->absolute_x, self->absolute_y, self->width, self->height,
-			button->color_focused[0] / 255.0,
-			button->color_focused[1] / 255.0, 
-			button->color_focused[2] / 255.0,
-			1,
-			button->color_focused[3] / 255.0);
+		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 1, false, 
+			RGBA_TO_COLOR(button->color_focused[0], button->color_focused[1], button->color_focused[2], button->color_focused[3]));
 
 		//Draw_ColoredString3(self->absolute_x, self->absolute_y, button->text, button->focused_text_color, 1, 0);
 		#endif // GLQUAKE

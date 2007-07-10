@@ -1,4 +1,4 @@
-//    $Id: Ctrl.c,v 1.18 2007-06-17 18:06:46 johnnycz Exp $
+//    $Id: Ctrl.c,v 1.19 2007-07-10 21:20:11 cokeman1982 Exp $
 
 #include "quakedef.h"
 #include "utils.h"
@@ -22,6 +22,8 @@ void UI_DrawCharacter (int cx, int line, int num)
 
 void UI_Print (int cx, int cy, const char *str, int red)
 {
+	// We want to draw the charset red, if colored text is turned on
+	// Draw_ColoredString will only draw white chars and color them.
 	if (red)
 	{
 		while (*str) 
@@ -101,12 +103,14 @@ void UI_MakeLine2(char *buf, int w)
 	buf[w] = 0;
 }
 
-void UI_DrawColoredAlphaBox(int x, int y, int w, int h, float r, float g, float b, float a)
+void UI_DrawColoredAlphaBox(int x, int y, int w, int h, color_t color)
 {
 #ifdef GLQUAKE
-	Draw_AlphaFillRGB(x, y, w, h, r, g, b, a);
+	Draw_AlphaFillRGB(x, y, w, h, color);
 #else
-	Draw_FadeBox(x, y, w, h, (r+g+b)/3.0, a);
+	byte bytecolor[4];
+	COLOR_TO_RGBA(color, bytecolor);
+	Draw_FadeBox(x, y, w, h, (bytecolor[0] + bytecolor[1] + bytecolor[2]) / 3.0, bytecolor[3] / 255.0);
 #endif
 }
 
@@ -115,17 +119,17 @@ void UI_DrawGrayBox(int x, int y, int w, int h)
 	byte c[4];
 	float fade = 1;
 
-	memcpy(c, StringToRGB(menu_marked_bgcolor.string), sizeof(byte)*4);
+	memcpy(c, StringToRGB(menu_marked_bgcolor.string), sizeof(byte) * 4);
 #ifdef GLQUAKE
-	if (menu_marked_fade.value) {
+	if (menu_marked_fade.value) 
+	{
 		fade = 0.5 * (1.0 + sin(menu_marked_fade.value * Sys_DoubleTime())); // this give us sinusoid from 0 to 1
 		fade = 0.5 + (1.0 - 0.5) * fade ; // this give us sinusoid from 0.5 to 1, so no zero alpha
 		fade = bound(0, fade, 1); // guarantee sanity if we mess somewhere
 	}
 #endif
 
-	UI_DrawColoredAlphaBox(x,y,w,h, 
-		fade*c[0]/255.0, fade*c[1]/255.0, fade*c[2]/255.0, c[3]/255.0);
+	UI_DrawColoredAlphaBox(x, y, w, h, RGBA_TO_COLOR((fade * c[0]), (fade * c[1]), (fade * c[2]), c[3]));
 }
 
 void UI_DrawBox(int x, int y, int w, int h)

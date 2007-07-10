@@ -81,8 +81,8 @@ unsigned short d_8to16table[256];
 unsigned d_8to24table[256];
 unsigned d_8to24table2[256];
 
-byte color_white[4] = {255, 255, 255, 0};
-byte color_black[4] = {0, 0, 0, 0};
+byte color_white[4] = {255, 255, 255, 255};
+byte color_black[4] = {0, 0, 0, 255};
 
 qbool OnChange_gl_ext_texture_compression(cvar_t *, char *);
 

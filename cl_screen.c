@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.121 2007-07-08 19:02:20 cokeman1982 Exp $
+$Id: cl_screen.c,v 1.122 2007-07-10 21:20:11 cokeman1982 Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -203,7 +203,7 @@ static void SCR_CheckMVScreenshot(void);
 void SCR_DrawMultiviewBorders(void);
 void SCR_DrawMVStatus(void);
 void SCR_DrawMVStatusStrings(void);
-void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
+void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
 void Draw_AlphaString (int x, int y, char *str, float alpha);
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
 
@@ -942,18 +942,29 @@ void SCR_SetupAutoID (void) {
 			autoid_count++;
 	}
 }
-
+/*
 #define AUTOID_HEALTHBAR_BG_COLOR			180/255.0, 115/255.0, 115/255.0
 #define AUTOID_HEALTHBAR_NORMAL_COLOR		80/255.0, 0, 0
 #define AUTOID_HEALTHBAR_MEGA_COLOR			255/255.0, 0, 0
 #define AUTOID_HEALTHBAR_TWO_MEGA_COLOR		255/255.0, 100/255.0, 0
 #define AUTOID_HEALTHBAR_UNNATURAL_COLOR	255/255.0, 255/255.0, 255/255.0
+*/
+#define AUTOID_HEALTHBAR_BG_COLOR			180, 115, 115
+#define AUTOID_HEALTHBAR_NORMAL_COLOR		80, 0, 0
+#define AUTOID_HEALTHBAR_MEGA_COLOR			255, 0, 0
+#define AUTOID_HEALTHBAR_TWO_MEGA_COLOR		255, 100, 0
+#define AUTOID_HEALTHBAR_UNNATURAL_COLOR	255, 255, 255
 
 #define AUTOID_HEALTHBAR_OFFSET_Y			16
 
+/*
 #define AUTOID_ARMORBAR_GREEN_ARMOR			25/255.0, 170/255.0, 0
 #define AUTOID_ARMORBAR_YELLOW_ARMOR		255/255.0, 220/255.0, 0
 #define AUTOID_ARMORBAR_RED_ARMOR			255/255.0, 0, 0
+*/
+#define AUTOID_ARMORBAR_GREEN_ARMOR			25, 170, 0
+#define AUTOID_ARMORBAR_YELLOW_ARMOR		255, 220, 0
+#define AUTOID_ARMORBAR_RED_ARMOR			255, 0, 0
 
 #define AUTOID_ARMORBAR_OFFSET_Y			AUTOID_HEALTHBAR_OFFSET_Y - 5
 #define AUTOID_ARMORNAME_OFFSET_Y			AUTOID_ARMORBAR_OFFSET_Y - 8 - 2
@@ -977,9 +988,9 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 	health = min(100, health);
 	health_length = Q_rint((name_length/100.0) * health);
 
-	// Normal health.
-	Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, name_length*2, 4, AUTOID_HEALTHBAR_BG_COLOR, 0.4);
-	Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, health_length*2, 4, AUTOID_HEALTHBAR_NORMAL_COLOR, 1.0);
+	// Normal health. 
+	Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, name_length * 2, 4, RGBA_TO_COLOR(AUTOID_HEALTHBAR_BG_COLOR, 100));
+	Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, health_length * 2, 4, RGBA_TO_COLOR(AUTOID_HEALTHBAR_NORMAL_COLOR, 255));
 
 	health = autoid_p->player->stats[STAT_HEALTH];
 
@@ -987,20 +998,20 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 	if(health > 100 && health <= 200)
 	{
 		health_length = Q_rint((name_length/100.0) * (health - 100));
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, health_length*2, 4, AUTOID_HEALTHBAR_MEGA_COLOR, 1.0);
+		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, health_length * 2, 4, RGBA_TO_COLOR(AUTOID_HEALTHBAR_MEGA_COLOR, 255));
 	}
 	else if(health > 200 && health <= 250)
 	{
 		// Super health.
 		health_length = Q_rint((name_length/100.0) * (health - 200));
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, name_length*2, 4, AUTOID_HEALTHBAR_MEGA_COLOR, 1.0);
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, health_length*2, 4, AUTOID_HEALTHBAR_TWO_MEGA_COLOR, 1.0);
+		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, name_length * 2, 4, RGBA_TO_COLOR(AUTOID_HEALTHBAR_MEGA_COLOR, 255));
+		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, health_length * 2, 4, RGBA_TO_COLOR(AUTOID_HEALTHBAR_TWO_MEGA_COLOR, 255));
 	}
 	else if(health > 250)
 	{
 		// Crazy health.
 		// This will never happen during a normal game.
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, name_length*2, 4, AUTOID_HEALTHBAR_UNNATURAL_COLOR, 1.0);
+		Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, name_length * 2, 4, RGBA_TO_COLOR(AUTOID_HEALTHBAR_UNNATURAL_COLOR, 255));
 	}
 
 	// Draw armor.
@@ -1012,22 +1023,24 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 	{
 		// Green armor.
 		strlcpy(armor_name, "&c0f0GA", sizeof(armor_name));
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, name_length*2, 4, AUTOID_ARMORBAR_GREEN_ARMOR, 0.2);
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length*2, 4, AUTOID_ARMORBAR_GREEN_ARMOR, 1.0);
+		//Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, name_length * 2, 4, AUTOID_ARMORBAR_GREEN_ARMOR, 0.2);
+		//Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length * 2, 4, AUTOID_ARMORBAR_GREEN_ARMOR, 1.0);
+		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, name_length * 2, 4, RGBA_TO_COLOR(AUTOID_ARMORBAR_GREEN_ARMOR, 50));
+		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length * 2, 4, RGBA_TO_COLOR(AUTOID_ARMORBAR_GREEN_ARMOR, 255));
 	}
 	else if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR2)
 	{
 		// Yellow armor.
 		strlcpy(armor_name, "&cff0YA", sizeof(armor_name));
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, name_length*2, 4, AUTOID_ARMORBAR_YELLOW_ARMOR, 0.2);
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length*2, 4, AUTOID_ARMORBAR_YELLOW_ARMOR, 1.0);
+		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, name_length * 2, 4, RGBA_TO_COLOR(AUTOID_ARMORBAR_YELLOW_ARMOR, 50));
+		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length * 2, 4, RGBA_TO_COLOR(AUTOID_ARMORBAR_YELLOW_ARMOR, 255));
 	}
 	else if(autoid_p->player->stats[STAT_ITEMS] & IT_ARMOR3)
 	{
 		// Red armor.
 		strlcpy(armor_name, "&cf00RA", sizeof(armor_name));
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, name_length*2, 4, AUTOID_ARMORBAR_RED_ARMOR, 0.2);
-		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length*2, 4, AUTOID_ARMORBAR_RED_ARMOR, 1.0);
+		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, name_length * 2, 4, RGBA_TO_COLOR(AUTOID_ARMORBAR_RED_ARMOR, 50));
+		Draw_AlphaFillRGB(x - name_length, y - AUTOID_ARMORBAR_OFFSET_Y, armor_length * 2, 4, RGBA_TO_COLOR(AUTOID_ARMORBAR_RED_ARMOR, 255));
 	}
 
 	if(scr_autoid.value >= 3 && autoid_p->player->stats[STAT_ITEMS] & (IT_ARMOR1 | IT_ARMOR2 | IT_ARMOR3))
@@ -2618,10 +2631,11 @@ static void SCR_DrawCursor(void) {
 	}
 	else
 	{
-		Draw_AlphaLineRGB(cursor_x + 10*scale, cursor_y + 10*scale, cursor_x + 40*scale, cursor_y + 40*scale, 10*scale, 0, 1, 0, 1);
-        Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + 20*scale, cursor_y, 10*scale, 0, 1, 0, 1);
-		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x, cursor_y + 20*scale, 10*scale, 0, 1, 0, 1);
-        Draw_AlphaLineRGB(cursor_x + 20*scale, cursor_y, cursor_x, cursor_y + 20*scale, 10*scale, 0, 1, 0, 1);
+		color_t c = RGBA_TO_COLOR(0, 255, 0, 255);
+		Draw_AlphaLineRGB(cursor_x + (10 * scale), cursor_y + (10 * scale), cursor_x + (40 * scale), cursor_y + (40 * scale), 10 * scale, c);
+        Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x + (20 * scale), cursor_y, 10 * scale, c);
+		Draw_AlphaLineRGB(cursor_x, cursor_y, cursor_x, cursor_y + 20*scale, 10 * scale, c);
+        Draw_AlphaLineRGB(cursor_x + (20 * scale), cursor_y, cursor_x, cursor_y + (20 * scale), 10 * scale, c);
 	}
 #else
 	/*
@@ -3981,7 +3995,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 	int armor_amount_width = 0;
 
 	#ifdef GLQUAKE
-	float armor_color[3] = {0, 0, 0};	// RGB.
+	byte armor_color[4] = {0, 0, 0, 75};	// RGBA.
 	#endif
 
 	//
@@ -3994,9 +4008,9 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 100.0);
 
 		#ifdef GLQUAKE
-		armor_color[0] = 80 / 255.0;
-		armor_color[1] = 190 / 255.0;
-		armor_color[2] = 80 / 255.0;
+		armor_color[0] = 80;
+		armor_color[1] = 190;
+		armor_color[2] = 80;
 		#endif
 	}
 	else if (cl.stats[STAT_ITEMS] & IT_ARMOR2)
@@ -4006,8 +4020,8 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 150.0);
 
 		#ifdef GLQUAKE
-		armor_color[0] = 250 / 255.0;
-		armor_color[1] = 230 / 255.0;
+		armor_color[0] = 250;
+		armor_color[1] = 230;
 		armor_color[2] = 0;
 		#endif
 	}
@@ -4018,8 +4032,8 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 200.0);
 
 		#ifdef GLQUAKE
-		armor_color[0] = 190 / 255.0;
-		armor_color[1] = 50 / 255.0;
+		armor_color[0] = 190;
+		armor_color[1] = 50;
 		armor_color[2] = 0;
 		#endif
 	}
@@ -4030,12 +4044,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 		// Background fill for armor.
 		//
 		#ifdef GLQUAKE
-		Draw_AlphaFillRGB (x,
-			y,
-			armor_amount_width,
-			8,
-			armor_color[0], armor_color[1], armor_color[2],
-			0.3);
+		Draw_AlphaFillRGB(x, y, armor_amount_width, 8, RGBA_TO_COLOR(armor_color[0], armor_color[1], armor_color[2], armor_color[3]));
 		#endif
 
 		// Armor value.
@@ -4051,7 +4060,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 
 void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 {
-	#define MV_HEALTH_OPACITY 0.3
+	#define MV_HEALTH_OPACITY 75
 	int health = cl.stats[STAT_HEALTH];
 
 	#ifdef GLQUAKE
@@ -4062,7 +4071,7 @@ void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 
 	if (health > 0)
 	{
-		Draw_AlphaFillRGB (x, y, health_amount_width, 8, AUTOID_HEALTHBAR_NORMAL_COLOR, 2 *  MV_HEALTH_OPACITY);
+		Draw_AlphaFillRGB(x, y, health_amount_width, 8, RGBA_TO_COLOR(AUTOID_HEALTHBAR_NORMAL_COLOR, 2 *  MV_HEALTH_OPACITY));
 	}
 
 	health = cl.stats[STAT_HEALTH];
@@ -4072,20 +4081,20 @@ void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 		// Mega health.
 		health_amount_width = Q_rint((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 100));
 
-		Draw_AlphaFillRGB (x, y, health_amount_width, 8, AUTOID_HEALTHBAR_MEGA_COLOR, MV_HEALTH_OPACITY);
+		Draw_AlphaFillRGB(x, y, health_amount_width, 8, RGBA_TO_COLOR(AUTOID_HEALTHBAR_MEGA_COLOR, MV_HEALTH_OPACITY));
 	}
 	else if (health > 200 && health <= 250)
 	{
 		// Super health.
 		health_amount_width = Q_rint((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 200));
 
-		Draw_AlphaFillRGB (x, y, MV_HUD_HEALTH_WIDTH, 8, AUTOID_HEALTHBAR_MEGA_COLOR, MV_HEALTH_OPACITY);
-		Draw_AlphaFillRGB (x, y, health_amount_width, 8, AUTOID_HEALTHBAR_TWO_MEGA_COLOR, MV_HEALTH_OPACITY);
+		Draw_AlphaFillRGB(x, y, MV_HUD_HEALTH_WIDTH, 8, RGBA_TO_COLOR(AUTOID_HEALTHBAR_MEGA_COLOR, MV_HEALTH_OPACITY));
+		Draw_AlphaFillRGB(x, y, health_amount_width, 8, RGBA_TO_COLOR(AUTOID_HEALTHBAR_TWO_MEGA_COLOR, MV_HEALTH_OPACITY));
 	}
 	else if (health > 250)
 	{
 		// Crazy health.
-		Draw_AlphaFillRGB (x, y, MV_HUD_HEALTH_WIDTH, 8, AUTOID_HEALTHBAR_UNNATURAL_COLOR, MV_HEALTH_OPACITY);
+		Draw_AlphaFillRGB(x, y, MV_HUD_HEALTH_WIDTH, 8, RGBA_TO_COLOR(AUTOID_HEALTHBAR_UNNATURAL_COLOR, MV_HEALTH_OPACITY));
 
 	}
 	#endif
@@ -4096,8 +4105,8 @@ void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 		Draw_String(x, y, va("%4d", health));
 	}
 
-	SCR_MV_SetBoundValue (width, MV_HUD_HEALTH_WIDTH);
-	SCR_MV_SetBoundValue (height, 8);
+	SCR_MV_SetBoundValue(width, MV_HUD_HEALTH_WIDTH);
+	SCR_MV_SetBoundValue(height, 8);
 }
 
 void SCR_MV_DrawPowerups (int x, int y)

@@ -228,7 +228,7 @@ void CheckModels_f(void)
 };
 ////////////////////////////////
 /// test stuff
-void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
+void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
 void Draw_AlphaWindow (int x1, int y1, int x2, int y2, int col, float alpha)
 {
 	int dist;

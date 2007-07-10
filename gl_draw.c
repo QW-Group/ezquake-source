@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.71 2007-07-08 15:20:03 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.72 2007-07-10 21:20:11 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -942,7 +942,8 @@ int HexToInt(char c)
 		return -1;
 }
 
-void Draw_ColoredString (int x, int y, const char *text, int red) {
+void Draw_ColoredString (int x, int y, const char *text, int red) 
+{
 	int r, g, b, num;
 	qbool white = true;
 	qbool atest = false;
@@ -954,7 +955,8 @@ void Draw_ColoredString (int x, int y, const char *text, int red) {
 	if (!*text)
 		return;
 
-	if (gl_alphafont.value)	{
+	if (gl_alphafont.value)	
+	{
 		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
 			glDisable(GL_ALPHA_TEST);
 		if (!(blend = glIsEnabled(GL_BLEND)))
@@ -968,23 +970,30 @@ void Draw_ColoredString (int x, int y, const char *text, int red) {
 
 	glBegin (GL_QUADS);
 
-	for ( ; *text; text++) {
-
-		if (*text == '&') {
-			if (text[1] == 'c' && text[2] && text[3] && text[4]) {
+	for ( ; *text; text++) 
+	{
+		if (*text == '&') 
+		{
+			if (text[1] == 'c' && text[2] && text[3] && text[4]) 
+			{
 				r = HexToInt(text[2]);
 				g = HexToInt(text[3]);
 				b = HexToInt(text[4]);
-				if (r >= 0 && g >= 0 && b >= 0) {
-					if (scr_coloredText.value) {
+				if (r >= 0 && g >= 0 && b >= 0) 
+				{
+					if (scr_coloredText.value)
+					{
 						glColor3f(r / 16.0, g / 16.0, b / 16.0);
 						white = false;
 					}
 					text += 4;
 					continue;
 				}
-            } else if (text[1] == 'r')	{
-				if (!white) {
+            } 
+			else if (text[1] == 'r')	
+			{
+				if (!white) 
+				{
 					glColor3ubv(color_white);
 					white = true;
 				}
@@ -1005,7 +1014,8 @@ void Draw_ColoredString (int x, int y, const char *text, int red) {
 
 	glEnd ();
 
-	if (gl_alphafont.value)	{
+	if (gl_alphafont.value)	
+	{
 		if (atest)
 			glEnable(GL_ALPHA_TEST);
 		if (!blend)
@@ -1019,13 +1029,20 @@ void Draw_ColoredString (int x, int y, const char *text, int red) {
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 }
 
-const int int_white = 0xFFFFFFFF;
+const int COLOR_WHITE = 0xFFFFFFFF;
 
-int RGBA_2_Int(byte r, byte g, byte b, byte a) {
+color_t RGBA_TO_COLOR(byte r, byte g, byte b, byte a) 
+{
 	return ((r << 0) | (g << 8) | (b << 16) | (a << 24)) & 0xFFFFFFFF;
 }
 
-byte* Int_2_RGBA(int i, byte rgba[4]) {
+color_t RGBAVECT_TO_COLOR(byte rgba[4])
+{
+	return ((rgba[0] << 0) | (rgba[1] << 8) | (rgba[2] << 16) | (rgba[3] << 24)) & 0xFFFFFFFF;
+}
+
+byte* COLOR_TO_RGBA(color_t i, byte rgba[4]) 
+{
 	rgba[0] = (i >> 0  & 0xFF);
 	rgba[1] = (i >> 8  & 0xFF);
 	rgba[2] = (i >> 16 & 0xFF);
@@ -1034,16 +1051,16 @@ byte* Int_2_RGBA(int i, byte rgba[4]) {
 	return rgba;
 }
 
-/*
-	Instead of keeping color info in *text we provide color for each symbol in different array
-
-	char rgb[] = "rgb";
-	int i_rgb[3] = {RGBA_2_Int(255,0,0,255), RGBA_2_Int(0,255,0,255), RGBA_2_Int(0,0,255,255)};
-	// this will draw "rgb" non transparent string where r symbol will be red, g will be green and b is blue
-	Draw_ColoredString2 (0, 10, rgb, i_rgba, false)
-
-	If u want use alpha u must use "gl_alphafont 1", "scr_coloredText 1" and "red" param must be false
-*/
+//
+//	Instead of keeping color info in *text we provide color for each symbol in different array
+//
+//	char rgb[] = "rgb";
+//	int i_rgb[3] = {RGBA_TO_COLOR(255,0,0,255), RGBA_TO_COLOR(0,255,0,255), RGBA_TO_COLOR(0,0,255,255)};
+//	// this will draw "rgb" non transparent string where r symbol will be red, g will be green and b is blue
+//	Draw_ColoredString2 (0, 10, rgb, i_rgba, false)
+//
+//	If u want use alpha u must use "gl_alphafont 1", "scr_coloredText 1" and "red" param must be false
+//
 void Draw_ColoredString2 (int x, int y, const char *text, int *clr, int red) {
 	byte white4[4] = {255, 255, 255, 255}, rgba[4];
 	int num, i, last;
@@ -1072,10 +1089,10 @@ void Draw_ColoredString2 (int x, int y, const char *text, int *clr, int red) {
 
 	glBegin (GL_QUADS);
 
-	for (last = int_white, i = 0; text[i]; i++) {
+	for (last = COLOR_WHITE, i = 0; text[i]; i++) {
 		if (scr_coloredText.value && clr[i] != last) {
-			// probably here we may made some trick like glColor4ubv((byte*)&last); instead of Int_2_RGBA()
-			glColor4ubv(Int_2_RGBA(last = clr[i], rgba));
+			// probably here we may made some trick like glColor4ubv((byte*)&last); instead of COLOR_TO_RGBA()
+			glColor4ubv(COLOR_TO_RGBA(last = clr[i], rgba));
 		}
 
 		num = text[i] & 255;
@@ -1108,7 +1125,7 @@ void Draw_ColoredString2 (int x, int y, const char *text, int *clr, int red) {
 	Instead of keeping color info in *text we provide info then particular color starts
 
 	char str[] = "redgreen";
-	clrinfo_t info[2] = { {RGBA_2_Int(255,0,0,255), 0}, {RGBA_2_Int(0,255,0,255), 3} };
+	clrinfo_t info[2] = { {RGBA_TO_COLOR(255,0,0,255), 0}, {RGBA_TO_COLOR(0,255,0,255), 3} };
 	// this will draw "redgreen" non transparent string where "red" will be red, "green" will be green
 	Draw_ColoredString2 (0, 10, str, info, 2, false)
 
@@ -1153,12 +1170,12 @@ void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr
 
 	glBegin (GL_QUADS);
 
-	for (last = int_white, j = i = 0; text[i]; i++)
+	for (last = COLOR_WHITE, j = i = 0; text[i]; i++)
 	{
 		if (scr_coloredText.value && j < clr_cnt && i == clr[j].i)
 		{
 			if (clr[j].c != last)
-				glColor4ubv(Int_2_RGBA(last = clr[j].c, rgba));
+				glColor4ubv(COLOR_TO_RGBA(last = clr[j].c, rgba));
 			j++;
 		}
 
@@ -1513,8 +1530,9 @@ void Draw_TextBox (int x, int y, int width, int lines) {
 	Draw_TransPic (cx, cy+8, p);
 }
 
-//This repeats a 64 * 64 tile graphic to fill the screen around a sized down refresh window.
-void Draw_TileClear (int x, int y, int w, int h) {
+// This repeats a 64 * 64 tile graphic to fill the screen around a sized down refresh window.
+void Draw_TileClear (int x, int y, int w, int h) 
+{
 	GL_Bind (draw_backtile->texnum);
 	glBegin (GL_QUADS);
 	glTexCoord2f (x / 64.0, y / 64.0);
@@ -1528,30 +1546,21 @@ void Draw_TileClear (int x, int y, int w, int h) {
 	glEnd ();
 }
 
-void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float r, float g, float b, float thickness, qbool fill, float alpha)
+void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool fill, color_t color)
 {
-	alpha = bound(0, alpha, 1);
+	byte bytecolor[4];
 
-	if (!alpha)
-	{
+	if ((byte)(color & 0xFF) == 0)
 		return;
-	}
 
 	glDisable (GL_TEXTURE_2D);
-	if (alpha < 1)
-	{
-		glEnable (GL_BLEND);
-		glDisable(GL_ALPHA_TEST);
-		glColor4f (r, g, b, alpha);
-	}
-	else
-	{
-		glColor3f (r, g, b);
-	}
-
+	glEnable (GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
+	glColor4ubv(COLOR_TO_RGBA(color, bytecolor));
+	
 	thickness = max(0, thickness);
 
-	if(fill)
+	if (fill)
 	{
 		glRectf(x, y, x + w, y + h);
 	}
@@ -1564,87 +1573,41 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float r, float g, float
 	}
 
 	glEnable (GL_TEXTURE_2D);
-	if (alpha < 1)
-	{
-		glEnable (GL_ALPHA_TEST);
-		glDisable (GL_BLEND);
-	}
-	glColor3ubv (color_white);
+	glEnable (GL_ALPHA_TEST);
+	glDisable (GL_BLEND);
+
+	glColor4ubv (color_white);
 }
 
-void Draw_AlphaRectangle (int x, int y, int w, int h, int c, float thickness, qbool fill, float alpha)
+void Draw_AlphaRectangle (int x, int y, int w, int h, byte c, float thickness, qbool fill, float alpha)
 {
-	Draw_AlphaRectangleRGB (x, y, w, h,
-		host_basepal[c * 3] / 255.0,
-		host_basepal[c * 3 + 1] / 255.0,
-		host_basepal[c * 3 + 2] / 255.0,
-		thickness, fill, alpha);
+	Draw_AlphaRectangleRGB(x, y, w, h, thickness, fill, 
+		RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], (byte)(alpha * 255)));
 }
 
-void Draw_AlphaFillRGB (int x, int y, int w, int h, float r, float g, float b, float alpha)
+void Draw_AlphaFillRGB (int x, int y, int w, int h, color_t color)
 {
-	Draw_AlphaRectangleRGB (x, y, w, h, r, g, b, 1, true, alpha);
+	Draw_AlphaRectangleRGB (x, y, w, h, 1, true, color);
 }
 
-void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha)
+void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha)
 {
 	Draw_AlphaRectangle(x, y, w, h, c, 1, true, alpha);
 }
 
-void Draw_FillRGB (int x, int y, int w, int h, float r, float g, float b)
-{
-	Draw_AlphaFillRGB (x, y, w, h, r, g, b, 1);
-}
-
-void Draw_Fill (int x, int y, int w, int h, int c)
+void Draw_Fill (int x, int y, int w, int h, byte c)
 {
 	Draw_AlphaFill(x, y, w, h, c, 1);
 }
 
-void Draw_AlphaOutlineRGB (int x, int y, int w, int h, float r, float g, float b, float thickness, float alpha)
+void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, color_t color)
 {
-	Draw_AlphaRectangleRGB (x, y, w, h, r, g, b, thickness, false, alpha);
-}
-
-void Draw_AlphaOutline (int x, int y, int w, int h, int c, float thickness, float alpha)
-{
-	Draw_AlphaRectangle (x, y, w, h, c, thickness, false, alpha);
-}
-
-
-void Draw_OutlineRGB (int x, int y, int w, int h, float r, float g, float b, float thickness)
-{
-	Draw_AlphaRectangleRGB (x, y, w, h, r, g, b, thickness, false, 1);
-}
-
-void Draw_Outline (int x, int y, int w, int h, int c, float thickness)
-{
-	Draw_AlphaRectangle (x, y, w, h, c, thickness, false, 1);
-}
-
-// HUD -> Cokeman
-//
-
-void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, float r, float g, float b, float alpha)
-{
-	alpha = bound(0, alpha, 1);
-
-	if (!alpha)
-	{
-		return;
-	}
-
+	byte bytecolor[4];
 	glDisable (GL_TEXTURE_2D);
-	if (alpha < 1)
-	{
-		glEnable (GL_BLEND);
-		glDisable(GL_ALPHA_TEST);
-		glColor4f (r, g, b, alpha);
-	}
-	else
-	{
-		glColor3f (r, g, b);
-	}
+
+	glEnable (GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
+	glColor4ubv(COLOR_TO_RGBA(color, bytecolor));
 
 	if(thickness > 0.0)
 	{
@@ -1657,24 +1620,19 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 	glEnd ();
 
 	glEnable (GL_TEXTURE_2D);
-	if (alpha < 1)
-	{
-		glEnable(GL_ALPHA_TEST);
-		glDisable (GL_BLEND);
-	}
+	glEnable(GL_ALPHA_TEST);
+	glDisable (GL_BLEND);
+	
 	glColor3ubv (color_white);
 }
 
-void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, int c, float alpha)
+void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, byte c, float alpha)
 {
 	Draw_AlphaLineRGB (x_start, y_start, x_end, y_end, thickness,
-		host_basepal[c * 3] / 255.0,
-		host_basepal[c * 3 + 1] / 255.0,
-		host_basepal[c * 3 + 2] / 255.0,
-		alpha);
+		RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], 255));
 }
 
-void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, int color)
+void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color)
 {
 	byte bytecolor[4];
 	int i = 0;
@@ -1684,7 +1642,7 @@ void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, 
 	glEnable (GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 
-	glColor4ubv(Int_2_RGBA(color, bytecolor));
+	glColor4ubv(COLOR_TO_RGBA(color, bytecolor));
 	glDisable (GL_TEXTURE_2D);
 
 	if(fill)
@@ -1708,33 +1666,21 @@ void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, 
 
 #define CIRCLE_LINE_COUNT	40
 
-void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, float r, float g, float b, float alpha)
+void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
 {
+	byte bytecolor[4];
 	double angle;
 	int i;
 	int start;
 	int end;
 
-	alpha = bound(0, alpha, 1);
-
-	if (!alpha)
-	{
-		return;
-	}
-
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 
 	glDisable (GL_TEXTURE_2D);
-	if (alpha < 1)
-	{
-		glEnable (GL_BLEND);
-		glDisable(GL_ALPHA_TEST);
-		glColor4f (r, g, b, alpha);
-	}
-	else
-	{
-		glColor3f (r, g, b);
-	}
+
+	glEnable (GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
+	glColor4ubv(COLOR_TO_RGBA(color, bytecolor));
 
 	if(thickness > 0.0)
 	{
@@ -1751,8 +1697,8 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 	}
 
 	// Get the vertex index where to start and stop drawing.
-	start	= Q_rint((startangle * CIRCLE_LINE_COUNT) / (2*M_PI));
-	end		= Q_rint((endangle   * CIRCLE_LINE_COUNT) / (2*M_PI));
+	start	= Q_rint((startangle * CIRCLE_LINE_COUNT) / (2 * M_PI));
+	end		= Q_rint((endangle   * CIRCLE_LINE_COUNT) / (2 * M_PI));
 
 	// If the end is less than the start, increase the index so that
 	// we start on a "new" circle.
@@ -1762,27 +1708,27 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 	}
 
 	// Create a vertex at the exact position specified by the start angle.
-	glVertex2f (x + radius*cos(startangle), y - radius*sin(startangle));
+	glVertex2f (x + radius * cos(startangle), y - radius * sin(startangle));
 
 	// TODO: Use lookup table for sin/cos?
 	for(i = start; i < end; i++)
 	{
-      angle = i*2*M_PI / CIRCLE_LINE_COUNT;
-      glVertex2f (x + radius*cos(angle), y - radius*sin(angle));
+		angle = (i * 2 * M_PI) / CIRCLE_LINE_COUNT;
+		glVertex2f (x + radius * cos(angle), y - radius * sin(angle));
 
-	  // When filling we're drawing triangles so we need to
-	  // create a vertex in the middle of the vertex to fill
-	  // the entire pie slice/circle.
-	  if(fill)
-	  {
-		glVertex2f (x, y);
-	  }
+		// When filling we're drawing triangles so we need to
+		// create a vertex in the middle of the vertex to fill
+		// the entire pie slice/circle.
+		if(fill)
+		{
+			glVertex2f (x, y);
+		}
     }
 
-	glVertex2f (x + radius*cos(endangle), y - radius*sin(endangle));
+	glVertex2f (x + radius * cos(endangle), y - radius * sin(endangle));
 
 	// Create a vertex for the middle point if we're not drawing a complete circle.
-	if(endangle - startangle < 2*M_PI)
+	if(endangle - startangle < 2 * M_PI)
 	{
 		glVertex2f (x, y);
 	}
@@ -1790,57 +1736,51 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 	glEnd ();
 
 	glEnable (GL_TEXTURE_2D);
-	if (alpha < 1)
-	{
-		glEnable (GL_ALPHA_TEST);
-		glDisable (GL_BLEND);
-	}
+
+	glEnable (GL_ALPHA_TEST);
+	glDisable (GL_BLEND);
+
 	glColor3ubv (color_white);
 
 	glPopAttrib();
 }
 
-void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, int c, float alpha)
+void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, byte c, float alpha)
 {
 	Draw_AlphaPieSliceRGB (x, y, radius, startangle, endangle, thickness, fill,
-		host_basepal[c * 3] / 255.0,
-		host_basepal[c * 3 + 1] / 255.0,
-		host_basepal[c * 3 + 2] / 255.0,
-		alpha);
-}
+		RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], 255));
+}	
 
-void Draw_AlphaCircleRGB (int x, int y, float radius, float thickness, qbool fill, float r, float g, float b, float alpha)
+void Draw_AlphaCircleRGB (int x, int y, float radius, float thickness, qbool fill, color_t color)
 {
-	Draw_AlphaPieSliceRGB (x, y, radius, 0, 2*M_PI, thickness, fill, r,	g, b, alpha);
+	Draw_AlphaPieSliceRGB (x, y, radius, 0, 2 * M_PI, thickness, fill, color);
 }
 
-void Draw_AlphaCircle (int x, int y, float radius, float thickness, qbool fill, int c, float alpha)
+void Draw_AlphaCircle (int x, int y, float radius, float thickness, qbool fill, byte c, float alpha)
 {
-	Draw_AlphaPieSlice (x, y, radius, 0, 2*M_PI, thickness, fill, c, alpha);
+	Draw_AlphaPieSlice (x, y, radius, 0, 2 * M_PI, thickness, fill, c, alpha);
 }
 
-void Draw_AlphaCircleOutlineRGB (int x, int y, float radius, float thickness, float r, float g, float b, float alpha)
+void Draw_AlphaCircleOutlineRGB (int x, int y, float radius, float thickness, color_t color)
 {
-	Draw_AlphaCircleRGB (x, y, radius, thickness, false, r, g, b, alpha);
+	Draw_AlphaCircleRGB (x, y, radius, thickness, false, color);
 }
 
-void Draw_AlphaCircleOutline (int x, int y, float radius, float thickness, int color, float alpha)
+void Draw_AlphaCircleOutline (int x, int y, float radius, float thickness, byte color, float alpha)
 {
 	Draw_AlphaCircle (x, y, radius, thickness, false, color, alpha);
 }
 
-void Draw_AlphaCircleFillRGB (int x, int y, float radius, float r, float g, float b, float alpha)
+void Draw_AlphaCircleFillRGB (int x, int y, float radius, color_t color)
 {
-	Draw_AlphaCircleRGB (x, y, radius, 1.0, true, r, g, b, alpha);
+	Draw_AlphaCircleRGB (x, y, radius, 1.0, true, color);
 }
 
-void Draw_AlphaCircleFill (int x, int y, float radius, int color, float alpha)
+void Draw_AlphaCircleFill (int x, int y, float radius, byte color, float alpha)
 {
 	Draw_AlphaCircle (x, y, radius, 1.0, true, color, alpha);
 }
 
-// HUD -> hexum
-// kazik -->
 //
 // SCALE versions of some functions
 //
@@ -1863,11 +1803,12 @@ void Draw_SCharacter (int x, int y, int num, float scale)
     row = num>>4;
     col = num&15;
 
-    frow = row*0.0625;
-    fcol = col*0.0625;
+    frow = row * 0.0625;
+    fcol = col * 0.0625;
     size = 0.0625;
 
-	if (gl_alphafont.value)	{
+	if (gl_alphafont.value)	
+	{
 		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
 			glDisable(GL_ALPHA_TEST);
 		if (!(blend = glIsEnabled(GL_BLEND)))
@@ -1876,15 +1817,16 @@ void Draw_SCharacter (int x, int y, int num, float scale)
 
     GL_Bind (char_textures[0]);
 
+	// FIXME: Use glScale instead?
     glBegin (GL_QUADS);
     glTexCoord2f (fcol, frow);
     glVertex2f (x, y);
     glTexCoord2f (fcol + size, frow);
-    glVertex2f (x+scale*8, y);
+    glVertex2f (x + (scale * 8), y);
     glTexCoord2f (fcol + size, frow + size);
-    glVertex2f (x+scale*8, y+scale*8*2); // disconnect: hack, hack, hack?
+    glVertex2f (x + (scale * 8), y + (scale * 8 * 2)); // disconnect: hack, hack, hack?
     glTexCoord2f (fcol, frow + size);
-    glVertex2f (x, y+scale*8*2); // disconnect: hack, hack, hack?
+    glVertex2f (x, y + (scale * 8 * 2)); // disconnect: hack, hack, hack?
     glEnd ();
 
 	if (gl_alphafont.value)	{
@@ -1972,9 +1914,7 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width
 	{
 		glEnable (GL_ALPHA_TEST);
 		glDisable (GL_BLEND);
-//		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-//		glCullFace (GL_FRONT);
 		glColor4f (1, 1, 1, 1);
 	}
 }
@@ -2024,12 +1964,6 @@ void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl)
 
 void Draw_STransPic (int x, int y, mpic_t *pic, float scale)
 {
-    /*if (   x < 0 || (unsigned)(x + scale*pic->width) > vid.width
-		|| y < 0 || (unsigned)(y + scale*pic->height) > vid.height )
-    {
-        Sys_Error ("Draw_TransPic: bad coordinates");
-    }*/
-
     Draw_SPic (x, y, pic, scale);
 }
 
@@ -2045,33 +1979,24 @@ void Draw_Pic (int x, int y, mpic_t *pic)
 
 void Draw_TransPic (int x, int y, mpic_t *pic)
 {
-	/*
-	// Why do this? GL Can handle drawing partialy outside the screen.
-	if (   x < 0 || (unsigned) (x + pic->width) > vid.width
-		|| y < 0 || (unsigned) (y + pic->height) > vid.height )
-		Sys_Error ("Draw_TransPic: bad coordinates");
-	*/
-
 	Draw_Pic (x, y, pic);
 }
 
-void Draw_SFill (int x, int y, int w, int h, int c, float scale)
+void Draw_SFill (int x, int y, int w, int h, byte c, float scale)
 {
-    glDisable (GL_TEXTURE_2D);
-    glColor3f (host_basepal[c*3]/255.0,
-        host_basepal[c*3+1]/255.0,
-        host_basepal[c*3+2]/255.0);
+    glDisable(GL_TEXTURE_2D);
+    glColor3ub(host_basepal[c * 3], host_basepal[(c * 3) + 1], host_basepal[(c * 3) + 2 ]);
 
-    glBegin (GL_QUADS);
+    glBegin(GL_QUADS);
 
-    glVertex2f (x,y);
-    glVertex2f (x+w*scale, y);
-    glVertex2f (x+w*scale, y+h*scale);
-    glVertex2f (x, y+h*scale);
+    glVertex2f(x, y);
+    glVertex2f(x + (w * scale), y);
+    glVertex2f(x + (w * scale), y + (h * scale));
+    glVertex2f(x, y + (h * scale));
 
-    glEnd ();
-    glColor3f (1,1,1);
-    glEnable (GL_TEXTURE_2D);
+    glEnd();
+    glColor3ub(255, 255, 255);
+    glEnable(GL_TEXTURE_2D);
 }
 
 static char last_mapname[MAX_QPATH] = {0};
@@ -2142,7 +2067,6 @@ void Draw_FadeBox (int x, int y, int width, int height,
     glDisable (GL_BLEND);
     glEnable (GL_TEXTURE_2D);
 }*/
-// kazik <--
 
 void Draw_FadeScreen (void) {
 	float alpha;

@@ -813,9 +813,7 @@ qbool HUD_OnChangeFrameColor(cvar_t *var, char *newval)
 	b_colors = StringToRGB(new_color);
 
 	#if GLQUAKE
-	hud_elem->frame_color_cache[0] = b_colors[0] / 255.0;
-	hud_elem->frame_color_cache[1] = b_colors[1] / 255.0;
-	hud_elem->frame_color_cache[2] = b_colors[2] / 255.0;
+	memcpy(hud_elem->frame_color_cache, b_colors, sizeof(byte) * 3);
 	#else
 	// Only use the quake pallete in software (not RGB).
 	hud_elem->frame_color_cache[0] = b_colors[0];
@@ -834,12 +832,15 @@ void HUD_DrawFrame(hud_t *hud, int x, int y, int width, int height)
 
     if (hud->frame->value > 0  &&  hud->frame->value <= 1)
     {
+		hud->frame_color_cache[3] = (byte)(255 * hud->frame->value);
+
 		#ifdef GLQUAKE
-		Draw_AlphaFillRGB(x, y, width, height,
+		Draw_AlphaFillRGB(x, y, width, height, 
+			RGBA_TO_COLOR(
 			hud->frame_color_cache[0], 
-			hud->frame_color_cache[1], 
-			hud->frame_color_cache[2], 
-			hud->frame->value);
+			hud->frame_color_cache[1],
+			hud->frame_color_cache[2],
+			hud->frame_color_cache[3]));
 		#else 
 		Draw_FadeBox(x, y, width, height,
 			(byte)hud->frame_color_cache[0], 

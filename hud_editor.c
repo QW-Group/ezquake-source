@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.26 2007-06-15 12:26:06 johnnycz Exp $
+	$Id: hud_editor.c,v 1.27 2007-07-10 21:20:12 cokeman1982 Exp $
 
 */
 
@@ -17,8 +17,11 @@
 #include "menu.h"
 #include "keys.h"
 #include "Ctrl.h"
+#include "ez_controls.h"
 
 #ifdef GLQUAKE
+
+ez_tree_t help_control_tree;
 
 extern mpic_t		*scr_cursor_icon;	// cl_screen.c
 extern cvar_t		hud_planmode;		// hud_common.c
@@ -253,16 +256,16 @@ static qbool HUD_Editor_DrawHoverList(int x, int y, hud_grephandle_t *list)
 
 	// Draw the background fill.
 	height = ((hud_hoverlist_count - 1) * (8 + LINEGAP)) + (2 * PADDING);
-	Draw_AlphaFillRGB(x, y - height, width, height, 0, 0, 0, 1.0);
+	Draw_AlphaFillRGB(x, y - height, width, height, RGBA_TO_COLOR(0, 0, 0, 255));
 	
 	hud_iter = list;
 
 	// Highlight color (yellow).
-	highlight.c = RGBA_2_Int(0, 255, 0, 255);
+	highlight.c = RGBA_TO_COLOR(0, 255, 0, 255);
 	highlight.i = 0;
 
 	// Orange.
-	color.c = RGBA_2_Int(255, 150, 0, 255);
+	color.c = RGBA_TO_COLOR(255, 150, 0, 255);
 	color.i = 0;
 
 	// Draw the list items.
@@ -298,7 +301,7 @@ static void HUD_Editor_SetMode(hud_editor_mode_t newmode)
 //
 // Draws a tool tip with a background next to the cursor.
 //
-static void HUD_Editor_DrawTooltip(int x, int y, char *string, float r, float g, float b, float a) 
+static void HUD_Editor_DrawTooltip(int x, int y, char *string, color_t color) //float r, float g, float b, float a) 
 {
 	int len = strlen(string) * 8;
 
@@ -315,7 +318,7 @@ static void HUD_Editor_DrawTooltip(int x, int y, char *string, float r, float g,
 		y -= 9;
 	}
 
-	Draw_AlphaFillRGB(x, y, len, 8, r, g, b, a);
+	Draw_AlphaFillRGB(x, y, len, 8, color);
 	Draw_String(x, y, string);
 }
 
@@ -843,15 +846,18 @@ static void HUD_Editor_Move(float dx, float dy, hud_t *hud_element)
 //
 static void HUD_Editor_DrawAlignment(hud_t *hud_parent)
 {
-	extern void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, int color);
+	extern void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color);
+	color_t c = RGBA_TO_COLOR(255, 255, 0, 50);
 
 	if(hud_parent)
 	{
-		Draw_Polygon(hud_parent->lx, hud_parent->ly, hud_align_current_poly, hud_align_current_polycount, true, RGBA_2_Int(255, 255, 0, 50));
+		//Draw_Polygon(hud_parent->lx, hud_parent->ly, hud_align_current_poly, hud_align_current_polycount, true, RGBA_TO_COLOR(255, 255, 0, 50));
+		Draw_Polygon(hud_parent->lx, hud_parent->ly, hud_align_current_poly, hud_align_current_polycount, true, c);
 	}
 	else
 	{
-		Draw_Polygon(0, 0, hud_align_current_poly, hud_align_current_polycount, true, RGBA_2_Int(255, 255, 0, 50));
+		//Draw_Polygon(0, 0, hud_align_current_poly, hud_align_current_polycount, true, RGBA_TO_COLOR(255, 255, 0, 50));
+		Draw_Polygon(0, 0, hud_align_current_poly, hud_align_current_polycount, true, c);
 	}
 }
 
@@ -1073,9 +1079,12 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 				found_handle = true;
 
 				// Draw the resize handle highlighted.
-				Draw_AlphaFillRGB(selected_hud->lx + resize_handles[last_resize_handle]->x, selected_hud->ly + resize_handles[last_resize_handle]->y, 
-					resize_handles[last_resize_handle]->width, resize_handles[last_resize_handle]->height,
-					1, 1, 0, 0.5);
+				Draw_AlphaFillRGB(
+					selected_hud->lx + resize_handles[last_resize_handle]->x, 
+					selected_hud->ly + resize_handles[last_resize_handle]->y, 
+					resize_handles[last_resize_handle]->width, 
+					resize_handles[last_resize_handle]->height, 
+					RGBA_TO_COLOR(255, 255, 0, 125));
 
 				// Check which resize handle that has been selected
 				// and resize the HUD element accordingly.
@@ -1130,7 +1139,7 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 				// Highlight the resize handle under the cursor.
 				Draw_AlphaFillRGB(hud_hover->lx + resize_handles[i]->x, hud_hover->ly + resize_handles[i]->y, 
 					resize_handles[i]->width, resize_handles[i]->height,
-					1, 1, 0, 0.5);
+					RGBA_TO_COLOR(255, 255, 0, 125));
 
 				// Set the resize cursor icon since we're hovering a resize handle.
 				scr_cursor_icon = hud_editor_resize_icon;
@@ -1141,7 +1150,7 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 				// Normal resize handle.
 				Draw_AlphaFillRGB(hud_hover->lx + resize_handles[i]->x, hud_hover->ly + resize_handles[i]->y, 
 				resize_handles[i]->width, resize_handles[i]->height,
-				1, 1, 0, 0.2);
+				RGBA_TO_COLOR(255, 255, 0, 50));
 			}
 		}
 	}
@@ -1393,13 +1402,13 @@ static qbool HUD_Editor_Placing(hud_t *hud_hover)
 				if(hud_hover == selected_hud || (selected_hud->place_hud && selected_hud->place_hud == hud_hover))
 				{
 					// Red "not allowed".
-					Draw_AlphaRectangleRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 1, 0, 0, 1, true, 0.1);
-					Draw_AlphaRectangleRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 1, 0, 0, 1, false, 2);
+					Draw_AlphaRectangleRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 1, true, RGBA_TO_COLOR(0, 0, 255, 25));
+					Draw_AlphaRectangleRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 1, false, RGBA_TO_COLOR(0, 0, 255, 255));
 				}
 				else
 				{
 					// Green "allowed" placement.
-					Draw_AlphaRectangleRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 0, 1, 0, 1, true, 0.1);
+					Draw_AlphaRectangleRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 1, true, RGBA_TO_COLOR(0, 255, 0, 25));
 				}
 
 				return true;
@@ -1409,12 +1418,12 @@ static qbool HUD_Editor_Placing(hud_t *hud_hover)
 			if(!strcmp(selected_hud->place->string, "screen"))
 			{
 				// Not allowed, already placed there.
-				Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 1, 0, 0, 1, true, 0.1);
+				Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 1, true, RGBA_TO_COLOR(255, 0, 0, 25));
 			}
 			else
 			{
 				// Allowed.
-				Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 0, 1, 0, 1, true, 0.1);
+				Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 1, true, RGBA_TO_COLOR(255, 0, 0, 25));
 			}
 		}
 	}
@@ -1537,11 +1546,11 @@ static void HUD_Editor_DrawGreps()
 	greps_it = hud_greps;
 
 	// Highlight color (yellow).
-	highlight.c = RGBA_2_Int(0, 255, 0, 255);
+	highlight.c = RGBA_TO_COLOR(0, 255, 0, 255);
 	highlight.i = 0;
 
 	// Orange.
-	color.c = RGBA_2_Int(255, 150, 0, 255);
+	color.c = RGBA_TO_COLOR(255, 150, 0, 255);
 	color.i = 0;
 
 	while(greps_it)
@@ -1728,7 +1737,7 @@ static void HUD_Editor_DrawOutlines(void)
 		}
 
 		// Draw an outline for all hud elements (faint).
-		Draw_AlphaRectangleRGB(temp_hud->lx, temp_hud->ly, temp_hud->lw, temp_hud->lh, 0, 1, 0, 1, false, 0.1);
+		Draw_AlphaRectangleRGB(temp_hud->lx, temp_hud->ly, temp_hud->lw, temp_hud->lh, 1, false, RGBA_TO_COLOR(0, 255, 0, 25));
 
 		temp_hud = temp_hud->next;
 	}
@@ -1949,10 +1958,10 @@ static void HUD_Editor_GetAlignmentPoint(hud_t *hud, int *x, int *y)
 //
 static void HUD_Editor_DrawLinesToEachCorner(hud_t *hud, int x, int y)
 {
-	Draw_AlphaLineRGB(hud->lx, hud->ly,						x, y, 1, 0, 1, 0, 0.1);
-	Draw_AlphaLineRGB(hud->lx, hud->ly + hud->lh,			x, y, 1, 0, 1, 0, 0.1);
-	Draw_AlphaLineRGB(hud->lx + hud->lw, hud->ly,			x, y, 1, 0, 1, 0, 0.1);
-	Draw_AlphaLineRGB(hud->lx + hud->lw, hud->ly + hud->lh, x, y, 1, 0, 1, 0, 0.1);	
+	Draw_AlphaLineRGB(hud->lx, hud->ly,						x, y, 1, RGBA_TO_COLOR(0, 255, 0, 25));
+	Draw_AlphaLineRGB(hud->lx, hud->ly + hud->lh,			x, y, 1, RGBA_TO_COLOR(0, 255, 0, 25));
+	Draw_AlphaLineRGB(hud->lx + hud->lw, hud->ly,			x, y, 1, RGBA_TO_COLOR(0, 255, 0, 25));
+	Draw_AlphaLineRGB(hud->lx + hud->lw, hud->ly + hud->lh, x, y, 1, RGBA_TO_COLOR(0, 255, 0, 25));
 }
 
 //
@@ -1973,7 +1982,7 @@ static void HUD_Editor_DrawConnections(hud_t *hud_hover)
 	HUD_Editor_GetAlignmentPoint(hud_hover, &align_x, &align_y);
 	
 	// Draw a line to the parent of the HUD we're hovering.
-	Draw_AlphaLineRGB(HUD_CENTER_X(hud_hover), HUD_CENTER_Y(hud_hover), align_x, align_y, 1, 0, 1, 0, 0.1); // Red.	
+	Draw_AlphaLineRGB(HUD_CENTER_X(hud_hover), HUD_CENTER_Y(hud_hover), align_x, align_y, 1, RGBA_TO_COLOR(0, 255, 0, 25));
 
 	// Draw a line to all children of the HUD we're hovering.
 	while((child = HUD_Editor_FindNextChild(hud_hover)))
@@ -1986,7 +1995,7 @@ static void HUD_Editor_DrawConnections(hud_t *hud_hover)
 
 		// Draw a line from the alignment point on the parent to the child.
 		HUD_Editor_GetAlignmentPoint(child, &align_x, &align_y);
-		Draw_AlphaLineRGB(align_x, align_y, HUD_CENTER_X(child), HUD_CENTER_Y(child), 1, 0, 1, 0, 0.1); // Red.
+		Draw_AlphaLineRGB(align_x, align_y, HUD_CENTER_X(child), HUD_CENTER_Y(child), 1, RGBA_TO_COLOR(0, 255, 0, 25));
 	}
 }
 
@@ -2064,7 +2073,7 @@ static void HUD_Editor_EvaluateState(hud_t *hud_hover)
 static void HUD_Editor_DrawTooltips(hud_t *hud_hover)
 {
 	char *message = NULL;
-	float color[4] = {0, 0, 0, 0};
+	byte color[4] = {0, 0, 0, 0};
 
 	if(!hud_hover)
 	{
@@ -2079,8 +2088,8 @@ static void HUD_Editor_DrawTooltips(hud_t *hud_hover)
 			case hud_editmode_move_resize :
 			{
 				message = va("(%d, %d) moving %s", (int)selected_hud->pos_x->value, (int)selected_hud->pos_y->value, selected_hud->name);
-				color[0] = 1;
-				color[3] = 0.5;
+				color[0] = 255;
+				color[3] = 125;
 				break;
 			}
 			case hud_editmode_align :
@@ -2090,24 +2099,24 @@ static void HUD_Editor_DrawTooltips(hud_t *hud_hover)
 				align = HUD_Editor_GetAlignmentString(hud_alignmode);
 
 				message = va("align %s to %s", selected_hud->name, align);
-				color[1] = 1;
-				color[2] = 1;
-				color[3] = 0.5;
+				color[1] = 255;
+				color[2] = 255;
+				color[3] = 125;
 				
 				break;
 			}
 			case hud_editmode_place :
 			{
 				message = va("placing %s", selected_hud->name);
-				color[0] = 1;
-				color[3] = 0.5;
+				color[0] = 255;
+				color[3] = 125;
 				break;
 			}
 			case hud_editmode_normal :
 			{
 				message = hud_hover->name;
-				color[2] = 1;
-				color[3] = 0.5;
+				color[2] = 255;
+				color[3] = 125;
 				break;
 			}
 		}
@@ -2116,18 +2125,18 @@ static void HUD_Editor_DrawTooltips(hud_t *hud_hover)
 	if(!message)
 	{
 		message = hud_hover->name;
-		color[2] = 1;
-		color[3] = 0.5;		
+		color[2] = 255;
+		color[3] = 125;		
 	}
 
-	HUD_Editor_DrawTooltip(hud_mouse_x, hud_mouse_y, message, color[0], color[1], color[2], color[3]);
+	HUD_Editor_DrawTooltip(hud_mouse_x, hud_mouse_y, message, RGBA_TO_COLOR(color[0], color[1], color[2], color[3]));
 }
 
 //
 // Draws a help window.
 //
 static void HUD_Editor_DrawHelp()
-{	
+{
 	#define HUD_EDITOR_HELP_BORDER	32
 	#define HUD_EDITOR_HELP_WIDTH	min(vid.conwidth - (2 * HUD_EDITOR_HELP_BORDER), 500)
 	#define HUD_EDITOR_HELP_HEIGHT	(vid.conheight - (2 * HUD_EDITOR_HELP_BORDER))
@@ -2180,6 +2189,24 @@ static void HUD_Editor_DrawHelp()
 		0);
 }
 
+int Test_OnGotFocus(ez_control_t *self)
+{
+	EZ_control_SetBackgroundColor(self, self->background_color[0], self->background_color[1], self->background_color[2], 200);
+	return 0;
+}
+
+int Test_OnLostFocus(ez_control_t *self)
+{
+	EZ_control_SetBackgroundColor(self, self->background_color[0], self->background_color[1], self->background_color[2], 100);
+	return 0;
+}
+
+int Test_OnButtonDraw(ez_control_t *self)
+{
+	Draw_String(self->absolute_x, self->absolute_y, "It works!");
+	return 0;
+}
+
 //
 // Main HUD Editor function.
 //
@@ -2202,7 +2229,7 @@ static void HUD_Editor(void)
 			// Draw a line that indicates that the movement is locked to the X-axis.
 			if (selected_hud)
 			{
-				Draw_AlphaLineRGB(0, HUD_CENTER_Y(selected_hud), vid.width, HUD_CENTER_Y(selected_hud), 1, 1, 0, 0, 0.3); // Red.
+				Draw_AlphaLineRGB(0, HUD_CENTER_Y(selected_hud), vid.width, HUD_CENTER_Y(selected_hud), 1, RGBA_TO_COLOR(255, 0, 0, 75));
 			}
 		}
 		else
@@ -2211,7 +2238,7 @@ static void HUD_Editor(void)
 
 			if (selected_hud)
 			{
-				Draw_AlphaLineRGB(HUD_CENTER_X(selected_hud), 0, HUD_CENTER_X(selected_hud), vid.height, 1, 1, 0, 0, 0.3); // Red.
+				Draw_AlphaLineRGB(HUD_CENTER_X(selected_hud), 0, HUD_CENTER_X(selected_hud), vid.height, 1, RGBA_TO_COLOR(255, 0, 0, 75));
 			}
 		}		
 	}
@@ -2249,13 +2276,13 @@ static void HUD_Editor(void)
 	// Draw a rectangle around the currently active HUD element.
 	if(found && hud_hover)
 	{
-		Draw_OutlineRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 0, 1, 0, 1);
+		Draw_AlphaRectangleRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 1, false, RGBA_TO_COLOR(0, 255, 0, 255));
 	}
 
 	// If we are realigning draw a green outline for the selected hud element.
 	if (selected_hud)
 	{
-		Draw_OutlineRGB(selected_hud->lx, selected_hud->ly, selected_hud->lw, selected_hud->lh, 0, 1, 0, 2);
+		Draw_AlphaRectangleRGB(selected_hud->lx, selected_hud->ly, selected_hud->lw, selected_hud->lh, 2, false, RGBA_TO_COLOR(0, 255, 0, 255));
 	}
 
 	// Check the mouse/keyboard states and if we're hovering above a hud or not.
@@ -2267,7 +2294,7 @@ static void HUD_Editor(void)
 	// Draw a red line from selected hud to cursor.
 	if (selected_hud)
 	{
-		Draw_AlphaLineRGB(hud_mouse_x, hud_mouse_y, HUD_CENTER_X(selected_hud), HUD_CENTER_Y(selected_hud), 1, 1, 0, 0, 1); // Red.
+		Draw_AlphaLineRGB(hud_mouse_x, hud_mouse_y, HUD_CENTER_X(selected_hud), HUD_CENTER_Y(selected_hud), 1, RGBA_TO_COLOR(255, 0, 0, 255));
 	}
 
 	// Check if we're performing any action.
@@ -2286,6 +2313,8 @@ static void HUD_Editor(void)
 	{
 		HUD_Editor_DrawHelp();
 	}
+
+	//EZ_tree_Draw(&help_control_tree);
 }
 
 //
@@ -2350,6 +2379,18 @@ void HUD_Editor_Toggle_f(void)
 #endif // GLQUAKE
 
 //
+// Handles mouse events sent to the HUD editor.
+//
+qbool HUD_Editor_MouseEvent(mouse_state_t *ms)
+{
+	#ifdef GLQUAKE
+	return EZ_tree_MouseEvent(&help_control_tree, ms);
+	#endif
+
+	return false;
+}
+
+//
 // Handles key events sent to the HUD editor.
 //
 void HUD_Editor_Key(int key, int unichar) 
@@ -2357,6 +2398,8 @@ void HUD_Editor_Key(int key, int unichar)
 	#ifdef GLQUAKE
 	static int planmode = 1;
 	int togglekeys[2];
+
+	//EZ_tree_KeyEvent(&help_control_tree, key, unichar);
 
 	M_FindKeysForCommand("toggleconsole", togglekeys);
 	if ((key == togglekeys[0]) || (key == togglekeys[1])) 
@@ -2408,9 +2451,40 @@ void HUD_Editor_Key(int key, int unichar)
 //
 void HUD_Editor_Init(void) 
 {
-	extern mpic_t *SCR_LoadCursorImage(char *cursorimage);
-
 	#ifdef GLQUAKE
+
+	extern mpic_t *SCR_LoadCursorImage(char *cursorimage);
+/*
+	ez_control_t *root = NULL;
+	ez_control_t *child1 = NULL;
+	ez_control_t *child2 = NULL;
+
+	ez_button_t *button = NULL;
+
+	root = EZ_control_Create(&help_control_tree, NULL, "Test window", "Test", 50, 50, 200, 200, NULL, CONTROL_FOCUSABLE | CONTROL_MOVABLE);
+	
+	child1 = EZ_control_Create(&help_control_tree, root, "Child 1", "Test", 10, 10, 50, 50, NULL, CONTROL_FOCUSABLE | CONTROL_RESIZE_H | CONTROL_RESIZE_V | CONTROL_MOVABLE | CONTROL_CONTAINED);
+	button = EZ_button_Create(&help_control_tree, child1, "My button", "A crazy button!", 15, 15, 15, 15, NULL, NULL, NULL, 0);
+
+	child2 = EZ_control_Create(&help_control_tree, root, "Child 2", "Test", 30, 50, 50, 20, NULL, CONTROL_FOCUSABLE | CONTROL_CONTAINED);
+
+	//EZ_control_SetOnDraw((ez_control_t *)button, Test_OnButtonDraw);
+
+	EZ_control_SetOnGotFocus(child1, Test_OnGotFocus);
+	EZ_control_SetOnLostFocus(child1, Test_OnLostFocus);
+
+	EZ_control_SetOnGotFocus(child2, Test_OnGotFocus);
+	EZ_control_SetOnLostFocus(child2, Test_OnLostFocus);
+
+	EZ_control_SetBackgroundColor(root, 0, 0, 0, 100);
+	EZ_control_SetBackgroundColor(child1, 150, 150, 0, 100);
+	EZ_control_SetBackgroundColor(child2, 150, 150, 200, 100);
+
+	EZ_button_SetFocusedColor(button, 255, 0, 0, 255);
+	EZ_button_SetNormalColor(button, 255, 255, 0, 100);
+	EZ_button_SetPressedColor(button, 255, 255, 0, 255);
+	EZ_button_SetHoverColor(button, 255, 0, 0, 150);
+*/
 	// Register commands.
 	Cmd_AddCommand("hud_editor", HUD_Editor_Toggle_f);
 

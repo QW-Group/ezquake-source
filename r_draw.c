@@ -424,14 +424,19 @@ void Draw_ColoredString (int x, int y, const char *text, int red)
 	}
 }
 
-const int int_white = 0xFFFFFFFF;
+const color_t COLOR_WHITE = 0xFFFFFFFF;
 
-int RGBA_2_Int(byte r, byte g, byte b, byte a) 
+color_t RGBA_TO_COLOR(byte r, byte g, byte b, byte a) 
 {
 	return 0xFFFFFFFF;
 }
 
-byte* Int_2_RGBA(int i, byte rgba[4]) 
+color_t RGBAVECT_TO_COLOR(byte rgba[4])
+{
+	return 0xFFFFFFFF;
+}
+
+byte* COLOR_TO_RGBA(color_t i, byte rgba[4]) 
 {
 	memset(rgba, 255, 4);
 	return rgba;
@@ -453,7 +458,7 @@ void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr
 	Draw_ColoredString(x, y, wcs2str(text), red);
 }
 
-void Draw_Pixel(int x, int y, byte color) 
+static __inline void Draw_Pixel(int x, int y, byte color) 
 {
 	byte *dest;
 
@@ -1066,7 +1071,7 @@ void Draw_TileClear (int x, int y, int w, int h)
 // 
 // Fills a box of pixels with a single color
 // 
-void Draw_Fill (int x, int y, int w, int h, int c) 
+void Draw_Fill (int x, int y, int w, int h, byte c) 
 {
 	int u, v;
 
@@ -1135,7 +1140,6 @@ void Draw_FadeBox (int x, int y, int width, int height, byte color, float alpha)
 
 void Draw_FadeScreen (void) 
 {
-
 	Draw_FadeBox(0, 0, vid.width, vid.height, 0, scr_menualpha.value);
 }
 
@@ -1187,7 +1191,7 @@ void Draw_STransPic (int x, int y, mpic_t *pic, float scale)
     Draw_TransPic(x, y, pic);
 }
 
-void Draw_SFill (int x, int y, int w, int h, int c, float scale)
+void Draw_SFill (int x, int y, int w, int h, byte c, float scale)
 {
     // no scale in SOFT yet..
     Draw_Fill(x, y, w, h, c);

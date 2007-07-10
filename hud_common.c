@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.143 2007-07-05 20:11:19 himan Exp $
+	$Id: hud_common.c,v 1.144 2007-07-10 21:20:12 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -26,7 +26,7 @@
 #include "sbar.h"
 #include "hud.h"
 #include "Ctrl.h"
-#include "console.h" // gavoja
+#include "console.h" 
 
 
 #ifndef STAT_MINUS
@@ -34,9 +34,9 @@
 #endif
 
 #ifdef GLQUAKE
-void Draw_AlphaFill (int x, int y, int w, int h, int c, float alpha);
+void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
 #else
-void Draw_Fill (int x, int y, int w, int h, int c);
+void Draw_Fill (int x, int y, int w, int h, byte c);
 #endif
 
 hud_t *hud_netgraph = NULL;
@@ -914,20 +914,20 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 		switch ((int)(player_speed / hud_speed2_wrapspeed->value))
 		{
 			case 0:
-				color1 = hud_speed2_color_stopped->value;
-				color2 = hud_speed2_color_normal->value;
+				color1 = hud_speed2_color_stopped->integer;
+				color2 = hud_speed2_color_normal->integer;
 				break;
 			case 1:
-				color1 = hud_speed2_color_normal->value;
-				color2 = hud_speed2_color_fast->value;
+				color1 = hud_speed2_color_normal->integer;
+				color2 = hud_speed2_color_fast->integer;
 				break;
 			case 2:
-				color1 = hud_speed2_color_fast->value;
-				color2 = hud_speed2_color_fastest->value;
+				color1 = hud_speed2_color_fast->integer;
+				color2 = hud_speed2_color_fastest->integer;
 				break;
 			default:
-				color1 = hud_speed2_color_fastest->value;
-				color2 = hud_speed2_color_insane->value;
+				color1 = hud_speed2_color_fastest->integer;
+				color2 = hud_speed2_color_insane->integer;
 				break;
 		}
 
@@ -1054,7 +1054,7 @@ void SCR_HUD_DrawSpeed2(hud_t *hud)
 		Draw_AlphaCircle (x, y, 2.0, 1, true, 15, hud_speed2_opacity->value);
 
 		// Draw the speed needle.
-		Draw_AlphaLine (needle_start_x, needle_start_y, needle_end_x, needle_end_y, 1, 15, hud_speed2_opacity->value);
+		Draw_AlphaLineRGB (needle_start_x, needle_start_y, needle_end_x, needle_end_y, 1, RGBA_TO_COLOR(250, 250, 250, 255 * hud_speed2_opacity->value));
 
 		// Draw the speed.
 		Draw_String (text_x, text_y, va("%d", player_speed));
@@ -1625,7 +1625,7 @@ void SCR_HUD_DrawFace(hud_t *hud)
         return;
 
     if ( (HUD_Stats(STAT_ITEMS) & (IT_INVISIBILITY | IT_INVULNERABILITY) )
-    == (IT_INVISIBILITY | IT_INVULNERABILITY) )
+		== (IT_INVISIBILITY | IT_INVULNERABILITY) )
     {
         Draw_SPic (x, y, sb_face_invis_invuln, scale);
         return;
@@ -4998,9 +4998,6 @@ void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pi
 				continue;
 			}
 
-			// This is only a test so that I can see my wonderful grid. :D
-			//Draw_AlphaOutline(x + tl_x, y + tl_y, p_cell_width, p_cell_height, 0, 1, 1);
-
 			//
 			// Death stats.
 			//
@@ -5151,27 +5148,20 @@ qbool Radar_OnChangeOtherFilter(cvar_t *var, char *newval)
 }
 
 
-#define HUD_COLOR_DEFAULT_TRANSPARENCY	0.3
+#define HUD_COLOR_DEFAULT_TRANSPARENCY	75
 
-float hud_radar_highlight_color[4] = {1.0, 1.0, 0.0, HUD_COLOR_DEFAULT_TRANSPARENCY};
+byte hud_radar_highlight_color[4] = {255, 255, 0, HUD_COLOR_DEFAULT_TRANSPARENCY};
 
 qbool Radar_OnChangeHighlightColor(cvar_t *var, char *newval)
 {
-	int i = 0;
-	byte *b_colors;
 	char *new_color;
 
 	// Translate a colors name to RGB values.
 	new_color = ColorNameToRGBString(newval);
 
 	// Parse the colors.
-	b_colors = StringToRGB(new_color);
-
-	// Save the colors / alpha transparency.
-	for(i = 0; i < 4; i++)
-	{
-		hud_radar_highlight_color[i] = b_colors[i] / 255.0;
-	}
+	//color = StringToRGB(new_color);
+	memcpy(hud_radar_highlight_color, StringToRGB(new_color), sizeof(byte) * 4);
 
 	// Set the cvar to contain the new color string
 	// (if the user entered "red" it will be "255 0 0").
@@ -5286,15 +5276,15 @@ void Radar_DrawEntities(int x, int y, float scale, float player_size, int show_h
 			//
 
 			// Draw a red border around the cross.
-			Draw_AlphaOutline (entity_p_x - 3, entity_p_y - 3, 8, 8, 79, 1, 0.8);
+			Draw_AlphaRectangleRGB(entity_p_x - 3, entity_p_y - 3, 8, 8, 1, false, RGBA_TO_COLOR(200, 0, 0, 200));
 
 			// Draw a black outline cross.
-			Draw_AlphaFill (entity_p_x - 3, entity_p_y - 1, 8, 4, 0, 1);
-			Draw_AlphaFill (entity_p_x - 1, entity_p_y - 3, 4, 8, 0, 1);
+			Draw_AlphaFill(entity_p_x - 3, entity_p_y - 1, 8, 4, 0, 1);
+			Draw_AlphaFill(entity_p_x - 1, entity_p_y - 3, 4, 8, 0, 1);
 
 			// Draw a 2 pixel cross.
-			Draw_AlphaFill (entity_p_x - 2, entity_p_y, 6, 2, 79, 1);
-			Draw_AlphaFill (entity_p_x, entity_p_y - 2, 2, 6, 79, 1);
+			Draw_AlphaFill(entity_p_x - 2, entity_p_y, 6, 2, 79, 1);
+			Draw_AlphaFill(entity_p_x, entity_p_y - 2, 2, 6, 79, 1);
 		}
 
 		if(radar_show_ssg && !strcmp(cl_visents.list[i].model->name, "progs/g_shot.mdl"))
@@ -5723,13 +5713,7 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 			if (highlight != HUD_RADAR_HIGHLIGHT_NONE && Cam_TrackNum() >= 0 && info->userid == cl.players[Cam_TrackNum()].userid)
 			{
 				extern int HexToInt(char c);
-				float r, g, b, highlight_alpha;
-
-				// Get the highlight color.
-				r = hud_radar_highlight_color[0];
-				g = hud_radar_highlight_color[1];
-				b = hud_radar_highlight_color[2];
-				highlight_alpha = hud_radar_highlight_color[3];
+				color_t higlight_color = RGBAVECT_TO_COLOR(hud_radar_highlight_color);
 
 				// Draw the highlight.
 				switch ((int)highlight)
@@ -5737,54 +5721,54 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 					case HUD_RADAR_HIGHLIGHT_CROSS_CORNERS :
 					{
 						// Top left
-						Draw_AlphaLineRGB (x, y, x + player_p_x, y + player_p_y, 2, r, g, b, highlight_alpha);
+						Draw_AlphaLineRGB (x, y, x + player_p_x, y + player_p_y, 2, higlight_color);
 
 						// Top right.
-						Draw_AlphaLineRGB (x + width, y, x + player_p_x, y + player_p_y, 2, r, g, b, highlight_alpha);
+						Draw_AlphaLineRGB (x + width, y, x + player_p_x, y + player_p_y, 2, higlight_color);
 
 						// Bottom left.
-						Draw_AlphaLineRGB (x, y + height, x + player_p_x, y + player_p_y, 2, r, g, b, highlight_alpha);
+						Draw_AlphaLineRGB (x, y + height, x + player_p_x, y + player_p_y, 2, higlight_color);
 
 						// Bottom right.
-						Draw_AlphaLineRGB (x + width, y + height, x + player_p_x, y + player_p_y, 2, r, g, b, highlight_alpha);
+						Draw_AlphaLineRGB (x + width, y + height, x + player_p_x, y + player_p_y, 2, higlight_color);
 						break;
 					}
 					case HUD_RADAR_HIGHLIGHT_ARROW_TOP :
 					{
 						// Top center.
-						Draw_AlphaLineRGB (x + width / 2, y, x + player_p_x, y + player_p_y, 2, r, g, b, highlight_alpha);
+						Draw_AlphaLineRGB (x + width / 2, y, x + player_p_x, y + player_p_y, 2, higlight_color);
 						break;
 					}
 					case HUD_RADAR_HIGHLIGHT_ARROW_CENTER :
 					{
 						// Center.
-						Draw_AlphaLineRGB (x + width / 2, y + height / 2, x + player_p_x, y + player_p_y, 2, r, g, b, highlight_alpha);
+						Draw_AlphaLineRGB (x + width / 2, y + height / 2, x + player_p_x, y + player_p_y, 2, higlight_color);
 						break;
 					}
 					case HUD_RADAR_HIGHLIGHT_ARROW_BOTTOM :
 					{
 						// Bottom center.
-						Draw_AlphaLineRGB (x + width / 2, y + height, x + player_p_x, y + player_p_y, 2, r, g, b, highlight_alpha);
+						Draw_AlphaLineRGB (x + width / 2, y + height, x + player_p_x, y + player_p_y, 2, higlight_color);
 						break;
 					}
 					case HUD_RADAR_HIGHLIGHT_FIXED_CIRCLE :
 					{
-						Draw_AlphaCircleRGB (x + player_p_x, y + player_p_y, player_size * 1.5, 1.0, true, r, g, b, highlight_alpha);
+						Draw_AlphaCircleRGB (x + player_p_x, y + player_p_y, player_size * 1.5, 1.0, true, higlight_color);
 						break;
 					}
 					case HUD_RADAR_HIGHLIGHT_CIRCLE :
 					{
-						Draw_AlphaCircleRGB (x + player_p_x, y + player_p_y, player_size * player_z_relative * 2.0, 1.0, true, r, g, b, highlight_alpha);
+						Draw_AlphaCircleRGB (x + player_p_x, y + player_p_y, player_size * player_z_relative * 2.0, 1.0, true, higlight_color);
 						break;
 					}
 					case HUD_RADAR_HIGHLIGHT_FIXED_OUTLINE :
 					{
-						Draw_AlphaCircleOutlineRGB (x + player_p_x, y + player_p_y, player_size * 1.5, 1.0, r, g, b, highlight_alpha);
+						Draw_AlphaCircleOutlineRGB (x + player_p_x, y + player_p_y, player_size * 1.5, 1.0, higlight_color);
 						break;
 					}
 					case HUD_RADAR_HIGHLIGHT_OUTLINE :
 					{
-						Draw_AlphaCircleOutlineRGB (x + player_p_x, y + player_p_y, player_size * player_z_relative * 2.0, 1.0, r, g, b, highlight_alpha);
+						Draw_AlphaCircleOutlineRGB (x + player_p_x, y + player_p_y, player_size * player_z_relative * 2.0, 1.0, higlight_color);
 						break;
 					}
 					case HUD_RADAR_HIGHLIGHT_TEXT_ONLY :
@@ -5811,13 +5795,13 @@ void Radar_DrawPlayers(int x, int y, int width, int height, float scale,
 
 				// Draw a slightly larger line behind the colored one
 				// so that it get's an outline.
-				x_line_end = x_line_start + (player_size*2*player_z_relative+1)*relative_x;
-				y_line_end = y_line_start - (player_size*2*player_z_relative+1)*relative_y;
+				x_line_end = x_line_start + (player_size * 2 * player_z_relative + 1) * relative_x;
+				y_line_end = y_line_start - (player_size * 2 * player_z_relative + 1) * relative_y;
 				Draw_AlphaLine (x_line_start, y_line_start, x_line_end, y_line_end, 4.0, 0, 1.0);
 
 				// Draw the colored line.
-				x_line_end = x_line_start + (player_size*2*player_z_relative)*relative_x;
-				y_line_end = y_line_start - (player_size*2*player_z_relative)*relative_y;
+				x_line_end = x_line_start + (player_size * 2 * player_z_relative) * relative_x;
+				y_line_end = y_line_start - (player_size * 2 * player_z_relative) * relative_y;
 				Draw_AlphaLine (x_line_start, y_line_start, x_line_end, y_line_end, 2.0, player_color, player_alpha);
 
 				// Draw the player on the map.
