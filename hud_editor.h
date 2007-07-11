@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.h,v 1.10 2007-07-03 16:18:06 cokeman1982 Exp $
+	$Id: hud_editor.h,v 1.11 2007-07-11 23:15:41 cokeman1982 Exp $
 
 */
 
@@ -18,7 +18,7 @@ void HUD_Editor_Draw(void);
 void HUD_Editor_Init(void);
 
 // Mouse processing.
-qbool HUD_Editor_MouseEvent(struct mouse_state_s *ms);
+qbool HUD_Editor_MouseEvent(mouse_state_t *ms);
 
 // key press processing function
 void HUD_Editor_Key(int, int);

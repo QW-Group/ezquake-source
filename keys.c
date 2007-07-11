@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.67 2007-07-04 19:44:43 cokeman1982 Exp $
+    $Id: keys.c,v 1.68 2007-07-11 23:15:41 cokeman1982 Exp $
 
 */
 
@@ -1922,7 +1922,7 @@ static qbool Mouse_EventDispatch(void)
 			mouse_handled = Menu_Mouse_Event(&scr_pointer_state);
 			break;
 		case key_hudeditor: 
-			//mouse_handled = HUD_Editor_MouseEvent(&scr_pointer_state);
+			mouse_handled = HUD_Editor_MouseEvent(&scr_pointer_state);
 			break;
 	}
     
