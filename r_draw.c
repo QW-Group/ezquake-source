@@ -1137,10 +1137,26 @@ static byte Draw_FindNearestColor(color_t color)
     return bestIndex;
 }
 
-
 void Draw_AlphaFillRGB (int x, int y, int width, int height, color_t color)
 {
 	Draw_FadeBox(x, y, width, height, Draw_FindNearestColor(color), (color >> 24) / 255.0);
+}
+
+void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool fill, color_t color)
+{
+	int t = Q_rint(thickness);
+
+	if (fill)
+	{
+		Draw_AlphaFillRGB(x, y, w, h, color);
+	}
+	else
+	{
+		Draw_AlphaFillRGB(x,		 y,				w,	t,				color);
+		Draw_AlphaFillRGB(x,		 (y + h - t),	w,	t,				color);
+		Draw_AlphaFillRGB(x,		 (y + t),		t,	(h - (2 * t)),	color);
+		Draw_AlphaFillRGB(x + w - t, (y + t),		t,	(h - (2 * t)),	color);
+	}
 }
 
 //=============================================================================
