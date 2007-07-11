@@ -1108,23 +1108,7 @@ void Draw_Fill (int x, int y, int w, int h, byte c)
 	}
 }
 
-__inline static void plus_truncate_byte(byte *a, byte b)
-{
-	if (((int)(*a)) + b < 0) 
-	{
-        (*a) = 0; 
-	}
-    else if (((int)(*a)) + b > 255) 
-	{
-        (*a) = 255; 
-	}
-    else 
-	{
-        (*a) += b;
-	}
-}
-
-static byte FindNearestColor(color_t color)
+static byte Draw_FindNearestColor(color_t color)
 {
 	#define PALETTE_SIZE 255
     int i; 
@@ -1135,9 +1119,9 @@ static byte FindNearestColor(color_t color)
 
 	COLOR_TO_RGBA(color, bytecolor);
     
-	for (i = 0; i < PALETTE_SIZE; i++) 
+	for (i = 0; i < PALETTE_SIZE; i++)
 	{
-		int Rdiff = ((int)bytecolor[0]) - host_basepal[i * 3];
+		int Rdiff = ((int)bytecolor[0]) - host_basepal[(i * 3)];
         int Gdiff = ((int)bytecolor[1]) - host_basepal[(i * 3) + 1];
         int Bdiff = ((int)bytecolor[2]) - host_basepal[(i * 3) + 2];
         
@@ -1153,112 +1137,10 @@ static byte FindNearestColor(color_t color)
     return bestIndex;
 }
 
-#define CHANNEL_RED		0
-#define CHANNEL_GREEN	1
-#define CHANNEL_BLUE	2
-
-static void computer_disperse(byte *src, byte *pixel, int channel_index, int color_index, int x, int y, int width, int height)
-{
-	int error = ((int)(pixel[channel_index])) - host_basepal[(color_index * 3) + channel_index];
-
-	if (x + 1 < width) 
-	{
-		plus_truncate_byte(&src[((x + 1) + (y)) * 3 + channel_index], (error * 7) >> 4);
-	} 
-
-	if (y + 1 < height) 
-	{
-		if (x - 1 > 0) 
-		{
-			plus_truncate_byte(&src[((x - 1) + ((y + 1) * width)) * 3 + channel_index], (error * 3) >> 4);
-		} 
-		
-		plus_truncate_byte(&src[(x + ((y + 1) * width)) * 3 + channel_index], (error * 5) >> 4);
-		
-		if (x + 1 < width) 
-		{
-			pblus_truncate_byte(&src[((x + 1) + ((y + 1) * width)) * 3 + channel_index], (error >> 4));
-		}
-	}
-}
-
-void FloydSteinbergDither(byte *src_24bit, byte *dest_8bit, int width, int height)
-{
-	int src_x = 0, y = 0, dest_x = 0;
-	byte cur_pixel[3];
-	byte nearest_color = 0;
-    	
-	for(y = 0; y < height; y++) 
-	{
-		for(src_x = 0, dest_x = 0; src_x < width; src_x++, dest_x++) 
-		{
-			/*
-			RGBTriple* currentPixel = &(image.pixels[x + (y * image.width)]);
-			unsigned char index = FindNearestColor(*currentPixel, palette);
-			result.pixels[x + (y * result.width)] = index;
-			*/
-			cur_pixel[0] = src_24bit[(src_x + (y * width)) * 3];
-			cur_pixel[1] = src_24bit[(src_x + (y * width)) * 3 + 1];
-			cur_pixel[2] = src_24bit[(src_x + (y * width)) * 3 + 2];
-
-			nearest_color = FindNearestColor(RGBAVECT_TO_COLOR(cur_pixel)); // FIXME: Not effective.
-
-			dest_8bit[dest_x + (y * width)] = nearest_color;
-
-			computer_disperse(src_24bit, cur_pixel, CHANNEL_RED, nearest_color, x, y, width, height);
-			computer_disperse(src_24bit, cur_pixel, CHANNEL_GREEN, nearest_color, x, y, width, height);
-			computer_disperse(src_24bit, cur_pixel, CHANNEL_BLUE, nearest_color, x, y, width, height);
-		}
-	}
-}
 
 void Draw_AlphaFillRGB (int x, int y, int width, int height, color_t color)
 {
-	int cur_x, cur_y;
-	byte bytecolor[4];
-	byte *dest;
-	byte *src_image = NULL; 
-	byte *dest_image = NULL;
-	byte c = FindNearestColor(color);
-
-	COLOR_TO_RGBA(color, bytecolor);
-
-	// Fill a temp image with the 24-bit color.
-	{
-		src_image = Q_malloc(sizeof(byte) * 3 * width * height);
-		
-		for (cur_y = 0; cur_y < height; cur_y++)
-		{
-			for (cur_x = 0; cur_x < width; cur_x++)
-			{
-				src_image[(cur_x + (cur_y * width)) * 3]	 = bytecolor[0];
-				src_image[(cur_x + (cur_y * width)) * 3 + 1] = bytecolor[1];
-				src_image[(cur_x + (cur_y * width)) * 3 + 2] = bytecolor[2];
-			}
-		}
-
-		dest_image = Q_malloc(sizeof(byte) * width * height);
-	}
-
-	FloydSteinbergDither(src_image, dest_image, width, height);
-
-	for (cur_y = 0; cur_y < height; cur_y++)
-	{
-		for (cur_x = 0; cur_x < width; cur_x++)
-		{
-			if (((x + cur_x) < scissor_left) || ((x + cur_x) > scissor_right) 
-			  || ((y + cur_y) < scissor_top) || ((y + cur_y) > scissor_bottom))
-			{
-				continue;
-			}
-
-			dest = vid.buffer + ((y + cur_y) * vid.rowbytes) + (x + cur_x);
-			*dest = dest_image[cur_x + (cur_y * width)];
-		}
-	}
-
-	free(src_image);
-	free(dest_image);
+	Draw_FadeBox(x, y, width, height, Draw_FindNearestColor(color), (color >> 24) / 255.0);
 }
 
 //=============================================================================
