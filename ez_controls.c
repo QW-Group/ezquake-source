@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.22 2007-07-10 21:20:11 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.23 2007-07-11 23:07:34 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -939,8 +939,6 @@ int EZ_control_OnLayoutChildren(ez_control_t *self)
 //
 int EZ_control_OnDraw(ez_control_t *self)
 {
-	#ifdef GLQUAKE
-
 	if (self->background_color[3] > 0)
 	{
 		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 1, true, 
@@ -953,26 +951,6 @@ int EZ_control_OnDraw(ez_control_t *self)
 			((self->flags & CONTROL_RESIZING_LEFT) ? "R" : " ") 
 			));
 	}
-
-	#else // SOFTWARE
-	if (self->parent 
-		&& (self->absolute_x >= self->parent->absolute_x)
-		&& (self->absolute_y >= self->parent->absolute_y)
-		&& ((self->absolute_x + self->width) <= (self->parent->absolute_x + self->parent->width))
-		&& ((self->absolute_y + self->height) <= (self->parent->absolute_y + self->parent->height)))
-	{
-		// TODO: Draw the control normally in software.
-	}
-	else if (self->parent)
-	{
-		// Only draw the outline of the control when it's not completly inside
-		// it's parent, since drawing only half of the control in software is not supported.
-		Draw_Fill(self->absolute_x, self->absolute_y, self->width, 1, 0);
-		Draw_Fill(self->absolute_x, self->absolute_y, 1, self->height, 0);
-		Draw_Fill(self->absolute_x + self->width, self->absolute_y, 1, self->height, 0);
-		Draw_Fill(self->absolute_x, self->absolute_y + self->height, self->width, 1, 0);
-	}
-	#endif // GLQUAKE
 
 	// Draw control specifics.
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDraw);
@@ -1646,45 +1624,35 @@ int EZ_button_OnDraw(ez_control_t *self)
 
 	if (self->flags & CONTROL_CLICKED)
 	{
-		#ifdef GLQUAKE
 		Draw_AlphaFillRGB(self->x, self->y, self->width, self->height, 
 			RGBA_TO_COLOR(button->color_pressed[0], button->color_pressed[1], button->color_pressed[2], button->color_pressed[3]));
-		#endif // GLQUAKE
 	}
 
 	if (self->flags & CONTROL_MOUSE_OVER)
 	{
 		if (self->flags & CONTROL_CLICKED)
 		{
-			#ifdef GLQUAKE
 			Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
 				RGBA_TO_COLOR(button->color_pressed[0], button->color_pressed[1], button->color_pressed[2], button->color_pressed[3]));
-			#endif // GLQUAKE
 		}
 		else
 		{
-			#ifdef GLQUAKE
 			Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
 				RGBA_TO_COLOR(button->color_hover[0], button->color_hover[1], button->color_hover[2], button->color_hover[3]));
-			#endif // GLQUAKE
 		}
 	}
 	else
 	{
-		#ifdef GLQUAKE
 		Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
 			RGBA_TO_COLOR(button->color_normal[0], button->color_normal[1], button->color_normal[2], button->color_normal[3]));
-		#endif // GLQUAKE
 	}
 
 	if (self->flags & CONTROL_FOCUSED)
 	{
-		#ifdef GLQUAKE
 		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 1, false, 
 			RGBA_TO_COLOR(button->color_focused[0], button->color_focused[1], button->color_focused[2], button->color_focused[3]));
 
 		//Draw_ColoredString3(self->absolute_x, self->absolute_y, button->text, button->focused_text_color, 1, 0);
-		#endif // GLQUAKE
 	}
 
 	// Draw control specifics.

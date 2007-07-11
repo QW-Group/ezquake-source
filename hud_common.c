@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.144 2007-07-10 21:20:12 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.145 2007-07-11 23:07:34 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -31,12 +31,6 @@
 
 #ifndef STAT_MINUS
 #define STAT_MINUS		10
-#endif
-
-#ifdef GLQUAKE
-void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
-#else
-void Draw_Fill (int x, int y, int w, int h, byte c);
 #endif
 
 hud_t *hud_netgraph = NULL;
@@ -2372,6 +2366,19 @@ void SCR_HUD_Group7(hud_t *hud)
 		&hud_pic_group7,
 		pic_scalemode->value,
 		pic_alpha->value);
+
+	{
+		int r, g, b;
+
+		for (r = 0, g = 0, b = 0; r < 255; r += 2, g += 2, b += 2)
+		{
+			Draw_AlphaFillRGB(r, 150, 2, 20, RGBA_TO_COLOR(r, 0, 0, 125));
+			Draw_AlphaFillRGB(r, 170, 2, 20, RGBA_TO_COLOR(0, g, 0, 125));
+			Draw_AlphaFillRGB(r, 190, 2, 20, RGBA_TO_COLOR(0, 0, b, 125));
+		}
+
+		Draw_AlphaRectangleRGB(0, 150, 125, 60, 5, false, RGBA_TO_COLOR(255, 0, 0, 125));
+	}
 }
 
 void SCR_HUD_Group8(hud_t *hud)
@@ -2651,13 +2658,8 @@ void Frags_DrawColors(int x, int y, int width, int height,
 	int posy = 0;
 	int char_size = (bignum > 0) ? Q_rint(24 * bignum) : 8;
 
-	#ifdef GLQUAKE
 	Draw_AlphaFill(x, y, width, height / 2, top_color, color_alpha);
 	Draw_AlphaFill(x, y + height / 2, width, height - height / 2, bottom_color, color_alpha);
-	#else
-	Draw_Fill(x, y, width, height / 2, top_color);
-    Draw_Fill(x, y + height / 2, width, height - height / 2, bottom_color);
-	#endif
 
 	posy = y + (height - char_size) / 2;
 
@@ -2932,20 +2934,12 @@ int Frags_DrawExtraSpecInfo(player_info_t *info,
 	{
 		armor_height = Q_rint((cell_height / armor_bg_power) * armor);
 
-		#ifdef GLQUAKE
 		Draw_AlphaFill(px,												// x
 						py + cell_height - (int)armor_height,			// y (draw from bottom up)
 						weapon_width,									// width
 						(int)armor_height,								// height
 						armor_bg_color,									// color
 						0.3);											// alpha
-		#else
-		Draw_Fill(px,
-				py + cell_height - (int)armor_height,
-				weapon_width,
-				(int)armor_height,
-				armor_bg_color);
-		#endif
 	}
 
 	// Draw the rl if the current player has it and the style allows it.
@@ -3046,7 +3040,7 @@ void Frags_DrawBackground(int px, int py, int cell_width, int cell_height,
 		bg_width += max_name_length*8 + space_x;
 
 	if(showteams)
-		bg_width += max_team_length*8 + space_x;
+		bg_width += max_team_length * 8 + space_x;
 
 	if(drawBrackets)
 		bg_alpha = 0.7;
@@ -3054,20 +3048,16 @@ void Frags_DrawBackground(int px, int py, int cell_width, int cell_height,
 	if(style == 7 || style == 8)
 		bg_color = 0x4f;
 
-#ifdef GLQUAKE
-	Draw_AlphaFill(px-1, py-space_y/2, bg_width, cell_height+space_y, bg_color, bg_alpha);
-#else
-	Draw_Fill(px-1, py-space_y/2, bg_width, cell_height+space_y, bg_color);
-#endif
+	Draw_AlphaFill(px - 1, py - space_y / 2, bg_width, cell_height + space_y, bg_color, bg_alpha);
 
 	if(drawBrackets && (style == 5 || style == 6))
 	{
-		Draw_Fill(px-1, py-1-space_y/2, bg_width, 1, 0x4f);
+		Draw_Fill(px - 1, py - 1 - space_y / 2, bg_width, 1, 0x4f);
 
-		Draw_Fill(px-1, py-space_y/2, 1, cell_height+space_y, 0x4f);
-		Draw_Fill(px+bg_width-1, py-1-space_y/2, 1, cell_height+1+space_y, 0x4f);
+		Draw_Fill(px - 1, py - space_y / 2, 1, cell_height + space_y, 0x4f);
+		Draw_Fill(px + bg_width - 1, py - 1 - space_y / 2, 1, cell_height + 1 + space_y, 0x4f);
 
-		Draw_Fill(px-1, py+cell_height+space_y/2, bg_width+1, 1, 0x4f);
+		Draw_Fill(px - 1, py + cell_height + space_y / 2, bg_width + 1, 1, 0x4f);
 	}
 }
 
@@ -4292,11 +4282,9 @@ qbool OnAutoHudChange(cvar_t *var, char *value) {
 
 // Is run when a new map is loaded.
 void HUD_NewMap() {
-#ifdef WITH_PNG
-#ifdef GLQUAKE
+#if defined(WITH_PNG) && defined(GLQUAKE)
 	HUD_NewRadarMap();
-#endif
-#endif
+#endif // WITH_PNG & GLQUAKE
 
 	autohud_loaded = false;
 }
@@ -4353,19 +4341,11 @@ void TeamHold_DrawBars(int x, int y, int width, int height,
 	clamp(team1_width, 0, width);
 	clamp(team2_width, 0, width);
 
-	#ifdef GLQUAKE
 	Draw_AlphaFill(x, y, team1_width, bar_height, team1_color, opacity);
-	#else
-	Draw_Fill(x, y, team1_width, bar_height, team1_color);
-	#endif
 
 	y += bar_height;
 
-	#ifdef GLQUAKE
 	Draw_AlphaFill(x, y, team2_width, bar_height, team2_color, opacity);
-	#else
-	Draw_Fill(x, y, team2_width, bar_height, team2_color);
-	#endif
 }
 
 void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
@@ -4390,11 +4370,7 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 		_height = Q_rint(height * team1_percent);
 		_height = max(0, height);
 
-		#ifdef GLQUAKE
 		Draw_AlphaFill(_x, _y, _width, _height, team1_color, opacity);
-		#else
-		Draw_Fill(_x, _y, _width, _height, team1_color);
-		#endif
 
 		// Team 2.
 		_x = x;
@@ -4403,11 +4379,7 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 		_height = Q_rint(height * team2_percent);
 		_height = max(0, _height);
 
-		#ifdef GLQUAKE
 		Draw_AlphaFill(_x, _y, _width, _height, team2_color, opacity);
-		#else
-		Draw_Fill(_x, _y, _width, _height, team2_color);
-		#endif
 
 		// Show the percentages in numbers also.
 		if(show_text)
@@ -4505,11 +4477,7 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 		_width = max(0, _width);
 		_height = max(0, height);
 
-		#ifdef GLQUAKE
 		Draw_AlphaFill(_x, _y, _width, _height, team1_color, opacity);
-		#else
-		Draw_Fill(_x, _y, _width, _height, team1_color);
-		#endif
 
 		// Team 2.
 		_x = Q_rint(x + (width * team1_percent));
@@ -4518,11 +4486,7 @@ void TeamHold_DrawPercentageBar(int x, int y, int width, int height,
 		_width = max(0, _width);
 		_height = max(0, height);
 
-		#ifdef GLQUAKE
 		Draw_AlphaFill(_x, _y, _width, _height, team2_color, opacity);
-		#else
-		Draw_Fill(_x, _y, _width, _height, team2_color);
-		#endif
 
 		// Show the percentages in numbers also.
 		if(show_text)
@@ -4603,11 +4567,7 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 			}
 			else
 			{
-				#ifdef GLQUAKE
 				Draw_AlphaFill(x, y, hud_teamholdbar_width->value, height, 0, hud_teamholdbar_opacity->value*0.5);
-				#else
-				Draw_Fill(x, y, hud_teamholdbar_width->value, height, 0);
-				#endif
 				return;
 			}
 
@@ -4624,11 +4584,7 @@ void SCR_HUD_DrawTeamHoldBar(hud_t *hud)
 		else
 		{
 			// If there's no stats grid available we don't know what to show, so just show a black frame.
-			#ifdef GLQUAKE
-			Draw_AlphaFill(x, y, hud_teamholdbar_width->value, height, 0, hud_teamholdbar_opacity->value*0.5);
-			#else
-			Draw_Fill(x, y, hud_teamholdbar_width->value, height, 0);
-			#endif
+			Draw_AlphaFill(x, y, hud_teamholdbar_width->value, height, 0, hud_teamholdbar_opacity->value * 0.5);
 		}
 	}
 }

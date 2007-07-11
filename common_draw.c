@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.16 2007-05-28 10:47:32 johnnycz Exp $
+	$Id: common_draw.c,v 1.17 2007-07-11 23:07:34 cokeman1982 Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -712,11 +712,7 @@ void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, int tim
 
 void SCR_DrawFill(int x, int y, int w, int h, int c, float opacity)
 {
-	#ifdef GLQUAKE
 	Draw_AlphaFill(x, y, w, h, c, opacity);
-	#else
-	Draw_Fill(x, y, w, h, c);
-	#endif
 }
 
 #define SPEED_TAG_LENGTH		2

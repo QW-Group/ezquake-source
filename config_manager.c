@@ -16,7 +16,7 @@ You	should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: config_manager.c,v 1.42 2007-06-15 12:26:06 johnnycz Exp $
+    $Id: config_manager.c,v 1.43 2007-07-11 23:07:34 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -33,11 +33,9 @@ char *Key_KeynumToString (int keynum, char *buffer);
 char *Key_KeynumToString (int keynum);
 #endif
 
-// START shaman RFE 1020608
 #ifdef GLQUAKE
 void DumpSkyGroups(FILE *f);
 #endif
-// END shaman RFE 1020608
 
 qbool Key_IsLeftRightSameBind(int b);
 void DumpMapGroups(FILE *f);
@@ -461,26 +459,18 @@ void DumpMisc(FILE *f)
 	DumpMapGroups(f);
 	fprintf(f, "\n");
 
-	// START shaman RFE 1020608
 #ifdef GLQUAKE
 	DumpSkyGroups(f);
 	fprintf(f, "\n");
-#endif
-	// END shaman RFE 1020608
 
-	// START shaman RFE 1032143 {
-#ifdef GLQUAKE
 	DumpFogSettings(f);
 	fprintf(f, "\n");
 #endif
-	// } END shaman RFE 1032143
 
 	DumpFloodProtSettings(f);
 	fprintf(f, "\n");
 
-	// START johnnycz RFE 1157227 {
 	fprintf(f, "hud_recalculate\n\n");
-	// } END johnnycz RFE 1157227
 
 	if (cl.teamfortress) {
 		if (!strcasecmp(Info_ValueForKey (cls.userinfo, "ec"), "on") ||
@@ -630,11 +620,11 @@ static void ResetTeamplayCommands(void)
 static void ResetMiscCommands(void)
 {
 	Cbuf_AddText("mapgroup clear\n");
-	// START shaman RFE 1020608
+
 #ifdef GLQUAKE
 	Cbuf_AddText("skygroup clear\n");
 #endif
-	// END shaman RFE 1020608
+
 	MarkDefaultSources();
 
 	Info_RemoveKey(cls.userinfo, "ec");

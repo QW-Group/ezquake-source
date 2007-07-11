@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.122 2007-07-10 21:20:11 cokeman1982 Exp $
+$Id: cl_screen.c,v 1.123 2007-07-11 23:07:34 cokeman1982 Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -836,6 +836,25 @@ void SCR_DrawConsole (void) {
 
 /*********************************** AUTOID ***********************************/
 
+#define AUTOID_HEALTHBAR_BG_COLOR			180, 115, 115
+#define AUTOID_HEALTHBAR_NORMAL_COLOR		80, 0, 0
+#define AUTOID_HEALTHBAR_MEGA_COLOR			255, 0, 0
+#define AUTOID_HEALTHBAR_TWO_MEGA_COLOR		255, 100, 0
+#define AUTOID_HEALTHBAR_UNNATURAL_COLOR	255, 255, 255
+
+#define AUTOID_HEALTHBAR_OFFSET_Y			16
+
+#define AUTOID_ARMORBAR_GREEN_ARMOR			25, 170, 0
+#define AUTOID_ARMORBAR_YELLOW_ARMOR		255, 220, 0
+#define AUTOID_ARMORBAR_RED_ARMOR			255, 0, 0
+
+#define AUTOID_ARMORBAR_OFFSET_Y			AUTOID_HEALTHBAR_OFFSET_Y - 5
+#define AUTOID_ARMORNAME_OFFSET_Y			AUTOID_ARMORBAR_OFFSET_Y - 8 - 2
+#define AUTOID_ARMORNAME_OFFSET_X			8/2
+
+#define AUTOID_WEAPON_OFFSET_Y				AUTOID_HEALTHBAR_OFFSET_Y
+#define AUTOID_WEAPON_OFFSET_X				2
+
 #ifdef GLQUAKE
 
 
@@ -942,36 +961,6 @@ void SCR_SetupAutoID (void) {
 			autoid_count++;
 	}
 }
-/*
-#define AUTOID_HEALTHBAR_BG_COLOR			180/255.0, 115/255.0, 115/255.0
-#define AUTOID_HEALTHBAR_NORMAL_COLOR		80/255.0, 0, 0
-#define AUTOID_HEALTHBAR_MEGA_COLOR			255/255.0, 0, 0
-#define AUTOID_HEALTHBAR_TWO_MEGA_COLOR		255/255.0, 100/255.0, 0
-#define AUTOID_HEALTHBAR_UNNATURAL_COLOR	255/255.0, 255/255.0, 255/255.0
-*/
-#define AUTOID_HEALTHBAR_BG_COLOR			180, 115, 115
-#define AUTOID_HEALTHBAR_NORMAL_COLOR		80, 0, 0
-#define AUTOID_HEALTHBAR_MEGA_COLOR			255, 0, 0
-#define AUTOID_HEALTHBAR_TWO_MEGA_COLOR		255, 100, 0
-#define AUTOID_HEALTHBAR_UNNATURAL_COLOR	255, 255, 255
-
-#define AUTOID_HEALTHBAR_OFFSET_Y			16
-
-/*
-#define AUTOID_ARMORBAR_GREEN_ARMOR			25/255.0, 170/255.0, 0
-#define AUTOID_ARMORBAR_YELLOW_ARMOR		255/255.0, 220/255.0, 0
-#define AUTOID_ARMORBAR_RED_ARMOR			255/255.0, 0, 0
-*/
-#define AUTOID_ARMORBAR_GREEN_ARMOR			25, 170, 0
-#define AUTOID_ARMORBAR_YELLOW_ARMOR		255, 220, 0
-#define AUTOID_ARMORBAR_RED_ARMOR			255, 0, 0
-
-#define AUTOID_ARMORBAR_OFFSET_Y			AUTOID_HEALTHBAR_OFFSET_Y - 5
-#define AUTOID_ARMORNAME_OFFSET_Y			AUTOID_ARMORBAR_OFFSET_Y - 8 - 2
-#define AUTOID_ARMORNAME_OFFSET_X			8/2
-
-#define AUTOID_WEAPON_OFFSET_Y				AUTOID_HEALTHBAR_OFFSET_Y
-#define AUTOID_WEAPON_OFFSET_X				2
 
 void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 {
@@ -2409,11 +2398,9 @@ void SCR_DrawHud (void)
 			if (!(elem->flags & HUD_BLINK_B) || tblink < 0.5)
 				if (elem->coords[3])
 				{
-#ifdef GLQUAKE
 					if (elem->alpha < 1)
 						Draw_AlphaFill(x, y, elem->scr_width, elem->scr_height, (unsigned char)elem->coords[3], elem->alpha);
 					else
-#endif
 						Draw_Fill(x, y, elem->scr_width, elem->scr_height, (unsigned char)elem->coords[3]);
 				}
 			if (!(elem->flags & HUD_BLINK_F) || tblink < 0.5)
@@ -3994,9 +3981,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 	char armor_color_code[6] = "";
 	int armor_amount_width = 0;
 
-	#ifdef GLQUAKE
 	byte armor_color[4] = {0, 0, 0, 75};	// RGBA.
-	#endif
 
 	//
 	// Set the armor text color based on what armor the player has.
@@ -4007,11 +3992,9 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 		strlcpy(armor_color_code, "&c0f0", sizeof(armor_color_code));
 		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 100.0);
 
-		#ifdef GLQUAKE
 		armor_color[0] = 80;
 		armor_color[1] = 190;
 		armor_color[2] = 80;
-		#endif
 	}
 	else if (cl.stats[STAT_ITEMS] & IT_ARMOR2)
 	{
@@ -4019,11 +4002,9 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 		strlcpy(armor_color_code, "&cff0", sizeof(armor_color_code));
 		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 150.0);
 
-		#ifdef GLQUAKE
 		armor_color[0] = 250;
 		armor_color[1] = 230;
 		armor_color[2] = 0;
-		#endif
 	}
 	else if (cl.stats[STAT_ITEMS] & IT_ARMOR3)
 	{
@@ -4031,11 +4012,9 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 		strlcpy(armor_color_code, "&cf00", sizeof(armor_color_code));
 		armor_amount_width = Q_rint(MV_HUD_ARMOR_WIDTH * cl.stats[STAT_ARMOR] / 200.0);
 
-		#ifdef GLQUAKE
 		armor_color[0] = 190;
 		armor_color[1] = 50;
 		armor_color[2] = 0;
-		#endif
 	}
 
 	if (cl.stats[STAT_ARMOR] > 0)
@@ -4043,9 +4022,7 @@ void SCR_MV_DrawArmor (int x, int y, int *width, int *height, int style)
 		//
 		// Background fill for armor.
 		//
-		#ifdef GLQUAKE
 		Draw_AlphaFillRGB(x, y, armor_amount_width, 8, RGBA_TO_COLOR(armor_color[0], armor_color[1], armor_color[2], armor_color[3]));
-		#endif
 
 		// Armor value.
 		if (style >= MV_HUD_STYLE_ALL_TEXT)
@@ -4063,7 +4040,6 @@ void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 	#define MV_HEALTH_OPACITY 75
 	int health = cl.stats[STAT_HEALTH];
 
-	#ifdef GLQUAKE
 	int health_amount_width = 0;
 
 	health = min(100, health);
@@ -4097,7 +4073,6 @@ void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 		Draw_AlphaFillRGB(x, y, MV_HUD_HEALTH_WIDTH, 8, RGBA_TO_COLOR(AUTOID_HEALTHBAR_UNNATURAL_COLOR, MV_HEALTH_OPACITY));
 
 	}
-	#endif
 
 	// No powerup.
 	if (style >= MV_HUD_STYLE_ALL_TEXT && !(cl.stats[STAT_ITEMS] & IT_INVULNERABILITY))
@@ -4298,11 +4273,7 @@ void SCR_DrawMVStatusView (mv_viewrect_t *view, int style, int position, qbool f
 		//
 		if(style >= MV_HUD_STYLE_ALL_FILL)
 		{
-			#ifdef GLQUAKE
 			Draw_AlphaFill (view->x + hud_x, view->y + hud_y, hud_width, hud_height, 0, 0.5);
-			#else
-			Draw_FadeBox (view->x + hud_x, view->y + hud_y, hud_width, hud_height, 0, 0.3);
-			#endif
 		}
 
 		// Draw powerups in the middle background of the hud.

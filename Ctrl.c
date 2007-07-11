@@ -1,4 +1,4 @@
-//    $Id: Ctrl.c,v 1.19 2007-07-10 21:20:11 cokeman1982 Exp $
+//    $Id: Ctrl.c,v 1.20 2007-07-11 23:07:34 cokeman1982 Exp $
 
 #include "quakedef.h"
 #include "utils.h"
@@ -105,13 +105,7 @@ void UI_MakeLine2(char *buf, int w)
 
 void UI_DrawColoredAlphaBox(int x, int y, int w, int h, color_t color)
 {
-#ifdef GLQUAKE
 	Draw_AlphaFillRGB(x, y, w, h, color);
-#else
-	byte bytecolor[4];
-	COLOR_TO_RGBA(color, bytecolor);
-	Draw_FadeBox(x, y, w, h, (bytecolor[0] + bytecolor[1] + bytecolor[2]) / 3.0, bytecolor[3] / 255.0);
-#endif
 }
 
 void UI_DrawGrayBox(int x, int y, int w, int h)

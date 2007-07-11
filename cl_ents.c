@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.33 2007-05-13 13:41:42 johnnycz Exp $
+	$Id: cl_ents.c,v 1.34 2007-07-11 23:07:34 cokeman1982 Exp $
 
 */
 
@@ -213,7 +213,9 @@ dlighttype_t dlightColor(float f, dlighttype_t def, qbool random) {
 }
 
 // if we have color in "r g b" format use it overwise use pre defined colors
-customlight_t *dlightColorEx(float f, char *str, dlighttype_t def, qbool random, customlight_t *l) {
+customlight_t *dlightColorEx(float f, char *str, dlighttype_t def, qbool random, customlight_t *l) 
+{
+	// TODO : Ok to use this in software also?
 #ifdef GLQUAKE
 	byte *color = StringToRGB(str);
 	int i;

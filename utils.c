@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: utils.c,v 1.37 2007-05-28 10:47:36 johnnycz Exp $
+	$Id: utils.c,v 1.38 2007-07-11 23:07:34 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -66,7 +66,6 @@ char *SecondsToHourString(int print_time) {
 	return time;
 }
 
-#ifdef GLQUAKE
 #define RGB_COLOR_RED					"255 0 0"
 #define RGB_COLOR_GREEN					"0 255 0"
 #define RGB_COLOR_BLUE					"0 0 255"
@@ -74,15 +73,6 @@ char *SecondsToHourString(int print_time) {
 #define RGB_COLOR_WHITE					"255 255 255"
 #define RGB_COLOR_YELLOW				"255 255 0"
 #define RGB_COLOR_PINK					"255 0 255"
-#else
-#define RGB_COLOR_RED					"251"
-#define RGB_COLOR_GREEN					"63"
-#define RGB_COLOR_BLUE					"208"
-#define RGB_COLOR_BLACK					"0"
-#define RGB_COLOR_WHITE					"254"
-#define RGB_COLOR_YELLOW				"182"
-#define RGB_COLOR_PINK					"144"
-#endif
 
 #define COLOR_CHECK(_colorname, _colorstring, _rgbstring) \
 	if(!strncmp(_colorstring, _colorname, sizeof(_colorstring))) return _rgbstring
@@ -109,6 +99,7 @@ byte *StringToRGB(char *s) {
 	Cmd_TokenizeString(s);
 
 	#ifdef GLQUAKE
+	// TODO: Ok to do this in software also?
 	// Use normal quake pallete if not all arguments where given.
 	if(Cmd_Argc() < 3)
 	{
