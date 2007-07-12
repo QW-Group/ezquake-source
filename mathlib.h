@@ -210,5 +210,6 @@ extern vec3_t _mathlib_temp_vec1, _mathlib_temp_vec2, _mathlib_temp_vec3;
 #endif
 
 #define clamp(a,b,c) (a = min(max(a, b), c))
+#define sgn(x) ((x < 0) ? -1 : ((x > 0) ? 1 : 0))
 
 #endif	//__MATHLIB_H_
