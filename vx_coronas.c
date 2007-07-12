@@ -21,6 +21,7 @@ typedef struct
 	coronatype_t type;
 	qbool sighted;
 	qbool los; //to prevent having to trace a line twice
+	int serialhint;//is a serial to avoid recreating stuff
 	int texture;
 } corona_t;
 
@@ -62,7 +63,7 @@ void R_UpdateCoronas(void)
 			c->alpha = 0;
 			c->type = C_FREE;
 			c->sighted = false;
-			
+			c->hint = 0;//so can be reused			
 		}
 		CoronaStats(1);
 		c->scale += c->growth * frametime; 
@@ -75,6 +76,7 @@ void R_UpdateCoronas(void)
 			
 			c->scale = 0;
 			c->alpha = 0;
+			
 
 			//Tei: this has been commented out for multiplayer,
 			// because some coronas see trough walls and can be cheat.
@@ -462,8 +464,10 @@ void InitCoronas(void)
 //NewStaticLightCorona
 //Throws down a permanent light at origin, and wont put another on top of it
 //This needs fixing so it wont be called so often
-void NewStaticLightCorona (coronatype_t type, vec3_t origin)
+void NewStaticLightCorona (coronatype_t type, vec3_t origin, int hint)
 {
+	extern cvar_t	developer;
+
 	corona_t	*c, *e=NULL;
 	int		i;
 	qbool breakage = true;
@@ -476,8 +480,12 @@ void NewStaticLightCorona (coronatype_t type, vec3_t origin)
 			e = c;
 			breakage = false;
 		}
+	
+		if (hint && c->serialhint == hint) 
+			return;		
+
 		if (VectorCompare(c->origin, origin) && c->type == C_FIRE)
-			return;
+			return;		
 	}
 	if (breakage) //no free coronas
 		return;
@@ -488,16 +496,18 @@ void NewStaticLightCorona (coronatype_t type, vec3_t origin)
 	e->type = type;
 	e->los = false;
 	e->texture = coronatexture;
+	e->serialhint = hint;
+
 	if (type == C_FIRE)
 	{
 		e->color[0] = 0.5;
 		e->color[1] = 0.2;
 		e->color[2] = 0.05;
 		e->scale = 0.1;
-		e->die = cl.time + 999;
-		e->alpha = 0.05;
+		e->die = cl.time + 800;
+		e->alpha = 0.05 ;				
 		e->fade = 0.5;
-		e->growth = 800;
+		e->growth = 800;		
 	}
 }
 
