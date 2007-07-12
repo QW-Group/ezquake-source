@@ -63,7 +63,7 @@ void R_UpdateCoronas(void)
 			c->alpha = 0;
 			c->type = C_FREE;
 			c->sighted = false;
-			c->hint = 0;//so can be reused			
+			c->serialhint = 0;//so can be reused			
 		}
 		CoronaStats(1);
 		c->scale += c->growth * frametime; 
