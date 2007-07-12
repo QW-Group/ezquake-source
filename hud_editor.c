@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.27 2007-07-10 21:20:12 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.28 2007-07-12 21:55:16 cokeman1982 Exp $
 
 */
 
@@ -18,8 +18,6 @@
 #include "keys.h"
 #include "Ctrl.h"
 #include "ez_controls.h"
-
-#ifdef GLQUAKE
 
 ez_tree_t help_control_tree;
 
@@ -2376,16 +2374,13 @@ void HUD_Editor_Toggle_f(void)
 		Cvar_SetValue(&hud_planmode, old_hud_planmode);
 	}
 }
-#endif // GLQUAKE
 
 //
 // Handles mouse events sent to the HUD editor.
 //
 qbool HUD_Editor_MouseEvent(mouse_state_t *ms)
 {
-	#ifdef GLQUAKE
 	return EZ_tree_MouseEvent(&help_control_tree, ms);
-	#endif
 
 	return false;
 }
@@ -2395,7 +2390,6 @@ qbool HUD_Editor_MouseEvent(mouse_state_t *ms)
 //
 void HUD_Editor_Key(int key, int unichar) 
 {
-	#ifdef GLQUAKE
 	static int planmode = 1;
 	int togglekeys[2];
 
@@ -2443,7 +2437,6 @@ void HUD_Editor_Key(int key, int unichar)
 			Cvar_SetValue(&hud_editor_allowplace, !hud_editor_allowplace.value);
 			break;
 	}
-	#endif
 }
 
 //
@@ -2451,8 +2444,6 @@ void HUD_Editor_Key(int key, int unichar)
 //
 void HUD_Editor_Init(void) 
 {
-	#ifdef GLQUAKE
-
 	extern mpic_t *SCR_LoadCursorImage(char *cursorimage);
 /*
 	ez_control_t *root = NULL;
@@ -2504,7 +2495,6 @@ void HUD_Editor_Init(void)
 
 	hud_editor = false;
 	HUD_Editor_SetMode(hud_editmode_off);
-	#endif // GLQUAKE
 }
 
 //
@@ -2512,12 +2502,10 @@ void HUD_Editor_Init(void)
 //
 void HUD_Editor_Draw(void) 
 {
-	#ifdef GLQUAKE
 	if (!hud_editor)
 		return;
 
 	HUD_Editor();
-	#endif // GLQUAKE
 }
 
 //
@@ -2526,7 +2514,6 @@ void HUD_Editor_Draw(void)
 //
 qbool HUD_Editor_ConfirmDraw(hud_t *hud)
 {
-	#ifdef GLQUAKE
 	if(hud_editor_mode == hud_editmode_align || hud_editor_mode == hud_editmode_place)
 	{
 		// If this is the selected hud, or the parent of the selected hud then draw it.
@@ -2538,7 +2525,6 @@ qbool HUD_Editor_ConfirmDraw(hud_t *hud)
 
 		return false;
 	}
-	#endif // GLQUAKE
 
 	return true;
 }

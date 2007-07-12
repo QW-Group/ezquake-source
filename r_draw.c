@@ -841,49 +841,17 @@ void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width,
 
 	dest = vid.buffer + y * vid.rowbytes + x;
 
-	if (pic->alpha)
+	for (v = 0; v < height; v++) 
 	{
-		if (width & 7) 
-		{	
-			// General
-			for (v = 0; v < height; v++) 
-			{
-				for (u = 0; u < width; u++)
-				{
-					if ((tbyte = source[u]) != TRANSPARENT_COLOR)
-						dest[u] = tbyte;
-				}
-
-				dest += vid.rowbytes;
-				source += pic->width;
-			}
-		} 
-		else 
-		{	
-			// Unwound
-			for (v = 0; v < height; v++) 
-			{
-				for (u = 0; u < width; u += 8) 
-				{
-					for (i = 0; i < 8; i++)
-					{
-						if ((tbyte = source[u + i]) != TRANSPARENT_COLOR)
-							dest[u + i] = tbyte;
-					}
-				}
-				dest += vid.rowbytes;
-				source += pic->width;
-			}
-		}
-	}
-	else
-	{
-		for (v = 0; v < height; v++) 
+		for (u = 0; u < width; u++)
 		{
-			memcpy (dest, source, width);
-			dest += vid.rowbytes;
-			source += pic->width;
+			if ((tbyte = source[u]) == TRANSPARENT_COLOR && pic->alpha)
+				continue;
+
+			Draw_Pixel(x + u, y + v, tbyte);
 		}
+
+		source += pic->width;
 	}
 }
 
@@ -1345,6 +1313,11 @@ void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thick
 void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, color_t color)
 {
 	Draw_AlphaLine(x_start, y_start, x_end, y_end, thickness, Draw_FindNearestColor(color), COLOR_ALPHA(color));
+}
+
+void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, color_t color)
+{
+	// TODO : Implement Draw_Polygon for software.
 }
 
 void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha)
