@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.72 2007-07-10 21:20:11 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.73 2007-07-12 21:22:25 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1027,28 +1027,6 @@ void Draw_ColoredString (int x, int y, const char *text, int red)
 
 	if (scr_coloredText.value)
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-}
-
-const int COLOR_WHITE = 0xFFFFFFFF;
-
-color_t RGBA_TO_COLOR(byte r, byte g, byte b, byte a) 
-{
-	return ((r << 0) | (g << 8) | (b << 16) | (a << 24)) & 0xFFFFFFFF;
-}
-
-color_t RGBAVECT_TO_COLOR(byte rgba[4])
-{
-	return ((rgba[0] << 0) | (rgba[1] << 8) | (rgba[2] << 16) | (rgba[3] << 24)) & 0xFFFFFFFF;
-}
-
-byte* COLOR_TO_RGBA(color_t i, byte rgba[4]) 
-{
-	rgba[0] = (i >> 0  & 0xFF);
-	rgba[1] = (i >> 8  & 0xFF);
-	rgba[2] = (i >> 16 & 0xFF);
-	rgba[3] = (i >> 24 & 0xFF);
-
-	return rgba;
 }
 
 //

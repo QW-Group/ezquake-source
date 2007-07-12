@@ -424,48 +424,6 @@ void Draw_ColoredString (int x, int y, const char *text, int red)
 	}
 }
 
-/*
-const color_t COLOR_WHITE = 0xFFFFFFFF;
-
-color_t RGBA_TO_COLOR(byte r, byte g, byte b, byte a) 
-{
-	return 0xFFFFFFFF;
-}
-
-color_t RGBAVECT_TO_COLOR(byte rgba[4])
-{
-	return 0xFFFFFFFF;
-}
-
-byte* COLOR_TO_RGBA(color_t i, byte rgba[4]) 
-{
-	memset(rgba, 255, 4);
-	return rgba;
-}
-*/
-
-const int COLOR_WHITE = 0xFFFFFFFF;
-
-color_t RGBA_TO_COLOR(byte r, byte g, byte b, byte a) 
-{
-	return ((r << 0) | (g << 8) | (b << 16) | (a << 24)) & 0xFFFFFFFF;
-}
-
-color_t RGBAVECT_TO_COLOR(byte rgba[4])
-{
-	return ((rgba[0] << 0) | (rgba[1] << 8) | (rgba[2] << 16) | (rgba[3] << 24)) & 0xFFFFFFFF;
-}
-
-byte* COLOR_TO_RGBA(color_t i, byte rgba[4]) 
-{
-	rgba[0] = (i >> 0  & 0xFF);
-	rgba[1] = (i >> 8  & 0xFF);
-	rgba[2] = (i >> 16 & 0xFF);
-	rgba[3] = (i >> 24 & 0xFF);
-
-	return rgba;
-}
-
 void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red) 
 {
 	Draw_ColoredString(x, y, text, red);
@@ -1137,6 +1095,258 @@ static byte Draw_FindNearestColor(color_t color)
     return bestIndex;
 }
 
+//
+// Bresenham's line algorithm - Draws a line effectivly between two points using only integer addition.
+// http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
+//
+static void bresenham_line(int x1, int y1, int x2, int y2, byte color)
+{
+	int i;
+	int dx = x2 - x1;		// The horizontal distance of the line.
+	int dy = y2 - y1;		// The vertical distance of the line.
+	int dxabs = abs(dx);
+	int dyabs = abs(dy);
+	int sdx = sgn(dx);
+	int sdy = sgn(dy);
+	int x = dyabs >> 1;
+	int y = dxabs >> 1;
+	int px = x1;
+	int py = y1;
+
+	Draw_Pixel(px, py, color);
+
+	if (dxabs >= dyabs) 
+	{
+		// The line is more horizontal than vertical.
+
+		for(i = 0; i < dxabs; i++)
+		{
+			y += dyabs;
+
+			if (y >= dxabs)
+			{
+				y -= dxabs;
+				py += sdy;
+			}
+
+			px += sdx;
+			Draw_Pixel(px, py, color);
+		}
+	}
+	else 
+	{
+		// The line is more vertical than horizontal.
+
+		for(i = 0; i < dyabs; i++)
+		{
+			x += dxabs;
+
+			if (x >= dyabs)
+			{
+				x -= dyabs;
+				px += sdx;
+			}
+
+			py += sdy;
+			Draw_Pixel(px, py, color);
+		}
+	}
+}
+
+//
+// FIXME: Not a proper thickline algorithm, doesn't draw the ends properly like => http://homepages.enterprise.net/murphy/thickline/index.html
+//
+static void bresenham_thickline (int x1, int y1, int x2, int y2, int thick, byte color)
+{
+	int dx, dy, incr1, incr2, d, x, y, xend, yend, xdirflag, ydirflag;
+	int wid;
+	int w, wstart;
+
+	dx = abs (x2 - x1);
+	dy = abs (y2 - y1);
+
+	if (dy <= dx)
+	{
+		// More-or-less horizontal. use wid for vertical stroke
+		if ((dx == 0) && (dy == 0))
+		{
+			wid = 1;
+		}
+		else
+		{
+			double ac = cos (atan2 (dy, dx));		
+			wid = (ac != 0) ? (thick / ac) : 1;
+	
+			if (wid == 0)
+			{
+				wid = 1;
+			}
+		}
+
+		d = 2 * dy - dx;
+		incr1 = 2 * dy;
+		incr2 = 2 * (dy - dx);
+
+		if (x1 > x2)
+		{
+			x = x2;
+			y = y2;
+			ydirflag = (-1);
+			xend = x1;
+		}
+		else
+		{
+			x = x1;
+			y = y1;
+			ydirflag = 1;
+			xend = x2;
+		}
+
+		// Set up line thickness.
+		wstart = y - wid / 2;
+		for (w = wstart; w < wstart + wid; w++)
+			Draw_Pixel(x, w, color);
+
+		if (((y2 - y1) * ydirflag) > 0)
+		{
+			while (x < xend)
+			{
+				x++;
+				if (d < 0)
+				{
+					d += incr1;
+				}
+				else
+				{
+					y++;
+					d += incr2;
+				}
+				
+				wstart = y - wid / 2;
+				
+				for (w = wstart; w < wstart + wid; w++)
+					Draw_Pixel(x, w, color);
+			}
+		}
+		else
+		{
+			while (x < xend)
+			{
+				x++;
+				if (d < 0)
+				{
+					d += incr1;
+				}
+				else
+				{
+					y--;
+					d += incr2;
+				}
+				
+				wstart = y - wid / 2;
+				
+				for (w = wstart; w < wstart + wid; w++)
+					Draw_Pixel(x, w, color);
+			}
+		}
+    }
+	else
+	{
+		// More-or-less vertical. use wid for horizontal stroke.
+		double as = sin (atan2 (dy, dx));
+		wid = (as != 0) ? (thick / as) : 1;
+		
+		if (wid == 0)
+			wid = 1;
+
+		d = 2 * dx - dy;
+		incr1 = 2 * dx;
+		incr2 = 2 * (dx - dy);
+		
+		if (y1 > y2)
+		{
+			y = y2;
+			x = x2;
+			yend = y1;
+			xdirflag = (-1);
+		}
+		else
+		{
+			y = y1;
+			x = x1;
+			yend = y2;
+			xdirflag = 1;
+		}
+
+		// Set up line thickness.
+		wstart = x - wid / 2;
+		for (w = wstart; w < wstart + wid; w++)
+			Draw_Pixel(w, y, color);
+
+		if (((x2 - x1) * xdirflag) > 0)
+		{
+			while (y < yend)
+			{
+				y++;
+				if (d < 0)
+				{
+					d += incr1;
+				}
+				else
+				{
+					x++;
+					d += incr2;
+				}
+
+				wstart = x - wid / 2;
+				
+				for (w = wstart; w < wstart + wid; w++)
+					Draw_Pixel(w, y, color);
+			}
+		}
+		else
+		{
+			while (y < yend)
+			{
+				y++;
+				if (d < 0)
+				{
+					d += incr1;
+				}
+				else
+				{
+					x--;
+					d += incr2;
+				}
+				
+				wstart = x - wid / 2;
+				
+				for (w = wstart; w < wstart + wid; w++)
+					Draw_Pixel(w, y, color);
+			}
+		}
+	}
+}
+
+void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, byte c, float alpha)
+{
+	if ((int)thickness == 1)
+	{
+		bresenham_line(x_start, y_start, x_end, y_end, c);
+	}
+	else
+	{
+		bresenham_thickline(x_start, y_start, x_end, y_end, Q_rint(thickness), c);
+	}
+}
+
+#define COLOR_ALPHA(color) ((float)((color >> 24) & 0xFF) / 255.0)
+
+void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, color_t color)
+{
+	Draw_AlphaLine(x_start, y_start, x_end, y_end, thickness, Draw_FindNearestColor(color), COLOR_ALPHA(color));
+}
+
 void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha)
 {
 	Draw_FadeBox(x, y, w, h, c, alpha);
@@ -1144,7 +1354,7 @@ void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha)
 
 void Draw_AlphaFillRGB (int x, int y, int width, int height, color_t color)
 {
-	Draw_FadeBox(x, y, width, height, Draw_FindNearestColor(color), (float)((color >> 24) & 0xFF) / 255.0);
+	Draw_FadeBox(x, y, width, height, Draw_FindNearestColor(color), COLOR_ALPHA(color));
 }
 
 void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool fill, color_t color)

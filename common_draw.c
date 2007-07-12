@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.17 2007-07-11 23:07:34 cokeman1982 Exp $
+	$Id: common_draw.c,v 1.18 2007-07-12 21:22:25 cokeman1982 Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -434,6 +434,28 @@ void SCR_DrawClients(void)
     }
 }
 #endif
+
+const int COLOR_WHITE = 0xFFFFFFFF;
+
+color_t RGBA_TO_COLOR(byte r, byte g, byte b, byte a) 
+{
+	return ((r << 0) | (g << 8) | (b << 16) | (a << 24)) & 0xFFFFFFFF;
+}
+
+color_t RGBAVECT_TO_COLOR(byte rgba[4])
+{
+	return ((rgba[0] << 0) | (rgba[1] << 8) | (rgba[2] << 16) | (rgba[3] << 24)) & 0xFFFFFFFF;
+}
+
+byte* COLOR_TO_RGBA(color_t i, byte rgba[4]) 
+{
+	rgba[0] = (i >> 0  & 0xFF);
+	rgba[1] = (i >> 8  & 0xFF);
+	rgba[2] = (i >> 16 & 0xFF);
+	rgba[3] = (i >> 24 & 0xFF);
+
+	return rgba;
+}
 
 // ---------------------------
 // OSD advanced net statistics

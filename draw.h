@@ -115,16 +115,18 @@ void Draw_SFill (int x, int y, int w, int h, byte c, float scale);
 
 void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
 void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, byte c, float alpha);
-void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
+
 void Draw_AlphaCircleRGB (int x, int y, float radius, float thickness, qbool fill, color_t color);
 void Draw_AlphaCircle (int x, int y, float radius, float thickness, qbool fill, byte c, float alpha);
 void Draw_AlphaCircleOutlineRGB (int x, int y, float radius, float thickness, color_t color);
 void Draw_AlphaCircleOutline (int x, int y, float radius, float thickness, byte color, float alpha);
 void Draw_AlphaCircleFillRGB (int x, int y, float radius, color_t color);
 void Draw_AlphaCircleFill (int x, int y, float radius, byte color, float alpha);
+
 void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, color_t color);
 void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, byte c, float alpha);
 
+void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
 void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool fill, color_t color);
 void Draw_AlphaFillRGB (int x, int y, int w, int h, color_t color);
 
