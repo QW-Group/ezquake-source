@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.157 2007-07-02 19:42:23 tonik Exp $
+$Id: cl_main.c,v 1.158 2007-07-12 17:06:47 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -68,6 +68,7 @@ $Id: cl_main.c,v 1.157 2007-07-02 19:42:23 tonik Exp $
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
+#include "fs.h"
 
 int	host_screenupdatecount; // kazik - HUD -> hexum
 
@@ -1762,6 +1763,8 @@ void CL_Frame (double time) {
 	fps_count++;
 
 	CL_CalcFPS(); // HUD -> hexum
+
+	VFS_TICK(); // VFS hook for updating some systems
 
 	CL_QTVPoll();
 

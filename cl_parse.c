@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.96 2007-07-09 18:16:55 qqshka Exp $
+$Id: cl_parse.c,v 1.97 2007-07-12 17:06:47 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -750,17 +750,7 @@ void CL_SendChunkDownloadReq(void)
 	for (j = 0; j < chunks; j++)
 	{
 		if (cls.downloadmethod != DL_QWCHUNKS)
-		{
-
-// { 	this is an evil hack, so we download fast during qtvplayback, even this is have nothing with chunked download
-			if (cls.mvdplayback == QTV_PLAYBACK) {
-				Cmd_TokenizeString("nextdl");		
-				QTV_Cmd_ForwardToServer ();
-			}
-
-// }
 			return;
-		}
 
 		i = CL_RequestADownloadChunk();
 		// i < 0 mean client complete download, let server know
@@ -1063,8 +1053,7 @@ void CL_ParseDownload (void) {
 		cls.downloadpercent = percent;
 
 		if (cls.mvdplayback == QTV_PLAYBACK) {
-			Cmd_TokenizeString("nextdl");
-			QTV_Cmd_ForwardToServer ();
+			// nothing
 		}
 		else {
 			MSG_WriteByte (&cls.netchan.message, clc_stringcmd);

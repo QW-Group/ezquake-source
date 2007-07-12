@@ -1,5 +1,5 @@
 /*
-    $Id: fs.h,v 1.3 2007-06-29 23:57:19 johnnycz Exp $
+    $Id: fs.h,v 1.4 2007-07-12 17:06:47 qqshka Exp $
 */
 
 #ifndef __FS_H__
@@ -41,6 +41,8 @@ int				VFS_READ   (struct vfsfile_s *vf, void *buffer, int bytestoread, vfserrno
 int				VFS_WRITE  (struct vfsfile_s *vf, void *buffer, int bytestowrite);
 void			VFS_FLUSH  (struct vfsfile_s *vf);
 char		   *VFS_GETS   (struct vfsfile_s *vf, char *buffer, int buflen); // return null terminated string
+
+void			VFS_TICK   (void);  // fill in/out our internall buffers (do read/write on socket)
 
 // open some temp VFS file, which actually result from tmpfile() at least when i commenting this
 vfsfile_t *FS_OpenTemp(void);

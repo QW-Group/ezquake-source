@@ -1,5 +1,5 @@
 /*
-    $Id: fs.c,v 1.7 2007-06-30 10:48:00 johnnycz Exp $
+    $Id: fs.c,v 1.8 2007-07-12 17:06:47 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -383,12 +383,21 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 typedef struct tcpfile_s {
 	vfsfile_t funcs; // <= must be at top/begining of struct
 
-	int sock;
+	int		sock;
 
-	char readbuffer[65536];
-	int readbuffered;
+	char	readbuffer [5 * 65536];
+	int		readbuffered;
+
+	char	writebuffer[5 * 65536];
+	int		writebuffered;
+
+	struct tcpfile_s *next;
 
 } tcpfile_t;
+
+
+tcpfile_t *vfs_tcp_list = NULL;
+
 
 void VFSTCP_Error(tcpfile_t *f)
 {
@@ -477,17 +486,47 @@ int VFSTCP_WriteBytes (struct vfsfile_s *file, void *buffer, int bytestowrite)
 	tcpfile_t *tf = (tcpfile_t*)file;
 	int len;
 
+	if (bytestowrite < 0)
+		Sys_Error("VFSTCP_WriteBytes: bytestowrite < 0"); // ffs
+
 	if (tf->sock == INVALID_SOCKET)
 		return 0;
 
-	len = send(tf->sock, buffer, bytestowrite, 0);
-	if (len == -1 || len == 0)
+	if (bytestowrite > (int)sizeof(tf->writebuffer) - tf->writebuffered)
 	{
-		Com_Printf("VFSTCP: failed to write %d bytes, closing link\n", bytestowrite);
+		Com_Printf("VFSTCP: failed to write %d bytes, buffer overflow, closing link\n", bytestowrite);
 		VFSTCP_Error(tf);
 		return 0;
 	}
-	return len;
+
+	// append data
+	memmove(tf->writebuffer + tf->writebuffered, buffer, bytestowrite);
+	tf->writebuffered += bytestowrite;
+
+	len = send(tf->sock, tf->writebuffer, tf->writebuffered, 0);
+
+	if (len < 0)
+	{
+		int err = qerrno;
+
+		if (err != EWOULDBLOCK/* FIXME: this is require winsock2.h on windows && err != EAGAIN && err != ENOTCONN */)
+		{
+			Com_Printf("VFSTCP: failed to write %d bytes, closing link, socket error %d\n", bytestowrite, err);
+			VFSTCP_Error(tf);
+			return 0;
+		}
+	}
+	else if (len > 0)
+	{
+		tf->writebuffered -= len;
+		memmove(tf->writebuffer, tf->writebuffer + len, tf->writebuffered);
+	}
+	else
+	{
+		// hm, zero bytes was sent
+	}
+
+	return bytestowrite; // well at least we put something in buffer, sure if bytestowrite not zero
 }
 
 qbool VFSTCP_Seek (struct vfsfile_s *file, unsigned long pos)
@@ -512,31 +551,76 @@ unsigned long VFSTCP_GetLen (struct vfsfile_s *file)
 
 void VFSTCP_Close (struct vfsfile_s *file)
 {
-	VFSTCP_Error((tcpfile_t*)file);
+	tcpfile_t *tmp, *prev;
+
+	VFSTCP_Error((tcpfile_t*)file); // close socket
+
+	// link out
+	for (tmp = prev = vfs_tcp_list; tmp; tmp = tmp->next)
+	{
+		if (tmp == (tcpfile_t*)file)
+		{
+			if (tmp == vfs_tcp_list)
+				vfs_tcp_list = tmp->next; // we remove from head a bit different
+			else
+				prev->next   = tmp->next; // removing not from head
+
+			break;
+		}
+
+		prev = tmp;
+	}
+
+	if (!tmp)
+		Com_Printf("VFSTCP: Close: not found in list\n");
+
 	Q_free(file);
+}
+
+void VFSTCP_Tick(void)
+{
+	tcpfile_t *tmp;
+	vfserrno_t err;
+
+	for (tmp = vfs_tcp_list; tmp; tmp = tmp->next)
+	{
+		VFSTCP_ReadBytes  ((vfsfile_t*)tmp, NULL, 0, &err); // perform read in our internal buffer
+		VFSTCP_WriteBytes ((vfsfile_t*)tmp, NULL, 0);		// perform write from our internall buffer
+
+//		Com_Printf("r %d, w %d\n", tmp->readbuffered, tmp->writebuffered);
+	}
 }
 
 vfsfile_t *FS_OpenTCP(char *name)
 {
 	tcpfile_t *newf;
 	int sock;
+//	int _true = true;
 	netadr_t adr = {0};
+
 	if (NET_StringToAdr(name, &adr))
 	{
 		sock = TCP_OpenStream(adr);
 		if (sock == INVALID_SOCKET)
 			return NULL;
 
+//		if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&_true, sizeof(_true)) == -1)
+//			Com_Printf ("FS_OpenTCP: setsockopt: (%i): %s\n", qerrno, strerror(qerrno));
+
 		newf = Q_malloc(sizeof(*newf));
-		newf->sock = sock;
-		newf->funcs.Close = VFSTCP_Close;
-		newf->funcs.Flush = NULL;
-		newf->funcs.GetLen = VFSTCP_GetLen;
-		newf->funcs.ReadBytes = VFSTCP_ReadBytes;
-		newf->funcs.Seek = VFSTCP_Seek;
-		newf->funcs.Tell = VFSTCP_Tell;
-		newf->funcs.WriteBytes = VFSTCP_WriteBytes;
+		newf->sock				= sock;
+		newf->funcs.Close		= VFSTCP_Close;
+		newf->funcs.Flush		= NULL;
+		newf->funcs.GetLen		= VFSTCP_GetLen;
+		newf->funcs.ReadBytes	= VFSTCP_ReadBytes;
+		newf->funcs.Seek		= VFSTCP_Seek;
+		newf->funcs.Tell		= VFSTCP_Tell;
+		newf->funcs.WriteBytes	= VFSTCP_WriteBytes;
 		newf->funcs.seekingisabadplan = true;
+
+		// link in
+		newf->next   = vfs_tcp_list;
+		vfs_tcp_list = newf;
 
 		return &newf->funcs;
 	}
@@ -546,6 +630,11 @@ vfsfile_t *FS_OpenTCP(char *name)
 
 //TCP file
 //******************************************************************************************************
+
+void VFS_TICK(void)
+{
+	VFSTCP_Tick(); // fill in/out our internall buffers (do read/write on socket)
+}
 
 // VFS
 //======================================================================================================
