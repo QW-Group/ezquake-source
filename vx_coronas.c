@@ -105,8 +105,8 @@ void R_UpdateCoronas(void)
 				c->growth = 1000;
 				if (c->scale > 150)
 					c->scale = 150 + rand() % 15; //flicker when at full radius
-				if (c->alpha > 0.7)
-					c->alpha = 0.7;
+				if (c->alpha > 0.2f)//TODO: make a cvar to control this
+					c->alpha = 0.2f;// .. coronacontrast or something
 			}
 			c->sighted = true;
 		}
