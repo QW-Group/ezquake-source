@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.68 2007-07-11 23:15:41 cokeman1982 Exp $
+    $Id: keys.c,v 1.69 2007-07-12 22:02:50 cokeman1982 Exp $
 
 */
 
@@ -25,9 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include "quakedef.h"
 #include "textencoding.h"
-#include "hud.h"
-#include "hud_common.h"
-#include "hud_editor.h"
 #include "menu.h"
 #include "keys.h"
 
@@ -42,6 +39,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #endif
 
+#include "hud.h"
+#include "hud_common.h"
+#include "hud_editor.h"
 
 //key up events are sent even if in console mode
 
