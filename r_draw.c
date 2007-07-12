@@ -814,8 +814,8 @@ void Draw_TransPic (int x, int y, mpic_t *pic)
 
 void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height) 
 {
-	byte *dest, *source, tbyte;
-	int v, u, i;
+	byte *source, tbyte;
+	int v, u;
 
 	// Completely outside of scissor bounds.
 	if (((x + width) < scissor_left) || ((x - width) > scissor_right) 
@@ -838,8 +838,6 @@ void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width,
 	}
 
 	source = pic->data + srcy * pic->width + srcx;
-
-	dest = vid.buffer + y * vid.rowbytes + x;
 
 	for (v = 0; v < height; v++) 
 	{
