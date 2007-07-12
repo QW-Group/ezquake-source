@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pmove.h"
 #include "utils.h"
 #include "sbar.h"
+#include "qtv.h"
 
 
 static vec3_t desired_position; // where the camera wants to be.
@@ -126,8 +127,17 @@ void Cam_Unlock(void)
 		return;
 	}
 
-	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-	MSG_WriteString (&cls.netchan.message, "ptrack");
+	if (cls.mvdplayback == QTV_PLAYBACK)
+	{
+		Cmd_TokenizeString("ptrack");
+		QTV_Cmd_ForwardToServer ();
+	}
+	else
+	{
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString (&cls.netchan.message, "ptrack");
+	}
+
 	autocam = CAM_NONE;
 	locked = false;
 	Sbar_Changed();
@@ -163,8 +173,17 @@ void Cam_Lock(int playernum)
 	}	
 	last_lock = cls.realtime;
 
-	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-	MSG_WriteString (&cls.netchan.message, st);
+	if (cls.mvdplayback == QTV_PLAYBACK)
+	{
+		Cmd_TokenizeString(st);
+		QTV_Cmd_ForwardToServer ();
+	}
+	else
+	{
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString (&cls.netchan.message, st);
+	}
+
 	spec_track = playernum;
 	locked = false;
 	Sbar_Changed();
