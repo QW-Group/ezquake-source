@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.23 2007-07-11 23:07:34 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.24 2007-07-13 20:43:10 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -226,7 +226,7 @@ void EZ_tree_Draw(ez_tree_t *tree)
 //
 // Control Tree - Dispatches a mouse event to a control tree.
 //
-int EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
+qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 {
 	int mouse_handled = false;
 	ez_control_t *payload = NULL;

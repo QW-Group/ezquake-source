@@ -11,6 +11,7 @@ CLIENT_C_FILES := \
 	EX_browser_ping \
 	EX_browser_sources \
 	EX_misc \
+	ez_controls \
 	auth \
 	cl_cam \
 	cl_cmd \

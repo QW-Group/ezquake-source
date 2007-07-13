@@ -121,16 +121,16 @@ typedef int (*ez_control_mouse_handler_fp) (struct ez_control_s *self, mouse_sta
 typedef int (*ez_control_key_handler_fp) (struct ez_control_s *self, int key, int unichar);
 typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool destroy_children);
 
-#define CONTROL_IS_CONTAINED(self) (self##->parent && (self##->flags & CONTROL_CONTAINED))
+#define CONTROL_IS_CONTAINED(self) (self->parent && (self->flags & CONTROL_CONTAINED))
 #define MOUSE_OUTSIDE_PARENT_GENERIC(ctrl, mouse_state, axis, h)									\
-	(ctrl##->parent																					\
-	&& (((int) mouse_state##->##axis <= ctrl##->parent->absolute_##axis)							\
-	|| ((int) mouse_state##->##axis >= (ctrl##->parent->absolute_##axis + ctrl##->parent->##h))))	\
+	(ctrl->parent																					\
+	&& (((int) mouse_state->axis <= ctrl->parent->absolute_##axis)							\
+	|| ((int) mouse_state->axis >= (ctrl->parent->absolute_##axis + ctrl->parent->h))))	\
 
 #define MOUSE_OUTSIDE_PARENT_X(ctrl, mouse_state) MOUSE_OUTSIDE_PARENT_GENERIC(ctrl, mouse_state, x, width)
 #define MOUSE_OUTSIDE_PARENT_Y(ctrl, mouse_state) MOUSE_OUTSIDE_PARENT_GENERIC(ctrl, mouse_state, y, height)
 
-#define CONTROL_EVENT_HANDLER(name, ctrl, eventhandler) (ctrl##->##name.##eventhandler)
+#define CONTROL_EVENT_HANDLER(name, ctrl, eventhandler) (ctrl->name.eventhandler)
 
 //
 // Raises an event.
@@ -141,7 +141,7 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 	int *p = (int *)retval;																			\
 	((ez_control_t *)ctrl)->override_count = ((ez_control_t *)ctrl)->inheritance_level;				\
 	if(CONTROL_EVENT_HANDLER(events, ctrl, eventhandler))											\
-		temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ctrl), __VA_ARGS__);			\
+	temp = CONTROL_EVENT_HANDLER(events, (ctrl), eventhandler)((ctrl), ##__VA_ARGS__);				\
 	if(p) (*p) = temp;																				\
 }																									\
 

@@ -4,20 +4,20 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.28 2007-07-12 21:55:16 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.29 2007-07-13 20:43:10 cokeman1982 Exp $
 
 */
 
 #include "quakedef.h"
-#include "hud.h"
 #include "EX_misc.h"
 #include "cl_screen.h"
-#include "hud_editor.h"
 #include "qsound.h"
 #include "menu.h"
 #include "keys.h"
 #include "Ctrl.h"
 #include "ez_controls.h"
+#include "hud.h"
+#include "hud_editor.h"
 
 ez_tree_t help_control_tree;
 

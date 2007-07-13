@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.69 2007-07-12 22:02:50 cokeman1982 Exp $
+    $Id: keys.c,v 1.70 2007-07-13 20:43:11 cokeman1982 Exp $
 
 */
 
@@ -55,11 +55,10 @@ cvar_t cl_newCompletion     = {"cl_newCompletion", "1" }; // addeded by jogi
 cvar_t	cl_showkeycodes = {"cl_showkeycodes", "0"};
 #endif // WITH_KEYMAP
 
-// Added by VVD {
 cvar_t	cl_savehistory = {"cl_savehistory", "1"};
 #define		HISTORY_FILE_NAME	"ezquake/.ezquake_history"
 #define		CMDLINES	(1<<8)
-// } Added by VVD
+
 #define		MAXCMDLINE	256
 wchar	key_lines[CMDLINES][MAXCMDLINE];
 int		key_linepos;
@@ -70,7 +69,6 @@ int		key_lastpress;
 int		edit_line=0;
 int		history_line=0;
 
-// added by jogi start
 int del_removes;
 int key_lineposorig;
 int old_keyline_length;
@@ -81,7 +79,6 @@ int count = 0;
 int count_cmd = 0;
 int count_cvar = 0;
 int count_alias = 0;
-// added by jogi stop
 
 keydest_t	key_dest, key_dest_beforemm, key_dest_beforecon;
 
@@ -284,7 +281,6 @@ keyname_t keynames[] = {
 
 mouse_state_t scr_pointer_state;
 
-// jogi add start
 /*
 ==============================================================================
 			Flushing my array
@@ -300,7 +296,6 @@ void CompleteCommandNew_Reset (void)
 	}
 }
 
-// jogi add stop
 /*
 ==============================================================================
 			LINE TYPING INTO THE CONSOLE
@@ -356,7 +351,6 @@ static void FindCommonSubString (char *s) {
 	}
 }
 
-
 int Cmd_CompleteCountPossible (char *partial);
 int Cmd_AliasCompleteCountPossible (char *partial);
 int Cvar_CompleteCountPossible (char *partial);
@@ -366,11 +360,6 @@ extern cmd_function_t *cmd_functions;
 extern cmd_alias_t *cmd_alias;
 extern cvar_t *cvar_vars;
 
-
-
-
-
-// added by jogi start
 void CompleteCommandNew (void)
 {
 	char *cmd, token[MAXCMDLINE], *s;
@@ -627,10 +616,6 @@ void CompleteCommandNew (void)
 		CompleteCommandNew ();
 	}
 }
-
-// added by jogi stop
-
-
 
 void CompleteCommand (void) {
 	char *cmd, token[MAXCMDLINE], *s;

@@ -4,7 +4,7 @@
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.h,v 1.12 2007-07-11 23:18:50 cokeman1982 Exp $
+	$Id: hud_editor.h,v 1.13 2007-07-13 20:43:11 cokeman1982 Exp $
 
 */
 
