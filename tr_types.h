@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_types.h,v 1.4 2007-03-21 17:03:10 vvd0 Exp $
+	$Id: tr_types.h,v 1.5 2007-07-13 13:01:20 qqshka Exp $
 
 */
 //
@@ -176,6 +176,7 @@ extern cvar_t	r_customwidth;
 extern cvar_t	r_customheight;
 extern cvar_t	r_customaspect; // qqshka: unused even in q3, but I keep cvar, just do not register it
 extern cvar_t	r_displayRefresh;
+extern cvar_t	vid_borderless;
 //extern cvar_t	r_intensity;
 
 //

@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-$Id: win_glimp.c,v 1.20 2007-06-24 15:52:09 qqshka Exp $
+$Id: win_glimp.c,v 1.21 2007-07-13 13:01:20 qqshka Exp $
 
 */
 /*
@@ -766,7 +766,12 @@ static qbool GLW_CreateWindow( const char *drivername, int width, int height, in
 		else
 		{
 			exstyle   = 0;
-			stylebits = WS_OVERLAPPED|WS_BORDER|WS_CAPTION|WS_VISIBLE|WS_SYSMENU;
+
+			if (vid_borderless.integer)
+				stylebits = WS_CHILD|WS_CLIPCHILDREN|WS_VISIBLE|WS_SYSMENU;
+			else
+				stylebits = WS_OVERLAPPED|WS_BORDER|WS_CAPTION|WS_VISIBLE|WS_SYSMENU;
+
 			AdjustWindowRect (&r, stylebits, FALSE);
 		}
 
@@ -806,7 +811,7 @@ static qbool GLW_CreateWindow( const char *drivername, int width, int height, in
 			 WINDOW_DEFAULT_NAME,
 			 stylebits,
 			 x, y, w, h,
-			 NULL,
+			 (stylebits & WS_CHILD) ? GetDesktopWindow() : NULL, // child require parent window
 			 NULL,
 			 global_hInstance,
 			 NULL);

@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_init.c,v 1.19 2007-06-17 01:44:32 himan Exp $
+	$Id: tr_init.c,v 1.20 2007-07-13 13:01:20 qqshka Exp $
 
 */
 // tr_init.c -- functions that are not called every frame
@@ -60,6 +60,7 @@ cvar_t	r_customwidth		= { "vid_customwidth",		"1600",	CVAR_ARCHIVE | CVAR_LATCH 
 cvar_t	r_customheight		= { "vid_customheight",		"1024",	CVAR_ARCHIVE | CVAR_LATCH };
 cvar_t	r_customaspect		= { "vid_customaspect",		"1",	CVAR_ARCHIVE | CVAR_LATCH }; // qqshka: unused even in q3, but I keep cvar, just do not register it
 cvar_t	r_displayRefresh	= { "vid_displayfrequency", "0",	CVAR_ARCHIVE | CVAR_LATCH };
+cvar_t	vid_borderless		= { "vid_borderless",		"0",	CVAR_ARCHIVE | CVAR_LATCH };
 //cvar_t	r_intensity		= { "vid_intensity",		"1",	CVAR_LATCH };
 
 //
@@ -76,6 +77,7 @@ cvar_t	r_swapInterval		= { "vid_vsync",			"0",	CVAR_ARCHIVE | CVAR_SILENT };
 
 cvar_t	vid_xpos			= { "vid_xpos",				"3",	CVAR_ARCHIVE | CVAR_SILENT };
 cvar_t	vid_ypos			= { "vid_ypos",				"22",	CVAR_ARCHIVE | CVAR_SILENT };
+
 
 qbool OnChange_r_con_xxx (cvar_t *var, char *string);
 cvar_t	r_conwidth			= { "vid_conwidth",			"640",	CVAR_NO_RESET | CVAR_SILENT, OnChange_r_con_xxx };
@@ -458,6 +460,8 @@ void R_Register( void )
 	//
 	Cvar_Register (&r_displayRefresh);
 	AssertCvarRange( &r_displayRefresh, 0, 300, true ); // useless in most cases thought
+
+	Cvar_Register (&vid_borderless);
 //	Cvar_Register (&r_intensity);
 
 	//
