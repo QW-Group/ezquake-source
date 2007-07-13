@@ -61,6 +61,11 @@ int	scissor_right	= 0;
 int scissor_top		= 0;
 int scissor_bottom	= 0;
 
+#define CLIP_TOP(y)		((y) < scissor_top)
+#define CLIP_BOTTOM(y)	((y) > scissor_bottom)
+#define CLIP_LEFT(x)	((x) < scissor_left)
+#define CLIP_RIGHT(x)	((x) > scissor_right)
+
 //=============================================================================
 // Support Routines 
 
@@ -272,8 +277,7 @@ void Draw_CharacterW (int x, int y, wchar num)
 	int i = 0;
 
 	// Don't draw if we're outside the scissor bounds.
-	if ((y <= (scissor_top - 8))  || (y > scissor_bottom) 
-	 || (x <= (scissor_left - 8)) || (x > scissor_right))
+	if ((y < (scissor_top - 8))  || (y > scissor_bottom) || (x < (scissor_left - 8)) || (x > scissor_right))
 		return;
 
 	// Find a characterset with the character available in it.
@@ -444,7 +448,7 @@ static __inline void Draw_Pixel(int x, int y, byte color)
 {
 	byte *dest;
 
-	if ((x < scissor_left) || (x > scissor_right) || (y < scissor_top) || (y > scissor_bottom))
+	if (CLIP_LEFT(x) || CLIP_RIGHT(x) || CLIP_TOP(y) || CLIP_BOTTOM(y))
 		return;
 
 	dest = vid.buffer + (y * vid.rowbytes) + x;
@@ -818,18 +822,17 @@ void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width,
 	int v, u;
 
 	// Completely outside of scissor bounds.
-	if (((x + width) < scissor_left) || ((x - width) > scissor_right) 
-	 || ((y + height) < scissor_top) || ((y - height) > scissor_bottom))
+	if (CLIP_LEFT(x + width) || CLIP_RIGHT(x - width) || CLIP_TOP(x + height) || CLIP_BOTTOM(y - height))
 		return;
 
 	// Move the position in the source so that we only draw the part that is
 	// within the scissor bounds.
 	{
-		srcx += (x < scissor_left) ? (scissor_left - x) : 0;
-		width -= ((x + width) > scissor_right) ? ((x + width) - scissor_right) : 0;
+		srcx += CLIP_LEFT(x) ? (scissor_left - x) : 0;
+		width -= CLIP_RIGHT(x + width) ? ((x + width) - scissor_right) : 0;
 
-		srcy += (y < scissor_top) ? (scissor_top - y) : 0;
-		height -= ((y + height) > scissor_bottom) ? ((y + height) - scissor_bottom) : 0; 
+		srcy += CLIP_TOP(y) ? (scissor_top - y) : 0;
+		height -= CLIP_BOTTOM(y + height) ? ((y + height) - scissor_bottom) : 0; 
 	}
 
 	if ((width < 0) || (height < 0) || (srcx > pic->width) || (srcy > pic->height))
@@ -841,8 +844,14 @@ void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width,
 
 	for (v = 0; v < height; v++) 
 	{
+		if (CLIP_TOP(y + v) || CLIP_BOTTOM(y + v))
+			continue;
+
 		for (u = 0; u < width; u++)
 		{
+			if (CLIP_LEFT(x + u) || CLIP_RIGHT(x + u))
+				continue;
+
 			if ((tbyte = source[u]) == TRANSPARENT_COLOR && pic->alpha)
 				continue;
 
@@ -859,8 +868,11 @@ void Draw_CharToConback (int num, byte *dest)
 	byte *source;
 
 	row = num >> 4;
-	col = num & 15;
-	source = draw_chars[0] + (row<<10) + (col<<3);
+	col = num & 0x0F;
+
+	// row * (16 chars per row) * (8*8 pixels per char)
+	// col * (8 pixels for char height)
+	source = draw_chars[0] + (row << 10) + (col << 3);
 
 	drawline = 8;
 
@@ -871,6 +883,7 @@ void Draw_CharToConback (int num, byte *dest)
 			if (source[x])
 				dest[x] = source[x];
 		}
+
 		source += 128;
 		dest += 320;
 	}
@@ -888,17 +901,18 @@ void Draw_ConsoleBackground (int lines)
 
 	conback = Draw_CachePic ("gfx/conback.lmp");
 
-	// hack the version number directly into the pic
+	// Hack the version number directly into the pic.
 
 	memcpy (saveback, conback->data + 320 * 186, 320 * 8);
 
-	// draw the pic
+	// Draw the pic.
 	dest = vid.buffer;
 
 	for (y = 0; y < lines; y++, dest += vid.rowbytes) 
 	{
 		v = (vid.conheight - lines + y + con_shift.value) * 200 / vid.conheight;
 		src = conback->data + v * 320;
+
 		if (vid.conwidth == 320) 
 		{
 			memcpy (dest, src, vid.conwidth);
@@ -940,8 +954,14 @@ void R_DrawRect8 (vrect_t *prect, int rowbytes, byte *psrc, int transparent)
 	{
 		for (i = 0; i < prect->height; i++) 
 		{
+			if (CLIP_TOP(prect->y + i) || CLIP_BOTTOM(prect->y + i))
+				continue;
+
 			for (j = 0; j < prect->width; j++) 
 			{
+				if (CLIP_LEFT(prect->x + j) || CLIP_RIGHT(prect->x + j))
+					continue;
+
 				t = *psrc;
 				if (t != TRANSPARENT_COLOR)
 					*pdest = t;
@@ -1025,8 +1045,14 @@ void Draw_Fill (int x, int y, int w, int h, byte c)
 
 	for (cur_y = 0; cur_y < h; cur_y++)
 	{
+		if (CLIP_TOP(y + cur_y) || CLIP_BOTTOM(y + cur_y))
+			continue;
+
 		for (cur_x = 0; cur_x < w; cur_x++)
 		{
+			if (CLIP_LEFT(x + cur_x) || CLIP_RIGHT(x + cur_x))
+				continue;
+
 			Draw_Pixel(x + cur_x, y + cur_y, c);
 		}
 	}
