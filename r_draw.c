@@ -751,10 +751,12 @@ void Draw_Crosshair(void)
 // Stretches a horizontal source line onto a horizontal
 // destination line. Used by RectStretch.
 // Entry:
-//        x1,x2 - x-coordinates of the destination line
-//        y1,y2 - x-coordinates of the source line
-//        yr    - y-coordinate of source line
-//        yw    - y-coordinate of destination line
+//	x_dest_start, x_dest_end - x-coordinates of the destination 
+//							   line (coordinates inside texture)
+//	x_src_start, x_src_end	 - x-coordinates of the source line 
+//							   (screen coordinates)
+//	y_src					 - y-coordinate of source line
+//	y_dest					 - y-coordinate of destination line
 // ============================================================
 static void Draw_StretchLine(mpic_t *pic, int x_dest_start, int x_dest_end, int x_src_start, int x_src_end, int y_src, int y_dest)
 {
@@ -797,31 +799,22 @@ static void Draw_StretchLine(mpic_t *pic, int x_dest_start, int x_dest_end, int 
 	}
 }
 
-// ============================================================
-// Based on GraphicGems fastBitmap.c 
-// (http://www.acm.org/tog/GraphicsGems/)
-// RectStretch enlarges or diminishes a source rectangle of
-// a bitmap to a destination rectangle. The source
-// rectangle is selected by the two points (xs1,ys1) and
-// (xs2,ys2), and the destination rectangle by (xd1,yd1) and
-// (xd2,yd2). Since readability of source-code is wanted,
-// some optimizations have been left out for the reader:
-// It's possible to read one line at a time, by first
-// stretching in x-direction and then stretching that bitmap
-// in y-direction.
-// Entry:
-//        x_src_start, y_src_start		- first point of source rectangle
-//        x_src_end, y_src_end			- second point of source rectangle
-//        x_dest_start, y_dest_start	- first point of destination rectangle
-//        x_dest_end, y_dest_end		- second point of destination rectangle
-// ============================================================
-void Draw_RectStretch(mpic_t *pic, int x, int y, int width, int height)
+//
+// x,y						- Position of the pic
+// width, height			- The size of the rectangle, the pic will fit within this.
+// srcx, srcy				- The position in the pic to start drawing from.
+// src_width, src_height	- The width and height of the sub-area of the pic to draw.
+//
+void Draw_RectStretchSubPic(mpic_t *pic, int x, int y, int srcx, int srcy, int src_width, int src_height, int width, int height)
 {
+	int dy_dest, dy_src, e, d;
+	short y_sign_dest, y_sign_src;
+
 	// Were to start in the source.
-	int x_src_start = 0;
-	int y_src_start = 0;
-	int x_src_end	= pic->width;
-	int y_src_end	= pic->height;
+	int x_src_start = abs(srcx);
+	int y_src_start = abs(srcy);
+	int x_src_end	= abs(src_width);
+	int y_src_end	= abs(src_height);
 	
 	// Where to write the image on screen.
 	int x_dest_start = x;
@@ -829,8 +822,11 @@ void Draw_RectStretch(mpic_t *pic, int x, int y, int width, int height)
 	int x_dest_end	= x + width; 
 	int y_dest_end	= y + height;
 
-	int dy_dest, dy_src, e, d;
-	short y_sign_dest, y_sign_src;
+	// Make sure we don't try to draw something outside the source.
+	clamp(x_src_start, 0, pic->width);
+	clamp(y_src_start, 0, pic->height);
+	clamp(x_src_end, 0, (pic->width - x_src_start)); 
+	clamp(y_src_end, 0, (pic->height - y_src_start)); 
 
 	dy_dest = abs(y_dest_end - y_dest_start);
 	dy_src  = abs(y_src_end  - y_src_start);
@@ -855,6 +851,28 @@ void Draw_RectStretch(mpic_t *pic, int x, int y, int width, int height)
 		y_dest_start += y_sign_dest;
 		e += dy_src;
 	}
+}
+
+// ============================================================
+// Based on GraphicGems fastBitmap.c 
+// (http://www.acm.org/tog/GraphicsGems/)
+// RectStretch enlarges or diminishes a source rectangle of
+// a bitmap to a destination rectangle. The source
+// rectangle is selected by the two points (xs1,ys1) and
+// (xs2,ys2), and the destination rectangle by (xd1,yd1) and
+// (xd2,yd2). Since readability of source-code is wanted,
+// some optimizations have been left out for the reader:
+// It's possible to read one line at a time, by first
+// stretching in x-direction and then stretching that bitmap
+// in y-direction.
+// Entry:
+//	x,y			  - Position of the pic
+//	width, height - The size of the rectangle, the pic will
+//					fit within this.
+// ============================================================
+void Draw_RectStretch(mpic_t *pic, int x, int y, int width, int height)
+{
+	Draw_RectStretchSubPic(pic, x, y, 0, 0, pic->width, pic->height, width, height);
 }
 
 void Draw_TextBox (int x, int y, int width, int lines) 
@@ -1567,29 +1585,24 @@ void Draw_SPic (int x, int y, mpic_t *pic, float scale)
 	Draw_RectStretch(pic, x, y, Q_rint(scale * pic->width), Q_rint(scale * pic->height));
 }
 
-void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl)
+void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *pic)
 {
-    // no scale in SOFT yet...
-    Draw_TransPic(x, y, gl);
+	Draw_RectStretch(pic, x, y, fit_width, fit_height);
 }
 
 void Draw_SSubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float scale)
 {
-    // no scale in SOFT yet..
-    // but make it transparent
-    Draw_TransSubPic(x, y, pic, srcx, srcy, width, height);
+	Draw_RectStretchSubPic(pic, x, y, srcx, srcy, width, height, Q_rint(scale * width), Q_rint(scale * height));
 }
 
 void Draw_STransPic (int x, int y, mpic_t *pic, float scale)
 {
-    // no scale in SOFT yet..
-    Draw_TransPic(x, y, pic);
+	Draw_RectStretchSubPic(pic, x, y, 0, 0, pic->width, pic->height, Q_rint(scale * pic->width), Q_rint(scale * pic->height));
 }
 
 void Draw_SFill (int x, int y, int w, int h, byte c, float scale)
 {
-    // no scale in SOFT yet..
-    Draw_Fill(x, y, w, h, c);
+    Draw_Fill(x, y, Q_rint(scale * w), Q_rint(scale * h), c);
 }
 
 //=============================================================================
