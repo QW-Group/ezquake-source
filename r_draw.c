@@ -745,7 +745,117 @@ void Draw_Crosshair(void)
 	}
 }
 
+// ============================================================
+// From GraphicGems fastBitmap.c 
+// (http://www.acm.org/tog/GraphicsGems/)
+// Stretches a horizontal source line onto a horizontal
+// destination line. Used by RectStretch.
+// Entry:
+//        x1,x2 - x-coordinates of the destination line
+//        y1,y2 - x-coordinates of the source line
+//        yr    - y-coordinate of source line
+//        yw    - y-coordinate of destination line
+// ============================================================
+static void Draw_StretchLine(mpic_t *pic, int x_dest_start, int x_dest_end, int x_src_start, int x_src_end, int y_src, int y_dest)
+{
+	byte *srcdata = pic->data;
+	int dx_dest, dx_src, e, d;
+	short x_dest_sign, x_src_sign;
+	byte color;
 
+	// Calculate the source and destination widths.
+	dx_dest = abs((int)(x_dest_end - x_dest_start));
+	dx_src  = abs((int)(x_src_end  - x_src_start));
+
+	// Get the sign to increment/decrement by.
+	x_dest_sign = sgn(x_dest_end - x_dest_start);
+	x_src_sign  = sgn(x_src_end  - x_src_start);
+
+	// Some cleverness so we don't have to use floats
+	// to calculate the ratio of pixels to draw.
+	e = (dx_src << 1) - dx_dest;
+	dx_src <<= 1;
+	
+	// Loop through each pixel in the destination line.
+	for(d = 0; d <= dx_dest; d++)
+	{
+		// Get the pixel for the specified source row.
+		color = *(srcdata + (y_src * pic->width) + x_src_start);
+
+		// Draw the pixel if it isn't transparent.
+		if (color != TRANSPARENT_COLOR)
+			Draw_Pixel(x_dest_start, y_dest, color);
+
+		while(e >= 0)
+		{
+			x_src_start += x_src_sign;
+			e -= (dx_dest << 1); 
+		}
+
+		x_dest_start += x_dest_sign;
+		e += dx_src;
+	}
+}
+
+// ============================================================
+// Based on GraphicGems fastBitmap.c 
+// (http://www.acm.org/tog/GraphicsGems/)
+// RectStretch enlarges or diminishes a source rectangle of
+// a bitmap to a destination rectangle. The source
+// rectangle is selected by the two points (xs1,ys1) and
+// (xs2,ys2), and the destination rectangle by (xd1,yd1) and
+// (xd2,yd2). Since readability of source-code is wanted,
+// some optimizations have been left out for the reader:
+// It's possible to read one line at a time, by first
+// stretching in x-direction and then stretching that bitmap
+// in y-direction.
+// Entry:
+//        x_src_start, y_src_start		- first point of source rectangle
+//        x_src_end, y_src_end			- second point of source rectangle
+//        x_dest_start, y_dest_start	- first point of destination rectangle
+//        x_dest_end, y_dest_end		- second point of destination rectangle
+// ============================================================
+void Draw_RectStretch(mpic_t *pic, int x, int y, int width, int height)
+{
+	// Were to start in the source.
+	int x_src_start = 0;
+	int y_src_start = 0;
+	int x_src_end	= pic->width;
+	int y_src_end	= pic->height;
+	
+	// Where to write the image on screen.
+	int x_dest_start = x;
+	int y_dest_start = y;
+	int x_dest_end	= x + width; 
+	int y_dest_end	= y + height;
+
+	int dy_dest, dy_src, e, d;
+	short y_sign_dest, y_sign_src;
+
+	dy_dest = abs(y_dest_end - y_dest_start);
+	dy_src  = abs(y_src_end  - y_src_start);
+
+	// Get the direction we should move when drawing (up or down).
+	y_sign_dest = sgn(y_dest_end - y_dest_start);
+	y_sign_src  = sgn(y_src_end  - y_src_start);
+	
+	e = (dy_src << 1) - dy_dest;
+	dy_src <<= 1;
+
+	for(d = 0; d < dy_dest; d++)
+	{
+		Draw_StretchLine(pic, x_dest_start, x_dest_end, x_src_start, x_src_end, y_src_start, y_dest_start);
+		
+		while(e >= 0)
+		{
+			y_src_start += y_sign_src;
+			e -= dy_dest << 1;
+		}
+
+		y_dest_start += y_sign_dest;
+		e += dy_src;
+	}
+}
 
 void Draw_TextBox (int x, int y, int width, int lines) 
 {
@@ -840,7 +950,7 @@ void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width,
 		return;
 	}
 
-	source = pic->data + srcy * pic->width + srcx;
+	source = pic->data + (srcy * pic->width) + srcx;
 
 	for (v = 0; v < height; v++) 
 	{
@@ -1454,9 +1564,7 @@ void Draw_SAlt_String (int x, int y, char *str, float scale)
 
 void Draw_SPic (int x, int y, mpic_t *pic, float scale)
 {
-    // no scale in SOFT yet..
-    // but mae it transparent
-    Draw_TransPic(x, y, pic);
+	Draw_RectStretch(pic, x, y, Q_rint(scale * pic->width), Q_rint(scale * pic->height));
 }
 
 void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl)
