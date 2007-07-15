@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.40 2007-03-28 18:34:10 qqshka Exp $
+    $Id: image.c,v 1.41 2007-07-15 17:47:18 cokeman1982 Exp $
 */
 
 #ifdef __FreeBSD__
@@ -56,7 +56,8 @@ cvar_t image_jpeg_quality_level = {"image_jpeg_quality_level", "75"};
 
 #ifdef GLQUAKE
 
-static void Image_Resample32LerpLine (byte *in, byte *out, int inwidth, int outwidth) {
+static void Image_Resample32LerpLine (byte *in, byte *out, int inwidth, int outwidth) 
+{
 	int j, xi, oldx = 0, f, fstep, endx, lerp;
 
 	fstep = (int) (inwidth * 65536.0f / outwidth);
@@ -82,7 +83,8 @@ static void Image_Resample32LerpLine (byte *in, byte *out, int inwidth, int outw
 	}
 }
 
-static void Image_Resample24LerpLine (byte *in, byte *out, int inwidth, int outwidth) {
+static void Image_Resample24LerpLine (byte *in, byte *out, int inwidth, int outwidth) 
+{
 	int j, xi, oldx = 0, f, fstep, endx, lerp;
 
 	fstep = (int) (inwidth * 65536.0f / outwidth);
@@ -110,7 +112,8 @@ static void Image_Resample24LerpLine (byte *in, byte *out, int inwidth, int outw
 #define NOLERPBYTE(i) *out++ = inrow[f + i]
 
 static void Image_Resample32 (void *indata, int inwidth, int inheight,
-								void *outdata, int outwidth, int outheight, int quality) {
+								void *outdata, int outwidth, int outheight, int quality) 
+{
 	if (quality) {
 		int i, j, r, yi, oldy, f, fstep, endy = (inheight - 1), lerp;
 		int inwidth4 = inwidth * 4, outwidth4 = outwidth * 4;
@@ -211,7 +214,8 @@ static void Image_Resample32 (void *indata, int inwidth, int inheight,
 }
 
 static void Image_Resample24 (void *indata, int inwidth, int inheight,
-					 void *outdata, int outwidth, int outheight, int quality) {
+					 void *outdata, int outwidth, int outheight, int quality)
+{
 	if (quality) {
 		int i, j, r, yi, oldy, f, fstep, endy = (inheight - 1), lerp;
 		int inwidth3 = inwidth * 3, outwidth3 = outwidth * 3;
@@ -313,7 +317,8 @@ static void Image_Resample24 (void *indata, int inwidth, int inheight,
 }
 
 void Image_Resample (void *indata, int inwidth, int inheight,
-					 void *outdata, int outwidth, int outheight, int bpp, int quality) {
+					 void *outdata, int outwidth, int outheight, int bpp, int quality) 
+{
 	if (bpp == 4)
 		Image_Resample32(indata, inwidth, inheight, outdata, outwidth, outheight, quality);
 	else if (bpp == 3)
@@ -322,7 +327,8 @@ void Image_Resample (void *indata, int inwidth, int inheight,
 		Sys_Error("Image_Resample: unsupported bpp (%d)", bpp);
 }
 
-void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp) {
+void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp) 
+{
 	int x, y, nextrow;
 
 	nextrow = *width * bpp;
@@ -424,6 +430,7 @@ void Image_MipReduce (byte *in, byte *out, int *width, int *height, int bpp) {
 /************************************ PNG ************************************/
 #ifdef WITH_PNG
 
+// FIXME: If we still want code for dynamically loading pnglib we should make it use the same function for loading, so that stuff doesn't have to be changed in two places like now... 
 #ifndef WITH_PNG_STATIC
 
 static QLIB_HANDLETYPE_T png_handle = NULL;
@@ -799,17 +806,20 @@ int Image_WritePNGPLTE (char *filename, int compression,
 
 #else
 
-static void PNG_IO_user_read_data(png_structp png_ptr, png_bytep data, png_size_t length) {
+static void PNG_IO_user_read_data(png_structp png_ptr, png_bytep data, png_size_t length) 
+{
 	FILE *f = (FILE *) png_get_io_ptr(png_ptr);
 	fread(data, 1, length, f);
 }
 
-static void PNG_IO_user_write_data(png_structp png_ptr, png_bytep data, png_size_t length) {
+static void PNG_IO_user_write_data(png_structp png_ptr, png_bytep data, png_size_t length) 
+{
 	FILE *f = (FILE *) png_get_io_ptr(png_ptr);
 	fwrite(data, 1, length, f);
 }
 
-static void PNG_IO_user_flush_data(png_structp png_ptr) {
+static void PNG_IO_user_flush_data(png_structp png_ptr) 
+{
 	FILE *f = (FILE *) png_get_io_ptr(png_ptr);
 	fflush(f);
 }
@@ -1091,7 +1101,6 @@ png_textp Image_LoadPNG_Comments (char *filename, int *text_count)
 	return textchunks;
 }
 
-// look at the line 564. WTF?!
 byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight) 
 {
 	byte *data = NULL;
@@ -1110,7 +1119,8 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight)
 	return data;
 }
 
-int Image_WritePNG (char *filename, int compression, byte *pixels, int width, int height) {
+int Image_WritePNG (char *filename, int compression, byte *pixels, int width, int height) 
+{
 	char name[MAX_PATH];
 	int i, bpp = 3, pngformat, width_sign;
 	FILE *fp;
@@ -1168,13 +1178,14 @@ int Image_WritePNG (char *filename, int compression, byte *pixels, int width, in
 int Image_WritePNGPLTE (char *filename, int compression,
 #ifdef GLQUAKE
 	byte *pixels, int width, int height, byte *palette)
-#else
+#else // SOFTWARE
 	byte *pixels, int width, int height, int rowbytes, byte *palette)
-#endif
+#endif // GLQUAKE
 {
-#ifdef GLQUAKE
+	#ifdef GLQUAKE
 	int rowbytes = width;
-#endif
+	#endif // GLQUAKE
+
 	int i;
 	char name[MAX_PATH];
 	FILE *fp;
@@ -1247,7 +1258,8 @@ int Image_WritePNGPLTE (char *filename, int compression,
 #define MYTGA_MONO8		84
 #define MYTGA_MONO16	85
 
-typedef struct TGAHeader_s {
+typedef struct TGAHeader_s 
+{
 	byte			idLength, colormapType, imageType;
 	unsigned short	colormapIndex, colormapLength;
 	byte			colormapSize;
@@ -1256,21 +1268,24 @@ typedef struct TGAHeader_s {
 } TGAHeader_t;
 
 
-static void TGA_upsample15(byte *dest, byte *src, qbool alpha) {
+static void TGA_upsample15(byte *dest, byte *src, qbool alpha) 
+{
 	dest[2] = (byte) ((src[0] & 0x1F) << 3);
 	dest[1] = (byte) ((((src[1] & 0x03) << 3) + ((src[0] & 0xE0) >> 5)) << 3);
 	dest[0] = (byte) (((src[1] & 0x7C) >> 2) << 3);
 	dest[3] = (alpha && !(src[1] & 0x80)) ? 0 : 255;
 }
 
-static void TGA_upsample24(byte *dest, byte *src) {
+static void TGA_upsample24(byte *dest, byte *src) 
+{
 	dest[2] = src[0];
 	dest[1] = src[1];
 	dest[0] = src[2];
 	dest[3] = 255;
 }
 
-static void TGA_upsample32(byte *dest, byte *src) {
+static void TGA_upsample32(byte *dest, byte *src) 
+{
 	dest[2] = src[0];
 	dest[1] = src[1];
 	dest[0] = src[2];
@@ -1280,7 +1295,8 @@ static void TGA_upsample32(byte *dest, byte *src) {
 
 #define TGA_ERROR(msg)	{if (msg) {Com_DPrintf((msg), COM_SkipPath(filename));} Q_free(fileBuffer); return NULL;}
 
-byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight) {
+byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight) 
+{
 	TGAHeader_t header;
 	int i, x, y, bpp, alphabits, compressed, mytype, row_inc, runlen, readpixelcount;
 	byte *fileBuffer, *in, *out, *data, *enddata, rgba[4], palette[256 * 4];
@@ -1427,7 +1443,8 @@ byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight) 
 	return data;
 }
 
-int Image_WriteTGA (char *filename, byte *pixels, int width, int height) {
+int Image_WriteTGA (char *filename, byte *pixels, int width, int height) 
+{
 	byte *buffer;
 	int size;
 	qbool retval = true;
@@ -1641,7 +1658,8 @@ int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int he
 #define jpeg_create_compress(cinfo) \
     jpeg_CreateCompress((cinfo), JPEG_LIB_VERSION, (size_t) sizeof(struct jpeg_compress_struct))
 
-typedef struct {
+typedef struct 
+{
   struct jpeg_destination_mgr pub; 
   FILE *outfile;
   JOCTET *buffer;
@@ -1653,7 +1671,8 @@ typedef my_destination_mgr *my_dest_ptr;
 
 static qbool jpeg_in_error = false;
 
-static void JPEG_IO_init_destination(j_compress_ptr cinfo) {
+static void JPEG_IO_init_destination(j_compress_ptr cinfo)
+{
 	my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
 	dest->buffer = (JOCTET *) (cinfo->mem->alloc_small)
 		((j_common_ptr) cinfo, JPOOL_IMAGE, JPEG_OUTPUT_BUF_SIZE * sizeof(JOCTET));
@@ -1661,7 +1680,8 @@ static void JPEG_IO_init_destination(j_compress_ptr cinfo) {
 	dest->pub.free_in_buffer = JPEG_OUTPUT_BUF_SIZE;
 }
 
-static boolean JPEG_IO_empty_output_buffer (j_compress_ptr cinfo) {
+static boolean JPEG_IO_empty_output_buffer (j_compress_ptr cinfo) 
+{
 	my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
 
 	if (fwrite(dest->buffer, 1, JPEG_OUTPUT_BUF_SIZE, dest->outfile) != JPEG_OUTPUT_BUF_SIZE) {
@@ -1673,7 +1693,8 @@ static boolean JPEG_IO_empty_output_buffer (j_compress_ptr cinfo) {
 	return true;
 }
 
-static void JPEG_IO_term_destination (j_compress_ptr cinfo) {
+static void JPEG_IO_term_destination (j_compress_ptr cinfo)
+{
 	my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
 	size_t datacount = JPEG_OUTPUT_BUF_SIZE - dest->pub.free_in_buffer;
 
@@ -1686,7 +1707,8 @@ static void JPEG_IO_term_destination (j_compress_ptr cinfo) {
 	fflush(dest->outfile);
 }
 
-static void JPEG_IO_set_dest (j_compress_ptr cinfo, FILE *outfile) {
+static void JPEG_IO_set_dest (j_compress_ptr cinfo, FILE *outfile) 
+{
 	my_dest_ptr dest;
 
 	if (!cinfo->dest) {
@@ -1701,17 +1723,20 @@ static void JPEG_IO_set_dest (j_compress_ptr cinfo, FILE *outfile) {
 	dest->outfile = outfile;
 }
 
-typedef struct my_error_mgr {
-  struct jpeg_error_mgr pub;
-  jmp_buf setjmp_buffer;
+typedef struct my_error_mgr 
+{
+	struct jpeg_error_mgr pub;
+	jmp_buf setjmp_buffer;
 } jpeg_error_mgr_wrapper;
 
-void jpeg_error_exit (j_common_ptr cinfo) {	
-  longjmp(((jpeg_error_mgr_wrapper *) cinfo->err)->setjmp_buffer, 1);
+void jpeg_error_exit (j_common_ptr cinfo)
+{	
+	longjmp(((jpeg_error_mgr_wrapper *) cinfo->err)->setjmp_buffer, 1);
 }
 
 
-int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int height) {
+int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int height) 
+{
 	char name[MAX_PATH];
 	FILE *outfile;
 	jpeg_error_mgr_wrapper jerr;
@@ -1794,14 +1819,15 @@ my_error_exit (j_common_ptr cinfo)
 
 /* Expanded data source object for stdio input */
 
-typedef struct {
-  struct jpeg_source_mgr pub;	/* public fields */
+typedef struct 
+{
+	struct jpeg_source_mgr pub;	// Public fields.
 
-  byte * infile;		/* source stream */
-  int currentpos;
-  int maxlen;
-  JOCTET * buffer;		/* start of buffer */
-  boolean start_of_file;	/* have we gotten any data yet? */
+	byte * infile;				// Source stream.
+	int currentpos;
+	int maxlen;
+	JOCTET * buffer;			// Start of buffer.
+	boolean start_of_file;		// Have we gotten any data yet?
 } my_source_mgr;
 
 typedef my_source_mgr * my_src_ptr;
@@ -2013,7 +2039,8 @@ badjpeg:
 
 /************************************ PCX ************************************/
 
-typedef struct pcx_s {
+typedef struct pcx_s 
+{
     char			manufacturer;
     char			version;
     char			encoding;
@@ -2029,7 +2056,8 @@ typedef struct pcx_s {
     byte			data;		
 } pcx_t;
 
-byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight) {
+byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight) 
+{
 	pcx_t *pcx;
 	byte *pcxbuf, *data, *out, *pix;
 	int x, y, dataByte, runLength, width, height;
@@ -2134,7 +2162,8 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 #ifdef GLQUAKE
 
 // this does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture
-byte *Image_LoadPCX_As32Bit (FILE *fin, char *filename, int matchwidth, int matchheight) {
+byte *Image_LoadPCX_As32Bit (FILE *fin, char *filename, int matchwidth, int matchheight)
+{
 	byte *pix = Image_LoadPCX (fin, filename, matchwidth, matchheight);
 	unsigned *out;
 	int size, i;
@@ -2157,13 +2186,14 @@ byte *Image_LoadPCX_As32Bit (FILE *fin, char *filename, int matchwidth, int matc
 
 #ifdef GLQUAKE
 int Image_WritePCX (char *filename, byte *data, int width, int height, byte *palette)
-#else
+#else // SOFTWARE
 int Image_WritePCX (char *filename, byte *data, int width, int height, int rowbytes, byte *palette)
-#endif
+#endif // GLQUAKE
 {
-#ifdef GLQUAKE
+	#ifdef GLQUAKE
 	int rowbytes = width;
-#endif
+	#endif // GLQUAKE
+	
 	int i, j, length;
 	byte *pack;
 	pcx_t *pcx;
@@ -2219,22 +2249,27 @@ int Image_WritePCX (char *filename, byte *data, int width, int height, int rowby
 
 /*********************************** INIT ************************************/
 
-void Image_Init(void) {
+void Image_Init(void) 
+{
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREENSHOTS);
-#ifdef WITH_PNG
-#ifndef WITH_PNG_STATIC
+	
+	#ifdef WITH_PNG
+	#ifndef WITH_PNG_STATIC
 	if (PNG_LoadLibrary())
 		QLib_RegisterModule(qlib_libpng, PNG_FreeLibrary);
-#endif
+	#endif // WITH_PNG_STATIC
 	Cvar_Register (&image_png_compression_level);
-#endif
-#ifdef WITH_JPEG
-#ifndef WITH_JPEG_STATIC
+	#endif // WITH_PNG
+
+	#ifdef WITH_JPEG
+	#ifndef WITH_JPEG_STATIC
 	if (JPEG_LoadLibrary())
 		QLib_RegisterModule(qlib_libjpeg, JPEG_FreeLibrary);
-#endif
+	#endif // WITH_JPEG_STATIC
 	Cvar_Register (&image_jpeg_quality_level);
-#endif
+	#endif // WITH_JPEG
 
 	Cvar_ResetCurrentGroup();
 }
+
+
