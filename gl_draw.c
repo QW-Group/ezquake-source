@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.74 2007-07-15 17:15:42 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.75 2007-07-15 22:27:58 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -386,22 +386,25 @@ mpic_t *CachePic_Find(const char *path) {
 	return NULL;
 }
 
-mpic_t* CachePic_Add(const char *path, mpic_t *pic) {
+mpic_t* CachePic_Add(const char *path, mpic_t *pic) 
+{
 	int key = Com_HashKey(path) % CACHED_PICS_HDSIZE;
 	cachepic_node_t *searchpos = cachepics[key];
 	cachepic_node_t **nextp = cachepics + key;
 
-	while (searchpos) {
+	while (searchpos) 
+	{
 		nextp = &searchpos->next;
 		searchpos = searchpos->next;
 	}
 
 	searchpos = (cachepic_node_t *) Q_malloc(sizeof(cachepic_node_t));
-	// write data
+	
+	// Write data.
 	memcpy(&searchpos->data.pic, pic, sizeof(mpic_t));
 	strncpy(searchpos->data.name, path, sizeof(searchpos->data.name));
-	searchpos->next = NULL; // terminate the list
-	*nextp = searchpos;// connect to the list
+	searchpos->next = NULL; // Terminate the list.
+	*nextp = searchpos;// Connect to the list.
 
 	return &searchpos->data.pic;
 }
@@ -428,7 +431,9 @@ void CachePics_DeInit(void) {
 //
 mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit)
 {
+	char temp_path[MAX_PATH];
 	mpic_t pic, *fpic, *pic_24bit;
+	qbool lmp_found = false;
 	qpic_t *dat;
 
 	// Check if the picture was already cached.
@@ -450,24 +455,34 @@ mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit)
 	}
 
 	// Load the ".lmp" file.
-	if (!(dat = (qpic_t *)FS_LoadTempFile (path)))
+	if (!strcmp(COM_FileExtension(path), "lmp") || !strcmp(COM_FileExtension(path), ""))
 	{
-		if(crash)
-			Sys_Error ("Draw_CachePicSafe: failed to load %s", path);
+		if (!(dat = (qpic_t *)FS_LoadTempFile (path)))
+		{
+			if(crash)
+				Sys_Error ("Draw_CachePicSafe: failed to load %s", path);
 
-		return NULL;
+			return NULL;
+		}
+
+		lmp_found = true;
+
+		// Make sure the width and height are correct.
+		SwapPic (dat);
 	}
-
-	// Make sure the width and height are correct.
-	SwapPic (dat);
 
 	// Try loading the 24-bit picture.
 	// If that fails load the data for the lmp instead.
 	if ((pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
 	{
 		memcpy(&pic, pic_24bit, sizeof(mpic_t));
-		pic.width = dat->width;
-		pic.height = dat->height;
+
+		// Only use the lmp-data if there was one.
+		if (lmp_found)
+		{
+			pic.width = dat->width;
+			pic.height = dat->height;
+		}
 	}
 	else
 	{

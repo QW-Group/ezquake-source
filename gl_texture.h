@@ -51,7 +51,7 @@ int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mod
 int GL_LoadPicTexture (char *name, mpic_t *pic, byte *data);
 
 
-byte *GL_LoadImagePixels (char *, int, int, int);
+byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
 int GL_LoadTexturePixels (byte *, char *, int, int, int);
 int GL_LoadTextureImage (char * , char *, int, int, int);
 mpic_t *GL_LoadPicImage (char *, char *, int, int, int);

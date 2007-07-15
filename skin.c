@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: skin.c,v 1.17 2007-04-15 14:54:50 johnnycz Exp $
+	$Id: skin.c,v 1.18 2007-07-15 22:27:58 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -170,26 +170,27 @@ void Skin_Find (player_info_t *sc) {
 	strlcpy(skin->name, name, sizeof(skin->name));
 }
 
-byte *Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp)
+byte *Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp, int *real_width, int *real_height)
 {
 	byte *pic;
 
 	*max_w = *max_h = *bpp = 0;
 
 #ifdef GLQUAKE
-	// pcx skins loads different, so using TEX_NO_PCX
-	if ((pic = GL_LoadImagePixels (name, 0, 0, TEX_NO_PCX))) {
-		// no limit in gl
-		*max_w	= image_width;
-		*max_h	= image_height;
-		*bpp	= 4; // 32 bit
+	// PCX skins loads different, so using TEX_NO_PCX
+	if ((pic = GL_LoadImagePixels (name, 0, 0, TEX_NO_PCX, real_width, real_height))) {
+		// No limit in gl.
+		*max_w	= *real_width;
+		*max_h	= *real_height;
+		*bpp	= 4; // 32 bit.
 
 		return pic;
 	}
-#endif
+#endif // GLQUAKE
 
-	if ((pic = Image_LoadPCX (NULL, name, 0, 0))) {
-		// pcx is limited
+	if ((pic = Image_LoadPCX (NULL, name, 0, 0, NULL, NULL))) 
+	{
+		// PCX is limited.
 		*max_w	= 320;
 		*max_h	= 200;
 		*bpp	= 1; // 8 bit
@@ -200,15 +201,12 @@ byte *Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp)
 	return NULL;
 }
 
-//Returns a pointer to the skin bitmap, or NULL to use the default
-byte *Skin_Cache (skin_t *skin, qbool no_baseskin) {
-	int y, max_w, max_h, bpp;
+// Returns a pointer to the skin bitmap, or NULL to use the default
+byte *Skin_Cache (skin_t *skin, qbool no_baseskin) 
+{
+	int y, max_w, max_h, bpp, real_width = -1, real_height = -1;
 	byte *pic = NULL, *out, *pix;
 	char name[MAX_OSPATH];
-
-// no need for that
-//	if (cls.downloadtype == dl_skin)
-//		return NULL;		// use base until downloaded
 
 	if (noskins.value == 1) // JACK: So NOSKINS > 1 will show skins, but
 		return NULL;		// not download new ones.
@@ -223,25 +221,30 @@ byte *Skin_Cache (skin_t *skin, qbool no_baseskin) {
 
 	snprintf (name, sizeof(name), "skins/%s.pcx", skin->name);
 
-	if (!(pic = Skin_PixelsLoad(name, &max_w, &max_h, &bpp)) || image_width > max_w || image_height > max_h) {
-
+	if (!(pic = Skin_PixelsLoad(name, &max_w, &max_h, &bpp, &real_width, &real_height)) || real_width > max_w || real_height > max_h) 
+	{
 		Q_free(pic);
 
-		if (no_baseskin) {
+		if (no_baseskin) 
+		{
 			skin->warned = true;
 			return NULL; // well, we not set skin->failedload = true, that how I need it here
 		}
 		else if (!skin->warned)
+		{
 			Com_Printf ("Couldn't load skin %s\n", name);
+		}
 
 		skin->warned = true;
 	}
 
-	if (!pic) { // attempt load at least default/base
+	if (!pic) 
+	{ 
+		// Attempt load at least default/base.
 		snprintf (name, sizeof(name), "skins/%s.pcx", baseskin.string);
 
-		if (!(pic = Skin_PixelsLoad(name, &max_w, &max_h, &bpp)) || image_width > max_w || image_height > max_h) {
-//			Com_Printf ("Couldn't load skin %s\n", name);
+		if (!(pic = Skin_PixelsLoad(name, &max_w, &max_h, &bpp, &real_width, &real_height)) || real_width > max_w || real_height > max_h) 
+		{
 			Q_free(pic);
 			skin->failedload = true;
 			return NULL;
@@ -252,19 +255,21 @@ byte *Skin_Cache (skin_t *skin, qbool no_baseskin) {
 		Sys_Error ("Skin_Cache: couldn't allocate");
 
 	memset (out, 0, max_w * max_h * bpp);
-	for (y = 0; y < image_height; y++, pix += (max_w * bpp))
-		memcpy (pix, pic + y * image_width * bpp, image_width * bpp);
+	for (y = 0; y < real_height; y++, pix += (max_w * bpp))
+	{
+		memcpy (pix, pic + y * real_width * bpp, real_width * bpp);
+	}
 
 	Q_free (pic);
 #ifdef GLQUAKE
 	skin->bpp 	 = bpp;
-	skin->width	 = image_width;
-	skin->height = image_height;
+	skin->width	 = real_width;
+	skin->height = real_height;
 
-	// load 32bit skin ASAP, so later we not affected by Cache changes, actually we does't need cache for 32bit skins at all
-//	skin->texnum = (bpp != 1) ? GL_LoadTexture (skin->name, skin->width, skin->height, pix, TEX_MIPMAP | TEX_NOSCALE, bpp) : 0;
-// FIXME: Above line does't work, texture loaded wrong, seems I need set some global gl states, but I dunno which,
-// so moved it to R_TranslatePlayerSkin() and here set texture to 0
+	// load 32bit skin ASAP, so later we not affected by Cache changes, actually we don't need cache for 32bit skins at all
+	//	skin->texnum = (bpp != 1) ? GL_LoadTexture (skin->name, skin->width, skin->height, pix, TEX_MIPMAP | TEX_NOSCALE, bpp) : 0;
+	// FIXME: Above line does't work, texture loaded wrong, seems I need set some global gl states, but I dunno which,
+	// so moved it to R_TranslatePlayerSkin() and here set texture to 0
 	skin->texnum = 0;
 #endif
 	skin->failedload = false;

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.42 2007-07-15 18:17:47 cokeman1982 Exp $
+    $Id: image.c,v 1.43 2007-07-15 22:27:58 cokeman1982 Exp $
 */
 
 #ifdef __FreeBSD__
@@ -46,8 +46,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif*/
 
 #define IMAGE_MAX_DIMENSIONS 4096
-
-int image_width, image_height;
 
 cvar_t image_png_compression_level = {"image_png_compression_level", "1"};
 cvar_t image_jpeg_quality_level = {"image_jpeg_quality_level", "75"};
@@ -572,7 +570,8 @@ static void PNG_IO_user_flush_data(png_structp png_ptr) {
 }
 
 
-byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight) {
+byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, *real_height) 
+{
 	byte header[8], **rowpointers, *data;
 	png_structp png_ptr;
 	png_infop pnginfo;
@@ -615,6 +614,13 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight)
 	qpng_read_info(png_ptr, pnginfo);
 	qpng_get_IHDR(png_ptr, pnginfo, (png_uint_32 *) &width, (png_uint_32 *) &height, &bitdepth,
 		&colortype, &interlace, &compression, &filter);
+
+	// Return the width and height.
+	if (real_width)
+		(*real_width) = width;
+
+	if (real_height)
+		(*real_height) = height;
 
 	if (width > IMAGE_MAX_DIMENSIONS || height > IMAGE_MAX_DIMENSIONS) {
 		Com_DPrintf ("PNG image %s exceeds maximum supported dimensions\n", COM_SkipPath(filename));
@@ -676,8 +682,6 @@ byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight)
 	qpng_destroy_read_struct(&png_ptr, &pnginfo, NULL);
 	Q_free(rowpointers);
 	fclose(fin);
-	image_width = width;
-	image_height = height;
 	return data;
 }
 
@@ -844,7 +848,7 @@ static qbool PNG_HasHeader (FILE *fin)
 	return true;
 }
 
-png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matchheight, int loadflag)
+png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height)
 {
 	byte **rowpointers = NULL;
 	byte *data = NULL;
@@ -918,6 +922,13 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 		png_get_IHDR(png_ptr, pnginfo, (png_uint_32 *) &width, (png_uint_32 *) &height, &bitdepth,
 			&colortype, &interlace, &compression, &filter);
 
+		// Return the width and height.
+		if (real_width)
+			(*real_width) = width;
+
+		if (real_height)
+			(*real_height) = height;
+
 		// Too big?
 		if (width > IMAGE_MAX_DIMENSIONS || height > IMAGE_MAX_DIMENSIONS) 
 		{
@@ -973,6 +984,16 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 			png_set_strip_16(png_ptr);
 		}
 
+		// 
+		// Dither the image using the 8-bit quake pallete for software.
+		// 
+		#ifndef GLQUAKE
+		{	
+			png_colorp quake_pal = (png_colorp)host_basepal;
+			png_set_dither(png_ptr, quake_pal, 256, 256, NULL, 1);
+		}
+		#endif
+
 		// Update the pnginfo structure with our transformation changes.
 		png_read_update_info(png_ptr, pnginfo);
 	}
@@ -997,7 +1018,7 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 		bitdepth = png_get_bit_depth(png_ptr, pnginfo);
 
 		// We don't support some formats.
-		if (bitdepth != 8 || bytesperpixel != 4) 
+		if (bitdepth != 8 )//|| bytesperpixel != 4 || bytesperpixel != 1) 
 		{
 			Com_DPrintf ("Unsupported PNG image %s: Bad color depth and/or bpp\n", COM_SkipPath(filename));
 			png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
@@ -1063,9 +1084,6 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 	fclose (fin);
 	fin = NULL;
 
-	image_width = width;
-	image_height = height;
-
 	// If we don't care about the data.
 	if (!(loadflag & PNG_LOAD_DATA))
 	{
@@ -1087,7 +1105,7 @@ png_textp Image_LoadPNG_Comments (char *filename, int *text_count)
 	png_textp textchunks = NULL;
 	png_data *pdata = NULL;
 
-	pdata = Image_LoadPNG_All (NULL, filename, 0, 0, PNG_LOAD_TEXT);
+	pdata = Image_LoadPNG_All (NULL, filename, 0, 0, PNG_LOAD_TEXT, NULL, NULL);
 
 	if (pdata)
 	{		
@@ -1101,13 +1119,13 @@ png_textp Image_LoadPNG_Comments (char *filename, int *text_count)
 	return textchunks;
 }
 
-byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight) 
+byte *Image_LoadPNG (FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 {
 	byte *data = NULL;
 	png_data *pdata;
 	
 	// Load the actual image.
-	pdata = Image_LoadPNG_All (fin, filename, matchwidth, matchheight, PNG_LOAD_DATA);
+	pdata = Image_LoadPNG_All (fin, filename, matchwidth, matchheight, PNG_LOAD_DATA, real_width, real_height);
 	
 	if (pdata)
 	{
@@ -1295,10 +1313,11 @@ static void TGA_upsample32(byte *dest, byte *src)
 
 #define TGA_ERROR(msg)	{if (msg) {Com_DPrintf((msg), COM_SkipPath(filename));} Q_free(fileBuffer); return NULL;}
 
-byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight) 
+byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 {
 	TGAHeader_t header;
 	int i, x, y, bpp, alphabits, compressed, mytype, row_inc, runlen, readpixelcount;
+	int image_width = -1, image_height = -1;
 	byte *fileBuffer, *in, *out, *data, *enddata, rgba[4], palette[256 * 4];
 
 	if (!fin && FS_FOpenFile (filename, &fin) == -1)
@@ -1323,6 +1342,13 @@ byte *Image_LoadTGA(FILE *fin, char *filename, int matchwidth, int matchheight)
 	header.height = image_height = BuffLittleShort(fileBuffer + 14);
 	header.pixelSize = fileBuffer[16];
 	header.attributes = fileBuffer[17];
+
+	// Return the width and height.
+	if (real_width)
+		(*real_width) = image_width;
+
+	if (real_height)
+		(*real_height) = image_height;
 
 	if (image_width > IMAGE_MAX_DIMENSIONS || image_height > IMAGE_MAX_DIMENSIONS || image_width <= 0 || image_height <= 0)
 		TGA_ERROR(NULL);
@@ -1917,10 +1943,10 @@ jpeg_mem_src (j_decompress_ptr cinfo, byte * infile, int maxlen)
 	src->maxlen = maxlen;
 }
 
-byte *Image_LoadJPEG(FILE *fin, char *filename, int matchwidth, int matchheight)
+byte *Image_LoadJPEG(FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
 {
 	byte *mem = NULL, *in, *out;
-	int i;
+	int i, image_width, image_height;
 
 	byte *infile = NULL;
 	int length;
@@ -1957,6 +1983,7 @@ byte *Image_LoadJPEG(FILE *fin, char *filename, int matchwidth, int matchheight)
 	// We set up the normal JPEG error routines, then override error_exit. 
 	cinfo.err = jpeg_std_error(&jerr.pub);
 	jerr.pub.error_exit = my_error_exit;
+
 	// Establish the setjmp return context for my_error_exit to use. */
 	if (setjmp(jerr.setjmp_buffer)) 
 	{
@@ -1982,6 +2009,13 @@ badjpeg:
 
 	image_width  = cinfo.output_width;
 	image_height = cinfo.output_height;
+
+	// Return the width and height.
+	if (real_width)
+		(*real_width) = image_width;
+
+	if (real_height)
+		(*real_height) = image_height;
 
 	if (image_width > IMAGE_MAX_DIMENSIONS || image_height > IMAGE_MAX_DIMENSIONS || image_width <= 0 || image_height <= 0)
 	{
@@ -2054,7 +2088,7 @@ typedef struct pcx_s
     byte			data;		
 } pcx_t;
 
-byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight) 
+byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 {
 	pcx_t *pcx;
 	byte *pcxbuf, *data, *out, *pix;
@@ -2094,6 +2128,13 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 
 	width = pcx->xmax + 1;
 	height = pcx->ymax + 1;
+
+	// Return the width and height.
+	if (real_width)
+		(*real_width) = width;
+
+	if (real_height)
+		(*real_height) = height;
 
 	if (width > IMAGE_MAX_DIMENSIONS || height > IMAGE_MAX_DIMENSIONS)
 	{
@@ -2163,24 +2204,23 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 	}
 
 	Q_free(pcxbuf);
-	image_width = width;
-	image_height = height;
 	return data;
 }
 
 #ifdef GLQUAKE
 
-// this does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture
-byte *Image_LoadPCX_As32Bit (FILE *fin, char *filename, int matchwidth, int matchheight)
+// This does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture.
+byte *Image_LoadPCX_As32Bit (FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
 {
-	byte *pix = Image_LoadPCX (fin, filename, matchwidth, matchheight);
+	byte *pix = Image_LoadPCX (fin, filename, matchwidth, matchheight, real_width, real_height);
 	unsigned *out;
 	int size, i;
 
 	if (!pix)
 		return NULL;
 
-	size = image_width * image_height;
+	//size = image_width * image_height;
+	size = (*real_width) * (*real_height);
 	out = Q_malloc(size * sizeof(unsigned));
 
 	for (i = 0; i < size; i++)

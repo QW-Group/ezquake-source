@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_texture.c,v 1.31 2007-07-01 00:55:02 qqshka Exp $
+$Id: gl_texture.c,v 1.32 2007-07-15 22:27:58 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -471,15 +471,18 @@ static qbool CheckTextureLoaded(int mode) {
 	return false;
 }
 
-byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int mode) {
+byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height) 
+{
 	char basename[MAX_QPATH], name[MAX_QPATH];
 	byte *c, *data = NULL;
 	FILE *f;
 
 	COM_StripExtension(filename, basename);
 	for (c = (byte *) basename; *c; c++)
+	{
 		if (*c == '*')
 			*c = '#';
+	}
 
 	snprintf (name, sizeof(name), "%s.link", basename);
 	if (FS_FOpenFile (name, &f) != -1)
@@ -489,71 +492,94 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 		fgets(link, 128, f);
 		fclose (f);
 		len = strlen(link);
-		// strip endline
-		if (link[len-1] == '\n') {
-			link[len-1] = '\0';
-			--len;
-		}
-		if (link[len-1] == '\r') {
-			link[len-1] = '\0';
-			--len;
-		}
-		snprintf (name, sizeof(name), "textures/%s", link);
-           	if (FS_FOpenFile (name, &f) != -1) {
-           		CHECK_TEXTURE_ALREADY_LOADED;
-           		if( !data && !strcasecmp(link + len - 3, "tga") )
-           		        data = Image_LoadTGA (f, name, matchwidth, matchheight);
-#ifdef WITH_PNG
-           		if( !data && !strcasecmp(link + len - 3, "png") )
-           		        data = Image_LoadPNG (f, name, matchwidth, matchheight);
-#endif
-#ifdef WITH_JPEG
-           		if( !data && !strcasecmp(link + len - 3, "jpg") )
-           		        data = Image_LoadJPEG (f, name, matchwidth, matchheight);
-#endif
-           		if( !(mode & TEX_NO_PCX) && !data && !strcasecmp(link + len - 3, "pcx") )  // TEX_NO_PCX - preventing loading skins here
-           		        data = Image_LoadPCX_As32Bit (f, name, matchwidth, matchheight);
 
-           		if ( data )
-           			return data;
-           	}
+		// Strip endline.
+		if (link[len-1] == '\n') 
+		{
+			link[len-1] = '\0';
+			--len;
+		}
+
+		if (link[len-1] == '\r') 
+		{
+			link[len-1] = '\0';
+			--len;
+		}
+
+		snprintf (name, sizeof(name), "textures/%s", link);
+       	if (FS_FOpenFile (name, &f) != -1) 
+		{
+       		CHECK_TEXTURE_ALREADY_LOADED;
+       		if( !data && !strcasecmp(link + len - 3, "tga") )
+			{
+				data = Image_LoadTGA (f, name, matchwidth, matchheight, real_width, real_height);
+			}
+
+			#ifdef WITH_PNG
+       		if( !data && !strcasecmp(link + len - 3, "png") )
+			{
+       			data = Image_LoadPNG (f, name, matchwidth, matchheight, real_width, real_height);
+			}
+			#endif // WITH_PNG
+			
+			#ifdef WITH_JPEG
+       		if( !data && !strcasecmp(link + len - 3, "jpg") )
+			{
+				data = Image_LoadJPEG (f, name, matchwidth, matchheight, real_width, real_height);
+			}
+			#endif // WITH_JPEG
+
+			// TEX_NO_PCX - preventing loading skins here
+       		if( !(mode & TEX_NO_PCX) && !data && !strcasecmp(link + len - 3, "pcx") )
+			{
+				data = Image_LoadPCX_As32Bit (f, name, matchwidth, matchheight, real_width, real_height);
+			}
+
+       		if ( data )
+				return data;
+		}
 	}
 
 	snprintf (name, sizeof(name), "%s.tga", basename);
-	if (FS_FOpenFile (name, &f) != -1) {
+	if (FS_FOpenFile (name, &f) != -1) 
+	{
 		CHECK_TEXTURE_ALREADY_LOADED;
-		if ((data = Image_LoadTGA (f, name, matchwidth, matchheight)))
+		if ((data = Image_LoadTGA (f, name, matchwidth, matchheight, real_width, real_height)))
 			return data;
 	}
 
-#ifdef WITH_PNG
+	#ifdef WITH_PNG
 	snprintf (name, sizeof(name), "%s.png", basename);
-	if (FS_FOpenFile (name, &f) != -1) {
+	if (FS_FOpenFile (name, &f) != -1) 
+	{
 		CHECK_TEXTURE_ALREADY_LOADED;
-		if ((data = Image_LoadPNG (f, name, matchwidth, matchheight)))
+		if ((data = Image_LoadPNG (f, name, matchwidth, matchheight, real_width, real_height)))
 			return data;
 	}
-#endif
+	#endif // WITH_PNG
 
-#ifdef WITH_JPEG
+	#ifdef WITH_JPEG
 	snprintf (name, sizeof(name), "%s.jpg", basename);
-	if (FS_FOpenFile (name, &f) != -1) {
+	if (FS_FOpenFile (name, &f) != -1) 
+	{
 		CHECK_TEXTURE_ALREADY_LOADED;
-		if ((data = Image_LoadJPEG (f, name, matchwidth, matchheight)))
+		if ((data = Image_LoadJPEG (f, name, matchwidth, matchheight, real_width, real_height)))
 			return data;
 	}
-#endif
-
+	#endif // WITH_JPEG
 
 	snprintf (name, sizeof(name), "%s.pcx", basename);
-	if (!(mode & TEX_NO_PCX) && FS_FOpenFile (name, &f) != -1) { // TEX_NO_PCX - preventing loading skins here
+	
+	// TEX_NO_PCX - preventing loading skins here.
+	if (!(mode & TEX_NO_PCX) && FS_FOpenFile (name, &f) != -1)
+	{
 		CHECK_TEXTURE_ALREADY_LOADED;
-		if ((data = Image_LoadPCX_As32Bit (f, name, matchwidth, matchheight)))
+		if ((data = Image_LoadPCX_As32Bit (f, name, matchwidth, matchheight, real_width, real_height)))
 			return data;
 	}
 
-
-	if (mode & TEX_COMPLAIN) {
+	if (mode & TEX_COMPLAIN) 
+	{
 		if (!no24bit)
 			Com_Printf_State(PRINT_FAIL, "Couldn't load %s image\n", COM_SkipPath(filename));
 	}
@@ -561,7 +587,8 @@ byte *GL_LoadImagePixels (char *filename, int matchwidth, int matchheight, int m
 	return NULL;
 }
 
-int GL_LoadTexturePixels (byte *data, char *identifier, int width, int height, int mode) {
+int GL_LoadTexturePixels (byte *data, char *identifier, int width, int height, int mode) 
+{
 	int i, j, image_size;
 	qbool gamma;
 
@@ -591,9 +618,11 @@ int GL_LoadTexturePixels (byte *data, char *identifier, int width, int height, i
 	return GL_LoadTexture (identifier, width, height, data, mode, 4);
 }
 
-int GL_LoadTextureImage (char *filename, char *identifier, int matchwidth, int matchheight, int mode) {
+int GL_LoadTextureImage (char *filename, char *identifier, int matchwidth, int matchheight, int mode) 
+{
 	int texnum;
 	byte *data;
+	int image_width = -1, image_height = -1;
 	gltexture_t *gltexture;
 
 	if (no24bit)
@@ -604,19 +633,23 @@ int GL_LoadTextureImage (char *filename, char *identifier, int matchwidth, int m
 
 	gltexture = current_texture = GL_FindTexture(identifier);
 
-	if (!(data = GL_LoadImagePixels (filename, matchwidth, matchheight, mode))) {
+	if (!(data = GL_LoadImagePixels (filename, matchwidth, matchheight, mode, &image_height, &image_width))) 
+	{
 		texnum =  (gltexture && !current_texture) ? gltexture->texnum : 0;
-	} else {
+	} 
+	else 
+	{
 		texnum = GL_LoadTexturePixels(data, identifier, image_width, image_height, mode);
-		Q_free(data);	// data was Q_malloc'ed by GL_LoadImagePixels
+		Q_free(data);	// Data was Q_malloc'ed by GL_LoadImagePixels.
 	}
 
 	current_texture = NULL;
 	return texnum;
 }
 
-mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheight, int mode) {
-	int width, height, i;
+mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheight, int mode) 
+{
+	int width, height, i, real_width, real_height;
 	char identifier[MAX_QPATH] = "pic:";
 	byte *data, *src, *dest, *buf;
 	static mpic_t pic;
@@ -624,16 +657,19 @@ mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheig
 	if (no24bit)
 		return NULL;
 
-	if (!(data = GL_LoadImagePixels (filename, matchwidth, matchheight, 0)))
+	if (!(data = GL_LoadImagePixels (filename, matchwidth, matchheight, 0, &real_width, &real_height)))
 		return NULL;
 
-	pic.width = image_width;
-	pic.height = image_height;
+	pic.width = real_width; 
+	pic.height = real_height;
 
-	if (mode & TEX_ALPHA) {
+	if (mode & TEX_ALPHA) 
+	{
 		mode &= ~TEX_ALPHA;
-		for (i = 0; i < image_width * image_height; i++) {
-			if ( ( (((unsigned *) data)[i] >> 24 ) & 0xFF ) < 255) {
+		for (i = 0; i < real_width * real_height; i++) 
+		{
+			if ( ( (((unsigned *) data)[i] >> 24 ) & 0xFF ) < 255) 
+			{
 				mode |= TEX_ALPHA;
 				break;
 			}
@@ -644,18 +680,22 @@ mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheig
 	Q_ROUND_POWER2(pic.height, height);
 
 	strlcpy (identifier + 4, id ? id : filename, sizeof(identifier) - 4);
-	if (width == pic.width && height == pic.height) {
+	if (width == pic.width && height == pic.height) 
+	{
 		pic.texnum = GL_LoadTexture (identifier, pic.width, pic.height, data, mode, 4);
 		pic.sl = 0;
 		pic.sh = 1;
 		pic.tl = 0;
 		pic.th = 1;
-	} else {
+	} 
+	else 
+	{
 		buf = (byte *) Q_calloc (width * height, 4);
 
 		src = data;
 		dest = buf;
-		for (i = 0; i < pic.height; i++) {
+		for (i = 0; i < pic.height; i++) 
+		{
 			memcpy (dest, src, pic.width * 4);
 			src += pic.width * 4;
 			dest += width * 4;
@@ -673,29 +713,30 @@ mpic_t *GL_LoadPicImage (char *filename, char *id, int matchwidth, int matchheig
 }
 
 int GL_LoadCharsetImage (char *filename, char *identifier) {
-	int i, texnum, image_size;
+	int i, texnum, image_size, real_width, real_height;
 	byte *data, *buf, *dest, *src;
 
 	if (no24bit)
 		return 0;
 
-	if (!(data = GL_LoadImagePixels (filename, 0, 0, 0)))
+	if (!(data = GL_LoadImagePixels (filename, 0, 0, 0, &real_width, &real_height)))
 		return 0;
 
 	if (!identifier)
 		identifier = filename;
 
-	image_size = image_width * image_height;
+	image_size = real_width * real_height;
 
 	buf = dest = (byte *) Q_calloc(image_size * 2, 4);
 	src = data;
-	for (i = 0 ; i < 16 ; i++) {
+	for (i = 0 ; i < 16 ; i++) 
+	{
 		memcpy (dest, src, image_size >> 2);
 		src += image_size >> 2;
 		dest += image_size >> 1;
 	}
 
-	texnum = GL_LoadTexture (identifier, image_width, image_height * 2, buf, TEX_ALPHA | TEX_NOCOMPRESS, 4);
+	texnum = GL_LoadTexture (identifier, real_width, real_height * 2, buf, TEX_ALPHA | TEX_NOCOMPRESS, 4);
 
 	Q_free(buf);
 	Q_free(data);	// data was Q_malloc'ed by GL_LoadImagePixels

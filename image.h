@@ -41,15 +41,15 @@ typedef struct
 } png_data;
 
 png_textp Image_LoadPNG_Comments (char *filename, int *text_count);
-png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matchheight, int loadflag);
-byte *Image_LoadPNG (FILE *, char *, int, int);
-byte *Image_LoadTGA (FILE *, char *, int, int);
-byte *Image_LoadPCX (FILE *, char *, int, int);
-byte *Image_LoadJPEG(FILE *, char *, int, int);
+png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height);
+byte *Image_LoadPNG (FILE *f, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
+byte *Image_LoadTGA (FILE *f, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
+byte *Image_LoadPCX (FILE *f, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
+byte *Image_LoadJPEG(FILE *f, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
 
 #ifdef GLQUAKE
 // this does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture
-byte *Image_LoadPCX_As32Bit (FILE *, char *, int, int);
+byte *Image_LoadPCX_As32Bit (FILE *f, char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
 #endif
 
 int Image_WritePNG(char *filename, int compression, byte *pixels, int width, int height);
@@ -69,7 +69,5 @@ int Image_WritePCX (char *filename, byte *data, int width, int height, int rowby
 #endif
 
 extern cvar_t image_jpeg_quality_level, image_png_compression_level;
-
-extern int image_width, image_height;
 
 #endif	//_IMAGE_H
