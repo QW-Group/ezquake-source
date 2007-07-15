@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.69 2007-07-01 04:34:02 qqshka Exp $
+    $Id: cmd.c,v 1.70 2007-07-15 09:50:44 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -296,7 +296,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 /*
 Set commands are added early, so they are guaranteed to be set before
 the client and server initialize for the first time.
- 
+
 Other commands are added late, after all initialization is complete.
 */
 void Cbuf_AddEarlyCommands (void)
@@ -407,7 +407,7 @@ void Cmd_Exec_f (void)
 //Just prints the rest of the line to the console
 /*void Cmd_Echo_f (void) {
 	int i;
- 
+
 	for (i = 1; i < Cmd_Argc(); i++)
 		Com_Printf ("%s ", Cmd_Argv(i));
 	Com_Printf ("\n");
@@ -1144,9 +1144,10 @@ void Cmd_CmdList (qbool use_regex)
 	if (count == MAX_SORTED_CMDS)
 		assert(!"count == MAX_SORTED_CMDS");
 
-	pattern = (!forwarded_only && Cmd_Argc() > 1) ? Cmd_Argv(1) : NULL;
+	c = Cmd_Argc();
+	pattern = (!forwarded_only && c > 1) ? Cmd_Argv(1) : NULL;
 
-	if (use_regex && ((c = Cmd_Argc()) > 1))
+	if (use_regex && c > 1)
 		if (!ReSearchInit(Cmd_Argv(1)))
 			return;
 
@@ -1734,7 +1735,7 @@ void Cmd_If_New(void)
 
 	buf[0] = '\0';
 	if (result)	// true case
-	{		
+	{
 		for (i = then_pos; i < c; i++) {
 			if (!else_found && !strcmp(Cmd_Argv(i), "else")) break;
 			if (buf[0])

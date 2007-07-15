@@ -4,7 +4,7 @@
 
 	made by johnnycz, June 2007
 	last edit:
-	$Id: menu_ingame.h,v 1.1 2007-06-28 21:54:28 johnnycz Exp $
+	$Id: menu_ingame.h,v 1.2 2007-07-15 09:50:44 disconn3ct Exp $
 
 */
 

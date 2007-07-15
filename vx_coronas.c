@@ -63,24 +63,24 @@ void R_UpdateCoronas(void)
 			c->alpha = 0;
 			c->type = C_FREE;
 			c->sighted = false;
-			c->serialhint = 0;//so can be reused			
+			c->serialhint = 0;//so can be reused
 		}
 		CoronaStats(1);
-		c->scale += c->growth * frametime; 
-		c->alpha += c->fade * frametime; 
+		c->scale += c->growth * frametime;
+		c->alpha += c->fade * frametime;
 
 		CL_TraceLine (r_refdef.vieworg, c->origin, impact, normal);
 		if (!VectorCompare(impact, c->origin))//Can't see it, so make it fade out(faster)
 		{
 			c->los = false;
-			
+
 			c->scale = 0;
 			c->alpha = 0;
-			
+
 
 			//Tei: this has been commented out for multiplayer,
 			// because some coronas see trough walls and can be cheat.
-			// #1041604	Eyecandy - cheaty (2nd)			
+			// #1041604	Eyecandy - cheaty (2nd)
 			/*
 			if (c->type == C_FIRE)
 			{
@@ -94,7 +94,7 @@ void R_UpdateCoronas(void)
 			}*/
 
 
-				
+
 		}
 		else
 		{
@@ -126,11 +126,11 @@ void R_DrawCoronas(void)
 	if (gl_fogenable.value)
 	{
 		glDisable(GL_FOG);
-	}	
+	}
 
 	if (!ISPAUSED)
 		R_UpdateCoronas();
-	
+
 	VectorScale (vup, 1, up);//1.5
 	VectorScale (vright, 1, right);
 
@@ -150,7 +150,7 @@ void R_DrawCoronas(void)
 			if (!c->sighted) //haven't seen it before
 				continue; //dont draw it
 			//else it will be fading out, so thats 'kay
-			
+
 
 		VectorSubtract (r_refdef.vieworg, c->origin, dist);
 		fdist = VectorLength(dist);
@@ -228,7 +228,7 @@ void NewCorona (coronatype_t type, vec3_t origin)
 	}
 
 	c = r_corona;
-	
+
 	for (i=0 ; i < MAX_CORONAS ; i++, c++)
 	{
 		if (c->type == C_FREE)
@@ -254,11 +254,11 @@ void NewCorona (coronatype_t type, vec3_t origin)
 				corona_found = true;
 				//sucesfully canivalize a fire corona that whas about to die.
 				break;
-			}			
+			}
 		}
 		//If can't canivalize a corona, It exit silently
 		//This is the worst case scenario, and will never happend
-		return;		
+		return;
 	}
 
 	c->sighted = false;
@@ -466,8 +466,6 @@ void InitCoronas(void)
 //This needs fixing so it wont be called so often
 void NewStaticLightCorona (coronatype_t type, vec3_t origin, int hint)
 {
-	extern cvar_t	developer;
-
 	corona_t	*c, *e=NULL;
 	int		i;
 	qbool breakage = true;
@@ -480,17 +478,17 @@ void NewStaticLightCorona (coronatype_t type, vec3_t origin, int hint)
 			e = c;
 			breakage = false;
 		}
-	
-		if (hint && c->serialhint == hint) 
-			return;		
+
+		if (hint && c->serialhint == hint)
+			return;
 
 		if (VectorCompare(c->origin, origin) && c->type == C_FIRE)
-			return;		
+			return;
 	}
 	if (breakage) //no free coronas
 		return;
 	memset (e, 0, sizeof(*e));
-	
+
 	e->sighted = false;
 	VectorCopy (origin, e->origin);
 	e->type = type;
@@ -505,9 +503,9 @@ void NewStaticLightCorona (coronatype_t type, vec3_t origin, int hint)
 		e->color[2] = 0.05;
 		e->scale = 0.1;
 		e->die = cl.time + 800;
-		e->alpha = 0.05 ;				
+		e->alpha = 0.05 ;
 		e->fade = 0.5;
-		e->growth = 800;		
+		e->growth = 800;
 	}
 }
 

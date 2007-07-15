@@ -2,7 +2,7 @@
 	Arithmetic expression evaluator
     @author johnnycz
     last edit:
-$Id: parser.c,v 1.19 2007-06-20 17:41:58 johnnycz Exp $
+$Id: parser.c,v 1.20 2007-07-15 09:50:45 disconn3ct Exp $
 
 */
 
@@ -152,7 +152,7 @@ GLOBAL expr_val Get_Expr_Dummy(void)
 LOCAL int Compare_Double(double a, double b)
 {
 	double diff = fabs(a-b);
-	if (diff < REAL_COMPARE_EPSILON) 
+	if (diff < REAL_COMPARE_EPSILON)
 		return 0; // a == b
 	else if (a > b)
 		return 1;
@@ -208,14 +208,14 @@ LOCAL expr_val Concat(EParser p, const expr_val e1, const expr_val e2)
 	free(e1.s_val);
 	free(e2.s_val);
 	ret.s_val[len-1] = '\0';
-	
+
 	return ret;
 }
 
 LOCAL expr_val operator_plus (EParser p, const expr_val e1, const expr_val e2)
 {
 	expr_val ret;
-	
+
 	switch (e1.type) {
 	case ET_INT: switch (e2.type) {
 		case ET_INT:	ret.type = ET_INT; ret.i_val = e1.i_val + e2.i_val; break;
@@ -308,7 +308,7 @@ LOCAL expr_val operator_divide(EParser p, const expr_val e1)
 	case ET_DBL:	d = e1.d_val; break;
 	case ET_BOOL:	d = e1.b_val; break;
 	}
-	
+
 	if (d) {
 		ret.type = ET_DBL;
 		ret.d_val = 1/d;
@@ -320,7 +320,7 @@ LOCAL expr_val operator_divide(EParser p, const expr_val e1)
 	return ret;
 }
 
-typedef enum { 
+typedef enum {
 	CMPRESULT_lt,
 	CMPRESULT_le,
 	CMPRESULT_eq,
@@ -354,7 +354,7 @@ LOCAL expr_val string_check_cmp(EParser p, const expr_val e1, const expr_val e2,
 		case CMPRESULT_ne: r.b_val = a != 0; break;
 		case CMPRESULT_ge: r.b_val = a >= 0; break;
 		case CMPRESULT_gt: r.b_val = a >  0; break;
-		}					  
+		}
 		free(e1.s_val);
 		free(e2.s_val);
 	}
@@ -598,7 +598,7 @@ LOCAL void Next_Token(EParser p)
     char c;
 
     while(c = CURCHAR(p), c && c == ' ') p->pos++;
-    
+
     if (!c)                     { p->lookahead = TK_EOF; }
 	else if (Follows(p, "isin")) { p->lookahead = TK_ISIN; }
 	else if (Follows(p, "!isin")) { p->lookahead = TK_NISIN; }
@@ -628,7 +628,7 @@ LOCAL void Next_Token(EParser p)
 		while (isdigit(*cp) || *cp == '.') {
 			if (*cp++ == '.') dbl++;
 		}
-		
+
 		if (dbl == 0)		{ p->lookahead = TK_INTEGER; }
 		else if (dbl == 1)	{ p->lookahead = TK_DOUBLE; }
 		else				{ SetError(p, ERR_MALFORMED_NUM); }
@@ -642,12 +642,12 @@ LOCAL expr_val Match_Var(EParser p)
 	char varname[MAX_VAR_NAME];
 	char *wp = varname;
 	size_t vnlen = 0;
-	
+
 	// var name can start with % sign
 	if (p->string[p->pos] == '%' || p->string[p->pos] == '$') p->pos++;
 
 	while (p->string[p->pos] && (isalpha(p->string[p->pos]) ||  p->string[p->pos] == '_') && vnlen < sizeof(varname))
-	{	
+	{
 		*wp++ = *(p->string + p->pos++);
 		vnlen++;
 	}
@@ -664,7 +664,7 @@ LOCAL expr_val Match_String(EParser p)
 	size_t len = 0;
 	int startpos = p->pos;
 	char firstc = p->string[startpos];
-	
+
 	if (firstc == '\'') {
 		p->pos++; startpos++;
 		while (p->string[p->pos] && p->string[p->pos] != '\'') {
@@ -678,6 +678,9 @@ LOCAL expr_val Match_String(EParser p)
 		}
 		p->pos++;	// skip the "
 	} else {
+		/*
+		 * FIXME is iswspace behaves same on Windows, Linux, MacOSX and FreeBSD?
+		 */
 		while (p->string[p->pos] && !iswspace(p->string[p->pos])) {
 			len++; p->pos++;
 		}
@@ -816,7 +819,7 @@ LOCAL expr_val Match(EParser p, int token)
 		if (!Follows(p, ">")) UNEXP_CHAR(p);
 		p->pos++; Next_Token(p);
 		break;
-    
+
 	case TK_ISIN:
 		if (!Follows(p, "isin")) UNEXP_CHAR(p);
 		p->pos += 4; Next_Token(p);

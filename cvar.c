@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cvar.c,v 1.49 2007-05-16 17:39:02 johnnycz Exp $
+$Id: cvar.c,v 1.50 2007-07-15 09:50:44 disconn3ct Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -275,7 +275,7 @@ void Cvar_Set (cvar_t *var, char *value)
 
 		// HACK: sometime I need somehow silently change latched cvars.
 		//       So, flag CVAR_SILENT for latched cvars mean no this warning.
-		//       However keep this flag always on latched variable is stupid imo. 
+		//       However keep this flag always on latched variable is stupid imo.
 		//       So, do not mix CVAR_LATCHED | CVAR_SILENT in cvar definition.
 		if ( !(var->flags & CVAR_SILENT) )
 			Com_Printf ("%s will be changed upon restarting.\n", var->name);
@@ -345,7 +345,7 @@ void Cvar_LatchedSet (cvar_t *var, char *value)
 	// yea, do not mess things
 	if ( !(var->flags & CVAR_LATCH) )
 		Sys_Error("Cvar_LatchedSet: non latched var %s", var->name);
-		
+
 	var->flags |= CVAR_SILENT; // shut up warnings, at least some...
 	Cvar_Set(var, value);
 	// remove this flag, btw if variable have this flag before set this flag will be removed anyway..
@@ -360,7 +360,7 @@ void Cvar_LatchedSetValue (cvar_t *var, float value)
 	// yea, do not mess things
 	if ( !(var->flags & CVAR_LATCH) )
 		Sys_Error("Cvar_LatchedSet: non latched var %s", var->name);
-		
+
 	var->flags |= CVAR_SILENT; // shut up warnings, at least some...
 	Cvar_SetValue(var, value);
 	// remove this flag, btw if variable have this flag before set this flag will be removed anyway..
@@ -548,7 +548,7 @@ qbool Cvar_Command (void)
 
 			if (cvar_viewlatched.integer && v->latchedString)
 				Com_Printf ("%s latched value is \"%s\"\n", spaces, v->latchedString);
-			
+
 		} else {
 			Com_Printf ("\"%s\" is \"%s\"\n", v->name, v->string);
 
@@ -655,9 +655,10 @@ void Cvar_CvarList (qbool use_regex)
 	if (count == MAX_SORTED_CVARS)
 		assert(!"count == MAX_SORTED_CVARS");
 
-	pattern = (Cmd_Argc() > 1) ? Cmd_Argv(1) : NULL;
+	c = Cmd_Argc();
+	pattern = (c > 1) ? Cmd_Argv(1) : NULL;
 
-	if (use_regex && ((c = Cmd_Argc()) > 1))
+	if (use_regex && c > 1)
 		if (!ReSearchInit(Cmd_Argv(1)))
 			return;
 
@@ -679,7 +680,7 @@ void Cvar_CvarList (qbool use_regex)
 			var->name);
 		m++;
 	}
-	
+
 	if (use_regex && (c > 1))
 		ReSearchDone ();
 
@@ -910,7 +911,7 @@ void Cvar_Set_Alias_Str_f (void)
 						*s++ = '\\';
 					*s++ = *v++;
 				}
-				*s = '\0'; 
+				*s = '\0';
 				Cvar_Set (var, str);*/
 		Cvar_Set (var, v);
 	}
@@ -959,7 +960,7 @@ void Cvar_Set_Bind_Str_f (void)
 								*s++ = '\\';
 							*s++ = *v++;
 						}
-						*s = '\0'; 
+						*s = '\0';
 						Cvar_Set (var, str);*/
 			Cvar_Set (var, keybindings[keynum]);
 		} else
