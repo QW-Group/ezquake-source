@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.41 2007-07-15 17:47:18 cokeman1982 Exp $
+    $Id: image.c,v 1.42 2007-07-15 18:17:47 cokeman1982 Exp $
 */
 
 #ifdef __FreeBSD__
@@ -1470,7 +1470,6 @@ int Image_WriteTGA (char *filename, byte *pixels, int width, int height)
 /*********************************** JPEG ************************************/
 
 #ifdef WITH_JPEG
-
 #ifndef WITH_JPEG_STATIC
 
 static QLIB_HANDLETYPE_T jpeg_handle = NULL;
@@ -1734,7 +1733,6 @@ void jpeg_error_exit (j_common_ptr cinfo)
 	longjmp(((jpeg_error_mgr_wrapper *) cinfo->err)->setjmp_buffer, 1);
 }
 
-
 int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int height) 
 {
 	char name[MAX_PATH];
@@ -1790,34 +1788,27 @@ int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int he
 
 typedef struct my_error_mgr * my_error_ptr;
 
-/*
- * Here's the routine that will replace the standard error_exit method:
- */
-
+// Here's the routine that will replace the standard error_exit method:
 METHODDEF(void)
 my_error_exit (j_common_ptr cinfo)
 {
-  /* cinfo->err really points to a my_error_mgr struct, so coerce pointer */
-  my_error_ptr myerr = (my_error_ptr) cinfo->err;
+	// cinfo->err really points to a my_error_mgr struct, so coerce pointer
+	my_error_ptr myerr = (my_error_ptr) cinfo->err;
 
-  /* Always display the message. */
-  /* We could postpone this until after returning, if we chose. */
-  (*cinfo->err->output_message) (cinfo);
+	// Always display the message.
+	// We could postpone this until after returning, if we chose.
+	(*cinfo->err->output_message) (cinfo);
 
-  /* Return control to the setjmp point */
-  longjmp(myerr->setjmp_buffer, 1);
+	// Return control to the setjmp point 
+	longjmp(myerr->setjmp_buffer, 1);
 }
 
+//
+// Sample routine for JPEG decompression.  We assume that the source file name
+// is passed in.  We want to return 1 on success, 0 on error.
+//
 
-/*
- * Sample routine for JPEG decompression.  We assume that the source file name
- * is passed in.  We want to return 1 on success, 0 on error.
- */
-
-
-
-
-/* Expanded data source object for stdio input */
+// Expanded data source object for stdio input 
 
 typedef struct 
 {
@@ -1832,8 +1823,7 @@ typedef struct
 
 typedef my_source_mgr * my_src_ptr;
 
-#define INPUT_BUF_SIZE  4096	/* choose an efficiently fread'able size */
-
+#define INPUT_BUF_SIZE  4096	// Choose an efficiently fread'able size.
 
 METHODDEF(void)
 init_source (j_decompress_ptr cinfo)
@@ -1855,11 +1845,14 @@ fill_input_buffer (j_decompress_ptr cinfo)
 	memcpy(src->buffer, &src->infile[src->currentpos], nbytes);
 	src->currentpos+=nbytes;
 
-	if (nbytes <= 0) {
-		if (src->start_of_file)	/* Treat empty input file as fatal error */
-		ERREXIT(cinfo, JERR_INPUT_EMPTY);
+	if (nbytes <= 0) 
+	{
+		if (src->start_of_file)	// Treat empty input file as fatal error.
+			ERREXIT(cinfo, JERR_INPUT_EMPTY);
+		
 		WARNMS(cinfo, JWRN_JPEG_EOF);
-    /* Insert a fake EOI marker */
+		
+		// Insert a fake EOI marker.
 		src->buffer[0] = (JOCTET) 0xFF;
 		src->buffer[1] = (JOCTET) JPEG_EOI;
 		nbytes = 2;
@@ -1876,53 +1869,52 @@ fill_input_buffer (j_decompress_ptr cinfo)
 METHODDEF(void)
 skip_input_data (j_decompress_ptr cinfo, long num_bytes)
 {
-  my_source_mgr *src = (my_source_mgr*) cinfo->src;
+	my_source_mgr *src = (my_source_mgr*) cinfo->src;
 
-  if (num_bytes > 0) {
-    while (num_bytes > (long) src->pub.bytes_in_buffer) {
-      num_bytes -= (long) src->pub.bytes_in_buffer;
-      (void) fill_input_buffer(cinfo);
-    }
-    src->pub.next_input_byte += (size_t) num_bytes;
-    src->pub.bytes_in_buffer -= (size_t) num_bytes;
-  }
+	if (num_bytes > 0) 
+	{
+		while (num_bytes > (long) src->pub.bytes_in_buffer) 
+		{
+			num_bytes -= (long) src->pub.bytes_in_buffer;
+			(void) fill_input_buffer(cinfo);
+		}
+		src->pub.next_input_byte += (size_t) num_bytes;
+		src->pub.bytes_in_buffer -= (size_t) num_bytes;
+	}
 }
-
-
 
 METHODDEF(void)
 term_source (j_decompress_ptr cinfo)
 {
 }
 
-
 GLOBAL(void)
 jpeg_mem_src (j_decompress_ptr cinfo, byte * infile, int maxlen)
 {
-  my_source_mgr *src;
+	my_source_mgr *src;
 
-  if (cinfo->src == NULL) {	/* first time for this JPEG object? */
-    cinfo->src = (struct jpeg_source_mgr *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				  sizeof(my_source_mgr));
-    src = (my_source_mgr*) cinfo->src;
-    src->buffer = (JOCTET *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				  INPUT_BUF_SIZE * sizeof(JOCTET));
-  }
+	if (cinfo->src == NULL) 
+	{	
+		// First time for this JPEG object?
+		cinfo->src = (struct jpeg_source_mgr *)(*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT, sizeof(my_source_mgr));
+		
+		src = (my_source_mgr*) cinfo->src;
+		
+		src->buffer = (JOCTET *)(*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT, INPUT_BUF_SIZE * sizeof(JOCTET));
+	}
 
-  src = (my_source_mgr*) cinfo->src;
-  src->pub.init_source = init_source;
-  src->pub.fill_input_buffer = fill_input_buffer;
-  src->pub.skip_input_data = skip_input_data;
-  src->pub.resync_to_restart = jpeg_resync_to_restart; /* use default method */
-  src->pub.term_source = term_source;
-  src->infile = infile;
-  src->pub.bytes_in_buffer = 0; /* forces fill_input_buffer on first read */
-  src->pub.next_input_byte = NULL; /* until buffer loaded */
+	src = (my_source_mgr*) cinfo->src;
+	src->pub.init_source = init_source;
+	src->pub.fill_input_buffer = fill_input_buffer;
+	src->pub.skip_input_data = skip_input_data;
+	src->pub.resync_to_restart = jpeg_resync_to_restart; // Use default method.
+	src->pub.term_source = term_source;
+	src->infile = infile;
+	src->pub.bytes_in_buffer = 0; // Forces fill_input_buffer on first read.
+	src->pub.next_input_byte = NULL; // until buffer loaded.
 
-  src->currentpos = 0;
-  src->maxlen = maxlen;
+	src->currentpos = 0;
+	src->maxlen = maxlen;
 }
 
 byte *Image_LoadJPEG(FILE *fin, char *filename, int matchwidth, int matchheight)
@@ -1933,109 +1925,115 @@ byte *Image_LoadJPEG(FILE *fin, char *filename, int matchwidth, int matchheight)
 	byte *infile = NULL;
 	int length;
 
-  /* This struct contains the JPEG decompression parameters and pointers to
-   * working space (which is allocated as needed by the JPEG library).
-   */
-  struct jpeg_decompress_struct cinfo;
-  /* We use our private extension JPEG error handler.
-   * Note that this struct must live as long as the main JPEG parameter
-   * struct, to avoid dangling-pointer problems.
-   */
-  struct my_error_mgr jerr;
-  /* More stuff */  
-  JSAMPARRAY buffer;		/* Output row buffer */
-  int size_stride;		/* physical row width in output buffer */
+	// This struct contains the JPEG decompression parameters and pointers to
+	// working space (which is allocated as needed by the JPEG library).
+	struct jpeg_decompress_struct cinfo;
+	
+	// We use our private extension JPEG error handler.
+	// Note that this struct must live as long as the main JPEG parameter
+	// struct, to avoid dangling-pointer problems.
+	struct my_error_mgr jerr;
+	
+	// More stuff 
+	JSAMPARRAY buffer;		// Output row buffer.
+	int size_stride;		// physical row width in output buffer.
 
 	if (!fin && FS_FOpenFile (filename, &fin) == -1)
 		return NULL;
 
 	infile = (byte *) Q_malloc(length = fs_filesize);
-	if (fread (infile, 1, fs_filesize, fin) != fs_filesize) {
+	if (fread (infile, 1, fs_filesize, fin) != fs_filesize) 
+	{
 		Com_DPrintf ("Image_LoadJPEG: fread() failed on %s\n", COM_SkipPath(filename));
 		fclose(fin);
 		Q_free(infile);
 		return NULL;
 	}
+
 	fclose(fin);
 
-  /* Step 1: allocate and initialize JPEG decompression object */
+	// Step 1: allocate and initialize JPEG decompression object.
 
-  /* We set up the normal JPEG error routines, then override error_exit. */
-  cinfo.err = jpeg_std_error(&jerr.pub);
-  jerr.pub.error_exit = my_error_exit;
-  /* Establish the setjmp return context for my_error_exit to use. */
-  if (setjmp(jerr.setjmp_buffer)) {
-    // If we get here, the JPEG code has signaled an error.
+	// We set up the normal JPEG error routines, then override error_exit. 
+	cinfo.err = jpeg_std_error(&jerr.pub);
+	jerr.pub.error_exit = my_error_exit;
+	// Establish the setjmp return context for my_error_exit to use. */
+	if (setjmp(jerr.setjmp_buffer)) 
+	{
+		// If we get here, the JPEG code has signaled an error.
 
 badjpeg:
 
-    jpeg_destroy_decompress(&cinfo);    
+		jpeg_destroy_decompress(&cinfo);    
 
-	Q_free(infile);
-	Q_free(mem);
-	Com_DPrintf ("Image_LoadJPEG: badjpeg %s, len %d\n", COM_SkipPath(filename), length);
-    return 0;
-  }
+		Q_free(infile);
+		Q_free(mem);
+		Com_DPrintf ("Image_LoadJPEG: badjpeg %s, len %d\n", COM_SkipPath(filename), length);
+		return 0;
+	}
 
-  jpeg_create_decompress(&cinfo);
+	jpeg_create_decompress(&cinfo);
 
-  jpeg_mem_src(&cinfo, infile, length);
+	jpeg_mem_src(&cinfo, infile, length);
 
-  (void) jpeg_read_header(&cinfo, TRUE);  
+	(void) jpeg_read_header(&cinfo, TRUE);  
 
-  (void) jpeg_start_decompress(&cinfo);
+	(void) jpeg_start_decompress(&cinfo);
 
-  image_width  = cinfo.output_width;
-  image_height = cinfo.output_height;
+	image_width  = cinfo.output_width;
+	image_height = cinfo.output_height;
 
-  if (image_width > IMAGE_MAX_DIMENSIONS || image_height > IMAGE_MAX_DIMENSIONS || image_width <= 0 || image_height <= 0)
-  {
-	Com_Printf("Bad actual dimensions %dx%d in jpeg %s\n", image_width, image_height, COM_SkipPath(filename));
-	goto badjpeg;
-  }
-  if ((matchwidth && image_width != matchwidth) || (matchheight && image_height != matchheight))
-  {
-	Com_Printf("Bad match dimensions %dx%d vs %dx%d in jpeg %s\n", image_width, image_height, matchwidth, matchheight, COM_SkipPath(filename));
-	goto badjpeg; 
-  }
+	if (image_width > IMAGE_MAX_DIMENSIONS || image_height > IMAGE_MAX_DIMENSIONS || image_width <= 0 || image_height <= 0)
+	{
+		Com_Printf("Bad actual dimensions %dx%d in jpeg %s\n", image_width, image_height, COM_SkipPath(filename));
+		goto badjpeg;
+	}
 
-  if (cinfo.output_components!=3)
-  {
+	if ((matchwidth && image_width != matchwidth) || (matchheight && image_height != matchheight))
+	{
+		Com_Printf("Bad match dimensions %dx%d vs %dx%d in jpeg %s\n", image_width, image_height, matchwidth, matchheight, COM_SkipPath(filename));
+		goto badjpeg; 
+	}
+
+	if (cinfo.output_components!=3)
+	{
 		Com_Printf("Bad number of componants in jpeg %s\n", COM_SkipPath(filename));
 		goto badjpeg;
-  }
-  size_stride = cinfo.output_width * cinfo.output_components;
-  /* Make a one-row-high sample array that will go away when done with image */
-   buffer = (*cinfo.mem->alloc_sarray)
+	}
+
+	size_stride = cinfo.output_width * cinfo.output_components;
+	// Make a one-row-high sample array that will go away when done with image.
+	buffer = (*cinfo.mem->alloc_sarray)
 		((j_common_ptr) &cinfo, JPOOL_IMAGE, size_stride, 1);
 
-   out = mem = Q_malloc(cinfo.output_height*cinfo.output_width*4);
-   memset(out, 0, cinfo.output_height*cinfo.output_width*4);
+	out = mem = Q_malloc(cinfo.output_height*cinfo.output_width*4);
+	memset(out, 0, cinfo.output_height*cinfo.output_width*4);
 
-  while (cinfo.output_scanline < cinfo.output_height) {
-    (void) jpeg_read_scanlines(&cinfo, buffer, 1);    
+	while (cinfo.output_scanline < cinfo.output_height) 
+	{
+		(void) jpeg_read_scanlines(&cinfo, buffer, 1);    
 
-	in = buffer[0];
-	for (i = 0; i < cinfo.output_width; i++)
-	{//rgb to rgba
-		*out++ = *in++;
-		*out++ = *in++;
-		*out++ = *in++;
-		*out++ = 255;	
-	}	
-  }
+		in = buffer[0];
+		for (i = 0; i < cinfo.output_width; i++)
+		{
+			// RGB to RGBA
+			*out++ = *in++;
+			*out++ = *in++;
+			*out++ = *in++;
+			*out++ = 255;	
+		}	
+	}
 
-  (void) jpeg_finish_decompress(&cinfo);
+	(void) jpeg_finish_decompress(&cinfo);
 
-  jpeg_destroy_decompress(&cinfo);
+	jpeg_destroy_decompress(&cinfo);
 
-  Q_free(infile);
-  return mem;
+	Q_free(infile);
+	return mem;
 }
 
-
-#endif
-#endif
+#endif // WITH_JPEG_STATIC
+#endif // WITH_JPEG
 
 /************************************ PCX ************************************/
 
@@ -2066,14 +2064,14 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 		return NULL;
 
 	pcxbuf = (byte *) Q_malloc(fs_filesize);
-	if (fread (pcxbuf, 1, fs_filesize, fin) != fs_filesize) {
+	if (fread (pcxbuf, 1, fs_filesize, fin) != fs_filesize) 
+	{
 		Com_DPrintf ("Image_LoadPCX: fread() failed on %s\n", COM_SkipPath(filename));
 		fclose(fin);
 		Q_free(pcxbuf);
 		return NULL;
 	}
 	fclose(fin);
-
 
 	pcx = (pcx_t *) pcxbuf;
 	pcx->xmax = LittleShort (pcx->xmax);
@@ -2087,7 +2085,8 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 
 	pix = &pcx->data;
 
-	if (pcx->manufacturer != 0x0a || pcx->version != 5 || pcx->encoding != 1 || pcx->bits_per_pixel != 8) {
+	if (pcx->manufacturer != 0x0a || pcx->version != 5 || pcx->encoding != 1 || pcx->bits_per_pixel != 8) 
+	{
 		Com_DPrintf ("Invalid PCX image %s\n", COM_SkipPath(filename));
 		Q_free(pcxbuf);
 		return NULL;
@@ -2096,22 +2095,27 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 	width = pcx->xmax + 1;
 	height = pcx->ymax + 1;
 
-	if (width > IMAGE_MAX_DIMENSIONS || height > IMAGE_MAX_DIMENSIONS) {
+	if (width > IMAGE_MAX_DIMENSIONS || height > IMAGE_MAX_DIMENSIONS)
+	{
 		Com_DPrintf ("PCX image %s exceeds maximum supported dimensions\n", COM_SkipPath(filename));
 		Q_free(pcxbuf);
 		return NULL;
 	}
 
-	if ((matchwidth && width != matchwidth) || (matchheight && height != matchheight)) {
+	if ((matchwidth && width != matchwidth) || (matchheight && height != matchheight))
+	{
 		Q_free(pcxbuf);
 		return NULL;
 	}
  
 	data = out = (byte *) Q_malloc (width * height);
 
-	for (y = 0; y < height; y++, out += width) {
-		for (x = 0; x < width; ) {
-			if (pix - (byte *) pcx > fs_filesize) {
+	for (y = 0; y < height; y++, out += width)
+	{
+		for (x = 0; x < width; ) 
+		{
+			if (pix - (byte *) pcx > fs_filesize) 
+			{
 				Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
 				Q_free(pcxbuf);
 				Q_free(data);
@@ -2120,21 +2124,25 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 
 			dataByte = *pix++;
 
-			if ((dataByte & 0xC0) == 0xC0) {
+			if ((dataByte & 0xC0) == 0xC0)
+			{
 				runLength = dataByte & 0x3F;
-				if (pix - (byte *) pcx > fs_filesize) {
+				if (pix - (byte *) pcx > fs_filesize)
+				{
 					Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
 					Q_free(pcxbuf);
 					Q_free(data);
 					return NULL;
 				}
 				dataByte = *pix++;
-			} else {
+			}
+			else 
+			{
 				runLength = 1;
 			}
 
-
-			if (runLength + x > width + 1) {
+			if (runLength + x > width + 1) 
+			{
 				Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
 				Q_free(pcxbuf);
 				Q_free(data);
@@ -2146,7 +2154,8 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight)
 		}
 	}
 
-	if (pix - (byte *) pcx > fs_filesize) {
+	if (pix - (byte *) pcx > fs_filesize) 
+	{
 		Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
 		Q_free(pcxbuf);
 		Q_free(data);
@@ -2217,11 +2226,12 @@ int Image_WritePCX (char *filename, byte *data, int width, int height, int rowby
 	pcx->palette_type = LittleShort(1);		
 	memset (pcx->filler, 0, sizeof(pcx->filler));
 
-
 	pack = &pcx->data;
 
-	for (i = 0; i < height; i++) {
-		for (j = 0; j < width; j++) {
+	for (i = 0; i < height; i++) 
+	{
+		for (j = 0; j < width; j++) 
+		{
 			if ((*data & 0xc0) != 0xc0)
 				*pack++ = *data++;
 			else {
@@ -2232,13 +2242,13 @@ int Image_WritePCX (char *filename, byte *data, int width, int height, int rowby
 		data += rowbytes - width;
 	}
 
-
 	*pack++ = 0x0c;	
 	for (i = 0; i < 768; i++)
 		*pack++ = *palette++;
 
 	length = pack - (byte *) pcx;
-	if (!(COM_WriteFile_2 (filename, pcx, length))) {
+	if (!(COM_WriteFile_2 (filename, pcx, length)))
+	{
 		Q_free(pcx);
 		return false;
 	}
