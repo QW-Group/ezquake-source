@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.145 2007-07-11 23:07:34 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.146 2007-07-15 22:30:08 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -2093,7 +2093,6 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
 
 qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
 {
-#ifdef GLQUAKE
 	#define HUD_GROUP_PIC_BASEPATH	"gfx/%s"
 
 	mpic_t *temp_pic = NULL;
@@ -2117,7 +2116,7 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
 	snprintf (pic_path, sizeof(pic_path), HUD_GROUP_PIC_BASEPATH, newpic);
 
 	// Try loading the pic.
-	if (!(temp_pic = GL_LoadPicImage(pic_path, newpic, 0, 0, TEX_ALPHA)))
+	if (!(temp_pic = Draw_CachePicSafe(pic_path, false, false)))
 	{
 		hud_pic->height = -1;
 		Com_Printf("Couldn't load picture %s for hud group.\n", newpic);
@@ -2127,9 +2126,6 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
 	// Save the pic.
 	(*hud_pic) = *temp_pic;
 
-#else
-	Com_Printf ("HUD background pictures only work in GLQuake.\n");
-#endif
 	return false;
 }
 
@@ -2341,6 +2337,9 @@ void SCR_HUD_Group6(hud_t *hud)
 		pic_alpha->value);
 }
 
+void bresenham_line(int x1, int y1, int x2, int y2, byte color);
+void Draw_RectStretch(mpic_t *pic, int x, int y, int width, int height);
+
 void SCR_HUD_Group7(hud_t *hud)
 {
     static cvar_t *width = NULL,
@@ -2368,7 +2367,8 @@ void SCR_HUD_Group7(hud_t *hud)
 		pic_alpha->value);
 
 	{
-		int r, g, b;
+		extern mpic_t *sb_weapons[7][8];  // sbar.c
+/*		int r, g, b;
 
 		for (r = 0, g = 0, b = 0; r < 255; r += 2, g += 2, b += 2)
 		{
@@ -2378,6 +2378,34 @@ void SCR_HUD_Group7(hud_t *hud)
 		}
 
 		Draw_AlphaRectangleRGB(0, 150, 125, 60, 5, false, RGBA_TO_COLOR(255, 0, 0, 125));
+
+		//bresenham_line(50, 123, 221, 200, 255);
+		//Draw_AlphaLine(50, 123, 221, 200, 5, 255, 1);
+		//Draw_AlphaLine(40, 123, 40, 200, 5, 255, 1);
+		Draw_AlphaLine(50, 50, 40, 200, 5, 255, 1);
+		Draw_AlphaLine(50, 250, 221, 140, 5, 255, 1);
+*/
+		{
+			extern mpic_t  *sb_face_quad;
+
+			int x = 50;
+			int y = 50;
+			int w = sb_face_quad->width;
+			int h = sb_face_quad->height;
+
+			/*
+			//RectStretch(sb_weapons[2][0], x, y, x + w, y + h, x, y,  (x + w), 2 * (y + h));
+			
+			//Draw_SPic(50, 50, sb_weapons[2][0], 1.5);
+			Draw_SPic(50, 50, sb_face_quad, 1.5);
+			
+			Draw_RectStretch(sb_face_quad, 80, 50, w, h);
+			//Draw_RectStretch(sb_face_quad, 120, 50, 2*w, h);
+			//Draw_Pic(100, 50, sb_face_quad);
+			//Draw_SPic(150, 50, sb_weapons[2][0], 0.5);
+			Draw_SSubPic(140, 50, sb_face_quad, 10, 8, 10, 10, 2);
+			*/
+		}
 	}
 }
 
