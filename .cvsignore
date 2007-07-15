@@ -1,16 +1,8 @@
-debug-i386-glibc
-release-i386-glibc
 Release-gl
 Debug-gl
 Debug
 Release
-ezquake.suo
-ezquake.ncb
-.DS_Store
 osx/build
-ezquake.vcproj.JHN4.Johnny.user
-ezquake_msvs_80.vcproj.JHN4.Johnny.user
+ezquake_msvs_80.vcproj.*
 ezquake_msvs_80.ncb
 ezquake_msvs_80.suo
-gas2masm.exe
-ezquake_msvs_80.vcproj.BLESK.Honza.user
