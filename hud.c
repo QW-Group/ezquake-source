@@ -331,20 +331,36 @@ int HUD_FindAlignY(hud_t *hud)
     }
 }
 
+int Hud_HudCompare (const void *p1, const void *p2)
+{
+	return strcmp((*((hud_t **) p1))->name, (*((hud_t **) p2))->name);
+}
+
 //
 // List hud elements
 //
 void HUD_List (void)
 {
-    hud_t *hud = hud_huds;
+	static hud_t *sorted_huds[256];
+	int i, count;
+    hud_t *hud;
+
+#define MAX_SORTED_HUDS (sizeof (sorted_huds) / sizeof (sorted_huds[0]))
+
+	for (hud = hud_huds, count = 0; hud && count < MAX_SORTED_HUDS; hud = hud->next, count++)
+		sorted_huds[count] = hud;
+	qsort (sorted_huds, count, sizeof (hud_t *), Hud_HudCompare);
+
+	if (count == MAX_SORTED_HUDS)
+		assert(!"count == MAX_SORTED_HUDS");
 
     Com_Printf("name            status\n");
     Com_Printf("--------------- ------\n");
-    while (hud)
-    {
-        Com_Printf("%-15s %s\n", hud->name, hud->show->value ? "shown" : "hidden");
-        hud = hud->next;
-    }
+	for (i = 0; i < count; i++) {
+		hud = sorted_huds[i];
+
+		Com_Printf("%-15s %s\n", hud->name, hud->show->value ? "shown" : "hidden");
+	}
 }
 
 //
