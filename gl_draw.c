@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.73 2007-07-12 21:22:25 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.74 2007-07-15 17:15:42 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1528,7 +1528,8 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 {
 	byte bytecolor[4];
 
-	if ((byte)(color & 0xFF) == 0)
+	// Is alpha 0?
+	if ((byte)(color >> 24 & 0xFF) == 0)
 		return;
 
 	glDisable (GL_TEXTURE_2D);
