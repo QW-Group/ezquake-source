@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.83 2007-07-01 00:55:02 qqshka Exp $
+    $Id: common.c,v 1.84 2007-07-15 21:15:43 cokeman1982 Exp $
 
 */
 
@@ -1654,38 +1654,51 @@ int FS_FOpenFile (char *filename, FILE **file) {
 	return -1;
 }
 
-//Filename are relative to the quake directory.
-//Always appends a 0 byte to the loaded data.
+// Filename are relative to the quake directory.
+// Always appends a 0 byte to the loaded data.
 static cache_user_t *loadcache;
 static byte			*loadbuf;
 static int			loadsize;
-byte *FS_LoadFile (char *path, int usehunk) {
+byte *FS_LoadFile (char *path, int usehunk) 
+{
 	FILE *h;
 	byte *buf;
 	char base[32];
 	int len;
 
-	buf = NULL;	// quiet compiler warning
+	buf = NULL;	// Quiet compiler warning.
 
-	// look for it in the filesystem or pack files
+	// Look for it in the filesystem or pack files.
 	len = fs_filesize = FS_FOpenFile (path, &h);
 	if (!h)
 		return NULL;
 
-	// extract the filename base name for hunk tag
+	// Extract the filename base name for hunk tag.
 	COM_FileBase (path, base);
 
-	if (usehunk == 1) {
+	// TODO: Make these into defines.
+	if (usehunk == 1) 
+	{
 		buf = (byte *) Hunk_AllocName (len + 1, base);
-	} else if (usehunk == 2) {
+	} 
+	else if (usehunk == 2) 
+	{
 		buf = (byte *) Hunk_TempAlloc (len + 1);
-	} else if (usehunk == 3) {
+	} 
+	else if (usehunk == 3) 
+	{
 		buf = (byte *) Cache_Alloc (loadcache, len + 1, base);
-	} else if (usehunk == 4) {
+	} 
+	else if (usehunk == 4) 
+	{
 		buf = ((len+1 > loadsize) ? (byte *) Hunk_TempAlloc (len + 1) : loadbuf);
-	} else if (usehunk == 5) {
+	} 
+	else if (usehunk == 5) 
+	{
 		buf = Q_malloc (len + 1);
-	} else {
+	} 
+	else 
+	{
 		Sys_Error ("FS_LoadFile: bad usehunk\n");
 	}
 
@@ -1693,14 +1706,17 @@ byte *FS_LoadFile (char *path, int usehunk) {
 		Sys_Error ("FS_LoadFile: not enough space for %s\n", path);
 
 	((byte *)buf)[len] = 0;
-#ifndef SERVERONLY
+	
+	#ifndef SERVERONLY
 	Draw_BeginDisc ();
-#endif
+	#endif
+	
 	fread (buf, 1, len, h);
 	fclose (h);
-#ifndef SERVERONLY
+	
+	#ifndef SERVERONLY
 	Draw_EndDisc ();
-#endif
+	#endif
 
 	return buf;
 }
