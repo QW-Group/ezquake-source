@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.146 2007-07-15 22:30:08 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.147 2007-07-16 21:31:59 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -1979,15 +1979,15 @@ void SCR_HUD_DrawAmmo4(hud_t *hud)
 // Groups
 // ============================================================================0
 
-mpic_t hud_pic_group1;
-mpic_t hud_pic_group2;
-mpic_t hud_pic_group3;
-mpic_t hud_pic_group4;
-mpic_t hud_pic_group5;
-mpic_t hud_pic_group6;
-mpic_t hud_pic_group7;
-mpic_t hud_pic_group8;
-mpic_t hud_pic_group9;
+mpic_t *hud_pic_group1;
+mpic_t *hud_pic_group2;
+mpic_t *hud_pic_group3;
+mpic_t *hud_pic_group4;
+mpic_t *hud_pic_group5;
+mpic_t *hud_pic_group6;
+mpic_t *hud_pic_group7;
+mpic_t *hud_pic_group8;
+mpic_t *hud_pic_group9;
 
 void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_scalemode, float pic_alpha)
 {
@@ -2018,7 +2018,6 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
         return;
 	}
 
-	#ifdef GLQUAKE
     // Draw the picture if it's set.
 	if (pic != NULL && pic->height > 0)
     {
@@ -2088,10 +2087,9 @@ void SCR_HUD_DrawGroup(hud_t *hud, int width, int height, mpic_t *pic, int pic_s
 			Draw_AlphaSubPic (x, y, pic, 0, 0, min(width, pic->width), min(height, pic->height), pic_alpha);
         }
     }
-	#endif
 }
 
-qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
+qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t **hud_pic, char *newpic)
 {
 	#define HUD_GROUP_PIC_BASEPATH	"gfx/%s"
 
@@ -2100,7 +2098,6 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
 
 	if (!hud_pic)
 	{
-		// Something is very wrong.
 		Com_Printf ("Couldn't load picture %s for hud group. HUD PIC is null\n", newpic);
 		return false;
 	}
@@ -2108,7 +2105,6 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
 	// If we have no pic name.
 	if(!newpic || !strcmp (newpic, ""))
 	{
-		hud_pic->height = -1;
 		return false;
 	}
 
@@ -2118,13 +2114,13 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t *hud_pic, char *newpic)
 	// Try loading the pic.
 	if (!(temp_pic = Draw_CachePicSafe(pic_path, false, false)))
 	{
-		hud_pic->height = -1;
 		Com_Printf("Couldn't load picture %s for hud group.\n", newpic);
 		return true;
 	}
 
 	// Save the pic.
-	(*hud_pic) = *temp_pic;
+	if (hud_pic)
+		*hud_pic = temp_pic;
 
 	return false;
 }
@@ -2196,7 +2192,7 @@ void SCR_HUD_Group1(hud_t *hud)
 	SCR_HUD_DrawGroup(hud,
 		width->value,
 		height->value,
-		&hud_pic_group1,
+		hud_pic_group1,
 		pic_scalemode->value,
 		pic_alpha->value);
 }
@@ -2224,7 +2220,7 @@ void SCR_HUD_Group2(hud_t *hud)
 	SCR_HUD_DrawGroup(hud,
 		width->value,
 		height->value,
-		&hud_pic_group2,
+		hud_pic_group2,
 		pic_scalemode->value,
 		pic_alpha->value);
 }
@@ -2251,7 +2247,7 @@ void SCR_HUD_Group3(hud_t *hud)
 	SCR_HUD_DrawGroup(hud,
 		width->value,
 		height->value,
-		&hud_pic_group3,
+		hud_pic_group3,
 		pic_scalemode->value,
 		pic_alpha->value);
 }
@@ -2278,7 +2274,7 @@ void SCR_HUD_Group4(hud_t *hud)
 	SCR_HUD_DrawGroup(hud,
 		width->value,
 		height->value,
-		&hud_pic_group4,
+		hud_pic_group4,
 		pic_scalemode->value,
 		pic_alpha->value);
 }
@@ -2305,7 +2301,7 @@ void SCR_HUD_Group5(hud_t *hud)
 	SCR_HUD_DrawGroup(hud,
 		width->value,
 		height->value,
-		&hud_pic_group5,
+		hud_pic_group5,
 		pic_scalemode->value,
 		pic_alpha->value);
 }
@@ -2332,7 +2328,7 @@ void SCR_HUD_Group6(hud_t *hud)
 	SCR_HUD_DrawGroup(hud,
 		width->value,
 		height->value,
-		&hud_pic_group6,
+		hud_pic_group6,
 		pic_scalemode->value,
 		pic_alpha->value);
 }
@@ -2362,7 +2358,7 @@ void SCR_HUD_Group7(hud_t *hud)
 	SCR_HUD_DrawGroup(hud,
 		width->value,
 		height->value,
-		&hud_pic_group7,
+		hud_pic_group7,
 		pic_scalemode->value,
 		pic_alpha->value);
 
@@ -2431,7 +2427,7 @@ void SCR_HUD_Group8(hud_t *hud)
 	SCR_HUD_DrawGroup(hud,
 		width->value,
 		height->value,
-		&hud_pic_group8,
+		hud_pic_group8,
 		pic_scalemode->value,
 		pic_alpha->value);
 }
@@ -2458,7 +2454,7 @@ void SCR_HUD_Group9(hud_t *hud)
 	SCR_HUD_DrawGroup(hud,
 		width->value,
 		height->value,
-		&hud_pic_group9,
+		hud_pic_group9,
 		pic_scalemode->value,
 		pic_alpha->value);
 }

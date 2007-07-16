@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.43 2007-07-15 22:27:58 cokeman1982 Exp $
+    $Id: image.c,v 1.44 2007-07-16 21:31:59 cokeman1982 Exp $
 */
 
 #ifdef __FreeBSD__
@@ -988,7 +988,7 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 		// Dither the image using the 8-bit quake pallete for software.
 		// 
 		#ifndef GLQUAKE
-		{	
+		{
 			png_colorp quake_pal = (png_colorp)host_basepal;
 			png_set_dither(png_ptr, quake_pal, 256, 256, NULL, 1);
 		}
@@ -1018,7 +1018,7 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 		bitdepth = png_get_bit_depth(png_ptr, pnginfo);
 
 		// We don't support some formats.
-		if (bitdepth != 8 )//|| bytesperpixel != 4 || bytesperpixel != 1) 
+		if (bitdepth != 8 || (bytesperpixel != 4 && bytesperpixel != 1)) 
 		{
 			Com_DPrintf ("Unsupported PNG image %s: Bad color depth and/or bpp\n", COM_SkipPath(filename));
 			png_destroy_read_struct(&png_ptr, &pnginfo, NULL);

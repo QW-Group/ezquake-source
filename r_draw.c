@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include "wad.h"
 #include "qsound.h"
+#include "image.h"
 
 typedef struct 
 {
@@ -95,7 +96,7 @@ mpic_t *Draw_CacheWadPic (char *name)
 static mpic_t *Draw_CachePicBase(char *path, qbool syserror)
 {
 	cachepic_t *pic;
-	int i;
+	int i, real_width = -1, real_height = -1;
 	qpic_t *dat;
 
 	for (pic = cachepics, i = 0; i < numcachepics; pic++, i++)
@@ -117,10 +118,41 @@ static mpic_t *Draw_CachePicBase(char *path, qbool syserror)
 	if (dat)
 		return (mpic_t *)dat;
 
-	// Load the pic from disk.
-	FS_LoadCacheFile (path, &pic->cache);
-	
+	{
+	#ifdef WITH_PNG
+		FILE *f;
+
+		if (!strcmp(COM_FileExtension(path), "png") && FS_FOpenFile(path, &f))
+		{
+			int i;
+			unsigned int t = 0;
+			mpic_t *png_pic = NULL;
+			byte *png_data = Image_LoadPNG(f, path, 0, 0, &real_width, &real_height);
+
+			png_pic = Cache_Alloc(&pic->cache, sizeof(mpic_t) + (sizeof(byte) * real_width * real_height), path);
+			
+			((mpic_t *)png_pic)->width = real_width;
+			((mpic_t *)png_pic)->height = real_height;
+			
+			for (i = 0; i < (real_width * real_height); i++)
+			{
+				png_pic->data[i] = png_data[i];
+			}
+
+			Q_free(png_data);
+
+			return png_pic;
+		}
+		else
+		#endif // WITH_PNG
+		{
+			// Load the pic from disk.
+			FS_LoadCacheFile (path, &pic->cache);
+		}
+	}
+
 	dat = (qpic_t *)pic->cache.data;
+	
 	if (!dat) 
 	{
 		if (syserror)
@@ -1598,6 +1630,26 @@ void Draw_SSubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int 
 void Draw_STransPic (int x, int y, mpic_t *pic, float scale)
 {
 	Draw_RectStretchSubPic(pic, x, y, 0, 0, pic->width, pic->height, Q_rint(scale * pic->width), Q_rint(scale * pic->height));
+}
+
+void Draw_AlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float alpha)
+{
+	Draw_SubPic(x, y, pic, srcx, srcy, width, height);
+}
+
+void Draw_SAlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float scale, float alpha)
+{
+	Draw_RectStretchSubPic(pic, x, y, srcx, srcy, width, height, Q_rint(scale * pic->width), Q_rint(scale * pic->height));
+}
+
+void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float scale_x, float scale_y, float alpha)
+{
+	Draw_RectStretchSubPic(pic, x, y, srcx, srcy, width, height, Q_rint(scale_x * pic->width), Q_rint(scale_y * pic->height));
+}
+
+void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha)
+{
+	Draw_TransSubPic(x, y, pic, 0, 0, pic->width, pic->height);
 }
 
 void Draw_SFill (int x, int y, int w, int h, byte c, float scale)
