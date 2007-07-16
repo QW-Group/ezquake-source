@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.44 2007-07-16 21:31:59 cokeman1982 Exp $
+    $Id: image.c,v 1.45 2007-07-16 23:25:24 cokeman1982 Exp $
 */
 
 #ifdef __FreeBSD__
@@ -46,6 +46,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif*/
 
 #define IMAGE_MAX_DIMENSIONS 4096
+
+#ifndef GLQUAKE
+// Dither from 24-bit pictures to the 8-bit quake palette instead of
+// just getting the nearest color (make a smother transition) when loading a PNG in software.
+// FIXME: This will not give you transparency for the image atm, hence default off!
+cvar_t image_png_dither_onload = {"image_png_dither_onload", "0"}; 
+#endif // !GLQUAKE
 
 cvar_t image_png_compression_level = {"image_png_compression_level", "1"};
 cvar_t image_jpeg_quality_level = {"image_jpeg_quality_level", "75"};
@@ -988,11 +995,16 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 		// Dither the image using the 8-bit quake pallete for software.
 		// 
 		#ifndef GLQUAKE
+		if (image_png_dither_onload.integer)
 		{
 			png_colorp quake_pal = (png_colorp)host_basepal;
+			byte bg_color = 0xFF;
+
+			png_set_background(png_ptr, (png_color_16p)&bg_color, 1, false, 1.0);
+
 			png_set_dither(png_ptr, quake_pal, 256, 256, NULL, 1);
 		}
-		#endif
+		#endif // !GLQUAKE
 
 		// Update the pnginfo structure with our transformation changes.
 		png_read_update_info(png_ptr, pnginfo);
@@ -1088,12 +1100,47 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 	if (!(loadflag & PNG_LOAD_DATA))
 	{
 		Q_free (data);
-		data = NULL;
 	}
 
 	// Gather up the return data.
 	png_return_val = (png_data *)Q_malloc(sizeof(png_data));	
-	png_return_val->data = data;
+
+	#ifndef GLQUAKE
+	if (!image_png_dither_onload.integer)
+	{
+		// SOFTWARE - Convert to the 8-bit quake palette by taking the nearest color.
+
+		byte Draw_FindNearestColorByBytes(byte r, byte g, byte b, byte a);
+		int i;
+		color_t current_color = 0;
+		byte *data_8bit = (byte *)Q_malloc(sizeof(byte) * width * height);
+
+		for (i = 0; i < (height * width); i++)
+		{
+			if (data[(i * 4) + 3] == 0)
+			{
+				// Alpha = 0 Set transparent color.
+				data_8bit[i] = 255;
+			}
+			else
+			{
+				// Find the nearest color.
+				data_8bit[i] = Draw_FindNearestColorByBytes(data[(i * 4)], data[(i * 4) + 1], data[(i * 4) + 2], data[(i * 4) + 3]);
+			}
+		}
+
+		Q_free(data);
+
+		png_return_val->data = data_8bit;
+	}
+	else
+	#endif // !GLQUAKE
+	{
+		// If in GLQuake or dithering is turned on when in software
+		// pnglib has done the palette conversion for us already.
+		// FIXME: With dithering we have no transparency :/
+		png_return_val->data = data;
+	}
 	png_return_val->textchunks = textchunks;
 	png_return_val->text_count = n_textcount;
 
@@ -2302,6 +2349,11 @@ int Image_WritePCX (char *filename, byte *data, int width, int height, int rowby
 void Image_Init(void) 
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREENSHOTS);
+
+	// Software.
+	#ifndef GLQUAKE
+	Cvar_Register (&image_png_dither_onload);
+	#endif // !GLQUAKE
 	
 	#ifdef WITH_PNG
 	#ifndef WITH_PNG_STATIC

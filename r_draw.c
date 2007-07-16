@@ -124,21 +124,38 @@ static mpic_t *Draw_CachePicBase(char *path, qbool syserror)
 
 		if (!strcmp(COM_FileExtension(path), "png") && FS_FOpenFile(path, &f))
 		{
+			// TODO: Load lmp before the png to get size data.
 			int i;
 			unsigned int t = 0;
 			mpic_t *png_pic = NULL;
 			byte *png_data = Image_LoadPNG(f, path, 0, 0, &real_width, &real_height);
 
+			// Nothing loaded.
+			if (!png_data)
+			{
+				if (syserror)
+					Sys_Error ("Draw_CachePic: failed to load %s", path);
+				else
+					return NULL;
+			}
+
+			// Get a cache position.
 			png_pic = Cache_Alloc(&pic->cache, sizeof(mpic_t) + (sizeof(byte) * real_width * real_height), path);
 			
 			((mpic_t *)png_pic)->width = real_width;
 			((mpic_t *)png_pic)->height = real_height;
 			
+			// Copy the image data to the mpic.
 			for (i = 0; i < (real_width * real_height); i++)
 			{
 				png_pic->data[i] = png_data[i];
+
+				// Transparent picture.
+				if (png_pic->data[i] == TRANSPARENT_COLOR)
+					png_pic->alpha = true;
 			}
 
+			// Free the loaded PNG data.
 			Q_free(png_data);
 
 			return png_pic;
@@ -1218,22 +1235,19 @@ void Draw_Fill (int x, int y, int w, int h, byte c)
 	}
 }
 
-static byte Draw_FindNearestColor(color_t color)
+byte Draw_FindNearestColorByBytes(byte r, byte g, byte b, byte a)
 {
 	#define PALETTE_SIZE 255
     int i; 
 	int distanceSquared;
 	int bestIndex = 0;
     int minDistanceSquared = (255 * 255) + (255 * 255) + (255 * 255) + 1;
-	byte bytecolor[4];
-
-	COLOR_TO_RGBA(color, bytecolor);
     
 	for (i = 0; i < PALETTE_SIZE; i++)
 	{
-		int Rdiff = ((int)bytecolor[0]) - host_basepal[(i * 3)];
-        int Gdiff = ((int)bytecolor[1]) - host_basepal[(i * 3) + 1];
-        int Bdiff = ((int)bytecolor[2]) - host_basepal[(i * 3) + 2];
+		int Rdiff = ((int)r) - host_basepal[(i * 3)];
+        int Gdiff = ((int)g) - host_basepal[(i * 3) + 1];
+        int Bdiff = ((int)b) - host_basepal[(i * 3) + 2];
         
 		distanceSquared = (Rdiff * Rdiff) + (Gdiff * Gdiff) + (Bdiff * Bdiff);
         
@@ -1245,6 +1259,17 @@ static byte Draw_FindNearestColor(color_t color)
     }
 
     return bestIndex;
+}
+
+byte Draw_FindNearestColorByVect(byte rgba[4])
+{
+	return Draw_FindNearestColorByBytes(rgba[0], rgba[1], rgba[2], rgba[3]);
+}
+
+byte Draw_FindNearestColor(color_t color)
+{
+	byte bytecolor[4];
+	return Draw_FindNearestColorByVect(COLOR_TO_RGBA(color, bytecolor));
 }
 
 //
