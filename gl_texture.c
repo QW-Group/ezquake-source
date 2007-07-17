@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_texture.c,v 1.33 2007-07-17 19:42:56 tonik Exp $
+$Id: gl_texture.c,v 1.34 2007-07-17 21:33:06 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -244,6 +244,21 @@ static void ScaleDimensions(int width, int height, int *scaled_width, int *scale
 	*scaled_height = bound(1, *scaled_height, maxsize);
 }
 
+static void brighten32 (byte *data, int size)
+{
+	byte *p;
+	int i;
+
+	p = data;
+	for (i = 0; i < size/4; i++)
+	{
+		p[0] = min(p[0] * 2.0/1.5, 255);
+		p[1] = min(p[1] * 2.0/1.5, 255);
+		p[2] = min(p[2] * 2.0/1.5, 255);
+		p += 4;
+	}
+}
+
 void GL_Upload32 (unsigned *data, int width, int height, int mode) {
 	int	internal_format, tempwidth, tempheight, miplevel;
 	unsigned int *newdata;
@@ -264,6 +279,9 @@ void GL_Upload32 (unsigned *data, int width, int height, int mode) {
 
 	while (width > tempwidth || height > tempheight)
 		Image_MipReduce ((byte *) newdata, (byte *) newdata, &width, &height, 4);
+
+	if (mode & TEX_BRIGHTEN)
+		brighten32 ((byte *)newdata, width * height * 4);
 
 	if (mode & TEX_NOCOMPRESS)
 		internal_format = (mode & TEX_ALPHA) ? 4 : 3;
@@ -331,7 +349,7 @@ void GL_Upload8 (byte *data, int width, int height, int mode) {
 			trans[i + 3] = table[data[i + 3]];
 		}
 	}
-	GL_Upload32 (trans, width, height, mode);
+	GL_Upload32 (trans, width, height, mode & ~TEX_BRIGHTEN);
 }
 
 int GL_LoadTexture (char *identifier, int width, int height, byte *data, int mode, int bpp) {

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.30 2007-03-15 16:13:36 disconn3ct Exp $
+	$Id: gl_model.c,v 1.31 2007-07-17 21:33:06 tonik Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -344,7 +344,7 @@ static char *TranslateTextureName (texture_t *tx)
 	return NULL;
 }
 
-int Mod_LoadExternalTexture(texture_t *tx, int mode) {
+int Mod_LoadExternalTexture(texture_t *tx, int mode, int brighten_flag) {
 	char *name, *altname, *mapname, *groupname;
 
 	if (loadmodel->bspversion == HL_BSPVERSION)
@@ -364,33 +364,33 @@ int Mod_LoadExternalTexture(texture_t *tx, int mode) {
 	groupname = TP_GetMapGroupName(mapname, NULL);
 
 	if (loadmodel->isworldmodel) {
-		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s/%s", mapname, name), name, 0, 0, mode))) {
+		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s/%s", mapname, name), name, 0, 0, mode | brighten_flag))) {
 			if (!ISTURBTEX(name))
 				tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s/%s_luma", mapname, name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
 		} else {
 			if (groupname) {
-				if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s/%s", groupname, name), name, 0, 0, mode))) {
+				if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s/%s", groupname, name), name, 0, 0, mode | brighten_flag))) {
 					if (!ISTURBTEX(name))
 						tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s/%s_luma", groupname, name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
 				}
 			}
 		}
 	} else {
-		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/bmodels/%s", name), name, 0, 0, mode))) {
+		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/bmodels/%s", name), name, 0, 0, mode | brighten_flag))) {
 			if (!ISTURBTEX(name))
 				tx->fb_texturenum = GL_LoadTextureImage (va("textures/bmodels/%s_luma", name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
 		}
 	}
 
 	if (!tx->gl_texturenum && altname) {
-		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s", altname), altname, 0, 0, mode))) {
+		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s", altname), altname, 0, 0, mode | brighten_flag))) {
 			if (!ISTURBTEX(name))
 				tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s_luma", altname), va("@fb_%s", altname), 0, 0, mode | TEX_LUMA);
 		}
 	}
 
 	if (!tx->gl_texturenum) {
-		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s", name), name, 0, 0, mode))) {
+		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s", name), name, 0, 0, mode | brighten_flag))) {
 			if (!ISTURBTEX(name))
 				tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s_luma", name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
 		}
@@ -457,8 +457,6 @@ void R_LoadBrushModelTextures (model_t *m)
 
 //	Com_Printf("lm %d %s\n", lightmode, loadmodel->name);
 
-	brighten_flag = (lightmode == 2) ? TEX_BRIGHTEN : 0;
-
 	for (i = 0; i < loadmodel->numtextures; i++)
 	{
 		tx = loadmodel->textures[i];
@@ -486,8 +484,9 @@ void R_LoadBrushModelTextures (model_t *m)
 		mipTexLevel  = noscale_flag ? 0 : gl_miptexLevel.value;
 
 		texmode      = TEX_MIPMAP | noscale_flag;
+		brighten_flag = (!ISTURBTEX(tx->name) && (lightmode == 2)) ? TEX_BRIGHTEN : 0;
     
-		if (Mod_LoadExternalTexture(tx, texmode)) {
+		if (Mod_LoadExternalTexture(tx, texmode, brighten_flag)) {
 			tx->loaded = true; // mark as loaded
 			continue;
 		}
