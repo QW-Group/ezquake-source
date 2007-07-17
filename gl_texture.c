@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_texture.c,v 1.32 2007-07-15 22:27:58 cokeman1982 Exp $
+$Id: gl_texture.c,v 1.33 2007-07-17 19:42:56 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -633,7 +633,7 @@ int GL_LoadTextureImage (char *filename, char *identifier, int matchwidth, int m
 
 	gltexture = current_texture = GL_FindTexture(identifier);
 
-	if (!(data = GL_LoadImagePixels (filename, matchwidth, matchheight, mode, &image_height, &image_width))) 
+	if (!(data = GL_LoadImagePixels (filename, matchwidth, matchheight, mode, &image_width, &image_height))) 
 	{
 		texnum =  (gltexture && !current_texture) ? gltexture->texnum : 0;
 	} 
