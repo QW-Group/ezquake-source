@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.45 2007-07-16 23:25:24 cokeman1982 Exp $
+    $Id: image.c,v 1.46 2007-07-17 20:03:39 tonik Exp $
 */
 
 #ifdef __FreeBSD__
@@ -2259,15 +2259,21 @@ byte *Image_LoadPCX (FILE *fin, char *filename, int matchwidth, int matchheight,
 // This does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture.
 byte *Image_LoadPCX_As32Bit (FILE *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
 {
-	byte *pix = Image_LoadPCX (fin, filename, matchwidth, matchheight, real_width, real_height);
+	int image_width, image_height;
 	unsigned *out;
 	int size, i;
 
+	byte *pix = Image_LoadPCX (fin, filename, matchwidth, matchheight, &image_width, &image_height);
 	if (!pix)
 		return NULL;
 
-	//size = image_width * image_height;
-	size = (*real_width) * (*real_height);
+	if (real_width)
+		(*real_width) = image_width;
+
+	if (real_height)
+		(*real_height) = image_height;
+
+	size = image_width * image_height;
 	out = Q_malloc(size * sizeof(unsigned));
 
 	for (i = 0; i < size; i++)
