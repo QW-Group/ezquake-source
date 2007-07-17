@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.46 2007-07-17 20:03:39 tonik Exp $
+    $Id: image.c,v 1.47 2007-07-17 23:41:38 cokeman1982 Exp $
 */
 
 #ifdef __FreeBSD__
@@ -51,7 +51,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Dither from 24-bit pictures to the 8-bit quake palette instead of
 // just getting the nearest color (make a smother transition) when loading a PNG in software.
 // FIXME: This will not give you transparency for the image atm, hence default off!
-cvar_t image_png_dither_onload = {"image_png_dither_onload", "0"}; 
+cvar_t image_png_dither_onload = {"image_png_dither_onload", "1"}; 
 #endif // !GLQUAKE
 
 cvar_t image_png_compression_level = {"image_png_compression_level", "1"};
@@ -997,12 +997,22 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 		#ifndef GLQUAKE
 		if (image_png_dither_onload.integer)
 		{
+			png_uint_16p histogram;
 			png_colorp quake_pal = (png_colorp)host_basepal;
-			byte bg_color = 0xFF;
+			png_color_16 bg;
+			
+			// Set the background color to the transparent quake color.
+			bg.red		= host_basepal[(255 * 3)];
+			bg.green	= host_basepal[(255 * 3) + 1];
+			bg.blue		= host_basepal[(255 * 3) + 2];
 
-			png_set_background(png_ptr, (png_color_16p)&bg_color, 1, false, 1.0);
+			png_set_background(png_ptr, &bg, PNG_BACKGROUND_GAMMA_SCREEN, 0, 1.0);
 
-			png_set_dither(png_ptr, quake_pal, 256, 256, NULL, 1);
+			// Check if the image contains a histogram, use it in that case.
+			if (!png_get_hIST(png_ptr, pnginfo, &histogram))
+				histogram = NULL;
+
+			png_set_dither(png_ptr, quake_pal, 256, 256, histogram, true);
 		}
 		#endif // !GLQUAKE
 
@@ -1110,25 +1120,8 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 	{
 		// SOFTWARE - Convert to the 8-bit quake palette by taking the nearest color.
 
-		byte Draw_FindNearestColorByBytes(byte r, byte g, byte b, byte a);
-		int i;
-		color_t current_color = 0;
-		byte *data_8bit = (byte *)Q_malloc(sizeof(byte) * width * height);
-
-		for (i = 0; i < (height * width); i++)
-		{
-			if (data[(i * 4) + 3] == 0)
-			{
-				// Alpha = 0 Set transparent color.
-				data_8bit[i] = 255;
-			}
-			else
-			{
-				// Find the nearest color.
-				data_8bit[i] = Draw_FindNearestColorByBytes(data[(i * 4)], data[(i * 4) + 1], data[(i * 4) + 2], data[(i * 4) + 3]);
-			}
-		}
-
+		byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int height, qbool dither);
+		byte *data_8bit = Draw_Convert24bitTo8bit(data, 4, width, height, false);
 		Q_free(data);
 
 		png_return_val->data = data_8bit;

@@ -1272,6 +1272,190 @@ byte Draw_FindNearestColor(color_t color)
 	return Draw_FindNearestColorByVect(COLOR_TO_RGBA(color, bytecolor));
 }
 
+byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int height, qbool dither)
+{
+	#define CHAN(x, color) ((x * bytes_per_pixel) + color)
+	#define RED(x)			CHAN(x, 0)
+	#define GREEN(x)		CHAN(x, 1)
+	#define BLUE(x)			CHAN(x, 2)
+	#define ALPHA(x)		CHAN(x, 3)
+
+	byte *dest = NULL;
+
+	// Already an 8-bit picture.
+	if (bytes_per_pixel == 1)
+		return src;
+
+	if (bytes_per_pixel != 3 && bytes_per_pixel != 4)
+	{
+		Sys_Error("Draw_Convert24bitTo8bit(): Invalid bytes_per_pixel count, only 3 or 4 allowed, %d was given.\n", bytes_per_pixel);
+	}
+
+	// Allocate the 8-bit destination buffer.
+	dest = (byte *)Q_malloc(sizeof(byte) * width * height);
+
+	if (dither)
+	{ 
+		// FIXME : Not really working. Made for loading a PNG with transparency, solved it natively with pnglib though.
+
+		//
+		// Convert to 8-bit by dithering using "Burkes filter".
+		//
+
+		// Based on methods described in: 
+		// http://www.efg2.com/Lab/Library/ImageProcessing/DHALF.TXT
+		//
+		// The Burkes filter is a "error diffusion"-method for dithering.
+		// For each pixel we find the nearest color available in the palette
+		// and use the difference between this value and the original image color
+		// as an error value that is then distributed to neighboring pixels that
+		// haven't been processed yet. Burkes filter is an evolved Floyd-Steinberg
+		// filter, which only distributes this error to 4 nearby pixels. Burkes
+		// distributes it to 7.
+		//
+		// The error is distributed as follows:
+		//
+		//    (* = The current pixel.)
+		//	
+		//				*   8   4
+		//		2   4   8   4   2   (1/32)
+		//
+		// The (1/32) to the right indicates that the dispersion is divided by 32
+		// for each pixel, 8/32, 4/32, ...
+		//
+		// To guard from overflow when adding the error values, the values are
+		// truncated to keep within the palette bounds. Also it's important that
+		// the sum of the distributed error values is original to the original error value.
+
+		int x = 0;
+		int y = 0;
+		int color = 0;
+		int error = 0;
+		int half_error = 0;
+		int min_sq_dist = 0;
+		int sq_dist = 0;
+		int image_size = width * height;
+		byte nearest_color = 0;
+		byte *line = NULL;			// Contains the RGB values for the current line being processed.
+		byte *original_line = NULL;
+		byte *error_below = NULL;	// Errors distributed to the next line.
+		byte error_forward[4];		// Errors distributed forward on the current line.
+		byte error_parts[4];		// The error parts 2/32, 4/32 and 8/32.
+
+		#define LINE_SIZE		(sizeof(byte) * bytes_per_pixel * width)
+
+		line		= (byte *)Q_malloc(LINE_SIZE);
+		error_below = (byte *)Q_malloc(LINE_SIZE);
+		
+		memset(error_below, 0, LINE_SIZE);
+
+		// Loop through the image line by line.
+		for (y = 0; y < height; y++)
+		{
+			// No forward errors for first pixel.
+			error_forward[0] = error_forward[1] = error_forward[2] = error_forward[3] = 0;
+			
+			original_line = (src + (y * LINE_SIZE));
+
+			// Copy the current line from the image.
+			memcpy (line, original_line, LINE_SIZE);
+
+			for (x = 0; x < width; x++)
+			{
+				for (color = 0; color < bytes_per_pixel; color++)
+				{
+					// Add error from previous pixels and make sure
+					// the value isn't overflown.
+					error = line[CHAN(x, color)] + error_forward[color] + error_below[CHAN(x, color)];
+					clamp(error, 0, 255);
+					line[CHAN(x, color)] = (byte)error;
+				}
+
+				// Find the nearest color for the pixel.
+				nearest_color = Draw_FindNearestColorByBytes(line[RED(x)], line[GREEN(x)], line[BLUE(x)], line[ALPHA(x)]);
+
+				if (line[ALPHA(x)] == 0)
+					nearest_color = TRANSPARENT_COLOR;
+
+				// Set the nearest color for the pixel in the 8-bit destination buffer.
+				dest[sizeof(byte) * ((y * width) + x)] = nearest_color;
+
+				if (nearest_color == TRANSPARENT_COLOR)
+					continue;
+
+				// Go through each color channel and distribute the error
+				// to the nearby pixels.
+				// 				*   8   4
+				//		2   4   8   4   2   (1/32)
+				for (color = 0; color < 3; color++)
+				{					
+					error = line[CHAN(x, color)] - host_basepal[(nearest_color * 3) + color];
+					half_error = error >> 1;
+					
+					//
+					// Calculate the error parts, making sure the 
+					// sum of them isn't larger than the actual error.
+					//
+					error_parts[0] = (7 * half_error) >> 3;			// 7 / 16
+					error_parts[1] = half_error - error_parts[0];	// 1 / 16
+					half_error = error - half_error;				
+					error_parts[2] = (5 * half_error) >> 3;			// 5 / 16
+					error_parts[3] = error_parts[2];				// 3 / 16
+
+					//
+					// Distribute the error parts to nearby pixels.
+					//
+
+					// 7/16 To the right.
+					error_forward[color] = error_parts[0];	
+					
+					// 1/16 Down right.
+					if (x < (width - 1))
+						error_below[((x + 1) * bytes_per_pixel) + color] = error_parts[1];
+
+					// 5/16 Below.
+					if (x == 0)
+						error_below[(x * bytes_per_pixel) + color] = error_parts[2];
+					else
+						error_below[(x * bytes_per_pixel) + color] += error_parts[2];
+
+					// 3/16 Down left.
+					if (x > 0)
+						error_below[((x - 1) * bytes_per_pixel) + color] = error_parts[3];
+				}
+			}
+		}
+
+		Q_free(line);
+		Q_free(error_below);
+	}
+	else
+	{
+		//
+		// Convert to 8-bit using nearest color.
+		//
+
+		int i;
+		color_t current_color = 0;
+
+		for (i = 0; i < (height * width); i++)
+		{
+			if ((bytes_per_pixel == 4) && (src[ALPHA(i)] == 0))
+			{
+				// Alpha = 0 Set transparent color.
+				dest[i] = TRANSPARENT_COLOR;
+			}
+			else
+			{
+				// Find the nearest color.
+				dest[i] = Draw_FindNearestColorByBytes(src[RED(i)], src[GREEN(i)], src[BLUE(i)], (bytes_per_pixel == 4) ? src[ALPHA(i)] : 255);
+			}
+		}
+	}
+
+	return dest;
+}
+
 //
 // Bresenham's line algorithm - Draws a line effectivly between two points using only integer addition.
 // http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
