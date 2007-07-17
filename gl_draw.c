@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.75 2007-07-15 22:27:58 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.76 2007-07-17 23:38:53 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -431,7 +431,6 @@ void CachePics_DeInit(void) {
 //
 mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit)
 {
-	char temp_path[MAX_PATH];
 	mpic_t pic, *fpic, *pic_24bit;
 	qbool lmp_found = false;
 	qpic_t *dat;
