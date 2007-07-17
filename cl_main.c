@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.158 2007-07-12 17:06:47 qqshka Exp $
+$Id: cl_main.c,v 1.159 2007-07-17 19:28:24 tonik Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -98,6 +98,7 @@ cvar_t	cl_independentPhysics = {"cl_independentPhysics", "1", CVAR_INIT};
 
 cvar_t	cl_predict_players = {"cl_predict_players", "1"};
 cvar_t	cl_solid_players = {"cl_solid_players", "1"};
+cvar_t	cl_predict_half = {"cl_predict_half", "0"};
 
 cvar_t  show_fps2 = {"draw_fps","0"};
 
@@ -1149,6 +1150,7 @@ void CL_InitLocal (void) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register (&cl_predict_players);
 	Cvar_Register (&cl_solid_players);
+	Cvar_Register (&cl_predict_half);
 	Cvar_Register (&cl_oldPL);
 	Cvar_Register (&cl_timeout);
 	Cvar_Register (&cl_useproxy);

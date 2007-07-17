@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.34 2007-07-11 23:07:34 cokeman1982 Exp $
+	$Id: cl_ents.c,v 1.35 2007-07-17 19:28:24 tonik Exp $
 
 */
 
@@ -39,6 +39,7 @@ void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info)
 #define ISDEAD(i) ( (i) >= 41 && (i) <= 102 )
 
 extern cvar_t cl_predict_players, cl_solid_players, cl_rocket2grenade;
+extern cvar_t cl_predict_half;
 extern cvar_t cl_model_bobbing;		
 extern cvar_t cl_nolerp, cl_lerp_monsters, cl_newlerp;
 
@@ -1885,7 +1886,7 @@ void CL_LinkPlayers (void) {
 		ent.angles[ROLL] = 4 * V_CalcRoll (ent.angles, state->velocity);
 
 		// only predict half the move to minimize overruns
-		msec = 500 * (playertime - state->state_time);
+		msec = (cl_predict_half.value ? 500 : 1000) * (playertime - state->state_time);
 		if (msec <= 0 || !cl_predict_players.value || cls.mvdplayback) {		
 			VectorCopy (state->origin, ent.origin);
 		} else {
