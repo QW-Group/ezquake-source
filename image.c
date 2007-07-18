@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: image.c,v 1.47 2007-07-17 23:41:38 cokeman1982 Exp $
+    $Id: image.c,v 1.48 2007-07-18 23:36:31 cokeman1982 Exp $
 */
 
 #ifdef __FreeBSD__
@@ -50,7 +50,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef GLQUAKE
 // Dither from 24-bit pictures to the 8-bit quake palette instead of
 // just getting the nearest color (make a smother transition) when loading a PNG in software.
-// FIXME: This will not give you transparency for the image atm, hence default off!
 cvar_t image_png_dither_onload = {"image_png_dither_onload", "1"}; 
 #endif // !GLQUAKE
 
@@ -1131,7 +1130,6 @@ png_data *Image_LoadPNG_All (FILE *fin, char *filename, int matchwidth, int matc
 	{
 		// If in GLQuake or dithering is turned on when in software
 		// pnglib has done the palette conversion for us already.
-		// FIXME: With dithering we have no transparency :/
 		png_return_val->data = data;
 	}
 	png_return_val->textchunks = textchunks;
