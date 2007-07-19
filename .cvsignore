@@ -2,7 +2,3 @@ Release-gl
 Debug-gl
 Debug
 Release
-osx/build
-ezquake_msvs_80.vcproj.*
-ezquake_msvs_80.ncb
-ezquake_msvs_80.suo

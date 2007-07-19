@@ -1,9 +1,8 @@
-gas2masm_msvs_80.vcproj.JHN4.Johnny.user
-gas2masm_msvs_80.ncb
-gas2masm_msvs_80.suo
-BuildLog.htm
+*.ncb
+*.suo
 Debug
-gas2masm_msvs_80.vcproj.BLESK.Honza.user
+Release
+gas2masm_msvs_80.vcproj.*.user
 gas2masm.exe
 gas2masm.ilk
-Release
+BuildLog.htm

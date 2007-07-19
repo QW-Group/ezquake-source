@@ -1,0 +1,6 @@
+*.ncb
+*.suo
+Debug
+Debug-gl
+Release-gl
+ezquake_msvs_80.vcproj.*.user
