@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.18 2007-07-12 21:22:25 cokeman1982 Exp $
+	$Id: common_draw.c,v 1.19 2007-07-19 19:10:47 cokeman1982 Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -434,6 +434,72 @@ void SCR_DrawClients(void)
     }
 }
 #endif
+
+cachepic_node_t	*cachepics[CACHED_PICS_HDSIZE];
+
+mpic_t *CachePic_Find(const char *path) 
+{
+	int key = Com_HashKey(path) % CACHED_PICS_HDSIZE;
+	cachepic_node_t *searchpos = cachepics[key];
+
+	while (searchpos) 
+	{
+		if (!strcmp(searchpos->data.name, path)) 
+		{
+			return searchpos->data.pic;
+		}
+		searchpos = searchpos->next;
+	}
+
+	return NULL;
+}
+
+mpic_t* CachePic_Add(const char *path, mpic_t *pic) 
+{
+	int key = Com_HashKey(path) % CACHED_PICS_HDSIZE;
+	cachepic_node_t *searchpos = cachepics[key];
+	cachepic_node_t **nextp = cachepics + key;
+
+	while (searchpos) 
+	{
+		nextp = &searchpos->next;
+		searchpos = searchpos->next;
+	}
+
+	searchpos = (cachepic_node_t *) Q_malloc(sizeof(cachepic_node_t));
+	
+	searchpos->data.pic = pic;
+	// Write data.
+	#ifdef GLQUAKE
+	//memcpy(&searchpos->data.pic, pic, sizeof(mpic_t));
+	#else
+	
+	#endif // GLQUAKE
+
+	strncpy(searchpos->data.name, path, sizeof(searchpos->data.name));
+	searchpos->next = NULL; // Terminate the list.
+	*nextp = searchpos;		// Connect to the list.
+
+	return searchpos->data.pic;
+}
+
+void CachePics_DeInit(void) 
+{
+	int i;
+	cachepic_node_t *cur = NULL, *nxt = NULL;
+
+	for (i = 0; i < CACHED_PICS_HDSIZE; i++)
+	{
+		for (cur = cachepics[i]; cur; cur = nxt)
+		{
+			nxt = cur->next;
+			Q_free(cur->data.pic);
+			Q_free(cur);
+		}
+	}
+
+	memset(cachepics, 0, sizeof(cachepics));
+}
 
 const int COLOR_WHITE = 0xFFFFFFFF;
 

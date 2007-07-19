@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "wad.h"
 #include "qsound.h"
 #include "image.h"
+#include "common_draw.h"
 
 typedef struct 
 {
@@ -70,16 +71,6 @@ int scissor_bottom	= 0;
 //=============================================================================
 // Support Routines 
 
-typedef struct cachepic_s 
-{
-	char			name[MAX_QPATH];
-	cache_user_t	cache;
-} cachepic_t;
-
-#define	MAX_CACHED_PICS		128
-cachepic_t	cachepics[MAX_CACHED_PICS];
-int			numcachepics;
-
 mpic_t *Draw_CacheWadPic (char *name) 
 {
 	qpic_t *p;
@@ -93,82 +84,80 @@ mpic_t *Draw_CacheWadPic (char *name)
 	return pic;
 }
 
-static mpic_t *Draw_CachePicBase(char *path, qbool syserror)
+//
+// Load an optional picture (if not present, returns null). If syserror is set it crashes instead.
+//
+mpic_t *Draw_CachePicSafe(char *path, qbool syserror, qbool only24bit)
 {
-	cachepic_t *pic;
-	int i, real_width = -1, real_height = -1;
+	//
+	// Get the filename without extension.
+	// Look for the file in the cache, return it if it exists.
+	// Otherwise add the pic to the cache.
+	// Try to load lmp.
+	//		if (fail) Sys error!
+	// if (only24bit) 
+	//		Try to load PNG.
+	//
+	FILE *f = NULL;
+	char stripped_path[MAX_PATH];
+	char lmp_path[MAX_PATH];
+	char png_path[MAX_PATH];
+	int real_width = -1, real_height = -1;
 	qpic_t *dat;
 
-	for (pic = cachepics, i = 0; i < numcachepics; pic++, i++)
-	{
-		if (!strcmp (path, pic->name))
-			break;
-	}
+	// Get the filename without extension.
+	COM_StripExtension(path, stripped_path);
+	snprintf(lmp_path, MAX_PATH, "%s.lmp", stripped_path);
+	snprintf(png_path, MAX_PATH, "%s.png", stripped_path);
 
-	if (i == numcachepics) 
-	{
-		if (numcachepics == MAX_CACHED_PICS)
-			Sys_Error ("numcachepics == MAX_CACHED_PICS");
-		numcachepics++;
-		strcpy (pic->name, path);
-	}
-
-	dat = (qpic_t *) Cache_Check (&pic->cache);
-
-	if (dat)
+	// Check if the picture was already cached.
+	if ((dat = (qpic_t *)CachePic_Find(path)))
 		return (mpic_t *)dat;
 
-	{
 	#ifdef WITH_PNG
-		FILE *f;
+	if (only24bit && FS_FOpenFile(png_path, &f) > 0)
+	{
+		int i;
+		unsigned int t = 0;
+		mpic_t *png_pic = NULL;
+		byte *png_data = Image_LoadPNG(f, path, 0, 0, &real_width, &real_height);
 
-		if (!strcmp(COM_FileExtension(path), "png") && FS_FOpenFile(path, &f))
+		// Nothing loaded.
+		if (!png_data)
 		{
-			// TODO: Load lmp before the png to get size data.
-			int i;
-			unsigned int t = 0;
-			mpic_t *png_pic = NULL;
-			byte *png_data = Image_LoadPNG(f, path, 0, 0, &real_width, &real_height);
-
-			// Nothing loaded.
-			if (!png_data)
-			{
-				if (syserror)
-					Sys_Error ("Draw_CachePic: failed to load %s", path);
-				else
-					return NULL;
-			}
-
-			// Get a cache position.
-			png_pic = Cache_Alloc(&pic->cache, sizeof(mpic_t) + (sizeof(byte) * real_width * real_height), path);
-			
-			((mpic_t *)png_pic)->width = real_width;
-			((mpic_t *)png_pic)->height = real_height;
-			
-			// Copy the image data to the mpic.
-			for (i = 0; i < (real_width * real_height); i++)
-			{
-				png_pic->data[i] = png_data[i];
-
-				// Transparent picture.
-				if (png_pic->data[i] == TRANSPARENT_COLOR)
-					png_pic->alpha = true;
-			}
-
-			// Free the loaded PNG data.
-			Q_free(png_data);
-
-			return png_pic;
+			if (syserror)
+				Sys_Error ("Draw_CachePic: failed to load %s", path);
+			else
+				return NULL;
 		}
-		else
-		#endif // WITH_PNG
+
+		// Get a cache position.
+		png_pic = (void *)Q_malloc(sizeof(mpic_t) + (sizeof(byte) * real_width * real_height));
+		
+		((mpic_t *)png_pic)->width = real_width;
+		((mpic_t *)png_pic)->height = real_height;
+		
+		// Copy the image data to the mpic.
+		for (i = 0; i < (real_width * real_height); i++)
 		{
-			// Load the pic from disk.
-			FS_LoadCacheFile (path, &pic->cache);
+			png_pic->data[i] = png_data[i];
+
+			// Transparent picture.
+			if (png_pic->data[i] == TRANSPARENT_COLOR)
+				png_pic->alpha = true;
 		}
+
+		// Free the loaded PNG data.
+		Q_free(png_data);
+
+		return CachePic_Add(path, png_pic);
 	}
-
-	dat = (qpic_t *)pic->cache.data;
+	else
+	#endif // WITH_PNG
+	{
+		// Load the LMP pic from disk.
+		dat = (qpic_t *)FS_LoadHeapFile(path);
+	}
 	
 	if (!dat) 
 	{
@@ -181,9 +170,10 @@ static mpic_t *Draw_CachePicBase(char *path, qbool syserror)
 	SwapPic (dat);
 
 	((mpic_t *) dat)->width = dat->width;
+	((mpic_t *) dat)->height = dat->height;
 	((mpic_t *) dat)->alpha = memchr (&dat->data, 255, dat->width * ((mpic_t *)dat)->height) != NULL;
 
-	return (mpic_t *)dat;
+	return CachePic_Add(path, (mpic_t *)dat);
 }
 
 //
@@ -191,18 +181,7 @@ static mpic_t *Draw_CachePicBase(char *path, qbool syserror)
 //
 mpic_t *Draw_CachePic (char *path) 
 {
-	return Draw_CachePicBase(path, true);
-}
-
-//
-// Load an optional picture (if not present, returns null)
-//
-mpic_t *Draw_CachePicSafe (char *path, qbool syserror, qbool obsolete)
-{
-	// 3rd argument is unused because we don't have 24bit pictures support in non-gl rendering
-	// and yes, 2nd argument is illogical because calling a function that has 'Safe' in the name
-	// we would expect that it automatically presumes not lead to app exit
-	return Draw_CachePicBase (path, syserror);
+	return Draw_CachePicSafe(path, true, false);
 }
 
 //
@@ -266,6 +245,8 @@ void Draw_Init (void)
 	Cvar_ResetCurrentGroup();
 
 	W_LoadWadFile("gfx.wad"); // Safe re-init.
+
+	CachePics_DeInit();
 
 	draw_chars[0] = W_GetLumpName ("conchars");
 	draw_chars[1] = LoadAlternateCharset ("conchars-cyr");
@@ -1286,6 +1267,7 @@ byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int hei
 	if (bytes_per_pixel == 1)
 		return src;
 
+	#if 0 // NOT WORKING ATM!
 	if (bytes_per_pixel != 3 && bytes_per_pixel != 4)
 	{
 		Sys_Error("Draw_Convert24bitTo8bit(): Invalid bytes_per_pixel count, only 3 or 4 allowed, %d was given.\n", bytes_per_pixel);
@@ -1297,6 +1279,7 @@ byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int hei
 	if (dither)
 	{ 
 		// FIXME : Not really working. Made for loading a PNG with transparency, solved it natively with pnglib though.
+		// FIXME : Could be extended so that alpha transparency is dithered a bit also.
 
 		//
 		// Convert to 8-bit by dithering using "Burkes filter".
@@ -1430,6 +1413,7 @@ byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int hei
 		Q_free(error_below);
 	}
 	else
+	#endif // NOT WORKING ATM!
 	{
 		//
 		// Convert to 8-bit using nearest color.

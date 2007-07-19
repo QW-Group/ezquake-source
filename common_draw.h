@@ -8,6 +8,24 @@
 
 void CommonDraw_Init(void);
 
+typedef struct cachepic_s 
+{
+	char		name[MAX_QPATH];
+	mpic_t		*pic;
+} cachepic_t;
+
+typedef struct cachepic_node_s 
+{
+	cachepic_t data;
+	struct cachepic_node_s *next;
+} cachepic_node_t;
+
+#define	CACHED_PICS_HDSIZE		64
+
+mpic_t *CachePic_Find(const char *path);
+mpic_t* CachePic_Add(const char *path, mpic_t *pic);
+void CachePics_DeInit(void);
+
 //int SCR_DrawDemoStatus(void);
 //void PrepareCrosshair(int num, byte tab[10][10]);
 //void SCR_DrawClients(void);
@@ -38,4 +56,4 @@ void SCR_DrawWordWrapString(int x, int y,
 void HUD_BeforeDraw();
 void HUD_AfterDraw();
 
-#endif  // __COMMON_GRAPH__H__
+#endif  // __COMMON_DRAW__H__

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.76 2007-07-17 23:38:53 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.77 2007-07-19 19:10:47 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -26,6 +26,7 @@ $Id: gl_draw.c,v 1.76 2007-07-17 23:38:53 cokeman1982 Exp $
 #include "stats_grid.h"
 #include "utils.h"
 #include "sbar.h"
+#include "common_draw.h"
 
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
 extern cvar_t scr_coloredText, con_shift;
@@ -313,22 +314,9 @@ void Scrap_Upload (void) {
 //=============================================================================
 /* Support Routines */
 
-typedef struct cachepic_s {
-	char		name[MAX_QPATH];
-	mpic_t		pic;
-} cachepic_t;
 
-typedef struct cachepic_node_s {
-	cachepic_t data;
-	struct cachepic_node_s *next;
-} cachepic_node_t;
-
-#define	CACHED_PICS_HDSIZE		64
-cachepic_node_t	*cachepics[CACHED_PICS_HDSIZE];
-
-//int		pic_texels, pic_count;
-
-mpic_t *Draw_CacheWadPic (char *name) {
+mpic_t *Draw_CacheWadPic (char *name) 
+{
 	qpic_t	*p;
 	mpic_t	*pic, *pic_24bit;
 
@@ -338,88 +326,48 @@ mpic_t *Draw_CacheWadPic (char *name) {
 	if (
 		(pic_24bit = GL_LoadPicImage(va("textures/wad/%s", name), name, 0, 0, TEX_ALPHA)) ||
 		(pic_24bit = GL_LoadPicImage(va("gfx/%s", name), name, 0, 0, TEX_ALPHA))
-	) {
+		) 
+	{
 		memcpy(&pic->texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
 		return pic;
 	}
 
 	// load little ones into the scrap
-	if (p->width < 64 && p->height < 64) {
+	if (p->width < 64 && p->height < 64) 
+	{
 		int x = 0, y = 0, i, j, k, texnum;
 
 		texnum = memchr(p->data, 255, p->width*p->height) != NULL;
-		if (!Scrap_AllocBlock (texnum, p->width, p->height, &x, &y)) {
+		
+		if (!Scrap_AllocBlock (texnum, p->width, p->height, &x, &y)) 
+		{
 			GL_LoadPicTexture (name, pic, p->data);
 			return pic;
 		}
+		
 		k = 0;
+		
 		for (i = 0; i < p->height; i++)
+		{
 			for (j  = 0; j < p->width; j++, k++)
+			{
 				scrap_texels[texnum][(y + i) * BLOCK_WIDTH + x + j] = p->data[k];
+			}
+		}
+
 		texnum += scrap_texnum;
 		pic->texnum = texnum;
 		pic->sl = (x + 0.25) / (float) BLOCK_WIDTH;
 		pic->sh = (x + p->width - 0.25) / (float) BLOCK_WIDTH;
 		pic->tl = (y + 0.25) / (float) BLOCK_WIDTH;
 		pic->th = (y + p->height - 0.25) / (float) BLOCK_WIDTH;
-
-//		pic_count++;
-//		pic_texels += p->width * p->height;
-	} else {
+	} 
+	else 
+	{
 		GL_LoadPicTexture (name, pic, p->data);
 	}
 
 	return pic;
-}
-
-mpic_t *CachePic_Find(const char *path) {
-	int key = Com_HashKey(path) % CACHED_PICS_HDSIZE;
-	cachepic_node_t *searchpos = cachepics[key];
-
-	while (searchpos) {
-		if (!strcmp(searchpos->data.name, path)) {
-			return &searchpos->data.pic;
-		}
-		searchpos = searchpos->next;
-	}
-
-	return NULL;
-}
-
-mpic_t* CachePic_Add(const char *path, mpic_t *pic) 
-{
-	int key = Com_HashKey(path) % CACHED_PICS_HDSIZE;
-	cachepic_node_t *searchpos = cachepics[key];
-	cachepic_node_t **nextp = cachepics + key;
-
-	while (searchpos) 
-	{
-		nextp = &searchpos->next;
-		searchpos = searchpos->next;
-	}
-
-	searchpos = (cachepic_node_t *) Q_malloc(sizeof(cachepic_node_t));
-	
-	// Write data.
-	memcpy(&searchpos->data.pic, pic, sizeof(mpic_t));
-	strncpy(searchpos->data.name, path, sizeof(searchpos->data.name));
-	searchpos->next = NULL; // Terminate the list.
-	*nextp = searchpos;// Connect to the list.
-
-	return &searchpos->data.pic;
-}
-
-void CachePics_DeInit(void) {
-	int i;
-	cachepic_node_t *cur, *nxt;
-
-	for (i = 0; i < CACHED_PICS_HDSIZE; i++)
-		for (cur = cachepics[i]; cur; cur = nxt) {
-			nxt = cur->next;
-			Q_free(cur);
-		}
-
-	memset(cachepics, 0, sizeof(cachepics));
 }
 
 //
@@ -431,35 +379,53 @@ void CachePics_DeInit(void) {
 //
 mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit)
 {
-	mpic_t pic, *fpic, *pic_24bit;
+	char stripped_path[MAX_PATH];
+	char lmp_path[MAX_PATH];
+	char png_path[MAX_PATH];
+	mpic_t *pic, *fpic, *pic_24bit;
 	qbool lmp_found = false;
-	qpic_t *dat;
+	FILE *f = NULL;
+	qpic_t *dat = NULL;
 
 	// Check if the picture was already cached.
 	if ((fpic = CachePic_Find(path)))
 		return fpic;
+
+	// Get the filename without extension.
+	COM_StripExtension(path, stripped_path);
+	snprintf(lmp_path, MAX_PATH, "%s.lmp", stripped_path);
+	snprintf(png_path, MAX_PATH, "%s.png", stripped_path);
 
 	// Try loading the pic from disk.
 
 	// Only load the 24-bit version of the picture.
 	if (only24bit)
 	{
-		if ((pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
-			return CachePic_Add(path, pic_24bit);
-
-		if(crash)
-			Sys_Error ("Draw_CachePicSafe: failed to load %s", path);
-
-		return NULL;
-	}
-
-	// Load the ".lmp" file.
-	if (!strcmp(COM_FileExtension(path), "lmp") || !strcmp(COM_FileExtension(path), ""))
-	{
-		if (!(dat = (qpic_t *)FS_LoadTempFile (path)))
+		if (!(pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
 		{
 			if(crash)
 				Sys_Error ("Draw_CachePicSafe: failed to load %s", path);
+
+			return NULL;
+		}
+		
+		// Make a new copy of the returned pic, since it's static 
+		// in GL_LoadPicImage and will be overwritten.
+		fpic = (mpic_t *)Q_malloc(sizeof(mpic_t));
+		memcpy(fpic, pic_24bit, sizeof(mpic_t));
+
+		return CachePic_Add(path, fpic);
+	}
+
+	// Load the ".lmp" file.
+	if (FS_FOpenFile(lmp_path, &f) > 0)
+	{
+		fclose (f);
+
+		if (!(dat = (qpic_t *)FS_LoadTempFile (lmp_path)))
+		{
+			if(crash)
+				Sys_Error ("Draw_CachePicSafe: failed to load %s", lmp_path);
 
 			return NULL;
 		}
@@ -470,28 +436,39 @@ mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit)
 		SwapPic (dat);
 	}
 
+	pic = (mpic_t *)Q_malloc(sizeof(mpic_t));
+
 	// Try loading the 24-bit picture.
 	// If that fails load the data for the lmp instead.
 	if ((pic_24bit = GL_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA)))
 	{
-		memcpy(&pic, pic_24bit, sizeof(mpic_t));
+		memcpy(pic, pic_24bit, sizeof(mpic_t));
 
 		// Only use the lmp-data if there was one.
 		if (lmp_found)
 		{
-			pic.width = dat->width;
-			pic.height = dat->height;
+			pic->width = dat->width;
+			pic->height = dat->height;
 		}
+	}
+	else if (!dat)
+	{
+		Q_free(pic);
+
+		if(crash)
+			Sys_Error ("Draw_CachePicSafe: failed to load %s", path);
+
+		return NULL;
 	}
 	else
 	{
-		pic.width = dat->width;
-		pic.height = dat->height;
-		GL_LoadPicTexture (path, &pic, dat->data);
+		pic->width = dat->width;
+		pic->height = dat->height;
+		GL_LoadPicTexture (path, pic, dat->data);
 	}
 
 	// Add the picture to the cache.
-	return CachePic_Add(path, &pic);
+	return CachePic_Add(path, pic);
 }
 
 mpic_t *Draw_CachePic (char *path)
@@ -694,12 +671,10 @@ void Draw_Init (void) {
 
 	CachePics_DeInit();
 
-// { scrap clearing
+	// Clear the scrap.
 	memset (scrap_allocated, 0, sizeof(scrap_allocated));
 	memset (scrap_texels,    0, sizeof(scrap_texels));
-
-	scrap_dirty = 0; // bit mask
-// }
+	scrap_dirty = 0; // Bit mask.
 
 	GL_Texture_Init();  // probably safe to re-init now
 

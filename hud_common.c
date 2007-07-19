@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.147 2007-07-16 21:31:59 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.148 2007-07-19 19:10:47 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -2112,7 +2112,7 @@ qbool SCR_HUD_LoadGroupPic(cvar_t *var, mpic_t **hud_pic, char *newpic)
 	snprintf (pic_path, sizeof(pic_path), HUD_GROUP_PIC_BASEPATH, newpic);
 
 	// Try loading the pic.
-	if (!(temp_pic = Draw_CachePicSafe(pic_path, false, false)))
+	if (!(temp_pic = Draw_CachePicSafe(pic_path, false, true)))
 	{
 		Com_Printf("Couldn't load picture %s for hud group.\n", newpic);
 		return true;
