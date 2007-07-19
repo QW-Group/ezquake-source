@@ -7,7 +7,7 @@
     made by:
         johnnycz, Mar 2007
     last edit:
-        $Id: Ctrl_ScrollBar.c,v 1.6 2007-07-11 23:07:34 cokeman1982 Exp $
+        $Id: Ctrl_ScrollBar.c,v 1.7 2007-07-19 19:12:00 cokeman1982 Exp $
 
 */
 
@@ -17,18 +17,17 @@
 
 #define SCRBARSCALE 0.33
 
-// In GL shouw .png scrollbar images
-mpic_t *scrbar_up, *scrbar_down, *scrbar_bg, *scrbar_slider;
+// PNG scrollbar images
+static mpic_t *scrbar_up, *scrbar_down, *scrbar_bg, *scrbar_slider;
 int scrollbar_width;
 int slider_height;
 
 void ScrollBars_Init()
 {
-	// TODO : Make sure this works with 8-bit versions of the pics also.
-	scrbar_bg = Draw_CachePicSafe("textures/scrollbars/slidebg", false, false);
-	scrbar_up = Draw_CachePicSafe("textures/scrollbars/arrow_up", false, false);
-	scrbar_down = Draw_CachePicSafe("textures/scrollbars/arrow_down", false, false);
-    scrbar_slider = Draw_CachePicSafe("textures/scrollbars/slider", false, false);
+	scrbar_bg = Draw_CachePicSafe("textures/scrollbars/slidebg", false, true);
+	scrbar_up = Draw_CachePicSafe("textures/scrollbars/arrow_up", false, true);
+	scrbar_down = Draw_CachePicSafe("textures/scrollbars/arrow_down", false, true);
+    scrbar_slider = Draw_CachePicSafe("textures/scrollbars/slider", false, true);
     if (scrbar_slider) 
 	{
         scrollbar_width = scrbar_slider->width * SCRBARSCALE;
@@ -88,33 +87,34 @@ qbool ScrollBar_MouseEvent(PScrollBar scrbar, const mouse_state_t *ms)
     return true;
 }
 
-#ifdef GLQUAKE
-// TODO: Draw scrollbars in software also? Need 8-bit versions of the pics
-static void SCRB_DrawGL(PScrollBar scrbar, int x, int y, int h)
+static void SCRB_DrawPics(PScrollBar scrbar, int x, int y, int h)
 {
     int w = scrollbar_width;
-    // height of one background image
-    int sh = (scrbar_bg->height) * SCRBARSCALE;
-    // how many complete background images fit in here
-    int compl_bgs = h / sh;                           
-    // height of the part of the last background image
+
+    // Height of one background image.
+    int sh = max(1, (scrbar_bg->height) * SCRBARSCALE);
+   
+	// How many complete background images fit in here
+    int compl_bgs = h / sh;    
+
+    // Height of the part of the last background image.
     int rest_bgh = (h - compl_bgs * sh) / SCRBARSCALE;
     int i;
     
     for (i = 0; i < compl_bgs; i++)
         Draw_SPic(x, y + i * sh, scrbar_bg, SCRBARSCALE);
-    // add the last part to fill the whole background
+
+    // Add the last part to fill the whole background.
     Draw_SSubPic(x, y + i * sh, scrbar_bg, 0, 0, scrbar_bg->width, rest_bgh, SCRBARSCALE);
     
-    // draw the remaining parts of the scrollbar
+    // Draw the remaining parts of the scrollbar.
     Draw_SPic(x, y, scrbar_up, SCRBARSCALE);
     Draw_SPic(x, y + h - w, scrbar_down, SCRBARSCALE);
     Draw_SPic(x, y + w + (h - 2 * w - slider_height) * scrbar->curpos, scrbar_slider, SCRBARSCALE);
 }
 
-#endif
 
-static void SCRB_DrawSW(PScrollBar scrbar, int x, int y, int h)
+static void SCRB_DrawNoPics(PScrollBar scrbar, int x, int y, int h)
 {
 	#define SCROLLBAR_QCOLOR		4
 	#define SCROLLBAR_BUTTON_QCOLOR	72
@@ -131,14 +131,8 @@ void ScrollBar_Draw(PScrollBar scrbar, int x, int y, int h)
 {
     scrbar->height = h;
 
-// noone coded PNG loading for software yet so we hate to use completely different rendering .. damnit
-#ifdef GLQUAKE
-	// TODO : Use the same draw function for both GL and software. Fix PNG loading maybe.
-    if (scrbar_up)
-        SCRB_DrawGL(scrbar, x, y, h);
-    else
-        SCRB_DrawSW(scrbar, x, y, h);
-#else
-    SCRB_DrawSW(scrbar, x, y, h);
-#endif
+	if (scrbar_up && scrbar_bg && scrbar_down && scrbar_slider)
+		SCRB_DrawPics(scrbar, x, y, h);
+	else
+		SCRB_DrawNoPics(scrbar, x, y, h);
 }
