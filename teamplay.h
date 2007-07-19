@@ -147,11 +147,15 @@ int BestWeaponFromStatItems (int stat);
 #define it_eyes		(1 << 23)
 #define it_sentry   (1 << 24)
 #define it_disp		(1 << 25)
-#define it_runes	(1 << 26)
-#define it_quaded   (1 << 27)
-#define it_pented   (1 << 28)
-#define NUM_ITEMFLAGS 29
+#define it_quaded   (1 << 26)
+#define it_pented   (1 << 27)
+#define it_rune1	(1 << 28)
+#define it_rune2	(1 << 29)
+#define it_rune3	(1 << 30)
+#define it_rune4	(1 << 31)
+#define NUM_ITEMFLAGS 32
  
+#define it_runes	(it_rune1|it_rune2|it_rune3|it_rune4)
 #define it_powerups	(it_quad|it_pent|it_ring)
 #define it_weapons	(it_lg|it_rl|it_gl|it_sng)// Does anyone really care to report ng/ssg?
 #define it_armor	(it_ra|it_ya|it_ga)

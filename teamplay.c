@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.78 2007-07-19 16:05:08 himan Exp $
+    $Id: teamplay.c,v 1.79 2007-07-19 18:22:22 cokeman1982 Exp $
 */
 
 #include <time.h>
@@ -2256,7 +2256,7 @@ int TP_CategorizeMessage (const char *s, int *offset)
 char *pknames[] = {"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
                    "mh", "health", "lg", "rl", "gl", "sng", "ng", "ssg", "pack",
                    "cells", "rockets", "nails", "shells", "flag",
-                   "teammate", "enemy", "eyes", "sentry", "disp", "runes", "quaded", "pented"};
+                   "teammate", "enemy", "eyes", "sentry", "disp", "quaded", "pented", "rune1", "rune2", "rune3", "rune4"};
 
 #define default_pkflags (it_powerups|it_suit|it_armor|it_weapons|it_mh| \
 				it_rockets|it_cells||it_pack|it_flag)
@@ -2281,7 +2281,7 @@ byte pointpriorities[NUM_ITEMFLAGS];
 
 static void DumpFlagCommand(FILE *f, char *name, int flags, int default_flags)
 {
-	int i, all_flags = (1 << NUM_ITEMFLAGS) - 1;
+	int i, all_flags = UINT_MAX;
 
 	fprintf(f, "%s ", name);
 
@@ -2391,7 +2391,7 @@ static void FlagCommand (int *flags, int defaultflags)
 			else if (!strcasecmp (p, "default"))
 				flag = defaultflags;
 			else if (!strcasecmp (p, "all"))
-				flag = (1<<NUM_ITEMFLAGS)-1;
+				flag = UINT_MAX; //(1 << NUM_ITEMFLAGS); //-1;
 		}
 
 
@@ -2529,16 +2529,16 @@ item_t	tp_items[] = {
                         {	it_flag,	&tp_name_flag,	"progs/flag.mdl",
                           {0, 0, 14},	25,
                         },
-                        {	it_runes,	&tp_name_rune1,	"progs/end1.mdl",
+                        {	it_rune1,	&tp_name_rune1,	"progs/end1.mdl",
                           {0, 0, 20},	18,
                         },
-                        {	it_runes,	&tp_name_rune2,	"progs/end2.mdl",
+                        {	it_rune2,	&tp_name_rune2,	"progs/end2.mdl",
                           {0, 0, 20},	18,
                         },
-                        {	it_runes,	&tp_name_rune3,	"progs/end3.mdl",
+                        {	it_rune3,	&tp_name_rune3,	"progs/end3.mdl",
                           {0, 0, 20},	18,
                         },
-                        {	it_runes,	&tp_name_rune4,	"progs/end4.mdl",
+                        {	it_rune4,	&tp_name_rune4,	"progs/end4.mdl",
                           {0, 0, 20},	18,
                         },
                         {	it_ra|it_ya|it_ga, NULL,	"progs/armor.mdl",
