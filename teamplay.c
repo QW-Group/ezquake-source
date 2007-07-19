@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.77 2007-06-15 12:26:07 johnnycz Exp $
+    $Id: teamplay.c,v 1.78 2007-07-19 16:05:08 himan Exp $
 */
 
 #include <time.h>
@@ -113,7 +113,7 @@ cvar_t	tp_name_status_green = {"tp_name_status_green", "$G"};
 cvar_t	tp_name_status_yellow = {"tp_name_status_yellow", "$Y"};
 cvar_t	tp_name_status_red = {"tp_name_status_red", "$R"};
 cvar_t	tp_name_status_blue = {"tp_name_status_blue", "$B"};
-cvar_t	tp_name_status_white = {"tp_name_status_white", "$x04"};
+cvar_t	tp_name_status_white = {"tp_name_status_white", "$W"};
 
 cvar_t	tp_need_ra = {"tp_need_ra", "120"};
 cvar_t	tp_need_ya = {"tp_need_ya", "80"};
@@ -1339,10 +1339,11 @@ char *TP_ParseFunChars (char *s, qbool chat)
 					case ':': c = 0x0A; break;
 					case '[': c = 0x10; break;
 					case ']': c = 0x11; break;
-					case 'G': c = 0x86; break;
-					case 'R': c = 0x87; break;
-					case 'Y': c = 0x88; break;
-					case 'B': c = 0x89; break;
+					case 'G': c = 0x86; break; // green led
+					case 'R': c = 0x87; break; // red led
+					case 'Y': c = 0x88; break; // yellow led
+					case 'B': c = 0x89; break; // blue led
+					case 'W': c = 0x4; break; // white led
 					case '(': c = 0x80; break;
 					case '=': c = 0x81; break;
 					case ')': c = 0x82; break;
