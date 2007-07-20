@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.67.2.39 2007-05-31 17:56:26 disconn3ct Exp $
+    $Id: teamplay.c,v 1.67.2.40 2007-07-20 00:44:58 himan Exp $
 */
 
 #include <time.h>
@@ -93,10 +93,10 @@ cvar_t	tp_name_backpack = {"tp_name_backpack", "pack"};
 cvar_t	tp_name_flag = {"tp_name_flag", "flag"};
 cvar_t	tp_name_sentry = {"tp_name_sentry", "sentry gun"};
 cvar_t	tp_name_disp = {"tp_name_disp", "dispenser"};
-cvar_t	tp_name_rune1 = {"tp_name_rune1", "resistance rune"};
-cvar_t	tp_name_rune2 = {"tp_name_rune2", "strength rune"};
-cvar_t	tp_name_rune3 = {"tp_name_rune3", "haste rune"};
-cvar_t	tp_name_rune4 = {"tp_name_rune4", "regeneration rune"};
+cvar_t	tp_name_rune1 = {"tp_name_rune1", "resistance"};
+cvar_t	tp_name_rune2 = {"tp_name_rune2", "strength"};
+cvar_t	tp_name_rune3 = {"tp_name_rune3", "haste"};
+cvar_t	tp_name_rune4 = {"tp_name_rune4", "regeneration"};
 cvar_t	tp_name_teammate = {"tp_name_teammate", ""};
 cvar_t	tp_name_enemy = {"tp_name_enemy", "enemy"};
 cvar_t	tp_name_eyes = {"tp_name_eyes", "eyes"};
@@ -113,7 +113,7 @@ cvar_t	tp_name_status_green = {"tp_name_status_green", "$G"};
 cvar_t	tp_name_status_yellow = {"tp_name_status_yellow", "$Y"};
 cvar_t	tp_name_status_red = {"tp_name_status_red", "$R"};
 cvar_t	tp_name_status_blue = {"tp_name_status_blue", "$B"};
-cvar_t	tp_name_status_white = {"tp_name_status_white", "$x04"};
+cvar_t	tp_name_status_white = {"tp_name_status_white", "$W"};
 
 cvar_t	tp_need_ra = {"tp_need_ra", "120"};
 cvar_t	tp_need_ya = {"tp_need_ya", "80"};
@@ -1336,10 +1336,11 @@ char *TP_ParseFunChars (char *s, qbool chat)
 					case ':': c = 0x0A; break;
 					case '[': c = 0x10; break;
 					case ']': c = 0x11; break;
-					case 'G': c = 0x86; break;
-					case 'R': c = 0x87; break;
-					case 'Y': c = 0x88; break;
-					case 'B': c = 0x89; break;
+					case 'G': c = 0x86; break; // green led
+					case 'R': c = 0x87; break; // red led
+					case 'Y': c = 0x88; break; // yellow led
+					case 'B': c = 0x89; break; // blue led
+					case 'W': c = 0x84; break; // white led
 					case '(': c = 0x80; break;
 					case '=': c = 0x81; break;
 					case ')': c = 0x82; break;
@@ -2252,7 +2253,7 @@ int TP_CategorizeMessage (const char *s, int *offset)
 char *pknames[] = {"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
                    "mh", "health", "lg", "rl", "gl", "sng", "ng", "ssg", "pack",
                    "cells", "rockets", "nails", "shells", "flag",
-                   "teammate", "enemy", "eyes", "sentry", "disp", "runes", "quaded", "pented"};
+                   "teammate", "enemy", "eyes", "sentry", "disp", "quaded", "pented", "rune1", "rune2", "rune3", "rune4"};
 
 #define default_pkflags (it_powerups|it_suit|it_armor|it_weapons|it_mh| \
 				it_rockets|it_cells||it_pack|it_flag)
@@ -2267,7 +2268,7 @@ Notice this list takes into account ctf/tf as well. Dm players don't worry about
  below are defaults for tp_point (what comes up in point. also see tp_pointpriorities to prioritize this list) First items have highest priority (powerups in this case)
 */
 // tp_point
-#define default_pointflags (it_powerups|it_flag|it_runes|it_players|it_suit|it_armor|it_sentry|it_mh| \
+#define default_pointflags (it_powerups|it_flag|it_rune1|it_rune2|it_rune3|it_rune4|it_players|it_suit|it_armor|it_sentry|it_mh| \
 				it_disp|it_rl|it_lg|it_pack|it_gl|it_sng|it_rockets|it_cells|it_nails)
 
 int pkflags = default_pkflags;
@@ -2277,7 +2278,7 @@ byte pointpriorities[NUM_ITEMFLAGS];
 
 static void DumpFlagCommand(FILE *f, char *name, int flags, int default_flags)
 {
-	int i, all_flags = (1 << NUM_ITEMFLAGS) - 1;
+	int i, all_flags = UINT_MAX;
 
 	fprintf(f, "%s ", name);
 
@@ -2387,7 +2388,7 @@ static void FlagCommand (int *flags, int defaultflags)
 			else if (!strcasecmp (p, "default"))
 				flag = defaultflags;
 			else if (!strcasecmp (p, "all"))
-				flag = (1<<NUM_ITEMFLAGS)-1;
+				flag = UINT_MAX; //(1 << NUM_ITEMFLAGS); //-1;
 		}
 
 
@@ -2525,16 +2526,16 @@ item_t	tp_items[] = {
                         {	it_flag,	&tp_name_flag,	"progs/flag.mdl",
                           {0, 0, 14},	25,
                         },
-                        {	it_runes,	&tp_name_rune1,	"progs/end1.mdl",
+                        {	it_rune1,	&tp_name_rune1,	"progs/end1.mdl",
                           {0, 0, 20},	18,
                         },
-                        {	it_runes,	&tp_name_rune2,	"progs/end2.mdl",
+                        {	it_rune2,	&tp_name_rune2,	"progs/end2.mdl",
                           {0, 0, 20},	18,
                         },
-                        {	it_runes,	&tp_name_rune3,	"progs/end3.mdl",
+                        {	it_rune3,	&tp_name_rune3,	"progs/end3.mdl",
                           {0, 0, 20},	18,
                         },
-                        {	it_runes,	&tp_name_rune4,	"progs/end4.mdl",
+                        {	it_rune4,	&tp_name_rune4,	"progs/end4.mdl",
                           {0, 0, 20},	18,
                         },
                         {	it_ra|it_ya|it_ga, NULL,	"progs/armor.mdl",
@@ -3302,7 +3303,8 @@ void TP_Init (void)
 	Cvar_Register (&tp_name_status_red);
 	Cvar_Register (&tp_name_status_yellow);
 	Cvar_Register (&tp_name_status_green);
-
+	Cvar_Register (&tp_name_status_white);
+	
 	Cvar_Register (&tp_name_pented);
 	Cvar_Register (&tp_name_quaded);
 	Cvar_Register (&tp_name_eyes);
