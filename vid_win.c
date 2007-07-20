@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.24 2007-03-11 06:01:43 disconn3ct Exp $
+	$Id: vid_win.c,v 1.25 2007-07-20 19:02:06 tonik Exp $
 
 */
 
@@ -274,12 +274,15 @@ void initFatalError(void) {
 }
 
 int VID_Suspend (MGLDC *dc, int flags) {
+	extern cvar_t sys_inactivesound;
+
 	if (flags & MGL_DEACTIVATE) {
 		// FIXME: this doesn't currently work on NT
 		if (block_switch.value && !WinNT)
 			return MGL_NO_DEACTIVATE;
 
-		S_BlockSound ();
+		if (!sys_inactivesound.value)
+			S_BlockSound ();
 		S_ClearBuffer ();
 		IN_RestoreOriginalMouseState ();
 		CDAudio_Pause ();
@@ -293,7 +296,8 @@ int VID_Suspend (MGLDC *dc, int flags) {
 		// fix the leftover Alt from any Alt-Tab or the like that switched us away
 		ClearAllStates ();
 		CDAudio_Resume ();
-		S_UnblockSound ();
+		if (!sys_inactivesound.value)
+			S_UnblockSound ();
 		in_mode_set = false;
 		vid.recalc_refdef = 1;
 		block_drawing = false;
@@ -2088,6 +2092,7 @@ void AppActivate(BOOL fActive, BOOL minimize) {
     HDC hdc;
     int i, t;
 	static BOOL	sound_active;
+	extern cvar_t sys_inactivesound;
 
 	ActiveApp = fActive;
 
@@ -2133,7 +2138,7 @@ void AppActivate(BOOL fActive, BOOL minimize) {
 	}
 
 	// enable/disable sound on focus gain/loss
-	if (!ActiveApp && sound_active) {
+	if (!ActiveApp && sound_active && !sys_inactivesound.value) {
 		S_BlockSound ();
 		S_ClearBuffer ();
 		sound_active = false;

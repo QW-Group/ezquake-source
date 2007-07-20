@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: snd_win.c,v 1.13 2007-05-03 12:03:55 johnnycz Exp $
+    $Id: snd_win.c,v 1.14 2007-07-20 19:02:05 tonik Exp $
 */
 
 #include "quakedef.h"
@@ -40,6 +40,8 @@ static qbool	snd_firsttime = true, snd_isdirect, snd_iswave;
 
 static int	sample16;
 static int	snd_sent, snd_completed;
+
+cvar_t sys_inactivesound = {"sys_inactiveSound", "0", CVAR_SILENT};
 
 /*
  * Global variables. Must be visible to window-procedure function 
@@ -234,7 +236,7 @@ static sndinitstat SNDDMA_InitDirect (void)
 	// get access to the primary buffer, if possible, so we can set the sound hardware format
 	memset (&dsbuf, 0, sizeof(dsbuf));
 	dsbuf.dwSize = sizeof(DSBUFFERDESC);
-	dsbuf.dwFlags = DSBCAPS_PRIMARYBUFFER;
+	dsbuf.dwFlags = DSBCAPS_PRIMARYBUFFER | (sys_inactivesound.value ? DSBCAPS_GLOBALFOCUS : 0);
 	dsbuf.dwBufferBytes = 0;
 	dsbuf.lpwfxFormat = NULL;
 
@@ -261,7 +263,7 @@ static sndinitstat SNDDMA_InitDirect (void)
 		// create the secondary buffer we'll actually work with
 		memset (&dsbuf, 0, sizeof(dsbuf));
 		dsbuf.dwSize = sizeof(DSBUFFERDESC);
-		dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCSOFTWARE;
+		dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCSOFTWARE | (sys_inactivesound.value ? DSBCAPS_GLOBALFOCUS : 0);
 		dsbuf.dwBufferBytes = SECONDARY_BUFFER_SIZE;
 		dsbuf.lpwfxFormat = &format;
 
@@ -471,6 +473,10 @@ static qbool SNDDMA_InitWav (void)
 qbool SNDDMA_Init(void)
 {
 	sndinitstat stat;
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
+	Cvar_Register (&sys_inactivesound);
+	Cvar_ResetCurrentGroup ();
 
 	if (COM_CheckParm ("-wavonly"))
 		wavonly = true;

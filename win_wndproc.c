@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: win_wndproc.c,v 1.5 2007-05-13 13:41:44 johnnycz Exp $
+	$Id: win_wndproc.c,v 1.6 2007-07-20 19:02:06 tonik Exp $
 
 */
 
@@ -73,12 +73,13 @@ void ClearAllStates (void) {
 ******************************************************************************/
 void AppActivate(BOOL fActive, BOOL minimize) {
 	static BOOL	sound_active;
+	extern cvar_t sys_inactivesound;
 
 	ActiveApp = fActive;
 	Minimized = minimize;
 
 	// enable/disable sound on focus gain/loss
-	if (!ActiveApp && sound_active) {
+	if (!ActiveApp && sound_active && !sys_inactivesound.value) {
 		S_BlockSound ();
 		sound_active = false;
 	} else if (ActiveApp && !sound_active) {
