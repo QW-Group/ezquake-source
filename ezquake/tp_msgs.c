@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.18 2007-05-31 17:57:09 disconn3ct Exp $
+  $Id: tp_msgs.c,v 1.1.2.19 2007-07-20 01:05:18 himan Exp $
 
 */
 
@@ -86,7 +86,7 @@ use the %-macros nor the $-macros.
 #define tp_sep_red		"$R$R"      // enemy, lost
 #define tp_sep_green	"$G$G"      // killed quad/ring/pent enemy, safe
 #define tp_sep_yellow	"$Y$Y"      // help
-#define tp_sep_white	"$x04$x04"  // Two white bubbles, location of item
+#define tp_sep_white	"$W$W"		// Two white bubbles, location of item
 #define tp_sep_blue		"$B$B"      // 
  
 typedef const char * MSGPART;
@@ -491,7 +491,7 @@ GLOBAL void TP_Msg_Point_f (void)
 				else
 					msg2 = va ("{&c0b0%s&cfff}", Macro_PointName());
 			}
-		else if (INPOINTPOWERUP() || INPOINTWEAPON() || INPOINTARMOR() || INPOINTAMMO() || INPOINT(pack) || INPOINT(mh) || INPOINT(flag) || INPOINT (disp) || INPOINT(sentry) || INPOINT(runes)) // How can I do if INPONIT(anything) or if INPOINT() not empty?
+		else if (INPOINTPOWERUP() || INPOINTWEAPON() || INPOINTARMOR() || INPOINTAMMO() || INPOINT(pack) || INPOINT(mh) || INPOINT(flag) || INPOINT (disp) || INPOINT(sentry) || INPOINT(runes)) // This should cover everything we can point to. How can I do if INPONIT(anything) or if INPOINT() not empty?
 		//  flag, disp, sent, rune
 			{
 				msg1 = tp_sep_yellow; // if we see any of these items ready for pickup, then we are yellow led status (meaning notice)
@@ -521,7 +521,10 @@ GLOBAL void TP_Msg_Point_f (void)
 					else if (INPOINT(sentry))	msg2 = "{$point}"; // note we can'te tell if it's enemy or team sent
 					
 					//ctf, other
-					else if (INPOINT(runes))	msg2 = "rune";
+					else if (INPOINT(rune1))	msg2 = "$tp_name_rune1";
+					else if (INPOINT(rune2))	msg2 = "$tp_name_rune2";
+					else if (INPOINT(rune3))	msg2 = "$tp_name_rune3";
+					else if (INPOINT(rune4))	msg2 = "$tp_name_rune4";
 			}
 		else msg2 = "{$point}"; // this should never happen
 	}
