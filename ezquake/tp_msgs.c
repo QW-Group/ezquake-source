@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.19 2007-07-20 01:05:18 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.20 2007-07-20 01:18:59 himan Exp $
 
 */
 
@@ -441,6 +441,7 @@ GLOBAL void TP_Msg_Took_f (void)
 		else if (TOOK(ya))								msg2 = tp_ib_name_ya;
 		else if (TOOK(ga))								msg2 = tp_ib_name_ga;
 		else if (TOOK(flag))							msg2 = tp_ib_name_flag;
+		else if (TOOK(runes))							msg2 = "$took";
 		else 											msg2 = "{$took}"; // This should never happen
 		
 		if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
@@ -516,9 +517,9 @@ GLOBAL void TP_Msg_Point_f (void)
 					else if (INPOINT(mh))		msg2 = tp_ib_name_mh;
 					
 					//TF
-					else if (INPOINT(flag))		msg2 = tp_ib_name_flag; // need to see between blue/red colors!
-					else if (INPOINT(disp))		msg2 = "{$point}";	// note we can'te tell if it's enemy or team disp
-					else if (INPOINT(sentry))	msg2 = "{$point}"; // note we can'te tell if it's enemy or team sent
+					else if (INPOINT(flag))		msg2 = tp_ib_name_flag; // note we cannot tell if it's enemy or team flag
+					else if (INPOINT(disp))		msg2 = "{$point}";	// note we cannot tell if it's enemy or team disp
+					else if (INPOINT(sentry))	msg2 = "{$point}"; // note we cannot tell if it's enemy or team sent
 					
 					//ctf, other
 					else if (INPOINT(rune1))	msg2 = "$tp_name_rune1";

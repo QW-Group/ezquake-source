@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.67.2.40 2007-07-20 00:44:58 himan Exp $
+    $Id: teamplay.c,v 1.67.2.41 2007-07-20 01:18:59 himan Exp $
 */
 
 #include <time.h>
@@ -2259,7 +2259,7 @@ char *pknames[] = {"quad", "pent", "ring", "suit", "ra", "ya",	"ga",
 				it_rockets|it_cells||it_pack|it_flag)
 
  // tp_took
-#define default_tookflags (it_powerups|it_ra|it_ya|it_ga|it_lg|it_rl|it_gl|it_sng|it_pack|it_rockets|it_cells|it_mh|it_flag)
+#define default_tookflags (it_powerups|it_ra|it_ya|it_ga|it_lg|it_rl|it_gl|it_sng|it_pack|it_rockets|it_cells|it_mh|it_flag|it_runes)
 
 /*
 powerups flag runes players suit armor sentry  mh disp rl lg pack gl sng rockets cells nails
