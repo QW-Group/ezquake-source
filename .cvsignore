@@ -1,4 +1,6 @@
-Release-gl
-Debug-gl
-Debug
-Release
+release-x86
+release-x86_64
+release-ppc
+debug-x86
+debug-x86_64
+debug-ppc

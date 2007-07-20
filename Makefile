@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.67 2007-06-06 18:21:29 hexum Exp $
+#	$Id: Makefile,v 1.68 2007-07-20 04:12:50 disconn3ct Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -30,7 +30,6 @@ ifeq ($(ARCH),ppc)
 	ARCH_CFLAGS = -arch ppc -faltivec -maltivec -mcpu=7450 -mtune=7450 -mpowerpc -mpowerpc-gfxopt -D__BIG_ENDIAN__
 endif
 
-# TODO: LIB_PREFIX must be $(OS)-$(ARCH)
 ifeq ($(OS),linux)
 	DEFAULT_TARGET = glx
 	OS_GL_CFLAGS = -DWITH_DGA -DWITH_EVDEV -DWITH_VMODE
