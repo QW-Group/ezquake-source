@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.79 2007-07-19 18:22:22 cokeman1982 Exp $
+    $Id: teamplay.c,v 1.80 2007-07-20 00:03:32 himan Exp $
 */
 
 #include <time.h>
@@ -1343,7 +1343,7 @@ char *TP_ParseFunChars (char *s, qbool chat)
 					case 'R': c = 0x87; break; // red led
 					case 'Y': c = 0x88; break; // yellow led
 					case 'B': c = 0x89; break; // blue led
-					case 'W': c = 0x4; break; // white led
+					case 'W': c = 0x84; break; // white led
 					case '(': c = 0x80; break;
 					case '=': c = 0x81; break;
 					case ')': c = 0x82; break;
