@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.80 2007-07-20 00:03:32 himan Exp $
+    $Id: teamplay.c,v 1.81 2007-07-20 00:41:24 himan Exp $
 */
 
 #include <time.h>
@@ -3306,6 +3306,7 @@ void TP_Init (void)
 	Cvar_Register (&tp_name_status_red);
 	Cvar_Register (&tp_name_status_yellow);
 	Cvar_Register (&tp_name_status_green);
+	Cvar_Register (&tp_name_status_white);
 
 	Cvar_Register (&tp_name_pented);
 	Cvar_Register (&tp_name_quaded);
