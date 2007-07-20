@@ -1,8 +1,0 @@
-*.ncb
-*.suo
-Debug
-Release
-gas2masm_msvs_80.vcproj.*.user
-gas2masm.exe
-gas2masm.ilk
-BuildLog.htm

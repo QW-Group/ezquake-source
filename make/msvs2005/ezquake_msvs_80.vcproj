@@ -48,7 +48,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName="Debug-gl/ezquake.tlb"
+				TypeLibraryName="Debug-gl\ezquake.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -98,7 +98,7 @@
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="asmlibm.lib libexpat.lib libtcl8.4.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib"
 				ShowProgress="0"
-				OutputFile="../ezquake-gl-debug.exe"
+				OutputFile="..\ezquake-gl-debug.exe"
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -172,7 +172,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName="Release/ezquake.tlb"
+				TypeLibraryName="Release\ezquake.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -195,7 +195,7 @@
 				PrecompiledHeaderFile="$(TargetDir)$(TargetName).pch"
 				AssemblerListingLocation="$(IntDir)\"
 				ObjectFile="$(IntDir)\"
-				ProgramDataBaseFileName="Release/"
+				ProgramDataBaseFileName="Release\"
 				XMLDocumentationFileName=""
 				BrowseInformation="0"
 				BrowseInformationFile="$(IntDir)\"
@@ -219,7 +219,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="asmlibm.lib libexpat.lib libtcl8.4.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib"
-				OutputFile="../ezquake.exe"
+				OutputFile="..\ezquake.exe"
 				Version=""
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -295,7 +295,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName="Release-gl/ezquake.tlb"
+				TypeLibraryName="Release-gl\ezquake.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -319,7 +319,7 @@
 				PrecompiledHeaderFile="$(TargetDir)$(TargetName).pch"
 				AssemblerListingLocation="$(IntDir)\"
 				ObjectFile="$(IntDir)\"
-				ProgramDataBaseFileName="Release-gl/"
+				ProgramDataBaseFileName="Release-gl\"
 				XMLDocumentationFileName=""
 				BrowseInformation="0"
 				BrowseInformationFile="$(IntDir)\"
@@ -343,7 +343,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386 "
 				AdditionalDependencies="asmlibm.lib libexpat.lib libtcl8.4.lib dxguid.lib opengl32.lib wsock32.lib winmm.lib dsound.lib libjpeg.lib libpng.lib libz.lib libpcre.lib minizip.lib"
-				OutputFile="../ezquake-gl.exe"
+				OutputFile="..\ezquake-gl.exe"
 				Version=""
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -419,7 +419,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName="Debug/ezquake.tlb"
+				TypeLibraryName="Debug\ezquake.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -466,7 +466,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="asmlibm.lib libexpat.lib libtcl8.4.lib mgllt.lib dxguid.lib wsock32.lib winmm.lib libjpeg.lib libpng.lib libz.lib dinput.lib dsound.lib libpcre.lib minizip.lib"
-				OutputFile="../ezquake-debug.exe"
+				OutputFile="..\ezquake-debug.exe"
 				Version=""
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -675,7 +675,7 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							BrowseInformationFile="Debug-gl/"
+							BrowseInformationFile="Debug-gl\"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -686,7 +686,7 @@
 							Name="VCCLCompilerTool"
 							OmitFramePointers="true"
 							BrowseInformation="1"
-							BrowseInformationFile="Release/"
+							BrowseInformationFile="Release\"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -695,7 +695,7 @@
 						<Tool
 							Name="VCCLCompilerTool"
 							OmitFramePointers="true"
-							BrowseInformationFile="Release-gl/"
+							BrowseInformationFile="Release-gl\"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -704,8 +704,8 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-							ObjectFile="Debug/"
-							BrowseInformationFile="Debug/"
+							ObjectFile="Debug\"
+							BrowseInformationFile="Debug\"
 						/>
 					</FileConfiguration>
 				</File>
