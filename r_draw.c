@@ -71,6 +71,44 @@ int scissor_bottom	= 0;
 //=============================================================================
 // Support Routines 
 
+byte Draw_FindNearestColorByBytes(byte r, byte g, byte b, byte a)
+{
+	#define PALETTE_SIZE 255
+    int i; 
+	int distanceSquared;
+	int bestIndex = 0;
+    int minDistanceSquared = (255 * 255) + (255 * 255) + (255 * 255) + 1;
+    
+	for (i = 0; i < PALETTE_SIZE; i++)
+	{
+		int Rdiff = ((int)r) - host_basepal[(i * 3)];
+        int Gdiff = ((int)g) - host_basepal[(i * 3) + 1];
+        int Bdiff = ((int)b) - host_basepal[(i * 3) + 2];
+        
+		distanceSquared = (Rdiff * Rdiff) + (Gdiff * Gdiff) + (Bdiff * Bdiff);
+        
+		if (distanceSquared < minDistanceSquared) 
+		{
+            minDistanceSquared = distanceSquared;
+            bestIndex = i;
+        }
+    }
+
+    return bestIndex;
+}
+
+byte Draw_FindNearestColorByVect(byte rgba[4])
+{
+	return Draw_FindNearestColorByBytes(rgba[0], rgba[1], rgba[2], rgba[3]);
+}
+
+byte Draw_FindNearestColor(color_t color)
+{
+	byte bytecolor[4];
+	return Draw_FindNearestColorByVect(COLOR_TO_RGBA(color, bytecolor));
+}
+
+
 mpic_t *Draw_CacheWadPic (char *name) 
 {
 	qpic_t *p;
@@ -234,6 +272,8 @@ void Draw_DisableScissor()
 
 void Draw_Init (void) 
 {
+	int i, j;
+
 	Draw_DisableScissor();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
@@ -249,9 +289,26 @@ void Draw_Init (void)
 	CachePics_DeInit();
 
 	draw_chars[0] = W_GetLumpName ("conchars");
+	
 	draw_chars[1] = LoadAlternateCharset ("conchars-cyr");
 	if (draw_chars[1])
 		char_range[1] = (1 << 10);
+
+	for (i = 0; i < MAX_CHARSETS; i++)
+	{
+		if (draw_chars[i])
+		{
+			// FIXME: If we add ability to load different sized charsets like in GL, 
+			// 256x256, 512x512... we need to get info about it's size while loading also
+			// for now we assume it's 128x128, since that's how big the original is.
+			for (j = 0; j < (128 * 128); j++)
+			{
+				// Set the proper transparent color.
+				if (draw_chars[i][j] == 0)
+					draw_chars[i][j] = TRANSPARENT_COLOR;
+			}
+		}
+	}
 
 	draw_disc = Draw_CacheWadPic ("disc");
 	draw_backtile = Draw_CacheWadPic ("backtile");
@@ -284,30 +341,165 @@ qbool R_CharAvailable (wchar num)
 }
 
 //
-// Draws one 8*8 graphics character with 0 being transparent.
-// It can be clipped to the top of the screen to allow the console to be smoothly scrolled off.
+// Draws and clips a pixel.
 //
-void Draw_Character (int x, int y, int num) 
+static __inline void Draw_Pixel(int x, int y, byte color) 
 {
-	Draw_CharacterW (x, y, char2wc(num));
+	byte *dest;
+
+	if (CLIP_LEFT(x) || CLIP_RIGHT(x) || CLIP_TOP(y) || CLIP_BOTTOM(y))
+		return;
+
+	dest = vid.buffer + (y * vid.rowbytes) + x;
+	*dest = color;
 }
 
-void Draw_CharacterW (int x, int y, wchar num) 
+// ============================================================
+// From GraphicGems fastBitmap.c 
+// (http://www.acm.org/tog/GraphicsGems/)
+// Stretches a horizontal source line onto a horizontal
+// destination line. Used by RectStretch.
+// Entry:
+//	x_dest_start, x_dest_end - x-coordinates of the destination 
+//							   line (coordinates inside texture)
+//	x_src_start, x_src_end	 - x-coordinates of the source line 
+//							   (screen coordinates)
+//	y_src					 - y-coordinate of source line
+//	y_dest					 - y-coordinate of destination line
+// ============================================================
+static void Draw_StretchLine(byte *srcdata, int src_width, int x_dest_start, int x_dest_end, int x_src_start, int x_src_end, int y_src, int y_dest)
 {
-	// The length of a row in the charset image, 16 characters, 8 pixels each. 16*8 = 128
-	#define CHARSET_ROW_LENGTH	(16 * 8)
+	int dx_dest, dx_src, e, d;
+	short x_dest_sign, x_src_sign;
+	byte color;
 
-	byte *dest, *source;	// Draw destination and character source.
-	int row_outside = 0;	// How many lines of the character are outside the specified scissor bounds.
-	int row_drawcount = 0;	// How many lines of the character should be drawn.
-	int col_outside = 0;	// The number of columns in the character that aren't visible.
-	int col_drawcount = 0;	// How many columns of the character that should be drawn.
-	int row, col;			// Row and column for the character in the charset texture.
-	int slot = 0;			// The slot for the charset the character was located in.
+	// Calculate the source and destination widths.
+	dx_dest = abs((int)(x_dest_end - x_dest_start));
+	dx_src  = abs((int)(x_src_end  - x_src_start));
+
+	// Get the sign to increment/decrement by.
+	x_dest_sign = sgn(x_dest_end - x_dest_start);
+	x_src_sign  = sgn(x_src_end  - x_src_start);
+
+	// Some cleverness so we don't have to use floats
+	// to calculate the ratio of pixels to draw.
+	e = (dx_src << 1) - dx_dest;
+	dx_src <<= 1;
+	
+	// Loop through each pixel in the destination line.
+	for(d = 0; d < dx_dest; d++)
+	{
+		// Get the pixel for the specified source row.
+		color = *(srcdata + (y_src * src_width) + x_src_start);
+
+		// Draw the pixel if it isn't transparent.
+		if (color != TRANSPARENT_COLOR)
+			Draw_Pixel(x_dest_start, y_dest, color);
+
+		while(e >= 0)
+		{
+			x_src_start += x_src_sign;
+			e -= (dx_dest << 1); 
+		}
+
+		x_dest_start += x_dest_sign;
+		e += dx_src;
+	}
+}
+
+static void Draw_StretchLineByPic(mpic_t *pic, int x_dest_start, int x_dest_end, int x_src_start, int x_src_end, int y_src, int y_dest)
+{
+	Draw_StretchLine(pic->data, pic->width, x_dest_start, x_dest_end, x_src_start, x_src_end, y_src, y_dest);
+}
+
+void Draw_RectStretchSubPic(byte *src,								// Source picture data.
+							int src_width, int src_height,			// Source picture dimensions.
+							int x, int y,							// Where on screen the picture should be drawn.
+							int srcx, int srcy,						// The coordinates in the picture where to start drawing from.
+							int src_subwidth, int src_subheight,	// The bounds of the sub-area to draw.
+							int width, int height)					// How large the drawn picture should be on screen.
+{
+	int dy_dest, dy_src, e, d;
+	short y_sign_dest, y_sign_src;
+
+	// Were to start in the source.
+	int x_src_start = abs(srcx);
+	int y_src_start = abs(srcy);
+	int x_src_end	= abs(x_src_start + src_subwidth);
+	int y_src_end	= abs(y_src_start + src_subheight);
+	
+	// Where to write the image on screen.
+	int x_dest_start = x;
+	int y_dest_start = y;
+	int x_dest_end	= x + width; 
+	int y_dest_end	= y + height;
+
+	// Make sure we don't try to draw something outside the source.
+	clamp(x_src_start, 0, src_width);
+	clamp(y_src_start, 0, src_height);
+	clamp(x_src_end, x_src_start, src_width);
+	clamp(y_src_end, y_src_start, src_height);
+
+	dy_dest = abs(y_dest_end - y_dest_start);
+	dy_src  = abs(y_src_end  - y_src_start);
+
+	// Get the direction we should move when drawing (up or down).
+	y_sign_dest = sgn(y_dest_end - y_dest_start);
+	y_sign_src  = sgn(y_src_end  - y_src_start);
+	
+	e = (dy_src << 1) - dy_dest;
+	dy_src <<= 1;
+
+	for(d = 0; d < dy_dest; d++)
+	{
+		Draw_StretchLine(src, src_width, x_dest_start, x_dest_end, x_src_start, x_src_end, y_src_start, y_dest_start);
+		
+		while(e >= 0)
+		{
+			y_src_start += y_sign_src;
+			e -= dy_dest << 1;
+		}
+
+		y_dest_start += y_sign_dest;
+		e += dy_src;
+	}
+}
+
+
+// ============================================================
+// Based on GraphicGems fastBitmap.c 
+// (http://www.acm.org/tog/GraphicsGems/)
+// RectStretch enlarges or diminishes a source rectangle of
+// a bitmap to a destination rectangle. The source
+// rectangle is selected by the two points (xs1,ys1) and
+// (xs2,ys2), and the destination rectangle by (xd1,yd1) and
+// (xd2,yd2). Since readability of source-code is wanted,
+// some optimizations have been left out for the reader:
+// It's possible to read one line at a time, by first
+// stretching in x-direction and then stretching that bitmap
+// in y-direction.
+// Entry:
+//	x,y			  - Position of the pic
+//	width, height - The size of the rectangle, the pic will
+//					fit within this.
+// ============================================================
+void Draw_RectStretch(mpic_t *pic, int x, int y, int width, int height)
+{
+	Draw_RectStretchSubPic(pic->data, pic->width, pic->height, x, y, 0, 0, pic->width, pic->height, width, height);
+}
+
+void Draw_ScaledCharacterW (int x, int y, wchar num, float scale)
+{
+	#define CHAR_SIZE			8					// The length of the side of a character in pixels.
+	#define CHARSET_ROW_LENGTH	(16 * CHAR_SIZE)	// The number of pixels per row.
+
+	int row, col;									// Row and column for the character in the charset texture.
+	int slot = 0;									// The slot for the charset the character was located in.
+	int char_size = Q_rint(8 * scale);				// Size the character should be drawn at.
 	int i = 0;
 
 	// Don't draw if we're outside the scissor bounds.
-	if ((y < (scissor_top - 8))  || (y > scissor_bottom) || (x < (scissor_left - 8)) || (x > scissor_right))
+	if ((y < (scissor_top - char_size))  || (y > scissor_bottom) || (x < (scissor_left - char_size)) || (x > scissor_right))
 		return;
 
 	// Find a characterset with the character available in it.
@@ -326,67 +518,36 @@ void Draw_CharacterW (int x, int y, wchar num)
 			num = '?';
 	}
 
+	// Find the row and column of the character in the charset texture.
 	row = (num >> 4) & 0x0F; // 'a' = 97 ASCII		(97 >> 4) = 6, row 6 in the charset (Row of characters, not pixels).
 	col = num & 0x0F;		 // 'a' = 112 ASCII		(112 & 0x0F) = 1, column 1 (0-index).
-	
-	// Get the buffer position of the character,
-	// 16 chars per row
-	// 8*8 pixels per char
-	// Example: 'a' = 97 gives row = 6, col = 1
-	// (16 chars per row) * (8*8 pixels per char) * (6 rows) = 6144
-	source = draw_chars[slot] + (16 * 8*8 * row) + (8 * col);
 
-	//
-	// Clip the character according to scissor bounds.
-	//
-	{
-		if (x < scissor_left)
-		{
-			// Outside to the left.
-			col_outside = (scissor_left - x);		// How many pixel columns of the character are outside?
-			source += col_outside;					// Move forward in the charset buffer so that only the visible part is drawn.
-			x = scissor_left;						// Set the new drawing point to start at.		
-		}
-		else if (x > (scissor_right - 8))
-		{
-			// Outside to the right.
-			col_outside = (scissor_right - x);	
-		}
+	// Draw the character.
+	Draw_RectStretchSubPic(draw_chars[slot],		// Charset data.
+		CHARSET_ROW_LENGTH, CHARSET_ROW_LENGTH,		// Charset size.
+		x, y,										// Screen coordinates where to draw the char.
+		(CHAR_SIZE * col), (CHAR_SIZE * row),		// Coordinates in the charset where the char is found.
+		CHAR_SIZE, CHAR_SIZE,						// The size of the char in the charset.
+		char_size, char_size);						// The size the char should be drawn at on screen.
 
-		// The number of columns to draw.
-		col_drawcount = (8 - col_outside);
+	// TODO: Allow loading new charsets on the fly like in GL. Chars will always be drawn at 8x8 though, unless conwidth/conheight is introduced.
+	// Example: 
+	// mpic_t *charset = Draw_CachePicSafe("textures/charsets/somecharset.png", false, true);
+	// int mchar_size = charset->width >> 4; // 16 characters per row.
+}
 
-		if (y < scissor_top) 
-		{
-			// Outside at the top.
-			row_outside = (scissor_top - y);				// How many lines we should draw of the character.
-			source += CHARSET_ROW_LENGTH * row_outside;		// Draw the bottom part of the image by moving our pos in the source.
-			y = scissor_top;								// Move the point we draw at to match the bounds.
-		}
-		else if (y > (scissor_bottom - 8))
-		{
-			row_outside = (scissor_bottom - y);
-		}
+void Draw_CharacterW (int x, int y, wchar num)
+{
+	Draw_ScaledCharacterW(x, y, num, 1);
+}
 
-		// The number of lines to draw.
-		row_drawcount = (8 - row_outside);
-	}
-
-	// Get the destination in the video buffer.
-	dest = vid.buffer + (y * vid.rowbytes) + x;
-
-	// Draw the character to the video buffer.
-	while (row_drawcount--)
-	{
-		for (i = 0; i < col_drawcount; i++)
-		{
-			if (source[i])
-				dest[i] = source[i];
-		}
-
-		source += CHARSET_ROW_LENGTH;		// Advance to the next row of the character source.
-		dest += vid.rowbytes;				// Next row of the video buffer.
-	}
+//
+// Draws one 8*8 graphics character with 0 being transparent.
+// It can be clipped to the top of the screen to allow the console to be smoothly scrolled off.
+//
+void Draw_Character (int x, int y, int num) 
+{
+	Draw_CharacterW (x, y, char2wc(num));
 }
 
 void Draw_String (int x, int y, const char *str) 
@@ -432,7 +593,7 @@ int HexToInt(char c)
 		return -1;
 }
 
-void Draw_ColoredString (int x, int y, const char *text, int red) 
+void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale) 
 {
 	int r, g, b;
 
@@ -453,9 +614,16 @@ void Draw_ColoredString (int x, int y, const char *text, int red)
 				text += 2;
 			}
 		}
-		Draw_Character (x, y, (*text) | (red ? 0x80 : 0));
-		x += 8;
+
+		Draw_ScaledCharacterW(x, y, (*text) | (red ? 0x80 : 0), scale);
+
+		x += 8 * scale;
 	}
+}
+
+void Draw_ColoredString (int x, int y, const char *text, int red) 
+{
+	Draw_ScalableColoredString(x, y, str2wcs(text), NULL, 0, red, 1);
 }
 
 void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red) 
@@ -465,26 +633,8 @@ void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int cl
 
 void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red) 
 {
-	Draw_ColoredString(x, y, wcs2str(text), red);
+	Draw_ScalableColoredString(x, y, text, NULL, 0, red, 1);
 }
-
-// No scale in software. Sorry :(
-void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale) 
-{
-	Draw_ColoredString(x, y, wcs2str(text), red);
-}
-
-static __inline void Draw_Pixel(int x, int y, byte color) 
-{
-	byte *dest;
-
-	if (CLIP_LEFT(x) || CLIP_RIGHT(x) || CLIP_TOP(y) || CLIP_BOTTOM(y))
-		return;
-
-	dest = vid.buffer + (y * vid.rowbytes) + x;
-	*dest = color;
-}
-
 
 #define		NUMCROSSHAIRS 6
 static qbool crosshairdata[NUMCROSSHAIRS][64] = {
@@ -773,136 +923,6 @@ void Draw_Crosshair(void)
 	{
 		Draw_Character (x - 4, y - 4, '+');
 	}
-}
-
-// ============================================================
-// From GraphicGems fastBitmap.c 
-// (http://www.acm.org/tog/GraphicsGems/)
-// Stretches a horizontal source line onto a horizontal
-// destination line. Used by RectStretch.
-// Entry:
-//	x_dest_start, x_dest_end - x-coordinates of the destination 
-//							   line (coordinates inside texture)
-//	x_src_start, x_src_end	 - x-coordinates of the source line 
-//							   (screen coordinates)
-//	y_src					 - y-coordinate of source line
-//	y_dest					 - y-coordinate of destination line
-// ============================================================
-static void Draw_StretchLine(mpic_t *pic, int x_dest_start, int x_dest_end, int x_src_start, int x_src_end, int y_src, int y_dest)
-{
-	byte *srcdata = pic->data;
-	int dx_dest, dx_src, e, d;
-	short x_dest_sign, x_src_sign;
-	byte color;
-
-	// Calculate the source and destination widths.
-	dx_dest = abs((int)(x_dest_end - x_dest_start));
-	dx_src  = abs((int)(x_src_end  - x_src_start));
-
-	// Get the sign to increment/decrement by.
-	x_dest_sign = sgn(x_dest_end - x_dest_start);
-	x_src_sign  = sgn(x_src_end  - x_src_start);
-
-	// Some cleverness so we don't have to use floats
-	// to calculate the ratio of pixels to draw.
-	e = (dx_src << 1) - dx_dest;
-	dx_src <<= 1;
-	
-	// Loop through each pixel in the destination line.
-	for(d = 0; d <= dx_dest; d++)
-	{
-		// Get the pixel for the specified source row.
-		color = *(srcdata + (y_src * pic->width) + x_src_start);
-
-		// Draw the pixel if it isn't transparent.
-		if (color != TRANSPARENT_COLOR)
-			Draw_Pixel(x_dest_start, y_dest, color);
-
-		while(e >= 0)
-		{
-			x_src_start += x_src_sign;
-			e -= (dx_dest << 1); 
-		}
-
-		x_dest_start += x_dest_sign;
-		e += dx_src;
-	}
-}
-
-//
-// x,y						- Position of the pic
-// width, height			- The size of the rectangle, the pic will fit within this.
-// srcx, srcy				- The position in the pic to start drawing from.
-// src_width, src_height	- The width and height of the sub-area of the pic to draw.
-//
-void Draw_RectStretchSubPic(mpic_t *pic, int x, int y, int srcx, int srcy, int src_width, int src_height, int width, int height)
-{
-	int dy_dest, dy_src, e, d;
-	short y_sign_dest, y_sign_src;
-
-	// Were to start in the source.
-	int x_src_start = abs(srcx);
-	int y_src_start = abs(srcy);
-	int x_src_end	= abs(src_width);
-	int y_src_end	= abs(src_height);
-	
-	// Where to write the image on screen.
-	int x_dest_start = x;
-	int y_dest_start = y;
-	int x_dest_end	= x + width; 
-	int y_dest_end	= y + height;
-
-	// Make sure we don't try to draw something outside the source.
-	clamp(x_src_start, 0, pic->width);
-	clamp(y_src_start, 0, pic->height);
-	clamp(x_src_end, 0, (pic->width - x_src_start)); 
-	clamp(y_src_end, 0, (pic->height - y_src_start)); 
-
-	dy_dest = abs(y_dest_end - y_dest_start);
-	dy_src  = abs(y_src_end  - y_src_start);
-
-	// Get the direction we should move when drawing (up or down).
-	y_sign_dest = sgn(y_dest_end - y_dest_start);
-	y_sign_src  = sgn(y_src_end  - y_src_start);
-	
-	e = (dy_src << 1) - dy_dest;
-	dy_src <<= 1;
-
-	for(d = 0; d < dy_dest; d++)
-	{
-		Draw_StretchLine(pic, x_dest_start, x_dest_end, x_src_start, x_src_end, y_src_start, y_dest_start);
-		
-		while(e >= 0)
-		{
-			y_src_start += y_sign_src;
-			e -= dy_dest << 1;
-		}
-
-		y_dest_start += y_sign_dest;
-		e += dy_src;
-	}
-}
-
-// ============================================================
-// Based on GraphicGems fastBitmap.c 
-// (http://www.acm.org/tog/GraphicsGems/)
-// RectStretch enlarges or diminishes a source rectangle of
-// a bitmap to a destination rectangle. The source
-// rectangle is selected by the two points (xs1,ys1) and
-// (xs2,ys2), and the destination rectangle by (xd1,yd1) and
-// (xd2,yd2). Since readability of source-code is wanted,
-// some optimizations have been left out for the reader:
-// It's possible to read one line at a time, by first
-// stretching in x-direction and then stretching that bitmap
-// in y-direction.
-// Entry:
-//	x,y			  - Position of the pic
-//	width, height - The size of the rectangle, the pic will
-//					fit within this.
-// ============================================================
-void Draw_RectStretch(mpic_t *pic, int x, int y, int width, int height)
-{
-	Draw_RectStretchSubPic(pic, x, y, 0, 0, pic->width, pic->height, width, height);
 }
 
 void Draw_TextBox (int x, int y, int width, int lines) 
@@ -1216,43 +1236,6 @@ void Draw_Fill (int x, int y, int w, int h, byte c)
 	}
 }
 
-byte Draw_FindNearestColorByBytes(byte r, byte g, byte b, byte a)
-{
-	#define PALETTE_SIZE 255
-    int i; 
-	int distanceSquared;
-	int bestIndex = 0;
-    int minDistanceSquared = (255 * 255) + (255 * 255) + (255 * 255) + 1;
-    
-	for (i = 0; i < PALETTE_SIZE; i++)
-	{
-		int Rdiff = ((int)r) - host_basepal[(i * 3)];
-        int Gdiff = ((int)g) - host_basepal[(i * 3) + 1];
-        int Bdiff = ((int)b) - host_basepal[(i * 3) + 2];
-        
-		distanceSquared = (Rdiff * Rdiff) + (Gdiff * Gdiff) + (Bdiff * Bdiff);
-        
-		if (distanceSquared < minDistanceSquared) 
-		{
-            minDistanceSquared = distanceSquared;
-            bestIndex = i;
-        }
-    }
-
-    return bestIndex;
-}
-
-byte Draw_FindNearestColorByVect(byte rgba[4])
-{
-	return Draw_FindNearestColorByBytes(rgba[0], rgba[1], rgba[2], rgba[3]);
-}
-
-byte Draw_FindNearestColor(color_t color)
-{
-	byte bytecolor[4];
-	return Draw_FindNearestColorByVect(COLOR_TO_RGBA(color, bytecolor));
-}
-
 byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int height, qbool dither)
 {
 	#define CHAN(x, color) ((x * bytes_per_pixel) + color)
@@ -1444,7 +1427,7 @@ byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int hei
 // Bresenham's line algorithm - Draws a line effectivly between two points using only integer addition.
 // http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
 //
-static void bresenham_line(int x1, int y1, int x2, int y2, byte color)
+static void Draw_BresenhamLine(int x1, int y1, int x2, int y2, byte color)
 {
 	int i;
 	int dx = x2 - x1;		// The horizontal distance of the line.
@@ -1501,7 +1484,7 @@ static void bresenham_line(int x1, int y1, int x2, int y2, byte color)
 //
 // FIXME: Not a proper thickline algorithm, doesn't draw the ends properly like => http://homepages.enterprise.net/murphy/thickline/index.html
 //
-static void bresenham_thickline (int x1, int y1, int x2, int y2, int thick, byte color)
+static void Draw_BresenhamThickLine (int x1, int y1, int x2, int y2, int thick, byte color)
 {
 	int dx, dy, incr1, incr2, d, x, y, xend, yend, xdirflag, ydirflag;
 	int wid;
@@ -1677,11 +1660,11 @@ void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thick
 {
 	if ((int)thickness == 1)
 	{
-		bresenham_line(x_start, y_start, x_end, y_end, c);
+		Draw_BresenhamLine(x_start, y_start, x_end, y_end, c);
 	}
 	else
 	{
-		bresenham_thickline(x_start, y_start, x_end, y_end, Q_rint(thickness), c);
+		Draw_BresenhamThickLine(x_start, y_start, x_end, y_end, Q_rint(thickness), c);
 	}
 }
 
@@ -1817,12 +1800,12 @@ void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *pic)
 
 void Draw_SSubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float scale)
 {
-	Draw_RectStretchSubPic(pic, x, y, srcx, srcy, width, height, Q_rint(scale * width), Q_rint(scale * height));
+	Draw_RectStretchSubPic(pic->data, pic->width, pic->height, x, y, srcx, srcy, width, height, Q_rint(scale * width), Q_rint(scale * height));
 }
 
 void Draw_STransPic (int x, int y, mpic_t *pic, float scale)
 {
-	Draw_RectStretchSubPic(pic, x, y, 0, 0, pic->width, pic->height, Q_rint(scale * pic->width), Q_rint(scale * pic->height));
+	Draw_RectStretchSubPic(pic->data, pic->width, pic->height, x, y, 0, 0, pic->width, pic->height, Q_rint(scale * pic->width), Q_rint(scale * pic->height));
 }
 
 void Draw_AlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float alpha)
@@ -1832,12 +1815,12 @@ void Draw_AlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width,
 
 void Draw_SAlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float scale, float alpha)
 {
-	Draw_RectStretchSubPic(pic, x, y, srcx, srcy, width, height, Q_rint(scale * pic->width), Q_rint(scale * pic->height));
+	Draw_RectStretchSubPic(pic->data, pic->width, pic->height, x, y, srcx, srcy, width, height, Q_rint(scale * pic->width), Q_rint(scale * pic->height));
 }
 
 void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float scale_x, float scale_y, float alpha)
 {
-	Draw_RectStretchSubPic(pic, x, y, srcx, srcy, width, height, Q_rint(scale_x * pic->width), Q_rint(scale_y * pic->height));
+	Draw_RectStretchSubPic(pic->data, pic->width, pic->height, x, y, srcx, srcy, width, height, Q_rint(scale_x * pic->width), Q_rint(scale_y * pic->height));
 }
 
 void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha)
