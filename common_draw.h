@@ -26,10 +26,6 @@ mpic_t *CachePic_Find(const char *path);
 mpic_t* CachePic_Add(const char *path, mpic_t *pic);
 void CachePics_DeInit(void);
 
-//int SCR_DrawDemoStatus(void);
-//void PrepareCrosshair(int num, byte tab[10][10]);
-//void SCR_DrawClients(void);
-
 void SCR_DrawBigClock(int x, int y, int style, int blink, float scale, int gametime);
 void SCR_DrawSmallClock(int x, int y, int style, int blink, float scale, int gametime);
 void SCR_NetStats(int x, int y, float period);
@@ -40,11 +36,12 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 					 int vertical,
 					 int vertical_text,
 					 int text_align,
-					 int color_stopped,
-					 int color_normal,
-					 int color_fast,
-					 int color_fastest,
-					 int color_insane);
+					 byte color_stopped,
+					 byte color_normal,
+					 byte color_fast,
+					 byte color_fastest,
+					 byte color_insane);
+
 void SCR_DrawWordWrapString(int x, int y, 
 							int y_spacing, 
 							int width, int height, 

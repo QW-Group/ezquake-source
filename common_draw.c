@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.19 2007-07-19 19:10:47 cokeman1982 Exp $
+	$Id: common_draw.c,v 1.20 2007-07-21 18:44:57 cokeman1982 Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -469,12 +469,6 @@ mpic_t* CachePic_Add(const char *path, mpic_t *pic)
 	searchpos = (cachepic_node_t *) Q_malloc(sizeof(cachepic_node_t));
 	
 	searchpos->data.pic = pic;
-	// Write data.
-	#ifdef GLQUAKE
-	//memcpy(&searchpos->data.pic, pic, sizeof(mpic_t));
-	#else
-	
-	#endif // GLQUAKE
 
 	strncpy(searchpos->data.name, path, sizeof(searchpos->data.name));
 	searchpos->next = NULL; // Terminate the list.
@@ -820,14 +814,14 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 					 int vertical,
 					 int vertical_text,
 					 int text_align,
-					 int color_stopped,
-					 int color_normal,
-					 int color_fast,
-					 int color_fastest,
-					 int color_insane)
+					 byte color_stopped,
+					 byte color_normal,
+					 byte color_fast,
+					 byte color_fastest,
+					 byte color_insane)
 {
-	int color_offset;
-	int color1, color2;
+	byte color_offset;
+	byte color1, color2;
     int player_speed;
     vec_t *velocity;
 
