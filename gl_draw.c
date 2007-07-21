@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.77 2007-07-19 19:10:47 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.78 2007-07-21 18:46:21 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -511,55 +511,72 @@ void Draw_InitConback (void) {
 	Hunk_FreeToLowMark (start);
 }
 
-static int Draw_LoadCharset(char *name) {
+static int Draw_LoadCharset(const char *name) 
+{
 	int texnum;
+	qbool loaded = false;
 
-	if (!strcasecmp(name, "original")) {
+	if (!strcasecmp(name, "original")) 
+	{
+		// Convert the 128*128 conchars texture to 128*256 leaving
+		// empty space between rows so that chars don't stumble on
+		// each other because of texture smoothing.
+		// This hack costs us 64K of GL texture memory
 		int i;
 		char buf[128 * 256], *src, *dest;
 
 		memset (buf, 255, sizeof(buf));
 		src = (char *) draw_chars;
 		dest = buf;
-		for (i = 0; i < 16; i++) {
+		
+		for (i = 0; i < 16; i++) 
+		{
 			memcpy (dest, src, 128 * 8);
 			src += 128 * 8;
 			dest += 128 * 8 * 2;
 		}
+
 		char_textures[0] = GL_LoadTexture ("pic:charset", 128, 256, (byte *)buf, TEX_ALPHA, 1);
-		goto done;
+		loaded = true;
 	}
-
-	if ((texnum = GL_LoadCharsetImage (va("textures/charsets/%s", name), "pic:charset"))) {
+	else if ((texnum = GL_LoadCharsetImage (va("textures/charsets/%s", name), "pic:charset"))) 
+	{
 		char_textures[0] = texnum;
-		goto done;
+		loaded = true;
 	}
 
-	Com_Printf ("Couldn't load charset \"%s\"\n", name);
-	return 1;
+	if (!loaded)
+	{
+		Com_Printf ("Couldn't load charset \"%s\"\n", name);
+		return 1;
+	}
 
-done:
-	if (!gl_smoothfont.value) {
+	if (!gl_smoothfont.value) 
+	{
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
+
 	return 0;
 }
 
-qbool OnChange_gl_consolefont(cvar_t *var, char *string) {
+qbool OnChange_gl_consolefont(cvar_t *var, char *string) 
+{
 	return Draw_LoadCharset(string);
 }
 
-void Draw_LoadCharset_f (void) {
-	switch (Cmd_Argc()) {
-	case 1:
-		Com_Printf("Current charset is \"%s\"\n", gl_consolefont.string);
-		break;
-	case 2:
-		Cvar_Set(&gl_consolefont, Cmd_Argv(1));
-		break;
-	default:
-		Com_Printf("Usage: %s <charset>\n", Cmd_Argv(0));
+void Draw_LoadCharset_f (void) 
+{
+	switch (Cmd_Argc()) 
+	{
+		case 1:
+			Com_Printf("Current charset is \"%s\"\n", gl_consolefont.string);
+			break;
+		case 2:
+			Cvar_Set(&gl_consolefont, Cmd_Argv(1));
+			break;
+		default:
+			Com_Printf("Usage: %s <charset>\n", Cmd_Argv(0));
 	}
 }
 
@@ -571,13 +588,18 @@ static int LoadAlternateCharset (char *name)
 	byte	*src, *dest;
 	int texnum;
 
-	/* We expect an .lmp to be in QPIC format, but it's ok if it's just raw data */
+	// We expect an .lmp to be in QPIC format, but it's ok if it's just raw data.
 	data = FS_LoadTempFile (va("gfx/%s.lmp", name));
+	
 	if (!data)
 		return 0;
+
 	if (fs_filesize == 128*128)
-		/* raw data */;
-	else if (fs_filesize == 128*128 + 8) {
+	{
+		// Raw data.
+	}
+	else if (fs_filesize == 128*128 + 8) 
+	{
 		qpic_t *p = (qpic_t *)data;
 		SwapPic (p);
 		if (p->width != 128 || p->height != 128)
@@ -585,11 +607,15 @@ static int LoadAlternateCharset (char *name)
 		data += 8;
 	}
 	else
+	{
 		return 0;
+	}
 
-	for (i=0 ; i<256*64 ; i++)
+	for (i=0 ; i < (256 * 64) ; i++)
+	{
 		if (data[i] == 0)
-			data[i] = 255;	// proper transparent color
+			data[i] = 255;	// Proper transparent color.
+	}
 
 	// Convert the 128*128 conchars texture to 128*256 leaving
 	// empty space between rows so that chars don't stumble on
@@ -598,7 +624,9 @@ static int LoadAlternateCharset (char *name)
 	memset (buf, 255, sizeof(buf));
 	src = data;
 	dest = buf;
-	for (i=0 ; i<16 ; i++) {
+
+	for (i = 0 ; i < 16 ; i++) 
+	{
 		memcpy (dest, src, 128*8);
 		src += 128*8;
 		dest += 128*8*2;
@@ -615,14 +643,16 @@ static int LoadAlternateCharset (char *name)
 
 
 
-void Draw_InitCharset(void) {
+void Draw_InitCharset(void) 
+{
 	int i;
 
 	memset(char_textures, 0, sizeof(char_textures));
 	memset(char_range,    0, sizeof(char_range));
 
 	draw_chars = W_GetLumpName ("conchars");
-	for (i = 0; i < 256 * 64; i++) {
+	for (i = 0; i < 256 * 64; i++) 
+	{
 		if (draw_chars[i] == 0)
 			draw_chars[i] = 255;
 	}
