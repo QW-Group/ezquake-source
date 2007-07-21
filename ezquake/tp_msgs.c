@@ -4,7 +4,7 @@
 
   made by johnnycz, Up2nOgoOd[ROCK]
   last edit:
-  $Id: tp_msgs.c,v 1.1.2.20 2007-07-20 01:18:59 himan Exp $
+  $Id: tp_msgs.c,v 1.1.2.21 2007-07-21 17:11:57 himan Exp $
 
 */
 
@@ -130,23 +130,23 @@ LOCAL void TP_Send_TeamSay(char *format, ...)
 GLOBAL void TP_Msg_Lost_f (void)
 { // This function has no use in being an external (client bind), excep that people are probably used to having this. Notice that tp_report makes this function obsolete.
     MSGPART led = tp_sep_red;
-    MSGPART msg1 = "";
-	MSGPART msg2 = "";
+    MSGPART quad_over_lost = "";
+	MSGPART weap_and_location = "";
 	if (DEAD()) // make sure you're dead when you press this bind, else it's useless. this check exists in case player has a bind tp_lost, b/c in tp_report we always check if dead.
 		{
 		if (HAVE_QUAD())
-			msg1 = tp_ib_name_quad " over ";
+			quad_over_lost = tp_ib_name_quad " over ";
  
 		if (HOLD_RL() || HOLD_LG() || HOLD_GL()) // gl could be useful too
-			msg2 = "lost "  COLORED(f0f,$weapon) " $[{%d}$] e:%E";
+			weap_and_location = "lost "  COLORED(f0f,$weapon) " $[{%d}$] e:%E";
 		else
-			msg2 = "lost $[{%d}$] e:%E";
+			weap_and_location = "lost $[{%d}$] e:%E";
 		}
 	else // if alive and reporting last death location
-		msg1 = "lost $[{%d}$]";
+		quad_over_lost = "lost $[{%d}$]";
 		
 	//$R$R quad over(1) lost loc weapon(2)
-    TP_Send_TeamSay("%s %s%s", led, msg1, msg2);
+    TP_Send_TeamSay("%s %s%s", led, quad_over_lost, weap_and_location);
 }
 
 
@@ -342,7 +342,7 @@ GLOBAL void TP_Msg_Help_f (void) { TP_Msg_SafeHelp(false); }
 
 LOCAL void TP_Msg_GetPentQuad(qbool quad)
 {
-	MSGPART msg1 = "";
+	MSGPART get_powerup = "";
  
 	if (quad)
 	{
@@ -359,7 +359,7 @@ LOCAL void TP_Msg_GetPentQuad(qbool quad)
 			return;
 			}
 		else
-			msg1 = "get " tp_ib_name_quad;
+			get_powerup = "get " tp_ib_name_quad;
 	}
 	else
 	{
@@ -372,11 +372,11 @@ LOCAL void TP_Msg_GetPentQuad(qbool quad)
 			}
 
 		else
-			msg1 = "get " tp_ib_name_pent;
+			get_powerup = "get " tp_ib_name_pent;
 	}
  
 	//$Y$Y get powerup(1)
-	TP_Send_TeamSay(tp_sep_yellow " %s", msg1);
+	TP_Send_TeamSay(tp_sep_yellow " %s", get_powerup);
 }
 GLOBAL void TP_Msg_GetQuad_f (void) { TP_Msg_GetPentQuad(true); }
 GLOBAL void TP_Msg_GetPent_f (void) { TP_Msg_GetPentQuad(false); }
@@ -384,7 +384,7 @@ GLOBAL void TP_Msg_GetPent_f (void) { TP_Msg_GetPentQuad(false); }
 
 GLOBAL void TP_Msg_QuadDead_f (void)
 {
-    MSGPART msg1 = "";
+    MSGPART quad_dead = "";
  
 	if (DEAD() && HAVE_QUAD()) // when you have quad and you die, before you spawn you're still glowing (in some mods/settings), meaning you have quad. this check is necessary!
 		{
@@ -396,20 +396,21 @@ GLOBAL void TP_Msg_QuadDead_f (void)
 		TP_Msg_EnemyPowerup_f(); // tp_enemypwr can handle this & all cases regarding players/powerups
 		return;
 		}
-	else msg1 = tp_ib_name_quad " dead";
+	else quad_dead = tp_ib_name_quad " dead";
 
-	TP_Send_TeamSay(tp_sep_yellow " %s", msg1);
+	//$Y$Y quad dead
+	TP_Send_TeamSay(tp_sep_yellow " %s", quad_dead);
 }
 
 
 
 GLOBAL void TP_Msg_Took_f (void)
 {
-    MSGPART msg1 = "";
-	MSGPART msg2 = "";
-	MSGPART msg3 = "";
-	MSGPART msg4 = "";
-	MSGPART msg5 = "";
+    MSGPART led = "";
+	MSGPART item_or_powerup = "";
+	MSGPART location = "";
+	MSGPART have_powerup = "";
+	MSGPART took = "";
  
 	if (TOOK_EMPTY())
 		return;
@@ -418,42 +419,42 @@ GLOBAL void TP_Msg_Took_f (void)
 		TP_GetNeed();
 		if (NEED(health) || NEED(armor) || NEED_WEAPON() || NEED(rockets) || NEED(cells))
 			{
-			msg1 = tp_sep_green;
-			msg2 = " " tp_ib_name_team " $colored_powerups need %u";
+			led = tp_sep_green;
+			item_or_powerup = " " tp_ib_name_team " $colored_powerups need %u";
 			}
 		else
 			{ // notice we can't send this check to tp_msgenemypwr, that's because if enemy with powerup is in your view, tp_enemypwr reports enemypwr first, but in this function you want to report TEAM quad.
-			msg1 = tp_sep_green;
-			msg2 = " " tp_ib_name_team " $colored_powerups";
-			msg3 = "";
+			led = tp_sep_green;
+			item_or_powerup = " " tp_ib_name_team " $colored_powerups";
+			location = "";
 			}
 		}
 	else
 	{
-		if	(TOOK(rl))									msg2 = tp_ib_name_rl;
-		else if (TOOK(lg))								msg2 = tp_ib_name_lg;
-		else if (TOOK(gl))								msg2 = tp_ib_name_gl;
-		else if (TOOK(sng))								msg2 = tp_ib_name_sng;
-		else if (TOOK(pack))    						msg2 = tp_ib_name_backpack;
-		else if (TOOK(rockets) || TOOK(cells))			msg2 = "{$took}";
-		else if (TOOK(mh))								msg2 = tp_ib_name_mh;
-		else if (TOOK(ra))								msg2 = tp_ib_name_ra;
-		else if (TOOK(ya))								msg2 = tp_ib_name_ya;
-		else if (TOOK(ga))								msg2 = tp_ib_name_ga;
-		else if (TOOK(flag))							msg2 = tp_ib_name_flag;
-		else if (TOOK(runes))							msg2 = "$took";
-		else 											msg2 = "{$took}"; // This should never happen
+		if		(TOOK(rl))								item_or_powerup = tp_ib_name_rl;
+		else if (TOOK(lg))								item_or_powerup = tp_ib_name_lg;
+		else if (TOOK(gl))								item_or_powerup = tp_ib_name_gl;
+		else if (TOOK(sng))								item_or_powerup = tp_ib_name_sng;
+		else if (TOOK(pack))    						item_or_powerup = tp_ib_name_backpack;
+		else if (TOOK(rockets) || TOOK(cells))			item_or_powerup = "{$took}";
+		else if (TOOK(mh))								item_or_powerup = tp_ib_name_mh;
+		else if (TOOK(ra))								item_or_powerup = tp_ib_name_ra;
+		else if (TOOK(ya))								item_or_powerup = tp_ib_name_ya;
+		else if (TOOK(ga))								item_or_powerup = tp_ib_name_ga;
+		else if (TOOK(flag))							item_or_powerup = tp_ib_name_flag;
+		else if (TOOK(runes))							item_or_powerup = "{$took}";
+		else 											item_or_powerup = "{$took}"; // This should never happen
 		
 		if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
-			msg4 = " $colored_short_powerups";
+			have_powerup = " $colored_short_powerups";
 		else
-			msg4 = "";
+			have_powerup = "";
 		
-		msg1 = tp_sep_white;
-		msg3 = "at $[{%l}$]";
-		msg5 = " took ";
+		led = tp_sep_white;
+		location = "at $[{%i}$]"; // took location
+		took = " took ";
 	}
-	TP_Send_TeamSay("%s%s%s%s %s", msg1, msg4, msg5, msg2, msg3);
+	TP_Send_TeamSay("%s%s%s %s", led, have_powerup, took, item_or_powerup, location);
 }
 
 extern cvar_t tp_name_teammate;
@@ -542,7 +543,7 @@ GLOBAL void TP_Msg_Point_f (void)
 
 GLOBAL void TP_Msg_Need_f (void)
 {
-    MSGPART msg1 = "";
+    MSGPART need_item = "";
  
 	if (DEAD())
 		return; // if you're dead, you need better aim :E
@@ -550,32 +551,32 @@ GLOBAL void TP_Msg_Need_f (void)
 		TP_GetNeed();
 	
 	if (NEED(health) || NEED(armor) || NEED_WEAPON() || NEED(rockets) || NEED(cells) || NEED(shells) || NEED(nails))
-		msg1 = "need %u";
+		need_item = "need %u";
 	else
 		return;
 	
-	TP_Send_TeamSay(tp_sep_green " %s", msg1);
+	TP_Send_TeamSay(tp_sep_green " %s", need_item);
 }
 
 LOCAL void TP_Msg_TrickReplace(qbool trick)
 {
-    MSGPART msg1 = "";
-	MSGPART msg2 = "";
-	MSGPART msg3 = "";
+    MSGPART trick_or_replace = "";
+	MSGPART location = "";
+	MSGPART powerup = "";
 	
 	if (trick)
-		msg1 = " {trick}";
+		trick_or_replace = " {trick}";
 	else
-		msg1 = " {replace}";
+		trick_or_replace = " {replace}";
 		
 	if (HAVE_QUAD() || HAVE_PENT() || HAVE_RING())
-		msg3 = " $colored_short_powerups";
+		powerup = " $colored_short_powerups";
 	else
-		msg3 = "";
+		powerup = "";
 		
-	msg2 = "$[{%l}$]";
+	location = "$[{%l}$]";
 	
-	TP_Send_TeamSay(tp_sep_yellow "%s%s %s", msg3, msg1, msg2);
+	TP_Send_TeamSay(tp_sep_yellow "%s%s %s", powerup, trick_or_replace, location);
 }
 GLOBAL void TP_Msg_Trick_f (void) { TP_Msg_TrickReplace(true); }
 GLOBAL void TP_Msg_Replace_f (void) { TP_Msg_TrickReplace(false); }
