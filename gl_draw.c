@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.78 2007-07-21 18:46:21 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.79 2007-07-23 19:43:01 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -137,7 +137,8 @@ static byte crosshairdata[NUMCROSSHAIRS][64] = {
 };
 
 
-qbool OnChange_gl_smoothfont (cvar_t *var, char *string) {
+qbool OnChange_gl_smoothfont (cvar_t *var, char *string)
+{
 	float newval;
 	int i;
 
@@ -146,14 +147,18 @@ qbool OnChange_gl_smoothfont (cvar_t *var, char *string) {
 	if (!newval == !gl_smoothfont.value || !char_textures[0])
 			return false;
 
-	for (i = 0; i < MAX_CHARSETS; i++) {
+	for (i = 0; i < MAX_CHARSETS; i++) 
+	{
 		if (!char_textures[i])
 			break;
 		GL_Bind(char_textures[i]);
-		if (newval)	{
+		if (newval)	
+		{
 			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		} else {
+		} 
+		else 
+		{
 			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		}
@@ -162,7 +167,8 @@ qbool OnChange_gl_smoothfont (cvar_t *var, char *string) {
 }
 
 
-qbool OnChange_gl_crosshairimage(cvar_t *v, char *s) {
+qbool OnChange_gl_crosshairimage(cvar_t *v, char *s) 
+{
 	mpic_t *pic;
 
 	customcrosshair_loaded &= ~CROSSHAIR_IMAGE;
@@ -170,10 +176,12 @@ qbool OnChange_gl_crosshairimage(cvar_t *v, char *s) {
 	if (!s[0])
 		return false;
 
-	if (!(pic = Draw_CachePicSafe(va("crosshairs/%s", s), false, true))) {
+	if (!(pic = Draw_CachePicSafe(va("crosshairs/%s", s), false, true))) 
+	{
 		Com_Printf("Couldn't load image %s\n", s);
 		return false;
 	}
+
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	crosshairpic = *pic;
@@ -181,7 +189,8 @@ qbool OnChange_gl_crosshairimage(cvar_t *v, char *s) {
 	return false;
 }
 
-void customCrosshair_Init(void) {
+void customCrosshair_Init(void) 
+{
 	FILE *f;
 	int i = 0, c;
 
@@ -191,22 +200,28 @@ void customCrosshair_Init(void) {
 	if (FS_FOpenFile("crosshairs/crosshair.txt", &f) == -1)
 		return;
 
-	while (i < 64) {
+	while (i < 64) 
+	{
 		c = fgetc(f);
-		if (c == EOF) {
+		if (c == EOF)
+		{
 			Com_Printf("Invalid format in crosshair.txt (Need 64 X's and O's)\n");
 			fclose(f);
 			return;
 		}
+
 		if (isspace(c))
 			continue;
-		if (tolower(c) != 'x' && tolower(c) != 'o') {
+
+		if (tolower(c) != 'x' && tolower(c) != 'o') 
+		{
 			Com_Printf("Invalid format in crosshair.txt (Only X's and O's and whitespace permitted)\n");
 			fclose(f);
 			return;
 		}
 		customcrosshairdata[i++] = (c == 'x' || c  == 'X') ? 0xfe : 0xff;
 	}
+
 	fclose(f);
 	crosshairtexture_txt = GL_LoadTexture ("", 8, 8, customcrosshairdata, TEX_ALPHA, 1);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -214,13 +229,15 @@ void customCrosshair_Init(void) {
 	customcrosshair_loaded |= CROSSHAIR_TXT;
 }
 
-void Draw_InitCrosshairs(void) {
+void Draw_InitCrosshairs(void) 
+{
 	int i;
 	char str[256] = {0};
 
 	memset(&crosshairpic, 0, sizeof(crosshairpic));
 
-	for (i = 0; i < NUMCROSSHAIRS; i++) {
+	for (i = 0; i < NUMCROSSHAIRS; i++) 
+	{
 		crosshairtextures[i] = GL_LoadTexture ("", 8, 8, crosshairdata[i], TEX_ALPHA, 1);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -229,6 +246,13 @@ void Draw_InitCrosshairs(void) {
 
 	snprintf(str, sizeof(str), "%s", gl_crosshairimage.string);
 	Cvar_Set(&gl_crosshairimage, str);
+}
+
+float overall_opacity = 1.0;
+
+void Draw_SetOverallOpacity(float opacity)
+{
+	overall_opacity = opacity;
 }
 
 void Draw_EnableScissorRectangle(int x, int y, int width, int height)
@@ -247,42 +271,47 @@ void Draw_DisableScissor()
 	glDisable(GL_SCISSOR_TEST);
 }
 
-/*
-=============================================================================
-  scrap allocation
+//
+// =============================================================================
+//  Scrap allocation
+//
+//  Allocate all the little status bar objects into a single texture
+//  to crutch up stupid hardware / drivers
+// =============================================================================
 
-  Allocate all the little status bar objects into a single texture
-  to crutch up stupid hardware / drivers
-=============================================================================
-*/
-
-// some cards have low quality of alpha pics, so load the pics
+// Some cards have low quality of alpha pics, so load the pics
 // without transparent pixels into a different scrap block.
-// scrap 0 is solid pics, 1 is transparent
+// scrap 0 is solid pics, 1 is transparent.
 #define	BLOCK_WIDTH		256
 #define	BLOCK_HEIGHT	256
 
 int			scrap_allocated[MAX_SCRAPS][BLOCK_WIDTH];
 byte		scrap_texels[MAX_SCRAPS][BLOCK_WIDTH*BLOCK_HEIGHT*4];
-int			scrap_dirty = 0;	// bit mask
+int			scrap_dirty = 0;	// Bit mask.
 int			scrap_texnum;
 
-// returns false if allocation failed
-qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y) {
+// Returns false if allocation failed.
+qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y) 
+{
 	int i, j, best, best2;
 
 	best = BLOCK_HEIGHT;
 
-	for (i = 0; i < BLOCK_WIDTH - w; i++) {
+	for (i = 0; i < BLOCK_WIDTH - w; i++) 
+	{
 		best2 = 0;
 
-		for (j = 0; j < w; j++) {
+		for (j = 0; j < w; j++) 
+		{
 			if (scrap_allocated[scrapnum][i + j] >= best)
 				break;
 			if (scrap_allocated[scrapnum][i + j] > best2)
 				best2 = scrap_allocated[scrapnum][i + j];
 		}
-		if (j == w) {	// this is a valid spot
+
+		if (j == w)
+		{	
+			// This is a valid spot.
 			*x = i;
 			*y = best = best2;
 		}
@@ -299,10 +328,12 @@ qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y) {
 	return true;
 }
 
-void Scrap_Upload (void) {
+void Scrap_Upload (void) 
+{
 	int i;
 
-	for (i = 0; i < MAX_SCRAPS; i++) {
+	for (i = 0; i < MAX_SCRAPS; i++)
+	{
 		if (!(scrap_dirty & (1 << i)))
 			continue;
 		scrap_dirty &= ~(1 << i);
@@ -312,8 +343,7 @@ void Scrap_Upload (void) {
 }
 
 //=============================================================================
-/* Support Routines */
-
+// Support Routines 
 
 mpic_t *Draw_CacheWadPic (char *name) 
 {
@@ -323,16 +353,14 @@ mpic_t *Draw_CacheWadPic (char *name)
 	p = W_GetLumpName (name);
 	pic = (mpic_t *)p;
 
-	if (
-		(pic_24bit = GL_LoadPicImage(va("textures/wad/%s", name), name, 0, 0, TEX_ALPHA)) ||
-		(pic_24bit = GL_LoadPicImage(va("gfx/%s", name), name, 0, 0, TEX_ALPHA))
-		) 
+	if ((pic_24bit = GL_LoadPicImage(va("textures/wad/%s", name), name, 0, 0, TEX_ALPHA)) ||
+		(pic_24bit = GL_LoadPicImage(va("gfx/%s", name), name, 0, 0, TEX_ALPHA))) 
 	{
 		memcpy(&pic->texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
 		return pic;
 	}
 
-	// load little ones into the scrap
+	// Load little ones into the scrap.
 	if (p->width < 64 && p->height < 64) 
 	{
 		int x = 0, y = 0, i, j, k, texnum;
@@ -476,13 +504,15 @@ mpic_t *Draw_CachePic (char *path)
 	return Draw_CachePicSafe (path, true, false);
 }
 
-// if conwidth or conheight changes, adjust conback sizes too
-void Draw_AdjustConback (void) {
+// If conwidth or conheight changes, adjust conback sizes too.
+void Draw_AdjustConback (void)
+{
 	conback.width  = vid.conwidth;
 	conback.height = vid.conheight;
 }
 
-void Draw_InitConback (void) {
+void Draw_InitConback (void) 
+{
 	qpic_t *cb;
 	int start;
 	mpic_t *pic_24bit;
@@ -496,10 +526,12 @@ void Draw_InitConback (void) {
 	if (cb->width != 320 || cb->height != 200)
 		Sys_Error ("Draw_InitConback: conback.lmp size is not 320x200");
 
-
-	if ((pic_24bit = GL_LoadPicImage("gfx/conback", "conback", 0, 0, 0))) {
+	if ((pic_24bit = GL_LoadPicImage("gfx/conback", "conback", 0, 0, 0))) 
+	{
 		memcpy(&conback.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
-	} else {
+	} 
+	else 
+	{
 		conback.width = cb->width;
 		conback.height = cb->height;
 		GL_LoadPicTexture ("conback", &conback, cb->data);
@@ -507,7 +539,7 @@ void Draw_InitConback (void) {
 
 	Draw_AdjustConback();
 
-	// free loaded console
+	// Free loaded console.
 	Hunk_FreeToLowMark (start);
 }
 
@@ -675,7 +707,8 @@ void Draw_InitCharset(void)
 void CP_Init (void);
 void Draw_InitConsoleBackground(void);
 
-void Draw_Init (void) {
+void Draw_Init (void) 
+{
 	Cmd_AddCommand("loadcharset", Draw_LoadCharset_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
@@ -738,53 +771,68 @@ qbool R_CharAvailable (wchar num)
 	return false;
 }
 
-__inline static void Draw_CharPoly(int x, int y, int num) {
+#define CHARSET_CHARS_PER_ROW	16
+#define CHARSET_WIDTH			1.0
+#define CHARSET_HEIGHT			1.0
+#define CHARSET_CHAR_WIDTH		(CHARSET_WIDTH / CHARSET_CHARS_PER_ROW)
+#define CHARSET_CHAR_HEIGHT		(CHARSET_HEIGHT / CHARSET_CHARS_PER_ROW)
+
+__inline static void Draw_CharPoly(int x, int y, int num) 
+{
 	float frow, fcol;
 
-	frow = (num >> 4) * 0.0625;
-	fcol = (num & 15) * 0.0625;
+	frow = (num >> 4) * CHARSET_CHAR_HEIGHT;
+	fcol = (num & 0x0F) * CHARSET_CHAR_WIDTH;
 
 	glTexCoord2f (fcol, frow);
 	glVertex2f (x, y);
-	glTexCoord2f (fcol + 0.0625, frow);
+	glTexCoord2f (fcol + CHARSET_CHAR_WIDTH, frow);
 	glVertex2f (x + 8, y);
-	glTexCoord2f (fcol + 0.0625, frow + 0.03125);
+	glTexCoord2f (fcol + CHARSET_CHAR_WIDTH, frow + (CHARSET_CHAR_HEIGHT / 2));
 	glVertex2f (x + 8, y + 8);
-	glTexCoord2f (fcol, frow + 0.03125);
+	glTexCoord2f (fcol, frow + (CHARSET_CHAR_HEIGHT / 2));
 	glVertex2f (x, y + 8);
 }
 
-//Draws one 8*8 graphics character with 0 being transparent.
-//It can be clipped to the top of the screen to allow the console to be smoothly scrolled off.
-void Draw_Character (int x, int y, int num) {
+// Draws one 8*8 graphics character with 0 being transparent.
+// It can be clipped to the top of the screen to allow the console to be smoothly scrolled off.
+void Draw_Character (int x, int y, int num) 
+{
 	Draw_CharacterW (x, y, char2wc(num));
 }
-void Draw_CharacterW (int x, int y, wchar num) {
+
+void Draw_CharacterW (int x, int y, wchar num) 
+{
 	qbool atest = false;
 	qbool blend = false;
 	int i, slot;
 
 	if (y <= -8)
-		return;			// totally off screen
+		return;		// Totally off screen.
 
 	if (num == 32)
-		return;		// space
+		return;		// Space.
 
 	slot = 0;
 	if ((num & 0xFF00) != 0)
 	{
 		for (i = 1; i < MAX_CHARSETS; i++)
-			if (char_range[i] == (num & 0xFF00)) {
+		{
+			if (char_range[i] == (num & 0xFF00)) 
+			{
 				slot = i;
 				break;
 			}
+		}
+
 		if (i == MAX_CHARSETS)
 			num = '?';
 	}
 
 	num &= 255;
 
-	if (gl_alphafont.value)	{
+	if (gl_alphafont.value)
+	{
 		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
 			glDisable(GL_ALPHA_TEST);
 		if (!(blend = glIsEnabled(GL_BLEND)))
@@ -797,7 +845,8 @@ void Draw_CharacterW (int x, int y, wchar num) {
 	Draw_CharPoly(x, y, num);
 	glEnd ();
 
-	if (gl_alphafont.value)	{
+	if (gl_alphafont.value)
+	{
 		if (atest)
 			glEnable(GL_ALPHA_TEST);
 		if (!blend)
@@ -805,18 +854,20 @@ void Draw_CharacterW (int x, int y, wchar num) {
 	}
 }
 
-void Draw_String (int x, int y, const char *str) {
+void Draw_String (int x, int y, const char *str) 
+{
 	int num;
 	qbool atest = false;
 	qbool blend = false;
 
 	if (y <= -8)
-		return;			// totally off screen
+		return;			// Totally off screen.
 
 	if (!*str)
 		return;
 
-	if (gl_alphafont.value)	{
+	if (gl_alphafont.value)	
+	{
 		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
 			glDisable(GL_ALPHA_TEST);
 		if (!(blend = glIsEnabled(GL_BLEND)))
@@ -827,8 +878,9 @@ void Draw_String (int x, int y, const char *str) {
 
 	glBegin (GL_QUADS);
 
-	while (*str) {	// stop rendering when out of characters
-		if ((num = *str++) != 32)	// skip spaces
+	while (*str) 
+	{
+		if ((num = *str++) != 32)	// Skip spaces.
 			Draw_CharPoly(x, y, num);
 
 		x += 8;
@@ -836,7 +888,8 @@ void Draw_String (int x, int y, const char *str) {
 
 	glEnd ();
 
-	if (gl_alphafont.value)	{
+	if (gl_alphafont.value)	
+	{
 		if (atest)
 			glEnable(GL_ALPHA_TEST);
 		if (!blend)
@@ -847,7 +900,8 @@ void Draw_String (int x, int y, const char *str) {
 void Draw_StringW (int x, int y, const wchar *ws)
 {
 	if (y <= -8)
-		return;			// totally off screen
+		return;			// Totally off screen.
+
 	while (*ws)
 	{
 		Draw_CharacterW (x, y, *ws++);
@@ -867,17 +921,16 @@ void Draw_AlphaString (int x, int y, const char *str, float alpha)
 		return;
 
 	if (y <= -8)
-		return;			// totally off screen
+		return;		// Totally off screen.
 
 	if (!str || !str[0])
 		return;
 
-//	if (gl_alphafont.value)	{ // need this anyway for alpha
-		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
-			glDisable(GL_ALPHA_TEST);
-		if (!(blend = glIsEnabled(GL_BLEND)))
-			glEnable(GL_BLEND);
-//	}
+	if ((atest = glIsEnabled(GL_ALPHA_TEST)))
+		glDisable(GL_ALPHA_TEST);
+	if (!(blend = glIsEnabled(GL_BLEND)))
+		glEnable(GL_BLEND);
+
 	glGetTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &value); // save current value
 	if (value != GL_MODULATE)
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -888,8 +941,9 @@ void Draw_AlphaString (int x, int y, const char *str, float alpha)
 
 	glBegin (GL_QUADS);
 
-	while (*str) {	// stop rendering when out of characters
-		if ((num = *str++) != 32)	// skip spaces
+	while (*str)
+	{
+		if ((num = *str++) != 32)	// Skip spaces.
 			Draw_CharPoly(x, y, num);
 
 		x += 8;
@@ -897,30 +951,32 @@ void Draw_AlphaString (int x, int y, const char *str, float alpha)
 
 	glEnd ();
 
-//	if (gl_alphafont.value)	{ // need this anyway for alpha
-		if (atest)
-			glEnable(GL_ALPHA_TEST);
-		if (!blend)
-			glDisable(GL_BLEND);
-//	}
-	if (value != GL_MODULATE) // restore
+	if (atest)
+		glEnable(GL_ALPHA_TEST);
+	if (!blend)
+		glDisable(GL_BLEND);
+
+	if (value != GL_MODULATE) // Restore.
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, value);
+
 	glColor3ubv (color_white);
 }
 
 
-void Draw_Alt_String (int x, int y, const char *str) {
+void Draw_Alt_String (int x, int y, const char *str) 
+{
 	int num;
 	qbool atest = false;
 	qbool blend = false;
 
 	if (y <= -8)
-		return;			// totally off screen
+		return;			// Totally off screen.
 
 	if (!*str)
 		return;
 
-	if (gl_alphafont.value)	{
+	if (gl_alphafont.value)	
+	{
 		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
 			glDisable(GL_ALPHA_TEST);
 		if (!(blend = glIsEnabled(GL_BLEND)))
@@ -931,8 +987,9 @@ void Draw_Alt_String (int x, int y, const char *str) {
 
 	glBegin (GL_QUADS);
 
-	while (*str) {// stop rendering when out of characters
-		if ((num = *str++ | 128) != (32 | 128))	// skip spaces
+	while (*str) 
+	{
+		if ((num = *str++ | 128) != (32 | 128))	// Skip spaces
 			Draw_CharPoly(x, y, num);
 
 		x += 8;
@@ -940,7 +997,8 @@ void Draw_Alt_String (int x, int y, const char *str) {
 
 	glEnd ();
 
-	if (gl_alphafont.value)	{
+	if (gl_alphafont.value)	
+	{
 		if (atest)
 			glEnable(GL_ALPHA_TEST);
 		if (!blend)
@@ -969,7 +1027,7 @@ void Draw_ColoredString (int x, int y, const char *text, int red)
 	qbool blend = false;
 
 	if (y <= -8)
-		return;			// totally off screen
+		return;			// Totally off screen.
 
 	if (!*text)
 		return;
@@ -1058,7 +1116,8 @@ void Draw_ColoredString (int x, int y, const char *text, int red)
 //
 //	If u want use alpha u must use "gl_alphafont 1", "scr_coloredText 1" and "red" param must be false
 //
-void Draw_ColoredString2 (int x, int y, const char *text, int *clr, int red) {
+void Draw_ColoredString2 (int x, int y, const char *text, int *clr, int red) 
+{
 	byte white4[4] = {255, 255, 255, 255}, rgba[4];
 	int num, i, last;
 	qbool atest = false;
@@ -1070,7 +1129,8 @@ void Draw_ColoredString2 (int x, int y, const char *text, int *clr, int red) {
 	if (!*text || !clr)
 		return;
 
-	if (gl_alphafont.value)	{
+	if (gl_alphafont.value)	
+	{
 		if ((atest = glIsEnabled(GL_ALPHA_TEST)))
 			glDisable(GL_ALPHA_TEST);
 		if (!(blend = glIsEnabled(GL_BLEND)))
@@ -1086,14 +1146,16 @@ void Draw_ColoredString2 (int x, int y, const char *text, int *clr, int red) {
 
 	glBegin (GL_QUADS);
 
-	for (last = COLOR_WHITE, i = 0; text[i]; i++) {
-		if (scr_coloredText.value && clr[i] != last) {
-			// probably here we may made some trick like glColor4ubv((byte*)&last); instead of COLOR_TO_RGBA()
+	for (last = COLOR_WHITE, i = 0; text[i]; i++) 
+	{
+		if (scr_coloredText.value && clr[i] != last) 
+		{
+			// Probably we can do some trick like glColor4ubv((byte*)&last); here instead of COLOR_TO_RGBA().
 			glColor4ubv(COLOR_TO_RGBA(last = clr[i], rgba));
 		}
 
 		num = text[i] & 255;
-		if (!scr_coloredText.value && red) // do not convert to red if we use coloredText
+		if (!scr_coloredText.value && red) // Do not convert to red if we use coloredText.
 			num |= 128;
 
 		if (num != 32 && num != (32 | 128))
@@ -1104,7 +1166,8 @@ void Draw_ColoredString2 (int x, int y, const char *text, int *clr, int red) {
 
 	glEnd ();
 
-	if (gl_alphafont.value)	{
+	if (gl_alphafont.value)	
+	{
 		if (atest)
 			glEnable(GL_ALPHA_TEST);
 		if (!blend)
@@ -1118,16 +1181,16 @@ void Draw_ColoredString2 (int x, int y, const char *text, int *clr, int red) {
 }
 
 
-/*
-	Instead of keeping color info in *text we provide info then particular color starts
-
-	char str[] = "redgreen";
-	clrinfo_t info[2] = { {RGBA_TO_COLOR(255,0,0,255), 0}, {RGBA_TO_COLOR(0,255,0,255), 3} };
-	// this will draw "redgreen" non transparent string where "red" will be red, "green" will be green
-	Draw_ColoredString2 (0, 10, str, info, 2, false)
-
-	If u want use alpha u must use "gl_alphafont 1", "scr_coloredText 1" and "red" param must be false
-*/
+//
+//	Instead of keeping color info in *text we provide info then particular color starts.
+//
+//	char str[] = "redgreen";
+//	clrinfo_t info[2] = { {RGBA_TO_COLOR(255,0,0,255), 0}, {RGBA_TO_COLOR(0,255,0,255), 3} };
+//	// This will draw "redgreen" non transparent string where "red" will be red, "green" will be green.
+//	Draw_ColoredString2 (0, 10, str, info, 2, false)
+//
+//	If u want use alpha u must use "gl_alphafont 1", "scr_coloredText 1" and "red" param must be false.
+//
 void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red) 
 {
 	Draw_ColoredString3W (x, y, str2wcs(text), clr, clr_cnt, red);
@@ -1208,6 +1271,7 @@ void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr
 		}
 
 		num &= 255;
+
 		// Do not convert to red if we use coloredText.
 		if (!scr_coloredText.value && red) 
 			num |= 128;
@@ -1233,7 +1297,8 @@ void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 }
 
-void Draw_Crosshair (void) {
+void Draw_Crosshair (void) 
+{
 	float x = 0.0, y = 0.0, ofs1, ofs2, sh, th, sl, tl;
 	byte *col;
 	extern vrect_t scr_vrect;
@@ -1358,25 +1423,24 @@ void Draw_Crosshair (void) {
 		if (!gl_crosshairalpha.value)
 			return;
 
-
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
 
 		col = StringToRGB(crosshaircolor.string);
 
-
-
-		if (gl_crosshairalpha.value) {
+		if (gl_crosshairalpha.value)
+		{
             glDisable(GL_ALPHA_TEST);
             glEnable (GL_BLEND);
 			col[3] = bound(0, gl_crosshairalpha.value, 1) * 255;
 			glColor4ubv (col);
-		} else {
+		}
+		else 
+		{
 			glColor3ubv (col);
 		}
 
-
-		if (customcrosshair_loaded & CROSSHAIR_IMAGE) {
+		if (customcrosshair_loaded & CROSSHAIR_IMAGE)
+		{
 			GL_Bind (crosshairpic.texnum);
 			ofs1 = 4 - 4.0 / crosshairpic.width;
 			ofs2 = 4 + 4.0 / crosshairpic.width;
@@ -1384,7 +1448,9 @@ void Draw_Crosshair (void) {
 			sl = crosshairpic.sl;
 			th = crosshairpic.th;
 			tl = crosshairpic.tl;
-		} else {
+		} 
+		else 
+		{
 			GL_Bind ((crosshair.value >= 2) ? crosshairtextures[(int) crosshair.value - 2] : crosshairtexture_txt);
 			ofs1 = 3.5;
 			ofs2 = 4.5;
@@ -1477,7 +1543,8 @@ void Draw_Crosshair (void) {
 	}
 }
 
-void Draw_TextBox (int x, int y, int width, int lines) {
+void Draw_TextBox (int x, int y, int width, int lines)
+{
 	mpic_t *p;
 	int cx, cy, n;
 
@@ -1487,42 +1554,50 @@ void Draw_TextBox (int x, int y, int width, int lines) {
 	p = Draw_CachePic ("gfx/box_tl.lmp");
 	Draw_TransPic (cx, cy, p);
 	p = Draw_CachePic ("gfx/box_ml.lmp");
-	for (n = 0; n < lines; n++) {
+	for (n = 0; n < lines; n++) 
+	{
 		cy += 8;
 		Draw_TransPic (cx, cy, p);
 	}
+
 	p = Draw_CachePic ("gfx/box_bl.lmp");
 	Draw_TransPic (cx, cy+8, p);
 
-	// draw middle
+	// Draw middle.
 	cx += 8;
-	while (width > 0) {
+	while (width > 0) 
+	{
 		cy = y;
 		p = Draw_CachePic ("gfx/box_tm.lmp");
 		Draw_TransPic (cx, cy, p);
 		p = Draw_CachePic ("gfx/box_mm.lmp");
-		for (n = 0; n < lines; n++) {
+		
+		for (n = 0; n < lines; n++) 
+		{
 			cy += 8;
 			if (n == 1)
 				p = Draw_CachePic ("gfx/box_mm2.lmp");
 			Draw_TransPic (cx, cy, p);
 		}
+
 		p = Draw_CachePic ("gfx/box_bm.lmp");
 		Draw_TransPic (cx, cy+8, p);
 		width -= 2;
 		cx += 16;
 	}
 
-	// draw right side
+	// Draw right side.
 	cy = y;
 	p = Draw_CachePic ("gfx/box_tr.lmp");
 	Draw_TransPic (cx, cy, p);
 	p = Draw_CachePic ("gfx/box_mr.lmp");
+
 	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
 		Draw_TransPic (cx, cy, p);
 	}
+
 	p = Draw_CachePic ("gfx/box_br.lmp");
 	Draw_TransPic (cx, cy+8, p);
 }
@@ -1791,19 +1866,19 @@ void Draw_SCharacter (int x, int y, int num, float scale)
 	qbool blend = false;
 
     if (num == 32)
-        return;     // space
+        return;     // Space.
 
     num &= 255;
 
-    if (y <= -8 * scale)
-        return;         // totally off screen
+    if (y <= (-8 * scale))
+        return;		// Totally off screen.
 
-    row = num>>4;
-    col = num&15;
+    row = num >> 4;
+    col = num & 0x0F;
 
-    frow = row * 0.0625;
-    fcol = col * 0.0625;
-    size = 0.0625;
+    frow = row * CHARSET_CHAR_HEIGHT;
+    fcol = col * CHARSET_CHAR_WIDTH;
+    size = CHARSET_CHAR_WIDTH;
 
 	if (gl_alphafont.value)	
 	{
@@ -1827,7 +1902,8 @@ void Draw_SCharacter (int x, int y, int num, float scale)
     glVertex2f (x, y + (scale * 8 * 2)); // disconnect: hack, hack, hack?
     glEnd ();
 
-	if (gl_alphafont.value)	{
+	if (gl_alphafont.value)	
+	{
 		if (atest)
 			glEnable(GL_ALPHA_TEST);
 		if (!blend)
@@ -2012,21 +2088,25 @@ void Draw_ConsoleBackground (int lines)
 	mpic_t *lvlshot = NULL;
 	float alpha = (SCR_NEED_CONSOLE_BACKGROUND ? 1 : bound(0, scr_conalpha.value, 1));
 
-	if (host_mapname.string[0] // we have mapname
-		 && (    scr_conback.value == 2 // always per level conback
-			 || (scr_conback.value == 1 && SCR_NEED_CONSOLE_BACKGROUND) // only at load time
-			)
-	   ) {
-		if (strncmp(host_mapname.string, last_mapname, sizeof(last_mapname))) { // lead to call Draw_CachePicSafe() once per level
+	if (host_mapname.string[0]											// We have mapname.
+		 && (    scr_conback.value == 2									// Always per level conback.
+			 || (scr_conback.value == 1 && SCR_NEED_CONSOLE_BACKGROUND) // Only at load time.
+			)) 
+	{
+		if (strncmp(host_mapname.string, last_mapname, sizeof(last_mapname))) 
+		{ 
+			// Call Draw_CachePicSafe() once per level.
 			char name[MAX_QPATH];
 
 			snprintf(name, sizeof(name), "textures/levelshots/%s.xxx", host_mapname.string);
-			if ((last_lvlshot = Draw_CachePicSafe(name, false, true))) { // resize
+			if ((last_lvlshot = Draw_CachePicSafe(name, false, true))) 
+			{ 
+				// Resize.
 				last_lvlshot->width  = conback.width;
 				last_lvlshot->height = conback.height;
 			}
 
-			strlcpy(last_mapname, host_mapname.string, sizeof(last_mapname)); // save
+			strlcpy(last_mapname, host_mapname.string, sizeof(last_mapname)); // Save.
 		}
 
 		lvlshot = last_lvlshot;
@@ -2036,50 +2116,25 @@ void Draw_ConsoleBackground (int lines)
 		Draw_AlphaPic(0, (lines - vid.height) + (int)con_shift.value, lvlshot ? lvlshot : &conback, alpha);
 }
 
-// ================
-// Draw_FadeBox
-// ================
-/*
-// Use Draw_AlphaFillRGB instead
-void Draw_FadeBox (int x, int y, int width, int height,
-                   float r, float g, float b, float a)
+void Draw_FadeScreen (void) 
 {
-    if (a <= 0)
-        return;
-
-    glDisable(GL_ALPHA_TEST);
-    glEnable (GL_BLEND);
-    glDisable (GL_TEXTURE_2D);
-
-    glColor4f (r, g, b, a);
-
-    glBegin (GL_QUADS);
-    glVertex2f (x, y);
-    glVertex2f (x + width, y);
-    glVertex2f (x + width, y + height);
-    glVertex2f (x, y + height);
-    glEnd ();
-
-    glColor3f (1,1,1);
-    glEnable(GL_ALPHA_TEST);
-    glDisable (GL_BLEND);
-    glEnable (GL_TEXTURE_2D);
-}*/
-
-void Draw_FadeScreen (void) {
 	float alpha;
 
 	alpha = bound(0, scr_menualpha.value, 1);
 	if (!alpha)
 		return;
 
-	if (alpha < 1) {
+	if (alpha < 1) 
+	{
 		glDisable (GL_ALPHA_TEST);
 		glEnable (GL_BLEND);
 		glColor4f (0, 0, 0, alpha);
-	} else {
+	} 
+	else 
+	{
 		glColor3f (0, 0, 0);
 	}
+
 	glDisable (GL_TEXTURE_2D);
 
 	glBegin (GL_QUADS);
@@ -2100,10 +2155,10 @@ void Draw_FadeScreen (void) {
 }
 
 //=============================================================================
-
-//Draws the little blue disc in the corner of the screen.
-//Call before beginning any disc IO.
-void Draw_BeginDisc (void) {
+// Draws the little blue disc in the corner of the screen.
+// Call before beginning any disc IO.
+void Draw_BeginDisc (void)
+{
 	if (!draw_disc)
 		return;
 	glDrawBuffer  (GL_FRONT);
@@ -2111,11 +2166,15 @@ void Draw_BeginDisc (void) {
 	glDrawBuffer  (GL_BACK);
 }
 
-//Erases the disc icon.
-//Call after completing any disc IO
+// Erases the disc icon.
+// Call after completing any disc IO
 void Draw_EndDisc (void) {}
 
-void GL_Set2D (void) {
+//
+// Changes the projection to orthogonal (2D drawing).
+// 
+void GL_Set2D (void) 
+{
 	glViewport (glx, gly, glwidth, glheight);
 
 	glMatrixMode(GL_PROJECTION);

@@ -74,8 +74,6 @@ void Draw_BeginDisc (void);
 void Draw_EndDisc (void);
 void Draw_TileClear (int x, int y, int w, int h);
 void Draw_Fill (int x, int y, int w, int h, byte c);
-//void Draw_FadeBox (int x, int y, int width, int height, float r, float g, float b, float a); // HUD -> hexum
-void Draw_FadeBox (int x, int y, int width, int height, byte c, float a);
 void Draw_FadeScreen (void);
 void Draw_String (int x, int y, const char *str);
 void Draw_StringW (int x, int y, const wchar *ws);
