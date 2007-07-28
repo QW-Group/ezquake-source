@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: vid_win.c,v 1.25 2007-07-20 19:02:06 tonik Exp $
+	$Id: vid_win.c,v 1.26 2007-07-28 23:57:38 cokeman1982 Exp $
 
 */
 
@@ -1858,6 +1858,10 @@ void VID_Update (vrect_t *rects) {
 	}
 
 	if (firstupdate) {
+		
+		// Reset the drawing bounds when changing video mode.
+		Draw_DisableScissor();
+
 		if (modestate == MS_WINDOWED) {
 			GetWindowRect (mainwindow, &trect);
 

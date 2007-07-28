@@ -241,6 +241,9 @@ static byte *LoadAlternateCharset (const char *name)
 	return data;
 }
 
+//
+// Sets the area of the screen that is drawn to by the Draw_* functions. (Works like glScissor kinda).
+//
 void Draw_EnableScissor(int left, int right, int top, int bottom)
 {
 	clamp(left, 0, vid.width);
@@ -416,7 +419,7 @@ void Draw_RectStretchSubPic(byte *src,								// Source picture data.
 							int src_width, int src_height,			// Source picture dimensions.
 							int x, int y,							// Where on screen the picture should be drawn.
 							int srcx, int srcy,						// The coordinates in the picture where to start drawing from.
-							int src_subwidth, int src_subheight,	// The bounds of the sub-area to draw.
+							int src_subwidth, int src_subheight,	// The bounds of the sub-area in the source to draw.
 							int width, int height)					// How large the drawn picture should be on screen.
 {
 	int dy_dest, dy_src, e, d;
@@ -593,7 +596,7 @@ int HexToInt(char c)
 		return -1;
 }
 
-void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale)
+void Draw_SColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale) 
 {
 	int r, g, b;
 
@@ -623,7 +626,7 @@ void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr
 
 void Draw_ColoredString (int x, int y, const char *text, int red)
 {
-	Draw_ScalableColoredString(x, y, str2wcs(text), NULL, 0, red, 1);
+	Draw_SColoredString(x, y, str2wcs(text), NULL, 0, red, 1);
 }
 
 void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red)
@@ -633,7 +636,7 @@ void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int cl
 
 void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red)
 {
-	Draw_ScalableColoredString(x, y, text, NULL, 0, red, 1);
+	Draw_SColoredString(x, y, text, NULL, 0, red, 1);
 }
 
 #define		NUMCROSSHAIRS 6
@@ -1713,7 +1716,7 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 // Draw_FadeBox
 // ================
 
-void Draw_FadeBox (int x, int y, int width, int height, byte color, float alpha)
+static void Draw_FadeBox (int x, int y, int width, int height, byte color, float alpha)
 {
 	int t;
 	int cur_x, cur_y;
@@ -1772,20 +1775,17 @@ void Draw_FadeScreen (void)
 
 void Draw_SCharacter (int x, int y, int num, float scale)
 {
-    // no scale in SOFT yet..
-    Draw_Character(x, y, num);
+    Draw_ScaledCharacterW(x, y, num, scale);
 }
 
 void Draw_SString (int x, int y, const char *str, float scale)
 {
-    // no scale in SOFT yet..
-    Draw_String(x, y, str);
+	Draw_SColoredString(x, y, str, NULL, 0, 0, scale);
 }
 
 void Draw_SAlt_String (int x, int y, const char *str, float scale)
 {
-    // no scale in SOFT yet..
-    Draw_Alt_String(x, y, str);
+	Draw_SColoredString(x, y, str, NULL, 0, 1, scale);
 }
 
 void Draw_SPic (int x, int y, mpic_t *pic, float scale)
@@ -1833,7 +1833,7 @@ void Draw_SFill (int x, int y, int w, int h, byte c, float scale)
     Draw_Fill(x, y, Q_rint(scale * w), Q_rint(scale * h), c);
 }
 
-//=============================================================================
+// =============================================================================
 
 //
 // Draws the little blue disc in the corner of the screen.
@@ -1842,7 +1842,7 @@ void Draw_SFill (int x, int y, int w, int h, byte c, float scale)
 void Draw_BeginDisc (void)
 {
 	if (!draw_disc)
-		return;		// not initialized yet
+		return;		// Not initialized yet.
 	D_BeginDirectRect (vid.width - 24, 0, draw_disc->data, 24, 24);
 }
 
@@ -1854,3 +1854,4 @@ void Draw_EndDisc (void)
 {
 	D_EndDirectRect (vid.width - 24, 0, 24, 24);
 }
+

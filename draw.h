@@ -91,7 +91,7 @@ typedef struct clrinfo_s
 void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red);
 void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red);
 
-void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale);
+void Draw_SColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale);
 
 mpic_t *Draw_CachePicSafe (char *path, qbool true, qbool only24bit);
 mpic_t *Draw_CachePic (char *path);
@@ -101,7 +101,7 @@ void Draw_TextBox (int x, int y, int width, int lines);
 
 void Draw_SCharacter (int x, int y, int num, float scale);
 void Draw_SString (int x, int y, const char *str, float scale);
-void Draw_SAlt_String (int x, int y, const char *str, float scale);
+void Draw_SAlt_String (int x, int y, const char *text, float scale);
 void Draw_SPic (int x, int y, mpic_t *, float scale);
 // Will fit image into given area; will keep it's proportions
 void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl);

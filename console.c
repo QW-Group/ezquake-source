@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: console.c,v 1.58 2007-07-10 21:20:11 cokeman1982 Exp $
+	$Id: console.c,v 1.59 2007-07-28 23:57:38 cokeman1982 Exp $
 */
 // console.c
 
@@ -891,7 +891,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 				if (!draw)
 					continue;
 
-				Draw_ScalableColoredString (
+				Draw_SColoredString (
 					posX,
 					v + posY,
 					buf,

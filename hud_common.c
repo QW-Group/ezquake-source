@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.148 2007-07-19 19:10:47 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.149 2007-07-28 23:57:38 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -2333,9 +2333,6 @@ void SCR_HUD_Group6(hud_t *hud)
 		pic_alpha->value);
 }
 
-void bresenham_line(int x1, int y1, int x2, int y2, byte color);
-void Draw_RectStretch(mpic_t *pic, int x, int y, int width, int height);
-
 void SCR_HUD_Group7(hud_t *hud)
 {
     static cvar_t *width = NULL,
@@ -2361,48 +2358,6 @@ void SCR_HUD_Group7(hud_t *hud)
 		hud_pic_group7,
 		pic_scalemode->value,
 		pic_alpha->value);
-
-	{
-		extern mpic_t *sb_weapons[7][8];  // sbar.c
-/*		int r, g, b;
-
-		for (r = 0, g = 0, b = 0; r < 255; r += 2, g += 2, b += 2)
-		{
-			Draw_AlphaFillRGB(r, 150, 2, 20, RGBA_TO_COLOR(r, 0, 0, 125));
-			Draw_AlphaFillRGB(r, 170, 2, 20, RGBA_TO_COLOR(0, g, 0, 125));
-			Draw_AlphaFillRGB(r, 190, 2, 20, RGBA_TO_COLOR(0, 0, b, 125));
-		}
-
-		Draw_AlphaRectangleRGB(0, 150, 125, 60, 5, false, RGBA_TO_COLOR(255, 0, 0, 125));
-
-		//bresenham_line(50, 123, 221, 200, 255);
-		//Draw_AlphaLine(50, 123, 221, 200, 5, 255, 1);
-		//Draw_AlphaLine(40, 123, 40, 200, 5, 255, 1);
-		Draw_AlphaLine(50, 50, 40, 200, 5, 255, 1);
-		Draw_AlphaLine(50, 250, 221, 140, 5, 255, 1);
-*/
-		{
-			extern mpic_t  *sb_face_quad;
-
-			int x = 50;
-			int y = 50;
-			int w = sb_face_quad->width;
-			int h = sb_face_quad->height;
-
-			/*
-			//RectStretch(sb_weapons[2][0], x, y, x + w, y + h, x, y,  (x + w), 2 * (y + h));
-			
-			//Draw_SPic(50, 50, sb_weapons[2][0], 1.5);
-			Draw_SPic(50, 50, sb_face_quad, 1.5);
-			
-			Draw_RectStretch(sb_face_quad, 80, 50, w, h);
-			//Draw_RectStretch(sb_face_quad, 120, 50, 2*w, h);
-			//Draw_Pic(100, 50, sb_face_quad);
-			//Draw_SPic(150, 50, sb_weapons[2][0], 0.5);
-			Draw_SSubPic(140, 50, sb_face_quad, 10, 8, 10, 10, 2);
-			*/
-		}
-	}
 }
 
 void SCR_HUD_Group8(hud_t *hud)
