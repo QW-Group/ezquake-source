@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -82,7 +82,7 @@ void Draw_ColoredString (int x, int y, const char *str, int red);
 
 void Draw_ColoredString2 (int x, int y, const char *text, int *clr, int red);
 
-typedef struct clrinfo_s 
+typedef struct clrinfo_s
 {
 	color_t c;	// Color.
 	int i;		// Index when this colors starts.
@@ -101,7 +101,7 @@ void Draw_TextBox (int x, int y, int width, int lines);
 
 void Draw_SCharacter (int x, int y, int num, float scale);
 void Draw_SString (int x, int y, const char *str, float scale);
-void Draw_SAlt_String (int x, int y, char *str, float scale);
+void Draw_SAlt_String (int x, int y, const char *str, float scale);
 void Draw_SPic (int x, int y, mpic_t *, float scale);
 // Will fit image into given area; will keep it's proportions
 void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl);
@@ -138,7 +138,7 @@ void Draw_EnableScissorRectangle(int x, int y, int width, int height);
 void Draw_EnableScissor(int left, int right, int top, int bottom);
 void Draw_DisableScissor();
 
-#endif // __DRAW_H__	
+#endif // __DRAW_H__
 
 
 

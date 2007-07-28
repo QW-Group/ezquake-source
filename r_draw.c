@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "image.h"
 #include "common_draw.h"
 
-typedef struct 
+typedef struct
 {
 	vrect_t	rect;
 	int		width;
@@ -69,25 +69,25 @@ int scissor_bottom	= 0;
 #define CLIP_RIGHT(x)	((x) > scissor_right)
 
 //=============================================================================
-// Support Routines 
+// Support Routines
 
 byte Draw_FindNearestColorByBytes(byte r, byte g, byte b, byte a)
 {
 	#define PALETTE_SIZE 255
-    int i; 
+    int i;
 	int distanceSquared;
 	int bestIndex = 0;
     int minDistanceSquared = (255 * 255) + (255 * 255) + (255 * 255) + 1;
-    
+
 	for (i = 0; i < PALETTE_SIZE; i++)
 	{
 		int Rdiff = ((int)r) - host_basepal[(i * 3)];
         int Gdiff = ((int)g) - host_basepal[(i * 3) + 1];
         int Bdiff = ((int)b) - host_basepal[(i * 3) + 2];
-        
+
 		distanceSquared = (Rdiff * Rdiff) + (Gdiff * Gdiff) + (Bdiff * Bdiff);
-        
-		if (distanceSquared < minDistanceSquared) 
+
+		if (distanceSquared < minDistanceSquared)
 		{
             minDistanceSquared = distanceSquared;
             bestIndex = i;
@@ -109,7 +109,7 @@ byte Draw_FindNearestColor(color_t color)
 }
 
 
-mpic_t *Draw_CacheWadPic (char *name) 
+mpic_t *Draw_CacheWadPic (char *name)
 {
 	qpic_t *p;
 	mpic_t *pic;
@@ -133,7 +133,7 @@ mpic_t *Draw_CachePicSafe(char *path, qbool syserror, qbool only24bit)
 	// Otherwise add the pic to the cache.
 	// Try to load lmp.
 	//		if (fail) Sys error!
-	// if (only24bit) 
+	// if (only24bit)
 	//		Try to load PNG.
 	//
 	FILE *f = NULL;
@@ -171,10 +171,10 @@ mpic_t *Draw_CachePicSafe(char *path, qbool syserror, qbool only24bit)
 
 		// Get a cache position.
 		png_pic = (void *)Q_malloc(sizeof(mpic_t) + (sizeof(byte) * real_width * real_height));
-		
+
 		((mpic_t *)png_pic)->width = real_width;
 		((mpic_t *)png_pic)->height = real_height;
-		
+
 		// Copy the image data to the mpic.
 		for (i = 0; i < (real_width * real_height); i++)
 		{
@@ -196,8 +196,8 @@ mpic_t *Draw_CachePicSafe(char *path, qbool syserror, qbool only24bit)
 		// Load the LMP pic from disk.
 		dat = (qpic_t *)FS_LoadHeapFile(path);
 	}
-	
-	if (!dat) 
+
+	if (!dat)
 	{
 		if (syserror)
 			Sys_Error ("Draw_CachePic: failed to load %s", path);
@@ -217,7 +217,7 @@ mpic_t *Draw_CachePicSafe(char *path, qbool syserror, qbool only24bit)
 //
 // Loads a required picture (if not present, exit with an error)
 //
-mpic_t *Draw_CachePic (char *path) 
+mpic_t *Draw_CachePic (char *path)
 {
 	return Draw_CachePicSafe(path, true, false);
 }
@@ -229,7 +229,7 @@ static byte *LoadAlternateCharset (const char *name)
 {
 	qpic_t *p;
 	byte *data;
-	
+
 	p = (qpic_t *)FS_LoadTempFile (va("gfx/%s.lmp", name));
 	if (!p || fs_filesize != 128*128+8)
 		return NULL;
@@ -270,7 +270,7 @@ void Draw_DisableScissor()
 	scissor_bottom	= vid.height;
 }
 
-void Draw_Init (void) 
+void Draw_Init (void)
 {
 	int i, j;
 
@@ -289,7 +289,7 @@ void Draw_Init (void)
 	CachePics_DeInit();
 
 	draw_chars[0] = W_GetLumpName ("conchars");
-	
+
 	draw_chars[1] = LoadAlternateCharset ("conchars-cyr");
 	if (draw_chars[1])
 		char_range[1] = (1 << 10);
@@ -298,7 +298,7 @@ void Draw_Init (void)
 	{
 		if (draw_chars[i])
 		{
-			// FIXME: If we add ability to load different sized charsets like in GL, 
+			// FIXME: If we add ability to load different sized charsets like in GL,
 			// 256x256, 512x512... we need to get info about it's size while loading also
 			// for now we assume it's 128x128, since that's how big the original is.
 			for (j = 0; j < (128 * 128); j++)
@@ -321,9 +321,9 @@ void Draw_Init (void)
 	customCrosshair_Init();
 }
 
-// 
+//
 // Checks if a unicode character is available.
-// 
+//
 qbool R_CharAvailable (wchar num)
 {
 	int i;
@@ -343,7 +343,7 @@ qbool R_CharAvailable (wchar num)
 //
 // Draws and clips a pixel.
 //
-static __inline void Draw_Pixel(int x, int y, byte color) 
+static __inline void Draw_Pixel(int x, int y, byte color)
 {
 	byte *dest;
 
@@ -355,14 +355,14 @@ static __inline void Draw_Pixel(int x, int y, byte color)
 }
 
 // ============================================================
-// From GraphicGems fastBitmap.c 
+// From GraphicGems fastBitmap.c
 // (http://www.acm.org/tog/GraphicsGems/)
 // Stretches a horizontal source line onto a horizontal
 // destination line. Used by RectStretch.
 // Entry:
-//	x_dest_start, x_dest_end - x-coordinates of the destination 
+//	x_dest_start, x_dest_end - x-coordinates of the destination
 //							   line (coordinates inside texture)
-//	x_src_start, x_src_end	 - x-coordinates of the source line 
+//	x_src_start, x_src_end	 - x-coordinates of the source line
 //							   (screen coordinates)
 //	y_src					 - y-coordinate of source line
 //	y_dest					 - y-coordinate of destination line
@@ -385,7 +385,7 @@ static void Draw_StretchLine(byte *srcdata, int src_width, int x_dest_start, int
 	// to calculate the ratio of pixels to draw.
 	e = (dx_src << 1) - dx_dest;
 	dx_src <<= 1;
-	
+
 	// Loop through each pixel in the destination line.
 	for(d = 0; d < dx_dest; d++)
 	{
@@ -399,7 +399,7 @@ static void Draw_StretchLine(byte *srcdata, int src_width, int x_dest_start, int
 		while(e >= 0)
 		{
 			x_src_start += x_src_sign;
-			e -= (dx_dest << 1); 
+			e -= (dx_dest << 1);
 		}
 
 		x_dest_start += x_dest_sign;
@@ -427,11 +427,11 @@ void Draw_RectStretchSubPic(byte *src,								// Source picture data.
 	int y_src_start = abs(srcy);
 	int x_src_end	= abs(x_src_start + src_subwidth);
 	int y_src_end	= abs(y_src_start + src_subheight);
-	
+
 	// Where to write the image on screen.
 	int x_dest_start = x;
 	int y_dest_start = y;
-	int x_dest_end	= x + width; 
+	int x_dest_end	= x + width;
 	int y_dest_end	= y + height;
 
 	// Make sure we don't try to draw something outside the source.
@@ -446,14 +446,14 @@ void Draw_RectStretchSubPic(byte *src,								// Source picture data.
 	// Get the direction we should move when drawing (up or down).
 	y_sign_dest = sgn(y_dest_end - y_dest_start);
 	y_sign_src  = sgn(y_src_end  - y_src_start);
-	
+
 	e = (dy_src << 1) - dy_dest;
 	dy_src <<= 1;
 
 	for(d = 0; d < dy_dest; d++)
 	{
 		Draw_StretchLine(src, src_width, x_dest_start, x_dest_end, x_src_start, x_src_end, y_src_start, y_dest_start);
-		
+
 		while(e >= 0)
 		{
 			y_src_start += y_sign_src;
@@ -467,7 +467,7 @@ void Draw_RectStretchSubPic(byte *src,								// Source picture data.
 
 
 // ============================================================
-// Based on GraphicGems fastBitmap.c 
+// Based on GraphicGems fastBitmap.c
 // (http://www.acm.org/tog/GraphicsGems/)
 // RectStretch enlarges or diminishes a source rectangle of
 // a bitmap to a destination rectangle. The source
@@ -507,7 +507,7 @@ void Draw_ScaledCharacterW (int x, int y, wchar num, float scale)
 	{
 		for (i = 1; i < MAX_CHARSETS; i++)
 		{
-			if (char_range[i] == (num & 0xFF00)) 
+			if (char_range[i] == (num & 0xFF00))
 			{
 				slot = i;
 				break;
@@ -531,7 +531,7 @@ void Draw_ScaledCharacterW (int x, int y, wchar num, float scale)
 		char_size, char_size);						// The size the char should be drawn at on screen.
 
 	// TODO: Allow loading new charsets on the fly like in GL. Chars will always be drawn at 8x8 though, unless conwidth/conheight is introduced.
-	// Example: 
+	// Example:
 	// mpic_t *charset = Draw_CachePicSafe("textures/charsets/somecharset.png", false, true);
 	// int mchar_size = charset->width >> 4; // 16 characters per row.
 }
@@ -545,14 +545,14 @@ void Draw_CharacterW (int x, int y, wchar num)
 // Draws one 8*8 graphics character with 0 being transparent.
 // It can be clipped to the top of the screen to allow the console to be smoothly scrolled off.
 //
-void Draw_Character (int x, int y, int num) 
+void Draw_Character (int x, int y, int num)
 {
 	Draw_CharacterW (x, y, char2wc(num));
 }
 
-void Draw_String (int x, int y, const char *str) 
+void Draw_String (int x, int y, const char *str)
 {
-	while (*str) 
+	while (*str)
 	{
 		Draw_Character (x, y, *str);
 		str++;
@@ -560,9 +560,9 @@ void Draw_String (int x, int y, const char *str)
 	}
 }
 
-void Draw_StringW (int x, int y, const wchar *str) 
+void Draw_StringW (int x, int y, const wchar *str)
 {
-	while (*str) 
+	while (*str)
 	{
 		Draw_CharacterW (x, y, *str);
 		str++;
@@ -570,9 +570,9 @@ void Draw_StringW (int x, int y, const wchar *str)
 	}
 }
 
-void Draw_Alt_String (int x, int y, const char *str) 
+void Draw_Alt_String (int x, int y, const char *str)
 {
-	while (*str) 
+	while (*str)
 	{
 		Draw_Character (x, y, (*str) | 0x80);
 		str++;
@@ -581,7 +581,7 @@ void Draw_Alt_String (int x, int y, const char *str)
 }
 
 
-int HexToInt(char c) 
+int HexToInt(char c)
 {
 	if (isdigit(c))
 		return c - '0';
@@ -593,23 +593,23 @@ int HexToInt(char c)
 		return -1;
 }
 
-void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale) 
+void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale)
 {
 	int r, g, b;
 
-	for ( ; *text; text++) 
+	for ( ; *text; text++)
 	{
-		if (*text == '&') 
+		if (*text == '&')
 		{
-			if (text[1] == 'c' && text[2] && text[3] && text[4])	
+			if (text[1] == 'c' && text[2] && text[3] && text[4])
 			{
 				r = HexToInt(text[2]);
 				g = HexToInt(text[3]);
 				b = HexToInt(text[4]);
 				if (r >= 0 && g >= 0 && b >= 0)
 					text += 5;
-            } 
-			else if (text[1] == 'r')	
+            }
+			else if (text[1] == 'r')
 			{
 				text += 2;
 			}
@@ -621,17 +621,17 @@ void Draw_ScalableColoredString (int x, int y, const wchar *text, clrinfo_t *clr
 	}
 }
 
-void Draw_ColoredString (int x, int y, const char *text, int red) 
+void Draw_ColoredString (int x, int y, const char *text, int red)
 {
 	Draw_ScalableColoredString(x, y, str2wcs(text), NULL, 0, red, 1);
 }
 
-void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red) 
+void Draw_ColoredString3 (int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red)
 {
 	Draw_ColoredString(x, y, text, red);
 }
 
-void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red) 
+void Draw_ColoredString3W (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red)
 {
 	Draw_ScalableColoredString(x, y, text, NULL, 0, red, 1);
 }
@@ -679,30 +679,30 @@ static qbool crosshairdata[NUMCROSSHAIRS][64] = {
 	true,  false, false, false, false, false, false, true,
 	},
 	{
-	false, false, true,  true,  true,  false, false, false, 
-	false, true,  false, true,  false, true,  false, false, 
-	true,  true,  false, true,  false, true,  true,  false, 
-	true,  true,  true,  true,  true,  true,  true,  false, 
-	true,  false, true,  true,  true,  false, true,  false, 
-	false, true,  false, false, false, true,  false, false, 
-	false, false, true,  true,  true,  false, false, false, 
+	false, false, true,  true,  true,  false, false, false,
+	false, true,  false, true,  false, true,  false, false,
+	true,  true,  false, true,  false, true,  true,  false,
+	true,  true,  true,  true,  true,  true,  true,  false,
+	true,  false, true,  true,  true,  false, true,  false,
+	false, true,  false, false, false, true,  false, false,
+	false, false, true,  true,  true,  false, false, false,
 	false, false, false, false, false, false, false, false,
 	},
 	{
-	false, false, true,  true,  true,  false, false, false, 
-	false, false, false, false, false, false, false, false, 
-	true,  false, false, false, false, false, true,  false, 
-	true,  false, false, true,  false, false, true,  false, 
-	true,  false, false, false, false, false, true,  false, 
-	false, false, false, false, false, false, false, false, 
-	false, false, true,  true,  true,  false, false, false, 
+	false, false, true,  true,  true,  false, false, false,
+	false, false, false, false, false, false, false, false,
+	true,  false, false, false, false, false, true,  false,
+	true,  false, false, true,  false, false, true,  false,
+	true,  false, false, false, false, false, true,  false,
+	false, false, false, false, false, false, false, false,
+	false, false, true,  true,  true,  false, false, false,
 	false, false, false, false, false, false, false, false
 	}
 };
 
 static qbool customcrosshairdata[64];
 static qbool customcrosshair_loaded;
-void customCrosshair_Init(void) 
+void customCrosshair_Init(void)
 {
 	FILE *f;
 	int i = 0, c;
@@ -711,10 +711,10 @@ void customCrosshair_Init(void)
 	if (FS_FOpenFile("crosshairs/crosshair.txt", &f) == -1)
 		return;
 
-	while (i < 64) 
+	while (i < 64)
 	{
 		c = fgetc(f);
-		if (c == EOF) 
+		if (c == EOF)
 		{
 			Com_Printf("Invalid format in crosshair.txt (Need 64 X's and O's)\n");
 			fclose(f);
@@ -722,22 +722,22 @@ void customCrosshair_Init(void)
 		}
 		if (isspace(c))
 			continue;
-		if (c  != 'x' && c  != 'X' && c  != 'O' && c  != 'o') 
+		if (c  != 'x' && c  != 'X' && c  != 'O' && c  != 'o')
 		{
 			Com_Printf("Invalid format in crosshair.txt (Only X's and O's and whitespace permitted)\n");
 			fclose(f);
 			return;
-		} 
+		}
 		else if (c == 'x' || c  == 'X' )
 			customcrosshairdata[i++] = true;
 		else
-			customcrosshairdata[i++] = false;		
+			customcrosshairdata[i++] = false;
 	}
 	fclose(f);
 	customcrosshair_loaded = true;
 }
 
-void Draw_Crosshair(void) 
+void Draw_Crosshair(void)
 {
 	int x = 0, y = 0, crosshair_val, row, col;
 	extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
@@ -757,37 +757,37 @@ void Draw_Crosshair(void)
 	}
 
 	// Multiview
-	if (cl_multiview.value && cls.mvdplayback) 
+	if (cl_multiview.value && cls.mvdplayback)
 	{
-		if (cl_multiview.value == 1) 
+		if (cl_multiview.value == 1)
 		{
-			x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value; 
+			x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value;
 			y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
 		}
 
-		if (cl_multiview.value == 2) 
+		if (cl_multiview.value == 2)
 		{
-			if (!cl_mvinset.value) 
+			if (!cl_mvinset.value)
 			{
-				if (CURRVIEW == 1) 
+				if (CURRVIEW == 1)
 				{
-					x = vid.width / 2; 
+					x = vid.width / 2;
 					y = vid.height * 3/4;
-				} 
-				else if (CURRVIEW == 2) 
+				}
+				else if (CURRVIEW == 2)
 				{
 					// top cv2
-					x = vid.width / 2; 
+					x = vid.width / 2;
 					y = vid.height / 4;
 				}
 			}
 			else
 			{
 				// inset
-				if (CURRVIEW == 2) 
+				if (CURRVIEW == 2)
 				{
 					// normal
-					x = vid.width / 2 + cl_crossx.value; 
+					x = vid.width / 2 + cl_crossx.value;
 					if (cl_sbar.value)
 					{
 						y = vid.height / 2 + cl_crossy.value - sb_lines / 2;
@@ -797,7 +797,7 @@ void Draw_Crosshair(void)
 						y = vid.height / 2 + cl_crossy.value / 2;
 					}
 				}
-				else if (CURRVIEW == 1) 
+				else if (CURRVIEW == 1)
 				{
 					x = vid.width - (vid.width/3)/2 - 1;
 					if (cl_sbar.value)
@@ -811,48 +811,48 @@ void Draw_Crosshair(void)
 				}
 			}
 		}
-		else if (cl_multiview.value == 3) 
+		else if (cl_multiview.value == 3)
 		{
-			if (CURRVIEW == 2) 
+			if (CURRVIEW == 2)
 			{
 				// top
 				x = vid.width / 2;
 				y = vid.height / 4;
 			}
-			else if (CURRVIEW == 3) 
+			else if (CURRVIEW == 3)
 			{
 				// bl
 				x = vid.width / 4;
 				y = vid.height/2 + vid.height/4;
 			}
-			else 
+			else
 			{
 				// br
 				x = vid.width/2 + vid.width/4;
 				y = vid.height/2 + vid.height/4;
 			}
 		}
-		else if (cl_multiview.value >= 4) 
+		else if (cl_multiview.value >= 4)
 		{
-			if (CURRVIEW == 2) 
+			if (CURRVIEW == 2)
 			{
 				// tl
 				x = vid.width/4;
 				y = vid.height/4;
 			}
-			else if (CURRVIEW == 3) 
+			else if (CURRVIEW == 3)
 			{
 				// tr
 				x = vid.width/2 + vid.width/4;
 				y = vid.height/4;
 			}
-			else if (CURRVIEW == 4) 
+			else if (CURRVIEW == 4)
 			{
 				// bl
 				x = vid.width/4;
 				y = vid.height/2 + vid.height/4;
 			}
-			else if (CURRVIEW == 1) 
+			else if (CURRVIEW == 1)
 			{
 				// br
 				x = vid.width/2 + vid.width/4;
@@ -860,9 +860,9 @@ void Draw_Crosshair(void)
 			}
 		}
 	}
-	else 
+	else
 	{
-		if (cls.mvdplayback) 
+		if (cls.mvdplayback)
 		{
 			x = vid.width / 2 + cl_crossx.value;
 			if (cl_sbar.value)
@@ -874,9 +874,9 @@ void Draw_Crosshair(void)
 				y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value / 2;
 			}
 		}
-		else 
+		else
 		{
-			x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value; 
+			x = scr_vrect.x + scr_vrect.width / 2 + cl_crossx.value;
 			y = scr_vrect.y + scr_vrect.height / 2 + cl_crossy.value;
 		}
 	}
@@ -884,13 +884,13 @@ void Draw_Crosshair(void)
 	crosshair_val = (int) crosshair.value;
 	if ((crosshair_val >= 2 && crosshair_val < 2 + NUMCROSSHAIRS) || (crosshair_val == 1 && customcrosshair_loaded)) {
 		data = (crosshair_val == 1) ? customcrosshairdata : crosshairdata[crosshair_val - 2];
-		for (row = 0; row < 8; row++) 
+		for (row = 0; row < 8; row++)
 		{
-			for (col = 0; col < 8; col++) 
+			for (col = 0; col < 8; col++)
 			{
-				if (data[row * 8 + col]) 
+				if (data[row * 8 + col])
 				{
-					if (crosshairsize.value >= 3) 
+					if (crosshairsize.value >= 3)
 					{
 						Draw_Pixel(x + 3 * (col - 3) - 1,	y + 3 * (row - 3) - 1,	c);
 						Draw_Pixel(x + 3 * (col - 3) - 1,	y + 3 * (row - 3),		c);
@@ -903,29 +903,29 @@ void Draw_Crosshair(void)
 						Draw_Pixel(x + 3 * (col - 3) + 1,	y + 3 * (row - 3) - 1,	c);
 						Draw_Pixel(x + 3 * (col - 3) + 1,	y + 3 * (row - 3),		c);
 						Draw_Pixel(x + 3 * (col - 3) + 1,	y + 3 * (row - 3) + 1,	c);
-					} 
+					}
 					else if (crosshairsize.value >= 2) {
 						Draw_Pixel(x + 2 * (col - 3),		y + 2 * (row - 3),		c);
 						Draw_Pixel(x + 2 * (col - 3),		y + 2 * (row - 3) - 1,	c);
 
 						Draw_Pixel(x + 2 * (col - 3) - 1,	y + 2 * (row - 3),		c);
 						Draw_Pixel(x + 2 * (col - 3) - 1,	y + 2 * (row - 3) - 1,	c);
-					} 
-					else 
+					}
+					else
 					{
 						Draw_Pixel(x + col - 3, y + row - 3, c);
 					}
 				}
 			}
 		}
-	} 
-	else 
+	}
+	else
 	{
 		Draw_Character (x - 4, y - 4, '+');
 	}
 }
 
-void Draw_TextBox (int x, int y, int width, int lines) 
+void Draw_TextBox (int x, int y, int width, int lines)
 {
 	mpic_t *p;
 	int cx, cy, n;
@@ -936,7 +936,7 @@ void Draw_TextBox (int x, int y, int width, int lines)
 	p = Draw_CachePic ("gfx/box_tl.lmp");
 	Draw_TransPic (cx, cy, p);
 	p = Draw_CachePic ("gfx/box_ml.lmp");
-	for (n = 0; n < lines; n++) 
+	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
 		Draw_TransPic (cx, cy, p);
@@ -946,13 +946,13 @@ void Draw_TextBox (int x, int y, int width, int lines)
 
 	// draw middle
 	cx += 8;
-	while (width > 0) 
+	while (width > 0)
 	{
 		cy = y;
 		p = Draw_CachePic ("gfx/box_tm.lmp");
 		Draw_TransPic (cx, cy, p);
 		p = Draw_CachePic ("gfx/box_mm.lmp");
-		for (n = 0; n < lines; n++) 
+		for (n = 0; n < lines; n++)
 		{
 			cy += 8;
 			if (n == 1)
@@ -970,7 +970,7 @@ void Draw_TextBox (int x, int y, int width, int lines)
 	p = Draw_CachePic ("gfx/box_tr.lmp");
 	Draw_TransPic (cx, cy, p);
 	p = Draw_CachePic ("gfx/box_mr.lmp");
-	for (n = 0; n < lines; n++) 
+	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
 		Draw_TransPic (cx, cy, p);
@@ -979,22 +979,22 @@ void Draw_TextBox (int x, int y, int width, int lines)
 	Draw_TransPic (cx, cy + 8, p);
 }
 
-void Draw_Pic (int x, int y, mpic_t *pic) 
+void Draw_Pic (int x, int y, mpic_t *pic)
 {
 	Draw_TransSubPic(x, y, pic, 0, 0, pic->width, pic->height);
 }
 
-void Draw_SubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height) 
+void Draw_SubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height)
 {
 	Draw_TransSubPic (x, y, pic, srcx, srcy, width, height);
 }
 
-void Draw_TransPic (int x, int y, mpic_t *pic) 
+void Draw_TransPic (int x, int y, mpic_t *pic)
 {
 	Draw_TransSubPic(x, y, pic, 0, 0, pic->width, pic->height);
 }
 
-void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height) 
+void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height)
 {
 	byte *source, tbyte;
 	int v, u;
@@ -1010,7 +1010,7 @@ void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width,
 		width -= CLIP_RIGHT(x + width) ? ((x + width) - scissor_right) : 0;
 
 		srcy += CLIP_TOP(y) ? (scissor_top - y) : 0;
-		height -= CLIP_BOTTOM(y + height) ? ((y + height) - scissor_bottom) : 0; 
+		height -= CLIP_BOTTOM(y + height) ? ((y + height) - scissor_bottom) : 0;
 	}
 
 	if ((width < 0) || (height < 0) || (srcx > pic->width) || (srcy > pic->height))
@@ -1020,7 +1020,7 @@ void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width,
 
 	source = pic->data + (srcy * pic->width) + srcx;
 
-	for (v = 0; v < height; v++) 
+	for (v = 0; v < height; v++)
 	{
 		if (CLIP_TOP(y + v) || CLIP_BOTTOM(y + v))
 			continue;
@@ -1040,7 +1040,7 @@ void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width,
 	}
 }
 
-void Draw_CharToConback (int num, byte *dest) 
+void Draw_CharToConback (int num, byte *dest)
 {
 	int	 row, col, drawline, x;
 	byte *source;
@@ -1054,7 +1054,7 @@ void Draw_CharToConback (int num, byte *dest)
 
 	drawline = 8;
 
-	while (drawline--) 
+	while (drawline--)
 	{
 		for (x = 0; x < 8; x++)
 		{
@@ -1067,7 +1067,7 @@ void Draw_CharToConback (int num, byte *dest)
 	}
 }
 
-void Draw_ConsoleBackground (int lines) 
+void Draw_ConsoleBackground (int lines)
 {
 	int x, y, v, f, fstep;
 	byte *src, *dest;
@@ -1086,20 +1086,20 @@ void Draw_ConsoleBackground (int lines)
 	// Draw the pic.
 	dest = vid.buffer;
 
-	for (y = 0; y < lines; y++, dest += vid.rowbytes) 
+	for (y = 0; y < lines; y++, dest += vid.rowbytes)
 	{
 		v = (vid.conheight - lines + y + con_shift.value) * 200 / vid.conheight;
 		src = conback->data + v * 320;
 
-		if (vid.conwidth == 320) 
+		if (vid.conwidth == 320)
 		{
 			memcpy (dest, src, vid.conwidth);
 		}
-		else 
+		else
 		{
 			f = 0;
 			fstep = 320 * 0x10000 / vid.conwidth;
-			for (x = 0; x < vid.conwidth; x += 4) 
+			for (x = 0; x < vid.conwidth; x += 4)
 			{
 				dest[x] = src[f >> 16];
 				f += fstep;
@@ -1117,7 +1117,7 @@ void Draw_ConsoleBackground (int lines)
 	memcpy(conback->data + 320 * 186, saveback, 320 * 8);
 }
 
-void R_DrawRect8 (vrect_t *prect, int rowbytes, byte *psrc, int transparent) 
+void R_DrawRect8 (vrect_t *prect, int rowbytes, byte *psrc, int transparent)
 {
 	byte t;
 	int i, j, srcdelta, destdelta;
@@ -1128,14 +1128,14 @@ void R_DrawRect8 (vrect_t *prect, int rowbytes, byte *psrc, int transparent)
 	srcdelta = rowbytes - prect->width;
 	destdelta = vid.rowbytes - prect->width;
 
-	if (transparent) 
+	if (transparent)
 	{
-		for (i = 0; i < prect->height; i++) 
+		for (i = 0; i < prect->height; i++)
 		{
 			if (CLIP_TOP(prect->y + i) || CLIP_BOTTOM(prect->y + i))
 				continue;
 
-			for (j = 0; j < prect->width; j++) 
+			for (j = 0; j < prect->width; j++)
 			{
 				if (CLIP_LEFT(prect->x + j) || CLIP_RIGHT(prect->x + j))
 					continue;
@@ -1151,10 +1151,10 @@ void R_DrawRect8 (vrect_t *prect, int rowbytes, byte *psrc, int transparent)
 			psrc += srcdelta;
 			pdest += destdelta;
 		}
-	} 
-	else 
+	}
+	else
 	{
-		for (i = 0; i < prect->height; i++) 
+		for (i = 0; i < prect->height; i++)
 		{
 			memcpy (pdest, psrc, prect->width);
 			psrc += rowbytes;
@@ -1164,7 +1164,7 @@ void R_DrawRect8 (vrect_t *prect, int rowbytes, byte *psrc, int transparent)
 }
 
 // This repeats a 64*64 tile graphic to fill the screen around a sized down refresh window.
-void Draw_TileClear (int x, int y, int w, int h) 
+void Draw_TileClear (int x, int y, int w, int h)
 {
 	int width, height, tileoffsetx, tileoffsety;
 	byte *psrc;
@@ -1180,7 +1180,7 @@ void Draw_TileClear (int x, int y, int w, int h)
 
 	tileoffsety = vr.y % r_rectdesc.height;
 
-	while (height > 0) 
+	while (height > 0)
 	{
 		vr.x = r_rectdesc.rect.x;
 		width = r_rectdesc.rect.width;
@@ -1192,7 +1192,7 @@ void Draw_TileClear (int x, int y, int w, int h)
 
 		tileoffsetx = vr.x % r_rectdesc.width;
 
-		while (width > 0) 
+		while (width > 0)
 		{
 			vr.width = r_rectdesc.width - tileoffsetx;
 
@@ -1214,10 +1214,10 @@ void Draw_TileClear (int x, int y, int w, int h)
 	}
 }
 
-// 
+//
 // Fills a box of pixels with a single color
-// 
-void Draw_Fill (int x, int y, int w, int h, byte c) 
+//
+void Draw_Fill (int x, int y, int w, int h, byte c)
 {
 	int cur_x, cur_y;
 
@@ -1260,7 +1260,7 @@ byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int hei
 	dest = (byte *)Q_malloc(sizeof(byte) * width * height);
 
 	if (dither)
-	{ 
+	{
 		// FIXME : Not really working. Made for loading a PNG with transparency, solved it natively with pnglib though.
 		// FIXME : Could be extended so that alpha transparency is dithered a bit also.
 
@@ -1268,7 +1268,7 @@ byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int hei
 		// Convert to 8-bit by dithering using "Burkes filter".
 		//
 
-		// Based on methods described in: 
+		// Based on methods described in:
 		// http://www.efg2.com/Lab/Library/ImageProcessing/DHALF.TXT
 		//
 		// The Burkes filter is a "error diffusion"-method for dithering.
@@ -1282,7 +1282,7 @@ byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int hei
 		// The error is distributed as follows:
 		//
 		//    (* = The current pixel.)
-		//	
+		//
 		//				*   8   4
 		//		2   4   8   4   2   (1/32)
 		//
@@ -1312,7 +1312,7 @@ byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int hei
 
 		line		= (byte *)Q_malloc(LINE_SIZE);
 		error_below = (byte *)Q_malloc(LINE_SIZE);
-		
+
 		memset(error_below, 0, LINE_SIZE);
 
 		// Loop through the image line by line.
@@ -1320,7 +1320,7 @@ byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int hei
 		{
 			// No forward errors for first pixel.
 			error_forward[0] = error_forward[1] = error_forward[2] = error_forward[3] = 0;
-			
+
 			original_line = (src + (y * LINE_SIZE));
 
 			// Copy the current line from the image.
@@ -1354,17 +1354,17 @@ byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int hei
 				// 				*   8   4
 				//		2   4   8   4   2   (1/32)
 				for (color = 0; color < 3; color++)
-				{					
+				{
 					error = line[CHAN(x, color)] - host_basepal[(nearest_color * 3) + color];
 					half_error = error >> 1;
-					
+
 					//
-					// Calculate the error parts, making sure the 
+					// Calculate the error parts, making sure the
 					// sum of them isn't larger than the actual error.
 					//
 					error_parts[0] = (7 * half_error) >> 3;			// 7 / 16
 					error_parts[1] = half_error - error_parts[0];	// 1 / 16
-					half_error = error - half_error;				
+					half_error = error - half_error;
 					error_parts[2] = (5 * half_error) >> 3;			// 5 / 16
 					error_parts[3] = error_parts[2];				// 3 / 16
 
@@ -1373,8 +1373,8 @@ byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int hei
 					//
 
 					// 7/16 To the right.
-					error_forward[color] = error_parts[0];	
-					
+					error_forward[color] = error_parts[0];
+
 					// 1/16 Down right.
 					if (x < (width - 1))
 						error_below[((x + 1) * bytes_per_pixel) + color] = error_parts[1];
@@ -1443,7 +1443,7 @@ static void Draw_BresenhamLine(int x1, int y1, int x2, int y2, byte color)
 
 	Draw_Pixel(px, py, color);
 
-	if (dxabs >= dyabs) 
+	if (dxabs >= dyabs)
 	{
 		// The line is more horizontal than vertical.
 
@@ -1461,7 +1461,7 @@ static void Draw_BresenhamLine(int x1, int y1, int x2, int y2, byte color)
 			Draw_Pixel(px, py, color);
 		}
 	}
-	else 
+	else
 	{
 		// The line is more vertical than horizontal.
 
@@ -1502,9 +1502,9 @@ static void Draw_BresenhamThickLine (int x1, int y1, int x2, int y2, int thick, 
 		}
 		else
 		{
-			double ac = cos (atan2 (dy, dx));		
+			double ac = cos (atan2 (dy, dx));
 			wid = (ac != 0) ? (thick / ac) : 1;
-	
+
 			if (wid == 0)
 			{
 				wid = 1;
@@ -1549,9 +1549,9 @@ static void Draw_BresenhamThickLine (int x1, int y1, int x2, int y2, int thick, 
 					y++;
 					d += incr2;
 				}
-				
+
 				wstart = y - wid / 2;
-				
+
 				for (w = wstart; w < wstart + wid; w++)
 					Draw_Pixel(x, w, color);
 			}
@@ -1570,9 +1570,9 @@ static void Draw_BresenhamThickLine (int x1, int y1, int x2, int y2, int thick, 
 					y--;
 					d += incr2;
 				}
-				
+
 				wstart = y - wid / 2;
-				
+
 				for (w = wstart; w < wstart + wid; w++)
 					Draw_Pixel(x, w, color);
 			}
@@ -1583,14 +1583,14 @@ static void Draw_BresenhamThickLine (int x1, int y1, int x2, int y2, int thick, 
 		// More-or-less vertical. use wid for horizontal stroke.
 		double as = sin (atan2 (dy, dx));
 		wid = (as != 0) ? (thick / as) : 1;
-		
+
 		if (wid == 0)
 			wid = 1;
 
 		d = 2 * dx - dy;
 		incr1 = 2 * dx;
 		incr2 = 2 * (dx - dy);
-		
+
 		if (y1 > y2)
 		{
 			y = y2;
@@ -1627,7 +1627,7 @@ static void Draw_BresenhamThickLine (int x1, int y1, int x2, int y2, int thick, 
 				}
 
 				wstart = x - wid / 2;
-				
+
 				for (w = wstart; w < wstart + wid; w++)
 					Draw_Pixel(w, y, color);
 			}
@@ -1646,9 +1646,9 @@ static void Draw_BresenhamThickLine (int x1, int y1, int x2, int y2, int thick, 
 					x--;
 					d += incr2;
 				}
-				
+
 				wstart = x - wid / 2;
-				
+
 				for (w = wstart; w < wstart + wid; w++)
 					Draw_Pixel(w, y, color);
 			}
@@ -1730,7 +1730,7 @@ void Draw_FadeBox (int x, int y, int width, int height, byte color, float alpha)
 			for (cur_x = x; cur_x < x + width; cur_x++)
 			{
 				if ((cur_x & 3) == t)
-					Draw_Pixel(cur_x, cur_y, color); 
+					Draw_Pixel(cur_x, cur_y, color);
 			}
 		}
 		else if (alpha < 0.666)
@@ -1761,7 +1761,7 @@ void Draw_FadeBox (int x, int y, int width, int height, byte color, float alpha)
 	}
 }
 
-void Draw_FadeScreen (void) 
+void Draw_FadeScreen (void)
 {
 	Draw_FadeBox(0, 0, vid.width, vid.height, 0, scr_menualpha.value);
 }
@@ -1782,7 +1782,7 @@ void Draw_SString (int x, int y, const char *str, float scale)
     Draw_String(x, y, str);
 }
 
-void Draw_SAlt_String (int x, int y, char *str, float scale)
+void Draw_SAlt_String (int x, int y, const char *str, float scale)
 {
     // no scale in SOFT yet..
     Draw_Alt_String(x, y, str);
@@ -1835,22 +1835,22 @@ void Draw_SFill (int x, int y, int w, int h, byte c, float scale)
 
 //=============================================================================
 
-// 
+//
 // Draws the little blue disc in the corner of the screen.
 // Call before beginning any disc IO.
-// 
-void Draw_BeginDisc (void) 
+//
+void Draw_BeginDisc (void)
 {
 	if (!draw_disc)
 		return;		// not initialized yet
 	D_BeginDirectRect (vid.width - 24, 0, draw_disc->data, 24, 24);
 }
 
-// 
+//
 // Erases the disc icon.
 // Call after completing any disc IO
-// 
-void Draw_EndDisc (void) 
+//
+void Draw_EndDisc (void)
 {
 	D_EndDirectRect (vid.width - 24, 0, 24, 24);
 }
