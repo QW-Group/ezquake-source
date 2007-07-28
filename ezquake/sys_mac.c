@@ -1,6 +1,6 @@
 /*
 
-	$Id: sys_mac.c,v 1.22.2.3 2007-07-08 18:00:10 zwoch Exp $
+	$Id: sys_mac.c,v 1.22.2.4 2007-07-28 08:22:42 zwoch Exp $
 
 */
 // sys_mac.c -- Macintosh system driver
@@ -259,7 +259,7 @@ void Sys_Message (Str255 briefMsg, char *error, ...)
 		
 		param.movable 		= 0;
 		param.filterProc 	= NULL;
-		param.defaultText	= "OK";
+		param.defaultText	= kAlertDefaultOKText;
 		param.cancelText 	= NULL;
 		param.otherText 	= NULL;
 		param.helpButton 	= false;
