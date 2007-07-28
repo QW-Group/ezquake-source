@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: cmd.c,v 1.70 2007-07-15 09:50:44 disconn3ct Exp $
+    $Id: cmd.c,v 1.71 2007-07-28 20:24:53 johnnycz Exp $
 */
 
 #include "quakedef.h"
@@ -45,7 +45,6 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
 static int gtf = 0; // global trigger flag
 
 cvar_t cl_warncmd = {"cl_warncmd", "0"};
-cvar_t cl_oldif = {"cl_oldif", "0"};
 
 cbuf_t cbuf_main;
 #ifndef SERVERONLY
@@ -1670,7 +1669,6 @@ void Cmd_If_New(void)
 	char* expr, * curarg;
 	int result, error;
 	char buf[1024];
-	qbool addquot_1 = false, addquot_3 = false;
 
 	pars_ex.subpatt_fnc = Cmd_CatchTriggerSubpatterns;
 	pars_ex.var2val_fnc = NULL;
@@ -1690,22 +1688,14 @@ void Cmd_If_New(void)
 		}
 	}
 
-	if (!then_pos) then_pos = 4;
-
-	if (then_pos == 4 && Cmd_Argv(1)[0] != '(')
-	{	// backward compatibility patch: most configs contain "<a> isin <b>", where
-		// one of the strings can get wrongly interpretted as some non-string token in the parser
-		// so if we have 3 arguments long expression and it is not enclosed in parentheses,
-		// we force the operands be enclosed in quotes (') to make sure they get recognized as strings
-		if (Cmd_Argv(1)[0] != '\'') addquot_1 = true;
-		if (Cmd_Argv(3)[0] != '\'') addquot_3 = true;
+	if (!then_found) {
+		Com_Printf("if command: \"then\" not found\n");
+		return;
 	}
 
 	for (i = 1; i < then_pos; i++) {
 		clen = strlen(Cmd_Argv(i));
 		expr_len += clen ? clen + 1 : 3; // we will take '' as a representation of an empty string
-		if (i == 1 && addquot_1) expr_len += 2;
-		if (i == 3 && addquot_3) expr_len += 2;
 	}
 
 	expr = (char *) Q_malloc(expr_len+1);
@@ -1714,13 +1704,8 @@ void Cmd_If_New(void)
 	for (i = 1; i < then_pos; i++) {
 		if (i > 1) strcat(expr, " ");
 		curarg = Cmd_Argv(i);
-		if (*curarg)
-		{
-			if ((i == 1 && addquot_1) || (i == 3 && addquot_3)) strlcat(expr, "'", expr_len);
-			strlcat(expr, curarg, expr_len);
-			if ((i == 1 && addquot_1) || (i == 3 && addquot_3)) strlcat(expr, "'", expr_len);
-		}
-		else strlcat(expr, "''", expr_len);
+		if (*curarg) strlcat(expr, curarg, expr_len);
+		else		 strlcat(expr, "''", expr_len);
 	}
 
 	error = Expr_Eval_Bool(expr, &pars_ex, &result);
@@ -1731,7 +1716,7 @@ void Cmd_If_New(void)
 	}
 	free(expr);
 
-	if (then_found) then_pos++;	// skin "then"
+	then_pos++;	// skip "then"
 
 	buf[0] = '\0';
 	if (result)	// true case
@@ -1852,8 +1837,12 @@ void Cmd_If_Old (void)
 }
 
 void Cmd_If_f(void) {
-	if (cl_oldif.value) Cmd_If_Old();
-	else				Cmd_If_New();
+	if (Cmd_Argc() > 2 && Cmd_Argv(1)[0] == '(')
+		 // new "if" requires parentheses around the condition
+		 // while the original "if" wouldn't work with these so it's safe
+		 // to presume noone used it there
+		 Cmd_If_New();
+	else Cmd_If_Old();
 }
 
 void Cmd_If_Exists_f(void)
@@ -1951,10 +1940,6 @@ void Cmd_Init (void)
 	Cmd_AddCommand ("if_exists", Cmd_If_Exists_f);
 	Cmd_AddCommand ("eval", Cmd_Eval_f);
 #endif
-
-	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
-	Cvar_Register(&cl_oldif);
-	Cvar_ResetCurrentGroup();
 
 	Cmd_AddCommand ("macrolist", Cmd_MacroList_f);
 	qsort(msgtrigger_commands,
