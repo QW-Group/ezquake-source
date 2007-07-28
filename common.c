@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.84 2007-07-15 21:15:43 cokeman1982 Exp $
+    $Id: common.c,v 1.85 2007-07-28 23:19:32 disconn3ct Exp $
 
 */
 
@@ -292,7 +292,7 @@ void COM_ForceExtensionEx (char *path, char *extension, int path_size)
 	src = path + strlen(path) - strlen(extension);
 	if (src >= path && !strcmp(src, extension))
 		return; // seems we alredy have this extension
-	
+
 	strlcat(path, extension, path_size);
 
 	src = path + strlen(path) - strlen(extension);
@@ -1338,7 +1338,7 @@ int COM_GetFloatTokens(const char *s, float *fl_array, int fl_array_size)
 {
     int i;
     if (!s || !*s) return 0;
-    
+
     for(i = 0; *s && i < fl_array_size; i++)
     {
         fl_array[i] = atof(s);
@@ -1659,7 +1659,7 @@ int FS_FOpenFile (char *filename, FILE **file) {
 static cache_user_t *loadcache;
 static byte			*loadbuf;
 static int			loadsize;
-byte *FS_LoadFile (char *path, int usehunk) 
+byte *FS_LoadFile (char *path, int usehunk)
 {
 	FILE *h;
 	byte *buf;
@@ -1677,27 +1677,27 @@ byte *FS_LoadFile (char *path, int usehunk)
 	COM_FileBase (path, base);
 
 	// TODO: Make these into defines.
-	if (usehunk == 1) 
+	if (usehunk == 1)
 	{
 		buf = (byte *) Hunk_AllocName (len + 1, base);
-	} 
-	else if (usehunk == 2) 
+	}
+	else if (usehunk == 2)
 	{
 		buf = (byte *) Hunk_TempAlloc (len + 1);
-	} 
-	else if (usehunk == 3) 
+	}
+	else if (usehunk == 3)
 	{
 		buf = (byte *) Cache_Alloc (loadcache, len + 1, base);
-	} 
-	else if (usehunk == 4) 
+	}
+	else if (usehunk == 4)
 	{
 		buf = ((len+1 > loadsize) ? (byte *) Hunk_TempAlloc (len + 1) : loadbuf);
-	} 
-	else if (usehunk == 5) 
+	}
+	else if (usehunk == 5)
 	{
 		buf = Q_malloc (len + 1);
-	} 
-	else 
+	}
+	else
 	{
 		Sys_Error ("FS_LoadFile: bad usehunk\n");
 	}
@@ -1706,14 +1706,14 @@ byte *FS_LoadFile (char *path, int usehunk)
 		Sys_Error ("FS_LoadFile: not enough space for %s\n", path);
 
 	((byte *)buf)[len] = 0;
-	
+
 	#ifndef SERVERONLY
 	Draw_BeginDisc ();
 	#endif
-	
+
 	fread (buf, 1, len, h);
 	fclose (h);
-	
+
 	#ifndef SERVERONLY
 	Draw_EndDisc ();
 	#endif
@@ -1841,7 +1841,7 @@ qbool FS_RemovePak (const char *pakfile) {
 	searchpath_t *cur = com_searchpaths;
 	searchpath_t *temp;
 	qbool ret = false;
-	
+
 	while (cur) {
 		if (cur->pack) {
 			if (!strcmp(cur->pack->filename, pakfile)) {
@@ -2159,15 +2159,15 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	//
     //Tei: original code from qbism.
 	i = 1;
-	while(i = COM_CheckParmOffset ("-data", i))
+	while((i = COM_CheckParmOffset ("-data", i)))
 	{
 		if (i && i < com_argc-1)
 		{
 			FS_AddGameDirectory(com_basedir,com_argv[i+1]);
 		}
 		i++;
-	} 
-    
+	}
+
 
 	// any set gamedirs will be freed up to here
 	com_base_searchpaths = com_searchpaths;

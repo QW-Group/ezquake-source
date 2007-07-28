@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.31 2007-07-17 21:33:06 tonik Exp $
+	$Id: gl_model.c,v 1.32 2007-07-28 23:19:32 disconn3ct Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -61,13 +61,13 @@ void Mod_Init (void) {
 //Caches the data if needed
 void *Mod_Extradata (model_t *mod) {
 	void *r;
-	
+
 	r = Cache_Check (&mod->cache);
 	if (r)
 		return r;
 
 	Mod_LoadModel (mod, true);
-	
+
 	if (!mod->cache.data)
 		Sys_Error ("Mod_Extradata: caching failed");
 	return mod->cache.data;
@@ -98,7 +98,7 @@ byte *Mod_DecompressVis (byte *in, model_t *model) {
 	int c, row;
 	byte *out;
 
-	row = (model->numleafs + 7) >> 3;	
+	row = (model->numleafs + 7) >> 3;
 	out = decompressed;
 
 	if (!in) {	// no vis info, so make all visible
@@ -106,7 +106,7 @@ byte *Mod_DecompressVis (byte *in, model_t *model) {
 			*out++ = 0xff;
 			row--;
 		}
-		return decompressed;		
+		return decompressed;
 	}
 
 	do {
@@ -122,7 +122,7 @@ byte *Mod_DecompressVis (byte *in, model_t *model) {
 			c--;
 		}
 	} while (out - decompressed < row);
-	
+
 	return decompressed;
 }
 
@@ -135,7 +135,7 @@ byte *Mod_LeafPVS (mleaf_t *leaf, model_t *model) {
 void Mod_ClearAll (void) {
 	int i;
 	model_t	*mod;
-	
+
 	for (i = 0, mod = mod_known; i < mod_numknown; i++, mod++)
 		if (mod->type != mod_alias && mod->type != mod_alias3 && mod->type != mod_sprite)
 			mod->needload = true;
@@ -144,7 +144,7 @@ void Mod_ClearAll (void) {
 model_t *Mod_FindName (char *name) {
 	int i;
 	model_t	*mod;
-	
+
 	if (!name[0])
 		Sys_Error ("Mod_ForName: NULL name");
 
@@ -165,9 +165,9 @@ model_t *Mod_FindName (char *name) {
 
 void Mod_TouchModel (char *name) {
 	model_t	*mod;
-	
+
 	mod = Mod_FindName (name);
-	
+
 	if (!mod->needload)	{
 		if (mod->type == mod_alias || mod->type == mod_alias3 || mod->type == mod_sprite)
 			Cache_Check (&mod->cache);
@@ -230,7 +230,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 
 	// load the file
 	if (!buf)
-		buf = (unsigned *)FS_LoadStackFile (mod->name, stackbuf, sizeof(stackbuf)); 
+		buf = (unsigned *)FS_LoadStackFile (mod->name, stackbuf, sizeof(stackbuf));
 	if (!buf) {
 		if (crash)
 			Host_Error ("Mod_LoadModel: %s not found", mod->name);
@@ -252,7 +252,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 
 	case MD3_IDENT:
 		Mod_LoadAlias3Model (mod, buf);
- 		break; 
+ 		break;
 
 	case IDSPRITEHEADER:
 		Mod_LoadSpriteModel (mod, buf);
@@ -270,7 +270,7 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 model_t *Mod_ForName (char *name, qbool crash) {
 	model_t	*mod;
 
-	mod = Mod_FindName (name);	
+	mod = Mod_FindName (name);
 	return Mod_LoadModel (mod, crash);
 }
 
@@ -323,7 +323,7 @@ static struct {
 static char *TranslateTextureName (texture_t *tx)
 {
 	int i;
-	int checksum;
+	int checksum = 0;
 	qbool checksum_done = false;
 
 	for (i = 0; translate_names[i].origname; i++) {
@@ -476,7 +476,7 @@ void R_LoadBrushModelTextures (model_t *m)
 			tx->loaded = true;
 			continue; // mark as loaded
 		}
-    
+
 		noscale_flag = 0;
 		noscale_flag = (!gl_scaleModelTextures.value && !loadmodel->isworldmodel) ? TEX_NOSCALE : noscale_flag;
 		noscale_flag = (!gl_scaleTurbTextures.value  && ISTURBTEX(tx->name))      ? TEX_NOSCALE : noscale_flag;
@@ -485,12 +485,12 @@ void R_LoadBrushModelTextures (model_t *m)
 
 		texmode      = TEX_MIPMAP | noscale_flag;
 		brighten_flag = (!ISTURBTEX(tx->name) && (lightmode == 2)) ? TEX_BRIGHTEN : 0;
-    
+
 		if (Mod_LoadExternalTexture(tx, texmode, brighten_flag)) {
 			tx->loaded = true; // mark as loaded
 			continue;
 		}
-    
+
 		if (loadmodel->bspversion == HL_BSPVERSION) {
 			if ((data = WAD3_LoadTexture(tx))) {
 				fs_netpath[0] = 0;
@@ -503,7 +503,7 @@ void R_LoadBrushModelTextures (model_t *m)
 
 			tx->offsets[0] = 0; // this mean use r_notexture_mip, any better solution?
 		}
-    
+
 		if (tx->offsets[0]) {
 			texname = tx->name;
 			width   = tx->width  >> mipTexLevel;
@@ -516,8 +516,8 @@ void R_LoadBrushModelTextures (model_t *m)
 			data     = (byte *) r_notexture_mip + r_notexture_mip->offsets[mipTexLevel];
 		}
 
-		tx->gl_texturenum = GL_LoadTexture (texname, width, height, data, texmode | brighten_flag, 1);					
-    
+		tx->gl_texturenum = GL_LoadTexture (texname, width, height, data, texmode | brighten_flag, 1);
+
 		if (!ISTURBTEX(tx->name) && Img_HasFullbrights(data, width * height))
 			tx->fb_texturenum = GL_LoadTexture (va("@fb_%s", texname), width, height, data, texmode | TEX_FULLBRIGHT, 1);
 
@@ -530,7 +530,7 @@ void Mod_LoadTextures (lump_t *l) {
 	miptex_t *mt;
 	texture_t *tx, *tx2, *anims[10], *altanims[10];
 	dmiptexlump_t *m;
-	
+
 	if (!l->filelen) {
 		loadmodel->textures = NULL;
 		return;
@@ -806,7 +806,7 @@ void Mod_LoadLighting (lump_t *l) {
 		return;
 	}
 
-	//check for a .lit file	
+	//check for a .lit file
 	mark = Hunk_LowMark();
 	data = LoadColoredLighting(loadmodel->name, &litfilename);
 	if (data) {
@@ -820,17 +820,17 @@ void Mod_LoadLighting (lump_t *l) {
 			if (developer.value || cl_warncmd.value)
 				Com_Printf("Static coloured lighting loaded\n");
 			loadmodel->lightdata = data + 8;
-			
+
 			in = mod_base + l->fileofs;
 			out = loadmodel->lightdata;
 			for (i = 0; i < l->filelen; i++) {
 				b = max(out[3 * i], max(out[3 * i + 1], out[3 * i + 2]));
 
 				if (!b) {
-					
+
 					out[3 * i] = out[3 * i + 1] = out[3 * i + 2] = in[i];
 				} else {
-					
+
 					float r = in[i] / (float) b;
 					out[3 *i + 0] = (int) (r * out[3 * i + 0]);
 					out[3 *i + 1] = (int) (r * out[3 * i + 1]);
@@ -865,7 +865,7 @@ void Mod_LoadVisibility (lump_t *l) {
 static void Mod_ParseWadsFromEntityLump (lump_t *l)
 {
 	char *data;
-	char *s, key[1024], value[1024];	
+	char *s, key[1024], value[1024];
 	int i, j, k;
 
 	if (!l->filelen)
@@ -954,7 +954,7 @@ void Mod_LoadSubmodels (lump_t *l) {
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadSubmodels: funny lump size in %s", loadmodel->name);
 	count = l->filelen / sizeof(*in);
-	if (count > MAX_MODELS)	
+	if (count > MAX_MODELS)
 		Host_Error("Mod_LoadSubmodels : count > MAX_MODELS");
 	out = (dmodel_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
 
@@ -1051,7 +1051,7 @@ void CalcSurfaceExtents (msurface_t *s) {
 			v = &loadmodel->vertexes[loadmodel->edges[-e].v[1]];
 
 		for (j = 0; j < 2; j++) {
-			val = v->position[0] * tex->vecs[j][0] + 
+			val = v->position[0] * tex->vecs[j][0] +
 				v->position[1] * tex->vecs[j][1] +
 				v->position[2] * tex->vecs[j][2] +
 				tex->vecs[j][3];
@@ -1062,7 +1062,7 @@ void CalcSurfaceExtents (msurface_t *s) {
 		}
 	}
 
-	for (i = 0; i < 2; i++) {	
+	for (i = 0; i < 2; i++) {
 		bmins[i] = floor(mins[i]/16);
 		bmaxs[i] = ceil(maxs[i]/16);
 
@@ -1089,13 +1089,13 @@ void Mod_LoadFaces (lump_t *l) {
 
 	for (surfnum = 0; surfnum < count; surfnum++, in++, out++) {
 		out->firstedge = LittleLong(in->firstedge);
-		out->numedges = LittleShort(in->numedges);		
+		out->numedges = LittleShort(in->numedges);
 		out->flags = 0;
 
 		planenum = LittleShort(in->planenum);
 		side = LittleShort(in->side);
 		if (side)
-			out->flags |= SURF_PLANEBACK;			
+			out->flags |= SURF_PLANEBACK;
 
 		out->plane = loadmodel->planes + planenum;
 
@@ -1207,7 +1207,7 @@ void Mod_LoadLeafs (lump_t *l) {
 		out->firstmarksurface = loadmodel->marksurfaces +
 			LittleShort(in->firstmarksurface);
 		out->nummarksurfaces = LittleShort(in->nummarksurfaces);
-		
+
 		p = LittleLong(in->visofs);
 		out->compressed_vis = (p == -1) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;
@@ -1216,14 +1216,14 @@ void Mod_LoadLeafs (lump_t *l) {
 			for (j = 0; j < out->nummarksurfaces; j++)
 				out->firstmarksurface[j]->flags |= SURF_UNDERWATER;
 		}
-	}	
+	}
 }
 
-void Mod_LoadMarksurfaces (lump_t *l) {	
+void Mod_LoadMarksurfaces (lump_t *l) {
 	int i, j, count;
 	short *in;
 	msurface_t **out;
-	
+
 	in = (void *)(mod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadMarksurfaces: funny lump size in %s", loadmodel->name);
@@ -1241,9 +1241,9 @@ void Mod_LoadMarksurfaces (lump_t *l) {
 	}
 }
 
-void Mod_LoadSurfedges (lump_t *l) {	
+void Mod_LoadSurfedges (lump_t *l) {
 	int i, count, *in, *out;
-	
+
 	in = (void *)(mod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadSurfedges: funny lump size in %s", loadmodel->name);
@@ -1261,13 +1261,13 @@ void Mod_LoadPlanes (lump_t *l) {
 	int i, j, count, bits;
 	mplane_t *out;
 	dplane_t *in;
-	
+
 	in = (void *)(mod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
 		Host_Error ("Mod_LoadPlanes: funny lump size in %s", loadmodel->name);
 	count = l->filelen / sizeof(*in);
 	out = (mplane_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
-	
+
 	loadmodel->planes = out;
 	loadmodel->numplanes = count;
 
@@ -1390,7 +1390,7 @@ void *Mod_LoadAliasFrame (void * pin, maliasframedesc_t *frame) {
 	trivertx_t *pinframe;
 	int i;
 	daliasframe_t *pdaliasframe;
-	
+
 	pdaliasframe = (daliasframe_t *)pin;
 
 	strcpy (frame->name, pdaliasframe->name);
@@ -1606,7 +1606,7 @@ static void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype) {
 
 				gl_texnum = fb_texnum = 0;
 				if (!(gl_texnum = Mod_LoadExternalSkin(identifier, &fb_texnum))) {
-					gl_texnum = GL_LoadTexture (identifier, pheader->skinwidth, 
+					gl_texnum = GL_LoadTexture (identifier, pheader->skinwidth,
 						pheader->skinheight, (byte *) (pskintype), texmode, 1);
 
 					if (Img_HasFullbrights((byte *) (pskintype), pheader->skinwidth*pheader->skinheight))
@@ -1676,11 +1676,11 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer) {
 	}
 
 	// allocate space for a working header, plus all the data except the frames, skin and group info
-	size = 	sizeof (aliashdr_t) 
+	size = 	sizeof (aliashdr_t)
 			+ (LittleLong (pinmodel->numframes) - 1) *
 			sizeof (pheader->frames[0]);
 	pheader = (aliashdr_t *) Hunk_AllocName (size, loadname);
-	
+
 	mod->flags = LittleLong (pinmodel->flags);
 
 	// endian-adjust and copy the data, starting with the alias model header
@@ -1755,7 +1755,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer) {
 
 		if (frametype == ALIAS_SINGLE)
 			pframetype = (daliasframetype_t *) Mod_LoadAliasFrame (pframetype + 1, &pheader->frames[i]);
-		else 
+		else
 			pframetype = (daliasframetype_t *) Mod_LoadAliasGroup (pframetype + 1, &pheader->frames[i]);
 
 		for (j = 0; j < 3; j++) {
@@ -1776,7 +1776,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer) {
 	// move the complete, relocatable alias model to the cache
 	end = Hunk_LowMark ();
 	total = end - start;
-	
+
 	Cache_Alloc (&mod->cache, total, loadname);
 	if (!mod->cache.data)
 		return;
@@ -1902,7 +1902,7 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
 	dspriteframetype_t *pframetype;
 
 	msprite2_t *psprite2;
-	
+
 
 	// remember point
 	start = Hunk_LowMark ();
@@ -2003,7 +2003,7 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
 	mod->type = mod_sprite;
 
 	// move the complete, relocatable model to the cache
-	
+
 	Cache_Alloc (&mod->cache, size, loadname);
 	if (!mod->cache.data) {
 		Q_free(psprite2);
@@ -2083,7 +2083,7 @@ void Mod_AddModelFlags(model_t *mod)
 		mod->modhint = MOD_DETPACK;
 	else if (!strcmp(mod->name, "progs/laser.mdl"))
 		mod->modhint = MOD_LASER;
-	else if (!strcmp(mod->name, "progs/demon.mdl")/* || 
+	else if (!strcmp(mod->name, "progs/demon.mdl")/* ||
 		!strcmp(mod->name, "progs/shambler.mdl") */)
 		mod->modhint = MOD_DEMON;
 	else if(!strcmp(mod->name, "progs/soldier.mdl"))

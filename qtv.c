@@ -1,7 +1,7 @@
 /*
 	Support for FTE QuakeTV
 
-	$Id: qtv.c,v 1.10 2007-07-01 04:34:02 qqshka Exp $
+	$Id: qtv.c,v 1.11 2007-07-28 23:19:32 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -16,7 +16,7 @@ cvar_t	qtv_buffertime = {"qtv_buffertime", "0.5"};
 void QTV_Init(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_MVD); // FIXME: add qtv group instead
-	
+
 	Cvar_Register(&qtv_buffertime);
 
 	Cvar_ResetCurrentGroup();
@@ -66,7 +66,7 @@ int ConsistantMVDData(unsigned char *buffer, int remaining)
 gottotallength:
 		if (remaining < length)
 			return available;
-		
+
 		remaining -= length;
 		available += length;
 		buffer += length;
@@ -95,7 +95,7 @@ void QTV_ForwardToServerEx (qbool skip_if_no_params, qbool use_first_argument)
 		return;
 	}
 
-	SZ_Init(&buf, data, sizeof(data));
+	SZ_Init(&buf, (byte *) data, sizeof(data));
 
 	s = TP_ParseMacroString (Cmd_Args());
 	s = TP_ParseFunChars (s, true);

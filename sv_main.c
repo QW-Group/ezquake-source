@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sv_main.c,v 1.26 2007-06-18 00:49:28 qqshka Exp $
+	$Id: sv_main.c,v 1.27 2007-07-28 23:19:32 disconn3ct Exp $
 */
 
 #include "qwsvdef.h"
@@ -263,7 +263,7 @@ int SV_GenerateUserID (void)
 			if (cl->state != cs_free && cl->userid == svs.lastuserid)
 				break;
 	} while (i != MAX_CLIENTS);
-	
+
 	return svs.lastuserid;
 }
 
@@ -289,7 +289,7 @@ void SVC_Status (void) {
 			top = (top < 0) ? 0 : ((top > 13) ? 13 : top);
 			bottom = (bottom < 0) ? 0 : ((bottom > 13) ? 13 : bottom);
 			ping = SV_CalcPing (cl);
-			Com_Printf ("%i %i %i %i \"%s\" \"%s\" %i %i\n", cl->userid, 
+			Com_Printf ("%i %i %i %i \"%s\" \"%s\" %i %i\n", cl->userid,
 				cl->old_frags, (int)(svs.realtime - cl->connection_started)/60,
 				ping, cl->name, Info_ValueForKey (cl->userinfo, "skin"), top, bottom);
 		}
@@ -330,7 +330,7 @@ void SVC_Log (void) {
 	else
 		seq = -1;
 
-	if (seq == svs.logsequence-1 || !sv_fraglogfile) {	
+	if (seq == svs.logsequence-1 || !sv_fraglogfile) {
 		// they already have this data, or we aren't logging frags
 		data[0] = A2A_NACK;
 		NET_SendPacket (NS_SERVER, 1, data, net_from);
@@ -402,7 +402,8 @@ void SVC_GetChallenge (void) {
 		over += 4;
 	}
 #endif
-	Netchan_OutOfBand(NS_SERVER, net_from, over-buf, buf);
+	assert (buf > over);
+	Netchan_OutOfBand(NS_SERVER, net_from, over-buf, (byte *) buf);
 }
 
 //A connection request that did not come from the master
@@ -471,7 +472,7 @@ void SVC_DirectConnect (void) {
 	// check for password or spectator_password
 	s = Info_ValueForKey (userinfo, "spectator");
 	if (s[0] && strcmp(s, "0")) {
-		if (spectator_password.string[0] && 
+		if (spectator_password.string[0] &&
 			strcasecmp(spectator_password.string, "none") &&
 			strcmp(spectator_password.string, s) )
 		{	// failed
@@ -674,7 +675,7 @@ void SV_ConnectionlessPacket (void) {
 /*
 ==============================================================================
 PACKET FILTERING
- 
+
 
 You can add or remove addresses from the filter list with:
 
@@ -715,12 +716,12 @@ qbool StringToFilter (char *s, ipfilter_t *f) {
 	char num[128];
 	unsigned int i, j;
 	unsigned char b[4], m[4];
-	
+
 	for (i=0 ; i<4 ; i++) {
 		b[i] = 0;
 		m[i] = 0;
 	}
-	
+
 	for (i=0 ; i<4 ; i++) {
 		if ( !isdigit((int)(unsigned char)*s) ) {
 			Com_Printf ("Bad filter address: %s\n", s);
@@ -740,16 +741,16 @@ qbool StringToFilter (char *s, ipfilter_t *f) {
 			break;
 		s++;
 	}
-	
+
 	f->mask = *(unsigned *)m;
 	f->compare = *(unsigned *)b;
-	
+
 	return true;
 }
 
 void SV_AddIP_f (void) {
 	int i;
-	
+
 	for (i = 0; i < numipfilters; i++)
 		if (ipfilters[i].compare == 0xffffffff)
 			break;		// free spot
@@ -824,7 +825,7 @@ void SV_SendBan (void) {
 	data[4] = A2C_PRINT;
 	data[5] = 0;
 	strcat (data, "\nbanned.\n");
-	
+
 	NET_SendPacket (NS_SERVER, strlen(data), data, net_from);
 }
 
@@ -862,7 +863,7 @@ void SV_ReadPackets (void) {
 			SV_ConnectionlessPacket ();
 			continue;
 		}
-		
+
 		// read the qport out of the message so we can fix up
 		// stupid address translating routers
 		MSG_BeginReading ();
@@ -882,7 +883,7 @@ void SV_ReadPackets (void) {
 				Com_DPrintf ("SV_ReadPackets: fixing up a translated port\n");
 				cl->netchan.remote_address.port = net_from.port;
 			}
-			if (Netchan_Process(&cl->netchan)) {	
+			if (Netchan_Process(&cl->netchan)) {
 				// this is a valid, sequenced packet, so process it
 				svs.stats.packets++;
 				cl->send_message = true;	// reply at end of frame
@@ -917,7 +918,7 @@ void SV_CheckTimeouts (void) {
 				nclients++;
 			if (cl->netchan.last_received < droptime) {
 				SV_BroadcastPrintf (PRINT_HIGH, "%s timed out\n", cl->name);
-				SV_DropClient (cl); 
+				SV_DropClient (cl);
 				cl->state = cs_free;	// don't bother with zombie state
 			}
 		}
@@ -1003,7 +1004,7 @@ void SV_Frame (double time) {
 
 	start = Sys_DoubleTime ();
 	svs.stats.idle += start - end;
-	
+
 	// keep the random time dependent
 	rand ();
 
@@ -1029,7 +1030,7 @@ void SV_Frame (double time) {
 	if (dedicated) {
 		// check for commands typed to the host
 		SV_GetConsoleCommands ();
-		
+
 		// process console commands
 		Cbuf_Execute ();
 	}
@@ -1167,7 +1168,7 @@ void SV_InitLocal (void) {
 	Info_SetValueForStarKey (svs.info, "*z_ext", va("%i", SERVER_EXTENSIONS), MAX_SERVERINFO_STRING);
 
 	if (strcmp(com_gamedirfile, "qw"))
-		Info_SetValueForStarKey (svs.info, "*gamedir", com_gamedirfile, MAX_SERVERINFO_STRING); 
+		Info_SetValueForStarKey (svs.info, "*gamedir", com_gamedirfile, MAX_SERVERINFO_STRING);
 
 	// init fraglog stuff
 	svs.logsequence = 1;
@@ -1257,7 +1258,7 @@ void SV_ExtractFromUserinfo (client_t *cl) {
 			} else if (cl->lastnamecount++ > 4) {
 				SV_BroadcastPrintf (PRINT_HIGH, "%s was kicked for name spam\n", cl->name);
 				SV_ClientPrintf (cl, PRINT_HIGH, "You were kicked from the game for name spamming\n");
-				SV_DropClient (cl); 
+				SV_DropClient (cl);
 				return;
 			}
 		}
