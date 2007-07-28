@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.80 2007-07-28 21:14:13 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.81 2007-07-28 23:49:38 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -158,17 +158,17 @@ qbool OnChange_gl_smoothfont (cvar_t *var, char *string)
 	if (!newval == !gl_smoothfont.value || !char_textures[0])
 			return false;
 
-	for (i = 0; i < MAX_CHARSETS; i++) 
+	for (i = 0; i < MAX_CHARSETS; i++)
 	{
 		if (!char_textures[i])
 			break;
 		GL_Bind(char_textures[i]);
-		if (newval)	
+		if (newval)
 		{
 			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		} 
-		else 
+		}
+		else
 		{
 			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -178,7 +178,7 @@ qbool OnChange_gl_smoothfont (cvar_t *var, char *string)
 }
 
 
-qbool OnChange_gl_crosshairimage(cvar_t *v, char *s) 
+qbool OnChange_gl_crosshairimage(cvar_t *v, char *s)
 {
 	mpic_t *pic;
 
@@ -187,7 +187,7 @@ qbool OnChange_gl_crosshairimage(cvar_t *v, char *s)
 	if (!s[0])
 		return false;
 
-	if (!(pic = Draw_CachePicSafe(va("crosshairs/%s", s), false, true))) 
+	if (!(pic = Draw_CachePicSafe(va("crosshairs/%s", s), false, true)))
 	{
 		Com_Printf("Couldn't load image %s\n", s);
 		return false;
@@ -200,7 +200,7 @@ qbool OnChange_gl_crosshairimage(cvar_t *v, char *s)
 	return false;
 }
 
-void customCrosshair_Init(void) 
+void customCrosshair_Init(void)
 {
 	FILE *f;
 	int i = 0, c;
@@ -211,7 +211,7 @@ void customCrosshair_Init(void)
 	if (FS_FOpenFile("crosshairs/crosshair.txt", &f) == -1)
 		return;
 
-	while (i < 64) 
+	while (i < 64)
 	{
 		c = fgetc(f);
 		if (c == EOF)
@@ -224,7 +224,7 @@ void customCrosshair_Init(void)
 		if (isspace(c))
 			continue;
 
-		if (tolower(c) != 'x' && tolower(c) != 'o') 
+		if (tolower(c) != 'x' && tolower(c) != 'o')
 		{
 			Com_Printf("Invalid format in crosshair.txt (Only X's and O's and whitespace permitted)\n");
 			fclose(f);
@@ -240,14 +240,14 @@ void customCrosshair_Init(void)
 	customcrosshair_loaded |= CROSSHAIR_TXT;
 }
 
-void Draw_InitCrosshairs(void) 
+void Draw_InitCrosshairs(void)
 {
 	int i;
 	char str[256] = {0};
 
 	memset(&crosshairpic, 0, sizeof(crosshairpic));
 
-	for (i = 0; i < NUMCROSSHAIRS; i++) 
+	for (i = 0; i < NUMCROSSHAIRS; i++)
 	{
 		crosshairtextures[i] = GL_LoadTexture ("", 8, 8, crosshairdata[i], TEX_ALPHA, 1);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -302,17 +302,17 @@ int			scrap_dirty = 0;	// Bit mask.
 int			scrap_texnum;
 
 // Returns false if allocation failed.
-qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y) 
+qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y)
 {
 	int i, j, best, best2;
 
 	best = BLOCK_HEIGHT;
 
-	for (i = 0; i < BLOCK_WIDTH - w; i++) 
+	for (i = 0; i < BLOCK_WIDTH - w; i++)
 	{
 		best2 = 0;
 
-		for (j = 0; j < w; j++) 
+		for (j = 0; j < w; j++)
 		{
 			if (scrap_allocated[scrapnum][i + j] >= best)
 				break;
@@ -321,7 +321,7 @@ qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y)
 		}
 
 		if (j == w)
-		{	
+		{
 			// This is a valid spot.
 			*x = i;
 			*y = best = best2;
@@ -339,7 +339,7 @@ qbool Scrap_AllocBlock (int scrapnum, int w, int h, int *x, int *y)
 	return true;
 }
 
-void Scrap_Upload (void) 
+void Scrap_Upload (void)
 {
 	int i;
 
@@ -354,9 +354,9 @@ void Scrap_Upload (void)
 }
 
 //=============================================================================
-// Support Routines 
+// Support Routines
 
-mpic_t *Draw_CacheWadPic (char *name) 
+mpic_t *Draw_CacheWadPic (char *name)
 {
 	qpic_t	*p;
 	mpic_t	*pic, *pic_24bit;
@@ -365,27 +365,27 @@ mpic_t *Draw_CacheWadPic (char *name)
 	pic = (mpic_t *)p;
 
 	if ((pic_24bit = GL_LoadPicImage(va("textures/wad/%s", name), name, 0, 0, TEX_ALPHA)) ||
-		(pic_24bit = GL_LoadPicImage(va("gfx/%s", name), name, 0, 0, TEX_ALPHA))) 
+		(pic_24bit = GL_LoadPicImage(va("gfx/%s", name), name, 0, 0, TEX_ALPHA)))
 	{
 		memcpy(&pic->texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
 		return pic;
 	}
 
 	// Load little ones into the scrap.
-	if (p->width < 64 && p->height < 64) 
+	if (p->width < 64 && p->height < 64)
 	{
 		int x = 0, y = 0, i, j, k, texnum;
 
 		texnum = memchr(p->data, 255, p->width*p->height) != NULL;
-		
-		if (!Scrap_AllocBlock (texnum, p->width, p->height, &x, &y)) 
+
+		if (!Scrap_AllocBlock (texnum, p->width, p->height, &x, &y))
 		{
 			GL_LoadPicTexture (name, pic, p->data);
 			return pic;
 		}
-		
+
 		k = 0;
-		
+
 		for (i = 0; i < p->height; i++)
 		{
 			for (j  = 0; j < p->width; j++, k++)
@@ -400,8 +400,8 @@ mpic_t *Draw_CacheWadPic (char *name)
 		pic->sh = (x + p->width - 0.25) / (float) BLOCK_WIDTH;
 		pic->tl = (y + 0.25) / (float) BLOCK_WIDTH;
 		pic->th = (y + p->height - 0.25) / (float) BLOCK_WIDTH;
-	} 
-	else 
+	}
+	else
 	{
 		GL_LoadPicTexture (name, pic, p->data);
 	}
@@ -413,7 +413,7 @@ mpic_t *Draw_CacheWadPic (char *name)
 // Loads an image into the cache.
 // Variables:
 //		crash - Crash the client if loading fails.
-//		only24bit - Don't fall back to loading the normal 8-bit texture if 
+//		only24bit - Don't fall back to loading the normal 8-bit texture if
 //					loading the 24-bit version fails.
 //
 mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit)
@@ -447,8 +447,8 @@ mpic_t *Draw_CachePicSafe (char *path, qbool crash, qbool only24bit)
 
 			return NULL;
 		}
-		
-		// Make a new copy of the returned pic, since it's static 
+
+		// Make a new copy of the returned pic, since it's static
 		// in GL_LoadPicImage and will be overwritten.
 		fpic = (mpic_t *)Q_malloc(sizeof(mpic_t));
 		memcpy(fpic, pic_24bit, sizeof(mpic_t));
@@ -522,7 +522,7 @@ void Draw_AdjustConback (void)
 	conback.height = vid.conheight;
 }
 
-void Draw_InitConback (void) 
+void Draw_InitConback (void)
 {
 	qpic_t *cb;
 	int start;
@@ -537,11 +537,11 @@ void Draw_InitConback (void)
 	if (cb->width != 320 || cb->height != 200)
 		Sys_Error ("Draw_InitConback: conback.lmp size is not 320x200");
 
-	if ((pic_24bit = GL_LoadPicImage("gfx/conback", "conback", 0, 0, 0))) 
+	if ((pic_24bit = GL_LoadPicImage("gfx/conback", "conback", 0, 0, 0)))
 	{
 		memcpy(&conback.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
-	} 
-	else 
+	}
+	else
 	{
 		conback.width = cb->width;
 		conback.height = cb->height;
@@ -554,12 +554,12 @@ void Draw_InitConback (void)
 	Hunk_FreeToLowMark (start);
 }
 
-static int Draw_LoadCharset(const char *name) 
+static int Draw_LoadCharset(const char *name)
 {
 	int texnum;
 	qbool loaded = false;
 
-	if (!strcasecmp(name, "original")) 
+	if (!strcasecmp(name, "original"))
 	{
 		// Convert the 128*128 conchars texture to 128*256 leaving
 		// empty space between rows so that chars don't stumble on
@@ -571,8 +571,8 @@ static int Draw_LoadCharset(const char *name)
 		memset (buf, 255, sizeof(buf));
 		src = (char *) draw_chars;
 		dest = buf;
-		
-		for (i = 0; i < 16; i++) 
+
+		for (i = 0; i < 16; i++)
 		{
 			memcpy (dest, src, 128 * 8);
 			src += 128 * 8;
@@ -582,7 +582,7 @@ static int Draw_LoadCharset(const char *name)
 		char_textures[0] = GL_LoadTexture ("pic:charset", 128, 256, (byte *)buf, TEX_ALPHA, 1);
 		loaded = true;
 	}
-	else if ((texnum = GL_LoadCharsetImage (va("textures/charsets/%s", name), "pic:charset"))) 
+	else if ((texnum = GL_LoadCharsetImage (va("textures/charsets/%s", name), "pic:charset")))
 	{
 		char_textures[0] = texnum;
 		loaded = true;
@@ -594,7 +594,7 @@ static int Draw_LoadCharset(const char *name)
 		return 1;
 	}
 
-	if (!gl_smoothfont.value) 
+	if (!gl_smoothfont.value)
 	{
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -603,14 +603,14 @@ static int Draw_LoadCharset(const char *name)
 	return 0;
 }
 
-qbool OnChange_gl_consolefont(cvar_t *var, char *string) 
+qbool OnChange_gl_consolefont(cvar_t *var, char *string)
 {
 	return Draw_LoadCharset(string);
 }
 
-void Draw_LoadCharset_f (void) 
+void Draw_LoadCharset_f (void)
 {
-	switch (Cmd_Argc()) 
+	switch (Cmd_Argc())
 	{
 		case 1:
 			Com_Printf("Current charset is \"%s\"\n", gl_consolefont.string);
@@ -633,7 +633,7 @@ static int LoadAlternateCharset (char *name)
 
 	// We expect an .lmp to be in QPIC format, but it's ok if it's just raw data.
 	data = FS_LoadTempFile (va("gfx/%s.lmp", name));
-	
+
 	if (!data)
 		return 0;
 
@@ -641,7 +641,7 @@ static int LoadAlternateCharset (char *name)
 	{
 		// Raw data.
 	}
-	else if (fs_filesize == 128*128 + 8) 
+	else if (fs_filesize == 128*128 + 8)
 	{
 		qpic_t *p = (qpic_t *)data;
 		SwapPic (p);
@@ -668,7 +668,7 @@ static int LoadAlternateCharset (char *name)
 	src = data;
 	dest = buf;
 
-	for (i = 0 ; i < 16 ; i++) 
+	for (i = 0 ; i < 16 ; i++)
 	{
 		memcpy (dest, src, 128*8);
 		src += 128*8;
@@ -684,7 +684,7 @@ static int LoadAlternateCharset (char *name)
 	return texnum;
 }
 
-void Draw_InitCharset(void) 
+void Draw_InitCharset(void)
 {
 	int i;
 
@@ -692,7 +692,7 @@ void Draw_InitCharset(void)
 	memset(char_range,    0, sizeof(char_range));
 
 	draw_chars = W_GetLumpName ("conchars");
-	for (i = 0; i < 256 * 64; i++) 
+	for (i = 0; i < 256 * 64; i++)
 	{
 		if (draw_chars[i] == 0)
 			draw_chars[i] = 255;
@@ -716,7 +716,7 @@ void Draw_InitCharset(void)
 void CP_Init (void);
 void Draw_InitConsoleBackground(void);
 
-void Draw_Init (void) 
+void Draw_Init (void)
 {
 	Cmd_AddCommand("loadcharset", Draw_LoadCharset_f);
 
@@ -811,7 +811,7 @@ __inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool ap
 		// Set the overall opacity.
 		if (apply_overall_opacity)
 		{
-			glGetPointerv(GL_CURRENT_COLOR, &color);
+			glGetPointerv(GL_CURRENT_COLOR, (GLvoid **) &color);
 			glColor4f(color[0], color[1], color[2], color[3] * overall_opacity);
 		}
 	}
@@ -821,7 +821,7 @@ __inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool ap
 	{
 		for (i = 1; i < MAX_CHARSETS; i++)
 		{
-			if (char_range[i] == (num & 0xFF00)) 
+			if (char_range[i] == (num & 0xFF00))
 			{
 				slot = i;
 				break;
@@ -853,14 +853,14 @@ __inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool ap
 
 		// Bottom right.
 		glTexCoord2f (fcol + CHARSET_CHAR_WIDTH, frow + CHARSET_CHAR_WIDTH);
-		glVertex2f (x + (scale * 8), y + (scale * 8 * 2)); 
+		glVertex2f (x + (scale * 8), y + (scale * 8 * 2));
 
 		// Bottom left.
 		glTexCoord2f (fcol, frow + CHARSET_CHAR_WIDTH);
 		glVertex2f (x, y + (scale * 8 * 2));
 	}
 	glEnd();
-	
+
 	glScalef(1, 1, 1);
 
 	glEnable(GL_ALPHA_TEST);
@@ -917,7 +917,7 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 		glEnable(GL_BLEND);
 	}
 
-	// Make sure we set the color from scratch so that the 
+	// Make sure we set the color from scratch so that the
 	// overall opacity is applied properly.
 	if (scr_coloredText.value)
 	{
@@ -941,15 +941,15 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 		// If we didn't get a color array, check for color codes in the text instead.
 		if (!color)
 		{
-			if (text[i] == '&') 
+			if (text[i] == '&')
 			{
-				if (text[i + 1] == 'c' && text[i + 2] && text[i + 3] && text[i + 4]) 
+				if (text[i + 1] == 'c' && text[i + 2] && text[i + 3] && text[i + 4])
 				{
 					r = HexToInt(text[2]);
 					g = HexToInt(text[3]);
 					b = HexToInt(text[4]);
 
-					if (r >= 0 && g >= 0 && b >= 0) 
+					if (r >= 0 && g >= 0 && b >= 0)
 					{
 						if (scr_coloredText.value)
 						{
@@ -961,9 +961,9 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 						continue;
 					}
 				}
-				else if (text[i + 1] == 'r')	
+				else if (text[i + 1] == 'r')
 				{
-					if (!color_is_white) 
+					if (!color_is_white)
 					{
 						glColor4ub(color_white[0], color_white[1], color_white[2], color_white[3] * real_alpha);
 						color_is_white = true;
@@ -981,7 +981,7 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 			// Set the new color if it's not the same as the last.
 			if (color[color_index].c != last_color)
 			{
-				last_color = color[color_index].c;		
+				last_color = color[color_index].c;
 				COLOR_TO_RGBA(color[color_index].c, rgba);
 				glColor4ub(rgba[0], rgba[1], rgba[2], rgba[3] * real_alpha);
 			}
@@ -992,7 +992,7 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 		curr_char = text[i];
 
 		// Do not convert to red if we use coloredText.
-		if (!scr_coloredText.value && red) 
+		if (!scr_coloredText.value && red)
 			curr_char |= 128;
 
 		// Draw the character but don't apply overall opacity, we've already done that.
@@ -1070,7 +1070,7 @@ void Draw_String (int x, int y, const char *text)
 	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, 1, 1);
 }
 
-void Draw_Crosshair (void) 
+void Draw_Crosshair (void)
 {
 	float x = 0.0, y = 0.0, ofs1, ofs2, sh, th, sl, tl;
 	byte *col;
@@ -1207,7 +1207,7 @@ void Draw_Crosshair (void)
 			col[3] = bound(0, gl_crosshairalpha.value, 1) * 255;
 			glColor4ubv (col);
 		}
-		else 
+		else
 		{
 			glColor3ubv (col);
 		}
@@ -1221,8 +1221,8 @@ void Draw_Crosshair (void)
 			sl = crosshairpic.sl;
 			th = crosshairpic.th;
 			tl = crosshairpic.tl;
-		} 
-		else 
+		}
+		else
 		{
 			GL_Bind ((crosshair.value >= 2) ? crosshairtextures[(int) crosshair.value - 2] : crosshairtexture_txt);
 			ofs1 = 3.5;
@@ -1327,7 +1327,7 @@ void Draw_TextBox (int x, int y, int width, int lines)
 	p = Draw_CachePic ("gfx/box_tl.lmp");
 	Draw_TransPic (cx, cy, p);
 	p = Draw_CachePic ("gfx/box_ml.lmp");
-	for (n = 0; n < lines; n++) 
+	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
 		Draw_TransPic (cx, cy, p);
@@ -1338,14 +1338,14 @@ void Draw_TextBox (int x, int y, int width, int lines)
 
 	// Draw middle.
 	cx += 8;
-	while (width > 0) 
+	while (width > 0)
 	{
 		cy = y;
 		p = Draw_CachePic ("gfx/box_tm.lmp");
 		Draw_TransPic (cx, cy, p);
 		p = Draw_CachePic ("gfx/box_mm.lmp");
-		
-		for (n = 0; n < lines; n++) 
+
+		for (n = 0; n < lines; n++)
 		{
 			cy += 8;
 			if (n == 1)
@@ -1376,7 +1376,7 @@ void Draw_TextBox (int x, int y, int width, int lines)
 }
 
 // This repeats a 64 * 64 tile graphic to fill the screen around a sized down refresh window.
-void Draw_TileClear (int x, int y, int w, int h) 
+void Draw_TileClear (int x, int y, int w, int h)
 {
 	GL_Bind (draw_backtile->texnum);
 	glBegin (GL_QUADS);
@@ -1403,7 +1403,7 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 	glEnable (GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 	glColor4ubv(COLOR_TO_RGBA(color, bytecolor));
-	
+
 	thickness = max(0, thickness);
 
 	if (fill)
@@ -1427,7 +1427,7 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 
 void Draw_AlphaRectangle (int x, int y, int w, int h, byte c, float thickness, qbool fill, float alpha)
 {
-	Draw_AlphaRectangleRGB(x, y, w, h, thickness, fill, 
+	Draw_AlphaRectangleRGB(x, y, w, h, thickness, fill,
 		RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], (byte)(alpha * 255)));
 }
 
@@ -1468,7 +1468,7 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 	glEnable (GL_TEXTURE_2D);
 	glEnable(GL_ALPHA_TEST);
 	glDisable (GL_BLEND);
-	
+
 	glColor3ubv (color_white);
 }
 
@@ -1595,7 +1595,7 @@ void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float end
 {
 	Draw_AlphaPieSliceRGB (x, y, radius, startangle, endangle, thickness, fill,
 		RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], 255));
-}	
+}
 
 void Draw_AlphaCircleRGB (int x, int y, float radius, float thickness, qbool fill, color_t color)
 {
@@ -1783,7 +1783,7 @@ void Draw_InitConsoleBackground(void)
 	last_mapname[0] = 0;
 }
 
-void Draw_ConsoleBackground (int lines) 
+void Draw_ConsoleBackground (int lines)
 {
 	mpic_t *lvlshot = NULL;
 	float alpha = (SCR_NEED_CONSOLE_BACKGROUND ? 1 : bound(0, scr_conalpha.value, 1));
@@ -1791,16 +1791,16 @@ void Draw_ConsoleBackground (int lines)
 	if (host_mapname.string[0]											// We have mapname.
 		 && (    scr_conback.value == 2									// Always per level conback.
 			 || (scr_conback.value == 1 && SCR_NEED_CONSOLE_BACKGROUND) // Only at load time.
-			)) 
+			))
 	{
-		if (strncmp(host_mapname.string, last_mapname, sizeof(last_mapname))) 
-		{ 
+		if (strncmp(host_mapname.string, last_mapname, sizeof(last_mapname)))
+		{
 			// Call Draw_CachePicSafe() once per level.
 			char name[MAX_QPATH];
 
 			snprintf(name, sizeof(name), "textures/levelshots/%s.xxx", host_mapname.string);
-			if ((last_lvlshot = Draw_CachePicSafe(name, false, true))) 
-			{ 
+			if ((last_lvlshot = Draw_CachePicSafe(name, false, true)))
+			{
 				// Resize.
 				last_lvlshot->width  = conback.width;
 				last_lvlshot->height = conback.height;
@@ -1816,7 +1816,7 @@ void Draw_ConsoleBackground (int lines)
 		Draw_AlphaPic(0, (lines - vid.height) + (int)con_shift.value, lvlshot ? lvlshot : &conback, alpha);
 }
 
-void Draw_FadeScreen (void) 
+void Draw_FadeScreen (void)
 {
 	float alpha;
 
@@ -1824,13 +1824,13 @@ void Draw_FadeScreen (void)
 	if (!alpha)
 		return;
 
-	if (alpha < 1) 
+	if (alpha < 1)
 	{
 		glDisable (GL_ALPHA_TEST);
 		glEnable (GL_BLEND);
 		glColor4f (0, 0, 0, alpha);
-	} 
-	else 
+	}
+	else
 	{
 		glColor3f (0, 0, 0);
 	}
@@ -1844,7 +1844,7 @@ void Draw_FadeScreen (void)
 	glVertex2f (0, vid.height);
 	glEnd ();
 
-	if (alpha < 1) 
+	if (alpha < 1)
 	{
 		glDisable (GL_BLEND);
 		glEnable (GL_ALPHA_TEST);
@@ -1873,8 +1873,8 @@ void Draw_EndDisc (void) {}
 
 //
 // Changes the projection to orthogonal (2D drawing).
-// 
-void GL_Set2D (void) 
+//
+void GL_Set2D (void)
 {
 	glViewport (glx, gly, glwidth, glheight);
 
