@@ -6,6 +6,12 @@
 
 //======================================
 
+#define QTV_PLAYBACK		2			// cls.mvdplayback == QTV_PLAYBACK if QTV playback
+#define QTV_VERSION			"1.2"		// we are support up to this QTV version
+#define QTV_VER_1_2			1.2			// download/chat was added at this point in QTV
+
+//======================================
+
 extern		cvar_t	qtv_buffertime;
 
 void		QTV_Init(void);
@@ -27,6 +33,7 @@ int			ConsistantMVDData(unsigned char *buffer, int remaining);
 void		QTV_Say_f (void);
 void		QTV_Cmd_ForwardToServer (void);
 void		QTV_Cl_ForwardToServer_f (void);
+void		QTV_Cmd_Printf(float min_version, char *fmt, ...);
 
 #endif // __QTV_H__
 

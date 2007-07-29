@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.159 2007-07-17 19:28:24 tonik Exp $
+$Id: cl_main.c,v 1.160 2007-07-29 00:15:03 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -658,6 +658,8 @@ void CL_ClearState (void) {
 	CL_ClearTEnts ();
 	CL_ClearScene ();
 
+	CL_ClearPredict();
+
 	// wipe the entire cl structure
 	memset (&cl, 0, sizeof(cl));
 
@@ -800,13 +802,16 @@ void CL_Disconnect_f (void) {
 
 //The server is changing levels
 void CL_Reconnect_f (void) {
-	if (cls.mvdplayback == QTV_PLAYBACK)
-		return; // change map during qtv playback
 
 	if (cls.download)  // don't change when downloading
 		return;
 
 	S_StopAllSounds (true);
+
+	if (cls.mvdplayback == QTV_PLAYBACK) {  // change map during qtv playback
+//		QTV_Cmd_Printf(QTV_VER_1_2, "qtvnew");
+		return;
+	}
 
 	if (cls.state == ca_connected) {
 		Com_Printf ("reconnecting...\n");

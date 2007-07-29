@@ -239,9 +239,6 @@ typedef enum {
 	dl_single
 } dltype_t;		// download type
 
-// cls.mvdplayback == QTV_PLAYBACK if qtv playback
-#define QTV_PLAYBACK 2
-
 //
 // The clientPersistent_t structure is persistent through an arbitrary number of server connections.
 //
@@ -350,6 +347,7 @@ typedef struct
 	float		latency;		// Rolling average
 
 	qbool		mvdplayback;	// Playing MVD.
+	float		qtv_svversion;	// version of qtvsv/proxy, note it float
 	int			lastto;			// Contains which players are affected by a demo message.
 								// * If multiple players are affected (dem_multiple) this will be a 
 								//   bit mask containing which players the last demo message relates to. (32-bits, 32 players)

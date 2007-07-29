@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.35 2007-07-17 19:28:24 tonik Exp $
+	$Id: cl_ents.c,v 1.36 2007-07-29 00:15:03 qqshka Exp $
 
 */
 
@@ -1497,12 +1497,17 @@ void CL_ParsePlayerinfo (void) {
 
 
 	if (cls.mvdplayback) {
-		if (!cl.parsecount || cent->sequence > cl.parsecount || cl.parsecount - cent->sequence >= UPDATE_BACKUP - 1) {
+		if (!cl.parsecount || cent->sequence > cl.parsecount || cl.parsecount - cent->sequence >= UPDATE_BACKUP - 1)
+	 	{
 			memset(&dummy, 0, sizeof(dummy));
+			dummy.pm_type = PM_SPECTATOR; // so camera able to fly
 			prevstate = &dummy;
-		} else {
+		}
+		else
+		{
 			prevstate = &cl.frames[cent->sequence & UPDATE_MASK].playerstate[num];
 		}
+
 		memcpy(state, prevstate, sizeof(player_state_t));
 
 		if (cls.findtrack && info->stats[STAT_HEALTH] > 0)	{
@@ -1581,12 +1586,12 @@ void CL_ParsePlayerinfo (void) {
 		}
 
 #ifdef VWEP_TEST
-	if (cl.z_ext & Z_EXT_VWEP) {
-		state->vw_index = state->command.impulse;
-		state->vw_frame = state->command.msec;
-	} else {
-		state->vw_index = state->vw_frame = 0;
-	}
+		if (cl.z_ext & Z_EXT_VWEP) {
+			state->vw_index = state->command.impulse;
+			state->vw_frame = state->command.msec;
+		} else {
+			state->vw_index = state->vw_frame = 0;
+		}
 #endif
 
 		for (i = 0; i < 3; i++) {

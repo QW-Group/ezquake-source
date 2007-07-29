@@ -129,8 +129,7 @@ void Cam_Unlock(void)
 
 	if (cls.mvdplayback == QTV_PLAYBACK)
 	{
-		Cmd_TokenizeString("ptrack");
-		QTV_Cmd_ForwardToServer ();
+		QTV_Cmd_Printf(QTV_VER_1_2, "ptrack");
 	}
 	else
 	{
@@ -175,8 +174,7 @@ void Cam_Lock(int playernum)
 
 	if (cls.mvdplayback == QTV_PLAYBACK)
 	{
-		Cmd_TokenizeString(st);
-		QTV_Cmd_ForwardToServer ();
+		QTV_Cmd_Printf(QTV_VER_1_2, "%s", st);
 	}
 	else
 	{

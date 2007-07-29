@@ -1,7 +1,7 @@
 /*
 	Support for FTE QuakeTV
 
-	$Id: qtv.c,v 1.11 2007-07-28 23:19:32 disconn3ct Exp $
+	$Id: qtv.c,v 1.12 2007-07-29 00:15:04 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -16,7 +16,7 @@ cvar_t	qtv_buffertime = {"qtv_buffertime", "0.5"};
 void QTV_Init(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_MVD); // FIXME: add qtv group instead
-
+	
 	Cvar_Register(&qtv_buffertime);
 
 	Cvar_ResetCurrentGroup();
@@ -66,7 +66,7 @@ int ConsistantMVDData(unsigned char *buffer, int remaining)
 gottotallength:
 		if (remaining < length)
 			return available;
-
+		
 		remaining -= length;
 		available += length;
 		buffer += length;
@@ -82,6 +82,9 @@ void QTV_ForwardToServerEx (qbool skip_if_no_params, qbool use_first_argument)
 	char data[1024 + 100] = {0}, text[1024], *s;
 	sizebuf_t buf;
 
+	if (cls.mvdplayback != QTV_PLAYBACK || !playbackfile || cls.qtv_svversion < QTV_VER_1_2)
+		return;
+
 	if (skip_if_no_params)
 		if (Cmd_Argc() < 2)
 			return;
@@ -95,7 +98,7 @@ void QTV_ForwardToServerEx (qbool skip_if_no_params, qbool use_first_argument)
 		return;
 	}
 
-	SZ_Init(&buf, (byte *) data, sizeof(data));
+	SZ_Init(&buf, (byte*) data, sizeof(data));
 
 	s = TP_ParseMacroString (Cmd_Args());
 	s = TP_ParseFunChars (s, true);
@@ -132,4 +135,20 @@ void QTV_Cmd_ForwardToServer (void)
 void QTV_Cl_ForwardToServer_f (void)
 {
 	QTV_ForwardToServerEx (false, false);
+}
+
+void QTV_Cmd_Printf(float min_version, char *fmt, ...)
+{
+	va_list argptr;
+	char msg[1024] = {0};
+
+	if (cls.mvdplayback != QTV_PLAYBACK || min_version > cls.qtv_svversion)
+		return; // no point for this, since it not qtv playback or qtv server do not support it
+
+	va_start (argptr, fmt);
+	vsnprintf (msg, sizeof(msg), fmt, argptr);
+	va_end (argptr);
+
+	Cmd_TokenizeString(msg);
+	QTV_Cmd_ForwardToServer ();
 }

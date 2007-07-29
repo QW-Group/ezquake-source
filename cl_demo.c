@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.75 2007-07-01 00:55:02 qqshka Exp $
+	$Id: cl_demo.c,v 1.76 2007-07-29 00:15:03 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pmove.h"
 #include "fs.h"
 #include "utils.h"
+#include "crc.h"
 
 
 float olddemotime, nextdemotime;
@@ -2305,6 +2306,8 @@ void CL_StopPlayback (void)
 	cls.mvdplayback = cls.demoplayback = cls.nqdemoplayback = false;
 	cl.paused &= ~PAUSED_DEMO;
 
+	cls.qtv_svversion = 0;
+
 	// Stop Qizmo demo playback.
 	#ifdef WIN32
 	if (qwz_playback)
@@ -2516,7 +2519,10 @@ void CL_TimeDemo_f (void)
 void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen);
 
 char qtvrequestbuffer[4096] = {0};
-int qtvrequestsize = 0;
+int  qtvrequestsize = 0;
+
+char qtvpassword[128] = {0};
+
 vfsfile_t *qtvrequest = NULL;
 
 //
@@ -2541,11 +2547,18 @@ void QTV_CloseRequest(qbool warn)
 //
 void CL_QTVPoll (void)
 {
+	char QTVSV[] = "QTVSV ";
+	int	 QTVSVLEN = sizeof(QTVSV)-1;
+
+	char hash[512] = {0};
+	char challenge[128] = {0};
+	char authmethod[128] = {0};
 	vfserrno_t err;
 	char *start, *end, *colon;
-	int len, need;
+	int len, need, chunk_size;
 	qbool streamavailable = false;
 	qbool saidheader = false;
+	float svversion = 0;
 
 	// We're not playing any QTV stream.
 	if (!qtvrequest)
@@ -2572,9 +2585,16 @@ void CL_QTVPoll (void)
 	qtvrequestsize += len;
 	qtvrequestbuffer[qtvrequestsize] = '\0';
 
-	// We didn't read anything, abort.
-	if (!qtvrequestsize)
+	// QTVSV not seen yet, abort.
+	if (qtvrequestsize < QTVSVLEN)
 		return;
+
+	if (strncmp(qtvrequestbuffer, QTVSV, QTVSVLEN))
+	{
+		Com_Printf("Server is not a QTV server (or is incompatable)\n");
+		QTV_CloseRequest(true); 
+		return;
+	}
 
 	// Make sure it's a complete chunk. "\n\n" specifies the end of a message.
 	for (start = qtvrequestbuffer; *start; start++)
@@ -2586,6 +2606,16 @@ void CL_QTVPoll (void)
 	// We've reached the end and didn't find "\n\n" so the chunk is incomplete.
 	if (!*start)
 		return;
+
+	svversion = atof(qtvrequestbuffer + QTVSVLEN);
+
+	// server sent float version, but we compare only major version number here
+	if ((int)svversion != atoi(QTV_VERSION))
+	{
+		Com_Printf("QTV server doesn't support a compatable protocol version, returned %.2f, need %s\n", svversion, QTV_VERSION);
+		QTV_CloseRequest(true); 
+		return;
+	}
 
 	start = qtvrequestbuffer;
 
@@ -2608,6 +2638,9 @@ void CL_QTVPoll (void)
 			{
 				// Remove the colon.
 				*colon++ = '\0';
+
+				while (*colon == ' ')
+					colon++;
 
 				//
 				// Check the request type. Might be an error.
@@ -2642,6 +2675,14 @@ void CL_QTVPoll (void)
 
 					Com_Printf("%s\n", colon);
 				}
+				else if (!strcmp(start, "AUTH"))
+				{
+					strlcpy(authmethod, colon, sizeof(authmethod));
+				}
+				else if (!strcmp(start, "CHALLENGE"))
+				{
+					strlcpy(challenge, colon, sizeof(challenge));
+				}
 				else if (!strcmp(start, "BEGIN"))
 				{
 					streamavailable = true;
@@ -2654,6 +2695,10 @@ void CL_QTVPoll (void)
 				{
 					streamavailable = true;
 				}
+				else if (!strncmp(start, "QTVSV ", 6))
+				{
+//					Com_Printf("QTVSV HEADER: %s\n", start);
+				}
 			}
 
 			// From start to end, we have a line.
@@ -2663,21 +2708,90 @@ void CL_QTVPoll (void)
 		end++;
 	}
 
+	// Get the size of the stream chunk.
+	chunk_size = qtvrequestsize - (end - qtvrequestbuffer);
+
+	if (chunk_size < 0)
+	{
+		Com_Printf("Error while parsing qtv request\n");
+		QTV_CloseRequest(true);
+		return;
+	}
+
+	// drop header
+	qtvrequestsize = chunk_size;
+	memmove(qtvrequestbuffer, end, qtvrequestsize);
+
+//	Com_Printf("memove: %d\n", qtvrequestsize);
+
 	// We found a stream.
 	if (streamavailable)
 	{
-		// Get the size of the stream chunk.
-		int chunk_size = qtvrequestsize - (end - qtvrequestbuffer);
-
 		// Start playing the QTV stream.
-		if (chunk_size >= 0) 
+		CL_QTVPlay(qtvrequest, qtvrequestbuffer, qtvrequestsize);
+		cls.qtv_svversion = svversion;
+		qtvrequest = NULL;
+
+		return;
+	}
+
+	// we need send auth now
+	if (authmethod[0])
+	{
+		char connrequest[2048];
+
+		if (!strcmp(authmethod, "PLAIN"))
 		{
-			CL_QTVPlay(qtvrequest, end, chunk_size);
-			qtvrequest = NULL;
+			snprintf(connrequest, sizeof(connrequest), "QTV\nVERSION: " QTV_VERSION "\nAUTH: PLAIN\nPASSWORD: \"%s\"\n\n", qtvpassword);
+			VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
+
 			return;
 		}
+		else if (!strcmp(authmethod, "CCITT"))
+		{
+			if (strlen(challenge)>=32)
+			{
+				unsigned short crcvalue;
 
-		Com_Printf("Error while parsing qtv request\n");
+				snprintf(hash, sizeof(hash), "%s%s", challenge, qtvpassword);
+				crcvalue = CRC_Block(hash, strlen(hash));
+				snprintf(hash, sizeof(hash), "0x%X", (unsigned int)CRC_Value(crcvalue));
+				snprintf(connrequest, sizeof(connrequest), "QTV\nVERSION: " QTV_VERSION "\nAUTH: CCITT\nPASSWORD: \"%s\"\n\n", hash);
+				VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
+
+				return;
+			}
+
+			Com_Printf("Wrong challenge for AUTH: %s\n", authmethod);
+		}
+		else if (!strcmp(authmethod, "MD4"))
+		{
+			if (strlen(challenge)>=8)
+			{
+				unsigned int md4sum[4];
+
+				snprintf(hash, sizeof(hash), "%s%s", challenge, qtvpassword);
+				Com_BlockFullChecksum (hash, strlen(hash), (unsigned char*)md4sum);
+				snprintf(hash, sizeof(hash), "%X%X%X%X", md4sum[0], md4sum[1], md4sum[2], md4sum[3]);
+				snprintf(connrequest, sizeof(connrequest), "QTV\nVERSION: " QTV_VERSION "\nAUTH: MD4\nPASSWORD: \"%s\"\n\n", hash);
+				VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
+
+				return;
+			}
+
+			Com_Printf("Wrong challenge for AUTH: %s\n", authmethod);
+		}
+		else if (!strcmp(authmethod, "NONE"))
+		{
+			snprintf(connrequest, sizeof(connrequest), "QTV\nVERSION: " QTV_VERSION "\nAUTH: NONE\nPASSWORD: \n\n");
+			VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
+
+			return;
+		}
+		else
+		{
+			Com_Printf("Unknown auth method %s\n", authmethod);
+		}
 	}
 
 	QTV_CloseRequest(true);
@@ -2705,14 +2819,28 @@ void CL_QTVList_f (void)
 		return;
 	}
 
+	strlcpy(qtvpassword, Cmd_Argv(2), sizeof(qtvpassword));
+
 	// Send the version of QTV the client supports.
 	connrequest =	"QTV\n"
-					"VERSION: 1\n";
+					"VERSION: " QTV_VERSION "\n";
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
 
 	// Get a source list from the server.
 	connrequest =	"SOURCELIST\n";
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
+
+	// if we use pass, then send our supported auth methods
+	if (qtvpassword[0])
+	{
+		connrequest = 
+						"AUTH: MD4\n"
+						"AUTH: CCITT\n"
+						"AUTH: PLAIN\n"
+						"AUTH: NONE\n";
+
+		VFS_WRITE(newf, connrequest, strlen(connrequest));
+	}
 
 	// "\n\n" will end the session.
 	connrequest =	"\n";
@@ -2805,6 +2933,8 @@ void CL_QTVPlay_f (void)
 		Com_Printf("Usage: qtvplay [stream@]hostname[:port] [password]\n");
 		return;
 	}
+
+	strlcpy(qtvpassword, Cmd_Argv(2), sizeof(qtvpassword));
 
 	// The stream address.
 	connrequest = Cmd_Argv(1);
@@ -2939,7 +3069,7 @@ void CL_QTVPlay_f (void)
 
 	// Send a QTV request to the proxy.
 	connrequest =	"QTV\n"
-					"VERSION: 1\n";
+					"VERSION: " QTV_VERSION "\n";
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
 
 	// If the user specified a specific stream such as "5@hostname:port"
@@ -2951,6 +3081,18 @@ void CL_QTVPlay_f (void)
 		connrequest =	stream;
 		VFS_WRITE(newf, connrequest, strlen(connrequest));
 		connrequest =	"\n";
+		VFS_WRITE(newf, connrequest, strlen(connrequest));
+	}
+
+	// if we use pass, then send our supported auth methods
+	if (qtvpassword[0])
+	{
+		connrequest = 
+						"AUTH: MD4\n"
+						"AUTH: CCITT\n"
+						"AUTH: PLAIN\n"
+						"AUTH: NONE\n";
+
 		VFS_WRITE(newf, connrequest, strlen(connrequest));
 	}
 

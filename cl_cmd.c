@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_cmd.c,v 1.52 2007-07-09 18:16:55 qqshka Exp $
+	$Id: cl_cmd.c,v 1.53 2007-07-29 00:15:03 qqshka Exp $
 */
 
 #include <time.h>
@@ -552,10 +552,7 @@ void CL_Download_f (void){
 	strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 
 	if (cls.mvdplayback == QTV_PLAYBACK) {
-		char buf[1024];
-		snprintf(buf, sizeof(buf), "download %s\n", filename);
-		Cmd_TokenizeString(buf);
-		QTV_Cmd_ForwardToServer ();
+		QTV_Cmd_Printf(QTV_VER_1_2, "download %s\n", filename);
 	}
 	else {
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
