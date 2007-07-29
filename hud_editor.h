@@ -1,10 +1,10 @@
 /**
-	
+
 	HUD Editor module
 
 	made by jogihoogi, Feb 2007
 	last edit:
-	$Id: hud_editor.h,v 1.13 2007-07-13 20:43:11 cokeman1982 Exp $
+	$Id: hud_editor.h,v 1.14 2007-07-29 01:28:38 disconn3ct Exp $
 
 */
 
@@ -18,14 +18,14 @@ void HUD_Editor_Draw(void);
 void HUD_Editor_Init(void);
 
 // Mouse processing.
-qbool HUD_Editor_MouseEvent(struct mouse_state_s *ms);
+qbool HUD_Editor_MouseEvent (mouse_state_t *ms);
 
 // key press processing function
 void HUD_Editor_Key(int, int);
 
 //
 // Should this HUD element be fully drawn or not when in align mode
-// when using the HUD editor.  
+// when using the HUD editor.
 //
 qbool HUD_Editor_ConfirmDraw(hud_t *hud);
 

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.24 2007-07-13 20:43:10 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.25 2007-07-29 01:28:38 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -40,7 +40,7 @@ $Id: ez_controls.c,v 1.24 2007-07-13 20:43:10 cokeman1982 Exp $
 void EZ_double_linked_list_Add(ez_double_linked_list_t *list, void *payload)
 {
 	ez_dllist_node_t *item = (ez_dllist_node_t *)Q_malloc(sizeof(ez_dllist_node_t));
-	
+
 	item->payload = payload;
 	item->next = NULL;
 
@@ -62,7 +62,7 @@ void EZ_double_linked_list_Add(ez_double_linked_list_t *list, void *payload)
 	{
 		item->previous->next = item;
 	}
-	
+
 	list->tail = item;
 	list->count++;
 }
@@ -83,7 +83,7 @@ ez_dllist_node_t *EZ_double_linked_list_FindByPayload(ez_double_linked_list_t *l
 
 		iter = iter->next;
 	}
-	
+
 	return NULL;
 }
 
@@ -105,11 +105,11 @@ void *EZ_double_linked_list_Remove(ez_double_linked_list_t *list, ez_dllist_node
 
 	item->previous->next = item->next;
 	item->next->previous = item->previous;
-	
+
 	list->count--;
 
 	Q_free(item);
-	
+
 	return payload;
 }
 
@@ -125,7 +125,7 @@ void EZ_double_linked_list_Order(ez_double_linked_list_t *list, PtFuncCompare co
 	PVOID **items = (PVOID **)Q_calloc(list->count, sizeof(PVOID *));
 
 	iter = list->head;
-	
+
 	while(iter)
 	{
 		items[i] = iter->payload;
@@ -152,7 +152,7 @@ void EZ_double_linked_list_Order(ez_double_linked_list_t *list, PtFuncCompare co
 // =========================================================================================
 
 //
-// Control tree - 
+// Control tree -
 // Sets the drawing bounds for a control and then calls the function
 // recursivly on all it's children. These bounds are used to restrict the drawing
 // of all children that should be contained within it's parent, and their children
@@ -176,7 +176,7 @@ static void EZ_tree_SetDrawBounds(ez_control_t *control)
 	for (iter = control->children.head; iter; iter = iter->next)
 	{
 		child = (ez_control_t *)iter->payload;
-		
+
 		// TODO : Probably should some better check for infinte loop here also.
 		if (child == control)
 		{
@@ -189,7 +189,7 @@ static void EZ_tree_SetDrawBounds(ez_control_t *control)
 
 //
 // Control Tree - Draws a control tree.
-// 
+//
 void EZ_tree_Draw(ez_tree_t *tree)
 {
 	ez_control_t *payload = NULL;
@@ -231,12 +231,12 @@ qbool EZ_tree_MouseEvent(ez_tree_t *tree, mouse_state_t *ms)
 	int mouse_handled = false;
 	ez_control_t *payload = NULL;
 	ez_dllist_node_t *iter = NULL;
-	
+
 	if (!tree)
 	{
 		Sys_Error("EZ_tree_MouseEvent: NULL tree reference.\n");
 	}
-	
+
 	// Propagate the mouse event in the opposite order that we drew
 	// the controls (Since they are drawn from back to front), so
 	// that the foremost control gets it first.
@@ -263,7 +263,7 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 {
 	qbool found = false;
 	ez_dllist_node_t *node_iter = NULL;
-	ez_control_t *payload = NULL;
+	// ez_control_t *payload = NULL;
 
 	// FIXME: Not working properly
 
@@ -274,15 +274,15 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 		// Find the next control that can be focused.
 		while(node_iter && !found)
 		{
-			ez_control_t *ha = (ez_control_t *)node_iter->payload;
+			// ez_control_t *ha = (ez_control_t *)node_iter->payload;
 			found = EZ_control_SetFocusByNode((ez_control_t *)node_iter->payload, node_iter);
 			node_iter = (next_control) ? node_iter->next : node_iter->previous;
 		}
 	}
-	
-	// We haven't found a focusable control yet, 
+
+	// We haven't found a focusable control yet,
 	// or there was no focused control to start with.
-	// So search for one from the start/end of the tab list 
+	// So search for one from the start/end of the tab list
 	// (depending on what direction we're searching in)
 	if(!found || !tree->focused_node)
 	{
@@ -291,7 +291,7 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 		// Find the next control that can be focused.
 		while(node_iter && !found)
 		{
-			ez_control_t *ha = (ez_control_t *)node_iter->payload;
+			// ez_control_t *ha = (ez_control_t *)node_iter->payload;
 			found = EZ_control_SetFocusByNode((ez_control_t *)node_iter->payload, node_iter);
 			node_iter = (next_control) ? node_iter->next : node_iter->previous;
 		}
@@ -324,7 +324,7 @@ qbool EZ_tree_KeyEvent(ez_tree_t *tree, int key, int unichar)
 				key_handled = true;
 				break;
 			case K_TAB :
-			{				
+			{
 				// Focus on the next focusable control (TAB)
 				// or the previous (Shift + TAB)
 				EZ_tree_ChangeFocus(tree, !isShiftDown());
@@ -348,7 +348,7 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree)
 {
 	ez_control_t *payload = NULL;
 	ez_dllist_node_t *iter = NULL;
-	
+
 	if(!tree)
 	{
 		assert(!"EZ_control_UnOrphanizeChildren: No control tree specified.\n");
@@ -360,7 +360,7 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree)
 	while(iter)
 	{
 		payload = (ez_control_t *)iter->payload;
-		
+
 		if(!payload->parent && payload != tree->root)
 		{
 			// The control is an orphan, and not the root control.
@@ -421,19 +421,19 @@ void EZ_tree_OrderTabList(ez_tree_t *tree)
 //
 // Control - Creates a new control and initializes it.
 //
-ez_control_t *EZ_control_Create(ez_tree_t *tree, ez_control_t *parent, 
-							  char *name, char *description, 
-							  int x, int y, int width, int height, 
+ez_control_t *EZ_control_Create(ez_tree_t *tree, ez_control_t *parent,
+							  char *name, char *description,
+							  int x, int y, int width, int height,
 							  char *background_name, int flags)
 {
 	ez_control_t *control = NULL;
-	
+
 	// We have to have a tree to add the control to.
 	if(!tree)
 	{
 		return NULL;
 	}
-	
+
 	control = (ez_control_t *)Q_malloc(sizeof(ez_control_t));
 
 	EZ_control_Init(control, tree, parent, name, description, x, y, width, height, background_name, flags);
@@ -444,9 +444,9 @@ ez_control_t *EZ_control_Create(ez_tree_t *tree, ez_control_t *parent,
 //
 // Control - Initializes a control and adds it to the specified control tree.
 //
-void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *parent, 
-							  char *name, char *description, 
-							  int x, int y, int width, int height, 
+void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *parent,
+							  char *name, char *description,
+							  int x, int y, int width, int height,
 							  char *background_name, int flags)
 {
 	static int order = 0;
@@ -457,14 +457,14 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	control->name = name;
 	control->description = description;
 	control->flags = flags | CONTROL_ENABLED | CONTROL_VISIBLE;
-	
+
 	// Default to containing a child within it's parent
 	// if the parent is being contained by it's parent.
 	if (parent && parent->flags & CONTROL_CONTAINED)
 	{
 		control->flags |= CONTROL_CONTAINED;
 	}
-	
+
 	control->draw_order = order++;
 
 	control->resize_handle_thickness = 5;
@@ -474,7 +474,7 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	control->height_min = 5;
 
 	// This should NEVER be changed.
-	control->inheritance_level = EZ_CONTROL_INHERITANCE_LEVEL; 
+	control->inheritance_level = EZ_CONTROL_INHERITANCE_LEVEL;
 
 	control->events.OnMouseEvent		= EZ_control_OnMouseEvent;
 	control->events.OnMouseClick		= EZ_control_OnMouseClick;
@@ -491,7 +491,7 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	control->events.OnLayoutChildren	= EZ_control_OnLayoutChildren;
 	control->events.OnMove				= EZ_control_OnMove;
 	control->events.OnResize			= EZ_control_OnResize;
-	
+
 	// Load the background image.
 	if(background_name)
 	{
@@ -530,7 +530,7 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 //
 int EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 {
-	ez_dllist_node_t *iter = NULL; 
+	ez_dllist_node_t *iter = NULL;
 	ez_dllist_node_t *temp = NULL;
 
 	// Nothing to destroy :(
@@ -553,7 +553,7 @@ int EZ_control_Destroy(ez_control_t *self, qbool destroy_children)
 
 	iter = self->children.head;
 
-	// Destroy the children! 
+	// Destroy the children!
 	while(iter)
 	{
 		if(destroy_children)
@@ -737,7 +737,7 @@ qbool EZ_control_SetFocusByNode(ez_control_t *self, ez_dllist_node_t *node)
 	if(tree->focused_node)
 	{
 		ez_control_t *payload = NULL;
-		
+
 		if(!tree->focused_node->payload)
 		{
 			Sys_Error("EZ_control_SetFocus(): Focused node has a NULL payload.\n");
@@ -757,7 +757,7 @@ qbool EZ_control_SetFocusByNode(ez_control_t *self, ez_dllist_node_t *node)
 
 		// Reset all manipulation flags.
 		payload->flags &= ~(CONTROL_CLICKED | CONTROL_MOVING | CONTROL_RESIZING_LEFT | CONTROL_RESIZING_RIGHT | CONTROL_RESIZING_BOTTOM | CONTROL_RESIZING_TOP);
-		
+
 		// Raise event for losing the focus.
 		CONTROL_RAISE_EVENT(NULL, payload, OnLostFocus);
 	}
@@ -893,7 +893,7 @@ int EZ_control_OnLostFocus(ez_control_t *self)
 //
 int EZ_control_OnResize(ez_control_t *self)
 {
-	
+
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnResize);
 
@@ -941,14 +941,14 @@ int EZ_control_OnDraw(ez_control_t *self)
 {
 	if (self->background_color[3] > 0)
 	{
-		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 1, true, 
+		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 1, true,
 			RGBA_TO_COLOR(self->background_color[0], self->background_color[1], self->background_color[2], self->background_color[3]));
 
-		Draw_String(self->absolute_x, self->absolute_y, va("%s%s%s%s", 
-			((self->flags & CONTROL_MOVING) ? "M" : " "), 
-			((self->flags & CONTROL_FOCUSED) ? "F" : " "), 
-			((self->flags & CONTROL_CLICKED) ? "C" : " "), 
-			((self->flags & CONTROL_RESIZING_LEFT) ? "R" : " ") 
+		Draw_String(self->absolute_x, self->absolute_y, va("%s%s%s%s",
+			((self->flags & CONTROL_MOVING) ? "M" : " "),
+			((self->flags & CONTROL_FOCUSED) ? "F" : " "),
+			((self->flags & CONTROL_CLICKED) ? "C" : " "),
+			((self->flags & CONTROL_RESIZING_LEFT) ? "R" : " ")
 			));
 	}
 
@@ -1012,14 +1012,14 @@ static void EZ_control_ResizeByDirection(ez_control_t *self, mouse_state_t *ms, 
 	// mouse should stay within the parent also when resizing the control.
 	if (ms && CONTROL_IS_CONTAINED(self))
 	{
-		if (resizing_width && MOUSE_OUTSIDE_PARENT_X(self, ms)) 
+		if (resizing_width && MOUSE_OUTSIDE_PARENT_X(self, ms))
 		{
 			ms->x = ms->x_old;
 			x = self->x;
 			width = self->width;
 		}
-	
-		if (resizing_height && MOUSE_OUTSIDE_PARENT_Y(self, ms)) 
+
+		if (resizing_height && MOUSE_OUTSIDE_PARENT_Y(self, ms))
 		{
 			ms->y = ms->y_old;
 			y = self->y;
@@ -1093,7 +1093,7 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 		{
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseDown, ms);
 		}
-		
+
 		if (ms->button_up && (ms->button_up != old_ms->button_up))
 		{
 			CONTROL_RAISE_EVENT(&mouse_handled, self, OnMouseUp, ms);
@@ -1115,7 +1115,7 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 
 	// Check for moving and resizing.
 	if ((self->flags & CONTROL_RESIZING_LEFT)
-	 || (self->flags & CONTROL_RESIZING_RIGHT) 
+	 || (self->flags & CONTROL_RESIZING_RIGHT)
 	 || (self->flags & CONTROL_RESIZING_TOP)
 	 || (self->flags & CONTROL_RESIZING_BOTTOM))
 	{
@@ -1157,16 +1157,16 @@ int EZ_control_OnMouseEvent(ez_control_t *self, mouse_state_t *ms)
 		// while moving the control.
 		if (CONTROL_IS_CONTAINED(self))
 		{
-			if (MOUSE_OUTSIDE_PARENT_X(self, ms)) 
+			if (MOUSE_OUTSIDE_PARENT_X(self, ms))
 			{
 				ms->x = ms->x_old;
 				x = self->x;
 				mouse_handled = true;
 			}
-			
+
 			if (MOUSE_OUTSIDE_PARENT_Y(self, ms))
 			{
-				ms->y = ms->y_old;				
+				ms->y = ms->y_old;
 				y = self->y;
 				mouse_handled = true;
 			}
@@ -1218,7 +1218,7 @@ int EZ_control_OnMouseLeave(ez_control_t *self, mouse_state_t *mouse_state)
 
 	// Stop moving since the mouse is outside the control.
 	self->flags &= ~(CONTROL_MOVING | CONTROL_MOUSE_OVER);
-	
+
 	CONTROL_EVENT_HANDLER_CALL(&mouse_handled, self, OnMouseLeave, mouse_state);
 	return mouse_handled;
 }
@@ -1284,8 +1284,8 @@ int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 		if (self->flags & CONTROL_RESIZE_H)
 		{
 			// Left side of the control.
-			if (POINT_IN_RECTANGLE(ms->x, ms->y, 
-				self->absolute_x, self->absolute_y, 
+			if (POINT_IN_RECTANGLE(ms->x, ms->y,
+				self->absolute_x, self->absolute_y,
 				self->resize_handle_thickness, self->height))
 			{
 				self->flags |= CONTROL_RESIZING_LEFT;
@@ -1293,8 +1293,8 @@ int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 			}
 
 			// Right side of the control.
-			if (POINT_IN_RECTANGLE(ms->x, ms->y, 
-				self->absolute_x + self->width - self->resize_handle_thickness, self->absolute_y, 
+			if (POINT_IN_RECTANGLE(ms->x, ms->y,
+				self->absolute_x + self->width - self->resize_handle_thickness, self->absolute_y,
 				self->resize_handle_thickness, self->height))
 			{
 				self->flags |= CONTROL_RESIZING_RIGHT;
@@ -1305,8 +1305,8 @@ int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 		if (self->flags & CONTROL_RESIZE_V)
 		{
 			// Top of the control.
-			if (POINT_IN_RECTANGLE(ms->x, ms->y, 
-				self->absolute_x, self->absolute_y, 
+			if (POINT_IN_RECTANGLE(ms->x, ms->y,
+				self->absolute_x, self->absolute_y,
 				self->width, self->resize_handle_thickness))
 			{
 				self->flags |= CONTROL_RESIZING_TOP;
@@ -1314,8 +1314,8 @@ int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 			}
 
 			// Bottom of the control.
-			if (POINT_IN_RECTANGLE(ms->x, ms->y, 
-				self->absolute_x, self->absolute_y + self->height - self->resize_handle_thickness, 
+			if (POINT_IN_RECTANGLE(ms->x, ms->y,
+				self->absolute_x, self->absolute_y + self->height - self->resize_handle_thickness,
 				self->width, self->resize_handle_thickness))
 			{
 				self->flags |= CONTROL_RESIZING_BOTTOM;
@@ -1323,7 +1323,7 @@ int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 			}
 		}
 	}
-	
+
 	// The control is being moved.
 	if ((self->flags & CONTROL_MOVABLE) && (ms->button_down == 1))
 	{
@@ -1382,21 +1382,21 @@ int EZ_control_OnMouseHover(ez_control_t *self, mouse_state_t *mouse_state)
 //
 // Label - Creates a label control and initializes it.
 //
-ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent, 
-							  char *name, char *description, 
-							  int x, int y, int width, int height, 
-							  char *background_name, 
+ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent,
+							  char *name, char *description,
+							  int x, int y, int width, int height,
+							  char *background_name,
 							  int flags, int text_flags,
 							  char *text, clrinfo_t text_color)
 {
 	ez_label_t *label = NULL;
-	
+
 	// We have to have a tree to add the control to.
 	if (!tree)
 	{
 		return NULL;
 	}
-	
+
 	label = (ez_label_t *)Q_malloc(sizeof(ez_label_t));
 	EZ_label_Init(label, tree, parent, name, description, x, y, width, height, background_name, flags, text_flags, text, text_color);
 	return label;
@@ -1405,10 +1405,10 @@ ez_label_t *EZ_label_Create(ez_tree_t *tree, ez_control_t *parent,
 //
 // Label - Initializes a label control.
 //
-void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent, 
-				  char *name, char *description, 
-				  int x, int y, int width, int height, 
-				  char *background_name, 
+void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
+				  char *name, char *description,
+				  int x, int y, int width, int height,
+				  char *background_name,
 				  int flags, int text_flags,
 				  char *text, clrinfo_t text_color)
 {
@@ -1461,20 +1461,20 @@ int EZ_label_OnDraw(ez_control_t *self)
 //
 // Button - Creates a new button and initializes it.
 //
-ez_button_t *EZ_button_Create(ez_tree_t *tree, ez_control_t *parent, 
-							  char *name, char *description, 
-							  int x, int y, int width, int height, 
+ez_button_t *EZ_button_Create(ez_tree_t *tree, ez_control_t *parent,
+							  char *name, char *description,
+							  int x, int y, int width, int height,
 							  char *background_name, char *hover_image, char *pressed_image,
 							  int flags)
 {
 	ez_button_t *button = NULL;
-	
+
 	// We have to have a tree to add the control to.
 	if (!tree)
 	{
 		return NULL;
 	}
-	
+
 	button = (ez_button_t *)Q_malloc(sizeof(ez_button_t));
 	EZ_button_Init(button, tree, parent, name, description, x, y, width, height, background_name, hover_image, pressed_image, flags);
 	return button;
@@ -1483,9 +1483,9 @@ ez_button_t *EZ_button_Create(ez_tree_t *tree, ez_control_t *parent,
 //
 // Button - Initializes a button.
 //
-void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent, 
-							  char *name, char *description, 
-							  int x, int y, int width, int height, 
+void EZ_button_Init(ez_button_t *button, ez_tree_t *tree, ez_control_t *parent,
+							  char *name, char *description,
+							  int x, int y, int width, int height,
 							  char *background_name, char *hover_image, char *pressed_image,
 							  int flags)
 {
@@ -1529,9 +1529,9 @@ int EZ_button_OnAction(ez_control_t *self)
 	CONTROL_EVENT_HANDLER_CALL(NULL, button, OnAction);
 
 	return 0;
-}	
+}
 
-// 
+//
 // Button - Sets the normal color of the button.
 //
 void EZ_button_SetNormalColor(ez_button_t *self, byte r, byte g, byte b, byte alpha)
@@ -1542,7 +1542,7 @@ void EZ_button_SetNormalColor(ez_button_t *self, byte r, byte g, byte b, byte al
 	self->color_normal[3] = alpha;
 }
 
-// 
+//
 // Button - Sets the pressed color of the button.
 //
 void EZ_button_SetPressedColor(ez_button_t *self, byte r, byte g, byte b, byte alpha)
@@ -1553,7 +1553,7 @@ void EZ_button_SetPressedColor(ez_button_t *self, byte r, byte g, byte b, byte a
 	self->color_pressed[3] = alpha;
 }
 
-// 
+//
 // Button - Sets the hover color of the button.
 //
 void EZ_button_SetHoverColor(ez_button_t *self, byte r, byte g, byte b, byte alpha)
@@ -1564,7 +1564,7 @@ void EZ_button_SetHoverColor(ez_button_t *self, byte r, byte g, byte b, byte alp
 	self->color_hover[3] = alpha;
 }
 
-// 
+//
 // Button - Sets the focused color of the button.
 //
 void EZ_button_SetFocusedColor(ez_button_t *self, byte r, byte g, byte b, byte alpha)
@@ -1575,7 +1575,7 @@ void EZ_button_SetFocusedColor(ez_button_t *self, byte r, byte g, byte b, byte a
 	self->color_focused[3] = alpha;
 }
 
-// 
+//
 // Button - Sets the OnAction event handler.
 //
 void EZ_button_SetOnAction(ez_button_t *self, ez_control_handler_fp OnAction)
@@ -1591,7 +1591,7 @@ int EZ_button_OnDraw(ez_control_t *self)
 	int text_x = 0;
 	int text_y = 0;
 	int text_len = 0;
-	qbool mouse_inside = 0;
+	// qbool mouse_inside = 0;
 	ez_button_t *button = (ez_button_t *)self;
 
 	// Run the parents implementation first.
@@ -1624,7 +1624,7 @@ int EZ_button_OnDraw(ez_control_t *self)
 
 	if (self->flags & CONTROL_CLICKED)
 	{
-		Draw_AlphaFillRGB(self->x, self->y, self->width, self->height, 
+		Draw_AlphaFillRGB(self->x, self->y, self->width, self->height,
 			RGBA_TO_COLOR(button->color_pressed[0], button->color_pressed[1], button->color_pressed[2], button->color_pressed[3]));
 	}
 
@@ -1632,24 +1632,24 @@ int EZ_button_OnDraw(ez_control_t *self)
 	{
 		if (self->flags & CONTROL_CLICKED)
 		{
-			Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
+			Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height,
 				RGBA_TO_COLOR(button->color_pressed[0], button->color_pressed[1], button->color_pressed[2], button->color_pressed[3]));
 		}
 		else
 		{
-			Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
+			Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height,
 				RGBA_TO_COLOR(button->color_hover[0], button->color_hover[1], button->color_hover[2], button->color_hover[3]));
 		}
 	}
 	else
 	{
-		Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height, 
+		Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height,
 			RGBA_TO_COLOR(button->color_normal[0], button->color_normal[1], button->color_normal[2], button->color_normal[3]));
 	}
 
 	if (self->flags & CONTROL_FOCUSED)
 	{
-		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 1, false, 
+		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 1, false,
 			RGBA_TO_COLOR(button->color_focused[0], button->color_focused[1], button->color_focused[2], button->color_focused[3]));
 
 		//Draw_ColoredString3(self->absolute_x, self->absolute_y, button->text, button->focused_text_color, 1, 0);

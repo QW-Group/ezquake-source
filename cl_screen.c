@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.123 2007-07-11 23:07:34 cokeman1982 Exp $
+$Id: cl_screen.c,v 1.124 2007-07-29 01:28:38 disconn3ct Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -29,6 +29,7 @@ $Id: cl_screen.c,v 1.123 2007-07-11 23:07:34 cokeman1982 Exp $
 #include "r_local.h"
 #endif
 #include "mvd_utils.h"
+#include "keys.h"
 #include "hud.h"
 #include "hud_common.h"
 #include "hud_editor.h"
@@ -46,7 +47,6 @@ $Id: cl_screen.c,v 1.123 2007-07-11 23:07:34 cokeman1982 Exp $
 #include "utils.h"
 #include "sbar.h"
 #include "menu.h"
-#include "keys.h"
 #include "image.h"
 #ifdef _WIN32
 #include "movie.h"	//joe: capturing to avi
@@ -138,7 +138,7 @@ cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
 cvar_t	scr_autoid				= {"scr_autoid", "0"};
 cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
 
-cvar_t  scr_teaminfo_order       = {"scr_teaminfo_order", "%p%n ê%lë %a/%h %w", CVAR_ARCHIVE, OnChange_scr_clock_format};
+cvar_t  scr_teaminfo_order       = {"scr_teaminfo_order", "%p%n ÔøΩ%lÔøΩ %a/%h %w", CVAR_ARCHIVE, OnChange_scr_clock_format}; // FIXME: encoding
 cvar_t	scr_teaminfo_align_right = {"scr_teaminfo_align_right", "1", CVAR_ARCHIVE};
 cvar_t	scr_teaminfo_frame_color = {"scr_teaminfo_frame_color", "10 0 0 120"};
 cvar_t	scr_teaminfo_scale		 = {"scr_teaminfo_scale",       "1",  CVAR_ARCHIVE};
@@ -977,7 +977,7 @@ void SCR_DrawAutoIDStatus (autoid_player_t *autoid_p, int x, int y)
 	health = min(100, health);
 	health_length = Q_rint((name_length/100.0) * health);
 
-	// Normal health. 
+	// Normal health.
 	Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, name_length * 2, 4, RGBA_TO_COLOR(AUTOID_HEALTHBAR_BG_COLOR, 100));
 	Draw_AlphaFillRGB(x - name_length, y - AUTOID_HEALTHBAR_OFFSET_Y, health_length * 2, 4, RGBA_TO_COLOR(AUTOID_HEALTHBAR_NORMAL_COLOR, 255));
 
@@ -1469,7 +1469,7 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 					if(!width_only)
 						Draw_ColoredString (x, y, SCR_GetWeaponShortNameByFlag(BestWeaponFromStatItems( ti_clients[i].items )), false);
 					x += 3 * FONTWIDTH;
-						
+
 					break;
 				default: // draw image by default
 					if(!width_only)
@@ -1508,12 +1508,12 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 							Draw_SPic (x, y, sb_armor[0], 1.0/3);
 					}
 					x += FONTWIDTH;
-    
+
 					break;
 				case 2: // colored background of armor value
 					if(!width_only) {
 						byte col[4] = {255, 255, 255, 0};
-    
+
 						if (ti_clients[i].items & IT_ARMOR3) {
 							col[0] = 255; col[1] =   0; col[2] =   0; col[3] = 255;
 						}
@@ -1523,14 +1523,14 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 						else if (ti_clients[i].items & IT_ARMOR1) {
 							col[0] =   0; col[1] = 255; col[2] =   0; col[3] = 255;
 						}
-    
+
 						glDisable (GL_TEXTURE_2D);
 						glColor4ub(col[0], col[1], col[2], col[3]);
 						glRectf(x, y, x + 3 * FONTWIDTH, y + 1 * FONTWIDTH);
 						glEnable (GL_TEXTURE_2D);
 						glColor4f(1, 1, 1, 1);
 					}
-    
+
 					break;
 				case 3: // colored armor value
 					if(!width_only) {
@@ -1541,7 +1541,7 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 						else if (ti_clients[i].items & IT_ARMOR1)
 							aclr = "&c0f0";
 					}
-    
+
 					break;
 				case 4: // armor value prefixed with letter
 					if(!width_only) {
@@ -1553,7 +1553,7 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 							Draw_ColoredString (x, y, "g", false);
 					}
 					x += FONTWIDTH;
-				    
+
 					break;
 				}
 
@@ -1566,11 +1566,11 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 				break;
 			case 'l': // draw location
 
-				if(!width_only) {			
+				if(!width_only) {
 					loc = TP_LocationName(ti_clients[i].org);
 					if (!loc[0])
 						loc = "unknown";
-    
+
 					snprintf(tmp, sizeof(tmp), "%*.*s", maxloc, maxloc, TP_ParseFunChars(loc, false));
 					Draw_ColoredString (x, y, tmp, false);
 				}
@@ -1583,12 +1583,12 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 					if ( sb_face_quad && (ti_clients[i].items & IT_QUAD))
 						Draw_SPic (x, y, sb_face_quad, 1.0/3);
 				x += FONTWIDTH;
-    
+
 				if(!width_only)
 					if ( sb_face_invuln && (ti_clients[i].items & IT_INVULNERABILITY))
 						Draw_SPic (x, y, sb_face_invuln, 1.0/3);
 				x += FONTWIDTH;
-    
+
 				if(!width_only)
 					if ( sb_face_invis && (ti_clients[i].items & IT_INVISIBILITY))
 						Draw_SPic (x, y, sb_face_invis, 1.0/3);
@@ -2741,7 +2741,7 @@ void SCR_DrawElements(void) {
 		}
 
         SCR_DrawCursor();
-	
+
     }
 }
 
@@ -2820,7 +2820,7 @@ void SCR_UpdateScreen (void) {
 	SCR_SetUpToDrawConsole ();
 
 	V_RenderView ();
-	
+
 	SCR_SetupCI ();
 
 	GL_Set2D ();

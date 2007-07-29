@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.160 2007-07-29 00:15:03 qqshka Exp $
+$Id: cl_main.c,v 1.161 2007-07-29 01:28:38 disconn3ct Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -34,6 +34,7 @@ $Id: cl_main.c,v 1.160 2007-07-29 00:15:03 qqshka Exp $
 #include "mvd_utils.h"
 #include "EX_browser.h"
 #include "qtv.h"
+#include "keys.h"
 #include "hud.h"
 #include "hud_common.h"
 #include "hud_editor.h"
@@ -57,7 +58,6 @@ $Id: cl_main.c,v 1.160 2007-07-29 00:15:03 qqshka Exp $
 #include "utils.h"
 #include "qsound.h"
 #include "menu.h"
-#include "keys.h"
 #include "image.h"
 #ifndef _WIN32
 #include <netdb.h>
@@ -127,14 +127,14 @@ cvar_t	qwdtools_dir = {"qwdtools_dir", "qwdtools"};
 
 cvar_t	cl_restrictions = {"cl_restrictions", "0"}; // 1 is FuhQuake and QW262 defaults
 
-cvar_t cl_floodprot			= {"cl_floodprot", "0"};		
-cvar_t cl_fp_messages		= {"cl_fp_messages", "4"};		
-cvar_t cl_fp_persecond		= {"cl_fp_persecond", "4"};		
-cvar_t cl_cmdline			= {"cl_cmdline", "", CVAR_ROM};	
-cvar_t cl_useproxy			= {"cl_useproxy", "0"};			
+cvar_t cl_floodprot			= {"cl_floodprot", "0"};
+cvar_t cl_fp_messages		= {"cl_fp_messages", "4"};
+cvar_t cl_fp_persecond		= {"cl_fp_persecond", "4"};
+cvar_t cl_cmdline			= {"cl_cmdline", "", CVAR_ROM};
+cvar_t cl_useproxy			= {"cl_useproxy", "0"};
 cvar_t cl_window_caption	= {"cl_window_caption", "1"};
 
-cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};	
+cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};
 // START shaman :: balancing variables
 cvar_t cl_nolerp			= {"cl_nolerp", "0"}; // 0 is good for indep-phys, 1 is good for old-phys
 // END shaman :: balancing variables
@@ -291,7 +291,7 @@ void CL_MakeActive(void) {
 	cls.state = ca_active;
 	if (cls.demoplayback) {
 		host_skipframe = true;
-		demostarttime = cls.demotime;		
+		demostarttime = cls.demotime;
 	}
 
 	Con_ClearNotify ();
@@ -525,19 +525,19 @@ qbool CL_ConnectedToProxy(void) {
 	cmd_alias_t *alias = NULL;
 	qbool found = true;
 	char **s;
-	char *qizmo_aliases[] = {	"ezcomp", "ezcomp2", "ezcomp3", 
+	char *qizmo_aliases[] = {	"ezcomp", "ezcomp2", "ezcomp3",
 									"f_sens", "f_fps", "f_tj", "f_ta", NULL};
 	char *fteqtv_aliases[] = { "+proxleft", "+proxright", NULL }; // who would need more?
 
 	if (cls.state < ca_active)
 		return false;
-	
+
 	for (s = qizmo_aliases; *s; s++) {
 		if (!(alias = Cmd_FindAlias(*s)) || !(alias->flags & ALIAS_SERVER)) {
 			found = false; break;
 		}
 	}
-	
+
 	if (found)
 		return true;
 
@@ -558,7 +558,7 @@ void CL_Join_f (void) {
 
 	if (Cmd_Argc() > 2) {
 		Com_Printf ("Usage: %s [server]\n", Cmd_Argv(0));
-		return; 
+		return;
 	}
 
 	Cvar_Set(&spectator, "");
@@ -587,7 +587,7 @@ void CL_Observe_f (void) {
 
 	if (Cmd_Argc() > 2) {
 		Com_Printf ("Usage: %s [server]\n", Cmd_Argv(0));
-		return; 
+		return;
 	}
 
 	Cvar_SetValue(&spectator, 1);
@@ -739,7 +739,7 @@ void CL_Disconnect (void) {
 	v_suitcshift.value		= nSuitshift;
 	v_bonusflash.value		= nBonusflash;
 	#endif
-	
+
 	r_lerpframes.value		= nLerpframesExit;
 	nTrack1duel = nTrack2duel = 0;
 	bExitmultiview = false;
@@ -747,7 +747,7 @@ void CL_Disconnect (void) {
 	// stop sounds (especially looping!)
 	S_StopAllSounds (true);
 
-	MT_Disconnect();	
+	MT_Disconnect();
 
 	if (cls.demorecording && cls.state != ca_disconnected)
 		CL_Stop_f();
@@ -796,7 +796,7 @@ void CL_Disconnect_f (void) {
 	cl.intermission = 0;
 	demo_playlist_started= 0;
 	mvd_demo_track_run = 0;
-	
+
 	Host_EndGame();
 }
 
@@ -838,7 +838,7 @@ void CL_ConnectionlessPacket (void) {
 #ifdef PROTOCOL_VERSION_FTE
 	unsigned int pext = 0;
 #endif
-	
+
     MSG_BeginReading ();
     MSG_ReadLong ();        // skip the -1
 
@@ -869,7 +869,7 @@ void CL_ConnectionlessPacket (void) {
 #else
 		CL_SendConnectPacket();
 #endif
-		break;	
+		break;
 	case S2C_CONNECTION:
 		if (!NET_CompareAdr(net_from, cls.server_adr))
 			return;
@@ -994,7 +994,7 @@ void CL_ReadPackets (void) {
 			continue;
 		}
 
-		if (net_message.cursize < 8 && !cls.mvdplayback) {	
+		if (net_message.cursize < 8 && !cls.mvdplayback) {
 			Com_DPrintf ("%s: Runt packet\n", NET_AdrToString(net_from));
 			continue;
 		}
@@ -1005,7 +1005,7 @@ void CL_ReadPackets (void) {
 			continue;
 		}
 
-		if (cls.mvdplayback) {		
+		if (cls.mvdplayback) {
 			MSG_BeginReading ();
 		} else {
 			if (!Netchan_Process(&cls.netchan))
@@ -1063,7 +1063,7 @@ void CL_Fog_f (void) {
 
 void CL_InitLocal (void) {
 	extern cvar_t baseskin, noskins, cl_name_as_skin;
-	char st[256]; 
+	char st[256];
 	extern void CL_Messages_f(void);//Tei, cl_messages
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CHAT);
@@ -1089,7 +1089,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_confirmquit);
 	Cvar_Register (&cl_window_caption);
 	Cvar_Register (&cl_onload);
-	
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register (&cl_sbar);
 	Cvar_Register (&cl_hudswap);
@@ -1170,9 +1170,9 @@ void CL_InitLocal (void) {
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
 	Cvar_Register (&allow_scripts);
-	
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
-	Cvar_Register (&cl_mediaroot);	
+	Cvar_Register (&cl_mediaroot);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_NO_GROUP);
 	Cvar_Register (&password);
@@ -1183,7 +1183,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_cmdline);
 	Cvar_ForceSet (&cl_cmdline, com_args_original);
 
-	
+
 	Cvar_ResetCurrentGroup();
 
 	snprintf(st, sizeof(st), "ezQuake %i", build_number());
@@ -1262,16 +1262,16 @@ void CL_Init (void) {
 
 	host_basepal = (byte *) FS_LoadHunkFile ("gfx/palette.lmp");
 	if (!host_basepal)
-		Sys_Error ("Couldn't load gfx/palette.lmp");		
+		Sys_Error ("Couldn't load gfx/palette.lmp");
 	FMod_CheckModel("gfx/palette.lmp", host_basepal, fs_filesize);
 
 	host_colormap = (byte *) FS_LoadHunkFile ("gfx/colormap.lmp");
 	if (!host_colormap)
 		Sys_Error ("Couldn't load gfx/colormap.lmp");
-	FMod_CheckModel("gfx/colormap.lmp", host_colormap, fs_filesize); 
+	FMod_CheckModel("gfx/colormap.lmp", host_colormap, fs_filesize);
 
 	Sys_mkdir(va("%s/qw", com_basedir));
-	Sys_mkdir(va("%s/ezquake", com_basedir));	
+	Sys_mkdir(va("%s/ezquake", com_basedir));
 
 	History_Init();
 	V_Init ();
@@ -1373,7 +1373,7 @@ static double CL_MinFrameTime (void) {
 	if (cls.timedemo || Movie_IsCapturing())
 		return 0;
 
-	if (cls.demoplayback) 
+	if (cls.demoplayback)
 	{
 		if (!cl_maxfps.value)
 			return 0;
@@ -1388,15 +1388,15 @@ static double CL_MinFrameTime (void) {
 			fps = max (30.0, cl_maxfps.value);
 		}
 
-	} 
-	else 
+	}
+	else
 	{
-		if (cl_independentPhysics.value == 0) 
+		if (cl_independentPhysics.value == 0)
 		{
 			fpscap = cl.maxfps ? max (30.0, cl.maxfps) : Rulesets_MaxFPS();
 			fps = cl_maxfps.value ? bound (30.0, cl_maxfps.value, fpscap) : com_serveractive ? fpscap : bound (30.0, rate.value / 80.0, fpscap);
 		}
-		else 
+		else
 			fps = cl_maxfps.value ? max(cl_maxfps.value, 30) : 99999; //#fps:
 	}
 
@@ -1465,7 +1465,7 @@ void CL_Frame (double time) {
 
 		extern cvar_t sys_yieldcpu;
 		if (sys_yieldcpu.integer)
-#ifdef _WIN32		
+#ifdef _WIN32
 			Sys_MSleep(0);
 #else
 		// that work bad on linux, at least on my system, dunno why.
@@ -1491,7 +1491,7 @@ void CL_Frame (double time) {
 		extraphysframetime += cls.frametime;
 		if (extraphysframetime < minphysframetime)
 			physframe = false;
-		else 
+		else
 		{
 			physframe = true;
 
@@ -1500,7 +1500,7 @@ void CL_Frame (double time) {
 			else										// Dunno how to do it right
 				physframetime = minphysframetime;
 			extraphysframetime -= physframetime;
-		}	
+		}
 	} else {
 		extraphysframetime = 0;
 		physframe = true;
@@ -1527,18 +1527,18 @@ void CL_Frame (double time) {
 			cl.gametime += cls.frametime;
 		else
 			cl.gametime = Sys_DoubleTime() - cl.gamestarttime - cl.gamepausetime;
-	} 
-	else 
+	}
+	else
 	{
 		// we hope here, that pause doesn't take long so we don't get too much de-synced
 		// if pause takes too much, we can get into usual clock sync-problems as we did before
-		cl.gamepausetime += cls.frametime; 
-	}		
-									
+		cl.gamepausetime += cls.frametime;
+	}
+
 	r_refdef2.time = cl.time;
 
 	// get new key events
-	if (cl_independentPhysics.value == 0) 
+	if (cl_independentPhysics.value == 0)
 	{
 		Sys_SendKeyEvents();
 
@@ -1569,7 +1569,7 @@ void CL_Frame (double time) {
 
 		CL_SendToServer();
 
-		// We need to move the mouse also when disconnected 
+		// We need to move the mouse also when disconnected
 		// to get the cursor working properly.
 		if(cls.state == ca_disconnected)
 		{
@@ -1616,7 +1616,7 @@ void CL_Frame (double time) {
 
 			CL_SendToServer();
 
-			if (cls.state == ca_disconnected) // We need to move the mouse also when disconnected 
+			if (cls.state == ca_disconnected) // We need to move the mouse also when disconnected
 			{
 				usercmd_t dummy;
 				IN_Move (&dummy);
@@ -1627,7 +1627,7 @@ void CL_Frame (double time) {
 			if (   (!cls.demoplayback && !cl.spectator) // not demo playback and not a spec
 				|| (!cls.demoplayback &&  cl.spectator && Cam_TrackNum() == -1) // not demo, spec free fly
 				|| ( cls.demoplayback && cls.mvdplayback && Cam_TrackNum() == -1) // mvd demo and free fly
-				|| cls.state == ca_disconnected // We need to move the mouse also when disconnected 
+				|| cls.state == ca_disconnected // We need to move the mouse also when disconnected
 				) {
 				usercmd_t dummy;
 				Sys_SendKeyEvents();
@@ -1657,7 +1657,7 @@ void CL_Frame (double time) {
 		CL_UserinfoChanged ("chat", char_flags);
 	}
 
-	if (cls.state >= ca_onserver) 
+	if (cls.state >= ca_onserver)
 	{
 		Cam_SetViewPlayer();
 
@@ -1684,7 +1684,7 @@ void CL_Frame (double time) {
 	// Multiview is enabled so save some values for effects that
 	// needs to be turned off.
 	//
-	if (!bExitmultiview) 
+	if (!bExitmultiview)
 	{
 		nContrastExit		= v_contrast.value;
 		nViewsizeExit		= scr_viewsize.value;
@@ -1694,7 +1694,7 @@ void CL_Frame (double time) {
 		nPolyblendExit		= gl_polyblend.value;
 		nGlClearExit		= gl_clear.value;
 		#else
-		nWaterwarp			= r_waterwarp.value; 
+		nWaterwarp			= r_waterwarp.value;
 		nContentblend		= v_contentblend.value;
 		nQuadshift			= v_quadcshift.value;
 		nRingshift			= v_ringcshift.value;
@@ -1704,16 +1704,16 @@ void CL_Frame (double time) {
 		nBonusflash			= v_bonusflash.value;
 		#endif
 
-		nLerpframesExit		= r_lerpframes.value; 
+		nLerpframesExit		= r_lerpframes.value;
 		CURRVIEW = 0;
 	}
 
-	if (bExitmultiview && !cl_multiview.value) 
+	if (bExitmultiview && !cl_multiview.value)
 	{
 		scr_viewsize.value =  nViewsizeExit;
 		v_contrast.value = nContrastExit;
 		cl_fakeshaft.value = nfakeshaft;
-		
+
 		#ifdef GLQUAKE
 		gl_polyblend.value = nPolyblendExit;
 		gl_clear.value = nGlClearExit;
@@ -1734,7 +1734,7 @@ void CL_Frame (double time) {
 
 	if (cl_multiview.value > 0 && cls.mvdplayback)
 	{
-		CL_Multiview(); 
+		CL_Multiview();
 	}
 
 	// update video
@@ -1745,12 +1745,12 @@ void CL_Frame (double time) {
 	// update audio
 	if ((CURRVIEW == 2 && cl_multiview.value && cls.mvdplayback) || (!cls.mvdplayback || cl_multiview.value < 2))
 	{
-		if (cls.state == ca_active)	
+		if (cls.state == ca_active)
 		{
 			S_Update (r_origin, vpn, vright, vup);
 			CL_DecayLights ();
-		} 
-		else 
+		}
+		else
 		{
 			S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
 		}
@@ -1795,23 +1795,23 @@ void CL_Shutdown (void) {
 	if (host_basepal)
 		VID_Shutdown();
 	History_Shutdown();
-} 
+}
 
-int CL_IncrLoop(int cview, int max) 
+int CL_IncrLoop(int cview, int max)
 {
 	return (cview >= max) ? 1 : ++cview;
 }
 
-int CL_NextPlayer(int plr) 
+int CL_NextPlayer(int plr)
 {
 	if (plr < -1)
 	{
 		plr = -1;
 	}
-	
+
 	plr++;
-	
-	while (cl.players[plr].spectator || !strcmp(cl.players[plr].name, "")) 
+
+	while (cl.players[plr].spectator || !strcmp(cl.players[plr].name, ""))
 	{
 		plr++;
 		if (plr >= MAX_CLIENTS)
@@ -1822,7 +1822,7 @@ int CL_NextPlayer(int plr)
 	return plr;
 }
 
-void CL_Multiview(void) 
+void CL_Multiview(void)
 {
 	static int playernum = 0;
 
@@ -1893,10 +1893,10 @@ void CL_Multiview(void)
 	#endif
 
 	// stop weapon model lerping as it lerps with the other view
-	r_lerpframes.value = 0; 
+	r_lerpframes.value = 0;
 
 	nPlayernum = playernum;
-	
+
 	// Copy the stats for the player we're about to draw in the next
 	// view to the client state, so that the correct stats are drawn
 	// in the multiview mini-HUD.
@@ -1906,8 +1906,8 @@ void CL_Multiview(void)
 	// Increase the current view being rendered.
 	//
 	CURRVIEW = CL_IncrLoop(CURRVIEW, (int)cl_multiview.value);
-	
-	if (cl_mvinset.value && cl_multiview.value == 2) 
+
+	if (cl_mvinset.value && cl_multiview.value == 2)
 	{
 		//
 		// Special case for mvinset and tracking 2 people
@@ -1919,33 +1919,33 @@ void CL_Multiview(void)
 		// If both the mvinset and main view is set to show
 		// the same player, pick the first player for the main view
 		// and the next after that for the mvinset.
-		if (nTrack1duel == nTrack2duel) 
+		if (nTrack1duel == nTrack2duel)
 		{
 			nTrack1duel = CL_NextPlayer(-1);
 			nTrack2duel = CL_NextPlayer(nTrack1duel);
-		}		
+		}
 
 		// The user pressed jump so we need to swap the pov.
-		if (nSwapPov) 
+		if (nSwapPov)
 		{
 			nTrack1duel = CL_NextPlayer(nTrack1duel);
 			nTrack2duel = CL_NextPlayer(nTrack2duel);
 			nSwapPov = false;
-		} 
-		else 
+		}
+		else
 		{
 			// Set the playernum based on if we're drawing the mvinset
-			// or the main view 
+			// or the main view
 			// (nTrack1duel = main view)
 			// (nTrack2duel = mvinset)
 			playernum = (CURRVIEW == 1) ? nTrack1duel : nTrack2duel;
 		}
-	} 
-	else 
+	}
+	else
 	{
 		//
 		// Normal multiview.
-		// 
+		//
 
 		// Start from the first player on each new frame.
 		playernum = ((CURRVIEW == 1) ? 0 : playernum);
@@ -1953,7 +1953,7 @@ void CL_Multiview(void)
 		//
 		// The player pressed jump and wants to change what team is spectated.
 		//
-		if (nSwapPov && cl_multiview.value >= 2 && cl.teamplay) 
+		if (nSwapPov && cl_multiview.value >= 2 && cl.teamplay)
 		{
 			int j;
 			int team_slot_count = 0;
@@ -1963,7 +1963,7 @@ void CL_Multiview(void)
 			for(j = 0; j < 4; j++)
 			{
 				last_mv_trackslots[j] = mv_trackslots[j];
-				mv_trackslots[j] = -1;				
+				mv_trackslots[j] = -1;
 			}
 
 			// Find the new team.
@@ -1983,8 +1983,8 @@ void CL_Multiview(void)
 			// Find the team members.
 			for(j = 0; j < MAX_CLIENTS; j++)
 			{
-				if(!cl.players[j].spectator 
-					&& strcmp(cl.players[j].name, "") 
+				if(!cl.players[j].spectator
+					&& strcmp(cl.players[j].name, "")
 					&& !strcmp(currteam, cl.players[j].team))
 				{
 					// Find the player slot to track.
@@ -1998,7 +1998,7 @@ void CL_Multiview(void)
 					break;
 				}
 			}
-			
+
 			if(cl_multiview.value == 2 && team_slot_count == 2)
 			{
 				// Switch between 2on2 teams.
@@ -2022,8 +2022,8 @@ void CL_Multiview(void)
 		else
 		{
 			// Check if the track* values have been set by the user,
-			// otherwise show the first 4 players.			
-			
+			// otherwise show the first 4 players.
+
 			if(CURRVIEW >= 1 && CURRVIEW <= 4)
 			{
 				// If the value of mv_trackslots[i] is negative, it means that view
@@ -2042,7 +2042,7 @@ void CL_Multiview(void)
 	}
 
 	// Set the current player we're tracking for the next view to be drawn.
-	spec_track = playernum;	
+	spec_track = playernum;
 
 	// Make sure we reset variables we suppressed during multiview drawing.
 	bExitmultiview = true;

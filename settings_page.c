@@ -1,10 +1,10 @@
 /**
-	
+
 	Settings page module
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.41 2007-06-30 11:31:29 johnnycz Exp $
+		$Id: settings_page.c,v 1.42 2007-07-29 01:28:38 disconn3ct Exp $
 
 */
 
@@ -123,7 +123,7 @@ static void Setting_DrawBoolAdv(int x, int y, int w, setting* setting, qbool act
 
 static void Setting_DrawSeparator(int x, int y, int w, setting* set)
 {
-	char buf[32];	
+	char buf[32];
 	snprintf(buf, sizeof(buf), "\x1d %s \x1f", set->label);
 	UI_Print_Center(x, y+LINEHEIGHT+LINEHEIGHT/2, w, buf, true);
 }
@@ -132,7 +132,7 @@ static void Setting_DrawAction(int x, int y, int w, setting* set, qbool active)
 {
     // this will make it centered
     UI_Print_Center(x, y, w, set->label, active);
-    
+
     // this will make it aligned to the left side from the center
     // Setting_PrintLabel(x, y, w, set->label, active);
 }
@@ -140,7 +140,7 @@ static void Setting_DrawAction(int x, int y, int w, setting* set, qbool active)
 static void Setting_DrawNamed(int x, int y, int w, setting* set, qbool active)
 {
 	x = Setting_PrintLabel(x, y, w, set->label, active);
-	UI_Print(x, y, set->named_ints[(int) bound(set->min, VARFVAL(set->cvar), set->max)], active);    
+	UI_Print(x, y, set->named_ints[(int) bound(set->min, VARFVAL(set->cvar), set->max)], active);
 }
 
 static int Enum_Find_ValueCode(setting* set)
@@ -199,7 +199,7 @@ static void Setting_DrawBind(int x, int y, int w, setting* set, qbool active, qb
 	int keys[2];
 	char *name;
 	char c[2];
-	
+
 	c[0] = FLASHINGARROW();
 	c[1] = 0;
 
@@ -210,7 +210,7 @@ static void Setting_DrawBind(int x, int y, int w, setting* set, qbool active, qb
 	}
 
 	x += LETW*2;
-	
+
 	M_FindKeysForCommand (set->varname, keys);
 
 	if (keys[0] == -1) {
@@ -349,7 +349,7 @@ static int Settings_PageHeight(const settings_page *page)
 static int Settings_LowestViewpoint(const settings_page *page)
 {
     int bottom = Settings_PageHeight(page);
-    
+
     // represents the 'top' number we are looking for
     int best_top = bottom - page->height;
 
@@ -371,12 +371,12 @@ static int Settings_LowestViewpoint(const settings_page *page)
 static void CheckViewpoint(settings_page *tab)
 {
     int lwp = Settings_LowestViewpoint(tab);
-    
+
     tab->viewpoint = bound(0, tab->viewpoint, lwp);
 
 	if (tab->marked == 1 && tab->settings[0].type == stt_separator) tab->viewpoint = 0;
 
-	if (tab->viewpoint > tab->marked) { 
+	if (tab->viewpoint > tab->marked) {
 		// marked entry is above us
 		tab->viewpoint = tab->marked;
 	} else while(STHeight(tab->settings + tab->marked) + tab->settings[tab->marked].top > tab->settings[tab->viewpoint].top + tab->height) {
@@ -388,7 +388,7 @@ static void CheckViewpoint(settings_page *tab)
 static void CheckCursor(settings_page *tab, qbool up)
 {	// this makes sure that cursor doesn't point at some meta-entry, section heading or hidden setting
 	setting *s;
-	while (tab->marked < 0) { 
+	while (tab->marked < 0) {
 		tab->marked = 0;
 		up = false;
 	}
@@ -431,7 +431,7 @@ static void RecalcPositions(settings_page* page)
 	{
 		s = page->settings + i;
 		s->top = curtop;
-		
+
 		curtop += STHeight(s);
 	}
 }
@@ -529,7 +529,7 @@ static void Setting_DrawSkinPreview(int x, int y, int w, int h, char *skinfile)
         curpic = Draw_CachePicSafe(buf, false, true);
         strlcpy(lastpicname, skinfile, sizeof(lastpicname));
     }
-    
+
     if (curpic)
     {
         Draw_FitPic(x, y, w, h, curpic);
@@ -554,7 +554,7 @@ static void Setting_Slider_Click(const settings_page *page, const mouse_state_t 
 {
     double p, vmin, vmax, vnew, vsteps;
     setting* s = page->settings + page->marked;
-    
+
     p = (ms->x - Slider_Startpos(page->width)) / UI_SliderWidth();
     p = bound(0, p, 1);
 
@@ -606,14 +606,14 @@ qbool Settings_Key(settings_page* tab, int key)
 		return FL_Key(&skins_filelist, key);
 	}
 
-	switch (key) { 
+	switch (key) {
 	case K_DOWNARROW:   tab->marked++; break;
 	case K_UPARROW:     tab->marked--; up = true; break;
-	case K_MWHEELDOWN:  
+	case K_MWHEELDOWN:
         if (tab->viewpoint < Settings_LowestViewpoint(tab))
-            tab->viewpoint++; 
+            tab->viewpoint++;
 
-        skip_check_viewpoint = true; 
+        skip_check_viewpoint = true;
         break;
 
 	case K_MWHEELUP:
@@ -664,12 +664,12 @@ qbool Settings_Key(settings_page* tab, int key)
 		} else return false;
 
 	case K_ESCAPE:
-		if (tab->mode == SPM_VIEWHELP) { 
+		if (tab->mode == SPM_VIEWHELP) {
 			tab->mode = SPM_NORMAL;
 			return true;
 		} else return false;
 
-	default: 
+	default:
 		switch (type) {
 		case stt_string:
 			if (key != K_TAB && key != K_ESCAPE && key != K_LEFTARROW && key != K_RIGHTARROW) {
@@ -705,7 +705,7 @@ static void Settings_AdjustScrollBar(settings_page *page)
 {
     double lwp = Settings_LowestViewpoint(page);
     double percentage = lwp ? (double) page->viewpoint / lwp : 0;
-    
+
     // do not adjust the scrollbar if we are scrolling, it would look weird
     if (page->scrollbar->mouselocked) return;
 
@@ -732,7 +732,7 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 
 	nexttop = tab->settings[0].top;
 
-	if (tab->mode == SPM_CHOOSESKIN) 
+	if (tab->mode == SPM_CHOOSESKIN)
 	{
 		FL_Draw(&skins_filelist, x, y, w, h - SKINPREVIEWHEIGHT);
 		Setting_DrawSkinPreview(x, y + h - SKINPREVIEWHEIGHT, w, SKINPREVIEWHEIGHT, FL_GetCurrentPath(&skins_filelist));
@@ -786,8 +786,6 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 
 void Settings_OnShow(settings_page *page)
 {
-	int oldm = page->marked;
-
 	RecalcPositions(page);
 
 	CheckCursor(page, false);
@@ -796,7 +794,7 @@ void Settings_OnShow(settings_page *page)
 		StringEntryEnter(page->settings + page->marked);
 }
 
-qbool Settings_Mouse_Event(settings_page *page, const mouse_state_t *ms) 
+qbool Settings_Mouse_Event(settings_page *page, const mouse_state_t *ms)
 {
 	int nmark;
 	int omark = page->marked;
@@ -804,7 +802,7 @@ qbool Settings_Mouse_Event(settings_page *page, const mouse_state_t *ms)
     // scrollbar associated with this page handles the event
     // page has to be in normal mode and user is already scrolling or
     // just started scrolling
-    if (page->mode == SPM_NORMAL && (page->scrollbar->mouselocked || 
+    if (page->mode == SPM_NORMAL && (page->scrollbar->mouselocked ||
         (ms->x > (page->width - page->scrollbar->width))))
     {
         if (ScrollBar_MouseEvent(page->scrollbar, ms))
@@ -835,7 +833,7 @@ qbool Settings_Mouse_Event(settings_page *page, const mouse_state_t *ms)
         else if (ms->button_up == 1) Settings_Key(page, K_MOUSE1);
         return true;
 		break;
-	
+
 	case SPM_NORMAL:
 		nmark = FindSetting_AtPos(page, page->settings[page->viewpoint].top + ms->y);
 		nmark = bound(0, nmark, page->count - 1);
