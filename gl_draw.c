@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.81 2007-07-28 23:49:38 disconn3ct Exp $
+$Id: gl_draw.c,v 1.82 2007-07-29 01:16:01 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -259,11 +259,12 @@ void Draw_InitCrosshairs(void)
 	Cvar_Set(&gl_crosshairimage, str);
 }
 
-float overall_opacity = 1.0;
+float overall_alpha = 1.0;
 
-void Draw_SetOverallOpacity(float opacity)
+void Draw_SetOverallAlpha(float alpha)
 {
-	overall_opacity = opacity;
+	clamp(alpha, 0.0, 1.0);
+	overall_alpha = alpha;
 }
 
 void Draw_EnableScissorRectangle(int x, int y, int width, int height)
@@ -786,10 +787,9 @@ qbool R_CharAvailable (wchar num)
 #define CHARSET_CHAR_WIDTH		(CHARSET_WIDTH / CHARSET_CHARS_PER_ROW)
 #define CHARSET_CHAR_HEIGHT		(CHARSET_HEIGHT / CHARSET_CHARS_PER_ROW)
 
-__inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overall_opacity)
+__inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool apply_overall_alpha, byte color[4])
 {
 	float frow, fcol;
-	float *color;
 	int i = 0;
 	int slot = 0;
 
@@ -800,21 +800,18 @@ __inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool ap
 		return;				// Space.
 
 	// Only apply overall opacity if it's not fully opague.
-	apply_overall_opacity = (apply_overall_opacity && (overall_opacity < 1.0));
+	apply_overall_alpha = (apply_overall_alpha && (overall_alpha < 1.0));
 
 	// Turn on alpha transparency.
-	if (gl_alphafont.value || apply_overall_opacity)
+	if (gl_alphafont.value || apply_overall_alpha)
 	{
 		glDisable(GL_ALPHA_TEST);
 		glEnable(GL_BLEND);
-
-		// Set the overall opacity.
-		if (apply_overall_opacity)
-		{
-			glGetPointerv(GL_CURRENT_COLOR, (GLvoid **) &color);
-			glColor4f(color[0], color[1], color[2], color[3] * overall_opacity);
-		}
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	}
+
+	// Set the overall alpha.
+	glColor4ub(color[0], color[1], color[2], color[3] * overall_alpha);
 
 	// Is this is a wchar, find a charset that has the char in it.
 	if ((num & 0xFF00) != 0)
@@ -835,7 +832,7 @@ __inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool ap
 	num &= 0xFF;	// Only use the first byte.
 
 	// Find the texture coordinates for the character.
-	frow = (num >> 4) * CHARSET_CHAR_HEIGHT;	// row = num / (16 chars per row)
+	frow = (num >> 4) * CHARSET_CHAR_HEIGHT;	// row = num * (16 chars per row)
 	fcol = (num & 0x0F) * CHARSET_CHAR_WIDTH;
 
 	GL_Bind(char_textures[slot]);
@@ -861,37 +858,31 @@ __inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool ap
 	}
 	glEnd();
 
-	glScalef(1, 1, 1);
-
 	glEnable(GL_ALPHA_TEST);
 	glDisable(GL_BLEND);
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-	// Reset the opacity to what it was so that we don't
-	// apply the overall opacity several times by accident.
-	if (apply_overall_opacity)
-	{
-		glColor4f(color[0], color[1], color[2], color[3]);
-	}
+	glColor4ubv(color_white);
 }
 
 void Draw_SCharacter (int x, int y, int num, float scale)
 {
-	Draw_CharacterBase(x, y, char2wc(num), scale, true);
+	Draw_CharacterBase(x, y, char2wc(num), scale, true, color_white);
 }
 
 void Draw_SCharacterW (int x, int y, wchar num, float scale)
 {
-	Draw_CharacterBase(x, y, num, scale, true);
+	Draw_CharacterBase(x, y, num, scale, true, color_white);
 }
 
-void Draw_CharacterW(int x, int y, wchar num)
+void Draw_CharacterW (int x, int y, wchar num)
 {
-	Draw_CharacterBase(x, y, num, 1, true);
+	Draw_CharacterBase(x, y, num, 1, true, color_white);
 }
 
 void Draw_Character (int x, int y, int num)
 {
-	Draw_CharacterBase(x, y, char2wc(num), 1, true);
+	Draw_CharacterBase(x, y, char2wc(num), 1, true, color_white);
 }
 
 __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, int color_count, int red, float scale, float alpha)
@@ -902,38 +893,22 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 	int curr_char;
 	int color_index = 0;
 	color_t last_color = COLOR_WHITE;
-	float real_alpha = overall_opacity * alpha;
 
 	// Nothing to draw.
 	if (!*text)
 		return;
 
-	clamp(real_alpha, 0.0, 1.0);
-
-	// Turn on alpha transparency.
-	if (gl_alphafont.value || (real_alpha < 1.0))
-	{
-		glDisable(GL_ALPHA_TEST);
-		glEnable(GL_BLEND);
-	}
-
-	// Make sure we set the color from scratch so that the
+	// Make sure we set the color from scratch so that the 
 	// overall opacity is applied properly.
 	if (scr_coloredText.value)
 	{
 		if (color_count > 0)
 		{
 			COLOR_TO_RGBA(color[color_index].c, rgba);
-			glColor4ub(rgba[0], rgba[1], rgba[2], rgba[3] * overall_opacity);
 		}
+	}
 
-		// Change texture mode to blend colors.
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	}
-	else
-	{
-		glColor4ub(255, 255, 255, 255 * overall_opacity);
-	}
+	memcpy(rgba, color_white, sizeof(byte) * 4);
 
 	// Draw the string.
 	for (i = 0; text[i]; i++)
@@ -953,9 +928,14 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 					{
 						if (scr_coloredText.value)
 						{
-							glColor4f(r / 16.0, g / 16.0, b / 16.0, real_alpha);
+							rgba[0] = (r * 16);
+							rgba[1] = (g * 16);
+							rgba[2] = (b * 16);
+							rgba[3] = 255;
 							color_is_white = false;
 						}
+
+						color_count; // Keep track on how many colors we're using.
 
 						i += 4;
 						continue;
@@ -965,7 +945,7 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 				{
 					if (!color_is_white)
 					{
-						glColor4ub(color_white[0], color_white[1], color_white[2], color_white[3] * real_alpha);
+						memcpy(rgba, color_white, sizeof(byte) * 4);
 						color_is_white = true;
 					}
 
@@ -983,7 +963,6 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 			{
 				last_color = color[color_index].c;
 				COLOR_TO_RGBA(color[color_index].c, rgba);
-				glColor4ub(rgba[0], rgba[1], rgba[2], rgba[3] * real_alpha);
 			}
 
 			color_index++; // Goto next color.
@@ -991,27 +970,17 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 
 		curr_char = text[i];
 
-		// Do not convert to red if we use coloredText.
-		if (!scr_coloredText.value && red)
+		// Do not convert the character to red if we're applying color to the text.
+		if (red && color_count <= 0)
 			curr_char |= 128;
 
+		// Set the alpha.
+		rgba[3] *= alpha;
+
 		// Draw the character but don't apply overall opacity, we've already done that.
-		Draw_CharacterBase(x, y, curr_char, scale, false);
+		Draw_CharacterBase(x, y, curr_char, scale, false, rgba);
 
 		x += (8 * scale);
-	}
-
-	glColor4ubv(color_white);	// Reset the color.
-
-	if (gl_alphafont.value || (real_alpha < 1.0))
-	{
-		glEnable(GL_ALPHA_TEST);
-		glDisable(GL_BLEND);
-	}
-
-	if (scr_coloredText.value)
-	{
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	}
 }
 
@@ -1402,7 +1371,8 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 	glDisable (GL_TEXTURE_2D);
 	glEnable (GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
-	glColor4ubv(COLOR_TO_RGBA(color, bytecolor));
+	COLOR_TO_RGBA(color, bytecolor);
+	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
 
 	thickness = max(0, thickness);
 
@@ -1453,7 +1423,8 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 
 	glEnable (GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
-	glColor4ubv(COLOR_TO_RGBA(color, bytecolor));
+	COLOR_TO_RGBA(color, bytecolor);
+	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
 
 	if(thickness > 0.0)
 	{
@@ -1488,7 +1459,9 @@ void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, 
 	glEnable (GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 
-	glColor4ubv(COLOR_TO_RGBA(color, bytecolor));
+	COLOR_TO_RGBA(color, bytecolor);
+	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
+
 	glDisable (GL_TEXTURE_2D);
 
 	if(fill)
@@ -1526,7 +1499,8 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 
 	glEnable (GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
-	glColor4ubv(COLOR_TO_RGBA(color, bytecolor));
+	COLOR_TO_RGBA(color, bytecolor);
+	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
 
 	if(thickness > 0.0)
 	{
@@ -1586,7 +1560,7 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 	glEnable (GL_ALPHA_TEST);
 	glDisable (GL_BLEND);
 
-	glColor3ubv (color_white);
+	glColor4ubv (color_white);
 
 	glPopAttrib();
 }
@@ -1652,6 +1626,8 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *gl, int srcx, int srcy, int width
 
     newtl = gl->tl + (srcy * oldglheight) / gl->height;
     newth = newtl + (height * oldglheight) / gl->height;
+
+	alpha *= overall_alpha;
 
 	if(alpha < 1.0)
 	{
@@ -1759,7 +1735,7 @@ void Draw_TransPic (int x, int y, mpic_t *pic)
 void Draw_SFill (int x, int y, int w, int h, byte c, float scale)
 {
     glDisable(GL_TEXTURE_2D);
-    glColor3ub(host_basepal[c * 3], host_basepal[(c * 3) + 1], host_basepal[(c * 3) + 2 ]);
+    glColor4ub(host_basepal[c * 3], host_basepal[(c * 3) + 1], host_basepal[(c * 3) + 2 ], overall_alpha);
 
     glBegin(GL_QUADS);
 
@@ -1769,7 +1745,7 @@ void Draw_SFill (int x, int y, int w, int h, byte c, float scale)
     glVertex2f(x, y + (h * scale));
 
     glEnd();
-    glColor3ub(255, 255, 255);
+    glColor4ubv(color_white);
     glEnable(GL_TEXTURE_2D);
 }
 
@@ -1786,7 +1762,7 @@ void Draw_InitConsoleBackground(void)
 void Draw_ConsoleBackground (int lines)
 {
 	mpic_t *lvlshot = NULL;
-	float alpha = (SCR_NEED_CONSOLE_BACKGROUND ? 1 : bound(0, scr_conalpha.value, 1));
+	float alpha = (SCR_NEED_CONSOLE_BACKGROUND ? 1 : bound(0, scr_conalpha.value, 1)) * overall_alpha;
 
 	if (host_mapname.string[0]											// We have mapname.
 		 && (    scr_conback.value == 2									// Always per level conback.
@@ -1820,7 +1796,7 @@ void Draw_FadeScreen (void)
 {
 	float alpha;
 
-	alpha = bound(0, scr_menualpha.value, 1);
+	alpha = bound(0, scr_menualpha.value, 1) * overall_alpha;
 	if (!alpha)
 		return;
 
