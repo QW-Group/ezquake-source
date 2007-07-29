@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: md4.c,v 1.2 2007-05-13 13:41:43 johnnycz Exp $
+	$Id: md4.c,v 1.3 2007-07-29 12:19:42 disconn3ct Exp $
 
 */
 /* GLOBAL.H - RSAREF types and constants */
@@ -43,9 +43,9 @@ typedef unsigned long int UINT4;
 
 All rights reserved.
   
-License to copy and use this software is granted provided that it is identified as the “RSA Data Security, Inc. MD4 Message-Digest Algorithm” in all material mentioning or referencing this software or this function.
-License is also granted to make and use derivative works provided that such works are identified as “derived from the RSA Data Security, Inc. MD4 Message-Digest Algorithm” in all material mentioning or referencing the derived work.
-RSA Data Security, Inc. makes no representations concerning either the merchantability of this software or the suitability of this software for any particular purpose. It is provided “as is” without express or implied warranty of any kind.
+License to copy and use this software is granted provided that it is identified as the 'RSA Data Security, Inc. MD4 Message-Digest Algorithm' in all material mentioning or referencing this software or this function.
+License is also granted to make and use derivative works provided that such works are identified as 'derived from the RSA Data Security, Inc. MD4 Message-Digest Algorithm' in all material mentioning or referencing the derived work.
+RSA Data Security, Inc. makes no representations concerning either the merchantability of this software or the suitability of this software for any particular purpose. It is provided 'as is' without express or implied warranty of any kind.
   
 These notices must be retained in any copies of any part of this documentation and/or software. */
 

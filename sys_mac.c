@@ -1,6 +1,6 @@
 /*
 
-	$Id: sys_mac.c,v 1.23 2007-05-28 10:47:34 johnnycz Exp $
+	$Id: sys_mac.c,v 1.24 2007-07-29 12:19:42 disconn3ct Exp $
 
 */
 // sys_mac.c -- Macintosh system driver
@@ -994,7 +994,7 @@ static void Initialize (void)
 	//	To make the Random sequences truly random, we need to make the seed start
 	//	at a different number.  An easy way to do this is to put the current time
 	//	and date into the seed.  Since it is always incrementing the starting seed
-	//	will always be different.  Don� for each call of Random, or the sequence
+	//	will always be different.  Done for each call of Random, or the sequence
 	//	will no longer be random.  Only needed once, here in the init.
 	//
 	randSeed = GetQDGlobalsRandomSeed ();
