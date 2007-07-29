@@ -1259,14 +1259,11 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 	//
 	// Item Opacity.
 	//
-	#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
-	if(use_framebuffer)
 	{
 		hud->opacity = HUD_CreateVar(name, "item_opacity", (item_opacity) ? item_opacity : "1.0");
 		hud->flags |= HUD_OPACITY;
 		hud->params[hud->num_params++] = hud->opacity;
 	}
-	#endif // FRAMEBUFFERS & GLQUAKE
     
 	//
     // Create parameters.
@@ -1423,7 +1420,9 @@ void HUD_DrawObject(hud_t *hud)
 	//
 	// Let the HUD element draw itself - updates last_draw_sequence itself.
 	//
+	Draw_SetOverallAlpha(hud->opacity->value);	
 	hud->draw_func(hud);
+	Draw_SetOverallAlpha(1.0);
 	
 	#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
 	if(use_framebuffer)

@@ -61,9 +61,7 @@ typedef struct hud_s
 	cvar_t *frame_color;				// Frame color cvar.
 	byte frame_color_cache[4];			// Cache for parsed frame color.
 
-#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
 	cvar_t *opacity;					// The overall opacity of the entire HUD element.
-#endif 
 
     // placement
     cvar_t *place;						// Place string, parsed to:
