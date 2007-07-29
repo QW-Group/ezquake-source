@@ -161,7 +161,6 @@ mpic_t *Draw_CachePicSafe(char *path, qbool syserror, qbool only24bit)
 	if (only24bit && FS_FOpenFile(png_path, &f) > 0)
 	{
 		int i;
-		unsigned int t = 0;
 		mpic_t *png_pic = NULL;
 		byte *png_data = Image_LoadPNG(f, path, 0, 0, &real_width, &real_height);
 
@@ -415,10 +414,12 @@ static void Draw_StretchLine(byte *srcdata, int src_width, int x_dest_start, int
 	}
 }
 
+/*
 static void Draw_StretchLineByPic(mpic_t *pic, int x_dest_start, int x_dest_end, int x_src_start, int x_src_end, int y_src, int y_dest)
 {
 	Draw_StretchLine(pic->data, pic->width, x_dest_start, x_dest_end, x_src_start, x_src_end, y_src, y_dest);
 }
+*/
 
 void Draw_RectStretchSubPic(byte *src,								// Source picture data.
 							int src_width, int src_height,			// Source picture dimensions.
@@ -601,7 +602,7 @@ int HexToInt(char c)
 		return -1;
 }
 
-void Draw_SColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale) 
+void Draw_SColoredString (int x, int y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale)
 {
 	int r, g, b;
 
@@ -1411,7 +1412,7 @@ byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int hei
 		//
 
 		int i;
-		color_t current_color = 0;
+		// color_t current_color = 0;
 
 		for (i = 0; i < (height * width); i++)
 		{

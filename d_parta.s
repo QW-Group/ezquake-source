@@ -23,7 +23,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: d_parta.s,v 1.2 2005-07-05 20:01:03 disconn3ct Exp $
+	$Id: d_parta.s,v 1.3 2007-07-29 01:45:54 disconn3ct Exp $
 */
 // d_parta.s
 // x86 assembly-language 8-bpp particle-drawing code.
@@ -226,7 +226,7 @@ LTestDone:
 	cmpl	$4,%eax
 	ja		LDefault
 
-	jmp		DP_EntryTable-4(,%eax,4)
+	jmp		*DP_EntryTable-4(,%eax,4)
 
 // 1x1
 .globl	DP_1x1

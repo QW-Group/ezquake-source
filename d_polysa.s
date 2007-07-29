@@ -23,7 +23,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: d_polysa.s,v 1.2 2005-07-05 20:01:03 disconn3ct Exp $
+	$Id: d_polysa.s,v 1.3 2007-07-29 01:45:54 disconn3ct Exp $
 */
 // d_polysa.s
 // x86 assembly-language polygon model drawing code
@@ -853,7 +853,7 @@ LRightEdgeStepped:
 	pushl	%esi
 
 	movl	spanpackage_t_ptex(%esi),%esi
-	jmp		aff8entryvec_table(,%eax,4)
+	jmp		*aff8entryvec_table(,%eax,4)
 
 // %bx = count of full and partial loops
 // %ebx high word = sfrac

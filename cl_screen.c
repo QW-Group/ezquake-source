@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.124 2007-07-29 01:28:38 disconn3ct Exp $
+$Id: cl_screen.c,v 1.125 2007-07-29 01:45:54 disconn3ct Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -2578,14 +2578,18 @@ void SCR_TileClear (void) {
 #endif
 
 // calculates the cursor scale based on the current screen/text size
+#ifdef GLQUAKE
 static double SCR_GetCursorScale(void) {
 	return (double) scr_cursor_scale.value * ((double) vid.width / (double)vid.conwidth);
 }
+#endif
 
 static void SCR_DrawCursor(void) {
 	// from in_*.c
 	extern float mouse_x, mouse_y;
+#ifdef GLQUAKE
     double scale = SCR_GetCursorScale();
+#endif
 
 	// Updating cursor location
 	scr_pointer_state.x += mouse_x;
@@ -2629,7 +2633,7 @@ static void SCR_DrawCursor(void) {
 	// FIXME: When the cursor is loaded in software, width and height are fine, but when reaching this point it's fucked up!!!
 	if (scr_cursor && scr_cursor->width)
 	{
-		Draw_SPic(cursor_x, cursor_y, scr_cursor, SCR_GetCursorScale());
+		Draw_SPic(cursor_x, cursor_y, scr_cursor, scale);
 	}
 	else
 	*/
