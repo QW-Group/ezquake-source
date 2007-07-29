@@ -5,12 +5,12 @@
 
 #include "quakedef.h"
 #include "common_draw.h"
+#include "keys.h"
 #include "hud.h"
 #include "hud_common.h"
 #include "hud_editor.h"
 #include "utils.h"
 #include "sbar.h"
-#include "keys.h"
 
 
 #define sbar_last_width 320  // yeah yeah I know, *garbage* -> leave it be :>
@@ -160,7 +160,7 @@ void HUD_Func_f(void)
 	{
         Com_Printf("Current status: %s\n", hud->show->value ? "shown" : "hidden");
 	}
-    
+
 	if (hud->frame != NULL)
 	{
         Com_Printf("Frame:          %s\n\n", hud->frame->string);
@@ -815,7 +815,7 @@ void HUD_CalcFrameExtents(hud_t *hud, int width, int height,									// In.
 qbool HUD_OnChangeFrameColor(cvar_t *var, char *newval)
 {
 	// Converts "red" into "255 0 0", etc. or returns input as it was.
-	char *new_color = ColorNameToRGBString(newval); 
+	char *new_color = ColorNameToRGBString(newval);
 	char buf[256];
 	int hudname_len;
 	hud_t* hud_elem;
@@ -845,9 +845,9 @@ void HUD_DrawFrame(hud_t *hud, int x, int y, int width, int height)
     {
 		hud->frame_color_cache[3] = (byte)(255 * hud->frame->value);
 
-		Draw_AlphaFillRGB(x, y, width, height, 
+		Draw_AlphaFillRGB(x, y, width, height,
 			RGBA_TO_COLOR(
-			hud->frame_color_cache[0], 
+			hud->frame_color_cache[0],
 			hud->frame_color_cache[1],
 			hud->frame_color_cache[2],
 			hud->frame_color_cache[3]));
@@ -926,19 +926,19 @@ qbool HUD_PrepareDraw(hud_t *hud, int width, int height, // In.
 			bounds_width = scr_vrect.width;
 			bounds_height = scr_vrect.height;
 			break;
-		case HUD_PLACE_SBAR:  
+		case HUD_PLACE_SBAR:
 			bounds_x = 0;
 			bounds_y = vid.height - sb_lines;
 			bounds_width = sbar_last_width;
 			bounds_height = sb_lines;
 			break;
-		case HUD_PLACE_IBAR: 
+		case HUD_PLACE_IBAR:
 			bounds_width = sbar_last_width;
 			bounds_height = max(sb_lines - SBAR_HEIGHT, 0);
 			bounds_x = 0;
 			bounds_y = vid.height - sb_lines;
 			break;
-		case HUD_PLACE_HBAR: 
+		case HUD_PLACE_HBAR:
 			bounds_width = sbar_last_width;
 			bounds_height = min(SBAR_HEIGHT, sb_lines);
 			bounds_x = 0;
@@ -950,7 +950,7 @@ qbool HUD_PrepareDraw(hud_t *hud, int width, int height, // In.
 			bounds_width = vid.width - sbar_last_width;
 			bounds_height = sb_lines;
 			break;
-		case HUD_PLACE_IFREE: 
+		case HUD_PLACE_IFREE:
 			bounds_width = vid.width - sbar_last_width;
 			bounds_height = max(sb_lines - SBAR_HEIGHT, 0);
 			bounds_x = sbar_last_width;
@@ -1068,7 +1068,7 @@ qbool HUD_PrepareDraw(hud_t *hud, int width, int height, // In.
 
     // Remember drawing sequence.
     hud->last_draw_sequence = host_screenupdatecount;
-    return true;    
+    return true;
 }
 
 //
@@ -1082,7 +1082,7 @@ cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
     sprintf(buf, "hud_%s_%s", hud_name, subvar);
     var = (cvar_t *)Q_malloc(sizeof(cvar_t));
     memset(var, 0, sizeof(cvar_t));
-    
+
 	// Set name.
 	var->name = Q_strdup(buf);
 
@@ -1132,7 +1132,7 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 	// common for all hud elements are added this needs to be increased.
 	int			num_params = 3;
 
-	// Allocate room for the HUD. 
+	// Allocate room for the HUD.
     hud = (hud_t *) Q_malloc(sizeof(hud_t));
     memset(hud, 0, sizeof(hud_t));
     hud->next = hud_huds;
@@ -1187,7 +1187,7 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
     i = HUD_FindPlace(hud);
     if (i == 0)
     {
-        // Probably parent should be registered earlier. 
+        // Probably parent should be registered earlier.
 		// (This doesn't matter, since we'll re-place all elements after
 		// all the elements have been registered)
         hud->place_num = 0;
@@ -1264,7 +1264,7 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 		hud->flags |= HUD_OPACITY;
 		hud->params[hud->num_params++] = hud->opacity;
 	}
-    
+
 	//
     // Create parameters.
 	//
@@ -1283,7 +1283,7 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
         hud->num_params ++;
         subvar = va_arg(argptr, char *);
     }
-    
+
     va_end (argptr);
 
     return hud;
@@ -1350,14 +1350,14 @@ cvar_t *HUD_FindVar(hud_t *hud, char *subvar)
 //
 // Draws single HUD element.
 //
-void HUD_DrawObject(hud_t *hud) 
+void HUD_DrawObject(hud_t *hud)
 {
     extern qbool sb_showscores, sb_showteamscores;
 
 	// Already tried to draw this frame.
     if (hud->last_try_sequence == host_screenupdatecount)
 	{
-        return; 
+        return;
 	}
 
     hud->last_try_sequence = host_screenupdatecount;
@@ -1420,10 +1420,10 @@ void HUD_DrawObject(hud_t *hud)
 	//
 	// Let the HUD element draw itself - updates last_draw_sequence itself.
 	//
-	Draw_SetOverallAlpha(hud->opacity->value);	
+	Draw_SetOverallAlpha(hud->opacity->value);
 	hud->draw_func(hud);
 	Draw_SetOverallAlpha(1.0);
-	
+
 	#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
 	if(use_framebuffer)
 	{
@@ -1462,7 +1462,7 @@ void HUD_Draw(void)
 	extern cvar_t scr_newHud;
     hud_t *hud;
 
-	if (mvd_autohud.value && !autohud_loaded) 
+	if (mvd_autohud.value && !autohud_loaded)
 	{
 		HUD_AutoLoad_MVD((int) mvd_autohud.value);
 		Com_DPrintf("Loading AUTOHUD...\n");
@@ -1490,7 +1490,7 @@ void HUD_Draw(void)
 	HUD_AfterDraw();
 }
 
-// 
+//
 // Compares two hud elements.
 //
 int HUD_OrderFunc(const void * p_h1, const void * p_h2)
