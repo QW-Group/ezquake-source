@@ -71,6 +71,11 @@ int scissor_bottom	= 0;
 //=============================================================================
 // Support Routines
 
+void Draw_SetOverallAlpha(float opacity)
+{
+	// Don't support this in software, looks crap with 8-bit.
+}
+
 byte Draw_FindNearestColorByBytes(byte r, byte g, byte b, byte a)
 {
 	#define PALETTE_SIZE 255
