@@ -23,7 +23,7 @@
 		59 Temple Place - Suite 330
 		Boston, MA  02111-1307, USA
 
-	$Id: math.s,v 1.4 2007-03-21 16:55:44 vvd0 Exp $
+	$Id: math.s,v 1.5 2007-07-29 01:36:20 disconn3ct Exp $
 */
 
 #include "asm_i386.h"
@@ -61,7 +61,7 @@ C(BoxOnPlaneSide):
 	jge		Lerror
 	flds	pl_normal(%edx)		// p->normal[0]
 	fld		%st(0)				// p->normal[0] | p->normal[0]
-	jmp		Ljmptab(,%eax,4)
+	jmp		*Ljmptab(,%eax,4)
 
 
 //dist1= p->normal[0]*emaxs[0] + p->normal[1]*emaxs[1] + p->normal[2]*emaxs[2];
