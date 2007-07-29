@@ -1688,38 +1688,7 @@ void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, 
 	// TODO : Implement Draw_Polygon for software.
 }
 
-void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha)
-{
-	Draw_FadeBox(x, y, w, h, c, alpha);
-}
-
-void Draw_AlphaFillRGB (int x, int y, int width, int height, color_t color)
-{
-	Draw_FadeBox(x, y, width, height, Draw_FindNearestColor(color), COLOR_ALPHA(color));
-}
-
-void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool fill, color_t color)
-{
-	int t = Q_rint(thickness);
-
-	if (fill)
-	{
-		Draw_AlphaFillRGB(x, y, w, h, color);
-	}
-	else
-	{
-		Draw_AlphaFillRGB(x,		 y,				w,	t,				color);
-		Draw_AlphaFillRGB(x,		 (y + h - t),	w,	t,				color);
-		Draw_AlphaFillRGB(x,		 (y + t),		t,	(h - (2 * t)),	color);
-		Draw_AlphaFillRGB(x + w - t, (y + t),		t,	(h - (2 * t)),	color);
-	}
-}
-
 //=============================================================================
-
-// ================
-// Draw_FadeBox
-// ================
 
 static void Draw_FadeBox (int x, int y, int width, int height, byte color, float alpha)
 {
@@ -1769,6 +1738,34 @@ static void Draw_FadeBox (int x, int y, int width, int height, byte color, float
 	}
 }
 
+void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha)
+{
+	Draw_FadeBox(x, y, w, h, c, alpha);
+}
+
+void Draw_AlphaFillRGB (int x, int y, int width, int height, color_t color)
+{
+	Draw_FadeBox(x, y, width, height, Draw_FindNearestColor(color), COLOR_ALPHA(color));
+}
+
+void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool fill, color_t color)
+{
+	int t = Q_rint(thickness);
+
+	if (fill)
+	{
+		Draw_AlphaFillRGB(x, y, w, h, color);
+	}
+	else
+	{
+		Draw_AlphaFillRGB(x,		 y,				w,	t,				color);
+		Draw_AlphaFillRGB(x,		 (y + h - t),	w,	t,				color);
+		Draw_AlphaFillRGB(x,		 (y + t),		t,	(h - (2 * t)),	color);
+		Draw_AlphaFillRGB(x + w - t, (y + t),		t,	(h - (2 * t)),	color);
+	}
+}
+
+
 void Draw_FadeScreen (void)
 {
 	Draw_FadeBox(0, 0, vid.width, vid.height, 0, scr_menualpha.value);
@@ -1785,12 +1782,12 @@ void Draw_SCharacter (int x, int y, int num, float scale)
 
 void Draw_SString (int x, int y, const char *str, float scale)
 {
-	Draw_SColoredString(x, y, str, NULL, 0, 0, scale);
+	Draw_SColoredString(x, y, str2wcs(str), NULL, 0, 0, scale);
 }
 
 void Draw_SAlt_String (int x, int y, const char *str, float scale)
 {
-	Draw_SColoredString(x, y, str, NULL, 0, 1, scale);
+	Draw_SColoredString(x, y, str2wcs(str), NULL, 0, 1, scale);
 }
 
 void Draw_SPic (int x, int y, mpic_t *pic, float scale)
