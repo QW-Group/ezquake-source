@@ -1,5 +1,5 @@
 /*
-	$Id: EX_browser.c,v 1.41 2007-07-10 21:20:11 cokeman1982 Exp $
+	$Id: EX_browser.c,v 1.42 2007-07-29 12:23:46 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -1033,11 +1033,11 @@ void Serverinfo_Draw ()
 
     strcpy(buf, " players serverinfo sources ");
     if (serverinfo_pos == 0)
-        strncpy(buf, "\x10נלבשועף\x11", 9);
+        strncpy(buf, "\x10נלבשועף\x11", 9); // FIXME: non-ascii chars
     if (serverinfo_pos == 1)
-        strncpy(buf+8, "\x10ףועצועימזן\x11", 12);
+        strncpy(buf+8, "\x10ףועצועימזן\x11", 12); // FIXME: non-ascii chars
     if (serverinfo_pos == 2)
-        strncpy(buf+19, "\x10ףןץעדוף\x11", 9);
+        strncpy(buf+19, "\x10ףןץעדוף\x11", 9); // FIXME: non-ascii chars
 
     UI_Print_Center(x, y+24, w, buf, false);
 
@@ -1786,6 +1786,7 @@ int Servers_Key(int key, CTab_t *tab, CTabPage_t *page)
 
             if (!SearchNextServer(Servers_pos))
                 if (!SearchNextServer(0))
+		    // FIXME: non-ascii chars
                     strcpy(searchstring, "מןפ זןץמה");  // not found
         }
 		return true;

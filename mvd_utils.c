@@ -1,5 +1,5 @@
 /*
-$Id: mvd_utils.c,v 1.44 2007-07-15 09:50:44 disconn3ct Exp $
+$Id: mvd_utils.c,v 1.45 2007-07-29 12:23:46 disconn3ct Exp $
 */
 
 #include "quakedef.h"
@@ -326,7 +326,7 @@ int last_track;
 // mvd_info cvars
 cvar_t			mvd_info		= {"mvd_info", "0"};
 cvar_t			mvd_info_show_header	= {"mvd_info_show_header", "0"};
-cvar_t			mvd_info_setup	= {"mvd_info_setup", "%p%n �%l� %h/%a %w"}; // FIXME
+cvar_t			mvd_info_setup		= {"mvd_info_setup", "%p%n �%l� %h/%a %w"}; // FIXME: non-ascii chars
 cvar_t			mvd_info_x		= {"mvd_info_x", "0"};
 cvar_t			mvd_info_y		= {"mvd_info_y", "0"};
 
