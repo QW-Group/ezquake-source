@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.30 2007-07-29 01:28:38 disconn3ct Exp $
+	$Id: hud_editor.c,v 1.31 2007-08-02 18:45:09 cokeman1982 Exp $
 
 */
 
@@ -1400,8 +1400,8 @@ static qbool HUD_Editor_Placing(hud_t *hud_hover)
 				if(hud_hover == selected_hud || (selected_hud->place_hud && selected_hud->place_hud == hud_hover))
 				{
 					// Red "not allowed".
-					Draw_AlphaRectangleRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 1, true, RGBA_TO_COLOR(0, 0, 255, 25));
-					Draw_AlphaRectangleRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 1, false, RGBA_TO_COLOR(0, 0, 255, 255));
+					Draw_AlphaRectangleRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 1, true, RGBA_TO_COLOR(255, 0, 0, 25));
+					Draw_AlphaRectangleRGB(hud_hover->lx, hud_hover->ly, hud_hover->lw, hud_hover->lh, 1, false, RGBA_TO_COLOR(255, 0, 0, 255));
 				}
 				else
 				{
@@ -1421,7 +1421,7 @@ static qbool HUD_Editor_Placing(hud_t *hud_hover)
 			else
 			{
 				// Allowed.
-				Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 1, true, RGBA_TO_COLOR(255, 0, 0, 25));
+				Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 1, true, RGBA_TO_COLOR(0, 255, 0, 25));
 			}
 		}
 	}
@@ -2457,7 +2457,7 @@ void HUD_Editor_Init(void)
 	root = EZ_control_Create(&help_control_tree, NULL, "Test window", "Test", 50, 50, 200, 200, NULL, CONTROL_FOCUSABLE | CONTROL_MOVABLE);
 
 	child1 = EZ_control_Create(&help_control_tree, root, "Child 1", "Test", 10, 10, 50, 50, NULL, CONTROL_FOCUSABLE | CONTROL_RESIZE_H | CONTROL_RESIZE_V | CONTROL_MOVABLE | CONTROL_CONTAINED);
-	button = EZ_button_Create(&help_control_tree, child1, "My button", "A crazy button!", 15, 15, 15, 15, NULL, NULL, NULL, 0);
+	button = EZ_button_Create(&help_control_tree, child1, "My button", "A crazy button!", 15, 15, 15, 15, NULL, NULL, NULL, CONTROL_CONTAINED);
 
 	child2 = EZ_control_Create(&help_control_tree, root, "Child 2", "Test", 30, 50, 50, 20, NULL, CONTROL_FOCUSABLE | CONTROL_CONTAINED);
 
