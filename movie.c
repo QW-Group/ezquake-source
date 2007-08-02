@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: movie.c,v 1.22 2007-03-11 06:01:41 disconn3ct Exp $
+	$Id: movie.c,v 1.23 2007-08-02 16:47:11 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -112,7 +112,10 @@ static void Movie_Start(double _time)
 	{
 		#ifdef GLQUAKE
 		// DEFAULT_SSHOT_FORMAT
-		if(!strcmp(scr_sshot_format.string, ""))
+		if (!strcmp(scr_sshot_format.string, "tga")
+		 || !strcmp(scr_sshot_format.string, "jpeg")
+		 || !strcmp(scr_sshot_format.string, "jpg")
+		 || !strcmp(scr_sshot_format.string, "png"))
 		{
 			strlcpy(image_ext, scr_sshot_format.string, sizeof(image_ext));		
 		}
