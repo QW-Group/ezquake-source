@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.62.2.3 2007-06-28 16:38:04 zwoch Exp $
+#	$Id: Makefile,v 1.62.2.4 2007-08-02 17:12:46 zwoch Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -84,7 +84,7 @@ $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR):
 PRJ_CFLAGS = -DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM -DWITH_ZIP
 BASE_CFLAGS = -Wall -funsigned-char $(ARCH_CFLAGS) $(PRJ_CFLAGS) -I ./libs
 
-RELEASE_CFLAGS = -pipe -O2 -fno-strict-aliasing -ffast-math -fomit-frame-pointer -fexpensive-optimizations -funroll-loops
+RELEASE_CFLAGS = -pipe -O2 -fno-strict-aliasing -ffast-math -fexpensive-optimizations -funroll-loops
 DEBUG_CFLAGS = -ggdb
 
 # opengl builds
