@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.82 2007-07-29 01:16:01 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.83 2007-08-07 19:05:28 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -920,9 +920,9 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 			{
 				if (text[i + 1] == 'c' && text[i + 2] && text[i + 3] && text[i + 4])
 				{
-					r = HexToInt(text[2]);
-					g = HexToInt(text[3]);
-					b = HexToInt(text[4]);
+					r = HexToInt(text[i + 2]);
+					g = HexToInt(text[i + 3]);
+					b = HexToInt(text[i + 4]);
 
 					if (r >= 0 && g >= 0 && b >= 0)
 					{
@@ -935,7 +935,7 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 							color_is_white = false;
 						}
 
-						color_count; // Keep track on how many colors we're using.
+						color_count++; // Keep track on how many colors we're using.
 
 						i += 4;
 						continue;
