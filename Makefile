@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.69 2007-07-28 23:18:57 disconn3ct Exp $
+#	$Id: Makefile,v 1.70 2007-08-07 15:25:01 disconn3ct Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -12,7 +12,7 @@ CC_BASEVERSION = $(shell $(CC) -dumpversion | sed -e 's/\..*//g')
 # TYPE = release debug
 TYPE=release
 STRIP = $(_E)strip
-#STRIPFLAGS = --strip-unneeded --remove-section=.comment
+STRIPFLAGS = --strip-unneeded --remove-section=.comment
 
 # ARCH = x86 ppc
 # OS = linux darwin freebsd
@@ -21,13 +21,13 @@ OS = $(shell uname -s | tr A-Z a-z)
 
 # add special architecture based flags
 ifeq ($(ARCH),x86_64)
-	ARCH_CFLAGS = -march=k8 -D__LITTLE_ENDIAN__
+	ARCH_CFLAGS = -mtune=nocona -mmmx -msse -msse2 -m64
 endif
 ifeq ($(ARCH),x86)
-	ARCH_CFLAGS = -march=i686 -D__LITTLE_ENDIAN__ -Did386
+	ARCH_CFLAGS = -march=i686 -mmmx -Did386
 endif
 ifeq ($(ARCH),ppc)
-	ARCH_CFLAGS = -arch ppc -faltivec -maltivec -mcpu=7450 -mtune=7450 -mpowerpc -mpowerpc-gfxopt -D__BIG_ENDIAN__
+	ARCH_CFLAGS = -arch i686 -arch ppc
 endif
 
 ifeq ($(OS),linux)
@@ -36,7 +36,7 @@ ifeq ($(OS),linux)
 endif
 ifeq ($(OS),darwin)
 	DEFAULT_TARGET = mac
-	OS_GL_CFLAGS = -I/opt/local/include/ -I/Developer/Headers/FlatCarbon -I/sw/include -FOpenGL -FAGL
+	OS_GL_CFLAGS = -I/opt/local/include/ -I/Developer/Headers/FlatCarbon -FOpenGL -FAGL
 endif
 ifeq ($(OS),freebsd)
 	DEFAULT_TARGET = glx
@@ -219,7 +219,7 @@ $(SVGA_S_OBJS): $(SVGA_DIR)/%.o: %.s
 
 MAC_C_OBJS = $(addprefix $(MAC_DIR)/, $(addsuffix .o, $(MAC_C_FILES)))
 MAC_CFLAGS = $(CFLAGS) $(GLCFLAGS)
-MAC_LDFLAGS = $(LDFLAGS) -L/sw/lib -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
+MAC_LDFLAGS = $(LDFLAGS) -arch i686 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk -framework OpenGL -framework AGL -framework DrawSprocket -framework Carbon -framework ApplicationServices -framework IOKit
 
 mac: _DIR = $(MAC_DIR)
 mac: _OBJS = $(MAC_C_OBJS) $(COMMON_LIBS) $(GL_LIBS)
