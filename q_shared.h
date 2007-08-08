@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.23 2007-05-03 12:03:55 johnnycz Exp $
+    $Id: q_shared.h,v 1.24 2007-08-08 00:53:29 disconn3ct Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -114,21 +114,21 @@ int		LongSwapPDP2Lit (int l);
 float	FloatSwapPDP2Big (float f);
 float	FloatSwapPDP2Lit (float f);
 
-#if defined __BIG_ENDIAN__
+#if defined __BIG_ENDIAN
 #define BigShort(x)		(x)
 #define BigLong(x)		(x)
 #define BigFloat(x)		(x)
 #define LittleShort(x)	ShortSwap(x)
 #define LittleLong(x)	LongSwap(x)
 #define LittleFloat(x)	FloatSwap(x)
-#elif defined(__LITTLE_ENDIAN__)
+#elif defined(__LITTLE_ENDIAN)
 #define BigShort(x)		ShortSwap(x)
 #define BigLong(x)		LongSwap(x)
 #define BigFloat(x)		FloatSwap(x)
 #define LittleShort(x)	(x)
 #define LittleLong(x)	(x)
 #define LittleFloat(x)	(x)
-#elif defined(__PDP_ENDIAN__)
+#elif defined(__PDP_ENDIAN)
 #define BigShort(x)		ShortSwap(x)
 #define BigLong(x)		LongSwapPDP2Big(x)
 #define BigFloat(x)		FloatSwapPDP2Big(x)
