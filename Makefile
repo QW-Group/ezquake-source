@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.70 2007-08-07 15:25:01 disconn3ct Exp $
+#	$Id: Makefile,v 1.71 2007-08-08 00:55:28 disconn3ct Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -24,7 +24,7 @@ ifeq ($(ARCH),x86_64)
 	ARCH_CFLAGS = -mtune=nocona -mmmx -msse -msse2 -m64
 endif
 ifeq ($(ARCH),x86)
-	ARCH_CFLAGS = -march=i686 -mmmx -Did386
+	ARCH_CFLAGS = -march=i686 -mtune=generic -mmmx -Did386
 endif
 ifeq ($(ARCH),ppc)
 	ARCH_CFLAGS = -arch i686 -arch ppc
