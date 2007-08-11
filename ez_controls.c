@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.25 2007-07-29 01:28:38 disconn3ct Exp $
+$Id: ez_controls.c,v 1.26 2007-08-11 20:31:04 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -163,14 +163,21 @@ static void EZ_tree_SetDrawBounds(ez_control_t *control)
 	ez_dllist_node_t *iter = NULL;
 	ez_control_t *child = NULL;
 	ez_control_t *p = control->parent;
+	qbool contained = control->flags & CONTROL_CONTAINED;
 
-	// If the control has a parent, set the corresponding bound
-	// to the parents bound, otherwise use the drawing area of
-	// the control as bounds (aka windows).
-	control->bound_top		= (p) ? (p->bound_top)		: (control->absolute_y);
-	control->bound_bottom	= (p) ? (p->bound_bottom)	: (control->absolute_y + control->height);
-	control->bound_left		= (p) ? (p->bound_left)		: (control->absolute_x);
-	control->bound_right	= (p) ? (p->bound_right)	: (control->absolute_x + control->width);
+	// Calculate the controls bounds.
+	int top		= control->absolute_y;
+	int bottom	= control->absolute_y + control->height;
+	int left	= control->absolute_x;
+	int right	= control->absolute_x + control->width;
+
+	// If the control has a parent (and should be contained within it's parent), 
+	// set the corresponding bound to the parents bound (ex. button), 
+	// otherwise use the drawing area of the control as bounds (ex. windows).
+	control->bound_top		= (p && contained && (top	 < p->bound_top))		? (p->bound_top)	: top;
+	control->bound_bottom	= (p && contained && (bottom > p->bound_bottom))	? (p->bound_bottom)	: bottom;
+	control->bound_left		= (p && contained && (left	 < p->bound_left))		? (p->bound_left)	: left;
+	control->bound_right	= (p && contained && (right	 > p->bound_right))		? (p->bound_right)	: right;
 
 	// Calculate the bounds for the children.
 	for (iter = control->children.head; iter; iter = iter->next)
@@ -180,7 +187,7 @@ static void EZ_tree_SetDrawBounds(ez_control_t *control)
 		// TODO : Probably should some better check for infinte loop here also.
 		if (child == control)
 		{
-			Sys_Error("EZ_tree_SetChildBound(): Infinite loop, child is its own parent\n");
+			Sys_Error("EZ_tree_SetDrawBounds(): Infinite loop, child is its own parent.\n");
 		}
 
 		EZ_tree_SetDrawBounds(child);
@@ -207,16 +214,13 @@ void EZ_tree_Draw(ez_tree_t *tree)
 	{
 		payload = (ez_control_t *)iter->payload;
 
-		// Make sure parts located outside the parent aren't drawn
-		// when the control is contained within it's parent.
-		if (payload->parent && (payload->flags & CONTROL_CONTAINED))
-		{
-			ez_control_t *p = payload->parent;
-			Draw_EnableScissor(p->bound_left, p->bound_right, p->bound_top, p->bound_bottom);
-		}
+		// Make sure that the control draws only within it's bounds.
+		Draw_EnableScissor(payload->bound_left, payload->bound_right, payload->bound_top, payload->bound_bottom);
 
+		// Raise the draw event for the control.
 		CONTROL_RAISE_EVENT(NULL, payload, OnDraw);
 
+		// Reset the drawing bounds to the entire screen after the control has been drawn.
 		Draw_DisableScissor();
 
 		iter = iter->next;
@@ -264,8 +268,6 @@ void EZ_tree_ChangeFocus(ez_tree_t *tree, qbool next_control)
 	qbool found = false;
 	ez_dllist_node_t *node_iter = NULL;
 	// ez_control_t *payload = NULL;
-
-	// FIXME: Not working properly
 
 	if(tree->focused_node)
 	{
@@ -396,7 +398,7 @@ void EZ_tree_OrderDrawList(ez_tree_t *tree)
 }
 
 //
-// Control - Tree Order function for the tab list based on the tab_order property.
+// Control Tree - Tree Order function for the tab list based on the tab_order property.
 //
 static int EZ_tree_TabOrderFunc(const void *val1, const void *val2)
 {
@@ -442,6 +444,25 @@ ez_control_t *EZ_control_Create(ez_tree_t *tree, ez_control_t *parent,
 }
 
 //
+// Control - 
+// Returns the screen position of the control. This will be different for a scrollable window
+// since it's drawing position differs from the windows actual position on screen.
+//
+void EZ_control_GetDrawingPosition(ez_control_t *self, int *x, int *y)
+{
+	if (self->flags & CONTROL_SCROLLABLE)
+	{
+		(*x) = self->absolute_virtual_x;
+		(*y) = self->absolute_virtual_y;
+	}
+	else
+	{
+		(*x) = self->absolute_x;
+		(*y) = self->absolute_y;
+	}
+}
+
+//
 // Control - Initializes a control and adds it to the specified control tree.
 //
 void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *parent,
@@ -476,6 +497,7 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	// This should NEVER be changed.
 	control->inheritance_level = EZ_CONTROL_INHERITANCE_LEVEL;
 
+	// Setup the default event functions, none of these should ever be NULL.
 	control->events.OnMouseEvent		= EZ_control_OnMouseEvent;
 	control->events.OnMouseClick		= EZ_control_OnMouseClick;
 	control->events.OnMouseDown			= EZ_control_OnMouseDown;
@@ -490,6 +512,7 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	control->events.OnLostFocus			= EZ_control_OnLostFocus;
 	control->events.OnLayoutChildren	= EZ_control_OnLayoutChildren;
 	control->events.OnMove				= EZ_control_OnMove;
+	control->events.OnScroll			= EZ_control_OnScroll;
 	control->events.OnResize			= EZ_control_OnResize;
 
 	// Load the background image.
@@ -515,14 +538,18 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 		EZ_control_AddChild(parent, control);
 	}
 
+	// Add the control to the draw and tab list.
 	EZ_double_linked_list_Add(&tree->drawlist, (void *)control);
 	EZ_double_linked_list_Add(&tree->tablist, (void *)control);
 
+	// Order the lists.
 	EZ_tree_OrderDrawList(tree);
 	EZ_tree_OrderTabList(tree);
 
+	// Position and size of the control.
 	EZ_control_SetPosition(control, x, y);
 	EZ_control_SetSize(control, width, height);
+	EZ_control_SetVirtualSize(control, width, height);
 }
 
 //
@@ -601,6 +628,14 @@ void EZ_control_SetOnLayoutChildren(ez_control_t *self, ez_control_handler_fp On
 void EZ_control_SetOnMove(ez_control_t *self, ez_control_handler_fp OnMove)
 {
 	self->event_handlers.OnMove = OnMove;
+}
+
+//
+// Control - Sets the OnScroll event handler.
+//
+void EZ_control_SetOnScroll(ez_control_t *self, ez_control_handler_fp OnScroll)
+{
+	self->event_handlers.OnScroll = OnScroll;
 }
 
 //
@@ -798,6 +833,12 @@ void EZ_control_SetSize(ez_control_t *self, int width, int height)
 	self->width = width;
 	self->height = height;
 
+	// Make sure the virtual size is sset together with the normal width, if it's smaller.
+	if (self->virtual_width < width || self->virtual_height < height)
+	{
+		EZ_control_SetVirtualSize(self, max(self->virtual_width, width), max(self->virtual_height, height));
+	}
+
 	// EZ_control_OnResize(self);
 	CONTROL_RAISE_EVENT(NULL, self, OnResize);
 }
@@ -814,7 +855,7 @@ void EZ_control_SetBackgroundColor(ez_control_t *self, byte r, byte g, byte b, b
 }
 
 //
-// Control - Sets the position of a control.
+// Control - Sets the position of a control, relative to it's parent.
 //
 void EZ_control_SetPosition(ez_control_t *self, int x, int y)
 {
@@ -824,6 +865,54 @@ void EZ_control_SetPosition(ez_control_t *self, int x, int y)
 
 	// Raise the event that we have moved.
 	CONTROL_RAISE_EVENT(NULL, self, OnMove);
+}
+
+//
+// Control - Sets the part of the control that should be shown if it's scrollable.
+//
+void EZ_control_SetScrollPosition(ez_control_t *self, int scroll_x, int scroll_y)
+{
+	// Only scroll scrollable controls.
+	if (!(self->flags & CONTROL_SCROLLABLE))
+	{
+		return;
+	}
+
+	// Don't allow scrolling outside the scroll area.
+	if ((scroll_x > self->virtual_width) 
+	 || (scroll_y > self->virtual_height)
+	 || (scroll_x < 0)
+	 || (scroll_y < 0))
+	{
+		return;
+	}
+
+	self->virtual_x = scroll_x;
+	self->virtual_y = scroll_y;
+ 
+	CONTROL_RAISE_EVENT(NULL, self, OnScroll);
+}
+
+//
+// Control - Convenient function for changing the scroll position by a specified amount.
+//
+void EZ_control_SetScrollChange(ez_control_t *self, int delta_scroll_x, int delta_scroll_y)
+{
+	EZ_control_SetScrollPosition(self, (self->virtual_x + delta_scroll_x), (self->virtual_y + delta_scroll_y));
+}
+
+//
+// Control - Sets the virtual size of the control (this area can be scrolled around in).
+//
+void EZ_control_SetVirtualSize(ez_control_t *self, int virtual_width, int virtual_height)
+{
+	// Set the new virtual size of the control (cannot be smaller than the current size of the control).
+	self->virtual_width = max(virtual_width, self->width);
+	self->virtual_height = max(virtual_height, self->height);
+
+	// Raise the event that we have changed the virtual size of the control.
+	// TODO : Raise a changed virtual size event.
+	//CONTROL_RAISE_EVENT(NULL, self, OnMove);
 }
 
 //
@@ -840,13 +929,15 @@ qbool EZ_control_IsRoot(ez_control_t *self)
 void EZ_control_AddChild(ez_control_t *self, ez_control_t *child)
 {
 	// Remove the control from it's current parent.
-	if(child->parent)
+	if (child->parent)
 	{
 		EZ_double_linked_list_RemoveByPayload(&child->parent->children, child);
 	}
-
+ 
+	// Set the new parent of the child.
 	child->parent = self;
 
+	// Add the child to the new parents list of children.
 	EZ_double_linked_list_Add(&self->children, child);
 }
 
@@ -878,7 +969,7 @@ int EZ_control_OnGotFocus(ez_control_t *self)
 //
 int EZ_control_OnLostFocus(ez_control_t *self)
 {
-	if(self->flags & CONTROL_FOCUSED)
+	if (self->flags & CONTROL_FOCUSED)
 	{
 		return 0;
 	}
@@ -893,8 +984,6 @@ int EZ_control_OnLostFocus(ez_control_t *self)
 //
 int EZ_control_OnResize(ez_control_t *self)
 {
-
-
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnResize);
 
 	return 0;
@@ -911,6 +1000,11 @@ int EZ_control_OnMove(ez_control_t *self)
 	// Update the absolute screen position based on the parents position.
 	self->absolute_x = (self->parent ? self->parent->absolute_x : 0) + self->x;
 	self->absolute_y = (self->parent ? self->parent->absolute_y : 0) + self->y;
+	
+	if (self->flags & CONTROL_SCROLLABLE)
+	{
+		EZ_control_OnScroll(self);
+	}
 
 	// Tell the children we've moved.
 	while(iter)
@@ -921,6 +1015,22 @@ int EZ_control_OnMove(ez_control_t *self)
 	}
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnMove);
+
+	return 0;
+}
+
+//
+// Control - On scroll event.
+//
+int EZ_control_OnScroll(ez_control_t *self)
+{
+	if (self->flags & CONTROL_SCROLLABLE)
+	{
+		self->absolute_virtual_x = self->absolute_x - self->virtual_x;
+		self->absolute_virtual_y = self->absolute_y - self->virtual_y;
+	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnScroll);
 
 	return 0;
 }
@@ -939,26 +1049,26 @@ int EZ_control_OnLayoutChildren(ez_control_t *self)
 //
 int EZ_control_OnDraw(ez_control_t *self)
 {
+	int x, y;
+	EZ_control_GetDrawingPosition(self, &x, &y);
+
 	if (self->background_color[3] > 0)
 	{
-		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 1, true,
-			RGBA_TO_COLOR(self->background_color[0], self->background_color[1], self->background_color[2], self->background_color[3]));
+		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 1, true, RGBAVECT_TO_COLOR(self->background_color));
+	}
 
-		Draw_String(self->absolute_x, self->absolute_y, va("%s%s%s%s",
+	Draw_String(x, y, va("%s%s%s%s",
 			((self->flags & CONTROL_MOVING) ? "M" : " "),
 			((self->flags & CONTROL_FOCUSED) ? "F" : " "),
 			((self->flags & CONTROL_CLICKED) ? "C" : " "),
 			((self->flags & CONTROL_RESIZING_LEFT) ? "R" : " ")
 			));
-	}
 
 	// Draw control specifics.
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDraw);
 
 	return 0;
 }
-
-
 
 //
 // Control - Key event.
@@ -1349,6 +1459,7 @@ int EZ_control_OnMouseDown(ez_control_t *self, mouse_state_t *ms)
 }
 
 /*
+// TODO : Add support for mouse wheel.
 //
 // Control - The mouse wheel was triggered within the bounds of the control.
 //
@@ -1418,7 +1529,7 @@ void EZ_label_Init(ez_label_t *label, ez_tree_t *tree, ez_control_t *parent,
 	label->super.CLASS_ID = EZ_LABEL_ID;
 	label->super.inheritance_level = EZ_LABEL_INHERITANCE_LEVEL;
 
-	label->super.flags |= CONTROL_CONTAINED;
+	label->super.flags	|= CONTROL_CONTAINED;
 	label->scale		= 1.0;
 	label->text			= text;
 	label->text_flags	|= text_flags;
@@ -1449,7 +1560,9 @@ int EZ_label_OnDraw(ez_control_t *self)
 	ez_label_t *label = (ez_label_t *)self;
 	EZ_control_OnDraw(self);
 
-	Draw_ColoredString3(self->absolute_x, self->absolute_y, label->text, &label->color, 1, 0);
+	Draw_SColoredString(self->absolute_x, self->absolute_y, label->text, &label->color, 1, false, label->scale);
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDraw);
 
 	return 0;
 }
@@ -1594,6 +1707,9 @@ int EZ_button_OnDraw(ez_control_t *self)
 	// qbool mouse_inside = 0;
 	ez_button_t *button = (ez_button_t *)self;
 
+	int x, y;
+	EZ_control_GetDrawingPosition(self, &x, &y);
+
 	// Run the parents implementation first.
 	EZ_control_OnDraw(self);
 
@@ -1624,34 +1740,28 @@ int EZ_button_OnDraw(ez_control_t *self)
 
 	if (self->flags & CONTROL_CLICKED)
 	{
-		Draw_AlphaFillRGB(self->x, self->y, self->width, self->height,
-			RGBA_TO_COLOR(button->color_pressed[0], button->color_pressed[1], button->color_pressed[2], button->color_pressed[3]));
+		Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_pressed));
 	}
 
 	if (self->flags & CONTROL_MOUSE_OVER)
 	{
 		if (self->flags & CONTROL_CLICKED)
 		{
-			Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height,
-				RGBA_TO_COLOR(button->color_pressed[0], button->color_pressed[1], button->color_pressed[2], button->color_pressed[3]));
+			Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_pressed));
 		}
 		else
 		{
-			Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height,
-				RGBA_TO_COLOR(button->color_hover[0], button->color_hover[1], button->color_hover[2], button->color_hover[3]));
+			Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_hover));
 		}
 	}
 	else
 	{
-		Draw_AlphaFillRGB(self->absolute_x, self->absolute_y, self->width, self->height,
-			RGBA_TO_COLOR(button->color_normal[0], button->color_normal[1], button->color_normal[2], button->color_normal[3]));
+		Draw_AlphaFillRGB(x, y, self->width, self->height, RGBAVECT_TO_COLOR(button->color_normal));
 	}
 
 	if (self->flags & CONTROL_FOCUSED)
 	{
-		Draw_AlphaRectangleRGB(self->absolute_x, self->absolute_y, self->width, self->height, 1, false,
-			RGBA_TO_COLOR(button->color_focused[0], button->color_focused[1], button->color_focused[2], button->color_focused[3]));
-
+		Draw_AlphaRectangleRGB(x, y, self->width, self->height, 1, false, RGBAVECT_TO_COLOR(button->color_focused));
 		//Draw_ColoredString3(self->absolute_x, self->absolute_y, button->text, button->focused_text_color, 1, 0);
 	}
 

@@ -111,7 +111,8 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree);
 #define CONTROL_CONTAINED			(1 << 11)	// Is the control contained within it's parent or can it go outside its edges?
 #define CONTROL_CLICKED				(1 << 12)	// Is the control being clicked? (If the mouse button is released outside the control a click event isn't raised).
 #define CONTROL_VISIBLE				(1 << 13)	// Is the control visible?
-#define CONTROL_MOUSE_OVER			(1 << 14)
+#define CONTROL_MOUSE_OVER			(1 << 14)	// Is the mouse over the control?
+#define CONTROL_SCROLLABLE			(1 << 15)	// Is the control scrollable?
 
 //
 // Control - Function pointer types.
@@ -169,7 +170,7 @@ typedef int (*ez_control_destroy_handler_fp) (struct ez_control_s *self, qbool d
 #define CONTROL_VALIDATE_CALL(ctrl, id, funcname) if( ctrl##->CLASS_ID < id ) Sys_Error("EZ_controls: Cannot pass a less specific object as an argument to %s\n", funcname)
 
 #define EZ_CONTROL_INHERITANCE_LEVEL	0
-#define EZ_CLASS_ID					0
+#define EZ_CLASS_ID						0
 
 typedef struct ez_control_events_s
 {
@@ -185,6 +186,7 @@ typedef struct ez_control_events_s
 	ez_control_handler_fp			OnDraw;
 	ez_control_destroy_handler_fp	OnDestroy;
 	ez_control_handler_fp			OnMove;
+	ez_control_handler_fp			OnScroll;
 	ez_control_handler_fp			OnResize;
 	ez_control_handler_fp			OnGotFocus;
 	ez_control_handler_fp			OnLostFocus;
@@ -199,24 +201,33 @@ typedef struct ez_control_s
 	
 	int	 				x;								// Relative position to it's parent.
 	int					y;
+
+	int					absolute_x;						// The absolute screen coordinates for the control.
+	int					absolute_y;	
 	
 	int 				width;							// Size.
 	int					height;
+
+	int					virtual_x;						// The relative position in the virtual window that the "real" window is showing.
+	int					virtual_y;
+
+	int					absolute_virtual_x;				// The absolute position of the virtual window on the screen.
+	int					absolute_virtual_y;
+
+	int					virtual_width;					// The virtual size of the control (scrollable area).
+	int					virtual_height;
 	
 	int					width_max;						// Max/min sizes for the control.
 	int					width_min;
 	int					height_max;
 	int					height_min;
 
-	int					bound_top;
+	int					bound_top;						// The bounds the control is allowed to draw within.
 	int					bound_left;
 	int					bound_right;
 	int					bound_bottom;
 
 	int					resize_handle_thickness;		// The thickness of the resize handles on the sides of the control.
-
-	int					absolute_x;						// The absolute screen coordinates for the control.
-	int					absolute_y;	
 
 	int					draw_order;						// The order the control is drawn in.
 	int					tab_order;						// The tab number of the control.
@@ -226,6 +237,7 @@ typedef struct ez_control_s
 
 	byte				background_color[4];			// The background color of the control RGBA.
 	mpic_t				*background;					// The background picture.
+	float				opacity;						// The opacity of the control.
 
 	mouse_state_t		prev_mouse_state;				// The last mouse event that was passed on to this control.
 
@@ -364,6 +376,16 @@ void EZ_control_SetSize(ez_control_t *self, int width, int height);
 void EZ_control_SetPosition(ez_control_t *self, int x, int y);
 
 //
+// Control - Sets the virtual size of the control (this area can be scrolled around in).
+//
+void EZ_control_SetVirtualSize(ez_control_t *self, int virtual_width, int virtual_height);
+
+//
+// Control - Sets the part of the control that should be shown if it's scrollable.
+//
+void EZ_control_SetScrollPosition(ez_control_t *self, int scroll_x, int scroll_y);
+
+//
 // Control - Focuses on a control.
 //
 qbool EZ_control_SetFocus(ez_control_t *self);
@@ -406,6 +428,16 @@ int EZ_control_OnLostFocus(ez_control_t *self);
 // Control - The control was moved.
 //
 int EZ_control_OnMove(ez_control_t *self);
+
+//
+// Control - On scroll event.
+//
+int EZ_control_OnScroll(ez_control_t *self);
+
+//
+// Control - Convenient function for changing the scroll position by a specified amount.
+//
+void EZ_control_SetScrollChange(ez_control_t *self, int delta_scroll_x, int delta_scroll_y);
 
 //
 // Control - The control was resized.
