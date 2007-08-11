@@ -192,7 +192,8 @@ typedef struct {
 #define	MAX_STYLESTRING		64
 
 typedef enum {lt_default, lt_muzzleflash, lt_explosion, lt_rocket,
-lt_red, lt_blue, lt_redblue, lt_green, lt_white, lt_custom, NUM_DLIGHTTYPES } dlighttype_t;
+	lt_red, lt_blue, lt_redblue, lt_green, lt_redgreen, lt_bluegreen, 
+	lt_white, lt_custom, NUM_DLIGHTTYPES } dlighttype_t;
 
 typedef struct {
 	int				key;				// so entities can reuse same entry

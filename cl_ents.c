@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.37 2007-08-11 20:01:37 cokeman1982 Exp $
+	$Id: cl_ents.c,v 1.38 2007-08-11 20:12:05 cokeman1982 Exp $
 
 */
 
@@ -200,7 +200,7 @@ void CL_AddEntity (entity_t *ent) {
 }
 
 // NUM_DLIGHTTYPES - this constant not used here, but help u find dynamic light related code if u change something
-static dlighttype_t dl_colors[] = {lt_red, lt_blue, lt_redblue, lt_green, lt_white};
+static dlighttype_t dl_colors[] = {lt_red, lt_blue, lt_redblue, lt_green, lt_redgreen, lt_bluegreen, lt_white};
 static int dl_colors_cnt = sizeof(dl_colors) / sizeof(dl_colors[0]);
 
 dlighttype_t dlightColor(float f, dlighttype_t def, qbool random) {
@@ -739,12 +739,22 @@ void CL_LinkPacketEntities (void) {
 		if (state->modelindex != cl_modelindices[mi_player] || r_powerupglow.value) {
 			flicker = r_lightflicker.value ? (rand() & 31) : 0;
 			// spawn light flashes, even ones coming from invisible objects
-			if ((state->effects & (EF_BLUE | EF_RED)) == (EF_BLUE | EF_RED)) {
+			if ((state->effects & (EF_BLUE | EF_RED | EF_GREEN)) 
+					== (EF_BLUE | EF_RED | EF_GREEN)) {
+				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_white, 0);
+			} else if ((state->effects & (EF_BLUE | EF_RED)) == (EF_BLUE | EF_RED)) {
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_redblue, 0);
+			} else if ((state->effects & (EF_BLUE | EF_GREEN)) == (EF_BLUE | EF_GREEN)) {
+				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_bluegreen, 0);
+			} else if ((state->effects & (EF_RED | EF_GREEN)) == (EF_RED | EF_GREEN)) {
+				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_redgreen, 0);
 			} else if (state->effects & EF_BLUE) {
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_blue, 0);
 			} else if (state->effects & EF_RED) {
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_red, 0);
+			} else if (state->effects & EF_GREEN) {
+				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_green, 0);
+
 			} else if (state->effects & EF_BRIGHTLIGHT) {
 				vec3_t	tmp;
 				VectorCopy (state->origin, tmp);
@@ -1176,12 +1186,21 @@ void CL_LinkPacketEntities (void) {
 		if (state->modelindex != cl_modelindices[mi_player] || r_powerupglow.value) {
 			flicker = r_lightflicker.value ? (rand() & 31) : 0;
 			// spawn light flashes, even ones coming from invisible objects
-			if ((state->effects & (EF_BLUE | EF_RED)) == (EF_BLUE | EF_RED)) {
+			if ((state->effects & (EF_BLUE | EF_RED | EF_GREEN))
+					== (EF_BLUE | EF_RED | EF_GREEN)) {
+				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_white, 0);
+			} else if ((state->effects & (EF_BLUE | EF_RED)) == (EF_BLUE | EF_RED)) {
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_redblue, 0);
+			} else if ((state->effects & (EF_RED | EF_GREEN)) == (EF_RED | EF_GREEN)) {
+				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_redgreen, 0);
+			} else if ((state->effects & (EF_BLUE | EF_GREEN)) == (EF_BLUE | EF_GREEN)) {
+				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_bluegreen, 0);
 			} else if (state->effects & EF_BLUE) {
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_blue, 0);
 			} else if (state->effects & EF_RED) {
 				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_red, 0);
+			} else if (state->effects & EF_GREEN) {
+				CL_NewDlight (state->number, state->origin, 200 + flicker, 0.1, lt_green, 0);
 			} else if (state->effects & EF_BRIGHTLIGHT) {
 				vec3_t	tmp;
 				VectorCopy (state->origin, tmp);

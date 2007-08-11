@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.55 2007-06-30 10:47:59 johnnycz Exp $
+    $Id: common.h,v 1.56 2007-08-11 20:12:05 cokeman1982 Exp $
 */
 // common.h  -- general definitions
 
@@ -113,8 +113,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 #define	EF_BRIGHTFIELD		1
 #define	EF_MUZZLEFLASH 		2
-#define	EF_BRIGHTLIGHT 		4
-#define	EF_DIMLIGHT 		8
+#define EF_GREEN			2		// D-Kure: EF_GREEN will replace 
+#define	EF_BRIGHTLIGHT 		4		// EF_MUZZLEFLASH and provide RGB colours
+#define	EF_DIMLIGHT 		8       // Both are needed as NQ uses EF_MUZZLE..
 #define	EF_FLAG1	 		16
 #define	EF_FLAG2	 		32
 #define EF_BLUE				64

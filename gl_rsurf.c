@@ -263,6 +263,8 @@ int dlightcolor[NUM_DLIGHTTYPES][3] = {
 	{   0,   0, 128 },	// blue
 	{ 128,   0, 128 },	// red + blue
 	{   0, 128,   0 },	// green
+	{ 128, 128,   0 }, 	// red + green
+	{   0, 128, 128 }, 	// blue + green
 	{ 128, 128, 128 },	// white
 	{ 128, 128, 128 },	// custom
 };

@@ -92,6 +92,8 @@ float bubblecolor[NUM_DLIGHTTYPES][4] = {
 	{ 0.05, 0.05, 0.3  },	// blue
 	{ 0.5,  0.05, 0.4  },	// red + blue
 	{ 0.05, 0.45, 0.05 },	// green
+	{ 0.5,  0.45, 0.05 },	// red + green
+	{ 0.05, 0.45, 0.4  },	// blue + green
 	{ 0.5,  0.5,  0.5  },	// white
 	{ 0.5,  0.5,  0.5  },	// custom
 };
