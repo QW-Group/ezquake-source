@@ -71,7 +71,7 @@ qbool gl_ext_compiled_vertex_array = false;
 cvar_t	vid_mode = {"vid_mode", "0", false};// Saved in prefs, not config (list generated for each device at runtime)
 cvar_t	gl_vid_windowed = {"gl_vid_windowed", "0", false};// Saved in prefs, not config - 1 = in a window
 cvar_t	gl_vid_screen = {"gl_vid_screen", "0", false};// Saved in prefs, not config
-cvar_t	gl_vid_colorbits = {"gl_vid_colorbits", "16", false};// Saved in prefs, not config
+cvar_t	gl_vid_colorbits = {"gl_vid_colorbits", "32", false};// Saved in prefs, not config
 cvar_t	vid_vsync = {"vid_vsync", "0", true};// VBL sync
 cvar_t	_windowed_mouse = {"_windowed_mouse","1", CVAR_ARCHIVE};
 qbool OnTextureBitsChange (cvar_t *var, char *value)
@@ -98,7 +98,7 @@ qbool OnTextureBitsChange (cvar_t *var, char *value)
 
 	return false;
 }
-cvar_t	gl_texturebits	= {"gl_texturebits", "16", 0, OnTextureBitsChange};
+cvar_t	gl_texturebits	= {"gl_texturebits", "32", 0, OnTextureBitsChange};
 
 cvar_t	vid_hwgammacontrol = {"vid_hwgammacontrol","1", 0}; 
 
@@ -218,6 +218,9 @@ void MacSetupScreen ()
 				   !gScreen.mode->refresh ||
 				   numDevices > 1)
 				   ? USE_DSP : USE_AGL;
+
+	// force DSp for now..
+	fullscreenX = USE_DSP;
 
 	// Allow fullscreen overides for testing
 	if (COM_CheckParm("-useAGL"))

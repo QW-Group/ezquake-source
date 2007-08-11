@@ -1,6 +1,6 @@
 /*
 
-	$Id: sys_mac.c,v 1.24 2007-07-29 12:19:42 disconn3ct Exp $
+	$Id: sys_mac.c,v 1.25 2007-08-11 08:49:36 zwoch Exp $
 
 */
 // sys_mac.c -- Macintosh system driver
@@ -221,10 +221,10 @@ void Sys_Error (char *error, ...)
 		Str255 briefMsg;
 		
 		param.movable 		= 0;
-		param.filterProc 	= NULL;
-		param.defaultText	= "\pOK";
-		param.cancelText 	= NULL;
-		param.otherText 	= NULL;
+		param.filterProc 	= nil;
+		param.defaultText	= nil;
+		param.cancelText 	= nil;
+		param.otherText 	= nil;
 		param.helpButton 	= false;
 		param.defaultButton	= kAlertStdAlertOKButton;
 		param.cancelButton	= 0;
@@ -259,7 +259,7 @@ void Sys_Message (Str255 briefMsg, char *error, ...)
 		
 		param.movable 		= 0;
 		param.filterProc 	= NULL;
-		param.defaultText	= "OK";
+		param.defaultText	= kAlertDefaultOKText;
 		param.cancelText 	= NULL;
 		param.otherText 	= NULL;
 		param.helpButton 	= false;
@@ -752,7 +752,7 @@ void SetVideoCvarsForPrefs (void)
 	Cvar_SetValue (&vid_mode, gScreen.profile->mode);
 	Cvar_SetValue (&gl_vid_screen, gScreen.profile->screen);
 	Cvar_SetValue (&gl_vid_colorbits, gScreen.profile->colorbits);
-//	Cvar_SetValue (&gl_texturebits, gScreen.profile->texturebits);
+	Cvar_SetValue (&gl_texturebits, gScreen.profile->texturebits);
 
 	if (inwindow)
   		Cvar_Set (&gl_vid_windowed, "1");
@@ -783,14 +783,14 @@ static void SetGlobalsFromPrefs (void)
 
 	if (macPrefs.color_depth == kMenuBpp16)
 		vid_currentprofile.colorbits = 16;
-	else
+//hack	else
 		vid_currentprofile.colorbits = 32;
 
 	if (macPrefs.tex_depth == kMenuBpp16) {
 		vid_currentprofile.texturebits = 16;
 		gl_solid_format = GL_RGB5;
 		gl_alpha_format = GL_RGBA4;
-	} else {
+//hack	} else {
 		vid_currentprofile.texturebits = 32;
 		gl_solid_format = GL_RGB8;
 		gl_alpha_format = GL_RGBA8;
