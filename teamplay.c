@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: teamplay.c,v 1.81 2007-07-20 00:41:24 himan Exp $
+    $Id: teamplay.c,v 1.82 2007-08-11 19:44:19 cokeman1982 Exp $
 */
 
 #include <time.h>
@@ -599,6 +599,12 @@ char *Macro_LastDrop (void)
 		return tp_name_someplace.string;
 }
 
+char *Macro_GameDir(void)
+{
+	sprintf(macro_buf, "%s", cls.gamedirfile);
+	return macro_buf;
+}
+
 char *Macro_LastTrigger_Match(void)
 {
 	return vars.lasttrigger_match;
@@ -1073,6 +1079,7 @@ void TP_AddMacros (void)
 	Cmd_AddMacroEx ("droptime", Macro_LastDropTime, teamplay);
 
 	Cmd_AddMacro ("tf_skin", Macro_TF_Skin);
+	Cmd_AddMacro ("gamedir", Macro_GameDir);
 
 	Cmd_AddMacro ("triggermatch", Macro_LastTrigger_Match);
 
