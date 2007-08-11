@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.161 2007-07-29 01:28:38 disconn3ct Exp $
+$Id: cl_main.c,v 1.162 2007-08-11 03:26:33 himan Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -162,12 +162,12 @@ cvar_t	password = {"password", "", CVAR_USERINFO};
 cvar_t	spectator = {"spectator", "", CVAR_USERINFO};
 cvar_t	name = {"name", "player", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	team = {"team", "", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	topcolor = {"topcolor","0", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	bottomcolor = {"bottomcolor","0", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t	topcolor = {"topcolor","", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t	bottomcolor = {"bottomcolor","", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	skin = {"skin", "", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	rate = {"rate", "5760", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	msg = {"msg", "1", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t  noaim = {"noaim", "1", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t	msg = {"msg", "", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t  noaim = {"noaim", "", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	w_switch = {"w_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	b_switch = {"b_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
 
