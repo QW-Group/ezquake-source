@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.76 2007-06-28 22:08:47 johnnycz Exp $
+	$Id: menu.c,v 1.77 2007-08-11 19:13:52 cokeman1982 Exp $
 
 */
 
@@ -424,6 +424,12 @@ void M_Main_Key (int key) {
 		m_state = m_none;
 		break;
 
+	case '`':
+	case '~':
+		key_dest = key_console;
+		m_state = m_none;
+		break;
+
 	case K_UPARROW:
 	case K_MWHEELUP:
 		S_LocalSound ("misc/menu1.wav");
@@ -614,6 +620,12 @@ void M_Quit_Key (int key) {
 			}
 			break;
 
+		case '`':
+		case '~':
+			key_dest = key_console;
+			m_state = m_none;
+			break;
+
 		case K_ENTER:
 		case 'Y':
 		case 'y':
@@ -734,6 +746,12 @@ void M_SinglePlayer_Key (int key) {
 			M_LeaveMenu (m_main);
 			break;
 
+		case '`':
+		case '~':
+			key_dest = key_console;
+			m_state = m_none;
+			break;
+
 		case K_DOWNARROW:
 		case K_MWHEELDOWN:
 			S_LocalSound ("misc/menu1.wav");
@@ -825,6 +843,12 @@ void M_SinglePlayer_Key (key) {
 		case K_ESCAPE:
 		case K_ENTER:
 			M_LeaveMenu (m_main);
+			break;
+
+		case '`':
+		case '~':
+			key_dest = key_console;
+			m_state = m_none;
 			break;
 	}
 }
@@ -942,6 +966,12 @@ void M_Load_Key (int key) {
 			M_LeaveMenu (m_singleplayer);
 			break;
 
+		case '`':
+		case '~':
+			key_dest = key_console;
+			m_state = m_none;
+			break;
+
 		case K_ENTER:
 		case K_MOUSE1:
 			S_LocalSound ("misc/menu2.wav");
@@ -983,6 +1013,12 @@ void M_Save_Key (int key) {
 		case K_MOUSE2:
 		case K_ESCAPE:
 			M_LeaveMenu (m_singleplayer);
+			break;
+
+		case '`':
+		case '~':
+			key_dest = key_console;
+			m_state = m_none;
 			break;
 
 		case K_ENTER:
@@ -1072,6 +1108,12 @@ void M_MultiPlayer_Key (int key) {
 		case K_MOUSE2:
 		case K_ESCAPE:
 			M_LeaveMenu (m_main);
+			break;
+
+		case '`':
+		case '~':
+			key_dest = key_console;
+			m_state = m_none;
 			break;
 
 		case K_DOWNARROW:
@@ -1293,6 +1335,13 @@ void M_Menu_MP3_Control_Key(int key) {
 			case K_ESCAPE:
 				M_LeaveMenu (m_main);
 				break;
+
+			case '`':
+			case '~':
+				key_dest = key_console;
+				m_state = m_none;
+				break;
+
 			case K_MOUSE1:
 			case K_ENTER:
 				if (MP3_IsActive())
@@ -1309,6 +1358,11 @@ void M_Menu_MP3_Control_Key(int key) {
 		case K_MOUSE2:
 		case K_ESCAPE:
 			M_LeaveMenu (m_main);
+			break;
+		case '`':
+		case '~':
+			key_dest = key_console;
+			m_state = m_none;
 			break;
 		case K_HOME:
 		case K_PGUP:
@@ -1545,6 +1599,12 @@ void M_Menu_MP3_Playlist_Key (int k) {
 			m_topmenu = m_none;
 		case K_ESCAPE:
 			M_LeaveMenu (m_mp3_control);
+			break;
+
+		case '`':
+		case '~':
+			key_dest = key_console;
+			m_state = m_none;
 			break;
 
 		case K_UPARROW:
@@ -1896,6 +1956,12 @@ void M_GameOptions_Key (int key) {
 		case K_MOUSE2:
 		case K_ESCAPE:
 			M_LeaveMenu (m_multiplayer);
+			break;
+
+		case '`':
+		case '~':
+			key_dest = key_console;
+			m_state = m_none;
 			break;
 
 		case K_UPARROW:
