@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_part.c,v 1.15 2007-04-19 23:43:19 qqshka Exp $
+	$Id: r_part.c,v 1.16 2007-08-11 20:24:06 cokeman1982 Exp $
 
 */
 
@@ -301,7 +301,9 @@ void Classic_ParticleExplosion (vec3_t org) {
 	int	i, j;
 	particle_t	*p;
 
-	CL_ExplosionSprite(org);
+	if (r_explosiontype.value != 9) {
+		CL_ExplosionSprite(org);
+	}
 
 	if (r_explosiontype.value == 1)
 		return;
