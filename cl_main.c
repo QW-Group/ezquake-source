@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.162 2007-08-11 03:26:33 himan Exp $
+$Id: cl_main.c,v 1.163 2007-08-11 20:01:37 cokeman1982 Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -108,6 +108,7 @@ static qbool allowremotecmd = true;
 
 cvar_t	cl_deadbodyfilter = {"cl_deadbodyFilter", "0"};
 cvar_t	cl_gibfilter = {"cl_gibFilter", "0"};
+cvar_t	cl_backpackfilter = {"cl_backpackfilter", "0"};
 cvar_t	cl_muzzleflash = {"cl_muzzleflash", "1"};
 cvar_t	cl_rocket2grenade = {"cl_r2g", "0"};
 cvar_t	cl_demospeed = {"cl_demospeed", "1"};
@@ -1107,6 +1108,7 @@ void CL_InitLocal (void) {
 	Cvar_Register (&cl_independentPhysics);	//#fps
 	Cvar_Register (&cl_deadbodyfilter);
 	Cvar_Register (&cl_gibfilter);
+	Cvar_Register (&cl_backpackfilter);
 	Cvar_Register (&cl_muzzleflash);
 	Cvar_Register (&cl_rocket2grenade);
 	Cvar_Register (&r_explosiontype);

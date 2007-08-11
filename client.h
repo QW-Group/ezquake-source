@@ -568,6 +568,7 @@ extern	cvar_t	cl_sbar;
 extern	cvar_t	cl_hudswap;
 extern	cvar_t	cl_deadbodyfilter;
 extern	cvar_t	cl_gibfilter;
+extern  cvar_t  cl_backpackfilter;
 extern	cvar_t	cl_muzzleflash;
 extern	cvar_t	cl_fakeshaft;
 

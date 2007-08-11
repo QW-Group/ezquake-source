@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.36 2007-07-29 00:15:03 qqshka Exp $
+	$Id: cl_ents.c,v 1.37 2007-08-11 20:01:37 cokeman1982 Exp $
 
 */
 
@@ -796,6 +796,10 @@ void CL_LinkPacketEntities (void) {
 		}
 		ent.skinnum = state->skinnum;
 	
+		if (ent.model->modhint == MOD_BACKPACK && cl_backpackfilter.value) {
+			continue;
+		}
+
 		ent.frame = state->frame;
 		if (cent->frametime >= 0 && cent->frametime <= cl.time) {
 			ent.oldframe = cent->oldframe;
@@ -1222,6 +1226,10 @@ void CL_LinkPacketEntities (void) {
 				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
 		}
 		ent.skinnum = state->skinnum;
+
+		if (ent.model->modhint == MOD_BACKPACK && cl_backpackfilter.value) {
+			continue;
+		}
 	
 		ent.frame = state->frame;
 		if (cent->frametime >= 0 && cent->frametime <= cl.time) {
