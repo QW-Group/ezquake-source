@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.103 2007-08-12 15:12:50 cokeman1982 Exp $
+$Id: cl_parse.c,v 1.104 2007-08-12 17:21:21 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1593,6 +1593,8 @@ void CL_ParseModellist (qbool extended)
 #endif
 		}
 
+		#if 0
+		// FIXME : 32-bit sprites not working.
 		// Precache 2D sprite models.
 		#define PRECACHE_SPRITE(sprite)														\
 			cl.model_precache[nummodels] = Mod_ForName (sprite, false);						\
@@ -1614,6 +1616,7 @@ void CL_ParseModellist (qbool extended)
 		PRECACHE_SPRITE("sprites/s_armor2.spr");
 		PRECACHE_SPRITE("sprites/s_armor3.spr");
 		PRECACHE_SPRITE("sprites/s_backpack.spr");
+		#endif
 
 		return;
 	}

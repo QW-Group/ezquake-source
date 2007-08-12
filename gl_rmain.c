@@ -1046,6 +1046,8 @@ void R_SetSpritesState(qbool state)
 	}
 }
 
+#if 0
+// FIXME : Simple items not working properly.
 int SpriteForMDL(void)
 {
 	if ((!strcmp(currententity->model->name, "maps/b_shell0.bsp")) || (!strcmp(currententity->model->name, "maps/b_shell1.bsp")))
@@ -1111,10 +1113,10 @@ int SpriteForMDL(void)
 
 	return -1;
 }
-
+#endif
 
 void R_DrawEntitiesOnList (visentlist_t *vislist) {
-	int i, idx;
+	int i;
 
 	if (!r_drawentities.value || !vislist->count)
 		return;
@@ -1128,20 +1130,22 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 		currententity = &vislist->list[i];
 
 		// Draw sprites instead of models for item models.
+		#if 0
 		if (r_simpleitems.value)
 		{
-			idx = SpriteForMDL();
+			int idx = SpriteForMDL();
 			if (idx >= 0)
 			{
 				if (cl.model_precache[cl_modelindices[idx]])
 				{
 					currententity->model = cl.model_precache[cl_modelindices[idx]];
-					currententity->model->type = mod_sprite;					
+					//currententity->model->type = mod_sprite;					
 					VectorCopy (currententity->origin, r_entorigin);
 					VectorSubtract (r_origin, r_entorigin, modelorg);
 				}
 			}
 		}
+		#endif
 
 		switch (currententity->model->type) 
 		{

@@ -794,6 +794,8 @@ typedef enum cl_modelindex_s
 	mi_weapon6, 
 	mi_weapon7, 
 	mi_weapon8,
+	#if 0
+	// FIXME : 32-bit sprites not working.
 	mi_2dshells,
 	mi_2dcells,
 	mi_2drockets,
@@ -809,6 +811,7 @@ typedef enum cl_modelindex_s
 	mi_2dbackpack,
 	mi_2dhealth10,
 	mi_2dhealth25,
+	#endif
 	cl_num_modelindices
 } cl_modelindex_t;		
 

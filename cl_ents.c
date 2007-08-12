@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.39 2007-08-12 15:12:50 cokeman1982 Exp $
+	$Id: cl_ents.c,v 1.40 2007-08-12 17:21:21 cokeman1982 Exp $
 
 */
 
@@ -121,6 +121,8 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_m17] = "progs/scor.mdl";
 
 	// Item sprites.
+	// FIXME : 32-bit sprites not working properly.
+	#if 0
 	cl_modelnames[mi_2dshells]		= "sprites/s_shells.spr";
 	cl_modelnames[mi_2dcells]		= "sprites/s_cells.spr";
 	cl_modelnames[mi_2drockets]		= "sprites/s_rockets.spr";
@@ -136,6 +138,7 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_2dbackpack]	= "sprites/s_backpack.spr";
 	cl_modelnames[mi_2dhealth10]	= "sprites/s_health10.spr";
 	cl_modelnames[mi_2dhealth25]	= "sprites/s_health25.spr";
+	#endif
 
 	// FIXME, delay until map load time?
 	cl_flame0_model = Mod_ForName ("progs/flame0.mdl", false);
