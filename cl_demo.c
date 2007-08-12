@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.78 2007-08-12 00:14:29 qqshka Exp $
+	$Id: cl_demo.c,v 1.79 2007-08-12 19:16:05 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -721,18 +721,18 @@ static void CL_WriteStartupData (void)
 //								DEMO READING
 //=============================================================================
 
-int CL_Demo_Peek(void *buf, int size);
+vfsfile_t *playbackfile = NULL;			// The demo file used for playback.
 
-vfsfile_t *playbackfile = NULL;		// The demo file used for playback.
+char	pb_buf[1024*10];				// Playback buffer.
+int		pb_cnt = 0;						// How many bytes we've have in playback buffer.
+qbool	pb_eof = false;					// Have we reached the end of the playback buffer?
 
-char pb_buf[1024*10];				// Playback buffer.
-char pb_tmp_buf[sizeof(pb_buf)];	// Temp playback buffer used for validating MVD data.
-int	pb_s = 0;						//
-int pb_cnt = 0;						// How many bytes we've read from the playback buffer.
-qbool pb_eof = false;				// Have we reached the end of the playback buffer?
+char	pb_tmp_buf[sizeof(pb_buf)];		// Temp playback buffer used for validating MVD data.
 
 //
 // Inits the demo playback buffer.
+// If we do QTV demo playback, we read data ahead while parsing QTV connection headers,
+// so we may have demo data in qtvrequestbuffer[], so we move data from qtvrequestbuffer[] to pb_buf[] with this function.
 //
 void CL_Demo_PB_Init(void *buf, int buflen)
 {
@@ -744,9 +744,35 @@ void CL_Demo_PB_Init(void *buf, int buflen)
 	memcpy(pb_buf, buf, buflen);
 
 	// Reset any associated playback buffers.
-	pb_s = 0;
 	pb_cnt = buflen;
 	pb_eof = false;
+}
+
+//
+// This is memory reading(not from file or socket), we just copy data from pb_buf[] to caller buffer,
+// sure if we not peeking we decrease pb_buf[] size (pb_cnt) and move along pb_buf[] itself.
+//
+int CL_Demo_Read(void *buf, int size, qbool peek)
+{
+	int need;
+
+	// Size can't be negative.
+	if (size < 0)
+		Sys_Error("pb_read: size < 0");
+
+	need = max(0, min(pb_cnt, size));
+	memcpy(buf, pb_buf, need);
+
+	if (!peek)
+	{
+		pb_cnt -= need;
+		memmove(pb_buf, pb_buf + need, pb_cnt);
+	}
+
+	if (need != size)
+		Host_Error("Unexpected end of demo");
+
+	return need;
 }
 
 //
@@ -765,11 +791,15 @@ int pb_raw_read(void *buf, int size)
 }
 
 //
-// Checks if the
+// Ensure we have enough data to parse, it not then return false.
+// Function was introduced with QTV, since if u read demo from file and not enough data that cricial,
+// but if u read demo (mvd stream) from network and not enough data that ok, we just freeze client for some time
+// and filling buffer.
 //
 qbool pb_ensure(void)
 {
-	int need, got = 0;
+	// Increase internal TCP buffer by faking a read to it.
+	pb_raw_read(NULL, 0);
 
 	// Show how much we've read.
 	if (cl_shownet.value == 3)
@@ -778,47 +808,27 @@ qbool pb_ensure(void)
 	// Try to decrease the playback buffer.
 	if (cls.mvdplayback && pb_cnt > 0 )
 	{
-		// At the same time increase internal TCP buffer by faking a read to it.
-		pb_raw_read(NULL, 0);
-
 		// Seems theoretical size of one MVD packet is 1400, so 2000 must be safe to parse something.
 		if (pb_cnt > 2000)
 			return true;
 
 		// Peek into the playback buffer.
-		CL_Demo_Peek(pb_tmp_buf, pb_cnt);
+		CL_Demo_Read(pb_tmp_buf, pb_cnt, true);
 
 		// Make sure the MVD data is valid.
 		if (ConsistantMVDData((unsigned char*)pb_tmp_buf, pb_cnt))
 			return true;
 	}
 
-	need = sizeof(pb_buf);	// We want to read the entire buffer.
-	need -= pb_cnt;			// But only read stuff we haven't read yet.
-	need = min(need, (int)sizeof(pb_buf) - pb_s - pb_cnt);
-	need = max(0, need);
-
-	if (need)
-	{
-		got = pb_raw_read(pb_buf + pb_s + pb_cnt, need);
-		pb_cnt += got;
-	}
-
-	if (got == need)
-	{
-		int tmp = (pb_s + pb_cnt) % (int)sizeof(pb_buf);
-		need = sizeof(pb_buf);
-		need -= pb_cnt;
-		pb_cnt += pb_raw_read(pb_buf + tmp, need);
-	}
+	pb_cnt += pb_raw_read(pb_buf + pb_cnt, max(0, (int)sizeof(pb_buf) - pb_cnt));
 
 	if (pb_cnt == (int)sizeof(pb_buf) || pb_eof)
 		return true; // return true if we have full buffer or get EOF
 
-	// Not enough data in buffer, check do we have at least one message in buffer.
+	// Probably not enough data in buffer, check do we have at least one message in buffer.
 	if (cls.mvdplayback && pb_cnt)
 	{
-		CL_Demo_Peek(pb_tmp_buf, pb_cnt);
+		CL_Demo_Read(pb_tmp_buf, pb_cnt, true);
 
 		if(ConsistantMVDData((unsigned char*)pb_tmp_buf, pb_cnt))
 			return true;
@@ -835,49 +845,6 @@ qbool pb_ensure(void)
 	}
 
 	return false;
-}
-
-int pb_read(void *buf, int size, qbool peek)
-{
-	int need, have = 0;
-
-	// Size can't be negative.
-	if (size < 0)
-		Sys_Error("pb_read: size < 0");
-
-	need = min(pb_cnt, size);
-	need = min(need, (int)sizeof(pb_buf) - pb_s);
-	memcpy((byte*)buf + have, (byte*)pb_buf + pb_s, need);
-	have += need;
-
-	need = min(pb_cnt, size);
-	need -= have;
-	need = min(need, pb_s);
-	memcpy((byte*)buf + have, pb_buf, need);
-	have += need;
-
-	if (!peek)
-	{
-		pb_s += have;
-		pb_s = pb_s % (int)sizeof(pb_buf);
-		pb_cnt -= have;
-	}
-
-	return have;
-}
-
-int CL_Demo_Peek(void *buf, int size)
-{
-	if (pb_read(buf, size, true) != size)
-		Host_Error("Unexpected end of demo");
-	return 1;
-}
-
-int CL_Demo_Read(void *buf, int size)
-{
-	if (pb_read(buf, size, false) != size)
-		Host_Error("Unexpected end of demo");
-	return 1;
 }
 
 //
@@ -974,7 +941,7 @@ qbool CL_GetDemoMessage (void)
 			// Peek inside, but don't read.
 			// (Since it might not be time to continue reading in the demo
 			// we want to be able to check this again later if that's the case).
-			CL_Demo_Peek(&mvd_time, sizeof(mvd_time));
+			CL_Demo_Read(&mvd_time, sizeof(mvd_time), true);
 
 			// Calculate the demo time.
 			// (The time in an MVD is saved as a byte with number of miliseconds since the last cmd
@@ -996,7 +963,7 @@ qbool CL_GetDemoMessage (void)
 			// Peek inside, but don't read.
 			// (Since it might not be time to continue reading in the demo
 			// we want to be able to check this again later if that's the case).
-			CL_Demo_Peek(&demotime, sizeof(demotime));
+			CL_Demo_Read(&demotime, sizeof(demotime), true);
 			demotime = LittleFloat(demotime);
 		}
 
@@ -1073,12 +1040,12 @@ qbool CL_GetDemoMessage (void)
 		if (cls.mvdplayback)
 		{
 			byte dummy_newtime;
-			CL_Demo_Read(&dummy_newtime, sizeof(dummy_newtime));
+			CL_Demo_Read(&dummy_newtime, sizeof(dummy_newtime), false);
 		}
 		else
 		{
 			float dummy_demotime;
-			CL_Demo_Read(&dummy_demotime, sizeof(dummy_demotime));
+			CL_Demo_Read(&dummy_demotime, sizeof(dummy_demotime), false);
 		}
 
 		// Save the previous time for MVD playback (for the next message),
@@ -1088,7 +1055,7 @@ qbool CL_GetDemoMessage (void)
 			prevtime = demotime;
 
 		// Get the msg type.
-		CL_Demo_Read(&c, sizeof(c));
+		CL_Demo_Read(&c, sizeof(c), false);
 		message_type = (c & 7);
 
 		if (message_type == dem_cmd)
@@ -1102,7 +1069,7 @@ qbool CL_GetDemoMessage (void)
 
 			// Read the user cmd from the demo.
 			pcmd = &cl.frames[i].cmd;
-			CL_Demo_Read(pcmd, sizeof(*pcmd));
+			CL_Demo_Read(pcmd, sizeof(*pcmd), false);
 
 			//
 			// Convert the angles/movement vectors into the correct byte order.
@@ -1120,7 +1087,7 @@ qbool CL_GetDemoMessage (void)
 			cls.netchan.outgoing_sequence++;
 
 			// Read the viewangles from the demo and convert them to correct byte order.
-			CL_Demo_Read(cl.viewangles, 12);
+			CL_Demo_Read(cl.viewangles, 12, false);
 			for (j = 0; j < 3; j++)
 				cl.viewangles[j] = LittleFloat (cl.viewangles[j]);
 
@@ -1153,7 +1120,7 @@ qbool CL_GetDemoMessage (void)
 				{
 					// Read the player bit mask from the demo and convert to the correct byte order.
 					// Each bit in this number represents a player, 32-bits, 32 players.
-					CL_Demo_Read(&i, sizeof(i));
+					CL_Demo_Read(&i, sizeof(i), false);
 					cls.lastto = LittleLong(i);
 					cls.lasttype = dem_multiple;
 					break;
@@ -1207,7 +1174,7 @@ qbool CL_GetDemoMessage (void)
 		{
 			// Read the size of next net message in the demo file
 			// and convert it into the correct byte order.
-			CL_Demo_Read(&net_message.cursize, 4);
+			CL_Demo_Read(&net_message.cursize, 4, false);
 			net_message.cursize = LittleLong (net_message.cursize);
 
 			// The message was too big, stop playback.
@@ -1219,7 +1186,7 @@ qbool CL_GetDemoMessage (void)
 			}
 
 			// Read the net message from the demo.
-			CL_Demo_Read(net_message.data, net_message.cursize);
+			CL_Demo_Read(net_message.data, net_message.cursize, false);
 
 			//
 			// Check what the last message type was for MVDs.
@@ -1264,10 +1231,10 @@ qbool CL_GetDemoMessage (void)
 		//
 		if (message_type == dem_set)
 		{
-			CL_Demo_Read(&i, sizeof(i));
+			CL_Demo_Read(&i, sizeof(i), false);
 			cls.netchan.outgoing_sequence = LittleLong(i);
 
-			CL_Demo_Read(&i, sizeof(i));
+			CL_Demo_Read(&i, sizeof(i), false);
 			cls.netchan.incoming_sequence = LittleLong(i);
 
 			if (cls.mvdplayback)

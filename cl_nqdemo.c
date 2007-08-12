@@ -17,7 +17,7 @@
 
 
 #define MAX_BIG_MSGLEN 8000
-int CL_Demo_Read(void *buf, int size);
+int CL_Demo_Read(void *buf, int size, qbool peek);
 #define SCR_EndLoadingPlaque()
 int cl_entframecount;
 void R_PreMapLoad (char *);
@@ -129,9 +129,9 @@ static qbool CL_GetNQDemoMessage (void)
 
 
 	// get the next message
-	CL_Demo_Read(&net_message.cursize, 4);
+	CL_Demo_Read(&net_message.cursize, 4, false);
 	for (i=0 ; i<3 ; i++) {
-		CL_Demo_Read(&f, 4);
+		CL_Demo_Read(&f, 4, false);
 		nq_mviewangles_temp[i] = LittleFloat (f);
 	}
 
@@ -139,7 +139,7 @@ static qbool CL_GetNQDemoMessage (void)
 	if (net_message.cursize > MAX_BIG_MSGLEN)
 		Host_Error ("Demo message > MAX_BIG_MSGLEN");
 
-	CL_Demo_Read(net_message.data, net_message.cursize);
+	CL_Demo_Read(net_message.data, net_message.cursize, false);
 	return true;
 }
 
@@ -1248,7 +1248,7 @@ void NQD_StartPlayback (void)
 
 	// parse forced cd track
 	for (c = 0; c != '\n'; ) {
-		CL_Demo_Read(&c, 1);
+		CL_Demo_Read(&c, 1, false);
 
 		if (c == '-')
 			neg = true;
