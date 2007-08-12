@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.77 2007-07-29 01:28:39 disconn3ct Exp $
+	$Id: cl_demo.c,v 1.78 2007-08-12 00:14:29 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -2830,6 +2830,14 @@ void CL_QTVList_f (void)
 	connrequest =	"SOURCELIST\n";
 	VFS_WRITE(newf, connrequest, strlen(connrequest));
 
+	// Send our userinfo
+	connrequest = "USERINFO: ";
+	VFS_WRITE(newf, connrequest, strlen(connrequest));
+	connrequest = cls.userinfo;
+	VFS_WRITE(newf, connrequest, strlen(connrequest));
+	connrequest =	"\n";
+	VFS_WRITE(newf, connrequest, strlen(connrequest));
+
 	// if we use pass, then send our supported auth methods
 	if (qtvpassword[0])
 	{
@@ -3083,6 +3091,14 @@ void CL_QTVPlay_f (void)
 		connrequest =	"\n";
 		VFS_WRITE(newf, connrequest, strlen(connrequest));
 	}
+
+	// Send our userinfo
+	connrequest = "USERINFO: ";
+	VFS_WRITE(newf, connrequest, strlen(connrequest));
+	connrequest = cls.userinfo;
+	VFS_WRITE(newf, connrequest, strlen(connrequest));
+	connrequest =	"\n";
+	VFS_WRITE(newf, connrequest, strlen(connrequest));
 
 	// if we use pass, then send our supported auth methods
 	if (qtvpassword[0])

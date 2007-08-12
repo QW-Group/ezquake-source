@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.163 2007-08-11 20:01:37 cokeman1982 Exp $
+$Id: cl_main.c,v 1.164 2007-08-12 00:14:29 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -308,9 +308,17 @@ void CL_UserinfoChanged (char *key, char *string) {
 	if (strcmp(s, Info_ValueForKey (cls.userinfo, key))) {
 		Info_SetValueForKey (cls.userinfo, key, s, MAX_INFO_STRING);
 
-		if (cls.state >= ca_connected) {
-			MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-			SZ_Print (&cls.netchan.message, va("setinfo \"%s\" \"%s\"\n", key, s));
+		if (cls.state >= ca_connected)
+		{
+			if (cls.mvdplayback == QTV_PLAYBACK)
+			{
+				QTV_Cmd_Printf(QTV_VER_1_3, "setinfo \"%s\" \"%s\"", key, s);
+			}
+			else
+			{
+				MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+				SZ_Print (&cls.netchan.message, va("setinfo \"%s\" \"%s\"\n", key, s));
+			}
 		}
 	}
 }

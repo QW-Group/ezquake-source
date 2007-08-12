@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.100 2007-07-29 01:45:54 disconn3ct Exp $
+$Id: cl_parse.c,v 1.101 2007-08-12 00:14:29 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -2389,6 +2389,23 @@ void CL_ParsePrint (void)
 
 	level = MSG_ReadByte ();
 	s0 = MSG_ReadString ();
+
+	if (cls.mvdplayback == QTV_PLAYBACK) // in case of QTV skip client id, this may be used for filtering/ignoring later
+	{
+		if (s0[0] == '#' && isdigit(s0[1]))
+		{
+			char *start = s0++;
+
+			while(isdigit(s0[0]))
+				s0++;
+
+			if (s0[0] == ':')
+				s0++;
+			else
+				s0 = start; // seems it was't chat, so do not skip
+		}
+	}
+
 	s = decode_string (s0);
 
 	qwcslcpy (str, s, sizeof(str)/sizeof(str[0]));

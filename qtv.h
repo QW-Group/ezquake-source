@@ -7,8 +7,9 @@
 //======================================
 
 #define QTV_PLAYBACK		2			// cls.mvdplayback == QTV_PLAYBACK if QTV playback
-#define QTV_VERSION			"1.2"		// we are support up to this QTV version
+#define QTV_VERSION			"1.3"		// we are support up to this QTV version
 #define QTV_VER_1_2			1.2			// download/chat was added at this point in QTV
+#define QTV_VER_1_3			1.3			// setinfo was added at this point in QTV
 
 //======================================
 
