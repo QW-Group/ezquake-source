@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.101 2007-08-12 00:14:29 qqshka Exp $
+$Id: cl_parse.c,v 1.102 2007-08-12 14:18:40 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -2376,7 +2376,7 @@ void CL_ParsePrint (void)
 	qbool suppress_talksound;
 	/*qbool cut_message = false;*/
 	wchar *s, str[2048], *p, check_flood/*, dest[2048], *c, *d, *f, e, b*/;
-	char *s0;
+	char *s0, qtvstr[2048];
 	int level, flags = 0, offset = 0;
 	size_t len;
 
@@ -2399,8 +2399,12 @@ void CL_ParsePrint (void)
 			while(isdigit(s0[0]))
 				s0++;
 
-			if (s0[0] == ':')
+			if (s0[0] == ':') // ok, it was qtv chat, skip #id: and insert user defined prefix, [qtv] by default
+			{
 				s0++;
+				snprintf(qtvstr, sizeof(qtvstr), "%s%s\n", qtv_chatprefix.string, s0);
+				s0 = qtvstr;
+			}
 			else
 				s0 = start; // seems it was't chat, so do not skip
 		}

@@ -1,7 +1,7 @@
 /*
 	Support for FTE QuakeTV
 
-	$Id: qtv.c,v 1.12 2007-07-29 00:15:04 qqshka Exp $
+	$Id: qtv.c,v 1.13 2007-08-12 14:18:40 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -11,6 +11,7 @@
 #include "fs.h"
 
 cvar_t	qtv_buffertime = {"qtv_buffertime", "0.5"};
+cvar_t	qtv_chatprefix = {"qtv_chatprefix", "[QTV]"};
 
 
 void QTV_Init(void)
@@ -18,6 +19,7 @@ void QTV_Init(void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_MVD); // FIXME: add qtv group instead
 	
 	Cvar_Register(&qtv_buffertime);
+	Cvar_Register(&qtv_chatprefix);
 
 	Cvar_ResetCurrentGroup();
 }

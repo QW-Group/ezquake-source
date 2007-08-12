@@ -14,6 +14,7 @@
 //======================================
 
 extern		cvar_t	qtv_buffertime;
+extern		cvar_t	qtv_chatprefix;
 
 void		QTV_Init(void);
 
