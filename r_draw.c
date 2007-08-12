@@ -1100,7 +1100,7 @@ void Draw_ConsoleBackground (int lines)
 	// Draw the pic.
 	dest = vid.buffer;
 
-	for (y = 0; y < lines; y++, dest += vid.rowbytes)
+	for (y = 0; y < lines - con_shift.value; y++, dest += vid.rowbytes)
 	{
 		v = (vid.conheight - lines + y + con_shift.value) * 200 / vid.conheight;
 		src = conback->data + v * 320;
