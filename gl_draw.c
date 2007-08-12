@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.83 2007-08-07 19:05:28 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.84 2007-08-12 17:33:17 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -806,9 +806,10 @@ __inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool ap
 	if (gl_alphafont.value || apply_overall_alpha)
 	{
 		glDisable(GL_ALPHA_TEST);
-		glEnable(GL_BLEND);
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	}
+	
+	glEnable(GL_BLEND);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	// Set the overall alpha.
 	glColor4ub(color[0], color[1], color[2], color[3] * overall_alpha);
@@ -900,15 +901,14 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 
 	// Make sure we set the color from scratch so that the 
 	// overall opacity is applied properly.
-	if (scr_coloredText.value)
+	if (scr_coloredText.value && (color_count > 0))
 	{
-		if (color_count > 0)
-		{
-			COLOR_TO_RGBA(color[color_index].c, rgba);
-		}
+		COLOR_TO_RGBA(color[color_index].c, rgba);
 	}
-
-	memcpy(rgba, color_white, sizeof(byte) * 4);
+	else
+	{
+		memcpy(rgba, color_white, sizeof(byte) * 4);
+	}
 
 	// Draw the string.
 	for (i = 0; text[i]; i++)
@@ -963,6 +963,7 @@ __inline void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color
 			{
 				last_color = color[color_index].c;
 				COLOR_TO_RGBA(color[color_index].c, rgba);
+				rgba[3] = 255;
 			}
 
 			color_index++; // Goto next color.
