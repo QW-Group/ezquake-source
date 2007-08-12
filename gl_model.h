@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.h,v 1.11 2007-03-11 02:01:01 disconn3ct Exp $
+	$Id: gl_model.h,v 1.12 2007-08-12 15:12:50 cokeman1982 Exp $
 */
 
 #ifndef __MODEL__
@@ -314,14 +314,47 @@ extern	stvert_t		stverts[MAXALIASVERTS];
 extern	mtriangle_t		triangles[MAXALIASTRIS];
 extern	trivertx_t		*poseverts[MAXALIASFRAMES];
 
-
-typedef enum {mod_brush, mod_sprite, mod_alias, mod_alias3} modtype_t;
+typedef enum 
+{
+	mod_brush, 
+	mod_sprite, 
+	mod_spr32,
+	mod_alias, 
+	mod_alias3
+} modtype_t;
 
 // some models are special
-typedef enum {MOD_NORMAL, MOD_PLAYER, MOD_EYES, MOD_FLAME, MOD_THUNDERBOLT, MOD_BACKPACK,
-	MOD_FLAG, MOD_SPIKE, MOD_TF_TRAIL, MOD_GRENADE, MOD_TESLA, MOD_SENTRYGUN, MOD_DETPACK,
-	MOD_LASER, MOD_DEMON, MOD_SOLDIER, MOD_OGRE, MOD_ENFORCER, MOD_VOORSPIKE, MOD_LAVABALL,
-	MOD_RAIL, MOD_RAIL2, MOD_BUILDINGGIBS, MOD_CLUSTER, MOD_SHAMBLER, MOD_TELEPORTDESTINATION} modhint_t;
+typedef enum 
+{
+	MOD_NORMAL, 
+	MOD_PLAYER, 
+	MOD_EYES, 
+	MOD_FLAME,
+	MOD_THUNDERBOLT,
+	MOD_BACKPACK,
+	MOD_FLAG,
+	MOD_SPIKE, 
+	MOD_TF_TRAIL,
+	MOD_GRENADE, 
+	MOD_TESLA, 
+	MOD_SENTRYGUN, 
+	MOD_DETPACK,
+	MOD_LASER, 
+	MOD_DEMON, 
+	MOD_SOLDIER,
+	MOD_OGRE,
+	MOD_ENFORCER,
+	MOD_VOORSPIKE,
+	MOD_LAVABALL,
+	MOD_RAIL, 
+	MOD_RAIL2,
+	MOD_BUILDINGGIBS,
+	MOD_CLUSTER,
+	MOD_SHAMBLER, 
+	MOD_SPR, 
+	MOD_SPR32,
+	MOD_TELEPORTDESTINATION
+} modhint_t;
 
 #define	EF_ROCKET	1			// leave a trail
 #define	EF_GRENADE	2			// leave a trail

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.c,v 1.32 2007-07-28 23:19:32 disconn3ct Exp $
+	$Id: gl_model.c,v 1.33 2007-08-12 15:12:50 cokeman1982 Exp $
 */
 // gl_model.c  -- model loading and caching
 
@@ -58,8 +58,9 @@ void Mod_Init (void) {
 	memset (mod_novis, 0xff, sizeof(mod_novis));
 }
 
-//Caches the data if needed
-void *Mod_Extradata (model_t *mod) {
+// Caches the data if needed
+void *Mod_Extradata (model_t *mod) 
+{
 	void *r;
 
 	r = Cache_Check (&mod->cache);
@@ -70,6 +71,7 @@ void *Mod_Extradata (model_t *mod) {
 
 	if (!mod->cache.data)
 		Sys_Error ("Mod_Extradata: caching failed");
+
 	return mod->cache.data;
 }
 
@@ -195,32 +197,33 @@ void Mod_TouchModels (void)
 	}
 }
 
-//Loads a model into the cache
-model_t *Mod_LoadModel (model_t *mod, qbool crash) {
+// Loads a model into the cache
+model_t *Mod_LoadModel (model_t *mod, qbool crash) 
+{
 	void *d;
 	unsigned *buf;
 	int namelen;
 	byte stackbuf[1024];		// avoid dirtying the cache heap
 
-	if (!mod->needload)	{
-		if (mod->type == mod_alias || mod->type == mod_alias3 || mod->type == mod_sprite) {
+	if (!mod->needload)
+	{
+		if (mod->type == mod_alias || mod->type == mod_alias3) // || mod->type == mod_sprite || mod->type == mod_spr32) 
+		{
 			d = Cache_Check (&mod->cache);
 			if (d)
 				return mod;
-		} else {
+		} 
+		else 
+		{
 			return mod;		// not cached at all
 		}
 	}
-/*
-	// because the world is so huge, load it one piece at a time
-	if (!crash)	{}
 
-	// load the file
-	buf = (unsigned *) FS_LoadStackFile (mod->name, stackbuf, sizeof(stackbuf));
-*/
 	namelen = strlen(mod->name);
 	buf = NULL;
-	if (namelen>=4 && (!strcmp(mod->name+namelen-4, ".mdl") || (namelen>=9 && mod->name[5] == 'b' && mod->name[6] == '_' && !strcmp(mod->name+namelen-4, ".bsp"))))
+
+	if (namelen >= 4 && (!strcmp(mod->name + namelen - 4, ".mdl") 
+		|| (namelen >= 9 && mod->name[5] == 'b' && mod->name[6] == '_' && !strcmp(mod->name + namelen - 4, ".bsp"))))
 	{
 		char newname[MAX_QPATH];
 		COM_StripExtension(mod->name, newname);
@@ -228,58 +231,65 @@ model_t *Mod_LoadModel (model_t *mod, qbool crash) {
 		buf = (unsigned *)FS_LoadStackFile (newname, stackbuf, sizeof(stackbuf));
 	}
 
-	// load the file
+	// Load the file
 	if (!buf)
 		buf = (unsigned *)FS_LoadStackFile (mod->name, stackbuf, sizeof(stackbuf));
-	if (!buf) {
+	
+	if (!buf) 
+	{
 		if (crash)
 			Host_Error ("Mod_LoadModel: %s not found", mod->name);
 		return NULL;
 	}
 
-	// allocate a new model
+	// Allocate a new model.
 	COM_FileBase (mod->name, loadname);
 	loadmodel = mod;
 	FMod_CheckModel(mod->name, buf, fs_filesize);
 
-	// call the apropriate loader
+	// Call the apropriate loader.
 	mod->needload = false;
 
-	switch (LittleLong(*((unsigned *) buf))) {
-	case IDPOLYHEADER:
-		Mod_LoadAliasModel (mod, buf);
-		break;
+	switch (LittleLong(*((unsigned *) buf))) 
+	{
+		case IDPOLYHEADER:
+			Mod_LoadAliasModel (mod, buf);
+			break;
 
-	case MD3_IDENT:
-		Mod_LoadAlias3Model (mod, buf);
- 		break;
+		case MD3_IDENT:
+			Mod_LoadAlias3Model (mod, buf);
+ 			break;
 
-	case IDSPRITEHEADER:
-		Mod_LoadSpriteModel (mod, buf);
-		break;
+		case IDSPRITEHEADER:
+			Mod_LoadSpriteModel (mod, buf);
+			break;
 
-	default:
-		Mod_LoadBrushModel (mod, buf);
-		break;
+		default:
+			Mod_LoadBrushModel (mod, buf);
+			break;
 	}
 
 	return mod;
 }
 
-//Loads in a model for the given name
-model_t *Mod_ForName (char *name, qbool crash) {
+// Loads in a model for the given name
+model_t *Mod_ForName (char *name, qbool crash) 
+{
 	model_t	*mod;
 
 	mod = Mod_FindName (name);
 	return Mod_LoadModel (mod, crash);
 }
 
-qbool Img_HasFullbrights (byte *pixels, int size) {
+qbool Img_HasFullbrights (byte *pixels, int size) 
+{
     int i;
 
     for (i = 0; i < size; i++)
+	{
         if (pixels[i] >= 224)
             return true;
+	}
 
     return false;
 }
@@ -300,9 +310,9 @@ qbool Img_HasFullbrights (byte *pixels, int size) {
 
 byte	*mod_base;
 
-/* Some id maps have textures with identical names but different looks.
-We hardcode a list of names, checksums and alternative names to provide a way
-for external texture packs to differentiate them. */
+// Some id maps have textures with identical names but different looks.
+// We hardcode a list of names, checksums and alternative names to provide a way
+// for external texture packs to differentiate them.
 static struct {
 	int md4;
 	char *origname, *newname;
@@ -326,15 +336,19 @@ static char *TranslateTextureName (texture_t *tx)
 	int checksum = 0;
 	qbool checksum_done = false;
 
-	for (i = 0; translate_names[i].origname; i++) {
+	for (i = 0; translate_names[i].origname; i++)
+	{
 		if (strcmp(tx->name, translate_names[i].origname))
 			continue;
-		if (!checksum_done) {
+
+		if (!checksum_done) 
+		{
 			checksum = Com_BlockChecksum(tx+1, tx->width*tx->height);
 			checksum_done = true;
-			//Com_DPrintf ("checksum(\"%s\") = 0x%x\n", tx->name, checksum);
 		}
-		if (translate_names[i].md4 == checksum) {
+
+		if (translate_names[i].md4 == checksum)
+		{
 			//Com_DPrintf ("Translating %s --> %s\n", tx->name, translate_names[i].newname);
 			assert (strlen(translate_names[i].newname) < sizeof(tx->name));
 			return translate_names[i].newname;
@@ -344,16 +358,20 @@ static char *TranslateTextureName (texture_t *tx)
 	return NULL;
 }
 
-int Mod_LoadExternalTexture(texture_t *tx, int mode, int brighten_flag) {
+int Mod_LoadExternalTexture(texture_t *tx, int mode, int brighten_flag) 
+{
 	char *name, *altname, *mapname, *groupname;
 
 	if (loadmodel->bspversion == HL_BSPVERSION)
 		return 0;
 
-	if (loadmodel->isworldmodel) {
+	if (loadmodel->isworldmodel)
+	{
 		if (!gl_externalTextures_world.value)
 			return 0;
-	} else {
+	} 
+	else
+	{
 		if (!gl_externalTextures_bmodels.value)
 			return 0;
 	}
@@ -363,34 +381,47 @@ int Mod_LoadExternalTexture(texture_t *tx, int mode, int brighten_flag) {
 	mapname = TP_MapName();
 	groupname = TP_GetMapGroupName(mapname, NULL);
 
-	if (loadmodel->isworldmodel) {
-		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s/%s", mapname, name), name, 0, 0, mode | brighten_flag))) {
+	if (loadmodel->isworldmodel) 
+	{
+		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s/%s", mapname, name), name, 0, 0, mode | brighten_flag))) 
+		{
 			if (!ISTURBTEX(name))
 				tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s/%s_luma", mapname, name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
-		} else {
-			if (groupname) {
-				if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s/%s", groupname, name), name, 0, 0, mode | brighten_flag))) {
+		} 
+		else 
+		{
+			if (groupname)
+			{
+				if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s/%s", groupname, name), name, 0, 0, mode | brighten_flag))) 
+				{
 					if (!ISTURBTEX(name))
 						tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s/%s_luma", groupname, name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
 				}
 			}
 		}
-	} else {
-		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/bmodels/%s", name), name, 0, 0, mode | brighten_flag))) {
+	}
+	else 
+	{
+		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/bmodels/%s", name), name, 0, 0, mode | brighten_flag))) 
+		{
 			if (!ISTURBTEX(name))
 				tx->fb_texturenum = GL_LoadTextureImage (va("textures/bmodels/%s_luma", name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
 		}
 	}
 
-	if (!tx->gl_texturenum && altname) {
-		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s", altname), altname, 0, 0, mode | brighten_flag))) {
+	if (!tx->gl_texturenum && altname) 
+	{
+		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s", altname), altname, 0, 0, mode | brighten_flag))) 
+		{
 			if (!ISTURBTEX(name))
 				tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s_luma", altname), va("@fb_%s", altname), 0, 0, mode | TEX_LUMA);
 		}
 	}
 
-	if (!tx->gl_texturenum) {
-		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s", name), name, 0, 0, mode | brighten_flag))) {
+	if (!tx->gl_texturenum)
+	{
+		if ((tx->gl_texturenum = GL_LoadTextureImage (va("textures/%s", name), name, 0, 0, mode | brighten_flag))) 
+		{
 			if (!ISTURBTEX(name))
 				tx->fb_texturenum = GL_LoadTextureImage (va("textures/%s_luma", name), va("@fb_%s", name), 0, 0, mode | TEX_LUMA);
 		}
@@ -419,23 +450,31 @@ static qbool Mod_LoadExternalSkyTexture (texture_t *tx)
 	snprintf (alphaname, sizeof(alphaname), "%s_alpha", tx->name);
 
 	solidskytexture = GL_LoadTextureImage (va("textures/%s/%s", mapname, solidname), solidname, 0, 0, 0);
-	if (!solidskytexture && altname) {
+	if (!solidskytexture && altname)
+	{
 		snprintf (altsolidname, sizeof(altsolidname), "%s_solid", altname);
 		solidskytexture = GL_LoadTextureImage (va("textures/%s", altsolidname), altsolidname, 0, 0, 0);
 	}
+
 	if (!solidskytexture)
 		solidskytexture = GL_LoadTextureImage (va("textures/%s", solidname), solidname, 0, 0, 0);
+
 	if (!solidskytexture)
 		return false;
 
 	alphaskytexture = GL_LoadTextureImage (va("textures/%s/%s", mapname, alphaname), alphaname, 0, 0, TEX_ALPHA);
-	if (!alphaskytexture && altname) {
+
+	if (!alphaskytexture && altname)
+	{
 		snprintf (altalphaname, sizeof(altalphaname), "%s_alpha", altname);
 		alphaskytexture = GL_LoadTextureImage (va("textures/%s", altalphaname), altalphaname, 0, 0, TEX_ALPHA);
 	}
+
 	if (!alphaskytexture)
 		alphaskytexture = GL_LoadTextureImage (va("textures/%s", alphaname), alphaname, 0, 0, TEX_ALPHA);
-	if (!alphaskytexture) {
+	
+	if (!alphaskytexture) 
+	{
 		// Load a texture consisting of a single transparent pixel
 		alphaskytexture = GL_LoadTexture (alphaname, 1, 1, &alphapixel, TEX_ALPHA, 1);
 	}
@@ -455,8 +494,6 @@ void R_LoadBrushModelTextures (model_t *m)
 	if (!loadmodel->textures)
 		return;
 
-//	Com_Printf("lm %d %s\n", lightmode, loadmodel->name);
-
 	for (i = 0; i < loadmodel->numtextures; i++)
 	{
 		tx = loadmodel->textures[i];
@@ -464,17 +501,16 @@ void R_LoadBrushModelTextures (model_t *m)
 			continue;
 
 		if (tx->loaded)
-			continue; // seems alredy loaded
+			continue; // Seems already loaded.
 
 		tx->gl_texturenum = tx->fb_texturenum = 0;
 
-//		Com_Printf("tx %s\n", tx->name);
-
-		if (loadmodel->isworldmodel && loadmodel->bspversion != HL_BSPVERSION && ISSKYTEX(tx->name)) {
+		if (loadmodel->isworldmodel && loadmodel->bspversion != HL_BSPVERSION && ISSKYTEX(tx->name)) 
+		{
 			if (!Mod_LoadExternalSkyTexture (tx))
 				R_InitSky (tx);
 			tx->loaded = true;
-			continue; // mark as loaded
+			continue; // Mark as loaded.
 		}
 
 		noscale_flag = 0;
@@ -486,30 +522,36 @@ void R_LoadBrushModelTextures (model_t *m)
 		texmode      = TEX_MIPMAP | noscale_flag;
 		brighten_flag = (!ISTURBTEX(tx->name) && (lightmode == 2)) ? TEX_BRIGHTEN : 0;
 
-		if (Mod_LoadExternalTexture(tx, texmode, brighten_flag)) {
-			tx->loaded = true; // mark as loaded
+		if (Mod_LoadExternalTexture(tx, texmode, brighten_flag)) 
+		{
+			tx->loaded = true; // Mark as loaded.
 			continue;
 		}
 
-		if (loadmodel->bspversion == HL_BSPVERSION) {
-			if ((data = WAD3_LoadTexture(tx))) {
+		if (loadmodel->bspversion == HL_BSPVERSION) 
+		{
+			if ((data = WAD3_LoadTexture(tx))) 
+			{
 				fs_netpath[0] = 0;
 				alpha_flag = ISALPHATEX(tx->name) ? TEX_ALPHA : 0;
 				tx->gl_texturenum = GL_LoadTexturePixels (data, tx->name, tx->width, tx->height, texmode | alpha_flag);
 				Q_free(data);
-				tx->loaded = true; // mark as loaded
+				tx->loaded = true; // Mark as loaded.
 				continue;
 			}
 
 			tx->offsets[0] = 0; // this mean use r_notexture_mip, any better solution?
 		}
 
-		if (tx->offsets[0]) {
+		if (tx->offsets[0]) 
+		{
 			texname = tx->name;
 			width   = tx->width  >> mipTexLevel;
 			height  = tx->height >> mipTexLevel;
 			data    = (byte *) tx + tx->offsets[mipTexLevel];
-		} else {
+		} 
+		else 
+		{
 			texname = r_notexture_mip->name;
 			width   = r_notexture_mip->width  >> mipTexLevel;
 			height  = r_notexture_mip->height >> mipTexLevel;
@@ -525,13 +567,15 @@ void R_LoadBrushModelTextures (model_t *m)
 	}
 }
 
-void Mod_LoadTextures (lump_t *l) {
+void Mod_LoadTextures (lump_t *l)
+{
 	int i, j, num, max, altmax, pixels;
 	miptex_t *mt;
 	texture_t *tx, *tx2, *anims[10], *altanims[10];
 	dmiptexlump_t *m;
 
-	if (!l->filelen) {
+	if (!l->filelen)
+	{
 		loadmodel->textures = NULL;
 		return;
 	}
@@ -541,7 +585,8 @@ void Mod_LoadTextures (lump_t *l) {
 	loadmodel->numtextures = m->nummiptex;
 	loadmodel->textures = (texture_t **) Hunk_AllocName (m->nummiptex * sizeof(*loadmodel->textures), loadname);
 
-	for (i = 0; i < m->nummiptex; i++) {
+	for (i = 0; i < m->nummiptex; i++) 
+	{
 		m->dataofs[i] = LittleLong(m->dataofs[i]);
 		if (m->dataofs[i] == -1)
 			continue;
@@ -555,22 +600,23 @@ void Mod_LoadTextures (lump_t *l) {
 		if ( (mt->width & 15) || (mt->height & 15) )
 			Host_Error ("Texture %s is not 16 aligned", mt->name);
 
-		pixels = mt->width * mt->height / 64 * 85;// some magic numbers?
+		pixels = mt->width * mt->height / 64 * 85;// Some magic numbers?
 		if (loadmodel->bspversion == HL_BSPVERSION)
-			pixels += 2 + 256*3;	/* palette and unknown two bytes */
+			pixels += 2 + 256*3;	// Palette and unknown two bytes.
 		tx = (texture_t *) Hunk_AllocName (sizeof(texture_t) + pixels, loadname);
 		loadmodel->textures[i] = tx;
 
 		memcpy (tx->name, mt->name, sizeof(tx->name));
 
-		if (!tx->name[0]) {
+		if (!tx->name[0]) 
+		{
 			snprintf(tx->name, sizeof(tx->name), "unnamed%d", i);
 			Com_DPrintf("Warning: unnamed texture in %s, renaming to %s\n", loadmodel->name, tx->name);
 		}
 
 		tx->width  = mt->width;
 		tx->height = mt->height;
-		tx->loaded = false; // so texture will be reloaded
+		tx->loaded = false; // So texture will be reloaded.
 
 		if (loadmodel->bspversion == HL_BSPVERSION)
 		{
@@ -595,7 +641,8 @@ void Mod_LoadTextures (lump_t *l) {
 			// HACK HACK HACK
 			if (!strcmp(mt->name, "shot1sid") && mt->width==32 && mt->height==32
 				&& CRC_Block((byte*)(mt+1), mt->width*mt->height) == 65393)
-			{	// This texture in b_shell1.bsp has some of the first 32 pixels painted white.
+			{	
+				// This texture in b_shell1.bsp has some of the first 32 pixels painted white.
 				// They are invisible in software, but look really ugly in GL. So we just copy
 				// 32 pixels from the bottom to make it look nice.
 				memcpy (tx+1, (byte *)(tx+1) + 32*31, 32);
@@ -612,14 +659,17 @@ void Mod_LoadTextures (lump_t *l) {
 	R_LoadBrushModelTextures (loadmodel);
 
 	// sequence the animations
-	for (i = 0; i < m->nummiptex; i++) {
+	for (i = 0; i < m->nummiptex; i++)
+	{
 		tx = loadmodel->textures[i];
+		
 		if (!tx || tx->name[0] != '+')
 			continue;
-		if (tx->anim_next)
-			continue;	// already sequenced
 
-		// find the number of frames in the animation
+		if (tx->anim_next)
+			continue;	// Already sequenced.
+
+		// Find the number of frames in the animation.
 		memset (anims, 0, sizeof(anims));
 		memset (altanims, 0, sizeof(altanims));
 
@@ -627,21 +677,28 @@ void Mod_LoadTextures (lump_t *l) {
 		altmax = 0;
 		if (max >= 'a' && max <= 'z')
 			max -= 'a' - 'A';
-		if (max >= '0' && max <= '9') {
+
+		if (max >= '0' && max <= '9') 
+		{
 			max -= '0';
 			altmax = 0;
 			anims[max] = tx;
 			max++;
-		} else if (max >= 'A' && max <= 'J') {
+		}
+		else if (max >= 'A' && max <= 'J')
+		{
 			altmax = max - 'A';
 			max = 0;
 			altanims[altmax] = tx;
 			altmax++;
-		} else {
+		} 
+		else 
+		{
 			Host_Error ("Mod_LoadTextures: Bad animating texture %s", tx->name);
 		}
 
-		for (j = i + 1; j < m->nummiptex; j++) {
+		for (j = i + 1; j < m->nummiptex; j++)
+		{
 			tx2 = loadmodel->textures[j];
 			if (!tx2 || tx2->name[0] != '+')
 				continue;
@@ -651,24 +708,30 @@ void Mod_LoadTextures (lump_t *l) {
 			num = tx2->name[1];
 			if (num >= 'a' && num <= 'z')
 				num -= 'a' - 'A';
-			if (num >= '0' && num <= '9') {
+			if (num >= '0' && num <= '9') 
+			{
 				num -= '0';
 				anims[num] = tx2;
 				if (num+1 > max)
 					max = num + 1;
-			} else if (num >= 'A' && num <= 'J') {
+			} 
+			else if (num >= 'A' && num <= 'J') 
+			{
 				num = num - 'A';
 				altanims[num] = tx2;
 				if (num+1 > altmax)
 					altmax = num+1;
-			} else {
+			} 
+			else
+			{
 				Host_Error ("Mod_LoadTextures: Bad animating texture %s", tx->name);
 			}
 		}
 
 #define	ANIM_CYCLE	2
-		// link them all together
-		for (j = 0; j < max; j++) {
+		// Link them all together.
+		for (j = 0; j < max; j++) 
+		{
 			tx2 = anims[j];
 			if (!tx2)
 				Host_Error ("Mod_LoadTextures: Missing frame %i of %s",j, tx->name);
@@ -679,7 +742,8 @@ void Mod_LoadTextures (lump_t *l) {
 			if (altmax)
 				tx2->alternate_anims = altanims[0];
 		}
-		for (j = 0; j < altmax; j++) {
+		for (j = 0; j < altmax; j++) 
+		{
 			tx2 = altanims[j];
 			if (!tx2)
 				Host_Error ("Mod_LoadTextures: Missing frame %i of %s",j, tx->name);
@@ -693,22 +757,13 @@ void Mod_LoadTextures (lump_t *l) {
 	}
 }
 
-/*
-void Mod_LoadSpriteModelTextures (model_t *m)
-{
-	// TODO
-}
-*/
-
 void Mod_LoadModelTextures (model_t *m)
 {
 	if (m->type == mod_brush)
 		R_LoadBrushModelTextures (m);
-//	else if (m->type == mod_sprite)
-//		Mod_LoadSpriteModelTextures (m);
 }
 
-// this is callback from VID after a vid_restart
+// This is callback from VID after a vid_restart.
 void Mod_ReloadModelsTextures (void)
 {
 	int i, j;
@@ -1787,8 +1842,8 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer) {
 
 //=============================================================================
 
-
-int Mod_LoadExternalSpriteSkin(char *identifier, int framenum) {
+int Mod_LoadExternalSpriteSkin(char *identifier, int framenum) 
+{
 	char loadpath[64];
 	int texmode, texnum;
 
@@ -1799,7 +1854,8 @@ int Mod_LoadExternalSpriteSkin(char *identifier, int framenum) {
 	snprintf (loadpath, sizeof(loadpath), "textures/sprites/%s", identifier);
 	texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 
-	if (!texnum) {
+	if (!texnum) 
+	{
 		snprintf (loadpath, sizeof(loadpath), "textures/%s", identifier);
 		texnum = GL_LoadTextureImage (loadpath, identifier, 0, 0, texmode);
 	}
@@ -1807,13 +1863,42 @@ int Mod_LoadExternalSpriteSkin(char *identifier, int framenum) {
 	return texnum;
 }
 
-void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum) {
-	dspriteframe_t *pinframe;
-	mspriteframe_t *pspriteframe;
-	char basename[64], identifier[64];
-	int width, height, size, origin[2], texnum, texmode;
+static	int	spr_version;
+
+void Mod_LoadSpriteModelTexture (char *sprite_name, dspriteframe_t *pinframe, mspriteframe_t *pspriteframe, int framenum, int width, int height, int texture_flag)
+{
+	char	name[64], sprite[64], sprite2[64];
+
+	COM_StripExtension(sprite_name, sprite);
+	snprintf(name, sizeof(name), "%s_%i", sprite_name, framenum);
+	snprintf(sprite2, sizeof(sprite2), "textures/sprites/%s_%i", COM_SkipPath(sprite), framenum);
+	
+	pspriteframe->gl_texturenum = GL_LoadTextureImage (sprite2, name, 0, 0, texture_flag);
+
+	if (pspriteframe->gl_texturenum == 0)
+	{
+		sprintf (sprite2, "textures/%s_%i", COM_SkipPath(sprite), framenum);
+		pspriteframe->gl_texturenum = GL_LoadTextureImage (sprite2, name, 0, 0, texture_flag);
+	}
+
+	if (pspriteframe->gl_texturenum == 0)
+	{
+		if (spr_version == SPRITE32_VERSION)
+			pspriteframe->gl_texturenum = GL_LoadTexture (sprite_name, width, height, (byte *)(pinframe + 1), texture_flag, 4);
+		else
+			pspriteframe->gl_texturenum = GL_LoadTexture (sprite_name, width, height, (byte *)(pinframe + 1), texture_flag, 1);
+	}
+}
+
+void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum) 
+{
+	dspriteframe_t		*pinframe;
+	mspriteframe_t		*pspriteframe;
+	char				basename[64], identifier[64];
+	int					width, height, size, origin[2], texnum, texmode;
 
 	texmode = TEX_MIPMAP | TEX_ALPHA;
+
 	if (!gl_scaleModelTextures.value && !loadmodel->isworldmodel)
 		texmode |= TEX_NOSCALE;
 
@@ -1823,7 +1908,8 @@ void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum) {
 
 	width = LittleLong (pinframe->width);
 	height = LittleLong (pinframe->height);
-	size = width * height;
+	//size = width * height;
+	size = (spr_version == SPRITE32_VERSION) ? (width * height * 4) : (width * height);
 
 	pspriteframe = (mspriteframe_t *) Hunk_AllocName (sizeof (mspriteframe_t),loadname);
 
@@ -1841,22 +1927,29 @@ void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum) {
 	pspriteframe->left = origin[0];
 	pspriteframe->right = width + origin[0];
 
+#if 0
+	// TODO : Make 32-bit sprites work!
+	Mod_LoadSpriteModelTexture(loadmodel->name, pinframe, pspriteframe, framenum, width, height, texmode);
+#else
 	snprintf (identifier, sizeof(identifier), "sprites/%s_%i", basename, framenum);
+
 	if (!(texnum = Mod_LoadExternalSpriteSkin(identifier, framenum)))
 		texnum = GL_LoadTexture (identifier, width, height, (byte *) (pinframe + 1), texmode, 1);
 
 	pspriteframe->gl_texturenum = texnum;
+#endif
 
 	return (void *) ((byte *) pinframe + sizeof (dspriteframe_t) + size);
 }
 
-void *Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe, int framenum) {
-	dspritegroup_t *pingroup;
-	mspritegroup_t *pspritegroup;
-	int i, numframes;
-	dspriteinterval_t *pin_intervals;
-	float *poutintervals;
-	void *ptemp;
+void *Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe, int framenum) 
+{
+	dspritegroup_t		*pingroup;
+	mspritegroup_t		*pspritegroup;
+	int					i, numframes;
+	dspriteinterval_t	*pin_intervals;
+	float				*poutintervals;
+	void				*ptemp;
 
 	pingroup = (dspritegroup_t *) pin;
 
@@ -1878,7 +1971,8 @@ void *Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe, int framenum) {
 
 	pspritegroup->intervals = poutintervals;
 
-	for (i = 0; i < numframes; i++) {
+	for (i = 0; i < numframes; i++)
+	{
 		*poutintervals = LittleFloat (pin_intervals->interval);
 		if (*poutintervals <= 0.0)
 			Host_Error ("Mod_LoadSpriteGroup: interval <= 0");
@@ -1895,7 +1989,8 @@ void *Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe, int framenum) {
 	return ptemp;
 }
 
-void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
+void Mod_LoadSpriteModel (model_t *mod, void *buffer)
+{
 	int i, j, version, numframes, size, start, offset, sztmp;
 	dsprite_t *pin;
 	msprite_t *psprite;
@@ -1903,19 +1998,17 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
 
 	msprite2_t *psprite2;
 
-
-	// remember point
+	// Remember point.
 	start = Hunk_LowMark ();
-
 
 	pin = (dsprite_t *)buffer;
 
 	version = LittleLong (pin->version);
+	spr_version = version;
 
-	if (version != SPRITE_VERSION) {
-		Host_Error ("Mod_LoadSpriteModel: %s has wrong version number (%i should be %i)", mod->name, version, SPRITE_VERSION);
-		return;
-	}
+	// FIXME : 32-bit sprites doesn't work yet. Stuff ported from QRack.
+	if (spr_version != SPRITE_VERSION && spr_version != SPRITE32_VERSION)
+		Sys_Error ("%s has wrong version number (%i should be %i or %i)", mod->name, spr_version, SPRITE_VERSION, SPRITE32_VERSION);
 
 	numframes = LittleLong (pin->numframes);
 
@@ -1935,7 +2028,7 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
 	mod->mins[2] = -psprite->maxheight/2;
 	mod->maxs[2] = psprite->maxheight/2;
 
-	// load the frames
+	// Load the frames.
 	if (numframes < 1 || numframes > MAX_SPRITE_FRAMES)
 		Host_Error ("Mod_LoadSpriteModel: Invalid # of frames: %d\n", numframes);
 
@@ -1945,16 +2038,20 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
 
 	size = sizeof(msprite2_t);
 
-	for (i = 0; i < numframes; i++) {
+	for (i = 0; i < numframes; i++)
+	{
 		spriteframetype_t	frametype;
 
 		frametype = LittleLong (pframetype->type);
 		psprite->frames[i].type = frametype;
 
-		if (frametype == SPR_SINGLE) {
+		if (frametype == SPR_SINGLE) 
+		{
 			pframetype = (dspriteframetype_t *)	Mod_LoadSpriteFrame (pframetype + 1, &psprite->frames[i].frameptr, i);
 			size += (int)sizeof(mspriteframe_t);
-		} else {
+		}
+		else
+		{
 			pframetype = (dspriteframetype_t *)	Mod_LoadSpriteGroup (pframetype + 1, &psprite->frames[i].frameptr, i);
 			size += (((mspritegroup_t*)(psprite->frames[i].frameptr))->numframes) * (int)sizeof(mspriteframe2_t);
 		}
@@ -1967,11 +2064,13 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
 	psprite2->maxheight	= psprite->maxheight;
 	psprite2->numframes	= psprite->numframes;
 
-	for (i = 0, offset = sizeof(msprite2_t); i < numframes; i++) {
+	for (i = 0, offset = sizeof(msprite2_t); i < numframes; i++)
+	{
 		psprite2->frames[i].type   = psprite->frames[i].type;
 		psprite2->frames[i].offset = offset;
 
-		if (psprite2->frames[i].type == SPR_SINGLE) {
+		if (psprite2->frames[i].type == SPR_SINGLE) 
+		{
 			psprite2->frames[i].numframes = 1; // always one
 
 			sztmp = (int)sizeof(mspriteframe_t);
@@ -1981,10 +2080,12 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
 			memcpy((byte*)(psprite2) + offset, psprite->frames[i].frameptr, sztmp);
 			offset += sztmp;
 		}
-		else {
+		else 
+		{
 			psprite2->frames[i].numframes = ((mspritegroup_t*)(psprite->frames[i].frameptr))->numframes;
 
-			for (j = 0; j < psprite2->frames[i].numframes; j++) {
+			for (j = 0; j < psprite2->frames[i].numframes; j++) 
+			{
 				mspriteframe2_t spr;
 
 				sztmp = (int)sizeof(mspriteframe2_t);
@@ -2000,12 +2101,13 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
 		}
 	}
 
-	mod->type = mod_sprite;
+	mod->type = (spr_version == SPRITE32_VERSION) ? mod_spr32 : mod_sprite;
 
-	// move the complete, relocatable model to the cache
+	// Move the complete, relocatable model to the cache
 
 	Cache_Alloc (&mod->cache, size, loadname);
-	if (!mod->cache.data) {
+	if (!mod->cache.data)
+	{
 		Q_free(psprite2);
 		Hunk_FreeToLowMark (start);
 		return;

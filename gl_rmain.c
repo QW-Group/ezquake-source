@@ -105,14 +105,14 @@ cvar_t	r_teamskincolor		= {"r_teamskincolor",  ""};
 cvar_t	r_skincolormode		= {"r_skincolormode",  "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t  r_fastturb = {"r_fastturb", "0"};
-// START shaman RFE 1022504
-// cvar_t r_skycolor = {"r_skycolor", "4"};
+cvar_t	r_simpleitems		= {"r_simpleitems", "0", true};
+
 cvar_t	r_skycolor   = {"r_skycolor", "40 80 150"};
 cvar_t  r_telecolor  = {"r_telecolor", "255 60 60"};
 cvar_t  r_lavacolor  = {"r_lavacolor", "80 0 0"};
 cvar_t  r_slimecolor = {"r_slimecolor", "10 60 10"};
 cvar_t  r_watercolor = {"r_watercolor", "50 80 120"};
-// END shaman RFE 1022504
+
 qbool OnChange_r_drawflat(cvar_t *v, char *skyname);
 cvar_t	r_drawflat   = {"r_drawflat", "0", 0, OnChange_r_drawflat};
 cvar_t	r_wallcolor  = {"r_wallcolor", "255 255 255", 0, OnChange_r_drawflat};
@@ -123,11 +123,10 @@ cvar_t	r_farclip			= {"r_farclip", "4096"};
 qbool OnChange_r_skyname(cvar_t *v, char *s);
 cvar_t	r_skyname			= {"r_skyname", "bloody-marvelous512", 0, OnChange_r_skyname};
 cvar_t	gl_detail			= {"gl_detail","0"};			
-// START shaman :: balancing variables
+
 cvar_t	gl_caustics			= {"gl_caustics", "0"}; // 1		
 cvar_t  gl_waterfog			= {"gl_turbfog", "0"}; // 2			
 cvar_t  gl_waterfog_density = {"gl_turbfogDensity", "1"};	
-// END shaman :: balancing variables
 
 cvar_t  gl_lumaTextures = {"gl_lumaTextures", "1"};	
 cvar_t	gl_subdivide_size = {"gl_subdivide_size", "64", CVAR_ARCHIVE};
@@ -1010,9 +1009,112 @@ void R_DrawAliasModel (entity_t *ent) {
 	glColor3ubv (color_white);
 }
 
+void R_SetSpritesState(qbool state)
+{
+	static qbool	r_state = false;
+
+	if (r_state == state)
+		return;
+
+	r_state = state;
+
+	if (state)
+	{
+		if (currententity->model->modhint == MOD_SPR32)
+		{
+			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glEnable (GL_BLEND);
+			glDepthMask (GL_FALSE);	// disable zbuffer updates
+		}
+		else
+		{
+			GL_DisableMultitexture ();
+			glEnable (GL_ALPHA_TEST);
+		}
+	}
+	else
+	{
+		if (currententity->model->modhint == MOD_SPR32)
+		{
+			glDisable (GL_BLEND);
+			glDepthMask (GL_TRUE);	// enable zbuffer updates
+		}
+		else
+		{
+			glDisable (GL_ALPHA_TEST);
+		}
+	}
+}
+
+int SpriteForMDL(void)
+{
+	if ((!strcmp(currententity->model->name, "maps/b_shell0.bsp")) || (!strcmp(currententity->model->name, "maps/b_shell1.bsp")))
+	{		
+		return mi_2dshells;
+	}
+	
+	if ((!strcmp(currententity->model->name, "maps/b_batt0.bsp")) || (!strcmp(currententity->model->name, "maps/b_batt1.bsp")))
+	{		
+		return mi_2dcells;
+	}
+	
+	if ((!strcmp(currententity->model->name, "maps/b_rock0.bsp")) || (!strcmp(currententity->model->name, "maps/b_rock1.bsp")))
+	{
+		return mi_2drockets;
+	}
+	
+	if ((!strcmp(currententity->model->name, "maps/b_nail0.bsp")) || (!strcmp(currententity->model->name, "maps/b_nail1.bsp")))
+	{		
+		return mi_2dnails;
+	}
+	
+	if (!strcmp(currententity->model->name, "maps/b_bh100.bsp"))
+	{
+		return mi_2dmega;
+	}
+	//------------------------
+	if (!strcmp(currententity->model->name, "progs/invulner.mdl"))
+	{
+		return mi_2dpent;
+	}
+
+	if (!strcmp(currententity->model->name, "progs/quaddama.mdl"))
+	{		
+		return mi_2dquad;
+	}
+
+	if (!strcmp(currententity->model->name, "progs/invisibl.mdl"))
+	{		
+		return mi_2dring;
+	}
+
+	if (!strcmp(currententity->model->name, "progs/suit.mdl"))
+	{		
+		return mi_2dsuit;
+	}
+//---------------------------------------------
+	if (!strcmp(currententity->model->name, "progs/armor.mdl"))
+	{
+		if (currententity->skinnum == 0)
+			return mi_2darmor1;
+		if (currententity->skinnum == 1)
+			return mi_2darmor2;
+		if (currententity->skinnum == 2)
+			return mi_2darmor3;
+		return true;
+	}
+	
+	if(!strcmp(currententity->model->name, "progs/backpack.mdl"))
+    {
+		return mi_2dbackpack;		
+	}
+
+	return -1;
+}
+
 
 void R_DrawEntitiesOnList (visentlist_t *vislist) {
-	int i;
+	int i, idx;
 
 	if (!r_drawentities.value || !vislist->count)
 		return;
@@ -1021,17 +1123,36 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 		glEnable (GL_ALPHA_TEST);
 
 	// draw sprites separately, because of alpha_test
-	for (i = 0; i < vislist->count; i++) {
+	for (i = 0; i < vislist->count; i++) 
+	{
 		currententity = &vislist->list[i];
-		switch (currententity->model->type) {
+
+		// Draw sprites instead of models for item models.
+		if (r_simpleitems.value)
+		{
+			idx = SpriteForMDL();
+			if (idx >= 0)
+			{
+				if (cl.model_precache[cl_modelindices[idx]])
+				{
+					currententity->model = cl.model_precache[cl_modelindices[idx]];
+					currententity->model->type = mod_sprite;					
+					VectorCopy (currententity->origin, r_entorigin);
+					VectorSubtract (r_origin, r_entorigin, modelorg);
+				}
+			}
+		}
+
+		switch (currententity->model->type) 
+		{
 			case mod_alias:
-				//VULT NAILTRAIL - Hidenails
+				// VULT NAILTRAIL - Hidenails
 				if (amf_hidenails.value && currententity->model->modhint == MOD_SPIKE)
 					break;
-				//VULT ROCKETTRAILS - Hide rockets
+				// VULT ROCKETTRAILS - Hide rockets
 				if (amf_hiderockets.value && currententity->model->flags & EF_ROCKET)
 					break;
-				//VULT CAMERAS - Show/Hide playermodel
+				// VULT CAMERAS - Show/Hide playermodel
 				if (currententity->alpha == -1)
 				{
 					 if (cameratype == C_NORMAL)
@@ -1039,11 +1160,11 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 					 else
 						currententity->alpha = 1;
 				}
-				//VULT MOTION TRAILS
+				// VULT MOTION TRAILS
 				if (currententity->alpha < 0)
 					break;
 
-				//joe: handle flame/flame0 model changes
+				// Handle flame/flame0 model changes
 				if (qmb_initialized)
 				{
 					if (!amf_part_fire.value && !strcmp(currententity->model->name, "progs/flame0.mdl"))
@@ -1099,7 +1220,10 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 				brushmodel = 0;
 				break;
 			case mod_sprite:
+			case mod_spr32:
+				R_SetSpritesState (true);
 				R_DrawSpriteModel (currententity);
+				R_SetSpritesState (false);
 				break;
 		}
 	}
@@ -1499,6 +1623,12 @@ void R_Init (void) {
 	Cvar_Register (&r_bloom_intensity);
 	Cvar_Register (&r_bloom_sample_size);
 	Cvar_Register (&r_bloom_fast_sample);
+	Cvar_Register (&r_drawentities);
+	Cvar_Register (&r_lerpframes);
+	Cvar_Register (&r_lerpmuzzlehack);
+	Cvar_Register (&r_drawflame);
+	Cvar_Register (&gl_detail);
+	Cvar_Register (&r_simpleitems);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 	Cvar_Register (&gl_solidparticles);
@@ -1517,12 +1647,12 @@ void R_Init (void) {
 	Cvar_Register (&r_fastsky);
 	Cvar_Register (&r_skycolor);
 	Cvar_Register (&r_fastturb);
-	// START shaman RFE 1022504
+
 	Cvar_Register (&r_telecolor);
 	Cvar_Register (&r_lavacolor);
 	Cvar_Register (&r_slimecolor);
 	Cvar_Register (&r_watercolor);
-	// END shaman RFE 1022504
+
 	Cvar_Register (&r_novis);
 	Cvar_Register (&r_wateralpha);
 	Cvar_Register (&gl_caustics);
@@ -1538,13 +1668,6 @@ void R_Init (void) {
 	Cvar_Register (&gl_fogred); 
 	Cvar_Register (&gl_fogblue);
 	Cvar_Register (&gl_foggreen);
-
-	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
-	Cvar_Register (&r_drawentities);
-	Cvar_Register (&r_lerpframes);
-	Cvar_Register (&r_lerpmuzzlehack);
-	Cvar_Register (&r_drawflame);
-	Cvar_Register (&gl_detail);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_BLEND);
 	Cvar_Register (&gl_polyblend);
@@ -1789,7 +1912,19 @@ void R_RenderView (void) {
 
 	SCR_SetupAutoID ();
 
-	R_BloomBlend();
+	if (cl_multiview.value && cls.mvdplayback)
+	{
+		// Only bloom when we have drawn all views when in multiview.
+		if (CURRVIEW == 1)
+		{
+			R_BloomBlend();
+		}
+	} 
+	else
+	{
+		// Normal, bloom on each frame.
+		R_BloomBlend();
+	}
 
 	if (r_speeds.value) {
 		time2 = Sys_DoubleTime ();

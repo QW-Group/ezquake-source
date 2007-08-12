@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_ents.c,v 1.38 2007-08-11 20:12:05 cokeman1982 Exp $
+	$Id: cl_ents.c,v 1.39 2007-08-12 15:12:50 cokeman1982 Exp $
 
 */
 
@@ -120,10 +120,28 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_m16] = "progs/grem.mdl";
 	cl_modelnames[mi_m17] = "progs/scor.mdl";
 
+	// Item sprites.
+	cl_modelnames[mi_2dshells]		= "sprites/s_shells.spr";
+	cl_modelnames[mi_2dcells]		= "sprites/s_cells.spr";
+	cl_modelnames[mi_2drockets]		= "sprites/s_rockets.spr";
+	cl_modelnames[mi_2dnails]		= "sprites/s_nails.spr";
+	cl_modelnames[mi_2dmega]		= "sprites/s_mega.spr";
+	cl_modelnames[mi_2dpent]		= "sprites/s_invuln.spr";
+	cl_modelnames[mi_2dquad]		= "sprites/s_quad.spr";
+	cl_modelnames[mi_2dring]		= "sprites/s_invis.spr";
+	cl_modelnames[mi_2dsuit]		= "sprites/s_suit.spr";
+	cl_modelnames[mi_2darmor1]		= "sprites/s_armor1.spr";
+	cl_modelnames[mi_2darmor2]		= "sprites/s_armor2.spr";
+	cl_modelnames[mi_2darmor3]		= "sprites/s_armor3.spr";
+	cl_modelnames[mi_2dbackpack]	= "sprites/s_backpack.spr";
+	cl_modelnames[mi_2dhealth10]	= "sprites/s_health10.spr";
+	cl_modelnames[mi_2dhealth25]	= "sprites/s_health25.spr";
+
 	// FIXME, delay until map load time?
 	cl_flame0_model = Mod_ForName ("progs/flame0.mdl", false);
 
-	for (i = 0; i < cl_num_modelindices; i++) {
+	for (i = 0; i < cl_num_modelindices; i++) 
+	{
 		if (!cl_modelnames[i])
 			Sys_Error("cl_modelnames[%d] not initialized", i);
 	}

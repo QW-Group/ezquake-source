@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.102 2007-08-12 14:18:40 qqshka Exp $
+$Id: cl_parse.c,v 1.103 2007-08-12 15:12:50 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -473,15 +473,18 @@ qbool CL_CheckOrDownloadFile (char *filename) {
 	return false;
 }
 
-void CL_FindModelNumbers (void) {
+void CL_FindModelNumbers (void)
+{
 	int i, j;
 
-	for (i = 0; i < cl_num_modelindices; i++)
-		cl_modelindices[i] = -1;
+	memset(cl_modelindices, -1, sizeof(cl_modelindex_t) * cl_num_modelindices);
 
-	for (i = 0; i < MAX_MODELS; i++) {
-		for (j = 0; j < cl_num_modelindices; j++) {
-			if (!strcmp(cl_modelnames[j], cl.model_name[i])) {
+	for (i = 0; i < MAX_MODELS; i++) 
+	{
+		for (j = 0; j < cl_num_modelindices; j++) 
+		{
+			if (!strcmp(cl_modelnames[j], cl.model_name[i])) 
+			{
 				cl_modelindices[j] = i;
 				break;
 			}
@@ -1540,7 +1543,8 @@ void CL_ParseModellist (qbool extended)
 	// precache models and note certain default indexes
 	nummodels = (extended) ? (unsigned) MSG_ReadShort () : MSG_ReadByte ();
 
-	while (1) {
+	while (1) 
+	{
 		str = MSG_ReadString ();
 		if (!str[0])
 			break;
@@ -1548,30 +1552,39 @@ void CL_ParseModellist (qbool extended)
 		nummodels++;
 		if (nummodels >= MAX_MODELS) //Spike: tweeked this, we still complain if the server exceeds the standard limit without using extensions.
 			Host_Error ("Server sent too many model_precache");
+		
 		if (nummodels >= 256 && !(cls.fteprotocolextensions & FTE_PEXT_MODELDBL))
 #else
 		if (++nummodels == MAX_MODELS)
 #endif
+		{
 			Host_Error ("Server sent too many model_precache");
+		}
 
 		if (str[0] == '/')
 			str++; // hexum -> fixup server error (submitted by empezar bug #1026106)
 		strlcpy (cl.model_name[nummodels], str, sizeof(cl.model_name[nummodels]));
 
 		if (nummodels == 1)
-			if (!com_serveractive) {
+		{
+			if (!com_serveractive) 
+			{
 				char mapname[MAX_QPATH];
 				COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname);
 				Cvar_ForceSet (&host_mapname, mapname);
 				R_PreMapLoad(mapname);
 			}
+		}
 	}
 
-	if ((n = MSG_ReadByte())) {
-		if (cls.mvdplayback == QTV_PLAYBACK) {
+	if ((n = MSG_ReadByte())) 
+	{
+		if (cls.mvdplayback == QTV_PLAYBACK) 
+		{
 			// none
 		}
-		else {
+		else 
+		{
 			MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 #if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
 			MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, (nummodels&0xff00)+n));
@@ -1579,6 +1592,28 @@ void CL_ParseModellist (qbool extended)
 			MSG_WriteString (&cls.netchan.message, va("modellist %i %i", cl.servercount, n));
 #endif
 		}
+
+		// Precache 2D sprite models.
+		#define PRECACHE_SPRITE(sprite)														\
+			cl.model_precache[nummodels] = Mod_ForName (sprite, false);						\
+			strlcpy (cl.model_name[nummodels], sprite, sizeof(cl.model_name[nummodels]));	\
+			nummodels++;																	\
+
+		PRECACHE_SPRITE("sprites/s_shells.spr");		
+		PRECACHE_SPRITE("sprites/s_cells.spr");
+		PRECACHE_SPRITE("sprites/s_rockets.spr");
+		PRECACHE_SPRITE("sprites/s_nails.spr");
+		PRECACHE_SPRITE("sprites/s_invuln.spr");
+		PRECACHE_SPRITE("sprites/s_quad.spr");
+		PRECACHE_SPRITE("sprites/s_suit.spr");
+		PRECACHE_SPRITE("sprites/s_invis.spr");
+		PRECACHE_SPRITE("sprites/s_mega.spr");
+		PRECACHE_SPRITE("sprites/s_health10.spr");
+		PRECACHE_SPRITE("sprites/s_health25.spr");
+		PRECACHE_SPRITE("sprites/s_armor1.spr");
+		PRECACHE_SPRITE("sprites/s_armor2.spr");
+		PRECACHE_SPRITE("sprites/s_armor3.spr");
+		PRECACHE_SPRITE("sprites/s_backpack.spr");
 
 		return;
 	}
