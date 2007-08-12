@@ -16,11 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_main.c,v 1.24 2007-08-12 22:42:13 cokeman1982 Exp $
+	$Id: r_main.c,v 1.25 2007-08-12 22:45:18 cokeman1982 Exp $
 
 */
 
 #include "quakedef.h"
+#include "vx_tracker.h"
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
