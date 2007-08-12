@@ -545,6 +545,11 @@ void Draw_ScaledCharacterW (int x, int y, wchar num, float scale)
 	// int mchar_size = charset->width >> 4; // 16 characters per row.
 }
 
+void Draw_SColoredCharacterW (int x, int y, wchar num, color_t color, float scale)
+{
+	Draw_ScaledCharacterW(x, y, num, scale);
+}
+
 void Draw_CharacterW (int x, int y, wchar num)
 {
 	Draw_ScaledCharacterW(x, y, num, 1);

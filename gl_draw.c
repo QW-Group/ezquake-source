@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.84 2007-08-12 17:33:17 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.85 2007-08-12 22:35:37 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -807,9 +807,12 @@ __inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool ap
 	{
 		glDisable(GL_ALPHA_TEST);
 	}
-	
-	glEnable(GL_BLEND);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	if (scr_coloredText.integer)
+	{
+		glEnable(GL_BLEND);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	}
 
 	// Set the overall alpha.
 	glColor4ub(color[0], color[1], color[2], color[3] * overall_alpha);
@@ -864,6 +867,13 @@ __inline void Draw_CharacterBase (int x, int y, wchar num, float scale, qbool ap
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 	glColor4ubv(color_white);
+}
+
+void Draw_SColoredCharacterW (int x, int y, wchar num, color_t color, float scale)
+{
+	byte rgba[4];
+	COLOR_TO_RGBA(color, rgba);
+	Draw_CharacterBase(x, y, num, scale, true, rgba);
 }
 
 void Draw_SCharacter (int x, int y, int num, float scale)
