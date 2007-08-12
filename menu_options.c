@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.69 2007-06-30 11:36:16 johnnycz Exp $
+		$Id: menu_options.c,v 1.70 2007-08-12 22:42:13 cokeman1982 Exp $
 
 */
 
@@ -22,6 +22,7 @@
 #include "settings_page.h"
 #include "Ctrl_EditBox.h"
 #include "vx_stuff.h"
+#include "vx_tracker.h"
 #ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"

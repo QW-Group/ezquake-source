@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: r_main.c,v 1.23 2007-03-27 19:38:55 johnnycz Exp $
+	$Id: r_main.c,v 1.24 2007-08-12 22:42:13 cokeman1982 Exp $
 
 */
 
@@ -302,6 +302,7 @@ void R_Init (void) {
 #endif	// id386
 
 	D_Init ();
+	InitTracker();
 }
 
 
@@ -353,6 +354,8 @@ void R_NewMap (void) {
 
 	r_dowarpold = false;
 	r_viewchanged = false;
+
+	VX_TrackerClear();
 }
 
 void R_SetVrect (vrect_t *pvrectin, vrect_t *pvrect, int lineadj) {

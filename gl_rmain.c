@@ -720,20 +720,6 @@ void R_DrawAliasModel (entity_t *ent) {
 		NewStaticLightCorona (C_LIGHTNING, ent->origin, (int)ent);
 	}
 
-/* joe: replaced this with my own stuff - see R_DrawEntitiesOnList()
-	if (amf_part_fire.value && (!strcmp (ent->model->name, "progs/flame.mdl") || !strcmp (ent->model->name, "progs/flame2.mdl") || !strcmp (ent->model->name, "progs/flame3.mdl")))
-	{
-		if (!strcmp (ent->model->name, "progs/flame.mdl") && !ISPAUSED)
-			ParticleFire(ent->origin);
-		else if (!strcmp (ent->model->name, "progs/flame2.mdl") || !strcmp (ent->model->name, "progs/flame3.mdl"))
-		{
-			if (!ISPAUSED)
-				ParticleFire(ent->origin);
-			return;
-		}
-	}
-*/
-
 	clmodel = ent->model;
 	paliashdr = (aliashdr_t *) Mod_Extradata (ent->model);	//locate the proper data
 
@@ -860,7 +846,8 @@ void R_DrawAliasModel (entity_t *ent) {
 	if (gl_affinemodels.value)
 		glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 
-	if (ent->model->modhint == MOD_PLAYER && playernum >= 0 && playernum < MAX_CLIENTS) {
+	if (ent->model->modhint == MOD_PLAYER && playernum >= 0 && playernum < MAX_CLIENTS)
+	{
 		extern qbool VX_TrackerIsEnemy(int player);
 		cv = VX_TrackerIsEnemy(playernum) ? &r_enemyskincolor : &r_teamskincolor;
 	}
@@ -1764,7 +1751,10 @@ void R_Init (void) {
 
 	//VULT STUFF
 	if (qmb_initialized)
+	{
 		InitVXStuff(); // safe re-init imo
+		InitTracker();
+	}
 	else
 		; // FIXME: hm, in case of vid_restart, what we must do if before vid_restart qmb_initialized was true?
 

@@ -1,7 +1,5 @@
 //VultureIIC
 
-#ifdef GLQUAKE
-
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
@@ -15,7 +13,6 @@ int GL_LoadTextureImage (char * , char *, int, int, int);
 int coronatexture;
 
 extern cvar_t gl_bounceparticles;
-// START shaman balancing variables
 
 cvar_t		amf_showstats = {"r_glstats", "0", CVAR_ARCHIVE};
 
@@ -38,9 +35,9 @@ cvar_t		amf_hiderockets = {"cl_hiderockets", "0", CVAR_ARCHIVE};
 
 cvar_t		amf_stat_loss = {"r_damagestats", "0", CVAR_ARCHIVE};
 cvar_t		amf_lightning = {"gl_lightning", "0", CVAR_ARCHIVE}; // 1
-// START shaman RFE 1022310
+
 cvar_t		amf_lightning_size = {"gl_lightning_size", "3", CVAR_ARCHIVE};
-// END shaman RFE 1022310
+
 cvar_t		amf_lightning_sparks = {"gl_lightning_sparks", "0", CVAR_ARCHIVE}; // 0.4
 cvar_t		amf_lighting_vertex = {"gl_lighting_vertex", "0", CVAR_ARCHIVE}; // 1
 cvar_t		amf_lighting_colour = {"gl_lighting_colour", "0", CVAR_ARCHIVE}; // 1
@@ -57,27 +54,6 @@ cvar_t		amf_motiontrails_wtf = {"gl_motiontrails_wtf", "0", CVAR_ARCHIVE};
 cvar_t		amf_nailtrail_water = {"gl_nailtrail_turb", "0", CVAR_ARCHIVE};
 cvar_t		amf_nailtrail_plasma = {"gl_nailtrail_plasma", "0", CVAR_ARCHIVE};
 cvar_t		amf_nailtrail = {"gl_nailtrail", "0", CVAR_ARCHIVE}; // 1
-cvar_t		amf_tracker_flags = {"r_tracker_flags", "0", CVAR_ARCHIVE};
-cvar_t		amf_tracker_frags = {"r_tracker_frags", "1", CVAR_ARCHIVE};
-cvar_t		amf_tracker_streaks = {"r_tracker_streaks", "0", CVAR_ARCHIVE};
-cvar_t		amf_tracker_time = {"r_tracker_time", "4", CVAR_ARCHIVE};
-cvar_t		amf_tracker_messages = {"r_tracker_messages", "10", CVAR_ARCHIVE};
-cvar_t		amf_tracker_align_right = {"r_tracker_align_right", "1", CVAR_ARCHIVE};
-cvar_t		amf_tracker_x = {"r_tracker_x", "0", CVAR_ARCHIVE};
-cvar_t		amf_tracker_y = {"r_tracker_y", "0", CVAR_ARCHIVE};
-cvar_t		amf_tracker_frame_color = {"r_tracker_frame_color", "0 0 0 0", CVAR_ARCHIVE};
-cvar_t		amf_tracker_scale = {"r_tracker_scale", "1", CVAR_ARCHIVE};
-cvar_t		amf_tracker_images_scale = {"r_tracker_images_scale", "1", CVAR_ARCHIVE};
-cvar_t		amf_tracker_color_good      = {"r_tracker_color_good",     "090", CVAR_ARCHIVE}; // good news
-cvar_t		amf_tracker_color_bad       = {"r_tracker_color_bad",      "900", CVAR_ARCHIVE}; // bad news
-cvar_t		amf_tracker_color_tkgood    = {"r_tracker_color_tkgood",   "990", CVAR_ARCHIVE}; // team kill, not on ur team
-cvar_t		amf_tracker_color_tkbad     = {"r_tracker_color_tkbad",    "009", CVAR_ARCHIVE}; // team kill, on ur team
-cvar_t		amf_tracker_color_myfrag    = {"r_tracker_color_myfrag",   "090", CVAR_ARCHIVE}; // use this color for frag which u done
-cvar_t		amf_tracker_color_fragonme  = {"r_tracker_color_fragonme", "900", CVAR_ARCHIVE}; // use this color when u frag someone
-cvar_t		amf_tracker_color_suicide   = {"r_tracker_color_suicide",  "900", CVAR_ARCHIVE}; // use this color when u suicides
-cvar_t		amf_tracker_string_suicides = {"r_tracker_string_suicides", " (suicides)", CVAR_ARCHIVE};
-cvar_t		amf_tracker_string_died     = {"r_tracker_string_died",     " (died)",     CVAR_ARCHIVE};
-
 
 cvar_t		amf_part_gunshot = {"gl_particle_gunshots", "0", CVAR_ARCHIVE};
 cvar_t		amf_part_gunshot_type = {"gl_particle_gunshots_type", "1", CVAR_ARCHIVE};
@@ -103,7 +79,7 @@ cvar_t		amf_part_trailtime   = {"gl_particle_trail_time",   "1", CVAR_ARCHIVE};
 cvar_t		amf_part_trailwidth  = {"gl_particle_trail_width",  "3", CVAR_ARCHIVE};
 cvar_t		amf_part_traildetail = {"gl_particle_trail_detail", "1", CVAR_ARCHIVE};
 cvar_t		amf_part_trailtype   = {"gl_particle_trail_type",   "1", CVAR_ARCHIVE};
-// END shaman :: balancing variables
+
 
 int vxdamagecount;
 int vxdamagecount_oldhealth;
@@ -423,28 +399,6 @@ void InitVXStuff(void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 
 	Cvar_Register (&amf_showstats);
-	Cvar_Register (&amf_tracker_frags);
-	Cvar_Register (&amf_tracker_flags);
-	Cvar_Register (&amf_tracker_streaks);
-	Cvar_Register (&amf_tracker_messages);
-	Cvar_Register (&amf_tracker_time);
-	Cvar_Register (&amf_tracker_align_right);
-	Cvar_Register (&amf_tracker_x);
-	Cvar_Register (&amf_tracker_y);
-	Cvar_Register (&amf_tracker_frame_color);
-	Cvar_Register (&amf_tracker_scale);
-	Cvar_Register (&amf_tracker_images_scale);
-
-	Cvar_Register (&amf_tracker_color_good);	
-	Cvar_Register (&amf_tracker_color_bad);
-	Cvar_Register (&amf_tracker_color_tkgood);
-	Cvar_Register (&amf_tracker_color_tkbad);
-	Cvar_Register (&amf_tracker_color_myfrag);
-	Cvar_Register (&amf_tracker_color_fragonme);
-	Cvar_Register (&amf_tracker_color_suicide);
-
-	Cvar_Register (&amf_tracker_string_suicides);
-	Cvar_Register (&amf_tracker_string_died);
 
 	Cvar_ResetCurrentGroup();
 
@@ -511,9 +465,7 @@ void InitVXStuff(void)
 	Cvar_Register (&amf_detpacklights);
 	Cvar_Register (&amf_buildingsparks);
 	Cvar_Register (&amf_lightning);
-// START shaman RFE 1022310
 	Cvar_Register (&amf_lightning_size);
-// END shaman RFE 1022310
 	Cvar_Register (&amf_lightning_sparks);
 	Cvar_Register (&amf_motiontrails);
 	Cvar_Register (&amf_motiontrails_wtf);
@@ -526,4 +478,4 @@ void InitVXStuff(void)
 	Cmd_AddCommand ("gl_setmode", Amf_SetMode_f);
 }
 
-#endif
+

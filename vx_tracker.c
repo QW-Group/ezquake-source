@@ -1,15 +1,38 @@
 //VULTUREIIC
 #include "quakedef.h"
-#include "gl_model.h"
-#include "gl_local.h"
+//#include "gl_model.h"
+//#include "gl_local.h"
 #include "vx_stuff.h"
 #include "utils.h"
+#include "vx_tracker.h"
 
 // seems noone uses next variables outside file, so make static
 // {
 static int active_track = 0;
 static int max_active_tracks = 0;
 // }
+
+cvar_t		amf_tracker_flags			= {"r_tracker_flags", "0", CVAR_ARCHIVE};
+cvar_t		amf_tracker_frags			= {"r_tracker_frags", "1", CVAR_ARCHIVE};
+cvar_t		amf_tracker_streaks			= {"r_tracker_streaks", "0", CVAR_ARCHIVE};
+cvar_t		amf_tracker_time			= {"r_tracker_time", "4", CVAR_ARCHIVE};
+cvar_t		amf_tracker_messages		= {"r_tracker_messages", "10", CVAR_ARCHIVE};
+cvar_t		amf_tracker_align_right		= {"r_tracker_align_right", "1", CVAR_ARCHIVE};
+cvar_t		amf_tracker_x				= {"r_tracker_x", "0", CVAR_ARCHIVE};
+cvar_t		amf_tracker_y				= {"r_tracker_y", "0", CVAR_ARCHIVE};
+cvar_t		amf_tracker_frame_color		= {"r_tracker_frame_color", "0 0 0 0", CVAR_ARCHIVE};
+cvar_t		amf_tracker_scale			= {"r_tracker_scale", "1", CVAR_ARCHIVE};
+cvar_t		amf_tracker_images_scale	= {"r_tracker_images_scale", "1", CVAR_ARCHIVE};
+cvar_t		amf_tracker_color_good      = {"r_tracker_color_good",     "090", CVAR_ARCHIVE}; // good news
+cvar_t		amf_tracker_color_bad       = {"r_tracker_color_bad",      "900", CVAR_ARCHIVE}; // bad news
+cvar_t		amf_tracker_color_tkgood    = {"r_tracker_color_tkgood",   "990", CVAR_ARCHIVE}; // team kill, not on ur team
+cvar_t		amf_tracker_color_tkbad     = {"r_tracker_color_tkbad",    "009", CVAR_ARCHIVE}; // team kill, on ur team
+cvar_t		amf_tracker_color_myfrag    = {"r_tracker_color_myfrag",   "090", CVAR_ARCHIVE}; // use this color for frag which u done
+cvar_t		amf_tracker_color_fragonme  = {"r_tracker_color_fragonme", "900", CVAR_ARCHIVE}; // use this color when u frag someone
+cvar_t		amf_tracker_color_suicide   = {"r_tracker_color_suicide",  "900", CVAR_ARCHIVE}; // use this color when u suicides
+cvar_t		amf_tracker_string_suicides = {"r_tracker_string_suicides", " (suicides)", CVAR_ARCHIVE};
+cvar_t		amf_tracker_string_died     = {"r_tracker_string_died",     " (died)",     CVAR_ARCHIVE};
+
 
 #define MAX_TRACKERMESSAGES 30
 #define MAX_TRACKER_MSG_LEN 500
@@ -27,6 +50,34 @@ static struct {
     double time;
     char text[MAX_SCOREBOARDNAME+20];
 } ownfragtext;
+
+void InitTracker(void)
+{
+	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
+
+	Cvar_Register (&amf_tracker_frags);
+	Cvar_Register (&amf_tracker_flags);
+	Cvar_Register (&amf_tracker_streaks);
+	Cvar_Register (&amf_tracker_messages);
+	Cvar_Register (&amf_tracker_time);
+	Cvar_Register (&amf_tracker_align_right);
+	Cvar_Register (&amf_tracker_x);
+	Cvar_Register (&amf_tracker_y);
+	Cvar_Register (&amf_tracker_frame_color);
+	Cvar_Register (&amf_tracker_scale);
+	Cvar_Register (&amf_tracker_images_scale);
+
+	Cvar_Register (&amf_tracker_color_good);	
+	Cvar_Register (&amf_tracker_color_bad);
+	Cvar_Register (&amf_tracker_color_tkgood);
+	Cvar_Register (&amf_tracker_color_tkbad);
+	Cvar_Register (&amf_tracker_color_myfrag);
+	Cvar_Register (&amf_tracker_color_fragonme);
+	Cvar_Register (&amf_tracker_color_suicide);
+
+	Cvar_Register (&amf_tracker_string_suicides);
+	Cvar_Register (&amf_tracker_string_died);
+}
 
 void VX_TrackerClear()
 {
@@ -91,7 +142,8 @@ void VX_TrackerAddText(char *msg, tracktype_t tt)
 	if (!msg || !msg[0])
 		return;
 
-	switch (tt) {
+	switch (tt) 
+	{
 		case tt_death:  if (!amf_tracker_frags.value)   return; break;
 		case tt_streak: if (!amf_tracker_streaks.value) return; break;
 		case tt_flag:   if (!amf_tracker_flags.value)   return; break;
@@ -401,136 +453,153 @@ void VX_TrackerStreakEndOddTeamkilled(int player, int count)
 	VX_TrackerAddText(outstring, tt_streak);
 }
 
-//We need a seperate function, since our messages are in colour... and transparent
+// We need a seperate function, since our messages are in colour... and transparent
 void VXSCR_DrawTrackerString (void)
 {
+	byte	rgba[4];
 	char	*start, image[256], fullpath[MAX_PATH];
 	int		l;
 	int		j;
 	int		x, y;
-	int		i, w;
-	float	alpha = 1, scale = bound(0.1, amf_tracker_scale.value, 10);
+	int		i, printable_chars;
+	float	alpha = 1;
+	float	scale = bound(0.1, amf_tracker_scale.value, 10);
 	float	im_scale = bound(0.1, amf_tracker_images_scale.value, 10);
 	byte	*col = StringToRGB(amf_tracker_frame_color.string);
-	vec3_t	kolorkodes = {1,1,1};
 
 	if (!active_track)
 		return;
 
-	y = vid.height*0.2/scale + amf_tracker_y.value;
+	memset(rgba, 255, sizeof(byte) * 4);
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glColor4f(kolorkodes[0], kolorkodes[1], kolorkodes[2], alpha);
-	glDisable(GL_ALPHA_TEST);
-	glEnable (GL_BLEND);
+	y = vid.height * 0.2 / scale + amf_tracker_y.value;
 
-	if (scale != 1) {
-		glPushMatrix ();
-		glScalef(scale, scale, 1); 
-	}
-
+	// Draw the max allowed trackers allowed at the same time
+	// the latest ones are always shown.
 	for (i = 0; i < max_active_tracks; i++)
 	{
+		// Time expired for this tracker, don't draw it.
 		if (trackermsg[i].die < r_refdef2.time)
 			continue;
 
+		// Get the start of the tracker message.
 		start = trackermsg[i].msg;
-		alpha = min(1, (trackermsg[i].die - r_refdef2.time)/2);
 
+		// Fade the text as it gets older.
+		alpha = min(1, (trackermsg[i].die - r_refdef2.time) / 2);
+
+		// Loop through the tracker message and parse it.
 		while (start[0])
 		{
-			l = w = 0;
+			l = printable_chars = 0;
 
+			// Find the number of printable characters for the next line.
 			while (start[l] && start[l] != '\n')
 			{
-				if (start[l] == '\\') { // we found opening slash, get image name now
+				// Look for any escape codes for images and color codes.
+
+				// Image escape.
+				if (start[l] == '\\') 
+				{
+					// We found opening slash, get image name now.
 					int from, to;
 
 					from = to = ++l;
 
-					for( ; start[l]; l++) {
+					for( ; start[l]; l++) 
+					{
 						if (start[l] == '\n')
-							break; // something bad, we does't found closing slash
+							break; // Something bad, we didn't find a closing slash.
 
 						if (start[l] == '\\')
-							break; // found closing slash
+							break; // Found a closing slash.
 
 						to = l + 1;
 					}
 
 					if (to > from)
-						w += 2; // we got potential image name, treat image as two printable characters
+						printable_chars += 2; // We got potential image name, treat image as two printable characters.
 
 					if (start[l] == '\\')
-						l++; // advance
+						l++; // Advance.
 
 					continue;
 				}
 
+				// Get rid of color codes.
 				if (start[l] == '&')
 				{
-					if (start[l + 1] == 'r') {
+					if (start[l + 1] == 'r') 
+					{
 						l += 2;
 						continue;
 					}
-					else if (start[l + 1] == 'c' && start[l + 2] && start[l + 3] && start[l + 4]) {
+					else if (start[l + 1] == 'c' && start[l + 2] && start[l + 3] && start[l + 4]) 
+					{
 						l += 5;
 						continue;
 					}
 				}
 
-				w++; // increment count of printable chars
-				l++; // increment count of any chars in string untill end or new line
+				printable_chars++;	// Increment count of printable chars.
+				l++;				// Increment count of any chars in string untill end or new line.
 			}
 
-			x = (amf_tracker_align_right.value ? (vid.width/scale - w*8) - 8 : 8);
+			// Place the tracker.
+			x = scale * (amf_tracker_align_right.value ? (vid.width / scale - printable_chars * 8) - 8 : 8);
 			x += amf_tracker_x.value;
 
-			glDisable (GL_TEXTURE_2D);
-			glColor4ub(col[0], col[1], col[2], (byte)(alpha*col[3]));
-			glRectf(x, y, x + w * 8, y + 8);
-			glEnable (GL_TEXTURE_2D);
-
-			glColor4f(kolorkodes[0], kolorkodes[1], kolorkodes[2], alpha);
-
+			// Draw the string.
 			for (j = 0; j < l;)
 			{
-				if (start[j] == '\\') { // we found opening slash, get image name now
+				if (start[j] == '\\') 
+				{ 
+					// We found opening slash, get image name now
 					int from, to;
 
 					from = to = ++j;
 
-					for( ; start[j]; j++) {
+					for( ; start[j]; j++) 
+					{
 						if (start[j] == '\n')
-							break; // something bad, we does't found closing slash
+							break; // Something bad, we does't found closing slash.
 
 						if (start[j] == '\\')
-							break; // found closing slash
+							break; // Found closing slash.
 
 						to = j + 1;
 					}
 
-					if (to > from) { // we got potential image name, treat image as two printable characters
+					if (to > from) 
+					{ 
+						// We got potential image name, treat image as two printable characters.
 						mpic_t *pic;
 						int size = to - from;
 
 						size = min(size, (int)sizeof(image) - 1);
 
-						memcpy(image, (start + from), size); // copy image name to temp buffer
+						memcpy(image, (start + from), size); // Copy image name to temp buffer.
 						image[size] = 0;
 
-						if (image[0]) {
+						if (image[0])
+						{
 							snprintf(fullpath, sizeof(fullpath), "textures/tracker/%s", image);
 
 							if ((pic = Draw_CachePicSafe(fullpath, false, true)))
-								Draw_FitPic((float)x - 0.5 * 8 * 2 * (im_scale - 1), (float)y - 0.5 * 8 * (im_scale - 1), im_scale * 8 * 2, im_scale * 8, pic);
+							{
+								Draw_FitPic(
+									(float)x - 0.5 * 8 * 2 * (im_scale - 1) * scale, 
+									(float)y - 0.5 * 8 * (im_scale - 1) * scale, 
+									im_scale * 8 * 2 * scale,
+									im_scale * 8 * scale, pic);
+							}
 						}
 
-						x += 8 * 2;
+						x += 8 * 2 * scale;
 					}
 
 					if (start[j] == '\\')
-						j++; // advance
+						j++; // Advance.
 
 					continue;
 				}
@@ -539,41 +608,37 @@ void VXSCR_DrawTrackerString (void)
 				{
 					if (start[j + 1] == 'r')	
 					{
-						glColor4f(kolorkodes[0] = kolorkodes[1] = kolorkodes[2] = 1, 1, 1, alpha);
+						memset(rgba, 255, sizeof(byte) * 4);
 						j += 2;
 						continue;
 					}
 					else if (start[j + 1] == 'c' && start[j + 2] && start[j + 3] && start[j + 4])
 					{
-						glColor4f(kolorkodes[0] = ((float)(start[j + 2] - '0') / 9),
-								  kolorkodes[1] = ((float)(start[j + 3] - '0') / 9),
-								  kolorkodes[2] = ((float)(start[j + 4] - '0') / 9), alpha);
+						rgba[0] = (byte)(255 * ((float)(start[j + 2] - '0') / 9));
+						rgba[1] = (byte)(255 * ((float)(start[j + 3] - '0') / 9));
+						rgba[2] = (byte)(255 * ((float)(start[j + 4] - '0') / 9));
+
    						j += 5;
 						continue;
 					}
 				}
 
-				Draw_Character (x, y, start[j]);
-				//Com_Printf("Drawing[%i]:%c\n", j, start[j]);
+				rgba[3] = 255 * alpha;
+				Draw_SColoredCharacterW (x, y, char2wc(start[j]), RGBAVECT_TO_COLOR(rgba), scale);
 
 				j++;
-				x += 8;
+				x += 8 * scale;
 			}
-			y += 8;
+
+			y += 8 * scale;	// Next line.
 
 			start += l;
 
 			if (*start == '\n')
-				start++; // skip the \n
+				start++; // Skip the \n
 		}
 	}
-
-	if (scale != 1)
-		glPopMatrix();
-
-	glEnable(GL_ALPHA_TEST);
-	glDisable (GL_BLEND);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	glColor4f(1, 1, 1, 1);
 }
+
+
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.128 2007-08-12 20:56:11 himan Exp $
+$Id: cl_screen.c,v 1.129 2007-08-12 22:42:13 cokeman1982 Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -2706,10 +2706,10 @@ void SCR_DrawElements(void) {
 #ifdef GLQUAKE
 				//VULT STATS
 				SCR_DrawAMFstats();
+#endif
 				//VULT DISPLAY KILLS
 				if (amf_tracker_frags.value || amf_tracker_flags.value || amf_tracker_streaks.value )
 					VX_TrackerThink();
-#endif
 
 				// Multiview
 				if (cl_multiview.value && cls.mvdplayback)
