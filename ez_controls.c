@@ -17,16 +17,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.26 2007-08-11 20:31:04 cokeman1982 Exp $
+$Id: ez_controls.c,v 1.27 2007-08-13 06:23:41 disconn3ct Exp $
 */
 
 #include "quakedef.h"
-
-#ifdef GLQUAKE
-#include "gl_model.h"
-#include "gl_local.h"
-#endif // GLQUAKE
-
 #include "keys.h"
 #include "ez_controls.h"
 
@@ -1560,7 +1554,7 @@ int EZ_label_OnDraw(ez_control_t *self)
 	ez_label_t *label = (ez_label_t *)self;
 	EZ_control_OnDraw(self);
 
-	Draw_SColoredString(self->absolute_x, self->absolute_y, label->text, &label->color, 1, false, label->scale);
+	Draw_SColoredString(self->absolute_x, self->absolute_y, str2wcs(label->text), &label->color, 1, false, label->scale);
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnDraw);
 
@@ -1770,4 +1764,3 @@ int EZ_button_OnDraw(ez_control_t *self)
 
 	return 0;
 }
-
