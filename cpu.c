@@ -16,11 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: cpu.c,v 1.1 2007-05-06 21:50:21 disconn3ct Exp $
+	$Id: cpu.c,v 1.2 2007-08-13 06:24:04 disconn3ct Exp $
 */
 
 #include "common.h"
 #include "cpu.h"
+
+#ifdef id386
 
 static unsigned int cpu_features = 0;
 static unsigned int cpu_vendor = 0; // 0 = unknown, 1 = intel, 2 = amd
@@ -79,3 +81,4 @@ void CPU_Info (void)
 
 	Com_Printf ("CPU features: %s\n", features);
 }
+#endif

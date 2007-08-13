@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  
-	$Id: host.c,v 1.44 2007-06-21 14:48:44 johnnycz Exp $
+	$Id: host.c,v 1.45 2007-08-13 06:24:04 disconn3ct Exp $
 */
 // this should be the only file that includes both server.h and client.h
 
@@ -558,7 +558,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	FILE *f;
 	cvar_t *v;
 
+#ifdef id386
 	CPU_Init ();
+#endif
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
 
@@ -628,7 +630,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Cvar_CleanUpTempVars ();
 
 	SYSINFO_Init();
+#ifdef id386
 	Cmd_AddCommand ("cpuinfo", CPU_Info);
+#endif
 
 #ifdef WITH_TCL
 	if (!TCL_InterpLoaded())
