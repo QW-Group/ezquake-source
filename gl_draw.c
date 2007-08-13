@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.85 2007-08-12 22:35:37 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.86 2007-08-13 22:00:34 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -1579,7 +1579,7 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, byte c, float alpha)
 {
 	Draw_AlphaPieSliceRGB (x, y, radius, startangle, endangle, thickness, fill,
-		RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], 255));
+		RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], (byte)Q_rint(255 * alpha)));
 }
 
 void Draw_AlphaCircleRGB (int x, int y, float radius, float thickness, qbool fill, color_t color)
