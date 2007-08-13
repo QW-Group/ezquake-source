@@ -40,7 +40,8 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 					 byte color_normal,
 					 byte color_fast,
 					 byte color_fastest,
-					 byte color_insane);
+					 byte color_insane,
+					 int style);
 
 void SCR_DrawWordWrapString(int x, int y, 
 							int y_spacing, 

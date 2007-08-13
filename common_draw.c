@@ -1,5 +1,5 @@
 /*
-	$Id: common_draw.c,v 1.20 2007-07-21 18:44:57 cokeman1982 Exp $
+	$Id: common_draw.c,v 1.21 2007-08-13 22:25:16 cokeman1982 Exp $
 */
 // module added by kazik
 // for common graphics (soft and GL)
@@ -801,6 +801,7 @@ void SCR_DrawFill(int x, int y, int w, int h, int c, float opacity)
 #define SPEED_OUTLINE_SPACING	SPEED_TAG_LENGTH
 #define SPEED_FILL_SPACING		SPEED_OUTLINE_SPACING + 1
 #define SPEED_WHITE				10
+#define SPEED_TEXT_ONLY			1
 
 #define	SPEED_TEXT_ALIGN_NONE	0
 #define SPEED_TEXT_ALIGN_CLOSE	1
@@ -818,7 +819,8 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 					 byte color_normal,
 					 byte color_fast,
 					 byte color_fastest,
-					 byte color_insane)
+					 byte color_insane,
+					 int style)
 {
 	byte color_offset;
 	byte color1, color2;
@@ -887,7 +889,7 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
     }
 
 	// Draw tag marks.
-	if(tick_spacing > 0.0)
+	if(tick_spacing > 0.0 && style != SPEED_TEXT_ONLY)
 	{
 		float f;
 
@@ -935,6 +937,7 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 	//
 	// Draw outline.
 	//
+	if (style != SPEED_TEXT_ONLY)
 	{
 		if(vertical)
 		{
@@ -977,6 +980,7 @@ void SCR_DrawHUDSpeed (int x, int y, int width, int height,
 	//
 	// Draw fill.
 	//
+	if (style != SPEED_TEXT_ONLY)
 	{
 		if(vertical)
 		{

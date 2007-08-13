@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.149 2007-07-28 23:57:38 cokeman1982 Exp $
+	$Id: hud_common.c,v 1.150 2007-08-13 22:25:16 cokeman1982 Exp $
 */
 //
 // common HUD elements
@@ -752,7 +752,8 @@ void SCR_HUD_DrawSpeed(hud_t *hud)
 		*hud_speed_color_insane,
 		*hud_speed_vertical,
 		*hud_speed_vertical_text,
-		*hud_speed_text_align;
+		*hud_speed_text_align,
+		*hud_speed_style;
 
     if (hud_speed_xyz == NULL)    // first time
     {
@@ -769,6 +770,7 @@ void SCR_HUD_DrawSpeed(hud_t *hud)
 		hud_speed_vertical		= HUD_FindVar(hud, "vertical");
 		hud_speed_vertical_text	= HUD_FindVar(hud, "vertical_text");
 		hud_speed_text_align	= HUD_FindVar(hud, "text_align");
+		hud_speed_style			= HUD_FindVar(hud, "style");
     }
 
 	width = max(0, hud_speed_width->value);
@@ -787,7 +789,8 @@ void SCR_HUD_DrawSpeed(hud_t *hud)
 			hud_speed_color_normal->value,
 			hud_speed_color_fast->value,
 			hud_speed_color_fastest->value,
-			hud_speed_color_insane->value);
+			hud_speed_color_insane->value,
+			hud_speed_style->integer);
 	}
 }
 
@@ -6151,6 +6154,7 @@ void CommonDraw_Init(void)
 		"vertical", "0",
 		"vertical_text", "1",
 		"text_align", "1",
+		"style", "0",
 		NULL);
 
 #ifdef GLQUAKE
