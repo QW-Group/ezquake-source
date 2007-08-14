@@ -708,12 +708,12 @@ void R_DrawAliasModel (entity_t *ent) {
 	{
 		//FIXME: This is slow and pathetic as hell, really we should just check the entity
 		//alternativley add some kind of permanent client side TE for the torch
-		NewStaticLightCorona (C_FIRE, ent->origin, (int)ent);
+		NewStaticLightCorona (C_FIRE, ent->origin, ent);
 	}
 
 	if (ent->model->modhint == MOD_TELEPORTDESTINATION && amf_coronas.value)
 	{
-		NewStaticLightCorona (C_LIGHTNING, ent->origin, (int)ent);
+		NewStaticLightCorona (C_LIGHTNING, ent->origin, ent);
 	}
 
 	clmodel = ent->model;
@@ -1084,6 +1084,9 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 				break;
 			case mod_sprite:
 				R_DrawSpriteModel (currententity);
+				break;
+			// not handled
+			case mod_spr32:
 				break;
 		}
 	}
