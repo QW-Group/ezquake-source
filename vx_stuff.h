@@ -30,7 +30,7 @@ void NewCorona (coronatype_t type, vec3_t origin);
 void R_DrawCoronas(void);
 void InitCoronas(void);
 void InitVXStuff(void);
-void NewStaticLightCorona (coronatype_t type, vec3_t origin, int serialhint);
+void NewStaticLightCorona (coronatype_t type, vec3_t origin, entity_t *serialhint);
 
 int	coronatexture;
 int	gunflashtexture;

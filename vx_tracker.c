@@ -465,7 +465,8 @@ void VXSCR_DrawTrackerString (void)
 	float	alpha = 1;
 	float	scale = bound(0.1, amf_tracker_scale.value, 10);
 	float	im_scale = bound(0.1, amf_tracker_images_scale.value, 10);
-	byte	*col = StringToRGB(amf_tracker_frame_color.string);
+	
+	StringToRGB(amf_tracker_frame_color.string);
 
 	if (!active_track)
 		return;

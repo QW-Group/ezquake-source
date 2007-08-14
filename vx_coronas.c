@@ -21,7 +21,7 @@ typedef struct
 	coronatype_t type;
 	qbool sighted;
 	qbool los; //to prevent having to trace a line twice
-	int serialhint;//is a serial to avoid recreating stuff
+	entity_t *serialhint;//is a serial to avoid recreating stuff
 	int texture;
 } corona_t;
 
@@ -464,7 +464,7 @@ void InitCoronas(void)
 //NewStaticLightCorona
 //Throws down a permanent light at origin, and wont put another on top of it
 //This needs fixing so it wont be called so often
-void NewStaticLightCorona (coronatype_t type, vec3_t origin, int hint)
+void NewStaticLightCorona (coronatype_t type, vec3_t origin, entity_t *hint)
 {
 	corona_t	*c, *e=NULL;
 	int		i;
@@ -479,7 +479,7 @@ void NewStaticLightCorona (coronatype_t type, vec3_t origin, int hint)
 			breakage = false;
 		}
 
-		if (hint && c->serialhint == hint)
+		if (hint == c->serialhint)
 			return;
 
 		if (VectorCompare(c->origin, origin) && c->type == C_FIRE)
