@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.24 2007-08-08 00:53:29 disconn3ct Exp $
+    $Id: q_shared.h,v 1.25 2007-08-14 17:57:58 dkure Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -114,27 +114,71 @@ int		LongSwapPDP2Lit (int l);
 float	FloatSwapPDP2Big (float f);
 float	FloatSwapPDP2Lit (float f);
 
-#if defined __BIG_ENDIAN
+//======================= ENDIAN DECTECTION ==================================
+//======================= WIN32 DEFINES ======================================
+#ifdef _WIN32
+#error WIN32_LITTLE_ENDIAN
+#endif
+
+//======================= MAC OS X DEFINES ===================================
+#if defined(MACOS_X)
+#define __LITTLE_ENDIAN__
+#endif
+
+//======================= MAC DEFINES ========================================
+#ifdef __MACOS__
+#define __BIG_ENDIAN__
+#endif
+
+//======================= LINUX DEFINES ======================================
+#ifdef __linux__
+
+#if __FLOAT_WORD_ORDER == __BIG_ENDIAN
+#define __BIG_ENDIAN__
+#elif __FLOAT_WORD_ORDER == __LITTLE_ENDIAN
+#define __LITTLE_ENDIAN__
+#elif __FLOAT_WORD_ORDER == __PDP_ENDIAN
+#define __PDP_ENDIAN__
+#endif
+
+#endif
+
+//======================= FreeBSD DEFINES ====================================
+#ifdef __FreeBSD__
+
+#if !idppc
+#define __LITTLE_ENDIAN__
+#else
+#define __BIG_ENDIAN__
+#endif
+
+#endif
+
+//======================= BYTE SWAPS =========================================
+#if defined __BIG_ENDIAN__
 #define BigShort(x)		(x)
 #define BigLong(x)		(x)
 #define BigFloat(x)		(x)
 #define LittleShort(x)	ShortSwap(x)
 #define LittleLong(x)	LongSwap(x)
 #define LittleFloat(x)	FloatSwap(x)
-#elif defined(__LITTLE_ENDIAN)
+
+#elif defined __LITTLE_ENDIAN__
 #define BigShort(x)		ShortSwap(x)
 #define BigLong(x)		LongSwap(x)
 #define BigFloat(x)		FloatSwap(x)
 #define LittleShort(x)	(x)
 #define LittleLong(x)	(x)
 #define LittleFloat(x)	(x)
-#elif defined(__PDP_ENDIAN)
+
+#elif defined __PDP_ENDIAN__
 #define BigShort(x)		ShortSwap(x)
 #define BigLong(x)		LongSwapPDP2Big(x)
 #define BigFloat(x)		FloatSwapPDP2Big(x)
 #define LittleShort(x)	(x)
 #define LittleLong(x)	LongSwapPDP2Lit(x)
 #define LittleFloat(x)	FloatSwapPDP2Lit(x)
+
 #else
 #error Unknown byte order type!
 #endif
