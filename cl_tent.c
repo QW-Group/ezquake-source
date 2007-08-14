@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_tent.c,v 1.28 2007-05-13 13:41:43 johnnycz Exp $
+	$Id: cl_tent.c,v 1.29 2007-08-14 15:18:38 dkure Exp $
 */
 // cl_tent.c -- client side temporary entities
 
@@ -348,7 +348,7 @@ void CL_ParseTEnt (void) {
 		}
 #ifdef GLQUAKE
 		//VULT PARTICLES
-		else if (r_explosiontype.value == 8)
+		else if (r_explosiontype.value == 8 && qmb_initialized)
 		{
 			FuelRodExplosion (pos);
 		}
