@@ -105,7 +105,6 @@ cvar_t	r_teamskincolor		= {"r_teamskincolor",  ""};
 cvar_t	r_skincolormode		= {"r_skincolormode",  "0"};
 cvar_t	r_fastsky = {"r_fastsky", "0"};
 cvar_t  r_fastturb = {"r_fastturb", "0"};
-cvar_t	r_simpleitems		= {"r_simpleitems", "0", true};
 
 cvar_t	r_skycolor   = {"r_skycolor", "40 80 150"};
 cvar_t  r_telecolor  = {"r_telecolor", "255 60 60"};
@@ -139,9 +138,9 @@ cvar_t	gl_ztrick = {"gl_ztrick", "0"};
 
 cvar_t	gl_smoothmodels = {"gl_smoothmodels", "1"};
 cvar_t	gl_affinemodels = {"gl_affinemodels", "0"};
-// START shaman :: balancing variables
+
 cvar_t	gl_polyblend = {"gl_polyblend", "1"}; // 0
-// END shaman :: balancing variables
+
 cvar_t	gl_flashblend = {"gl_flashblend", "0"};
 cvar_t	gl_playermip = {"gl_playermip", "0"};
 cvar_t	gl_nocolors = {"gl_nocolors", "0"};
@@ -152,7 +151,6 @@ cvar_t	gl_lightmode = {"gl_lightmode", "2"};
 cvar_t	gl_loadlitfiles = {"gl_loadlitfiles", "1"};
 cvar_t	gl_colorlights = {"gl_colorlights", "1"};
 
-// START shaman :: balancing variables
 cvar_t gl_solidparticles = {"gl_solidparticles", "0"}; // 1
 cvar_t gl_part_explosions = {"gl_part_explosions", "0"}; // 1
 cvar_t gl_part_trails = {"gl_part_trails", "0"}; // 1
@@ -163,11 +161,9 @@ cvar_t gl_part_telesplash = {"gl_part_telesplash", "0"}; // 1
 cvar_t gl_part_blobs = {"gl_part_blobs", "0"}; // 1
 cvar_t gl_part_lavasplash = {"gl_part_lavasplash", "0"}; // 1
 cvar_t gl_part_inferno = {"gl_part_inferno", "0"}; // 1
-// END shaman :: balancing variables
 
-// START shaman RFE 1032143 {
 cvar_t  gl_fogenable		= {"gl_fog", "0"};
-// END shaman RFE 1032143
+
 cvar_t  gl_fogstart			= {"gl_fogstart", "50.0"};
 cvar_t  gl_fogend			= {"gl_fogend", "800.0"};
 cvar_t  gl_fogred			= {"gl_fogred", "0.6"};
@@ -712,12 +708,12 @@ void R_DrawAliasModel (entity_t *ent) {
 	{
 		//FIXME: This is slow and pathetic as hell, really we should just check the entity
 		//alternativley add some kind of permanent client side TE for the torch
-		NewStaticLightCorona (C_FIRE, ent->origin, ent);
+		NewStaticLightCorona (C_FIRE, ent->origin, (int)ent);
 	}
 
 	if (ent->model->modhint == MOD_TELEPORTDESTINATION && amf_coronas.value)
 	{
-		NewStaticLightCorona (C_LIGHTNING, ent->origin, ent);
+		NewStaticLightCorona (C_LIGHTNING, ent->origin, (int)ent);
 	}
 
 	clmodel = ent->model;
@@ -996,112 +992,6 @@ void R_DrawAliasModel (entity_t *ent) {
 	glColor3ubv (color_white);
 }
 
-void R_SetSpritesState(qbool state)
-{
-	static qbool	r_state = false;
-
-	if (r_state == state)
-		return;
-
-	r_state = state;
-
-	if (state)
-	{
-		if (currententity->model->modhint == MOD_SPR32)
-		{
-			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glEnable (GL_BLEND);
-			glDepthMask (GL_FALSE);	// disable zbuffer updates
-		}
-		else
-		{
-			GL_DisableMultitexture ();
-			glEnable (GL_ALPHA_TEST);
-		}
-	}
-	else
-	{
-		if (currententity->model->modhint == MOD_SPR32)
-		{
-			glDisable (GL_BLEND);
-			glDepthMask (GL_TRUE);	// enable zbuffer updates
-		}
-		else
-		{
-			glDisable (GL_ALPHA_TEST);
-		}
-	}
-}
-
-#if 0
-// FIXME : Simple items not working properly.
-int SpriteForMDL(void)
-{
-	if ((!strcmp(currententity->model->name, "maps/b_shell0.bsp")) || (!strcmp(currententity->model->name, "maps/b_shell1.bsp")))
-	{		
-		return mi_2dshells;
-	}
-	
-	if ((!strcmp(currententity->model->name, "maps/b_batt0.bsp")) || (!strcmp(currententity->model->name, "maps/b_batt1.bsp")))
-	{		
-		return mi_2dcells;
-	}
-	
-	if ((!strcmp(currententity->model->name, "maps/b_rock0.bsp")) || (!strcmp(currententity->model->name, "maps/b_rock1.bsp")))
-	{
-		return mi_2drockets;
-	}
-	
-	if ((!strcmp(currententity->model->name, "maps/b_nail0.bsp")) || (!strcmp(currententity->model->name, "maps/b_nail1.bsp")))
-	{		
-		return mi_2dnails;
-	}
-	
-	if (!strcmp(currententity->model->name, "maps/b_bh100.bsp"))
-	{
-		return mi_2dmega;
-	}
-	//------------------------
-	if (!strcmp(currententity->model->name, "progs/invulner.mdl"))
-	{
-		return mi_2dpent;
-	}
-
-	if (!strcmp(currententity->model->name, "progs/quaddama.mdl"))
-	{		
-		return mi_2dquad;
-	}
-
-	if (!strcmp(currententity->model->name, "progs/invisibl.mdl"))
-	{		
-		return mi_2dring;
-	}
-
-	if (!strcmp(currententity->model->name, "progs/suit.mdl"))
-	{		
-		return mi_2dsuit;
-	}
-//---------------------------------------------
-	if (!strcmp(currententity->model->name, "progs/armor.mdl"))
-	{
-		if (currententity->skinnum == 0)
-			return mi_2darmor1;
-		if (currententity->skinnum == 1)
-			return mi_2darmor2;
-		if (currententity->skinnum == 2)
-			return mi_2darmor3;
-		return true;
-	}
-	
-	if(!strcmp(currententity->model->name, "progs/backpack.mdl"))
-    {
-		return mi_2dbackpack;		
-	}
-
-	return -1;
-}
-#endif
-
 void R_DrawEntitiesOnList (visentlist_t *vislist) {
 	int i;
 
@@ -1115,24 +1005,6 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 	for (i = 0; i < vislist->count; i++) 
 	{
 		currententity = &vislist->list[i];
-
-		// Draw sprites instead of models for item models.
-		#if 0
-		if (r_simpleitems.value)
-		{
-			int idx = SpriteForMDL();
-			if (idx >= 0)
-			{
-				if (cl.model_precache[cl_modelindices[idx]])
-				{
-					currententity->model = cl.model_precache[cl_modelindices[idx]];
-					//currententity->model->type = mod_sprite;					
-					VectorCopy (currententity->origin, r_entorigin);
-					VectorSubtract (r_origin, r_entorigin, modelorg);
-				}
-			}
-		}
-		#endif
 
 		switch (currententity->model->type) 
 		{
@@ -1211,10 +1083,7 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 				brushmodel = 0;
 				break;
 			case mod_sprite:
-			case mod_spr32:
-				R_SetSpritesState (true);
 				R_DrawSpriteModel (currententity);
-				R_SetSpritesState (false);
 				break;
 		}
 	}
@@ -1619,7 +1488,6 @@ void R_Init (void) {
 	Cvar_Register (&r_lerpmuzzlehack);
 	Cvar_Register (&r_drawflame);
 	Cvar_Register (&gl_detail);
-	Cvar_Register (&r_simpleitems);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 	Cvar_Register (&gl_solidparticles);

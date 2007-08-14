@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+$Id: client.h,v 1.68 2007-08-14 17:13:14 cokeman1982 Exp $
+
 */
 // client.h
 
@@ -32,7 +34,7 @@ typedef struct
 
 extern cvar_t cl_demospeed;
 #define ISPAUSED (cl.paused || (!cl_demospeed.value && cls.demoplayback))
-#define	MAX_PROJECTILES	32 
+#define	MAX_PROJECTILES	32
 
 typedef struct {
 	char			name[16];
@@ -109,10 +111,10 @@ typedef struct player_info_s {
 	byte	translations[VID_GRADES*256];
 	skin_t	*skin;
 
-	int		stats[MAX_CL_STATS];	
+	int		stats[MAX_CL_STATS];
 
 
-	qbool	skin_refresh;	
+	qbool	skin_refresh;
 	qbool	ignored;		//for ignore
 	qbool	validated;		//for authentication
 	char		f_server[16];	//for f_server responses
@@ -153,8 +155,8 @@ typedef struct {
 	entity_state_t	baseline;
 	entity_state_t	current;
 
-	vec3_t			lerp_origin;	
-	vec3_t			trail_origin;	
+	vec3_t			lerp_origin;
+	vec3_t			trail_origin;
 
 	vec3_t			velocity; // hack
 
@@ -192,7 +194,7 @@ typedef struct {
 #define	MAX_STYLESTRING		64
 
 typedef enum {lt_default, lt_muzzleflash, lt_explosion, lt_rocket,
-	lt_red, lt_blue, lt_redblue, lt_green, lt_redgreen, lt_bluegreen, 
+	lt_red, lt_blue, lt_redblue, lt_green, lt_redgreen, lt_bluegreen,
 	lt_white, lt_custom, NUM_DLIGHTTYPES } dlighttype_t;
 
 typedef struct {
@@ -243,7 +245,7 @@ typedef enum {
 //
 // The clientPersistent_t structure is persistent through an arbitrary number of server connections.
 //
-typedef struct 
+typedef struct
 {
 	//
 	// Connection information.
@@ -292,7 +294,7 @@ typedef struct
 	char		gamedirfile[MAX_QPATH];
 	char		gamedir[MAX_OSPATH];
 
-	// 
+	//
 	// Download vars.
 	//
 	FILE		*download;			// file transfer from server
@@ -315,7 +317,7 @@ typedef struct
 
 	//
 	// Upload vars.
-	// 
+	//
 	FILE		*upload;
 	char		uploadname[MAX_OSPATH];
 	int			uploadpercent;
@@ -326,7 +328,7 @@ typedef struct
 	int			upload_size;
 
 	//
-	// Demo recording info must be here, because record 
+	// Demo recording info must be here, because record
 	// is started before entering a map (and clearing clientState_t)
 	//
 	qbool		demorecording;
@@ -350,7 +352,7 @@ typedef struct
 	qbool		mvdplayback;	// Playing MVD.
 	float		qtv_svversion;	// version of qtvsv/proxy, note it float
 	int			lastto;			// Contains which players are affected by a demo message.
-								// * If multiple players are affected (dem_multiple) this will be a 
+								// * If multiple players are affected (dem_multiple) this will be a
 								//   bit mask containing which players the last demo message relates to. (32-bits, 32 players)
 								// * If only a single player should receive the message (dem_single),
 								//   this is a a 5-bit number containing the player number. (2^5 = 32 unique player numbers)
@@ -493,18 +495,18 @@ typedef struct {
 	float		maxspeed;
 	float		bunnyspeedcap;
 
-	int			waterlevel;		
+	int			waterlevel;
 
-	
+
 	double		whensaid[10];       // For floodprots
  	int			whensaidhead;       // Head value for floodprots
 
-	
+
 	qbool		standby;
 	qbool		countdown;
-	float		fbskins;		
-	float		fakeshaft;	
-	qbool		userfb;			
+	float		fbskins;
+	float		fakeshaft;
+	qbool		userfb;
 	int			minlight;
 	float		watervis;
 	qbool		allow_lumas;
@@ -528,9 +530,9 @@ extern visentlist_t cl_visents, cl_visbents;
 #endif
 
 // ezQuake cvars
-extern cvar_t cl_floodprot;			
-extern cvar_t cl_fp_messages;		
-extern cvar_t cl_fp_persecond;	
+extern cvar_t cl_floodprot;
+extern cvar_t cl_fp_messages;
+extern cvar_t cl_fp_persecond;
 extern cvar_t cl_cmdline;
 #ifdef WITH_KEYMAP
 extern cvar_t cl_showkeycodes;
@@ -546,18 +548,18 @@ extern cvar_t cl_mvdisplayhud;
 extern cvar_t cl_mvhudpos;
 extern cvar_t cl_mvhudvertical;
 extern cvar_t cl_mvhudflip;
-extern cvar_t cl_mvinset; 
+extern cvar_t cl_mvinset;
 extern cvar_t cl_mvinsetcrosshair;
 extern cvar_t cl_mvinsethud;
 
 extern cvar_t r_rocketlight;
 extern cvar_t r_rocketlightcolor;
-extern cvar_t r_explosionlightcolor;	
+extern cvar_t r_explosionlightcolor;
 extern cvar_t r_explosionlight;
 extern cvar_t r_explosiontype;
 extern cvar_t r_flagcolor;
 extern cvar_t r_lightflicker;
-extern cvar_t r_telesplash; 
+extern cvar_t r_telesplash;
 extern cvar_t r_shaftalpha;
 
 extern cvar_t cl_restrictions;
@@ -633,7 +635,7 @@ qbool CL_AutoRecord_Status(void);
 void CL_AutoRecord_SaveMatch(void);
 
 extern double demostarttime;
-extern float nextdemotime, olddemotime;		
+extern float nextdemotime, olddemotime;
 
 // cl_parse.c
 #define NET_TIMINGS 256
@@ -723,7 +725,7 @@ void CL_StartUpload (byte *data, int size);
 void CL_StopUpload(void);
 void CL_StartFileUpload(void); //bliP
 
-void CL_ParseClientdata (void);	
+void CL_ParseClientdata (void);
 
 void CL_FinishDownload(qbool rename_files);
 
@@ -744,76 +746,16 @@ void CL_ExplosionSprite (vec3_t);
 void CL_UpdateTEnts (void);
 
 // cl_ents.c
-typedef enum cl_modelindex_s 
-{
-	mi_spike, 
-	mi_player, 
-	mi_eyes, 
-	mi_flag, 
-	mi_tf_flag, 
-	mi_tf_stan, 
-	mi_explod1, 
-	mi_explod2, 
-	mi_h_player,
-	mi_gib1, 
-	mi_gib2, 
-	mi_gib3,
-	mi_rocket,
-	mi_grenade,
-	mi_bubble,
-	mi_vaxe, 
-	mi_vbio,
-	mi_vgrap, 
-	mi_vknife, 
-	mi_vknife2, 
-	mi_vmedi, 
-	mi_vspan,
-	mi_flame,	// For changing flame/flame0 models
-	mi_monster1,
-	mi_m2, 
-	mi_m3,
-	mi_m4,
-	mi_m5,
-	mi_m6,
-	mi_m7,
-	mi_m8,
-	mi_m9,
-	mi_m10,
-	mi_m11,
-	mi_m12,
-	mi_m13, 
-	mi_m14, 
-	mi_m15, 
-	mi_m16, 
-	mi_m17,
-	mi_weapon1, 
-	mi_weapon2, 
-	mi_weapon3, 
-	mi_weapon4, 
-	mi_weapon5, 
-	mi_weapon6, 
-	mi_weapon7, 
-	mi_weapon8,
-	#if 0
-	// FIXME : 32-bit sprites not working.
-	mi_2dshells,
-	mi_2dcells,
-	mi_2drockets,
-	mi_2dnails,
-	mi_2dmega,
-	mi_2dpent,
-	mi_2dquad,
-	mi_2dring,
-	mi_2dsuit,
-	mi_2darmor1,
-	mi_2darmor2,
-	mi_2darmor3,
-	mi_2dbackpack,
-	mi_2dhealth10,
-	mi_2dhealth25,
-	#endif
-	cl_num_modelindices
-} cl_modelindex_t;		
+typedef enum cl_modelindex_s {
+	mi_spike, mi_player, mi_eyes, mi_flag, mi_tf_flag, mi_tf_stan, mi_explod1, mi_explod2, mi_h_player,
+	mi_gib1, mi_gib2, mi_gib3, mi_rocket, mi_grenade, mi_bubble,
+	mi_vaxe, mi_vbio, mi_vgrap, mi_vknife, mi_vknife2, mi_vmedi, mi_vspan,
+	mi_flame,	//joe: for changing flame/flame0 models
+	mi_monster1,mi_m2,mi_m3,mi_m4,mi_m5,mi_m6,mi_m7,mi_m8,mi_m9,mi_m10,mi_m11,mi_m12,
+	mi_m13, mi_m14, mi_m15, mi_m16, mi_m17,
+	mi_weapon1, mi_weapon2, mi_weapon3, mi_weapon4, mi_weapon5, mi_weapon6, mi_weapon7, mi_weapon8,
+	cl_num_modelindices,
+} cl_modelindex_t;
 
 extern cl_modelindex_t cl_modelindices[cl_num_modelindices];
 extern char *cl_modelnames[cl_num_modelindices];
@@ -915,7 +857,7 @@ int		CURRVIEW;					// The current view being drawn in multiview mode.
 int		nNumViews;					// The number of views in multiview mode.
 qbool	bExitmultiview;				// Used when saving effect values on each frame.
 
-qbool	mv_skinsforced;				// When using teamcolor/enemycolor in multiview we can't just assume 
+qbool	mv_skinsforced;				// When using teamcolor/enemycolor in multiview we can't just assume
 									// that the "teammates" should all be colored in the same color as the
 									// person we're tracking (or opposite for enemies), because we're tracking
 									// more than one person. Therefore the teamcolor/enemycolor is set only once,
@@ -940,7 +882,7 @@ int		nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the trac
 // Original values saved between frames for effects that are
 // turned off during multiview mode.
 //
-float	nContrastExit;				// v_contrast 
+float	nContrastExit;				// v_contrast
 float	nCrosshairExit;
 float	nfakeshaft;					// cl_fakeshaft
 int		nPolyblendExit;				// gl_polyblend

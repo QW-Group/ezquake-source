@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_model.h,v 1.12 2007-08-12 15:12:50 cokeman1982 Exp $
+	$Id: gl_model.h,v 1.13 2007-08-14 17:13:14 cokeman1982 Exp $
 */
 
 #ifndef __MODEL__
@@ -351,8 +351,6 @@ typedef enum
 	MOD_BUILDINGGIBS,
 	MOD_CLUSTER,
 	MOD_SHAMBLER, 
-	MOD_SPR, 
-	MOD_SPR32,
 	MOD_TELEPORTDESTINATION
 } modhint_t;
 
