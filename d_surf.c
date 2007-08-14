@@ -135,8 +135,8 @@ surfcache_t     *D_SCAlloc (int width, int size)
 
 	if ((size <= 0) || (size > 0x10000))
 		Sys_Error ("D_SCAlloc: bad cache size %d", size);
-	
-#ifdef __alpha__
+
+#if defined(__alpha__) || defined(_LP64)	
 	size = (int)((long)&((surfcache_t *)0)->data[size]);
 #else
 	size = (int)&((surfcache_t *)0)->data[size];

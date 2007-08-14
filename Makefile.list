@@ -71,6 +71,7 @@ CLIENT_C_FILES := \
 	tp_triggers \
 	textencoding \
 	utils \
+	vx_tracker \
 	wad \
 	xsd \
 	xsd_command \
@@ -134,7 +135,6 @@ GL_C_FILES := \
 	vx_coronas \
 	vx_motiontrail \
 	vx_stuff \
-	vx_tracker \
 	vx_vertexlights \
 	vid_common_gl 
 

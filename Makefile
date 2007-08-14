@@ -2,7 +2,7 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.72 2007-08-11 09:21:14 zwoch Exp $
+#	$Id: Makefile,v 1.73 2007-08-14 23:27:14 disconn3ct Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -80,7 +80,7 @@ $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR):
 	$(MKDIR)
 
 # compiler flags
-PRJ_CFLAGS = -DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM -DWITH_ZIP
+PRJ_CFLAGS = -DWITH_ZLIB -DWITH_PNG -DEMBED_TCL -DJSS_CAM
 BASE_CFLAGS = -pipe -Wall -funsigned-char $(ARCH_CFLAGS) $(PRJ_CFLAGS) -I ./libs
 
 RELEASE_CFLAGS = -O2 -fno-strict-aliasing -ffast-math -funroll-loops
@@ -101,7 +101,7 @@ else
 LDFLAGS = -ggdb -lm -lpthread
 endif
 
-COMMON_LIBS = libs/$(LIB_PREFIX)/minizip.a libs/$(LIB_PREFIX)/libpng.a libs/$(LIB_PREFIX)/libz.a libs/$(LIB_PREFIX)/libpcre.a libs/$(LIB_PREFIX)/libexpat.a libs/$(LIB_PREFIX)/libtcl8.4.a libs/$(LIB_PREFIX)/asmlibe.a
+COMMON_LIBS = libs/$(LIB_PREFIX)/libpng.a libs/$(LIB_PREFIX)/libz.a libs/$(LIB_PREFIX)/libpcre.a libs/$(LIB_PREFIX)/libexpat.a libs/$(LIB_PREFIX)/libtcl8.4.a
 GL_LIBS = libs/$(LIB_PREFIX)/libjpeg.a
 
 ifeq ($(OS),freebsd)
