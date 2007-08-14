@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.25 2007-08-14 17:57:58 dkure Exp $
+    $Id: q_shared.h,v 1.26 2007-08-14 18:12:27 dkure Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -117,7 +117,7 @@ float	FloatSwapPDP2Lit (float f);
 //======================= ENDIAN DECTECTION ==================================
 //======================= WIN32 DEFINES ======================================
 #ifdef _WIN32
-#error WIN32_LITTLE_ENDIAN
+#error __LITTLE_ENDIAN__
 #endif
 
 //======================= MAC OS X DEFINES ===================================
