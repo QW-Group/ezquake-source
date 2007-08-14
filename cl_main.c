@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.164 2007-08-12 00:14:29 qqshka Exp $
+$Id: cl_main.c,v 1.165 2007-08-14 20:33:59 himan Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -167,7 +167,7 @@ cvar_t	topcolor = {"topcolor","", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	bottomcolor = {"bottomcolor","", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	skin = {"skin", "", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	rate = {"rate", "5760", CVAR_ARCHIVE|CVAR_USERINFO};
-cvar_t	msg = {"msg", "", CVAR_ARCHIVE|CVAR_USERINFO};
+cvar_t	msg = {"msg", "1", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t  noaim = {"noaim", "", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	w_switch = {"w_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
 cvar_t	b_switch = {"b_switch", "", CVAR_ARCHIVE|CVAR_USERINFO};
