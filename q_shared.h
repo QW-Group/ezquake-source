@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.26 2007-08-14 18:12:27 dkure Exp $
+    $Id: q_shared.h,v 1.27 2007-08-14 18:27:02 dkure Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -121,14 +121,18 @@ float	FloatSwapPDP2Lit (float f);
 #endif
 
 //======================= MAC OS X DEFINES ===================================
-#if defined(MACOS_X)
-#define __LITTLE_ENDIAN__
-#endif
+// <DyB|Tuna> for mac the gcc defines __BIG_ENDIAN__ and __LITTLE_ANDIAN__ 
+//            according to which arch type is selected
+//#if defined(MACOS_X)
+//#define __LITTLE_ENDIAN__
+//#endif
 
 //======================= MAC DEFINES ========================================
-#ifdef __MACOS__
-#define __BIG_ENDIAN__
-#endif
+// <DyB|Tuna> for mac the gcc defines __BIG_ENDIAN__ and __LITTLE_ANDIAN__ 
+//            according to which arch type is selected
+//#ifdef __MACOS__
+//#define __BIG_ENDIAN__
+//#endif
 
 //======================= LINUX DEFINES ======================================
 #ifdef __linux__
