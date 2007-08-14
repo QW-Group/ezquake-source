@@ -2,7 +2,7 @@
 	Arithmetic expression evaluator
     @author johnnycz
     last edit:
-$Id: parser.c,v 1.20 2007-07-15 09:50:45 disconn3ct Exp $
+$Id: parser.c,v 1.21 2007-08-14 14:50:33 dkure Exp $
 
 */
 
@@ -12,6 +12,7 @@ $Id: parser.c,v 1.20 2007-07-15 09:50:45 disconn3ct Exp $
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
+#include <wctype.h>
 #ifndef snprintf
 #include "q_shared.h"
 #endif
@@ -307,6 +308,8 @@ LOCAL expr_val operator_divide(EParser p, const expr_val e1)
 	case ET_INT:	d = e1.i_val; break;
 	case ET_DBL:	d = e1.d_val; break;
 	case ET_BOOL:	d = e1.b_val; break;
+	// unhandled
+	case ET_STR: break;
 	}
 
 	if (d) {
@@ -375,17 +378,25 @@ LOCAL expr_val operator_eq(EParser p, const expr_val e1, const expr_val e2)
 		case ET_INT: ret.b_val = e1.i_val == e2.i_val; break;
 		case ET_DBL: ret.b_val = !Compare_Double(e1.i_val, e2.d_val); break;
 		case ET_BOOL: ret.b_val = e2.b_val ? e1.i_val == 1 : e1.i_val == 0; break;
+		// handled above, avoid gcc warning
+		case ET_STR: break;
 		} break;
 	case ET_DBL: switch (e2.type) {
 		case ET_INT: ret.b_val = !Compare_Double(e1.d_val, e2.i_val); break;
 		case ET_DBL: ret.b_val = !Compare_Double(e1.d_val, e2.d_val); break;
 		case ET_BOOL: SetError(p, ERR_TYPE_MISMATCH); break;
+		// handled above, avoid gcc warning
+		case ET_STR: break;
 		} break;
 	case ET_BOOL: switch (e2.type) {
 		case ET_INT: ret.b_val = e1.b_val ? e2.i_val == 1 : e2.i_val == 0; break;
 		case ET_DBL: SetError(p, ERR_TYPE_MISMATCH); break;
 		case ET_BOOL: ret.b_val = e1.b_val == e2.b_val; break;
+		// handled above, avoid gcc warning
+		case ET_STR: break;
 	    } break;
+	// handled above, avoid gcc warning
+	case ET_STR: break;
 	}
 
 	return ret;
@@ -405,16 +416,22 @@ LOCAL expr_val operator_lt(EParser p, const expr_val e1, const expr_val e2)
 		case ET_INT: ret.b_val = e1.i_val < e2.i_val; break;
 		case ET_DBL: ret.b_val = Compare_Double(e1.i_val, e2.d_val) == -1; break;
 		case ET_BOOL: SetError(p, ERR_TYPE_MISMATCH); break;
+		// handled above, avoid gcc warning
+		case ET_STR: break;
 		} break;
 	case ET_DBL: switch (e2.type) {
 		case ET_INT: ret.b_val = Compare_Double(e1.d_val, e2.i_val) == -1; break;
 		case ET_DBL: ret.b_val = Compare_Double(e1.d_val, e2.d_val) == -1; break;
 		case ET_BOOL: SetError(p, ERR_TYPE_MISMATCH); break;
+		// handled above, avoid gcc warning
+		case ET_STR: break;
 		} break;
 	case ET_BOOL: switch (e2.type) {
 		case ET_BOOL: ret.b_val = !e1.b_val && e2.b_val; break;
 		default: SetError(p, ERR_TYPE_MISMATCH); break;
 	    } break;
+	// handled above, avoid gcc warning
+	case ET_STR: break;
 	}
 
 	return ret;
@@ -622,7 +639,7 @@ LOCAL void Next_Token(EParser p)
 	else if (c == '/')			{ p->lookahead = TK_SLASH; }
     else if (c == '(')          { p->lookahead = TK_BR_O; }
     else if (c == ')')          { p->lookahead = TK_BR_C; }
-    else if (c >= '0' && c <= '9' || c == '.') {  // isdigit screamed with debug warnings here in some occasions
+    else if ((c >= '0' && c <= '9') || c == '.') {  // isdigit screamed with debug warnings here in some occasions
 		int dbl = 0;
 		const char *cp = p->string + p->pos;
 		while (isdigit(*cp) || *cp == '.') {

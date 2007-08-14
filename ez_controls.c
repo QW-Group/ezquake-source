@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.27 2007-08-13 06:23:41 disconn3ct Exp $
+$Id: ez_controls.c,v 1.28 2007-08-14 14:50:32 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -1729,6 +1729,15 @@ int EZ_button_OnDraw(ez_control_t *self)
 		case middle_left :
 			text_x = button->padding_left;
 			//text_y = button-
+			break;
+		default:
+			break;
+		// unhandled
+		case middle_center:
+		case middle_right:
+		case bottom_left:
+		case bottom_center:
+		case bottom_right:
 			break;
 	}
 

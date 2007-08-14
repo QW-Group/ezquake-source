@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.42 2007-07-29 01:28:38 disconn3ct Exp $
+		$Id: settings_page.c,v 1.43 2007-08-14 14:50:33 dkure Exp $
 
 */
 
@@ -269,6 +269,9 @@ static void Setting_Increase(setting* set) {
 		case stt_separator:
 		case stt_string:
 		case stt_bind:
+		case stt_skin:
+		case stt_advmark:
+		case stt_basemark:
 			break;
 	}
 }
@@ -295,6 +298,9 @@ static void Setting_Decrease(setting* set) {
 		case stt_action:
 		case stt_string:
 		case stt_bind:
+		case stt_skin:
+		case stt_advmark:
+		case stt_basemark:
 			break;
 	}
 }
@@ -308,8 +314,16 @@ static void Setting_Reset(setting* set)
 		case stt_bool:
 			Cvar_ResetVar(set->cvar);
 			break;
-
+		// unhandled
 		case stt_bind:
+		case stt_separator:
+		case stt_custom:
+		case stt_enum:
+		case stt_action:
+		case stt_playercolor:
+		case stt_skin:
+		case stt_advmark:
+		case stt_basemark:
 			break;
 	}
 }
@@ -655,6 +669,10 @@ qbool Settings_Key(settings_page* tab, int key)
 		switch (tab->mode) {
 		case SPM_NORMAL: tab->mode = SPM_VIEWHELP; return true;
 		case SPM_VIEWHELP: tab->mode = SPM_NORMAL; return true;
+		// unhandled
+		case SPM_BINDING:
+		case SPM_CHOOSESKIN:
+			break;
 		}
 		break;
 
@@ -777,6 +795,10 @@ void Settings_Draw(int x, int y, int w, int h, settings_page* tab)
 			case stt_playercolor: Setting_DrawColor(x, y, w, set, active); break;
 			case stt_skin: Setting_DrawSkin(x, y, w, set, active); break;
 			case stt_bind: Setting_DrawBind(x, y, w, set, active, tab->mode == SPM_BINDING); break;
+			// unhandled
+			case stt_advmark:
+			case stt_basemark:
+				break;
 		}
 		y += ch;
 		if (i < tab->count)

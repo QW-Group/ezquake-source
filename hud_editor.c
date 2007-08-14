@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.31 2007-08-02 18:45:09 cokeman1982 Exp $
+	$Id: hud_editor.c,v 1.32 2007-08-14 14:50:33 dkure Exp $
 
 */
 
@@ -902,6 +902,16 @@ static void HUD_Editor_ResizeDelta(cvar_t *size, float delta_size, hud_alignmode
 		case hud_align_top :
 			Cvar_SetValue(size, size->value - delta_size);
 			break;
+		// unhandled
+		case hud_align_center:
+		case hud_align_topleft:
+		case hud_align_bottomleft:
+		case hud_align_bottomright:
+		case hud_align_topright:
+		case hud_align_consoleleft:
+		case hud_align_consoleright:
+		case hud_align_console:
+			break;
 	}
 }
 
@@ -924,6 +934,16 @@ static void HUD_EditorScaleDelta(cvar_t *scale, float delta_scale, hud_alignmode
 		case hud_align_topright :
 		case hud_align_bottomright :
 			Cvar_SetValue(scale, scale->value + delta_scale);
+			break;
+		// unhandled
+		case hud_align_center:
+		case hud_align_top:
+		case hud_align_left:
+		case hud_align_bottom:
+		case hud_align_right:
+		case hud_align_consoleleft:
+		case hud_align_consoleright:
+		case hud_align_console:
 			break;
 	}
 
@@ -1060,11 +1080,11 @@ static qbool HUD_Editor_Resizing(hud_t *hud_hover)
 			// We're in resize mode, so check if we're clicking any of the
 			// resize handles.
 
-			if(selected_hud && (last_resize_handle == i) ||
+			if((selected_hud && (last_resize_handle == i)) ||
 				  (hud_mouse_x >= (selected_hud->lx + resize_handles[i]->x)
-				&& hud_mouse_x <= (selected_hud->lx + resize_handles[i]->x + resize_handles[i]->width)
-				&& hud_mouse_y >= (selected_hud->ly + resize_handles[i]->y)
-				&& hud_mouse_y <= (selected_hud->ly + resize_handles[i]->y + resize_handles[i]->height)))
+				&& (hud_mouse_x <= (selected_hud->lx + resize_handles[i]->x + resize_handles[i]->width))
+				&& (hud_mouse_y >= (selected_hud->ly + resize_handles[i]->y))
+				&& (hud_mouse_y <= (selected_hud->ly + resize_handles[i]->y + resize_handles[i]->height))))
 			{
 				// Keep track of which resize handle we're grabbing
 				// so that it doesn't matter if the mouse "slips" outside
@@ -2119,6 +2139,13 @@ static void HUD_Editor_DrawTooltips(hud_t *hud_hover)
 				color[3] = 125;
 				break;
 			}
+			// unhandled
+			case hud_editmode_off:
+			case hud_editmode_resize:
+			case hud_editmode_hudmenu:
+			case hud_editmode_menu:
+			case hud_editmode_hoverlist:
+				break;
 		}
 	}
 
