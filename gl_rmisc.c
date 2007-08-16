@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_rmisc.c,v 1.21 2007-08-12 22:42:13 cokeman1982 Exp $
+	$Id: gl_rmisc.c,v 1.22 2007-08-16 22:54:18 cokeman1982 Exp $
 */
 // gl_rmisc.c
 
@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #endif
 #include "rulesets.h"
-
+#include "tr_types.h"
 
 void R_InitOtherTextures (void) {
 /*	static const int flags = TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN;
@@ -327,11 +327,17 @@ void R_TimeRefresh_f (void) {
 		return;
 	}
 
-	glDrawBuffer  (GL_FRONT);
+	if (glConfig.hardwareType != GLHW_INTEL)
+	{
+		// Causes the console to flicker on Intel cards.
+		glDrawBuffer  (GL_FRONT);
+	}
+	
 	glFinish ();
 
 	start = Sys_DoubleTime ();
-	for (i = 0; i < 128; i++) {
+	for (i = 0; i < 128; i++) 
+	{
 		r_refdef.viewangles[1] = i * (360.0 / 128.0);
 		R_RenderView ();
 	}
@@ -341,7 +347,11 @@ void R_TimeRefresh_f (void) {
 	time = stop-start;
 	Com_Printf ("%f seconds (%f fps)\n", time, 128/time);
 
-	glDrawBuffer  (GL_BACK);
+	if (glConfig.hardwareType == GLHW_INTEL)
+	{
+		glDrawBuffer  (GL_BACK);
+	}
+
 	GL_EndRendering ();
 }
 

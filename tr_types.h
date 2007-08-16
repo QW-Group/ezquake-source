@@ -19,7 +19,7 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-	$Id: tr_types.h,v 1.5 2007-07-13 13:01:20 qqshka Exp $
+	$Id: tr_types.h,v 1.6 2007-08-16 22:54:18 cokeman1982 Exp $
 
 */
 //
@@ -54,7 +54,11 @@ typedef enum {
 							// display adapter
 	GLHW_RIVA128,			// where you can't interpolate alpha
 	GLHW_RAGEPRO,			// where you can't modulate alpha on alpha textures
-	GLHW_PERMEDIA2			// where you don't have src*dst
+	GLHW_PERMEDIA2,			// where you don't have src*dst
+	GLHW_INTEL				// Causes flickering console if you write directly to the front 
+							// buffer and then flip the back buffer for instance when drawing
+							// the I/O icon or doing timerefresh.
+							// http://www.intel.com/cd/ids/developer/asmo-na/eng/168252.htm?page=7
 } glHardwareType_t;
 
 typedef struct {
