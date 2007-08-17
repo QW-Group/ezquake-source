@@ -106,6 +106,8 @@ void FL_Init(filelist_t	*	fl,
 	fl->file_color = file_color;
 	fl->selected_color = selected_color;
 	fl->dir_color = dir_color;
+	fl->show_dirup = true;
+	fl->show_dirs = true;
 
     fl->scrollbar = ScrollBar_Create(NULL);
 
@@ -165,6 +167,24 @@ void FL_AddFileType(filelist_t *fl, int id, char *ext)
 
     fl->num_filetypes ++;
 }
+
+//
+// hides the ".." option to traverse in the dirs hierarchy
+//
+void FL_SetDirUpOption(filelist_t *fl, qbool show)
+{
+	fl->show_dirup = show;
+}
+
+
+//
+// hides the ".." option to traverse in the dirs hierarchy
+//
+void FL_SetDirsOption(filelist_t *fl, qbool show)
+{
+	fl->show_dirs = show;
+}
+
 
 //
 // get current entry
@@ -671,6 +691,18 @@ void FL_ReadDir(filelist_t *fl)
 		if (!strcmp(ent.fname, ".") || ent.hidden)
 		{
             goto skip;
+		}
+
+		// Skip the "up one level" option if setting says so
+		if (!strcmp(ent.fname, "..") && !fl->show_dirup)
+		{
+			goto skip;
+		}
+
+		// Skip directories, if settings say so
+		if (ent.directory && !fl->show_dirs)
+		{
+			goto skip;
 		}
 
         // Find registered type if it's not a directory.
@@ -1187,7 +1219,8 @@ void FL_CheckDisplayPosition(filelist_t *fl)
 
     if (key == K_BACKSPACE)
     {
-        FL_ChangeDirUp(fl);
+		if (fl->show_dirup)
+			FL_ChangeDirUp(fl);
         return true;
     }
 

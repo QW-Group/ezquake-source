@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.70 2007-08-12 22:42:13 cokeman1982 Exp $
+		$Id: menu_options.c,v 1.71 2007-08-17 19:35:32 johnnycz Exp $
 
 */
 
@@ -1360,7 +1360,8 @@ void Menu_Options_Init(void) {
 		&cfg_browser_zipcolor,
 #endif
 		"./ezquake/configs");
-
+	FL_SetDirUpOption(&configs_filelist, false);
+	FL_SetDirsOption(&configs_filelist, false);
 	FL_AddFileType(&configs_filelist, 0, ".cfg");
 	FL_AddFileType(&configs_filelist, 1, ".txt");
 

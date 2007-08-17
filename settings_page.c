@@ -4,7 +4,7 @@
 
 	made by johnnycz, Jan 2007
 	last edit:
-		$Id: settings_page.c,v 1.43 2007-08-14 14:50:33 dkure Exp $
+		$Id: settings_page.c,v 1.44 2007-08-17 19:35:32 johnnycz Exp $
 
 */
 
@@ -951,7 +951,9 @@ void Settings_MainInit(void)
 		&skin_browser_zipcolor,
 #endif
 		"./qw/skins");
-
+	
+	FL_SetDirUpOption(&skins_filelist, false);
+	FL_SetDirsOption(&skins_filelist, false);
 	FL_AddFileType(&skins_filelist, 0, ".pcx");
     FL_AddFileType(&skins_filelist, 1, ".png");
     FL_AddFileType(&skins_filelist, 2, ".jpg");

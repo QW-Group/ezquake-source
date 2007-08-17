@@ -103,6 +103,8 @@ typedef struct filelist_s
 	#ifdef WITH_ZIP
 	cvar_t *		zip_color;
 	#endif
+	qbool			show_dirup;
+	qbool			show_dirs;
 
     // For PGUP/PGDN, filled by drawing func
     int				last_page_size;
@@ -178,6 +180,18 @@ void FL_AddFileType(filelist_t *, int id, char *ext);
 // Set current directory (and drive).
 //
 void FL_SetCurrentDir(filelist_t *, const char *dir);
+
+
+//
+// hides the ".." option to traverse in the dirs hierarchy
+//
+void FL_SetDirUpOption(filelist_t *fl, qbool show);
+
+
+//
+// hides the ".." option to traverse in the dirs hierarchy
+//
+void FL_SetDirsOption(filelist_t *fl, qbool show);
 
 
 //
