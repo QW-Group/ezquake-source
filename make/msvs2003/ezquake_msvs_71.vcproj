@@ -1345,9 +1345,6 @@
 					RelativePath="..\..\help.c">
 				</File>
 				<File
-					RelativePath="..\..\help_browser.c">
-				</File>
-				<File
 					RelativePath="..\..\help_files.c">
 				</File>
 				<File

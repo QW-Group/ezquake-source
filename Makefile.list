@@ -35,7 +35,6 @@ CLIENT_C_FILES := \
 	fmod \
 	fragstats \
 	help \
-	help_browser \
 	help_files \
 	hud \
 	hud_common \

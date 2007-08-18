@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.71 2007-08-17 19:35:32 johnnycz Exp $
+		$Id: menu_options.c,v 1.72 2007-08-18 14:09:26 johnnycz Exp $
 
 */
 
@@ -41,7 +41,6 @@
 #include "keys.h"
 #include "hud.h"
 #include "hud_common.h"
-
 
 typedef enum {
 	OPTPG_SETTINGS,
@@ -1253,8 +1252,6 @@ void Menu_Options_Key(int key, int unichar) {
 	if (!handled && (key == K_ESCAPE || key == K_MOUSE2))
 		M_Menu_Main_f();
 }
-
-#define OPTPADDING 4
 
 void Menu_Options_Draw(void) {
 	int x, y, w, h;

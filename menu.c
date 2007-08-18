@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: menu.c,v 1.77 2007-08-11 19:13:52 cokeman1982 Exp $
+	$Id: menu.c,v 1.78 2007-08-18 14:09:26 johnnycz Exp $
 
 */
 
@@ -560,13 +560,9 @@ void M_Menu_Help_f (void) {
 }
 
 void M_Help_Draw (void) {
-	//    M_DrawPic (0, 0, Draw_CachePic ( va("gfx/help%i.lmp", help_page)) );
-	extern void Help_Draw(int, int, int, int);
-
 	int x, y, w, h;
 
 #ifdef GLQUAKE
-	// disconnect: unscale help menu
 	if (scr_scaleMenu.value) {
 		menuwidth = vid.width;
 		menuheight = vid.height;
@@ -576,17 +572,20 @@ void M_Help_Draw (void) {
 	}
 #endif
 
-	w = min(max(512, 320), vid.width) - 8;
-	h = min(max(432, 200), vid.height) - 8;
-	x = (vid.width - w) / 2;
-	y = (vid.height - h) / 2;
+    // this will add top, left and bottom padding
+    // right padding is not added because it causes annoying scrollbar behaviour
+    // when mouse gets off the scrollbar to the right side of it
+	w = vid.width - OPTPADDING; // here used to be a limit to 512x... size
+	h = vid.height - OPTPADDING*2;
+	x = OPTPADDING;
+	y = OPTPADDING;
 
-	Help_Draw (x, y, w, h);
+	Menu_Help_Draw (x, y, w, h);
 }
 
 void M_Help_Key (int key) {
 	extern void Help_Key(int key);
-	Help_Key(key);
+	Menu_Help_Key(key);
 }
 
 
@@ -2130,7 +2129,7 @@ void M_Init (void) {
 
 	Cvar_ResetCurrentGroup();
 	Browser_Init();
-	Help_Init();
+	Menu_Help_Init();	// help_files module
 	Menu_Demo_Init();	// menu_demo module
 	Menu_Options_Init(); // menu_options module
 	Menu_Ingame_Init();
@@ -2407,6 +2406,7 @@ qbool Menu_Mouse_Event(const mouse_state_t* ms)
 	case m_demos:			return Menu_Demo_Mouse_Event(ms);
 	case m_ingame:			return Menu_Ingame_Mouse_Event(ms);
 	case m_democtrl:		return Menu_Democtrl_Mouse_Event(ms);
+	case m_help:			return Menu_Help_Mouse_Event(ms);
 	case m_none: default:	return false;
 	}
 }

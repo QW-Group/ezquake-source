@@ -1,12 +1,12 @@
-#include "quakedef.h"
-#include "EX_FileList.h"
-#include "help.h"
-#include "keys.h"
+/*
+ * Variables and commands help system
+ */
 
+// for QuakeWorld Tutorial menu, look into help_files.c
+
+#include "quakedef.h"
 
 #define CONSOLE_HELP_MARGIN 2
-
-CTab_t help_tab;
 
 void Help_DescribeCmd(xml_command_t *cmd)
 {
@@ -292,52 +292,7 @@ void Help_Describe_f(void)
         Com_Printf("Nothing found.\n");
 }
 
-
-void Help_Key(int key)
-{
-	extern void M_Menu_Main_f (void);
-
-    int handled = CTab_Key(&help_tab, key);
-
-    if (!handled)
-    {
-        if (key == K_ESCAPE)
-        {
-            M_Menu_Main_f();
-        }
-    }
-}
-
-void Help_Draw(int x, int y, int w, int h)
-{
-    CTab_Draw(&help_tab, x, y, w, h);
-}
-
-CTabPage_Handlers_t help_files_handlers = {
-	Help_Files_Draw,
-	Help_Files_Key
-};
-
-CTabPage_Handlers_t help_browser_handlers = {
-	Help_Browser_Draw,
-	Help_Browser_Key
-};
-
 void Help_Init(void)
 {
     Cmd_AddCommand("describe", Help_Describe_f);
-
-    // initialize tab control
-    CTab_Init(&help_tab);
-
-    Help_Browser_Init();
-    Help_Files_Init();
-
-    CTab_AddPage(&help_tab, "files", help_files, &help_files_handlers);
-//    CTab_AddPage(&help_tab, "help", help_help, NULL, NULL, NULL);
-    CTab_AddPage(&help_tab, "browser", help_browser, &help_browser_handlers);
-//    CTab_AddPage(&help_tab, "online", help_online, NULL, NULL, NULL);
-//    CTab_AddPage(&help_tab, "options", help_options, NULL, NULL, NULL);
-
-    Help_Browser_Focus();
 }

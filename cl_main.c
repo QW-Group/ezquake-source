@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.166 2007-08-15 14:09:01 johnnycz Exp $
+$Id: cl_main.c,v 1.167 2007-08-18 14:09:26 johnnycz Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -69,6 +69,7 @@ $Id: cl_main.c,v 1.166 2007-08-15 14:09:01 johnnycz Exp $
 #include "server.h"
 #endif
 #include "fs.h"
+#include "help.h"
 
 int	host_screenupdatecount; // kazik - HUD -> hexum
 
@@ -1319,6 +1320,7 @@ void CL_Init (void) {
 	TP_Init ();
 	Hud_262Init();
 	HUD_Init();
+	Help_Init();
 	M_Init ();
 
 	SList_Init ();
