@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.130 2007-08-12 22:45:18 cokeman1982 Exp $
+$Id: cl_screen.c,v 1.131 2007-08-19 00:39:19 qqshka Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -1430,7 +1430,7 @@ char *SCR_GetWeaponShortNameByFlag (int flag)
 
 static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc, qbool width_only)
 {
-	char *s = scr_teaminfo_order.string, *loc, tmp[1024], *aclr;
+	char *s, *loc, tmp[1024], tmp2[MAX_MACRO_STRING], *aclr;
 	int x_in = x; // save x
 	mpic_t *pic;
 
@@ -1441,6 +1441,11 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 		Com_DPrintf("SCR_Draw_TeamInfoPlayer: wrong client %d\n", i);
 		return 0;
 	}
+
+	// this limit len of string because TP_ParseFunChars() do not check overflow
+	strlcpy(tmp2, scr_teaminfo_order.string, sizeof(tmp2));
+	strlcpy(tmp2, TP_ParseFunChars(tmp2, false), sizeof(tmp2));
+	s = tmp2;
 
 	//
 	// parse/draw string like this "%n %h:%a %l %p %w"
