@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.132 2007-08-19 01:32:22 qqshka Exp $
+$Id: cl_screen.c,v 1.133 2007-08-19 16:48:48 borisu Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -2345,6 +2345,29 @@ qbool Hud_TranslateCoords (hud_element_t *elem, int *x, int *y)
 	return true;
 }
 
+int strlen_color (const char* txt)
+{
+	int l = 0;
+	while (*txt) {
+		if (*txt == '&') {
+			if (txt[1] == 'c' && txt[2] && txt[3] && txt[4]) {
+					txt += 5;
+					continue;
+			} else if (txt[1] == 'r') {
+				txt += 2;
+				continue;
+			} else {
+				txt++;
+				l++;
+			}
+		} else {
+			txt++;
+			l++;
+		}
+	}
+	return l;
+}
+
 void SCR_DrawHud (void)
 {
 	hud_element_t* elem;
@@ -2367,12 +2390,12 @@ void SCR_DrawHud (void)
 				st = ((cvar_t*)elem->contents)->string;
 				strlcpy (buf, st, sizeof(buf));
 				st = buf;
-				l = strlen (st);
+				l = strlen_color(st);
 			} else if (elem->flags & HUD_STRING) {
 				Cmd_ExpandString(elem->contents, buf); //, sizeof(buf));
 				st = TP_ParseMacroString(buf);
 				st = TP_ParseFunChars(st, false);
-				l = strlen(st);
+				l = strlen_color(st);
 			} else if (elem->flags & HUD_FUNC) {
 				func = elem->contents;
 				st =(*func)();
