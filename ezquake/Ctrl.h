@@ -1,4 +1,4 @@
-//    $Id: Ctrl.h,v 1.11 2007-03-31 15:24:10 johnnycz Exp $
+//    $Id: Ctrl.h,v 1.11.2.1 2007-08-19 14:18:21 johnnycz Exp $
 
 #ifndef __CTRL_H__
 #define __CTRL_H__
@@ -16,12 +16,13 @@ void UI_DrawCharacter (int cx, int line, int num);
 void UI_Print (int cx, int cy, const char *str, int red);
 int UI_DrawSlider (int x, int y, float range);
 int UI_SliderWidth(void);
-void UI_Print3 (int cx, int cy, char *str, clrinfo_t *clr, int clr_cnt, int red);
+void UI_Print3 (int cx, int cy, const char *str, clrinfo_t *clr, int clr_cnt, int red);
 void UI_Print_Center (int cx, int cy, int w, const char *str, int red);
 void UI_Print_Center3 (int cx, int cy, int w, char *str, clrinfo_t *clr, int clr_cnt, int red);
 void UI_DrawTextBox (int x, int y, int width, int lines);
 void UI_MakeLine(char *buf, int w);
 void UI_MakeLine2(char *buf, int w);
+void UI_DrawColoredAlphaBox(int x, int y, int w, int h, float r, float g, float b, float a);
 void UI_DrawGrayBox(int x, int y, int w, int h);
 void UI_DrawBox(int x, int y, int w, int h);
 
