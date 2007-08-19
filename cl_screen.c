@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_screen.c,v 1.131 2007-08-19 00:39:19 qqshka Exp $
+$Id: cl_screen.c,v 1.132 2007-08-19 01:32:22 qqshka Exp $
 */
 #include <time.h>
 #include "quakedef.h"
@@ -1487,16 +1487,18 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 				}
 
 				break;
-			case 'h': // draw health
+			case 'h': // draw health, padding with space on left side
+			case 'H': // draw health, padding with space on right side
 
 				if(!width_only) {
-					snprintf(tmp, sizeof(tmp), "%s%3d", (ti_clients[i].health < scr_teaminfo_low_health.integer ? "&cf00" : ""), ti_clients[i].health);
+					snprintf(tmp, sizeof(tmp), (s[0] == 'h' ? "%s%3d" : "%s%-3d"), (ti_clients[i].health < scr_teaminfo_low_health.integer ? "&cf00" : ""), ti_clients[i].health);
 					Draw_ColoredString (x, y, tmp, false);
 				}
 				x += 3 * FONTWIDTH;
 
 				break;
-			case 'a': // draw armor
+			case 'a': // draw armor, padded with space on left side
+			case 'A': // draw armor, padded with space on right side
 
 				aclr = "";
 
@@ -1564,7 +1566,7 @@ static int SCR_Draw_TeamInfoPlayer(int i, int x, int y, int maxname, int maxloc,
 				}
 
 				if(!width_only) { // value drawed no matter which style
-					snprintf(tmp, sizeof(tmp), "%s%3d", aclr, ti_clients[i].armor);
+					snprintf(tmp, sizeof(tmp), (s[0] == 'a' ? "%s%3d" : "%s%-3d"), aclr, ti_clients[i].armor);
 					Draw_ColoredString (x, y, tmp, false);
 				}
 				x += 3 * FONTWIDTH;
