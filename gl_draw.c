@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.87 2007-08-16 22:54:18 cokeman1982 Exp $
+$Id: gl_draw.c,v 1.88 2007-08-20 17:22:11 zwoch Exp $
 */
 
 #include "quakedef.h"
@@ -27,7 +27,9 @@ $Id: gl_draw.c,v 1.87 2007-08-16 22:54:18 cokeman1982 Exp $
 #include "utils.h"
 #include "sbar.h"
 #include "common_draw.h"
+#ifndef __APPLE__
 #include "tr_types.h"
+#endif
 
 extern cvar_t crosshair, cl_crossx, cl_crossy, crosshaircolor, crosshairsize;
 extern cvar_t scr_coloredText, con_shift;
@@ -1865,8 +1867,10 @@ void Draw_BeginDisc (void)
 	// view frustrum. Similarly, a flip operation while rendering to a back buffer 
 	// will cause serialization. Be sure you are done altering the back buffer
 	// before you flip.
+#ifndef __APPLE__
 	if (glConfig.hardwareType == GLHW_INTEL)
 		return;
+#endif
 
 	glDrawBuffer  (GL_FRONT);
 	Draw_Pic (vid.width - 24, 0, draw_disc);
