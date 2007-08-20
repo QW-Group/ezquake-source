@@ -13,7 +13,7 @@
 	made by:
 		johnnycz, Jan 2006
 	last edit:
-		$Id: menu_options.c,v 1.72 2007-08-18 14:09:26 johnnycz Exp $
+		$Id: menu_options.c,v 1.73 2007-08-20 17:35:58 zwoch Exp $
 
 */
 
@@ -888,12 +888,11 @@ setting settvideo_arr[] = {
 	ADDSET_NUMBER	("Anisotropy filter", gl_anisotropy, 0, 16, 1),
 	ADDSET_ENUM		("Quality Mode", gl_texturemode, gl_texturemode_enum),
 
+#ifndef __APPLE__
 	ADDSET_SEPARATOR("Screen settings"),
 	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),
 #ifdef GLQUAKE
-#ifndef __APPLE__
 	ADDSET_BOOL("Vertical sync", r_swapInterval),
-#endif
 #endif
 	ADDSET_CUSTOM("Bit depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
@@ -901,7 +900,6 @@ setting settvideo_arr[] = {
 	ADDSET_ACTION("Apply changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
 
 	ADDSET_SEPARATOR("Font Size"),
-#ifndef __APPLE__
 	ADDSET_NUMBER("Width", r_conwidth, 320, 2048, 8),
 	ADDSET_NUMBER("Height", r_conheight, 240, 1538, 4),
 #endif
