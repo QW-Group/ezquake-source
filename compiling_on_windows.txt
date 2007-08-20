@@ -18,7 +18,8 @@ Instructions:
 
 3) Get directx SDK and place it where compiler can see it
  - http://www.microsoft.com/downloads/details.aspx?FamilyID=529f03be-1339-48c4-bd5a-8506e5acf571&DisplayLang=en
- - project file looks in DXSDK_DIR (Environment variable), you can set this in your System -> Advanced -> Environment Variables settings
+ - it usually works right after install
+ - if not, project file looks in DXSDK_DIR (Environment variable), you can set this in your System -> Advanced -> Environment Variables settings
 
 4) Get platfrom SDK and set it up
  - http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/default.aspx
