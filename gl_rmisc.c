@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: gl_rmisc.c,v 1.23 2007-08-20 17:22:11 zwoch Exp $
+	$Id: gl_rmisc.c,v 1.24 2007-08-21 21:26:32 cokeman1982 Exp $
 */
 // gl_rmisc.c
 
@@ -352,7 +352,7 @@ void R_TimeRefresh_f (void) {
 	Com_Printf ("%f seconds (%f fps)\n", time, 128/time);
 
 #ifndef __APPLE__
-	if (glConfig.hardwareType == GLHW_INTEL)
+	if (glConfig.hardwareType != GLHW_INTEL)
 	{
 		glDrawBuffer  (GL_BACK);
 	}
