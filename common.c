@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.89 2007-08-21 14:34:21 dkure Exp $
+    $Id: common.c,v 1.90 2007-08-21 20:53:16 cokeman1982 Exp $
 
 */
 
@@ -1985,24 +1985,30 @@ void FS_AddUserDirectory ( char *dir ) {
 }
 #endif /* SERVERONLY */
 
+void Draw_InitConback(void);
+void Draw_InitConsoleBackground(void);
 
-//Sets the gamedir and path to a different directory.
-void FS_SetGamedir (char *dir) {
+// Sets the gamedir and path to a different directory.
+void FS_SetGamedir (char *dir)
+{
 	searchpath_t  *next;
 	if (strstr(dir, "..") || strstr(dir, "/")
-	        || strstr(dir, "\\") || strstr(dir, ":") ) {
+	 || strstr(dir, "\\") || strstr(dir, ":") ) 
+	{
 		Com_Printf ("Gamedir should be a single filename, not a path\n");
 		return;
 	}
 
-
 	if (!strcmp(com_gamedirfile, dir))
-		return;		// still the same
+		return;		// Still the same.
+	
 	strlcpy (com_gamedirfile, dir, sizeof(com_gamedirfile));
 
-	// free up any current game dir info
-	while (com_searchpaths != com_base_searchpaths)	{
-		if (com_searchpaths->pack) {
+	// Free up any current game dir info.
+	while (com_searchpaths != com_base_searchpaths)	
+	{
+		if (com_searchpaths->pack) 
+		{
 			fclose (com_searchpaths->pack->handle);
 			Q_free (com_searchpaths->pack->files);
 			Q_free (com_searchpaths->pack);
@@ -2012,29 +2018,25 @@ void FS_SetGamedir (char *dir) {
 		com_searchpaths = next;
 	}
 
-	// flush all data, so it will be forced to reload
+	// Flush all data, so it will be forced to reload.
 	Cache_Flush ();
 
 	sprintf (com_gamedir, "%s/%s", com_basedir, dir);
 
-	if (strcmp(dir, "id1") && strcmp(dir, "qw") && strcmp(dir, "ezquake")) {
+	if (strcmp(dir, "id1") && strcmp(dir, "qw") && strcmp(dir, "ezquake"))
+	{
 		FS_AddGameDirectory(com_basedir, dir);
 	}
 
-#ifdef GLQUAKE
+	#ifdef GLQUAKE
 	// Reload gamedir specific conback as its not flushed
-	void Draw_InitConback(void);
-	void Draw_InitConsoleBackground(void);
-
 	Draw_InitConback();
 	Draw_InitConsoleBackground();
-#endif // GLQUAKE
+	#endif // GLQUAKE
 
-	// QW262 -->
 #ifndef SERVERONLY
 	FS_AddUserDirectory(dir);
 #endif
-	// <-- QW262
 }
 
 void FS_ShutDown( void ) {
