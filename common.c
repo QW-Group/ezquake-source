@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.90 2007-08-21 20:53:16 cokeman1982 Exp $
+    $Id: common.c,v 1.91 2007-08-22 11:36:06 qqshka Exp $
 
 */
 
@@ -1986,7 +1986,6 @@ void FS_AddUserDirectory ( char *dir ) {
 #endif /* SERVERONLY */
 
 void Draw_InitConback(void);
-void Draw_InitConsoleBackground(void);
 
 // Sets the gamedir and path to a different directory.
 void FS_SetGamedir (char *dir)
@@ -2028,11 +2027,10 @@ void FS_SetGamedir (char *dir)
 		FS_AddGameDirectory(com_basedir, dir);
 	}
 
-	#ifdef GLQUAKE
+#ifdef GLQUAKE
 	// Reload gamedir specific conback as its not flushed
 	Draw_InitConback();
-	Draw_InitConsoleBackground();
-	#endif // GLQUAKE
+#endif // GLQUAKE
 
 #ifndef SERVERONLY
 	FS_AddUserDirectory(dir);

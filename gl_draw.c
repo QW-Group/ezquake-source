@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: gl_draw.c,v 1.88 2007-08-20 17:22:11 zwoch Exp $
+$Id: gl_draw.c,v 1.89 2007-08-22 11:36:06 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -519,45 +519,6 @@ mpic_t *Draw_CachePic (char *path)
 	return Draw_CachePicSafe (path, true, false);
 }
 
-// If conwidth or conheight changes, adjust conback sizes too.
-void Draw_AdjustConback (void)
-{
-	conback.width  = vid.conwidth;
-	conback.height = vid.conheight;
-}
-
-void Draw_InitConback (void)
-{
-	qpic_t *cb;
-	int start;
-	mpic_t *pic_24bit;
-
-	start = Hunk_LowMark ();
-
-	if (!(cb = (qpic_t *) FS_LoadHunkFile ("gfx/conback.lmp")))
-		Sys_Error ("Couldn't load gfx/conback.lmp");
-	SwapPic (cb);
-
-	if (cb->width != 320 || cb->height != 200)
-		Sys_Error ("Draw_InitConback: conback.lmp size is not 320x200");
-
-	if ((pic_24bit = GL_LoadPicImage("gfx/conback", "conback", 0, 0, 0)))
-	{
-		memcpy(&conback.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
-	}
-	else
-	{
-		conback.width = cb->width;
-		conback.height = cb->height;
-		GL_LoadPicTexture ("conback", &conback, cb->data);
-	}
-
-	Draw_AdjustConback();
-
-	// Free loaded console.
-	Hunk_FreeToLowMark (start);
-}
-
 static int Draw_LoadCharset(const char *name)
 {
 	int texnum;
@@ -718,7 +679,7 @@ void Draw_InitCharset(void)
 }
 
 void CP_Init (void);
-void Draw_InitConsoleBackground(void);
+void Draw_InitConback (void);
 
 void Draw_Init (void)
 {
@@ -761,9 +722,6 @@ void Draw_Init (void)
 
 	// Load the crosshair pics
 	Draw_InitCrosshairs();
-
-	// So console background will be re-inited.
-	Draw_InitConsoleBackground();
 
 	// Get the other pics we need.
 	draw_disc     = Draw_CacheWadPic("disc");
@@ -1766,9 +1724,45 @@ void Draw_SFill (int x, int y, int w, int h, byte c, float scale)
 static char last_mapname[MAX_QPATH] = {0};
 static mpic_t *last_lvlshot = NULL;
 
-// Needed for vid_restart.
-void Draw_InitConsoleBackground(void)
+// If conwidth or conheight changes, adjust conback sizes too.
+void Draw_AdjustConback (void)
 {
+	conback.width  = vid.conwidth;
+	conback.height = vid.conheight;
+}
+
+void Draw_InitConback (void)
+{
+	qpic_t *cb;
+	int start;
+	mpic_t *pic_24bit;
+
+	start = Hunk_LowMark ();
+
+	if (!(cb = (qpic_t *) FS_LoadHunkFile ("gfx/conback.lmp")))
+		Sys_Error ("Couldn't load gfx/conback.lmp");
+	SwapPic (cb);
+
+	if (cb->width != 320 || cb->height != 200)
+		Sys_Error ("Draw_InitConback: conback.lmp size is not 320x200");
+
+	if ((pic_24bit = GL_LoadPicImage("gfx/conback", "conback", 0, 0, 0)))
+	{
+		memcpy(&conback.texnum, &pic_24bit->texnum, sizeof(mpic_t) - 8);
+	}
+	else
+	{
+		conback.width = cb->width;
+		conback.height = cb->height;
+		GL_LoadPicTexture ("conback", &conback, cb->data);
+	}
+
+	Draw_AdjustConback();
+
+	// Free loaded console.
+	Hunk_FreeToLowMark (start);
+
+	// Level shots init
 	last_lvlshot = NULL;
 	last_mapname[0] = 0;
 }
@@ -1783,9 +1777,10 @@ void Draw_ConsoleBackground (int lines)
 			 || (scr_conback.value == 1 && SCR_NEED_CONSOLE_BACKGROUND) // Only at load time.
 			))
 	{
+		// Here we limit call Draw_CachePicSafe() once per level,
+		// because if image not found Draw_CachePicSafe() will try open image again each frame, that cause HDD lag.
 		if (strncmp(host_mapname.string, last_mapname, sizeof(last_mapname)))
 		{
-			// Call Draw_CachePicSafe() once per level.
 			char name[MAX_QPATH];
 
 			snprintf(name, sizeof(name), "textures/levelshots/%s.xxx", host_mapname.string);
