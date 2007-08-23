@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: skin.c,v 1.20 2007-08-20 12:13:01 dkure Exp $
+	$Id: skin.c,v 1.21 2007-08-23 15:56:52 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include "teamplay.h"
 #include "image.h"
+#include "qtv.h"
 
 
 qbool OnChangeSkinForcing(cvar_t *var, char *string);
@@ -337,6 +338,11 @@ void Skin_Skins_f (void) {
 	cls.downloadnumber = 0;
 	cls.downloadtype = dl_skin;
 	Skin_NextDownload ();
+
+	if (cls.mvdplayback == QTV_PLAYBACK && cbuf_current != &cbuf_main)
+	{
+		cls.qtv_donotbuffer = false;
+	}
 }
 
 //Sets all skins to one specific one

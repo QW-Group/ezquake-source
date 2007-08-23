@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: client.h,v 1.68 2007-08-14 17:13:14 cokeman1982 Exp $
+$Id: client.h,v 1.69 2007-08-23 15:56:52 qqshka Exp $
 
 */
 // client.h
@@ -351,6 +351,7 @@ typedef struct
 
 	qbool		mvdplayback;	// Playing MVD.
 	float		qtv_svversion;	// version of qtvsv/proxy, note it float
+	qbool		qtv_donotbuffer;// do not try buffering even if not enough data
 	int			lastto;			// Contains which players are affected by a demo message.
 								// * If multiple players are affected (dem_multiple) this will be a
 								//   bit mask containing which players the last demo message relates to. (32-bits, 32 players)

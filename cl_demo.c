@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: cl_demo.c,v 1.79 2007-08-12 19:16:05 qqshka Exp $
+	$Id: cl_demo.c,v 1.80 2007-08-23 15:56:52 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -42,7 +42,7 @@ float olddemotime, nextdemotime;
 
 double bufferingtime; // if we stream from QTV, this is non zero when we trying fill our buffer
 
-#define QTVBUFFERTIME bound(0.1, qtv_buffertime.value, 10);
+#define QTVBUFFERTIME bound(0.1, qtv_buffertime.value, 10)
 
 //
 // Vars related to QIZMO compressed demos.
@@ -834,14 +834,14 @@ qbool pb_ensure(void)
 			return true;
 	}
 
-	if (cls.mvdplayback == QTV_PLAYBACK && !bufferingtime)
+	if (cls.mvdplayback == QTV_PLAYBACK && !bufferingtime && !cls.qtv_donotbuffer)
 	{
 		double prebufferseconds = QTVBUFFERTIME;
 
 		bufferingtime = Sys_DoubleTime() + prebufferseconds;
 
 		if (developer.integer >= 2)
-			Com_DPrintf("qtv: no enough buffered, buffering for %.1f\n", prebufferseconds); // print some annoying message
+			Com_DPrintf("&cF00" "qtv: no enough buffered, buffering for %.1fs\n" "&r", prebufferseconds); // print some annoying message
 	}
 
 	return false;
@@ -2274,6 +2274,7 @@ void CL_StopPlayback (void)
 	cl.paused &= ~PAUSED_DEMO;
 
 	cls.qtv_svversion = 0;
+	cls.qtv_donotbuffer = false;
 
 	// Stop Qizmo demo playback.
 	#ifdef WIN32
@@ -2834,7 +2835,6 @@ void CL_QTVList_f (void)
 void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 {
 	int i;
-	double prebufferseconds = QTVBUFFERTIME;
 
 	// End any current game.
 	Host_EndGame();
@@ -2875,7 +2875,9 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 	olddemotime = nextdemotime = 0;
 	cls.findtrack = true;
 
-	bufferingtime = Sys_DoubleTime() + prebufferseconds;
+	cls.qtv_donotbuffer = true; // do not try buffering before "skins" not received
+
+	bufferingtime = 0; // with eztv it correct, since eztv do not send data before we complete connection, so prebuffering is pointless
 
 	// Used for knowing who messages is directed to in MVD's.
 	cls.lastto = cls.lasttype = 0;
@@ -2890,7 +2892,7 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 
 	TP_ExecTrigger ("f_demostart");
 
-	Com_Printf("Attempting to stream QTV data, buffer is %.1fs\n", prebufferseconds);
+	Com_Printf("Attempting to stream QTV data, buffer is %.1fs\n", (double)(QTVBUFFERTIME));
 }
 
 //

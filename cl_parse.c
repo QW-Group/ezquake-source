@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_parse.c,v 1.105 2007-08-14 17:13:13 cokeman1982 Exp $
+$Id: cl_parse.c,v 1.106 2007-08-23 15:56:52 qqshka Exp $
 */
 
 #include "quakedef.h"
@@ -1481,6 +1481,7 @@ void CL_ParseServerData (void) {
 	memset(cl.sound_name, 0, sizeof(cl.sound_name));
 
 	if (cls.mvdplayback == QTV_PLAYBACK) {
+		cls.qtv_donotbuffer = true; // do not try buffering before "skins" not received
 		QTV_Cmd_Printf(QTV_VER_1_2, "qtvsoundlist %i %i", cl.servercount, 0);
 	}
 	else {
