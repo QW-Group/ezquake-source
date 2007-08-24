@@ -105,6 +105,8 @@ COMMON_C_FILES := \
 	crc \
 	cvar \
 	fs \
+	fs_fte \
+	hash \
 	host \
 	mathlib \
 	md4 \
