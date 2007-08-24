@@ -69,6 +69,7 @@ char * Sys_getcwd (char *buf, int bufsize);
 // file IO
 void Sys_mkdir (const char *path);
 int Sys_remove (char *path);
+int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm);
 
 // memory protection
 void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length);

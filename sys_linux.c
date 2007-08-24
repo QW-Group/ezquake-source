@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_linux.c,v 1.25 2007-04-15 14:54:50 johnnycz Exp $
+	$Id: sys_linux.c,v 1.26 2007-08-24 16:48:22 dkure Exp $
 
 */
 #include <unistd.h>
@@ -490,6 +490,87 @@ char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
     return realpath(relPath, absPath);
 }
 // kazik <--
+
+#ifdef FTE_FS
+int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm)
+{
+#include <dirent.h>
+	DIR *dir, *dir2;
+	char apath[MAX_OSPATH];
+	char file[MAX_OSPATH];
+	char truepath[MAX_OSPATH];
+	char *s;
+	struct dirent *ent;
+
+	//printf("path = %s\n", gpath);
+	//printf("match = %s\n", match);
+
+	if (!gpath)
+		gpath = "";
+	*apath = '\0';
+
+	strncpy(apath, match, sizeof(apath));
+	for (s = apath+strlen(apath)-1; s >= apath; s--)
+	{
+		if (*s == '/')
+		{
+			s[1] = '\0';
+			match += s - apath+1;
+			break;
+		}
+	}
+	if (s < apath)  //didn't find a '/'
+		*apath = '\0';
+
+	snprintf(truepath, sizeof(truepath), "%s/%s", gpath, apath);
+
+
+	//printf("truepath = %s\n", truepath);
+	//printf("gamepath = %s\n", gpath);
+	//printf("apppath = %s\n", apath);
+	//printf("match = %s\n", match);
+	dir = opendir(truepath);
+	if (!dir)
+	{
+		Com_DPrintf("Failed to open dir %s\n", truepath);
+		return true;
+	}
+	do
+	{
+		ent = readdir(dir);
+		if (!ent)
+			break;
+		if (*ent->d_name != '.')
+			if (wildcmp(match, ent->d_name))
+			{
+				snprintf(file, sizeof(file), "%s/%s", gpath, ent->d_name);
+				//would use stat, but it breaks on fat32.
+
+				if ((dir2 = opendir(file)))
+				{
+					closedir(dir2);
+					snprintf(file, sizeof(file), "%s%s/", apath, ent->d_name);
+					//printf("is directory = %s\n", file);
+				}
+				else
+				{
+					snprintf(file, sizeof(file), "%s%s", apath, ent->d_name);
+					//printf("file = %s\n", file);
+				}
+
+				if (!func(file, -2, parm))
+				{
+					closedir(dir);
+					return false;
+				}
+			}
+	} while(1);
+	closedir(dir);
+
+	return true;
+}
+
+#endif /* FTE_FS */
 
 /********************************* CLIPBOARD *********************************/
 

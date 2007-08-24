@@ -1,6 +1,6 @@
 /*
 
-	$Id: sys_mac.c,v 1.25 2007-08-11 08:49:36 zwoch Exp $
+	$Id: sys_mac.c,v 1.26 2007-08-24 16:48:22 dkure Exp $
 
 */
 // sys_mac.c -- Macintosh system driver
@@ -187,6 +187,13 @@ void Sys_mkdir (const char *path)
 {
 	mkdir(path, 0777);
 }
+
+#ifdef FTE_FS
+int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm) {
+#error Sys_EnumerateFiles not implemented, see an example of sys_linux.c for an implementation
+	return 0;
+}
+#endif
 
 /*
 ===============================================================================

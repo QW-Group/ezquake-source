@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.39 2007-05-29 13:23:08 disconn3ct Exp $
+	$Id: sys_win.c,v 1.40 2007-08-24 16:48:22 dkure Exp $
 
 */
 // sys_win.c
@@ -173,6 +173,72 @@ Sys_remove
 int Sys_remove (char *path)
 {
 	return remove(path);
+}
+
+// D-Kure: This is added for FTE vfs
+int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm)
+{
+	HANDLE r;
+	WIN32_FIND_DATA fd; 
+	char apath[MAX_OSPATH];
+	char apath2[MAX_OSPATH];
+	char file[MAX_OSPATH];
+	char *s;
+	int go;
+	if (!gpath)
+		return 0;
+	//  strcpy(apath, match);
+	Q_snprintfz(apath, sizeof(apath), "%s/%s", gpath, match);
+	for (s = apath+strlen(apath)-1; s> apath; s--)
+	{
+		if (*s == '/') 
+			break;
+	}
+	*s = '\0';
+
+	//this is what we ask windows for.
+	Q_snprintfz(file, sizeof(file), "%s/*.*", apath);
+
+	//we need to make apath contain the path in match but not gpath
+	Q_strncpyz(apath2, match, sizeof(apath));
+	match = s+1;
+	for (s = apath2+strlen(apath2)-1; s> apath2; s--)
+	{
+		if (*s == '/')
+			break;
+	}
+	*s = '\0';
+	if (s != apath2)
+		strcat(apath2, "/");
+
+	r = FindFirstFile(file, &fd);
+	if (r==(HANDLE)-1)
+		return 1;
+	go = true;
+	do
+	{
+		if (*fd.cFileName == '.');  //don't ever find files with a name starting with '.'
+		else if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)    //is a directory
+		{
+			if (wildcmp(match, fd.cFileName))
+			{
+				Q_snprintfz(file, sizeof(file), "%s%s/", apath2, fd.cFileName);
+				go = func(file, fd.nFileSizeLow, parm);
+			}
+		}
+		else
+		{
+			if (wildcmp(match, fd.cFileName))
+			{
+				Q_snprintfz(file, sizeof(file), "%s%s", apath2, fd.cFileName);
+				go = func(file, fd.nFileSizeLow, parm);
+			}
+		}
+	}
+	while(FindNextFile(r, &fd) && go);
+	FindClose(r);
+
+	return go;
 }
 
 /*
