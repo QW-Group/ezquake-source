@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.c,v 1.22 2007-08-08 00:53:29 disconn3ct Exp $
+    $Id: q_shared.c,v 1.23 2007-08-24 16:52:38 dkure Exp $
 
 */
 // q_shared.c -- functions shared by all subsystems
@@ -289,6 +289,51 @@ char *strchrrev(char *str, char chr)
 			return str;
 
 	return NULL;
+}
+
+// D-Kure: added for fte vfs
+int wildcmp(char *wild, char *string)
+{
+	char *cp=NULL, *mp=NULL;
+
+	while ((*string) && (*wild != '*'))
+	{
+		if ((*wild != *string) && (*wild != '?'))
+		{
+			return 0;
+		}
+		wild++;
+		string++;
+	}
+
+	while (*string)
+	{
+		if (*wild == '*')
+		{
+			if (!*++wild)   //a * at the end of the wild string matches anything the checked string has
+			{
+				return 1;
+			}
+			mp = wild;
+			cp = string+1;
+		}
+		else if ((*wild == *string) || (*wild == '?'))
+		{
+			wild++;
+			string++;
+		}
+		else
+		{
+			wild = mp;
+			string = cp++;
+		}
+	}
+
+	while (*wild == '*')
+	{
+		wild++;
+	}
+	return !*wild;
 }
 
 wchar char2wc (char c)

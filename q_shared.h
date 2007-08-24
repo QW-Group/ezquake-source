@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: q_shared.h,v 1.28 2007-08-14 18:48:09 dkure Exp $
+    $Id: q_shared.h,v 1.29 2007-08-24 16:52:38 dkure Exp $
 
 */
 // q_shared.h -- functions shared by all subsystems
@@ -221,6 +221,7 @@ char  *strnstr (const char *s, const char *find, size_t slen);
 // Added by VVD }
 
 char *strchrrev(char *str, char chr);
+int wildcmp(char *wild, char *string);
 
 wchar char2wc (char c);
 char wc2char (wchar wc);
