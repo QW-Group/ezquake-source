@@ -39,6 +39,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #endif
 
+// Define FTE_FS if we should use the VFS layer ported from FTE
+//#define FTE_FS
+
 #include "expat.h" // FIXME?
 #include "pcre.h" // FIXME?
 
