@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.c,v 1.91 2007-08-22 11:36:06 qqshka Exp $
+    $Id: common.c,v 1.92 2007-08-24 17:02:15 dkure Exp $
 
 */
 
@@ -1432,6 +1432,7 @@ int COM_FileLength (FILE *f)
 	return end;
 }
 
+#ifndef FTE_FS
 int COM_FileOpenRead (char *path, FILE **hndl)
 {
 	FILE *f;
@@ -1444,7 +1445,9 @@ int COM_FileOpenRead (char *path, FILE **hndl)
 
 	return COM_FileLength(f);
 }
+#endif /* FTE_FS */
 
+#ifndef FTE_FS
 void COM_Path_f (void)
 {
 	searchpath_t *search;
@@ -1459,6 +1462,7 @@ void COM_Path_f (void)
 			Com_Printf ("%s\n", search->filename);
 	}
 }
+#endif /* FTE_FS */
 
 int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 {
@@ -1503,6 +1507,7 @@ int COM_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 }
 
 //The filename will be prefixed by com_basedir
+#ifndef FTE_FS
 qbool COM_WriteFile (char *filename, void *data, int len)
 {
 	FILE *f;
@@ -1520,6 +1525,7 @@ qbool COM_WriteFile (char *filename, void *data, int len)
 	fclose (f);
 	return true;
 }
+#endif /* FTE_FS */
 
 //The filename used as is
 qbool COM_WriteFile_2 (char *filename, void *data, int len)
@@ -1544,6 +1550,7 @@ qbool COM_WriteFile_2 (char *filename, void *data, int len)
 //Only used for CopyFile and download
 
 
+#ifndef FTE_FS
 void COM_CreatePath(char *path)
 {
 	char *s, save;
@@ -1564,6 +1571,7 @@ void COM_CreatePath(char *path)
 		}
 	}
 }
+#endif /* FS_FTE */
 
 int FS_FOpenPathFile (char *filename, FILE **file) {
 
@@ -1666,8 +1674,6 @@ byte *FS_LoadFile (char *path, int usehunk)
 	char base[32];
 	int len;
 
-	buf = NULL;	// Quiet compiler warning.
-
 	// Look for it in the filesystem or pack files.
 	len = fs_filesize = FS_FOpenFile (path, &h);
 	if (!h)
@@ -1700,10 +1706,13 @@ byte *FS_LoadFile (char *path, int usehunk)
 	else
 	{
 		Sys_Error ("FS_LoadFile: bad usehunk\n");
+		return NULL;
 	}
 
-	if (!buf)
+	if (!buf) {
 		Sys_Error ("FS_LoadFile: not enough space for %s\n", path);
+		return NULL;
+	}
 
 	((byte *)buf)[len] = 0;
 

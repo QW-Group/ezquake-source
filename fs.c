@@ -1,5 +1,5 @@
 /*
-    $Id: fs.c,v 1.8 2007-07-12 17:06:47 qqshka Exp $
+    $Id: fs.c,v 1.9 2007-08-24 17:02:15 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -52,6 +52,7 @@ void VFS_FLUSH (struct vfsfile_s *vf) {
 }
 
 // return null terminated string
+#ifndef FTE_FS
 char *VFS_GETS(struct vfsfile_s *vf, char *buffer, int buflen)
 {
 	char in;
@@ -85,6 +86,7 @@ char *VFS_GETS(struct vfsfile_s *vf, char *buffer, int buflen)
 
 	return buffer;
 }
+#endif /* FTE_FS */
 
 //******************************************************************************************************
 //STDIO files (OS)
@@ -96,6 +98,7 @@ typedef struct {
 
 } vfsosfile_t;
 
+#ifndef FTE_FS
 int VFSOS_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err)
 {
 	int r;
@@ -111,25 +114,33 @@ int VFSOS_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfse
 
 	return r;
 }
+#endif /* FTE_FS */
 
+#ifndef FTE_FS
 int VFSOS_WriteBytes (struct vfsfile_s *file, void *buffer, int bytestowrite)
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 	return fwrite(buffer, 1, bytestowrite, intfile->handle);
 }
+#endif /* FTE_FS */
 
+#ifndef FTE_FS
 qbool VFSOS_Seek (struct vfsfile_s *file, unsigned long pos)
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 	return fseek(intfile->handle, pos, SEEK_SET) == 0;
 }
+#endif /* FTE_FS */
 
+#ifndef FTE_FS
 unsigned long VFSOS_Tell (struct vfsfile_s *file)
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 	return ftell(intfile->handle);
 }
+#endif /* FTE_FS */
 
+#ifndef FTE_FS
 unsigned long VFSOS_GetSize (struct vfsfile_s *file)
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
@@ -145,14 +156,19 @@ unsigned long VFSOS_GetSize (struct vfsfile_s *file)
 
 	return maxlen;
 }
+#endif /* FTE_FS */
 
+
+#ifndef FTE_FS
 void VFSOS_Close(vfsfile_t *file)
 {
 	vfsosfile_t *intfile = (vfsosfile_t*)file;
 	fclose(intfile->handle);
 	Q_free(file);
 }
+#endif /* FTE_FS */
 
+#ifndef FTE_FS
 vfsfile_t *FS_OpenTemp(void)
 {
 	FILE *f;
@@ -175,8 +191,10 @@ vfsfile_t *FS_OpenTemp(void)
 
 	return (vfsfile_t*)file;
 }
+#endif /* FTE_FS */
 
 // if f == NULL then use fopen(name, ...);
+#ifndef FTE_FS
 vfsfile_t *VFSOS_Open(char *name, FILE *f, char *mode)
 {
 	vfsosfile_t *file;
@@ -220,6 +238,7 @@ vfsfile_t *VFSOS_Open(char *name, FILE *f, char *mode)
 
 	return (vfsfile_t*)file;
 }
+#endif /* FTE_FS */
 
 //STDIO files (OS)
 //******************************************************************************************************
@@ -234,6 +253,7 @@ typedef struct {
 	unsigned long currentpos;
 } vfspack_t;
 
+#ifndef FTE_FS
 int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfserrno_t *err)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
@@ -257,13 +277,17 @@ int VFSPAK_ReadBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread, vfse
 
 	return r;
 }
+#endif
 
+#ifndef FTE_FS
 int VFSPAK_WriteBytes (struct vfsfile_s *vfs, void *buffer, int bytestoread)
 {	//not supported.
 	Sys_Error("Cannot write to pak files");
 	return 0;
 }
+#endif
 
+#ifndef FTE_FS
 qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
@@ -274,19 +298,25 @@ qbool VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long pos)
 	vfsp->currentpos = pos + vfsp->startpos;
 	return fseek(vfsp->handle, vfsp->currentpos, SEEK_SET) == 0;
 }
+#endif /* FS_FTE */
 
+#ifndef FTE_FS
 unsigned long VFSPAK_Tell (struct vfsfile_s *vfs)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 	return vfsp->currentpos - vfsp->startpos;
 }
+#endif /* FS_FTE */
 
+#ifndef FTE_FS
 unsigned long VFSPAK_GetLen (struct vfsfile_s *vfs)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
 	return vfsp->length;
 }
+#endif /* FS_FTE */
 
+#ifndef FTE_FS
 void VFSPAK_Close(vfsfile_t *vfs)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
@@ -294,7 +324,9 @@ void VFSPAK_Close(vfsfile_t *vfs)
 	fclose(vfsp->handle);
 	Q_free(vfsp);	//free ourselves.
 }
+#endif /* FTE_FS */
 
+#ifndef FTE_FS
 vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode)
 {
 	vfspack_t *vfs;
@@ -319,6 +351,7 @@ vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode)
 
 	return (vfsfile_t *)vfs;
 }
+#endif /* FS_FTE */
 
 // PAK files
 //******************************************************************************************************
@@ -327,6 +360,7 @@ vfsfile_t *FSPAK_OpenVFS(FILE *handle, int fsize, int fpos, char *mode)
 // some general function to open VFS file, except VFSTCP
 //
 
+#ifndef FTE_FS
 vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 {
 	vfsfile_t *vf;
@@ -375,6 +409,7 @@ vfsfile_t *FS_OpenVFS(char *filename, char *mode, relativeto_t relativeto)
 
 	return NULL;
 }
+#endif /* FS_FTE */
 
 
 //******************************************************************************************************
