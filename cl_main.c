@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.167 2007-08-18 14:09:26 johnnycz Exp $
+$Id: cl_main.c,v 1.168 2007-08-24 16:55:04 dkure Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -948,7 +948,7 @@ void CL_ConnectionlessPacket (void) {
 
 	case A2C_PRINT:		// print command from somewhere
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
-		if (net_message.cursize > 100 && !strncmp(net_message.data + 5, "\\chunk", sizeof("\\chunk")-1)) {
+		if (net_message.cursize > 100 && !strncmp((char *)net_message.data + 5, "\\chunk", sizeof("\\chunk")-1)) {
 			CL_Parse_OOB_ChunkedDownload();
 			return;
 		}

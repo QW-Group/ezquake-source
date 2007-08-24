@@ -4,7 +4,7 @@
 
 	Initial concept code jogihoogi, rewritten by Cokeman, Feb 2007
 	last edit:
-	$Id: hud_editor.c,v 1.32 2007-08-14 14:50:33 dkure Exp $
+	$Id: hud_editor.c,v 1.33 2007-08-24 16:55:03 dkure Exp $
 
 */
 
@@ -2326,11 +2326,12 @@ static void HUD_Editor(void)
 
 	// Check if we're performing any action.
 	// (Only perform one at any given time).
-	HUD_Editor_DrawHoverList(hud_hoverlist_x, hud_hoverlist_y, hud_hoverlist)
-	|| HUD_Editor_Resizing(hud_hover)
-	|| HUD_Editor_Moving(hud_hover)
-	|| HUD_Editor_Placing(hud_hover)
-	|| HUD_Editor_Aligning(hud_hover);
+	(void)
+	(HUD_Editor_DrawHoverList(hud_hoverlist_x, hud_hoverlist_y, hud_hoverlist)
+		 || HUD_Editor_Resizing(hud_hover)
+		 || HUD_Editor_Moving(hud_hover)
+		 || HUD_Editor_Placing(hud_hover)
+		 || HUD_Editor_Aligning(hud_hover));
 
 	// Draw tooltips for the HUD.
 	HUD_Editor_DrawTooltips(hud_hover);

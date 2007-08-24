@@ -2,7 +2,7 @@
 	Arithmetic expression evaluator
     @author johnnycz
     last edit:
-$Id: parser.c,v 1.21 2007-08-14 14:50:33 dkure Exp $
+$Id: parser.c,v 1.22 2007-08-24 16:55:04 dkure Exp $
 
 */
 
@@ -128,7 +128,7 @@ LOCAL int Get_Bool(const expr_val e)
 
 GLOBAL expr_val Get_Expr_Double(double v)
 {
-	expr_val t;
+	expr_val t = {0};
 	t.type = ET_DBL;
 	t.d_val = v;
 	return t;
@@ -136,7 +136,7 @@ GLOBAL expr_val Get_Expr_Double(double v)
 
 GLOBAL expr_val Get_Expr_Integer(int v)
 {
-	expr_val t;
+	expr_val t = {0};
 	t.type = ET_INT;
 	t.i_val = v;
 	return t;
@@ -144,7 +144,7 @@ GLOBAL expr_val Get_Expr_Integer(int v)
 
 GLOBAL expr_val Get_Expr_Dummy(void)
 {
-	expr_val t;
+	expr_val t = {0};
 	t.type = ET_INT;
 	t.i_val = 0;
 	return t;
@@ -163,7 +163,7 @@ LOCAL int Compare_Double(double a, double b)
 
 LOCAL expr_val ToString(EParser p, const expr_val e)
 {
-	expr_val r;
+	expr_val r = {0};
 	switch (e.type) {
 	case ET_STR: r = e; break;
 	case ET_INT:
@@ -191,7 +191,7 @@ LOCAL expr_val ToString(EParser p, const expr_val e)
 LOCAL expr_val Concat(EParser p, const expr_val e1, const expr_val e2)
 {
 	size_t len;
-	expr_val ret;
+	expr_val ret = {0};
 	if (e1.type != ET_STR || e2.type != ET_STR) {
 		SetError(p, ERR_INTERNAL);
 		return Get_Expr_Dummy();
@@ -250,7 +250,7 @@ LOCAL expr_val operator_plus (EParser p, const expr_val e1, const expr_val e2)
 
 LOCAL expr_val operator_minus (EParser p, const expr_val e1)
 {
-	expr_val ret;
+	expr_val ret = {0};
 
 	switch (e1.type) {
 	case ET_INT: ret.type = ET_INT; ret.i_val = -e1.i_val; break;
@@ -264,7 +264,7 @@ LOCAL expr_val operator_minus (EParser p, const expr_val e1)
 
 LOCAL expr_val operator_multiply (EParser p, const expr_val e1, const expr_val e2)
 {
-	expr_val ret;
+	expr_val ret = {0};
 
 	switch (e1.type) {
 	case ET_INT: switch (e2.type) {
@@ -299,17 +299,14 @@ LOCAL expr_val operator_divide(EParser p, const expr_val e1)
 	double d;
 	expr_val ret;
 
-	if (e1.type == ET_STR) {
-		SetError(p, ERR_TYPE_MISMATCH);
-		return e1;
-	}
-
 	switch (e1.type) {
 	case ET_INT:	d = e1.i_val; break;
 	case ET_DBL:	d = e1.d_val; break;
 	case ET_BOOL:	d = e1.b_val; break;
-	// unhandled
-	case ET_STR: break;
+	case ET_STR: 
+	default:
+		SetError(p, ERR_TYPE_MISMATCH); 
+		return e1;
 	}
 
 	if (d) {
@@ -336,7 +333,7 @@ typedef enum {
 // and we want to do a comparision on them
 LOCAL expr_val string_check_cmp(EParser p, const expr_val e1, const expr_val e2, cmp_type ctype)
 {
-	expr_val r;
+	expr_val r = {0};
 	r.type = ET_BOOL;
 	r.b_val = BOOL_FALSE;
 
@@ -367,7 +364,7 @@ LOCAL expr_val string_check_cmp(EParser p, const expr_val e1, const expr_val e2,
 // test: "1==1.0", "2==2.0", "5/2==2.5"
 LOCAL expr_val operator_eq(EParser p, const expr_val e1, const expr_val e2)
 {
-	expr_val ret;
+	expr_val ret = {0};
 	ret.type = ET_BOOL;
 
 	if (e1.type == ET_STR || e2.type == ET_STR)
@@ -405,7 +402,7 @@ LOCAL expr_val operator_eq(EParser p, const expr_val e1, const expr_val e2)
 // test: "1<1.0", ...
 LOCAL expr_val operator_lt(EParser p, const expr_val e1, const expr_val e2)
 {
-	expr_val ret;
+	expr_val ret = {0};
 	ret.type = ET_BOOL;
 
 	if (e1.type == ET_STR || e2.type == ET_STR)
@@ -443,7 +440,7 @@ LOCAL expr_val operator_lt(EParser p, const expr_val e1, const expr_val e2)
 #define EQ_VAL() (operator_eq(p,e1,e2).b_val)
 #define ADDOP(name,cond)										\
 LOCAL expr_val operator_##name (EParser p, const expr_val e1, const expr_val e2) {	\
-	expr_val ret; ret.type = ET_BOOL;												\
+	expr_val ret = {0}; ret.type = ET_BOOL;												\
 	if (e1.type == ET_STR || e2.type == ET_STR)										\
 		return string_check_cmp(p, e1, e2, CMPRESULT_##name);						\
 	else ret.b_val = (cond); return ret;											\
@@ -462,7 +459,7 @@ LOCAL expr_val operator_isin(EParser p, const expr_val e1, const expr_val e2)
 {
 	expr_val s1 = ToString(p, e1);
 	expr_val s2 = ToString(p, e2);
-	expr_val r; r.type = ET_BOOL;
+	expr_val r = {0}; r.type = ET_BOOL;
 
 	if (!(*s1.s_val)) {
 		r.b_val = BOOL_FALSE;
@@ -484,7 +481,7 @@ LOCAL expr_val operator_nisin(EParser p, const expr_val e1, const expr_val e2)
 
 LOCAL expr_val operator_reeq(EParser p, const expr_val e1, const expr_val e2)
 {
-	expr_val r;
+	expr_val r = {0};
 	expr_val strr = ToString(p, e1);
 	expr_val mask = ToString(p, e2);
 	// this makes sense for "111 =~ 1.1", however we are doing str->double->str conversion
@@ -527,7 +524,7 @@ LOCAL expr_val operator_rene(EParser p, const expr_val e1, const expr_val e2)
 
 LOCAL expr_val operator_and(EParser p, const expr_val e1, const expr_val e2)
 {
-	expr_val ret;
+	expr_val ret = {0};
 	ret.type = ET_BOOL;
 
 	switch (e1.type) {
@@ -563,7 +560,7 @@ LOCAL expr_val operator_and(EParser p, const expr_val e1, const expr_val e2)
 // a copy-paste of operator_and, I couldn't think of better way, limited C :(
 LOCAL expr_val operator_or(EParser p, const expr_val e1, const expr_val e2)
 {
-	expr_val ret;
+	expr_val ret = {0};
 	ret.type = ET_BOOL;
 
 	switch (e1.type) {
@@ -677,7 +674,7 @@ LOCAL expr_val Match_Var(EParser p)
 
 LOCAL expr_val Match_String(EParser p)
 {
-	expr_val ret;
+	expr_val ret = {0};
 	size_t len = 0;
 	int startpos = p->pos;
 	char firstc = p->string[startpos];
