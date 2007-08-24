@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: client.h,v 1.69 2007-08-23 15:56:52 qqshka Exp $
+$Id: client.h,v 1.70 2007-08-24 16:51:27 dkure Exp $
 
 */
 // client.h
@@ -600,6 +600,7 @@ void CL_ReadPackets (void);
 void CL_BeginServerConnect(void);
 void CL_Disconnect (void);
 void CL_Disconnect_f (void);
+void CL_Reconnect_f (void);
 qbool CL_ConnectedToProxy(void);
 void CL_MakeActive(void);
 
