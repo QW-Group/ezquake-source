@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: common.h,v 1.56 2007-08-11 20:12:05 cokeman1982 Exp $
+    $Id: common.h,v 1.57 2007-08-24 17:00:31 dkure Exp $
 */
 // common.h  -- general definitions
 
@@ -153,6 +153,7 @@ void COM_AddParm (char *parm);
 void COM_InitArgv (int argc, char **argv);
 int COM_Argc (void);
 int COM_CheckParm (char *parm);
+int COM_CheckParmOffset (char *parm, int offset);
 
 // equals to consecutive calls of strtok(s, " ") that assign values to array
 // "1 3.5 6 7" will lead to fl_array[0] = 1.0; fl_array[1] = 3.5; ...
