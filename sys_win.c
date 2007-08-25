@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: sys_win.c,v 1.40 2007-08-24 16:48:22 dkure Exp $
+	$Id: sys_win.c,v 1.41 2007-08-25 14:18:50 cokeman1982 Exp $
 
 */
 // sys_win.c
@@ -188,7 +188,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	if (!gpath)
 		return 0;
 	//  strcpy(apath, match);
-	Q_snprintfz(apath, sizeof(apath), "%s/%s", gpath, match);
+	snprintf(apath, sizeof(apath), "%s/%s", gpath, match);
 	for (s = apath+strlen(apath)-1; s> apath; s--)
 	{
 		if (*s == '/') 
@@ -197,10 +197,10 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 	*s = '\0';
 
 	//this is what we ask windows for.
-	Q_snprintfz(file, sizeof(file), "%s/*.*", apath);
+	snprintf(file, sizeof(file), "%s/*.*", apath);
 
 	//we need to make apath contain the path in match but not gpath
-	Q_strncpyz(apath2, match, sizeof(apath));
+	strlcpy(apath2, match, sizeof(apath));
 	match = s+1;
 	for (s = apath2+strlen(apath2)-1; s> apath2; s--)
 	{
@@ -222,7 +222,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 		{
 			if (wildcmp(match, fd.cFileName))
 			{
-				Q_snprintfz(file, sizeof(file), "%s%s/", apath2, fd.cFileName);
+				snprintf(file, sizeof(file), "%s%s/", apath2, fd.cFileName);
 				go = func(file, fd.nFileSizeLow, parm);
 			}
 		}
@@ -230,7 +230,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 		{
 			if (wildcmp(match, fd.cFileName))
 			{
-				Q_snprintfz(file, sizeof(file), "%s%s", apath2, fd.cFileName);
+				snprintf(file, sizeof(file), "%s%s", apath2, fd.cFileName);
 				go = func(file, fd.nFileSizeLow, parm);
 			}
 		}
