@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-    $Id: keys.c,v 1.72 2007-08-14 14:50:33 dkure Exp $
+    $Id: keys.c,v 1.73 2007-08-26 17:53:08 himan Exp $
 
 */
 
@@ -1270,10 +1270,11 @@ void Key_Console (int key, int unichar)
 			{
 				case '[': unichar = 0x10; break;
 				case ']': unichar = 0x11; break;
-				case 'g': unichar = 0x86; break;
-				case 'r': unichar = 0x87; break;
-				case 'y': unichar = 0x88; break;
-				case 'b': unichar = 0x89; break;
+				case 'g': unichar = 0x86; break; // ctrl+g green led
+				case 'r': unichar = 0x87; break; // ctrl+r red led
+				case 'y': unichar = 0x88; break; // ctrl+y yellow led
+				case 'b': unichar = 0x89; break; // ctrl+b blue led
+				case 'w': unichar = 0x84; break; // ctrl+w white led
 				case '(': unichar = 0x80; break;
 				case '=': unichar = 0x81; break;
 				case ')': unichar = 0x82; break;
