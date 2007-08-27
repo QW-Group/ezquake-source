@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: ez_controls.c,v 1.28 2007-08-14 14:50:32 dkure Exp $
+$Id: ez_controls.c,v 1.29 2007-08-27 19:50:06 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -207,6 +207,13 @@ void EZ_tree_Draw(ez_tree_t *tree)
 	while (iter)
 	{
 		payload = (ez_control_t *)iter->payload;
+
+		Draw_AlphaRectangleRGB(
+			payload->absolute_virtual_x, 
+			payload->absolute_virtual_y, 
+			payload->virtual_width, 
+			payload->virtual_height, 
+			1, false, RGBA_TO_COLOR(255, 0, 0, 125));
 
 		// Make sure that the control draws only within it's bounds.
 		Draw_EnableScissor(payload->bound_left, payload->bound_right, payload->bound_top, payload->bound_bottom);
@@ -472,6 +479,7 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	control->name = name;
 	control->description = description;
 	control->flags = flags | CONTROL_ENABLED | CONTROL_VISIBLE;
+	control->anchor_flags = anchor_none;
 
 	// Default to containing a child within it's parent
 	// if the parent is being contained by it's parent.
@@ -483,9 +491,9 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	control->draw_order = order++;
 
 	control->resize_handle_thickness = 5;
-	control->width_max = vid.conwidth;
+	control->width_max	= vid.conwidth;
 	control->height_max = vid.conheight;
-	control->width_min = 5;
+	control->width_min	= 5;
 	control->height_min = 5;
 
 	// This should NEVER be changed.
@@ -508,6 +516,7 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	control->events.OnMove				= EZ_control_OnMove;
 	control->events.OnScroll			= EZ_control_OnScroll;
 	control->events.OnResize			= EZ_control_OnResize;
+	control->events.OnParentResize		= EZ_control_OnParentResize;
 
 	// Load the background image.
 	if(background_name)
@@ -541,9 +550,15 @@ void EZ_control_Init(ez_control_t *control, ez_tree_t *tree, ez_control_t *paren
 	EZ_tree_OrderTabList(tree);
 
 	// Position and size of the control.
+	control->prev_width				= width;
+	control->prev_height			= height;
+	control->prev_virtual_width		= width;
+	control->prev_virtual_height	= height;
+
+	EZ_control_SetVirtualSize(control, width, height);
+	EZ_control_SetMinVirtualSize(control, width, height);
 	EZ_control_SetPosition(control, x, y);
 	EZ_control_SetSize(control, width, height);
-	EZ_control_SetVirtualSize(control, width, height);
 }
 
 //
@@ -811,6 +826,18 @@ void EZ_control_SetTabOrder(ez_control_t *self, int tab_order)
 }
 
 //
+// Control - Sets the anchoring of the control to it's parent.
+//
+void EZ_control_SetAnchor(ez_control_t *self, ez_anchor_t anchor_flags)
+{
+	self->anchor_flags = anchor_flags;
+
+	// Make sure the control is repositioned correctly.
+	CONTROL_RAISE_EVENT(NULL, self, OnMove);
+	CONTROL_RAISE_EVENT(NULL, self, OnParentResize);
+}
+
+//
 // Control - Sets the tab order of a control.
 //
 void EZ_control_SetDrawOrder(ez_control_t *self, int draw_order)
@@ -824,17 +851,46 @@ void EZ_control_SetDrawOrder(ez_control_t *self, int draw_order)
 //
 void EZ_control_SetSize(ez_control_t *self, int width, int height)
 {
-	self->width = width;
+	self->prev_width = self->width;
+	self->prev_height = self->height;
+
+	self->width  = width;
 	self->height = height;
 
-	// Make sure the virtual size is sset together with the normal width, if it's smaller.
-	if (self->virtual_width < width || self->virtual_height < height)
-	{
-		EZ_control_SetVirtualSize(self, max(self->virtual_width, width), max(self->virtual_height, height));
-	}
+	clamp(self->width, self->width_min, self->width_max);
+	clamp(self->height, self->height_min, self->height_max);
 
-	// EZ_control_OnResize(self);
 	CONTROL_RAISE_EVENT(NULL, self, OnResize);
+}
+
+//
+// Control - Set the max size for the control.
+//
+void EZ_control_SetMaxSize(ez_control_t *self, int max_width, int max_height)
+{
+	self->width_max = max(0, max_width);
+	self->height_max = max(0, max_height);
+
+	// Do we need to change the size of the control to fit?
+	if ((self->width > self->width_max) || (self->height > self->height_max))
+	{
+		EZ_control_SetSize(self, min(self->width, self->width_max), min(self->height, self->height_max));
+	}
+}
+
+//
+// Control - Set the min size for the control.
+//
+void EZ_control_SetMinSize(ez_control_t *self, int min_width, int min_height)
+{
+	self->width_max = max(0, min_width);
+	self->height_max = max(0, min_height);
+
+	// Do we need to change the size of the control to fit?
+	if ((self->width < self->width_min) || (self->height < self->height_min))
+	{
+		EZ_control_SetSize(self, max(self->width, self->width_min), max(self->height, self->height_min));
+	}
 }
 
 //
@@ -873,8 +929,8 @@ void EZ_control_SetScrollPosition(ez_control_t *self, int scroll_x, int scroll_y
 	}
 
 	// Don't allow scrolling outside the scroll area.
-	if ((scroll_x > self->virtual_width) 
-	 || (scroll_y > self->virtual_height)
+	if ((scroll_x > (self->virtual_width - self->width)) 
+	 || (scroll_y > (self->virtual_height - self->height))
 	 || (scroll_x < 0)
 	 || (scroll_y < 0))
 	{
@@ -900,13 +956,28 @@ void EZ_control_SetScrollChange(ez_control_t *self, int delta_scroll_x, int delt
 //
 void EZ_control_SetVirtualSize(ez_control_t *self, int virtual_width, int virtual_height)
 {
+	self->prev_virtual_width = self->virtual_width;
+	self->prev_virtual_height = self->virtual_height;
+
 	// Set the new virtual size of the control (cannot be smaller than the current size of the control).
-	self->virtual_width = max(virtual_width, self->width);
-	self->virtual_height = max(virtual_height, self->height);
+	self->virtual_width = max(virtual_width, self->virtual_width_min);
+	self->virtual_height = max(virtual_height, self->virtual_height_min);
+
+	self->virtual_width = max(self->virtual_width, self->width + self->virtual_x);
+	self->virtual_height = max(self->virtual_height, self->height + self->virtual_y);
 
 	// Raise the event that we have changed the virtual size of the control.
 	// TODO : Raise a changed virtual size event.
 	//CONTROL_RAISE_EVENT(NULL, self, OnMove);
+}
+
+//
+// Control - Set the min virtual size for the control, the control size is not allowed to be larger than this.
+//
+void EZ_control_SetMinVirtualSize(ez_control_t *self, int min_virtual_width, int min_virtual_height)
+{
+	self->virtual_width_min = max(0, min_virtual_width);
+	self->virtual_height_min = max(0, min_virtual_height);
 }
 
 //
@@ -978,7 +1049,80 @@ int EZ_control_OnLostFocus(ez_control_t *self)
 //
 int EZ_control_OnResize(ez_control_t *self)
 {
+	// Calculate how much the width has changed so that we can
+	// compensate by scrolling.
+	int scroll_change_x = (self->prev_width - self->width);
+	int scroll_change_y = (self->prev_height - self->height);
+
+	ez_control_t *payload = NULL;
+	ez_dllist_node_t *iter = self->children.head;
+
+	// Make sure the virtual size never is smaller than the normal size of the control
+	// and that it's never smaller than the virtual max size.
+	EZ_control_SetVirtualSize(self, self->width, self->height);
+
+	// First scroll the window so that we use the current virtual space fully
+	// before expanding it. That is, only start expanding when the:
+	// REAL_SIZE > VIRTUAL_MIN_SIZE
+	if (scroll_change_x < 0)
+	{
+		EZ_control_SetScrollChange(self, scroll_change_x, 0);
+	}
+
+	if (scroll_change_y < 0)
+	{
+		EZ_control_SetScrollChange(self, 0, scroll_change_y);
+	}
+
+	// Tell the children we've resized.
+	while(iter)
+	{
+		payload = (ez_control_t *)iter->payload;
+		CONTROL_RAISE_EVENT(NULL, payload, OnParentResize);
+		iter = iter->next;
+	}
+
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnResize);
+
+	return 0;
+}
+
+//
+// Control - The controls parent was resized.
+//
+int EZ_control_OnParentResize(ez_control_t *self)
+{
+	if (self->parent && (self->flags & CONTROL_RESIZEABLE))
+	{
+		int x = 0;
+		int y = 0;
+		int width = self->width;
+		int height = self->height;
+
+		if ((self->anchor_flags & (anchor_left | anchor_right)) == (anchor_left | anchor_right))
+		{
+			// The position of the right side of the control relative to the parents right side.
+			int x_from_right = self->parent->prev_virtual_width - (self->x + self->width);
+			
+			// Set the new width so that the right side of the control is
+			// still the same distance from the right side of the parent.
+			width = self->parent->virtual_width - (self->x + x_from_right);
+		}
+
+		if ((self->anchor_flags & (anchor_top | anchor_bottom)) == (anchor_top | anchor_bottom))
+		{
+			int x_from_bottom = self->parent->prev_virtual_height - (self->x + self->height);
+			height = self->parent->virtual_height - (self->x + x_from_bottom);
+		}
+
+		// Set the new size if it changed.
+		if (self->width != width || self->height != height)
+		{
+			EZ_control_SetSize(self, width, height);
+		}
+	}
+
+	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnParentResize);
 
 	return 0;
 }
@@ -992,13 +1136,44 @@ int EZ_control_OnMove(ez_control_t *self)
 	ez_dllist_node_t *iter = self->children.head;
 
 	// Update the absolute screen position based on the parents position.
-	self->absolute_x = (self->parent ? self->parent->absolute_x : 0) + self->x;
-	self->absolute_y = (self->parent ? self->parent->absolute_y : 0) + self->y;
-	
-	if (self->flags & CONTROL_SCROLLABLE)
+	self->absolute_x = (self->parent ? self->parent->absolute_virtual_x : 0) + self->x;
+	self->absolute_y = (self->parent ? self->parent->absolute_virtual_y : 0) + self->y;
+
+	if (self->parent)
 	{
-		EZ_control_OnScroll(self);
+		// If the control has a parent, position it in relation to it
+		// and the way it's anchored to it.
+
+		// If we're anchored to both the left and right part of the parent we position
+		// based on the parents left pos 
+		// (We will stretch to the right if the control is resizable and if the parent is resized).
+		if ((self->anchor_flags & anchor_left) && !(self->anchor_flags & anchor_right))
+		{
+			self->absolute_x = self->parent->absolute_virtual_x + self->x;
+		}
+		else if ((self->anchor_flags & anchor_right) && !(self->anchor_flags & anchor_left))
+		{
+			self->absolute_x = self->parent->absolute_virtual_x + self->parent->virtual_width + (self->x - self->width);
+		}
+
+		if (self->anchor_flags & anchor_top)
+		{
+			self->absolute_y = self->parent->absolute_virtual_y + self->y;
+		}
+		else if (self->anchor_flags & anchor_bottom)
+		{
+			self->absolute_y = self->parent->absolute_virtual_y + self->parent->virtual_height + (self->y - self->height);
+		}
 	}
+	else
+	{
+		// No parent, position based on screen coordinates.
+		self->absolute_x = self->x;
+		self->absolute_y = self->y;
+	}
+
+	// We need to move the virtual area of the control also.
+	CONTROL_RAISE_EVENT(NULL, self, OnScroll);
 
 	// Tell the children we've moved.
 	while(iter)
@@ -1018,10 +1193,18 @@ int EZ_control_OnMove(ez_control_t *self)
 //
 int EZ_control_OnScroll(ez_control_t *self)
 {
-	if (self->flags & CONTROL_SCROLLABLE)
+	ez_control_t *payload = NULL;
+	ez_dllist_node_t *iter = self->children.head;
+
+	self->absolute_virtual_x = self->absolute_x - self->virtual_x;
+	self->absolute_virtual_y = self->absolute_y - self->virtual_y;
+
+	// Tell the children we've scrolled.
+	while(iter)
 	{
-		self->absolute_virtual_x = self->absolute_x - self->virtual_x;
-		self->absolute_virtual_y = self->absolute_y - self->virtual_y;
+		payload = (ez_control_t *)iter->payload;
+		CONTROL_RAISE_EVENT(NULL, payload, OnMove);
+		iter = iter->next;
 	}
 
 	CONTROL_EVENT_HANDLER_CALL(NULL, self, OnScroll);
@@ -1101,7 +1284,7 @@ static void EZ_control_ResizeByDirection(ez_control_t *self, mouse_state_t *ms, 
 		width = self->width + ((direction & RESIZE_LEFT) ? delta_x : -delta_x);
 		clamp(width, self->width_min, self->width_max);
 
-		// Move the control to counter act the resizing when resizing to the left.
+		// Move the control to counteract the resizing when resizing to the left.
 		x = self->x + ((direction & RESIZE_LEFT) ? (self->width - width) : 0);
 	}
 

@@ -113,6 +113,7 @@ void EZ_tree_UnOrphanizeChildren(ez_tree_t *tree);
 #define CONTROL_VISIBLE				(1 << 13)	// Is the control visible?
 #define CONTROL_MOUSE_OVER			(1 << 14)	// Is the mouse over the control?
 #define CONTROL_SCROLLABLE			(1 << 15)	// Is the control scrollable?
+#define CONTROL_RESIZEABLE			(1 << 16)	// Is the control resizeable?
 
 //
 // Control - Function pointer types.
@@ -188,9 +189,19 @@ typedef struct ez_control_events_s
 	ez_control_handler_fp			OnMove;
 	ez_control_handler_fp			OnScroll;
 	ez_control_handler_fp			OnResize;
+	ez_control_handler_fp			OnParentResize;
 	ez_control_handler_fp			OnGotFocus;
 	ez_control_handler_fp			OnLostFocus;
 } ez_control_events_t;
+
+typedef enum ez_anchor_e
+{
+	anchor_none		= (1 << 0),
+	anchor_left		= (1 << 1), 
+	anchor_right	= (1 << 2),
+	anchor_top		= (1 << 3),
+	anchor_bottom	= (1 << 4)
+} ez_anchor_t;
 
 typedef struct ez_control_s
 {
@@ -202,11 +213,17 @@ typedef struct ez_control_s
 	int	 				x;								// Relative position to it's parent.
 	int					y;
 
+	int					prev_x;							// Previous position.
+	int					prev_y;
+
 	int					absolute_x;						// The absolute screen coordinates for the control.
 	int					absolute_y;	
 	
 	int 				width;							// Size.
 	int					height;
+	
+	int					prev_width;						// Previous size.
+	int					prev_height;
 
 	int					virtual_x;						// The relative position in the virtual window that the "real" window is showing.
 	int					virtual_y;
@@ -216,6 +233,12 @@ typedef struct ez_control_s
 
 	int					virtual_width;					// The virtual size of the control (scrollable area).
 	int					virtual_height;
+
+	int					prev_virtual_width;				// The previous virtual size of the control.
+	int					prev_virtual_height;
+
+	int					virtual_width_min;				// The virtual min size for the control.
+	int					virtual_height_min;
 	
 	int					width_max;						// Max/min sizes for the control.
 	int					width_min;
@@ -226,6 +249,8 @@ typedef struct ez_control_s
 	int					bound_left;
 	int					bound_right;
 	int					bound_bottom;
+
+	ez_anchor_t			anchor_flags;					// Which parts of it's parent the control is anchored to.
 
 	int					resize_handle_thickness;		// The thickness of the resize handles on the sides of the control.
 
@@ -381,9 +406,24 @@ void EZ_control_SetPosition(ez_control_t *self, int x, int y);
 void EZ_control_SetVirtualSize(ez_control_t *self, int virtual_width, int virtual_height);
 
 //
+// Control - Set the min virtual size for the control, the control size is not allowed to be larger than this.
+//
+void EZ_control_SetMinVirtualSize(ez_control_t *self, int min_virtual_width, int min_virtual_height);
+
+//
 // Control - Sets the part of the control that should be shown if it's scrollable.
 //
 void EZ_control_SetScrollPosition(ez_control_t *self, int scroll_x, int scroll_y);
+
+//
+// Control - Sets the anchoring of the control to it's parent.
+//
+void EZ_control_SetAnchor(ez_control_t *self, ez_anchor_t anchor_flags);
+
+//
+// Control - Sets the tab order of a control.
+//
+void EZ_control_SetTabOrder(ez_control_t *self, int tab_order);
 
 //
 // Control - Focuses on a control.
@@ -443,6 +483,11 @@ void EZ_control_SetScrollChange(ez_control_t *self, int delta_scroll_x, int delt
 // Control - The control was resized.
 //
 int EZ_control_OnResize(ez_control_t *self);
+
+//
+// Control - The controls parent was resized.
+//
+int EZ_control_OnParentResize(ez_control_t *self);
 
 //
 // Control - Layouts children.
