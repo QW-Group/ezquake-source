@@ -1,5 +1,5 @@
 /*
-	$Id: hud_common.c,v 1.151 2007-08-29 13:27:26 dkure Exp $
+	$Id: hud_common.c,v 1.152 2007-08-29 15:06:04 dkure Exp $
 */
 //
 // common HUD elements
@@ -152,7 +152,9 @@ int TP_IsAmmoLow(int weapon)
 int TP_TeamFortressEngineerSpanner(void) {
 	char *player_skin=Info_ValueForKey(cl.players[cl.playernum].userinfo,"skin");
 	char *model_name=cl.model_precache[cl.viewent.current.modelindex]->name;
-	if (cl.teamfortress && (strcasecmp(player_skin, "tf_eng") == 0)
+	if (cl.teamfortress && player_skin
+			&& (strcasecmp(player_skin, "tf_eng") == 0)
+			&& model_name 
 			&& (strcasecmp(model_name, "progs/v_span.mdl") == 0)) {
 		return 1;
 	} else {
