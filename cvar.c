@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cvar.c,v 1.50 2007-07-15 09:50:44 disconn3ct Exp $
+$Id: cvar.c,v 1.51 2007-08-29 20:53:26 borisu Exp $
 */
 // cvar.c -- dynamic variable tracking
 
@@ -216,6 +216,7 @@ void Cvar_Set (cvar_t *var, char *value)
 {
 #ifndef SERVERONLY
 	extern cvar_t cl_warncmd;
+	extern cvar_t re_subi[10];
 #endif
 	static qbool changing = false;
 	float test ;
@@ -224,10 +225,12 @@ void Cvar_Set (cvar_t *var, char *value)
 		return;
 
 	// C code may wrongly use Cvar_Set on non registered variable, some 99.99% accurate check
-	if (!var->next /* this is fast, but a bit flawed logic */ && !Cvar_FindVar(var->name)) {
-		Com_Printf("Cvar_Set: on non linked var %s\n", var->name);
-		return;
-	}
+	// variables for internal triggers are not registered intentionally
+	if (var < re_subi || var > re_subi + 9 ) 
+		if (!var->next /* this is fast, but a bit flawed logic */ && !Cvar_FindVar(var->name)) {
+			Com_Printf("Cvar_Set: on non linked var %s\n", var->name);
+			return;
+		}
 
 	if (var->flags & CVAR_ROM) {
 		Com_Printf ("\"%s\" is write protected\n", var->name);
