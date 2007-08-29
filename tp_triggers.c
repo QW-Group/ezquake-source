@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-	$Id: tp_triggers.c,v 1.3 2007-05-28 10:47:36 johnnycz Exp $
+	$Id: tp_triggers.c,v 1.4 2007-08-29 18:55:12 cokeman1982 Exp $
 */
 
 #include "quakedef.h"
@@ -746,7 +746,7 @@ qbool CL_SearchForReTriggers (const char *s, unsigned trigger_type)
 			if (irt->flags & trigger_type) {
 				result = pcre_exec (irt->regexp, irt->regexp_extra, s, len, 0, 0, offsets, 99);
 				if (result >= 0) {
-					Re_Trigger_Copy_Subpatterns (s, offsets, min(result,10), re_subi);
+					Re_Trigger_Copy_Subpatterns (s, offsets, min(result,10), re_sub);
 					irt->func (s);
 				}
 			}
@@ -844,11 +844,11 @@ static void INTRIG_Lastip_port (const char *s)
 	memset (lastip, 0, sizeof (lastip));
  
 	snprintf (lastip, sizeof (lastip), "%s.%s.%s.%s:%s",
-						re_subi[1].string,
-						re_subi[2].string,
-						re_subi[3].string,
-						re_subi[4].string,
-						re_subi[5].string);
+						re_sub[1].string,
+						re_sub[2].string,
+						re_sub[3].string,
+						re_sub[4].string,
+						re_sub[5].string);
 }
  
 static void InitInternalTriggers(void)
