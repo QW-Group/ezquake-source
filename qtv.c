@@ -1,7 +1,7 @@
 /*
 	Support for FTE QuakeTV
 
-	$Id: qtv.c,v 1.13 2007-08-12 14:18:40 qqshka Exp $
+	$Id: qtv.c,v 1.14 2007-08-29 21:04:45 himan Exp $
 */
 
 #include "quakedef.h"
@@ -11,7 +11,7 @@
 #include "fs.h"
 
 cvar_t	qtv_buffertime = {"qtv_buffertime", "0.5"};
-cvar_t	qtv_chatprefix = {"qtv_chatprefix", "[QTV]"};
+cvar_t	qtv_chatprefix = {"qtv_chatprefix", "$[{QTV}$] "};
 
 
 void QTV_Init(void)
